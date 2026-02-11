@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C54X coff binaries.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    Contributed by Timothy Wall (twall@cygnus.com)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -388,6 +388,7 @@ const bfd_target tic54x_coff0_vec =
     15,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -450,6 +451,7 @@ const bfd_target tic54x_coff0_beh_vec =
 #else
     false,			/* keep unused section symbols.  */
 #endif
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -513,6 +515,7 @@ const bfd_target tic54x_coff1_vec =
 #else
     false,			/* keep unused section symbols.  */
 #endif
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -576,6 +579,7 @@ const bfd_target tic54x_coff1_beh_vec =
 #else
     false,			/* keep unused section symbols.  */
 #endif
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -639,6 +643,7 @@ const bfd_target tic54x_coff2_vec =
 #else
     false,			/* keep unused section symbols.  */
 #endif
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -702,6 +707,7 @@ const bfd_target tic54x_coff2_beh_vec =
 #else
     false,			/* keep unused section symbols.  */
 #endif
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     tic54x_getl32, tic54x_getl_signed_32, tic54x_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */

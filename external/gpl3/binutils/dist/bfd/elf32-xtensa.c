@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,7 +22,6 @@
 #include "bfd.h"
 
 #include <stdarg.h>
-#include <strings.h>
 
 #include "bfdlink.h"
 #include "libbfd.h"
@@ -414,16 +413,16 @@ elf_xtensa_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       TRACE ("BFD_RELOC_XTENSA_RTLD");
       return &elf_howto_table[(unsigned) R_XTENSA_RTLD ];
 
-    case BFD_RELOC_XTENSA_GLOB_DAT:
-      TRACE ("BFD_RELOC_XTENSA_GLOB_DAT");
+    case BFD_RELOC_GLOB_DAT:
+      TRACE ("BFD_RELOC_GLOB_DAT");
       return &elf_howto_table[(unsigned) R_XTENSA_GLOB_DAT ];
 
-    case BFD_RELOC_XTENSA_JMP_SLOT:
-      TRACE ("BFD_RELOC_XTENSA_JMP_SLOT");
+    case BFD_RELOC_JMP_SLOT:
+      TRACE ("BFD_RELOC_JMP_SLOT");
       return &elf_howto_table[(unsigned) R_XTENSA_JMP_SLOT ];
 
-    case BFD_RELOC_XTENSA_RELATIVE:
-      TRACE ("BFD_RELOC_XTENSA_RELATIVE");
+    case BFD_RELOC_RELATIVE:
+      TRACE ("BFD_RELOC_RELATIVE");
       return &elf_howto_table[(unsigned) R_XTENSA_RELATIVE ];
 
     case BFD_RELOC_XTENSA_PLT:
@@ -1322,9 +1321,9 @@ elf_xtensa_hide_symbol (struct bfd_link_info *info,
 static asection *
 elf_xtensa_gc_mark_hook (asection *sec,
 			 struct bfd_link_info *info,
-			 Elf_Internal_Rela *rel,
+			 struct elf_reloc_cookie *cookie,
 			 struct elf_link_hash_entry *h,
-			 Elf_Internal_Sym *sym)
+			 unsigned int symndx)
 {
   /* Property sections are marked "KEEP" in the linker scripts, but they
      should not cause other sections to be marked.  (This approach relies
@@ -1340,14 +1339,14 @@ elf_xtensa_gc_mark_hook (asection *sec,
     return NULL;
 
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_XTENSA_GNU_VTINHERIT:
       case R_XTENSA_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 
@@ -1588,7 +1587,7 @@ elf_xtensa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  if (s == NULL)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -1795,7 +1794,7 @@ elf_xtensa_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
     {
       struct elf_link_hash_entry *tlsbase = &htab->tlsbase->elf;
       struct bfd_link_hash_entry *bh = &tlsbase->root;
-      const struct elf_backend_data *bed = get_elf_backend_data (output_bfd);
+      elf_backend_data *bed = get_elf_backend_data (output_bfd);
 
       tlsbase->type = STT_TLS;
       if (!(_bfd_generic_link_add_one_symbol
@@ -2617,7 +2616,8 @@ elf_xtensa_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_XTENSA_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -3214,7 +3214,8 @@ elf_xtensa_combine_prop_entries (bfd *output_bfd,
 
 static bool
 elf_xtensa_finish_dynamic_sections (bfd *output_bfd,
-				    struct bfd_link_info *info)
+				    struct bfd_link_info *info,
+				    bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf_xtensa_link_hash_table *htab;
   bfd *dynobj;
@@ -3418,8 +3419,7 @@ elf_xtensa_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
     return false;
 
   /* Don't even pretend to support mixed-format linking.  */
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return false;
 
   out_flag = elf_elfheader (obfd)->e_flags;

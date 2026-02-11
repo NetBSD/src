@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -293,20 +293,11 @@ extern void coff_pop_insert (void);
    information.  */
 #define INIT_STAB_SECTION(stab, str) obj_coff_init_stab_section (stab, str)
 
-/* Store the number of relocations in the section aux entry.  */
-#ifdef OBJ_XCOFF
-#define SET_SECTION_RELOCS(sec, relocs, n)		\
-  do {							\
-    symbolS * sectSym = section_symbol (sec);		\
-    if (S_GET_STORAGE_CLASS (sectSym) == C_DWARF)	\
-      SA_SET_SECT_NRELOC (sectSym, n);			\
-    else						\
-      SA_SET_SCN_NRELOC (sectSym, n);			\
-  } while (0)
-#else
-#define SET_SECTION_RELOCS(sec, relocs, n) \
-  SA_SET_SCN_NRELOC (section_symbol (sec), n)
-#endif
+/* We need to store the number of relocations in the section aux entry.  */
+#define FINALIZE_SECTION_RELOCS(sec, relocs, n) \
+  obj_coff_finalize_section_relocs (sec, relocs, n)
+extern bool obj_coff_finalize_section_relocs (asection *, arelent **,
+					      unsigned int);
 
 extern int  S_SET_DATA_TYPE              (symbolS *, int);
 extern int  S_SET_STORAGE_CLASS          (symbolS *, int);

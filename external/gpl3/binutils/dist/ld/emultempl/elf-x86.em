@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2019-2025 Free Software Foundation, Inc.
+# Copyright (C) 2019-2026 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -33,7 +33,7 @@ static struct elf_linker_x86_params params;
 static void
 elf_x86_create_output_section_statements (void)
 {
-  _bfd_elf_linker_x86_set_options (&link_info, &params);
+  bfd_elf_linker_x86_set_options (&link_info, &params);
 }
 
 EOF
@@ -56,61 +56,3 @@ EOF
 
 LDEMUL_BEFORE_PARSE=elf_x86_before_parse
 fi
-
-case x${OUTPUT_FORMAT}${CALL_NOP_BYTE} in
-  x*x86-64*0x67)
-fragment <<EOF
-
-static void
-elf_x86_64_before_parse (void)
-{
-  params.mark_plt = DEFAULT_LD_Z_MARK_PLT;
-
-  elf_x86_before_parse ();
-}
-EOF
-
-    LDEMUL_BEFORE_PARSE=elf_x86_64_before_parse
-    ;;
-esac
-
-case x${OUTPUT_FORMAT} in
-  x*x86-64*)
-fragment <<EOF
-
-static void
-elf_x86_64_before_allocation (void)
-{
-  if (!bfd_link_relocatable (&link_info)
-      && is_elf_hash_table (link_info.hash)
-      && expld.phase != lang_mark_phase_enum)
-    {
-      struct elf_link_hash_table *htab = elf_hash_table (&link_info);
-      /* Run one_lang_size_sections_pass to estimate the output section
-	 layout before sizing dynamic sections.  */
-      expld.dataseg.phase = exp_seg_none;
-      expld.phase = lang_mark_phase_enum;
-      /* NB: Exclude linker created GOT setions when estimating output
-	 section layout as sizing dynamic sections may change linker
-	 created GOT sections.  */
-      if (htab->sgot != NULL)
-	htab->sgot->flags |= SEC_EXCLUDE;
-      if (htab->sgotplt != NULL)
-	htab->sgotplt->flags |= SEC_EXCLUDE;
-      one_lang_size_sections_pass (NULL, false);
-      /* Restore linker created GOT setions.  */
-      if (htab->sgot != NULL)
-	htab->sgot->flags &= ~SEC_EXCLUDE;
-      if (htab->sgotplt != NULL)
-	htab->sgotplt->flags &= ~SEC_EXCLUDE;
-      lang_reset_memory_regions ();
-    }
-
-  gld${EMULATION_NAME}_before_allocation ();
-}
-
-EOF
-
-LDEMUL_BEFORE_ALLOCATION=elf_x86_64_before_allocation
-    ;;
-esac

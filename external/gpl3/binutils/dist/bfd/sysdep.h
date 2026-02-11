@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for the BFD library
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,6 +36,10 @@
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
+
+#ifdef HAVE_STRINGS_H
+#include <strings.h>
+#endif
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -110,6 +114,10 @@ extern int ffs (int);
 
 #if !HAVE_DECL_STPCPY
 extern char *stpcpy (char *__dest, const char *__src);
+#endif
+
+#if !HAVE_DECL_STRTOULL
+extern unsigned long long strtoull(const char *, char **, int);
 #endif
 
 #ifdef HAVE_FTELLO

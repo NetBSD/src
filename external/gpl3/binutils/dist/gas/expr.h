@@ -1,5 +1,5 @@
 /* expr.h -> header file for expr.c
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -37,7 +37,7 @@
 
    NOTE: This enumeration must match the op_rank array in expr.c.  */
 
-typedef enum
+typedef enum operatorT
 {
   /* An illegal expression.  */
   O_illegal,
@@ -122,14 +122,8 @@ typedef struct expressionS
   /* A number to add.  */
   offsetT X_add_number;
 
-  /* The type of the expression.  We can't assume that an arbitrary
-     compiler can handle a bitfield of enum type.  FIXME: We could
-     check this using autoconf.  */
-#ifdef __GNUC__
-  operatorT X_op : 8;
-#else
-  unsigned char X_op;
-#endif
+  /* The type of the expression.  */
+  ENUM_BITFIELD (operatorT) X_op : 8;
 
   /* Non-zero if the expression value should be regarded as unsigned.  This is
      only valid for
@@ -145,9 +139,7 @@ typedef struct expressionS
      signed word.  */
   unsigned int X_extrabit : 1;
 
-  /* 7 additional bits can be defined if needed.  */
-
-  /* Machine dependent field */
+  /* Machine dependent field.  */
   unsigned short X_md;
 } expressionS;
 

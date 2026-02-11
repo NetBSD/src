@@ -1,5 +1,5 @@
 /* This file is tc-arm.h
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 
@@ -20,6 +20,7 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#ifndef TC_ARM
 #define TC_ARM 1
 
 #ifndef TARGET_BYTES_BIG_ENDIAN
@@ -377,3 +378,10 @@ extern bool arm_tc_equal_in_insn (int, char *);
 #define TC_LARGEST_EXPONENT_IS_NORMAL(PRECISION) \
 	arm_is_largest_exponent_ok ((PRECISION))
 int arm_is_largest_exponent_ok (int precision);
+
+#ifdef OBJ_ELF
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+#endif /* OBJ_ELF */
+
+#endif /* TC_ARM */

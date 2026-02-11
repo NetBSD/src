@@ -1,5 +1,5 @@
 /* C-SKY disassembler.
-   Copyright (C) 1988-2025 Free Software Foundation, Inc.
+   Copyright (C) 1988-2026 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -263,24 +263,15 @@ csky_get_disassembler (bfd *abfd)
    return print_insn_csky;
 }
 
-/* Parse the string of disassembler options.  */
-static void
-parse_csky_dis_options (const char *opts_in)
+/* Parse a disassembler option.  */
+static bool
+parse_csky_option (const char *opt, void *data ATTRIBUTE_UNUSED)
 {
-  char *opts = xstrdup (opts_in);
-  char *opt = opts;
-  char *opt_end = opts;
-
-  for (; opt_end != NULL; opt = opt_end + 1)
-    {
-      if ((opt_end = strchr (opt, ',')) != NULL)
-	*opt_end = 0;
-      if (strcmp (opt, "abi-names") == 0)
-	using_abi = 1;
-      else
-	fprintf (stderr,
-		 "unrecognized disassembler option: %s", opt);
-    }
+  if (strcmp (opt, "abi-names") == 0)
+    using_abi = 1;
+  else
+    fprintf (stderr, "unrecognized disassembler option: %s", opt);
+  return true;
 }
 
 /* Get general register name.  */
@@ -1058,7 +1049,7 @@ print_insn_csky (bfd_vma memaddr, struct disassemble_info *info)
 
   if (info->disassembler_options)
     {
-      parse_csky_dis_options (info->disassembler_options);
+      for_each_disassembler_option (info, parse_csky_option, NULL);
       info->disassembler_options = NULL;
     }
 

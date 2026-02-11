@@ -46,7 +46,7 @@
 @copying
 This document is the manual for @ProductName{}, last updated @value{UPDATED}.
 
-Copyright @copyright{} 2022-2025 Free Software Foundation, Inc.
+Copyright @copyright{} 2022-2026 Free Software Foundation, Inc.
 
 @c -- @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -157,6 +157,7 @@ The gprofng Man Pages
 * Man page for @command{gprofng display text}::  The man page for gprofng display text.
 * Man page for @command{gprofng display html}::  The man page for gprofng display html.
 * Man page for @command{gprofng display src}::   The man page for gprofng display src.
+* Man page for @command{gprofng display gmon}::  The man page for gprofng display gmon.
 * Man page for @command{gprofng archive}::       The man page for gprofng archive.
 
 @c -- Index
@@ -4425,6 +4426,14 @@ In this appendix the man pages for the various @ProductName{} tools are listed.
 @c ----------------------------------------------------------------------------
 
 @include gprofng-display-src.texi
+
+@c -- A new node --------------------------------------------------------------
+@page
+@node    Man page for @command{gprofng display gmon}
+@section Man page for @command{gprofng display gmon}
+@c ----------------------------------------------------------------------------
+
+@include gprofng-display-gmon.texi
 
 @c -- A new node --------------------------------------------------------------
 @page

@@ -1,5 +1,5 @@
 /* Matsushita 10300 specific support for 32-bit ELF
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -662,10 +662,10 @@ static const struct mn10300_reloc_map mn10300_reloc_map[] =
   { BFD_RELOC_MN10300_GOT32, R_MN10300_GOT32 },
   { BFD_RELOC_MN10300_GOT24, R_MN10300_GOT24 },
   { BFD_RELOC_MN10300_GOT16, R_MN10300_GOT16 },
-  { BFD_RELOC_MN10300_COPY, R_MN10300_COPY },
-  { BFD_RELOC_MN10300_GLOB_DAT, R_MN10300_GLOB_DAT },
-  { BFD_RELOC_MN10300_JMP_SLOT, R_MN10300_JMP_SLOT },
-  { BFD_RELOC_MN10300_RELATIVE, R_MN10300_RELATIVE },
+  { BFD_RELOC_COPY, R_MN10300_COPY },
+  { BFD_RELOC_GLOB_DAT, R_MN10300_GLOB_DAT },
+  { BFD_RELOC_JMP_SLOT, R_MN10300_JMP_SLOT },
+  { BFD_RELOC_RELATIVE, R_MN10300_RELATIVE },
   { BFD_RELOC_MN10300_TLS_GD, R_MN10300_TLS_GD },
   { BFD_RELOC_MN10300_TLS_LD, R_MN10300_TLS_LD },
   { BFD_RELOC_MN10300_TLS_LDO, R_MN10300_TLS_LDO },
@@ -689,7 +689,7 @@ _bfd_mn10300_elf_create_got_section (bfd * abfd,
   flagword   pltflags;
   asection * s;
   struct elf_link_hash_entry * h;
-  const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  elf_backend_data * bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab;
   int ptralign;
 
@@ -1385,19 +1385,19 @@ mn10300_elf_check_relocs (bfd *abfd,
 static asection *
 mn10300_elf_gc_mark_hook (asection *sec,
 			  struct bfd_link_info *info,
-			  Elf_Internal_Rela *rel,
+			  struct elf_reloc_cookie *cookie,
 			  struct elf_link_hash_entry *h,
-			  Elf_Internal_Sym *sym)
+			  unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_MN10300_GNU_VTINHERIT:
       case R_MN10300_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Perform a relocation as part of a final link.  */
@@ -2101,7 +2101,8 @@ mn10300_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MN10300_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -3392,7 +3393,6 @@ mn10300_elf_relax_section (bfd *abfd,
 		symval += irel->r_addend;
 
 	      symval = _bfd_merged_section_offset (abfd, & sym_sec,
-						   elf_section_data (sym_sec)->sec_info,
 						   symval);
 
 	      if (ELF_ST_TYPE (isym->st_info) != STT_SECTION)
@@ -4707,8 +4707,7 @@ _bfd_mn10300_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
@@ -4789,7 +4788,7 @@ _bfd_mn10300_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword   flags;
   asection * s;
-  const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf32_mn10300_link_hash_table *htab = elf32_mn10300_hash_table (info);
   int ptralign = 0;
 
@@ -5030,7 +5029,7 @@ _bfd_mn10300_elf_late_size_sections (bfd * output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -5337,8 +5336,9 @@ _bfd_mn10300_elf_finish_dynamic_symbol (bfd * output_bfd,
 /* Finish up the dynamic sections.  */
 
 static bool
-_bfd_mn10300_elf_finish_dynamic_sections (bfd * output_bfd,
-					  struct bfd_link_info * info)
+_bfd_mn10300_elf_finish_dynamic_sections (bfd *output_bfd,
+					  struct bfd_link_info *info,
+					  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *      dynobj;
   asection * sgot;

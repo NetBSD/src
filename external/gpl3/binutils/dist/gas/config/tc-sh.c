@@ -1,5 +1,5 @@
 /* tc-sh.c -- Assemble code for the Renesas / SuperH SH
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -3602,6 +3602,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg ATTRIBUTE_UNUSED)
 
     case BFD_RELOC_32:
     case BFD_RELOC_32_PCREL:
+#if defined (OBJ_COFF) && defined (TE_PE)
+    case BFD_RELOC_RVA:
+#endif
       apply_full_field_fix (fixP, buf, val, 4);
       break;
 

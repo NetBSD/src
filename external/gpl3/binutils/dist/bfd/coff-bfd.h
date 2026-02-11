@@ -1,5 +1,5 @@
 /* BFD COFF interfaces used outside of BFD.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -54,8 +54,6 @@ struct coff_section_tdata
   /* Optional information about a COMDAT entry; NULL if not COMDAT. */
   struct coff_comdat_info *comdat;
   int line_base;
-  /* A pointer used for .stab linking optimizations.  */
-  void * stab_info;
   /* Available for individual backends.  */
   void * tdata;
 };

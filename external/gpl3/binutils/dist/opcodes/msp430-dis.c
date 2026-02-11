@@ -1,5 +1,5 @@
 /* Disassemble MSP430 instructions.
-   Copyright (C) 2002-2025 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -259,15 +259,18 @@ msp430_singleoperand (disassemble_info *info,
 		{
 		  cmd_len += 2;
 		  *cycles = 4;
-		  sprintf (op, "0x%04x", dst);
-		  sprintf (comm, "PC rel. abs addr 0x%04x",
-			   PS ((short) (addr + 2) + dst));
 		  if (extended_dst)
 		    {
 		      dst |= extended_dst << 16;
 		      sprintf (op, "0x%05x", dst);
 		      sprintf (comm, "PC rel. abs addr 0x%05lx",
 			       (long)((addr + 2 + dst) & 0xfffff));
+		    }
+		  else
+		    {
+		      sprintf (op, "0x%04x", dst);
+		      sprintf (comm, "PC rel. abs addr 0x%04x",
+			       PS ((short) (addr + 2) + dst));
 		    }
 		}
 	      else
@@ -280,12 +283,13 @@ msp430_singleoperand (disassemble_info *info,
 		{
 		  cmd_len += 2;
 		  *cycles = 4;
-		  sprintf (op, "&0x%04x", PS (dst));
 		  if (extended_dst)
 		    {
 		      dst |= extended_dst << 16;
 		      sprintf (op, "&0x%05x", dst & 0xfffff);
 		    }
+		  else
+		    sprintf (op, "&0x%04x", PS (dst));
 		}
 	      else
 		return -1;
@@ -339,9 +343,6 @@ msp430_singleoperand (disassemble_info *info,
 	      if (msp430dis_opcode_signed (addr + 2, info, &dst, comm))
 		{
 		  cmd_len += 2;
-		  sprintf (op, "#%d", dst);
-		  if (dst > 9 || dst < 0)
-		    sprintf (comm, "#0x%04x", PS (dst));
 		  if (extended_dst)
 		    {
 		      dst |= extended_dst << 16;
@@ -350,6 +351,12 @@ msp430_singleoperand (disassemble_info *info,
 		      sprintf (op, "#%d", dst);
 		      if (dst > 9 || dst < 0)
 			sprintf (comm, "#0x%05x", dst);
+		    }
+		  else
+		    {
+		      sprintf (op, "#%d", dst);
+		      if (dst > 9 || dst < 0)
+			sprintf (comm, "#0x%04x", PS (dst));
 		    }
 		}
 	      else
@@ -367,15 +374,18 @@ msp430_singleoperand (disassemble_info *info,
 	      if (msp430dis_opcode_signed (addr + 2, info, &dst, comm))
 		{
 		  cmd_len += 2;
-		  sprintf (op, "0x%04x", PS (dst));
-		  sprintf (comm, "PC rel. 0x%04x",
-			   PS ((short) addr + 2 + dst));
 		  if (extended_dst)
 		    {
 		      dst |= extended_dst << 16;
 		      sprintf (op, "0x%05x", dst & 0xffff);
 		      sprintf (comm, "PC rel. 0x%05lx",
 			       (long)((addr + 2 + dst) & 0xfffff));
+		    }
+		  else
+		    {
+		      sprintf (op, "0x%04x", PS (dst));
+		      sprintf (comm, "PC rel. 0x%04x",
+			       PS ((short) addr + 2 + dst));
 		    }
 		}
 	      else
@@ -387,12 +397,13 @@ msp430_singleoperand (disassemble_info *info,
 	      if (msp430dis_opcode_signed (addr + 2, info, &dst, comm))
 		{
 		  cmd_len += 2;
-		  sprintf (op, "&0x%04x", PS (dst));
 		  if (extended_dst)
 		    {
 		      dst |= extended_dst << 16;
 		      sprintf (op, "&0x%05x", dst & 0xfffff);
 		    }
+		  else
+		    sprintf (op, "&0x%04x", PS (dst));
 		}
 	      else
 		return -1;

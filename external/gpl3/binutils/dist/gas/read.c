@@ -1,5 +1,5 @@
 /* read.c - read a source file -
-   Copyright (C) 1986-2025 Free Software Foundation, Inc.
+   Copyright (C) 1986-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -764,19 +764,19 @@ assemble_one (char *line)
       /* Make sure this hasn't pushed the locked sequence
 	 past the bundle size.  */
       valueT bundle_size = pending_bundle_size (bundle_lock_frag);
-      if (bundle_size > 1U << bundle_align_p2)
+      if (bundle_size > (valueT) 1 << bundle_align_p2)
 	as_bad (_ (".bundle_lock sequence at %" PRIu64 " bytes, "
-		   "but .bundle_align_mode limit is %u bytes"),
-		(uint64_t) bundle_size, 1U << bundle_align_p2);
+		   "but .bundle_align_mode limit is %" PRIu64 " bytes"),
+		(uint64_t) bundle_size, (uint64_t) 1 << bundle_align_p2);
     }
   else if (bundle_align_p2 > 0)
     {
       valueT insn_size = pending_bundle_size (insn_start_frag);
 
-      if (insn_size > 1U << bundle_align_p2)
+      if (insn_size > (valueT) 1 << bundle_align_p2)
 	as_bad (_("single instruction is %" PRIu64 " bytes long, "
-		  "but .bundle_align_mode limit is %u bytes"),
-		(uint64_t) insn_size, 1U << bundle_align_p2);
+		  "but .bundle_align_mode limit is %" PRIu64 " bytes"),
+		(uint64_t) insn_size, (uint64_t) 1 << bundle_align_p2);
 
       finish_bundle (insn_start_frag, insn_size);
     }
@@ -858,16 +858,24 @@ do_align (unsigned int n, char *fill, unsigned int len, unsigned int max)
 }
 
 /* Find first <eol><next_char>NO_APP<eol>, if any, in the supplied buffer.
-   Return NULL if there's none, or else the position of <next_char>.  */
+   Return NULL if there's none, or else the position of <next_char>.
+   
+   Note: the S parameter to this function is typed as CHAR* rather than
+   CONST CHAR* because if it is const then the strstr() function will return
+   a const pointer, which in turn means that the END local would need to be
+   const, which would mean that the function itself would have to return a
+   const pointer, which means that input_line_pointer would have to become
+   const, which would break lots of things.  (See PR 33696).  */
+
 static char *
-find_no_app (const char *s, char next_char)
+find_no_app (char *s, char next_char)
 {
   const char *start = s;
   const char srch[] = { next_char, 'N', 'O', '_', 'A', 'P', 'P', '\0' };
 
   for (;;)
     {
-      char *ends = strstr (s, srch);
+      char * ends = strstr (s, srch);
 
       if (ends == NULL)
 	break;
@@ -894,6 +902,8 @@ read_a_source_file (const char *name)
 #ifdef WARN_COMMENTS
   found_comment = 0;
 #endif
+
+  set_identify_name (name);
 
   buffer = input_scrub_new_file (name);
 
@@ -1955,10 +1965,7 @@ s_mri_common (int small ATTRIBUTE_UNUSED)
 
   if (line_label != NULL)
     {
-      expressionS exp;
-      exp.X_op = O_symbol;
-      exp.X_add_symbol = sym;
-      exp.X_add_number = 0;
+      expressionS exp = { .X_op = O_symbol, .X_add_symbol = sym };
       symbol_set_value_expression (line_label, &exp);
       symbol_set_frag (line_label, &zero_address_frag);
       S_SET_SEGMENT (line_label, expr_section);
@@ -2248,7 +2255,7 @@ static struct deferred_diag {
   unsigned int lineno;
   bool err;
   expressionS exp;
-} *deferred_diags, *last_deferred_diag;
+} *deferred_diag_head, **deferred_diag_tail = &deferred_diag_head;
 
 static void
 s_errwarn_if (int err)
@@ -2260,17 +2267,15 @@ s_errwarn_if (int err)
   if (errcnt != had_errors ())
     {
       ignore_rest_of_line ();
+      free (diag);
       return;
     }
 
   diag->err = err;
   diag->file = as_where (&diag->lineno);
   diag->next = NULL;
-  if ( deferred_diags == NULL )
-    deferred_diags = diag;
-  else
-    last_deferred_diag->next = diag;
-  last_deferred_diag = diag;
+  *deferred_diag_tail = diag;
+  deferred_diag_tail = &diag->next;
 
   demand_empty_rest_of_line ();
 }
@@ -2280,20 +2285,23 @@ evaluate_deferred_diags (void)
 {
   struct deferred_diag *diag;
 
-  for (diag = deferred_diags; diag != NULL; diag = diag->next)
+  while ((diag = deferred_diag_head) != NULL)
     {
       if (!resolve_expression (&diag->exp) || diag->exp.X_op != O_constant)
 	as_warn_where (diag->file, diag->lineno,
 		       _("expression does not evaluate to a constant"));
       else if (diag->exp.X_add_number == 0)
-	continue;
+	;
       else if (diag->err)
 	as_bad_where (diag->file, diag->lineno,
 		      _(".errif expression evaluates to true"));
       else
 	as_warn_where (diag->file, diag->lineno,
 		       _(".warnif expression evaluates to true"));
+      deferred_diag_head = diag->next;
+      free (diag);
     }
+  deferred_diag_tail = &deferred_diag_head;
 }
 
 /* Handle the MRI fail pseudo-op.  */
@@ -4119,6 +4127,9 @@ pseudo_set (symbolS *symbolP)
 
   know (symbolP);		/* NULL pointer is logic error.  */
 
+#ifdef md_expr_init_rest
+  md_expr_init_rest (&exp);
+#endif
   if (!S_IS_FORWARD_REF (symbolP))
     (void) expression (&exp);
   else
@@ -6785,10 +6796,10 @@ s_bundle_unlock (int arg ATTRIBUTE_UNUSED)
 
   size = pending_bundle_size (bundle_lock_frag);
 
-  if (size > 1U << bundle_align_p2)
+  if (size > (valueT) 1 << bundle_align_p2)
     as_bad (_(".bundle_lock sequence is %" PRIu64 " bytes, "
-	      "but bundle size is only %u bytes"),
-	    (uint64_t) size, 1u << bundle_align_p2);
+	      "but bundle size is only %" PRIu64 " bytes"),
+	    (uint64_t) size, (uint64_t) 1 << bundle_align_p2);
   else
     finish_bundle (bundle_lock_frag, size);
 

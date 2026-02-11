@@ -1,5 +1,5 @@
 /* PEF support for BFD.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -55,7 +55,6 @@
 #define bfd_pef_bfd_relax_section		    bfd_generic_relax_section
 #define bfd_pef_bfd_gc_sections			    bfd_generic_gc_sections
 #define bfd_pef_bfd_lookup_section_flags	    bfd_generic_lookup_section_flags
-#define bfd_pef_bfd_merge_sections		    bfd_generic_merge_sections
 #define bfd_pef_bfd_is_group_section		    bfd_generic_is_group_section
 #define bfd_pef_bfd_group_name			    bfd_generic_group_name
 #define bfd_pef_bfd_discard_group		    bfd_generic_discard_group
@@ -1020,6 +1019,7 @@ const bfd_target pef_vec =
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  false,			/* merge sections */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */
@@ -1156,6 +1156,7 @@ const bfd_target pef_xlib_vec =
   16,				/* AR_max_namelen.  */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* Data.  */

@@ -1,5 +1,5 @@
 /* SPARC ELF specific backend routines.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -46,9 +46,6 @@ struct _bfd_sparc_elf_link_hash_table
 {
   struct elf_link_hash_table elf;
 
-  /* Short-cut to get to dynamic linker sections.  */
-  asection *interp;
-
   union
   {
     bfd_signed_vma refcount;
@@ -89,53 +86,53 @@ struct _bfd_sparc_elf_link_hash_table
    ? (struct _bfd_sparc_elf_link_hash_table *) (p)->hash : NULL)
 
 extern reloc_howto_type *_bfd_sparc_elf_reloc_type_lookup
-  (bfd *, bfd_reloc_code_real_type);
+  (bfd *, bfd_reloc_code_real_type) ATTRIBUTE_HIDDEN;
 extern reloc_howto_type *_bfd_sparc_elf_reloc_name_lookup
-  (bfd *, const char *);
+  (bfd *, const char *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_info_to_howto
-  (bfd *, arelent *, Elf_Internal_Rela *);
+  (bfd *, arelent *, Elf_Internal_Rela *) ATTRIBUTE_HIDDEN;
 extern reloc_howto_type *_bfd_sparc_elf_info_to_howto_ptr
-  (bfd*, unsigned int);
+  (bfd*, unsigned int) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_mkobject
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern struct bfd_link_hash_table *_bfd_sparc_elf_link_hash_table_create
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_create_dynamic_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern void _bfd_sparc_elf_copy_indirect_symbol
   (struct bfd_link_info *,
    struct elf_link_hash_entry *,
-   struct elf_link_hash_entry *);
+   struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_check_relocs
   (bfd *, struct bfd_link_info *,
-   asection *, const Elf_Internal_Rela *);
+   asection *, const Elf_Internal_Rela *) ATTRIBUTE_HIDDEN;
 extern asection *_bfd_sparc_elf_gc_mark_hook
-  (asection *, struct bfd_link_info *,
-   Elf_Internal_Rela *, struct elf_link_hash_entry *,
-   Elf_Internal_Sym *);
+  (asection *, struct bfd_link_info *, struct elf_reloc_cookie *,
+   struct elf_link_hash_entry *, unsigned int) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_adjust_dynamic_symbol
-  (struct bfd_link_info *, struct elf_link_hash_entry *);
+  (struct bfd_link_info *, struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_omit_section_dynsym
-  (bfd *, struct bfd_link_info *, asection *);
+  (bfd *, struct bfd_link_info *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_late_size_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_new_section_hook
-  (bfd *, asection *);
+  (bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_relax_section
-  (bfd *, struct bfd_section *, struct bfd_link_info *, bool *);
+  (bfd *, struct bfd_section *, struct bfd_link_info *, bool *)
+  ATTRIBUTE_HIDDEN;
 extern int _bfd_sparc_elf_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
-   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **);
+   Elf_Internal_Rela *, Elf_Internal_Sym *, asection **) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_finish_dynamic_symbol
   (bfd *, struct bfd_link_info *, struct elf_link_hash_entry *,
-   Elf_Internal_Sym *sym);
+   Elf_Internal_Sym *sym) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_finish_dynamic_sections
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *, bfd_byte *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_fixup_symbol
-  (struct bfd_link_info *, struct elf_link_hash_entry *);
+  (struct bfd_link_info *, struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_object_p
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bfd_vma _bfd_sparc_elf_plt_sym_val
-  (bfd_vma, const asection *, const arelent *);
+  (bfd_vma, const asection *, const arelent *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_sparc_elf_merge_private_bfd_data
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;

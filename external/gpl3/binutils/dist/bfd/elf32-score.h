@@ -1,5 +1,5 @@
 /* 32-bit ELF support for S+core.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by
    Brain.lin (brain.lin@sunplusct.com)
    Mei Ligang (ligang@sunnorth.com.cn)
@@ -28,10 +28,11 @@
 extern void
 s7_bfd_score_elf_hide_symbol (struct bfd_link_info *,
 			      struct elf_link_hash_entry *,
-			      bool);
+			      bool) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *);
+s7_bfd_score_info_to_howto (bfd *, arelent *, Elf_Internal_Rela *)
+  ATTRIBUTE_HIDDEN;
 
 extern int
 s7_bfd_score_elf_relocate_section (bfd *,
@@ -41,13 +42,13 @@ s7_bfd_score_elf_relocate_section (bfd *,
 				   bfd_byte *,
 				   Elf_Internal_Rela *,
 				   Elf_Internal_Sym *,
-				   asection **);
+				   asection **) ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_check_relocs (bfd *,
 			       struct bfd_link_info *,
 			       asection *,
-			       const Elf_Internal_Rela *);
+			       const Elf_Internal_Rela *) ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_add_symbol_hook (bfd *,
@@ -56,97 +57,107 @@ s7_bfd_score_elf_add_symbol_hook (bfd *,
 				  const char **,
 				  flagword *,
 				  asection **,
-				  bfd_vma *);
+				  bfd_vma *) ATTRIBUTE_HIDDEN;
 
 extern void
-s7_bfd_score_elf_symbol_processing (bfd *, asymbol *);
+s7_bfd_score_elf_symbol_processing (bfd *, asymbol *) ATTRIBUTE_HIDDEN;
 
 extern int
 s7_bfd_score_elf_link_output_symbol_hook (struct bfd_link_info *,
 					  const char *,
 					  Elf_Internal_Sym *,
 					  asection *,
-					  struct elf_link_hash_entry *);
+					  struct elf_link_hash_entry *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_section_from_bfd_section (bfd *,
 					   asection *,
-					   int *);
+					   int *) ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_adjust_dynamic_symbol (struct bfd_link_info *,
-					struct elf_link_hash_entry *);
+					struct elf_link_hash_entry *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_early_size_sections (bfd *, struct bfd_link_info *);
+s7_bfd_score_elf_early_size_sections (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_late_size_sections (bfd *, struct bfd_link_info *);
+s7_bfd_score_elf_late_size_sections (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_create_dynamic_sections (bfd *, struct bfd_link_info *);
+s7_bfd_score_elf_create_dynamic_sections (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_finish_dynamic_symbol (bfd *,
 					struct bfd_link_info *,
 					struct elf_link_hash_entry *,
-					Elf_Internal_Sym *);
+					Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_finish_dynamic_sections (bfd *, struct bfd_link_info *);
+s7_bfd_score_elf_finish_dynamic_sections (bfd *, struct bfd_link_info *,
+					  bfd_byte *) ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_fake_sections (bfd *,
 				Elf_Internal_Shdr *,
-				asection *);
+				asection *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_section_processing (bfd *, Elf_Internal_Shdr *);
+s7_bfd_score_elf_section_processing (bfd *, Elf_Internal_Shdr *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_write_section (bfd *, asection *, bfd_byte *);
+s7_bfd_score_elf_write_section (bfd *, asection *, bfd_byte *) ATTRIBUTE_HIDDEN;
 
 extern void
 s7_bfd_score_elf_copy_indirect_symbol (struct bfd_link_info *,
 				       struct elf_link_hash_entry *,
-				       struct elf_link_hash_entry *);
+				       struct elf_link_hash_entry *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
 s7_bfd_score_elf_discard_info (bfd *, struct elf_reloc_cookie *,
-			       struct bfd_link_info *);
+			       struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_ignore_discarded_relocs (asection *);
+s7_bfd_score_elf_ignore_discarded_relocs (asection *) ATTRIBUTE_HIDDEN;
 
 extern asection *
 s7_bfd_score_elf_gc_mark_hook (asection *,
 			       struct bfd_link_info *,
-			       Elf_Internal_Rela *,
+			       struct elf_reloc_cookie *,
 			       struct elf_link_hash_entry *,
-			       Elf_Internal_Sym *);
+			       unsigned int) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_grok_prstatus (bfd *, Elf_Internal_Note *);
+s7_bfd_score_elf_grok_prstatus (bfd *, Elf_Internal_Note *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_bfd_score_elf_grok_psinfo (bfd *, Elf_Internal_Note *);
+s7_bfd_score_elf_grok_psinfo (bfd *, Elf_Internal_Note *) ATTRIBUTE_HIDDEN;
 
 extern reloc_howto_type *
-s7_elf32_score_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+s7_elf32_score_reloc_type_lookup (bfd *, bfd_reloc_code_real_type)
+  ATTRIBUTE_HIDDEN;
 
 extern struct bfd_link_hash_table *
-s7_elf32_score_link_hash_table_create (bfd *);
+s7_elf32_score_link_hash_table_create (bfd *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_elf32_score_print_private_bfd_data (bfd *, void *);
+s7_elf32_score_print_private_bfd_data (bfd *, void *) ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_elf32_score_merge_private_bfd_data (bfd *, struct bfd_link_info *);
+s7_elf32_score_merge_private_bfd_data (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 
 extern bool
-s7_elf32_score_new_section_hook (bfd *, asection *);
+s7_elf32_score_new_section_hook (bfd *, asection *) ATTRIBUTE_HIDDEN;
 
 extern bool
-_bfd_score_elf_common_definition (Elf_Internal_Sym *);
+_bfd_score_elf_common_definition (Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
 
 #define elf_backend_common_definition   _bfd_score_elf_common_definition

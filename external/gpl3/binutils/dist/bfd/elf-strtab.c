@@ -1,5 +1,5 @@
 /* ELF strtab with GC and suffix merging support.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Written by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -275,7 +275,7 @@ _bfd_elf_strtab_size (struct elf_strtab_hash *tab)
 }
 
 bfd_size_type
-_bfd_elf_strtab_len (struct elf_strtab_hash *tab)
+bfd_elf_strtab_len (struct elf_strtab_hash *tab)
 {
   return tab->size;
 }
@@ -296,8 +296,8 @@ _bfd_elf_strtab_offset (struct elf_strtab_hash *tab, size_t idx)
 }
 
 const char *
-_bfd_elf_strtab_str (struct elf_strtab_hash *tab, size_t idx,
-		     bfd_size_type *offset)
+bfd_elf_strtab_str (struct elf_strtab_hash *tab, size_t idx,
+		    bfd_size_type *offset)
 {
   if (idx == 0)
     return NULL;

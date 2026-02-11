@@ -1,5 +1,5 @@
 /* subsegs.h -> subsegs.c
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -62,16 +62,9 @@ typedef struct frchain frchainS;
    frag chain, even if it contains no (complete) frags.  */
 extern frchainS *frchain_now;
 
-typedef struct segment_info_struct {
+typedef struct segment_info_struct
+{
   frchainS *frchainP;
-  unsigned int hadone : 1;
-
-  /* This field is set if this is a .bss section which does not really
-     have any contents.  Once upon a time a .bss section did not have
-     any frags, but that is no longer true.  This field prevent the
-     SEC_HAS_CONTENTS flag from being set for the section even if
-     there are frags.  */
-  unsigned int bss : 1;
 
   /* Fixups for this segment.  This is only valid after the frchains
      are run together.  */
@@ -85,13 +78,28 @@ typedef struct segment_info_struct {
   /* Used by dwarf2dbg.c for this section's line table entries.  */
   void *dwarf2_line_seg;
 
-  union {
+  /* This field is set if this is a .bss section which does not really
+     have any contents.  Once upon a time a .bss section did not have
+     any frags, but that is no longer true.  This field prevent the
+     SEC_HAS_CONTENTS flag from being set for the section even if
+     there are frags.  */
+  unsigned int bss : 1;
+
+  /* Set whenever dwarf2_emit_insn is called, and used to disable
+     .eh_frame and .debug_frame optimisation.  This is an anti-fuzzer
+     measure.  */
+  unsigned int insn_seen : 1;
+
+  /* Used by the stabs code.  */
+  unsigned int stab_seen : 1;
+
+  union
+  {
     /* Current size of section holding stabs strings.  */
     unsigned long stab_string_size;
     /* Initial frag for ELF.  */
     char *p;
-  }
-  stabu;
+  } stabu;
 
 #ifdef NEED_LITERAL_POOL
   unsigned long literal_pool_size;

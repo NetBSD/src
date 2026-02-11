@@ -1617,7 +1617,7 @@ msgstr ""
 #: lexsup.c:335
 msgid ""
 "Do not allow multiple definitions with symbols included\n"
-"                                in filename invoked by -R or --just-symbols"
+"           in filename invoked by -R or --just-symbols"
 msgstr ""
 "Não permite vários definições com símbolos\n"
 "                                incluídos no nome de arquivo invocador por\n"

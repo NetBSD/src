@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright (C) 2007-2025 Free Software Foundation, Inc.
+   Copyright (C) 2007-2026 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -109,7 +109,7 @@ static const struct cr16_reloc_map cr16_reloc_map[R_CR16_MAX] =
   {BFD_RELOC_CR16_SWITCH32,  R_CR16_SWITCH32},
   {BFD_RELOC_CR16_GOT_REGREL20, R_CR16_GOT_REGREL20},
   {BFD_RELOC_CR16_GOTC_REGREL20, R_CR16_GOTC_REGREL20},
-  {BFD_RELOC_CR16_GLOB_DAT,  R_CR16_GLOB_DAT}
+  {BFD_RELOC_GLOB_DAT,       R_CR16_GLOB_DAT}
 };
 
 static reloc_howto_type cr16_elf_howto_table[] =
@@ -582,7 +582,7 @@ _bfd_cr16_elf_create_got_section (bfd * abfd, struct bfd_link_info * info)
   flagword   flags;
   asection * s;
   struct elf_link_hash_entry * h;
-  const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  elf_backend_data * bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
   int ptralign;
 
@@ -1384,7 +1384,8 @@ elf32_cr16_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_CR16_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -1673,8 +1674,7 @@ _bfd_cr16_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 {
   bfd *obfd = info->output_bfd;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   if (bfd_get_arch (obfd) == bfd_get_arch (ibfd)
@@ -2172,16 +2172,6 @@ elf32_cr16_relax_section (bfd *abfd, asection *sec,
   return false;
 }
 
-static asection *
-elf32_cr16_gc_mark_hook (asection *sec,
-			 struct bfd_link_info *info,
-			 Elf_Internal_Rela *rel,
-			 struct elf_link_hash_entry *h,
-			 Elf_Internal_Sym *sym)
-{
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
-}
-
 /* Create dynamic sections when linking against a dynamic object.  */
 
 static bool
@@ -2189,7 +2179,7 @@ _bfd_cr16_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword   flags;
   asection * s;
-  const struct elf_backend_data * bed = get_elf_backend_data (abfd);
+  elf_backend_data * bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
   int ptralign = 0;
 
@@ -2407,7 +2397,7 @@ _bfd_cr16_elf_late_size_sections (bfd * output_bfd,
       if (bfd_link_executable (info) && !info->nointerp)
 	{
 #if 0
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -2589,8 +2579,9 @@ _bfd_cr16_elf_finish_dynamic_symbol (bfd * output_bfd,
 /* Finish up the dynamic sections.  */
 
 static bool
-_bfd_cr16_elf_finish_dynamic_sections (bfd * output_bfd,
-				       struct bfd_link_info * info)
+_bfd_cr16_elf_finish_dynamic_sections (bfd *output_bfd,
+				       struct bfd_link_info *info,
+				       bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *      dynobj;
   asection * sgot;
@@ -2820,7 +2811,6 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 #define bfd_elf32_bfd_relax_section	  elf32_cr16_relax_section
 #define bfd_elf32_bfd_get_relocated_section_contents \
 				elf32_cr16_get_relocated_section_contents
-#define elf_backend_gc_mark_hook	  elf32_cr16_gc_mark_hook
 #define elf_backend_can_gc_sections	  1
 #define elf_backend_rela_normal		  1
 #define elf_backend_check_relocs	  cr16_elf_check_relocs

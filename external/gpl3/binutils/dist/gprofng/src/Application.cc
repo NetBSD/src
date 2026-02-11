@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -247,7 +247,7 @@ Application::print_version_info ()
 {
   printf ( GTXT (
     "GNU %s binutils version %s\n"
-    "Copyright (C) 2025 Free Software Foundation, Inc.\n"
+    "Copyright (C) 2026 Free Software Foundation, Inc.\n"
     "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n"
     "This is free software: you are free to change and redistribute it.\n"
     "There is NO WARRANTY, to the extent permitted by law.\n"),

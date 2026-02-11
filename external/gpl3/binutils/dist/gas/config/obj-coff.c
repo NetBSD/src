@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -43,7 +43,7 @@
    attributes when a directive has no valid flags or the "w" flag is
    used.  This default should be appropriate for most.  */
 #ifndef TC_COFF_SECTION_DEFAULT_ATTRIBUTES
-#define TC_COFF_SECTION_DEFAULT_ATTRIBUTES (SEC_LOAD | SEC_DATA)
+#define TC_COFF_SECTION_DEFAULT_ATTRIBUTES (SEC_ALLOC | SEC_LOAD | SEC_DATA)
 #endif
 
 /* This is used to hold the symbol built by a sequence of pseudo-ops
@@ -1015,12 +1015,10 @@ obj_coff_val (int ignore ATTRIBUTE_UNUSED)
 	}
       else if (! streq (S_GET_NAME (def_symbol_in_progress), symbol_name))
 	{
-	  expressionS exp;
-
-	  exp.X_op = O_symbol;
-	  exp.X_add_symbol = symbol_find_or_make (symbol_name);
-	  exp.X_op_symbol = NULL;
-	  exp.X_add_number = 0;
+	  expressionS exp = {
+	    .X_op = O_symbol,
+	    .X_add_symbol = symbol_find_or_make (symbol_name)
+	  };
 	  symbol_set_value_expression (def_symbol_in_progress, &exp);
 
 	  /* If the segment is undefined when the forward reference is
@@ -1495,7 +1493,7 @@ coff_adjust_section_syms (bfd *abfd ATTRIBUTE_UNUSED,
 
   secsym = section_symbol (sec);
   /* This is an estimate; we'll plug in the real value using
-     SET_SECTION_RELOCS later */
+     FINALIZE_SECTION_RELOCS later */
 #ifdef OBJ_XCOFF
   if (S_GET_STORAGE_CLASS (secsym) == C_DWARF)
     SA_SET_SECT_NRELOC (secsym, nrelocs);
@@ -1514,6 +1512,27 @@ void
 coff_frob_file_after_relocs (void)
 {
   bfd_map_over_sections (stdoutput, coff_adjust_section_syms, NULL);
+}
+
+/* Set relocations for the section and then store the number of relocations
+   in its aux entry.  */
+
+bool
+obj_coff_finalize_section_relocs (asection *sec, arelent **relocs,
+				  unsigned int n)
+{
+  symbolS *sect_sym;
+
+  if (!bfd_finalize_section_relocs (stdoutput, sec, n ? relocs : NULL, n))
+    return false;
+  sect_sym = section_symbol (sec);
+#ifdef OBJ_XCOFF
+  if (S_GET_STORAGE_CLASS (sect_sym) == C_DWARF)
+    SA_SET_SECT_NRELOC (sect_sym, n);
+  else
+#endif
+    SA_SET_SCN_NRELOC (sect_sym, n);
+  return true;
 }
 
 /* Implement the .section pseudo op:
@@ -1605,6 +1624,8 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		case 'n':
 		  /* Section not loaded.  */
 		  flags &=~ SEC_LOAD;
+		  if (!is_bss)
+		    flags &= ~SEC_ALLOC;
 		  flags |= SEC_NEVER_LOAD;
 		  load_removed = 1;
 		  break;
@@ -1617,7 +1638,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		  /* Data section.  */
 		  flags |= SEC_DATA;
 		  if (! load_removed)
-		    flags |= SEC_LOAD;
+		    flags |= SEC_LOAD | SEC_ALLOC;
 		  flags &=~ SEC_READONLY;
 		  break;
 
@@ -1641,7 +1662,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		     otherwise set the SEC_DATA flag.  */
 		  flags |= (attr == 'x' || (flags & SEC_CODE) ? SEC_CODE : SEC_DATA);
 		  if (! load_removed)
-		    flags |= SEC_LOAD;
+		    flags |= SEC_LOAD | SEC_ALLOC;
 		  /* Note - the READONLY flag is set here, even for the 'x'
 		     attribute in order to be compatible with the MSVC
 		     linker.  */

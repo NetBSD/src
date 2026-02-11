@@ -1,5 +1,5 @@
 /* tc-aarch64.h -- Header file for tc-aarch64.c.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GAS.
@@ -276,7 +276,7 @@ extern void aarch64_after_parse_args (void);
 #define md_after_parse_args() aarch64_after_parse_args ()
 
 # define EXTERN_FORCE_RELOC 			1
-# define tc_fix_adjustable(FIX) 		1
+# define tc_fix_adjustable(FIX) 		aarch64_fix_adjustable (FIX)
 
 /* Values passed to md_apply_fix don't include the symbol value.  */
 # define MD_APPLY_SYM_VALUE(FIX) 		0
@@ -327,8 +327,7 @@ extern unsigned int aarch64_sframe_cfa_ra_reg;
 #define SFRAME_CFA_RA_REG aarch64_sframe_cfa_ra_reg
 
 /* Whether SFrame return address tracking is needed.  */
-extern bool aarch64_sframe_ra_tracking_p (void);
-#define sframe_ra_tracking_p aarch64_sframe_ra_tracking_p
+#define sframe_ra_tracking_p() true
 
 /* The fixed offset from CFA for SFrame to recover the return address.
    (useful only when SFrame RA tracking is not needed).  */
@@ -338,6 +337,9 @@ extern offsetT aarch64_sframe_cfa_ra_offset (void);
 /* The abi/arch identifier for SFrame.  */
 unsigned char aarch64_sframe_get_abi_arch (void);
 #define sframe_get_abi_arch aarch64_sframe_get_abi_arch
+
+/* Whether SFrame FDE of type SFRAME_FDE_TYPE_FLEX be generated.  */
+#define sframe_support_flex_fde_p() false
 
 #endif /* OBJ_ELF  */
 
@@ -360,6 +362,7 @@ extern void aarch64_init_frag (struct frag *, int);
 extern void aarch64_handle_align (struct frag *);
 extern int tc_aarch64_regname_to_dw2regnum (char *regname);
 extern void tc_aarch64_frame_initial_instructions (void);
+extern bool aarch64_fix_adjustable (struct fix *);
 
 #ifdef TE_PE
 
@@ -369,5 +372,10 @@ extern void tc_aarch64_frame_initial_instructions (void);
 void tc_pe_dwarf2_emit_offset (symbolS *, unsigned int);
 
 #endif /* TE_PE */
+
+#ifdef OBJ_ELF
+/* The target supports Object Attributes v2.  */
+#define TC_OBJ_ATTR_v2 1
+#endif /* OBJ_ELF */
 
 #endif /* TC_AARCH64 */

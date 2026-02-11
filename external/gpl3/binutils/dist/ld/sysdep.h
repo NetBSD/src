@@ -1,5 +1,5 @@
 /* sysdep.h -- handle host dependencies for the GNU linker
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -94,6 +94,10 @@ extern char **environ;
 
 #if !HAVE_DECL_STPCPY
 extern char *stpcpy (char *__dest, const char *__src);
+#endif
+
+#if !HAVE_DECL_STRTOULL
+extern unsigned long long strtoull(const char *, char **, int);
 #endif
 
 #define POISON_BFD_BOOLEAN 1

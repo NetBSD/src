@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -17,6 +17,10 @@
    along with this program; if not, write to the Free Software
    Foundation, 51 Franklin Street - Fifth Floor,
    Boston, MA 02110-1301, USA.  */
+
+#ifndef COFF_WITH_PE
+#error non-PE COFF unsupported
+#endif
 
 #include "sysdep.h"
 #include "bfd.h"
@@ -560,8 +564,8 @@ extern const bfd_target TARGET_LITTLE_SYM;
 
 /* The transfer vectors that lead the outside world to all of the above.  */
 CREATE_BIG_COFF_TARGET_VEC (TARGET_BIG_SYM, TARGET_BIG_NAME, D_PAGED,
-			    (SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_READONLY | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
+			    SEC_DEBUGGING,
 			    0, & TARGET_LITTLE_SYM, COFF_SWAP_TABLE)
 CREATE_LITTLE_COFF_TARGET_VEC (TARGET_LITTLE_SYM, TARGET_LITTLE_NAME, D_PAGED,
-			       (SEC_CODE | SEC_DATA | SEC_DEBUGGING | SEC_READONLY | SEC_LINK_ONCE | SEC_LINK_DUPLICATES),
+			       SEC_DEBUGGING,
 			       0, & TARGET_BIG_SYM, COFF_SWAP_TABLE)

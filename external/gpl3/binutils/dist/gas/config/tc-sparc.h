@@ -1,5 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -178,4 +178,7 @@ extern int sparc_cie_data_alignment;
    this, BFD_RELOC_32_PCREL will be emitted directly instead.  */
 #define CFI_DIFF_EXPR_OK 0
 
-#endif
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+
+#endif /* TC_SPARC */

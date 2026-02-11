@@ -1,5 +1,5 @@
 /* LoongArch opcode support.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of the GNU opcodes library.
@@ -65,7 +65,17 @@ get_loongarch_opcode_by_binfmt (insn_t insn)
 	if ((insn & it->mask) == it->match && it->mask
 	    && !(it->include && !*it->include)
 	    && !(it->exclude && *it->exclude))
-	  return it;
+	  {
+	    /* ud ui5 need rd==rj. We should continue searching
+	       for the next `it` if rd != rj. Furthermore, we need
+	       `it->pinfo` to ensure that only the `it` in loongarch
+	       alias_opcodes[] is skipped.  */
+	    if (LARCH_INSN_AMSWAP_W (insn)
+		&& (LARCH_GET_RD (insn) != LARCH_GET_RJ (insn))
+		&& (it->pinfo & INSN_DIS_ALIAS))
+	      continue;
+	    return it;
+	  }
     }
   return NULL;
 }
@@ -142,10 +152,19 @@ dis_one_arg (char esc1, char esc2, const char *bit_field,
   insn_t insn = *(insn_t *) info->private_data;
   int32_t imm, u_imm;
   enum disassembler_style style;
+  bool is_ud_2nd_arg = false;
+
+  if (LARCH_INSN_AMSWAP_W (insn)
+      && (LARCH_GET_RD (insn) == LARCH_GET_RJ (insn))
+      && (LARCH_GET_RK (insn) == 1)
+      && loongarch_dis_show_aliases
+      && need_comma)
+    is_ud_2nd_arg = true;
 
   if (esc1)
     {
-      if (need_comma)
+      /* The "ud ui5" does not nedd a comma.  */
+      if (need_comma && !is_ud_2nd_arg)
 	info->fprintf_styled_func (info->stream, dis_style_text, ", ");
       need_comma = 1;
       imm = loongarch_decode_imm (bit_field, insn, 1);
@@ -155,7 +174,17 @@ dis_one_arg (char esc1, char esc2, const char *bit_field,
   switch (esc1)
     {
     case 'r':
-      info->fprintf_styled_func (info->stream, dis_style_register, "%s", loongarch_r_disname[u_imm]);
+      switch (esc2)
+	{
+	  case 'u':
+	    /* The "ud ui5" only needs to print one parameter.  */
+	    if (is_ud_2nd_arg)
+	      break;
+	    info->fprintf_styled_func (info->stream, dis_style_immediate, "0x%x", u_imm);
+	    break;
+	  default:
+	    info->fprintf_styled_func (info->stream, dis_style_register, "%s", loongarch_r_disname[u_imm]);
+	}
       break;
     case 'f':
       switch (esc2)

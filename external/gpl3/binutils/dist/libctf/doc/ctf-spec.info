@@ -1,7 +1,7 @@
-This is ctf-spec.info, produced by makeinfo version 7.1.1 from
+This is ctf-spec.info, produced by makeinfo version 7.2 from
 ctf-spec.texi.
 
-Copyright © 2021-2025 Free Software Foundation, Inc.
+Copyright © 2021-2026 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU General Public License, Version 3 or any
@@ -1755,36 +1755,35 @@ Index
 * volatile:                              Pointers typedefs and cvr-quals.
                                                                (line  6)
 
-
 
 Tag Table:
-Node: Top549
-Node: Overview1419
-Node: CTF archive4754
-Node: CTF dictionaries9472
-Node: CTF Preamble9889
-Node: CTF file-wide flags12575
-Node: CTF header14069
-Node: The type section20061
-Node: The info word24839
-Node: Type indexes and type IDs27445
-Node: Type kinds30857
-Node: Integer types34249
-Node: Floating-point types37897
-Node: Slices42149
-Node: Pointers typedefs and cvr-quals45713
-Node: Arrays46932
-Node: Function pointers48961
-Node: Enums49650
-Node: Structs and unions50960
-Node: Forward declarations54933
-Node: The symtypetab sections56532
-Node: The variable section59638
-Node: The label section60784
-Node: The string section61771
-Node: Data models63045
-Node: Limits of CTF63718
-Node: Index64795
+Node: Top547
+Node: Overview1417
+Node: CTF archive4752
+Node: CTF dictionaries9470
+Node: CTF Preamble9887
+Node: CTF file-wide flags12573
+Node: CTF header14067
+Node: The type section20059
+Node: The info word24837
+Node: Type indexes and type IDs27443
+Node: Type kinds30855
+Node: Integer types34247
+Node: Floating-point types37895
+Node: Slices42147
+Node: Pointers typedefs and cvr-quals45711
+Node: Arrays46930
+Node: Function pointers48959
+Node: Enums49648
+Node: Structs and unions50958
+Node: Forward declarations54931
+Node: The symtypetab sections56530
+Node: The variable section59636
+Node: The label section60782
+Node: The string section61769
+Node: Data models63043
+Node: Limits of CTF63716
+Node: Index64793
 
 End Tag Table
 

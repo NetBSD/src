@@ -1,5 +1,5 @@
 /* expr.c -operands, expressions-
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -34,8 +34,6 @@
 #endif
 
 bool literal_prefix_dollar_hex = false;
-
-static void clean_up_expression (expressionS * expressionP);
 
 /* We keep a mapping of expression symbols to file positions, so that
    we can provide better error messages.  */
@@ -185,12 +183,11 @@ symbol_lookup_or_make (const char *name, bool start)
 symbolS *
 expr_build_uconstant (offsetT value)
 {
-  expressionS e;
-
-  e.X_op = O_constant;
-  e.X_add_number = value;
-  e.X_unsigned = 1;
-  e.X_extrabit = 0;
+  expressionS e = {
+    .X_op = O_constant,
+    .X_add_number = value,
+    .X_unsigned = 1
+  };
   return make_expr_symbol (&e);
 }
 
@@ -801,14 +798,19 @@ operand (expressionS *expressionP, enum expr_mode mode)
   segT segment;
   operatorT op = O_absent; /* For unary operators.  */
 
+#ifdef md_expr_init
+  md_expr_init (expressionP);
+#else
+  memset (expressionP, 0, sizeof (*expressionP));
+#endif
+
   /* All integers are regarded as unsigned unless they are negated.
      This is because the only thing which cares whether a number is
      unsigned is the code in emit_expr which extends constants into
      bignums.  It should only sign extend negative numbers, so that
      something like ``.quad 0x80000000'' is not sign extended even
      though it appears negative if valueT is 32 bits.  */
-  expressionP->X_unsigned = 1;
-  expressionP->X_extrabit = 0;
+  expressionP->X_unsigned = 1;				\
 
   /* Digits, assume it is a bignum.  */
 
@@ -1451,9 +1453,6 @@ operand (expressionS *expressionP, enum expr_mode mode)
       break;
     }
 
-  /* It is more 'efficient' to clean up the expressionS when they are
-     created.  Doing it here saves lines of code.  */
-  clean_up_expression (expressionP);
   SKIP_ALL_WHITESPACE ();		/* -> 1st char after operand.  */
   know (!is_whitespace (*input_line_pointer));
 
@@ -1477,39 +1476,6 @@ operand (expressionS *expressionP, enum expr_mode mode)
       return S_GET_SEGMENT (expressionP->X_add_symbol);
     case O_register:
       return reg_section;
-    }
-}
-
-/* Internal.  Simplify a struct expression for use by expr ().  */
-
-/* In:	address of an expressionS.
-	The X_op field of the expressionS may only take certain values.
-	Elsewise we waste time special-case testing. Sigh. Ditto SEG_ABSENT.
-
-   Out:	expressionS may have been modified:
-	Unused fields zeroed to help expr ().  */
-
-static void
-clean_up_expression (expressionS *expressionP)
-{
-  switch (expressionP->X_op)
-    {
-    case O_illegal:
-    case O_absent:
-      expressionP->X_add_number = 0;
-      /* Fall through.  */
-    case O_big:
-    case O_constant:
-    case O_register:
-      expressionP->X_add_symbol = NULL;
-      /* Fall through.  */
-    case O_symbol:
-    case O_uminus:
-    case O_bit_not:
-      expressionP->X_op_symbol = NULL;
-      break;
-    default:
-      break;
     }
 }
 
@@ -1888,7 +1854,9 @@ expr (int rankarg,		/* Larger # is higher rank.  */
 
       input_line_pointer += op_chars;	/* -> after operator.  */
 
-      right.X_md = 0;
+#ifdef md_expr_init_rest
+      md_expr_init_rest (&right);
+#endif
       rightseg = expr (op_rank[op_left], &right, mode);
       if (right.X_op == O_absent)
 	{

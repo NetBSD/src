@@ -1,5 +1,5 @@
 /* BFD library support routines for the NFP.
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of BFD, the Binary File Descriptor library.

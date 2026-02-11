@@ -1,6 +1,6 @@
 /* Alpha VMS external format of Extended Image Header.
 
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    Written by Tristan Gingold <gingold@adacore.com>, AdaCore.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -140,6 +140,8 @@ struct vms_eihd
 #define EIHD__Q_SYMVVA		40
 #define EIHD__L_IMGTYPE		52
 
+/* ext_fixup_off field offset.  Some headers may be missing this and
+   following fields.  */
 #define EIHD__C_LENGTH 104
 
 #endif /* _VMS_EIHD_H */

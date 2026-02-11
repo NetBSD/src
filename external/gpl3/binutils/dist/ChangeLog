@@ -1,3 +1,52 @@
+2026-01-08  Nick Clifton  <nickc@redhat.com>
+
+	Import the following commits from the master config sources:
+
+	commit a2287c3041a3f2a204eb942e09c015eab00dc7dd
+	Author: Collin Funk <collin.funk1@gmail.com>
+	Date:   Wed Jul 9 19:29:18 2025 -0700
+
+		Adjust 'time-stamp' variables to modern Emacs
+
+	commit 973e3e6af23b73a4f1b8d95680454cae22593bf8
+	Author: Pat Pannuto <ppannuto@ucsd.edu>
+	Date:   Wed Jun 11 16:11:36 2025 -0700
+
+		config.sub: Add Tock OS support
+
+		This adds the Tock OS targets in preparation for implementing the
+		Tock OS-specific toolchain support.
+
+	commit 3a71dc102953608d4592ec401b519837c28a672a
+	Author: Oskari Alaranta <oskari.alaranta@bananymous.com>
+	Date:   Tue Jun 3 23:06:06 2025 +0300
+
+		config.sub: recognize banan_os
+
+	commit f91a544533876c70f43b9fd51064b2bcf3fa7382
+	Author: Siteshwar Vashisht <svashisht@redhat.com>
+	Date:   Thu May 8 15:14:55 2025 +0200
+
+		config.sub: fix a duplicated case pattern
+
+	commit 484648c73f3843b256dd011bd415e81594300a0a
+	Author: Russell Keith-Magee <russell@keith-magee.com>
+	Date:   Tue Jan 7 03:27:54 2025 -0500
+
+		config.sub: Include support for arm64_32 and iOS/tvOS/watchOS simulators
+
+	commit 7f4149527babe92cb5da1032734f5cb90cefdac5
+	Author: Tankut Baris Aktemur <tankut.baris.aktemur@intel.com>
+	Date:   Fri Dec 13 16:59:18 2024 +0100
+
+		config.sub: add intelgt as a basic machine
+
+	commit 9f6e0fe8ce04628bbd4a455118ff3f8309a1aef9
+	Author: mintsuki <mintsuki@protonmail.com>
+	Date:   Wed Nov 20 19:25:34 2024 +0100
+
+		ironclad: change ironclad to ironclad-mlibc
+
 2025-07-13  Nick Clifton  <nickc@redhat.com>
 
 	* 2.45 Binutils Branch point.

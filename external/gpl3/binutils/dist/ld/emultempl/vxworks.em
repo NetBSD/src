@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2026 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -42,8 +42,8 @@ vxworks_after_open (void)
   if (force_dynamic
       && link_info.input_bfds
       && bfd_get_flavour (link_info.output_bfd) == bfd_target_elf_flavour
-      && !_bfd_elf_link_create_dynamic_sections (link_info.input_bfds,
-						 &link_info))
+      && !bfd_elf_link_create_dynamic_sections (link_info.input_bfds,
+						&link_info))
     einfo (_("%X%P: cannot create dynamic sections %E\n"));
 
   if (!force_dynamic

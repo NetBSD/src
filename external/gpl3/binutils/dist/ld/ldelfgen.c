@@ -1,5 +1,5 @@
 /* Emulation code used by all ELF targets.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -304,9 +304,8 @@ ldelf_map_segments (bool need_layout)
 	     previous linker generated program headers.  */
 	  if (lang_phdr_list == NULL)
 	    elf_seg_map (link_info.output_bfd) = NULL;
-	  if (!_bfd_elf_map_sections_to_segments (link_info.output_bfd,
-						  &link_info,
-						  &need_layout))
+	  if (!bfd_elf_map_sections_to_segments (link_info.output_bfd,
+						 &link_info, &need_layout))
 	    fatal (_("%P: map sections to segments failed: %E\n"));
 
 	  if (phdr_size != elf_program_header_size (link_info.output_bfd))
@@ -334,8 +333,7 @@ ldelf_map_segments (bool need_layout)
     {
       /* If we don't have user supplied phdrs, strip zero-sized dynamic
 	 sections and regenerate program headers.  */
-      const struct elf_backend_data *bed
-	= get_elf_backend_data (link_info.output_bfd);
+      elf_backend_data *bed = get_elf_backend_data (link_info.output_bfd);
       if (bed->elf_backend_strip_zero_sized_dynamic_sections
 	  && !bed->elf_backend_strip_zero_sized_dynamic_sections (&link_info))
 	fatal (_("%P: failed to strip zero-sized dynamic sections\n"));
@@ -384,13 +382,13 @@ ldelf_ctf_strtab_iter_cb (uint32_t *offset, void *arg_)
      a nonzero refcount.  */
   do
     {
-      if (arg->next_i >= _bfd_elf_strtab_len (arg->strtab))
+      if (arg->next_i >= bfd_elf_strtab_len (arg->strtab))
 	{
 	  arg->next_i = 0;
 	  return NULL;
 	}
 
-      ret = _bfd_elf_strtab_str (arg->strtab, arg->next_i++, &off);
+      ret = bfd_elf_strtab_str (arg->strtab, arg->next_i++, &off);
     }
   while (ret == NULL);
 

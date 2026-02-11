@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -26,6 +26,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "aout/ar.h"
+#include "libiberty.h"
 #if defined (_WIN32)
 #include <windows.h>
 #include <locale.h>
@@ -122,7 +123,6 @@ _bfd_real_fopen (const char *filename, const char *modes)
   const wchar_t   prefixDOS[] = L"\\\\?\\";
   const wchar_t   prefixUNC[] = L"\\\\?\\UNC\\";
   const wchar_t   prefixNone[] = L"";
-  const size_t    partPathLen = strlen (filename) + 1;
   const wchar_t * prefix;
   size_t          sizeof_prefix;
   bool            strip_network_prefix = false;
@@ -207,10 +207,12 @@ _bfd_real_fopen (const char *filename, const char *modes)
 
   MultiByteToWideChar (cp, 0, filename, -1, partPath, partPathWSize);
 
-  /* Convert any UNIX style path separators into the DOS i.e. backslash separator.  */
-  for (ix = 0; ix < partPathLen; ix++)
-    if (IS_UNIX_DIR_SEPARATOR(filename[ix]))
-      partPath[ix] = '\\';
+  /* Convert any UNIX style path separators into the DOS i.e. backslash
+     separator.  Short of a TOASCII()- or ISASCII()-like helper (taking
+     wchar_t as input) in libiberty, open-code that here for now.  */
+  for (ix = 0; partPath[ix] != L'\0'; ix++)
+    if (partPath[ix] <= L'\x7f' && IS_UNIX_DIR_SEPARATOR ((char)partPath[ix]))
+      partPath[ix] = L'\\';
 
   /* Getting the full path from the provided partial path.
      1) Get the length.
@@ -245,7 +247,7 @@ _bfd_real_fopen (const char *filename, const char *modes)
   /* It is non-standard for modes to exceed 16 characters.  */
   wchar_t  modesW[16];
 
-  MultiByteToWideChar (cp, 0, modes, -1, modesW, sizeof(modesW));
+  MultiByteToWideChar (cp, 0, modes, -1, modesW, ARRAY_SIZE (modesW));
 
   FILE *  file = _wfopen (fullPath, modesW);
   free (fullPath);
@@ -293,7 +295,7 @@ DESCRIPTION
 .  int (*bstat) (struct bfd *abfd, struct stat *sb);
 .  {* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
 .     mmap parameter, except that LEN and OFFSET do not need to be page
-.     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+.     aligned.  Returns MAP_FAILED on failure, mmapped address on success.
 .     Also write in MAP_ADDR the address of the page aligned buffer and in
 .     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
 .     MAP_LEN to unmap.  *}
@@ -328,6 +330,7 @@ bfd_read (void *ptr, bfd_size_type size, bfd *abfd)
   ufile_ptr offset = 0;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -339,6 +342,7 @@ bfd_read (void *ptr, bfd_size_type size, bfd *abfd)
      this element.  */
   if (element_bfd->arelt_data != NULL
       && element_bfd->my_archive != NULL
+      && element_bfd->my_archive->iovec == element_bfd->iovec
       && !bfd_is_thin_archive (element_bfd->my_archive))
     {
       bfd_size_type maxbytes = arelt_size (element_bfd);
@@ -392,6 +396,7 @@ bfd_write (const void *ptr, bfd_size_type size, bfd *abfd)
   file_ptr nwrote;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -440,6 +445,7 @@ bfd_tell (bfd *abfd)
   file_ptr ptr;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -470,6 +476,7 @@ int
 bfd_flush (bfd *abfd)
 {
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -497,6 +504,7 @@ bfd_stat (bfd *abfd, struct stat *statbuf)
   int result;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -531,6 +539,7 @@ bfd_seek (bfd *abfd, file_ptr position, int direction)
   ufile_ptr offset = 0;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -701,8 +710,8 @@ bfd_get_file_size (bfd *abfd)
 	      && memcmp (((struct ar_hdr *) adata->arch_header)->ar_fmag,
 			 "Z\012", 2) == 0)
 	    compression_p2 = 3;
-	  abfd = abfd->my_archive;
 	}
+      abfd = abfd->my_archive;
     }
 
   file_size = bfd_get_size (abfd) << compression_p2;
@@ -725,6 +734,7 @@ DESCRIPTION
 	Return mmap()ed region of the file, if possible and implemented.
 	LEN and OFFSET do not need to be page aligned.  The page aligned
 	address and length are written to MAP_ADDR and MAP_LEN.
+	Returns MAP_FAILED on failure.
 
 */
 
@@ -734,6 +744,7 @@ bfd_mmap (bfd *abfd, void *addr, size_t len,
 	  void **map_addr, size_t *map_len)
 {
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -898,7 +909,7 @@ memory_bmmap (bfd *abfd ATTRIBUTE_UNUSED, void *addr ATTRIBUTE_UNUSED,
 	      void **map_addr ATTRIBUTE_UNUSED,
 	      size_t *map_len ATTRIBUTE_UNUSED)
 {
-  return (void *)-1;
+  return MAP_FAILED;
 }
 
 const struct bfd_iovec _bfd_memory_iovec =

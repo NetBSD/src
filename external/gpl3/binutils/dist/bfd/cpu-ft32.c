@@ -1,5 +1,5 @@
 /* BFD support for the ft32 processor.
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    Written by FTDI (support@ftdichip.com)
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -101,9 +101,6 @@
    is the same as sizeof (sframe_header) because there is no SFrame auxilliary
    header.  */
 #define PLT_SFRAME_FDE_START_OFFSET	sizeof (sframe_header)
-
-#define ABI_64_P(abfd) \
-  (get_elf_backend_data (abfd)->s->elfclass == ELFCLASS64)
 
 /* If ELIMINATE_COPY_RELOCS is non-zero, the linker will try to avoid
    copying dynamic variables from a shared lib into an app's dynbss
@@ -224,12 +221,15 @@
 		   || (EH)->elf.root.type == bfd_link_hash_undefined)))
 
 /* TRUE if this input relocation should be copied to output.  H->dynindx
-   may be -1 if this symbol was marked to become local.  */
+   may be -1 if this symbol was marked to become local.  STV_PROTECTED
+   symbols are local. */
 #define COPY_INPUT_RELOC_P(IS_X86_64, INFO, H, R_TYPE) \
   ((H) != NULL \
    && (H)->dynindx != -1 \
    && (X86_PCREL_TYPE_P (IS_X86_64, R_TYPE) \
-       || !(bfd_link_executable (INFO) || SYMBOLIC_BIND ((INFO), (H))) \
+       || !(bfd_link_executable (INFO) \
+	    || SYMBOLIC_BIND ((INFO), (H)) \
+	    || ELF_ST_VISIBILITY ((H)->other) == STV_PROTECTED) \
        || !(H)->def_regular))
 
 /* TRUE if this is actually a static link, or it is a -Bsymbolic link
@@ -599,7 +599,6 @@ struct elf_x86_link_hash_table
   struct elf_link_hash_table elf;
 
   /* Short-cuts to get to dynamic linker sections.  */
-  asection *interp;
   asection *plt_eh_frame;
   asection *plt_second;
   asection *plt_second_eh_frame;
@@ -647,13 +646,13 @@ struct elf_x86_link_hash_table
   /* The index of the next R_X86_64_IRELATIVE entry in .rela.plt.  */
   bfd_vma next_irelative_index;
 
+  /* The .rela.tls/.rel.tls section for R_386_TLS_DESC or R_X86_64_TLSDESC
+     relocation.  */
+  asection *rel_tls_desc;
+
   /* The (unloaded but important) .rel.plt.unloaded section on VxWorks.
      This is used for i386 only.  */
   asection *srelplt2;
-
-  /* The index of the next unused R_386_TLS_DESC slot in .rel.plt.  This
-     is only used for i386.  */
-  bfd_vma next_tls_desc_index;
 
   /* DT_RELR bitmap.  */
   struct elf_dt_relr_bitmap dt_relr_bitmap;
@@ -667,9 +666,15 @@ struct elf_x86_link_hash_table
   /* Number of relative reloc generation pass.  */
   unsigned int generate_relative_reloc_pass;
 
-   /* Value used to fill the unused bytes of the first PLT entry.  This
-      is only used for i386.  */
-  bfd_byte plt0_pad_byte;
+  /* TRUE if inputs have R_386_TLS_DESC_CALL or R_X86_64_TLSDESC_CALL
+     relocation.  */
+  unsigned int has_tls_desc_call : 1;
+
+  /* TRUE if inputs call ___tls_get_addr.  This is only used for i386.  */
+  unsigned int has_tls_get_addr_call : 1;
+
+  /* TRUE if loc_hash_table is used.  */
+  unsigned int has_loc_hash_table : 1;
 
   /* TRUE if GOT is referenced.  */
   unsigned int got_referenced : 1;
@@ -681,6 +686,10 @@ struct elf_x86_link_hash_table
      be used as function address.  PIC PLT in PIE can't be used as
      function address.  */
   unsigned int pcrel_plt : 1;
+
+   /* Value used to fill the unused bytes of the first PLT entry.  This
+      is only used for i386.  */
+  bfd_byte plt0_pad_byte;
 
   bfd_vma (*r_info) (bfd_vma, bfd_vma);
   bfd_vma (*r_sym) (bfd_vma);
@@ -861,6 +870,9 @@ extern bool _bfd_elf_x86_size_relative_relocs
 extern bool _bfd_elf_x86_finish_relative_relocs
   (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
+extern asection * _bfd_elf_x86_get_reloc_section
+  (bfd *, const char *) ATTRIBUTE_HIDDEN;
+
 extern void _bfd_elf32_write_addend 
   (bfd *, uint64_t, void *) ATTRIBUTE_HIDDEN;
 extern void _bfd_elf64_write_addend
@@ -875,7 +887,7 @@ extern bool _bfd_x86_elf_late_size_sections
   (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 extern struct elf_x86_link_hash_table *_bfd_x86_elf_finish_dynamic_sections
-  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
+  (bfd *, struct bfd_link_info *, bfd_byte *) ATTRIBUTE_HIDDEN;
 
 extern bool _bfd_x86_elf_early_size_sections
   (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
@@ -905,8 +917,8 @@ extern bool _bfd_x86_elf_link_symbol_references_local
   (struct bfd_link_info *, struct elf_link_hash_entry *) ATTRIBUTE_HIDDEN;
 
 extern asection * _bfd_x86_elf_gc_mark_hook
-  (asection *, struct bfd_link_info *, Elf_Internal_Rela *,
-   struct elf_link_hash_entry *, Elf_Internal_Sym *) ATTRIBUTE_HIDDEN;
+  (asection *, struct bfd_link_info *, struct elf_reloc_cookie *,
+   struct elf_link_hash_entry *, unsigned int) ATTRIBUTE_HIDDEN;
 
 extern long _bfd_x86_elf_get_synthetic_symtab
   (bfd *, long, long, bfd_vma, struct elf_x86_plt [], asymbol **,
@@ -937,7 +949,16 @@ extern void _bfd_x86_elf_link_report_tls_transition_error
   (struct bfd_link_info *, bfd *, asection *, Elf_Internal_Shdr *,
    struct elf_link_hash_entry *, Elf_Internal_Sym *,
    const Elf_Internal_Rela *, const char *, const char *,
-   enum elf_x86_tls_error_type);
+   enum elf_x86_tls_error_type) ATTRIBUTE_HIDDEN;
+
+extern void _bfd_x86_elf_link_report_tls_invalid_section_error
+  (bfd *, asection *, Elf_Internal_Shdr *, struct elf_link_hash_entry *,
+   Elf_Internal_Sym *, reloc_howto_type *) ATTRIBUTE_HIDDEN;
+
+extern bool
+_bfd_elf_x86_copy_special_section_fields
+  (const bfd *, bfd *, const Elf_Internal_Shdr *,
+   Elf_Internal_Shdr *) ATTRIBUTE_HIDDEN;
 
 #define bfd_elf64_mkobject \
   _bfd_x86_elf_mkobject
@@ -984,6 +1005,10 @@ extern void _bfd_x86_elf_link_report_tls_transition_error
   _bfd_elf_x86_size_relative_relocs
 #define elf_backend_finish_relative_relocs \
   _bfd_elf_x86_finish_relative_relocs
+#define elf_backend_get_reloc_section \
+  _bfd_elf_x86_get_reloc_section
+#define elf_backend_copy_special_section_fields \
+  _bfd_elf_x86_copy_special_section_fields
 #define elf_backend_use_mmap true
 
 #define ELF_P_ALIGN ELF_MINPAGESIZE

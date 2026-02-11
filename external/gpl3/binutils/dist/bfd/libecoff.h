@@ -1,5 +1,5 @@
 /* BFD ECOFF object file private structure.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -24,6 +24,8 @@
 #ifndef ECOFF_H
 #include "coff/ecoff.h"
 #endif
+
+#include "hidden.h"
 
 /* This is the backend information kept for ECOFF files.  This
    structure is constant for a particular backend.  The first element
@@ -230,28 +232,29 @@ struct ecoff_link_hash_table
 };
 
 /* Make an ECOFF object.  */
-extern bool _bfd_ecoff_mkobject (bfd *);
+extern bool _bfd_ecoff_mkobject (bfd *) ATTRIBUTE_HIDDEN;
 
 /* Read in the ECOFF symbolic debugging information.  */
 extern bool _bfd_ecoff_slurp_symbolic_info
-  (bfd *, asection *, struct ecoff_debug_info *);
+  (bfd *, asection *, struct ecoff_debug_info *) ATTRIBUTE_HIDDEN;
 
 /* Generic ECOFF BFD backend vectors.  */
 
-extern bool _bfd_ecoff_write_object_contents (bfd *);
+extern bool _bfd_ecoff_write_object_contents (bfd *) ATTRIBUTE_HIDDEN;
 
 #define _bfd_ecoff_close_and_cleanup _bfd_generic_close_and_cleanup
-extern bool _bfd_ecoff_bfd_free_cached_info (bfd *);
+extern bool _bfd_ecoff_bfd_free_cached_info (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_new_section_hook
-  (bfd *, asection *);
+  (bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_get_section_contents
-  (bfd *, asection *, void * location, file_ptr, bfd_size_type);
+  (bfd *, asection *, void * location, file_ptr, bfd_size_type)
+  ATTRIBUTE_HIDDEN;
 
 #define _bfd_ecoff_bfd_link_split_section _bfd_generic_link_split_section
 #define _bfd_ecoff_bfd_link_check_relocs  _bfd_generic_link_check_relocs
 
 extern bool _bfd_ecoff_bfd_copy_private_bfd_data
-  (bfd *, bfd *);
+  (bfd *, bfd *) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_bfd_copy_private_section_data \
   _bfd_generic_bfd_copy_private_section_data
 
@@ -268,13 +271,13 @@ extern bool _bfd_ecoff_bfd_copy_private_bfd_data
   _bfd_generic_bfd_merge_private_bfd_data
 
 #define _bfd_ecoff_bfd_set_private_flags _bfd_generic_bfd_set_private_flags
-extern bool _bfd_ecoff_slurp_armap (bfd *);
+extern bool _bfd_ecoff_slurp_armap (bfd *) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_slurp_extended_name_table _bfd_slurp_extended_name_table
 #define _bfd_ecoff_construct_extended_name_table \
   _bfd_archive_bsd_construct_extended_name_table
 #define _bfd_ecoff_truncate_arname bfd_dont_truncate_arname
 extern bool _bfd_ecoff_write_armap
-  (bfd *, unsigned int, struct orl *, unsigned int, int);
+  (bfd *, unsigned int, struct orl *, unsigned int, int) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_read_ar_hdr _bfd_generic_read_ar_hdr
 #define _bfd_ecoff_write_ar_hdr _bfd_generic_write_ar_hdr
 #define _bfd_ecoff_openr_next_archived_file \
@@ -284,21 +287,22 @@ extern bool _bfd_ecoff_write_armap
 #define _bfd_ecoff_update_armap_timestamp _bfd_bool_bfd_true
 #define _bfd_ecoff_bfd_is_target_special_symbol _bfd_bool_bfd_asymbol_false
 
-extern long _bfd_ecoff_get_symtab_upper_bound (bfd *);
-extern long _bfd_ecoff_canonicalize_symtab (bfd *, asymbol **);
-extern asymbol *_bfd_ecoff_make_empty_symbol (bfd *);
+extern long _bfd_ecoff_get_symtab_upper_bound (bfd *) ATTRIBUTE_HIDDEN;
+extern long _bfd_ecoff_canonicalize_symtab (bfd *, asymbol **) ATTRIBUTE_HIDDEN;
+extern asymbol *_bfd_ecoff_make_empty_symbol (bfd *) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_print_symbol
-  (bfd *, void *, asymbol *, bfd_print_symbol_type);
+  (bfd *, void *, asymbol *, bfd_print_symbol_type) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_get_symbol_info
-  (bfd *, asymbol *, symbol_info *);
+  (bfd *, asymbol *, symbol_info *) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_get_symbol_version_string \
   _bfd_nosymbols_get_symbol_version_string
 extern bool _bfd_ecoff_bfd_is_local_label_name
-  (bfd *, const char *);
+  (bfd *, const char *) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_get_lineno _bfd_nosymbols_get_lineno
 extern bool _bfd_ecoff_find_nearest_line
   (bfd *, asymbol **, asection *, bfd_vma,
-   const char **, const char **, unsigned int *, unsigned int *);
+   const char **, const char **, unsigned int *, unsigned int *)
+  ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_find_nearest_line_with_alt \
   _bfd_nosymbols_find_nearest_line_with_alt
 #define _bfd_ecoff_find_line _bfd_nosymbols_find_line
@@ -309,48 +313,52 @@ extern bool _bfd_ecoff_find_nearest_line
 
 #define _bfd_ecoff_get_reloc_upper_bound coff_get_reloc_upper_bound
 extern long _bfd_ecoff_canonicalize_reloc
-  (bfd *, asection *, arelent **, asymbol **);
+  (bfd *, asection *, arelent **, asymbol **) ATTRIBUTE_HIDDEN;
 /* ecoff_bfd_reloc_type_lookup defined by backend. */
 
 extern bool _bfd_ecoff_set_arch_mach
-  (bfd *, enum bfd_architecture, unsigned long);
+  (bfd *, enum bfd_architecture, unsigned long) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_set_section_contents
-  (bfd *, asection *, const void * location, file_ptr, bfd_size_type);
+  (bfd *, asection *, const void * location, file_ptr, bfd_size_type)
+  ATTRIBUTE_HIDDEN;
 
-extern int _bfd_ecoff_sizeof_headers (bfd *, struct bfd_link_info *);
+extern int _bfd_ecoff_sizeof_headers (bfd *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 /* ecoff_bfd_get_relocated_section_contents defined by backend.  */
 /* ecoff_bfd_relax_section defined by backend.  */
 extern struct bfd_link_hash_table *_bfd_ecoff_bfd_link_hash_table_create
-  (bfd *);
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_bfd_link_add_symbols
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 #define _bfd_ecoff_bfd_link_just_syms _bfd_generic_link_just_syms
 #define _bfd_ecoff_bfd_copy_link_hash_symbol_type \
   _bfd_generic_copy_link_hash_symbol_type
 extern bool _bfd_ecoff_bfd_final_link
-  (bfd *, struct bfd_link_info *);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 /* Hook functions for the generic COFF section reading code.  */
 
-extern void * _bfd_ecoff_mkobject_hook (bfd *, void *, void *);
+extern void *_bfd_ecoff_mkobject_hook
+  (bfd *, void *, void *) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_set_alignment_hook
-  (bfd *, asection *, void *);
+  (bfd *, asection *, void *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_set_arch_mach_hook
-  (bfd *, void *);
+  (bfd *, void *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_no_long_sections
-  (bfd *abfd, int enable);
+  (bfd *abfd, int enable) ATTRIBUTE_HIDDEN;
 extern bool _bfd_ecoff_styp_to_sec_flags
-  (bfd *, void *, const char *, asection *, flagword *);
-extern bool _bfd_ecoff_slurp_symbol_table (bfd *);
+  (bfd *, void *, const char *, asection *, flagword *) ATTRIBUTE_HIDDEN;
+extern bool _bfd_ecoff_slurp_symbol_table
+  (bfd *) ATTRIBUTE_HIDDEN;
 
 /* ECOFF auxiliary information swapping routines.  These are the same
    for all ECOFF targets, so they are defined in ecofflink.c.  */
 
 extern void _bfd_ecoff_swap_tir_in
-  (int, const struct tir_ext *, TIR *);
+  (int, const struct tir_ext *, TIR *) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_swap_tir_out
-  (int, const TIR *, struct tir_ext *);
+  (int, const TIR *, struct tir_ext *) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_swap_rndx_in
-  (int, const struct rndx_ext *, RNDXR *);
+  (int, const struct rndx_ext *, RNDXR *) ATTRIBUTE_HIDDEN;
 extern void _bfd_ecoff_swap_rndx_out
-  (int, const RNDXR *, struct rndx_ext *);
+  (int, const RNDXR *, struct rndx_ext *) ATTRIBUTE_HIDDEN;

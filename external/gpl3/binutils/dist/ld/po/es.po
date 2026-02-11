@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: ld 2.44.90\n"
 "Report-Msgid-Bugs-To: https://sourceware.org/bugzilla/\n"
 "POT-Creation-Date: 2025-07-13 08:53+0100\n"
-"PO-Revision-Date: 2025-07-16 08:01+0200\n"
+"PO-Revision-Date: 2025-08-01 08:07+0200\n"
 "Last-Translator: Antonio Ceballos Roa <aceballos@gmail.com>\n"
 "Language-Team: Spanish <es@tp.org.es>\n"
 "Language: es\n"
@@ -1408,11 +1408,11 @@ msgstr "Activa avisos cuando --enable-non-contiguous-regions puede provocar comp
 
 #: lexsup.c:134
 msgid "Disable the LINKER_VERSION linker script directive"
-msgstr ""
+msgstr "Desactiva la directiva de script de enlazado LINKER_VERSION"
 
 #: lexsup.c:136
 msgid "Enable the LINKER_VERSION linker script directive"
-msgstr ""
+msgstr "Activa la directiva de script de enlazado LINKER_VERSION"
 
 #: lexsup.c:138
 msgid "Link big-endian objects"
@@ -1540,7 +1540,7 @@ msgstr "Envía el argumento al último plugin cargado"
 
 #: lexsup.c:191
 msgid "Store plugin intermediate files permanently"
-msgstr ""
+msgstr "Almacena los ficheros intermedios de «plugin» permanentemente"
 
 #: lexsup.c:194 lexsup.c:197
 msgid "Ignored for GCC LTO option compatibility"
@@ -1576,7 +1576,7 @@ msgstr "Sólo enlaza símbolos (si es un directorio, es igual que --rpath)"
 
 #: lexsup.c:229
 msgid "PATTERN=FILE"
-msgstr ""
+msgstr "PATRÓN=FICHERO"
 
 #: lexsup.c:232
 msgid "Strip all symbols"
@@ -1922,7 +1922,7 @@ msgstr "Reduce las saturaciones de memoria, tal vez tomando más tiempo"
 
 #: lexsup.c:457
 msgid "Set the maximum cache size to SIZE bytes"
-msgstr ""
+msgstr "Establece el tamaño máximo de caché en TAMAÑO bytes"
 
 #: lexsup.c:460
 msgid "Reduce code size by using target specific optimizations"
@@ -1974,7 +1974,7 @@ msgstr "Ordena secciones por nombre o alineación máxima"
 
 #: lexsup.c:492
 msgid "Sort sections by statements in FILE"
-msgstr ""
+msgstr "Ordena las secciones por instrucciones en FICHERO"
 
 #: lexsup.c:494
 msgid "COUNT"
@@ -2709,7 +2709,7 @@ msgstr "                                Estilos: none,md5,sha1,uuid,0xHEX\n"
 #: lexsup.c:2286
 #, c-format
 msgid "  --package-metadata[=JSON]   Generate package metadata note\n"
-msgstr ""
+msgstr "  --package-metadata[=JSON]   Genera nota de metadatos del paquete\n"
 
 #: lexsup.c:2288
 #, c-format
@@ -2954,481 +2954,439 @@ msgstr "%s: opciones específicas de emulación:\n"
 #: lexsup.c:2508
 #, c-format
 msgid "Report bugs to %s\n"
-msgstr "Reporte bichos a %s\n"
+msgstr "Reporte errores a %s\n"
 
 #: mri.c:291
-#, fuzzy
-#| msgid "%F%P: unknown format type %s\n"
 msgid "%P: unknown format type %s\n"
 msgstr "%P: tipo de formato %s desconocido\n"
 
 #: pdb.c:845 pdb.c:1136
 msgid "%P: CodeView symbol references out of range type %v\n"
-msgstr ""
+msgstr "%P: símbolo CodeView referencia tipo fuera de rango %v\n"
 
 #: pdb.c:1014
 msgid "%P: warning: truncated CodeView record S_LDATA32/S_GDATA32/S_LTHREAD32/S_GTHREAD32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView truncado S_LDATA32/S_GDATA32/S_LTHREAD32/S_GTHREAD32\n"
 
 #: pdb.c:1033
 msgid "%P: warning: name for S_LDATA32/S_GDATA32/S_LTHREAD32/S_GTHREAD32 has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: el nombre de S_LDATA32/S_GDATA32/S_LTHREAD32/S_GTHREAD32 no tiene cero final\n"
 
 #: pdb.c:1081 pdb.c:1751
 msgid "%P: warning: truncated CodeView record S_GPROC32/S_LPROC32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView truncado S_GPROC32/S_LPROC32\n"
 
 #: pdb.c:1093 pdb.c:1768
 msgid "%P: warning: could not find end of S_GPROC32/S_LPROC32 record\n"
-msgstr ""
+msgstr "%P: aviso: no se ha podido encontrar el final del registro S_GPROC32/S_LPROC32\n"
 
 #: pdb.c:1119
 msgid "%P: warning: name for S_GPROC32/S_LPROC32 has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: el nombre de S_GPROC32/S_LPROC32 no tiene cero final\n"
 
 #: pdb.c:1175
 msgid "%P: CodeView S_GPROC32_ID/S_LPROC32_ID symbol referenced unknown type as ID\n"
-msgstr ""
+msgstr "%P: símbolo CodeView S_GPROC32_ID/S_LPROC32_ID hace referencia un tipo desconocido como ID\n"
 
 #: pdb.c:1249
 msgid "%P: warning: truncated CodeView record S_UDT\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_UDT truncado\n"
 
 #: pdb.c:1260
 msgid "%P: warning: name for S_UDT has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: el nombre de S_UDT no tiene cero final\n"
 
 #: pdb.c:1297
 msgid "%P: warning: truncated CodeView record S_CONSTANT\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_CONSTANT truncado\n"
 
 #: pdb.c:1314
 msgid "%P: warning: unhandled type %v within S_CONSTANT\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en S_CONSTANT\n"
 
 #: pdb.c:1328
 msgid "%P: warning: name for S_CONSTANT has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: el nombre de S_CONSTANT no tiene cero final\n"
 
 #: pdb.c:1388
 msgid "%P: warning: unexpected CodeView scope start record %v\n"
-msgstr ""
+msgstr "%P: aviso: registro %v de comienzo de alcance CodeView inesperado\n"
 
 #: pdb.c:1410
 msgid "%P: warning: truncated CodeView record S_BUILDINFO\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_BUILDINFO truncado\n"
 
 #: pdb.c:1436
 msgid "%P: warning: truncated CodeView record S_BLOCK32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_BLOCK32 truncado\n"
 
 #: pdb.c:1448
 msgid "%P: warning: could not find end of S_BLOCK32 record\n"
-msgstr ""
+msgstr "%P: aviso: no se ha podido encontrar el final del registro S_BLOCK32\n"
 
 #: pdb.c:1473
 msgid "%P: warning: truncated CodeView record S_BPREL32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_BPREL32 truncado\n"
 
 #: pdb.c:1497
 msgid "%P: warning: truncated CodeView record S_REGISTER\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_REGISTER truncado\n"
 
 #: pdb.c:1521
 msgid "%P: warning: truncated CodeView record S_REGREL32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_REGREL32 truncado\n"
 
 #: pdb.c:1545
 msgid "%P: warning: truncated CodeView record S_LOCAL\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_LOCAL truncado\n"
 
 #: pdb.c:1571
 msgid "%P: warning: truncated CodeView record S_INLINESITE\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_INLINESITE truncado\n"
 
 #: pdb.c:1583
 msgid "%P: warning: could not find end of S_INLINESITE record\n"
-msgstr ""
+msgstr "%P: aviso: no se ha podido encontrar el final del registro S_INLINESITE\n"
 
 #: pdb.c:1616
 msgid "%P: warning: truncated CodeView record S_THUNK32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_THUNK32 truncado\n"
 
 #: pdb.c:1628
 msgid "%P: warning: could not find end of S_THUNK32 record\n"
-msgstr ""
+msgstr "%P: aviso: no se ha podido encontrar el final del registro S_THUNK32\n"
 
 #: pdb.c:1653
 msgid "%P: warning: truncated CodeView record S_HEAPALLOCSITE\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_HEAPALLOCSITE truncado\n"
 
 #: pdb.c:1687 pdb.c:1831
-#, fuzzy
-#| msgid "%P: warning: unrecognized --build-id style ignored\n"
 msgid "%P: warning: unrecognized CodeView record %v\n"
-msgstr "%P: aviso: se descarta estilo --build-id no reconocido\n"
+msgstr "%P: aviso: registro %v CodeView no reconocido\n"
 
 #: pdb.c:1723
 msgid "%P: warning: truncated CodeView record S_LDATA32/S_LTHREAD32\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView S_LDATA32/S_LTHREAD32 truncado\n"
 
 #: pdb.c:1879
 msgid "%P: warning: truncated DEBUG_S_INLINEELINES data\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView DEBUG_S_INLINEELINES truncado\n"
 
 #: pdb.c:1886
 msgid "%P: warning: unexpected DEBUG_S_INLINEELINES version %u\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView DEBUG_S_INLINEELINES truncado\n"
 
 #: pdb.c:2239
 msgid "%P: CodeView type %v references other type %v not yet declared\n"
-msgstr ""
+msgstr "%P: el tipo CodeView %v hace referencia a otro tipo %v no declarado todavía\n"
 
 #: pdb.c:2246
 msgid "%P: CodeView type %v references out of range type %v\n"
-msgstr ""
+msgstr "%P: el tipo CodeView %v hace referencia al tipo tipo fuera de rango %v\n"
 
 #: pdb.c:2306
 msgid "%P: warning: truncated CodeView type record LF_UDT_SRC_LINE\n"
-msgstr ""
+msgstr "%P: aviso: registro CodeView LF_UDT_SRC_LINE truncado\n"
 
 #: pdb.c:2319
 msgid "%P: warning: CodeView type record LF_UDT_SRC_LINE referred to unknown type %v\n"
-msgstr ""
+msgstr "%P: aviso: el registro LF_UDT_SRC_LINE de tipo CodeView hace referencia al tipo desconocido %v\n"
 
 #: pdb.c:2341
 msgid "%P: warning: CodeView type record LF_UDT_SRC_LINE referred to unknown string %v\n"
-msgstr ""
+msgstr "%P: aviso: el registro LF_UDT_SRC_LINE de tipo CodeView hace referencia a la cadena desconocida %v\n"
 
 #: pdb.c:2350
 msgid "%P: warning: CodeView type record LF_UDT_SRC_LINE pointed to unexpected record type\n"
-msgstr ""
+msgstr "%P: aviso: el registro LF_UDT_SRC_LINE de tipo CodeView apunta a un tipo de registro desconocido\n"
 
 #: pdb.c:2399
 msgid "%P: warning: duplicate CodeView type record LF_UDT_MOD_SRC_LINE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_UDT_MOD_SRC_LINE de tipo CodeView duplicado\n"
 
 #: pdb.c:2448
 msgid "%P: warning: truncated CodeView type record LF_MODIFIER\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_MODIFIER de tipo CodeView truncado\n"
 
 #: pdb.c:2466 pdb.c:2481
 msgid "%P: warning: truncated CodeView type record LF_POINTER\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_POINTER de tipo CodeView truncado\n"
 
 #: pdb.c:2499
 msgid "%P: warning: truncated CodeView type record LF_PROCEDURE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_PROCEDURE de tipo CodeView truncado\n"
 
 #: pdb.c:2519
 msgid "%P: warning: truncated CodeView type record LF_MFUNCTION\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_MFUNCTION de tipo CodeView truncado\n"
 
 #: pdb.c:2547 pdb.c:2557
 msgid "%P: warning: truncated CodeView type record LF_ARGLIST\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_ARGLIST de tipo CodeView truncado\n"
 
 #: pdb.c:2582 pdb.c:2652 pdb.c:2789 pdb.c:2836 pdb.c:3054 pdb.c:3101
 msgid "%P: warning: truncated CodeView type record LF_FIELDLIST\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_FIELDLIST de tipo CodeView truncado\n"
 
 #: pdb.c:2599 pdb.c:2627
 msgid "%P: warning: truncated CodeView type record LF_MEMBER\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_MEMBER de tipo CodeView truncado\n"
 
 #: pdb.c:2618
 msgid "%P: warning: unhandled type %v within LF_MEMBER\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en LF_MEMBER\n"
 
 #: pdb.c:2638
 msgid "%P: warning: name for LF_MEMBER has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_MEMBER sin cero final\n"
 
 #: pdb.c:2671 pdb.c:2694 pdb.c:2721
 msgid "%P: warning: truncated CodeView type record LF_ENUMERATE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_ENUMERATE de tipo CodeView truncado\n"
 
 #: pdb.c:2687
 msgid "%P: warning: unhandled type %v within LF_ENUMERATE\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en LF_ENUMERATE\n"
 
 #: pdb.c:2707
 msgid "%P: warning: name for LF_ENUMERATE has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_ENUMERATE sin cero final\n"
 
 #: pdb.c:2738
 msgid "%P: warning: truncated CodeView type record LF_INDEX\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_INDEX de tipo CodeView truncado\n"
 
 #: pdb.c:2759
 msgid "%P: warning: truncated CodeView type record LF_ONEMETHOD\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_ONEMETHOD de tipo CodeView truncado\n"
 
 #: pdb.c:2774
 msgid "%P: warning: name for LF_ONEMETHOD has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_ONEMETHOD sin cero final\n"
 
 #: pdb.c:2807
 msgid "%P: warning: truncated CodeView type record LF_METHOD\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_METHOD de tipo CodeView truncado\n"
 
 #: pdb.c:2822
 msgid "%P: warning: name for LF_METHOD has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_METHOD sin cero final\n"
 
 #: pdb.c:2855 pdb.c:2884 pdb.c:2895
 msgid "%P: warning: truncated CodeView type record LF_BCLASS\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_BCLASS de tipo CodeView truncado\n"
 
 #: pdb.c:2875
 msgid "%P: warning: unhandled type %v within LF_BCLASS\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en LF_BCLASS\n"
 
 #: pdb.c:2912
 msgid "%P: warning: truncated CodeView type record LF_VFUNCTAB\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_VFUNCTAB de tipo CodeView truncado\n"
 
 #: pdb.c:2935 pdb.c:2969 pdb.c:2994 pdb.c:3005
 msgid "%P: warning: truncated CodeView type record LF_VBCLASS/LF_IVBCLASS\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_VBCLASS/LF_IVBCLASS de tipo CodeView truncado\n"
 
 #: pdb.c:2960 pdb.c:2985
 msgid "%P: warning: unhandled type %v within LF_VBCLASS/LF_IVBCLASS\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en LF_VBCLASS/LF_IVBCLASS\n"
 
 #: pdb.c:3024
 msgid "%P: warning: truncated CodeView type record LF_STMEMBER\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_STMEMBER de tipo CodeView truncado\n"
 
 #: pdb.c:3039
 msgid "%P: warning: name for LF_STMEMBER has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_STMEMBER sin cero final\n"
 
 #: pdb.c:3072
 msgid "%P: warning: truncated CodeView type record LF_NESTTYPE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_NESTTYPE de tipo CodeView truncado\n"
 
 #: pdb.c:3086
 msgid "%P: warning: name for LF_NESTTYPE has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_NESTTYPE sin cero final\n"
 
 #: pdb.c:3113
-#, fuzzy
-#| msgid "%P: warning: unrecognized --build-id style ignored\n"
 msgid "%P: warning: unrecognized CodeView subtype %v\n"
-msgstr "%P: aviso: se descarta estilo --build-id no reconocido\n"
+msgstr "%P: aviso: subtipo CodeView %v no reconocido\n"
 
 #: pdb.c:3128
 msgid "%P: warning: truncated CodeView type record LF_BITFIELD\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_BITFIELD de tipo CodeView truncado\n"
 
 #: pdb.c:3146
 msgid "%P: warning: truncated CodeView type record LF_METHODLIST\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_METHODLIST de tipo CodeView truncado\n"
 
 #: pdb.c:3154
 msgid "%P: warning: malformed CodeView type record LF_METHODLIST\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_METHODLIST de tipo CodeView truncado\n"
 
 #: pdb.c:3178
 msgid "%P: warning: truncated CodeView type record LF_ARRAY\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_ARRAY de tipo CodeView truncado\n"
 
 #: pdb.c:3201 pdb.c:3235
 msgid "%P: warning: truncated CodeView type record LF_CLASS/LF_STRUCTURE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_CLASS/LF_STRUCTURE de tipo CodeView truncado\n"
 
 #: pdb.c:3226
 msgid "%P: warning: unhandled type %v within LF_CLASS/LF_STRUCTURE\n"
-msgstr ""
+msgstr "%P: aviso: tipo %v no manejado en LF_CLASS/LF_STRUCTURE\n"
 
 #: pdb.c:3245
 msgid "%P: warning: name for LF_CLASS/LF_STRUCTURE has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_CLASS/LF_STRUCTURE sin cero final\n"
 
 #: pdb.c:3264
 msgid "%P: warning: unique name for LF_CLASS/LF_STRUCTURE has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre único de LF_CLASS/LF_STRUCTURE sin cero final\n"
 
 #: pdb.c:3288 pdb.c:3316
 msgid "%P: warning: truncated CodeView type record LF_UNION\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_UNION de tipo CodeView truncado\n"
 
 #: pdb.c:3307
-#, fuzzy
-#| msgid "%P: warning: unknown machine type %u"
 msgid "%P: warning: unhandled type %v within LF_UNION\n"
-msgstr "%P: aviso: tipo de máquina no conocido %u"
+msgstr "%P: aviso: tipo %v no manejado en LF_UNION\n"
 
 #: pdb.c:3326
 msgid "%P: warning: name for LF_UNION has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_UNION sin cero final\n"
 
 #: pdb.c:3345
 msgid "%P: warning: unique name for LF_UNION has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre único de LF_UNION sin cero final\n"
 
 #: pdb.c:3369
 msgid "%P: warning: truncated CodeView type record LF_ENUM\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_ENUM de tipo CodeView truncado\n"
 
 #: pdb.c:3384
 msgid "%P: warning: name for LF_ENUM has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre de LF_ENUM sin cero final\n"
 
 #: pdb.c:3402
 msgid "%P: warning: unique name for LF_ENUM has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: nombre único de LF_ENUM sin cero final\n"
 
 #: pdb.c:3421
 msgid "%P: warning: truncated CodeView type record LF_VFTABLE\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_VFTABLE de tipo CodeView truncado\n"
 
 #: pdb.c:3442
 msgid "%P: warning: truncated CodeView type record LF_STRING_ID\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_STRING_ID de tipo CodeView truncado\n"
 
 #: pdb.c:3455
 msgid "%P: warning: string for LF_STRING_ID has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: cadena de LF_STRING_ID sin cero final\n"
 
 #: pdb.c:3472 pdb.c:3482
 msgid "%P: warning: truncated CodeView type record LF_SUBSTR_LIST\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_SUBSTR_LIST de tipo CodeView truncado\n"
 
 #: pdb.c:3505 pdb.c:3515
 msgid "%P: warning: truncated CodeView type record LF_BUILDINFO\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_BUILDINFO de tipo CodeView truncado\n"
 
 #: pdb.c:3538
 msgid "%P: warning: truncated CodeView type record LF_FUNC_ID\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_FUNC_ID de tipo CodeView truncado\n"
 
 #: pdb.c:3554
 msgid "%P: warning: string for LF_FUNC_ID has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: cadena de LF_FUNC_ID sin cero final\n"
 
 #: pdb.c:3571
 msgid "%P: warning: truncated CodeView type record LF_MFUNC_ID\n"
-msgstr ""
+msgstr "%P: aviso: registro LF_MFUNC_ID de tipo CodeView truncado\n"
 
 #: pdb.c:3587
 msgid "%P: warning: string for LF_MFUNC_ID has no terminating zero\n"
-msgstr ""
+msgstr "%P: aviso: cadena de LF_MFUNC_ID sin cero final\n"
 
 #: pdb.c:3602
-#, fuzzy
-#| msgid "%P: warning: unrecognized --build-id style ignored\n"
 msgid "%P: warning: unrecognized CodeView type %v\n"
-msgstr "%P: aviso: se descarta estilo --build-id no reconocido\n"
+msgstr "%P: aviso: tipo CodeView %v no reconocido\n"
 
 #: pdb.c:3776
 msgid "%P: warning: unable to get working directory\n"
-msgstr ""
+msgstr "%P: aviso: no se puede obtener el directorio de trabajo\n"
 
 #: pdb.c:3784
-#, fuzzy
-#| msgid "%P: warning: global constructor %s used\n"
 msgid "%P: warning: unable to get program name\n"
-msgstr "%P: aviso: se usó el constructor global %s\n"
+msgstr "%P: aviso: no se puede obtener el nombre del programa\n"
 
 #: pdb.c:3793
 msgid "%P: warning: unable to get full path to PDB\n"
-msgstr ""
+msgstr "%P: aviso: no se puede obtener la ruta completa de PDB\n"
 
 #: pdb.c:5249
-#, fuzzy
-#| msgid "%F%P: can not create BFD: %E\n"
 msgid "%P: warning: cannot create PDB file: %E\n"
-msgstr "%P: no se puede crear BFD: %E\n"
+msgstr "%P: no se puede crear el fichero PDB: %E\n"
 
 #: pdb.c:5264
-#, fuzzy
-#| msgid "%P: warning: cannot create .buildid section, --build-id ignored\n"
 msgid "%P: warning: cannot create old directory stream in PDB file: %E\n"
-msgstr "%P: aviso: no se puede crear la sección .buildid, se descarta --build-id\n"
+msgstr "%P: aviso: no se puede crear el flujoa del directorio antiguo en el fichero PDB: %E\n"
 
 #: pdb.c:5273
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create info stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo info en el fichero PDB: %E\n"
 
 #: pdb.c:5282
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create TPI stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo TPI en el fichero PDB: %E\n"
 
 #: pdb.c:5291
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create DBI stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo DBI en el fichero PDB: %E\n"
 
 #: pdb.c:5300
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create IPI stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo IPI en el fichero PDB: %E\n"
 
 #: pdb.c:5309
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create /names stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo /names en el fichero PDB: %E\n"
 
 #: pdb.c:5318
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create symbol record stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo de registro de símbolo en el fichero PDB: %E\n"
 
 #: pdb.c:5327
-#, fuzzy
-#| msgid "%P: warning: cannot create .buildid section, --build-id ignored\n"
 msgid "%P: warning: cannot create publics stream in PDB file: %E\n"
-msgstr "%P: aviso: no se puede crear la sección .buildid, se descarta --build-id\n"
+msgstr "%P: aviso: no se puede crear el flujo de públicos en el fichero PDB\n"
 
 #: pdb.c:5334
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot create section header stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede crear el flujo de cabecera de sección en el fichero PDB: %E\n"
 
 #: pdb.c:5353
-#, fuzzy
-#| msgid "%P: cannot stat linker map file: %E\n"
 msgid "%P: warning: cannot populate DBI stream in PDB file: %E\n"
-msgstr "%P: no se puede el estado del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede rellenar el flujo DBI en el fichero PDB: %E\n"
 
 #: pdb.c:5362
-#, fuzzy
-#| msgid "%P: cannot stat linker map file: %E\n"
 msgid "%P: warning: cannot populate TPI stream in PDB file: %E\n"
-msgstr "%P: no se puede el estado del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede rellenar el flujo TPI en el fichero PDB: %E\n"
 
 #: pdb.c:5373
-#, fuzzy
-#| msgid "%P: cannot stat linker map file: %E\n"
 msgid "%P: warning: cannot populate IPI stream in PDB file: %E\n"
-msgstr "%P: no se puede el estado del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede rellenar el flujo IPI en el fichero PDB: %E\n"
 
 #: pdb.c:5385
-#, fuzzy
-#| msgid "%P%F: cannot create name for linker map file: %E\n"
 msgid "%P: warning: cannot populate names stream in PDB file: %E\n"
-msgstr "%P%F: no se puede crear el nombre del fichero de mapa del enlazador: %E\n"
+msgstr "%P: aviso: no se puede rellenar el flujo de nombres en el fichero PDB: %E\n"
 
 #: pdb.c:5392
 msgid "%P: warning: cannot populate publics stream in PDB file: %E\n"
-msgstr ""
+msgstr "%P: aviso: no se puede rellenar el flujo de públicos en el fichero PDB\n"
 
 #: pdb.c:5399
-#, fuzzy
-#| msgid "%P: %pB: warning: cannot parse .xtensa.info section\n"
 msgid "%P: warning: cannot populate info stream in PDB file: %E\n"
-msgstr "%P: %pB: aviso: no se puede analizar la sección .xtensa.info\n"
+msgstr "%P: aviso: no se puede rellenar el flujo info en el fichero PDB: %E\n"
 
 #: pe-dll.c:483
 msgid "%X%P: unsupported PEI architecture: %s\n"
@@ -3490,8 +3448,6 @@ msgstr "%X%P: no se puede exportar %s: no se encuentra el símbolo\n"
 #: ehppalinux.c:113 ehppanbsd.c:113 ehppaobsd.c:113 em68hc11elf.c:173
 #: em68hc11elfb.c:173 em68hc12elf.c:173 em68hc12elfb.c:173 eppcmacos.c:1631
 #: eppcmacos.c:1641
-#, fuzzy
-#| msgid "%F%P: can not create BFD: %E\n"
 msgid "%P: can not create BFD: %E\n"
 msgstr "%P: no se puede crear BFD: %E\n"
 
@@ -3526,7 +3482,7 @@ msgstr ""
 
 #: pe-dll.c:1684
 msgid "%P: base relocation for section `%s' above .reloc section\n"
-msgstr ""
+msgstr "%P: reubicación de base para la sección «%s» por encima de la sección .reloc\n"
 
 #: pe-dll.c:1734
 #, c-format
@@ -3544,16 +3500,12 @@ msgid "; no contents available\n"
 msgstr "; no hay contenido disponible\n"
 
 #: pe-dll.c:2368
-#, fuzzy
-#| msgid "%X%P: error: export ordinal too large: %d\n"
 msgid "%P: error: NULL decorated name for %s\n"
-msgstr "%X%P: error: exportación de ordinal demasiado grande: %d\n"
+msgstr "%P: error: nombre decorado con NULL para %s\n"
 
 #: pe-dll.c:2903
-#, fuzzy
-#| msgid "%X%P: %C: variable '%pT' can't be auto-imported; please read the documentation for ld's --enable-auto-import for details\n"
 msgid "%X%P: %H: variable '%pT' can't be auto-imported; please read the documentation for ld's --enable-auto-import for details\n"
-msgstr "%X%P: %C: no se puede auto-importar la variable '%pT'. Por favor lea la documentación de --enable-auto-import de ld para más detalles\n"
+msgstr "%X%P: %H: no se puede auto-importar la variable '%pT'. Por favor, lea la documentación de --enable-auto-import de ld para más detalles\n"
 
 #: pe-dll.c:2924
 #, c-format
@@ -3598,8 +3550,6 @@ msgid "<no plugin>"
 msgstr "<sin plugin>"
 
 #: plugin.c:255 plugin.c:1139
-#, fuzzy
-#| msgid "%F%P: %s: error loading plugin: %s\n"
 msgid "%P: %s: error loading plugin: %s\n"
 msgstr "%P: %s: error al cargar el plugin: %s\n"
 
@@ -3608,26 +3558,18 @@ msgid "%P: %s: duplicated plugin\n"
 msgstr "%P: %s: plugin duplicado\n"
 
 #: plugin.c:346
-#, fuzzy
-#| msgid "%F%P: could not create dummy IR bfd: %E\n"
 msgid "%P: could not create dummy IR bfd: %E\n"
-msgstr "%P: no se puede crear el bdf IR dummy: %F%E\n"
+msgstr "%P: no se puede crear el bfd IR dummy: %E\n"
 
 #: plugin.c:428
-#, fuzzy
-#| msgid "%F%P: %s: non-ELF symbol in ELF BFD!\n"
 msgid "%P: %s: non-ELF symbol in ELF BFD!\n"
-msgstr "%P: %s: ¡Símbolo que no es ELF en el BFD ELF!\n"
+msgstr "%P: %s: ¡símbolo que no es ELF en el BFD ELF!\n"
 
 #: plugin.c:439
-#, fuzzy
-#| msgid "%F%P: unknown ELF symbol visibility: %d!\n"
 msgid "%P: unknown ELF symbol visibility: %d!\n"
-msgstr "%P: visibilidad de símbolo ELF desconocida: ¡%d!\n"
+msgstr "%P: ¡visibilidad de símbolo ELF desconocida: %d!\n"
 
 #: plugin.c:561
-#, fuzzy
-#| msgid "%F%P: unsupported input file size: %s (%ld bytes)\n"
 msgid "%P: unsupported input file size: %s (%ld bytes)\n"
 msgstr "%P: no se admite el tamaño de fichero de entrada: %s (%ld bytes)\n"
 
@@ -3648,8 +3590,6 @@ msgstr "valor de visibilidad LTO desconocido %x"
 
 #. We should not have a new, indirect or warning symbol here.
 #: plugin.c:837
-#, fuzzy
-#| msgid "%F%P: %s: plugin symbol table corrupt (sym type %d)\n"
 msgid "%P: %s: plugin symbol table corrupt (sym type %d)\n"
 msgstr "%P: %s: la tabla de símbolos de plugin está corrupta (tipo de símbolo %d)\n"
 
@@ -3662,32 +3602,22 @@ msgid "%P: warning: "
 msgstr "%P: aviso: "
 
 #: plugin.c:989
-#, fuzzy
-#| msgid "%P: error: "
 msgid "%X%P: error: "
-msgstr "%P: error: "
+msgstr "%X%P: error: "
 
 #: plugin.c:1146
-#, fuzzy
-#| msgid "%F%P: %s: plugin error: %d\n"
 msgid "%P: %s: plugin error: %d\n"
 msgstr "%P: %s: error en el plugin: %d\n"
 
 #: plugin.c:1210
-#, fuzzy
-#| msgid "%F%P: plugin_strdup failed to allocate memory: %s\n"
 msgid "%P: plugin_strdup failed to allocate memory: %s\n"
 msgstr "%P: plugin_strdup no pudo asignar memoria: %s\n"
 
 #: plugin.c:1252
-#, fuzzy
-#| msgid "%F%P: plugin failed to allocate memory for input: %s\n"
 msgid "%P: plugin failed to allocate memory for input: %s\n"
 msgstr "%P: plugin no pudo asignar memoria para entrada: %s\n"
 
 #: plugin.c:1281
-#, fuzzy
-#| msgid "%F%P: %s: plugin reported error claiming file\n"
 msgid "%P: %s: plugin reported error claiming file\n"
 msgstr "%P: %s: el plugin reportó error al reclamar el fichero\n"
 
@@ -3928,8 +3858,6 @@ msgstr "%X%P: no se pueden construir los stubs: %E\n"
 #: ei386pe_posix.c:1523 emcorepe.c:1523 ends32belf.c:77 ends32belf16m.c:77
 #: ends32belf_linux.c:77 ends32elf.c:77 ends32elf16m.c:77 ends32elf_linux.c:77
 #: escore3_elf.c:82 escore7_elf.c:82 eshpe.c:1523 ev850.c:94 ev850_rh850.c:94
-#, fuzzy
-#| msgid "%F%P: error: cannot change output format whilst linking %s binaries\n"
 msgid "%P: error: cannot change output format whilst linking %s binaries\n"
 msgstr "%P: error: no se puede cambiar el formato de salida mientras se enlazan los binarios %s\n"
 
@@ -3946,10 +3874,8 @@ msgstr "%P: error: no se puede cambiar el formato de salida mientras se enlazan 
 #: eaarch64linux32.c:487 eaarch64linux32b.c:403 eaarch64linux32b.c:463
 #: eaarch64linux32b.c:487 eaarch64linuxb.c:403 eaarch64linuxb.c:463
 #: eaarch64linuxb.c:487 eaarch64nto.c:403 eaarch64nto.c:463 eaarch64nto.c:487
-#, fuzzy
-#| msgid "%F%P: unrecognized -a option `%s'\n"
 msgid "%X%P: error: unrecognized value '-z %s'\n"
-msgstr "%P: no se reconoce la opción -a `%s'\n"
+msgstr "%X%P: error: no se reconoce el valor '-z %s'\n"
 
 #: eaarch64cloudabi.c:744 eaarch64cloudabib.c:744 eaarch64elf.c:744
 #: eaarch64elf32.c:744 eaarch64elf32b.c:744 eaarch64elfb.c:744
@@ -4026,7 +3952,7 @@ msgstr "%P: no se reconoce la opción -a `%s'\n"
 #: eshlelf_nbsd.c:283 eshlelf_nto.c:283 eshlelf_vxworks.c:315 ev850.c:259
 #: ev850_rh850.c:259
 msgid "%P: --compress-debug-sections=zstd: ld is not built with zstd support\n"
-msgstr ""
+msgstr "%P: --compress-debug-sections=zstd: ld no está construido con soporte para zstd\n"
 
 #: eaarch64cloudabi.c:749 eaarch64cloudabib.c:749 eaarch64elf.c:749
 #: eaarch64elf32.c:749 eaarch64elf32b.c:749 eaarch64elfb.c:749
@@ -4102,8 +4028,6 @@ msgstr ""
 #: eshelf_vxworks.c:320 eshlelf.c:288 eshlelf_fd.c:329 eshlelf_linux.c:329
 #: eshlelf_nbsd.c:288 eshlelf_nto.c:288 eshlelf_vxworks.c:320 ev850.c:264
 #: ev850_rh850.c:264
-#, fuzzy
-#| msgid "%F%P: invalid --compress-debug-sections option: `%s'\n"
 msgid "%P: invalid --compress-debug-sections option: `%s'\n"
 msgstr "%P: opción --compress-debug-sections no válida: `%s'\n"
 
@@ -4162,8 +4086,6 @@ msgstr "%P: opción --compress-debug-sections no válida: `%s'\n"
 #: eshelf_linux.c:387 eshelf_nbsd.c:346 eshelf_nto.c:346 eshelf_uclinux.c:346
 #: eshelf_vxworks.c:378 eshlelf.c:346 eshlelf_fd.c:387 eshlelf_linux.c:387
 #: eshlelf_nbsd.c:346 eshlelf_nto.c:346 eshlelf_vxworks.c:378
-#, fuzzy
-#| msgid "%F%P: invalid hash style `%s'\n"
 msgid "%P: invalid hash style `%s'\n"
 msgstr "%P: estilo de hash no válido `%s'\n"
 
@@ -4241,8 +4163,6 @@ msgstr "%P: estilo de hash no válido `%s'\n"
 #: eshelf_vxworks.c:395 eshlelf.c:363 eshlelf_fd.c:404 eshlelf_linux.c:404
 #: eshlelf_nbsd.c:363 eshlelf_nto.c:363 eshlelf_vxworks.c:395 ev850.c:288
 #: ev850_rh850.c:288
-#, fuzzy
-#| msgid "%F%P: invalid maximum page size `%s'\n"
 msgid "%P: invalid maximum page size `%s'\n"
 msgstr "%P: tamaño de página máximo no válido `%s'\n"
 
@@ -4320,8 +4240,6 @@ msgstr "%P: tamaño de página máximo no válido `%s'\n"
 #: eshelf_vxworks.c:405 eshlelf.c:373 eshlelf_fd.c:414 eshlelf_linux.c:414
 #: eshlelf_nbsd.c:373 eshlelf_nto.c:373 eshlelf_vxworks.c:405 ev850.c:298
 #: ev850_rh850.c:298
-#, fuzzy
-#| msgid "%F%P: invalid common page size `%s'\n"
 msgid "%P: invalid common page size `%s'\n"
 msgstr "%P: tamaño de página normal no válido `%s'\n"
 
@@ -4399,8 +4317,6 @@ msgstr "%P: tamaño de página normal no válido `%s'\n"
 #: eshelf_vxworks.c:414 eshlelf.c:382 eshlelf_fd.c:423 eshlelf_linux.c:423
 #: eshlelf_nbsd.c:382 eshlelf_nto.c:382 eshlelf_vxworks.c:414 ev850.c:307
 #: ev850_rh850.c:307
-#, fuzzy
-#| msgid "%F%P: invalid stack size `%s'\n"
 msgid "%P: invalid stack size `%s'\n"
 msgstr "%P: tamaño de pila no válido `%s'\n"
 
@@ -4478,8 +4394,6 @@ msgstr "%P: tamaño de pila no válido `%s'\n"
 #: eshelf_vxworks.c:453 eshlelf.c:421 eshlelf_fd.c:462 eshlelf_linux.c:462
 #: eshlelf_nbsd.c:421 eshlelf_nto.c:421 eshlelf_vxworks.c:453 ev850.c:346
 #: ev850_rh850.c:346
-#, fuzzy
-#| msgid "%F%P: invalid visibility in `-z %s'; must be default, internal, hidden, or protected"
 msgid "%P: invalid visibility in `-z %s'; must be default, internal, hidden, or protected"
 msgstr "%P: visibilidad no válida en `-z %s', debe ser default, internal, hidden o protected"
 
@@ -4633,12 +4547,13 @@ msgstr "  --no-apply-dynamic-relocs    No aplica valores de tiempo de enlazamien
 #: eaarch64fbsd.c:1067 eaarch64fbsdb.c:1067 eaarch64haiku.c:1062
 #: eaarch64linux.c:1067 eaarch64linux32.c:1067 eaarch64linux32b.c:1067
 #: eaarch64linuxb.c:1067 eaarch64nto.c:1240
-#, fuzzy, c-format
-#| msgid "  -z force-bti                  Turn on Branch Target Identification mechanism and generate PLTs with BTI. Generate warnings for missing BTI on inputs\n"
+#, c-format
 msgid ""
 "  -z force-bti                         Turn on Branch Target Identification mechanism and generate PLTs with BTI.\n"
 "                                         Generate warnings for missing BTI markings on inputs\n"
-msgstr "  -z force-bti                  Activa el mechanismo de identificación de objetivo de rama y genera PLTs con BTI. Genera avisos para BTI ausentes en las entradas\n"
+msgstr ""
+"  -z force-bti                         Activa el mechanismo de identificación de objetivo de rama y genera PLTs\n"
+"                                         con BTI. Genera avisos para marcas BTI ausentes en las entradas\n"
 
 #: eaarch64cloudabi.c:1065 eaarch64cloudabib.c:1065 eaarch64elf.c:1070
 #: eaarch64elf32.c:1070 eaarch64elf32b.c:1070 eaarch64elfb.c:1070
@@ -4654,16 +4569,22 @@ msgid ""
 "                                         error: Emit error when the input objects are missing BTI markings\n"
 "                                           and output has BTI marking.\n"
 msgstr ""
+"  -z bti-report[=none|warning|error]   Emite aviso/error si no coincide la marcación BTI de los objetos de entrada y\n"
+"                                       de salida.\n"
+"                                         none: No emite mensajes de aviso/error.\n"
+"                                         warning (por defecto): Emite aviso cuando los objetos de entrada carecen de\n"
+"                                           marcas BTI y la salida los tiene.\n"
+"                                         error: Emite aviso cuando los objetos de entrada carecen de marcas BTI y\n"
+"                                           la salida los tiene.\n"
 
 #: eaarch64cloudabi.c:1072 eaarch64cloudabib.c:1072 eaarch64elf.c:1077
 #: eaarch64elf32.c:1077 eaarch64elf32b.c:1077 eaarch64elfb.c:1077
 #: eaarch64fbsd.c:1077 eaarch64fbsdb.c:1077 eaarch64haiku.c:1072
 #: eaarch64linux.c:1077 eaarch64linux32.c:1077 eaarch64linux32b.c:1077
 #: eaarch64linuxb.c:1077 eaarch64nto.c:1250
-#, fuzzy, c-format
-#| msgid "  -z pac-plt                    Protect PLTs with Pointer Authentication.\n"
+#, c-format
 msgid "  -z pac-plt                           Protect PLTs with Pointer Authentication.\n"
-msgstr "  -z pac-plt                    Protege PLTs con autenticación de puntero.\n"
+msgstr "  -z pac-plt                           Protege PLTs con autenticación de puntero.\n"
 
 #: eaarch64cloudabi.c:1074 eaarch64cloudabib.c:1074 eaarch64elf.c:1079
 #: eaarch64elf32.c:1079 eaarch64elf32b.c:1079 eaarch64elfb.c:1079
@@ -4677,6 +4598,10 @@ msgid ""
 "                                         always: always marks the output with GCS.\n"
 "                                         never: never marks the output with GCS.\n"
 msgstr ""
+"  -z gcs=[always|never|implicit]       Controla el que la salida disponga del mecanismo de pila de control protegida (GCS).\n"
+"                                         implicit (por defecto, si se omite '-z gcs'): deduce GCS de los objetos de entrada.\n"
+"                                         always: marca siempre la salida con GCS.\n"
+"                                         never: no marca nunca la salida con GCS.\n"
 
 #: eaarch64cloudabi.c:1079 eaarch64cloudabib.c:1079 eaarch64elf.c:1084
 #: eaarch64elf32.c:1084 eaarch64elf32b.c:1084 eaarch64elfb.c:1084
@@ -4692,6 +4617,13 @@ msgid ""
 "                                         error: Emit error when the input objects are missing GCS markings\n"
 "                                           and output have GCS marking.\n"
 msgstr ""
+"  -z gcs-report[=none|warning|error]   Emite aviso/error si no coincide la marcación GCS de los objetos de entrada y\n"
+"                                       de salida.\n"
+"                                         none: No emite mensajes de aviso/error.\n"
+"                                         warning (por defecto): Emite aviso cuando los objetos de entrada carecen de\n"
+"                                           marcas GCS y la salida los tiene.\n"
+"                                         error: Emite aviso cuando los objetos de entrada carecen de marcas GCS y\n"
+"                                           la salida los tiene.\n"
 
 #: eaarch64cloudabi.c:1086 eaarch64cloudabib.c:1086 eaarch64elf.c:1091
 #: eaarch64elf32.c:1091 eaarch64elf32b.c:1091 eaarch64elfb.c:1091
@@ -4708,6 +4640,13 @@ msgid ""
 "                                               error: Emit error when the input objects are missing GCS markings\n"
 "                                                 and output have GCS marking.\n"
 msgstr ""
+"  -z gcs-report-dynamic=none|warning|error   Emite aviso/error si no coincide la marcación GCS de la unidad de enlace\n"
+"                                             actual y los objetos dinámicos de entrada.\n"
+"                                               none: No emite mensajes de aviso/error.\n"
+"                                               warning (por defecto): Emite aviso cuando los objetos de entrada carecen de\n"
+"                                                 marcas GCS y la salida los tiene.\n"
+"                                               error: Emite aviso cuando los objetos de entrada carecen de marcas GCS y\n"
+"                                                 la salida los tiene.\n"
 
 #: eaarch64cloudabi.c:1094 eaarch64cloudabib.c:1094 eaarch64elf.c:1099
 #: eaarch64elf32.c:1099 eaarch64elf32b.c:1099 eaarch64elfb.c:1099
@@ -4725,52 +4664,55 @@ msgid ""
 "                                               allocation tags detected on load/store operations.\n"
 "                                         async: Enable imprecise exceptions.\n"
 msgstr ""
+"  -z memtag-mode[=none|sync|async]     Selecciona el modo de operación extensión de etiquetado de\n"
+"                                       memoria. Emite una etiqueta dinámica DT_AARCH64_MEMTAG_MODE\n"
+"                                       para el binario. Esta entrada solo es válida en el ejecutable\n"
+"                                       principal. Se hace caso omiso en los objetos que el cargador\n"
+"                                       carga dinámicamente.\n"
+"                                         none (por defecto): Desactiva las comprobaciones MTE en\n"
+"                                              operaciones de lectura y escritura de memoria.\n"
+"                                         sync: Activa excepciones precisas cuando se detectan\n"
+"                                               discordancias en etiquetas de direcciones y de reserva\n"
+"                                               en operaciones de carga/almacenamiento.\n"
+"                                         async: Activa excepciones imprecisas.\n"
 
 #: eaarch64cloudabi.c:1103 eaarch64cloudabib.c:1103 eaarch64elf.c:1108
 #: eaarch64elf32.c:1108 eaarch64elf32b.c:1108 eaarch64elfb.c:1108
 #: eaarch64fbsd.c:1108 eaarch64fbsdb.c:1108 eaarch64haiku.c:1103
 #: eaarch64linux.c:1108 eaarch64linux32.c:1108 eaarch64linux32b.c:1108
 #: eaarch64linuxb.c:1108 eaarch64nto.c:1281
-#, fuzzy, c-format
-#| msgid "  -z pac-plt                    Protect PLTs with Pointer Authentication.\n"
+#, c-format
 msgid "  -z memtag-stack               Mark program stack with MTE protection.\n"
-msgstr "  -z pac-plt                    Protege PLTs con autenticación de puntero.\n"
+msgstr "  -z memtag-stack               Marca la pila del programa con protección MTE.\n"
 
 #: eaarch64nto.c:521
-#, fuzzy
-#| msgid "%X%P: can not create note section: %E\n"
 msgid "%P: cannot create .note section in stub BFD.\n"
-msgstr "%X%P: no se puede crear la sección de notas: %E\n"
+msgstr "%P: no se puede crear la sección .note en el stub BFD.\n"
 
 #: eaarch64nto.c:530
-#, fuzzy
-#| msgid "%F%P: failed to create .xtensa.info section\n"
 msgid "%P: failed to create .note section\n"
-msgstr "%P: fallo al crear la sección .xtensa.info\n"
+msgstr "%P: fallo al crear la sección .note\n"
 
 #: eaarch64nto.c:571
-#, fuzzy
-#| msgid "%F%P: %pB: can't read contents of section .idata: %E\n"
 msgid "%P: %pB: can't read contents of section .note: %E\n"
-msgstr "%P: %pB: no se puede leer el contenido de la sección .idata: %E\n"
+msgstr "%P: %pB: no se puede leer el contenido de la sección .note: %E\n"
 
 #: eaarch64nto.c:581 eaarch64nto.c:585
-#, fuzzy
-#| msgid "%P: %B: warning: duplicate section `%s' has different size\n"
 msgid "%P: %pB: warning: duplicated QNX stack .note detected\n"
-msgstr "%P: %B: aviso: la sección duplicada `%s' tiene tamaño diferente\n"
+msgstr "%P: %pB: aviso: se ha detectado .note del stack QNX duplicada\n"
 
 #: eaarch64nto.c:614
 msgid "%P: error: --lazy-stack must follow -zstack-size=<size>\n"
-msgstr ""
+msgstr "%P: error: --lazy-stack debe ir después de -zstack-size=<tamaño>\n"
 
 #: eaarch64nto.c:1284
-#, fuzzy, c-format
-#| msgid "  --stack <size>                     Set size of the initial stack\n"
+#, c-format
 msgid ""
 "  --stack <size>              Set size of the initial stack\n"
 "  --lazy-stack                Set lazy allocation of stack\n"
-msgstr "  --stack <size>                     Establece el tamaño de la pila inicial\n"
+msgstr ""
+"  --stack <size>              Establece el tamaño de la pila inicial\n"
+"  --lazy-stack                Establece asignación perezosa de la pila\n"
 
 #: eaarch64pe.c:350 earm64pe.c:350 earm_wince_pe.c:338 earmpe.c:338
 #: ei386pe.c:338 ei386pe_posix.c:338 ei386pep.c:350 emcorepe.c:338 eshpe.c:338
@@ -5153,10 +5095,9 @@ msgstr "  --build-id[=ESTILO]                Genera ID de build\n"
 
 #: eaarch64pe.c:406 earm64pe.c:406 earm_wince_pe.c:397 earmpe.c:397
 #: ei386pe.c:397 ei386pe_posix.c:397 ei386pep.c:406 emcorepe.c:397 eshpe.c:397
-#, fuzzy, c-format
-#| msgid "  --build-id[=STYLE]                 Generate build ID\n"
+#, c-format
 msgid "  --pdb=[FILENAME]                   Generate PDB file\n"
-msgstr "  --build-id[=ESTILO]                Genera ID de build\n"
+msgstr "  --pdb=[NOMBREFICH]                 Genera fichero PDB\n"
 
 #: eaarch64pe.c:535 earm64pe.c:535 earm_wince_pe.c:546 earmpe.c:546
 #: ei386beos.c:188 ei386pe.c:546 ei386pe_posix.c:546 ei386pep.c:535
@@ -5167,32 +5108,24 @@ msgstr "%P: aviso: número de versión erróneo en la opción -subsystem\n"
 #: eaarch64pe.c:560 earm64pe.c:560 earm_wince_pe.c:571 earmpe.c:571
 #: ei386beos.c:205 ei386pe.c:571 ei386pe_posix.c:571 ei386pep.c:560
 #: emcorepe.c:571 eshpe.c:571
-#, fuzzy
-#| msgid "%F%P: invalid subsystem type %s\n"
 msgid "%P: invalid subsystem type %s\n"
 msgstr "%P: tipo de subsistema %s inválido\n"
 
 #: eaarch64pe.c:581 earm64pe.c:581 earm_wince_pe.c:592 earmpe.c:592
 #: ei386beos.c:215 ei386pe.c:592 ei386pe_posix.c:592 ei386pep.c:581
 #: emcorepe.c:592 eshpe.c:592
-#, fuzzy
-#| msgid "%F%P: invalid hex number for PE parameter '%s'\n"
 msgid "%P: invalid hex number for PE parameter '%s'\n"
 msgstr "%P: número hexadecimal inválido para el parámetro PE '%s'\n"
 
 #: eaarch64pe.c:598 earm64pe.c:598 earm_wince_pe.c:609 earmpe.c:609
 #: ei386beos.c:230 ei386pe.c:609 ei386pe_posix.c:609 ei386pep.c:598
 #: emcorepe.c:609 eshpe.c:609
-#, fuzzy
-#| msgid "%F%P: strange hex info for PE parameter '%s'\n"
 msgid "%P: strange hex info for PE parameter '%s'\n"
 msgstr "%P: información hexadecimal extraña para el parámetro PE '%s'\n"
 
 #: eaarch64pe.c:615 earm64pe.c:615 earm_wince_pe.c:625 earmpe.c:625
 #: eelf32mcore.c:356 ei386beos.c:245 ei386pe.c:625 ei386pe_posix.c:625
 #: ei386pep.c:615 emcorepe.c:625 eshpe.c:625
-#, fuzzy
-#| msgid "%F%P: cannot open base file %s\n"
 msgid "%P: cannot open base file %s\n"
 msgstr "%P: no se puede abrir el fichero base %s\n"
 
@@ -5209,10 +5142,8 @@ msgstr "%P: aviso: --export-dynamic no se admite para objetivos PE+, ¿quiso dec
 #: eaarch64pe.c:997 earm64pe.c:997 earm_wince_pe.c:1049 earmpe.c:1049
 #: ei386pe.c:1049 ei386pe_posix.c:1049 ei386pep.c:997 emcorepe.c:1049
 #: eshpe.c:1049
-#, fuzzy
-#| msgid "%P: warning: ignoring invalid module type %s\n"
 msgid "%P: warning: overwriting decorated name %s with %s\n"
-msgstr "%P: aviso: se descartal tipo de módulo no válido %s\n"
+msgstr "%P: aviso: se sobreescribe el nombre decorado %s con %s\n"
 
 #: eaarch64pe.c:1042 eaarch64pe.c:1070 earm64pe.c:1042 earm64pe.c:1070
 #: ei386pep.c:1042 ei386pep.c:1070
@@ -5235,10 +5166,8 @@ msgstr "Use --disable-stdcall-fixup para desactivar estas composturas\n"
 #: eaarch64pe.c:1131 earm64pe.c:1131 earm_wince_pe.c:1115 earmpe.c:1115
 #: ei386pe.c:1115 ei386pe_posix.c:1115 ei386pep.c:1131 emcorepe.c:1115
 #: eshpe.c:1115
-#, fuzzy
-#| msgid "%P: %C: cannot get section contents - auto-import exception\n"
 msgid "%P: %H: cannot get section contents - auto-import exception\n"
-msgstr "%P: %C: no se puede obtener el contenido de la sección - excepción de auto-importación\n"
+msgstr "%P: %H: no se puede obtener el contenido de la sección - excepción de auto-importación\n"
 
 #: eaarch64pe.c:1261 earm64pe.c:1261 earm_wince_pe.c:1246 earmpe.c:1246
 #: ei386pe.c:1246 ei386pe_posix.c:1246 ei386pep.c:1261 emcorepe.c:1246
@@ -5255,8 +5184,6 @@ msgstr "%P: aviso: no se puede crear la sección .buildid, se descarta --build-i
 #: eaarch64pe.c:1468 earm64pe.c:1468 earm_wince_pe.c:1452 earmpe.c:1452
 #: ei386pe.c:1452 ei386pe_posix.c:1452 ei386pep.c:1468 emcorepe.c:1452
 #: eshpe.c:1452
-#, fuzzy
-#| msgid "%F%P: cannot perform PE operations on non PE output file '%pB'\n"
 msgid "%P: cannot perform PE operations on non PE output file '%pB'\n"
 msgstr "%P: no se pueden realizar operaciones PE en el fichero de salida '%pB' que no es PE\n"
 
@@ -5267,14 +5194,10 @@ msgid "%X%P: unable to process relocs: %E\n"
 msgstr "%X%P: no se pueden procesar las reubicaciones: %E\n"
 
 #: eaix5ppc.c:302 eaix5rs6.c:302 eaixppc.c:302 eaixrs6.c:302 eppcmacos.c:302
-#, fuzzy
-#| msgid "%F%P: cannot open %s\n"
 msgid "%P: cannot open %s\n"
 msgstr "%P: no se puede abrir %s\n"
 
 #: eaix5ppc.c:350 eaix5rs6.c:350 eaixppc.c:350 eaixrs6.c:350 eppcmacos.c:350
-#, fuzzy
-#| msgid "%F%P: cannot read %s\n"
 msgid "%P: cannot read %s\n"
 msgstr "%P: no se puede leer %s\n"
 
@@ -5307,34 +5230,24 @@ msgid "%P: warning: ignoring invalid -pT number %s\n"
 msgstr "%P: aviso: se descartal número -pT no válido %s\n"
 
 #: eaix5ppc.c:701 eaix5rs6.c:701 eaixppc.c:701 eaixrs6.c:701 eppcmacos.c:701
-#, fuzzy
-#| msgid "%F%P: bfd_xcoff_link_record_set failed: %E\n"
 msgid "%P: bfd_xcoff_link_record_set failed: %E\n"
 msgstr "%P: falló bfd_xcoff_link_record_set: %E\n"
 
 #: eaix5ppc.c:731 eaix5rs6.c:731 eaixppc.c:731 eaixrs6.c:731 eppcmacos.c:731
-#, fuzzy
-#| msgid "%F%P: bfd_link_hash_lookup of export symbol failed: %E\n"
 msgid "%P: bfd_link_hash_lookup of export symbol failed: %E\n"
 msgstr "%P: falló bfd_link_hash_lookup: %E\n"
 
 #: eaix5ppc.c:733 eaix5rs6.c:733 eaixppc.c:733 eaixrs6.c:733 eppcmacos.c:733
-#, fuzzy
-#| msgid "%F%P: bfd_xcoff_export_symbol failed: %E\n"
 msgid "%P: bfd_xcoff_export_symbol failed: %E\n"
 msgstr "%P: falló bfd_xcoff_export_symbol: %E\n"
 
 #: eaix5ppc.c:838 eaix5rs6.c:838 eaixppc.c:838 eaixrs6.c:838 eppcmacos.c:838
-#, fuzzy
-#| msgid "%F%P: can't find output section %s\n"
 msgid "%P: can't find output section %pA\n"
-msgstr "%P: no se puede encontrar la sección de salida %s\n"
+msgstr "%P: no se puede encontrar la sección de salida %pA\n"
 
 #: eaix5ppc.c:875 eaix5rs6.c:875 eaixppc.c:875 eaixrs6.c:875 eppcmacos.c:875
-#, fuzzy
-#| msgid "%F%P: can't find %s in output section\n"
 msgid "%P: can't find %pA in output section\n"
-msgstr "%P: no se puede encontrar %s en la sección de salida\n"
+msgstr "%P: no se puede encontrar %pA en la sección de salida\n"
 
 #: eaix5ppc.c:941 eaix5rs6.c:941 eaixppc.c:941 eaixrs6.c:941 eppcmacos.c:941
 msgid "%P: can't find required output section %s\n"
@@ -5342,29 +5255,21 @@ msgstr "%P: no se puede encontrar la sección de salida requerida %s\n"
 
 #: eaix5ppc.c:1123 eaix5rs6.c:1123 eaixppc.c:1123 eaixrs6.c:1123
 #: eppcmacos.c:1123
-#, fuzzy
-#| msgid "%X%P: can not size stub section: %E\n"
 msgid "%X%P: can not size stub sections: %E\n"
-msgstr "%X%P: no se puede medir la sección de stub: %E\n"
+msgstr "%X%P: no se pueden dimensionar las secciones stub: %E\n"
 
 #: eaix5ppc.c:1128 eaix5rs6.c:1128 eaixppc.c:1128 eaixrs6.c:1128
 #: eppcmacos.c:1128
-#, fuzzy
-#| msgid "%F%P: failed to set dynamic section sizes: %E\n"
 msgid "%P: failed to layout dynamic sections: %E\n"
-msgstr "%P: no se han podido establecer los tamaños de las secciones dinámicas: %E\n"
+msgstr "%P: no se han podido diseñar las secciones dinámicas: %E\n"
 
 #: eaix5ppc.c:1341 eaix5rs6.c:1341 eaixppc.c:1341 eaixrs6.c:1341
 #: eppcmacos.c:1341
-#, fuzzy
-#| msgid "%F%P:%s:%d: #! ([member]) is not supported in import files\n"
 msgid "%P:%s:%d: #! ([member]) is not supported in import files\n"
 msgstr "%P:%s:%d: #! ([miembro]) no se admite en ficheros de importación\n"
 
 #: eaix5ppc.c:1358 eaix5rs6.c:1358 eaixppc.c:1358 eaixrs6.c:1358
 #: eppcmacos.c:1358
-#, fuzzy
-#| msgid "%F%P: could not parse import path: %E\n"
 msgid "%P: could not parse import path: %E\n"
 msgstr "%P: no se puede analizar la ruta de importación: %E\n"
 
@@ -5396,31 +5301,23 @@ msgstr "%P:%s:%d: aviso: se descarta la línea última inacabada\n"
 
 #: eaix5ppc.c:1513 eaix5rs6.c:1513 eaixppc.c:1513 eaixrs6.c:1513
 #: eppcmacos.c:1513
-#, fuzzy
-#| msgid "%F%P: only relocations against symbols are permitted\n"
 msgid "%P: only relocations against symbols are permitted\n"
 msgstr "%P: solo se permiten reubicaciones contra símbolos\n"
 
 #: eaix5ppc.c:1516 eaix5rs6.c:1516 eaixppc.c:1516 eaixrs6.c:1516
 #: eppcmacos.c:1516
-#, fuzzy
-#| msgid "%F%P: bfd_xcoff_link_count_reloc failed: %E\n"
 msgid "%P: bfd_xcoff_link_count_reloc failed: %E\n"
 msgstr "%P: falló bfd_xcoff_link_count_reloc: %E\n"
 
 #: eaix5ppc.c:1604 eaix5rs6.c:1604 eaixppc.c:1604 eaixrs6.c:1604
 #: eppcmacos.c:1604
-#, fuzzy
-#| msgid "%X%P: can not create stub BFD: %E\n"
 msgid "%P: can not create stub BFD: %E\n"
-msgstr "%X%P: no se puede crear stub BFD: %E\n"
+msgstr "%P: no se puede crear stub BFD: %E\n"
 
 #: eaix5ppc.c:1614 eaix5rs6.c:1614 eaixppc.c:1614 eaixrs6.c:1614
 #: eelf32kvx.c:324 eelf64_s390.c:66 eelf64kvx.c:324 eelf64kvx_linux.c:322
 #: eelf64lppc.c:132 eelf64lppc_fbsd.c:132 eelf64ppc.c:132 eelf64ppc_fbsd.c:132
 #: eppcmacos.c:1614
-#, fuzzy
-#| msgid "%F%P: can not init BFD: %E\n"
 msgid "%P: can not init BFD: %E\n"
 msgstr "%P: no se puede inicializar BFD: %E\n"
 
@@ -5593,8 +5490,6 @@ msgstr "%P: se encontraron errores al procesar el fichero %s\n"
 #: earmelfb_fuchsia.c:556 earmelfb_linux.c:556 earmelfb_linux_eabi.c:556
 #: earmelfb_linux_fdpiceabi.c:556 earmelfb_nacl.c:556 earmelfb_nbsd.c:555
 #: earmnto.c:555
-#, fuzzy
-#| msgid "%F%P: %s: can't open: %E\n"
 msgid "%P: %s: can't open: %E\n"
 msgstr "%P: %s: no se puede abrir: %E\n"
 
@@ -5605,10 +5500,8 @@ msgstr "%P: %s: no se puede abrir: %E\n"
 #: earmelfb_fuchsia.c:559 earmelfb_linux.c:559 earmelfb_linux_eabi.c:559
 #: earmelfb_linux_fdpiceabi.c:559 earmelfb_nacl.c:559 earmelfb_nbsd.c:558
 #: earmnto.c:558
-#, fuzzy
-#| msgid "%F%P: %s: not a relocatable file: %E\n"
 msgid "%P: %s: not a relocatable file: %E\n"
-msgstr "%P: %s no es un fichero reubicable: %E\n"
+msgstr "%P: %s: no es un fichero reubicable: %E\n"
 
 #: earmelf.c:1101 earmelf_fbsd.c:1101 earmelf_fuchsia.c:1106
 #: earmelf_haiku.c:1106 earmelf_linux.c:1106 earmelf_linux_eabi.c:1106
@@ -5966,8 +5859,6 @@ msgid "%X%P: can not create note section: %E\n"
 msgstr "%X%P: no se puede crear la sección de notas: %E\n"
 
 #: eelf32_spu.c:347
-#, fuzzy
-#| msgid "%F%P: no built-in overlay manager\n"
 msgid "%P: no built-in overlay manager\n"
 msgstr "%P: ningún gestor de recubrimientos incorporado\n"
 
@@ -5992,8 +5883,6 @@ msgid "%X%P: can not size overlay stubs: %E\n"
 msgstr "%X%P: no se puede calcular tamaño de stubs de recubrimientos: %E\n"
 
 #: eelf32_spu.c:524
-#, fuzzy
-#| msgid "%F%P: can not open script: %E\n"
 msgid "%P: can not open script: %E\n"
 msgstr "%P: no se puede abrir el script: %E\n"
 
@@ -6006,50 +5895,34 @@ msgid "%P: --auto-overlay ignored with zero local store range\n"
 msgstr "%P: --auto-overlay descartado con rango de almacenamiento local cero\n"
 
 #: eelf32_spu.c:939
-#, fuzzy
-#| msgid "%F%P: invalid --local-store address range `%s'\n"
 msgid "%P: invalid --local-store address range `%s'\n"
 msgstr "%P: rango de direcciones --local-store no válido `%s'\n"
 
 #: eelf32_spu.c:975
-#, fuzzy
-#| msgid "%F%P: invalid --num-lines/--num-regions `%u'\n"
 msgid "%P: invalid --num-lines/--num-regions `%u'\n"
 msgstr "%P --num-lines/--num-regions no válido `%u'\n"
 
 #: eelf32_spu.c:980
-#, fuzzy
-#| msgid "%F%P: invalid --line-size/--region-size `%u'\n"
 msgid "%P: invalid --line-size/--region-size `%u'\n"
 msgstr "%P: --line-size/--region-size no válido `%u'\n"
 
 #: eelf32_spu.c:1001
-#, fuzzy
-#| msgid "%F%P: invalid --num-lines/--num-regions `%s'\n"
 msgid "%P: invalid --num-lines/--num-regions `%s'\n"
 msgstr "%P: --num-lines/--num-regions no válido `%s'\n"
 
 #: eelf32_spu.c:1014
-#, fuzzy
-#| msgid "%F%P: invalid --line-size/--region-size `%s'\n"
 msgid "%P: invalid --line-size/--region-size `%s'\n"
 msgstr "%P: --line-size/--region-size no válido `%s'\n"
 
 #: eelf32_spu.c:1023
-#, fuzzy
-#| msgid "%F%P: invalid --fixed-space value `%s'\n"
 msgid "%P: invalid --fixed-space value `%s'\n"
 msgstr "%P: valor de --fixed-space no válido `%s'\n"
 
 #: eelf32_spu.c:1032
-#, fuzzy
-#| msgid "%F%P: invalid --reserved-space value `%s'\n"
 msgid "%P: invalid --reserved-space value `%s'\n"
 msgstr "%P: valor de --reserved-space no válido `%s'\n"
 
 #: eelf32_spu.c:1041
-#, fuzzy
-#| msgid "%F%P: invalid --extra-stack-space value `%s'\n"
 msgid "%P: invalid --extra-stack-space value `%s'\n"
 msgstr "%P: valor de --extra-stack-space no válido `%s'\n"
 
@@ -6189,24 +6062,18 @@ msgstr "  --lrlive-analysis           Examina la vitalidad lr en el prólogo de 
 
 #: eelf32_tic6x_be.c:90 eelf32_tic6x_elf_be.c:90 eelf32_tic6x_elf_le.c:90
 #: eelf32_tic6x_le.c:90 eelf32_tic6x_linux_be.c:90 eelf32_tic6x_linux_le.c:90
-#, fuzzy
-#| msgid "%F%P: invalid --dsbt-index %d, outside DSBT size\n"
 msgid "%P: invalid --dsbt-index %d, outside DSBT size\n"
 msgstr "%P: --dsbt-index %d no válido, tamaño fuera de DSBT\n"
 
 #: eelf32_tic6x_be.c:629 eelf32_tic6x_elf_be.c:629 eelf32_tic6x_elf_le.c:629
 #: eelf32_tic6x_le.c:629 eelf32_tic6x_linux_be.c:629
 #: eelf32_tic6x_linux_le.c:629
-#, fuzzy
-#| msgid "%F%P: invalid --dsbt-index %s\n"
 msgid "%P: invalid --dsbt-index %s\n"
 msgstr "%P: --dsbt-index no válido %s\n"
 
 #: eelf32_tic6x_be.c:639 eelf32_tic6x_elf_be.c:639 eelf32_tic6x_elf_le.c:639
 #: eelf32_tic6x_le.c:639 eelf32_tic6x_linux_be.c:639
 #: eelf32_tic6x_linux_le.c:639
-#, fuzzy
-#| msgid "%F%P: invalid --dsbt-size %s\n"
 msgid "%P: invalid --dsbt-size %s\n"
 msgstr "%P: --dsbt-size no válido %s\n"
 
@@ -6246,8 +6113,6 @@ msgstr "                          Desactiva la fusión de entradas exidx\n"
 #: eelf_i386_sol2.c:725 eelf_i386_vxworks.c:619 eelf_iamcu.c:593
 #: eelf_x86_64.c:8638 eelf_x86_64_cloudabi.c:636 eelf_x86_64_fbsd.c:636
 #: eelf_x86_64_haiku.c:636 eelf_x86_64_sol2.c:768
-#, fuzzy
-#| msgid "%F%P: invalid number for -z call-nop=prefix-: %s\n"
 msgid "%P: invalid number for -z call-nop=prefix-: %s\n"
 msgstr "%P: número no válido para -z call-nop=prefix-: %s\n"
 
@@ -6256,8 +6121,6 @@ msgstr "%P: número no válido para -z call-nop=prefix-: %s\n"
 #: eelf_i386_sol2.c:734 eelf_i386_vxworks.c:628 eelf_iamcu.c:602
 #: eelf_x86_64.c:8647 eelf_x86_64_cloudabi.c:645 eelf_x86_64_fbsd.c:645
 #: eelf_x86_64_haiku.c:645 eelf_x86_64_sol2.c:777
-#, fuzzy
-#| msgid "%F%P: invalid number for -z call-nop=suffix-: %s\n"
 msgid "%P: invalid number for -z call-nop=suffix-: %s\n"
 msgstr "%P: número no válido para -z call-nop=suffix-: %s\n"
 
@@ -6266,34 +6129,26 @@ msgstr "%P: número no válido para -z call-nop=suffix-: %s\n"
 #: eelf_i386_sol2.c:739 eelf_i386_vxworks.c:633 eelf_iamcu.c:607
 #: eelf_x86_64.c:8652 eelf_x86_64_cloudabi.c:650 eelf_x86_64_fbsd.c:650
 #: eelf_x86_64_haiku.c:650 eelf_x86_64_sol2.c:782
-#, fuzzy
-#| msgid "%F%P: unsupported option: -z %s\n"
 msgid "%P: unsupported option: -z %s\n"
 msgstr "%P: no se admite la opción: -z %s\n"
 
 #: eelf32_x86_64.c:8674 eelf_i386.c:8097 eelf_i386_fbsd.c:629
 #: eelf_i386_haiku.c:629 eelf_x86_64.c:8674 eelf_x86_64_cloudabi.c:672
 #: eelf_x86_64_fbsd.c:672 eelf_x86_64_haiku.c:672 eelf_x86_64_sol2.c:804
-#, fuzzy
-#| msgid "%F%P: invalid option for -z cet-report=: %s\n"
 msgid "%P: invalid option for -z cet-report=: %s\n"
 msgstr "%P: origen no válido para -z cet-report=: %s\n"
 
 #: eelf32_x86_64.c:8688 eelf_i386.c:8111 eelf_i386_fbsd.c:643
 #: eelf_i386_haiku.c:643 eelf_x86_64.c:8688 eelf_x86_64_cloudabi.c:686
 #: eelf_x86_64_fbsd.c:686 eelf_x86_64_haiku.c:686 eelf_x86_64_sol2.c:818
-#, fuzzy
-#| msgid "%F%P: invalid x86-64 ISA level: %s\n"
 msgid "%P: invalid x86-64 ISA level: %s\n"
 msgstr "%P: nivel ISA x86-64 inválido: %s\n"
 
 #: eelf32_x86_64.c:8704 eelf_i386.c:8127 eelf_i386_fbsd.c:659
 #: eelf_i386_haiku.c:659 eelf_x86_64.c:8704 eelf_x86_64_cloudabi.c:702
 #: eelf_x86_64_fbsd.c:702 eelf_x86_64_haiku.c:702 eelf_x86_64_sol2.c:834
-#, fuzzy
-#| msgid "%F%P: invalid option for -z cet-report=: %s\n"
 msgid "%P: invalid option for -z isa-level-report=: %s\n"
-msgstr "%P: origen no válido para -z cet-report=: %s\n"
+msgstr "%P: opción no válida para -z isa-level-report=: %s\n"
 
 #: eelf32_x86_64.c:8751 eelf_i386.c:8169 eelf_i386_be.c:572
 #: eelf_i386_fbsd.c:701 eelf_i386_haiku.c:701 eelf_i386_ldso.c:592
@@ -6311,7 +6166,7 @@ msgstr "  -z noextern-protected-data  No trata los símbolos de datos protegidos
 #: eelf_x86_64_haiku.c:801 eelf_x86_64_sol2.c:933
 #, c-format
 msgid "  -z indirect-extern-access   Enable indirect external access\n"
-msgstr ""
+msgstr "  -z indirect-extern-access   Activa acceso externo indirecto\n"
 
 #: eelf32_x86_64.c:8755 eelf_i386.c:8173 eelf_i386_be.c:576
 #: eelf_i386_fbsd.c:705 eelf_i386_haiku.c:705 eelf_i386_ldso.c:596
@@ -6320,7 +6175,7 @@ msgstr ""
 #: eelf_x86_64_haiku.c:803 eelf_x86_64_sol2.c:935
 #, c-format
 msgid "  -z noindirect-extern-access Disable indirect external access (default)\n"
-msgstr ""
+msgstr "  -z noindirect-extern-access Desactiva acceso externo indirecto (predefinido)\n"
 
 #: eelf32_x86_64.c:8758 eelf32lppc.c:869 eelf32lppclinux.c:869
 #: eelf32lppcnto.c:869 eelf32lppcsim.c:869 eelf32ppc.c:869 eelf32ppc_fbsd.c:869
@@ -6396,7 +6251,7 @@ msgstr ""
 #: eelf_x86_64_fbsd.c:826 eelf_x86_64_haiku.c:826 eelf_x86_64_sol2.c:958
 #, c-format
 msgid "  -z report-relative-reloc    Report relative relocations\n"
-msgstr ""
+msgstr "  -z report-relative-reloc    Informa de reubicacioens relativas\n"
 
 #: eelf32_x86_64.c:8781 eelf_i386.c:8196 eelf_i386_fbsd.c:728
 #: eelf_i386_haiku.c:728 eelf_x86_64.c:8831 eelf_x86_64_cloudabi.c:829
@@ -6408,16 +6263,13 @@ msgstr "  -z x86-64-{baseline|v[234]} Marca el nivel ISA x86-64-{baseline|v[234]
 #: eelf32_x86_64.c:8784 eelf_i386.c:8199 eelf_i386_fbsd.c:731
 #: eelf_i386_haiku.c:731 eelf_x86_64.c:8834 eelf_x86_64_cloudabi.c:832
 #: eelf_x86_64_fbsd.c:832 eelf_x86_64_haiku.c:832 eelf_x86_64_sol2.c:964
-#, fuzzy, c-format
-#| msgid ""
-#| "  -z lam-u48-report=[none|warning|error] (default: none)\n"
-#| "                              Report missing LAM_U48 property\n"
+#, c-format
 msgid ""
 "  -z isa-level-report=[none|all|needed|used] (default: none)\n"
 "                              Report x86-64 ISA level\n"
 msgstr ""
-"  -z lam-u48-report=[none|warning|error] (predefinido: none)\n"
-"                              Informa de la falta de la propiedad LAM_U48\n"
+"  -z isa-level-report=[none|all|needed|used] (predefinido: none)\n"
+"                              Informa del nivel ISA x86-64\n"
 
 #: eelf32_x86_64.c:8789 eelf_x86_64.c:8853 eelf_x86_64_cloudabi.c:851
 #: eelf_x86_64_fbsd.c:851 eelf_x86_64_haiku.c:851 eelf_x86_64_sol2.c:983
@@ -6426,6 +6278,8 @@ msgid ""
 "  -z mark-plt                 Mark PLT with dynamic tags (default)\n"
 "  -z nomark-plt               Do not mark PLT with dynamic tags\n"
 msgstr ""
+"  -z mark-plt                 Marca PLT con etiquetas dinámicas (predefinido)\n"
+"  -z nomark-plt               No marca PLT con etiquetas dinámicas\n"
 
 #: eelf32_x86_64.c:8793 eelf_x86_64.c:8857 eelf_x86_64_cloudabi.c:855
 #: eelf_x86_64_fbsd.c:855 eelf_x86_64_haiku.c:855 eelf_x86_64_sol2.c:987
@@ -6434,6 +6288,8 @@ msgid ""
 "  -z mark-plt                 Mark PLT with dynamic tags\n"
 "  -z nomark-plt               Do not mark PLT with dynamic tags (default)\n"
 msgstr ""
+"  -z mark-plt                 Marca PLT con etiquetas dinámicas\n"
+"  -z nomark-plt               No marca PLT con etiquetas dinámicas (predefinido)\n"
 
 #: eelf32_x86_64.c:8797 eelf64loongarch.c:619 eelf64lppc.c:1389
 #: eelf64lppc_fbsd.c:1389 eelf64ppc.c:1389 eelf64ppc_fbsd.c:1389
@@ -6442,7 +6298,7 @@ msgstr ""
 #: eelf_x86_64_haiku.c:859 eelf_x86_64_sol2.c:991
 #, c-format
 msgid "  -z pack-relative-relocs     Pack relative relocations\n"
-msgstr ""
+msgstr "  -z pack-relative-relocs     Empaqueta reubicaciones relativas\n"
 
 #: eelf32_x86_64.c:8799 eelf64loongarch.c:621 eelf64lppc.c:1391
 #: eelf64lppc_fbsd.c:1391 eelf64ppc.c:1391 eelf64ppc_fbsd.c:1391
@@ -6451,7 +6307,7 @@ msgstr ""
 #: eelf_x86_64_haiku.c:861 eelf_x86_64_sol2.c:993
 #, c-format
 msgid "  -z nopack-relative-relocs   Do not pack relative relocations (default)\n"
-msgstr ""
+msgstr "  -z nopack-relative-relocs   No empaqueta reubicaciones relativas (predefinido)\n"
 
 #: eelf32b4300.c:775 eelf32bmip.c:775 eelf32bmipn32.c:789 eelf32bsmip.c:789
 #: eelf32btsmip.c:775 eelf32btsmip_fbsd.c:775 eelf32btsmipn32.c:775
@@ -6553,22 +6409,17 @@ msgstr "  --data-in-l1                Pone los datos en L1\n"
 #: eelf32lriscv.c:641 eelf32lriscv_ilp32.c:641 eelf32lriscv_ilp32f.c:641
 #: eelf64briscv.c:641 eelf64briscv_lp64.c:641 eelf64briscv_lp64f.c:641
 #: eelf64lriscv.c:641 eelf64lriscv_lp64.c:641 eelf64lriscv_lp64f.c:641
-#, fuzzy, c-format
-#| msgid "  --plugin                    Make SPU plugin\n"
+#, c-format
 msgid "  --relax-gp                  Perform GP relaxation\n"
-msgstr "  --plugin                    Produce plugin SPU\n"
+msgstr "  --relax-gp                  Realiza relajación GP\n"
 
 #: eelf32briscv.c:642 eelf32briscv_ilp32.c:642 eelf32briscv_ilp32f.c:642
 #: eelf32lriscv.c:642 eelf32lriscv_ilp32.c:642 eelf32lriscv_ilp32f.c:642
 #: eelf64briscv.c:642 eelf64briscv_lp64.c:642 eelf64briscv_lp64f.c:642
 #: eelf64lriscv.c:642 eelf64lriscv_lp64.c:642 eelf64lriscv_lp64f.c:642
-#, fuzzy, c-format
-#| msgid "  --no-toc-sort               Don't sort TOC and GOT sections\n"
+#, c-format
 msgid "  --no-relax-gp               Don't perform GP relaxation\n"
-msgstr ""
-"  --no-toc-sort               No ordena las secciones TOC y GOT\n"
-"  -z nocombreloc              No funde las reubicaciones dinámicas en una\n"
-"                                sola sección\n"
+msgstr "  --no-relax-gp               No realiza relajación GP\n"
 
 #: eelf32briscv.c:643 eelf32briscv_ilp32.c:643 eelf32briscv_ilp32f.c:643
 #: eelf32lriscv.c:643 eelf32lriscv_ilp32.c:643 eelf32lriscv_ilp32f.c:643
@@ -6576,7 +6427,7 @@ msgstr ""
 #: eelf64lriscv.c:643 eelf64lriscv_lp64.c:643 eelf64lriscv_lp64f.c:643
 #, c-format
 msgid "  --check-uleb128             Check if SUB_ULEB128 has non-zero addend\n"
-msgstr ""
+msgstr "  --check-uleb128             Comprueba si SUB_ULEB128 tiene adenda distinta de cero\n"
 
 #: eelf32briscv.c:644 eelf32briscv_ilp32.c:644 eelf32briscv_ilp32f.c:644
 #: eelf32lriscv.c:644 eelf32lriscv_ilp32.c:644 eelf32lriscv_ilp32f.c:644
@@ -6584,17 +6435,13 @@ msgstr ""
 #: eelf64lriscv.c:644 eelf64lriscv_lp64.c:644 eelf64lriscv_lp64f.c:644
 #, c-format
 msgid "  --no-check-uleb128          Don't check if SUB_ULEB128 has non-zero addend\n"
-msgstr ""
+msgstr "  --no-check-uleb128          No comprueba si SUB_ULEB128 tiene adenda distinta de cero\n"
 
 #: eelf32cr16.c:88
-#, fuzzy
-#| msgid "%F%P: %pB: all input objects must be COFF or ELF for --embedded-relocs\n"
 msgid "%P: %pB: all input objects must be COFF or ELF for --embedded-relocs\n"
 msgstr "%P: %pB: todos los objetos de entrada deben ser COFF o ELF para --embedded-relocs\n"
 
 #: eelf32cr16.c:112 em68kelf.c:116 em68kelfnbsd.c:116
-#, fuzzy
-#| msgid "%F%P: %pB: can not create .emreloc section: %E\n"
 msgid "%P: %pB: can not create .emreloc section: %E\n"
 msgstr "%P: %pB: no se puede crear la sección .emreloc: %E\n"
 
@@ -6611,16 +6458,12 @@ msgid "%X%P: %pB: can not create runtime reloc information: %s\n"
 msgstr "%X%P: %pB: no se puede crear información de reubicación para tiempo de ejecución: %s\n"
 
 #: eelf32kvx.c:64 eelf64kvx.c:64
-#, fuzzy
-#| msgid "%F%P: -pie not supported\n"
 msgid ":%P: -pie not supported\n"
-msgstr "%P: no se admite -pie\n"
+msgstr ":%P: no se admite -pie\n"
 
 #: eelf32kvx.c:316 eelf64kvx.c:316 eelf64kvx_linux.c:314
-#, fuzzy
-#| msgid "%F%P: can not create BFD: %E\n"
 msgid "%P: can not create BFD %E\n"
-msgstr "%P: no se puede crear BFD: %E\n"
+msgstr "%P: no se puede crear BFD %E\n"
 
 #: eelf32lppc.c:99 eelf32lppclinux.c:99 eelf32lppcnto.c:99 eelf32lppcsim.c:99
 #: eelf32ppc.c:99 eelf32ppc_fbsd.c:99 eelf32ppchaiku.c:99 eelf32ppclinux.c:99
@@ -6659,8 +6502,6 @@ msgstr "%X%P: ppc_finish_symbols problema %E\n"
 #: eelf32ppcsim.c:810 eelf32ppcvxworks.c:780 eelf32ppcwindiss.c:810
 #: eelf64lppc.c:1252 eelf64lppc_fbsd.c:1252 eelf64ppc.c:1252
 #: eelf64ppc_fbsd.c:1252
-#, fuzzy
-#| msgid "%F%P: invalid --plt-align `%s'\n"
 msgid "%P: invalid --plt-align `%s'\n"
 msgstr "%P: --plt-align no válido `%s'\n"
 
@@ -6668,8 +6509,6 @@ msgstr "%P: --plt-align no válido `%s'\n"
 #: eelf32lppcsim.c:843 eelf32ppc.c:843 eelf32ppc_fbsd.c:843
 #: eelf32ppchaiku.c:843 eelf32ppclinux.c:843 eelf32ppcnto.c:843
 #: eelf32ppcsim.c:843 eelf32ppcvxworks.c:813 eelf32ppcwindiss.c:843
-#, fuzzy
-#| msgid "%F%P: invalid pagesize `%s'\n"
 msgid "%P: invalid pagesize `%s'\n"
 msgstr "%P: tamaño de página no válido `%s'\n"
 
@@ -6890,8 +6729,6 @@ msgid "%P: warning: failed to convert %s table in %pB (%s); subsequent disassemb
 msgstr "%P: aviso: no se ha podido convertir la tabla de %s en %pB (%s); el desensamblaje subsiguiente puede estar incompleto\n"
 
 #: eelf32xtensa.c:421
-#, fuzzy
-#| msgid "%F%P: %pB: cannot read contents of section %pA\n"
 msgid "%P: %pB: cannot read contents of section %pA\n"
 msgstr "%P: %pB: no se puede leer el contenido de la sección %pA\n"
 
@@ -6904,32 +6741,22 @@ msgid "%P: %pB: warning: cannot parse .xtensa.info section\n"
 msgstr "%P: %pB: aviso: no se puede analizar la sección .xtensa.info\n"
 
 #: eelf32xtensa.c:462
-#, fuzzy
-#| msgid "%F%P: little endian output does not match Xtensa configuration\n"
 msgid "%P: little endian output does not match Xtensa configuration\n"
 msgstr "%P: la salida «little endian» no concuerda con la configuración Xtensa\n"
 
 #: eelf32xtensa.c:468
-#, fuzzy
-#| msgid "%F%P: big endian output does not match Xtensa configuration\n"
 msgid "%P: big endian output does not match Xtensa configuration\n"
 msgstr "%P: la salida «big endian» no concuerda con la configuración Xtensa\n"
 
 #: eelf32xtensa.c:487
-#, fuzzy
-#| msgid "%F%P: cross-endian linking for %pB not supported\n"
 msgid "%P: cross-endian linking for %pB not supported\n"
 msgstr "%P: no se admite el enlazamiento con «endian» cruzado para %pB\n"
 
 #: eelf32xtensa.c:518
-#, fuzzy
-#| msgid "%F%P: failed to create .xtensa.info section\n"
 msgid "%P: failed to create .xtensa.info section\n"
 msgstr "%P: fallo al crear la sección .xtensa.info\n"
 
 #: eelf32xtensa.c:1257
-#, fuzzy
-#| msgid "%F%P: Relaxation not supported with --enable-non-contiguous-regions.\n"
 msgid "%P: Relaxation not supported with --enable-non-contiguous-regions.\n"
 msgstr "%P: No se admite relajar con --enable-non-contiguous-regions.\n"
 
@@ -6953,8 +6780,6 @@ msgid "  --abi-call0                 Choose call0 ABI for the output object\n"
 msgstr "  --abi-call0                 Elige ABI call0 para el objeto de salida\n"
 
 #: eelf32z80.c:70 ez80.c:59
-#, fuzzy
-#| msgid "%F%P: %pB: Instruction sets of object files incompatible\n"
 msgid "%P: %pB: Instruction sets of object files incompatible\n"
 msgstr "%P: %pB: Conjuntos de instrucciones de los ficheros objeto incompatibles\n"
 
@@ -6994,8 +6819,6 @@ msgstr "%P: los fragmentos .init/.fini utilizan punteros TOC que difieren\n"
 
 #: eelf64lppc.c:1281 eelf64lppc_fbsd.c:1281 eelf64ppc.c:1281
 #: eelf64ppc_fbsd.c:1281
-#, fuzzy
-#| msgid "%F%P: invalid --power10-stubs argument `%s'\n"
 msgid "%P: invalid --power10-stubs argument `%s'\n"
 msgstr "%P: argumento de --power10-stubs no válido `%s'\n"
 
@@ -7173,29 +6996,21 @@ msgid "%X%P: too many global registers: %u, max 223\n"
 msgstr "%X%P: demasiados registros globales: %u, máx 223\n"
 
 #: eelf64mmix.c:144 emmo.c:144
-#, fuzzy
-#| msgid "%F%P: can't finalize linker-allocated global registers\n"
 msgid "%P: can't finalize linker-allocated global registers\n"
 msgstr "%P: no se pueden finalizar los registros globales asignados por el enlazador\n"
 
 #: eelf_x86_64.c:8719 eelf_x86_64_cloudabi.c:717 eelf_x86_64_fbsd.c:717
 #: eelf_x86_64_haiku.c:717 eelf_x86_64_sol2.c:849
-#, fuzzy
-#| msgid "%F%P: invalid option for -z lam-u48-report=: %s\n"
 msgid "%P: invalid option for -z lam-u48-report=: %s\n"
 msgstr "%P: opción no válida para -z lam-u48-report=: %s\n"
 
 #: eelf_x86_64.c:8733 eelf_x86_64_cloudabi.c:731 eelf_x86_64_fbsd.c:731
 #: eelf_x86_64_haiku.c:731 eelf_x86_64_sol2.c:863
-#, fuzzy
-#| msgid "%F%P: invalid option for -z lam-u57-report=: %s\n"
 msgid "%P: invalid option for -z lam-u57-report=: %s\n"
 msgstr "%P: opción no válida para -z lam-u57-report=: %s\n"
 
 #: eelf_x86_64.c:8754 eelf_x86_64_cloudabi.c:752 eelf_x86_64_fbsd.c:752
 #: eelf_x86_64_haiku.c:752 eelf_x86_64_sol2.c:884
-#, fuzzy
-#| msgid "%F%P: invalid option for -z lam-report=: %s\n"
 msgid "%P: invalid option for -z lam-report=: %s\n"
 msgstr "%P: opción no válida para -z lam-report=: %s\n"
 
@@ -7257,26 +7072,18 @@ msgstr ""
 "                                múltiples\n"
 
 #: ei386beos.c:354
-#, fuzzy
-#| msgid "%F%P: PE operations on non PE file\n"
 msgid "%P: PE operations on non PE file\n"
 msgstr "%P: operaciones PE en un fichero que no es PE\n"
 
 #: ei386beos.c:403 ei386beos.c:408
-#, fuzzy
-#| msgid "%F%P: %pB: can't read contents of section .idata: %E\n"
 msgid "%P: %pB: can't read contents of section .idata: %E\n"
 msgstr "%P: %pB: no se puede leer el contenido de la sección .idata: %E\n"
 
 #: ei386beos.c:640
-#, fuzzy
-#| msgid "%F%P: section %s has '$' as first character\n"
 msgid "%P: section %s has '$' as first character\n"
 msgstr "%P: la sección %s tiene un '$' como primer carácter\n"
 
 #: ei386beos.c:670
-#, fuzzy
-#| msgid "%F%P: *(%s$) missing from linker script\n"
 msgid "%P: *(%s$) missing from linker script\n"
 msgstr "%P: falta *(%s$) en el «script» del enlazador \n"
 
@@ -7307,8 +7114,6 @@ msgstr ""
 "                                describe la disposición de la ventana del banco de memoria\n"
 
 #: em68kelf.c:92 em68kelfnbsd.c:92
-#, fuzzy
-#| msgid "%F%P: %pB: all input objects must be ELF for --embedded-relocs\n"
 msgid "%P: %pB: all input objects must be ELF for --embedded-relocs\n"
 msgstr "%P: %pB: todos los objetos de entrada deben ser ELF para --embedded-relocs\n"
 
@@ -7387,8 +7192,6 @@ msgstr "%P: no se reconoce el argumento de la opción --data-region=: \"%s\"\n"
 #. Incompatible objects.
 #: ends32belf.c:129 ends32belf16m.c:129 ends32belf_linux.c:129 ends32elf.c:129
 #: ends32elf16m.c:129 ends32elf_linux.c:129
-#, fuzzy
-#| msgid "%F%P: %pB: ABI version of object files mismatched\n"
 msgid "%P: %pB: ABI version of object files mismatched\n"
 msgstr "%P: %pB: versión ABI de los ficheros objeto discordantes\n"
 
@@ -7470,8 +7273,6 @@ msgid "  --format 0|1|2              Specify which COFF version to use\n"
 msgstr "  --format 0|1|2              Especifica qué versión COFF utilizar\n"
 
 #: etic3xcoff.c:91 etic3xcoff_onchip.c:91 etic4xcoff.c:91 etic54xcoff.c:91
-#, fuzzy
-#| msgid "%F%P: invalid COFF format version %s\n"
 msgid "%P: invalid COFF format version %s\n"
 msgstr "%P: versión no válida de formato COFF %s\n"
 

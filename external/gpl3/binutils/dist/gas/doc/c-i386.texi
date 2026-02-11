@@ -1,4 +1,4 @@
-@c Copyright (C) 1991-2025 Free Software Foundation, Inc.
+@c Copyright (C) 1991-2026 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -126,6 +126,7 @@ processor names are recognized:
 @code{znver3},
 @code{znver4},
 @code{znver5},
+@code{znver6},
 @code{btver1},
 @code{btver2},
 @code{generic32} and
@@ -198,6 +199,7 @@ accept various extension mnemonics.  For example,
 @code{avx512_bf16},
 @code{avx_vnni},
 @code{avx512_fp16},
+@code{avx512_bmm},
 @code{prefetchi},
 @code{avx_ifma},
 @code{avx_vnni_int8},
@@ -220,6 +222,10 @@ accept various extension mnemonics.  For example,
 @code{user_msr},
 @code{msr_imm},
 @code{apx_f},
+@code{apx_nci},
+@code{apx_ndd},
+@code{apx_nf},
+@code{apx_nci_ndd_nf},
 @code{avx10.2},
 @code{avx10.2/512},
 @code{avx10.2/256},
@@ -478,8 +484,7 @@ relocations, R_386_GOT32X, in 32-bit mode, or R_X86_64_GOTPCRELX and
 R_X86_64_REX_GOTPCRELX, in 64-bit mode.
 @option{-mrelax-relocations=@var{yes}} will generate relax relocations.
 @option{-mrelax-relocations=@var{no}} will not generate relax
-relocations.  The default can be controlled by a configure option
-@option{--enable-x86-relax-relocations}.
+relocations.
 
 @cindex @samp{-mtls-check=} option, i386
 @cindex @samp{-mtls-check=} option, x86-64
@@ -1463,10 +1468,10 @@ instruction with the @samp{data16} instruction prefix), since the 80386
 insists upon masking @samp{%eip} to 16 bits after the word displacement
 is added. (See also @pxref{i386-Arch})
 
-Note that the @samp{jcxz}, @samp{jecxz}, @samp{loop}, @samp{loopz},
-@samp{loope}, @samp{loopnz} and @samp{loopne} instructions only come in byte
-displacements, so that if you use these instructions (@code{@value{GCC}} does
-not use them) you may get an error message (and incorrect code).  The AT&T
+Note that the @samp{jcxz}, @samp{jecxz}, @samp{jrcxz}, @samp{loop},
+@samp{loopz}, @samp{loope}, @samp{loopnz} and @samp{loopne} instructions only
+come with byte displacements, so that if you use these instructions
+(@code{@value{GCC}} does not use them) you may get an error message.  The AT&T
 80386 assembler tries to get around this problem by expanding @samp{jcxz foo}
 to
 
@@ -1692,9 +1697,9 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{k6} @tab @samp{k6_2} @tab @samp{athlon} @tab @samp{k8}
 @item @samp{amdfam10} @tab @samp{bdver1} @tab @samp{bdver2} @tab @samp{bdver3}
 @item @samp{bdver4} @tab @samp{znver1} @tab @samp{znver2} @tab @samp{znver3}
-@item @samp{znver4} @tab @samp{znver5} @tab @samp{btver1} @tab @samp{btver2}
-@item @samp{generic32}
-@item @samp{generic64} @tab @samp{.cmov} @tab @samp{.fxsr} @tab @samp{.mmx}
+@item @samp{znver4} @tab @samp{znver5} @tab @samp{znver6} @tab @samp{btver1}
+@item @samp{btver2} @tab @samp{generic32} @tab @samp{generic64}
+@item @samp{.cmov} @tab @samp{.fxsr} @tab @samp{.mmx}
 @item @samp{.sse} @tab @samp{.sse2} @tab @samp{.sse3} @tab @samp{.sse4a}
 @item @samp{.ssse3} @tab @samp{.sse4.1} @tab @samp{.sse4.2} @tab @samp{.sse4}
 @item @samp{.avx} @tab @samp{.vmx} @tab @samp{.smx} @tab @samp{.ept}
@@ -1711,9 +1716,9 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.avx512vbmi} @tab @samp{.avx512_4fmaps} @tab @samp{.avx512_4vnniw}
 @item @samp{.avx512_vpopcntdq} @tab @samp{.avx512_vbmi2} @tab @samp{.avx512_vnni}
 @item @samp{.avx512_bitalg} @tab @samp{.avx512_bf16} @tab @samp{.avx512_vp2intersect}
-@item @samp{.tdx} @tab @samp{.avx_vnni} @tab @samp{.avx512_fp16} @tab @samp{.avx10.1}
-@item @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite} @tab @samp{.ibt}
-@item @samp{.prefetchi} @tab @samp{.avx_ifma} @tab @samp{.avx_vnni_int8}
+@item @samp{.tdx} @tab @samp{.avx_vnni} @tab @samp{.avx512_fp16} @tab @samp{avx512_bmm}
+@item @samp{.avx10.1} @tab @samp{.clwb} @tab @samp{.rdpid} @tab @samp{.ptwrite}
+@item @samp{.ibt} @tab @samp{.prefetchi} @tab @samp{.avx_ifma} @tab @samp{.avx_vnni_int8}
 @item @samp{.cmpccxadd} @tab @samp{.wrmsrns} @tab @samp{.msrlist}
 @item @samp{.avx_ne_convert} @tab @samp{.rao_int} @tab @samp{.fred} @tab @samp{.lkgs}
 @item @samp{.avx_vnni_int16} @tab @samp{.sha512} @tab @samp{.sm3} @tab @samp{.sm4}
@@ -1733,6 +1738,7 @@ supported on the CPU specified.  The choices for @var{cpu_type} are:
 @item @samp{.padlock} @tab @samp{.clzero} @tab @samp{.mwaitx} @tab @samp{.rdpru}
 @item @samp{.mcommit} @tab @samp{.sev_es} @tab @samp{.snp} @tab @samp{.invlpgb}
 @item @samp{.tlbsync} @tab @samp{.rmpquery} @tab @samp{.rmpread} @tab @samp{.apx_f}
+@item @samp{.apx_nci} @tab @samp{.apx_ndd} @tab @samp{.apx_nf} @tab @samp{.apx_nci_ndd_nf}
 @item @samp{.gmism2} @tab @samp{.gmiccs} @tab @samp{.padlockrng2} @tab @samp{.padlockphe2}
 @item @samp{.padlockxmodx}
 
@@ -1760,8 +1766,8 @@ suffixes will disable all insns with wider vector or mask register operands.
 On SVR4-derived platforms, the separator character @samp{/} can be replaced by
 @samp{:}.
 
-Following the CPU architecture (but not a sub-architecture, which are those
-starting with a dot), you may specify @samp{jumps} or @samp{nojumps} to
+Following a 16-bit CPU architecture (but not a sub-architecture, which are
+those starting with a dot), you may specify @samp{jumps} or @samp{nojumps} to
 control automatic promotion of conditional jumps. @samp{jumps} is the
 default, and enables jump promotion;  All external jumps will be of the long
 variety, and file-local jumps will be promoted as necessary.

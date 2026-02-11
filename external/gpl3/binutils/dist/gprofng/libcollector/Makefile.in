@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -109,7 +109,9 @@ host_triplet = @host@
 target_triplet = @target@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../../config/depstand.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../../config/clang-plugin.m4 \
+	$(top_srcdir)/../../config/depstand.m4 \
+	$(top_srcdir)/../../config/gcc-plugin.m4 \
 	$(top_srcdir)/../../config/lead-dot.m4 \
 	$(top_srcdir)/../../config/override.m4 \
 	$(top_srcdir)/../../config/warnings.m4 \
@@ -178,30 +180,35 @@ am__v_lt_0 = --silent
 am__v_lt_1 = 
 libgp_collector_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(libgp_collector_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
+	$(libgp_collector_la_CFLAGS) $(CFLAGS) \
+	$(libgp_collector_la_LDFLAGS) $(LDFLAGS) -o $@
 libgp_collectorAPI_la_DEPENDENCIES =
-am_libgp_collectorAPI_la_OBJECTS = collectorAPI.lo
+am_libgp_collectorAPI_la_OBJECTS =  \
+	libgp_collectorAPI_la-collectorAPI.lo
 libgp_collectorAPI_la_OBJECTS = $(am_libgp_collectorAPI_la_OBJECTS)
+libgp_collectorAPI_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
+	$(libgp_collectorAPI_la_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
+	$(LDFLAGS) -o $@
 libgp_heap_la_LIBADD =
-am_libgp_heap_la_OBJECTS = heaptrace.lo
+am_libgp_heap_la_OBJECTS = libgp_heap_la-heaptrace.lo
 libgp_heap_la_OBJECTS = $(am_libgp_heap_la_OBJECTS)
 libgp_heap_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libgp_heap_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libgp_heap_la_CFLAGS) \
+	$(CFLAGS) $(libgp_heap_la_LDFLAGS) $(LDFLAGS) -o $@
 libgp_iotrace_la_LIBADD =
-am_libgp_iotrace_la_OBJECTS = iotrace.lo
+am_libgp_iotrace_la_OBJECTS = libgp_iotrace_la-iotrace.lo
 libgp_iotrace_la_OBJECTS = $(am_libgp_iotrace_la_OBJECTS)
 libgp_iotrace_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(libgp_iotrace_la_LDFLAGS) $(LDFLAGS) \
-	-o $@
+	$(libgp_iotrace_la_CFLAGS) $(CFLAGS) \
+	$(libgp_iotrace_la_LDFLAGS) $(LDFLAGS) -o $@
 libgp_sync_la_LIBADD =
-am_libgp_sync_la_OBJECTS = synctrace.lo
+am_libgp_sync_la_OBJECTS = libgp_sync_la-synctrace.lo
 libgp_sync_la_OBJECTS = $(am_libgp_sync_la_OBJECTS)
 libgp_sync_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(libgp_sync_la_LDFLAGS) $(LDFLAGS) -o $@
+	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(libgp_sync_la_CFLAGS) \
+	$(CFLAGS) $(libgp_sync_la_LDFLAGS) $(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
 am__v_P_0 = false
@@ -337,6 +344,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
+LLVM_CONFIG = @LLVM_CONFIG@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -420,7 +428,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = foreign
-ACLOCAL_AMFLAGS = -I . -I ../.. 
+ACLOCAL_AMFLAGS = -I . -I ../..  -I ../../config
 CSOURCES = \
 	gethrtime.c \
 	dispatcher.c \
@@ -441,7 +449,7 @@ CSOURCES = \
 	collector.c \
 	$(NULL)
 
-AM_CFLAGS = $(GPROFNG_CFLAGS) $(GPROFNG_NO_NONNULL_COMPARE_CFLAGS)
+AM_CFLAGS = $(GPROFNG_CFLAGS) $(GPROFNG_NO_NONNULL_COMPARE_CFLAGS) $(NOLTO_CFLAGS)
 AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -I.. -I$(srcdir) \
 	-I$(srcdir)/../common -I$(srcdir)/../src \
 	-I$(srcdir)/../../include
@@ -459,6 +467,7 @@ pkglib_LTLIBRARIES = libgp-collector.la libgp-collectorAPI.la libgp-heap.la \
 	libgp-sync.la libgp-iotrace.la
 
 libgp_collector_la_SOURCES = $(CSOURCES)
+libgp_collector_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_collector_la_CPPFLAGS = $(AM_CPPFLAGS) $(jdk_inc) \
 	-I../../bfd -I$(srcdir)/../..
 
@@ -467,12 +476,16 @@ libgp_collector_la_CPPFLAGS = $(AM_CPPFLAGS) $(jdk_inc) \
 libgp_collector_la_LDFLAGS = $(AM_LDFLAGS)
 libgp_collector_la_LIBADD = $(CLOCK_GETTIME_LINK)
 libgp_heap_la_SOURCES = heaptrace.c
+libgp_heap_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_heap_la_LDFLAGS = $(AM_LDFLAGS)
 libgp_sync_la_SOURCES = synctrace.c
+libgp_sync_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_sync_la_LDFLAGS = $(AM_LDFLAGS)
 libgp_iotrace_la_SOURCES = iotrace.c
+libgp_iotrace_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_iotrace_la_LDFLAGS = $(AM_LDFLAGS)
 libgp_collectorAPI_la_SOURCES = collectorAPI.c
+libgp_collectorAPI_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgp_collectorAPI_la_LIBADD = -lc -ldl
 all: lib-config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-am
@@ -567,7 +580,7 @@ libgp-collector.la: $(libgp_collector_la_OBJECTS) $(libgp_collector_la_DEPENDENC
 	$(AM_V_CCLD)$(libgp_collector_la_LINK) -rpath $(pkglibdir) $(libgp_collector_la_OBJECTS) $(libgp_collector_la_LIBADD) $(LIBS)
 
 libgp-collectorAPI.la: $(libgp_collectorAPI_la_OBJECTS) $(libgp_collectorAPI_la_DEPENDENCIES) $(EXTRA_libgp_collectorAPI_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(LINK) -rpath $(pkglibdir) $(libgp_collectorAPI_la_OBJECTS) $(libgp_collectorAPI_la_LIBADD) $(LIBS)
+	$(AM_V_CCLD)$(libgp_collectorAPI_la_LINK) -rpath $(pkglibdir) $(libgp_collectorAPI_la_OBJECTS) $(libgp_collectorAPI_la_LIBADD) $(LIBS)
 
 libgp-heap.la: $(libgp_heap_la_OBJECTS) $(libgp_heap_la_DEPENDENCIES) $(EXTRA_libgp_heap_la_DEPENDENCIES) 
 	$(AM_V_CCLD)$(libgp_heap_la_LINK) -rpath $(pkglibdir) $(libgp_heap_la_OBJECTS) $(libgp_heap_la_LIBADD) $(LIBS)
@@ -584,9 +597,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/collectorAPI.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/heaptrace.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/iotrace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collectorAPI_la-collectorAPI.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-collector.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-dispatcher.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-envmgmt.Plo@am__quote@
@@ -604,7 +615,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-profile.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-tsd.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_collector_la-unwind.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/synctrace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_heap_la-heaptrace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_iotrace_la-iotrace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgp_sync_la-synctrace.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -628,123 +641,151 @@ distclean-compile:
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
 
 libgp_collector_la-gethrtime.lo: gethrtime.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-gethrtime.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-gethrtime.Tpo -c -o libgp_collector_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-gethrtime.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-gethrtime.Tpo -c -o libgp_collector_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-gethrtime.Tpo $(DEPDIR)/libgp_collector_la-gethrtime.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gethrtime.c' object='libgp_collector_la-gethrtime.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
 
 libgp_collector_la-dispatcher.lo: dispatcher.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-dispatcher.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-dispatcher.Tpo -c -o libgp_collector_la-dispatcher.lo `test -f 'dispatcher.c' || echo '$(srcdir)/'`dispatcher.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-dispatcher.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-dispatcher.Tpo -c -o libgp_collector_la-dispatcher.lo `test -f 'dispatcher.c' || echo '$(srcdir)/'`dispatcher.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-dispatcher.Tpo $(DEPDIR)/libgp_collector_la-dispatcher.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dispatcher.c' object='libgp_collector_la-dispatcher.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-dispatcher.lo `test -f 'dispatcher.c' || echo '$(srcdir)/'`dispatcher.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-dispatcher.lo `test -f 'dispatcher.c' || echo '$(srcdir)/'`dispatcher.c
 
 libgp_collector_la-iolib.lo: iolib.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-iolib.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-iolib.Tpo -c -o libgp_collector_la-iolib.lo `test -f 'iolib.c' || echo '$(srcdir)/'`iolib.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-iolib.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-iolib.Tpo -c -o libgp_collector_la-iolib.lo `test -f 'iolib.c' || echo '$(srcdir)/'`iolib.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-iolib.Tpo $(DEPDIR)/libgp_collector_la-iolib.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iolib.c' object='libgp_collector_la-iolib.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-iolib.lo `test -f 'iolib.c' || echo '$(srcdir)/'`iolib.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-iolib.lo `test -f 'iolib.c' || echo '$(srcdir)/'`iolib.c
 
 libgp_collector_la-mmaptrace.lo: mmaptrace.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-mmaptrace.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-mmaptrace.Tpo -c -o libgp_collector_la-mmaptrace.lo `test -f 'mmaptrace.c' || echo '$(srcdir)/'`mmaptrace.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-mmaptrace.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-mmaptrace.Tpo -c -o libgp_collector_la-mmaptrace.lo `test -f 'mmaptrace.c' || echo '$(srcdir)/'`mmaptrace.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-mmaptrace.Tpo $(DEPDIR)/libgp_collector_la-mmaptrace.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='mmaptrace.c' object='libgp_collector_la-mmaptrace.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-mmaptrace.lo `test -f 'mmaptrace.c' || echo '$(srcdir)/'`mmaptrace.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-mmaptrace.lo `test -f 'mmaptrace.c' || echo '$(srcdir)/'`mmaptrace.c
 
 libgp_collector_la-memmgr.lo: memmgr.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-memmgr.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-memmgr.Tpo -c -o libgp_collector_la-memmgr.lo `test -f 'memmgr.c' || echo '$(srcdir)/'`memmgr.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-memmgr.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-memmgr.Tpo -c -o libgp_collector_la-memmgr.lo `test -f 'memmgr.c' || echo '$(srcdir)/'`memmgr.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-memmgr.Tpo $(DEPDIR)/libgp_collector_la-memmgr.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='memmgr.c' object='libgp_collector_la-memmgr.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-memmgr.lo `test -f 'memmgr.c' || echo '$(srcdir)/'`memmgr.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-memmgr.lo `test -f 'memmgr.c' || echo '$(srcdir)/'`memmgr.c
 
 libgp_collector_la-tsd.lo: tsd.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-tsd.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-tsd.Tpo -c -o libgp_collector_la-tsd.lo `test -f 'tsd.c' || echo '$(srcdir)/'`tsd.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-tsd.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-tsd.Tpo -c -o libgp_collector_la-tsd.lo `test -f 'tsd.c' || echo '$(srcdir)/'`tsd.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-tsd.Tpo $(DEPDIR)/libgp_collector_la-tsd.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='tsd.c' object='libgp_collector_la-tsd.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-tsd.lo `test -f 'tsd.c' || echo '$(srcdir)/'`tsd.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-tsd.lo `test -f 'tsd.c' || echo '$(srcdir)/'`tsd.c
 
 libgp_collector_la-profile.lo: profile.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-profile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-profile.Tpo -c -o libgp_collector_la-profile.lo `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-profile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-profile.Tpo -c -o libgp_collector_la-profile.lo `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-profile.Tpo $(DEPDIR)/libgp_collector_la-profile.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='profile.c' object='libgp_collector_la-profile.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-profile.lo `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-profile.lo `test -f 'profile.c' || echo '$(srcdir)/'`profile.c
 
 libgp_collector_la-envmgmt.lo: envmgmt.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-envmgmt.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-envmgmt.Tpo -c -o libgp_collector_la-envmgmt.lo `test -f 'envmgmt.c' || echo '$(srcdir)/'`envmgmt.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-envmgmt.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-envmgmt.Tpo -c -o libgp_collector_la-envmgmt.lo `test -f 'envmgmt.c' || echo '$(srcdir)/'`envmgmt.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-envmgmt.Tpo $(DEPDIR)/libgp_collector_la-envmgmt.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='envmgmt.c' object='libgp_collector_la-envmgmt.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-envmgmt.lo `test -f 'envmgmt.c' || echo '$(srcdir)/'`envmgmt.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-envmgmt.lo `test -f 'envmgmt.c' || echo '$(srcdir)/'`envmgmt.c
 
 libgp_collector_la-linetrace.lo: linetrace.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-linetrace.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-linetrace.Tpo -c -o libgp_collector_la-linetrace.lo `test -f 'linetrace.c' || echo '$(srcdir)/'`linetrace.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-linetrace.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-linetrace.Tpo -c -o libgp_collector_la-linetrace.lo `test -f 'linetrace.c' || echo '$(srcdir)/'`linetrace.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-linetrace.Tpo $(DEPDIR)/libgp_collector_la-linetrace.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='linetrace.c' object='libgp_collector_la-linetrace.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-linetrace.lo `test -f 'linetrace.c' || echo '$(srcdir)/'`linetrace.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-linetrace.lo `test -f 'linetrace.c' || echo '$(srcdir)/'`linetrace.c
 
 libgp_collector_la-libcol_hwcdrv.lo: libcol_hwcdrv.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_hwcdrv.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_hwcdrv.Tpo -c -o libgp_collector_la-libcol_hwcdrv.lo `test -f 'libcol_hwcdrv.c' || echo '$(srcdir)/'`libcol_hwcdrv.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_hwcdrv.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_hwcdrv.Tpo -c -o libgp_collector_la-libcol_hwcdrv.lo `test -f 'libcol_hwcdrv.c' || echo '$(srcdir)/'`libcol_hwcdrv.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-libcol_hwcdrv.Tpo $(DEPDIR)/libgp_collector_la-libcol_hwcdrv.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libcol_hwcdrv.c' object='libgp_collector_la-libcol_hwcdrv.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_hwcdrv.lo `test -f 'libcol_hwcdrv.c' || echo '$(srcdir)/'`libcol_hwcdrv.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_hwcdrv.lo `test -f 'libcol_hwcdrv.c' || echo '$(srcdir)/'`libcol_hwcdrv.c
 
 libgp_collector_la-libcol_hwcfuncs.lo: libcol_hwcfuncs.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_hwcfuncs.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_hwcfuncs.Tpo -c -o libgp_collector_la-libcol_hwcfuncs.lo `test -f 'libcol_hwcfuncs.c' || echo '$(srcdir)/'`libcol_hwcfuncs.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_hwcfuncs.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_hwcfuncs.Tpo -c -o libgp_collector_la-libcol_hwcfuncs.lo `test -f 'libcol_hwcfuncs.c' || echo '$(srcdir)/'`libcol_hwcfuncs.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-libcol_hwcfuncs.Tpo $(DEPDIR)/libgp_collector_la-libcol_hwcfuncs.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libcol_hwcfuncs.c' object='libgp_collector_la-libcol_hwcfuncs.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_hwcfuncs.lo `test -f 'libcol_hwcfuncs.c' || echo '$(srcdir)/'`libcol_hwcfuncs.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_hwcfuncs.lo `test -f 'libcol_hwcfuncs.c' || echo '$(srcdir)/'`libcol_hwcfuncs.c
 
 libgp_collector_la-libcol-i386-dis.lo: libcol-i386-dis.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol-i386-dis.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol-i386-dis.Tpo -c -o libgp_collector_la-libcol-i386-dis.lo `test -f 'libcol-i386-dis.c' || echo '$(srcdir)/'`libcol-i386-dis.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol-i386-dis.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol-i386-dis.Tpo -c -o libgp_collector_la-libcol-i386-dis.lo `test -f 'libcol-i386-dis.c' || echo '$(srcdir)/'`libcol-i386-dis.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-libcol-i386-dis.Tpo $(DEPDIR)/libgp_collector_la-libcol-i386-dis.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libcol-i386-dis.c' object='libgp_collector_la-libcol-i386-dis.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol-i386-dis.lo `test -f 'libcol-i386-dis.c' || echo '$(srcdir)/'`libcol-i386-dis.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol-i386-dis.lo `test -f 'libcol-i386-dis.c' || echo '$(srcdir)/'`libcol-i386-dis.c
 
 libgp_collector_la-hwprofile.lo: hwprofile.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-hwprofile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-hwprofile.Tpo -c -o libgp_collector_la-hwprofile.lo `test -f 'hwprofile.c' || echo '$(srcdir)/'`hwprofile.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-hwprofile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-hwprofile.Tpo -c -o libgp_collector_la-hwprofile.lo `test -f 'hwprofile.c' || echo '$(srcdir)/'`hwprofile.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-hwprofile.Tpo $(DEPDIR)/libgp_collector_la-hwprofile.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='hwprofile.c' object='libgp_collector_la-hwprofile.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-hwprofile.lo `test -f 'hwprofile.c' || echo '$(srcdir)/'`hwprofile.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-hwprofile.lo `test -f 'hwprofile.c' || echo '$(srcdir)/'`hwprofile.c
 
 libgp_collector_la-jprofile.lo: jprofile.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-jprofile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-jprofile.Tpo -c -o libgp_collector_la-jprofile.lo `test -f 'jprofile.c' || echo '$(srcdir)/'`jprofile.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-jprofile.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-jprofile.Tpo -c -o libgp_collector_la-jprofile.lo `test -f 'jprofile.c' || echo '$(srcdir)/'`jprofile.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-jprofile.Tpo $(DEPDIR)/libgp_collector_la-jprofile.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='jprofile.c' object='libgp_collector_la-jprofile.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-jprofile.lo `test -f 'jprofile.c' || echo '$(srcdir)/'`jprofile.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-jprofile.lo `test -f 'jprofile.c' || echo '$(srcdir)/'`jprofile.c
 
 libgp_collector_la-unwind.lo: unwind.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-unwind.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-unwind.Tpo -c -o libgp_collector_la-unwind.lo `test -f 'unwind.c' || echo '$(srcdir)/'`unwind.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-unwind.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-unwind.Tpo -c -o libgp_collector_la-unwind.lo `test -f 'unwind.c' || echo '$(srcdir)/'`unwind.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-unwind.Tpo $(DEPDIR)/libgp_collector_la-unwind.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='unwind.c' object='libgp_collector_la-unwind.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-unwind.lo `test -f 'unwind.c' || echo '$(srcdir)/'`unwind.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-unwind.lo `test -f 'unwind.c' || echo '$(srcdir)/'`unwind.c
 
 libgp_collector_la-libcol_util.lo: libcol_util.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_util.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_util.Tpo -c -o libgp_collector_la-libcol_util.lo `test -f 'libcol_util.c' || echo '$(srcdir)/'`libcol_util.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-libcol_util.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-libcol_util.Tpo -c -o libgp_collector_la-libcol_util.lo `test -f 'libcol_util.c' || echo '$(srcdir)/'`libcol_util.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-libcol_util.Tpo $(DEPDIR)/libgp_collector_la-libcol_util.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='libcol_util.c' object='libgp_collector_la-libcol_util.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_util.lo `test -f 'libcol_util.c' || echo '$(srcdir)/'`libcol_util.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-libcol_util.lo `test -f 'libcol_util.c' || echo '$(srcdir)/'`libcol_util.c
 
 libgp_collector_la-collector.lo: collector.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libgp_collector_la-collector.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-collector.Tpo -c -o libgp_collector_la-collector.lo `test -f 'collector.c' || echo '$(srcdir)/'`collector.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -MT libgp_collector_la-collector.lo -MD -MP -MF $(DEPDIR)/libgp_collector_la-collector.Tpo -c -o libgp_collector_la-collector.lo `test -f 'collector.c' || echo '$(srcdir)/'`collector.c
 @am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collector_la-collector.Tpo $(DEPDIR)/libgp_collector_la-collector.Plo
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='collector.c' object='libgp_collector_la-collector.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-collector.lo `test -f 'collector.c' || echo '$(srcdir)/'`collector.c
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libgp_collector_la_CPPFLAGS) $(CPPFLAGS) $(libgp_collector_la_CFLAGS) $(CFLAGS) -c -o libgp_collector_la-collector.lo `test -f 'collector.c' || echo '$(srcdir)/'`collector.c
+
+libgp_collectorAPI_la-collectorAPI.lo: collectorAPI.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_collectorAPI_la_CFLAGS) $(CFLAGS) -MT libgp_collectorAPI_la-collectorAPI.lo -MD -MP -MF $(DEPDIR)/libgp_collectorAPI_la-collectorAPI.Tpo -c -o libgp_collectorAPI_la-collectorAPI.lo `test -f 'collectorAPI.c' || echo '$(srcdir)/'`collectorAPI.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_collectorAPI_la-collectorAPI.Tpo $(DEPDIR)/libgp_collectorAPI_la-collectorAPI.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='collectorAPI.c' object='libgp_collectorAPI_la-collectorAPI.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_collectorAPI_la_CFLAGS) $(CFLAGS) -c -o libgp_collectorAPI_la-collectorAPI.lo `test -f 'collectorAPI.c' || echo '$(srcdir)/'`collectorAPI.c
+
+libgp_heap_la-heaptrace.lo: heaptrace.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_heap_la_CFLAGS) $(CFLAGS) -MT libgp_heap_la-heaptrace.lo -MD -MP -MF $(DEPDIR)/libgp_heap_la-heaptrace.Tpo -c -o libgp_heap_la-heaptrace.lo `test -f 'heaptrace.c' || echo '$(srcdir)/'`heaptrace.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_heap_la-heaptrace.Tpo $(DEPDIR)/libgp_heap_la-heaptrace.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='heaptrace.c' object='libgp_heap_la-heaptrace.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_heap_la_CFLAGS) $(CFLAGS) -c -o libgp_heap_la-heaptrace.lo `test -f 'heaptrace.c' || echo '$(srcdir)/'`heaptrace.c
+
+libgp_iotrace_la-iotrace.lo: iotrace.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_iotrace_la_CFLAGS) $(CFLAGS) -MT libgp_iotrace_la-iotrace.lo -MD -MP -MF $(DEPDIR)/libgp_iotrace_la-iotrace.Tpo -c -o libgp_iotrace_la-iotrace.lo `test -f 'iotrace.c' || echo '$(srcdir)/'`iotrace.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_iotrace_la-iotrace.Tpo $(DEPDIR)/libgp_iotrace_la-iotrace.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='iotrace.c' object='libgp_iotrace_la-iotrace.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_iotrace_la_CFLAGS) $(CFLAGS) -c -o libgp_iotrace_la-iotrace.lo `test -f 'iotrace.c' || echo '$(srcdir)/'`iotrace.c
+
+libgp_sync_la-synctrace.lo: synctrace.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_sync_la_CFLAGS) $(CFLAGS) -MT libgp_sync_la-synctrace.lo -MD -MP -MF $(DEPDIR)/libgp_sync_la-synctrace.Tpo -c -o libgp_sync_la-synctrace.lo `test -f 'synctrace.c' || echo '$(srcdir)/'`synctrace.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgp_sync_la-synctrace.Tpo $(DEPDIR)/libgp_sync_la-synctrace.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='synctrace.c' object='libgp_sync_la-synctrace.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgp_sync_la_CFLAGS) $(CFLAGS) -c -o libgp_sync_la-synctrace.lo `test -f 'synctrace.c' || echo '$(srcdir)/'`synctrace.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

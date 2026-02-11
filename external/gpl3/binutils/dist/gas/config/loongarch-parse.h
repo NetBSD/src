@@ -87,7 +87,7 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 344 "./config/loongarch-parse.y"
+#line 345 "./config/loongarch-parse.y"
 
 char *c_str;
 offsetT imm;

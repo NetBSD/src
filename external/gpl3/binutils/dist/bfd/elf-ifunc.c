@@ -1,5 +1,5 @@
 /* ELF STT_GNU_IFUNC support.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -35,7 +35,7 @@ _bfd_elf_create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 {
   flagword flags, pltflags;
   asection *s;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   if (htab->irelifunc != NULL || htab->iplt != NULL)
@@ -115,7 +115,7 @@ _bfd_elf_allocate_ifunc_dyn_relocs (struct bfd_link_info *info,
   asection *plt, *gotplt, *relplt;
   struct elf_dyn_relocs *p;
   unsigned int sizeof_reloc;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   struct elf_link_hash_table *htab;
   /* If AVOID_PLT is TRUE, don't use PLT if possible.  */
   bool use_plt = !avoid_plt || h->plt.refcount > 0;

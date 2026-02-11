@@ -1,5 +1,5 @@
 /* Support for the generic parts of COFF, for BFD.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -596,12 +596,12 @@ _bfd_coff_internal_syment_name (bfd *abfd,
    value must be INTERNAL_RELOCS.  The function returns NULL on error.  */
 
 struct internal_reloc *
-_bfd_coff_read_internal_relocs (bfd *abfd,
-				asection *sec,
-				bool cache,
-				bfd_byte *external_relocs,
-				bool require_internal,
-				struct internal_reloc *internal_relocs)
+bfd_coff_read_internal_relocs (bfd *abfd,
+			       asection *sec,
+			       bool cache,
+			       bfd_byte *external_relocs,
+			       bool require_internal,
+			       struct internal_reloc *internal_relocs)
 {
   bfd_size_type relsz;
   bfd_byte *free_external = NULL;
@@ -1259,9 +1259,17 @@ coff_write_alien_symbol (bfd *abfd,
     }
   else
     {
+      asection *isec = symbol->section;
+
       native->u.syment.n_scnum = output_section->target_index;
-      native->u.syment.n_value = (symbol->value
-				  + symbol->section->output_offset);
+      native->u.syment.n_value = symbol->value;
+
+      if (isec->sec_info_type == SEC_INFO_TYPE_MERGE
+	  && !(symbol->flags & (BSF_SECTION_SYM | BSF_MERGE_RESOLVED)))
+	native->u.syment.n_value =
+	  _bfd_merged_section_offset (abfd, &isec, symbol->value);
+
+      native->u.syment.n_value += isec->output_offset;
       if (! obj_pe (abfd))
 	native->u.syment.n_value += output_section->vma;
 
@@ -2864,8 +2872,8 @@ init_reloc_cookie_rels (struct coff_reloc_cookie *cookie,
       return true;
     }
 
-  cookie->rels = _bfd_coff_read_internal_relocs (abfd, sec, false, NULL,
-						 0, NULL);
+  cookie->rels = bfd_coff_read_internal_relocs (abfd, sec, false, NULL,
+						false, NULL);
 
   if (cookie->rels == NULL)
     return false;
@@ -3238,7 +3246,7 @@ _bfd_coff_gc_keep (struct bfd_link_info *info)
 /* Do mark and sweep of unused sections.  */
 
 bool
-bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
+_bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 {
   bfd *sub;
 
@@ -3288,7 +3296,7 @@ bfd_coff_gc_sections (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
 /* Return name used to identify a comdat group.  */
 
 const char *
-bfd_coff_group_name (bfd *abfd, const asection *sec)
+_bfd_coff_group_name (bfd *abfd, const asection *sec)
 {
   struct coff_comdat_info *ci = bfd_coff_get_comdat_section (abfd, sec);
   if (ci != NULL)

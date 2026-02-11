@@ -1,7 +1,7 @@
 /* -*- c -*-
    Declarations and definitions of codes relating to the DWARF2 and
    DWARF3 symbolic debugging information formats.
-   Copyright (C) 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
    Written by Gary Funck (gary@intrepid.com) The Ada Joint Program
    Office (AJPO), Florida State University and Silicon Graphics Inc.
@@ -174,6 +174,11 @@ DW_TAG (DW_TAG_GNU_formal_parameter_pack, 0x4108)
    are properly part of DWARF 5.  */
 DW_TAG (DW_TAG_GNU_call_site, 0x4109)
 DW_TAG (DW_TAG_GNU_call_site_parameter, 0x410a)
+
+/* GNU annotation extension used by btf_decl_tag and btf_type_tag.
+   See https://gcc.gnu.org/wiki/GNUAnnotationsDwarf .  */
+DW_TAG (DW_TAG_GNU_annotation, 0x6001)
+
 /* Extensions for UPC.  See: http://dwarfstd.org/doc/DWARF4.pdf.  */
 DW_TAG (DW_TAG_upc_shared_type, 0x8765)
 DW_TAG (DW_TAG_upc_strict_type, 0x8766)
@@ -364,6 +369,9 @@ DW_AT (DW_AT_export_symbols, 0x89)
 DW_AT (DW_AT_deleted, 0x8a)
 DW_AT (DW_AT_defaulted, 0x8b)
 DW_AT (DW_AT_loclists_base, 0x8c)
+/* DWARF 6.  */
+DW_AT (DW_AT_language_name, 0x90)
+DW_AT (DW_AT_language_version, 0x91)
 
 DW_AT_DUP (DW_AT_lo_user, 0x2000) /* Implementation-defined range start.  */
 DW_AT_DUP (DW_AT_hi_user, 0x3fff) /* Implementation-defined range end.  */
@@ -453,6 +461,9 @@ DW_AT (DW_AT_GNU_pubtypes, 0x2135)
 DW_AT (DW_AT_GNU_discriminator, 0x2136)
 DW_AT (DW_AT_GNU_locviews, 0x2137)
 DW_AT (DW_AT_GNU_entry_view, 0x2138)
+/* GNU annotation extension used by btf_decl_tag and btf_type_tag.
+   See https://gcc.gnu.org/wiki/GNUAnnotationsDwarf .  */
+DW_AT (DW_AT_GNU_annotation, 0x2139)
 /* VMS extensions.  */
 DW_AT (DW_AT_VMS_rtnbeg_pd_address, 0x2201)
 /* GNAT extensions.  */

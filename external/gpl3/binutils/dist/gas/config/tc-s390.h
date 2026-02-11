@@ -1,5 +1,5 @@
 /* tc-s390.h -- Header file for tc-s390.c.
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    Written by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of GAS, the GNU Assembler.
@@ -19,6 +19,7 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#ifndef TC_S390
 #define TC_S390
 
 struct fix;
@@ -118,8 +119,7 @@ extern const unsigned int s390_sframe_cfa_ra_reg;
 #define SFRAME_CFA_RA_REG s390_sframe_cfa_ra_reg
 
 /* Whether SFrame return address tracking is needed.  */
-extern bool s390_sframe_ra_tracking_p (void);
-#define sframe_ra_tracking_p s390_sframe_ra_tracking_p
+#define sframe_ra_tracking_p() true
 
 /* The fixed offset from CFA for SFrame to recover the return address.
    (useful only when SFrame RA tracking is not needed).  */
@@ -129,3 +129,11 @@ extern offsetT s390_sframe_cfa_ra_offset (void);
 /* The abi/arch identifier for SFrame.  */
 unsigned char s390_sframe_get_abi_arch (void);
 #define sframe_get_abi_arch s390_sframe_get_abi_arch
+
+/* Whether SFrame FDE of type SFRAME_FDE_TYPE_FLEX be generated.  */
+#define sframe_support_flex_fde_p() true
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+
+#endif /* TC_S390 */

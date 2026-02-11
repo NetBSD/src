@@ -132,6 +132,7 @@ ecoff.c
 ecofflink.c
 ecoffswap.h
 elf-attrs.c
+elf-attrs.h
 elf-bfd.h
 elf-eh-frame.c
 elf-hppa.h
@@ -140,8 +141,6 @@ elf-linker-x86.h
 elf-linux-core.h
 elf-m10200.c
 elf-m10300.c
-elf-nacl.c
-elf-nacl.h
 elf-properties.c
 elf-s390.h
 elf-sframe.c
@@ -275,6 +274,7 @@ format.c
 genlink.h
 go32stub.h
 hash.c
+hidden.h
 hpux-core.c
 i386aout.c
 i386bsd.c

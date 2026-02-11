@@ -1,6 +1,6 @@
 /* KVX ELF support for BFD.
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of GNU Binutils.

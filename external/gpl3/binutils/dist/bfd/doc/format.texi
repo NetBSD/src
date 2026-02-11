@@ -26,14 +26,12 @@ The BFD contains the result of an executable core dump.
 @subsection File format functions
 
 
-@findex bfd_check_format_lto
-@subsubsection @code{bfd_check_format_lto}
-@deftypefn {Function} bool bfd_check_format_lto (bfd *abfd, bfd_format format, bool lto_sections_removed); 
+@findex bfd_check_format
+@subsubsection @code{bfd_check_format}
+@deftypefn {Function} bool bfd_check_format (bfd *abfd, bfd_format format); 
 Verify if the file attached to the BFD @var{abfd} is compatible
 with the format @var{format} (i.e., one of @code{bfd_object},
 @code{bfd_archive} or @code{bfd_core}).
-
-If LTO_SECTION_REMOVED is true, ignore plugin target.
 
 If the BFD has been set to a specific target before the
 call, only the named target and format combination is
@@ -74,37 +72,14 @@ the thread calling bfd_check_format must call bfd_cache_close
 itself.
 
 @end deftypefn
-@findex bfd_check_format
-@subsubsection @code{bfd_check_format}
-@deftypefn {Function} bool bfd_check_format (bfd *abfd, bfd_format format); 
-Similar to bfd_check_format_plugin, except plugin target isn't
-ignored.
-
-@end deftypefn
-@findex bfd_check_format_matches_lto
-@subsubsection @code{bfd_check_format_matches_lto}
-@deftypefn {Function} bool bfd_check_format_matches_lto (bfd *abfd, bfd_format format, char ***matching, bool lto_sections_removed); 
-Like @code{bfd_check_format}, except when it returns FALSE with
-@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.  In that
-case, if @var{matching} is not NULL, it will be filled in with
-a NULL-terminated list of the names of the formats that matched,
-allocated with @code{malloc}.
-Then the user may choose a format and try again.
-
-When done with the list that @var{matching} points to, the caller
-should free it.
-
-If LTO_SECTION_REMOVED is true, ignore plugin target.
-
-@end deftypefn
 @findex bfd_check_format_matches
 @subsubsection @code{bfd_check_format_matches}
 @deftypefn {Function} bool bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching); 
 Like @code{bfd_check_format}, except when it returns FALSE with
-@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.  In that
-case, if @var{matching} is not NULL, it will be filled in with
-a NULL-terminated list of the names of the formats that matched,
-allocated with @code{malloc}.
+@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.
+In that case, if @var{matching} is not NULL, it will be filled
+in with a NULL-terminated list of the names of the formats
+that matched, allocated with @code{malloc}.
 Then the user may choose a format and try again.
 
 When done with the list that @var{matching} points to, the caller

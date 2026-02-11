@@ -1,5 +1,5 @@
 /* BFD back-end for AArch64 COFF files.
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,9 +18,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-
-#ifndef COFF_WITH_peAArch64
-#define COFF_WITH_peAArch64
+#ifndef COFF_WITH_PE
+#error non-PE COFF unsupported
 #endif
 
 #include "sysdep.h"
@@ -974,6 +973,7 @@ const bfd_target
   15,				/* Ar_max_namelen.  */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
 
   /* Data conversion functions.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
@@ -1018,3 +1018,78 @@ const bfd_target
 
   COFF_SWAP_TABLE
 };
+
+#ifdef COFF_WITH_PE_BIGOBJ
+const bfd_target
+  TARGET_SYM_BIG =
+{
+  TARGET_NAME_BIG,
+  bfd_target_coff_flavour,
+  BFD_ENDIAN_LITTLE,		/* Data byte order is little.  */
+  BFD_ENDIAN_LITTLE,		/* Header byte order is little.  */
+
+  (HAS_RELOC | EXEC_P		/* Object flags.  */
+   | HAS_LINENO | HAS_DEBUG
+   | HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED | BFD_COMPRESS | BFD_DECOMPRESS),
+
+  (SEC_HAS_CONTENTS | SEC_ALLOC | SEC_LOAD | SEC_RELOC /* Section flags.  */
+#ifdef COFF_WITH_PE
+   | SEC_LINK_ONCE | SEC_LINK_DUPLICATES | SEC_READONLY | SEC_DEBUGGING
+#endif
+   | SEC_CODE | SEC_DATA | SEC_EXCLUDE ),
+
+#ifdef TARGET_UNDERSCORE
+  TARGET_UNDERSCORE,		/* Leading underscore.  */
+#else
+  0,				/* Leading underscore.  */
+#endif
+  '/',				/* Ar_pad_char.  */
+  15,				/* Ar_max_namelen.  */
+  0,				/* match priority.  */
+  TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
+
+  /* Data conversion functions.  */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+  bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+  bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Data.  */
+  /* Header conversion functions.  */
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,
+  bfd_getl32, bfd_getl_signed_32, bfd_putl32,
+  bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* Hdrs.  */
+
+  /* Note that we allow an object file to be treated as a core file as well.  */
+  {				/* bfd_check_format.  */
+    _bfd_dummy_target,
+    coff_object_p,
+    bfd_generic_archive_p,
+    coff_object_p
+  },
+  {				/* bfd_set_format.  */
+    _bfd_bool_bfd_false_error,
+    coff_mkobject,
+    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error
+  },
+  {				/* bfd_write_contents.  */
+    _bfd_bool_bfd_false_error,
+    coff_write_object_contents,
+    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error
+  },
+
+  BFD_JUMP_TABLE_GENERIC (coff_aarch64),
+  BFD_JUMP_TABLE_COPY (coff),
+  BFD_JUMP_TABLE_CORE (_bfd_nocore),
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
+  BFD_JUMP_TABLE_SYMBOLS (coff),
+  BFD_JUMP_TABLE_RELOCS (coff),
+  BFD_JUMP_TABLE_WRITE (coff),
+  BFD_JUMP_TABLE_LINK (coff),
+  BFD_JUMP_TABLE_DYNAMIC (_bfd_nodynamic),
+
+  NULL,
+
+  &bigobj_swap_table
+};
+#endif

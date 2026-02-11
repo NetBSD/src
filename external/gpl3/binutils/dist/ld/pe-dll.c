@@ -1,5 +1,5 @@
 /* Routines to help build PEI-format DLLs (Win32 etc)
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@cygnus.com>
 
    This file is part of the GNU Binutils.
@@ -245,12 +245,17 @@ static const autofilter_entry_type autofilter_symbollist_i386[] =
   { NULL, 0 }
 };
 
-#define PE_ARCH_i386	 1
-#define PE_ARCH_sh	 2
-#define PE_ARCH_mips	 3
-#define PE_ARCH_arm	 4
-#define PE_ARCH_arm_wince 5
-#define PE_ARCH_aarch64  6
+/* Internal identification of PE architectures.  */
+enum
+{
+  PE_ARCH_none,
+  PE_ARCH_i386,
+  PE_ARCH_sh,
+  PE_ARCH_arm,
+  PE_ARCH_arm_wince,
+  PE_ARCH_aarch64,
+  PE_ARCH_mcore,
+};
 
 /* Don't make it constant as underscore mode gets possibly overriden
    by target or -(no-)leading-underscore option.  */
@@ -305,7 +310,6 @@ static pe_details_type pe_detail_list[] =
     true,
     autofilter_symbollist_i386
   },
-#endif
   {
     "pei-shl",
     "pe-shl",
@@ -317,12 +321,22 @@ static pe_details_type pe_detail_list[] =
     autofilter_symbollist_generic
   },
   {
-    "pei-mips",
-    "pe-mips",
-    34 /* MIPS_R_RVA */,
+    "pei-mcore-little",
+    "pe-mcore-little",
+    7 /* IMAGE_REL_MCORE_RVA */,
     ~0, 0, ~0, /* none */
-    PE_ARCH_mips,
-    bfd_arch_mips,
+    PE_ARCH_mcore,
+    bfd_arch_mcore,
+    false,
+    autofilter_symbollist_generic
+  },
+  {
+    "pei-mcore-big",
+    "pe-mcore-big",
+    7 /* IMAGE_REL_MCORE_RVA */,
+    ~0, 0, ~0, /* none */
+    PE_ARCH_mcore,
+    bfd_arch_mcore,
     false,
     autofilter_symbollist_generic
   },
@@ -347,9 +361,22 @@ static pe_details_type pe_detail_list[] =
     false,
     autofilter_symbollist_generic
   },
+#endif
   {
     "pei-aarch64-little",
     "pe-aarch64-little",
+    2,  /* IMAGE_REL_ARM64_ADDR32NB */
+    8,  /* IMAGE_REL_ARM64_SECREL */
+    11, /* IMAGE_REL_ARM64_SECREL_LOW12L */
+    13, /* IMAGE_REL_ARM64_SECTION */
+    PE_ARCH_aarch64,
+    bfd_arch_aarch64,
+    false,
+    autofilter_symbollist_generic
+  },
+  {
+    "pei-aarch64-little",
+    "pe-bigobj-aarch64-little",
     2,  /* IMAGE_REL_ARM64_ADDR32NB */
     8,  /* IMAGE_REL_ARM64_SECREL */
     11, /* IMAGE_REL_ARM64_SECREL_LOW12L */
@@ -791,9 +818,17 @@ process_def_file_and_drectve (bfd *abfd ATTRIBUTE_UNUSED, struct bfd_link_info *
 	    {
 	      /* We should export symbols which are either global or not
 		 anything at all.  (.bss data is the latter)
-		 We should not export undefined symbols.  */
+		 We should not export undefined symbols.
+		 Compilers may generate template data (initializers) for
+		 thread-local variables in .tls$* sections, but they are only
+		 used by the DLL loader.  Symbols in those sections are used
+		 to access thread-local variables, but only via offsets to the
+		 beginning of the .tls output section.  These offsets can't be
+		 exported.  PE targets not using BSF_THREAD_LOCAL, we need to
+		 go by section name for now.  */
 	      bool would_export
 		= (symbols[j]->section != bfd_und_section_ptr
+		   && !startswith (symbols[j]->section->name, ".tls$")
 		   && ((symbols[j]->flags & BSF_GLOBAL)
 		       || (symbols[j]->flags == 0)));
 	      if (link_info.version_info && would_export)
@@ -1081,6 +1116,7 @@ build_filler_bfd (bool include_edata)
       edata_s = bfd_make_section_old_way (filler_bfd, ".edata");
       if (edata_s == NULL
 	  || !bfd_set_section_flags (edata_s, (SEC_HAS_CONTENTS
+					       | SEC_DATA
 					       | SEC_ALLOC
 					       | SEC_LOAD
 					       | SEC_KEEP
@@ -1095,7 +1131,7 @@ build_filler_bfd (bool include_edata)
   reloc_s = bfd_make_section_old_way (filler_bfd, ".reloc");
   if (reloc_s == NULL
       || !bfd_set_section_flags (reloc_s, (SEC_HAS_CONTENTS
-					   | SEC_ALLOC
+					   | SEC_DATA
 					   | SEC_LOAD
 					   | SEC_KEEP
 					   | SEC_IN_MEMORY)))
@@ -1630,9 +1666,8 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 		  const struct bfd_link_hash_entry *blhe
 		    = bfd_wrapped_link_hash_lookup (abfd, info, sym->name,
 						    false, false, false);
-
 		  /* Don't create relocs for undefined weak symbols.  */
-		  if (sym->flags == BSF_WEAK)
+		  if (sym->flags & BSF_WEAK)
 		    {
 		      if (blhe && blhe->type == bfd_link_hash_undefweak)
 			{
@@ -1657,7 +1692,7 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 			continue;
 		    }
 		  /* Nor for Dwarf FDE references to discarded sections.  */
-		  else if (bfd_is_abs_section (sym->section->output_section))
+		  if (bfd_is_abs_section (sym->section->output_section))
 		    {
 		      /* We only ignore relocs from .eh_frame sections, as
 			 they are discarded by the final link rather than
@@ -1666,10 +1701,10 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 			continue;
 		    }
 		  /* Nor for absolute symbols.  */
-		  else if (blhe && ldexp_is_final_sym_absolute (blhe)
-			   && (!blhe->linker_def
-			       || (strcmp (sym->name, "__image_base__")
-				   && strcmp (sym->name, U ("__ImageBase")))))
+		  if (blhe && ldexp_is_final_sym_absolute (blhe)
+		      && (!blhe->linker_def
+			  || (strcmp (sym->name, "__image_base__")
+			      && strcmp (sym->name, U ("__ImageBase")))))
 		    continue;
 
 		  reloc_data[total_relocs].vma = sec_vma + relocs[i]->address;
@@ -1701,15 +1736,6 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 		      break;
 		    case BITS_AND_SHIFT (16, 0):
 		      reloc_data[total_relocs].type = IMAGE_REL_BASED_LOW;
-		      total_relocs++;
-		      break;
-		    case BITS_AND_SHIFT (16, 16):
-		      reloc_data[total_relocs].type = IMAGE_REL_BASED_HIGHADJ;
-		      /* FIXME: we can't know the symbol's right value
-			 yet, but we probably can safely assume that
-			 CE will relocate us in 64k blocks, so leaving
-			 it zero is safe.  */
-		      reloc_data[total_relocs].extra = 0;
 		      total_relocs++;
 		      break;
 		    case BITS_AND_SHIFT (26, 2):
@@ -1765,9 +1791,6 @@ generate_reloc (bfd *abfd, struct bfd_link_info *info)
 	}
 
       reloc_sz += 2;
-
-      if (reloc_data[i].type == IMAGE_REL_BASED_HIGHADJ)
-	reloc_sz += 2;
     }
 
   reloc_sz = (reloc_sz + 3) & ~3;	/* 4-byte align.  */
@@ -2314,18 +2337,6 @@ static const unsigned char jmp_sh_bytes[] =
   0x01, 0xd0, 0x02, 0x60, 0x2b, 0x40, 0x09, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-/* _function:
-	lui	$t0,<high:__imp_function>
-	lw	$t0,<low:__imp_function>
-	jr	$t0
-	nop                              */
-
-static const unsigned char jmp_mips_bytes[] =
-{
-  0x00, 0x00, 0x08, 0x3c,  0x00, 0x00, 0x08, 0x8d,
-  0x08, 0x00, 0x00, 0x01,  0x00, 0x00, 0x00, 0x00
-};
-
 static const unsigned char jmp_arm_bytes[] =
 {
   0x00, 0xc0, 0x9f, 0xe5,	/* ldr  ip, [pc] */
@@ -2387,10 +2398,6 @@ make_one (def_file_export *exp, bfd *parent, bool include_jmp_stub)
 	case PE_ARCH_sh:
 	  jmp_bytes = jmp_sh_bytes;
 	  jmp_byte_count = sizeof (jmp_sh_bytes);
-	  break;
-	case PE_ARCH_mips:
-	  jmp_bytes = jmp_mips_bytes;
-	  jmp_byte_count = sizeof (jmp_mips_bytes);
 	  break;
 	case PE_ARCH_arm:
 	case PE_ARCH_arm_wince:
@@ -2477,11 +2484,6 @@ make_one (def_file_export *exp, bfd *parent, bool include_jmp_stub)
 	  break;
 	case PE_ARCH_sh:
 	  quick_reloc (abfd, 8, BFD_RELOC_32, 2);
-	  break;
-	case PE_ARCH_mips:
-	  quick_reloc (abfd, 0, BFD_RELOC_HI16_S, 2);
-	  quick_reloc (abfd, 0, BFD_RELOC_LO16, 0); /* MIPS_R_PAIR */
-	  quick_reloc (abfd, 4, BFD_RELOC_LO16, 2);
 	  break;
 	case PE_ARCH_arm:
 	case PE_ARCH_arm_wince:
@@ -3717,8 +3719,11 @@ pe_exe_build_sections (bfd *abfd, struct bfd_link_info *info ATTRIBUTE_UNUSED)
 {
   pe_dll_id_target (bfd_get_target (abfd));
   pe_output_file_set_long_section_names (abfd);
-  build_filler_bfd (0);
-  pe_output_file_set_long_section_names (filler_bfd);
+  if (pe_dll_enable_reloc_section)
+    {
+      build_filler_bfd (false);
+      pe_output_file_set_long_section_names (filler_bfd);
+    }
 }
 
 void

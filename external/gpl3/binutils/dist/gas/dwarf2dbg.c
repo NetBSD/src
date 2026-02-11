@@ -1,5 +1,5 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -1071,6 +1071,8 @@ void
 dwarf2_emit_insn (int size)
 {
   struct dwarf2_line_info loc;
+
+  seg_info (now_seg)->insn_seen = 1;
 
   if (debug_type != DEBUG_DWARF2
       ? !dwarf2_loc_directive_seen

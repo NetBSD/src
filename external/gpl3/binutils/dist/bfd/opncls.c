@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -151,8 +151,7 @@ _bfd_delete_bfd (bfd *abfd)
     bfd_free_cached_info (abfd);
 
   /* The target _bfd_free_cached_info may not have done anything..  */
-  if (abfd->section_htab.memory)
-    bfd_hash_table_free (&abfd->section_htab);
+  bfd_hash_table_free (&abfd->section_htab);
   if (abfd->memory)
     objalloc_free (abfd->memory);
 
@@ -186,8 +185,7 @@ DESCRIPTION
 bool
 _bfd_free_cached_info (bfd *abfd)
 {
-  if (abfd->section_htab.memory)
-    bfd_hash_table_free (&abfd->section_htab);
+  bfd_hash_table_free (&abfd->section_htab);
 
   abfd->sections = NULL;
   abfd->section_last = NULL;
@@ -1034,15 +1032,12 @@ bfd_make_readable (bfd *abfd)
   abfd->origin = 0;
   abfd->opened_once = false;
   abfd->output_has_begun = false;
-  abfd->usrdata = NULL;
   abfd->cacheable = false;
   abfd->mtime_set = false;
 
   abfd->target_defaulted = true;
   abfd->direction = read_direction;
   abfd->symcount = 0;
-  abfd->outsymbols = 0;
-  abfd->tdata.any = 0;
   abfd->size = 0;
 
   bfd_check_format (abfd, bfd_object);

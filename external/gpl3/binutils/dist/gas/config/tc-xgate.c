@@ -1,5 +1,5 @@
 /* tc-xgate.c -- Assembler code for Freescale XGATE
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    Contributed by Sean Keys <skeys@ipdatasys.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -1123,7 +1123,6 @@ xgate_scan_operands (struct xgate_opcode *opcode, s_operand oprs[])
   unsigned short oper_mask = 0;
   int operand_bit_length = 0;
   unsigned int operand = 0;
-  char n_operand_bits = 0;
   char first_operand_equals_second = 0;
   int i = 0;
   char c = 0;
@@ -1139,7 +1138,6 @@ xgate_scan_operands (struct xgate_opcode *opcode, s_operand oprs[])
 	{
 	  oper_mask <<= 1;
 	  oper_mask += 1;
-	  n_operand_bits++;
 	}
     }
 

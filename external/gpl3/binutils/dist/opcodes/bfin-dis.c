@@ -1,5 +1,5 @@
 /* Disassemble ADI Blackfin Instructions.
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of libopcodes.
 
@@ -486,7 +486,7 @@ static const enum machine_registers decode_allregs[] =
 #ifndef OUTS
 #define OUTS(p, txt) (p)->fprintf_func ((p)->stream, "%s", txt)
 #endif
-#define OUT(p, txt, ...) (p)->fprintf_func ((p)->stream, txt, ## __VA_ARGS__)
+#define OUT(p, txt, ...) (p)->fprintf_func ((p)->stream, txt, __VA_ARGS__)
 
 static void
 amod0 (int s0, int x0, disassemble_info *outf)

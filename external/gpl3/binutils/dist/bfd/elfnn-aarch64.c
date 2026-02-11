@@ -1,5 +1,5 @@
 /* AArch64-specific support for NN-bit ELF.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -4494,6 +4494,8 @@ _bfd_aarch64_add_call_stub_entries (bool *stub_changed, bfd *output_bfd,
 		    = bfd_elf_string_from_elf_section (input_bfd,
 						       symtab_hdr->sh_link,
 						       sym->st_name);
+		  if (sym_name == NULL || sym_name[0] == 0)
+		    sym_name = bfd_section_name (sym_sec);
 		}
 	      else
 		{
@@ -4629,8 +4631,9 @@ _bfd_aarch64_add_call_stub_entries (bool *stub_changed, bfd *output_bfd,
 	      stub_entry->h = hash;
 	      stub_entry->st_type = st_type;
 
-	      if (sym_name == NULL)
-		sym_name = "unnamed";
+	      if (sym_name == NULL || sym_name[0] == 0)
+		sym_name = bfd_section_name (section);
+
 	      len = sizeof (STUB_ENTRY_NAME) + strlen (sym_name);
 	      stub_entry->output_name = bfd_alloc (htab->stub_bfd, len);
 	      if (stub_entry->output_name == NULL)
@@ -4769,30 +4772,12 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
       stub_group_size = 127 * 1024 * 1024;
     }
 
-  group_sections (htab, stub_group_size, stubs_always_before_branch);
-
-  (*htab->layout_sections_again) ();
-
-  if (htab->fix_erratum_835769)
-    {
-      bfd *input_bfd;
-
-      for (input_bfd = info->input_bfds;
-	   input_bfd != NULL; input_bfd = input_bfd->link.next)
-	{
-	  if (!is_aarch64_elf (input_bfd)
-	      || (input_bfd->flags & BFD_LINKER_CREATED) != 0)
-	    continue;
-
-	  if (!_bfd_aarch64_erratum_835769_scan (input_bfd, info,
-						 &num_erratum_835769_fixes))
-	    return false;
-	}
-
-      _bfd_aarch64_resize_stubs (htab);
-      (*htab->layout_sections_again) ();
-    }
-
+  /* The 843419 erratum fix inserts stub sections in place, not in
+     the section groups.  Running this after we have created the stub
+     groups can perturb the calculations and cause the stub groups
+     that have been created to be out of range.  Avoid this by running
+     this pass first and then creating the groups once we know how much
+     code this mitigation will insert.  */
   if (htab->fix_erratum_843419 != ERRAT_NONE)
     {
       bfd *input_bfd;
@@ -4812,6 +4797,30 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
 	       section = section->next)
 	    if (!_bfd_aarch64_erratum_843419_scan (input_bfd, section, info))
 	      return false;
+	}
+
+      _bfd_aarch64_resize_stubs (htab);
+      (*htab->layout_sections_again) ();
+    }
+
+  group_sections (htab, stub_group_size, stubs_always_before_branch);
+
+  (*htab->layout_sections_again) ();
+
+  if (htab->fix_erratum_835769)
+    {
+      bfd *input_bfd;
+
+      for (input_bfd = info->input_bfds;
+	   input_bfd != NULL; input_bfd = input_bfd->link.next)
+	{
+	  if (!is_aarch64_elf (input_bfd)
+	      || (input_bfd->flags & BFD_LINKER_CREATED) != 0)
+	    continue;
+
+	  if (!_bfd_aarch64_erratum_835769_scan (input_bfd, info,
+						 &num_erratum_835769_fixes))
+	    return false;
 	}
 
       _bfd_aarch64_resize_stubs (htab);
@@ -4970,7 +4979,6 @@ setup_plt_values (struct bfd_link_info *link_info,
     {
       globals->plt0_entry = elfNN_aarch64_small_plt0_bti_entry;
 
-      /* Only in ET_EXEC we need PLTn with BTI.  */
       if (bfd_link_executable (link_info))
 	{
 	  globals->plt_entry_size = PLT_BTI_PAC_SMALL_ENTRY_SIZE;
@@ -4988,7 +4996,6 @@ setup_plt_values (struct bfd_link_info *link_info,
     {
       globals->plt0_entry = elfNN_aarch64_small_plt0_bti_entry;
 
-      /* Only in ET_EXEC we need PLTn with BTI.  */
       if (bfd_link_executable (link_info))
 	{
 	  globals->plt_entry_size = PLT_BTI_SMALL_ENTRY_SIZE;
@@ -5031,40 +5038,101 @@ bfd_elfNN_aarch64_set_options (struct bfd *output_bfd,
   elf_aarch64_tdata (output_bfd)->no_enum_size_warning = no_enum_warn;
   elf_aarch64_tdata (output_bfd)->no_wchar_size_warning = no_wchar_warn;
 
-  /* Note: gnu_property_aarch64_feature_1_and was initialized to 0 by
-     bfd_zalloc().  */
+  /* The global list of object attributes used to save requested features from
+     the command-line options.  */
+  obj_attr_subsection_v2_t *attrs_subsection
+    = bfd_elf_obj_attr_subsection_v2_init (xstrdup ("aeabi_feature_and_bits"),
+					    OA_SUBSEC_PUBLIC, true,
+					    OA_ENC_ULEB128);
+
+  uint32_t gnu_property_aarch64_feature_1_and = 0;
+  aarch64_feature_marking_report gcs_report;
+  aarch64_feature_marking_report gcs_report_dynamic;
+
   if (sw_protections->plt_type & PLT_BTI)
-    elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
-      |= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
+    {
+      gnu_property_aarch64_feature_1_and |= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
+      _bfd_aarch64_oav2_record (attrs_subsection, Tag_Feature_BTI, true);
+    }
+
+  /* Note: Contrarilly to PLT_BTI, (sw_protections->plt_type & PLT_PAC) == true
+     does not mean that Tag_Feature_PAC should also be set to true.  The PAC
+     object attribute is only there to mirror the existing GNU properties.
+     Adding a property for PAC was in retrospect a mistake as it does not carry
+     valuable information.  The only use it does have is informational: if the
+     property is set on the output ELF object, then someone went to the trouble
+     of enabling it on all the input objects.  */
 
   switch (sw_protections->gcs_type)
     {
     case GCS_ALWAYS:
-      elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
-	|= GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      gnu_property_aarch64_feature_1_and |= GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      _bfd_aarch64_oav2_record (attrs_subsection, Tag_Feature_GCS, true);
+
+      /* The default diagnostic level with '-z gcs=always' is 'warning'.  */
+      if (sw_protections->gcs_report == MARKING_UNSET)
+	gcs_report = MARKING_WARN;
+      else
+	gcs_report = sw_protections->gcs_report;
+
+      /* The default diagnostic level with '-z gcs=always' is 'warning'.  */
+      if (sw_protections->gcs_report_dynamic == MARKING_UNSET)
+	gcs_report_dynamic = MARKING_WARN;
+      else
+	gcs_report_dynamic = sw_protections->gcs_report_dynamic;
       break;
+
     case GCS_NEVER:
-      elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
-	&= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      gnu_property_aarch64_feature_1_and &= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      _bfd_aarch64_oav2_record (attrs_subsection, Tag_Feature_GCS, false);
+
+      /* Markings are ignored, so no diagnostic messages can be emitted.  */
+      gcs_report = MARKING_NONE;
+      gcs_report_dynamic = MARKING_NONE;
       break;
+
     case GCS_IMPLICIT:
       /* GCS feature on the output bfd will be deduced from input objects.  */
+
+      /* No warnings should be emitted on input static objects with
+	 '-z gcs=implicit'.  */
+      gcs_report = MARKING_NONE;
+
+      /* Binary Linux distributions do not rebuild all packages from scratch
+	 when rolling out a new feature or creating a new release; only modified
+	 packages get rebuilt.  In the context of GCS deployment, this meant
+	 that some packages were rebuilt with GCS enabled while their
+	 dependencies were not yet GCS-compatible, resulting in warnings because
+	 originally the report level for dynamic objects was set to warning.
+	 These warnings caused build failures for packages that treat linker
+	 warnings as errors.  Those errors slowed down the GCS deployment, and
+	 Linux distribution maintainers requested that no GCS option provided
+	 should be equivalent to '-z gcs=implicit -z gcs-report-dynamic=none'.
+	 */
+      if (sw_protections->gcs_report_dynamic == MARKING_UNSET)
+	gcs_report_dynamic = MARKING_NONE;
+      else
+	gcs_report_dynamic = sw_protections->gcs_report_dynamic;
       break;
+
+    default:
+      /* Unknown GCS type.  */
+      abort ();
     }
 
+  if (attrs_subsection->size > 0)
+    LINKED_LIST_APPEND (obj_attr_subsection_v2_t)
+      (&elf_obj_attr_subsections (output_bfd), attrs_subsection);
+
+  elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
+    = gnu_property_aarch64_feature_1_and;
+
   elf_aarch64_tdata (output_bfd)->sw_protections = *sw_protections;
-  /* Inherit the value from '-z gcs-report' if the option '-z gcs-report-dynamic'
-     was not set on the command line.  However, the inheritance mechanism is
-     capped to avoid inheriting the error level from -g gcs-report as the user
-     might want to continue to build a module without rebuilding all the shared
-     libraries.  If a user also wants to error GCS issues in the shared
-     libraries, '-z gcs-report-dynamic=error' will have to be specified
-     explicitly.  */
-  if (sw_protections->gcs_report_dynamic == MARKING_UNSET)
-    elf_aarch64_tdata (output_bfd)->sw_protections.gcs_report_dynamic
-      = (sw_protections->gcs_report == MARKING_ERROR)
-      ? MARKING_WARN
-      : sw_protections->gcs_report;
+  /* Adjusting GCS diagnostic levels.  */
+  elf_aarch64_tdata (output_bfd)->sw_protections.gcs_report
+    = gcs_report;
+  elf_aarch64_tdata (output_bfd)->sw_protections.gcs_report_dynamic
+    = gcs_report_dynamic;
 
   elf_aarch64_tdata (output_bfd)->n_bti_issues = 0;
   elf_aarch64_tdata (output_bfd)->n_gcs_issues = 0;
@@ -5825,7 +5893,7 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 		}
 
 	      sreloc = globals->root.irelifunc;
-	      elf_append_rela (output_bfd, sreloc, &outrel);
+	      _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 
 	      /* If this reloc is against an external symbol, we
 		 do not want to fiddle with the addend.  Otherwise,
@@ -6290,7 +6358,7 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 	  outrel.r_offset = got_entry_addr;
 	  outrel.r_info = ELFNN_R_INFO (0, AARCH64_R (RELATIVE));
 	  outrel.r_addend = orig_value;
-	  elf_append_rela (output_bfd, s, &outrel);
+	  _bfd_elf_append_rela (output_bfd, s, &outrel);
 	}
       break;
 
@@ -7059,7 +7127,8 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_AARCH64_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -7498,7 +7567,7 @@ elfNN_aarch64_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (!_bfd_generic_verify_endian_match (ibfd, info))
     return false;
 
-  if (!is_aarch64_elf (ibfd) || !is_aarch64_elf (obfd))
+  if (!is_aarch64_elf (ibfd))
     return true;
 
   /* The input BFD must have had its flags initialised.  */
@@ -7765,7 +7834,7 @@ elfNN_aarch64_allocate_local_symbols (bfd *abfd, unsigned number)
 static bool
 aarch64_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
 {
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   flagword flags;
   asection *s;
   struct elf_link_hash_entry *h;
@@ -8347,7 +8416,7 @@ elfNN_aarch64_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
       /* Check relocation against STT_GNU_IFUNC symbol if there are
 	 dynamic symbols.  */
       bfd *abfd = info->output_bfd;
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       unsigned long r_symndx = ELFNN_R_SYM (rela->r_info);
       if (r_symndx != STN_UNDEF)
 	{
@@ -8464,10 +8533,9 @@ elfNN_aarch64_modify_headers (bfd *abfd,
 			      struct bfd_link_info *info)
 {
   struct elf_segment_map *m;
-  unsigned int segment_count = 0;
   Elf_Internal_Phdr *p;
 
-  for (m = elf_seg_map (abfd); m != NULL; m = m->next, segment_count++)
+  for (m = elf_seg_map (abfd); m != NULL; m = m->next)
     {
       /* We are only interested in the memory tag segment that will be dumped
 	 to a core file.  If we have no memory tags or this isn't a core file we
@@ -9486,7 +9554,7 @@ elfNN_aarch64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     {
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->root.interp;
 	  if (s == NULL)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -9767,16 +9835,16 @@ elfNN_aarch64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 	  aarch64_plt_type plt_type
 	    = elf_aarch64_tdata (output_bfd)->sw_protections.plt_type;
-	  if ((plt_type == PLT_BTI_PAC)
+	  if (plt_type == PLT_BTI_PAC
 	      && (!add_dynamic_entry (DT_AARCH64_BTI_PLT, 0)
 		  || !add_dynamic_entry (DT_AARCH64_PAC_PLT, 0)))
 	    return false;
 
-	  else if ((plt_type == PLT_BTI)
+	  else if (plt_type == PLT_BTI
 		   && !add_dynamic_entry (DT_AARCH64_BTI_PLT, 0))
 	    return false;
 
-	  else if ((plt_type == PLT_PAC)
+	  else if (plt_type == PLT_PAC
 		   && !add_dynamic_entry (DT_AARCH64_PAC_PLT, 0))
 	    return false;
 	}
@@ -9950,8 +10018,7 @@ elfNN_aarch64_early_size_sections (bfd *output_bfd,
       if (tlsbase)
 	{
 	  struct bfd_link_hash_entry *h = NULL;
-	  const struct elf_backend_data *bed =
-	    get_elf_backend_data (output_bfd);
+	  elf_backend_data *bed = get_elf_backend_data (output_bfd);
 
 	  if (!(_bfd_generic_link_add_one_symbol
 		(info, output_bfd, "_TLS_MODULE_BASE_", BSF_LOCAL,
@@ -10219,7 +10286,8 @@ elfNN_aarch64_init_small_plt0_entry (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 static bool
 elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
-				       struct bfd_link_info *info)
+				       struct bfd_link_info *info,
+				       bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf_aarch64_link_hash_table *htab;
   bfd *dynobj;
@@ -10298,12 +10366,10 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
 	  const bfd_byte *entry = elfNN_aarch64_tlsdesc_small_plt_entry;
 	  htab->tlsdesc_plt_entry_size = PLT_TLSDESC_ENTRY_SIZE;
 
-	  aarch64_plt_type type
+	  aarch64_plt_type plt_type
 	    = elf_aarch64_tdata (output_bfd)->sw_protections.plt_type;
-	  if (type == PLT_BTI || type == PLT_BTI_PAC)
-	    {
-	      entry = elfNN_aarch64_tlsdesc_small_plt_bti_entry;
-	    }
+	  if (plt_type & PLT_BTI)
+	    entry = elfNN_aarch64_tlsdesc_small_plt_bti_entry;
 
 	  memcpy (htab->root.splt->contents + htab->root.tlsdesc_plt,
 		  entry, htab->tlsdesc_plt_entry_size);
@@ -10331,7 +10397,7 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
 
 	   /* First instruction in BTI enabled PLT stub is a BTI
 	      instruction so skip it.  */
-	    if (type & PLT_BTI)
+	    if (plt_type & PLT_BTI)
 	      {
 		plt_entry = plt_entry + 4;
 		adrp1_addr = adrp1_addr + 4;
@@ -10416,7 +10482,8 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
   return true;
 }
 
-/* Check if BTI enabled PLTs are needed.  Returns the type needed.  */
+/* Check if BTI-enabled (and/or PAC-enabled) PLTs are needed.
+   Returns the type needed, and whether DF_1_PIE is set via tdata is_pie.  */
 static aarch64_plt_type
 get_plt_type (bfd *abfd)
 {
@@ -10435,13 +10502,12 @@ get_plt_type (bfd *abfd)
       Elf_Internal_Dyn dyn;
       bfd_elfNN_swap_dyn_in (abfd, extdyn, &dyn);
 
-      /* Let's check the processor specific dynamic array tags.  */
-      bfd_vma tag = dyn.d_tag;
-      if (tag < DT_LOPROC || tag > DT_HIPROC)
-	continue;
-
-      switch (tag)
+      switch (dyn.d_tag)
 	{
+	case DT_FLAGS_1:
+	  elf_tdata (abfd)->is_pie = (dyn.d_un.d_val & DF_1_PIE) != 0;
+	  break;
+
 	case DT_AARCH64_BTI_PLT:
 	  ret |= PLT_BTI;
 	  break;
@@ -10484,14 +10550,18 @@ elfNN_aarch64_plt_sym_val (bfd_vma i, const asection *plt,
     = elf_aarch64_tdata (plt->owner)->sw_protections.plt_type;
   if (plt_type == PLT_BTI_PAC)
     {
-      if (elf_elfheader (plt->owner)->e_type == ET_EXEC)
+      if (elf_elfheader (plt->owner)->e_type == ET_EXEC
+	  || (elf_elfheader (plt->owner)->e_type == ET_DYN
+	      && elf_tdata (plt->owner)->is_pie))
 	pltn_size = PLT_BTI_PAC_SMALL_ENTRY_SIZE;
       else
 	pltn_size = PLT_PAC_SMALL_ENTRY_SIZE;
     }
   else if (plt_type == PLT_BTI)
     {
-      if (elf_elfheader (plt->owner)->e_type == ET_EXEC)
+      if (elf_elfheader (plt->owner)->e_type == ET_EXEC
+	  || (elf_elfheader (plt->owner)->e_type == ET_DYN
+	      && elf_tdata (plt->owner)->is_pie))
 	pltn_size = PLT_BTI_SMALL_ENTRY_SIZE;
     }
   else if (plt_type == PLT_PAC)
@@ -10536,6 +10606,42 @@ elfNN_aarch64_backend_symbol_processing (bfd *abfd, asymbol *sym)
     sym->flags |= BSF_KEEP;
 }
 
+/* Implement elf_backend_setup_object_attributes for AArch64.  */
+static bfd *
+elfNN_aarch64_link_setup_object_attributes (struct bfd_link_info *info)
+{
+  bfd *pbfd = _bfd_aarch64_elf_link_setup_object_attributes (info);
+
+  struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
+
+  /* When BTI is forced on the command line, information flows from plt_type to
+     the frozen object attributes (a.k.a FROZEN), so plt_type has already been
+     set and FROZEN doesn't have any effect on plt_type.
+     Whereas if BTI is inferred from the input bfds, information flows from
+     output object attributes to plt_type.  If the property GNU_PROPERTY_AARCH64
+     _FEATURE_1_BTI has been set on all the input bfds, then BTI is set on the
+     output bfd and plt_type is updated accordingly.
+
+     Important note: this is not true for GNU_PROPERTY_AARCH64_FEATURE_1_PAC.
+     See more explanation in bfd_elfNN_aarch64_set_options.  */
+  const obj_attr_subsection_v2_t *aeabi_feature_and_bits_subsec
+    = bfd_obj_attr_subsection_v2_find_by_name
+      (elf_obj_attr_subsections (info->output_bfd).first,
+       "aeabi_feature_and_bits", true);
+  if (aeabi_feature_and_bits_subsec != NULL)
+    {
+      const obj_attr_v2_t *attr_bti
+	= bfd_obj_attr_v2_find_by_tag (aeabi_feature_and_bits_subsec,
+					Tag_Feature_BTI, true);
+      if (attr_bti && attr_bti->val.uint == 1)
+	tdata->sw_protections.plt_type |= PLT_BTI;
+    }
+
+  setup_plt_values (info, tdata->sw_protections.plt_type);
+
+  return pbfd;
+}
+
 /* Implement elf_backend_setup_gnu_properties for AArch64.  It serves as a
    wrapper function for _bfd_aarch64_elf_link_setup_gnu_properties to account
    for the effect of GNU properties of the output_bfd.  */
@@ -10551,7 +10657,7 @@ elfNN_aarch64_link_setup_gnu_properties (struct bfd_link_info *info)
      outprop to plt_type.  If the property GNU_PROPERTY_AARCH64_FEATURE_1_BTI
      has been set on all the input bfds, then BTI is set on the output bfd and
      plt_type is updated accordingly.  */
-  struct elf_aarch64_obj_tdata * tdata = elf_aarch64_tdata (info->output_bfd);
+  struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
   uint32_t outprop = tdata->gnu_property_aarch64_feature_1_and;
   if (outprop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
     tdata->sw_protections.plt_type |= PLT_BTI;
@@ -10612,7 +10718,7 @@ elfNN_aarch64_merge_gnu_properties (struct bfd_link_info *info,
 /* We use this so we can override certain functions
    (though currently we don't).  */
 
-const struct elf_size_info elfNN_aarch64_size_info =
+static const struct elf_size_info elfNN_aarch64_size_info =
 {
   sizeof (ElfNN_External_Ehdr),
   sizeof (ElfNN_External_Phdr),
@@ -10753,8 +10859,23 @@ const struct elf_size_info elfNN_aarch64_size_info =
 #define elf_backend_symbol_processing		\
   elfNN_aarch64_backend_symbol_processing
 
+#define elf_backend_setup_object_attributes	\
+  elfNN_aarch64_link_setup_object_attributes
+
 #define elf_backend_setup_gnu_properties	\
   elfNN_aarch64_link_setup_gnu_properties
+
+#define elf_backend_translate_gnu_props_to_obj_attrs \
+  _bfd_aarch64_translate_gnu_props_to_obj_attrs
+
+#define elf_backend_translate_obj_attrs_to_gnu_props \
+  _bfd_aarch64_translate_obj_attrs_to_gnu_props
+
+#define elf_backend_obj_attr_v2_default_value	\
+  _bfd_aarch64_oav2_default_value
+
+#define elf_backend_obj_attr_v2_merge	\
+  _bfd_aarch64_oav2_attr_merge
 
 #define elf_backend_merge_gnu_properties	\
   elfNN_aarch64_merge_gnu_properties
@@ -10781,26 +10902,31 @@ const struct elf_size_info elfNN_aarch64_size_info =
 #define elf_backend_extern_protected_data 0
 #define elf_backend_hash_symbol elf_aarch64_hash_symbol
 
+/* In OAv2, the presence of a vendor prefix means that the contents (syntax) can
+   be fully parsed, even if the interpretation of each tag is unknown.*/
+#undef	elf_backend_obj_attrs_vendor
+#define elf_backend_obj_attrs_vendor		"aeabi"
 #undef	elf_backend_obj_attrs_section
 #define elf_backend_obj_attrs_section		SEC_AARCH64_ATTRIBUTES
-
-#include "elfNN-target.h"
-
-/* CloudABI support.  */
-
-#undef	TARGET_LITTLE_SYM
-#define	TARGET_LITTLE_SYM	aarch64_elfNN_le_cloudabi_vec
-#undef	TARGET_LITTLE_NAME
-#define	TARGET_LITTLE_NAME	"elfNN-littleaarch64-cloudabi"
-#undef	TARGET_BIG_SYM
-#define	TARGET_BIG_SYM		aarch64_elfNN_be_cloudabi_vec
-#undef	TARGET_BIG_NAME
-#define	TARGET_BIG_NAME		"elfNN-bigaarch64-cloudabi"
-
-#undef	ELF_OSABI
-#define	ELF_OSABI		ELFOSABI_CLOUDABI
-
-#undef	elfNN_bed
-#define	elfNN_bed		elfNN_aarch64_cloudabi_bed
+/* In OAv2, the type of an attribute is specified by the subsection that
+   contains it.  */
+#define elf_backend_obj_attrs_arg_type		NULL
+#undef	elf_backend_obj_attrs_section_type
+#define elf_backend_obj_attrs_section_type	SHT_AARCH64_ATTRIBUTES
+#undef	elf_backend_default_obj_attr_version
+#define elf_backend_default_obj_attr_version	OBJ_ATTR_V2
+#undef	elf_backend_obj_attrs_version_dec
+#define elf_backend_obj_attrs_version_dec \
+  _bfd_aarch64_obj_attrs_version_dec
+#undef	elf_backend_obj_attrs_version_enc
+#define elf_backend_obj_attrs_version_enc \
+  _bfd_aarch64_obj_attrs_version_enc
+/* Object attributes v2 specific values.  */
+#undef	elf_backend_obj_attr_v2_known_subsections
+#define elf_backend_obj_attr_v2_known_subsections \
+  aarch64_obj_attr_v2_known_subsections
+#undef	elf_backend_obj_attr_v2_known_subsections_size
+#define elf_backend_obj_attr_v2_known_subsections_size \
+  ARRAY_SIZE(aarch64_obj_attr_v2_known_subsections)
 
 #include "elfNN-target.h"

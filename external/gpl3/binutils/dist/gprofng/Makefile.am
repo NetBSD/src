@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # along with this program; see the file COPYING3.  If not see
 # <http://www.gnu.org/licenses/>.
 
-ACLOCAL_AMFLAGS = -I . -I .. 
+ACLOCAL_AMFLAGS = -I . -I .. -I ../config
 
 AUTOMAKE_OPTIONS = dejagnu foreign
 
@@ -44,12 +44,14 @@ LD_NO_AS_NEEDED = @LD_NO_AS_NEEDED@
 GPROFNG_CFLAGS = @GPROFNG_CFLAGS@
 GPROFNG_CPPFLAGS = @GPROFNG_CPPFLAGS@
 GPROFNG_BROKEN_JAVAC = @GPROFNG_BROKEN_JAVAC@
+NOLTO_CFLAGS = @NOLTO_CFLAGS@
 
 AM_MAKEFLAGS = \
 	jdk_inc="$(jdk_inc)" \
 	LD_NO_AS_NEEDED="$(LD_NO_AS_NEEDED)" \
 	GPROFNG_CFLAGS="$(GPROFNG_CFLAGS)" \
-	GPROFNG_CPPFLAGS="$(GPROFNG_CPPFLAGS)"
+	GPROFNG_CPPFLAGS="$(GPROFNG_CPPFLAGS)" \
+	NOLTO_CFLAGS="$(NOLTO_CFLAGS)"
 
 .PHONY: check-small check-extra check-install
 

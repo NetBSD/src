@@ -1,6 +1,6 @@
 /* LoongArch assembler/disassembler support.
 
-   Copyright (C) 2021-2025 Free Software Foundation, Inc.
+   Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GNU Binutils.
@@ -36,6 +36,7 @@ extern "C"
 
   #define LARCH_MK_ADDI_D 0xffc00000
   #define LARCH_OP_ADDI_D 0x02c00000
+  #define LARCH_MK_ADDI_W LARCH_MK_ADDI_D
   #define LARCH_OP_ADDI_W 0x02800000
   #define LARCH_MK_PCADDI 0xfe000000
   #define LARCH_OP_PCADDI 0x18000000
@@ -50,6 +51,8 @@ extern "C"
   #define LARCH_OP_LU12I_W 0x14000000
   #define LARCH_MK_LD_D 0xffc00000
   #define LARCH_OP_LD_D 0x28c00000
+  #define LARCH_MK_LD_W LARCH_MK_LD_D
+  #define LARCH_OP_LD_W 0x28800000
   #define LARCH_MK_JIRL 0xfc000000
   #define LARCH_OP_JIRL 0x4c000000
   #define LARCH_MK_BCEQZ 0xfc000300
@@ -73,6 +76,8 @@ extern "C"
   #define LARCH_OP_CSRXCHG 0x04000000
   #define LARCH_MK_GCSRXCHG 0xff000000
   #define LARCH_OP_GCSRXCHG 0x05000000
+  #define LARCH_MK_AMSWAP_W 0xffff8000
+  #define LARCH_OP_AMSWAP_W 0x38600000
 
   #define LARCH_INSN_OPS(insn, op) ((insn & LARCH_MK_##op) == LARCH_OP_##op)
   #define LARCH_INSN_ADDI_D(insn) LARCH_INSN_OPS((insn), ADDI_D)
@@ -82,6 +87,7 @@ extern "C"
   #define LARCH_INSN_ORI(insn) LARCH_INSN_OPS((insn), ORI)
   #define LARCH_INSN_LU12I_W(insn) LARCH_INSN_OPS((insn), LU12I_W)
   #define LARCH_INSN_LD_D(insn) LARCH_INSN_OPS((insn), LD_D)
+  #define LARCH_INSN_LD_W(insn) LARCH_INSN_OPS((insn), LD_W)
   #define LARCH_INSN_JIRL(insn) LARCH_INSN_OPS((insn), JIRL)
   #define LARCH_INSN_BCEQZ(insn) LARCH_INSN_OPS((insn), BCEQZ)
   #define LARCH_INSN_BCNEZ(insn) LARCH_INSN_OPS((insn), BCNEZ)
@@ -92,6 +98,7 @@ extern "C"
   #define LARCH_INSN_BSTRPICK_D(insn) LARCH_INSN_OPS((insn), BSTRPICK_D)
   #define LARCH_INSN_CSRXCHG(insn) LARCH_INSN_OPS((insn), CSRXCHG)
   #define LARCH_INSN_GCSRXCHG(insn) LARCH_INSN_OPS((insn), GCSRXCHG)
+  #define LARCH_INSN_AMSWAP_W(insn) LARCH_INSN_OPS((insn), AMSWAP_W)
 
   #define LARCH_INSN_ATOMIC_MEM(insn)			\
 	((insn & 0xfff80000) == 0x38580000	\
@@ -109,6 +116,7 @@ extern "C"
   #define LARCH_RD_RJ_A0 0x084
   #define LARCH_GET_RD(insn) (insn & 0x1f)
   #define LARCH_GET_RJ(insn) ((insn >> 5) & 0x1f)
+  #define LARCH_GET_RK(insn) ((insn >> 10) & 0x1f)
 
   typedef uint32_t insn_t;
 

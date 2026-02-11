@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80, Z180, EZ80 and ASCII R800
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -1463,36 +1463,11 @@ emit_s (char prefix, char opcode, const char *args)
 
   p = parse_exp (args, & arg_s);
   if (*p == ',' && arg_s.X_md == 0 && arg_s.X_op == O_register && arg_s.X_add_number == REG_A)
-    { /* possible instruction in generic format op A,x */
-      if (!(ins_ok & INS_EZ80) && !sdcc_compat)
-        ill_op ();
+    {
+      /* Allow both op A,x and op x */
       ++p;
       p = parse_exp (p, & arg_s);
     }
-  emit_sx (prefix, opcode, & arg_s);
-  return p;
-}
-
-static const char *
-emit_sub (char prefix, char opcode, const char *args)
-{
-  expressionS arg_s;
-  const char *p;
-
-  if (!(ins_ok & INS_GBZ80))
-    return emit_s (prefix, opcode, args);
-  p = parse_exp (args, & arg_s);
-  if (*p++ != ',')
-    {
-      error (_("bad instruction syntax"));
-      return p;
-    }
-
-  if (arg_s.X_md != 0 || arg_s.X_op != O_register || arg_s.X_add_number != REG_A)
-    ill_op ();
-
-  p = parse_exp (p, & arg_s);
-
   emit_sx (prefix, opcode, & arg_s);
   return p;
 }
@@ -1731,8 +1706,8 @@ emit_adc (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad instruction syntax"));
-      return p;
+      /* "op x" -> "op A,x" */
+      return emit_s (prefix, opcode, args);
     }
 
   if ((term.X_md) || (term.X_op != O_register))
@@ -1774,8 +1749,8 @@ emit_add (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad instruction syntax"));
-      return p;
+      /* "op x" -> "op A,x" */
+      return emit_s (prefix, opcode, args);
     }
 
   if ((term.X_md) || (term.X_op != O_register))
@@ -3389,7 +3364,7 @@ static int
 assemble_suffix (const char **suffix)
 {
   static
-  const char sf[8][4] = 
+  const char sf[8][4] =
     {
       "il",
       "is",
@@ -3664,7 +3639,7 @@ static table_t instab[] =
   { "srl",  0xCB, 0x38, emit_mr,   INS_ALL },
   { "stmix",0xED, 0x7D, emit_insn, INS_EZ80 },
   { "stop", 0x00, 0x10, emit_insn, INS_GBZ80 },
-  { "sub",  0x00, 0x90, emit_sub,  INS_ALL },
+  { "sub",  0x00, 0x90, emit_s,    INS_ALL },
   { "swap", 0xCB, 0x30, emit_swap, INS_GBZ80|INS_Z80N },
   { "swapnib",0xED,0x23,emit_insn, INS_Z80N },
   { "test", 0xED, 0x27, emit_insn_n, INS_Z80N },

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in.
 #
-#   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ MAINTAINERCLEANFILES =
 
 INCDIR = $(srcdir)/../include
 # include libctf for swap.h
-AM_CPPFLAGS = -I$(srcdir) -I$(srcdir)/../include -I$(srcdir)/../libctf
+AM_CPPFLAGS = -I$(srcdir)/../include -I$(srcdir)/../libctf
 AM_CFLAGS = @ac_libsframe_warn_cflags@
 libsframe_version_info = -version-info `grep -v '^\#' $(srcdir)/libtool-version`
 # libsframe does not restrict the set of exported symbols.  So, if linker does

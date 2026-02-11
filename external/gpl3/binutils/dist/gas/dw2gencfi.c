@@ -1,5 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -996,21 +996,21 @@ dot_cfi_escape (int ignored ATTRIBUTE_UNUSED)
 	  if (is_whitespace (c))
 	    c = *++input_line_pointer;
 	  if (c != '(')
-	    {
-	      input_line_pointer = ilp_save;
-	      e->type = CFI_ESC_byte;
-	    }
+	    e->type = CFI_ESC_byte;
 	}
+      if (e->type == CFI_ESC_byte)
+	input_line_pointer = ilp_save;
 
       if (e->type == CFI_ESC_sleb128 || e->type == CFI_ESC_uleb128)
 	{
 	  /* We're still at the opening parenthesis.  Leave it to expression()
 	     to parse it and find the matching closing one.  */
 	  expression (&e->exp);
+	  e->reloc = TC_PARSE_CONS_RETURN_NONE;
 	}
       else
 	{
-	  /* We may still be at the opening parenthesis.  Leave it to expression()
+	  /* We may still be at an opening parenthesis.  Leave it to expression()
 	     to parse it and find the matching closing one.  */
 	  e->reloc = do_parse_cons_expression (&e->exp, e->type);
 	}
@@ -1694,12 +1694,11 @@ output_cfi_insn (struct cfi_insn_data *insn)
 	  }
 	else
 	  {
-	    expressionS exp;
-
-	    exp.X_op = O_subtract;
-	    exp.X_add_symbol = to;
-	    exp.X_op_symbol = from;
-	    exp.X_add_number = 0;
+	    expressionS exp = {
+	      .X_op = O_subtract,
+	      .X_add_symbol = to,
+	      .X_op_symbol = from,
+	    };
 
 	    /* The code in ehopt.c expects that one byte of the encoding
 	       is already allocated to the frag.  This comes from the way
@@ -2598,9 +2597,11 @@ cfi_finish (void)
 
   /* Generate SFrame section if the user:
 	- enables via the command line option, or
+	- default-enabled at configure-time via --enable-default-sframe, or
 	- specifies .sframe in the .cfi_sections directive and does not disable
 	  via the command line.  */
   if (flag_gen_sframe == GEN_SFRAME_ENABLED
+      || flag_gen_sframe == GEN_SFRAME_CONFIG_ENABLED
       || ((all_cfi_sections & CFI_EMIT_sframe) != 0
 	  && flag_gen_sframe != GEN_SFRAME_DISABLED))
     {
@@ -2619,7 +2620,9 @@ cfi_finish (void)
 	}
       else
 #endif
-	as_bad (_(".sframe not supported for target"));
+	/* Avoid erroring with DEFAULT_SFRAME for non-default options, like
+	   -32 on x86_64.  */
+	sframe_as_bad ("%s", _(".sframe not supported for target"));
     }
 
   if ((all_cfi_sections & CFI_EMIT_debug_frame) != 0)

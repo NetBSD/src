@@ -1,6 +1,6 @@
 /* Implementation header.
 
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -30,12 +30,15 @@ extern "C"
 #include <assert.h>
 #define sframe_assert(expr) (assert (expr))
 
+typedef struct sf_fde_tbl sf_fde_tbl;
+typedef struct sf_fre_tbl sf_fre_tbl;
+
 struct sframe_decoder_ctx
 {
   /* SFrame header.  */
   sframe_header sfd_header;
   /* SFrame function desc entries table.  */
-  sframe_func_desc_entry *sfd_funcdesc;
+  sf_fde_tbl *sfd_funcdesc;
   /* SFrame FRE table.  */
   char *sfd_fres;
   /* Number of bytes needed for SFrame FREs.  */
@@ -44,9 +47,6 @@ struct sframe_decoder_ctx
      the original input buffer before decoding.  */
   void *sfd_buf;
 };
-
-typedef struct sf_fde_tbl sf_fde_tbl;
-typedef struct sf_fre_tbl sf_fre_tbl;
 
 struct sframe_encoder_ctx
 {

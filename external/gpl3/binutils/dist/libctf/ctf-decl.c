@@ -1,5 +1,5 @@
 /* C declarator syntax glue.
-   Copyright (C) 2019-2025 Free Software Foundation, Inc.
+   Copyright (C) 2019-2026 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -154,9 +154,12 @@ ctf_decl_push (ctf_decl_t *cd, ctf_dict_t *fp, ctf_id_t type)
     cd->cd_qualp = prec;
 
   /* By convention qualifiers of base types precede the type specifier (e.g.
-     const int vs. int const) even though the two forms are equivalent.  */
+     const int vs. int const) even though the two forms are equivalent.
+     As of gcc-14.2.0, arrays must also be prepended in order to dump with the
+     dimensions properly ordered.  */
 
-  if (is_qual && prec == CTF_PREC_BASE)
+  if ((is_qual && prec == CTF_PREC_BASE) || ((kind == CTF_K_ARRAY) &&
+    (fp->ctf_openflags & (CTF_F_ARRNELEMS))))
     ctf_list_prepend (&cd->cd_nodes[prec], cdp);
   else
     ctf_list_append (&cd->cd_nodes[prec], cdp);

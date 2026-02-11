@@ -1,5 +1,5 @@
 /* Common code for PA ELF implementations.
-   Copyright (C) 1999-2025 Free Software Foundation, Inc.
+   Copyright (C) 1999-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -30,7 +30,7 @@
 #define ELF_R_TYPE(X)		      ELF64_R_TYPE(X)
 #define ELF_R_SYM(X)		      ELF64_R_SYM(X)
 #define elf_hppa_reloc_final_type     elf64_hppa_reloc_final_type
-#define _bfd_elf_hppa_gen_reloc_type  _bfd_elf64_hppa_gen_reloc_type
+#define bfd_elf_hppa_gen_reloc_type   bfd_elf64_hppa_gen_reloc_type
 #define elf_hppa_relocate_section     elf64_hppa_relocate_section
 #define elf_hppa_final_link	      elf64_hppa_final_link
 #endif
@@ -38,7 +38,7 @@
 #define ELF_R_TYPE(X)		      ELF32_R_TYPE(X)
 #define ELF_R_SYM(X)		      ELF32_R_SYM(X)
 #define elf_hppa_reloc_final_type     elf32_hppa_reloc_final_type
-#define _bfd_elf_hppa_gen_reloc_type  _bfd_elf32_hppa_gen_reloc_type
+#define bfd_elf_hppa_gen_reloc_type   bfd_elf32_hppa_gen_reloc_type
 #define elf_hppa_relocate_section     elf32_hppa_relocate_section
 #define elf_hppa_final_link	      elf32_hppa_final_link
 #endif
@@ -745,12 +745,12 @@ elf_hppa_reloc_final_type (bfd *abfd,
    relocation with modifications based on format and field.  */
 
 elf_hppa_reloc_type **
-_bfd_elf_hppa_gen_reloc_type (bfd *abfd,
-			      elf_hppa_reloc_type base_type,
-			      int format,
-			      unsigned int field,
-			      int ignore ATTRIBUTE_UNUSED,
-			      asymbol *sym ATTRIBUTE_UNUSED)
+bfd_elf_hppa_gen_reloc_type (bfd *abfd,
+			     elf_hppa_reloc_type base_type,
+			     int format,
+			     unsigned int field,
+			     int ignore ATTRIBUTE_UNUSED,
+			     asymbol *sym ATTRIBUTE_UNUSED)
 {
   elf_hppa_reloc_type *finaltype;
   elf_hppa_reloc_type **final_types;

@@ -1,5 +1,5 @@
 /* Mach-O object file format for gas, the assembler.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -99,9 +99,9 @@ extern void obj_mach_o_post_relax_hook (void);
 #define obj_frob_file_after_relocs obj_mach_o_frob_file_after_relocs
 extern void obj_mach_o_frob_file_after_relocs (void);
 
-#define SET_SECTION_RELOCS(sec, relocs, n) \
+#define FINALIZE_SECTION_RELOCS(sec, relocs, n) \
   obj_mach_o_reorder_section_relocs (sec, relocs, n)
-extern void obj_mach_o_reorder_section_relocs (asection *, arelent **,
+extern bool obj_mach_o_reorder_section_relocs (asection *, arelent **,
 					       unsigned int);
 
 /* Emit relocs for local subtracts, to cater for subsections-via-symbols.  */

@@ -1,5 +1,5 @@
 /* Support for 64-bit archives.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -226,7 +226,7 @@ _bfd_archive_64_bit_write_armap (bfd *arch,
 	 the object file's address in the archive.  */
 
       for (;
-	   count < symbol_count && map[count].u.abfd == current;
+	   count < symbol_count && map[count].abfd == current;
 	   count++)
 	{
 	  bfd_putb64 ((bfd_vma) archive_member_file_ptr, buf);

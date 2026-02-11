@@ -1,5 +1,5 @@
 /* VxWorks support for ELF
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -81,7 +81,7 @@ elf_vxworks_create_dynamic_sections (bfd *dynobj, struct bfd_link_info *info,
 				     asection **srelplt2_out)
 {
   struct elf_link_hash_table *htab;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   asection *s;
 
   htab = elf_hash_table (info);
@@ -153,7 +153,7 @@ elf_vxworks_emit_relocs (bfd *output_bfd,
 			 Elf_Internal_Rela *internal_relocs,
 			 struct elf_link_hash_entry **rel_hash)
 {
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   int j;
 
   bed = get_elf_backend_data (output_bfd);

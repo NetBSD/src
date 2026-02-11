@@ -1,5 +1,5 @@
 /* aarch64-opc.h -- Header file for aarch64-opc.c and aarch64-opc-2.c.
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -30,6 +30,10 @@
 enum aarch64_field_kind
 {
   FLD_NIL,
+  FLD_CONST_0,
+  FLD_CONST_00,
+  FLD_CONST_01,
+  FLD_CONST_1,
   FLD_CRm,
   FLD_CRm_dsb_nxs,
   FLD_CRn,
@@ -66,10 +70,12 @@ enum aarch64_field_kind
   FLD_SME_Zdn2,
   FLD_SME_Zdn4,
   FLD_SME_Zm,
+  FLD_SME_Zm17_3,
   FLD_SME_Zm2,
   FLD_SME_Zm4,
   FLD_SME_Zn2,
   FLD_SME_Zn4,
+  FLD_SME_Zn6_3,
   FLD_SME_ZtT,
   FLD_SME_Zt3,
   FLD_SME_Zt2,
@@ -159,9 +165,11 @@ enum aarch64_field_kind
   FLD_imm1_14,
   FLD_imm1_15,
   FLD_imm1_16,
+  FLD_imm1_22,
   FLD_imm2_0,
   FLD_imm2_1,
   FLD_imm2_2,
+  FLD_imm2_4,
   FLD_imm2_8,
   FLD_imm2_10,
   FLD_imm2_12,
@@ -242,16 +250,42 @@ enum aarch64_field_kind
   FLD_ZA5_4,
 };
 
-/* Field description.  */
+/* Field description.
+
+   If is_const is false, this identifies a bitfield in an instruction encoding
+   that has size WIDTH and has its least significant bit at position NUM.
+
+   If is_const is true, this represents the constant bit string of size WIDTH
+   bits stored in the least significant bits of NUM.  In this case, the
+   leading 8-WIDTH bits of VALUE must be zero.
+
+   A sequence of fields can be used to describe how instruction operands are
+   represented in the 32-bit instruction encoding.
+
+   For example, consider an instruction operand Zd that is an even numbered
+   register in z16-z30, with the middle three bits of the register number
+   stored in bits [19:17] of the encoding.  The register number can then be
+   constructed by concatenating:
+   - a constant bit '1' (represented here as {1, 1, true}),
+   - bits [19:17] of the encoding (represented here as {3, 17, false}), and
+   - a constant bit '0' (represented here as {1, 0, true}).
+   This sequence of fields fully describes both the constraints on which
+   register numbers are valid, and how valid register numbers are represented
+   in the instruction encoding.  */
 struct aarch64_field
 {
-  int lsb;
-  int width;
+  unsigned int width:8;
+  unsigned int num:7;
+  bool is_const:1;
 };
 
 typedef struct aarch64_field aarch64_field;
 
-extern const aarch64_field fields[];
+#define AARCH64_FIELD(lsb, width) {width, lsb, false}
+#define AARCH64_FIELD_CONST(val, width) {width, val, true}
+#define AARCH64_FIELD_NIL {0, 0, false}
+
+extern const aarch64_field aarch64_fields[];
 
 /* Operand description.  */
 
@@ -265,9 +299,9 @@ struct aarch64_operand
 
   unsigned int flags;
 
-  /* The associated instruction bit-fields; no operand has more than 4
+  /* The associated instruction bit-fields; no operand has more than 5
      bit-fields */
-  enum aarch64_field_kind fields[5];
+  enum aarch64_field_kind fields[6];
 
   /* Brief description */
   const char *desc;
@@ -307,8 +341,7 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 #undef F_DEPRECATED
 #define F_DEPRECATED	(1 << 0)  /* Deprecated system register.  */
 
-#undef F_ARCHEXT
-#define F_ARCHEXT	(1 << 1)  /* Architecture dependent system register.  */
+/*			(1 << 1)     Unused.  */
 
 #undef F_HASXT
 #define F_HASXT		(1 << 2)  /* System instruction register <Xt>
@@ -330,6 +363,9 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 
 #undef F_REG_128
 #define F_REG_128	(1 << 7) /* System register implementable as 128-bit wide.  */
+
+#undef F_TLBID_XT
+#define F_TLBID_XT	(1 << 8)  /* System instruction register <Xt> as optional operand.  */
 
 
 /* PSTATE field name for the MSR instruction this is encoded in "op1:op2:CRm".
@@ -358,14 +394,6 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 /* Bits [15, 18] contain the maximum value for an immediate MSR.  */
 #define F_REG_MAX_VALUE(X) ((X) << 15)
 #define F_GET_REG_MAX_VALUE(X) (((X) >> 15) & 0x0f)
-
-/* HINT operand flags.  */
-#define HINT_OPD_F_NOPRINT	(1 << 0)  /* Should not be printed.  */
-
-/* Encode 7-bit HINT #imm in the lower 8 bits.  Use higher bits for flags.  */
-#define HINT_ENCODE(flag, val) ((flag << 8) | val)
-#define HINT_FLAG(val) (val >> 8)
-#define HINT_VAL(val) (val & 0xff)
 
 static inline bool
 operand_has_inserter (const aarch64_operand *operand)
@@ -427,7 +455,7 @@ static inline unsigned
 get_operand_field_width (const aarch64_operand *operand, unsigned n)
 {
   assert (operand->fields[n] != FLD_NIL);
-  return fields[operand->fields[n]].width;
+  return aarch64_fields[operand->fields[n]].width;
 }
 
 /* Return the total width of the operand *OPERAND.  */
@@ -437,7 +465,7 @@ get_operand_fields_width (const aarch64_operand *operand)
   int i = 0;
   unsigned width = 0;
   while (operand->fields[i] != FLD_NIL)
-    width += fields[operand->fields[i++]].width;
+    width += aarch64_fields[operand->fields[i++]].width;
   assert (width > 0 && width < 32);
   return width;
 }
@@ -482,10 +510,10 @@ gen_mask (int width)
 static inline int
 gen_sub_field (enum aarch64_field_kind kind, int lsb_rel, int width, aarch64_field *ret)
 {
-  const aarch64_field *field = &fields[kind];
+  const aarch64_field *field = &aarch64_fields[kind];
   if (lsb_rel < 0 || width <= 0 || lsb_rel + width > field->width)
     return 0;
-  ret->lsb = field->lsb + lsb_rel;
+  ret->num = field->num + lsb_rel;
   ret->width = width;
   return 1;
 }
@@ -497,10 +525,16 @@ static inline void
 insert_field_2 (const aarch64_field *field, aarch64_insn *code,
 		aarch64_insn value, aarch64_insn mask)
 {
-  assert (field->width < 32 && field->width >= 1 && field->lsb >= 0
-	  && field->lsb + field->width <= 32);
+  assert (field->width < 32 && field->width >= 1
+	  && (field->is_const ? (field->num < 1 << field->width)
+			      : (field->num + field->width <= 32)));
   value &= gen_mask (field->width);
-  value <<= field->lsb;
+  if (field->is_const)
+    {
+      assert (value == field->num);
+      return;
+    }
+  value <<= field->num;
   /* In some opcodes, field can be part of the base opcode, e.g. the size
      field in FADD.  The following helps avoid corrupt the base opcode.  */
   value &= ~mask;
@@ -515,9 +549,13 @@ extract_field_2 (const aarch64_field *field, aarch64_insn code,
 		 aarch64_insn mask)
 {
   aarch64_insn value;
+  /* Check for constant field.  */
+  if (field->is_const)
+    return field->num;
+
   /* Clear any bit that is a part of the base opcode.  */
   code &= ~mask;
-  value = (code >> field->lsb) & gen_mask (field->width);
+  value = (code >> field->num) & gen_mask (field->width);
   return value;
 }
 
@@ -528,7 +566,7 @@ static inline void
 insert_field (enum aarch64_field_kind kind, aarch64_insn *code,
 	      aarch64_insn value, aarch64_insn mask)
 {
-  insert_field_2 (&fields[kind], code, value, mask);
+  insert_field_2 (&aarch64_fields[kind], code, value, mask);
 }
 
 /* Extract field KIND of CODE and return the value.  MASK can be zero or the
@@ -538,7 +576,7 @@ static inline aarch64_insn
 extract_field (enum aarch64_field_kind kind, aarch64_insn code,
 	       aarch64_insn mask)
 {
-  return extract_field_2 (&fields[kind], code, mask);
+  return extract_field_2 (&aarch64_fields[kind], code, mask);
 }
 
 extern aarch64_insn

@@ -1,5 +1,5 @@
 /* Plugin control for the GNU linker.
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -21,7 +21,6 @@
 #include "sysdep.h"
 #include "libiberty.h"
 #include "bfd.h"
-#if BFD_SUPPORTS_PLUGINS
 #include "bfdlink.h"
 #include "bfdver.h"
 #include "ctf-api.h"
@@ -1327,8 +1326,13 @@ plugin_object_p (bfd *ibfd, bool known_used)
 #endif
 
       /* If plugin didn't claim the file, we don't need the dummy bfd.
-	 Can't avoid speculatively creating it, alas.  */
-      ibfd->plugin_format = bfd_plugin_no;
+	 Can't avoid speculatively creating it, alas.  NB: Set input
+	 plugin_format to bfd_plugin_no only if known_used is set or
+	 the LDPT_REGISTER_CLAIM_FILE_HOOK_V2 linker plugin hook is
+	 unused since the V2 linker plugin hook doesn't claim the
+	 offload IR if known_used is unset.  */
+      if (known_used || !claim_file_handler_v2)
+	ibfd->plugin_format = bfd_plugin_no;
       bfd_close_all_done (abfd);
       return NULL;
     }
@@ -1536,4 +1540,3 @@ plugin_notice (struct bfd_link_info *info,
 				      abfd, section, value, flags);
   return true;
 }
-#endif /* BFD_SUPPORTS_PLUGINS */

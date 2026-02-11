@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2025 Free Software Foundation, Inc.
+# Copyright (C) 2014-2026 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -12,7 +12,7 @@
 #	SMALL_DATA_DTOR - .dtors contains small data.
 #	DATA_ADDR - if end-of-text-plus-one-page isn't right for data start
 #	INITIAL_READONLY_SECTIONS - at start of text segment
-#	OTHER_READONLY_SECTIONS - other than .text .init .rodata ...
+#	OTHER_READONLY_SECTIONS - other than .text .rodata ...
 #		(e.g., .PARISC.milli)
 #	OTHER_TEXT_SECTIONS - these get put in .text when relocating
 #	OTHER_READWRITE_SECTIONS - other than .data .bss .ctors .sdata ...
@@ -273,7 +273,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2026 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -400,13 +400,6 @@ if test -z "${NON_ALLOC_DYN}"; then
 fi
 
 cat <<EOF
-  .init         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${INIT_START}}
-    KEEP (*(SORT_NONE(.init)))
-    ${RELOCATING+${INIT_END}}
-  } =${NOP-0}
-
   ${TEXT_PLT+${PLT}}
   ${TINY_READONLY_SECTION}
   .text         ${RELOCATING-0} :
@@ -416,12 +409,6 @@ cat <<EOF
     /* .gnu.warning sections are handled specially by elf.em.  */
     *(.gnu.warning)
     ${RELOCATING+${OTHER_TEXT_SECTIONS}}
-  } =${NOP-0}
-  .fini         ${RELOCATING-0} :
-  {
-    ${RELOCATING+${FINI_START}}
-    KEEP (*(SORT_NONE(.fini)))
-    ${RELOCATING+${FINI_END}}
   } =${NOP-0}
   ${RELOCATING+PROVIDE (__${ETEXT_NAME} = .);}
   ${RELOCATING+PROVIDE (_${ETEXT_NAME} = .);}
@@ -500,6 +487,8 @@ cat <<EOF
     ${RELOCATING+*(.dynbss)}
     *(.bss${RELOCATING+ .bss.* .gnu.linkonce.b.*})
     ${RELOCATING+*(COMMON)
+    /* Provide 16 bytes for HP_LOAD map.  */
+    . += 16;
     /* Align here to ensure that the .bss section occupies space up to
        _end.  Align after .bss to ensure correct alignment even if the
        .bss section disappears because there are no input sections.

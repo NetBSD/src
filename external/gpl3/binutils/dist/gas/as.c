@@ -1,5 +1,5 @@
 /* as.c - GAS main program.
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -112,6 +112,15 @@ unsigned int dwarf_level = 3;
 int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
 bool flag_generate_build_notes = DEFAULT_GENERATE_BUILD_NOTES;
 #endif
+
+/* If DEFAULT_SFRAME is 0 instead, flag_gen_sframe gets the default
+   enum value GEN_SFRAME_DEFAULT_NONE.  */
+#if DEFAULT_SFRAME
+enum gen_sframe_option flag_gen_sframe = GEN_SFRAME_CONFIG_ENABLED;
+#endif
+/* Version of SFrame stack trace info to generate.  Default version is
+   SFRAME_VERSION_3.  */
+enum gen_sframe_version flag_gen_sframe_version = GEN_SFRAME_VERSION_3;
 
 segT reg_section;
 segT expr_section;
@@ -312,7 +321,11 @@ Options:\n\
                           generate GNU Build notes if none are present in the input\n"));
   fprintf (stream, _("\
   --gsframe[={no|yes}]    whether to generate SFrame stack trace information\n\
-                          (default: no)\n"));
+                          (default: %s)\n\
+			  Default version emitted is V3\n"),
+	   DEFAULT_SFRAME ? "yes" : "no");
+  fprintf (stream, _("\
+  --gsframe-<N>           generate SFrame version <N> information. 3 == <N>\n"));
 # if defined (TARGET_USE_SCFI) && defined (TARGET_USE_GINSN)
   fprintf (stream, _("\
   --scfi=experimental     Synthesize DWARF CFI for hand-written asm\n\
@@ -507,6 +520,7 @@ parse_args (int * pargc, char *** pargv)
       OPTION_NO_PAD_SECTIONS,
       OPTION_MULTIBYTE_HANDLING,  /* = STD_BASE + 40 */
       OPTION_SFRAME,
+      OPTION_SFRAME_3,
       OPTION_SCFI,
       OPTION_INFO,
       OPTION_NOINFO
@@ -541,6 +555,7 @@ parse_args (int * pargc, char *** pargv)
     ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}
     ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
     ,{"gsframe", optional_argument, NULL, OPTION_SFRAME}
+    ,{"gsframe-3", no_argument, NULL, OPTION_SFRAME_3}
 # if defined (TARGET_USE_SCFI) && defined (TARGET_USE_GINSN)
     ,{"scfi", required_argument, NULL, OPTION_SCFI}
 # endif
@@ -715,7 +730,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
-	  printf (_("Copyright (C) 2025 Free Software Foundation, Inc.\n"));
+	  printf (_("Copyright (C) 2026 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or later.\n\
@@ -1052,6 +1067,11 @@ This program has absolutely no warranty.\n"));
 	    flag_gen_sframe = GEN_SFRAME_ENABLED;
 	  break;
 
+	case OPTION_SFRAME_3:
+	  flag_gen_sframe = GEN_SFRAME_ENABLED;
+	  flag_gen_sframe_version = GEN_SFRAME_VERSION_3;
+	  break;
+
 #endif /* OBJ_ELF */
 
 	case 'Z':
@@ -1246,15 +1266,15 @@ perform_an_assembly_pass (int argc, char ** argv)
   if (strstr (BFD_VERSION_STRING, "." XSTRING (BFD_VERSION_DATE)) != NULL)
     predefine_symbol ("date", BFD_VERSION_DATE);
 
+#ifdef obj_begin
+  obj_begin ();
+#endif
+
   /* This may add symbol table entries, which requires having an open BFD,
      and sections already created.  */
   md_begin ();
-
 #ifdef USING_CGEN
   gas_cgen_begin ();
-#endif
-#ifdef obj_begin
-  obj_begin ();
 #endif
 
   /* Skip argv[0].  */

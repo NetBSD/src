@@ -1,5 +1,5 @@
 /* .sframe section processing.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,6 +24,8 @@
 #include "elf-bfd.h"
 #include "sframe-api.h"
 #include "sframe-internal.h"
+
+typedef sframe_func_desc_idx_v3 sframe_func_desc_entry;
 
 /* Return TRUE if the function has been marked for deletion during the linking
    process.  */
@@ -121,13 +123,24 @@ sframe_decoder_init_func_bfdinfo (bfd *abfd,
     return true;
 
   rel = cookie->rels;
+  unsigned int reloc_index = 0;
   for (i = 0; i < fde_count; i++)
     {
       /* Bookkeep the relocation offset and relocation index of each function
-	 for later use.  */
-      sframe_decoder_set_func_r_offset (sfd_info, i, rel->r_offset);
-      sframe_decoder_set_func_reloc_index (sfd_info, i, i);
+	 for later use.  There may be some R_*_NONE relocations intermingled
+	 (see PR ld/33401).  Skip over those.  */
+      while (rel->r_info == 0)
+	{
+	  reloc_index++;
+	  rel++;
+	}
 
+      BFD_ASSERT (reloc_index < sec->reloc_count);
+
+      sframe_decoder_set_func_r_offset (sfd_info, i, rel->r_offset);
+      sframe_decoder_set_func_reloc_index (sfd_info, i, reloc_index);
+
+      reloc_index++;
       rel++;
     }
 
@@ -149,13 +162,31 @@ sframe_read_value (bfd *abfd, bfd_byte *contents, unsigned int offset,
 		   unsigned int width)
 {
   BFD_ASSERT (contents && offset);
-  /* Supporting the usecase of reading only the 4-byte relocated
-     value (signed offset for func start addr) for now.  */
-  BFD_ASSERT (width == 4);
+  /* ATM, for SFrame, the sole usecase is of reading only the 8-byte relocated
+     value (signed offset for func start addr).  */
+  BFD_ASSERT (width == 8);
   /* FIXME endianness ?? */
   unsigned char *buf = contents + offset;
-  bfd_vma value = bfd_get_signed_32 (abfd, buf);
+  bfd_vma value = bfd_get_signed_64 (abfd, buf);
   return value;
+}
+
+/* Return true if any of the input BFDs contains at least one .sframe
+   section.  */
+
+bool
+_bfd_elf_sframe_present_input_bfds (struct bfd_link_info *info)
+{
+  /* Find if any input file has an .sframe section.  */
+  for (bfd *pbfd = info->input_bfds; pbfd != NULL; pbfd = pbfd->link.next)
+    if (bfd_get_flavour (pbfd) == bfd_target_elf_flavour
+	&& bfd_count_sections (pbfd) != 0)
+      {
+	asection *sec = bfd_get_section_by_name (pbfd, ".sframe");
+	if (sec != NULL)
+	  return true;
+      }
+  return false;
 }
 
 /* Return true if there is at least one non-empty .sframe section in
@@ -198,6 +229,9 @@ _bfd_elf_parse_sframe (bfd *abfd,
   bfd_size_type sf_size;
   int decerr = 0;
 
+  if (info->discard_sframe)
+    sec->flags |= SEC_EXCLUDE;
+
   /* Prior versions of assembler and ld were generating SFrame sections with
      section type SHT_PROGBITS.  Issue an error for lack of support for such
      objects now.  Even if section size is zero, a valid section type is
@@ -211,12 +245,15 @@ _bfd_elf_parse_sframe (bfd *abfd,
     }
 
   if (sec->size == 0
-      || (sec->flags & SEC_HAS_CONTENTS) == 0
-      || sec->sec_info_type != SEC_INFO_TYPE_NONE)
+      || (sec->flags & SEC_HAS_CONTENTS) == 0)
     {
       /* This file does not contain .sframe information.  */
       return false;
     }
+
+  /* Check if this section was already parsed.  */
+  if (sec->sec_info_type == SEC_INFO_TYPE_SFRAME)
+    return true;
 
   if (bfd_is_abs_section (sec->output_section))
     {
@@ -249,7 +286,7 @@ _bfd_elf_parse_sframe (bfd *abfd,
       goto fail_no_free;
     }
 
-  elf_section_data (sec)->sec_info = sfd_info;
+  sec->sec_info = sfd_info;
   sec->sec_info_type = SEC_INFO_TYPE_SFRAME;
 
   goto success;
@@ -288,7 +325,7 @@ _bfd_elf_discard_section_sframe
      .rela.sframe get updated ?.  */
   keep = false;
 
-  sfd_info = (struct sframe_dec_info *) elf_section_data (sec)->sec_info;
+  sfd_info = sec->sec_info;
 
   /* Skip checking for the linker created .sframe sections
      (for PLT sections).  */
@@ -360,7 +397,7 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
   if (sec->sec_info_type != SEC_INFO_TYPE_SFRAME)
     return false;
 
-  sfd_info = (struct sframe_dec_info *) elf_section_data (sec)->sec_info;
+  sfd_info = sec->sec_info;
   sfd_ctx = sfd_info->sfd_ctx;
 
   htab = elf_hash_table (info);
@@ -396,7 +433,7 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
 	 SFRAME_V2_GNU_AS_LD_ENCODING_FLAGS, it is enforced that the provided
 	 input sections also have this flag set.  */
       tflags |= SFRAME_F_FDE_FUNC_START_PCREL;
-      htab->sfe_info.sfe_ctx = sframe_encode (SFRAME_VERSION_2,
+      htab->sfe_info.sfe_ctx = sframe_encode (SFRAME_VERSION_3,
 					      tflags, /* SFrame flags.  */
 					      sfd_ctx_abi_arch,
 					      sfd_ctx_fixed_fp_offset,
@@ -430,19 +467,19 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
       != sframe_encoder_get_abi_arch (sfe_ctx))
     {
       _bfd_error_handler
-	(_("input SFrame sections with different abi prevent .sframe"
-	  " generation"));
+	(_("error in %pB (%pA); unexpected ABI in SFrame section"),
+	 sec->owner, sec);
       return false;
     }
 
   /* Check that all .sframe sections being linked have the same version.  */
   dctx_version = sframe_decoder_get_version (sfd_ctx);
   ectx_version = sframe_encoder_get_version (sfe_ctx);
-  if (dctx_version != SFRAME_VERSION_2 || dctx_version != ectx_version)
+  if (dctx_version != SFRAME_VERSION_3 || dctx_version != ectx_version)
     {
       _bfd_error_handler
-	(_("input SFrame sections with different format versions prevent"
-	  " .sframe generation"));
+	(_("error in %pB (%pA); unexpected SFrame format version %" PRIu8),
+	 sec->owner, sec, dctx_version);
       return false;
     }
 
@@ -454,34 +491,32 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
       != SFRAME_V2_GNU_AS_LD_ENCODING_FLAGS)
     {
       _bfd_error_handler
-	(_("SFrame sections with unexpected data encoding prevent"
-	  " .sframe generation"));
+	(_("error in %pB (%pA); unexpected SFrame data encoding"),
+	 sec->owner, sec);
       return false;
     }
 
   /* Iterate over the function descriptor entries and the FREs of the
      function from the decoder context.  Add each of them to the encoder
      context, if suitable.  */
-  uint32_t i = 0, j = 0, cur_fidx = 0;
+  uint32_t i = 0, cur_fidx = 0;
 
   uint32_t num_fidx = sframe_decoder_get_num_fidx (sfd_ctx);
   uint32_t num_enc_fidx = sframe_encoder_get_num_fidx (sfe_ctx);
+  uint8_t reloc_size = 8;
 
   for (i = 0; i < num_fidx; i++)
     {
       unsigned int num_fres = 0;
-      int32_t func_start_addr;
+      int64_t func_start_addr;
       bfd_vma address;
       uint32_t func_size = 0;
-      unsigned char func_info = 0;
       unsigned int r_offset = 0;
       bool pltn_reloc_by_hand = false;
       unsigned int pltn_r_offset = 0;
-      uint8_t rep_block_size = 0;
 
-      if (!sframe_decoder_get_funcdesc_v2 (sfd_ctx, i, &num_fres, &func_size,
-					   &func_start_addr, &func_info,
-					   &rep_block_size))
+      if (!sframe_decoder_get_funcdesc_v3 (sfd_ctx, i, &num_fres, &func_size,
+					   &func_start_addr, NULL, NULL, NULL))
 	{
 	  /* If function belongs to a deleted section, skip editing the
 	     function descriptor entry.  */
@@ -523,10 +558,11 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
 		}
 
 	      /* Get the SFrame FDE function start address after relocation.  */
-	      address = sframe_read_value (abfd, contents, r_offset, 4);
+	      address = sframe_read_value (abfd, contents, r_offset,
+					   reloc_size);
 	      if (pltn_reloc_by_hand)
-		address += sframe_read_value (abfd, contents,
-					      pltn_r_offset, 4);
+		address += sframe_read_value (abfd, contents, pltn_r_offset,
+					      reloc_size);
 	      address += (sec->output_offset + r_offset);
 	      /* SFrame FDE function start address is an offset from the
 		 sfde_func_start_address field to the start PC.  The
@@ -544,26 +580,25 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
 	      func_start_addr = address;
 	    }
 
-	  /* Update the encoder context with updated content.  */
-	  int err = sframe_encoder_add_funcdesc_v2 (sfe_ctx, func_start_addr,
-						    func_size, func_info,
-						    rep_block_size, num_fres);
+	  /* Update the encoder context with FDE index entry.  */
+	  int err = sframe_encoder_add_funcdesc (sfe_ctx, func_start_addr,
+						 func_size);
 	  cur_fidx++;
 	  BFD_ASSERT (!err);
 	}
 
-      for (j = 0; j < num_fres; j++)
-	{
-	  sframe_frame_row_entry fre;
-	  if (!sframe_decoder_get_fre (sfd_ctx, i, j, &fre))
-	    {
-	      int err = sframe_encoder_add_fre (sfe_ctx,
-						cur_fidx-1+num_enc_fidx,
-						&fre);
-	      BFD_ASSERT (!err);
-	    }
-	}
+      uint32_t fde_num_fres = 0;
+      char *fres_buf = NULL;
+      size_t fres_buf_size = 0;
+
+      int err = sframe_decoder_get_fres_buf (sfd_ctx, i, &fres_buf,
+					     &fres_buf_size, &fde_num_fres);
+      BFD_ASSERT (!err && fde_num_fres == num_fres);
+      err = sframe_encoder_add_fres_buf (sfe_ctx, cur_fidx - 1 + num_enc_fidx,
+					 num_fres, fres_buf, fres_buf_size);
+      BFD_ASSERT (!err);
     }
+
   sfd_info->sfd_state = SFRAME_SEC_MERGED;
   /* Free the SFrame decoder context.  */
   sframe_decoder_free (&sfd_ctx);
@@ -600,7 +635,7 @@ _bfd_elf_sframe_section_offset (bfd *output_bfd ATTRIBUTE_UNUSED,
   if (sec->sec_info_type != SEC_INFO_TYPE_SFRAME)
     return offset;
 
-  sfd_info = elf_section_data (sec)->sec_info;
+  sfd_info = sec->sec_info;
   sfd_ctx = sfd_info->sfd_ctx;
   sfd_num_fdes = sframe_decoder_get_num_fidx (sfd_ctx);
 
@@ -681,7 +716,8 @@ _bfd_elf_write_section_sframe (bfd *abfd, struct bfd_link_info *info)
   if (sec == NULL)
     return true;
 
-  contents = sframe_encoder_write (sfe_ctx, &sec_size, &err);
+  bool sort_p = !bfd_link_relocatable (info);
+  contents = sframe_encoder_write (sfe_ctx, &sec_size, sort_p, &err);
   sec->size = (bfd_size_type) sec_size;
 
   if (!bfd_set_section_contents (abfd, sec->output_section, contents,

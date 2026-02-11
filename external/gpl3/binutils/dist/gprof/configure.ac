@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -43,7 +43,6 @@ AC_CHECK_HEADERS(sys/time.h)
 AC_CHECK_FUNCS(setitimer)
 
 ALL_LINGUAS="bg da de eo es fi fr ga hu id it ja ms nl pt_BR ro ru rw sr sv tr uk vi"
-AM_PO_SUBDIRS
 ZW_GNU_GETTEXT_SISTER_DIR
 
 AM_MAINTAINER_MODE
@@ -87,6 +86,7 @@ AC_CACHE_CHECK([whether gprof tests can run],
   fi])
 AM_CONDITIONAL(NATIVE, test "$gprof_cv_sys_native" = "yes")
 
-AC_OUTPUT(Makefile testsuite/Makefile po/Makefile.in:po/Make-in)
+AC_CONFIG_FILES([Makefile testsuite/Makefile po/Makefile.in:po/Make-in])
+AC_OUTPUT
 
 GNU_MAKE_JOBSERVER

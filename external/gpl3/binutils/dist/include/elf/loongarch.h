@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2026 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GNU Binutils.
@@ -288,6 +288,41 @@ RELOC_NUMBER (R_LARCH_TLS_LE_LO12_R, 123)
 RELOC_NUMBER (R_LARCH_TLS_LD_PCREL20_S2, 124)
 RELOC_NUMBER (R_LARCH_TLS_GD_PCREL20_S2, 125)
 RELOC_NUMBER (R_LARCH_TLS_DESC_PCREL20_S2, 126)
+
+/* LA32R medium call
+   pcaddu12i + jirl
+   %call30(sym).  */
+RELOC_NUMBER (R_LARCH_CALL30, 127)
+
+/* LA32R PCREL: pcaddu12i, %pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_PCADD_HI20, 128)
+/* LA32R PCREL: addi.w/ld.[bhw], %pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_PCADD_LO12, 129)
+
+/* LA32R GOT: pcaddu12i, %got_pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_GOT_PCADD_HI20, 130)
+/* LA32R GOT: ld.w, %got_pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_GOT_PCADD_LO12, 131)
+
+/* LA32R TLS IE: pcaddu12i, %ie_pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_IE_PCADD_HI20, 132)
+/* LA32R TLS IE: ld.w, %ie_pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_IE_PCADD_LO12, 133)
+
+/* LA32R TLS LD: pcaddu12i, %ld_pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_LD_PCADD_HI20, 134)
+/* LA32R TLS LD: addi.w, %ld_pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_LD_PCADD_LO12, 135)
+
+/* LA32R TLS GD: pcaddu12i, %gd_pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_GD_PCADD_HI20, 136)
+/* LA32R TLS GD: addi.w, %gd_pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_GD_PCADD_LO12, 137)
+
+/* LA32R TLS DESC: pcaddu12i, %desc_pcadd_hi20(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_DESC_PCADD_HI20, 138)
+/* LA32R TLS DESC: addi.w, %desc_pcadd_lo12(sym).  */
+RELOC_NUMBER (R_LARCH_TLS_DESC_PCADD_LO12, 139)
 
 END_RELOC_NUMBERS (R_LARCH_count)
 

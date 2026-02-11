@@ -1,5 +1,5 @@
 /* tc-310v.h -- Header file for tc-d30v.c.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Written by Martin Hunt, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -39,6 +39,9 @@
 
 /* We don't need to handle .word strangely.  */
 #define WORKING_DOT_WORD
+
+extern const char d30v_symbol_chars[];
+#define tc_symbol_chars d30v_symbol_chars
 
 #define md_number_to_chars           number_to_chars_bigendian
 

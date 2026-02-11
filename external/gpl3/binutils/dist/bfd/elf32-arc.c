@@ -1,5 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Contributed by Cupertino Miranda (cmiranda@synopsys.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -377,15 +377,22 @@ arc_elf_link_hash_table_create (bfd *abfd)
 #define ARC_RELOC_HOWTO(TYPE, VALUE, SIZE, BITSIZE, RELOC_FUNCTION, OVERFLOW, FORMULA) \
   { BFD_RELOC_##TYPE, R_##TYPE },
 
+/* Aliases.  */
+#define BFD_RELOC_ARC_NONE	BFD_RELOC_NONE
+#define BFD_RELOC_ARC_8		BFD_RELOC_8
+#define BFD_RELOC_ARC_16	BFD_RELOC_16
+#define BFD_RELOC_ARC_24	BFD_RELOC_24
+#define BFD_RELOC_ARC_32	BFD_RELOC_32
+#define BFD_RELOC_ARC_PC32	BFD_RELOC_32_PCREL
+#define BFD_RELOC_ARC_PLT32	BFD_RELOC_32_PLT_PCREL
+#define BFD_RELOC_ARC_COPY	BFD_RELOC_COPY
+#define BFD_RELOC_ARC_GLOB_DAT	BFD_RELOC_GLOB_DAT
+#define BFD_RELOC_ARC_JMP_SLOT	BFD_RELOC_JMP_SLOT
+#define BFD_RELOC_ARC_RELATIVE	BFD_RELOC_RELATIVE
+
 static const struct arc_reloc_map arc_reloc_map[] =
 {
 #include "elf/arc-reloc.def"
-
-  {BFD_RELOC_NONE,  R_ARC_NONE},
-  {BFD_RELOC_8,  R_ARC_8},
-  {BFD_RELOC_16, R_ARC_16},
-  {BFD_RELOC_24, R_ARC_24},
-  {BFD_RELOC_32, R_ARC_32},
 };
 
 #undef ARC_RELOC_HOWTO
@@ -485,8 +492,7 @@ arc_elf_print_private_bfd_data (bfd *abfd, void * ptr)
 static bool
 arc_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   BFD_ASSERT (!elf_flags_init (obfd)
@@ -868,8 +874,7 @@ arc_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (! _bfd_generic_verify_endian_match (ibfd, info))
     return false;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   /* Collect ELF flags.  */
@@ -1947,6 +1952,18 @@ elf_arc_relocate_section (bfd *			  output_bfd,
       return false;
     }
 
+  if (wrel != rel)
+    {
+      Elf_Internal_Shdr *rel_hdr;
+      size_t deleted = rel - wrel;
+
+      rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section);
+      rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
+      rel_hdr = _bfd_elf_single_rel_hdr (input_section);
+      rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
+      input_section->reloc_count -= deleted;
+    }
+
   return true;
 }
 
@@ -2059,7 +2076,7 @@ elf_arc_check_relocs (bfd *			 abfd,
 		  {
 		    if (info->dynamic
 			&& ! htab->dynamic_sections_created
-			&& ! _bfd_elf_link_create_dynamic_sections (abfd, info))
+			&& ! bfd_elf_link_create_dynamic_sections (abfd, info))
 		      return false;
 		    sreloc = _bfd_elf_make_dynamic_reloc_section (sec, dynobj,
 								  2, abfd,
@@ -2570,7 +2587,8 @@ arc_create_forced_local_got_entries_for_tls (struct bfd_hash_entry *bh,
 
 static bool
 elf_arc_finish_dynamic_sections (bfd * output_bfd,
-				 struct bfd_link_info *info)
+				 struct bfd_link_info *info,
+				 bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf_link_hash_table *htab = elf_hash_table (info);
   bfd *dynobj = (elf_hash_table (info))->dynobj;
@@ -2731,7 +2749,7 @@ elf_arc_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	 interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_section_by_name (dynobj, ".interp");
+	  s = htab->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof (ELF_DYNAMIC_INTERPRETER);
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -2830,7 +2848,7 @@ elf32_arc_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
     }
 }
 
-const struct elf_size_info arc_elf32_size_info =
+static const struct elf_size_info arc_elf32_size_info =
 {
   sizeof (Elf32_External_Ehdr),
   sizeof (Elf32_External_Phdr),
@@ -2899,7 +2917,7 @@ elf32_arc_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
    string or both.  */
 
 static int
-elf32_arc_obj_attrs_arg_type (int tag)
+elf32_arc_obj_attrs_arg_type (obj_attr_tag_t tag)
 {
   if (tag == Tag_ARC_CPU_name
 	   || tag == Tag_ARC_ISA_config

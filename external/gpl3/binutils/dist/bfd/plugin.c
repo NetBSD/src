@@ -1,5 +1,5 @@
 /* Plugin support for BFD.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -99,7 +99,6 @@ dlerror (void)
 #define bfd_plugin_bfd_link_split_section	      _bfd_generic_link_split_section
 #define bfd_plugin_bfd_gc_sections		      bfd_generic_gc_sections
 #define bfd_plugin_bfd_lookup_section_flags	      bfd_generic_lookup_section_flags
-#define bfd_plugin_bfd_merge_sections		      bfd_generic_merge_sections
 #define bfd_plugin_bfd_is_group_section		      bfd_generic_is_group_section
 #define bfd_plugin_bfd_group_name		      bfd_generic_group_name
 #define bfd_plugin_bfd_discard_group		      bfd_generic_discard_group
@@ -136,6 +135,14 @@ struct plugin_list_entry
 
   /* These can be reused for all IR objects.  */
   const char *plugin_name;
+};
+
+struct plugin_data_struct
+{
+  int nsyms;
+  const struct ld_plugin_symbol *syms;
+  int object_only_nsyms;
+  asymbol **object_only_syms;
 };
 
 static const char *plugin_program_name;
@@ -196,16 +203,23 @@ bfd_plugin_get_symbols_in_object_only (bfd *abfd)
 	     abfd->filename, bfd_errmsg (bfd_get_error ()));
 	  return;
 	}
-      else if (!bfd_check_format (nbfd, bfd_object))
+      /* Prevent this recursive call into bfd_check_format from
+	 attempting to load the plugin again while it is running.  */
+      nbfd->plugin_format = bfd_plugin_no;
+      if (!bfd_check_format (nbfd, bfd_object))
 	{
 	  /* There is no object only section if it isn't a bfd_object
 	     file.  */
 	  bfd_close (nbfd);
 	  return;
 	}
+
+      /* Copy LTO type derived from input sections.  */
+      abfd->lto_type = nbfd->lto_type;
     }
   else
     {
+      BFD_ASSERT (abfd->plugin_format == bfd_plugin_no);
       if (!bfd_check_format (abfd, bfd_object))
 	{
 	  (*_bfd_error_handler)
@@ -239,6 +253,9 @@ bfd_plugin_get_symbols_in_object_only (bfd *abfd)
 
   /* Open the file containing object only section.  */
   nbfd = bfd_openr (object_only_file, NULL);
+  /* Prevent this recursive call into bfd_check_format from
+     attempting to load the plugin again while it is running.  */
+  nbfd->plugin_format = bfd_plugin_no;
   if (!bfd_check_format (nbfd, bfd_object))
     {
       (*_bfd_error_handler)
@@ -326,9 +343,8 @@ add_symbols (void * handle,
 	     const struct ld_plugin_symbol * syms)
 {
   bfd *abfd = handle;
-  struct plugin_data_struct *plugin_data =
-    bfd_alloc (abfd, sizeof (plugin_data_struct));
-
+  struct plugin_data_struct *plugin_data = bfd_alloc (abfd,
+						      sizeof (*plugin_data));
   if (!plugin_data)
     return LDPS_ERR;
 
@@ -361,6 +377,7 @@ bfd_plugin_open_input (bfd *ibfd, struct ld_plugin_input_file *file)
 
   iobfd = ibfd;
   while (iobfd->my_archive
+	 && iobfd->my_archive->iovec == iobfd->iovec
 	 && !bfd_is_thin_archive (iobfd->my_archive))
     iobfd = iobfd->my_archive;
   file->name = bfd_get_filename (iobfd);
@@ -453,6 +470,7 @@ bfd_plugin_close_file_descriptor (bfd *abfd, int fd)
   else
     {
       while (abfd->my_archive
+	     && abfd->my_archive->iovec == abfd->iovec
 	     && !bfd_is_thin_archive (abfd->my_archive))
 	abfd = abfd->my_archive;
 
@@ -598,6 +616,10 @@ try_load_plugin (const char *pname,
   if (status != LDPS_OK)
     goto short_circuit;
 
+  /* Setting bfd_plugin_no here prevents recursive calls into
+     bfd_check_format from within the plugin (unless the plugin opens
+     another bfd.)  Attempting to load the plugin again while it is
+     running is *not* a good idea.  */
   abfd->plugin_format = bfd_plugin_no;
 
   if (!current_plugin->claim_file)
@@ -627,14 +649,6 @@ bfd_plugin_set_plugin (const char *p)
   plugin_name = p;
 }
 
-/* Return TRUE if a plugin library is used.  */
-
-bool
-bfd_plugin_specified_p (void)
-{
-  return plugin_list != NULL;
-}
-
 /* Return TRUE if ABFD can be claimed by linker LTO plugin.  */
 
 bool
@@ -643,16 +657,6 @@ bfd_link_plugin_object_p (bfd *abfd)
   if (ld_plugin_object_p)
     return ld_plugin_object_p (abfd, false) != NULL;
   return false;
-}
-
-extern const bfd_target plugin_vec;
-
-/* Return TRUE if TARGET is a pointer to plugin_vec.  */
-
-bool
-bfd_plugin_target_p (const bfd_target *target)
-{
-  return target == &plugin_vec;
 }
 
 /* Register OBJECT_P to be used by bfd_plugin_object_p.  */
@@ -792,9 +796,9 @@ bfd_plugin_bfd_copy_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
 
 static bool
 bfd_plugin_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
-					 asymbol *isymbol ATTRIBUTE_UNUSED,
+					 asymbol **isymbol ATTRIBUTE_UNUSED,
 					 bfd *obfd ATTRIBUTE_UNUSED,
-					 asymbol *osymbol ATTRIBUTE_UNUSED)
+					 asymbol **osymbol ATTRIBUTE_UNUSED)
 {
   BFD_ASSERT (0);
   return true;
@@ -978,6 +982,7 @@ const bfd_target plugin_vec =
   15,				/* ar_max_namelen.  */
   255,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
 
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
@@ -989,30 +994,26 @@ const bfd_target plugin_vec =
   {				/* bfd_check_format.  */
     _bfd_dummy_target,
     bfd_plugin_object_p,
-    bfd_generic_archive_p,
+    _bfd_dummy_target,
     _bfd_dummy_target
   },
   {				/* bfd_set_format.  */
     _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 
   BFD_JUMP_TABLE_GENERIC (bfd_plugin),
   BFD_JUMP_TABLE_COPY (bfd_plugin),
   BFD_JUMP_TABLE_CORE (bfd_plugin),
-#ifdef USE_64_BIT_ARCHIVE
-  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_64_bit),
-#else
-  BFD_JUMP_TABLE_ARCHIVE (_bfd_archive_coff),
-#endif
+  BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
   BFD_JUMP_TABLE_SYMBOLS (bfd_plugin),
   BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
   BFD_JUMP_TABLE_WRITE (bfd_plugin),

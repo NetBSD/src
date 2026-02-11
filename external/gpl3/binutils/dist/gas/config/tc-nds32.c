@@ -1,5 +1,5 @@
 /* tc-nds32.c -- Assemble for the nds32
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of GAS, the GNU Assembler.
@@ -3452,8 +3452,9 @@ nds32_lookup_pseudo_opcode (const char *str)
 
   for (i = 0; i < maxlen; i++)
     {
-      if (is_whitespace (op[i] = str[i]))
+      if (is_end_of_stmt (str[i]) || is_whitespace (str[i]))
 	break;
+      op[i] = str[i];
     }
   op[i] = '\0';
 
@@ -4093,7 +4094,8 @@ nds32_relax_relocs (int relax)
     {"", "",};
 
   name = input_line_pointer;
-  while (*input_line_pointer && !is_whitespace (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -4228,7 +4230,8 @@ nds32_relax_hint (int mode ATTRIBUTE_UNUSED)
   struct relax_hint_id *record_id;
 
   name = input_line_pointer;
-  while (*input_line_pointer && !is_whitespace (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -4361,7 +4364,8 @@ nds32_flag (int ignore ATTRIBUTE_UNUSED)
 
   /* Skip whitespaces.  */
   name = input_line_pointer;
-  while (*input_line_pointer && !is_whitespace (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -4398,7 +4402,8 @@ ict_model (int ignore ATTRIBUTE_UNUSED)
 
   /* Skip whitespaces.  */
   name = input_line_pointer;
-  while (*input_line_pointer && !is_whitespace (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   saved_char = *input_line_pointer;
   *input_line_pointer = 0;
@@ -5944,7 +5949,7 @@ nds32_elf_append_relax_relocs (const char *key, const void *value)
   char *where;
   int pcrel;
 
-  if (!relocs_pattern)
+  if (!relocs_pattern || !relocs_pattern->opcode)
     return;
 
   if (!nds32_find_reloc_table (relocs_pattern, &hint_info))
@@ -6478,9 +6483,11 @@ md_assemble (char *str)
     }
   else if (!relaxing && enable_16bit && (optimize || optimize_for_space)
 	   && ((!fld && !verbatim && insn.opcode->isize == 4
-		&& nds32_convert_32_to_16 (stdoutput, insn.insn, &insn_16, NULL))
+		&& bfd_elf_nds32_convert_32_to_16 (stdoutput, insn.insn,
+						   &insn_16, NULL))
 	       || (insn.opcode->isize == 2
-		   && nds32_convert_16_to_32 (stdoutput, insn.insn, NULL))))
+		   && bfd_elf_nds32_convert_16_to_32 (stdoutput, insn.insn,
+						      NULL))))
     {
       /* Record this one is relaxable.  */
       expressionS *pexp = insn.info;
@@ -7068,7 +7075,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec, fragS *fragP)
       if (fragP->tc_frag_data.flag & NDS32_FRAG_RELAXED)
 	{
 	  insn_16 = fragP->tc_frag_data.insn;
-	  nds32_convert_16_to_32 (stdoutput, insn_16, &insn);
+	  bfd_elf_nds32_convert_16_to_32 (stdoutput, insn_16, &insn);
 	  fr_buffer = fragP->fr_literal + fr_where;
 	  fragP->fr_fix += 2;
 	  exp.X_op = O_symbol;
@@ -7084,7 +7091,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT sec, fragS *fragP)
       if (fragP->tc_frag_data.opcode->isize == 2)
 	{
 	  insn_16 = fragP->tc_frag_data.insn;
-	  nds32_convert_16_to_32 (stdoutput, insn_16, &insn);
+	  bfd_elf_nds32_convert_16_to_32 (stdoutput, insn_16, &insn);
 	}
       else
 	insn = fragP->tc_frag_data.insn;

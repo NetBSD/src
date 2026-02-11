@@ -481,7 +481,6 @@ outside the BFD library.
 @end deftypefn
 @findex bfd_merge_private_bfd_data
 @subsubsection @code{bfd_merge_private_bfd_data}
-@deftypefn {Function} bool bfd_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info); 
 Merge private BFD information from the BFD @var{ibfd} to the
 the output file BFD when linking.  Return @code{TRUE} on success,
 @code{FALSE} on error.  Possible error returns are:
@@ -499,7 +498,6 @@ Not enough memory exists to create private data for @var{obfd}.
 
 @end example
 
-@end deftypefn
 @findex _bfd_generic_verify_endian_match
 @subsubsection @code{_bfd_generic_verify_endian_match}
 @deftypefn {Function} bool _bfd_generic_verify_endian_match (bfd *ibfd, struct bfd_link_info *info); 

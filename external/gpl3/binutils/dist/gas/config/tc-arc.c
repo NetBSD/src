@@ -1,5 +1,5 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 
    Contributor: Claudiu Zissulescu <claziss@synopsys.com>
 
@@ -544,9 +544,9 @@ static const struct arc_reloc_op_tag
 {
   DEF (gotoff,  BFD_RELOC_ARC_GOTOFF,		1),
   DEF (gotpc,   BFD_RELOC_ARC_GOTPC32,		0),
-  DEF (plt,	BFD_RELOC_ARC_PLT32,		0),
+  DEF (plt,	BFD_RELOC_32_PLT_PCREL,		0),
   DEF (sda,	DUMMY_RELOC_ARC_ENTRY,		1),
-  DEF (pcl,	BFD_RELOC_ARC_PC32,		1),
+  DEF (pcl,	BFD_RELOC_32_PCREL,		1),
   DEF (tlsgd,   BFD_RELOC_ARC_TLS_GD_GOT,	0),
   DEF (tlsie,   BFD_RELOC_ARC_TLS_IE_GOT,	0),
   DEF (tpoff9,  BFD_RELOC_ARC_TLS_LE_S9,	0),
@@ -686,7 +686,7 @@ const unsigned arc_num_relaxable_ins = ARRAY_SIZE (arc_relaxable_insns);
 /* Pre-defined "_GLOBAL_OFFSET_TABLE_".  */
 symbolS * GOT_symbol = 0;
 
-/* Set to TRUE when we assemble instructions.  */
+/* Set to TRUE for a special parsing action when assembling instructions.  */
 static bool assembling_insn = false;
 
 /* List with attributes set explicitly.  */
@@ -1275,9 +1275,8 @@ tokenize_arguments (char *str,
 
 	  /* Parse @label.  */
 	  input_line_pointer++;
-	  tok->X_op = O_symbol;
-	  tok->X_md = O_absent;
 	  expression (tok);
+	  tok->X_md = O_absent;
 
 	  if (*input_line_pointer == '@')
 	    parse_reloc_symbol (tok);
@@ -1304,9 +1303,11 @@ tokenize_arguments (char *str,
 	  if ((saw_arg && !saw_comma) || num_args == ntok)
 	    goto err;
 
-	  tok->X_op = O_absent;
-	  tok->X_md = O_absent;
+	  /* Tell arc_parse_name to do its job.  */
+	  assembling_insn = true;
 	  expression (tok);
+	  assembling_insn = false;
+	  tok->X_md = O_absent;
 
 	  /* Legacy: There are cases when we have
 	     identifier@relocation_type, if it is the case parse the
@@ -1592,7 +1593,7 @@ get_register (symbolS *sym)
 }
 
 /* Return true if a RELOC is generic.  A generic reloc is PC-rel of a
-   simple ME relocation (e.g. RELOC_ARC_32_ME, BFD_RELOC_ARC_PC32.  */
+   simple ME relocation (e.g. RELOC_ARC_32_ME, BFD_RELOC_32_PCREL.  */
 
 static bool
 generic_reloc_p (extended_bfd_reloc_code_real_type reloc)
@@ -2522,9 +2523,6 @@ md_assemble (char *str)
   opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123456789");
   opname = xmemdup0 (str, opnamelen);
 
-  /* Signalize we are assembling the instructions.  */
-  assembling_insn = true;
-
   /* Tokenize the flags.  */
   if ((nflg = tokenize_flags (str + opnamelen, flags, MAX_INSN_FLGS)) == -1)
     {
@@ -2548,7 +2546,6 @@ md_assemble (char *str)
 
   /* Finish it off.  */
   assemble_tokens (opname, tok, ntok, flags, nflg);
-  assembling_insn = false;
 }
 
 /* Callback to insert a register into the hash table.  */
@@ -2788,7 +2785,7 @@ md_pcrel_from_section (fixS *fixP,
     {
       switch (fixP->fx_r_type)
 	{
-	case BFD_RELOC_ARC_PC32:
+	case BFD_RELOC_32_PCREL:
 	  /* The hardware calculates relative to the start of the
 	     insn, but this relocation is relative to location of the
 	     LIMM, compensate.  The base always needs to be
@@ -2796,7 +2793,7 @@ md_pcrel_from_section (fixS *fixP,
 	     relocation for short instructions.  */
 	  base -= 4;
 	  /* Fall through.  */
-	case BFD_RELOC_ARC_PLT32:
+	case BFD_RELOC_32_PLT_PCREL:
 	case BFD_RELOC_ARC_S25H_PCREL_PLT:
 	case BFD_RELOC_ARC_S21H_PCREL_PLT:
 	case BFD_RELOC_ARC_S25W_PCREL_PLT:
@@ -3004,9 +3001,9 @@ md_apply_fix (fixS *fixP,
 	  fixP->fx_offset += fixP->fx_frag->fr_address;
 	  /* Fall through.  */
 	case BFD_RELOC_32:
-	  fixP->fx_r_type = BFD_RELOC_ARC_PC32;
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
 	  /* Fall through.  */
-	case BFD_RELOC_ARC_PC32:
+	case BFD_RELOC_32_PCREL:
 	  /* fixP->fx_offset += fixP->fx_where - fixP->fx_dot_value; */
 	  break;
 	default:
@@ -3104,11 +3101,11 @@ md_apply_fix (fixS *fixP,
 
     case BFD_RELOC_ARC_GOTOFF:
     case BFD_RELOC_ARC_32_ME:
-    case BFD_RELOC_ARC_PC32:
+    case BFD_RELOC_32_PCREL:
       md_number_to_chars_midend (fixpos, value, fixP->fx_size);
       return;
 
-    case BFD_RELOC_ARC_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
       md_number_to_chars_midend (fixpos, value, fixP->fx_size);
       return;
 
@@ -3386,9 +3383,8 @@ md_operand (expressionS *expressionP)
   if (*p == '@')
     {
       input_line_pointer++;
-      expressionP->X_op = O_symbol;
-      expressionP->X_md = O_absent;
       expression (expressionP);
+      expressionP->X_md = O_absent;
     }
 }
 
@@ -3404,10 +3400,6 @@ arc_parse_name (const char *name,
   struct symbol *sym;
 
   if (!assembling_insn)
-    return false;
-
-  if (e->X_op == O_symbol
-      && e->X_md == O_absent)
     return false;
 
   sym = str_hash_find (arc_reg_hash, name);
@@ -4224,7 +4216,7 @@ tc_arc_fix_adjustable (fixS *fixP)
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_ARC_GOTPC32:
-    case BFD_RELOC_ARC_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
     case BFD_RELOC_ARC_S25H_PCREL_PLT:
     case BFD_RELOC_ARC_S21H_PCREL_PLT:
     case BFD_RELOC_ARC_S25W_PCREL_PLT:
@@ -4925,7 +4917,7 @@ arc_extcorereg (int opertype)
 static void
 arc_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_PROC);
 
   if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
     attributes_set_explicitly[tag] = true;
@@ -4934,7 +4926,7 @@ arc_attribute (int ignored ATTRIBUTE_UNUSED)
 /* Set an attribute if it has not already been set by the user.  */
 
 static void
-arc_set_attribute_int (int tag, int value)
+arc_set_attribute_int (obj_attr_tag_t tag, int value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
@@ -4945,7 +4937,7 @@ arc_set_attribute_int (int tag, int value)
 }
 
 static void
-arc_set_attribute_string (int tag, const char *value)
+arc_set_attribute_string (obj_attr_tag_t tag, const char *value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES

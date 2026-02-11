@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -40,7 +40,6 @@ static inline void
 insert_fields (aarch64_insn *code, aarch64_insn value, aarch64_insn mask, ...)
 {
   uint32_t num;
-  const aarch64_field *field;
   enum aarch64_field_kind kind;
   va_list va;
 
@@ -50,9 +49,8 @@ insert_fields (aarch64_insn *code, aarch64_insn value, aarch64_insn mask, ...)
   while (num--)
     {
       kind = va_arg (va, enum aarch64_field_kind);
-      field = &fields[kind];
       insert_field (kind, code, value, mask);
-      value >>= field->width;
+      value >>= aarch64_fields[kind].width;
     }
   va_end (va);
 }
@@ -72,7 +70,7 @@ insert_all_fields_after (const aarch64_operand *self, unsigned int start,
       {
 	kind = self->fields[i];
 	insert_field (kind, code, value, 0);
-	value >>= fields[kind].width;
+	value >>= aarch64_fields[kind].width;
       }
 }
 
@@ -106,8 +104,8 @@ aarch64_ins_regno (const aarch64_operand *self, const aarch64_opnd_info *info,
 		   const aarch64_inst *inst ATTRIBUTE_UNUSED,
 		   aarch64_operand_error *errors ATTRIBUTE_UNUSED)
 {
-  int val = info->reg.regno - get_operand_specific_data (self);
-  insert_field (self->fields[0], code, val, 0);
+  int val = info->reg.regno;
+  insert_all_fields (self, code, val);
   return true;
 }
 
@@ -315,7 +313,7 @@ aarch64_ins_ldst_elemlist (const aarch64_operand *self ATTRIBUTE_UNUSED,
 			   const aarch64_inst *inst ATTRIBUTE_UNUSED,
 			   aarch64_operand_error *errors ATTRIBUTE_UNUSED)
 {
-  aarch64_field field = {0, 0};
+  aarch64_field field = AARCH64_FIELD_NIL;
   aarch64_insn QSsize = 0;	/* fields Q:S:size.  */
   aarch64_insn opcodeh2 = 0;	/* opcode<2:1> */
 
@@ -461,7 +459,7 @@ aarch64_ins_advsimd_imm_modified (const aarch64_operand *self ATTRIBUTE_UNUSED,
   uint64_t imm = info->imm.value;
   enum aarch64_modifier_kind kind = info->shifter.kind;
   int amount = info->shifter.amount;
-  aarch64_field field = {0, 0};
+  aarch64_field field = AARCH64_FIELD_NIL;
 
   /* a:b:c:d:e:f:g:h */
   if (!info->imm.is_fp && aarch64_get_qualifier_esize (opnd0_qualifier) == 8)
@@ -1263,9 +1261,8 @@ aarch64_ins_sve_aligned_reglist (const aarch64_operand *self,
 				 const aarch64_inst *inst ATTRIBUTE_UNUSED,
 				 aarch64_operand_error *errors ATTRIBUTE_UNUSED)
 {
-  unsigned int num_regs = get_operand_specific_data (self);
   unsigned int val = info->reglist.first_regno;
-  insert_field (self->fields[0], code, val / num_regs, 0);
+  insert_all_fields (self, code, val);
   return true;
 }
 
@@ -1351,6 +1348,21 @@ aarch64_ins_sve_strided_reglist (const aarch64_operand *self,
   assert ((val & mask) == val);
   insert_field (self->fields[0], code, val >> 4, 0);
   insert_field (self->fields[1], code, val & 15, 0);
+  return true;
+}
+
+/* Encode {Zn - Zm}[index].  The fields array specifies which field
+   to use for Zn.  */
+bool
+aarch64_ins_sve_reglist_index (const aarch64_operand *self ATTRIBUTE_UNUSED,
+			 const aarch64_opnd_info *info ATTRIBUTE_UNUSED, aarch64_insn *code ATTRIBUTE_UNUSED,
+			 const aarch64_inst *inst ATTRIBUTE_UNUSED,
+			 aarch64_operand_error *errors ATTRIBUTE_UNUSED)
+{
+  assert (info->reglist.has_index);
+  insert_field (self->fields[0], code, info->reglist.first_regno, 0);
+  insert_field (self->fields[1], code, info->reglane.index, 0);
+
   return true;
 }
 
@@ -1798,8 +1810,8 @@ aarch64_ins_x0_to_x30 (const aarch64_operand *self,
   return true;
 }
 
-/* Insert an indexed register, with the first field being the register
-   number and the remaining fields being the index.  */
+/* Insert an indexed register, with the last five field bits holding the
+   register number and the remaining bits holding the index.  */
 bool
 aarch64_ins_simple_index (const aarch64_operand *self,
 			  const aarch64_opnd_info *info,
@@ -1807,9 +1819,8 @@ aarch64_ins_simple_index (const aarch64_operand *self,
 			  const aarch64_inst *inst ATTRIBUTE_UNUSED,
 			  aarch64_operand_error *errors ATTRIBUTE_UNUSED)
 {
-  int bias = get_operand_specific_data (self);
-  insert_field (self->fields[0], code, info->reglane.regno - bias, 0);
-  insert_all_fields_after (self, 1, code, info->reglane.index);
+  unsigned int val = (info->reglane.index << 5) | info->reglane.regno;
+  insert_all_fields (self, code, val);
   return true;
 }
 
@@ -1835,7 +1846,7 @@ static void
 encode_asimd_fcvt (aarch64_inst *inst)
 {
   aarch64_insn value;
-  aarch64_field field = {0, 0};
+  aarch64_field field = AARCH64_FIELD_NIL;
   enum aarch64_opnd_qualifier qualifier = AARCH64_OPND_QLF_NIL;
 
   switch (inst->opcode->op)
@@ -1867,7 +1878,7 @@ static void
 encode_asisd_fcvtxn (aarch64_inst *inst)
 {
   aarch64_insn val = 1;
-  aarch64_field field = {0, 0};
+  aarch64_field field = AARCH64_FIELD_NIL;
   assert (inst->operands[0].qualifier == AARCH64_OPND_QLF_S_S);
   gen_sub_field (FLD_size, 0, 1, &field);
   insert_field_2 (&field, &inst->value, val, 0);
@@ -1878,7 +1889,7 @@ static void
 encode_fcvt (aarch64_inst *inst)
 {
   aarch64_insn val;
-  const aarch64_field field = {15, 2};
+  const aarch64_field field = AARCH64_FIELD (15, 2);
 
   /* opc dstsize */
   switch (inst->operands[0].qualifier)
@@ -2098,7 +2109,7 @@ do_special_encoding (struct aarch64_inst *inst)
   if (inst->opcode->flags & F_T)
     {
       int num;	/* num of consecutive '0's on the right side of imm5<3:0>.  */
-      aarch64_field field = {0, 0};
+      aarch64_field field = AARCH64_FIELD_NIL;
       enum aarch64_opnd_qualifier qualifier;
 
       idx = 0;
@@ -2159,7 +2170,7 @@ do_special_encoding (struct aarch64_inst *inst)
     {
       /* e.g. LDRSB <Wt>, [<Xn|SP>, <R><m>{, <extend> {<amount>}}].  */
       enum aarch64_opnd_qualifier qualifier;
-      aarch64_field field = {0, 0};
+      aarch64_field field = AARCH64_FIELD_NIL;
       assert (aarch64_get_operand_class (inst->opcode->operands[0])
 	      == AARCH64_OPND_CLASS_INT_REG);
       gen_sub_field (FLD_opc, 0, 1, &field);
@@ -2244,7 +2255,6 @@ aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
       break;
 
     case sme_misc:
-    case sme2_movaz:
     case sve_misc:
       /* These instructions have only a single variant.  */
       break;
@@ -2699,7 +2709,6 @@ aarch64_opcode_encode (const aarch64_opcode *opcode,
 	{
 	case ERR_UND:
 	case ERR_UNP:
-	case ERR_NYI:
 	  return false;
 	default:
 	  break;
@@ -2715,7 +2724,6 @@ aarch64_opcode_encode (const aarch64_opcode *opcode,
     {
     case ERR_UND:
     case ERR_UNP:
-    case ERR_NYI:
       return false;
     default:
       break;

@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -333,6 +333,9 @@ microblaze_s_weakext (int ignore ATTRIBUTE_UNUSED)
 	  SKIP_WHITESPACE ();
 	}
 
+#ifdef md_expr_init_rest
+      md_expr_init_rest (&exp);
+#endif
       expression (&exp);
       if (exp.X_op != O_symbol)
 	{

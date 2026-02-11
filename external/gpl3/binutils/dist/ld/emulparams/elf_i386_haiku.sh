@@ -1,5 +1,6 @@
 source_sh ${srcdir}/emulparams/elf_i386.sh
 source_sh ${srcdir}/emulparams/elf_haiku.sh
+EXTRA_EM_FILE="elf-x86"
 TEXT_START_ADDR=0x200000
 NONPAGED_TEXT_START_ADDR=0x200000
 MAXPAGESIZE=0x1000

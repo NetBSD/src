@@ -1,6 +1,6 @@
 /* tc-moxie.h -- Header file for tc-moxie.c.
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

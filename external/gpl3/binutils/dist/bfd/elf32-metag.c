@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2025 Free Software Foundation, Inc.
+   Copyright (C) 2013-2026 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -720,10 +720,10 @@ static const struct metag_reloc_map metag_reloc_map [] =
     { BFD_RELOC_METAG_RELBRANCH_PLT, R_METAG_RELBRANCH_PLT },
     { BFD_RELOC_METAG_GOTOFF,	     R_METAG_GOTOFF },
     { BFD_RELOC_METAG_PLT,	     R_METAG_PLT },
-    { BFD_RELOC_METAG_COPY,	     R_METAG_COPY },
-    { BFD_RELOC_METAG_JMP_SLOT,	     R_METAG_JMP_SLOT },
-    { BFD_RELOC_METAG_RELATIVE,	     R_METAG_RELATIVE },
-    { BFD_RELOC_METAG_GLOB_DAT,	     R_METAG_GLOB_DAT },
+    { BFD_RELOC_COPY,		     R_METAG_COPY },
+    { BFD_RELOC_JMP_SLOT,	     R_METAG_JMP_SLOT },
+    { BFD_RELOC_RELATIVE,	     R_METAG_RELATIVE },
+    { BFD_RELOC_GLOB_DAT,	     R_METAG_GLOB_DAT },
     { BFD_RELOC_METAG_TLS_GD,	     R_METAG_TLS_GD },
     { BFD_RELOC_METAG_TLS_LDM,	     R_METAG_TLS_LDM },
     { BFD_RELOC_METAG_TLS_LDO_HI16,  R_METAG_TLS_LDO_HI16 },
@@ -1383,44 +1383,6 @@ metag_final_link_relocate (reloc_howto_type *howto,
   return r;
 }
 
-/* This is defined because R_METAG_NONE != 0...
-   See RELOC_AGAINST_DISCARDED_SECTION for details.  */
-#define METAG_RELOC_AGAINST_DISCARDED_SECTION(info, input_bfd, input_section, \
-					      rel, relend, howto, contents) \
-  {									\
-    _bfd_clear_contents (howto, input_bfd, input_section,		\
-			 contents, rel->r_offset);			\
-									\
-    if (bfd_link_relocatable (info)					\
-	&& (input_section->flags & SEC_DEBUGGING))			\
-      {									\
-	/* Only remove relocations in debug sections since other	\
-	   sections may require relocations.  */			\
-	Elf_Internal_Shdr *rel_hdr;					\
-									\
-	rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section); \
-									\
-	/* Avoid empty output section.  */				\
-	if (rel_hdr->sh_size > rel_hdr->sh_entsize)			\
-	  {								\
-	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
-	    rel_hdr = _bfd_elf_single_rel_hdr (input_section);		\
-	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
-									\
-	    memmove (rel, rel + 1, (relend - rel) * sizeof (*rel));	\
-									\
-	    input_section->reloc_count--;				\
-	    relend--;							\
-	    rel--;							\
-	    continue;							\
-	  }								\
-      }									\
-									\
-    rel->r_info = R_METAG_NONE;						\
-    rel->r_addend = 0;							\
-    continue;								\
-  }
-
 /* Relocate a META ELF section.
 
 The RELOCATE_SECTION function is called by the new ELF backend linker
@@ -1529,8 +1491,9 @@ elf_metag_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && discarded_section (sec))
-	  METAG_RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-						 rel, relend, howto, contents);
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, 1, relend, R_METAG_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2014,7 +1977,7 @@ elf_metag_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   struct elf_metag_link_hash_table *htab;
   struct elf_link_hash_entry *eh;
   struct bfd_link_hash_entry *bh;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
 
   /* Don't try to create the .plt and .got twice.  */
   htab = metag_link_hash_table (info);
@@ -2735,7 +2698,7 @@ elf_metag_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->etab.interp;
 	  if (s == NULL)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -3141,7 +3104,8 @@ elf_metag_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 
 static bool
 elf_metag_finish_dynamic_sections (bfd *output_bfd,
-				   struct bfd_link_info *info)
+				   struct bfd_link_info *info,
+				   bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   struct elf_metag_link_hash_table *htab;
@@ -3259,19 +3223,19 @@ elf_metag_finish_dynamic_sections (bfd *output_bfd,
 static asection *
 elf_metag_gc_mark_hook (asection *sec,
 			struct bfd_link_info *info,
-			Elf_Internal_Rela *rela,
+			struct elf_reloc_cookie *cookie,
 			struct elf_link_hash_entry *hh,
-			Elf_Internal_Sym *sym)
+			unsigned int symndx)
 {
   if (hh != NULL)
-    switch ((unsigned int) ELF32_R_TYPE (rela->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_METAG_GNU_VTINHERIT:
       case R_METAG_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rela, hh, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, hh, symndx);
 }
 
 /* Determine the type of stub needed, if any, for a call.  */

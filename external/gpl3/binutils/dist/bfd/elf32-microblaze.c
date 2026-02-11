@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -660,7 +660,7 @@ microblaze_elf_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
     case BFD_RELOC_MICROBLAZE_64_TLSTPREL:
       microblaze_reloc = R_MICROBLAZE_TLSTPREL32;
       break;
-    case BFD_RELOC_MICROBLAZE_COPY:
+    case BFD_RELOC_COPY:
       microblaze_reloc = R_MICROBLAZE_COPY;
       break;
     default:
@@ -1765,7 +1765,6 @@ microblaze_elf_relax_section (bfd *abfd,
   Elf_Internal_Rela *irel, *irelend;
   bfd_byte *contents = NULL;
   bfd_byte *free_contents = NULL;
-  int rel_count;
   unsigned int shndx;
   size_t i, sym_index;
   asection *o;
@@ -1818,8 +1817,7 @@ microblaze_elf_relax_section (bfd *abfd,
     goto error_return;
 
   irelend = internal_relocs + sec->reloc_count;
-  rel_count = 0;
-  for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+  for (irel = internal_relocs; irel < irelend; irel++)
     {
       bfd_vma symval;
       if ((ELF32_R_TYPE (irel->r_info) != (int) R_MICROBLAZE_64_PCREL)
@@ -1935,10 +1933,9 @@ microblaze_elf_relax_section (bfd *abfd,
   if (sdata->relax_count > 0)
     {
       shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
-      rel_count = 0;
       sdata->relax[sdata->relax_count].addr = sec->size;
 
-      for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+      for (irel = internal_relocs; irel < irelend; irel++)
 	{
 	  bfd_vma nraddr;
 
@@ -2313,20 +2310,20 @@ microblaze_elf_relax_section (bfd *abfd,
 
 static asection *
 microblaze_elf_gc_mark_hook (asection *sec,
-			     struct bfd_link_info * info,
-			     Elf_Internal_Rela * rel,
-			     struct elf_link_hash_entry * h,
-			     Elf_Internal_Sym * sym)
+			     struct bfd_link_info *info,
+			     struct elf_reloc_cookie *cookie,
+			     struct elf_link_hash_entry *h,
+			     unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_MICROBLAZE_GNU_VTINHERIT:
       case R_MICROBLAZE_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* PIC support.  */
@@ -3323,7 +3320,8 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
 
 static bool
 microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
-					struct bfd_link_info *info)
+					struct bfd_link_info *info,
+					bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn, *sgot;

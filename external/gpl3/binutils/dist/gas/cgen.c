@@ -1,5 +1,5 @@
 /* GAS interface for targets using CGEN: Cpu tools GENerator.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -294,12 +294,11 @@ gas_cgen_record_fixup_exp (fragS *frag, int where, const CGEN_INSN *insn,
 static symbolS *
 expr_build_binary (operatorT op, symbolS * s1, symbolS * s2)
 {
-  expressionS e;
-
-  e.X_op = op;
-  e.X_add_symbol = s1;
-  e.X_op_symbol = s2;
-  e.X_add_number = 0;
+  expressionS e = {
+    .X_op = op,
+    .X_add_symbol = s1,
+    .X_op_symbol = s2
+  };
   return make_expr_symbol (& e);
 }
 #endif
@@ -368,6 +367,9 @@ gas_cgen_parse_operand (CGEN_CPU_DESC cd ATTRIBUTE_UNUSED,
     }
 
   expr_jmp_buf_p = 1;
+#ifdef md_expr_init_rest
+  md_expr_init_rest (&exp);
+#endif
   expression (&exp);
   expr_jmp_buf_p = 0;
   errmsg = NULL;

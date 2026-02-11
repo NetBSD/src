@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -306,25 +306,24 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
   switch (d->state)
     {
     case state_idle:
-      if (*pnbytes == 4)
+      /* This might be the size of the CIE or FDE.  We want to know
+	 the size so that we don't accidentally optimize across an FDE
+	 boundary.  We recognize the size in one of two forms: a
+	 symbol which will later be defined as a difference, or a
+	 subtraction of two symbols.  Either way, we can tell when we
+	 are at the end of the FDE because the symbol becomes defined
+	 (in the case of a subtraction, the end symbol, from which the
+	 start symbol is being subtracted).  Other ways of describing
+	 the size will not be optimized.  */
+      if (*pnbytes == 4
+	  && !seg_info (now_seg)->insn_seen
+	  && (exp->X_op == O_symbol || exp->X_op == O_subtract)
+	  && !S_IS_DEFINED (exp->X_add_symbol))
 	{
-	  /* This might be the size of the CIE or FDE.  We want to know
-	     the size so that we don't accidentally optimize across an FDE
-	     boundary.  We recognize the size in one of two forms: a
-	     symbol which will later be defined as a difference, or a
-	     subtraction of two symbols.  Either way, we can tell when we
-	     are at the end of the FDE because the symbol becomes defined
-	     (in the case of a subtraction, the end symbol, from which the
-	     start symbol is being subtracted).  Other ways of describing
-	     the size will not be optimized.  */
-	  if ((exp->X_op == O_symbol || exp->X_op == O_subtract)
-	      && ! S_IS_DEFINED (exp->X_add_symbol))
-	    {
-	      d->state = state_saw_size;
-	      d->size_end_sym = exp->X_add_symbol;
-	      if (!d->cie_info.f)
-		d->cie_info.f = frag_now;
-	    }
+	  d->state = state_saw_size;
+	  d->size_end_sym = exp->X_add_symbol;
+	  if (!d->cie_info.f)
+	    d->cie_info.f = frag_now;
 	}
       break;
 

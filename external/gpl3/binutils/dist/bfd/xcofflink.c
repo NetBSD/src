@@ -1,5 +1,5 @@
 /* POWER/PowerPC XCOFF linker support.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -711,7 +711,7 @@ _bfd_xcoff_bfd_link_hash_table_create (bfd *abfd)
 }
 
 /* Read internal relocs for an XCOFF csect.  This is a wrapper around
-   _bfd_coff_read_internal_relocs which tries to take advantage of any
+   bfd_coff_read_internal_relocs which tries to take advantage of any
    relocs which may have been cached for the enclosing section.  */
 
 static struct internal_reloc *
@@ -736,8 +736,8 @@ xcoff_read_internal_relocs (bfd *abfd,
 	  && cache
 	  && enclosing->reloc_count > 0)
 	{
-	  if (_bfd_coff_read_internal_relocs (abfd, enclosing, true,
-					      external_relocs, false, NULL)
+	  if (bfd_coff_read_internal_relocs (abfd, enclosing, true,
+					     external_relocs, false, NULL)
 	      == NULL)
 	    return NULL;
 	}
@@ -760,8 +760,8 @@ xcoff_read_internal_relocs (bfd *abfd,
 	}
     }
 
-  return _bfd_coff_read_internal_relocs (abfd, sec, cache, external_relocs,
-					 require_internal, internal_relocs);
+  return bfd_coff_read_internal_relocs (abfd, sec, cache, external_relocs,
+					require_internal, internal_relocs);
 }
 
 /* Split FILENAME into an import path and an import filename,

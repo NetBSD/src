@@ -1,0 +1,6 @@
+libsframe is a support library for the GNU Binutils collection (currently used
+by GNU ld, objdump, etc.) to read and write SFrame section data.
+
+Note: This library is currently intended for internal use by GNU Binutils only.
+Strict guarantees for ABI compatibility are not provided, and external projects
+should not rely on the stability of these interfaces.

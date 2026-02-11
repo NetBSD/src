@@ -1,5 +1,5 @@
 /* M32R-specific support for 32-bit ELF.
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1211,10 +1211,10 @@ static const struct m32r_reloc_map m32r_reloc_map[] =
 
   { BFD_RELOC_M32R_GOT24, R_M32R_GOT24 },
   { BFD_RELOC_M32R_26_PLTREL, R_M32R_26_PLTREL },
-  { BFD_RELOC_M32R_COPY, R_M32R_COPY },
-  { BFD_RELOC_M32R_GLOB_DAT, R_M32R_GLOB_DAT },
-  { BFD_RELOC_M32R_JMP_SLOT, R_M32R_JMP_SLOT },
-  { BFD_RELOC_M32R_RELATIVE, R_M32R_RELATIVE },
+  { BFD_RELOC_COPY, R_M32R_COPY },
+  { BFD_RELOC_GLOB_DAT, R_M32R_GLOB_DAT },
+  { BFD_RELOC_JMP_SLOT, R_M32R_JMP_SLOT },
+  { BFD_RELOC_RELATIVE, R_M32R_RELATIVE },
   { BFD_RELOC_M32R_GOTOFF, R_M32R_GOTOFF },
   { BFD_RELOC_M32R_GOTPC24, R_M32R_GOTPC24 },
   { BFD_RELOC_M32R_GOT16_HI_ULO, R_M32R_GOT16_HI_ULO },
@@ -1534,7 +1534,7 @@ m32r_elf_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
   struct elf_link_hash_table *htab;
   flagword flags, pltflags;
   asection *s;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   int ptralign = 2; /* 32bit */
 
   htab = m32r_elf_hash_table (info);
@@ -1983,7 +1983,7 @@ m32r_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -2354,7 +2354,8 @@ m32r_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_M32R_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info) && !use_rel)
 	{
@@ -3066,7 +3067,8 @@ m32r_elf_finish_dynamic_symbol (bfd *output_bfd,
 
 static bool
 m32r_elf_finish_dynamic_sections (bfd *output_bfd,
-				  struct bfd_link_info *info)
+				  struct bfd_link_info *info,
+				  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf_link_hash_table *htab;
   bfd *dynobj;
@@ -3236,8 +3238,7 @@ m32r_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword out_flags;
   flagword in_flags;
 
-  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   in_flags  = elf_elfheader (ibfd)->e_flags;
@@ -3315,12 +3316,12 @@ m32r_elf_print_private_bfd_data (bfd *abfd, void * ptr)
 static asection *
 m32r_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_M32R_GNU_VTINHERIT:
       case R_M32R_GNU_VTENTRY:
@@ -3329,7 +3330,7 @@ m32r_elf_gc_mark_hook (asection *sec,
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Look through the relocs for a section during the first phase.

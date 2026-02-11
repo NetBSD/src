@@ -1,5 +1,5 @@
 /* sframe-opt.c - optimize FRE and FDE information in SFrame.
-   Copyright (C) 2022-2025 Free Software Foundation, Inc.
+   Copyright (C) 2022-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -21,6 +21,12 @@
 #include "as.h"
 #include "sframe.h"
 
+/* Much like everything in gen-sframe.c, the functions here aren't supposed
+   to ever be reached when SFrame isn't supported by a target.  */
+#ifndef support_sframe_p
+# define support_sframe_p() false
+#endif
+
 /* The function estimates the size of a rs_sframe variant frag based on
    the current values of the symbols.  It is called before the
    relaxation loop.  We set fr_subtype{0:2} to the expected length.  */
@@ -32,6 +38,8 @@ sframe_estimate_size_before_relax (fragS *frag)
   expressionS *exp;
   symbolS *widthS;
   int ret;
+
+  gas_assert (support_sframe_p ());
 
   /* We are dealing with two different kind of fragments here which need
      to be fixed up:
@@ -75,6 +83,8 @@ sframe_relax_frag (fragS *frag)
 {
   int oldsize, newsize;
 
+  gas_assert (support_sframe_p ());
+
   oldsize = frag->fr_subtype & 7;
   if (oldsize == 7)
     oldsize = -1;
@@ -94,12 +104,15 @@ sframe_convert_frag (fragS *frag)
   offsetT value;
 
   offsetT rest_of_data;
-  uint8_t fde_type, fre_type;
+  uint8_t fde_pc_type, fre_type;
   uint8_t pauth_key;
+  bool signal_p;
 
   expressionS *exp;
   symbolS *dataS;
   symbolS *fsizeS, *diffS;
+
+  gas_assert (support_sframe_p ());
 
   /* We are dealing with two different kind of fragments here which need
      to be fixed up:
@@ -116,9 +129,10 @@ sframe_convert_frag (fragS *frag)
 	 the fre_type.  */
       dataS = exp->X_add_symbol;
       rest_of_data = (symbol_get_value_expression(dataS))->X_add_number;
-      fde_type = SFRAME_V1_FUNC_FDE_TYPE (rest_of_data);
-      pauth_key = SFRAME_V1_FUNC_PAUTH_KEY (rest_of_data);
-      gas_assert (fde_type == SFRAME_FDE_TYPE_PCINC);
+      fde_pc_type = SFRAME_V3_FDE_PC_TYPE (rest_of_data);
+      pauth_key = SFRAME_V3_AARCH64_FDE_PAUTH_KEY (rest_of_data);
+      signal_p = SFRAME_V3_FDE_SIGNAL_P (rest_of_data);
+      gas_assert (fde_pc_type == SFRAME_V3_FDE_PCTYPE_INC);
 
       /* Calculate the applicable fre_type.  */
       fsizeS = exp->X_op_symbol;
@@ -131,8 +145,9 @@ sframe_convert_frag (fragS *frag)
 	fre_type = SFRAME_FRE_TYPE_ADDR4;
 
       /* Create the new function info.  */
-      value = SFRAME_V1_FUNC_INFO (fde_type, fre_type);
-      value = SFRAME_V1_FUNC_INFO_UPDATE_PAUTH_KEY (pauth_key, value);
+      value = SFRAME_V3_FDE_FUNC_INFO (fde_pc_type, fre_type);
+      value = SFRAME_V3_FDE_UPDATE_PAUTH_KEY (pauth_key, value);
+      value = SFRAME_V3_FDE_UPDATE_SIGNAL_P (signal_p, value);
 
       frag->fr_literal[frag->fr_fix] = value;
     }

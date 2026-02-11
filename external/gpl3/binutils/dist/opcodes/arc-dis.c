@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARC.
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 
    Contributed by Claudiu Zissulescu (claziss@synopsys.com)
 
@@ -740,16 +740,16 @@ operand_iterator_next (struct arc_operand_iterator *iter,
 static void
 parse_option (struct arc_disassemble_info *arc_infop, const char *option)
 {
-  if (disassembler_options_cmp (option, "dsp") == 0)
+  if (strcmp (option, "dsp") == 0)
     add_to_decode (arc_infop, DSP, NONE);
 
-  else if (disassembler_options_cmp (option, "spfp") == 0)
+  else if (strcmp (option, "spfp") == 0)
     add_to_decode (arc_infop, FLOAT, SPX);
 
-  else if (disassembler_options_cmp (option, "dpfp") == 0)
+  else if (strcmp (option, "dpfp") == 0)
     add_to_decode (arc_infop, FLOAT, DPX);
 
-  else if (disassembler_options_cmp (option, "quarkse_em") == 0)
+  else if (strcmp (option, "quarkse_em") == 0)
     {
       add_to_decode (arc_infop, FLOAT, DPX);
       add_to_decode (arc_infop, FLOAT, SPX);
@@ -757,10 +757,10 @@ parse_option (struct arc_disassemble_info *arc_infop, const char *option)
       add_to_decode (arc_infop, FLOAT, QUARKSE2);
     }
 
-  else if (disassembler_options_cmp (option, "fpuda") == 0)
+  else if (strcmp (option, "fpuda") == 0)
     add_to_decode (arc_infop, FLOAT, DPA);
 
-  else if (disassembler_options_cmp (option, "nps400") == 0)
+  else if (strcmp (option, "nps400") == 0)
     {
       add_to_decode (arc_infop, ACL, NPS400);
       add_to_decode (arc_infop, ARITH, NPS400);
@@ -777,13 +777,13 @@ parse_option (struct arc_disassemble_info *arc_infop, const char *option)
       add_to_decode (arc_infop, ULTRAIP, NPS400);
     }
 
-  else if (disassembler_options_cmp (option, "fpus") == 0)
+  else if (strcmp (option, "fpus") == 0)
     {
       add_to_decode (arc_infop, FLOAT, SP);
       add_to_decode (arc_infop, FLOAT, CVT);
     }
 
-  else if (disassembler_options_cmp (option, "fpud") == 0)
+  else if (strcmp (option, "fpud") == 0)
     {
       add_to_decode (arc_infop, FLOAT, DP);
       add_to_decode (arc_infop, FLOAT, CVT);
@@ -827,16 +827,25 @@ parse_cpu_option (const char *option)
   int i;
 
   for (i = 0; cpu_types[i].name; ++i)
-    {
-      if (!disassembler_options_cmp (cpu_types[i].name, option))
-	{
-	  return cpu_types[i].flags;
-	}
-    }
+    if (strcmp (cpu_types[i].name, option) == 0)
+      return cpu_types[i].flags;
 
   /* xgettext:c-format */
   opcodes_error_handler (_("unrecognised disassembler CPU option: %s"), option);
   return ARC_OPCODE_NONE;
+}
+
+static bool
+arc_parse_option (const char *option, void *data)
+{
+  struct arc_disassemble_info *arc_infop = data;
+
+  if (strncmp (option, "cpu=", 4) == 0)
+    /* Strip leading `cpu=`.  */
+    arc_infop->isa_mask = parse_cpu_option (option + 4);
+  else
+    parse_option (arc_infop, option);
+  return true;
 }
 
 /* Go over the options list and parse it.  */
@@ -845,20 +854,10 @@ static void
 parse_disassembler_options (struct disassemble_info *info)
 {
   struct arc_disassemble_info *arc_infop = info->private_data;
-  const char *option;
 
   arc_infop->isa_mask = ARC_OPCODE_NONE;
 
-  FOR_EACH_DISASSEMBLER_OPTION (option, info->disassembler_options)
-    {
-      /* A CPU option?  Cannot use STRING_COMMA_LEN because strncmp is also a
-	 preprocessor macro.  */
-      if (strncmp (option, "cpu=", 4) == 0)
-	/* Strip leading `cpu=`.  */
-	arc_infop->isa_mask = parse_cpu_option (option + 4);
-      else
-	parse_option (arc_infop, option);
-    }
+  for_each_disassembler_option (info, arc_parse_option, arc_infop);
 
   /* Figure out CPU type, unless it was enforced via disassembler options.  */
   if (arc_infop->isa_mask == ARC_OPCODE_NONE)

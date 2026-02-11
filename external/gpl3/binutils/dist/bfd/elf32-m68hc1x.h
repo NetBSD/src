@@ -1,5 +1,5 @@
 /* Motorola 68HC11/68HC12-specific support for 32-bit ELF
-   Copyright (C) 2003-2025 Free Software Foundation, Inc.
+   Copyright (C) 2003-2026 Free Software Foundation, Inc.
    Contributed by Stephane Carrez (stcarrez@nerim.fr)
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -34,9 +34,11 @@
 
 /* Set and control ELF flags in ELF header.  */
 extern bool _bfd_m68hc11_elf_merge_private_bfd_data
-  (bfd *, struct bfd_link_info *);
-extern bool _bfd_m68hc11_elf_set_private_flags (bfd*,flagword);
-extern bool _bfd_m68hc11_elf_print_private_bfd_data (bfd*, void*);
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
+extern bool _bfd_m68hc11_elf_set_private_flags
+  (bfd *, flagword) ATTRIBUTE_HIDDEN;
+extern bool _bfd_m68hc11_elf_print_private_bfd_data
+  (bfd *, void *) ATTRIBUTE_HIDDEN;
 
 /* This hash entry is used to record a trampoline that must be generated
    to call a far function using a normal calling convention ('jsr').
@@ -134,51 +136,55 @@ struct m68hc11_elf_link_hash_table
 /* Create a 68HC11/68HC12 ELF linker hash table.  */
 
 extern struct m68hc11_elf_link_hash_table* m68hc11_elf_hash_table_create
-  (bfd*);
+  (bfd *) ATTRIBUTE_HIDDEN;
 
 extern void m68hc11_elf_get_bank_parameters (struct bfd_link_info*);
 
 /* Return 1 if the address is in banked memory.
    This can be applied to a virtual address and to a physical address.  */
-extern int m68hc11_addr_is_banked (struct m68hc11_page_info*, bfd_vma);
+extern int m68hc11_addr_is_banked
+  (struct m68hc11_page_info *, bfd_vma) ATTRIBUTE_HIDDEN;
 
 /* Return the physical address seen by the processor, taking
    into account banked memory.  */
-extern bfd_vma m68hc11_phys_addr (struct m68hc11_page_info*, bfd_vma);
+extern bfd_vma m68hc11_phys_addr
+  (struct m68hc11_page_info *, bfd_vma) ATTRIBUTE_HIDDEN;
 
 /* Return the page number corresponding to an address in banked memory.  */
-extern bfd_vma m68hc11_phys_page (struct m68hc11_page_info*, bfd_vma);
+extern bfd_vma m68hc11_phys_page
+  (struct m68hc11_page_info *, bfd_vma) ATTRIBUTE_HIDDEN;
 
 bfd_reloc_status_type m68hc11_elf_ignore_reloc
   (bfd *abfd, arelent *reloc_entry,
    asymbol *symbol, void *data, asection *input_section,
-   bfd *output_bfd, char **error_message);
+   bfd *output_bfd, char **error_message) ATTRIBUTE_HIDDEN;
 bfd_reloc_status_type m68hc11_elf_special_reloc
   (bfd *abfd, arelent *reloc_entry,
     asymbol *symbol, void *data, asection *input_section,
-    bfd *output_bfd, char **error_message);
+    bfd *output_bfd, char **error_message) ATTRIBUTE_HIDDEN;
 
 bool elf32_m68hc11_check_relocs
   (bfd * abfd, struct bfd_link_info * info,
-   asection * sec, const Elf_Internal_Rela * relocs);
+   asection * sec, const Elf_Internal_Rela * relocs) ATTRIBUTE_HIDDEN;
 int elf32_m68hc11_relocate_section
   (bfd *output_bfd, struct bfd_link_info *info,
    bfd *input_bfd, asection *input_section,
    bfd_byte *contents, Elf_Internal_Rela *relocs,
-   Elf_Internal_Sym *local_syms, asection **local_sections);
+   Elf_Internal_Sym *local_syms, asection **local_sections) ATTRIBUTE_HIDDEN;
 
 bool elf32_m68hc11_add_symbol_hook
   (bfd *abfd, struct bfd_link_info *info,
    Elf_Internal_Sym *sym, const char **namep,
    flagword *flagsp, asection **secp,
-   bfd_vma *valp);
+   bfd_vma *valp) ATTRIBUTE_HIDDEN;
 
 void elf32_m68hc11_merge_symbol_attribute
-  (struct elf_link_hash_entry *, unsigned int, bool, bool);
+  (struct elf_link_hash_entry *, unsigned int, bool, bool) ATTRIBUTE_HIDDEN;
 
 /* Tweak the OSABI field of the elf header.  */
 
-extern bool elf32_m68hc11_init_file_header (bfd*, struct bfd_link_info*);
+extern bool elf32_m68hc11_init_file_header
+  (bfd *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
 
 int elf32_m68hc11_setup_section_lists (bfd *, struct bfd_link_info *);
 

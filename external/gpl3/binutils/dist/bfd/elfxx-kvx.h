@@ -1,5 +1,5 @@
 /* KVX-specific backend routines.
-   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -49,7 +49,8 @@ extern bool elf32_kvx_build_stubs
 
 extern bfd_reloc_status_type
 _bfd_kvx_elf_put_addend (bfd *, bfd_byte *, bfd_reloc_code_real_type,
-			     reloc_howto_type *, bfd_signed_vma);
+			     reloc_howto_type *, bfd_signed_vma)
+  ATTRIBUTE_HIDDEN;
 
 bool
 kvx_elf32_init_stub_bfd (struct bfd_link_info *info,
@@ -58,9 +59,11 @@ bool
 kvx_elf64_init_stub_bfd (struct bfd_link_info *info,
 			bfd *stub_bfd);
 
-bool _bfd_kvx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note);
+bool _bfd_kvx_elf_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
+  ATTRIBUTE_HIDDEN;
 
-bool _bfd_kvx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note);
+bool _bfd_kvx_elf_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
+  ATTRIBUTE_HIDDEN;
 
 #define elf_backend_grok_prstatus _bfd_kvx_elf_grok_prstatus
 #define elf_backend_grok_psinfo _bfd_kvx_elf_grok_psinfo

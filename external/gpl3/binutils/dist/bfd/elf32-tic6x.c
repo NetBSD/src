@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
 		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -1422,8 +1422,8 @@ static const tic6x_reloc_map elf32_tic6x_reloc_map[] =
     { BFD_RELOC_C6000_SBR_GOT_H16_W, R_C6000_SBR_GOT_H16_W },
     { BFD_RELOC_C6000_DSBT_INDEX, R_C6000_DSBT_INDEX },
     { BFD_RELOC_C6000_PREL31, R_C6000_PREL31 },
-    { BFD_RELOC_C6000_COPY, R_C6000_COPY },
-    { BFD_RELOC_C6000_JUMP_SLOT, R_C6000_JUMP_SLOT },
+    { BFD_RELOC_COPY, R_C6000_COPY },
+    { BFD_RELOC_JMP_SLOT, R_C6000_JUMP_SLOT },
     { BFD_RELOC_C6000_EHTYPE, R_C6000_EHTYPE },
     { BFD_RELOC_C6000_PCR_H16, R_C6000_PCR_H16 },
     { BFD_RELOC_C6000_PCR_L16, R_C6000_PCR_L16 },
@@ -1594,10 +1594,7 @@ elf32_tic6x_final_link (bfd *abfd, struct bfd_link_info *info)
 	}
     }
   /* Invoke the regular ELF backend linker to do all the work.  */
-  if (!bfd_elf_final_link (abfd, info))
-    return false;
-
-  return true;
+  return _bfd_elf_final_link (abfd, info);
 }
 
 /* Called to pass PARAMS to the backend.  We store them in the hash table
@@ -1724,7 +1721,7 @@ elf32_tic6x_finish_dynamic_symbol (bfd * output_bfd,
       Elf_Internal_Rela rela;
       bfd_byte *loc;
       asection *plt, *gotplt, *relplt;
-      const struct elf_backend_data *bed;
+      elf_backend_data *bed;
 
       bed = get_elf_backend_data (output_bfd);
 
@@ -2104,7 +2101,7 @@ elf32_tic6x_rel_relocation_p (bfd *abfd, asection *sec,
 			      const Elf_Internal_Rela *rel)
 {
   Elf_Internal_Shdr *rel_hdr;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
 
   /* To determine which flavor of relocation this is, we depend on the
      fact that the INPUT_SECTION's REL_HDR is read before RELA_HDR.  */
@@ -2220,7 +2217,8 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_C6000_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -2693,7 +2691,7 @@ elf32_tic6x_check_relocs (bfd *abfd, struct bfd_link_info *info,
   if ((bfd_link_pic (info) || elf32_tic6x_using_dsbt (abfd))
       && ! htab->elf.dynamic_sections_created)
     {
-      if (! _bfd_elf_link_create_dynamic_sections (abfd, info))
+      if (! bfd_elf_link_create_dynamic_sections (abfd, info))
 	return false;
     }
 
@@ -3170,7 +3168,7 @@ elf32_tic6x_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->elf.interp;
 	  if (s == NULL)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -3364,7 +3362,8 @@ elf32_tic6x_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 
 static bool
 elf32_tic6x_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				     struct bfd_link_info *info)
+				     struct bfd_link_info *info,
+				     bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   struct elf32_tic6x_link_hash_table *htab;
   bfd *dynobj;
@@ -3462,7 +3461,7 @@ elf32_tic6x_plt_sym_val (bfd_vma i, const asection *plt,
 }
 
 static int
-elf32_tic6x_obj_attrs_arg_type (int tag)
+elf32_tic6x_obj_attrs_arg_type (obj_attr_tag_t tag)
 {
   if (tag == Tag_ABI_compatibility)
     return ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL;
@@ -3792,7 +3791,7 @@ elf32_tic6x_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (!_bfd_generic_verify_endian_match (ibfd, info))
     return false;
 
-  if (! is_tic6x_elf (ibfd) || ! is_tic6x_elf (info->output_bfd))
+  if (! is_tic6x_elf (ibfd))
     return true;
 
   if (!elf32_tic6x_merge_attributes (ibfd, info))
@@ -4286,6 +4285,8 @@ elf32_tic6x_write_section (bfd *output_bfd,
 #define	TARGET_BIG_NAME			"elf32-tic6x-linux-be"
 #undef ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_C6000_LINUX
+#undef ELF_OSABI_EXACT
+#define ELF_OSABI_EXACT			1
 
 #include "elf32-target.h"
 
@@ -4302,5 +4303,7 @@ elf32_tic6x_write_section (bfd *output_bfd,
 #define	TARGET_BIG_NAME			"elf32-tic6x-elf-be"
 #undef ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_C6000_ELFABI
+#undef ELF_OSABI_EXACT
+#define ELF_OSABI_EXACT			1
 
 #include "elf32-target.h"
