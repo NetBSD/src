@@ -1,5 +1,5 @@
 /* tc-sparc.c -- Assemble for the SPARC
-   Copyright (C) 1989-2025 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -275,8 +275,9 @@ static struct sparc_arch {
   { "v9m",     "v9m", v9,  0, 1, 0, 0 },
   { "v9m8",     "m8", v9,  0, 1, 0, 0 },
 
-  /* This exists to allow configure.tgt to pass one
+  /* These exist to allow configure.tgt to pass one
      value to specify both the default machine and default word size.  */
+  { "v8plus-32", "v9", v9, 32, 0, 0, 0 },
   { "v9-64",   "v9",  v9, 64, 0, 0, 0 },
   { NULL, NULL, v8, 0, 0, 0, 0 }
 };
@@ -3914,8 +3915,8 @@ tc_gen_reloc (asection *section, fixS *fixp)
     case BFD_RELOC_16_PCREL:
     case BFD_RELOC_32_PCREL:
     case BFD_RELOC_64_PCREL:
-    case BFD_RELOC_SPARC_PLT32:
-    case BFD_RELOC_SPARC_PLT64:
+    case BFD_RELOC_32_PLT_PCREL:
+    case BFD_RELOC_64_PLT_PCREL:
     case BFD_RELOC_VTABLE_ENTRY:
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_SPARC_TLS_GD_HI22:
@@ -4903,8 +4904,8 @@ cons_fix_new_sparc (fragS *frag,
       else if (*sparc_cons_special_reloc == 'p')
 	switch (nbytes)
 	  {
-	  case 4: r = BFD_RELOC_SPARC_PLT32; break;
-	  case 8: r = BFD_RELOC_SPARC_PLT64; break;
+	  case 4: r = BFD_RELOC_32_PLT_PCREL; break;
+	  case 8: r = BFD_RELOC_64_PLT_PCREL; break;
 	  }
       else
 	switch (nbytes)

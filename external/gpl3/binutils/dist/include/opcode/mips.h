@@ -1,5 +1,5 @@
 /* mips.h.  Mips opcode list for GDB, the GNU debugger.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
 

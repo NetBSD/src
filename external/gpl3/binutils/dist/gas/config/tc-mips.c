@@ -1,5 +1,5 @@
 /* tc-mips.c -- assemble code for a MIPS chip.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF and R4000 support by Ian Lance Taylor of Cygnus
@@ -492,7 +492,11 @@ static int mips_32bitmode = 0;
 #define HAVE_64BIT_OBJECTS (mips_abi == N64_ABI)
 
 /* True if relocations are stored in-place.  */
+#ifdef TE_VXWORKS
+#define HAVE_IN_PLACE_ADDENDS 0
+#else
 #define HAVE_IN_PLACE_ADDENDS (!HAVE_NEWABI)
+#endif
 
 /* The ABI-derived address size.  */
 #define HAVE_64BIT_ADDRESSES \
@@ -2803,7 +2807,8 @@ struct regname {
     {"$cc6",	RTYPE_FCC | RTYPE_CCC | 6}, \
     {"$cc7",	RTYPE_FCC | RTYPE_CCC | 7}
 
-#define N32N64_SYMBOLIC_REGISTER_NAMES \
+/* ABI-specific symbolic register names.  */
+#define NEWABI_SYMBOLIC_REGISTER_NAMES \
     {"$a4",	RTYPE_GP | 8},  \
     {"$a5",	RTYPE_GP | 9},  \
     {"$a6",	RTYPE_GP | 10}, \
@@ -2817,7 +2822,7 @@ struct regname {
     {"$t2",	RTYPE_GP | 14}, \
     {"$t3",	RTYPE_GP | 15}
 
-#define O32_SYMBOLIC_REGISTER_NAMES \
+#define OLDABI_SYMBOLIC_REGISTER_NAMES \
     {"$t0",	RTYPE_GP | 8},  \
     {"$t1",	RTYPE_GP | 9},  \
     {"$t2",	RTYPE_GP | 10}, \
@@ -2830,6 +2835,210 @@ struct regname {
     {"$ta1",	RTYPE_GP | 13}, /* alias for $t5 */ \
     {"$ta2",	RTYPE_GP | 14}, /* alias for $t6 */ \
     {"$ta3",	RTYPE_GP | 15}  /* alias for $t7 */
+
+#define O32_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$fv0f",	RTYPE_FPU | 1},  \
+    {"$fv1",	RTYPE_FPU | 2},  \
+    {"$fv1f",	RTYPE_FPU | 3},  \
+    {"$ft0",	RTYPE_FPU | 4},  \
+    {"$ft0f",	RTYPE_FPU | 5},  \
+    {"$ft1",	RTYPE_FPU | 6},  \
+    {"$ft1f",	RTYPE_FPU | 7},  \
+    {"$ft2",	RTYPE_FPU | 8},  \
+    {"$ft2f",	RTYPE_FPU | 9},  \
+    {"$ft3",	RTYPE_FPU | 10}, \
+    {"$ft3f",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa0f",	RTYPE_FPU | 13}, \
+    {"$fa1",	RTYPE_FPU | 14}, \
+    {"$fa1f",	RTYPE_FPU | 15}, \
+    {"$ft4",	RTYPE_FPU | 16}, \
+    {"$ft4f",	RTYPE_FPU | 17}, \
+    {"$ft5",	RTYPE_FPU | 18}, \
+    {"$ft5f",	RTYPE_FPU | 19}, \
+    {"$fs0",	RTYPE_FPU | 20}, \
+    {"$fs0f",	RTYPE_FPU | 21}, \
+    {"$fs1",	RTYPE_FPU | 22}, \
+    {"$fs1f",	RTYPE_FPU | 23}, \
+    {"$fs2",	RTYPE_FPU | 24}, \
+    {"$fs2f",	RTYPE_FPU | 25}, \
+    {"$fs3",	RTYPE_FPU | 26}, \
+    {"$fs3f",	RTYPE_FPU | 27}, \
+    {"$fs4",	RTYPE_FPU | 28}, \
+    {"$fs4f",	RTYPE_FPU | 29}, \
+    {"$fs5",	RTYPE_FPU | 30}, \
+    {"$fs5f",	RTYPE_FPU | 31}
+
+#define O64_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$fv1",	RTYPE_FPU | 1},  \
+    {"$ft0",	RTYPE_FPU | 2},  \
+    {"$ft1",	RTYPE_FPU | 3},  \
+    {"$ft2",	RTYPE_FPU | 4},  \
+    {"$ft3",	RTYPE_FPU | 5},  \
+    {"$ft4",	RTYPE_FPU | 6},  \
+    {"$ft5",	RTYPE_FPU | 7},  \
+    {"$ft6",	RTYPE_FPU | 8},  \
+    {"$ft7",	RTYPE_FPU | 9},  \
+    {"$ft8",	RTYPE_FPU | 10}, \
+    {"$ft9",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa1",	RTYPE_FPU | 13}, \
+    {"$ft10",	RTYPE_FPU | 14}, \
+    {"$ft11",	RTYPE_FPU | 15}, \
+    {"$ft12",	RTYPE_FPU | 16}, \
+    {"$ft13",	RTYPE_FPU | 17}, \
+    {"$ft14",	RTYPE_FPU | 18}, \
+    {"$ft15",	RTYPE_FPU | 19}, \
+    {"$fs0",	RTYPE_FPU | 20}, \
+    {"$fs1",	RTYPE_FPU | 21}, \
+    {"$fs2",	RTYPE_FPU | 22}, \
+    {"$fs3",	RTYPE_FPU | 23}, \
+    {"$fs4",	RTYPE_FPU | 24}, \
+    {"$fs5",	RTYPE_FPU | 25}, \
+    {"$fs6",	RTYPE_FPU | 26}, \
+    {"$fs7",	RTYPE_FPU | 27}, \
+    {"$fs8",	RTYPE_FPU | 28}, \
+    {"$fs9",	RTYPE_FPU | 29}, \
+    {"$fs10",	RTYPE_FPU | 30}, \
+    {"$fs11",	RTYPE_FPU | 31}
+
+#define N32_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$ft14",	RTYPE_FPU | 1},  \
+    {"$fv1",	RTYPE_FPU | 2},  \
+    {"$ft15",	RTYPE_FPU | 3},  \
+    {"$ft0",	RTYPE_FPU | 4},  \
+    {"$ft1",	RTYPE_FPU | 5},  \
+    {"$ft2",	RTYPE_FPU | 6},  \
+    {"$ft3",	RTYPE_FPU | 7},  \
+    {"$ft4",	RTYPE_FPU | 8},  \
+    {"$ft5",	RTYPE_FPU | 9},  \
+    {"$ft6",	RTYPE_FPU | 10}, \
+    {"$ft7",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa1",	RTYPE_FPU | 13}, \
+    {"$fa2",	RTYPE_FPU | 14}, \
+    {"$fa3",	RTYPE_FPU | 15}, \
+    {"$fa4",	RTYPE_FPU | 16}, \
+    {"$fa5",	RTYPE_FPU | 17}, \
+    {"$fa6",	RTYPE_FPU | 18}, \
+    {"$fa7",	RTYPE_FPU | 19}, \
+    {"$fs0",	RTYPE_FPU | 20}, \
+    {"$ft8",	RTYPE_FPU | 21}, \
+    {"$fs1",	RTYPE_FPU | 22}, \
+    {"$ft9",	RTYPE_FPU | 23}, \
+    {"$fs2",	RTYPE_FPU | 24}, \
+    {"$ft10",	RTYPE_FPU | 25}, \
+    {"$fs3",	RTYPE_FPU | 26}, \
+    {"$ft11",	RTYPE_FPU | 27}, \
+    {"$fs4",	RTYPE_FPU | 28}, \
+    {"$ft12",	RTYPE_FPU | 29}, \
+    {"$fs5",	RTYPE_FPU | 30}, \
+    {"$ft13",	RTYPE_FPU | 31}
+
+#define N64_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$ft12",	RTYPE_FPU | 1},  \
+    {"$fv1",	RTYPE_FPU | 2},  \
+    {"$ft13",	RTYPE_FPU | 3},  \
+    {"$ft0",	RTYPE_FPU | 4},  \
+    {"$ft1",	RTYPE_FPU | 5},  \
+    {"$ft2",	RTYPE_FPU | 6},  \
+    {"$ft3",	RTYPE_FPU | 7},  \
+    {"$ft4",	RTYPE_FPU | 8},  \
+    {"$ft5",	RTYPE_FPU | 9},  \
+    {"$ft6",	RTYPE_FPU | 10}, \
+    {"$ft7",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa1",	RTYPE_FPU | 13}, \
+    {"$fa2",	RTYPE_FPU | 14}, \
+    {"$fa3",	RTYPE_FPU | 15}, \
+    {"$fa4",	RTYPE_FPU | 16}, \
+    {"$fa5",	RTYPE_FPU | 17}, \
+    {"$fa6",	RTYPE_FPU | 18}, \
+    {"$fa7",	RTYPE_FPU | 19}, \
+    {"$ft8",	RTYPE_FPU | 20}, \
+    {"$ft9",	RTYPE_FPU | 21}, \
+    {"$ft10",	RTYPE_FPU | 22}, \
+    {"$ft11",	RTYPE_FPU | 23}, \
+    {"$fs0",	RTYPE_FPU | 24}, \
+    {"$fs1",	RTYPE_FPU | 25}, \
+    {"$fs2",	RTYPE_FPU | 26}, \
+    {"$fs3",	RTYPE_FPU | 27}, \
+    {"$fs4",	RTYPE_FPU | 28}, \
+    {"$fs5",	RTYPE_FPU | 29}, \
+    {"$fs6",	RTYPE_FPU | 30}, \
+    {"$fs7",	RTYPE_FPU | 31}
+
+#define EABI32_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$fv0f",	RTYPE_FPU | 1},  \
+    {"$fv1",	RTYPE_FPU | 2},  \
+    {"$fv1f",	RTYPE_FPU | 3},  \
+    {"$ft0",	RTYPE_FPU | 4},  \
+    {"$ft0f",	RTYPE_FPU | 5},  \
+    {"$ft1",	RTYPE_FPU | 6},  \
+    {"$ft1f",	RTYPE_FPU | 7},  \
+    {"$ft2",	RTYPE_FPU | 8},  \
+    {"$ft2f",	RTYPE_FPU | 9},  \
+    {"$ft3",	RTYPE_FPU | 10}, \
+    {"$ft3f",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa0f",	RTYPE_FPU | 13}, \
+    {"$fa1",	RTYPE_FPU | 14}, \
+    {"$fa1f",	RTYPE_FPU | 15}, \
+    {"$fa2",	RTYPE_FPU | 16}, \
+    {"$fa2f",	RTYPE_FPU | 17}, \
+    {"$fa3",	RTYPE_FPU | 18}, \
+    {"$fa3f",	RTYPE_FPU | 19}, \
+    {"$fs0",	RTYPE_FPU | 20}, \
+    {"$fs0f",	RTYPE_FPU | 21}, \
+    {"$fs1",	RTYPE_FPU | 22}, \
+    {"$fs1f",	RTYPE_FPU | 23}, \
+    {"$fs2",	RTYPE_FPU | 24}, \
+    {"$fs2f",	RTYPE_FPU | 25}, \
+    {"$fs3",	RTYPE_FPU | 26}, \
+    {"$fs3f",	RTYPE_FPU | 27}, \
+    {"$fs4",	RTYPE_FPU | 28}, \
+    {"$fs4f",	RTYPE_FPU | 29}, \
+    {"$fs5",	RTYPE_FPU | 30}, \
+    {"$fs5f",	RTYPE_FPU | 31}
+
+#define EABI64_SYMBOLIC_FPU_REGISTER_NAMES \
+    {"$fv0",	RTYPE_FPU | 0},	 \
+    {"$fv1",	RTYPE_FPU | 1},  \
+    {"$ft0",	RTYPE_FPU | 2},  \
+    {"$ft1",	RTYPE_FPU | 3},  \
+    {"$ft2",	RTYPE_FPU | 4},  \
+    {"$ft3",	RTYPE_FPU | 5},  \
+    {"$ft4",	RTYPE_FPU | 6},  \
+    {"$ft5",	RTYPE_FPU | 7},  \
+    {"$ft6",	RTYPE_FPU | 8},  \
+    {"$ft7",	RTYPE_FPU | 9},  \
+    {"$ft8",	RTYPE_FPU | 10}, \
+    {"$ft9",	RTYPE_FPU | 11}, \
+    {"$fa0",	RTYPE_FPU | 12}, \
+    {"$fa1",	RTYPE_FPU | 13}, \
+    {"$fa2",	RTYPE_FPU | 14}, \
+    {"$fa3",	RTYPE_FPU | 15}, \
+    {"$fa4",	RTYPE_FPU | 16}, \
+    {"$fa5",	RTYPE_FPU | 17}, \
+    {"$fa6",	RTYPE_FPU | 18}, \
+    {"$fa7",	RTYPE_FPU | 19}, \
+    {"$fs0",	RTYPE_FPU | 20}, \
+    {"$fs1",	RTYPE_FPU | 21}, \
+    {"$fs2",	RTYPE_FPU | 22}, \
+    {"$fs3",	RTYPE_FPU | 23}, \
+    {"$fs4",	RTYPE_FPU | 24}, \
+    {"$fs5",	RTYPE_FPU | 25}, \
+    {"$fs6",	RTYPE_FPU | 26}, \
+    {"$fs7",	RTYPE_FPU | 27}, \
+    {"$fs8",	RTYPE_FPU | 28}, \
+    {"$fs9",	RTYPE_FPU | 29}, \
+    {"$fs10",	RTYPE_FPU | 30}, \
+    {"$fs11",	RTYPE_FPU | 31}
 
 /* Remaining symbolic register names.  */
 #define SYMBOLIC_REGISTER_NAMES \
@@ -2940,12 +3149,38 @@ static const struct regname reg_names[] = {
 };
 
 static const struct regname reg_names_o32[] = {
-  O32_SYMBOLIC_REGISTER_NAMES,
+  OLDABI_SYMBOLIC_REGISTER_NAMES,
+  O32_SYMBOLIC_FPU_REGISTER_NAMES,
   {0, 0}
 };
 
-static const struct regname reg_names_n32n64[] = {
-  N32N64_SYMBOLIC_REGISTER_NAMES,
+static const struct regname reg_names_o64[] = {
+  OLDABI_SYMBOLIC_REGISTER_NAMES,
+  O64_SYMBOLIC_FPU_REGISTER_NAMES,
+  {0, 0}
+};
+
+static const struct regname reg_names_n32[] = {
+  NEWABI_SYMBOLIC_REGISTER_NAMES,
+  N32_SYMBOLIC_FPU_REGISTER_NAMES,
+  {0, 0}
+};
+
+static const struct regname reg_names_n64[] = {
+  NEWABI_SYMBOLIC_REGISTER_NAMES,
+  N64_SYMBOLIC_FPU_REGISTER_NAMES,
+  {0, 0}
+};
+
+static const struct regname reg_names_eabi32[] = {
+  NEWABI_SYMBOLIC_REGISTER_NAMES,
+  EABI32_SYMBOLIC_FPU_REGISTER_NAMES,
+  {0, 0}
+};
+
+static const struct regname reg_names_eabi64[] = {
+  NEWABI_SYMBOLIC_REGISTER_NAMES,
+  EABI64_SYMBOLIC_FPU_REGISTER_NAMES,
   {0, 0}
 };
 
@@ -3387,7 +3622,7 @@ mips_parse_arguments (char *s, char float_format)
       if (!s)
 	{
 	  obstack_free (&mips_operand_tokens,
-			obstack_finish (&mips_operand_tokens));
+			obstack_base (&mips_operand_tokens));
 	  return 0;
 	}
       SKIP_SPACE_TABS (s);
@@ -3690,6 +3925,7 @@ md_begin (void)
 {
   int i = 0;
   int broken = 0;
+  const struct regname *abi_reg_names;
 
   if (mips_pic != NO_PIC)
     {
@@ -3813,16 +4049,35 @@ md_begin (void)
     symbol_table_insert (symbol_new (reg_names[i].name, reg_section,
 				     &zero_address_frag,
 				     reg_names[i].num));
-  if (HAVE_NEWABI)
-    for (i = 0; reg_names_n32n64[i].name; i++)
-      symbol_table_insert (symbol_new (reg_names_n32n64[i].name, reg_section,
-				       &zero_address_frag,
-				       reg_names_n32n64[i].num));
-  else
-    for (i = 0; reg_names_o32[i].name; i++)
-      symbol_table_insert (symbol_new (reg_names_o32[i].name, reg_section,
-				       &zero_address_frag,
-				       reg_names_o32[i].num));
+
+  switch (mips_abi)
+    {
+    case NO_ABI:
+    case O32_ABI:
+    default:
+      abi_reg_names = reg_names_o32;
+      break;
+    case O64_ABI:
+      abi_reg_names = reg_names_o64;
+      break;
+    case N32_ABI:
+      abi_reg_names = reg_names_n32;
+      break;
+    case N64_ABI:
+      abi_reg_names = reg_names_n64;
+      break;
+    case EABI_ABI:
+      if (file_mips_opts.gp == 64)
+	abi_reg_names = reg_names_eabi64;
+      else
+	abi_reg_names = reg_names_eabi32;
+      break;
+    }
+
+  for (i = 0; abi_reg_names[i].name; i++)
+    symbol_table_insert (symbol_new (abi_reg_names[i].name, reg_section,
+				     &zero_address_frag,
+				     abi_reg_names[i].num));
 
   for (i = 0; i < 32; i++)
     {
@@ -4303,6 +4558,13 @@ micromips_reloc_p (bfd_reloc_code_real_type reloc)
     case BFD_RELOC_MICROMIPS_HIGHER:
     case BFD_RELOC_MICROMIPS_SCN_DISP:
     case BFD_RELOC_MICROMIPS_JALR:
+    case BFD_RELOC_MICROMIPS_TLS_GD:
+    case BFD_RELOC_MICROMIPS_TLS_LDM:
+    case BFD_RELOC_MICROMIPS_TLS_DTPREL_HI16:
+    case BFD_RELOC_MICROMIPS_TLS_DTPREL_LO16:
+    case BFD_RELOC_MICROMIPS_TLS_GOTTPREL:
+    case BFD_RELOC_MICROMIPS_TLS_TPREL_HI16:
+    case BFD_RELOC_MICROMIPS_TLS_TPREL_LO16:
       return true;
 
     default:
@@ -4349,6 +4611,28 @@ lo16_reloc_p (bfd_reloc_code_real_type reloc)
   return (reloc == BFD_RELOC_LO16 || reloc == BFD_RELOC_LO16_PCREL
 	  || reloc == BFD_RELOC_MIPS16_LO16
 	  || reloc == BFD_RELOC_MICROMIPS_LO16);
+}
+
+static inline bool
+tls_hi16_reloc_p (bfd_reloc_code_real_type reloc)
+{
+  return (reloc == BFD_RELOC_MIPS_TLS_DTPREL_HI16
+	  || reloc == BFD_RELOC_MIPS_TLS_TPREL_HI16
+	  || reloc == BFD_RELOC_MIPS16_TLS_DTPREL_HI16
+	  || reloc == BFD_RELOC_MIPS16_TLS_TPREL_HI16
+	  || reloc == BFD_RELOC_MICROMIPS_TLS_DTPREL_HI16
+	  || reloc == BFD_RELOC_MICROMIPS_TLS_TPREL_HI16);
+}
+
+static inline bool
+tls_lo16_reloc_p (bfd_reloc_code_real_type reloc)
+{
+  return (reloc == BFD_RELOC_MIPS_TLS_DTPREL_LO16
+	  || reloc == BFD_RELOC_MIPS_TLS_TPREL_LO16
+	  || reloc == BFD_RELOC_MIPS16_TLS_DTPREL_LO16
+	  || reloc == BFD_RELOC_MIPS16_TLS_TPREL_LO16
+	  || reloc == BFD_RELOC_MICROMIPS_TLS_DTPREL_LO16
+	  || reloc == BFD_RELOC_MICROMIPS_TLS_TPREL_LO16);
 }
 
 static inline bool
@@ -4402,6 +4686,7 @@ reloc_needs_lo_p (bfd_reloc_code_real_type reloc)
 {
   return (HAVE_IN_PLACE_ADDENDS
 	  && (hi16_reloc_p (reloc)
+	      || tls_hi16_reloc_p (reloc)
 	      /* VxWorks R_MIPS_GOT16 relocs never need a matching %lo();
 		 all GOT16 relocations evaluate to "G".  */
 	      || (got16_reloc_p (reloc) && mips_pic != VXWORKS_PIC)));
@@ -4413,10 +4698,34 @@ reloc_needs_lo_p (bfd_reloc_code_real_type reloc)
 static inline bfd_reloc_code_real_type
 matching_lo_reloc (bfd_reloc_code_real_type reloc)
 {
-  return (mips16_reloc_p (reloc) ? BFD_RELOC_MIPS16_LO16
-	  : micromips_reloc_p (reloc) ? BFD_RELOC_MICROMIPS_LO16
-	  : reloc == BFD_RELOC_HI16_S_PCREL ? BFD_RELOC_LO16_PCREL
-	  : BFD_RELOC_LO16);
+  switch (reloc)
+    {
+    case BFD_RELOC_HI16_S:
+    case BFD_RELOC_MIPS_GOT16:
+      return BFD_RELOC_LO16;
+    case BFD_RELOC_HI16_S_PCREL:
+      return BFD_RELOC_LO16_PCREL;
+    case BFD_RELOC_MIPS_TLS_DTPREL_HI16:
+      return BFD_RELOC_MIPS_TLS_DTPREL_LO16;
+    case BFD_RELOC_MIPS_TLS_TPREL_HI16:
+      return BFD_RELOC_MIPS_TLS_TPREL_LO16;
+    case BFD_RELOC_MIPS16_HI16_S:
+    case BFD_RELOC_MIPS16_GOT16:
+      return BFD_RELOC_MIPS16_LO16;
+    case BFD_RELOC_MIPS16_TLS_DTPREL_HI16:
+      return BFD_RELOC_MIPS16_TLS_DTPREL_LO16;
+    case BFD_RELOC_MIPS16_TLS_TPREL_HI16:
+      return BFD_RELOC_MIPS16_TLS_TPREL_LO16;
+    case BFD_RELOC_MICROMIPS_HI16_S:
+    case BFD_RELOC_MICROMIPS_GOT16:
+      return BFD_RELOC_MICROMIPS_LO16;
+    case BFD_RELOC_MICROMIPS_TLS_DTPREL_HI16:
+      return BFD_RELOC_MICROMIPS_TLS_DTPREL_LO16;
+    case BFD_RELOC_MICROMIPS_TLS_TPREL_HI16:
+      return BFD_RELOC_MICROMIPS_TLS_TPREL_LO16;
+    default:
+      abort ();
+    }
 }
 
 /* Return true if the given fixup is followed by a matching R_MIPS_LO16
@@ -6914,7 +7223,6 @@ fix_loongson2f_jump (struct mips_cl_insn * ip)
       || strcmp (ip->insn_mo->name, "jalr") == 0)
     {
       int sreg;
-      expressionS ep;
 
       if (! mips_opts.at)
         return;
@@ -6923,8 +7231,10 @@ fix_loongson2f_jump (struct mips_cl_insn * ip)
       if (sreg == ZERO || sreg == KT0 || sreg == KT1 || sreg == ATREG)
         return;
 
-      ep.X_op = O_constant;
-      ep.X_add_number = 0xcfff0000;
+      expressionS ep = {
+	.X_op = O_constant,
+	.X_add_number = 0xcfff0000
+      };
       macro_build (&ep, "lui", "t,u", ATREG, BFD_RELOC_HI16);
       ep.X_add_number = 0xffff;
       macro_build (&ep, "ori", "t,r,i", ATREG, ATREG, BFD_RELOC_LO16);
@@ -7452,12 +7762,11 @@ micromips_add_label (void)
   S_SET_OTHER (s, ELF_ST_SET_MICROMIPS (S_GET_OTHER (s)));
 }
 
-/* If assembling microMIPS code, then return the microMIPS reloc
-   corresponding to the requested one if any.  Otherwise return
-   the reloc unchanged.  */
+/* Return the microMIPS relocation corresponding to RELOC if there is any
+   and MICROMIPS_P is true.  Otherwise return RELOC unchanged.  */
 
 static bfd_reloc_code_real_type
-micromips_map_reloc (bfd_reloc_code_real_type reloc)
+micromips_map_reloc (bfd_reloc_code_real_type reloc, bool micromips_p)
 {
   static const bfd_reloc_code_real_type relocs[][2] =
     {
@@ -7493,7 +7802,7 @@ micromips_map_reloc (bfd_reloc_code_real_type reloc)
   bfd_reloc_code_real_type r;
   size_t i;
 
-  if (!mips_opts.micromips)
+  if (!micromips_p)
     return reloc;
   for (i = 0; i < ARRAY_SIZE (relocs); i++)
     {
@@ -7974,7 +8283,8 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
       /* Perform any necessary conversion to microMIPS relocations
 	 and find out how many relocations there actually are.  */
       for (i = 0; i < 3 && reloc_type[i] != BFD_RELOC_UNUSED; i++)
-	final_type[i] = micromips_map_reloc (reloc_type[i]);
+	final_type[i] = micromips_map_reloc (reloc_type[i],
+					     mips_opts.micromips);
 
       /* In a compound relocation, it is the final (outermost)
 	 operator that determines the relocated field.  */
@@ -8015,6 +8325,8 @@ append_insn (struct mips_cl_insn *ip, expressionS *address_expr,
 	      || reloc_type[0] == BFD_RELOC_MIPS_16
 	      || reloc_type[0] == BFD_RELOC_MIPS_RELGOT
 	      || reloc_type[0] == BFD_RELOC_MIPS16_GPREL
+	      || tls_hi16_reloc_p (reloc_type[0])
+	      || tls_lo16_reloc_p (reloc_type[0])
 	      || hi16_reloc_p (reloc_type[0])
 	      || lo16_reloc_p (reloc_type[0])))
 	ip->fixp[0]->fx_no_overflow = 1;
@@ -9616,10 +9928,14 @@ load_register (int reg, expressionS *ep, int dbl)
 	generic_bignum[3] = 0;
       else if (ep->X_add_number > 4)
 	as_bad (_("number larger than 64 bits"));
-      lo32.X_op = O_constant;
-      lo32.X_add_number = generic_bignum[0] + (generic_bignum[1] << 16);
-      hi32.X_op = O_constant;
-      hi32.X_add_number = generic_bignum[2] + (generic_bignum[3] << 16);
+      lo32 = (expressionS) {
+	.X_op = O_constant,
+	.X_add_number = generic_bignum[0] + (generic_bignum[1] << 16)
+      };
+      hi32 = (expressionS) {
+	.X_op = O_constant,
+	.X_add_number = generic_bignum[2] + (generic_bignum[3] << 16)
+      };
     }
 
   if (hi32.X_add_number == 0)
@@ -9666,9 +9982,7 @@ load_register (int reg, expressionS *ep, int dbl)
 	  if ((hi32.X_add_number & ~(offsetT) himask) == 0
 	      && (lo32.X_add_number & ~(offsetT) lomask) == 0)
 	    {
-	      expressionS tmp;
-
-	      tmp.X_op = O_constant;
+	      expressionS tmp = { .X_op = O_constant };
 	      if (shift < 32)
 		tmp.X_add_number = ((hi32.X_add_number << (32 - shift))
 				    | (lo32.X_add_number >> shift));
@@ -9720,12 +10034,9 @@ load_register (int reg, expressionS *ep, int dbl)
 	  shift = COUNT_TOP_ZEROES ((unsigned int) hi32.X_add_number);
 	  if (shift != 0)
 	    {
-	      expressionS tmp;
-
 	      /* This instruction will set the register to be all
                  ones.  */
-	      tmp.X_op = O_constant;
-	      tmp.X_add_number = (offsetT) -1;
+	      expressionS tmp = { .X_op = O_constant, .X_add_number = -1 };
 	      macro_build (&tmp, "addiu", "t,r,j", reg, 0, BFD_RELOC_LO16);
 	      if (bit != 0)
 		{
@@ -9888,7 +10199,7 @@ load_address (int reg, expressionS *ep, int *used_at)
     }
   else if (!mips_big_got)
     {
-      expressionS ex;
+      expressionS ex = *ep;
 
       /* If this is a reference to an external symbol, we want
 	   lw		$reg,<sym>($gp)		(BFD_RELOC_MIPS_GOT16)
@@ -9906,7 +10217,6 @@ load_address (int reg, expressionS *ep, int *used_at)
 	{
 	  if (ep->X_add_number)
 	    {
-	      ex.X_add_number = ep->X_add_number;
 	      ep->X_add_number = 0;
 	      relax_start (ep->X_add_symbol);
 	      macro_build (ep, ADDRESS_LOAD_INSN, "t,o(b)", reg,
@@ -9926,7 +10236,6 @@ load_address (int reg, expressionS *ep, int *used_at)
 	}
       else
 	{
-	  ex.X_add_number = ep->X_add_number;
 	  ep->X_add_number = 0;
 	  macro_build (ep, ADDRESS_LOAD_INSN, "t,o(b)", reg,
 		       BFD_RELOC_MIPS_GOT16, mips_gp_register);
@@ -9949,7 +10258,7 @@ load_address (int reg, expressionS *ep, int *used_at)
     }
   else if (mips_big_got)
     {
-      expressionS ex;
+      expressionS ex = *ep;
 
       /* This is the large GOT case.  If this is a reference to an
 	 external symbol, we want
@@ -9969,7 +10278,6 @@ load_address (int reg, expressionS *ep, int *used_at)
       */
       if (HAVE_NEWABI)
 	{
-	  ex.X_add_number = ep->X_add_number;
 	  ep->X_add_number = 0;
 	  relax_start (ep->X_add_symbol);
 	  macro_build (ep, "lui", LUI_FMT, reg, BFD_RELOC_MIPS_GOT_HI16);
@@ -9996,7 +10304,6 @@ load_address (int reg, expressionS *ep, int *used_at)
 	}
       else
 	{
-	  ex.X_add_number = ep->X_add_number;
 	  ep->X_add_number = 0;
 	  relax_start (ep->X_add_symbol);
 	  macro_build (ep, "lui", LUI_FMT, reg, BFD_RELOC_MIPS_GOT_HI16);
@@ -10086,12 +10393,10 @@ load_got_offset (int dest, expressionS *local)
 static void
 add_got_offset (int dest, expressionS *local)
 {
-  expressionS global;
-
-  global.X_op = O_constant;
-  global.X_op_symbol = NULL;
-  global.X_add_symbol = NULL;
-  global.X_add_number = local->X_add_number;
+  expressionS global = {
+    .X_op = O_constant,
+    .X_add_number = local->X_add_number
+};
 
   relax_start (local->X_add_symbol);
   macro_build (&global, ADDRESS_ADDI_INSN, "t,r,j",
@@ -10104,13 +10409,11 @@ add_got_offset (int dest, expressionS *local)
 static void
 add_got_offset_hilo (int dest, expressionS *local, int tmp)
 {
-  expressionS global;
   int hold_mips_optimize;
-
-  global.X_op = O_constant;
-  global.X_op_symbol = NULL;
-  global.X_add_symbol = NULL;
-  global.X_add_number = local->X_add_number;
+  expressionS global = {
+    .X_op = O_constant,
+    .X_add_number = local->X_add_number
+  };
 
   relax_start (local->X_add_symbol);
   load_register (tmp, &global, HAVE_64BIT_ADDRESSES);
@@ -10164,12 +10467,12 @@ macro_build_branch_likely (const char *br, const char *brneg,
 			   unsigned int sreg, unsigned int treg)
 {
   int noreorder = mips_opts.noreorder;
-  expressionS expr1;
 
   gas_assert (mips_opts.micromips);
   start_noreorder ();
   if (noreorder)
     {
+      expressionS expr1 = { 0 };
       micromips_label_expr (&expr1);
       macro_build (&expr1, brneg, fmt, sreg, treg);
       macro_build (NULL, "nop", "");
@@ -10432,15 +10735,9 @@ macro (struct mips_cl_insn *ip, char *str)
 
   mask = ip->insn_mo->mask;
 
-  label_expr.X_op = O_constant;
-  label_expr.X_op_symbol = NULL;
-  label_expr.X_add_symbol = NULL;
-  label_expr.X_add_number = 0;
+  label_expr = (expressionS) { .X_op = O_constant };
 
-  expr1.X_op = O_constant;
-  expr1.X_op_symbol = NULL;
-  expr1.X_add_symbol = NULL;
-  expr1.X_add_number = 1;
+  expr1 = (expressionS) { .X_op = O_constant, .X_add_number = 1 };
   align = 1;
 
   switch (mask)
@@ -14151,10 +14448,7 @@ mips16_macro (struct mips_cl_insn *ip)
     else
       op[i] = -1;
 
-  expr1.X_op = O_constant;
-  expr1.X_op_symbol = NULL;
-  expr1.X_add_symbol = NULL;
-  expr1.X_add_number = 1;
+  expr1 = (expressionS) { .X_op = O_constant, .X_add_number = 1 };
 
   dbl = 0;
 
@@ -14766,6 +15060,24 @@ parse_relocation (char **str, bfd_reloc_code_real_type *reloc)
   return false;
 }
 
+/* Return a relocation operator corresponding to RELOC.  */
+
+static const char *
+mips_op_for_relocation (bfd_reloc_code_real_type reloc)
+
+{
+  size_t i;
+
+  for (i = 0; i < ARRAY_SIZE (mips_percent_op); i++)
+    if (reloc == micromips_map_reloc (mips_percent_op[i].reloc,
+				      micromips_reloc_p (reloc)))
+      return mips_percent_op[i].str;
+  for (i = 0; i < ARRAY_SIZE (mips16_percent_op); i++)
+    if (reloc == mips16_percent_op[i].reloc)
+      return mips16_percent_op[i].str;
+
+  abort ();
+}
 
 /* Parse string STR as a 16-bit relocatable operand.  Store the
    expression in *EP and the relocations in the array starting
@@ -15635,11 +15947,7 @@ mips_frob_file (void)
 	 fixup_has_matching_lo_p() will return true.  For PC-relative
 	 relocations the distance between the offsets is retained
 	 according to expectations in `fixup_has_matching_lo_p',
-	 `_bfd_mips_elf_lo16_reloc' and `mips_elf_add_lo16_rel_addend'.
-
-	 We don't warn about unmatched high-part relocations since some
-	 versions of gcc have been known to emit dead "lui ...%hi(...)"
-	 instructions.  */
+	 `_bfd_mips_elf_lo16_reloc' and `mips_elf_add_lo16_rel_addend'.  */
       if (lo_pos != NULL)
 	{
 	  if (l->fixp->fx_r_type != BFD_RELOC_HI16_S_PCREL)
@@ -15651,6 +15959,11 @@ mips_frob_file (void)
 	      *lo_pos = l->fixp;
 	    }
 	}
+      else
+	as_warn_where
+	  (l->fixp->fx_file, l->fixp->fx_line,
+	   _("can't find matching low-part relocation for %s operator"),
+	   mips_op_for_relocation (l->fixp->fx_r_type));
     }
 }
 
@@ -17120,11 +17433,11 @@ s_cpload (int ignore ATTRIBUTE_UNUSED)
      the default instruction sequence.  */
   in_shared = mips_in_shared || HAVE_64BIT_SYMBOLS;
 
-  ex.X_op = O_symbol;
-  ex.X_add_symbol = symbol_find_or_make (in_shared ? "_gp_disp" :
-                                         "__gnu_local_gp");
-  ex.X_op_symbol = NULL;
-  ex.X_add_number = 0;
+  ex = (expressionS) {
+    .X_op = O_symbol,
+    .X_add_symbol = symbol_find_or_make (in_shared ? "_gp_disp"
+					 : "__gnu_local_gp")
+  };
 
   /* In ELF, this symbol is implicitly an STT_OBJECT symbol.  */
   symbol_get_bfdsym (ex.X_add_symbol)->flags |= BSF_OBJECT;
@@ -17226,10 +17539,10 @@ s_cpsetup (int ignore ATTRIBUTE_UNUSED)
   macro_start ();
   if (mips_cpreturn_register == -1)
     {
-      ex_off.X_op = O_constant;
-      ex_off.X_add_symbol = NULL;
-      ex_off.X_op_symbol = NULL;
-      ex_off.X_add_number = mips_cpreturn_offset;
+      ex_off = (expressionS) {
+	.X_op = O_constant,
+	.X_add_number = mips_cpreturn_offset
+      };
 
       macro_build (&ex_off, "sd", "t,o(b)", mips_gp_register,
 		   BFD_RELOC_LO16, SP);
@@ -17252,12 +17565,10 @@ s_cpsetup (int ignore ATTRIBUTE_UNUSED)
     }
   else
     {
-      expressionS ex;
-
-      ex.X_op = O_symbol;
-      ex.X_add_symbol = symbol_find_or_make ("__gnu_local_gp");
-      ex.X_op_symbol = NULL;
-      ex.X_add_number = 0;
+      expressionS ex = {
+	.X_op = O_symbol,
+	.X_add_symbol = symbol_find_or_make ("__gnu_local_gp")
+      };
 
       /* In ELF, this symbol is implicitly an STT_OBJECT symbol.  */
       symbol_get_bfdsym (ex.X_add_symbol)->flags |= BSF_OBJECT;
@@ -17326,10 +17637,10 @@ s_cprestore (int ignore ATTRIBUTE_UNUSED)
   mips_cprestore_offset = get_absolute_expression ();
   mips_cprestore_valid = 1;
 
-  ex.X_op = O_constant;
-  ex.X_add_symbol = NULL;
-  ex.X_op_symbol = NULL;
-  ex.X_add_number = mips_cprestore_offset;
+  ex = (expressionS) {
+    .X_op = O_constant,
+    .X_add_number = mips_cprestore_offset
+  };
 
   mips_mark_labels ();
   mips_assembling_insn = true;
@@ -17378,10 +17689,10 @@ s_cpreturn (int ignore ATTRIBUTE_UNUSED)
   macro_start ();
   if (mips_cpreturn_register == -1)
     {
-      ex.X_op = O_constant;
-      ex.X_add_symbol = NULL;
-      ex.X_op_symbol = NULL;
-      ex.X_add_number = mips_cpreturn_offset;
+      ex = (expressionS) {
+	.X_op = O_constant,
+	.X_add_number = mips_cpreturn_offset
+      };
 
       macro_build (&ex, "ld", "t,o(b)", mips_gp_register, BFD_RELOC_LO16, SP);
     }
@@ -18425,6 +18736,7 @@ mips_fix_adjustable (fixS *fixp)
      this, it seems better not to force the issue, and instead keep the
      original symbol.  This will work with either linker behavior.  */
   if ((lo16_reloc_p (fixp->fx_r_type)
+       || tls_lo16_reloc_p (fixp->fx_r_type)
        || reloc_needs_lo_p (fixp->fx_r_type))
       && HAVE_IN_PLACE_ADDENDS
       && (S_GET_SEGMENT (fixp->fx_addsy)->flags & SEC_MERGE) != 0)
@@ -20732,7 +21044,7 @@ mips_md_finish (void)
   file_mips_check_options ();
 
   /* Set a floating-point ABI if the user did not.  */
-  if (obj_elf_seen_attribute (OBJ_ATTR_GNU, Tag_GNU_MIPS_ABI_FP))
+  if (oav1_attr_seen (OBJ_ATTR_GNU, Tag_GNU_MIPS_ABI_FP))
     {
       /* Perform consistency checks on the floating-point ABI.  */
       fpabi = bfd_elf_get_obj_attr_int (stdoutput, OBJ_ATTR_GNU,

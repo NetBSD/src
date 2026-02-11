@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 #   Contributed by ARM Ltd.
 #
 # This file is part of the GNU Binutils.
@@ -38,7 +38,7 @@ static aarch64_protection_opts sw_protections = {
   .plt_type = PLT_NORMAL,
   .bti_report = MARKING_WARN,
   .gcs_type = GCS_IMPLICIT,
-  .gcs_report = MARKING_WARN,
+  .gcs_report = MARKING_UNSET,
   .gcs_report_dynamic = MARKING_UNSET,
 };
 
@@ -419,7 +419,7 @@ aarch64_parse_gcs_report_dynamic_option (const char *_optarg)
   #define GCS_REPORT_DYNAMIC_LEN  COMPILE_TIME_STRLEN (GCS_REPORT_DYNAMIC)
 
   return aarch64_parse_feature_report_option (_optarg, GCS_REPORT_DYNAMIC,
-    GCS_REPORT_DYNAMIC_LEN, false, &sw_protections.gcs_report_dynamic);
+    GCS_REPORT_DYNAMIC_LEN, true, &sw_protections.gcs_report_dynamic);
 
   #undef GCS_REPORT_DYNAMIC
   #undef GCS_REPORT_DYNAMIC_LEN
@@ -489,6 +489,7 @@ PARSE_AND_LIST_LONGOPTS='
   { "fix-cortex-a53-835769", no_argument, NULL, OPTION_FIX_ERRATUM_835769},
   { "fix-cortex-a53-843419", optional_argument, NULL, OPTION_FIX_ERRATUM_843419},
   { "no-apply-dynamic-relocs", no_argument, NULL, OPTION_NO_APPLY_DYNAMIC_RELOCS},
+  { "discard-sframe", no_argument, NULL, OPTION_DISCARD_SFRAME},
 '
 
 PARSE_AND_LIST_OPTIONS='
@@ -497,6 +498,7 @@ PARSE_AND_LIST_OPTIONS='
   fprintf (file, _("  --no-wchar-size-warning     Don'\''t warn about objects with incompatible\n"
 		   "                                wchar_t sizes\n"));
   fprintf (file, _("  --pic-veneer                Always generate PIC interworking veneers\n"));
+  fprintf (file, _("  --discard-sframe            Don'\''t generate SFrame stack trace info in output\n"));
   fprintf (file, _("\
   --stub-group-size=N         Maximum size of a group of input sections that\n\
                                 can be handled by one stub section.  A negative\n\
@@ -634,6 +636,11 @@ PARSE_AND_LIST_ARGS_CASES='
 	  fatal (_("%P: invalid number `%s'\''\n"), optarg);
       }
       break;
+
+    case OPTION_DISCARD_SFRAME:
+      link_info.discard_sframe = true;
+      break;
+
 '
 
 # We have our own before_allocation etc. functions, but they call

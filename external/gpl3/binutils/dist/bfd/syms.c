@@ -1,5 +1,5 @@
 /* Generic symbol-table support for the BFD library.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -302,6 +302,9 @@ CODE_FRAGMENT
 .
 .  {* This section symbol should be included in the symbol table.  *}
 .#define BSF_SECTION_SYM_USED    (1 << 24)
+.
+.  {* This symbol underwent section merge resolution.  *}
+.#define BSF_MERGE_RESOLVED      (1 << 25)
 .
 .  flagword flags;
 .
@@ -792,10 +795,6 @@ bfd_symbol_info (asymbol *symbol, symbol_info *ret)
 /*
 FUNCTION
 	bfd_copy_private_symbol_data
-
-SYNOPSIS
-	bool bfd_copy_private_symbol_data
-	  (bfd *ibfd, asymbol *isym, bfd *obfd, asymbol *osym);
 
 DESCRIPTION
 	Copy private symbol information from @var{isym} in the BFD

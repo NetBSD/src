@@ -1,5 +1,5 @@
 /* MIPS-specific support for 64-bit ELF
-   Copyright (C) 1996-2025 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    Ian Lance Taylor, Cygnus Support
    Linker support added by Mark Mitchell, CodeSourcery, LLC.
    <mark@codesourcery.com>
@@ -3852,9 +3852,9 @@ bfd_elf64_bfd_reloc_type_lookup (bfd *abfd ATTRIBUTE_UNUSED,
       return &elf_mips_gnu_pcrel32;
     case BFD_RELOC_MIPS_EH:
       return &elf_mips_eh_howto;
-    case BFD_RELOC_MIPS_COPY:
+    case BFD_RELOC_COPY:
       return &elf_mips_copy_howto;
-    case BFD_RELOC_MIPS_JUMP_SLOT:
+    case BFD_RELOC_JMP_SLOT:
       return &elf_mips_jump_slot_howto;
     default:
       bfd_set_error (bfd_error_bad_value);
@@ -4700,7 +4700,7 @@ static const struct ecoff_debug_swap mips_elf64_ecoff_debug_swap =
    standard ELF.  This structure is used to redirect the relocation
    handling routines.  */
 
-const struct elf_size_info mips_elf64_size_info =
+static const struct elf_size_info mips_elf64_size_info =
 {
   sizeof (Elf64_External_Ehdr),
   sizeof (Elf64_External_Phdr),
@@ -4809,6 +4809,8 @@ const struct elf_size_info mips_elf64_size_info =
 					mips_elf64_is_local_label_name
 #define bfd_elf64_bfd_is_target_special_symbol \
 					_bfd_mips_elf_is_target_special_symbol
+#define bfd_elf64_finalize_section_relocs \
+					_bfd_mips_elf_finalize_section_relocs
 #define bfd_elf64_find_nearest_line	_bfd_mips_elf_find_nearest_line
 #define bfd_elf64_find_nearest_line_with_alt \
 				_bfd_mips_elf_find_nearest_line_with_alt
@@ -4880,6 +4882,8 @@ const struct elf_size_info mips_elf64_size_info =
 
 #undef	ELF_OSABI
 #define	ELF_OSABI			ELFOSABI_FREEBSD
+#undef	ELF_OSABI_EXACT
+#define	ELF_OSABI_EXACT			1
 
 #undef	elf64_bed
 #define elf64_bed				elf64_fbsd_tradbed

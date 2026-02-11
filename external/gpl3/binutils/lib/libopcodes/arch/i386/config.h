@@ -13,7 +13,7 @@
 #define __CONFIG_H__ 1
 
 /* Define if you want run-time sanity checks. */
-/* #undef ENABLE_CHECKING */
+#define ENABLE_CHECKING 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -92,7 +92,7 @@
 #define PACKAGE_NAME "opcodes"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "opcodes 2.45"
+#define PACKAGE_STRING "opcodes 2.46.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "opcodes"
@@ -101,7 +101,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.45"
+#define PACKAGE_VERSION "2.46.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -129,7 +129,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.45"
+#define VERSION "2.46.0"
 
 /* Define to 1 if on MINIX. */
 /* #undef _MINIX */

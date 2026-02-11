@@ -47,9 +47,6 @@
    type by default. */
 #define DEFAULT_GENERATE_ELF_STT_COMMON 0
 
-/* Define to 1 if you want to generate x86 relax relocations by default. */
-#define DEFAULT_GENERATE_X86_RELAX_RELOCATIONS 1
-
 /* Define to 1 if you want to fix Loongson3 LLSC Errata by default. */
 #define DEFAULT_MIPS_FIX_LOONGSON3_LLSC 0
 
@@ -65,6 +62,9 @@
 /* Define default value for RISC-V -mpriv-spec */
 /* #undef DEFAULT_RISCV_PRIV_SPEC */
 
+/* Define to 1 if you want to emit SFrames by default. */
+#define DEFAULT_SFRAME 0
+
 /* Define to 1 if you want to check x86 TLS relocation by default. */
 #define DEFAULT_X86_TLS_CHECK 1
 
@@ -76,7 +76,7 @@
 #define EMULATIONS 
 
 /* Define if you want run-time sanity checks. */
-/* #undef ENABLE_CHECKING */
+#define ENABLE_CHECKING 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -239,7 +239,7 @@
 #define PACKAGE_NAME "gas"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "gas 2.45"
+#define PACKAGE_STRING "gas 2.46.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "gas"
@@ -248,7 +248,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.45"
+#define PACKAGE_VERSION "2.46.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -270,9 +270,6 @@
 
 /* Target OS. */
 #define TARGET_OS "netbsdelf"
-
-/* Define if default target is PowerPC Solaris. */
-/* #undef TARGET_SOLARIS_COMMENT */
 
 /* Target vendor. */
 #define TARGET_VENDOR ""
@@ -315,7 +312,7 @@
 /* #undef USING_CGEN */
 
 /* Version number of package */
-#define VERSION "2.45"
+#define VERSION "2.46.0"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

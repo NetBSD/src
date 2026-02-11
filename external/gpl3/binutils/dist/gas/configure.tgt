@@ -1,6 +1,6 @@
 # gas target specific configuration file.  This is a -*- sh -*- file.
 #
-#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -161,7 +161,6 @@ case ${generic_target} in
   arm-*-linux-*)			fmt=elf  em=linux ;;
   arm-*-uclinux*eabi*)			fmt=elf  em=armlinuxeabi ;;
   arm-*-uclinux*)			fmt=elf  em=linux ;;
-  arm-*-nacl*)				fmt=elf  em=nacl ;;
   arm-*-netbsd* | arm-*-openbsd*)	fmt=elf  em=nbsd ;;
   arm-*-nto*)				fmt=elf ;;
   arm-wince-pe | arm-*-wince | arm*-*-mingw32ce* | arm*-*-cegcc*)
@@ -366,7 +365,6 @@ case ${generic_target} in
   ppc-*-eabi* | ppc-*-sysv4*)		fmt=elf ;;
   ppc-*-haiku*)				fmt=elf em=haiku ;;
   ppc-*-linux-*)			fmt=elf em=linux ;;
-  ppc-*-solaris*)			fmt=elf em=solaris ;;
   ppc-*-macos*)				fmt=coff em=macos ;;
   ppc-*-nto*)				fmt=elf ;;
   ppc-*-kaos*)				fmt=elf ;;
@@ -403,7 +401,10 @@ case ${generic_target} in
 
   sparc-*-haiku*)			fmt=elf em=haiku ;;
   sparc-*-linux-*)			fmt=elf em=linux ;;
-  sparc-*-solaris*)			fmt=elf em=solaris ;;
+  sparc-*-solaris*)			fmt=elf em=solaris
+    case ${cpu} in
+      sparc)	arch=v8plus-32 ;;
+    esac ;;
   sparc-*-freebsd*)			fmt=elf em=freebsd ;;
   sparc-*-*bsd*)			fmt=elf em=nbsd ;;
 
@@ -437,7 +438,6 @@ case ${generic_target} in
   z8k-*-coff | z8k-*-sim)		fmt=coff ;;
 
   *-*-aout | *-*-scout)			fmt=aout ;;
-  *-*-cloudabi*)			fmt=elf em=cloudabi ;;
   *-*-dragonfly*)			fmt=elf em=dragonfly ;;
   *-*-freebsd* | *-*-kfreebsd*-gnu)	fmt=elf em=freebsd ;;
   *-*-generic)				fmt=generic ;;

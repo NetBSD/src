@@ -1,5 +1,5 @@
 /* tc-ppc.c -- Assemble for the PowerPC or POWER (RS/6000)
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of GAS, the GNU Assembler.
@@ -123,6 +123,10 @@ static void ppc_weak (int);
 static void ppc_GNU_visibility (int);
 #endif
 
+/* This string holds the chars that always start a comment.  If the
+   pre-processor is disabled, these aren't very useful.  */
+const char ppc_comment_chars[] = "#";
+
 #ifdef OBJ_ELF
 static void ppc_elf_rdata (int);
 static void ppc_elf_lcomm (int);
@@ -133,23 +137,6 @@ static void ppc_elf_gnu_attribute (int);
 
 /* Generic assembler global variables which must be defined by all
    targets.  */
-
-#ifdef OBJ_ELF
-/* This string holds the chars that always start a comment.  If the
-   pre-processor is disabled, these aren't very useful.  The macro
-   tc_comment_chars points to this.  We use this, rather than the
-   usual comment_chars, so that we can switch for Solaris conventions.  */
-static const char ppc_solaris_comment_chars[] = "#!";
-static const char ppc_eabi_comment_chars[] = "#";
-
-#ifdef TARGET_SOLARIS_COMMENT
-const char *ppc_comment_chars = ppc_solaris_comment_chars;
-#else
-const char *ppc_comment_chars = ppc_eabi_comment_chars;
-#endif
-#else
-const char comment_chars[] = "#";
-#endif
 
 /* Characters which start a comment at the beginning of a line.  */
 const char line_comment_chars[] = "#";
@@ -351,7 +338,6 @@ static const struct pd_reg pre_defined_registers[] =
   { "ctr", 9, PPC_OPERAND_SPR },
   { "dar", 19, PPC_OPERAND_SPR },
   { "dec", 22, PPC_OPERAND_SPR },
-  { "dsisr", 18, PPC_OPERAND_SPR },
 
   /* Dense Math Registers.  */
   { "dm0", 0, PPC_OPERAND_DMR },
@@ -362,6 +348,8 @@ static const struct pd_reg pre_defined_registers[] =
   { "dm5", 5, PPC_OPERAND_DMR },
   { "dm6", 6, PPC_OPERAND_DMR },
   { "dm7", 7, PPC_OPERAND_DMR },
+
+  { "dsisr", 18, PPC_OPERAND_SPR },
 
   /* Floating point registers */
   { "f.0", 0, PPC_OPERAND_FPR },
@@ -993,15 +981,6 @@ static enum { SHLIB_NONE, SHLIB_PIC, SHLIB_MRELOCATABLE } shlib = SHLIB_NONE;
 
 /* Flags to set in the elf header.  */
 static flagword ppc_flags = 0;
-
-/* Whether this is Solaris or not.  */
-#ifdef TARGET_SOLARIS_COMMENT
-#define SOLARIS_P true
-#else
-#define SOLARIS_P false
-#endif
-
-static bool msolaris = SOLARIS_P;
 #endif
 
 #ifdef OBJ_XCOFF
@@ -1247,17 +1226,6 @@ md_parse_option (int c, const char *arg)
 	  set_target_endian = 1;
 	}
 
-      else if (strcmp (arg, "solaris") == 0)
-	{
-	  msolaris = true;
-	  ppc_comment_chars = ppc_solaris_comment_chars;
-	}
-
-      else if (strcmp (arg, "no-solaris") == 0)
-	{
-	  msolaris = false;
-	  ppc_comment_chars = ppc_eabi_comment_chars;
-	}
       else if (strcmp (arg, "spe2") == 0)
 	{
 	  ppc_cpu |= PPC_OPCODE_SPE2;
@@ -1444,10 +1412,6 @@ PowerPC options:\n"));
   fprintf (stream, _("\
 -mbig, -mbig-endian, -be\n\
                         generate code for a big endian machine\n"));
-  fprintf (stream, _("\
--msolaris               generate code for Solaris\n"));
-  fprintf (stream, _("\
--mno-solaris            do not generate code for Solaris\n"));
   fprintf (stream, _("\
 -K PIC                  set EF_PPC_RELOCATABLE_LIB in ELF flags\n"));
   fprintf (stream, _("\
@@ -1891,7 +1855,7 @@ md_begin (void)
 
 #ifdef OBJ_ELF
   /* Set the ELF flags if desired.  */
-  if (ppc_flags && !msolaris)
+  if (ppc_flags)
     bfd_set_private_flags (stdoutput, ppc_flags);
 #endif
 
@@ -2125,8 +2089,8 @@ ppc_elf_suffix (char **str_p, expressionS *exp_p)
     MAP ("plt@l",		BFD_RELOC_LO16_PLTOFF),
     MAP ("plt@h",		BFD_RELOC_HI16_PLTOFF),
     MAP ("plt@ha",		BFD_RELOC_HI16_S_PLTOFF),
-    MAP ("copy",		BFD_RELOC_PPC_COPY),
-    MAP ("globdat",		BFD_RELOC_PPC_GLOB_DAT),
+    MAP ("copy",		BFD_RELOC_COPY),
+    MAP ("globdat",		BFD_RELOC_GLOB_DAT),
     MAP ("sectoff",		BFD_RELOC_16_BASEREL),
     MAP ("sectoff@l",		BFD_RELOC_LO16_BASEREL),
     MAP ("sectoff@h",		BFD_RELOC_HI16_BASEREL),
@@ -2359,7 +2323,7 @@ ppc_elf_cons_fix_check (expressionS *exp ATTRIBUTE_UNUSED,
     }
 }
 
-/* Solaris pseduo op to change to the .rodata section.  */
+/* Solaris pseudo op to change to the .rodata section.  */
 static void
 ppc_elf_rdata (int xxx)
 {
@@ -2576,7 +2540,7 @@ ppc_elf_abiversion (int ignore ATTRIBUTE_UNUSED)
 static void
 ppc_elf_gnu_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_GNU);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_GNU);
 
   /* Check validity of defined powerpc tags.  */
   if (tag == Tag_GNU_Power_ABI_FP
@@ -3201,10 +3165,10 @@ fixup_size (bfd_reloc_code_real_type reloc, bool *pc_relative)
 #ifndef OBJ_XCOFF
     case BFD_RELOC_CTOR:
 #endif
-    case BFD_RELOC_PPC_COPY:
+    case BFD_RELOC_COPY:
     case BFD_RELOC_PPC_DTPMOD:
     case BFD_RELOC_PPC_DTPREL:
-    case BFD_RELOC_PPC_GLOB_DAT:
+    case BFD_RELOC_GLOB_DAT:
     case BFD_RELOC_PPC_TPREL:
       size = ppc_obj64 ? 8 : 4;
       break;
@@ -3685,7 +3649,7 @@ md_assemble (char *str)
 
 		case BFD_RELOC_PPC_TLS:
 		case BFD_RELOC_PPC64_TLS_PCREL:
-		  if (!_bfd_elf_ppc_at_tls_transform (opcode->opcode, 0))
+		  if (!bfd_elf_ppc_at_tls_transform (opcode->opcode, 0))
 		    as_bad (_("@tls may not be used with \"%s\" operands"),
 			    opcode->name);
 		  else if (operand->shift != 11)
@@ -4171,12 +4135,12 @@ ppc_section_flags (flagword flags, bfd_vma attr ATTRIBUTE_UNUSED, int type)
 }
 
 bfd_vma
-ppc_elf_section_letter (int letter, const char **ptrmsg)
+ppc_elf_section_letter (int letter, const char **extra)
 {
   if (letter == 'v')
     return SHF_PPC_VLE;
 
-  *ptrmsg = _("bad .section directive: want a,e,v,w,x,M,S,G,T in string");
+  *extra = "v";
   return -1;
 }
 #endif /* OBJ_ELF */
@@ -5312,13 +5276,7 @@ ppc_function (int ignore ATTRIBUTE_UNUSED)
 
   if (ext_sym != lab_sym)
     {
-      expressionS exp;
-
-      exp.X_op = O_symbol;
-      exp.X_add_symbol = lab_sym;
-      exp.X_op_symbol = NULL;
-      exp.X_add_number = 0;
-      exp.X_unsigned = 0;
+      expressionS exp = { .X_op = O_symbol, .X_add_symbol = lab_sym };
       symbol_set_value_expression (ext_sym, &exp);
     }
 
@@ -7355,8 +7313,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 	case BFD_RELOC_PPC_DTPMOD:
 	case BFD_RELOC_PPC_TPREL:
 	case BFD_RELOC_PPC_DTPREL:
-	case BFD_RELOC_PPC_COPY:
-	case BFD_RELOC_PPC_GLOB_DAT:
+	case BFD_RELOC_COPY:
+	case BFD_RELOC_GLOB_DAT:
 	case BFD_RELOC_32_PLT_PCREL:
 	case BFD_RELOC_PPC_EMB_NADDR32:
 	case BFD_RELOC_PPC64_TOC:
@@ -7522,8 +7480,8 @@ md_apply_fix (fixS *fixP, valueT *valP, segT seg)
 	case BFD_RELOC_LO16_PLTOFF:
 	case BFD_RELOC_HI16_PLTOFF:
 	case BFD_RELOC_HI16_S_PLTOFF:
-	case BFD_RELOC_PPC_COPY:
-	case BFD_RELOC_PPC_GLOB_DAT:
+	case BFD_RELOC_COPY:
+	case BFD_RELOC_GLOB_DAT:
 	case BFD_RELOC_16_BASEREL:
 	case BFD_RELOC_LO16_BASEREL:
 	case BFD_RELOC_HI16_BASEREL:

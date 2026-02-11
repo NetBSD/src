@@ -36,6 +36,14 @@
    when a .note-GNU-stack section is missing. */
 #define DEFAULT_LD_EXECSTACK 0
 
+/* Define to 1 if you want to enable --gnu2-tls-tag in ELF i386/x86-64 linker
+   by default. */
+#define DEFAULT_LD_GNU2_TLS_TAG 2
+
+/* Define to 1 if you want to enable --gnu-tls-tag in ELF i386 linker by
+   default. */
+#define DEFAULT_LD_GNU_TLS_TAG 2
+
 /* Define to 1 if you want to enable --rosegment in the ELF linker by default.
    */
 #define DEFAULT_LD_ROSEGMENT 0
@@ -74,7 +82,7 @@
 #define DEFAULT_NEW_DTAGS 0
 
 /* Define if you want run-time sanity checks. */
-/* #undef ENABLE_CHECKING */
+#define ENABLE_CHECKING 1
 
 /* Handle .ctf type-info sections */
 #define ENABLE_LIBCTF 1
@@ -114,6 +122,10 @@
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
 #define HAVE_DECL_STPCPY 1
+
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOULL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -156,6 +168,12 @@
 
 /* Define to 1 if you have the `lseek' function. */
 #define HAVE_LSEEK 1
+
+/* Define to 1 if you have the `mallinfo' function. */
+/* #undef HAVE_MALLINFO */
+
+/* Define to 1 if you have the `mallinfo2' function. */
+/* #undef HAVE_MALLINFO2 */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -228,7 +246,7 @@
 #define PACKAGE_NAME "ld"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ld 2.45"
+#define PACKAGE_STRING "ld 2.46.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ld"
@@ -237,7 +255,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.45"
+#define PACKAGE_VERSION "2.46.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -272,7 +290,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.45"
+#define VERSION "2.46.0"
 
 /* whether to use inline xxhash */
 /* #undef WITH_XXHASH */

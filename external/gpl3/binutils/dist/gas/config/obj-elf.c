@@ -1,5 +1,5 @@
 /* ELF object file format
-   Copyright (C) 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -71,7 +71,6 @@ static void obj_elf_visibility (int);
 static void obj_elf_symver (int);
 static void obj_elf_subsection (int);
 static void obj_elf_popsection (int);
-static void obj_elf_gnu_attribute (int);
 static void obj_elf_tls_common (int);
 static void obj_elf_lcomm (int);
 static void obj_elf_struct (int);
@@ -116,7 +115,12 @@ static const pseudo_typeS elf_pseudo_table[] =
   {"vtable_entry", obj_elf_vtable_entry, 0},
 
   /* A GNU extension for object attributes.  */
+#ifdef TC_OBJ_ATTR
   {"gnu_attribute", obj_elf_gnu_attribute, 0},
+#if TC_OBJ_ATTR_v2
+  {"gnu_subsection", obj_elf_gnu_subsection, 0},
+#endif /* TC_OBJ_ATTR_v2 */
+#endif /* TC_OBJ_ATTR */
 
   /* These are used for dwarf2.  */
   { "file", dwarf2_directive_file, 0 },
@@ -581,7 +585,6 @@ change_section (const char *name,
   asection *old_sec;
   segT sec;
   flagword flags;
-  const struct elf_backend_data *bed;
   const struct bfd_elf_special_section *ssect;
 
   if (match_p == NULL)
@@ -627,7 +630,7 @@ change_section (const char *name,
 	group_section_insert (match_p, sec, &group_idx);
     }
 
-  bed = get_elf_backend_data (stdoutput);
+  elf_backend_data *bed = get_elf_backend_data (stdoutput);
   ssect = (*bed->get_sec_type_attr) (stdoutput, sec);
 
   if (ssect != NULL)
@@ -792,7 +795,7 @@ change_section (const char *name,
 	= match_p->linked_to_symbol_name;
 
       bfd_set_section_flags (sec, flags);
-      if (flags & (SEC_MERGE | SEC_STRINGS))
+      if (entsize != 0)
 	sec->entsize = entsize;
       elf_group_name (sec) = match_p->group_name;
 
@@ -847,7 +850,7 @@ change_section (const char *name,
 	       processor or application specific attribute as suspicious?  */
 	    elf_section_flags (sec) = attr;
 
-	  if ((flags & (SEC_MERGE | SEC_STRINGS))
+	  if (entsize != 0
 	      && old_sec->entsize != (unsigned) entsize)
 	    as_bad (_("changed section entity size for %s"), name);
 	}
@@ -870,8 +873,9 @@ obj_elf_change_section (const char *name,
 }
 
 static bfd_vma
-obj_elf_parse_section_letters (char *str, size_t len,
-			       bool *is_clone, int *inherit, bfd_vma *gnu_attr)
+obj_elf_parse_section_letters (char *str, size_t len, bool push,
+			       bool *is_clone, int *inherit, bfd_vma *gnu_attr,
+			       bool *has_entsize)
 {
   bfd_vma attr = 0;
 
@@ -896,6 +900,11 @@ obj_elf_parse_section_letters (char *str, size_t len,
 		}
 	    }
 	  break;
+	case 'd':
+	  if (gnu_attr == NULL)
+	    goto unrecognized;
+	  *gnu_attr |= SHF_GNU_MBIND;
+	  break;
 	case 'e':
 	  attr |= SHF_EXCLUDE;
 	  break;
@@ -908,33 +917,36 @@ obj_elf_parse_section_letters (char *str, size_t len,
 	case 'x':
 	  attr |= SHF_EXECINSTR;
 	  break;
-	case 'M':
-	  attr |= SHF_MERGE;
-	  break;
-	case 'S':
-	  attr |= SHF_STRINGS;
+	case 'E':
+	  *has_entsize = true;
 	  break;
 	case 'G':
 	  attr |= SHF_GROUP;
 	  break;
-	case 'T':
-	  attr |= SHF_TLS;
-	  break;
-	case 'd':
-	  *gnu_attr |= SHF_GNU_MBIND;
+	case 'M':
+	  attr |= SHF_MERGE;
 	  break;
 	case 'R':
+	  if (gnu_attr == NULL)
+	    goto unrecognized;
 	  *gnu_attr |= SHF_GNU_RETAIN;
+	  break;
+	case 'S':
+	  attr |= SHF_STRINGS;
+	  break;
+	case 'T':
+	  attr |= SHF_TLS;
 	  break;
 	case '?':
 	  *is_clone = true;
 	  break;
 	default:
+	unrecognized:
 	  {
-	    const char *bad_msg = _("unrecognized .section attribute:"
-				    " want a,e,o,w,x,M,S,G,T or number");
+	    const char *md_extra = "";
+
 #ifdef md_elf_section_letter
-	    bfd_vma md_attr = md_elf_section_letter (*str, &bad_msg);
+	    bfd_vma md_attr = md_elf_section_letter (*str, &md_extra);
 	    if (md_attr != (bfd_vma) -1)
 	      attr |= md_attr;
 	    else
@@ -942,22 +954,14 @@ obj_elf_parse_section_letters (char *str, size_t len,
 	      if (ISDIGIT (*str))
 		{
 		  char * end;
-		  const struct elf_backend_data *bed;
 		  bfd_vma numeric_flags = strtoul (str, &end, 0);
 
 		  attr |= numeric_flags;
 
-		  bed = get_elf_backend_data (stdoutput);
-
-		  if (bed->elf_osabi == ELFOSABI_NONE
-		      || bed->elf_osabi == ELFOSABI_STANDALONE
-		      || bed->elf_osabi == ELFOSABI_GNU
-		      || bed->elf_osabi == ELFOSABI_FREEBSD)
+		  if (gnu_attr != NULL)
 		    {
 		      /* Add flags in the SHF_MASKOS range to gnu_attr for
 			 OSABIs that support those flags.
-			 Also adding the flags for ELFOSABI_{NONE,STANDALONE}
-			 allows them to be validated later in obj_elf_section.
 			 We can't just always set these bits in gnu_attr for
 			 all OSABIs, since Binutils does not recognize all
 			 SHF_MASKOS bits for non-GNU OSABIs.  It's therefore
@@ -973,10 +977,19 @@ obj_elf_parse_section_letters (char *str, size_t len,
 		  len -= (end - str);
 		  str = end;
 		}
-	      else if (!attr && !*gnu_attr && (*str == '+' || *str == '-'))
+	      else if (!*inherit && !attr
+		       && (gnu_attr == NULL || !*gnu_attr)
+		       && (*str == '+' || *str == '-'))
 		*inherit = *str == '+' ? 1 : -1;
 	      else
-		as_fatal ("%s", bad_msg);
+		{
+		  as_bad (_("unrecognized .%ssection attribute: want %s%s%s,? or number"),
+		    push ? "push" : "",
+		    gnu_attr != NULL ? "a,d,e,o,w,x,E,G,M,R,S,T"
+				     : "a,e,o,w,x,E,G,M,S,T",
+		    md_extra != NULL ? "," : "", md_extra);
+		  return attr;
+		}
 	  }
 	  break;
 	}
@@ -1181,7 +1194,7 @@ obj_elf_section (int push)
   bfd_vma attr;
   bfd_vma gnu_attr;
   int entsize;
-  bool linkonce;
+  bool linkonce, has_entsize;
   subsegT new_subsection = 0;
   struct elf_section_match match;
   unsigned long linked_to_section_index = -1UL;
@@ -1226,6 +1239,7 @@ obj_elf_section (int push)
   attr = 0;
   gnu_attr = 0;
   entsize = 0;
+  has_entsize = false;
   linkonce = 0;
 
   if (*input_line_pointer == ',')
@@ -1261,8 +1275,15 @@ obj_elf_section (int push)
 	      ignore_rest_of_line ();
 	      return;
 	    }
-	  attr = obj_elf_parse_section_letters (beg, strlen (beg), &is_clone,
-						&inherit, &gnu_attr);
+
+	  elf_backend_data *bed = get_elf_backend_data (stdoutput);
+	  bool maybe_gnu = (bed->elf_osabi == ELFOSABI_NONE
+			    || bed->elf_osabi == ELFOSABI_GNU
+			    || bed->elf_osabi == ELFOSABI_FREEBSD);
+	  attr = obj_elf_parse_section_letters (beg, strlen (beg), push,
+						&is_clone, &inherit,
+						maybe_gnu ? &gnu_attr : NULL,
+						&has_entsize);
 
 	  if (inherit > 0)
 	    attr |= elf_section_flags (now_seg);
@@ -1270,6 +1291,9 @@ obj_elf_section (int push)
 	    attr = elf_section_flags (now_seg) & ~attr;
 	  if (inherit)
 	    type = elf_section_type (now_seg);
+
+	  if ((attr & (SHF_MERGE | SHF_STRINGS)) != 0)
+	    has_entsize = true;
 
 	  SKIP_WHITESPACE ();
 	  if (*input_line_pointer == ',')
@@ -1310,16 +1334,18 @@ obj_elf_section (int push)
 	    }
 
 	  SKIP_WHITESPACE ();
-	  if ((attr & (SHF_MERGE | SHF_STRINGS)) != 0
-	      && *input_line_pointer == ',')
+	  if (has_entsize && *input_line_pointer == ',')
 	    {
 	      ++input_line_pointer;
 	      SKIP_WHITESPACE ();
 	      if (inherit && *input_line_pointer == ','
+		  && ((bfd_section_flags (now_seg)
+		       & (SEC_MERGE | SEC_STRINGS)) != 0
+		      || now_seg->entsize))
+		goto fetch_entsize;
+	      if (is_end_of_stmt (*input_line_pointer)
 		  && (bfd_section_flags (now_seg)
 		      & (SEC_MERGE | SEC_STRINGS)) != 0)
-		goto fetch_entsize;
-	      if (is_end_of_stmt (*input_line_pointer))
 		{
 		  /* ??? This is here for older versions of gcc that
 		     test for gas string merge support with
@@ -1327,7 +1353,7 @@ obj_elf_section (int push)
 		     Unfortunately '@' begins a comment on arm.
 		     This isn't as_warn because gcc tests with
 		     --fatal-warnings. */
-		  as_tsktsk (_("missing merge / string entity size, 1 assumed"));
+		  as_tsktsk (_("missing section entity size, 1 assumed"));
 		  entsize = 1;
 		}
 	      else
@@ -1336,15 +1362,17 @@ obj_elf_section (int push)
 		  SKIP_WHITESPACE ();
 		  if (entsize <= 0)
 		    {
-		      as_warn (_("invalid merge / string entity size"));
+		      as_warn (_("invalid section entity size"));
 		      attr &= ~(SHF_MERGE | SHF_STRINGS);
+		      has_entsize = false;
 		      entsize = 0;
 		    }
 		}
 	    }
-	  else if ((attr & (SHF_MERGE | SHF_STRINGS)) != 0 && inherit
-		    && (bfd_section_flags (now_seg)
-			& (SEC_MERGE | SEC_STRINGS)) != 0)
+	  else if (has_entsize && inherit
+		    && ((bfd_section_flags (now_seg)
+			 & (SEC_MERGE | SEC_STRINGS)) != 0
+			|| now_seg->entsize))
 	    {
 	    fetch_entsize:
 	      entsize = now_seg->entsize;
@@ -1355,6 +1383,7 @@ obj_elf_section (int push)
 		 entsize must be specified if SHF_MERGE is set.  */
 	      as_warn (_("entity size for SHF_MERGE not specified"));
 	      attr &= ~(SHF_MERGE | SHF_STRINGS);
+	      has_entsize = false;
 	    }
 	  else if ((attr & SHF_STRINGS) != 0)
 	    {
@@ -1363,6 +1392,11 @@ obj_elf_section (int push)
 		 so we have to default this silently for
 		 compatibility.  */
 	      entsize = 1;
+	    }
+	  else if (has_entsize)
+	    {
+	      as_warn (_("entity size not specified"));
+	      has_entsize = false;
 	    }
 
 	  if ((attr & (SHF_MERGE | SHF_STRINGS)) != 0 && type == SHT_NOBITS)
@@ -1572,28 +1606,17 @@ obj_elf_section (int push)
 
   if ((gnu_attr & (SHF_GNU_MBIND | SHF_GNU_RETAIN)) != 0)
     {
-      const struct elf_backend_data *bed;
       bool mbind_p = (gnu_attr & SHF_GNU_MBIND) != 0;
 
       if (mbind_p && (attr & SHF_ALLOC) == 0)
 	as_bad (_("SHF_ALLOC isn't set for GNU_MBIND section: %s"), name);
 
-      bed = get_elf_backend_data (stdoutput);
+      if (mbind_p)
+	elf_tdata (stdoutput)->has_gnu_osabi |= elf_gnu_osabi_mbind;
+      if ((gnu_attr & SHF_GNU_RETAIN) != 0)
+	elf_tdata (stdoutput)->has_gnu_osabi |= elf_gnu_osabi_retain;
 
-      if (bed->elf_osabi != ELFOSABI_GNU
-	  && bed->elf_osabi != ELFOSABI_FREEBSD
-	  && bed->elf_osabi != ELFOSABI_NONE)
-	as_bad (_("%s section is supported only by GNU and FreeBSD targets"),
-		mbind_p ? "GNU_MBIND" : "GNU_RETAIN");
-      else
-	{
-	  if (mbind_p)
-	    elf_tdata (stdoutput)->has_gnu_osabi |= elf_gnu_osabi_mbind;
-	  if ((gnu_attr & SHF_GNU_RETAIN) != 0)
-	    elf_tdata (stdoutput)->has_gnu_osabi |= elf_gnu_osabi_retain;
-
-	  attr |= gnu_attr;
-	}
+      attr |= gnu_attr;
     }
 
   change_section (name, type, attr, entsize, &match, linkonce, push,
@@ -2050,199 +2073,6 @@ obj_elf_vtable_entry (int ignore ATTRIBUTE_UNUSED)
   (void) obj_elf_get_vtable_entry ();
 }
 
-#define skip_whitespace(str)  do { if (is_whitespace (*(str))) ++(str); } while (0)
-
-static inline int
-skip_past_char (char ** str, char c)
-{
-  if (**str == c)
-    {
-      (*str)++;
-      return 0;
-    }
-  else
-    return -1;
-}
-#define skip_past_comma(str) skip_past_char (str, ',')
-
-/* A list of attributes that have been explicitly set by the assembly code.
-   VENDOR is the vendor id, BASE is the tag shifted right by the number
-   of bits in MASK, and bit N of MASK is set if tag BASE+N has been set.  */
-struct recorded_attribute_info {
-  struct recorded_attribute_info *next;
-  int vendor;
-  unsigned int base;
-  unsigned long mask;
-};
-static struct recorded_attribute_info *recorded_attributes;
-
-/* Record that we have seen an explicit specification of attribute TAG
-   for vendor VENDOR.  */
-
-static void
-record_attribute (int vendor, unsigned int tag)
-{
-  unsigned int base;
-  unsigned long mask;
-  struct recorded_attribute_info *rai;
-
-  base = tag / (8 * sizeof (rai->mask));
-  mask = 1UL << (tag % (8 * sizeof (rai->mask)));
-  for (rai = recorded_attributes; rai; rai = rai->next)
-    if (rai->vendor == vendor && rai->base == base)
-      {
-	rai->mask |= mask;
-	return;
-      }
-
-  rai = XNEW (struct recorded_attribute_info);
-  rai->next = recorded_attributes;
-  rai->vendor = vendor;
-  rai->base = base;
-  rai->mask = mask;
-  recorded_attributes = rai;
-}
-
-/* Return true if we have seen an explicit specification of attribute TAG
-   for vendor VENDOR.  */
-
-bool
-obj_elf_seen_attribute (int vendor, unsigned int tag)
-{
-  unsigned int base;
-  unsigned long mask;
-  struct recorded_attribute_info *rai;
-
-  base = tag / (8 * sizeof (rai->mask));
-  mask = 1UL << (tag % (8 * sizeof (rai->mask)));
-  for (rai = recorded_attributes; rai; rai = rai->next)
-    if (rai->vendor == vendor && rai->base == base)
-      return (rai->mask & mask) != 0;
-  return false;
-}
-
-/* Parse an attribute directive for VENDOR.
-   Returns the attribute number read, or zero on error.  */
-
-int
-obj_elf_vendor_attribute (int vendor)
-{
-  expressionS exp;
-  int type;
-  int tag;
-  unsigned int i = 0;
-  char *s = NULL;
-
-  /* Read the first number or name.  */
-  skip_whitespace (input_line_pointer);
-  s = input_line_pointer;
-  if (ISDIGIT (*input_line_pointer))
-    {
-      expression (& exp);
-      if (exp.X_op != O_constant)
-	goto bad;
-      tag = exp.X_add_number;
-    }
-  else
-    {
-      char *name;
-
-      /* A name may contain '_', but no other punctuation.  */
-      for (; ISALNUM (*input_line_pointer) || *input_line_pointer == '_';
-	   ++input_line_pointer)
-	i++;
-      if (i == 0)
-	goto bad;
-
-      name = xmemdup0 (s, i);
-
-#ifndef CONVERT_SYMBOLIC_ATTRIBUTE
-#define CONVERT_SYMBOLIC_ATTRIBUTE(a) -1
-#endif
-
-      tag = CONVERT_SYMBOLIC_ATTRIBUTE (name);
-      if (tag == -1)
-	{
-	  as_bad (_("Attribute name not recognised: %s"), name);
-	  ignore_rest_of_line ();
-	  free (name);
-	  return 0;
-	}
-      free (name);
-    }
-
-  type = _bfd_elf_obj_attrs_arg_type (stdoutput, vendor, tag);
-
-  if (skip_past_comma (&input_line_pointer) == -1)
-    goto bad;
-  if (type & 1)
-    {
-      expression (& exp);
-      if (exp.X_op != O_constant)
-	{
-	  as_bad (_("expected numeric constant"));
-	  ignore_rest_of_line ();
-	  return 0;
-	}
-      i = exp.X_add_number;
-    }
-  if ((type & 3) == 3
-      && skip_past_comma (&input_line_pointer) == -1)
-    {
-      as_bad (_("expected comma"));
-      ignore_rest_of_line ();
-      return 0;
-    }
-  if (type & 2)
-    {
-      int len;
-
-      skip_whitespace (input_line_pointer);
-      if (*input_line_pointer != '"')
-	goto bad_string;
-      s = demand_copy_C_string (&len);
-    }
-
-  record_attribute (vendor, tag);
-  bool ok = false;
-  switch (type & 3)
-    {
-    case 3:
-      ok = bfd_elf_add_obj_attr_int_string (stdoutput, vendor, tag, i, s);
-      break;
-    case 2:
-      ok = bfd_elf_add_obj_attr_string (stdoutput, vendor, tag, s);
-      break;
-    case 1:
-      ok = bfd_elf_add_obj_attr_int (stdoutput, vendor, tag, i);
-      break;
-    default:
-      abort ();
-    }
-  if (!ok)
-    as_fatal (_("error adding attribute: %s"),
-	      bfd_errmsg (bfd_get_error ()));
-
-  demand_empty_rest_of_line ();
-  return tag;
- bad_string:
-  as_bad (_("bad string constant"));
-  ignore_rest_of_line ();
-  return 0;
- bad:
-  as_bad (_("expected <tag> , <value>"));
-  ignore_rest_of_line ();
-  return 0;
-}
-
-/* Parse a .gnu_attribute directive.  */
-
-static void
-obj_elf_gnu_attribute (int ignored ATTRIBUTE_UNUSED)
-{
-  obj_elf_vendor_attribute (OBJ_ATTR_GNU);
-}
-
 void
 elf_obj_read_begin_hook (void)
 {
@@ -2514,9 +2344,7 @@ obj_elf_type (int ignore ATTRIBUTE_UNUSED)
 	   || strcmp (type_name, "10") == 0
 	   || strcmp (type_name, "STT_GNU_IFUNC") == 0)
     {
-      const struct elf_backend_data *bed;
-
-      bed = get_elf_backend_data (stdoutput);
+      elf_backend_data *bed = get_elf_backend_data (stdoutput);
       if (bed->elf_osabi != ELFOSABI_NONE
 	  && bed->elf_osabi != ELFOSABI_GNU
 	  && bed->elf_osabi != ELFOSABI_FREEBSD)
@@ -2533,9 +2361,7 @@ obj_elf_type (int ignore ATTRIBUTE_UNUSED)
     }
   else if (strcmp (type_name, "gnu_unique_object") == 0)
     {
-      const struct elf_backend_data *bed;
-
-      bed = get_elf_backend_data (stdoutput);
+      elf_backend_data *bed = get_elf_backend_data (stdoutput);
       if (bed->elf_osabi != ELFOSABI_NONE
 	  && bed->elf_osabi != ELFOSABI_GNU)
 	as_bad (_("symbol type \"%s\" is supported only by GNU targets"),
@@ -3006,7 +2832,10 @@ elf_frob_file_before_adjust (void)
 	      char *p = strchr (sy_obj->versioned_name->name,
 				ELF_VER_CHR);
 
-	      if (sy_obj->rename)
+	      /* NB: Malformed versioned symbols may not have @@@.  */
+	      if (sy_obj->rename
+		  && p[1] == ELF_VER_CHR
+		  && p[2] == ELF_VER_CHR)
 		{
 		  /* The @@@ syntax is a special case. If the symbol is
 		     not defined, 2 `@'s will be removed from the
@@ -3175,6 +3004,17 @@ elf_begin (void)
   previous_subsection = 0;
   comment_section = NULL;
   memset (&groups, 0, sizeof (groups));
+
+#ifdef TC_OBJ_ATTR
+  /* Set the object attribute version for the output object to the default
+     value supported by the backend.  */
+  elf_obj_attr_version (stdoutput)
+    = get_elf_backend_data (stdoutput)->default_obj_attr_version;
+
+#if TC_OBJ_ATTR_v1
+  oav1_attr_info_init ();
+#endif /* TC_OBJ_ATTR_v1 */
+#endif /* TC_OBJ_ATTR */
 }
 
 void
@@ -3186,17 +3026,15 @@ elf_end (void)
       section_stack = top->next;
       free (top);
     }
-  while (recorded_attributes)
-    {
-      struct recorded_attribute_info *rai = recorded_attributes;
-      recorded_attributes = rai->next;
-      free (rai);
-    }
   if (groups.indexes)
     {
       htab_delete (groups.indexes);
       free (groups.head);
     }
+
+#if TC_OBJ_ATTR_v1
+  oav1_attr_info_exit ();
+#endif /* TC_OBJ_ATTR_v1 */
 }
 
 #ifdef USE_EMULATIONS

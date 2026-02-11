@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -291,6 +291,8 @@ TARGET_CPU_HFILES = \
 
 TARGET_EXTRA_FILES = \
 	config/bfin-lex-wrapper.c \
+	config/obj-elf-attr.c \
+	config/obj-elf-attr.h \
 	config/xtensa-relax.c \
 	config/xtensa-relax.h \
 	config/kvx-parse.h \

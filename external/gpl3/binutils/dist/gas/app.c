@@ -1,5 +1,5 @@
 /* This is the Assembler Pre-Processor
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -258,10 +258,6 @@ do_scrub_begin (int m68k_mri ATTRIBUTE_UNUSED)
 #endif
 #ifdef DOUBLEBAR_PARALLEL
   lex['|'] = LEX_IS_DOUBLEBAR_1ST;
-#endif
-#ifdef TC_D30V
-  /* Must do this is we want VLIW instruction with "->" or "<-".  */
-  lex['-'] = LEX_IS_SYMBOL_COMPONENT;
 #endif
 
 #ifdef H_TICK_HEX

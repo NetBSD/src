@@ -23,7 +23,7 @@
 #define DEFAULT_LD_Z_SEPARATE_CODE 1
 
 /* Define if you want run-time sanity checks. */
-/* #undef ENABLE_CHECKING */
+#define ENABLE_CHECKING 1
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -79,6 +79,10 @@
 /* Define to 1 if you have the declaration of `strnlen', and to 0 if you
    don't. */
 #define HAVE_DECL_STRNLEN 1
+
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOULL 1
 
 /* Define to 1 if you have the declaration of `vasprintf', and to 0 if you
    don't. */
@@ -279,7 +283,7 @@
 #define PACKAGE_NAME "bfd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "bfd 2.45"
+#define PACKAGE_STRING "bfd 2.46.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bfd"
@@ -288,7 +292,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.45"
+#define PACKAGE_VERSION "2.46.0"
 
 /* The size of `int', as computed by sizeof. */
 #define SIZEOF_INT 4
@@ -352,7 +356,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.45"
+#define VERSION "2.46.0"
 
 /* Define WORDS_BIGENDIAN to 1 if your processor stores words with the most
    significant byte first (like Motorola and SPARC, unlike Intel). */

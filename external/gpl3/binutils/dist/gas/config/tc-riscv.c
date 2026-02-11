@@ -1,5 +1,5 @@
 /* tc-riscv.c -- RISC-V assembler
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -2518,13 +2518,16 @@ parse_relocation (char **str, bfd_reloc_code_real_type *reloc,
 }
 
 static void
-my_getExpression (expressionS *ep, char *str)
+my_getExpression (expressionS *ep, char *str, bool defer)
 {
   char *save_in;
 
   save_in = input_line_pointer;
   input_line_pointer = str;
-  expression (ep);
+  if (defer)
+    deferred_expression (ep);
+  else
+    expression (ep);
   expr_parse_end = input_line_pointer;
   input_line_pointer = save_in;
 }
@@ -2543,6 +2546,7 @@ my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
   size_t reloc_index;
   unsigned crux_depth, str_depth;
   bool orig_probing = probing_insn_operands;
+  bool force_reloc = false;
   char *crux;
 
   /* Search for the start of the main expression.
@@ -2582,7 +2586,10 @@ my_getSmallExpression (expressionS *ep, bfd_reloc_code_real_type *reloc,
   if (str_depth || reloc_index)
     probing_insn_operands = false;
 
-  my_getExpression (ep, crux);
+  if (*reloc == BFD_RELOC_RISCV_GOT_HI20)
+    force_reloc = true;
+
+  my_getExpression (ep, crux, force_reloc);
   str = expr_parse_end;
 
   probing_insn_operands = orig_probing;
@@ -2674,7 +2681,7 @@ my_getVsetvliExpression (expressionS *ep, char *str)
     }
   else
     {
-      my_getExpression (ep, str);
+      my_getExpression (ep, str, false/* defer */);
       str = expr_parse_end;
     }
 }
@@ -2727,7 +2734,7 @@ my_getThVsetvliExpression (expressionS *ep, char *str)
     }
   else
     {
-      my_getExpression (ep, str);
+      my_getExpression (ep, str, false/* defer */);
       str = expr_parse_end;
     }
 }
@@ -2851,6 +2858,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
   error.missing_ext = NULL;
   /* Indicate we are assembling instruction with CSR.  */
   bool insn_with_csr = false;
+  bool force_reloc = false;
 
   /* Parse the name of the instruction.  Terminate the string if whitespace
      is found so that str_hash_find only sees the name part of the string.  */
@@ -3353,7 +3361,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  continue;
 
 		case 'i': /* vector arith signed immediate */
-		  my_getExpression (imm_expr, asarg);
+		  my_getExpression (imm_expr, asarg, force_reloc);
 		  check_absolute_expr (ip, imm_expr, FALSE);
 		  if (imm_expr->X_add_number > 15
 		      || imm_expr->X_add_number < -16)
@@ -3365,7 +3373,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  continue;
 
 		case 'j': /* vector arith unsigned immediate */
-		  my_getExpression (imm_expr, asarg);
+		  my_getExpression (imm_expr, asarg, force_reloc);
 		  check_absolute_expr (ip, imm_expr, FALSE);
 		  if (imm_expr->X_add_number < 0
 		      || imm_expr->X_add_number >= 32)
@@ -3377,7 +3385,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  continue;
 
 		case 'k': /* vector arith signed immediate, minus 1 */
-		  my_getExpression (imm_expr, asarg);
+		  my_getExpression (imm_expr, asarg, force_reloc);
 		  check_absolute_expr (ip, imm_expr, FALSE);
 		  if (imm_expr->X_add_number > 16
 		      || imm_expr->X_add_number < -15)
@@ -3389,7 +3397,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  continue;
 
 		case 'l': /* 6-bit vector arith unsigned immediate */
-		  my_getExpression (imm_expr, asarg);
+		  my_getExpression (imm_expr, asarg, force_reloc);
 		  check_absolute_expr (ip, imm_expr, FALSE);
 		  if (imm_expr->X_add_number < 0
 		      || imm_expr->X_add_number >= 64)
@@ -3453,7 +3461,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      break;
 
 	    case '<': /* Shift amount, 0 - 31.  */
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      check_absolute_expr (ip, imm_expr, false);
 	      if ((unsigned long) imm_expr->X_add_number > 31)
 		as_bad (_("improper shift amount (%"PRIu64")"),
@@ -3464,7 +3472,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      continue;
 
 	    case '>': /* Shift amount, 0 - (XLEN-1).  */
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      check_absolute_expr (ip, imm_expr, false);
 	      if ((unsigned long) imm_expr->X_add_number >= xlen)
 		as_bad (_("improper shift amount (%"PRIu64")"),
@@ -3475,7 +3483,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      continue;
 
 	    case 'Z': /* CSRRxI immediate.  */
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      check_absolute_expr (ip, imm_expr, false);
 	      if ((unsigned long) imm_expr->X_add_number > 31)
 		as_bad (_("improper CSRxI immediate (%"PRIu64")"),
@@ -3492,7 +3500,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		INSERT_OPERAND (CSR, *ip, regno);
 	      else
 		{
-		  my_getExpression (imm_expr, asarg);
+		  my_getExpression (imm_expr, asarg, force_reloc);
 		  check_absolute_expr (ip, imm_expr, true);
 		  if ((unsigned long) imm_expr->X_add_number > 0xfff)
 		    as_bad (_("improper CSR address (%"PRIu64")"),
@@ -3591,7 +3599,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      break;
 
 	    case 'I':
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      if (imm_expr->X_op != O_big
 		  && imm_expr->X_op != O_constant)
 		break;
@@ -3600,7 +3608,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      continue;
 
 	    case 'A':
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      normalize_constant_expr (imm_expr);
 	      /* The 'A' format specifier must be a symbol.  */
 	      if (imm_expr->X_op != O_symbol)
@@ -3610,7 +3618,10 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      continue;
 
 	    case 'B':
-	      my_getExpression (imm_expr, asarg);
+	      if (ip->insn_mo->mask == M_LGA
+		  || (riscv_opts.pic && ip->insn_mo->mask == M_LA))
+		force_reloc = true;
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      normalize_constant_expr (imm_expr);
 	      /* The 'B' format specifier must be a symbol or a constant.  */
 	      if (imm_expr->X_op != O_symbol && imm_expr->X_op != O_constant)
@@ -3662,7 +3673,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	    case 'p': /* PC-relative offset.  */
 	    branch:
 	      *imm_reloc = BFD_RELOC_12_PCREL;
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      asarg = expr_parse_end;
 	      continue;
 
@@ -3685,13 +3696,13 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 
 	    case 'a': /* 20-bit PC-relative offset.  */
 	    jump:
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      asarg = expr_parse_end;
 	      *imm_reloc = BFD_RELOC_RISCV_JMP;
 	      continue;
 
 	    case 'c':
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      asarg = expr_parse_end;
 	      if (strcmp (asarg, "@plt") == 0)
 		asarg += 4;
@@ -3792,7 +3803,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      break;
 
 	    case 'y': /* bs immediate */
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      check_absolute_expr (ip, imm_expr, FALSE);
 	      if ((unsigned long)imm_expr->X_add_number > 3)
 		as_bad(_("Improper bs immediate (%lu)"),
@@ -3803,7 +3814,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 	      continue;
 
 	    case 'Y': /* rnum immediate */
-	      my_getExpression (imm_expr, asarg);
+	      my_getExpression (imm_expr, asarg, force_reloc);
 	      check_absolute_expr (ip, imm_expr, FALSE);
 	      if ((unsigned long)imm_expr->X_add_number > 10)
 		as_bad(_("Improper rnum immediate (%lu)"),
@@ -3833,7 +3844,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			 pseudo S-type but lower 5-bits zero.  */
 		      if (riscv_handle_implicit_zero_offset (imm_expr, asarg))
 			continue;
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, false);
 		      if (((unsigned) (imm_expr->X_add_number) & 0x1fU)
 			  || imm_expr->X_add_number >= RISCV_IMM_REACH / 2
@@ -4025,7 +4036,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			s = strtol (oparg + 1, (char **)&oparg, 10);
 			oparg--;
 
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, false);
 			if (!sign)
 			  {
@@ -4053,7 +4064,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  switch (*++oparg)
 		    {
 		      case '2':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number<0
@@ -4063,7 +4074,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_IS2_UIMM5 (imm_expr->X_add_number);
 			  continue;
 		      case '3':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number < 0
@@ -4073,7 +4084,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_IS3_UIMM5 (imm_expr->X_add_number);
 			continue;
 		      case '4':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number < -16
@@ -4083,7 +4094,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_IS2_UIMM5 (imm_expr->X_add_number);
 			continue;
 		      case '5':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number < -32
@@ -4093,7 +4104,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_SIMD_IMM6 (imm_expr->X_add_number);
 			continue;
 		      case '6':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number < 0
@@ -4103,7 +4114,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_BITMANIP_UIMM5 (imm_expr->X_add_number);
 			continue;
 		      case '7':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			if (imm_expr->X_add_number < 0
@@ -4113,7 +4124,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 			    |= ENCODE_CV_BITMANIP_UIMM2 (imm_expr->X_add_number);
 			continue;
 		      case '8':
-			my_getExpression (imm_expr, asarg);
+			my_getExpression (imm_expr, asarg, force_reloc);
 			check_absolute_expr (ip, imm_expr, FALSE);
 			asarg = expr_parse_end;
 			++oparg;
@@ -4194,7 +4205,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		  switch (*++oparg)
 		    {
 		    case '@': /* hint 0 - 31.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number > 31)
 			as_bad(_("Improper hint amount (%lu)"),
@@ -4205,7 +4216,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		      continue;
 
 		    case '#': /* immediate 0 - 511.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number > 511)
 			as_bad(_("Improper immediate amount (%lu)"),
@@ -4216,7 +4227,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		      continue;
 
 		    case '$': /* LDP offset 0 to (1<<7)-8.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number >= (1 << 7)
 			  || ((unsigned long)imm_expr->X_add_number & 0x7) != 0)
@@ -4229,7 +4240,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		      continue;
 
 		    case '%': /* LWP offset 0 to (1<<7)-4.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number >= (1 << 7)
 			  || ((unsigned long)imm_expr->X_add_number & 0x3) != 0)
@@ -4242,7 +4253,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		      continue;
 
 		    case '^': /* SDP offset 0 to (1<<7)-8.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number >= (1 << 7)
 			  || ((unsigned long)imm_expr->X_add_number & 0x7) != 0)
@@ -4257,7 +4268,7 @@ riscv_ip (char *str, struct riscv_cl_insn *ip, expressionS *imm_expr,
 		      continue;
 
 		    case '&': /* SWP offset 0 to (1<<7)-4.  */
-		      my_getExpression (imm_expr, asarg);
+		      my_getExpression (imm_expr, asarg, force_reloc);
 		      check_absolute_expr (ip, imm_expr, FALSE);
 		      if ((unsigned long)imm_expr->X_add_number >= (1 << 7)
 			  || ((unsigned long)imm_expr->X_add_number & 0x3) != 0)
@@ -4613,7 +4624,7 @@ bool riscv_parse_name (const char *name, struct expressionS *ep,
   if (!probing_insn_operands)
     return false;
 
-  gas_assert (mode == expr_normal);
+  gas_assert (mode == expr_normal || expr_defer_p (mode));
 
   regno = reg_lookup_internal (name, RCLASS_GPR);
   if (regno == -1u)
@@ -5792,7 +5803,7 @@ riscv_convert_symbolic_attribute (const char *name)
   static const struct
   {
     const char *name;
-    const int tag;
+    const obj_attr_tag_t tag;
   }
   attribute_table[] =
   {
@@ -5824,7 +5835,7 @@ riscv_convert_symbolic_attribute (const char *name)
 static void
 s_riscv_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_PROC);
   unsigned old_xlen;
   obj_attribute *attr;
 
@@ -5837,7 +5848,7 @@ s_riscv_attribute (int ignored ATTRIBUTE_UNUSED)
       if (!start_assemble)
 	riscv_set_arch (attr[Tag_RISCV_arch].s);
       else
-	as_fatal (_("architecture elf attributes must set before "
+	as_fatal (_("architecture elf attributes must be set before "
 		    "any instructions"));
 
       if (old_xlen != xlen)
@@ -5855,7 +5866,7 @@ s_riscv_attribute (int ignored ATTRIBUTE_UNUSED)
     case Tag_RISCV_priv_spec_minor:
     case Tag_RISCV_priv_spec_revision:
       if (start_assemble)
-       as_fatal (_("privileged elf attributes must set before "
+       as_fatal (_("privileged elf attributes must be set before "
 		   "any instructions"));
       break;
 

@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -1508,19 +1508,19 @@ elf32_hppa_check_relocs (bfd *abfd,
 static asection *
 elf32_hppa_gc_mark_hook (asection *sec,
 			 struct bfd_link_info *info,
-			 Elf_Internal_Rela *rela,
+			 struct elf_reloc_cookie *cookie,
 			 struct elf_link_hash_entry *hh,
-			 Elf_Internal_Sym *sym)
+			 unsigned int symndx)
 {
   if (hh != NULL)
-    switch ((unsigned int) ELF32_R_TYPE (rela->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_PARISC_GNU_VTINHERIT:
       case R_PARISC_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rela, hh, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, hh, symndx);
 }
 
 /* Support for core dump NOTE sections.  */
@@ -2063,7 +2063,7 @@ elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  sec = bfd_get_linker_section (dynobj, ".interp");
+	  sec = htab->etab.interp;
 	  if (sec == NULL)
 	    abort ();
 	  sec->size = sizeof ELF_DYNAMIC_INTERPRETER;
@@ -3043,7 +3043,7 @@ elf32_hppa_final_link (bfd *abfd, struct bfd_link_info *info)
   struct stat buf;
 
   /* Invoke the regular ELF linker to do all the work.  */
-  if (!bfd_elf_final_link (abfd, info))
+  if (!_bfd_elf_final_link (abfd, info))
     return false;
 
   /* If we're producing a final executable, sort the contents of the
@@ -3594,7 +3594,7 @@ elf32_hppa_relocate_section (bfd *output_bfd,
 
       if (sym_sec != NULL && discarded_section (sym_sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rela, 1, relend,
+					 rela, 1, relend, R_PARISC_NONE,
 					 elf_hppa_howto_table + r_type, 0,
 					 contents);
 
@@ -4369,7 +4369,8 @@ elf32_hppa_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
 
 static bool
 elf32_hppa_finish_dynamic_sections (bfd *output_bfd,
-				    struct bfd_link_info *info)
+				    struct bfd_link_info *info,
+				    bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   struct elf32_hppa_link_hash_table *htab;
@@ -4538,6 +4539,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #define ELF_MACHINE_CODE	EM_PARISC
 #define ELF_MAXPAGESIZE		0x1000
 #define ELF_OSABI		ELFOSABI_HPUX
+#define ELF_OSABI_EXACT		1
 #define elf32_bed		elf32_hppa_hpux_bed
 
 #include "elf32-target.h"

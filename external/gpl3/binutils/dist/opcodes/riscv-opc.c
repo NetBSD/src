@@ -1,5 +1,5 @@
 /* RISC-V opcode list
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -311,14 +311,6 @@ static int
 match_c_addi4spn (const struct riscv_opcode *op, insn_t insn)
 {
   return match_opcode (op, insn) && EXTRACT_CIWTYPE_ADDI4SPN_IMM (insn) != 0;
-}
-
-/* This requires a non-zero shift.  A zero rd is a hint, so is allowed.  */
-
-static int
-match_c_slli (const struct riscv_opcode *op, insn_t insn)
-{
-  return match_opcode (op, insn) && EXTRACT_CITYPE_IMM (insn) != 0;
 }
 
 /* This requires a non-zero rd, and a non-zero shift.  */
@@ -1199,12 +1191,12 @@ const struct riscv_opcode riscv_opcodes[] =
 {"c.and",      0, INSN_CLASS_ZCA,   "Cs,Ct",     MATCH_C_AND, MASK_C_AND, match_opcode, 0 },
 {"c.or",       0, INSN_CLASS_ZCA,   "Cs,Ct",     MATCH_C_OR, MASK_C_OR, match_opcode, 0 },
 {"c.xor",      0, INSN_CLASS_ZCA,   "Cs,Ct",     MATCH_C_XOR, MASK_C_XOR, match_opcode, 0 },
-{"c.slli",     0, INSN_CLASS_ZCA,   "d,C>",      MATCH_C_SLLI, MASK_C_SLLI, match_c_slli, 0 },
-{"c.srli",     0, INSN_CLASS_ZCA,   "Cs,C>",     MATCH_C_SRLI, MASK_C_SRLI, match_c_slli, 0 },
-{"c.srai",     0, INSN_CLASS_ZCA,   "Cs,C>",     MATCH_C_SRAI, MASK_C_SRAI, match_c_slli, 0 },
-{"c.slli64",   0, INSN_CLASS_ZCA,   "d",         MATCH_C_SLLI64, MASK_C_SLLI64, match_c_slli64, 0 },
-{"c.srli64",   0, INSN_CLASS_ZCA,   "Cs",        MATCH_C_SRLI64, MASK_C_SRLI64, match_c_slli64, 0 },
-{"c.srai64",   0, INSN_CLASS_ZCA,   "Cs",        MATCH_C_SRAI64, MASK_C_SRAI64, match_c_slli64, 0 },
+{"c.slli",     0, INSN_CLASS_ZCA,   "d,C>",      MATCH_C_SLLI, MASK_C_SLLI, match_opcode, 0 },
+{"c.srli",     0, INSN_CLASS_ZCA,   "Cs,C>",     MATCH_C_SRLI, MASK_C_SRLI, match_opcode, 0 },
+{"c.srai",     0, INSN_CLASS_ZCA,   "Cs,C>",     MATCH_C_SRAI, MASK_C_SRAI, match_opcode, 0 },
+{"c.slli64",   0, INSN_CLASS_ZCA,   "d",         MATCH_C_SLLI64, MASK_C_SLLI64, match_c_slli64, INSN_ALIAS }, /* Deprecated.  */
+{"c.srli64",   0, INSN_CLASS_ZCA,   "Cs",        MATCH_C_SRLI64, MASK_C_SRLI64, match_c_slli64, INSN_ALIAS }, /* Deprecated.  */
+{"c.srai64",   0, INSN_CLASS_ZCA,   "Cs",        MATCH_C_SRAI64, MASK_C_SRAI64, match_c_slli64, INSN_ALIAS }, /* Deprecated.  */
 {"c.andi",     0, INSN_CLASS_ZCA,   "Cs,Co",     MATCH_C_ANDI, MASK_C_ANDI, match_opcode, 0 },
 {"c.addiw",   64, INSN_CLASS_ZCA,   "d,Co",      MATCH_C_ADDIW, MASK_C_ADDIW, match_rd_nonzero, 0 },
 {"c.addw",    64, INSN_CLASS_ZCA,   "Cs,Ct",     MATCH_C_ADDW, MASK_C_ADDW, match_opcode, 0 },

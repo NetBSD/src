@@ -1,5 +1,5 @@
 /* RISC-V ELF specific backend routines.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -47,13 +47,13 @@ extern void riscv_elf64_set_options (struct bfd_link_info *,
 				     struct riscv_elf_params *);
 
 extern reloc_howto_type *
-riscv_reloc_name_lookup (bfd *, const char *);
+riscv_reloc_name_lookup (bfd *, const char *) ATTRIBUTE_HIDDEN;
 
 extern reloc_howto_type *
-riscv_reloc_type_lookup (bfd *, bfd_reloc_code_real_type);
+riscv_reloc_type_lookup (bfd *, bfd_reloc_code_real_type) ATTRIBUTE_HIDDEN;
 
 extern reloc_howto_type *
-riscv_elf_rtype_to_howto (bfd *, unsigned int r_type);
+riscv_elf_rtype_to_howto (bfd *, unsigned int r_type) ATTRIBUTE_HIDDEN;
 
 /* The information of architecture attribute.  */
 struct riscv_subset_t
@@ -79,12 +79,12 @@ riscv_release_subset_list (riscv_subset_list_t *);
 extern void
 riscv_add_subset (riscv_subset_list_t *,
 		  const char *,
-		  int, int);
+		  int, int) ATTRIBUTE_HIDDEN;
 
 extern bool
 riscv_lookup_subset (const riscv_subset_list_t *,
 		     const char *,
-		     riscv_subset_t **);
+		     riscv_subset_t **) ATTRIBUTE_HIDDEN;
 
 typedef struct
 {
@@ -107,10 +107,10 @@ extern char *
 riscv_arch_str (unsigned, riscv_subset_list_t *, bool);
 
 extern size_t
-riscv_estimate_digit (unsigned);
+riscv_estimate_digit (unsigned) ATTRIBUTE_HIDDEN;
 
 extern int
-riscv_compare_subsets (const char *, const char *);
+riscv_compare_subsets (const char *, const char *) ATTRIBUTE_HIDDEN;
 
 extern riscv_subset_list_t *
 riscv_copy_subset_list (riscv_subset_list_t *);
@@ -139,14 +139,14 @@ extern void
 bfd_elf64_riscv_set_data_segment_info (struct bfd_link_info *, int *);
 
 extern bfd *
-_bfd_riscv_elf_link_setup_gnu_properties (struct bfd_link_info *, uint32_t *);
+_bfd_riscv_elf_link_setup_gnu_properties (struct bfd_link_info *, uint32_t *) ATTRIBUTE_HIDDEN;
 
 extern enum elf_property_kind
 _bfd_riscv_elf_parse_gnu_properties (bfd *, unsigned int, bfd_byte *,
-				     unsigned int);
+				     unsigned int) ATTRIBUTE_HIDDEN;
 
 extern bool
 _bfd_riscv_elf_merge_gnu_properties (struct bfd_link_info *, bfd *,
-				     elf_property *, elf_property *, uint32_t);
+				     elf_property *, elf_property *, uint32_t) ATTRIBUTE_HIDDEN;
 
 #define elf_backend_parse_gnu_properties _bfd_riscv_elf_parse_gnu_properties

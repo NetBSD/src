@@ -1,5 +1,5 @@
 /* tc-riscv.h -- header file for tc-riscv.c.
-   Copyright (C) 2011-2025 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -186,5 +186,8 @@ extern void riscv_adjust_symtab (void);
    symbols appear as two independent function declarations.  */
 #define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC)  \
   elf_copy_symbol_size (DEST, SRC)
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
 
 #endif /* TC_RISCV */

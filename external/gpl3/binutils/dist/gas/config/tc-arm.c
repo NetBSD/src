@@ -1,5 +1,5 @@
 /* tc-arm.c -- Assemble for the ARM
-   Copyright (C) 1994-2025 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 	Modified by David Taylor (dtaylor@armltd.co.uk)
 	Cirrus coprocessor mods by Aldy Hernandez (aldyh@redhat.com)
@@ -920,20 +920,16 @@ struct asm_opcode
 #define BAD_CDE_COPROC	_("coprocessor for insn is not enabled for cde")
 #define UNPRED_REG(R)	_("using " R " results in unpredictable behaviour")
 #define THUMB1_RELOC_ONLY  _("relocation valid in thumb1 code only")
-#define MVE_NOT_IT	_("Warning: instruction is UNPREDICTABLE in an IT " \
-			  "block")
-#define MVE_NOT_VPT	_("Warning: instruction is UNPREDICTABLE in a VPT " \
-			  "block")
-#define MVE_BAD_PC	_("Warning: instruction is UNPREDICTABLE with PC" \
-			  " operand")
-#define MVE_BAD_SP	_("Warning: instruction is UNPREDICTABLE with SP" \
-			  " operand")
+#define MVE_NOT_IT	_("instruction is UNPREDICTABLE in an IT block")
+#define MVE_NOT_VPT	_("instruction is UNPREDICTABLE in a VPT block")
+#define MVE_BAD_PC	_("instruction is UNPREDICTABLE with PC operand")
+#define MVE_BAD_SP	_("instruction is UNPREDICTABLE with SP operand")
 #define BAD_SIMD_TYPE	_("bad type in SIMD instruction")
 #define BAD_MVE_AUTO	\
   _("GAS auto-detection mode and -march=all is deprecated for MVE, please" \
     " use a valid -march or -mcpu option.")
-#define BAD_MVE_SRCDEST	_("Warning: 32-bit element size and same destination "\
-			  "and source operands makes instruction UNPREDICTABLE")
+#define BAD_MVE_SRCDEST	_("32-bit element size and same destination and " \
+			  "source operands makes instruction UNPREDICTABLE")
 #define BAD_EL_TYPE	_("bad element type for instruction")
 #define MVE_BAD_QREG	_("MVE vector register Q[0..7] expected")
 #define BAD_PACBTI	_("selected processor does not support PACBTI extention")
@@ -1474,7 +1470,7 @@ parse_neon_type (struct neon_type *type, char **str)
   while (type->elems < NEON_MAX_TYPE_ELS)
     {
       enum neon_el_type thistype = NT_untyped;
-      unsigned thissize = -1u;
+      unsigned long thissize = -1ul;
 
       if (*ptr != '.')
 	break;
@@ -1505,14 +1501,17 @@ parse_neon_type (struct neon_type *type, char **str)
 	      return FAIL;
 	    }
 	  ptr += 1;
+	  if (!ISDIGIT (*ptr) || *ptr == '0')
+	    goto unexpected;
 	  thissize = strtoul (ptr, &ptr, 10);
 	  if (thissize != 16)
 	    {
-	      as_bad (_("bad size %d in type specifier"), thissize);
+	      as_bad (_("bad size %lu in type specifier"), thissize);
 	      return FAIL;
 	    }
 	  goto done;
 	default:
+	unexpected:
 	  as_bad (_("unexpected character `%c' in type specifier"), *ptr);
 	  return FAIL;
 	}
@@ -1525,12 +1524,14 @@ parse_neon_type (struct neon_type *type, char **str)
       else
 	{
 	parsesize:
+	  if (!ISDIGIT (*ptr) || *ptr == '0')
+	    goto unexpected;
 	  thissize = strtoul (ptr, &ptr, 10);
 
 	  if (thissize != 8 && thissize != 16 && thissize != 32
 	      && thissize != 64)
 	    {
-	      as_bad (_("bad size %d in type specifier"), thissize);
+	      as_bad (_("bad size %lu in type specifier"), thissize);
 	      return FAIL;
 	    }
 	}
@@ -1972,7 +1973,7 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
 		    {
 		      if (range & (1 << i))
 			as_tsktsk
-			  (_("Warning: duplicated register (r%d) in register list"),
+			  (_("duplicated register (r%d) in register list"),
 			   i);
 		      else
 			range |= 1 << i;
@@ -1981,10 +1982,10 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
 		}
 
 	      if (range & (1 << reg))
-		as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+		as_tsktsk (_("duplicated register (r%d) in register list"),
 			   reg);
 	      else if (reg <= cur_reg)
-		as_tsktsk (_("Warning: register range not in ascending order"));
+		as_tsktsk (_("register range not in ascending order"));
 
 	      range |= 1 << reg;
 	      cur_reg = reg;
@@ -2022,7 +2023,7 @@ parse_reg_list (char ** strp, enum reg_list_els etype)
 		  regno &= -regno;
 		  regno = (1 << regno) - 1;
 		  as_tsktsk
-		    (_("Warning: duplicated register (r%d) in register list"),
+		    (_("duplicated register (r%d) in register list"),
 		     regno);
 		}
 
@@ -3848,7 +3849,7 @@ s_arm_elf_cons (int nbytes)
 							       reloc);
 	      int size = bfd_get_reloc_size (howto);
 
-	      if (reloc == BFD_RELOC_ARM_PLT32)
+	      if (reloc == BFD_RELOC_32_PLT_PCREL)
 		{
 		  as_bad (_("(plt) is only valid on branch targets"));
 		  reloc = BFD_RELOC_UNUSED;
@@ -4350,10 +4351,10 @@ parse_dot_save (char **str_p, int prev_reg)
       if (!in_range)
 	{
 	  if (core_regs & (1 << reg))
-	    as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+	    as_tsktsk (_("duplicated register (r%d) in register list"),
 		       reg);
 	  else if (reg <= prev_reg)
-	    as_tsktsk (_("Warning: register list not in ascending order"));
+	    as_tsktsk (_("register list not in ascending order"));
 
 	  core_regs |= (1 << reg);
 	  prev_reg = reg;
@@ -4370,7 +4371,7 @@ parse_dot_save (char **str_p, int prev_reg)
 	  for (i = prev_reg + 1; i <= reg; i++)
 	    {
 	      if (core_regs & (1 << i))
-		as_tsktsk (_("Warning: duplicated register (r%d) in register list"),
+		as_tsktsk (_("duplicated register (r%d) in register list"),
 			   i);
 	      else
 		core_regs |= 1 << i;
@@ -4971,9 +4972,9 @@ s_arm_unwind_raw (int ignored ATTRIBUTE_UNUSED)
 static void
 s_arm_eabi_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_PROC);
 
-  if (tag >= 0 && tag < NUM_KNOWN_OBJ_ATTRIBUTES)
+  if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
     attributes_set_explicitly[tag] = 1;
 }
 
@@ -6411,19 +6412,15 @@ parse_sys_vldr_vstr (char **str)
     {"P0",		0x5, 0x1},
     {"FPCXTNS",		0x6, 0x1},
     {"FPCXT_NS",	0x6, 0x1},
-    {"fpcxtns",		0x6, 0x1},
-    {"fpcxt_ns",	0x6, 0x1},
     {"FPCXTS",		0x7, 0x1},
     {"FPCXT_S",		0x7, 0x1},
-    {"fpcxts",		0x7, 0x1},
-    {"fpcxt_s",		0x7, 0x1}
   };
   char *op_end = strchr (*str, ',');
   size_t op_strlen = op_end - *str;
 
   for (i = 0; i < sizeof (sysregs) / sizeof (sysregs[0]); i++)
     {
-      if (!strncmp (*str, sysregs[i].name, op_strlen))
+      if (!strncasecmp (*str, sysregs[i].name, op_strlen))
 	{
 	  val = sysregs[i].regl | (sysregs[i].regh << 3);
 	  *str = op_end;
@@ -9303,11 +9300,11 @@ encode_branch (int default_reloc)
 {
   if (inst.operands[0].hasreloc)
     {
-      constraint (inst.operands[0].imm != BFD_RELOC_ARM_PLT32
+      constraint (inst.operands[0].imm != BFD_RELOC_32_PLT_PCREL
 		  && inst.operands[0].imm != BFD_RELOC_ARM_TLS_CALL,
 		  _("the only valid suffixes here are '(plt)' and '(tlscall)'"));
-      inst.relocs[0].type = inst.operands[0].imm == BFD_RELOC_ARM_PLT32
-	? BFD_RELOC_ARM_PLT32
+      inst.relocs[0].type = inst.operands[0].imm == BFD_RELOC_32_PLT_PCREL
+	? BFD_RELOC_32_PLT_PCREL
 	: thumb_mode ? BFD_RELOC_ARM_THM_TLS_CALL : BFD_RELOC_ARM_TLS_CALL;
     }
   else
@@ -9454,7 +9451,7 @@ struct deprecated_coproc_regs_s
 };
 
 #define DEPR_ACCESS_V8 \
-  N_("This coprocessor register access is deprecated in ARMv8")
+  N_("this coprocessor register access is deprecated in ARMv8")
 
 /* Table of all deprecated coprocessor registers.  */
 static struct deprecated_coproc_regs_s deprecated_coproc_regs[] =
@@ -9516,7 +9513,7 @@ do_co_reg (void)
 	    && inst.operands[4].reg == r->crm
 	    && inst.operands[5].imm == r->opc2)
 	  {
-	    if (! ARM_CPU_IS_ANY (cpu_variant)
+	    if (!(r->obs_msg && check_obsolete (&r->obsoleted, r->obs_msg))
 		&& warn_on_deprecated
 		&& ARM_CPU_HAS_FEATURE (cpu_variant, r->deprecated))
 	      as_tsktsk ("%s", r->dep_msg);
@@ -12018,7 +12015,7 @@ do_t_branch23 (void)
      the branch encoding is now needed to deal with TLSCALL relocs.
      So if we see a PLT reloc now, put it back to how it used to be to
      keep the preexisting behaviour.  */
-  if (inst.relocs[0].type == BFD_RELOC_ARM_PLT32)
+  if (inst.relocs[0].type == BFD_RELOC_32_PLT_PCREL)
     inst.relocs[0].type = BFD_RELOC_THUMB_PCREL_BRANCH23;
 
 #if defined(OBJ_COFF)
@@ -16035,7 +16032,7 @@ do_mve_vmlas (void)
 {
   enum neon_shape rs = neon_select_shape (NS_QQR, NS_NULL);
   struct neon_type_el et
-    = neon_check_type (3, rs, N_EQK, N_EQK, N_SU_MVE | N_KEY);
+    = neon_check_type (3, rs, N_EQK, N_EQK, N_SU_MVE | N_I_MVE | N_KEY);
 
   if (inst.operands[2].reg == REG_PC)
     as_tsktsk (MVE_BAD_PC);
@@ -16047,7 +16044,7 @@ do_mve_vmlas (void)
   else
     inst.pred_insn_type = MVE_OUTSIDE_PRED_INSN;
 
-  inst.instruction |= (et.type == NT_unsigned) << 28;
+  inst.instruction |= (et.type == NT_untyped) << 28;
   inst.instruction |= HI1 (inst.operands[0].reg) << 22;
   inst.instruction |= neon_logbits (et.size) << 20;
   inst.instruction |= LOW4 (inst.operands[1].reg) << 16;
@@ -17953,7 +17950,7 @@ do_mve_vhcadd (void)
   constraint (rot != 90 && rot != 270, _("immediate out of range"));
 
   if (et.size == 32 && inst.operands[0].reg == inst.operands[2].reg)
-    as_tsktsk (_("Warning: 32-bit element size and same first and third "
+    as_tsktsk (_("32-bit element size and same first and third "
 		 "operand makes instruction UNPREDICTABLE"));
 
   mve_encode_qqq (0, et.size);
@@ -19725,7 +19722,7 @@ do_neon_rev (void)
 
   if (ARM_CPU_HAS_FEATURE (cpu_variant, mve_ext) && elsize == 64
       && inst.operands[0].reg == inst.operands[1].reg)
-    as_tsktsk (_("Warning: 64-bit element size and same destination and source"
+    as_tsktsk (_("64-bit element size and same destination and source"
 		 " operands makes instruction UNPREDICTABLE"));
 
   gas_assert (elsize != 0);
@@ -21276,7 +21273,7 @@ do_vcadd (void)
       et = neon_check_type (3, rs, N_EQK, N_EQK, N_KEY | N_F16 | N_F32 | N_I8
 			    | N_I16 | N_I32);
       if (et.size == 32 && inst.operands[0].reg == inst.operands[2].reg)
-	as_tsktsk (_("Warning: 32-bit element size and same first and third "
+	as_tsktsk (_("32-bit element size and same first and third "
 		     "operand makes instruction UNPREDICTABLE"));
     }
 
@@ -22470,7 +22467,8 @@ opcode_lookup (char **str)
 	  if (parse_neon_type (&inst.vectype, str) == FAIL)
 	    return NULL;
 	}
-      else if (end[offset] != '\0' && !is_whitespace (end[offset]))
+
+      if (**str != '\0' && !is_whitespace (**str))
 	return NULL;
     }
   else
@@ -22818,8 +22816,7 @@ handle_pred_state (void)
 		{
 		  if (unified_syntax
 		      && !(implicit_it_mode & IMPLICIT_IT_MODE_ARM))
-		    as_tsktsk (_("Warning: conditional outside an IT block"\
-				 " for Thumb."));
+		    as_tsktsk (_("conditional outside an IT block for Thumb"));
 		}
 	      else
 		{
@@ -23902,7 +23899,7 @@ static struct reloc_entry reloc_names[] =
 {
   { "got",     BFD_RELOC_ARM_GOT32   },	 { "GOT",     BFD_RELOC_ARM_GOT32   },
   { "gotoff",  BFD_RELOC_ARM_GOTOFF  },	 { "GOTOFF",  BFD_RELOC_ARM_GOTOFF  },
-  { "plt",     BFD_RELOC_ARM_PLT32   },	 { "PLT",     BFD_RELOC_ARM_PLT32   },
+  { "plt",     BFD_RELOC_32_PLT_PCREL},	 { "PLT",     BFD_RELOC_32_PLT_PCREL},
   { "target1", BFD_RELOC_ARM_TARGET1 },	 { "TARGET1", BFD_RELOC_ARM_TARGET1 },
   { "target2", BFD_RELOC_ARM_TARGET2 },	 { "TARGET2", BFD_RELOC_ARM_TARGET2 },
   { "sbrel",   BFD_RELOC_ARM_SBREL32 },	 { "SBREL",   BFD_RELOC_ARM_SBREL32 },
@@ -27248,7 +27245,7 @@ md_pcrel_from_section (fixS * fixP, segT seg)
 
     case BFD_RELOC_ARM_PCREL_BRANCH:
     case BFD_RELOC_ARM_PCREL_JUMP:
-    case BFD_RELOC_ARM_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
 #ifdef TE_WINCE
       /* When handling fixups immediately, because we have already
 	 discovered the value of a symbol, or the address of the frag involved
@@ -28200,7 +28197,7 @@ md_apply_fix (fixS *	fixP,
 	}
       /* Fall through.  */
 
-    case BFD_RELOC_ARM_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
 #endif
     case BFD_RELOC_ARM_PCREL_BRANCH:
       temp = 3;
@@ -29422,7 +29419,7 @@ tc_gen_reloc (asection *section, fixS *fixp)
     case BFD_RELOC_ARM_GOT32:
     case BFD_RELOC_ARM_GOTOFF:
     case BFD_RELOC_ARM_GOT_PREL:
-    case BFD_RELOC_ARM_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
     case BFD_RELOC_ARM_TARGET1:
     case BFD_RELOC_ARM_ROSEGREL32:
     case BFD_RELOC_ARM_SBREL32:
@@ -29751,7 +29748,7 @@ arm_fix_adjustable (fixS * fixP)
     return false;
 
   /* Don't allow symbols to be discarded on GOT related relocs.	 */
-  if (fixP->fx_r_type == BFD_RELOC_ARM_PLT32
+  if (fixP->fx_r_type == BFD_RELOC_32_PLT_PCREL
       || fixP->fx_r_type == BFD_RELOC_ARM_GOT32
       || fixP->fx_r_type == BFD_RELOC_ARM_GOTOFF
       || fixP->fx_r_type == BFD_RELOC_ARM_TLS_GD32
@@ -29805,10 +29802,6 @@ elf32_arm_target_format (void)
   return (target_big_endian
 	  ? "elf32-bigarm-vxworks"
 	  : "elf32-littlearm-vxworks");
-#elif defined (TE_NACL)
-  return (target_big_endian
-	  ? "elf32-bigarm-nacl"
-	  : "elf32-littlearm-nacl");
 #else
   if (arm_fdpic)
     {
@@ -30069,7 +30062,7 @@ md_begin (void)
     {
       struct reloc_entry * entry = reloc_names + i;
 
-      if (arm_is_eabi() && entry->reloc == BFD_RELOC_ARM_PLT32)
+      if (arm_is_eabi() && entry->reloc == BFD_RELOC_32_PLT_PCREL)
 	/* This makes encode_branch() use the EABI versions of this relocation.  */
 	entry->reloc = BFD_RELOC_UNUSED;
 
@@ -32137,7 +32130,7 @@ static const cpu_arch_ver_table cpu_arch_ver[] =
 /* Set an attribute if it has not already been set by the user.  */
 
 static void
-aeabi_set_attribute_int (int tag, int value)
+aeabi_set_attribute_int (obj_attr_tag_t tag, int value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
@@ -32148,7 +32141,7 @@ aeabi_set_attribute_int (int tag, int value)
 }
 
 static void
-aeabi_set_attribute_string (int tag, const char *value)
+aeabi_set_attribute_string (obj_attr_tag_t tag, const char *value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES

@@ -453,7 +453,7 @@
 #define HAVE_WORKING_VFORK 1
 
 /* Define if you have x86 SHA1 HW acceleration support. */
-#define HAVE_X86_SHA1_HW_SUPPORT 1
+/* #undef HAVE_X86_SHA1_HW_SUPPORT */
 
 /* Define to 1 if you have the `_doprnt' function. */
 /* #undef HAVE__DOPRNT */

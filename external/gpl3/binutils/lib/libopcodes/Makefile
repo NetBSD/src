@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2024/07/09 04:29:10 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2026/02/11 20:15:05 christos Exp $
 
 NOLINKLIB=	# defined
 NOLINT=		# defined
@@ -15,7 +15,7 @@ BFD_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 .if exists(${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk)
 .include "${.CURDIR}/arch/${BFD_MACHINE_ARCH}/defs.mk"
 
-SHLIB_MAJOR=	12
+SHLIB_MAJOR=	13
 SHLIB_MINOR=	0
 
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}

@@ -1,5 +1,5 @@
 /* BFD back-end for archive files (libraries).
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.  Mostly Gumby Henkel-Wallace's fault.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -141,6 +141,7 @@ SUBSECTION
 #include "hashtab.h"
 #include "filenames.h"
 #include "bfdlink.h"
+#include "plugin.h"
 
 #ifndef errno
 extern int errno;
@@ -167,11 +168,7 @@ INTERNAL
 .struct orl		{* Output ranlib.  *}
 .{
 .  char **name;		{* Symbol name.  *}
-.  union
-.  {
-.    file_ptr pos;
-.    bfd *abfd;
-.  } u;			{* bfd* or file position.  *}
+.  bfd *abfd;		{* Containing BFD.  *}
 .  int namidx;		{* Index into string table.  *}
 .};
 .
@@ -950,8 +947,8 @@ bfd_generic_archive_p (bfd *abfd)
       if (first != NULL)
 	{
 	  first->target_defaulted = false;
-	  if (bfd_check_format (first, bfd_object)
-	      && first->xvec != abfd->xvec)
+	  if (!bfd_check_format (first, bfd_object)
+	      || first->xvec != abfd->xvec)
 	    bfd_set_error (bfd_error_wrong_object_format);
 	  bfd_close (first);
 	}
@@ -1189,7 +1186,7 @@ do_slurp_coff_armap (bfd *abfd)
 bool
 bfd_slurp_armap (bfd *abfd)
 {
-  char nextname[17];
+  char nextname[16];
   int i = bfd_read (nextname, 16, abfd);
 
   if (i == 0)
@@ -1200,12 +1197,13 @@ bfd_slurp_armap (bfd *abfd)
   if (bfd_seek (abfd, -16, SEEK_CUR) != 0)
     return false;
 
-  if (startswith (nextname, "__.SYMDEF       ")
-      || startswith (nextname, "__.SYMDEF/      ")) /* Old Linux archives.  */
+  if (memcmp (nextname, "__.SYMDEF       ", 16) == 0
+      /* Old Linux archives.  */
+      || memcmp (nextname, "__.SYMDEF/      ", 16) == 0)
     return do_slurp_bsd_armap (abfd);
-  else if (startswith (nextname, "/               "))
+  else if (memcmp (nextname, "/               ", 16) == 0)
     return do_slurp_coff_armap (abfd);
-  else if (startswith (nextname, "/SYM64/         "))
+  else if (memcmp (nextname, "/SYM64/         ", 16) == 0)
     {
       /* 64bit (Irix 6) archive.  */
 #ifdef BFD64
@@ -1215,13 +1213,27 @@ bfd_slurp_armap (bfd *abfd)
       return false;
 #endif
     }
-  else if (startswith (nextname, "#1/20           "))
+  else if (memcmp (nextname, "________", 8) == 0
+	   && ((nextname[8] == '_' && nextname[9] == '_')
+	       || (nextname[8] == '6' && nextname[9] == '4'))
+	   && nextname[10] == 'E'
+	   && (nextname[11] == 'B' || nextname[11] == 'L')
+	   && nextname[12] == 'E'
+	   && (nextname[13] == 'B' || nextname[13] == 'L')
+	   && nextname[14] == '_'
+	   && (nextname[15] == ' ' || nextname[15] == 'X'))
+    {
+      /* ECOFF archive.  */
+      bfd_set_error (bfd_error_wrong_format);
+      return false;
+    }
+  else if (memcmp (nextname, "#1/20           ", 16) == 0)
     {
       /* Mach-O has a special name for armap when the map is sorted by name.
 	 However because this name has a space it is slightly more difficult
 	 to check it.  */
       struct ar_hdr hdr;
-      char extname[21];
+      char extname[20];
 
       if (bfd_read (&hdr, sizeof (hdr), abfd) != sizeof (hdr))
 	return false;
@@ -1230,9 +1242,8 @@ bfd_slurp_armap (bfd *abfd)
 	return false;
       if (bfd_seek (abfd, -(file_ptr) (sizeof (hdr) + 20), SEEK_CUR) != 0)
 	return false;
-      extname[20] = 0;
-      if (startswith (extname, "__.SYMDEF SORTED")
-	  || startswith (extname, "__.SYMDEF"))
+      if (memcmp (extname, "__.SYMDEF SORTED", 16) == 0
+	  || memcmp (extname, "__.SYMDEF", 9) == 0)
 	return do_slurp_bsd_armap (abfd);
     }
 
@@ -2313,7 +2324,6 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 {
   char *first_name = NULL;
   bfd *current;
-  file_ptr elt_no = 0;
   struct orl *map = NULL;
   unsigned int orl_max = 1024;		/* Fine initial default.  */
   unsigned int orl_count = 0;
@@ -2348,7 +2358,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
   /* Map over each element.  */
   for (current = arch->archive_head;
        current != NULL;
-       current = current->archive_next, elt_no++)
+       current = current->archive_next)
     {
       if (bfd_check_format (current, bfd_object)
 	  && (bfd_get_file_flags (current) & HAS_SYMS) != 0)
@@ -2358,6 +2368,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 	  long src_count;
 
 	  if (bfd_get_lto_type (current) == lto_slim_ir_object
+	      && !bfd_plugin_target_p (current->xvec)
 	      && report_plugin_err)
 	    {
 	      report_plugin_err = false;
@@ -2415,6 +2426,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 
 		      if (bfd_lto_slim_symbol_p (current,
 						 syms[src_count]->name)
+			  && !bfd_plugin_target_p (current->xvec)
 			  && report_plugin_err)
 			{
 			  report_plugin_err = false;
@@ -2432,7 +2444,7 @@ _bfd_compute_and_write_armap (bfd *arch, unsigned int elength)
 		      if (*(map[orl_count].name) == NULL)
 			goto error_return;
 		      strcpy (*(map[orl_count].name), syms[src_count]->name);
-		      map[orl_count].u.abfd = current;
+		      map[orl_count].abfd = current;
 		      map[orl_count].namidx = stridx;
 
 		      stridx += namelen + 1;
@@ -2498,7 +2510,7 @@ _bfd_bsd_write_armap (bfd *arch,
     {
       unsigned int offset;
 
-      if (map[count].u.abfd != last_elt)
+      if (map[count].abfd != last_elt)
 	{
 	  do
 	    {
@@ -2509,7 +2521,7 @@ _bfd_bsd_write_armap (bfd *arch,
 	      firstreal += firstreal % 2;
 	      current = current->archive_next;
 	    }
-	  while (current != map[count].u.abfd);
+	  while (current != map[count].abfd);
 	}
 
       /* The archive file format only has 4 bytes to store the offset
@@ -2574,7 +2586,7 @@ _bfd_bsd_write_armap (bfd *arch,
       unsigned int offset;
       bfd_byte buf[BSD_SYMDEF_SIZE];
 
-      if (map[count].u.abfd != last_elt)
+      if (map[count].abfd != last_elt)
 	{
 	  do
 	    {
@@ -2593,7 +2605,7 @@ _bfd_bsd_write_armap (bfd *arch,
 #endif
 	      current = current->archive_next;
 	    }
-	  while (current != map[count].u.abfd);
+	  while (current != map[count].abfd);
 	}
 
       /* The archive file format only has 4 bytes to store the offset
@@ -2750,7 +2762,7 @@ _bfd_coff_write_armap (bfd *arch,
       /* For each symbol which is used defined in this object, write
 	 out the object file's address in the archive.  */
 
-      while (count < symbol_count && map[count].u.abfd == current)
+      while (count < symbol_count && map[count].abfd == current)
 	{
 	  unsigned int offset = (unsigned int) archive_member_file_ptr;
 
@@ -2808,7 +2820,7 @@ _bfd_coff_write_armap (bfd *arch,
       /* For each symbol which is used defined in this object, write
 	 out the object file's address in the archive.  */
 
-      while (count < symbol_count && map[count].u.abfd == current)
+      while (count < symbol_count && map[count].abfd == current)
 	{
 	  unsigned int offset = (unsigned int) archive_member_file_ptr;
 

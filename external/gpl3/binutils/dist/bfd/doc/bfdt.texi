@@ -664,15 +664,17 @@ The @var{syms} table is also needed for horrible internal magic
 reasons.
 
 @end deftypefn
-@findex bfd_set_reloc
-@subsubsection @code{bfd_set_reloc}
-@deftypefn {Function} void bfd_set_reloc (bfd *abfd, asection *sec, arelent **rel, unsigned int count); 
-Set the relocation pointer and count within
-section @var{sec} to the values @var{rel} and @var{count}.
-The argument @var{abfd} is ignored.
+@findex bfd_finalize_section_relocs
+@subsubsection @code{bfd_finalize_section_relocs}
+@deftypefn {Function} bool bfd_finalize_section_relocs (bfd *abfd, asection *sec, arelent **rel, unsigned int count); 
+Set the relocation pointer and count within section @var{sec}
+to the values @var{rel} and @var{count}, and take any other
+actions required at the conclusion of section relocation
+processing.
 @example
-#define bfd_set_reloc(abfd, asect, location, count) \
-       BFD_SEND (abfd, _bfd_set_reloc, (abfd, asect, location, count))
+#define bfd_finalize_section_relocs(abfd, asect, location, count) \
+       BFD_SEND (abfd, _bfd_finalize_section_relocs, \
+                 (abfd, asect, location, count))
 @end example
 
 @end deftypefn
@@ -879,9 +881,6 @@ The following functions exist but have not yet been documented.
 
 #define bfd_lookup_section_flags(link_info, flag_info, section) \
        BFD_SEND (abfd, _bfd_lookup_section_flags, (link_info, flag_info, section))
-
-#define bfd_merge_sections(abfd, link_info) \
-       BFD_SEND (abfd, _bfd_merge_sections, (abfd, link_info))
 
 #define bfd_is_group_section(abfd, sec) \
        BFD_SEND (abfd, _bfd_is_group_section, (abfd, sec))

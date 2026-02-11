@@ -1,5 +1,5 @@
 /* SPARC-specific support for ELF
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,9 +36,6 @@
 
 /* In case we're on a 32-bit machine, construct a 64-bit "-1" value.  */
 #define MINUS_ONE (~ (bfd_vma) 0)
-
-#define ABI_64_P(abfd) \
-  (get_elf_backend_data (abfd)->s->elfclass == ELFCLASS64)
 
 /* The relocation "howto" table.  */
 
@@ -375,22 +372,22 @@ _bfd_sparc_elf_reloc_type_lookup (bfd *abfd,
     case BFD_RELOC_SPARC_WPLT30:
       return &_bfd_sparc_elf_howto_table[R_SPARC_WPLT30];
 
-    case BFD_RELOC_SPARC_COPY:
+    case BFD_RELOC_COPY:
       return &_bfd_sparc_elf_howto_table[R_SPARC_COPY];
 
-    case BFD_RELOC_SPARC_GLOB_DAT:
+    case BFD_RELOC_GLOB_DAT:
       return &_bfd_sparc_elf_howto_table[R_SPARC_GLOB_DAT];
 
-    case BFD_RELOC_SPARC_JMP_SLOT:
+    case BFD_RELOC_JMP_SLOT:
       return &_bfd_sparc_elf_howto_table[R_SPARC_JMP_SLOT];
 
-    case BFD_RELOC_SPARC_RELATIVE:
+    case BFD_RELOC_RELATIVE:
       return &_bfd_sparc_elf_howto_table[R_SPARC_RELATIVE];
 
     case BFD_RELOC_SPARC_UA32:
       return &_bfd_sparc_elf_howto_table[R_SPARC_UA32];
 
-    case BFD_RELOC_SPARC_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
       return &_bfd_sparc_elf_howto_table[R_SPARC_PLT32];
 
     case BFD_RELOC_SPARC_10:
@@ -441,7 +438,7 @@ _bfd_sparc_elf_reloc_type_lookup (bfd *abfd,
     case BFD_RELOC_SPARC_DISP64:
       return &_bfd_sparc_elf_howto_table[R_SPARC_DISP64];
 
-    case BFD_RELOC_SPARC_PLT64:
+    case BFD_RELOC_64_PLT_PCREL:
       return &_bfd_sparc_elf_howto_table[R_SPARC_PLT64];
 
     case BFD_RELOC_SPARC_HIX22:
@@ -570,7 +567,7 @@ _bfd_sparc_elf_reloc_type_lookup (bfd *abfd,
     case BFD_RELOC_SPARC_JMP_IREL:
       return &sparc_jmp_irel_howto;
 
-    case BFD_RELOC_SPARC_IRELATIVE:
+    case BFD_RELOC_IRELATIVE:
       return &sparc_irelative_howto;
 
     case BFD_RELOC_VTABLE_INHERIT:
@@ -679,7 +676,7 @@ _bfd_sparc_elf_info_to_howto (bfd *abfd, arelent *cache_ptr,
 #define UNDEFINED_WEAK_RESOLVED_TO_ZERO(INFO, EH)		\
   ((EH)->elf.root.type == bfd_link_hash_undefweak		\
    && bfd_link_executable (INFO)				\
-   && (_bfd_sparc_elf_hash_table (INFO)->interp == NULL		\
+   && (_bfd_sparc_elf_hash_table (INFO)->elf.interp == NULL	\
        || !(INFO)->dynamic_undefined_weak			\
        || (EH)->has_non_got_reloc				\
        || !(EH)->has_got_reloc))
@@ -753,7 +750,7 @@ sparc_put_word_64 (bfd *abfd, bfd_vma val, void *ptr)
 static void
 sparc_elf_append_rela (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
 {
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   bfd_byte *loc;
 
   bed = get_elf_backend_data (abfd);
@@ -1245,7 +1242,7 @@ _bfd_sparc_elf_create_dynamic_sections (bfd *dynobj,
 static bool
 create_ifunc_sections (bfd *abfd, struct bfd_link_info *info)
 {
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
   flagword flags, pltflags;
   asection *s;
@@ -1829,12 +1826,12 @@ _bfd_sparc_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 asection *
 _bfd_sparc_elf_gc_mark_hook (asection *sec,
 			     struct bfd_link_info *info,
-			     Elf_Internal_Rela *rel,
+			     struct elf_reloc_cookie *cookie,
 			     struct elf_link_hash_entry *h,
-			     Elf_Internal_Sym *sym)
+			     unsigned int symndx)
 {
   if (h != NULL)
-    switch (SPARC_ELF_R_TYPE (rel->r_info))
+    switch (SPARC_ELF_R_TYPE (cookie->rel->r_info))
       {
       case R_SPARC_GNU_VTINHERIT:
       case R_SPARC_GNU_VTENTRY:
@@ -1843,7 +1840,7 @@ _bfd_sparc_elf_gc_mark_hook (asection *sec,
 
   if (!bfd_link_executable (info))
     {
-      switch (SPARC_ELF_R_TYPE (rel->r_info))
+      switch (SPARC_ELF_R_TYPE (cookie->rel->r_info))
 	{
 	case R_SPARC_TLS_GD_CALL:
 	case R_SPARC_TLS_LDM_CALL:
@@ -1858,11 +1855,11 @@ _bfd_sparc_elf_gc_mark_hook (asection *sec,
 	  h->mark = 1;
 	  if (h->is_weakalias)
 	    weakdef (h)->mark = 1;
-	  sym = NULL;
+	  symndx = 0;
 	}
     }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 static Elf_Internal_Rela *
@@ -2408,12 +2405,11 @@ _bfd_sparc_elf_late_size_sections (bfd *output_bfd,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = htab->dynamic_interpreter_size;
 	  s->contents = (unsigned char *) htab->dynamic_interpreter;
 	  s->alloced = 1;
-	  htab->interp = s;
 	}
     }
 
@@ -2715,7 +2711,7 @@ static bfd_vma
 tpoff (struct bfd_link_info *info, bfd_vma address)
 {
   struct elf_link_hash_table *htab = elf_hash_table (info);
-  const struct elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
+  elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
   bfd_vma static_tls_size;
 
   /* If tls_sec is NULL, we should have signalled an error already.  */
@@ -2892,7 +2888,8 @@ _bfd_sparc_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_SPARC_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -4245,7 +4242,7 @@ _bfd_sparc_elf_finish_dynamic_symbol (bfd *output_bfd,
 				      Elf_Internal_Sym *sym)
 {
   struct _bfd_sparc_elf_link_hash_table *htab;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   struct _bfd_sparc_elf_link_hash_entry  *eh;
   bool resolved_to_zero;
 
@@ -4506,7 +4503,7 @@ sparc_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 		  asection *splt ATTRIBUTE_UNUSED)
 {
   struct _bfd_sparc_elf_link_hash_table *htab;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   bfd_byte *dyncon, *dynconend;
   size_t dynsize;
   int stt_regidx = -1;
@@ -4718,7 +4715,9 @@ pie_finish_undefweak_symbol (struct bfd_hash_entry *bh,
 }
 
 bool
-_bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+_bfd_sparc_elf_finish_dynamic_sections (bfd *output_bfd,
+					struct bfd_link_info *info,
+					bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn;

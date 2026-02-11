@@ -1,5 +1,5 @@
 /* 32-bit ELF support for ARM
-   Copyright (C) 1998-2025 Free Software Foundation, Inc.
+   Copyright (C) 1998-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -25,7 +25,6 @@
 #include "libiberty.h"
 #include "libbfd.h"
 #include "elf-bfd.h"
-#include "elf-nacl.h"
 #include "elf-vxworks.h"
 #include "elf/arm.h"
 #include "elf32-arm.h"
@@ -2017,20 +2016,19 @@ static const struct elf32_arm_reloc_map elf32_arm_reloc_map[] =
     {BFD_RELOC_THUMB_PCREL_BRANCH20, R_ARM_THM_JUMP19},
     {BFD_RELOC_THUMB_PCREL_BRANCH9,  R_ARM_THM_JUMP8},
     {BFD_RELOC_THUMB_PCREL_BRANCH7,  R_ARM_THM_JUMP6},
-    {BFD_RELOC_ARM_GLOB_DAT,	     R_ARM_GLOB_DAT},
-    {BFD_RELOC_ARM_JUMP_SLOT,	     R_ARM_JUMP_SLOT},
-    {BFD_RELOC_ARM_RELATIVE,	     R_ARM_RELATIVE},
+    {BFD_RELOC_GLOB_DAT,	     R_ARM_GLOB_DAT},
+    {BFD_RELOC_JMP_SLOT,	     R_ARM_JUMP_SLOT},
+    {BFD_RELOC_RELATIVE,	     R_ARM_RELATIVE},
     {BFD_RELOC_ARM_GOTOFF,	     R_ARM_GOTOFF32},
     {BFD_RELOC_ARM_GOTPC,	     R_ARM_GOTPC},
     {BFD_RELOC_ARM_GOT_PREL,	     R_ARM_GOT_PREL},
     {BFD_RELOC_ARM_GOT32,	     R_ARM_GOT32},
-    {BFD_RELOC_ARM_PLT32,	     R_ARM_PLT32},
+    {BFD_RELOC_32_PLT_PCREL,	     R_ARM_PLT32},
     {BFD_RELOC_ARM_TARGET1,	     R_ARM_TARGET1},
     {BFD_RELOC_ARM_ROSEGREL32,	     R_ARM_ROSEGREL32},
     {BFD_RELOC_ARM_SBREL32,	     R_ARM_SBREL32},
     {BFD_RELOC_ARM_PREL31,	     R_ARM_PREL31},
     {BFD_RELOC_ARM_TARGET2,	     R_ARM_TARGET2},
-    {BFD_RELOC_ARM_PLT32,	     R_ARM_PLT32},
     {BFD_RELOC_ARM_TLS_GOTDESC,	     R_ARM_TLS_GOTDESC},
     {BFD_RELOC_ARM_TLS_CALL,	     R_ARM_TLS_CALL},
     {BFD_RELOC_ARM_THM_TLS_CALL,     R_ARM_THM_TLS_CALL},
@@ -2045,7 +2043,7 @@ static const struct elf32_arm_reloc_map elf32_arm_reloc_map[] =
     {BFD_RELOC_ARM_TLS_TPOFF32,	     R_ARM_TLS_TPOFF32},
     {BFD_RELOC_ARM_TLS_IE32,	     R_ARM_TLS_IE32},
     {BFD_RELOC_ARM_TLS_LE32,	     R_ARM_TLS_LE32},
-    {BFD_RELOC_ARM_IRELATIVE,	     R_ARM_IRELATIVE},
+    {BFD_RELOC_IRELATIVE,	     R_ARM_IRELATIVE},
     {BFD_RELOC_ARM_GOTFUNCDESC,      R_ARM_GOTFUNCDESC},
     {BFD_RELOC_ARM_GOTOFFFUNCDESC,   R_ARM_GOTOFFFUNCDESC},
     {BFD_RELOC_ARM_FUNCDESC,         R_ARM_FUNCDESC},
@@ -2151,6 +2149,16 @@ elf32_arm_nabi_grok_prstatus (bfd *abfd, Elf_Internal_Note *note)
       default:
 	return false;
 
+      case 156:         /* Linux/ARM 32-bit, some pre-v5.9 linux kernels.  */
+	/* There's a linux kernel bug for CONFIG_BINFMT_ELF_FDPIC=y
+	   configurations, fixed by v5.9 linux kernel commit 16aead81018c
+	   ("take fdpic-related parts of elf_prstatus out").
+	   The bug causes the FDPIC-specific unsigned long fields
+	   pr_exec_fdpic_loadmap and pr_interp_fdpic_loadmap to be added to
+	   struct elf_prstatus in case the FDPIC ABI is not used.
+	   The two fields are added after pr_reg, so just ignore them.  */
+
+	/* Fall through.  */
       case 148:		/* Linux/ARM 32-bit.  */
 	/* pr_cursig */
 	elf_tdata (abfd)->core->signal = bfd_get_16 (abfd, note->descdata + 12);
@@ -2497,45 +2505,6 @@ static const bfd_vma elf32_arm_plt_thumb_stub [] =
   0xe7fd		/* b .-2 */
 };
 
-/* The first entry in a procedure linkage table looks like
-   this.  It is set up so that any shared library function that is
-   called before the relocation has been set up calls the dynamic
-   linker first.  */
-static const bfd_vma elf32_arm_nacl_plt0_entry [] =
-{
-  /* First bundle: */
-  0xe300c000,		/* movw	ip, #:lower16:&GOT[2]-.+8	*/
-  0xe340c000,		/* movt	ip, #:upper16:&GOT[2]-.+8	*/
-  0xe08cc00f,		/* add	ip, ip, pc			*/
-  0xe52dc008,		/* str	ip, [sp, #-8]!			*/
-  /* Second bundle: */
-  0xe3ccc103,		/* bic	ip, ip, #0xc0000000		*/
-  0xe59cc000,		/* ldr	ip, [ip]			*/
-  0xe3ccc13f,		/* bic	ip, ip, #0xc000000f		*/
-  0xe12fff1c,		/* bx	ip				*/
-  /* Third bundle: */
-  0xe320f000,		/* nop					*/
-  0xe320f000,		/* nop					*/
-  0xe320f000,		/* nop					*/
-  /* .Lplt_tail: */
-  0xe50dc004,		/* str	ip, [sp, #-4]			*/
-  /* Fourth bundle: */
-  0xe3ccc103,		/* bic	ip, ip, #0xc0000000		*/
-  0xe59cc000,		/* ldr	ip, [ip]			*/
-  0xe3ccc13f,		/* bic	ip, ip, #0xc000000f		*/
-  0xe12fff1c,		/* bx	ip				*/
-};
-#define ARM_NACL_PLT_TAIL_OFFSET	(11 * 4)
-
-/* Subsequent entries in a procedure linkage table look like this.  */
-static const bfd_vma elf32_arm_nacl_plt_entry [] =
-{
-  0xe300c000,		/* movw	ip, #:lower16:&GOT[n]-.+8	*/
-  0xe340c000,		/* movt	ip, #:upper16:&GOT[n]-.+8	*/
-  0xe08cc00f,		/* add	ip, ip, pc			*/
-  0xea000000,		/* b	.Lplt_tail			*/
-};
-
 /* PR 28924:
    There was a bug due to too high values of THM_MAX_FWD_BRANCH_OFFSET and
    THM2_MAX_FWD_BRANCH_OFFSET.  The first macro concerns the case when Thumb-2
@@ -2749,32 +2718,6 @@ static const insn_sequence elf32_arm_stub_long_branch_v4t_thumb_tls_pic[] =
   DATA_WORD (0, R_ARM_REL32, -4),    /* dcd  R_ARM_REL32(X) */
 };
 
-/* NaCl ARM -> ARM long branch stub.  */
-static const insn_sequence elf32_arm_stub_long_branch_arm_nacl[] =
-{
-  ARM_INSN (0xe59fc00c),		/* ldr	ip, [pc, #12] */
-  ARM_INSN (0xe3ccc13f),		/* bic	ip, ip, #0xc000000f */
-  ARM_INSN (0xe12fff1c),		/* bx	ip */
-  ARM_INSN (0xe320f000),		/* nop */
-  ARM_INSN (0xe125be70),		/* bkpt	0x5be0 */
-  DATA_WORD (0, R_ARM_ABS32, 0),	/* dcd	R_ARM_ABS32(X) */
-  DATA_WORD (0, R_ARM_NONE, 0),		/* .word 0 */
-  DATA_WORD (0, R_ARM_NONE, 0),		/* .word 0 */
-};
-
-/* NaCl ARM -> ARM long branch stub, PIC.  */
-static const insn_sequence elf32_arm_stub_long_branch_arm_nacl_pic[] =
-{
-  ARM_INSN (0xe59fc00c),		/* ldr	ip, [pc, #12] */
-  ARM_INSN (0xe08cc00f),		/* add	ip, ip, pc */
-  ARM_INSN (0xe3ccc13f),		/* bic	ip, ip, #0xc000000f */
-  ARM_INSN (0xe12fff1c),		/* bx	ip */
-  ARM_INSN (0xe125be70),		/* bkpt	0x5be0 */
-  DATA_WORD (0, R_ARM_REL32, 8),	/* dcd	R_ARM_REL32(X+8) */
-  DATA_WORD (0, R_ARM_NONE, 0),		/* .word 0 */
-  DATA_WORD (0, R_ARM_NONE, 0),		/* .word 0 */
-};
-
 /* Stub used for transition to secure state (aka SG veneer).  */
 static const insn_sequence elf32_arm_stub_cmse_branch_thumb_only[] =
 {
@@ -2859,8 +2802,6 @@ static const insn_sequence elf32_arm_stub_a8_veneer_blx[] =
   DEF_STUB (long_branch_thumb_only_pic) \
   DEF_STUB (long_branch_any_tls_pic) \
   DEF_STUB (long_branch_v4t_thumb_tls_pic) \
-  DEF_STUB (long_branch_arm_nacl) \
-  DEF_STUB (long_branch_arm_nacl_pic) \
   DEF_STUB (cmse_branch_thumb_only) \
   DEF_STUB (a8_veneer_b_cond) \
   DEF_STUB (a8_veneer_b) \
@@ -3848,16 +3789,11 @@ create_got_section (bfd *dynobj, struct bfd_link_info *info)
 static bool
 create_ifunc_sections (struct bfd_link_info *info)
 {
-  struct elf32_arm_link_hash_table *htab;
-  const struct elf_backend_data *bed;
-  bfd *dynobj;
+  struct elf32_arm_link_hash_table *htab = elf32_arm_hash_table (info);
+  bfd *dynobj = htab->root.dynobj;
+  elf_backend_data *bed = get_elf_backend_data (dynobj);
   asection *s;
-  flagword flags;
-
-  htab = elf32_arm_hash_table (info);
-  dynobj = htab->root.dynobj;
-  bed = get_elf_backend_data (dynobj);
-  flags = bed->dynamic_sec_flags;
+  flagword flags = bed->dynamic_sec_flags;
 
   if (htab->root.iplt == NULL)
     {
@@ -4526,13 +4462,9 @@ arm_type_of_stub (struct bfd_link_info *info,
 		? (r_type == R_ARM_TLS_CALL
 		   /* TLS PIC Stub.  */
 		   ? arm_stub_long_branch_any_tls_pic
-		   : (globals->root.target_os == is_nacl
-		      ? arm_stub_long_branch_arm_nacl_pic
-		      : arm_stub_long_branch_any_arm_pic))
+		   : arm_stub_long_branch_any_arm_pic)
 		/* non-PIC stubs.  */
-		: (globals->root.target_os == is_nacl
-		   ? arm_stub_long_branch_arm_nacl
-		   : arm_stub_long_branch_any_any);
+		: arm_stub_long_branch_any_any;
 	    }
 	}
     }
@@ -4795,7 +4727,7 @@ elf32_arm_create_or_find_stub_sec (asection **link_sec_p, asection *section,
 	stub_sec_p = &htab->stub_group[link_sec->id].stub_sec;
       stub_sec_prefix = link_sec->name;
       out_sec = link_sec->output_section;
-      align = htab->root.target_os == is_nacl ? 4 : 3;
+      align = 3;
     }
 
   if (*stub_sec_p == NULL)
@@ -4975,10 +4907,6 @@ arm_stub_required_alignment (enum elf32_arm_stub_type stub_type)
     case arm_stub_cmse_branch_thumb_only:
     case arm_stub_a8_veneer_blx:
       return 4;
-
-    case arm_stub_long_branch_arm_nacl:
-    case arm_stub_long_branch_arm_nacl_pic:
-      return 16;
 
     default:
       abort ();  /* Should be unreachable.  */
@@ -5984,7 +5912,7 @@ cmse_scan (bfd *input_bfd, struct elf32_arm_link_hash_table *htab,
 	   obj_attribute *out_attr, struct elf_link_hash_entry **sym_hashes,
 	   int *cmse_stub_created)
 {
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed = get_elf_backend_data (input_bfd);
   Elf_Internal_Shdr *symtab_hdr;
   unsigned i, j, sym_count, ext_start;
   Elf_Internal_Sym *cmse_sym, *local_syms;
@@ -5996,7 +5924,6 @@ cmse_scan (bfd *input_bfd, struct elf32_arm_link_hash_table *htab,
   struct elf32_arm_stub_hash_entry *stub_entry;
   bool is_v8m, new_stub, cmse_invalid, ret = true;
 
-  bed = get_elf_backend_data (input_bfd);
   symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
   sym_count = symtab_hdr->sh_size / bed->s->sizeof_sym;
   ext_start = symtab_hdr->sh_info;
@@ -6529,16 +6456,15 @@ elf32_arm_size_stubs (bfd *output_bfd,
   while (1)
     {
       bfd *input_bfd;
-      unsigned int bfd_indx;
       asection *stub_sec;
       enum elf32_arm_stub_type stub_type;
       bool stub_changed = false;
       unsigned prev_num_a8_fixes = num_a8_fixes;
 
       num_a8_fixes = 0;
-      for (input_bfd = info->input_bfds, bfd_indx = 0;
+      for (input_bfd = info->input_bfds;
 	   input_bfd != NULL;
-	   input_bfd = input_bfd->link.next, bfd_indx++)
+	   input_bfd = input_bfd->link.next)
 	{
 	  Elf_Internal_Shdr *symtab_hdr;
 	  asection *section;
@@ -9574,10 +9500,6 @@ elf32_arm_allocate_plt_entry (struct bfd_link_info *info,
       splt = htab->root.iplt;
       sgotplt = htab->root.igotplt;
 
-      /* NaCl uses a special first entry in .iplt too.  */
-      if (htab->root.target_os == is_nacl && splt->size == 0)
-	splt->size += htab->plt_header_size;
-
       /* Allocate room for an R_ARM_IRELATIVE relocation in .rel.iplt.  */
       elf32_arm_allocate_irelocs (info, htab->root.irelplt, 1);
     }
@@ -9628,18 +9550,6 @@ elf32_arm_allocate_plt_entry (struct bfd_link_info *info,
     sgotplt->size += 8;
   else
     sgotplt->size += 4;
-}
-
-static bfd_vma
-arm_movw_immediate (bfd_vma value)
-{
-  return (value & 0x00000fff) | ((value & 0x0000f000) << 4);
-}
-
-static bfd_vma
-arm_movt_immediate (bfd_vma value)
-{
-  return ((value & 0x0fff0000) >> 16) | ((value & 0xf0000000) >> 12);
 }
 
 /* Fill in a PLT entry and its associated GOT slot.  If DYNINDX == -1,
@@ -9778,45 +9688,6 @@ elf32_arm_populate_plt_entry (bfd *output_bfd, struct bfd_link_info *info,
       rel.r_info = ELF32_R_INFO (htab->root.hplt->indx, R_ARM_ABS32);
       rel.r_addend = 0;
       SWAP_RELOC_OUT (htab) (output_bfd, &rel, loc);
-    }
-  else if (htab->root.target_os == is_nacl)
-    {
-      /* Calculate the displacement between the PLT slot and the
-	 common tail that's part of the special initial PLT slot.  */
-      int32_t tail_displacement
-	= ((splt->output_section->vma + splt->output_offset
-	    + ARM_NACL_PLT_TAIL_OFFSET)
-	   - (plt_address + htab->plt_entry_size + 4));
-      BFD_ASSERT ((tail_displacement & 3) == 0);
-      tail_displacement >>= 2;
-
-      BFD_ASSERT ((tail_displacement & 0xff000000) == 0
-		  || (-tail_displacement & 0xff000000) == 0);
-
-      /* Calculate the displacement between the PLT slot and the entry
-	 in the GOT.  The offset accounts for the value produced by
-	 adding to pc in the penultimate instruction of the PLT stub.  */
-      got_displacement = (got_address
-			  - (plt_address + htab->plt_entry_size));
-
-      /* NaCl does not support interworking at all.  */
-      BFD_ASSERT (!elf32_arm_plt_needs_thumb_stub_p (info, arm_plt));
-
-      put_arm_insn (htab, output_bfd,
-		    elf32_arm_nacl_plt_entry[0]
-		    | arm_movw_immediate (got_displacement),
-		    ptr + 0);
-      put_arm_insn (htab, output_bfd,
-		    elf32_arm_nacl_plt_entry[1]
-		    | arm_movt_immediate (got_displacement),
-		    ptr + 4);
-      put_arm_insn (htab, output_bfd,
-		    elf32_arm_nacl_plt_entry[2],
-		    ptr + 8);
-      put_arm_insn (htab, output_bfd,
-		    elf32_arm_nacl_plt_entry[3]
-		    | (tail_displacement & 0x00ffffff),
-		    ptr + 12);
     }
   else if (htab->fdpic_p)
     {
@@ -12676,7 +12547,7 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
     case R_ARM_THM_ALU_ABS_G2_NC:
     case R_ARM_THM_ALU_ABS_G3_NC:
 	{
-	    const int shift_array[4] = {0, 8, 16, 24};
+	    static const int shift_array[4] = {0, 8, 16, 24};
 	    bfd_vma insn = bfd_get_16 (input_bfd, hit_data);
 	    bfd_vma addr = value;
 	    int shift = shift_array[r_type - R_ARM_THM_ALU_ABS_G0_NC];
@@ -13381,7 +13252,8 @@ elf32_arm_relocate_section (bfd *		   output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_ARM_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -13826,7 +13698,7 @@ elf32_arm_final_link (bfd *abfd, struct bfd_link_info *info)
     return false;
 
   /* Invoke the regular ELF backend linker to do all the work.  */
-  if (!bfd_elf_final_link (abfd, info))
+  if (!_bfd_elf_final_link (abfd, info))
     return false;
 
   /* Process stub sections (eg BE8 encoding, ...).  */
@@ -14019,7 +13891,7 @@ elf32_arm_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   flagword in_flags;
   flagword out_flags;
 
-  if (! is_arm_elf (ibfd) || ! is_arm_elf (obfd))
+  if (! is_arm_elf (ibfd))
     return true;
 
   in_flags  = elf_elfheader (ibfd)->e_flags;
@@ -14091,7 +13963,7 @@ enum
    string or both.  */
 
 static int
-elf32_arm_obj_attrs_arg_type (int tag)
+elf32_arm_obj_attrs_arg_type (obj_attr_tag_t tag)
 {
   if (tag == Tag_compatibility)
     return ATTR_TYPE_FLAG_INT_VAL | ATTR_TYPE_FLAG_STR_VAL;
@@ -14194,11 +14066,12 @@ set_secondary_compatible_arch (bfd *abfd, int arch)
 
 static int
 tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
-		      int newtag, int secondary_compat, const char* name_table[])
+		      int newtag, int secondary_compat,
+		      const char *const name_table[])
 {
 #define T(X) TAG_CPU_ARCH_##X
   int tagl, tagh, result;
-  const int v6t2[] =
+  static const int v6t2[] =
     {
       T(V6T2),   /* PRE_V4.  */
       T(V6T2),   /* V4.  */
@@ -14210,7 +14083,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V7),     /* V6KZ.  */
       T(V6T2)    /* V6T2.  */
     };
-  const int v6k[] =
+  static const int v6k[] =
     {
       T(V6K),    /* PRE_V4.  */
       T(V6K),    /* V4.  */
@@ -14223,7 +14096,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V7),     /* V6T2.  */
       T(V6K)     /* V6K.  */
     };
-  const int v7[] =
+  static const int v7[] =
     {
       T(V7),     /* PRE_V4.  */
       T(V7),     /* V4.  */
@@ -14237,7 +14110,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V7),     /* V6K.  */
       T(V7)      /* V7.  */
     };
-  const int v6_m[] =
+  static const int v6_m[] =
     {
       -1,	 /* PRE_V4.  */
       -1,	 /* V4.  */
@@ -14252,7 +14125,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V7),     /* V7.  */
       T(V6_M)    /* V6_M.  */
     };
-  const int v6s_m[] =
+  static const int v6s_m[] =
     {
       -1,	 /* PRE_V4.  */
       -1,	 /* V4.  */
@@ -14268,7 +14141,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V6S_M),  /* V6_M.  */
       T(V6S_M)   /* V6S_M.  */
     };
-  const int v7e_m[] =
+  static const int v7e_m[] =
     {
       -1,	 /* PRE_V4.  */
       -1,	 /* V4.  */
@@ -14285,7 +14158,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V7E_M),  /* V6S_M.  */
       T(V7E_M)   /* V7E_M.  */
     };
-  const int v8[] =
+  static const int v8[] =
     {
       T(V8),		/* PRE_V4.  */
       T(V8),		/* V4.  */
@@ -14310,7 +14183,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V8),		/* V8.3.  */
       T(V8),		/* V8.1-M.MAIN.  */
     };
-  const int v8r[] =
+  static const int v8r[] =
     {
       T(V8R),		/* PRE_V4.  */
       T(V8R),		/* V4.  */
@@ -14329,7 +14202,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V8),		/* V8.  */
       T(V8R),		/* V8R.  */
     };
-  const int v8m_baseline[] =
+  static const int v8m_baseline[] =
     {
       -1,		/* PRE_V4.  */
       -1,		/* V4.  */
@@ -14349,7 +14222,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       -1,		/* V8R.  */
       T(V8M_BASE)	/* V8-M BASELINE.  */
     };
-  const int v8m_mainline[] =
+  static const int v8m_mainline[] =
     {
       -1,		/* PRE_V4.  */
       -1,		/* V4.  */
@@ -14370,7 +14243,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V8M_MAIN),	/* V8-M BASELINE.  */
       T(V8M_MAIN)	/* V8-M MAINLINE.  */
     };
-  const int v8_1m_mainline[] =
+  static const int v8_1m_mainline[] =
     {
       -1,		/* PRE_V4.  */
       -1,		/* V4.  */
@@ -14395,7 +14268,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       -1,		/* Unused (20).  */
       T(V8_1M_MAIN)	/* V8.1-M MAINLINE.  */
     };
-  const int v9[] =
+  static const int v9[] =
     {
       T(V9),		/* PRE_V4.  */
       T(V9),		/* V4.  */
@@ -14421,7 +14294,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V9),		/* V8.1-M.MAIN.  */
       T(V9),		/* V9.  */
      };
-  const int v4t_plus_v6_m[] =
+  static const int v4t_plus_v6_m[] =
     {
       -1,		/* PRE_V4.  */
       -1,		/* V4.  */
@@ -14448,7 +14321,7 @@ tag_cpu_arch_combine (bfd *ibfd, int oldtag, int *secondary_compat_out,
       T(V9),		/* V9.  */
       T(V4T_PLUS_V6_M)	/* V4T plus V6_M.  */
     };
-  const int *comb[] =
+  static const int *const comb[] =
     {
       v6t2,
       v6k,
@@ -14672,7 +14545,7 @@ elf32_arm_merge_eabi_attributes (bfd *ibfd, struct bfd_link_info *info)
 	    int secondary_compat = -1, secondary_compat_out = -1;
 	    unsigned int saved_out_attr = out_attr[i].i;
 	    int arch_attr;
-	    static const char *name_table[] =
+	    static const char *const name_table[] =
 	      {
 		/* These aren't real CPU names, but we can't guess
 		   that from the architecture version alone.  */
@@ -15349,19 +15222,19 @@ elf32_arm_get_symbol_type (Elf_Internal_Sym * elf_sym, int type)
 static asection *
 elf32_arm_gc_mark_hook (asection *sec,
 			struct bfd_link_info *info,
-			Elf_Internal_Rela *rel,
+			struct elf_reloc_cookie *cookie,
 			struct elf_link_hash_entry *h,
-			Elf_Internal_Sym *sym)
+			unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_ARM_GNU_VTINHERIT:
       case R_ARM_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Look through the relocs for a section during the first phase.  */
@@ -15830,7 +15703,7 @@ elf32_arm_update_relocs (asection *o,
 {
   void (*swap_in) (bfd *, const bfd_byte *, Elf_Internal_Rela *);
   void (*swap_out) (bfd *, const Elf_Internal_Rela *, bfd_byte *);
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   _arm_elf_section_data *eado;
   struct bfd_link_order *p;
   bfd_byte *erela_head, *erela;
@@ -16002,7 +15875,7 @@ elf32_arm_gc_mark_extra_sections (struct bfd_link_info *info,
   obj_attribute *out_attr;
   Elf_Internal_Shdr *symtab_hdr;
   unsigned i, sym_count, ext_start;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   struct elf_link_hash_entry **sym_hashes;
   struct elf32_arm_link_hash_entry *cmse_hash;
   bool again, is_v8m, first_bfd_browse = true;
@@ -16825,7 +16698,7 @@ elf32_arm_late_size_sections (bfd * output_bfd ATTRIBUTE_UNUSED,
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
@@ -17213,8 +17086,7 @@ elf32_arm_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
       if (tlsbase)
 	{
 	  struct bfd_link_hash_entry *bh = NULL;
-	  const struct elf_backend_data *bed
-	    = get_elf_backend_data (output_bfd);
+	  elf_backend_data *bed = get_elf_backend_data (output_bfd);
 
 	  if (!(_bfd_generic_link_add_one_symbol
 		(info, output_bfd, "_TLS_MODULE_BASE_", BSF_LOCAL,
@@ -17346,42 +17218,11 @@ arm_put_trampoline (struct elf32_arm_link_hash_table *htab, bfd *output_bfd,
     }
 }
 
-/* Install the special first PLT entry for elf32-arm-nacl.  Unlike
-   other variants, NaCl needs this entry in a static executable's
-   .iplt too.  When we're handling that case, GOT_DISPLACEMENT is
-   zero.  For .iplt really only the last bundle is useful, and .iplt
-   could have a shorter first entry, with each individual PLT entry's
-   relative branch calculated differently so it targets the last
-   bundle instead of the instruction before it (labelled .Lplt_tail
-   above).  But it's simpler to keep the size and layout of PLT0
-   consistent with the dynamic case, at the cost of some dead code at
-   the start of .iplt and the one dead store to the stack at the start
-   of .Lplt_tail.  */
-static void
-arm_nacl_put_plt0 (struct elf32_arm_link_hash_table *htab, bfd *output_bfd,
-		   asection *plt, bfd_vma got_displacement)
-{
-  unsigned int i;
-
-  put_arm_insn (htab, output_bfd,
-		elf32_arm_nacl_plt0_entry[0]
-		| arm_movw_immediate (got_displacement),
-		plt->contents + 0);
-  put_arm_insn (htab, output_bfd,
-		elf32_arm_nacl_plt0_entry[1]
-		| arm_movt_immediate (got_displacement),
-		plt->contents + 4);
-
-  for (i = 2; i < ARRAY_SIZE (elf32_arm_nacl_plt0_entry); ++i)
-    put_arm_insn (htab, output_bfd,
-		  elf32_arm_nacl_plt0_entry[i],
-		  plt->contents + (i * 4));
-}
-
 /* Finish up the dynamic sections.  */
 
 static bool
-elf32_arm_finish_dynamic_sections (bfd * output_bfd, struct bfd_link_info * info)
+elf32_arm_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info,
+				   bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd * dynobj;
   asection * sgot;
@@ -17543,9 +17384,6 @@ elf32_arm_finish_dynamic_sections (bfd * output_bfd, struct bfd_link_info * info
 	      SWAP_RELOC_OUT (htab) (output_bfd, &rel,
 				     htab->srelplt2->contents);
 	    }
-	  else if (htab->root.target_os == is_nacl)
-	    arm_nacl_put_plt0 (htab, output_bfd, splt,
-			       got_address + 8 - (plt_address + 16));
 	  else if (using_thumb_only (htab))
 	    {
 	      got_displacement = got_address - (plt_address + 12);
@@ -17654,12 +17492,6 @@ elf32_arm_finish_dynamic_sections (bfd * output_bfd, struct bfd_link_info * info
 	}
     }
 
-  if (htab->root.target_os == is_nacl
-      && htab->root.iplt != NULL
-      && htab->root.iplt->size > 0)
-    /* NaCl uses a special first entry in .iplt too.  */
-    arm_nacl_put_plt0 (htab, output_bfd, htab->root.iplt, 0);
-
   /* Fill in the first three entries in the global offset table.  */
   if (sgot)
     {
@@ -17767,7 +17599,7 @@ elf32_arm_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSED,
       /* Check relocation against STT_GNU_IFUNC symbol if there are
 	 dynamic symbols.  */
       bfd *abfd = info->output_bfd;
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       unsigned long r_symndx = ELF32_R_SYM (rela->r_info);
       if (r_symndx != STN_UNDEF)
 	{
@@ -17971,11 +17803,6 @@ elf32_arm_output_plt_map_1 (output_arch_syminfo *osi,
       if (!elf32_arm_output_map_sym (osi, ARM_MAP_ARM, addr + 12))
 	return false;
       if (!elf32_arm_output_map_sym (osi, ARM_MAP_DATA, addr + 20))
-	return false;
-    }
-  else if (htab->root.target_os == is_nacl)
-    {
-      if (!elf32_arm_output_map_sym (osi, ARM_MAP_ARM, addr))
 	return false;
     }
   else if (htab->fdpic_p)
@@ -18350,11 +18177,6 @@ elf32_arm_output_arch_local_syms (bfd *output_bfd,
 		return false;
 	    }
 	}
-      else if (htab->root.target_os == is_nacl)
-	{
-	  if (!elf32_arm_output_map_sym (&osi, ARM_MAP_ARM, 0))
-	    return false;
-	}
       else if (using_thumb_only (htab) && !htab->fdpic_p)
 	{
 	  if (!elf32_arm_output_map_sym (&osi, ARM_MAP_THUMB, 0))
@@ -18373,17 +18195,6 @@ elf32_arm_output_arch_local_syms (bfd *output_bfd,
 	    return false;
 #endif
 	}
-    }
-  if (htab->root.target_os == is_nacl
-      && htab->root.iplt
-      && htab->root.iplt->size > 0)
-    {
-      /* NaCl uses a special first entry in .iplt too.  */
-      osi.sec = htab->root.iplt;
-      osi.sec_shndx = (_bfd_elf_section_from_bfd_section
-		       (output_bfd, osi.sec->output_section));
-      if (!elf32_arm_output_map_sym (&osi, ARM_MAP_ARM, 0))
-	return false;
     }
   if ((htab->root.splt && htab->root.splt->size > 0)
       || (htab->root.iplt && htab->root.iplt->size > 0))
@@ -19964,7 +19775,7 @@ elf32_arm_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 }
 
 /* We use this to override swap_symbol_in and swap_symbol_out.  */
-const struct elf_size_info elf32_arm_size_info =
+static const struct elf_size_info elf32_arm_size_info =
 {
   sizeof (Elf32_External_Ehdr),
   sizeof (Elf32_External_Phdr),
@@ -20442,90 +20253,6 @@ elf32_arm_backend_symbol_processing (bfd *abfd, asymbol *sym)
 
 #include "elf32-target.h"
 
-/* Native Client targets.  */
-
-#undef	TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM		arm_elf32_nacl_le_vec
-#undef	TARGET_LITTLE_NAME
-#define TARGET_LITTLE_NAME		"elf32-littlearm-nacl"
-#undef	TARGET_BIG_SYM
-#define TARGET_BIG_SYM			arm_elf32_nacl_be_vec
-#undef	TARGET_BIG_NAME
-#define TARGET_BIG_NAME			"elf32-bigarm-nacl"
-
-/* Like elf32_arm_link_hash_table_create -- but overrides
-   appropriately for NaCl.  */
-
-static struct bfd_link_hash_table *
-elf32_arm_nacl_link_hash_table_create (bfd *abfd)
-{
-  struct bfd_link_hash_table *ret;
-
-  ret = elf32_arm_link_hash_table_create (abfd);
-  if (ret)
-    {
-      struct elf32_arm_link_hash_table *htab
-	= (struct elf32_arm_link_hash_table *) ret;
-
-      htab->plt_header_size = 4 * ARRAY_SIZE (elf32_arm_nacl_plt0_entry);
-      htab->plt_entry_size = 4 * ARRAY_SIZE (elf32_arm_nacl_plt_entry);
-    }
-  return ret;
-}
-
-/* Since NaCl doesn't use the ARM-specific unwind format, we don't
-   really need to use elf32_arm_modify_segment_map.  But we do it
-   anyway just to reduce gratuitous differences with the stock ARM backend.  */
-
-static bool
-elf32_arm_nacl_modify_segment_map (bfd *abfd, struct bfd_link_info *info)
-{
-  return (elf32_arm_modify_segment_map (abfd, info)
-	  && nacl_modify_segment_map (abfd, info));
-}
-
-static bool
-elf32_arm_nacl_final_write_processing (bfd *abfd)
-{
-  arm_final_write_processing (abfd);
-  return nacl_final_write_processing (abfd);
-}
-
-static bfd_vma
-elf32_arm_nacl_plt_sym_val (bfd_vma i, const asection *plt,
-			    const arelent *rel ATTRIBUTE_UNUSED)
-{
-  return plt->vma
-    + 4 * (ARRAY_SIZE (elf32_arm_nacl_plt0_entry) +
-	   i * ARRAY_SIZE (elf32_arm_nacl_plt_entry));
-}
-
-#undef	elf32_bed
-#define elf32_bed				elf32_arm_nacl_bed
-#undef  bfd_elf32_bfd_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_create	\
-  elf32_arm_nacl_link_hash_table_create
-#undef	elf_backend_plt_alignment
-#define elf_backend_plt_alignment		4
-#undef	elf_backend_modify_segment_map
-#define	elf_backend_modify_segment_map		elf32_arm_nacl_modify_segment_map
-#undef	elf_backend_modify_headers
-#define	elf_backend_modify_headers		nacl_modify_headers
-#undef  elf_backend_final_write_processing
-#define elf_backend_final_write_processing	elf32_arm_nacl_final_write_processing
-#undef bfd_elf32_get_synthetic_symtab
-#undef  elf_backend_plt_sym_val
-#define elf_backend_plt_sym_val			elf32_arm_nacl_plt_sym_val
-#undef  elf_backend_copy_special_section_fields
-
-#undef	ELF_MINPAGESIZE
-#undef	ELF_COMMONPAGESIZE
-
-#undef ELF_TARGET_OS
-#define ELF_TARGET_OS				is_nacl
-
-#include "elf32-target.h"
-
 /* Reset to defaults.  */
 #undef	elf_backend_plt_alignment
 #undef	elf_backend_modify_segment_map
@@ -20552,6 +20279,8 @@ elf32_arm_nacl_plt_sym_val (bfd_vma i, const asection *plt,
 #define elf_match_priority		128
 #undef ELF_OSABI
 #define ELF_OSABI		ELFOSABI_ARM_FDPIC
+#undef ELF_OSABI_EXACT
+#define ELF_OSABI_EXACT		1
 
 /* Like elf32_arm_link_hash_table_create -- but overrides
    appropriately for FDPIC.  */
@@ -20610,6 +20339,7 @@ elf32_arm_fdpic_omit_section_dynsym (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 #undef elf_match_priority
 #undef ELF_OSABI
+#undef ELF_OSABI_EXACT
 #undef elf_backend_omit_section_dynsym
 
 /* VxWorks Targets.  */
@@ -20690,7 +20420,7 @@ elf32_arm_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (! _bfd_generic_verify_endian_match (ibfd, info))
     return false;
 
-  if (! is_arm_elf (ibfd) || ! is_arm_elf (obfd))
+  if (! is_arm_elf (ibfd))
     return true;
 
   if (!elf32_arm_merge_eabi_attributes (ibfd, info))

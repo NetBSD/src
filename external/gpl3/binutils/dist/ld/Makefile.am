@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,8 @@ ZLIBINC = @zlibinc@
 
 ELF_CFLAGS=-DELF_LIST_OPTIONS=@elf_list_options@ \
 	   -DELF_SHLIB_LIST_OPTIONS=@elf_shlib_list_options@ \
-	   -DELF_PLT_UNWIND_LIST_OPTIONS=@elf_plt_unwind_list_options@
+	   -DELF_PLT_UNWIND_LIST_OPTIONS=@elf_plt_unwind_list_options@ \
+	   -DELF_SFRAME_LIST_OPTIONS=@elf_sframe_list_options@
 WARN_CFLAGS = @WARN_CFLAGS@
 NO_WERROR = @NO_WERROR@
 AM_CFLAGS = $(WARN_CFLAGS) $(ELF_CFLAGS) $(JANSSON_CFLAGS) $(ZSTD_CFLAGS)
@@ -171,7 +172,6 @@ ALL_EMULATION_SOURCES = \
 	earmelf_linux.c \
 	earmelf_linux_eabi.c \
 	earmelf_linux_fdpiceabi.c \
-	earmelf_nacl.c \
 	earmelf_nbsd.c \
 	earmelf_nbsd_eabi.c \
 	earmelf_nbsd_eabihf.c \
@@ -183,7 +183,6 @@ ALL_EMULATION_SOURCES = \
 	earmelfb_linux.c \
 	earmelfb_linux_eabi.c \
 	earmelfb_linux_fdpiceabi.c \
-	earmelfb_nacl.c \
 	earmelfb_nbsd.c \
 	earmelfb_nbsd_eabi.c \
 	earmelfb_nbsd_eabihf.c \
@@ -286,7 +285,6 @@ ALL_EMULATION_SOURCES = \
 	eelf_i386_be.c \
 	eelf_i386_fbsd.c \
 	eelf_i386_haiku.c \
-	eelf_i386_ldso.c \
 	eelf_i386_sol2.c \
 	eelf_i386_vxworks.c \
 	eelf_iamcu.c \
@@ -381,8 +379,6 @@ ALL_EMULATION_SOURCES = \
 ALL_EMULATIONS = $(ALL_EMULATION_SOURCES:.c=.@OBJEXT@)
 
 ALL_64_EMULATION_SOURCES = \
-	eaarch64cloudabi.c \
-	eaarch64cloudabib.c \
 	eaarch64elf.c \
 	eaarch64elf32.c \
 	eaarch64elf32b.c \
@@ -467,7 +463,6 @@ ALL_64_EMULATION_SOURCES = \
 	eelf64tilegx_be.c \
 	eelf_mipsel_haiku.c \
 	eelf_x86_64.c \
-	eelf_x86_64_cloudabi.c \
 	eelf_x86_64_fbsd.c \
 	eelf_x86_64_haiku.c \
 	eelf_x86_64_sol2.c \

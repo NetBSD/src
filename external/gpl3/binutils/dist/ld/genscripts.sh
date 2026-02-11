@@ -1,6 +1,6 @@
 #!/bin/sh
 # genscripts.sh - generate the ld-emulation-target specific files
-# Copyright (C) 2004-2025 Free Software Foundation, Inc.
+# Copyright (C) 2004-2026 Free Software Foundation, Inc.
 #
 # This file is part of the Gnu Linker.
 #
@@ -185,7 +185,7 @@ fi
 # Otherwise, the default is set here.
 #
 # The format is the usual list of colon-separated directories.
-# To force a logically empty LIB_PATH, do LIBPATH=":".
+# To force a logically empty LIB_PATH, do LIB_PATH=":".
 #
 # If we are using a sysroot, prefix library paths with "=" to indicate this.
 #
@@ -233,7 +233,8 @@ append_to_lib_path()
 	    fi ;;
 	esac
       done
-      if test "${skip_lib}" = "no"; then
+
+      if test "${skip_lib}" = "no" && test "${LIBPATH_SKIP_NONNATIVE}" != "yes"; then
 	case :${lib_path1}:${lib_path2}: in
 	  *:${lib}:*) ;;
 	  *::) lib_path2=${lib} ;;
@@ -245,7 +246,7 @@ append_to_lib_path()
 }
 
 # Always search $(tooldir)/lib, aka /usr/local/TARGET/lib when native
-# except when LIBPATH=":".
+# except when LIB_PATH=":".
 if [ "${LIB_PATH}" != ":" ] ; then
   libs=
   if [ "x${TOOL_LIB}" = "x" ] ; then

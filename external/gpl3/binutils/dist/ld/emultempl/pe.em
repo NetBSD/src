@@ -18,7 +18,7 @@ esac
 rm -f e${EMULATION_NAME}.c
 (echo;echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
-/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -228,6 +228,8 @@ fragment <<EOF
   link_info.pei386_auto_import = ${default_auto_import};
   /* Use by default version.  */
   link_info.pei386_runtime_pseudo_reloc = DEFAULT_PSEUDO_RELOC_VERSION;
+#else
+  pe_dll_enable_reloc_section = 0;
 #endif
 }
 
@@ -1594,6 +1596,9 @@ gld${EMULATION_NAME}_after_open (void)
   else
     pe_exe_build_sections (link_info.output_bfd, &link_info);
 #endif
+#else /* !DLL_SUPPORT */
+  if (!bfd_link_relocatable (&link_info))
+    pe_exe_build_sections (link_info.output_bfd, &link_info);
 #endif /* DLL_SUPPORT */
 
 #if defined(TARGET_IS_armpe) || defined(TARGET_IS_arm_wince_pe)
@@ -2104,6 +2109,9 @@ gld${EMULATION_NAME}_finish (void)
 
   if (pe_out_def_filename)
     pe_dll_generate_def_file (pe_out_def_filename);
+#else /* !DLL_SUPPORT */
+  if (!bfd_link_relocatable (&link_info))
+    pe_exe_fill_sections (link_info.output_bfd, &link_info);
 #endif /* DLL_SUPPORT */
 
   /* I don't know where .idata gets set as code, but it shouldn't be.  */

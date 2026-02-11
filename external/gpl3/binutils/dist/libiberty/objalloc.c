@@ -1,5 +1,5 @@
 /* objalloc.c -- routines to allocate memory for objects
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Solutions.
 
 This program is free software; you can redistribute it and/or modify it
@@ -177,6 +177,10 @@ void
 objalloc_free (struct objalloc *o)
 {
   struct objalloc_chunk *l;
+
+  /* Handle a nullptr as being a no-op. */
+  if (o == NULL)
+    return;
 
   l = (struct objalloc_chunk *) o->chunks;
   while (l != NULL)

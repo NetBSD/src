@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -575,7 +575,22 @@
 #define SHT_CHECKSUM	             0x6ffffff8	/* Checksum for DSO content.  */
 #define SHT_GNU_OBJECT_ONLY	     0x6ffffff9	/* Object only */
 
-#define SHT_SUNW_move	             0x6ffffffa
+#define SHT_SUNW_ctf                 0x6fffffeb
+#define SHT_SUNW_symnsort            0x6fffffec
+#define SHT_SUNW_phname              0x6fffffed
+#define SHT_SUNW_ancillary           0x6fffffee
+#define SHT_SUNW_capchain            0x6fffffef
+#define SHT_SUNW_capinfo             0x6ffffff0
+#define SHT_SUNW_symsort             0x6ffffff1
+#define SHT_SUNW_tlssort             0x6ffffff2
+#define SHT_SUNW_LDYNSYM             0x6ffffff3
+#define SHT_SUNW_dof                 0x6ffffff4
+#define SHT_SUNW_cap                 0x6ffffff5
+#define SHT_SUNW_SIGNATURE           0x6ffffff6
+#define SHT_SUNW_ANNOTATE            0x6ffffff7
+#define SHT_SUNW_DEBUGSTR            0x6ffffff8
+#define SHT_SUNW_DEBUG               0x6ffffff9
+#define SHT_SUNW_move                0x6ffffffa
 #define SHT_SUNW_COMDAT              0x6ffffffb
 #define SHT_SUNW_syminfo             0x6ffffffc
 /* The next three section types are defined by Solaris, and are named
@@ -682,6 +697,8 @@
 #define NT_X86_SHSTK	0x204		/* x86 SHSTK state.  */
 					/* This replaces NT_X86_CET (0x203).  */
 					/*   note name must be "LINUX".  */
+#define NT_X86_XSAVE_LAYOUT	0x205	/* XSAVE layout description */
+					/*   note name must be "LINUX".  */
 #define NT_S390_HIGH_GPRS 0x300		/* S/390 upper halves of GPRs  */
 					/*   note name must be "LINUX".  */
 #define NT_S390_TIMER	0x301		/* S390 timer */
@@ -740,6 +757,8 @@
 #define NT_ARM_ZA       0x40c           /* AArch64 SME ZA register.  */
 					/*   Note: name must be "LINUX".  */
 #define NT_ARM_ZT       0x40d           /* AArch64 SME2 ZT registers.  */
+					/*   Note: name must be "LINUX".  */
+#define NT_ARM_FPMR     0x40e           /* AArch64 FPMR.  */
 					/*   Note: name must be "LINUX".  */
 #define NT_ARM_GCS	0x410		/* AArch64 Guarded Control Stack
 					   registers.  */
@@ -1366,6 +1385,11 @@
 
 #define VERSYM_HIDDEN		0x8000
 
+/* This flag appears in a Versym structure.  It means that the symbol
+   is the base version.  */
+
+#define VERSYM_BASE		0x0001
+
 /* This is the mask for the rest of the Versym information.  */
 
 #define VERSYM_VERSION		0x7fff
@@ -1436,6 +1460,8 @@
 #define AT_HWCAP2	26		/* Extension of AT_HWCAP.  */
 #define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
 #define AT_RSEQ_ALIGN	28		/* rseq allocation alignment */
+#define AT_HWCAP3	29		/* Extension of AT_HWCAP.  */
+#define AT_HWCAP4	30		/* Extension of AT_HWCAP.  */
 #define AT_EXECFN	31		/* Filename of executable.  */
 /* Pointer to the global system page used for system calls and other
    nice things.  */

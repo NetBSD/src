@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2024/06/30 16:10:22 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2026/02/11 20:15:05 christos Exp $
 
 CPPFLAGS+=	-I${.CURDIR}/arch/${BINUTILS_MACHINE_ARCH}
 
@@ -14,9 +14,9 @@ PROGDPLIBS+=	iberty	${TOP}/${BFDSUBDIR}/libiberty
 
 TEXINFO=	${G_TEXINFOS}
 COMMONOBJDIR!=	cd ${TOP}/usr.bin/common && ${PRINTOBJDIR}
-INFOFLAGS=	-I${COMMONOBJDIR} -I${DIST}/libiberty
+INFOFLAGS=	-I${COMMONOBJDIR} -I${DIST}/libiberty -I${DIST}/bfd/doc
 
-gprof.info:	bfdver.texi
+gprof.info:	${DIST}/bfd/doc/bfdver.texi
 
 .PATH: ${COMMONOBJDIR} ${DIST}/gprof
 

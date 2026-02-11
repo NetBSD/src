@@ -1,5 +1,5 @@
 /* tc-or1k.c -- Assembler for the OpenRISC family.
-   Copyright (C) 2001-2025 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Contributed for OR32 by Johan Rydberg, jrydberg@opencores.org
 
    This file is part of GAS, the GNU Assembler.
@@ -354,22 +354,28 @@ or1k_apply_fix (struct fix *f, valueT *t, segT s)
 
   switch (f->fx_r_type)
     {
+    case BFD_RELOC_OR1K_TLS_DTPMOD:
+    case BFD_RELOC_OR1K_TLS_DTPOFF:
     case BFD_RELOC_OR1K_TLS_GD_HI16:
+    case BFD_RELOC_OR1K_TLS_GD_LO13:
     case BFD_RELOC_OR1K_TLS_GD_LO16:
     case BFD_RELOC_OR1K_TLS_GD_PG21:
-    case BFD_RELOC_OR1K_TLS_GD_LO13:
-    case BFD_RELOC_OR1K_TLS_LDM_HI16:
-    case BFD_RELOC_OR1K_TLS_LDM_LO16:
-    case BFD_RELOC_OR1K_TLS_LDM_PG21:
-    case BFD_RELOC_OR1K_TLS_LDM_LO13:
-    case BFD_RELOC_OR1K_TLS_LDO_HI16:
-    case BFD_RELOC_OR1K_TLS_LDO_LO16:
+    case BFD_RELOC_OR1K_TLS_IE_AHI16:
     case BFD_RELOC_OR1K_TLS_IE_HI16:
+    case BFD_RELOC_OR1K_TLS_IE_LO13:
     case BFD_RELOC_OR1K_TLS_IE_LO16:
     case BFD_RELOC_OR1K_TLS_IE_PG21:
-    case BFD_RELOC_OR1K_TLS_IE_LO13:
+    case BFD_RELOC_OR1K_TLS_LDM_HI16:
+    case BFD_RELOC_OR1K_TLS_LDM_LO13:
+    case BFD_RELOC_OR1K_TLS_LDM_LO16:
+    case BFD_RELOC_OR1K_TLS_LDM_PG21:
+    case BFD_RELOC_OR1K_TLS_LDO_HI16:
+    case BFD_RELOC_OR1K_TLS_LDO_LO16:
+    case BFD_RELOC_OR1K_TLS_LE_AHI16:
     case BFD_RELOC_OR1K_TLS_LE_HI16:
     case BFD_RELOC_OR1K_TLS_LE_LO16:
+    case BFD_RELOC_OR1K_TLS_LE_SLO16:
+    case BFD_RELOC_OR1K_TLS_TPOFF:
       S_SET_THREAD_LOCAL (f->fx_addsy);
       break;
     default:

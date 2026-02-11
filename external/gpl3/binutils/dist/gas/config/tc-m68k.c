@@ -1,5 +1,5 @@
 /* tc-m68k.c -- Assemble for the m68k family
-   Copyright (C) 1987-2025 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -7941,7 +7941,7 @@ m68k_elf_cons (int nbytes /* 4=.long */)
 static void
 m68k_elf_gnu_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_GNU);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_GNU);
 
   /* Check validity of defined m68k tags.  */
   if (tag == Tag_GNU_M68K_ABI_FP)

@@ -1,4 +1,4 @@
-@c Copyright (C) 2001-2025 Free Software Foundation, Inc.
+@c Copyright (C) 2001-2026 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @c man end
@@ -193,12 +193,6 @@ Generate code for a little endian machine.
 @item -mbig, -mbig-endian, -be
 Generate code for a big endian machine.
 
-@item -msolaris
-Generate code for Solaris.
-
-@item -mno-solaris
-Do not generate code for Solaris.
-
 @item -nops=@var{count}
 If an alignment directive inserts more than @var{count} nops, put a
 branch at the beginning to skip execution of the nops.
@@ -241,11 +235,6 @@ If a @samp{#} appears as the first character of a line then the whole
 line is treated as a comment, but in this case the line could also be
 a logical line number directive (@pxref{Comments}) or a preprocessor
 control command (@pxref{Preprocessing}).
-
-If the assembler has been configured for the ppc-*-solaris* target
-then the @samp{!} character also acts as a line comment character.
-This can be disabled via the @option{-mno-solaris} command-line
-option.
 
 @cindex line separator, PowerPC
 @cindex statement separator, PowerPC

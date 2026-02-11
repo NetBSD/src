@@ -17,7 +17,7 @@ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH=i386
 MACHINE=
 TEMPLATE_NAME=elf
-EXTRA_EM_FILE="elf-x86"
+EXTRA_EM_FILE="elf-i386-glibc"
 GENERATE_SHLIB_SCRIPT=yes
 #ELFSIZE=32
 GENERATE_PIE_SCRIPT=yes
@@ -40,6 +40,8 @@ OTHER_PLT_SECTIONS="
 .plt.got      ${RELOCATING-0} : { *(.plt.got) }
 .plt.sec      ${RELOCATING-0} : { *(.plt.sec) }
 "
+OTHER_GOT_RELOC_SECTIONS="
+  .rel.tls	${RELOCATING-0} : { *(.rel.tls) }"
 
 # Linux modify the default library search path to first include
 # a 32-bit specific directory.

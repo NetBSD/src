@@ -1,5 +1,5 @@
 /* mips-opc.c -- MIPS opcode list.
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by Ralph Campbell and OSF
    Commented and modified by Ian Lance Taylor, Cygnus Support
    Extended for MIPS32 support by Anders Norlander, and by SiByte, Inc.
@@ -1206,7 +1206,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"floor.l.d",		"D,S",		0x4620000b, 0xffff003f, WR_1|RD_2|FP_D,		0,		I3_33,		0,	0 },
 {"floor.l.s",		"D,S",		0x4600000b, 0xffff003f, WR_1|RD_2|FP_S|FP_D,	0,		I3_33,		0,	0 },
 {"floor.w.d",		"D,S",		0x4620000f, 0xffff003f, WR_1|RD_2|FP_S|FP_D,	0,		I2,		0,	SF },
-{"floor.w.s",		"D,S",		0x4600000f, 0xffff003f, WR_1|RD_2|FP_S,		0,		I2,		0,	0 },
+{"floor.w.s",		"D,S",		0x4600000f, 0xffff003f,	WR_1|RD_2|FP_S,		0,		I2,		0,	EE },
 {"hibernate",		"",		0x42000023, 0xffffffff,	0, 			0,		V1,		0,	0 },
 {"hypcall",		"",		0x42000028, 0xffffffff, TRAP,			0,		0,		IVIRT,	0 },
 {"hypcall",		"+J",		0x42000028, 0xffe007ff, TRAP,			0,		0,		IVIRT,	0 },
@@ -1823,7 +1823,7 @@ const struct mips_opcode mips_builtin_opcodes[] =
 {"round.l.d",		"D,S",		0x46200008, 0xffff003f, WR_1|RD_2|FP_D,		0,		I3_33,		0,	0 },
 {"round.l.s",		"D,S",		0x46000008, 0xffff003f, WR_1|RD_2|FP_S|FP_D,	0,		I3_33,		0,	0 },
 {"round.w.d",		"D,S",		0x4620000c, 0xffff003f, WR_1|RD_2|FP_S|FP_D,	0,		I2,		0,	SF },
-{"round.w.s",		"D,S",		0x4600000c, 0xffff003f, WR_1|RD_2|FP_S,		0,		I2,		0,	0 },
+{"round.w.s",		"D,S",		0x4600000c, 0xffff003f,	WR_1|RD_2|FP_S,		0,		I2,		0,	EE },
 {"rsqrt.d",		"D,S",		0x46200016, 0xffff003f, WR_1|RD_2|FP_D,		0,		I4_33,		0,	0 },
 {"rsqrt.ps",		"D,S",		0x46c00016, 0xffff003f, WR_1|RD_2|FP_D,		0,		SB1,		0,	0 },
 {"rsqrt.s",		"D,S",		0x46000016, 0xffff003f, WR_1|RD_2|FP_S,		0,		I4_33,		0,	0 },

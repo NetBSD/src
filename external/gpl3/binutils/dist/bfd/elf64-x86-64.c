@@ -1,5 +1,5 @@
 /* X86-64 specific support for ELF
-   Copyright (C) 2000-2025 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    Contributed by Jan Hubicka <jh@suse.cz>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -233,11 +233,11 @@ static const struct elf_reloc_map x86_64_reloc_map[] =
   { BFD_RELOC_64,		R_X86_64_64,   },
   { BFD_RELOC_32_PCREL,		R_X86_64_PC32, },
   { BFD_RELOC_X86_64_GOT32,	R_X86_64_GOT32,},
-  { BFD_RELOC_X86_64_PLT32,	R_X86_64_PLT32,},
-  { BFD_RELOC_X86_64_COPY,	R_X86_64_COPY, },
-  { BFD_RELOC_X86_64_GLOB_DAT,	R_X86_64_GLOB_DAT, },
-  { BFD_RELOC_X86_64_JUMP_SLOT, R_X86_64_JUMP_SLOT, },
-  { BFD_RELOC_X86_64_RELATIVE,	R_X86_64_RELATIVE, },
+  { BFD_RELOC_32_PLT_PCREL,	R_X86_64_PLT32,},
+  { BFD_RELOC_COPY,		R_X86_64_COPY, },
+  { BFD_RELOC_GLOB_DAT,		R_X86_64_GLOB_DAT, },
+  { BFD_RELOC_JMP_SLOT,		R_X86_64_JUMP_SLOT, },
+  { BFD_RELOC_RELATIVE,		R_X86_64_RELATIVE, },
   { BFD_RELOC_X86_64_GOTPCREL,	R_X86_64_GOTPCREL, },
   { BFD_RELOC_32,		R_X86_64_32, },
   { BFD_RELOC_X86_64_32S,	R_X86_64_32S, },
@@ -260,13 +260,13 @@ static const struct elf_reloc_map x86_64_reloc_map[] =
   { BFD_RELOC_X86_64_GOTPCREL64,R_X86_64_GOTPCREL64, },
   { BFD_RELOC_X86_64_GOTPC64,	R_X86_64_GOTPC64, },
   { BFD_RELOC_X86_64_GOTPLT64,	R_X86_64_GOTPLT64, },
-  { BFD_RELOC_X86_64_PLTOFF64,	R_X86_64_PLTOFF64, },
+  { BFD_RELOC_64_PLTOFF,	R_X86_64_PLTOFF64, },
   { BFD_RELOC_SIZE32,		R_X86_64_SIZE32, },
   { BFD_RELOC_SIZE64,		R_X86_64_SIZE64, },
   { BFD_RELOC_X86_64_GOTPC32_TLSDESC, R_X86_64_GOTPC32_TLSDESC, },
   { BFD_RELOC_X86_64_TLSDESC_CALL, R_X86_64_TLSDESC_CALL, },
   { BFD_RELOC_X86_64_TLSDESC,	R_X86_64_TLSDESC, },
-  { BFD_RELOC_X86_64_IRELATIVE,	R_X86_64_IRELATIVE, },
+  { BFD_RELOC_IRELATIVE,	R_X86_64_IRELATIVE, },
   { BFD_RELOC_X86_64_PC32_BND,	R_X86_64_PC32_BND, },
   { BFD_RELOC_X86_64_PLT32_BND,	R_X86_64_PLT32_BND, },
   { BFD_RELOC_X86_64_GOTPCRELX, R_X86_64_GOTPCRELX, },
@@ -479,7 +479,7 @@ static char *
 elf_x86_64_write_core_note (bfd *abfd, char *buf, int *bufsiz,
 			    int note_type, ...)
 {
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   va_list ap;
   const char *fname, *psargs;
   long pid;
@@ -1626,6 +1626,16 @@ elf_x86_64_tls_transition (struct bfd_link_info *info, bfd *abfd,
       return true;
     }
 
+  if ((elf_section_type (sec) != SHT_PROGBITS
+       || (sec->flags & SEC_CODE) == 0))
+    {
+      reloc_howto_type *howto = elf_x86_64_rtype_to_howto (abfd,
+							   from_type);
+      _bfd_x86_elf_link_report_tls_invalid_section_error
+	(abfd, sec, symtab_hdr, h, sym, howto);
+      return false;
+    }
+
   /* Return TRUE if there is no transition.  */
   if (from_type == to_type
       || (from_type == R_X86_64_CODE_4_GOTTPOFF
@@ -1717,7 +1727,9 @@ elf_x86_64_need_pic (struct bfd_link_info *info,
     {
       object = _("a shared object");
       if (!pic)
-	pic = _("; recompile with -fPIC");
+	pic = (howto->type == R_X86_64_TPOFF32
+	       ? _("; local-exec is incompatible with -shared")
+	       : _("; recompile with -fPIC"));
     }
   else
     {
@@ -1949,7 +1961,7 @@ elf_x86_64_convert_load_reloc (bfd *abfd,
       else if (isym->st_shndx == SHN_COMMON)
 	tsec = bfd_com_section_ptr;
       else if (isym->st_shndx == SHN_X86_64_LCOMMON)
-	tsec = &_bfd_elf_large_com_section;
+	tsec = &bfd_elf_large_com_section;
       else
 	tsec = bfd_section_from_elf_index (abfd, isym->st_shndx);
     }
@@ -2588,6 +2600,9 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 	      /* Fake a STT_GNU_IFUNC symbol.  */
 	      h->root.root.string = bfd_elf_sym_name (abfd, symtab_hdr,
 						      isym, NULL);
+	      if (h->root.root.string == bfd_symbol_error_name)
+		goto error_return;
+
 	      h->type = STT_GNU_IFUNC;
 	      h->def_regular = 1;
 	      h->ref_regular = 1;
@@ -2600,7 +2615,9 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
       else
 	{
 	  isym = NULL;
-	  h = _bfd_elf_get_link_hash_entry (sym_hashes, r_symndx, symtab_hdr);
+	  h = _bfd_elf_get_link_hash_entry (sym_hashes, r_symndx,
+					    symtab_hdr->sh_info,
+					    NUM_SHDR_ENTRIES (symtab_hdr));
 	}
 
       /* Check invalid x32 relocations.  */
@@ -2612,7 +2629,6 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 
 	  case R_X86_64_DTPOFF64:
 	  case R_X86_64_TPOFF64:
-	  case R_X86_64_PC64:
 	  case R_X86_64_GOTOFF64:
 	  case R_X86_64_GOT64:
 	  case R_X86_64_GOTPCREL64:
@@ -2684,7 +2700,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 	  goto create_got;
 
 	case R_X86_64_TPOFF32:
-	  if (!bfd_link_executable (info) && ABI_64_P (abfd))
+	  if (!bfd_link_executable (info))
 	    {
 	      elf_x86_64_need_pic (info, abfd, sec, h, symtab_hdr, isym,
 				   &x86_64_elf_howto_table[r_type]);
@@ -2693,6 +2709,10 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 	  if (eh != NULL)
 	    eh->zero_undefweak &= 0x2;
 	  break;
+
+	case R_X86_64_TLSDESC_CALL:
+	  htab->has_tls_desc_call = 1;
+	  goto need_got;
 
 	case R_X86_64_GOTTPOFF:
 	case R_X86_64_CODE_4_GOTTPOFF:
@@ -2715,7 +2735,7 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 	case R_X86_64_GOTPLT64:
 	case R_X86_64_GOTPC32_TLSDESC:
 	case R_X86_64_CODE_4_GOTPC32_TLSDESC:
-	case R_X86_64_TLSDESC_CALL:
+need_got:
 	  /* This symbol requires a global offset table entry.	*/
 	  {
 	    int tls_type, old_tls_type;
@@ -2746,6 +2766,16 @@ elf_x86_64_scan_relocs (bfd *abfd, struct bfd_link_info *info,
 	      case R_X86_64_TLSDESC_CALL:
 		tls_type = GOT_TLS_GDESC;
 		break;
+	      }
+
+	    if (tls_type >= GOT_TLS_GD
+		&& tls_type <= GOT_TLS_GDESC
+		&& (elf_section_type (sec) != SHT_PROGBITS
+		    || (sec->flags & SEC_CODE) == 0))
+	      {
+		_bfd_x86_elf_link_report_tls_invalid_section_error
+		  (abfd, sec, symtab_hdr, h, isym, howto);
+		goto error_return;
 	      }
 
 	    if (h != NULL)
@@ -3117,7 +3147,7 @@ static bfd_vma
 elf_x86_64_tpoff (struct bfd_link_info *info, bfd_vma address)
 {
   struct elf_link_hash_table *htab = elf_hash_table (info);
-  const struct elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
+  elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
   bfd_vma static_tls_size;
 
   /* If tls_segment is NULL, we should have signalled an error already.  */
@@ -3535,7 +3565,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 		    sreloc = htab->elf.srelgot;
 		  else
 		    sreloc = htab->elf.irelplt;
-		  elf_append_rela (output_bfd, sreloc, &outrel);
+		  _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 
 		  /* If this reloc is against an external symbol, we
 		     do not want to fiddle with the addend.  Otherwise,
@@ -3690,7 +3720,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 		  (info, input_section, h, sym, "R_X86_64_RELATIVE",
 		   &outrel);
 
-	      elf_append_rela (output_bfd, s, &outrel);
+	      _bfd_elf_append_rela (output_bfd, s, &outrel);
 	    }
 
 	  if (off >= (bfd_vma) -2)
@@ -4107,7 +4137,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 		      (info, input_section, h, sym,
 		       relative_reloc_name, &outrel);
 
-		  elf_append_rela (output_bfd, sreloc, &outrel);
+		  _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 		}
 
 	      /* If this reloc is against an external symbol, we do
@@ -4623,12 +4653,12 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 				     + htab->elf.sgotplt->output_offset
 				     + offplt
 				     + htab->sgotplt_jump_table_size);
-		  sreloc = htab->elf.srelplt;
+		  sreloc = htab->rel_tls_desc;
 		  if (indx == 0)
 		    outrel.r_addend = relocation - _bfd_x86_elf_dtpoff_base (info);
 		  else
 		    outrel.r_addend = 0;
-		  elf_append_rela (output_bfd, sreloc, &outrel);
+		  _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 		}
 
 	      sreloc = htab->elf.srelgot;
@@ -4650,7 +4680,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 		outrel.r_addend = relocation - _bfd_x86_elf_dtpoff_base (info);
 	      outrel.r_info = htab->r_info (indx, dr_type);
 
-	      elf_append_rela (output_bfd, sreloc, &outrel);
+	      _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 
 	      if (GOT_TLS_GD_P (tls_type))
 		{
@@ -4668,8 +4698,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 		      outrel.r_info = htab->r_info (indx,
 						    R_X86_64_DTPOFF64);
 		      outrel.r_offset += GOT_ENTRY_SIZE;
-		      elf_append_rela (output_bfd, sreloc,
-						&outrel);
+		      _bfd_elf_append_rela (output_bfd, sreloc, &outrel);
 		    }
 		}
 
@@ -4972,8 +5001,7 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 			  htab->elf.sgot->contents + off + GOT_ENTRY_SIZE);
 	      outrel.r_info = htab->r_info (0, R_X86_64_DTPMOD64);
 	      outrel.r_addend = 0;
-	      elf_append_rela (output_bfd, htab->elf.srelgot,
-					&outrel);
+	      _bfd_elf_append_rela (output_bfd, htab->elf.srelgot, &outrel);
 	      htab->tls_ld_or_ldm_got.offset |= 1;
 	    }
 	  relocation = htab->elf.sgot->output_section->vma
@@ -5099,14 +5127,6 @@ elf_x86_64_relocate_section (bfd *output_bfd,
 
       rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
-      if (rel_hdr->sh_size == 0)
-	{
-	  /* It is too late to remove an empty reloc section.  Leave
-	     one NONE reloc.
-	     ??? What is wrong with an empty section???  */
-	  rel_hdr->sh_size = rel_hdr->sh_entsize;
-	  deleted -= 1;
-	}
       rel_hdr = _bfd_elf_single_rel_hdr (input_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
       input_section->reloc_count -= deleted;
@@ -5150,7 +5170,7 @@ elf_x86_64_finish_dynamic_symbol (bfd *output_bfd,
       Elf_Internal_Rela rela;
       bfd_byte *loc;
       asection *plt, *gotplt, *relplt, *resolved_plt;
-      const struct elf_backend_data *bed;
+      elf_backend_data *bed;
       bfd_vma plt_got_pcrel_offset;
 
       /* When building a static executable, use .iplt, .igot.plt and
@@ -5516,7 +5536,7 @@ elf_x86_64_finish_dynamic_symbol (bfd *output_bfd,
 	    _bfd_x86_elf_link_report_relative_reloc
 	      (info, relgot, h, sym, relative_reloc_name, &rela);
 
-	  elf_append_rela (output_bfd, relgot, &rela);
+	  _bfd_elf_append_rela (output_bfd, relgot, &rela);
 	}
     }
 
@@ -5537,7 +5557,7 @@ elf_x86_64_finish_dynamic_symbol (bfd *output_bfd,
 	s = htab->elf.sreldynrelro;
       else
 	s = htab->elf.srelbss;
-      elf_append_rela (output_bfd, s, &rela);
+      _bfd_elf_append_rela (output_bfd, s, &rela);
     }
 
   return true;
@@ -5586,7 +5606,7 @@ elf_x86_64_reloc_type_class (const struct bfd_link_info *info,
 			     const Elf_Internal_Rela *rela)
 {
   bfd *abfd = info->output_bfd;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_x86_link_hash_table *htab
     = elf_x86_hash_table (info, X86_64_ELF_DATA);
 
@@ -5630,11 +5650,12 @@ elf_x86_64_reloc_type_class (const struct bfd_link_info *info,
 
 static bool
 elf_x86_64_finish_dynamic_sections (bfd *output_bfd,
-				    struct bfd_link_info *info)
+				    struct bfd_link_info *info,
+				    bfd_byte *buf)
 {
   struct elf_x86_link_hash_table *htab;
 
-  htab = _bfd_x86_elf_finish_dynamic_sections (output_bfd, info);
+  htab = _bfd_x86_elf_finish_dynamic_sections (output_bfd, info, buf);
   if (htab == NULL)
     return false;
 
@@ -5755,10 +5776,12 @@ elf_x86_64_output_arch_local_syms
   if (htab == NULL)
     return false;
 
-  /* Fill PLT and GOT entries for local STT_GNU_IFUNC symbols.  */
-  htab_traverse (htab->loc_hash_table,
-		 elf_x86_64_finish_local_dynamic_symbol,
-		 info);
+  /* Fill PLT and GOT entries for local STT_GNU_IFUNC symbols if
+     needed.  */
+  if (htab->has_loc_hash_table)
+    htab_traverse (htab->loc_hash_table,
+		   elf_x86_64_finish_local_dynamic_symbol,
+		   info);
 
   return true;
 }
@@ -5856,7 +5879,7 @@ elf_x86_64_get_synthetic_symtab (bfd *abfd,
 	    {
 	      if (memcmp (plt_contents + lazy_ibt_plt->plt_entry_size,
 			  lazy_ibt_plt->plt_entry,
-			  lazy_ibt_plt->plt_got_offset) == 0)
+			  lazy_ibt_plt->plt_reloc_offset) == 0)
 		{
 		  /* The fist entry in the lazy IBT PLT is the same as
 		     the lazy PLT.  */
@@ -5878,7 +5901,7 @@ elf_x86_64_get_synthetic_symtab (bfd *abfd,
 	      if (memcmp (plt_contents
 			  + lazy_bnd_ibt_plt->plt_entry_size,
 			  lazy_bnd_ibt_plt->plt_entry,
-			  lazy_bnd_ibt_plt->plt_got_offset) == 0)
+			  lazy_bnd_ibt_plt->plt_reloc_offset) == 0)
 		lazy_plt = lazy_bnd_ibt_plt;
 	      else
 		lazy_plt = lazy_bnd_plt;
@@ -6034,7 +6057,7 @@ static bool
 elf_x86_64_elf_section_from_bfd_section (bfd *abfd ATTRIBUTE_UNUSED,
 					 asection *sec, int *index_return)
 {
-  if (sec == &_bfd_elf_large_com_section)
+  if (sec == &bfd_elf_large_com_section)
     {
       *index_return = SHN_X86_64_LCOMMON;
       return true;
@@ -6053,7 +6076,7 @@ elf_x86_64_symbol_processing (bfd *abfd ATTRIBUTE_UNUSED,
   switch (elfsym->internal_elf_sym.st_shndx)
     {
     case SHN_X86_64_LCOMMON:
-      asym->section = &_bfd_elf_large_com_section;
+      asym->section = &bfd_elf_large_com_section;
       asym->value = elfsym->internal_elf_sym.st_size;
       /* Common symbol doesn't set BSF_GLOBAL.  */
       asym->flags &= ~BSF_GLOBAL;
@@ -6083,7 +6106,7 @@ elf_x86_64_common_section (asection *sec)
   if ((elf_section_flags (sec) & SHF_X86_64_LARGE) == 0)
     return bfd_com_section_ptr;
   else
-    return &_bfd_elf_large_com_section;
+    return &bfd_elf_large_com_section;
 }
 
 static bool
@@ -6193,7 +6216,7 @@ static bfd *
 elf_x86_64_link_setup_gnu_properties (struct bfd_link_info *info)
 {
   struct elf_x86_init_table init_table;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   struct elf_x86_link_hash_table *htab;
 
   if ((int) R_X86_64_standard >= (int) R_X86_64_converted_reloc_bit
@@ -6250,8 +6273,9 @@ static void
 elf_x86_64_add_glibc_version_dependency
   (struct elf_find_verdep_info *rinfo)
 {
-  unsigned int i = 0;
-  const char *version[3] = { NULL, NULL, NULL };
+  int i = 0, mark_plt = -1;
+  const char *version[4] = { NULL, NULL, NULL, NULL };
+  bool auto_version[4] = { false, false, false, false };
   struct elf_x86_link_hash_table *htab;
 
   if (rinfo->info->enable_dt_relr)
@@ -6261,14 +6285,41 @@ elf_x86_64_add_glibc_version_dependency
     }
 
   htab = elf_x86_hash_table (rinfo->info, X86_64_ELF_DATA);
-  if (htab != NULL && htab->params->mark_plt)
+  if (htab != NULL)
     {
-      version[i] = "GLIBC_2.36";
-      i++;
+      if (htab->params->gnu2_tls_version_tag && htab->has_tls_desc_call)
+	{
+	  version[i] = "GLIBC_ABI_GNU2_TLS";
+	  /* 2 == auto, enable if libc.so defines the GLIBC_ABI_GNU2_TLS
+	     version.  */
+	  if (htab->params->gnu2_tls_version_tag == 2)
+	    auto_version[i] = true;
+	  i++;
+	}
+      if (htab->params->mark_plt)
+	{
+	  mark_plt = i;
+	  auto_version[i] = true;
+	  version[i] = "GLIBC_ABI_DT_X86_64_PLT";
+	  i++;
+	}
     }
 
-  if (i != 0)
-    _bfd_elf_link_add_glibc_version_dependency (rinfo, version);
+  if (i == 0
+      || !_bfd_elf_link_add_glibc_version_dependency (rinfo, version,
+						      auto_version))
+    return;
+
+  if (mark_plt < 0 || auto_version[mark_plt])
+    return;
+
+  /* Add the GLIBC_2.36 version dependency if libc.so doesn't have
+     GLIBC_ABI_DT_X86_64_PLT.  */
+  version[0] = "GLIBC_2.36";
+  auto_version[0] = false;
+  version[1] = NULL;
+  _bfd_elf_link_add_glibc_version_dependency (rinfo, version,
+					      auto_version);
 }
 
 static const struct bfd_elf_special_section
@@ -6288,8 +6339,9 @@ elf_x86_64_special_sections[]=
 #define ELF_ARCH			    bfd_arch_i386
 #define ELF_TARGET_ID			    X86_64_ELF_DATA
 #define ELF_MACHINE_CODE		    EM_X86_64
+#define	ELF_OSABI			    ELFOSABI_GNU
 #define ELF_MAXPAGESIZE			    0x1000
-#define ELF_COMMONPAGESIZE		    0x1000
+#define ELF_COMMONPAGESIZE		    ELF_MAXPAGESIZE
 
 #define elf_backend_can_gc_sections	    1
 #define elf_backend_can_refcount	    1
@@ -6363,20 +6415,7 @@ elf_x86_64_special_sections[]=
 
 #include "elf64-target.h"
 
-/* CloudABI support.  */
-
-#undef	TARGET_LITTLE_SYM
-#define TARGET_LITTLE_SYM		    x86_64_elf64_cloudabi_vec
-#undef	TARGET_LITTLE_NAME
-#define TARGET_LITTLE_NAME		    "elf64-x86-64-cloudabi"
-
-#undef	ELF_OSABI
-#define	ELF_OSABI			    ELFOSABI_CLOUDABI
-
-#undef	elf64_bed
-#define elf64_bed elf64_x86_64_cloudabi_bed
-
-#include "elf64-target.h"
+#undef elf_backend_add_glibc_version_dependency
 
 /* FreeBSD support.  */
 
@@ -6387,6 +6426,8 @@ elf_x86_64_special_sections[]=
 
 #undef	ELF_OSABI
 #define	ELF_OSABI			    ELFOSABI_FREEBSD
+#undef	ELF_OSABI_EXACT
+#define	ELF_OSABI_EXACT			    1
 
 #undef	elf64_bed
 #define elf64_bed elf64_x86_64_fbsd_bed
@@ -6400,12 +6441,15 @@ elf_x86_64_special_sections[]=
 #undef  TARGET_LITTLE_NAME
 #define TARGET_LITTLE_NAME		    "elf64-x86-64-sol2"
 
-#undef ELF_TARGET_OS
+#undef	ELF_MAXPAGESIZE
+#define ELF_MAXPAGESIZE			    0x100000
+
+#undef	ELF_TARGET_OS
 #define	ELF_TARGET_OS			    is_solaris
 
-/* Restore default: we cannot use ELFOSABI_SOLARIS, otherwise ELFOSABI_NONE
-   objects won't be recognized.  */
 #undef ELF_OSABI
+#define ELF_OSABI			    ELFOSABI_SOLARIS
+#undef ELF_OSABI_EXACT
 
 #undef  elf64_bed
 #define elf64_bed			    elf64_x86_64_sol2_bed
@@ -6422,32 +6466,14 @@ elf_x86_64_special_sections[]=
 #undef  elf_backend_want_plt_sym
 #define elf_backend_want_plt_sym	    1
 
-#undef  elf_backend_strtab_flags
-#define elf_backend_strtab_flags	SHF_STRINGS
-
-static bool
-elf64_x86_64_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUSED,
-						  bfd *obfd ATTRIBUTE_UNUSED,
-						  const Elf_Internal_Shdr *isection ATTRIBUTE_UNUSED,
-						  Elf_Internal_Shdr *osection ATTRIBUTE_UNUSED)
-{
-  /* PR 19938: FIXME: Need to add code for setting the sh_info
-     and sh_link fields of Solaris specific section types.  */
-  return false;
-}
-
-#undef  elf_backend_copy_special_section_fields
-#define elf_backend_copy_special_section_fields elf64_x86_64_copy_solaris_special_section_fields
-
 #include "elf64-target.h"
 
 /* Restore defaults.  */
 #undef	ELF_OSABI
+#undef	ELF_OSABI_EXACT
 #undef	elf_backend_static_tls_alignment
 #undef	elf_backend_want_plt_sym
 #define elf_backend_want_plt_sym	0
-#undef  elf_backend_strtab_flags
-#undef  elf_backend_copy_special_section_fields
 
 /* 32bit x86-64 support.  */
 
@@ -6461,11 +6487,13 @@ elf64_x86_64_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUS
 #undef ELF_ARCH
 #define ELF_ARCH			    bfd_arch_i386
 
-#undef	ELF_MACHINE_CODE
-#define ELF_MACHINE_CODE		    EM_X86_64
+#undef	ELF_MAXPAGESIZE
+#define ELF_MAXPAGESIZE			    0x1000
 
 #undef	ELF_TARGET_OS
 #undef	ELF_OSABI
+#define	ELF_OSABI			    ELFOSABI_GNU
+#undef	ELF_OSABI_EXACT
 
 #define bfd_elf32_bfd_copy_private_section_data \
   elf_x86_64_copy_private_section_data
@@ -6483,6 +6511,10 @@ elf64_x86_64_copy_solaris_special_section_fields (const bfd *ibfd ATTRIBUTE_UNUS
 #undef elf_backend_bfd_from_remote_memory
 #define elf_backend_bfd_from_remote_memory \
   _bfd_elf32_bfd_from_remote_memory
+
+#undef elf_backend_add_glibc_version_dependency
+#define elf_backend_add_glibc_version_dependency \
+  elf_x86_64_add_glibc_version_dependency
 
 #undef elf_backend_size_info
 #define elf_backend_size_info \

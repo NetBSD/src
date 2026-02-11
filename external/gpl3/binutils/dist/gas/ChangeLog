@@ -1,3 +1,28 @@
+2025-09-16  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* NEWS: Mention Solaris/PowerPC removal.
+
+	* configure.ac <ppc-*-solaris*>: Remove.
+	* configure: Regenerate.
+	* configure.in: Regenerate.
+	* configure.tgt <ppc-*-solaris*>: Remove.
+
+	* config/tc-ppc.c (ppc_solaris_comment_chars): Remove.
+	(ppc_eabi_comment_chars): Remove.
+	(SOLARIS_P): Remove.
+	(msolaris): Remove.
+	(md_parse_option): Remove "solaris", "no-solaris" hangling.
+	(md_show_usage): Likewise.
+	(md_begin): Remove msolaris handling.
+	* config/tc-ppc.h (ppc_comment_chars): Fix declaration.
+	* stabs.c (s_stab_generic) [TC_PPC && OBJ_ELF]: Remove 4-arg
+	.stabd support.
+
+	* doc/as.texi (Overview, Target PowerPC options): Remove
+	-msolaris, -mno-solaris.
+	* doc/c-ppc.texi (PowerPC-Opts): Remove -msolaris, -mno-solaris.
+	(PowerPC-Chars): Remove ! as line comment character.
+
 2025-07-13  Nick Clifton  <nickc@redhat.com>
 
 	* 2.45 Branch point.
@@ -3406,7 +3431,7 @@
 
 For older changes see ChangeLog-2020
 
-Copyright (C) 2021-2025 Free Software Foundation, Inc.
+Copyright (C) 2021-2026 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

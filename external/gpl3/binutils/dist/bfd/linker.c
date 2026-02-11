@@ -1,5 +1,5 @@
 /* linker.c -- BFD linker routines
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -492,6 +492,7 @@ _bfd_link_hash_table_init
     {
       /* Arrange for destruction of this hash table on closing ABFD.  */
       table->hash_table_free = _bfd_generic_link_hash_table_free;
+      table->merge_info = NULL;
       abfd->link.hash = table;
       abfd->is_linker_output = true;
     }
@@ -809,6 +810,7 @@ _bfd_generic_link_hash_table_free (bfd *obfd)
 
   BFD_ASSERT (obfd->is_linker_output && obfd->link.hash);
   ret = (struct generic_link_hash_table *) obfd->link.hash;
+  _bfd_merge_sections_free (ret->root.merge_info);
   bfd_hash_table_free (&ret->root.table);
   free (ret);
   obfd->link.hash = NULL;
@@ -2308,7 +2310,9 @@ _bfd_generic_link_output_symbols (bfd *output_bfd,
    hash table entry.  */
 
 static void
-set_symbol_from_hash (asymbol *sym, struct bfd_link_hash_entry *h)
+set_symbol_from_hash (bfd *output_bfd,
+		      asymbol *sym,
+		      struct bfd_link_hash_entry *h)
 {
   switch (h->type)
     {
@@ -2339,13 +2343,26 @@ set_symbol_from_hash (asymbol *sym, struct bfd_link_hash_entry *h)
       sym->flags |= BSF_WEAK;
       break;
     case bfd_link_hash_defined:
+      sym->flags |= BSF_GLOBAL;
       sym->section = h->u.def.section;
       sym->value = h->u.def.value;
+      if (sym->section->sec_info_type == SEC_INFO_TYPE_MERGE)
+	{
+	  sym->value =
+	    _bfd_merged_section_offset (output_bfd, &sym->section, sym->value);
+	  sym->flags |= BSF_MERGE_RESOLVED;
+	}
       break;
     case bfd_link_hash_defweak:
       sym->flags |= BSF_WEAK;
       sym->section = h->u.def.section;
       sym->value = h->u.def.value;
+      if (sym->section->sec_info_type == SEC_INFO_TYPE_MERGE)
+	{
+	  sym->value =
+	    _bfd_merged_section_offset (output_bfd, &sym->section, sym->value);
+	  sym->flags |= BSF_MERGE_RESOLVED;
+	}
       break;
     case bfd_link_hash_common:
       sym->value = h->u.c.size;
@@ -2400,7 +2417,7 @@ _bfd_generic_link_write_global_symbol (struct generic_link_hash_entry *h,
       sym->flags = 0;
     }
 
-  set_symbol_from_hash (sym, &h->root);
+  set_symbol_from_hash (wginfo->output_bfd, sym, &h->root);
 
   sym->flags |= BSF_GLOBAL;
 
@@ -2688,7 +2705,7 @@ default_indirect_link_order (bfd *output_bfd,
       for (; sympp < symppend; sympp++)
 	{
 	  asymbol *sym;
-	  struct bfd_link_hash_entry *h;
+	  struct bfd_link_hash_entry *h = NULL;
 
 	  sym = *sympp;
 
@@ -2714,9 +2731,22 @@ default_indirect_link_order (bfd *output_bfd,
 					  bfd_asymbol_name (sym),
 					  false, false, true);
 	      if (h != NULL)
-		set_symbol_from_hash (sym, h);
+		set_symbol_from_hash (output_bfd, sym, h);
+	    }
+
+	  if (h == NULL
+	      && sym->section->sec_info_type == SEC_INFO_TYPE_MERGE
+	      && !(sym->flags & (BSF_SECTION_SYM | BSF_MERGE_RESOLVED)))
+	    {
+	      sym->value = _bfd_merged_section_offset (output_bfd,
+						       &sym->section,
+						       sym->value);
+	      sym->flags |= BSF_MERGE_RESOLVED;
 	    }
 	}
+
+      if (input_section->sec_info_type == SEC_INFO_TYPE_MERGE)
+	return _bfd_write_merged_section (output_bfd, input_section);
     }
 
   if ((output_section->flags & (SEC_GROUP | SEC_LINKER_CREATED)) == SEC_GROUP
@@ -3063,82 +3093,13 @@ _bfd_generic_section_already_linked (bfd *abfd ATTRIBUTE_UNUSED,
   return false;
 }
 
-/* Choose a neighbouring section to S in OBFD that will be output, or
-   the absolute section if ADDR is out of bounds of the neighbours.  */
-
-asection *
-_bfd_nearby_section (bfd *obfd, asection *s, bfd_vma addr)
-{
-  asection *next, *prev, *best;
-
-  /* Find preceding kept section.  */
-  for (prev = s->prev; prev != NULL; prev = prev->prev)
-    if ((prev->flags & SEC_EXCLUDE) == 0
-	&& !bfd_section_removed_from_list (obfd, prev))
-      break;
-
-  /* Find following kept section.  Start at prev->next because
-     other sections may have been added after S was removed.  */
-  if (s->prev != NULL)
-    next = s->prev->next;
-  else
-    next = s->owner->sections;
-  for (; next != NULL; next = next->next)
-    if ((next->flags & SEC_EXCLUDE) == 0
-	&& !bfd_section_removed_from_list (obfd, next))
-      break;
-
-  /* Choose better of two sections, based on flags.  The idea
-     is to choose a section that will be in the same segment
-     as S would have been if it was kept.  */
-  best = next;
-  if (prev == NULL)
-    {
-      if (next == NULL)
-	best = bfd_abs_section_ptr;
-    }
-  else if (next == NULL)
-    best = prev;
-  else if (((prev->flags ^ next->flags)
-	    & (SEC_ALLOC | SEC_THREAD_LOCAL | SEC_LOAD)) != 0)
-    {
-      if (((next->flags ^ s->flags)
-	   & (SEC_ALLOC | SEC_THREAD_LOCAL)) != 0
-	  /* We prefer to choose a loaded section.  Section S
-	     doesn't have SEC_LOAD set (it being excluded, that
-	     part of the flag processing didn't happen) so we
-	     can't compare that flag to those of NEXT and PREV.  */
-	  || ((prev->flags & SEC_LOAD) != 0
-	      && (next->flags & SEC_LOAD) == 0))
-	best = prev;
-    }
-  else if (((prev->flags ^ next->flags) & SEC_READONLY) != 0)
-    {
-      if (((next->flags ^ s->flags) & SEC_READONLY) != 0)
-	best = prev;
-    }
-  else if (((prev->flags ^ next->flags) & SEC_CODE) != 0)
-    {
-      if (((next->flags ^ s->flags) & SEC_CODE) != 0)
-	best = prev;
-    }
-  else
-    {
-      /* Flags we care about are the same.  Prefer the following
-	 section if that will result in a positive valued sym.  */
-      if (addr < next->vma)
-	best = prev;
-    }
-
-  return best;
-}
-
 /* Convert symbols in excluded output sections to use a kept section.  */
 
 static bool
 fix_syms (struct bfd_link_hash_entry *h, void *data)
 {
-  bfd *obfd = (bfd *) data;
+  struct bfd_link_info *info = data;
+  bfd *obfd = info->output_bfd;
 
   if (h->type == bfd_link_hash_defined
       || h->type == bfd_link_hash_defweak)
@@ -3152,7 +3113,8 @@ fix_syms (struct bfd_link_hash_entry *h, void *data)
 	  asection *op;
 
 	  h->u.def.value += s->output_offset + s->output_section->vma;
-	  op = _bfd_nearby_section (obfd, s->output_section, h->u.def.value);
+	  op = info->callbacks->nearby_section (obfd, s->output_section,
+						h->u.def.value);
 	  h->u.def.value -= op->vma;
 	  h->u.def.section = op;
 	}
@@ -3162,9 +3124,9 @@ fix_syms (struct bfd_link_hash_entry *h, void *data)
 }
 
 void
-_bfd_fix_excluded_sec_syms (bfd *obfd, struct bfd_link_info *info)
+bfd_fix_excluded_sec_syms (struct bfd_link_info *info)
 {
-  bfd_link_hash_traverse (info->hash, fix_syms, obfd);
+  bfd_link_hash_traverse (info->hash, fix_syms, info);
 }
 
 /*
@@ -3471,10 +3433,6 @@ _bfd_generic_link_check_relocs (bfd *abfd ATTRIBUTE_UNUSED,
 /*
 FUNCTION
 	bfd_merge_private_bfd_data
-
-SYNOPSIS
-	bool bfd_merge_private_bfd_data
-	  (bfd *ibfd, struct bfd_link_info *info);
 
 DESCRIPTION
 	Merge private BFD information from the BFD @var{ibfd} to the
