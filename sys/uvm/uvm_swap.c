@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.210 2026/01/04 00:41:14 wiz Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.211 2026/02/11 22:19:14 wiz Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.210 2026/01/04 00:41:14 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.211 2026/02/11 22:19:14 wiz Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1807,7 +1807,6 @@ uvm_swap_free(int startslot, int nslots)
 	sdp->swd_npginuse -= nslots;
 	KASSERTMSG(uvmexp.swpginuse >= nslots, "swpginuse %d nslots %d",
 		   uvmexp.swpginuse, nslots);
-	KASSERT(uvmexp.swpginuse >= nslots);
 	uvmexp.swpginuse -= nslots;
 	mutex_exit(&uvm_swap_data_lock);
 }
