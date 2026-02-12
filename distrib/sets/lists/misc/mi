@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.227 2025/12/24 20:05:59 thorpej Exp $
+# $NetBSD: mi,v 1.228 2026/02/12 04:10:44 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1356,8 +1356,8 @@
 ./usr/share/examples/asm/README			misc-asm-examples	share
 ./usr/share/examples/asm/hello			misc-asm-examples
 ./usr/share/examples/asm/hello/Makefile		misc-asm-examples	share
-./usr/share/examples/asm/hello/arm.s		misc-asm-examples	share
 ./usr/share/examples/asm/hello/aarch64.s	misc-asm-examples	share
+./usr/share/examples/asm/hello/arm.s		misc-asm-examples	share
 ./usr/share/examples/asm/hello/i386.s		misc-asm-examples	share
 ./usr/share/examples/asm/hello/powerpc.s	misc-asm-examples	share
 ./usr/share/examples/asm/hello/sh3.s		misc-asm-examples	share

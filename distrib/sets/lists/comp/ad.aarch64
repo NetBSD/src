@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.62 2026/01/08 14:52:03 simonb Exp $
+# $NetBSD: ad.aarch64,v 1.63 2026/02/12 04:26:10 kre Exp $
 #
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
@@ -118,6 +118,10 @@
 ./usr/include/arm/vfpreg.h			comp-c-include
 ./usr/include/arm/vmparam.h			comp-c-include
 ./usr/include/arm/wchar_limits.h		comp-c-include
+./usr/include/clang-13.0/arm64intr.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_cmse.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/clang-5.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-7.0/arm64intr.h		comp-obsolete		obsolete
@@ -126,10 +130,6 @@
 ./usr/include/clang-9.0/arm64intr.h		comp-obsolete		obsolete
 ./usr/include/clang-9.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-9.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-13.0/arm64intr.h		comp-c-include		llvm
-./usr/include/clang-13.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-13.0/arm_cmse.h		comp-c-include		llvm
-./usr/include/clang-13.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/evbarm				comp-c-include
 ./usr/include/evbarm/disklabel.h		comp-c-include
 ./usr/include/evbarm/intr.h			comp-c-include
@@ -141,25 +141,6 @@
 ./usr/include/g++/bits/aarch64/c++config.h	comp-c-include		gcc,libstdcxx,compat
 ./usr/include/g++/bits/arm			comp-c-include		libstdcxx,compat
 ./usr/include/g++/bits/arm/c++config.h		comp-c-include		gcc,libstdcxx,compat
-./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcc=48
-./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcc=48
-./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcc=48
-./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcc=48,eabi
-./usr/include/gcc-6/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-6/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_acle.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_bf16.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_fp16.h			comp-obsolete		obsolete
@@ -183,6 +164,25 @@
 ./usr/include/gcc-14/arm_neon_sve_bridge.h	comp-c-include		gcc=14
 ./usr/include/gcc-14/arm_sme.h			comp-c-include		gcc=14
 ./usr/include/gcc-14/arm_sve.h			comp-c-include		gcc=14
+./usr/include/gcc-4.8/arm_neon.h		comp-c-include		gcc=48
+./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcc=48
+./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcc=48
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcc=48,eabi
+./usr/include/gcc-6/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-6/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabi/libarm_p.a			comp-c-proflib		compat,profile,llvm
@@ -193,10 +193,10 @@
 ./usr/lib/eabihf/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabihf/libarm_p.a			comp-c-proflib		compat,profile,llvm
 ./usr/lib/eabihf/libarm_pic.a			comp-c-piclib		compat,pic,picinstall,llvm
-./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds
 ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcccmds
 ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcccmds
 ./usr/lib/libtsan_pic.a				comp-c-piclib		arch64,picinstall,cxx,gcccmds
+./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds
 ./usr/lib/oabi/libarm.a				comp-obsolete		obsolete
 ./usr/lib/oabi/libarm.so			base-obsolete		obsolete
 ./usr/lib/oabi/libarm_p.a			comp-obsolete		obsolete

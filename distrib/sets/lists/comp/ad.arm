@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.116 2026/01/08 14:52:03 simonb Exp $
+# $NetBSD: ad.arm,v 1.117 2026/02/12 04:26:10 kre Exp $
 #
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
@@ -298,6 +298,9 @@
 ./usr/include/cats/varargs.h			comp-obsolete		obsolete
 ./usr/include/cats/vmparam.h			comp-obsolete		obsolete
 ./usr/include/cats/wchar_limits.h		comp-obsolete		obsolete
+./usr/include/clang-13.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_cmse.h		comp-c-include		llvm
+./usr/include/clang-13.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/clang-3.6/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-3.6/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-3.8/arm_acle.h		comp-obsolete		obsolete
@@ -310,9 +313,6 @@
 ./usr/include/clang-7.0/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-9.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-9.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-13.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-13.0/arm_cmse.h		comp-c-include		llvm
-./usr/include/clang-13.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/epoc32				comp-c-include
 ./usr/include/epoc32/ansi.h			comp-obsolete		obsolete
 ./usr/include/epoc32/aout_machdep.h		comp-obsolete		obsolete
@@ -408,42 +408,6 @@
 ./usr/include/evbarm/varargs.h			comp-obsolete		obsolete
 ./usr/include/evbarm/vmparam.h			comp-obsolete		obsolete
 ./usr/include/evbarm/wchar_limits.h		comp-obsolete		obsolete
-./usr/include/gcc-4.5/arm_neon.h		comp-obsolete		obsolete
-./usr/include/gcc-4.5/mmintrin.h		comp-obsolete		obsolete
-./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/arm_neon.h		comp-obsolete		obsolete
-./usr/include/gcc-4.8/mmintrin.h		comp-obsolete		obsolete
-./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-4.8/unwind-arm-common.h	comp-obsolete		obsolete
-./usr/include/gcc-5/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-5/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-5/mmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-5/unwind-arm-common.h		comp-obsolete		obsolete
-./usr/include/gcc-6/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-6/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-6/mmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-6/unwind-arm-common.h		comp-obsolete		obsolete
-./usr/include/gcc-7/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_cmse.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-7/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-7/mmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-7/unwind-arm-common.h		comp-obsolete		obsolete
-./usr/include/gcc-8/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_cmse.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-8/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-8/mmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_acle.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_cmse.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_fp16.h			comp-obsolete		obsolete
-./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
-./usr/include/gcc-9/mmintrin.h			comp-obsolete		obsolete
-./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_acle.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_bf16.h			comp-obsolete		obsolete
 ./usr/include/gcc-10/arm_cde.h			comp-obsolete		obsolete
@@ -481,6 +445,42 @@
 ./usr/include/gcc-14/arm_mve_types.h		comp-c-include		gcc=14
 ./usr/include/gcc-14/arm_neon.h			comp-c-include		gcc=14
 ./usr/include/gcc-14/mmintrin.h			comp-c-include		gcc=14
+./usr/include/gcc-4.5/arm_neon.h		comp-obsolete		obsolete
+./usr/include/gcc-4.5/mmintrin.h		comp-obsolete		obsolete
+./usr/include/gcc-4.5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-4.8/arm_neon.h		comp-obsolete		obsolete
+./usr/include/gcc-4.8/mmintrin.h		comp-obsolete		obsolete
+./usr/include/gcc-4.8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-4.8/unwind-arm-common.h	comp-obsolete		obsolete
+./usr/include/gcc-5/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-5/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-5/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-5/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-5/unwind-arm-common.h		comp-obsolete		obsolete
+./usr/include/gcc-6/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-6/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-6/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-6/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-6/unwind-arm-common.h		comp-obsolete		obsolete
+./usr/include/gcc-7/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_cmse.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-7/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-7/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-7/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-7/unwind-arm-common.h		comp-obsolete		obsolete
+./usr/include/gcc-8/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_cmse.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-8/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-8/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-8/tgmath.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_acle.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_cmse.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_fp16.h			comp-obsolete		obsolete
+./usr/include/gcc-9/arm_neon.h			comp-obsolete		obsolete
+./usr/include/gcc-9/mmintrin.h			comp-obsolete		obsolete
+./usr/include/gcc-9/tgmath.h			comp-obsolete		obsolete
 ./usr/include/hpcarm				comp-c-include
 ./usr/include/hpcarm/ansi.h			comp-obsolete		obsolete
 ./usr/include/hpcarm/aout_machdep.h		comp-obsolete		obsolete

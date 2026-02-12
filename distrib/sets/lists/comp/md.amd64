@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.310 2026/01/08 14:52:03 simonb Exp $
+# $NetBSD: md.amd64,v 1.311 2026/02/12 04:26:11 kre Exp $
 #
 ./usr/include/amd64				comp-c-include
 ./usr/include/amd64/ansi.h			comp-c-include
@@ -1734,10 +1734,10 @@
 ./usr/lib/i386/libi386.so			comp-sys-shlib		compat,pic
 ./usr/lib/i386/libi386_p.a			comp-c-proflib		compat,profile
 ./usr/lib/i386/libi386_pic.a			comp-c-piclib		compat,pic,picinstall
-./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds,gcc
 ./usr/lib/libtsan.a				comp-c-lib		arch64,cxx,gcccmds,gcc
 ./usr/lib/libtsan_p.a				comp-c-proflib		arch64,profile,cxx,gcccmds,gcc
 ./usr/lib/libtsan_pic.a				comp-c-piclib		compat,picinstall,cxx,gcccmds,gcc
+./usr/lib/libtsan_preinit.o			comp-c-lib		arch64,cxx,gcccmds,gcc
 ./usr/lib/libx86_64.a				comp-c-lib
 ./usr/lib/libx86_64_p.a				comp-c-proflib		profile
 ./usr/lib/libx86_64_pic.a			comp-c-piclib		pic,picinstall

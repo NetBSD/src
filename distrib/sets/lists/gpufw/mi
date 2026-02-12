@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.7 2022/05/15 00:24:14 mrg Exp $
+# $NetBSD: mi,v 1.8 2026/02/12 04:22:59 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -20,7 +20,6 @@
 ./libdata/firmware/amdgpu/bonaire_k_smc.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/bonaire_mc.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/bonaire_me.bin		base-gpufw	amdgpufirmware
-./libdata/firmware/amdgpu/fiji_ce.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/bonaire_mec.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/bonaire_pfp.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/bonaire_rlc.bin		base-gpufw	amdgpufirmware
@@ -39,6 +38,7 @@
 ./libdata/firmware/amdgpu/carrizo_sdma1.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/carrizo_uvd.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/carrizo_vce.bin		base-gpufw	amdgpufirmware
+./libdata/firmware/amdgpu/fiji_ce.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/fiji_me.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/fiji_mec.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/fiji_mec2.bin			base-gpufw	amdgpufirmware
@@ -123,7 +123,6 @@
 ./libdata/firmware/amdgpu/navi12_smc.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/navi12_sos.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/navi12_ta.bin			base-gpufw	amdgpufirmware
-./libdata/firmware/amdgpu/si58_mc.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/navi12_vcn.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/navi14_asd.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/navi14_ce.bin			base-gpufw	amdgpufirmware
@@ -266,6 +265,7 @@
 ./libdata/firmware/amdgpu/renoir_rlc.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/renoir_sdma.bin		base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/renoir_vcn.bin		base-gpufw	amdgpufirmware
+./libdata/firmware/amdgpu/si58_mc.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/stoney_ce.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/stoney_me.bin			base-gpufw	amdgpufirmware
 ./libdata/firmware/amdgpu/stoney_mec.bin		base-gpufw	amdgpufirmware

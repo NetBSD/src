@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.130 2024/07/11 20:41:10 riastradh Exp $
+# $NetBSD: md.amd64,v 1.131 2026/02/12 04:26:12 kre Exp $
 #
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
@@ -62,9 +62,9 @@
 ./usr/X11R7/lib/modules/drivers/ast_drv.so		xserver-xf86-video-ast-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ast_drv.so.1		xserver-xf86-video-ast-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
-./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.22		xserver-xf86-video-ati-drivers	xorg
+./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/ch7017_drv.so.2		-unknown-	xorg,xorg_server_ver=110
@@ -414,8 +414,8 @@
 ./usr/X11R7/man/html4/x86/radeon.html			xserver-xf86-video-radeon-htmlman	html,xorg
 ./usr/X11R7/man/html4/xgi.html				xserver-obsolete	html,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/html4/xgi.html				xserver-xf86-video-xgi-htmlman	html,xorg,xorg_server_ver=110
-./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				xserver-obsolete	obsolete

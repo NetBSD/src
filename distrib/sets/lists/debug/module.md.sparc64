@@ -1,9 +1,11 @@
-# $NetBSD: module.md.sparc64,v 1.4 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: module.md.sparc64,v 1.5 2026/02/12 04:30:33 kre Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09/compat_netbsd32_09.kmod.debug modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_12		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_12/compat_netbsd32_12.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_13		modules-base-kernel	kmod,debug
@@ -26,8 +28,6 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod.debug modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod,debug

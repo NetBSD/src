@@ -1,4 +1,4 @@
-# $NetBSD: md.ofppc,v 1.42 2024/07/11 20:41:11 riastradh Exp $
+# $NetBSD: md.ofppc,v 1.43 2026/02/12 04:26:12 kre Exp $
 #
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
@@ -24,9 +24,9 @@
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so			xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/tdfx_dri.so.0		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
-./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.22		xserver-xf86-video-ati-drivers	xorg
+./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/chips_drv.so		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/chips_drv.so.1		xserver-xf86-video-chips-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
@@ -155,8 +155,8 @@
 ./usr/X11R7/man/html4/tdfx.html				xserver-xf86-video-tdfx-htmlman	html,xorg
 ./usr/X11R7/man/html4/ws.html				xserver-xf86-input-ws-htmlman	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				xserver-xf86-video-wsfb-htmlman	html,xorg
-./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man4/ati.4				xserver-xf86-video-ati-man	.man,xorg

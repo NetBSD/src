@@ -1,4 +1,4 @@
-# $NetBSD: md.sparc64,v 1.81 2025/06/10 13:24:45 macallan Exp $	x11
+# $NetBSD: md.sparc64,v 1.82 2026/02/12 04:26:12 kre Exp $	x11
 #
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
@@ -30,9 +30,9 @@
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/ag10e_drv.so.0		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so		xserver-xf86-video-ati-drivers	xorg
-./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.19		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/ati_drv.so.22		xserver-xf86-video-ati-drivers	xorg
+./usr/X11R7/lib/modules/drivers/ati_drv.so.6		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		xserver-xf86-video-glint-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		xserver-xf86-video-glint-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		xserver-xf86-input-keyboard-drivers	xorg
@@ -227,8 +227,8 @@
 ./usr/X11R7/man/html4/void.html				xserver-obsolete	obsolete
 ./usr/X11R7/man/html4/ws.html				xserver-xf86-input-ws-htmlman	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				xserver-xf86-video-wsfb-htmlman	html,xorg
-./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/pcitweak.1				xserver-obsolete	obsolete

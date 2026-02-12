@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47 2026/02/07 17:19:31 gutteridge Exp $
+# $NetBSD: mi,v 1.48 2026/02/12 04:13:02 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1395,11 +1395,10 @@
 ./usr/share/man/html4/luna68k/xp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/m25p.html			man-sys-htmlman		html
-./usr/share/man/html4/mac68k/ascaudio.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
+./usr/share/man/html4/mac68k/ascaudio.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/autoconf.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/cpi.html		man-sys-htmlman		html
-./usr/share/man/html4/mac68k/pbbat.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/intro.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/iwm.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/kmem.html		man-sys-htmlman		html
@@ -1407,6 +1406,7 @@
 ./usr/share/man/html4/mac68k/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/netdock.html	man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/obio.html		man-sys-htmlman		html
+./usr/share/man/html4/mac68k/pbbat.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/zsc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mach64drm.html		man-sys-htmlman		html
 ./usr/share/man/html4/machfb.html		man-sys-htmlman		html
@@ -1628,8 +1628,8 @@
 ./usr/share/man/html4/sbt.html			man-sys-htmlman		html
 ./usr/share/man/html4/sbus.html			man-sys-htmlman		html
 ./usr/share/man/html4/sc.html			man-sys-htmlman		html
-./usr/share/man/html4/scc.html			man-obsolete		obsolete
 ./usr/share/man/html4/sc16is7xx.html		man-sys-htmlman		html
+./usr/share/man/html4/scc.html			man-obsolete		obsolete
 ./usr/share/man/html4/schide.html		man-sys-htmlman		html
 ./usr/share/man/html4/scmd.html			man-sys-htmlman		html
 ./usr/share/man/html4/scmdi2c.html		man-sys-htmlman		html
@@ -1860,7 +1860,6 @@
 ./usr/share/man/html4/uipad.html		man-sys-htmlman		html
 ./usr/share/man/html4/uipaq.html		man-sys-htmlman		html
 ./usr/share/man/html4/uirda.html		man-sys-htmlman		html
-./usr/share/man/html4/umcpmio.html		man-sys-htmlman		html
 ./usr/share/man/html4/uk.html			man-sys-htmlman		html
 ./usr/share/man/html4/ukbd.html			man-sys-htmlman		html
 ./usr/share/man/html4/ukphy.html		man-sys-htmlman		html
@@ -1868,6 +1867,7 @@
 ./usr/share/man/html4/ulpt.html			man-sys-htmlman		html
 ./usr/share/man/html4/umass.html		man-sys-htmlman		html
 ./usr/share/man/html4/umb.html			man-sys-htmlman		html
+./usr/share/man/html4/umcpmio.html		man-sys-htmlman		html
 ./usr/share/man/html4/umcs.html			man-sys-htmlman		html
 ./usr/share/man/html4/umct.html			man-sys-htmlman		html
 ./usr/share/man/html4/umidi.html		man-sys-htmlman		html
@@ -2576,8 +2576,8 @@
 ./usr/share/man/html8/edquota.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/eeprom.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/efi.html			man-sysutil-htmlman	efi_rt,html
-./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/emcfanctl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/emips/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/envstat.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/error.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/eshconfig.html		man-obsolete		obsolete
@@ -2937,8 +2937,8 @@
 ./usr/share/man/html8/rc.d.html			man-rc-htmlman		html
 ./usr/share/man/html8/rc.html			man-rc-htmlman		html
 ./usr/share/man/html8/rc.local.html		man-rc-htmlman		html
-./usr/share/man/html8/rc.shutdown.html		man-rc-htmlman		html
 ./usr/share/man/html8/rc.shutdown.final.html	man-rc-htmlman		html
+./usr/share/man/html8/rc.shutdown.html		man-rc-htmlman		html
 ./usr/share/man/html8/rc.subr.html		man-rc-htmlman		html
 ./usr/share/man/html8/rcorder.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/rdate.html		man-netutil-htmlman	html

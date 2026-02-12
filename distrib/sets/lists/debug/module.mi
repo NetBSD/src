@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.33 2025/04/27 21:13:42 riastradh Exp $
+# $NetBSD: module.mi,v 1.34 2026/02/12 04:04:36 kre Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
@@ -61,6 +61,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_09/compat_09.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_10				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_10/compat_10.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_100				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_100/compat_100.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_12				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_12/compat_12.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_13				modules-base-kernel	kmod,debug
@@ -89,8 +91,6 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_80/compat_80.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_90				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_90/compat_90.kmod.debug		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_100				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_100/compat_100.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_crypto_50			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_crypto_50/compat_crypto_50.kmod.debug modules-base-kernel kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_ossaudio			modules-base-kernel	kmod,debug
@@ -181,10 +181,10 @@
 ./usr/libdata/debug/@MODULEDIR@/hythygtemp/hythygtemp.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2c_bitbang			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2c_bitbang/i2c_bitbang.kmod.debug	modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/i2cexec				modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/i2cexec/i2cexec.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2c_subr				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/i2c_subr/i2c_subr.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/i2cexec				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/i2cexec/i2cexec.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_agr				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_agr/if_agr.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/if_aue				modules-base-kernel	kmod,debug

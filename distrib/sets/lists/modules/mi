@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.164 2025/03/11 13:56:47 brad Exp $
+# $NetBSD: mi,v 1.165 2026/02/12 04:22:59 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9,10 +9,10 @@
 ./@MODULEDIR@/accf_dataready/accf_dataready.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/accf_httpready			modules-base-kernel	kmod
 ./@MODULEDIR@/accf_httpready/accf_httpready.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/adosfs				modules-base-kernel	kmod
-./@MODULEDIR@/adosfs/adosfs.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/adiantum				modules-base-kernel	kmod
 ./@MODULEDIR@/adiantum/adiantum.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/adosfs				modules-base-kernel	kmod
+./@MODULEDIR@/adosfs/adosfs.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/aht20temp				modules-base-kernel     kmod
 ./@MODULEDIR@/aht20temp/aht20temp.kmod		modules-base-kernel     kmod
 ./@MODULEDIR@/aio				modules-base-kernel	kmod
@@ -75,6 +75,8 @@
 ./@MODULEDIR@/compat_09/compat_09.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_10				modules-base-kernel	kmod
 ./@MODULEDIR@/compat_10/compat_10.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/compat_100			modules-base-kernel	kmod
+./@MODULEDIR@/compat_100/compat_100.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_12				modules-base-kernel	kmod
 ./@MODULEDIR@/compat_12/compat_12.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_13				modules-base-kernel	kmod
@@ -103,8 +105,6 @@
 ./@MODULEDIR@/compat_80/compat_80.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/compat_90				modules-base-kernel	kmod
 ./@MODULEDIR@/compat_90/compat_90.kmod		modules-base-kernel	kmod
-./@MODULEDIR@/compat_100			modules-base-kernel	kmod
-./@MODULEDIR@/compat_100/compat_100.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/compat_crypto_50			modules-base-kernel	kmod
 ./@MODULEDIR@/compat_crypto_50/compat_crypto_50.kmod modules-base-kernel kmod
 ./@MODULEDIR@/compat_ossaudio			modules-base-kernel	kmod
@@ -203,10 +203,10 @@
 ./@MODULEDIR@/hythygtemp/hythygtemp.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/i2c_bitbang			modules-base-kernel	kmod
 ./@MODULEDIR@/i2c_bitbang/i2c_bitbang.kmod	modules-base-kernel	kmod
-./@MODULEDIR@/i2cexec				modules-base-kernel	kmod
-./@MODULEDIR@/i2cexec/i2cexec.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/i2c_subr				modules-base-kernel	kmod
 ./@MODULEDIR@/i2c_subr/i2c_subr.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/i2cexec				modules-base-kernel	kmod
+./@MODULEDIR@/i2cexec/i2cexec.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_agr				modules-base-kernel	kmod
 ./@MODULEDIR@/if_agr/if_agr.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/if_aue				modules-base-kernel	kmod
@@ -405,16 +405,16 @@
 ./@MODULEDIR@/putter/putter.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/raid				modules-base-kernel	kmod
 ./@MODULEDIR@/raid/raid.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/scmd				modules-base-kernel	kmod
+./@MODULEDIR@/scmd/scmd.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/scmdi2c				modules-base-kernel	kmod
+./@MODULEDIR@/scmdi2c/scmdi2c.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/scsi_subr				modules-base-kernel	kmod
 ./@MODULEDIR@/scsi_subr/scsi_subr.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/scsiverbose			modules-base-kernel	kmod
 ./@MODULEDIR@/scsiverbose/scsiverbose.kmod	modules-base-kernel	kmod
 ./@MODULEDIR@/sdt				base-obsolete		obsolete
 ./@MODULEDIR@/sdt/sdt.kmod			base-obsolete		obsolete
-./@MODULEDIR@/scmd				modules-base-kernel	kmod
-./@MODULEDIR@/scmd/scmd.kmod			modules-base-kernel	kmod
-./@MODULEDIR@/scmdi2c				modules-base-kernel	kmod
-./@MODULEDIR@/scmdi2c/scmdi2c.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/sdtemp				modules-base-kernel	kmod
 ./@MODULEDIR@/sdtemp/sdtemp.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/secmodel_bsd44			modules-base-kernel	kmod

@@ -1,4 +1,4 @@
-# $NetBSD: md.hpcsh,v 1.35 2024/07/11 20:41:11 riastradh Exp $
+# $NetBSD: md.hpcsh,v 1.36 2026/02/12 04:26:12 kre Exp $
 #
 ./etc/X11/xorg.conf.640x240-jp				xserver-xorg-server-etc	xorg
 ./etc/X11/xorg.conf.640x240-us				xserver-xorg-server-etc	xorg
@@ -108,8 +108,8 @@
 ./usr/X11R7/man/html4/mousedrv.html			xserver-xf86-input-mouse-htmlman	html,xorg
 ./usr/X11R7/man/html4/ws.html				xserver-xf86-input-ws-htmlman	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				xserver-xf86-video-wsfb-htmlman	html,xorg
-./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.d.html			xserver-xorg-server-htmlman	html,xorg
+./usr/X11R7/man/html5/xorg.conf.html			xserver-xorg-server-htmlman	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man1/gtf.1				xserver-xorg-server-man	.man,xorg
 ./usr/X11R7/man/man4/exa.4				xserver-xf86-video-exa-man	.man,xorg

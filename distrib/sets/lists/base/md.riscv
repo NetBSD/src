@@ -1,4 +1,4 @@
-# $NetBSD: md.riscv,v 1.2 2024/07/11 20:41:06 riastradh Exp $
+# $NetBSD: md.riscv,v 1.3 2026/02/12 04:26:10 kre Exp $
 #
 ./libdata/firmware/if_bwfm/brcmfmac43143-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43241b0-sdio.bin		base-firmware-root	firmware
@@ -11,6 +11,8 @@
 ./libdata/firmware/if_bwfm/brcmfmac4335-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43362-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4339-sdio.bin		base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43430-sdio.AP6212.txt	base-firmware-root	firmware
+./libdata/firmware/if_bwfm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-r0.txt	base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43430a0-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac43455-sdio.bin		base-firmware-root	firmware
@@ -19,5 +21,3 @@
 ./libdata/firmware/if_bwfm/brcmfmac4354-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4356-sdio.bin		base-firmware-root	firmware
 ./libdata/firmware/if_bwfm/brcmfmac4373-sdio.bin		base-firmware-root	firmware
-./libdata/firmware/if_bwfm/brcmfmac43430-sdio.AP6212.txt	base-firmware-root	firmware
-./libdata/firmware/if_bwfm/brcmfmac43430-sdio.beagle,beaglev-starlight-jh7100-r0.txt	base-firmware-root	firmware
