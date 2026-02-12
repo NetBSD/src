@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.127 2024/01/21 12:58:10 kre Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.128 2026/02/12 16:26:54 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.127 2024/01/21 12:58:10 kre Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.128 2026/02/12 16:26:54 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -789,6 +789,7 @@ get_addrselectpolicy(struct policyhead *head)
 	free(buf);
 	return 1;
 #else
+	__USE(head);
 	return 0;
 #endif
 }
@@ -867,6 +868,8 @@ match_addrselectpolicy(struct sockaddr *addr, struct policyhead *head)
 
 	return bestent;
 #else
+	__USE(addr);
+	__USE(head);
 	return NULL;
 #endif
 
