@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.389 2026/02/11 20:17:02 christos Exp $
+# $NetBSD: shl.mi,v 1.390 2026/02/12 01:49:54 christos Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -124,6 +124,7 @@
 ./usr/libdata/debug/usr/lib/libgnuctf.so.1.0.debug		comp-sys-debug	debug,compatfile,binutils=239
 ./usr/libdata/debug/usr/lib/libgnuctf.so.2.0.debug		comp-sys-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libgnuctf.so.3.0.debug		comp-sys-debug	debug,compatfile,binutils=245
+./usr/libdata/debug/usr/lib/libgnuctf.so.3.0.debug		comp-sys-debug	debug,compatfile,binutils=246
 ./usr/libdata/debug/usr/lib/libgnumalloc.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libgomp.so.2.1.debug		comp-sys-debug	debug,compatfile,gcc=10
 ./usr/libdata/debug/usr/lib/libgomp.so.2.2.debug		comp-sys-debug	debug,compatfile,gcc=12
