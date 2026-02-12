@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2025/11/06 00:57:05 christos Exp $
+#	$NetBSD: Makefile,v 1.67 2026/02/12 15:17:30 christos Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -133,6 +133,10 @@ cp-demangle.d cp-demangle.o: cp-demangle.h
 .if ${MACHINE_ARCH} == "i386"
 COPTS.random.cc += -Wno-error=psabi
 COPTS.cow-string-inst.cc += -Wno-error=psabi
+.endif
+
+.if ${MACHINE} == "sun2"
+COPTS.std_stacktrace-cp-demangle.c += -Wno-stack-protector
 .endif
 
 # XXX
