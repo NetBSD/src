@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.212 2026/02/12 00:08:37 mrg Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.213 2026/02/12 13:34:45 kre Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.212 2026/02/12 00:08:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.213 2026/02/12 13:34:45 kre Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -782,7 +782,7 @@ uvm_swap_stats(char *ptr, int misc,
 	struct swapdev *sdp;
 	struct swapent sep;
 	int count = 0;
-	int error = 0;
+	int error;
 
 	KASSERT(len <= sizeof(sep));
 	if (len == 0)
@@ -800,7 +800,6 @@ uvm_swap_stats(char *ptr, int misc,
 
 	KASSERT(rw_lock_held(&swap_syscall_lock));
 
-	mutex_enter(&uvm_swap_data_lock);
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
 			int inuse;
@@ -816,17 +815,13 @@ uvm_swap_stats(char *ptr, int misc,
 			if (f)
 				(*f)(&sep, &sep);
 			if ((error = copyout(&sep, ptr, len)) != 0)
-				break;
+				return error;
 			ptr += len;
 			count++;
 		}
-		if (error)
-			break;
 	}
-	mutex_exit(&uvm_swap_data_lock);
-	if (error == 0)
-		*retval = count;
-	return error;
+	*retval = count;
+	return 0;
 }
 
 /*
