@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2025/09/19 05:18:23 mrg Exp $
+# $NetBSD: Makefile,v 1.11 2026/02/13 03:16:15 lukem Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -567,5 +567,5 @@ SRCS+=	amdgpufb.c
 
 .include <bsd.kmodule.mk>
 
-# XXX
+# XXX implement CWARNFLAGS.<fn> for this Makefile
 CFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}

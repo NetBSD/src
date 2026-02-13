@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.463 2026/02/11 22:15:40 lukem Exp $
+#	$NetBSD: bsd.README,v 1.464 2026/02/13 03:16:15 lukem Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -858,14 +858,14 @@ FILESMODE_<fn>	File mode of the specific file <fn>.
 
 FILESDIR_<fn>	The location to install the specific file <fn>.
 
-FILESNAME_<fn>	Optional name to install <fn> as.
+FILESNAME_<fn>	Optional name to install file <fn> as.
 
 FILESBUILD	If this variable is defined, then its value will be
 		used as the default for all FILESBUILD_<fn> variables.
 		Otherwise, the default will be "no".
 
-FILESBUILD_<fn> A value different from "no" will add the file to the list of
-		targets to be built by 'realall'.  Users of that variable
+FILESBUILD_<fn> A value different from "no" will add the file <fn> to the list
+		of targets to be built by 'realall'.  Users of that variable
 		should provide a target to build the file.
 
 
@@ -880,7 +880,7 @@ UUDECODE_FILES	List of files which are stored as <file>.uue in the source
 		not.
 
 UUDECODE_FILES_RENAME_<fn>
-		Rename the output from the decode to the provided name.
+		Rename the output from the decode to the provided name <fn>.
 
 		Note: These files are simply decoded, with no install or other
 		rule applying implicitly except being added to the 'clean'
@@ -1379,7 +1379,7 @@ COPTS		Extra options for the C compiler.  Should be appended to
 		options that select CPU-related options.
 
 COPTS.<fn>	Extra options for the C compiler when creating the
-		C objects for <fn>.
+		C objects for file <fn>.
 		For <fn>.[ly], "<fn>.c" must be used.
 
 CPUFLAGS	Additional options passed to the compiler/assembler to
@@ -1392,12 +1392,12 @@ CPUFLAGS	Additional options passed to the compiler/assembler to
 
 		Default: Unset.
 
-CPUFLAGS.<fn>	Additional options to the compiler/assembler for <fn>.
+CPUFLAGS.<fn>	Additional options to the compiler/assembler for file <fn>.
 		For <fn>.[ly], "<fn>.c" must be used.
 
 CPPFLAGS	Additional options to the C pre-processor.
 
-CPPFLAGS.<fn>	Additional options to the C pre-processor for <fn>.
+CPPFLAGS.<fn>	Additional options to the C pre-processor for file <fn>.
 		For <fn>.[ly], "<fn>.c" must be used.
 
 GDBINIT		List of GDB initialization files to add to "source"
@@ -1417,7 +1417,7 @@ LINKS		See <bsd.links.mk>
 OBJCOPTS	Additional options to the compiler when creating ObjC objects.
 
 OBJCOPTS.<fn>	Additional options to the compiler when creating the
-		ObjC objects for <fn>.
+		ObjC objects for file <fn>.
 		For <fn>.[ly], "<fn>.c" must be used.
 
 SYMLINKS	See <bsd.links.mk>
@@ -1828,7 +1828,8 @@ CPPSCRIPTS		List of files/scripts to run through cpp(1)
 
 CPPSCRIPTFLAGS		Additional options to cpp(1) when building CPPSCRIPTS.
 
-CPPSCRIPTFLAGS_<fn>	Additional options to cpp(1) when building CPPSCRIPT <fn>.
+CPPSCRIPTFLAGS_<fn>	Additional options to cpp(1) when building CPPSCRIPT
+			file <fn>.
 
 
 =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
@@ -1880,6 +1881,11 @@ CPP		C Pre-Processor.  [cpp]
 CPPFLAGS	Options to ${CPP}.  []
 
 CPUFLAGS	Optimization options for ${CC}.  []
+
+CWARNFLAGS	Warnings to enable or disable in CFLAGS. []
+
+CWARNFLAGS.<comp>
+		Warnings to enable or disable in CFLAGS for compiler <comp>. []
 
 CXX		C++ compiler.  [c++]
 
