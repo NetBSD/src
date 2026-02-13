@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.213 2026/02/12 13:34:45 kre Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.214 2026/02/13 03:44:49 kre Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.213 2026/02/12 13:34:45 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.214 2026/02/13 03:44:49 kre Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -779,9 +779,11 @@ uvm_swap_stats(char *ptr, int misc,
     register_t *retval)
 {
 	struct swappri *spp;
-	struct swapdev *sdp;
+	struct swapdev *sdp, **sdps, **sp;
 	struct swapent sep;
-	int count = 0;
+	size_t sdpsize = 0;
+	struct swapdev *stackbuf[8];
+	int count, slots;
 	int error;
 
 	KASSERT(len <= sizeof(sep));
@@ -794,34 +796,153 @@ uvm_swap_stats(char *ptr, int misc,
 	if (misc == 0 || uvmexp.nswapdev == 0)
 		return 0;
 
-	/* Make sure userland cannot exhaust kernel memory */
-	if ((size_t)misc > (size_t)uvmexp.nswapdev)
-		misc = uvmexp.nswapdev;
+	KASSERT(rw_lock_held(&swap_syscall_lock));
+
+	/*
+	 * Allocate space for pointers to all swapdevs
+	 *
+	 * This needs to be done here (not earlier) (and so needs
+	 * the unlock/lock dance) because of the way the various
+	 * compat functions work.
+	 */
+	sdps = NULL;
+	slots = uvmexp.nswapdev;
+
+	if (slots > misc)	/* we never need more than requested */
+		slots = misc;
+
+	/*
+	 * Nb: do not limit misc to <= uvmexp.nswapdev yet,
+	 * as the latter might get bigger (or smaller)
+	 */
+
+	if ((SIZE_T_MAX / sizeof sdp) <= misc)	/* unlikely */
+		return E2BIG;
+
+	/*
+	 * One slot for each currently existing swap device,
+	 * but limited no more than the request wants (misc).
+	 */
+	sdpsize = (size_t)slots * sizeof sdp;
+
+	/*
+	 * Borrow from kmem_tmpbuf_alloc() but don't use it
+	 * so we don't need to do the unlock dance unnecessarily
+	 */
+	if (sdpsize <= sizeof stackbuf) {
+		sdps = stackbuf;
+	} else {
+		rw_exit(&swap_syscall_lock);
+
+		sdps = kmem_alloc(sdpsize, KM_SLEEP);
+
+		rw_enter(&swap_syscall_lock, RW_READER);
+
+		/*
+		 * At this point, 3 possibilities.
+		 *
+		 * uvmexp.nswapdev has increased, as a
+		 * new swap device got added.  That's OK,
+		 * just ignore the excess device, and
+		 * return the first N (the number that
+		 * were there when we started.
+		 *
+		 * uvmexp.nswapdev has decreased, a swap
+		 * device was deleted.   In this case we
+		 * will return less devices than requested
+		 * but that's OK.  We will have more memory
+		 * than is needed to save them all, but
+		 * just a little more, and it gets freed
+		 * just below.
+		 *
+		 * uvmexp.nswapdev hasn't changed.   This
+		 * will be the usual case (no swapctl operations
+		 * occurred while the lock was releases - or
+		 * possibly a device was deleted and another
+		 * added - that's irrelevant, at this point
+		 * all that matters is the number of devices,
+		 * we haven't looked at the lists yet.
+		 *
+		 * So we never need to repeat this allocation,
+		 * Once is quite enough.
+		 *
+		 * And we never need to look at uvmexp.nswapdev
+		 * again!
+		 */
+	}
 
 	KASSERT(rw_lock_held(&swap_syscall_lock));
 
+	/*
+	 * Collect all of the swap descriptors, while
+	 * holding the data lock, so the lists cannot
+	 * change.   Then they can be used safely.
+	 *
+	 * They cannot be deleted, because swap_syscall_lock
+	 * is held, but the lists holding them can be adjusted
+	 * except in this small loop where we lock out that
+	 * kind of activity.   No processing happens here,
+	 * this is fast, with no func calls, or anything which
+	 * might perform operations which might need the lock.
+	 */
+	mutex_enter(&uvm_swap_data_lock);
+	sp = sdps;
+	count = 0;
 	LIST_FOREACH(spp, &swap_priority, spi_swappri) {
 		TAILQ_FOREACH(sdp, &spp->spi_swapdev, swd_next) {
-			int inuse;
-
-			if (misc-- <= 0)
-				break;
-
-			inuse = btodb((uint64_t)sdp->swd_npginuse <<
-			    PAGE_SHIFT);
-
-			memset(&sep, 0, sizeof(sep));
-			swapent_cvt(&sep, sdp, inuse);
-			if (f)
-				(*f)(&sep, &sep);
-			if ((error = copyout(&sep, ptr, len)) != 0)
-				return error;
-			ptr += len;
-			count++;
+			if (++count <= slots)
+				*sp++ = sdp;
+			/*
+			 * don't bother with exiting the loops
+			 * early, they tend to be very short,
+			 * and not exhausting them is a very rare
+			 * occurrence.  So just loop and do nothing
+			 * in the odd case we could break out early.
+			 */
 		}
 	}
+	mutex_exit(&uvm_swap_data_lock);
+
+	/*
+	 * Now we have a stable list of devices which cannot change,
+	 * even if the swapping lists are reordered.
+	 */
+
+	if (misc > slots)		/* the number of storage slots */
+		misc = slots;
+	if (misc > count)		/* the number of devices now */
+		misc = count;
+
+	error = 0;
+	count = 0;
+	sp = sdps;
+	while (misc-- > 0) {
+		int inuse;
+
+		sdp = *sp++;
+
+		inuse = btodb((uint64_t)sdp->swd_npginuse <<
+		    PAGE_SHIFT);
+
+		memset(&sep, 0, sizeof(sep));
+		swapent_cvt(&sep, sdp, inuse);
+		if (f)
+			(*f)(&sep, &sep);
+		if ((error = copyout(&sep, ptr, len)) != 0)
+			goto out;
+		ptr += len;
+		count++;
+	}
 	*retval = count;
-	return 0;
+   out:;
+	if (sdps != stackbuf) {
+		/*
+		 * XXX should unlock & lock again here
+		 * as well probably, but for now, no...
+		 */
+		kmem_free(sdps, sdpsize);
+	}
+	return error;
 }
 
 /*
