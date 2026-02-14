@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.23 2024/06/29 07:52:16 rin Exp $
+# $NetBSD: Makefile.efiboot,v 1.24 2026/02/14 23:28:56 christos Exp $
 
 S=		${.CURDIR}/../../../../..
 
@@ -133,7 +133,7 @@ CLEANFILES+=	${PROG}.so ${PROG}.tmp
 ${PROG}: ${PROG}.so
 	${OBJCOPY} -j .text -j .sdata -j .data -j .dynamic -j .dynsym	\
 	    -j .rel -j .rel.* -j .rela -j .rela.* -j .reloc		\
-	    --subsystem efi-app	--target=${OBJFMT} ${PROG}.so ${.TARGET}
+	    --subsystem efi-app	--output-target=${OBJFMT} ${PROG}.so ${.TARGET}
 
 .include <bsd.prog.mk>
 
