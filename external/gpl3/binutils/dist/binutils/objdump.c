@@ -1,5 +1,5 @@
 /* objdump.c -- dump information about an object file.
-   Copyright (C) 1990-2025 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -659,8 +659,8 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 
 	case 4:
 	  out += sprintf (out, "\\u%02x%02x%02x",
-		  ((in[0] & 0x07) << 6) | ((in[1] & 0x3c) >> 2),
-		  ((in[1] & 0x03) << 6) | ((in[2] & 0x3c) >> 2),
+		  ((in[0] & 0x07) << 2) | ((in[1] & 0x30) >> 4),
+		  ((in[1] & 0x0f) << 4) | ((in[2] & 0x3c) >> 2),
 		  ((in[2] & 0x03) << 6) | ((in[3] & 0x3f)));
 	  break;
 	default:
@@ -1106,6 +1106,9 @@ remove_useless_symbols (asymbol **symbols, long count)
       if (bfd_is_und_section (sym->section)
 	  || bfd_is_com_section (sym->section))
 	continue;
+      if (strstr (sym->name, "gnu_compiled")
+	  || strstr (sym->name, "gcc2_compiled"))
+	continue;
 
       *out_ptr++ = sym;
     }
@@ -1170,18 +1173,6 @@ compare_symbols (const void *ap, const void *bp)
   bn = bfd_asymbol_name (b);
   anl = strlen (an);
   bnl = strlen (bn);
-
-  /* The symbols gnu_compiled and gcc2_compiled convey no real
-     information, so put them after other symbols with the same value.  */
-  af = (strstr (an, "gnu_compiled") != NULL
-	|| strstr (an, "gcc2_compiled") != NULL);
-  bf = (strstr (bn, "gnu_compiled") != NULL
-	|| strstr (bn, "gcc2_compiled") != NULL);
-
-  if (af && ! bf)
-    return 1;
-  if (! af && bf)
-    return -1;
 
   /* We use a heuristic for the file name, to try to sort it after
      more useful symbols.  It may not work on non Unix systems, but it
@@ -3755,7 +3746,7 @@ disassemble_bytes (struct disassemble_info *inf,
 static void
 disassemble_section (bfd *abfd, asection *section, void *inf)
 {
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   bfd_vma sign_adjust = 0;
   struct disassemble_info *pinfo = (struct disassemble_info *) inf;
   struct objdump_disasm_info *paux;
@@ -4092,11 +4083,7 @@ disassemble_section (bfd *abfd, asection *section, void *inf)
 	  || sym == NULL
 	  || sym->section != section
 	  || bfd_asymbol_value (sym) > addr
-	  || ((sym->flags & BSF_OBJECT) == 0
-	      && (strstr (bfd_asymbol_name (sym), "gnu_compiled")
-		  == NULL)
-	      && (strstr (bfd_asymbol_name (sym), "gcc2_compiled")
-		  == NULL))
+	  || (sym->flags & BSF_OBJECT) == 0
 	  || (sym->flags & BSF_FUNCTION) != 0)
 	insns = true;
       else
@@ -4498,7 +4485,8 @@ dump_dwarf_section (bfd *abfd, asection *section,
   else
     match = name;
 
-  if (elf_section_type (section) == SHT_GNU_SFRAME)
+  if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
+      && elf_section_type (section) == SHT_GNU_SFRAME)
     match = ".sframe";
 
   for (i = 0; i < max; i++)
@@ -5006,9 +4994,10 @@ dump_sframe_section (bfd *abfd, const char *sect_name, bool is_mainfile)
 	 SHT_GNU_SFRAME.  For SFrame sections from Binutils 2.44 or earlier,
 	 check explcitly for SFrame sections of type SHT_PROGBITS and name
 	 ".sframe" to allow them.  */
-      else if (elf_section_type (sec) != SHT_GNU_SFRAME
-	       && !(elf_section_type (sec) == SHT_PROGBITS
-		    && strcmp (sect_name, ".sframe") == 0))
+      else if (bfd_get_flavour (abfd) != bfd_target_elf_flavour
+	       || (elf_section_type (sec) != SHT_GNU_SFRAME
+		   && !(elf_section_type (sec) == SHT_PROGBITS
+			&& strcmp (sect_name, ".sframe") == 0)))
 	{
 	  printf (_("Section %s does not contain SFrame data\n\n"),
 		  sanitize_string (sect_name));
@@ -5700,7 +5689,7 @@ might_need_separate_debug_info (bool is_mainfile)
 static void
 dump_bfd (bfd *abfd, bool is_mainfile)
 {
-  const struct elf_backend_data * bed;
+  elf_backend_data *bed;
 
   if (bfd_big_endian (abfd))
     byte_get = byte_get_big_endian;

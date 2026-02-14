@@ -1,5 +1,5 @@
 /* addr2line.c -- convert addresses to line number and function name
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Contributed by Ulrich Lauther <Ulrich.Lauther@mchp.siemens.de>
 
    This file is part of GNU Binutils.
@@ -314,7 +314,7 @@ translate_addresses (bfd *abfd, asection *section)
         pc = bfd_scan_vma (adr, NULL, 16);
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
 	{
-	  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+	  elf_backend_data *bed = get_elf_backend_data (abfd);
 	  bfd_vma sign = (bfd_vma) 1 << (bed->s->arch_size - 1);
 
 	  pc &= (sign << 1) - 1;

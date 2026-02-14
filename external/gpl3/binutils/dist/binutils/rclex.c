@@ -1,6 +1,6 @@
 /* rclex.c -- lexer for Windows rc files parser  */
 
-/* Copyright (C) 1997-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1997-2026 Free Software Foundation, Inc.
 
    Written by Kai Tietz, Onevision.
 

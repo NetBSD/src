@@ -1,5 +1,5 @@
 /* nm.c -- Describe symbol table of a rel file.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -36,9 +36,8 @@
 #include "libcoff.h"
 #include "bucomm.h"
 #include "demanguse.h"
-#include "plugin-api.h"
-#include "plugin.h"
 #include "safe-ctype.h"
+#include "plugin.h"
 
 #ifndef streq
 #define streq(a,b) (strcmp ((a),(b)) == 0)
@@ -71,6 +70,7 @@ struct extended_symbol_info
   bfd_vma ssize;
   elf_symbol_type *elfinfo;
   coff_symbol_type *coffinfo;
+  bool is_stab;
   /* FIXME: We should add more fields for Type, Line, Section.  */
 };
 #define SYM_VALUE(sym)       (sym->sinfo->value)
@@ -221,11 +221,6 @@ static char other_format[] = "%02x";
 static char desc_format[] = "%04x";
 
 static char *target = NULL;
-#if BFD_SUPPORTS_PLUGINS
-static const char *plugin_target = "plugin";
-#else
-static const char *plugin_target = NULL;
-#endif
 
 typedef enum unicode_display_type
 {
@@ -343,10 +338,9 @@ usage (FILE *stream, int status)
   -P, --portability      Same as --format=posix\n"));
   fprintf (stream, _("\
   -r, --reverse-sort     Reverse the sense of the sort\n"));
-#if BFD_SUPPORTS_PLUGINS
-  fprintf (stream, _("\
+  if (bfd_plugin_enabled ())
+    fprintf (stream, _("\
       --plugin NAME      Load the specified plugin\n"));
-#endif
   fprintf (stream, _("\
   -S, --print-size       Print size of defined symbols\n"));
   fprintf (stream, _("\
@@ -572,8 +566,8 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 
 	case 4:
 	  out += sprintf (out, "\\u%02x%02x%02x",
-		  ((in[0] & 0x07) << 6) | ((in[1] & 0x3c) >> 2),
-		  ((in[1] & 0x03) << 6) | ((in[2] & 0x3c) >> 2),
+		  ((in[0] & 0x07) << 2) | ((in[1] & 0x30) >> 4),
+		  ((in[1] & 0x0f) << 4) | ((in[2] & 0x3c) >> 2),
 		  ((in[2] & 0x03) << 6) | ((in[3] & 0x3f)));
 	  break;
 	default:
@@ -802,6 +796,7 @@ filter_symbols (bfd *abfd, bool is_dynamic, void *minisyms,
 	continue;
 
       if (bfd_lto_slim_symbol_p (abfd, sym->name)
+	  && !bfd_plugin_target_p (abfd->xvec)
 	  && report_plugin_err)
 	{
 	  report_plugin_err = false;
@@ -1214,8 +1209,11 @@ print_symbol (bfd *        abfd,
 
   bfd_get_symbol_info (abfd, sym, &syminfo);
 
+  info.is_stab = false;
+  if (syminfo.type == '-')
+    info.is_stab = true;
   /* PR 22967 - Distinguish between local and global ifunc symbols.  */
-  if (syminfo.type == 'i'
+  else if (syminfo.type == 'i'
       && sym->flags & BSF_GNU_INDIRECT_FUNCTION)
     {
       if (ifunc_type_chars == NULL || ifunc_type_chars[0] == 0)
@@ -1484,7 +1482,8 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
 
   /* lto_type is set to lto_non_ir_object when a bfd is loaded with a
      compiler LTO plugin.  */
-  if (bfd_get_lto_type (abfd) == lto_slim_ir_object)
+  if (bfd_get_lto_type (abfd) == lto_slim_ir_object
+      && !bfd_plugin_target_p (abfd->xvec))
     {
       report_plugin_err = false;
       non_fatal (_("%s: plugin needed to handle lto object"),
@@ -1642,7 +1641,7 @@ display_file (char *filename)
   if (get_file_size (filename) < 1)
     return false;
 
-  file = bfd_openr (filename, target ? target : plugin_target);
+  file = bfd_openr (filename, target);
   if (file == NULL)
     {
       bfd_nonfatal (filename);
@@ -1878,7 +1877,7 @@ print_symbol_info_bsd (struct extended_symbol_info *info, bfd *abfd)
 
   printf (" %c", SYM_TYPE (info));
 
-  if (SYM_TYPE (info) == '-')
+  if (info->is_stab)
     {
       /* A stab.  */
       printf (" ");
@@ -1907,7 +1906,7 @@ print_symbol_info_sysv (struct extended_symbol_info *info, bfd *abfd)
 
   printf ("|   %c  |", SYM_TYPE (info));
 
-  if (SYM_TYPE (info) == '-')
+  if (info->is_stab)
     {
       /* A stab.  */
       printf ("%18s|  ", SYM_STAB_NAME (info));		/* (C) Type.  */
@@ -1985,9 +1984,7 @@ main (int argc, char **argv)
   program_name = *argv;
   xmalloc_set_program_name (program_name);
   bfd_set_error_program_name (program_name);
-#if BFD_SUPPORTS_PLUGINS
   bfd_plugin_set_program_name (program_name);
-#endif
 
   expandargv (&argc, &argv);
 
@@ -2134,11 +2131,9 @@ main (int argc, char **argv)
 	  break;
 
 	case OPTION_PLUGIN:	/* --plugin */
-#if BFD_SUPPORTS_PLUGINS
+	  if (!bfd_plugin_enabled ())
+	    fatal (_("sorry - this program has been built without plugin support\n"));
 	  bfd_plugin_set_plugin (optarg);
-#else
-	  fatal (_("sorry - this program has been built without plugin support\n"));
-#endif
 	  break;
 
 	case OPTION_IFUNC_CHARS:

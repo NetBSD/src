@@ -1,5 +1,32 @@
 -*- text -*-
 
+Changes in 2.46:
+
+* SFrame stack trace format now represents an undefined return address as
+  an SFrame FRE without any offsets.  libsframe provides a new API to test
+  for RA undefined, which is used when dumping SFrame information (e.g. using
+  objdump and readelf) to show such FREs as "RA undefined".
+
+* Add --got-contents option to readelf to display the contents of
+  Global Offset Table (GOT) sections.
+
+* Internal changes to plugin support, and stricter target checking may result
+  in some errors being exposed in user options passed to the various binutils.
+  For example objcopy --target=TARGET now will only work if the input file is
+  for TARGET whereas prior versions of objcopy accepted other target input
+  files and produced a TARGET output.  If you do in fact want the old
+  behaviour the correct usage is objcopy --output-target=TARGET.
+
+* NaCl target support is removed.
+
+* New versioned release of libsframe: libsframe.so.3.  This release introduces
+  versioned symbols with version node name LIBSFRAME_3.0.
+
+* objdump and readelf now support displaying SFrame Version 3 information.
+  The existing --sframe option can be used to display sections in the the new
+  V3 format.  Display of SFrame Version 2 information continues to be supported
+  (NB: Emission and linking of SFrame Version 2 is discontinued).
+
 Changes in 2.45:
 
 * New versioned release of libsframe: libsframe.so.2.  This release introduces
@@ -1033,7 +1060,7 @@ Changes in binutils 2.1:
   and/or local symbols only.  They now also support long options.
 
 
-Copyright (C) 2012-2025 Free Software Foundation, Inc.
+Copyright (C) 2012-2026 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

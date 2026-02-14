@@ -1,5 +1,5 @@
 /* debug.c -- Handle generic debugging information.
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -2554,8 +2554,9 @@ debug_write_type (struct debug_handle *info,
     case DEBUG_KIND_UNION_CLASS:
       return debug_write_class_type (info, fns, fhandle, type, tag);
     case DEBUG_KIND_ENUM:
-      return (*fns->enum_type) (fhandle, tag, type->u.kenum->names,
-				type->u.kenum->values);
+      return (*fns->enum_type) (fhandle, tag,
+				type->u.kenum ? type->u.kenum->names : NULL,
+				type->u.kenum ? type->u.kenum->values : NULL);
     case DEBUG_KIND_POINTER:
       if (! debug_write_type (info, fns, fhandle, type->u.kpointer,
 			      (struct debug_name *) NULL))
@@ -3094,7 +3095,11 @@ debug_type_samep (struct debug_handle *info, struct debug_type_s *t1,
       break;
 
     case DEBUG_KIND_ENUM:
-      if (t1->u.kenum->names == NULL)
+      if (t1->u.kenum == NULL)
+	ret = t2->u.kenum == NULL;
+      else if (t2->u.kenum == NULL)
+	ret = false;
+      else if (t1->u.kenum->names == NULL)
 	ret = t2->u.kenum->names == NULL;
       else if (t2->u.kenum->names == NULL)
 	ret = false;

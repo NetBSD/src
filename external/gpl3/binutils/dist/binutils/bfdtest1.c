@@ -1,5 +1,5 @@
 /* A program to test BFD.
-   Copyright (C) 2012-2025 Free Software Foundation, Inc.
+   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 

@@ -10,7 +10,7 @@
 
 @copying
 @c man begin COPYRIGHT
-Copyright @copyright{} 1991-2025 Free Software Foundation, Inc.
+Copyright @copyright{} 1991-2026 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3
@@ -1315,6 +1315,7 @@ objcopy [@option{-F} @var{bfdname}|@option{--target=}@var{bfdname}]
         [@option{--keep-global-symbols=}@var{filename}]
         [@option{--localize-symbols=}@var{filename}]
         [@option{--weaken-symbols=}@var{filename}]
+        [@option{--binary-symbol-prefix}@var{string}]
         [@option{--add-symbol} @var{name}=[@var{section}:]@var{value}[,@var{flags}]]
         [@option{--alt-machine-code=}@var{index}]
         [@option{--prefix-symbols=}@var{string}]
@@ -1553,6 +1554,20 @@ given more than once.  Note - unique symbols are not converted.
 @item -W @var{symbolname}
 @itemx --weaken-symbol=@var{symbolname}
 Make symbol @var{symbolname} weak. This option may be given more than once.
+
+@item --binary-symbol-prefix=@var{string}
+When used with @option{--input-target=binary}, sets @var{string} as the
+base name for the symbols generated for the input file.  These symbols are:
+
+@example
+@var{string}_start
+@var{string}_end
+@var{string}_size
+@end example
+
+By default, the binary input handler derives the prefix symbol name from a
+mangled version of the input file name and _binary prefix.  This option
+allows specifying it explicitly.
 
 @item --globalize-symbol=@var{symbolname}
 Give symbol @var{symbolname} global scoping so that it is visible
@@ -2023,20 +2038,22 @@ like this:
  objcopy --add-gnu-debuglink=foo.debug
 @end smallexample
 
-At debug time the debugger will attempt to look for the separate debug
+At debug time, the debugger will attempt to look for the separate debug
 info file in a set of known locations.  The exact set of these
 locations varies depending upon the distribution being used, but it
 typically includes:
 
-@table @code
+@itemize @bullet
+@item
+The same directory as the executable.
 
-@item * The same directory as the executable.
+@item
+A sub-directory of the directory containing the executable called
+.debug.
 
-@item * A sub-directory of the directory containing the executable
-called .debug
-
-@item * A global debug directory such as /usr/lib/debug.
-@end table
+@item
+A global debug directory such as /usr/lib/debug.
+@end itemize
 
 As long as the debug info file has been installed into one of these
 locations before the debugger is run everything should work
@@ -2071,14 +2088,20 @@ needed if debugging abilities are required.  The suggested procedure
 to create these files is as follows:
 
 @enumerate
-@item Link the executable as normal.  Assuming that it is called
-@code{foo} then...
-@item Run @code{objcopy --only-keep-debug foo foo.dbg} to
-create a file containing the debugging info.
-@item Run @code{objcopy --strip-debug foo} to create a
-stripped executable.
-@item Run @code{objcopy --add-gnu-debuglink=foo.dbg foo}
-to add a link to the debugging info into the stripped executable.
+@item
+Link the executable as normal.  Assuming that it is called @code{foo}
+then...
+
+@item
+Run @code{objcopy --only-keep-debug foo foo.dbg} to create a file
+containing the debugging info.
+
+@item
+Run @code{objcopy --strip-debug foo} to create a stripped executable.
+
+@item
+Run @code{objcopy --add-gnu-debuglink=foo.dbg foo} to add a link to the
+debugging info into the stripped executable.
 @end enumerate
 
 Note---the choice of @code{.dbg} as an extension for the debug info
@@ -2086,10 +2109,17 @@ file is arbitrary.  Also the @code{--only-keep-debug} step is
 optional.  You could instead do this:
 
 @enumerate
-@item Link the executable as normal.
-@item Copy @code{foo} to  @code{foo.full}
-@item Run @code{objcopy --strip-debug foo}
-@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@item
+Link the executable as normal.
+
+@item
+Copy @code{foo} to @code{foo.full}.
+
+@item
+Run @code{objcopy --strip-debug foo}.
+
+@item
+Run @code{objcopy --add-gnu-debuglink=foo.full foo}.
 @end enumerate
 
 i.e., the file pointed to by the @option{--add-gnu-debuglink} can be the
@@ -2171,12 +2201,17 @@ the subsystem version also.  Numeric values are also accepted for
 
 @item --extract-symbol
 Keep the file's section flags and symbols but remove all section data.
-Specifically, the option:
+Specifically, this option:
 
-@itemize
-@item removes the contents of all sections;
-@item sets the size of every section to zero; and
-@item sets the file's start address to zero.
+@itemize @bullet
+@item
+Removes the contents of all sections.
+
+@item
+Sets the size of every section to zero.
+
+@item
+Sets the file's start address to zero.
 @end itemize
 
 This option is used to build a @file{.sym} file for a VxWorks kernel.
@@ -3794,14 +3829,20 @@ needed if debugging abilities are required.  The suggested procedure
 to create these files is as follows:
 
 @enumerate
-@item Link the executable as normal.  Assuming that it is called
-@code{foo} then...
-@item Run @code{objcopy --only-keep-debug foo foo.dbg} to
-create a file containing the debugging info.
-@item Run @code{objcopy --strip-debug foo} to create a
-stripped executable.
-@item Run @code{objcopy --add-gnu-debuglink=foo.dbg foo}
-to add a link to the debugging info into the stripped executable.
+@item
+Link the executable as normal.  Assuming that it is called @code{foo}
+then...
+
+@item
+Run @code{objcopy --only-keep-debug foo foo.dbg} to create a file
+containing the debugging info.
+
+@item
+Run @code{strip --strip-debug foo} to create a stripped executable.
+
+@item
+Run @code{objcopy --add-gnu-debuglink=foo.dbg foo} to add a link to the
+debugging info into the stripped executable.
 @end enumerate
 
 Note---the choice of @code{.dbg} as an extension for the debug info
@@ -3809,10 +3850,17 @@ file is arbitrary.  Also the @code{--only-keep-debug} step is
 optional.  You could instead do this:
 
 @enumerate
-@item Link the executable as normal.
-@item Copy @code{foo} to @code{foo.full}
-@item Run @code{strip --strip-debug foo}
-@item Run @code{objcopy --add-gnu-debuglink=foo.full foo}
+@item
+Link the executable as normal.
+
+@item
+Copy @code{foo} to @code{foo.full}.
+
+@item
+Run @code{strip --strip-debug foo}.
+
+@item
+Run @code{objcopy --add-gnu-debuglink=foo.full foo}.
 @end enumerate
 
 i.e., the file pointed to by the @option{--add-gnu-debuglink} can be the
@@ -5076,6 +5124,7 @@ readelf [@option{-a}|@option{--all}]
         [@option{--ctf-strings=}@var{section}]
         [@option{--sframe=}@var{section}]
         [@option{-I}|@option{--histogram}]
+        [@option{--got-contents}]
         [@option{-v}|@option{--version}]
         [@option{-W}|@option{--wide}]
         [@option{-T}|@option{--silent-truncation}]
@@ -5111,7 +5160,8 @@ given.
 Equivalent to specifying @option{--file-header},
 @option{--program-headers}, @option{--sections}, @option{--symbols},
 @option{--relocs}, @option{--dynamic}, @option{--notes},
-@option{--version-info}, @option{--arch-specific}, @option{--unwind},
+@option{--got-contents}, @option{--version-info},
+@option{--arch-specific}, @option{--unwind},
 @option{--section-groups} and @option{--histogram}.
 
 Note - this option does not enable @option{--use-dynamic} itself, so
@@ -5286,7 +5336,7 @@ Displays the contents of the file's dynamic section, if it has one.
 @item -V
 @itemx --version-info
 @cindex ELF version sections information
-Displays the contents of the version sections in the file, it they
+Displays the contents of the version sections in the file, if they
 exist.
 
 @item -A
@@ -5386,6 +5436,14 @@ string table are used.
 
 If either of @option{--ctf-symbols} or @option{--ctf-strings} is specified, the
 other must be specified as well.
+
+@item --got-contents
+@cindex ELF section information
+@cindex ELF reloc information
+Displays the contents of the file's Global Offset Table (GOT) sections,
+if it has any.  For MIPS, this option is similar to
+@option{--arch-specific}, but it only displays the GOT related contents
+and it is ignored when @option{--arch-specific} is used.
 
 @item -I
 @itemx --histogram

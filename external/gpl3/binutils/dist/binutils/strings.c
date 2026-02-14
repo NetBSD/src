@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993-2025 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -757,8 +757,8 @@ display_utf8_char (const unsigned char * buffer)
 
 	case 4:
 	  printf ("\\u%02x%02x%02x",
-		  ((buffer[0] & 0x07) << 6) | ((buffer[1] & 0x3c) >> 2),
-		  ((buffer[1] & 0x03) << 6) | ((buffer[2] & 0x3c) >> 2),
+		  ((buffer[0] & 0x07) << 2) | ((buffer[1] & 0x30) >> 4),
+		  ((buffer[1] & 0x0f) << 4) | ((buffer[2] & 0x3c) >> 2),
 		  ((buffer[2] & 0x03) << 6) | ((buffer[3] & 0x3f)));
 	  break;
 	default:
