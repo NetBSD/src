@@ -1,5 +1,5 @@
 /* ar.c - Archive modify and extract.
-   Copyright (C) 1991-2025 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -32,9 +32,7 @@
 #include "arsup.h"
 #include "filenames.h"
 #include "binemul.h"
-#include "plugin-api.h"
 #include "plugin.h"
-#include "ansidecl.h"
 
 #ifdef __GO32___
 #define EXT_NAME_LEN 3		/* Bufflen of addition to name if it's MS-DOS.  */
@@ -42,12 +40,9 @@
 #define EXT_NAME_LEN 6		/* Ditto for *NIX.  */
 #endif
 
-/* Static declarations.  */
+/* Forward declarations.  */
 
-static void mri_emul (void);
 static const char *normalize (const char *, bfd *);
-static void remove_output (void);
-static void map_over_members (bfd *, void (*)(bfd *), char **, int);
 static void print_contents (bfd * member);
 static void delete_members (bfd *, char **files_to_delete);
 
@@ -58,8 +53,7 @@ static void print_descr (bfd * abfd);
 static void write_archive (bfd *);
 static int  ranlib_only (const char *archname);
 static int  ranlib_touch (const char *archname);
-static void usage (int);
-
+
 /** Globals and flags.  */
 
 static int mri_mode;
@@ -147,12 +141,6 @@ static bfd *  libdeps_bfd = NULL;
 static int show_version = 0;
 
 static int show_help = 0;
-
-#if BFD_SUPPORTS_PLUGINS
-static const char *plugin_target = "plugin";
-#else
-static const char *plugin_target = NULL;
-#endif
 
 static const char *target = NULL;
 
@@ -280,18 +268,18 @@ usage (int help)
 {
   FILE *s;
 
-#if BFD_SUPPORTS_PLUGINS
-  /* xgettext:c-format */
-  const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
-	" [--plugin <name>] [member-name] [count] archive-file file...\n");
+  const char *command_line;
+  if (bfd_plugin_enabled ())
+    /* xgettext:c-format */
+    command_line
+      = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
+	  " [--plugin <name>] [member-name] [count] archive-file file...\n");
+  else
+    /* xgettext:c-format */
+    command_line
+      = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
+	  " [member-name] [count] archive-file file...\n");
 
-#else
-  /* xgettext:c-format */
-  const char *command_line
-    = _("Usage: %s [emulation options] [-]{dmpqrstx}[abcDfilMNoOPsSTuvV]"
-	" [member-name] [count] archive-file file...\n");
-#endif
   s = help ? stdout : stderr;
 
   fprintf (s, command_line, program_name);
@@ -343,10 +331,11 @@ usage (int help)
   fprintf (s, _("  --output=DIRNAME - specify the output directory for extraction operations\n"));
   fprintf (s, _("  --record-libdeps=<text> - specify the dependencies of this library\n"));
   fprintf (s, _("  --thin       - make a thin archive\n"));
-#if BFD_SUPPORTS_PLUGINS
-  fprintf (s, _(" optional:\n"));
-  fprintf (s, _("  --plugin <p> - load the specified plugin\n"));
-#endif
+  if (bfd_plugin_enabled ())
+    {
+      fprintf (s, _(" optional:\n"));
+      fprintf (s, _("  --plugin <p> - load the specified plugin\n"));
+    }
 
   ar_emul_usage (s);
 
@@ -370,10 +359,9 @@ ranlib_usage (int help)
   fprintf (s, _(" Generate an index to speed access to archives\n"));
   fprintf (s, _(" The options are:\n\
   @<file>                      Read options from <file>\n"));
-#if BFD_SUPPORTS_PLUGINS
-  fprintf (s, _("\
+  if (bfd_plugin_enabled ())
+    fprintf (s, _("\
   --plugin <name>              Load the specified plugin\n"));
-#endif
   if (DEFAULT_AR_DETERMINISTIC)
     fprintf (s, _("\
   -D                           Use zero for symbol map timestamp (default)\n\
@@ -600,12 +588,9 @@ decode_options (int argc, char **argv)
           deterministic = false;
           break;
 	case OPTION_PLUGIN:
-#if BFD_SUPPORTS_PLUGINS
+	  if (!bfd_plugin_enabled ())
+	    fatal (_("sorry - this program has been built without plugin support\n"));
 	  bfd_plugin_set_plugin (optarg);
-#else
-	  fprintf (stderr, _("sorry - this program has been built without plugin support\n"));
-	  xexit (1);
-#endif
 	  break;
 	case OPTION_TARGET:
 	  target = optarg;
@@ -675,12 +660,9 @@ ranlib_main (int argc, char **argv)
 
 	  /* PR binutils/13493: Support plugins.  */
 	case OPTION_PLUGIN:
-#if BFD_SUPPORTS_PLUGINS
+	  if (!bfd_plugin_enabled ())
+	    fatal (_("sorry - this program has been built without plugin support\n"));
 	  bfd_plugin_set_plugin (optarg);
-#else
-	  fprintf (stderr, _("sorry - this program has been built without plugin support\n"));
-	  xexit (1);
-#endif
 	  break;
 	}
     }
@@ -731,9 +713,7 @@ main (int argc, char **argv)
   program_name = argv[0];
   xmalloc_set_program_name (program_name);
   bfd_set_error_program_name (program_name);
-#if BFD_SUPPORTS_PLUGINS
   bfd_plugin_set_program_name (program_name);
-#endif
 
   expandargv (&argc, &argv);
 
@@ -888,7 +868,7 @@ main (int argc, char **argv)
 	  if (! bfd_make_readable (libdeps_bfd))
 	    fatal (_("Cannot make libdeps object readable."));
 
-	  if (bfd_find_target (plugin_target, libdeps_bfd) == NULL)
+	  if (bfd_find_target (target, libdeps_bfd) == NULL)
 	    fatal (_("Cannot reset libdeps record type."));
 
 	  /* Insert our libdeps record in 2nd slot of the list of files
@@ -977,11 +957,9 @@ open_inarch (const char *archive_filename, const char *file)
   struct stat sbuf;
   bfd *arch;
   char **matching;
+  const char *arch_target = target;
 
   bfd_set_error (bfd_error_no_error);
-
-  if (target == NULL)
-    target = plugin_target;
 
   if (stat (archive_filename, &sbuf) != 0)
     {
@@ -1008,16 +986,16 @@ open_inarch (const char *archive_filename, const char *file)
 
       /* If the target isn't set, try to figure out the target to use
 	 for the archive from the first object on the list.  */
-      if (target == NULL && file != NULL)
+      if (arch_target == NULL && file != NULL)
 	{
 	  bfd *obj;
 
-	  obj = bfd_openr (file, target);
+	  obj = bfd_openr (file, arch_target);
 	  if (obj != NULL)
 	    {
 	      if (bfd_check_format (obj, bfd_object)
 		  && bfd_target_supports_archives (obj))
-		target = bfd_get_target (obj);
+		arch_target = bfd_get_target (obj);
 	      (void) bfd_close (obj);
 	    }
 	}
@@ -1026,7 +1004,7 @@ open_inarch (const char *archive_filename, const char *file)
       output_filename = xstrdup (archive_filename);
 
       /* Create an empty archive.  */
-      arch = bfd_openw (archive_filename, target);
+      arch = bfd_openw (archive_filename, arch_target);
       if (arch == NULL
 	  || ! bfd_set_format (arch, bfd_archive)
 	  || ! bfd_close (arch))
@@ -1035,7 +1013,7 @@ open_inarch (const char *archive_filename, const char *file)
         non_fatal (_("creating %s"), archive_filename);
     }
 
-  arch = bfd_openr (archive_filename, target);
+  arch = bfd_openr (archive_filename, arch_target);
   if (arch == NULL)
     {
     bloser:
@@ -1069,8 +1047,8 @@ open_inarch (const char *archive_filename, const char *file)
 	}
     }
 
+  /* Open all the archive contents.  */
   last_one = &(arch->archive_next);
-  /* Read all the contents right away, regardless.  */
   for (next_one = bfd_openr_next_archived_file (arch, NULL);
        next_one;
        next_one = bfd_openr_next_archived_file (arch, next_one))

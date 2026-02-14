@@ -554,7 +554,7 @@ char *yytext;
 #line 4 "arlex.l"
 /* arlex.l - Strange script language lexer */
 
-/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

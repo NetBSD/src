@@ -1,5 +1,5 @@
 /* elfedit.c -- Update the ELF header of an ELF format file
-   Copyright (C) 2010-2025 Free Software Foundation, Inc.
+   Copyright (C) 2010-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 

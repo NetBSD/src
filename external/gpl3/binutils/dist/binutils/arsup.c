@@ -1,5 +1,5 @@
 /* arsup.c - Archive support for MRI compatibility
-   Copyright (C) 1992-2025 Free Software Foundation, Inc.
+   Copyright (C) 1992-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -31,11 +31,6 @@
 #include "filenames.h"
 #include "bucomm.h"
 #include "arsup.h"
-
-static void map_over_list
-  (bfd *, void (*function) (bfd *, bfd *), struct list *);
-static void ar_directory_doer (bfd *, bfd *);
-static void ar_addlib_doer (bfd *, bfd *);
 
 extern int verbose;
 extern int deterministic;
@@ -180,11 +175,7 @@ ar_open (char *name, int t)
 	  bfd *element;
 	  bfd *ibfd;
 
-#if BFD_SUPPORTS_PLUGINS	  
-	  ibfd = bfd_openr (name, "plugin");
-#else
 	  ibfd = bfd_openr (name, NULL);
-#endif
 
 	  if (!ibfd)
 	    {
@@ -266,11 +257,7 @@ ar_addmod (struct list *list)
 	{
 	  bfd *abfd;
 
-#if BFD_SUPPORTS_PLUGINS	  
-	  abfd = bfd_openr (list->name, "plugin");
-#else
 	  abfd = bfd_openr (list->name, NULL);
-#endif
 	  if (!abfd)
 	    {
 	      fprintf (stderr, _("%s: can't open file %s\n"),
@@ -504,7 +491,6 @@ ar_extract (struct list *list)
 
 	  if (!found)
 	    {
-	      bfd_openr (list->name, NULL);
 	      fprintf (stderr, _("%s: can't find module file %s\n"),
 		       program_name, list->name);
 	    }

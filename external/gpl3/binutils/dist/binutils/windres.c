@@ -1,5 +1,5 @@
 /* windres.c -- a program to manipulate Windows resources
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -692,7 +692,7 @@ quot (const char *string)
 
   for (src = string, dest = buf; *src; src++, dest++)
     {
-      if (*src == '(' || *src == ')' || *src == ' ')
+      if (*src == '(' || *src == ')' || *src == ' ' || *src == '<' || *src == '>')
 	*dest++ = '\\';
       *dest = *src;
     }

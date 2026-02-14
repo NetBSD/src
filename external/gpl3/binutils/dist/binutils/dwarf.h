@@ -1,5 +1,5 @@
 /* dwarf.h - DWARF support header file
-   Copyright (C) 2005-2025 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -269,7 +269,7 @@ extern void * xcrealloc (void *, uint64_t, size_t);
    offset.  */
 extern bool reloc_at (struct dwarf_section *, uint64_t);
 
-extern uint64_t read_leb128 (unsigned char *, const unsigned char *const,
+extern uint64_t read_leb128 (const unsigned char *, const unsigned char *const,
 			     bool, unsigned int *, int *);
 
 #if HAVE_LIBDEBUGINFOD

@@ -1,5 +1,5 @@
 /* dlltool.c -- tool to generate stuff for PE style DLLs
-   Copyright (C) 1995-2025 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -1428,6 +1428,7 @@ scan_filtered_symbols (bfd *abfd, void *minisyms, long symcount,
       if (*symbol_name
 	  && *symbol_name == bfd_get_symbol_leading_char (abfd))
 	++symbol_name;
+      symbol_name = xstrdup (symbol_name);
 
       def_exports (symbol_name , 0, -1, 0, 0,
 		   ! (sym->flags & BSF_FUNCTION), 0, NULL);

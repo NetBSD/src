@@ -12441,7 +12441,7 @@ fi
 
 
 # Set the 'development' global.
-. $srcdir/bfd/development.sh
+. $srcdir/../bfd/development.sh
 
 # Set acp_cpp_for_build variable
 ac_cpp_for_build="$CC_FOR_BUILD -E $CPPFLAGS_FOR_BUILD"

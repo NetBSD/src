@@ -1,5 +1,5 @@
 /* rescoff.c -- read and write resources in Windows COFF files.
-   Copyright (C) 1997-2025 Free Software Foundation, Inc.
+   Copyright (C) 1997-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Rewritten by Kai Tietz, Onevision.
 
@@ -308,6 +308,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
 	  re->subdir = 1;
 	  re->u.dir = read_coff_res_dir (wrbfd, flaginfo->data + rva, flaginfo,
 					 type, level + 1);
+	  if (re->u.dir == NULL)
+	    return NULL;
 	}
       else
 	{
@@ -319,6 +321,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
 	  re->subdir = 0;
 	  re->u.res = read_coff_data_entry (wrbfd, flaginfo->data + rva,
 					    flaginfo, type);
+	  if (re->u.res == NULL)
+	    return NULL;
 	}
 
       *pp = re;
@@ -359,6 +363,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
 	  re->subdir = 1;
 	  re->u.dir = read_coff_res_dir (wrbfd, flaginfo->data + rva, flaginfo,
 					 type, level + 1);
+	  if (re->u.dir == NULL)
+	    return NULL;
 	}
       else
 	{
@@ -370,6 +376,8 @@ read_coff_res_dir (windres_bfd *wrbfd, const bfd_byte *data,
 	  re->subdir = 0;
 	  re->u.res = read_coff_data_entry (wrbfd, flaginfo->data + rva,
 					    flaginfo, type);
+	  if (re->u.res == NULL)
+	    return NULL;
 	}
 
       *pp = re;
@@ -677,7 +685,13 @@ write_coff_file (const char *filename, const char *target,
       return false;
     }
 
-  bfd_set_reloc (abfd, sec, cwi.relocs, cwi.reloc_count);
+  if (!bfd_finalize_section_relocs (abfd, sec, cwi.relocs, cwi.reloc_count))
+    {
+      bfd_nonfatal ("bfd_finalize_section_relocs");
+      bfd_close_all_done (abfd);
+      free (cwi.relocs);
+      return false;
+    }
 
   offset = 0;
   for (d = cwi.dirs.d; d != NULL; d = d->next)
