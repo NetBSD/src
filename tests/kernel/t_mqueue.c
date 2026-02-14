@@ -108,20 +108,15 @@ ATF_TC_HEAD(mqueue, tc)
 ATF_TC_BODY(mqueue, tc)
 {
 	int status;
-	char *tmpdir;
-	char template[32];
 	char mq_name[64];
 
-	strlcpy(template, "./t_mqueue.XXXXXX", sizeof(template));
-	tmpdir = mkdtemp(template);
-	ATF_REQUIRE_MSG(tmpdir != NULL, "mkdtemp failed: %d", errno);
-	snprintf(mq_name, sizeof(mq_name), "%s/mq", tmpdir);
+	snprintf(mq_name, sizeof(mq_name), "/t_mqueue.%d", getpid());
 
 	mqd_t mqfd;
 
 	mqfd = mq_open(mq_name, O_RDWR | O_CREAT,
 	    S_IRUSR | S_IRWXG | S_IROTH, NULL);
-	ATF_REQUIRE_MSG(mqfd != -1, "mq_open failed: %d", errno);
+	ATF_REQUIRE_MSG(mqfd != (mqd_t)-1, "mq_open(%s, ...) failed: %d", mq_name, errno);
 
 	send_msgs(mqfd);
 	receive_msgs(mqfd);
