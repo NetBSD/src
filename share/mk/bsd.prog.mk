@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.363 2026/02/14 08:12:27 skrll Exp $
+#	$NetBSD: bsd.prog.mk,v 1.364 2026/02/14 16:07:25 riastradh Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -38,7 +38,7 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core .gdbinit
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=	${PIE_CFLAGS}
 AFLAGS+=	${PIE_AFLAGS}
-LDFLAGS+=	${"${LDSTATIC.${.TARGET}}" == "-static" :? : ${PIE_LDFLAGS}}
+# PIE_LDFLAGS added on a per-PROG basis below depending on LDSTATIC.${PROG}
 .endif
 
 CFLAGS+=	${COPTS}
@@ -470,6 +470,9 @@ PAXCTL_FLAGS.${_P}= +a
 _DPADD.${_P}=		${DPADD}    ${DPADD.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
+.if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
+_LDFLAGS.${_P}+=	${"${LDSTATIC.${_P}}" == "-static" :? : ${PIE_LDFLAGS}}
+.endif
 .if ${MKSANITIZER} != "yes"
 # Sanitizers don't support static build.
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
