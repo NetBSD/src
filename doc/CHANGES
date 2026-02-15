@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3229 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3230 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -166,3 +166,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	tmux(1): Import version 3.6a. [wiz 20260209]
 	ftp(1): send custom HTTP headers in provided order, not reverse.
 		[lukem 20260208]
+	binutils: Import 2.46 [christos 20260215]
