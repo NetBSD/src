@@ -1,4 +1,4 @@
-/*	$NetBSD: xdr_float.c,v 1.42 2024/04/11 18:41:03 christos Exp $	*/
+/*	$NetBSD: xdr_float.c,v 1.43 2026/02/15 18:49:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: xdr_float.c,v 1.42 2024/04/11 18:41:03 christos Exp $");
+__RCSID("$NetBSD: xdr_float.c,v 1.43 2026/02/15 18:49:13 christos Exp $");
 #endif
 #endif
 
@@ -258,8 +258,8 @@ xdr_double(XDR *xdrs, double *dp)
 		id.exp = vd.exp - VAX_DBL_BIAS + IEEE_DBL_BIAS;
 		id.mantissa1 = (vd.mantissa1 << 13) |
 			    ((unsigned int)vd.mantissa2 >> 3);
-		id.mantissa2 = ((vd.mantissa2 & MASK(3)) << 29) |
-				(vd.mantissa3 << 13) |
+		id.mantissa2 = (((unsigned int)vd.mantissa2 & MASK(3)) << 29) |
+				((unsigned int)vd.mantissa3 << 13) |
 				(((unsigned int)vd.mantissa4 >> 3) & MASK(13));
 	shipit:
 		id.sign = vd.sign;
