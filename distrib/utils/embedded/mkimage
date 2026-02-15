@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.93 2026/02/07 20:07:19 riastradh Exp $
+# $NetBSD: mkimage,v 1.94 2026/02/15 21:07:36 riastradh Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -46,7 +46,7 @@
 #  - make_label: Prints disklabel to stdout
 #
 
-set -e
+set -e -o pipefail
 
 DIR="$(cd "$(dirname "$0")" && pwd)"
 PROG="$(basename "$0")"
