@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.36 2026/02/15 05:39:42 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.37 2026/02/15 07:01:20 skrll Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -960,7 +960,7 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		gftfb_wait(sc);
 	} else
 		gftfb_wait_fifo(sc, he);
-		
+
 	if (ri->ri_font->stride == 1) {
 		uint8_t *data8 = data;
 		for (i = 0; i < he; i++) {
@@ -1045,7 +1045,7 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	 * This is for masking off pixels at the end of a line if it's not a
 	 * multiple of 4. Would be nice if we knew where the clipping registers
 	 * live...
-	 */ 
+	 */
 	mask = 0xf0000000 << (4 - (wi & 3));
 
 	data8 = WSFONT_GLYPH(c, font);
@@ -1079,7 +1079,7 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		}
 		/* if we have pixels left in latch write them out */
 		if ((i & 3) != 0) {
-			latch = latch << ((4 - (i & 3)) << 3);	
+			latch = latch << ((4 - (i & 3)) << 3);
 			/* make sure we write only the pixels in the latch */
 			gftfb_write4(sc, NGLE_BINC_MASK, mask);
 			gftfb_write4(sc, NGLE_BINC_DATA_R, latch);
@@ -1265,7 +1265,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		gftfb_wait(sc);
 		gftfb_write4(sc, NGLE_IBO, 0x300);
 		gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
-		gftfb_dba(sc, 
+		gftfb_dba(sc,
 		    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0));
 		gftfb_write4(sc, NGLE_BINC_DST, 0);
 		for (i = 0; i < 128; i += 2) {
