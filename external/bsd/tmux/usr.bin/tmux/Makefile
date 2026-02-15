@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.43 2026/02/10 07:02:41 martin Exp $
+# $NetBSD: Makefile,v 1.44 2026/02/15 00:05:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -262,6 +262,7 @@ DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c+=	-Wno-format-nonliteral
 COPTS.input.c+=		-Wno-sign-compare -Wno-pointer-sign
+COPTS.mode-tree.c+=	-Wno-error=stack-protector
 COPTS.tty.c+=		-Wno-pointer-sign
 COPTS.utempter.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
