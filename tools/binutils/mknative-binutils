@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mknative-binutils,v 1.17 2026/02/11 21:04:24 christos Exp $
+#	$NetBSD: mknative-binutils,v 1.18 2026/02/15 15:47:46 christos Exp $
 #
 # Shell script for generating all the constants needed for a native
 # platform build of src/external/gpl3/binutils
@@ -85,22 +85,22 @@ get_binutils () {
 	local d=external/gpl3/binutils/usr.bin/common/arch/$BFD_MACHINE_ARCH
 	mkdir -p $_TOP/$d
 
-#	{
-#		getvars binutils/Makefile \
-#			VERSION DEFS INCLUDES PROGRAMS
-#		getvars binutils/Makefile \
-#			man_MANS TEXINFOS
-#		getvars bfd/Makefile \
-#			PKGVERSION | sed 's,\\\(.\),\1,'
-#		getvars bfd/Makefile \
-#			REPORT_BUGS_TEXI
-#
-#		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
-#			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
-#		done
-#	} | write_mk $d/defs.mk
+	{
+		getvars binutils/Makefile \
+			VERSION DEFS INCLUDES PROGRAMS
+		getvars binutils/Makefile \
+			man_MANS TEXINFOS
+		getvars bfd/Makefile \
+			PKGVERSION | sed 's,\\\(.\),\1,'
+		getvars bfd/Makefile \
+			REPORT_BUGS_TEXI
 
-#	write_c $d/config.h < $_TMPDIR/binutils/config.h
+		for f in `getvars binutils/Makefile PROGRAMS | sed 'y,-,_,;s,^[^=]*=,,'`; do
+			getvars binutils/Makefile ${f}_OBJECTS ${f}_DEPENDENCIES
+		done
+	} | write_mk $d/defs.mk
+
+	write_c $d/config.h < $_TMPDIR/binutils/config.h
 
 	### gas
 
