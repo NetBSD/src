@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.70 2026/01/03 23:57:09 riastradh Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.71 2026/02/15 21:51:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.70 2026/01/03 23:57:09 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.71 2026/02/15 21:51:08 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -101,7 +101,7 @@ static int	ELFNAMEEND(coredump_notes)(struct lwp *, struct note_state *);
 static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
 
 /* The 'note' section names and data are always 4-byte aligned. */
-#define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
+#define	ELFROUNDSIZE	sizeof(Elf_Word)
 
 #define elf_read_lwpstatus	CONCAT(process_read_lwpstatus, ELFSIZE)
 #define elf_lwpstatus		CONCAT(process_lwpstatus, ELFSIZE)
