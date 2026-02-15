@@ -1,4 +1,4 @@
-/*	$NetBSD: unistd.h,v 1.65 2023/10/25 08:22:25 simonb Exp $	*/
+/*	$NetBSD: unistd.h,v 1.66 2026/02/15 21:47:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -130,7 +130,7 @@
 					/* regular expressions */
 #define	_POSIX_REGEXP			1
 					/* semaphores */
-#define	_POSIX_SEMAPHORES		0
+#define	_POSIX_SEMAPHORES		200112L
 					/* shared memory objects */
 #define	_POSIX_SHARED_MEMORY_OBJECTS	0
 					/* shell */

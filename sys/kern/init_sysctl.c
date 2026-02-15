@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.229 2026/02/15 21:45:25 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.230 2026/02/15 21:47:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.229 2026/02/15 21:45:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.230 2026/02/15 21:47:18 christos Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -450,7 +450,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-		       200112, NULL, 0,
+		       _POSIX_SEMAPHORES, NULL, 0,
 		       CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
