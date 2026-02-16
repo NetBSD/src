@@ -1,4 +1,4 @@
-.\"	$NetBSD: adm1026hm.4,v 1.2 2026/02/16 16:26:34 jdc Exp $
+.\"	$NetBSD: adm1026hm.4,v 1.3 2026/02/16 18:46:32 jdc Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,15 +27,14 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 13, 2026
+.Dd February 16, 2026
 .Dt ADM1026HM 4
 .Os
 .Sh NAME
 .Nm adm1026hm
 .Nd Analog Devices ADM1026 complete thermal system management controller
 .Sh SYNOPSIS
-.Cd "adm1026hm* at iic0 addr 0x2e: ADM1026 hardware monitor: rev. 0x4, step. 0x5"
-.Cd "adm1026hm*: 8 fans, 3 temperatures, 15 voltages"
+.Cd "adm1026hm* at iic? addr?"
 .Sh DESCRIPTION
 The
 .Nm
