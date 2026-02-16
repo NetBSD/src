@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.21 2026/02/16 19:41:35 kre Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.22 2026/02/16 20:35:30 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.21 2026/02/16 19:41:35 kre Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.22 2026/02/16 20:35:30 kre Exp $");
 #endif
 
 
@@ -53,6 +53,35 @@ __RCSID("$NetBSD: swaplist.c,v 1.21 2026/02/16 19:41:35 kre Exp $");
 
 #include "swapctl.h"
 
+static int
+swapent_cmp(const void *a, const void *b)
+{
+	const struct swapent *p, *q;
+	size_t l1, l2;
+
+	p = (const struct swapent *)a;
+	q = (const struct swapent *)b;
+
+	/*
+	 * Sort by priority first, highest priority first
+	 * (which means increasing order of the priority field)
+	 */
+	if (p->se_priority != q->se_priority)
+		return p->se_priority - q->se_priority;
+
+	/*
+	 * Then sort by device name.  These are arbitrary,
+	 * and no order really makes more sense than any
+	 * other, but the kernel's lists of swap devices at
+	 * the same priority are reordered at will, but for
+	 * a better human experience, keeping a constant
+	 * ordering is better, this should achieve that.
+	 */
+	if ((l1 = strlen(p->se_path)) != (l2 = strlen(q->se_path)))
+		return l1 > l2 ? 1 : -1;
+	return strcmp(p->se_path, q->se_path);
+}
+
 int
 list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 {
@@ -70,15 +99,39 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 		return 0;
 	}
 
+	/*
+	 * treat the value from swapctl(SWAP_NSWAP) as a hint,
+	 * as the value might have changed (swap devices added
+	 * or removed) between when that info was obtained, and
+	 * when we actually request the stats.
+	 *
+	 * Assume it will be increasing (if descreasing no harm)
+	 * and allow for it to have grown a reasonable amount.
+	 *
+	 * Then we simply use however many swap table entries
+	 * the kernel returns from swapctl(SWAP_STATS), be that
+	 * more or less than swapctl(SWAP_NSWAP) claimed, or
+	 * as many as or less than we have allocated space for.
+	 * If the kernel has added even more than the guess
+	 * below, then we will not get all of them.   Oh well...
+	 */
+	nswap += 3;
+
 	fsep = sep = (struct swapent *)malloc(nswap * sizeof(*sep));
 	if (sep == NULL)
 		err(1, "malloc");
 	rnswap = swapctl(SWAP_STATS, (void *)sep, nswap);
 	if (rnswap < 0)
 		err(1, "SWAP_STATS");
-	if (nswap != rnswap)
-		warnx("SWAP_STATS different to SWAP_NSWAP (%d != %d)",
-		    rnswap, nswap);
+
+	if (rnswap == 0) {
+		puts("no swap devices configured");
+		return 0;
+	}
+
+	/* keep the list ordered, as long as it remains stable */
+	if (rnswap > 1)
+		qsort(sep, rnswap, sizeof(struct swapent), swapent_cmp);
 
 	pathmax = 11;
 	switch (kflag) {
