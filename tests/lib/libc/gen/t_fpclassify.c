@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.14 2025/12/23 17:11:42 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.15 2026/02/16 13:51:27 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.14 2025/12/23 17:11:42 riastradh Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.15 2026/02/16 13:51:27 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -188,10 +188,12 @@ formatbitsl(long double f)
 #endif
 
 #ifdef __HAVE_FENV
+#  define	FE_IEEE754_EXCEPT					      \
+	(FE_INVALID|FE_DIVBYZERO|FE_OVERFLOW|FE_UNDERFLOW|FE_INEXACT)
 #  define	CLEAREXCEPT()	feclearexcept(FE_ALL_EXCEPT)
 #  define	CHECKEXCEPT()	do					      \
 {									      \
-	int _except = fetestexcept(FE_ALL_EXCEPT);			      \
+	int _except = fetestexcept(FE_IEEE754_EXCEPT);			      \
 	ATF_CHECK_MSG(_except == 0,					      \
 	    "expected no exceptions, got 0x%x", _except);		      \
 } while (0)
