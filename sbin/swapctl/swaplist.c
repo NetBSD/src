@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.20 2026/02/16 19:23:23 kre Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.21 2026/02/16 19:41:35 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.20 2026/02/16 19:23:23 kre Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.21 2026/02/16 19:41:35 kre Exp $");
 #endif
 
 
@@ -81,7 +81,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 		    rnswap, nswap);
 
 	pathmax = 11;
-	switch(kflag) {
+	switch (kflag) {
 		case 1:
 			header = "1K-blocks";
 			blocksize = 1024;
