@@ -1266,7 +1266,6 @@ rf_scrub_begin(int fd, int argc, char *argv[])
 					scrb.rate = bps * 1000 * 1000 * 1000;
 			} else
 				errx(1, "no scrubbing rate unit specified");
-
 		}
 		else if (strcmp(argv[i], "portion") == 0) {
 			if (argc <= i + 2) /* do argc check once */
@@ -1285,8 +1284,9 @@ rf_scrub_begin(int fd, int argc, char *argv[])
 			if (scrb.portion_begin >= scrb.portion_end) {
 				errx(1, "upper bound must be greater than lower bound for scrub portions");
 			}
-
 		}
+		else
+			errx(1, "scrubbing requires rate and portion arguments");
 	}
 
 	do_ioctl(fd, RAIDFRAME_SCRUB, &scrb,
