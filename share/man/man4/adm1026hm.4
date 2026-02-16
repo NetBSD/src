@@ -1,4 +1,4 @@
-.\"	$NetBSD: adm1026hm.4,v 1.3 2026/02/16 18:46:32 jdc Exp $
+.\"	$NetBSD: adm1026hm.4,v 1.4 2026/02/16 19:14:42 uwe Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,29 +47,40 @@ chip configuration.
 The values of the sensors are made available through the
 .Xr envstat 8
 interface.
-.Bl -column "V3.3 standby" "uV DC" "Description" -offset indent
-.It Sy "Sensor" Ta Sy "Units" Ta Sy "Description"
-.It Li "fan N" Ta "RPM" Ta "Fan 0-7"
-.It Li "internal" Ta "C" Ta "Internal temperature"
-.It Li "external N" Ta "C" Ta "External temperature 1\(en2"
-.It Li "Vbatt" Ta "mV DC" Ta "Battery voltage"
-.It Li "V3.3 standby" Ta "mV DC" Ta "3.3V standby voltage"
-.It Li "V3.3 main" Ta "mV DC" Ta "3.3V main voltage"
-.It Li "V5.0" Ta "mV DC" Ta "5.0V supply voltage"
-.It Li "V+12" Ta "mV DC" Ta "+12V supply voltage"
-.It Li "V-12" Ta "mV DC" Ta "-12V supply voltage"
-.It Li "V3.3 N" Ta "mV DC" Ta "Analog in (3.3V reference) 0\(en5"
-.It Li "V2.5 N" Ta "mV DC" Ta "Analog in (2.5V reference) 0\(en3"
+.Bl -column ".Li V3.3 standby" "mV DC" -offset indent
+.It Sy Sensor     Ta Sy Units  Ta Sy Description
+.It Li fan Ar N      Ta RPM    Ta Fan 0\^\(en7
+.It Li internal      Ta C      Ta Internal temperature
+.It Li external Ar N Ta C      Ta External temperature 1\(en2
+.It Li Vbatt         Ta mV DC  Ta Battery voltage
+.It Li V3.3 standby  Ta mV DC  Ta 3.3V standby voltage
+.It Li V3.3 main     Ta mV DC  Ta 3.3V main voltage
+.It Li V5.0          Ta mV DC  Ta 5.0V supply voltage
+.It Li V+12          Ta mV DC  Ta +12V supply voltage
+.It Li V-12          Ta mV DC  Ta \-12V supply voltage
+.It Li V3.3 Ar N     Ta mV DC  Ta Analog in (3.3V reference) 0\^\(en5
+.It Li V2.5 Ar N     Ta mV DC  Ta Analog in (2.5V reference) 0\^\(en3
 .El
 .Pp
-Configurable limits for the sensors are also available via envstat.
+Configurable limits for the sensors are also available via
+.Xr envstat 8 .
 Initial limit values are read from the chip.
 Each temperature sensor has a high, therm and low limit, which are
-mapped to critmax, warnmax and warnlow, respectively.
-Voltage sensors have high (warnmax) and low (warnlow) limits.
-Fan sensors have a high limit mapped to warnlow, because the
-fan measurements are revolution intervals, so higher numbers
-correlate to lower fan speeds.
+mapped to
+.Fa critmax ,
+.Fa warnmax
+and
+.Fa warnmin ,
+respectively.
+Voltage sensors have high
+.Pq Fa warnmax
+and low
+.Pq Fa warnmin
+limits.
+Fan sensors have a high limit mapped to
+.Fa warnmin ,
+because the fan measurements are revolution intervals, so higher
+numbers correlate to lower fan speeds.
 .Sh SEE ALSO
 .Xr iic 4 ,
 .Xr intro 4 ,
