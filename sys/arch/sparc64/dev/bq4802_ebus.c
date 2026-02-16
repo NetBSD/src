@@ -1,4 +1,4 @@
-/*	$NetBSD: bq4802_ebus.c,v 1.1 2026/02/01 11:45:10 jdc Exp $	*/
+/*	$NetBSD: bq4802_ebus.c,v 1.2 2026/02/16 16:29:59 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bq4802_ebus.c,v 1.1 2026/02/01 11:45:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bq4802_ebus.c,v 1.2 2026/02/16 16:29:59 jdc Exp $");
 
 /* Clock driver for rtc/bq4802 (a Texas Instruments bq4802Y/bq4802LY). */
 
@@ -120,8 +120,8 @@ bq4802rtc_ebus_attach(device_t parent, device_t self, void *aux)
 
 	/* Setup: alarms off, disable DST, enable updates, 24-hour mode */
 	ctrl = bq4802_read(sc, BQ4802_CTRL);
-	ctrl = ctrl & ~(BQ4802_CTRL_DSE | BQ4802_CTRL_STP | BQ4802_CTRL_UTI);
-	ctrl = ctrl | BQ4802_CTRL_24;
+	ctrl = ctrl & ~(BQ4802_CTRL_DSE | BQ4802_CTRL_UTI);
+	ctrl = ctrl | BQ4802_CTRL_24 | BQ4802_CTRL_STP;
 	bq4802_write(sc, BQ4802_CTRL, ctrl);
 
 	todr_attach(tch);

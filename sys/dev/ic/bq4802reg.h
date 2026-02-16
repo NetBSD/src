@@ -1,4 +1,4 @@
-/*	$NetBSD: bq4802reg.h,v 1.1 2026/02/01 11:45:10 jdc Exp $	*/
+/*	$NetBSD: bq4802reg.h,v 1.2 2026/02/16 16:29:59 jdc Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -117,7 +117,7 @@
 /* Control */
 #define	BQ4802_CTRL_DSE	0x01	/* Daylight savings enable */
 #define	BQ4802_CTRL_24	0x02	/* 1 for 24-hour, 0 for 12-hour */
-#define	BQ4802_CTRL_STP	0x04	/* Stop when in battery-backup mode */
+#define	BQ4802_CTRL_STP	0x04	/* 0 = stop when in battery-backup mode */
 #define	BQ4802_CTRL_UTI	0x08	/* Update transfer inhibit */
 
 /* Max number of registers we need to read/write for the TOD. */
