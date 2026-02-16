@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.22 2026/02/16 20:35:30 kre Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.23 2026/02/16 23:18:54 kre Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.22 2026/02/16 20:35:30 kre Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.23 2026/02/16 23:18:54 kre Exp $");
 #endif
 
 
@@ -90,7 +90,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 	char	szbuf[5], usbuf[5], avbuf[5]; /* size, used, avail */
 	const	char *header, *suff;
 	size_t	l;
-	int	hlen, size, inuse, ncounted, pathmax;
+	int	hlen, size, inuse, ncounted, pathmax, cw;
 	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
 	int64_t	totalsize, totalinuse;
 
@@ -163,14 +163,40 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 	if (hflag || kflag)
 		hlen = strlen(header);
 
+	cw = 8;
 	if (dolong && tflag == 0) {
-		for (i = rnswap; i-- > 0; sep++)
+		totalsize = 0;
+		for (i = rnswap; i-- > 0; sep++) {
 			if ((size_t)pathmax < (l = strlen(sep->se_path)))
 				pathmax = l;
+			totalsize += sep->se_nblks;
+		}
 		sep = fsep;
-		(void)printf("%-*s %*s %8s %8s %8s  %s\n",
-		    pathmax, "Device", hlen, header,
-		    "Used", "Avail", "Capacity", "Priority");
+
+		if (!hflag) {
+			totalsize = dbtoqb(totalsize) / blocksize;
+			if (totalsize > 9999999990)
+				cw = 11;
+			else if (totalsize > 999999990)
+				cw = 10;
+			else if (totalsize > 99999990)
+				cw = 9;
+
+			if (hlen < cw)
+				hlen = cw;
+		}
+
+		/*
+		 * The intent here is that for the 3 size columns,
+		 * the units digit (or scale letter with -h) is always
+		 * under the rightmost character of its heading, the
+		 * '%' character is under the 't' in "Capacity" and
+		 * the units digit of the priority is under the 'o'
+		 * of "Priority".    This looks reasonably good.
+		 */
+		(void)printf("%-*s %*s %*s %*s %8s  %s\n",
+		    pathmax, "Device", hlen, header, cw, "Used",
+		    cw, "Avail", "Capacity", "Priority");
 	}
 	totalsize = totalinuse = ncounted = 0;
 	for (; rnswap-- > 0; sep++) {
@@ -188,8 +214,8 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 				    pathmax, sep->se_path, hlen,
 				    (long)(dbtoqb(size) / blocksize));
 
-				(void)printf("%8ld %8ld %5.0f%%    %d\n",
-				    (long)(dbtoqb(inuse) / blocksize),
+				(void)printf("%*ld %*ld  %5.0f%%    %3d\n",
+				    cw, (long)(dbtoqb(inuse) / blocksize), cw,
 				    (long)(dbtoqb(size - inuse) / blocksize),
 				    (double)inuse / (double)size * 100.0,
 				    sep->se_priority);
@@ -209,8 +235,8 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 				(void)printf("%-*s %*s ",
 				    pathmax, sep->se_path, hlen, szbuf);
 
-				(void)printf("%8s %8s %5.0f%%    %d\n",
-				    usbuf, avbuf,
+				(void)printf("%*s %*s  %5.0f%%    %3d\n",
+				    cw, usbuf, cw, avbuf,
 				    (double)inuse / (double)size * 100.0,
 				    sep->se_priority);
 			}
@@ -271,14 +297,14 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 			    (dbtoqb(totalsize-totalinuse)), "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
-			(void)printf("%-*s %*s %8s %8s %5.0f%%\n",
-			    pathmax, "Total", hlen, szbuf, usbuf, avbuf,
+			(void)printf("%-*s %*s %*s %*s  %5.0f%%\n",
+			    pathmax, "Total", hlen, szbuf, cw, usbuf, cw, avbuf,
 			    (double)(totalinuse) / (double)totalsize * 100.0);
 		} else {
-			(void)printf("%-*s %*ld %8ld %8ld %5.0f%%\n",
+			(void)printf("%-*s %*ld %*ld %*ld  %5.0f%%\n",
 			    pathmax, "Total", hlen,
 			    (long)(dbtoqb(totalsize) / blocksize),
-			    (long)(dbtoqb(totalinuse) / blocksize),
+			    cw, (long)(dbtoqb(totalinuse) / blocksize), cw,
 			    (long)(dbtoqb(totalsize - totalinuse) / blocksize),
 			    (double)(totalinuse) / (double)totalsize * 100.0);
 		}
