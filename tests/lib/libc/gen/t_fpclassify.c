@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.19 2026/02/17 09:27:25 kre Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.20 2026/02/17 13:53:50 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.19 2026/02/17 09:27:25 kre Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.20 2026/02/17 13:53:50 kre Exp $");
 
 #include <sys/endian.h>
 
@@ -153,7 +153,7 @@ makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
 {
 	volatile double temp;
 
-	makequietsignalling(&temp, (double) f, bith)
+	makequietsignalling(&temp, (double) f, bith);
 	*ret = temp;
 }
 
