@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.14 2024/12/06 11:46:11 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.15 2026/02/17 07:02:09 macallan Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -253,7 +253,7 @@ glyphcache_add(glyphcache *gc, int c, int x, int y)
 	b->gb_map[c - 33] = (cx << 16) | cy;
 	gc->gc_bitblt(gc->gc_blitcookie, x, y, cx, cy,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
-	if (gc->gc_underline & 1) {
+	if (gc->gc_underline & WSATTR_UNDERLINE) {
 		glyphcache_underline(gc, x, y, gc->gc_underline);
 	}
 	return 0;
@@ -351,7 +351,7 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 	gc->gc_bitblt(gc->gc_blitcookie, cx, cy, x, y,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
 	/* and underline it if needed */
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		glyphcache_underline(gc, x, y, attr);
 	/* update bucket's time stamp */
 	b->gb_lastread = time_uptime;
