@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.88 2026/02/10 05:08:21 kre Exp $
+.\" $NetBSD: gpt.8,v 1.89 2026/02/17 01:41:56 kre Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -88,7 +88,8 @@ corresponding to a disk-like device or a regular file.
 The
 .Ar command
 specifies the operation to be performed upon the GPT of the
-.Ar device specified.
+.Ar device
+specified.
 Commands possible are listed below.
 .Pp
 Note that when built as a tool, and named
@@ -473,7 +474,7 @@ is created.
 .Pp
 The
 .Fl A
-options sets the PMBR partition active.
+option sets the PMBR partition active.
 .Pp
 The
 .Fl P
@@ -1329,7 +1330,7 @@ To allow this label to always appear, and be understood, on
 one output line, the label is first converted to UTF-8 encoding,
 and then further encoded as if by
 .Xr vis 1
-using the options VIS_CSTYLE|VIS_OCTAL|VIS_TAB|VIS_NL.
+using the options VIS_CSTYLE\||\|VIS_OCTAL\||\|VIS_TAB\||\|VIS_NL.
 .It Purpose
 This field is used only when the
 .Ic Index
