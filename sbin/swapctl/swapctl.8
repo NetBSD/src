@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.50 2026/02/17 01:16:17 kre Exp $
+.\"	$NetBSD: swapctl.8,v 1.51 2026/02/17 11:07:07 uwe Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -63,46 +63,48 @@
 .Fl q
 .Nm
 .Fl z
+.Pp
 .Nm swapon
 .Fl a
 .Op Fl t Cm blk Ns \||\| Ns Cm noblk
 .Nm swapon
 .Ar path
+.
 .Sh DESCRIPTION
 The
 .Nm
 program adds, removes,
 lists, and prioritizes swap devices and files for the system.
+.Pp
 The
 .Nm swapon
-program acts the same as the
-.Nm
-program as if called with the
 .Fl a
-option, except if
-.Nm swapon
-itself is called with
-.Fl a
-in which case
-.Nm swapon
-acts as
+acts the same as the
 .Nm
-with the
 .Fl A
-option.
+.Pq Dq all .
 .Pp
-The following options are available:
-.Bl -tag -width 123456
-.It Fl A
-This option causes
+Otherwise,
+.Nm swapon
+.Ar path
+acts the same as the
 .Nm
-to read the
+.Fl a
+.Ar path
+.Pq Dq add .
+.Pp
+The following options are available for
+.Nm :
+.Bl -tag -width Fl
+.
+.It Fl A
+Read the
 .Pa /etc/fstab
 file for devices and files with a
 .Ql sw
 or
 .Ql dp
-type, and adds all
+type, and add all
 .Ql sw
 type entries as swap devices and sets the last
 .Ql dp
@@ -115,41 +117,25 @@ If used together with
 this option will not read
 .Pa /etc/fstab
 but query the kernel for all swap partitions on local hard disks.
+.
 .It Fl a
-The
-.Fl a
-option requires that a
+Add
 .Ar path
-also be in the argument list.
-The
-.Ar path
-is added to the kernel's list of swap devices using the
+to the kernel's list of swap devices using the
 .Xr swapctl 2
 system call.
-When using the
-.Nm swapon
-form of this command, the
-.Fl a
-option is treated the same as the
-.Fl A
-option, for backwards compatibility.
+.
 .It Fl c
-The
-.Fl c
-option changes the priority of the listed swap device or file.
+Change the priority of the 
+.Ar path
+swap device or file.
+.
 .It Fl D
-The
-.Fl D
-option requires that a
-.Ar dumpdev
-also be in the argument list.
 The kernel dump device is set to
 .Ar dumpdev .
 The word
 .Cm none
-can be used instead of a
-.Ar dumpdev
-to disable the currently set dump device.
+can be used instead to disable the currently set dump device.
 This change is made via the
 .Xr swapctl 2
 system call.
@@ -157,63 +143,58 @@ The dump device is used when the system crashes
 to write a current snapshot of real memory, to be saved later with
 .Xr savecore 8
 at system reboot, and analyzed to determine the problem.
+.
 .It Fl d
-The
-.Fl d
-option removes the listed
+Remove
 .Ar path
 from the kernel's list of swap devices or files.
+.
 .It Fl f
 Used in combination with the
 .Fl A
 command and
 .Fl t Cm auto
-flag this option makes
+option this option makes
 .Nm
 use the first discovered swap device to also become the dump device.
 The
 .Fl f
 option is mutually exclusive with the
-.Fl o
-option.
+.Fl o .
+.
 .It Fl g
-The
-.Fl g
-option uses (1024 * 1024 * 1024) byte blocks instead of the default 512 byte.
+Report sizes in GB (1024 * 1024 * 1024) blocks instead of the default
+512 byte.
+.
 .It Fl h
-The
-.Fl h
-option uses
+Use
 .Xr humanize_number 3
 to display the sizes.
+.
 .It Fl k
-The
-.Fl k
-option uses 1024 byte blocks instead of the default 512 byte.
+Report sizes in KB (1024) blocks instead of the default 512 byte.
+.
 .It Fl l
-The
-.Fl l
-option lists the current swap devices and files, and their usage statistics.
+List the current swap devices and files, and their usage statistics.
+.
 .It Fl m
-The
-.Fl m
-option uses (1024 * 1024) byte blocks instead of the default 512 byte.
+Report sizes in MB (1024 * 1024) blocks instead of the default 512 byte.
+.
 .It Fl n
-Used with the
+Dry run.
+With the
 .Fl A
 or
 .Fl U
-command, the
-.Fl n
-option makes
+command print the action
 .Nm
-print the action it would take, but not actually change any swap or
-dump devices.
+would take, but don't actually change any swap or dump devices.
+.
 .It Fl o
 Similar to the
 .Fl f
-flag, this
-.Dq Dump Only
+option, this
+.Dq dump only
 option makes
 .Nm
 find the first swap device and configure it as dump device.
@@ -222,22 +203,20 @@ This option needs to be used in combination with
 .Fl A Fl t Cm auto
 and is mutually exclusive with
 .Fl f .
+.
 .It Fl p
-The
-.Fl p
-option sets the priority of swap devices or files to the
+Specify the
 .Ar priority
-argument.
-This works with the
-.\" .Fl d ,
-.Fl A ,
+of swap devices or files.
+With
 .Fl a
 and
 .Fl c
-options.
+set the priority of the specified
+.Ar path .
 With
-.Fl A ,
-the given
+.Fl A
+the
 .Ar priority
 becomes the default for
 .Pa /etc/fstab
@@ -246,9 +225,9 @@ With the
 .Fl l
 and
 .Fl s
-options,
-output is limited to consider only devices (or files) with the given
+the output is limited to only devices (or files) with the given
 .Ar priority .
+.
 .It Fl q
 Query
 .Pa /etc/fstab ,
@@ -257,19 +236,12 @@ If any are found,
 .Nm
 returns with an exit status of 0, if none are found the exit status will
 be 1.
+.
 .It Fl s
-The
-.Fl s
-option displays a single line summary of current swap statistics.
+Display a single line summary of current swap statistics.
+.
 .It Fl t
-This flag modifies the function of the
-.Fl A
-and
-.Fl U
-options.
-The
-.Fl t
-option allows the type of device to add or remove to be specified.
+Specify the type of device to add or remove.
 An argument of
 .Cm blk
 causes all block devices in
@@ -282,15 +254,14 @@ operates on all non-block devices in
 An argument of
 .Cm auto
 causes all swap partitions on local hard disks to be used.
-This option is useful in early system startup, where swapping
+The latter is useful in early system startup, where swapping
 may be needed before all file systems are available, such as during
 disk checks of large file systems.
+.
 .It Fl U
-This option causes
-.Nm
-to read the
+Read the
 .Pa /etc/fstab
-file for devices and files with a
+file for devices and files with an
 .Ql sw
 type, and remove all these entries as swap devices.
 If no swap devices are unconfigured,
@@ -301,15 +272,11 @@ If used together with
 this option will not read
 .Pa /etc/fstab
 but unconfigure all local swap partitions.
+.
 .It Fl z
-The
-.Fl z
-option displays the current dump device.
+Display the current dump device.
 .El
-.Pp
-See the
-.Sx SYNOPSIS
-to determine which options apply in which circumstances.
+.
 .Ss Swap Priority
 The
 .Nx
