@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.51 2026/02/17 11:07:07 uwe Exp $
+.\"	$NetBSD: swapctl.8,v 1.52 2026/02/17 12:24:45 kre Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -76,18 +76,18 @@ The
 program adds, removes,
 lists, and prioritizes swap devices and files for the system.
 .Pp
-The
+The historic
 .Nm swapon
+program, with
 .Fl a
-acts the same as the
+acts the same as
 .Nm
 .Fl A
-.Pq Dq all .
-.Pp
-Otherwise,
+.Pq Dq all ,
+otherwise,
 .Nm swapon
 .Ar path
-acts the same as the
+acts the same as
 .Nm
 .Fl a
 .Ar path
@@ -106,7 +106,7 @@ or
 .Ql dp
 type, and add all
 .Ql sw
-type entries as swap devices and sets the last
+type entries as swap devices and set the last
 .Ql dp
 type entry as the dump device.
 If no swap devices are configured,
@@ -121,9 +121,7 @@ but query the kernel for all swap partitions on local hard disks.
 .It Fl a
 Add
 .Ar path
-to the kernel's list of swap devices using the
-.Xr swapctl 2
-system call.
+to the kernel's list of swap devices.
 .
 .It Fl c
 Change the priority of the 
@@ -132,13 +130,11 @@ swap device or file.
 .
 .It Fl D
 The kernel dump device is set to
-.Ar dumpdev .
+.Ar dumpdev ,
+which must be a local block device, not a file.
 The word
 .Cm none
 can be used instead to disable the currently set dump device.
-This change is made via the
-.Xr swapctl 2
-system call.
 The dump device is used when the system crashes
 to write a current snapshot of real memory, to be saved later with
 .Xr savecore 8
@@ -150,16 +146,15 @@ Remove
 from the kernel's list of swap devices or files.
 .
 .It Fl f
-Used in combination with the
-.Fl A
-command and
-.Fl t Cm auto
-option this option makes
+Used in combination with
+.Fl A Fl t Cm auto ,
+.Fl f
+causes
 .Nm
-use the first discovered swap device to also become the dump device.
+to use the first discovered swap device as the dump device.
 The
 .Fl f
-option is mutually exclusive with the
+option is mutually exclusive with
 .Fl o .
 .
 .It Fl g
@@ -186,7 +181,7 @@ With the
 .Fl A
 or
 .Fl U
-command print the action
+options, print the action
 .Nm
 would take, but don't actually change any swap or dump devices.
 .
@@ -197,7 +192,7 @@ option, this
 .Dq dump only
 option makes
 .Nm
-find the first swap device and configure it as dump device.
+find the first swap device and configure it as the dump device.
 No swap device is changed.
 This option needs to be used in combination with
 .Fl A Fl t Cm auto
@@ -366,18 +361,26 @@ If no swap information is specified in
 .Pa /etc/fstab ,
 the system startup scripts (see
 .Xr rc 8 )
-will configure no swap space and your machine will behave very badly
+will configure no swap space and the system will behave very badly
 if (more likely when) it runs out of real memory.
 .Pp
 Local and remote swap files cannot be configured until after the file
-systems they reside on are mounted read/write.
+systems they reside upon are mounted read/write.
 The system startup scripts need to
 .Xr fsck 8
 all local file systems before this can happen.
 This process requires substantial amounts of memory on some systems.
-If you configure no local block swap devices on a machine that has local
-file systems to check and rely only on swap files, the machine will have
+If no local block swap devices are configured on a machine that has local
+file systems to check, and relies only on swap files, the machine will have
 no swap space at all during system
 .Xr fsck 8
 and may run out of real memory, causing fsck to abnormally exit and
-startup scripts to fail.
+the startup scripts to fail.
+.Pp
+Which device is
+.Dq first
+for the purposes of
+.Fl Aft Ns Cm auto
+or
+.Fl Aot Ns Cm auto
+is not specified, and depends upon system configuration behavior.
