@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.37 2026/02/15 07:01:20 skrll Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.38 2026/02/17 07:22:53 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -123,6 +123,8 @@ static int 	gftfb_putpalreg(struct gftfb_softc *, uint8_t, uint8_t,
 
 static void	gftfb_rectfill(struct gftfb_softc *, int, int, int, int,
 			    uint32_t);
+static void	gftfb_rectfill_a(void *, int, int, int, int, long);
+
 static void	gftfb_bitblt(void *, int, int, int, int, int,
 			    int, int);
 
@@ -340,6 +342,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gc.gc_bitblt = gftfb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rectfill = gftfb_rectfill_a;
 	sc->sc_gc.gc_rop = RopSrc;
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
@@ -417,13 +420,12 @@ gftfb_disable_rom(struct sti_softc *sc)
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
 
-
-
 static inline void
 gftfb_setup_fb(struct gftfb_softc *sc)
 {
 	gftfb_both(sc, BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
-	gftfb_write4(sc, NGLE_IBO, 0x83000300);
+	gftfb_write4(sc, NGLE_IBO, 
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, 1, 0, 0));
 	gftfb_wait(sc);
 	gftfb_write1(sc, NGLE_CONTROL_FB, 1);
 }
@@ -451,8 +453,10 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* attr. planes */
 	gftfb_wait(sc);
-	gftfb_dba(sc, 0x2ea0d000);
-	gftfb_write4(sc, NGLE_IBO, 0x23000302);
+	gftfb_dba(sc, 
+	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINattr, 0));
+	gftfb_write4(sc, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 1, 0));
 	gftfb_write4(sc, NGLE_CPR, NGLE_ARTIST_CMAP0);
 	gftfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
 
@@ -506,7 +510,8 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* colour map */
 	gftfb_both(sc, BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
-	gftfb_write4(sc, NGLE_IBO, 0x03000300);
+	gftfb_write4(sc, NGLE_IBO, 
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
 	gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	gftfb_wait(sc);
 	gftfb_write4(sc, NGLE_BINC_DST, 0);
@@ -831,6 +836,16 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+gftfb_rectfill_a(void *cookie, int dstx, int dsty,
+    int width, int height, long attr)
+{
+	struct gftfb_softc *sc = cookie;
+
+	gftfb_rectfill(sc, dstx, dsty, width, height,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 			    int he, int rop)
 {
@@ -923,10 +938,13 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	/* if we're drawing a space we're done here */
 	if (c == 0x20) {
 		gftfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			gftfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
@@ -940,8 +958,6 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	gftfb_wait_fifo(sc, 4);
 
-	/* character colour */
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 	gftfb_write4(sc, NGLE_FG, fg);
 	gftfb_write4(sc, NGLE_BG, bg);
 	/* pixel address in 32bit since we're in AddrLong mode */
@@ -961,20 +977,47 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	} else
 		gftfb_wait_fifo(sc, he);
 
-	if (ri->ri_font->stride == 1) {
-		uint8_t *data8 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data8;
-			gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
-			data8++;
+	if (attr & WSATTR_HILIT) {
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				mask |= mask >> 1;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				mask |= mask >> 1;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
 	} else {
-		uint16_t *data16 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data16;
-			gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
-			data16++;
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
+	}
+
+	if (attr & WSATTR_UNDERLINE) {
+		gftfb_wait_fifo(sc, 2);
+		gftfb_write4(sc, NGLE_BINC_DST,
+		    (x << 2) | ((y + he - 2) << 13));
+		gftfb_write4(sc, NGLE_BINC_DATA_D, cmask);
 	}
 }
 
@@ -1012,6 +1055,8 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		gftfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			glyphcache_underline(&sc->sc_gc, x, y, attr);
 		return;
 	}
 
@@ -1241,7 +1286,9 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		mutex_enter(&sc->sc_hwlock);
 		gftfb_both(sc,
 		    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
-		gftfb_write4(sc, NGLE_IBO, 0x03000300);
+		gftfb_write4(sc, NGLE_IBO, 
+		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
+		    0, 0));
 		gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 		gftfb_wait(sc);
 		gftfb_write4(sc, NGLE_BINC_DST, 0);

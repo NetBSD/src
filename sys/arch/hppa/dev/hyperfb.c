@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.30 2026/02/10 09:50:23 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.31 2026/02/17 07:22:53 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.30 2026/02/10 09:50:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.31 2026/02/17 07:22:53 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -130,6 +130,7 @@ static void	hyperfb_set_video(struct hyperfb_softc *, int);
 
 static void	hyperfb_rectfill(struct hyperfb_softc *, int, int, int, int,
 			    uint32_t);
+static void	hyperfb_rectfill_a(void *, int, int, int, int, long);
 static void	hyperfb_bitblt(void *, int, int, int, int, int,
 			    int, int);
 
@@ -465,6 +466,7 @@ hyperfb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	sc->sc_gc.gc_bitblt = hyperfb_bitblt;
+	sc->sc_gc.gc_rectfill = hyperfb_rectfill_a;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = RopSrc;
 
@@ -1030,6 +1032,16 @@ hyperfb_rectfill(struct hyperfb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+hyperfb_rectfill_a(void *cookie, int dstx, int dsty,
+    int width, int height, long attr)
+{
+	struct hyperfb_softc *sc = cookie;
+
+	hyperfb_rectfill(sc, dstx, dsty, width, height,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 hyperfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
     int he, int rop)
 {
@@ -1137,6 +1149,8 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (c == 0x20) {
 		/* clear the character cell */
 		hyperfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			hyperfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
@@ -1165,21 +1179,47 @@ hyperfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 		hyperfb_wait(sc);
 	} else
 		hyperfb_wait_fifo(sc, he);
-		
-	if (ri->ri_font->stride == 1) {
-		uint8_t *data8 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data8;
-			hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
-			data8++;
+
+	if (attr & WSATTR_HILIT) {
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				mask |= mask >> 1;
+				hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				mask |= mask >> 1;
+				hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
 	} else {
-		uint16_t *data16 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data16;
-			hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
-			data16++;
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				hyperfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
+	}
+	if (attr & WSATTR_UNDERLINE) {
+		hyperfb_wait_fifo(sc, 2);
+		hyperfb_write4(sc, NGLE_BINC_DST,
+		    (x << 2) | ((y + he - 2) << 13));
+		hyperfb_write4(sc, NGLE_BINC_DATA_D, cmask);
 	}
 }
 
@@ -1286,6 +1326,7 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		/* if we have pixels left in latch write them out */
 		if ((i & 3) != 0) {
 			latch = latch << ((4 - (i & 3)) << 3);	
+			/* make sure we write only the pixels in the latch */
 			hyperfb_write4(sc, NGLE_BINC_MASK, mask);
 			hyperfb_write4(sc, NGLE_BINC_DATA_R, latch);
 		}
