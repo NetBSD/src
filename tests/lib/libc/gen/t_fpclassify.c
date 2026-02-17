@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.18 2026/02/17 09:07:48 kre Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.19 2026/02/17 09:27:25 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.18 2026/02/17 09:07:48 kre Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.19 2026/02/17 09:27:25 kre Exp $");
 
 #include <sys/endian.h>
 
@@ -147,7 +147,15 @@ makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
 
 #    define	LDBL_QNANBITH		DBL_QNANBIT
 #    define	LDBL_SNANBITH		DBL_SNANBIT
-#    define	makequietsignallingl	makequietsignalling
+
+static void
+makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
+{
+	volatile double temp;
+
+	makequietsignalling(&temp, (double) f, bith)
+	*ret = temp;
+}
 
 #  endif
 
