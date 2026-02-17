@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.20 2026/02/17 13:53:50 kre Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.21 2026/02/17 22:32:36 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.20 2026/02/17 13:53:50 kre Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.21 2026/02/17 22:32:36 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -159,41 +159,47 @@ makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
 
 #  endif
 
-static const char *
-formatbitsf(float f)
-{
-	static char buf[2*sizeof(f) + 1];
-	union { float f; uint32_t i; } u = { .f = f };
+#define	__UNVOLATILECONST(p)						      \
+	((const void *)(uintptr_t)(const volatile void *)(p))
 
-	__CTASSERT(sizeof(f) <= sizeof(u));
+static const char *
+formatbitsf(const volatile float *f)
+{
+	static char buf[2*sizeof(*f) + 1];
+	union { float f; uint32_t i; } u;
+
+	__CTASSERT(sizeof(*f) <= sizeof(u));
+	memcpy(&u.f, __UNVOLATILECONST(f), sizeof(*f));
 	snprintf(buf, sizeof(buf), "%08"PRIx32, u.i);
 
 	return buf;
 }
 
 static const char *
-formatbits(double f)
+formatbits(const volatile double *f)
 {
-	static char buf[2*sizeof(f) + 1];
-	union { double f; uint64_t i; } u = { .f = f };
+	static char buf[2*sizeof(*f) + 1];
+	union { double f; uint64_t i; } u;
 
-	__CTASSERT(sizeof(f) <= sizeof(u));
+	__CTASSERT(sizeof(*f) <= sizeof(u));
+	memcpy(&u.f, __UNVOLATILECONST(f), sizeof(*f));
 	snprintf(buf, sizeof(buf), "%016"PRIx64, u.i);
 
 	return buf;
 }
 
 static const char *
-formatbitsl(long double f)
+formatbitsl(const volatile long double *f)
 {
-	static char buf[2*sizeof(f) + 1];
+	static char buf[2*sizeof(*f) + 1];
 	union {
 		long double f;
 		uint64_t i[sizeof(long double)/sizeof(double)];
-	} u = { .f = f };
+	} u;
 	size_t i, j, n = __arraycount(u.i);
 
-	__CTASSERT(sizeof(f) <= sizeof(u));
+	__CTASSERT(sizeof(*f) <= sizeof(u));
+	memcpy(&u.f, __UNVOLATILECONST(f), sizeof(*f));
 #if _BYTE_ORDER == _BIG_ENDIAN
 	for (i = j = 0; j < n; i++, j++)
 #elif _BYTE_ORDER == _LITTLE_ENDIAN
@@ -510,7 +516,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	volatile float nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -518,53 +524,53 @@ ATF_TC_BODY(fpclassify_float, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsf(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
 	/* test a quiet NaN */
 	makequietsignallingf(&nan, NAN, FLT_QNANBIT);
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issignalling(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbitsf(&nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsf(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 	/* verify quiet NaN doesn't provoke exception */
@@ -576,31 +582,31 @@ ATF_TC_BODY(fpclassify_float, tc)
 	/* test a signalling NaN */
 	makequietsignallingf(&nan, NAN, FLT_SNANBIT);
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(issignalling(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsf(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT_SNAN();
 
 	/* verify signalling NaN does provoke exception */
@@ -618,7 +624,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	(void)z;
 	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
 	    "signalling NaN %a [0x%s] failed to raise invalid operation",
-	    nan, formatbitsf(nan));
+	    nan, formatbitsf(&nan));
 #endif
     }
 #endif
@@ -834,7 +840,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	volatile double nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -842,53 +848,53 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbitsf(nan));
+	    formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsf(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbits(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
 	/* test a quiet NaN */
 	makequietsignalling(&nan, NAN, DBL_QNANBIT);
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issignalling(nan), "nan=%a [0x%s]", nan,
-	    formatbits(nan));
+	    formatbits(&nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbits(nan));
+	    formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbits(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbits(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 	/* verify quiet NaN doesn't provoke exception */
@@ -900,31 +906,31 @@ ATF_TC_BODY(fpclassify_double, tc)
 	/* test a signalling NaN */
 	makequietsignalling(&nan, NAN, DBL_SNANBIT);
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(issignalling(nan), "nan=%a [0x%s]", nan,
-	    formatbits(nan));
+	    formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%a [0x%s]", nan,
-	    formatbits(nan));
+	    formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%a [0x%s]", nan, formatbits(&nan));
 	CHECKEXCEPT_SNAN();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%a [0x%s])=%d FP_NAN=%d",
-	    nan, formatbits(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbits(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT_SNAN();
 
 	/* verify signalling NaN does provoke exception */
@@ -942,7 +948,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	(void)z;
 	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
 	    "signalling NaN %a [0x%s] failed to raise invalid operation",
-	    nan, formatbits(nan));
+	    nan, formatbits(&nan));
 #endif
     }
 #endif
@@ -1159,7 +1165,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	volatile long double nan = NAN;
 
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
@@ -1167,22 +1173,23 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
-	    formatbitsl(nan));
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsl(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 #ifdef _FLOAT_IEEE754
@@ -1191,31 +1198,32 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	makequietsignallingl(&nan, NAN, LDBL_QNANBITH);
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issignalling(nan), "nan=%La [0x%s]", nan,
-	    formatbitsl(nan));
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
-	    formatbitsl(nan));
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsl(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 	/* verify quiet NaN doesn't provoke exception */
@@ -1227,31 +1235,32 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	/* test a signalling NaN */
 	makequietsignallingl(&nan, NAN, LDBL_SNANBITH);
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(issignalling(nan), "nan=%La [0x%s]", nan,
-	    formatbitsl(nan));
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 #endif
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isinf(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!isnormal(nan), "nan=%La [0x%s]", nan,
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(!issubnormal(nan), "nan=%La [0x%s]", nan,
-	    formatbitsl(nan));
+	    formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
-	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
+	ATF_CHECK_MSG(!iszero(nan), "nan=%La [0x%s]", nan, formatbitsl(&nan));
 	CHECKEXCEPT();
 	CLEAREXCEPT();
 	ATF_CHECK_EQ_MSG(fpclassify(nan), FP_NAN,
 	    "fpclassify(%La [0x%s])=%d FP_NAN=%d",
-	    nan, formatbitsl(nan), fpclassify(nan), FP_NAN);
+	    nan, formatbitsl(&nan), fpclassify(nan), FP_NAN);
 	CHECKEXCEPT();
 
 	/* verify signalling NaN does provoke exception */
@@ -1269,7 +1278,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	(void)z;
 	ATF_CHECK_MSG(fetestexcept(FE_INVALID),
 	    "signalling NaN %La [0x%s] failed to raise invalid operation",
-	    nan, formatbitsl(nan));
+	    nan, formatbitsl(&nan));
 #endif
     }
 #endif
