@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.37 2025/06/04 08:06:46 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.38 2026/02/17 09:40:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.37 2025/06/04 08:06:46 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.38 2026/02/17 09:40:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1124,7 +1124,7 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			}
 			}
 		}
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
 }
@@ -1161,7 +1161,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	/* if we draw a whitespace we're done here */
 	if (c == 0x20) {
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -1242,7 +1242,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		pm2fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 

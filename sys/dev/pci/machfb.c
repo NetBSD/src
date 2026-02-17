@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.107 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: machfb.c,v 1.108 2026/02/17 09:40:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.107 2022/09/25 17:52:25 thorpej Exp $");
+	"$NetBSD: machfb.c,v 1.108 2026/02/17 09:40:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1619,7 +1619,7 @@ mach64_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 			mach64_setup_mono(sc, x, y, wi, he, fg, bg);
 			mach64_feed_bytes(sc, ri->ri_fontscale, data);
 		}
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
 }
@@ -1652,7 +1652,7 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		mach64_rectfill(sc, x, y, wi, he, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -1733,7 +1733,7 @@ mach64_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	} else 	if (attr & 1) {
+	} else 	if (attr & WSATTR_UNDERLINE) {
 		mach64_rectfill(sc, x, y + he - 2, wi, 1, fg);
 	}
 

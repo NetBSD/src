@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.118 2025/11/22 21:51:28 andvar Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.119 2026/02/17 09:40:54 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.118 2025/11/22 21:51:28 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.119 2026/02/17 09:40:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1331,7 +1331,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 
 	if ((offset >= 0) && (offset < (dp->rd_virty * dp->rd_stride))) {
 		pa = bus_space_mmap(sc->sc_memt,
-		    sc->sc_memaddr + dp->rd_offset + offset, 0,
+		    sc->sc_memaddr, dp->rd_offset + offset,
 		    prot, BUS_SPACE_MAP_LINEAR);
 		return pa;
 	}
@@ -3087,6 +3087,8 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		radeonfb_rectfill(dp, xd, yd, w, h, bg);
+		if (attr & WSATTR_UNDERLINE)
+			radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
 		return;
 	}
 	data = WSFONT_GLYPH(c, font);
@@ -3157,7 +3159,7 @@ radeonfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			break;
 		}
 	}
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
 }
 
@@ -3195,7 +3197,7 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		radeonfb_rectfill(dp, xd, yd, w, h, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
 		return;
 	}
@@ -3263,7 +3265,7 @@ radeonfb_putchar_aa32(void *cookie, int row, int col, u_int c, long attr)
 	}
 	if (rv == GC_ADD) {
 		glyphcache_add(&dp->rd_gc, c, xd, yd);
-	} else if (attr & 1)
+	} else if (attr & WSATTR_UNDERLINE)
 		radeonfb_rectfill(dp, xd, yd + h - 2, w, 1, fg);
 }
 
@@ -3298,7 +3300,7 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		radeonfb_rectfill(dp, x, y, wi, he, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			radeonfb_rectfill(dp, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -3390,7 +3392,7 @@ radeonfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_ADD) {
 		glyphcache_add(&dp->rd_gc, c, x, y);
 	} else
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			radeonfb_rectfill(dp, x, y + he - 2, wi, 1, fg);
 }
 
