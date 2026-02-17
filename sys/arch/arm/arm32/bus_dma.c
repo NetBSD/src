@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.153 2026/02/01 09:03:17 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.154 2026/02/17 06:50:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.153 2026/02/01 09:03:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.154 2026/02/17 06:50:29 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -2010,8 +2010,6 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 		struct arm32_dma_range *pdr;
 
 		for (i = 0, pdr = tag->_ranges; i < tag->_nranges; i++, pdr++) {
-			KASSERT(nranges != 0);
-
 			if (min_addr > pdr->dr_sysbase + pdr->dr_len
 			    || max_addr < pdr->dr_sysbase) {
 				/*
@@ -2020,6 +2018,9 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 				 */
 				continue;
 			}
+			/* Check we're expecting to add this range */
+			KASSERT(nranges != 0);
+
 			/*
 			 * Copy the range and adjust to fit within the new
 			 * limits

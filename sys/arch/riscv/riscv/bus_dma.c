@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.15 2026/02/01 09:03:17 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.16 2026/02/17 06:49:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define _RISCV_NEED_BUS_DMA_BOUNCE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.15 2026/02/01 09:03:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.16 2026/02/17 06:49:55 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -1870,8 +1870,6 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 		struct riscv_dma_range *pdr;
 
 		for (i = 0, pdr = tag->_ranges; i < tag->_nranges; i++, pdr++) {
-			KASSERT(nranges != 0);
-
 			if (min_addr > pdr->dr_sysbase + pdr->dr_len
 			    || max_addr < pdr->dr_sysbase) {
 				/*
@@ -1880,6 +1878,9 @@ _bus_dmatag_subregion(bus_dma_tag_t tag, bus_addr_t min_addr,
 				 */
 				continue;
 			}
+			/* Check we're expecting to add this range */
+			KASSERT(nranges != 0);
+
 			/*
 			 * Copy the range and adjust to fit within the new
 			 * limits
