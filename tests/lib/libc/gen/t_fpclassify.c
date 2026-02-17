@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.16 2026/02/16 22:45:45 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.17 2026/02/17 05:08:36 kre Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.16 2026/02/16 22:45:45 riastradh Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.17 2026/02/17 05:08:36 kre Exp $");
 
 #include <sys/endian.h>
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: t_fpclassify.c,v 1.16 2026/02/16 22:45:45 riastradh Exp $");
 #  define	FLT_SNANBIT	(SNANBIT*__BIT(FLT_MANT_DIG - 2))
 
 static void
-makequietsignallingf(volatile float *ret, float f, uint32_t bit)
+mkquietsigf(volatile float *ret, float f, uint32_t bit)
 {
 	union { float f; uint32_t i; } u = { .f = f };
 
@@ -100,7 +100,7 @@ makequietsignallingf(volatile float *ret, float f, uint32_t bit)
 #  define	DBL_SNANBIT	(SNANBIT*__BIT(DBL_MANT_DIG - 2))
 
 static void
-makequietsignalling(volatile double *ret, double f, uint64_t bit)
+mkquietsig(volatile double *ret, double f, uint64_t bit)
 {
 	union { double f; uint64_t i; } u = { .f = f };
 
@@ -128,7 +128,7 @@ makequietsignalling(volatile double *ret, double f, uint64_t bit)
 	(SNANBIT*__BIT(LDBL_MANT_DIG - 2 - EXT_FRACLBITS))
 
 static void
-makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
+mkquietsigl(volatile long double *ret, long double f, uint64_t bith)
 {
 	union ieee_ext_u u = { .extu_ld = f };
 
@@ -147,7 +147,7 @@ makequietsignallingl(volatile long double *ret, long double f, uint64_t bith)
 
 #    define	LDBL_QNANBITH		DBL_QNANBIT
 #    define	LDBL_SNANBITH		DBL_SNANBIT
-#    define	makequietsignallingl	makequietsignalling
+#    define	mkquietsigl	mkquietsig
 
 #  endif
 
@@ -530,7 +530,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 
 #ifdef _FLOAT_IEEE754
 	/* test a quiet NaN */
-	makequietsignallingf(&nan, NAN, FLT_QNANBIT);
+	mkquietsigf(&nan, NAN, FLT_QNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT();
@@ -566,7 +566,7 @@ ATF_TC_BODY(fpclassify_float, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	makequietsignallingf(&nan, NAN, FLT_SNANBIT);
+	mkquietsigf(&nan, NAN, FLT_SNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbitsf(nan));
 	CHECKEXCEPT_SNAN();
@@ -854,7 +854,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 
 #ifdef _FLOAT_IEEE754
 	/* test a quiet NaN */
-	makequietsignalling(&nan, NAN, DBL_QNANBIT);
+	mkquietsig(&nan, NAN, DBL_QNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT();
@@ -890,7 +890,7 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	makequietsignalling(&nan, NAN, DBL_SNANBIT);
+	mkquietsig(&nan, NAN, DBL_SNANBIT);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%a [0x%s]", nan, formatbits(nan));
 	CHECKEXCEPT_SNAN();
@@ -1180,7 +1180,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 #ifdef _FLOAT_IEEE754
 #ifdef __HAVE_LONG_DOUBLE
 	/* test a quiet NaN */
-	makequietsignallingl(&nan, NAN, LDBL_QNANBITH);
+	mkquietsigl(&nan, NAN, LDBL_QNANBITH);
 #endif
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
@@ -1217,7 +1217,7 @@ ATF_TC_BODY(fpclassify_long_double, tc)
 	CHECKEXCEPT();
 
 	/* test a signalling NaN */
-	makequietsignallingl(&nan, NAN, LDBL_SNANBITH);
+	mkquietsigl(&nan, NAN, LDBL_SNANBITH);
 	CLEAREXCEPT();
 	ATF_CHECK_MSG(isnan(nan), "nan=%La [0x%s]", nan, formatbitsl(nan));
 	CHECKEXCEPT();
