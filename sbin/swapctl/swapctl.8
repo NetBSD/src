@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.47 2026/02/16 23:22:49 kre Exp $
+.\"	$NetBSD: swapctl.8,v 1.48 2026/02/17 00:17:35 uwe Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -34,16 +34,16 @@
 .Sh SYNOPSIS
 .Nm
 .Fl A
-.Op Fl f Ns | Ns Fl o
+.Op Fl f Ns \||\| Ns Fl o
 .Op Fl n
 .Op Fl p Ar priority
-.Op Fl t Ar blk Ns | Ns Ar noblk Ns | Ns Ar auto
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk Ns \||\| Ns Cm auto
 .Nm
-.Fl D Ar dumpdev Ns | Ns Ar none
+.Fl D Ar dumpdev Ns | Ns Cm none
 .Nm
 .Fl U
 .Op Fl n
-.Op Fl t Ar blk Ns | Ns Ar noblk Ns | Ns Ar auto
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk Ns \||\| Ns Cm auto
 .Nm
 .Fl a
 .Op Fl p Ar priority
@@ -56,8 +56,8 @@
 .Fl d
 .Ar path
 .Nm
-.Fl l Ns | Ns Fl s
-.Op Fl k Ns | Ns Fl m Ns | Ns Fl g Ns | Ns Fl h
+.Fl l Ns \||\| Ns Fl s
+.Op Fl k Ns \||\| Ns Fl m Ns \||\| Ns Fl g Ns \||\| Ns Fl h
 .Op Fl p Ar priority
 .Nm
 .Fl q
@@ -65,7 +65,7 @@
 .Fl z
 .Nm swapon
 .Fl a
-.Op Fl t Ar blk Ns | Ns Ar noblk
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk
 .Nm swapon
 .Ar path
 .Sh DESCRIPTION
@@ -99,19 +99,19 @@ This option causes
 to read the
 .Pa /etc/fstab
 file for devices and files with a
-.Dq sw
+.Ql sw
 or
-.Dq dp
+.Ql dp
 type, and adds all
-.Dq sw
+.Ql sw
 type entries as swap devices and sets the last
-.Dq dp
+.Ql dp
 type entry as the dump device.
 If no swap devices are configured,
 .Nm
 will exit with an error code.
 If used together with
-.Fl t Ar auto
+.Fl t Cm auto
 this option will not read
 .Pa /etc/fstab
 but query the kernel for all swap partitions on local hard disks.
@@ -146,7 +146,7 @@ also be in the argument list.
 The kernel dump device is set to
 .Ar dumpdev .
 The word
-.Dq none
+.Cm none
 can be used instead of a
 .Ar dumpdev
 to disable the currently set dump device.
@@ -167,7 +167,7 @@ from the kernel's list of swap devices or files.
 Used in combination with the
 .Fl A
 command and
-.Fl t Ar auto
+.Fl t Cm auto
 flag this option makes
 .Nm
 use the first discovered swap device to also become the dump device.
@@ -219,7 +219,7 @@ option makes
 find the first swap device and configure it as dump device.
 No swap device is changed.
 This option needs to be used in combination with
-.Fl A Fl t Ar auto
+.Fl A Fl t Cm auto
 and is mutually exclusive with
 .Fl f .
 .It Fl p
@@ -271,16 +271,16 @@ The
 .Fl t
 option allows the type of device to add or remove to be specified.
 An argument of
-.Ar blk
+.Cm blk
 causes all block devices in
 .Pa /etc/fstab
 to be added (or removed).
 An argument of
-.Ar noblk
+.Cm noblk
 operates on all non-block devices in
 .Pa /etc/fstab .
 An argument of
-.Ar auto
+.Cm auto
 causes all swap partitions on local hard disks to be used.
 This option is useful in early system startup, where swapping
 may be needed before all file systems are available, such as during
@@ -291,13 +291,13 @@ This option causes
 to read the
 .Pa /etc/fstab
 file for devices and files with a
-.Dq sw
+.Ql sw
 type, and remove all these entries as swap devices.
 If no swap devices are unconfigured,
 .Nm
 will exit with an error code.
 If used together with
-.Fl t Ar auto
+.Fl t Cm auto
 this option will not read
 .Pa /etc/fstab
 but unconfigure all local swap partitions.
@@ -383,7 +383,7 @@ program was written by
 .An Matthew R. Green Aq Mt mrg@eterna23.net .
 .Sh CAVEATS
 Using the automatic swap partition detection done by the
-.Fl A Fl t Ar auto
+.Fl A Fl t Cm auto
 option may be dangerous.
 Depending on the on-disk partitioning scheme used, the type of a partition
 may not be accurately recognizable as a swap partition.
