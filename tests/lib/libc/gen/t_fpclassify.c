@@ -1,4 +1,4 @@
-/* $NetBSD: t_fpclassify.c,v 1.21 2026/02/17 22:32:36 riastradh Exp $ */
+/* $NetBSD: t_fpclassify.c,v 1.22 2026/02/17 23:33:05 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fpclassify.c,v 1.21 2026/02/17 22:32:36 riastradh Exp $");
+__RCSID("$NetBSD: t_fpclassify.c,v 1.22 2026/02/17 23:33:05 riastradh Exp $");
 
 #include <sys/endian.h>
 
@@ -235,6 +235,11 @@ formatbitsl(const volatile long double *f)
  * code uses fld* / fst* between CLEAREXCEPT() and the operation just
  * to move data around on the stack for argument-passing, so we have to
  * expect FE_INVALID for those operations, annoyingly.
+ *
+ * For more details, see:
+ *
+ * PR lib/60015: x87 makes testing signalling NaN difficult
+ * https://gnats.NetBSD.org/60015
  */
 #  ifdef __i386__
 #    define	CHECKEXCEPT_SNAN()	do				      \
@@ -910,8 +915,15 @@ ATF_TC_BODY(fpclassify_double, tc)
 	CHECKEXCEPT_SNAN();
 #ifdef HAVE_ISSIGNALLING
 	CLEAREXCEPT();
+#  ifdef __i386__
+	atf_tc_expect_fail("PR lib/60015:"
+	    " x87 makes testing signalling NaN difficult");
+#  endif
 	ATF_CHECK_MSG(issignalling(nan), "nan=%a [0x%s]", nan,
 	    formatbits(&nan));
+#  ifdef __i386__
+	atf_tc_expect_pass();
+#  endif
 	CHECKEXCEPT_SNAN();
 #endif
 	CLEAREXCEPT();
