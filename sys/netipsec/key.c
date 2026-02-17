@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.285 2024/09/02 18:56:20 andvar Exp $	*/
+/*	$NetBSD: key.c,v 1.286 2026/02/17 22:26:51 andvar Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.285 2024/09/02 18:56:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.286 2026/02/17 22:26:51 andvar Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -199,7 +199,7 @@ static u_int32_t acq_seq = 0;
  *     setsockopt(IP_IPSEC_POLICY)
  *   - Such policies (SPs) are set to a socket (PCB) and also inserted to
  *     the key_spd.socksplist list (not the key_spd.splist)
- *   - Such a policy is destroyed when a corresponding socket is destroed,
+ *   - Such a policy is destroyed when a corresponding socket is destroyed,
  *     however, a socket can be destroyed in softint so we cannot destroy
  *     it directly instead we just mark it DEAD and delay the destruction
  *     until GC by the timer

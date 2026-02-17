@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.59 2023/09/24 10:59:24 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.60 2026/02/17 22:26:51 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998 Bill Studenmund
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.59 2023/09/24 10:59:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.60 2026/02/17 22:26:51 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -867,7 +867,7 @@ static int stdin, stdout;
  * (the video, better than CN_NORMAL), and CN_REMOTE (pick me!)
  *
  * As the mac's a bit different, we do extra work here. We mainly check
- * to see if we have serial echo going on. Also chould check for default
+ * to see if we have serial echo going on. Also should check for default
  * speeds.
  */
 

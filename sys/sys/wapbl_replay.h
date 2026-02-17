@@ -1,4 +1,4 @@
-/*	$NetBSD: wapbl_replay.h,v 1.2 2024/05/13 00:01:53 msaitoh Exp $	*/
+/*	$NetBSD: wapbl_replay.h,v 1.3 2026/02/17 22:26:52 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2003,2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ struct wapbl_wc_inodelist {
 	int32_t		wc_len;
 	int32_t		wc_inocnt;
 	int32_t		wc_clear;	/* set if previously listed inodes 
-					   hould be ignored */
+					   should be ignored */
 	struct {
 		uint32_t wc_inumber;
 		uint32_t wc_imode;
