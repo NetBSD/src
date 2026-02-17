@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.31 2025/11/09 08:19:50 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.32 2026/02/17 07:10:49 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.31 2025/11/09 08:19:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.32 2026/02/17 07:10:49 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,6 +130,7 @@ static void	gffb_sync(struct gffb_softc *);
 
 static void	gffb_rectfill(struct gffb_softc *, int, int, int, int,
 			    uint32_t);
+static void	gffb_rectfill_a(void *, int, int, int, int, long);
 static void	gffb_bitblt(void *, int, int, int, int, int, int, int);
 static void	gffb_rop(struct gffb_softc *, int);
 
@@ -333,7 +334,8 @@ gffb_attach(device_t parent, device_t self, void *aux)
 		0, 0,
 		NULL,
 		8, 16,
-		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_RESIZE,
+		WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		    WSSCREEN_RESIZE,
 		NULL
 	};
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
@@ -380,6 +382,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 
 	if (sc->sc_accel) {
 		sc->sc_gc.gc_bitblt = gffb_bitblt;
+		sc->sc_gc.gc_rectfill = gffb_rectfill_a;
 		sc->sc_gc.gc_blitcookie = sc;
 		sc->sc_gc.gc_rop = 0xcc;
 		sc->vd.show_screen_cookie = &sc->sc_gc;
@@ -658,7 +661,8 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_flg |= RI_8BIT_IS_RGB | RI_ENABLE_ALPHA;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_RESIZE;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_RESIZE | WSSCREEN_UNDERLINE |
+		WSSCREEN_HILIT;
 	scr->scr_flags |= VCONS_LOADFONT;
 
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
@@ -1280,6 +1284,16 @@ gffb_rectfill(struct gffb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+gffb_rectfill_a(void *cookie, int dstx, int dsty,
+    int width, int height, long attr)
+{
+	struct gffb_softc *sc = cookie;
+
+	gffb_rectfill(sc, dstx, dsty, width, height,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 gffb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
     int wi, int he, int rop)
 {
@@ -1340,7 +1354,7 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg;
+	uint32_t bg, fg;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1354,9 +1368,12 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (c == 0x20) {
 		gffb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
@@ -1371,7 +1388,7 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	 */
 	mutex_enter(&sc->sc_lock);
 	gffb_sync(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);
+	sc->sc_putchar(cookie, row, col, c, attr & 0xfffffff0);
 	mutex_exit(&sc->sc_lock);
 
 	/*
@@ -1382,7 +1399,9 @@ gffb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	 */
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	}
+	} else if (attr & WSATTR_UNDERLINE)
+		gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+
 }
 
 static void
@@ -1408,16 +1427,18 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (c == 0x20) {
 		gffb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
 	if (rv == GC_OK)
 		return;
 
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 	data = WSFONT_GLYPH(c, font);
 
 	mutex_enter(&sc->sc_lock);
@@ -1434,26 +1455,53 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	gffb_dmanext(sc, (y << 16) | (x & 0xFFFF));
 
 	gffb_dmastart(sc, RECT_EXPAND_TWO_COLOR_DATA(0), he);
-	switch (font->stride) {
-		case 1: {
-			uint8_t *data8 = data;
-			uint32_t reg;
-			for (i = 0; i < he; i++) {
-				reg = *data8;
-				gffb_dmanext(sc, reg << 24);
-				data8++;
+	if (attr & WSATTR_HILIT) {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					reg |= reg >> 1;
+					gffb_dmanext(sc, reg << 24);
+					data8++;
+				}
+				break;
 			}
-			break;
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					reg |= reg >> 1;
+					gffb_dmanext(sc, reg << 16);
+					data16++;
+				}
+				break;
+			}
 		}
-		case 2: {
-			uint16_t *data16 = data;
-			uint32_t reg;
-			for (i = 0; i < he; i++) {
-				reg = *data16;
-				gffb_dmanext(sc, reg << 16);
-				data16++;
+	} else {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data8;
+					gffb_dmanext(sc, reg << 24);
+					data8++;
+				}
+				break;
 			}
-			break;
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					gffb_dmanext(sc, reg << 16);
+					data16++;
+				}
+				break;
+			}
 		}
 	}
 
@@ -1462,7 +1510,9 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 
 	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
-	}
+	} else 	if (attr & WSATTR_UNDERLINE)
+		gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+
 }
 
 static void
