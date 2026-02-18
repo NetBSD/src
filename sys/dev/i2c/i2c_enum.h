@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_enum.h,v 1.3 2025/09/23 13:57:31 thorpej Exp $	*/
+/*	$NetBSD: i2c_enum.h,v 1.4 2026/02/18 13:51:05 thorpej Exp $	*/
 
 /*-             
  * Copyright (c) 2021, 2025 The NetBSD Foundation, Inc.
@@ -82,7 +82,8 @@ i2c_enumerate_deventries(device_t dev, devhandle_t call_handle,
 
 	for (; entry->name != NULL; entry++) {
 		child_devhandle = devhandle_invalid();
-		if (! (*devcb)(dev, call_handle, entry, &child_devhandle)) {
+		if (devcb != NULL &&
+		    ! (*devcb)(dev, call_handle, entry, &child_devhandle)) {
 			continue;
 		}
 		cbrv = i2c_enumerate_device(dev, args, entry->name,
