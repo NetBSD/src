@@ -123,6 +123,8 @@ __KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.144 2024/09/19 06:13:03 andvar Exp $
 /* main configuration routines */
 static int raidframe_booted = 0;
 
+/* RAID scrubbing starting*/
+
 static void rf_ConfigureDebug(RF_Config_t * cfgPtr);
 static void set_debug_option(char *name, long val);
 static void rf_UnconfigureArray(void);
@@ -361,7 +363,7 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureReconstruction);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureDiskQueueSystem);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigurePSStatus);
-	
+
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureEngine);
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureStripeLocks);
 
@@ -384,8 +386,8 @@ rf_Configure(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr, RF_AutoConfig_t *ac)
 	DO_RAID_INIT_CONFIGURE(rf_ConfigureLayout);
 
 
-	
-	
+
+
 	/* Initialize per-RAID PSS bits */
 	rf_InitPSStatus(raidPtr);
 
@@ -560,7 +562,7 @@ rf_ShutdownRDFreeList(void *arg)
 	RF_Raid_t *raidPtr;
 
 	raidPtr = (RF_Raid_t *) arg;
-	
+
 	pool_destroy(&raidPtr->pools.rad);
 }
 
@@ -706,9 +708,9 @@ rf_DoAccess(RF_Raid_t * raidPtr, RF_IoType_t type, RF_RaidAddr_t raidAddress, RF
 	RF_ETIMER_START(desc->tracerec.tot_timer);
 #endif
 
-	if (raidPtr->parity_map != NULL && 
+	if (raidPtr->parity_map != NULL &&
 	    type == RF_IO_TYPE_WRITE)
-		rf_paritymap_begin(raidPtr->parity_map, raidAddress, 
+		rf_paritymap_begin(raidPtr->parity_map, raidAddress,
 		    numBlocks);
 
 	rf_ContinueRaidAccess(desc);

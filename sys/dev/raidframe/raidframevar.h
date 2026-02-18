@@ -215,6 +215,7 @@ typedef struct RF_CallbackValueDesc_s RF_CallbackValueDesc_t;
 typedef struct RF_ChunkDesc_s RF_ChunkDesc_t;
 typedef struct RF_CommonLogData_s RF_CommonLogData_t;
 typedef struct RF_Config_s RF_Config_t;
+typedef struct RF_Scrub_s RF_Scrub_t;
 typedef struct RF_CumulativeStats_s RF_CumulativeStats_t;
 typedef struct RF_DagHeader_s RF_DagHeader_t;
 typedef struct RF_DagList_s RF_DagList_t;
@@ -351,6 +352,13 @@ struct RF_Config_s {
 	 */
 };
 
+/* introduce a scrub components containing scrub rate and portion to scrub */
+struct RF_Scrub_s {
+	uint64_t rate;
+	int portion_begin;
+	int portion_end;
+};
+
 typedef RF_uint32 RF_ReconReqFlags_t;
 /* flags that can be put in the rf_recon_req structure */
 #define RF_FDFLAGS_NONE   0x0	/* just fail the disk */
@@ -386,7 +394,7 @@ enum RF_DiskStatus_e {
 	rf_ds_reconstructing,   /* reconstruction ongoing */
 	rf_ds_dist_spared,      /* reconstruction complete to distributed
                                  * spare space, dead disk not yet replaced */
-	rf_ds_spared,           /* reconstruction complete, dead disk not 
+	rf_ds_spared,           /* reconstruction complete, dead disk not
 				   yet replaced */
 	rf_ds_spare,            /* an available spare disk */
 	rf_ds_used_spare,       /* a spare which has been used, and hence is

@@ -1395,6 +1395,22 @@ out:
 	return retcode;
 }
 
+static int
+rf_scrub(dev_t dev, void *data)
+{
+	struct raid_softc *rs = raidsoftc(dev);
+	RF_Raid_t *raidPtr = &rs->sc_r;
+	RF_Scrub_t *scrb = (RF_Scrub_t *)data;
+	RF_ComponentLabel_t *label = raidget_component_label(raidPtr, 0); /* pick 0 index column as we label remains consitent */
+
+	int level = label->parityConfig - '0'; /* looks like was passed as ASCII from userland */
+
+	if (level == 0)
+		return ENOTSUP;
+
+
+}
+
 #if RF_DISABLED
 static int
 rf_set_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
@@ -1610,6 +1626,9 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((retcode = rf_getConfiguration(rs, data, &k_cfg)) != 0)
 			return retcode;
 		return rf_construct(rs, k_cfg);
+
+	case RAIDFRAME_SCRUB:
+		rf_scrub(dev, data);
 
 		/* shutdown the system */
 	case RAIDFRAME_SHUTDOWN:
