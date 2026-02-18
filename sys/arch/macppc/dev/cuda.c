@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.34 2025/09/23 13:57:31 thorpej Exp $ */
+/*	$NetBSD: cuda.c,v 1.35 2026/02/18 13:35:40 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.34 2025/09/23 13:57:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.35 2026/02/18 13:35:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,10 +184,8 @@ cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
 	struct i2c_enumerate_devices_args *args = v;
 
-	i2c_enumerate_deventries(dev, call_handle, args,
+	return i2c_enumerate_deventries(dev, call_handle, args,
 	    cuda_i2c_devices, cuda_i2cdev_callback);
-
-	return 0;
 }
 
 static device_call_t

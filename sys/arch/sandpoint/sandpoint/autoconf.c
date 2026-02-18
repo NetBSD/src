@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2025/10/03 14:05:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2026/02/18 13:35:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2025/10/03 14:05:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2026/02/18 13:35:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -153,10 +153,8 @@ sandpoint_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	/* Pointer to the table has been stashed in the devhandle. */
 	const struct i2c_deventry *table = call_handle.const_pointer;
 
-	i2c_enumerate_deventries(dev, call_handle, args,
+	return i2c_enumerate_deventries(dev, call_handle, args,
 	    table, sandpoint_i2cdev_callback);
-
-	return 0;
 }
 
 static device_call_t
