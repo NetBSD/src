@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.87 2026/02/14 17:02:19 joe Exp $   */
+/*      $NetBSD: raidctl.c,v 1.88 2026/02/18 19:43:15 joe Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.87 2026/02/14 17:02:19 joe Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.88 2026/02/18 19:43:15 joe Exp $");
 #endif
 
 
@@ -1227,6 +1227,28 @@ get_time_string(char *string, size_t len, int simple_time)
 
 }
 
+static void
+component_err(int level)
+{
+	const char *limit;
+	switch (level) {
+	case 0:
+		limit = "more than one";
+		break;
+	case 1:
+		limit = "exactly two";
+		break;
+	case 5:
+		limit = "more than two";
+		break;
+	default:
+		return; /* no use */
+	}
+
+	fprintf(stderr,  "For RAID level %d the number of columns must be %s.\n", level, limit);
+	usage();
+}
+
 /* Simplified RAID creation with a single command line... */
 static void
 rf_simple_create(int fd, int argc, char *argv[])
@@ -1263,10 +1285,10 @@ rf_simple_create(int fd, int argc, char *argv[])
 	/* Level 0 must have at least two components.
 	   Level 1 must have exactly two components.
 	   Level 5 must have at least three components. */
-	if ((level == 0 && num_components < 2) ||
+	if ((level == 0 && num_components < 2)
 	    (level == 1 && num_components != 2) ||
 	    (level == 5 && num_components < 3))
-		usage();
+		component_err(level);
 
 	/* build a config... */
 
