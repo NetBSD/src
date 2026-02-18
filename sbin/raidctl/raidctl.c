@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.88 2026/02/18 19:43:15 joe Exp $   */
+/*      $NetBSD: raidctl.c,v 1.89 2026/02/18 19:45:51 joe Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.88 2026/02/18 19:43:15 joe Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.89 2026/02/18 19:45:51 joe Exp $");
 #endif
 
 
@@ -1285,7 +1285,7 @@ rf_simple_create(int fd, int argc, char *argv[])
 	/* Level 0 must have at least two components.
 	   Level 1 must have exactly two components.
 	   Level 5 must have at least three components. */
-	if ((level == 0 && num_components < 2)
+	if ((level == 0 && num_components < 2) ||
 	    (level == 1 && num_components != 2) ||
 	    (level == 5 && num_components < 3))
 		component_err(level);
