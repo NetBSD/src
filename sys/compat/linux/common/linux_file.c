@@ -202,19 +202,19 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
 	 */
-        if (!(flags & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
-                file_t *fp;
+	if (!(flags & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
+		file_t *fp;
 
 		fp = fd_getfile(fd);
 
-                /* ignore any error, just give it a try */
-                if (fp != NULL) {
+		/* ignore any error, just give it a try */
+		if (fp != NULL) {
 			if (fp->f_type == DTYPE_VNODE) {
 				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, NULL);
 			}
 			fd_putfile(fd);
 		}
-        }
+	}
 }
 
 /*
