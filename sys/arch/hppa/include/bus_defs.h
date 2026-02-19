@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.4 2026/02/19 07:52:37 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.5 2026/02/19 08:00:09 skrll Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -178,10 +178,6 @@ struct hppa_bus_space_tag {
 			      bus_space_handle_t h2, bus_size_t o2, bus_size_t c);
 };
 typedef const struct hppa_bus_space_tag *bus_space_tag_t;
-
-/* flags for bus space map functions */
-#define BUS_SPACE_MAP_NOEXTENT		0x8000  /* no extent ops */
-
 
 /* bus access routines */
 #define	BUS_SPACE_ALIGNED_POINTER(p, t)	ALIGNED_POINTER(p, t)

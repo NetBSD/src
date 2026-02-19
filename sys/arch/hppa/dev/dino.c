@@ -1,4 +1,4 @@
-/*	$NetBSD: dino.c,v 1.18 2025/04/06 03:31:52 riastradh Exp $ */
+/*	$NetBSD: dino.c,v 1.19 2026/02/19 08:00:09 skrll Exp $ */
 
 /*	$OpenBSD: dino.c,v 1.5 2004/02/13 20:39:31 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.18 2025/04/06 03:31:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dino.c,v 1.19 2026/02/19 08:00:09 skrll Exp $");
 
 /* #include "cardbus.h" */
 
@@ -487,8 +487,8 @@ dino_iomap(void *v, bus_addr_t bpa, bus_size_t size,
 	struct dino_softc *sc = v;
 	int error;
 
-	if (!(flags & BUS_SPACE_MAP_NOEXTENT) &&
-	    (error = extent_alloc_region(sc->sc_ioex, bpa, size, EX_NOWAIT)))
+	error = extent_alloc_region(sc->sc_ioex, bpa, size, EX_NOWAIT);
+	if (error)
 		return error;
 
 	if (bshp)
