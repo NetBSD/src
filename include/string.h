@@ -1,4 +1,4 @@
-/*	$NetBSD: string.h,v 1.58 2024/12/09 12:09:02 nros Exp $	*/
+/*	$NetBSD: string.h,v 1.59 2026/02/19 13:19:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -126,7 +126,7 @@ char	*strstr(const char *, const char *);
 char	*strtok(char * __restrict, const char * __restrict);
 #if (_POSIX_C_SOURCE - 0 >= 200112L) || \
     defined(_REENTRANT) || defined(_NETBSD_SOURCE)
-char	*strtok_r(char *, const char *, char **);
+char	*strtok_r(char *__restrict, const char *__restrict, char **__restrict);
 #endif /* _POSIX_C_SOURCE || _REENTRANT || _NETBSD_SOURCE */
 size_t	 strxfrm(char * __restrict, const char * __restrict, size_t);
 #if (_POSIX_C_SOURCE - 0) >= 200809L || defined(_NETBSD_SOURCE)
