@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.5 2026/02/19 08:00:09 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.6 2026/02/19 08:52:56 skrll Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -184,19 +184,6 @@ typedef const struct hppa_bus_space_tag *bus_space_tag_t;
 
 /* XXX fredette */
 #define	__BUS_SPACE_HAS_STREAM_METHODS
-
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
-#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* For devices that have a 24-bit address space */
 #define	BUS_DMA_24BIT		BUS_DMA_BUS1
