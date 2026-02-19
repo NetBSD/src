@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.14 2025/11/30 23:42:56 thorpej Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.15 2026/02/19 11:51:14 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.14 2025/11/30 23:42:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.15 2026/02/19 11:51:14 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -123,7 +123,7 @@ bootinfo_get_mmu(struct bi_record *bi)
 	case BI_MMU_SUN3:	return MMU_SUN;
 	case BI_MMU_APOLLO:	/* XXX MMU_HP ??? */
 	case BI_MMU_COLDFIRE:
-	default:		return FPU_UNKNOWN;
+	default:		return -666;
 	}
 }
 
