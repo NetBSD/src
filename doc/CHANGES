@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3230 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3231 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -163,7 +163,20 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	evbppc: wiiu: Add RTC support. [jmcneill 20260203]
 	ftp(1): simplify socket buffer handling to improve performance.
 		[lukem 20260207]
-	tmux(1): Import version 3.6a. [wiz 20260209]
 	ftp(1): send custom HTTP headers in provided order, not reverse.
 		[lukem 20260208]
+	tmux(1): Import version 3.6a. [wiz 20260209]
+	gpt(8): Allow the -s sector size to be scaled (but just with 'K')
+		[kre 20260209]
+	gpt(8): Add human friendly size output (and more) to gpt show.
+		[kre 20260209]
+	ld.elf_so(4): Support DT_PREINIT_ARRAY which holds a pointer to
+		an array of pointers to functions that should be executed
+		before the main program starts. [skrll 20260210]
+	sparc64: Add thermal limits to ADM1026 sensors. [jdc 20260210]
 	binutils: Import 2.46 [christos 20260215]
+	gffb(4): Support underlined console text. [macallan 20260217]
+	hppa: Support underlined console text in gftfb(4) and hyperfb(4).
+		[macallan 20260217]
+	pchtemp(4): Add a simple driver for Intel PCH thermal sensors.
+		[yamt 20260220]
