@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.58 2020/10/06 18:47:07 mlelstv Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.58 2020/10/06 18:47:07 mlelstv Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -169,6 +169,9 @@ do_single(int argc, char **argv, int action)
 	unsigned int ndisks, ui;
 	int ret = 1;
 
+	if (argc == 0)
+		usage();
+
 	flags = 0;
 	memset(&ccio, 0, sizeof(ccio));
 
@@ -200,8 +203,7 @@ do_single(int argc, char **argv, int action)
 			noflags = 1;
 		} else {
 			if (action == CCD_CONFIGALL) {
-				warnx("%s: bad line: %lu", ccdconf,
-				    (u_long)lineno);
+				warnx("%s: bad line: %zu", ccdconf, lineno);
 				return (1);
 			} else
 				usage();
@@ -226,13 +228,11 @@ do_single(int argc, char **argv, int action)
 	}
 
 	if (noflags == 0) {
-		/* Next argument is the ccd configuration flags. */
-		cp = *argv++; --argc;
-		if ((flags = flags_to_val(cp)) < 0) {
-			warnx("invalid flags argument: %s", cp);
-			free(ccd);
-			return (1);
-		}
+		/* Next argument might be the ccd configuration flags. */
+		if ((flags = flags_to_val(*argv)) < 0)
+			flags = 0;	/* It wasn't */
+		else
+			argv++, --argc;
 	}
 
 	/* Next is the list of disks to make the ccd from. */
@@ -287,7 +287,7 @@ do_single(int argc, char **argv, int action)
 
 	ret = 0;
 
-error:
+ error:;
 	free(ccd);
 	while (ndisks > 0)
 		free(disks[--ndisks]);
