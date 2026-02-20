@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.27 2014/08/13 13:14:35 apb Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.28 2026/02/20 21:09:37 kre Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 13, 2014
+.Dd February 20, 2026
 .Dt CCDCONFIG 8
 .Os
 .Sh NAME
@@ -39,8 +39,7 @@
 .Ar ccd
 .Ar ileave
 .Op Ar flags
-.Ar dev
-.Op Ar ...
+.Ar dev Ns \&...
 .Nm
 .Fl C
 .Op Fl v
@@ -48,18 +47,19 @@
 .Nm
 .Fl u
 .Op Fl v
-.Ar ccd
-.Op Ar ...
+.Ar ccd Ns \&...
 .Nm
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
 .Nm
 .Fl g
-.Oo
-.Ar ccd Oo ...
-.Oc
-.Oc
+.Op Fl vWw
+.Op Ar ccd Ns \&...
+.Nm
+.Fl p
+.Op Fl hsVvWw
+.Op Ar ccd Ns \&...
 .Sh DESCRIPTION
 .Nm
 is used to dynamically configure and unconfigure concatenated disk
@@ -71,6 +71,11 @@ The options are as follows:
 .Bl -tag -width indent
 .It Fl c
 Configure a ccd.
+The ccd to configure is given as
+.Ar ccd ,
+it is usually the name of a
+.Xr ccd 4
+device relative to /dev/.
 This is the default behavior of
 .Nm .
 .It Fl C
@@ -85,24 +90,94 @@ Dump the current ccd configuration in a format suitable
 for use as the ccd configuration file.
 If no arguments are specified, every configured ccd is dumped.
 Otherwise, the configuration of each listed ccd is dumped.
+.It Fl h
+With
+.Fl p
+show the size as a number of bytes, rather than sectors,
+and interpreted by
+.Xr humanize_number 3 .
+.It Fl s
+With
+.Fl p
+show the flags in string form, rather than as a number.
 .It Fl u
-Unconfigure a ccd.
+Unconfigure one, or more, ccds.
 .It Fl U
-Unconfigure all ccd devices listed the ccd configuration file.
+Unconfigure all ccd devices listed in the ccd configuration file.
+.It Fl V
+Identical to
+.Fl v ,
+except when used with
+.Fl p
+a more ornate layout is used.
 .It Fl v
 Causes
 .Nm
 to be verbose.
+When used with
+.Fl c
+or
+.Fl C
+information about the ccd being configured is printed.
+When used with
+.Fl u
+or
+.Fl U
+a message indicating that the ccd has been unconfigured is printed.
+When used with
+.Fl g
+or
+.Fl p
+a header line is printed before the output.
+In the case of
+.Fl g
+the header is in a format that will be treated as a comment
+if included in a ccd configuration file.
+.It Fl W
+With
+.Fl g
+or
+.Fl p
+when a component device of a ccd is a wedge with a label,
+print the label in
+.Li NAME=label
+format instead of the wedge device name.
+Wedge names in this format are always accepted as a
+.Ar dev
+.Pq component device
+argument.
+.It Fl w
+The same as
+.Fl W
+except wedge labels which contain any of
+.Sq \&\ \&
+.Pq space ,
+.Sq \et
+.Pq tab ,
+or
+.Sq \en
+.Pq newline
+are treated as if no label exists; the wedge device name is used.
 .El
 .Pp
+See the
+.Sx ENVIRONMENT
+section below for some extra options.
+.Pp
 A ccd is described on the command line and in the ccd configuration
-file by the name of the ccd, the interleave factor,
+file by the name of the ccd
+.Po
+the string
+.Dq Cm ccd
+with a decimal unit number appended
+.Pc ,
+the interleave factor,
 the ccd configuration flags, and a list of one or more devices.
 An interleave factor of 0 means that the devices are
 concatenated serially, not interleaved.
 The flags may be represented as a decimal number, a hexadecimal number,
 a comma-separated list of strings, or the word
-.Dq none .
+.Dq Li none .
 The flags are as follows:
 .Bl -column -offset indent "CCDF_UNIFORM " "0x02 "
 .It Em "Symbolic	Numeric	Comment"
@@ -111,6 +186,16 @@ The size of all components is clamped to that of the smallest component.
 .It CCDF_NOLABEL	0x04	Ignore raw disklabel.
 Useful when creating a new ccd.
 .El
+.Pp
+The aliases
+.Dq Li uniform
+and
+.Dq Li nolabel
+may be used instead of the formal names, and are printed when
+.Nm
+.Fl ps
+is requested.
+In all cases when considering input names of flags, character case is ignored.
 .Ss /etc/ccd.conf
 The file
 .Pa /etc/ccd.conf
@@ -120,15 +205,15 @@ if
 .Fl C
 or
 .Fl U
-is used.
+is used without
+.Fl f .
 Each line of the configuration file contains arguments as per the
 .Fl c
 argument:
 .Ar ccd
 .Ar ileave
 .Op Ar flags
-.Ar dev
-.Op Ar ...
+.Ar dev Ns \&...
 .Pp
 A
 .Sq #
@@ -146,6 +231,59 @@ See
 .Sx EXAMPLES
 for an example of
 .Pa /etc/ccd.conf .
+.Sh ENVIRONMENT
+The name
+.Ev CCDCONFIG
+in the environment passed to
+.Nm ,
+can be set to a string containing of one or more of the
+characters:
+.Li Sq h
+.Li Sq s
+.Li Sq V
+.Li Sq v
+.Li Sq W
+and
+.Li Sq w ,
+to cause the appropriate option to default to on.
+Any other characters in the value of
+.Ev CCDCONFIG
+are ignored.
+To allow these defaults to be overridden for a particular instance of
+.Nm ,
+additional options,
+not shown in the SYNOPSIS, listed above, or output in a usage message,
+can be used on the command line to override settings from
+.Ev CCDCONFIG .
+.Fl D
+will disable
+.Li Sq w
+and
+.Li Sq W ,
+.Fl n
+will disable
+.Li Sq h ,
+.Fl q
+will disable
+.Li Sq v
+and
+.Li Sq V ,
+and
+.Fl S
+will disable
+.Li Sq s .
+In addition the options in each of the option pairs
+.Fl W
+and
+.Fl w ,
+and
+.Fl V
+and
+.Fl v ,
+are mutually exclusive, using one on the command line will
+override an earlier use of the other, or use of the other
+character in
+.Ev CCDCONFIG .
 .Sh FILES
 /etc/ccd.conf - default ccd configuration file.
 .Sh EXAMPLES
@@ -168,6 +306,7 @@ An example
 ccd0            16      none    /dev/sd2e /dev/sd3e
 .Ed
 .Sh SEE ALSO
+.Xr humanize_number 3 ,
 .Xr ccd 4 ,
 .Xr ccd.conf 5 ,
 .Xr rc 8
@@ -176,3 +315,12 @@ The
 .Nm
 command first appeared in
 .Nx 1.1 .
+The
+.Fl W
+.Pq and Fl w
+option,
+and the
+.Fl p
+option, and its related options,
+first appeared in
+.Nx 12.0 .

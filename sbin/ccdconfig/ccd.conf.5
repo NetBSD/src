@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.conf.5,v 1.5 2014/08/13 14:13:04 apb Exp $
+.\"	$NetBSD: ccd.conf.5,v 1.6 2026/02/20 21:09:37 kre Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -58,8 +58,7 @@ argument to
 .Ar ccd
 .Ar ileave
 .Op Ar flags
-.Ar dev
-.Op Ar ...
+.Ar dev Ns \&...
 .Ed
 .Pp
 .Bl -tag -width preserveX
@@ -74,7 +73,7 @@ For serial concatenation, specify
 The flags for the device, which may be represented as a decimal number,
 a hexadecimal number, a comma-separated list of strings, or the word
 .Dq none .
-.It Ar dev Op Ar ...
+.It Ar dev Ns \&...
 The component partitions to be concatenated, which should be of type
 .Dv FS_CCD .
 .El

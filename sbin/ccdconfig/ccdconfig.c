@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.60 2026/02/20 21:09:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.60 2026/02/20 21:09:37 kre Exp $");
 #endif
 
 #include <sys/param.h>
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <nlist.h>
 #include <stdio.h>
@@ -59,16 +60,23 @@ __RCSID("$NetBSD: ccdconfig.c,v 1.59 2026/02/20 17:07:53 kre Exp $");
 #include "pathnames.h"
 
 
-static	size_t lineno;
 static	gid_t egid;
+static	size_t lineno;
+static	int human_sz;
+static	u_int sector_size;
+static	int string_flags;
 static	int verbose;
+static	int wedge_names;
+
 static	const char *ccdconf = _PATH_CCDCONF;
 
 static struct	flagval {
 	const char *fv_flag;
 	int	fv_val;
 } flagvaltab[] = {
+	{ "uniform",		CCDF_UNIFORM },
 	{ "CCDF_UNIFORM",	CCDF_UNIFORM },
+	{ "nolabel",		CCDF_NOLABEL },
 	{ "CCDF_NOLABEL",	CCDF_NOLABEL },
 	{ NULL,			0 },
 };
@@ -78,6 +86,7 @@ static struct	flagval {
 #define CCD_UNCONFIG		2	/* unconfigure a device */
 #define CCD_UNCONFIGALL		3	/* unconfigure all devices */
 #define CCD_DUMP		4	/* dump a ccd's configuration */
+#define CCD_PRINT_INFO		5	/* print ccd configuration info */
 
 static	int checkdev(char *);
 static	int do_io(char *, u_long, struct ccd_ioctl *);
@@ -86,6 +95,7 @@ static	int do_all(int);
 static	int dump_ccd(int, char **, int);
 static	int flags_to_val(char *);
 static	int pathtounit(char *, int *);
+static	const char *print_name(const char *);
 static	char *resolve_ccdname(char *);
 __dead static	void usage(void);
 
@@ -93,10 +103,23 @@ int
 main(int argc, char *argv[])
 {
 	int ch, options = 0, action = CCD_CONFIG;
+	char *ev = getenv("CCDCONFIG");
+
+	if (ev != NULL) {
+		while ((ch = *ev++) != '\0')
+			switch (ch) {
+			case 'h':	human_sz = 1;		break;
+			case 's':	string_flags = 1;	break;
+			case 'V':	verbose = 2;		break;
+			case 'v':	verbose = 1;		break;
+			case 'W':	wedge_names = 2;	break;
+			case 'w':	wedge_names = 1;	break;
+			}
+	}
 
 	egid = getegid();
 	setegid(getgid());
-	while ((ch = getopt(argc, argv, "cCf:guUv")) != -1) {
+	while ((ch = getopt(argc, argv, "cCDf:ghnpqSsuUvVWw")) != -1) {
 		switch (ch) {
 		case 'c':
 			action = CCD_CONFIG;
@@ -108,12 +131,42 @@ main(int argc, char *argv[])
 			++options;
 			break;
 
+		case 'D':
+			wedge_names = 0;
+			break;
+
 		case 'f':
 			ccdconf = optarg;
 			break;
 
 		case 'g':
 			action = CCD_DUMP;
+			++options;
+			break;
+
+		case 'h':
+			human_sz = 1;
+			break;
+
+		case 'n':
+			human_sz = 0;
+			break;
+
+		case 'p':
+			action = CCD_PRINT_INFO;
+			++options;
+			break;
+
+		case 'q':
+			verbose = 0;
+			break;
+
+		case 'S':
+			string_flags = 0;
+			break;
+
+		case 's':
+			string_flags = 1;
 			break;
 
 		case 'u':
@@ -126,8 +179,20 @@ main(int argc, char *argv[])
 			++options;
 			break;
 
+		case 'V':
+			verbose = 2;
+			break;
+
 		case 'v':
 			verbose = 1;
+			break;
+
+		case 'W':
+			wedge_names = 2;
+			break;
+
+		case 'w':
+			wedge_names = 1;
 			break;
 
 		default:
@@ -151,6 +216,7 @@ main(int argc, char *argv[])
 			exit(do_all(action));
 			/* NOTREACHED */
 
+		case CCD_PRINT_INFO:
 		case CCD_DUMP:
 		default:
 			exit(dump_ccd(argc, argv, action));
@@ -299,7 +365,7 @@ static int
 do_all(int action)
 {
 	FILE *f;
-	char *line, *cp, *vp, **argv, **nargv;
+	char *line, *cp, *vp, **argv;
 	int argc, rval;
 	size_t len;
 
@@ -326,10 +392,9 @@ do_all(int action)
 			if (vp == NULL)
 				continue;
 
-			nargv = erealloc(argv, sizeof(char *) * (argc + 1));
-			argv = nargv;
-			argc++;
-			argv[argc - 1] = vp;
+			argv = erealloc(argv, sizeof(char *) * (argc + 2));
+			argv[argc++] = vp;
+			argv[argc] = NULL;
 
 			/*
 			 * If our action is to unconfigure all, then pass
@@ -348,7 +413,7 @@ do_all(int action)
 			if (do_single(argc, argv, action))
 				rval = 1;
 
- end_of_line:
+ end_of_line:;
 		if (argv != NULL)
 			free(argv);
 		free(line);
@@ -460,64 +525,227 @@ do_io(char *path, u_long cmd, struct ccd_ioctl *cciop)
 	return (0);
 }
 
-static void
-print_ccd_info(int u, struct ccddiskinfo *ccd, char *str)
+static const char *
+print_name(const char * dev)
 {
+	int fd;
+	ssize_t len;
+	struct dkwedge_info dkw;
+	static char nbuf[MAXPATHLEN];
+
+	sector_size = DEV_BSIZE;
+
+	if (!wedge_names)
+		return dev;
+
+	if (strncmp(dev, "/dev/", 5) == 0)
+		fd = opendisk(dev + 5, O_RDONLY, nbuf, sizeof nbuf, 0);
+	else if (strchr(dev, '/') == NULL)
+		fd = opendisk(dev, O_RDONLY, nbuf, sizeof nbuf, 0);
+	else
+		fd = open(dev, O_RDONLY);
+
+	if (fd < 0)
+		return dev;
+
+	if (ioctl(fd, DIOCGWEDGEINFO, &dkw) == -1) {
+		close(fd);
+		return dev;
+	}
+	close(fd);
+
+	if (dkw.dkw_wname[0] == '\0')
+		return dev;
+
+	if (wedge_names < 2) {
+		if (strchr((char *)dkw.dkw_wname, '\n') != NULL ||
+		    strchr((char *)dkw.dkw_wname, ' ') != NULL ||
+		    strchr((char *)dkw.dkw_wname, '\t') != NULL)
+			return dev;
+	}
+
+	len = snprintf(nbuf, sizeof nbuf, "NAME=%s", dkw.dkw_wname);
+	if (len < 0)
+		return dev;
+	if ((size_t)len > sizeof nbuf)
+		return dev;
+	if (len > 35)		/* don't return GUIDS */
+		return dev;
+
+	return nbuf;
+}
+
+static void
+config_info(int u, struct ccddiskinfo *ccd, char *str)
+{
+	int i;
 	static int header_printed = 0;
 
 	if (header_printed == 0 && verbose) {
-		printf("# ccd\t\tileave\tflags\t\tsize\tcomponent devices\n");
+		printf("# ccd\t\tileave\tflags\tcomponent devices\n");
 		header_printed = 1;
 	}
 
 	/* Dump out softc information. */
-	printf("ccd%d\t\t%d\t0x%x\t%ju\t", u, ccd->ccd_ileave,
-	    ccd->ccd_flags & CCDF_USERMASK,
-	    (uintmax_t)ccd->ccd_size * DEV_BSIZE);
+	printf("ccd%d\t\t%d\t0x%x\t", u, ccd->ccd_ileave,
+	    ccd->ccd_flags & CCDF_USERMASK);
 
 	/* Read component pathname and display component info. */
-	for (size_t i = 0; i < ccd->ccd_ndisks; ++i) {
-		fputs(str, stdout);
-		fputc((i + 1 < ccd->ccd_ndisks) ? ' ' : '\n', stdout);
+	for (i = ccd->ccd_ndisks; --i >= 0; ) {
+		printf("%s%s", print_name(str), i ? " " : "\n");
 		str += strlen(str) + 1;
 	}
 	fflush(stdout);
 }
 
+static void
+get_sec_size(int u)
+{
+	int fd;
+	char ccdname[32];
+	char buf[MAXPATHLEN];
+
+	sector_size = DEV_BSIZE;
+
+	if (snprintf(ccdname, sizeof ccdname, "ccd%d", u) >=
+	    (ssize_t)sizeof ccdname)		/* very unlikely */
+		return;
+
+	fd = opendisk(ccdname, O_RDONLY, buf, sizeof buf, 0);
+	if (fd < 0)
+		return;
+
+	if (ioctl(fd, DIOCGSECTORSIZE, &sector_size) == -1)
+		sector_size = DEV_BSIZE;
+
+	(void) close(fd);
+}
+
+static void
+ccd_info(int u, struct ccddiskinfo *ccd, char *names)
+{
+	const char *sep;
+	char *p;
+	size_t len;
+	u_int n;
+	static int header_printed = 0;
+
+	if (verbose && !header_printed) {
+		printf("ccd\t%11s%18s%15s\t%s\n", "ileave", "flags", "size",
+		    "component devices");
+		if (verbose > 1)
+			printf("----\t%11s%18s%15s\t%s\n", "------", "-----",
+			    "----", "--------- -------");
+		header_printed = 1;
+	} else if (verbose > 1)
+		putchar('\n');
+
+	printf("ccd%d\t%11d", u, ccd->ccd_ileave);
+
+	if (string_flags) {
+		u_int f = ccd->ccd_flags & CCDF_USERMASK;
+
+		if (f == 0)
+			printf("%18s", "none");
+		else {
+			for (len = n = 0; flagvaltab[n].fv_flag != NULL; n++)
+				if (f & flagvaltab[n].fv_val) {
+					len += strlen(flagvaltab[n].fv_flag)+1;
+					f &= ~flagvaltab[n].fv_val;
+				}
+
+			if (len > 0)
+				len--;
+			if (len < 18)
+				printf("%*s", (int)(18 - len), "");
+			else
+				putchar(' ');
+
+			f = ccd->ccd_flags & CCDF_USERMASK;
+			for (len = 1, n = 0; flagvaltab[n].fv_flag != NULL; n++)
+				if (f & flagvaltab[n].fv_val) {
+					printf("%s%s", ","+len,
+					    flagvaltab[n].fv_flag);
+					len = 0;
+					f &= ~flagvaltab[n].fv_val;
+				}
+		}
+	} else
+		printf("  %#16x", ccd->ccd_flags & CCDF_USERMASK);
+
+	if (human_sz) {
+		char szbuf[6];
+
+		get_sec_size(u);
+
+		if (humanize_number(szbuf, sizeof szbuf,
+		    (intmax_t)ccd->ccd_size * sector_size,
+		    NULL, HN_AUTOSCALE, HN_DECIMAL | HN_B) == -1)
+			goto just_number;
+
+		printf("%15s", szbuf);
+
+	} else {
+   just_number:;
+		printf("%15ju", (uintmax_t)ccd->ccd_size);
+	}
+
+	sep = "\t";
+	for (p = names, n = ccd->ccd_ndisks; n > 0; n--) {
+		printf("%-*s%s", verbose > 1 && p != names ? 57 : 1,
+		     sep, print_name(p));
+
+		sep = verbose > 1 ? "\n" : " ";
+
+		p += strlen(p) + 1;
+	}
+	putchar('\n');
+}
+
 static int
-printccdinfo(int u)
+dumpccdinfo(int u, int action)
 {
 	struct ccddiskinfo ccd;
 	size_t s = sizeof(ccd);
-	size_t len;
 	const char *str;
-
-	if (sysctlbyname(str = "kern.ccd.info", &ccd, &s, &u, sizeof(u))
-	    == -1) {
-		if (errno == ENOENT)
-			warnx("ccd unit %d not configured", u);
-		else
-			warn("error getting %s for ccd%d", str, u);
-		return 1;
-	}
-
-	if (sysctlbyname(str = "kern.ccd.components", NULL, &len, &u, sizeof(u))
-	    == -1) {
-		warn("Error getting %s for ccd%d", str, u);
-		return 1;
-	}
-
 	char *names;
+	size_t len;
+
+	str = "kern.ccd.info";
+	if (sysctlbyname(str, &ccd, &s, &u, sizeof(u)) == -1) {
+		if (errno == ENOENT)
+			warnx("ccd%d is not configured", u);
+		else
+			warn("cannot get %s for ccd%d",str,u);
+		return 1;
+	}
+
+	str = "kern.ccd.components";
+	if (sysctlbyname(str, NULL, &len, &u, sizeof(u)) == -1) {
+		warn("error getting %s (length) for ccd%d", str, u);
+		return 1;
+	}
 	names = emalloc(len);
-	if (sysctlbyname(str = "kern.ccd.components", names, &len, &u,
-	    sizeof(u)) == -1) {
-		warn("error getting %s for ccd%d", str, u);
+	if (sysctlbyname(str, names, &len, &u, sizeof(u)) == -1) {
+		warn("error getting %s (data) for ccd%d", str, u);
 		free(names);
 		return 1;
 	}
-	print_ccd_info(u, &ccd, names);
+
+	if (action == CCD_PRINT_INFO)
+		ccd_info(u, &ccd, names);
+	else
+		config_info(u, &ccd, names);
+
 	free(names);
+
 	return 0;
+}
+
+static int
+cmp_unit(const void *a, const void *b)
+{
+	return *(const int *)a - *(const int *)b;
 }
 
 static int
@@ -525,21 +753,25 @@ dump_ccd(int argc, char **argv, int action)
 {
 	const char *sys;
 	int errs = 0;
+
 	if (argc == 0) {
 		int *units;
 		size_t nunits = 0;
-		if (sysctlbyname(sys = "kern.ccd.units", NULL, &nunits, NULL, 0)
-		    == -1) {
+
+		sys = "kern.ccd.units";
+		if (sysctlbyname(sys, NULL, &nunits, NULL, 0) == -1) {
 			switch (errno) {
 			case ENOENT:
 				warnx("no ccd driver in the kernel");
 				return 1;
 			case ENOMEM:
-				break;
+				break;		/* XXX ??? Huh, why? */
 			default:
-				err(EXIT_FAILURE, "1 error getting %s", sys);
+				err(EXIT_FAILURE,
+				    "error getting %s (length)", sys);
+				/* NOTREACHED */
 			}
-		    }
+		}
 
 		if (nunits == 0) {
 			warnx("no concatenated disks configured");
@@ -549,10 +781,13 @@ dump_ccd(int argc, char **argv, int action)
 		units = emalloc(nunits);
 
 		if (sysctlbyname(sys, units, &nunits, NULL, 0) == -1)
-			err(EXIT_FAILURE, "2 error getting %s", sys);
+			err(EXIT_FAILURE, "error getting %s (data)", sys);
+
 		nunits /= sizeof(*units);
+		if (nunits > 1)
+			qsort(units, nunits, sizeof units[0], cmp_unit);
 		for (size_t i = 0; i < nunits; i++)
-			errs += printccdinfo(units[i]);
+			errs += dumpccdinfo(units[i], action);
 		free(units);
 		return errs;
 	}
@@ -570,12 +805,13 @@ dump_ccd(int argc, char **argv, int action)
 			continue;
 		}
 		if ((error = pathtounit(ccd, &i)) != 0) {
+			errno = error;
 			warn("%s", ccd);
 			free(ccd);
 			errs++;
 			continue;
 		}
-		errs += printccdinfo(i);
+		errs += dumpccdinfo(i, action);
 		free(ccd);
 	}
 	return errs;
@@ -587,24 +823,21 @@ flags_to_val(char *flags)
 {
 	char *cp, *tok;
 	int i, tmp, val = ~CCDF_USERMASK;
-	size_t flagslen;
 
 	/*
 	 * The most common case is that of NIL flags, so check for
 	 * those first.
 	 */
-	if (strcmp("none", flags) == 0 || strcmp("0x0", flags) == 0 ||
+	if (strcasecmp("none", flags) == 0 || strcasecmp("0x0", flags) == 0 ||
 	    strcmp("0", flags) == 0)
 		return (0);
-
-	flagslen = strlen(flags);
 
 	/* Check for values represented by strings. */
 	cp = estrdup(flags);
 	tmp = 0;
 	for (tok = cp; (tok = strtok(tok, ",")) != NULL; tok = NULL) {
 		for (i = 0; flagvaltab[i].fv_flag != NULL; ++i)
-			if (strcmp(tok, flagvaltab[i].fv_flag) == 0)
+			if (strcasecmp(tok, flagvaltab[i].fv_flag) == 0)
 				break;
 		if (flagvaltab[i].fv_flag == NULL) {
 			free(cp);
@@ -618,24 +851,18 @@ flags_to_val(char *flags)
 	val = tmp;
 	goto out;
 
- bad_string:
+ bad_string:;
 
-	/* Check for values represented in hex. */
-	if (flagslen > 2 && flags[0] == '0' && flags[1] == 'x') {
-		errno = 0;	/* to check for ERANGE */
-		val = (int)strtol(&flags[2], &cp, 16);
-		if ((errno == ERANGE) || (*cp != '\0'))
-			return (-1);
-		goto out;
-	}
+#if CCDF_NOLABEL > CCDF_UNIFORM
+#define	MAX_FLAG CCDF_NOLABEL
+#else
+#define MAX_FLAG CCDF_UNIFORM
+#endif
 
-	/* Check for values represented in decimal. */
-	errno = 0;	/* to check for ERANGE */
-	val = (int)strtol(flags, &cp, 10);
-	if ((errno == ERANGE) || (*cp != '\0'))
-		return (-1);
-
- out:
+	val = (int)strtoi(flags, &cp, 0, 0, MAX_FLAG, &tmp);
+	if (tmp != 0 || cp == flags || *cp != '\0')
+		return -1;
+ out:;
 	return (((val & ~CCDF_USERMASK) == 0) ? val : -1);
 }
 
@@ -644,12 +871,12 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-cv] ccd ileave [flags] dev [...]\n",
+	fprintf(stderr, "usage: %s [-cv] ccd ileave [flags] dev...\n",
 	    progname);
 	fprintf(stderr, "       %s -C [-v] [-f config_file]\n", progname);
-	fprintf(stderr, "       %s -u [-v] ccd [...]\n", progname);
+	fprintf(stderr, "       %s -g [-vWw] [ccd...]\n", progname);
+	fprintf(stderr, "       %s -p [-hsVvWw] [ccd...]\n", progname);
+	fprintf(stderr, "       %s -u [-v] ccd...\n", progname);
 	fprintf(stderr, "       %s -U [-v] [-f config_file]\n", progname);
-	fprintf(stderr, "       %s -g [ccd [...]]\n",
-	    progname);
 	exit(1);
 }
