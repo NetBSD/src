@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.157 2026/02/20 03:19:30 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.156 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.157 2026/02/20 03:19:30 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1961,7 +1961,7 @@ vcache_reclaim(vnode_t *vp)
 	}
 
 	if (vip->vi_key.vk_key_len > 0) {
-	/* Remove from vnode cache. */
+		/* Remove from vnode cache. */
 		hash = vcache_hash(&vip->vi_key);
 		mutex_enter(&vcache_lock);
 		KASSERT(vip == vcache_hash_lookup(&vip->vi_key, hash));
