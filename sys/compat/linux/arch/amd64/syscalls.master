@@ -145,7 +145,8 @@
 			    struct itimerval50 *itv, \
 			    struct itimerval50 *oitv); }
 39	STD		{ pid_t|sys||getpid(void); }
-40	UNIMPL		sendfile
+40	STD 	{ ssize_t|linux_sys||sendfile(int out_fd, int in_fd, \
+				off_t *offset, size_t count); }
 41	STD		{ int|linux_sys||socket(int domain, \
 			    int type, int protocol); }
 42	STD		{ int|linux_sys||connect(int s, \
