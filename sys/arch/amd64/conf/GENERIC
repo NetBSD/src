@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.620 2025/11/07 19:07:38 pgoyette Exp $
+# $NetBSD: GENERIC,v 1.621 2026/02/20 07:54:26 yamt Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.620 $"
+#ident		"GENERIC-$Revision: 1.621 $"
 
 maxusers	64		# estimated number of users
 
@@ -530,6 +530,8 @@ amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
 
 amdsmn* at pci?				# AMD SMN Configuration
 amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
+
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

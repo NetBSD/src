@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.101 2026/02/12 04:26:11 kre Exp $
+# $NetBSD: md.i386,v 1.102 2026/02/20 07:54:25 yamt Exp $
 #
 #./@MODULEDIR@/emuxki				modules-base-kernel	kmod
 #./@MODULEDIR@/emuxki/emuxki.kmod		modules-base-kernel	kmod
@@ -166,6 +166,8 @@
 ./@MODULEDIR@/odcm/odcm.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/padlock				modules-base-kernel	kmod
 ./@MODULEDIR@/padlock/padlock.kmod		modules-base-kernel	kmod
+./@MODULEDIR@/pchtemp				modules-base-kernel	kmod
+./@MODULEDIR@/pchtemp/pchtemp.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/powernow				modules-base-kernel	kmod
 ./@MODULEDIR@/powernow/powernow.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/pwdog				modules-base-kernel	kmod

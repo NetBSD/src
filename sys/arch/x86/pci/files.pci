@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.27 2023/04/12 06:39:15 riastradh Exp $
+#	$NetBSD: files.pci,v 1.28 2026/02/20 07:54:26 yamt Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -88,3 +88,8 @@ file	arch/x86/pci/imcsmb/imc.c		imc
 device	imcsmb: i2cbus
 attach	imcsmb at imc
 file	arch/x86/pci/imcsmb/imcsmb.c		imcsmb
+
+# Intel PCH Thermal Subsystem
+device	pchtemp: sysmon_envsys
+attach	pchtemp at pci
+file	arch/x86/pci/pchtemp.c		pchtemp
