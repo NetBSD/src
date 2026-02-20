@@ -276,6 +276,25 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
 }
 
 /*
+ *	sendfile(2). 
+ *
+ *  
+ */
+int
+linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
+	register_t *retval)
+{
+	/*
+	 * syscallarg(int) out_fd;
+	 * syscallarg(int) in_fd;
+	 * syscallarg(off_t *) offset;
+	 * syscallarg(size_t) count;
+	 */
+
+	return ENOSYS;
+}
+
+/*
  * Most actions in the fcntl() call are straightforward; simply
  * pass control to the NetBSD system call. A few commands need
  * conversions after the actual system call has done its work,
