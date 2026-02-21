@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccd.conf.5,v 1.6 2026/02/20 21:09:37 kre Exp $
+.\"	$NetBSD: ccd.conf.5,v 1.7 2026/02/21 02:10:42 uwe Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,14 +54,9 @@ Each line of the configuration file contains arguments as per the
 argument to
 .Xr ccdconfig 8 :
 .Pp
-.Bd -ragged -offset indent -compact
-.Ar ccd
-.Ar ileave
-.Op Ar flags
-.Ar dev Ns \&...
-.Ed
+.D1 Ar ccd Ar ileave Oo Ar flags Oc Ar dev \&...
 .Pp
-.Bl -tag -width preserveX
+.Bl -tag -width Ar
 .It Ar ccd
 The name of the ccd.
 .It Ar ileave
@@ -72,23 +67,24 @@ For serial concatenation, specify
 .It Ar flags
 The flags for the device, which may be represented as a decimal number,
 a hexadecimal number, a comma-separated list of strings, or the word
-.Dq none .
-.It Ar dev Ns \&...
+.Sq Li none .
+.It Ar dev \&...
 The component partitions to be concatenated, which should be of type
 .Dv FS_CCD .
 .El
 .Pp
 A
-.Sq #
+.Ql #
 is a comment, and everything to end of line is ignored.
 A
-.Sq \e
+.Ql \e
 at the end of a line indicates that the next line should be concatenated
 with the current.
 A
-.Sq \e
-preceding any character (other than the end of line) prevents that
-character's special meaning from taking effect.
+.Ql \e
+preceding any character
+.Pq other than the end of line
+prevents that character's special meaning from taking effect.
 .Sh FILES
 .Pa /etc/ccd.conf
 .Sh EXAMPLES
