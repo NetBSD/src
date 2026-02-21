@@ -1,4 +1,4 @@
-.\"	$NetBSD: ccdconfig.8,v 1.28 2026/02/20 21:09:37 kre Exp $
+.\"	$NetBSD: ccdconfig.8,v 1.29 2026/02/21 02:37:34 uwe Exp $
 .\"
 .\" Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,48 +34,56 @@
 .Nm ccdconfig
 .Nd configuration utility for the concatenated disk driver
 .Sh SYNOPSIS
+.
 .Nm
 .Op Fl cv
 .Ar ccd
 .Ar ileave
 .Op Ar flags
-.Ar dev Ns \&...
+.Ar dev \&...
+.
 .Nm
 .Fl C
 .Op Fl v
 .Op Fl f Ar config_file
+.
 .Nm
 .Fl u
 .Op Fl v
-.Ar ccd Ns \&...
+.Ar ccd \&...
+.
 .Nm
 .Fl U
 .Op Fl v
 .Op Fl f Ar config_file
+.
 .Nm
 .Fl g
 .Op Fl vWw
-.Op Ar ccd Ns \&...
+.Op Ar ccd \&...
+.
 .Nm
 .Fl p
 .Op Fl hsVvWw
-.Op Ar ccd Ns \&...
+.Op Ar ccd \&...
+.
 .Sh DESCRIPTION
 .Nm
 is used to dynamically configure and unconfigure concatenated disk
 devices, or ccds.
-For more information about the ccd, see
+For more information see
 .Xr ccd 4 .
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl c
 Configure a ccd.
 The ccd to configure is given as
 .Ar ccd ,
 it is usually the name of a
 .Xr ccd 4
-device relative to /dev/.
+device relative to
+.Pa /dev .
 This is the default behavior of
 .Nm .
 .It Fl C
@@ -150,12 +158,12 @@ argument.
 The same as
 .Fl W
 except wedge labels which contain any of
-.Sq \&\ \&
+.Ql \~
 .Pq space ,
-.Sq \et
+.Ql \et
 .Pq tab ,
 or
-.Sq \en
+.Ql \en
 .Pq newline
 are treated as if no label exists; the wedge device name is used.
 .El
@@ -177,20 +185,20 @@ An interleave factor of 0 means that the devices are
 concatenated serially, not interleaved.
 The flags may be represented as a decimal number, a hexadecimal number,
 a comma-separated list of strings, or the word
-.Dq Li none .
+.Sq Li none .
 The flags are as follows:
-.Bl -column -offset indent "CCDF_UNIFORM " "0x02 "
-.It Em "Symbolic	Numeric	Comment"
-.It CCDF_UNIFORM	0x02	Use uniform interleave.
+.Bl -column -offset indent ".Dv CCDF_UNIFORM" ".Sy Numeric"
+.It Sy Symbolic Ta Sy Numeric Ta Sy Comment.
+.It Dv CCDF_UNIFORM Ta Li 0x02 Ta Use uniform interleave.
 The size of all components is clamped to that of the smallest component.
-.It CCDF_NOLABEL	0x04	Ignore raw disklabel.
+.It Dv CCDF_NOLABEL Ta Li 0x04 Ta Ignore raw disklabel.
 Useful when creating a new ccd.
 .El
 .Pp
 The aliases
-.Dq Li uniform
+.Sq Li uniform
 and
-.Dq Li nolabel
+.Sq Li nolabel
 may be used instead of the formal names, and are printed when
 .Nm
 .Fl ps
@@ -210,22 +218,20 @@ is used without
 Each line of the configuration file contains arguments as per the
 .Fl c
 argument:
-.Ar ccd
-.Ar ileave
-.Op Ar flags
-.Ar dev Ns \&...
+.Ar ccd Ar ileave Oo Ar flags Oc Ar dev \&...
 .Pp
 A
-.Sq #
+.Ql #
 is a comment, and everything to end of line is ignored.
 A
-.Sq \e
+.Ql \e
 at the end of a line indicates that the next line should be concatenated
 with the current.
 A
-.Sq \e
-preceding any character (other than the end of line) prevents that
-character's special meaning from taking effect.
+.Ql \e
+preceding any character
+.Pq other than the end of line
+prevents that character's special meaning from taking effect.
 .Pp
 See
 .Sx EXAMPLES
@@ -238,13 +244,13 @@ in the environment passed to
 .Nm ,
 can be set to a string containing of one or more of the
 characters:
-.Li Sq h
-.Li Sq s
-.Li Sq V
-.Li Sq v
-.Li Sq W
+.Ql h
+.Ql s
+.Ql V
+.Ql v
+.Ql W
 and
-.Li Sq w ,
+.Ql w ,
 to cause the appropriate option to default to on.
 Any other characters in the value of
 .Ev CCDCONFIG
@@ -252,26 +258,28 @@ are ignored.
 To allow these defaults to be overridden for a particular instance of
 .Nm ,
 additional options,
-not shown in the SYNOPSIS, listed above, or output in a usage message,
+not shown in the
+.Sx SYNOPSIS ,
+listed above, or output in a usage message,
 can be used on the command line to override settings from
 .Ev CCDCONFIG .
 .Fl D
 will disable
-.Li Sq w
+.Ql w
 and
-.Li Sq W ,
+.Ql W ,
 .Fl n
 will disable
-.Li Sq h ,
+.Ql h ,
 .Fl q
 will disable
-.Li Sq v
+.Ql v
 and
-.Li Sq V ,
+.Ql V ,
 and
 .Fl S
 will disable
-.Li Sq s .
+.Ql s .
 In addition the options in each of the option pairs
 .Fl W
 and
@@ -285,18 +293,28 @@ override an earlier use of the other, or use of the other
 character in
 .Ev CCDCONFIG .
 .Sh FILES
-/etc/ccd.conf - default ccd configuration file.
+.Bl -tag -width Pa -compact
+.It Pa /etc/ccd.conf
+default ccd configuration file.
+.El
 .Sh EXAMPLES
-The following command, executed from the command line, would configure ccd0
-with 4 components (/dev/sd2e, /dev/sd3e, /dev/sd4e, /dev/sd5e), and an
-interleave factor of 32 blocks.
-.Bd -unfilled -offset indent
-# ccdconfig ccd0 32 0 /dev/sd2e /dev/sd3e /dev/sd4e /dev/sd5e
-.Ed
+The following command, executed from the command line, would configure
+.Pa ccd0
+with 4 components
+.Po
+.Pa /dev/sd2e ,
+.Pa /dev/sd3e ,
+.Pa /dev/sd4e ,
+.Pa /dev/sd5e 
+.Pc ,
+and an interleave factor of 32 blocks.
+.Pp
+.Dl ccdconfig ccd0 32 0 /dev/sd2e /dev/sd3e /dev/sd4e /dev/sd5e
+.Pp
 .Pp
 An example
 .Pa /etc/ccd.conf :
-.Bd -unfilled -offset indent
+.Bd -literal -offset indent
 #
 # /etc/ccd.conf
 # Configuration file for concatenated disk devices
