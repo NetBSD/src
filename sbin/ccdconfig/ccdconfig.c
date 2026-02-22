@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdconfig.c,v 1.60 2026/02/20 21:09:37 kre Exp $	*/
+/*	$NetBSD: ccdconfig.c,v 1.61 2026/02/22 17:11:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1996, 1997\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ccdconfig.c,v 1.60 2026/02/20 21:09:37 kre Exp $");
+__RCSID("$NetBSD: ccdconfig.c,v 1.61 2026/02/22 17:11:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -664,7 +664,7 @@ ccd_info(int u, struct ccddiskinfo *ccd, char *names)
 			f = ccd->ccd_flags & CCDF_USERMASK;
 			for (len = 1, n = 0; flagvaltab[n].fv_flag != NULL; n++)
 				if (f & flagvaltab[n].fv_val) {
-					printf("%s%s", ","+len,
+					printf("%s%s", &","[len],
 					    flagvaltab[n].fv_flag);
 					len = 0;
 					f &= ~flagvaltab[n].fv_val;
