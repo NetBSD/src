@@ -38,7 +38,17 @@ empty_head() {
 empty_body() {
 	test_mount
 
-	atf_check -s exit:0 -o empty -e empty touch a
+	local file=a
+
+	# NB: this should not be required unless someone ran the script
+	# directly or used `kyua debug`.
+	rm -f $file
+
+	# All atime/ctime/mtime should equal st_birthtime since the file
+	# was just created (in theory).
+	echo "1. Creation"
+
+	atf_check -s exit:0 -o empty -e empty touch $file
 	eval $(stat -s a | sed -e 's|st_|ost_|g') || atf_fail "stat failed"
 	[ ${ost_birthtime} -eq ${ost_atime} ] || \
 	    atf_fail "Incorrect atime: ${ost_birthtime} != ${ost_atime}"
@@ -47,8 +57,11 @@ empty_body() {
 	[ ${ost_birthtime} -eq ${ost_mtime} ] || \
 	    atf_fail "Incorrect mtime: ${ost_birthtime} != ${ost_mtime}"
 
+	# 2. atime should be updated; all else should remain constant
+	echo "2. Read"
+
 	sleep 1
-	atf_check -s exit:0 -o empty -e empty cat a
+	atf_check -s exit:0 -o empty -e empty cat $file
 	eval $(stat -s a) || atf_fail "stat failed"
 	[ ${st_atime} -gt ${ost_atime} ] || \
 	    atf_fail "Incorrect atime: ${st_atime} <= ${ost_atime}"
@@ -57,8 +70,13 @@ empty_body() {
 	[ ${st_mtime} -eq ${ost_mtime} ] || \
 	    atf_fail "Incorrect mtime: ${st_mtime} != ${ost_mtime}"
 
+	# 3. atime/ctime/mtime should be updated.
+	#
+	# Technically birthtime should be updated too.
+	echo "3. Truncation"
+
 	sleep 1
-	echo foo >a || atf_fail "Write failed"
+	echo foo >$file || atf_fail "Write failed"
 	eval $(stat -s a) || atf_fail "stat failed"
 	[ ${st_atime} -gt ${ost_atime} ] || \
 	    atf_fail "Incorrect atime: ${st_atime} <= ${ost_atime}"
