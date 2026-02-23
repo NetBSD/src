@@ -275,9 +275,7 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
 	return 0;
 }
 
-/*
- *	sendfile(2). Unlike the linux implementation, this one is not zero-copy
- */
+/* sendfile(2) */
 int
 linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	register_t *retval)
@@ -299,6 +297,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	file_t *out_fp = NULL;
 	
 	off_t in_offset = 0;
+	off_t in_offset_before_reads;
 	bool has_user_offset = (user_offset != NULL);
 	size_t bytes_left;
 	size_t total_bytes_copied = 0;
@@ -401,31 +400,32 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		goto out;
 	}
 
-	buffer = kmem_alloc(LINUX_COPY_FILE_RANGE_MAX_CHUNK, KM_SLEEP);
+	buffer = kmem_alloc(MAXBSIZE, KM_SLEEP);
 
 	bytes_left = count;
+	in_offset_before_reads = in_fp->f_offset;
+	if (has_user_offset) 
+		in_fp->f_offset = in_offset;
 
 	while (bytes_left > 0) {
 
-		size_t to_copy = MIN(bytes_left, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
+		size_t to_copy = MIN(bytes_left, MAXBSIZE);
 		size_t bytes_read = 0;
 		size_t bytes_written = 0;
 
 		/* Set up iovec and uio for reading */
 		aiov.iov_base = buffer;
 		aiov.iov_len = to_copy;
+		auio.uio_resid = to_copy;
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
-		auio.uio_resid = to_copy;
-		auio.uio_offset = has_user_offset ? in_offset : in_fp->f_offset;
 		auio.uio_rw = UIO_READ;
 		UIO_SETUP_SYSSPACE(&auio);
 
 		/*	Read the in_fp */
-		error = (*in_fp->f_ops->fo_read)(in_fp, 
-			has_user_offset ? &in_offset : &in_fp->f_offset, &auio, 
+		error = (*in_fp->f_ops->fo_read)(in_fp, &in_fp->f_offset, &auio, 
 			in_fp->f_cred, 0);
-		
+
 		if (error) 
 			break; /* Error when reading */
 
@@ -439,23 +439,18 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		/* Set up iovec and uio for writing */
 		aiov.iov_base = buffer;
 		aiov.iov_len = bytes_read;
+		auio.uio_resid = bytes_read;
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
-		auio.uio_resid = bytes_read;
-		auio.uio_offset = out_fp->f_offset;
 		auio.uio_rw = UIO_WRITE;
-		UIO_SETUP_SYSSPACE(&auio);	
+		UIO_SETUP_SYSSPACE(&auio);
 
 		/*	Write to out_fp */
 		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, &auio,
             out_fp->f_cred, 0);
 
-		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, 
-			&auio, out_fp->f_cred, 0);
-
 		bytes_written = bytes_read - auio.uio_resid;
 
-		/*	Exit only after updating the values */
 		if (error) {
 			if (error == ENOBUFS) {
 				error = EAGAIN;	/*	What the syscall expects */
@@ -463,12 +458,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 			break; /* Error when writing */
 		}
 		
-		if (has_user_offset) {
-			in_offset += bytes_written;
-		}
-		else {
-			in_fp->f_offset += bytes_written;
-		}
+		in_fp->f_offset += bytes_written;
 		out_fp->f_offset += bytes_written;
 
 		total_bytes_copied += bytes_written;
@@ -480,7 +470,8 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	}
 	
 	if (has_user_offset) {
-		int copy_err = copyout(&in_offset, user_offset, sizeof(in_offset));
+		int copy_err = copyout(&in_fp->f_offset, user_offset, sizeof(in_offset));
+		in_fp->f_offset = in_offset_before_reads; /* returns to original */
 		/*	Overrides error only if there's something wrong with the copyout */
 		if (copy_err) 
 			error = copy_err;
@@ -492,7 +483,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 
 out:
 	if (buffer) 
-		kmem_free(buffer, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
+		kmem_free(buffer, MAXBSIZE);
 	if (in_fp) 
 		fd_putfile(in_fd);
 	if (out_fp)
