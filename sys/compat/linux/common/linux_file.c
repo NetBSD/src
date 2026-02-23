@@ -276,9 +276,7 @@ linux_sys_openat(struct lwp *l, const struct linux_sys_openat_args *uap,
 }
 
 /*
- *	sendfile(2). 
- *
- *  
+ *	sendfile(2). Unlike the linux implementation, this one is not zero-copy
  */
 int
 linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
@@ -290,9 +288,6 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	 * syscallarg(off_t *) offset;
 	 * syscallarg(size_t) count;
 	 */
-
-	printf("Iniciando syscall\n");
-	printf("===============================================================\n");
 	
 	/* Args from the syscall */
 	int in_fd = SCARG(uap, in_fd);
@@ -341,10 +336,9 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	} 
 
 	/*	
-	 *	in_fp normally can only be a regular file,
-	 * 	but if out_fd is a pipe in_fd can also be a 
-	 * 	pipe or a socket (in which case the sendfile would
-	 * 	desugars to a splice)
+	 *	Normally, in_fd can only be a regular file, however, if out_fd
+	 * 	is a pipe the linux sendfile desugars to a splice, allowing
+	 * 	in_fd to be a socket, but NOT a pipe (even though splice accepts).
 	 */
 	switch (in_fp->f_type) {
 
@@ -357,8 +351,8 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		}
 		break;
 
-	/* case DTYPE_PIPE: Don't work on linux either */
 	case DTYPE_SOCKET:
+		/*	If in_fd is a socket, user_offset must be NULL */
 		if (has_user_offset) {
 			error = EINVAL;
 			goto out;
@@ -373,7 +367,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		goto out;
 	}
 
-	/*	out_fp may be a regular file, a pipe or a tcp socket */
+	/*	out_fp may be a regular file, a pipe or a socket */
 	switch (out_fp->f_type) {
 
 	case DTYPE_VNODE:
@@ -386,12 +380,6 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		break;
 
 	case DTYPE_SOCKET:
-		// struct socket *so = out_fp->f_socket;
-
-		// if (so->so_type != SOCK_STREAM) {
-		// 	error = EINVAL;
-		// 	goto out;
-		// }
 		break;
 
 	case DTYPE_PIPE:
@@ -417,10 +405,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 
 	bytes_left = count;
 
-	printf("Entrando no loop\n");
 	while (bytes_left > 0) {
-		printf("IN offset loop start: %jd\n", (intmax_t)in_fp->f_offset);
-		printf("OUT offset loop start: %jd\n", (intmax_t)out_fp->f_offset);
 
 		size_t to_copy = MIN(bytes_left, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
 		size_t bytes_read = 0;
@@ -432,9 +417,8 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = to_copy;
-		// auio.uio_offset = has_user_offset ? in_offset : in_fp->f_offset;
+		auio.uio_offset = has_user_offset ? in_offset : in_fp->f_offset;
 		auio.uio_rw = UIO_READ;
-		// auio.uio_vmspace = l->l_proc->p_vmspace;
 		UIO_SETUP_SYSSPACE(&auio);
 
 		/*	Read the in_fp */
@@ -447,9 +431,7 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 
 		bytes_read = to_copy - auio.uio_resid;
 		
-		printf("Bytes Read: %jd\n", (intmax_t)bytes_read);
 		if (bytes_read == 0) {
-			printf("EOF");
 			/*	EOF reached */
 			break; 
 		}
@@ -460,27 +442,25 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 		auio.uio_iov = &aiov;
 		auio.uio_iovcnt = 1;
 		auio.uio_resid = bytes_read;
-		// auio.uio_offset = out_fp->f_offset;
+		auio.uio_offset = out_fp->f_offset;
 		auio.uio_rw = UIO_WRITE;
-		// auio.uio_vmspace = l->l_proc->p_vmspace;
 		UIO_SETUP_SYSSPACE(&auio);	
 
 		/*	Write to out_fp */
 		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, &auio,
             out_fp->f_cred, 0);
 
-		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, &auio, out_fp->f_cred, 0);
-
-		// PRINT DE DEBUG CRÍTICO:
-		printf("DEBUG: error = %d, resid_inicial = %zu, resid_final = %zu\n", 
-        	error, bytes_read, auio.uio_resid);
+		error = (*out_fp->f_ops->fo_write)(out_fp, &out_fp->f_offset, 
+			&auio, out_fp->f_cred, 0);
 
 		bytes_written = bytes_read - auio.uio_resid;
-		printf("Bytes Written: %jd\n", (intmax_t)bytes_written);
 
-		if (error == ENOBUFS) {
-			bytes_written = 0;	/*	Assumes that nothing was written  */
-			error = EAGAIN; /*	The syscall expects this error */
+		/*	Exit only after updating the values */
+		if (error) {
+			if (error == ENOBUFS) {
+				error = EAGAIN;	/*	What the syscall expects */
+			}
+			break; /* Error when writing */
 		}
 		
 		if (has_user_offset) {
@@ -493,20 +473,10 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 
 		total_bytes_copied += bytes_written;
 		bytes_left -= bytes_written;
-
-		/*	Exit only after updating the values */
-		if (error)
-			break; /* Error when writing */
-
-		printf("IN offset loop end: %jd\n", (intmax_t)in_fp->f_offset);
-		printf("OUT offset loop end: %jd\n", (intmax_t)out_fp->f_offset);
 	}
-
-	printf("saindo do loop\n");
 
 	if (total_bytes_copied > 0) {
 		error = 0;
-
 	}
 	
 	if (has_user_offset) {
@@ -521,7 +491,6 @@ linux_sys_sendfile(struct lwp *l, const struct linux_sys_sendfile_args *uap,
 	goto out;
 
 out:
-	printf("Estou no goto!\n");
 	if (buffer) 
 		kmem_free(buffer, LINUX_COPY_FILE_RANGE_MAX_CHUNK);
 	if (in_fp) 
