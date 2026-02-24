@@ -1,4 +1,4 @@
-/* $NetBSD: ahcisata_ahb.c,v 1.2 2026/02/05 01:38:43 jmcneill Exp $ */
+/* $NetBSD: ahcisata_ahb.c,v 1.3 2026/02/24 21:41:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_ahb.c,v 1.2 2026/02/05 01:38:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_ahb.c,v 1.3 2026/02/24 21:41:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,7 +63,9 @@ ahcisata_ahb_intr(void *arg)
 
 	val = RD4(sc, SATA_HCCFG_INT_REG);
 
-	ret |= ahci_intr(sc);
+	if (panicstr == NULL) {
+		ret |= ahci_intr(sc);
+	}
 
 	if (val != 0) {
 		ret |= 1;
