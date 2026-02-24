@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_powerpc.c,v 1.15 2023/08/23 14:00:11 rin Exp $	*/
+/*	$NetBSD: kvm_powerpc.c,v 1.16 2026/02/24 21:38:00 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2005 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@
 #include <powerpc/oea/bat.h>
 #include <powerpc/oea/pte.h>
 
-__RCSID("$NetBSD: kvm_powerpc.c,v 1.15 2023/08/23 14:00:11 rin Exp $");
+__RCSID("$NetBSD: kvm_powerpc.c,v 1.16 2026/02/24 21:38:00 jmcneill Exp $");
 
 static int	_kvm_match_601bat(kvm_t *, vaddr_t, paddr_t *, int *);
 static int	_kvm_match_bat(kvm_t *, vaddr_t, paddr_t *, int *);
@@ -304,6 +304,7 @@ _kvm_kvatop(kvm_t *kd, vaddr_t va, paddr_t *pa)
 	case MPC604ev:
 	case MPC750:
 	case IBM750FX:
+	case IBMESPRESSO:
 	case MPC7400:
 	case MPC7450:
 	case MPC7410:
