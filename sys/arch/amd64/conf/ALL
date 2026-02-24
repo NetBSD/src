@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.196 2025/11/07 19:07:38 pgoyette Exp $
+# $NetBSD: ALL,v 1.197 2026/02/20 07:54:26 yamt Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.196 $"
+#ident		"ALL-$Revision: 1.197 $"
 
 maxusers	64		# estimated number of users
 
@@ -626,6 +626,8 @@ amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
+
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
 
 # Winbond LPC Super I/O
 wbsio*	at isa? port 0x2e

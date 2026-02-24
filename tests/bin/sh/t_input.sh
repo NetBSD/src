@@ -1,4 +1,4 @@
-# $NetBSD: t_input.sh,v 1.2 2024/10/14 12:26:28 kre Exp $
+# $NetBSD: t_input.sh,v 1.3 2026/02/23 20:19:28 andvar Exp $
 #
 # Copyright (c) 2021 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,7 +28,7 @@
 : ${TEST_SH:="/bin/sh"}
 
 # This set of tests checks the low level shell (script) input
-# systrem (reading script files, nested files, fines read while
+# system (reading script files, nested files, fines read while
 # reading strings, ..) and correctly dropping nul bytes from file data
 
 # other shell input (the read builtin for example) is not covered here.

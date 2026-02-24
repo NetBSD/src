@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.207 2025/11/07 19:07:38 pgoyette Exp $
+# $NetBSD: XEN3_DOM0,v 1.208 2026/02/20 07:54:26 yamt Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.207 $"
+#ident		"XEN3_DOM0-$Revision: 1.208 $"
 
 maxusers	32		# estimated number of users
 
@@ -536,6 +536,8 @@ amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
 
 amdsmn* at pci?				# AMD SMN Configuration
 amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
+
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.43 2025/12/10 03:20:59 perseant Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.44 2026/02/23 20:19:28 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.43 2025/12/10 03:20:59 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.44 2026/02/23 20:19:28 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -618,7 +618,7 @@ lfs_skip_superblock(struct lfs *fs, daddr_t *offsetp)
 }
 
 /*
- * Read the partial sement at offset.
+ * Read the partial segment at offset.
  *
  * If finfo_func and ino_func are both NULL, check the summary
  * and data checksums.  During roll forward, this must be done in its

@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.36 2023/12/31 21:32:43 gutteridge Exp $ */
+/* $NetBSD: bwfm.c,v 1.37 2026/02/20 12:05:51 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -2114,7 +2114,7 @@ bwfm_get_sta_info(struct bwfm_softc *sc, struct ifmediareq *ifmr)
 	if (!IEEE80211_ADDR_EQ(ni->ni_macaddr, sta.ea))
 		return;
 
-	if (le16toh(sta.ver) < 4)
+	if (le16toh(sta.ver) < 3)
 		return;
 
 	flags = le32toh(sta.flags);

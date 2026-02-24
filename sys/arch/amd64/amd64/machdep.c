@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.378 2025/12/21 07:00:26 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.379 2026/02/22 12:14:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.378 2025/12/21 07:00:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2026/02/22 12:14:56 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -2275,7 +2275,11 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= bootspace.smodule && v < bootspace.emodule) {
 		*handled = true;
-		if (!uvm_map_checkprot(module_map, v, v + 1, prot)) {
+		vm_map_lock_read(module_map);
+		const bool allowed =
+		    uvm_map_checkprot(module_map, v, v + 1, prot);
+		vm_map_unlock_read(module_map);
+		if (!allowed) {
 			return EFAULT;
 		}
 	} else {

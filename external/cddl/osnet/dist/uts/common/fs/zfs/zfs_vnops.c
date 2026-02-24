@@ -6233,6 +6233,8 @@ zfs_netbsd_putpages(void *v)
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
 	if (cleaning) {
+		bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
+
 		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
 		ASSERT(offlo < offhi || offhi == 0);
 		if (offhi == 0)
@@ -6240,7 +6242,7 @@ zfs_netbsd_putpages(void *v)
 		else
 			len = offhi - offlo;
 		rw_exit(vp->v_uobj.vmobjlock);
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount);
 			if (error)
 				return error;
@@ -6259,7 +6261,15 @@ zfs_netbsd_putpages(void *v)
 		 */
 		rrm_enter(&zfsvfs->z_teardown_lock, RW_READER, FTAG);
 
-		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
+		if (pagedaemon) {
+			rl = zfs_range_lock_try(zp, offlo, len, RL_WRITER);
+			if (rl == NULL) {
+				error = EBUSY;
+				goto fail;
+			}
+		} else {
+			rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
+		}
 		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
@@ -6276,6 +6286,7 @@ zfs_netbsd_putpages(void *v)
 		if (cleaned)
 		if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
 			zil_commit(zfsvfs->z_log, zp->z_id);
+fail:
 		ZFS_EXIT(zfsvfs);
 		fstrans_done(vp->v_mount);
 	}

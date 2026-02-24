@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_quirks.c,v 1.102 2020/06/19 11:52:42 flxd Exp $	*/
+/*	$NetBSD: umass_quirks.c,v 1.103 2026/02/23 20:19:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.102 2020/06/19 11:52:42 flxd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_quirks.c,v 1.103 2026/02/23 20:19:28 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -140,7 +140,7 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	/*
-	 * The SONY Portable GPS strage device almost hangs up when request
+	 * The SONY Portable GPS storage device almost hangs up when request
 	 * UR_BBB_GET_MAX_LUN - disable the query logic.
 	 */
 	{ { USB_VENDOR_SONY, USB_PRODUCT_SONY_GPS_CS1 },

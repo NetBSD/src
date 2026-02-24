@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.32 2026/02/17 07:10:49 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.33 2026/02/23 08:58:07 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.32 2026/02/17 07:10:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.33 2026/02/23 08:58:07 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1412,7 +1412,7 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gffb_softc *sc = scr->scr_cookie;
 	void *data;
-	int x, y, wi, he, rv = GC_NOPE, i;
+	int x, y, wi, he, i;
 	uint32_t bg, fg;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1435,14 +1435,11 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 			gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
-	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
 
 	data = WSFONT_GLYPH(c, font);
 
 	mutex_enter(&sc->sc_lock);
-
+	gffb_sync(sc);
 	gffb_rop(sc, 0xcc);
 
 	gffb_dmastart(sc, RECT_EXPAND_TWO_COLOR_CLIP, 7);
@@ -1504,13 +1501,11 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 			}
 		}
 	}
-
 	gffb_dma_kickoff(sc);
+
 	mutex_exit(&sc->sc_lock);
 
-	if (rv == GC_ADD) {
-		glyphcache_add(&sc->sc_gc, c, x, y);
-	} else 	if (attr & WSATTR_UNDERLINE)
+	if (attr & WSATTR_UNDERLINE)
 		gffb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 
 }

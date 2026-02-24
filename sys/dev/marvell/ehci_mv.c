@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.10 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.11 2026/02/23 20:19:28 andvar Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.10 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.11 2026/02/23 20:19:28 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,7 @@ extern int ehcidebug;
 #define MARVELL_USB_EHCI_PS_PSPD_HS	0x08000000	/*  High speed */
 
 #define MARVELL_USB_EHCI_USBMODE	0x68
-#define MARVELL_USB_EHCI_MODE_STRMDIS	0x00000008 /* RW straming disable */
+#define MARVELL_USB_EHCI_MODE_STRMDIS	0x00000008 /* RW streaming disable */
 #define MARVELL_USB_EHCI_MODE_BE	0x00000004 /* RW B/L endianness select*/
 #define MARVELL_USB_EHCI_MODE_HDMASK	0x00000003 /* RW host/device Mask */
 #define MARVELL_USB_EHCI_MODE_HOST	0x00000003 /* RW mode host */

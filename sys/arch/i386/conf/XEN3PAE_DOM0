@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.44 2025/05/22 09:37:40 bad Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.45 2026/02/20 07:54:26 yamt Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -260,6 +260,8 @@ lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 
 amdnb_misc* at pci?			# AMD NB Misc Configuration
 amdtemp* at amdnb_misc?			# AMD CPU Temperature sensors
+
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
 
 # AMD 768 and 8111 power/ACPI controllers
 amdpm*	at pci? dev ? function ?	# RNG and SMBus 1.0 interface

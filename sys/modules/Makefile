@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.299 2025/12/28 20:24:56 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.300 2026/02/20 07:54:26 yamt Exp $
 
 .include <bsd.own.mk>
 
@@ -249,6 +249,7 @@ SUBDIR+=	hdaudioverbose
 SUBDIR+=	hpet
 SUBDIR+=	ichsmb
 SUBDIR+=	odcm
+SUBDIR+=	pchtemp
 SUBDIR+=	powernow
 SUBDIR+=	tco
 SUBDIR+=	tprof_x86

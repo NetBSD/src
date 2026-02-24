@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1830 2026/02/15 16:51:47 christos Exp $
+# $NetBSD: mi,v 1.1831 2026/02/20 07:54:25 yamt Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1698,6 +1698,7 @@
 ./usr/share/man/cat4/pceb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcf8563rtc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/pchb.0			man-sys-catman		.cat
+./usr/share/man/cat4/pchtemp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pci.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pcib.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pciback.0			man-sys-catman		.cat
@@ -5290,6 +5291,7 @@
 ./usr/share/man/man4/pceb.4			man-sys-man		.man
 ./usr/share/man/man4/pcf8563rtc.4		man-sys-man		.man
 ./usr/share/man/man4/pchb.4			man-sys-man		.man
+./usr/share/man/man4/pchtemp.4			man-sys-man		.man
 ./usr/share/man/man4/pci.4			man-sys-man		.man
 ./usr/share/man/man4/pcib.4			man-sys-man		.man
 ./usr/share/man/man4/pciback.4			man-sys-man		.man

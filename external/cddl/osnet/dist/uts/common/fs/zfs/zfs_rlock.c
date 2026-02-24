@@ -100,8 +100,8 @@
 /*
  * Check if a write lock can be grabbed, or wait and recheck until available.
  */
-static void
-zfs_range_lock_writer(znode_t *zp, rl_t *new)
+static boolean_t
+zfs_range_lock_writer(znode_t *zp, rl_t *new, boolean_t nonblock)
 {
 	avl_tree_t *tree = &zp->z_range_avl;
 	rl_t *rl;
@@ -149,7 +149,7 @@ zfs_range_lock_writer(znode_t *zp, rl_t *new)
 		if (avl_numnodes(tree) == 0) {
 			new->r_type = RL_WRITER; /* convert to writer */
 			avl_add(tree, new);
-			return;
+			return (B_TRUE);
 		}
 
 		/*
@@ -169,8 +169,10 @@ zfs_range_lock_writer(znode_t *zp, rl_t *new)
 
 		new->r_type = RL_WRITER; /* convert possible RL_APPEND */
 		avl_insert(tree, new, where);
-		return;
+		return (B_TRUE);
 wait:
+		if (nonblock)
+			return (B_FALSE);
 		if (!rl->r_write_wanted) {
 			cv_init(&rl->r_wr_cv, NULL, CV_DEFAULT, NULL);
 			rl->r_write_wanted = B_TRUE;
@@ -423,7 +425,8 @@ got_lock:
  * previously locked as RL_WRITER).
  */
 rl_t *
-zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
+zfs_range_lock_impl(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type,
+	boolean_t nonblock)
 {
 	rl_t *new;
 
@@ -443,6 +446,7 @@ zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
 
 	mutex_enter(&zp->z_range_lock);
 	if (type == RL_READER) {
+		ASSERT(!nonblock); /* XXXNETBSD not implemented */
 		/*
 		 * First check for the usual case of no locks
 		 */
@@ -450,10 +454,27 @@ zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
 			avl_add(&zp->z_range_avl, new);
 		else
 			zfs_range_lock_reader(zp, new);
-	} else
-		zfs_range_lock_writer(zp, new); /* RL_WRITER or RL_APPEND */
+	} else {
+		/* RL_WRITER or RL_APPEND */
+		if (!zfs_range_lock_writer(zp, new, nonblock)) {
+			kmem_free(new, sizeof (*new));
+			new = NULL;
+		}
+	}
 	mutex_exit(&zp->z_range_lock);
 	return (new);
+}
+
+rl_t *
+zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
+{
+	return zfs_range_lock_impl(zp, off, len, type, B_FALSE);
+}
+
+rl_t *
+zfs_range_lock_try(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type)
+{
+	return zfs_range_lock_impl(zp, off, len, type, B_TRUE);
 }
 
 /*

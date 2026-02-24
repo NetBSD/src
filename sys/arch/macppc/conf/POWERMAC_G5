@@ -168,6 +168,9 @@ pmu* 		at obio?	# Apple PMU
 # Audio support
 audio*	at audiobus?
 
+# MIDI support
+midi*	at midibus?
+
 spkr*	at audio?		# PC speaker (synthesized)
 wsbell* at spkr?
 
@@ -194,14 +197,8 @@ ehci*	at pci? dev ? function ?	# USB Enhanced Host Controller
 
 usb*	at ohci?					# USB bus support
 usb*	at ehci?					# USB bus support
-uhub*	at usb?						# USB Hubs
-uhub*	at uhub? port ?
-uhidev*	at uhub? port ? configuration ? interface ?	# USB HID device
-uhid*	at uhidev? reportid ?				# USB Generic HID
-ukbd*	at uhidev? reportid ?				# USB Keyboards
-wskbd*	at ukbd? console ?
-ums*	at uhidev? reportid ?				# USB Mice
-wsmouse* at ums?
+
+include "dev/usb/usbdevices.config"
 
 genfb*	at pci? dev ? function ?	# Generic Open Firmware Framebuffer
 gffb*	at pci? dev ? function ?	# some iMacs have nvidia graphics chips

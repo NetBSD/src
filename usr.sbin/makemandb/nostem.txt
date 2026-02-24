@@ -2901,6 +2901,7 @@ pcc
 pcctwo
 pcdisplay
 pchb
+pchtemp
 pci
 pciback
 pcibios

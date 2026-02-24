@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.20 2026/01/17 13:36:23 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.21 2026/02/19 08:50:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -93,10 +93,6 @@ typedef u_long bus_space_handle_t;
  *
  * Map a region of bus space.
  */
-
-#define	BUS_SPACE_MAP_CACHEABLE		0x01
-#define	BUS_SPACE_MAP_LINEAR		0x02
-#define	BUS_SPACE_MAP_PREFETCHABLE     	0x04
 
 #define	BUS_SPACE_MAP_BUS1		0x0100
 #define	BUS_SPACE_MAP_BUS2		0x0200
@@ -313,28 +309,9 @@ struct bus_space {
 #endif /* __BUS_SPACE_HAS_PROBING_METHODS */
 };
 
-#define	BUS_SPACE_BARRIER_READ	0x01
-#define	BUS_SPACE_BARRIER_WRITE	0x02
-
 #define BUS_SPACE_ALIGNED_POINTER(p, t) ALIGNED_POINTER(p, t)
 
-/* Bus Space DMA macros */
-
-/*
- * Flags used in various bus DMA methods.
- */
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
-#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
+/* Bus DMA macros */
 
 /*
  * Private flags stored in the DMA map.
@@ -346,14 +323,6 @@ struct bus_space {
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
-
-/*
- * Operations performed by bus_dmamap_sync().
- */
-#define	BUS_DMASYNC_PREREAD	0x01	/* pre-read synchronization */
-#define	BUS_DMASYNC_POSTREAD	0x02	/* post-read synchronization */
-#define	BUS_DMASYNC_PREWRITE	0x04	/* pre-write synchronization */
-#define	BUS_DMASYNC_POSTWRITE	0x08	/* post-write synchronization */
 
 typedef struct arm32_bus_dma_tag	*bus_dma_tag_t;
 typedef struct arm32_bus_dmamap		*bus_dmamap_t;

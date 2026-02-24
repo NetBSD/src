@@ -30,9 +30,9 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)strtok.3	8.2 (Berkeley) 2/3/94
-.\"	$NetBSD: strtok.3,v 1.23 2008/08/29 05:48:40 dholland Exp $
+.\"	$NetBSD: strtok.3,v 1.24 2026/02/19 13:24:32 kre Exp $
 .\"
-.Dd August 11, 2002
+.Dd February 19, 2026
 .Dt STRTOK 3
 .Os
 .Sh NAME
@@ -45,7 +45,7 @@
 .Ft char *
 .Fn strtok "char * restrict str" "const char * restrict sep"
 .Ft char *
-.Fn strtok_r "char *str" "const char *sep" "char **lasts"
+.Fn strtok_r "char * restrict str" "const char * restrict sep" "char ** restrict lasts"
 .Sh DESCRIPTION
 The
 .Fn strtok
@@ -98,16 +98,16 @@ the string
 .Bd -literal -offset indent
 #define MAXTOKENS	128
 
-char s[512], *p, *tokens[MAXTOKENS];
+char s[512], *p, *tokens[MAXTOKENS+1];
 char *last;
 int i = 0;
 
 snprintf(s, sizeof(s), "cat dog horse cow");
 
-for ((p = strtok_r(s, " ", &last)); p;
+for ((p = strtok_r(s, " ", &last));
+    (p != NULL && i < MAXTOKENS);
     (p = strtok_r(NULL, " ", &last)), i++) {
-	if (i < MAXTOKENS - 1)
-		tokens[i] = p;
+	tokens[i] = p;
 }
 tokens[i] = NULL;
 .Ed
@@ -126,6 +126,15 @@ and
 .Li tokens[3]
 will point to
 .Qq cow .
+.Pp
+If the pointer variable
+.Li p
+is not
+.Dv NULL
+when the loop terminates,
+there were more than
+.Li MAXTOKENS
+words in the input string.
 .Sh SEE ALSO
 .Xr index 3 ,
 .Xr memchr 3 ,
@@ -147,6 +156,12 @@ The
 .Fn strtok_r
 function conforms to
 .St -p1003.1c-95 .
+The
+.Pa restrict
+keyword was added in
+.St -isoC-99
+and
+.St -p1003.1-2001 .
 .Sh BUGS
 The System V
 .Fn strtok ,

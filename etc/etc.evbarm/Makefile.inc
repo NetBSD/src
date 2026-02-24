@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.137 2026/01/15 08:44:06 skrll Exp $
+#	$NetBSD: Makefile.inc,v 1.138 2026/02/20 07:20:28 skrll Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -59,7 +59,6 @@ EVBARM_BOARDS.armv5t+=		MV2120
 KERNEL_SETS.armv5t+=		OPENBLOCKS_A6
 EVBARM_BOARDS.armv5t+=		OPENRD
 EVBARM_BOARDS.armv5t+=		SHEEVAPLUG
-#KERNEL_SETS.armv5t+=		IMX23_OLINUXINO
 KERNEL_SETS.armv5t+=		GENERIC_V5
 
 EVBARM_BOARDS.armv6+=		RPI
