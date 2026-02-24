@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2026/02/07 13:06:19 jmcneill Exp $ */
+/* $NetBSD: machdep.c,v 1.6 2026/02/24 21:41:59 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2026/02/07 13:06:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/02/24 21:41:59 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -117,6 +117,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2026/02/07 13:06:19 jmcneill Exp $")
 #include <powerpc/pic/picvar.h>
 
 #include <ddb/db_extern.h>
+#include <ddb/db_active.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -542,38 +543,57 @@ consinit(void)
 void
 cpu_reboot(int howto, char *what)
 {
-	static int syncing;
-	extern void disable_intr(void);
+	static int syncdone = false;
+
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
 
 	boothowto = howto;
-	if (!cold && !(howto & RB_NOSYNC) && !syncing) {
-		syncing = 1;
-		vfs_shutdown();		/* sync */
+
+	if ((howto & RB_NOSYNC) == 0 && panicstr == NULL) {
+		if (!syncdone) {
+			syncdone = true;
+			/* XXX used to force unmount as well, here */
+			vfs_sync_all(curlwp);
+		}
+
+		while (vfs_unmountall1(curlwp, false, false) ||
+		       config_detach_all(boothowto) ||
+		       vfs_unmount_forceone(curlwp)) {
+			/* do nothing */
+		}
+	} else {
+		if (!db_active) {
+			suspendsched();
+		}
 	}
+
+	pmf_system_shutdown(boothowto);
+
+	/* Disable interrupts */
 	splhigh();
-	if (!cold && (howto & RB_DUMP)) {
+
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
 		oea_dumpsys();
 	}
-	pmf_system_shutdown(boothowto);
-	doshutdownhooks();
 
-	disable_intr();
+haltsys:
+	doshutdownhooks();
 
 #ifdef MULTIPROCESSOR
 	cpu_halt_others();
 	delay(100000);
 #endif
 
-	/* Force halt on panic to capture the cause on screen. */
-	if (panicstr != NULL) {
-		howto |= RB_HALT;
-	}
 	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
 		printf("power off\n\n");
 		wii_poweroff();
 		delay(100000);
 		printf("power off failed!\n\n");
 	}
+
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\n");
 		wii_halt();
