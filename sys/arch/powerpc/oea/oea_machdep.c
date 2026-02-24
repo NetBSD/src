@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.87 2026/02/24 21:44:00 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.87 2026/02/24 21:44:00 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -57,8 +57,12 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Ex
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/kcore.h>
+#include <sys/conf.h>
+#include <sys/core.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_page.h>
 
 #ifdef DDB
 #include <powerpc/db_machdep.h>
@@ -70,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.86 2026/01/09 22:54:33 jmcneill Ex
 #endif
 
 #include <machine/powerpc.h>
+#include <machine/kcore.h>
 
 #include <powerpc/trap.h>
 #include <powerpc/spr.h>
@@ -86,6 +91,8 @@ char machine[] = MACHINE;		/* from <machine/param.h> */
 char machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 struct vm_map *phys_map = NULL;
+
+vaddr_t memhook;
 
 /*
  * Global variables used here and there
@@ -1001,6 +1008,12 @@ oea_startup(const char *model)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, 0, false, NULL);
 
+	/*
+	 * Steal a page for crash dumps
+	 */
+	memhook = uvm_km_alloc(kernel_map, PAGE_SIZE, PAGE_SIZE,
+			       UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
@@ -1019,10 +1032,181 @@ oea_startup(const char *model)
  * Crash dump handling.
  */
 
+static int
+cpu_dump(void)
+{
+#if defined(PPC_OEA) && !defined(PPC_OEA64) && !defined(PPC_OEA64_BRIDGE)
+	int (*dump)(dev_t, daddr_t, void *, size_t);
+	char bf[dbtob(1)];
+	kcore_seg_t *segp;
+	cpu_kcore_hdr_t *cpuhdrp;
+	phys_ram_seg_t *memsegp;
+	struct mem_region *mem, *avail;
+	const struct bdevsw *bdev;
+	vaddr_t addr;
+	int i;
+
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL) {
+		return ENXIO;
+	}
+	dump = bdev->d_dump;
+
+	memset(bf, 0, sizeof(bf));
+	segp = (kcore_seg_t *)bf;
+	cpuhdrp = (cpu_kcore_hdr_t *)&bf[ALIGN(sizeof(*segp))];
+	memsegp = (phys_ram_seg_t *)&bf[ALIGN(sizeof(*segp)) +
+					ALIGN(sizeof(*cpuhdrp))];
+
+	/* Generate a segment header. */
+	CORE_SETMAGIC(*segp, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	segp->c_size = dbtob(1) - ALIGN(sizeof(*segp));
+
+	/* Add the machine-dependent header info. */
+	cpuhdrp->pad = 0;
+	cpuhdrp->pvr = mfpvr();
+	asm volatile ("mfsdr1 %0" : "=r" (cpuhdrp->sdr1));
+	addr = 0;
+	for (i = 0; i < 16; i++) {
+		asm volatile ("mfsrin %0, %1"
+			      : "=r" (cpuhdrp->sr[i])
+			      : "r" (addr));
+		addr += 1 << ADDR_SR_SHFT;
+	}
+        asm volatile ("mfibatu %0,0" : "=r"(cpuhdrp->ibatu[0]));
+        asm volatile ("mfibatl %0,0" : "=r"(cpuhdrp->ibatl[0]));
+        asm volatile ("mfibatu %0,1" : "=r"(cpuhdrp->ibatu[1]));
+        asm volatile ("mfibatl %0,1" : "=r"(cpuhdrp->ibatl[1]));
+        asm volatile ("mfibatu %0,2" : "=r"(cpuhdrp->ibatu[2]));
+        asm volatile ("mfibatl %0,2" : "=r"(cpuhdrp->ibatl[2]));
+        asm volatile ("mfibatu %0,3" : "=r"(cpuhdrp->ibatu[3]));
+        asm volatile ("mfibatl %0,3" : "=r"(cpuhdrp->ibatl[3]));
+        if ((cpuhdrp->pvr >> 16) != MPC601) {
+                asm volatile ("mfdbatu %0,0" : "=r"(cpuhdrp->dbatu[0]));
+                asm volatile ("mfdbatl %0,0" : "=r"(cpuhdrp->dbatl[0]));
+                asm volatile ("mfdbatu %0,1" : "=r"(cpuhdrp->dbatu[1]));
+                asm volatile ("mfdbatl %0,1" : "=r"(cpuhdrp->dbatl[1]));
+                asm volatile ("mfdbatu %0,2" : "=r"(cpuhdrp->dbatu[2]));
+                asm volatile ("mfdbatl %0,2" : "=r"(cpuhdrp->dbatl[2]));
+                asm volatile ("mfdbatu %0,3" : "=r"(cpuhdrp->dbatu[3]));
+                asm volatile ("mfdbatl %0,3" : "=r"(cpuhdrp->dbatl[3]));
+        } else {
+		memset(cpuhdrp->dbatl, 0, sizeof(cpuhdrp->dbatl));
+		memset(cpuhdrp->dbatu, 0, sizeof(cpuhdrp->dbatu));
+		memset(cpuhdrp->ibatl, 0, sizeof(cpuhdrp->ibatl));
+		memset(cpuhdrp->ibatu, 0, sizeof(cpuhdrp->ibatu));
+	}
+	cpuhdrp->pad_reg = 0;
+
+	/* Fill in the memory segment descriptors. */
+	mem_regions(&mem, &avail);
+	while (mem->size != 0) {
+		memsegp->start = mem->start;
+		memsegp->size = mem->size;
+		memsegp++;
+		mem++;
+	}
+
+	return dump(dumpdev, dumplo, bf, dbtob(1));
+#else
+	return ENOSYS;
+#endif
+}
+
 void
 oea_dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	const struct bdevsw *bdev;
+	daddr_t blkno;
+	unsigned long long len;
+	int psize, error, addr;
+	struct mem_region *mem, *avail;
+	vaddr_t dumpspace;
+
+	if (dumpdev == NODEV) {
+		return;
+	}
+	if (dumpsize == 0) {
+		cpu_dumpconf();
+	}
+	if (dumplo <= 0 || dumpsize == 0) {
+		printf("\ndump to dev %u,%u not possible\n",
+		    major(dumpdev), minor(dumpdev));
+		delay(5000000);
+		return;
+	}
+	printf("\ndumping to dev %u,%u offset %ld\n",
+	    major(dumpdev), minor(dumpdev), dumplo);
+
+	bdev = bdevsw_lookup(dumpdev);
+	if (bdev == NULL || bdev->d_psize == NULL) {
+		return;
+	}
+	psize = bdev_size(dumpdev);
+	printf("dump ");
+	if (psize == -1) {
+		printf("area unavailable\n");
+		return;
+	}
+	if ((error = cpu_dump()) != 0) {
+		goto done;
+	}
+
+	blkno = dumplo + cpu_dumpsize();
+	dumpspace = memhook;
+	error = 0;
+	len = 0;
+
+	mem_regions(&mem, &avail);
+	while (mem->size != 0) {
+		for (addr = mem->start;
+		     addr < mem->start + mem->size;
+		     addr += PAGE_SIZE) {
+			if ((len % (1024 * 1024)) == 0) {
+				printf("%lld ", len / (1024 * 1024));
+			}
+			pmap_kenter_pa(dumpspace, addr, VM_PROT_READ, 0);
+			pmap_update(pmap_kernel());
+			error = bdev->d_dump(dumpdev, blkno,
+			   (void *)dumpspace, PAGE_SIZE);
+			if (error != 0) {
+				goto done;
+			}
+			blkno += btodb(PAGE_SIZE);
+			len += PAGE_SIZE;
+		}
+		mem++;
+	}
+
+done:
+	switch (error) {
+	case ENXIO:
+		printf("device bad\n");
+		break;
+	case EFAULT:
+		printf("device not ready\n");
+		break;
+	case EINVAL:
+		printf("area improper\n");
+		break;
+	case EIO:
+		printf("i/o error\n");
+		break;
+	case EINTR:
+		printf("aborted from console\n");
+		break;
+	case ENOSYS:
+		printf("not implemented\n");
+		break;
+	case 0:
+		printf("succeeded\n");
+		break;
+	default:
+		printf("error %d\n", error);
+		break;
+	}
+	printf("\n\n");
+	delay(5000000);
 }
 
 /*

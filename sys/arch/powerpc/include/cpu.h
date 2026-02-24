@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.126 2026/01/09 22:54:33 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.127 2026/02/24 21:44:00 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -454,6 +454,8 @@ void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
 
 void	cpu_fixup_stubs(void);
+
+int	cpu_dumpsize(void);
 
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE) && !defined(_MODULE)
 int	cpu_get_dfs(void);
