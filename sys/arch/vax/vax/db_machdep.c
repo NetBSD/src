@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.61.2.1 2026/02/24 00:25:47 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.61.2.2 2026/02/24 00:26:26 mrg Exp $	*/
 
 /*
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.61.2.1 2026/02/24 00:25:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.61.2.2 2026/02/24 00:26:26 mrg Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -350,7 +350,6 @@ db_dump_stack(VAX_CALLFRAME *fp, void (*pr)(const char *, ...))
 
 	while (!IN_USERLAND(fp->vax_fp) &&
 	    db_validate_address((vaddr_t)fp->vax_fp)) {
-#define VAX_NUMARGS(x)	((x) & 0xff)
 		u_int pc = fp->vax_pc;
 
 		/*
@@ -402,16 +401,11 @@ db_dump_stack(VAX_CALLFRAME *fp, void (*pr)(const char *, ...))
 		/* First get the frame that called this function ... */
 		tmp_frame = fp->vax_fp;
 
-		if (!tmp_frame->vax_calls) {
-			(*pr)("(Found CALLG, giving up)\n");
-			return;
-		}
-
 		/* Count saved register bits */
 		arg_base = popcount(tmp_frame->vax_regs);
 
 		/* number of arguments is then pointed to by vax_args[arg_base] */
-		nargs = VAX_NUMARGS(tmp_frame->vax_args[arg_base]);
+		nargs = tmp_frame->vax_args[arg_base];
 		if (nargs) {
 			nargs--; /* reduce by one for formatting niceties */
 			arg_base++; /* skip past the actual number of arguments */
