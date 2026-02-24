@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 2025/07/01 14:19:45 macallan Exp $	*/
+/*	$NetBSD: machdep.c,v 1.179 2026/02/24 21:54:38 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2025/07/01 14:19:45 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2026/02/24 21:54:38 jmcneill Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -226,7 +226,7 @@ cpu_startup(void)
 void
 dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	oea_dumpsys();
 }
 
 /*
