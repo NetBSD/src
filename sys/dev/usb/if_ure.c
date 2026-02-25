@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.62 2026/01/30 22:36:02 gutteridge Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.63 2026/02/25 01:34:13 gutteridge Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.62 2026/01/30 22:36:02 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.63 2026/02/25 01:34:13 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -932,15 +932,13 @@ ure_attach(device_t parent, device_t self, void *aux)
 	 * be handled in software for some cases.
 	 */
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Tx |
-	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
-#ifdef INET6
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx;
-#endif
-	if (un->un_flags & ~URE_FLAG_VER_4C00) {
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx;
+
+	if (!(un->un_flags & URE_FLAG_VER_4C00))
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx |
 		    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 		    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
-	}
 	struct ethercom *ec = usbnet_ec(un);
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU;
 #ifdef notyet
