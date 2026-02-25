@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.148 2025/09/06 21:02:40 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.149 2026/02/25 05:30:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.148 2025/09/06 21:02:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.149 2026/02/25 05:30:11 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -254,7 +254,8 @@ bootsync(void)
 {
 	static bool bootsyncdone = false;
 
-	if (bootsyncdone) return;
+	if (bootsyncdone)
+		return;
 
 	bootsyncdone = true;
 

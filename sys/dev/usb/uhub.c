@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.162 2024/05/04 12:49:15 mlelstv Exp $	*/
+/*	$NetBSD: uhub.c,v 1.163 2026/02/25 05:28:35 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.162 2024/05/04 12:49:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.163 2026/02/25 05:28:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -632,8 +632,10 @@ uhub_explore(struct usbd_device *dev)
 			    device_unit(sc->sc_dev), port, 0, 0);
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_ENABLE);
 			if (change & UPS_C_CONNECT_STATUS) {
-				/* Ignore the port error if the device
-				   vanished. */
+				/*
+				 * Ignore the port error if the device
+				 * vanished.
+				 */
 			} else if (status & UPS_PORT_ENABLED) {
 				aprint_error_dev(sc->sc_dev,
 				    "illegal enable change, port %d\n", port);
