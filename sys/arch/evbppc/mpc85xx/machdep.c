@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.49 2022/07/22 20:09:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.50 2026/02/25 11:57:46 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2022/07/22 20:09:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.50 2026/02/25 11:57:46 jmcneill Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -75,6 +75,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.49 2022/07/22 20:09:47 thorpej Exp $")
 #include <net/if.h>
 #include <net/if_media.h>
 #include <dev/mii/miivar.h>
+
+#include <machine/powerpc.h>
 
 #include <powerpc/pcb.h>
 #include <powerpc/spr.h>
@@ -126,6 +128,8 @@ void	initppc(vaddr_t, vaddr_t, void *, void *, char *, char *);
 #define	MEMREGIONS	4
 phys_ram_seg_t physmemr[MEMREGIONS];		/* All memory */
 phys_ram_seg_t availmemr[2*MEMREGIONS];		/* Available memory */
+static struct mem_region phys_region[MEMREGIONS];
+static struct mem_region avail_region[2*MEMREGIONS];
 static u_int nmemr;
 
 #ifndef CONSFREQ
@@ -620,6 +624,22 @@ memprobe(vaddr_t endkernel)
 	 */
 	for (u_int i = 0; i < cnt; i++)
 		physmem += atop(physmemr[i].size);
+
+	/* Populate powerpc mem regions. */
+	for (u_int i = 0; i < __arraycount(physmemr); i++) {
+		phys_region[i].start = (paddr_t)physmemr[i].start;
+		phys_region[i].size = (psize_t)physmemr[i].size;
+		if (phys_region[i].size == 0) {
+			break;
+		}
+	}
+	for (u_int i = 0; i < __arraycount(availmemr); i++) {
+		avail_region[i].start = (paddr_t)availmemr[i].start;
+		avail_region[i].size = (psize_t)availmemr[i].size;
+		if (avail_region[i].size == 0) {
+			break;
+		}
+	}
 
 	nmemr = cnt;
 	return physmemr[cnt-1].start + physmemr[cnt-1].size;
@@ -1558,4 +1578,11 @@ cpu_startup(void)
 		break;
 #endif
 	}
+}
+
+void
+mem_regions(struct mem_region **mem, struct mem_region **avail)
+{
+	*mem = phys_region;
+	*avail = avail_region;
 }
