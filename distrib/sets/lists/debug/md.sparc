@@ -1,6 +1,6 @@
-# $NetBSD: md.sparc,v 1.6 2024/10/07 09:05:02 skrll Exp $
+# $NetBSD: md.sparc,v 1.7 2026/02/26 19:18:52 christos Exp $
 #
-./usr/lib/libsparc_v8_g.a			comp-c-debuglib debuglib
+./usr/lib/libsparc_v8_g.a			comp-obsolete obsolete
 ./usr/libdata/debug/lib/libsparc_v8.so.0.0.debug	comp-sys-debug	debug,pic
 ./usr/libdata/debug/sbin/edlabel.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/sbin/ldconfig.debug		comp-sysutil-debug	debug,pic
