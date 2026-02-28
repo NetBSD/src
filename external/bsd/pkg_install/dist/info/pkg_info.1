@@ -1,4 +1,4 @@
-.\" $NetBSD: pkg_info.1,v 1.4 2021/04/10 19:49:59 nia Exp $
+.\" $NetBSD: pkg_info.1,v 1.5 2026/02/28 10:40:55 bsiegert Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -245,33 +245,33 @@ In addition,
 style {,} alternates have been implemented.
 Package version numbers can also be matched in a relational manner
 using the
-.Dq \*[Ge] ,
-.Dq \*[Le] ,
-.Dq \*[Gt] ,
+.Dq >= ,
+.Dq <= ,
+.Dq > ,
 and
-.Dq \*[Lt]
+.Dq < 
 operators.
 For example,
-.Dl pkg_info -e 'name\*[Ge]1.3'
+.Dl pkg_info -e 'name>=1.3'
 will match versions 1.3 and later of the
 .Dq name
 package.
 (Make sure to use shell quoting.)
 Additionally, ranges can be defined, by giving both a lower bound
 .Po with
-.Dq \*[Gt]
+.Dq >
 or
-.Dq \*[Ge]
+.Dq >=
 .Pc
 as well as an upper bound
 .Po with
-.Dq \*[Lt]
+.Dq <
 or
-. Dq \*[Le]
+. Dq <=
 .Pc .
 The lower bound has to come first.
 For example,
-.Dl pkg_info -e 'name\*[Ge]1.3\*[Lt]2.0'
+.Dl pkg_info -e 'name>=1.3<2.0'
 will match versions 1.3 (inclusive) to 2.0 (exclusive) of package
 .Dq name .
 .Pp
