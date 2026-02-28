@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.523 2026/02/28 22:06:38 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.524 2026/02/28 22:58:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.523 2026/02/28 22:06:38 christos Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.524 2026/02/28 22:58:00 christos Exp $");
 
 
 #ifdef USE_SELECT
@@ -979,8 +979,8 @@ MaybeSubMake(const char *cmd)
 	for (p = strstr(cmd, make); p != NULL; p = strstr(&p[1], make)) {
 		if (p == cmd || p[-1] == '/' || ch_isspace(p[-1])) {
 			if (p[len] == '\0' || ch_isspace(p[len])) {
-				DEBUG1(JOB, "MaybeSubMake: matched \"%.16s...\"\n",
-				    p);
+				DEBUG2(JOB, "%s: matched \"%.16s...\"\n",
+				    __func__, p);
 				return true;
 			}
 		}
@@ -1632,8 +1632,8 @@ JobExec(Job *job, char **argv)
 
 	if (DEBUG(JOB)) {
 		debug_printf(
-		    "JobExec: target %s, pid %d added to jobs table\n",
-		    job->node->name, job->pid);
+		    "%s: target %s, pid %d added to jobs table\n",
+		    __func__, job->node->name, job->pid);
 		JobTable_Dump("job started");
 	}
 	JobsTable_Unlock(&mask);
