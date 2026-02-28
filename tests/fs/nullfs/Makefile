@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.5 2020/03/01 18:08:14 christos Exp $
+#	$NetBSD: Makefile,v 1.6 2026/02/28 20:43:28 riastradh Exp $
 #
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/fs/nullfs
 WARNS=		4
+
+TESTS_SH+=	t_ipc
 
 TESTS_C=	t_basic
 
