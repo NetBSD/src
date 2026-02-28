@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.272 2026/01/04 01:54:22 riastradh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.273 2026/02/28 15:46:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #define __COMPAT_SYSCTL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.272 2026/01/04 01:54:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.273 2026/02/28 15:46:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -402,6 +402,16 @@ sysctl_dispatch(SYSCTLFN_ARGS)
 
 	fn = NULL;
 	error = sysctl_locate(l, name, namelen, &rnode, &ni);
+
+	/*
+	 * Enforce private-node read permissions on the final target even when
+	 * dispatching through a custom sysctl handler rather than
+	 * sysctl_lookup().
+	 */
+	if (error == 0 && l != NULL && (rnode->sysctl_flags & CTLFLAG_PRIVATE)
+	    && (error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_SYSCTL,
+	    KAUTH_REQ_SYSTEM_SYSCTL_PRVT, NULL, NULL, NULL)) != 0)
+		goto out;
 
 	if (rnode->sysctl_func != NULL) {
 		/*
