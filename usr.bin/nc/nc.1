@@ -1,4 +1,4 @@
-.\"     $NetBSD: nc.1,v 1.4 2026/03/01 06:22:09 kre Exp $
+.\"     $NetBSD: nc.1,v 1.5 2026/03/01 11:28:04 uwe Exp $
 .\"     $OpenBSD: nc.1,v 1.81 2017/01/26 22:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
@@ -54,14 +54,16 @@
 .\" .Op Fl V Ar rtable
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
-.Op Fl x Ar proxy_address Ns Op : Ns Ar port
+.Op Fl x Ar proxy_address Ns Op Cm \&: Ns Ar port
 .Op Ar destination
 .Op Ar port
 .Sh DESCRIPTION
 The
 .Nm
-(or
-.Nm netcat )
+.Po
+or
+.Nm netcat
+.Pc
 utility is used for just about anything under the sun involving TCP,
 UDP, or
 .Ux Ns -domain
@@ -94,7 +96,7 @@ and much, much more
 .El
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width Fl
 .It Fl 4
 Forces
 .Nm
@@ -117,13 +119,15 @@ Do not attempt to read from stdin.
 .It Fl E Ar endspec
 Exit after
 .Ar endspec
-network packets have been read or written (whichever occurs first).
+network packets have been read or written
+.Pq whichever occurs first .
 The
 .Ar endspec
-is either a single unsigned integer,
+is either a single unsigned integer
+.Ar n ,
 specifying the maximum number of packets for reading or writing,
 or a pair of unsigned integers separated by a slash
-.Pq Sq Li \&/
+.Pq Ql \&/
 character
 .Pq with no whitespace
 as
@@ -137,7 +141,8 @@ Either, or both,
 .Ar s
 or
 .Ar r
-may be zero, or omitted, to indicate no limit (the default).
+may be zero, or omitted, to indicate no limit
+.Pq the default .
 .Fl E
 does not apply when
 .Fl z
@@ -154,17 +159,21 @@ This is useful in conjunction with
 to have
 .Nm
 perform connection setup with a proxy but then leave the rest of the
-connection to another program (e.g.\&
+connection to another program
+.Po
+e.g.,\&
 .Xr ssh 1
 using the
 .Xr ssh_config 5
 .Cm ProxyUseFdpass
-option).
+option
+.Pc .
 .It Fl H Ar hash
 Specifies the required hash string of the peer certificate when using TLS.
 The string format required is that used by
 .Xr tls_peer_cert_hash 3 .
-Erroneous if not using TLS, and may not be used with -T noverify.
+Erroneous if not using TLS, and may not be used with
+.Fl T Cm noverify.
 .It Fl h
 Prints out
 .Nm
@@ -205,13 +214,19 @@ Additionally, any timeouts specified with the
 .Fl w
 option are ignored.
 .It Fl M Ar ttl
-Set the TTL / hop limit of outgoing packets.
+Set the
+.No TTL Ns \|/\| Ns hop
+limit of outgoing packets.
 .It Fl m Ar minttl
-Ask the kernel to drop incoming packets whose TTL / hop limit is under
+Ask the kernel to drop incoming packets whose
+.No TTL Ns \|/\| Ns hop
+limit is under
 .Ar minttl .
 .It Fl N
 .Xr shutdown 2
-the network socket after EOF on the input.
+the network socket after
+.Tn EOF
+on the input.
 Some servers require this to finish their work.
 .It Fl n
 Do not do any DNS or service lookups on any specified addresses,
@@ -261,15 +276,15 @@ Change IPv4 TOS value or TLS options.
 For TLS options
 .Ar keyword
 may be one of
-.Ar tlsall ;
+.Cm tlsall ;
 which allows the use of all supported TLS protocols and ciphers,
-.Ar noverify ;
+.Cm noverify ;
 which disables certificate verification;
-.Ar noname ,
+.Cm noname ,
 which disables certificate name checking;
-.Ar clientcert ,
+.Cm clientcert ,
 which requires a client certificate on incoming connections; or
-.Ar muststaple ,
+.Cm muststaple ,
 which requires the peer to provide a valid stapled OCSP response
 with the handshake.
 It is an error to specify TLS options if not using TLS.
@@ -277,16 +292,16 @@ It is an error to specify TLS options if not using TLS.
 For IPv4 TOS value
 .Ar keyword
 may be one of
-.Ar critical ,
-.Ar inetcontrol ,
-.Ar lowdelay ,
-.Ar netcontrol ,
-.Ar throughput ,
-.Ar reliability ,
+.Cm critical ,
+.Cm inetcontrol ,
+.Cm lowdelay ,
+.Cm netcontrol ,
+.Cm throughput ,
+.Cm reliability ,
 or one of the DiffServ Code Points:
-.Ar ef ,
-.Ar af11 ... af43 ,
-.Ar cs0 ... cs7 ;
+.Cm ef ,
+.Cm af11 Ns \^\(en\^ Ns Cm af43 ,
+.Cm cs0 Ns \^\(en\^ Ns Cm cs7 ;
 or a number in either hex or decimal.
 .It Fl t
 Causes
@@ -336,15 +351,15 @@ Requests that
 .Nm
 should use the specified protocol when talking to the proxy server.
 Supported protocols are
-.Dq 4
-(SOCKS v.4),
-.Dq 5
-(SOCKS v.5)
+.Cm 4
+.Pq SOCKS v4 ,
+.Cm 5
+.Pq SOCKS v5
 and
-.Dq connect
-(HTTPS proxy).
+.Cm connect
+.Pq HTTPS proxy .
 If the protocol is not specified, SOCKS version 5 is used.
-.It Fl x Ar proxy_address Ns Op : Ns Ar port
+.It Fl x Ar proxy_address\^ Ns Op Cm \&: Ns Ar port
 Requests that
 .Nm
 should connect to
@@ -355,8 +370,8 @@ and
 .Ar port .
 If
 .Ar port
-is not specified, the well-known port for the proxy protocol is used (1080
-for SOCKS, 3128 for HTTPS).
+is not specified, the well-known port for the proxy protocol is used
+.Pq 1080 for SOCKS, 3128 for HTTPS .
 .It Fl z
 Specifies that
 .Nm
@@ -368,24 +383,29 @@ option.
 .Pp
 .Ar destination
 can be a numerical IP address or a symbolic hostname
-(unless the
+.Po
+unless the
 .Fl n
-option is given).
+option is given
+.Pc .
 In general, a destination must be specified,
 unless the
 .Fl l
 option is given
-(in which case the local host is used).
+.Pq in which case the local host is used .
 For
 .Ux Ns -domain
 sockets, a destination is required and is the socket path to connect to
-(or listen on if the
+.Po
+or listen on if the
 .Fl l
-option is given).
+option is given
+.Pc .
 .Pp
 .Ar port
 can be a specified as a numeric port number, or as a service name.
-Ports may be specified in a range of the form nn-mm.
+Ports may be specified in a range of the form
+.Ar nn Ns Cm \&- Ns Ar mm .
 In general,
 a destination port must be specified,
 unless the
@@ -419,8 +439,8 @@ does not really care which side is being used as a
 and which side is being used as a
 .Sq client .
 The connection may be terminated using an
-.Dv EOF
-.Pq Sq ^D .
+.Tn EOF
+.Pq Ql \&^D .
 .Sh DATA TRANSFER
 The example in the previous section can be expanded to build a
 basic data transfer model.
@@ -488,7 +508,7 @@ Connection to host.example.com 22 port [tcp/ssh] succeeded!
 Connection to host.example.com 25 port [tcp/smtp] succeeded!
 .Ed
 .Pp
-The port range was specified to limit the search to ports 20 \- 30.
+The port range was specified to limit the search to ports 20\^\(en\^30.
 .Pp
 Alternatively, it might be useful to know which server software
 is running, and which versions.
@@ -515,7 +535,7 @@ the source port, with a timeout of 5 seconds:
 Open a TCP connection to port 443 of www.google.ca, and negotiate TLS.
 Check for a different name in the certificate for validation.
 .Pp
-.Dl $  nc -v -c -e adsf.au.doubleclick.net www.google.ca 443
+.Dl $ nc -v -c -e adsf.au.doubleclick.net www.google.ca 443
 .Pp
 Open a UDP connection to port 53 of host.example.com:
 .Pp
@@ -545,7 +565,7 @@ for more information.
 .Dl $ nc -x10.2.3.4:8080 -Xconnect host.example.com 42
 .Pp
 The same example again, this time enabling proxy authentication with username
-.Dq ruser
+.Ql ruser
 if the proxy requires it:
 .Pp
 .Dl $ nc -x10.2.3.4:8080 -Xconnect -Pruser host.example.com 42
