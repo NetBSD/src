@@ -36,7 +36,7 @@ src=/usr/src
 arch=$(uname -m)
 
 usage() {
-	echo "Usage: $PROG [-a <arch>] [-s <srcdir>] [-f <file>]" 1>&2
+	echo "Usage: $PROG [-a <arch>] [-k <kernel>] [-s <srcdir>]" 1>&2
 	exit 1
 }
 
