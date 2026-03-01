@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.44 2024/05/17 21:31:10 christos Exp $
+#	$NetBSD: Makefile.image,v 1.45 2026/03/01 15:16:56 christos Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -48,6 +48,7 @@ PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 GZIP_N_FLAG=-n
 .endif
 MAKESPEC=	${HOST_SH} ${NETBSDSRCDIR}/etc/makespec
+GETRAMDISKSIZE=	${HOST_SH} ${NETBSDSRCDIR}/etc/getramdisksize -a ${MACHINE} -s ${NETBSDSRCDIR}
 
 .if ${MAKEVERBOSE} >= 2 
 PAX_v?= -v
