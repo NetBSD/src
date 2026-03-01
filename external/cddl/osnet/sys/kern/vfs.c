@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs.c,v 1.9 2021/09/05 11:43:22 mlelstv Exp $	*/
+/*	$NetBSD: vfs.c,v 1.10 2026/03/01 13:52:29 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2006-2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -129,12 +129,29 @@ vfs_clearmntopt(vfs_t *vfsp, const char *name)
 int
 vfs_optionisset(const vfs_t *vfsp, const char *name, char **argp)
 {
+	/*
+	 * this api expects tri-state semantics for zfs.
+	 *
+	 * eg.
+	 *   - "ro"
+	 *   - "rw"
+	 *   - "unspecified" (ie. leave it to the corresponding zfs property)
+	 *
+	 * unfortunately, NetBSD system call interface (ie. MNT_xxx flags)
+	 * doesn't have a way for users to leave it unspecified.
+	 * (eg. as we don't have MNT_READWRITE, the lack of MNT_RDONLY
+	 * automatically implies read-write.)
+	 * this function treats a lack of mount option as "unspecified" to
+	 * allow users to leave it to be controlled by the corresponding
+	 * zfs property.
+	 * unfortunately, it means that there is no way for users to override
+	 * eg. "readonly" zfs property with a mount option. it's a bit shame,
+	 * but better than having no way to leave it to the properties. someday
+	 * we may want to introduce MNT_READWRITE...
+	 */
 	
 	if (strcmp("ro", name) == 0)
 		return (vfsp->mnt_flag & MNT_RDONLY) != 0;
-
-	if (strcmp("rw", name) == 0)
-		return (vfsp->mnt_flag & MNT_RDONLY) == 0;
 
 	if (strcmp("nodevices", name) == 0)
 		return (vfsp->mnt_flag & MNT_NODEV) != 0;
@@ -142,20 +159,11 @@ vfs_optionisset(const vfs_t *vfsp, const char *name, char **argp)
 	if (strcmp("noatime", name) == 0)
 		return (vfsp->mnt_flag & MNT_NOATIME) != 0;
 
-	if (strcmp("atime", name) == 0)
-		return (vfsp->mnt_flag & MNT_NOATIME) == 0;
-
 	if (strcmp("nosuid", name) == 0)
 		return (vfsp->mnt_flag & MNT_NOSUID) != 0;
 
-	if (strcmp("suid", name) == 0)
-		return (vfsp->mnt_flag & MNT_NOSUID) == 0;
-
 	if (strcmp("noexec", name) == 0)
 		return (vfsp->mnt_flag & MNT_NOEXEC) != 0;
-	
-	if (strcmp("exec", name) == 0)
-		return (vfsp->mnt_flag & MNT_NOEXEC) == 0;
 	
 	return 0;
 }
