@@ -1,4 +1,4 @@
-/*	$NetBSD: cs80bus.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $	*/
+/*	$NetBSD: cs80bus.c,v 1.20 2026/03/01 20:46:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.19 2021/08/07 16:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs80bus.c,v 1.20 2026/03/01 20:46:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,7 @@ static int	cs80busprint(void *, const char *);
  * are tagged with a 16-bit ID.
  *
  * CS80/SS80 has a 2-level addressing scheme; slave, the analog
- * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unforunately,
+ * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unfortunately,
  * IDs are on a per-slave basis; punits are often used for disk
  * drives that have an accompanying tape drive on the second punit.
  *

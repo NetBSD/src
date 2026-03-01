@@ -1,4 +1,4 @@
-/*	$NetBSD: __sigtramp2.S,v 1.5 2021/11/24 02:01:15 thorpej Exp $ */
+/*	$NetBSD: __sigtramp2.S,v 1.6 2026/03/01 20:46:00 andvar Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * instructions to skip to the ucontext.  Not that this order really
  * matters, but I think this inconsistency deserves an explanation.
  *
- * The DWARF register numbers unforunately do not map directly to our
+ * The DWARF register numbers unfortunately do not map directly to our
  * _REG_* constants that are used to index the general registers in the
  * ucontext_t at all.
  *

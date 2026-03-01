@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.46 2025/11/27 05:04:35 andvar Exp $	*/
+/*	$NetBSD: hpib.c,v 1.47 2026/03/01 20:46:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.46 2025/11/27 05:04:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.47 2026/03/01 20:46:00 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
  * probably Amigo, too) are tagged with a 16-bit ID.
  *
  * HP-IB has a 2-level addressing scheme; slave, the analog
- * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unforunately,
+ * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unfortunately,
  * IDs are on a per-slave basis; punits are often used for disk
  * drives that have an accompanying tape drive on the second punit.
  *
