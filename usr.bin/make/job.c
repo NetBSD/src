@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.524 2026/02/28 22:58:00 christos Exp $	*/
+/*	$NetBSD: job.c,v 1.525 2026/03/01 01:38:27 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.524 2026/02/28 22:58:00 christos Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.525 2026/03/01 01:38:27 sjg Exp $");
 
 
 #ifdef USE_SELECT
@@ -974,8 +974,7 @@ MaybeSubMake(const char *cmd)
 		make[strcspn(make, "[")] = '\0';
 		len = strlen(make);
 	}
-	while (strchr("@+-", *cmd))
-		cmd++;
+	cmd += strspn(cmd, "@ \t+-");
 	for (p = strstr(cmd, make); p != NULL; p = strstr(&p[1], make)) {
 		if (p == cmd || p[-1] == '/' || ch_isspace(p[-1])) {
 			if (p[len] == '\0' || ch_isspace(p[len])) {
