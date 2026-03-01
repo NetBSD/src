@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.33 2026/02/23 08:58:07 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.34 2026/03/01 12:35:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -29,13 +29,15 @@
  * A console driver for nvidia geforce graphics controllers
  * tested on macppc only so far, should work on other hardware as long as
  * something sets up a usable graphics mode and sets the right device properties
- * This driver should work with all NV1x hardware but so far it's been tested
- * only on NV11 / GeForce2 MX. Needs testing with more hardware and if
- * successful, PCI IDs need to be added to gffb_match()
+ * This driver should work with all NV1x and NV3x hardware but so far it's been
+ * tested only on NV11 / GeForce2 MX and 5200, U and Go variants ( the 5200 Go 
+ * is used in various PowerBooks and iMac G5, and Apple shipped 5200U cards with
+ * some G5s). Needs testing with more hardware and if successful, PCI IDs need
+ * to be added to gffb_match()
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.33 2026/02/23 08:58:07 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.34 2026/03/01 12:35:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
