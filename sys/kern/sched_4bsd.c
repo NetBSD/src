@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.47 2025/01/17 04:11:33 mrg Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.48 2026/03/01 13:56:50 yamt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.47 2025/01/17 04:11:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.48 2026/03/01 13:56:50 yamt Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -508,7 +508,7 @@ sched_lwp_collect(struct lwp *t)
 	/* Absorb estcpu value of collected LWP. */
 	l = curlwp;
 	lwp_lock(l);
-	l->l_estcpu += t->l_estcpu;
+	l->l_estcpu = ESTCPULIM(l->l_estcpu + t->l_estcpu);
 	lwp_unlock(l);
 }
 
