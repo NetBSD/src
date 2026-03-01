@@ -1,4 +1,4 @@
-.\"     $NetBSD: nc.1,v 1.3 2017/02/06 16:08:56 wiz Exp $
+.\"     $NetBSD: nc.1,v 1.4 2026/03/01 06:22:09 kre Exp $
 .\"     $OpenBSD: nc.1,v 1.81 2017/01/26 22:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
@@ -26,7 +26,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 2, 2017
+.Dd March 1, 2026
 .Dt NC 1
 .Os
 .Sh NAME
@@ -36,6 +36,7 @@
 .Nm nc
 .Op Fl 46cDdFhklNnrStUuvz
 .Op Fl C Ar certfile
+.Op Fl E Ar endspec
 .Op Fl e Ar name
 .Op Fl H Ar hash
 .Op Fl I Ar length
@@ -108,14 +109,42 @@ certificate is loaded, in PEM format.
 May only be used with TLS.
 .It Fl c
 If using a TCP socket to connect or listen, use TLS.
-Illegal if not using TCP sockets.
+Must not be specified if not using TCP sockets.
 .It Fl D
 Enable debugging on the socket.
 .It Fl d
 Do not attempt to read from stdin.
+.It Fl E Ar endspec
+Exit after
+.Ar endspec
+network packets have been read or written (whichever occurs first).
+The
+.Ar endspec
+is either a single unsigned integer,
+specifying the maximum number of packets for reading or writing,
+or a pair of unsigned integers separated by a slash
+.Pq Sq Li \&/
+character
+.Pq with no whitespace
+as
+.Oo Ar s Oc Ns Li \&/ Ns Oo Ar r Oc
+where
+.Ar s
+specifies the maximum number of packets to send over the network, and
+.Ar r
+specifies the maximum number of packets to receive.
+Either, or both,
+.Ar s
+or
+.Ar r
+may be zero, or omitted, to indicate no limit (the default).
+.Fl E
+does not apply when
+.Fl z
+is used.
 .It Fl e Ar name
 Specify the name that must be present in the peer certificate when using TLS.
-Illegal if not using TLS.
+Erroneous if not using TLS.
 .It Fl F
 Pass the first connected socket using
 .Xr sendmsg 2
@@ -135,7 +164,7 @@ option).
 Specifies the required hash string of the peer certificate when using TLS.
 The string format required is that used by
 .Xr tls_peer_cert_hash 3 .
-Illegal if not using TLS, and may not be used with -T noverify.
+Erroneous if not using TLS, and may not be used with -T noverify.
 .It Fl h
 Prints out
 .Nm
@@ -209,7 +238,7 @@ option.
 .It Fl R Ar CAfile
 Specifies the filename from which the root CA bundle for certificate
 verification is loaded, in PEM format.
-Illegal if not using TLS.
+Erroneous if not using TLS.
 The default is
 .Pa /etc/ssl/cert.pem .
 .It Fl r
@@ -243,7 +272,7 @@ which requires a client certificate on incoming connections; or
 .Ar muststaple ,
 which requires the peer to provide a valid stapled OCSP response
 with the handshake.
-It is illegal to specify TLS options if not using TLS.
+It is an error to specify TLS options if not using TLS.
 .Pp
 For IPv4 TOS value
 .Ar keyword

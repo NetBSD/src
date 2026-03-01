@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.7 2023/06/20 08:51:24 rin Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.8 2026/03/01 06:22:09 kre Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: netcat.c,v 1.7 2023/06/20 08:51:24 rin Exp $");
 #include <netinet/ip.h>
 #include <arpa/telnet.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
@@ -109,6 +110,8 @@ int	Tflag = -1;				/* IP Type of Service */
 #ifdef __OpenBSD__
 int	rtableid = -1;
 #endif
+
+intmax_t maxsend, maxrecv;
 
 int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
@@ -181,9 +184,9 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv,
 #ifdef CRYPTO
-	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z"
+	    "46C:cDdE:e:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z"
 #else
-	    "46Dde:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+	    "46DdE:e:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
 #endif
 	)) != -1) {
 		switch (ch) {
@@ -217,6 +220,31 @@ main(int argc, char *argv[])
 		case 'd':
 			dflag = 1;
 			break;
+
+		case 'E': {
+			char *ep;
+
+			maxsend = strtoi(optarg, &ep, 0, 0, UINT_MAX, &errnum);
+			if (errnum == ECANCELED)
+				maxsend = 0;
+			if ((errnum == ENOTSUP || errnum == ECANCELED) &&
+			    *ep == '/' && (ep[1] == '\0' ||
+			    isdigit(*(unsigned char *)(ep + 1)))) {
+				maxrecv = strtoi(ep + 1, &ep, 0, 0, UINT_MAX,
+				    &errnum);
+				if (errnum == ECANCELED) {
+					maxrecv = 0;
+					if (*ep == '\0')
+						errnum = 0;
+				}
+			} else
+				maxrecv = maxsend;
+
+			if (errnum)
+				errc(1, errnum, "bad end specifier '%s'",
+				    optarg);
+			break;
+		}
 		case 'e':
 			tls_expectname = optarg;
 			break;
@@ -1066,7 +1094,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 	size_t netinbufpos = 0;
 	unsigned char stdinbuf[BUFSIZE];
 	size_t stdinbufpos = 0;
-	int n, num_fds;
+	int n, num_fds, done = 0;
 	ssize_t ret;
 
 	/* don't read from stdin if requested */
@@ -1089,7 +1117,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 	pfd[POLL_STDOUT].fd = stdout_fd;
 	pfd[POLL_STDOUT].events = 0;
 
-	while (1) {
+	while (!done || pfd[POLL_STDOUT].events == POLLOUT) {
 		/* both inputs are gone, buffers are empty, we are done */
 		if (pfd[POLL_STDIN].fd == -1 && pfd[POLL_NETIN].fd == -1 &&
 		    stdinbufpos == 0 && netinbufpos == 0) {
@@ -1163,7 +1191,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 		}
 
 		/* try to read from stdin */
-		if (pfd[POLL_STDIN].revents & POLLIN && stdinbufpos < BUFSIZE) {
+		if (!done && pfd[POLL_STDIN].revents & POLLIN &&
+		    stdinbufpos < BUFSIZE) {
 			ret = fillbuf(pfd[POLL_STDIN].fd, stdinbuf,
 			    &stdinbufpos, NULL);
 			if (ret == TLS_WANT_POLLIN)
@@ -1180,7 +1209,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 				pfd[POLL_STDIN].events = 0;
 		}
 		/* try to write to network */
-		if (pfd[POLL_NETOUT].revents & POLLOUT && stdinbufpos > 0) {
+		if (!done && pfd[POLL_NETOUT].revents & POLLOUT &&
+		    stdinbufpos > 0) {
 			ret = drainbuf(pfd[POLL_NETOUT].fd, stdinbuf,
 			    &stdinbufpos, tls_ctx);
 			if (ret == TLS_WANT_POLLIN)
@@ -1195,9 +1225,13 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			/* buffer no longer full - poll stdin again */
 			if (stdinbufpos < BUFSIZE)
 				pfd[POLL_STDIN].events = POLLIN;
+
+			if (maxsend != 0 && --maxsend == 0)
+				done = 1;
 		}
 		/* try to read from network */
-		if (pfd[POLL_NETIN].revents & POLLIN && netinbufpos < BUFSIZE) {
+		if (!done && pfd[POLL_NETIN].revents & POLLIN &&
+		    netinbufpos < BUFSIZE) {
 			ret = fillbuf(pfd[POLL_NETIN].fd, netinbuf,
 			    &netinbufpos, tls_ctx);
 			if (ret == TLS_WANT_POLLIN)
@@ -1221,6 +1255,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			if (tflag)
 				atelnet(pfd[POLL_NETIN].fd, netinbuf,
 				    netinbufpos);
+			if (maxrecv != 0 && --maxrecv == 0)
+				done = 1;
 		}
 		/* try to write to stdout */
 		if (pfd[POLL_STDOUT].revents & POLLOUT && netinbufpos > 0) {
@@ -1251,6 +1287,10 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			pfd[POLL_STDOUT].fd = -1;
 		}
 	}
+
+	if (pfd[POLL_NETOUT].fd != -1 && Nflag)
+		shutdown(pfd[POLL_NETOUT].fd, SHUT_WR);
+	close(net_fd);
 }
 
 ssize_t
@@ -1720,6 +1760,7 @@ help(void)
 #endif
 	"\t-D		Enable the debug socket option\n"
 	"\t-d		Detach from stdin\n"
+	"\t-E [s]/[r]	Exit after sending s or receiving r (pkts)\n"
 #ifdef CRYPTO
 	"\t-e name\t	Required name in peer certificate\n"
 #endif
@@ -1773,7 +1814,8 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-e name] [-I length]\n"
+	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-e name] [-E [s]/[r]] "
+	    "[-I length]\n"
 #ifdef CRYPTO
 	    "\t  [-C certfile] [-H hash] [-K keyfile] [-R CAfile] "
 	    "[-T keyword] [-o staplefile]\n"
