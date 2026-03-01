@@ -735,6 +735,7 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 	int off;
 	int error = 0;
 	int npages, found;
+	void *buf = NULL;
 
 	start = uio->uio_loffset;
 	off = start & PAGEOFFSET;
@@ -742,7 +743,7 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 	for (start &= PAGEMASK; len > 0; start += PAGESIZE) {
 		page_t *pp;
 		uint64_t bytes = MIN(PAGESIZE - off, len);
-
+retry:
 		pp = NULL;
 		npages = 1;
 		rw_enter(rw, RW_WRITER);
@@ -750,14 +751,20 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 		    UFP_NOALLOC);
 		rw_exit(rw);
 
-		/* XXXNETBSD shouldn't access userspace with the page busy */
 		if (found) {
-			va = zfs_map_page(pp, S_READ);
-			error = uiomove(va + off, bytes, UIO_READ, uio);
-			zfs_unmap_page(pp, va);
+			if (buf != NULL) {
+				va = zfs_map_page(pp, S_READ);
+				memcpy(buf, va + off, bytes);
+				zfs_unmap_page(pp, va);
+			}
 			rw_enter(rw, RW_WRITER);
 			uvm_page_unbusy(&pp, 1);
 			rw_exit(rw);
+			if (buf == NULL) {
+				buf = kmem_alloc(PAGESIZE, KM_SLEEP);
+				goto retry;
+			}
+			error = uiomove(buf, bytes, UIO_READ, uio);
 		} else {
 			error = dmu_read_uio_dbuf(sa_get_db(zp->z_sa_hdl),
 			    uio, bytes);
@@ -767,6 +774,9 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 		off = 0;
 		if (error)
 			break;
+	}
+	if (buf != NULL) {
+		kmem_free(buf, PAGESIZE);
 	}
 	return (error);
 }
