@@ -5143,6 +5143,20 @@ zfs_netbsd_read(void *v)
 	case VFIFO:
 		ZFS_ACCESSTIME_STAMP(zp->z_zfsvfs, zp);
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
+	case VREG:
+		break;
+	case VDIR:
+		/*
+		 * Note: this is normal on NetBSD because it historically
+		 * allows read() on a directory.
+		 * We simply reject it here though because it doesn't make
+		 * sense to allow read() unless we implement a conversion
+		 * to the historical version of the UFS dirent structure,
+		 * which i (yamt) don't think is worth the effort.
+		 */
+		return EISDIR;
+	default:
+		return EINVAL;
 	}
 
 	return (zfs_read(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
@@ -5166,6 +5180,16 @@ zfs_netbsd_write(void *v)
 	case VFIFO:
 		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
+	case VREG:
+		break;
+	case VDIR:
+		/*
+		 * Note: this shouldn't happen as NetBSD's vn_openchk
+		 * rejects FWRITE on VDIR.
+		 */
+		return EIO;
+	default:
+		return EINVAL;
 	}
 
 	resid = uio->uio_resid;
