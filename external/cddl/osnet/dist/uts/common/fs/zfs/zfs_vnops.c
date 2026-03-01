@@ -805,25 +805,28 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
 		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
 		    UFP_NOALLOC);
 		if (found) {
-			/*
-			 * We're about to zap the page's contents and don't
-			 * care about any existing modifications.  We must
-			 * keep track of any new modifications past this
-			 * point.  Clear the modified bit in the pmap, and
-			 * if the page is marked dirty revert to tracking
-			 * the modified bit.
-			 */
-			switch (uvm_pagegetdirty(pp)) {
-			case UVM_PAGE_STATUS_DIRTY:
-				/* Does pmap_clear_modify(). */
-				uvm_pagemarkdirty(pp, UVM_PAGE_STATUS_UNKNOWN);
-				break;
-			case UVM_PAGE_STATUS_UNKNOWN:
-				pmap_clear_modify(pp);
-				break;
-			case UVM_PAGE_STATUS_CLEAN:
-				/* Nothing to do. */
-				break;
+			if (nbytes == PAGESIZE) {
+				/*
+				 * We're about to zap the page's contents
+				 * and don't care about any existing
+				 * modifications.  We must keep track of
+				 * any new modifications past this point.
+				 * Clear the modified bit in the pmap, and
+				 * if the page is marked dirty revert to
+				 * tracking the modified bit.
+				 */
+				switch (uvm_pagegetdirty(pp)) {
+				case UVM_PAGE_STATUS_DIRTY:
+					/* Does pmap_clear_modify(). */
+					uvm_pagemarkdirty(pp, UVM_PAGE_STATUS_UNKNOWN);
+					break;
+				case UVM_PAGE_STATUS_UNKNOWN:
+					pmap_clear_modify(pp);
+					break;
+				case UVM_PAGE_STATUS_CLEAN:
+					/* Nothing to do. */
+					break;
+				}
 			}
 			rw_exit(rw);
 
