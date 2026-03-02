@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.230 2026/01/31 12:12:58 nia Exp $
+#	$NetBSD: GENERIC64,v 1.231 2026/03/02 14:05:49 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -32,7 +32,6 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-options 	INCLUDE_CONFIG_FILE
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
