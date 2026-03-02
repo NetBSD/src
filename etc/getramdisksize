@@ -36,33 +36,53 @@ src=/usr/src
 arch=$(uname -m)
 
 usage() {
-	echo "Usage: $PROG [-a <arch>] [-k <kernel>] [-s <srcdir>]" 1>&2
+	printf >&2 'Usage: %s [-a <arch>] [-k <kernel>] [-s <srcdir>]\n' \
+	    "${PROG}"
 	exit 1
 }
 
 getsize() {
-	set - $(grep MEMORY_DISK_ROOT_SIZE "$1")
-	eval $(echo "$2")
-	echo $((${MEMORY_DISK_ROOT_SIZE} / 2))k
+	set -f
+
+	MDRSZ=$(grep MEMORY_DISK_ROOT_SIZE "$1") || return 1
+	set -- ${MDRSZ}
+
+	case "$2" in
+	MEMORY_DISK_ROOT_SIZE=*[^0-9]*)
+		return 1;;
+	MEMORY_DISK_ROOT_SIZE=*)
+		eval "$2";;
+	*)
+		return 1;;
+	esac
+
+	# should the following round down (as it does now), or up?
+	printf '%dk\n' "$(( MEMORY_DISK_ROOT_SIZE / 2 ))"
+
+	# leave exit status from printf, so we fail if output fails.
 }
 
-while getopts "a:k:s:" i; do
+while getopts a:k:s: i
+do
 	case $i in
-	a)	arch="$OPTARG";;
-	k)	kernel="$OPTARG";;
-	s)	src="$OPTARG";;
+	a)	arch=$OPTARG;;
+	k)	kernel=$OPTARG;;
+	s)	src=$OPTARG;;
 	*)
 		usage;;
 	esac
 done
-
 shift $((OPTIND - 1))
 
-file="$src/sys/arch/$arch/conf/$kernel"
+file=$src/sys/arch/$arch/conf/$kernel
 
-if [ ! -f "$file" ]; then
-	echo "$PROG: Can't open '$file'" 1>&2
+if ! [ -f "$file" ]; then
+	printf >&2 "%s: Can't open '%s'\\n" "${PROG}" "${file}"
 	exit 1
 fi
 
-getsize "$file"
+getsize "$file" || {
+	printf >&2 '%s: Bad/missing MEMORY_DISK_ROOT_SIZE in %s\n' \
+	    "${PROG}" "${file}"
+	exit 1
+}
