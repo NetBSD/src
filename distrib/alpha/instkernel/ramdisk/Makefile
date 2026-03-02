@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.33 2020/04/06 11:58:10 martin Exp $
+#	$NetBSD: Makefile,v 1.34 2026/03/02 13:53:02 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	4660k
 MAKEFS_FLAGS+=	-o density=5k
 
 WARNS=		1
@@ -32,6 +31,7 @@ PARSELISTENV=	INSTALLNOTES=${INSTALLNOTES:Q} TOOL_PWD_MKDB=${TOOL_PWD_MKDB:Q}
 .include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
+IMAGESIZE!=	${GETRAMDISKSIZE}
 
 release:
 
