@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.21 2025/02/08 16:12:20 skrll Exp $
+# $NetBSD: GENERIC64,v 1.22 2026/03/02 07:26:14 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -28,7 +28,7 @@ options 	VERBOSE_INIT_RISCV
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KERNHIST
 #options 	KERNHIST_PRINT
