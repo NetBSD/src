@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1466 2026/02/16 03:55:59 christos Exp $
+#      $NetBSD: bsd.own.mk,v 1.1467 2026/03/02 14:27:30 gutteridge Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -106,7 +106,7 @@ MKGCCCMDS?=	no
 
 #
 # We import the old gcc as "gcc.old" when upgrading.  EXTERNAL_GCC_SUBDIR is
-# set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
+# set to the relevant subdirectory in src/external/gpl3 for this HAVE_GCC.
 #
 .if ${HAVE_GCC} == 12
 EXTERNAL_GCC_SUBDIR?=	gcc.old
@@ -134,7 +134,7 @@ NOGCCISL=	# defined
 
 #
 # Build GCC with libquadmath.
-# Eg:  grep '#define HAVE_FLOAT128 1' lib/libgfortran/arch/*/config.h
+# E.g.:  grep '#define HAVE_FLOAT128 1' lib/libgfortran/arch/*/config.h
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
