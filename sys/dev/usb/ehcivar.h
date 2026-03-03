@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.53 2024/09/23 10:07:26 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.54 2026/03/03 13:48:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,8 +79,6 @@ typedef struct ehci_soft_itd {
 #define ehci_soft_sitd_t ehci_soft_itd_t
 #define ehci_soft_sitd ehci_soft_itd
 #define sc_softsitds sc_softitds
-#define EHCI_SITD_SIZE (roundup(sizeof(struct ehci_soft_sitd), EHCI_SITD_ALIGN))
-#define EHCI_SITD_CHUNK (EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
 
 struct ehci_xfer {
 	struct usbd_xfer ex_xfer;

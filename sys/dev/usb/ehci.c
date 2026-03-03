@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.333 2025/09/29 14:21:46 rin Exp $ */
+/*	$NetBSD: ehci.c,v 1.334 2026/03/03 13:48:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.333 2025/09/29 14:21:46 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.334 2026/03/03 13:48:07 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3315,7 +3315,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 		 */
 		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
-		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
+		    EHCI_PAGE_SIZE, 0, &dma);
 
 		if (err) {
 			DPRINTF("alloc returned %jd", err, 0, 0, 0);
