@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.57 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.58 2026/03/03 23:04:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.57 2025/12/14 18:07:40 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.58 2026/03/03 23:04:02 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -964,6 +964,12 @@ map_end(EditLine *el)
 	el->el_map.vii = NULL;
 	el_free(el->el_map.help);
 	el->el_map.help = NULL;
+	for (size_t nf = 0; nf < el->el_map.nfunc; nf++) {
+		if (!el->el_map.help[nf].allocated)
+			continue;
+		el_free((void *)(intptr_t)el->el_map.help[nf].name);
+		el_free((void *)(intptr_t)el->el_map.help[nf].description);
+	}
 	el_free(el->el_map.func);
 	el->el_map.func = NULL;
 }
@@ -1453,9 +1459,10 @@ map_addfunc(EditLine *el, const wchar_t *name, const wchar_t *help,
 	nf = (size_t)el->el_map.nfunc;
 	el->el_map.func[nf] = func;
 
-	el->el_map.help[nf].name = name;
+	el->el_map.help[nf].name = wcsdup(name);
 	el->el_map.help[nf].func = (int)nf;
-	el->el_map.help[nf].description = help;
+	el->el_map.help[nf].description = wcsdup(help);
+	el->el_map.help[nf].allocated = 1;
 	el->el_map.nfunc++;
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: map.h,v 1.14 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: map.h,v 1.15 2026/03/03 23:04:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,8 +43,9 @@
 typedef el_action_t (*el_func_t)(EditLine *, wint_t);
 
 typedef struct el_bindings_t {	/* for the "bind" shell command */
-	const wchar_t	*name;		/* function name for bind command */
 	int		 func;		/* function numeric value */
+	int		 allocated;	/* if it was allocated */
+	const wchar_t	*name;		/* function name for bind command */
 	const wchar_t	*description;	/* description of function */
 } el_bindings_t;
 
