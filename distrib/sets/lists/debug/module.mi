@@ -163,6 +163,8 @@
 ./usr/libdata/debug/@MODULEDIR@/flash/flash.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/fss				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/fss/fss.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/full				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/full/full.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/gpio				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/gpio/gpio.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/gpioiic				modules-base-kernel	kmod,debug

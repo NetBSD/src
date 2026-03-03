@@ -2786,6 +2786,7 @@
 ./usr/include/milter/mfdef.h			comp-obsolete		obsolete
 ./usr/include/miscfs/fdesc/fdesc.h		comp-c-include
 ./usr/include/miscfs/fifofs/fifo.h		comp-c-include
+./usr/include/miscfs/fullfs/full.h		comp-c-include
 ./usr/include/miscfs/genfs/genfs.h		comp-c-include
 ./usr/include/miscfs/genfs/genfs_node.h		comp-c-include
 ./usr/include/miscfs/genfs/layer.h		comp-c-include
@@ -4338,6 +4339,8 @@
 ./usr/lib/librumpfs_fdesc_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_ffs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_ffs_p.a			comp-c-proflib		rump,profile
+./usr/lib/librumpfs_full.a			comp-c-lib		rump,fullfs
+./usr/lib/librumpfs_full_p.a			comp-c-proflib		rump,fullfs,profile
 ./usr/lib/librumpfs_hfs.a			comp-c-lib		rump
 ./usr/lib/librumpfs_hfs_p.a			comp-c-proflib		rump,profile
 ./usr/lib/librumpfs_kernfs.a			comp-c-lib		rump

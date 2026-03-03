@@ -677,6 +677,9 @@
 ./usr/lib/librumpfs_ffs.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_ffs.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_ffs.so.0.0			base-rump-shlib		rump
+./usr/lib/librumpfs_full.so			base-rump-shlib		rump
+./usr/lib/librumpfs_full.so.0			base-rump-shlib		rump
+./usr/lib/librumpfs_full.so.0.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_hfs.so			base-rump-shlib		rump
 ./usr/lib/librumpfs_hfs.so.0			base-rump-shlib		rump
 ./usr/lib/librumpfs_hfs.so.0.0			base-rump-shlib		rump

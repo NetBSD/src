@@ -2776,6 +2776,7 @@
 ./usr/share/man/html8/mount_fdesc.html		man-miscfs-htmlman	fdescfs,html
 ./usr/share/man/html8/mount_ffs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_filecore.html	man-filecorefs-htmlman	filecorefs,html
+./usr/share/man/html8/mount_full.html		man-miscfs-htmlman	fullfs,html
 ./usr/share/man/html8/mount_hfs.html		man-hfs-htmlman		hfs,html
 ./usr/share/man/html8/mount_kernfs.html		man-sysutil-htmlman	kernfs,html
 ./usr/share/man/html8/mount_lfs.html		man-sysutil-htmlman	lfs,html

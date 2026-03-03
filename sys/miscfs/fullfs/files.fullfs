@@ -1,0 +1,7 @@
+#	$NetBSD$
+
+deffs	FULLFS
+
+define	fullfs: vfs, layerfs
+file	miscfs/fullfs/full_vfsops.c	fullfs
+file	miscfs/fullfs/full_vnops.c	fullfs

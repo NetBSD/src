@@ -13,6 +13,10 @@ TESTS_SUBDIRS+=	vfs
 TESTS_SUBDIRS+=	cd9660
 .endif
 
+.if ${MKFULLFS} != "no"
+TESTS_SUBDIRS+=	fullfs
+.endif
+
 .if ${MKHFS} != "no"
 TESTS_SUBDIRS+=	hfs
 .endif

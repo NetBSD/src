@@ -73,6 +73,7 @@
 #define	MOUNT_LFS	"lfs"		/* Log-based Filesystem */
 #define	MOUNT_FDESC	"fdesc"		/* File Descriptor Filesystem */
 #define	MOUNT_NULL	"null"		/* Minimal Filesystem Layer */
+#define	MOUNT_FULL	"full"		/* Full Filesystem Layer */
 #define	MOUNT_OVERLAY	"overlay"	/* Minimal Overlay Filesystem Layer */
 #define	MOUNT_UMAP	"umap"	/* User/Group Identifier Remapping Filesystem */
 #define	MOUNT_KERNFS	"kernfs"	/* Kernel Information Filesystem */

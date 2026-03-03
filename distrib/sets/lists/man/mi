@@ -3100,6 +3100,7 @@
 ./usr/share/man/cat8/mount_fdesc.0		man-miscfs-catman	fdescfs,.cat
 ./usr/share/man/cat8/mount_ffs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_filecore.0		man-filecorefs-catman	filecorefs,.cat
+./usr/share/man/cat8/mount_full.0		man-miscfs-catman	fullfs,.cat
 ./usr/share/man/cat8/mount_hfs.0		man-hfs-catman		hfs,.cat
 ./usr/share/man/cat8/mount_hfsp.0		man-obsolete		obsolete
 ./usr/share/man/cat8/mount_kernfs.0		man-sysutil-catman	kernfs,.cat
@@ -6693,6 +6694,7 @@
 ./usr/share/man/man8/mount_fdesc.8		man-miscfs-man		fdescfs,.man
 ./usr/share/man/man8/mount_ffs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_filecore.8		man-filecorefs-man	filecorefs,.man
+./usr/share/man/man8/mount_full.8		man-miscfs-man		fullfs,.man
 ./usr/share/man/man8/mount_hfs.8		man-hfs-man		hfs,.man
 ./usr/share/man/man8/mount_hfsp.8		man-obsolete		obsolete
 ./usr/share/man/man8/mount_kernfs.8		man-sysutil-man		kernfs,.man
