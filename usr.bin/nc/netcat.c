@@ -1,3 +1,4 @@
+/* $NetBSD: netcat.c,v 1.9 2026/03/03 03:14:41 kre Exp $ */
 /* $OpenBSD: netcat.c,v 1.172 2017/02/05 01:39:14 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
@@ -27,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.8 2026/03/01 06:22:09 kre Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.9 2026/03/03 03:14:41 kre Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -113,6 +114,7 @@ int	rtableid = -1;
 
 intmax_t maxsend, maxrecv;
 
+#ifdef CRYPTO
 int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
 char    *Kflag;					/* Private key file */
@@ -122,6 +124,7 @@ int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
+#endif
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -153,8 +156,11 @@ void	report_tls(struct tls *tls_ctx, char * host, char *tlsexpectname);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
 ssize_t fillbuf(int, unsigned char *, size_t *, struct tls *);
+
+#ifdef CRYPTO
 void	tls_setup_client(struct tls *, int, char *);
 struct tls *tls_setup_server(struct tls *, int, char *);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -184,9 +190,12 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv,
 #ifdef CRYPTO
-	    "46C:cDdE:e:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z"
+	    "46C:cDdE:e:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuvw:X:x:z"
 #else
-	    "46DdE:e:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+	    "46DdE:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+#endif
+#ifdef __OpenBSD__
+	    "V:"
 #endif
 	)) != -1) {
 		switch (ch) {
@@ -245,9 +254,11 @@ main(int argc, char *argv[])
 				    optarg);
 			break;
 		}
+#ifdef CRYPTO
 		case 'e':
 			tls_expectname = optarg;
 			break;
+#endif
 		case 'F':
 			Fflag = 1;
 			break;
@@ -428,15 +439,15 @@ main(int argc, char *argv[])
 		errx(1, "cannot use -z and -l");
 	if (!lflag && kflag)
 		errx(1, "must use -l with -k");
-	if (uflag && usetls)
-		errx(1, "cannot use -c and -u");
-	if ((family == AF_UNIX) && usetls)
-		errx(1, "cannot use -c and -U");
 	if ((family == AF_UNIX) && Fflag)
 		errx(1, "cannot use -F and -U");
+#ifdef CRYPTO
 	if (Fflag && usetls)
 		errx(1, "cannot use -c and -F");
-#ifdef CRYPTO
+	if ((family == AF_UNIX) && usetls)
+		errx(1, "cannot use -c and -U");
+	if (uflag && usetls)
+		errx(1, "cannot use -c and -u");
 	if (TLSopt && !usetls)
 		errx(1, "you must specify -c to use TLS options");
 	if (Cflag && !usetls)
@@ -1761,6 +1772,7 @@ help(void)
 	"\t-D		Enable the debug socket option\n"
 	"\t-d		Detach from stdin\n"
 	"\t-E [s]/[r]	Exit after sending s or receiving r (pkts)\n"
+	"\t-E n		     (same as -E n/n)\n"
 #ifdef CRYPTO
 	"\t-e name\t	Required name in peer certificate\n"
 #endif
@@ -1814,11 +1826,11 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-e name] [-E [s]/[r]] "
+	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-E [s]/[r] | -E n] "
 	    "[-I length]\n"
 #ifdef CRYPTO
-	    "\t  [-C certfile] [-H hash] [-K keyfile] [-R CAfile] "
-	    "[-T keyword] [-o staplefile]\n"
+	    "\t  [-C certfile] [-e name] [-H hash] "
+	    "[-K keyfile] [-R CAfile] [-T keyword] [-o staplefile]\n"
 #endif
 	    "\t  [-i interval] [-M ttl] [-m minttl] [-O length]\n"
 	    "\t  [-P proxy_username] [-p source_port]\n"
