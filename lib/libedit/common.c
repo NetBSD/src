@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.51 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: common.c,v 1.52 2026/03/03 15:05:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: common.c,v 1.51 2025/12/14 18:07:40 christos Exp $");
+__RCSID("$NetBSD: common.c,v 1.52 2026/03/03 15:05:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -569,7 +569,7 @@ ed_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 	if (el->el_history.eventno == 0) {	/* save the current buffer
 						 * away */
 		(void) wcsncpy(el->el_history.buf, el->el_line.buffer,
-		    EL_BUFSIZ);
+		    el->el_history.sz);
 		el->el_history.last = el->el_history.buf +
 		    (el->el_line.lastchar - el->el_line.buffer);
 	}
@@ -641,7 +641,7 @@ ed_search_prev_history(EditLine *el, wint_t c __attribute__((__unused__)))
 	}
 	if (el->el_history.eventno == 0) {
 		(void) wcsncpy(el->el_history.buf, el->el_line.buffer,
-		    EL_BUFSIZ);
+		    el->el_history.sz);
 		el->el_history.last = el->el_history.buf +
 		    (el->el_line.lastchar - el->el_line.buffer);
 	}

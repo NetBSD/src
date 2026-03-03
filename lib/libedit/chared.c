@@ -1,4 +1,4 @@
-/*	$NetBSD: chared.c,v 1.65 2025/12/14 18:07:40 christos Exp $	*/
+/*	$NetBSD: chared.c,v 1.66 2026/03/03 15:05:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)chared.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: chared.c,v 1.65 2025/12/14 18:07:40 christos Exp $");
+__RCSID("$NetBSD: chared.c,v 1.66 2026/03/03 15:05:17 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -561,7 +561,7 @@ ch_enlargebufs(EditLine *el, size_t addlen)
 			(el->el_chared.c_redo.lim - el->el_chared.c_redo.buf);
 	el->el_chared.c_redo.buf = newbuffer;
 
-	if (!hist_enlargebuf(el, sz, newsz))
+	if (!hist_enlargebuf(el, newsz))
 		return 0;
 
 	/* Safe to set enlarged buffer size */
