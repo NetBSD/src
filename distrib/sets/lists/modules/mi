@@ -185,6 +185,8 @@
 ./@MODULEDIR@/flash/flash.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/fss				modules-base-kernel	kmod
 ./@MODULEDIR@/fss/fss.kmod			modules-base-kernel	kmod
+./@MODULEDIR@/full				modules-base-kernel	kmod
+./@MODULEDIR@/full/full.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/gpio				modules-base-kernel	kmod
 ./@MODULEDIR@/gpio/gpio.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/gpioiic				modules-base-kernel	kmod

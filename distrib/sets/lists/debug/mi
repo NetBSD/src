@@ -391,6 +391,7 @@
 ./usr/libdata/debug/sbin/mount_fdesc.debug	comp-miscfs-debug	fdescfs,debug
 ./usr/libdata/debug/sbin/mount_ffs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/mount_filecore.debug	comp-filecorefs-debug	filecorefs,debug
+./usr/libdata/debug/sbin/mount_full.debug	comp-miscfs-debug	fullfs,debug
 ./usr/libdata/debug/sbin/mount_hfs.debug	comp-hfs-debug		hfs,debug
 ./usr/libdata/debug/sbin/mount_kernfs.debug	comp-sysutil-debug	kernfs,debug
 ./usr/libdata/debug/sbin/mount_lfs.debug	comp-sysutil-debug	lfs,debug
@@ -1714,6 +1715,7 @@
 ./usr/libdata/debug/usr/tests/fs/ffs/t_snapshot_v2.debug		tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/ffs/t_update_log.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/fifofs/t_fifo.debug			tests-fs-debug		debug,atf,rump
+./usr/libdata/debug/usr/tests/fs/fullfs/t_basic.debug			tests-fs-debug		fullfs,debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/hfs/t_pathconvert.debug		tests-fs-debug		hfs,debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/kernfs/t_basic.debug			tests-fs-debug		kernfs,debug,atf,rump
 ./usr/libdata/debug/usr/tests/fs/lfs/t_basic.debug			tests-fs-debug		lfs,debug,atf,rump
