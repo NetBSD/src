@@ -5,6 +5,8 @@
 PROG=	nc
 SRCS=	netcat.c atomicio.c socks.c
 
+# If this is ever made to work, change ".nr C 0" to ".nr C 1"
+# early in nc.1 to return all the cryto options to the man page.
 #CPPFLAGS+=-DCRYPTO
 #LDADD+= -ltls -lssl -lcrypto
 #DPADD+=  ${LIBTLS} ${LIBSSL} ${LIBCRYPTO}

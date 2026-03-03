@@ -1,4 +1,4 @@
-.\"     $NetBSD: nc.1,v 1.5 2026/03/01 11:28:04 uwe Exp $
+.\"     $NetBSD: nc.1,v 1.6 2026/03/03 03:14:47 kre Exp $
 .\"     $OpenBSD: nc.1,v 1.81 2017/01/26 22:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
@@ -26,7 +26,9 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd March 1, 2026
+.nr C 0	\" Set to 1 if the CRYPTO options are to be included
+.\"
+.Dd March 3, 2026
 .Dt NC 1
 .Os
 .Sh NAME
@@ -34,23 +36,24 @@
 .Nd arbitrary TCP and UDP connections and listens
 .Sh SYNOPSIS
 .Nm nc
-.Op Fl 46cDdFhklNnrStUuvz
-.Op Fl C Ar certfile
+.ie \nC .Op Fl 46cDdFhklNnrStUuvz
+.el .Op Fl 46DdFhklNnrStUuvz
+.if \nC .Op Fl C Ar certfile
 .Op Fl E Ar endspec
-.Op Fl e Ar name
-.Op Fl H Ar hash
+.if \nC .Op Fl e Ar name
+.if \nC .Op Fl H Ar hash
 .Op Fl I Ar length
 .Op Fl i Ar interval
-.Op Fl K Ar keyfile
+.if \nC .Op Fl K Ar keyfile
 .Op Fl M Ar ttl
 .Op Fl m Ar minttl
 .Op Fl O Ar length
-.Op Fl o Ar staplefile
+.if \nC .Op Fl o Ar staplefile
 .Op Fl P Ar proxy_username
 .Op Fl p Ar source_port
-.Op Fl R Ar CAfile
+.if \nC .Op Fl R Ar CAfile
 .Op Fl s Ar source
-.Op Fl T Ar keyword
+.if \nC .Op Fl T Ar keyword
 .\" .Op Fl V Ar rtable
 .Op Fl w Ar timeout
 .Op Fl X Ar proxy_protocol
@@ -105,6 +108,7 @@ to use IPv4 addresses only.
 Forces
 .Nm
 to use IPv6 addresses only.
+.if \nC \{
 .It Fl C Ar certfile
 Specifies the filename from which the public key part of the TLS
 certificate is loaded, in PEM format.
@@ -112,6 +116,7 @@ May only be used with TLS.
 .It Fl c
 If using a TCP socket to connect or listen, use TLS.
 Must not be specified if not using TCP sockets.
+.\}
 .It Fl D
 Enable debugging on the socket.
 .It Fl d
@@ -147,9 +152,11 @@ may be zero, or omitted, to indicate no limit
 does not apply when
 .Fl z
 is used.
+.if \nC \{
 .It Fl e Ar name
 Specify the name that must be present in the peer certificate when using TLS.
 Erroneous if not using TLS.
+.\}
 .It Fl F
 Pass the first connected socket using
 .Xr sendmsg 2
@@ -168,12 +175,14 @@ using the
 .Cm ProxyUseFdpass
 option
 .Pc .
+.if \nC \{
 .It Fl H Ar hash
 Specifies the required hash string of the peer certificate when using TLS.
 The string format required is that used by
 .Xr tls_peer_cert_hash 3 .
 Erroneous if not using TLS, and may not be used with
 .Fl T Cm noverify.
+.\}
 .It Fl h
 Prints out
 .Nm
@@ -183,10 +192,12 @@ Specifies the size of the TCP receive buffer.
 .It Fl i Ar interval
 Specifies a delay time interval between lines of text sent and received.
 Also causes a delay time between connections to multiple ports.
+.if \nC \{
 .It Fl K Ar keyfile
 Specifies the filename from which the private key
 is loaded in PEM format.
 May only be used with TLS.
+.\}
 .It Fl k
 Forces
 .Nm
@@ -233,12 +244,14 @@ Do not do any DNS or service lookups on any specified addresses,
 hostnames or ports.
 .It Fl O Ar length
 Specifies the size of the TCP send buffer.
+.if \nC \{
 .It Fl o Ar staplefile
 Specifies the filename from which to load data to be stapled
 during the TLS handshake.
 The file is expected to contain an OCSP response from an OCSP server in
 DER format.
 May only be used with TLS and when a certificate is being used.
+.\}
 .It Fl P Ar proxy_username
 Specifies a username to present to a proxy server that requires authentication.
 If no username is specified then authentication will not be attempted.
@@ -250,12 +263,14 @@ should use, subject to privilege restrictions and availability.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
+.if \nC \{
 .It Fl R Ar CAfile
 Specifies the filename from which the root CA bundle for certificate
 verification is loaded, in PEM format.
 Erroneous if not using TLS.
 The default is
 .Pa /etc/ssl/cert.pem .
+.\}
 .It Fl r
 Specifies that source and/or destination ports should be chosen randomly
 instead of sequentially within a range or in the order that the system
@@ -271,6 +286,7 @@ to create and use so that datagrams can be received.
 It is an error to use this option in conjunction with the
 .Fl l
 option.
+.if \nC \{
 .It Fl T Ar keyword
 Change IPv4 TOS value or TLS options.
 For TLS options
@@ -303,6 +319,7 @@ or one of the DiffServ Code Points:
 .Cm af11 Ns \^\(en\^ Ns Cm af43 ,
 .Cm cs0 Ns \^\(en\^ Ns Cm cs7 ;
 or a number in either hex or decimal.
+.\}
 .It Fl t
 Causes
 .Nm
