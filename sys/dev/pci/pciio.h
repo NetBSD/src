@@ -116,5 +116,20 @@ struct pciio_drvnameonbus {
 };
 #define	PCI_IOC_DRVNAMEONBUS	_IOWR('P', 5, struct pciio_drvnameonbus)
 
+/*
+ * pciio_bar_map:
+ *
+ *	PCI BAR mapping for userspace access.
+ */
+struct pciio_bar_map {
+        int     bus;			/* bus number */
+        int     device;			/* device number  */
+        int     function;		/* function number */
+        int     barnum;			/* BAR number */
+        off_t   offset;			/* offset for mmap */
+        size_t  size;			/* size of BAR */
+};
+
+#define PCI_IOC_MAP_BAR _IOWR('P', 6, struct pciio_bar_map) 
 
 #endif /* _DEV_PCI_PCIIO_H_ */
