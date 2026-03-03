@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.527 2026/03/03 19:36:41 rillig Exp $	*/
+/*	$NetBSD: job.c,v 1.528 2026/03/03 20:12:20 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.527 2026/03/03 19:36:41 rillig Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.528 2026/03/03 20:12:20 sjg Exp $");
 
 
 #ifdef USE_SELECT
@@ -966,8 +966,8 @@ find_make(const char *cmd, const char *make, size_t len)
 	for (p = strstr(cmd, make); p != NULL; p = strstr(&p[1], make)) {
 		if (p == cmd || ch_isspace(p[-1])) {
 			if (p[len] == '\0' || ch_isspace(p[len])) {
-				DEBUG5(JOB, "%s: matched \"%.*s\" in \"%.*s...\"\n",
-				    __func__, (int)len, p,
+				DEBUG4(JOB, "find_make: matched \"%.*s\" in \"%.*s...\"\n",
+				    (int)len, p,
 				    (int)len + 32, cmd);
 
 				return true;
@@ -996,8 +996,7 @@ MaybeSubMake(const char *cmd)
 			make_name_len = strlen(make_name);
 		} else
 			make_name_len = 0;
-		DEBUG2(JOB, "%s: Looking for \"%s\"\n",
-		    __func__, make);
+		DEBUG1(JOB, "MaybeSubMake: Looking for \"%s\"\n", make);
 	}
 	cmd += strspn(cmd, "@ \t+-");
 	if (find_make(cmd, make, make_len))
@@ -1651,8 +1650,8 @@ JobExec(Job *job, char **argv)
 
 	if (DEBUG(JOB)) {
 		debug_printf(
-		    "%s: target %s, pid %d added to jobs table\n",
-		    __func__, job->node->name, job->pid);
+		    "JobExec: target %s, pid %d added to jobs table\n",
+		    job->node->name, job->pid);
 		JobTable_Dump("job started");
 	}
 	JobsTable_Unlock(&mask);
