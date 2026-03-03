@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.379 2026/02/11 21:39:21 sjg Exp $
+# $NetBSD: Makefile,v 1.380 2026/03/03 20:03:00 rillig Exp $
 #
 # Unit tests for make(1)
 #
@@ -616,6 +616,7 @@ STD_SED_CMDS.dd+=	-e 's,  ${DEFSYSPATH:U/usr/share/mk} ,  <defsyspath> ,'
 # Omit details such as process IDs from the output of the -dg1 option.
 STD_SED_CMDS.dg1=	-e 's,${.CURDIR}$$,<curdir>,'
 STD_SED_CMDS.dg1+=	-e 's,  ${DEFSYSPATH:U/usr/share/mk}$$,  <defsyspath>,'
+STD_SED_CMDS.dg1+=	-e '/^\.MAKE\.PATH_FILEMON/d'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.[A-Z_]* *=\) .*,\1 <details omitted>,'
 STD_SED_CMDS.dg1+=	-e 's,^\(\.MAKE\.JOBS\.C *=\) .*,\1 <details omitted>,'
@@ -626,6 +627,7 @@ STD_SED_CMDS.dg1+=	-e '/\.SYSPATH/d'
 
 STD_SED_CMDS.dg2=	${STD_SED_CMDS.dg1}
 STD_SED_CMDS.dg2+=	-e 's,\(last modified\) ..:..:.. ... ..\, ....,\1 <timestamp>,'
+
 STD_SED_CMDS.dg3=	${STD_SED_CMDS.dg2}
 
 # Omit details such as process IDs from the output of the -dj option.
