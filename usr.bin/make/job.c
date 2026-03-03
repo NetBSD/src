@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.526 2026/03/03 18:30:30 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.527 2026/03/03 19:36:41 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.526 2026/03/03 18:30:30 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.527 2026/03/03 19:36:41 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -969,7 +969,7 @@ find_make(const char *cmd, const char *make, size_t len)
 				DEBUG5(JOB, "%s: matched \"%.*s\" in \"%.*s...\"\n",
 				    __func__, (int)len, p,
 				    (int)len + 32, cmd);
-				    
+
 				return true;
 			}
 		}
@@ -1003,7 +1003,7 @@ MaybeSubMake(const char *cmd)
 	if (find_make(cmd, make, make_len))
 		return true;
 	if (make_name_len > 0 && find_make(cmd, make_name, make_name_len))
-                return true;
+		return true;
 	return false;
 }
 
