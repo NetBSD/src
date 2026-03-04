@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.71 2026/03/04 01:23:28 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.72 2026/03/04 01:28:46 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.71 2026/03/04 01:23:28 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.72 2026/03/04 01:28:46 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -511,7 +511,7 @@ sbc_drq_intr(void *p)
 		 */
 		dcount =
 		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
-		if (count && count < 4) {
+		if (count) {
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			data = (u_int8_t *)dh->dh_addr;
 
@@ -576,7 +576,7 @@ sbc_drq_intr(void *p)
 		 */
 		dcount =
 		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
-		if (count && count < 4) {
+		if (count) {
 			data = (u_int8_t *)dh->dh_addr;
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			while (count) {
