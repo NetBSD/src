@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp_var.h,v 1.89.2.1 2026/03/04 18:53:56 martin Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.89.2.2 2026/03/04 18:56:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
@@ -180,9 +180,8 @@ SLIST_HEAD(http_headers, entry);
  */
 #define	FTPBUFLEN	(16 * 1024)
 #define	MAX_IN_PORT_T	0xffffU
-#define	SOCKBUFMIN	(8 * 1024)		/* 8 KiB min auto sockbuf size */
-#define	SOCKBUFMAX	(8 * 1024 * 1024)	/* 8 MiB max auto sockbuf size */
-#define	XFERBUFMAX	(128 * 1024)		/* 128 KiB max read()/write() */
+#define	XFERBUFMIN	(1 * 1024)	/* 1 KiB max read()/write() */
+#define	XFERBUFMAX	(128 * 1024)	/* 128 KiB max read()/write() */
 
 #define	HASHBYTES	1024	/* default mark for `hash' command */
 #define	DEFAULTINCR	1024	/* default increment for `rate' command */
