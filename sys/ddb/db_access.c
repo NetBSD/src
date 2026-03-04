@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.27 2023/09/01 10:55:23 andvar Exp $	*/
+/*	$NetBSD: db_access.c,v 1.27.8.1 2026/03/04 20:26:00 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.27 2023/09/01 10:55:23 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.27.8.1 2026/03/04 20:26:00 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -82,6 +82,7 @@ db_get_value(db_addr_t addr, size_t size, bool is_signed)
 	return (value);
 }
 
+#if defined DDB || defined _KMEMUSER
 quad_t
 db_get_qvalue(db_addr_t addr, size_t size, bool is_signed)
 {
@@ -101,6 +102,7 @@ db_get_qvalue(db_addr_t addr, size_t size, bool is_signed)
 	db_read_bytes(addr, sizeof(data), (char *)&data);
 	return data;
 }
+#endif
 
 void
 db_put_value(db_addr_t addr, size_t size, db_expr_t value)

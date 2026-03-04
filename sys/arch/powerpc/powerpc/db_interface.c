@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.61 2024/09/08 10:09:48 andvar Exp $ */
+/*	$NetBSD: db_interface.c,v 1.61.2.1 2026/03/04 20:26:00 martin Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2024/09/08 10:09:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61.2.1 2026/03/04 20:26:00 martin Exp $");
 
 #define USERACC
 
@@ -67,7 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.61 2024/09/08 10:09:48 andvar Exp
 #define NOCPU   ~0
 volatile u_int ddb_cpu = NOCPU;
 
+#ifdef DDB
 int	db_active = 0;
+#endif
 
 db_regs_t ddb_regs;
 
