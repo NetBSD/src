@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.86 2024/11/05 20:07:41 rillig Exp $   */
+/*      $NetBSD: raidctl.c,v 1.86.2.1 2026/03/04 19:42:45 martin Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.86 2024/11/05 20:07:41 rillig Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.86.2.1 2026/03/04 19:42:45 martin Exp $");
 #endif
 
 
@@ -1248,7 +1248,7 @@ rf_simple_create(int fd, int argc, char *argv[])
 	if (strcmp(argv[0],"mirror")==0) {
 		level = 1;
 	} else
-		level = atoi(argv[0]);
+		level = xstrtouint(argv[0]);
 
 	if (level != 0 && level != 1 && level !=5)
 		usage();
