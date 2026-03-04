@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.77 2026/03/04 20:40:30 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.78 2026/03/04 21:02:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2759,4 +2759,11 @@ sys/arch/aarch64/aarch64/pmap_machdep.c		1.9
 
 	aarch64: correct argument order in tlb_invalidate_addr calls.
 	[skrll, ticket #206]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0_RC2!
+	[martin]
+
 
