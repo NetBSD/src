@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.126.2.1 2024/07/20 15:33:03 martin Exp $	*/
+/*	$NetBSD: refresh.c,v 1.126.2.2 2026/03/04 19:39:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.126.2.1 2024/07/20 15:33:03 martin Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.126.2.2 2026/03/04 19:39:19 martin Exp $");
 #endif
 #endif				/* not lint */
 
@@ -1073,7 +1073,7 @@ putchbr(__LDATA *nsp, __LDATA *csp, __LDATA *psp, int wy, int wx)
 	/* We need to insert characters. */
 #ifdef HAVE_WCHAR
 	cw = nsp->wcols;
-	pcw = psp->wcols;
+	pcw = (psp == NULL) ? 0 : psp->wcols;
 	if (cw < 1 || pcw < 1)
 		return ERR; /* Nothing to insert */
 
