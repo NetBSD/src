@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.15 2025/07/05 15:11:05 macallan Exp $ */
+/*	$NetBSD: picvar.h,v 1.16 2026/03/04 10:54:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.15 2025/07/05 15:11:05 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: picvar.h,v 1.16 2026/03/04 10:54:32 jmcneill Exp $");
 
 #ifndef PIC_VAR_H
 #define PIC_VAR_H
@@ -65,6 +65,7 @@ struct intr_source {
 	struct evcnt is_ev;
 	char is_evname[16];
 	char is_intrid[INTRIDBUF];
+	u_int is_cpuindex;
 };
 
 #define OPENPIC_MAX_ISUS	4
