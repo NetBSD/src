@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.70 2025/05/24 10:10:10 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.71 2026/03/04 01:23:28 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.70 2025/05/24 10:10:10 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.71 2026/03/04 01:23:28 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -445,6 +445,9 @@ sbc_drq_intr(void *p)
 	volatile u_int8_t *drq = 0;	/* XXX gcc4 -Wuninitialized */
 	u_int8_t *data;
 	int count, dcount, s;
+
+	if (ncr_sc->sc_state & NCR_ABORTING)
+		return;
 
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
