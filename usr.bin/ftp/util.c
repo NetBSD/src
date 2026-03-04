@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.164.2.6 2026/03/04 19:04:51 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.164.2.7 2026/03/04 19:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.164.2.6 2026/03/04 19:04:51 martin Exp $");
+__RCSID("$NetBSD: util.c,v 1.164.2.7 2026/03/04 19:07:19 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -1081,40 +1081,18 @@ strsuftoi(const char *arg)
 void
 setupsockbufsize(int sock)
 {
-	socklen_t slen;
 
-	if (0 == rcvbuf_size) {
-		slen = sizeof(rcvbuf_size);
-		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
-		    (void *)&rcvbuf_size, &slen) == -1)
-			err(1, "Unable to determine rcvbuf size");
-		if (rcvbuf_size <= 0)
-			rcvbuf_size = SOCKBUFMIN;
-		if (rcvbuf_size > SOCKBUFMAX)
-			rcvbuf_size = SOCKBUFMAX;
-		DPRINTF("setupsockbufsize: rcvbuf_size determined as %d\n",
-		    rcvbuf_size);
-	}
-	if (0 == sndbuf_size) {
-		slen = sizeof(sndbuf_size);
-		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-		    (void *)&sndbuf_size, &slen) == -1)
-			err(1, "Unable to determine sndbuf size");
-		if (sndbuf_size <= 0)
-			sndbuf_size = SOCKBUFMIN;
-		if (sndbuf_size > SOCKBUFMAX)
-			sndbuf_size = SOCKBUFMAX;
-		DPRINTF("setupsockbufsize: sndbuf_size determined as %d\n",
-		    sndbuf_size);
+	if (sndbuf_size > 0) {
+		if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
+		    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
+			warn("Unable to set sndbuf size %d", sndbuf_size);
 	}
 
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-	    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
-		warn("Unable to set sndbuf size %d", sndbuf_size);
-
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
-	    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
-		warn("Unable to set rcvbuf size %d", rcvbuf_size);
+	if (rcvbuf_size > 0) {
+		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
+		    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
+			warn("Unable to set rcvbuf size %d", rcvbuf_size);
+	}
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.235.2.5 2026/03/04 19:04:51 martin Exp $	*/
+/*	$NetBSD: fetch.c,v 1.235.2.6 2026/03/04 19:07:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.235.2.5 2026/03/04 19:04:51 martin Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.235.2.6 2026/03/04 19:07:19 martin Exp $");
 #endif /* not lint */
 
 /*
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: fetch.c,v 1.235.2.5 2026/03/04 19:04:51 martin Exp $");
 #include <arpa/ftp.h>
 #include <arpa/inet.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -1696,13 +1695,17 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 	oldquit = xsignal(SIGQUIT, psummary);
 	oldint = xsignal(SIGINT, aborthttp);
 
-			/* Resize xferbuf to rcvbuf_size */
-	assert(rcvbuf_size > 0);
-	if ((size_t)rcvbuf_size != bufsize) {
+			/* Resize xferbuf to clamped rcvbuf_size */
+	if (bufsize == 0 || (size_t)rcvbuf_size != bufsize) {
 		if (xferbuf)
 			(void)free(xferbuf);
-		bufsize = MIN(rcvbuf_size, XFERBUFMAX);
+		if (rcvbuf_size == 0)
+			bufsize = XFERBUFMAX;
+		else
+			bufsize = MAX(XFERBUFMIN, MIN(rcvbuf_size, XFERBUFMAX));
 		xferbuf = ftp_malloc(bufsize);
+		DPRINTF("resized xferbuf to bufsize %zu using rcvbuf_size %d\n",
+		    bufsize, rcvbuf_size);
 	}
 
 	bytes = 0;
