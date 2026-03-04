@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.271.2.1 2026/02/02 19:52:25 martin Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.271.2.2 2026/03/04 20:22:45 martin Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.271.2.1 2026/02/02 19:52:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.271.2.2 2026/03/04 20:22:45 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3876,16 +3876,35 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 		addlog("\n");
 }
 
+/*
+ * rt_ifmsg requires sppp to be unlocked as it will attempt to lock it again.
+ * unlocking sppp is safe here because this logic runs in a single thread,
+ * the workqueue, so concurrent state transitions are excluded on that basis;
+ * other tlu functions already release and re-aquire the lock already,
+ * which is only for coordination with threads _other_ than the workqueue
+ * thread which doesn't change the state.
+ */
 static void
-sppp_ipcp_tlu(struct sppp *sp)
+sppp_rt_ifmsg(struct sppp *sp)
 {
-#ifdef INET
 	struct ifnet *ifp;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	SPPP_LOG(sp, LOG_INFO, "IPCP layer up\n");
 	ifp = &sp->pp_if;
+	SPPP_UNLOCK(sp);
+	rt_ifmsg(ifp);
+	SPPP_LOCK(sp, RW_WRITER);
+}
+
+static void
+sppp_ipcp_tlu(struct sppp *sp)
+{
+#ifdef INET
+
+	KASSERT(SPPP_WLOCKED(sp));
+
+	SPPP_LOG(sp, LOG_INFO, "IPCP layer up\n");
 	if ((sp->ipcp.flags & IPCP_MYADDR_DYN) &&
 	    ((sp->ipcp.flags & IPCP_MYADDR_SEEN) == 0)) {
 		SPPP_LOG(sp, LOG_WARNING,
@@ -3895,7 +3914,7 @@ sppp_ipcp_tlu(struct sppp *sp)
 	} else {
 		/* we are up. Set addresses and notify anyone interested */
 		sppp_set_ip_addrs(sp);
-		rt_ifmsg(ifp);
+		sppp_rt_ifmsg(sp);
 	}
 #endif
 }
@@ -3904,13 +3923,9 @@ static void
 sppp_ipcp_tld(struct sppp *sp)
 {
 #ifdef INET
-	struct ifnet *ifp;
-
-	KASSERT(SPPP_WLOCKED(sp));
 
 	SPPP_LOG(sp, LOG_INFO, "IPCP layer down\n");
-	ifp = &sp->pp_if;
-	rt_ifmsg(ifp);
+	sppp_rt_ifmsg(sp);
 #endif
 }
 
@@ -4445,27 +4460,19 @@ end:
 static void
 sppp_ipv6cp_tlu(struct sppp *sp)
 {
-	struct ifnet *ifp;
-
-	KASSERT(SPPP_WLOCKED(sp));
 
 	SPPP_LOG(sp, LOG_INFO, "IPv6CP layer up\n");
-	ifp = &sp->pp_if;
 	/* we are up - notify isdn daemon */
 	sppp_notify_con_wlocked(sp);
-	rt_ifmsg(ifp);
+	sppp_rt_ifmsg(sp);
 }
 
 static void
 sppp_ipv6cp_tld(struct sppp *sp)
 {
-	struct ifnet *ifp;
-
-	KASSERT(SPPP_WLOCKED(sp));
 
 	SPPP_LOG(sp, LOG_INFO, "IPv6CP layer down\n");
-	ifp = &sp->pp_if;
-	rt_ifmsg(ifp);
+	sppp_rt_ifmsg(sp);
 }
 
 static void
