@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.75.2.2 2026/03/04 19:20:17 martin Exp $	 */
+/*	$NetBSD: headers.c,v 1.75.2.3 2026/03/04 19:29:37 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.75.2.2 2026/03/04 19:20:17 martin Exp $");
+__RCSID("$NetBSD: headers.c,v 1.75.2.3 2026/03/04 19:29:37 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -342,6 +342,21 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
 			dbg(("headers: DT_FINI_ARRAYSZ %zu",
 			    obj->fini_arraysz));
+			break;
+#endif
+
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_PREINIT_ARRAY:
+			obj->preinit_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			dbg(("headers: DT_PREINIT_ARRAY at %p",
+			    obj->preinit_array));
+			break;
+
+		case DT_PREINIT_ARRAYSZ:
+			obj->preinit_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			dbg(("headers: DT_PREINIT_ARRAYSZ %zu",
+			    obj->preinit_arraysz));
 			break;
 #endif
 

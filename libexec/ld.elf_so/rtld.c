@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.221.2.1 2026/01/22 20:31:07 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.221.2.2 2026/03/04 19:29:37 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.221.2.1 2026/01/22 20:31:07 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.221.2.2 2026/03/04 19:29:37 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -133,6 +133,7 @@ extern Elf_Dyn  _DYNAMIC;
 
 static void _rtld_call_fini_functions(sigset_t *, int);
 static void _rtld_call_init_functions(sigset_t *);
+static void _rtld_call_preinit_functions(sigset_t *);
 static void _rtld_initlist_visit(Objlist *, Obj_Entry *, int);
 static void _rtld_initlist_tsort(Objlist *, int);
 static Obj_Entry *_rtld_dlcheck(void *);
@@ -283,6 +284,25 @@ _rtld_call_ifunc_functions(sigset_t *mask, Obj_Entry *obj, u_int cur_objgen)
 		}
 	}
 	return false;
+}
+
+static void
+_rtld_call_preinit_functions(sigset_t *mask)
+{
+#ifdef HAVE_INITFINI_ARRAY
+	Obj_Entry      *obj = _rtld_objmain;
+
+	/*
+	 * Process the init_array if it exists.  Simply go from  start
+	 * to end.
+	 */
+	for (size_t i = 0; i < obj->preinit_arraysz; i++) {
+		fptr_t preinit = obj->preinit_array[i];
+		dbg (("calling preinit_array function %s at %p",
+		    obj->path, (void *)preinit));
+		_rtld_call_initfini_function(preinit, mask);
+	}
+#endif /* HAVE_INITFINI_ARRAY */
 }
 
 static void
@@ -797,6 +817,9 @@ _rtld(Elf_Addr *sp, Elf_Addr relocbase)
 	_rtld_debug_state();	/* say hello to the debugger! */
 
 	_rtld_exclusive_enter(&mask);
+
+	dbg(("calling main preinit array functions"));
+	_rtld_call_preinit_functions(&mask);
 
 	dbg(("calling _init functions"));
 	_rtld_call_init_functions(&mask);

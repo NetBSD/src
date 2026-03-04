@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.h,v 1.150 2025/05/02 23:04:31 riastradh Exp $	 */
+/*	$NetBSD: rtld.h,v 1.150.2.1 2026/03/04 19:29:37 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -308,6 +308,8 @@ typedef struct Struct_Obj_Entry {
 	size_t		init_arraysz;	/* # of entries in it */
 	fptr_t		*fini_array;	/* start of fini array */
 	size_t		fini_arraysz;	/* # of entries in it */
+	fptr_t		*preinit_array;	/* start of preinit array */
+	size_t		preinit_arraysz;/* # of entries in it */
 	/* IRELATIVE relocations */
 	size_t		ifunc_remaining;
 #if \
