@@ -41,13 +41,21 @@ RB_GENERATE(client_files, client_file, entry, file_cmp);
 static char *
 file_get_path(struct client *c, const char *file)
 {
-	char	*path;
+	const char	*home;
+	char		*path, *full_path;
 
-	if (*file == '/')
+	if (strncmp(file, "~/", 2) != 0)
 		path = xstrdup(file);
-	else
-		xasprintf(&path, "%s/%s", server_client_get_cwd(c, NULL), file);
-	return (path);
+	else {
+		home = find_home();
+		if (home == NULL)
+			home = "";
+		xasprintf(&path, "%s%s", home, file + 1);
+	}
+	if (*path == '/')
+		return (path);
+	xasprintf(&full_path, "%s/%s", server_client_get_cwd(c, NULL), path);
+	return (full_path);
 }
 
 /* Tree comparison function. */
@@ -361,7 +369,7 @@ file_read(struct client *c, const char *path, client_file_cb cb, void *cbdata)
 	size_t			 msglen;
 	int			 fd = -1;
 	u_int			 stream = file_next_stream++;
-	FILE			*f;
+	FILE			*f = NULL;
 	size_t			 size;
 	char			 buffer[BUFSIZ];
 
@@ -401,7 +409,6 @@ file_read(struct client *c, const char *path, client_file_cb cb, void *cbdata)
 			cf->error = EIO;
 			goto done;
 		}
-		fclose(f);
 		goto done;
 	}
 
@@ -424,6 +431,8 @@ skip:
 	return cf;
 
 done:
+	if (f != NULL)
+		fclose(f);
 	file_fire_done(cf);
 	return NULL;
 }

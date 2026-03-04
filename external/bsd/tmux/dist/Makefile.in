@@ -103,7 +103,7 @@ bin_PROGRAMS = tmux$(EXEEXT)
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wdeclaration-after-statement \
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wno-pointer-sign -Wno-attributes \
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@	-Wno-unused-result -Wno-format-y2k
-@IS_DARWIN_TRUE@@IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_3 = -Wno-deprecated-declarations -Wno-cast-align
+@IS_DARWIN_TRUE@@IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_3 = -Wno-deprecated-declarations -Wno-cast-align -Wno-macro-redefined
 @IS_DEBUG_TRUE@@IS_GCC_TRUE@am__append_4 = -DDEBUG
 @IS_GCC_TRUE@am__append_5 = -iquote.
 
@@ -123,17 +123,20 @@ bin_PROGRAMS = tmux$(EXEEXT)
 # Set flags for Haiku.
 @IS_HAIKU_TRUE@am__append_11 = -D_BSD_SOURCE
 
+# Set flags for Cygwin.
+@IS_CYGWIN_TRUE@am__append_12 = -DTMUX_SOCK_PERM=0
+
 # Add compat file for forkpty.
-@NEED_FORKPTY_TRUE@am__append_12 = compat/forkpty-@PLATFORM@.c
+@NEED_FORKPTY_TRUE@am__append_13 = compat/forkpty-@PLATFORM@.c
 
 # Add compat file for systemd.
-@HAVE_SYSTEMD_TRUE@am__append_13 = compat/systemd.c
+@HAVE_SYSTEMD_TRUE@am__append_14 = compat/systemd.c
 
 # Add compat file for utf8proc.
-@HAVE_UTF8PROC_TRUE@am__append_14 = compat/utf8proc.c
+@HAVE_UTF8PROC_TRUE@am__append_15 = compat/utf8proc.c
 
 # Enable sixel support.
-@ENABLE_SIXEL_TRUE@am__append_15 = image.c image-sixel.c
+@ENABLE_SIXEL_TRUE@am__append_16 = image.c image-sixel.c
 @NEED_FUZZING_TRUE@check_PROGRAMS = fuzz/input-fuzzer$(EXEEXT)
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -335,7 +338,8 @@ am__DIST_COMMON = $(srcdir)/Makefile.in \
 	$(top_srcdir)/compat/freezero.c \
 	$(top_srcdir)/compat/getdtablecount.c \
 	$(top_srcdir)/compat/getdtablesize.c \
-	$(top_srcdir)/compat/getline.c $(top_srcdir)/compat/getopt.c \
+	$(top_srcdir)/compat/getline.c \
+	$(top_srcdir)/compat/getopt_long.c \
 	$(top_srcdir)/compat/getpeereid.c \
 	$(top_srcdir)/compat/getprogname.c \
 	$(top_srcdir)/compat/htonll.c \
@@ -385,7 +389,7 @@ AM_CPPFLAGS = @AM_CPPFLAGS@ @XOPEN_DEFINES@ \
 	-DTMUX_LOCK_CMD='"@DEFAULT_LOCK_CMD@"' \
 	-DTMUX_TERM='"@DEFAULT_TERM@"' $(am__append_4) $(am__append_5) \
 	$(am__append_6) $(am__append_7) $(am__append_9) \
-	$(am__append_10) $(am__append_11)
+	$(am__append_10) $(am__append_11) $(am__append_12)
 AM_DEFAULT_VERBOSITY = @AM_DEFAULT_VERBOSITY@
 AM_LDFLAGS = @AM_LDFLAGS@
 AUTOCONF = @AUTOCONF@
@@ -556,9 +560,9 @@ dist_tmux_SOURCES = alerts.c arguments.c attributes.c cfg.c client.c \
 	tmux-protocol.h tty-acs.c tty-features.c tty-keys.c tty-term.c \
 	tty.c utf8-combined.c utf8.c window-buffer.c window-client.c \
 	window-clock.c window-copy.c window-customize.c window-tree.c \
-	window.c xmalloc.c xmalloc.h $(am__append_15)
-nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_12) \
-	$(am__append_13) $(am__append_14)
+	window.c xmalloc.c xmalloc.h $(am__append_16)
+nodist_tmux_SOURCES = osdep-@PLATFORM@.c $(am__append_13) \
+	$(am__append_14) $(am__append_15)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_LDFLAGS = $(FUZZING_LIBS)
 @NEED_FUZZING_TRUE@fuzz_input_fuzzer_LDADD = $(LDADD) $(tmux_OBJECTS)
 all: all-am
@@ -827,7 +831,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getdtablecount.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getdtablesize.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getline.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getopt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getopt_long.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getpeereid.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/getprogname.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@compat/$(DEPDIR)/htonll.Po@am__quote@

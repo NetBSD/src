@@ -43,12 +43,8 @@ static void		 window_client_key(struct window_mode_entry *,
 #define WINDOW_CLIENT_DEFAULT_KEY_FORMAT \
 	"#{?#{e|<:#{line},10}," \
 		"#{line}" \
-	"," \
-		"#{?#{e|<:#{line},36},"	\
-	        	"M-#{a:#{e|+:97,#{e|-:#{line},10}}}" \
-		"," \
-	        	"" \
-		"}" \
+	",#{e|<:#{line},36},"	\
+		"M-#{a:#{e|+:97,#{e|-:#{line},10}}}" \
 	"}"
 
 static const struct menu_item window_client_menu_items[] = {
@@ -310,7 +306,7 @@ window_client_init(struct window_mode_entry *wme,
 
 	data->data = mode_tree_start(wp, args, window_client_build,
 	    window_client_draw, NULL, window_client_menu, NULL,
-	    window_client_get_key, data, window_client_menu_items,
+	    window_client_get_key, NULL, data, window_client_menu_items,
 	    window_client_sort_list, nitems(window_client_sort_list), &s);
 	mode_tree_zoom(data->data, args);
 

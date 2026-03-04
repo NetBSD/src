@@ -101,10 +101,10 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	src_wp->window = dst_w;
 	options_set_parent(src_wp->options, dst_w->options);
-	src_wp->flags |= PANE_STYLECHANGED;
+	src_wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	dst_wp->window = src_w;
 	options_set_parent(dst_wp->options, src_w->options);
-	dst_wp->flags |= PANE_STYLECHANGED;
+	dst_wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 
 	sx = src_wp->sx; sy = src_wp->sy;
 	xoff = src_wp->xoff; yoff = src_wp->yoff;
@@ -132,9 +132,12 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 		window_pane_stack_remove(&dst_w->last_panes, dst_wp);
 		colour_palette_from_option(&src_wp->palette, src_wp->options);
 		colour_palette_from_option(&dst_wp->palette, dst_wp->options);
+		layout_fix_panes(src_w, NULL);
+		server_redraw_window(src_w);
 	}
-	server_redraw_window(src_w);
+	layout_fix_panes(dst_w, NULL);
 	server_redraw_window(dst_w);
+
 	notify_window("window-layout-changed", src_w);
 	if (src_w != dst_w)
 		notify_window("window-layout-changed", dst_w);

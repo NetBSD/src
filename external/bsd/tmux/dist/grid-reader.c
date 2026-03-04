@@ -180,19 +180,14 @@ grid_reader_handle_wrap(struct grid_reader *gr, u_int *xx, u_int *yy)
 int
 grid_reader_in_set(struct grid_reader *gr, const char *set)
 {
-	struct grid_cell	gc;
-
-	grid_get_cell(gr->gd, gr->cx, gr->cy, &gc);
-	if (gc.flags & GRID_FLAG_PADDING)
-		return (0);
-	return (utf8_cstrhas(set, &gc.data));
+	return (grid_in_set(gr->gd, gr->cx, gr->cy, set));
 }
 
 /* Move cursor to the start of the next word. */
 void
 grid_reader_cursor_next_word(struct grid_reader *gr, const char *separators)
 {
-	u_int	xx, yy;
+	u_int	xx, yy, width;
 
 	/* Do not break up wrapped words. */
 	if (grid_get_line(gr->gd, gr->cy)->flags & GRID_LINE_WRAPPED)
@@ -229,8 +224,8 @@ grid_reader_cursor_next_word(struct grid_reader *gr, const char *separators)
 		}
 	}
 	while (grid_reader_handle_wrap(gr, &xx, &yy) &&
-	    grid_reader_in_set(gr, WHITESPACE))
-		gr->cx++;
+	    (width = grid_reader_in_set(gr, WHITESPACE)))
+		gr->cx += width;
 }
 
 /* Move cursor to the end of the next word. */
@@ -338,6 +333,20 @@ grid_reader_cursor_previous_word(struct grid_reader *gr, const char *separators,
 	gr->cy = oldy;
 }
 
+/* Compare grid cell to UTF-8 data. Return 1 if equal, 0 if not. */
+static int
+grid_reader_cell_equals_data(const struct grid_cell *gc,
+    const struct utf8_data *ud)
+{
+	if (gc->flags & GRID_FLAG_PADDING)
+		return (0);
+	if (gc->flags & GRID_FLAG_TAB && ud->size == 1 && *ud->data == '\t')
+		return (1);
+	if (gc->data.size != ud->size)
+		return (0);
+	return (memcmp(gc->data.data, ud->data, gc->data.size) == 0);
+}
+
 /* Jump forward to character. */
 int
 grid_reader_cursor_jump(struct grid_reader *gr, const struct utf8_data *jc)
@@ -352,9 +361,7 @@ grid_reader_cursor_jump(struct grid_reader *gr, const struct utf8_data *jc)
 		xx = grid_line_length(gr->gd, py);
 		while (px < xx) {
 			grid_get_cell(gr->gd, px, py, &gc);
-			if (!(gc.flags & GRID_FLAG_PADDING) &&
-			    gc.data.size == jc->size &&
-			    memcmp(gc.data.data, jc->data, gc.data.size) == 0) {
+			if (grid_reader_cell_equals_data(&gc, jc)) {
 				gr->cx = px;
 				gr->cy = py;
 				return (1);
@@ -382,9 +389,7 @@ grid_reader_cursor_jump_back(struct grid_reader *gr, const struct utf8_data *jc)
 	for (py = gr->cy + 1; py > 0; py--) {
 		for (px = xx; px > 0; px--) {
 			grid_get_cell(gr->gd, px - 1, py - 1, &gc);
-			if (!(gc.flags & GRID_FLAG_PADDING) &&
-			    gc.data.size == jc->size &&
-			    memcmp(gc.data.data, jc->data, gc.data.size) == 0) {
+			if (grid_reader_cell_equals_data(&gc, jc)) {
 				gr->cx = px - 1;
 				gr->cy = py - 1;
 				return (1);
@@ -415,7 +420,9 @@ grid_reader_cursor_back_to_indentation(struct grid_reader *gr)
 		xx = grid_line_length(gr->gd, py);
 		for (px = 0; px < xx; px++) {
 			grid_get_cell(gr->gd, px, py, &gc);
-			if (gc.data.size != 1 || *gc.data.data != ' ') {
+			if ((gc.data.size != 1 || *gc.data.data != ' ') &&
+			    ~gc.flags & GRID_FLAG_TAB &&
+			    ~gc.flags & GRID_FLAG_PADDING) {
 				gr->cx = px;
 				gr->cy = py;
 				return;
