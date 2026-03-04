@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tls_alignment.c,v 1.1.2.2 2025/12/18 18:14:22 martin Exp $	*/
+/*	$NetBSD: t_tls_alignment.c,v 1.1.2.3 2026/03/04 18:40:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -57,10 +57,6 @@ ATF_TC_HEAD(tls_alignment, tc)
 
 ATF_TC_BODY(tls_alignment, tc)
 {
-#ifdef __HAVE_TLS_VARIANT_I
-	atf_tc_expect_fail("PR toolchain/59652");
-#endif
-	
 	ATF_CHECK(tls_data.magic1 == MAGIC1);
 	ATF_CHECK(tls_data.magic2 == MAGIC2);
 	ATF_CHECK(tls_data.magic3 == MAGIC3);
