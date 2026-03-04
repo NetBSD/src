@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.6 2023/04/20 08:28:02 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.6.8.1 2026/03/04 20:38:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6 2023/04/20 08:28:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6.8.1 2026/03/04 20:38:27 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -251,10 +251,10 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			atomic_swap_64(ptep, opte | LX_BLKPAG_AF);
 			// tlb_invalidate_addr does the dsb(ishst);
-			tlb_invalidate_addr(pai->pai_asid, va);
+			tlb_invalidate_addr(va, pai->pai_asid);
 			cpu_icache_sync_range(va, PAGE_SIZE);
 			atomic_swap_64(ptep, opte);
-			tlb_invalidate_addr(pai->pai_asid, va);
+			tlb_invalidate_addr(va, pai->pai_asid);
 		}
 	}
 done:
