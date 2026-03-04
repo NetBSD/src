@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.22 2025/04/01 20:16:57 nia Exp $
+#	$NetBSD: GENERIC.common,v 1.22.2.1 2026/03/04 20:32:39 martin Exp $
 #
 #	GENERIC common RISC-V kernel config items shared between 32 and 64
 #	kernels
@@ -46,6 +46,7 @@ options 	BUFQ_PRIOCSCAN
 #
 makeoptions 	COPTS="-O2 -fno-omit-frame-pointer"
 makeoptions 	COPY_SYMTAB=1
+options 	INCLUDE_CONFIG_FILE
 options 	DDB		# in-kernel debugger
 #options 	DDB_COMMANDONENTER="bt"	# execute command when ddb is entered
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
