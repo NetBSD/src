@@ -111,7 +111,5 @@ struct null_node {
 extern int (**null_vnodeop_p)(void *);
 extern struct vfsops nullfs_vfsops;
 
-void nullfs_init(void);
-
 #endif /* _KERNEL */
 #endif /* _MISCFS_NULLFS_H_ */
