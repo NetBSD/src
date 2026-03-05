@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.98 2026/02/02 19:47:34 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.99 2026/03/05 07:04:42 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1297,4 +1297,9 @@ tests/lib/libc/sys/t_sigtimedwait.c		1.3-1.5
 
 	sigtimedwait(2): PR 59586: fix semantically important error codes.
 	[riastradh, ticket #2003]
+
+libexec/ld.elf_so/headers.c			1.78
+
+	ld.elf_so(1): fix typo in debug message.
+	[skrll, ticket #2005]
 
