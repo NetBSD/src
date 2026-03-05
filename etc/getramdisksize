@@ -48,7 +48,7 @@ getsize() {
 	set -- ${MDRSZ}
 
 	case "$2" in
-	MEMORY_DISK_ROOT_SIZE=*[^0-9]*)
+	MEMORY_DISK_ROOT_SIZE=*[!0-9]*)
 		return 1;;
 	MEMORY_DISK_ROOT_SIZE=*)
 		eval "$2";;
