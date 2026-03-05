@@ -33,6 +33,7 @@ struct format_range {
 
 	enum style_range_type		 type;
 	u_int				 argument;
+	char                             string[16];
 
 	TAILQ_ENTRY(format_range)	 entry;
 };
@@ -44,9 +45,18 @@ format_is_type(struct format_range *fr, struct style *sy)
 {
 	if (fr->type != sy->range_type)
 		return (0);
-	if (fr->type == STYLE_RANGE_WINDOW &&
-	    fr->argument != sy->range_argument)
-		return (0);
+	switch (fr->type) {
+	case STYLE_RANGE_NONE:
+	case STYLE_RANGE_LEFT:
+	case STYLE_RANGE_RIGHT:
+		return (1);
+	case STYLE_RANGE_PANE:
+	case STYLE_RANGE_WINDOW:
+	case STYLE_RANGE_SESSION:
+		return (fr->argument == sy->range_argument);
+	case STYLE_RANGE_USER:
+		return (strcmp(fr->string, sy->range_string) == 0);
+	}
 	return (1);
 }
 
@@ -632,6 +642,36 @@ format_draw_absolute_centre(struct screen_write_ctx *octx, u_int available,
 	    width_after);
 }
 
+/* Get width and count of any leading #s. */
+static const char *
+format_leading_hashes(const char *cp, u_int *n, u_int *width)
+{
+	for (*n = 0; cp[*n] == '#'; (*n)++)
+		/* nothing */;
+	if (*n == 0) {
+		*width = 0;
+		return (cp);
+	}
+	if (cp[*n] != '[') {
+		if ((*n % 2) == 0)
+			*width = (*n / 2);
+		else
+			*width = (*n / 2) + 1;
+		return (cp + *n);
+	}
+	*width = (*n / 2);
+	if ((*n % 2) == 0) {
+		/*
+		 * An even number of #s means that all #s are escaped, so not a
+		 * style. The caller should not skip this. Return pointing to
+		 * the [.
+		 */
+		return (cp + *n);
+	}
+	/* This is a style, so return pointing to the #. */
+	return (cp + *n - 1);
+}
+
 /* Draw multiple characters. */
 static void
 format_draw_many(struct screen_write_ctx *ctx, struct style *sy, char ch,
@@ -647,7 +687,8 @@ format_draw_many(struct screen_write_ctx *ctx, struct style *sy, char ch,
 /* Draw a format to a screen. */
 void
 format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
-    u_int available, const char *expanded, struct style_ranges *srs)
+    u_int available, const char *expanded, struct style_ranges *srs,
+    int default_colours)
 {
 	enum { LEFT,
 	       CENTRE,
@@ -678,7 +719,7 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	int			 focus_start = -1, focus_end = -1;
 	int			 list_state = -1, fill = -1, even;
 	enum style_align	 list_align = STYLE_ALIGN_DEFAULT;
-	struct grid_cell	 gc, current_default;
+	struct grid_cell	 gc, current_default, base_default;
 	struct style		 sy, saved_sy;
 	struct utf8_data	*ud = &sy.gc.data;
 	const char		*cp, *end;
@@ -688,7 +729,9 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 	struct format_ranges	 frs;
 	struct style_range	*sr;
 
+	memcpy(&base_default, base, sizeof base_default);
 	memcpy(&current_default, base, sizeof current_default);
+	base = &base_default;
 	style_set(&sy, &current_default);
 	TAILQ_INIT(&frs);
 	log_debug("%s: %s", __func__, expanded);
@@ -789,6 +832,10 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 		log_debug("%s: style '%s' -> '%s'", __func__, tmp,
 		    style_tostring(&sy));
 		free(tmp);
+		if (default_colours) {
+			sy.gc.bg = base->bg;
+			sy.gc.fg = base->fg;
+		}
 
 		/* If this style has a fill colour, store it for later. */
 		if (sy.fill != 8)
@@ -801,6 +848,12 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 			sy.default_type = STYLE_DEFAULT_BASE;
 		} else if (sy.default_type == STYLE_DEFAULT_POP) {
 			memcpy(&current_default, base, sizeof current_default);
+			sy.default_type = STYLE_DEFAULT_BASE;
+		} else if (sy.default_type == STYLE_DEFAULT_SET) {
+			memcpy(&base_default, &saved_sy.gc,
+			    sizeof base_default);
+			memcpy(&current_default, &saved_sy.gc,
+			    sizeof current_default);
 			sy.default_type = STYLE_DEFAULT_BASE;
 		}
 
@@ -907,6 +960,8 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 
 				fr->type = sy.range_type;
 				fr->argument = sy.range_argument;
+				strlcpy(fr->string, sy.range_string,
+				    sizeof fr->string);
 			}
 		}
 
@@ -978,13 +1033,39 @@ format_draw(struct screen_write_ctx *octx, const struct grid_cell *base,
 		sr = xcalloc(1, sizeof *sr);
 		sr->type = fr->type;
 		sr->argument = fr->argument;
+		strlcpy(sr->string, fr->string, sizeof sr->string);
 		sr->start = fr->start;
 		sr->end = fr->end;
 		TAILQ_INSERT_TAIL(srs, sr, entry);
 
-		log_debug("%s: range %d|%u at %u-%u", __func__, sr->type,
-		    sr->argument, sr->start, sr->end);
-
+		switch (sr->type) {
+		case STYLE_RANGE_NONE:
+			break;
+		case STYLE_RANGE_LEFT:
+			log_debug("%s: range left at %u-%u", __func__,
+			    sr->start, sr->end);
+			break;
+		case STYLE_RANGE_RIGHT:
+			log_debug("%s: range right at %u-%u", __func__,
+			    sr->start, sr->end);
+			break;
+		case STYLE_RANGE_PANE:
+			log_debug("%s: range pane|%%%u at %u-%u", __func__,
+			    sr->argument, sr->start, sr->end);
+			break;
+		case STYLE_RANGE_WINDOW:
+			log_debug("%s: range window|%u at %u-%u", __func__,
+			    sr->argument, sr->start, sr->end);
+			break;
+		case STYLE_RANGE_SESSION:
+			log_debug("%s: range session|$%u at %u-%u", __func__,
+			    sr->argument, sr->start, sr->end);
+			break;
+		case STYLE_RANGE_USER:
+			log_debug("%s: range user|%u at %u-%u", __func__,
+			    sr->argument, sr->start, sr->end);
+			break;
+		}
 		format_free_range(&frs, fr);
 	}
 
@@ -1002,44 +1083,27 @@ u_int
 format_width(const char *expanded)
 {
 	const char		*cp, *end;
-	u_int			 n, width = 0;
+	u_int			 n, leading_width, width = 0;
 	struct utf8_data	 ud;
 	enum utf8_state		 more;
 
 	cp = expanded;
 	while (*cp != '\0') {
 		if (*cp == '#') {
-			for (n = 1; cp[n] == '#'; n++)
-				/* nothing */;
-			if (cp[n] != '[') {
-				width += n;
-				cp += n;
-				continue;
+			end = format_leading_hashes(cp, &n, &leading_width);
+			width += leading_width;
+			cp = end;
+			if (*cp == '#') {
+				end = format_skip(cp + 2, "]");
+				if (end == NULL)
+					return (0);
+				cp = end + 1;
 			}
-			width += (n / 2); /* one for each ## */
-
-			if ((n % 2) == 0) {
-				/*
-				 * An even number of #s means that all #s are
-				 * escaped, so not a style.
-				 */
-				width++; /* one for the [ */
-				cp += (n + 1);
-				continue;
-			}
-			cp += (n - 1); /* point to the [ */
-
-			end = format_skip(cp + 2, "]");
-			if (end == NULL)
-				return (0);
-			cp = end + 1;
 		} else if ((more = utf8_open(&ud, *cp)) == UTF8_MORE) {
 			while (*++cp != '\0' && more == UTF8_MORE)
 				more = utf8_append(&ud, *cp);
 			if (more == UTF8_DONE)
 				width += ud.width;
-			else
-				cp -= ud.have;
 		} else if (*cp > 0x1f && *cp < 0x7f) {
 			width++;
 			cp++;
@@ -1059,53 +1123,36 @@ format_trim_left(const char *expanded, u_int limit)
 {
 	char			*copy, *out;
 	const char		*cp = expanded, *end;
-	u_int			 even, n, width = 0;
+	u_int			 n, width = 0, leading_width;
 	struct utf8_data	 ud;
 	enum utf8_state		 more;
 
-	out = copy = xcalloc(1, strlen(expanded) + 1);
+	out = copy = xcalloc(2, strlen(expanded) + 1);
 	while (*cp != '\0') {
 		if (width >= limit)
 			break;
 		if (*cp == '#') {
-			for (end = cp + 1; *end == '#'; end++)
-				/* nothing */;
-			n = end - cp;
-			if (*end != '[') {
-				if (n > limit - width)
-					n = limit - width;
-				memcpy(out, cp, n);
-				out += n;
-				width += n;
-				cp = end;
-				continue;
-			}
-			even = ((n % 2) == 0);
-
-			n /= 2;
-			if (n > limit - width)
-				n = limit - width;
-			width += n;
-			n *= 2;
-			memcpy(out, cp, n);
-			out += n;
-
-			if (even) {
-				if (width + 1 <= limit) {
-					*out++ = '[';
-					width++;
+			end = format_leading_hashes(cp, &n, &leading_width);
+			if (leading_width > limit - width)
+				leading_width = limit - width;
+			if (leading_width != 0) {
+				if (n == 1)
+					*out++ = '#';
+				else {
+					memset(out, '#', 2 * leading_width);
+					out += 2 * leading_width;
 				}
-				cp = end + 1;
-				continue;
+				width += leading_width;
 			}
-			cp = end - 1;
-
-			end = format_skip(cp + 2, "]");
-			if (end == NULL)
-				break;
-			memcpy(out, cp, end + 1 - cp);
-			out += (end + 1 - cp);
-			cp = end + 1;
+			cp = end;
+			if (*cp == '#') {
+				end = format_skip(cp + 2, "]");
+				if (end == NULL)
+					break;
+				memcpy(out, cp, end + 1 - cp);
+				out += (end + 1 - cp);
+				cp = end + 1;
+			}
 		} else if ((more = utf8_open(&ud, *cp)) == UTF8_MORE) {
 			while (*++cp != '\0' && more == UTF8_MORE)
 				more = utf8_append(&ud, *cp);
@@ -1137,7 +1184,8 @@ format_trim_right(const char *expanded, u_int limit)
 {
 	char			*copy, *out;
 	const char		*cp = expanded, *end;
-	u_int			 width = 0, total_width, skip, old_n, even, n;
+	u_int			 width = 0, total_width, skip, n;
+	u_int			 leading_width, copy_width;
 	struct utf8_data	 ud;
 	enum utf8_state		 more;
 
@@ -1146,67 +1194,35 @@ format_trim_right(const char *expanded, u_int limit)
 		return (xstrdup(expanded));
 	skip = total_width - limit;
 
-	out = copy = xcalloc(1, strlen(expanded) + 1);
+	out = copy = xcalloc(2, strlen(expanded) + 1);
 	while (*cp != '\0') {
 		if (*cp == '#') {
-			for (end = cp + 1; *end == '#'; end++)
-				/* nothing */;
-			old_n = n = end - cp;
-			if (*end != '[') {
-				if (width <= skip) {
-					if (skip - width >= n)
-						n = 0;
-					else
-						n -= (skip - width);
-				}
-				if (n != 0) {
-					memcpy(out, cp, n);
-					out += n;
-				}
-
-				/*
-				 * The width always increases by the full
-				 * amount even if we can't copy anything yet.
-				 */
-				width += old_n;
-				cp = end;
-				continue;
-			}
-			even = ((n % 2) == 0);
-
-			n /= 2;
+			end = format_leading_hashes(cp, &n, &leading_width);
+			copy_width = leading_width;
 			if (width <= skip) {
-				if (skip - width >= n)
-					n = 0;
+				if (skip - width >= copy_width)
+					copy_width = 0;
 				else
-					n -= (skip - width);
+					copy_width -= (skip - width);
 			}
-			if (n != 0) {
-				/*
-				 * Copy the full amount because it hasn't been
-				 * escaped yet.
-				 */
-				memcpy(out, cp, old_n);
-				out += old_n;
+			if (copy_width != 0) {
+				if (n == 1)
+					*out++ = '#';
+				else {
+					memset(out, '#', 2 * copy_width);
+					out += 2 * copy_width;
+				}
 			}
-			cp += old_n;
-			width += (old_n / 2) - even;
-
-			if (even) {
-				if (width > skip)
-					*out++ = '[';
-				width++;
-				continue;
+			width += leading_width;
+			cp = end;
+			if (*cp == '#') {
+				end = format_skip(cp + 2, "]");
+				if (end == NULL)
+					break;
+				memcpy(out, cp, end + 1 - cp);
+				out += (end + 1 - cp);
+				cp = end + 1;
 			}
-			cp = end - 1;
-
-			end = format_skip(cp + 2, "]");
-			if (end == NULL) {
-				break;
-			}
-			memcpy(out, cp, end + 1 - cp);
-			out += (end + 1 - cp);
-			cp = end + 1;
 		} else if ((more = utf8_open(&ud, *cp)) == UTF8_MORE) {
 			while (*++cp != '\0' && more == UTF8_MORE)
 				more = utf8_append(&ud, *cp);

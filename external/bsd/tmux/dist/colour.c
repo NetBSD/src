@@ -105,6 +105,21 @@ colour_split_rgb(int c, u_char *r, u_char *g, u_char *b)
 	*b = c & 0xff;
 }
 
+/* Force colour to RGB if not already. */
+int
+colour_force_rgb(int c)
+{
+	if (c & COLOUR_FLAG_RGB)
+		return (c);
+	if (c & COLOUR_FLAG_256)
+		return (colour_256toRGB(c));
+	if (c >= 0 && c <= 7)
+		return (colour_256toRGB(c));
+	if (c >= 90 && c <= 97)
+		return (colour_256toRGB(8 + c - 90));
+	return (-1);
+}
+
 /* Convert colour to a string. */
 const char *
 colour_tostring(int c)
@@ -113,7 +128,7 @@ colour_tostring(int c)
 	u_char		r, g, b;
 
 	if (c == -1)
-		return ("invalid");
+		return ("none");
 
 	if (c & COLOUR_FLAG_RGB) {
 		colour_split_rgb(c, &r, &g, &b);
@@ -165,6 +180,46 @@ colour_tostring(int c)
 		return ("brightwhite");
 	}
 	return ("invalid");
+}
+
+/* Convert background colour to theme. */
+enum client_theme
+colour_totheme(int c)
+{
+	int	r, g, b, brightness;
+
+	if (c == -1)
+		return (THEME_UNKNOWN);
+
+	if (c & COLOUR_FLAG_RGB) {
+		r = (c >> 16) & 0xff;
+		g = (c >> 8) & 0xff;
+		b = (c >> 0) & 0xff;
+
+		brightness = r + g + b;
+		if (brightness > 382)
+			return (THEME_LIGHT);
+		return (THEME_DARK);
+	}
+
+	if (c & COLOUR_FLAG_256)
+		return (colour_totheme(colour_256toRGB(c)));
+
+	switch (c) {
+	case 0:
+	case 90:
+		return (THEME_DARK);
+	case 7:
+	case 97:
+		return (THEME_LIGHT);
+	default:
+		if (c >= 0 && c <= 7)
+			return (colour_totheme(colour_256toRGB(c)));
+		if (c >= 90 && c <= 97)
+			return (colour_totheme(colour_256toRGB(8 + c - 90)));
+		break;
+	}
+	return (THEME_UNKNOWN);
 }
 
 /* Convert colour from string. */
@@ -927,13 +982,18 @@ colour_byname(const char *name)
 		{ "yellow3", 0xcdcd00 },
 		{ "yellow4", 0x8b8b00 }
 	};
-	u_int	i;
-	int	c;
+	u_int		 i;
+	int		 c;
+	const char	*errstr;
 
-	if (strncmp(name, "grey", 4) == 0 || strncmp(name, "gray", 4) == 0) {
-		if (!isdigit((u_char)name[4]))
+	if (strncasecmp(name, "grey", 4) == 0 ||
+	    strncasecmp(name, "gray", 4) == 0) {
+		if (name[4] == '\0')
 			return (0xbebebe|COLOUR_FLAG_RGB);
-		c = round(2.55 * atoi(name + 4));
+		c = strtonum(name + 4, 0, 100, &errstr);
+		if (errstr != NULL)
+			return (-1);
+		c = round(2.55 * c);
 		if (c < 0 || c > 255)
 			return (-1);
 		return (colour_join_rgb(c, c, c));
@@ -943,4 +1003,156 @@ colour_byname(const char *name)
 			return (colours[i].c|COLOUR_FLAG_RGB);
 	}
 	return (-1);
+}
+
+/* Parse colour from an X11 string. */
+int
+colour_parseX11(const char *p)
+{
+	double	 c, m, y, k = 0;
+	u_int	 r, g, b;
+	size_t	 len = strlen(p);
+	int	 colour = -1;
+	char	*copy;
+
+	if ((len == 12 && sscanf(p, "rgb:%02x/%02x/%02x", &r, &g, &b) == 3) ||
+	    (len == 7 && sscanf(p, "#%02x%02x%02x", &r, &g, &b) == 3) ||
+	    sscanf(p, "%d,%d,%d", &r, &g, &b) == 3)
+		colour = colour_join_rgb(r, g, b);
+	else if ((len == 18 &&
+	    sscanf(p, "rgb:%04x/%04x/%04x", &r, &g, &b) == 3) ||
+	    (len == 13 && sscanf(p, "#%04x%04x%04x", &r, &g, &b) == 3))
+		colour = colour_join_rgb(r >> 8, g >> 8, b >> 8);
+	else if ((sscanf(p, "cmyk:%lf/%lf/%lf/%lf", &c, &m, &y, &k) == 4 ||
+	    sscanf(p, "cmy:%lf/%lf/%lf", &c, &m, &y) == 3) &&
+	    c >= 0 && c <= 1 && m >= 0 && m <= 1 &&
+	    y >= 0 && y <= 1 && k >= 0 && k <= 1) {
+		colour = colour_join_rgb(
+		    (1 - c) * (1 - k) * 255,
+		    (1 - m) * (1 - k) * 255,
+		    (1 - y) * (1 - k) * 255);
+	} else {
+		while (len != 0 && *p == ' ') {
+			p++;
+			len--;
+		}
+		while (len != 0 && p[len - 1] == ' ')
+			len--;
+		copy = xstrndup(p, len);
+		colour = colour_byname(copy);
+		free(copy);
+	}
+	log_debug("%s: %s = %s", __func__, p, colour_tostring(colour));
+	return (colour);
+}
+
+/* Initialize palette. */
+void
+colour_palette_init(struct colour_palette *p)
+{
+	p->fg = 8;
+	p->bg = 8;
+	p->palette = NULL;
+	p->default_palette = NULL;
+}
+
+/* Clear palette. */
+void
+colour_palette_clear(struct colour_palette *p)
+{
+	if (p != NULL) {
+		p->fg = 8;
+		p->bg = 8;
+ 		free(p->palette);
+		p->palette = NULL;
+	}
+}
+
+/* Free a palette. */
+void
+colour_palette_free(struct colour_palette *p)
+{
+	if (p != NULL) {
+		free(p->palette);
+		p->palette = NULL;
+		free(p->default_palette);
+		p->default_palette = NULL;
+	}
+}
+
+/* Get a colour from a palette. */
+int
+colour_palette_get(struct colour_palette *p, int c)
+{
+	if (p == NULL)
+		return (-1);
+
+	if (c >= 90 && c <= 97)
+		c = 8 + c - 90;
+	else if (c & COLOUR_FLAG_256)
+		c &= ~COLOUR_FLAG_256;
+	else if (c >= 8)
+		return (-1);
+
+	if (p->palette != NULL && p->palette[c] != -1)
+		return (p->palette[c]);
+	if (p->default_palette != NULL && p->default_palette[c] != -1)
+		return (p->default_palette[c]);
+	return (-1);
+}
+
+/* Set a colour in a palette. */
+int
+colour_palette_set(struct colour_palette *p, int n, int c)
+{
+	u_int	i;
+
+	if (p == NULL || n > 255)
+		return (0);
+
+	if (c == -1 && p->palette == NULL)
+		return (0);
+
+	if (c != -1 && p->palette == NULL) {
+		if (p->palette == NULL)
+			p->palette = xcalloc(256, sizeof *p->palette);
+		for (i = 0; i < 256; i++)
+			p->palette[i] = -1;
+	}
+	p->palette[n] = c;
+	return (1);
+}
+
+/* Build palette defaults from an option. */
+void
+colour_palette_from_option(struct colour_palette *p, struct options *oo)
+{
+	struct options_entry		*o;
+	struct options_array_item	*a;
+	u_int				 i, n;
+	int				 c;
+
+	if (p == NULL)
+		return;
+
+	o = options_get(oo, "pane-colours");
+	if ((a = options_array_first(o)) == NULL) {
+		if (p->default_palette != NULL) {
+			free(p->default_palette);
+			p->default_palette = NULL;
+		}
+		return;
+	}
+	if (p->default_palette == NULL)
+		p->default_palette = xcalloc(256, sizeof *p->default_palette);
+	for (i = 0; i < 256; i++)
+		p->default_palette[i] = -1;
+	while (a != NULL) {
+		n = options_array_item_index(a);
+		if (n < 256) {
+			c = options_array_item_value(a)->number;
+			p->default_palette[n] = c;
+		}
+		a = options_array_next(a);
+	}
 }

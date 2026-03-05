@@ -36,10 +36,13 @@ static const char *options_table_mode_keys_list[] = {
 	"emacs", "vi", NULL
 };
 static const char *options_table_clock_mode_style_list[] = {
-	"12", "24", NULL
+	"12", "24", "12-with-seconds", "24-with-seconds", NULL
 };
 static const char *options_table_status_list[] = {
 	"off", "on", "2", "3", "4", "5", NULL
+};
+static const char *options_table_message_line_list[] = {
+	"0", "1", "2", "3", "4", NULL
 };
 static const char *options_table_status_keys_list[] = {
 	"emacs", "vi", NULL
@@ -56,11 +59,27 @@ static const char *options_table_bell_action_list[] = {
 static const char *options_table_visual_bell_list[] = {
 	"off", "on", "both", NULL
 };
+static const char *options_table_cursor_style_list[] = {
+	"default", "blinking-block", "block", "blinking-underline", "underline",
+	"blinking-bar", "bar", NULL
+};
+static const char *options_table_pane_scrollbars_list[] = {
+	"off", "modal", "on", NULL
+};
+static const char *options_table_pane_scrollbars_position_list[] = {
+	"right", "left", NULL
+};
 static const char *options_table_pane_status_list[] = {
 	"off", "top", "bottom", NULL
 };
-static const char *options_table_pane_lines_list[] = {
-	"single", "double", "heavy", "simple", "number", NULL
+static const char *options_table_pane_border_indicators_list[] = {
+	"off", "colour", "arrows", "both", NULL
+};
+static const char *options_table_pane_border_lines_list[] = {
+	"single", "double", "heavy", "simple", "number", "spaces", NULL
+};
+static const char *options_table_popup_border_lines_list[] = {
+	"single", "double", "heavy", "simple", "rounded", "padded", "none", NULL
 };
 static const char *options_table_set_clipboard_list[] = {
 	"off", "external", "on", NULL
@@ -71,16 +90,25 @@ static const char *options_table_window_size_list[] = {
 static const char *options_table_remain_on_exit_list[] = {
 	"off", "on", "failed", NULL
 };
+static const char *options_table_destroy_unattached_list[] = {
+	"off", "on", "keep-last", "keep-group", NULL
+};
 static const char *options_table_detach_on_destroy_list[] = {
-	"off", "on", "no-detached", NULL
+	"off", "on", "no-detached", "previous", "next", NULL
 };
 static const char *options_table_extended_keys_list[] = {
 	"off", "on", "always", NULL
 };
+static const char *options_table_extended_keys_format_list[] = {
+	"csi-u", "xterm", NULL
+};
+static const char *options_table_allow_passthrough_list[] = {
+	"off", "on", "all", NULL
+};
 
 /* Status line format. */
 #define OPTIONS_TABLE_STATUS_FORMAT1 \
-	"#[align=left range=left #{status-left-style}]" \
+	"#[align=left range=left #{E:status-left-style}]" \
 	"#[push-default]" \
 	"#{T;=/#{status-left-length}:status-left}" \
 	"#[pop-default]" \
@@ -89,20 +117,20 @@ static const char *options_table_extended_keys_list[] = {
 	"#[list=left-marker]<#[list=right-marker]>#[list=on]" \
 	"#{W:" \
 		"#[range=window|#{window_index} " \
-			"#{window-status-style}" \
+			"#{E:window-status-style}" \
 			"#{?#{&&:#{window_last_flag}," \
-				"#{!=:#{window-status-last-style},default}}, " \
-				"#{window-status-last-style}," \
+				"#{!=:#{E:window-status-last-style},default}}, " \
+				"#{E:window-status-last-style}," \
 			"}" \
 			"#{?#{&&:#{window_bell_flag}," \
-				"#{!=:#{window-status-bell-style},default}}, " \
-				"#{window-status-bell-style}," \
+				"#{!=:#{E:window-status-bell-style},default}}, " \
+				"#{E:window-status-bell-style}," \
 				"#{?#{&&:#{||:#{window_activity_flag}," \
 					     "#{window_silence_flag}}," \
 					"#{!=:" \
-					"#{window-status-activity-style}," \
+					"#{E:window-status-activity-style}," \
 					"default}}, " \
-					"#{window-status-activity-style}," \
+					"#{E:window-status-activity-style}," \
 				"}" \
 			"}" \
 		"]" \
@@ -110,26 +138,26 @@ static const char *options_table_extended_keys_list[] = {
 		"#{T:window-status-format}" \
 		"#[pop-default]" \
 		"#[norange default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
+		"#{?loop_last_flag,,#{window-status-separator}}" \
 	"," \
 		"#[range=window|#{window_index} list=focus " \
-			"#{?#{!=:#{window-status-current-style},default}," \
-				"#{window-status-current-style}," \
-				"#{window-status-style}" \
+			"#{?#{!=:#{E:window-status-current-style},default}," \
+				"#{E:window-status-current-style}," \
+				"#{E:window-status-style}" \
 			"}" \
 			"#{?#{&&:#{window_last_flag}," \
-				"#{!=:#{window-status-last-style},default}}, " \
-				"#{window-status-last-style}," \
+				"#{!=:#{E:window-status-last-style},default}}, " \
+				"#{E:window-status-last-style}," \
 			"}" \
 			"#{?#{&&:#{window_bell_flag}," \
-				"#{!=:#{window-status-bell-style},default}}, " \
-				"#{window-status-bell-style}," \
+				"#{!=:#{E:window-status-bell-style},default}}, " \
+				"#{E:window-status-bell-style}," \
 				"#{?#{&&:#{||:#{window_activity_flag}," \
 					     "#{window_silence_flag}}," \
 					"#{!=:" \
-					"#{window-status-activity-style}," \
+					"#{E:window-status-activity-style}," \
 					"default}}, " \
-					"#{window-status-activity-style}," \
+					"#{E:window-status-activity-style}," \
 				"}" \
 			"}" \
 		"]" \
@@ -137,18 +165,68 @@ static const char *options_table_extended_keys_list[] = {
 		"#{T:window-status-current-format}" \
 		"#[pop-default]" \
 		"#[norange list=on default]" \
-		"#{?window_end_flag,,#{window-status-separator}}" \
+		"#{?loop_last_flag,,#{window-status-separator}}" \
 	"}" \
-	"#[nolist align=right range=right #{status-right-style}]" \
+	"#[nolist align=right range=right #{E:status-right-style}]" \
 	"#[push-default]" \
 	"#{T;=/#{status-right-length}:status-right}" \
 	"#[pop-default]" \
 	"#[norange default]"
 #define OPTIONS_TABLE_STATUS_FORMAT2 \
-	"#[align=centre]#{P:#{?pane_active,#[reverse],}" \
-	"#{pane_index}[#{pane_width}x#{pane_height}]#[default] }"
+	"#[align=left]#{R: ,#{n:#{session_name}}}P: " \
+	"#[norange default]" \
+	"#[list=on align=#{status-justify}]" \
+	"#[list=left-marker]<#[list=right-marker]>#[list=on]" \
+	"#{P:" \
+		"#[range=pane|#{pane_id} " \
+			"#{E:pane-status-style}" \
+		"]" \
+		"#[push-default]" \
+		"#P[#{pane_width}x#{pane_height}]" \
+		"#[pop-default]" \
+		"#[norange list=on default]  " \
+	"," \
+		"#[range=pane|#{pane_id} list=focus " \
+			"#{?#{!=:#{E:pane-status-current-style},default}," \
+				"#{E:pane-status-current-style}," \
+				"#{E:pane-status-style}" \
+			"}" \
+		"]" \
+		"#[push-default]" \
+		"#P[#{pane_width}x#{pane_height}]*" \
+		"#[pop-default]" \
+		"#[norange list=on default] " \
+	"}"
+#define OPTIONS_TABLE_STATUS_FORMAT3 \
+	"#[align=left]#{R: ,#{n:#{session_name}}}S: " \
+	"#[norange default]" \
+	"#[list=on align=#{status-justify}]" \
+	"#[list=left-marker]<#[list=right-marker]>#[list=on]" \
+	"#{S:" \
+		"#[range=session|#{session_id} " \
+			"#{E:session-status-style}" \
+		"]" \
+		"#[push-default]" \
+		"#S#{session_alert}" \
+		"#[pop-default]" \
+		"#[norange list=on default]  " \
+	"," \
+		"#[range=session|#{session_id} list=focus " \
+			"#{?#{!=:#{E:session-status-current-style},default}," \
+					"#{E:session-status-current-style}," \
+					"#{E:session-status-style}" \
+			"}" \
+		"]" \
+		"#[push-default]" \
+		"#S*#{session_alert}" \
+		"#[pop-default]" \
+		"#[norange list=on default] " \
+	"}"
 static const char *options_table_status_format_default[] = {
-	OPTIONS_TABLE_STATUS_FORMAT1, OPTIONS_TABLE_STATUS_FORMAT2, NULL
+	OPTIONS_TABLE_STATUS_FORMAT1,
+	OPTIONS_TABLE_STATUS_FORMAT2,
+	OPTIONS_TABLE_STATUS_FORMAT3,
+	NULL
 };
 
 /* Helpers for hook options. */
@@ -184,6 +262,9 @@ const struct options_name_map options_other_names[] = {
 	{ "display-panes-color", "display-panes-colour" },
 	{ "display-panes-active-color", "display-panes-active-colour" },
 	{ "clock-mode-color", "clock-mode-colour" },
+	{ "cursor-color", "cursor-colour" },
+	{ "prompt-cursor-color", "prompt-cursor-colour" },
+	{ "pane-colors", "pane-colours" },
 	{ NULL, NULL }
 };
 
@@ -222,6 +303,15 @@ const struct options_table_entry options_table[] = {
 		  "Each entry is an alias and a command separated by '='."
 	},
 
+	{ .name = "codepoint-widths",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .flags = OPTIONS_TABLE_IS_ARRAY,
+	  .default_str = "",
+	  .separator = ",",
+	  .text = "Array of override widths for Unicode codepoints."
+	},
+
 	{ .name = "copy-command",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
@@ -230,10 +320,32 @@ const struct options_table_entry options_table[] = {
 		  "If empty, no command is run."
 	},
 
+	{ .name = "cursor-colour",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_num = -1,
+	  .text = "Colour of the cursor."
+	},
+
+	{ .name = "cursor-style",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .choices = options_table_cursor_style_list,
+	  .default_num = 0,
+	  .text = "Style of the cursor."
+	},
+
+	{ .name = "default-client-command",
+	  .type = OPTIONS_TABLE_COMMAND,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_str = "new-session",
+	  .text = "Default command to run when tmux is run without a command."
+	},
+
 	{ .name = "default-terminal",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
-	  .default_str = "screen",
+	  .default_str = TMUX_TERM,
 	  .text = "Default for the 'TERM' environment variable."
 	},
 
@@ -249,7 +361,8 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .minimum = 0,
 	  .maximum = INT_MAX,
-	  .default_num = 500,
+	  .default_num = 10,
+	  .unit = "milliseconds",
 	  .text = "Time to wait before assuming a key is Escape."
 	},
 
@@ -274,7 +387,15 @@ const struct options_table_entry options_table[] = {
 	  .choices = options_table_extended_keys_list,
 	  .default_num = 0,
 	  .text = "Whether to request extended key sequences from terminals "
-	          "that support it."
+		  "that support it."
+	},
+
+	{ .name = "extended-keys-format",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .choices = options_table_extended_keys_format_list,
+	  .default_num = 1,
+	  .text = "The format of emitted extended key sequences."
 	},
 
 	{ .name = "focus-events",
@@ -292,6 +413,51 @@ const struct options_table_entry options_table[] = {
 		  "Empty does not write a history file."
 	},
 
+	{ .name = "input-buffer-size",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .minimum = INPUT_BUF_DEFAULT_SIZE,
+	  .maximum = UINT_MAX,
+	  .default_num = INPUT_BUF_DEFAULT_SIZE,
+	  .text = "Number of bytes accepted in a single input before dropping."
+	},
+
+	{ .name = "menu-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "default",
+	  .separator = ",",
+	  .text = "Default style of menu."
+	},
+
+	{ .name = "menu-selected-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "bg=yellow,fg=black",
+	  .separator = ",",
+	  .text = "Default style of selected menu item."
+	},
+
+	{ .name = "menu-border-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of menu borders."
+	},
+
+	{ .name = "menu-border-lines",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_popup_border_lines_list,
+	  .default_num = BOX_LINES_SINGLE,
+	  .text = "Type of characters used to draw menu border lines. Some of "
+		  "these are only supported on terminals with UTF-8 support."
+	},
+
 	{ .name = "message-limit",
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SERVER,
@@ -299,6 +465,26 @@ const struct options_table_entry options_table[] = {
 	  .maximum = INT_MAX,
 	  .default_num = 1000,
 	  .text = "Maximum number of server messages to keep."
+	},
+
+	{ .name = "prefix-timeout",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 0,
+	  .unit = "milliseconds",
+	  .text = "The timeout for the prefix key if no subsequent key is "
+		  "pressed. Zero means disabled."
+	},
+
+	{ .name = "prompt-history-limit",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .minimum = 0,
+	  .maximum = INT_MAX,
+	  .default_num = 100,
+	  .text = "Maximum number of commands to keep in history."
 	},
 
 	{ .name = "set-clipboard",
@@ -315,7 +501,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "",
+	  .default_str = "linux*:AX@",
 	  .separator = ",",
 	  .text = "List of terminal capabilities overrides."
 	},
@@ -325,7 +511,8 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_SERVER,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
 	  .default_str = "xterm*:clipboard:ccolour:cstyle:focus:title,"
-			 "screen*:title",
+			 "screen*:title,"
+			 "rxvt*:ignorefkeys",
 	  .separator = ",",
 	  .text = "List of terminal features, used if they cannot be "
 		  "automatically detected."
@@ -340,6 +527,14 @@ const struct options_table_entry options_table[] = {
 	  .text = "User key assignments. "
 		  "Each sequence in the list is translated into a key: "
 		  "'User0', 'User1' and so on."
+	},
+
+	{ .name = "variation-selector-always-wide",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_SERVER,
+	  .default_num = 1,
+	  .text = "If the Unicode VS16 codepoint should always be treated as a "
+		  "wide character."
 	},
 
 	/* Session options. */
@@ -358,7 +553,7 @@ const struct options_table_entry options_table[] = {
 	  .maximum = INT_MAX,
 	  .default_num = 1,
 	  .unit = "milliseconds",
-	  .text = "Maximum time between input to assume it pasting rather "
+	  .text = "Maximum time between input to assume it is pasting rather "
 		  "than typing."
 	},
 
@@ -403,11 +598,12 @@ const struct options_table_entry options_table[] = {
 	},
 
 	{ .name = "destroy-unattached",
-	  .type = OPTIONS_TABLE_FLAG,
+	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_SESSION,
+	  .choices = options_table_destroy_unattached_list,
 	  .default_num = 0,
 	  .text = "Whether to destroy sessions when they have no attached "
-		  "clients."
+		  "clients, or keep the last session whether in the group."
 	},
 
 	{ .name = "detach-on-destroy",
@@ -465,6 +661,18 @@ const struct options_table_entry options_table[] = {
 		  "If changed, the new value applies only to new panes."
 	},
 
+	{ .name = "initial-repeat-time",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .minimum = 0,
+	  .maximum = 2000000,
+	  .default_num = 0,
+	  .unit = "milliseconds",
+	  .text = "Time to wait for a key binding to repeat the first time the "
+		  "key is pressed, if it is bound with the '-r' flag. "
+		  "Subsequent presses use the 'repeat-time' option."
+	},
+
 	{ .name = "key-table",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
@@ -486,7 +694,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "lock-command",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = "lock -np",
+	  .default_str = TMUX_LOCK_CMD,
 	  .text = "Shell command to run to lock a client."
 	},
 
@@ -500,13 +708,21 @@ const struct options_table_entry options_table[] = {
 		  "'mode-keys' is set to 'vi'."
 	},
 
+	{ .name = "message-line",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .choices = options_table_message_line_list,
+	  .default_num = 0,
+	  .text = "Position (line) of messages and the command prompt."
+	},
+
 	{ .name = "message-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .default_str = "bg=yellow,fg=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
 	  .separator = ",",
-	  .text = "Style of the command prompt."
+	  .text = "Style of messages and the command prompt."
 	},
 
 	{ .name = "mouse",
@@ -521,7 +737,7 @@ const struct options_table_entry options_table[] = {
 	{ .name = "prefix",
 	  .type = OPTIONS_TABLE_KEY,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_num = '\002',
+	  .default_num = 'b'|KEYC_CTRL,
 	  .text = "The prefix key."
 	},
 
@@ -544,7 +760,7 @@ const struct options_table_entry options_table[] = {
 	  .type = OPTIONS_TABLE_NUMBER,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .minimum = 0,
-	  .maximum = SHRT_MAX,
+	  .maximum = 2000000,
 	  .default_num = 500,
 	  .unit = "milliseconds",
 	  .text = "Time to wait for a key binding to repeat, if it is bound "
@@ -605,7 +821,7 @@ const struct options_table_entry options_table[] = {
 	  .text = "Formats for the status lines. "
 		  "Each array member is the format for one status line. "
 		  "The default status line is made up of several components "
-		  "which may be configured individually with other option such "
+		  "which may be configured individually with other options such "
 		  "as 'status-left'."
 	},
 
@@ -705,11 +921,64 @@ const struct options_table_entry options_table[] = {
 	  .text = "Style of the status line."
 	},
 
+	{ .name = "pane-status-current-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of the current pane in the status line."
+	},
+
+	{ .name = "pane-status-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of panes in the status line, except the current "
+		  "pane."
+	},
+
+	{ .name = "prompt-cursor-colour",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .default_num = 6,
+	  .text = "Colour of the cursor when in the command prompt."
+	},
+
+	{ .name = "prompt-cursor-style",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_SESSION,
+	  .choices = options_table_cursor_style_list,
+	  .default_num = 0,
+	  .text = "Style of the cursor when in the command prompt."
+	},
+
+	{ .name = "session-status-current-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of the current session in the status line."
+	},
+
+	{ .name = "session-status-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of sessions in the status line, except the current "
+		  "session."
+	},
+
 	{ .name = "update-environment",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
 	  .flags = OPTIONS_TABLE_IS_ARRAY,
-	  .default_str = "DISPLAY KRB5CCNAME SSH_ASKPASS SSH_AUTH_SOCK "
+	  .default_str = "DISPLAY KRB5CCNAME MSYSTEM SSH_ASKPASS SSH_AUTH_SOCK "
 			 "SSH_AGENT_PID SSH_CONNECTION WINDOWID XAUTHORITY",
 	  .text = "List of environment variables to update in the session "
 		  "environment when a client is attached."
@@ -745,7 +1014,11 @@ const struct options_table_entry options_table[] = {
 	{ .name = "word-separators",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_SESSION,
-	  .default_str = " ",
+	  /*
+	   * The set of non-alphanumeric printable ASCII characters minus the
+	   * underscore.
+	   */
+	  .default_str = "!\"#$%&'()*+,-./:;<=>?@[\\]^`{|}~",
 	  .text = "Characters considered to separate words."
 	},
 
@@ -760,12 +1033,31 @@ const struct options_table_entry options_table[] = {
 		  "linked to ('off')."
 	},
 
+	{ .name = "allow-passthrough",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .choices = options_table_allow_passthrough_list,
+	  .default_num = 0,
+	  .text = "Whether applications are allowed to use the escape sequence "
+		  "to bypass tmux. Can be 'off' (disallowed), 'on' (allowed "
+		  "if the pane is visible), or 'all' (allowed even if the pane "
+		  "is invisible)."
+	},
+
 	{ .name = "allow-rename",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_num = 0,
 	  .text = "Whether applications are allowed to use the escape sequence "
 		  "to rename windows."
+	},
+
+	{ .name = "allow-set-title",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_num = 1,
+	  .text = "Whether applications are allowed to use the escape sequence "
+		  "to set the pane title."
 	},
 
 	{ .name = "alternate-screen",
@@ -833,6 +1125,43 @@ const struct options_table_entry options_table[] = {
 	  .text = "Style of the marked line in copy mode."
 	},
 
+	{ .name = "copy-mode-position-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "#[align=right]"
+			 "#{t/p:top_line_time}#{?#{e|>:#{top_line_time},0}, ,}"
+			 "[#{scroll_position}/#{history_size}]"
+			 "#{?search_timed_out, (timed out),"
+			 "#{?search_count, (#{search_count}"
+			 "#{?search_count_partial,+,} results),}}",
+	  .text = "Format of the position indicator in copy mode."
+	},
+
+	{ .name = "copy-mode-position-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "#{E:mode-style}",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of position indicator in copy mode."
+	},
+
+	{ .name = "copy-mode-selection-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "#{E:mode-style}",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of selection in copy mode."
+	},
+
+	{ .name = "fill-character",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "",
+	  .text = "Character used to fill unused parts of window."
+	},
+
 	{ .name = "main-pane-height",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
@@ -860,8 +1189,8 @@ const struct options_table_entry options_table[] = {
 	{ .name = "mode-style",
 	  .type = OPTIONS_TABLE_STRING,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .default_str = "bg=yellow,fg=black",
 	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .default_str = "noattr,bg=yellow,fg=black",
 	  .separator = ",",
 	  .text = "Style of indicators and highlighting in modes."
 	},
@@ -927,18 +1256,28 @@ const struct options_table_entry options_table[] = {
 
 	{ .name = "pane-border-format",
 	  .type = OPTIONS_TABLE_STRING,
-	  .scope = OPTIONS_TABLE_WINDOW,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_str = "#{?pane_active,#[reverse],}#{pane_index}#[default] "
 			 "\"#{pane_title}\"",
 	  .text = "Format of text in the pane status lines."
 	},
 
+	{ .name = "pane-border-indicators",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_pane_border_indicators_list,
+	  .default_num = PANE_BORDER_COLOUR,
+	  .text = "Whether to indicate the active pane by colouring border or "
+		  "displaying arrow markers."
+	},
+
 	{ .name = "pane-border-lines",
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_WINDOW,
-	  .choices = options_table_pane_lines_list,
+	  .choices = options_table_pane_border_lines_list,
 	  .default_num = PANE_LINES_SINGLE,
-	  .text = "Type of the pane type lines."
+	  .text = "Type of characters used to draw pane border lines. Some of "
+		  "these are only supported on terminals with UTF-8 support."
 	},
 
 	{ .name = "pane-border-status",
@@ -958,6 +1297,66 @@ const struct options_table_entry options_table[] = {
 	  .text = "Style of the pane status lines."
 	},
 
+	{ .name = "pane-colours",
+	  .type = OPTIONS_TABLE_COLOUR,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "",
+	  .flags = OPTIONS_TABLE_IS_ARRAY,
+	  .text = "The default colour palette for colours zero to 255."
+	},
+
+	{ .name = "pane-scrollbars",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_pane_scrollbars_list,
+	  .default_num = PANE_SCROLLBARS_OFF,
+	  .text = "Pane scrollbar state."
+	},
+
+	{ .name = "pane-scrollbars-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "bg=black,fg=white,width=1,pad=0",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Style of the pane scrollbar."
+	},
+
+	{ .name = "pane-scrollbars-position",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_pane_scrollbars_position_list,
+	  .default_num = PANE_SCROLLBARS_RIGHT,
+	  .text = "Pane scrollbar position."
+	},
+
+	{ .name = "popup-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of popups."
+	},
+
+	{ .name = "popup-border-style",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .default_str = "default",
+	  .flags = OPTIONS_TABLE_IS_STYLE,
+	  .separator = ",",
+	  .text = "Default style of popup borders."
+	},
+
+	{ .name = "popup-border-lines",
+	  .type = OPTIONS_TABLE_CHOICE,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .choices = options_table_popup_border_lines_list,
+	  .default_num = BOX_LINES_SINGLE,
+	  .text = "Type of characters used to draw popup border lines. Some of "
+		  "these are only supported on terminals with UTF-8 support."
+	},
+
 	{ .name = "remain-on-exit",
 	  .type = OPTIONS_TABLE_CHOICE,
 	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
@@ -967,11 +1366,42 @@ const struct options_table_entry options_table[] = {
 		  "killed ('off' or 'failed') when the program inside exits."
 	},
 
+	{ .name = "remain-on-exit-format",
+	  .type = OPTIONS_TABLE_STRING,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_str = "Pane is dead ("
+			 "#{?#{!=:#{pane_dead_status},},"
+			 "status #{pane_dead_status},}"
+			 "#{?#{!=:#{pane_dead_signal},},"
+			 "signal #{pane_dead_signal},}, "
+			 "#{t:pane_dead_time})",
+	  .text = "Message shown after the program in a pane has exited, if "
+		  "remain-on-exit is enabled."
+	},
+
+	{ .name = "scroll-on-clear",
+	  .type = OPTIONS_TABLE_FLAG,
+	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
+	  .default_num = 1,
+	  .text = "Whether the contents of the screen should be scrolled into"
+		  "history when clearing the whole screen."
+	},
+
 	{ .name = "synchronize-panes",
 	  .type = OPTIONS_TABLE_FLAG,
 	  .scope = OPTIONS_TABLE_WINDOW|OPTIONS_TABLE_PANE,
 	  .default_num = 0,
 	  .text = "Whether typing should be sent to all panes simultaneously."
+	},
+
+	{ .name = "tiled-layout-max-columns",
+	  .type = OPTIONS_TABLE_NUMBER,
+	  .scope = OPTIONS_TABLE_WINDOW,
+	  .minimum = 0,
+	  .maximum = USHRT_MAX,
+	  .default_num = 0,
+	  .text = "Maximum number of columns in the 'tiled' layout. "
+		  "A value of 0 means no limit."
 	},
 
 	{ .name = "window-active-style",
@@ -1085,7 +1515,7 @@ const struct options_table_entry options_table[] = {
 	  .scope = OPTIONS_TABLE_WINDOW,
 	  .default_num = 1,
 	  .text = "Whether xterm-style function key sequences should be sent. "
-	          "This option is no longer used."
+		  "This option is no longer used."
 	},
 
 	/* Hook options. */
@@ -1130,10 +1560,16 @@ const struct options_table_entry options_table[] = {
 	OPTIONS_TABLE_HOOK("alert-activity", ""),
 	OPTIONS_TABLE_HOOK("alert-bell", ""),
 	OPTIONS_TABLE_HOOK("alert-silence", ""),
+	OPTIONS_TABLE_HOOK("client-active", ""),
 	OPTIONS_TABLE_HOOK("client-attached", ""),
 	OPTIONS_TABLE_HOOK("client-detached", ""),
+	OPTIONS_TABLE_HOOK("client-focus-in", ""),
+	OPTIONS_TABLE_HOOK("client-focus-out", ""),
 	OPTIONS_TABLE_HOOK("client-resized", ""),
 	OPTIONS_TABLE_HOOK("client-session-changed", ""),
+	OPTIONS_TABLE_HOOK("client-light-theme", ""),
+	OPTIONS_TABLE_HOOK("client-dark-theme", ""),
+	OPTIONS_TABLE_HOOK("command-error", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-died", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-exited", ""),
 	OPTIONS_TABLE_PANE_HOOK("pane-focus-in", ""),
@@ -1146,10 +1582,11 @@ const struct options_table_entry options_table[] = {
 	OPTIONS_TABLE_HOOK("session-renamed", ""),
 	OPTIONS_TABLE_HOOK("session-window-changed", ""),
 	OPTIONS_TABLE_WINDOW_HOOK("window-layout-changed", ""),
-	OPTIONS_TABLE_WINDOW_HOOK("window-linked", ""),
+	OPTIONS_TABLE_HOOK("window-linked", ""),
 	OPTIONS_TABLE_WINDOW_HOOK("window-pane-changed", ""),
 	OPTIONS_TABLE_WINDOW_HOOK("window-renamed", ""),
-	OPTIONS_TABLE_WINDOW_HOOK("window-unlinked", ""),
+	OPTIONS_TABLE_WINDOW_HOOK("window-resized", ""),
+	OPTIONS_TABLE_HOOK("window-unlinked", ""),
 
 	{ .name = NULL }
 };

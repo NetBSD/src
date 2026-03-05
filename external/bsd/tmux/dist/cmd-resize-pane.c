@@ -36,7 +36,7 @@ const struct cmd_entry cmd_resize_pane_entry = {
 	.name = "resize-pane",
 	.alias = "resizep",
 
-	.args = { "DLMRTt:Ux:y:Z", 0, 1 },
+	.args = { "DLMRTt:Ux:y:Z", 0, 1, NULL },
 	.usage = "[-DLMRTUZ] [-x width] [-y height] " CMD_TARGET_PANE_USAGE " "
 		 "[adjustment]",
 
@@ -60,7 +60,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	const char	       	*errstr;
 	char			*cause;
 	u_int			 adjust;
-	int			 x, y;
+	int			 x, y, status;
 	struct grid		*gd = wp->base.grid;
 
 	if (args_has(args, 'T')) {
@@ -87,7 +87,7 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (args_has(args, 'Z')) {
 		if (w->flags & WINDOW_ZOOMED)
-			window_unzoom(w);
+			window_unzoom(w, 1);
 		else
 			window_zoom(wp);
 		server_redraw_window(w);
@@ -95,10 +95,10 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 	}
 	server_unzoom_window(w);
 
-	if (args->argc == 0)
+	if (args_count(args) == 0)
 		adjust = 1;
 	else {
-		adjust = strtonum(args->argv[0], 1, INT_MAX, &errstr);
+		adjust = strtonum(args_string(args, 0), 1, INT_MAX, &errstr);
 		if (errstr != NULL) {
 			cmdq_error(item, "adjustment %s", errstr);
 			return (CMD_RETURN_ERROR);
@@ -120,6 +120,17 @@ cmd_resize_pane_exec(struct cmd *self, struct cmdq_item *item)
 			cmdq_error(item, "height %s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
+		}
+		status = options_get_number(w->options, "pane-border-status");
+		switch (status) {
+		case PANE_STATUS_TOP:
+			if (y != INT_MAX && wp->yoff == 1)
+				y++;
+			break;
+		case PANE_STATUS_BOTTOM:
+			if (y != INT_MAX && wp->yoff + wp->sy == w->sy - 1)
+				y++;
+			break;
 		}
 		layout_resize_pane_to(wp, LAYOUT_TOPBOTTOM, y);
 	}

@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT([tmux], 3.2a)
+AC_INIT([tmux], 3.6a)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -24,11 +24,11 @@ SAVED_LDFLAGS="$LDFLAGS"
 # Is this oss-fuzz build?
 AC_ARG_ENABLE(
 	fuzzing,
-	AC_HELP_STRING(--enable-fuzzing, build fuzzers)
+	AS_HELP_STRING(--enable-fuzzing, build fuzzers)
 )
 AC_ARG_VAR(
 	FUZZING_LIBS,
-	AC_HELP_STRING(libraries to link fuzzing targets with)
+	AS_HELP_STRING(libraries to link fuzzing targets with)
 )
 
 # Set up convenient fuzzing defaults before initializing compiler.
@@ -44,7 +44,7 @@ fi
 # Set up the compiler in two different ways and say yes we may want to install.
 AC_PROG_CC
 AM_PROG_CC_C_O
-AC_PROG_CC_C99
+m4_version_prereq(2.70, [AC_PROG_CC], [AC_PROG_CC_C99])
 AC_PROG_CPP
 AC_PROG_EGREP
 AC_PROG_INSTALL
@@ -56,23 +56,44 @@ AC_USE_SYSTEM_EXTENSIONS
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir=/etc
 
 # Is this --enable-debug?
-case "x$VERSION" in xnext*) enable_debug=yes;; esac
 AC_ARG_ENABLE(
 	debug,
-	AC_HELP_STRING(--enable-debug, enable debug build flags),
+	AS_HELP_STRING(--enable-debug, enable debug build flags),
+	,
+	[case "x$VERSION" in xnext*) enable_debug=yes;; esac]
 )
 AM_CONDITIONAL(IS_DEBUG, test "x$enable_debug" = xyes)
 
 # Is this a static build?
 AC_ARG_ENABLE(
 	static,
-	AC_HELP_STRING(--enable-static, create a static build)
+	AS_HELP_STRING(--enable-static, create a static build)
 )
 if test "x$enable_static" = xyes; then
+	case "$host_os" in
+		*darwin*)
+			AC_MSG_ERROR([static linking is not supported on macOS])
+			;;
+	esac
 	test "x$PKG_CONFIG" != x && PKG_CONFIG="$PKG_CONFIG --static"
 	AM_LDFLAGS="-static $AM_LDFLAGS"
 	LDFLAGS="$AM_LDFLAGS $SAVED_LDFLAGS"
 fi
+
+# Allow default TERM to be set.
+AC_ARG_WITH(
+	TERM,
+	AS_HELP_STRING(--with-TERM, set default TERM),
+	[DEFAULT_TERM=$withval],
+	[DEFAULT_TERM=]
+)
+case "x$DEFAULT_TERM" in
+	xscreen*|xtmux*|x)
+	;;
+	*)
+		AC_MSG_ERROR("unsuitable TERM (must be screen* or tmux*)")
+	;;
+esac
 
 # Do we need fuzzers?
 AM_CONDITIONAL(NEED_FUZZING, test "x$enable_fuzzing" = xyes)
@@ -108,6 +129,7 @@ AC_CHECK_HEADERS([ \
 	sys/dir.h \
 	sys/ndir.h \
 	sys/tree.h \
+	ucred.h \
 	util.h \
 ])
 
@@ -126,6 +148,7 @@ AC_CHECK_FUNCS([ \
 	flock \
 	prctl \
 	proc_pidinfo \
+	getpeerucred \
 	sysconf
 ])
 
@@ -140,9 +163,12 @@ AC_REPLACE_FUNCS([ \
 	freezero \
 	getdtablecount \
 	getdtablesize \
+	getpeereid \
 	getline \
 	getprogname \
+	htonll \
 	memmem \
+	ntohll \
 	setenv \
 	setproctitle \
 	strcasestr \
@@ -156,11 +182,12 @@ AC_FUNC_STRNLEN
 # Check if strtonum works.
 AC_MSG_CHECKING([for working strtonum])
 AC_RUN_IFELSE([AC_LANG_PROGRAM(
-         [#include <stdlib.h>],
-         [return (strtonum("0", 0, 1, NULL) == 0 ? 0 : 1);]
-	 )],
-	 [AC_DEFINE(HAVE_STRTONUM) AC_MSG_RESULT(yes)],
-	 [AC_LIBOBJ(strtonum) AC_MSG_RESULT(no)]
+		[#include <stdlib.h>],
+		[return (strtonum("0", 0, 1, NULL) == 0 ? 0 : 1);]
+	)],
+	[AC_DEFINE(HAVE_STRTONUM) AC_MSG_RESULT(yes)],
+	[AC_LIBOBJ(strtonum) AC_MSG_RESULT(no)],
+	[AC_LIBOBJ(strtonum) AC_MSG_RESULT(no)]
 )
 
 # Clang sanitizers wrap reallocarray even if it isn't available on the target
@@ -192,7 +219,7 @@ AC_SEARCH_LIBS(clock_gettime, rt)
 # musl does not set optarg to NULL for flags without arguments (although it is
 # not required to, but it is helpful) 3) there are probably other weird
 # implementations.
-AC_LIBOBJ(getopt)
+AC_LIBOBJ(getopt_long)
 
 # Look for libevent. Try libevent_core or libevent with pkg-config first then
 # look for the library.
@@ -243,6 +270,12 @@ if test "x$found_libevent" = xno; then
 	AC_MSG_ERROR("libevent not found")
 fi
 
+# Look for yacc.
+AC_CHECK_PROG(found_yacc, $YACC, yes, no)
+if test "x$found_yacc" = xno; then
+	AC_MSG_ERROR("yacc not found")
+fi
+
 # Look for ncurses or curses. Try pkg-config first then directly for the
 # library.
 PKG_CHECK_MODULES(
@@ -285,7 +318,7 @@ fi
 if test "x$found_ncurses" = xno; then
 	AC_SEARCH_LIBS(
 		setupterm,
-		[tinfo ncurses ncursesw],
+		[tinfo terminfo ncurses ncursesw],
 		found_ncurses=yes,
 		found_ncurses=no
 	)
@@ -298,6 +331,7 @@ if test "x$found_ncurses" = xno; then
 	fi
 fi
 if test "x$found_ncurses" = xyes; then
+	CPPFLAGS="$CPPFLAGS -DHAVE_NCURSES_H"
 	AC_DEFINE(HAVE_NCURSES_H)
 else
 	AC_CHECK_LIB(
@@ -313,16 +347,21 @@ else
 	)
 	if test "x$found_curses" = xyes; then
 		LIBS="$LIBS -lcurses"
+		CPPFLAGS="$CPPFLAGS -DHAVE_CURSES_H"
 		AC_DEFINE(HAVE_CURSES_H)
 	else
 		AC_MSG_ERROR("curses not found")
 	fi
 fi
+AC_CHECK_FUNCS([ \
+	tiparm \
+	tiparm_s \
+])
 
 # Look for utempter.
 AC_ARG_ENABLE(
 	utempter,
-	AC_HELP_STRING(--enable-utempter, use utempter if it is installed)
+	AS_HELP_STRING(--enable-utempter, use utempter if it is installed)
 )
 if test "x$enable_utempter" = xyes; then
 	AC_CHECK_HEADER(utempter.h, enable_utempter=yes, enable_utempter=no)
@@ -344,9 +383,18 @@ fi
 # Look for utf8proc.
 AC_ARG_ENABLE(
 	utf8proc,
-	AC_HELP_STRING(--enable-utf8proc, use utf8proc if it is installed)
+	AS_HELP_STRING(--enable-utf8proc, use utf8proc if it is installed)
 )
 if test "x$enable_utf8proc" = xyes; then
+	PKG_CHECK_MODULES(
+		LIBUTF8PROC,
+		libutf8proc,
+		[
+			AM_CPPFLAGS="$LIBUTF8PROC_CFLAGS $AM_CPPFLAGS"
+			CPPFLAGS="$LIBUTF8PROC_CFLAGS $SAVED_CPPFLAGS"
+			LIBS="$LIBUTF8PROC_LIBS $LIBS"
+		]
+	)
 	AC_CHECK_HEADER(utf8proc.h, enable_utf8proc=yes, enable_utf8proc=no)
 	if test "x$enable_utf8proc" = xyes; then
 		AC_SEARCH_LIBS(
@@ -364,15 +412,67 @@ if test "x$enable_utf8proc" = xyes; then
 fi
 AM_CONDITIONAL(HAVE_UTF8PROC, [test "x$enable_utf8proc" = xyes])
 
+# Check for systemd support.
+AC_ARG_ENABLE(
+	systemd,
+	AS_HELP_STRING(--enable-systemd, enable systemd integration)
+)
+if test x"$enable_systemd" = xyes; then
+	PKG_CHECK_MODULES(
+		SYSTEMD,
+		libsystemd,
+		[
+			AM_CPPFLAGS="$SYSTEMD_CFLAGS $AM_CPPFLAGS"
+			CPPFLAGS="$AM_CPPFLAGS $SAVED_CPPFLAGS"
+			LIBS="$SYSTEMD_LIBS $LIBS"
+			found_systemd=yes
+		],
+		found_systemd=no
+	)
+	if test "x$found_systemd" = xyes; then
+		AC_DEFINE(HAVE_SYSTEMD)
+	else
+		AC_MSG_ERROR("systemd not found")
+	fi
+fi
+AM_CONDITIONAL(HAVE_SYSTEMD, [test "x$found_systemd" = xyes])
+AC_ARG_ENABLE(
+	cgroups,
+	AS_HELP_STRING(--disable-cgroups, disable adding panes to new cgroups with systemd)
+)
+if test "x$enable_cgroups" = x; then
+	# Default to the same as $enable_systemd.
+	enable_cgroups=$enable_systemd
+fi
+if test "x$enable_cgroups" = xyes; then
+	if test "x$found_systemd" = xyes; then
+		AC_DEFINE(ENABLE_CGROUPS)
+	else
+		AC_MSG_ERROR("cgroups requires systemd to be enabled")
+	fi
+fi
+
+# Enable sixel support.
+AC_ARG_ENABLE(
+	sixel,
+	AS_HELP_STRING(--enable-sixel, enable sixel images)
+)
+if test "x$enable_sixel" = xyes; then
+	AC_DEFINE(ENABLE_SIXEL)
+fi
+AM_CONDITIONAL(ENABLE_SIXEL, [test "x$enable_sixel" = xyes])
+
 # Check for b64_ntop. If we have b64_ntop, we assume b64_pton as well.
 AC_MSG_CHECKING(for b64_ntop)
-AC_TRY_LINK(
+AC_LINK_IFELSE([AC_LANG_PROGRAM(
 	[
 		#include <sys/types.h>
 		#include <netinet/in.h>
 		#include <resolv.h>
 	],
-	[b64_ntop(NULL, 0, NULL, 0);],
+	[
+		b64_ntop(NULL, 0, NULL, 0);
+	])],
 	found_b64_ntop=yes,
 	found_b64_ntop=no
 )
@@ -381,13 +481,15 @@ OLD_LIBS="$LIBS"
 if test "x$found_b64_ntop" = xno; then
 	AC_MSG_CHECKING(for b64_ntop with -lresolv)
 	LIBS="$OLD_LIBS -lresolv"
-	AC_TRY_LINK(
+	AC_LINK_IFELSE([AC_LANG_PROGRAM(
 		[
 			#include <sys/types.h>
 			#include <netinet/in.h>
 			#include <resolv.h>
 		],
-		[b64_ntop(NULL, 0, NULL, 0);],
+		[
+			b64_ntop(NULL, 0, NULL, 0);
+		])],
 		found_b64_ntop=yes,
 		found_b64_ntop=no
 	)
@@ -396,13 +498,15 @@ fi
 if test "x$found_b64_ntop" = xno; then
 	AC_MSG_CHECKING(for b64_ntop with -lnetwork)
 	LIBS="$OLD_LIBS -lnetwork"
-	AC_TRY_LINK(
+	AC_LINK_IFELSE([AC_LANG_PROGRAM(
 		[
 			#include <sys/types.h>
 			#include <netinet/in.h>
 			#include <resolv.h>
 		],
-		[b64_ntop(NULL, 0, NULL, 0);],
+		[
+			b64_ntop(NULL, 0, NULL, 0);
+		])],
 		found_b64_ntop=yes,
 		found_b64_ntop=no
 	)
@@ -443,6 +547,24 @@ AC_LINK_IFELSE([AC_LANG_SOURCE(
 AC_MSG_RESULT($found_malloc_trim)
 if test "x$found_malloc_trim" = xyes; then
 	AC_DEFINE(HAVE_MALLOC_TRIM)
+fi
+
+# Build against jemalloc if requested.
+AC_ARG_ENABLE(
+	jemalloc,
+	AS_HELP_STRING(--enable-jemalloc, use jemalloc if it is installed)
+)
+if test "x$enable_jemalloc" = xyes; then
+	PKG_CHECK_MODULES(
+		JEMALLOC,
+		jemalloc,
+		[
+			AM_CPPFLAGS="$JEMALLOC_CFLAGS $AM_CPPFLAGS"
+			CPPFLAGS="$AM_CPPFLAGS $SAVED_CPPFLAGS"
+			LIBS="$LIBS $JEMALLOC_LIBS"
+		],
+		AC_MSG_ERROR("jemalloc not found")
+	)
 fi
 
 # Check for CMSG_DATA. On some platforms like HP-UX this requires UNIX 95
@@ -516,9 +638,9 @@ else
 	AC_LIBOBJ(err)
 fi
 
-# Look for imsg_init in libutil.
-AC_SEARCH_LIBS(imsg_init, util, found_imsg_init=yes, found_imsg_init=no)
-if test "x$found_imsg_init" = xyes; then
+# Look for imsg_add in libutil.
+AC_SEARCH_LIBS(imsg_add, util, found_imsg_add=yes, found_imsg_add=no)
+if test "x$found_imsg_add" = xyes; then
 	AC_DEFINE(HAVE_IMSG)
 else
 	AC_LIBOBJ(imsg)
@@ -599,7 +721,7 @@ AC_CHECK_DECL(
 )
 AC_CHECK_DECL(
 	TAILQ_PREV,
-	found_queue_h=yes,
+	,
 	found_queue_h=no,
 	[#include <sys/queue.h>]
 )
@@ -655,6 +777,14 @@ AC_CHECK_DECL(
 	[#include <sys/prctl.h>]
 )
 
+# Look for setsockopt(SO_PEERCRED).
+AC_CHECK_DECL(
+	SO_PEERCRED,
+	AC_DEFINE(HAVE_SO_PEERCRED),
+	,
+	[#include <sys/socket.h>]
+)
+
 # Look for fcntl(F_CLOSEM).
 AC_CHECK_DECL(
 	F_CLOSEM,
@@ -672,6 +802,74 @@ else
 	AC_MSG_RESULT(no)
 fi
 
+# Try to figure out what the best value for TERM might be.
+if test "x$DEFAULT_TERM" = x; then
+	DEFAULT_TERM=screen
+	AC_MSG_CHECKING(TERM)
+	AC_RUN_IFELSE([AC_LANG_SOURCE(
+		[
+			#include <stdio.h>
+			#include <stdlib.h>
+			#if defined(HAVE_CURSES_H)
+			#include <curses.h>
+			#elif defined(HAVE_NCURSES_H)
+			#include <ncurses.h>
+			#endif
+			#include <term.h>
+			int main(void) {
+				if (setupterm("screen-256color", -1, NULL) != OK)
+					exit(1);
+				exit(0);
+			}
+		 ])],
+		 [DEFAULT_TERM=screen-256color],
+		 ,
+		 [DEFAULT_TERM=screen]
+	)
+	AC_RUN_IFELSE([AC_LANG_SOURCE(
+		[
+			#include <stdio.h>
+			#include <stdlib.h>
+			#if defined(HAVE_CURSES_H)
+			#include <curses.h>
+			#elif defined(HAVE_NCURSES_H)
+			#include <ncurses.h>
+			#endif
+			#include <term.h>
+			int main(void) {
+				if (setupterm("tmux", -1, NULL) != OK)
+					exit(1);
+				exit(0);
+			}
+		 ])],
+		 [DEFAULT_TERM=tmux],
+		 ,
+		 [DEFAULT_TERM=screen]
+	)
+	AC_RUN_IFELSE([AC_LANG_SOURCE(
+		[
+			#include <stdio.h>
+			#include <stdlib.h>
+			#if defined(HAVE_CURSES_H)
+			#include <curses.h>
+			#elif defined(HAVE_NCURSES_H)
+			#include <ncurses.h>
+			#endif
+			#include <term.h>
+			int main(void) {
+				if (setupterm("tmux-256color", -1, NULL) != OK)
+					exit(1);
+				exit(0);
+			}
+		 ])],
+		 [DEFAULT_TERM=tmux-256color],
+		 ,
+		 [DEFAULT_TERM=screen]
+	)
+	AC_MSG_RESULT($DEFAULT_TERM)
+fi
+AC_SUBST(DEFAULT_TERM)
+
 # Man page defaults to mdoc.
 MANFORMAT=mdoc
 AC_SUBST(MANFORMAT)
@@ -687,19 +885,32 @@ case "$host_os" in
 		AC_MSG_RESULT(darwin)
 		PLATFORM=darwin
 		#
-		# OS X uses __dead2 instead of __dead, like FreeBSD. But it
-		# defines __dead away so it needs to be removed before we can
-		# replace it.
+		# macOS uses __dead2 instead of __dead, like FreeBSD. But it defines
+		# __dead away so it needs to be removed before we can replace it.
 		#
 		AC_DEFINE(BROKEN___DEAD)
 		#
-		# OS X CMSG_FIRSTHDR is broken, so redefine it with a working
-		# one. daemon works but has some stupid side effects, so use
-		# our internal version which has a workaround.
+		# macOS CMSG_FIRSTHDR is broken, so redefine it with a working one.
+		# daemon works but has some stupid side effects, so use our internal
+		# version which has a workaround.
 		#
 		AC_DEFINE(BROKEN_CMSG_FIRSTHDR)
 		AC_LIBOBJ(daemon)
 		AC_LIBOBJ(daemon-darwin)
+		#
+		# macOS wcwidth(3) is bad, so complain and suggest using utf8proc
+		# instead.
+		#
+		if test "x$enable_utf8proc" = x; then
+			AC_MSG_NOTICE([])
+			AC_MSG_NOTICE([	   macOS library support for Unicode is very poor,])
+			AC_MSG_NOTICE([	   particularly for complex codepoints like emojis;])
+			AC_MSG_NOTICE([	   to use these correctly, configuring with])
+			AC_MSG_NOTICE([	   --enable-utf8proc is recommended. To build])
+			AC_MSG_NOTICE([	   without anyway, use --disable-utf8proc])
+			AC_MSG_NOTICE([])
+			AC_MSG_ERROR([must give --enable-utf8proc or --disable-utf8proc])
+		fi
 		;;
 	*dragonfly*)
 		AC_MSG_RESULT(dragonfly)
@@ -734,8 +945,13 @@ case "$host_os" in
 				MANFORMAT=mdoc
 				;;
 			*)
-				# Solaris 2.0 to 11.3 use AT&T nroff.
-				MANFORMAT=man
+				if test `uname -o 2>/dev/null` = illumos; then
+					# Illumos uses mandoc.
+					MANFORMAT=mdoc
+				else
+					# Solaris 2.0 to 11.3 use AT&T nroff.
+					MANFORMAT=man
+				fi
 				;;
 		esac
 		;;
@@ -766,8 +982,21 @@ AM_CONDITIONAL(IS_NETBSD, test "x$PLATFORM" = xnetbsd)
 AM_CONDITIONAL(IS_OPENBSD, test "x$PLATFORM" = xopenbsd)
 AM_CONDITIONAL(IS_SUNOS, test "x$PLATFORM" = xsunos)
 AM_CONDITIONAL(IS_HPUX, test "x$PLATFORM" = xhpux)
+AM_CONDITIONAL(IS_CYGWIN, test "x$PLATFORM" = xcygwin)
 AM_CONDITIONAL(IS_HAIKU, test "x$PLATFORM" = xhaiku)
 AM_CONDITIONAL(IS_UNKNOWN, test "x$PLATFORM" = xunknown)
+
+# Set the default lock command
+DEFAULT_LOCK_CMD="lock -np"
+if test "x$PLATFORM" = xlinux; then
+	AC_CHECK_PROG(found_vlock, vlock, yes, no)
+	if test "x$found_vlock" = xyes; then
+		DEFAULT_LOCK_CMD="vlock"
+	fi
+fi
+AC_MSG_CHECKING(lock-command)
+AC_MSG_RESULT($DEFAULT_LOCK_CMD)
+AC_SUBST(DEFAULT_LOCK_CMD)
 
 # Save our CFLAGS/CPPFLAGS/LDFLAGS for the Makefile and restore the old user
 # variables.
@@ -779,4 +1008,5 @@ AC_SUBST(AM_LDFLAGS)
 LDFLAGS="$SAVED_LDFLAGS"
 
 # autoconf should create a Makefile.
-AC_OUTPUT(Makefile)
+AC_CONFIG_FILES(Makefile)
+AC_OUTPUT

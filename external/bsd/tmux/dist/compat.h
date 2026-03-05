@@ -38,6 +38,14 @@
 #include <event2/bufferevent_compat.h>
 #else
 #include <event.h>
+#ifndef EVBUFFER_EOL_LF
+/*
+ * This doesn't really work because evbuffer_readline is broken, but gets us to
+ * build with very old (older than 1.4.14) libevent.
+ */
+#define EVBUFFER_EOL_LF
+#define evbuffer_readln(a, b, c) evbuffer_readline(a)
+#endif
 #endif
 
 #ifdef HAVE_MALLOC_TRIM
@@ -289,6 +297,11 @@ void		 explicit_bzero(void *, size_t);
 int		 getdtablecount(void);
 #endif
 
+#ifndef HAVE_GETDTABLESIZE
+/* getdtablesize.c */
+int		 getdtablesize(void);
+#endif
+
 #ifndef HAVE_CLOSEFROM
 /* closefrom.c */
 void		 closefrom(int);
@@ -332,6 +345,23 @@ char		*strndup(const char *, size_t);
 #ifndef HAVE_MEMMEM
 /* memmem.c */
 void		*memmem(const void *, size_t, const void *, size_t);
+#endif
+
+#ifndef HAVE_HTONLL
+/* htonll.c */
+#undef htonll
+uint64_t	 htonll(uint64_t);
+#endif
+
+#ifndef HAVE_NTOHLL
+/* ntohll.c */
+#undef ntohll
+uint64_t	 ntohll(uint64_t);
+#endif
+
+#ifndef HAVE_GETPEEREID
+/* getpeereid.c */
+int		getpeereid(int, uid_t *, gid_t *);
 #endif
 
 #ifndef HAVE_DAEMON
@@ -416,6 +446,13 @@ void		*reallocarray(void *, size_t, size_t);
 void		*recallocarray(void *, size_t, size_t, size_t);
 #endif
 
+#ifdef HAVE_SYSTEMD
+/* systemd.c */
+int		 systemd_activated(void);
+int		 systemd_create_socket(int, char **);
+int		 systemd_move_to_new_cgroup(char **);
+#endif
+
 #ifdef HAVE_UTF8PROC
 /* utf8proc.c */
 int		 utf8proc_wcwidth(wchar_t);
@@ -430,11 +467,11 @@ int		 utf8proc_wctomb(char *, wchar_t);
 
 /* getopt.c */
 #ifndef HAVE_BSD_GETOPT
-extern int	BSDopterr;
-extern int	BSDoptind;
-extern int	BSDoptopt;
-extern int	BSDoptreset;
-extern char    *BSDoptarg;
+extern int	 BSDopterr;
+extern int	 BSDoptind;
+extern int	 BSDoptopt;
+extern int	 BSDoptreset;
+extern char	*BSDoptarg;
 int	BSDgetopt(int, char *const *, const char *);
 #define getopt(ac, av, o)  BSDgetopt(ac, av, o)
 #define opterr             BSDopterr

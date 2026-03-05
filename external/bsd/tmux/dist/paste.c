@@ -111,6 +111,12 @@ paste_walk(struct paste_buffer *pb)
 	return (RB_NEXT(paste_time_tree, &paste_by_time, pb));
 }
 
+int
+paste_is_empty(void)
+{
+	return RB_ROOT(&paste_by_time) == NULL;
+}
+
 /* Get the most recent automatic buffer. */
 struct paste_buffer *
 paste_get_top(const char **name)
@@ -118,6 +124,8 @@ paste_get_top(const char **name)
 	struct paste_buffer	*pb;
 
 	pb = RB_MIN(paste_time_tree, &paste_by_time);
+	while (pb != NULL && !pb->automatic)
+		pb = RB_NEXT(paste_time_tree, &paste_by_time, pb);
 	if (pb == NULL)
 		return (NULL);
 	if (name != NULL)
@@ -142,6 +150,8 @@ paste_get_name(const char *name)
 void
 paste_free(struct paste_buffer *pb)
 {
+	notify_paste_buffer(pb->name, 1);
+
 	RB_REMOVE(paste_name_tree, &paste_by_name, pb);
 	RB_REMOVE(paste_time_tree, &paste_by_time, pb);
 	if (pb->automatic)
@@ -198,6 +208,8 @@ paste_add(const char *prefix, char *data, size_t size)
 	pb->order = paste_next_order++;
 	RB_INSERT(paste_name_tree, &paste_by_name, pb);
 	RB_INSERT(paste_time_tree, &paste_by_time, pb);
+
+	notify_paste_buffer(pb->name, 0);
 }
 
 /* Rename a paste buffer. */
@@ -228,11 +240,10 @@ paste_rename(const char *oldname, const char *newname, char **cause)
 	}
 
 	pb_new = paste_get_name(newname);
-	if (pb_new != NULL) {
-		if (cause != NULL)
-			xasprintf(cause, "buffer %s already exists", newname);
-		return (-1);
-	}
+	if (pb_new == pb)
+		return (0);
+	if (pb_new != NULL)
+		paste_free(pb_new);
 
 	RB_REMOVE(paste_name_tree, &paste_by_name, pb);
 
@@ -244,6 +255,9 @@ paste_rename(const char *oldname, const char *newname, char **cause)
 	pb->automatic = 0;
 
 	RB_INSERT(paste_name_tree, &paste_by_name, pb);
+
+	notify_paste_buffer(oldname, 1);
+	notify_paste_buffer(newname, 0);
 
 	return (0);
 }
@@ -293,6 +307,8 @@ paste_set(char *data, size_t size, const char *name, char **cause)
 	RB_INSERT(paste_name_tree, &paste_by_name, pb);
 	RB_INSERT(paste_time_tree, &paste_by_time, pb);
 
+	notify_paste_buffer(name, 0);
+
 	return (0);
 }
 
@@ -303,6 +319,8 @@ paste_replace(struct paste_buffer *pb, char *data, size_t size)
 	free(pb->data);
 	pb->data = data;
 	pb->size = size;
+
+	notify_paste_buffer(pb->name, 0);
 }
 
 /* Convert start of buffer into a nice string. */

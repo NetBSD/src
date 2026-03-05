@@ -55,8 +55,22 @@ static int	tty_keys_clipboard(struct tty *, const char *, size_t,
 		    size_t *);
 static int	tty_keys_device_attributes(struct tty *, const char *, size_t,
 		    size_t *);
+static int	tty_keys_device_attributes2(struct tty *, const char *, size_t,
+		    size_t *);
 static int	tty_keys_extended_device_attributes(struct tty *, const char *,
 		    size_t, size_t *);
+static int	tty_keys_palette(struct tty *, const char *, size_t, size_t *);
+
+/* A key tree entry. */
+struct tty_key {
+	char		 ch;
+	key_code	 key;
+
+	struct tty_key	*left;
+	struct tty_key	*right;
+
+	struct tty_key	*next;
+};
 
 /* Default raw keys. */
 struct tty_default_key_raw {
@@ -115,7 +129,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033\033[C", KEYC_RIGHT|KEYC_CURSOR|KEYC_META },
 	{ "\033\033[D", KEYC_LEFT|KEYC_CURSOR|KEYC_META },
 
-	/* Other (xterm) "cursor" keys. */
+	/* Other xterm keys. */
 	{ "\033OH", KEYC_HOME },
 	{ "\033OF", KEYC_END },
 
@@ -128,7 +142,7 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033\033[H", KEYC_HOME|KEYC_META|KEYC_IMPLIED_META },
 	{ "\033\033[F", KEYC_END|KEYC_META|KEYC_IMPLIED_META },
 
-	/* rxvt-style arrow + modifier keys. */
+	/* rxvt arrow keys. */
 	{ "\033Oa", KEYC_UP|KEYC_CTRL },
 	{ "\033Ob", KEYC_DOWN|KEYC_CTRL },
 	{ "\033Oc", KEYC_RIGHT|KEYC_CTRL },
@@ -139,7 +153,31 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[c", KEYC_RIGHT|KEYC_SHIFT },
 	{ "\033[d", KEYC_LEFT|KEYC_SHIFT },
 
-	/* rxvt-style function + modifier keys (C = ^, S = $, C-S = @). */
+	/* rxvt function keys. */
+	{ "\033[11~", KEYC_F1 },
+	{ "\033[12~", KEYC_F2 },
+	{ "\033[13~", KEYC_F3 },
+	{ "\033[14~", KEYC_F4 },
+	{ "\033[15~", KEYC_F5 },
+	{ "\033[17~", KEYC_F6 },
+	{ "\033[18~", KEYC_F7 },
+	{ "\033[19~", KEYC_F8 },
+	{ "\033[20~", KEYC_F9 },
+	{ "\033[21~", KEYC_F10 },
+
+	{ "\033[23~", KEYC_F1|KEYC_SHIFT },
+	{ "\033[24~", KEYC_F2|KEYC_SHIFT },
+	{ "\033[25~", KEYC_F3|KEYC_SHIFT },
+	{ "\033[26~", KEYC_F4|KEYC_SHIFT },
+	{ "\033[28~", KEYC_F5|KEYC_SHIFT },
+	{ "\033[29~", KEYC_F6|KEYC_SHIFT },
+	{ "\033[31~", KEYC_F7|KEYC_SHIFT },
+	{ "\033[32~", KEYC_F8|KEYC_SHIFT },
+	{ "\033[33~", KEYC_F9|KEYC_SHIFT },
+	{ "\033[34~", KEYC_F10|KEYC_SHIFT },
+	{ "\033[23$", KEYC_F11|KEYC_SHIFT },
+	{ "\033[24$", KEYC_F12|KEYC_SHIFT },
+
 	{ "\033[11^", KEYC_F1|KEYC_CTRL },
 	{ "\033[12^", KEYC_F2|KEYC_CTRL },
 	{ "\033[13^", KEYC_F3|KEYC_CTRL },
@@ -152,31 +190,6 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21^", KEYC_F10|KEYC_CTRL },
 	{ "\033[23^", KEYC_F11|KEYC_CTRL },
 	{ "\033[24^", KEYC_F12|KEYC_CTRL },
-	{ "\033[2^", KEYC_IC|KEYC_CTRL },
-	{ "\033[3^", KEYC_DC|KEYC_CTRL },
-	{ "\033[7^", KEYC_HOME|KEYC_CTRL },
-	{ "\033[8^", KEYC_END|KEYC_CTRL },
-	{ "\033[6^", KEYC_NPAGE|KEYC_CTRL },
-	{ "\033[5^", KEYC_PPAGE|KEYC_CTRL },
-
-	{ "\033[11$", KEYC_F1|KEYC_SHIFT },
-	{ "\033[12$", KEYC_F2|KEYC_SHIFT },
-	{ "\033[13$", KEYC_F3|KEYC_SHIFT },
-	{ "\033[14$", KEYC_F4|KEYC_SHIFT },
-	{ "\033[15$", KEYC_F5|KEYC_SHIFT },
-	{ "\033[17$", KEYC_F6|KEYC_SHIFT },
-	{ "\033[18$", KEYC_F7|KEYC_SHIFT },
-	{ "\033[19$", KEYC_F8|KEYC_SHIFT },
-	{ "\033[20$", KEYC_F9|KEYC_SHIFT },
-	{ "\033[21$", KEYC_F10|KEYC_SHIFT },
-	{ "\033[23$", KEYC_F11|KEYC_SHIFT },
-	{ "\033[24$", KEYC_F12|KEYC_SHIFT },
-	{ "\033[2$", KEYC_IC|KEYC_SHIFT },
-	{ "\033[3$", KEYC_DC|KEYC_SHIFT },
-	{ "\033[7$", KEYC_HOME|KEYC_SHIFT },
-	{ "\033[8$", KEYC_END|KEYC_SHIFT },
-	{ "\033[6$", KEYC_NPAGE|KEYC_SHIFT },
-	{ "\033[5$", KEYC_PPAGE|KEYC_SHIFT },
 
 	{ "\033[11@", KEYC_F1|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[12@", KEYC_F2|KEYC_CTRL|KEYC_SHIFT },
@@ -190,20 +203,21 @@ static const struct tty_default_key_raw tty_default_raw_keys[] = {
 	{ "\033[21@", KEYC_F10|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[23@", KEYC_F11|KEYC_CTRL|KEYC_SHIFT },
 	{ "\033[24@", KEYC_F12|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[2@", KEYC_IC|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[3@", KEYC_DC|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[7@", KEYC_HOME|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[8@", KEYC_END|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[6@", KEYC_NPAGE|KEYC_CTRL|KEYC_SHIFT },
-	{ "\033[5@", KEYC_PPAGE|KEYC_CTRL|KEYC_SHIFT },
 
 	/* Focus tracking. */
 	{ "\033[I", KEYC_FOCUS_IN },
 	{ "\033[O", KEYC_FOCUS_OUT },
 
 	/* Paste keys. */
-	{ "\033[200~", KEYC_PASTE_START },
-	{ "\033[201~", KEYC_PASTE_END },
+	{ "\033[200~", KEYC_PASTE_START|KEYC_IMPLIED_META },
+	{ "\033[201~", KEYC_PASTE_END|KEYC_IMPLIED_META },
+
+	/* Extended keys. */
+	{ "\033[1;5Z", '\011'|KEYC_CTRL|KEYC_SHIFT },
+
+	/* Theme reporting. */
+	{ "\033[?997;1n", KEYC_REPORT_DARK_THEME },
+	{ "\033[?997;2n", KEYC_REPORT_LIGHT_THEME },
 };
 
 /* Default xterm keys. */
@@ -645,6 +659,74 @@ tty_keys_next1(struct tty *tty, const char *buf, size_t len, key_code *key,
 	return (-1);
 }
 
+/* Process window size change escape sequences. */
+static int
+tty_keys_winsz(struct tty *tty, const char *buf, size_t len, size_t *size)
+{
+	struct client	*c = tty->client;
+	size_t		 end;
+	char		 tmp[64];
+	u_int		 sx, sy, xpixel, ypixel, char_x, char_y;
+
+	*size = 0;
+
+	/* If we did not request this, ignore it. */
+	if (!(tty->flags & TTY_WINSIZEQUERY))
+		return (-1);
+
+	/* First two bytes are always \033[. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != '[')
+		return (-1);
+	if (len == 2)
+		return (1);
+
+	/*
+	 * Stop at either 't' or anything that isn't a
+	 * number or ';'.
+	 */
+	for (end = 2; end < len && end != sizeof tmp; end++) {
+		if (buf[end] == 't')
+			break;
+		if (!isdigit((u_char)buf[end]) && buf[end] != ';')
+			break;
+	}
+	if (end == len)
+		return (1);
+	if (end == sizeof tmp || buf[end] != 't')
+		return (-1);
+
+	/* Copy to the buffer. */
+	memcpy(tmp, buf + 2, end - 2);
+	tmp[end - 2] = '\0';
+
+	/* Try to parse the window size sequence. */
+	if (sscanf(tmp, "8;%u;%u", &sy, &sx) == 2) {
+		/* Window size in characters. */
+		tty_set_size(tty, sx, sy, tty->xpixel, tty->ypixel);
+
+		*size = end + 1;
+		return (0);
+	} else if (sscanf(tmp, "4;%u;%u", &ypixel, &xpixel) == 2) {
+		/* Window size in pixels. */
+		char_x = (xpixel && tty->sx) ? xpixel / tty->sx : 0;
+		char_y = (ypixel && tty->sy) ? ypixel / tty->sy : 0;
+		tty_set_size(tty, tty->sx, tty->sy, char_x, char_y);
+		tty_invalidate(tty);
+
+		tty->flags &= ~TTY_WINSIZEQUERY;
+		*size = end + 1;
+		return (0);
+	}
+
+	log_debug("%s: unrecognized window size sequence: %s", c->name, tmp);
+	return (-1);
+}
+
+
 /* Process at least one key in the buffer. Return 0 if no keys present. */
 int
 tty_keys_next(struct tty *tty)
@@ -655,7 +737,7 @@ tty_keys_next(struct tty *tty)
 	size_t			 len, size;
 	cc_t			 bspace;
 	int			 delay, expired = 0, n;
-	key_code		 key;
+	key_code		 key, onlykey;
 	struct mouse_event	 m = { 0 };
 	struct key_event	*event;
 
@@ -677,8 +759,19 @@ tty_keys_next(struct tty *tty)
 		goto partial_key;
 	}
 
-	/* Is this a device attributes response? */
+	/* Is this a primary device attributes response? */
 	switch (tty_keys_device_attributes(tty, buf, len, &size)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		goto partial_key;
+	}
+
+	/* Is this a secondary device attributes response? */
+	switch (tty_keys_device_attributes2(tty, buf, len, &size)) {
 	case 0:		/* yes */
 		key = KEYC_UNKNOWN;
 		goto complete_key;
@@ -690,6 +783,30 @@ tty_keys_next(struct tty *tty)
 
 	/* Is this an extended device attributes response? */
 	switch (tty_keys_extended_device_attributes(tty, buf, len, &size)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		goto partial_key;
+	}
+
+	/* Is this a colours response? */
+	switch (tty_keys_colours(tty, buf, len, &size, &tty->fg, &tty->bg)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
+		session_theme_changed(c->session);
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		session_theme_changed(c->session);
+		goto partial_key;
+	}
+
+	/* Is this a palette response? */
+	switch (tty_keys_palette(tty, buf, len, &size)) {
 	case 0:		/* yes */
 		key = KEYC_UNKNOWN;
 		goto complete_key;
@@ -716,6 +833,17 @@ tty_keys_next(struct tty *tty)
 	/* Is this an extended key press? */
 	switch (tty_keys_extended_key(tty, buf, len, &size, &key)) {
 	case 0:		/* yes */
+		goto complete_key;
+	case -1:	/* no, or not valid */
+		break;
+	case 1:		/* partial */
+		goto partial_key;
+	}
+
+	/* Check for window size query */
+	switch (tty_keys_winsz(tty, buf, len, &size)) {
+	case 0:		/* yes */
+		key = KEYC_UNKNOWN;
 		goto complete_key;
 	case -1:	/* no, or not valid */
 		break;
@@ -770,6 +898,38 @@ first_key:
 		key = (u_char)buf[0];
 		size = 1;
 	}
+
+	/* C-Space is special. */
+	if ((key & KEYC_MASK_KEY) == C0_NUL)
+		key = ' ' | KEYC_CTRL | (key & KEYC_META);
+
+	/*
+	 * Check for backspace key using termios VERASE - the terminfo
+	 * kbs entry is extremely unreliable, so cannot be safely
+	 * used. termios should have a better idea.
+	 */
+	bspace = tty->tio.c_cc[VERASE];
+	if (bspace != _POSIX_VDISABLE && key == bspace) {
+		log_debug("%s: key %#llx is backspace", c->name, key);
+		key = KEYC_BSPACE;
+	}
+
+	/*
+	 * Fix up all C0 control codes that don't have a dedicated key into
+	 * corresponding Ctrl keys. Convert characters in the A-Z range into
+	 * lowercase, so ^A becomes a|CTRL.
+	 */
+	onlykey = key & KEYC_MASK_KEY;
+	if (onlykey < 0x20 &&
+	    onlykey != C0_HT &&
+	    onlykey != C0_CR &&
+	    onlykey != C0_ESC) {
+		onlykey |= 0x40;
+		if (onlykey >= 'A' && onlykey <= 'Z')
+			onlykey |= 0x20;
+		key = onlykey | KEYC_CTRL | (key & KEYC_META);
+	}
+
 	goto complete_key;
 
 partial_key:
@@ -787,6 +947,14 @@ partial_key:
 
 	/* Get the time period. */
 	delay = options_get_number(global_options, "escape-time");
+	if (delay == 0)
+		delay = 1;
+	if ((tty->flags & (TTY_WAITFG|TTY_WAITBG) ||
+	    (tty->flags & TTY_ALL_REQUEST_FLAGS) != TTY_ALL_REQUEST_FLAGS)) {
+		log_debug("%s: increasing delay for active query", c->name);
+		if (delay < 500)
+			delay = 500;
+	}
 	tv.tv_sec = delay / 1000;
 	tv.tv_usec = (delay % 1000) * 1000L;
 
@@ -802,37 +970,40 @@ partial_key:
 complete_key:
 	log_debug("%s: complete key %.*s %#llx", c->name, (int)size, buf, key);
 
-	/*
-	 * Check for backspace key using termios VERASE - the terminfo
-	 * kbs entry is extremely unreliable, so cannot be safely
-	 * used. termios should have a better idea.
-	 */
-	bspace = tty->tio.c_cc[VERASE];
-	if (bspace != _POSIX_VDISABLE && (key & KEYC_MASK_KEY) == bspace)
-		key = (key & KEYC_MASK_MODIFIERS)|KEYC_BSPACE;
-
-	/* Remove data from buffer. */
-	evbuffer_drain(tty->in, size);
-
 	/* Remove key timer. */
 	if (event_initialized(&tty->key_timer))
 		evtimer_del(&tty->key_timer);
 	tty->flags &= ~TTY_TIMER;
 
 	/* Check for focus events. */
-	if (key == KEYC_FOCUS_OUT)
-		tty->client->flags &= ~CLIENT_FOCUSED;
-	else if (key == KEYC_FOCUS_IN)
-		tty->client->flags |= CLIENT_FOCUSED;
+	if (key == KEYC_FOCUS_OUT) {
+		c->flags &= ~CLIENT_FOCUSED;
+		window_update_focus(c->session->curw->window);
+		notify_client("client-focus-out", c);
+	} else if (key == KEYC_FOCUS_IN) {
+		c->flags |= CLIENT_FOCUSED;
+		notify_client("client-focus-in", c);
+		window_update_focus(c->session->curw->window);
+	}
 
 	/* Fire the key. */
 	if (key != KEYC_UNKNOWN) {
-		event = xmalloc(sizeof *event);
+		event = xcalloc(1, sizeof *event);
 		event->key = key;
 		memcpy(&event->m, &m, sizeof event->m);
-		if (!server_client_handle_key(c, event))
+
+		event->buf = xmalloc(size);
+		event->len = size;
+		memcpy (event->buf, buf, event->len);
+
+		if (!server_client_handle_key(c, event)) {
+			free(event->buf);
 			free(event);
+		}
 	}
+
+	/* Remove data from buffer. */
+	evbuffer_drain(tty->in, size);
 
 	return (1);
 
@@ -871,8 +1042,9 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 	u_int		 number, modifiers;
 	char		 tmp[64];
 	cc_t		 bspace;
-	key_code	 nkey;
-	key_code	 onlykey;
+	key_code	 nkey, onlykey;
+	struct utf8_data ud;
+	utf8_char	 uc;
 
 	*size = 0;
 
@@ -902,8 +1074,8 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 		return (-1);
 
 	/* Copy to the buffer. */
-	memcpy(tmp, buf + 2, end);
-	tmp[end] = '\0';
+	memcpy(tmp, buf + 2, end - 2);
+	tmp[end - 2] = '\0';
 
 	/* Try to parse either form of key. */
 	if (buf[end] == '~') {
@@ -922,72 +1094,65 @@ tty_keys_extended_key(struct tty *tty, const char *buf, size_t len,
 	else
 		nkey = number;
 
-	/* Update the modifiers. */
-	switch (modifiers) {
-	case 2:
-		nkey |= KEYC_SHIFT;
-		break;
-	case 3:
-		nkey |= (KEYC_META|KEYC_IMPLIED_META);
-		break;
-	case 4:
-		nkey |= (KEYC_SHIFT|KEYC_META|KEYC_IMPLIED_META);
-		break;
-	case 5:
-		nkey |= KEYC_CTRL;
-		break;
-	case 6:
-		nkey |= (KEYC_SHIFT|KEYC_CTRL);
-		break;
-	case 7:
-		nkey |= (KEYC_META|KEYC_CTRL);
-		break;
-	case 8:
-		nkey |= (KEYC_SHIFT|KEYC_META|KEYC_IMPLIED_META|KEYC_CTRL);
-		break;
-	case 9:
-		nkey |= (KEYC_META|KEYC_IMPLIED_META);
-		break;
-	default:
-		*key = KEYC_NONE;
-		break;
+	/* Convert UTF-32 codepoint into internal representation. */
+	if (nkey != KEYC_BSPACE && nkey & ~0x7f) {
+		if (utf8_fromwc(nkey, &ud) == UTF8_DONE &&
+		    utf8_from_data(&ud, &uc) == UTF8_DONE)
+			nkey = uc;
+		else
+			return (-1);
 	}
 
-	/*
-	 * Don't allow both KEYC_CTRL and as an implied modifier. Also convert
-	 * C-X into C-x and so on.
-	 */
-	if (nkey & KEYC_CTRL) {
-		onlykey = (nkey & KEYC_MASK_KEY);
-		if (onlykey < 32 &&
-		    onlykey != 9 &&
-		    onlykey != 13 &&
-		    onlykey != 27)
-			/* nothing */;
-		else if (onlykey >= 97 && onlykey <= 122)
-			onlykey -= 96;
-		else if (onlykey >= 64 && onlykey <= 95)
-			onlykey -= 64;
-		else if (onlykey == 32)
-			onlykey = 0;
-		else if (onlykey == 63)
-			onlykey = 127;
-		else
-			onlykey |= KEYC_CTRL;
-		nkey = onlykey|((nkey & KEYC_MASK_MODIFIERS) & ~KEYC_CTRL);
+	/* Update the modifiers. */
+	if (modifiers > 0) {
+		modifiers--;
+		if (modifiers & 1)
+			nkey |= KEYC_SHIFT;
+		if (modifiers & 2)
+			nkey |= (KEYC_META|KEYC_IMPLIED_META); /* Alt */
+		if (modifiers & 4)
+			nkey |= KEYC_CTRL;
+		if (modifiers & 8)
+			nkey |= (KEYC_META|KEYC_IMPLIED_META); /* Meta */
 	}
+
+	/* Convert S-Tab into Backtab. */
+	if ((nkey & KEYC_MASK_KEY) == '\011' && (nkey & KEYC_SHIFT))
+		nkey = KEYC_BTAB | (nkey & ~KEYC_MASK_KEY & ~KEYC_SHIFT);
+
+	/*
+	 * Deal with the Shift modifier when present alone. The problem is that
+	 * in mode 2 some terminals would report shifted keys, like S-a, as
+	 * just A, and some as S-A.
+	 *
+	 * Because we need an unambiguous internal representation, and because
+	 * restoring the Shift modifier when it's missing would require knowing
+	 * the keyboard layout, and because S-A would cause a lot of issues
+	 * downstream, we choose to lose the Shift for all printable
+	 * characters.
+	 *
+	 * That still leaves some ambiguity, such as C-S-A vs. C-A, but that's
+	 * OK, and applications can handle that.
+	 */
+	onlykey = nkey & KEYC_MASK_KEY;
+	if (((onlykey > 0x20 && onlykey < 0x7f) ||
+	    KEYC_IS_UNICODE(nkey)) &&
+	    (nkey & KEYC_MASK_MODIFIERS) == KEYC_SHIFT)
+		nkey &= ~KEYC_SHIFT;
 
 	if (log_get_level() != 0) {
 		log_debug("%s: extended key %.*s is %llx (%s)", c->name,
 		    (int)*size, buf, nkey, key_string_lookup_key(nkey, 1));
 	}
+
 	*key = nkey;
 	return (0);
 }
 
 /*
  * Handle mouse key input. Returns 0 for success, -1 for failure, 1 for partial
- * (probably a mouse sequence but need more data).
+ * (probably a mouse sequence but need more data), -2 if an invalid mouse
+ * sequence.
  */
 static int
 tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
@@ -1045,17 +1210,13 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		log_debug("%s: mouse input: %.*s", c->name, (int)*size, buf);
 
 		/* Check and return the mouse input. */
-		if (b < 32)
-			return (-1);
-		b -= 32;
-		if (x >= 33)
-			x -= 33;
-		else
-			x = 256 - x;
-		if (y >= 33)
-			y -= 33;
-		else
-			y = 256 - y;
+		if (b < MOUSE_PARAM_BTN_OFF ||
+		    x < MOUSE_PARAM_POS_OFF ||
+		    y < MOUSE_PARAM_POS_OFF)
+			return (-2);
+		b -= MOUSE_PARAM_BTN_OFF;
+		x -= MOUSE_PARAM_POS_OFF;
+		y -= MOUSE_PARAM_POS_OFF;
 	} else if (buf[2] == '<') {
 		/* Read the three inputs. */
 		*size = 3;
@@ -1094,7 +1255,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 
 		/* Check and return the mouse input. */
 		if (x < 1 || y < 1)
-			return (-1);
+			return (-2);
 		x--;
 		y--;
 		b = sgr_b;
@@ -1102,7 +1263,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		/* Type is M for press, m for release. */
 		sgr_type = ch;
 		if (sgr_type == 'm')
-			b |= 3;
+			b = 3;
 
 		/*
 		 * Some terminals (like PuTTY 0.63) mistakenly send
@@ -1110,7 +1271,7 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
 		 * Discard it before it reaches any program running inside
 		 * tmux.
 		 */
-		if (sgr_type == 'm' && (sgr_b & 64))
+		if (sgr_type == 'm' && MOUSE_WHEEL(sgr_b))
 		    return (-2);
 	} else
 		return (-1);
@@ -1138,12 +1299,14 @@ tty_keys_mouse(struct tty *tty, const char *buf, size_t len, size_t *size,
  * partial.
  */
 static int
-tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
-    size_t *size)
+tty_keys_clipboard(struct tty *tty, const char *buf, size_t len, size_t *size)
 {
-	size_t	 end, terminator, needed;
-	char	*copy, *out;
-	int	 outlen;
+	struct client		*c = tty->client;
+	struct window_pane	*wp;
+	size_t			 end, terminator = 0, needed;
+	char			*copy, *out;
+	int			 outlen;
+	u_int			 i;
 
 	*size = 0;
 
@@ -1183,11 +1346,14 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 	}
 	if (end == len)
 		return (1);
-	*size = end + terminator;
+	*size = end + 1;
 
 	/* Skip the initial part. */
 	buf += 5;
 	end -= 5;
+
+	/* Adjust end so that it points to the start of the terminator. */
+	end -= terminator - 1;
 
 	/* Get the second argument. */
 	while (end != 0 && *buf != ';') {
@@ -1198,6 +1364,12 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 		return (0);
 	buf++;
 	end--;
+
+	/* If we did not request this, ignore it. */
+	if (~tty->flags & TTY_OSC52QUERY)
+		return (0);
+	tty->flags &= ~TTY_OSC52QUERY;
+	evtimer_del(&tty->clipboard_timer);
 
 	/* It has to be a string so copy it. */
 	copy = xmalloc(end + 1);
@@ -1214,9 +1386,104 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 	}
 	free(copy);
 
-	/* Create a new paste buffer. */
+	/* Create a new paste buffer and forward to panes. */
 	log_debug("%s: %.*s", __func__, outlen, out);
-	paste_add(NULL, out, outlen);
+	if (c->flags & CLIENT_CLIPBOARDBUFFER) {
+		paste_add(NULL, out, outlen);
+		c->flags &= ~CLIENT_CLIPBOARDBUFFER;
+	}
+	for (i = 0; i < c->clipboard_npanes; i++) {
+		wp = window_pane_find_by_id(c->clipboard_panes[i]);
+		if (wp != NULL)
+			input_reply_clipboard(wp->event, out, outlen, "\033\\");
+	}
+	free(c->clipboard_panes);
+	c->clipboard_panes = NULL;
+	c->clipboard_npanes = 0;
+
+	return (0);
+}
+
+/*
+ * Handle primary device attributes input. Returns 0 for success, -1 for
+ * failure, 1 for partial.
+ */
+static int
+tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
+    size_t *size)
+{
+	struct client	*c = tty->client;
+	int		*features = &c->term_features;
+	u_int		 i, n = 0;
+	char		 tmp[128], *endptr, p[32] = { 0 }, *cp, *next;
+
+	*size = 0;
+	if (tty->flags & TTY_HAVEDA)
+		return (-1);
+
+	/* First three bytes are always \033[?. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != '[')
+		return (-1);
+	if (len == 2)
+		return (1);
+	if (buf[2] != '?')
+		return (-1);
+	if (len == 3)
+		return (1);
+
+	/* Copy the rest up to a c. */
+	for (i = 0; i < sizeof tmp; i++) {
+		if (3 + i == len)
+			return (1);
+		if (buf[3 + i] >= 'a' && buf[3 + i] <= 'z')
+			break;
+		tmp[i] = buf[3 + i];
+	}
+	if (i == sizeof tmp)
+		return (-1);
+	if (buf[3 + i] != 'c')
+		return (-1);
+	tmp[i] = '\0';
+	*size = 4 + i;
+
+	/* Convert all arguments to numbers. */
+	cp = tmp;
+	while ((next = strsep(&cp, ";")) != NULL) {
+		p[n] = strtoul(next, &endptr, 10);
+		if (*endptr != '\0')
+			p[n] = 0;
+		if (++n == nitems(p))
+			break;
+	}
+
+	/* Add terminal features. */
+	switch (p[0]) {
+	case 61: /* level 1 */
+	case 62: /* level 2 */
+	case 63: /* level 3 */
+	case 64: /* level 4 */
+	case 65: /* level 5 */
+		for (i = 1; i < n; i++) {
+			log_debug("%s: DA feature: %d", c->name, p[i]);
+			if (p[i] == 4)
+				tty_add_features(features, "sixel", ",");
+			if (p[i] == 21)
+				tty_add_features(features, "margins", ",");
+			if (p[i] == 28)
+				tty_add_features(features, "rectfill", ",");
+			if (p[i] == 52)
+				tty_add_features(features, "clipboard", ",");
+		}
+		break;
+	}
+	log_debug("%s: received primary DA %.*s", c->name, (int)*size, buf);
+
+	tty_update_features(tty);
+	tty->flags |= TTY_HAVEDA;
 
 	return (0);
 }
@@ -1226,21 +1493,19 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
  * failure, 1 for partial.
  */
 static int
-tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
+tty_keys_device_attributes2(struct tty *tty, const char *buf, size_t len,
     size_t *size)
 {
 	struct client	*c = tty->client;
+	int		*features = &c->term_features;
 	u_int		 i, n = 0;
-	char		 tmp[64], *endptr, p[32] = { 0 }, *cp, *next;
+	char		 tmp[128], *endptr, p[32] = { 0 }, *cp, *next;
 
 	*size = 0;
-	if (tty->flags & TTY_HAVEDA)
+	if (tty->flags & TTY_HAVEDA2)
 		return (-1);
 
-	/*
-	 * First three bytes are always \033[>. Some older Terminal.app
-	 * versions respond as for DA (\033[?) so accept and ignore that.
-	 */
+	/* First three bytes are always \033[>. */
 	if (buf[0] != '\033')
 		return (-1);
 	if (len == 1)
@@ -1249,27 +1514,25 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 		return (-1);
 	if (len == 2)
 		return (1);
-	if (buf[2] != '>' && buf[2] != '?')
+	if (buf[2] != '>')
 		return (-1);
 	if (len == 3)
 		return (1);
 
-	/* Copy the rest up to a 'c'. */
-	for (i = 0; i < (sizeof tmp) - 1; i++) {
+	/* Copy the rest up to a c. */
+	for (i = 0; i < sizeof tmp; i++) {
 		if (3 + i == len)
 			return (1);
-		if (buf[3 + i] == 'c')
+		if (buf[3 + i] >= 'a' && buf[3 + i] <= 'z')
 			break;
 		tmp[i] = buf[3 + i];
 	}
-	if (i == (sizeof tmp) - 1)
+	if (i == sizeof tmp)
+		return (-1);
+	if (buf[3 + i] != 'c')
 		return (-1);
 	tmp[i] = '\0';
 	*size = 4 + i;
-
-	/* Ignore DA response. */
-	if (buf[2] == '?')
-		return (0);
 
 	/* Convert all arguments to numbers. */
 	cp = tmp;
@@ -1277,28 +1540,30 @@ tty_keys_device_attributes(struct tty *tty, const char *buf, size_t len,
 		p[n] = strtoul(next, &endptr, 10);
 		if (*endptr != '\0')
 			p[n] = 0;
-		n++;
+		if (++n == nitems(p))
+			break;
 	}
 
-	/* Add terminal features. */
+	/*
+	 * Add terminal features. We add DECSLRM and DECFRA for some
+	 * identification codes here, notably 64 will catch VT520, even though
+	 * we can't use level 5 from DA because of VTE.
+	 */
 	switch (p[0]) {
-	case 41: /* VT420 */
-		tty_add_features(&c->term_features, "margins,rectfill", ",");
-		break;
 	case 'M': /* mintty */
-		tty_default_features(&c->term_features, "mintty", 0);
+		tty_default_features(features, "mintty", 0);
 		break;
 	case 'T': /* tmux */
-		tty_default_features(&c->term_features, "tmux", 0);
+		tty_default_features(features, "tmux", 0);
 		break;
 	case 'U': /* rxvt-unicode */
-		tty_default_features(&c->term_features, "rxvt-unicode", 0);
+		tty_default_features(features, "rxvt-unicode", 0);
 		break;
 	}
 	log_debug("%s: received secondary DA %.*s", c->name, (int)*size, buf);
 
 	tty_update_features(tty);
-	tty->flags |= TTY_HAVEDA;
+	tty->flags |= TTY_HAVEDA2;
 
 	return (0);
 }
@@ -1312,6 +1577,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
     size_t len, size_t *size)
 {
 	struct client	*c = tty->client;
+	int		*features = &c->term_features;
 	u_int		 i;
 	char		 tmp[128];
 
@@ -1337,7 +1603,7 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 	if (len == 4)
 		return (1);
 
-	/* Copy the rest up to a '\033\\'. */
+	/* Copy the rest up to \033\. */
 	for (i = 0; i < (sizeof tmp) - 1; i++) {
 		if (4 + i == len)
 			return (1);
@@ -1352,13 +1618,15 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 
 	/* Add terminal features. */
 	if (strncmp(tmp, "iTerm2 ", 7) == 0)
-		tty_default_features(&c->term_features, "iTerm2", 0);
+		tty_default_features(features, "iTerm2", 0);
 	else if (strncmp(tmp, "tmux ", 5) == 0)
-		tty_default_features(&c->term_features, "tmux", 0);
+		tty_default_features(features, "tmux", 0);
 	else if (strncmp(tmp, "XTerm(", 6) == 0)
-		tty_default_features(&c->term_features, "XTerm", 0);
+		tty_default_features(features, "XTerm", 0);
 	else if (strncmp(tmp, "mintty ", 7) == 0)
-		tty_default_features(&c->term_features, "mintty", 0);
+		tty_default_features(features, "mintty", 0);
+	else if (strncmp(tmp, "foot(", 5) == 0)
+		tty_default_features(features, "foot", 0);
 	log_debug("%s: received extended DA %.*s", c->name, (int)*size, buf);
 
 	free(c->term_type);
@@ -1366,6 +1634,145 @@ tty_keys_extended_device_attributes(struct tty *tty, const char *buf,
 
 	tty_update_features(tty);
 	tty->flags |= TTY_HAVEXDA;
+
+	return (0);
+}
+
+/*
+ * Handle foreground or background input. Returns 0 for success, -1 for
+ * failure, 1 for partial.
+ */
+int
+tty_keys_colours(struct tty *tty, const char *buf, size_t len, size_t *size,
+    int *fg, int *bg)
+{
+	struct client	*c = tty->client;
+	u_int		 i;
+	char		 tmp[128];
+	int		 n;
+
+	*size = 0;
+
+	/* First four bytes are always \033]1 and 0 or 1 and ;. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != ']')
+		return (-1);
+	if (len == 2)
+		return (1);
+	if (buf[2] != '1')
+		return (-1);
+	if (len == 3)
+		return (1);
+	if (buf[3] != '0' && buf[3] != '1')
+		return (-1);
+	if (len == 4)
+		return (1);
+	if (buf[4] != ';')
+		return (-1);
+	if (len == 5)
+		return (1);
+
+	/* Copy the rest up to \033\ or \007. */
+	for (i = 0; i < (sizeof tmp) - 1; i++) {
+		if (5 + i == len)
+			return (1);
+		if (buf[5 + i - 1] == '\033' && buf[5 + i] == '\\')
+			break;
+		if (buf[5 + i] == '\007')
+			break;
+		tmp[i] = buf[5 + i];
+	}
+	if (i == (sizeof tmp) - 1)
+		return (-1);
+	if (tmp[i - 1] == '\033')
+		tmp[i - 1] = '\0';
+	else
+		tmp[i] = '\0';
+	*size = 6 + i;
+
+	n = colour_parseX11(tmp);
+	if (n != -1 && buf[3] == '0') {
+		if (c != NULL)
+			log_debug("%s fg is %s", c->name, colour_tostring(n));
+		else
+			log_debug("fg is %s", colour_tostring(n));
+		*fg = n;
+		tty->flags &= ~TTY_WAITFG;
+	} else if (n != -1) {
+		if (c != NULL)
+			log_debug("%s bg is %s", c->name, colour_tostring(n));
+		else
+			log_debug("bg is %s", colour_tostring(n));
+		*bg = n;
+		tty->flags &= ~TTY_WAITBG;
+	}
+
+	return (0);
+}
+
+/* Handle OSC 4 palette colour responses. */
+static int
+tty_keys_palette(struct tty *tty, const char *buf, size_t len, size_t *size)
+{
+	struct client			 *c = tty->client;
+	u_int				  i, start;
+	char				  tmp[128], *endptr;
+	int				  idx;
+	struct input_request_palette_data pd;
+
+	*size = 0;
+
+	/* First three bytes are always \033]4. */
+	if (buf[0] != '\033')
+		return (-1);
+	if (len == 1)
+		return (1);
+	if (buf[1] != ']')
+		return (-1);
+	if (len == 2)
+		return (1);
+	if (buf[2] != '4')
+		return (-1);
+	if (len == 3)
+		return (1);
+	if (buf[3] != ';')
+		return (-1);
+	if (len == 4)
+		return (1);
+
+	/* Parse index. */
+	idx = strtol(buf + 4, &endptr, 10);
+	if (endptr == buf + 4 || *endptr != ';')
+		return (-1);
+	if (idx < 0 || idx > 255)
+		return (-1);
+
+	/* Copy the rest up to \033\ or \007. */
+	start = (endptr - buf) + 1;
+	for (i = start; i < len && i - start < sizeof tmp; i++) {
+		if (buf[i - 1] == '\033' && buf[i] == '\\')
+			break;
+		if (buf[i] == '\007')
+			break;
+		tmp[i - start] = buf[i];
+	}
+	if (i - start == sizeof tmp)
+		return (-1);
+	if (i > 0 && buf[i - 1] == '\033')
+		tmp[i - start - 1] = '\0';
+	else
+		tmp[i - start] = '\0';
+	*size = i + 1;
+
+	/* Work out the colour. */
+	pd.c = colour_parseX11(tmp);
+	if (pd.c == -1)
+		return (0);
+	pd.idx = idx;
+	input_request_reply(c, INPUT_REQUEST_PALETTE, &pd);
 
 	return (0);
 }

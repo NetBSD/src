@@ -260,6 +260,7 @@ options_default(struct options *oo, const struct options_table_entry *oe)
 	struct options_entry	*o;
 	union options_value	*ov;
 	u_int			 i;
+	struct cmd_parse_result	*pr;
 
 	o = options_empty(oo, oe);
 	ov = &o->value;
@@ -277,6 +278,17 @@ options_default(struct options *oo, const struct options_table_entry *oe)
 	switch (oe->type) {
 	case OPTIONS_TABLE_STRING:
 		ov->string = xstrdup(oe->default_str);
+		break;
+	case OPTIONS_TABLE_COMMAND:
+		pr = cmd_parse_from_string(oe->default_str, NULL);
+		switch (pr->status) {
+		case CMD_PARSE_ERROR:
+			free(pr->error);
+			break;
+		case CMD_PARSE_SUCCESS:
+			ov->cmdlist = pr->cmdlist;
+			break;
+		}
 		break;
 	default:
 		ov->number = oe->default_num;
@@ -402,7 +414,7 @@ options_array_clear(struct options_entry *o)
 		return;
 
 	RB_FOREACH_SAFE(a, options_array, &o->value.array, a1)
-	    options_array_free(o, a);
+		options_array_free(o, a);
 }
 
 union options_value *
@@ -424,7 +436,8 @@ options_array_set(struct options_entry *o, u_int idx, const char *value,
 {
 	struct options_array_item	*a;
 	char				*new;
-	struct cmd_parse_result		*pr = NULL; // XXX: gcc
+	struct cmd_parse_result		*pr;
+	long long		 	 number;
 
 	if (!OPTIONS_IS_ARRAY(o)) {
 		if (cause != NULL)
@@ -442,10 +455,6 @@ options_array_set(struct options_entry *o, u_int idx, const char *value,
 	if (OPTIONS_IS_COMMAND(o)) {
 		pr = cmd_parse_from_string(value, NULL);
 		switch (pr->status) {
-		case CMD_PARSE_EMPTY:
-			if (cause != NULL)
-				*cause = xstrdup("empty command");
-			return (-1);
 		case CMD_PARSE_ERROR:
 			if (cause != NULL)
 				*cause = pr->error;
@@ -476,6 +485,20 @@ options_array_set(struct options_entry *o, u_int idx, const char *value,
 		else
 			options_value_free(o, &a->value);
 		a->value.string = new;
+		return (0);
+	}
+
+	if (o->tableentry->type == OPTIONS_TABLE_COLOUR) {
+		if ((number = colour_fromstring(value)) == -1) {
+			xasprintf(cause, "bad colour: %s", value);
+			return (-1);
+		}
+		a = options_array_item(o, idx);
+		if (a == NULL)
+			a = options_array_new(o, idx);
+		else
+			options_value_free(o, &a->value);
+		a->value.number = number;
 		return (0);
 	}
 
@@ -567,10 +590,28 @@ char *
 options_to_string(struct options_entry *o, int idx, int numeric)
 {
 	struct options_array_item	*a;
+	char				*result = NULL;
+	char				*last = NULL;
+	char				*next;
 
 	if (OPTIONS_IS_ARRAY(o)) {
-		if (idx == -1)
-			return (xstrdup(""));
+		if (idx == -1) {
+			RB_FOREACH(a, options_array, &o->value.array) {
+				next = options_value_to_string(o, &a->value,
+				    numeric);
+				if (last == NULL)
+					result = next;
+				else {
+					xasprintf(&result, "%s %s", last, next);
+					free(last);
+					free(next);
+				}
+				last = result;
+			}
+			if (result == NULL)
+				return (xstrdup(""));
+			return (result);
+		}
 		a = options_array_item(o, idx);
 		if (a == NULL)
 			return (xstrdup(""));
@@ -708,6 +749,19 @@ options_get_number(struct options *oo, const char *name)
 	return (o->value.number);
 }
 
+const struct cmd_list *
+options_get_command(struct options *oo, const char *name)
+{
+	struct options_entry	*o;
+
+	o = options_get(oo, name);
+	if (o == NULL)
+		fatalx("missing option %s", name);
+	if (!OPTIONS_IS_COMMAND(o))
+		fatalx("option %s is not a command", name);
+	return (o->value.cmdlist);
+}
+
 struct options_entry *
 options_set_string(struct options *oo, const char *name, int append,
     const char *fmt, ...)
@@ -766,6 +820,30 @@ options_set_number(struct options *oo, const char *name, long long value)
 	if (!OPTIONS_IS_NUMBER(o))
 		fatalx("option %s is not a number", name);
 	o->value.number = value;
+	return (o);
+}
+
+struct options_entry *
+options_set_command(struct options *oo, const char *name,
+    struct cmd_list *value)
+{
+	struct options_entry	*o;
+
+	if (*name == '@')
+		fatalx("user option %s must be a string", name);
+
+	o = options_get_only(oo, name);
+	if (o == NULL) {
+		o = options_default(oo, options_parent_table_entry(oo, name));
+		if (o == NULL)
+			return (NULL);
+	}
+
+	if (!OPTIONS_IS_COMMAND(o))
+		fatalx("option %s is not a command", name);
+	if (o->value.cmdlist != NULL)
+		cmd_list_free(o->value.cmdlist);
+	o->value.cmdlist = value;
 	return (o);
 }
 
@@ -978,28 +1056,39 @@ options_from_string_flag(struct options *oo, const char *name,
 	return (0);
 }
 
+int
+options_find_choice(const struct options_table_entry *oe, const char *value,
+    char **cause)
+{
+	const char	**cp;
+	int		  n = 0, choice = -1;
+
+	for (cp = oe->choices; *cp != NULL; cp++) {
+		if (strcmp(*cp, value) == 0)
+			choice = n;
+		n++;
+	}
+	if (choice == -1) {
+		xasprintf(cause, "unknown value: %s", value);
+		return (-1);
+	}
+	return (choice);
+}
+
 static int
 options_from_string_choice(const struct options_table_entry *oe,
     struct options *oo, const char *name, const char *value, char **cause)
 {
-	const char	**cp;
-	int		  n, choice = -1;
+	int	choice = -1;
 
 	if (value == NULL) {
 		choice = options_get_number(oo, name);
 		if (choice < 2)
 			choice = !choice;
 	} else {
-		n = 0;
-		for (cp = oe->choices; *cp != NULL; cp++) {
-			if (strcmp(*cp, value) == 0)
-				choice = n;
-			n++;
-		}
-		if (choice == -1) {
-			xasprintf(cause, "unknown value: %s", value);
+		choice = options_find_choice(oe, value, cause);
+		if (choice < 0)
 			return (-1);
-		}
 	}
 	options_set_number(oo, name, choice);
 	return (0);
@@ -1014,6 +1103,7 @@ options_from_string(struct options *oo, const struct options_table_entry *oe,
 	const char		*errstr, *new;
 	char			*old;
 	key_code		 key;
+	struct cmd_parse_result	*pr;
 
 	if (oe != NULL) {
 		if (value == NULL &&
@@ -1072,6 +1162,15 @@ options_from_string(struct options *oo, const struct options_table_entry *oe,
 	case OPTIONS_TABLE_CHOICE:
 		return (options_from_string_choice(oe, oo, name, value, cause));
 	case OPTIONS_TABLE_COMMAND:
+		pr = cmd_parse_from_string(value, NULL);
+		switch (pr->status) {
+		case CMD_PARSE_ERROR:
+			*cause = pr->error;
+			return (-1);
+		case CMD_PARSE_SUCCESS:
+			options_set_command(oo, name, pr->cmdlist);
+			return (0);
+		}
 		break;
 	}
 	return (-1);
@@ -1085,13 +1184,27 @@ options_push_changes(const char *name)
 	struct window		*w;
 	struct window_pane	*wp;
 
+	log_debug("%s: %s", __func__, name);
+
 	if (strcmp(name, "automatic-rename") == 0) {
 		RB_FOREACH(w, windows, &windows) {
 			if (w->active == NULL)
 				continue;
-			if (options_get_number(w->options, "automatic-rename"))
+			if (options_get_number(w->options, name))
 				w->active->flags |= PANE_CHANGED;
 		}
+	}
+	if (strcmp(name, "cursor-colour") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
+			window_pane_default_cursor(wp);
+	}
+	if (strcmp(name, "cursor-style") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
+			window_pane_default_cursor(wp);
+	}
+	if (strcmp(name, "fill-character") == 0) {
+		RB_FOREACH(w, windows, &windows)
+			window_set_fill_character(w);
 	}
 	if (strcmp(name, "key-table") == 0) {
 		TAILQ_FOREACH(loop, &clients, entry)
@@ -1111,12 +1224,30 @@ options_push_changes(const char *name)
 	if (strcmp(name, "window-style") == 0 ||
 	    strcmp(name, "window-active-style") == 0) {
 		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
-			wp->flags |= PANE_STYLECHANGED;
+			wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	}
-	if (strcmp(name, "pane-border-status") == 0) {
+	if (strcmp(name, "pane-colours") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes)
+			colour_palette_from_option(&wp->palette, wp->options);
+	}
+	if (strcmp(name, "pane-border-status") == 0 ||
+	    strcmp(name, "pane-scrollbars") == 0 ||
+	    strcmp(name, "pane-scrollbars-position") == 0) {
 		RB_FOREACH(w, windows, &windows)
 			layout_fix_panes(w, NULL);
 	}
+	if (strcmp(name, "pane-scrollbars-style") == 0) {
+		RB_FOREACH(wp, window_pane_tree, &all_window_panes) {
+			style_set_scrollbar_style_from_option(
+			    &wp->scrollbar_style, wp->options);
+		}
+		RB_FOREACH(w, windows, &windows)
+			layout_fix_panes(w, NULL);
+	}
+	if (strcmp(name, "codepoint-widths") == 0)
+		utf8_update_width_cache();
+	if (strcmp(name, "input-buffer-size") == 0)
+		input_set_buffer_size(options_get_number(global_options, name));
 	RB_FOREACH(s, sessions, &sessions)
 		status_update_cache(s);
 

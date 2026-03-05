@@ -37,7 +37,7 @@ const struct cmd_entry cmd_load_buffer_entry = {
 	.name = "load-buffer",
 	.alias = "loadb",
 
-	.args = { "b:t:w", 1, 1 },
+	.args = { "b:t:w", 1, 1, NULL },
 	.usage = CMD_BUFFER_USAGE " " CMD_TARGET_CLIENT_USAGE " path",
 
 	.flags = CMD_AFTERHOOK|CMD_CLIENT_TFLAG|CMD_CLIENT_CANFAIL,
@@ -66,7 +66,7 @@ cmd_load_buffer_done(__unused struct client *c, const char *path, int error,
 		return;
 
 	if (error != 0)
-		cmdq_error(item, "%s: %s", path, strerror(error));
+		cmdq_error(item, "%s: %s", strerror(error), path);
 	else if (bsize != 0) {
 		copy = xmalloc(bsize);
 		memcpy(copy, bdata, bsize);
@@ -77,7 +77,7 @@ cmd_load_buffer_done(__unused struct client *c, const char *path, int error,
 		} else if (tc != NULL &&
 		    tc->session != NULL &&
 		    (~tc->flags & CLIENT_DEAD))
-			tty_set_selection(&tc->tty, copy, bsize);
+			tty_set_selection(&tc->tty, "", copy, bsize);
 		if (tc != NULL)
 			server_client_unref(tc);
 	}
@@ -105,7 +105,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		cdata->client->references++;
 	}
 
-	path = format_single_from_target(item, args->argv[0]);
+	path = format_single_from_target(item, args_string(args, 0));
 	file_read(cmdq_get_client(item), path, cmd_load_buffer_done, cdata);
 	free(path);
 

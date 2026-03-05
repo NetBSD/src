@@ -33,7 +33,7 @@ const struct cmd_entry cmd_select_pane_entry = {
 	.name = "select-pane",
 	.alias = "selectp",
 
-	.args = { "DdegLlMmP:RT:t:UZ", 0, 0 }, /* -P and -g deprecated */
+	.args = { "DdegLlMmP:RT:t:UZ", 0, 0, NULL }, /* -P and -g deprecated */
 	.usage = "[-DdeLlMmRUZ] [-T title] " CMD_TARGET_PANE_USAGE,
 
 	.target = { 't', CMD_FIND_PANE, 0 },
@@ -46,7 +46,7 @@ const struct cmd_entry cmd_last_pane_entry = {
 	.name = "last-pane",
 	.alias = "lastp",
 
-	.args = { "det:Z", 0, 0 },
+	.args = { "det:Z", 0, 0, NULL },
 	.usage = "[-deZ] " CMD_TARGET_WINDOW_USAGE,
 
 	.target = { 't', CMD_FIND_WINDOW, 0 },
@@ -98,7 +98,11 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct options_entry	*o;
 
 	if (entry == &cmd_last_pane_entry || args_has(args, 'l')) {
-		lastwp = w->last;
+		/*
+		 * Check for no last pane found in case the other pane was
+		 * spawned without being visited (for example split-window -d).
+		 */
+		lastwp = TAILQ_FIRST(&w->last_panes);
 		if (lastwp == NULL && window_count_panes(w) == 2) {
 			lastwp = TAILQ_PREV(w->active, window_panes, entry);
 			if (lastwp == NULL)
@@ -145,10 +149,14 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 		markedwp = marked_pane.wp;
 
 		if (lastwp != NULL) {
+			lastwp->flags |= (PANE_REDRAW|PANE_STYLECHANGED|
+			    PANE_THEMECHANGED);
 			server_redraw_window_borders(lastwp->window);
 			server_status_window(lastwp->window);
 		}
 		if (markedwp != NULL) {
+			markedwp->flags |= (PANE_REDRAW|PANE_STYLECHANGED|
+			    PANE_THEMECHANGED);
 			server_redraw_window_borders(markedwp->window);
 			server_status_window(markedwp->window);
 		}
@@ -163,7 +171,7 @@ cmd_select_pane_exec(struct cmd *self, struct cmdq_item *item)
 			return (CMD_RETURN_ERROR);
 		}
 		options_set_string(oo, "window-active-style", 0, "%s", style);
-		wp->flags |= (PANE_REDRAW|PANE_STYLECHANGED);
+		wp->flags |= (PANE_REDRAW|PANE_STYLECHANGED|PANE_THEMECHANGED);
 	}
 	if (args_has(args, 'g')) {
 		cmdq_print(item, "%s", options_get_string(oo, "window-style"));

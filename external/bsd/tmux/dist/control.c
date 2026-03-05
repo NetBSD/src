@@ -385,7 +385,7 @@ control_pause_pane(struct client *c, struct window_pane *wp)
 }
 
 /* Write a line. */
-static void __printflike(2, 0)
+static void printflike(2, 0)
 control_vwrite(struct client *c, const char *fmt, va_list ap)
 {
 	struct control_state	*cs = c->control_state;
@@ -664,7 +664,7 @@ control_write_pending(struct client *c, struct control_pane *cp, size_t limit)
 	uint64_t		 age, t = get_timer();
 
 	wp = control_window_pane(c, cp->pane);
-	if (wp == NULL) {
+	if (wp == NULL || wp->fd == -1) {
 		TAILQ_FOREACH_SAFE(cb, &cp->blocks, entry, cb1) {
 			TAILQ_REMOVE(&cp->blocks, cb, entry);
 			control_free_block(cs, cb);
@@ -775,13 +775,16 @@ control_start(struct client *c)
 
 	cs->read_event = bufferevent_new(c->fd, control_read_callback,
 	    control_write_callback, control_error_callback, c);
-	bufferevent_enable(cs->read_event, EV_READ);
+	if (cs->read_event == NULL)
+		fatalx("out of memory");
 
 	if (c->flags & CLIENT_CONTROLCONTROL)
 		cs->write_event = cs->read_event;
 	else {
 		cs->write_event = bufferevent_new(c->out_fd, NULL,
 		    control_write_callback, control_error_callback, c);
+		if (cs->write_event == NULL)
+			fatalx("out of memory");
 	}
 	bufferevent_setwatermark(cs->write_event, EV_WRITE, CONTROL_BUFFER_LOW,
 	    0);
@@ -790,6 +793,13 @@ control_start(struct client *c)
 		bufferevent_write(cs->write_event, "\033P1000p", 7);
 		bufferevent_enable(cs->write_event, EV_WRITE);
 	}
+}
+
+/* Control client ready. */
+void
+control_ready(struct client *c)
+{
+	bufferevent_enable(c->control_state->read_event, EV_READ);
 }
 
 /* Discard all output for a client. */
@@ -864,7 +874,7 @@ control_check_subs_pane(struct client *c, struct control_sub *csub)
 	struct control_sub_pane	*csp, find;
 
 	wp = window_pane_find_by_id(csub->id);
-	if (wp == NULL)
+	if (wp == NULL || wp->fd == -1)
 		return;
 	w = wp->window;
 

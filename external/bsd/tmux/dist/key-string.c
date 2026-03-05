@@ -18,6 +18,7 @@
 
 #include <sys/types.h>
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 #include <wchar.h>
@@ -56,12 +57,47 @@ static const struct {
 	{ "PPage",	KEYC_PPAGE|KEYC_IMPLIED_META },
 	{ "PageUp",	KEYC_PPAGE|KEYC_IMPLIED_META },
 	{ "PgUp",	KEYC_PPAGE|KEYC_IMPLIED_META },
-	{ "Tab",	'\011' },
 	{ "BTab",	KEYC_BTAB },
 	{ "Space",	' ' },
 	{ "BSpace",	KEYC_BSPACE },
-	{ "Enter",	'\r' },
-	{ "Escape",	'\033' },
+
+	/*
+	 * C0 control characters, with the exception of Tab, Enter,
+	 * and Esc, should never appear as keys. We still render them,
+	 * so to be able to spot them in logs in case of an abnormality.
+	 */
+	{ "[NUL]",	C0_NUL },
+	{ "[SOH]",	C0_SOH },
+	{ "[STX]",	C0_STX },
+	{ "[ETX]",	C0_ETX },
+	{ "[EOT]",	C0_EOT },
+	{ "[ENQ]",	C0_ENQ },
+	{ "[ASC]",	C0_ASC },
+	{ "[BEL]",	C0_BEL },
+	{ "[BS]",	C0_BS },
+	{ "Tab",	C0_HT },
+	{ "[LF]",	C0_LF },
+	{ "[VT]",	C0_VT },
+	{ "[FF]",	C0_FF },
+	{ "Enter",	C0_CR },
+	{ "[SO]",	C0_SO },
+	{ "[SI]",	C0_SI },
+	{ "[DLE]",	C0_DLE },
+	{ "[DC1]",	C0_DC1 },
+	{ "[DC2]",	C0_DC2 },
+	{ "[DC3]",	C0_DC3 },
+	{ "[DC4]",	C0_DC4 },
+	{ "[NAK]",	C0_NAK },
+	{ "[SYN]",	C0_SYN },
+	{ "[ETB]",	C0_ETB },
+	{ "[CAN]",	C0_CAN },
+	{ "[EM]",	C0_EM },
+	{ "[SUB]",	C0_SUB },
+	{ "Escape",	C0_ESC },
+	{ "[FS]",	C0_FS },
+	{ "[GS]",	C0_GS },
+	{ "[RS]",	C0_RS },
+	{ "[US]",	C0_US },
 
 	/* Arrow keys. */
 	{ "Up",		KEYC_UP|KEYC_CURSOR|KEYC_IMPLIED_META },
@@ -91,26 +127,68 @@ static const struct {
 	KEYC_MOUSE_STRING(MOUSEDOWN1, MouseDown1),
 	KEYC_MOUSE_STRING(MOUSEDOWN2, MouseDown2),
 	KEYC_MOUSE_STRING(MOUSEDOWN3, MouseDown3),
+	KEYC_MOUSE_STRING(MOUSEDOWN6, MouseDown6),
+	KEYC_MOUSE_STRING(MOUSEDOWN7, MouseDown7),
+	KEYC_MOUSE_STRING(MOUSEDOWN8, MouseDown8),
+	KEYC_MOUSE_STRING(MOUSEDOWN9, MouseDown9),
+	KEYC_MOUSE_STRING(MOUSEDOWN10, MouseDown10),
+	KEYC_MOUSE_STRING(MOUSEDOWN11, MouseDown11),
 	KEYC_MOUSE_STRING(MOUSEUP1, MouseUp1),
 	KEYC_MOUSE_STRING(MOUSEUP2, MouseUp2),
 	KEYC_MOUSE_STRING(MOUSEUP3, MouseUp3),
+	KEYC_MOUSE_STRING(MOUSEUP6, MouseUp6),
+	KEYC_MOUSE_STRING(MOUSEUP7, MouseUp7),
+	KEYC_MOUSE_STRING(MOUSEUP8, MouseUp8),
+	KEYC_MOUSE_STRING(MOUSEUP9, MouseUp9),
+	KEYC_MOUSE_STRING(MOUSEUP10, MouseUp10),
+	KEYC_MOUSE_STRING(MOUSEUP11, MouseUp11),
 	KEYC_MOUSE_STRING(MOUSEDRAG1, MouseDrag1),
 	KEYC_MOUSE_STRING(MOUSEDRAG2, MouseDrag2),
 	KEYC_MOUSE_STRING(MOUSEDRAG3, MouseDrag3),
+	KEYC_MOUSE_STRING(MOUSEDRAG6, MouseDrag6),
+	KEYC_MOUSE_STRING(MOUSEDRAG7, MouseDrag7),
+	KEYC_MOUSE_STRING(MOUSEDRAG8, MouseDrag8),
+	KEYC_MOUSE_STRING(MOUSEDRAG9, MouseDrag9),
+	KEYC_MOUSE_STRING(MOUSEDRAG10, MouseDrag10),
+	KEYC_MOUSE_STRING(MOUSEDRAG11, MouseDrag11),
 	KEYC_MOUSE_STRING(MOUSEDRAGEND1, MouseDragEnd1),
 	KEYC_MOUSE_STRING(MOUSEDRAGEND2, MouseDragEnd2),
 	KEYC_MOUSE_STRING(MOUSEDRAGEND3, MouseDragEnd3),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND6, MouseDragEnd6),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND7, MouseDragEnd7),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND8, MouseDragEnd8),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND9, MouseDragEnd9),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND10, MouseDragEnd10),
+	KEYC_MOUSE_STRING(MOUSEDRAGEND11, MouseDragEnd11),
 	KEYC_MOUSE_STRING(WHEELUP, WheelUp),
 	KEYC_MOUSE_STRING(WHEELDOWN, WheelDown),
 	KEYC_MOUSE_STRING(SECONDCLICK1, SecondClick1),
 	KEYC_MOUSE_STRING(SECONDCLICK2, SecondClick2),
 	KEYC_MOUSE_STRING(SECONDCLICK3, SecondClick3),
+	KEYC_MOUSE_STRING(SECONDCLICK6, SecondClick6),
+	KEYC_MOUSE_STRING(SECONDCLICK7, SecondClick7),
+	KEYC_MOUSE_STRING(SECONDCLICK8, SecondClick8),
+	KEYC_MOUSE_STRING(SECONDCLICK9, SecondClick9),
+	KEYC_MOUSE_STRING(SECONDCLICK10, SecondClick10),
+	KEYC_MOUSE_STRING(SECONDCLICK11, SecondClick11),
 	KEYC_MOUSE_STRING(DOUBLECLICK1, DoubleClick1),
 	KEYC_MOUSE_STRING(DOUBLECLICK2, DoubleClick2),
 	KEYC_MOUSE_STRING(DOUBLECLICK3, DoubleClick3),
+	KEYC_MOUSE_STRING(DOUBLECLICK6, DoubleClick6),
+	KEYC_MOUSE_STRING(DOUBLECLICK7, DoubleClick7),
+	KEYC_MOUSE_STRING(DOUBLECLICK8, DoubleClick8),
+	KEYC_MOUSE_STRING(DOUBLECLICK9, DoubleClick9),
+	KEYC_MOUSE_STRING(DOUBLECLICK10, DoubleClick10),
+	KEYC_MOUSE_STRING(DOUBLECLICK11, DoubleClick11),
 	KEYC_MOUSE_STRING(TRIPLECLICK1, TripleClick1),
 	KEYC_MOUSE_STRING(TRIPLECLICK2, TripleClick2),
 	KEYC_MOUSE_STRING(TRIPLECLICK3, TripleClick3),
+	KEYC_MOUSE_STRING(TRIPLECLICK6, TripleClick6),
+	KEYC_MOUSE_STRING(TRIPLECLICK7, TripleClick7),
+	KEYC_MOUSE_STRING(TRIPLECLICK8, TripleClick8),
+	KEYC_MOUSE_STRING(TRIPLECLICK9, TripleClick9),
+	KEYC_MOUSE_STRING(TRIPLECLICK10, TripleClick10),
+	KEYC_MOUSE_STRING(TRIPLECLICK11, TripleClick11)
 };
 
 /* Find key string in table. */
@@ -164,8 +242,7 @@ key_string_get_modifiers(const char **string)
 key_code
 key_string_lookup_string(const char *string)
 {
-	static const char	*other = "!#()+,-.0123456789:;<=>'\r\t\177`/";
-	key_code		 key, modifiers;
+	key_code		 key, modifiers = 0;
 	u_int			 u, i;
 	struct utf8_data	 ud, *udp;
 	enum utf8_state		 more;
@@ -183,6 +260,8 @@ key_string_lookup_string(const char *string)
 	if (string[0] == '0' && string[1] == 'x') {
 		if (sscanf(string + 2, "%x", &u) != 1)
 			return (KEYC_UNKNOWN);
+		if (u < 32)
+			return (u);
 		mlen = wctomb(m, u);
 		if (mlen <= 0 || mlen > MB_LEN_MAX)
 			return (KEYC_UNKNOWN);
@@ -200,12 +279,15 @@ key_string_lookup_string(const char *string)
 		return (uc);
 	}
 
-	/* Check for modifiers. */
-	modifiers = 0;
+	/* Check for short Ctrl key. */
 	if (string[0] == '^' && string[1] != '\0') {
+		if (string[2] == '\0')
+			return (tolower((u_char)string[1])|KEYC_CTRL);
 		modifiers |= KEYC_CTRL;
 		string++;
 	}
+
+	/* Check for modifiers. */
 	modifiers |= key_string_get_modifiers(&string);
 	if (string == NULL || string[0] == '\0')
 		return (KEYC_UNKNOWN);
@@ -237,26 +319,6 @@ key_string_lookup_string(const char *string)
 			key &= ~KEYC_IMPLIED_META;
 	}
 
-	/* Convert the standard control keys. */
-	if (key <= 127 &&
-	    (modifiers & KEYC_CTRL) &&
-	    strchr(other, key) == NULL &&
-	    key != 9 &&
-	    key != 13 &&
-	    key != 27) {
-		if (key >= 97 && key <= 122)
-			key -= 96;
-		else if (key >= 64 && key <= 95)
-                       key -= 64;
-		else if (key == 32)
-			key = 0;
-		else if (key == 63)
-			key = 127;
-		else
-			return (KEYC_UNKNOWN);
-		modifiers &= ~KEYC_CTRL;
-	}
-
 	return (key|modifiers);
 }
 
@@ -279,10 +341,6 @@ key_string_lookup_key(key_code key, int with_flags)
 		snprintf(out, sizeof out, "%c", (int)(key & 0xff));
 		goto out;
 	}
-
-	/* Display C-@ as C-Space. */
-	if ((key & (KEYC_MASK_KEY|KEYC_MASK_MODIFIERS)) == 0)
-		key = ' '|KEYC_CTRL;
 
 	/* Fill in the modifiers. */
 	if (key & KEYC_CTRL)
@@ -352,7 +410,7 @@ key_string_lookup_key(key_code key, int with_flags)
 		s = "MouseMoveBorder";
 		goto append;
 	}
-	if (key >= KEYC_USER && key < KEYC_USER + KEYC_NUSER) {
+	if (key >= KEYC_USER && key < KEYC_USER_END) {
 		snprintf(tmp, sizeof tmp, "User%u", (u_int)(key - KEYC_USER));
 		strlcat(out, tmp, sizeof out);
 		goto out;
@@ -383,13 +441,8 @@ key_string_lookup_key(key_code key, int with_flags)
 		goto out;
 	}
 
-	/* Check for standard or control key. */
-	if (key <= 32) {
-		if (key == 0 || key > 26)
-			xsnprintf(tmp, sizeof tmp, "C-%c", (int)(64 + key));
-		else
-			xsnprintf(tmp, sizeof tmp, "C-%c", (int)(96 + key));
-	} else if (key >= 32 && key <= 126) {
+	/* Printable ASCII keys. */
+	if (key > 32 && key <= 126) {
 		tmp[0] = key;
 		tmp[1] = '\0';
 	} else if (key == 127)
@@ -416,6 +469,8 @@ out:
 			strlcat(out, "I", sizeof out);
 		if (saved & KEYC_BUILD_MODIFIERS)
 			strlcat(out, "B", sizeof out);
+		if (saved & KEYC_SENT)
+			strlcat(out, "S", sizeof out);
 		strlcat(out, "]", sizeof out);
 	}
 	return (out);

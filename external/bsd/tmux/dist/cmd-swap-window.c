@@ -32,7 +32,7 @@ const struct cmd_entry cmd_swap_window_entry = {
 	.name = "swap-window",
 	.alias = "swapw",
 
-	.args = { "ds:t:", 0, 0 },
+	.args = { "ds:t:", 0, 0, NULL },
 	.usage = "[-d] " CMD_SRCDST_WINDOW_USAGE,
 
 	.source = { 's', CMD_FIND_WINDOW, CMD_FIND_DEFAULT_MARKED },
@@ -77,6 +77,8 @@ cmd_swap_window_exec(struct cmd *self, struct cmdq_item *item)
 	wl_src->window = w_dst;
 	TAILQ_INSERT_TAIL(&w_dst->winlinks, wl_src, wentry);
 
+	if (marked_pane.wl == wl_src)
+		marked_pane.wl = wl_dst;
 	if (args_has(args, 'd')) {
 		session_select(dst, wl_dst->idx);
 		if (src != dst)

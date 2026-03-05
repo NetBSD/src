@@ -35,7 +35,7 @@ const struct cmd_entry cmd_join_pane_entry = {
 	.name = "join-pane",
 	.alias = "joinp",
 
-	.args = { "bdfhvp:l:s:t:", 0, 0 },
+	.args = { "bdfhvp:l:s:t:", 0, 0, NULL },
 	.usage = "[-bdfhv] [-l size] " CMD_SRCDST_PANE_USAGE,
 
 	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
@@ -49,7 +49,7 @@ const struct cmd_entry cmd_move_pane_entry = {
 	.name = "move-pane",
 	.alias = "movep",
 
-	.args = { "bdfhvp:l:s:t:", 0, 0 },
+	.args = { "bdfhvp:l:s:t:", 0, 0, NULL },
 	.usage = "[-bdfhv] [-l size] " CMD_SRCDST_PANE_USAGE,
 
 	.source = { 's', CMD_FIND_PANE, CMD_FIND_DEFAULT_MARKED },
@@ -71,10 +71,11 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	struct window		*src_w, *dst_w;
 	struct window_pane	*src_wp, *dst_wp;
 	char			*cause = NULL;
-	int			 size, percentage, dst_idx;
+	int			 size, dst_idx;
 	int			 flags;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
+	u_int			 curval = 0;
 
 	dst_s = target->s;
 	dst_wl = target->wl;
@@ -97,23 +98,30 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 	if (args_has(args, 'h'))
 		type = LAYOUT_LEFTRIGHT;
 
+	/* If the 'p' flag is dropped then this bit can be moved into 'l'. */
+	if (args_has(args, 'l') || args_has(args, 'p')) {
+		if (args_has(args, 'f')) {
+			if (type == LAYOUT_TOPBOTTOM)
+				curval = dst_w->sy;
+			else
+				curval = dst_w->sx;
+		} else {
+			if (type == LAYOUT_TOPBOTTOM)
+				curval = dst_wp->sy;
+			else
+				curval = dst_wp->sx;
+		}
+	}
+
 	size = -1;
 	if (args_has(args, 'l')) {
-		if (type == LAYOUT_TOPBOTTOM) {
-			size = args_percentage(args, 'l', 0, INT_MAX,
-			    dst_wp->sy, &cause);
-		} else {
-			size = args_percentage(args, 'l', 0, INT_MAX,
-			    dst_wp->sx, &cause);
-		}
+		size = args_percentage_and_expand(args, 'l', 0, INT_MAX, curval,
+			   item, &cause);
 	} else if (args_has(args, 'p')) {
-		percentage = args_strtonum(args, 'p', 0, 100, &cause);
-		if (cause == NULL) {
-			if (type == LAYOUT_TOPBOTTOM)
-				size = (dst_wp->sy * percentage) / 100;
-			else
-				size = (dst_wp->sx * percentage) / 100;
-		}
+		size = args_strtonum_and_expand(args, 'l', 0, 100, item,
+			   &cause);
+		if (cause == NULL)
+			size = curval * size / 100;
 	}
 	if (cause != NULL) {
 		cmdq_error(item, "size %s", cause);
@@ -141,12 +149,13 @@ cmd_join_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	src_wp->window = dst_w;
 	options_set_parent(src_wp->options, dst_w->options);
-	src_wp->flags |= PANE_STYLECHANGED;
+	src_wp->flags |= (PANE_STYLECHANGED|PANE_THEMECHANGED);
 	if (flags & SPAWN_BEFORE)
 		TAILQ_INSERT_BEFORE(dst_wp, src_wp, entry);
 	else
 		TAILQ_INSERT_AFTER(&dst_w->panes, dst_wp, src_wp, entry);
 	layout_assign_pane(lc, src_wp, 0);
+	colour_palette_from_option(&src_wp->palette, src_wp->options);
 
 	recalculate_sizes();
 

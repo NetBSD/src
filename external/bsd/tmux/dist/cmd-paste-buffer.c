@@ -33,7 +33,7 @@ const struct cmd_entry cmd_paste_buffer_entry = {
 	.name = "paste-buffer",
 	.alias = "pasteb",
 
-	.args = { "db:prs:t:", 0, 0 },
+	.args = { "db:prs:t:", 0, 0, NULL },
 	.usage = "[-dpr] [-s separator] " CMD_BUFFER_USAGE " "
 		 CMD_TARGET_PANE_USAGE,
 
@@ -53,6 +53,11 @@ cmd_paste_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	const char		*sepstr, *bufname, *bufdata, *bufend, *line;
 	size_t			 seplen, bufsize;
 	int			 bracket = args_has(args, 'p');
+
+	if (window_pane_exited(wp)) {
+		cmdq_error(item, "target pane has exited");
+		return (CMD_RETURN_ERROR);
+	}
 
 	bufname = NULL;
 	if (args_has(args, 'b'))

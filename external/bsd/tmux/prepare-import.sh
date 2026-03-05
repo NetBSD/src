@@ -1,5 +1,5 @@
 #! /bin/sh
-# $NetBSD: prepare-import.sh,v 1.5 2017/04/23 02:01:59 christos Exp $
+# $NetBSD: prepare-import.sh,v 1.5.22.1 2026/03/05 07:14:00 martin Exp $
 #
 # Use this script to recreate the 'dist' subdirectory from a newly released
 # distfile.  The script takes care of unpacking the distfile, removing any
@@ -52,6 +52,27 @@ cleanup_dist() {
 	log "Removing unnecessary files from dist"
 	find dist -name .deps -exec rm -fr {} +
 	find dist -name .dirstamp -exec rm -f {} +
+	rm dist/cmd-parse.c
+	rm dist/compat/asprintf.c
+	rm dist/compat/bitstring.h
+	rm dist/compat/closefrom.c
+	rm dist/compat/daemon.c
+	rm dist/compat/fgetln.c
+	rm dist/compat/forkpty-aix.c
+	rm dist/compat/forkpty-hpux.c
+	rm dist/compat/forkpty-sunos.c
+	rm dist/compat/getopt_long.c
+	rm dist/compat/queue.h
+	rm dist/compat/setenv.c
+	rm dist/compat/strcasestr.c
+	rm dist/compat/strlcat.c
+	rm dist/compat/strlcpy.c
+	rm dist/compat/strsep.c
+	rm dist/compat/strtonum.c
+	rm dist/compat/tree.h
+	rm dist/compat/unvis.c
+	rm dist/compat/vis.c
+	rm dist/compat/vis.h
 }
 
 diff_dirs() {
