@@ -1,3 +1,622 @@
+CHANGES FROM 3.6 TO 3.6a
+
+* Fix a buffer overread and an infinite loop in format processing (reported by
+  Giorgi Kobakhia, issue 4735).
+
+* Allow drag in alternate screen again (issue 4743 reported by Brad King).
+
+* Fix y offset of mouse if status at top (issue 4738 from Michael Grant).
+
+* Add a missing skin tone (from Jake Stewart, issue 4736).
+
+* Allow characters to be combined in either order (issue 4726, reported by Jake
+  Stewart).
+
+* Fix horizontal mouse resizing when pane status lines are on (from Michael
+  Grant, issue 4720).
+
+* Fix noattr so it does not delete attributes set in the style itself (issue
+  4713).
+
+* Newer libevents do not allow event_del on a zero'd event (issue 4706).
+
+* Place cursor on correct line if message-line is not 0 (issue 4707).
+
+* Fix compile error on FreeBSD (from Yasuhiro Kimura, issue 4701).
+
+CHANGES FROM 3.5a TO 3.6
+
+* Add seconds options for clock mode (issue 4697).
+
+* Add a resize callback for menus so that they are correctly moved on resize
+  (issue 4696).
+
+* Make -v to source-file pass through to subsequent source-file commands (issue
+  4216).
+
+* If display-popup is used inside a popup, modify that popup (issue 4678).
+
+* Add selection-mode command to expilcitly set the selection mode in copy mode
+  (issue 3842).
+
+* Save and restore images in alternate screen (issue 3732).
+
+* Ignore Hangul filler character (issue 3998).
+
+* Improve handling of regional indicators and emoji modifiers (issue 3998).
+
+* Preserve marked pane with swap-window and move-window (issue 3443).
+
+* Set and check COLORTERM as a hint for RGB colour.
+
+* If tmux receives a palette request (OSC 4) in a pane and the palette entry
+  has not been set, send a request to the most recently used client and
+  forward any response instead (based on change from Tim Culverhouse, issue
+  4665).
+
+* Add -l flag to command-prompt to disable splitting into multiple prompts
+  (issue 4483).
+
+* Don't enter copy mode on mouse wheel in alternate screen (issue 3705).
+
+* Add commands to centre the cursor in copy mode (issue 4662).
+
+* Support case insensitive search in modes in the same way as copy mode
+  (like emacs, so all-lowercase means case insensitive) (issue 4396).
+
+* Fix the logic of the no-detached case for the detach-on-destroy option (from
+  Martin Louazel, issue 4649).
+
+* Add buffer_full format variable (from Mohammad AlSaleh, issue 4630).
+
+* Introduce a new window option, tiled-layout-max-columns, which configures the
+  maximum number of columns in the tiled layout.
+
+* Add support for DECRQSS SP q (report cursor style), DECRQM ?12 (report cursor
+  blink state) and DECRQM ?2004, ?1004, ?1006 (report mouse state) ( rom
+  Andrea Alberti, issue 4618).
+
+* Fix missing argument from OSC 4 reply (issue 4596).
+
+* Add -k flag to display-popup which allows any key to dismiss the popup once
+  the command has exited (from Meriel Luna Mittelbach, issue 4612).
+
+* Add nicer default second and third status lines (from Michael Grant, issue
+  4490).
+
+* Add a pane-border-lines "spaces" value to use spaces for pane borders (issue
+  4587).
+
+* Replace invalid UTF-8 characters with the placeholder instead of ignoring
+  them (issue 4514).
+
+* Fix incorrect handling of Korean Hangul Jamo characters (from Roy Jung, issue
+  4546).
+
+* Allow uppercase letters in gray/grey color names (from Pavel Roskin, issue
+  4560).
+
+* Add sorting to W, P, L loop operators (from Michael Grant, issue 4516).
+
+* Detect support for OSC 52 using the device attributes report (from James
+  Holderness, issue 4539).
+
+* Add noattr for styles and use in mode-style to allow whether attributes are
+  ignored or used to be configured (issue 4498).
+
+* Add a set-default style attribute which replaces the current default colours
+  and attributes completely.
+
+* Add -E to run-shell to forward stderr as well as stdout (issue 4246).
+
+* Add an option variation-selector-always-wide to instruct tmux not to
+  always interpret VS16 as a wide character and assume the terminal does
+  likewise.
+
+* Switch to getopt_long from OpenSSH (from Koichi Murase, issue 4492).
+
+* Add more features for boolean expressions in formats: 1) extend && and || to
+  support arbitrarily many arguments and 2) add ! and !! for not and not-not
+  (from David Mandelberg).
+
+* Do not mistake other DCS sequences for SIXEL sequences (from James
+  Holderness, issue 4488).
+
+* Improve #? conditional expression in formats: add support for else if and
+  default empty string if no else value (from David Mandelberg, issue 4451).
+
+* Add default-client-command to set the command used if tmux is run without a
+  command; the default stays new-session (from David Mandelberg, issue
+  4422).
+
+* Add S-Up and S-Down to move windows in tree mode (from David Mandelberg,
+  issue 4415).
+
+* Add mode 2031 support to automatically report dark or light theme. tmux will
+  guess the theme from the background colour on terminals which do not
+  themselves support the escape sequence (from Jonathan Slenders, issue 4353).
+
+* Add -M flag to capture-pane to use the copy mode screen (issue 4358).
+
+* Align index numbers in trees (from David Mandelberg, issue 4360).
+
+* Add display-message -C flag to update pane while message is displayed (from
+  Vitaly Ostrosablin, issue 4363).
+
+* Make list-commands command show only one command if an argument is given
+  (from Ilya Grigoriev, issue 4352).
+
+* Count line numbers correctly inside strings in configuration files (reported
+  by Pedro Navarro, issue 4325).
+
+* Map bright black (colour 8) to white (7) if the background is black on
+  terminals with only eight colours so the text is not invisible (from Dmytro
+  Bagrii, issue 4322).
+
+* New codepoint-widths option allowing users to override the width of
+  individual Unicode codepoints.
+
+* Add a nesting limit to source-file (from Fadi Afani, issue 4223).
+
+* Add copy-mode-position-style and copy-mode-selection-style options for copy
+  mode.
+
+* Add no-detach-on-destroy client option (issue 4242).
+
+* Add input-buffer-size option (from Ken Lau).
+
+* Add support for a scrollbar at the side of each pane. New options
+  pane-scrollbars turn them on or off, pane-scrollbars-position sets the
+  position (left or right), and pane-scrollbars-style to set the colours (from
+  Michael Grant, issue 4221).
+
+* Allow control characters to be entered at the command prompt by prefixing
+  with C-v (from Alexander Arch, issue 4206).
+
+* Do not attempt to search for zero length strings (from Alexander Arch, issue
+  4209).
+
+* Preserve tabs for copying and capture-pane (from Alexander Arch, issue
+  4201).
+
+* Increase the maximum for repeat-time.
+
+* Adjust how Ctrl and Meta keys are sent to use standard representation if
+  available in mode 1 (from Stanislav Kljuhhin, issue 4188).
+
+* Allow attributes in menu style (from Japin Li, issue 4194).
+
+* Add a sixel_support format variable which is 1 if SIXEL is supported, always
+  0 on OpenBSD (requested by Misaki Masa, issue 4177).
+
+* Add prompt-cursor-colour and prompt-cursor-style to set the style of the
+  cursor in the command prompt and remove the emulated cursor (from Alexander
+  Arch, issue 4170).
+
+* Add initial-repeat-time option to allow the first repeat time to be increased
+  and later reduced (from David le Blanc, issue 4164).
+
+* Send focus events to pane when entering or leaving popup (issue 3991).
+
+* Add copy-mode-position-format to configure the position indicator.
+
+* Add -y flag to disable confirmation prompts in modes (issue 4152).
+
+* Add -C and -P flags to the copy commands in copy mode: -C prevents the
+  commands from sending the text to the clipboard and -P prevents them from
+  adding the text as a paste buffer (issue 4153).
+
+* Preserve transparency and raster attribute dimensions when sending a SIXEL
+  image, and avoid collapsing empty lines (issue 4149).
+
+* Bypass permission check for Cygwin (based on a change by Yuya Adachi via
+  Rafael Kitover, issue 4148).
+
+* Add MSYSTEM to default update-environment (for Cgywin).
+
+* Set client stdout file descriptor also for Cgywin (from Michael Wild via Rafael
+  Kitover, issue 4148).
+
+* Use global cursor style and colour options for modes instead of default
+  (issue 4117).
+
+* Fix pasting so it does not interpret keys but instead copies the input
+  without interpretation (reported by Mark Kelly).
+
+* Try to query window pixel size from the outside terminal if the values
+  returned by TIOCGWINSZ are zero (Dmitry Galchinsky, issue 4099).
+
+CHANGES FROM 3.5 TO 3.5a
+
+* Do not translate BSpace as Unicode with extended keys.
+
+* Fix so that keys with Shift are represented correctly with extended keys.
+
+* Revert to using /bin/sh for #() and run-shell and if-shell; the change to use
+  default-shell only applies now to popups.
+
+* Fix grey colour without a number suffix in styles.
+ 
+CHANGES FROM 3.4 TO 3.5
+
+* Revamp extended keys support to more closely match xterm and support mode 2
+  as well as mode 1. This is a substantial change to key handling which changes
+  tmux to always request mode 2 from parent terminal, changes to an unambiguous
+  internal representation of keys, and adds an option (extended-keys-format) to
+  control the format similar to the xterm(1) formatOtherKeys resource.
+
+* Clear an overlay (popup or menu) when command prompt is entered.
+
+* Add copy-mode -d flag to scroll a page down if in copy mode already (matching
+  -e).
+
+* Display hyperlinks in copy mode and add copy_cursor_hyperlink format to get
+  the hyperlink under the cursor.
+
+* Add a prefix timeout option.
+
+* Mouse move keys are not useful as key bindings because we do not turn them on
+  unless the application requests them. Ignore them so they do not cause the
+  prefix to be canceled
+
+* Add search_count and search_count_partial formats in copy mode.
+
+* Do not reset mouse pane if clicked on status line,
+
+* Add mirrored versions of the main-horizontal and main-vertical layouts where
+  the main pane is bottom or right instead of top or left.
+
+* Allow REP to work with Unicode characters.
+
+* Fix size calculation of terminators for clipboard escape sequences.
+
+* Treat CRLF as LF in config files where it is easy to do so.
+
+* The Linux console has some bugs with bright colours, so add some workarounds
+  for it.
+
+* If built with systemd, remove some environment variables it uses.
+
+* Adjust the logic when deleting last buffer to better preserve the selection:
+  if selecting the element below the deleted one fails (because as the last
+  one), select the one above it instead.
+
+* Add --enable-jemalloc to build with jemalloc memory allocator (since glibc
+  malloc is so poor).
+
+* Add a way (refresh-client -r) for control mode clients to provide OSC 10 and
+  11 responses to tmux so they can set the default foreground and background
+  colours.
+
+* Add N to search backwards in tree modes.
+
+* Use default-shell for command prompt, #() and popups.
+
+* Revert part of a change intended to improve search performance by skipping
+  parts of lines already searched, but which in fact skipped the ends of lines
+  altogether.
+
+* Add a command-error hook when a command fails.
+
+* Add an option allow-set-title to forbid applications from changing the pane
+  title.
+
+* Correct handling of mouse up events (don't ignore all but the last released
+  button), and always process down event for double click.
+
+* Fix a crash if focusing a pane that is exiting.
+
+* Pick newest session (as documented) when looking for next session for
+  detach-on-destroy.
+
+* Reduce default escape-time to 10 milliseconds.
+
+* Add display-menu -M to always turn mouse on in a menu.
+
+* Look for feature code 21 for DECSLRM and 28 for DECFRA in the device
+  attributes and also accept level 1.
+
+* Fix crash if built with SIXEL and the SIXEL colour register is invalid; also
+  remove SIXEL images before reflow.
+
+* Do not notify window-layout-changed if the window is about to be destroyed.
+
+* Do not consider a selection present if it is empty for the selection_active
+  and selection_present format variables.
+
+* Fix split-window -p.
+
+CHANGES FROM 3.3a TO 3.4
+
+* Add options keep-last and keep-group to destroy-unattached to keep the last
+  session whether in a group.
+
+* Don't allow paste-buffer into dead panes.
+
+* Add -t to source-file.
+
+* Rewrite combined character handling to be more consistent and to support
+  newer Unicode combined characters.
+
+* Add basic support for SIXEL if built with --enable-sixel.
+
+* Add a session, pane and user mouse range types for the status line and add
+  format variables for mouse_status_line and mouse_status_range so they can be
+  associated with different commands in the key bindings.
+
+* Add flag (-o) to next-prompt/previous-prompt to go to OSC 133 command output.
+
+* Add options and flags for menu styles (menu-style, menu-border-style) similar
+  to those existing for popups.
+
+* Add support for marking lines with a shell prompt based on the OSC 133 extension.
+
+* Check for libterminfo for NetBSD.
+
+* Add "us" to styles for underscore colour.
+
+* Add flags (-c and -y) to change the confirm key and default behaviour of
+  confirm-before.
+
+* Use ncurses' new tparm_s function (added in 6.4-20230424) instead of tparm so
+  it does not object to string arguments in c apabilities it doesn't already
+  know. Also ignore errors from tparm if using previous ncurses versions.
+
+* Set default lock command to vlock on Linux if present at build time.
+
+* Discard mouse sequences that have the right form but actually are invalid.
+
+* Add support for spawning panes in separate cgroups with systemd and a
+  configure flag (--disable-cgroups) to turn off.
+
+* Add a format (pane_unseen_changes) to show if there are unseen changes while
+  in a mode.
+
+* Remove old buffer when renaming rather than complaining.
+
+* Add an L modifier like P, W, S to loop over clients.
+
+* Add -f to list-clients like the other list commands.
+
+* Extend display-message to work for control clients.
+
+* Add a flag to display-menu to select the manu item selected when the menu is
+  open.
+
+* Have tmux recognise pasted text wrapped in bracket paste sequences, rather
+  than only forwarding them to the program inside.
+
+* Have client return 1 if process is interrupted to an input pane.
+
+* Query the client terminal for foreground and background colours and if OSC 10
+  or 11 is received but no colour has been set inside tmux, return the colour
+  from the first attached client.
+
+* Add send-keys -K to handle keys directly as if typed (so look up in key
+  table).
+
+* Process escape sequences in show-buffer.
+
+* Add a -l flag to display-message to disable format expansion.
+
+* Add paste-buffer-deleted notification and fix name of paste-buffer-changed.
+
+* Do not attempt to connect to the socket as a client if systemd is active.
+
+* Add scroll-top and scroll-bottom commands to scroll so cursor is at top or
+  bottom.
+
+* Add a -T flag to capture-pane to stop at the last used cell instead of the
+  full width. Restore the previous behaviour by making it default to off unless
+  -J is used.
+
+* Add message-line option to control where message and prompt go.
+
+* Notification when a paste buffer is deleted.
+
+* Add a Nobr terminfo(5) capability to tell tmux the terminal does not use bright
+  colours for bold.
+
+* Change g and G to go to top and bottom in menus.
+
+* Add a third state "all" to allow-passthrough to work even in invisible panes.
+
+* Add support for OSC 8 hyperlinks.
+
+* Store the time lines are scrolled into history and display in copy mode.
+
+* Add a %config-error reply to control mode for configuration file errors since
+  reporting them in view mode is useless.
+
+* A new feature flag (ignorefkeys) to ignore terminfo(5) function key
+  definitions for rxvt.
+
+* Pass through first argument to OSC 52 (which clipboards to set) if the
+  application provides it.
+
+* Expand arguments to send-keys, capture-pane, split-window, join-pane where it
+  makes sense to do so.
+
+* Ignore named buffers when choosing a buffer if one is not specified by the user.
+
+CHANGES FROM 3.3 TO 3.3a
+
+* Do not crash when run-shell produces output from a config file.
+
+* Do not unintentionally turn off all mouse mode when button mode is also
+  present.
+
+CHANGES FROM 3.2a TO 3.3
+
+* Add an ACL list for users connecting to the tmux socket. Users may be
+  forbidden from attaching, forced to attach read-only, or allowed to attach
+  read-write. A new command, server-access, configures the list. File system
+  permissions must still be configured manually.
+
+* Emit window-layout-changed on swap-pane.
+
+* Better error reporting when applying custom layouts.
+
+* Handle ANSI escape sequences in run-shell output.
+
+* Add pane_start_path to match start_command.
+
+* Set PWD so shells have a hint about the real path.
+
+* Do not allow pipe-pane on dead panes.
+
+* Do not report mouse positions (incorrectly) above the maximum of 223 in
+  normal mouse mode.
+
+* Add an option (default off) to control the passthrough escape sequence.
+
+* Support more mouse buttons when the terminal sends them.
+
+* Add a window-resized hook which is fired when the window is actually resized
+  which may be later than the client resize.
+
+* Add next_session_id format with the next session ID.
+
+* Add formats for client and server UID and user.
+
+* Add argument to refresh-client -l to forward clipboard to a pane.
+
+* Add remain-on-exit-format to set text shown when pane is dead.
+
+* With split-window -f use percentages of window size not pane size.
+
+* Add an option (fill-character) to set the character used for unused areas of
+  a client.
+
+* Add an option (scroll-on-clear) to control if tmux scrolls into history on
+  clear.
+
+* Add a capability for OSC 7 and use it similarly to how the title is set (and
+  controlled by the same set-titles option).
+
+* Add support for systemd socket activation (where systemd creates the Unix
+  domain socket for tmux rather than tmux creating it). Build with
+  --enable-systemd.
+
+* Add an option (pane-border-indicators) to select how the active pane is shown
+  on the pane border (colour, arrows or both).
+
+* Support underscore styles with capture-pane -e.
+
+* Make pane-border-format a pane option rather than window.
+
+* Respond to OSC 4 queries
+
+* Fix g/G keys in modes to do the same thing as copy mode (and vi).
+
+* Bump the time terminals have to respond to device attributes queries to three
+  seconds.
+
+* If automatic-rename is off, allow the rename escape sequence to set an empty
+  name.
+
+* Trim menu item text more intelligently.
+
+* Add cursor-style and cursor-colour options to set the default cursor style
+  and colour.
+
+* Accept some useful and non-conflicting emacs keys in vi normal mode at the
+  command prompt.
+
+* Add a format modifier (c) to force a colour to RGB.
+
+* Add -s and -S to display-popup to set styles, -b to set lines and -T to set
+  popup title. New popup-border-lines, popup-border-style and popup-style
+  options set the defaults.
+
+* Add -e flag to set an environment variable for a popup.
+
+* Make send-keys without arguments send the key it is bound to (if bound to a
+  key).
+
+* Try to leave terminal cursor at the right position even when tmux is drawing
+  its own cursor or selection (such as at the command prompt and in choose
+  mode) for people using screen readers and similar which can make use of it.
+
+* Change so that {} is converted to tmux commands immediately when parsed. This
+  means it must contain valid tmux commands. For commands which expand %% and
+  %%%, this now only happens within string arguments. Use of nested aliases
+  inside {} is now forbidden. Processing of commands given in quotes remains
+  the same.
+
+* Disable evports on SunOS since they are broken.
+
+* Do not expand the file given with tmux -f so it can contain :s.
+
+* Bump FORMAT_LOOP_LIMIT and add a log message when hit.
+
+* Add a terminal feature for the mouse (since FreeBSD termcap does not have kmous).
+
+* Forbid empty session names.
+
+* Improve error reporting when the tmux /tmp directory cannot be created or
+  used.
+
+* Give #() commands a one second grace period where the output is empty before
+  telling the user they aren't doing anything ("not ready").
+
+* When building, pick default-terminal from the first of tmux-256color, tmux,
+  screen-256color, screen that is available on the build system (--with-TERM
+  can override).
+
+* Do not close popups on resize, instead adjust them to fit.
+
+* Add a client-active hook.
+
+* Make window-linked and window-unlinked window options.
+
+* Do not configure on macOS without the user making a choice about utf8proc
+  (either --enable-utf8proc or --disable-utf8proc).
+
+* Do not freeze output in panes when a popup is open, let them continue to
+  redraw.
+
+* Add pipe variants of the line copy commands.
+
+* Change copy-line and copy-end-of-line not to cancel and add -and-cancel
+  variants, like the other copy commands.
+
+* Support the OSC palette-setting sequences in popups.
+
+* Add a pane-colours array option to specify the defaults palette.
+
+* Add support for Unicode zero-width joiner.
+
+* Make newline a style delimiter as well so they can cross multiple lines for
+  readability in configuration files.
+
+* Change focus to be driven by events rather than scanning panes so the
+  ordering of in and out is consistent.
+
+* Add display-popup -B to open a popup without a border.
+
+* Add a menu for popups that can be opened with button three outside the popup
+  or on the left or top border. Resizing now only works on the right and bottom
+  borders or when using Meta. The menu allows a popup to be closed, expanded to
+  the full size of the client, centered in the client or changed into a pane.
+
+* Make command-prompt and confirm-before block by default (like run-shell). A
+  new -b flags runs them in the background as before. Also set return code for
+  confirm-before.
+
+* Change cursor style handling so tmux understands which sequences contain
+  blinking and sets the flag appropriately, means that it works whether cnorm
+  disables blinking or not. This now matches xterm's behaviour.
+
+* More accurate vi(1) word navigation in copy mode and on the status line. This
+  changes the meaning of the word-separators option: setting it to the empty
+  string is equivalent to the previous behavior.
+
+* Add -F for command-prompt and use it to fix "Rename" on the window menu.
+
+* Add different command histories for different types of prompts ("command",
+  "search" etc).
+
 CHANGES FROM 3.2 TO 3.2a
 
 * Add an "always" value for the "extended-keys" option; if set then tmux will
@@ -9,7 +628,7 @@ CHANGES FROM 3.2 TO 3.2a
 * Do not expand the filename given to -f so it can contain colons.
 
 * Fixes for problems with extended keys and modifiers, scroll region,
-  source-file, crosscompiling, format modifiers and other minor issues.
+  source-file, cross compiling, format modifiers and other minor issues.
 
 CHANGES FROM 3.1c TO 3.2
 
@@ -118,7 +737,7 @@ CHANGES FROM 3.1c TO 3.2
 
 * Add a way for control mode clients to subscribe to a format and be notified
   of changes rather than having to poll.
-    
+
 * Add some formats for search in copy mode (search_present, search_match).
 
 * Do not wait on shutdown for commands started with run -b.
@@ -242,7 +861,7 @@ CHANGES FROM 3.1c TO 3.2
   only show windows and C-b . only targets.
 
 * Change all the style options to string options so they can support formats.
-  Change pane-border-active-style to use this to change the border colour when
+  Change pane-active-border-style to use this to change the border colour when
   in a mode or with synchronize-panes on. This also implies a few minor changes
   to existing behaviour:
 
@@ -1124,7 +1743,7 @@ Incompatible Changes
 
     bind -Tcopy-mode C-r command-prompt -i -p'search up' "send -X search-backward-incremental '%%'"
 
-  There are also some new commmands available with send -X, such as
+  There are also some new commands available with send -X, such as
   copy-pipe-and-cancel.
 * set-remain-on-exit has gone -- can be achieved with hooks instead.
 * Hooks: before hooks have been removed and only a selection of commands now
@@ -3100,7 +3719,7 @@ The list of older changes is below.
 * (nicm) -n on new-session is now -s, and -n is now the initial window name.
   This was documented but not implemented :-/.
 * (nicm) kill-window command, bound to & by default (because it should be hard
-  to hit accidently).
+  to hit accidentally).
 * (nicm) bell-style option with three choices: "none" completely ignore bell;
   "any" pass through a bell in any window to current; "current" ignore bells
   except in current window. This applies only to the bell terminal signal,

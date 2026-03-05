@@ -24,7 +24,196 @@
 #include <string.h>
 #include <wchar.h>
 
+#include "compat.h"
 #include "tmux.h"
+
+struct utf8_width_item {
+	wchar_t				wc;
+	u_int				width;
+	int				allocated;
+
+	RB_ENTRY(utf8_width_item)	entry;
+};
+
+static int
+utf8_width_cache_cmp(struct utf8_width_item *uw1, struct utf8_width_item *uw2)
+{
+	if (uw1->wc < uw2->wc)
+		return (-1);
+	if (uw1->wc > uw2->wc)
+		return (1);
+	return (0);
+}
+RB_HEAD(utf8_width_cache, utf8_width_item);
+RB_GENERATE_STATIC(utf8_width_cache, utf8_width_item, entry,
+    utf8_width_cache_cmp);
+static struct utf8_width_cache utf8_width_cache =
+    RB_INITIALIZER(utf8_width_cache);
+
+static struct utf8_width_item utf8_default_width_cache[] = {
+	{ .wc = 0x0261D, .width = 2 },
+	{ .wc = 0x026F9, .width = 2 },
+	{ .wc = 0x0270A, .width = 2 },
+	{ .wc = 0x0270B, .width = 2 },
+	{ .wc = 0x0270C, .width = 2 },
+	{ .wc = 0x0270D, .width = 2 },
+	{ .wc = 0x1F1E6, .width = 1 },
+	{ .wc = 0x1F1E7, .width = 1 },
+	{ .wc = 0x1F1E8, .width = 1 },
+	{ .wc = 0x1F1E9, .width = 1 },
+	{ .wc = 0x1F1EA, .width = 1 },
+	{ .wc = 0x1F1EB, .width = 1 },
+	{ .wc = 0x1F1EC, .width = 1 },
+	{ .wc = 0x1F1ED, .width = 1 },
+	{ .wc = 0x1F1EE, .width = 1 },
+	{ .wc = 0x1F1EF, .width = 1 },
+	{ .wc = 0x1F1F0, .width = 1 },
+	{ .wc = 0x1F1F1, .width = 1 },
+	{ .wc = 0x1F1F2, .width = 1 },
+	{ .wc = 0x1F1F3, .width = 1 },
+	{ .wc = 0x1F1F4, .width = 1 },
+	{ .wc = 0x1F1F5, .width = 1 },
+	{ .wc = 0x1F1F6, .width = 1 },
+	{ .wc = 0x1F1F7, .width = 1 },
+	{ .wc = 0x1F1F8, .width = 1 },
+	{ .wc = 0x1F1F9, .width = 1 },
+	{ .wc = 0x1F1FA, .width = 1 },
+	{ .wc = 0x1F1FB, .width = 1 },
+	{ .wc = 0x1F1FC, .width = 1 },
+	{ .wc = 0x1F1FD, .width = 1 },
+	{ .wc = 0x1F1FE, .width = 1 },
+	{ .wc = 0x1F1FF, .width = 1 },
+	{ .wc = 0x1F385, .width = 2 },
+	{ .wc = 0x1F3C2, .width = 2 },
+	{ .wc = 0x1F3C3, .width = 2 },
+	{ .wc = 0x1F3C4, .width = 2 },
+	{ .wc = 0x1F3C7, .width = 2 },
+	{ .wc = 0x1F3CA, .width = 2 },
+	{ .wc = 0x1F3CB, .width = 2 },
+	{ .wc = 0x1F3CC, .width = 2 },
+	{ .wc = 0x1F3FB, .width = 2 },
+	{ .wc = 0x1F3FC, .width = 2 },
+	{ .wc = 0x1F3FD, .width = 2 },
+	{ .wc = 0x1F3FE, .width = 2 },
+	{ .wc = 0x1F3FF, .width = 2 },
+	{ .wc = 0x1F442, .width = 2 },
+	{ .wc = 0x1F443, .width = 2 },
+	{ .wc = 0x1F446, .width = 2 },
+	{ .wc = 0x1F447, .width = 2 },
+	{ .wc = 0x1F448, .width = 2 },
+	{ .wc = 0x1F449, .width = 2 },
+	{ .wc = 0x1F44A, .width = 2 },
+	{ .wc = 0x1F44B, .width = 2 },
+	{ .wc = 0x1F44C, .width = 2 },
+	{ .wc = 0x1F44D, .width = 2 },
+	{ .wc = 0x1F44E, .width = 2 },
+	{ .wc = 0x1F44F, .width = 2 },
+	{ .wc = 0x1F450, .width = 2 },
+	{ .wc = 0x1F466, .width = 2 },
+	{ .wc = 0x1F467, .width = 2 },
+	{ .wc = 0x1F468, .width = 2 },
+	{ .wc = 0x1F469, .width = 2 },
+	{ .wc = 0x1F46B, .width = 2 },
+	{ .wc = 0x1F46C, .width = 2 },
+	{ .wc = 0x1F46D, .width = 2 },
+	{ .wc = 0x1F46E, .width = 2 },
+	{ .wc = 0x1F470, .width = 2 },
+	{ .wc = 0x1F471, .width = 2 },
+	{ .wc = 0x1F472, .width = 2 },
+	{ .wc = 0x1F473, .width = 2 },
+	{ .wc = 0x1F474, .width = 2 },
+	{ .wc = 0x1F475, .width = 2 },
+	{ .wc = 0x1F476, .width = 2 },
+	{ .wc = 0x1F477, .width = 2 },
+	{ .wc = 0x1F478, .width = 2 },
+	{ .wc = 0x1F47C, .width = 2 },
+	{ .wc = 0x1F481, .width = 2 },
+	{ .wc = 0x1F482, .width = 2 },
+	{ .wc = 0x1F483, .width = 2 },
+	{ .wc = 0x1F485, .width = 2 },
+	{ .wc = 0x1F486, .width = 2 },
+	{ .wc = 0x1F487, .width = 2 },
+	{ .wc = 0x1F48F, .width = 2 },
+	{ .wc = 0x1F491, .width = 2 },
+	{ .wc = 0x1F4AA, .width = 2 },
+	{ .wc = 0x1F574, .width = 2 },
+	{ .wc = 0x1F575, .width = 2 },
+	{ .wc = 0x1F57A, .width = 2 },
+	{ .wc = 0x1F590, .width = 2 },
+	{ .wc = 0x1F595, .width = 2 },
+	{ .wc = 0x1F596, .width = 2 },
+	{ .wc = 0x1F645, .width = 2 },
+	{ .wc = 0x1F646, .width = 2 },
+	{ .wc = 0x1F647, .width = 2 },
+	{ .wc = 0x1F64B, .width = 2 },
+	{ .wc = 0x1F64C, .width = 2 },
+	{ .wc = 0x1F64D, .width = 2 },
+	{ .wc = 0x1F64E, .width = 2 },
+	{ .wc = 0x1F64F, .width = 2 },
+	{ .wc = 0x1F6A3, .width = 2 },
+	{ .wc = 0x1F6B4, .width = 2 },
+	{ .wc = 0x1F6B5, .width = 2 },
+	{ .wc = 0x1F6B6, .width = 2 },
+	{ .wc = 0x1F6C0, .width = 2 },
+	{ .wc = 0x1F6CC, .width = 2 },
+	{ .wc = 0x1F90C, .width = 2 },
+	{ .wc = 0x1F90F, .width = 2 },
+	{ .wc = 0x1F918, .width = 2 },
+	{ .wc = 0x1F919, .width = 2 },
+	{ .wc = 0x1F91A, .width = 2 },
+	{ .wc = 0x1F91B, .width = 2 },
+	{ .wc = 0x1F91C, .width = 2 },
+	{ .wc = 0x1F91D, .width = 2 },
+	{ .wc = 0x1F91E, .width = 2 },
+	{ .wc = 0x1F91F, .width = 2 },
+	{ .wc = 0x1F926, .width = 2 },
+	{ .wc = 0x1F930, .width = 2 },
+	{ .wc = 0x1F931, .width = 2 },
+	{ .wc = 0x1F932, .width = 2 },
+	{ .wc = 0x1F933, .width = 2 },
+	{ .wc = 0x1F934, .width = 2 },
+	{ .wc = 0x1F935, .width = 2 },
+	{ .wc = 0x1F936, .width = 2 },
+	{ .wc = 0x1F937, .width = 2 },
+	{ .wc = 0x1F938, .width = 2 },
+	{ .wc = 0x1F939, .width = 2 },
+	{ .wc = 0x1F93D, .width = 2 },
+	{ .wc = 0x1F93E, .width = 2 },
+	{ .wc = 0x1F977, .width = 2 },
+	{ .wc = 0x1F9B5, .width = 2 },
+	{ .wc = 0x1F9B6, .width = 2 },
+	{ .wc = 0x1F9B8, .width = 2 },
+	{ .wc = 0x1F9B9, .width = 2 },
+	{ .wc = 0x1F9BB, .width = 2 },
+	{ .wc = 0x1F9CD, .width = 2 },
+	{ .wc = 0x1F9CE, .width = 2 },
+	{ .wc = 0x1F9CF, .width = 2 },
+	{ .wc = 0x1F9D1, .width = 2 },
+	{ .wc = 0x1F9D2, .width = 2 },
+	{ .wc = 0x1F9D3, .width = 2 },
+	{ .wc = 0x1F9D4, .width = 2 },
+	{ .wc = 0x1F9D5, .width = 2 },
+	{ .wc = 0x1F9D6, .width = 2 },
+	{ .wc = 0x1F9D7, .width = 2 },
+	{ .wc = 0x1F9D8, .width = 2 },
+	{ .wc = 0x1F9D9, .width = 2 },
+	{ .wc = 0x1F9DA, .width = 2 },
+	{ .wc = 0x1F9DB, .width = 2 },
+	{ .wc = 0x1F9DC, .width = 2 },
+	{ .wc = 0x1F9DD, .width = 2 },
+	{ .wc = 0x1FAC3, .width = 2 },
+	{ .wc = 0x1FAC4, .width = 2 },
+	{ .wc = 0x1FAC5, .width = 2 },
+	{ .wc = 0x1FAF0, .width = 2 },
+	{ .wc = 0x1FAF1, .width = 2 },
+	{ .wc = 0x1FAF2, .width = 2 },
+	{ .wc = 0x1FAF3, .width = 2 },
+	{ .wc = 0x1FAF4, .width = 2 },
+	{ .wc = 0x1FAF5, .width = 2 },
+	{ .wc = 0x1FAF6, .width = 2 },
+	{ .wc = 0x1FAF7, .width = 2 },
+	{ .wc = 0x1FAF8, .width = 2 }
+};
 
 struct utf8_item {
 	RB_ENTRY(utf8_item)	index_entry;
@@ -61,17 +250,18 @@ RB_HEAD(utf8_index_tree, utf8_item);
 RB_GENERATE_STATIC(utf8_index_tree, utf8_item, index_entry, utf8_index_cmp);
 static struct utf8_index_tree utf8_index_tree = RB_INITIALIZER(utf8_index_tree);
 
-static u_int utf8_next_index;
+static int	utf8_no_width;
+static u_int	utf8_next_index;
 
 #define UTF8_GET_SIZE(uc) (((uc) >> 24) & 0x1f)
-#define UTF8_GET_WIDTH(flags) (((uc) >> 29) - 1)
+#define UTF8_GET_WIDTH(uc) (((uc) >> 29) - 1)
 
 #define UTF8_SET_SIZE(size) (((utf8_char)(size)) << 24)
 #define UTF8_SET_WIDTH(width) ((((utf8_char)(width)) + 1) << 29)
 
 /* Get a UTF-8 item from data. */
 static struct utf8_item *
-utf8_item_by_data(const char *data, size_t size)
+utf8_item_by_data(const u_char *data, size_t size)
 {
 	struct utf8_item	ui;
 
@@ -92,13 +282,127 @@ utf8_item_by_index(u_int index)
 	return (RB_FIND(utf8_index_tree, &utf8_index_tree, &ui));
 }
 
+/* Find a codepoint in the cache. */
+static struct utf8_width_item *
+utf8_find_in_width_cache(wchar_t wc)
+{
+	struct utf8_width_item	uw;
+
+	uw.wc = wc;
+	return RB_FIND(utf8_width_cache, &utf8_width_cache, &uw);
+}
+
+/* Parse a single codepoint option. */
+static void
+utf8_add_to_width_cache(const char *s)
+{
+	struct utf8_width_item	*uw, *old;
+	char			*copy, *cp, *endptr;
+	u_int			 width;
+	const char		*errstr;
+	struct utf8_data	*ud;
+	wchar_t			 wc;
+	unsigned long long	 n;
+
+	copy = xstrdup(s);
+	if ((cp = strchr(copy, '=')) == NULL) {
+		free(copy);
+		return;
+	}
+	*cp++ = '\0';
+
+	width = strtonum(cp, 0, 2, &errstr);
+	if (errstr != NULL) {
+		free(copy);
+		return;
+	}
+
+	if (strncmp(copy, "U+", 2) == 0) {
+		errno = 0;
+		n = strtoull(copy + 2, &endptr, 16);
+		if (copy[2] == '\0' ||
+		    *endptr != '\0' ||
+		    n == 0 ||
+		    n > WCHAR_MAX ||
+		    (errno == ERANGE && n == ULLONG_MAX)) {
+			free(copy);
+			return;
+		}
+		wc = n;
+	} else {
+		utf8_no_width = 1;
+		ud = utf8_fromcstr(copy);
+		utf8_no_width = 0;
+		if (ud[0].size == 0 || ud[1].size != 0) {
+			free(ud);
+			free(copy);
+			return;
+		}
+#ifdef HAVE_UTF8PROC
+		if (utf8proc_mbtowc(&wc, ud[0].data, ud[0].size) <= 0) {
+#else
+		if (mbtowc(&wc, (char *)ud[0].data, ud[0].size) <= 0) {
+#endif
+			free(ud);
+			free(copy);
+			return;
+		}
+		free(ud);
+	}
+
+	log_debug("Unicode width cache: %08X=%u", (u_int)wc, width);
+
+	uw = xcalloc(1, sizeof *uw);
+	uw->wc = wc;
+	uw->width = width;
+	uw->allocated = 1;
+
+	old = RB_INSERT(utf8_width_cache, &utf8_width_cache, uw);
+	if (old != NULL) {
+		RB_REMOVE(utf8_width_cache, &utf8_width_cache, old);
+		if (old->allocated)
+			free(old);
+		RB_INSERT(utf8_width_cache, &utf8_width_cache, uw);
+	}
+
+	free(copy);
+}
+
+/* Rebuild cache of widths. */
+void
+utf8_update_width_cache(void)
+{
+	struct utf8_width_item		*uw, *uw1;
+	struct options_entry		*o;
+	struct options_array_item	*a;
+	u_int				 i;
+
+	RB_FOREACH_SAFE (uw, utf8_width_cache, &utf8_width_cache, uw1) {
+		RB_REMOVE(utf8_width_cache, &utf8_width_cache, uw);
+		if (uw->allocated)
+			free(uw);
+	}
+
+	for (i = 0; i < nitems(utf8_default_width_cache); i++) {
+		RB_INSERT(utf8_width_cache, &utf8_width_cache,
+		    &utf8_default_width_cache[i]);
+	}
+
+	o = options_get(global_options, "codepoint-widths");
+	a = options_array_first(o);
+	while (a != NULL) {
+		utf8_add_to_width_cache(options_array_item_value(a)->string);
+		a = options_array_next(a);
+	}
+}
+
 /* Add a UTF-8 item. */
 static int
 utf8_put_item(const u_char *data, size_t size, u_int *index)
 {
 	struct utf8_item	*ui;
 
-	ui = utf8_item_by_data((const char *)data, size);
+	ui = utf8_item_by_data((const unsigned char *)data, size);
 	if (ui != NULL) {
 		*index = ui->index;
 		log_debug("%s: found %.*s = %u", __func__, (int)size, data,
@@ -135,8 +439,8 @@ utf8_from_data(const struct utf8_data *ud, utf8_char *uc)
 		goto fail;
 	if (ud->size <= 3) {
 		index = (((utf8_char)ud->data[2] << 16)|
-		          ((utf8_char)ud->data[1] << 8)|
-		          ((utf8_char)ud->data[0]));
+			  ((utf8_char)ud->data[1] << 8)|
+			  ((utf8_char)ud->data[0]));
 	} else if (utf8_put_item(ud->data, ud->size, &index) != 0)
 		goto fail;
 	*uc = UTF8_SET_SIZE(ud->size)|UTF8_SET_WIDTH(ud->width)|index;
@@ -214,12 +518,44 @@ utf8_copy(struct utf8_data *to, const struct utf8_data *from)
 static enum utf8_state
 utf8_width(struct utf8_data *ud, int *width)
 {
-	wchar_t	wc;
+	struct utf8_width_item	*uw;
+	wchar_t			 wc;
 
+	if (utf8_towc(ud, &wc) != UTF8_DONE)
+		return (UTF8_ERROR);
+	uw = utf8_find_in_width_cache(wc);
+	if (uw != NULL) {
+		*width = uw->width;
+		log_debug("cached width for %08X is %d", (u_int)wc, *width);
+		return (UTF8_DONE);
+	}
 #ifdef HAVE_UTF8PROC
-	switch (utf8proc_mbtowc(&wc, ud->data, ud->size)) {
+	*width = utf8proc_wcwidth(wc);
+	log_debug("utf8proc_wcwidth(%05X) returned %d", (u_int)wc, *width);
 #else
-	switch (mbtowc(&wc, (char *)ud->data, ud->size)) {
+	*width = wcwidth(wc);
+	log_debug("wcwidth(%05X) returned %d", (u_int)wc, *width);
+	if (*width < 0) {
+		/*
+		 * C1 control characters are nonprintable, so they are always
+		 * zero width.
+		 */
+		*width = (wc >= 0x80 && wc <= 0x9f) ? 0 : 1;
+	}
+#endif
+	if (*width >= 0 && *width <= 0xff)
+		return (UTF8_DONE);
+	return (UTF8_ERROR);
+}
+
+/* Convert UTF-8 character to wide character. */
+enum utf8_state
+utf8_towc(const struct utf8_data *ud, wchar_t *wc)
+{
+#ifdef HAVE_UTF8PROC
+	switch (utf8proc_mbtowc(wc, ud->data, ud->size)) {
+#else
+	switch (mbtowc(wc, __UNCONST(ud->data), ud->size)) {
 #endif
 	case -1:
 		log_debug("UTF-8 %.*s, mbtowc() %d", (int)ud->size, ud->data,
@@ -229,29 +565,33 @@ utf8_width(struct utf8_data *ud, int *width)
 	case 0:
 		return (UTF8_ERROR);
 	}
-#ifdef HAVE_UTF8PROC
-	*width = utf8proc_wcwidth(wc);
-#else
-	*width = wcwidth(wc);
-#endif
-	if (*width >= 0 && *width <= 0xff)
-		return (UTF8_DONE);
-	log_debug("UTF-8 %.*s, wcwidth() %d", (int)ud->size, ud->data, *width);
+	log_debug("UTF-8 %.*s is %05X", (int)ud->size, ud->data, (u_int)*wc);
+	return (UTF8_DONE);
+}
 
-#ifndef __OpenBSD__
-	/*
-	 * Many platforms (particularly and inevitably OS X) have no width for
-	 * relatively common characters (wcwidth() returns -1); assume width 1
-	 * in this case. This will be wrong for genuinely nonprintable
-	 * characters, but they should be rare. We may pass through stuff that
-	 * ideally we would block, but this is no worse than sending the same
-	 * to the terminal without tmux.
-	 */
-	if (*width < 0) {
-		*width = 1;
+/* Convert wide character to UTF-8 character. */
+enum utf8_state
+utf8_fromwc(wchar_t wc, struct utf8_data *ud)
+{
+	int	size, width;
+
+#ifdef HAVE_UTF8PROC
+	size = utf8proc_wctomb(ud->data, wc);
+#else
+	size = wctomb((char *)ud->data, wc);
+#endif
+	if (size < 0) {
+		log_debug("UTF-8 %d, wctomb() %d", wc, errno);
+		wctomb(NULL, 0);
+		return (UTF8_ERROR);
+	}
+	if (size == 0)
+		return (UTF8_ERROR);
+	ud->size = ud->have = size;
+	if (utf8_width(ud, &width) == UTF8_DONE) {
+		ud->width = width;
 		return (UTF8_DONE);
 	}
-#endif
 	return (UTF8_ERROR);
 }
 
@@ -296,11 +636,13 @@ utf8_append(struct utf8_data *ud, u_char ch)
 	if (ud->have != ud->size)
 		return (UTF8_MORE);
 
-	if (ud->width == 0xff)
-		return (UTF8_ERROR);
-	if (utf8_width(ud, &width) != UTF8_DONE)
-		return (UTF8_ERROR);
-	ud->width = width;
+	if (!utf8_no_width) {
+		if (ud->width == 0xff)
+			return (UTF8_ERROR);
+		if (utf8_width(ud, &width) != UTF8_DONE)
+			return (UTF8_ERROR);
+		ud->width = width;
+	}
 
 	return (UTF8_DONE);
 }
@@ -331,7 +673,7 @@ utf8_strvis(char *dst, const char *src, size_t len, int flag)
 			/* Not a complete, valid UTF-8 character. */
 			src -= ud.have;
 		}
-		if (src[0] == '$' && src < end - 1) {
+		if ((flag & VIS_DQ) && src[0] == '$' && src < end - 1) {
 			if (isalpha((u_char)src[1]) ||
 			    src[1] == '_' ||
 			    src[1] == '{')

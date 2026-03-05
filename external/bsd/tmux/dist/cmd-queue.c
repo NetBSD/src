@@ -19,9 +19,11 @@
 #include <sys/types.h>
 
 #include <ctype.h>
+#include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "tmux.h"
 
@@ -124,7 +126,7 @@ cmdq_new(void)
 {
 	struct cmdq_list	*queue;
 
-	queue = xcalloc (1, sizeof *queue);
+	queue = xcalloc(1, sizeof *queue);
 	TAILQ_INIT (&queue->list);
 	return (queue);
 }
@@ -234,8 +236,10 @@ cmdq_link_state(struct cmdq_state *state)
 
 /* Make a copy of a state. */
 struct cmdq_state *
-cmdq_copy_state(struct cmdq_state *state)
+cmdq_copy_state(struct cmdq_state *state, struct cmd_find_state *current)
 {
+	if (current != NULL)
+		return (cmdq_new_state(current, &state->event, state->flags));
 	return (cmdq_new_state(&state->current, &state->event, state->flags));
 }
 
@@ -267,6 +271,15 @@ cmdq_add_format(struct cmdq_state *state, const char *key, const char *fmt, ...)
 	format_add(state->formats, key, "%s", value);
 
 	free(value);
+}
+
+/* Add formats to command queue. */
+void
+cmdq_add_formats(struct cmdq_state *state, struct format_tree *ft)
+{
+	if (state->formats == NULL)
+		state->formats = format_create(NULL, NULL, FORMAT_NONE, 0);
+	format_merge(state->formats, ft);
 }
 
 /* Merge formats from item. */
@@ -343,12 +356,12 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	struct cmdq_state		*state = item->state;
 	struct cmd			*cmd = item->cmd;
 	struct args			*args = cmd_get_args(cmd);
-	struct args_entry		*entryp;
-	struct args_value		*valuep;
+	struct args_entry		*ae;
+	struct args_value		*av;
 	struct options			*oo;
 	va_list				 ap;
 	char				*name, tmp[32], flag, *arguments;
-	int				 i;
+	u_int				 i;
 	const char			*value;
 	struct cmdq_item		*new_item;
 	struct cmdq_state		*new_state;
@@ -385,11 +398,11 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 	cmdq_add_format(new_state, "hook_arguments", "%s", arguments);
 	free(arguments);
 
-	for (i = 0; i < args->argc; i++) {
+	for (i = 0; i < args_count(args); i++) {
 		xsnprintf(tmp, sizeof tmp, "hook_argument_%d", i);
-		cmdq_add_format(new_state, tmp, "%s", args->argv[i]);
+		cmdq_add_format(new_state, tmp, "%s", args_string(args, i));
 	}
-	flag = args_first(args, &entryp);
+	flag = args_first(args, &ae);
 	while (flag != 0) {
 		value = args_get(args, flag);
 		if (value == NULL) {
@@ -401,15 +414,15 @@ cmdq_insert_hook(struct session *s, struct cmdq_item *item,
 		}
 
 		i = 0;
-		value = args_first_value(args, flag, &valuep);
-		while (value != NULL) {
+		av = args_first_value(args, flag);
+		while (av != NULL) {
 			xsnprintf(tmp, sizeof tmp, "hook_flag_%c_%d", flag, i);
-			cmdq_add_format(new_state, tmp, "%s", value);
+			cmdq_add_format(new_state, tmp, "%s", av->string);
 			i++;
-			value = args_next_value(&valuep);
+			av = args_next_value(av);
 		}
 
-		flag = args_next(&entryp);
+		flag = args_next(&ae);
 	}
 
 	a = options_array_first(o);
@@ -469,6 +482,13 @@ cmdq_remove_group(struct cmdq_item *item)
 	}
 }
 
+/* Empty command callback. */
+static enum cmd_retval
+cmdq_empty_command(__unused struct cmdq_item *item, __unused void *data)
+{
+	return (CMD_RETURN_NORMAL);
+}
+
 /* Get a command for the command queue. */
 struct cmdq_item *
 cmdq_get_command(struct cmd_list *cmdlist, struct cmdq_state *state)
@@ -478,12 +498,14 @@ cmdq_get_command(struct cmd_list *cmdlist, struct cmdq_state *state)
 	const struct cmd_entry	*entry;
 	int			 created = 0;
 
+	if ((cmd = cmd_list_first(cmdlist)) == NULL)
+		return (cmdq_get_callback(cmdq_empty_command, NULL));
+
 	if (state == NULL) {
 		state = cmdq_new_state(NULL, NULL, 0);
 		created = 1;
 	}
 
-	cmd = cmd_list_first(cmdlist);
 	while (cmd != NULL) {
 		entry = cmd_get_entry(cmd);
 
@@ -540,17 +562,31 @@ cmdq_add_message(struct cmdq_item *item)
 {
 	struct client		*c = item->client;
 	struct cmdq_state	*state = item->state;
-	const char		*name, *key;
+	const char		*key;
 	char			*tmp;
+	uid_t                    uid;
+	struct passwd		*pw;
+	char                    *user = NULL;
 
 	tmp = cmd_print(item->cmd);
 	if (c != NULL) {
-		name = c->name;
+		uid = proc_get_peer_uid(c->peer);
+		if (uid != (uid_t)-1 && uid != getuid()) {
+			if ((pw = getpwuid(uid)) != NULL)
+				xasprintf(&user, "[%s]", pw->pw_name);
+			else
+				user = xstrdup("[unknown]");
+		} else
+			user = xstrdup("");
 		if (c->session != NULL && state->event.key != KEYC_NONE) {
 			key = key_string_lookup_key(state->event.key, 0);
-			server_add_message("%s key %s: %s", name, key, tmp);
-		} else
-			server_add_message("%s command: %s", name, tmp);
+			server_add_message("%s%s key %s: %s", c->name, user,
+			    key, tmp);
+		} else {
+			server_add_message("%s%s command: %s", c->name, user,
+			    tmp);
+		}
+		free(user);
 	} else
 		server_add_message("command: %s", tmp);
 	free(tmp);
@@ -628,9 +664,18 @@ cmdq_fire_command(struct cmdq_item *item)
 
 out:
 	item->client = saved;
-	if (retval == CMD_RETURN_ERROR)
+	if (retval == CMD_RETURN_ERROR) {
+		fsp = NULL;
+		if (cmd_find_valid_state(&item->target))
+			fsp = &item->target;
+		else if (cmd_find_valid_state(&item->state->current))
+			fsp = &item->state->current;
+		else if (cmd_find_from_client(&fs, item->client, 0) == 0)
+			fsp = &fs;
+		cmdq_insert_hook(fsp != NULL ? fsp->s : NULL, item, fsp,
+		    "command-error");
 		cmdq_guard(item, "error", flags);
-	else
+	} else
 		cmdq_guard(item, "end", flags);
 	return (retval);
 }
@@ -769,10 +814,10 @@ cmdq_running(struct client *c)
 	struct cmdq_list	*queue = cmdq_get(c);
 
 	if (queue->item == NULL)
-        return (NULL);
-    if (queue->item->flags & CMDQ_WAITING)
-        return (NULL);
-    return (queue->item);
+		return (NULL);
+	if (queue->item->flags & CMDQ_WAITING)
+		return (NULL);
+	return (queue->item);
 }
 
 /* Print a guard line. */
@@ -789,43 +834,28 @@ cmdq_guard(struct cmdq_item *item, const char *guard, int flags)
 
 /* Show message from command. */
 void
+cmdq_print_data(struct cmdq_item *item, struct evbuffer *evb)
+{
+	server_client_print(item->client, 1, evb);
+}
+
+/* Show message from command. */
+void
 cmdq_print(struct cmdq_item *item, const char *fmt, ...)
 {
-	struct client			*c = item->client;
-	struct window_pane		*wp;
-	struct window_mode_entry	*wme;
-	va_list				 ap;
-	char				*tmp, *msg;
+	va_list		 ap;
+	struct evbuffer	*evb;
+
+	evb = evbuffer_new();
+	if (evb == NULL)
+		fatalx("out of memory");
 
 	va_start(ap, fmt);
-	xvasprintf(&msg, fmt, ap);
+	evbuffer_add_vprintf(evb, fmt, ap);
 	va_end(ap);
 
-	log_debug("%s: %s", __func__, msg);
-
-	if (c == NULL)
-		/* nothing */;
-	else if (c->session == NULL || (c->flags & CLIENT_CONTROL)) {
-		if (~c->flags & CLIENT_UTF8) {
-			tmp = msg;
-			msg = utf8_sanitize(tmp);
-			free(tmp);
-		}
-		if (c->flags & CLIENT_CONTROL)
-			control_write(c, "%s", msg);
-		else
-			file_print(c, "%s\n", msg);
-	} else {
-		wp = server_client_get_pane(c);
-		wme = TAILQ_FIRST(&wp->modes);
-		if (wme == NULL || wme->mode != &window_view_mode) {
-			window_pane_set_mode(wp, NULL, &window_view_mode, NULL,
-			    NULL);
-		}
-		window_copy_add(wp, "%s", msg);
-	}
-
-	free(msg);
+	cmdq_print_data(item, evb);
+	evbuffer_free(evb);
 }
 
 /* Show error from command. */
@@ -862,7 +892,7 @@ cmdq_error(struct cmdq_item *item, const char *fmt, ...)
 		c->retval = 1;
 	} else {
 		*msg = toupper((u_char) *msg);
-		status_message_set(c, -1, 1, 0, "%s", msg);
+		status_message_set(c, -1, 1, 0, 0, "%s", msg);
 	}
 
 	free(msg);

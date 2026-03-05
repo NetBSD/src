@@ -39,9 +39,10 @@ const struct cmd_entry cmd_split_window_entry = {
 	.name = "split-window",
 	.alias = "splitw",
 
-	.args = { "bc:de:fF:hIl:p:Pt:vZ", 0, -1 },
+	.args = { "bc:de:fF:hIl:p:Pt:vZ", 0, -1, NULL },
 	.usage = "[-bdefhIPvZ] [-c start-directory] [-e environment] "
-		 "[-F format] [-l size] " CMD_TARGET_PANE_USAGE " [command]",
+		 "[-F format] [-l size] " CMD_TARGET_PANE_USAGE
+		 " [shell-command [argument ...]]",
 
 	.target = { 't', CMD_FIND_PANE, 0 },
 
@@ -55,70 +56,65 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	struct args		*args = cmd_get_args(self);
 	struct cmd_find_state	*current = cmdq_get_current(item);
 	struct cmd_find_state	*target = cmdq_get_target(item);
-	struct spawn_context	 sc;
+	struct spawn_context	 sc = { 0 };
 	struct client		*tc = cmdq_get_target_client(item);
 	struct session		*s = target->s;
 	struct winlink		*wl = target->wl;
+	struct window		*w = wl->window;
 	struct window_pane	*wp = target->wp, *new_wp;
 	enum layout_type	 type;
 	struct layout_cell	*lc;
 	struct cmd_find_state	 fs;
-	int			 size, percentage, flags, input;
-	const char		*template, *add, *errstr, *p;
-	char			*cause, *cp, *copy;
-	size_t			 plen;
-	struct args_value	*value;
+	int			 size, flags, input;
+	const char		*template;
+	char			*cause = NULL, *cp;
+	struct args_value	*av;
+	u_int			 count = args_count(args), curval = 0;
 
+	type = LAYOUT_TOPBOTTOM;
 	if (args_has(args, 'h'))
 		type = LAYOUT_LEFTRIGHT;
-	else
-		type = LAYOUT_TOPBOTTOM;
-	if ((p = args_get(args, 'l')) != NULL) {
-		plen = strlen(p);
-		if (p[plen - 1] == '%') {
-			copy = xstrdup(p);
-			copy[plen - 1] = '\0';
-			percentage = strtonum(copy, 0, INT_MAX, &errstr);
-			free(copy);
-			if (errstr != NULL) {
-				cmdq_error(item, "percentage %s", errstr);
-				return (CMD_RETURN_ERROR);
-			}
+
+	/* If the 'p' flag is dropped then this bit can be moved into 'l'. */
+	if (args_has(args, 'l') || args_has(args, 'p')) {
+		if (args_has(args, 'f')) {
 			if (type == LAYOUT_TOPBOTTOM)
-				size = (wp->sy * percentage) / 100;
+				curval = w->sy;
 			else
-				size = (wp->sx * percentage) / 100;
+				curval = w->sx;
 		} else {
-			size = args_strtonum(args, 'l', 0, INT_MAX, &cause);
-			if (cause != NULL) {
-				cmdq_error(item, "lines %s", cause);
-				free(cause);
-				return (CMD_RETURN_ERROR);
-			}
+			if (type == LAYOUT_TOPBOTTOM)
+				curval = wp->sy;
+			else
+				curval = wp->sx;
 		}
+	}
+
+	size = -1;
+	if (args_has(args, 'l')) {
+		size = args_percentage_and_expand(args, 'l', 0, INT_MAX, curval,
+		    item, &cause);
 	} else if (args_has(args, 'p')) {
-		percentage = args_strtonum(args, 'p', 0, INT_MAX, &cause);
-		if (cause != NULL) {
-			cmdq_error(item, "create pane failed: -p %s", cause);
-			free(cause);
-			return (CMD_RETURN_ERROR);
-		}
-		if (type == LAYOUT_TOPBOTTOM)
-			size = (wp->sy * percentage) / 100;
-		else
-			size = (wp->sx * percentage) / 100;
-	} else
-		size = -1;
+		size = args_strtonum_and_expand(args, 'p', 0, 100, item,
+		    &cause);
+		if (cause == NULL)
+			size = curval * size / 100;
+	}
+	if (cause != NULL) {
+		cmdq_error(item, "size %s", cause);
+		free(cause);
+		return (CMD_RETURN_ERROR);
+	}
 
 	window_push_zoom(wp->window, 1, args_has(args, 'Z'));
-	input = (args_has(args, 'I') && args->argc == 0);
+	input = (args_has(args, 'I') && count == 0);
 
 	flags = 0;
 	if (args_has(args, 'b'))
 		flags |= SPAWN_BEFORE;
 	if (args_has(args, 'f'))
 		flags |= SPAWN_FULLSIZE;
-	if (input || (args->argc == 1 && *args->argv[0] == '\0'))
+	if (input || (count == 1 && *args_string(args, 0) == '\0'))
 		flags |= SPAWN_EMPTY;
 
 	lc = layout_split_pane(wp, type, size, flags);
@@ -127,7 +123,6 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 
-	memset(&sc, 0, sizeof sc);
 	sc.item = item;
 	sc.s = s;
 	sc.wl = wl;
@@ -135,15 +130,13 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	sc.wp0 = wp;
 	sc.lc = lc;
 
-	sc.name = NULL;
-	sc.argc = args->argc;
-	sc.argv = args->argv;
+	args_to_vector(args, &sc.argc, &sc.argv);
 	sc.environ = environ_create();
 
-	add = args_first_value(args, 'e', &value);
-	while (add != NULL) {
-		environ_put(sc.environ, add, 0);
-		add = args_next_value(&value);
+	av = args_first_value(args, 'e');
+	while (av != NULL) {
+		environ_put(sc.environ, av->string, 0);
+		av = args_next_value(av);
 	}
 
 	sc.idx = -1;
@@ -158,15 +151,27 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	if ((new_wp = spawn_pane(&sc, &cause)) == NULL) {
 		cmdq_error(item, "create pane failed: %s", cause);
 		free(cause);
+		if (sc.argv != NULL)
+			cmd_free_argv(sc.argc, sc.argv);
+		environ_free(sc.environ);
 		return (CMD_RETURN_ERROR);
 	}
-	if (input && window_pane_start_input(new_wp, item, &cause) != 0) {
-		server_client_remove_pane(new_wp);
-		layout_close_pane(new_wp);
-		window_remove_pane(wp->window, new_wp);
-		cmdq_error(item, "%s", cause);
-		free(cause);
-		return (CMD_RETURN_ERROR);
+	if (input) {
+		switch (window_pane_start_input(new_wp, item, &cause)) {
+		case -1:
+			server_client_remove_pane(new_wp);
+			layout_close_pane(new_wp);
+			window_remove_pane(wp->window, new_wp);
+			cmdq_error(item, "%s", cause);
+			free(cause);
+			if (sc.argv != NULL)
+				cmd_free_argv(sc.argc, sc.argv);
+			environ_free(sc.environ);
+			return (CMD_RETURN_ERROR);
+		case 1:
+			input = 0;
+			break;
+		}
 	}
 	if (!args_has(args, 'd'))
 		cmd_find_from_winlink_pane(current, wl, new_wp, 0);
@@ -185,6 +190,8 @@ cmd_split_window_exec(struct cmd *self, struct cmdq_item *item)
 	cmd_find_from_winlink_pane(&fs, wl, new_wp, 0);
 	cmdq_insert_hook(s, item, &fs, "after-split-window");
 
+	if (sc.argv != NULL)
+		cmd_free_argv(sc.argc, sc.argv);
 	environ_free(sc.environ);
 	if (input)
 		return (CMD_RETURN_WAIT);

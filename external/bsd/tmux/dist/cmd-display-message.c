@@ -39,8 +39,8 @@ const struct cmd_entry cmd_display_message_entry = {
 	.name = "display-message",
 	.alias = "display",
 
-	.args = { "acd:INpt:F:v", 0, 1 },
-	.usage = "[-aINpv] [-c target-client] [-d delay] [-F format] "
+	.args = { "aCc:d:lINpt:F:v", 0, 1, NULL },
+	.usage = "[-aCIlNpv] [-c target-client] [-d delay] [-F format] "
 		 CMD_TARGET_PANE_USAGE " [message]",
 
 	.target = { 't', CMD_FIND_PANE, CMD_FIND_CANFAIL },
@@ -68,22 +68,28 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 	struct window_pane	*wp = target->wp;
 	const char		*template;
 	char			*msg, *cause;
-	int			 delay = -1;
+	int			 delay = -1, flags, Nflag = args_has(args, 'N');
+	int			 Cflag = args_has(args, 'C');
 	struct format_tree	*ft;
-	int			 flags;
+	u_int			 count = args_count(args);
+	struct evbuffer		*evb;
 
 	if (args_has(args, 'I')) {
 		if (wp == NULL)
 			return (CMD_RETURN_NORMAL);
-		if (window_pane_start_input(wp, item, &cause) != 0) {
+		switch (window_pane_start_input(wp, item, &cause)) {
+		case -1:
 			cmdq_error(item, "%s", cause);
 			free(cause);
 			return (CMD_RETURN_ERROR);
+		case 1:
+			return (CMD_RETURN_NORMAL);
+		case 0:
+			return (CMD_RETURN_WAIT);
 		}
-		return (CMD_RETURN_WAIT);
 	}
 
-	if (args_has(args, 'F') && args->argc != 0) {
+	if (args_has(args, 'F') && count != 0) {
 		cmdq_error(item, "only one of -F or argument must be given");
 		return (CMD_RETURN_ERROR);
 	}
@@ -97,9 +103,10 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		}
 	}
 
-	template = args_get(args, 'F');
-	if (args->argc != 0)
-		template = args->argv[0];
+	if (count != 0)
+		template = args_string(args, 0);
+	else
+		template = args_get(args, 'F');
 	if (template == NULL)
 		template = DISPLAY_MESSAGE_TEMPLATE;
 
@@ -127,15 +134,24 @@ cmd_display_message_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_NORMAL);
 	}
 
-	msg = format_expand_time(ft, template);
+	if (args_has(args, 'l'))
+		msg = xstrdup(template);
+	else
+		msg = format_expand_time(ft, template);
+
 	if (cmdq_get_client(item) == NULL)
 		cmdq_error(item, "%s", msg);
 	else if (args_has(args, 'p'))
 		cmdq_print(item, "%s", msg);
-	else if (tc != NULL) {
-		status_message_set(tc, delay, 0, args_has(args, 'N'), "%s",
-		    msg);
-	}
+	else if (tc != NULL && (tc->flags & CLIENT_CONTROL)) {
+		evb = evbuffer_new();
+		if (evb == NULL)
+			fatalx("out of memory");
+		evbuffer_add_printf(evb, "%%message %s", msg);
+		server_client_print(tc, 0, evb);
+		evbuffer_free(evb);
+	} else if (tc != NULL)
+		status_message_set(tc, delay, 0, Nflag, Cflag, "%s", msg);
 	free(msg);
 
 	format_free(ft);

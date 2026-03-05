@@ -53,6 +53,8 @@ struct cmd_find_state	 marked_pane;
 static u_int		 message_next;
 struct message_list	 message_log;
 
+time_t			 current_time;
+
 static int	server_loop(void);
 static void	server_send_exit(void);
 static void	server_accept(int, short, void *);
@@ -68,7 +70,8 @@ server_set_marked(struct session *s, struct winlink *wl, struct window_pane *wp)
 	cmd_find_clear_state(&marked_pane, 0);
 	marked_pane.s = s;
 	marked_pane.wl = wl;
-	marked_pane.w = wl->window;
+	if (wl != NULL)
+		marked_pane.w = wl->window;
 	marked_pane.wp = wp;
 }
 
@@ -100,8 +103,8 @@ server_check_marked(void)
 }
 
 /* Create server socket. */
-static int
-server_create_socket(int flags, char **cause)
+int
+server_create_socket(uint64_t flags, char **cause)
 {
 	struct sockaddr_un	sa;
 	size_t			size;
@@ -169,7 +172,7 @@ server_tidy_event(__unused int fd, __unused short events, __unused void *data)
 
 /* Fork new server. */
 int
-server_start(struct tmuxproc *client, int flags, struct event_base *base,
+server_start(struct tmuxproc *client, uint64_t flags, struct event_base *base,
     int lockfd, char *lockfile)
 {
 	int		 fd;
@@ -204,16 +207,20 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 		fatal("pledge failed");
 
 	input_key_build();
+	utf8_update_width_cache();
 	RB_INIT(&windows);
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);
 	RB_INIT(&sessions);
 	key_bindings_init();
 	TAILQ_INIT(&message_log);
-
 	gettimeofday(&start_time, NULL);
 
+#ifdef HAVE_SYSTEMD
+	server_fd = systemd_create_socket(flags, &cause);
+#else
 	server_fd = server_create_socket(flags, &cause);
+#endif
 	if (server_fd != -1)
 		server_update_socket();
 	if (~flags & CLIENT_NOFORK)
@@ -229,14 +236,18 @@ server_start(struct tmuxproc *client, int flags, struct event_base *base,
 
 	if (cause != NULL) {
 		if (c != NULL) {
-			cmdq_append(c, cmdq_get_error(cause));
+			c->exit_message = cause;
 			c->flags |= CLIENT_EXIT;
+		} else {
+			fprintf(stderr, "%s\n", cause);
+			exit(1);
 		}
-		free(cause);
 	}
 
 	evtimer_set(&server_ev_tidy, server_tidy_event, NULL);
 	evtimer_add(&server_ev_tidy, &tv);
+
+	server_acl_init();
 
 	server_add_accept(0);
 	proc_loop(server_proc, server_loop);
@@ -253,6 +264,8 @@ server_loop(void)
 {
 	struct client	*c;
 	u_int		 items;
+
+	current_time = time(NULL);
 
 	do {
 		items = cmdq_next(NULL);
@@ -354,9 +367,10 @@ server_update_socket(void)
 static void
 server_accept(int fd, short events, __unused void *data)
 {
-	struct sockaddr_storage	sa;
-	socklen_t		slen = sizeof sa;
-	int			newfd;
+	struct sockaddr_storage	 sa;
+	socklen_t		 slen = sizeof sa;
+	int			 newfd;
+	struct client		*c;
 
 	server_add_accept(0);
 	if (!(events & EV_READ))
@@ -373,11 +387,16 @@ server_accept(int fd, short events, __unused void *data)
 		}
 		fatal("accept failed");
 	}
+
 	if (server_exit) {
 		close(newfd);
 		return;
 	}
-	server_client_create(newfd);
+	c = server_client_create(newfd);
+	if (!server_acl_join(c)) {
+		c->exit_message = xstrdup("access not allowed");
+		c->flags |= CLIENT_EXIT;
+	}
 }
 
 /*

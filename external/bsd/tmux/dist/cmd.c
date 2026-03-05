@@ -35,6 +35,7 @@ extern const struct cmd_entry cmd_choose_buffer_entry;
 extern const struct cmd_entry cmd_choose_client_entry;
 extern const struct cmd_entry cmd_choose_tree_entry;
 extern const struct cmd_entry cmd_clear_history_entry;
+extern const struct cmd_entry cmd_clear_prompt_history_entry;
 extern const struct cmd_entry cmd_clock_mode_entry;
 extern const struct cmd_entry cmd_command_prompt_entry;
 extern const struct cmd_entry cmd_confirm_before_entry;
@@ -46,7 +47,6 @@ extern const struct cmd_entry cmd_display_menu_entry;
 extern const struct cmd_entry cmd_display_message_entry;
 extern const struct cmd_entry cmd_display_popup_entry;
 extern const struct cmd_entry cmd_display_panes_entry;
-extern const struct cmd_entry cmd_down_pane_entry;
 extern const struct cmd_entry cmd_find_window_entry;
 extern const struct cmd_entry cmd_has_session_entry;
 extern const struct cmd_entry cmd_if_shell_entry;
@@ -94,6 +94,7 @@ extern const struct cmd_entry cmd_select_pane_entry;
 extern const struct cmd_entry cmd_select_window_entry;
 extern const struct cmd_entry cmd_send_keys_entry;
 extern const struct cmd_entry cmd_send_prefix_entry;
+extern const struct cmd_entry cmd_server_access_entry;
 extern const struct cmd_entry cmd_set_buffer_entry;
 extern const struct cmd_entry cmd_set_environment_entry;
 extern const struct cmd_entry cmd_set_hook_entry;
@@ -104,6 +105,7 @@ extern const struct cmd_entry cmd_show_environment_entry;
 extern const struct cmd_entry cmd_show_hooks_entry;
 extern const struct cmd_entry cmd_show_messages_entry;
 extern const struct cmd_entry cmd_show_options_entry;
+extern const struct cmd_entry cmd_show_prompt_history_entry;
 extern const struct cmd_entry cmd_show_window_options_entry;
 extern const struct cmd_entry cmd_source_file_entry;
 extern const struct cmd_entry cmd_split_window_entry;
@@ -114,7 +116,6 @@ extern const struct cmd_entry cmd_swap_window_entry;
 extern const struct cmd_entry cmd_switch_client_entry;
 extern const struct cmd_entry cmd_unbind_key_entry;
 extern const struct cmd_entry cmd_unlink_window_entry;
-extern const struct cmd_entry cmd_up_pane_entry;
 extern const struct cmd_entry cmd_wait_for_entry;
 
 const struct cmd_entry *cmd_table[] = {
@@ -126,6 +127,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_choose_client_entry,
 	&cmd_choose_tree_entry,
 	&cmd_clear_history_entry,
+	&cmd_clear_prompt_history_entry,
 	&cmd_clock_mode_entry,
 	&cmd_command_prompt_entry,
 	&cmd_confirm_before_entry,
@@ -184,6 +186,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_select_window_entry,
 	&cmd_send_keys_entry,
 	&cmd_send_prefix_entry,
+	&cmd_server_access_entry,
 	&cmd_set_buffer_entry,
 	&cmd_set_environment_entry,
 	&cmd_set_hook_entry,
@@ -194,6 +197,7 @@ const struct cmd_entry *cmd_table[] = {
 	&cmd_show_hooks_entry,
 	&cmd_show_messages_entry,
 	&cmd_show_options_entry,
+	&cmd_show_prompt_history_entry,
 	&cmd_show_window_options_entry,
 	&cmd_source_file_entry,
 	&cmd_split_window_entry,
@@ -216,10 +220,7 @@ struct cmd {
 
 	char			 *file;
 	u_int			  line;
-
-	char			 *alias;
-	int			  argc;
-	char			**argv;
+	int			  parse_flags;
 
 	TAILQ_ENTRY(cmd)	  qentry;
 };
@@ -247,7 +248,7 @@ cmd_log_argv(int argc, char **argv, const char *fmt, ...)
 
 /* Prepend to an argument vector. */
 void
-cmd_prepend_argv(int *argc, char ***argv, char *arg)
+cmd_prepend_argv(int *argc, char ***argv, const char *arg)
 {
 	char	**new_argv;
 	int	  i;
@@ -264,7 +265,7 @@ cmd_prepend_argv(int *argc, char ***argv, char *arg)
 
 /* Append to an argument vector. */
 void
-cmd_append_argv(int *argc, char ***argv, char *arg)
+cmd_append_argv(int *argc, char ***argv, const char *arg)
 {
 	*argv = xreallocarray(*argv, (*argc) + 1, sizeof **argv);
 	(*argv)[(*argc)++] = xstrdup(arg);
@@ -412,6 +413,13 @@ cmd_get_source(struct cmd *cmd, const char **file, u_int *line)
 		*line = cmd->line;
 }
 
+/* Get parse flags for command. */
+int
+cmd_get_parse_flags(struct cmd *cmd)
+{
+	return (cmd->parse_flags);
+}
+
 /* Look for an alias for a command. */
 char *
 cmd_get_alias(const char *name)
@@ -444,7 +452,7 @@ cmd_get_alias(const char *name)
 }
 
 /* Look up a command entry by name. */
-static const struct cmd_entry *
+const struct cmd_entry *
 cmd_find(const char *name, char **cause)
 {
 	const struct cmd_entry	**loop, *entry, *found = NULL;
@@ -495,64 +503,70 @@ ambiguous:
 
 /* Parse a single command from an argument vector. */
 struct cmd *
-cmd_parse(int argc, char **argv, const char *file, u_int line, char **cause)
+cmd_parse(struct args_value *values, u_int count, const char *file, u_int line,
+    int parse_flags, char **cause)
 {
 	const struct cmd_entry	*entry;
-	const char		*name;
 	struct cmd		*cmd;
 	struct args		*args;
+	char			*error = NULL;
 
-	if (argc == 0) {
+	if (count == 0 || values[0].type != ARGS_STRING) {
 		xasprintf(cause, "no command");
 		return (NULL);
 	}
-	name = argv[0];
-
-	entry = cmd_find(name, cause);
+	entry = cmd_find(values[0].string, cause);
 	if (entry == NULL)
 		return (NULL);
-	cmd_log_argv(argc, argv, "%s: %s", __func__, entry->name);
 
-	args = args_parse(entry->args.template, argc, argv);
-	if (args == NULL)
-		goto usage;
-	if (entry->args.lower != -1 && args->argc < entry->args.lower)
-		goto usage;
-	if (entry->args.upper != -1 && args->argc > entry->args.upper)
-		goto usage;
+	args = args_parse(&entry->args, values, count, &error);
+	if (args == NULL && error == NULL) {
+		xasprintf(cause, "usage: %s %s", entry->name, entry->usage);
+		return (NULL);
+	}
+	if (args == NULL) {
+		xasprintf(cause, "command %s: %s", entry->name, error);
+		free(error);
+		return (NULL);
+	}
 
 	cmd = xcalloc(1, sizeof *cmd);
 	cmd->entry = entry;
 	cmd->args = args;
+	cmd->parse_flags = parse_flags;
 
 	if (file != NULL)
 		cmd->file = xstrdup(file);
 	cmd->line = line;
 
-	cmd->alias = NULL;
-	cmd->argc = argc;
-	cmd->argv = cmd_copy_argv(argc, argv);
-
 	return (cmd);
-
-usage:
-	if (args != NULL)
-		args_free(args);
-	xasprintf(cause, "usage: %s %s", entry->name, entry->usage);
-	return (NULL);
 }
 
 /* Free a command. */
 void
 cmd_free(struct cmd *cmd)
 {
-	free(cmd->alias);
-	cmd_free_argv(cmd->argc, cmd->argv);
-
 	free(cmd->file);
 
 	args_free(cmd->args);
 	free(cmd);
+}
+
+/* Copy a command. */
+struct cmd *
+cmd_copy(struct cmd *cmd, int argc, char **argv)
+{
+	struct cmd	*new_cmd;
+
+	new_cmd = xcalloc(1, sizeof *new_cmd);
+	new_cmd->entry = cmd->entry;
+	new_cmd->args = args_copy(cmd->args, argc, argv);
+
+	if (cmd->file != NULL)
+		new_cmd->file = xstrdup(cmd->file);
+	new_cmd->line = cmd->line;
+
+	return (new_cmd);
 }
 
 /* Get a command as a string. */
@@ -593,7 +607,18 @@ cmd_list_append(struct cmd_list *cmdlist, struct cmd *cmd)
 	TAILQ_INSERT_TAIL(cmdlist->list, cmd, qentry);
 }
 
-/* Move all commands from one command list to another */
+/* Append all commands from one list to another.  */
+void
+cmd_list_append_all(struct cmd_list *cmdlist, struct cmd_list *from)
+{
+	struct cmd	*cmd;
+
+	TAILQ_FOREACH(cmd, from->list, qentry)
+		cmd->group = cmdlist->group;
+	TAILQ_CONCAT(cmdlist->list, from->list, qentry);
+}
+
+/* Move all commands from one command list to another. */
 void
 cmd_list_move(struct cmd_list *cmdlist, struct cmd_list *from)
 {
@@ -618,9 +643,40 @@ cmd_list_free(struct cmd_list *cmdlist)
 	free(cmdlist);
 }
 
+/* Copy a command list, expanding %s in arguments. */
+struct cmd_list *
+cmd_list_copy(const struct cmd_list *cmdlist, int argc, char **argv)
+{
+	struct cmd	*cmd;
+	struct cmd_list	*new_cmdlist;
+	struct cmd	*new_cmd;
+	u_int		 group = cmdlist->group;
+	char		*s;
+
+	s = cmd_list_print(cmdlist, 0);
+	log_debug("%s: %s", __func__, s);
+	free(s);
+
+	new_cmdlist = cmd_list_new();
+	TAILQ_FOREACH(cmd, cmdlist->list, qentry) {
+		if (cmd->group != group) {
+			new_cmdlist->group = cmd_list_next_group++;
+			group = cmd->group;
+		}
+		new_cmd = cmd_copy(cmd, argc, argv);
+		cmd_list_append(new_cmdlist, new_cmd);
+	}
+
+	s = cmd_list_print(new_cmdlist, 0);
+	log_debug("%s: %s", __func__, s);
+	free(s);
+
+	return (new_cmdlist);
+}
+
 /* Get a command list as a string. */
 char *
-cmd_list_print(struct cmd_list *cmdlist, int escaped)
+cmd_list_print(const struct cmd_list *cmdlist, int escaped)
 {
 	struct cmd	*cmd, *next;
 	char		*buf, *this;
@@ -763,10 +819,14 @@ cmd_mouse_pane(struct mouse_event *m, struct session **sp,
 
 	if ((wl = cmd_mouse_window(m, sp)) == NULL)
 		return (NULL);
-	if ((wp = window_pane_find_by_id(m->wp)) == NULL)
-		return (NULL);
-	if (!window_has_pane(wl->window, wp))
-		return (NULL);
+	if (m->wp == -1)
+		wp = wl->window->active;
+	else {
+		if ((wp = window_pane_find_by_id(m->wp)) == NULL)
+			return (NULL);
+		if (!window_has_pane(wl->window, wp))
+			return (NULL);
+	}
 
 	if (wlp != NULL)
 		*wlp = wl;

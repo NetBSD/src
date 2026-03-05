@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2022/01/23 16:47:46 christos Exp $
+# $NetBSD: Makefile,v 1.28.2.1 2026/03/05 07:14:06 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -67,12 +67,14 @@ cmd-select-layout.c \
 cmd-select-pane.c \
 cmd-select-window.c \
 cmd-send-keys.c \
+cmd-server-access.c \
 cmd-set-buffer.c \
 cmd-set-environment.c \
 cmd-set-option.c \
 cmd-show-environment.c \
 cmd-show-messages.c \
 cmd-show-options.c \
+cmd-show-prompt-history.c \
 cmd-source-file.c \
 cmd-split-window.c \
 cmd-swap-pane.c \
@@ -91,6 +93,9 @@ format.c \
 grid-reader.c \
 grid-view.c \
 grid.c \
+hyperlinks.c \
+image.c \
+image-sixel.c \
 input-keys.c \
 input.c \
 job.c \
@@ -115,6 +120,7 @@ resize.c \
 screen-redraw.c \
 screen-write.c \
 screen.c \
+server-acl.c \
 server-client.c \
 server-fn.c \
 server.c \
@@ -129,6 +135,7 @@ tty-keys.c \
 tty-term.c \
 tty.c \
 utf8.c \
+utf8-combined.c \
 window-buffer.c \
 window-client.c \
 window-clock.c \
@@ -147,6 +154,8 @@ SRCS+=		imsg.c
 SRCS+=		fdforkpty.c
 SRCS+=		freezero.c
 SRCS+=		explicit_bzero.c
+SRCS+=		htonll.c
+SRCS+=		ntohll.c
 SRCS+=		recallocarray.c
 SRCS+=		getdtablecount.c
 #SRCS+=		strtonum.c
@@ -160,13 +169,25 @@ CPPFLAGS+=	-I${SRCDIR} -I${.CURDIR}
 # Would be nicer to stick this in a config.h file, but the upstream code
 # does not use one at this moment.
 
+# ENABLE_SIXEL, HAVE_REALLOCARRAY, HAVE_TREE_H, HAVE_UTEMPTER, HAVE_VIS added manually
+#
+# HAVE_BSD_GETOPT:
+# Use the NetBSD libc getopt functions instead of the compat functions
+# provided by tmux (done using a local patch).
+#
+# HAVE_VIS:
+# tmux assumes the OpenBSD variant of strnvis which has arguments
+# swapped compared to FreeBSD & NetBSD, see
+# https://github.com/tmux/tmux/pull/4015
+# We have a local patch that adapts the call to the NetBSD version,
+# so we don't need to use the compat code provided by tmux.
 CPPFLAGS+=	\
+-DENABLE_SIXEL=1 \
 -DHAVE_ASPRINTF=1 \
 -DHAVE_B64_NTOP=1 \
 -DHAVE_BITSTRING_H=1 \
 -DHAVE_BSD_GETOPT=1 \
 -DHAVE_CFMAKERAW=1 \
--DHAVE_CFMAKERAWEP=1 \
 -DHAVE_CLOCK_GETTIME=1 \
 -DHAVE_CLOSEFROM=1 \
 -DHAVE_CURSES_H=1 \
@@ -178,14 +199,12 @@ CPPFLAGS+=	\
 -DHAVE_FGETLN=1 \
 -DHAVE_FLOCK=1 \
 -DHAVE_FORKPTY=1 \
--DHAVE_FPARSELN=1 \
 -DHAVE_GETDTABLESIZE=1 \
 -DHAVE_GETLINE=1 \
--DHAVE_GETOPT=1 \
+-DHAVE_GETPEEREID=1 \
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
 -DHAVE_LIBM=1 \
--DHAVE_LIBPROC_H=1 \
 -DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
@@ -210,6 +229,7 @@ CPPFLAGS+=	\
 -DHAVE_SYS_STAT_H=1 \
 -DHAVE_SYS_TREE_H=1 \
 -DHAVE_SYS_TYPES_H=1 \
+-DHAVE_TIPARM=1 \
 -DHAVE_TREE_H=1 \
 -DHAVE_UNISTD_H=1 \
 -DHAVE_UTEMPTER=1 \
@@ -219,28 +239,41 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.2a\" \
+-DPACKAGE_STRING=\"tmux\ 3.6a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.2a\" \
+-DPACKAGE_VERSION=\"3.6a\" \
 -DSTDC_HEADERS=1 \
--DTMUX_CONF="\"/etc/tmux.conf:~/.tmux.conf:~/.config/tmux/tmux.conf\"" \
--DTMUX_VERSION='"3.2a"' \
--DVERSION=\"3.2a\" \
+-DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+-DTMUX_LOCK_CMD='"lock -np"' \
+-DTMUX_TERM='"tmux-256color"' \
+-DTMUX_VERSION='"3.6a"' \
+-DVERSION=\"3.6a\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_NETBSD_SOURCE \
 -D_OPENBSD_SOURCE \
 -D_POSIX_PTHREAD_SEMANTICS=1 \
 -D_TANDEM_SOURCE=1 \
--D_XOPEN_SOURCE=500 \
 -D__EXTENSIONS__=1
 
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
-COPTS.format.c += -Wno-format-nonliteral
+COPTS.format.c+=	-Wno-format-nonliteral
+COPTS.input.c+=		-Wno-sign-compare -Wno-pointer-sign
+COPTS.mode-tree.c+=	-Wno-error=stack-protector
+COPTS.tty.c+=		-Wno-pointer-sign
 COPTS.utempter.c+=	${GCC_NO_STRINGOP_TRUNCATION}
-COPTS.window-copy.c+=	${GCC_NO_MAYBE_UNINITIALIZED}
+COPTS.window-copy.c+=	${GCC_NO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
+COPTS.cmd-run-shell.c += ${GCC_NO_MAYBE_UNINITIALIZED}
+
+# The man page needs substitutions, but the dist file usurps the
+# output file suffix.
+.NOPATH: tmux.1
+tmux.1: $(SRCDIR)/tmux.1
+	sed -e 's|@SYSCONFDIR@|/etc|g' $> > $@
+
+CLEANDIRFILES+=	tmux.1
 
 .include <bsd.prog.mk>

@@ -43,12 +43,8 @@ static void		 window_client_key(struct window_mode_entry *,
 #define WINDOW_CLIENT_DEFAULT_KEY_FORMAT \
 	"#{?#{e|<:#{line},10}," \
 		"#{line}" \
-	"," \
-		"#{?#{e|<:#{line},36},"	\
-	        	"M-#{a:#{e|+:97,#{e|-:#{line},10}}}" \
-		"," \
-	        	"" \
-		"}" \
+	",#{e|<:#{line},36},"	\
+		"M-#{a:#{e|+:97,#{e|-:#{line},10}}}" \
 	"}"
 
 static const struct menu_item window_client_menu_items[] = {
@@ -242,7 +238,7 @@ window_client_draw(__unused void *modedata, void *itemdata,
 		screen_write_cursormove(ctx, cx, cy + 2, 0);
 	else
 		screen_write_cursormove(ctx, cx, cy + sy - 1 - lines, 0);
-	screen_write_hline(ctx, sx, 0, 0);
+	screen_write_hline(ctx, sx, 0, 0, BOX_LINES_DEFAULT, NULL);
 
 	if (at != 0)
 		screen_write_cursormove(ctx, cx, cy, 0);
@@ -281,7 +277,7 @@ window_client_get_key(void *modedata, void *itemdata, u_int line)
 	key = key_string_lookup_string(expanded);
 	free(expanded);
 	format_free(ft);
-	return key;
+	return (key);
 }
 
 static struct screen *
@@ -303,14 +299,14 @@ window_client_init(struct window_mode_entry *wme,
 		data->key_format = xstrdup(WINDOW_CLIENT_DEFAULT_KEY_FORMAT);
 	else
 		data->key_format = xstrdup(args_get(args, 'K'));
-	if (args == NULL || args->argc == 0)
+	if (args == NULL || args_count(args) == 0)
 		data->command = xstrdup(WINDOW_CLIENT_DEFAULT_COMMAND);
 	else
-		data->command = xstrdup(args->argv[0]);
+		data->command = xstrdup(args_string(args, 0));
 
 	data->data = mode_tree_start(wp, args, window_client_build,
 	    window_client_draw, NULL, window_client_menu, NULL,
-	    window_client_get_key, data, window_client_menu_items,
+	    window_client_get_key, NULL, data, window_client_menu_items,
 	    window_client_sort_list, nitems(window_client_sort_list), &s);
 	mode_tree_zoom(data->data, args);
 

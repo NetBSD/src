@@ -113,6 +113,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 		window_pane_resize(sc->wp0, w->sx, w->sy);
 
 		layout_init(w, sc->wp0);
+		w->active = NULL;
 		window_set_active_pane(w, sc->wp0, 0);
 	}
 
@@ -177,6 +178,7 @@ spawn_window(struct spawn_context *sc, char **cause)
 
 	/* Set the name of the new window. */
 	if (~sc->flags & SPAWN_RESPAWN) {
+		free(w->name);
 		if (sc->name != NULL) {
 			w->name = format_single(item, sc->name, c, s, NULL,
 			    NULL);
@@ -208,7 +210,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	struct window_pane	 *new_wp;
 	struct environ		 *child;
 	struct environ_entry	 *ee;
-	char			**argv, *cp, **argvp, *argv0, *cwd;
+	char			**argv, *cp, **argvp, *argv0, *cwd, *new_cwd;
 	const char		 *cmd, *tmp;
 	int			  argc;
 	u_int			  idx;
@@ -224,9 +226,16 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	 * Work out the current working directory. If respawning, use
 	 * the pane's stored one unless specified.
 	 */
-	if (sc->cwd != NULL)
+	if (sc->cwd != NULL) {
 		cwd = format_single(item, sc->cwd, c, target->s, NULL, NULL);
-	else if (~sc->flags & SPAWN_RESPAWN)
+		if (*cwd != '/') {
+			xasprintf(&new_cwd, "%s%s%s",
+			    server_client_get_cwd(c, target->s),
+			    *cwd != '\0' ? "/" : "", cwd);
+			free(cwd);
+			cwd = new_cwd;
+		}
+	} else if (~sc->flags & SPAWN_RESPAWN)
 		cwd = xstrdup(server_client_get_cwd(c, target->s));
 	else
 		cwd = NULL;
@@ -334,8 +343,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		log_debug("%s: cmd=%s", __func__, cp);
 		free(cp);
 	}
-	if (cwd != NULL)
-		log_debug("%s: cwd=%s", __func__, cwd);
+	log_debug("%s: cwd=%s", __func__, new_wp->cwd);
 	cmd_log_argv(new_wp->argc, new_wp->argv, "%s", __func__);
 	environ_log(child, "%s: environment ", __func__);
 
@@ -374,16 +382,31 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	}
 
 	/* In the parent process, everything is done now. */
-	if (new_wp->pid != 0)
+	if (new_wp->pid != 0) {
 		goto complete;
+	}
 
+#if defined(HAVE_SYSTEMD) && defined(ENABLE_CGROUPS)
+	/*
+	 * Move the child process into a new cgroup for systemd-oomd isolation.
+	 */
+	if (systemd_move_to_new_cgroup(cause) < 0) {
+		log_debug("%s: moving pane to new cgroup failed: %s",
+		    __func__, *cause);
+		free (*cause);
+	}
+#endif
 	/*
 	 * Child process. Change to the working directory or home if that
 	 * fails.
 	 */
-	if (chdir(new_wp->cwd) != 0 &&
-	    ((tmp = find_home()) == NULL || chdir(tmp) != 0) &&
-	    chdir("/") != 0)
+	if (chdir(new_wp->cwd) == 0)
+		environ_set(child, "PWD", 0, "%s", new_wp->cwd);
+	else if ((tmp = find_home()) != NULL && chdir(tmp) == 0)
+		environ_set(child, "PWD", 0, "%s", tmp);
+	else if (chdir("/") == 0)
+		environ_set(child, "PWD", 0, "/");
+	else
 		fatal("chdir failed");
 
 	/*
@@ -406,8 +429,8 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		_exit(1);
 
 	/* Clean up file descriptors and signals and update the environment. */
-	closefrom(STDERR_FILENO + 1);
 	proc_clear_signals(server_proc, 1);
+	closefrom(STDERR_FILENO + 1);
 	sigprocmask(SIG_SETMASK, &oldset, NULL);
 	log_close();
 	environ_push(child);

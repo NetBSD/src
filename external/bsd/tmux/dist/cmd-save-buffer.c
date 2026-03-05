@@ -37,7 +37,7 @@ const struct cmd_entry cmd_save_buffer_entry = {
 	.name = "save-buffer",
 	.alias = "saveb",
 
-	.args = { "ab:", 1, 1 },
+	.args = { "ab:", 1, 1, NULL },
 	.usage = "[-a] " CMD_BUFFER_USAGE " path",
 
 	.flags = CMD_AFTERHOOK,
@@ -48,7 +48,7 @@ const struct cmd_entry cmd_show_buffer_entry = {
 	.name = "show-buffer",
 	.alias = "showb",
 
-	.args = { "b:", 0, 0 },
+	.args = { "b:", 0, 0, NULL },
 	.usage = CMD_BUFFER_USAGE,
 
 	.flags = CMD_AFTERHOOK,
@@ -65,7 +65,7 @@ cmd_save_buffer_done(__unused struct client *c, const char *path, int error,
 		return;
 
 	if (error != 0)
-		cmdq_error(item, "%s: %s", path, strerror(error));
+		cmdq_error(item, "%s: %s", strerror(error), path);
 	cmdq_continue(item);
 }
 
@@ -78,7 +78,8 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 	int			 flags;
 	const char		*bufname = args_get(args, 'b'), *bufdata;
 	size_t			 bufsize;
-	char			*path, *tmp;
+	char			*path;
+	struct evbuffer		*evb;
 
 	if (bufname == NULL) {
 		if ((pb = paste_get_top(NULL)) == NULL) {
@@ -96,15 +97,17 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (cmd_get_entry(self) == &cmd_show_buffer_entry) {
 		if (c->session != NULL || (c->flags & CLIENT_CONTROL)) {
-			utf8_stravisx(&tmp, bufdata, bufsize,
-			    VIS_OCTAL|VIS_CSTYLE|VIS_TAB);
-			cmdq_print(item, "%s", tmp);
-			free(tmp);
+			evb = evbuffer_new();
+			if (evb == NULL)
+				fatalx("out of memory");
+			evbuffer_add(evb, bufdata, bufsize);
+			cmdq_print_data(item, evb);
+			evbuffer_free(evb);
 			return (CMD_RETURN_NORMAL);
 		}
 		path = xstrdup("-");
 	} else
-		path = format_single_from_target(item, args->argv[0]);
+		path = format_single_from_target(item, args_string(args, 0));
 	if (args_has(args, 'a'))
 		flags = O_APPEND;
 	else

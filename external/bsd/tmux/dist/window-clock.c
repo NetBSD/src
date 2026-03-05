@@ -45,7 +45,7 @@ const struct window_mode window_clock_mode = {
 };
 
 struct window_clock_mode_data {
-	struct screen	        screen;
+	struct screen		screen;
 	time_t			tim;
 	struct event		timer;
 };
@@ -142,7 +142,7 @@ window_clock_timer_callback(__unused int fd, __unused short events, void *arg)
 	t = time(NULL);
 	gmtime_r(&t, &now);
 	gmtime_r(&data->tim, &then);
-	if (now.tm_min == then.tm_min)
+	if (now.tm_sec == then.tm_sec)
 		return;
 	data->tim = t;
 
@@ -207,7 +207,7 @@ window_clock_draw_screen(struct window_mode_entry *wme)
 {
 	struct window_pane		*wp = wme->wp;
 	struct window_clock_mode_data	*data = wme->data;
-	struct screen_write_ctx	 	 ctx;
+	struct screen_write_ctx		 ctx;
 	int				 colour, style;
 	struct screen			*s = &data->screen;
 	struct grid_cell		 gc;
@@ -223,14 +223,21 @@ window_clock_draw_screen(struct window_mode_entry *wme)
 
 	t = time(NULL);
 	tm = localtime(&t);
-	if (style == 0) {
-		strftime(tim, sizeof tim, "%l:%M ", localtime(&t));
+	if (style == 0 || style == 2) {
+		if (style == 2)
+			strftime(tim, sizeof tim, "%l:%M:%S ", localtime(&t));
+		else
+			strftime(tim, sizeof tim, "%l:%M ", localtime(&t));
 		if (tm->tm_hour >= 12)
 			strlcat(tim, "PM", sizeof tim);
 		else
 			strlcat(tim, "AM", sizeof tim);
-	} else
-		strftime(tim, sizeof tim, "%H:%M", tm);
+	} else {
+		if (style == 3)
+			strftime(tim, sizeof tim, "%H:%M:%S", tm);
+		else
+			strftime(tim, sizeof tim, "%H:%M", tm);
+	}
 
 	screen_write_clearscreen(&ctx, 8);
 

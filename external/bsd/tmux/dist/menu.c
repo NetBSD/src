@@ -27,6 +27,11 @@ struct menu_data {
 	struct cmdq_item	*item;
 	int			 flags;
 
+	struct grid_cell	 style;
+	struct grid_cell	 border_style;
+	struct grid_cell	 selected_style;
+	enum box_lines		 border_lines;
+
 	struct cmd_find_state	 fs;
 	struct screen		 s;
 
@@ -55,13 +60,16 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
     struct cmdq_item *qitem, struct client *c, struct cmd_find_state *fs)
 {
 	struct menu_item	*new_item;
-	const char		*key, *cmd;
-	char			*s, *name;
-	u_int			 width;
+	const char		*key = NULL, *cmd, *suffix = "";
+	char			*s, *trimmed, *name;
+	u_int			 width, max_width;
 	int			 line;
+	size_t			 keylen, slen;
 
 	line = (item == NULL || item->name == NULL || *item->name == '\0');
 	if (line && menu->count == 0)
+		return;
+	if (line && menu->items[menu->count - 1].name == NULL)
 		return;
 
 	menu->items = xreallocarray(menu->items, menu->count + 1,
@@ -80,11 +88,36 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 		menu->count--;
 		return;
 	}
+	max_width = c->tty.sx - 4;
+
+	slen = strlen(s);
 	if (*s != '-' && item->key != KEYC_UNKNOWN && item->key != KEYC_NONE) {
 		key = key_string_lookup_key(item->key, 0);
-		xasprintf(&name, "%s#[default] #[align=right](%s)", s, key);
+		keylen = strlen(key) + 3; /* 3 = space and two brackets */
+
+		/*
+		 * Add the key if it is shorter than a quarter of the available
+		 * space or there is space for the entire item text and the
+		 * key.
+		 */
+		if (keylen <= max_width / 4)
+			max_width -= keylen;
+		else if (keylen >= max_width || slen >= max_width - keylen)
+			key = NULL;
+	}
+
+	if (slen > max_width) {
+		max_width--;
+		suffix = ">";
+	}
+	trimmed = format_trim_right(s, max_width);
+	if (key != NULL) {
+		xasprintf(&name, "%s%s#[default] #[align=right](%s)",
+		    trimmed, suffix, key);
 	} else
-		xasprintf(&name, "%s", s);
+		xasprintf(&name, "%s%s", trimmed, suffix);
+	free(trimmed);
+
 	new_item->name = name;
 	free(s);
 
@@ -100,6 +133,8 @@ menu_add_item(struct menu *menu, const struct menu_item *item,
 	new_item->key = item->key;
 
 	width = format_width(new_item->name);
+	if (*new_item->name == '-')
+		width--;
 	if (width > menu->width)
 		menu->width = width;
 }
@@ -131,30 +166,53 @@ menu_free(struct menu *menu)
 	free(menu);
 }
 
-static struct screen *
-menu_mode_cb(struct client *c, __unused u_int *cx, __unused u_int *cy)
+struct screen *
+menu_mode_cb(__unused struct client *c, void *data, u_int *cx, u_int *cy)
 {
-	struct menu_data	*md = c->overlay_data;
+	struct menu_data	*md = data;
+
+	*cx = md->px + 2;
+	if (md->choice == -1)
+		*cy = md->py;
+	else
+		*cy = md->py + 1 + md->choice;
 
 	return (&md->s);
 }
 
-static void
-menu_draw_cb(struct client *c, __unused struct screen_redraw_ctx *ctx0)
+/* Return parts of the input range which are not obstructed by the menu. */
+void
+menu_check_cb(__unused struct client *c, void *data, u_int px, u_int py,
+    u_int nx, struct overlay_ranges *r)
 {
-	struct menu_data	*md = c->overlay_data;
+	struct menu_data	*md = data;
+	struct menu		*menu = md->menu;
+
+	server_client_overlay_range(md->px, md->py, menu->width + 4,
+	    menu->count + 2, px, py, nx, r);
+}
+
+void
+menu_draw_cb(struct client *c, void *data,
+    __unused struct screen_redraw_ctx *rctx)
+{
+	struct menu_data	*md = data;
 	struct tty		*tty = &c->tty;
 	struct screen		*s = &md->s;
 	struct menu		*menu = md->menu;
 	struct screen_write_ctx	 ctx;
 	u_int			 i, px = md->px, py = md->py;
-	struct grid_cell	 gc;
-
-	style_apply(&gc, c->session->curw->window->options, "mode-style", NULL);
 
 	screen_write_start(&ctx, s);
 	screen_write_clearscreen(&ctx, 8);
-	screen_write_menu(&ctx, menu, md->choice, &gc);
+
+	if (md->border_lines != BOX_LINES_NONE) {
+		screen_write_box(&ctx, menu->width + 4, menu->count + 2,
+		    md->border_lines, &md->border_style, menu->title);
+	}
+
+	screen_write_menu(&ctx, menu, md->choice, md->border_lines,
+	    &md->style, &md->border_style, &md->selected_style);
 	screen_write_stop(&ctx);
 
 	for (i = 0; i < screen_size_y(&md->s); i++) {
@@ -163,10 +221,10 @@ menu_draw_cb(struct client *c, __unused struct screen_redraw_ctx *ctx0)
 	}
 }
 
-static void
-menu_free_cb(struct client *c)
+void
+menu_free_cb(__unused struct client *c, void *data)
 {
-	struct menu_data	*md = c->overlay_data;
+	struct menu_data	*md = data;
 
 	if (md->item != NULL)
 		cmdq_continue(md->item);
@@ -179,10 +237,10 @@ menu_free_cb(struct client *c)
 	free(md);
 }
 
-static int
-menu_key_cb(struct client *c, struct key_event *event)
+int
+menu_key_cb(struct client *c, void *data, struct key_event *event)
 {
-	struct menu_data		*md = c->overlay_data;
+	struct menu_data		*md = data;
 	struct menu			*menu = md->menu;
 	struct mouse_event		*m = &event->m;
 	u_int				 i;
@@ -195,7 +253,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 
 	if (KEYC_IS_MOUSE(event->key)) {
 		if (md->flags & MENU_NOMOUSE) {
-			if (MOUSE_BUTTONS(m->b) != 0)
+			if (MOUSE_BUTTONS(m->b) != MOUSE_BUTTON_1)
 				return (1);
 			return (0);
 		}
@@ -208,7 +266,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 					return (1);
 			} else {
 				if (!MOUSE_RELEASE(m->b) &&
-				    MOUSE_WHEEL(m->b) == 0 &&
+				    !MOUSE_WHEEL(m->b) &&
 				    !MOUSE_DRAG(m->b))
 					return (1);
 			}
@@ -222,7 +280,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 			if (MOUSE_RELEASE(m->b))
 				goto chosen;
 		} else {
-			if (MOUSE_WHEEL(m->b) == 0 && !MOUSE_DRAG(m->b))
+			if (!MOUSE_WHEEL(m->b) && !MOUSE_DRAG(m->b))
 				goto chosen;
 		}
 		md->choice = m->y - (md->py + 1);
@@ -240,6 +298,7 @@ menu_key_cb(struct client *c, struct key_event *event)
 		}
 	}
 	switch (event->key & ~KEYC_MASK_FLAGS) {
+	case KEYC_BTAB:
 	case KEYC_UP:
 	case 'k':
 		if (old == -1)
@@ -276,36 +335,73 @@ menu_key_cb(struct client *c, struct key_event *event)
 		} while ((name == NULL || *name == '-') && md->choice != old);
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		return (0);
-	case 'g':
 	case KEYC_PPAGE:
-	case '\002': /* C-b */
-		if (md->choice > 5)
-			md->choice -= 5;
-		else
+	case 'b'|KEYC_CTRL:
+		if (md->choice < 6)
 			md->choice = 0;
-		while (md->choice != count && (name == NULL || *name == '-'))
+		else {
+			i = 5;
+			while (i > 0) {
+				md->choice--;
+				name = menu->items[md->choice].name;
+				if (md->choice != 0 &&
+				    (name != NULL && *name != '-'))
+					i--;
+				else if (md->choice == 0)
+					break;
+			}
+		}
+		c->flags |= CLIENT_REDRAWOVERLAY;
+		break;
+	case KEYC_NPAGE:
+		if (md->choice > count - 6) {
+			md->choice = count - 1;
+			name = menu->items[md->choice].name;
+		} else {
+			i = 5;
+			while (i > 0) {
+				md->choice++;
+				name = menu->items[md->choice].name;
+				if (md->choice != count - 1 &&
+				    (name != NULL && *name != '-'))
+					i--;
+				else if (md->choice == count - 1)
+					break;
+			}
+		}
+		while (name == NULL || *name == '-') {
+			md->choice--;
+			name = menu->items[md->choice].name;
+		}
+		c->flags |= CLIENT_REDRAWOVERLAY;
+		break;
+	case 'g':
+	case KEYC_HOME:
+		md->choice = 0;
+		name = menu->items[md->choice].name;
+		while (name == NULL || *name == '-') {
 			md->choice++;
-		if (md->choice == count)
-			md->choice = -1;
+			name = menu->items[md->choice].name;
+		}
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		break;
 	case 'G':
-	case KEYC_NPAGE:
-		if (md->choice > count - 6)
-			md->choice = count - 1;
-		else
-			md->choice += 5;
-		while (md->choice != -1 && (name == NULL || *name == '-'))
+	case KEYC_END:
+		md->choice = count - 1;
+		name = menu->items[md->choice].name;
+		while (name == NULL || *name == '-') {
 			md->choice--;
+			name = menu->items[md->choice].name;
+		}
 		c->flags |= CLIENT_REDRAWOVERLAY;
 		break;
-	case '\006': /* C-f */
+	case 'f'|KEYC_CTRL:
 		break;
 	case '\r':
 		goto chosen;
 	case '\033': /* Escape */
-	case '\003': /* C-c */
-	case '\007': /* C-g */
+	case 'c'|KEYC_CTRL:
+	case 'g'|KEYC_CTRL:
 	case 'q':
 		return (1);
 	}
@@ -342,54 +438,151 @@ chosen:
 	return (1);
 }
 
-int
-menu_display(struct menu *menu, int flags, struct cmdq_item *item, u_int px,
-    u_int py, struct client *c, struct cmd_find_state *fs, menu_choice_cb cb,
+static void
+menu_resize_cb(struct client *c, void *data)
+{
+	struct menu_data	*md = data;
+	u_int			 nx, ny, w, h;
+
+	if (md == NULL)
+		return;
+
+	nx = md->px;
+	ny = md->py;
+
+	w = md->menu->width + 4;
+	h = md->menu->count + 2;
+
+	if (nx + w > c->tty.sx) {
+		if (c->tty.sx <= w)
+			nx = 0;
+		else
+			nx = c->tty.sx - w;
+	}
+
+	if (ny + h > c->tty.sy) {
+		if (c->tty.sy <= h)
+			ny = 0;
+		else
+			ny = c->tty.sy - h;
+	}
+	md->px = nx;
+	md->py = ny;
+}
+
+static void
+menu_set_style(struct client *c, struct grid_cell *gc, const char *style,
+    const char *option)
+{
+	struct style	 sytmp;
+	struct options	*o = c->session->curw->window->options;
+
+	memcpy(gc, &grid_default_cell, sizeof *gc);
+	style_apply(gc, o, option, NULL);
+	if (style != NULL) {
+		style_set(&sytmp, &grid_default_cell);
+		if (style_parse(&sytmp, gc, style) == 0) {
+			gc->fg = sytmp.gc.fg;
+			gc->bg = sytmp.gc.bg;
+		}
+	}
+}
+
+struct menu_data *
+menu_prepare(struct menu *menu, int flags, int starting_choice,
+    struct cmdq_item *item, u_int px, u_int py, struct client *c,
+    enum box_lines lines, const char *style, const char *selected_style,
+    const char *border_style, struct cmd_find_state *fs, menu_choice_cb cb,
     void *data)
 {
 	struct menu_data	*md;
-	u_int			 i;
+	int			 choice;
 	const char		*name;
+	struct options		*o = c->session->curw->window->options;
 
 	if (c->tty.sx < menu->width + 4 || c->tty.sy < menu->count + 2)
-		return (-1);
+		return (NULL);
 	if (px + menu->width + 4 > c->tty.sx)
 		px = c->tty.sx - menu->width - 4;
 	if (py + menu->count + 2 > c->tty.sy)
 		py = c->tty.sy - menu->count - 2;
 
+	if (lines == BOX_LINES_DEFAULT)
+		lines = options_get_number(o, "menu-border-lines");
+
 	md = xcalloc(1, sizeof *md);
 	md->item = item;
 	md->flags = flags;
+	md->border_lines = lines;
+
+	menu_set_style(c, &md->style, style, "menu-style");
+	menu_set_style(c, &md->selected_style, selected_style,
+	    "menu-selected-style");
+	menu_set_style(c, &md->border_style, border_style, "menu-border-style");
 
 	if (fs != NULL)
 		cmd_find_copy_state(&md->fs, fs);
 	screen_init(&md->s, menu->width + 4, menu->count + 2, 0);
 	if (~md->flags & MENU_NOMOUSE)
-		md->s.mode |= MODE_MOUSE_ALL;
+		md->s.mode |= (MODE_MOUSE_ALL|MODE_MOUSE_BUTTON);
 	md->s.mode &= ~MODE_CURSOR;
 
 	md->px = px;
 	md->py = py;
 
 	md->menu = menu;
+	md->choice = -1;
+
 	if (md->flags & MENU_NOMOUSE) {
-		for (i = 0; i < menu->count; i++) {
-			name = menu->items[i].name;
-			if (name != NULL && *name != '-')
-				break;
+		if (starting_choice >= (int)menu->count) {
+			starting_choice = menu->count - 1;
+			choice = starting_choice + 1;
+			for (;;) {
+				name = menu->items[choice - 1].name;
+				if (name != NULL && *name != '-') {
+					md->choice = choice - 1;
+					break;
+				}
+				if (--choice == 0)
+					choice = menu->count;
+				if (choice == starting_choice + 1)
+					break;
+			}
+		} else if (starting_choice >= 0) {
+			choice = starting_choice;
+			for (;;) {
+				name = menu->items[choice].name;
+				if (name != NULL && *name != '-') {
+					md->choice = choice;
+					break;
+				}
+				if (++choice == (int)menu->count)
+					choice = 0;
+				if (choice == starting_choice)
+					break;
+			}
 		}
-		if (i != menu->count)
-			md->choice = i;
-		else
-			md->choice = -1;
-	} else
-		md->choice = -1;
+	}
 
 	md->cb = cb;
 	md->data = data;
+	return (md);
+}
 
+int
+menu_display(struct menu *menu, int flags, int starting_choice,
+    struct cmdq_item *item, u_int px, u_int py, struct client *c,
+    enum box_lines lines, const char *style, const char *selected_style,
+    const char *border_style, struct cmd_find_state *fs, menu_choice_cb cb,
+    void *data)
+{
+	struct menu_data	*md;
+
+	md = menu_prepare(menu, flags, starting_choice, item, px, py, c, lines,
+	    style, selected_style, border_style, fs, cb, data);
+	if (md == NULL)
+		return (-1);
 	server_client_set_overlay(c, 0, NULL, menu_mode_cb, menu_draw_cb,
-	    menu_key_cb, menu_free_cb, md);
+	    menu_key_cb, menu_free_cb, menu_resize_cb, md);
 	return (0);
 }
