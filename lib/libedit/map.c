@@ -1,4 +1,4 @@
-/*	$NetBSD: map.c,v 1.59 2026/03/04 10:31:46 christos Exp $	*/
+/*	$NetBSD: map.c,v 1.60 2026/03/05 13:41:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: map.c,v 1.59 2026/03/04 10:31:46 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.60 2026/03/05 13:41:25 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -962,12 +962,12 @@ map_end(EditLine *el)
 	el->el_map.emacs = NULL;
 	el->el_map.vic = NULL;
 	el->el_map.vii = NULL;
-	el_free(el->el_map.help);
-	el->el_map.help = NULL;
 	for (size_t nf = EL_NUM_FCNS; nf < el->el_map.nfunc; nf++) {
 		el_free((void *)(intptr_t)el->el_map.help[nf].name);
 		el_free((void *)(intptr_t)el->el_map.help[nf].description);
 	}
+	el_free(el->el_map.help);
+	el->el_map.help = NULL;
 	el_free(el->el_map.func);
 	el->el_map.func = NULL;
 }
