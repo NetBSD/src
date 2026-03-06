@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3234 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3235 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -186,3 +186,11 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[yamt 20260220]
 	powerpc: Add kernel crash dump support for OEA platforms.
 		[jmcneill 20260225]
+	pkg_add(1): Import pkg_install-20260226. [bsiegert 20260228]
+	nc(1): Add -E to limit number of net packets sent/recieved.
+		[kre 20260301]
+	i386, amd64: Treat Time Stamp Counter as being a lower quality
+		clock source when running as a NVMM guest.
+		[yamt 20260301]
+	zfs: Various reliability improvements. [yamt 20260301]
+	zfs: Reject read(2) on directories. [yamt 20260301]
