@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.56 2025/07/01 19:55:15 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.57 2026/03/06 07:04:05 joe Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -1252,6 +1252,7 @@ _npf_table_build_const(nl_table_t *tl)
 		free(buf);
 		goto out;
 	}
+	memcpy(buf, cdb, len);
 	munmap(cdb, len);
 
 	/*
@@ -1259,6 +1260,9 @@ _npf_table_build_const(nl_table_t *tl)
 	 */
 	nvlist_move_binary(tl->table_dict, "data", buf, len);
 	error = nvlist_error(tl->table_dict);
+	if (!error) {
+		nvlist_free(tl->table_dict, "entries");
+	}
 out:
 	if (fd != -1) {
 		close(fd);
