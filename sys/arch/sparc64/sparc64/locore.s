@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.438 2025/11/04 20:51:49 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.439 2026/03/07 20:48:26 palle Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1095,7 +1095,8 @@ _C_LABEL(trapbase_sun4v):
 	VTRAP(T_TEXTFAULT, sun4v_tl0_itsb_miss)			! 0x009 - inst MMU miss
 	sun4v_trap_entry 26					! 0x00a-0x023
 	CLEANWIN0						! 0x24-0x27 = clean window
-	sun4v_trap_entry 9					! 0x028-0x030			
+	sun4v_trap_entry 8					! 0x028-0x02f			
+	VTRAP(T_DATAFAULT, sun4v_datatrap)	! 0x030 = data access exception (UA 2005)
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
 	sun4v_trap_entry 2					! 0x032-0x033
 	TRAP(T_ALIGN)						! 0x034 = address alignment error
