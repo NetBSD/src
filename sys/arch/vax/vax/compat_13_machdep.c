@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_machdep.c,v 1.6 2018/12/29 11:30:12 maxv Exp $	*/
+/*	$NetBSD: compat_13_machdep.c,v 1.7 2026/03/07 19:12:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.6 2018/12/29 11:30:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_13_machdep.c,v 1.7 2026/03/07 19:12:58 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -191,7 +191,7 @@ setupstack_oldsigcontext(const struct ksiginfo *ksi, const sigset_t *mask,
 	mutex_exit(p->p_lock);
 
 	/* Point stack pointer at pc in trampoline.  */
-	sp =- 8;
+	sp -= 8;
 
 	error = copyout(&tramp, (char *)tramp.scp - sizeof(tramp), sizeof(tramp)) != 0 ||
 	    copyout(&sigctx, (void *)tramp.scp, sizeof(sigctx)) != 0;
