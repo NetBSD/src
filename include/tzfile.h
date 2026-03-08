@@ -1,4 +1,4 @@
-/*	$NetBSD: tzfile.h,v 1.15 2025/12/18 14:01:49 christos Exp $	*/
+/*	$NetBSD: tzfile.h,v 1.16 2026/03/08 21:05:43 christos Exp $	*/
 
 /* Layout and location of TZif files.  */
 
@@ -106,23 +106,25 @@ struct tzhead {
 */
 
 #ifndef TZ_MAX_TIMES
-/* This must be at least 242 for Europe/London with 'zic -b fat'.  */
+/* The following limit applies to localtime.c; zic has no such limit.
+   The limit must be at least 310 for Asia/Hebron with 'zic -b fat'.  */
 # define TZ_MAX_TIMES 2000
 #endif /* !defined TZ_MAX_TIMES */
 
 #ifndef TZ_MAX_TYPES
 /* This must be at least 18 for Europe/Vilnius with 'zic -b fat'.  */
-# define TZ_MAX_TYPES 256 /* Limited by what (unsigned char)'s can hold */
+# define TZ_MAX_TYPES 256 /* Limited to 256 by Internet RFC 9636.  */
 #endif /* !defined TZ_MAX_TYPES */
 
 #ifndef TZ_MAX_CHARS
 /* This must be at least 40 for America/Anchorage.  */
-# define TZ_MAX_CHARS 50	/* Maximum number of abbreviation characters */
-				/* (limited by what unsigned chars can hold) */
+# define TZ_MAX_CHARS 256	/* Maximum number of abbreviation characters */
+				/* (limited to 256 by Internet RFC 9636) */
 #endif /* !defined TZ_MAX_CHARS */
 
 #ifndef TZ_MAX_LEAPS
-/* This must be at least 27 for leap seconds from 1972 through mid-2023.
+/* The following limit applies to localtime.c; zic has no such limit.
+   The limit must be at least 27 for leap seconds from 1972 through mid-2023.
    There's a plan to discontinue leap seconds by 2035.  */
 # define TZ_MAX_LEAPS 50	/* Maximum number of leap second corrections */
 #endif /* !defined TZ_MAX_LEAPS */
