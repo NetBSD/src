@@ -7,7 +7,7 @@
 #ifdef _KERNEL
 #include <sys/types.h>
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_rid_test.c,v 1.3 2025/07/01 20:19:30 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_rid_test.c,v 1.4 2026/03/08 16:59:24 christos Exp $");
 #endif
 
 #include "npf_impl.h"
@@ -124,7 +124,9 @@ run_raw_testcase(unsigned i, bool verbose)
 		npf_match_info_t mi;
 		int id_match;
 
+		mutex_enter(softnet_lock);
 		id_match = npf_rule_match_rid(rl, npc, t->di);
+		mutex_exit(softnet_lock);
 		error = npf_rule_conclude(rl, &mi);
 		if (verbose)
 			printf("id match is ...%d\n", id_match);
@@ -151,7 +153,9 @@ run_handler_testcase(unsigned i)
 	int error;
 
 	m = mbuf_get_pkt(t->af, IPPROTO_UDP, t->src, t->dst, t->sport, t->dport);
+	mutex_enter(softnet_lock);
 	error = npfk_packet_handler(npf, &m, ifp, t->di);
+	mutex_exit(softnet_lock);
 	if (m) {
 		m_freem(m);
 	}
