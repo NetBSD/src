@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.19 2026/03/08 19:39:10 mlelstv Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.20 2026/03/08 19:40:52 mlelstv Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.16 2025/10/27 03:18:36 kevlo Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ struct rge_rx {
 	struct rge_rx_desc	*rge_rx_list;
 
 	struct mbuf		*rge_head;
-	struct mbuf		**rge_tail;
+	struct mbuf		*rge_tail;
 };
 
 struct rge_queues {
@@ -384,11 +384,7 @@ enum rge_mac_type {
 
 #define RGE_TIMEOUT		100
 
-#if 0
 #define RGE_JUMBO_FRAMELEN	9216
-#else
-#define RGE_JUMBO_FRAMELEN	(MCLBYTES - ETHER_ALIGN)
-#endif
 #define RGE_JUMBO_MTU							\
 	(RGE_JUMBO_FRAMELEN - ETHER_HDR_LEN - ETHER_CRC_LEN - 		\
 	ETHER_VLAN_ENCAP_LEN)

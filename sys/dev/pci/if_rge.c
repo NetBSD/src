@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.48 2026/03/08 19:39:10 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.49 2026/03/08 19:40:52 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.48 2026/03/08 19:39:10 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.49 2026/03/08 19:40:52 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -68,23 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.48 2026/03/08 19:39:10 mlelstv Exp $");
 #include <dev/pci/if_rgereg.h>
 
 #ifdef __NetBSD__
-static struct mbuf *
-MCLGETL(struct rge_softc *sc __unused, int how,
-    u_int size)
-{
-	struct mbuf *m;
-
-	MGETHDR(m, how, MT_DATA);
-	if (m == NULL)
-		return NULL;
-
-	MEXTMALLOC(m, size, how);
-	if ((m->m_flags & M_EXT) == 0) {
-		m_freem(m);
-		return NULL;
-	}
-	return m;
-}
 
 #ifdef NET_MPSAFE
 #define 	RGE_MPSAFE	1
@@ -641,12 +624,20 @@ static int
 rge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rge_softc *sc = ifp->if_softc;
-	//struct ifreq *ifr = (struct ifreq *)data;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > RGE_JUMBO_MTU) {
+			error = EINVAL;
+		} else { 
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;      /* no need to reset (no ENETRESET) */
+		} 
+		break; 
 	case SIOCSIFFLAGS:
 		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
 			break;
@@ -1017,7 +1008,7 @@ rge_stop(struct ifnet *ifp, int disable)
 	if (q->q_rx.rge_head != NULL) {
 		m_freem(q->q_rx.rge_head);
 		q->q_rx.rge_head = NULL;
-		q->q_rx.rge_tail = &q->q_rx.rge_head;
+		q->q_rx.rge_tail = NULL;
 	}
 
 	/* Free the TX list buffers. */
@@ -1425,12 +1416,17 @@ rge_newbuf(struct rge_queues *q, int idx)
 	bus_dmamap_t rxmap;
 	int error __diagused;
 
-	m = MCLGETL(NULL, M_DONTWAIT, RGE_JUMBO_FRAMELEN);
+	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
 	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 
-	m->m_len = m->m_pkthdr.len = RGE_JUMBO_FRAMELEN;
+	MCLGET(m, M_DONTWAIT);
+	if (!(m->m_flags & M_EXT)) {
+		m_freem(m);
+		return (ENOBUFS);
+	}
+	m->m_len = m->m_pkthdr.len = MCLBYTES;
 
 	rxq = &q->q_rx.rge_rxq[idx];
 	rxmap = rxq->rxq_dmamap;
@@ -1458,6 +1454,10 @@ rge_rx_list_init(struct rge_queues *q)
 {
 	unsigned i;
 
+	q->q_rx.rge_rxq_prodidx = q->q_rx.rge_rxq_considx = 0;
+	q->q_rx.rge_head = NULL;
+	q->q_rx.rge_tail = NULL;
+
 	memset(q->q_rx.rge_rx_list, 0, RGE_RX_LIST_SZ);
 
 	for (i = 0; i < RGE_RX_LIST_CNT; i++) {
@@ -1467,10 +1467,6 @@ rge_rx_list_init(struct rge_queues *q)
 			return (ENOBUFS);
 		}
 	}
-
-	q->q_rx.rge_rxq_prodidx = q->q_rx.rge_rxq_considx = 0;
-	q->q_rx.rge_head = NULL;
-	q->q_rx.rge_tail = &q->q_rx.rge_head;;
 
 	return (0);
 }
@@ -1544,11 +1540,12 @@ rge_rxeof(struct rge_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, rxq->rxq_dmamap, 0,
 		    rxq->rxq_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
-		if ((rxstat & (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) !=
-		    (RGE_RDCMDSTS_SOF | RGE_RDCMDSTS_EOF)) {
-			if_statinc(ifp, if_ierrors);
-			rge_load_rxbuf(q, i);
-			continue;
+		if (rxstat & RGE_RDCMDSTS_SOF) {
+			if (q->q_rx.rge_head != NULL) {
+				m_freem(q->q_rx.rge_head);
+				q->q_rx.rge_head = NULL;
+				q->q_rx.rge_tail = NULL;
+			}
 		}
 
 		if (rxstat & RGE_RDCMDSTS_RXERRSUM) {
@@ -1560,7 +1557,7 @@ rge_rxeof(struct rge_softc *sc)
 			if (q->q_rx.rge_head != NULL) {
 				m_freem(q->q_rx.rge_head);
 				q->q_rx.rge_head = NULL;
-				q->q_rx.rge_tail = &q->q_rx.rge_head;
+				q->q_rx.rge_tail = NULL;
 			}
 			rge_load_rxbuf(q, i);
 			continue;
@@ -1575,44 +1572,33 @@ rge_rxeof(struct rge_softc *sc)
 			if (q->q_rx.rge_head != NULL) {
 				m_freem(q->q_rx.rge_head);
 				q->q_rx.rge_head = NULL;
-				q->q_rx.rge_tail = &q->q_rx.rge_head;
+				q->q_rx.rge_tail = NULL;
 			}
 			rge_load_rxbuf(q, i);
 			continue;
 		}
 
+		m->m_pkthdr.len = m->m_len = total_len;
 		m_set_rcvif(m, ifp);
+
 		if (q->q_rx.rge_head != NULL) {
-			m->m_len = total_len;
-			/*
-			 * Special case: if there's 4 bytes or less
-			 * in this buffer, the mbuf can be discarded:
-			 * the last 4 bytes is the CRC, which we don't
-			 * care about anyway.
-			 */
-			if (m->m_len <= ETHER_CRC_LEN) {
-				(*q->q_rx.rge_tail)->m_len -=
-				    (ETHER_CRC_LEN - m->m_len);
-				m_freem(m);
-			} else {
-				m->m_len -= ETHER_CRC_LEN;
-				m->m_flags &= ~M_PKTHDR;
-				(*q->q_rx.rge_tail)->m_next = m;
-			}
-			m = q->q_rx.rge_head;
-			q->q_rx.rge_head = NULL;
-			q->q_rx.rge_tail = &q->q_rx.rge_head;
-			m->m_pkthdr.len = total_len - ETHER_CRC_LEN;
-		} else
-	#if 0
-			m->m_pkthdr.len = m->m_len =
-			    (total_len - ETHER_CRC_LEN);
-	#else
-		{
-			m->m_pkthdr.len = m->m_len = total_len;
-			m->m_flags |= M_HASFCS;
+			m_remove_pkthdr(m);
+			q->q_rx.rge_tail->m_next = m;
+			q->q_rx.rge_tail = m;
+			q->q_rx.rge_head->m_pkthdr.len += m->m_len;
+		} else {
+			q->q_rx.rge_head = m;
+			q->q_rx.rge_tail = m;
 		}
-	#endif
+
+		if ((rxstat & RGE_RDCMDSTS_EOF) == 0)
+			continue;
+
+		m = q->q_rx.rge_head;
+		q->q_rx.rge_head = NULL;
+		q->q_rx.rge_tail = NULL;
+
+		m->m_flags |= M_HASFCS;
 
 		/* Check IP header checksum. */
 		if ((extsts & RGE_RDEXTSTS_IPCSUMERR) &&
