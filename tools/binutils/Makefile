@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.39 2024/07/04 01:19:44 christos Exp $
+#	$NetBSD: Makefile,v 1.39.2.1 2026/03/08 10:56:27 martin Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -15,6 +15,7 @@ BASE_CONFIGURE_ARGS= \
 	--target=${MACHINE_GNU_PLATFORM} \
 	--enable-initfini-array=yes \
 	--enable-default-execstack=no \
+	--with-debuginfod=no \
 	${BRANDING}
 
 CONFIGURE_ARGS=	--disable-nls --disable-werror \
