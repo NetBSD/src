@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.18 2026/01/28 06:15:37 pgoyette Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.19 2026/03/08 19:39:10 mlelstv Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.16 2025/10/27 03:18:36 kevlo Exp $	*/
 
 /*
@@ -73,6 +73,10 @@
 #define RGE_RSS_CTRL		0x4500
 #define RGE_RXQUEUE_CTRL	0x4800
 #define RGE_EEE_TXIDLE_TIMER	0x6048
+#define RGE_SDS_CMD		0x2348
+#define RGE_SDS_ADDR		0x234a
+#define RGE_SDS_DATA_IN		0x234c
+#define RGE_SDS_DATA_OUT	0x234e
 
 /* Flags for register RGE_INT_CFG0 */
 #define RGE_INT_CFG0_EN			0x01
@@ -195,6 +199,10 @@
 
 /* Flags for register RGE_CPLUSCMD */
 #define RGE_CPLUSCMD_RXCSUM	0x0020
+
+/* Flags for register RGE_SDS_CMD */
+#define RGE_SDS_CMD_IN		0x0001
+#define RGE_SDS_WE_IN		0x0002
 
 #define RGE_TX_NSEGS		32
 #define	RGE_TX_LIST_CNT		1024
@@ -417,6 +425,8 @@ struct rge_softc {
 	uint16_t		rge_rcodever;
 	uint32_t		rge_flags;
 #define RGE_FLAG_MSI		0x00000001
+	uint8_t			rge_sfpmode;
+#define RGE_SFPMODE_RTL8127ATF	7
 
 	uint32_t		rge_intrs;
 	uint32_t		rge_tx_ack;

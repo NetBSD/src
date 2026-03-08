@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.47 2026/01/28 06:15:37 pgoyette Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.48 2026/03/08 19:39:10 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.47 2026/01/28 06:15:37 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.48 2026/03/08 19:39:10 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -166,6 +166,10 @@ static void	rge_write_ephy(struct rge_softc *, uint16_t, uint16_t);
 static uint16_t	rge_read_ephy(struct rge_softc *, uint16_t);
 static uint16_t	rge_check_ephy_ext_add(struct rge_softc *, uint16_t);
 static void	rge_r27_write_ephy(struct rge_softc *, uint16_t, uint16_t);
+static int	rge_wait_sds(struct rge_softc *);
+static uint16_t	rge_read_sds(struct rge_softc *, uint16_t);
+static void	rge_write_sds(struct rge_softc *, uint16_t, uint16_t);
+static void	rge_reset_sds(struct rge_softc *);
 static void	rge_write_phy(struct rge_softc *, uint16_t, uint16_t, uint16_t);
 static uint16_t	rge_read_phy(struct rge_softc *, uint16_t, uint16_t);
 static void	rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
@@ -1037,9 +1041,59 @@ rge_stop(struct ifnet *ifp, int disable)
 	}
 }
 
+
+
 /*
  * Set media options.
  */
+static int
+rge_ifmedia_upd_sds(struct rge_softc *sc)
+{
+	struct ifmedia *ifm = &sc->sc_media;
+	uint16_t val;
+
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_1000_LX:
+		/* index 0, page 1, register 31 */
+		val = rge_read_sds(sc, 0x003f);
+		val &= ~0x0008;
+		rge_write_sds(sc, 0x003f, val);
+
+		/* index 0, page 2, register 0 */
+		val = rge_read_sds(sc, 0x0040);
+		val &= ~0x3040;
+		val |= 0x0040;
+		rge_write_sds(sc, 0x0040, val);
+
+		rge_reset_sds(sc);
+		break;
+	case IFM_10G_LR:
+	case IFM_AUTO:
+		rge_reset_sds(sc);
+
+		RGE_WRITE_2(sc, 0x233a, 0x801a);
+		val = RGE_READ_2(sc, 0x233e);
+		val &= 0x3003;
+		val |= 0x1000;
+		RGE_WRITE_2(sc, 0x233e, val);
+
+		rge_write_phy_ocp(sc, 0xc40a, 0x0000);
+		rge_write_phy_ocp(sc, 0xc466, 0x0003);
+		rge_write_phy_ocp(sc, 0xc808, 0x0000);
+		rge_write_phy_ocp(sc, 0xc80a, 0x0000);
+
+		val = rge_read_phy_ocp(sc, 0xc804);
+		val &= ~0x000f;
+		val |= 0x000c;
+		rge_write_phy_ocp(sc, 0xc804, val);
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
 static int
 rge_ifmedia_upd(struct ifnet *ifp)
 {
@@ -1055,6 +1109,9 @@ rge_ifmedia_upd(struct ifnet *ifp)
 	RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0001);
 	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
 		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0007);
+
+	if (sc->rge_sfpmode)
+		return rge_ifmedia_upd_sds(sc);
 
 	val = rge_read_phy_ocp(sc, 0xa5d4);
 	switch (sc->rge_type) {
@@ -1149,18 +1206,25 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		else
 			ifmr->ifm_active |= IFM_HDX;
 
-		if (status & RGE_PHYSTAT_10MBPS)
-			ifmr->ifm_active |= IFM_10_T;
-		else if (status & RGE_PHYSTAT_100MBPS)
-			ifmr->ifm_active |= IFM_100_TX;
-		else if (status & RGE_PHYSTAT_1000MBPS)
-			ifmr->ifm_active |= IFM_1000_T;
-		else if (status & RGE_PHYSTAT_2500MBPS)
-			ifmr->ifm_active |= IFM_2500_T;
-		else if (status & RGE_PHYSTAT_5000MBPS)
-			ifmr->ifm_active |= IFM_5000_T;
-		else if (status & RGE_PHYSTAT_10000MBPS)
-			ifmr->ifm_active |= IFM_10G_T;
+		if (sc->rge_sfpmode) {
+			if (status & RGE_PHYSTAT_1000MBPS)
+				ifmr->ifm_active |= IFM_1000_LX;
+			else if (status & RGE_PHYSTAT_10000MBPS)
+				ifmr->ifm_active |= IFM_10G_LR;
+		} else {
+			if (status & RGE_PHYSTAT_10MBPS)
+				ifmr->ifm_active |= IFM_10_T;
+			else if (status & RGE_PHYSTAT_100MBPS)
+				ifmr->ifm_active |= IFM_100_TX;
+			else if (status & RGE_PHYSTAT_1000MBPS)
+				ifmr->ifm_active |= IFM_1000_T;
+			else if (status & RGE_PHYSTAT_2500MBPS)
+				ifmr->ifm_active |= IFM_2500_T;
+			else if (status & RGE_PHYSTAT_5000MBPS)
+				ifmr->ifm_active |= IFM_5000_T;
+			else if (status & RGE_PHYSTAT_10000MBPS)
+				ifmr->ifm_active |= IFM_10G_T;
+		}
 	}
 }
 
@@ -2134,6 +2198,10 @@ rge_phy_config(struct rge_softc *sc)
 	/* Read ram code version. */
 	rge_write_phy_ocp(sc, 0xa436, 0x801e);
 	sc->rge_rcodever = rge_read_phy_ocp(sc, 0xa438);
+
+	/* Get fiber mode */
+	if (sc->rge_type == MAC_R27)
+		sc->rge_sfpmode = rge_read_mac_ocp(sc, 0xd006);
 
 	switch (sc->rge_type) {
 	case MAC_R25:
@@ -3453,6 +3521,13 @@ rge_patch_phy_mcu(struct rge_softc *sc, int set)
 static void
 rge_add_media_types(struct rge_softc *sc)
 {
+	if (sc->rge_sfpmode) {
+		/* No distinction between SX/SR and LX/LR */
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_1000_LX, 0, NULL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10G_LR, 0, NULL);
+		return;
+	}
+
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_100_TX, 0, NULL);
@@ -3712,6 +3787,63 @@ rge_read_ephy(struct rge_softc *sc, uint16_t reg)
 	DELAY(20);
 
 	return (val & RGE_EPHYAR_DATA_MASK);
+}
+
+static int
+rge_wait_sds(struct rge_softc *sc)
+{
+	uint16_t tmp;
+	int i;
+
+	for (i = 0; i < 100; i++) {
+		tmp = RGE_READ_2(sc, RGE_SDS_CMD);
+		if (tmp & RGE_SDS_CMD_IN)
+			return 1;
+		DELAY(1);
+	}
+
+	return 0;
+}
+
+static uint16_t
+rge_read_sds(struct rge_softc *sc, uint16_t reg)
+{
+	uint16_t val = 0xffff;
+
+	RGE_WRITE_2(sc, RGE_SDS_ADDR, reg);
+	RGE_WRITE_2(sc, RGE_SDS_CMD, RGE_SDS_CMD_IN);
+
+	if (rge_wait_sds(sc))
+		val = RGE_READ_2(sc, RGE_SDS_DATA_OUT);
+
+	return val;
+}
+
+static void
+rge_write_sds(struct rge_softc *sc, uint16_t reg, uint16_t val)
+{
+	RGE_WRITE_2(sc, RGE_SDS_DATA_IN, val);
+	RGE_WRITE_2(sc, RGE_SDS_ADDR, reg);
+	RGE_WRITE_2(sc, RGE_SDS_CMD, RGE_SDS_CMD_IN | RGE_SDS_WE_IN);
+
+	rge_wait_sds(sc);
+}
+
+static void
+rge_reset_sds(struct rge_softc *sc)
+{
+	uint8_t b;
+
+	b = RGE_READ_1(sc, 0x2350);
+	b &= ~0x01;
+	RGE_WRITE_1(sc, 0x2350, b);
+	DELAY(1);
+
+	RGE_WRITE_2(sc, 0x233a, 0x801f);
+	b = RGE_READ_1(sc, 0x2350);
+	b |= 0x01;
+	RGE_WRITE_1(sc, 0x2350, b);
+	DELAY(10);
 }
 
 static uint16_t
