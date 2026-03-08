@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.66 2025/12/18 17:45:30 christos Exp $	*/
+/*	$NetBSD: zdump.c,v 1.67 2026/03/08 21:04:54 christos Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.66 2025/12/18 17:45:30 christos Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.67 2026/03/08 21:04:54 christos Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -128,7 +128,7 @@ size_overflow(void)
 
 /* Return A + B, exiting if the result would overflow either ptrdiff_t
    or size_t.  A and B are both nonnegative.  */
-ATTRIBUTE_PURE_114833 static ptrdiff_t
+ATTRIBUTE_PURE_114833_HACK static ptrdiff_t
 sumsize(size_t a, size_t b)
 {
 #ifdef ckd_add

@@ -1,9 +1,9 @@
-.\"	$NetBSD: tzfile.5,v 1.38 2025/12/18 17:45:29 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.39 2026/03/08 21:04:54 christos Exp $
 .\"
 .\" @(#)tzfile.5	8.3
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
-.Dd December 17, 2025
+.Dd March 8, 2026
 .Dt TZFILE 5
 .Os
 .Sh NAME
@@ -191,8 +191,10 @@ For example, when
 and there is no TZif file
 .Dq EET\*-2EEST ,
 the idea was to adapt the transition times from a TZif file with the
-well-known name "posixrules" that is present only for this purpose and
-is a copy of the file
+well-known name 
+.Dq posixrules
+that was present only for this purpose and
+was a copy of the file
 .Dq Europe/Brussels ,
 a file with a different UT offset.
 POSIX does not specify the details of this obsolete transformational behavior,
@@ -203,7 +205,7 @@ so users desiring (say) Greek time should instead specify
 .Dv TZ="Europe/Athens"
 for better historical coverage, falling back on
 .Dv TZ="EET\*-2EEST,M3.5.0/3,M10.5.0/4"
-if POSIX conformance is required
+if conformance to POSIX.1-2017 or earlier is required
 and older timestamps need not be handled accurately.
 .Pp
 The

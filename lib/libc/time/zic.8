@@ -1,9 +1,9 @@
-.\" $NetBSD: zic.8,v 1.53 2025/12/18 17:45:30 christos Exp $
+.\" $NetBSD: zic.8,v 1.54 2026/03/08 21:04:54 christos Exp $
 .\" @(#)zic.8	8.6
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\" .TH zic 8
-.Dd December 17, 2025
+.Dd March 8, 2026
 .Dt ZIC 8
 .Os
 .Sh NAME
@@ -93,15 +93,10 @@ any already-existing link is removed.
 .It Fl L Ar leapsecondfilename
 Read leap second information from the file with the given name.
 If this option is not used,
-no leap second information appears in output files.
+no leap second information appears in output files;
+this is required by some TZif readers.
 .It Fl p Ar timezone
-Use
-.Ar timezone Ap s
-rules when handling POSIX-format TZ strings like
-.Ql EET\-2EEST
-that lack transition rules.
-.Nm
-will act as if the input contained a link line of the form
+Act as if the input contained a link line of the form
 .Pp
 .D1 Li Link Ar timezone Li posixrules
 .Pp
@@ -109,13 +104,23 @@ Unless
 .Ar timezone
 is
 .Ql \&\- ,
-this option is obsolete and poorly supported.
+this option is obsolete and is no longer supported by most runtimes.
 Among other things it should not be used for timestamps after the year 2037,
 and it should not be combined with
 .Fl b Cm slim
 if
 .Ar timezone Ap s
 transitions are at standard time or Universal Time (UT) instead of local time.
+The option is present only to support obsolete runtimes that used
+.Ar timezone 's
+rules when handling obsolescent
+TZ strings like "AST4ADT" that lack transition rules;
+modern runtimes that support these TZ strings
+typically just use current US rules
+as the TZ strings were mainly used in the US.
+Similarly, any Zone or Link named
+.Dq posixrules
+is obsolete and problematic.
 .It Fl m Ar mode
 Change the output regular files' owner and group to those specified.
 The 

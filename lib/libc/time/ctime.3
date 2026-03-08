@@ -1,9 +1,9 @@
-.\" $NetBSD: ctime.3,v 1.73 2025/12/18 17:45:29 christos Exp $
+.\" $NetBSD: ctime.3,v 1.74 2026/03/08 21:04:54 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 2009-05-17 by Arthur David Olson.
 .\"
-.Dd December 17, 2025
+.Dd March 8, 2026
 .Dt CTIME 3
 .Os
 .Sh NAME
@@ -524,16 +524,13 @@ function returns string containing the name of the timezone given in
 .Fa tz .
 .El
 .Sh FILES
-.Bl -tag -width /usr/share/zoneinfo/posixrules -compact
+.Bl -tag -width /usr/share/zoneinfo/localtime -compact
 .It Pa /etc/localtime
 local timezone file
 .It Pa /usr/share/zoneinfo
 timezone information directory
 .It Pa /usr/share/zoneinfo/localtime
 local timezone file
-.It Pa /usr/share/zoneinfo/posixrules
-default DST rules (obsolete,
-and can cause bugs if present)
 .It Pa /usr/share/zoneinfo/GMT
 for UTC leap seconds
 .El
