@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1467 2026/03/02 14:27:30 gutteridge Exp $
+#      $NetBSD: bsd.own.mk,v 1.1468 2026/03/09 20:27:06 skrll Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -978,8 +978,6 @@ MKKMOD.or1k=	no
 
 # No profiling for or1k or risc-v (yet)
 MKPROFILE.or1k=	no
-MKPROFILE.riscv32=no
-MKPROFILE.riscv64=no
 
 #
 # The m68000 port is incomplete.
