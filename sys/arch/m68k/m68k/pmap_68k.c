@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.49 2025/12/17 07:05:50 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.50 2026/03/09 16:09:17 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.49 2025/12/17 07:05:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.50 2026/03/09 16:09:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2398,6 +2398,8 @@ pmap_remove_all(pmap_t pmap)
 {
 	struct pmap_completion pc;
 	struct pv_entry *pv;
+	struct vm_page *pg;
+	pt_entry_t opte;
 
 	KASSERT(pmap != pmap_kernel());
 
@@ -2434,9 +2436,11 @@ pmap_remove_all(pmap_t pmap)
 	/* Step 3. */
 	while ((pv = LIST_FIRST(&pmap->pm_pvlist)) != NULL) {
 		KASSERT(pv->pv_pmap == pmap);
-		pmap_pv_remove(pmap,
-		    pmap_pa_to_pg(pte_pa(pte_load(pmap_pv_pte(pv)))),
-		    PV_VA(pv), &pc);
+		opte = pte_load(pmap_pv_pte(pv));
+		pg = pmap_pa_to_pg(pte_pa(opte));
+		/* Update cached U/M bits from mapping that's going away. */
+		VM_MDPAGE_ADD_UM(pg, opte);
+		pmap_pv_remove(pmap, pg, PV_VA(pv), &pc);
 	}
 
 	/* Step 4. */
