@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.11 2025/11/05 21:24:48 christos Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.12 2026/03/09 20:29:25 skrll Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -86,16 +86,6 @@ check32() {
 	return 0
 }
 
-check59301() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		return 1
-		;;
-	esac
-	return 0
-}
-
 atf_test_case static_destructor
 static_destructor_head() {
 	atf_set "descr" "compile and run \"hello world\""
@@ -162,15 +152,12 @@ static_destructor_body() {
 }
 
 static_destructor_profile_body() {
-	check59301 || return
-
 	mktest main
 	ccmain -static -pg
 }
 
 static_destructor_profile_32_body() {
 	check32 || return
-	check59301 || return
 
 	mktest main
 	ccmain -static -pg -m32
@@ -198,8 +185,6 @@ static_destructor_pic_32_body() {
 }
 
 static_destructor_pic_profile_body() {
-	check59301 || return
-
 	mktest pic
 	mkmain pic
 	cclib -pg 
@@ -208,7 +193,6 @@ static_destructor_pic_profile_body() {
 
 static_destructor_pic_profile_32_body() {
 	check32 || return
-	check59301 || return
 
 	mktest pic
 	mkmain pic
