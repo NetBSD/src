@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.58 2024/02/18 10:49:43 mrg Exp $
+#	$NetBSD: Makefile.arm,v 1.59 2026/03/09 21:08:13 christos Exp $
 
 # Makefile for NetBSD
 #
@@ -112,8 +112,10 @@ LOADADDRESS?=	0xF0000000
 LINKFLAGS_NORMAL=	-X
 # Strip ARM mapping symbols from the kernel image, as they interfere
 # with ddb, but don't strip them in netbsd.gdb. See Makefile.kern.inc.
+# Also strip useless __func__ symbols to reduce size.
 ARCH_STRIP_SYMBOLS=	--strip-symbol='[$$][atd]' \
-			--strip-symbol='[$$][atd]\.*'
+			--strip-symbol='[$$][atd]\.*' \
+			--strip-symbol='__func__.*'
 
 ##
 ## (6) port specific target dependencies
