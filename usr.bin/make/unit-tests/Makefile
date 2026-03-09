@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.380 2026/03/03 20:03:00 rillig Exp $
+# $NetBSD: Makefile,v 1.381 2026/03/09 20:09:10 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -777,6 +777,7 @@ _SED_CMDS+=	-e 's,^usage: ${TEST_MAKE:T:S,.,\\.,g} ,usage: make ,'
 _SED_CMDS+=	-e 's,${TEST_MAKE:T:S,.,\\.,g}\(\[[1-9][0-9]*\][: ]\),make\1,'
 _SED_CMDS+=	-e 's,<curdir>/,,g'
 _SED_CMDS+=	-e 's,${UNIT_TESTS:S,.,\\.,g}/,,g'
+_SED_CMDS+=	-e 's,\(\.make\)[1-9][0-9]*,\1,g'
 _SED_CMDS+=	-e '/MAKE.VERSION/d'
 _SED_CMDS+=	-e '/EGREP=/d'
 
