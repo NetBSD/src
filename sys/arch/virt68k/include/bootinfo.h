@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.8 2025/11/14 00:44:14 thorpej Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.9 2026/03/09 23:21:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -148,9 +148,6 @@ struct bootinfo_data {
 	int			bootinfo_mem_nsegments_avail;
 	int			bootinfo_total_mem_pages;
 
-	paddr_t			bootinfo_console_addr;
-	bool			bootinfo_console_addr_valid;
-
 	uint32_t		bootinfo_initrd_start;
 	uint32_t		bootinfo_initrd_size;
 };
@@ -164,15 +161,10 @@ struct bootinfo_data *	bootinfo_data(void);
 struct bi_record *	bootinfo_find(uint32_t tag);
 void			bootinfo_enumerate(bool (*)(struct bi_record *, void *),
 					   void *);
-bool			bootinfo_addr_is_console(paddr_t);
 
 void			bootinfo_setup_initrd(void);
 void			bootinfo_setup_rndseed(void);
 bool			bootinfo_getarg(const char *, char *, size_t);
-
-void			bootinfo_md_cnattach(void (*)(bus_space_tag_t,
-						      bus_space_handle_t),
-					     paddr_t, psize_t);
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.23 2025/12/21 07:00:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24 2026/03/09 23:21:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/12/21 07:00:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2026/03/09 23:21:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -99,6 +99,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.23 2025/12/21 07:00:28 skrll Exp $");
 #include <ddb/db_output.h>
 #endif
 
+#include "gftty.h"
+#if NGFTTY > 0
+#include <dev/goldfish/gfttyvar.h>
+#endif  
+
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
 
@@ -145,11 +150,8 @@ const struct pmap_bootmap machine_bootmap[] = {
 };
 #endif
 
-/*
- * Machine-dependent bootinfo "console attach" routine.
- */
-void
-bootinfo_md_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
+static void
+machine_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
     paddr_t addr, paddr_t size)
 {
 	extern struct virt68k_bus_space_tag _mainbus_space_tag;
@@ -170,7 +172,21 @@ void
 machine_init(paddr_t nextpa)
 {
 	struct bootinfo_data *bid = bootinfo_data();
+	struct bi_record *bi __unused;
 	int i;
+
+	/*
+	 * Find the console in the bootinfo and attach it.
+	 */
+#if NGFTTY > 0
+	bi = bootinfo_find(BI_VIRT_GF_TTY_BASE);
+	if (bi != NULL) {
+		struct bi_virt_dev *vd = bootinfo_dataptr(bi);
+		machine_cnattach(gftty_cnattach, vd->vd_mmio_base, 0x1000);
+		printf("Initialized Goldfish TTY console @ 0x%08x\n",
+		    vd->vd_mmio_base);
+	}
+#endif /* NGFTTY > 0 */
 
 	/*
 	 * Pass 2 at parsing bootinfo now that the MMU is enabled.

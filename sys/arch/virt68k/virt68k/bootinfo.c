@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.15 2026/02/19 11:51:14 thorpej Exp $        */
+/*      $NetBSD: bootinfo.c,v 1.16 2026/03/09 23:21:21 thorpej Exp $        */
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.15 2026/02/19 11:51:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.16 2026/03/09 23:21:21 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -48,30 +48,12 @@ __KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.15 2026/02/19 11:51:14 thorpej Exp $"
 #include <machine/bootinfo.h>
 #include <machine/vmparam.h>
 
-#include "gftty.h"
-#if NGFTTY > 0
-#include <dev/goldfish/gfttyvar.h>
-#endif
-
 static struct bi_mem_info	bid_mem_segments[VM_PHYSSEG_MAX];
 static struct bi_mem_info	bid_mem_segments_avail[VM_PHYSSEG_MAX];
 
 static struct bootinfo_data	bootinfo_data_store;
 
 #define	RELOC(v, t)	*((t *)PMAP_BOOTSTRAP_RELOC_GLOB(&(v)))
-
-#if NGFTTY > 0
-static bool
-bootinfo_set_console(struct bootinfo_data *bid, paddr_t pa)
-{
-	if (! bid->bootinfo_console_addr_valid) {
-		bid->bootinfo_console_addr = pa;
-		bid->bootinfo_console_addr_valid = true;
-		return true;
-	}
-	return false;
-}
-#endif
 
 /*
  * We use always_inline for the parsers that are called from
@@ -226,25 +208,6 @@ bootinfo_reserve_initrd(struct bootinfo_data *bid)
 	}
 }
 
-static inline void
-bootinfo_gf_tty_consinit(struct bootinfo_data *bid, struct bi_record *bi)
-{
-#if NGFTTY > 0
-	struct bi_virt_dev *vd = bootinfo_dataptr(bi);
-
-	/*
-	 * vd_mmio_base is the PA, but we're going to run mapped
-	 * VA==PA for devices anyway once the MMU is turned on.
-	 */
-	if (bootinfo_set_console(bid, vd->vd_mmio_base)) {
-		bootinfo_md_cnattach(gftty_cnattach,
-		    vd->vd_mmio_base, 0x1000);
-		printf("Initialized Goldfish TTY console @ 0x%08x\n",
-		    vd->vd_mmio_base);
-	}
-#endif /* NGFTTY > 0 */
-}
-
 /*
  * bootinfo_startup1 --
  *	Parse the boot info during early start-up, before the MMU is
@@ -336,19 +299,6 @@ void
 bootinfo_startup2(paddr_t nextpa)
 {
 	struct bootinfo_data *bid = &bootinfo_data_store;
-	struct bi_record *bi;
-
-	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
-	     bi = bootinfo_next(bi)) {
-		switch (bi->bi_tag) {
-		case BI_VIRT_GF_TTY_BASE:
-			bootinfo_gf_tty_consinit(bid, bi);
-			break;
-
-		default:
-			break;
-		}
-	}
 
 	/*
 	 * Scoot the start of available forward to account for:
@@ -445,20 +395,6 @@ bootinfo_find(uint32_t tag)
 
 	bootinfo_enumerate(bootinfo_find_cb, &ctx);
 	return ctx.result;
-}
-
-/*
- * bootinfo_addr_is_console --
- *	Tests to see if the device at the specified address is
- *	the console device.
- */
-bool
-bootinfo_addr_is_console(paddr_t pa)
-{
-	struct bootinfo_data *bid = &bootinfo_data_store;
-
-	return bid->bootinfo_console_addr_valid &&
-	       bid->bootinfo_console_addr == pa;
 }
 
 /*
