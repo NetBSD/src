@@ -730,25 +730,10 @@ cat <<EOF
   .exception_ranges ${RELOCATING-0} : ONLY_IF_RO { *(.exception_ranges${RELOCATING+*}) }
 
   ${TEXT_PLT+${PLT_NEXT_DATA+${PLT} ${OTHER_PLT_SECTIONS}}}
-EOF
 
-test -n "${RELOCATING}" && cat <<EOF
-  /* Various note sections.  Placed here so that they are always included
-     in the read-only segment and not treated as orphan sections.  The
-     current orphan handling algorithm does place note sections after R/O
-     data, but this is not guaranteed to always be the case.  */
-  .note.build-id :      { *(.note.build-id) } ${REGION}
-  .note.GNU-stack :     { *(.note.GNU-stack) } ${REGION}
-  .note.gnu.property :  { *(.note.gnu.property) } ${REGION}
-  .note.ABI-tag :       { *(.note.ABI-tag) } ${REGION}
-  .note.package :       { *(.note.package) } ${REGION}
-  .note.dlopen :        { *(.note.dlopen) } ${REGION}
-  .note.netbsd.ident :  { *(.note.netbsd.ident) } ${REGION}
-  .note.openbsd.ident : { *(.note.openbsd.ident) } ${REGION}
-
-  ${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (__${ETEXT_NAME} = .);}
-  ${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (_${ETEXT_NAME} = .);}
-  ${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (${ETEXT_NAME} = .);}
+  ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (__${ETEXT_NAME} = .);}}
+  ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (_${ETEXT_NAME} = .);}}
+  ${RELOCATING+${ETEXT_LAST_IN_RODATA_SEGMENT+PROVIDE (${ETEXT_NAME} = .);}}
 EOF
 }
 
