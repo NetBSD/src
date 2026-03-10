@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.1 2026/03/10 01:27:23 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.2 2026/03/10 02:05:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.1 2026/03/10 01:27:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.2 2026/03/10 02:05:30 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -102,9 +102,9 @@ bootinfo_get_mmu(struct bi_record *bi)
 	case BI_MMU_68040:	return MMU_68040;
 	case BI_MMU_68060:	return MMU_68040;	/* XXX */
 	case BI_MMU_SUN3:	return MMU_SUN;
-	case BI_MMU_APOLLO:	/* XXX MMU_HP ??? */
+	case BI_MMU_APOLLO:	/* DN3000 / DN4000 MMU for 68020 */
 	case BI_MMU_COLDFIRE:
-	default:		return -666;
+	default:		return MMU_UNKNOWN;
 	}
 }
 
@@ -238,6 +238,9 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	bid->bootinfo_mem_segments_avail = (struct bi_mem_info *)
 	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments_avail);
 
+	/* Set some defaults that we might fix up later. */
+	RELOC(mmutype, int) = MMU_UNKNOWN;
+
 	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
 	     bi = bootinfo_next(bi)) {
 		switch (bi->bi_tag) {
@@ -263,6 +266,34 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 
 		case BI_RAMDISK:
 			bootinfo_add_initrd(bid, bi);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	if (RELOC(mmutype, int) == MMU_UNKNOWN) {
+		switch (RELOC(cputype, int)) {
+		case CPU_68020:
+			/* Must consult machine type. */
+			switch (bid->bootinfo_machtype) {
+			case BI_MACH_SUN3:
+				RELOC(mmutype, int) = MMU_SUN;
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		case CPU_68030:
+			RELOC(mmutype, int) = MMU_68030;
+			break;
+
+		case CPU_68040:
+		case CPU_68060:		/* XXX */
+			RELOC(mmutype, int) = MMU_68060;
 			break;
 
 		default:
