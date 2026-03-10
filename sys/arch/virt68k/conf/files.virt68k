@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.6 2025/11/20 18:05:00 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.7 2026/03/10 01:27:23 thorpej Exp $
 
 # config file for virt68k
 
@@ -32,7 +32,6 @@ file arch/virt68k/dev/virtctrl.c		virtctrl
 file dev/md_root.c				memory_disk_hooks
 
 file arch/virt68k/virt68k/autoconf.c
-file arch/virt68k/virt68k/bootinfo.c
 file arch/virt68k/virt68k/bus_dma.c
 file arch/virt68k/virt68k/bus_space.c
 file arch/virt68k/virt68k/clock.c
@@ -44,6 +43,7 @@ file arch/virt68k/virt68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb
 file arch/m68k/m68k/kgdb_machdep.c		kgdb
+file arch/m68k/m68k/linux_bootinfo.c
 file arch/m68k/m68k/m68k_trap.c
 file arch/m68k/m68k/mmu_subr.s
 file arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k

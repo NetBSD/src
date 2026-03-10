@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2025/10/04 04:48:12 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.8 2026/03/10 01:27:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2025/10/04 04:48:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.8 2026/03/10 01:27:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2025/10/04 04:48:12 thorpej Exp $")
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/bootinfo.h>
+#include <m68k/linux_bootinfo.h>
 #include <machine/intr.h>
 
 #include <virt68k/dev/mainbusvar.h>

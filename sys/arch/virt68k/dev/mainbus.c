@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.2 2025/09/17 15:16:50 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.3 2026/03/10 01:27:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2025/09/17 15:16:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2026/03/10 01:27:23 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 #define _VIRT68K_BUS_SPACE_PRIVATE
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.2 2025/09/17 15:16:50 thorpej Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <machine/bootinfo.h>
+#include <m68k/linux_bootinfo.h>
 #include <machine/cpu.h>
 
 #include <virt68k/dev/mainbusvar.h>

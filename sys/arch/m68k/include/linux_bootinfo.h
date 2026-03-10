@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.9 2026/03/09 23:21:20 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.h,v 1.1 2026/03/10 01:27:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _VIRT68K_BOOTINFO_H_
-#define	_VIRT68K_BOOTINFO_H_
+#ifndef _M68K_LINUX_BOOTINFO_H_
+#define	_M68K_LINUX_BOOTINFO_H_
 
 /*
  * Linux/m68k boot information structures.  These records are used to
@@ -168,4 +168,4 @@ bool			bootinfo_getarg(const char *, char *, size_t);
 
 #endif /* _KERNEL */
 
-#endif /* _VIRT68K_BOOTINFO_H_ */
+#endif /* _M68K_LINUX_BOOTINFO_H_ */

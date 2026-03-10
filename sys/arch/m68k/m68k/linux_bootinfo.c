@@ -1,4 +1,4 @@
-/*      $NetBSD: bootinfo.c,v 1.16 2026/03/09 23:21:21 thorpej Exp $        */
+/*	$NetBSD: linux_bootinfo.c,v 1.1 2026/03/10 01:27:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.16 2026/03/09 23:21:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.1 2026/03/10 01:27:23 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -45,8 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: bootinfo.c,v 1.16 2026/03/09 23:21:21 thorpej Exp $"
 #include <dev/md.h>
 #endif
 
-#include <machine/bootinfo.h>
-#include <machine/vmparam.h>
+#include <m68k/linux_bootinfo.h>
 
 static struct bi_mem_info	bid_mem_segments[VM_PHYSSEG_MAX];
 static struct bi_mem_info	bid_mem_segments_avail[VM_PHYSSEG_MAX];
