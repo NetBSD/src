@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.107 2024/06/20 15:17:27 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.108 2026/03/10 21:59:29 andvar Exp $      */
 
 /*
  * Copyright (c) 2006,2024 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.107 2024/06/20 15:17:27 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.108 2026/03/10 21:59:29 andvar Exp $");
 
 #include <sys/buf.h>
 #include <sys/condvar.h>
@@ -537,7 +537,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	struct xenbus_device *xbusd = xbdi->xbdi_xbusd;
 
 	XENPRINTF(("xbdback %s: connect\n", xbusd->xbusd_path));
-	/* read comunication informations */
+	/* read communication informations */
 	err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 	    "ring-ref", &ring_ref, 10);
 	if (err) {

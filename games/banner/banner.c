@@ -1,4 +1,4 @@
-/*	$NetBSD: banner.c,v 1.22 2021/05/02 12:50:43 rillig Exp $	*/
+/*	$NetBSD: banner.c,v 1.23 2026/03/10 21:59:28 andvar Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)banner.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: banner.c,v 1.22 2021/05/02 12:50:43 rillig Exp $");
+__RCSID("$NetBSD: banner.c,v 1.23 2026/03/10 21:59:28 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -1160,7 +1160,7 @@ main(int argc, char *argv[])
 			}
 			else {
 				y = data_table[pc+1];
-				/* compensate for narrow teminals */
+				/* compensate for narrow terminals */
 #if 0 /* notdef */
 				x = (x*width + (DWIDTH/2)) / DWIDTH;
 				y = (y*width + (DWIDTH/2)) / DWIDTH;

@@ -1,4 +1,4 @@
-/*	$NetBSD: e500reg.h,v 1.17 2022/05/24 20:50:18 andvar Exp $	*/
+/*	$NetBSD: e500reg.h,v 1.18 2026/03/10 21:59:29 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -360,7 +360,7 @@
 #define	SPMODEn_REV	__PPCBIT(2)	/* Reverse data mode: 0=LSB of the character sent and received first, 1=MSB */
 #define	SPMODEn_DIV16	__PPCBIT(3)	/* Divide by 16: 0=System clock, 1=System clock/16 */
 #define	SPMODEn_PM	__PPCBITS(4,7)	/* Prescale modulus select */
-#define	SPMODEn_ODD	__PPCBIT(8)	/* 0=Even division, 1=Odd dividion */
+#define	SPMODEn_ODD	__PPCBIT(8)	/* 0=Even division, 1=Odd division */
 #define	SPMODEn_POL	__PPCBIT(11)	/* CS polarity: 0=Asserted high/Negated low, 1=Asserted low/Negated high */
 #define	SPMODEn_LEN	__PPCBITS(12,15) /* Character length in bits per character */
 #define	SPMODEn_CSBEF	__PPCBITS(16,19) /* CS assertion time in bits before frame start */

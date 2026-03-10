@@ -1,4 +1,4 @@
-/*	$NetBSD: aml_common.h,v 1.3 2024/01/28 10:09:54 andvar Exp $	*/
+/*	$NetBSD: aml_common.h,v 1.4 2026/03/10 21:59:30 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Mitsuru IWASAKI <iwasaki@FreeBSD.org>
@@ -78,7 +78,7 @@ void		 aml_print_namestring(u_int8_t *);
 void		 aml_print_indent(int);
 
 /*
- * Reigion I/O Stuff for both kernel/userland.
+ * Region I/O Stuff for both kernel/userland.
  */
 
 /*

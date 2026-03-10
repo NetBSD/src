@@ -1,4 +1,4 @@
-/*	$NetBSD: rcons.h,v 1.16 2005/12/11 12:23:44 christos Exp $ */
+/*	$NetBSD: rcons.h,v 1.17 2026/03/10 21:59:29 andvar Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
 struct wsdisplay_emulops;
 
 struct rconsole {
-	/* This section must be filled in by the framebugger device */
+	/* This section must be filled in by the framebuffer device */
 	u_int	rc_maxrow;		/* emulator height of screen */
 	u_int	rc_maxcol;		/* emulator width of screen */
 	void	(*rc_bell)(int);	/* ring the bell */

@@ -1,4 +1,4 @@
-/*      $NetBSD: pciback.c,v 1.23 2022/09/01 15:33:23 bouyer Exp $      */
+/*      $NetBSD: pciback.c,v 1.24 2026/03/10 21:59:29 andvar Exp $      */
 
 /*
  * Copyright (c) 2009 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.23 2022/09/01 15:33:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciback.c,v 1.24 2026/03/10 21:59:29 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -560,7 +560,7 @@ pciback_xenbus_frontend_changed(void *arg, XenbusState new_state)
 	case XenbusStateConnected:
 		break;
 	case XenbusStateInitialised:
-		/* read comunication informations */
+		/* read communication informations */
 		err = xenbus_read_ul(NULL, xbusd->xbusd_otherend,
 		    "pci-op-ref", &shared_ref, 10);
 		if (err) {

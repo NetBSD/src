@@ -1,4 +1,4 @@
-/*	$NetBSD: logpage.c,v 1.11 2023/02/02 08:21:32 mlelstv Exp $	*/
+/*	$NetBSD: logpage.c,v 1.12 2026/03/10 21:59:29 andvar Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: logpage.c,v 1.11 2023/02/02 08:21:32 mlelstv Exp $");
+__RCSID("$NetBSD: logpage.c,v 1.12 2026/03/10 21:59:29 andvar Exp $");
 #if 0
 __FBSDID("$FreeBSD: head/sbin/nvmecontrol/logpage.c 329824 2018-02-22 13:32:31Z wma $");
 #endif
@@ -471,7 +471,7 @@ print_intel_add_smart(const struct nvm_identify_controller *cdata __unused,
 	 * walker[3] = Normalized Value
 	 * walker[4] = reserved
 	 * walker[5..10] = Little Endian Raw value
-	 *	(or other represenations)
+	 *	(or other representations)
 	 * walker[11] = reserved
 	 */
 	while (walker < end) {

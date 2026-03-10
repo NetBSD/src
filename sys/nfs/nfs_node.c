@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_node.c,v 1.126 2020/05/01 08:43:00 hannken Exp $	*/
+/*	$NetBSD: nfs_node.c,v 1.127 2026/03/10 21:59:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.126 2020/05/01 08:43:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_node.c,v 1.127 2026/03/10 21:59:29 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -117,7 +117,7 @@ nfs_loadvnode(struct mount *mp, struct vnode *vp,
 	const nfsfh_t *fhp = key;
 	struct nfsnode *np;
 
-	/* Aloocate and initialize the nfsnode. */
+	/* Allocate and initialize the nfsnode. */
 	np = pool_get(&nfs_node_pool, PR_WAITOK);
 	memset(np, 0, sizeof *np);
 	if (fhsize > NFS_SMALLFH) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/18 10:34:46 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3 2026/03/10 21:59:30 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,7 @@ typedef struct {
 	unsigned int crit : 1;	/* FS contains a "Critical"? FS */
 	unsigned int used : 1;  /* FS in use */
 	unsigned int      : 7;
-	unsigned int slice : 5;	/* Slice number to assocate with plus one */
+	unsigned int slice : 5;	/* Slice number to associate with plus one */
 	unsigned int part  : 16; /* reserved, but we'll hide disk part here */
     } flags;
     u_int32_t tmade;	/* time FS was created */

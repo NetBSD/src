@@ -1,4 +1,4 @@
-# $NetBSD: t_builtins.sh,v 1.7 2025/12/17 19:10:27 andvar Exp $
+# $NetBSD: t_builtins.sh,v 1.8 2026/03/10 21:59:29 andvar Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -614,7 +614,7 @@ readonly_body() {
 			 unset VAR; eval "$V"; readonly -p;
 			 printf %s\\n "FOUND=${MYVAR-unset&}${MYVAR:-empty}"'
 
-	# don't test stderr, some shells inist on generating a message for an
+	# don't test stderr, some shells insist on generating a message for an
 	# unset of a readonly var (rather than simply having unset make $?=1)
 
 	atf_check -s not-exit:0 -e empty -o empty ${TEST_SH} -c \

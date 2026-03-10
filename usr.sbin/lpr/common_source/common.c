@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.44 2023/05/13 11:48:19 andvar Exp $	*/
+/*	$NetBSD: common.c,v 1.45 2026/03/10 21:59:30 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: common.c,v 1.44 2023/05/13 11:48:19 andvar Exp $");
+__RCSID("$NetBSD: common.c,v 1.45 2026/03/10 21:59:30 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,7 @@ const char	*AF;		/* accounting file */
 long		 BR;		/* baud rate if lp is a tty */
 const char	*CF;		/* name of cifplot filter (per job) */
 const char	*DF;		/* name of tex filter (per job) */
-long		 DU;		/* daeomon user-id */
+long		 DU;		/* daemon user-id */
 long		 FC;		/* flags to clear if lp is a tty */
 const char	*FF;		/* form feed string */
 long		 FS;		/* flags to set if lp is a tty */
@@ -92,7 +92,7 @@ long		 PW;		/* page width */
 long		 PX;		/* page width in pixels */
 long		 PY;		/* page length in pixels */
 const char	*RF;		/* name of fortran text filter (per job) */
-const char	*RG;		/* resricted group */
+const char	*RG;		/* restricted group */
 const char	*RM;		/* remote machine name */
 const char	*RP;		/* remote printer name */
 long		 RS;		/* restricted to those with local accounts */

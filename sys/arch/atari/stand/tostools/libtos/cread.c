@@ -1,4 +1,4 @@
-/*	$NetBSD: cread.c,v 1.10 2009/03/31 11:48:15 tsutsui Exp $	*/
+/*	$NetBSD: cread.c,v 1.11 2026/03/10 21:59:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -87,7 +87,7 @@ static int		get_byte(struct sd *);
 static unsigned long	getLong(struct sd *);
 static void		check_header(struct sd *);
 
-/* XXX - find suitable headerf ile for these: */
+/* XXX - find suitable header file for these: */
 void	*zcalloc(void *, unsigned int, unsigned int);
 void	zcfree(void *, void *);
 void	zmemcpy(unsigned char *, unsigned char *, unsigned int);

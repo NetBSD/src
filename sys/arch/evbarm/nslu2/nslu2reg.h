@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2reg.h,v 1.2 2008/04/28 20:23:17 martin Exp $	*/
+/*	$NetBSD: nslu2reg.h,v 1.3 2026/03/10 21:59:29 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 #define	GPIO_BUZZER	4	/* GPIO[4]: Buzzer [Output] */
 #define	GPIO_POWER_OFF	8	/* GPIO[8]: Power Off [Output, Active high] */
-#define	GPIO_EXP_CLOCK	15	/* GPIO[15]: Expandion bus clock [Output] */
+#define	GPIO_EXP_CLOCK	15	/* GPIO[15]: Expansion bus clock [Output] */
 
 
 /*

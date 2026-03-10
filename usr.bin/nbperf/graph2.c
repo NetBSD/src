@@ -1,4 +1,4 @@
-/*	$NetBSD: graph2.c,v 1.6 2021/01/28 18:52:43 joerg Exp $	*/
+/*	$NetBSD: graph2.c,v 1.7 2026/03/10 21:59:30 andvar Exp $	*/
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph2.c,v 1.6 2021/01/28 18:52:43 joerg Exp $");
+__RCSID("$NetBSD: graph2.c,v 1.7 2026/03/10 21:59:30 andvar Exp $");
 
 #include <err.h>
 #include <inttypes.h>
@@ -200,7 +200,7 @@ SIZED2(_hash)(struct nbperf *nbperf, struct SIZED(graph) *graph)
 			if (j == 1 && e->vertices[0] == e->vertices[1]) {
 				if (!nbperf->allow_hash_fudging)
 					return -1;
-				e->vertices[1] ^= 1; /* toogle bit to differ */
+				e->vertices[1] ^= 1; /* toggle bit to differ */
 				graph->hash_fudge |= 1;
 			}
 #if GRAPH_SIZE == 3

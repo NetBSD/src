@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.58 2025/12/01 07:52:57 andvar Exp $ */
+/* $NetBSD: acpi.c,v 1.59 2026/03/10 21:59:30 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.58 2025/12/01 07:52:57 andvar Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.59 2026/03/10 21:59:30 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -170,7 +170,7 @@ static const char *TCPA_pcclient_strings[] = {
 	"CMOS",
 	"NVRAM",
 	"Option ROM Execute",
-	"Option ROM Configurateion",
+	"Option ROM Configuration",
 	"<undefined>",
 	"Option ROM Microcode Update ",
 	"S-CRTM Version String",
