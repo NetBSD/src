@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.3 2026/03/10 02:07:27 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.4 2026/03/10 13:45:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.3 2026/03/10 02:07:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.4 2026/03/10 13:45:47 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -69,6 +69,7 @@ bootinfo_next(struct bi_record *bi)
 	return (struct bi_record *)addr;
 }
 
+#ifndef __mc68010__
 static inline int __attribute__((always_inline))
 bootinfo_get_cpu(struct bi_record *bi)
 {
@@ -107,6 +108,7 @@ bootinfo_get_mmu(struct bi_record *bi)
 	default:		return MMU_UNKNOWN;
 	}
 }
+#endif /* ! __mc68010__ */
 
 static inline void __attribute__((always_inline))
 bootinfo_add_mem(struct bootinfo_data *bid, struct bi_record *bi)
@@ -240,6 +242,10 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 
 	/* Set some defaults that we might fix up later. */
 	RELOC(mmutype, int) = MMU_UNKNOWN;
+#ifdef __mc68010__
+	RELOC(fputype, int) = FPU_NONE;
+	RELOC(cputype, int) = CPU_68010;
+#endif /* __mc68010__ */
 
 	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
 	     bi = bootinfo_next(bi)) {
@@ -248,6 +254,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 			bid->bootinfo_machtype = bootinfo_get_u32(bi);
 			break;
 
+#ifndef __mc68010__
 		case BI_CPUTYPE:
 			RELOC(cputype, int) = bootinfo_get_cpu(bi);
 			break;
@@ -259,6 +266,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 		case BI_MMUTYPE:
 			RELOC(mmutype, int) = bootinfo_get_mmu(bi);
 			break;
+#endif /* ! __mc68010__ */
 
 		case BI_MEMCHUNK:
 			bootinfo_add_mem(bid, bi);
@@ -273,6 +281,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 		}
 	}
 
+#ifndef __mc68010__
 	if (RELOC(mmutype, int) == MMU_UNKNOWN) {
 		switch (RELOC(cputype, int)) {
 		case CPU_68020:
@@ -300,6 +309,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 			break;
 		}
 	}
+#endif /* ! __mc68010__ */
 
 	/* Set bootinfo_end to be just past the BI_LAST record. */
 	nextpa = (paddr_t)bootinfo_next(bi);
