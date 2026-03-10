@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.382 2026/03/10 05:02:00 sjg Exp $
+# $NetBSD: Makefile,v 1.383 2026/03/10 15:38:26 sjg Exp $
 #
 # Unit tests for make(1)
 #
@@ -707,18 +707,12 @@ clean:
 TEST_MAKE?=	${.MAKE}
 .if ${TEST_MAKE:M/*} == ""
 # we want an absolute path for TEST_MAKE
-# macros from bmake/mk/sys.vars.mk
-
-# type should be a builtin in any sh since about 1980,
-# but sadly there are exceptions!
-.if ${.MAKE.OS:Unknown:NBSD/OS} == ""
-_type_sh = which
+tm!= for d in ${PATH:S,:, ,g:M/*}; do \
+	test -x $$d/${TEST_MAKE} || continue; \
+	echo $$d/${TEST_MAKE}; break; done
+.if ${tm:M/*}
+TEST_MAKE:= ${tm}
 .endif
-# AUTOCONF := ${autoconf:L:${M_whence}}
-M_type = @x@(${_type_sh:Utype} $$x) 2> /dev/null; echo;@:${M_sh1:Ush}:[0]:N* found*:[@]:C,[()],,g
-M_whence = ${M_type}:M/*:[1]
-
-TEST_MAKE:= ${TEST_MAKE:${M_whence}}
 .endif
 
 TOOL_SED?=	sed
