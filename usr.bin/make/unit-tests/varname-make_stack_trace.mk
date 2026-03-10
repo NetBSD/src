@@ -1,4 +1,4 @@
-# $NetBSD: varname-make_stack_trace.mk,v 1.6 2026/03/09 20:09:10 sjg Exp $
+# $NetBSD: varname-make_stack_trace.mk,v 1.7 2026/03/10 04:43:05 sjg Exp $
 #
 # Tests for the MAKE_STACK_TRACE environment variable, which controls whether
 # to print inter-process stack traces that are useful to narrow down where an
@@ -57,4 +57,9 @@ multi-stage-4: .PHONY
 multi-stage-5: .PHONY
 
 ${_make}:
-	@ln -sf ${MAKE} ${.TARGET}
+	@for m in ${MAKE} ${PATH:S,:, ,g:@d@$d/${MAKE}@}; \
+	do \
+	    test -x $$m || continue; \
+	    ln -sf $$m ${.TARGET}; \
+	    break; \
+	done

@@ -1,4 +1,4 @@
-# $NetBSD: opt-jobs-internal.mk,v 1.8 2026/03/09 20:09:10 sjg Exp $
+# $NetBSD: opt-jobs-internal.mk,v 1.9 2026/03/10 04:43:05 sjg Exp $
 #
 # Tests for the (intentionally undocumented) internal -J command line option.
 .if ${DEBUG_TEST:U:M${.PARSEFILE:R}} != ""
@@ -66,4 +66,10 @@ indirect-expr-empty: .PHONY
 	@${MAKE:U} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
 
 ${_make}:
-	@ln -sf ${MAKE} ${.TARGET}
+	@for m in ${MAKE} ${PATH:S,:, ,g:@d@$d/${MAKE}@}; \
+	do \
+	    test -x $$m || continue; \
+	    ln -sf $$m ${.TARGET}; \
+	    break; \
+	done
+
