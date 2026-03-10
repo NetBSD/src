@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.28 2025/12/05 13:52:27 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.29 2026/03/10 01:46:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,7 @@ extern	int mmutype;		/* MMU on this host */
  * values for mmutype (assigned for quick testing).  Assembly
  * code relies on this ordering, so do not change it!
  */
+#define	MMU_UNKNOWN	-4	/* unknown MMU type */
 #define	MMU_68060	-3	/* 68060 on-chip MMU */
 #define	MMU_68040	-2	/* 68040 on-chip MMU */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
