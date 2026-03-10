@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.304 2025/09/25 05:11:25 mrg Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.305 2026/03/10 01:26:17 gutteridge Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -361,9 +361,6 @@ ${_s:T:R}.o: ${_s}
 .include "${S}/conf/cscope.mk"
 .include "${S}/conf/gdbinit.mk"
 .include "${S}/conf/ssp.mk"
-.if "${_SKIP_DTS}" != "yes"
-.include "${S}/conf/dts.mk"
-.endif
 .include "${S}/conf/copts.mk"
 
 ##
