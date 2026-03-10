@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.9 2024/09/15 03:56:57 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.10 2026/03/10 19:46:48 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2005 Izumi Tsutsui.  All rights reserved.
@@ -120,7 +120,7 @@ main(int argc, char **argv)
 		err(1, "`%s' must be a regular file", params->stage1);
 
 	if (params->s1stat.st_size > MACPPC_BOOT_BLOCK_MAX_SIZE)
-		err(1, "primary bootrap `%s' too large (%ld bytes)",
+		err(1, "primary bootstrap `%s' too large (%ld bytes)",
 		    params->stage1, (long)params->s1stat.st_size);
 
 #ifdef DEBUG
