@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.2 2026/03/10 02:05:30 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.3 2026/03/10 02:07:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.2 2026/03/10 02:05:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.3 2026/03/10 02:07:27 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -293,7 +293,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 
 		case CPU_68040:
 		case CPU_68060:		/* XXX */
-			RELOC(mmutype, int) = MMU_68060;
+			RELOC(mmutype, int) = MMU_68040;
 			break;
 
 		default:
