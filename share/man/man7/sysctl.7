@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.168 2026/03/10 21:23:28 andvar Exp $
+.\"	$NetBSD: sysctl.7,v 1.169 2026/03/11 21:46:54 andvar Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1143,7 +1143,7 @@ Maximum socket buffer size in bytes.
 See
 .Xr secmodel_securelevel 9 .
 .It Li kern.sched ( dynamic )
-Influence the scheduling of LWPs, their priorisation and how they are
+Influence the scheduling of LWPs, their prioritisation and how they are
 distributed on and moved between CPUs.
 .Bl -column "kern.sched.balance_period" "integer" "Changeable" -offset indent
 .It Sy Third level name	   Sy Type	 Sy Changeable
@@ -1562,7 +1562,7 @@ probing reachability.
 .It Li arp.nd_retrans
 The number of milliseconds between ARP probes.
 .It Li arp.nd_nud
-If set to non-zero, perform Neighor Unreachability Detection.
+If set to non-zero, perform Neighbor Unreachability Detection.
 .It Li arp.nd_maxnudhint
 Neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
