@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.143 2024/12/08 17:12:01 rillig Exp $ */
+/* $NetBSD: scan.l,v 1.144 2026/03/11 00:46:13 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: scan.l,v 1.143 2024/12/08 17:12:01 rillig Exp $");
+__RCSID("$NetBSD: scan.l,v 1.144 2026/03/11 00:46:13 rillig Exp $");
 #endif
 
 #include "lint1.h"
@@ -56,7 +56,7 @@ punctuator_4	{punctuator_3}|\?|:|::|;|\.\.\.
 punctuator_5	{punctuator_4}|=|\*=|\/=|%=|\+=|-=|<<=|>>=|&=|\^=|\|=
 punctuator_6	{punctuator_5}|,|#|##
 punctuator_7	{punctuator_6}|<:|:>|<%|%>|%:|%:%:
-punctuator	{punctuator_7}|@
+punctuator	{punctuator_7}|$|@
 
 %pointer
 %option nounput

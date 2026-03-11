@@ -1,4 +1,4 @@
-/*	$NetBSD: lex_preprocess.c,v 1.1 2026/03/11 00:43:08 rillig Exp $	*/
+/*	$NetBSD: lex_preprocess.c,v 1.2 2026/03/11 00:46:13 rillig Exp $	*/
 # 3 "lex_preprocess.c"
 
 /*
@@ -15,8 +15,6 @@
 
 // Neither of the following characters is a preprocessing token in strict
 // standard C, but the '$' occurs when generating assembler code.
-// TODO: accept '$' in preprocessing lines
-/* expect+1: error: unknown character \44 [250] */
 #define REGISTER_PREFIX $
 #define BACKTICK /* ` */
 #define COMMERCIAL_AT /* @ */
