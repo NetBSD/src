@@ -1,4 +1,4 @@
-/*	$NetBSD: vif.c,v 1.19 2015/02/05 16:50:19 gdt Exp $	*/
+/*	$NetBSD: vif.c,v 1.20 2026/03/11 21:54:22 andvar Exp $	*/
 
 /*
  * The mrouted program is covered by the license in the accompanying file
@@ -1124,7 +1124,7 @@ update_neighbor(vifi_t vifi, u_int32_t addr, int msgtype, char *p, int datalen, 
 		n->al_genid = genid;
 	    else if (n->al_genid != genid) {
 		logit(LOG_DEBUG, 0,
-		    "new genid neigbor %s on vif %d [old:%x, new:%x]",
+		    "new genid neighbor %s on vif %d [old:%x, new:%x]",
 		    inet_fmt(addr), vifi, n->al_genid, genid);
 
 		n->al_genid = genid;

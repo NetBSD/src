@@ -1,4 +1,4 @@
-/*	$NetBSD: lightbar.c,v 1.2 2025/09/15 06:42:10 macallan Exp $	*/
+/*	$NetBSD: lightbar.c,v 1.3 2026/03/11 21:54:22 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.2 2025/09/15 06:42:10 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.3 2026/03/11 21:54:22 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -123,7 +123,7 @@ lightbar_attach(device_t parent, device_t self, void *aux)
 	sc->sc_baseaddr = ca->ca_baseaddr;
 
 	/*
-	 * default brightnesss for system and user time bar
+	 * default brightness for system and user time bar
 	 * can be changed via sysctl later on
 	 */
 	sc->sc_sys = 2;

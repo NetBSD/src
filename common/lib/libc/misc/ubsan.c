@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.12 2023/12/07 07:10:44 andvar Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.13 2026/03/11 21:54:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.12 2023/12/07 07:10:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.13 2026/03/11 21:54:21 andvar Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.12 2023/12/07 07:10:44 andvar Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.13 2026/03/11 21:54:21 andvar Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -753,7 +753,7 @@ HandleAlignmentAssumption(bool isFatal, struct CAlignmentAssumptionData *pData, 
 	}
 }
 
-/* Definions of public symbols emitted by the instrumentation code */
+/* Definitions of public symbols emitted by the instrumentation code */
 void
 __ubsan_handle_add_overflow(struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS)
 {

@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_exp2.c,v 1.5 2014/03/18 21:52:19 dsl Exp $");
+__RCSID("$NetBSD: s_exp2.c,v 1.6 2026/03/11 21:54:21 andvar Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: src/lib/msun/src/s_exp2.c,v 1.7 2008/02/22 02:27:34 das Exp $");
 #endif
@@ -393,7 +393,7 @@ exp2(double x)
 
 	/*
 	 * Scale by 2**k.
-	 * For 'normal' values of 'k' we just multply be the correct value,
+	 * For 'normal' values of 'k' we just multiply be the correct value,
 	 * but at the extremes this doesn't work and the multiply must
 	 * be split.
 	 */

@@ -1,4 +1,4 @@
-/* $NetBSD: pipe.h,v 1.42 2023/11/02 10:31:55 martin Exp $ */
+/* $NetBSD: pipe.h,v 1.43 2026/03/11 21:54:22 andvar Exp $ */
 
 /*
  * Copyright (c) 1996 John S. Dyson
@@ -109,7 +109,7 @@ struct pipe {
  * KERN_PIPE subtypes
  */
 #define	KERN_PIPE_MAXKVASZ		1	/* maximum kva size (obsolete) */
-#define	KERN_PIPE_LIMITKVA		2	/* limit kva for laons (obsolete) */
+#define	KERN_PIPE_LIMITKVA		2	/* limit kva for loans (obsolete) */
 #define	KERN_PIPE_MAXBIGPIPES		3	/* maximum # of "big" pipes */
 #define	KERN_PIPE_NBIGPIPES		4	/* current number of "big" p. */
 #define	KERN_PIPE_KVASIZE		5	/* current pipe kva size */

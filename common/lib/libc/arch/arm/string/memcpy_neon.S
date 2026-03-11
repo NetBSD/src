@@ -29,7 +29,7 @@
 
 #include <machine/asm.h>
 
-RCSID("$NetBSD: memcpy_neon.S,v 1.3 2025/02/27 08:39:53 andvar Exp $")
+RCSID("$NetBSD: memcpy_neon.S,v 1.4 2026/03/11 21:54:21 andvar Exp $")
 
 	.text
 ENTRY(memcpy)
@@ -103,7 +103,7 @@ ENTRY(memcpy)
 	bne	.Lincongruent		/*   no, load next dword */
 
 	/*
-	 * We are now 64-byte aligneds so all writes should fill one or more
+	 * We are now 64-byte aligned so all writes should fill one or more
 	 * cachelines.  Even if d1 has 7 bytes cached, to write 32 bytes we
 	 * still need to read 4 dwords (3 full dwords and 1 dword for that
 	 * last byte).

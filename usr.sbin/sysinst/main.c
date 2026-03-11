@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.35 2026/03/11 21:54:22 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -110,7 +110,7 @@ const char *err_outofmem;
 extern int log_flip(void);
 #endif
 
-/* Definion for colors */
+/* Definition for colors */
 
 struct {
 	unsigned int bg;
