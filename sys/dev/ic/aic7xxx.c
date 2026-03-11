@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.149 2026/03/11 19:52:01 andvar Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $
+ * $Id: aic7xxx.c,v 1.149 2026/03/11 19:52:01 andvar Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.148 2024/02/02 22:39:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.149 2026/03/11 19:52:01 andvar Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -5395,7 +5395,7 @@ ahc_search_qinfifo(struct ahc_softc *ahc, int target, char channel,
 		scb = ahc_lookup_scb(ahc, ahc->qinfifo[qinstart]);
 
 		if (scb == NULL) {
-			printf("found = %d, qinstart = %d, qinfifionext = %d\n",
+			printf("found = %d, qinstart = %d, qinfifonext = %d\n",
 				found, qinstart, ahc->qinfifonext);
 			panic("First/Second Qinfifo fixup\n");
 		}
