@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.151 2026/03/08 21:04:54 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.152 2026/03/11 14:59:18 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.151 2026/03/08 21:04:54 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.152 2026/03/11 14:59:18 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -167,7 +167,6 @@ static void dounlock(void) { pthread_mutex_unlock(&locallock); }
    negative if known to be single-threaded so no lock is needed.  */
 int
 lock(void)
-/*###170 [cc] multiple definition of `__lcl_lock'; libc_pic.a(compat_localtime.pico):/usr/src/lib/libc/time/localtime.c:170: first defined here%%%*/
 {
   if (!is_threaded())
     return -1;
@@ -176,7 +175,6 @@ lock(void)
 void
 unlock(bool threaded)
 {
-/*###178 [cc] multiple definition of `__lcl_unlock'; libc_pic.a(compat_localtime.pico):/usr/src/lib/libc/time/localtime.c:178: first defined here%%%*/
   if (threaded)
     dounlock();
 }
@@ -1189,7 +1187,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 
 		int_fast64_t prevtr = -1;
 		int_fast32_2s prevcorr = 0;
-		set_leapcount(sp, leapcnt);
+		set_leapcount(sp, (int)leapcnt);
 		sp->timecnt = (int)timecnt;
 		sp->typecnt = (int)typecnt;
 		sp->charcnt = (int)charcnt;
@@ -1238,7 +1236,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 			  return EINVAL;
 
 			ttisp = &sp->ttis[i];
-			ttisp->tt_utoff = utoff;
+			ttisp->tt_utoff = (int)utoff;
 			p += 4;
 			isdst = *p++;
 			if (! (isdst < 2))
@@ -1284,12 +1282,12 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		  if (tr <= TIME_T_MAX) {
 		    struct lsinfo ls;
 		    ls.ls_trans = tr;
-		    ls.ls_corr = corr;
+		    ls.ls_corr = (int)corr;
 		    set_lsinfo(sp, leapcnt, ls);
 		    leapcnt++;
 		  }
 		}
-		set_leapcount(sp, leapcnt);
+		set_leapcount(sp, (int)leapcnt);
 
 		for (i = 0; i < sp->typecnt; ++i) {
 			register struct ttinfo *	ttisp;
