@@ -1,4 +1,4 @@
-/*	$NetBSD: emit.c,v 1.18 2024/06/09 16:49:40 rillig Exp $	*/
+/*	$NetBSD: emit.c,v 1.19 2026/03/11 00:43:08 rillig Exp $	*/
 # 3 "emit.c"
 
 /*
@@ -323,4 +323,26 @@ int
 only_using(void)
 {
 	return used_and_using(only_used());
+}
+
+/*
+ * When a function returns a value and doesn't ever reach the point where it
+ * would return no value, the value-less return doesn't count.
+ */
+
+__attribute__((__noreturn__)) void exit(int);
+
+int maybe_exit(int i);
+
+// FIXME: do not emit that maybe_exit might return void.
+int
+call_maybe_exit(void)
+{
+	return maybe_exit(13);
+}
+
+int
+maybe_exit(int i)
+{
+	exit(1);
 }

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1414 2026/02/28 20:43:28 riastradh Exp $
+# $NetBSD: mi,v 1.1415 2026/03/11 00:43:07 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -7153,6 +7153,7 @@
 ./usr/tests/usr.bin/xlint/lint1/lex_integer_binary.exp		tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer_ilp32.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_integer_ilp32.exp		tests-obsolete		obsolete,atf
+./usr/tests/usr.bin/xlint/lint1/lex_preprocess.c		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_string.c			tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_string.exp			tests-obsolete		obsolete,atf
 ./usr/tests/usr.bin/xlint/lint1/lex_utf8.c			tests-usr.bin-tests	compattestfile,atf

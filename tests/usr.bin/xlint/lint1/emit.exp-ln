@@ -89,3 +89,10 @@ S emit.c
 325 c 0.325 u 14used_and_using f1 I I
 325 c 0.325 u 9only_used f0 I
 323 d 0.323 dr 10only_using F0 I
+
+333 d 0.333 e 4exit F1 I V
+335 d 0.335 e 10maybe_exit F1 I I
+341 c 0.341 p1u 10maybe_exit f1 I I
+339 d 0.339 dr 15call_maybe_exit F0 I
+347 c 0.347 p1i 4exit f1 I V
+345 d 0.345 d 10maybe_exit F1 I I
