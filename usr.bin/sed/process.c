@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.54 2024/09/17 13:34:08 kre Exp $	*/
+/*	$NetBSD: process.c,v 1.55 2026/03/12 19:13:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: process.c,v 1.54 2024/09/17 13:34:08 kre Exp $");
+__RCSID("$NetBSD: process.c,v 1.55 2026/03/12 19:13:11 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/process.c 192732 2009-05-25 06:45:33Z brian $");
 #endif
@@ -64,6 +64,7 @@ static const char sccsid[] = "@(#)process.c	8.6 (Berkeley) 4/20/94";
 #include <unistd.h>
 #include <wchar.h>
 #include <wctype.h>
+#include <util.h>
 
 #include "defs.h"
 #include "extern.h"
@@ -127,7 +128,7 @@ redirect:
 				goto redirect;
 			case 'a':
 				if (appendx >= appendnum)
-					appends = xrealloc(appends,
+					appends = erealloc(appends,
 					    sizeof(struct s_appends) *
 					    (appendnum *= 2));
 				appends[appendx].type = AP_STRING;
@@ -220,7 +221,7 @@ redirect:
 				exit(0);
 			case 'r':
 				if (appendx >= appendnum)
-					appends = xrealloc(appends,
+					appends = erealloc(appends,
 					    sizeof(struct s_appends) *
 					    (appendnum *= 2));
 				appends[appendx].type = AP_FILE;
@@ -395,8 +396,8 @@ substitute(struct s_command *cp)
 	if (re == NULL) {
 		if (defpreg != NULL && cp->u.s->maxbref > defpreg->re_nsub) {
 			linenum = cp->u.s->linenum;
-			errx(1, "%lu: %s: \\%u not defined in the RE",
-					linenum, fname, cp->u.s->maxbref);
+			sederr("\\%u not defined in the RE",
+					cp->u.s->maxbref);
 		}
 	}
 	if (!regexec_e(re, s, 0, 0, psl))
@@ -690,7 +691,7 @@ regexec_e(regex_t *preg, const char *string, int eflags, int nomatch,
 
 	/* Set anchors */
 #ifndef REG_STARTEND
-	buf = xmalloc(slen + 1);
+	buf = emalloc(slen + 1);
 	(void)memcpy(buf, string, slen);
 	buf[slen] = '\0';
 	eval = regexec(defpreg, buf,
@@ -727,7 +728,7 @@ regsub(SPACE *sp, char *string, char *src)
 	/* XXX What is the +1 for? */					\
 	if (sp->len + (reqlen) + 1 >= sp->blen) {			\
 		sp->blen += (reqlen) + 1024;				\
-		sp->space = sp->back = xrealloc(sp->back, sp->blen);	\
+		sp->space = sp->back = erealloc(sp->back, sp->blen);	\
 		dst = sp->space + sp->len;				\
 	}
 
@@ -771,7 +772,7 @@ cspace(SPACE *sp, const char *p, size_t len, enum e_spflag spflag)
 	tlen = sp->len + len + 1;
 	if (tlen > sp->blen) {
 		sp->blen = tlen + 1024;
-		sp->space = sp->back = xrealloc(sp->back, sp->blen);
+		sp->space = sp->back = erealloc(sp->back, sp->blen);
 	}
 
 	if (spflag == REPLACE)

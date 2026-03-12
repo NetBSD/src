@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.15 2014/06/26 02:14:32 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.16 2026/03/12 19:13:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.15 2014/06/26 02:14:32 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.16 2026/03/12 19:13:11 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/misc.c 200462 2009-12-13 03:14:06Z delphij $");
 #endif
@@ -54,50 +54,37 @@ static const char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #include <regex.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
+#include <util.h>
 
 #include "defs.h"
 #include "extern.h"
 
-/*
- * malloc with result test
- */
-void *
-xmalloc(size_t size)
+void
+sederr(const char *fmt, ...)
 {
-	void *p;
+	char buf[1024];
+	va_list ap;
 
-	if ((p = malloc(size)) == NULL)
-		err(1, "malloc(%zu)", size);
-	return p;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	errx(EXIT_FAILURE, "%lu: %s: %s", linenum, fname, buf);
 }
 
-/*
- * realloc with result test
- */
-void *
-xrealloc(void *p, size_t size)
+void
+sedwarn(const char *fmt, ...)
 {
-	if (p == NULL)			/* Compatibility hack. */
-		return (xmalloc(size));
+	char buf[1024];
+	va_list ap;
 
-	if ((p = realloc(p, size)) == NULL)
-		err(1, "realloc(%zu)", size);
-	return p;
+	va_start(ap, fmt);
+	vsnprintf(buf, sizeof(buf), fmt, ap);
+	va_end(ap);
+	warnx("%lu: %s: %s", linenum, fname, buf);
 }
 
-/*
- * realloc with result test
- */
-void *
-xcalloc(size_t c, size_t n)
-{
-	void *p;
-
-	if ((p = calloc(c, n)) == NULL)
-		err(1, "calloc(%zu, %zu)", c, n);
-	return p;
-}
 /*
  * Return a string for a regular expression error passed.  This is overkill,
  * because of the silly semantics of regerror (we can never know the size of
@@ -113,7 +100,7 @@ strregerror(int errcode, regex_t *preg)
 	if (oe != NULL)
 		free(oe);
 	s = regerror(errcode, preg, buf, 0);
-	oe = xmalloc(s);
+	oe = emalloc(s);
 	(void)regerror(errcode, preg, oe, s);
 	return (oe);
 }

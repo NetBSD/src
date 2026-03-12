@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.20 2015/03/12 12:40:41 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2026/03/12 19:13:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -56,6 +56,5 @@ int	 lastline(void);
 void	 process(void);
 void	 resetstate(void);
 char	*strregerror(int, regex_t *);
-void	*xmalloc(size_t);
-void	*xrealloc(void *, size_t);
-void	*xcalloc(size_t, size_t);
+__dead void	sederr(const char *, ...) __printflike(1, 2);
+void	sedwarn(const char *, ...) __printflike(1, 2);

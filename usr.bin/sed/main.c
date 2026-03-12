@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.38 2021/03/11 15:45:55 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.39 2026/03/12 19:13:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 Johann 'Myrkraverk' Oskarsson.
@@ -39,7 +39,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.38 2021/03/11 15:45:55 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.39 2026/03/12 19:13:11 christos Exp $");
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/usr.bin/sed/main.c 252231 2013-06-26 04:14:19Z pfg $");
 #endif
@@ -71,6 +71,7 @@ static const char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/3/94";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include "util.h"
 
 #include "defs.h"
 #include "extern.h"
@@ -159,7 +160,7 @@ main(int argc, char *argv[])
 			break;
 		case 'e':
 			eflag = 1;
-			temp_arg = xmalloc(strlen(optarg) + 2);
+			temp_arg = emalloc(strlen(optarg) + 2);
 			strcpy(temp_arg, optarg);
 			strcat(temp_arg, "\n");
 			add_compunit(CU_STRING, temp_arg);
@@ -494,7 +495,7 @@ add_compunit(enum e_cut type, char *s)
 {
 	struct s_compunit *cu;
 
-	cu = xmalloc(sizeof(struct s_compunit));
+	cu = emalloc(sizeof(struct s_compunit));
 	cu->type = type;
 	cu->s = s;
 	cu->next = NULL;
@@ -510,7 +511,7 @@ add_file(char *s)
 {
 	struct s_flist *fp;
 
-	fp = xmalloc(sizeof(struct s_flist));
+	fp = emalloc(sizeof(struct s_flist));
 	fp->next = NULL;
 	*fl_nextp = fp;
 	fp->fname = s;
