@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.39 2021/02/23 07:13:51 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.40 2026/03/12 05:16:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.39 2021/02/23 07:13:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.40 2026/03/12 05:16:32 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -130,7 +130,7 @@ const struct db_command db_machine_command_table[] = {
 	{ DDB_ADD_CMD("frame",	db_show_frame_cmd,	0,
 			"Displays the contents of a trapframe",
 			"[address]",
-			"   address:\taddress of trapfame to display")},
+			"   address:\taddress of trapframe to display")},
 #ifdef _KERNEL
 	{ DDB_ADD_CMD("reset",	db_reset_cmd,		0,
 			"Reset the system",

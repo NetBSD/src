@@ -1,4 +1,4 @@
-/*	$NetBSD: bds_emul.S,v 1.10 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: bds_emul.S,v 1.11 2026/03/12 05:16:32 andvar Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -588,7 +588,7 @@ bcemul_done:
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	t3, CALLFRAME_RA(sp)
 	REG_S	s0, CALLFRAME_S0(sp)
-	move	s0, a1			# save trapfame
+	move	s0, a1			# save trapframe
 
 	/* Fetch previous branch instruction */
 	REG_PROLOGUE
