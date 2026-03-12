@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.152 2026/03/11 14:59:18 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.153 2026/03/12 13:30:50 christos Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.152 2026/03/11 14:59:18 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.153 2026/03/12 13:30:50 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1283,7 +1283,7 @@ tzloadbody(char const *name, struct state *sp, char tzloadflags,
 		    struct lsinfo ls;
 		    ls.ls_trans = tr;
 		    ls.ls_corr = (int)corr;
-		    set_lsinfo(sp, leapcnt, ls);
+		    set_lsinfo(sp, (int)leapcnt, ls);
 		    leapcnt++;
 		  }
 		}
