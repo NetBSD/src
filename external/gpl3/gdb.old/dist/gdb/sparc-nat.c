@@ -154,9 +154,7 @@ sparc_fetch_inferior_registers (process_stratum_target *proc_target,
 
   if (regnum == SPARC_G0_REGNUM)
     {
-      gdb_byte zero[8] = { 0 };
-
-      regcache->raw_supply (SPARC_G0_REGNUM, &zero);
+      regcache->raw_supply_zeroed (SPARC_G0_REGNUM);
       return;
     }
 

@@ -1,6 +1,6 @@
 /* complete.c -- filename completion for readline. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2021 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -95,7 +95,7 @@ typedef int QSFUNC ();
 /* Most systems don't declare getpwent in <pwd.h> if _POSIX_SOURCE is
    defined. */
 #if defined (HAVE_GETPWENT) && (!defined (HAVE_GETPW_DECLS) || defined (_POSIX_SOURCE))
-extern struct passwd *getpwent PARAMS((void));
+extern struct passwd *getpwent (void);
 #endif /* HAVE_GETPWENT && (!HAVE_GETPW_DECLS || _POSIX_SOURCE) */
 
 /* If non-zero, then this is the address of a function to call when
@@ -114,44 +114,44 @@ rl_compdisp_func_t *rl_completion_display_matches_hook = (rl_compdisp_func_t *)N
 #endif
 
 #if defined (VISIBLE_STATS)
-static int stat_char PARAMS((char *));
+static int stat_char (char *);
 #endif
 
 #if defined (COLOR_SUPPORT)
-static int colored_stat_start PARAMS((const char *));
-static void colored_stat_end PARAMS((void));
-static int colored_prefix_start PARAMS((void));
-static void colored_prefix_end PARAMS((void));
+static int colored_stat_start (const char *);
+static void colored_stat_end (void);
+static int colored_prefix_start (void);
+static void colored_prefix_end (void);
 #endif
 
-static int path_isdir PARAMS((const char *));
+static int path_isdir (const char *);
 
-static char *rl_quote_filename PARAMS((char *, int, char *));
+static char *rl_quote_filename (char *, int, char *);
 
-static void _rl_complete_sigcleanup PARAMS((int, void *));
+static void _rl_complete_sigcleanup (int, void *);
 
-static void set_completion_defaults PARAMS((int));
-static int get_y_or_n PARAMS((int));
-static int _rl_internal_pager PARAMS((int));
-static char *printable_part PARAMS((char *));
-static int fnwidth PARAMS((const char *));
-static int fnprint PARAMS((const char *, int, const char *));
-static int print_filename PARAMS((char *, char *, int));
+static void set_completion_defaults (int);
+static int get_y_or_n (int);
+static int _rl_internal_pager (int);
+static char *printable_part (char *);
+static int fnwidth (const char *);
+static int fnprint (const char *, int, const char *);
+static int print_filename (char *, char *, int);
 
-static char **gen_completion_matches PARAMS((char *, int, int, rl_compentry_func_t *, int, int));
+static char **gen_completion_matches (char *, int, int, rl_compentry_func_t *, int, int);
 
-static char **remove_duplicate_matches PARAMS((char **));
-static void insert_match PARAMS((char *, int, int, char *));
-static int append_to_match PARAMS((char *, int, int, int));
-static void insert_all_matches PARAMS((char **, int, char *));
-static int complete_fncmp PARAMS((const char *, int, const char *, int));
-static void display_matches PARAMS((char **));
-static int compute_lcd_of_matches PARAMS((char **, int, const char *));
-static int postprocess_matches PARAMS((char ***, int));
-static int compare_match PARAMS((char *, const char *));
-static int complete_get_screenwidth PARAMS((void));
+static char **remove_duplicate_matches (char **);
+static void insert_match (char *, int, int, char *);
+static int append_to_match (char *, int, int, int);
+static void insert_all_matches (char **, int, char *);
+static int complete_fncmp (const char *, int, const char *, int);
+static void display_matches (char **);
+static int compute_lcd_of_matches (char **, int, const char *);
+static int postprocess_matches (char ***, int);
+static int compare_match (char *, const char *);
+static int complete_get_screenwidth (void);
 
-static char *make_quoted_replacement PARAMS((char *, int, char *));
+static char *make_quoted_replacement (char *, int, char *);
 
 /* **************************************************************** */
 /*								    */
@@ -304,7 +304,7 @@ const char *rl_basic_quote_characters = "\"'";
 /* The list of characters that signal a break between words for
    rl_complete_internal.  The default list is the contents of
    rl_basic_word_break_characters.  */
-/*const*/ char *rl_completer_word_break_characters = (/*const*/ char *)NULL;
+const char *rl_completer_word_break_characters = 0;
 
 /* Hook function to allow an application to set the completion word
    break characters before readline breaks up the line.  Allows
@@ -757,7 +757,7 @@ fnwidth (const char *string)
   mbstate_t ps;
   int left, w;
   size_t clen;
-  wchar_t wc;
+  WCHAR_T wc;
 
   left = strlen (string) + 1;
   memset (&ps, 0, sizeof (mbstate_t));
@@ -774,7 +774,7 @@ fnwidth (const char *string)
       else
 	{
 #if defined (HANDLE_MULTIBYTE)
-	  clen = mbrtowc (&wc, string + pos, left - pos, &ps);
+	  clen = MBRTOWC (&wc, string + pos, left - pos, &ps);
 	  if (MB_INVALIDCH (clen))
 	    {
 	      width++;
@@ -812,7 +812,7 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
   const char *end;
   size_t tlen;
   int width;
-  wchar_t wc;
+  WCHAR_T wc;
 
   print_len = strlen (to_print);
   end = to_print + print_len + 1;
@@ -835,7 +835,8 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
     colored_stat_start (real_pathname);
 #endif
 
-  if (prefix_bytes && _rl_completion_prefix_display_length > 0)
+  if (prefix_bytes && _rl_completion_prefix_display_length > 0 &&
+      prefix_bytes > _rl_completion_prefix_display_length)
     {
       char ellipsis;
 
@@ -880,7 +881,7 @@ fnprint (const char *to_print, int prefix_bytes, const char *real_pathname)
       else
 	{
 #if defined (HANDLE_MULTIBYTE)
-	  tlen = mbrtowc (&wc, s, end - s, &ps);
+	  tlen = MBRTOWC (&wc, s, end - s, &ps);
 	  if (MB_INVALIDCH (tlen))
 	    {
 	      tlen = 1;
@@ -1078,7 +1079,8 @@ char
 _rl_find_completion_word (int *fp, int *dp)
 {
   int scan, end, found_quote, delimiter, pass_next, isbrk;
-  char quote_char, *brkchars;
+  char quote_char;
+  const char *brkchars;
 
   end = rl_point;
   found_quote = delimiter = 0;
@@ -1321,7 +1323,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
   int v;
   size_t v1, v2;
   mbstate_t ps1, ps2;
-  wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
 #endif
 
   /* If only one match, just use that.  Otherwise, compare each
@@ -1353,8 +1355,8 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 #if defined (HANDLE_MULTIBYTE)
 	    if (MB_CUR_MAX > 1 && rl_byte_oriented == 0)
 	      {
-		v1 = mbrtowc(&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
-		v2 = mbrtowc (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
+		v1 = MBRTOWC (&wc1, match_list[i]+si, strlen (match_list[i]+si), &ps1);
+		v2 = MBRTOWC (&wc2, match_list[i+1]+si, strlen (match_list[i+1]+si), &ps2);
 		if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
 		  {
 		    if (c1 != c2)	/* do byte comparison */
@@ -1364,7 +1366,7 @@ compute_lcd_of_matches (char **match_list, int matches, const char *text)
 		if (_rl_completion_case_fold)
 		  {
 		    wc1 = towlower (wc1);
-		   wc2 = towlower (wc2);
+		    wc2 = towlower (wc2);
 		  }
 		if (wc1 != wc2)
 		  break;
@@ -1547,7 +1549,7 @@ rl_display_match_list (char **matches, int len, int max)
 
       if (common_length > _rl_completion_prefix_display_length && common_length > ELLIPSIS_LEN)
 	max -= common_length - ELLIPSIS_LEN;
-      else
+      else if (_rl_colored_completion_prefix <= 0)
 	common_length = sind = 0;
     }
 #if defined (COLOR_SUPPORT)
@@ -1979,7 +1981,7 @@ compare_match (char *text, const char *match)
     {
       temp = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
       r = strcmp (temp, match);
-      free (temp);
+      xfree (temp);
       return r;
     }      
   return (strcmp (text, match));
@@ -2029,9 +2031,25 @@ rl_complete_internal (int what_to_do)
 
   text = rl_copy_text (start, end);
   matches = gen_completion_matches (text, start, end, our_func, found_quote, quote_char);
+  /* If TEXT contains quote characters, it will be dequoted as part of
+     generating the matches, and the matches will not contain any quote
+     characters. We need to dequote TEXT before performing the comparison.
+     Since compare_match performs the dequoting, and we only want to do it
+     once, we don't call compare_matches after dequoting TEXT; we call
+     strcmp directly. */
   /* nontrivial_lcd is set if the common prefix adds something to the word
      being completed. */
-  nontrivial_lcd = matches && compare_match (text, matches[0]) != 0;
+  if (rl_filename_completion_desired && rl_filename_quoting_desired &&
+      rl_completion_found_quote && rl_filename_dequoting_function)
+    {
+      char *t;
+      t = (*rl_filename_dequoting_function) (text, rl_completion_quote_character);
+      xfree (text);
+      text = t;
+      nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
+    }
+  else
+    nontrivial_lcd = matches && strcmp (text, matches[0]) != 0;
   if (what_to_do == '!' || what_to_do == '@')
     tlen = strlen (text);
   xfree (text);
@@ -2330,7 +2348,7 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 #if defined (HANDLE_MULTIBYTE)
   size_t v1, v2;
   mbstate_t ps1, ps2;
-  wchar_t wc1, wc2;
+  WCHAR_T wc1, wc2;
 #endif
 
 #if defined (HANDLE_MULTIBYTE)
@@ -2357,8 +2375,8 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 	{
 	  do
 	    {
-	      v1 = mbrtowc (&wc1, s1, convlen, &ps1);
-	      v2 = mbrtowc (&wc2, s2, filename_len, &ps2);
+	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
+	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
 	      if (v1 == 0 && v2 == 0)
 		return 1;
 	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
@@ -2407,8 +2425,8 @@ complete_fncmp (const char *convfn, int convlen, const char *filename, int filen
 	{
 	  do
 	    {
-	      v1 = mbrtowc (&wc1, s1, convlen, &ps1);
-	      v2 = mbrtowc (&wc2, s2, filename_len, &ps2);
+	      v1 = MBRTOWC (&wc1, s1, convlen, &ps1);
+	      v2 = MBRTOWC (&wc2, s2, filename_len, &ps2);
 	      if (v1 == 0 && v2 == 0)
 		return 1;
 	      else if (MB_INVALIDCH (v1) || MB_INVALIDCH (v2))
@@ -2524,7 +2542,8 @@ rl_filename_completion_function (const char *text, int state)
 	  temp = tilde_expand (dirname);
 	  xfree (dirname);
 	  dirname = temp;
-	  tilde_dirname = 1;
+	  if (*dirname != '~')
+	    tilde_dirname = 1;	/* indicate successful tilde expansion */
 	}
 
       /* We have saved the possibly-dequoted version of the directory name
@@ -2543,11 +2562,16 @@ rl_filename_completion_function (const char *text, int state)
 	  xfree (users_dirname);
 	  users_dirname = savestring (dirname);
 	}
-      else if (tilde_dirname == 0 && rl_completion_found_quote && rl_filename_dequoting_function)
+      else if (rl_completion_found_quote && rl_filename_dequoting_function)
 	{
-	  /* delete single and double quotes */
+	  /* We already ran users_dirname through the dequoting function.
+	     If tilde_dirname == 1, we successfully performed tilde expansion
+	     on dirname. Now we need to reconcile those results. We either
+	     just copy the already-dequoted users_dirname or tilde expand it
+	     if we tilde-expanded dirname. */
+	  temp = tilde_dirname ? tilde_expand (users_dirname) : savestring (users_dirname);
 	  xfree (dirname);
-	  dirname = savestring (users_dirname);
+	  dirname = temp;
 	}
       directory = opendir (dirname);
 

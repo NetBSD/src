@@ -197,10 +197,10 @@ info_print_args_help (const char *prefix,
 		      bool document_n_flag)
 {
   return xstrprintf (_("\
-%sIf NAMEREGEXP is provided, only prints the %s whose name\n\
-matches NAMEREGEXP.\n\
-If -t TYPEREGEXP is provided, only prints the %s whose type\n\
-matches TYPEREGEXP.  Note that the matching is done with the type\n\
+%sIf NAMEREGEXP is provided, only prints the %s\n\
+whose name matches NAMEREGEXP.\n\
+If -t TYPEREGEXP is provided, only prints the %s\n\
+whose type matches TYPEREGEXP.  Note that the matching is done with the type\n\
 printed by the 'whatis' command.\n\
 By default, the command might produce headers and/or messages indicating\n\
 why no %s can be printed.\n\

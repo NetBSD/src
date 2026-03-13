@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_READ_GDB_INDEX_H
-#define DWARF2_READ_GDB_INDEX_H
+#ifndef GDB_DWARF2_READ_GDB_INDEX_H
+#define GDB_DWARF2_READ_GDB_INDEX_H
 
 #include "gdbsupport/function-view.h"
 
@@ -44,4 +44,4 @@ int dwarf2_read_gdb_index
    get_gdb_index_contents_ftype get_gdb_index_contents,
    get_gdb_index_contents_dwz_ftype get_gdb_index_contents_dwz);
 
-#endif /* DWARF2_READ_GDB_INDEX_H */
+#endif /* GDB_DWARF2_READ_GDB_INDEX_H */

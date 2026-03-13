@@ -199,7 +199,6 @@ SFILES = \
 	$(srcdir)/linux-low.cc \
 	$(srcdir)/linux-m68k-low.cc \
 	$(srcdir)/linux-mips-low.cc \
-	$(srcdir)/linux-nios2-low.cc \
 	$(srcdir)/linux-or1k-low.cc \
 	$(srcdir)/linux-ppc-low.cc \
 	$(srcdir)/linux-riscv-low.cc \
@@ -488,6 +487,7 @@ stamp-xml: $(XML_DIR)/feature_to_c.sh Makefile $(XML_FILES)
 MAKEOVERRIDES =
 
 regdat_sh = $(srcdir)/../gdb/regformats/regdat.sh
+osabi_def = $(srcdir)/../gdbsupport/osabi.def
 
 UST_CFLAGS = \
 	$(ustinc) \
@@ -588,11 +588,11 @@ target/%.o: ../gdb/target/%.c
 # Rules for register format descriptions.  Suffix destination files with
 # -generated to identify and clean them easily.
 
-%-generated.cc: ../gdb/regformats/%.dat $(regdat_sh)
-	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
+%-generated.cc: ../gdb/regformats/%.dat $(osabi_def) $(regdat_sh)
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $(osabi_def) $@
 
-%-generated.cc: ../gdb/regformats/rs6000/%.dat $(regdat_sh)
-	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
+%-generated.cc: ../gdb/regformats/rs6000/%.dat $(osabi_def) $(regdat_sh)
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $(osabi_def) $@
 
 # Rule for gdbreplay.o.  This is the same as COMPILE, but includes common-defs.h
 # instead of server.h.

@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_ENVIRON_H
-#define COMMON_ENVIRON_H
+#ifndef GDBSUPPORT_ENVIRON_H
+#define GDBSUPPORT_ENVIRON_H
 
 #include <vector>
 #include <set>
@@ -100,4 +100,4 @@ private:
   std::set<std::string> m_user_unset_env;
 };
 
-#endif /* COMMON_ENVIRON_H */
+#endif /* GDBSUPPORT_ENVIRON_H */

@@ -19,7 +19,7 @@
 standard_testfile
 
 if { [build_executable "failed to prepare" $testfile $srcfile \
-	  {debug ldflags=-Wl,--build-id}] == -1 } {
+	  {debug build-id}] == -1 } {
     return
 }
 set host_binfile [gdb_remote_download host $binfile]

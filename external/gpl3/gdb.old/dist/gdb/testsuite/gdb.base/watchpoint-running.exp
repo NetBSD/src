@@ -105,7 +105,7 @@ proc test {stop_mode hw} {
 	    # GDB should transparently temporarily pause the inferior,
 	    # to force it to single step, but it doesn't, so the
 	    # thread continues running free.
-	    setup_kfail gdb/111111 *-*-*
+	    setup_kfail gdb/31833 *-*-*
 
 	    # No point waiting too much for output we know isn't
 	    # coming.

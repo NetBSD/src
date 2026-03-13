@@ -588,21 +588,41 @@ evaluate_subexp_do_call (expression *exp, enum noside noside,
 {
   if (callee == NULL)
     error (_("Cannot evaluate function -- may be inlined"));
+
+  type *ftype = callee->type ();
+
+  /* If the callee is a struct, there might be a user-defined function call
+     operator that should be used instead.  */
+  std::vector<value *> vals;
+  if (overload_resolution
+      && exp->language_defn->la_language == language_cplus
+      && check_typedef (ftype)->code () == TYPE_CODE_STRUCT)
+    {
+      /* Include space for the `this' pointer at the start.  */
+      vals.resize (argvec.size () + 1);
+
+      vals[0] = value_addr (callee);
+      for (int i = 0; i < argvec.size (); ++i)
+	vals[i + 1] = argvec[i];
+
+      int static_memfuncp;
+      find_overload_match (vals, "operator()", METHOD, &vals[0], nullptr,
+			   &callee, nullptr, &static_memfuncp, 0, noside);
+      if (!static_memfuncp)
+	argvec = vals;
+
+      ftype = callee->type ();
+    }
+
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       /* If the return type doesn't look like a function type,
 	 call an error.  This can happen if somebody tries to turn
 	 a variable into a function call.  */
 
-      type *ftype = callee->type ();
-
       if (ftype->code () == TYPE_CODE_INTERNAL_FUNCTION)
 	{
-	  /* We don't know anything about what the internal
-	     function might return, but we have to return
-	     something.  */
-	  return value::zero (builtin_type (exp->gdbarch)->builtin_int,
-			     not_lval);
+	  /* The call to call_internal_function below handles noside.  */
 	}
       else if (ftype->code () == TYPE_CODE_XMETHOD)
 	{
@@ -642,7 +662,8 @@ evaluate_subexp_do_call (expression *exp, enum noside noside,
     {
     case TYPE_CODE_INTERNAL_FUNCTION:
       return call_internal_function (exp->gdbarch, exp->language_defn,
-				     callee, argvec.size (), argvec.data ());
+				     callee, argvec.size (), argvec.data (),
+				     noside);
     case TYPE_CODE_XMETHOD:
       return callee->call_xmethod (argvec);
     default:
@@ -666,9 +687,13 @@ operation::evaluate_funcall (struct type *expect_type,
   struct type *type = callee->type ();
   if (type->code () == TYPE_CODE_PTR)
     type = type->target_type ();
+  /* If type is a struct, num_fields would refer to the number of
+     members in the type, not the number of arguments.  */
+  bool type_has_arguments
+    = type->code () == TYPE_CODE_FUNC || type->code () == TYPE_CODE_METHOD;
   for (int i = 0; i < args.size (); ++i)
     {
-      if (i < type->num_fields ())
+      if (type_has_arguments && i < type->num_fields ())
 	vals[i] = args[i]->evaluate (type->field (i).type (), exp, noside);
       else
 	vals[i] = args[i]->evaluate_with_coercion (exp, noside);
@@ -1847,16 +1872,19 @@ eval_op_postdec (struct type *expect_type, struct expression *exp,
     }
 }
 
-/* A helper function for OP_TYPE.  */
+namespace expr
+{
 
 struct value *
-eval_op_type (struct type *expect_type, struct expression *exp,
-	      enum noside noside, struct type *type)
+type_operation::evaluate (struct type *expect_type, struct expression *exp,
+			  enum noside noside)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
-    return value::allocate (type);
+    return value::allocate (std::get<0> (m_storage));
   else
     error (_("Attempt to use a type name as an expression"));
+}
+
 }
 
 /* A helper function for BINOP_ASSIGN_MODIFY.  */
@@ -1929,7 +1957,8 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   if (value_as_long (target) == 0)
     return value_from_longest (long_type, 0);
 
-  if (lookup_minimal_symbol ("objc_msg_lookup", 0, 0).minsym)
+  if (lookup_minimal_symbol (current_program_space, "objc_msg_lookup").minsym
+      != nullptr)
     gnu_runtime = 1;
 
   /* Find the method dispatch (Apple runtime) or method lookup
@@ -2076,7 +2105,7 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 
   /* Found a function symbol.  Now we will substitute its
      value in place of the message dispatcher (obj_msgSend),
-     so that we call the method directly instead of thru
+     so that we call the method directly instead of through
      the dispatcher.  The main reason for doing this is that
      we can now evaluate the return value and parameter values
      according to their known data types, in case we need to

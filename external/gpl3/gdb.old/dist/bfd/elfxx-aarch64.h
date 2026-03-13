@@ -34,27 +34,82 @@ extern void bfd_elf32_aarch64_init_maps
 typedef enum
 {
   PLT_NORMAL	= 0x0,  /* Normal plts.  */
-  PLT_BTI	= 0x1,  /* plts with bti.  */
+  PLT_BTI	= 0x1,  /* plts with BTI.  */
   PLT_PAC	= 0x2,  /* plts with pointer authentication.  */
   PLT_BTI_PAC	= PLT_BTI | PLT_PAC
 } aarch64_plt_type;
 
-/* To indicate if BTI is enabled with/without warning.  */
+/* Indicates whether the linker should generate warnings, errors, or nothing
+   when input objects are missing GNU feature property markings and the output
+   has the markings.  */
 typedef enum
 {
-  BTI_NONE	= 0,  /* BTI is not enabled.  */
-  BTI_WARN	= 1,  /* BTI is enabled with -z force-bti.  */
-} aarch64_enable_bti_type;
+  MARKING_NONE	= 0,  /* Does not emit any warning/error messages.  */
+  MARKING_WARN	= 1,  /* Emit warning when the input objects are missing GNU
+			 feature property markings, and the output has the
+			 markings.  */
+  MARKING_ERROR	= 2,  /* Emit error when the input objects are missing GNU
+			 feature property markings, and the output has the
+			 markings.  */
+} aarch64_feature_marking_report;
 
-/* A structure to encompass all information coming from BTI or PAC
-   related command line options.  This involves the "PLT_TYPE" to determine
-   which version of PLTs to pick and "BTI_TYPE" to determine if
-   BTI should be turned on with any warnings.   */
-typedef struct
+/* To indicate whether GNU_PROPERTY_AARCH64_FEATURE_1_GCS bit is
+   enabled/disabled on the output when -z gcs linker
+   command line option is passed.  */
+typedef enum
 {
+  GCS_NEVER	= 0,  /* gcs is disabled on output.  */
+  GCS_IMPLICIT  = 1,  /* gcs is deduced from input object.  */
+  GCS_ALWAYS	= 2,  /* gsc is enabled on output.  */
+} aarch64_gcs_type;
+
+/* A structure to encompass all information about software protections coming
+   from BTI or PAC related command line options.  */
+struct aarch64_protection_opts
+{
+  /* PLT type to use depending on the selected software proctections.  */
   aarch64_plt_type plt_type;
-  aarch64_enable_bti_type bti_type;
-} aarch64_bti_pac_info;
+
+  /* Report level for BTI issues.  */
+  aarch64_feature_marking_report bti_report;
+
+  /* Look-up mode for GCS property.  */
+  aarch64_gcs_type gcs_type;
+
+  /* Report level for GCS issues.  */
+  aarch64_feature_marking_report gcs_report;
+};
+typedef struct aarch64_protection_opts aarch64_protection_opts;
+
+struct elf_aarch64_local_symbol;
+struct elf_aarch64_obj_tdata
+{
+  struct elf_obj_tdata root;
+
+  /* local symbol descriptors */
+  struct elf_aarch64_local_symbol *locals;
+
+  /* Zero to warn when linking objects with incompatible enum sizes.  */
+  int no_enum_size_warning;
+
+  /* Zero to warn when linking objects with incompatible wchar_t sizes.  */
+  int no_wchar_size_warning;
+
+  /* All GNU_PROPERTY_AARCH64_FEATURE_1_AND properties.  */
+  uint32_t gnu_property_aarch64_feature_1_and;
+
+  /* Software protections options.  */
+  struct aarch64_protection_opts sw_protections;
+
+  /* Number of reported BTI issues.  */
+  int n_bti_issues;
+
+  /* Number of reported GCS issues.  */
+  int n_gcs_issues;
+};
+
+#define elf_aarch64_tdata(bfd)				\
+  ((struct elf_aarch64_obj_tdata *) (bfd)->tdata.any)
 
 /* An enum to define what kind of erratum fixes we should apply.  This gives the
    user a bit more control over the sequences we generate.  */
@@ -67,11 +122,11 @@ typedef enum
 
 extern void bfd_elf64_aarch64_set_options
   (bfd *, struct bfd_link_info *, int, int, int, int, erratum_84319_opts, int,
-   aarch64_bti_pac_info);
+   const aarch64_protection_opts *);
 
 extern void bfd_elf32_aarch64_set_options
   (bfd *, struct bfd_link_info *, int, int, int, int, erratum_84319_opts, int,
-   aarch64_bti_pac_info);
+   const aarch64_protection_opts *);
 
 /* AArch64 stub generation support for ELF64.  Called from the linker.  */
 extern int elf64_aarch64_setup_section_lists
@@ -94,6 +149,17 @@ extern bool elf32_aarch64_size_stubs
    struct bfd_section * (*) (const char *, struct bfd_section *),
    void (*) (void));
 extern bool elf32_aarch64_build_stubs
+  (struct bfd_link_info *);
+
+/* AArch64 relative relocation packing support for ELF64.  */
+extern bool elf64_aarch64_size_relative_relocs
+  (struct bfd_link_info *, bool *);
+extern bool elf64_aarch64_finish_relative_relocs
+  (struct bfd_link_info *);
+/* AArch64 relative relocation packing support for ELF32.  */
+extern bool elf32_aarch64_size_relative_relocs
+  (struct bfd_link_info *, bool *);
+extern bool elf32_aarch64_finish_relative_relocs
   (struct bfd_link_info *);
 
 /* Take the PAGE component of an address or offset.  */
@@ -135,8 +201,7 @@ _bfd_aarch64_elf_write_core_note (bfd *, char *, int *, int, ...);
 #define elf_backend_write_core_note	_bfd_aarch64_elf_write_core_note
 
 extern bfd *
-_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *,
-					    uint32_t *);
+_bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *);
 
 extern enum elf_property_kind
 _bfd_aarch64_elf_parse_gnu_properties (bfd *, unsigned int,
@@ -146,6 +211,12 @@ extern bool
 _bfd_aarch64_elf_merge_gnu_properties (struct bfd_link_info *, bfd *,
 				       elf_property *, elf_property *,
 				       uint32_t);
+
+extern void
+_bfd_aarch64_elf_check_bti_report (struct bfd_link_info *, bfd *);
+
+extern void
+_bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *, bfd *);
 
 extern void
 _bfd_aarch64_elf_link_fixup_gnu_properties (struct bfd_link_info *,

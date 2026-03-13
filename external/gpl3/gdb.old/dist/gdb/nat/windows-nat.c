@@ -172,23 +172,13 @@ windows_process_info::get_exec_module_filename (char *exe_name_ret,
   DWORD cbNeeded;
 
   cbNeeded = 0;
-#ifdef __x86_64__
-  if (wow64_process)
+  BOOL ret = with_context (nullptr, [&] (auto *context)
     {
-      if (!EnumProcessModulesEx (handle,
-				 &dh_buf, sizeof (HMODULE), &cbNeeded,
-				 LIST_MODULES_32BIT)
-	  || !cbNeeded)
-	return 0;
-    }
-  else
-#endif
-    {
-      if (!EnumProcessModules (handle,
-			       &dh_buf, sizeof (HMODULE), &cbNeeded)
-	  || !cbNeeded)
-	return 0;
-    }
+      return enum_process_modules (context, handle, &dh_buf,
+				   sizeof (HMODULE), &cbNeeded);
+    });
+  if (!ret || !cbNeeded)
+    return 0;
 
   /* We know the executable is always first in the list of modules,
      which we just fetched.  So no need to fetch more.  */
@@ -523,41 +513,22 @@ windows_process_info::add_dll (LPVOID load_addr)
   HMODULE *hmodules;
   int i;
 
-#ifdef __x86_64__
-  if (wow64_process)
+  BOOL ret = with_context (nullptr, [&] (auto *context)
     {
-      if (EnumProcessModulesEx (handle, &dummy_hmodule,
-				sizeof (HMODULE), &cb_needed,
-				LIST_MODULES_32BIT) == 0)
-	return;
-    }
-  else
-#endif
-    {
-      if (EnumProcessModules (handle, &dummy_hmodule,
-			      sizeof (HMODULE), &cb_needed) == 0)
-	return;
-    }
-
-  if (cb_needed < 1)
+      return enum_process_modules (context, handle, &dummy_hmodule,
+				   sizeof (HMODULE), &cb_needed);
+    });
+  if (!ret || cb_needed < 1)
     return;
 
   hmodules = (HMODULE *) alloca (cb_needed);
-#ifdef __x86_64__
-  if (wow64_process)
+  ret = with_context (nullptr, [&] (auto *context)
     {
-      if (EnumProcessModulesEx (handle, hmodules,
-				cb_needed, &cb_needed,
-				LIST_MODULES_32BIT) == 0)
-	return;
-    }
-  else
-#endif
-    {
-      if (EnumProcessModules (handle, hmodules,
-			      cb_needed, &cb_needed) == 0)
-	return;
-    }
+      return enum_process_modules (context, handle, hmodules,
+				   cb_needed, &cb_needed);
+    });
+  if (!ret)
+    return;
 
   char system_dir[MAX_PATH];
   char syswow_dir[MAX_PATH];

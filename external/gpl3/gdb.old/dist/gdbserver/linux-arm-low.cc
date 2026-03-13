@@ -361,7 +361,7 @@ get_next_pcs_is_thumb (struct arm_get_next_pcs *self)
 }
 
 /* Read memory from the inferior.
-   BYTE_ORDER is ignored and there to keep compatiblity with GDB's
+   BYTE_ORDER is ignored and there to keep compatibility with GDB's
    read_memory_unsigned_integer. */
 static ULONGEST
 get_next_pcs_read_memory_unsigned_integer (CORE_ADDR memaddr,
@@ -636,7 +636,7 @@ arm_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr,
 	pts[i] = p;
 
 	/* Only update the threads of the current process.  */
-	for_each_thread (current_thread->id.pid (), [&] (thread_info *thread)
+	current_process ()->for_each_thread ([&] (thread_info *thread)
 	  {
 	    update_registers_callback (thread, watch, i);
 	  });
@@ -681,7 +681,7 @@ arm_target::low_remove_point (raw_bkpt_type type, CORE_ADDR addr,
 	pts[i].control = arm_hwbp_control_disable (pts[i].control);
 
 	/* Only update the threads of the current process.  */
-	for_each_thread (current_thread->id.pid (), [&] (thread_info *thread)
+	current_process ()->for_each_thread ([&] (thread_info *thread)
 	  {
 	    update_registers_callback (thread, watch, i);
 	  });
@@ -706,7 +706,7 @@ arm_target::low_stopped_by_watchpoint ()
 
   /* Retrieve siginfo.  */
   errno = 0;
-  ptrace (PTRACE_GETSIGINFO, lwpid_of (current_thread), 0, &siginfo);
+  ptrace (PTRACE_GETSIGINFO, current_thread->id.lwp (), 0, &siginfo);
   if (errno != 0)
     return false;
 
@@ -819,14 +819,42 @@ arm_target::low_new_fork (process_info *parent, process_info *child)
     child_lwp_info->wpts_changed[i] = 1;
 }
 
+/* For PID, set the address register of hardware breakpoint pair I to
+   ADDRESS.  */
+
+static void
+sethbpregs_hwbp_address (int pid, int i, unsigned int address)
+{
+  PTRACE_TYPE_ARG3 address_reg = (PTRACE_TYPE_ARG3) ((i << 1) + 1);
+
+  errno = 0;
+
+  if (ptrace (PTRACE_SETHBPREGS, pid, address_reg, &address) < 0)
+    perror_with_name (_("Unexpected error updating breakpoint address"));
+}
+
+/* For PID, set the control register of hardware breakpoint pair I to
+   CONTROL.  */
+
+static void
+sethbpregs_hwbp_control (int pid, int i, arm_hwbp_control_t control)
+{
+  PTRACE_TYPE_ARG3 control_reg = (PTRACE_TYPE_ARG3) ((i << 1) + 2);
+
+  errno = 0;
+
+  if (ptrace (PTRACE_SETHBPREGS, pid, control_reg, &control) < 0)
+    perror_with_name (_("Unexpected error setting breakpoint control"));
+}
+
 /* Called when resuming a thread.
    If the debug regs have changed, update the thread's copies.  */
 void
 arm_target::low_prepare_to_resume (lwp_info *lwp)
 {
-  struct thread_info *thread = get_lwp_thread (lwp);
-  int pid = lwpid_of (thread);
-  struct process_info *proc = find_process_pid (pid_of (thread));
+  thread_info *thread = lwp->thread;
+  int pid = thread->id.lwp ();
+  process_info *proc = find_process_pid (thread->id.pid ());
   struct arch_process_info *proc_info = proc->priv->arch_private;
   struct arch_lwp_info *lwp_info = lwp->arch_private;
   int i;
@@ -834,19 +862,32 @@ arm_target::low_prepare_to_resume (lwp_info *lwp)
   for (i = 0; i < arm_linux_get_hw_breakpoint_count (); i++)
     if (lwp_info->bpts_changed[i])
       {
-	errno = 0;
+	unsigned int address = proc_info->bpts[i].address;
+	arm_hwbp_control_t control = proc_info->bpts[i].control;
 
-	if (arm_hwbp_control_is_enabled (proc_info->bpts[i].control))
-	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_TYPE_ARG3) ((i << 1) + 1),
-		      &proc_info->bpts[i].address) < 0)
-	    perror_with_name ("Unexpected error setting breakpoint address");
-
-	if (arm_hwbp_control_is_initialized (proc_info->bpts[i].control))
-	  if (ptrace (PTRACE_SETHBPREGS, pid,
-		      (PTRACE_TYPE_ARG3) ((i << 1) + 2),
-		      &proc_info->bpts[i].control) < 0)
-	    perror_with_name ("Unexpected error setting breakpoint");
+	if (!arm_hwbp_control_is_initialized (control))
+	  {
+	    /* Nothing to do.  */
+	  }
+	else if (!arm_hwbp_control_is_enabled (control))
+	  {
+	    /* Disable hardware breakpoint, just write the control
+	       register.  */
+	    sethbpregs_hwbp_control (pid, i, control);
+	  }
+	else
+	  {
+	    /* See arm_linux_nat_target::low_prepare_to_resume for detailed
+	       comment.  */
+	    unsigned int aligned_address = address & ~0x7U;
+	    if (aligned_address != address)
+	      {
+		sethbpregs_hwbp_address (pid, i, aligned_address);
+		sethbpregs_hwbp_control (pid, i, control);
+	      }
+	    sethbpregs_hwbp_address (pid, i, address);
+	    sethbpregs_hwbp_control (pid, i, control);
+	  }
 
 	lwp_info->bpts_changed[i] = 0;
       }
@@ -968,7 +1009,7 @@ arm_read_description (void)
     {
       /* Make sure that the kernel supports reading VFP registers.  Support was
 	 added in 2.6.30.  */
-      int pid = lwpid_of (current_thread);
+      int pid = current_thread->id.lwp ();
       errno = 0;
       char *buf = (char *) alloca (ARM_VFP3_REGS_SIZE);
       if (ptrace (PTRACE_GETVFPREGS, pid, 0, buf) < 0 && errno == EIO)
@@ -992,7 +1033,7 @@ arm_read_description (void)
 void
 arm_target::low_arch_setup ()
 {
-  int tid = lwpid_of (current_thread);
+  int tid = current_thread->id.lwp ();
   int gpregs[18];
   struct iovec iov;
 

@@ -445,7 +445,7 @@ psim_create(const char *file_name,
 
   os_emulation = os_emul_create(file_name, root);
   if (os_emulation == NULL)
-    error("psim: either file %s was not reconized or unreconized or unknown os-emulation type\n", file_name);
+    error("psim: either file %s was not recognized or unreconized or unknown os-emulation type\n", file_name);
 
   /* fill in the missing real number of CPU's */
   nr_cpus = tree_find_integer_property(root, "/openprom/options/smp");
@@ -991,7 +991,7 @@ psim_write_register(psim *system,
 
   processor = system->processors[which_cpu];
 
-  /* If the data is comming in raw (target order), need to cook it
+  /* If the data is coming in raw (target order), need to cook it
      into host order before putting it into PSIM's internal structures */
   if (mode == raw_transfer) {
     switch (description.size) {

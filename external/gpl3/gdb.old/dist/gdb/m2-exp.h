@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef M2_EXP_H
-#define M2_EXP_H
+#ifndef GDB_M2_EXP_H
+#define GDB_M2_EXP_H
 
 #include "expop.h"
 
@@ -81,4 +81,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* M2_EXP_H */
+#endif /* GDB_M2_EXP_H */

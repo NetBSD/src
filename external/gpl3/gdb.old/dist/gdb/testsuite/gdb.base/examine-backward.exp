@@ -172,17 +172,17 @@ with_test_prefix "char-width=1, print-max=20" {
     }
     gdb_test "x/-xb" "0x39" "take 1 char backward again"
     gdb_test "x/-s" "\"01234567890123456789\"\.\.\." \
-        "take 1 string backward (1/6)"
+	"take 1 string backward, 1/6"
     gdb_test "x/-s" "\".+\"" \
-        "take 1 string backward (2/6)"
+	"take 1 string backward, 2/6"
     gdb_test "x/-s" "\"\"" \
-        "take 1 string backward (3/6)"
+	"take 1 string backward, 3/6"
     gdb_test "x/-s" "\"\"" \
-        "take 1 string backward (4/6)"
+	"take 1 string backward, 4/6"
     gdb_test "x/-s" "\"GHIJKLMNOPQRSTUVWXYZ\"" \
-        "take 1 string backward (5/6)"
+	"take 1 string backward, 5/6"
     gdb_test "x/-s" "\"ABCDEFGHIJKLMNOPQRST\"\.\.\." \
-        "take 1 string backward (6/6)"
+	"take 1 string backward, 6/6"
 }
 
 with_test_prefix "char-width=2, print-max=20" {
@@ -214,17 +214,17 @@ with_test_prefix "char-width=2, print-max=20" {
     }
     gdb_test "x/-xh" "0x0039" "take 1 char backward again"
     gdb_test "x/-sh" "u\"01234567890123456789\"\.\.\." \
-        "take 1 string backward (1/6)"
+	"take 1 string backward, 1/6"
     gdb_test "x/-sh" "u\".+\"" \
-        "take 1 string backward (2/6)"
+	"take 1 string backward, 2/6"
     gdb_test "x/-sh" "u\"\"" \
-        "take 1 string backward (3/6)"
+	"take 1 string backward, 3/6"
     gdb_test "x/-sh" "u\"\"" \
-        "take 1 string backward (4/6)"
+	"take 1 string backward, 4/6"
     gdb_test "x/-sh" "u\"GHIJKLMNOPQRSTUVWXYZ\"" \
-        "take 1 string backward (5/6)"
+	"take 1 string backward, 5/6"
     gdb_test "x/-sh" "u\"ABCDEFGHIJKLMNOPQRST\"\.\.\." \
-        "take 1 string backward (6/6)"
+	"take 1 string backward, 6/6"
 }
 
 with_test_prefix "char-width=4, print-max=20" {
@@ -256,17 +256,17 @@ with_test_prefix "char-width=4, print-max=20" {
     }
     gdb_test "x/-xw" "0x00000039" "take 1 char backward again"
     gdb_test "x/-sw" "U\"01234567890123456789\"\.\.\." \
-        "take 1 string backward (1/6)"
+	"take 1 string backward, 1/6"
     gdb_test "x/-sw" "U\".+\"" \
-        "take 1 string backward (2/6)"
+	"take 1 string backward, 2/6"
     gdb_test "x/-sw" "U\"\"" \
-        "take 1 string backward (3/6)"
+	"take 1 string backward, 3/6"
     gdb_test "x/-sw" "U\"\"" \
-        "take 1 string backward (4/6)"
+	"take 1 string backward, 4/6"
     gdb_test "x/-sw" "U\"GHIJKLMNOPQRSTUVWXYZ\"" \
-        "take 1 string backward (5/6)"
+	"take 1 string backward, 5/6"
     gdb_test "x/-sw" "U\"ABCDEFGHIJKLMNOPQRST\"\.\.\." \
-        "take 1 string backward (6/6)"
+	"take 1 string backward, 6/6"
 }
 
 with_test_prefix "char-width=2, print-max=0" {
@@ -299,17 +299,17 @@ with_test_prefix "char-width=2, print-max=0" {
     }
     gdb_test "x/-xh" "0x0000" "take 1 char backward"
     gdb_test "x/-sh" "u\"!!!!!!\"" \
-        "take 1 string backward (1/6)"
+	"take 1 string backward, 1/6"
     gdb_test "x/-sh" "u\"012345678901234567890123456789\"" \
-        "take 1 string backward (2/6)"
+	"take 1 string backward, 2/6"
     gdb_test "x/-sh" "u\".+\"" \
-        "take 1 string backward (3/6)"
+	"take 1 string backward, 3/6"
     gdb_test "x/-sh" "u\"\"" \
-        "take 1 string backward (4/6)"
+	"take 1 string backward, 4/6"
     gdb_test "x/-sh" "u\"\"" \
-        "take 1 string backward (5/6)"
+	"take 1 string backward, 5/6"
     gdb_test "x/-sh" "u\"ABCDEFGHIJKLMNOPQRSTUVWXYZ\"" \
-        "take 1 string backward (6/6)"
+	"take 1 string backward, 6/6"
 }
 
 with_test_prefix "char-width=1, print-max=4" {
@@ -326,13 +326,13 @@ with_test_prefix "char-width=1, print-max=4" {
         "\"\""
     }
     gdb_test "x/-xb" "0x00" "take 1 byte backward"
-    gdb_test_sequence "x/-4s" "take 4 strings backward (1/2)" {
+    gdb_test_sequence "x/-4s" "take 4 strings backward, 1/2" {
         "\"TUVW\"\.\.\."
         "\"XYZ\""
         "\"\""
         "\"\""
     }
-    gdb_test_sequence "x/-4s" "take 4 strings backward (2/2)" {
+    gdb_test_sequence "x/-4s" "take 4 strings backward, 2/2" {
         "\"CDEF\"\.\.\."
         "\"GHIJ\"\.\.\."
         "\"KLMN\"\.\.\."
@@ -348,9 +348,9 @@ with_test_prefix "backward disassemble general" {
     set main_re "main(\\(\\))?"
 
     gdb_test "x/i main" "0x\[0-9a-fA-F\]+ <$main_re>:\t.*" \
-        "move the current position to main (x/i)"
+	"move the current position to main, x/i"
     gdb_test "x/-i" "0x\[0-9a-fA-F\]+ <$main_re>:\t.*" \
-        "move the current position to main (x/-i)"
+	"move the current position to main, x/-i"
     for {set i 0} {$i < [llength $length_to_examine]} {incr i} {
         set len [lindex $length_to_examine $i]
         set instructions [capture_command_output "x/${len}i" ""]

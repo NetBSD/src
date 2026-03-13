@@ -573,6 +573,8 @@ bfd_wrapped_link_hash_lookup (bfd *abfd,
 	  strcat (n, WRAP);
 	  strcat (n, l);
 	  h = bfd_link_hash_lookup (info->hash, n, create, true, follow);
+	  if (h != NULL)
+	    h->wrapper_symbol = true;
 	  free (n);
 	  return h;
 	}
@@ -2371,7 +2373,7 @@ _bfd_generic_reloc_link_order (bfd *abfd,
 
   /* Get the symbol to use for the relocation.  */
   if (link_order->type == bfd_section_reloc_link_order)
-    r->sym_ptr_ptr = link_order->u.reloc.p->u.section->symbol_ptr_ptr;
+    r->sym_ptr_ptr = &link_order->u.reloc.p->u.section->symbol;
   else
     {
       struct generic_link_hash_entry *h;

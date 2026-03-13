@@ -197,8 +197,7 @@ static bool
 elfNN_riscv_mkobject (bfd *abfd)
 {
   return bfd_elf_allocate_object (abfd,
-				  sizeof (struct _bfd_riscv_elf_obj_tdata),
-				  RISCV_ELF_DATA);
+				  sizeof (struct _bfd_riscv_elf_obj_tdata));
 }
 
 #include "elf/common.h"
@@ -503,8 +502,7 @@ riscv_elf_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct riscv_elf_link_hash_entry),
-				      RISCV_ELF_DATA))
+				      sizeof (struct riscv_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1969,6 +1967,8 @@ typedef struct
   bfd_vma value;
   /* Original reloc type.  */
   int type;
+  /* True if changed to R_RISCV_HI20.  */
+  bool absolute;
 } riscv_pcrel_hi_reloc;
 
 typedef struct riscv_pcrel_lo_reloc
@@ -1976,7 +1976,7 @@ typedef struct riscv_pcrel_lo_reloc
   /* PC value of auipc.  */
   bfd_vma address;
   /* Internal relocation.  */
-  const Elf_Internal_Rela *reloc;
+  Elf_Internal_Rela *reloc;
   /* Record the following information helps to resolve the %pcrel
      which cross different input section.  For now we build a hash
      for pcrel at the start of riscv_elf_relocate_section, and then
@@ -2043,7 +2043,7 @@ static bool
 riscv_zero_pcrel_hi_reloc (Elf_Internal_Rela *rel,
 			   struct bfd_link_info *info,
 			   bfd_vma pc,
-			   bfd_vma addr,
+			   bfd_vma *addr,
 			   bfd_byte *contents,
 			   const reloc_howto_type *howto)
 {
@@ -2059,17 +2059,22 @@ riscv_zero_pcrel_hi_reloc (Elf_Internal_Rela *rel,
 
   /* If it's possible to reference the symbol using auipc we do so, as that's
      more in the spirit of the PC-relative relocations we're processing.  */
-  bfd_vma offset = addr - pc;
+  bfd_vma offset = *addr - pc;
   if (ARCH_SIZE == 32 || VALID_UTYPE_IMM (RISCV_CONST_HIGH_PART (offset)))
     return false;
 
   /* If it's impossible to reference this with a LUI-based offset then don't
      bother to convert it at all so users still see the PC-relative relocation
      in the truncation message.  */
-  if (ARCH_SIZE > 32 && !VALID_UTYPE_IMM (RISCV_CONST_HIGH_PART (addr)))
+  if (ARCH_SIZE > 32 && !VALID_UTYPE_IMM (RISCV_CONST_HIGH_PART (*addr)))
     return false;
 
-  rel->r_info = ELFNN_R_INFO (addr, R_RISCV_HI20);
+  /* PR27180, encode target absolute address into r_addend rather than
+     r_sym.  Clear the ADDR to avoid duplicate relocate in the
+     perform_relocation.  */
+  rel->r_info = ELFNN_R_INFO (0, R_RISCV_HI20);
+  rel->r_addend += *addr;
+  *addr = 0;
 
   bfd_vma insn = riscv_get_insn (howto->bitsize, contents + rel->r_offset);
   insn = (insn & ~MASK_AUIPC) | MATCH_LUI;
@@ -2085,7 +2090,7 @@ riscv_record_pcrel_hi_reloc (riscv_pcrel_relocs *p,
 			     bool absolute)
 {
   bfd_vma offset = absolute ? value : value - addr;
-  riscv_pcrel_hi_reloc entry = {addr, offset, type};
+  riscv_pcrel_hi_reloc entry = {addr, offset, type, absolute};
   riscv_pcrel_hi_reloc **slot =
     (riscv_pcrel_hi_reloc **) htab_find_slot (p->hi_relocs, &entry, INSERT);
 
@@ -2100,7 +2105,7 @@ riscv_record_pcrel_hi_reloc (riscv_pcrel_relocs *p,
 static bool
 riscv_record_pcrel_lo_reloc (riscv_pcrel_relocs *p,
 			     bfd_vma addr,
-			     const Elf_Internal_Rela *reloc,
+			     Elf_Internal_Rela *reloc,
 			     asection *input_section,
 			     struct bfd_link_info *info,
 			     reloc_howto_type *howto,
@@ -2125,7 +2130,7 @@ riscv_resolve_pcrel_lo_relocs (riscv_pcrel_relocs *p)
     {
       bfd *input_bfd = r->input_section->owner;
 
-      riscv_pcrel_hi_reloc search = {r->address, 0, 0};
+      riscv_pcrel_hi_reloc search = {r->address, 0, 0, 0};
       riscv_pcrel_hi_reloc *entry = htab_find (p->hi_relocs, &search);
       /* There may be a risk if the %pcrel_lo with addend refers to
 	 an IFUNC symbol.  The %pcrel_hi has been relocated to plt,
@@ -2160,6 +2165,27 @@ riscv_resolve_pcrel_lo_relocs (riscv_pcrel_relocs *p)
 
       perform_relocation (r->howto, r->reloc, entry->value, r->input_section,
 			  input_bfd, r->contents);
+
+      /* The corresponding R_RISCV_GOT_PCREL_HI20 and R_RISCV_PCREL_HI20 are
+	 converted to R_RISCV_HI20, so try to convert R_RISCV_PCREL_LO12_I/S
+	 to R_RISCV_LO12_I/S.  */
+      if (entry->absolute)
+	{
+	  switch (ELFNN_R_TYPE (r->reloc->r_info))
+	    {
+	    case R_RISCV_PCREL_LO12_I:
+	      r->reloc->r_info = ELFNN_R_INFO (0, R_RISCV_LO12_I);
+	      r->reloc->r_addend += entry->value;
+	      break;
+	    case R_RISCV_PCREL_LO12_S:
+	      r->reloc->r_info = ELFNN_R_INFO (0, R_RISCV_LO12_S);
+	      r->reloc->r_addend += entry->value;
+	      break;
+	    default:
+	      /* This shouldn't happen, so just skip it.  */
+	      break;
+	    }
+	}
     }
 
   return true;
@@ -2358,7 +2384,6 @@ riscv_elf_relocate_section (bfd *output_bfd,
 		    || h->plt.offset == (bfd_vma) -1)
 		  {
 		    Elf_Internal_Rela outrel;
-		    asection *sreloc;
 
 		    /* Need a dynamic relocation to get the real function
 		       address.  */
@@ -2399,13 +2424,24 @@ riscv_elf_relocate_section (bfd *output_bfd,
 		       2. .rela.got section in dynamic executable.
 		       3. .rela.iplt section in static executable.  */
 		    if (bfd_link_pic (info))
-		      sreloc = htab->elf.irelifunc;
+		      riscv_elf_append_rela (output_bfd, htab->elf.irelifunc,
+					     &outrel);
 		    else if (htab->elf.splt != NULL)
-		      sreloc = htab->elf.srelgot;
+		      riscv_elf_append_rela (output_bfd, htab->elf.srelgot,
+					     &outrel);
 		    else
-		      sreloc = htab->elf.irelplt;
-
-		    riscv_elf_append_rela (output_bfd, sreloc, &outrel);
+		      {
+			/* Do not use riscv_elf_append_rela to add dynamic
+			   relocs into .rela.iplt, since it may cause the
+			   overwrite problems.  This is same as what we did
+			   in the riscv_elf_finish_dynamic_symbol.  */
+			const struct elf_backend_data *bed =
+				get_elf_backend_data (output_bfd);
+			bfd_vma iplt_idx = htab->last_iplt_index--;
+			bfd_byte *loc = htab->elf.irelplt->contents
+					+ iplt_idx * sizeof (ElfNN_External_Rela);
+			bed->s->swap_reloca_out (output_bfd, &outrel, loc);
+		      }
 
 		    /* If this reloc is against an external symbol, we
 		       do not want to fiddle with the addend.  Otherwise,
@@ -2688,7 +2724,7 @@ riscv_elf_relocate_section (bfd *output_bfd,
 	      /* Address of got entry.  */
 	      relocation = sec_addr (htab->elf.sgot) + off;
 	      absolute = riscv_zero_pcrel_hi_reloc (rel, info, pc,
-						    relocation, contents,
+						    &relocation, contents,
 						    howto);
 	      /* Update howto if relocation is changed.  */
 	      howto = riscv_elf_rtype_to_howto (input_bfd,
@@ -2696,8 +2732,8 @@ riscv_elf_relocate_section (bfd *output_bfd,
 	      if (howto == NULL)
 		r = bfd_reloc_notsupported;
 	      else if (!riscv_record_pcrel_hi_reloc (&pcrel_relocs, pc,
-						     relocation, r_type,
-						     absolute))
+						     relocation + rel->r_addend,
+						     r_type, absolute))
 		r = bfd_reloc_overflow;
 	    }
 	  break;
@@ -2839,7 +2875,7 @@ riscv_elf_relocate_section (bfd *output_bfd,
 	  }
 
 	case R_RISCV_PCREL_HI20:
-	  absolute = riscv_zero_pcrel_hi_reloc (rel, info, pc, relocation,
+	  absolute = riscv_zero_pcrel_hi_reloc (rel, info, pc, &relocation,
 						contents, howto);
 	  /* Update howto if relocation is changed.  */
 	  howto = riscv_elf_rtype_to_howto (input_bfd,
@@ -3569,7 +3605,7 @@ riscv_elf_finish_dynamic_sections (bfd *output_bfd,
 	}
     }
 
-  if (htab->elf.sgotplt)
+  if (htab->elf.sgotplt && htab->elf.sgotplt->size > 0)
     {
       asection *output_section = htab->elf.sgotplt->output_section;
 
@@ -3580,31 +3616,28 @@ riscv_elf_finish_dynamic_sections (bfd *output_bfd,
 	  return false;
 	}
 
-      if (htab->elf.sgotplt->size > 0)
-	{
-	  /* Write the first two entries in .got.plt, needed for the dynamic
-	     linker.  */
-	  bfd_put_NN (output_bfd, (bfd_vma) -1, htab->elf.sgotplt->contents);
-	  bfd_put_NN (output_bfd, (bfd_vma) 0,
-		      htab->elf.sgotplt->contents + GOT_ENTRY_SIZE);
-	}
+      /* Write the first two entries in .got.plt, needed for the dynamic
+	 linker.  */
+      bfd_put_NN (output_bfd, (bfd_vma) -1, htab->elf.sgotplt->contents);
+      bfd_put_NN (output_bfd, (bfd_vma) 0,
+		  htab->elf.sgotplt->contents + GOT_ENTRY_SIZE);
 
       elf_section_data (output_section)->this_hdr.sh_entsize = GOT_ENTRY_SIZE;
     }
 
-  if (htab->elf.sgot)
+  if (htab->elf.sgot && htab->elf.sgot->size > 0)
     {
       asection *output_section = htab->elf.sgot->output_section;
 
-      if (htab->elf.sgot->size > 0)
+      if (!bfd_is_abs_section (output_section))
 	{
 	  /* Set the first entry in the global offset table to the address of
 	     the dynamic section.  */
 	  bfd_vma val = sdyn ? sec_addr (sdyn) : 0;
 	  bfd_put_NN (output_bfd, val, htab->elf.sgot->contents);
-	}
 
-      elf_section_data (output_section)->this_hdr.sh_entsize = GOT_ENTRY_SIZE;
+	  elf_section_data (output_section)->this_hdr.sh_entsize = GOT_ENTRY_SIZE;
+	}
     }
 
   /* Fill PLT and GOT entries for local STT_GNU_IFUNC symbols.  */
@@ -4036,20 +4069,9 @@ riscv_merge_attributes (bfd *ibfd, struct bfd_link_info *info)
 	    else if (in_priv_spec != PRIV_SPEC_CLASS_NONE
 		     && in_priv_spec != out_priv_spec)
 	      {
-		_bfd_error_handler
-		  (_("warning: %pB use privileged spec version %u.%u.%u but "
-		     "the output use version %u.%u.%u"),
-		   ibfd,
-		   in_attr[Tag_a].i,
-		   in_attr[Tag_b].i,
-		   in_attr[Tag_c].i,
-		   out_attr[Tag_a].i,
-		   out_attr[Tag_b].i,
-		   out_attr[Tag_c].i);
-
-		/* The privileged spec v1.9.1 can not be linked with others
-		   since the conflicts, so we plan to drop it in a year or
-		   two.  */
+		/* The abandoned privileged spec v1.9.1 can not be linked with
+		   others since the conflicts.  Keep the check since compatible
+		   issue.  */
 		if (in_priv_spec == PRIV_SPEC_CLASS_1P9P1
 		    || out_priv_spec == PRIV_SPEC_CLASS_1P9P1)
 		  {
@@ -4731,6 +4753,9 @@ _bfd_riscv_relax_lui (bfd *abfd,
   bfd_vma gp = htab->params->relax_gp
 	       ? riscv_global_pointer_value (link_info)
 	       : 0;
+  bfd_vma data_segment_alignment = link_info->relro
+				   ? ELF_MAXPAGESIZE + ELF_COMMONPAGESIZE
+				   : ELF_MAXPAGESIZE;
   int use_rvc = elf_elfheader (abfd)->e_flags & EF_RISCV_RVC;
 
   BFD_ASSERT (rel->r_offset + 4 <= sec->size);
@@ -4755,6 +4780,16 @@ _bfd_riscv_relax_lui (bfd *abfd,
 	      htab->max_alignment_for_gp = max_alignment;
 	    }
 	}
+
+      /* PR27566, for default linker script, if a symbol's value outsides the
+	 bounds of the defined section, then it may cross the data segment
+	 alignment, so we should reserve more size about MAXPAGESIZE and
+	 COMMONPAGESIZE, since the data segment alignment might move the
+	 section forward.  */
+      if (symval < sec_addr (sym_sec)
+	  || symval > (sec_addr (sym_sec) + sym_sec->size))
+	max_alignment = data_segment_alignment > max_alignment
+			? data_segment_alignment : max_alignment;
     }
 
   /* Is the reference in range of x0 or gp?
@@ -4799,8 +4834,7 @@ _bfd_riscv_relax_lui (bfd *abfd,
       && ELFNN_R_TYPE (rel->r_info) == R_RISCV_HI20
       && VALID_CITYPE_LUI_IMM (RISCV_CONST_HIGH_PART (symval))
       && VALID_CITYPE_LUI_IMM (RISCV_CONST_HIGH_PART (symval)
-			    + (link_info->relro ? 2 * ELF_MAXPAGESIZE
-			       : ELF_MAXPAGESIZE)))
+			       + data_segment_alignment))
     {
       /* Replace LUI with C.LUI if legal (i.e., rd != x0 and rd != x2/sp).  */
       bfd_vma lui = bfd_getl32 (contents + rel->r_offset);
@@ -4945,6 +4979,9 @@ _bfd_riscv_relax_pc (bfd *abfd ATTRIBUTE_UNUSED,
   bfd_vma gp = htab->params->relax_gp
 	       ? riscv_global_pointer_value (link_info)
 	       : 0;
+  bfd_vma data_segment_alignment = link_info->relro
+				   ? ELF_MAXPAGESIZE + ELF_COMMONPAGESIZE
+				   : ELF_MAXPAGESIZE;
 
   BFD_ASSERT (rel->r_offset + 4 <= sec->size);
 
@@ -5019,6 +5056,16 @@ _bfd_riscv_relax_pc (bfd *abfd ATTRIBUTE_UNUSED,
 	      htab->max_alignment_for_gp = max_alignment;
 	    }
 	}
+
+      /* PR27566, for default linker script, if a symbol's value outsides the
+	 bounds of the defined section, then it may cross the data segment
+	 alignment, so we should reserve more size about MAXPAGESIZE and
+	 COMMONPAGESIZE, since the data segment alignment might move the
+	 section forward.  */
+      if (symval < sec_addr (sym_sec)
+	  || symval > (sec_addr (sym_sec) + sym_sec->size))
+	max_alignment = data_segment_alignment > max_alignment
+			? data_segment_alignment : max_alignment;
     }
 
   /* Is the reference in range of x0 or gp?
@@ -5577,7 +5624,7 @@ riscv_elf_is_target_special_symbol (bfd *abfd, asymbol *sym)
 {
   /* PR27584, local and empty symbols.  Since they are usually
      generated for pcrel relocations.  */
-  return (!strcmp (sym->name, "")
+  return (!sym->name[0]
 	  || _bfd_elf_is_local_label_name (abfd, sym->name)
 	  /* PR27916, mapping symbols.  */
 	  || riscv_elf_is_mapping_symbols (sym->name));

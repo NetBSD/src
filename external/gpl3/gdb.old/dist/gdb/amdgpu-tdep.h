@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMDGPU_TDEP_H
-#define AMDGPU_TDEP_H
+#ifndef GDB_AMDGPU_TDEP_H
+#define GDB_AMDGPU_TDEP_H
 
 #include "gdbarch.h"
 
@@ -90,4 +90,4 @@ bool is_amdgpu_arch (struct gdbarch *gdbarch);
 
 amdgpu_gdbarch_tdep *get_amdgpu_gdbarch_tdep (gdbarch *arch);
 
-#endif /* AMDGPU_TDEP_H */
+#endif /* GDB_AMDGPU_TDEP_H */

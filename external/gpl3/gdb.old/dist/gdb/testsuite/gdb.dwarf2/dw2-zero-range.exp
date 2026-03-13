@@ -29,13 +29,11 @@ proc_with_prefix test_relocated { exec_path lib_path complaint_re readnow_p } {
     clean_restart $exec_path
     gdb_load_shlib $lib_path
 
-    # Don't load the symbols for $lib_path during runto_main.
-    # Instead, we do this afterwards using "sharedlibrary $lib_path".
-    gdb_test_no_output "set auto-solib-add off"
-
     if { ![runto_main] } {
 	return
     }
+
+    gdb_test_no_output "nosharedlibrary"
 
     # Test for presence of complaint.
     with_complaints 1 {

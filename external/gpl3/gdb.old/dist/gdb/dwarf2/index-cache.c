@@ -28,8 +28,6 @@
 #include "dwarf2/index-write.h"
 #include "dwarf2/read.h"
 #include "dwarf2/dwz.h"
-#include "objfiles.h"
-#include "gdbsupport/selftest.h"
 #include <string>
 #include <stdlib.h>
 #include "run-on-main-thread.h"
@@ -324,7 +322,7 @@ set_index_cache_directory_command (const char *arg, int from_tty,
 				   cmd_list_element *element)
 {
   /* Make sure the index cache directory is absolute and tilde-expanded.  */
-  index_cache_directory = gdb_abspath (index_cache_directory.c_str ());
+  index_cache_directory = gdb_abspath (index_cache_directory);
   global_index_cache.set_directory (index_cache_directory);
 }
 

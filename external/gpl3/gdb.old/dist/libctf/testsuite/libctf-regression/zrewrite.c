@@ -150,7 +150,4 @@ main (int argc, char *argv[])
  write_stderr:
   fprintf (stderr, "%s: cannot open for writing: %s\n", argv[0], strerror (errno));
   return 1;
- read_err: 
-  fprintf (stderr, "%s: cannot read\n", argv[0]);
-  return 1;
 }

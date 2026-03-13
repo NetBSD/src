@@ -55,12 +55,10 @@ foreach test $methods {
 
     gdb_test "list $test" $result
     gdb_test "list '$test'" $result
-    if {[gdb_breakpoint $test]} {
-	pass "break $test"
-    }
-    if {[gdb_breakpoint '$test']} {
-	pass "break '$test'"
-    }
+    gdb_assert { [gdb_breakpoint $test no-message] } \
+	"break $test, unquoted"
+    gdb_assert { [gdb_breakpoint '$test' no-message] } \
+	"break $test, single-quoted"
 }
 
 # PR c++/17976

@@ -66,7 +66,7 @@ py_insn_get_insn_type ()
       py_insn_type.tp_doc = "GDB instruction object";
       py_insn_type.tp_getset = py_insn_getset;
 
-      if (PyType_Ready (&py_insn_type) < 0)
+      if (gdbpy_type_ready (&py_insn_type) < 0)
 	{
 	  /* Reset the tp_new field so any subsequent calls to this
 	     function will retry to make the type ready.  */

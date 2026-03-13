@@ -43,6 +43,7 @@ start (void *arg)
   int thread_return_value = *(int *) arg;
 
   do_exit (thread_return_value);
+  return NULL;
 }
 
 int

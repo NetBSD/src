@@ -24,8 +24,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_DWARF2_COMP_UNIT_H
-#define GDB_DWARF2_COMP_UNIT_H
+#ifndef GDB_DWARF2_COMP_UNIT_HEAD_H
+#define GDB_DWARF2_COMP_UNIT_HEAD_H
 
 #include "dwarf2.h"
 #include "dwarf2/leb.h"
@@ -136,4 +136,4 @@ extern const gdb_byte *read_and_check_comp_unit_head
    const gdb_byte *info_ptr,
    rcuh_kind section_kind);
 
-#endif /* GDB_DWARF2_COMP_UNIT_H */
+#endif /* GDB_DWARF2_COMP_UNIT_HEAD_H */

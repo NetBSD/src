@@ -4080,7 +4080,7 @@ mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
 	    }
 
 	  /* Some types require symbols, whereas some do not.  */
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  switch (type)
 	    {
 	    case R_MIPS_NONE:
@@ -4113,7 +4113,7 @@ mips_elf64_slurp_one_reloc_table (bfd *abfd, asection *asect,
 		      if ((s->flags & BSF_SECTION_SYM) == 0)
 			relent->sym_ptr_ptr = ps;
 		      else
-			relent->sym_ptr_ptr = s->section->symbol_ptr_ptr;
+			relent->sym_ptr_ptr = &s->section->symbol;
 		    }
 
 		  used_sym = true;

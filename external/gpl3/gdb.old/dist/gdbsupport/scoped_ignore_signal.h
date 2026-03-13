@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SCOPED_IGNORE_SIGNAL_H
-#define SCOPED_IGNORE_SIGNAL_H
+#ifndef GDBSUPPORT_SCOPED_IGNORE_SIGNAL_H
+#define GDBSUPPORT_SCOPED_IGNORE_SIGNAL_H
 
 #include <signal.h>
 
@@ -118,4 +118,4 @@ using scoped_ignore_sigpipe = scoped_ignore_signal<SIGPIPE, true>;
 using scoped_ignore_sigpipe = scoped_ignore_signal_nop;
 #endif
 
-#endif /* SCOPED_IGNORE_SIGNAL_H */
+#endif /* GDBSUPPORT_SCOPED_IGNORE_SIGNAL_H */

@@ -200,7 +200,7 @@ BEGIN:
     .dw 0x21 ;
     .dw 0x22 ;
     .dw 0x26 ;
-    .dw 0x27 ;	// XXX: hardware doesnt trigger illegal exception ?
+    .dw 0x27 ;	// XXX: hardware doesn't trigger illegal exception ?
     .dw 0x28 ;
     .dw 0x29 ;
     .dw 0x2A ;

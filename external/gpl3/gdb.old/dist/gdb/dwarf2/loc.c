@@ -20,6 +20,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
+#include "exceptions.h"
 #include "ui-out.h"
 #include "value.h"
 #include "frame.h"
@@ -40,7 +41,6 @@
 #include "dwarf2/frame.h"
 #include "dwarf2/leb.h"
 #include "compile/compile.h"
-#include "gdbsupport/selftest.h"
 #include <algorithm>
 #include <vector>
 #include <unordered_set>
@@ -388,12 +388,12 @@ dwarf2_find_location_expression (const dwarf2_loclist_baton *baton,
       enum debug_loc_kind kind;
       const gdb_byte *new_ptr = NULL; /* init for gcc -Wall */
 
-      if (baton->per_cu->version () < 5 && baton->from_dwo)
+      if (baton->dwarf_version < 5 && baton->from_dwo)
 	kind = decode_debug_loc_dwo_addresses (baton->per_cu,
 					       baton->per_objfile,
 					       loc_ptr, buf_end, &new_ptr,
 					       &low, &high, byte_order);
-      else if (baton->per_cu->version () < 5)
+      else if (baton->dwarf_version < 5)
 	kind = decode_debug_loc_addresses (loc_ptr, buf_end, &new_ptr,
 					   &low, &high,
 					   byte_order, addr_size,
@@ -444,7 +444,7 @@ dwarf2_find_location_expression (const dwarf2_loclist_baton *baton,
 	  high = (unrelocated_addr) ((CORE_ADDR) high + (CORE_ADDR) base_address);
 	}
 
-      if (baton->per_cu->version () < 5)
+      if (baton->dwarf_version < 5)
 	{
 	  length = extract_unsigned_integer (loc_ptr, 2, byte_order);
 	  loc_ptr += 2;
@@ -666,9 +666,8 @@ call_site_target::iterate_over_addresses (gdbarch *call_site_gdbarch,
 	dwarf_block = m_loc.dwarf_block;
 	if (dwarf_block == NULL)
 	  {
-	    struct bound_minimal_symbol msym;
-	    
-	    msym = lookup_minimal_symbol_by_pc (call_site->pc () - 1);
+	    bound_minimal_symbol msym
+	      = lookup_minimal_symbol_by_pc (call_site->pc () - 1);
 	    throw_error (NO_ENTRY_VALUE_ERROR,
 			 _("DW_AT_call_target is not specified at %s in %s"),
 			 paddress (call_site_gdbarch, call_site->pc ()),
@@ -678,9 +677,8 @@ call_site_target::iterate_over_addresses (gdbarch *call_site_gdbarch,
 	  }
 	if (caller_frame == NULL)
 	  {
-	    struct bound_minimal_symbol msym;
-	    
-	    msym = lookup_minimal_symbol_by_pc (call_site->pc () - 1);
+	    bound_minimal_symbol msym
+	      = lookup_minimal_symbol_by_pc (call_site->pc () - 1);
 	    throw_error (NO_ENTRY_VALUE_ERROR,
 			 _("DW_AT_call_target DWARF block resolving "
 			   "requires known frame which is currently not "
@@ -707,12 +705,12 @@ call_site_target::iterate_over_addresses (gdbarch *call_site_gdbarch,
     case call_site_target::PHYSNAME:
       {
 	const char *physname;
-	struct bound_minimal_symbol msym;
 
 	physname = m_loc.physname;
 
 	/* Handle both the mangled and demangled PHYSNAME.  */
-	msym = lookup_minimal_symbol (physname, NULL, NULL);
+	bound_minimal_symbol msym
+	  = lookup_minimal_symbol (current_program_space, physname);
 	if (msym.minsym == NULL)
 	  {
 	    msym = lookup_minimal_symbol_by_pc (call_site->pc () - 1);
@@ -781,7 +779,7 @@ func_addr_to_tail_call_list (struct gdbarch *gdbarch, CORE_ADDR addr)
    via its tail calls (incl. transitively).  Throw NO_ENTRY_VALUE_ERROR if it
    can call itself via tail calls.
 
-   If a funtion can tail call itself its entry value based parameters are
+   If a function can tail call itself its entry value based parameters are
    unreliable.  There is no verification whether the value of some/all
    parameters is unchanged through the self tail call, we expect if there is
    a self tail call all the parameters can be modified.  */
@@ -819,9 +817,8 @@ func_verify_no_selftailcall (struct gdbarch *gdbarch, CORE_ADDR verify_addr)
 	    {
 	      if (target_addr == verify_addr)
 		{
-		  struct bound_minimal_symbol msym;
-
-		  msym = lookup_minimal_symbol_by_pc (verify_addr);
+		  bound_minimal_symbol msym
+		    = lookup_minimal_symbol_by_pc (verify_addr);
 		  throw_error (NO_ENTRY_VALUE_ERROR,
 			       _("DW_OP_entry_value resolving has found "
 				 "function \"%s\" at %s can call itself via tail "
@@ -845,7 +842,7 @@ static void
 tailcall_dump (struct gdbarch *gdbarch, const struct call_site *call_site)
 {
   CORE_ADDR addr = call_site->pc ();
-  struct bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (addr - 1);
+  bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (addr - 1);
 
   gdb_printf (gdb_stdlog, " %s(%s)", paddress (gdbarch, addr),
 	      (msym.minsym == NULL ? "???"
@@ -1063,10 +1060,10 @@ call_site_find_chain_1 (struct gdbarch *gdbarch, CORE_ADDR caller_pc,
 
   if (retval == NULL)
     {
-      struct bound_minimal_symbol msym_caller, msym_callee;
-      
-      msym_caller = lookup_minimal_symbol_by_pc (caller_pc);
-      msym_callee = lookup_minimal_symbol_by_pc (callee_pc);
+      bound_minimal_symbol msym_caller
+	= lookup_minimal_symbol_by_pc (caller_pc);
+      bound_minimal_symbol msym_callee
+	= lookup_minimal_symbol_by_pc (callee_pc);
       throw_error (NO_ENTRY_VALUE_ERROR,
 		   _("There are no unambiguously determinable intermediate "
 		     "callers or callees between caller function \"%s\" at %s "
@@ -1164,8 +1161,7 @@ dwarf_expr_reg_to_entry_parameter (const frame_info_ptr &initial_frame,
   caller_frame = get_prev_frame (frame);
   if (gdbarch != frame_unwind_arch (frame))
     {
-      struct bound_minimal_symbol msym
-	= lookup_minimal_symbol_by_pc (func_addr);
+      bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (func_addr);
       struct gdbarch *caller_gdbarch = frame_unwind_arch (frame);
 
       throw_error (NO_ENTRY_VALUE_ERROR,
@@ -1180,8 +1176,7 @@ dwarf_expr_reg_to_entry_parameter (const frame_info_ptr &initial_frame,
 
   if (caller_frame == NULL)
     {
-      struct bound_minimal_symbol msym
-	= lookup_minimal_symbol_by_pc (func_addr);
+      bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (func_addr);
 
       throw_error (NO_ENTRY_VALUE_ERROR, _("DW_OP_entry_value resolving "
 					   "requires caller of %s (%s)"),
@@ -1972,6 +1967,7 @@ dwarf2_get_symbol_read_needs (gdb::array_view<const gdb_byte> expr,
 	case DW_OP_GNU_reinterpret:
 	case DW_OP_addrx:
 	case DW_OP_GNU_addr_index:
+	case DW_OP_constx:
 	case DW_OP_GNU_const_index:
 	case DW_OP_constu:
 	case DW_OP_plus_uconst:
@@ -2252,7 +2248,7 @@ dwarf2_get_symbol_read_needs (gdb::array_view<const gdb_byte> expr,
 /* A helper function that throws an unimplemented error mentioning a
    given DWARF operator.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 unimplemented (unsigned int op)
 {
   const char *name = get_DW_OP_name (op);
@@ -3270,10 +3266,13 @@ locexpr_describe_location_piece (struct symbol *symbol, struct ui_file *stream,
   /* With -gsplit-dwarf a TLS variable can also look like this:
      DW_AT_location    : 3 byte block: fc 4 e0
 			(DW_OP_GNU_const_index: 4;
-			 DW_OP_GNU_push_tls_address)  */
+			 DW_OP_GNU_push_tls_address) |
+			 3 byte block a2 4 e0
+			(DW_OP_constx: 4;
+			 DW_OP_form_tls_address)  */
   else if (data + 3 <= end
 	   && data + 1 + (leb128_size = skip_leb128 (data + 1, end)) < end
-	   && data[0] == DW_OP_GNU_const_index
+	   && (data[0] == DW_OP_constx || data[0] == DW_OP_GNU_const_index)
 	   && leb128_size > 0
 	   && (data[1 + leb128_size] == DW_OP_GNU_push_tls_address
 	       || data[1 + leb128_size] == DW_OP_form_tls_address)
@@ -3680,6 +3679,7 @@ disassemble_dwarf_expression (struct ui_file *stream,
 	  gdb_printf (stream, " 0x%s", phex_nz (ul, addr_size));
 	  break;
 
+	case DW_OP_constx:
 	case DW_OP_GNU_const_index:
 	  data = safe_read_uleb128 (data, end, &ul);
 	  ul = (uint64_t) dwarf2_read_addr_index (per_cu, per_objfile, ul);
@@ -3977,12 +3977,12 @@ loclist_describe_location (struct symbol *symbol, CORE_ADDR addr,
       enum debug_loc_kind kind;
       const gdb_byte *new_ptr = NULL; /* init for gcc -Wall */
 
-      if (dlbaton->per_cu->version () < 5 && dlbaton->from_dwo)
+      if (dlbaton->dwarf_version < 5 && dlbaton->from_dwo)
 	kind = decode_debug_loc_dwo_addresses (dlbaton->per_cu,
 					       per_objfile,
 					       loc_ptr, buf_end, &new_ptr,
 					       &low, &high, byte_order);
-      else if (dlbaton->per_cu->version () < 5)
+      else if (dlbaton->dwarf_version < 5)
 	kind = decode_debug_loc_addresses (loc_ptr, buf_end, &new_ptr,
 					   &low, &high,
 					   byte_order, addr_size,
@@ -4032,7 +4032,7 @@ loclist_describe_location (struct symbol *symbol, CORE_ADDR addr,
       CORE_ADDR low_reloc = per_objfile->relocate (low);
       CORE_ADDR high_reloc = per_objfile->relocate (high);
 
-      if (dlbaton->per_cu->version () < 5)
+      if (dlbaton->dwarf_version < 5)
 	 {
 	   length = extract_unsigned_integer (loc_ptr, 2, byte_order);
 	   loc_ptr += 2;
@@ -4124,13 +4124,13 @@ _initialize_dwarf2loc ()
 {
   add_setshow_zuinteger_cmd ("entry-values", class_maintenance,
 			     &entry_values_debug,
-			     _("Set entry values and tail call frames "
-			       "debugging."),
-			     _("Show entry values and tail call frames "
-			       "debugging."),
-			     _("When non-zero, the process of determining "
-			       "parameter values from function entry point "
-			       "and tail call frames will be printed."),
+			     _("\
+Set entry values and tail call frames debugging."),
+			     _("\
+Show entry values and tail call frames debugging."),
+			     _("\
+When non-zero, the process of determining parameter values from\n\
+function entry point and tail call frames will be printed."),
 			     NULL,
 			     show_entry_values_debug,
 			     &setdebuglist, &showdebuglist);

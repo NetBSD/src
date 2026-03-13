@@ -27,10 +27,8 @@ if { [prepare_for_testing "failed to prepare" $testfile \
     return -1
 }
 
-if { ![fortran_runto_main] } {
-    perror "Could not run to main."
-    return
-}
+# Don't run to main to avoid increasing the search scope to include
+# debug info of shared libraries like libc, libgcc, libgfortran etc.
 
 set integer4 [fortran_int4]
 set integer8 [fortran_int8]

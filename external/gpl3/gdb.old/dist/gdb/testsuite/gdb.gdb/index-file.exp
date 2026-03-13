@@ -38,12 +38,28 @@ with_timeout_factor $timeout_factor {
 # Record how many worker threads GDB is using.
 set worker_threads [gdb_get_worker_threads]
 
+if { $worker_threads eq "UNKNOWN" } {
+    unresolved "unable to get worker thread count"
+    return -1
+}
+
 # Generate an index file.
 set dir1 [standard_output_file "index_1"]
 remote_exec host "mkdir -p ${dir1}"
 with_timeout_factor $timeout_factor {
-    gdb_test_no_output "save gdb-index $dir1" \
-	"create gdb-index file"
+    set ok 0
+    gdb_test_multiple "save gdb-index $dir1" "create gdb-index file" {
+	-re -wrap "Error while writing index for \[^\r\n\]*: No debugging symbols" {
+	    unsupported $gdb_test_name
+	}
+	-re -wrap "^" {
+	    pass $gdb_test_name
+	    set ok 1
+	}
+    }
+    if { ! $ok } {
+	return -1
+    }
 
     gdb_test_no_output "save gdb-index -dwarf-5 $dir1" \
 	"create dwarf-index files"

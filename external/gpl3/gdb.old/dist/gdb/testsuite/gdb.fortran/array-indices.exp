@@ -62,13 +62,13 @@ set r3p9  [string_to_regexp $a3p9]
 set rep5  "<repeats 5 times>"
 set rep6  "<repeats 6 times>"
 
-proc array_repeat { variant } {
+proc array_repeat_1 { variant } {
     global testfile srcfile
-    upvar n0 n0 n1 n1 n2 n2 n5 n5
-    upvar r1p r1p r1p9 r1p9 r2po r2po r2p9o r2p9o r2p r2p r2p9 r2p9
-    upvar r3po r3po r3p9o r3p9o r3p r3p r3p9 r3p9
-    upvar a2po a2po a2p9o a2p9o a3po a3po a3p9o a3p9o
-    upvar rep5 rep5 rep6 rep6
+    global n0 n0 n1 n1 n2 n2 n5 n5
+    global r1p r1p r1p9 r1p9 r2po r2po r2p9o r2p9o r2p r2p r2p9 r2p9
+    global r3po r3po r3p9o r3p9o r3p r3p r3p9 r3p9
+    global a2po a2po a2p9o a2p9o a3po a3po a3p9o a3p9o
+    global rep5 rep5 rep6 rep6
 
     standard_testfile "${variant}.f90"
 
@@ -77,19 +77,18 @@ proc array_repeat { variant } {
 	return -1
     }
 
-    with_test_prefix "${variant}" {
-	gdb_test_no_output "set print array-indexes on"
-    }
+    gdb_test_no_output "set print array-indexes on"
 
     if {![fortran_runto_main]} {
 	perror "Could not run to main."
 	return
     }
 
-    gdb_breakpoint [gdb_get_line_number "Break here"]
-    gdb_continue_to_breakpoint "${variant}"
+    set line_marker "Break here"
+    gdb_breakpoint [gdb_get_line_number $line_marker]
+    gdb_continue_to_breakpoint $line_marker
 
-    with_test_prefix "${variant}: repeats=unlimited, elements=unlimited" {
+    with_test_prefix "repeats=unlimited, elements=unlimited" {
 	# Check the arrays print as expected.
 	gdb_test_no_output "set print repeats unlimited"
 	gdb_test_no_output "set print elements unlimited"
@@ -102,7 +101,7 @@ proc array_repeat { variant } {
 	gdb_test "print array_3d9" "${r3p9}"
     }
 
-    with_test_prefix "${variant}: repeats=4, elements=unlimited" {
+    with_test_prefix "repeats=4, elements=unlimited" {
 	# Now set the repeat limit.
 	gdb_test_no_output "set print repeats 4"
 	gdb_test_no_output "set print elements unlimited"
@@ -126,7 +125,7 @@ proc array_repeat { variant } {
 				$n5 = ($n0 = ($n0 = 9, ${rep6}) ${rep6}))"]
     }
 
-    with_test_prefix "${variant}: repeats=unlimited, elements=12" {
+    with_test_prefix "repeats=unlimited, elements=12" {
 	# Now set the element limit.
 	gdb_test_no_output "set print repeats unlimited"
 	gdb_test_no_output "set print elements 12"
@@ -147,7 +146,7 @@ proc array_repeat { variant } {
 				...)"]
     }
 
-    with_test_prefix "${variant}: repeats=4, elements=12" {
+    with_test_prefix "repeats=4, elements=12" {
 	# Now set both limits.
 	gdb_test_no_output "set print repeats 4"
 	gdb_test_no_output "set print elements 12"
@@ -173,7 +172,7 @@ proc array_repeat { variant } {
 				       ...) ...)"]
     }
 
-    with_test_prefix "${variant}: repeats=4, elements=30" {
+    with_test_prefix "repeats=4, elements=30" {
 	# Now set both limits.
 	gdb_test_no_output "set print repeats 4"
 	gdb_test_no_output "set print elements 30"
@@ -193,6 +192,12 @@ proc array_repeat { variant } {
 	gdb_test "print array_3d9" \
 	    [string_to_regexp "($n0 = ($n0 = ($n0 = 3, ${rep5}, $n5 = 9)\
 				       ${rep5} ...) ...)"]
+    }
+}
+
+proc array_repeat { variant } {
+    with_test_prefix $variant {
+	array_repeat_1 $variant
     }
 }
 

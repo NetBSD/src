@@ -114,7 +114,7 @@ arc_linux_read_description (void)
   target_desc_up tdesc = arc_create_target_description (features);
 
   static const char *expedite_regs[] = { "sp", "status32", nullptr };
-  init_target_desc (tdesc.get (), expedite_regs);
+  init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
 
   return tdesc.release ();
 }
@@ -282,7 +282,7 @@ arc_store_gregset (struct regcache *regcache, const void *buf)
   unsigned long pcl = regbuf->stop_pc & ~3L;
   supply_register_by_name (regcache, "pcl", &pcl);
 
-  /* Other auxilliary registers.  */
+  /* Other auxiliary registers.  */
   supply_register_by_name (regcache, "status32", &(regbuf->scratch.status32));
 
   /* BTA.  */

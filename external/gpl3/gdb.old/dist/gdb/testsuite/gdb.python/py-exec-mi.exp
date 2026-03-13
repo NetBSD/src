@@ -30,3 +30,7 @@ gdb_test_no_output "python gdb.execute_mi('-exec-arguments', 'a', 'b', 'c')" \
     "set arguments"
 
 gdb_test "show args" ".*\"a b c\"."
+
+# Ensure that this causes an error, not a crash.
+gdb_test "python gdb.execute_mi()" \
+    "Error occurred in Python: gdb.execute_mi requires command argument"

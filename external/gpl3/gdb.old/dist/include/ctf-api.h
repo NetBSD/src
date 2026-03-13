@@ -25,6 +25,7 @@
 #define	_CTF_API_H
 
 #include <sys/types.h>
+#include <inttypes.h>
 #include <ctf.h>
 #include <zlib.h>
 
@@ -195,7 +196,7 @@ typedef struct ctf_snapshot_id
   _CTF_ITEM (ECTF_NOCTFDATA, "File does not contain CTF data.") \
   _CTF_ITEM (ECTF_NOCTFBUF, "Buffer does not contain CTF data.") \
   _CTF_ITEM (ECTF_NOSYMTAB, "Symbol table information is not available.") \
-  _CTF_ITEM (ECTF_NOPARENT, "The parent CTF dictionary is unavailable.") \
+  _CTF_ITEM (ECTF_NOPARENT, "The parent CTF dictionary is needed but unavailable.") \
   _CTF_ITEM (ECTF_DMODEL, "Data model mismatch.") \
   _CTF_ITEM (ECTF_LINKADDEDLATE, "File added to link too late.") \
   _CTF_ITEM (ECTF_ZALLOC, "Failed to allocate (de)compression buffer.") \
@@ -219,12 +220,12 @@ typedef struct ctf_snapshot_id
   _CTF_ITEM (ECTF_NOLABEL, "No label found corresponding to name.") \
   _CTF_ITEM (ECTF_NOLABELDATA, "File does not contain any labels.") \
   _CTF_ITEM (ECTF_NOTSUP, "Feature not supported.") \
-  _CTF_ITEM (ECTF_NOENUMNAM, "Enum element name not found.") \
+  _CTF_ITEM (ECTF_NOENUMNAM, "Enumerator name not found.") \
   _CTF_ITEM (ECTF_NOMEMBNAM, "Member name not found.") \
   _CTF_ITEM (ECTF_RDONLY, "CTF container is read-only.") \
   _CTF_ITEM (ECTF_DTFULL, "CTF type is full (no more members allowed).") \
   _CTF_ITEM (ECTF_FULL, "CTF container is full.") \
-  _CTF_ITEM (ECTF_DUPLICATE, "Duplicate member or variable name.") \
+  _CTF_ITEM (ECTF_DUPLICATE, "Duplicate member, enumerator, or variable name.") \
   _CTF_ITEM (ECTF_CONFLICT, "Conflicting type is already defined.") \
   _CTF_ITEM (ECTF_OVERROLLBACK, "Attempt to roll back past a ctf_update.") \
   _CTF_ITEM (ECTF_COMPRESS, "Failed to compress CTF data.") \
@@ -242,7 +243,8 @@ typedef struct ctf_snapshot_id
   _CTF_ITEM (ECTF_FLAGS, "CTF header contains flags unknown to libctf.") \
   _CTF_ITEM (ECTF_NEEDSBFD, "This feature needs a libctf with BFD support.") \
   _CTF_ITEM (ECTF_INCOMPLETE, "Type is not a complete type.") \
-  _CTF_ITEM (ECTF_NONAME, "Type name must not be empty.")
+  _CTF_ITEM (ECTF_NONAME, "Type name must not be empty.") \
+  _CTF_ITEM (ECTF_BADFLAG, "Invalid CTF dict flag specified.")
 
 #define	ECTF_BASE	1000	/* Base value for libctf errnos.  */
 
@@ -255,7 +257,7 @@ _CTF_ERRORS
 #undef _CTF_FIRST
   };
 
-#define ECTF_NERR (ECTF_NONAME - ECTF_BASE + 1) /* Count of CTF errors.  */
+#define ECTF_NERR (ECTF_BADFLAG - ECTF_BASE + 1) /* Count of CTF errors.  */
 
 /* The CTF data model is inferred to be the caller's data model or the data
    model of the given object, unless ctf_setmodel is explicitly called.  */
@@ -268,9 +270,11 @@ _CTF_ERRORS
 #endif
 
 /* Dynamic CTF containers can be created using ctf_create.  The ctf_add_*
-   routines can be used to add new definitions to the dynamic container.
-   New types are labeled as root or non-root to determine whether they are
-   visible at the top-level program scope when subsequently doing a lookup.  */
+   routines can be used to add new definitions to the dynamic container.  New
+   types are labeled as root or non-root to determine whether they are visible
+   at the top-level program scope when subsequently doing a lookup.
+   (Identifiers contained within non-root types, like enumeration constants, are
+   also not visible.)  */
 
 #define	CTF_ADD_NONROOT	0	/* Type only visible in nested scope.  */
 #define	CTF_ADD_ROOT	1	/* Type visible at top-level scope.  */
@@ -278,6 +282,12 @@ _CTF_ERRORS
 /* Flags for ctf_member_next.  */
 
 #define CTF_MN_RECURSE 0x1	/* Recurse into unnamed members.  */
+
+/* Flags for ctf_dict_set_flag.  */
+
+/* If set, duplicate enumerators in a single dict fail with ECTF_DUPLICATE.  */
+
+#define CTF_STRICT_NO_DUP_ENUMERATORS	0x1
 
 /* These typedefs are used to define the signature for callback functions that
    can be used with the iteration and visit functions below.  There is also a
@@ -346,6 +356,11 @@ extern ctf_archive_t *ctf_fdopen (int fd, const char *filename,
 extern ctf_archive_t *ctf_open (const char *filename,
 				const char *target, int *errp);
 extern void ctf_close (ctf_archive_t *);
+
+/* Set or unset dict-wide boolean flags, and get the value of these flags.  */
+
+extern int ctf_dict_set_flag (ctf_dict_t *, uint64_t flag, int set);
+extern int ctf_dict_get_flag (ctf_dict_t *, uint64_t flag);
 
 /* Return the data, symbol, or string sections used by a given CTF dict.  */
 extern ctf_sect_t ctf_getdatasect (const ctf_dict_t *);
@@ -536,6 +551,16 @@ extern ctf_id_t ctf_lookup_by_name (ctf_dict_t *, const char *);
 
 extern ctf_id_t ctf_lookup_variable (ctf_dict_t *, const char *);
 
+/* Look up a single enumerator by enumeration constant name.  Returns the ID of
+   the enum it is contained within and optionally its value.  Error out with
+   ECTF_DUPLICATE if multiple exist (which can happen in some older dicts).  See
+   ctf_lookup_enumerator_next in that case.  Enumeration constants in non-root
+   types are not returned, but constants in parents are, if not overridden by
+   an enum in the child.  */
+
+extern ctf_id_t ctf_lookup_enumerator (ctf_dict_t *, const char *,
+				       int64_t *enum_value);
+
 /* Type lookup functions.  */
 
 /* Strip qualifiers and typedefs off a type, returning the base type.
@@ -661,17 +686,47 @@ extern int ctf_member_iter (ctf_dict_t *, ctf_id_t, ctf_member_f *, void *);
 extern ssize_t ctf_member_next (ctf_dict_t *, ctf_id_t, ctf_next_t **,
 				const char **name, ctf_id_t *membtype,
 				int flags);
+
+/* Return all enumeration constants in a given enum type.  */
 extern int ctf_enum_iter (ctf_dict_t *, ctf_id_t, ctf_enum_f *, void *);
 extern const char *ctf_enum_next (ctf_dict_t *, ctf_id_t, ctf_next_t **,
 				  int *);
+
+/* Return all enumeration constants with a given name in a given dict, similar
+   to ctf_lookup_enumerator above but capable of returning multiple values.
+   Enumerators in parent dictionaries are not returned: enumerators in non-root
+   types *are* returned.  This operation internally iterates over all types in
+   the dict, so is relatively expensive in large dictionaries.
+
+   There is nothing preventing NAME from being changed by the caller in the
+   middle of iteration: the results might be slightly confusing, but they are
+   well-defined.  */
+
+extern ctf_id_t ctf_lookup_enumerator_next (ctf_dict_t *, const char *name,
+					    ctf_next_t **, int64_t *enum_value);
+
+/* Likewise, across all dicts in an archive (parent first).  The DICT and ERRP
+   arguments are not optional: without the forer you can't tell which dict the
+   returned type is in, and without the latter you can't distinguish real errors
+   from end-of-iteration.  DICT should be NULL before the first call and is set
+   to NULL after the last and on error: on successful call it is set to the dict
+   containing the returned enum, and it is the caller's responsibility to
+   ctf_dict_close() it.  The caller should otherwise pass it back in unchanged
+   (do not reassign it during iteration, just as with the ctf_next_t iterator
+   itself).  */
+
+extern ctf_id_t ctf_arc_lookup_enumerator_next (ctf_archive_t *, const char *name,
+						ctf_next_t **, int64_t *enum_value,
+						ctf_dict_t **dict, int *errp);
 
 /* Iterate over all types in a dict.  ctf_type_iter_all recurses over all types:
    ctf_type_iter recurses only over types with user-visible names (for which
    CTF_ADD_ROOT was passed).  All such types are returned, even if they are
    things like pointers that intrinsically have no name: this is the only effect
    of CTF_ADD_ROOT for such types.  ctf_type_next allows you to choose whether
-   to see hidden types or not with the want_hidden arg: if set, the flag (if
-   passed) returns the hidden state of each type in turn.  */
+   to see non-root types or not with the want_hidden arg: if set, the flag (if
+   passed) returns the non-root state of each type in turn.  Types in parent
+   dictionaries are not returned.  */
 
 extern int ctf_type_iter (ctf_dict_t *, ctf_type_f *, void *);
 extern int ctf_type_iter_all (ctf_dict_t *, ctf_type_all_f *, void *);
@@ -785,9 +840,8 @@ extern ctf_id_t ctf_add_union_sized (ctf_dict_t *, uint32_t, const char *,
 extern ctf_id_t ctf_add_unknown (ctf_dict_t *, uint32_t, const char *);
 extern ctf_id_t ctf_add_volatile (ctf_dict_t *, uint32_t, ctf_id_t);
 
-/* Add an enumerator to an enum (the name is a misnomer).  We do not currently
-   validate that enumerators have unique names, even though C requires it: in
-   future this may change.  */
+/* Add an enumerator to an enum.  If the enum is non-root, so are all the
+   constants added to it by ctf_add_enumerator.  */
 
 extern int ctf_add_enumerator (ctf_dict_t *, ctf_id_t, const char *, int);
 

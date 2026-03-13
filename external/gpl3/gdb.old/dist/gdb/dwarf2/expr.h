@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (DWARF2EXPR_H)
-#define DWARF2EXPR_H
+#ifndef GDB_DWARF2_EXPR_H
+#define GDB_DWARF2_EXPR_H
 
 #include "leb128.h"
 #include "dwarf2/call-site.h"
@@ -320,4 +320,4 @@ extern const gdb_byte *safe_read_sleb128 (const gdb_byte *buf,
 extern const gdb_byte *safe_skip_leb128 (const gdb_byte *buf,
 					 const gdb_byte *buf_end);
 
-#endif /* DWARF2EXPR_H */
+#endif /* GDB_DWARF2_EXPR_H */

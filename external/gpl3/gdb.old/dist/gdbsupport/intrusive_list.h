@@ -27,7 +27,7 @@ template<typename T>
 class intrusive_list_node
 {
 public:
-  bool is_linked () const
+  bool is_linked () const noexcept
   {
     return next != INTRUSIVE_LIST_UNLINKED_VALUE;
   }
@@ -56,7 +56,7 @@ private:
 template<typename T>
 struct intrusive_base_node
 {
-  static intrusive_list_node<T> *as_node (T *elem)
+  static intrusive_list_node<T> *as_node (T *elem) noexcept
   { return elem; }
 };
 
@@ -65,7 +65,7 @@ struct intrusive_base_node
 template<typename T, intrusive_list_node<T> T::*MemberNode>
 struct intrusive_member_node
 {
-  static intrusive_list_node<T> *as_node (T *elem)
+  static intrusive_list_node<T> *as_node (T *elem) noexcept
   { return &(elem->*MemberNode); }
 };
 
@@ -86,29 +86,29 @@ struct intrusive_list_base_iterator
   using node_type = intrusive_list_node<T>;
 
   /* Create an iterator pointing to ELEM.  */
-  explicit intrusive_list_base_iterator (pointer elem)
+  explicit intrusive_list_base_iterator (pointer elem) noexcept
     : m_elem (elem)
   {}
 
   /* Create a past-the-end iterator.  */
-  intrusive_list_base_iterator ()
+  intrusive_list_base_iterator () noexcept
     : m_elem (nullptr)
   {}
 
-  reference operator* () const
+  reference operator* () const noexcept
   { return *m_elem; }
 
-  pointer operator-> () const
+  pointer operator-> () const noexcept
   { return m_elem; }
 
-  bool operator== (const self_type &other) const
+  bool operator== (const self_type &other) const noexcept
   { return m_elem == other.m_elem; }
 
-  bool operator!= (const self_type &other) const
+  bool operator!= (const self_type &other) const noexcept
   { return m_elem != other.m_elem; }
 
 protected:
-  static node_type *as_node (pointer elem)
+  static node_type *as_node (pointer elem) noexcept
   { return AsNode::as_node (elem); }
 
   /* A past-end-the iterator points to the list's head.  */
@@ -131,14 +131,14 @@ struct intrusive_list_iterator
   using base::base;
   using base::m_elem;
 
-  self_type &operator++ ()
+  self_type &operator++ () noexcept
   {
     node_type *node = this->as_node (m_elem);
     m_elem = node->next;
     return *this;
   }
 
-  self_type operator++ (int)
+  self_type operator++ (int) noexcept
   {
     self_type temp = *this;
     node_type *node = this->as_node (m_elem);
@@ -146,14 +146,14 @@ struct intrusive_list_iterator
     return temp;
   }
 
-  self_type &operator-- ()
+  self_type &operator-- () noexcept
   {
     node_type *node = this->as_node (m_elem);
     m_elem = node->prev;
     return *this;
   }
 
-  self_type operator-- (int)
+  self_type operator-- (int) noexcept
   {
     self_type temp = *this;
     node_type *node = this->as_node (m_elem);
@@ -178,14 +178,14 @@ struct intrusive_list_reverse_iterator
   using base::m_elem;
   using node_type = typename base::node_type;
 
-  self_type &operator++ ()
+  self_type &operator++ () noexcept
   {
     node_type *node = this->as_node (m_elem);
     m_elem = node->prev;
     return *this;
   }
 
-  self_type operator++ (int)
+  self_type operator++ (int) noexcept
   {
     self_type temp = *this;
     node_type *node = this->as_node (m_elem);
@@ -193,14 +193,14 @@ struct intrusive_list_reverse_iterator
     return temp;
   }
 
-  self_type &operator-- ()
+  self_type &operator-- () noexcept
   {
     node_type *node = this->as_node (m_elem);
     m_elem = node->next;
     return *this;
   }
 
-  self_type operator-- (int)
+  self_type operator-- (int) noexcept
   {
     self_type temp = *this;
     node_type *node = this->as_node (m_elem);
@@ -243,14 +243,14 @@ public:
     = const intrusive_list_reverse_iterator<T, AsNode>;
   using node_type = intrusive_list_node<T>;
 
-  intrusive_list () = default;
+  intrusive_list () noexcept = default;
 
   ~intrusive_list ()
   {
     clear ();
   }
 
-  intrusive_list (intrusive_list &&other)
+  intrusive_list (intrusive_list &&other) noexcept
     : m_front (other.m_front),
       m_back (other.m_back)
   {
@@ -258,7 +258,7 @@ public:
     other.m_back = nullptr;
   }
 
-  intrusive_list &operator= (intrusive_list &&other)
+  intrusive_list &operator= (intrusive_list &&other) noexcept
   {
     m_front = other.m_front;
     m_back = other.m_back;
@@ -268,47 +268,47 @@ public:
     return *this;
   }
 
-  void swap (intrusive_list &other)
+  void swap (intrusive_list &other) noexcept
   {
     std::swap (m_front, other.m_front);
     std::swap (m_back, other.m_back);
   }
 
-  iterator iterator_to (reference value)
+  iterator iterator_to (reference value) noexcept
   {
     return iterator (&value);
   }
 
-  const_iterator iterator_to (const_reference value)
+  const_iterator iterator_to (const_reference value) noexcept
   {
     return const_iterator (&value);
   }
 
-  reference front ()
+  reference front () noexcept
   {
     gdb_assert (!this->empty ());
     return *m_front;
   }
 
-  const_reference front () const
+  const_reference front () const noexcept
   {
     gdb_assert (!this->empty ());
     return *m_front;
   }
 
-  reference back ()
+  reference back () noexcept
   {
     gdb_assert (!this->empty ());
     return *m_back;
   }
 
-  const_reference back () const
+  const_reference back () const noexcept
   {
     gdb_assert (!this->empty ());
     return *m_back;
   }
 
-  void push_front (reference elem)
+  void push_front (reference elem) noexcept
   {
     intrusive_list_node<T> *elem_node = as_node (&elem);
 
@@ -321,7 +321,7 @@ public:
       this->push_front_non_empty (elem);
   }
 
-  void push_back (reference elem)
+  void push_back (reference elem) noexcept
   {
     intrusive_list_node<T> *elem_node = as_node (&elem);
 
@@ -334,8 +334,10 @@ public:
       this->push_back_non_empty (elem);
   }
 
-  /* Inserts ELEM before POS.  */
-  void insert (const_iterator pos, reference elem)
+  /* Inserts ELEM before POS.
+
+     Returns an iterator to the inserted element.  */
+  iterator insert (const_iterator pos, reference elem) noexcept
   {
     if (this->empty ())
       return this->push_empty (elem);
@@ -359,10 +361,12 @@ public:
     prev_node->next = &elem;
     elem_node->next = pos_elem;
     pos_node->prev = &elem;
+
+    return this->iterator_to (elem);
   }
 
   /* Move elements from LIST at the end of the current list.  */
-  void splice (intrusive_list &&other)
+  void splice (intrusive_list &&other) noexcept
   {
     if (other.empty ())
       return;
@@ -388,21 +392,21 @@ public:
     other.m_back = nullptr;
   }
 
-  void pop_front ()
+  void pop_front () noexcept
   {
     gdb_assert (!this->empty ());
-    erase_element (*m_front);
+    unlink_element (*m_front);
   }
 
-  void pop_back ()
+  void pop_back () noexcept
   {
     gdb_assert (!this->empty ());
-    erase_element (*m_back);
+    unlink_element (*m_back);
   }
 
 private:
   /* Push ELEM in the list, knowing the list is empty.  */
-  void push_empty (reference elem)
+  iterator push_empty (reference elem) noexcept
   {
     gdb_assert (this->empty ());
 
@@ -415,10 +419,12 @@ private:
     m_back = &elem;
     elem_node->prev = nullptr;
     elem_node->next = nullptr;
+
+    return this->iterator_to (elem);
   }
 
   /* Push ELEM at the front of the list, knowing the list is not empty.  */
-  void push_front_non_empty (reference elem)
+  iterator push_front_non_empty (reference elem) noexcept
   {
     gdb_assert (!this->empty ());
 
@@ -432,10 +438,12 @@ private:
     front_node->prev = &elem;
     elem_node->prev = nullptr;
     m_front = &elem;
+
+    return this->iterator_to (elem);
   }
 
   /* Push ELEM at the back of the list, knowing the list is not empty.  */
-  void push_back_non_empty (reference elem)
+  iterator push_back_non_empty (reference elem) noexcept
   {
     gdb_assert (!this->empty ());
 
@@ -449,9 +457,12 @@ private:
     back_node->next = &elem;
     elem_node->next = nullptr;
     m_back = &elem;
+
+    return this->iterator_to (elem);
   }
 
-  void erase_element (reference elem)
+protected:
+  void unlink_element (reference elem) noexcept
   {
     intrusive_list_node<T> *elem_node = as_node (&elem);
 
@@ -489,18 +500,18 @@ private:
 public:
   /* Remove the element pointed by I from the list.  The element
      pointed by I is not destroyed.  */
-  iterator erase (const_iterator i)
+  iterator erase (const_iterator i) noexcept
   {
     iterator ret = i;
     ++ret;
 
-    erase_element (*i);
+    unlink_element (*i);
 
     return ret;
   }
 
   /* Erase all the elements.  The elements are not destroyed.  */
-  void clear ()
+  void clear () noexcept
   {
     while (!this->empty ())
       pop_front ();
@@ -509,7 +520,7 @@ public:
   /* Erase all the elements.  Disposer::operator()(pointer) is called
      for each of the removed elements.  */
   template<typename Disposer>
-  void clear_and_dispose (Disposer disposer)
+  void clear_and_dispose (Disposer disposer) noexcept
   {
     while (!this->empty ())
       {
@@ -519,7 +530,7 @@ public:
       }
   }
 
-  bool empty () const
+  bool empty () const noexcept
   {
     return m_front == nullptr;
   }
@@ -585,7 +596,7 @@ public:
   }
 
 private:
-  static node_type *as_node (pointer elem)
+  static node_type *as_node (pointer elem) noexcept
   {
     return AsNode::as_node (elem);
   }

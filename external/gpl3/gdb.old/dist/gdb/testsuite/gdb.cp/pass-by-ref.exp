@@ -396,12 +396,12 @@ proc test_for_class { prefix states cbvfun data_field length} {
 	    gdb_test "print ${cbvfun}<$name> (${name}_var)" " = $expected" \
 		"call '$cbvfun'"
 	    gdb_test "print ${name}_var.${data_field}\[0\]" " = $ORIGINAL" \
-		"cbv argument should not change (item 0)"
+		"cbv argument should not change, item 0"
 	    if {$length > 1} {
 		set last_index [expr $length - 1]
 		gdb_test "print ${name}_var.${data_field}\[$last_index\]" \
 		    " = $ORIGINAL" \
-		    "cbv argument should not change (item $last_index)"
+		    "cbv argument should not change, item $last_index"
 	    }
 	    if {$dtor == "explicit"} {
 		if {$cctor == "defaultedIn"

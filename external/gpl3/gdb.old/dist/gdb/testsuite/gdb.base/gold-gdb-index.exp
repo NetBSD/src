@@ -32,11 +32,11 @@ if { [have_index $binfile] != "gdb_index" } {
     return -1
 }
 
-gdb_test_no_output "set auto-solib-add off"
-
 if {![runto_main]} {
     return 0
 }
+
+gdb_test_no_output "nosharedlibrary"
 
 gdb_test_no_output "set breakpoint pending off"
 gdb_test "break N1::misspelled" "Function \"N1::misspelled\" not defined\."

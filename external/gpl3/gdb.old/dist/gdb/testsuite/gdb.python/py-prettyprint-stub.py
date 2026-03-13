@@ -16,6 +16,8 @@
 # This file is part of the GDB testsuite.
 # It tests Python-based pretty-printing of stubs.
 
+import gdb.printing
+
 
 class SPrinter:
     def __init__(self, val):

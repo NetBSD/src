@@ -37,9 +37,9 @@ gdb_install_guile_module
 gdb_scm_test_silent_cmd "guile (define main-func (lookup-global-symbol \"main\"))" \
     "lookup main"
 gdb_test "guile (print (symbol-function? main-func))" \
-    "= #t" "test (symbol-function? main)"
+    "= #t" "test, symbol-function? main"
 gdb_test "guile (print (lookup-global-symbol \"junk\"))" \
-    "= #f" "test (lookup-global-symbol junk)"
+    "= #f" "test, lookup-global-symbol junk"
 
 gdb_test "guile (print (symbol-value main-func))" \
     "= {int \\(int, char \[*\]\[*\]\\)} $hex \\<main\\>" "print value of main"

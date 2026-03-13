@@ -102,7 +102,7 @@ print_icache_extraction(lf *file,
 
   /* Define a storage area for the cache element */
   if (what_to_declare == undef_variables) {
-    /* We've finished with the value - destory it */
+    /* We've finished with the value - destroy it */
     lf_indent_suppress(file);
     lf_printf(file, "#undef %s\n", entry_name);
     return;
@@ -482,7 +482,7 @@ print_icache_struct(insn_table *instructions,
   }
   else {
     /* alernativly, since no cache, emit a dummy definition for
-       idecode_cache so that code refering to the type can still compile */
+       idecode_cache so that code referring to the type can still compile */
     lf_printf(file, "typedef void idecode_cache;\n");
   }
   lf_printf(file, "\n");

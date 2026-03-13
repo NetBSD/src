@@ -28,7 +28,8 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
 
 mi_clean_restart $binfile
 
-mi_runto_main
+# Don't run to main to avoid increasing the search scope to include
+# debug info of shared libraries like glibc, libgcc, etc.
 
 mi_gdb_test "1-complete br" \
             "1\\^done,completion=\"break\",matches=\\\[.*\"break\",.*\"break-range\".*\\\],max_completions_reached=\"0\"" \

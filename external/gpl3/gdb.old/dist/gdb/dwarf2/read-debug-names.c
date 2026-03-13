@@ -690,7 +690,7 @@ check_cus_from_debug_names (dwarf2_per_bfd *per_bfd,
 			     const mapped_debug_names_reader &map,
 			     const mapped_debug_names_reader &dwz_map)
 {
-  if (!check_cus_from_debug_names_list (per_bfd, map, per_bfd->info,
+  if (!check_cus_from_debug_names_list (per_bfd, map, per_bfd->infos[0],
 					false /* is_dwz */))
     return false;
 
@@ -742,15 +742,16 @@ do_dwarf2_read_debug_names (dwarf2_per_objfile *per_objfile)
 
   if (map.tu_count != 0)
     {
-      /* We can only handle a single .debug_types when we have an
-	 index.  */
-      if (per_bfd->types.size () > 1)
+      /* We can only handle a single .debug_info and .debug_types when we have
+	 an index.  */
+      if (per_bfd->infos.size () > 1
+	  || per_bfd->types.size () > 1)
 	return false;
 
       dwarf2_section_info *section
 	= (per_bfd->types.size () == 1
 	   ? &per_bfd->types[0]
-	   : &per_bfd->info);
+	   : &per_bfd->infos[0]);
 
       if (!check_signatured_type_table_from_debug_names (per_objfile,
 							 map, section))

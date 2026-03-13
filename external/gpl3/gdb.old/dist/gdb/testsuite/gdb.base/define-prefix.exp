@@ -152,7 +152,7 @@ gdb_test "abc-prefix def-prefix ghi-prefix-cmd alternate-jkl-cmd" \
     "use user command after redefining ghi-prefix-cmd: alternate-jkl-cmd"
 
 ####################
-# Check error behaviour.
+# Check error behavior.
 
 gdb_test "define-prefix print" ".* is built-in.*"
 

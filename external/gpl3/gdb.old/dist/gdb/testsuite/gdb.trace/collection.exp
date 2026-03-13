@@ -161,7 +161,7 @@ proc gdb_collect_args_test { myargs msg } {
 	# collected.  In C, an array as function parameters is a special
 	# case; it's just a pointer into the caller's array, and as such,
 	# that's what normally the debug info describes.  Maybe this was
-	# originaly written for a compiler where array parameters were
+	# originally written for a compiler where array parameters were
 	# really described as arrays in debug info.
 
 	setup_xfail "*-*-*"
@@ -250,7 +250,7 @@ proc gdb_collect_argarray_test { myargs msg } {
 	# are collected.  In C, an array as function parameters is a
 	# special case; it's just a pointer into the caller's array,
 	# and as such, that's what normally the debug info describes.
-	# Maybe this was originaly written for a compiler where array
+	# Maybe this was originally written for a compiler where array
 	# parameters were really described as arrays in debug info.
 
 	setup_xfail "*-*-*"

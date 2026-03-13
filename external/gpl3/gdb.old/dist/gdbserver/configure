@@ -8274,7 +8274,25 @@ $as_echo "#define HAVE_LANGINFO_CODESET 1" >>confdefs.h
   fi
 
 
-  for ac_header in linux/perf_event.h locale.h memory.h signal.h 		   sys/resource.h sys/socket.h 		   sys/un.h sys/wait.h 		   thread_db.h wait.h 		   termios.h 		   dlfcn.h 		   linux/elf.h proc_service.h 		   poll.h sys/poll.h sys/select.h
+for ac_header in  \
+  dlfcn.h \
+  linux/elf.h \
+  linux/perf_event.h  \
+  locale.h \
+  memory.h \
+  poll.h \
+  proc_service.h \
+  signal.h \
+  sys/poll.h \
+  sys/resource.h \
+  sys/select.h \
+  sys/socket.h \
+  sys/un.h \
+  sys/wait.h \
+  termios.h \
+  thread_db.h \
+  wait.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -8736,9 +8754,25 @@ if test "$ac_res" != no; then :
 
 fi
 
-  for ac_func in fdwalk getrlimit pipe pipe2 poll socketpair sigaction \
-		  ptrace64 sbrk setns sigaltstack sigprocmask \
-		  setpgid setpgrp getrusage getauxval sigtimedwait
+  for ac_func in  \
+    fdwalk \
+    getauxval \
+    getrlimit \
+    getrusage \
+    pipe \
+    pipe2 \
+    poll \
+    ptrace64 \
+    sbrk \
+    setns \
+    setpgid \
+    setpgrp \
+    sigaction \
+    sigaltstack \
+    sigprocmask \
+    sigtimedwait \
+    socketpair \
+
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -10214,6 +10248,17 @@ if test "x$ac_cv_member_struct_pt_insn_resynced" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_PT_INSN_RESYNCED 1
+_ACEOF
+
+
+fi
+
+      ac_fn_c_check_member "$LINENO" "struct pt_event" "variant.ptwrite" "ac_cv_member_struct_pt_event_variant_ptwrite" "#include <intel-pt.h>
+"
+if test "x$ac_cv_member_struct_pt_event_variant_ptwrite" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE 1
 _ACEOF
 
 
@@ -13108,7 +13153,23 @@ else CCDEPMODE=depmode=$am_cv_CC_dependencies_compiler_type
 fi
 
 
-for ac_header in termios.h sys/reg.h string.h 		 sys/procfs.h linux/elf.h 		 fcntl.h signal.h sys/file.h 		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h 		 netinet/tcp.h arpa/inet.h ws2tcpip.h
+for ac_header in  \
+  arpa/inet.h \
+  fcntl.h \
+  linux/elf.h \
+  netdb.h \
+  netinet/in.h \
+  netinet/tcp.h \
+  signal.h \
+  string.h \
+  sys/file.h \
+  sys/ioctl.h \
+  sys/procfs.h \
+  sys/reg.h \
+  sys/socket.h \
+  termios.h \
+  ws2tcpip.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -13120,6 +13181,7 @@ _ACEOF
 fi
 
 done
+
 
 for ac_header in vfork.h
 do :
@@ -13334,7 +13396,11 @@ $as_echo "#define HAVE_WORKING_FORK 1" >>confdefs.h
 
 fi
 
-for ac_func in pread pwrite pread64
+for ac_func in  \
+  pread \
+  pread64 \
+  pwrite \
+
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -13715,7 +13781,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wredundant-move \
 -Wmissing-declarations \
 -Wstrict-null-sentinel \
--Wno-vla-cxx-extension \
+-Wvla \
 "
 
 # The -Wmissing-prototypes flag will be accepted by GCC, but results

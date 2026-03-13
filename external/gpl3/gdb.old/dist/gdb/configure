@@ -760,6 +760,7 @@ HAVE_NATIVE_GCORE_TARGET
 TARGET_OBS
 AMD_DBGAPI_LIBS
 AMD_DBGAPI_CFLAGS
+HAVE_GSTACK
 ENABLE_BFD_64_BIT_FALSE
 ENABLE_BFD_64_BIT_TRUE
 subdirs
@@ -11499,7 +11500,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11502 "configure"
+#line 11503 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -11605,7 +11606,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 11608 "configure"
+#line 11609 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -19567,7 +19568,25 @@ $as_echo "#define HAVE_LANGINFO_CODESET 1" >>confdefs.h
   fi
 
 
-  for ac_header in linux/perf_event.h locale.h memory.h signal.h 		   sys/resource.h sys/socket.h 		   sys/un.h sys/wait.h 		   thread_db.h wait.h 		   termios.h 		   dlfcn.h 		   linux/elf.h proc_service.h 		   poll.h sys/poll.h sys/select.h
+for ac_header in  \
+  dlfcn.h \
+  linux/elf.h \
+  linux/perf_event.h  \
+  locale.h \
+  memory.h \
+  poll.h \
+  proc_service.h \
+  signal.h \
+  sys/poll.h \
+  sys/resource.h \
+  sys/select.h \
+  sys/socket.h \
+  sys/un.h \
+  sys/wait.h \
+  termios.h \
+  thread_db.h \
+  wait.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -20029,9 +20048,25 @@ if test "$ac_res" != no; then :
 
 fi
 
-  for ac_func in fdwalk getrlimit pipe pipe2 poll socketpair sigaction \
-		  ptrace64 sbrk setns sigaltstack sigprocmask \
-		  setpgid setpgrp getrusage getauxval sigtimedwait
+  for ac_func in  \
+    fdwalk \
+    getauxval \
+    getrlimit \
+    getrusage \
+    pipe \
+    pipe2 \
+    poll \
+    ptrace64 \
+    sbrk \
+    setns \
+    setpgid \
+    setpgrp \
+    sigaction \
+    sigaltstack \
+    sigprocmask \
+    sigtimedwait \
+    socketpair \
+
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -21507,6 +21542,17 @@ if test "x$ac_cv_member_struct_pt_insn_resynced" = xyes; then :
 
 cat >>confdefs.h <<_ACEOF
 #define HAVE_STRUCT_PT_INSN_RESYNCED 1
+_ACEOF
+
+
+fi
+
+      ac_fn_c_check_member "$LINENO" "struct pt_event" "variant.ptwrite" "ac_cv_member_struct_pt_event_variant_ptwrite" "#include <intel-pt.h>
+"
+if test "x$ac_cv_member_struct_pt_event_variant_ptwrite" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE 1
 _ACEOF
 
 
@@ -24817,9 +24863,17 @@ if test "${enable_targets+set}" = set; then :
   yes | "") as_fn_error $? "enable-targets option must specify target names or 'all'" "$LINENO" 5
             ;;
   no)       enable_targets= ;;
-  *)        enable_targets=$enableval ;;
+  *)
+	enable_targets=$enableval
+
+cat >>confdefs.h <<_ACEOF
+#define ENABLE_TARGETS "$enable_targets"
+_ACEOF
+
+	;;
 esac
 fi
+
 
 
 # Check whether --enable-64-bit-bfd was given.
@@ -24955,6 +25009,12 @@ if test x${all_targets} = xtrue; then
   fi
 fi
 
+HAVE_GSTACK=0
+if test $gdb_native = yes; then
+   HAVE_GSTACK=1
+fi
+
+
 # AMD debugger API support.
 
 
@@ -24993,19 +25053,19 @@ if test "$gdb_require_amd_dbgapi" = true \
   # version of the library.
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for amd-dbgapi >= 0.68.0" >&5
-$as_echo_n "checking for amd-dbgapi >= 0.68.0... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for amd-dbgapi >= 0.75.0" >&5
+$as_echo_n "checking for amd-dbgapi >= 0.75.0... " >&6; }
 
 if test -n "$AMD_DBGAPI_CFLAGS"; then
     pkg_cv_AMD_DBGAPI_CFLAGS="$AMD_DBGAPI_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"amd-dbgapi >= 0.68.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "amd-dbgapi >= 0.68.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"amd-dbgapi >= 0.75.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "amd-dbgapi >= 0.75.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_AMD_DBGAPI_CFLAGS=`$PKG_CONFIG --cflags "amd-dbgapi >= 0.68.0" 2>/dev/null`
+  pkg_cv_AMD_DBGAPI_CFLAGS=`$PKG_CONFIG --cflags "amd-dbgapi >= 0.75.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -25017,12 +25077,12 @@ if test -n "$AMD_DBGAPI_LIBS"; then
     pkg_cv_AMD_DBGAPI_LIBS="$AMD_DBGAPI_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
-    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"amd-dbgapi >= 0.68.0\""; } >&5
-  ($PKG_CONFIG --exists --print-errors "amd-dbgapi >= 0.68.0") 2>&5
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"amd-dbgapi >= 0.75.0\""; } >&5
+  ($PKG_CONFIG --exists --print-errors "amd-dbgapi >= 0.75.0") 2>&5
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_AMD_DBGAPI_LIBS=`$PKG_CONFIG --libs "amd-dbgapi >= 0.68.0" 2>/dev/null`
+  pkg_cv_AMD_DBGAPI_LIBS=`$PKG_CONFIG --libs "amd-dbgapi >= 0.75.0" 2>/dev/null`
 		      test "x$?" != "x0" && pkg_failed=yes
 else
   pkg_failed=yes
@@ -25067,9 +25127,9 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        AMD_DBGAPI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "amd-dbgapi >= 0.68.0" 2>&1`
+	        AMD_DBGAPI_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors --cflags --libs "amd-dbgapi >= 0.75.0" 2>&1`
         else
-	        AMD_DBGAPI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "amd-dbgapi >= 0.68.0" 2>&1`
+	        AMD_DBGAPI_PKG_ERRORS=`$PKG_CONFIG --print-errors --cflags --libs "amd-dbgapi >= 0.75.0" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
 	echo "$AMD_DBGAPI_PKG_ERRORS" >&5
@@ -27942,7 +28002,7 @@ else
         python_prefix=
       fi
       if test ! -x "${python_prog}"; then
-        # Fall back to gdb 7.0/7.1 behaviour.
+        # Fall back to gdb 7.0/7.1 behavior.
         python_prog=missing
         python_prefix=${with_python}
       fi
@@ -29134,13 +29194,22 @@ $as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
 
-# elf_hp.h is for HP/UX 64-bit shared library support.
-for ac_header in nlist.h machine/reg.h \
-                  thread_db.h \
-		  sys/file.h sys/filio.h sys/ioctl.h sys/param.h \
-		  sys/procctl.h sys/resource.h sys/ptrace.h ptrace.h \
-		  sys/reg.h sys/debugreg.h \
-		  termios.h elf_hp.h
+for ac_header in  \
+  machine/reg.h \
+  nlist.h \
+  ptrace.h \
+  sys/debugreg.h \
+  sys/file.h \
+  sys/filio.h \
+  sys/ioctl.h \
+  sys/param.h \
+  sys/procctl.h \
+  sys/ptrace.h \
+  sys/reg.h \
+  sys/resource.h \
+  termios.h \
+  thread_db.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -29152,6 +29221,7 @@ _ACEOF
 fi
 
 done
+
 
 for ac_header in sys/user.h
 do :
@@ -29170,7 +29240,14 @@ fi
 done
 
 
-for ac_header in curses.h cursesX.h ncurses.h ncursesw/ncurses.h ncurses/ncurses.h ncurses/term.h
+for ac_header in  \
+  curses.h \
+  cursesX.h \
+  ncurses.h \
+  ncurses/ncurses.h \
+  ncurses/term.h \
+  ncursesw/ncurses.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -29182,6 +29259,7 @@ _ACEOF
 fi
 
 done
+
 
 for ac_header in term.h
 do :
@@ -29834,13 +29912,27 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
 # Checks for library functions.  #
 # ------------------------------ #
 
-for ac_func in getuid getgid \
-		pread pread64 pwrite resize_term \
-		getpgid setsid \
-		sigsetmask \
-		ttrace wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise waitpid \
-		use_default_colors
+for ac_func in  \
+  btowc \
+  getgid \
+  getpgid \
+  getrlimit \
+  getuid \
+  iconvlist \
+  libiconvlist \
+  posix_madvise \
+  pread \
+  pread64 \
+  pwrite \
+  resize_term \
+  setlocale \
+  setrlimit \
+  setsid \
+  sigsetmask \
+  ttrace \
+  use_default_colors \
+  wresize \
+
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -29851,6 +29943,7 @@ _ACEOF
 
 fi
 done
+
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nl_langinfo and CODESET" >&5
@@ -31188,7 +31281,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wredundant-move \
 -Wmissing-declarations \
 -Wstrict-null-sentinel \
--Wno-vla-cxx-extension \
+-Wvla \
 "
 
 # The -Wmissing-prototypes flag will be accepted by GCC, but results
@@ -33003,8 +33096,8 @@ $as_echo_n "checking whether to use babeltrace... " >&6; }
 $as_echo "$with_babeltrace" >&6; }
 
 if test "x$with_babeltrace" = "xno"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: babletrace support disabled; GDB is unable to read CTF data." >&5
-$as_echo "$as_me: WARNING: babletrace support disabled; GDB is unable to read CTF data." >&2;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: babeltrace support disabled; GDB is unable to read CTF data." >&5
+$as_echo "$as_me: WARNING: babeltrace support disabled; GDB is unable to read CTF data." >&2;}
 else
   # Append -Werror to CFLAGS so that configure can catch the warning
   # "assignment from incompatible pointer type", which is related to
@@ -33674,6 +33767,8 @@ fi
 
 
 ac_config_files="$ac_config_files gcore"
+
+ac_config_files="$ac_config_files gstack.in:gstack-1.in"
 
 ac_config_files="$ac_config_files Makefile gdb-gdb.gdb gdb-gdb.py doc/Makefile data-directory/Makefile"
 
@@ -34775,6 +34870,7 @@ do
     "jit-reader.h") CONFIG_FILES="$CONFIG_FILES jit-reader.h:jit-reader.in" ;;
     "nm.h") CONFIG_LINKS="$CONFIG_LINKS nm.h:$GDB_NM_FILE" ;;
     "gcore") CONFIG_FILES="$CONFIG_FILES gcore" ;;
+    "gstack.in") CONFIG_FILES="$CONFIG_FILES gstack.in:gstack-1.in" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "gdb-gdb.gdb") CONFIG_FILES="$CONFIG_FILES gdb-gdb.gdb" ;;
     "gdb-gdb.py") CONFIG_FILES="$CONFIG_FILES gdb-gdb.py" ;;

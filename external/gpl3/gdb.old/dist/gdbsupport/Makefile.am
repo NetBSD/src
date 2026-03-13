@@ -68,7 +68,6 @@ libgdbsupport_a_SOURCES = \
     filestuff.cc \
     format.cc \
     gdb-dlfcn.cc \
-    gdb-hashtab.cc \
     gdb_obstack.cc \
     gdb_regex.cc \
     gdb_tilde_expand.cc \
@@ -77,6 +76,7 @@ libgdbsupport_a_SOURCES = \
     job-control.cc \
     netstuff.cc \
     new-op.cc \
+    osabi.cc \
     pathstuff.cc \
     print-utils.cc \
     ptid.cc \

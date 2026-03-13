@@ -346,6 +346,7 @@ tracepoint_change_loc_2 "trace"
 tracepoint_install_in_trace_disabled "trace"
 
 # Re-compile test case with IPA.
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 gdb_load_shlib $libipa
 

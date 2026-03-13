@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_SIGNALS_H
-#define COMMON_GDB_SIGNALS_H
+#ifndef GDBSUPPORT_GDB_SIGNALS_H
+#define GDBSUPPORT_GDB_SIGNALS_H
 
 #include "gdb/signals.h"
 
@@ -35,9 +35,9 @@ extern int gdb_signal_to_host_p (enum gdb_signal signo);
    gdb_signal_to_host() returns 0 and prints a warning() on GDB's
    console if SIGNO has no equivalent host representation.  */
 /* FIXME: cagney/1999-11-22: Here ``host'' is used incorrectly, it is
-   refering to the target operating system's signal numbering.
+   referring to the target operating system's signal numbering.
    Similarly, ``enum gdb_signal'' is named incorrectly, ``enum
-   gdb_signal'' would probably be better as it is refering to GDB's
+   gdb_signal'' would probably be better as it is referring to GDB's
    internal representation of a target operating system's signal.  */
 extern enum gdb_signal gdb_signal_from_host (int);
 extern int gdb_signal_to_host (enum gdb_signal);
@@ -55,4 +55,4 @@ extern const char *gdb_signal_to_name (enum gdb_signal);
 /* Given a name (SIGHUP, etc.), return its signal.  */
 enum gdb_signal gdb_signal_from_name (const char *);
 
-#endif /* COMMON_GDB_SIGNALS_H */
+#endif /* GDBSUPPORT_GDB_SIGNALS_H */

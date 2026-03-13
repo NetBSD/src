@@ -25,16 +25,19 @@ if {[build_executable ${testfile}.exp $testfile] == -1} {
     return
 }
 
-save_vars { env(ASAN_OPTIONS) } {
+save_vars { env(ASAN_OPTIONS) env(TSAN_OPTIONS) } {
     # The request readMemory with count 18446744073709551615 triggers address
     # sanitizer.  Suppress the error, leaving us with just this warning:
     #   WARNING: AddressSanitizer failed to allocate 0xffffffffffffffff bytes
     set_sanitizer ASAN_OPTIONS allocator_may_return_null 1
+    set_sanitizer TSAN_OPTIONS allocator_may_return_null 1
 
     if {[dap_initialize] == ""} {
 	return
     }
 }
+
+set launch_id [dap_launch $testfile]
 
 set line [gdb_get_line_number "BREAK"]
 set obj [dap_check_request_and_response "set breakpoint by line number" \
@@ -45,9 +48,8 @@ set line_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $testfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "inferior started" thread "body reason" started
 
 dap_wait_for_event_and_check "stopped at line breakpoint" stopped \

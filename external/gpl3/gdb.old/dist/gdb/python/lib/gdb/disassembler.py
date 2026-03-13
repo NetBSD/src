@@ -147,7 +147,7 @@ class maint_info_py_disassemblers_cmd(gdb.Command):
         # Figure out the name of the current architecture.  There
         # should always be a current inferior, but if, somehow, there
         # isn't, then leave curr_arch as the empty string, which will
-        # not then match agaisnt any architecture in the dictionary.
+        # not then match against any architecture in the dictionary.
         curr_arch = ""
         if gdb.selected_inferior() is not None:
             curr_arch = gdb.selected_inferior().architecture().name()

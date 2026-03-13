@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SCOPE_EXIT_H
-#define COMMON_SCOPE_EXIT_H
+#ifndef GDBSUPPORT_SCOPE_EXIT_H
+#define GDBSUPPORT_SCOPE_EXIT_H
 
 #include <functional>
 #include <type_traits>
@@ -109,6 +109,9 @@ public:
       /* "If the initialization of exit_function throws an exception,
 	 calls f()."  */
       f ();
+      /* "throws: Nothing, unless the initialization of exit_function
+	 throws."  */
+      throw;
     }
 
   template<typename EFP,
@@ -165,4 +168,4 @@ operator+ (scope_exit_lhs, EF &&rhs)
 #define SCOPE_EXIT \
   auto CONCAT(scope_exit_, __LINE__) = ::detail::scope_exit_lhs () + [&] ()
 
-#endif /* COMMON_SCOPE_EXIT_H */
+#endif /* GDBSUPPORT_SCOPE_EXIT_H */

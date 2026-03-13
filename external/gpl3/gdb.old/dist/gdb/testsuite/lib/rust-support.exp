@@ -86,8 +86,9 @@ gdb_caching_proc rust_llvm_version {} {
 	verbose "could not find rustc"
     } else {
 	set output [lindex [remote_exec host "$rustc --version --verbose"] 1]
+	set output [regsub -all "\r\n" $output "\n"]
 	foreach line [split $output \n] {
-	    if {[regexp "LLVM version: (.+)\$" $output ignore version]} {
+	    if {[regexp "LLVM version: (.+)\$" $line ignore version]} {
 		return $version
 	    }
 	}

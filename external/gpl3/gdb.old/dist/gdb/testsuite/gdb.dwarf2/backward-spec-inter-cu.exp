@@ -98,6 +98,7 @@ foreach_with_prefix worker_threads $worker_threads_list {
 
     gdb_load $binfile
 
-    gdb_test "maint print objfiles" "$eol$ws+qualified:$ws+ns::v$eol.*" \
+    gdb_test "pipe maint print objfiles | grep ns::v" \
+	"$ws+qualified:$ws+ns::v" \
 	"v has parent ns"
 }

@@ -23,10 +23,8 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <assert.h>
 #include <unistd.h>
 
 /* Count the number of tasks/threads in the PID thread group.  */

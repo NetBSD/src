@@ -57,7 +57,7 @@ gdb_test "print Arg" \
 
 # The 'set print elements' command used to control printing of characters
 # in a string, before we created 'set print characters'.  This test makes
-# sure that 'set print elements' doens't effect string printing any more.
+# sure that 'set print elements' doesn't effect string printing any more.
 gdb_test_no_output "set print elements 12"
 gdb_test "print Arg" \
     " = \"abcdefghijklmnopqrstuvwxyz\"" \

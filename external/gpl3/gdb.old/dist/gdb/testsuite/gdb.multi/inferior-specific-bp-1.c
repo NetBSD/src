@@ -35,7 +35,7 @@ foo (void)
 static void
 bar (void)
 {
-  global_var = 0;
+  global_var = 0;	/* First location of bar.  */
 
   foo ();
 }

@@ -95,7 +95,7 @@ gdb_assert {$found_dealloc_breakpoint} "ran all compiled in tests"
 
 foreach var {array_1d_p array_2d_p allocatable_array_1d \
 		 allocatable_array_2d} {
-    gdb_test_multiple "p size ($var, 3)" "p size ($var, 3)" {
+    gdb_test_multiple "p size ($var, 3)" "" {
 	-re -wrap "DIM argument to SIZE must be between 1 and \[1-2\]" {
 	    pass $gdb_test_name
 	}
@@ -129,7 +129,7 @@ gdb_continue_to_breakpoint "Final Breakpoint"
 
 foreach var {array_1d_p array_2d_p allocatable_array_1d \
 		 allocatable_array_2d} {
-    gdb_test_multiple "p size ($var)" "p size ($var)" {
+    gdb_test_multiple "p size ($var)" "" {
 	-re -wrap "SIZE can only be used on allocated/associated arrays" {
 	    pass $gdb_test_name
 	}

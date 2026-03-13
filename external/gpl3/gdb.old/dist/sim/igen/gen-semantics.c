@@ -246,7 +246,7 @@ print_semantic_body (lf *file,
     }
 
   /* Architecture expects a REG to be zero.  Instead of having to
-     check every read to see if it is refering to that REG just zap it
+     check every read to see if it is referring to that REG just zap it
      at the start of every instruction */
   if (options.gen.zero_reg)
     {

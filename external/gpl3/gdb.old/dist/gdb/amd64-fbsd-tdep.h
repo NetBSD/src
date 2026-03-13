@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_FBSD_TDEP_H
-#define AMD64_FBSD_TDEP_H
+#ifndef GDB_AMD64_FBSD_TDEP_H
+#define GDB_AMD64_FBSD_TDEP_H
 
 #include "regset.h"
 
 extern const struct regset amd64_fbsd_gregset;
 
-#endif /* AMD64_FBSD_TDEP_H */
+#endif /* GDB_AMD64_FBSD_TDEP_H */

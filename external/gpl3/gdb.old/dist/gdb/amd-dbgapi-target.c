@@ -269,7 +269,7 @@ struct amd_dbgapi_target final : public target_ops
 
   struct gdbarch *thread_architecture (ptid_t) override;
 
-  void thread_events (int enable) override;
+  void thread_events (bool enable) override;
 
   std::string pid_to_str (ptid_t ptid) override;
 
@@ -483,12 +483,12 @@ struct amd_dbgapi_target_breakpoint : public code_breakpoint
     disposition = disp_donttouch;
   }
 
-  void re_set () override;
+  void re_set (program_space *) override;
   void check_status (struct bpstat *bs) override;
 };
 
 void
-amd_dbgapi_target_breakpoint::re_set ()
+amd_dbgapi_target_breakpoint::re_set (program_space *)
 {
   /* Nothing.  */
 }
@@ -684,7 +684,7 @@ amd_dbgapi_target::resume (ptid_t scope_ptid, int step, enum gdb_signal signo)
       switch (signo)
 	{
 	case GDB_SIGNAL_BUS:
-	  exception = AMD_DBGAPI_EXCEPTION_WAVE_APERTURE_VIOLATION;
+	  exception = AMD_DBGAPI_EXCEPTION_WAVE_ADDRESS_ERROR;
 	  break;
 	case GDB_SIGNAL_SEGV:
 	  exception = AMD_DBGAPI_EXCEPTION_WAVE_MEMORY_VIOLATION;
@@ -1167,7 +1167,7 @@ process_one_event (amd_dbgapi_event_id_t event_id,
 	  ws.set_thread_exited (0);
 	else if (status == AMD_DBGAPI_STATUS_SUCCESS)
 	  {
-	    if (stop_reason & AMD_DBGAPI_WAVE_STOP_REASON_APERTURE_VIOLATION)
+	    if (stop_reason & AMD_DBGAPI_WAVE_STOP_REASON_ADDRESS_ERROR)
 	      ws.set_stopped (GDB_SIGNAL_BUS);
 	    else if (stop_reason
 		     & AMD_DBGAPI_WAVE_STOP_REASON_MEMORY_VIOLATION)
@@ -1805,7 +1805,7 @@ amd_dbgapi_target::thread_architecture (ptid_t ptid)
 }
 
 void
-amd_dbgapi_target::thread_events (int enable)
+amd_dbgapi_target::thread_events (bool enable)
 {
   m_report_thread_events = enable;
   beneath ()->thread_events (enable);
@@ -1992,19 +1992,35 @@ amd_dbgapi_inferior_pre_detach (inferior *inf)
     detach_amd_dbgapi (inf);
 }
 
-/* get_os_pid callback.  */
+/* client_process_get_info callback.  */
 
 static amd_dbgapi_status_t
-amd_dbgapi_get_os_pid_callback
-  (amd_dbgapi_client_process_id_t client_process_id, pid_t *pid)
+amd_dbgapi_client_process_get_info_callback
+  (amd_dbgapi_client_process_id_t client_process_id,
+   amd_dbgapi_client_process_info_t query, size_t value_size, void *value)
 {
   inferior *inf = reinterpret_cast<inferior *> (client_process_id);
 
   if (inf->pid == 0)
     return AMD_DBGAPI_STATUS_ERROR_PROCESS_EXITED;
 
-  *pid = inf->pid;
-  return AMD_DBGAPI_STATUS_SUCCESS;
+  if (value == nullptr)
+    return AMD_DBGAPI_STATUS_ERROR_INVALID_ARGUMENT;
+
+  switch (query)
+    {
+    case AMD_DBGAPI_CLIENT_PROCESS_INFO_OS_PID:
+      if (value_size != sizeof (amd_dbgapi_os_process_id_t))
+	return AMD_DBGAPI_STATUS_ERROR_INVALID_ARGUMENT_COMPATIBILITY;
+
+      *static_cast<amd_dbgapi_os_process_id_t *> (value) = inf->pid;
+      return AMD_DBGAPI_STATUS_SUCCESS;
+
+    case AMD_DBGAPI_CLIENT_PROCESS_INFO_CORE_STATE:
+      return AMD_DBGAPI_STATUS_ERROR_NOT_AVAILABLE;
+    }
+
+  return AMD_DBGAPI_STATUS_ERROR_INVALID_ARGUMENT;
 }
 
 /* insert_breakpoint callback.  */
@@ -2056,6 +2072,50 @@ amd_dbgapi_remove_breakpoint_callback
 
   delete_breakpoint (it->second);
   info->breakpoint_map.erase (it);
+
+  return AMD_DBGAPI_STATUS_SUCCESS;
+}
+
+/* xfer_global_memory callback.  */
+
+static amd_dbgapi_status_t
+amd_dbgapi_xfer_global_memory_callback
+  (amd_dbgapi_client_process_id_t client_process_id,
+   amd_dbgapi_global_address_t global_address,
+   amd_dbgapi_size_t *value_size, void *read_buffer,
+   const void *write_buffer)
+{
+  if ((read_buffer != nullptr) == (write_buffer != nullptr))
+    return AMD_DBGAPI_STATUS_ERROR_INVALID_ARGUMENT_COMPATIBILITY;
+
+  inferior *inf = reinterpret_cast<inferior *> (client_process_id);
+
+  /* We need to set inferior_ptid / current_inferior as those are
+     used by the target which will process the xfer_partial request.
+
+     Note that we end up here when amd-dbgapi tries to access device memory or
+     register content which are at this point mapped/saved in the host process
+     memory.  As a consequence, unwinding GPU frames will most likely call into
+     here.  If we used switch_to_thread to select a host thread, this would
+     implicitly call reinit_frame_cache.  We do not want to clear the frame
+     cache while trying to build it.  */
+  scoped_restore save_inferior_ptid = make_scoped_restore (&inferior_ptid);
+  scoped_restore_current_inferior restore_current_inferior;
+  scoped_restore_current_program_space restore_program_space;
+  inferior_ptid = ptid_t (inf->pid);
+  set_current_inferior (inf);
+  set_current_program_space (inf->pspace);
+
+  target_xfer_status status
+    = target_xfer_partial (inf->top_target (), TARGET_OBJECT_RAW_MEMORY,
+			   nullptr, static_cast<gdb_byte *> (read_buffer),
+			   static_cast<const gdb_byte *> (write_buffer),
+			   global_address, *value_size, value_size);
+
+  if (status == TARGET_XFER_EOF)
+    return AMD_DBGAPI_STATUS_ERROR_PROCESS_EXITED;
+  else if (status != TARGET_XFER_OK)
+    return AMD_DBGAPI_STATUS_ERROR_MEMORY_ACCESS;
 
   return AMD_DBGAPI_STATUS_SUCCESS;
 }
@@ -2138,9 +2198,10 @@ amd_dbgapi_log_message_callback (amd_dbgapi_log_level_t level,
 static amd_dbgapi_callbacks_t dbgapi_callbacks = {
   .allocate_memory = malloc,
   .deallocate_memory = free,
-  .get_os_pid = amd_dbgapi_get_os_pid_callback,
+  .client_process_get_info = amd_dbgapi_client_process_get_info_callback,
   .insert_breakpoint = amd_dbgapi_insert_breakpoint_callback,
   .remove_breakpoint = amd_dbgapi_remove_breakpoint_callback,
+  .xfer_global_memory = amd_dbgapi_xfer_global_memory_callback,
   .log_message = amd_dbgapi_log_message_callback,
 };
 

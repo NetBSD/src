@@ -162,7 +162,7 @@ objfpy_get_build_id (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (build_id != NULL)
@@ -183,7 +183,7 @@ objfpy_get_progspace (PyObject *self, void *closure)
   objfile_object *obj = (objfile_object *) self;
 
   if (obj->objfile)
-    return pspace_to_pspace_object (obj->objfile->pspace).release ();
+    return pspace_to_pspace_object (obj->objfile->pspace ()).release ();
 
   Py_RETURN_NONE;
 }
@@ -453,7 +453,7 @@ objfpy_add_separate_debug_file (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -488,7 +488,7 @@ objfpy_lookup_global_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -523,7 +523,7 @@ objfpy_lookup_static_symbol (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -709,11 +709,7 @@ objfile_to_objfile_object (struct objfile *objfile)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_objfile (void)
 {
-  if (PyType_Ready (&objfile_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Objfile",
-				 (PyObject *) &objfile_object_type);
+  return gdbpy_type_ready (&objfile_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_objfile);

@@ -468,8 +468,8 @@ static const struct tramp_frame mips64_fbsd_sigframe =
 static CORE_ADDR
 mips_fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol msym
-    = lookup_bound_minimal_symbol ("_mips_rtld_bind");
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_mips_rtld_bind");
   if (msym.minsym != nullptr && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 

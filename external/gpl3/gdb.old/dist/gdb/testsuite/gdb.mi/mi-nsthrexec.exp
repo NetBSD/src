@@ -47,7 +47,7 @@ if { [mi_runto_main] < 0 } {
 
 mi_create_breakpoint thread_execler \
     "breakpoint at thread_execler" \
-    -number 2 -function thread_execler
+    -number 2 -func thread_execler
 
 # All threads should stop, except the main thread.
 mi_send_resuming_command "exec-continue --all" "resume all"

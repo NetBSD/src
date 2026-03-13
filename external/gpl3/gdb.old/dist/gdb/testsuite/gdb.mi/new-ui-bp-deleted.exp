@@ -76,8 +76,12 @@ foreach_mi_ui_mode mode {
     set loc2 [make_bp_loc "$::decimal\\.2"]
 
     # Create the inferior-specific breakpoint.
-    mi_create_breakpoint_multi "-g i2 foo" "create breakpoint in inferior 2" \
-	-inferior "2" -locations "\\\[$loc1,$loc2\\\]"
+    mi_create_breakpoint "-g i2 foo" "create breakpoint in inferior 2" \
+	-number "$decimal" \
+	-type "breakpoint" \
+	-enabled "y" \
+	-func "foo" \
+	-inferior "2"
     set bpnum [mi_get_valueof "/d" "\$bpnum" "INVALID"]
 
     if {$mode eq "separate"} {

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DISPLACED_STEPPING_H
-#define DISPLACED_STEPPING_H
+#ifndef GDB_DISPLACED_STEPPING_H
+#define GDB_DISPLACED_STEPPING_H
 
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/byte-vector.h"
@@ -207,4 +207,4 @@ private:
   std::vector<displaced_step_buffer> m_buffers;
 };
 
-#endif /* DISPLACED_STEPPING_H */
+#endif /* GDB_DISPLACED_STEPPING_H */
