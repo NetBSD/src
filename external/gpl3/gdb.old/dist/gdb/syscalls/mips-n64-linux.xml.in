@@ -377,4 +377,9 @@
   <syscall name="lsm_get_self_attr" number="5459"/>
   <syscall name="lsm_set_self_attr" number="5460"/>
   <syscall name="lsm_list_modules" number="5461"/>
+  <syscall name="mseal" number="5462"/>
+  <syscall name="setxattrat" number="5463"/>
+  <syscall name="getxattrat" number="5464"/>
+  <syscall name="listxattrat" number="5465"/>
+  <syscall name="removexattrat" number="5466"/>
 </syscalls_info>

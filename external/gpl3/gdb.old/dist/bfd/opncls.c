@@ -45,18 +45,9 @@ SUBSECTION
 	Functions for opening and closing
 */
 
-/* Counters used to initialize the bfd identifier.  */
+/* Counter used to initialize the unique bfd identifier.  */
 
 static unsigned int bfd_id_counter = 0;
-static unsigned int bfd_reserved_id_counter = 0;
-
-/*
-EXTERNAL
-.{* Set to N to open the next N BFDs using an alternate id space.  *}
-.extern unsigned int bfd_use_reserved_id;
-.
-*/
-unsigned int bfd_use_reserved_id = 0;
 
 /* fdopen is a loser -- we should use stdio exclusively.  Unfortunately
    if we do that we can't use fcntl.  */
@@ -83,13 +74,7 @@ _bfd_new_bfd (void)
 
   if (!bfd_lock ())
     return NULL;
-  if (bfd_use_reserved_id)
-    {
-      nbfd->id = --bfd_reserved_id_counter;
-      --bfd_use_reserved_id;
-    }
-  else
-    nbfd->id = bfd_id_counter++;
+  nbfd->id = bfd_id_counter++;
   if (!bfd_unlock ())
     {
       free (nbfd);

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXEC_H
-#define EXEC_H
+#ifndef GDB_EXEC_H
+#define GDB_EXEC_H
 
 #include "target.h"
 #include "progspace.h"
@@ -62,7 +62,7 @@ extern enum target_xfer_status
    noted above.  See memory_xfer_partial_1() in target.c for an
    example.
 
-   Return the number of bytes actually transfered, or zero when no
+   Return the number of bytes actually transferred, or zero when no
    data is available for the requested range.
 
    This function is intended to be used from target_xfer_partial
@@ -105,4 +105,9 @@ extern void print_section_info (const std::vector<target_section> *table,
 extern void try_open_exec_file (const char *exec_file_host,
 				struct inferior *inf,
 				symfile_add_flags add_flags);
-#endif
+
+/* Report a "No executable file specified" error.  */
+
+extern void no_executable_specified_error ();
+
+#endif /* GDB_EXEC_H */

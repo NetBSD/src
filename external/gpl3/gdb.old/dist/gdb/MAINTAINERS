@@ -328,7 +328,7 @@ the native maintainer when resolving ABI issues.
 			Lancelot Six		lancelot.six@amd.com
 
 	arc		--target=arc-elf
-			Shahab Vahedi		shahab@synopsys.com
+			Shahab Vahedi		list@vahedi.org
 
 	arm		--target=arm-elf
 			Alan Hayward		alan.hayward@arm.com
@@ -346,7 +346,6 @@ the native maintainer when resolving ABI issues.
 	h8300		--target=h8300-elf
 
 	i386		--target=i386-elf
-			Felix Willgerodt	felix.willgerodt@intel.com
 
 	ia64		--target=ia64-linux-gnu
 			(--target=ia64-elf broken)
@@ -384,9 +383,7 @@ the native maintainer when resolving ABI issues.
 
 	ms1		Deleted
 
-	nios2		--target=nios2-elf
-			--target=nios2-linux-gnu
-			Yao Qi			qiyao@sourceware.org
+	nios2		Deleted
 
 	ns32k		Deleted
 
@@ -422,7 +419,6 @@ the native maintainer when resolving ABI issues.
 	vax		--target=vax-netbsd
 
 	x86-64		--target=x86_64-linux-gnu
-			Felix Willgerodt	felix.willgerodt@intel.com
 
 	xstormy16	--target=xstormy16-elf
 	xtensa		--target=xtensa-elf
@@ -473,7 +469,7 @@ SystemTap		Sergio Durigan Junior	sergiodj@sergiodj.net
 Reverse debugging / Record and Replay / Tracing:
 
 record
-  full			Guinevere Larsen	blarsen@redhat.com
+  full			Guinevere Larsen	guinevere@redhat.com
   btrace		Markus T. Metzger	markus.t.metzger@intel.com
 
 
@@ -554,6 +550,7 @@ David Blaikie					dblaikie@gmail.com
 Philip Blundell					philb@gnu.org
 Eric Botcazou					ebotcazou@libertysurf.fr
 Per Bothner					per@bothner.com
+Mohamed Bouhaouel				mohamed.bouhaouel@intel.com
 Don Breazeal					donb@codesourcery.com
 Joel Brobecker					brobecker@adacore.com
 Dave Brolley					brolley@redhat.com
@@ -606,6 +603,7 @@ Mike Frysinger					vapier@gentoo.org
 Gary Funck					gary@intrepid.com
 Martin Galvan					martingalvan@sourceware.org
 Chen Gang					gang.chen.5i5j@gmail.com
+Klaus Gerlicher					klaus.gerlicher@intel.com
 Mircea Gherzan					mircea.gherzan@intel.com
 Paul Gilliam					pgilliam@us.ibm.com
 Tristan Gingold					tgingold@free.fr
@@ -643,6 +641,7 @@ Sam James					sam@gentoo.org
 Janis Johnson					janisjo@codesourcery.com
 Jeff Johnston					jjohnstn@redhat.com
 Ruslan Kabatsayev				b7.10110111@gmail.com
+Aditya Kamath					Aditya.Kamath1@ibm.com
 Geoff Keating					geoffk@redhat.com
 Nils-Christian Kempke				nils-christian.kempke@intel.com
 Mark Kettenis					kettenis@gnu.org
@@ -656,7 +655,7 @@ Jan Kratochvil					jan.kratochvil@redhat.com
 Maxim Kuvyrkov					maxim@kugelworks.com
 Pierre Langlois 				pierre.langlois@arm.com
 Jonathan Larmour				jifl@ecoscentric.com
-Guinevere Larsen				blarsen@redhat.com
+Guinevere Larsen				guinevere@redhat.com
 Jeff Law					law@redhat.com
 Justin Lebar					justin.lebar@gmail.com
 David Lecomber					david@streamline-computing.com
@@ -690,11 +689,12 @@ Chris Moller					cmoller@redhat.com
 Patrick Monnerat				patrick@monnerat.net
 Phil Muldoon					pmuldoon@redhat.com
 Pierre Muller					muller@sourceware.org
-Gaius Mulley					gaius@glam.ac.uk
+Gaius Mulley					gaiusmod2@gmail.com
 Masaki Muranaka					monaka@monami-software.com
 Joseph Myers					josmyers@redhat.com
 Fernando Nasser					fnasser@redhat.com
 Adam Nemet					anemet@caviumnetworks.com
+Dmitrii Neverov 				dmitry.neverov@jetbrains.com
 Will Newton					will.newton@linaro.org
 Nathanael Nerode				neroden@gcc.gnu.org
 Hans-Peter Nilsson				hp@bitrange.com
@@ -774,7 +774,7 @@ Kai Tietz					ktietz@redhat.com
 Andreas Tobler					andreast@fgznet.ch
 Jon Turney					jon.turney@dronecode.org.uk
 David Ung					davidu@mips.com
-Shahab Vahedi					shahab@synopsys.com
+Shahab Vahedi					shahab.vahedi@amd.com
 D Venkatasubramanian				dvenkat@noida.hcltech.com
 Corinna Vinschen				vinschen@redhat.com
 Jan Vrany					jan.vrany@fit.cvut.cz
@@ -789,7 +789,7 @@ Ulrich Weigand					uweigand@de.ibm.com
 Ken Werner					ken.werner@de.ibm.com
 Tim Wiederhake					tim.wiederhake@intel.com
 Mark Wielaard					mark@klomp.org
-Felix Willgerodt				felix.willgerodt@intel.com
+Felix Willgerodt				felix.willgerodt@gmail.com
 Nathan Williams					nathanw@wasabisystems.com
 Bob Wilson					bob.wilson@acm.org
 Jim Wilson					wilson@tuliptree.org
@@ -865,6 +865,7 @@ Stan Shebs (Global)				stanshebs@google.com
 Joel Brobecker (Global, Ada)			brobecker@adacore.com
 Doug Evans (Global)				dje@google.com
 Yao Qi (Global)					qiyao@sourceware.org
+Felix Willgerodt (amd64, i386)			felix.willgerodt@gmail.com
 
 
 Folks that have been caught up in a paper trail:

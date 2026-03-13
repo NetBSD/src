@@ -89,42 +89,39 @@ set re_synth	"foo & operator=\\(foo const ?&\\);"
 
 gdb_test "print foo_instance1" "\\$\[0-9\]+ = \{ifoo = 111, ccpfoo = 0x0\}"
 
-gdb_test_multiple "ptype foo_instance1" "ptype foo_instance1" {
-    -re "type = $re_class${ws}$XX_fields${ws}$re_synth${ws}$re_dtor${ws}$re_ctor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 2.95.3 -gstabs+, no "const" on "const char *"
-	# TODO: gdb.base/constvar.exp has XFAILed this kind of problem for a
-	# long time, but an XFAIL really needs an external bug report.
-	# -- chastain 2003-12-31
-	# setup_xfail "*-*-*"
-	# fail "ptype foo_instance1"
-	# TODO: this should be a KFAIL.
-	pass "ptype foo_instance1 (shorter match)"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_synth${ws}$re_dtor${ws}$re_ctor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 2.95.3 -gstabs+ if "const char *" ever gets fixed
-	pass "ptype foo_instance1"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$XX_dtor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 3.3.2 -gdwarf-2, "~foo(int)"
-	# TODO: kfail this
-	# kfail "gdb/1113" "ptype foo_instance1"
-	pass "ptype foo_instance1 (shorter match)"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$re_dtor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 3.3.2 -gdwarf-2, if the dtor bug gets fixed
-	# gcc HEAD -gdwarf-2 (abi-2)
-	# TODO: just pass this
-	pass "ptype foo_instance1 (shorter match)"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_synth${ws}$re_ctor${ws}$re_dtor${ws}$re_methods$nl\}$nl$gdb_prompt $" {
-	# gcc 3.3.2 -gstabs+
-	# TODO: enough with the "shorter match"
-	pass "ptype foo_instance1 (shorter match)"
-    }
-    -re "type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$re_dtor${ws}$re_methods${ws}$re_synth$nl\}$nl$gdb_prompt $" {
-	# gcc HEAD -gstabs+ (abi-2)
-	pass "ptype foo_instance1 (shorter match)"
-    }
+set lines [gdb_get_lines "ptype foo_instance1"]
+set test "ptype foo_instance1 output"
+if { [regexp "^type = $re_class${ws}$XX_fields${ws}$re_synth${ws}$re_dtor${ws}$re_ctor${ws}$re_methods$nl\}\r\n$" $lines] } {
+    # gcc 2.95.3 -gstabs+, no "const" on "const char *"
+    # TODO: gdb.base/constvar.exp has XFAILed this kind of problem for a
+    # long time, but an XFAIL really needs an external bug report.
+    # -- chastain 2003-12-31
+    # setup_xfail "*-*-*"
+    # fail "ptype foo_instance1"
+    # TODO: this should be a KFAIL.
+    pass "$test (shorter match)"
+} elseif { [regexp "^type = $re_class${ws}$re_fields${ws}$re_synth${ws}$re_dtor${ws}$re_ctor${ws}$re_methods$nl\}\r\n$" $lines] } {
+    # gcc 2.95.3 -gstabs+ if "const char *" ever gets fixed
+    pass "$test"
+} elseif { [regexp "^type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$XX_dtor${ws}$re_methods$nl\}\r\n$" $lines] } {
+    # gcc 3.3.2 -gdwarf-2, "~foo(int)"
+    # TODO: kfail this
+    # kfail "gdb/1113" "ptype foo_instance1"
+    pass "$test (shorter match)"
+} elseif { [regexp "^type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$re_dtor${ws}$re_methods$nl\}\r\n$" $lines] } {
+    # gcc 3.3.2 -gdwarf-2, if the dtor bug gets fixed
+    # gcc HEAD -gdwarf-2 (abi-2)
+    # TODO: just pass this
+    pass "$test (shorter match)"
+} elseif { [regexp "^type = $re_class${ws}$re_fields${ws}$re_synth${ws}$re_ctor${ws}$re_dtor${ws}$re_methods$nl\}\r\n$" $lines] } {
+    # gcc 3.3.2 -gstabs+
+    # TODO: enough with the "shorter match"
+    pass "$test (shorter match)"
+} elseif { [regexp "^type = $re_class${ws}$re_fields${ws}$re_ctor${ws}$re_dtor${ws}$re_methods${ws}$re_synth$nl\}\r\n$" $lines] } {
+    # gcc HEAD -gstabs+ (abi-2)
+    pass "$test (shorter match)"
+} else {
+    fail $test
 }
 
 # Print variables and method calls.

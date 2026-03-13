@@ -296,7 +296,7 @@ gdb_test "catch exec" "Catchpoint \[0-9\]+ \\(exec\\)" \
 #
 
 gdb_test_no_output "set breakpoint pending off"
-gdb_test "break 999" "No line 999 in the current file." \
+gdb_test "break 999" "^No compiled code for line 999 in the current file\\." \
     "break on non-existent source line"
 
 # Run to the desired default location. If not positioned here, the

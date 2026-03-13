@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_WCHAR_H
-#define GDB_WCHAR_H
+#ifndef GDB_GDB_WCHAR_H
+#define GDB_GDB_WCHAR_H
 
 /* We handle three different modes here.
    
@@ -132,4 +132,4 @@ typedef int gdb_wint_t;
 
 #endif
 
-#endif /* GDB_WCHAR_H */
+#endif /* GDB_GDB_WCHAR_H */

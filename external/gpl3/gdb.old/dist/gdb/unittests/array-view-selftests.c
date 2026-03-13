@@ -364,6 +364,39 @@ check_range_for ()
   SELF_CHECK (sum == 1 + 2 + 3 + 4);
 }
 
+template<typename T>
+static void
+check_iterator ()
+{
+  T data[] = {1, 2, 3, 4};
+  gdb::array_view<T> view (data);
+
+  typename std::decay<T>::type sum = 0;
+  for (typename gdb::array_view<T>::iterator it = view.begin ();
+       it != view.end (); it++)
+    {
+      *it *= 2;
+      sum += *it;
+    }
+
+  SELF_CHECK (sum == 2 + 4 + 6 + 8);
+}
+
+template<typename T>
+static void
+check_const_iterator ()
+{
+  T data[] = {1, 2, 3, 4};
+  gdb::array_view<T> view (data);
+
+  typename std::decay<T>::type sum = 0;
+  for (typename gdb::array_view<T>::const_iterator it = view.cbegin ();
+       it != view.cend (); it++)
+    sum += *it;
+
+  SELF_CHECK (sum == 1 + 2 + 3 + 4);
+}
+
 /* Entry point.  */
 
 static void
@@ -490,6 +523,9 @@ run_tests ()
 
   check_range_for<gdb_byte> ();
   check_range_for<const gdb_byte> ();
+  check_iterator<gdb_byte> ();
+  check_const_iterator<gdb_byte> ();
+  check_const_iterator<const gdb_byte> ();
 
   /* Check that the right ctor overloads are taken when the element is
      a container.  */

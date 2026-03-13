@@ -1,3 +1,13 @@
+2024-10-18  WANG Xuerui <git@xen0n.name>
+
+	* elfnn-loongarch.c (ELF_MAXPAGESIZE): Bump to 64KiB.
+	(ELF_MINPAGESIZE): Define as 4KiB.
+	(ELF_COMMONPAGESIZE): Define as 16KiB.
+
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
 2024-01-15  Nick Clifton  <nickc@redhat.com>
 
 	* 2.42 branch point.

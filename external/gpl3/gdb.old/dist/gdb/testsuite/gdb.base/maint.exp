@@ -70,11 +70,11 @@ set saw_registers 0
 set saw_headers 0
 set test "maint print registers"
 gdb_test_multiple $test $test {
-    -re "\[^\r\n\]+Name\[^\r\n\]+Nr\[^\r\n\]+Rel\[^\r\n\]+Offset\[^\r\n\]+Size\[^\r\n\]+Type\[^\r\n\]+\r\n" {
+    -re "Name\[^\r\n\]+Nr\[^\r\n\]+Rel\[^\r\n\]+Offset\[^\r\n\]+Size\[^\r\n\]+Type\[^\r\n\]+\r\n" {
 	set saw_headers 1
 	exp_continue
     }
-    -re "^\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\r\n" {
+    -re "\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\[0-9\]+\[^\r\n\]+\r\n" {
         set saw_registers 1
         exp_continue
     }
@@ -380,6 +380,9 @@ gdb_test "maint info" \
 gdb_test "maint" \
     "List.*unambiguous\\..*" \
     "maint w/o args"
+
+gdb_test "show configuration" \
+    "^This GDB was configured as follows:\r\n.*\r\nGNU Readline library version: \[^\r\n\]+"
 
 # Test that "main info line-table" w/o a file name shows the symtab for
 # $srcfile.

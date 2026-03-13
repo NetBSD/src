@@ -56,7 +56,7 @@ rs6000_lynx178_push_dummy_call (struct gdbarch *gdbarch,
      on PPC variants that lack them.  */
   gdb_assert (ppc_floating_point_unit_p (gdbarch));
 
-  /* The first eight words of ther arguments are passed in registers.
+  /* The first eight words of the arguments are passed in registers.
      Copy them appropriately.  */
   ii = 0;
 

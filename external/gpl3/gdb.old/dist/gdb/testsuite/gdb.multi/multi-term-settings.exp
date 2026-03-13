@@ -94,7 +94,7 @@ proc create_inferior {which_inf inf_how} {
 		 "attach"] == 0} {
 
 	    # The program is now stopped, but if testing against
-	    # gdbserver, then the inferior's output emmitted before it
+	    # gdbserver, then the inferior's output emitted before it
 	    # stopped isn't flushed unless we explicitly do so,
 	    # because it is on a different spawn_id.  Do it now, to
 	    # avoid confusing tests further below.

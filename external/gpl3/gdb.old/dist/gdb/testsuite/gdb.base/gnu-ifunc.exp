@@ -225,7 +225,7 @@ proc misc_tests {resolver_attr resolver_debug final_debug} {
 	return 1
     }
 
-    # The "if" condition is artifical to test regression of a former patch.
+    # The "if" condition is artificial to test regression of a former patch.
     gdb_breakpoint "[gdb_get_line_number "break-at-nextcall"] if i && (int) gnu_ifunc (i) != 42"
 
     gdb_breakpoint [gdb_get_line_number "break-at-call"]

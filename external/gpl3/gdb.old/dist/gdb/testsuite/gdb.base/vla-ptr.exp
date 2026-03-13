@@ -29,13 +29,13 @@ set sizeof_int [get_sizeof "int" 4]
 # Check that VLA passed to function (pointer) points to the first element.
 gdb_breakpoint [gdb_get_line_number "foo_bp"]
 gdb_continue_to_breakpoint "foo_bp"
-gdb_test "print vla_ptr" "\\\(int \\\*\\\) $hex" "print vla_ptr (foo)"
-gdb_test "print *vla_ptr" " = 2" "print *vla_ptr (foo)"
+gdb_test "print vla_ptr" "\\\(int \\\*\\\) $hex" "print vla_ptr, foo"
+gdb_test "print *vla_ptr" " = 2" "print *vla_ptr, foo"
 
 gdb_breakpoint [gdb_get_line_number "bar_bp"]
 gdb_continue_to_breakpoint "bar_bp"
-gdb_test "print vla_ptr" "\\\(int \\\*\\\) $hex" "print vla_ptr (bar)"
-gdb_test "print *vla_ptr" " = 2" "print *vla_ptr (bar)"
+gdb_test "print vla_ptr" "\\\(int \\\*\\\) $hex" "print vla_ptr, bar"
+gdb_test "print *vla_ptr" " = 2" "print *vla_ptr, bar"
 
 gdb_breakpoint [gdb_get_line_number "vla_func_bp"]
 gdb_continue_to_breakpoint "vla_func_bp"

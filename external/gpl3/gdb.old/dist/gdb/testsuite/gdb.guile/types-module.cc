@@ -31,6 +31,10 @@ class derived : public base
 
 derived d;
 
+typedef const int const_int;
+const_int foo (3);
+const_int &foo_ref (foo);
+
 int
 main (void)
 {

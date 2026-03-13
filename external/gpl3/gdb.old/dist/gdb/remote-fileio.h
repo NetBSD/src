@@ -19,8 +19,8 @@
 
 /* See the GDB User Guide for details of the GDB remote protocol.  */
 
-#ifndef REMOTE_FILEIO_H
-#define REMOTE_FILEIO_H
+#ifndef GDB_REMOTE_FILEIO_H
+#define GDB_REMOTE_FILEIO_H
 
 #include "gdbsupport/fileio.h"
 
@@ -44,4 +44,4 @@ extern void initialize_remote_fileio (
 extern void remote_fileio_to_host_stat (struct fio_stat *fst,
 					struct stat *st);
 
-#endif
+#endif /* GDB_REMOTE_FILEIO_H */

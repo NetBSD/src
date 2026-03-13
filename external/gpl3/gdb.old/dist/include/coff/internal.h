@@ -215,7 +215,7 @@ struct internal_extra_pe_aouthdr
   short MinorImageVersion;	/*  exe or dll being created, default to 0.  */
   short MajorSubsystemVersion;	/* Minimum subsystem version required to */
   short MinorSubsystemVersion;	/*  run exe; default to 3.1.  */
-  uint32_t Reserved1;		/* Seems to be 0.  */
+  uint32_t Win32Version;	/* Set to 0.  */
   uint32_t SizeOfImage;		/* Size of memory to allocate for prog.  */
   uint32_t SizeOfHeaders;	/* Size of PE header and section table.  */
   uint32_t CheckSum;		/* Set to 0.  */

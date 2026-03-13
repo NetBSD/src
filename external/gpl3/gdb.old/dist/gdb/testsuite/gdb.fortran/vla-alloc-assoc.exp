@@ -32,32 +32,32 @@ if ![fortran_runto_main] {
 gdb_breakpoint [gdb_get_line_number "vla1-allocated"]
 gdb_continue_to_breakpoint "vla1-allocated"
 gdb_test "print l" " = \\.TRUE\\." \
-  "print vla1 allocation status (allocated)"
+  "print vla1 allocation status, allocated"
 
 gdb_breakpoint [gdb_get_line_number "vla2-allocated"]
 gdb_continue_to_breakpoint "vla2-allocated"
 gdb_test "print l" " = \\.TRUE\\." \
-  "print vla2 allocation status (allocated)"
+  "print vla2 allocation status, allocated"
 
 gdb_breakpoint [gdb_get_line_number "pvla-associated"]
 gdb_continue_to_breakpoint "pvla-associated"
 gdb_test "print l" " = \\.TRUE\\." \
-  "print pvla associated status (associated)"
+  "print pvla associated status, associated"
 
 gdb_breakpoint [gdb_get_line_number "pvla-re-associated"]
 gdb_continue_to_breakpoint "pvla-re-associated"
 gdb_test "print l" " = \\.TRUE\\." \
-  "print pvla associated status (re-associated)"
+  "print pvla associated status, re-associated"
 
 gdb_breakpoint [gdb_get_line_number "pvla-deassociated"]
 gdb_continue_to_breakpoint "pvla-deassociated"
 gdb_test "print l" " = \\.FALSE\\." \
-  "print pvla allocation status (deassociated)"
+  "print pvla allocation status, deassociated"
 
 gdb_breakpoint [gdb_get_line_number "vla1-deallocated"]
 gdb_continue_to_breakpoint "vla1-deallocated"
 gdb_test "print l" " = \\.FALSE\\." \
-  "print vla1 allocation status (deallocated)"
+  "print vla1 allocation status, deallocated"
 gdb_test "print vla1" " = <not allocated>" \
   "print deallocated vla1"
 

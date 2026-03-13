@@ -2559,6 +2559,13 @@ init_nfp3200_priv (nfp_priv_data * priv, struct disassemble_info *dinfo)
       return false;
     }
 
+  if (sec->bfd_section == NULL)
+    {
+      /* See PR 31843 for an example of this.  */
+      dinfo->fprintf_func (dinfo->stream, _("The ME-Config section is corrupt."));
+      return false;
+    }
+
   for (roff = 0; (bfd_size_type) roff < sec->sh_size;
        roff += sec->sh_entsize, menum_linear++)
     {

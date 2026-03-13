@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (INFERIOR_H)
-#define INFERIOR_H 1
+#ifndef GDB_INFERIOR_H
+#define GDB_INFERIOR_H
 
 #include <exception>
 #include <list>
@@ -86,13 +86,7 @@ struct infcall_suspend_state_deleter
 	/* If we are restoring the inferior state due to an exception,
 	   some error message will be printed.  So, only warn the user
 	   when we cannot restore during normal execution.  */
-	bool unwinding;
-#if __cpp_lib_uncaught_exceptions
-	unwinding = std::uncaught_exceptions () > 0;
-#else
-	unwinding = std::uncaught_exception ();
-#endif
-	if (!unwinding)
+	if (std::uncaught_exceptions () == 0)
 	  warning (_("Failed to restore inferior state: %s"), e.what ());
       }
   }
@@ -872,4 +866,4 @@ valid_global_inferior_id (int id)
   return false;
 }
 
-#endif /* !defined (INFERIOR_H) */
+#endif /* GDB_INFERIOR_H */

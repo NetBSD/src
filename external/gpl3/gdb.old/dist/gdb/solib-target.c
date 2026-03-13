@@ -226,10 +226,10 @@ solib_target_parse_libraries (const char *library)
 }
 #endif
 
-static intrusive_list<solib>
+static owning_intrusive_list<solib>
 solib_target_current_sos (void)
 {
-  intrusive_list<solib> sos;
+  owning_intrusive_list<solib> sos;
 
   /* Fetch the list of shared libraries.  */
   std::optional<gdb::char_vector> library_document
@@ -245,15 +245,12 @@ solib_target_current_sos (void)
   /* Build a struct solib for each entry on the list.  */
   for (lm_info_target_up &info : library_list)
     {
-      solib *new_solib = new solib;
+      auto &new_solib = sos.emplace_back ();
 
       /* We don't need a copy of the name in INFO anymore.  */
-      new_solib->so_name = std::move (info->name);
-      new_solib->so_original_name = new_solib->so_name;
-      new_solib->lm_info = std::move (info);
-
-      /* Add it to the list.  */
-      sos.push_back (*new_solib);
+      new_solib.so_name = std::move (info->name);
+      new_solib.so_original_name = new_solib.so_name;
+      new_solib.lm_info = std::move (info);
     }
 
   return sos;
@@ -412,4 +409,9 @@ const solib_ops solib_target_so_ops =
   solib_target_open_symbol_file_object,
   solib_target_in_dynsym_resolve_code,
   solib_bfd_open,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  default_find_solib_addr,
 };

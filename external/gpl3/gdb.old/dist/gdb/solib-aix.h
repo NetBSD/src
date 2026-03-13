@@ -15,12 +15,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_AIX_H
-#define SOLIB_AIX_H
+#ifndef GDB_SOLIB_AIX_H
+#define GDB_SOLIB_AIX_H
 
 struct solib_ops;
 extern const solib_ops solib_aix_so_ops;
 
 extern CORE_ADDR solib_aix_get_toc_value (CORE_ADDR pc);
 
-#endif
+#endif /* GDB_SOLIB_AIX_H */

@@ -2579,7 +2579,7 @@ mips_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception)
     }
   else if (exception != 0 && mips_cpu->exc_suspended == 0)
     {
-      sim_io_eprintf(sd, "Warning, ignoring spontanous exception signal (%d)\n", exception);
+      sim_io_eprintf(sd, "Warning, ignoring spontaneous exception signal (%d)\n", exception);
     }
   mips_cpu->exc_suspended = 0;
 }

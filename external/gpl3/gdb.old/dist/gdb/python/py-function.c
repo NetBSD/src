@@ -120,6 +120,8 @@ fnpy_init (PyObject *self, PyObject *args, PyObject *kwds)
 	      docstring = python_string_to_host_string (ds_obj.get ());
 	      if (docstring == NULL)
 		return -1;
+	      docstring
+		= gdbpy_fix_doc_string_indentation (std::move (docstring));
 	    }
 	}
     }
@@ -137,11 +139,7 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_functions (void)
 {
   fnpy_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&fnpy_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Function",
-				 (PyObject *) &fnpy_object_type);
+  return gdbpy_type_ready (&fnpy_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_functions);

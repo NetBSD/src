@@ -1062,8 +1062,7 @@ elf64_ia64_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf64_ia64_new_elf_hash_entry,
-				      sizeof (struct elf64_ia64_link_hash_entry),
-				      IA64_ELF_DATA))
+				      sizeof (struct elf64_ia64_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -5413,8 +5412,8 @@ elf64_vms_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 static bool
 elf64_ia64_vms_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object
-    (abfd, sizeof (struct elf64_ia64_vms_obj_tdata), IA64_ELF_DATA);
+  return bfd_elf_allocate_object (abfd,
+				  sizeof (struct elf64_ia64_vms_obj_tdata));
 }
 
 
@@ -5449,6 +5448,7 @@ static const struct elf_size_info elf64_ia64_vms_size_info = {
 };
 
 #define ELF_ARCH			bfd_arch_ia64
+#define ELF_TARGET_ID			IA64_ELF_DATA
 #define ELF_MACHINE_CODE		EM_IA_64
 #define ELF_MAXPAGESIZE			0x10000	/* 64KB */
 #define ELF_COMMONPAGESIZE		0x200	/* 16KB */

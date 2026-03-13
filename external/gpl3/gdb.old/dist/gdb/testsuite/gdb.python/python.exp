@@ -561,3 +561,16 @@ if { [use_gdb_stub] == 0 } {
 	}
     }
 }
+
+# Regression test for PR python/32163: several types were not
+# previously registered with the module, so could not be inspected
+# directly.
+foreach type {Instruction LazyString Membuf Record RecordFunctionSegment \
+		  RecordGap RecordInstruction TuiWindow} {
+    if { $type == "TuiWindow" && ![allow_tui_tests] } {
+	continue
+    }
+
+    gdb_test "python print(type(gdb.$type))" "<class 'type'>" \
+	"gdb.$type is registered"
+}

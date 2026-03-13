@@ -172,7 +172,7 @@ sim_open (SIM_OPEN_KIND kind,
       sim_hw_parse (sd, "/mn103cpu@0x20000000");
       sim_hw_parse (sd, "/mn103cpu@0x20000000/reg 0x20000000 0x42");
       
-      /* DEBUG: ACK output wired upto a glue device */
+      /* DEBUG: ACK output wired up to a glue device */
       sim_hw_parse (sd, "/glue@0x20002000");
       sim_hw_parse (sd, "/glue@0x20002000/reg 0x20002000 4");
       sim_hw_parse (sd, "/mn103cpu > ack int0 /glue@0x20002000");
@@ -478,7 +478,7 @@ mn10300_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception)
     }
   else if(exception != 0 && State.exc_suspended == 0)
     {
-      sim_io_eprintf(sd, "Warning, ignoring spontanous exception signal (%d)\n", exception); 
+      sim_io_eprintf(sd, "Warning, ignoring spontaneous exception signal (%d)\n", exception); 
     }
   State.exc_suspended = 0; 
 }

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef I386_LINUX_TDEP_H
-#define I386_LINUX_TDEP_H
+#ifndef GDB_I386_LINUX_TDEP_H
+#define GDB_I386_LINUX_TDEP_H
 
 #include "gdbsupport/x86-xstate.h"
 
@@ -49,38 +49,6 @@ extern uint64_t i386_linux_core_read_xsave_info (bfd *abfd,
 extern bool i386_linux_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
 						   x86_xsave_layout &layout);
 
-/* Handle and display information related to the MPX bound violation
-   to the user.  */
-extern void i386_linux_report_signal_info (struct gdbarch *gdbarch,
-					   struct ui_out *uiout,
-					   enum gdb_signal siggnal);
-
-/* Return the target description according to XCR0.  */
-extern const struct target_desc *i386_linux_read_description (uint64_t xcr0);
-
-/* Format of XSAVE extended state is:
-	struct
-	{
-	  fxsave_bytes[0..463]
-	  sw_usable_bytes[464..511]
-	  xstate_hdr_bytes[512..575]
-	  extended state regions (AVX, MPX, AVX512, PKRU, etc.)
-	};
-
-  Same memory layout will be used for the coredump NT_X86_XSTATE
-  representing the XSAVE extended state registers.
-
-  The first 8 bytes of the sw_usable_bytes[464..467] is the OS enabled
-  extended state mask, which is the same as the extended control register
-  0 (the XFEATURE_ENABLED_MASK register), XCR0.  We can use this mask
-  together with the mask saved in the xstate_hdr_bytes to determine what
-  states the processor/OS supports and what state, used or initialized,
-  the process/thread is in.  */ 
-#define I386_LINUX_XSAVE_XCR0_OFFSET 464
-
 extern int i386_linux_gregset_reg_offset[];
 
-/* Return x86 siginfo type.  */
-extern struct type *x86_linux_get_siginfo_type (struct gdbarch *gdbarch);
-
-#endif /* i386-linux-tdep.h */
+#endif /* GDB_I386_LINUX_TDEP_H */

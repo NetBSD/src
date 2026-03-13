@@ -574,7 +574,7 @@ _cec_raise (SIM_CPU *cpu, struct bfin_cec *cec, int ivg)
 	  /* XXX: what happens with 'raise 0' ?  */
 	  SET_RETEREG (oldpc);
 	  excp_to_sim_halt (sim_stopped, SIM_SIGTRAP);
-	  /* XXX: Need an easy way for gdb to signal it isnt here.  */
+	  /* XXX: Need an easy way for gdb to signal it isn't here.  */
 	  cec->ipend &= ~IVG_EMU_B;
 	  break;
 	case IVG_RST:
