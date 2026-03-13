@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.667 2026/02/08 11:02:03 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.668 2026/03/13 04:22:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.667 2026/02/08 11:02:03 rillig Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.668 2026/03/13 04:22:03 sjg Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -1296,6 +1296,10 @@ ReadFirstDefaultMakefile(void)
 	free(prefs);
 }
 
+#ifndef MAKE_SAVE_DOLLARS_DEFAULT
+# define MAKE_SAVE_DOLLARS_DEFAULT "yes"
+#endif
+
 /*
  * Initialize variables such as MAKE, MACHINE, .MAKEFLAGS.
  * Initialize a few modules.
@@ -1360,6 +1364,7 @@ main_Init(int argc, char **argv)
 #else
 	Global_Set_ReadOnly(".MAKE.JOBS.C", "no");
 #endif
+	Global_Set(MAKE_SAVE_DOLLARS, MAKE_SAVE_DOLLARS_DEFAULT);
 
 	CmdOpts_Init();
 	allPrecious = false;	/* Remove targets when interrupted */

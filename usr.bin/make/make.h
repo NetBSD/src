@@ -1,4 +1,4 @@
-/*	$NetBSD: make.h,v 1.364 2026/02/10 18:53:34 sjg Exp $	*/
+/*	$NetBSD: make.h,v 1.365 2026/03/13 04:22:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -1032,6 +1032,8 @@ typedef enum VarExportMode {
 	/* .export-literal: Do not expand the variable value. */
 	VEM_LITERAL
 } VarExportMode;
+
+#define MAKE_SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
 
 void Var_Delete(GNode *, const char *);
 #ifdef CLEANUP

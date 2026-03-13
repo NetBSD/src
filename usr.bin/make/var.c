@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.1178 2026/02/01 16:42:34 rillig Exp $	*/
+/*	$NetBSD: var.c,v 1.1179 2026/03/13 04:22:03 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -130,7 +130,7 @@
 #include "metachar.h"
 
 /*	"@(#)var.c	8.3 (Berkeley) 3/19/94" */
-MAKE_RCSID("$NetBSD: var.c,v 1.1178 2026/02/01 16:42:34 rillig Exp $");
+MAKE_RCSID("$NetBSD: var.c,v 1.1179 2026/03/13 04:22:03 sjg Exp $");
 
 /*
  * Variables are defined using one of the VAR=value assignments.  Their
@@ -306,11 +306,10 @@ static char varUndefined[] = "";
  * Traditionally this make consumed $$ during := like any other expansion.
  * Other make's do not, and this make follows straight since 2016-01-09.
  *
- * This knob allows controlling the behavior:
+ * This knob (.MAKE.SAVE_DOLLARS) allows controlling the behavior:
  *	false to consume $$ during := assignment.
  *	true to preserve $$ during := assignment.
  */
-#define MAKE_SAVE_DOLLARS ".MAKE.SAVE_DOLLARS"
 static bool save_dollars = true;
 
 /*
