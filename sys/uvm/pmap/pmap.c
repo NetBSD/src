@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2026/01/27 07:23:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2026/03/13 07:22:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2026/01/27 07:23:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2026/03/13 07:22:24 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -467,14 +467,12 @@ pmap_page_syncicache(struct vm_page *pg)
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 
-	UVMHIST_LOG(pmaphist, "pv %#jx pv_pmap %#jx", (uintptr_t)pv,
-	    (uintptr_t)pv->pv_pmap, 0, 0);
-
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
-#ifdef MULTIPROCESSOR
 			UVMHIST_LOG(pmaphist, "pv %#jx pv_pmap %#jx",
 			    (uintptr_t)pv, (uintptr_t)pv->pv_pmap, 0, 0);
+
+#ifdef MULTIPROCESSOR
 			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
 			if (kcpuset_match(onproc, kcpuset_running)) {
 				break;
@@ -486,7 +484,10 @@ pmap_page_syncicache(struct vm_page *pg)
 			}
 #endif
 		}
+	} else {
+		UVMHIST_LOG(pmaphist, "no mappings", 0, 0, 0, 0);
 	}
+
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_disable();
