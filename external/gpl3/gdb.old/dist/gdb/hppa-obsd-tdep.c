@@ -43,7 +43,6 @@ hppaobsd_supply_gregset (const struct regset *regset,
 			 struct regcache *regcache,
 			 int regnum, const void *gregs, size_t len)
 {
-  gdb_byte zero[4] = { 0 };
   const gdb_byte *regs = (const gdb_byte *) gregs;
   size_t offset;
   int i;
@@ -51,7 +50,7 @@ hppaobsd_supply_gregset (const struct regset *regset,
   gdb_assert (len >= HPPAOBSD_SIZEOF_GREGS);
 
   if (regnum == -1 || regnum == HPPA_R0_REGNUM)
-    regcache->raw_supply (HPPA_R0_REGNUM, &zero);
+    regcache->raw_supply_zeroed (HPPA_R0_REGNUM);
   for (i = HPPA_R1_REGNUM, offset = 4; i <= HPPA_R31_REGNUM; i++, offset += 4)
     {
       if (regnum == -1 || regnum == i)

@@ -121,9 +121,9 @@ default_macro_scope (void)
 	 symbol files loaded, then get_current_or_default would raise an
 	 error.  But `set width' shouldn't raise an error just because
 	 it can't decide which scope to macro-expand its argument in.  */
-      struct symtab_and_line cursal
-	= get_current_source_symtab_and_line ();
-      
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
+
       sal.symtab = cursal.symtab;
       sal.line = cursal.line;
     }

@@ -30,9 +30,6 @@ if {[build_executable "failed to prepare" ${testfile} \
 
 mi_clean_restart $binfile
 
-# Avoid shared lib symbols.
-mi_gdb_test "-gdb-set auto-solib-add off" "\\^done"
-
 mi_runto_main
 
 # Avoid libc symbols.

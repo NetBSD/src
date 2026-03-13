@@ -28,7 +28,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {}] != "
 clean_restart $executable
 
 # The first access (as we do not use -readnow) prints some:
-# Dwarf Error: Cannot find DIE at 0x0 referenced from DIE at 0x29 [in module ...]
+# DWARF Error: Cannot find DIE at 0x0 referenced from DIE at 0x29 [in module ...]
 with_test_prefix "first" {
     gdb_test "ptype f"
 }

@@ -564,7 +564,3 @@ if {![string compare $is64bitonly "no"]} {
       "reload struct as memory, tekhex" \
 	$struct_val "\*$struct_ptr_type"
 }
-
-# clean up files
-
-remote_exec host "rm -f $filenames"

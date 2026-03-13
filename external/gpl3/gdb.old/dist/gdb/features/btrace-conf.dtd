@@ -12,3 +12,5 @@
 
 <!ELEMENT pt	EMPTY>
 <!ATTLIST pt	size	CDATA	#IMPLIED>
+<!ATTLIST pt	ptwrite	(yes | no) #IMPLIED>
+<!ATTLIST pt	event-tracing	(yes | no)	#IMPLIED>

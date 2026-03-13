@@ -24,6 +24,7 @@ main ()
   const char array[] = "array";
   pointer typedef_ptr = "typedef pointer";
   const char *null = 0;
+  int not_a_string = 23;
 
   return 0; /* break here */
 }

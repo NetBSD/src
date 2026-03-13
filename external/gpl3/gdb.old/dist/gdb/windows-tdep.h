@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef WINDOWS_TDEP_H
-#define WINDOWS_TDEP_H
+#ifndef GDB_WINDOWS_TDEP_H
+#define GDB_WINDOWS_TDEP_H
 
 #include "frame-unwind.h"
 
@@ -75,4 +75,4 @@ struct cygwin_sigwrapper_frame_unwind : public frame_unwind
   gdb::array_view<const gdb::array_view<const gdb_byte>> patterns_list;
 };
 
-#endif
+#endif /* GDB_WINDOWS_TDEP_H */

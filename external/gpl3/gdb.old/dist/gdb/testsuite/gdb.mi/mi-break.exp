@@ -313,7 +313,7 @@ proc_with_prefix test_explicit_breakpoints {} {
 
     mi_create_breakpoint "-c \"intarg == 3\" --function callee2" \
 	"insert explicit conditional breakpoint in callee2" \
-	-func callee2 ".*$srcfile" -line $line_callee2_body \
+	-func callee2 -file ".*$srcfile" -line $line_callee2_body \
 	-cond "intarg == 3"
 
     # mi_create_breakpoint cannot deal with displaying canonical
@@ -357,7 +357,7 @@ proc_with_prefix test_forced_conditions {} {
 	"dprintf with forced condition"
 
     # Define a plain breakpoint first, and a condition later.
-    mi_create_breakpoint "callme" "define a bp" ""
+    mi_create_breakpoint "callme" "define a bp"
     mi_gdb_test "-break-condition --force 16 bad == 42" \
 	"${warning}\\^done" \
 	"invalid condition is forced"

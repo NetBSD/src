@@ -48,6 +48,7 @@ case "${gdbserver_host}" in
 			srv_tgtobj="$srv_tgtobj nat/aarch64-linux.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64-insn.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64.o"
+			srv_tgtobj="$srv_tgtobj arch/aarch64-mte.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64-mte-linux.o"
 			srv_tgtobj="$srv_tgtobj arch/aarch64-scalable-linux.o"
 			srv_tgtobj="$srv_tgtobj linux-aarch64-tdesc.o"
@@ -109,12 +110,18 @@ case "${gdbserver_host}" in
 			srv_tgtobj="${srv_tgtobj} nat/linux-btrace.o"
 			srv_tgtobj="${srv_tgtobj} nat/x86-linux.o"
 			srv_tgtobj="${srv_tgtobj} nat/x86-linux-dregs.o"
+			srv_tgtobj="${srv_tgtobj} nat/i386-linux.o"
+			srv_tgtobj="${srv_tgtobj} nat/x86-linux-tdesc.o"
+			srv_tgtobj="${srv_tgtobj} arch/x86-linux-tdesc-features.o"
+			srv_tgtobj="${srv_tgtobj} arch/i386-linux-tdesc.o"
 			srv_linux_usrregs=yes
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			srv_linux_btrace=yes
 			ipa_obj="linux-i386-ipa.o linux-x86-tdesc-ipa.o"
 			ipa_obj="${ipa_obj} arch/i386-ipa.o"
+			ipa_obj="${ipa_obj} arch/x86-linux-tdesc-features-ipa.o"
+			ipa_obj="${ipa_obj} arch/i386-linux-tdesc-ipa.o"
 			;;
   i[34567]86-*-mingw*)	srv_regobj=""
 			srv_tgtobj="x86-low.o nat/x86-dregs.o win32-low.o"
@@ -177,14 +184,6 @@ case "${gdbserver_host}" in
 			srv_xmlfiles="${srv_xmlfiles} mips64-cp0.xml"
 			srv_xmlfiles="${srv_xmlfiles} mips64-fpu.xml"
 			srv_xmlfiles="${srv_xmlfiles} mips64-dsp.xml"
-			srv_linux_regsets=yes
-			srv_linux_usrregs=yes
-			srv_linux_thread_db=yes
-			;;
-  nios2*-*-linux*)	srv_regobj="nios2-linux.o"
-			srv_tgtobj="$srv_linux_obj linux-nios2-low.o"
-			srv_xmlfiles="nios2-linux.xml"
-			srv_xmlfiles="${srv_xmlfiles} nios2-cpu.xml"
 			srv_linux_regsets=yes
 			srv_linux_usrregs=yes
 			srv_linux_thread_db=yes
@@ -371,13 +370,19 @@ case "${gdbserver_host}" in
 			srv_tgtobj="${srv_tgtobj} nat/linux-btrace.o"
 			srv_tgtobj="${srv_tgtobj} nat/x86-linux.o"
 			srv_tgtobj="${srv_tgtobj} nat/x86-linux-dregs.o"
+			srv_tgtobj="${srv_tgtobj} nat/x86-linux-tdesc.o"
 			srv_tgtobj="${srv_tgtobj} nat/amd64-linux-siginfo.o"
+			srv_tgtobj="${srv_tgtobj} arch/x86-linux-tdesc-features.o"
+			srv_tgtobj="${srv_tgtobj} arch/amd64-linux-tdesc.o"
+			srv_tgtobj="${srv_tgtobj} arch/i386-linux-tdesc.o"
 			srv_linux_usrregs=yes # This is for i386 progs.
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			srv_linux_btrace=yes
 			ipa_obj="linux-amd64-ipa.o linux-x86-tdesc-ipa.o"
 			ipa_obj="${ipa_obj} arch/amd64-ipa.o"
+			ipa_obj="${ipa_obj} arch/x86-linux-tdesc-features-ipa.o"
+			ipa_obj="${ipa_obj} arch/amd64-linux-tdesc-ipa.o"
 			;;
   x86_64-*-mingw*)	srv_regobj=""
 			srv_tgtobj="x86-low.o nat/x86-dregs.o"

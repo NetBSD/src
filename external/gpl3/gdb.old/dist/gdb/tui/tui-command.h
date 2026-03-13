@@ -19,15 +19,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_COMMAND_H
-#define TUI_TUI_COMMAND_H
+#ifndef GDB_TUI_TUI_COMMAND_H
+#define GDB_TUI_TUI_COMMAND_H
 
 #include "tui/tui-data.h"
 
 /* The TUI command window.  */
 struct tui_cmd_window
-  : public tui_noscroll_window, tui_nobox_window, tui_norefresh_window,
-    tui_always_visible_window
+  : public tui_noscroll_window, tui_nobox_window, tui_always_visible_window
 {
   tui_cmd_window () = default;
 
@@ -55,7 +54,12 @@ struct tui_cmd_window
   int start_line = 0;
 };
 
-/* Refresh the command window.  */
-extern void tui_refresh_cmd_win (void);
+/* Return the instance of the command windows.  */
 
-#endif /* TUI_TUI_COMMAND_H */
+inline tui_cmd_window *
+tui_cmd_win ()
+{
+  return dynamic_cast<tui_cmd_window *> (tui_win_list[CMD_WIN]);
+}
+
+#endif /* GDB_TUI_TUI_COMMAND_H */

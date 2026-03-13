@@ -266,7 +266,7 @@ enum frv_ec
 
 /* FR-V Interrupt.
    This struct contains enough information to describe a particular interrupt
-   occurance.  */
+   occurrence.  */
 struct frv_interrupt
 {
   enum frv_interrupt_kind  kind;

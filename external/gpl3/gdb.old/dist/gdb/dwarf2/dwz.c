@@ -26,6 +26,7 @@
 #include "filenames.h"
 #include "gdb_bfd.h"
 #include "gdbcore.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/scoped_fd.h"
 #include "run-on-main-thread.h"

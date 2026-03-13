@@ -57,7 +57,7 @@ proc process_saved_regs { current inner outer } {
     # and for dummy frames won't have saved registers.  If there's a
     # problem, fail but capture the output anyway, hopefully later
     # "info frame" requests for that same frame will at least fail in
-    # a consistent manner (stops propogated fails).
+    # a consistent manner (stops propagated fails).
 
     foreach func $inner {
 	set saved_regs($func) "error"

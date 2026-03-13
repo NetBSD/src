@@ -70,7 +70,7 @@ proc test_fields {lang} {
 
 	if {$lang == "c++"} {
 	    # Test usage with a class.
-	    gdb_scm_test_silent_cmd "print c" "print value (c)"
+	    gdb_scm_test_silent_cmd "print c" "print value, c"
 	    gdb_scm_test_silent_cmd "guile (define c (history-ref 0))" \
 		"get value (c) from history"
 	    gdb_scm_test_silent_cmd "guile (define fields (type-fields (value-type c)))" \
@@ -84,7 +84,7 @@ proc test_fields {lang} {
 	}
 
 	# Test normal fields usage in structs.
-	gdb_scm_test_silent_cmd "print st" "print value (st)"
+	gdb_scm_test_silent_cmd "print st" "print value, st"
 	gdb_scm_test_silent_cmd "guile (define st (history-ref 0))" \
 	    "get value (st) from history"
 	gdb_scm_test_silent_cmd "guile (define st-type (value-type st))" \
@@ -120,7 +120,7 @@ proc test_fields {lang} {
 	    "check field iterator on bad type"
 
 	# Test type-array.
-	gdb_scm_test_silent_cmd "print ar" "print value (ar)"
+	gdb_scm_test_silent_cmd "print ar" "print value, ar"
 	gdb_scm_test_silent_cmd "guile (define ar (history-ref 0))" \
 	    "get value (ar) from history"
 	gdb_scm_test_silent_cmd "guile (define ar0 (value-subscript ar 0))" \
@@ -133,11 +133,11 @@ proc test_fields {lang} {
 	# Test type-vector.
 	# Note: vectors cast differently than arrays.  Here ar[0] is replicated
 	# for the size of the vector.
-	gdb_scm_test_silent_cmd "print vec_data_1" "print value (vec_data_1)"
+	gdb_scm_test_silent_cmd "print vec_data_1" "print value, vec_data_1"
 	gdb_scm_test_silent_cmd "guile (define vec_data_1 (history-ref 0))" \
 	    "get value (vec_data_1) from history"
 
-	gdb_scm_test_silent_cmd "print vec_data_2" "print value (vec_data_2)"
+	gdb_scm_test_silent_cmd "print vec_data_2" "print value, vec_data_2"
 	gdb_scm_test_silent_cmd "guile (define vec_data_2 (history-ref 0))" \
 	    "get value (vec_data_2) from history"
 
@@ -192,7 +192,7 @@ proc test_equality {lang} {
 
 proc test_enums {} {
     with_test_prefix "test_enum" {
-	gdb_scm_test_silent_cmd "print e" "print value (e)"
+	gdb_scm_test_silent_cmd "print e" "print value, e"
 	gdb_scm_test_silent_cmd "guile (define e (history-ref 0))" \
 	    "get value (e) from history"
 	gdb_scm_test_silent_cmd "guile (define fields (type-fields (value-type e)))" \
@@ -208,9 +208,9 @@ proc test_enums {} {
 	gdb_test "guile (print (type-num-fields (value-type e)))" \
 	    "= 3" "check the number of enum values"
 	gdb_test "guile (print (field-name (type-field (value-type e) \"v1\")))" \
-	    "= v1" "check enum field lookup by name (v1)"
+	    "= v1" "check enum field lookup by name, v1"
 	gdb_test "guile (print (field-name (type-field (value-type e) \"v3\")))" \
-	    "= v3" "check enum field lookup by name (v3)"
+	    "= v3" "check enum field lookup by name, v3"
 	gdb_test "guile (print (iterator-map field-enumval (make-field-iterator (value-type e))))" \
 	    "\\(0 1 2\\)" "check enum fields iteration"
     }
@@ -218,7 +218,7 @@ proc test_enums {} {
 
 proc test_base_class {} {
     with_test_prefix "test_base_class" {
-	gdb_scm_test_silent_cmd "print d" "print value (d)"
+	gdb_scm_test_silent_cmd "print d" "print value, d"
 	gdb_scm_test_silent_cmd "guile (define d (history-ref 0))" \
 	    "get value (d) from history"
 	gdb_scm_test_silent_cmd "guile (define fields (type-fields (value-type d)))" \
@@ -226,9 +226,9 @@ proc test_base_class {} {
 	gdb_test "guile (print (length fields))" \
 	    "= 3" "check the number of fields"
 	gdb_test "guile (print (field-baseclass? (car fields)))" \
-	    "= #t" "check base class (fields\[0\])"
+	    "= #t" {check base class, fields[0]}
 	gdb_test "guile (print (field-baseclass? (cadr fields)))" \
-	    "= #f" "check base class (fields\[1\])"
+	    "= #f" {check base class, fields[1]}
     }
 }
 
@@ -236,7 +236,7 @@ proc test_range {} {
     with_test_prefix "test_range" {
 	with_test_prefix "on ranged value" {
 	    # Test a valid range request.
-	    gdb_scm_test_silent_cmd "print ar" "print value (ar)"
+	    gdb_scm_test_silent_cmd "print ar" "print value, ar"
 	    gdb_scm_test_silent_cmd "guile (define ar (history-ref 0))" \
 		"get value (ar) from history"
 	    gdb_test "guile (print (length (type-range (value-type ar))))" \
@@ -247,7 +247,7 @@ proc test_range {} {
 
 	with_test_prefix "on unranged value" {
 	    # Test where a range does not exist.
-	    gdb_scm_test_silent_cmd "print st" "print value (st)"
+	    gdb_scm_test_silent_cmd "print st" "print value, st"
 	    gdb_scm_test_silent_cmd "guile (define st (history-ref 0))" \
 		"get value (st) from history"
 	    gdb_test "guile (print (type-range (value-type st)))" \
@@ -256,7 +256,7 @@ proc test_range {} {
 	}
 
 	with_test_prefix "on flexible array member" {
-	    gdb_scm_test_silent_cmd "print f" "print value (f)"
+	    gdb_scm_test_silent_cmd "print f" "print value, f"
 	    gdb_scm_test_silent_cmd "guile (define f (history-ref 0))" \
 		"get value (f) from history"
 	    gdb_test "guile (print (type-range (field-type (type-field (value-type (value-dereference f)) \"items\"))))" \

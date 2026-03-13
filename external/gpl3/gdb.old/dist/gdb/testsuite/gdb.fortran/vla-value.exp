@@ -39,10 +39,10 @@ gdb_test "print &vla1" \
   " = \\\(PTR TO -> \\\( $real, allocatable \\\(:,:,:\\\) \\\)\\\) $hex" \
   "print non-allocated &vla1"
 gdb_test "print vla1(1,1,1)" "no such vector element \\\(vector not allocated\\\)" \
-  "print member in non-allocated vla1 (1)"
+  "print member in non-allocated vla1, 1"
 gdb_test "print vla1(101,202,303)" \
   "no such vector element \\\(vector not allocated\\\)" \
-  "print member in non-allocated vla1 (2)"
+  "print member in non-allocated vla1, 2"
 gdb_test "print vla1(5,2,18)=1" "no such vector element \\\(vector not allocated\\\)" \
   "set member in non-allocated vla1"
 
@@ -68,11 +68,11 @@ gdb_test "print vla1(9, 9, 9) = 999" " = 999" \
 gdb_breakpoint [gdb_get_line_number "vla1-filled"]
 gdb_continue_to_breakpoint "vla1-filled"
 gdb_test "print vla1(3, 6, 9)" " = 42" \
-  "print allocated vla1(3,6,9) after specific assignment (filled)"
+  "print allocated vla1(3,6,9) after specific assignment, filled"
 gdb_test "print vla1(1, 3, 8)" " = 1001" \
-  "print allocated vla1(1,3,8) after specific assignment (filled)"
+  "print allocated vla1(1,3,8) after specific assignment, filled"
 gdb_test "print vla1(9, 9, 9)" " = 999" \
-  "print allocated vla1(9,9,9) after assignment in debugger (filled)"
+  "print allocated vla1(9,9,9) after assignment in debugger, filled"
 
 # Try to access values in undefined pointer to VLA (dangling)
 gdb_test "print pvla" " = <not associated>" "print undefined pvla"
@@ -120,11 +120,11 @@ gdb_test "print pvla" " = <not associated>" \
 gdb_breakpoint [gdb_get_line_number "vla1-deallocated"]
 gdb_continue_to_breakpoint "vla1-deallocated"
 gdb_test "print vla1(3, 6, 9)" "no such vector element \\\(vector not allocated\\\)" \
-  "print allocated vla1(3,6,9) after specific assignment (deallocated)"
+  "print allocated vla1(3,6,9) after specific assignment, deallocated"
 gdb_test "print vla1(1, 3, 8)" "no such vector element \\\(vector not allocated\\\)" \
-  "print allocated vla1(1,3,8) after specific assignment (deallocated)"
+  "print allocated vla1(1,3,8) after specific assignment, deallocated"
 gdb_test "print vla1(9, 9, 9)" "no such vector element \\\(vector not allocated\\\)" \
-  "print allocated vla1(9,9,9) after assignment in debugger (deallocated)"
+  "print allocated vla1(9,9,9) after assignment in debugger, deallocated"
 
 
 # Try to assign VLA to user variable
@@ -147,7 +147,7 @@ gdb_test "print \$myvar" \
   " = \\( *\\( *\\( *1311, *1311, *1311,\[()1311, .\]*\\)" \
   "print \$myvar set to vla1"
 
-gdb_test "next" "\\d+.*vla1\\(1, 3, 8\\) = 1001" "next (2)"
+gdb_test "next" "\\d+.*vla1\\(1, 3, 8\\) = 1001" "next, 2"
 gdb_test "print \$myvar(3,6,9)" " = 1311"
 
 gdb_breakpoint [gdb_get_line_number "pvla-associated"]

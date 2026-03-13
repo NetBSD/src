@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef GDB_MAIN_H
+#define GDB_MAIN_H
 
 struct captured_main_args
 {
@@ -46,4 +46,4 @@ extern char *windows_get_absolute_argv0 (const char *argv0);
 
 extern void set_gdb_data_directory (const char *new_data_dir);
 
-#endif
+#endif /* GDB_MAIN_H */

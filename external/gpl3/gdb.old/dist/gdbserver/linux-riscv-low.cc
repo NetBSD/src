@@ -86,12 +86,12 @@ riscv_target::low_arch_setup ()
   static const char *expedite_regs[] = { "sp", "pc", NULL };
 
   const riscv_gdbarch_features features
-    = riscv_linux_read_features (lwpid_of (current_thread));
+    = riscv_linux_read_features (current_thread->id.lwp ());
   target_desc_up tdesc = riscv_create_target_description (features);
 
   if (tdesc->expedite_regs.empty ())
     {
-      init_target_desc (tdesc.get (), expedite_regs);
+      init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
       gdb_assert (!tdesc->expedite_regs.empty ());
     }
 

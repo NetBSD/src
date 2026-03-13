@@ -87,7 +87,7 @@ gdb_test "print r + (-1)" " = 0\\.2(499.*|5|500.*)"
 gdb_test "print r + (-5)" " = -3\\.7(499.*|5|500.*)"
 gdb_test "print r + (-10)" " = -8\\.7(499.*|5|500.*)"
 
-# Test substraction
+# Test subtraction
 gdb_test "print r - s" " = -0\\.9(499.*|5|500.*)"
 gdb_test "print r - t" " = 4\\.4(499.*|5|500.*)"
 

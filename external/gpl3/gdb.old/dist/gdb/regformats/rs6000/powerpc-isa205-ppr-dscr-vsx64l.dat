@@ -3,6 +3,7 @@
 name:powerpc_isa205_ppr_dscr_vsx64l
 xmltarget:powerpc-isa205-ppr-dscr-vsx64l.xml
 expedite:r1,pc
+osabi:unknown
 64:r0
 64:r1
 64:r2

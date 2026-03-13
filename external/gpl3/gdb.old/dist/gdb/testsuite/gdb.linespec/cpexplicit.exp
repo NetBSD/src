@@ -80,7 +80,7 @@ namespace eval $testfile {
     add linespecs "-function myclass::myfunction -line 3" $location(normal)
     add linespecs "-function myclass::myfunction -label top -line 3" \
 	$location(top)
-    add linespecs "-line 3" $location(normal)
+    add linespecs "-line 25" $location(normal)
     add linespecs "-function myclass::operator," $location(operator)
     add linespecs "-function 'myclass::operator,'" $location(operator)
     add linespecs "-function \"myclass::operator,\"" $location(operator)

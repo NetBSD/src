@@ -25,6 +25,7 @@
 #include "dwarf2/section.h"
 
 struct dwarf2_per_bfd;
+struct dwarf2_per_objfile;
 
 /* This represents a '.dwz' file.  */
 

@@ -258,7 +258,9 @@ case ${gdb_host} in
 		NATDEPFILES="${NATDEPFILES} x86-nat.o nat/x86-dregs.o \
 		nat/x86-xstate.o \
 		i386-linux-nat.o x86-linux-nat.o nat/linux-btrace.o \
-		nat/x86-linux.o nat/x86-linux-dregs.o"
+		nat/x86-linux.o nat/x86-linux-dregs.o nat/i386-linux.o \
+		nat/x86-linux-tdesc.o arch/i386-linux-tdesc.o \
+		arch/x86-linux-tdesc-features.o"
 		;;
 	    ia64)
 		# Host: Intel IA-64 running GNU/Linux
@@ -266,7 +268,9 @@ case ${gdb_host} in
 		;;
 	    loongarch)
 		# Host: LoongArch, running GNU/Linux.
-		NATDEPFILES="${NATDEPFILES} loongarch-linux-nat.o linux-nat-trad.o"
+		NATDEPFILES="${NATDEPFILES} loongarch-linux-nat.o linux-nat-trad.o \
+		nat/loongarch-hw-point.o nat/loongarch-linux.o \
+		nat/loongarch-linux-hw-point.o"
 		;;
 	    m32r)
 		# Host: M32R based machine running GNU/Linux
@@ -324,8 +328,9 @@ case ${gdb_host} in
 		NATDEPFILES="${NATDEPFILES} x86-nat.o nat/x86-dregs.o \
 		nat/x86-xstate.o amd64-nat.o amd64-linux-nat.o x86-linux-nat.o \
 		nat/linux-btrace.o \
-		nat/x86-linux.o nat/x86-linux-dregs.o \
-		nat/amd64-linux-siginfo.o"
+		nat/x86-linux.o nat/x86-linux-dregs.o nat/x86-linux-tdesc.o \
+		nat/amd64-linux-siginfo.o arch/x86-linux-tdesc-features.o \
+		arch/i386-linux-tdesc.o arch/amd64-linux-tdesc.o"
 		;;
 	    sparc)
 		# Host: GNU/Linux UltraSPARC
@@ -415,15 +420,6 @@ case ${gdb_host} in
 		NATDEPFILES="${NATDEPFILES} sparc64-netbsd-nat.o sparc-nat.o"
 		;;
 
-	esac
-	;;
-    nto)
-	case ${gdb_host_cpu} in
-	    i386)
-		# Host: Intel 386 running QNX.
-		NATDEPFILES='nto-procfs.o'
-		NAT_FILE='config/nm-nto.h'
-		;;
 	esac
 	;;
     obsd)

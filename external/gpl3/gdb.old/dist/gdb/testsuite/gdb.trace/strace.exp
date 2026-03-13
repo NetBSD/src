@@ -19,6 +19,7 @@ require allow_shlib_tests
 standard_testfile
 set executable $testfile
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 
 set lib_opts debug

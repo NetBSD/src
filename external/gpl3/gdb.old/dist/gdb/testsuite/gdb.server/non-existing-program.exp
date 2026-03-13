@@ -45,7 +45,7 @@ expect {
 	exp_continue
     }
     # Likewise, but with startup-with-shell enabled, which is the
-    # default behaviour.
+    # default behavior.
     -re "stdin/stdout redirected.*exec: non-existing-program: not found\r\nDuring startup program exited with code 127\.\r\nExiting\r\n" {
 	set saw_exiting 1
 	exp_continue

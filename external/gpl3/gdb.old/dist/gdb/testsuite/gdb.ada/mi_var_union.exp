@@ -24,11 +24,8 @@ set MIFLAGS "-i=mi"
 
 set float "\\-?((\[0-9\]+(\\.\[0-9\]+)?(e\[-+\]\[0-9\]+)?)|(nan\\($hex\\)))"
 
-foreach_with_prefix scenario {none all minimal} {
-    set flags {debug}
-    if {$scenario != "none"} {
-	lappend flags additional_flags=-fgnat-encodings=$scenario
-    }
+foreach_gnat_encoding scenario flags {none all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != "" } {
 	return -1

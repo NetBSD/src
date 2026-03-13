@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_PROCFS_H
-#define NAT_LINUX_PROCFS_H
+#ifndef GDB_NAT_LINUX_PROCFS_H
+#define GDB_NAT_LINUX_PROCFS_H
 
 #include <unistd.h>
 
@@ -96,4 +96,4 @@ extern const char *linux_proc_pid_to_exec_file (int pid);
 
 extern void linux_proc_init_warnings ();
 
-#endif /* NAT_LINUX_PROCFS_H */
+#endif /* GDB_NAT_LINUX_PROCFS_H */

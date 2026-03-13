@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INF_LOOP_H
-#define INF_LOOP_H
+#ifndef GDB_INF_LOOP_H
+#define GDB_INF_LOOP_H
 
 #include "target.h"
 
 extern void inferior_event_handler (enum inferior_event_type event_type);
 
-#endif /* #ifndef INF_LOOP_H */
+#endif /* GDB_INF_LOOP_H */

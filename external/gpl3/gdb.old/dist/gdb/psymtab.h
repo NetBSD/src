@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PSYMTAB_H
-#define PSYMTAB_H
+#ifndef GDB_PSYMTAB_H
+#define GDB_PSYMTAB_H
 
 #include "objfiles.h"
 #include <string_view>
@@ -349,7 +349,7 @@ struct partial_symtab
   void add_psymbol (std::string_view name,
 		    bool copy_name, domain_enum domain,
 		    enum address_class theclass,
-		    short section,
+		    int section,
 		    psymbol_placement where,
 		    unrelocated_addr coreaddr,
 		    enum language language,
@@ -444,7 +444,7 @@ struct partial_symtab
      improve access.  Binary search will be the usual method of
      finding a symbol within it.  */
 
-  std::vector<partial_symbol *> global_psymbols;
+  std::vector<const partial_symbol *> global_psymbols;
 
   /* Static symbol list.  This list will *not* be sorted after readin;
      to find a symbol in it, exhaustive search must be used.  This is
@@ -453,7 +453,7 @@ struct partial_symtab
      to take a *lot* of time; check) or an error (and we don't care
      how long errors take).  */
 
-  std::vector<partial_symbol *> static_psymbols;
+  std::vector<const partial_symbol *> static_psymbols;
 
   /* True if the name of this partial symtab is not a source file name.  */
 
@@ -633,11 +633,13 @@ struct psymbol_functions : public quick_symbol_functions
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags kind) override;
+     domain_search_flags kind,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
+       override;
 
   struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
-     CORE_ADDR pc, struct obj_section *section, int warn_if_readin) override;
+    (struct objfile *objfile, bound_minimal_symbol msymbol, CORE_ADDR pc,
+     struct obj_section *section, int warn_if_readin) override;
 
   struct compunit_symtab *find_compunit_symtab_by_address
     (struct objfile *objfile, CORE_ADDR address) override
@@ -672,11 +674,10 @@ struct psymbol_functions : public quick_symbol_functions
      exactly matches PC, or, if we cannot find an exact match, the
      psymtab that contains a symbol whose address is closest to PC.  */
 
-  struct partial_symtab *find_pc_sect_psymtab
-       (struct objfile *objfile,
-	CORE_ADDR pc,
-	struct obj_section *section,
-	struct bound_minimal_symbol msymbol);
+  struct partial_symtab *find_pc_sect_psymtab (struct objfile *objfile,
+					       CORE_ADDR pc,
+					       struct obj_section *section,
+					       bound_minimal_symbol msymbol);
 
 private:
 
@@ -687,4 +688,4 @@ private:
   std::shared_ptr<psymtab_storage> m_partial_symtabs;
 };
 
-#endif /* PSYMTAB_H */
+#endif /* GDB_PSYMTAB_H */

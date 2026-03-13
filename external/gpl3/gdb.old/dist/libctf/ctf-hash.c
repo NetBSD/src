@@ -164,7 +164,10 @@ ctf_dynhash_create_sized (unsigned long nelems, ctf_hash_fun hash_fun,
   if (key_free || value_free)
     dynhash = malloc (sizeof (ctf_dynhash_t));
   else
-    dynhash = malloc (offsetof (ctf_dynhash_t, key_free));
+    {
+      void *p = malloc (offsetof (ctf_dynhash_t, key_free));
+      dynhash = p;
+    }
   if (!dynhash)
     return NULL;
 
@@ -225,7 +228,10 @@ ctf_hashtab_insert (struct htab *htab, void *key, void *value,
       if (key_free || value_free)
 	*slot = malloc (sizeof (ctf_helem_t));
       else
-	*slot = malloc (offsetof (ctf_helem_t, owner));
+	{
+	  void *p = malloc (offsetof (ctf_helem_t, owner));
+	  *slot = p;
+	}
       if (!*slot)
 	return NULL;
       (*slot)->key = key;
@@ -256,7 +262,7 @@ ctf_dynhash_insert (ctf_dynhash_t *hp, void *key, void *value)
 			     key_free, value_free);
 
   if (!slot)
-    return errno;
+    return -errno;
 
   /* Keep track of the owner, so that the del function can get at the key_free
      and value_free functions.  Only do this if one of those functions is set:
@@ -626,7 +632,7 @@ ctf_dynset_insert (ctf_dynset_t *hp, void *key)
   struct htab *htab = (struct htab *) hp;
   void **slot;
 
-  slot = htab_find_slot (htab, key, INSERT);
+  slot = htab_find_slot (htab, key_to_internal (key), INSERT);
 
   if (!slot)
     {
@@ -649,6 +655,12 @@ void
 ctf_dynset_remove (ctf_dynset_t *hp, const void *key)
 {
   htab_remove_elt ((struct htab *) hp, key_to_internal (key));
+}
+
+size_t
+ctf_dynset_elements (ctf_dynset_t *hp)
+{
+  return htab_elements ((struct htab *) hp);
 }
 
 void
@@ -780,7 +792,7 @@ ctf_dynhash_insert_type (ctf_dict_t *fp, ctf_dynhash_t *hp, uint32_t type,
     return EINVAL;
 
   if ((str = ctf_strptr_validate (fp, name)) == NULL)
-    return ctf_errno (fp);
+    return ctf_errno (fp) * -1;
 
   if (str[0] == '\0')
     return 0;		   /* Just ignore empty strings on behalf of caller.  */
@@ -789,6 +801,9 @@ ctf_dynhash_insert_type (ctf_dict_t *fp, ctf_dynhash_t *hp, uint32_t type,
 				 (void *) (ptrdiff_t) type)) == 0)
     return 0;
 
+  /* ctf_dynhash_insert returns a negative error value: negate it for
+     ctf_set_errno.  */
+  ctf_set_errno (fp, err * -1);
   return err;
 }
 

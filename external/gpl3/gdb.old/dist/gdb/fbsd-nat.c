@@ -45,6 +45,7 @@
 #include "elf-bfd.h"
 #include "fbsd-nat.h"
 #include "fbsd-tdep.h"
+#include "gdbsupport/eintr.h"
 
 #ifndef PT_GETREGSET
 #define	PT_GETREGSET	42	/* Get a target register set */
@@ -1150,7 +1151,7 @@ fbsd_wait_for_fork_child (pid_t pid)
     return ptid;
 
   int status;
-  pid_t wpid = waitpid (pid, &status, 0);
+  pid_t wpid = gdb::waitpid (pid, &status, 0);
   if (wpid == -1)
     perror_with_name (("waitpid"));
 
@@ -2156,7 +2157,7 @@ fbsd_nat_target::kill ()
 	perror_with_name (("ptrace (PT_KILL)"));
 
   int status;
-  waitpid (pid, &status, 0);
+  gdb::waitpid (pid, &status, 0);
 
   target_mourn_inferior (inferior_ptid);
 }

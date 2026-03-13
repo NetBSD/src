@@ -117,7 +117,7 @@ proc test_trace_frame_collected { data_source } {
 
 	mi_gdb_test "-trace-frame-collected" \
 	    "\\^done,explicit-variables=\\\[\{name=\"gdb_char_test\",value=\".*\"\}\\\],computed-expressions=\\\[\\\],registers=\\\[$reg_pattern\\\],tvars=\\\[\\\],memory=\\\[\{address=\"$hex\",length=\"1\"\}\\\]"\
-	    "-trace-frame-collected (register)"
+	    "-trace-frame-collected, register"
 
 	mi_gdb_test "-trace-find frame-number 1" \
 	    ".*\\^done,found=\"1\",tracepoint=\"${decimal}\",traceframe=\"1\",frame=\{.*" \

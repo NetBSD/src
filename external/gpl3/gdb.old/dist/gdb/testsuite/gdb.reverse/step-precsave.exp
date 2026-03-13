@@ -46,8 +46,8 @@ with_timeout_factor 20 {
 	-re -wrap "Breakpoint .* end of main .*" {
 	    pass $gdb_test_name
 	}
-	-re -wrap "Process record does not support instruction 0xc5 at.*" {
-	    kfail "record/23188" $gdb_test_name
+	-re -wrap "Process record does not support VEX instruction.*" {
+	    kfail "record/17346" $gdb_test_name
 	}
 	-re -wrap "Process record does not support instruction 0xfae64 at.*" {
 	    kfail "record/25038" $gdb_test_name
@@ -68,6 +68,8 @@ with_timeout_factor 10 {
 
 gdb_test "kill" "" "kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
+
+clean_restart ${binfile}
 
 gdb_test "record restore $precsave" \
     "Restored records from core file .*" \
@@ -151,7 +153,7 @@ gdb_test_multiple "stepi" "$test_message" {
     }
 }
 
-# stepi thru return of a function call
+# stepi through return of a function call
 
 set test_message "stepi back from function call"
 gdb_test_multiple "stepi" "$test_message" {
@@ -183,10 +185,10 @@ gdb_test_multiple "stepi" "$test_message" {
 
 gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 
-# stepi backward thru return and into a function
+# stepi backward through return and into a function
 
 set stepi_location  [gdb_get_line_number "ARRIVED IN CALLEE" "$srcfile"]
-set test_message "reverse stepi thru function return"
+set test_message "reverse stepi through function return"
 gdb_test_multiple "stepi" "$test_message" {
     -re "NEXTI TEST.*$gdb_prompt $" {
 	fail "$test_message (start statement)"
@@ -266,12 +268,12 @@ gdb_test_multiple "stepi" "$test_message" {
     }
 }
 
-# step backward into function (thru return)
+# step backward into function (through return)
 
 gdb_test "step" "(RETURN FROM CALLEE|ARRIVED IN CALLEE).*" \
     "reverse step into fn call"
 
-# step backward out of called function (thru call)
+# step backward out of called function (through call)
 
 set test_message "reverse step out of called fn"
 gdb_test_multiple "step" "$test_message" {

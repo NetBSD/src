@@ -20,6 +20,14 @@
 
 standard_testfile
 
+if { [test_compiler_info "clang*"] } {
+    # Clang doesn't add OpenMP information in the correct scope,
+    # so all relevant tests here will fail.  See here for more info:
+    # https://github.com/llvm/llvm-project/issues/44236
+    unsupported "Clang doesn't provide required info for the test"
+    return
+}
+
 set have_nested_function_support 0
 set opts {openmp debug}
 if [support_nested_function_tests] {

@@ -894,7 +894,6 @@ _bfd_noarchive_openr_next_archived_file (bfd *archive,
 bfd_cleanup
 bfd_generic_archive_p (bfd *abfd)
 {
-  struct artdata *tdata_hold;
   char armag[SARMAG + 1];
   size_t amt;
 
@@ -914,15 +913,10 @@ bfd_generic_archive_p (bfd *abfd)
       return NULL;
     }
 
-  tdata_hold = bfd_ardata (abfd);
-
   amt = sizeof (struct artdata);
   bfd_ardata (abfd) = (struct artdata *) bfd_zalloc (abfd, amt);
   if (bfd_ardata (abfd) == NULL)
-    {
-      bfd_ardata (abfd) = tdata_hold;
-      return NULL;
-    }
+    return NULL;
 
   bfd_ardata (abfd)->first_file_filepos = SARMAG;
 
@@ -932,7 +926,6 @@ bfd_generic_archive_p (bfd *abfd)
       if (bfd_get_error () != bfd_error_system_call)
 	bfd_set_error (bfd_error_wrong_format);
       bfd_release (abfd, bfd_ardata (abfd));
-      bfd_ardata (abfd) = tdata_hold;
       return NULL;
     }
 

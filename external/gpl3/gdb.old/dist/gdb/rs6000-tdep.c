@@ -1389,7 +1389,7 @@ rs6000_fetch_instruction (struct gdbarch *gdbarch, const CORE_ADDR pc)
   return op;
 }
 
-/* GCC generates several well-known sequences of instructions at the begining
+/* GCC generates several well-known sequences of instructions at the beginning
    of each function prologue when compiling with -fstack-check.  If one of
    such sequences starts at START_PC, then return the address of the
    instruction immediately past this sequence.  Otherwise, return START_PC.  */
@@ -2163,7 +2163,7 @@ skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc, CORE_ADDR lim_pc,
      this might be a call to an initializer in main(), introduced by gcc2.
      We'd like to skip over it as well.  Fortunately, xlc does some extra
      work before calling a function right after a prologue, thus we can
-     single out such gcc2 behaviour.  */
+     single out such gcc2 behavior.  */
 
 
   if ((op & 0xfc000001) == 0x48000001)
@@ -2250,7 +2250,7 @@ rs6000_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     {
       CORE_ADDR displ = op & BL_DISPLACEMENT_MASK;
       CORE_ADDR call_dest = pc + 4 + displ;
-      struct bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
+      bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       /* We check for ___eabi (three leading underscores) in addition
 	 to __eabi in case the GCC option "-fleading-underscore" was
@@ -2324,7 +2324,6 @@ rs6000_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
   unsigned int ii, op;
   int rel;
   CORE_ADDR solib_target_pc;
-  struct bound_minimal_symbol msymbol;
 
   static unsigned trampoline_code[] =
   {
@@ -2339,7 +2338,7 @@ rs6000_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
   };
 
   /* Check for bigtoc fixup code.  */
-  msymbol = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
   if (msymbol.minsym
       && rs6000_in_solib_return_trampoline (gdbarch, pc,
 					    msymbol.minsym->linkage_name ()))
@@ -3529,7 +3528,7 @@ struct ppc_variant
     const struct target_desc **tdesc;
   };
 
-static struct ppc_variant variants[] =
+static const ppc_variant variants[] =
 {
   {"powerpc", "PowerPC user-level", bfd_arch_powerpc,
    bfd_mach_ppc, &tdesc_powerpc_altivec32},
@@ -4299,7 +4298,7 @@ ppc_record_ACC_fpscr (struct regcache *regcache, ppc_gdbarch_tdep *tdep,
 	 ACC[7][3] -> VSR[31]
 
      NOTE:
-     In ISA 3.1 the ACC is mapped on top of VSR[0] thru VSR[31].
+     In ISA 3.1 the ACC is mapped on top of VSR[0] through VSR[31].
 
      In the future, the ACC may be implemented as an independent register file
      rather than mapping on top of the VSRs.  This will then require the ACC to
@@ -8604,7 +8603,7 @@ powerpc_set_soft_float (const char *args, int from_tty,
   struct gdbarch_info info;
 
   /* Update the architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("could not update architecture"));
 }
 
@@ -8630,7 +8629,7 @@ powerpc_set_vector_abi (const char *args, int from_tty,
 
   /* Update the architecture.  */
   gdbarch_info info;
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("could not update architecture"));
 }
 

@@ -52,3 +52,36 @@ if { [istarget *-*-linux*] } {
 
 gdb_breakpoint main
 gdb_test "continue" "Breakpoint.* main .*" "continue to main"
+
+if { [istarget "aarch64*-*-*"]
+     || [istarget "arm*-*-*"]
+     || [istarget "csky*-*-*"]
+     || [istarget "loongarch*-*-*"]
+     || [istarget "riscv*-*-*"] } {
+    set pc_regname "pc"
+} elseif { [is_amd64_regs_target] } {
+    set pc_regname "rip"
+} elseif { [is_x86_like_target] } {
+    set pc_regname "eip"
+} elseif { [istarget "tic6x-*-*"] } {
+    set pc_regname "PC"
+}
+
+# Sending the PC register in advance is good practice.  Test that this is
+# actually done for the targets where gdbserver is supposed to.
+set expedited_pc_test_name "send PC as expedited register in stop reply"
+if { [info exists pc_regname] } {
+    set seen_line false
+    gdb_test_multiple "maintenance print remote-registers" \
+	     $expedited_pc_test_name -lbl {
+	-re "${pc_regname}\[\[:space:\]\]+${decimal}.*${decimal}\[\[:space:\]\]+yes" {
+	    set seen_line true
+	    exp_continue
+	}
+	-re "\r\n$gdb_prompt $" {
+	    gdb_assert { $seen_line } $gdb_test_name
+	}
+    }
+} else {
+    untested $expedited_pc_test_name
+}

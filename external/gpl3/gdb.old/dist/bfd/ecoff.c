@@ -966,6 +966,7 @@ _bfd_ecoff_slurp_symbol_table (bfd *abfd)
       if (fdr_ptr->isymBase < 0
 	  || fdr_ptr->isymBase > symhdr->isymMax
 	  || fdr_ptr->csym < 0
+	  || fdr_ptr->csym > symhdr->isymMax - fdr_ptr->isymBase
 	  || fdr_ptr->csym > ((long) bfd_get_symcount (abfd)
 			      - (internal_ptr - internal))
 	  || fdr_ptr->issBase < 0
@@ -1451,11 +1452,13 @@ _bfd_ecoff_print_symbol (bfd *abfd,
   const struct ecoff_debug_swap * const debug_swap
     = &ecoff_backend (abfd)->debug_swap;
   FILE *file = (FILE *)filep;
+  const char *symname = (symbol->name != bfd_symbol_error_name
+			 ? symbol->name : _("<corrupt>"));
 
   switch (how)
     {
     case bfd_print_symbol_name:
-      fprintf (file, "%s", symbol->name);
+      fprintf (file, "%s", symname);
       break;
     case bfd_print_symbol_more:
       if (ecoffsymbol (symbol)->local)
@@ -1525,7 +1528,7 @@ _bfd_ecoff_print_symbol (bfd *abfd,
 		 (unsigned) ecoff_ext.asym.sc,
 		 (unsigned) ecoff_ext.asym.index,
 		 jmptbl, cobol_main, weakext,
-		 symbol->name);
+		 symname);
 
 	if (ecoffsymbol (symbol)->fdr != NULL
 	    && ecoff_ext.asym.index != indexNil)
@@ -1682,7 +1685,7 @@ ecoff_slurp_reloc_table (bfd *abfd,
       (*backend->swap_reloc_in) (abfd,
 				 external_relocs + i * external_reloc_size,
 				 &intern);
-      rptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+      rptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       rptr->addend = 0;
 
       if (intern.r_extern)
@@ -1726,7 +1729,7 @@ ecoff_slurp_reloc_table (bfd *abfd,
 	      sec = bfd_get_section_by_name (abfd, sec_name);
 	      if (sec != NULL)
 		{
-		  rptr->sym_ptr_ptr = sec->symbol_ptr_ptr;
+		  rptr->sym_ptr_ptr = &sec->symbol;
 		  rptr->addend = - bfd_section_vma (sec);
 		}
 	    }
@@ -3277,8 +3280,8 @@ ecoff_link_hash_newfunc (struct bfd_hash_entry *entry,
       ret->abfd = NULL;
       ret->written = 0;
       ret->small = 0;
+      memset ((void *) &ret->esym, 0, sizeof ret->esym);
     }
-  memset ((void *) &ret->esym, 0, sizeof ret->esym);
 
   return (struct bfd_hash_entry *) ret;
 }
@@ -3960,7 +3963,7 @@ ecoff_reloc_link_order (bfd *output_bfd,
   if (type == bfd_section_reloc_link_order)
     {
       section = link_order->u.reloc.p->u.section;
-      rel.sym_ptr_ptr = section->symbol_ptr_ptr;
+      rel.sym_ptr_ptr = &section->symbol;
     }
   else
     {
