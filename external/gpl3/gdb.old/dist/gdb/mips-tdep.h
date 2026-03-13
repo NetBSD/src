@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MIPS_TDEP_H
-#define MIPS_TDEP_H
+#ifndef GDB_MIPS_TDEP_H
+#define GDB_MIPS_TDEP_H
 
 #include "objfiles.h"
 #include "gdbarch.h"
@@ -210,4 +210,4 @@ in_mips_stubs_section (CORE_ADDR pc)
   return pc_in_section (pc, ".MIPS.stubs");
 }
 
-#endif /* MIPS_TDEP_H */
+#endif /* GDB_MIPS_TDEP_H */

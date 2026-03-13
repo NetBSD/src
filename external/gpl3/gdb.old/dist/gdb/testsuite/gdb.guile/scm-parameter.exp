@@ -62,11 +62,11 @@ gdb_test_multiline "Simple gdb boolean parameter" \
     "end"
 
 with_test_prefix "test-param" {
-    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value (true)"
+    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value, true"
     gdb_test "show print test-param" "The state of the Test Parameter is on." "show parameter on"
     gdb_test_no_output "set print test-param off"
     gdb_test "show print test-param" "The state of the Test Parameter is off." "show parameter off"
-    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value (false)"
+    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value, false"
     gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "show help"
     gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "set help"
     gdb_test "help set print" "set print test-param -- Set the state of the boolean test-param.*" "general help"
@@ -94,11 +94,11 @@ gdb_test_multiline "enum gdb parameter" \
     "end"
 
 with_test_prefix "test-enum-param" {
-    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value (one)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value, one"
     gdb_test "show print test-enum-param" "The state of the enum is one." "show initial value"
     gdb_test_no_output "set print test-enum-param two"
     gdb_test "show print test-enum-param" "The state of the enum is two." "show new value"
-    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value (two)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value, two"
     gdb_test "set print test-enum-param three" "Undefined item: \"three\".*" "set invalid enum parameter" 
 }
 
@@ -241,14 +241,14 @@ foreach_with_prefix kind {
 
     with_test_prefix "test-$kind-param" {
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    3 "$kind parameter value (3)"
+	    3 "$kind parameter value, 3"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 3." "show initial value"
 	gdb_test_no_output "set print test-$kind-param 2"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 2." "show new value"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    2 "$kind parameter value (2)"
+	    2 "$kind parameter value, 2"
 	scm_param_test_maybe_no_output \
 	    "guile (set-parameter-value! test-$kind-param #:unlimited)" \
 	    $param_set_unlimited
@@ -257,18 +257,18 @@ foreach_with_prefix kind {
 	    "show unlimited value"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 1)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    1 "$kind parameter value (1)"
+	    1 "$kind parameter value, 1"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 0)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_zero "$kind parameter value (0)"
+	    $param_get_zero "$kind parameter value, 0"
 	scm_param_test_maybe_no_output "set print test-$kind-param -1" \
 	    $param_set_minus_one
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_one "$kind parameter value (-1)"
+	    $param_get_minus_one "$kind parameter value, -1"
 	scm_param_test_maybe_no_output "set print test-$kind-param -2" \
 	    $param_set_minus_two
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_two "$kind parameter value (-2)"
+	    $param_get_minus_two "$kind parameter value, -2"
     }
 }
 
@@ -378,11 +378,11 @@ gdb_test_multiline "previously ambiguously named boolean parameter" \
 gdb_test_no_output "guile (register-parameter! prev-ambig)"
 
 with_test_prefix "previously-ambiguous" {
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value (false)"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value, false"
     gdb_test "show print s" "Command is not documented is off." "show parameter off"
     gdb_test_no_output "set print s on"
     gdb_test "show print s" "Command is not documented is on." "show parameter on"
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value (true)"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value, true"
     gdb_test "help show print s" "This command is not documented." "show help"
     gdb_test "help set print s" "This command is not documented." "set help"
     gdb_test "help set print" "set print s -- This command is not documented.*" "general help"

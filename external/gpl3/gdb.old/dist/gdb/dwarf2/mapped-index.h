@@ -20,7 +20,9 @@
 #ifndef GDB_DWARF2_MAPPED_INDEX_H
 #define GDB_DWARF2_MAPPED_INDEX_H
 
+#include "dwarf2/index-common.h"
 #include "language.h"
+#include "quick-symbol.h"
 
 /* An index into a (C++) symbol name component in a symbol name as
    recorded in the mapped_index's symbol table.  For each C++ symbol
@@ -82,6 +84,11 @@ struct dwarf_scanner_base
   virtual void wait_completely ()
   {
   }
+
+  /* Look up ADDR, and return either the corresponding CU, or nullptr
+     if the address could not be found.  */
+  virtual dwarf2_per_cu_data *lookup (unrelocated_addr addr)
+  { return nullptr; }
 };
 
 /* Base class containing bits shared by both .gdb_index and

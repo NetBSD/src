@@ -174,7 +174,7 @@ _start:
 	.data
 1:	ldi r1, 2f@word
 	jmp r1
-;;; Successfull trap jumps back to here
+;;; Successful trap jumps back to here
 	.text
 ;;; Verify the PSW
 2:	mvfc	r2, cr0

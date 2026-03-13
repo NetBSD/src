@@ -106,7 +106,7 @@ ctf_dump_format_type (ctf_dict_t *fp, ctf_id_t id, int flag)
       const char *idstr = "";
 
       id = new_id;
-      if (flag == CTF_ADD_NONROOT)
+      if (!(flag & CTF_ADD_ROOT))
 	{
 	  nonroot_leader = "{";
 	  nonroot_trailer = "}";
@@ -349,6 +349,7 @@ ctf_dump_header (ctf_dict_t *fp, ctf_dump_state_t *state)
 
       if (asprintf (&str, "Flags: 0x%x (%s)", fp->ctf_openflags, flagstr) < 0)
 	goto err;
+      free (flagstr);
       ctf_dump_append (state, str);
     }
 
@@ -814,7 +815,7 @@ ctf_dump (ctf_dict_t *fp, ctf_dump_state_t **statep, ctf_sect_names_t sect,
       if (!str)
 	{
 	  ctf_set_errno (fp, ENOMEM);
-	  return str;
+	  return NULL;
 	}
     }
 

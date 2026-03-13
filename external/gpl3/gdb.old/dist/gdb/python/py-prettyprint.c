@@ -836,10 +836,7 @@ PyTypeObject printer_object_type =
 static int
 gdbpy_initialize_prettyprint ()
 {
-  if (PyType_Ready (&printer_object_type) < 0)
-    return -1;
-  return gdb_pymodule_addobject (gdb_module, "ValuePrinter",
-				 (PyObject *) &printer_object_type);
+  return gdbpy_type_ready (&printer_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_prettyprint);

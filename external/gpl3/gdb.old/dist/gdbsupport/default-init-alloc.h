@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_DEFAULT_INIT_ALLOC_H
-#define COMMON_DEFAULT_INIT_ALLOC_H
+#ifndef GDBSUPPORT_DEFAULT_INIT_ALLOC_H
+#define GDBSUPPORT_DEFAULT_INIT_ALLOC_H
 
 #if __cplusplus >= 202002L
 #include <memory_resource>
@@ -75,4 +75,4 @@ public:
 
 } /* namespace gdb */
 
-#endif /* COMMON_DEFAULT_INIT_ALLOC_H */
+#endif /* GDBSUPPORT_DEFAULT_INIT_ALLOC_H */

@@ -71,8 +71,8 @@ proc do_test {lang} {
 	    "Undefined convenience variable or function \"%s\" not defined in \"%s\"."
 	invalid_label "No label \"%s\" defined in function \"%s\"."
 	invalid_parm "invalid linespec argument, \"%s\""
-	invalid_offset "No line %d in the current file."
-	invalid_offset_f "No line %d in file \"%s\"."
+	invalid_offset "No compiled code for line %d in the current file."
+	invalid_offset_f "No compiled code for line %d in file \"%s\"."
 	malformed_line_offset "malformed line offset: \"%s\""
 	source_incomplete \
 	    "Source filename requires function, label, or line offset."
@@ -135,14 +135,14 @@ proc do_test {lang} {
 
     foreach x {1 +1 +100 -10} {
 	test_break "3 $x" unexpected_opt "number" $x
-	test_break "-line 3 $x" garbage $x
+	test_break "-line 34 $x" garbage $x
 	test_break "+10 $x" unexpected_opt "number" $x
 	test_break "-line +10 $x" garbage $x
 	test_break "-10 $x" unexpected_opt "number" $x
 	test_break "-line -10 $x" garbage $x
     }
 
-    foreach x {3 +10 -10} {
+    foreach x {34 +10 -10} {
 	test_break "$x foo" unexpected_opt "string" "foo"
 	test_break "-line $x foo" garbage "foo"
     }
@@ -207,12 +207,12 @@ proc do_test {lang} {
 
     test_break "${srcfile}::" invalid_function "${srcfile}::"
     test_break "$srcfile:3 1" unexpected_opt "number" "1"
-    test_break "-source $srcfile -line 3 1" garbage "1"
+    test_break "-source $srcfile -line 34 1" garbage "1"
     test_break "$srcfile:3 +100" unexpected_opt "number" "+100"
-    test_break "-source $srcfile -line 3 +100" garbage "+100"
+    test_break "-source $srcfile -line 34 +100" garbage "+100"
     test_break "$srcfile:3 -100" unexpected_opt "number" "-100"
     test_break "$srcfile:3 foo" unexpected_opt "string" "foo"
-    test_break "-source $srcfile -line 3 foo" garbage "foo"
+    test_break "-source $srcfile -line 34 foo" garbage "foo"
 
     foreach x $invalid_offsets {
 	test_break "$srcfile:$x" invalid_offset_f $x $srcfile

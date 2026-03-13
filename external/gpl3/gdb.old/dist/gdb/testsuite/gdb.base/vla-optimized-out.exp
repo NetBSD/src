@@ -57,15 +57,15 @@ proc vla_optimized_out {exe_suffix options} {
     # that case to reply with 'no such vector element'.
     gdb_test "p a\[0\]" \
 	"(= <optimized out>|no such vector element)" \
-	"print out of range element of vla (0)"
+	"print out of range element of vla, 0"
 
     gdb_test "p a\[6\]" \
 	"no such vector element" \
-	"print out of range element of vla (6)"
+	"print out of range element of vla, 6"
 
     gdb_test "p a\[0xffffffff\]" \
 	"no such vector element" \
-	"print out of range element of vla (0xffffffff)"
+	"print out of range element of vla, 0xffffffff"
 }
 
 set o1_sizeof_result "6"

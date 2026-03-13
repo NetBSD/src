@@ -19,7 +19,7 @@
 #
 # This sort of thing can occur in optimized code, f.i. here a slightly more
 # elaborate case with another is-stmt=no entry (the one with line number 12)
-# inbetween:
+# in between:
 # INDEX  LINE   ADDRESS            IS-STMT
 # 12     13     0x00000000004003ed
 # 13     12     0x00000000004003f2

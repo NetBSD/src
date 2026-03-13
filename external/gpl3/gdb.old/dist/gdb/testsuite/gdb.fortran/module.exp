@@ -31,9 +31,6 @@ gdb_test "p modmany::var_i" " = 14" "stopped language detection"
 
 gdb_test "print mod1::var_const" " = 20" "fully qualified name of DW_TAG_constant"
 
-# Avoid shared lib symbols.
-gdb_test_no_output "set auto-solib-add off"
-
 if {![fortran_runto_main]} {
     return
 }

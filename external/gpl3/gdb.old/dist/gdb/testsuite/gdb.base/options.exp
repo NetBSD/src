@@ -99,21 +99,21 @@ proc make_cmd {variant} {
 # operand.
 proc expect_none {operand} {
     return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
-	    -string '' -- $operand"
+	    -string '' -filename '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
 # test-options xxx", with -flag set.  OPERAND is the expected operand.
 proc expect_flag {operand} {
     return "-flag 1 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
-	    -string '' -- $operand"
+	    -string '' -filename '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
 # test-options xxx", with -bool set.  OPERAND is the expected operand.
 proc expect_bool {operand} {
     return "-flag 0 -xx1 0 -xx2 0 -bool 1 -enum xxx -uint-unl 0 -pint-unl 0\
-	    -string '' -- $operand"
+	    -string '' -filename '' -- $operand"
 }
 
 # Return a string for the expected result of running "maint
@@ -123,10 +123,10 @@ proc expect_bool {operand} {
 proc expect_integer {option val operand} {
     if {$option == "uinteger-unlimited"} {
 	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl $val\
-		-pint-unl 0 -string '' -- $operand"
+		-pint-unl 0 -string '' -filename '' -- $operand"
     } elseif {$option == "pinteger-unlimited"} {
 	return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0\
-		-pint-unl $val -string '' -- $operand"
+		-pint-unl $val -string '' -filename '' -- $operand"
     } else {
 	error "unsupported option: $option"
     }
@@ -144,12 +144,28 @@ proc expect_string {str operand} {
 	set str [string range $str 1 end-1]
     }
     return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
-	    -string '$str' -- $operand"
+	    -string '$str' -filename '' -- $operand"
+}
+
+# Return a string for the expected result of running "maint
+# test-options xxx", with -filename set to $STR.  OPERAND is the
+# expected operand.
+proc expect_filename {str operand} {
+    # Dequote the string in the expected output.
+    if { ( [string range $str 0 0] == "\""
+	   && [string range $str end end] == "\"")
+	 || ([string range $str 0 0] == "'"
+	     && [string range $str end end] == "'")} {
+	set str [string range $str 1 end-1]
+    }
+    return "-flag 0 -xx1 0 -xx2 0 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
+	    -string '' -filename '$str' -- $operand"
 }
 
 set all_options {
     "-bool"
     "-enum"
+    "-filename"
     "-flag"
     "-pinteger-unlimited"
     "-string"
@@ -612,7 +628,7 @@ proc_with_prefix test-flag {variant} {
     # Extract twice the same flag, separated by one space.
     gdb_test "$cmd -xx1     -xx2 -xx1  -xx2 -xx1    -- non flags args" \
 	"-flag 0 -xx1 1 -xx2 1 -bool 0 -enum xxx -uint-unl 0 -pint-unl 0\
-	 -string '' -- non flags args"
+	 -string '' -filename '' -- non flags args"
 
     # Extract 2 known flags in front of unknown flags.
     gdb_test "$cmd -xx1 -xx2 -a -b -c -xx1 --" \
@@ -1031,6 +1047,70 @@ proc_with_prefix test-string {variant} {
     }
 }
 
+# Filename option tests.  These tests only focus on how GDB parses the
+# filename option, and ensures that GDB can complete things after the
+# filename value.  The actual strings passed as filenames in this proc
+# are not actual files that exist on disk.
+#
+# Filename options do also support completion.  For testing of this
+# aspect see the gdb.base/filename-completion.exp script.
+proc_with_prefix test-filename {variant} {
+    global all_options
+
+    set cmd [make_cmd $variant]
+
+    # Check that "-" where a value is expected does not show the
+    # command's options.  I.e., a filename's value is not optional.
+    # Check both completion and running the command.
+    res_test_gdb_complete_none \
+	"1 [expect_none ""]" \
+	"$cmd -filename -"
+    gdb_test "$cmd -filename --" \
+	"-filename requires an argument"
+    if {$variant == "require-delimiter"} {
+	gdb_test "$cmd -filename" [expect_none "-filename"]
+    } else {
+	gdb_test "$cmd -filename" \
+	    "-filename requires an argument"
+    }
+
+    foreach_with_prefix str {
+	"STR"
+	"\"STR\""
+	"\\\"STR"
+	"'STR'"
+	"\\'STR"
+	"\"STR AAA\""
+	"'STR BBB'"
+	"\"STR 'CCC' DDD\""
+	"'STR \"EEE\" FFF'"
+	"\"STR \\\"GGG\\\" HHH\""
+	"'STR \\\'III\\\' JJJ'"
+    } {
+	res_test_gdb_complete_none \
+	    "1 [expect_none ""]" \
+	    "$cmd -filename ${str}"
+	gdb_test "$cmd -filename ${str} --" [expect_filename "${str}" ""]
+
+	# Completing at "-" after parsing STR should list all options.
+	res_test_gdb_complete_multiple \
+	    "1 [expect_filename "${str}" "-"]" \
+	    "$cmd -filename ${str} " "-" "" $all_options
+
+	# Check that only $STR is considered part of the filename's value.
+	# I.e., that we stop parsing the filename at the first
+	# whitespace or after the closing quote of $STR.
+	if {$variant == "require-delimiter"} {
+	    res_test_gdb_complete_none \
+		"1 [expect_filename "${str}" "BAR"]" \
+		"$cmd -filename ${str} BAR"
+	} else {
+	    res_test_gdb_complete_none "0 BAR" "$cmd -filename ${str} BAR"
+	}
+	gdb_test "$cmd -filename ${str} BAR --" "Unrecognized option at: BAR --"
+    }
+}
+
 # Run the options framework tests first.
 foreach_with_prefix cmd {
     "require-delimiter"
@@ -1045,6 +1125,7 @@ foreach_with_prefix cmd {
     }
     test-enum $cmd
     test-string $cmd
+    test-filename $cmd
 }
 
 # Run the print integration tests, both as "standalone", and under
@@ -1081,3 +1162,9 @@ test-thread-apply
 
 # Basic "info threads" integration tests.
 test-info-threads
+
+# There was a bug where the "metasyntactic variable" was glued to the
+# option.
+gdb_test "help maintenance test-options unknown-is-operand" \
+    "-string STRING.*-filename FILENAME.*" \
+    "option help has spaces"

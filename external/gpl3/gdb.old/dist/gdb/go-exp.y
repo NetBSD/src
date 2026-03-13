@@ -569,16 +569,15 @@ variable:	name_not_typename
 			    }
 			  else
 			    {
-			      struct bound_minimal_symbol msymbol;
 			      std::string arg = copy_name ($1.stoken);
 
-			      msymbol =
-				lookup_bound_minimal_symbol (arg.c_str ());
+			      bound_minimal_symbol msymbol =
+				lookup_minimal_symbol (current_program_space, arg.c_str ());
 			      if (msymbol.minsym != NULL)
 				pstate->push_new<var_msym_value_operation>
 				  (msymbol);
-			      else if (!have_full_symbols ()
-				       && !have_partial_symbols ())
+			      else if (!have_full_symbols (current_program_space)
+				       && !have_partial_symbols (current_program_space))
 				error (_("No symbol table is loaded.  "
 				       "Use the \"file\" command."));
 			      else

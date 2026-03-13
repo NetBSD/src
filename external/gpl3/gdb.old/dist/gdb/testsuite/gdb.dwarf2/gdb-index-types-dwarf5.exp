@@ -17,7 +17,7 @@ standard_testfile
 
 set flags {}
 lappend flags {additional_flags=-fdebug-types-section}
-lappend flags {additional_flags=-gdwarf-5}
+lappend flags {dwarf5}
 
 if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  $srcfile $flags] } {

@@ -356,8 +356,8 @@ z80_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
   /* stage2: check for FP saving scheme */
   if (prologue[pos] == 0xcd) /* call nn */
     {
-      struct bound_minimal_symbol msymbol;
-      msymbol = lookup_minimal_symbol ("__sdcc_enter_ix", NULL, NULL);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, "__sdcc_enter_ix");
       if (msymbol.minsym)
 	{
 	  value = msymbol.value_address ();
@@ -621,8 +621,8 @@ z80_frame_unwind_cache (const frame_info_ptr &this_frame,
 		break; /* found */
 	      for (i = sizeof(names)/sizeof(*names)-1; i >= 0; --i)
 		{
-		  struct bound_minimal_symbol msymbol;
-		  msymbol = lookup_minimal_symbol (names[i], NULL, NULL);
+		  bound_minimal_symbol msymbol
+		    = lookup_minimal_symbol (current_program_space, names[i]);
 		  if (!msymbol.minsym)
 		    continue;
 		  if (addr == msymbol.value_address ())
@@ -719,8 +719,8 @@ z80_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
   static int addr = -1;
   if (addr == -1)
     {
-      struct bound_minimal_symbol bh;
-      bh = lookup_minimal_symbol ("_break_handler", NULL, NULL);
+      bound_minimal_symbol bh
+	= lookup_minimal_symbol (current_program_space, "_break_handler");
       if (bh.minsym)
 	addr = bh.value_address ();
       else
@@ -894,14 +894,13 @@ read_target_long_array (CORE_ADDR memaddr, unsigned int *myaddr,
 static int
 z80_read_overlay_region_table ()
 {
-  struct bound_minimal_symbol novly_regions_msym;
-  struct bound_minimal_symbol ovly_region_table_msym;
   struct gdbarch *gdbarch;
   int word_size;
   enum bfd_endian byte_order;
 
   z80_free_overlay_region_table ();
-  novly_regions_msym = lookup_minimal_symbol ("_novly_regions", NULL, NULL);
+  bound_minimal_symbol novly_regions_msym
+    = lookup_minimal_symbol (current_program_space, "_novly_regions");
   if (! novly_regions_msym.minsym)
     {
       error (_("Error reading inferior's overlay table: "
@@ -910,7 +909,8 @@ z80_read_overlay_region_table ()
       return 0;
     }
 
-  ovly_region_table_msym = lookup_bound_minimal_symbol ("_ovly_region_table");
+  bound_minimal_symbol ovly_region_table_msym
+    = lookup_minimal_symbol (current_program_space, "_ovly_region_table");
   if (! ovly_region_table_msym.minsym)
     {
       error (_("Error reading inferior's overlay table: couldn't find "

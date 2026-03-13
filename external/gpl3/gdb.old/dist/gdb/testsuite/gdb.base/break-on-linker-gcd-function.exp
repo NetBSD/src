@@ -40,10 +40,13 @@ proc set_breakpoint_on_gcd_function {} {
     # Single hex digit
     set xd {[0-9a-f]}
 
-    # This accepts e.g. "Breakpoint 1 at 0x40968a" (fixed GDB)
-    # but rejects e.g. "Breakpoint 1 at 0x4" (broken GDB).
-    gdb_test "b [gdb_get_line_number "gdb break here"]" \
-	"Breakpoint \[0-9\] at 0x${xd}${xd}+: .*"
+    set lineno [gdb_get_line_number "gdb break here"]
+    gdb_test "set breakpoint pending on"
+    gdb_test "b $lineno" \
+	[multi_line \
+	     "^No compiled code for line $lineno in the current file\\." \
+	     "Breakpoint $::decimal \\($lineno\\) pending\\."] \
+	"break on line in garbage collected function"
 }
 
 set_breakpoint_on_gcd_function

@@ -413,6 +413,151 @@ ctf_lookup_variable (ctf_dict_t *fp, const char *name)
   return type;
 }
 
+/* Look up a single enumerator by enumeration constant name.  Returns the ID of
+   the enum it is contained within and optionally its value.  Error out with
+   ECTF_DUPLICATE if multiple exist (which can happen in some older dicts).  See
+   ctf_lookup_enumerator_next in that case.  Enumeration constants in non-root
+   types are not returned, but constants in parents are, if not overridden by
+   an enum in the child..  */
+
+ctf_id_t
+ctf_lookup_enumerator (ctf_dict_t *fp, const char *name, int64_t *enum_value)
+{
+  ctf_id_t type;
+  int enum_int_value;
+
+  if (ctf_dynset_lookup (fp->ctf_conflicting_enums, name))
+    return (ctf_set_typed_errno (fp, ECTF_DUPLICATE));
+
+  /* CTF_K_UNKNOWN suffices for things like enumeration constants that aren't
+     actually types at all (ending up in the global name table).  */
+  type = ctf_lookup_by_rawname (fp, CTF_K_UNKNOWN, name);
+  /* Nonexistent type? It may be in the parent.  */
+  if (type == 0 && fp->ctf_parent)
+    {
+      if ((type = ctf_lookup_enumerator (fp->ctf_parent, name, enum_value)) == 0)
+	return ctf_set_typed_errno (fp, ECTF_NOENUMNAM);
+      return type;
+    }
+
+  /* Nothing more to do if this type didn't exist or we don't have to look up
+     the enum value.  */
+  if (type == 0)
+    return ctf_set_typed_errno (fp, ECTF_NOENUMNAM);
+
+  if (enum_value == NULL)
+    return type;
+
+  if (ctf_enum_value (fp, type, name, &enum_int_value) < 0)
+    return CTF_ERR;
+  *enum_value = enum_int_value;
+
+  return type;
+}
+
+/* Return all enumeration constants with a given name in a given dict, similar
+   to ctf_lookup_enumerator above but capable of returning multiple values.
+   Enumerators in parent dictionaries are not returned: enumerators in
+   hidden types *are* returned.  */
+
+ctf_id_t
+ctf_lookup_enumerator_next (ctf_dict_t *fp, const char *name,
+			    ctf_next_t **it, int64_t *val)
+{
+  ctf_next_t *i = *it;
+  int found = 0;
+
+  /* We use ctf_type_next() to iterate across all types, but then traverse each
+     enumerator found by hand: traversing enumerators is very easy, and it would
+     probably be more confusing to use two nested iterators than to do it this
+     way.  We use ctn_next to work over enums, then ctn_en and ctn_n to work
+     over enumerators within each enum.  */
+  if (!i)
+    {
+      if ((i = ctf_next_create ()) == NULL)
+	return ctf_set_typed_errno (fp, ENOMEM);
+
+      i->cu.ctn_fp = fp;
+      i->ctn_iter_fun = (void (*) (void)) ctf_lookup_enumerator_next;
+      i->ctn_increment = 0;
+      i->ctn_tp = NULL;
+      i->u.ctn_en = NULL;
+      i->ctn_n = 0;
+      *it = i;
+    }
+
+  if ((void (*) (void)) ctf_lookup_enumerator_next != i->ctn_iter_fun)
+    return (ctf_set_typed_errno (fp, ECTF_NEXT_WRONGFUN));
+
+  if (fp != i->cu.ctn_fp)
+    return (ctf_set_typed_errno (fp, ECTF_NEXT_WRONGFP));
+
+  do
+    {
+      const char *this_name;
+
+      /* At end of enum? Traverse to next one, if any are left.  */
+
+      if (i->u.ctn_en == NULL || i->ctn_n == 0)
+	{
+	  const ctf_type_t *tp;
+	  ctf_dtdef_t *dtd;
+
+	  do
+	    i->ctn_type = ctf_type_next (i->cu.ctn_fp, &i->ctn_next, NULL, 1);
+	  while (i->ctn_type != CTF_ERR
+		 && ctf_type_kind_unsliced (i->cu.ctn_fp, i->ctn_type)
+		 != CTF_K_ENUM);
+
+	  if (i->ctn_type == CTF_ERR)
+	    {
+	      /* Conveniently, when the iterator over all types is done, so is the
+		 iteration as a whole: so we can just pass all errors from the
+		 internal iterator straight back out..  */
+	      ctf_next_destroy (i);
+	      *it = NULL;
+	      return CTF_ERR;			/* errno is set for us.  */
+	    }
+
+	  if ((tp = ctf_lookup_by_id (&fp, i->ctn_type)) == NULL)
+	    return CTF_ERR;			/* errno is set for us.  */
+	  i->ctn_n = LCTF_INFO_VLEN (fp, tp->ctt_info);
+
+	  dtd = ctf_dynamic_type (fp, i->ctn_type);
+
+	  if (dtd == NULL)
+	    {
+	      (void) ctf_get_ctt_size (fp, tp, NULL, &i->ctn_increment);
+	      i->u.ctn_en = (const ctf_enum_t *) ((uintptr_t) tp +
+						  i->ctn_increment);
+	    }
+	  else
+	    i->u.ctn_en = (const ctf_enum_t *) dtd->dtd_vlen;
+	}
+
+      this_name = ctf_strptr (fp, i->u.ctn_en->cte_name);
+
+      i->ctn_n--;
+
+      if (strcmp (name, this_name) == 0)
+	{
+	  if (val)
+	    *val = i->u.ctn_en->cte_value;
+	  found = 1;
+
+	  /* Constant found in this enum: try the next one.  (Constant names
+	     cannot be duplicated within a given enum.)  */
+
+	  i->ctn_n = 0;
+	}
+
+      i->u.ctn_en++;
+    }
+  while (!found);
+
+  return i->ctn_type;
+}
+
 typedef struct ctf_symidx_sort_arg_cb
 {
   ctf_dict_t *fp;

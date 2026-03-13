@@ -684,19 +684,46 @@ extern CORE_ADDR gdbarch_addr_bits_remove (struct gdbarch *gdbarch, CORE_ADDR ad
 extern void set_gdbarch_addr_bits_remove (struct gdbarch *gdbarch, gdbarch_addr_bits_remove_ftype *addr_bits_remove);
 
 /* On some architectures, not all bits of a pointer are significant.
-   On AArch64, for example, the top bits of a pointer may carry a "tag", which
-   can be ignored by the kernel and the hardware.  The "tag" can be regarded as
-   additional data associated with the pointer, but it is not part of the address.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
 
    Given a pointer for the architecture, this hook removes all the
-   non-significant bits and sign-extends things as needed.  It gets used to remove
-   non-address bits from data pointers (for example, removing the AArch64 MTE tag
-   bits from a pointer) and from code pointers (removing the AArch64 PAC signature
-   from a pointer containing the return address). */
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from pointers used for watchpoints. */
 
-typedef CORE_ADDR (gdbarch_remove_non_address_bits_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
-extern CORE_ADDR gdbarch_remove_non_address_bits (struct gdbarch *gdbarch, CORE_ADDR pointer);
-extern void set_gdbarch_remove_non_address_bits (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_ftype *remove_non_address_bits);
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_watchpoint_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_watchpoint (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_watchpoint (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_watchpoint_ftype *remove_non_address_bits_watchpoint);
+
+/* On some architectures, not all bits of a pointer are significant.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
+
+   Given a pointer for the architecture, this hook removes all the
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from pointers used for breakpoints. */
+
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_breakpoint_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_breakpoint (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_breakpoint (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_breakpoint_ftype *remove_non_address_bits_breakpoint);
+
+/* On some architectures, not all bits of a pointer are significant.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
+
+   Given a pointer for the architecture, this hook removes all the
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from any pointer used to access memory. */
+
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_memory_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_memory (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_memory (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_memory_ftype *remove_non_address_bits_memory);
 
 /* Return a string representation of the memory tag TAG. */
 
@@ -1751,3 +1778,18 @@ extern void set_gdbarch_read_core_file_mappings (struct gdbarch *gdbarch, gdbarc
 typedef bool (gdbarch_use_target_description_from_corefile_notes_ftype) (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
 extern bool gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
 extern void set_gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, gdbarch_use_target_description_from_corefile_notes_ftype *use_target_description_from_corefile_notes);
+
+/* Examine the core file bfd object CBFD and try to extract the name of
+   the current executable and the argument list, which are return in a
+   core_file_exec_context object.
+
+   If for any reason the details can't be extracted from CBFD then an
+   empty context is returned.
+
+   It is required that the current inferior be the one associated with
+   CBFD, strings are read from the current inferior using target methods
+   which all assume current_inferior() is the one to read from. */
+
+typedef core_file_exec_context (gdbarch_core_parse_exec_context_ftype) (struct gdbarch *gdbarch, bfd *cbfd);
+extern core_file_exec_context gdbarch_core_parse_exec_context (struct gdbarch *gdbarch, bfd *cbfd);
+extern void set_gdbarch_core_parse_exec_context (struct gdbarch *gdbarch, gdbarch_core_parse_exec_context_ftype *core_parse_exec_context);

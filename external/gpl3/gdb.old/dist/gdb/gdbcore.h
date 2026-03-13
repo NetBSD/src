@@ -19,8 +19,8 @@
 
 /* Interface routines for core, executable, etc.  */
 
-#if !defined (GDBCORE_H)
-#define GDBCORE_H 1
+#ifndef GDB_GDBCORE_H
+#define GDB_GDBCORE_H
 
 struct type;
 struct regcache;
@@ -124,10 +124,6 @@ extern void (*deprecated_file_changed_hook) (const char *filename);
 
 extern bool write_files;
 
-/* Open and set up the core file bfd.  */
-
-extern void core_target_open (const char *arg, int from_tty);
-
 extern void core_file_command (const char *filename, int from_tty);
 
 extern void exec_file_attach (const char *filename, int from_tty);
@@ -196,4 +192,70 @@ private:
   std::string m_storage;
 };
 
-#endif /* !defined (GDBCORE_H) */
+/* Type returned from core_target_find_mapped_file.  Holds information
+   about a mapped file that was processed when a core file was initially
+   loaded.  */
+struct core_target_mapped_file_info
+{
+  /* Constructor.  BUILD_ID is not nullptr, and is the build-id for the
+     mapped file.  FILENAME is the location of the file that GDB loaded to
+     provide the mapped file.  This might be different from the name of the
+     mapped file mentioned in the core file, e.g. if GDB downloads a file
+     from debuginfod then FILENAME would point into the debuginfod client
+     cache.  The FILENAME can be the empty string if GDB was unable to find
+     a file to provide the mapped file.  */
+
+  core_target_mapped_file_info (const bfd_build_id *build_id,
+				const std::string filename)
+    : m_build_id (build_id),
+      m_filename (filename)
+  {
+    gdb_assert (m_build_id != nullptr);
+  }
+
+  /* The build-id for this mapped file.  */
+
+  const bfd_build_id *
+  build_id () const
+  {
+    return m_build_id;
+  }
+
+  /* The file GDB used to provide this mapped file.  */
+
+  const std::string &
+  filename () const
+  {
+    return m_filename;
+  }
+
+private:
+  const bfd_build_id *m_build_id = nullptr;
+  const std::string m_filename;
+};
+
+/* If the current inferior has a core_target for its process target, then
+   lookup information about a mapped file that was discovered when the
+   core file was loaded.
+
+   The FILENAME is the file we're looking for.  The ADDR, if provided, is a
+   mapped address within the inferior which is known to be part of the file
+   we are looking for.
+
+   As an example, when loading shared libraries this function can be
+   called, in that case FILENAME will be the name of the shared library
+   that GDB is trying to load and ADDR will be an inferior address which is
+   part of the shared library we are looking for.
+
+   This function looks for a mapped file which matches FILENAME and/or
+   which covers ADDR and returns information about that file.
+
+   The returned information includes the name of the mapped file if known
+   and the build-id for the mapped file if known.
+
+   */
+std::optional<core_target_mapped_file_info>
+core_target_find_mapped_file (const char *filename,
+			      std::optional<CORE_ADDR> addr);
+
+#endif /* GDB_GDBCORE_H */

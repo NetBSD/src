@@ -45,6 +45,7 @@ enum s390_opcode_cpu_val
     S390_OPCODE_ARCH12,
     S390_OPCODE_ARCH13,
     S390_OPCODE_ARCH14,
+    S390_OPCODE_ARCH15,
     S390_OPCODE_MAXCPU
   };
 
@@ -192,9 +193,5 @@ extern const struct s390_operand s390_operands[];
 #define S390_OPERAND_VR 0x800
 
 #define S390_OPERAND_CP16 0x1000
-
-#define S390_OPERAND_OR1 0x2000
-#define S390_OPERAND_OR2 0x4000
-#define S390_OPERAND_OR8 0x8000
 
 #endif /* S390_H */

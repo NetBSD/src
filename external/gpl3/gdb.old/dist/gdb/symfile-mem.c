@@ -41,6 +41,7 @@
    entry point.  */
 
 
+#include "exceptions.h"
 #include "symtab.h"
 #include "gdbcore.h"
 #include "objfiles.h"

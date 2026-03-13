@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_VERSION_H
-#define COMMON_VERSION_H
+#ifndef GDBSUPPORT_VERSION_H
+#define GDBSUPPORT_VERSION_H
 
 /* Version number of GDB, as a string.  */
 extern const char version[];
@@ -28,4 +28,4 @@ extern const char host_name[];
 /* Canonical target name as a string.  */
 extern const char target_name[];
 
-#endif /* COMMON_VERSION_H */
+#endif /* GDBSUPPORT_VERSION_H */

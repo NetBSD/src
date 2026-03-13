@@ -103,7 +103,7 @@ proc run_test { args } {
 		set seen_first_message true
 		exp_continue
 	    }
-	    -re "\r\n$mi_gdb_prompt" {
+	    -re "$mi_gdb_prompt" {
 		gdb_assert $seen_first_message $gdb_test_name
 	    }
 	}

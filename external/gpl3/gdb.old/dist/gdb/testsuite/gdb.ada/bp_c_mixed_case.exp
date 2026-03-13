@@ -92,14 +92,14 @@ gdb_test "p <NoDebugMixedCaseFunc>" \
 
 set test "break <MixedCaseFunc>, in C"
 gdb_test_multiple "break <MixedCaseFunc>" $test {
-	-re "Function \"<MixedCaseFunc>\" not defined\..*Make breakpoint pending on future shared library load.*y or .n.. $" {
+	-re "Function \"<MixedCaseFunc>\" not defined\\..*Make breakpoint pending on future shared library load.*y or .n.. $" {
 		gdb_test_no_output "n" $test
 	}
 }
 
 set test "break <NoDebugMixedCaseFunc>, in C"
 gdb_test_multiple "break <NoDebugMixedCaseFunc>" $test {
-	-re "Function \"<NoDebugMixedCaseFunc>\" not defined\..*Make breakpoint pending on future shared library load.*y or .n.. $" {
+	-re "Function \"<NoDebugMixedCaseFunc>\" not defined\\..*Make breakpoint pending on future shared library load.*y or .n.. $" {
 		gdb_test_no_output "n" $test
 	}
 }

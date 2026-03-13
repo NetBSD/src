@@ -24,7 +24,8 @@
 
 struct loongarch_ASEs_option LARCH_opts =
 {
-  .relax = 1
+  .relax = 1,
+  .thin_add_sub = 0
 };
 
 size_t
@@ -123,6 +124,38 @@ const char *const loongarch_x_normal_name[32] =
   "$xr8",  "$xr9",  "$xr10", "$xr11", "$xr12", "$xr13", "$xr14", "$xr15",
   "$xr16", "$xr17", "$xr18", "$xr19", "$xr20", "$xr21", "$xr22", "$xr23",
   "$xr24", "$xr25", "$xr26", "$xr27", "$xr28", "$xr29", "$xr30", "$xr31",
+};
+
+const char *const loongarch_r_cfi_name[32] =
+{
+  "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+  "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
+  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+  "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+};
+
+const char *const loongarch_r_cfi_name_alias[32] =
+{
+  "zero", "ra", "tp", "sp", "a0", "a1", "a2", "a3",
+  "a4",   "a5", "a6", "a7", "t0", "t1", "t2", "t3",
+  "t4",   "t5", "t6", "t7", "t8", "r21","fp", "s0",
+  "s1",   "s2", "s3", "s4", "s5", "s6", "s7", "s8",
+};
+
+const char *const loongarch_f_cfi_name[32] =
+{
+  "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",
+  "f8",  "f9",  "f10", "f11", "f12", "f13", "f14", "f15",
+  "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
+  "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
+};
+
+const char *const loongarch_f_cfi_name_alias[32] =
+{
+  "fa0", "fa1", "fa2",  "fa3",  "fa4",  "fa5",  "fa6",  "fa7",
+  "ft0", "ft1", "ft2",  "ft3",  "ft4",  "ft5",  "ft6",  "ft7",
+  "ft8", "ft9", "ft10", "ft11", "ft12", "ft13", "ft14", "ft15",
+  "fs0", "fs1", "fs2",  "fs3",  "fs4",  "fs5",  "fs6",  "fs7",
 };
 
 /* Can not use xx_pa for abs.  */

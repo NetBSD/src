@@ -390,13 +390,13 @@ set timeout $prev_timeout
 
 if {[is_c_compiler_gcc]} {
     gdb_test "print sef.field=sm1" ".*.\[0-9\]* = sm1"
-    gdb_test "print sef.field" ".*.\[0-9\]* = sm1" "print sef.field (sm1)"
+    gdb_test "print sef.field" ".*.\[0-9\]* = sm1" "print sef.field, sm1"
     gdb_test "print sef.field=s1" ".*.\[0-9\]* = s1"
-    gdb_test "print sef.field" ".*.\[0-9\]* = s1" "print sef.field (s1)"
+    gdb_test "print sef.field" ".*.\[0-9\]* = s1" "print sef.field, s1"
     gdb_test "print uef.field=u2" ".*.\[0-9\]* = u2"
-    gdb_test "print uef.field" ".*.\[0-9\]* = u2" "print uef.field (u2)"
+    gdb_test "print uef.field" ".*.\[0-9\]* = u2" "print uef.field, u2"
     gdb_test "print uef.field=u1" ".*.\[0-9\]* = u1"
-    gdb_test "print uef.field" ".*.\[0-9\]* = u1" "print uef.field (u1)"
+    gdb_test "print uef.field" ".*.\[0-9\]* = u1" "print uef.field, u1"
 
     # Test for truncation when assigning invalid values to bitfields.
     gdb_test "print sef.field=7" \

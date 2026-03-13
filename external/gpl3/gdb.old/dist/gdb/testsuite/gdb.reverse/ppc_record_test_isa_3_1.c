@@ -28,7 +28,7 @@ main ()
      pmxvi4ger8*, pmxvi8ger4* pmxvi16ger2* instructions were officially changed
      to pmdmxbf16ger*, pmdmxvf32ger*, pmdmxvf64ger*, pmdmxvi4ger8*,
      pmdmxvi8ger4*, pmdmxvi16ger* respectively.  The old mnemonics are used in
-     this test for backward compatibity.   */
+     this test for backward compatibility.   */
   ra = 0xABCDEF012;
   rb = 0;
   rs = 0x012345678;

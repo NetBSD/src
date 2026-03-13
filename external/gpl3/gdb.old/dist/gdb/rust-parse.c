@@ -239,7 +239,7 @@ struct rust_parser
   int lex_string ();
   int lex_identifier ();
   uint32_t lex_hex (int min, int max);
-  uint32_t lex_escape (int is_byte);
+  uint32_t lex_escape (bool is_byte);
   int lex_operator ();
   int lex_one_token ();
   void push_back (char c);
@@ -519,7 +519,7 @@ rust_parser::lex_hex (int min, int max)
    otherwise we're lexing a character escape.  */
 
 uint32_t
-rust_parser::lex_escape (int is_byte)
+rust_parser::lex_escape (bool is_byte)
 {
   uint32_t result;
 
@@ -617,12 +617,12 @@ lex_multibyte_char (const char *text, int *len)
 int
 rust_parser::lex_character ()
 {
-  int is_byte = 0;
+  bool is_byte = false;
   uint32_t value;
 
   if (pstate->lexptr[0] == 'b')
     {
-      is_byte = 1;
+      is_byte = true;
       ++pstate->lexptr;
     }
   gdb_assert (pstate->lexptr[0] == '\'');
@@ -672,10 +672,8 @@ starts_raw_string (const char *str)
 static bool
 ends_raw_string (const char *str, int n)
 {
-  int i;
-
   gdb_assert (str[0] == '"');
-  for (i = 0; i < n; ++i)
+  for (int i = 0; i < n; ++i)
     if (str[i + 1] != '#')
       return false;
   return true;
@@ -907,14 +905,13 @@ rust_parser::lex_number ()
 {
   regmatch_t subexps[NUM_SUBEXPRESSIONS];
   int match;
-  int is_integer = 0;
-  int could_be_decimal = 1;
-  int implicit_i32 = 0;
+  bool is_integer = false;
+  bool could_be_decimal = true;
+  bool implicit_i32 = false;
   const char *type_name = NULL;
   struct type *type;
   int end_index;
   int type_index = -1;
-  int i;
 
   match = regexec (&number_regex, pstate->lexptr, ARRAY_SIZE (subexps),
 		   subexps, 0);
@@ -924,17 +921,17 @@ rust_parser::lex_number ()
   if (subexps[INT_TEXT].rm_so != -1)
     {
       /* Integer part matched.  */
-      is_integer = 1;
+      is_integer = true;
       end_index = subexps[INT_TEXT].rm_eo;
       if (subexps[INT_TYPE].rm_so == -1)
 	{
 	  type_name = "i32";
-	  implicit_i32 = 1;
+	  implicit_i32 = true;
 	}
       else
 	{
 	  type_index = INT_TYPE;
-	  could_be_decimal = 0;
+	  could_be_decimal = false;
 	}
     }
   else if (subexps[FLOAT_TYPE1].rm_so != -1)
@@ -968,11 +965,11 @@ rust_parser::lex_number ()
       if (rust_identifier_start_p (*next) || *next == '.')
 	{
 	  --subexps[0].rm_eo;
-	  is_integer = 1;
+	  is_integer = true;
 	  end_index = subexps[0].rm_eo;
 	  type_name = "i32";
-	  could_be_decimal = 1;
-	  implicit_i32 = 1;
+	  could_be_decimal = true;
+	  implicit_i32 = true;
 	}
     }
 
@@ -993,10 +990,10 @@ rust_parser::lex_number ()
 
   /* Copy the text of the number and remove the "_"s.  */
   std::string number;
-  for (i = 0; i < end_index && pstate->lexptr[i]; ++i)
+  for (int i = 0; i < end_index && pstate->lexptr[i]; ++i)
     {
       if (pstate->lexptr[i] == '_')
-	could_be_decimal = 0;
+	could_be_decimal = false;
       else
 	number.push_back (pstate->lexptr[i]);
     }
@@ -1021,7 +1018,7 @@ rust_parser::lex_number ()
 	  if (radix != 10)
 	    {
 	      offset = 2;
-	      could_be_decimal = 0;
+	      could_be_decimal = false;
 	    }
 	}
 
@@ -2235,11 +2232,9 @@ static void
 rust_lex_test_sequence (rust_parser *parser, const char *input, int len,
 			const int expected[])
 {
-  int i;
-
   parser->reset (input);
 
-  for (i = 0; i < len; ++i)
+  for (int i = 0; i < len; ++i)
     {
       int token = parser->lex_one_token ();
       SELF_CHECK (token == expected[i]);
@@ -2271,14 +2266,14 @@ rust_lex_test_completion (rust_parser *parser)
 {
   const int expected[] = { IDENT, '.', COMPLETE, 0 };
 
-  parser->pstate->parse_completion = 1;
+  parser->pstate->parse_completion = true;
 
   rust_lex_test_sequence (parser, "something.wha", ARRAY_SIZE (expected),
 			  expected);
   rust_lex_test_sequence (parser, "something.", ARRAY_SIZE (expected),
 			  expected);
 
-  parser->pstate->parse_completion = 0;
+  parser->pstate->parse_completion = false;
 }
 
 /* Test pushback.  */

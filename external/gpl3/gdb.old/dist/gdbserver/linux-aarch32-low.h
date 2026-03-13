@@ -33,7 +33,6 @@ int arm_breakpoint_at (CORE_ADDR where);
 
 void initialize_low_arch_aarch32 (void);
 
-void init_registers_arm_with_neon (void);
 int arm_is_thumb_mode (void);
 
 #endif /* GDBSERVER_LINUX_AARCH32_LOW_H */

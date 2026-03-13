@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GMP_UTILS_H
-#define GMP_UTILS_H
+#ifndef GDB_GMP_UTILS_H
+#define GDB_GMP_UTILS_H
 
 /* Include <stdio.h> and <stdarg.h> ahead of <gmp.h>, so as to get
    access to GMP's various formatting functions.  */
@@ -663,4 +663,4 @@ gdb_mpz::as_integer_truncate () const
   return result;
 }
 
-#endif
+#endif /* GDB_GMP_UTILS_H */

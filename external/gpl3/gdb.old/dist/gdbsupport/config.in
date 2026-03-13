@@ -256,6 +256,9 @@
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
 
+/* Define to 1 if `variant.ptwrite' is a member of `struct pt_event'. */
+#undef HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE
+
 /* Define to 1 if `enabled' is a member of `struct pt_insn'. */
 #undef HAVE_STRUCT_PT_INSN_ENABLED
 
@@ -315,6 +318,12 @@
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
+
+/* Define to 1 if you have the `wait' function. */
+#undef HAVE_WAIT
+
+/* Define to 1 if you have the `waitpid' function. */
+#undef HAVE_WAITPID
 
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H

@@ -486,7 +486,6 @@ ihex_scan (bfd *abfd)
 static bfd_cleanup
 ihex_object_p (bfd *abfd)
 {
-  void * tdata_save;
   bfd_byte b[9];
   unsigned int i;
   unsigned int type;
@@ -525,12 +524,12 @@ ihex_object_p (bfd *abfd)
     }
 
   /* OK, it looks like it really is an Intel Hex file.  */
-  tdata_save = abfd->tdata.any;
-  if (! ihex_mkobject (abfd) || ! ihex_scan (abfd))
+  if (!ihex_mkobject (abfd))
+    return NULL;
+
+  if (!ihex_scan (abfd))
     {
-      if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-	bfd_release (abfd, abfd->tdata.any);
-      abfd->tdata.any = tdata_save;
+      bfd_release (abfd, abfd->tdata.any);
       return NULL;
     }
 

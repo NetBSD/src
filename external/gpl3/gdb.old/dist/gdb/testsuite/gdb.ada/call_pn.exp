@@ -35,7 +35,10 @@ if {![runto "foo.adb:$bp_location"]} {
 # related to PR25764 - "LOC_UNRESOLVED symbol missing from partial symtab".
 # Stabilize test results by ensuring that the xfail triggers for the "before"
 # print.
-gdb_test_no_output "maint expand-symtabs"
+gdb_test_no_output {maint expand-symtabs "\(pck\|foo\)\.adb"}
+
+set gcc_major_version [gcc_major_version]
+set have_xfail [expr $gcc_major_version >= 8 &&  $gcc_major_version <= 9]
 
 # The xfail is for PR gcc/94469, which occurs with target board
 # unix/-flto/-O0/-flto-partition=none/-ffat-lto-objects and gcc-8 and later.
@@ -45,14 +48,17 @@ set xfail_re \
     [multi_line \
 	 "Multiple matches for last_node_id" \
 	 "\\\[0\\\] cancel" \
-	 "\\\[1\\\] pck\.last_node_id at .*.adb:17" \
-	 "\\\[2\\\] pck\.last_node_id at .*.adb:17" \
+	 "\\\[1\\\] pck\\.last_node_id at .*.adb:17" \
+	 "\\\[2\\\] pck\\.last_node_id at .*.adb:17" \
 	 "> $"]
 
 # Make sure that last_node_id is set to zero...
 gdb_test_multiple "print last_node_id" "print last_node_id before calling pn" {
     -re $xfail_re {
-	xfail $gdb_test_name
+	if { $have_xfail } {
+	    setup_xfail *-*-*
+	}
+	fail $gdb_test_name
 	# One of the choices will print the correct value, the other one
 	# <optimized out>.  Since we don't known which one to choose to get
 	# the correct value, cancel.
@@ -74,7 +80,10 @@ gdb_test "print pn(4321)" "= 4321"
 # Make sure that last_node_id now has the correct value...
 gdb_test_multiple "print last_node_id" "print last_node_id after calling pn" {
     -re $xfail_re {
-	xfail $gdb_test_name
+	if { $have_xfail } {
+	    setup_xfail *-*-*
+	}
+	fail $gdb_test_name
 	# Cancel
 	gdb_test_multiple "0" "cancel after xfail 2" {
 	    -re -wrap "cancelled" {

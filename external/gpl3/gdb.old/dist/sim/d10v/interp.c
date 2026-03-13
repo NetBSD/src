@@ -964,7 +964,7 @@ step_once (SIM_DESC sd, SIM_CPU *cpu)
 	{
 	  if (PSW_RP && PC == RPT_E)
 	    {
-	      /* Note: The behavour of a branch instruction at RPT_E
+	      /* Note: The behavior of a branch instruction at RPT_E
 		 is implementation dependant, this simulator takes the
 		 branch.  Branching to RPT_E is valid, the instruction
 		 must be executed before the loop is taken.  */

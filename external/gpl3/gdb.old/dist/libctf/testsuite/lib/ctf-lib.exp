@@ -136,11 +136,13 @@ proc run_lookup_test { name } {
     } else {
 	set file "$srcdir/$subdir/$name"
     }
+    # strip off the srcdir, which contains build host specific pathnames
+    set file4log [string map [list $srcdir/ ""] $file]
 
     set opt_array [slurp_options "${file}.lk"]
     if { $opt_array == -1 } {
 	perror "error reading options from $file.lk"
-	unresolved $subdir/$name
+	unresolved $file4log
 	return
     }
     set run_ld 0
@@ -166,7 +168,7 @@ proc run_lookup_test { name } {
 	}
 	if ![info exists opts($opt_name)] {
 	    perror "unknown option $opt_name in file $file.lk"
-	    unresolved $subdir/$name
+	    unresolved $file4log
 	    return
 	}
 
@@ -175,12 +177,12 @@ proc run_lookup_test { name } {
 
     if { [llength $opts(no_cross)] != 0
 	 && "$TEST_CROSS" eq "yes" } {
-	untested "$subdir/$name not tested when cross-compiling"
+	untested "$file4log not tested when cross-compiling"
 	return
     }
 
     if { [llength $opts(host)] != 0 && ![ishost $opts(host)] } {
-	untested "$subdir/$name only runs on $opts(host)"
+	untested "$file4log only runs on $opts(host)"
 	return
     }
 
@@ -203,10 +205,7 @@ proc run_lookup_test { name } {
 	set shared ""
     }
 
-    set testname $opts(name)
-    if { $opts(name) == "" } {
-	set testname "$subdir/$name"
-    }
+    set testname $file4log
 
     # Compile and link the lookup program.
     set comp_output [prune_warnings [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la $opts(lookup_link)"]]
@@ -268,6 +267,11 @@ proc run_lookup_test { name } {
 	set results [run_host_cmd tmpdir/lookup $lookup_output]
     } else {
 	set results [run_host_cmd "$opts(wrapper) tmpdir/lookup" $lookup_output]
+    }
+
+    if { [regexp {^UNSUPPORTED: (.*)$} $results -> reason] } {
+	unsupported "$testname: $reason"
+	return 0
     }
 
     set f [open "tmpdir/lookup.out" "w"]

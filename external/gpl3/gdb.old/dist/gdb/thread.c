@@ -50,6 +50,7 @@
 #include "inline-frame.h"
 #include "stack.h"
 #include "interps.h"
+#include "record-full.h"
 
 /* See gdbthread.h.  */
 
@@ -998,7 +999,13 @@ validate_registers_access (void)
      reason, but is marked running from the user's perspective.  E.g.,
      the thread is waiting for its turn in the step-over queue.  */
   if (tp->executing ())
-    error (_("Selected thread is running."));
+    {
+      /* If we are replaying with the record-full subsystem, even though
+	 the thread is executing, it is always safe to read from it since
+	 replay execution is just GDB reading and writing to a regcache.  */
+      if (!record_full_is_replaying ())
+	error (_("Selected thread is running."));
+    }
 }
 
 /* See gdbthread.h.  */
@@ -1016,7 +1023,11 @@ can_access_registers_thread (thread_info *thread)
 
   /* ... or from a spinning thread.  FIXME: see validate_registers_access.  */
   if (thread->executing ())
-    return false;
+    {
+      /* See validate_registers_access.  */
+      if (!record_full_is_replaying ())
+	return false;
+    }
 
   return true;
 }

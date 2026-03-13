@@ -19,13 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_DATA_H
-#define TUI_TUI_DATA_H
+#ifndef GDB_TUI_TUI_DATA_H
+#define GDB_TUI_TUI_DATA_H
 
 #include "tui/tui.h"
 #include "gdb_curses.h"
-#include "observable.h"
-#include "gdbsupport/gdb-checked-static-cast.h"
 
 /* A deleter that calls delwin.  */
 struct curses_deleter
@@ -50,7 +48,8 @@ protected:
      window's contents.  */
   virtual void rerender ();
 
-  virtual void make_window ();
+  /* Create the curses window.  */
+  void make_window ();
 
 public:
   tui_win_info (tui_win_info &&) = default;
@@ -118,13 +117,6 @@ public:
     return true;
   }
 
-  /* Disable output until the next call to doupdate.  */
-  void no_refresh ()
-  {
-    if (handle != nullptr)
-      wnoutrefresh (handle.get ());
-  }
-
   /* Called after the tab width has been changed.  */
   virtual void update_tab_width ()
   {
@@ -167,7 +159,7 @@ public:
   const std::string &title () const
   { return m_title; }
 
-  /* Clear the window, maybe draw the boarder, and then display string
+  /* Clear the window, maybe draw the border, and then display string
      STR centered in the window, abbreviated if necessary.  */
   void center_string (const char *str);
 
@@ -261,15 +253,6 @@ struct tui_nobox_window : public virtual tui_win_info
   }
 };
 
-/* A TUI window that is not refreshed.  */
-
-struct tui_norefresh_window : public virtual tui_win_info
-{
-  virtual void refresh_window () final override
-  {
-  }
-};
-
 /* A TUI window that is always visible.  */
 
 struct tui_always_visible_window : public virtual tui_win_info
@@ -288,17 +271,6 @@ struct tui_always_visible_window : public virtual tui_win_info
 
 /* Global Data.  */
 extern struct tui_win_info *tui_win_list[MAX_MAJOR_WINDOWS];
-
-#define TUI_SRC_WIN \
-  (gdb::checked_static_cast<tui_source_window *> (tui_win_list[SRC_WIN]))
-#define TUI_DISASM_WIN \
-  (gdb::checked_static_cast<tui_disasm_window *> (tui_win_list[DISASSEM_WIN]))
-#define TUI_DATA_WIN \
-  (gdb::checked_static_cast<tui_data_window *> (tui_win_list[DATA_WIN]))
-#define TUI_CMD_WIN \
-  (dynamic_cast<tui_cmd_window *> (tui_win_list[CMD_WIN]))
-#define TUI_STATUS_WIN \
-  (dynamic_cast<tui_status_window *> (tui_win_list[STATUS_WIN]))
 
 /* All the windows that are currently instantiated, in layout
    order.  */
@@ -325,4 +297,4 @@ extern struct tui_win_info *tui_prev_win (struct tui_win_info *);
 
 extern unsigned int tui_tab_width;
 
-#endif /* TUI_TUI_DATA_H */
+#endif /* GDB_TUI_TUI_DATA_H */

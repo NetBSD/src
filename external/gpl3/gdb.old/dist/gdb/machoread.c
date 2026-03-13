@@ -390,13 +390,14 @@ static CORE_ADDR
 macho_resolve_oso_sym_with_minsym (struct objfile *main_objfile, asymbol *sym)
 {
   /* For common symbol and global symbols, use the min symtab.  */
-  struct bound_minimal_symbol msym;
   const char *name = sym->name;
 
   if (*name != '\0'
       && *name == bfd_get_symbol_leading_char (main_objfile->obfd.get ()))
     ++name;
-  msym = lookup_minimal_symbol (name, NULL, main_objfile);
+
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, name, main_objfile);
   if (msym.minsym == NULL)
     {
       warning (_("can't find symbol '%s' in minsymtab"), name);
@@ -433,7 +434,8 @@ macho_add_oso_symfile (oso_el *oso, const gdb_bfd_ref_ptr &abfd,
       return;
     }
 
-  if (abfd->my_archive == NULL && oso->mtime != bfd_get_mtime (abfd.get ()))
+  if (abfd->my_archive == nullptr
+      && oso->mtime != gdb_bfd_get_mtime (abfd.get ()))
     {
       warning (_("`%s': file time stamp mismatch."), oso->name);
       return;

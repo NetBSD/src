@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_DSBT_H
-#define SOLIB_DSBT_H
+#ifndef GDB_SOLIB_DSBT_H
+#define GDB_SOLIB_DSBT_H
 
 struct solib_ops;
 
 extern const solib_ops dsbt_so_ops;
 
-#endif /* solib-dsbt.h */
+#endif /* GDB_SOLIB_DSBT_H */

@@ -64,7 +64,7 @@ _bfd_elf_link_keep_memory (struct bfd_link_info *info)
      this is opt-in by each backend.  */
   const struct elf_backend_data *bed
     = get_elf_backend_data (info->output_bfd);
-  if (bed->use_mmap)
+  if (bed != NULL && bed->use_mmap)
     return false;
 #endif
   bfd *abfd;
@@ -2247,16 +2247,19 @@ _bfd_elf_export_symbol (struct elf_link_hash_entry *h, void *data)
 
 /* Return the glibc version reference if VERSION_DEP is added to the
    list of glibc version dependencies successfully.  VERSION_DEP will
-   be put into the .gnu.version_r section.  */
+   be put into the .gnu.version_r section.  GLIBC_MINOR_BASE is the
+   pointer to the glibc minor base version.  */
 
 static Elf_Internal_Verneed *
 elf_link_add_glibc_verneed (struct elf_find_verdep_info *rinfo,
 			    Elf_Internal_Verneed *glibc_verref,
-			    const char *version_dep)
+			    const char *version_dep,
+			    int *glibc_minor_base)
 {
   Elf_Internal_Verneed *t;
   Elf_Internal_Vernaux *a;
   size_t amt;
+  int minor_version = -1;
 
   if (glibc_verref != NULL)
     {
@@ -2272,8 +2275,6 @@ elf_link_add_glibc_verneed (struct elf_find_verdep_info *rinfo,
     }
   else
     {
-      bool is_glibc;
-
       for (t = elf_tdata (rinfo->info->output_bfd)->verref;
 	   t != NULL;
 	   t = t->vn_nextref)
@@ -2287,7 +2288,6 @@ elf_link_add_glibc_verneed (struct elf_find_verdep_info *rinfo,
       if (t == NULL)
 	return t;
 
-      is_glibc = false;
       for (a = t->vn_auxptr; a != NULL; a = a->vna_nextptr)
 	{
 	  /* Return if VERSION_DEP dependency has been added.  */
@@ -2296,12 +2296,24 @@ elf_link_add_glibc_verneed (struct elf_find_verdep_info *rinfo,
 	    return t;
 
 	  /* Check if libc.so provides GLIBC_2.XX version.  */
-	  if (!is_glibc && startswith (a->vna_nodename, "GLIBC_2."))
-	    is_glibc = true;
+	  if (startswith (a->vna_nodename, "GLIBC_2."))
+	    {
+	      minor_version = strtol (a->vna_nodename + 8, NULL, 10);
+	      if (minor_version < *glibc_minor_base)
+		*glibc_minor_base = minor_version;
+	    }
 	}
 
       /* Skip if it isn't linked against glibc.  */
-      if (!is_glibc)
+      if (minor_version < 0)
+	return NULL;
+    }
+
+  /* Skip if 2.GLIBC_MINOR_BASE includes VERSION_DEP.  */
+  if (startswith (version_dep, "GLIBC_2."))
+    {
+      minor_version = strtol (version_dep + 8, NULL, 10);
+      if (minor_version <= *glibc_minor_base)
 	return NULL;
     }
 
@@ -2333,10 +2345,12 @@ _bfd_elf_link_add_glibc_version_dependency
    const char *version_dep[])
 {
   Elf_Internal_Verneed *t = NULL;
+  int glibc_minor_base = INT_MAX;
 
   do
     {
-      t = elf_link_add_glibc_verneed (rinfo, t, *version_dep);
+      t = elf_link_add_glibc_verneed (rinfo, t, *version_dep,
+				      &glibc_minor_base);
       /* Return if there is no glibc version reference.  */
       if (t == NULL)
 	return;
@@ -2863,7 +2877,7 @@ _bfd_elf_link_info_read_relocs (bfd *abfd,
   if (keep_memory)
     esdo->relocs = internal_relocs;
 
-  _bfd_munmap_readonly_temporary (alloc1, alloc1_size);
+  _bfd_munmap_temporary (alloc1, alloc1_size);
 
   /* Don't free alloc2, since if it was allocated we are passing it
      back (under the name of internal_relocs).  */
@@ -2871,7 +2885,7 @@ _bfd_elf_link_info_read_relocs (bfd *abfd,
   return internal_relocs;
 
  error_return:
-  _bfd_munmap_readonly_temporary (alloc1, alloc1_size);
+  _bfd_munmap_temporary (alloc1, alloc1_size);
   if (alloc2 != NULL)
     {
       if (keep_memory)
@@ -3639,6 +3653,7 @@ elf_link_is_defined_archive_symbol (bfd * abfd, carsym * symdef)
      object file is an IR object, give linker LTO plugin a chance to
      get the correct symbol table.  */
   if (abfd->plugin_format == bfd_plugin_yes
+      || abfd->plugin_format == bfd_plugin_yes_unused
 #if BFD_SUPPORTS_PLUGINS
       || (abfd->plugin_format == bfd_plugin_unknown
 	  && bfd_link_plugin_object_p (abfd))
@@ -5680,7 +5695,8 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
       && !bfd_link_relocatable (info)
       && (abfd->flags & BFD_PLUGIN) == 0
       && !just_syms
-      && extsymcount)
+      && extsymcount != 0
+      && is_elf_hash_table (&htab->root))
     {
       int r_sym_shift;
 
@@ -5703,9 +5719,7 @@ elf_link_add_object_symbols (bfd *abfd, struct bfd_link_info *info)
 	  if ((s->flags & SEC_RELOC) == 0
 	      || s->reloc_count == 0
 	      || (s->flags & SEC_EXCLUDE) != 0
-	      || ((info->strip == strip_all
-		   || info->strip == strip_debugger)
-		  && (s->flags & SEC_DEBUGGING) != 0))
+	      || (s->flags & SEC_DEBUGGING) != 0)
 	    continue;
 
 	  internal_relocs = _bfd_elf_link_info_read_relocs
@@ -8095,8 +8109,8 @@ _bfd_elf_merge_sections (bfd *obfd, struct bfd_link_info *info)
   bfd *ibfd;
   asection *sec;
 
-  if (!is_elf_hash_table (info->hash))
-    return false;
+  if (ENABLE_CHECKING && !is_elf_hash_table (info->hash))
+    abort ();
 
   for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     if ((ibfd->flags & DYNAMIC) == 0
@@ -8119,8 +8133,8 @@ _bfd_elf_merge_sections (bfd *obfd, struct bfd_link_info *info)
 	  }
 
   if (elf_hash_table (info)->merge_info != NULL)
-    _bfd_merge_sections (obfd, info, elf_hash_table (info)->merge_info,
-			 merge_sections_remove_hook);
+    return _bfd_merge_sections (obfd, info, elf_hash_table (info)->merge_info,
+				merge_sections_remove_hook);
   return true;
 }
 
@@ -8304,11 +8318,11 @@ _bfd_elf_link_hash_table_init
    struct bfd_hash_entry *(*newfunc) (struct bfd_hash_entry *,
 				      struct bfd_hash_table *,
 				      const char *),
-   unsigned int entsize,
-   enum elf_target_id target_id)
+   unsigned int entsize)
 {
   bool ret;
-  int can_refcount = get_elf_backend_data (abfd)->can_refcount;
+  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  int can_refcount = bed->can_refcount;
 
   table->init_got_refcount.refcount = can_refcount - 1;
   table->init_plt_refcount.refcount = can_refcount - 1;
@@ -8320,8 +8334,8 @@ _bfd_elf_link_hash_table_init
   ret = _bfd_link_hash_table_init (&table->root, abfd, newfunc, entsize);
 
   table->root.type = bfd_link_elf_hash_table;
-  table->hash_table_id = target_id;
-  table->target_os = get_elf_backend_data (abfd)->target_os;
+  table->hash_table_id = bed->target_id;
+  table->target_os = bed->target_os;
 
   return ret;
 }
@@ -8339,8 +8353,7 @@ _bfd_elf_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (! _bfd_elf_link_hash_table_init (ret, abfd, _bfd_elf_link_hash_newfunc,
-				       sizeof (struct elf_link_hash_entry),
-				       GENERIC_ELF_DATA))
+				       sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -8805,6 +8818,8 @@ bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2,
 	    symp->name = bfd_elf_string_from_elf_section (bfd1,
 							  hdr1->sh_link,
 							  ssym->st_name);
+	    if (symp->name == NULL)
+	      goto done;
 	    symp++;
 	  }
 
@@ -8818,6 +8833,8 @@ bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2,
 	    symp->name = bfd_elf_string_from_elf_section (bfd2,
 							  hdr2->sh_link,
 							  ssym->st_name);
+	    if (symp->name == NULL)
+	      goto done;
 	    symp++;
 	  }
 
@@ -8864,14 +8881,22 @@ bfd_elf_match_symbols_in_sections (asection *sec1, asection *sec2,
     goto done;
 
   for (i = 0; i < count1; i++)
-    symtable1[i].name
-      = bfd_elf_string_from_elf_section (bfd1, hdr1->sh_link,
-					 symtable1[i].u.isym->st_name);
+    {
+      symtable1[i].name
+	= bfd_elf_string_from_elf_section (bfd1, hdr1->sh_link,
+					   symtable1[i].u.isym->st_name);
+      if (symtable1[i].name == NULL)
+	goto done;
+    }
 
   for (i = 0; i < count2; i++)
-    symtable2[i].name
-      = bfd_elf_string_from_elf_section (bfd2, hdr2->sh_link,
-					 symtable2[i].u.isym->st_name);
+    {
+      symtable2[i].name
+	= bfd_elf_string_from_elf_section (bfd2, hdr2->sh_link,
+					   symtable2[i].u.isym->st_name);
+      if (symtable2[i].name == NULL)
+	goto done;
+    }
 
   /* Sort symbol by name.  */
   qsort (symtable1, count1, sizeof (struct elf_symbol),
@@ -11889,10 +11914,7 @@ elf_link_input_bfd (struct elf_final_link_info *flinfo, bfd *input_bfd)
 		    {
 		      rel_hash = PTR_ADD (esdo->rela.hashes, esdo->rela.count);
 		      rela_hash_list = rel_hash;
-		      if (bed->is_rela_normal != NULL)
-			rela_normal = bed->is_rela_normal (irela);
-		      else
-			rela_normal = bed->rela_normal;
+		      rela_normal = bed->rela_normal;
 		    }
 
 		  irela->r_offset = _bfd_elf_section_offset (output_bfd,
@@ -12903,7 +12925,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
     {
       file_ptr off = elf_next_file_pos (abfd);
 
-      _bfd_elf_assign_file_position_for_section (symtab_hdr, off, true);
+      _bfd_elf_assign_file_position_for_section (symtab_hdr, off, true, 0);
 
       /* Note that at this point elf_next_file_pos (abfd) is
 	 incorrect.  We do not yet know the size of the .symtab section.
@@ -13347,7 +13369,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 	      symtab_shndx_hdr->sh_size = amt;
 
 	      off = _bfd_elf_assign_file_position_for_section (symtab_shndx_hdr,
-							       off, true);
+							       off, true, 0);
 
 	      if (bfd_seek (abfd, symtab_shndx_hdr->sh_offset, SEEK_SET) != 0
 		  || (bfd_write (flinfo.symshndxbuf, amt, abfd) != amt))
@@ -13371,7 +13393,7 @@ bfd_elf_final_link (bfd *abfd, struct bfd_link_info *info)
       symstrtab_hdr->sh_addralign = 1;
 
       off = _bfd_elf_assign_file_position_for_section (symstrtab_hdr,
-						       off, true);
+						       off, true, 0);
       elf_next_file_pos (abfd) = off;
 
       if (bfd_seek (abfd, symstrtab_hdr->sh_offset, SEEK_SET) != 0

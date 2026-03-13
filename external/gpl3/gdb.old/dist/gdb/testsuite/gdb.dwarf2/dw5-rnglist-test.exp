@@ -24,8 +24,7 @@ standard_testfile .cc
 # we let that be the test of whether the target supports it.
 
 if { [prepare_for_testing "failed to prepare" "${testfile}" \
-          $srcfile {debug c++ additional_flags=-gdwarf-5 \
-                        additional_flags=-O0}] } {
+          $srcfile {debug c++ dwarf5 additional_flags=-O0}] } {
     return -1
 }
 

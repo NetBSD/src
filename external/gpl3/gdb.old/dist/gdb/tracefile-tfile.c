@@ -462,24 +462,24 @@ tfile_target_open (const char *arg, int from_tty)
   struct uploaded_tsv *uploaded_tsvs = NULL;
 
   target_preopen (from_tty);
-  if (!arg)
+  std::string filename = extract_single_filename_arg (arg);
+  if (filename.empty ())
     error (_("No trace file specified."));
 
-  gdb::unique_xmalloc_ptr<char> filename (tilde_expand (arg));
-  if (!IS_ABSOLUTE_PATH (filename.get ()))
-    filename = make_unique_xstrdup (gdb_abspath (filename.get ()).c_str ());
+  if (!IS_ABSOLUTE_PATH (filename.c_str ()))
+    filename = gdb_abspath (filename);
 
   flags = O_BINARY | O_LARGEFILE;
   flags |= O_RDONLY;
-  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0).release ();
+  scratch_chan = gdb_open_cloexec (filename.c_str (), flags, 0).release ();
   if (scratch_chan < 0)
-    perror_with_name (filename.get ());
+    perror_with_name (filename.c_str ());
 
   /* Looks semi-reasonable.  Toss the old trace file and work on the new.  */
 
   current_inferior ()->unpush_target (&tfile_ops);
 
-  trace_filename = std::move (filename);
+  trace_filename = make_unique_xstrdup (filename.c_str ());
   trace_fd = scratch_chan;
 
   /* Make sure this is clear.  */
@@ -1120,5 +1120,6 @@ void _initialize_tracefile_tfile ();
 void
 _initialize_tracefile_tfile ()
 {
-  add_target (tfile_target_info, tfile_target_open, filename_completer);
+  add_target (tfile_target_info, tfile_target_open,
+	      filename_maybe_quoted_completer);
 }

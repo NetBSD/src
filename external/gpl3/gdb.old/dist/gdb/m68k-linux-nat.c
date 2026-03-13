@@ -300,7 +300,7 @@ static void store_regs (const struct regcache *regcache, int tid, int regno)
 #endif
 
 
-/* Transfering floating-point registers between GDB, inferiors and cores.  */
+/* Transferring floating-point registers between GDB, inferiors and cores.  */
 
 /* What is the address of fpN within the floating-point register set F?  */
 #define FPREG_ADDR(f, n) (&(f)->fpregs[(n) * 3])
@@ -350,7 +350,7 @@ fill_fpregset (const struct regcache *regcache,
 #ifdef HAVE_PTRACE_GETREGS
 
 /* Fetch all floating-point registers from process/thread TID and store
-   thier values in GDB's register array.  */
+   their values in GDB's register array.  */
 
 static void
 fetch_fpregs (struct regcache *regcache, int tid)
