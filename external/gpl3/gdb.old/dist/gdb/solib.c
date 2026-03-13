@@ -19,6 +19,7 @@
 
 
 #include <fcntl.h>
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "symtab.h"
 #include "bfd.h"
@@ -45,7 +46,6 @@
 #include "gdb_bfd.h"
 #include "gdbsupport/filestuff.h"
 #include "gdbsupport/scoped_fd.h"
-#include "debuginfod-support.h"
 #include "source.h"
 #include "cli/cli-style.h"
 
@@ -113,7 +113,6 @@ show_solib_search_path (struct ui_file *file, int from_tty,
 static gdb::unique_xmalloc_ptr<char>
 solib_find_1 (const char *in_pathname, int *fd, bool is_solib)
 {
-  const solib_ops *ops = gdbarch_so_ops (current_inferior ()->arch ());
   int found_file = -1;
   gdb::unique_xmalloc_ptr<char> temp_pathname;
   const char *fskind = effective_target_file_system_kind ();
@@ -295,12 +294,6 @@ solib_find_1 (const char *in_pathname, int *fd, bool is_solib)
 			OPF_TRY_CWD_FIRST | OPF_RETURN_REALPATH,
 			target_lbasename (fskind, in_pathname),
 			O_RDONLY | O_BINARY, &temp_pathname);
-
-  /* If not found, and we're looking for a solib, try to use target
-     supplied solib search method.  */
-  if (is_solib && found_file < 0 && ops->find_and_open_solib)
-    found_file = ops->find_and_open_solib (in_pathname, O_RDONLY | O_BINARY,
-					   &temp_pathname);
 
   /* If not found, next search the inferior's $PATH environment variable.  */
   if (found_file < 0 && sysroot == NULL)
@@ -495,58 +488,6 @@ solib_bfd_open (const char *pathname)
   return abfd;
 }
 
-/* Mapping of a core file's shared library sonames to their respective
-   build-ids.  Added to the registries of core file bfds.  */
-
-typedef std::unordered_map<std::string, std::string> soname_build_id_map;
-
-/* Key used to associate a soname_build_id_map to a core file bfd.  */
-
-static const struct registry<bfd>::key<soname_build_id_map>
-  cbfd_soname_build_id_data_key;
-
-/* See solib.h.  */
-
-void
-set_cbfd_soname_build_id (gdb_bfd_ref_ptr abfd, const char *soname,
-			  const bfd_build_id *build_id)
-{
-  gdb_assert (abfd.get () != nullptr);
-  gdb_assert (soname != nullptr);
-  gdb_assert (build_id != nullptr);
-
-  soname_build_id_map *mapptr
-    = cbfd_soname_build_id_data_key.get (abfd.get ());
-
-  if (mapptr == nullptr)
-    mapptr = cbfd_soname_build_id_data_key.emplace (abfd.get ());
-
-  (*mapptr)[soname] = build_id_to_string (build_id);
-}
-
-/* If SONAME had a build-id associated with it in ABFD's registry by a
-   previous call to set_cbfd_soname_build_id then return the build-id
-   as a NULL-terminated hex string.  */
-
-static gdb::unique_xmalloc_ptr<char>
-get_cbfd_soname_build_id (gdb_bfd_ref_ptr abfd, const char *soname)
-{
-  if (abfd.get () == nullptr || soname == nullptr)
-    return {};
-
-  soname_build_id_map *mapptr
-    = cbfd_soname_build_id_data_key.get (abfd.get ());
-
-  if (mapptr == nullptr)
-    return {};
-
-  auto it = mapptr->find (lbasename (soname));
-  if (it == mapptr->end ())
-    return {};
-
-  return make_unique_xstrdup (it->second.c_str ());
-}
-
 /* Given a pointer to one of the shared objects in our list of mapped
    objects, use the recorded name to open a bfd descriptor for the
    object, build a section table, relocate all the section addresses
@@ -566,36 +507,55 @@ solib_map_sections (solib &so)
 
   gdb::unique_xmalloc_ptr<char> filename (tilde_expand (so.so_name.c_str ()));
   gdb_bfd_ref_ptr abfd (ops->bfd_open (filename.get ()));
-  gdb::unique_xmalloc_ptr<char> build_id_hexstr
-    = get_cbfd_soname_build_id (current_program_space->cbfd,
-				so.so_name.c_str ());
+
+  /* If we have a core target then the core target might have some helpful
+     information (i.e. build-ids) about the shared libraries we are trying
+     to load.  Grab those hints now and use the below to validate or find
+     the shared libraries.
+
+     If we don't have a core target then this will return an empty struct
+     with no hint information, we then lookup the shared library based on
+     its filename.  */
+  std::optional<CORE_ADDR> solib_addr = ops->find_solib_addr (so);
+  std::optional <const core_target_mapped_file_info> mapped_file_info
+    = core_target_find_mapped_file (so.so_name.c_str (), solib_addr);
 
   /* If we already know the build-id of this solib from a core file, verify
      it matches ABFD's build-id.  If there is a mismatch or the solib wasn't
      found, attempt to query debuginfod for the correct solib.  */
-  if (build_id_hexstr.get () != nullptr)
+  if (mapped_file_info.has_value ())
     {
-      bool mismatch = false;
+      bool mismatch = (abfd != nullptr
+		       && build_id_bfd_get (abfd.get ()) != nullptr
+		       && !build_id_equal (mapped_file_info->build_id (),
+					   build_id_bfd_get (abfd.get ())));
 
-      if (abfd != nullptr && abfd->build_id != nullptr)
-	{
-	  std::string build_id = build_id_to_string (abfd->build_id);
-
-	  if (build_id != build_id_hexstr.get ())
-	    mismatch = true;
-	}
       if (abfd == nullptr || mismatch)
 	{
-	  scoped_fd fd = debuginfod_exec_query (
-	    (const unsigned char *) build_id_hexstr.get (), 0,
-	    so.so_name.c_str (), &filename);
+	  /* If GDB found a suitable file during the file mapping
+	     processing stage then lets use that.  We don't check the
+	     build-id after opening this file, either this file was found
+	     by build-id, in which case it's going to match, or this file
+	     doesn't have a build-id, so checking tells us nothing.
+	     However, if it was good enough during the mapped file
+	     processing, we assume it's good enough now.  */
+	  if (!mapped_file_info->filename ().empty ())
+	    abfd = ops->bfd_open (mapped_file_info->filename ().c_str ());
+	  else
+	    abfd = nullptr;
 
-	  if (fd.get () >= 0)
-	    abfd = ops->bfd_open (filename.get ());
-	  else if (mismatch)
-	    warning (_ ("Build-id of %ps does not match core file."),
-		     styled_string (file_name_style.style (),
-				    filename.get ()));
+	  if (abfd == nullptr)
+	    abfd = find_objfile_by_build_id (current_program_space,
+					     mapped_file_info->build_id (),
+					     so.so_name.c_str ());
+
+	  if (abfd == nullptr && mismatch)
+	    {
+	      warning (_ ("Build-id of %ps does not match core file."),
+		       styled_string (file_name_style.style (),
+				      filename.get ()));
+	      abfd = nullptr;
+	    }
 	}
     }
 
@@ -653,7 +613,7 @@ solib::clear ()
   this->abfd = nullptr;
 
   /* Our caller closed the objfile, possibly via objfile_purge_solibs.  */
-  this->symbols_loaded = 0;
+  this->symbols_loaded = false;
   this->objfile = nullptr;
 
   this->addr_low = this->addr_high = 0;
@@ -713,7 +673,7 @@ solib_read_symbols (solib &so, symfile_add_flags flags)
 	      so.objfile->addr_low = so.addr_low;
 	    }
 
-	  so.symbols_loaded = 1;
+	  so.symbols_loaded = true;
 	}
       catch (const gdb_exception_error &e)
 	{
@@ -729,15 +689,16 @@ solib_read_symbols (solib &so, symfile_add_flags flags)
   return false;
 }
 
-/* Return true if KNOWN->objfile is used by any other so_list object
-   in the list of shared libraries.  Return false otherwise.  */
+/* Return true if KNOWN->objfile is used by any other solib object
+   in PSPACE's list of shared libraries.  Return false otherwise.  */
 
 static bool
-solib_used (const solib &known)
+solib_used (program_space *pspace, const solib &known)
 {
-  for (const solib &pivot : current_program_space->solibs ())
+  for (const solib &pivot : pspace->solibs ())
     if (&pivot != &known && pivot.objfile == known.objfile)
       return true;
+
   return false;
 }
 
@@ -815,8 +776,8 @@ update_solib_list (int from_tty)
      the time we're done walking GDB's list, the inferior's list
      contains only the new shared objects, which we then add.  */
 
-  intrusive_list<solib> inferior = ops->current_sos ();
-  intrusive_list<solib>::iterator gdb_iter
+  owning_intrusive_list<solib> inferior = ops->current_sos ();
+  owning_intrusive_list<solib>::iterator gdb_iter
     = current_program_space->so_list.begin ();
   while (gdb_iter != current_program_space->so_list.end ())
     {
@@ -845,7 +806,6 @@ update_solib_list (int from_tty)
       if (inferior_iter != inferior.end ())
 	{
 	  inferior.erase (inferior_iter);
-	  delete &*inferior_iter;
 	  ++gdb_iter;
 	}
 
@@ -858,21 +818,17 @@ update_solib_list (int from_tty)
 
 	  current_program_space->deleted_solibs.push_back (gdb_iter->so_name);
 
-	  intrusive_list<solib>::iterator gdb_iter_next
-	    = current_program_space->so_list.erase (gdb_iter);
-
 	  /* Unless the user loaded it explicitly, free SO's objfile.  */
 	  if (gdb_iter->objfile != nullptr
 	      && !(gdb_iter->objfile->flags & OBJF_USERLOADED)
-	      && !solib_used (*gdb_iter))
+	      && !solib_used (current_program_space, *gdb_iter))
 	    gdb_iter->objfile->unlink ();
 
 	  /* Some targets' section tables might be referring to
 	     sections from so.abfd; remove them.  */
 	  current_program_space->remove_target_sections (&*gdb_iter);
 
-	  delete &*gdb_iter;
-	  gdb_iter = gdb_iter_next;
+	  gdb_iter = current_program_space->so_list.erase (gdb_iter);
 	}
     }
 
@@ -924,18 +880,27 @@ update_solib_list (int from_tty)
 
       if (not_found == 1)
 	warning (_ ("Could not load shared library symbols for %ps.\n"
-		    "Do you need \"set solib-search-path\" "
-		    "or \"set sysroot\"?"),
+		    "Do you need \"%ps\" or \"%ps\"?"),
 		 styled_string (file_name_style.style (),
-				not_found_filename));
+				not_found_filename),
+		 styled_string (command_style.style (),
+				"set solib-search-path"),
+		 styled_string (command_style.style (), "set sysroot"));
       else if (not_found > 1)
 	warning (_ ("\
 Could not load shared library symbols for %d libraries, e.g. %ps.\n\
-Use the \"info sharedlibrary\" command to see the complete listing.\n\
-Do you need \"set solib-search-path\" or \"set sysroot\"?"),
+Use the \"%ps\" command to see the complete listing.\n\
+Do you need \"%ps\" or \"%ps\"?"),
 		 not_found,
 		 styled_string (file_name_style.style (),
-				not_found_filename));
+				not_found_filename),
+		 styled_string (command_style.style (),
+				"info sharedlibrary"),
+		 styled_string (command_style.style (),
+				"set solib-search-path"),
+		 styled_string (command_style.style (),
+				"set sysroot"));
+
     }
 }
 
@@ -1211,11 +1176,13 @@ clear_solib (program_space *pspace)
 
   disable_breakpoints_in_shlibs (pspace);
 
-  pspace->so_list.clear_and_dispose ([pspace] (solib *so) {
-    notify_solib_unloaded (pspace, *so);
-    pspace->remove_target_sections (so);
-    delete so;
-  });
+  for (solib &so : pspace->so_list)
+    {
+      notify_solib_unloaded (pspace, so);
+      pspace->remove_target_sections (&so);
+    };
+
+  pspace->so_list.clear ();
 
   if (ops->clear_solib != nullptr)
     ops->clear_solib (pspace);
@@ -1253,21 +1220,29 @@ sharedlibrary_command (const char *args, int from_tty)
   solib_add (args, from_tty, 1);
 }
 
-/* Implements the command "nosharedlibrary", which discards symbols
-   that have been auto-loaded from shared libraries.  Symbols from
-   shared libraries that were added by explicit request of the user
-   are not discarded.  Also called from remote.c.  */
+/* See solib.h.  */
 
 void
-no_shared_libraries (const char *ignored, int from_tty)
+no_shared_libraries (program_space *pspace)
 {
   /* The order of the two routines below is important: clear_solib notifies
      the solib_unloaded observers, and some of these observers might need
      access to their associated objfiles.  Therefore, we can not purge the
      solibs' objfiles before clear_solib has been called.  */
 
-  clear_solib (current_program_space);
-  objfile_purge_solibs ();
+  clear_solib (pspace);
+  objfile_purge_solibs (pspace);
+}
+
+/* Implements the command "nosharedlibrary", which discards symbols
+   that have been auto-loaded from shared libraries.  Symbols from
+   shared libraries that were added by explicit request of the user
+   are not discarded.  */
+
+static void
+no_shared_libraries_command (const char *ignored, int from_tty)
+{
+  no_shared_libraries (current_program_space);
 }
 
 /* See solib.h.  */
@@ -1313,7 +1288,7 @@ reload_shared_libraries_1 (int from_tty)
   for (solib &so : current_program_space->solibs ())
     {
       const char *found_pathname = NULL;
-      bool was_loaded = so.symbols_loaded != 0;
+      bool was_loaded = so.symbols_loaded;
       symfile_add_flags add_flags = SYMFILE_DEFER_BP_RESET;
 
       if (from_tty)
@@ -1332,7 +1307,7 @@ reload_shared_libraries_1 (int from_tty)
 	      && filename_cmp (found_pathname, so.so_name.c_str ()) != 0))
 	{
 	  if (so.objfile && !(so.objfile->flags & OBJF_USERLOADED)
-	      && !solib_used (so))
+	      && !solib_used (current_program_space, so))
 	    so.objfile->unlink ();
 	  current_program_space->remove_target_sections (&so);
 	  so.clear ();
@@ -1719,10 +1694,18 @@ remove_user_added_objfile (struct objfile *objfile)
 {
   if (objfile->flags & OBJF_USERLOADED)
     {
-      for (solib &so : objfile->pspace->solibs ())
+      for (solib &so : objfile->pspace ()->solibs ())
 	if (so.objfile == objfile)
 	  so.objfile = nullptr;
     }
+}
+
+/* See solist.h.  */
+
+std::optional<CORE_ADDR>
+default_find_solib_addr (solib &so)
+{
+  return {};
 }
 
 void _initialize_solib ();
@@ -1744,7 +1727,7 @@ _initialize_solib ()
     = add_info ("sharedlibrary", info_sharedlibrary_command,
 		_ ("Status of loaded shared object libraries."));
   add_info_alias ("dll", info_sharedlibrary_cmd, 1);
-  add_com ("nosharedlibrary", class_files, no_shared_libraries,
+  add_com ("nosharedlibrary", class_files, no_shared_libraries_command,
 	   _ ("Unload all shared object library symbols."));
 
   add_setshow_boolean_cmd ("auto-solib-add", class_support, &auto_solib_add,

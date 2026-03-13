@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef IA64_TDEP_H
-#define IA64_TDEP_H
+#ifndef GDB_IA64_TDEP_H
+#define GDB_IA64_TDEP_H
 
 #include "gdbarch.h"
 
@@ -156,7 +156,7 @@
 /* Predicate registers: There are 64 of these 1-bit registers.  We
    define a single register which is used to communicate these values
    to/from the target.  We will somehow contrive to make it appear
-   that IA64_PR0_REGNUM thru IA64_PR63_REGNUM hold the actual values.  */
+   that IA64_PR0_REGNUM through IA64_PR63_REGNUM hold the actual values.  */
 #define IA64_PR_REGNUM		330
 
 /* Instruction pointer: 64 bits wide.  */
@@ -265,4 +265,4 @@ extern unw_accessors_t ia64_unw_rse_accessors;
 extern struct libunwind_descr ia64_libunwind_descr;
 #endif
 
-#endif /* ia64-tdep.h */
+#endif /* GDB_IA64_TDEP_H */

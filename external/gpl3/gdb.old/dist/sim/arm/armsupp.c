@@ -388,11 +388,11 @@ ModeToBank (ARMword mode)
 unsigned
 ARMul_NthReg (ARMword instr, unsigned number)
 {
-  unsigned bit, upto;
+  unsigned bit, up_to;
 
-  for (bit = 0, upto = 0; upto <= number; bit ++)
+  for (bit = 0, up_to = 0; up_to <= number; bit ++)
     if (BIT (bit))
-      upto ++;
+      up_to ++;
 
   return (bit - 1);
 }

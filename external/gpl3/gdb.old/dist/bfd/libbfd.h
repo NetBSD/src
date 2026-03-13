@@ -895,22 +895,6 @@ _bfd_alloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
   return NULL;
 }
 
-#ifdef USE_MMAP
-extern void *_bfd_mmap_readonly_persistent
-  (bfd *, size_t) ATTRIBUTE_HIDDEN;
-extern void *_bfd_mmap_readonly_temporary
-  (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
-extern void _bfd_munmap_readonly_temporary
-  (void *, size_t) ATTRIBUTE_HIDDEN;
-#else
-#define _bfd_mmap_readonly_persistent(abfd, rsize) \
-  _bfd_alloc_and_read (abfd, rsize, rsize)
-#define _bfd_munmap_readonly_temporary(ptr, rsize) free (ptr)
-#endif
-
-extern bool _bfd_mmap_read_temporary
-  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
-
 static inline void *
 _bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
 {
@@ -934,17 +918,37 @@ _bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
   return NULL;
 }
 
-#ifndef USE_MMAP
+#ifdef USE_MMAP
+extern void *_bfd_mmap_persistent
+  (bfd *, size_t) ATTRIBUTE_HIDDEN;
+extern void *_bfd_mmap_temporary
+  (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
+extern void _bfd_munmap_temporary
+  (void *, size_t) ATTRIBUTE_HIDDEN;
+#else
 static inline void *
-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
-			      size_t *map_size)
+_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+{
+  return _bfd_alloc_and_read (abfd, rsize, rsize);
+}
+static inline void *
+_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
+		     size_t *map_size)
 {
   void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
   *map_addr = mem;
   *map_size = rsize;
   return mem;
 }
+static inline void
+_bfd_munmap_temporary (void *ptr, size_t rsize ATTRIBUTE_UNUSED)
+{
+  free (ptr);
+}
 #endif
+
+extern bool _bfd_mmap_read_temporary
+  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
 /* Extracted from libbfd.c.  */
 void *bfd_malloc (bfd_size_type /*size*/) ATTRIBUTE_HIDDEN;
 
@@ -988,6 +992,8 @@ struct per_xvec_messages *_bfd_set_error_handler_caching (struct per_xvec_messag
 void _bfd_restore_error_handler_caching (struct per_xvec_messages *) ATTRIBUTE_HIDDEN;
 
 const char *_bfd_get_error_program_name (void) ATTRIBUTE_HIDDEN;
+
+bool _bfd_threading_enabled (void) ATTRIBUTE_HIDDEN;
 
 bool bfd_lock (void) ATTRIBUTE_HIDDEN;
 
@@ -2891,58 +2897,6 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_MSP430_SYM_DIFF",
   "BFD_RELOC_MSP430_SET_ULEB128",
   "BFD_RELOC_MSP430_SUB_ULEB128",
-  "BFD_RELOC_NIOS2_S16",
-  "BFD_RELOC_NIOS2_U16",
-  "BFD_RELOC_NIOS2_CALL26",
-  "BFD_RELOC_NIOS2_IMM5",
-  "BFD_RELOC_NIOS2_CACHE_OPX",
-  "BFD_RELOC_NIOS2_IMM6",
-  "BFD_RELOC_NIOS2_IMM8",
-  "BFD_RELOC_NIOS2_HI16",
-  "BFD_RELOC_NIOS2_LO16",
-  "BFD_RELOC_NIOS2_HIADJ16",
-  "BFD_RELOC_NIOS2_GPREL",
-  "BFD_RELOC_NIOS2_UJMP",
-  "BFD_RELOC_NIOS2_CJMP",
-  "BFD_RELOC_NIOS2_CALLR",
-  "BFD_RELOC_NIOS2_ALIGN",
-  "BFD_RELOC_NIOS2_GOT16",
-  "BFD_RELOC_NIOS2_CALL16",
-  "BFD_RELOC_NIOS2_GOTOFF_LO",
-  "BFD_RELOC_NIOS2_GOTOFF_HA",
-  "BFD_RELOC_NIOS2_PCREL_LO",
-  "BFD_RELOC_NIOS2_PCREL_HA",
-  "BFD_RELOC_NIOS2_TLS_GD16",
-  "BFD_RELOC_NIOS2_TLS_LDM16",
-  "BFD_RELOC_NIOS2_TLS_LDO16",
-  "BFD_RELOC_NIOS2_TLS_IE16",
-  "BFD_RELOC_NIOS2_TLS_LE16",
-  "BFD_RELOC_NIOS2_TLS_DTPMOD",
-  "BFD_RELOC_NIOS2_TLS_DTPREL",
-  "BFD_RELOC_NIOS2_TLS_TPREL",
-  "BFD_RELOC_NIOS2_COPY",
-  "BFD_RELOC_NIOS2_GLOB_DAT",
-  "BFD_RELOC_NIOS2_JUMP_SLOT",
-  "BFD_RELOC_NIOS2_RELATIVE",
-  "BFD_RELOC_NIOS2_GOTOFF",
-  "BFD_RELOC_NIOS2_CALL26_NOAT",
-  "BFD_RELOC_NIOS2_GOT_LO",
-  "BFD_RELOC_NIOS2_GOT_HA",
-  "BFD_RELOC_NIOS2_CALL_LO",
-  "BFD_RELOC_NIOS2_CALL_HA",
-  "BFD_RELOC_NIOS2_R2_S12",
-  "BFD_RELOC_NIOS2_R2_I10_1_PCREL",
-  "BFD_RELOC_NIOS2_R2_T1I7_1_PCREL",
-  "BFD_RELOC_NIOS2_R2_T1I7_2",
-  "BFD_RELOC_NIOS2_R2_T2I4",
-  "BFD_RELOC_NIOS2_R2_T2I4_1",
-  "BFD_RELOC_NIOS2_R2_T2I4_2",
-  "BFD_RELOC_NIOS2_R2_X1I7_2",
-  "BFD_RELOC_NIOS2_R2_X2L5",
-  "BFD_RELOC_NIOS2_R2_F1I5_2",
-  "BFD_RELOC_NIOS2_R2_L5I4X1",
-  "BFD_RELOC_NIOS2_R2_T1X1I6",
-  "BFD_RELOC_NIOS2_R2_T1X1I6_2",
   "BFD_RELOC_PRU_U16",
   "BFD_RELOC_PRU_U16_PMEMIMM",
   "BFD_RELOC_PRU_LDI32",

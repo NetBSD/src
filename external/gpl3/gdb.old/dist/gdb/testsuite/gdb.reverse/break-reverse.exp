@@ -64,7 +64,7 @@ gdb_test_multiple "continue" "main backward" {
     -re ".*Breakpoint $decimal,.*$srcfile:$main_location.*$gdb_prompt $" {
 	pass "main backward"
     }
-    -re "No more reverse-execution history.* break in main .*$gdb_prompt $" {
+    -re -wrap "Reached end of recorded history.*Backward execution.*" {
 	pass "main backward"
     }
 }
@@ -80,7 +80,7 @@ gdb_test_multiple "continue" "end of record log" {
     -re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $" {
 	pass "end of record log"
     }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+    -re -wrap "Reached end of recorded history.*Following forward.*" {
 	pass "end of record log"
     }
 }

@@ -52,15 +52,15 @@ proc recurse_tests {} {
 
 	# Continue inward for a few iterations
 	gdb_test "continue" "Breakpoint.* recurse \\(a=9\\).*" \
-	    "continue to recurse (a = 9)"
+	    "continue to recurse, a = 9"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=8\\).*" \
-	    "continue to recurse (a = 8)"
+	    "continue to recurse, a = 8"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=7\\).*" \
-	    "continue to recurse (a = 7)"
+	    "continue to recurse, a = 7"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=6\\).*" \
-	    "continue to recurse (a = 6)"
+	    "continue to recurse, a = 6"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=5\\).*" \
-	    "continue to recurse (a = 5)"
+	    "continue to recurse, a = 5"
 
 	# Put a watchpoint on another instance of b
 	# First we need to step over the assignment of b, so it has a known
@@ -76,13 +76,13 @@ proc recurse_tests {} {
 
 	# Continue inward for a few iterations
 	gdb_test "continue" "Breakpoint.* recurse \\(a=4\\).*" \
-	    "continue to recurse (a = 4)"
+	    "continue to recurse, a = 4"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=3\\).*" \
-	    "continue to recurse (a = 3)"
+	    "continue to recurse, a = 3"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=2\\).*" \
-	    "continue to recurse (a = 2)"
+	    "continue to recurse, a = 2"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=1\\).*" \
-	    "continue to recurse (a = 1)"
+	    "continue to recurse, a = 1"
 
 	# Continue until second set of b (second instance).
 	gdb_test "continue" \

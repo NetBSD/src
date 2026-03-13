@@ -35,7 +35,7 @@ INLINE_OS_EMUL\
 
 
 /* System-call emulation - for user code.  Instead of trapping system
-   calls to kernel mode, the simulator emulates the kernels behavour */
+   calls to kernel mode, the simulator emulates the kernels behavior */
 
 INLINE_OS_EMUL\
 (void) os_emul_system_call
@@ -47,7 +47,7 @@ INLINE_OS_EMUL\
    instructions are added to the instruction table that when executed
    call this emulation function. The instruction call emulator should
    verify the address that the instruction appears before emulating
-   the required behavour.  If the verification fails, a zero value
+   the required behavior.  If the verification fails, a zero value
    should be returned (indicating instruction illegal). */
 
 INLINE_OS_EMUL\

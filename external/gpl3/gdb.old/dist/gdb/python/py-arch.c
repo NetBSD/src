@@ -199,8 +199,7 @@ archpy_disassemble (PyObject *self, PyObject *args, PyObject *kw)
 	}
       catch (const gdb_exception &except)
 	{
-	  gdbpy_convert_exception (except);
-	  return NULL;
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
 
       gdbpy_ref<> pc_obj = gdb_py_object_from_ulongest (pc);
@@ -270,15 +269,16 @@ archpy_integer_type (PyObject *self, PyObject *args, PyObject *kw)
 {
   static const char *keywords[] = { "size", "signed", NULL };
   int size;
-  PyObject *is_signed_obj = nullptr;
+  PyObject *is_signed_obj = Py_True;
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "i|O", keywords,
-					&size, &is_signed_obj))
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "i|O!", keywords,
+					&size,
+					&PyBool_Type, &is_signed_obj))
     return nullptr;
 
   /* Assume signed by default.  */
-  bool is_signed = (is_signed_obj == nullptr
-		    || PyObject_IsTrue (is_signed_obj));
+  gdb_assert (PyBool_Check (is_signed_obj));
+  bool is_signed = is_signed_obj == Py_True;
 
   struct gdbarch *gdbarch;
   ARCHPY_REQUIRE_VALID (self, gdbarch);
@@ -362,11 +362,7 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_arch (void)
 {
   arch_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&arch_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Architecture",
-				 (PyObject *) &arch_object_type);
+  return gdbpy_type_ready (&arch_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_arch);

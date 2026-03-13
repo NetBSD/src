@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_LINUX_NAT_H
-#define X86_LINUX_NAT_H 1
+#ifndef GDB_X86_LINUX_NAT_H
+#define GDB_X86_LINUX_NAT_H
 
 #include "gdb_proc_service.h"
 #include "linux-nat.h"
@@ -92,4 +92,4 @@ private:
 extern ps_err_e x86_linux_get_thread_area (pid_t pid, void *addr,
 					   unsigned int *base_addr);
 
-#endif
+#endif /* GDB_X86_LINUX_NAT_H */

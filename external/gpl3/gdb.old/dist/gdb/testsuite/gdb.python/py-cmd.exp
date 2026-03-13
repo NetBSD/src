@@ -128,19 +128,19 @@ gdb_test "test_error_cmd ugh" "you lose!" "call error command"
 
 gdb_test "python print (gdb.string_to_argv (\"1 2 3\"))" \
   {\['1', '2', '3'\]} \
-  "string_to_argv (\"1 2 3\")"
+  "string_to_argv (\"1 2 3\"), case 1"
 
 gdb_test "python print (gdb.string_to_argv (\"'1 2' 3\"))" \
   {\['1 2', '3'\]} \
-  "string_to_argv (\"'1 2' 3\")"
+  "string_to_argv (\"'1 2' 3\"), case 2"
 
 gdb_test "python print (gdb.string_to_argv ('\"1 2\" 3'))" \
   {\['1 2', '3'\]} \
-  "string_to_argv ('\"1 2\" 3')"
+  "string_to_argv ('\"1 2\" 3'), case 3"
 
 gdb_test "python print (gdb.string_to_argv ('1\\ 2 3'))" \
   {\['1 2', '3'\]} \
-    "string_to_argv ('1\\ 2 3')"
+    "string_to_argv ('1\\ 2 3'), case 4"
 
 # Test user-defined python commands.
 gdb_test_multiline "input simple user-defined command" \

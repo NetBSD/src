@@ -80,7 +80,7 @@ gdb_test "print \$_exitsignal" " = 11" \
 gdb_test "print \$_exitcode" " = void" \
     "\$_exitcode is still void after restarting the inferior"
 
-# Now we test the behaviour of $_exit{code,signal} during a normal
+# Now we test the behavior of $_exit{code,signal} during a normal
 # inferior execution.
 standard_testfile normal.c
 

@@ -126,7 +126,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 		     "1: \\(int\\) a_global = 41" \
 		     "warning: .*b_global.*"  \
 		     "3: \\(int\\) c_global = 43" \
-		    ] "after rerun (2)"
+		    ] "after rerun, 2"
 
     # Now verify that displays which are not in the shared library
     # are not cleared permaturely.

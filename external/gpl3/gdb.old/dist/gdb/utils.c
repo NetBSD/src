@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include "gdbsupport/gdb_wait.h"
+#include "gdbsupport/scoped_signal_handler.h"
 #include "event-top.h"
 #include "gdbthread.h"
 #include "fnmatch.h"
@@ -80,6 +81,8 @@
 #include "gdbsupport/buildargv.h"
 #include "pager.h"
 #include "run-on-main-thread.h"
+#include "gdbsupport/gdb_tilde_expand.h"
+#include "gdbsupport/eintr.h"
 
 void (*deprecated_error_begin_hook) (void);
 
@@ -192,7 +195,7 @@ verror (const char *string, va_list args)
 
 /* Emit a message and abort.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 abort_with_message (const char *msg)
 {
   if (current_ui == NULL)
@@ -596,11 +599,11 @@ add_internal_problem_command (struct internal_problem *problem)
   if (problem->user_settable_should_dump_core)
     {
       std::string set_core_doc
-	= string_printf (_("Set whether GDB should create a core file of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Set whether GDB should dump core "
+			   "when %s is detected."), problem->name);
       std::string show_core_doc
-	= string_printf (_("Show whether GDB will create a core file of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Show whether GDB should dump core "
+			   "when %s is detected."), problem->name);
       add_setshow_enum_cmd ("corefile", class_maintenance,
 			    internal_problem_modes,
 			    &problem->should_dump_core,
@@ -616,11 +619,11 @@ add_internal_problem_command (struct internal_problem *problem)
   if (problem->user_settable_should_print_backtrace)
     {
       std::string set_bt_doc
-	= string_printf (_("Set whether GDB should print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Set whether GDB should show backtrace "
+			   "when %s is detected."), problem->name);
       std::string show_bt_doc
-	= string_printf (_("Show whether GDB will print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Show whether GDB should show backtrace "
+			   "when %s is detected."), problem->name);
       add_setshow_boolean_cmd ("backtrace", class_maintenance,
 			       &problem->should_print_backtrace,
 			       set_bt_doc.c_str (),
@@ -818,7 +821,9 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
     }
 
   /* Format the question outside of the loop, to avoid reusing args.  */
-  std::string question = string_vprintf (ctlstr, args);
+  string_file tem (gdb_stdout->can_emit_style_escape ());
+  gdb_vprintf (&tem, ctlstr, args);
+  std::string question = tem.release ();
   std::string prompt
     = string_printf (_("%s%s(%s or %s) %s"),
 		     annotation_level > 1 ? "\n\032\032pre-query\n" : "",
@@ -1281,6 +1286,14 @@ set_screen_width_and_height (int width, int height)
   set_width ();
 }
 
+/* Import termcap variable UP (instead of readline private variable
+   _rl_term_up, which we're trying to avoid, see PR build/10723).  The UP
+   variable doesn't seem be part of the regular termcap interface, but rather
+   curses-specific.  But if it's missing in the termcap library, then readline
+   provides a fallback version.  Let's assume the fallback is not part of the
+   private readline interface.  */
+extern "C" char *UP;
+
 /* Implement "maint info screen".  */
 
 static void
@@ -1339,6 +1352,46 @@ maintenance_info_screen (const char *args, int from_tty)
 	      _("Number of lines environment thinks "
 		"are in a page is %s (LINES).\n"),
 	      getenv ("LINES"));
+
+  bool have_up = UP != nullptr && *UP != '\0';
+
+  /* Fetch value of readline variable horizontal-scroll-mode.  */
+  const char *horizontal_scroll_mode_value
+    = rl_variable_value ("horizontal-scroll-mode");
+  bool force_horizontal_scroll_mode
+    = (horizontal_scroll_mode_value != nullptr
+       && strcmp (horizontal_scroll_mode_value, "on") == 0);
+
+  const char *mode = nullptr;
+  const char *reason = nullptr;
+  if (batch_flag)
+    {
+      mode = "unsupported";
+      reason = "gdb batch mode";
+    }
+  else if (!have_up)
+    {
+      mode = "unsupported";
+      reason = "terminal is not Cursor Up capable";
+    }
+  else if (force_horizontal_scroll_mode)
+    {
+      mode = "disabled";
+      reason = "horizontal-scroll-mode";
+    }
+  else if (readline_hidden_cols)
+    {
+      mode = "readline";
+      reason = "terminal is not auto wrap capable, last column reserved";
+    }
+  else
+    {
+      mode = "terminal";
+      reason = "terminal is auto wrap capable";
+    }
+
+  gdb_printf (gdb_stdout, _("Readline wrapping mode: %s (%s).\n"), mode,
+	      reason);
 }
 
 void
@@ -3416,35 +3469,19 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
   if (timeout > 0)
     {
 #ifdef SIGALRM
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
-      struct sigaction sa, old_sa;
-
-      sa.sa_handler = sigalrm_handler;
-      sigemptyset (&sa.sa_mask);
-      sa.sa_flags = 0;
-      sigaction (SIGALRM, &sa, &old_sa);
-#else
-      sighandler_t ofunc;
-
-      ofunc = signal (SIGALRM, sigalrm_handler);
-#endif
+      scoped_signal_handler<SIGALRM> alarm_restore (sigalrm_handler);
 
       alarm (timeout);
 #endif
 
-      waitpid_result = waitpid (pid, status, 0);
+      waitpid_result = gdb::waitpid (pid, status, 0);
 
 #ifdef SIGALRM
       alarm (0);
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
-      sigaction (SIGALRM, &old_sa, NULL);
-#else
-      signal (SIGALRM, ofunc);
-#endif
 #endif
     }
   else
-    waitpid_result = waitpid (pid, status, WNOHANG);
+    waitpid_result = gdb::waitpid (pid, status, WNOHANG);
 
   if (waitpid_result == pid)
     return pid;
@@ -3665,6 +3702,23 @@ copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
       buf &= (1 << nbits) - 1;
       *dest = (*dest & (~0U << nbits)) | buf;
     }
+}
+
+/* See utils.h.  */
+
+std::string
+extract_single_filename_arg (const char *args)
+{
+  if (args == nullptr)
+    return {};
+
+  std::string filename = extract_string_maybe_quoted (&args);
+  args = skip_spaces (args);
+  if (*args != '\0')
+    error (_("Junk after filename \"%s\": %s"), filename.c_str (), args);
+  if (!filename.empty ())
+    filename = gdb_tilde_expand (filename.c_str ());
+  return filename;
 }
 
 #if GDB_SELF_TEST

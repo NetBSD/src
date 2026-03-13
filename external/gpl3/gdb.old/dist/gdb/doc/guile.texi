@@ -3946,7 +3946,7 @@ Then in gdb:
 (gdb) guile (use-modules (gdb) (gdb types))
 (gdb) guile (define foo-ref (parse-and-eval "foo_ref"))
 (gdb) guile (get-basic-type (value-type foo-ref))
-int
+#<gdb:type int>
 @end smallexample
 @end deffn
 

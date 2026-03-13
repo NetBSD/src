@@ -37,7 +37,7 @@ set bp_lineno [gdb_get_line_number "vla-filled"]
 
 mi_create_breakpoint "-t vla.c:$bp_lineno" \
     "insert breakpoint at line $bp_lineno after vla is filled" \
-    -function func -line $bp_lineno -file ".*vla.c" -disp del
+    -func func -line $bp_lineno -file ".*vla.c" -disp del
 
 mi_run_cmd
 mi_expect_stop "breakpoint-hit" "func" "\{name=\"n\",value=\"5\"\}" \

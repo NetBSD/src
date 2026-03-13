@@ -6033,7 +6033,7 @@ Multiply64 (ARMul_State * state, ARMword instr, int msigned, int scc)
       hi = (((Rs >> 16) & 0xFFFF) * ((Rm >> 16) & 0xFFFF));
 
       /* We now need to add all of these results together, taking
-	 care to propogate the carries from the additions.  */
+	 care to propagate the carries from the additions.  */
       RdLo = Add32 (lo, (mid1 << 16), &carry);
       RdHi = carry;
       RdLo = Add32 (RdLo, (mid2 << 16), &carry);

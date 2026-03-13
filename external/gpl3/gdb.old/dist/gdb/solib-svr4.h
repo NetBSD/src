@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_SVR4_H
-#define SOLIB_SVR4_H
+#ifndef GDB_SOLIB_SVR4_H
+#define GDB_SOLIB_SVR4_H
 
 #include "solist.h"
 
@@ -112,4 +112,4 @@ extern struct link_map_offsets *svr4_lp64_fetch_link_map_offsets (void);
    SVR4 run time loader.  */
 int svr4_in_dynsym_resolve_code (CORE_ADDR pc);
 
-#endif /* solib-svr4.h */
+#endif /* GDB_SOLIB_SVR4_H */

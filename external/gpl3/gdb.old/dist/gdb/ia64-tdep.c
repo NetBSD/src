@@ -3615,9 +3615,7 @@ ia64_convert_from_func_ptr_addr (struct gdbarch *gdbarch, CORE_ADDR addr,
   /* There are also descriptors embedded in vtables.  */
   if (s)
     {
-      struct bound_minimal_symbol minsym;
-
-      minsym = lookup_minimal_symbol_by_pc (addr);
+      bound_minimal_symbol minsym = lookup_minimal_symbol_by_pc (addr);
 
       if (minsym.minsym
 	  && is_vtable_name (minsym.minsym->linkage_name ()))
@@ -3846,7 +3844,7 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      a dummy code sequence pushed on the stack to make the call, and
      this sequence doesn't need b0 to be set in order for our dummy
      breakpoint to be hit.  Nonetheless, this doesn't interfere, and
-     it's needed for other OSes, so we do this unconditionaly.  */
+     it's needed for other OSes, so we do this unconditionally.  */
   regcache_cooked_write_unsigned (regcache, IA64_BR0_REGNUM, bp_addr);
 
   regcache_cooked_write_unsigned (regcache, sp_regnum, sp);

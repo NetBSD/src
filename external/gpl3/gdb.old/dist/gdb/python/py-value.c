@@ -233,7 +233,8 @@ valpy_init (PyObject *self, PyObject *args, PyObject *kwds)
    each.  */
 void
 gdbpy_preserve_values (const struct extension_language_defn *extlang,
-		       struct objfile *objfile, htab_t copied_types)
+		       struct objfile *objfile,
+		       copied_types_hash_t &copied_types)
 {
   value_object *iter;
 
@@ -257,7 +258,7 @@ valpy_dereference (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -300,7 +301,7 @@ valpy_referenced_value (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -323,7 +324,7 @@ valpy_reference_value (PyObject *self, PyObject *args, enum type_code refcode)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -369,7 +370,7 @@ valpy_to_array (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -393,7 +394,7 @@ valpy_const_value (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -499,7 +500,7 @@ valpy_get_dynamic_type (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (type == NULL)
@@ -520,14 +521,7 @@ valpy_get_dynamic_type (PyObject *self, void *closure)
    If LENGTH is provided then the length parameter is set to LENGTH.
    Otherwise if the value is an array of known length then the array's length
    is used.  Otherwise the length will be set to -1 (meaning first null of
-   appropriate with).
-
-   Note: In order to not break any existing uses this allows creating
-   lazy strings from anything.  PR 20769.  E.g.,
-   gdb.parse_and_eval("my_int_variable").lazy_string().
-   "It's easier to relax restrictions than it is to impose them after the
-   fact."  So we should be flagging any unintended uses as errors, but it's
-   perhaps too late for that.  */
+   appropriate with).  */
 
 static PyObject *
 valpy_lazy_string (PyObject *self, PyObject *args, PyObject *kw)
@@ -595,9 +589,7 @@ valpy_lazy_string (PyObject *self, PyObject *args, PyObject *kw)
 	  addr = value_as_address (value);
 	  break;
 	default:
-	  /* Should flag an error here.  PR 20769.  */
-	  addr = value->address ();
-	  break;
+	  error (_("Cannot make lazy string from this object"));
 	}
 
       str_obj = gdbpy_create_lazy_string_object (addr, length, user_encoding,
@@ -605,7 +597,7 @@ valpy_lazy_string (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return str_obj;
@@ -640,7 +632,7 @@ valpy_string (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   encoding = (user_encoding && *user_encoding) ? user_encoding : la_encoding;
@@ -815,7 +807,9 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
 	}
     }
 
-  string_file stb (PyObject_IsTrue (styling_obj));
+  /* We force styling_obj to be a 'bool' when we parse the args above.  */
+  gdb_assert (PyBool_Check (styling_obj));
+  string_file stb (styling_obj == Py_True);
 
   try
     {
@@ -824,7 +818,7 @@ valpy_format_string (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_Decode (stb.c_str (), stb.size (), host_charset (), NULL);
@@ -869,7 +863,7 @@ valpy_do_cast (PyObject *self, PyObject *args, enum exp_opcode op)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -921,8 +915,7 @@ valpy_assign_core (value_object *self, struct value *new_value)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return false;
+      return gdbpy_handle_gdb_exception (false, except);
     }
 
   return true;
@@ -997,7 +990,7 @@ value_has_field (struct value *v, PyObject *field)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return has_field;
@@ -1153,7 +1146,11 @@ valpy_getitem (PyObject *self, PyObject *key)
 	     type.  */
 	  struct value *idx = convert_value_from_python (key);
 
-	  if (idx != NULL)
+	  if (idx != NULL
+	      && binop_user_defined_p (BINOP_SUBSCRIPT, tmp, idx))
+	    res_val = value_x_binop (tmp, idx, BINOP_SUBSCRIPT,
+				     OP_NULL, EVAL_NORMAL);
+	  else if (idx != NULL)
 	    {
 	      /* Check the value's type is something that can be accessed via
 		 a subscript.  */
@@ -1174,9 +1171,9 @@ valpy_getitem (PyObject *self, PyObject *key)
       if (res_val)
 	result = value_to_value_object (res_val);
     }
-  catch (gdb_exception &ex)
+  catch (const gdb_exception &ex)
     {
-      GDB_PY_HANDLE_EXCEPTION (ex);
+      return gdbpy_handle_gdb_exception (nullptr, ex);
     }
 
   return result;
@@ -1207,14 +1204,16 @@ valpy_call (PyObject *self, PyObject *args, PyObject *keywords)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
-  if (ftype->code () != TYPE_CODE_FUNC && ftype->code () != TYPE_CODE_METHOD)
+  if (ftype->code () != TYPE_CODE_FUNC && ftype->code () != TYPE_CODE_METHOD
+      && ftype->code () != TYPE_CODE_INTERNAL_FUNCTION)
     {
       PyErr_SetString (PyExc_RuntimeError,
 		       _("Value is not callable (not TYPE_CODE_FUNC"
-			 " or TYPE_CODE_METHOD)."));
+			 " or TYPE_CODE_METHOD"
+			 " or TYPE_CODE_INTERNAL_FUNCTION)."));
       return NULL;
     }
 
@@ -1248,14 +1247,21 @@ valpy_call (PyObject *self, PyObject *args, PyObject *keywords)
     {
       scoped_value_mark free_values;
 
-      value *return_value
-	= call_function_by_hand (function, NULL,
-				 gdb::make_array_view (vargs, args_count));
+      value *return_value;
+      if (ftype->code () == TYPE_CODE_INTERNAL_FUNCTION)
+	return_value = call_internal_function (gdbpy_enter::get_gdbarch (),
+					       current_language,
+					       function, args_count, vargs,
+					       EVAL_NORMAL);
+      else
+	return_value
+	  = call_function_by_hand (function, NULL,
+				   gdb::make_array_view (vargs, args_count));
       result = value_to_value_object (return_value);
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -1280,7 +1286,7 @@ valpy_str (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_Decode (stb.c_str (), stb.size (), host_charset (), NULL);
@@ -1299,7 +1305,7 @@ valpy_get_is_optimized_out (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (opt)
@@ -1321,7 +1327,7 @@ valpy_get_is_lazy (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (opt)
@@ -1351,7 +1357,7 @@ valpy_get_bytes (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   value_obj->content_bytes
@@ -1395,7 +1401,7 @@ valpy_fetch_lazy (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -1566,7 +1572,7 @@ valpy_binop (enum valpy_opcode opcode, PyObject *self, PyObject *other)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -1634,7 +1640,7 @@ valpy_negative (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -1661,7 +1667,7 @@ valpy_absolute (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (isabs)
@@ -1691,12 +1697,12 @@ valpy_nonzero (PyObject *self)
 	/* All other values are True.  */
 	nonzero = 1;
     }
-  catch (gdb_exception &ex)
+  catch (const gdb_exception &ex)
     {
       /* This is not documented in the Python documentation, but if
 	 this function fails, return -1 as slot_nb_nonzero does (the
 	 default Python nonzero function).  */
-      GDB_PY_SET_HANDLE_EXCEPTION (ex);
+      return gdbpy_handle_gdb_exception (-1, ex);
     }
 
   return nonzero;
@@ -1716,7 +1722,7 @@ valpy_invert (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -1843,7 +1849,7 @@ valpy_richcompare (PyObject *self, PyObject *other, int op)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   /* In this case, the Python exception has already been set.  */
@@ -1882,7 +1888,7 @@ valpy_long (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (type->is_unsigned ())
@@ -1917,7 +1923,7 @@ valpy_float (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyFloat_FromDouble (d);
@@ -1976,9 +1982,8 @@ convert_value_from_python (PyObject *obj)
     {
       if (PyBool_Check (obj))
 	{
-	  cmp = PyObject_IsTrue (obj);
-	  if (cmp >= 0)
-	    value = value_from_longest (builtin_type_pybool, cmp);
+	  cmp = obj == Py_True ? 1 : 0;
+	  value = value_from_longest (builtin_type_pybool, cmp);
 	}
       else if (PyLong_Check (obj))
 	{
@@ -2043,8 +2048,7 @@ convert_value_from_python (PyObject *obj)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return NULL;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return value;
@@ -2068,7 +2072,7 @@ gdbpy_history (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -2095,7 +2099,7 @@ gdbpy_add_history (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return nullptr;
@@ -2140,7 +2144,7 @@ gdbpy_convenience_variable (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (result == nullptr && !found)
@@ -2186,7 +2190,7 @@ gdbpy_set_convenience_variable (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -2203,11 +2207,7 @@ gdbpy_is_value_object (PyObject *obj)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_values (void)
 {
-  if (PyType_Ready (&value_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Value",
-				 (PyObject *) &value_object_type);
+  return gdbpy_type_ready (&value_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_values);

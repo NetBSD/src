@@ -377,6 +377,16 @@ proc test_inferior_function_call {} {
     gdb_test "python result2 = fp3(10)" ".*Too few arguments in function call.*"
 }
 
+proc test_convenience_function_call {} {
+    # Get convenience function with gdb.convenience_variable.
+    gdb_test "python print(gdb.convenience_variable('_isvoid')(2))" "0"
+    gdb_test "python print(gdb.convenience_variable('_strlen')('two'))" "3"
+
+    # Get convenience function with gdb.parse_and_eval.
+    gdb_test "python print(gdb.parse_and_eval('\$_isvoid')(3))" "0"
+    gdb_test "python print(gdb.parse_and_eval('\$_strlen')('three'))" "5"
+}
+
 # A few objfile tests.
 proc test_objfiles {} {
     gdb_test "python\nok=False\nfor file in gdb.objfiles():\n  if 'py-value' in file.filename:\n    ok=True\nprint (ok)\nend" "True" \
@@ -782,6 +792,7 @@ test_value_in_inferior
 test_value_from_buffer
 test_value_sub_classes
 test_inferior_function_call
+test_convenience_function_call
 test_assign
 test_value_bytes
 test_value_after_death

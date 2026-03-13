@@ -66,6 +66,8 @@ enum i386_cpu
   CpuSSE3,
   /* VIA PadLock required */
   CpuPadLock,
+  /* ZHAOXIN GMI required */
+  CpuGMI,
   /* AMD Secure Virtual Machine Ext-s required */
   CpuSVME,
   /* VMX Instructions required */
@@ -225,6 +227,8 @@ enum i386_cpu
   CpuLKGS,
   /* Intel USER_MSR Instruction support required.  */
   CpuUSER_MSR,
+  /* Intel MSR_IMM Instructions support required.  */
+  CpuMSR_IMM,
   /* mwaitx instruction required */
   CpuMWAITX,
   /* Clzero instruction required */
@@ -321,6 +325,8 @@ enum i386_cpu
   CpuAVX512VL,
   /* Intel APX_F Instructions support required.  */
   CpuAPX_F,
+  /* Intel AVX10.2 Instructions support required.  */
+  CpuAVX10_2,
   /* Not supported in the 64bit mode  */
   CpuNo64,
 
@@ -357,6 +363,7 @@ enum i386_cpu
 		   cpuavx512f:1, \
 		   cpuavx512vl:1, \
 		   cpuapx_f:1, \
+		   cpuavx10_2:1, \
       /* NOTE: This field needs to remain last. */ \
 		   cpuno64:1
 
@@ -398,6 +405,7 @@ typedef union i386_cpu_flags
       unsigned int cpusse2:1;
       unsigned int cpusse3:1;
       unsigned int cpupadlock:1;
+      unsigned int cpugmi:1;
       unsigned int cpusvme:1;
       unsigned int cpuvmx:1;
       unsigned int cpusmx:1;
@@ -477,6 +485,7 @@ typedef union i386_cpu_flags
       unsigned int cpufred:1;
       unsigned int cpulkgs:1;
       unsigned int cpuuser_msr:1;
+      unsigned int cpumsr_imm:1;
       unsigned int cpumwaitx:1;
       unsigned int cpuclzero:1;
       unsigned int cpuospke:1;
@@ -566,10 +575,12 @@ enum
 #define UGH 3
   /* An implicit xmm0 as the first operand */
 #define IMPLICIT_1ST_XMM0 4
-  /* The second operand must be a vector register, {x,y,z}mmN, where N is a multiple of 4.
-     It implicitly denotes the register group of {x,y,z}mmN - {x,y,z}mm(N + 3).
+  /* One of the operands denotes a sequence of registers, with insn-dependent
+     constraint on the first register number.  It implicitly denotes e.g. the
+     register group of {x,y,z}mmN - {x,y,z}mm(N + 3), in which case N ought to
+     be a multiple of 4.
    */
-#define IMPLICIT_QUAD_GROUP 5
+#define IMPLICIT_GROUP 5
   /* Default mask isn't allowed.  */
 #define NO_DEFAULT_MASK 6
   /* Address prefix changes register operand */
@@ -579,6 +590,12 @@ enum
 #define DISTINCT_DEST 8
   /* Instruction updates stack pointer implicitly.  */
 #define IMPLICIT_STACK_OP 9
+  /* Instruction zeroes upper part of register.  */
+#define ZERO_UPPER 10
+  /* Instruction support SCC.  */
+#define SCC 11
+  /* Instruction requires EVEX.NF to be 1.  */
+#define EVEX_NF 12
   OperandConstraint,
   /* instruction ignores operand size prefix and in Intel mode ignores
      mnemonic size suffix check.  */
@@ -733,6 +750,9 @@ enum
 #define ATT_MNEMONIC 3
   Dialect,
 
+  /* Mnemonic suffix permitted in Intel syntax.  */
+  IntelSuffix,
+
   /* ISA64: Don't change the order without other code adjustments.
 	0: Common to AMD64 and Intel64.
 	1: AMD64.
@@ -753,9 +773,6 @@ enum
 
   /* Instrucion requires REX2 prefix.  */
   Rex2,
-
-  /* Support zero upper */
-  ZU,
 
   /* The last bitfield in i386_opcode_modifier.  */
   Opcode_Modifier_Num
@@ -800,11 +817,11 @@ typedef struct i386_opcode_modifier
   unsigned int disp8memshift:3;
   unsigned int optimize:1;
   unsigned int dialect:2;
+  unsigned int intelsuffix:1;
   unsigned int isa64:2;
   unsigned int noegpr:1;
   unsigned int nf:1;
   unsigned int rex2:1;
-  unsigned int zu:1;
 } i386_opcode_modifier;
 
 /* Operand classes.  */
@@ -975,15 +992,15 @@ typedef struct insn_template
   /* opcode space */
   unsigned int opcode_space:4;
   /* Opcode encoding space (values chosen to be usable directly in
-     VEX/XOP mmmmm and EVEX mm fields):
+     VEX/XOP mmmmm and EVEX mmm fields):
      0: Base opcode space.
      1: 0F opcode prefix / space.
      2: 0F38 opcode prefix / space.
      3: 0F3A opcode prefix / space.
-     4: EVEXMAP4 opcode prefix / space.
-     5: EVEXMAP5 opcode prefix / space.
-     6: EVEXMAP6 opcode prefix / space.
-     7: VEXMAP7 opcode prefix / space.
+     4: MAP4 opcode prefix / space.
+     5: MAP5 opcode prefix / space.
+     6: MAP6 opcode prefix / space.
+     7: MAP7 opcode prefix / space.
      8: XOP 08 opcode space.
      9: XOP 09 opcode space.
      A: XOP 0A opcode space.
@@ -992,10 +1009,10 @@ typedef struct insn_template
 #define SPACE_0F	1
 #define SPACE_0F38	2
 #define SPACE_0F3A	3
-#define SPACE_EVEXMAP4	4
-#define SPACE_EVEXMAP5	5
-#define SPACE_EVEXMAP6	6
-#define SPACE_VEXMAP7	7
+#define SPACE_MAP4	4
+#define SPACE_MAP5	5
+#define SPACE_MAP6	6
+#define SPACE_MAP7	7
 #define SPACE_XOP08	8
 #define SPACE_XOP09	9
 #define SPACE_XOP0A	0xA
