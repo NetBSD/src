@@ -32,7 +32,6 @@ struct dll_info
   CORE_ADDR base_addr;
 };
 
-extern void clear_dlls (void);
 extern void loaded_dll (const char *name, CORE_ADDR base_addr);
 extern void loaded_dll (process_info *proc, const char *name,
 			CORE_ADDR base_addr);

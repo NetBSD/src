@@ -25,7 +25,7 @@ global testname
 global subsrcdir
 
 set subsrcdir "$srcdir/$subdir/"
-set testname "$dir/libctf-repeat-cu.exp"
+set testname "libctf-repeat-cu.exp"
 
 if ![is_elf_format] {
     unsupported "CTF needs bfd changes to be emitted on non-ELF"

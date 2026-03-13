@@ -28,7 +28,7 @@ if { [test_compiler_info {gfortran-*} f90] &&
 }
 
 if {[prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} \
-	 {debug f90 additional_flags=-gdwarf-5}]} {
+	 {debug f90 dwarf5}]} {
     return -1
 }
 

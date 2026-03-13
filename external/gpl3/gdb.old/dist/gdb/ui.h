@@ -15,12 +15,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef UI_H
-#define UI_H
+#ifndef GDB_UI_H
+#define GDB_UI_H
 
 #include "gdbsupport/event-loop.h"
 #include "gdbsupport/intrusive_list.h"
 #include "gdbsupport/next-iterator.h"
+#include "gdbsupport/scoped_restore.h"
 
 struct interp;
 
@@ -229,4 +230,4 @@ ui_range all_uis ()
   return ui_range (ui_list);
 }
 
-#endif /* UI_H */
+#endif /* GDB_UI_H */

@@ -1,0 +1,100 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test instruction breakpoint resolution.
+
+require allow_dap_tests
+
+load_lib dap-support.exp
+
+standard_testfile basic-dap.c
+
+if {[build_executable ${testfile}.exp $testfile $srcfile] == -1} {
+    return
+}
+
+# Get the address of a function.  Make sure the inferior is running
+# first -- on the ARM builder, the function address changed during
+# startup, and we want to find the final relocated address.
+clean_restart $testfile
+if {![runto_main]} {
+    return
+}
+set addr [get_var_address address_breakpoint_here]
+gdb_exit
+
+if {[dap_initialize] == ""} {
+    return
+}
+
+set launch_id [dap_launch $testfile]
+
+set obj [dap_check_request_and_response "set breakpoint on main" \
+	     setFunctionBreakpoints \
+	     {o breakpoints [a [o name [s main]]]}]
+set fn_bpno [dap_get_breakpoint_number $obj]
+
+set obj [dap_check_request_and_response "set breakpoint by address" \
+	     setInstructionBreakpoints \
+	     [format {o breakpoints [a [o instructionReference [s %s]]]} \
+		  $addr]]
+set bpno [dap_get_breakpoint_number $obj]
+
+set bp [lindex [dict get [lindex $obj 0] body breakpoints] 0]
+gdb_assert {[dict get $bp verified] == "false"} \
+    "breakpoint is not verified"
+
+dap_check_request_and_response "configurationDone" configurationDone
+
+# The event we're looking for should occur during startup, but we want
+# to leave open the possibility that it occurs when waiting for the
+# stopped event.  So, keep all event lists around and search them
+# once below.
+lassign [dap_check_response "launch response" launch $launch_id] \
+    unused objs0
+lassign [dap_wait_for_event_and_check "inferior started" \
+	     thread "body reason" started] \
+    unused objs1
+lassign [dap_wait_for_event_and_check "stopped at breakpoint" stopped \
+	    "body reason" breakpoint \
+	    "body hitBreakpointIds" $fn_bpno] unused objs2
+
+set found_bp_event 0
+foreach obj [concat $objs0 $objs1 $objs2] {
+    if { [dict get $obj "type"] != "event" } {
+	continue
+    }
+
+    if { [dict get $obj "event"] != "breakpoint" } {
+	continue
+    }
+
+    set body [dict get $obj "body"]
+
+    if { [dict get $body "reason"] != "changed" } {
+	continue
+    }
+
+    set breakpoint [dict get $body breakpoint]
+    if {[dict get $breakpoint id] == $bpno} {
+	gdb_assert {[dict get $breakpoint source name] == "basic-dap.c"} \
+	    "breakpoint modification event has source"
+	set found_bp_event 1
+    }
+}
+
+gdb_assert {$found_bp_event} "found the breakpoint event"
+
+dap_shutdown

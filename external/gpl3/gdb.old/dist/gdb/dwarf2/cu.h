@@ -24,6 +24,8 @@
 #include "dwarf2/comp-unit-head.h"
 #include <optional>
 #include "language.h"
+#include "gdbsupport/unordered_set.h"
+#include "dwarf2/die.h"
 
 /* Type used for delaying computation of method physnames.
    See comments for compute_delayed_physnames.  */
@@ -95,7 +97,8 @@ struct dwarf2_cu
   }
 
   /* Add a dependence relationship from this cu to REF_PER_CU.  */
-  void add_dependence (struct dwarf2_per_cu_data *ref_per_cu);
+  void add_dependence (struct dwarf2_per_cu_data *ref_per_cu)
+  { m_dependencies.emplace (ref_per_cu); }
 
   /* The header of the compilation unit.  */
   struct comp_unit_head header;
@@ -120,9 +123,9 @@ private:
   std::unique_ptr<buildsym_compunit> m_builder;
 
   /* A set of pointers to dwarf2_per_cu_data objects for compilation
-     units referenced by this one.  Only set during full symbol processing;
+     units referenced by this one.  Only used during full symbol processing;
      partial symbol tables do not have dependencies.  */
-  htab_t m_dependencies = nullptr;
+  gdb::unordered_set<dwarf2_per_cu_data *> m_dependencies;
 
 public:
   /* The generic symbol table building routines have separate lists for
@@ -151,7 +154,9 @@ public:
 
   /* A hash table of DIE cu_offset for following references with
      die_info->offset.sect_off as hash.  */
-  htab_t die_hash = nullptr;
+  using die_hash_t = gdb::unordered_set<die_info *, die_info_hash_sect_off,
+					die_info_eq_sect_off>;
+  die_hash_t die_hash;
 
   /* Full DIEs if read in.  */
   struct die_info *dies = nullptr;
@@ -170,7 +175,7 @@ public:
   std::vector<delayed_method_info> method_list;
 
   /* To be copied to symtab->call_site_htab.  */
-  htab_t call_site_htab = nullptr;
+  call_site_htab_t call_site_htab;
 
   /* Non-NULL if this CU came from a DWO file.
      There is an invariant here that is important to remember:

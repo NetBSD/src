@@ -1,0 +1,92 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile main.c -dw.S
+
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    global srcdir subdir srcfile srcfile2
+    declare_labels var_label int_label L1 L2
+
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_C}
+	    {stmt_list $L1 DW_FORM_sec_offset}
+	} {
+	    tag_variable {
+		{name var1}
+		{abstract_origin %$var_label}
+		{const_value 1 DW_FORM_sdata}
+	    }
+	    subprogram {
+		{external 1 flag}
+		{MACRO_AT_func {main}}
+	    }
+	    int_label: base_type {
+		{byte_size 4 udata}
+		{encoding @DW_ATE_signed}
+		{name int}
+	    }
+	}
+    }
+
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_C}
+	    {stmt_list $L2 DW_FORM_sec_offset}
+	} {
+	    var_label: tag_variable {
+		{name "var1"}
+		{type %$int_label}
+		{decl_file 1}
+		{decl_line 1}
+	    }
+	}
+    }
+
+    lines {version 2} L1 {
+	file_name "file1.c" 0
+	file_name "file2.c" 0
+    }
+
+    lines {version 2} L2 {
+	file_name "file3.c" 0
+	file_name "file4.c" 0
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+if ![runto main] {
+    return -1
+}
+
+gdb_test "p var1" " = 1"
+
+set re \
+    [multi_line \
+	 "All variables matching regular expression \"var1\":" \
+	 "" \
+	 "File file3.c:" \
+	 "1:\tstatic int var1;"]
+gdb_test "info var var1" $re

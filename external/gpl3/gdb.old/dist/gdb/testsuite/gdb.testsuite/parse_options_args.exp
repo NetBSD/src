@@ -38,7 +38,7 @@ with_test_prefix parse_options {
 
 with_test_prefix parse_args {
     proc test2 { args } {
-	parse_args {
+	parse_some_args {
 	    { opt1 defval1 }
 	    { opt2 defval2 }
 	    { opt3 }

@@ -195,7 +195,7 @@ get_language_name (enum language lang)
 #endif /* HAVE_SOURCE_HIGHLIGHT */
 
 /* Try to highlight CONTENTS from file FULLNAME in language LANG using
-   the GNU source-higlight library.  Return true if highlighting
+   the GNU source-highlight library.  Return true if highlighting
    succeeded.  */
 
 static bool
@@ -281,6 +281,12 @@ static void gnu_source_highlight_test ()
   try
     {
       res = try_source_highlight (styled_prog, language_c, fullname);
+    }
+  catch (const gdb_exception &e)
+    {
+      if (e.reason != RETURN_ERROR)
+	throw;
+      saw_exception = true;
     }
   catch (...)
     {

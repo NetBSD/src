@@ -20,8 +20,9 @@
 
 #include <sys/mman.h>
 #include "tracepoint.h"
-#include "linux-x86-tdesc.h"
 #include "gdbsupport/x86-xstate.h"
+#include "arch/i386-linux-tdesc.h"
+#include "arch/x86-linux-tdesc-features.h"
 
 /* GDB register numbers.  */
 
@@ -244,28 +245,15 @@ initialize_fast_tracepoint_trampoline_buffer (void)
     }
 }
 
-/* Map the tdesc index to xcr0 mask.  */
-static uint64_t idx2mask[X86_TDESC_LAST] = {
-  X86_XSTATE_X87_MASK,
-  X86_XSTATE_SSE_MASK,
-  X86_XSTATE_AVX_MASK,
-  X86_XSTATE_MPX_MASK,
-  X86_XSTATE_AVX_MPX_MASK,
-  X86_XSTATE_AVX_AVX512_MASK,
-  X86_XSTATE_AVX_MPX_AVX512_PKU_MASK,
-};
-
 /* Return target_desc to use for IPA, given the tdesc index passed by
    gdbserver.  */
 
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
-  if (idx >= X86_TDESC_LAST)
-    {
-      internal_error ("unknown ipa tdesc index: %d", idx);
-    }
-  return i386_linux_read_description (idx2mask[idx]);
+  uint64_t xcr0 = x86_linux_tdesc_idx_to_xcr0 (idx);
+
+  return i386_linux_read_description (xcr0);
 }
 
 /* Allocate buffer for the jump pads.  On i386, we can reach an arbitrary
@@ -287,6 +275,6 @@ void
 initialize_low_tracepoint (void)
 {
   initialize_fast_tracepoint_trampoline_buffer ();
-  for (auto i = 0; i < X86_TDESC_LAST; i++)
-    i386_linux_read_description (idx2mask[i]);
+  for (int i = 0; i < x86_linux_i386_tdesc_count (); i++)
+    i386_linux_read_description (x86_linux_tdesc_idx_to_xcr0 (i));
 }

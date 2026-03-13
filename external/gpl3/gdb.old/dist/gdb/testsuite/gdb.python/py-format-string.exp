@@ -82,7 +82,7 @@ set default_pointer_regexp "0x\[a-fA-F0-9\]+"
 
 # A regular expression for a non-expanded C++ reference.
 #
-# Stringifying a C++ reference produces an address preceeded by a "@" in
+# Stringifying a C++ reference produces an address preceded by a "@" in
 # Python, but, by default, the C++ reference/class is expanded by the
 # GDB print command.
 set default_ref_regexp "@${default_pointer_regexp}"
@@ -1104,10 +1104,16 @@ proc_with_prefix test_invalid_args {} {
     "12" \
     "TypeError.*: format_string\\(\\) takes 0 positional arguments but 1 were given.*"
 
+  # For python <= 3.12.
+  set re1 \
+    "TypeError.*: 'invalid' is an invalid keyword argument for this function"
+  # For python >= 3.13.
+  set re2 \
+    "TypeError.*: this function got an unexpected keyword argument 'invalid'"
   check_format_string \
     "a_point_t" \
     "invalid=True" \
-    "TypeError.*: 'invalid' is an invalid keyword argument for this function.*"
+    "($re1|$re2).*"
 
   check_format_string \
     "a_point_t" \
@@ -1125,6 +1131,11 @@ proc_with_prefix test_invalid_args {} {
 proc test_styling {} {
     gdb_test "python print(gdb.parse_and_eval(\"a_point_t\").format_string(styling=True, raw=True))" \
 	"{[style x variable] = 42, [style y variable] = 12}"
+
+    gdb_test "python print(gdb.parse_and_eval(\"a_point_t\").format_string(styling=None, raw=True))" \
+	[multi_line \
+	     "Python Exception <class 'TypeError'>: argument 8 must be bool, not None" \
+	     "Error occurred in Python: argument 8 must be bool, not None" ] \
 }
 
 # Test the gdb.print_options API.

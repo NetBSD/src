@@ -80,13 +80,30 @@ AC_CONFIG_COMMANDS([gdbdepdir],[
 
 ZW_PROG_COMPILER_DEPENDENCIES([CC])
 
-AC_CHECK_HEADERS(termios.h sys/reg.h string.h dnl
-		 sys/procfs.h linux/elf.h dnl
-		 fcntl.h signal.h sys/file.h dnl
-		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
-		 netinet/tcp.h arpa/inet.h ws2tcpip.h)
+AC_CHECK_HEADERS([ \
+  arpa/inet.h \
+  fcntl.h \
+  linux/elf.h \
+  netdb.h \
+  netinet/in.h \
+  netinet/tcp.h \
+  signal.h \
+  string.h \
+  sys/file.h \
+  sys/ioctl.h \
+  sys/procfs.h \
+  sys/reg.h \
+  sys/socket.h \
+  termios.h \
+  ws2tcpip.h \
+])
+
 AC_FUNC_FORK
-AC_CHECK_FUNCS(pread pwrite pread64)
+AC_CHECK_FUNCS([ \
+  pread \
+  pread64 \
+  pwrite \
+])
 
 # Check the return and argument types of ptrace.
 GDB_AC_PTRACE

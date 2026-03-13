@@ -840,175 +840,175 @@ const CGEN_OPERAND cris_cgen_operand_table[] =
 {
 /* pc: program counter */
   { "pc", CRIS_OPERAND_PC, HW_H_PC, 0, 0,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_NIL] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_NIL] } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbit:  */
   { "cbit", CRIS_OPERAND_CBIT, HW_H_CBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* cbit-move: cbit for pre-V32, nothing for newer */
   { "cbit-move", CRIS_OPERAND_CBIT_MOVE, HW_H_CBIT_MOVE, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* vbit:  */
   { "vbit", CRIS_OPERAND_VBIT, HW_H_VBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* vbit-move: vbit for pre-V32, nothing for newer */
   { "vbit-move", CRIS_OPERAND_VBIT_MOVE, HW_H_VBIT_MOVE, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* zbit:  */
   { "zbit", CRIS_OPERAND_ZBIT, HW_H_ZBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* zbit-move: zbit for pre-V32, nothing for newer */
   { "zbit-move", CRIS_OPERAND_ZBIT_MOVE, HW_H_ZBIT_MOVE, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* nbit:  */
   { "nbit", CRIS_OPERAND_NBIT, HW_H_NBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* nbit-move: nbit for pre-V32, nothing for newer */
   { "nbit-move", CRIS_OPERAND_NBIT_MOVE, HW_H_NBIT_MOVE, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* xbit:  */
   { "xbit", CRIS_OPERAND_XBIT, HW_H_XBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* ibit:  */
   { "ibit", CRIS_OPERAND_IBIT, HW_H_IBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* ubit:  */
   { "ubit", CRIS_OPERAND_UBIT, HW_H_UBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV10)|(1<<MACH_CRISV32), 0 } } } }  },
 /* pbit:  */
   { "pbit", CRIS_OPERAND_PBIT, HW_H_PBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV10)|(1<<MACH_CRISV32), 0 } } } }  },
 /* rbit: carry bit for MCP+restore-P flag bit */
   { "rbit", CRIS_OPERAND_RBIT, HW_H_RBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* sbit:  */
   { "sbit", CRIS_OPERAND_SBIT, HW_H_SBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* mbit:  */
   { "mbit", CRIS_OPERAND_MBIT, HW_H_MBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* qbit:  */
   { "qbit", CRIS_OPERAND_QBIT, HW_H_QBIT, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* prefix-set: Instruction-prefixed flag */
   { "prefix-set", CRIS_OPERAND_PREFIX_SET, HW_H_INSN_PREFIXED_P, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* prefixreg: Prefix address */
   { "prefixreg", CRIS_OPERAND_PREFIXREG, HW_H_PREFIXREG, 0, 0,
-    { 0, { 0 } }, 
+    { 0, { 0 } },
     { 0|A(SEM_ONLY), { { { (1<<MACH_BASE), 0 } } } }  },
 /* Rs: Source general register */
   { "Rs", CRIS_OPERAND_RS, HW_H_GR, 3, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND1] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND1] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* inc: Incrementness of indirect operand */
   { "inc", CRIS_OPERAND_INC, HW_H_INC, 10, 1,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_MEMMODE] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_MEMMODE] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* Ps: Source special register */
   { "Ps", CRIS_OPERAND_PS, HW_H_SR, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* Ss: Source support register */
   { "Ss", CRIS_OPERAND_SS, HW_H_SUPR, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* Sd: Destination support register */
   { "Sd", CRIS_OPERAND_SD, HW_H_SUPR, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* i: Quick signed 6-bit */
   { "i", CRIS_OPERAND_I, HW_H_SINT, 5, 6,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_S6] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_S6] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* j: Quick unsigned 6-bit */
   { "j", CRIS_OPERAND_J, HW_H_UINT, 5, 6,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_U6] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_U6] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* c: Quick unsigned 5-bit */
   { "c", CRIS_OPERAND_C, HW_H_UINT, 4, 5,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_U5] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_U5] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* qo: Quick unsigned 4-bit, PC-relative */
   { "qo", CRIS_OPERAND_QO, HW_H_ADDR, 3, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_QO] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_QO] } },
     { 0|A(PCREL_ADDR), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* Rd: Destination general register */
   { "Rd", CRIS_OPERAND_RD, HW_H_GR, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* sconst8: Signed byte [PC+] */
   { "sconst8", CRIS_OPERAND_SCONST8, HW_H_SINT, 15, 16,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__BYTE] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__BYTE] } },
     { 0|A(SIGN_OPT), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uconst8: Unsigned byte [PC+] */
   { "uconst8", CRIS_OPERAND_UCONST8, HW_H_UINT, 15, 16,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__BYTE] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__BYTE] } },
     { 0|A(SIGN_OPT), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sconst16: Signed word [PC+] */
   { "sconst16", CRIS_OPERAND_SCONST16, HW_H_SINT, 15, 16,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD] } },
     { 0|A(SIGN_OPT), { { { (1<<MACH_BASE), 0 } } } }  },
 /* uconst16: Unsigned word [PC+] */
   { "uconst16", CRIS_OPERAND_UCONST16, HW_H_UINT, 15, 16,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD] } },
     { 0|A(SIGN_OPT), { { { (1<<MACH_BASE), 0 } } } }  },
 /* const32: Dword [PC+] */
   { "const32", CRIS_OPERAND_CONST32, HW_H_UINT, 31, 32,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__DWORD] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__DWORD] } },
     { 0|A(SIGN_OPT), { { { (1<<MACH_BASE), 0 } } } }  },
 /* const32-pcrel: Dword [PC+] */
   { "const32-pcrel", CRIS_OPERAND_CONST32_PCREL, HW_H_ADDR, 31, 32,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__DWORD_PCREL] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__DWORD_PCREL] } },
     { 0|A(PCREL_ADDR)|A(SIGN_OPT), { { { (1<<MACH_CRISV32), 0 } } } }  },
 /* Pd: Destination special register */
   { "Pd", CRIS_OPERAND_PD, HW_H_SR, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* o: Signed 8-bit */
   { "o", CRIS_OPERAND_O, HW_H_SINT, 7, 8,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_S8] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_S8] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* o-pcrel: 9-bit signed immediate PC-rel */
   { "o-pcrel", CRIS_OPERAND_O_PCREL, HW_H_IADDR, 0, 8,
-    { 2, { &CRIS_F_DISP9_MULTI_IFIELD[0] } }, 
+    { 2, { &CRIS_F_DISP9_MULTI_IFIELD[0] } },
     { 0|A(PCREL_ADDR)|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* o-word-pcrel: 16-bit signed immediate PC-rel */
   { "o-word-pcrel", CRIS_OPERAND_O_WORD_PCREL, HW_H_IADDR, 15, 16,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD_PCREL] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_INDIR_PC__WORD_PCREL] } },
     { 0|A(SIGN_OPT)|A(PCREL_ADDR), { { { (1<<MACH_BASE), 0 } } } }  },
 /* cc: Condition codes */
   { "cc", CRIS_OPERAND_CC, HW_H_CCODE, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* n: Quick unsigned 4-bit */
   { "n", CRIS_OPERAND_N, HW_H_UINT, 3, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_U4] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_U4] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* swapoption: Swap option */
   { "swapoption", CRIS_OPERAND_SWAPOPTION, HW_H_SWAP, 15, 4,
-    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } }, 
+    { 0, { &cris_cgen_ifld_table[CRIS_F_OPERAND2] } },
     { 0, { { { (1<<MACH_BASE), 0 } } } }  },
 /* list-of-flags: Flag bits as operand */
   { "list-of-flags", CRIS_OPERAND_LIST_OF_FLAGS, HW_H_FLAGBITS, 3, 8,
-    { 2, { &CRIS_F_DSTSRC_MULTI_IFIELD[0] } }, 
+    { 2, { &CRIS_F_DSTSRC_MULTI_IFIELD[0] } },
     { 0|A(VIRTUAL), { { { (1<<MACH_BASE), 0 } } } }  },
 /* sentinel */
   { 0, 0, 0, 0, 0,
@@ -2742,7 +2742,7 @@ cris_cgen_cpu_open (enum cgen_cpu_open_arg arg_type, ...)
 
   /* Default to not allowing signed overflow.  */
   cd->signed_overflow_ok_p = 0;
-  
+
   return (CGEN_CPU_DESC) cd;
 }
 
@@ -2782,7 +2782,7 @@ cris_cgen_cpu_close (CGEN_CPU_DESC cd)
       for (i = 0; i < cd->insn_table.num_init_entries; ++i, ++insns)
 	if (CGEN_INSN_RX (insns))
 	  regfree (CGEN_INSN_RX (insns));
-    }  
+    }
 
   free ((CGEN_INSN *) cd->macro_insn_table.init_entries);
   free ((CGEN_INSN *) cd->insn_table.init_entries);

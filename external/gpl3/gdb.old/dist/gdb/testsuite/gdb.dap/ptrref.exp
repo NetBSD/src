@@ -27,6 +27,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set line [gdb_get_line_number "BREAK"]
 set obj [dap_check_request_and_response "set breakpoint by line number" \
 	     setBreakpoints \
@@ -36,9 +38,8 @@ set line_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $testfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "inferior started" thread "body reason" started
 
 dap_wait_for_event_and_check "stopped at line breakpoint" stopped \
@@ -54,12 +55,14 @@ set scopes [dap_check_request_and_response "get scopes" scopes \
 		[format {o frameId [i %d]} $frame_id]]
 set scopes [dict get [lindex $scopes 0] body scopes]
 
-gdb_assert {[llength $scopes] == 2} "two scopes"
+gdb_assert {[llength $scopes] == 3} "three scopes"
 
-lassign $scopes scope reg_scope
+lassign $scopes scope reg_scope global_scope
 gdb_assert {[dict get $scope name] == "Locals"} "scope is locals"
+gdb_assert {[dict get $global_scope name] == "Globals"} "scope is globals"
 
-gdb_assert {[dict get $scope namedVariables] == 4} "three vars in scope"
+gdb_assert {[dict get $scope namedVariables] == 4} "four vars in locals"
+gdb_assert {[dict get $global_scope namedVariables] == 1} "one var in globals"
 
 set num [dict get $scope variablesReference]
 set refs [lindex [dap_check_request_and_response "fetch variables" \

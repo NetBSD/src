@@ -55,11 +55,17 @@ proc initial_setup_simple { startup_with_shell run_args } {
     }
 }
 
+# Are we using 'remote' or 'extended-remote' protocol?
+set is_remote_p [gdb_protocol_is_remote]
+
 ## Run the actual tests
 
 with_test_prefix "startup_with_shell = on; run_args = *.unique-extension" {
     initial_setup_simple "on" "$unique_file_dir/*.unique-extension"
     gdb_test_no_output "set print characters unlimited"
+    if { $is_remote_p } {
+	setup_xfail "*-*-*" gdb/28392
+    }
     gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"$unique_file\"" \
 	"first argument expanded"
 }
@@ -74,6 +80,9 @@ with_test_prefix "startup_with_shell = off; run_args = *.unique-extension" {
 with_test_prefix "startup_with_shell = on; run_args = \$TEST" {
     set env(TEST) "1234"
     initial_setup_simple "on" "\$TEST"
+    if { $is_remote_p } {
+	setup_xfail "*-*-*" gdb/28392
+    }
     gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"1234\"" \
 	"testing first argument"
     unset env(TEST)

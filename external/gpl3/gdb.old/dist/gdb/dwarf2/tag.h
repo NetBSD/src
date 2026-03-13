@@ -30,7 +30,6 @@ tag_is_type (dwarf_tag tag)
 {
   switch (tag)
     {
-    case DW_TAG_padding:
     case DW_TAG_array_type:
     case DW_TAG_class_type:
     case DW_TAG_enumeration_type:

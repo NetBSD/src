@@ -51,11 +51,7 @@ gdb_test_multiple "print *the_local_var" "only one CU expanded" -lbl {
     -re ".symtab-create. start_subfile: name = \[^,\]*, name_for_id = \[^\r\n\]*\r\n" {
 	exp_continue
     }
-    -re -wrap ".* = \\\(n => $decimal\\\)" {
-	if {$found_pck + $found_pck2 <= 1} {
-	    pass $gdb_test_name
-	} else {
-	    fail $gdb_test_name
-	}
+    -re -wrap "" {
+	gdb_assert {$found_pck + $found_pck2 <= 1} $gdb_test_name
     }
 }

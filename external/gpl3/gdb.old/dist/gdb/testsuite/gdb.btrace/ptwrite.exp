@@ -1,0 +1,201 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib gdb-python.exp
+
+require allow_btrace_ptw_tests allow_python_tests
+
+set opts {}
+
+if [info exists COMPILE] {
+    # make check RUNTESTFLAGS="gdb.btrace/ptwrite.exp COMPILE=1"
+    standard_testfile ptwrite.c
+    lappend opts debug additional_flags=-mptwrite
+} elseif {[istarget "i?86-*-*"] || [istarget "x86_64-*-*"]} {
+    if {[is_amd64_regs_target]} {
+	standard_testfile x86_64-ptwrite.S
+    } else {
+	standard_testfile i386-ptwrite.S
+    }
+} else {
+    unsupported "target architecture not supported"
+    return -1
+}
+
+if [prepare_for_testing "failed to prepare" $testfile $srcfile $opts] {
+    return -1
+}
+
+if { ![runto_main] } {
+    untested "failed to run to main"
+    return -1
+}
+
+### 1. Default testrun
+
+# Setup recording
+gdb_test_no_output "set record instruction-history-size unlimited"
+gdb_test_no_output "record btrace pt"
+gdb_test "next 2" ".*"
+
+with_test_prefix "Default" {
+    # Test record instruction-history
+    gdb_test "record instruction-history 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[0x42\\\]" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[0x43\\\].*" \
+	]
+
+    gdb_test "record instruction-history /a 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+.*" \
+	]
+
+    # Test function call history
+    gdb_test "record function-call-history 1,4" [multi_line \
+	"1\tmain" \
+	"2\tptwrite1" \
+	"\t  \\\[0x42\\\]" \
+	"3\tmain" \
+	"4\tptwrite2" \
+	"\t  \\\[0x43\\\]" \
+	]
+
+    gdb_test "record function-call-history /a 1,4" [multi_line \
+	"1\tmain" \
+	"2\tptwrite1" \
+	"3\tmain" \
+	"4\tptwrite2" \
+	]
+}
+
+# Test payload printing during stepping
+with_test_prefix "Stepping" {
+    gdb_test "record goto 10" "Can't go to an auxiliary instruction\."
+    gdb_test "record goto 9" ".*ptwrite.* at .*"
+    gdb_test "stepi" ".*\\\[0x42\\\].*"
+    gdb_test "reverse-stepi" ".*\\\[0x42\\\].*"
+    gdb_test "continue" [multi_line \
+	    ".*\\\[0x42\\\]" \
+	    "\\\[0x43\\\].*" \
+	    ]
+    gdb_test "reverse-continue" [multi_line \
+	    ".*\\\[0x43\\\]" \
+	    "\\\[0x42\\\].*" \
+	    ]
+}
+
+# Test auxiliary type in python
+gdb_test_multiline "auxiliary type in python" \
+    "python" "" \
+    "h = gdb.current_recording().instruction_history" "" \
+    "for insn in h:" "" \
+    "    if hasattr(insn, 'decoded'):" "" \
+    "        print(insn.decoded.decode())" "" \
+    "    elif hasattr(insn, 'data'):" "" \
+    "        print(insn.data)" "" \
+    "end" \
+    [multi_line \
+	".*mov    -0x4\\\(%(e|r)bp\\\),%(e|r)ax" \
+	"ptwrite %eax" \
+	"0x42" \
+	"nop.*" \
+	"mov    -0x4\\\(%(e|r)bp\\\),%(e|r)ax" \
+	"ptwrite %eax" \
+	"0x43" \
+	"nop.*"
+    ]
+
+
+### 2. Test filter registration
+### 2.1 Custom filter
+with_test_prefix "Custom" {
+    gdb_test_multiline "register filter in python" \
+	"python" "" \
+	"def my_filter(payload, ip):" "" \
+	"    if  payload == 66:" "" \
+	"        return \"payload: {0}, ip: {1:#x}\".format(payload, ip)" "" \
+	"    else:" "" \
+	"        return None" "" \
+	"def factory(thread): return my_filter" "" \
+	"import gdb.ptwrite" "" \
+	"gdb.ptwrite.register_filter_factory(factory)" "" \
+	"end" ""
+
+    gdb_test "record instruction-history 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[payload: 66, ip: $hex\\\]" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:.*" \
+	]
+}
+
+### 2.2 None as filter. This resets the default behavior.
+with_test_prefix "None" {
+    gdb_test_multiline "register filter in python" \
+	"python" "" \
+	"import gdb.ptwrite" "" \
+	"gdb.ptwrite.register_filter_factory(None)" "" \
+	"end" ""
+
+    gdb_test "record instruction-history 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[0x42\\\]" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[0x43\\\].*" \
+	]
+}
+
+### 2.3 Lambdas as filter
+with_test_prefix "Lambdas" {
+    gdb_test_multiline "register filter in python" \
+	"python" "" \
+	"import gdb.ptwrite" "" \
+	"lambda_filter = lambda payload, ip: \"{}\".format(payload + 2)" "" \
+	"gdb.ptwrite.register_filter_factory(lambda thread : lambda_filter)" "" \
+	"end" ""
+
+    gdb_test "record instruction-history 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[68\\\]" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[69\\\].*" \
+	] "Lambdas: record instruction-history 1"
+}
+
+### 2.4 Functors as filter
+with_test_prefix "Functors" {
+    gdb_test_multiline "register filter in python" \
+	"python" "" \
+	"import gdb.ptwrite" "" \
+	"class foobar(object):" "" \
+	"    def __init__(self):" "" \
+	"        self.variable = 0" "" \
+	"    def __call__(self, payload, ip):" "" \
+	"        self.variable += 1" "" \
+	"        return \"{}, {}\".format(self.variable, payload)" "" \
+	"gdb.ptwrite.register_filter_factory(lambda thread : foobar())" "" \
+	"end" ""
+
+    gdb_test "record instruction-history 1" [multi_line \
+	".*\[0-9\]+\t   $hex <ptwrite1\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[1, 66\\\]" \
+	".*\[0-9\]+\t   $hex <ptwrite2\\+\[0-9\]+>:\tptwrite %\[a-z\]+" \
+	"\[0-9\]+\t     \\\[2, 67\\\].*" \
+	] "Functors: record instruction-history 1"
+}

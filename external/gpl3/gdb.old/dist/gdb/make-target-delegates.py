@@ -362,7 +362,7 @@ for current_line in scan_target_h():
 
     delegators.append(name)
 
-with open("target-delegates.c", "w") as f:
+with open("target-delegates-gen.c", "w") as f:
     print(
         gdbcopyright.copyright(
             "make-target-delegates.py", "Boilerplate target methods for GDB"

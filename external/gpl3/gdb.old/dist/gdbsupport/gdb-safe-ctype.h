@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_SAFE_CTYPE_H
-#define GDB_SAFE_CTYPE_H
+#ifndef GDBSUPPORT_GDB_SAFE_CTYPE_H
+#define GDBSUPPORT_GDB_SAFE_CTYPE_H
 
 /* After safe-ctype.h is included, we can no longer use the host's
    ctype routines.  Trying to do so results in compile errors.  Code
@@ -46,4 +46,4 @@ gdb_isprint (int ch)
 #include <locale>
 #include "safe-ctype.h"
 
-#endif
+#endif /* GDBSUPPORT_GDB_SAFE_CTYPE_H */

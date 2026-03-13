@@ -30,13 +30,14 @@ main (void)
 {
   int ret = baz ();
   stop_breakpt ();
-  return ret;
+  /* We have to call bar here, otherwise it might be optimized away.  */
+  return ret + bar ();
 }
 
 static int
 bar (void)
 {
-  return baz ();
+  return baz ();		/* Second location of bar.  */
 }
 
 static int

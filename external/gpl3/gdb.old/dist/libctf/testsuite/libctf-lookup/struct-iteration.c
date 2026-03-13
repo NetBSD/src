@@ -53,7 +53,7 @@ main (int argc, char *argv[])
     {
       char *type_name = ctf_type_aname (fp, membtype);
 
-      printf ("next test: %s, offset %lx, has type %lx/%s\n",
+      printf ("next test: %s, offset %zx, has type %lx/%s\n",
 	      name, offset, membtype, type_name);
       free (type_name);
     }

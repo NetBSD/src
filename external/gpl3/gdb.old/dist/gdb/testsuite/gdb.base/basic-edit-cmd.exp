@@ -1,0 +1,157 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the 'edit' command.
+
+# This relies on setting environment variables, so best to run on
+# non-remote hosts.
+require {!is_remote host}
+
+standard_testfile
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile]} {
+    return
+}
+
+# Check that 'echo' is available in the shell.
+gdb_test_multiple "shell echo test 1234 xyz" "check echo is available" {
+    -re -wrap "^test 1234 xyz" {
+    }
+
+    -re -wrap "" {
+	unsupported "shell cannot use echo command"
+	return
+    }
+}
+
+if {![runto_main]} {
+    return
+}
+
+# Are we using DWARF debug format?
+get_debug_format
+set non_dwarf [expr ! [test_debug_format "DWARF \[0-9\]"]]
+
+# Find line numbers for use in tests.
+set line_0 [gdb_get_line_number "prologue location"]
+set line_1 [gdb_get_line_number "first location"]
+set line_2 [gdb_get_line_number "second location"]
+set line_3 [gdb_get_line_number "third location"]
+set line_4 [gdb_get_line_number "fourth location"]
+
+# Regexp to match SRCFILE.
+set srcfile_re [string_to_regexp [file normalize $srcdir/$subdir]/$srcfile]
+set srcfile_re_simple "\[^\r\n\]+/[string_to_regexp $srcfile]"
+
+# Setup the EDITOR environment variable to run our helper script, and
+# then run the tests.
+
+save_vars { env(EDITOR) } {
+    set env(EDITOR) "echo"
+
+    # Start with no test binary loaded.
+    clean_restart
+    gdb_test "edit" \
+	"^No symbol table is loaded.  Use the \"file\" command\\." \
+	"try edit when no symbol file is loaded"
+
+    # Now start with a test binary.
+    clean_restart $binfile
+
+    with_test_prefix "before starting inferior" {
+
+	# We should be able to find the default location (of main)
+	# even for non-dwarf debug formats, but this currently fails
+	# with the stabs board.
+	if { $non_dwarf } { setup_xfail *-*-* }
+	# Additionally, some targets will report the default location
+	# as the opening brace of main, while others report the first
+	# line of code inside main.  For this test either will do.
+	gdb_test "edit" \
+	    "\r\n\\+(?:$line_0|$line_1) $srcfile_re" \
+	    "check edit of default location"
+
+	gdb_test "list $line_4" \
+	    "\r\n$line_4\\s+\[^\r\n\]+/\\* fourth location \\*/\r\n.*" \
+	    "list lines around the fourth location"
+
+	gdb_test "edit" \
+	    "\r\n\\+$line_4 $srcfile_re" \
+	    "check edit of fourth location after listing"
+
+	gdb_test "edit $line_2" \
+	    "\r\n\\+$line_2 $srcfile_re" \
+	    "check edit of second location"
+
+	gdb_test "edit xxx" \
+	    "^Function \"xxx\" not defined\\." \
+	    "try to edit an unknown function"
+    }
+
+    if {![runto_main]} {
+	return
+    }
+
+    set first_loc_pc [get_hexadecimal_valueof "\$pc" "*UNKNOWN*" \
+			  "get \$pc at first location"]
+
+    with_test_prefix "stopped at first location" {
+	gdb_test "edit" \
+	    "\r\n\\+$line_1 $srcfile_re" \
+	    "check edit of current location"
+    }
+
+    gdb_breakpoint $line_2
+    gdb_continue_to_breakpoint "stop at second location"
+
+    with_test_prefix "at second location" {
+	gdb_test "edit" \
+	    "\r\n\\+$line_2 $srcfile_re" \
+	    "check edit current location results"
+
+	gdb_test "edit $line_3" \
+	    "\r\n\\+$line_3 $srcfile_re" \
+	    "check edit third location results"
+    }
+
+    with_test_prefix "list first location" {
+	gdb_test "list $line_1" \
+	    "\r\n$line_1\\s+\[^\r\n\]+/\\* first location \\*/\r\n.*" \
+	    "list lines around the first location"
+
+	gdb_test "edit" \
+	    "\r\n\\+$line_1 $srcfile_re" \
+	    "check edit current location results"
+    }
+
+    gdb_breakpoint $line_4
+    gdb_continue_to_breakpoint "stop at fourth location"
+
+    with_test_prefix "at fourth location" {
+	gdb_test "edit" \
+	    "\r\n\\+$line_4 $srcfile_re" \
+	    "check edit current location results"
+
+	gdb_test "edit $line_1" \
+	    "\r\n\\+$line_1 $srcfile_re" \
+	    "check edit first location results"
+
+	gdb_test "edit *$first_loc_pc" \
+	    [multi_line \
+		 "[string_to_regexp $first_loc_pc] is in main \\($srcfile_re_simple:$line_1\\)\\." \
+		 "\\+$line_1 $srcfile_re"] \
+	    "check edit first location by address results"
+    }
+}

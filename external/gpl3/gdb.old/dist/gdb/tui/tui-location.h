@@ -15,13 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_LOCATION_H
-#define TUI_TUI_LOCATION_H
-
-#include "tui/tui.h"
-#include "tui/tui.h"
-#include "gdb_curses.h"
-#include "observable.h"
+#ifndef GDB_TUI_TUI_LOCATION_H
+#define GDB_TUI_TUI_LOCATION_H
 
 /* Class used to track the current location that the TUI is displaying.  An
    instance of this class will be created; as events occur within GDB the
@@ -90,4 +85,4 @@ private:
 
 extern tui_location_tracker tui_location;
 
-#endif /* TUI_TUI_LOCATION_H */
+#endif /* GDB_TUI_TUI_LOCATION_H */

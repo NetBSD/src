@@ -140,3 +140,8 @@ GDB_PY_DEFINE_EVENT_TYPE (free_progspace,
 			  "FreeProgspaceEvent",
 			  "GDB free Progspace event object",
 			  event_object_type);
+
+GDB_PY_DEFINE_EVENT_TYPE (tui_enabled,
+			  "TuiEnabledEvent",
+			  "GDB TUI enabled event object",
+			  event_object_type);

@@ -32,6 +32,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set line [gdb_get_line_number "STOP"]
 set obj [dap_check_request_and_response "set breakpoint by line number" \
 	     setBreakpoints \
@@ -41,9 +43,8 @@ set line_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $testfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "inferior started" thread "body reason" started
 
 dap_wait_for_event_and_check "stopped at line breakpoint" stopped \
@@ -59,7 +60,9 @@ set scopes [dap_check_request_and_response "get scopes" scopes \
 		[format {o frameId [i %d]} $frame_id]]
 set scopes [dict get [lindex $scopes 0] body scopes]
 
-gdb_assert {[llength $scopes] == 2} "two scopes"
+# There may be three scopes instead of two if an artificial symbol ends up in
+# the DWARF.  See https://github.com/rust-lang/rust/issues/125126.
+gdb_assert { [llength $scopes] == 2 || [llength $scopes] == 3 } "two scopes"
 
 lassign $scopes scope ignore
 gdb_assert {[dict get $scope name] == "Locals"} "scope is locals"

@@ -34,21 +34,36 @@ standard_testfile .c -extra.c
 
 foreach_with_prefix debug {"none" "some"} {
 
-    set flags "nodebug"
     if {$debug == "some"} {
-	set flags "debug"
+	if {[prepare_for_testing_full "failed to prepare" \
+		[list ${testfile}-${debug} $linkflags \
+		    $srcfile [list nodebug] \
+		    $srcfile2 [list debug]]]} {
+	    return -1
+	}
+
+	# We don't test "list ." before starting with some debug info
+	# because GDB will choose the symtab that has debuginfo, and
+	# print the copyright blurb.  This test isn't interested (yet?)
+	# in checking if this default location choice is consistent.
+    } else {
+	set executable ${testfile}-none
+	if {[build_executable "failed to prepare" ${executable} \
+		[list $srcfile $srcfile2] $linkflags]} {
+	    return -1
+	}
+
+	# Stripping is a backup in case the system has static libc debuginfo.
+	# We can continue the test even if it fails.
+	gdb_gnu_strip_debug $executable no-debuglink
+
+	clean_restart ${executable}
+
+	gdb_test "list ." \
+	    "^Insufficient debug info for showing source lines at default location" \
+	    "print before start"
     }
 
-    if {[prepare_for_testing_full "failed to prepare" \
-	    [list ${testfile}-${debug} $linkflags \
-		$srcfile [list nodebug] \
-		$srcfile2 [list $debug]]]} {
-	return -1
-    }
-
-    gdb_test "list ." \
-	"^Insufficient debug info for showing source lines at default location" \
-	"print before start"
 
     if { ![runto bar] } {
 	return -1

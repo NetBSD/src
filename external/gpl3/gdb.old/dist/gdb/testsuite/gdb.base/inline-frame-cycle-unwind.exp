@@ -37,7 +37,7 @@
 # mechanism such that the fact that "inline_frame" was inlined into
 # "normal_frame" would cause GDB to trigger an assertion.
 #
-# This text makes use of a Python unwinder which can fake the cyclic
+# This test makes use of a Python unwinder which can fake the cyclic
 # stack cycle, further the test sets up multiple levels of normal and
 # inline frames.  At the point of testing the stack looks like this:
 #
@@ -72,77 +72,89 @@ gdb_continue_to_breakpoint "stop at test breakpoint"
 gdb_test_no_output "source ${pyfile}"\
     "import python scripts"
 
-# Check the unbroken stack.
-gdb_test_sequence "bt" "backtrace when the unwind is left unbroken" {
-    "\\r\\n#0 \[^\r\n\]* inline_func \\(\\) at "
-    "\\r\\n#1 \[^\r\n\]* normal_func \\(\\) at "
-    "\\r\\n#2 \[^\r\n\]* inline_func \\(\\) at "
-    "\\r\\n#3 \[^\r\n\]* normal_func \\(\\) at "
-    "\\r\\n#4 \[^\r\n\]* inline_func \\(\\) at "
-    "\\r\\n#5 \[^\r\n\]* normal_func \\(\\) at "
-    "\\r\\n#6 \[^\r\n\]* main \\(\\) at "
-}
+# Test with and without filters.
+foreach bt_cmd { "bt" "bt -no-filters" } {
+    with_test_prefix "$bt_cmd" {
 
-with_test_prefix "cycle at level 5" {
-    # Arrange to introduce a stack cycle at frame 5.
-    gdb_test_no_output "python stop_at_level=5"
-    gdb_test "maint flush register-cache" \
-	"Register cache flushed\\."
-    gdb_test_lines "bt" "backtrace when the unwind is broken at frame 5" \
-	[multi_line \
-	     "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "#2 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#3 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "#4 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#5 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
-}
+	# Check the unbroken stack.
+	gdb_test_sequence "$bt_cmd" "backtrace when the unwind is left unbroken" {
+	    "\\r\\n#0 \[^\r\n\]* inline_func \\(\\) at "
+	    "\\r\\n#1 \[^\r\n\]* normal_func \\(\\) at "
+	    "\\r\\n#2 \[^\r\n\]* inline_func \\(\\) at "
+	    "\\r\\n#3 \[^\r\n\]* normal_func \\(\\) at "
+	    "\\r\\n#4 \[^\r\n\]* inline_func \\(\\) at "
+	    "\\r\\n#5 \[^\r\n\]* normal_func \\(\\) at "
+	    "\\r\\n#6 \[^\r\n\]* main \\(\\) at "
+	}
 
-with_test_prefix "cycle at level 3" {
-    # Arrange to introduce a stack cycle at frame 3.
-    gdb_test_no_output "python stop_at_level=3"
-    gdb_test "maint flush register-cache" \
-	"Register cache flushed\\."
-    gdb_test_lines "bt" "backtrace when the unwind is broken at frame 3" \
-	[multi_line \
-	     "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "#2 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#3 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
-}
+	with_test_prefix "cycle at level 5" {
+	    # Arrange to introduce a stack cycle at frame 5.
+	    gdb_test_no_output "python stop_at_level=5"
+	    gdb_test "maint flush register-cache" \
+		"Register cache flushed\\."
+	    gdb_test_lines "$bt_cmd" "backtrace when the unwind is broken at frame 5" \
+		[multi_line \
+		    "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "#2 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#3 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "#4 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#5 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
+	}
 
-with_test_prefix "cycle at level 1" {
-    # Arrange to introduce a stack cycle at frame 1.
-    gdb_test_no_output "python stop_at_level=1"
-    gdb_test "maint flush register-cache" \
-	"Register cache flushed\\."
-    gdb_test_lines "bt" "backtrace when the unwind is broken at frame 1" \
-	[multi_line \
-	     "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
-	     "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
-	     "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
-}
+	with_test_prefix "cycle at level 3" {
+	    # Arrange to introduce a stack cycle at frame 3.
+	    gdb_test_no_output "python stop_at_level=3"
+	    gdb_test "maint flush register-cache" \
+		"Register cache flushed\\."
+	    gdb_test_lines "$bt_cmd" "backtrace when the unwind is broken at frame 3" \
+		[multi_line \
+		    "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "#2 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#3 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
+	}
 
-# Flush the register cache (which also flushes the frame cache) so we
-# get a full backtrace again, then switch on frame debugging and try
-# to back trace.  At one point this triggered an assertion.
-gdb_test "maint flush register-cache" \
-    "Register cache flushed\\." ""
-gdb_test_no_output "set debug frame 1"
-set ok 1
-gdb_test_multiple "bt" "backtrace with debugging on" {
-    -re "^$gdb_prompt $" {
-	gdb_assert { $ok } $gdb_test_name
+	with_test_prefix "cycle at level 1" {
+	    # Arrange to introduce a stack cycle at frame 1.
+	    gdb_test_no_output "python stop_at_level=1"
+	    gdb_test "maint flush register-cache" \
+		"Register cache flushed\\."
+	    gdb_test_lines "$bt_cmd" "backtrace when the unwind is broken at frame 1" \
+		[multi_line \
+		    "#0 \[^\r\n\]* inline_func \\(\\) at \[^\r\n\]+" \
+		    "#1 \[^\r\n\]* normal_func \\(\\) at \[^\r\n\]+" \
+		    "Backtrace stopped: previous frame identical to this frame \\(corrupt stack\\?\\)"]
+	}
+
+	# Flush the register cache (which also flushes the frame cache) so we
+	# get a full backtrace again, then switch on frame debugging and try
+	# to back trace.  At one point this triggered an assertion.
+	gdb_test "maint flush register-cache" \
+	    "Register cache flushed\\." ""
+	gdb_test_no_output "set debug frame 1"
+	set ok 1
+	gdb_test_multiple "$bt_cmd" "backtrace with debugging on" {
+	    -re "^$gdb_prompt $" {
+		gdb_assert { $ok } $gdb_test_name
+	    }
+	    -re "Python Exception <class 'gdb.error'>: \[^\r\n\]*\r\n" {
+		set ok 0
+		exp_continue
+	    }
+	    -re "\[^\r\n\]+\r\n" {
+		exp_continue
+	    }
+	}
+	gdb_test "p 1 + 2 + 3" " = 6" \
+	    "ensure GDB is still alive"
+
+	# Prepare for the next iteration of the test loop
+	gdb_test_no_output "set debug frame 0"
+	gdb_test_no_output "python stop_at_level=None"
+	    gdb_test "maint flush register-cache" \
+		"Register cache flushed\\." "maint flush register-cache at (loop end)"
     }
-    -re "Python Exception <class 'gdb.error'>: \[^\r\n\]*\r\n" {
-	set ok 0
-	exp_continue
-    }
-    -re "\[^\r\n\]+\r\n" {
-	exp_continue
-    }
 }
-gdb_test "p 1 + 2 + 3" " = 6" \
-    "ensure GDB is still alive"

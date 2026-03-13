@@ -14,11 +14,13 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import itertools
+from typing import Dict
 
 import gdb
 from gdb.frames import frame_iterator
 
 from .startup import in_gdb_thread
+from .state import set_thread
 
 # A list of all the frames we've reported.  A frame's index in the
 # list is its ID.  We don't use a hash here because frames are not
@@ -29,6 +31,9 @@ _all_frames = []
 # Map from a global thread ID to a memoizing frame iterator.
 _iter_map = {}
 
+# Map from a global frame ID to a thread ID.
+thread_ids: Dict[int, int] = {}
+
 
 # Clear all the frame IDs.
 @in_gdb_thread
@@ -37,6 +42,8 @@ def _clear_frame_ids(evt):
     _all_frames = []
     global _iter_map
     _iter_map = {}
+    global thread_ids
+    thread_ids = {}
 
 
 # Clear the frame ID map whenever the inferior runs.
@@ -46,6 +53,11 @@ gdb.events.cont.connect(_clear_frame_ids)
 @in_gdb_thread
 def frame_for_id(id):
     """Given a frame identifier ID, return the corresponding frame."""
+    global thread_ids
+    if id in thread_ids:
+        thread_id = thread_ids[id]
+        if thread_id != gdb.selected_thread().global_num:
+            set_thread(thread_id)
     global _all_frames
     return _all_frames[id]
 
@@ -94,6 +106,8 @@ def _frame_id_generator():
         global _all_frames
         num = len(_all_frames)
         _all_frames.append(frame)
+        global thread_ids
+        thread_ids[num] = gdb.selected_thread().global_num
         return num
 
     def yield_frames(iterator, for_elided):

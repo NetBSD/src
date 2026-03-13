@@ -48,5 +48,5 @@ for {set i 0} {$i < 4} {incr i} {
 }
 
 gdb_test "continue" \
-         "Continuing\..*$inferior_exited_re.*" \
+         "Continuing\\..*$inferior_exited_re.*" \
          "continuing to program completion"

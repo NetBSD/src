@@ -1,0 +1,119 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Create a file with an artificially short (1-byte) build-id, and
+# check that GDB doesn't try to load debug information.  If we do try
+# then we end up loading from: `debug-directory/.build-id/xx/.debug`
+# which isn't right.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+# No remote host testing either.
+require {!is_remote host}
+
+standard_testfile main.c
+
+# Create an assembler file which encodes BUILDID as the build-id.  Compile
+# this along with the global SRCFILE to create a test executable.
+#
+# Split the debug information out from the newly created executable and place
+# it into the debug file directory.
+#
+# Load the executable into GDB and check to see if the debug information was
+# loaded or not.  For this test we are expecting that the debug information
+# was not loaded.  The reason is that, with short values for BUILDID, GDB ends
+# up looking for the debug information in weird locations.
+proc run_test { buildid } {
+    set len [string length $buildid]
+
+    set asm_file [standard_output_file "$::testfile.$len.S"]
+    Dwarf::assemble $asm_file {
+	declare_labels int_label int_label2
+
+	upvar buildid buildid
+
+	build_id $buildid
+
+	cu { label cu_start } {
+	    compile_unit {{language @DW_LANG_C}} {
+		int_label2: base_type {
+		    {name int}
+		    {byte_size 4 sdata}
+		    {encoding @DW_ATE_signed}
+		}
+
+		constant {
+		    {name the_int}
+		    {type :$int_label2}
+		    {const_value 99 data1}
+		}
+	    }
+	}
+
+	aranges {} cu_start {
+	    arange {} 0 0
+	}
+    }
+
+    set execfile [standard_output_file $::testfile.$len]
+
+    if { [build_executable_from_specs "failed to build" \
+	      $execfile {debug no-build-id} \
+	      $::srcfile debug \
+	      $asm_file {}] } {
+	return
+    }
+
+    # Create the debug directory.
+    set debugdir [standard_output_file "debugdir.$len"]
+    set build_id_dir $debugdir/.build-id/$buildid
+    remote_exec host "mkdir -p $build_id_dir"
+
+    # Split out the debug information.
+    if {[gdb_gnu_strip_debug $execfile no-debuglink]} {
+	unresolved "failed to split out debug information"
+	return
+    }
+
+    # Move the debug information into the debug directory.  We place the debug
+    # information into a file called just '.debug'.  GDB should not check this
+    # file, but at one point GDB would check this file, even though this
+    # doesn't make much sense.
+    set execfile_debug ${execfile}.debug
+    remote_exec host "mv $execfile_debug $build_id_dir/.debug"
+
+    # Start GDB, set the debug-file-directory, and try loading the file.
+    clean_restart
+
+    gdb_test_no_output "set debug-file-directory $debugdir" \
+	"set debug-file-directory"
+
+    gdb_file_cmd $execfile
+
+    gdb_assert { $::gdb_file_cmd_debug_info eq "nodebug" } \
+	"no debug should be loaded"
+
+    # For sanity, read something that was encoded in the debug
+    # information, this should fail.
+    gdb_test "print the_int" \
+	"(?:No symbol table is loaded|No symbol \"the_int\" in current context).*"
+}
+
+foreach_with_prefix buildid { a4 "" } {
+    run_test $buildid
+}

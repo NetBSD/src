@@ -26,9 +26,61 @@ extract_integer (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order
 {
   typename std::make_unsigned<T>::type retval = 0;
 
+  /* It is ok if BUF is wider than T, but only if the value is
+     representable.  */
+  bool bad_repr = false;
   if (buf.size () > (int) sizeof (T))
-    error (_("\
-That operation is not available on integers of more than %d bytes."),
+    {
+      const size_t end = buf.size () - sizeof (T);
+      if (byte_order == BFD_ENDIAN_BIG)
+	{
+	  for (size_t i = 0; i < end; ++i)
+	    {
+	      /* High bytes == 0 are always ok, and high bytes == 0xff
+		 are ok when the type is signed.  */
+	      if ((buf[i] == 0
+		   || (std::is_signed<T>::value && buf[i] == 0xff))
+		  /* All the high bytes must be the same, no
+		     alternating 0 and 0xff.  */
+		  && (i == 0 || buf[i - 1] == buf[i]))
+		{
+		  /* Ok.  */
+		}
+	      else
+		{
+		  bad_repr = true;
+		  break;
+		}
+	    }
+	  buf = buf.slice (end);
+	}
+      else
+	{
+	  size_t bufsz = buf.size () - 1;
+	  for (size_t i = bufsz; i >= end; --i)
+	    {
+	      /* High bytes == 0 are always ok, and high bytes == 0xff
+		 are ok when the type is signed.  */
+	      if ((buf[i] == 0
+		   || (std::is_signed<T>::value && buf[i] == 0xff))
+		  /* All the high bytes must be the same, no
+		     alternating 0 and 0xff.  */
+		  && (i == bufsz || buf[i] == buf[i + 1]))
+		{
+		  /* Ok.  */
+		}
+	      else
+		{
+		  bad_repr = true;
+		  break;
+		}
+	    }
+	  buf = buf.slice (0, end);
+	}
+    }
+
+  if (bad_repr)
+    error (_("Value cannot be represented as integer of %d bytes."),
 	   (int) sizeof (T));
 
   /* Start at the most significant end of the integer, and work towards
@@ -67,59 +119,6 @@ template LONGEST extract_integer<LONGEST> (gdb::array_view<const gdb_byte> buf,
 					   enum bfd_endian byte_order);
 template ULONGEST extract_integer<ULONGEST>
   (gdb::array_view<const gdb_byte> buf, enum bfd_endian byte_order);
-
-/* Sometimes a long long unsigned integer can be extracted as a
-   LONGEST value.  This is done so that we can print these values
-   better.  If this integer can be converted to a LONGEST, this
-   function returns 1 and sets *PVAL.  Otherwise it returns 0.  */
-
-int
-extract_long_unsigned_integer (const gdb_byte *addr, int orig_len,
-			       enum bfd_endian byte_order, LONGEST *pval)
-{
-  const gdb_byte *p;
-  const gdb_byte *first_addr;
-  int len;
-
-  len = orig_len;
-  if (byte_order == BFD_ENDIAN_BIG)
-    {
-      for (p = addr;
-	   len > (int) sizeof (LONGEST) && p < addr + orig_len;
-	   p++)
-	{
-	  if (*p == 0)
-	    len--;
-	  else
-	    break;
-	}
-      first_addr = p;
-    }
-  else
-    {
-      first_addr = addr;
-      for (p = addr + orig_len - 1;
-	   len > (int) sizeof (LONGEST) && p >= addr;
-	   p--)
-	{
-	  if (*p == 0)
-	    len--;
-	  else
-	    break;
-	}
-    }
-
-  if (len <= (int) sizeof (LONGEST))
-    {
-      *pval = (LONGEST) extract_unsigned_integer (first_addr,
-						  sizeof (LONGEST),
-						  byte_order);
-      return 1;
-    }
-
-  return 0;
-}
-
 
 /* Treat the bytes at BUF as a pointer of type TYPE, and return the
    address it represents.  */
@@ -293,6 +292,47 @@ copy_integer_to_size_test ()
   do_cint_test (0xff2112345678, 0xffffff2112345678, 8, 0xffffff2112345678, 6);
 }
 
+template<typename T>
+void
+do_extract_test (gdb_byte byte1, gdb_byte byte2, enum bfd_endian endian,
+		 std::optional<T> expected)
+{
+  std::optional<T> result;
+
+  try
+    {
+      const gdb_byte val[2] = { byte1, byte2 };
+      result = extract_integer<T> (gdb::make_array_view (val, 2), endian);
+    }
+  catch (const gdb_exception_error &)
+    {
+    }
+
+  SELF_CHECK (result == expected);
+}
+
+template<typename T>
+void
+do_extract_tests (gdb_byte low, gdb_byte high, std::optional<T> expected)
+{
+  do_extract_test (low, high, BFD_ENDIAN_LITTLE, expected);
+  do_extract_test (high, low, BFD_ENDIAN_BIG, expected);
+}
+
+static void
+extract_integer_test ()
+{
+  do_extract_tests<uint8_t> (0x00, 0xff, {});
+  do_extract_tests<uint8_t> (0x7f, 0x23, {});
+  do_extract_tests<uint8_t> (0x80, 0xff, {});
+  do_extract_tests<uint8_t> (0x00, 0x00, 0x00);
+
+  do_extract_tests<int8_t> (0xff, 0x00, 0xff);
+  do_extract_tests<int8_t> (0x7f, 0x23, {});
+  do_extract_tests<int8_t> (0x80, 0xff, 0x80);
+  do_extract_tests<int8_t> (0x00, 0x00, 0x00);
+}
+
 } // namespace selftests
 
 #endif
@@ -304,5 +344,7 @@ _initialize_extract_store_integer ()
 #if GDB_SELF_TEST
   selftests::register_test ("copy_integer_to_size",
 			    selftests::copy_integer_to_size_test);
+  selftests::register_test ("extract_integer",
+			    selftests::extract_integer_test);
 #endif
 }

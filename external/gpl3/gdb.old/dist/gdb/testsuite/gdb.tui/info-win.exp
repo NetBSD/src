@@ -40,7 +40,7 @@ Term::command "layout h"
 Term::command "winheight cmd + 3"
 
 # As the tuiterm.exp library just waits for the prompt and command to
-# be echo'ed bcak to the screen, multiple 'info win' calls like this
+# be echo'ed back to the screen, multiple 'info win' calls like this
 # have a problem.  Dejagnu will send the command to gdb, but will then
 # immediately see the '(gdb) info win' output from the first use
 # above.  This means we end up rushing ahead, and some tests might

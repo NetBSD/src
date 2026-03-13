@@ -29,6 +29,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set obj [dap_check_request_and_response "set exception catchpoints" \
 	     setExceptionBreakpoints \
 	     {o filters [a [s nosuchfilter] [s assert]] \
@@ -57,15 +59,20 @@ foreach spec $bps {
 	    gdb_assert {[dict get $spec source path] != "null"} \
 		"breakpoint $i path"
 	}
+
+	# Breakpoint should be unverified and pending.
+	gdb_assert {[dict get $spec verified] == "false"} \
+	    "catchpoint $i is unverified"
+	gdb_assert {[dict get $spec reason] == "pending"} \
+	    "catchpoint $i is pending"
     }
     incr i
 }
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $binfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "stopped at first raise" stopped \
     "body reason" breakpoint \
     "body hitBreakpointIds" 2

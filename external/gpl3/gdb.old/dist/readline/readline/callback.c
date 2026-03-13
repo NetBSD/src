@@ -115,7 +115,10 @@ rl_callback_handler_install (const char *prompt, rl_vcpfunc_t *linefunc)
 #define CALLBACK_READ_RETURN() \
   do { \
     if (rl_persistent_signal_handlers == 0) \
-      rl_clear_signals (); \
+      { \
+        rl_clear_signals (); \
+        if (_rl_caught_signal) _rl_signal_handler (_rl_caught_signal); \
+      } \
     return; \
   } while (0)
 #else
@@ -149,6 +152,14 @@ rl_callback_read_char (void)
       (*rl_redisplay_function) ();
       _rl_want_redisplay = 0;
       memcpy ((void *)_rl_top_level, (void *)olevel, sizeof (procenv_t));
+
+      /* If we longjmped because of a timeout, handle it here. */
+      if (RL_ISSTATE (RL_STATE_TIMEOUT))
+	{
+	  RL_SETSTATE (RL_STATE_DONE);
+	  rl_done = 1;
+	}
+
       CALLBACK_READ_RETURN ();
     }
 
@@ -287,7 +298,8 @@ rl_callback_read_char (void)
 	  rl_clear_signals ();
 #endif
 	  in_handler = 0;
-	  (*rl_linefunc) (line);
+	  if (rl_linefunc)			/* just in case */
+	    (*rl_linefunc) (line);
 
 	  /* If the user did not clear out the line, do it for him. */
 	  if (rl_line_buffer[0])

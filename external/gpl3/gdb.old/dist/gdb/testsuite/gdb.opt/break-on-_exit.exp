@@ -18,7 +18,7 @@
 # set past the syscall due to faulty prologue skipping, the breakpoint will not
 # trigger.
 #
-# In particular, we're trying to excercise the instruction analysis
+# In particular, we're trying to exercise the instruction analysis
 # functionality of prologue skipping.  If the non-minimal symbols are
 # read for libc, then that functionality might not be used because f.i.
 # line-info is used instead.  Also, if the minimal symbols are not read

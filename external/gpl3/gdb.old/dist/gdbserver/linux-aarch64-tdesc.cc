@@ -26,16 +26,17 @@
 #include <inttypes.h>
 #include <unordered_map>
 
-/* All possible aarch64 target descriptors.  */
-static std::unordered_map<aarch64_features, target_desc *> tdesc_aarch64_map;
-
-static std::vector<const char *> expedited_registers;
-
 /* Create the aarch64 target description.  */
 
 const target_desc *
 aarch64_linux_read_description (const aarch64_features &features)
 {
+  /* All possible aarch64 target descriptors.  This map must live within
+     this function as the in-process-agent calls this function from a
+     constructor function, when globals might not yet have been
+     initialised.  */
+  static std::unordered_map<aarch64_features, target_desc *> tdesc_aarch64_map;
+
   if (features.vq > AARCH64_MAX_SVE_VQ)
     error (_("VQ is %" PRIu64 ", maximum supported value is %d"), features.vq,
 	   AARCH64_MAX_SVE_VQ);
@@ -50,10 +51,11 @@ aarch64_linux_read_description (const aarch64_features &features)
   if (tdesc == NULL)
     {
       tdesc = aarch64_create_target_description (features);
-      expedited_registers.clear ();
 
-      /* Configure the expedited registers.  By default we include x29, sp and
-	 pc.  */
+      /* Configure the expedited registers.  Calling init_target_desc takes
+	 a copy of all the strings pointed to by expedited_registers so this
+	 vector only needs to live for the scope of this function.  */
+      std::vector<const char *> expedited_registers;
       expedited_registers.push_back ("x29");
       expedited_registers.push_back ("sp");
       expedited_registers.push_back ("pc");
@@ -65,7 +67,8 @@ aarch64_linux_read_description (const aarch64_features &features)
 
       expedited_registers.push_back (nullptr);
 
-      init_target_desc (tdesc, (const char **) expedited_registers.data ());
+      init_target_desc (tdesc, (const char **) expedited_registers.data (),
+			GDB_OSABI_LINUX);
 
       tdesc_aarch64_map[features] = tdesc;
     }

@@ -49,11 +49,12 @@ if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
 # or "extended-remote".  Check the output of 'info connections', and
 # the contents of the gdb.TargetConnection.details string.
 proc do_test { target } {
+    global timeout
     clean_restart ${::binfile}
 
     # Make sure we're disconnected, in case we're testing with an
     # extended-remote board, therefore already connected.
-    gdb_test "disconnect" ".*"
+    gdb_test "disconnect" ".*" "disconnect before running the test"
 
     gdb_test "target ${target} | ${::gdbserver} - ${::binfile}" ".*" \
 	"start gdbserver using pipe syntax"
@@ -68,6 +69,16 @@ proc do_test { target } {
 	gdb_test_no_output "python conn = gdb.selected_inferior().connection"
 	gdb_test "python print(conn.details)" "\| ${::gdbserver} - ${::binfile}"
     }
+
+    # Make sure GDB server doesn't attempt to reconnect with a closed STDIN.
+    # Here we set the timeout to a short value to see if GDB will hang in an
+    # attempt to reconnect with the now closed STDIN. For this test to be
+    # useful the new temporary timeout MUST be shorter than PIPE_CLOSE_TIMEOUT
+    # defined in gdb/ser-pipe.c (5 seconds at the time of writing).
+    set prev_timeout $timeout
+    set timeout 2
+    gdb_test "disconnect" ".*" "disconnect and test for hang"
+    set timeout $prev_timeout
 }
 
 save_vars { GDBFLAGS } {

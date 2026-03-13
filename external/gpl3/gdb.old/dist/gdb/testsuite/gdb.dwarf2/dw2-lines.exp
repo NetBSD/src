@@ -88,6 +88,10 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
 		# to set the current file explicitly.
 		DW_LNS_set_file $diridx
 
+		DW_LNE_set_address $bar_start
+		line [line_for bar]
+		DW_LNS_copy
+
 		DW_LNE_set_address bar_label
 		line [line_for bar_label]
 		DW_LNS_copy
@@ -122,9 +126,9 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
     gdb_breakpoint "bar_label"
     gdb_continue_to_breakpoint "foo \\(1\\)"
 
-    gdb_test "next" "foo \\(2\\).*" "next to foo (2)"
-    gdb_test "next" "foo \\(3\\).*" "next to foo (3)"
-    gdb_test "next" "foo \\(4\\).*" "next to foo (4)"
+    gdb_test "next" "foo \\(2\\).*" "next to foo(2)"
+    gdb_test "next" "foo \\(3\\).*" "next to foo(3)"
+    gdb_test "next" "foo \\(4\\).*" "next to foo(4)"
 }
 
 

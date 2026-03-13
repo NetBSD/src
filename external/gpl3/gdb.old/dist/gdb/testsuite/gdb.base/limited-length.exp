@@ -240,3 +240,13 @@ with_test_prefix "with unlimited print elements" {
 	"value is not available" \
 	"output expression referring unavailable element from history"
 }
+
+gdb_test_no_output "set max-value-size 10000"
+gdb_test_no_output "set print elements 200"
+
+gdb_test "print large_empty_string" \
+    " = \\\{0 '\\\\000' <repeats 10000 times>, <unavailable> <repeats 90000 times>\\\}" \
+    "print large empty string which is not fully available"
+gdb_test -nonl "output large_empty_string" \
+    "\\\{0 '\\\\000' <repeats 10000 times>, <unavailable> <repeats 90000 times>\\\}" \
+    "output large empty string which is not fully available"

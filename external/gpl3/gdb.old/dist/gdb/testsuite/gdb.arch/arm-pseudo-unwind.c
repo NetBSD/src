@@ -24,10 +24,17 @@ break_here_c (uint64_t value)
 {
 }
 
+__attribute__((target("arm")))
+uint64_t
+caller_trampoline (void)
+{
+  return caller ();
+}
+
 int
 main (void)
 {
-  uint64_t value = caller ();
+  uint64_t value = caller_trampoline ();
   break_here_c (value);
   return 0;
 }

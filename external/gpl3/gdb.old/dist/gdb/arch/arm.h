@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_ARM_H
-#define ARCH_ARM_H
+#ifndef GDB_ARCH_ARM_H
+#define GDB_ARCH_ARM_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -227,4 +227,4 @@ target_desc *arm_create_target_description (arm_fp_type fp_type, bool tls);
 
 target_desc *arm_create_mprofile_target_description (arm_m_profile_type m_type);
 
-#endif /* ARCH_ARM_H */
+#endif /* GDB_ARCH_ARM_H */

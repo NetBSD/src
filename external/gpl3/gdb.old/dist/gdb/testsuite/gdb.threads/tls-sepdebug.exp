@@ -65,16 +65,21 @@ if  { [gdb_compile_pthreads \
 }
 
 set absdir [file dirname [standard_output_file ${binsharedbase}]]
+if { [info exists ::env(LD_LIBRARY_PATH)] } {
+    set ld_library_path $::env(LD_LIBRARY_PATH)
+} else {
+    set ld_library_path ""
+}
 
-foreach ld_library_path [list $absdir [relative_filename [pwd] $absdir]] \
+foreach library_path [list $absdir [relative_filename [pwd] $absdir]] \
 	name { absolute relative } {
     with_test_prefix $name {
 
 	# Restart, but defer loading until after setting LD_LIBRARY_PATH.
 	clean_restart
-
-	gdb_test_no_output "set env LD_LIBRARY_PATH=$ld_library_path" \
-			   "set env LD_LIBRARY_PATH"
+	gdb_test_no_output \
+	    "set env LD_LIBRARY_PATH=$ld_library_path:$library_path" \
+	    "set env LD_LIBRARY_PATH"
 
 	gdb_load ${binmainfile}
 

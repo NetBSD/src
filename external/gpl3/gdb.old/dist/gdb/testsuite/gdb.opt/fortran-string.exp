@@ -33,5 +33,5 @@ if {![runto f]} {
 
 gdb_test_no_output "set print frame-arguments all"
 gdb_test "frame" ".*s='foo'.*"
-gdb_test "ptype s" "type = character \\(3\\)"
+gdb_test "ptype s" "type = character\\*3"
 gdb_test "p s" "\\$\[0-9\]* = 'foo'"

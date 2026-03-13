@@ -124,7 +124,7 @@ if {$is_remote} {
     #
     # However, we might be too quick sending the 'info threads 99' command,
     # so, if we see the output of that command without any thread exited
-    # text, we wait for a short while and try again.  We wait for upto 5
+    # text, we wait for a short while and try again.  We wait for up to 5
     # seconds (5 tries).  However, this might mean on a _really_ slow
     # machine that the thread still hasn't exited.  I guess if we start
     # seeing that then we can just update ATTEMPT_COUNT below.

@@ -30,7 +30,7 @@ Dwarf::assemble $asm_file {
 	    # Check handling of self-referencing DIE.
 	    declare_labels c1
 	    c1: class_type {
-		{name c1}
+		{name class1}
 		{specification :$c1}
 	    }
 
@@ -59,8 +59,8 @@ require {string eq $index ""}
 
 require !readnow
 
-gdb_test "maint print objfiles $testfile" \
-    "\r\n *qualified: *c1\r\n.*" \
+gdb_test "pipe maint print objfiles $testfile | grep class1" \
+    " *qualified: *class1" \
     "class c1 in cooked index"
 
 gdb_test "maint expand-symtabs"

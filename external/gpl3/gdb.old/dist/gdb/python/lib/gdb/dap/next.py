@@ -73,10 +73,10 @@ def step_in(
     exec_and_expect_stop(cmd)
 
 
-@request("stepOut", response=False)
+@request("stepOut", defer_stop_events=True)
 def step_out(*, threadId: int, singleThread: bool = False, **args):
     _handle_thread_step(threadId, singleThread, True)
-    exec_and_expect_stop("finish")
+    exec_and_expect_stop("finish &", propagate_exception=True)
 
 
 # This is a server-side request because it is funny: it wants to
