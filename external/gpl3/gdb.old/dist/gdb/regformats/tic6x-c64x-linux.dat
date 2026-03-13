@@ -4,6 +4,7 @@ name:tic6x_c64x_linux
 feature:1
 xmltarget:tic6x-c64x-linux.xml
 expedite:A15,PC
+osabi:GNU/Linux
 32:A0
 32:A1
 32:A2

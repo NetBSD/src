@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (EXPRESSION_H)
-#define EXPRESSION_H 1
+#ifndef GDB_EXPRESSION_H
+#define GDB_EXPRESSION_H
 
 #include "gdbtypes.h"
 #include "symtab.h"
@@ -147,6 +147,11 @@ public:
   virtual bool uses_objfile (struct objfile *objfile) const
   { return false; }
 
+  /* Some expression nodes represent a type, not a value.  This method
+     should be overridden to return 'true' in these situations.  */
+  virtual bool type_p () const
+  { return false; }
+
   /* Generate agent expression bytecodes for this operation.  */
   void generate_ax (struct expression *exp, struct agent_expr *ax,
 		    struct axs_value *value,
@@ -214,6 +219,11 @@ struct expression
   {
     op->dump (stream, 0);
   }
+
+  /* Call the type_p method on the outermost sub-expression of this
+     expression, and return the result.  */
+  bool type_p () const
+  { return op->type_p (); }
 
   /* Return true if this expression uses OBJFILE (and will become
      dangling when OBJFILE is unloaded), otherwise return false.
@@ -387,4 +397,4 @@ enum range_flag : unsigned
 
 DEF_ENUM_FLAGS_TYPE (enum range_flag, range_flags);
 
-#endif /* !defined (EXPRESSION_H) */
+#endif /* GDB_EXPRESSION_H */

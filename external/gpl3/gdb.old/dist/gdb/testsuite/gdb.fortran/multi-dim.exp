@@ -41,19 +41,19 @@ gdb_test "print foo(2,3,4)" \
 
 gdb_test "print foo(0,0,0)" \
     "no such vector element" \
-    "print an invalid array index (0,0,0)"
+    "print an invalid array index @ 0,0,0"
 
 gdb_test "print foo(2,3,5)" \
     "no such vector element" \
-    "print an invalid array index (2,3,5)"
+    "print an invalid array index @ 2,3,5"
 
 gdb_test "print foo(2,4,4)" \
     "no such vector element" \
-    "print an invalid array index (2,4,4)"
+    "print an invalid array index @ 2,4,4"
 
 gdb_test "print foo(3,3,4)" \
     "no such vector element" \
-    "print an invalid array index (3,3,4)"
+    "print an invalid array index @ 3,3,4"
 
 gdb_test "print foo" \
     { = \(\(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 10\)\) \(\(10, 10\) \(10, 10\) \(10, 20\)\)\)} \

@@ -443,6 +443,8 @@ main (void)
       else if (strcmp (cpu_string, "z16") == 0
 	       || strcmp (cpu_string, "arch14") == 0)
 	min_cpu = S390_OPCODE_ARCH14;
+      else if (strcmp (cpu_string, "arch15") == 0)
+	min_cpu = S390_OPCODE_ARCH15;
       else {
 	print_error ("Mnemonic \"%s\": Couldn't parse CPU string: %s\n",
 		     mnemonic, cpu_string);

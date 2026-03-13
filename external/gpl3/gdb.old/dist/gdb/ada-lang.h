@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (ADA_LANG_H)
-#define ADA_LANG_H 1
+#ifndef GDB_ADA_LANG_H
+#define GDB_ADA_LANG_H
 
 class frame_info_ptr;
 struct inferior;
@@ -236,12 +236,10 @@ extern struct block_symbol ada_lookup_symbol (const char *,
 					      const struct block *,
 					      domain_search_flags);
 
-extern void ada_lookup_encoded_symbol
-  (const char *name, const struct block *block, domain_search_flags domain,
-   struct block_symbol *symbol_info);
+extern block_symbol ada_lookup_encoded_symbol
+  (const char *name, const struct block *block, domain_search_flags domain);
 
-extern struct bound_minimal_symbol ada_lookup_simple_minsym (const char *,
-							     objfile *);
+extern bound_minimal_symbol ada_lookup_simple_minsym (const char *, objfile *);
 
 extern int ada_scan_number (const char *, int, LONGEST *, int *);
 
@@ -435,4 +433,8 @@ extern block_symbol ada_resolve_variable (struct symbol *sym,
 extern struct type *ada_index_type (struct type *type, int n,
 				    const char *name);
 
-#endif
+/* Clear the Ada symbol cache.  */
+
+extern void ada_clear_symbol_cache (program_space *pspace);
+
+#endif /* GDB_ADA_LANG_H */

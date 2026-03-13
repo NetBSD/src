@@ -65,6 +65,41 @@ Dwarf::assemble $asm_file {
 	    }
 	}
     }
+
+    cu {} {
+	DW_TAG_compile_unit {
+		{DW_AT_language @DW_LANG_C_plus_plus}
+		{DW_AT_name	tmp.c}
+		{DW_AT_comp_dir /tmp}
+	} {
+	    declare_labels integer_label forward
+
+	    integer_label: DW_TAG_base_type {
+		{DW_AT_byte_size 4 DW_FORM_sdata}
+		{DW_AT_encoding	 @DW_ATE_signed}
+		{DW_AT_name	 int}
+	    }
+
+	    DW_TAG_enumeration_type {
+		{DW_AT_specification :$forward}
+	    } {
+		DW_TAG_enumerator {
+		    {DW_AT_name val1}
+		    {DW_AT_const_value 1 DW_FORM_sdata}
+		}
+	    }
+
+	    DW_TAG_namespace {
+		{DW_AT_name ns}
+	    } {
+		forward: DW_TAG_enumeration_type {
+		    {DW_AT_name e}
+		    {DW_AT_type :$integer_label}
+		    {DW_AT_declaration 1 flag}
+		}
+	    }
+	}
+    }
 }
 
 if { [prepare_for_testing "failed to prepare" ${testfile} \
@@ -79,3 +114,18 @@ gdb_test "ptype enum EU" "type = enum EU {TWO = 2}" \
 gdb_test_no_output "set lang c++"
 gdb_test "ptype enum EU" "type = enum EU : unsigned int {TWO = 2}" \
     "ptype EU in C++"
+
+gdb_test "p ns::val1" \
+    " = ns::val1"
+
+require !readnow
+require {string equal [have_index $binfile] ""}
+
+set re_ws "\[ \t\]"
+
+gdb_test_lines "maint print objfiles" \
+    "val1 has a parent" \
+    [multi_line \
+	 "" \
+	 "$re_ws+qualified:$re_ws+ns::val1" \
+	 ".*"]

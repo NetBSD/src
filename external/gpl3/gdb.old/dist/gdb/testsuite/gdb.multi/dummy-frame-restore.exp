@@ -62,12 +62,12 @@ proc test { inf1 inf2 } {
 
     with_test_prefix "inf $inf1 first" {
 	gdb_test "inferior 2" "witching to inferior 2 .*" \
-	    "switch to inferior 2 (1)"
+	    "switch to inferior 2, 1"
 	check_bt 2 "before infcall"
 	gdb_test "p commonfun()" "Breakpoint .*The program being debugged stopped while in a function called from GDB.*" "infcall in inferior 2"
 
 	gdb_test "inferior 1" "witching to inferior 1 .*" \
-	    "switch to inferior 1 (1)"
+	    "switch to inferior 1, 1"
 	check_bt 1 "before infcall"
 	gdb_test "p commonfun()" "Breakpoint .*The program being debugged stopped while in a function called from GDB.*" "infcall in inferior 1"
 
@@ -75,13 +75,13 @@ proc test { inf1 inf2 } {
 	    "two dummy frames"
 
 	gdb_test "inferior $inf1" "witching to inferior $inf1 .*" \
-	    "switch to inferior $inf1 (2)"
+	    "switch to inferior $inf1, 2"
 	gdb_test "finish" "Run till exit from #0  commonfun .*" \
 	    "finish in inferior $inf1"
 	check_bt $inf1 "after infcall"
 
 	gdb_test "inferior $inf2" "witching to inferior $inf2 .*" \
-	    "switch to inferior $inf2 (2)"
+	    "switch to inferior $inf2, 2"
 	gdb_test "finish" "Run till exit from #0  commonfun .*" \
 	    "finish in inferior $inf2"
 	check_bt $inf2 "after infcall"

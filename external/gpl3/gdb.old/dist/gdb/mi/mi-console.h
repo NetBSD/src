@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_CONSOLE_H
-#define MI_MI_CONSOLE_H
+#ifndef GDB_MI_MI_CONSOLE_H
+#define GDB_MI_MI_CONSOLE_H
 
 /* An output stream for MI.  Wraps a given output stream with a prefix
    and handles quoting.  This stream is locally buffered.  */
@@ -55,4 +55,4 @@ private:
   char m_quote;
 };
 
-#endif /* MI_MI_CONSOLE_H */
+#endif /* GDB_MI_MI_CONSOLE_H */

@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXTENSION_H
-#define EXTENSION_H
+#ifndef GDB_EXTENSION_H
+#define GDB_EXTENSION_H
 
 #include "mi/mi-cmds.h"
 #include "gdbsupport/array-view.h"
-#include "hashtab.h"
 #include <optional>
+#include "gdbtypes.h"
 
 struct breakpoint;
 struct command_line;
@@ -36,6 +36,7 @@ struct ui_file;
 struct ui_out;
 struct value;
 struct value_print_options;
+struct program_space;
 
 /* A function to load and process a script file.
    The file has been opened and is ready to be read from the beginning.
@@ -176,7 +177,7 @@ enum ext_lang_rc
 
   /* There was an error (e.g., Python error while printing a value).
      When an error occurs no further extension languages are tried.
-     This is to preserve existing behaviour, and because it's convenient
+     This is to preserve existing behavior, and because it's convenient
      for Python developers.
      Note: This is different than encountering a memory error trying to read
      a value for pretty-printing.  Here we're referring to, e.g., programming
@@ -303,7 +304,11 @@ extern enum ext_lang_bt_status apply_ext_lang_frame_filter
    enum ext_lang_frame_args args_type,
    struct ui_out *out, int frame_low, int frame_high);
 
-extern void preserve_ext_lang_values (struct objfile *, htab_t copied_types);
+extern void apply_ext_lang_ptwrite_filter
+  (struct btrace_thread_info *btinfo);
+
+extern void preserve_ext_lang_values (struct objfile *,
+				      copied_types_hash_t &copied_types);
 
 extern const struct extension_language_defn *get_breakpoint_cond_ext_lang
   (struct breakpoint *b, enum extension_language skip_lang);
@@ -358,23 +363,23 @@ extern std::optional<int> ext_lang_print_insn
    it.  And the third option is for the extension to just return a null
    result, indication there is nothing the extension can do to provide the
    missing debug information.  */
-struct ext_lang_missing_debuginfo_result
+struct ext_lang_missing_file_result
 {
   /* Default result.  The extension was unable to provide the missing debug
      info.  */
-  ext_lang_missing_debuginfo_result ()
+  ext_lang_missing_file_result ()
   { /* Nothing.  */ }
 
   /* When TRY_AGAIN is true GDB should try searching again, the extension
      may have installed the missing debug info into a suitable location.
      When TRY_AGAIN is false this is equivalent to the default, no
      argument, constructor.  */
-  ext_lang_missing_debuginfo_result (bool try_again)
+  ext_lang_missing_file_result (bool try_again)
     : m_try_again (try_again)
   { /* Nothing.  */ }
 
   /* Look in FILENAME for the missing debug info.  */
-  ext_lang_missing_debuginfo_result (std::string &&filename)
+  ext_lang_missing_file_result (std::string &&filename)
     : m_filename (std::move (filename))
   { /* Nothing.  */ }
 
@@ -404,8 +409,27 @@ private:
 
 /* Called when GDB failed to find any debug information for OBJFILE.  */
 
-extern ext_lang_missing_debuginfo_result ext_lang_handle_missing_debuginfo
+extern ext_lang_missing_file_result ext_lang_handle_missing_debuginfo
   (struct objfile *objfile);
+
+/* Called when GDB opens a core-file to find any object files for which a
+   build-id could be extracted from the core-file, but the matching file
+   could not otherwise be found by GDB.
+
+   PSPACE is the program space in which GDB is opening the core-file and
+   is looking for a missing object file.  BUILD_ID is the build-id of the
+   file being looked for, and will not be NULL.  FILENAME is the name of
+   the file GDB is looking for, this will not be NULL.  The FILENAME is
+   provided only for creating helpful messages for the user.  FILENAME
+   might already exist on disk but have the wrong build-id, of FILENAME
+   might not exist on disk.  If the missing objfile can be found then it
+   does not have to be placed at the location FILENAME.
+
+   The returned object indicates if the file could be found or not.  */
+
+extern ext_lang_missing_file_result ext_lang_find_objfile_from_buildid
+  (program_space *pspace, const struct bfd_build_id *build_id,
+   const char *filename);
 
 #if GDB_SELF_TEST
 namespace selftests {
@@ -459,4 +483,4 @@ extern bool check_quit_flag ();
 
 extern void set_quit_flag ();
 
-#endif /* EXTENSION_H */
+#endif /* GDB_EXTENSION_H */

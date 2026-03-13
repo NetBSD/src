@@ -46,7 +46,6 @@
 # List of .dat files to create in ../regformats/
 WHICH = mips-linux mips-dsp-linux \
 	mips64-linux mips64-dsp-linux \
-	nios2-linux \
 	or1k-linux \
 	rs6000/powerpc-32 \
 	rs6000/powerpc-32l rs6000/powerpc-altivec32l rs6000/powerpc-e500l \
@@ -73,7 +72,6 @@ mips-expedite = r29,pc
 mips-dsp-expedite = r29,pc
 mips64-expedite = r29,pc
 mips64-dsp-expedite = r29,pc
-nios2-linux-expedite = sp,pc
 or1k-expedite = r1,npc
 powerpc-expedite = r1,pc
 s390-linux32-expedite = r14,r15,pswa
@@ -107,7 +105,6 @@ XMLTOC = \
 	mips64-dsp-linux.xml \
 	mips64-linux.xml \
 	nds32.xml \
-	nios2.xml \
 	or1k.xml \
 	or1k-linux.xml \
 	rs6000/powerpc-32.xml \
@@ -191,6 +188,8 @@ $(outdir)/%.dat: %.xml number-regs.xsl sort-regs.xsl gdbserver-regs.xsl
 	echo "xmltarget:$(<F)" >> $(outdir)/$*.tmp
 	echo "expedite:$(if $($*-expedite),$($*-expedite),$($(firstword $(subst -, ,$(notdir $*)))-expedite))" \
 	  >> $(outdir)/$*.tmp
+	$(XSLTPROC) --path "$(PWD)" --xinclude print-osabi.xsl $< \
+	  >> $(outdir)/$*.tmp
 	$(XSLTPROC) --path "$(PWD)" --xinclude number-regs.xsl $< | \
 	  $(XSLTPROC) sort-regs.xsl - | \
 	  $(XSLTPROC) gdbserver-regs.xsl - >> $(outdir)/$*.tmp
@@ -222,12 +221,10 @@ FEATURE_XMLFILES = aarch64-core.xml \
 	i386/32bit-sse.xml \
 	i386/32bit-linux.xml \
 	i386/32bit-avx.xml \
-	i386/32bit-mpx.xml \
 	i386/32bit-avx512.xml \
 	i386/32bit-segments.xml \
 	i386/64bit-avx512.xml \
 	i386/64bit-core.xml \
-	i386/64bit-mpx.xml \
 	i386/64bit-segments.xml \
 	i386/64bit-avx.xml \
 	i386/64bit-linux.xml \

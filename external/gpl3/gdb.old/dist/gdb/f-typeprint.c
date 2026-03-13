@@ -21,8 +21,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
-#include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"

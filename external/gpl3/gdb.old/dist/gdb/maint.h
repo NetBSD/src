@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MAINT_H
-#define MAINT_H
+#ifndef GDB_MAINT_H
+#define GDB_MAINT_H
 
 #include "gdbsupport/run-time-clock.h"
 #include <chrono>
@@ -70,4 +70,4 @@ class scoped_command_stats
 extern obj_section *maint_obj_section_from_bfd_section (bfd *abfd,
 							asection *asection,
 							objfile *ofile);
-#endif /* MAINT_H */
+#endif /* GDB_MAINT_H */

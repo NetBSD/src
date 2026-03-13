@@ -104,7 +104,7 @@ thpy_get_details (PyObject *self, void *ignore)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
   if (extra_info == nullptr)
     Py_RETURN_NONE;
@@ -212,7 +212,7 @@ thpy_get_ptid_string (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 }
 
@@ -245,7 +245,7 @@ thpy_switch (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -330,7 +330,7 @@ thpy_thread_handle (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (hv.size () == 0)
@@ -412,11 +412,7 @@ gdbpy_selected_thread (PyObject *self, PyObject *args)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_thread (void)
 {
-  if (PyType_Ready (&thread_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "InferiorThread",
-				 (PyObject *) &thread_object_type);
+  return gdbpy_type_ready (&thread_object_type);
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_thread);

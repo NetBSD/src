@@ -476,9 +476,6 @@ proc_with_prefix test_no_break_on_catchpoint {} {
 
 test_no_break_on_catchpoint
 
-# Verify that GDB responds gracefully when asked to set a breakpoint
-# on a nonexistent source line.
-
 proc_with_prefix test_break_nonexistent_line {} {
     clean_restart break
 
@@ -486,9 +483,11 @@ proc_with_prefix test_break_nonexistent_line {} {
 	return
     }
 
+    # Verify that GDB responds gracefully when asked to set a
+    # breakpoint on a nonexistent source line.
     gdb_test_no_output "set breakpoint pending off"
     gdb_test "break 999" \
-	"No line 999 in the current file." \
+	"^No compiled code for line 999 in the current file\\." \
 	"break on non-existent source line"
 }
 

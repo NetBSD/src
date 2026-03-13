@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_H)
-#define FRAME_H 1
+#ifndef GDB_FRAME_H
+#define GDB_FRAME_H
 
 /* The following is the intended naming schema for frame functions.
    It isn't 100% consistent, but it is approaching that.  Frame naming
@@ -1077,4 +1077,4 @@ extern void set_frame_previous_pc_masked (const frame_info_ptr &frame);
 extern bool get_frame_pc_masked (const frame_info_ptr &frame);
 
 
-#endif /* !defined (FRAME_H)  */
+#endif /* GDB_FRAME_H */

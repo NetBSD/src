@@ -33,7 +33,7 @@ if { ![runto_main] } {
     return 0
 }
 
-# Verify set may-call-functions behaviour.
+# Verify set may-call-functions behavior.
 gdb_test_no_output "set may-call-functions off"
 gdb_test "call callexit()" \
     "Cannot call functions in the program: may-call-functions is off." \

@@ -101,7 +101,7 @@ SYMBOL(main):
 	.byte	0x87
 	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 
-	/* Manually inserted to have a DW_AT_specification refering to
+	/* Manually inserted to have a DW_AT_specification referring to
 	   something and appearing ahead of it.  */
 	.uleb128 0x8	/* DW_TAG_class_type */
 	.4byte .Ltu_class_type - .Ldebug_types0
@@ -185,7 +185,7 @@ SYMBOL(main):
 		.byte	0x3	/* DW_OP_addr */
 		.4byte	baz
 
-		/* Manually inserted to have a DW_AT_specification refering to
+		/* Manually inserted to have a DW_AT_specification referring to
 		   something and appearing ahead of it.  */
 		.uleb128 0x8	/* DW_TAG_class_type */
 		.4byte .Lcu_class_type - .Ldebug_info0 /* DW_AT_specification */

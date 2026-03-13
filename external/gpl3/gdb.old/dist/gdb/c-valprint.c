@@ -176,8 +176,7 @@ print_unpacked_pointer (struct type *type, struct type *elttype,
     {
       /* Print vtbl's nicely.  */
       CORE_ADDR vt_address = unpack_pointer (type, valaddr + embedded_offset);
-      struct bound_minimal_symbol msymbol =
-	lookup_minimal_symbol_by_pc (vt_address);
+      bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (vt_address);
 
       /* If 'symbol_print' is set, we did the work above.  */
       if (!options->symbol_print

@@ -65,7 +65,8 @@ EXTERNAL
 .  {
 .    bfd_plugin_unknown = 0,
 .    bfd_plugin_yes = 1,
-.    bfd_plugin_no = 2
+.    bfd_plugin_yes_unused = 2,
+.    bfd_plugin_no = 3
 .  };
 .
 .struct bfd_build_id
@@ -1089,8 +1090,14 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 	      ptr += 2;
 	    }
 
+	  /* There is a clash between Microsoft's non-standard I64
+	     and I32 integer length modifiers and glibc's
+	     non-standard I flag.  */
+	  const char *printf_flag_chars
+	    = sizeof PRId64 == sizeof "I64d" ? "-+ #0'" : "-+ #0'I";
+
 	  /* Move past flags.  */
-	  while (strchr ("-+ #0'I", *ptr))
+	  while (strchr (printf_flag_chars, *ptr))
 	    *sptr++ = *ptr++;
 
 	  if (*ptr == '*')
@@ -1139,6 +1146,22 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 		/* Handle explicit numeric value.  */
 		while (ISDIGIT (*ptr))
 		  *sptr++ = *ptr++;
+	    }
+	  if (sizeof PRId64 == sizeof "I64d" && *ptr =='I')
+	    {
+	      if (ptr[1] == '6' && ptr[2] == '4')
+		{
+		  wide_width = 3;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		}
+	      else if (ptr[1] == '3' && ptr[2] == '2')
+		{
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		}
 	    }
 	  while (strchr ("hlL", *ptr))
 	    {
@@ -1191,14 +1214,17 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 			PRINT_TYPE (long, l);
 			break;
 		      case 2:
+			if (sizeof PRId64 == sizeof "I64d")
+			  {
+			    /* Convert any %ll to %I64.  */
+			    sptr[-3] = 'I';
+			    sptr[-2] = '6';
+			    sptr[-1] = '4';
+			    *sptr++ = ptr[-1];
+			    *sptr = '\0';
+			  }
+			/* Fall through.  */
 		      default:
-#if defined (__MSVCRT__)
-			sptr[-3] = 'I';
-			sptr[-2] = '6';
-			sptr[-1] = '4';
-			*sptr++ = ptr[-1];
-			*sptr = '\0';
-#endif
 			PRINT_TYPE (long long, ll);
 			break;
 		      }
@@ -1321,8 +1347,14 @@ _bfd_doprnt_scan (const char *format, va_list ap, union _bfd_doprnt_args *args)
 	      ptr += 2;
 	    }
 
+	  /* There is a clash between Microsoft's non-standard I64
+	     and I32 integer length modifiers and glibc's
+	     non-standard I flag.  */
+	  const char *printf_flag_chars
+	    = sizeof PRId64 == sizeof "I64d" ? "-+ #0'" : "-+ #0'I";
+
 	  /* Move past flags.  */
-	  while (strchr ("-+ #0'I", *ptr))
+	  while (strchr (printf_flag_chars, *ptr))
 	    ptr++;
 
 	  if (*ptr == '*')
@@ -1370,6 +1402,17 @@ _bfd_doprnt_scan (const char *format, va_list ap, union _bfd_doprnt_args *args)
 		/* Handle explicit numeric value.  */
 		while (ISDIGIT (*ptr))
 		  ptr++;
+	    }
+
+	  if (sizeof PRId64 == sizeof "I64d" && *ptr =='I')
+	    {
+	      if (ptr[1] == '6' && ptr[2] == '4')
+		{
+		  wide_width = 3;
+		  ptr += 3;
+		}
+	      else if (ptr[1] == '3' && ptr[2] == '2')
+		ptr += 3;
 	    }
 	  while (strchr ("hlL", *ptr))
 	    {
@@ -1956,6 +1999,23 @@ static bfd_lock_unlock_fn_type unlock_fn;
 static void *lock_data;
 
 /*
+INTERNAL_FUNCTION
+	_bfd_threading_enabled
+
+SYNOPSIS
+	bool _bfd_threading_enabled (void);
+
+DESCRIPTION
+	Return true if threading is enabled, false if not.
+*/
+
+bool
+_bfd_threading_enabled (void)
+{
+  return lock_fn != NULL;
+}
+
+/*
 FUNCTION
 	bfd_thread_init
 
@@ -1973,7 +2033,9 @@ DESCRIPTION
 	success and false on error.  DATA is passed verbatim to the
 	lock and unlock functions.  The lock and unlock functions
 	should return true on success, or set the BFD error and return
-	false on failure.
+	false on failure.  Note also that the lock must be a recursive
+	lock: BFD may attempt to acquire the lock when it is already
+	held by the current thread.
 */
 
 bool
