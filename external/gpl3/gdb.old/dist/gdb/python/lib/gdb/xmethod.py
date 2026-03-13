@@ -266,9 +266,14 @@ def register_xmethod_matcher(locus, matcher, replace=False):
             del locus.xmethods[index]
         else:
             raise RuntimeError(
-                "Xmethod matcher already registered with "
-                "%s: %s" % (locus_name, matcher.name)
+                "Xmethod matcher already registered with {}: {}".format(
+                    locus_name, matcher.name
+                )
             )
     if gdb.parameter("verbose"):
-        gdb.write("Registering xmethod matcher '%s' with %s' ...\n")
+        gdb.write(
+            "Registering xmethod matcher '{}' with '{}' ...\n".format(
+                locus_name, matcher.name
+            )
+        )
     locus.xmethods.insert(0, matcher)

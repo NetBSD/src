@@ -105,7 +105,7 @@ if {[runto_main]} {
 	"next to ++count #2"
     sleep 2
 
-    # ...call the function, which is immediatly interrupted
+    # ...call the function, which is immediately interrupted
 
     gdb_test "p func1 ()" \
 "Breakpoint \[0-9\]*, handler.*

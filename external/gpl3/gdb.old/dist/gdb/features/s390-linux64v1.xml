@@ -11,6 +11,7 @@
 <!DOCTYPE target SYSTEM "gdb-target.dtd">
 <target>
   <architecture>s390:31-bit</architecture>
+  <osabi>GNU/Linux</osabi>
   <xi:include href="s390-core64.xml"/>
   <xi:include href="s390-acr.xml"/>
   <xi:include href="s390-fpr.xml"/>

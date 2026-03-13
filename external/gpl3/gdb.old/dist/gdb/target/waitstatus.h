@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_WAITSTATUS_H
-#define TARGET_WAITSTATUS_H
+#ifndef GDB_TARGET_WAITSTATUS_H
+#define GDB_TARGET_WAITSTATUS_H
 
 #include "diagnostics.h"
 #include "gdb/signals.h"
@@ -470,4 +470,4 @@ enum target_stop_reason
   TARGET_STOPPED_BY_SINGLE_STEP
 };
 
-#endif /* TARGET_WAITSTATUS_H */
+#endif /* GDB_TARGET_WAITSTATUS_H */

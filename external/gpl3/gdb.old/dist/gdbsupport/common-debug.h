@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_DEBUG_H
-#define COMMON_COMMON_DEBUG_H
+#ifndef GDBSUPPORT_COMMON_DEBUG_H
+#define GDBSUPPORT_COMMON_DEBUG_H
 
 #include <optional>
 #include "gdbsupport/preprocessor.h"
@@ -271,4 +271,4 @@ make_scoped_debug_start_end (PT &&pred, const char *module, const char *func,
 				   __func__, "enter", "exit",	\
 				   nullptr)
 
-#endif /* COMMON_COMMON_DEBUG_H */
+#endif /* GDBSUPPORT_COMMON_DEBUG_H */

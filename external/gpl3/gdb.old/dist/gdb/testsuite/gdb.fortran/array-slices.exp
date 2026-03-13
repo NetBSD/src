@@ -58,9 +58,6 @@ proc run_test { repack } {
 
     clean_restart ${binfile}
 
-    # Avoid shared lib symbols.
-    gdb_test_no_output "set auto-solib-add off"
-
     if ![fortran_runto_main] {
 	return -1
     }
@@ -248,7 +245,7 @@ proc run_test { repack } {
 	    # The goal here is to compare the sizes of the slice in show with
 	    # the size of the slice extracted by GDB.  So we can only compare
 	    # sizes when GDB's repacking setting matches the repacking
-	    # behaviour we got from the compiler.
+	    # behavior we got from the compiler.
 	    if { ($addr_in_show < $start_addr || $addr_in_show >= $end_addr) \
 		 == ($repack == "on") } {
 		gdb_assert {$size_in_show == $size_in_parent} \

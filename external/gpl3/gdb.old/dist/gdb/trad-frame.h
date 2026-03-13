@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TRAD_FRAME_H
-#define TRAD_FRAME_H
+#ifndef GDB_TRAD_FRAME_H
+#define GDB_TRAD_FRAME_H
 
 #include "frame.h"
 
@@ -203,4 +203,4 @@ struct value *trad_frame_get_prev_register (const frame_info_ptr &this_frame,
 					    trad_frame_saved_reg this_saved_regs[],
 					    int regnum);
 
-#endif
+#endif /* GDB_TRAD_FRAME_H */

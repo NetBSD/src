@@ -22,11 +22,8 @@ standard_ada_testfile bar
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-foreach_with_prefix scenario {none all minimal} {
-    set flags {debug}
-    if {$scenario != "none"} {
-	lappend flags additional_flags=-fgnat-encodings=$scenario
-    }
+foreach_gnat_encoding scenario flags {none all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != "" } {
 	return -1

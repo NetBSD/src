@@ -254,7 +254,7 @@ i386_fbsd_nat_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
       request = PT_CONTINUE;
     }
 
-  /* An addres of (caddr_t) 1 tells ptrace to continue from where it
+  /* An address of (caddr_t) 1 tells ptrace to continue from where it
      was.  (If GDB wanted it to start some other way, we have already
      written a new PC value to the child.)  */
   if (ptrace (request, pid, (caddr_t) 1,

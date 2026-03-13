@@ -1064,13 +1064,12 @@ bfd_allocate_mmapped_page (bfd *abfd, struct bfd_mmapped_entry **entry)
   return mmapped;
 }
 
-/* Mmap a memory region of RSIZE bytes with PROT at the current offset.
+/* Mmap a memory region of RSIZE bytes at the current file offset.
    Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
    on invalid input and MAP_FAILED for mmap failure.  */
 
 static void *
-bfd_mmap_local (bfd *abfd, size_t rsize, int prot, void **map_addr,
-		size_t *map_size)
+bfd_mmap_local (bfd *abfd, size_t rsize, void **map_addr, size_t *map_size)
 {
   /* We mmap on the underlying file.  In an archive it might be nice
      to limit RSIZE to the element size, but that can be fuzzed and
@@ -1092,18 +1091,18 @@ bfd_mmap_local (bfd *abfd, size_t rsize, int prot, void **map_addr,
     }
 
   void *mem;
-  mem = bfd_mmap (abfd, NULL, rsize, prot, MAP_PRIVATE, offset,
-		  map_addr, map_size);
+  mem = bfd_mmap (abfd, NULL, rsize, PROT_READ | PROT_WRITE, MAP_PRIVATE,
+		  offset, map_addr, map_size);
   return mem;
 }
 
-/* Mmap a readonly memory region of RSIZE bytes at the current offset.
+/* Mmap a memory region of RSIZE bytes at the current offset.
    Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
    on invalid input and MAP_FAILED for mmap failure.  */
 
 void *
-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
-			      size_t *map_size)
+_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
+		     size_t *map_size)
 {
   /* Use mmap only if section size >= the minimum mmap section size.  */
   if (rsize < _bfd_minimum_mmap_size)
@@ -1116,17 +1115,17 @@ _bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
       return mem;
     }
 
-  return bfd_mmap_local (abfd, rsize, PROT_READ, map_addr, map_size);
+  return bfd_mmap_local (abfd, rsize, map_addr, map_size);
 }
 
 /* Munmap RSIZE bytes at PTR.  */
 
 void
-_bfd_munmap_readonly_temporary (void *ptr, size_t rsize)
+_bfd_munmap_temporary (void *ptr, size_t rsize)
 {
-  /* NB: Since _bfd_munmap_readonly_temporary is called like free, PTR
-     may be NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is
-     0, _bfd_malloc_and_read is called.  */
+  /* NB: Since _bfd_munmap_temporary is called like free, PTR may be
+     NULL.  Otherwise, PTR and RSIZE must be valid.  If RSIZE is 0,
+     free is called.  */
   if (ptr == NULL)
     return;
   if (rsize != 0)
@@ -1138,11 +1137,11 @@ _bfd_munmap_readonly_temporary (void *ptr, size_t rsize)
     free (ptr);
 }
 
-/* Mmap a readonly memory region of RSIZE bytes at the current offset.
+/* Mmap a memory region of RSIZE bytes at the current offset.
    Return NULL on invalid input or mmap failure.  */
 
 void *
-_bfd_mmap_readonly_persistent (bfd *abfd, size_t rsize)
+_bfd_mmap_persistent (bfd *abfd, size_t rsize)
 {
   /* Use mmap only if section size >= the minimum mmap section size.  */
   if (rsize < _bfd_minimum_mmap_size)
@@ -1150,7 +1149,7 @@ _bfd_mmap_readonly_persistent (bfd *abfd, size_t rsize)
 
   void *mem, *map_addr;
   size_t map_size;
-  mem = bfd_mmap_local (abfd, rsize, PROT_READ, &map_addr, &map_size);
+  mem = bfd_mmap_local (abfd, rsize, &map_addr, &map_size);
   if (mem == NULL)
     return mem;
   if (mem == MAP_FAILED)
@@ -1213,9 +1212,7 @@ _bfd_mmap_read_temporary (void **data_p, size_t *size_p,
 		 && (abfd->flags & BFD_PLUGIN) == 0);
   if (use_mmmap)
     {
-      void *mmaped = _bfd_mmap_readonly_temporary (abfd, size,
-						   mmap_base,
-						   size_p);
+      void *mmaped = _bfd_mmap_temporary (abfd, size, mmap_base, size_p);
       /* MAP_FAILED is returned when called from GDB on an object with
 	 opncls_iovec.  Use bfd_read in this case.  */
       if (mmaped != MAP_FAILED)
@@ -1234,8 +1231,7 @@ _bfd_mmap_read_temporary (void **data_p, size_t *size_p,
       if (data == NULL)
 	return false;
       *data_p = data;
-      /* NB: _bfd_munmap_readonly_temporary will free *MMAP_BASE if
-	 *SIZE_P == 0.  */
+      /* NB: _bfd_munmap_temporary will free *MMAP_BASE if *SIZE_P == 0.  */
       *mmap_base = data;
     }
   else
@@ -1302,12 +1298,9 @@ _bfd_generic_get_section_contents (bfd *abfd,
 	  || bfd_get_flavour (abfd) != bfd_target_elf_flavour)
 	abort ();
 
-      int prot = ((section->reloc_count == 0)
-		  ? PROT_READ : PROT_READ | PROT_WRITE);
-
-      location = bfd_mmap_local
-	(abfd, count, prot, &elf_section_data (section)->contents_addr,
-	 &elf_section_data (section)->contents_size);
+      location = bfd_mmap_local (abfd, count,
+				 &elf_section_data (section)->contents_addr,
+				 &elf_section_data (section)->contents_size);
 
       if (location == NULL)
 	return false;

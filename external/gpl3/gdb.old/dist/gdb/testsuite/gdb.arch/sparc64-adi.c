@@ -31,7 +31,6 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/shm.h>
-#include <errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>

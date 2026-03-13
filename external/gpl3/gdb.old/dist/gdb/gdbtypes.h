@@ -1,4 +1,3 @@
-
 /* Internal type definitions for GDB.
 
    Copyright (C) 1992-2024 Free Software Foundation, Inc.
@@ -20,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GDBTYPES_H)
-#define GDBTYPES_H 1
+#ifndef GDB_GDBTYPES_H
+#define GDB_GDBTYPES_H
 
 /* * \page gdbtypes GDB Types
 
@@ -44,18 +43,13 @@
    written such that they can be used as both rvalues and lvalues.
  */
 
-#include "hashtab.h"
 #include "gdbsupport/array-view.h"
-#include "gdbsupport/gdb-hashtab.h"
 #include <optional>
-#include "gdbsupport/offset-type.h"
 #include "gdbsupport/enum-flags.h"
-#include "gdbsupport/underlying.h"
-#include "gdbsupport/print-utils.h"
-#include "gdbsupport/function-view.h"
 #include "dwarf2.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gmp-utils.h"
+#include "gdbsupport/unordered_map.h"
 
 /* Forward declarations for prototypes.  */
 struct field;
@@ -2789,10 +2783,10 @@ extern int class_or_union_p (const struct type *);
 
 extern void maintenance_print_type (const char *, int);
 
-extern htab_up create_copied_types_hash ();
+using copied_types_hash_t = gdb::unordered_map<type *, type *>;
 
 extern struct type *copy_type_recursive (struct type *type,
-					 htab_t copied_types);
+					 copied_types_hash_t &copied_types);
 
 extern struct type *copy_type (const struct type *type);
 
@@ -2831,4 +2825,4 @@ extern unsigned int overload_debug;
 
 extern bool is_nocall_function (const struct type *type);
 
-#endif /* GDBTYPES_H */
+#endif /* GDB_GDBTYPES_H */

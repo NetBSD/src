@@ -72,22 +72,22 @@ gdb_test "print cbvDtorDel (*dtorDel)" \
 
 # Test that GDB calls the correct copy ctor
 gdb_test "print cbvFourCCtor (fourCctor_c0v0)" "13" \
-    "call cbvFourCCtor (c0v0)"
+    "call cbvFourCCtor, c0v0"
 gdb_test "print fourCctor_c0v0.x" "2" \
     "cbv argument 'twoCctor_c0v0' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c1v0)" "14" \
-    "call cbvFourCCtor (c1v0)"
+    "call cbvFourCCtor, c1v0"
 gdb_test "print fourCctor_c1v0.x" "2" \
     "cbv argument 'twoCctor_c1v0' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c0v1)" "15" \
-    "call cbvFourCCtor (c0v1)"
+    "call cbvFourCCtor, c0v1"
 gdb_test "print fourCctor_c0v1.x" "2" \
     "cbv argument 'twoCctor_c0v1' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c1v1)" "16" \
-    "call cbvFourCCtor (c1v1)"
+    "call cbvFourCCtor, c1v1"
 gdb_test "print fourCctor_c1v1.x" "2" \
     "cbv argument 'twoCctor_c1v1' should not change"
 

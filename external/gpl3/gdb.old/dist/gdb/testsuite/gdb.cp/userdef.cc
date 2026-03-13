@@ -307,7 +307,20 @@ class Member
 {
 public:
   int z;
+
+  int operator() ();
+  int operator() (int);
 };
+
+int Member::operator() ()
+{
+  return z;
+}
+
+int Member::operator() (int value)
+{
+  return value * z;
+}
 
 bool operator== (const Member &m1, const Member &m2)
 {
@@ -335,9 +348,11 @@ int main (void)
  Container c;
  Member mem1, mem2;
  int val;
+ Member Container::* mptr = &Container::m;
  
  mem1.z = 5;
  mem2.z = 7;
+ c.m.z = 8;
 
  marker1(); // marker1-returns-here
  cout << one; // marker1-returns-here
@@ -403,6 +418,13 @@ int main (void)
  cout << "predec " << three;
  ++three;
  cout << "preinc " << three;
+
+ val = mem1 ();
+ cout << "funcall " << val << endl;
+ val = mem1 (10);
+ cout << "funcall 2 " << val << endl;
+ val = (c.*mptr) (11);
+ cout << "funcall 3 " << val << endl;
 
  (*c).z = 1;
 

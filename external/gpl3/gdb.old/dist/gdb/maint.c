@@ -44,6 +44,7 @@
 #include "cli/cli-decode.h"
 #include "cli/cli-utils.h"
 #include "cli/cli-setshow.h"
+#include "cli/cli-style.h"
 #include "cli/cli-cmds.h"
 
 static void maintenance_do_deprecate (const char *, int);
@@ -104,14 +105,16 @@ maintenance_demangler_warning (const char *args, int from_tty)
 static void
 maintenance_demangle (const char *args, int from_tty)
 {
-  gdb_printf (_("This command has been moved to \"demangle\".\n"));
+  gdb_printf (_("This command has been moved to \"%ps\".\n"),
+	      styled_string (command_style.style (), "demangle"));
 }
 
 static void
 maintenance_time_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    gdb_printf (_("\"maintenance time\" takes a numeric argument.\n"));
+    gdb_printf (_("\"%ps\" takes a numeric argument.\n"),
+		styled_string (command_style.style (), "maintenance time"));
   else
     set_per_command_time (strtol (args, NULL, 10));
 }
@@ -120,7 +123,8 @@ static void
 maintenance_space_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    gdb_printf ("\"maintenance space\" takes a numeric argument.\n");
+    gdb_printf ("\"%ps\" takes a numeric argument.\n",
+		styled_string (command_style.style (), "maintenance space"));
   else
     set_per_command_space (strtol (args, NULL, 10));
 }
@@ -546,7 +550,6 @@ maintenance_translate_address (const char *arg, int from_tty)
   CORE_ADDR address;
   struct obj_section *sect;
   const char *p;
-  struct bound_minimal_symbol sym;
 
   if (arg == NULL || *arg == 0)
     error (_("requires argument (address or section + address)"));
@@ -577,6 +580,7 @@ maintenance_translate_address (const char *arg, int from_tty)
 
   address = parse_and_eval_address (p);
 
+  bound_minimal_symbol sym;
   if (sect)
     sym = lookup_minimal_symbol_by_pc_section (address, sect);
   else
@@ -630,9 +634,11 @@ maintenance_deprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      gdb_printf (_("\"maintenance deprecate\" takes an argument,\n\
+      gdb_printf (_("\"%ps\" takes an argument,\n\
 the command you want to deprecate, and optionally the replacement command\n\
-enclosed in quotes.\n"));
+enclosed in quotes.\n"),
+		  styled_string (command_style.style (),
+				 "maintenance deprecate"));
     }
 
   maintenance_do_deprecate (args, 1);
@@ -644,8 +650,10 @@ maintenance_undeprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      gdb_printf (_("\"maintenance undeprecate\" takes an argument, \n\
-the command you want to undeprecate.\n"));
+      gdb_printf (_("\"%ps\" takes an argument, \n\
+the command you want to undeprecate.\n"),
+		  styled_string (command_style.style (),
+				 "maintenance undeprecate"));
     }
 
   maintenance_do_deprecate (args, 0);

@@ -1593,7 +1593,7 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
       if (ELF_R_SYM (rela.r_info) == STN_UNDEF)
 	/* FIXME: This and the error case below mean that we have a
 	   symbol on relocs that is not elf_symbol_type.  */
-	relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
       else if (ELF_R_SYM (rela.r_info) > symcount)
 	{
 	  _bfd_error_handler
@@ -1601,7 +1601,7 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 	    (_("%pB(%pA): relocation %d has invalid symbol index %ld"),
 	     abfd, asect, i, (long) ELF_R_SYM (rela.r_info));
 	  bfd_set_error (bfd_error_bad_value);
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	}
       else
 	{
@@ -1614,11 +1614,12 @@ elf_slurp_reloc_table_from_section (bfd *abfd,
 
       relent->addend = rela.r_addend;
 
+      res = false;
       if ((entsize == sizeof (Elf_External_Rela)
-	   && ebd->elf_info_to_howto != NULL)
-	  || ebd->elf_info_to_howto_rel == NULL)
+	   || ebd->elf_info_to_howto_rel == NULL)
+	  && ebd->elf_info_to_howto != NULL)
 	res = ebd->elf_info_to_howto (abfd, relent, &rela);
-      else
+      else if (ebd->elf_info_to_howto_rel != NULL)
 	res = ebd->elf_info_to_howto_rel (abfd, relent, &rela);
 
       if (! res || relent->howto == NULL)

@@ -25,7 +25,7 @@ require isnative
 # Can the system run this test (in particular support sparse
 # corefiles)?  On systems that lack sparse corefile support this test
 # consumes too many resources - gigabytes worth of disk space and
-# I/O bandwith.
+# I/O bandwidth.
 
 if { [istarget "*-*-*bsd*"]
      || [istarget "*-*-solaris*"] 

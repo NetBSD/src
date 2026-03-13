@@ -57,7 +57,7 @@ proc symlink_resolve {file} {
 	} else {
 	    set src2 $target
 	}
-	verbose -log "Resolved symlink $file targetting $target as $src2"
+	verbose -log "Resolved symlink $file targeting $target as $src2"
 	set file $src2
 
 	set loop [expr $loop + 1]

@@ -136,7 +136,7 @@ parallel_for_each (unsigned n, RandomIt first, RandomIt last,
 }
 
 /* A sequential drop-in replacement of parallel_for_each.  This can be useful
-   when debugging multi-threading behaviour, and you want to limit
+   when debugging multi-threading behavior, and you want to limit
    multi-threading in a fine-grained way.  */
 
 template<class RandomIt, class RangeFunction>

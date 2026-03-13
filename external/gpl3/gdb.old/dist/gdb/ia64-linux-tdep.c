@@ -174,7 +174,6 @@ ia64_linux_supply_fpregset (const struct regset *regset,
 			    struct regcache *regcache,
 			    int regnum, const void *regs, size_t len)
 {
-  const gdb_byte f_zero[16] = { 0 };
   const gdb_byte f_one[16] =
     { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
@@ -184,7 +183,7 @@ ia64_linux_supply_fpregset (const struct regset *regset,
      did the same.  So ignore whatever might be recorded in fpregset_t
      for fr0/fr1 and always supply their expected values.  */
   if (regnum == -1 || regnum == IA64_FR0_REGNUM)
-    regcache->raw_supply (IA64_FR0_REGNUM, f_zero);
+    regcache->raw_supply_zeroed (IA64_FR0_REGNUM);
   if (regnum == -1 || regnum == IA64_FR1_REGNUM)
     regcache->raw_supply (IA64_FR1_REGNUM, f_one);
 }

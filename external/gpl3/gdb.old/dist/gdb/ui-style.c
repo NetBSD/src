@@ -315,9 +315,11 @@ ui_file_style::parse (const char *buf, size_t *n_read)
 	    case 35:
 	    case 36:
 	    case 37:
+	      m_foreground = color (value - 30);
+	      break;
 	      /* Note: not 38.  */
 	    case 39:
-	      m_foreground = color (value - 30);
+	      m_foreground = NONE;
 	      break;
 
 	    case 40:
@@ -328,9 +330,11 @@ ui_file_style::parse (const char *buf, size_t *n_read)
 	    case 45:
 	    case 46:
 	    case 47:
+	      m_background = color (value - 40);
+	      break;
 	      /* Note: not 48.  */
 	    case 49:
-	      m_background = color (value - 40);
+	      m_background = NONE;
 	      break;
 
 	    case 90:

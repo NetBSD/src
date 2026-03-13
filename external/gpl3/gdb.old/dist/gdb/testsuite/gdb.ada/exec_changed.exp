@@ -86,7 +86,7 @@ if { [gdb_start_cmd] < 0 } {
 
 clean_restart "${binfile}$EXEEXT"
 
-# Ensure we don't accidently use the main symbol cache.
+# Ensure we don't accidentally use the main symbol cache.
 gdb_test_no_output "mt set symbol-cache-size 0"
 
 # Put something in the symbol lookup cache that will get looked up when

@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_DECODE_H
-#define CLI_CLI_DECODE_H
+#ifndef GDB_CLI_CLI_DECODE_H
+#define GDB_CLI_CLI_DECODE_H
 
 /* This file defines the private interfaces for any code implementing
    command internals.  */
@@ -28,6 +28,9 @@
 #include "completer.h"
 #include "gdbsupport/intrusive_list.h"
 #include "gdbsupport/buildargv.h"
+
+/* The allowed length of a line in a documentation string.  */
+constexpr int cli_help_line_length = 80;
 
 /* Not a set/show command.  Note that some commands which begin with
    "set" or "show" might be in this category, if their syntax does
@@ -313,4 +316,4 @@ extern int cli_user_command_p (struct cmd_list_element *);
 
 extern int find_command_name_length (const char *);
 
-#endif /* CLI_CLI_DECODE_H */
+#endif /* GDB_CLI_CLI_DECODE_H */

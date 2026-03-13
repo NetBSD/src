@@ -49,7 +49,7 @@
 #define MAPPED_INT(SIZE, LSB, MAP, PRINT_HEX) \
   { \
     typedef char ATTRIBUTE_UNUSED \
-      static_assert[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
+      static_assert_3[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
     static const struct mips_mapped_int_operand op = { \
       { OP_MAPPED_INT, SIZE, LSB }, MAP, PRINT_HEX \
     }; \
@@ -83,7 +83,7 @@
 #define MAPPED_REG(SIZE, LSB, BANK, MAP) \
   { \
     typedef char ATTRIBUTE_UNUSED \
-      static_assert[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
+      static_assert_4[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
     static const struct mips_reg_operand op = { \
       { OP_REG, SIZE, LSB }, OP_REG_##BANK, MAP \
     }; \
@@ -93,7 +93,7 @@
 #define OPTIONAL_MAPPED_REG(SIZE, LSB, BANK, MAP) \
   { \
     typedef char ATTRIBUTE_UNUSED \
-      static_assert[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
+      static_assert_5[(1 << (SIZE)) == ARRAY_SIZE (MAP)]; \
     static const struct mips_reg_operand op = { \
       { OP_OPTIONAL_REG, SIZE, LSB }, OP_REG_##BANK, MAP \
     }; \

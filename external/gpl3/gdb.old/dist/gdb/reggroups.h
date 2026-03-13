@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef REGGROUPS_H
-#define REGGROUPS_H
+#ifndef GDB_REGGROUPS_H
+#define GDB_REGGROUPS_H
 
 struct gdbarch;
 
@@ -98,4 +98,4 @@ extern const reggroup *reggroup_find (struct gdbarch *gdbarch,
 extern int default_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
 					const struct reggroup *reggroup);
 
-#endif
+#endif /* GDB_REGGROUPS_H */

@@ -19,6 +19,8 @@
 #ifndef GDBSERVER_I387_FP_H
 #define GDBSERVER_I387_FP_H
 
+struct x86_xsave_layout;
+
 void i387_cache_to_fsave (struct regcache *regcache, void *buf);
 void i387_fsave_to_cache (struct regcache *regcache, const void *buf);
 
@@ -30,6 +32,6 @@ void i387_xsave_to_cache (struct regcache *regcache, const void *buf);
 
 /* Set the XSAVE mask and fetch the XSAVE layout via CPUID.  */
 
-void i387_set_xsave_mask (uint64_t xcr0, int len);
+std::pair<uint64_t *, x86_xsave_layout *> i387_get_xsave_storage ();
 
 #endif /* GDBSERVER_I387_FP_H */

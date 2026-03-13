@@ -152,12 +152,10 @@ foreach test $methods {
 
     gdb_test "list -qualified $func" $result
     gdb_test "list -qualified '$func'" $result
-    if {[gdb_breakpoint "-qualified $func"]} {
-      pass "break -qualified $func"
-    }
-    if {[gdb_breakpoint "-qualified '$func'"]} {
-      pass "break -qualified '$func'"
-    }
+    gdb_assert { [gdb_breakpoint "-qualified $func" no-message] } \
+	"break -qualified $func, unquoted"
+    gdb_assert { [gdb_breakpoint "-qualified '$func'" no-message] } \
+	"break -qualified $func, single-quoted"
 }
 
 # The tests above use -qualified to explicitly pick the one "test"

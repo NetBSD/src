@@ -96,18 +96,18 @@ START_RELOC_NUMBERS (elf_x86_64_reloc_type)
 	instruction starts at 5 bytes before the relocation offset,
 	relaxable.  */
      RELOC_NUMBER (R_X86_64_CODE_5_GOTPCRELX, 46)
+     /* PC relative offset to IE GOT entry if the instruction starts at
+        5 bytes before the relocation offset.  */
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 47)
      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
 	instruction starts at 5 bytes before the relocation offset.  */
-     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 47)
-    /* PC relative offset to IE GOT entry if the instruction starts at
-       5 bytes before the relocation offset.  */
-     RELOC_NUMBER (R_X86_64_CODE_5_GOTTPOFF, 48)
+     RELOC_NUMBER (R_X86_64_CODE_5_GOTPC32_TLSDESC, 48)
      /* Load from 32 bit signed pc relative offset to GOT entry if the
 	instruction starts at 6 bytes before the relocation offset,
 	relaxable.  */
      RELOC_NUMBER (R_X86_64_CODE_6_GOTPCRELX, 49)
-    /* PC relative offset to IE GOT entry if the instruction starts at
-       6 bytes before the relocation offset.  */
+     /* PC relative offset to IE GOT entry if the instruction starts at
+        6 bytes before the relocation offset.  */
      RELOC_NUMBER (R_X86_64_CODE_6_GOTTPOFF, 50)
      /* 32 bit signed pc relative offset to TLS descriptor in the GOT if
 	instruction starts at 6 bytes before the relocation offset.  */
@@ -118,7 +118,7 @@ END_RELOC_NUMBERS (R_X86_64_max)
 
 /* Processor specific section types.  */
 
-#define SHT_X86_64_UNWIND	0x70000001	/* unwind information */
+#define SHT_X86_64_UNWIND	(SHT_LOPROC + 1)  /* Unwind information.  */
 
 /* Like SHN_COMMON but the symbol will be allocated in the .lbss
    section.  */

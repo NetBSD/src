@@ -1568,7 +1568,7 @@ store2 (SIM_DESC sd, ea_type *arg, int n)
   return store_1 (sd, arg, n, 1);
 }
 
-/* Callback for qsort.  We sort first based on availablity
+/* Callback for qsort.  We sort first based on availability
    (available instructions sort lower).  When availability state
    is the same, then we use the first 4 bit nibble as a secondary
    sort key.

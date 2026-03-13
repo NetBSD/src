@@ -36,7 +36,7 @@ runto "ops_test.adb:$bp_location"
 set bp_re "Breakpoint $decimal at $hex"
 foreach op { "+" "-" } {
     set op_re [string_to_regexp $op]
-    gdb_test "break \"$op\"" "$bp_re: \"$op_re\"\. \\($decimal locations\\).*"
+    gdb_test "break \"$op\"" "$bp_re: \"$op_re\"\\. \\($decimal locations\\).*"
 }
 
 foreach op { "*" "/" "mod" "rem" "**" "<" "<=" ">" ">=" "=" "and" "or" "xor" "&" "abs" "not"} {
@@ -45,7 +45,7 @@ foreach op { "*" "/" "mod" "rem" "**" "<" "<=" ">" ">=" "=" "and" "or" "xor" "&"
 	-re -wrap "$bp_re: file .*ops.adb, line $decimal." {
 	    pass $gdb_test_name
 	}
-	-re -wrap "$bp_re: \"$op_re\"\. \\($decimal locations\\).*" {
+	-re -wrap "$bp_re: \"$op_re\"\\. \\($decimal locations\\).*" {
 	    pass $gdb_test_name
 	}
     }
@@ -72,7 +72,7 @@ runto "ops_test.adb:$bp_location"
 foreach op { "+" "-" } {
     set op_re [string_to_regexp $op]
     gdb_test "break ops.\"$op\"" \
-             "Breakpoint $decimal at $hex: ops\\.\"$op_re\"\. \\(2 locations\\)"
+             "Breakpoint $decimal at $hex: ops\\.\"$op_re\"\\. \\(2 locations\\)"
 }
 
 foreach op { "*" "/" "mod" "rem" "**" "<" "<=" ">" ">=" "=" "and" "or" "xor" "&" "abs" "not"} {

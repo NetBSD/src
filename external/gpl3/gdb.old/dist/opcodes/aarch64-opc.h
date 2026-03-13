@@ -60,9 +60,12 @@ enum aarch64_field_kind
   FLD_SME_V,
   FLD_SME_VL_10,
   FLD_SME_VL_13,
+  FLD_SME_ZAda_1b,
   FLD_SME_ZAda_2b,
   FLD_SME_ZAda_3b,
+  FLD_SME_ZdnT,
   FLD_SME_Zdn2,
+  FLD_SME_Zdn2_0,
   FLD_SME_Zdn4,
   FLD_SME_Zm,
   FLD_SME_Zm2,
@@ -104,10 +107,15 @@ enum aarch64_field_kind
   FLD_SVE_Zn,
   FLD_SVE_Zt,
   FLD_SVE_i1,
+  FLD_SVE_i1_23,
+  FLD_SVE_i2,
   FLD_SVE_i2h,
   FLD_SVE_i3h,
   FLD_SVE_i3h2,
+  FLD_SVE_i3h3,
   FLD_SVE_i3l,
+  FLD_SVE_i3l2,
+  FLD_SVE_i4l2,
   FLD_SVE_imm3,
   FLD_SVE_imm4,
   FLD_SVE_imm5,
@@ -145,15 +153,19 @@ enum aarch64_field_kind
   FLD_hw,
   FLD_imm1_0,
   FLD_imm1_2,
+  FLD_imm1_3,
   FLD_imm1_8,
   FLD_imm1_10,
+  FLD_imm1_14,
   FLD_imm1_15,
   FLD_imm1_16,
   FLD_imm2_0,
   FLD_imm2_1,
+  FLD_imm2_2,
   FLD_imm2_8,
   FLD_imm2_10,
   FLD_imm2_12,
+  FLD_imm2_13,
   FLD_imm2_15,
   FLD_imm2_16,
   FLD_imm2_19,
@@ -163,6 +175,7 @@ enum aarch64_field_kind
   FLD_imm3_12,
   FLD_imm3_14,
   FLD_imm3_15,
+  FLD_imm3_19,
   FLD_imm4_0,
   FLD_imm4_5,
   FLD_imm4_10,
@@ -178,6 +191,8 @@ enum aarch64_field_kind
   FLD_imm14,
   FLD_imm16_0,
   FLD_imm16_5,
+  FLD_imm17_1,
+  FLD_imm17_2,
   FLD_imm19,
   FLD_imm26,
   FLD_immb,
@@ -219,6 +234,11 @@ enum aarch64_field_kind
   FLD_ZAn,
   FLD_opc2,
   FLD_rcpc3_size,
+  FLD_brbop,
+  FLD_ZA8_1,
+  FLD_ZA7_2,
+  FLD_ZA6_3,
+  FLD_ZA5_4,
 };
 
 /* Field description.  */
@@ -278,6 +298,7 @@ verify_constraints (const struct aarch64_inst *, const aarch64_insn, bfd_vma,
 #define OPD_F_SHIFT_BY_4	0x00000800	/* Need to left shift the field
 						   value by 4 to get the value
 						   of an immediate operand.  */
+#define OPD_F_UNSIGNED		0x00001000	/* Expect an unsigned value.  */
 
 
 /* Register flags.  */
@@ -382,6 +403,12 @@ operand_need_shift_by_four (const aarch64_operand *operand)
 }
 
 static inline bool
+operand_need_unsigned_offset (const aarch64_operand *operand)
+{
+  return (operand->flags & OPD_F_UNSIGNED) != 0;
+}
+
+static inline bool
 operand_maybe_stack_pointer (const aarch64_operand *operand)
 {
   return (operand->flags & OPD_F_MAYBE_SP) != 0;
@@ -422,7 +449,7 @@ get_operand_from_code (enum aarch64_opnd code)
 
 /* Operand qualifier and operand constraint checking.  */
 
-int aarch64_match_operands_constraint (aarch64_inst *,
+bool aarch64_match_operands_constraint (aarch64_inst *,
 				       aarch64_operand_error *);
 
 /* Operand qualifier related functions.  */

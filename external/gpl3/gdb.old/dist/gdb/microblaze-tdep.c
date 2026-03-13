@@ -160,7 +160,7 @@ microblaze_alloc_frame_cache (void)
 /* The base of the current frame is in a frame pointer register.
    This register is noted in frame_extra_info->fp_regnum.
 
-   Note that the existance of an FP might also indicate that the
+   Note that the existence of an FP might also indicate that the
    function has called alloca.  */
 #define MICROBLAZE_MY_FRAME_IN_FP 0x2
 

@@ -32,7 +32,7 @@ following:
 
 	gcc			GCC version two includes suport
 				for long long (64bit integer)
-				arrithemetic which PSIM uses.  Hence
+				arithmetic which PSIM uses.  Hence
 				it is recommended that you build PSIM
 				using GCC.
 				
@@ -146,7 +146,7 @@ At the time of writing the following were outstanding:
 	the description of a target machine (including the initial
 	state of all processor registers) from a file.
 
-	Unfortunatly GDB does not yet have a standard command that
+	Unfortunately GDB does not yet have a standard command that
 	facilitates the use of this feature.  Until such a command is
 	added, the patch (hack?) gdb-4.15+attach.diff.gz can be used to
 	extend GDB's attach command so that it can be used to initialize

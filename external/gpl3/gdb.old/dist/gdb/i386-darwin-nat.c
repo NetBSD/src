@@ -499,7 +499,7 @@ darwin_check_osabi (darwin_inferior *inf, thread_t thread)
       else
 	info.bfd_arch_info = bfd_lookup_arch (bfd_arch_i386,
 					      bfd_mach_i386_i386);
-      gdbarch_update_p (info);
+      gdbarch_update_p (current_inferior (), info);
     }
 }
 

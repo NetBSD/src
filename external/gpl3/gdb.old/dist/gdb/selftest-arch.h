@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SELFTEST_ARCH_H
-#define SELFTEST_ARCH_H
+#ifndef GDB_SELFTEST_ARCH_H
+#define GDB_SELFTEST_ARCH_H
 
 typedef void self_test_foreach_arch_function (struct gdbarch *);
 
@@ -31,4 +31,4 @@ extern void
 			      self_test_foreach_arch_function *function);
 }
 
-#endif /* SELFTEST_ARCH_H */
+#endif /* GDB_SELFTEST_ARCH_H */

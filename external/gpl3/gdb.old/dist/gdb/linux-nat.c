@@ -243,7 +243,7 @@ PTRACE_PEEKTEXT/PTRACE_POKETEXT or process_vm_readv/process_vm_writev:
 
 struct linux_nat_target *linux_target;
 
-/* Does the current host support PTRACE_GETREGSET?  */
+/* See nat/linux-nat.h.  */
 enum tribool have_ptrace_getregset = TRIBOOL_UNKNOWN;
 
 /* When true, print debug messages relating to the linux native target.  */
@@ -279,7 +279,7 @@ struct simple_pid_list
 static struct simple_pid_list *stopped_pids;
 
 /* Whether target_thread_events is in effect.  */
-static int report_thread_events;
+static bool report_thread_events;
 
 static int kill_lwp (int lwpid, int signo);
 
@@ -4624,7 +4624,7 @@ linux_nat_target::fileio_unlink (struct inferior *inf, const char *filename,
 /* Implementation of the to_thread_events method.  */
 
 void
-linux_nat_target::thread_events (int enable)
+linux_nat_target::thread_events (bool enable)
 {
   report_thread_events = enable;
 }

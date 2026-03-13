@@ -58,8 +58,8 @@ if { [istarget *-*-linux*] } {
     if { $do_xml_test } {
 	# This is done in a way to avoid the timeout that can occur from
 	# applying .* regexp to large output.
-	gdb_test_sequence "info os processes" "get process list" \
-	    { "pid +user +command" "1 +root +\[/a-z\]*(init|systemd|bash)" }
+	gdb_test_lines "info os processes" "get process list" \
+	    "^pid +user +command.*\r\n1 +root +\[/a-z\]*(init|systemd|bash)"
     }
 }
 

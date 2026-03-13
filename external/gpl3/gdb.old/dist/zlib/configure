@@ -2413,7 +2413,6 @@ test -n "$target_alias" &&
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
 
-
 # This works around an automake problem.
 mkinstalldirs="`cd $ac_aux_dir && ${PWDCMD-pwd}`/mkinstalldirs"
 
@@ -10746,7 +10745,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10749 "configure"
+#line 10748 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10852,7 +10851,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 10855 "configure"
+#line 10854 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H

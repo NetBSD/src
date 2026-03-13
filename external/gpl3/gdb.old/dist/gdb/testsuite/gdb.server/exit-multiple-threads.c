@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <pthread.h>
 
 /* The number of threads to create.  */
 int thread_count = 3;

@@ -355,7 +355,7 @@ Multiply64 (int sign, unsigned long op0)
   hi   = (((op0 >> 16) & 0xFFFF) * ((op1 >> 16) & 0xFFFF));
   
   /* We now need to add all of these results together, taking care
-     to propogate the carries from the additions: */
+     to propagate the carries from the additions: */
   RdLo = Add32 (lo, (mid1 << 16), & carry);
   RdHi = carry;
   RdLo = Add32 (RdLo, (mid2 << 16), & carry);

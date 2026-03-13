@@ -285,6 +285,9 @@ class FrameVars(object):
                     # returns False for arguments as well.  Anyway,
                     # don't include non-variables here.
                     continue
+                elif sym.is_artificial:
+                    # Skip artificial symbols.
+                    continue
                 lvars.append(SymValueWrapper(frame, sym))
 
             if block.function is not None:

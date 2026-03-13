@@ -491,6 +491,9 @@ get_insn_history_modifiers (const char **arg)
 
 	  switch (*args)
 	    {
+	    case 'a':
+	      modifiers |= DISASSEMBLY_OMIT_AUX_INSN;
+	      break;
 	    case 'm':
 	    case 's':
 	      modifiers |= DISASSEMBLY_SOURCE;
@@ -640,6 +643,9 @@ get_call_history_modifiers (const char **arg)
 	      break;
 	    case 'c':
 	      modifiers |= RECORD_PRINT_INDENT_CALLS;
+	      break;
+	    case 'a':
+	      modifiers |= RECORD_DONT_PRINT_AUX;
 	      break;
 	    default:
 	      error (_("Invalid modifier: %c."), *args);
@@ -821,7 +827,7 @@ A size of \"unlimited\" means unlimited lines.  The default is 10."),
 Usage: record save [FILENAME]\n\
 Default filename is 'gdb_record.PROCESS_ID'."),
 	       &record_cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   cmd_list_element *record_delete_cmd
     =  add_cmd ("delete", class_obscure, cmd_record_delete,
@@ -859,38 +865,42 @@ With a /m or /s modifier, source lines are included (if available).\n\
 With a /r modifier, raw instructions in hex are included.\n\
 With a /f modifier, function names are omitted.\n\
 With a /p modifier, current position markers are omitted.\n\
-With no argument, disassembles ten more instructions after the previous \
+With a /a modifier, omits output of auxiliary data, which is enabled\n\
+by default.\n\
+With no argument, disassembles ten more instructions after the previous\n\
 disassembly.\n\
-\"record instruction-history -\" disassembles ten instructions before a \
+\"record instruction-history -\" disassembles ten instructions before a\n\
 previous disassembly.\n\
-One argument specifies an instruction number as shown by 'info record', and \
+One argument specifies an instruction number as shown by 'info record', and\n\
 ten instructions are disassembled after that instruction.\n\
-Two arguments with comma between them specify starting and ending instruction \
+Two arguments with comma between them specify starting and ending instruction\n\
 numbers to disassemble.\n\
-If the second argument is preceded by '+' or '-', it specifies the distance \
+If the second argument is preceded by '+' or '-', it specifies the distance\n\
 from the first argument.\n\
-The number of instructions to disassemble can be defined with \"set record \
-instruction-history-size\"."),
+The number of instructions to disassemble can be defined with\n\
+\"set record instruction-history-size\"."),
 	   &record_cmdlist);
 
   add_cmd ("function-call-history", class_obscure, cmd_record_call_history, _("\
 Prints the execution history at function granularity.\n\
-It prints one line for each sequence of instructions that belong to the same \
+It prints one line for each sequence of instructions that belong to the same\n\
 function.\n\
 Without modifiers, it prints the function name.\n\
 With a /l modifier, the source file and line number range is included.\n\
 With a /i modifier, the instruction number range is included.\n\
 With a /c modifier, the output is indented based on the call stack depth.\n\
+With a /a modifier, omits output of auxiliary data, which is enabled \
+by default.\n\
 With no argument, prints ten more lines after the previous ten-line print.\n\
-\"record function-call-history -\" prints ten lines before a previous ten-line \
+\"record function-call-history -\" prints ten lines before a previous ten-line\n\
 print.\n\
-One argument specifies a function number as shown by 'info record', and \
+One argument specifies a function number as shown by 'info record', and\n\
 ten lines are printed after that function.\n\
 Two arguments with comma between them specify a range of functions to print.\n\
-If the second argument is preceded by '+' or '-', it specifies the distance \
+If the second argument is preceded by '+' or '-', it specifies the distance\n\
 from the first argument.\n\
-The number of functions to print can be defined with \"set record \
-function-call-history-size\"."),
+The number of functions to print can be defined with\n\
+\"set record function-call-history-size\"."),
 	   &record_cmdlist);
 
   /* Sync command control variables.  */

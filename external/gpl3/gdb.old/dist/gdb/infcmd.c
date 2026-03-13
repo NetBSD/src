@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "arch-utils.h"
+#include "exceptions.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "frame.h"
@@ -26,6 +27,7 @@
 #include "gdbsupport/environ.h"
 #include "value.h"
 #include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "symfile.h"
 #include "gdbcore.h"
 #include "target.h"
@@ -367,7 +369,6 @@ enum run_how
 static void
 run_command_1 (const char *args, int from_tty, enum run_how run_how)
 {
-  const char *exec_file;
   struct ui_out *uiout = current_uiout;
   struct target_ops *run_target;
   int async_exec;
@@ -383,7 +384,7 @@ run_command_1 (const char *args, int from_tty, enum run_how run_how)
 
   /* Clean up any leftovers from other runs.  Some other things from
      this function should probably be moved into target_pre_inferior.  */
-  target_pre_inferior (from_tty);
+  target_pre_inferior ();
 
   /* The comment here used to read, "The exec file is re-read every
      time we do a generic_mourn_inferior, so we just have to worry
@@ -421,7 +422,7 @@ run_command_1 (const char *args, int from_tty, enum run_how run_how)
       tbreak_command (arg.c_str (), 0);
     }
 
-  exec_file = get_exec_file (0);
+  const char *exec_file = current_program_space->exec_filename ();
 
   /* We keep symbols from add-symbol-file, on the grounds that the
      user might want to add some symbols before running the program
@@ -519,7 +520,7 @@ start_command (const char *args, int from_tty)
   /* Some languages such as Ada need to search inside the program
      minimal symbols for the location where to put the temporary
      breakpoint before starting.  */
-  if (!have_minimal_symbols ())
+  if (!have_minimal_symbols (current_program_space))
     error (_("No symbol table loaded.  Use the \"file\" command."));
 
   /* Run the program until reaching the main procedure...  */
@@ -992,7 +993,7 @@ prepare_one_step (thread_info *tp, struct step_command_fsm *sm)
 	     Use inlined_subroutine info to make the range more narrow.  */
 	  if (inline_skipped_frames (tp) > 0)
 	    {
-	      symbol *sym = inline_skipped_symbol (tp);
+	      const symbol *sym = inline_skipped_symbol (tp);
 	      if (sym->aclass () == LOC_BLOCK)
 		{
 		  const block *block = sym->value_block ();
@@ -1078,7 +1079,8 @@ jump_command (const char *arg, int from_tty)
     {
       /* If multiple sal-objects were found, try dropping those that aren't
 	 from the current symtab.  */
-      struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
       sals.erase (std::remove_if (sals.begin (), sals.end (),
 		  [&] (const symtab_and_line &sal)
 		    {
@@ -1102,7 +1104,9 @@ jump_command (const char *arg, int from_tty)
 					  find_pc_mapped_section (sal.pc));
   if (fn != nullptr && sfn != fn)
     {
-      if (!query (_("Line %d is not in `%s'.  Jump anyway? "), sal.line,
+      if (!query (_("Line %ps is not in `%s'.  Jump anyway? "),
+		  styled_string (line_number_style.style (),
+				 pulongest (sal.line)),
 		  fn->print_name ()))
 	{
 	  error (_("Not confirmed."));
@@ -1359,7 +1363,7 @@ until_next_command (int from_tty)
 
   if (!func)
     {
-      struct bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
+      bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
 
       if (msymbol.minsym == nullptr)
 	error (_("Execution is not within a known function."));
@@ -1996,10 +2000,9 @@ info_program_command (const char *args, int from_tty)
     }
 
   if (from_tty)
-    {
-      gdb_printf (_("Type \"info stack\" or \"info "
-		    "registers\" for more information.\n"));
-    }
+    gdb_printf (_("Type \"%ps\" or \"%ps\" for more information.\n"),
+		styled_string (command_style.style (), "info stack"),
+		styled_string (command_style.style (), "info registers"));
 }
 
 static void
@@ -2497,7 +2500,7 @@ setup_inferior (int from_tty)
 
   /* If no exec file is yet known, try to determine it from the
      process itself.  */
-  if (get_exec_file (0) == nullptr)
+  if (current_program_space->exec_filename () == nullptr)
     exec_file_locate_attach (inferior_ptid.pid (), 1, from_tty);
   else
     {
@@ -2628,7 +2631,7 @@ attach_command (const char *args, int from_tty)
 
   /* Clean up any leftovers from other runs.  Some other things from
      this function should probably be moved into target_pre_inferior.  */
-  target_pre_inferior (from_tty);
+  target_pre_inferior ();
 
   gdb::unique_xmalloc_ptr<char> stripped = strip_bg_char (args, &async_exec);
   args = stripped.get ();
@@ -2827,7 +2830,7 @@ detach_command (const char *args, int from_tty)
   /* If the solist is global across inferiors, don't clear it when we
      detach from a single inferior.  */
   if (!gdbarch_has_global_solist (inf->arch ()))
-    no_shared_libraries (nullptr, from_tty);
+    no_shared_libraries (inf->pspace);
 
   if (deprecated_detach_hook)
     deprecated_detach_hook ();
@@ -2853,7 +2856,7 @@ disconnect_command (const char *args, int from_tty)
   query_if_trace_running (from_tty);
   disconnect_tracing ();
   target_disconnect (args, from_tty);
-  no_shared_libraries (nullptr, from_tty);
+  no_shared_libraries (current_program_space);
   init_thread_list ();
   update_previous_thread ();
   if (deprecated_detach_hook)
@@ -3112,7 +3115,7 @@ Follow this command with any number of args, to be passed to the program."),
 				       get_args_value,
 				       show_args_command,
 				       &setlist, &showlist);
-  set_cmd_completer (args_set_show.set, filename_completer);
+  set_cmd_completer (args_set_show.set, deprecated_filename_completer);
 
   auto cwd_set_show
     = add_setshow_string_noescape_cmd ("cwd", class_run, _("\
@@ -3128,7 +3131,7 @@ working directory."),
 				       set_cwd_value, get_inferior_cwd,
 				       show_cwd_command,
 				       &setlist, &showlist);
-  set_cmd_completer (cwd_set_show.set, filename_completer);
+  set_cmd_completer (cwd_set_show.set, deprecated_filename_completer);
 
   c = add_cmd ("environment", no_class, environment_info, _("\
 The environment to give the program, or one variable's value.\n\
@@ -3162,7 +3165,7 @@ This path is equivalent to the $PATH shell variable.  It is a list of\n\
 directories, separated by colons.  These directories are searched to find\n\
 fully linked executable files and separately compiled object files as \
 needed."));
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   c = add_cmd ("paths", no_class, path_info, _("\
 Current search path for finding object files.\n\
@@ -3279,8 +3282,10 @@ frame."));
   add_com_alias ("u", until_cmd, class_run, 1);
 
   c = add_com ("advance", class_run, advance_command, _("\
-Continue the program up to the given location (same form as args for break \
-command).\n\
+Continue the program up to the given location.\n\
+Usage: advance LOCSPEC\n\
+The argument is a location specification, i.e., the same forms\n\
+accepted by the 'break' command.\n\
 Execution will also stop upon exit from the current stack frame."));
   set_cmd_completer (c, location_completer);
 
@@ -3312,18 +3317,18 @@ Specifying -a and an ignore count simultaneously is an error."));
     = add_com ("run", class_run, run_command, _("\
 Start debugged program.\n"
 RUN_ARGS_HELP));
-  set_cmd_completer (run_cmd, filename_completer);
+  set_cmd_completer (run_cmd, deprecated_filename_completer);
   add_com_alias ("r", run_cmd, class_run, 1);
 
   c = add_com ("start", class_run, start_command, _("\
 Start the debugged program stopping at the beginning of the main procedure.\n"
 RUN_ARGS_HELP));
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   c = add_com ("starti", class_run, starti_command, _("\
 Start the debugged program stopping at the first instruction.\n"
 RUN_ARGS_HELP));
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   add_com ("interrupt", class_run, interrupt_command,
 	   _("Interrupt the execution of the debugged program.\n\

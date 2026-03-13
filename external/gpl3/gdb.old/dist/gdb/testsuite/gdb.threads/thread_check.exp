@@ -47,7 +47,7 @@ if {![runto_main]} {
 
 
 #
-# set breakpoint at thread fucntion tf
+# set breakpoint at thread function tf
 #
 gdb_test "break tf" \
     "Breakpoint.*at.* file .*$srcfile, line.*" \

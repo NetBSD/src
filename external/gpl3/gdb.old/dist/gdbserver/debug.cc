@@ -20,6 +20,8 @@
 
 #if !defined (IN_PROCESS_AGENT)
 bool remote_debug = false;
+
+bool suppressed_remote_debug = false;
 #endif
 
 /* Output file for debugging.  Default to standard error.  */
@@ -116,4 +118,12 @@ debug_write (const void *buf, size_t nbyte)
 {
   int fd = fileno (debug_file);
   return write (fd, buf, nbyte);
+}
+
+/* See debug.h.  */
+
+void
+suppress_next_putpkt_log ()
+{
+  suppressed_remote_debug = true;
 }

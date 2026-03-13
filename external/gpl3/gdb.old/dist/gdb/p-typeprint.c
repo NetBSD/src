@@ -19,7 +19,6 @@
 /* This file is derived from p-typeprint.c */
 
 #include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"

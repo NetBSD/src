@@ -170,7 +170,7 @@ bfd_mach_o_arm64_canonicalize_one_reloc (bfd *       abfd,
     {
       if (reloc.r_length == 2 && reloc.r_pcrel == 0)
 	{
-	  res->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  res->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  res->addend = reloc.r_value;
 	  res->howto = &arm64_howto_table[10];
 	  return true;

@@ -37,11 +37,11 @@ gdb_test "print fun_rename_test_next(1)" " = 2"
 
 set test "print fun_rename_test_n(1)"
 gdb_test_multiple $test $test {
-    -re " = 2\..*$gdb_prompt $"  {
+    -wrap -re " = 2"  {
         pass $test
     }
-    -re "No definition of \"fun_rename_test_n\" in current context\..*$gdb_prompt $" {
-        if {[test_compiler_info {gcc-6*}]} {
+    -wrap -re "No definition of \"fun_rename_test_n\" in current context\\." {
+	if {[gnat_version_compare >= 6]} {
             fail $test
         } else {
             xfail $test
@@ -51,11 +51,11 @@ gdb_test_multiple $test $test {
 }
 set test "print renamed_fun_rename_test_next(1)"
 gdb_test_multiple $test $test {
-    -re " = 2\..*$gdb_prompt $" {
+    -wrap -re " = 2" {
         pass $test
     }
-    -re "No definition of \"renamed_fun_rename_test_next\" in current context\..*$gdb_prompt $" {
-        if {[test_compiler_info {gcc-6*}]} {
+    -wrap -re "No definition of \"renamed_fun_rename_test_next\" in current context\\." {
+	if {[gnat_version_compare >= 6]} {
             fail $test
         } else {
             xfail $test
@@ -65,18 +65,18 @@ gdb_test_multiple $test $test {
 
 set test "print pack.renamed_fun_rename_test_next(1)"
 gdb_test_multiple $test $test {
-    -re " = 2\..*$gdb_prompt $" {
+    -wrap -re " = 2" {
         pass $test
     }
-    -re "No definition of \"pack\.renamed_fun_rename_test_next\" in current context\..*$gdb_prompt $" {
-        if {[test_compiler_info {gcc-6*}]} {
+    -wrap -re "No definition of \"pack\\.renamed_fun_rename_test_next\" in current context\\." {
+	if {[gnat_version_compare >= 6]} {
             fail $test
         } else {
             xfail $test
         }
     }
-    -re "Type <data variable, no debug info> is not a structure or union type\..*$gdb_prompt $" {
-        if {[test_compiler_info {gcc-6*}]} {
+    -wrap -re "Type <data variable, no debug info> is not a structure or union type\\." {
+	if {[gnat_version_compare >= 6]} {
             fail $test
         } else {
             xfail $test

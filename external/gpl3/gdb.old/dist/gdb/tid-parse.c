@@ -24,7 +24,7 @@
 
 /* See tid-parse.h.  */
 
-void ATTRIBUTE_NORETURN
+[[noreturn]] void
 invalid_thread_id_error (const char *string)
 {
   error (_("Invalid thread ID: %s"), string);
@@ -47,46 +47,75 @@ get_positive_number_trailer (const char **pp, int trailer, const char *string)
   return num;
 }
 
-/* See tid-parse.h.  */
+/* Parse TIDSTR as a per-inferior thread ID, in either INF_NUM.THR_NUM
+   or THR_NUM form, and return a pair, the first item of the pair is
+   INF_NUM and the second item is THR_NUM.
 
-struct thread_info *
-parse_thread_id (const char *tidstr, const char **end)
+   If TIDSTR does not include an INF_NUM component, then the first item in
+   the pair will be 0 (which is an invalid inferior number), this indicates
+   that TIDSTR references the current inferior.
+
+   This function does not validate the INF_NUM and THR_NUM are actually
+   valid numbers, that is, they might reference inferiors or threads that
+   don't actually exist; this function just splits the string into its
+   component parts.
+
+   If there is an error parsing TIDSTR then this function will raise an
+   exception.  */
+
+static std::pair<int, int>
+parse_thread_id_1 (const char *tidstr, const char **end)
 {
   const char *number = tidstr;
   const char *dot, *p1;
-  struct inferior *inf;
-  int thr_num;
-  int explicit_inf_id = 0;
+  int thr_num, inf_num;
 
   dot = strchr (number, '.');
 
   if (dot != NULL)
     {
       /* Parse number to the left of the dot.  */
-      int inf_num;
-
       p1 = number;
       inf_num = get_positive_number_trailer (&p1, '.', number);
       if (inf_num == 0)
 	invalid_thread_id_error (number);
-
-      inf = find_inferior_id (inf_num);
-      if (inf == NULL)
-	error (_("No inferior number '%d'"), inf_num);
-
-      explicit_inf_id = 1;
       p1 = dot + 1;
     }
   else
     {
-      inf = current_inferior ();
-
+      inf_num = 0;
       p1 = number;
     }
 
   thr_num = get_positive_number_trailer (&p1, 0, number);
   if (thr_num == 0)
     invalid_thread_id_error (number);
+
+  if (end != nullptr)
+    *end = p1;
+
+  return { inf_num, thr_num };
+}
+
+/* See tid-parse.h.  */
+
+struct thread_info *
+parse_thread_id (const char *tidstr, const char **end)
+{
+  const auto [inf_num, thr_num] = parse_thread_id_1 (tidstr, end);
+
+  inferior *inf;
+  bool explicit_inf_id = false;
+
+  if (inf_num != 0)
+    {
+      inf = find_inferior_id (inf_num);
+      if (inf == nullptr)
+	error (_("No inferior number '%d'"), inf_num);
+      explicit_inf_id = true;
+    }
+  else
+    inf = current_inferior ();
 
   thread_info *tp = nullptr;
   for (thread_info *it : inf->threads ())
@@ -96,7 +125,7 @@ parse_thread_id (const char *tidstr, const char **end)
 	break;
       }
 
-  if (tp == NULL)
+  if (tp == nullptr)
     {
       if (show_inferior_qualified_tids () || explicit_inf_id)
 	error (_("Unknown thread %d.%d."), inf->num, thr_num);
@@ -104,10 +133,23 @@ parse_thread_id (const char *tidstr, const char **end)
 	error (_("Unknown thread %d."), thr_num);
     }
 
-  if (end != NULL)
-    *end = p1;
-
   return tp;
+}
+
+/* See tid-parse.h.  */
+
+bool
+is_thread_id (const char *tidstr, const char **end)
+{
+  try
+    {
+      (void) parse_thread_id_1 (tidstr, end);
+      return true;
+    }
+  catch (const gdb_exception_error &)
+    {
+      return false;
+    }
 }
 
 /* See tid-parse.h.  */

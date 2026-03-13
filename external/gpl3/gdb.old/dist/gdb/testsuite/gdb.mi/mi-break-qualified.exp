@@ -69,7 +69,7 @@ proc test_break_qualified {} {
 		  -enabled "y" \
 		  -func "$func" \
 		  -file ".*mi-break-qualified.cc" \
-		  -line="$line_no"]
+		  -line $line_no]
     }
 
     set loc1 [make_loc_re "NS::func\\(int\\)" $loc_ns_func_line]

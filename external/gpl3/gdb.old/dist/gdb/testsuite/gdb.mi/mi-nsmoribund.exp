@@ -50,7 +50,7 @@ set bkpt_line [gdb_get_line_number "set breakpoint here"]
 
 mi_create_breakpoint "$srcfile:$bkpt_line" \
     "breakpoint at thread_function" \
-    -number 2 -function thread_function
+    -number 2 -func thread_function
 
 mi_send_resuming_command "exec-continue --all" "resume all"
 for {set i 0} {$i < $nthreads} {incr i} {

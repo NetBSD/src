@@ -724,6 +724,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 with_curses
+with_shared_termcap_library
 enable_multibyte
 enable_static
 enable_install_examples
@@ -1366,6 +1367,9 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-curses           use the curses library instead of the termcap
                           library
+  --with-shared-termcap-library
+                          link the readline shared library against the
+                          termcap/curses shared library [[default=NO]]
 
 Some influential environment variables:
   CC          C compiler command
@@ -1862,6 +1866,63 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_func
+
+# ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
+# ----------------------------------------------------
+# Tries to find if the field MEMBER exists in type AGGR, after including
+# INCLUDES, setting cache variable VAR accordingly.
+ac_fn_c_check_member ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2.$3" >&5
+$as_echo_n "checking for $2.$3... " >&6; }
+if eval \${$4+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (sizeof ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  eval "$4=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$4
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_member
 
 # ac_fn_c_check_decl LINENO SYMBOL VAR INCLUDES
 # ---------------------------------------------
@@ -2482,7 +2543,7 @@ ac_configure="$SHELL $ac_aux_dir/configure"  # Please don't use this var.
 ac_config_headers="$ac_config_headers config.h"
 
 
-LIBVERSION=8.1
+LIBVERSION=8.2
 
 # Make sure we can run config.sub.
 $SHELL "$ac_aux_dir/config.sub" sun4 >/dev/null 2>&1 ||
@@ -2558,11 +2619,18 @@ case $host_os in *\ *) host_os=`echo "$host_os" | sed 's/ /-/g'`;; esac
 
 
 opt_curses=no
+opt_shared_termcap_lib=no
 
 
 # Check whether --with-curses was given.
 if test "${with_curses+set}" = set; then :
   withval=$with_curses; opt_curses=$withval
+fi
+
+
+# Check whether --with-shared-termcap-library was given.
+if test "${with_shared_termcap_library+set}" = set; then :
+  withval=$with_shared_termcap_library; opt_shared_termcap_lib=$withval
 fi
 
 
@@ -3923,11 +3991,10 @@ $as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
 
 
 
-
 # If we're using gcc and the user hasn't specified CFLAGS, add -O2 to CFLAGS
 if test -n "$want_auto_cflags" ; then
-	AUTO_CFLAGS="-g ${GCC+-O2}"
-	STYLE_CFLAGS="${GCC+-Wno-parentheses} ${GCC+-Wno-format-security}"
+	AUTO_CFLAGS="-g ${GCC:+-O2}"
+	STYLE_CFLAGS="${GCC:+-Wno-parentheses} ${GCC:+-Wno-format-security} ${GCC:+-Wno-tautological-constant-out-of-range-compare}"
 fi
 
 if test $ac_cv_c_compiler_gnu = yes; then
@@ -4254,6 +4321,13 @@ fi
 MAKE_SHELL=/bin/sh
 
 
+
+# codeset.m4 serial 5 (gettext-0.18.2)
+
+
+
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for an ANSI C-conforming const" >&5
 $as_echo_n "checking for an ANSI C-conforming const... " >&6; }
 if ${ac_cv_c_const+:} false; then :
@@ -4334,6 +4408,48 @@ if test $ac_cv_c_const = no; then
 $as_echo "#define const /**/" >>confdefs.h
 
 fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for inline" >&5
+$as_echo_n "checking for inline... " >&6; }
+if ${ac_cv_c_inline+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_c_inline=no
+for ac_kw in inline __inline__ __inline; do
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#ifndef __cplusplus
+typedef int foo_t;
+static $ac_kw foo_t static_foo () {return 0; }
+$ac_kw foo_t foo () {return 0; }
+#endif
+
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_c_inline=$ac_kw
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  test "$ac_cv_c_inline" != no && break
+done
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_c_inline" >&5
+$as_echo "$ac_cv_c_inline" >&6; }
+
+case $ac_cv_c_inline in
+  inline | yes) ;;
+  *)
+    case $ac_cv_c_inline in
+      no) ac_val=;;
+      *) ac_val=$ac_cv_c_inline;;
+    esac
+    cat >>confdefs.h <<_ACEOF
+#ifndef __cplusplus
+#define inline $ac_val
+#endif
+_ACEOF
+    ;;
+esac
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for function prototypes" >&5
 $as_echo_n "checking for function prototypes... " >&6; }
@@ -4419,40 +4535,6 @@ $as_echo "#define volatile /**/" >>confdefs.h
 fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking return type of signal handlers" >&5
-$as_echo_n "checking return type of signal handlers... " >&6; }
-if ${ac_cv_type_signal+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <signal.h>
-
-int
-main ()
-{
-return *(signal (0, 0)) (0) == 1;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_type_signal=int
-else
-  ac_cv_type_signal=void
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_signal" >&5
-$as_echo "$ac_cv_type_signal" >&6; }
-
-cat >>confdefs.h <<_ACEOF
-#define RETSIGTYPE $ac_cv_type_signal
-_ACEOF
-
-
-
 ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
 if test "x$ac_cv_type_size_t" = xyes; then :
 
@@ -4472,119 +4554,6 @@ else
 cat >>confdefs.h <<_ACEOF
 #define ssize_t int
 _ACEOF
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
-$as_echo_n "checking for ANSI C header files... " >&6; }
-if ${ac_cv_header_stdc+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_header_stdc=yes
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then :
-  :
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ctype.h>
-#include <stdlib.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      return 2;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
-$as_echo "$ac_cv_header_stdc" >&6; }
-if test $ac_cv_header_stdc = yes; then
-
-$as_echo "#define STDC_HEADERS 1" >>confdefs.h
 
 fi
 
@@ -4790,7 +4759,7 @@ fi
 fi
 
 
-for ac_func in fcntl kill lstat readlink
+for ac_func in fcntl gettimeofday kill lstat pselect readlink select setitimer
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -4802,8 +4771,8 @@ _ACEOF
 fi
 done
 
-for ac_func in fnmatch memmove pselect putenv select setenv setlocale \
-		strcasecmp strpbrk tcgetattr vsnprintf
+for ac_func in fnmatch memmove putenv setenv setlocale \
+		strcasecmp strpbrk sysconf tcgetattr vsnprintf
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -4990,7 +4959,8 @@ fi
 
 done
 
-for ac_header in sys/ioctl.h sys/pte.h sys/stream.h sys/select.h sys/file.h
+for ac_header in sys/ioctl.h sys/pte.h sys/stream.h sys/select.h \
+		sys/time.h sys/file.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -5223,16 +5193,20 @@ rm -rf conftest*
 fi
 
 
-
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for type of signal functions" >&5
 $as_echo_n "checking for type of signal functions... " >&6; }
 if ${bash_cv_signal_vintage+:} false; then :
   $as_echo_n "(cached) " >&6
 else
 
+if ${bash_cv_posix_signals+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <signal.h>
+
 int
 main ()
 {
@@ -5248,60 +5222,91 @@ main ()
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
+  bash_cv_posix_signals=yes
+else
+  bash_cv_posix_signals=no
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+
+
+if test $bash_cv_posix_signals = yes; then
   bash_cv_signal_vintage=posix
 else
-
-    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+  if ${bash_cv_bsd_signals+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <signal.h>
+
 int
 main ()
 {
 
-	int mask = sigmask(SIGINT);
-	sigsetmask(mask); sigblock(mask); sigpause(mask);
+int mask = sigmask(SIGINT);
+sigsetmask(mask); sigblock(mask); sigpause(mask);
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  bash_cv_signal_vintage=4.2bsd
+  bash_cv_bsd_signals=yes
 else
+  bash_cv_bsd_signals=no
 
-      cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+fi
+
+
+  if test $bash_cv_bsd_signals = yes; then
+    bash_cv_signal_vintage=4.2bsd
+  else
+    if ${bash_cv_sysv_signals+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-	#include <signal.h>
-	RETSIGTYPE foo() { }
+#include <signal.h>
+void foo() { }
+
 int
 main ()
 {
 
-		int mask = sigmask(SIGINT);
-		sigset(SIGINT, foo); sigrelse(SIGINT);
-		sighold(SIGINT); sigpause(SIGINT);
+int mask = sigmask(SIGINT);
+sigset(SIGINT, foo); sigrelse(SIGINT);
+sighold(SIGINT); sigpause(SIGINT);
 
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  bash_cv_signal_vintage=svr3
+  bash_cv_sysv_signals=yes
 else
-  bash_cv_signal_vintage=v7
+  bash_cv_sysv_signals=no
 
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
-
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
 
+
+    if test $bash_cv_sysv_signals = yes; then
+      bash_cv_signal_vintage=svr3
+    else
+      bash_cv_signal_vintage=v7
+    fi
+  fi
 fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
 
 fi
 
@@ -5317,7 +5322,6 @@ elif test "$bash_cv_signal_vintage" = svr3; then
 $as_echo "#define HAVE_USG_SIGHOLD 1" >>confdefs.h
 
 fi
-
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking if signal handlers must be reinstalled when invoked" >&5
@@ -5340,7 +5344,7 @@ else
 #endif
 #include <stdlib.h>
 
-typedef RETSIGTYPE sigfunc();
+typedef void sigfunc();
 
 volatile int nsigint;
 
@@ -5362,7 +5366,7 @@ set_signal_handler(sig, handler)
 #define set_signal_handler(s, h) signal(s, h)
 #endif
 
-RETSIGTYPE
+void
 sigint(s)
 int s;
 {
@@ -5406,9 +5410,13 @@ if ${bash_cv_func_sigsetjmp+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to missing" >&5
-$as_echo "$as_me: WARNING: cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to missing" >&2;}
-     bash_cv_func_sigsetjmp=missing
+  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to $bash_cv_posix_signals" >&5
+$as_echo "$as_me: WARNING: cannot check for sigsetjmp/siglongjmp if cross-compiling -- defaulting to $bash_cv_posix_signals" >&2;}
+     if test "$bash_cv_posix_signals" = "yes" ; then
+	bash_cv_func_sigsetjmp=present
+     else
+	bash_cv_func_sigsetjmp=missing
+     fi
 
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
@@ -5430,21 +5438,30 @@ exit (1);
 #else
 
 int code;
-sigset_t set, oset;
+sigset_t set, oset, nset;
 sigjmp_buf xx;
 
 /* get the mask */
 sigemptyset(&set);
 sigemptyset(&oset);
-sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &set);
+
 sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &oset);
+/* paranoia -- make sure SIGINT is not blocked */
+sigdelset (&oset, SIGINT);
+sigprocmask (SIG_SETMASK, &oset, (sigset_t *)NULL);
 
 /* save it */
 code = sigsetjmp(xx, 1);
 if (code)
-  exit(0);	/* could get sigmask and compare to oset here. */
+{
+  sigprocmask(SIG_BLOCK, (sigset_t *)NULL, &nset);
+  /* could compare nset to oset here, but we just look for SIGINT */
+  if (sigismember (&nset, SIGINT))
+    exit(1);
+  exit(0);
+}
 
-/* change it */
+/* change it so that SIGINT is blocked */
 sigaddset(&set, SIGINT);
 sigprocmask(SIG_BLOCK, &set, (sigset_t *)NULL);
 
@@ -5453,6 +5470,7 @@ siglongjmp(xx, 10);
 exit(1);
 #endif
 }
+
 _ACEOF
 if ac_fn_c_try_run "$LINENO"; then :
   bash_cv_func_sigsetjmp=present
@@ -5480,8 +5498,8 @@ else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
+		#include <sys/types.h>
+		#include <sys/stat.h>
 
 int
 main ()
@@ -5505,7 +5523,6 @@ if test $bash_cv_func_lstat = yes; then
   $as_echo "#define HAVE_LSTAT 1" >>confdefs.h
 
 fi
-
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether or not strcoll and strcmp differ" >&5
 $as_echo_n "checking whether or not strcoll and strcmp differ... " >&6; }
@@ -5575,72 +5592,6 @@ fi
 $as_echo "$bash_cv_func_strcoll_broken" >&6; }
 if test $bash_cv_func_strcoll_broken = yes; then
 $as_echo "#define STRCOLL_BROKEN 1" >>confdefs.h
-
-fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether the ctype macros accept non-ascii characters" >&5
-$as_echo_n "checking whether the ctype macros accept non-ascii characters... " >&6; }
-if ${bash_cv_func_ctype_nonascii+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  if test "$cross_compiling" = yes; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: cannot check ctype macros if cross compiling -- defaulting to no" >&5
-$as_echo "$as_me: WARNING: cannot check ctype macros if cross compiling -- defaulting to no" >&2;}
-    bash_cv_func_ctype_nonascii=no
-
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#ifdef HAVE_LOCALE_H
-#include <locale.h>
-#endif
-#include <stdio.h>
-#include <ctype.h>
-#include <stdlib.h>
-
-int
-main(c, v)
-int	c;
-char	*v[];
-{
-	char	*deflocale;
-	unsigned char x;
-	int	r1, r2;
-
-#ifdef HAVE_SETLOCALE
-	/* We take a shot here.  If that locale is not known, try the
-	   system default.  We try this one because '\342' (226) is
-	   known to be a printable character in that locale. */
-	deflocale = setlocale(LC_ALL, "en_US.ISO8859-1");
-	if (deflocale == 0)
-		deflocale = setlocale(LC_ALL, "");
-#endif
-
-	x = '\342';
-	r1 = isprint(x);
-	x -= 128;
-	r2 = isprint(x);
-	exit (r1 == 0 || r2 == 0);
-}
-
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-  bash_cv_func_ctype_nonascii=yes
-else
-  bash_cv_func_ctype_nonascii=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_func_ctype_nonascii" >&5
-$as_echo "$bash_cv_func_ctype_nonascii" >&6; }
-if test $bash_cv_func_ctype_nonascii = yes; then
-$as_echo "#define CTYPE_NON_ASCII 1" >>confdefs.h
 
 fi
 
@@ -5739,6 +5690,20 @@ $as_echo "#define GWINSZ_IN_SYS_IOCTL 1" >>confdefs.h
 fi
 
 
+
+ for ac_header in inttypes.h
+do :
+  ac_fn_c_check_header_mongrel "$LINENO" "inttypes.h" "ac_cv_header_inttypes_h" "$ac_includes_default"
+if test "x$ac_cv_header_inttypes_h" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_INTTYPES_H 1
+_ACEOF
+
+fi
+
+done
+
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sig_atomic_t in signal.h" >&5
 $as_echo_n "checking for sig_atomic_t in signal.h... " >&6; }
 if ${ac_cv_have_sig_atomic_t+:} false; then :
@@ -5746,9 +5711,7 @@ if ${ac_cv_have_sig_atomic_t+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-
-#include <signal.h>
-
+ #include <signal.h>
 int
 main ()
 {
@@ -5769,54 +5732,50 @@ fi
 $as_echo "$ac_cv_have_sig_atomic_t" >&6; }
 if test "$ac_cv_have_sig_atomic_t" = "no"
 then
-    ac_fn_c_check_type "$LINENO" "sig_atomic_t" "ac_cv_type_sig_atomic_t" "$ac_includes_default"
-if test "x$ac_cv_type_sig_atomic_t" = xyes; then :
 
-else
 
-cat >>confdefs.h <<_ACEOF
-#define sig_atomic_t int
-_ACEOF
-
-fi
-
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether signal handlers are of type void" >&5
-$as_echo_n "checking whether signal handlers are of type void... " >&6; }
-if ${bash_cv_void_sighandler+:} false; then :
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sig_atomic_t" >&5
+$as_echo_n "checking for sig_atomic_t... " >&6; }
+if ${bash_cv_type_sig_atomic_t+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 #include <sys/types.h>
+#if HAVE_STDLIB_H
+#include <stdlib.h>
+#endif
+#if HAVE_STDDEF_H
+#include <stddef.h>
+#endif
+#if HAVE_INTTYPES_H
+#include <inttypes.h>
+#endif
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
 #include <signal.h>
-#ifdef signal
-#undef signal
-#endif
-#ifdef __cplusplus
-extern "C"
-#endif
-void (*signal ()) ();
-int
-main ()
-{
-int i;
-  ;
-  return 0;
-}
+
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  bash_cv_void_sighandler=yes
+if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
+  $EGREP "sig_atomic_t" >/dev/null 2>&1; then :
+  bash_cv_type_sig_atomic_t=yes
 else
-  bash_cv_void_sighandler=no
+  bash_cv_type_sig_atomic_t=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+rm -f conftest*
+
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_void_sighandler" >&5
-$as_echo "$bash_cv_void_sighandler" >&6; }
-if test $bash_cv_void_sighandler = yes; then
-$as_echo "#define VOID_SIGHANDLER 1" >>confdefs.h
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_type_sig_atomic_t" >&5
+$as_echo "$bash_cv_type_sig_atomic_t" >&6; }
+
+if test $bash_cv_type_sig_atomic_t = no; then
+  cat >>confdefs.h <<_ACEOF
+#define sig_atomic_t int
+_ACEOF
+
+fi
 
 fi
 
@@ -5828,6 +5787,7 @@ if ${bash_cv_tiocstat_in_ioctl+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 int
@@ -5842,6 +5802,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
   bash_cv_tiocstat_in_ioctl=yes
 else
   bash_cv_tiocstat_in_ioctl=no
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -5860,6 +5821,7 @@ if ${bash_cv_fionread_in_ioctl+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
 int
@@ -5874,6 +5836,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
   bash_cv_fionread_in_ioctl=yes
 else
   bash_cv_fionread_in_ioctl=no
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -5921,42 +5884,76 @@ $as_echo_n "checking for struct winsize in sys/ioctl.h and termios.h... " >&6; }
 if ${bash_cv_struct_winsize_header+:} false; then :
   $as_echo_n "(cached) " >&6
 else
+
+if ${bash_cv_struct_winsize_ioctl+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <sys/types.h>
 #include <sys/ioctl.h>
+
 int
 main ()
 {
+
 struct winsize x;
+if (sizeof (x) > 0) return (0);
+
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  bash_cv_struct_winsize_header=ioctl_h
+  bash_cv_struct_winsize_ioctl=yes
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <sys/types.h>
-#include <termios.h>
-int
-main ()
-{
-struct winsize x;
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  bash_cv_struct_winsize_header=termios_h
-else
-  bash_cv_struct_winsize_header=other
+  bash_cv_struct_winsize_ioctl=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 
 fi
+
+
+if ${bash_cv_struct_winsize_termios+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/termios.h>
+
+int
+main ()
+{
+
+struct winsize x;
+if (sizeof (x) > 0) return (0);
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bash_cv_struct_winsize_termios=yes
+else
+  bash_cv_struct_winsize_termios=no
+fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+
+
+
+if test $bash_cv_struct_winsize_ioctl = yes; then
+  bash_cv_struct_winsize_header=ioctl_h
+elif test $bash_cv_struct_winsize_termios = yes; then
+  bash_cv_struct_winsize_header=termios_h
+else
+  bash_cv_struct_winsize_header=other
+fi
+
 fi
 
 if test $bash_cv_struct_winsize_header = ioctl_h; then
@@ -5977,12 +5974,12 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct dirent.d_ino" >&5
 $as_echo_n "checking for struct dirent.d_ino... " >&6; }
-if ${bash_cv_dirent_has_dino+:} false; then :
+if ${bash_cv_dirent_has_d_ino+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
 
+
+ac_fn_c_check_member "$LINENO" "struct dirent" "d_ino" "ac_cv_member_struct_dirent_d_ino" "
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -6003,27 +6000,24 @@ else
 # endif
 #endif /* HAVE_DIRENT_H */
 
-int
-main ()
-{
+"
+if test "x$ac_cv_member_struct_dirent_d_ino" = xyes; then :
 
-struct dirent d; int z; z = d.d_ino;
-
-  ;
-  return 0;
-}
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_DIRENT_D_INO 1
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  bash_cv_dirent_has_dino=yes
+
+bash_cv_dirent_has_d_ino=yes
 else
-  bash_cv_dirent_has_dino=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  bash_cv_dirent_has_d_ino=no
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_dirent_has_dino" >&5
-$as_echo "$bash_cv_dirent_has_dino" >&6; }
-if test $bash_cv_dirent_has_dino = yes; then
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_dirent_has_d_ino" >&5
+$as_echo "$bash_cv_dirent_has_d_ino" >&6; }
+if test $bash_cv_dirent_has_d_ino = yes; then
 $as_echo "#define HAVE_STRUCT_DIRENT_D_INO 1" >>confdefs.h
 
 fi
@@ -6034,9 +6028,9 @@ $as_echo_n "checking for struct dirent.d_fileno... " >&6; }
 if ${bash_cv_dirent_has_d_fileno+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
 
+
+ac_fn_c_check_member "$LINENO" "struct dirent" "d_fileno" "ac_cv_member_struct_dirent_d_fileno" "
 #include <stdio.h>
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -6057,28 +6051,62 @@ else
 # endif
 #endif /* HAVE_DIRENT_H */
 
-int
-main ()
-{
+"
+if test "x$ac_cv_member_struct_dirent_d_fileno" = xyes; then :
 
-struct dirent d; int z; z = d.d_fileno;
-
-  ;
-  return 0;
-}
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_DIRENT_D_FILENO 1
 _ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  bash_cv_dirent_has_d_fileno=yes
+
+bash_cv_dirent_has_d_fileno=yes
 else
   bash_cv_dirent_has_d_fileno=no
 fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+
 fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_dirent_has_d_fileno" >&5
 $as_echo "$bash_cv_dirent_has_d_fileno" >&6; }
 if test $bash_cv_dirent_has_d_fileno = yes; then
 $as_echo "#define HAVE_STRUCT_DIRENT_D_FILENO 1" >>confdefs.h
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct timeval in sys/time.h and time.h" >&5
+$as_echo_n "checking for struct timeval in sys/time.h and time.h... " >&6; }
+if ${bash_cv_struct_timeval+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#if HAVE_SYS_TIME_H
+		  #include <sys/time.h>
+		  #endif
+		  #include <time.h>
+
+int
+main ()
+{
+static struct timeval x; x.tv_sec = x.tv_usec;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  bash_cv_struct_timeval=yes
+else
+  bash_cv_struct_timeval=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_struct_timeval" >&5
+$as_echo "$bash_cv_struct_timeval" >&6; }
+if test $bash_cv_struct_timeval = yes; then
+  $as_echo "#define HAVE_TIMEVAL 1" >>confdefs.h
 
 fi
 
@@ -6359,7 +6387,8 @@ elif test $bash_cv_termcap_lib = libc; then
 TERMCAP_LIB=
 TERMCAP_DEP=
 else
-TERMCAP_LIB=-lcurses
+# we assume ncurses is installed somewhere the linker can find it
+TERMCAP_LIB=-lncurses
 TERMCAP_DEP=
 fi
 
@@ -6385,6 +6414,10 @@ fi
 done
 
 fi
+case "$opt_shared_termcap_lib" in
+[Yy][Ee][Ss])	SHARED_TERMCAP="$TERMCAP_LIB" ;;
+-l*)		SHARED_TERMCAP="$opt_shared_termcap_lib" ;;
+esac
 
 case "$TERMCAP_LIB" in
 -ltinfo)  TERMCAP_PKG_CONFIG_LIB=tinfo ;;
@@ -6393,6 +6426,40 @@ case "$TERMCAP_LIB" in
 -ltermcap) TERMCAP_PKG_CONFIG_LIB=termcap ;;
 *) TERMCAP_PKG_CONFIG_LIB=termcap ;;
 esac
+
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for nl_langinfo and CODESET" >&5
+$as_echo_n "checking for nl_langinfo and CODESET... " >&6; }
+if ${am_cv_langinfo_codeset+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <langinfo.h>
+int
+main ()
+{
+char* cs = nl_langinfo(CODESET); return !cs;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  am_cv_langinfo_codeset=yes
+else
+  am_cv_langinfo_codeset=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $am_cv_langinfo_codeset" >&5
+$as_echo "$am_cv_langinfo_codeset" >&6; }
+  if test $am_cv_langinfo_codeset = yes; then
+
+$as_echo "#define HAVE_LANGINFO_CODESET 1" >>confdefs.h
+
+  fi
 
 
 for ac_header in wctype.h
@@ -6592,36 +6659,7 @@ fi
 done
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for nl_langinfo and CODESET" >&5
-$as_echo_n "checking for nl_langinfo and CODESET... " >&6; }
-if ${bash_cv_langinfo_codeset+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <langinfo.h>
-int
-main ()
-{
-char* cs = nl_langinfo(CODESET);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  bash_cv_langinfo_codeset=yes
-else
-  bash_cv_langinfo_codeset=no
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $bash_cv_langinfo_codeset" >&5
-$as_echo "$bash_cv_langinfo_codeset" >&6; }
-if test $bash_cv_langinfo_codeset = yes; then
-  $as_echo "#define HAVE_LANGINFO_CODESET 1" >>confdefs.h
 
-fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for wchar_t in wchar.h" >&5
 $as_echo_n "checking for wchar_t in wchar.h... " >&6; }
@@ -6630,8 +6668,8 @@ if ${bash_cv_type_wchar_t+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <wchar.h>
 
+#include <wchar.h>
 int
 main ()
 {
@@ -6647,6 +6685,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
   bash_cv_type_wchar_t=yes
 else
   bash_cv_type_wchar_t=no
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -6665,6 +6704,7 @@ if ${bash_cv_type_wctype_t+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <wctype.h>
 int
 main ()
@@ -6681,6 +6721,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
   bash_cv_type_wctype_t=yes
 else
   bash_cv_type_wctype_t=no
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -6699,6 +6740,7 @@ if ${bash_cv_type_wint_t+:} false; then :
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
 #include <wctype.h>
 int
 main ()
@@ -6715,6 +6757,7 @@ if ac_fn_c_try_compile "$LINENO"; then :
   bash_cv_type_wint_t=yes
 else
   bash_cv_type_wint_t=no
+
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 fi
@@ -6733,6 +6776,7 @@ if ${bash_cv_wcwidth_broken+:} false; then :
 else
   if test "$cross_compiling" = yes; then :
   bash_cv_wcwidth_broken=no
+
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
@@ -6848,10 +6892,12 @@ if test -f ${srcdir}/support/shobj-conf; then
 $as_echo_n "checking configuration for building shared libraries... " >&6; }
         eval `TERMCAP_LIB=$TERMCAP_LIB ${CONFIG_SHELL-/bin/sh} ${srcdir}/support/shobj-conf -C "${CC}" -c ${host_cpu} -o ${host_os} -v ${host_vendor}`
 
-#	case "$SHLIB_LIBS" in
-#	*curses*|*termcap*|*termlib*)	;;
-#	*)			SHLIB_LIBS="$SHLIB_LIBS $TERMCAP_LIB" ;;
-#	esac
+	# SHARED_TERMCAP is set only if opt_shared_termcap_library is set
+	case "$SHLIB_LIBS" in
+	*curses*|*tinfo*)	;;
+	*termcap*|*termlib*)	;;	# common aliases
+	*)		SHLIB_LIBS="$SHLIB_LIBS $SHARED_TERMCAP" ;;
+	esac
 
 
 
@@ -6916,6 +6962,7 @@ esac
 
 
 
+# CFLAGS=${CFLAGS-"$AUTO_CFLAGS"}
 if test -n "$want_auto_cflags"; then
 	CFLAGS="$AUTO_CFLAGS"
 fi
@@ -6937,9 +6984,11 @@ CFLAGS="$CFLAGS $STYLE_CFLAGS"
 
 
 
-ac_config_files="$ac_config_files Makefile doc/Makefile examples/Makefile shlib/Makefile readline.pc"
+ac_config_files="$ac_config_files Makefile doc/Makefile examples/Makefile shlib/Makefile readline.pc history.pc"
 
-ac_config_commands="$ac_config_commands default"
+
+ac_config_commands="$ac_config_commands stamp-h"
+
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -7641,7 +7690,8 @@ do
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
     "shlib/Makefile") CONFIG_FILES="$CONFIG_FILES shlib/Makefile" ;;
     "readline.pc") CONFIG_FILES="$CONFIG_FILES readline.pc" ;;
-    "default") CONFIG_COMMANDS="$CONFIG_COMMANDS default" ;;
+    "history.pc") CONFIG_FILES="$CONFIG_FILES history.pc" ;;
+    "stamp-h") CONFIG_COMMANDS="$CONFIG_COMMANDS stamp-h" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac
@@ -8197,10 +8247,7 @@ $as_echo "$as_me: executing $ac_file commands" >&6;}
 
 
   case $ac_file$ac_mode in
-    "default":C)
-# Makefile uses this timestamp file to record whether config.h is up to date.
-echo > stamp-h
- ;;
+    "stamp-h":C) echo > stamp-h ;;
 
   esac
 done # for ac_tag

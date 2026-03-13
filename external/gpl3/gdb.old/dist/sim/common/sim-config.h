@@ -141,7 +141,7 @@ extern enum bfd_endian current_target_byte_order;
    expect to see (VEA includes things like coherency and the time
    base) while OEA is what an operating system expects to see.  By
    setting these to specific values, the build process is able to
-   eliminate non relevent environment code.
+   eliminate non relevant environment code.
 
    STATE_ENVIRONMENT(sd) specifies which of vea or oea is required for
    the current runtime.

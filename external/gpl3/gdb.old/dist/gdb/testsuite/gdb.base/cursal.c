@@ -31,7 +31,7 @@ func1 ()
 
 int
 main ()
-{
+{ /* main prologue */
   int v0 = 0;
   func1 ();
 

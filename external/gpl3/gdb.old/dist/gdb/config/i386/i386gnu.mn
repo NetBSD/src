@@ -21,7 +21,9 @@ MIGCOM = $(MIG) -cc cat - /dev/null
 	| $(MIGCOM) -sheader /dev/null -server /dev/null -user $*_U.c -header $*_U.h
 
 # MIG stubs are not yet ready for C++ compilation.
-%_S.o %_U.o : COMPILE.post += -x c -include gnu-nat-mig.h
+%_S.o %_U.o : COMPILE.post += -x c
+# Do not include defs.h since it requires C++. Rather include our own gnu-nat-mig.h
+%_S.o %_U.o : GDB_INCLUDED_HEADER = -include gnu-nat-mig.h
 
 NAT_GENERATED_FILES = notify_S.h notify_S.c \
 	process_reply_S.h process_reply_S.c \

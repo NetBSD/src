@@ -51,5 +51,5 @@ status_to_str (int status)
 int
 my_waitpid (int pid, int *status, int flags)
 {
-  return gdb::handle_eintr (-1, ::waitpid, pid, status, flags);
+  return gdb::waitpid (pid, status, flags);
 }

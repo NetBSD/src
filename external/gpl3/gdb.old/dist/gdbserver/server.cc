@@ -109,7 +109,7 @@ static struct {
 	   its name with CURRENT_DIRECTORY.  Otherwise, we leave the
 	   name as-is because we'll try searching for it in $PATH.  */
 	if (is_regular_file (m_path.c_str (), &reg_file_errno))
-	  m_path = gdb_abspath (m_path.c_str ());
+	  m_path = gdb_abspath (m_path);
       }
   }
 
@@ -282,17 +282,6 @@ get_exec_wrapper ()
   return !wrapper_argv.empty () ? wrapper_argv.c_str () : NULL;
 }
 
-/* See gdbsupport/common-inferior.h.  */
-
-const char *
-get_exec_file (int err)
-{
-  if (err && program_path.get () == NULL)
-    error (_("No executable file specified."));
-
-  return program_path.get ();
-}
-
 /* See server.h.  */
 
 gdb_environ *
@@ -405,7 +394,7 @@ write_qxfer_response (char *buf, const gdb_byte *data, int len, int is_more)
 /* Handle btrace enabling in BTS format.  */
 
 static void
-handle_btrace_enable_bts (struct thread_info *thread)
+handle_btrace_enable_bts (thread_info *thread)
 {
   if (thread->btrace != NULL)
     error (_("Btrace already enabled."));
@@ -417,7 +406,7 @@ handle_btrace_enable_bts (struct thread_info *thread)
 /* Handle btrace enabling in Intel Processor Trace format.  */
 
 static void
-handle_btrace_enable_pt (struct thread_info *thread)
+handle_btrace_enable_pt (thread_info *thread)
 {
   if (thread->btrace != NULL)
     error (_("Btrace already enabled."));
@@ -429,7 +418,7 @@ handle_btrace_enable_pt (struct thread_info *thread)
 /* Handle btrace disabling.  */
 
 static void
-handle_btrace_disable (struct thread_info *thread)
+handle_btrace_disable (thread_info *thread)
 {
 
   if (thread->btrace == NULL)
@@ -447,7 +436,7 @@ static int
 handle_btrace_general_set (char *own_buf)
 {
   client_state &cs = get_client_state ();
-  struct thread_info *thread;
+  thread_info *thread;
   char *op;
 
   if (!startswith (own_buf, "Qbtrace:"))
@@ -496,7 +485,7 @@ static int
 handle_btrace_conf_general_set (char *own_buf)
 {
   client_state &cs = get_client_state ();
-  struct thread_info *thread;
+  thread_info *thread;
   char *op;
 
   if (!startswith (own_buf, "Qbtrace-conf:"))
@@ -547,6 +536,32 @@ handle_btrace_conf_general_set (char *own_buf)
 	}
 
       current_btrace_conf.pt.size = (unsigned int) size;
+    }
+  else if (strncmp (op, "pt:ptwrite=", strlen ("pt:ptwrite=")) == 0)
+    {
+      op += strlen ("pt:ptwrite=");
+      if (strncmp (op, "\"yes\"", strlen ("\"yes\"")) == 0)
+	current_btrace_conf.pt.ptwrite = true;
+      else if (strncmp (op, "\"no\"", strlen ("\"no\"")) == 0)
+	current_btrace_conf.pt.ptwrite = false;
+      else
+	{
+	  strcpy (own_buf, "E.Bad ptwrite value.");
+	  return -1;
+	}
+    }
+  else if (strncmp (op, "pt:event-tracing=", strlen ("pt:event-tracing=")) == 0)
+    {
+      op += strlen ("pt:event-tracing=");
+      if (strncmp (op, "\"yes\"", strlen ("\"yes\"")) == 0)
+	current_btrace_conf.pt.event_tracing = true;
+      else if (strncmp (op, "\"no\"", strlen ("\"no\"")) == 0)
+	current_btrace_conf.pt.event_tracing = false;
+      else
+	{
+	  strcpy (own_buf, "E.Bad event-tracing value.");
+	  return -1;
+	}
     }
   else
     {
@@ -997,7 +1012,7 @@ handle_general_set (char *own_buf)
 
 	  for_each_thread ([&] (thread_info *thread)
 	    {
-	      if (ptid_of (thread).matches (ptid))
+	      if (thread->id.matches (ptid))
 		set_options[thread] = options;
 	    });
 	}
@@ -1013,7 +1028,7 @@ handle_general_set (char *own_buf)
 	      // XXX: undefined reference to
 	      // `to_string[abi:cxx11](enum_flags<gdb_thread_option>)'
 	      threads_debug_printf ("[options for %s are now %s]\n",
-				    target_pid_to_str (ptid_of (thread)).c_str (),
+				    target_pid_to_str (thread->id).c_str (),
 				    to_string (options).c_str ());
 #endif
 
@@ -1290,11 +1305,7 @@ handle_detach (char *own_buf)
       process = find_process_pid (pid);
     }
   else
-    {
-      process = (current_thread != nullptr
-		 ? get_thread_process (current_thread)
-		 : nullptr);
-    }
+    process = current_process ();
 
   if (process == NULL)
     {
@@ -1349,27 +1360,21 @@ handle_detach (char *own_buf)
      another process might delete the next thread in the iteration, which is
      the one saved by the safe iterator.  We will never delete the currently
      iterated on thread, so standard iteration should be safe.  */
-  for (thread_info *thread : all_threads)
+  for (thread_info &thread : process->thread_list ())
     {
-      /* Only threads that are of the process we are detaching.  */
-      if (thread->id.pid () != pid)
-	continue;
-
       /* Only threads that have a pending fork event.  */
       target_waitkind kind;
-      thread_info *child = target_thread_pending_child (thread, &kind);
+      thread_info *child = target_thread_pending_child (&thread, &kind);
       if (child == nullptr || kind == TARGET_WAITKIND_THREAD_CLONED)
 	continue;
 
-      process_info *fork_child_process = get_thread_process (child);
-      gdb_assert (fork_child_process != nullptr);
-
+      process_info *fork_child_process = child->process ();
       int fork_child_pid = fork_child_process->pid;
 
       if (detach_inferior (fork_child_process) != 0)
 	warning (_("Failed to detach fork child %s, child of %s"),
 		 target_pid_to_str (ptid_t (fork_child_pid)).c_str (),
-		 target_pid_to_str (thread->id).c_str ());
+		 target_pid_to_str (thread.id).c_str ());
     }
 
   if (detach_inferior (process) != 0)
@@ -1548,7 +1553,7 @@ parse_debug_options (const char *options)
   gdb_assert (options != nullptr);
 
   /* Empty options means the "default" set.  This exists mostly for
-     backwards compatibility with gdbserver's legacy behaviour.  */
+     backwards compatibility with gdbserver's legacy behavior.  */
   if (*options == '\0')
     options = "+threads";
 
@@ -1780,7 +1785,7 @@ struct qxfer
      the starting point.  The ANNEX can be used to provide additional
      data-specific information to the target.
 
-     Return the number of bytes actually transfered, zero when no
+     Return the number of bytes actually transferred, zero when no
      further transfer is possible, -1 on error, -2 when the transfer
      is not supported, and -3 on a verbose error message that should
      be preserved.  Return of a positive value smaller than LEN does
@@ -1827,7 +1832,7 @@ handle_qxfer_exec_file (const char *annex,
       if (current_thread == NULL)
 	return -1;
 
-      pid = pid_of (current_thread);
+      pid = current_thread->id.pid ();
     }
   else
     {
@@ -1998,7 +2003,7 @@ handle_qxfer_statictrace (const char *annex,
 static void
 handle_qxfer_threads_worker (thread_info *thread, std::string *buffer)
 {
-  ptid_t ptid = ptid_of (thread);
+  ptid_t ptid = thread->id;
   char ptid_s[100];
   int core = target_core_of_thread (ptid);
   char core_s[21];
@@ -2173,7 +2178,7 @@ handle_qxfer_btrace (const char *annex,
 {
   client_state &cs = get_client_state ();
   static std::string cache;
-  struct thread_info *thread;
+  thread_info *thread;
   enum btrace_read_type type;
   int result;
 
@@ -2254,7 +2259,7 @@ handle_qxfer_btrace_conf (const char *annex,
 {
   client_state &cs = get_client_state ();
   static std::string cache;
-  struct thread_info *thread;
+  thread_info *thread;
   int result;
 
   if (writebuf != NULL)
@@ -2504,6 +2509,8 @@ supported_btrace_packets (char *buf)
   strcat (buf, ";Qbtrace-conf:bts:size+");
   strcat (buf, ";Qbtrace:pt+");
   strcat (buf, ";Qbtrace-conf:pt:size+");
+  strcat (buf, ";Qbtrace-conf:pt:ptwrite+");
+  strcat (buf, ";Qbtrace-conf:pt:event-tracing+");
   strcat (buf, ";Qbtrace:off+");
   strcat (buf, ";qXfer:btrace:read+");
   strcat (buf, ";qXfer:btrace-conf:read+");
@@ -2515,7 +2522,47 @@ static void
 handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 {
   client_state &cs = get_client_state ();
-  static std::list<thread_info *>::const_iterator thread_iter;
+  static owning_intrusive_list<process_info>::iterator process_iter;
+  static owning_intrusive_list<thread_info>::iterator thread_iter;
+
+  auto init_thread_iter = [&] ()
+    {
+      process_iter = all_processes.begin ();
+      owning_intrusive_list<thread_info> *thread_list;
+
+      for (; process_iter != all_processes.end (); ++process_iter)
+	{
+	  thread_list = &process_iter->thread_list ();
+	  thread_iter = thread_list->begin ();
+	  if (thread_iter != thread_list->end ())
+	    break;
+	}
+      /* Make sure that there is at least one thread to iterate.  */
+      gdb_assert (process_iter != all_processes.end ());
+      gdb_assert (thread_iter != thread_list->end ());
+    };
+
+  auto advance_thread_iter = [&] ()
+    {
+      /* The loop below is written in the natural way as-if we'd always
+	 start at the beginning of the inferior list.  This fast forwards
+	 the algorithm to the actual current position.  */
+      owning_intrusive_list<thread_info> *thread_list
+	= &process_iter->thread_list ();
+      goto start;
+
+      for (; process_iter != all_processes.end (); ++process_iter)
+	{
+	  thread_list = &process_iter->thread_list ();
+	  thread_iter = thread_list->begin ();
+	  while (thread_iter != thread_list->end ())
+	    {
+	      return;
+	    start:
+	      ++thread_iter;
+	    }
+	}
+    };
 
   /* Reply the current thread id.  */
   if (strcmp ("qC", own_buf) == 0 && !disable_packet_qC)
@@ -2527,8 +2574,8 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	ptid = cs.general_thread;
       else
 	{
-	  thread_iter = all_threads.begin ();
-	  ptid = (*thread_iter)->id;
+	  init_thread_iter ();
+	  ptid = thread_iter->id;
 	}
 
       sprintf (own_buf, "QC");
@@ -2588,24 +2635,26 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
       if (strcmp ("qfThreadInfo", own_buf) == 0)
 	{
 	  require_running_or_return (own_buf);
-	  thread_iter = all_threads.begin ();
+	  init_thread_iter ();
 
 	  *own_buf++ = 'm';
-	  ptid_t ptid = (*thread_iter)->id;
+	  ptid_t ptid = thread_iter->id;
 	  write_ptid (own_buf, ptid);
-	  thread_iter++;
+	  advance_thread_iter ();
 	  return;
 	}
 
       if (strcmp ("qsThreadInfo", own_buf) == 0)
 	{
 	  require_running_or_return (own_buf);
-	  if (thread_iter != all_threads.end ())
+	  /* We're done if the process iterator hits the end of the
+	     process list.  */
+	  if (process_iter != all_processes.end ())
 	    {
 	      *own_buf++ = 'm';
-	      ptid_t ptid = (*thread_iter)->id;
+	      ptid_t ptid = thread_iter->id;
 	      write_ptid (own_buf, ptid);
-	      thread_iter++;
+	      advance_thread_iter ();
 	      return;
 	    }
 	  else
@@ -2719,6 +2768,8 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 		  if (target_supports_memory_tagging ())
 		    cs.memory_tagging_feature = true;
 		}
+	      else if (feature == "error-message+")
+		cs.error_message_supported = true;
 	      else
 		{
 		  /* Move the unknown features all together.  */
@@ -2735,7 +2786,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	       "PacketSize=%x;QPassSignals+;QProgramSignals+;"
 	       "QStartupWithShell+;QEnvironmentHexEncoded+;"
 	       "QEnvironmentReset+;QEnvironmentUnset+;"
-	       "QSetWorkingDir+",
+	       "QSetWorkingDir+;binary-upload+",
 	       PBUFSIZ - 1);
 
       if (target_supports_catch_syscall ())
@@ -2897,7 +2948,7 @@ handle_query (char *own_buf, int packet_len, int *new_packet_len_p)
 	err = 1;
       else
 	{
-	  struct thread_info *thread = find_thread_ptid (ptid);
+	  thread_info *thread = find_thread_ptid (ptid);
 
 	  if (thread == NULL)
 	    err = 2;
@@ -3075,7 +3126,7 @@ static void resume (struct thread_resume *actions, size_t n);
 
 /* The callback that is passed to visit_actioned_threads.  */
 typedef int (visit_actioned_threads_callback_ftype)
-  (const struct thread_resume *, struct thread_info *);
+  (const struct thread_resume *, thread_info *);
 
 /* Call CALLBACK for any thread to which ACTIONS applies to.  Returns
    true if CALLBACK returns true.  Returns false if no matching thread
@@ -3111,7 +3162,7 @@ visit_actioned_threads (thread_info *thread,
 
 static int
 handle_pending_status (const struct thread_resume *resumption,
-		       struct thread_info *thread)
+		       thread_info *thread)
 {
   client_state &cs = get_client_state ();
   if (thread->status_pending_p)
@@ -3606,7 +3657,7 @@ myresume (char *own_buf, int step, int sig)
 
   if (step || sig || valid_cont_thread)
     {
-      resume_info[0].thread = current_ptid;
+      resume_info[0].thread = current_thread->id;
       if (step)
 	resume_info[0].kind = resume_step;
       else
@@ -3725,7 +3776,7 @@ handle_status (char *own_buf)
     {
       for_each_thread (queue_stop_reply_callback);
 
-      /* The first is sent immediatly.  OK is sent if there is no
+      /* The first is sent immediately.  OK is sent if there is no
 	 stopped thread, which is the same handling of the vStopped
 	 packet (by design).  */
       notif_write_event (&notif_stop, cs.own_buf);
@@ -3768,7 +3819,7 @@ handle_status (char *own_buf)
 
       if (thread != NULL)
 	{
-	  struct thread_info *tp = (struct thread_info *) thread;
+	  thread_info *tp = (thread_info *) thread;
 
 	  /* We're reporting this event, so it's no longer
 	     pending.  */
@@ -4050,13 +4101,45 @@ test_memory_tagging_functions (void)
 	      && tags.size () == 5);
 }
 
+/* Exercise the behavior of doing a 0-length comparison for a register in a
+   register buffer, which should return true.  */
+
+static void test_registers_raw_compare_zero_length ()
+{
+  /* Start off with a dummy target description.  */
+  target_desc dummy_tdesc;
+
+  /* Make it 8 bytes long.  */
+  dummy_tdesc.registers_size = 8;
+
+  /* Add a couple dummy 32-bit registers.  */
+  dummy_tdesc.reg_defs.emplace_back ("r0", 0, 32);
+  dummy_tdesc.reg_defs.emplace_back ("r1", 32, 32);
+
+  /* Create a dummy buffer that will serve as the register buffer for our
+     dummy regcache.  */
+  gdb_byte dummy_register_buffer[8];
+
+  /* Create our dummy register cache so we can invoke the raw_compare method
+     we want to validate.  */
+  regcache dummy_regcache;
+  init_register_cache (&dummy_regcache, &dummy_tdesc, dummy_register_buffer);
+
+  /* Create a dummy byte buffer we can pass to the raw_compare method.  */
+  gdb_byte dummy_buffer[8];
+
+  /* Validate the 0-length comparison (due to the comparison offset being
+     equal to the length of the register) returns true.  */
+  SELF_CHECK (dummy_regcache.raw_compare (0, dummy_buffer, 4));
+}
+
 } // namespace selftests
 #endif /* GDB_SELF_TEST */
 
 /* Main function.  This is called by the real "main" function,
    wrapped in a TRY_CATCH that handles any uncaught exceptions.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 captured_main (int argc, char *argv[])
 {
   int bad_attach;
@@ -4073,6 +4156,8 @@ captured_main (int argc, char *argv[])
 
   selftests::register_test ("remote_memory_tagging",
 			    selftests::test_memory_tagging_functions);
+  selftests::register_test ("test_registers_raw_compare_zero_length",
+			    selftests::test_registers_raw_compare_zero_length);
 #endif
 
   current_directory = getcwd (NULL, 0);
@@ -4213,6 +4298,10 @@ captured_main (int argc, char *argv[])
 	  /* "-" specifies a stdio connection and is a form of port
 	     specification.  */
 	  port = STDIO_CONNECTION_NAME;
+
+	  /* Implying --once here prevents a hang after stdin has been closed.  */
+	  run_once = true;
+
 	  next_arg++;
 	  break;
 	}
@@ -4384,6 +4473,7 @@ captured_main (int argc, char *argv[])
       cs.hwbreak_feature = 0;
       cs.vCont_supported = 0;
       cs.memory_tagging_feature = false;
+      cs.error_message_supported = false;
 
       remote_open (port);
 
@@ -4674,7 +4764,7 @@ process_serial_event (void)
 	    write_enn (cs.own_buf);
 	  else
 	    {
-	      regcache = get_thread_regcache (current_thread, 1);
+	      regcache = get_thread_regcache (current_thread);
 	      registers_to_string (regcache, cs.own_buf);
 	    }
 	}
@@ -4691,7 +4781,7 @@ process_serial_event (void)
 	    write_enn (cs.own_buf);
 	  else
 	    {
-	      regcache = get_thread_regcache (current_thread, 1);
+	      regcache = get_thread_regcache (current_thread);
 	      registers_from_string (regcache, &cs.own_buf[1]);
 	      write_ok (cs.own_buf);
 	    }
@@ -4715,6 +4805,35 @@ process_serial_event (void)
 	write_ok (cs.own_buf);
       else
 	write_enn (cs.own_buf);
+      break;
+    case 'x':
+      {
+	require_running_or_break (cs.own_buf);
+	decode_x_packet (&cs.own_buf[1], &mem_addr, &len);
+	int res = gdb_read_memory (mem_addr, mem_buf, len);
+	if (res < 0)
+	  write_enn (cs.own_buf);
+	else
+	  {
+	    gdb_byte *buffer = (gdb_byte *) cs.own_buf;
+	    *buffer++ = 'b';
+
+	    int out_len_units;
+	    new_packet_len = remote_escape_output (mem_buf, res, 1,
+						   buffer,
+						   &out_len_units,
+						   PBUFSIZ);
+	    new_packet_len++; /* For the 'b' marker.  */
+
+	    if (out_len_units != res)
+	      {
+		write_enn (cs.own_buf);
+		new_packet_len = -1;
+	      }
+	    else
+	      suppress_next_putpkt_log ();
+	  }
+      }
       break;
     case 'X':
       require_running_or_break (cs.own_buf);

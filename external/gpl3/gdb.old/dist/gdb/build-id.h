@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BUILD_ID_H
-#define BUILD_ID_H
+#ifndef GDB_BUILD_ID_H
+#define GDB_BUILD_ID_H
 
 #include "gdb_bfd.h"
 #include "gdbsupport/rsp-low.h"
@@ -40,13 +40,6 @@ extern int build_id_verify (bfd *abfd,
 extern gdb_bfd_ref_ptr build_id_to_debug_bfd (size_t build_id_len,
 					      const bfd_byte *build_id);
 
-/* Find and open a BFD for an executable file given a build-id.  If no BFD
-   can be found, return NULL.  The returned reference to the BFD must be
-   released by the caller.  */
-
-extern gdb_bfd_ref_ptr build_id_to_exec_bfd (size_t build_id_len,
-					     const bfd_byte *build_id);
-
 /* Find the separate debug file for OBJFILE, by using the build-id
    associated with OBJFILE's BFD.  If successful, returns the file name for the
    separate debug file, otherwise, return an empty string.
@@ -59,6 +52,22 @@ extern gdb_bfd_ref_ptr build_id_to_exec_bfd (size_t build_id_len,
 
 extern std::string find_separate_debug_file_by_buildid
   (struct objfile *objfile, deferred_warnings *warnings);
+
+/* Find an objfile (executable or shared library) that matches BUILD_ID.
+   This is done by first checking in the debug-file-directory for a
+   suitable .build-id/ sub-directory, and looking for a file with the
+   required build-id (usually a symbolic link or hard link to the actual
+   file).
+
+   If that doesn't find us a file then we call to debuginfod to see if it
+   can provide the required file.
+
+   EXPECTED_FILENAME is used in output messages from debuginfod, this
+   should be the file we were looking for but couldn't find.  */
+
+extern gdb_bfd_ref_ptr find_objfile_by_build_id
+  (struct program_space *pspace, const bfd_build_id *build_id,
+   const char *expected_filename);
 
 /* Return an hex-string representation of BUILD_ID.  */
 
@@ -96,4 +105,4 @@ build_id_equal (const bfd_build_id *a, const bfd_build_id *b)
   return build_id_equal (a, b->size, b->data);
 }
 
-#endif /* BUILD_ID_H */
+#endif /* GDB_BUILD_ID_H */

@@ -197,7 +197,7 @@ proc test_virtual_calls {} {
     # wrong value "202"
     #   gcc 2.95.3 -gdwarf-2
     #   gcc 2.95.3 -gstabs+
-    # attempt to take addres of value not located in memory
+    # attempt to take address of value not located in memory
     #   gcc 3.3.2 -gdwarf-2
     #   gcc 3.3.2 -gstabs+
     #

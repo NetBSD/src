@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (OBJFILE_FLAGS_H)
-#define OBJFILE_FLAGS_H
+#ifndef GDB_OBJFILE_FLAGS_H
+#define GDB_OBJFILE_FLAGS_H
 
 #include "gdbsupport/enum-flags.h"
 
@@ -60,4 +60,4 @@ enum objfile_flag : unsigned
 
 DEF_ENUM_FLAGS_TYPE (enum objfile_flag, objfile_flags);
 
-#endif /* !defined (OBJFILE_FLAGS_H) */
+#endif /* GDB_OBJFILE_FLAGS_H */

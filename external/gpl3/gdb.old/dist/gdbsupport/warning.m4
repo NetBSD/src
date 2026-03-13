@@ -52,7 +52,7 @@ build_warnings="-Wall -Wpointer-arith \
 -Wredundant-move \
 -Wmissing-declarations \
 -Wstrict-null-sentinel \
--Wno-vla-cxx-extension \
+-Wvla \
 "
 
 # The -Wmissing-prototypes flag will be accepted by GCC, but results

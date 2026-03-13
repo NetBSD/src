@@ -248,7 +248,7 @@ foreach ovld $overloads {
     append bptable [format "\r\n\[0-9\]+\[\t \]+breakpoint\[\t \]+keep y\[\t \]+$hex\[\t \]+in foo::overload1arg\\(%s\\) at.*$srcfile:%d" $ovld \
 			$line($type_map("$ovld"))]
 }
-gdb_test "info break" $bptable "breakpoint info (after setting one-by-one)"
+gdb_test "info break" $bptable "breakpoint info, after setting one-by-one"
 
 # Test choice "cancel".
 # This is copy-and-paste from set_bp_overloaded.
@@ -288,7 +288,7 @@ gdb_expect {
     }
 }
 
-gdb_test "info break" $bptable "breakpoint info (after cancel)"
+gdb_test "info break" $bptable "breakpoint info, after cancel"
 
 # Test that if the user selects multiple entries from the option list,
 # GDB creates one breakpoint per entry.
@@ -325,7 +325,7 @@ gdb_expect {
     }
 }
 
-gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints." "breakpoint info (after delete)"
+gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints." "breakpoint info, after delete"
 
 
 
@@ -375,7 +375,7 @@ foreach ovld {void char signed_char unsigned_char short_int \
 		      $types($ovld) $line($ovld)]
 }
 
-gdb_test "info break" $bptable "breakpoint info (after setting on all)"
+gdb_test "info break" $bptable "breakpoint info, after setting on all"
 
 # Run through each breakpoint.
 proc continue_to_bp_overloaded {bpnumber might_fail line argtype argument} {

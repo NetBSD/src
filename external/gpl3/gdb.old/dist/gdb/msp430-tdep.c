@@ -807,11 +807,10 @@ msp430_in_return_stub (struct gdbarch *gdbarch, CORE_ADDR pc,
 static CORE_ADDR
 msp430_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol bms;
   const char *stub_name;
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
-  bms = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol bms = lookup_minimal_symbol_by_pc (pc);
   if (!bms.minsym)
     return pc;
 

@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_FILTERED_ITERATOR_H
-#define COMMON_FILTERED_ITERATOR_H
+#ifndef GDBSUPPORT_FILTERED_ITERATOR_H
+#define GDBSUPPORT_FILTERED_ITERATOR_H
 
 #include <type_traits>
 
@@ -89,4 +89,4 @@ private:
   BaseIterator m_end {};
 };
 
-#endif /* COMMON_FILTERED_ITERATOR_H */
+#endif /* GDBSUPPORT_FILTERED_ITERATOR_H */

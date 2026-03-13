@@ -17,7 +17,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "filestuff.h"
-#include "gdb_vecs.h"
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>

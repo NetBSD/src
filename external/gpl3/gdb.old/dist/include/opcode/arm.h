@@ -105,8 +105,8 @@
 					   coprocessor version 2.	   */
 
 #define FPU_ENDIAN_PURE	     0x80000000	/* Pure-endian doubles.		   */
-#define FPU_FPA_EXT_V1	     0x40000000	/* Base FPA instruction set.	   */
-#define FPU_FPA_EXT_V2	     0x20000000	/* LFM/SFM.			   */
+/* unused		     0x40000000	*/
+/* unused		     0x20000000	*/
 /* unused		     0x10000000	*/
 #define FPU_VFP_EXT_V1xD     0x08000000	/* Base VFP instruction set.	   */
 #define FPU_VFP_EXT_V1	     0x04000000	/* Double-precision insns.	   */
@@ -244,13 +244,9 @@
 					     | FPU_VFP_EXT_V3	   \
 					     | FPU_NEON_EXT_V1	   \
 					     | FPU_VFP_EXT_D32)
-#define FPU_FPA		  (FPU_FPA_EXT_V1    | FPU_FPA_EXT_V2)
 
 /* Deprecated.  */
-#define FPU_ARCH_VFP		ARM_FEATURE_COPROC (FPU_ENDIAN_PURE)
-
-#define FPU_ARCH_FPE		ARM_FEATURE_COPROC (FPU_FPA_EXT_V1)
-#define FPU_ARCH_FPA		ARM_FEATURE_COPROC (FPU_FPA)
+#define FPU_ARCH_SOFTVFP	ARM_FEATURE_COPROC (FPU_ENDIAN_PURE)
 
 #define FPU_ARCH_VFP_V1xD	ARM_FEATURE_COPROC (FPU_VFP_V1xD)
 #define FPU_ARCH_VFP_V1		ARM_FEATURE_COPROC (FPU_VFP_V1)
@@ -358,8 +354,6 @@
 #define ARM_ARCH_V7M	 ARM_FEATURE_CORE (ARM_AEXT_V7M, ARM_EXT2_V6T2_V8M)
 #define ARM_ARCH_V7EM	 ARM_FEATURE_CORE (ARM_AEXT_V7EM, ARM_EXT2_V6T2_V8M)
 #define ARM_ARCH_V8A	 ARM_FEATURE_CORE (ARM_AEXT_V8A, ARM_AEXT2_V8A)
-#define ARM_ARCH_V8A_CRC ARM_FEATURE (ARM_AEXT_V8A,	   \
-				      ARM_AEXT2_V8A | ARM_EXT2_CRC)
 #define ARM_ARCH_V8_1A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_1A	   \
 				      | ARM_EXT2_CRC,  FPU_NEON_EXT_RDMA)
 #define ARM_ARCH_V8_2A	 ARM_FEATURE (ARM_AEXT_V8A, ARM_AEXT2_V8_2A	   \
@@ -385,6 +379,8 @@
 #define ARM_ARCH_V8M_MAIN_DSP  ARM_FEATURE_CORE (ARM_AEXT_V8M_MAIN_DSP,	   \
 						 ARM_AEXT2_V8M_MAIN_DSP)
 #define ARM_ARCH_V8R	       ARM_FEATURE_CORE (ARM_AEXT_V8R, ARM_AEXT2_V8R)
+#define ARM_ARCH_V8R_CRC       ARM_FEATURE_CORE (ARM_AEXT_V8R,		   \
+						 ARM_AEXT2_V8R | ARM_EXT2_CRC)
 #define ARM_ARCH_V8_1M_MAIN    ARM_FEATURE_CORE (ARM_AEXT_V8_1M_MAIN,	   \
 						 ARM_AEXT2_V8_1M_MAIN)
 #define ARM_ARCH_V9A	       ARM_FEATURE_ALL(ARM_AEXT_V8A,	   \
@@ -407,7 +403,7 @@
 #define ARM_ARCH_UNKNOWN	ARM_FEATURE_ALL (-1, -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP), -1, -1)	/* Machine type is unknown.  */
 #define ARM_ANY		ARM_FEATURE_ALL (-1, -1 & ~(ARM_EXT2_MVE | ARM_EXT2_MVE_FP), -1, 0)	/* Any basic core.  */
 #define FPU_ANY		ARM_FEATURE_COPROC (-1 & ~(ARM_CEXT_XSCALE | ARM_CEXT_IWMMXT | ARM_CEXT_IWMMXT2)) /* Any FPU.  */
-#define FPU_ANY_HARD	ARM_FEATURE_COPROC (FPU_FPA | FPU_VFP_HARD)
+#define FPU_ANY_HARD	ARM_FEATURE_COPROC (FPU_VFP_HARD)
 /* Extensions containing some Thumb-2 instructions.  If any is present, Thumb
    ISA is Thumb-2.  */
 #define ARM_ARCH_THUMB2 ARM_FEATURE_CORE (ARM_EXT_V6T2 | ARM_EXT_V7	\

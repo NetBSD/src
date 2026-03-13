@@ -73,7 +73,7 @@ proc set_arch { arch which trans_mode } {
 
     # Anchor the test output, so that error messages are detected.
     set cmd "set tdesc filename $filename"
-    set msg "set tdesc filename tdesc-arch.xml ($which architecture)"
+    set msg "set tdesc filename tdesc-arch.xml, $which architecture"
     set cmd_regex [string_to_regexp $cmd]
     gdb_test_multiple $cmd $msg {
 	-re "^$cmd_regex\r\n$gdb_prompt $" {
@@ -87,7 +87,7 @@ proc set_arch { arch which trans_mode } {
     set cmd "show architecture"
     gdb_test $cmd \
 	"The target architecture is set to \"auto\" \\(currently \"$arch\"\\)\\." \
-	"$cmd ($which architecture)"
+	"$cmd, $which architecture"
 
     remote_file host delete $filename
 }
@@ -115,11 +115,11 @@ if {[is_remote host]} {
 set cmd "set tdesc filename $filename"
 gdb_test $cmd \
     "warning:.*Target description specified unknown architecture.*" \
-    "set tdesc filename tdesc-arch.xml (invalid architecture)"
+    "set tdesc filename tdesc-arch.xml, invalid architecture"
 
 set cmd "show architecture"
 gdb_test $cmd \
     "The target architecture is set to \"auto\" \\(currently \"$default_arch\"\\)\\." \
-    "$cmd (invalid architecture)"
+    "$cmd, invalid architecture"
 
 remote_file host delete $filename

@@ -1015,7 +1015,7 @@ riscv_pseudo_register_write (struct gdbarch *gdbarch,
   if (regnum == tdep->fflags_regnum || regnum == tdep->frm_regnum)
     {
       int fcsr_regnum = RISCV_CSR_FCSR_REGNUM;
-      gdb_byte raw_buf[register_size (gdbarch, fcsr_regnum)];
+      gdb::byte_vector raw_buf (register_size (gdbarch, fcsr_regnum));
 
       regcache->raw_read (fcsr_regnum, raw_buf);
 

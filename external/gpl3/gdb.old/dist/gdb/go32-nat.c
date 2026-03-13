@@ -681,10 +681,8 @@ go32_nat_target::create_inferior (const char *exec_file,
   int result;
   const char *args = allargs.c_str ();
 
-  /* If no exec file handed to us, get it from the exec-file command -- with
-     a good, common error message if none is specified.  */
-  if (exec_file == 0)
-    exec_file = get_exec_file (1);
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
 
   resume_signal = -1;
   resume_is_step = 0;

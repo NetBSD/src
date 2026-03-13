@@ -95,10 +95,12 @@ proc test_load_shlib { print_symbol_loading } {
     global gdb_prompt
     with_test_prefix "shlib ${print_symbol_loading}" {
 	clean_restart ${binfile}
-	gdb_test_no_output "set auto-solib-add off"
 	if ![runto_main] {
 	    return -1
 	}
+
+	gdb_test_no_output "nosharedlibrary"
+
 	gdb_test_no_output "set print symbol-loading $print_symbol_loading"
 	set test_name "load shared-lib"
 	set libc_re \

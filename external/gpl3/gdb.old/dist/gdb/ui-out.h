@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef UI_OUT_H
-#define UI_OUT_H 1
+#ifndef GDB_UI_OUT_H
+#define GDB_UI_OUT_H
 
 #include <vector>
 
@@ -182,7 +182,8 @@ class ui_out
   void begin (ui_out_type type, const char *id);
   void end (ui_out_type type);
 
-  void field_signed (const char *fldname, LONGEST value);
+  void field_signed (const char *fldname, LONGEST value,
+		     const ui_file_style &style = ui_file_style ());
   void field_fmt_signed (int width, ui_align align, const char *fldname,
 			 LONGEST value);
   /* Like field_signed, but print an unsigned value.  */
@@ -346,7 +347,8 @@ protected:
   virtual void do_begin (ui_out_type type, const char *id) = 0;
   virtual void do_end (ui_out_type type) = 0;
   virtual void do_field_signed (int fldno, int width, ui_align align,
-				const char *fldname, LONGEST value) = 0;
+				const char *fldname, LONGEST value,
+				const ui_file_style &style) = 0;
   virtual void do_field_unsigned (int fldno, int width, ui_align align,
 				  const char *fldname, ULONGEST value) = 0;
   virtual void do_field_skip (int fldno, int width, ui_align align,
@@ -656,4 +658,4 @@ private:
   std::optional<buffering_file> m_buffered_uiout;
 };
 
-#endif /* UI_OUT_H */
+#endif /* GDB_UI_OUT_H */

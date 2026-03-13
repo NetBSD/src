@@ -134,7 +134,7 @@ proc test_one_sig_reverse {prevsig} {
 		xfail "$testmsg (handled)"
 	    }
 	}
-	-re "No more reverse-execution history.*kill.*$gdb_prompt " {
+	-re "Reached end of recorded.*Backward execution.*kill.*$gdb_prompt " {
 	    if {$saw_signal} {
 		pass "$testmsg (handled)"
 	    } else {

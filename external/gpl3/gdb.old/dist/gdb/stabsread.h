@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef STABSREAD_H
-#define STABSREAD_H
+#ifndef GDB_STABSREAD_H
+#define GDB_STABSREAD_H
 
 struct objfile;
 struct legacy_psymtab;
@@ -54,7 +54,7 @@ extern unsigned char processing_gcc_compilation;
 extern int within_function;
 
 /* Hash table of global symbols whose values are not known yet.
-   They are chained thru the SYMBOL_VALUE_CHAIN, since we don't
+   They are chained through the SYMBOL_VALUE_CHAIN, since we don't
    have the correct data for that slot yet.
 
    The use of the LOC_BLOCK code in this chain is nonstandard--
@@ -173,7 +173,7 @@ class psymtab_storage;
 /* Functions exported by dbxread.c.  These are not in stabsread.c because
    they are only used by some stabs readers.  */
 
-extern legacy_psymtab *dbx_end_psymtab
+extern legacy_psymtab *stabs_end_psymtab
   (struct objfile *objfile, psymtab_storage *partial_symtabs,
    legacy_psymtab *pst,
    const char **include_list, int num_includes,
@@ -185,6 +185,12 @@ extern void process_one_symbol (int, int, CORE_ADDR, const char *,
 				const section_offsets &,
 				struct objfile *, enum language);
 
+/* Setup partial_symtab's describing each source file for which
+   debugging information is available.  */
+
+void
+read_stabs_symtab (struct objfile *, symfile_add_flags);
+
 extern void elfstab_build_psymtabs (struct objfile *objfile,
 				    asection *stabsect,
 				    file_ptr stabstroffset,
@@ -195,9 +201,6 @@ extern void coffstab_build_psymtabs
    CORE_ADDR textaddr, unsigned int textsize,
    const std::vector<asection *> &stabs,
    file_ptr stabstroffset, unsigned int stabstrsize);
-
-extern void stabsect_build_psymtabs (struct objfile *objfile, char *stab_name,
-				     char *stabstr_name, char *text_name);
 
 extern int symbol_reference_defined (const char **);
 
@@ -215,4 +218,91 @@ extern void init_header_files (void);
 
 extern void scan_file_globals (struct objfile *objfile);
 
-#endif /* STABSREAD_H */
+/* Complaints about the symbols we have encountered.  */
+
+void
+unknown_symtype_complaint (const char *);
+
+void
+lbrac_mismatch_complaint (int);
+
+void
+repeated_header_complaint (const char *, int);
+
+bound_minimal_symbol
+find_stab_function (const char *, const char *, struct objfile *);
+
+/* This handles a single symbol from the symbol-file, building symbols
+   into a GDB symtab.  It takes these arguments and an implicit argument.
+
+   TYPE is the type field of the ".stab" symbol entry.
+   DESC is the desc field of the ".stab" entry.
+   VALU is the value field of the ".stab" entry.
+   NAME is the symbol name, in our address space.
+   SECTION_OFFSETS is a set of amounts by which the sections of this
+   object file were relocated when it was loaded into memory.  Note
+   that these section_offsets are not the objfile->section_offsets but
+   the pst->section_offsets.  All symbols that refer to memory
+   locations need to be offset by these amounts.
+   OBJFILE is the object file from which we are reading symbols.  It
+   is used in end_compunit_symtab.
+   LANGUAGE is the language of the symtab.
+*/
+
+void
+process_one_symbol (int, int, CORE_ADDR, const char *,
+		    const section_offsets &,
+		    struct objfile *, enum language);
+
+#define LDSYMOFF(p) (((struct symloc *)((p)->read_symtab_private))->ldsymoff)
+#define LDSYMLEN(p) (((struct symloc *)((p)->read_symtab_private))->ldsymlen)
+#define SYMLOC(p) ((struct symloc *)((p)->read_symtab_private))
+#define SYMBOL_SIZE(p) (SYMLOC(p)->symbol_size)
+#define SYMBOL_OFFSET(p) (SYMLOC(p)->symbol_offset)
+#define STRING_OFFSET(p) (SYMLOC(p)->string_offset)
+#define FILE_STRING_OFFSET(p) (SYMLOC(p)->file_string_offset)
+#define PST_LANGUAGE(p) (SYMLOC(p)->pst_language)
+
+#define INTERNALIZE_SYMBOL(intern, extern, abfd)			\
+  {									\
+    (intern).n_strx = bfd_h_get_32 (abfd, (extern)->e_strx);		\
+    (intern).n_type = bfd_h_get_8 (abfd, (extern)->e_type);		\
+    (intern).n_other = 0;						\
+    (intern).n_desc = bfd_h_get_16 (abfd, (extern)->e_desc);  		\
+    if (bfd_get_sign_extend_vma (abfd))					\
+      (intern).n_value = bfd_h_get_signed_32 (abfd, (extern)->e_value);	\
+    else								\
+      (intern).n_value = bfd_h_get_32 (abfd, (extern)->e_value);	\
+  }
+
+/* We put a pointer to this structure in the read_symtab_private field
+   of the psymtab.  */
+
+struct symloc
+  {
+    /* Offset within the file symbol table of first local symbol for this
+       file.  */
+
+    int ldsymoff;
+
+    /* Length (in bytes) of the section of the symbol table devoted to
+       this file's symbols (actually, the section bracketed may contain
+       more than just this file's symbols).  If ldsymlen is 0, the only
+       reason for this thing's existence is the dependency list.  Nothing
+       else will happen when it is read in.  */
+
+    int ldsymlen;
+
+    /* The size of each symbol in the symbol file (in external form).  */
+
+    int symbol_size;
+
+    /* Further information needed to locate the symbols if they are in
+       an ELF file.  */
+
+    int symbol_offset;
+    int string_offset;
+    int file_string_offset;
+    enum language pst_language;
+  };
+#endif /* GDB_STABSREAD_H */

@@ -34,7 +34,7 @@
 # third breakpoint will actually be placed at the same location as the
 # second breakpoint.
 #
-# This test is designed to test GDB's internal behaviour with respect
+# This test is designed to test GDB's internal behavior with respect
 # to discarding particular line table entries.  GCC and DWARF are
 # starting to introduce the idea of line table views.  As the views
 # information becomes better supported within GDB it is likely that

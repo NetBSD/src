@@ -156,17 +156,5 @@ gdb_test_no_output "set tdesc filename $remote_file" \
     "load the target description that lacks fflags and frm"
 
 foreach reg {fflags frm} {
-    gdb_test_multiple "info registers $reg" "" {
-	-re "^info registers $reg\r\n" {
-	    exp_continue
-	}
-
-	-wrap -re "^Invalid register `$reg`" {
-	    fail $gdb_test_name
-	}
-
-	-wrap -re "^$reg\\s+\[^\r\n\]+" {
-	    pass $gdb_test_name
-	}
-    }
+    gdb_test "info registers $reg" "^$reg\\s+\[^\r\n\]+"
 }

@@ -19,10 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "target.h"
 #include "gdbsupport/event-loop.h"
 #include "event-top.h"
-#include "command.h"
 #include "top.h"
 #include "ui.h"
 #include "tui/tui.h"
@@ -164,7 +164,7 @@ do_tui_putc (WINDOW *w, char c)
 static void
 update_cmdwin_start_line ()
 {
-  TUI_CMD_WIN->start_line = getcury (TUI_CMD_WIN->handle.get ());
+  tui_cmd_win ()->start_line = getcury (tui_cmd_win ()->handle.get ());
 }
 
 /* Print a character in the curses command window.  The output is
@@ -174,7 +174,7 @@ update_cmdwin_start_line ()
 static void
 tui_putc (char c)
 {
-  do_tui_putc (TUI_CMD_WIN->handle.get (), c);
+  do_tui_putc (tui_cmd_win ()->handle.get (), c);
   update_cmdwin_start_line ();
 }
 
@@ -457,7 +457,7 @@ void
 tui_puts (const char *string, WINDOW *w)
 {
   if (w == nullptr)
-    w = TUI_CMD_WIN->handle.get ();
+    w = tui_cmd_win ()->handle.get ();
 
   while (true)
     {
@@ -508,7 +508,7 @@ tui_puts (const char *string, WINDOW *w)
       string = next;
     }
 
-  if (TUI_CMD_WIN != nullptr && w == TUI_CMD_WIN->handle.get ())
+  if (tui_cmd_win () != nullptr && w == tui_cmd_win ()->handle.get ())
     update_cmdwin_start_line ();
 }
 
@@ -552,7 +552,7 @@ tui_puts_internal (WINDOW *w, const char *string, int *height)
 	}
     }
 
-  if (TUI_CMD_WIN != nullptr && w == TUI_CMD_WIN->handle.get ())
+  if (tui_cmd_win () != nullptr && w == tui_cmd_win ()->handle.get ())
     update_cmdwin_start_line ();
   if (saw_nl)
     wrefresh (w);
@@ -582,8 +582,8 @@ tui_redisplay_readline (void)
   
   int c_pos = -1;
   int c_line = -1;
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
-  int start_line = TUI_CMD_WIN->start_line;
+  WINDOW *w = tui_cmd_win ()->handle.get ();
+  int start_line = tui_cmd_win ()->start_line;
   wmove (w, start_line, 0);
   int height = 1;
   if (prompt != nullptr)
@@ -623,20 +623,19 @@ tui_redisplay_readline (void)
 	  waddch (w, c);
 	}
       if (c == '\n')
-	TUI_CMD_WIN->start_line = getcury (w);
+	tui_cmd_win ()->start_line = getcury (w);
       int col = getcurx (w);
       if (col < prev_col)
 	height++;
       prev_col = col;
     }
   wclrtobot (w);
-  TUI_CMD_WIN->start_line = getcury (w);
+  tui_cmd_win ()->start_line = getcury (w);
   if (c_line >= 0)
     wmove (w, c_line, c_pos);
-  TUI_CMD_WIN->start_line -= height - 1;
+  tui_cmd_win ()->start_line -= height - 1;
 
   wrefresh (w);
-  fflush(stdout);
 }
 
 /* Readline callback to prepare the terminal.  It is called once each
@@ -708,7 +707,7 @@ tui_mld_puts (const struct match_list_displayer *displayer, const char *s)
 static void
 tui_mld_flush (const struct match_list_displayer *displayer)
 {
-  wrefresh (TUI_CMD_WIN->handle.get ());
+  wrefresh (tui_cmd_win ()->handle.get ());
 }
 
 /* TUI version of displayer.erase_entire_line.  */
@@ -716,7 +715,7 @@ tui_mld_flush (const struct match_list_displayer *displayer)
 static void
 tui_mld_erase_entire_line (const struct match_list_displayer *displayer)
 {
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
   int cur_y = getcury (w);
 
   wmove (w, cur_y, 0);
@@ -754,7 +753,7 @@ gdb_wgetch (WINDOW *win)
 static int
 tui_mld_getc (FILE *fp)
 {
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
   int c = gdb_wgetch (w);
 
   return c;
@@ -1036,7 +1035,7 @@ tui_inject_newline_into_command_window ()
 {
   gdb_assert (tui_active);
 
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
 
   /* When hitting return with an empty input, gdb executes the last
      command.  If we emit a newline, this fills up the command window
@@ -1061,8 +1060,8 @@ tui_inject_newline_into_command_window ()
       int px, py;
       getyx (w, py, px);
       px += rl_end - rl_point;
-      py += px / TUI_CMD_WIN->width;
-      px %= TUI_CMD_WIN->width;
+      py += px / tui_cmd_win ()->width;
+      px %= tui_cmd_win ()->width;
       wmove (w, py, px);
       tui_putc ('\n');
     }
@@ -1096,7 +1095,7 @@ tui_getc_1 (FILE *fp)
   int ch;
   WINDOW *w;
 
-  w = TUI_CMD_WIN->handle.get ();
+  w = tui_cmd_win ()->handle.get ();
 
 #ifdef TUI_USE_PIPE_FOR_READLINE
   /* Flush readline output.  */

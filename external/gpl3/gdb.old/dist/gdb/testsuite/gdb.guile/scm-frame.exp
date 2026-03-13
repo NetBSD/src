@@ -91,9 +91,9 @@ gdb_test "guile (print (eq? bframe (newest-frame)))" \
     #t "newest frame -vs- newest frame"
 
 gdb_test "guile (print (eq? f0 f1))" \
-    "#f" "test equality comparison (false)"
+    "#f" "test equality comparison, false"
 gdb_test "guile (print (eq? f0 f0))" \
-    "#t" "test equality comparison (true)"
+    "#t" "test equality comparison, true"
 gdb_test "guile (print (frame-valid? f0))" \
     "#t" "test frame-valid?"
 gdb_test "guile (print (frame-name f0))" \

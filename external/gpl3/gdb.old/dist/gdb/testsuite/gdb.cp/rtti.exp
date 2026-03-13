@@ -73,7 +73,7 @@ gdb_test_multiple "print *e1" "print *e1" {
 
 # NOTE: carlton/2004-01-14: This test with an "<incomplete type>"
 # message because, within rtt1.cc, GDB has no way of knowing that the
-# class is called 'n2::D2' instead of just 'D2'.  This is an artifical
+# class is called 'n2::D2' instead of just 'D2'.  This is an artificial
 # test case, though: if we were using these classes in a more
 # substantial way, G++ would emit more debug info.  As is, I don't
 # think there's anything that GDB can do about this case until G++

@@ -55,8 +55,8 @@ struct pspace_object
   /* The debug method list.  */
   PyObject *xmethods;
 
-  /* The missing debug handler list.  */
-  PyObject *missing_debug_handlers;
+  /* The missing file handler list.  */
+  PyObject *missing_file_handlers;
 };
 
 extern PyTypeObject pspace_object_type
@@ -148,7 +148,7 @@ pspy_get_exec_file (PyObject *self, void *closure)
 
   PSPY_REQUIRE_VALID (obj);
 
-  const char *filename = obj->pspace->exec_filename.get ();
+  const char *filename = obj->pspace->exec_filename ();
   if (filename != nullptr)
     return host_string_to_python_string (filename).release ();
 
@@ -166,7 +166,7 @@ pspy_dealloc (PyObject *self)
   Py_XDECREF (ps_self->frame_unwinders);
   Py_XDECREF (ps_self->type_printers);
   Py_XDECREF (ps_self->xmethods);
-  Py_XDECREF (ps_self->missing_debug_handlers);
+  Py_XDECREF (ps_self->missing_file_handlers);
   Py_TYPE (self)->tp_free (self);
 }
 
@@ -202,8 +202,8 @@ pspy_initialize (pspace_object *self)
   if (self->xmethods == NULL)
     return 0;
 
-  self->missing_debug_handlers = PyList_New (0);
-  if (self->missing_debug_handlers == nullptr)
+  self->missing_file_handlers = PyList_New (0);
+  if (self->missing_file_handlers == nullptr)
     return 0;
 
   return 1;
@@ -349,18 +349,18 @@ pspy_get_xmethods (PyObject *o, void *ignore)
 /* Return the list of missing debug handlers for this program space.  */
 
 static PyObject *
-pspy_get_missing_debug_handlers (PyObject *o, void *ignore)
+pspy_get_missing_file_handlers (PyObject *o, void *ignore)
 {
   pspace_object *self = (pspace_object *) o;
 
-  Py_INCREF (self->missing_debug_handlers);
-  return self->missing_debug_handlers;
+  Py_INCREF (self->missing_file_handlers);
+  return self->missing_file_handlers;
 }
 
 /* Set this program space's list of missing debug handlers to HANDLERS.  */
 
 static int
-pspy_set_missing_debug_handlers (PyObject *o, PyObject *handlers,
+pspy_set_missing_file_handlers (PyObject *o, PyObject *handlers,
 				 void *ignore)
 {
   pspace_object *self = (pspace_object *) o;
@@ -380,9 +380,9 @@ pspy_set_missing_debug_handlers (PyObject *o, PyObject *handlers,
     }
 
   /* Take care in case the LHS and RHS are related somehow.  */
-  gdbpy_ref<> tmp (self->missing_debug_handlers);
+  gdbpy_ref<> tmp (self->missing_file_handlers);
   Py_INCREF (handlers);
-  self->missing_debug_handlers = handlers;
+  self->missing_file_handlers = handlers;
 
   return 0;
 }
@@ -522,7 +522,7 @@ pspy_block_for_pc (PyObject *o, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (cust == NULL || cust->objfile () == NULL)
@@ -564,7 +564,7 @@ pspy_find_pc_line (PyObject *o, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -747,11 +747,10 @@ gdbpy_initialize_pspace (void)
   gdb::observers::free_program_space.attach (gdbpy_free_program_space_event,
 					     "py-progspace");
 
-  if (PyType_Ready (&pspace_object_type) < 0)
+  if (gdbpy_type_ready (&pspace_object_type) < 0)
     return -1;
 
-  return gdb_pymodule_addobject (gdb_module, "Progspace",
-				 (PyObject *) &pspace_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_pspace);
@@ -779,8 +778,8 @@ static gdb_PyGetSetDef pspace_getset[] =
     "Type printers.", NULL },
   { "xmethods", pspy_get_xmethods, NULL,
     "Debug methods.", NULL },
-  { "missing_debug_handlers", pspy_get_missing_debug_handlers,
-    pspy_set_missing_debug_handlers, "Missing debug handlers.", NULL },
+  { "missing_file_handlers", pspy_get_missing_file_handlers,
+    pspy_set_missing_file_handlers, "Missing file handlers.", NULL },
   { NULL }
 };
 

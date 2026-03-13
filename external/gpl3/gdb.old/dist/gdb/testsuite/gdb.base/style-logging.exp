@@ -41,7 +41,8 @@ with_ansi_styling_terminal {
 
     set main_expr [style main function]
     set base_file_expr [style ".*style\\.c" file]
-    set file_expr "$base_file_expr:\[0-9\]"
+    set line_expr [style $decimal line-number]
+    set file_expr "$base_file_expr:$line_expr"
     set arg_expr [style "arg." variable]
     gdb_test "frame" \
 	"$main_expr.*$arg_expr.*$arg_expr.*$file_expr.*"

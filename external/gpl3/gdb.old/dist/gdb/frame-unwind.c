@@ -119,10 +119,10 @@ frame_unwind_append_unwinder (struct gdbarch *gdbarch,
 }
 
 /* Call SNIFFER from UNWINDER.  If it succeeded set UNWINDER for
-   THIS_FRAME and return 1.  Otherwise the function keeps THIS_FRAME
-   unchanged and returns 0.  */
+   THIS_FRAME and return true.  Otherwise the function keeps THIS_FRAME
+   unchanged and returns false.  */
 
-static int
+static bool
 frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 			  const struct frame_unwind *unwinder)
 {
@@ -157,7 +157,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 	     thus most unwinders aren't able to determine if they're
 	     the best fit.  Keep trying.  Fallback prologue unwinders
 	     should always accept the frame.  */
-	  return 0;
+	  return false;
 	}
       throw;
     }
@@ -165,7 +165,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
   if (res)
     {
       frame_debug_printf ("yes");
-      return 1;
+      return true;
     }
   else
     {
@@ -173,7 +173,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
       /* Don't set *THIS_CACHE to NULL here, because sniffer has to do
 	 so.  */
       frame_cleanup_after_sniffer (this_frame);
-      return 0;
+      return false;
     }
   gdb_assert_not_reached ("frame_unwind_try_unwinder");
 }
@@ -376,7 +376,8 @@ _initialize_frame_unwind ()
   add_cmd ("frame-unwinders",
 	   class_maintenance,
 	   maintenance_info_frame_unwinders,
-	   _("List the frame unwinders currently in effect, "
-	     "starting with the highest priority."),
+	   _("\
+List the frame unwinders currently in effect.\n\
+Unwinders are listed starting with the highest priority."),
 	   &maintenanceinfolist);
 }

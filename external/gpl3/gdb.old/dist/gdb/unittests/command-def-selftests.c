@@ -78,9 +78,10 @@ check_doc (struct cmd_list_element *commandlist, const char *prefix)
 	  (prefix, c->name,
 	   "has superfluous trailing whitespace");
 
+      const char *prev_start = c->doc;
       for (const char *nl = strchr (c->doc, '\n');
 	   nl != nullptr;
-	   nl = strchr (nl + 1, '\n'))
+	   nl = strchr (prev_start, '\n'))
 	{
 	  if (nl == c->doc)
 	    broken_doc_invariant (prefix, c->name, "has a leading newline");
@@ -91,7 +92,14 @@ check_doc (struct cmd_list_element *commandlist, const char *prefix)
 		broken_doc_invariant (prefix, c->name,
 				      "has whitespace before a newline");
 	    }
+
+	  if (nl - prev_start > cli_help_line_length)
+	    broken_doc_invariant (prefix, c->name, "has over-long line");
+	  prev_start = nl + 1;
 	}
+
+      if (strlen (prev_start) > cli_help_line_length)
+	broken_doc_invariant (prefix, c->name, "has over-long line");
 
       /* Check if this command has subcommands and is not an
 	 abbreviation.  We skip checking subcommands of abbreviations

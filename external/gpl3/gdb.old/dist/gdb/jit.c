@@ -28,6 +28,7 @@
 #include "filenames.h"
 #include "frame-unwind.h"
 #include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "gdbcore.h"
 #include "inferior.h"
 #include "observable.h"
@@ -222,7 +223,7 @@ static jiter_objfile_data *
 get_jiter_objfile_data (objfile *objf)
 {
   if (objf->jiter_data == nullptr)
-    objf->jiter_data.reset (new jiter_objfile_data ());
+    objf->jiter_data = std::make_unique<jiter_objfile_data> ();
 
   return objf->jiter_data.get ();
 }
@@ -236,8 +237,9 @@ add_objfile_entry (struct objfile *objfile, CORE_ADDR entry,
 {
   gdb_assert (objfile->jited_data == nullptr);
 
-  objfile->jited_data.reset (new jited_objfile_data (entry, symfile_addr,
-						     symfile_size));
+  objfile->jited_data = std::make_unique<jited_objfile_data> (entry,
+							      symfile_addr,
+							      symfile_size);
 }
 
 /* Helper function for reading the global JIT descriptor from remote
@@ -613,6 +615,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
 	new_block = new (&objfile->objfile_obstack) global_block;
       else
 	new_block = new (&objfile->objfile_obstack) block;
+
       new_block->set_multidict
 	(mdict_create_linear (&objfile->objfile_obstack, NULL));
       new_block->set_superblock (block_iter);
@@ -624,7 +627,7 @@ finalize_symtab (struct gdb_symtab *stab, struct objfile *objfile)
       bv->set_block (i, new_block);
 
       if (i == GLOBAL_BLOCK)
-	new_block->set_compunit_symtab (cust);
+	new_block->as_global_block ()->set_compunit (cust);
     }
 
   /* Fill up the superblock fields for the real blocks, using the
@@ -660,8 +663,10 @@ jit_object_close_impl (struct gdb_symbol_callbacks *cb,
 		     paddress (priv_data->gdbarch,
 			       priv_data->entry.symfile_addr));
 
-  objfile *objfile = objfile::make (nullptr, objfile_name.c_str (),
-				    OBJF_NOT_FILENAME);
+  objfile *objfile = objfile::make (nullptr, current_program_space,
+				    objfile_name.c_str (), OBJF_NOT_FILENAME);
+  objfile->section_offsets.push_back (0);
+  objfile->sect_index_text = 0;
   objfile->per_bfd->gdbarch = priv_data->gdbarch;
 
   for (gdb_symtab &symtab : obj->symtabs)
@@ -880,7 +885,7 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch, program_space *pspace)
       /* Lookup the registration symbol.  If it is missing, then we
 	 assume we are not attached to a JIT.  */
       bound_minimal_symbol reg_symbol
-	= lookup_minimal_symbol_text (jit_break_name, the_objfile);
+	= lookup_minimal_symbol_text (pspace, jit_break_name, the_objfile);
       if (reg_symbol.minsym == NULL
 	  || reg_symbol.value_address () == 0)
 	{
@@ -890,7 +895,8 @@ jit_breakpoint_re_set_internal (struct gdbarch *gdbarch, program_space *pspace)
 	}
 
       bound_minimal_symbol desc_symbol
-	= lookup_minimal_symbol_linkage (jit_descriptor_name, the_objfile);
+	= lookup_minimal_symbol_linkage (jit_descriptor_name,
+					 the_objfile, true);
       if (desc_symbol.minsym == NULL
 	  || desc_symbol.value_address () == 0)
 	{
@@ -1295,6 +1301,16 @@ jit_event_handler (gdbarch *gdbarch, objfile *jiter)
     }
 }
 
+/* Implementation of "show jit-reader-directory".  */
+
+static void
+show_jit_reader_directory (const char *args, int from_tty)
+{
+  gdb_printf (_("JIT reader directory is %ps.\n"),
+	      styled_string (file_name_style.style (),
+			     jit_reader_dir.c_str ()));
+}
+
 void _initialize_jit ();
 void
 _initialize_jit ()
@@ -1326,9 +1342,9 @@ _initialize_jit ()
 Load FILE as debug info reader and unwinder for JIT compiled code.\n\
 Usage: jit-reader-load FILE\n\
 Try to load file FILE as a debug info reader (and unwinder) for\n\
-JIT compiled code.  The file is loaded from " JIT_READER_DIR ",\n\
-relocated relative to the GDB executable if required."));
-      set_cmd_completer (c, filename_completer);
+JIT compiled code.  If FILE is not an absolute file name, it is found\n\
+relative to a built-in directory.  See \"show jit-reader-directory\"."));
+      set_cmd_completer (c, deprecated_filename_completer);
 
       c = add_com ("jit-reader-unload", no_class,
 		   jit_reader_unload_command, _("\
@@ -1336,5 +1352,11 @@ Unload the currently loaded JIT debug info reader.\n\
 Usage: jit-reader-unload\n\n\
 Do \"help jit-reader-load\" for info on loading debug info readers."));
       set_cmd_completer (c, noop_completer);
+
+      add_cmd ("jit-reader-directory", class_obscure,
+	       show_jit_reader_directory,
+	       _("Show the JIT reader directory.\n\
+This is the directory used by \"jit-reader-load\" when given\n\
+a relative file name."), &showlist);
     }
 }

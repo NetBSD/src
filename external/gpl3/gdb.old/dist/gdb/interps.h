@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INTERPS_H
-#define INTERPS_H
+#ifndef GDB_INTERPS_H
+#define GDB_INTERPS_H
 
 #include "gdbsupport/intrusive_list.h"
 
@@ -378,4 +378,4 @@ extern void interps_notify_memory_changed (inferior *inf, CORE_ADDR addr,
 #define INTERP_TUI		"tui"
 #define INTERP_INSIGHT		"insight"
 
-#endif
+#endif /* GDB_INTERPS_H */

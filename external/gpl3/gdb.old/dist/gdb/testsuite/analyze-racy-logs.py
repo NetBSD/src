@@ -29,7 +29,6 @@
 # This program is invoked when the user runs "make check" and
 # specifies the RACY_ITER environment variable.
 
-import os
 import re
 import sys
 
@@ -45,7 +44,7 @@ import sys
 #                                   }
 #                   }
 
-files_and_tests = dict()
+files_and_tests: dict[str, dict[str, set[str]]] = dict()
 
 # The relatioships between various states of the same tests that
 # should be ignored.  For example, if the same test PASSes on a
@@ -60,7 +59,7 @@ ignore_relations = {"PASS": "KFAIL"}
 sum_matcher = re.compile("^(.?(PASS|FAIL)): (.*)$")
 
 
-def parse_sum_line(line, dic):
+def parse_sum_line(line: str, dic: dict[str, set[str]]):
     """Parse a single LINE from a sumfile, and store the results in the
     dictionary referenced by DIC."""
     global sum_matcher
@@ -72,7 +71,7 @@ def parse_sum_line(line, dic):
         test_name = m.group(3)
         # Remove tail parentheses.  These are likely to be '(timeout)'
         # and other extra information that will only confuse us.
-        test_name = re.sub("(\s+)?\(.*$", "", test_name)
+        test_name = re.sub(r"(\s+)?\(.*$", "", test_name)
         if result not in dic.keys():
             dic[result] = set()
         if test_name in dic[result]:
@@ -93,7 +92,7 @@ def parse_sum_line(line, dic):
         dic[result].add(test_name)
 
 
-def read_sum_files(files):
+def read_sum_files(files: list[str]):
     """Read the sumfiles (passed as a list in the FILES variable), and
     process each one, filling the FILES_AND_TESTS global dictionary with
     information about them."""
@@ -127,8 +126,8 @@ def identify_racy_tests():
     #
     # Each set in ALL_TESTS will contain all tests, racy or not, for
     # that state.
-    nonracy_tests = dict()
-    all_tests = dict()
+    nonracy_tests: dict[str, set[str]] = dict()
+    all_tests: dict[str, set[str]] = dict()
     for f in files_and_tests:
         for state in files_and_tests[f]:
             try:
@@ -144,14 +143,14 @@ def identify_racy_tests():
     # Now, we eliminate the tests that are present in states that need
     # to be ignored.  For example, tests both in the PASS and KFAIL
     # states should not be considered racy.
-    ignored_tests = set()
+    ignored_tests: set[str] = set()
     for s1, s2 in ignore_relations.items():
         try:
             ignored_tests |= all_tests[s1] & all_tests[s2]
         except:
             continue
 
-    racy_tests = set()
+    racy_tests: set[str] = set()
     for f in files_and_tests:
         for state in files_and_tests[f]:
             racy_tests |= files_and_tests[f][state] - nonracy_tests[state]

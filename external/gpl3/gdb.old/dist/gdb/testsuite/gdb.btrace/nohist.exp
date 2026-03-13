@@ -42,7 +42,7 @@ with_test_prefix "forward" {
     check_not_replaying
 }
 
-gdb_test "reverse-continue" "No more reverse-execution history\.\r\n.*"
+gdb_test "reverse-continue" "Reached end of recorded history; stopping.*"
 
 with_test_prefix "backward" {
     check_not_replaying

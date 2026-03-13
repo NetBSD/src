@@ -55,7 +55,7 @@ with_test_prefix "trailing whitespace" {
 gdb_test "break thread 123" "Unknown thread 123\\."
 gdb_test "break thread foo" "Invalid thread ID: foo"
 gdb_test "break task 123" "Unknown task 123\\."
-gdb_test "break task foo" "Junk after task keyword\\."
+gdb_test "break task foo" "Junk 'foo' after task keyword\\."
 gdb_breakpoint "thread if 0" "message"
 
 # These are also NULL locations, but using a subsequent keyword
@@ -63,9 +63,9 @@ gdb_breakpoint "thread if 0" "message"
 gdb_test "break thread thread" "Invalid thread ID: thread"
 gdb_test "break thread task" "Invalid thread ID: task"
 gdb_test "break thread if" "Invalid thread ID: if"
-gdb_test "break task task" "Junk after task keyword\\."
-gdb_test "break task thread" "Junk after task keyword\\."
-gdb_test "break task if" "Junk after task keyword\\."
+gdb_test "break task task" "Junk 'task' after task keyword\\."
+gdb_test "break task thread" "Junk 'thread' after task keyword\\."
+gdb_test "break task if" "Junk 'if' after task keyword\\."
 
 # Test locations containing keyword followed by keyword.
 gdb_test "break thread thread 123" "Unknown thread 123\\."

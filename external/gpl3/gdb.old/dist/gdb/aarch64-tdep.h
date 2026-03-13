@@ -19,8 +19,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef AARCH64_TDEP_H
-#define AARCH64_TDEP_H
+#ifndef GDB_AARCH64_TDEP_H
+#define GDB_AARCH64_TDEP_H
 
 #include "arch/aarch64.h"
 #include "displaced-stepping.h"
@@ -203,4 +203,12 @@ void aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
 
 bool aarch64_displaced_step_hw_singlestep (struct gdbarch *gdbarch);
 
-#endif /* aarch64-tdep.h */
+std::optional<CORE_ADDR> aarch64_mte_get_atag (CORE_ADDR address);
+
+/* AArch64 implementation of the remove_non_address_bits gdbarch hooks.
+   Remove non address bits from a pointer value.  */
+
+CORE_ADDR aarch64_remove_non_address_bits (struct gdbarch *gdbarch,
+					   CORE_ADDR pointer);
+
+#endif /* GDB_AARCH64_TDEP_H */

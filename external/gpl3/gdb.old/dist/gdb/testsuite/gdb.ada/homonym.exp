@@ -76,7 +76,7 @@ gdb_test "print lcl" \
 
 set bp_location [gdb_get_line_number "BREAK_2" ${testdir}/homonym.adb]
 gdb_test "break homonym.adb:$bp_location" \
-         "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: file .*homonym\.adb, line \[0-9\]+\." \
+         "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: file .*homonym\\.adb, line \[0-9\]+\\." \
          "break at BREAK_2"
 
 gdb_test "continue" \

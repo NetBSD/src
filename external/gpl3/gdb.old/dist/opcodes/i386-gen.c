@@ -30,7 +30,9 @@
 
 /* Build-time checks are preferrable over runtime ones.  Use this construct
    in preference where possible.  */
+#ifndef static_assert
 #define static_assert(e) ((void)sizeof (struct { int _:1 - 2 * !(e); }))
+#endif
 
 static const char *program_name = NULL;
 static int debug = 0;
@@ -45,7 +47,7 @@ typedef struct dependency
 static const dependency isa_dependencies[] =
 {
   { "UNKNOWN",
-    "~IAMCU" },
+    "~(IAMCU|MPX)" },
   { "GENERIC32",
     "386" },
   { "GENERIC64",
@@ -241,6 +243,8 @@ static const dependency isa_dependencies[] =
   { "AVX10_1",
     "AVX512VL|AVX512DQ|AVX512CD|AVX512VBMI|AVX512_VBMI2|AVX512IFMA"
     "|AVX512_VNNI|AVX512_BF16|AVX512_FP16|AVX512_VPOPCNTDQ|AVX512_BITALG" },
+  { "AVX10_2",
+    "AVX10_1" },
   { "SEV_ES",
     "SVME" },
   { "SNP",
@@ -276,6 +280,8 @@ static const dependency isa_dependencies[] =
   { "MSRLIST",
     "64" },
   { "USER_MSR",
+    "64" },
+  { "MSR_IMM",
     "64" },
   { "APX_F",
     "XSAVE|64" },
@@ -332,6 +338,7 @@ static bitfield cpu_flags[] =
   BITFIELD (3dnow),
   BITFIELD (3dnowA),
   BITFIELD (PadLock),
+  BITFIELD (GMI),
   BITFIELD (SVME),
   BITFIELD (VMX),
   BITFIELD (SMX),
@@ -401,7 +408,9 @@ static bitfield cpu_flags[] =
   BITFIELD (FRED),
   BITFIELD (LKGS),
   BITFIELD (USER_MSR),
+  BITFIELD (MSR_IMM),
   BITFIELD (APX_F),
+  BITFIELD (AVX10_2),
   BITFIELD (MWAITX),
   BITFIELD (CLZERO),
   BITFIELD (OSPKE),
@@ -487,11 +496,11 @@ static bitfield opcode_modifiers[] =
   BITFIELD (Disp8MemShift),
   BITFIELD (Optimize),
   BITFIELD (Dialect),
+  BITFIELD (IntelSuffix),
   BITFIELD (ISA64),
   BITFIELD (NoEgpr),
   BITFIELD (NF),
   BITFIELD (Rex2),
-  BITFIELD (ZU),
 };
 
 #define CLASS(n) #n, n
@@ -1135,10 +1144,10 @@ process_i386_opcode_modifier (FILE *table, char *mod, unsigned int space,
     SPACE(0F),
     SPACE(0F38),
     SPACE(0F3A),
-    SPACE(EVEXMAP4),
-    SPACE(EVEXMAP5),
-    SPACE(EVEXMAP6),
-    SPACE(VEXMAP7),
+    SPACE(MAP4),
+    SPACE(MAP5),
+    SPACE(MAP6),
+    SPACE(MAP7),
     SPACE(XOP08),
     SPACE(XOP09),
     SPACE(XOP0A),
@@ -1669,6 +1678,69 @@ parse_template (char *buf, int lineno)
   return true;
 }
 
+static void
+expand_template (const struct template *tmpl,
+		 const struct template_instance *inst,
+		 char *dst, const char *src, int lineno)
+{
+  while (*src)
+    {
+      const char *ident = tmpl->name, *end;
+      const struct template_param *param;
+      const struct template_arg *arg;
+
+      if ((*dst = *src++) != '<')
+	{
+	  ++dst;
+	  continue;
+	}
+      while (ISSPACE(*src))
+	++src;
+      while (*ident && *src == *ident)
+	++src, ++ident;
+      while (ISSPACE(*src))
+	++src;
+      if (*src != ':' || *ident != '\0')
+	{
+	  memcpy (++dst, tmpl->name, ident - tmpl->name);
+	  dst += ident - tmpl->name;
+	  continue;
+	}
+      while (ISSPACE(*++src))
+	;
+
+      end = src;
+      while (*end != '\0' && !ISSPACE(*end) && *end != '>')
+	++end;
+
+      for (param = tmpl->params, arg = inst->args; param;
+	   param = param->next, arg = arg->next)
+	{
+	  if (end - src == strlen (param->name)
+	      && !memcmp (src, param->name, end - src))
+	    {
+	      src = end;
+	      break;
+	    }
+	}
+
+      if (param == NULL)
+	fail ("template '%s' has no parameter '%.*s'\n",
+	      tmpl->name, (int)(end - src), src);
+
+      while (ISSPACE(*src))
+	++src;
+      if (*src != '>')
+	fail ("%s: %d: missing '>'\n", filename, lineno);
+
+      memcpy(dst, arg->val, strlen(arg->val));
+      dst += strlen(arg->val);
+      ++src;
+    }
+
+  *dst = '\0';
+}
+
 static unsigned int
 expand_templates (char *name, const char *str, htab_t opcode_hash_table,
 		  struct opcode_hash_entry ***opcode_array_p, int lineno)
@@ -1743,71 +1815,20 @@ expand_templates (char *name, const char *str, htab_t opcode_hash_table,
 
       for (inst = tmpl->instances; inst; inst = inst->next)
 	{
-	  char *name2 = xmalloc(strlen(name) + strlen(inst->name) + strlen(ptr2) + 1);
+	  char *name2 = xmalloc(strlen(name) + strlen(inst->name)
+			+ 2 * strlen(ptr2) + 1);
 	  char *str2 = xmalloc(2 * strlen(str));
-	  const char *src;
 
-	  strcpy (name2, name);
-	  strcat (name2, inst->name);
-	  strcat (name2, ptr2);
+	  ptr1 = stpcpy (name2, name);
+	  ptr1 = stpcpy (ptr1, inst->name);
 
-	  for (ptr1 = str2, src = str; *src; )
-	    {
-	      const char *ident = tmpl->name, *end;
-	      const struct template_param *param;
-	      const struct template_arg *arg;
+	  /* Expand this template in trailing portion of mnemonic.  */
+	  expand_template (tmpl, inst, ptr1, ptr2, lineno);
 
-	      if ((*ptr1 = *src++) != '<')
-		{
-		  ++ptr1;
-		  continue;
-		}
-	      while (ISSPACE(*src))
-		++src;
-	      while (*ident && *src == *ident)
-		++src, ++ident;
-	      while (ISSPACE(*src))
-		++src;
-	      if (*src != ':' || *ident != '\0')
-		{
-		  memcpy (++ptr1, tmpl->name, ident - tmpl->name);
-		  ptr1 += ident - tmpl->name;
-		  continue;
-		}
-	      while (ISSPACE(*++src))
-		;
+	  /* Expand this template in attributes and operands.  */
+	  expand_template (tmpl, inst, str2, str, lineno);
 
-	      end = src;
-	      while (*end != '\0' && !ISSPACE(*end) && *end != '>')
-		++end;
-
-	      for (param = tmpl->params, arg = inst->args; param;
-		   param = param->next, arg = arg->next)
-		{
-		  if (end - src == strlen (param->name)
-		      && !memcmp (src, param->name, end - src))
-		    {
-		      src = end;
-		      break;
-		    }
-		}
-
-	      if (param == NULL)
-		fail ("template '%s' has no parameter '%.*s'\n",
-		      tmpl->name, (int)(end - src), src);
-
-	      while (ISSPACE(*src))
-		++src;
-	      if (*src != '>')
-		fail ("%s: %d: missing '>'\n", filename, lineno);
-
-	      memcpy(ptr1, arg->val, strlen(arg->val));
-	      ptr1 += strlen(arg->val);
-	      ++src;
-	    }
-
-	  *ptr1 = '\0';
-
+	  /* Expand further templates, if any. */
 	  expand_templates (name2, str2, opcode_hash_table, opcode_array_p,
 			    lineno);
 

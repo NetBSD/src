@@ -66,7 +66,7 @@ if {[skip_compile_feature_untested]} {
 gdb_test_no_output "compile -- f = 10" \
     "test abbreviations and code delimiter"
 
-gdb_test "compile f = 10;" ".*= 10;: No such file.*" \
+gdb_test "compile f = 10;" "^Junk after filename \"=\": 10;" \
     "Test abbreviations and code collision"
 
 gdb_test_no_output "compile -r -- void _gdb_expr(){int i = 5;}" \

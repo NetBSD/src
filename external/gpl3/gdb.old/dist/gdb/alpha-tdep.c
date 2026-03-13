@@ -1505,11 +1505,7 @@ alpha_supply_int_regs (struct regcache *regcache, int regno,
       regcache->raw_supply (i, regs + i * 8);
 
   if (regno == ALPHA_ZERO_REGNUM || regno == -1)
-    {
-      const gdb_byte zero[8] = { 0 };
-
-      regcache->raw_supply (ALPHA_ZERO_REGNUM, zero);
-    }
+    regcache->raw_supply_zeroed (ALPHA_ZERO_REGNUM);
 
   if (regno == ALPHA_PC_REGNUM || regno == -1)
     regcache->raw_supply (ALPHA_PC_REGNUM, pc);

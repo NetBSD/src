@@ -237,11 +237,11 @@ mi_list_varobj_children weird {
 # Desc: change format of weird.func_ptr and weird.func_ptr_ptr
 mi_gdb_test "-var-set-format weird.func_ptr hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"$hex\"" \
-	"set format variable weird.func_ptr in hex (1)"
+	"set format variable weird.func_ptr in hex, 1"
 
 mi_gdb_test "-var-show-format weird.func_ptr" \
 	"\\^done,format=\"hexadecimal\"" \
-	"show format variable weird.func_ptr (hex)"
+	"show format variable weird.func_ptr, hex"
 
 mi_gdb_test "-var-set-format weird.func_ptr_ptr hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"$hex\"" \
@@ -249,7 +249,7 @@ mi_gdb_test "-var-set-format weird.func_ptr_ptr hexadecimal" \
 
 mi_gdb_test "-var-show-format weird.func_ptr_ptr" \
 	"\\^done,format=\"hexadecimal\"" \
-	"show format variable weird.func_ptr_ptr (hex)"
+	"show format variable weird.func_ptr_ptr, hex"
 
 mi_gdb_test "-var-set-format weird.func_ptr zero-hexadecimal" \
 	"\\^done,format=\"zero-hexadecimal\",value=\"$hex\"" \
@@ -257,7 +257,7 @@ mi_gdb_test "-var-set-format weird.func_ptr zero-hexadecimal" \
 
 mi_gdb_test "-var-show-format weird.func_ptr" \
 	"\\^done,format=\"zero-hexadecimal\"" \
-	"show format variable weird.func_ptr (zhex)"
+	"show format variable weird.func_ptr, zhex"
 
 mi_gdb_test "-var-set-format weird.func_ptr_ptr zero-hexadecimal" \
 	"\\^done,format=\"zero-hexadecimal\",value=\"$hex\"" \
@@ -265,7 +265,7 @@ mi_gdb_test "-var-set-format weird.func_ptr_ptr zero-hexadecimal" \
 
 mi_gdb_test "-var-show-format weird.func_ptr_ptr" \
 	"\\^done,format=\"zero-hexadecimal\"" \
-	"show format variable weird.func_ptr_ptr (zhex)"
+	"show format variable weird.func_ptr_ptr, zhex"
 
 # Test: c_variable-6.24
 # Desc: format of weird and children
@@ -299,7 +299,7 @@ mi_gdb_test "-var-set-format weird.long_array natural" \
 
 mi_gdb_test "-var-set-format weird.func_ptr hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"$hex\"" \
-	"set format variable weird.func_ptr in hex (2)"
+	"set format variable weird.func_ptr in hex, 2"
 
 mi_gdb_test "-var-set-format weird.func_ptr_struct hexadecimal" \
 	"\\^done,format=\"hexadecimal\",value=\"$hex\"" \

@@ -27,12 +27,13 @@ if { [gdb_compile_pthreads ${srcdir}/${subdir}/${srcfile} ${binfile} executable 
 }
 
 # Start with a fresh gdb.
-save_vars { env(ASAN_OPTIONS) } {
+save_vars { env(ASAN_OPTIONS) env(TSAN_OPTIONS) } {
     # The call to gdb.selected_inferior().read_memory (0, 0xffffffffffffffff)
     # triggers address sanitizer.  Suppress the error, leaving us with just
     # this warning:
     #   WARNING: AddressSanitizer failed to allocate 0xffffffffffffffff bytes
     set_sanitizer ASAN_OPTIONS allocator_may_return_null 1
+    set_sanitizer TSAN_OPTIONS allocator_may_return_null 1
 
     clean_restart ${testfile}
 }

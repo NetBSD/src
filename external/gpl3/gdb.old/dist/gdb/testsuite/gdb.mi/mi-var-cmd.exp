@@ -150,7 +150,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: linteger changed"
 
 # Step over "lpinteger = &linteger;"
-mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 1] "step at do_locals_tests (2)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 1] "step at do_locals_tests, 2"
 
 # Test: c_variable-2.3
 # Desc: check whether only lpinteger changed
@@ -159,7 +159,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: lpinteger changed"
 
 # Step over "lcharacter = 'a';"
-mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 2] "step at do_locals_tests (3)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 2] "step at do_locals_tests, 3"
 
 # Test: c_variable-2.4
 # Desc: check whether only lcharacter changed
@@ -168,7 +168,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: lcharacter changed"
 
 # Step over "lpcharacter = &lcharacter;"
-mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 3] "step at do_locals_tests (4)"
+mi_step_to "do_locals_tests" "" "var-cmd.c" [expr $line_dlt_linteger + 3] "step at do_locals_tests, 4"
 
 # Test: c_variable-2.5
 # Desc: check whether only lpcharacter changed
@@ -189,7 +189,7 @@ mi_gdb_test "-var-update *" \
 #  lsimple.character = 'a';
 
 mi_execute_to "exec-step 9" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" [expr $line_dlt_linteger + 12] "" "step at do_locals_tests (5)"
+	"var-cmd.c" [expr $line_dlt_linteger + 12] "" "step at do_locals_tests, 5"
 
 # Test: c_variable-2.6
 # Desc: check whether llong, lplong, lfloat, lpfloat, ldouble, lpdouble, lsimple.integer,
@@ -207,7 +207,7 @@ mi_gdb_test "-var-update *" \
 set line_dlt_4321 [gdb_get_line_number "linteger = 4321;"]
 
 mi_execute_to "exec-step 4" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" $line_dlt_4321 "" "step at do_locals_tests (6)"
+	"var-cmd.c" $line_dlt_4321 "" "step at do_locals_tests, 6"
 
 # Test: c_variable-2.7
 # Desc: check whether (lsimple.signed_character, lsimple.char_ptr) lpsimple, func changed
@@ -226,7 +226,7 @@ mi_gdb_test "-var-update *" \
 #  lsimple.character = 'b';
 
 mi_execute_to "exec-step 8" "end-stepping-range" "do_locals_tests" "" \
-	"var-cmd.c" [expr $line_dlt_4321 + 8] "" "step at do_locals_tests (7)"
+	"var-cmd.c" [expr $line_dlt_4321 + 8] "" "step at do_locals_tests, 7"
 
 # Test: c_variable-2.8
 # Desc: check whether linteger, lcharacter, llong, lfoat, ldouble, lsimple.integer,
@@ -374,7 +374,7 @@ mi_gdb_test "-var-assign func do_block_tests" \
 
 mi_gdb_test "-var-update *" \
 	"\\^done,changelist=\\\[\\\]" \
-	"assign same value to func (update)"
+	"assign same value to func, update"
 
 mi_gdb_test "-var-create array_ptr * array_ptr" \
 	"\\^done,name=\"array_ptr\",numchild=\"1\",value=\"$hex <array>\",type=\"int \\*\",has_more=\"0\"" \
@@ -386,7 +386,7 @@ mi_gdb_test "-var-assign array_ptr array2" \
 
 mi_gdb_test "-var-update *" \
 	"\\^done,changelist=\\\[\{name=\"array_ptr\",in_scope=\"true\",type_changed=\"false\",has_more=\"0\"\}\\\]" \
-	"assign array to pointer (update)"
+	"assign array to pointer, update"
 
 mi_gdb_test "-var-assign array_ptr array2" \
 	"\\^done,value=\"$hex <array2>\"" \
@@ -394,7 +394,7 @@ mi_gdb_test "-var-assign array_ptr array2" \
 
 mi_gdb_test "-var-update *" \
 	"\\^done,changelist=\\\[\\\]" \
-	"assign same array to pointer (update)"
+	"assign same array to pointer, update"
 
 
 ######
@@ -434,7 +434,7 @@ mi_gdb_test "-var-update *" \
 clear_xfail *-*-*
 
 mi_step_to "subroutine1" "\{name=\"i\",value=\".*\"\},\{name=\"l\",value=\".*\"\}" \
-	"var-cmd.c" [expr $line_subroutine1_body + 2] "step at subroutine1 (2)"
+	"var-cmd.c" [expr $line_subroutine1_body + 2] "step at subroutine1, 2"
 
 # Test: c_variable-2.13
 # Desc: change subroutine1 local i
@@ -443,7 +443,7 @@ mi_gdb_test "-var-update *" \
 	"update all vars: i changed"
 
 mi_step_to "subroutine1" "\{name=\"i\",value=\".*\"\},\{name=\"l\",value=\".*\"\}" \
-	"var-cmd.c" [expr $line_subroutine1_body + 3] "step at subroutine1 (3)"
+	"var-cmd.c" [expr $line_subroutine1_body + 3] "step at subroutine1, 3"
 
 # Test: c_variable-2.14
 # Desc: change do_locals_tests local llong

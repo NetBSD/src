@@ -5822,7 +5822,7 @@ testsuite/common/bits64m63.c: testsuite/common/bits-gen$(EXEEXT) testsuite/commo
 
 @SIM_ENABLE_ARCH_ppc_TRUE@ppc/defines.h: ppc/stamp-defines ; @true
 @SIM_ENABLE_ARCH_ppc_TRUE@ppc/stamp-defines: config.h Makefile
-@SIM_ENABLE_ARCH_ppc_TRUE@	$(AM_V_GEN)$(SED) -n -e '/^#define HAVE_.*1$$/{ s/ 1$$/",/; s/.* HAVE_/"HAVE_/; p }' < config.h > ppc/defines.hin
+@SIM_ENABLE_ARCH_ppc_TRUE@	$(AM_V_GEN)$(SED) -n -e '/^#define HAVE_.*1$$/{ s/ 1$$/",/; s/.* HAVE_/"HAVE_/; p; }' < config.h > ppc/defines.hin
 @SIM_ENABLE_ARCH_ppc_TRUE@	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change ppc/defines.hin ppc/defines.h
 @SIM_ENABLE_ARCH_ppc_TRUE@	$(AM_V_at)touch $@
 

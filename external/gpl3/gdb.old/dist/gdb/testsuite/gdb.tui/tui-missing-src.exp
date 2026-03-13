@@ -101,3 +101,6 @@ Term::command "finish"
 Term::check_box_contents "check source box is empty after return" \
     0 0 80 15 "No Source Available"
 Term::check_contents "Back in main" "Value returned is .* 13"
+
+Term::resize 30 100
+Term::check_box "source box after resize" 0 0 100 19

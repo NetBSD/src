@@ -333,7 +333,7 @@ sim_io_poll_quit (SIM_DESC sd)
    FIXME: Some completly new mechanism for handling the general
    problem of asynchronous IO is needed.
 
-   FIXME: This function does not supress the echoing (ECHO) of input.
+   FIXME: This function does not suppress the echoing (ECHO) of input.
    Consequently polled input is always displayed.
 
    FIXME: This function does not perform uncooked reads.

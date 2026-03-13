@@ -55,7 +55,7 @@ proc prepare {lang} {
     return 1
 }
 
-# The following list is layed out as a table.  It is composed by
+# The following list is laid out as a table.  It is composed by
 # sub-lists (lines), with each line representing one whatis/ptype
 # test.  The sub-list (line) elements (columns) are (in order):
 #
@@ -271,8 +271,11 @@ proc run_tests {lang} {
 		if {([string match "v_*" $to]
 		     || (![string match "v_*" $from] && ![string match "*method" $from])
 		     || [string match "*method" $to])} {
-		    gdb_test "whatis ($to) $from" "syntax error.*" "whatis ($to) $from (syntax)"
-		    gdb_test "ptype ($to) $from" "syntax error.*" "ptype ($to) $from (syntax)"
+		    set cmd "whatis ($to) $from"
+		    gdb_test $cmd "syntax error.*" "$cmd, syntax"
+
+		    set cmd "ptype ($to) $from"
+		    gdb_test $cmd "syntax error.*" "$cmd, syntax"
 		} elseif {([string match "*float*" $from] && [string match "*array*" $to])
 			  || (!$float_ptr_same_size
 			      && ([string match "float*" $to] && [string match "*array*" $from]
@@ -289,8 +292,11 @@ proc run_tests {lang} {
 			  || ([string match "*ftype2" $to] && [string match "*method" $from])
 			  || ([string match "*method_ptr*" $to] && [string match "*method" $from])
 			  || ([string match "*method_ptr*" $to] && [string match "*array*" $from])} {
-		    gdb_test "whatis ($to) $from" "Invalid cast." "whatis ($to) $from (invalid)"
-		    gdb_test "ptype ($to) $from" "Invalid cast." "ptype ($to) $from (invalid)"
+		    set cmd "whatis ($to) $from"
+		    gdb_test $cmd  "Invalid cast." "$cmd, invalid"
+
+		    set cmd "ptype ($to) $from"
+		    gdb_test $cmd "Invalid cast." "$cmd, invalid"
 		} else {
 		    gdb_test "whatis ($to) $from" "type = [string_to_regexp $to]"
 		    gdb_test "ptype ($to) $from" "type = $ptype"

@@ -133,7 +133,7 @@ static solib_ops powerpc_so_ops;
 	    (gdb) b main
 	    Breakpoint 2 at 0x100006a0: file gdb.base/shmain.c, line 44.
 
-	Examine the instruction (and the immediatly following instruction)
+	Examine the instruction (and the immediately following instruction)
 	upon which the breakpoint was placed.  Note that the PLT entry
 	for shr1 contains zeros.
 
@@ -313,15 +313,13 @@ static const struct ppc_insn_pattern powerpc32_plt_stub_so_2[] =
 static int
 powerpc_linux_in_dynsym_resolve_code (CORE_ADDR pc)
 {
-  struct bound_minimal_symbol sym;
-
   /* Check whether PC is in the dynamic linker.  This also checks
      whether it is in the .plt section, used by non-PIC executables.  */
   if (svr4_in_dynsym_resolve_code (pc))
     return 1;
 
   /* Check if we are in the resolver.  */
-  sym = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol sym = lookup_minimal_symbol_by_pc (pc);
   if (sym.minsym != NULL
       && (strcmp (sym.minsym->linkage_name (), "__glink") == 0
 	  || strcmp (sym.minsym->linkage_name (), "__glink_PLTresolve") == 0))
@@ -1670,10 +1668,9 @@ ppc_elfv2_elf_make_msymbol_special (asymbol *sym, struct minimal_symbol *msym)
 static CORE_ADDR
 ppc_elfv2_skip_entrypoint (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol fun;
   int local_entry_offset = 0;
 
-  fun = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol fun = lookup_minimal_symbol_by_pc (pc);
   if (fun.minsym == NULL)
     return pc;
 

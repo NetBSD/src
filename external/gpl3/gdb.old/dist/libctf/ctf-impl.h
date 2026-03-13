@@ -208,13 +208,13 @@ typedef struct ctf_err_warning
    the csa_refs in all entries are purged.  */
 
 #define CTF_STR_ATOM_FREEABLE	0x1
-#define CTF_STR_ATOM_MOVABLE	0x2
 
 typedef struct ctf_str_atom
 {
   char *csa_str;		/* Pointer to string (also used as hash key).  */
   ctf_list_t csa_refs;		/* This string's refs.  */
-  uint32_t csa_offset;		/* Strtab offset, if any.  */
+  ctf_list_t csa_movable_refs;	/* This string's movable refs.  */
+  uint32_t csa_offset;		/* Offset in this strtab, if any.  */
   uint32_t csa_external_offset;	/* External strtab offset, if any.  */
   unsigned long csa_snapshot_id; /* Snapshot ID at time of creation.  */
   int csa_flags;		 /* CTF_STR_ATOM_* flags. */
@@ -294,7 +294,8 @@ typedef struct ctf_dedup
   ctf_dynhash_t *cd_decorated_names[4];
 
   /* Map type names to a hash from type hash value -> number of times each value
-     has appeared.  */
+     has appeared.  Enumeration constants are tracked via the enum they appear
+     in.  */
   ctf_dynhash_t *cd_name_counts;
 
   /* Map global type IDs to type hash values.  Used to determine if types are
@@ -386,12 +387,13 @@ struct ctf_dict
   ctf_dynhash_t *ctf_structs;	    /* Hash table of struct types.  */
   ctf_dynhash_t *ctf_unions;	    /* Hash table of union types.  */
   ctf_dynhash_t *ctf_enums;	    /* Hash table of enum types.  */
-  ctf_dynhash_t *ctf_names;	    /* Hash table of remaining type names.  */
+  ctf_dynhash_t *ctf_names;	    /* Hash table of remaining types, plus
+				       enumeration constants.  */
   ctf_lookup_t ctf_lookups[5];	    /* Pointers to nametabs for name lookup.  */
   ctf_strs_t ctf_str[2];	    /* Array of string table base and bounds.  */
   ctf_strs_writable_t *ctf_dynstrtab; /* Dynamically allocated string table, if any. */
   ctf_dynhash_t *ctf_str_atoms;	  /* Hash table of ctf_str_atoms_t.  */
-  ctf_dynhash_t *ctf_str_movable_refs; /* Hash table of void * -> ctf_str_atom_ref_t.  */
+  ctf_dynhash_t *ctf_str_movable_refs; /* Hash table of void * -> ctf_str_atom_ref_movable_t.  */
   uint32_t ctf_str_prov_offset;	  /* Latest provisional offset assigned so far.  */
   unsigned char *ctf_base;	  /* CTF file pointer.  */
   unsigned char *ctf_dynbase;	  /* Freeable CTF file pointer. */
@@ -406,6 +408,7 @@ struct ctf_dict
   uint32_t *ctf_pptrtab;	  /* Parent types pointed to by child dicts.  */
   size_t ctf_pptrtab_len;	  /* Num types storable in pptrtab currently.  */
   uint32_t ctf_pptrtab_typemax;	  /* Max child type when pptrtab last updated.  */
+  ctf_dynset_t *ctf_conflicting_enums;	/* Tracks enum constants that conflict.  */
   uint32_t *ctf_funcidx_names;	  /* Name of each function symbol in symtypetab
 				     (if indexed).  */
   uint32_t *ctf_objtidx_names;	  /* Likewise, for object symbols.  */
@@ -541,13 +544,15 @@ struct ctf_next
   uint32_t ctn_n;
 
   /* Some iterators contain other iterators, in addition to their other
-     state.  */
+     state.  We allow for inner and outer iterators, for two-layer nested loops
+     like those found in ctf_arc_lookup_enumerator_next.  */
   ctf_next_t *ctn_next;
+  ctf_next_t *ctn_next_inner;
 
-  /* We can save space on this side of things by noting that a dictionary is
-     either dynamic or not, as a whole, and a given iterator can only iterate
-     over one kind of thing at once: so we can overlap the DTD and non-DTD
-     members, and the structure, variable and enum members, etc.  */
+  /* We can save space on this side of things by noting that a type is either
+     dynamic or not, as a whole, and a given iterator can only iterate over one
+     kind of thing at once: so we can overlap the DTD and non-DTD members, and
+     the structure, variable and enum members, etc.  */
   union
   {
     unsigned char *ctn_vlen;
@@ -557,11 +562,13 @@ struct ctf_next
     void **ctn_hash_slot;
   } u;
 
-  /* This union is of various sorts of dict we can iterate over:
-     currently dictionaries and archives, dynhashes, and dynsets.  */
+  /* This union is of various sorts of dict we can iterate over: currently
+     archives, dictionaries, dynhashes, and dynsets.  ctn_fp is non-const
+     because we need to set errors on it.  */
+
   union
   {
-    const ctf_dict_t *ctn_fp;
+    ctf_dict_t *ctn_fp;
     const ctf_archive_t *ctn_arc;
     const ctf_dynhash_t *ctn_h;
     const ctf_dynset_t *ctn_s;
@@ -595,7 +602,8 @@ struct ctf_next
   ((fp)->ctf_dictops->ctfo_get_vbytes(fp, kind, size, vlen))
 
 #define LCTF_CHILD	0x0001	/* CTF dict is a child.  */
-#define LCTF_LINKING	0x0002  /* CTF link is underway: respect ctf_link_flags.  */
+#define LCTF_LINKING	0x0002	/* CTF link is underway: respect ctf_link_flags.  */
+#define LCTF_STRICT_NO_DUP_ENUMERATORS 0x0004 /* Duplicate enums prohibited.  */
 
 extern ctf_dynhash_t *ctf_name_table (ctf_dict_t *, int);
 extern const ctf_type_t *ctf_lookup_by_id (ctf_dict_t **, ctf_id_t);
@@ -668,6 +676,7 @@ extern int ctf_dynhash_next_sorted (ctf_dynhash_t *, ctf_next_t **,
 extern ctf_dynset_t *ctf_dynset_create (htab_hash, htab_eq, ctf_hash_free_fun);
 extern int ctf_dynset_insert (ctf_dynset_t *, void *);
 extern void ctf_dynset_remove (ctf_dynset_t *, const void *);
+extern size_t ctf_dynset_elements (ctf_dynset_t *);
 extern void ctf_dynset_destroy (ctf_dynset_t *);
 extern void *ctf_dynset_lookup (ctf_dynset_t *, const void *);
 extern int ctf_dynset_exists (ctf_dynset_t *, const void *key,
@@ -705,13 +714,15 @@ extern int ctf_add_variable_forced (ctf_dict_t *, const char *, ctf_id_t);
 extern int ctf_add_funcobjt_sym_forced (ctf_dict_t *, int is_function,
 					const char *, ctf_id_t);
 
+extern int ctf_track_enumerator (ctf_dict_t *, ctf_id_t, const char *);
+
 extern int ctf_dedup_atoms_init (ctf_dict_t *);
 extern int ctf_dedup (ctf_dict_t *, ctf_dict_t **, uint32_t ninputs,
-		      uint32_t *parents, int cu_mapped);
-extern void ctf_dedup_fini (ctf_dict_t *, ctf_dict_t **, uint32_t);
+		      int cu_mapped);
 extern ctf_dict_t **ctf_dedup_emit (ctf_dict_t *, ctf_dict_t **,
 				    uint32_t ninputs, uint32_t *parents,
 				    uint32_t *noutputs, int cu_mapped);
+extern void ctf_dedup_fini (ctf_dict_t *, ctf_dict_t **, uint32_t);
 extern ctf_id_t ctf_dedup_type_mapping (ctf_dict_t *fp, ctf_dict_t *src_fp,
 					ctf_id_t src_type);
 
@@ -738,7 +749,6 @@ extern int ctf_str_move_refs (ctf_dict_t *fp, void *src, size_t len, void *dest)
 extern int ctf_str_add_external (ctf_dict_t *, const char *, uint32_t offset);
 extern void ctf_str_remove_ref (ctf_dict_t *, const char *, uint32_t *ref);
 extern void ctf_str_rollback (ctf_dict_t *, ctf_snapshot_id_t);
-extern void ctf_str_purge_refs (ctf_dict_t *);
 extern const ctf_strs_writable_t *ctf_str_write_strtab (ctf_dict_t *);
 
 extern struct ctf_archive_internal *
@@ -754,6 +764,8 @@ extern void ctf_flip_header (ctf_header_t *);
 extern int ctf_flip (ctf_dict_t *, ctf_header_t *, unsigned char *, int);
 
 extern int ctf_import_unref (ctf_dict_t *fp, ctf_dict_t *pfp);
+
+extern int ctf_write_thresholded (ctf_dict_t *fp, int fd, size_t threshold);
 
 _libctf_malloc_
 extern void *ctf_mmap (size_t length, size_t offset, int fd);

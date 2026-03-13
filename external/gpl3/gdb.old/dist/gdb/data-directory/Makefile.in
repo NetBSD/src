@@ -77,8 +77,11 @@ PYTHON_FILE_LIST = \
 	gdb/FrameIterator.py \
 	gdb/frames.py \
 	gdb/missing_debug.py \
+	gdb/missing_objfile.py \
+	gdb/missing_files.py \
 	gdb/printing.py \
 	gdb/prompt.py \
+	gdb/ptwrite.py \
 	gdb/styling.py \
 	gdb/types.py \
 	gdb/unwinder.py \
@@ -86,7 +89,7 @@ PYTHON_FILE_LIST = \
 	gdb/command/__init__.py \
 	gdb/command/explore.py \
 	gdb/command/frame_filters.py \
-	gdb/command/missing_debug.py \
+	gdb/command/missing_files.py \
 	gdb/command/pretty_printers.py \
 	gdb/command/prompt.py \
 	gdb/command/type_printers.py \
@@ -98,6 +101,7 @@ PYTHON_FILE_LIST = \
 	gdb/dap/evaluate.py \
 	gdb/dap/events.py \
 	gdb/dap/frames.py \
+	gdb/dap/globalvars.py \
 	gdb/dap/__init__.py \
 	gdb/dap/io.py \
 	gdb/dap/launch.py \
@@ -118,8 +122,7 @@ PYTHON_FILE_LIST = \
 	gdb/function/as_string.py \
 	gdb/function/caller_is.py \
 	gdb/function/strfns.py \
-	gdb/printer/__init__.py \
-	gdb/printer/bound_registers.py
+	gdb/printer/__init__.py
 
 @HAVE_PYTHON_TRUE@PYTHON_FILES = $(PYTHON_FILE_LIST)
 @HAVE_PYTHON_FALSE@PYTHON_FILES =

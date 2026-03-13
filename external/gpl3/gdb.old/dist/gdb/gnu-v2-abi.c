@@ -186,7 +186,6 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   struct type *known_type;
   struct type *rtti_type;
   CORE_ADDR vtbl;
-  struct bound_minimal_symbol minsym;
   char *p;
   const char *linkage_name;
   struct type *btype;
@@ -239,7 +238,7 @@ gnuv2_value_rtti_type (struct value *v, int *full, LONGEST *top, int *using_enc)
   vtbl = value_as_address (value_field (v, known_type_vptr_fieldno));
 
   /* Try to find a symbol that is the vtable.  */
-  minsym=lookup_minimal_symbol_by_pc(vtbl);
+  bound_minimal_symbol minsym = lookup_minimal_symbol_by_pc (vtbl);
   if (minsym.minsym==NULL
       || (linkage_name=minsym.minsym->linkage_name ())==NULL
       || !is_vtable_name (linkage_name))

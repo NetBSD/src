@@ -167,7 +167,7 @@ set sizeof_random_data [get_sizeof "random_data" 48*1024]
 clean_restart $binfile
 
 #
-# Part THREE: Check the upload behavour
+# Part THREE: Check the upload behavior.
 #
 if {![runto_main]} {
     return

@@ -43,7 +43,7 @@ proc probe_target_hardware_step {} {
 
     gdb_test_no_output "set debug target 1"
     set test "probe target hardware step"
-    gdb_test_multiple "si" $test {
+    gdb_test_multiple "pipe si | grep resume" $test {
 	-re "resume \\(\[^\r\n\]+, step, .*$gdb_prompt $" {
 	    set hw_step 1
 	    pass $test

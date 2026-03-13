@@ -31,9 +31,9 @@ set srcfile1 skip1.c
 
 # Right after we start gdb, there's no default file or function to skip.
 
-gdb_test "skip file" "No default file now." "skip file (no default file)"
+gdb_test "skip file" "No default file now." "skip file, no default file"
 gdb_test "skip function" "No default function now."
-gdb_test "skip" "No default function now." "skip (no default function)"
+gdb_test "skip" "No default function now." "skip, no default function"
 
 # Test elided args.
 
@@ -59,8 +59,8 @@ gdb_test "info skip" "Not skipping any files or functions\." "info skip empty"
 
 # Create a skiplist entry for the current file and function.
 
-gdb_test "skip file" "File .*$srcfile will be skipped when stepping\." "skip file ($srcfile)"
-gdb_test "skip" "Function main will be skipped when stepping\." "skip (main)"
+gdb_test "skip file" "File .*$srcfile will be skipped when stepping\." "skip file, $srcfile"
+gdb_test "skip" "Function main will be skipped when stepping\." "skip, main"
 
 # Create a skiplist entry for a specified file and function.
 

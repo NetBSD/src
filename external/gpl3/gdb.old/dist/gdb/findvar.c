@@ -449,8 +449,8 @@ language_defn::read_var_value (struct symbol *var,
 	  (var->arch (),
 	   [var, &bmsym] (objfile *objfile)
 	     {
-		bmsym = lookup_minimal_symbol (var->linkage_name (), nullptr,
-					       objfile);
+		bmsym = lookup_minimal_symbol (current_program_space,
+					       var->linkage_name (), objfile);
 
 		/* Stop if a match is found.  */
 		return bmsym.minsym != nullptr;

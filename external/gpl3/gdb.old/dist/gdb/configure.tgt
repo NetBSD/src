@@ -59,7 +59,8 @@ amd64_tobjs="ravenscar-thread.o amd64-ravenscar-thread.o \
 case "${targ}" in
 aarch64*-*-*)
 	cpu_obs="aarch32-tdep.o aarch64-tdep.o arch/aarch32.o \
-		 arch/aarch64-insn.o arch/aarch64.o  ravenscar-thread.o \
+		 arch/aarch64-insn.o arch/aarch64.o arch/aarch64-mte.o \
+		 ravenscar-thread.o \
 		 aarch64-ravenscar-thread.o";;
 
 alpha*-*-*)
@@ -310,11 +311,6 @@ i[34567]86-*-openbsd*)
 	# Target: OpenBSD/i386
 	gdb_target_obs="i386-bsd-tdep.o i386-obsd-tdep.o bsd-uthread.o"
 	;;
-i[34567]86-*-nto*)
-	# Target: Intel 386 running qnx6.
-	gdb_target_obs="solib-svr4.o \
-			i386-nto-tdep.o nto-tdep.o"
-	;;
 i[34567]86-*-solaris2* | x86_64-*-solaris2*)
 	# Target: Solaris x86_64
 	gdb_target_obs="${i386_tobjs} ${amd64_tobjs} \
@@ -326,10 +322,13 @@ i[34567]86-*-linux*)
 	gdb_target_obs="i386-linux-tdep.o \
 			glibc-tdep.o \
 			solib-svr4.o symfile-mem.o \
-			linux-tdep.o linux-record.o"
+			linux-tdep.o linux-record.o \
+			arch/i386-linux-tdesc.o \
+			arch/x86-linux-tdesc-features.o"
 	if test "x$enable_64_bit_bfd" = "xyes"; then
 	    # Target: GNU/Linux x86-64
-	    gdb_target_obs="amd64-linux-tdep.o ${gdb_target_obs}"
+	    gdb_target_obs="amd64-linux-tdep.o \
+			    arch/amd64-linux-tdesc.o ${gdb_target_obs}"
 	fi
 	;;
 i[34567]86-*-gnu*)
@@ -375,7 +374,7 @@ lm32-*-*)
 loongarch*-*-linux*)
 	# Target: LoongArch running Linux
 	gdb_target_obs="loongarch-linux-tdep.o glibc-tdep.o \
-			linux-tdep.o solib-svr4.o"
+			linux-tdep.o solib-svr4.o linux-record.o"
 	;;
 
 m32c-*-*)
@@ -476,17 +475,6 @@ msp430-*-elf*)
 nds32*-*-elf)
 	# Target: AndesTech NDS32 core
 	gdb_target_obs="nds32-tdep.o"
-	;;
-
-nios2*-*-linux*)
-	# Target: Altera Nios II running Linux
-	gdb_target_obs="nios2-tdep.o nios2-linux-tdep.o solib-svr4.o \
-			symfile-mem.o glibc-tdep.o linux-tdep.o"
-	;;
-
-nios2*-*-*)
-	# Target: Altera Nios II bare-metal
-	gdb_target_obs="nios2-tdep.o"
 	;;
 
 or1k*-*-linux*)
@@ -734,7 +722,9 @@ x86_64-*-linux*)
 	# Target: GNU/Linux x86-64
 	gdb_target_obs="amd64-linux-tdep.o ${i386_tobjs}  \
 			i386-linux-tdep.o glibc-tdep.o \
-			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o"
+			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o \
+			arch/i386-linux-tdesc.o arch/amd64-linux-tdesc.o \
+			arch/x86-linux-tdesc-features.o"
 	;;
 x86_64-*-freebsd* | x86_64-*-kfreebsd*-gnu)
 	# Target: FreeBSD/amd64
@@ -782,7 +772,6 @@ gdb_target_obs="${cpu_obs} ${os_obs} ${gdb_target_obs}"
 
 case "${targ}" in
 aarch64*-*-*)		gdb_sim=aarch64 ;;
-arm*-*-*)		gdb_sim=arm ;;
 avr*-*-*)		gdb_sim=avr ;;
 bfin-*-*)		gdb_sim=bfin ;;
 bpf-*-*)		gdb_sim=bpf ;;
@@ -821,7 +810,6 @@ case "${targ}" in
 *-*-linux* | *-*-uclinux*)
 		gdb_osabi=GDB_OSABI_LINUX ;;
 *-*-netbsd*)	gdb_osabi=GDB_OSABI_NETBSD ;;
-*-*-nto*)	gdb_osabi=GDB_OSABI_QNXNTO ;;
 m68*-*-openbsd* | m88*-*-openbsd* | vax-*-openbsd*) ;;
 *-*-openbsd*)	gdb_osabi=GDB_OSABI_OPENBSD ;;
 *-*-solaris*)	gdb_osabi=GDB_OSABI_SOLARIS ;;

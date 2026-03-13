@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_REGCACHE_H
-#define COMMON_COMMON_REGCACHE_H
+#ifndef GDBSUPPORT_COMMON_REGCACHE_H
+#define GDBSUPPORT_COMMON_REGCACHE_H
 
 struct reg_buffer_common;
 
@@ -35,10 +35,10 @@ enum register_status : signed char
 
     /* The register value is unavailable.  E.g., we're inspecting a
        traceframe, and this register wasn't collected.  Note that this
-       is different a different "unavailable" from saying the register
-       does not exist in the target's architecture --- in that case,
-       the target should have given us a target description that does
-       not include the register in the first place.  */
+       "unavailable" is different from saying the register does not
+       exist in the target's architecture --- in that case, the target
+       should have given us a target description that does not include
+       the register in the first place.  */
     REG_UNAVAILABLE = -1
   };
 
@@ -96,6 +96,12 @@ struct reg_buffer_common
 				      regcache_register_size (this, regnum)));
   }
 
+  /* Supply part of register REGNUM with zeroed value.  Start at OFFSET in
+     the register, with size SIZE.  The rest of the register is left
+     untouched.  */
+  virtual void raw_supply_part_zeroed (int regnum, int offset, size_t size)
+    = 0;
+
   /* Collect register REGNUM from this register buffer and store its contents in
      DST.  */
   virtual void raw_collect (int regnum, gdb::array_view<gdb_byte> dst) const
@@ -120,4 +126,4 @@ struct reg_buffer_common
   virtual bool raw_compare (int regnum, const void *buf, int offset) const = 0;
 };
 
-#endif /* COMMON_COMMON_REGCACHE_H */
+#endif /* GDBSUPPORT_COMMON_REGCACHE_H */

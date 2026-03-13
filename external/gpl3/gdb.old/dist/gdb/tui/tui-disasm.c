@@ -29,21 +29,15 @@
 #include "tui/tui.h"
 #include "tui/tui-command.h"
 #include "tui/tui-data.h"
-#include "tui/tui-win.h"
-#include "tui/tui-layout.h"
 #include "tui/tui-winsource.h"
 #include "tui/tui-status.h"
-#include "tui/tui-file.h"
 #include "tui/tui-disasm.h"
-#include "tui/tui-source.h"
 #include "progspace.h"
 #include "objfiles.h"
 #include "cli/cli-style.h"
 #include "tui/tui-location.h"
 #include "gdbsupport/selftest.h"
 #include "inferior.h"
-
-#include "gdb_curses.h"
 
 struct tui_asm_line
 {
@@ -163,11 +157,11 @@ tui_disassemble (struct gdbarch *gdbarch,
 static CORE_ADDR
 tui_find_backward_disassembly_start_address (CORE_ADDR addr)
 {
-  struct bound_minimal_symbol msym, msym_prev;
-
-  msym = lookup_minimal_symbol_by_pc_section (addr - 1, nullptr,
-					      lookup_msym_prefer::TEXT,
-					      &msym_prev);
+  bound_minimal_symbol msym_prev;
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol_by_pc_section (addr - 1, nullptr,
+					   lookup_msym_prefer::TEXT,
+					   &msym_prev);
   if (msym.minsym != nullptr)
     return msym.value_address ();
   else if (msym_prev.minsym != nullptr)
@@ -395,10 +389,12 @@ tui_get_begin_asm_address (struct gdbarch **gdbarch_p, CORE_ADDR *addr_p)
 
   if (tui_location.addr () == 0)
     {
-      if (have_full_symbols () || have_partial_symbols ())
+      if (have_full_symbols (current_program_space)
+	  || have_partial_symbols (current_program_space))
 	{
 	  set_default_source_symtab_and_line ();
-	  struct symtab_and_line sal = get_current_source_symtab_and_line ();
+	  symtab_and_line sal
+	    = get_current_source_symtab_and_line (current_program_space);
 
 	  if (sal.symtab != nullptr)
 	    find_line_pc (sal.symtab, sal.line, &addr);
@@ -406,8 +402,8 @@ tui_get_begin_asm_address (struct gdbarch **gdbarch_p, CORE_ADDR *addr_p)
 
       if (addr == 0)
 	{
-	  struct bound_minimal_symbol main_symbol
-	    = lookup_minimal_symbol (main_name (), nullptr, nullptr);
+	  bound_minimal_symbol main_symbol
+	    = lookup_minimal_symbol (current_program_space, main_name ());
 	  if (main_symbol.minsym != nullptr)
 	    addr = main_symbol.value_address ();
 	}
@@ -433,12 +429,12 @@ tui_get_low_disassembly_address (struct gdbarch *gdbarch,
 
   /* Determine where to start the disassembly so that the pc is about
      in the middle of the viewport.  */
-  if (TUI_DISASM_WIN != NULL)
-    pos = TUI_DISASM_WIN->height;
-  else if (TUI_CMD_WIN == NULL)
+  if (tui_disasm_win () != nullptr)
+    pos = tui_disasm_win ()->height;
+  else if (tui_cmd_win () == nullptr)
     pos = tui_term_height () / 2 - 2;
   else
-    pos = tui_term_height () - TUI_CMD_WIN->height - 2;
+    pos = tui_term_height () - tui_cmd_win ()->height - 2;
   pos = (pos - 2) / 2;
 
   pc = tui_find_disassembly_address (gdbarch, pc, -pos);

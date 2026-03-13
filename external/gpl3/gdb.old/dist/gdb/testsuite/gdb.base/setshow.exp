@@ -67,12 +67,12 @@ proc_with_prefix test_setshow_annotate {} {
 
     #test set annotate 1
     gdb_test "set annotate 1" ".*post-prompt.*"
-    gdb_test "show annotate" "Annotation_level is 1..*"  "show annotate (1)"
+    gdb_test "show annotate" "Annotation_level is 1..*"  "show annotate, 1"
     #test annotation_level 1
     gdb_test "info line 1" "Line 1 of .* is at address .* but contains no code.*:1:0:beg:0x.*"  "annotation_level 1"
     #test set annotate 0
     gdb_test_no_output "set annotate 0" "set annotate 0"
-    gdb_test "show annotate" "Annotation_level is 0..*"  "show annotate (0)"
+    gdb_test "show annotate" "Annotation_level is 0..*"  "show annotate, 0"
     #test annotation_level 0
     gdb_test "info line 1" "Line 1 of .* is at address .* but contains no code.*"  "annotation_level 0"
 }
@@ -121,13 +121,13 @@ proc_with_prefix test_setshow_check {} {
 	"_gdb_setting check range on"
 
     #test show check range on
-    gdb_test "show check range" "Range checking is \"on\"\..*" "show check range (on)"
+    gdb_test "show check range" "Range checking is \"on\"\..*" "show check range, on"
 
     #test set check range off with trailing space
     gdb_test_no_output "set check range off " "set check range off"
 
     #test show check range off
-    gdb_test "show check range" "Range checking is \"off\"\..*" "show check range (off)"
+    gdb_test "show check range" "Range checking is \"off\"\..*" "show check range, off"
     gdb_test "p \$_gdb_setting(\"check range\")" " = \"off\"" \
 	"_gdb_setting check range off"
 
@@ -144,7 +144,7 @@ proc_with_prefix test_setshow_check {} {
 
     # Test show check type on
     gdb_test "show check type" "Strict type checking is on\..*" \
-	"show check type (on)"
+	"show check type, on"
     gdb_test "p \$_gdb_setting_str(\"check type\")" " = \"on\"" \
 	"_gdb_setting_str check type on"
     gdb_test "p \$_gdb_setting(\"check type\")" " = 1" \
@@ -159,7 +159,7 @@ proc_with_prefix test_setshow_check {} {
 
     # Test show check type off
     gdb_test "show check type" "Strict type checking is off\..*" \
-	"show check type (off)"
+	"show check type, off"
 }
 
 proc_with_prefix test_setshow_breakpoint_pending {} {
@@ -200,11 +200,11 @@ proc_with_prefix test_setshow_complaints {} {
     #test set complaints 100
     gdb_test_no_output "set complaints 100" "set complaints 100"
     #test show complaints 100
-    gdb_test "show complaints" "Max number of complaints about incorrect symbols is 100..*" "show complaints (100)"
+    gdb_test "show complaints" "Max number of complaints about incorrect symbols is 100..*" "show complaints, 100"
     #test set complaints 0
     gdb_test_no_output "set complaints 0" "set complaints 0"
     #test show complaints 0
-    gdb_test "show complaints" "Max number of complaints about incorrect symbols is 0..*" "show complaints (0)"
+    gdb_test "show complaints" "Max number of complaints about incorrect symbols is 0..*" "show complaints, 0"
 }
 
 proc_with_prefix test_setshow_confirm {} {
@@ -213,11 +213,11 @@ proc_with_prefix test_setshow_confirm {} {
     #test set confirm off
     gdb_test_no_output "set confirm off" "set confirm off"
     #test show confirm off
-    gdb_test "show confirm" "Whether to confirm potentially dangerous operations is off..*" "show confirm (off)"
+    gdb_test "show confirm" "Whether to confirm potentially dangerous operations is off..*" "show confirm, off"
     #test set confirm on
     gdb_test_no_output "set confirm on" "set confirm on"
     #test show confirm on
-    gdb_test "show confirm" "Whether to confirm potentially dangerous operations is on..*" "show confirm (on)"
+    gdb_test "show confirm" "Whether to confirm potentially dangerous operations is on..*" "show confirm, on"
 }
 
 proc_with_prefix test_setshow_editing {} {
@@ -331,7 +331,7 @@ proc_with_prefix test_setshow_history {} {
     #test show history filename foobar.baz
     gdb_test "show history filename" \
 	"The filename in which to record the command history is \"[string_to_regexp $PWD]/foobar.baz\"..*" \
-	"show history filename (current_directory/foobar.baz)"
+	"show history filename, current_directory/foobar.baz"
 
     #test set history save on
     gdb_test_no_output "set history save on" "set history save on"
@@ -356,13 +356,13 @@ proc_with_prefix test_setshow_language {} {
     gdb_test_no_output "set language asm"
 
     #test show language asm
-    gdb_test "show language" "The current source language is \"asm\"..*" "show language (asm)"
+    gdb_test "show language" "The current source language is \"asm\"..*" "show language, asm"
 
     #test set language rust, with a trailing space
     gdb_test_no_output "set language rust " "set language rust"
 
     #test show language rust
-    gdb_test "show language" "The current source language is \"rust\"..*" "show language (rust)"
+    gdb_test "show language" "The current source language is \"rust\"..*" "show language, rust"
 
     #test completion for set language.
     gdb_test "complete set language min" "set language minimal" \
@@ -372,7 +372,7 @@ proc_with_prefix test_setshow_language {} {
     gdb_test_no_output "set language auto" "set language auto"
 
     #test show language
-    gdb_test "show language" "The current source language is \"auto.*\"..*" "show language (auto)"
+    gdb_test "show language" "The current source language is \"auto.*\"..*" "show language, auto"
 }
 
 proc_with_prefix test_setshow_listsize {} {
@@ -447,13 +447,13 @@ proc_with_prefix test_setshow_radix {} {
     gdb_test "set radix 16" "Input and output radices now set to decimal 16, hex 10, octal 20..*"
 
     #test show radix 16
-    gdb_test "show radix" "Input and output radices set to decimal 16, hex 10, octal 20..*"  "show radix (16)"
+    gdb_test "show radix" "Input and output radices set to decimal 16, hex 10, octal 20..*"  "show radix, 16"
 
     #test set radix 10
     gdb_test "set radix" "Input and output radices now set to decimal 10, hex a, octal 12..*"  "set radix 10"
 
     #test show radix 10
-    gdb_test "show radix" "Input and output radices set to decimal 10, hex a, octal 12..*" "show radix (10)"
+    gdb_test "show radix" "Input and output radices set to decimal 10, hex a, octal 12..*" "show radix, 10"
 }
 
 proc_with_prefix test_setshow_width {} {
@@ -492,13 +492,13 @@ proc_with_prefix test_setshow_verbose {} {
     gdb_test_no_output "set verbose on" "set verbose on"
 
     #test show verbose on
-    gdb_test "show verbose" "Verbose printing of informational messages is on..*" "show verbose (on)"
+    gdb_test "show verbose" "Verbose printing of informational messages is on..*" "show verbose, on"
 
     #test set verbose off
     gdb_test_no_output "set verbose off" "set verbose off"
 
     #test show verbose off
-    gdb_test "show verbose" "Verbosity is off..*" "show verbose (off)"
+    gdb_test "show verbose" "Verbosity is off..*" "show verbose, off"
 }
 
 proc_with_prefix test_argument_preceded_by_space {} {

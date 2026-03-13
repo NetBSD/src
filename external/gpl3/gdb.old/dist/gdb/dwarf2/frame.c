@@ -25,7 +25,6 @@
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
-#include "gdbcore.h"
 #include "gdbtypes.h"
 #include "symtab.h"
 #include "objfiles.h"
@@ -37,7 +36,6 @@
 #include "dwarf2/frame.h"
 #include "dwarf2/read.h"
 #include "dwarf2/public.h"
-#include "ax.h"
 #include "dwarf2/loc.h"
 #include "dwarf2/frame-tailcall.h"
 #include "gdbsupport/gdb_binary_search.h"
@@ -913,7 +911,7 @@ dwarf2_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
      its return address.  As a result the return address will
      point at some random instruction, and the CFI for that
      instruction is probably worthless to us.  GCC's unwinder solves
-     this problem by substracting 1 from the return address to get an
+     this problem by subtracting 1 from the return address to get an
      address in the middle of a presumed call instruction (or the
      instruction in the associated delay slot).  This should only be
      done for "normal" frames and not for resume-type frames (signal
@@ -1075,7 +1073,7 @@ incomplete CFI data; unspecified registers (e.g., %s) at %s"),
 	    ULONGEST retaddr_column = fs.retaddr_column;
 
 	    /* It seems rather bizarre to specify an "empty" column as
-	       the return adress column.  However, this is exactly
+	       the return address column.  However, this is exactly
 	       what GCC does on some targets.  It turns out that GCC
 	       assumes that the return address can be found in the
 	       register corresponding to the return address column.
@@ -2045,7 +2043,7 @@ decode_frame_entry (struct gdbarch *gdbarch,
 	 produces a hole in the frame info that gets filled by the 
 	 linker with zeros.
 
-	 The GCC behaviour is arguably a bug, but it's effectively now
+	 The GCC behavior is arguably a bug, but it's effectively now
 	 part of the ABI, so we're now stuck with it, at least at the
 	 object file level.  A smart linker may decide, in the process
 	 of compressing duplicate CIE information, that it can rewrite

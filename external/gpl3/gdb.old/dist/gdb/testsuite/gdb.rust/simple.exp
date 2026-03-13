@@ -421,3 +421,6 @@ gdb_test "print 4 - 3 - 1" " = 0"
 
 # Another operator precedence bug.
 gdb_test "print \$one = \$two = 75" " = \\\(\\\)"
+
+gdb_test "info symbol 0xffffffffffffffff" \
+    "No symbol matches 0xffffffffffffffff."

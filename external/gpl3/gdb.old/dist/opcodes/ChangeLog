@@ -1,3 +1,7 @@
+2024-07-20  Nick Clifton  <nickc@redhat.com>
+
+	* 2.43 branch point.
+
 2024-02-15 Will Hawkins  <hawkinsw@obs.cr>
 
 	* bpf-opc.c: Move callx into the v1 BPF CPU variant.

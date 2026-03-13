@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (BREAKPOINT_H)
-#define BREAKPOINT_H 1
+#ifndef GDB_BREAKPOINT_H
+#define GDB_BREAKPOINT_H
 
 #include "frame.h"
 #include "value.h"
@@ -29,8 +29,6 @@
 #include <vector>
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/filtered-iterator.h"
-#include "gdbsupport/function-view.h"
-#include "gdbsupport/next-iterator.h"
 #include "gdbsupport/iterator-range.h"
 #include "gdbsupport/refcounted-object.h"
 #include "gdbsupport/safe-iterator.h"
@@ -47,6 +45,14 @@ struct bp_location;
 struct linespec_result;
 struct linespec_sals;
 struct inferior;
+
+/* True if breakpoint debug output is enabled.  */
+extern bool debug_breakpoint;
+
+/* Print a "breakpoint" debug statement.  */
+#define breakpoint_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_breakpoint, "breakpoint", fmt, \
+			      ##__VA_ARGS__)
 
 /* Enum for exception-handling support in 'catch throw', 'catch rethrow',
    'catch catch' and the MI equivalent.  */
@@ -454,7 +460,7 @@ public:
      as ``address'' (above) except for cases in which
      ADJUST_BREAKPOINT_ADDRESS has computed a different address at
      which to place the breakpoint in order to comply with a
-     processor's architectual constraints.  */
+     processor's architectural constraints.  */
   CORE_ADDR requested_address = 0;
 
   /* An additional address assigned with this location.  This is currently
@@ -506,9 +512,6 @@ public:
      any.  This may be used to ascertain if the location was
      originally set on a GNU ifunc symbol.  */
   const minimal_symbol *msymbol = NULL;
-
-  /* The objfile the symbol or minimal symbol were found in.  */
-  const struct objfile *objfile = NULL;
 
   /* Return a string representation of the bp_location.
      This is only meant to be used in debug messages.  */
@@ -562,15 +565,15 @@ enum print_stop_action
 
 struct breakpoint_ops
 {
-  /* Create SALs from location spec, storing the result in
-     linespec_result.
-
-     For an explanation about the arguments, see the function
-     `create_sals_from_location_spec_default'.
+  /* Create SALs from LOCSPEC, storing the result in linespec_result
+     CANONICAL.  If SEARCH_PSPACE is not nullptr then only results in the
+     corresponding program space are returned.  If SEARCH_PSPACE is nullptr
+     then results for all program spaces are returned.
 
      This function is called inside `create_breakpoint'.  */
   void (*create_sals_from_location_spec) (location_spec *locspec,
-					  struct linespec_result *canonical);
+					  linespec_result *canonical,
+					  program_space *search_pspace);
 
   /* This method will be responsible for creating a breakpoint given its SALs.
      Usually, it just calls `create_breakpoints_sal' (for ordinary
@@ -702,11 +705,19 @@ struct breakpoint : public intrusive_list_node<breakpoint>
 
   /* Reevaluate a breakpoint.  This is necessary after symbols change
      (e.g., an executable or DSO was loaded, or the inferior just
-     started).  */
-  virtual void re_set ()
-  {
-    /* Nothing to re-set.  */
-  }
+     started).
+
+     If not nullptr, then FILTER_PSPACE is the program space in which
+     symbols may have changed, we only need to add new locations in
+     FILTER_PSPACE.
+
+     If FILTER_PSPACE is nullptr then all program spaces may have changed,
+     new locations need to be searched for in every program space.
+
+     This is pure virtual as, at a minimum, each sub-class must recompute
+     any cached condition expressions based off of the cond_string member
+     variable.  */
+  virtual void re_set (program_space *filter_pspace) = 0;
 
   /* Insert the breakpoint or watchpoint or activate the catchpoint.
      Return 0 for success, 1 if the breakpoint, watchpoint or
@@ -823,9 +834,21 @@ struct breakpoint : public intrusive_list_node<breakpoint>
      equals this.  */
   struct frame_id frame_id = null_frame_id;
 
-  /* The program space used to set the breakpoint.  This is only set
-     for breakpoints which are specific to a program space; for
-     non-thread-specific ordinary breakpoints this is NULL.  */
+  /* The program space used to set the breakpoint.  This is only set for
+     breakpoints that are not type bp_breakpoint or bp_hardware_breakpoint.
+     For thread or inferior specific breakpoints, the breakpoints are
+     managed via the thread and inferior member variables.  */
+
+  /* If not nullptr then this is the program space for which this
+     breakpoint was created.  All watchpoint and catchpoint sub-types set
+     this field, but not all of the code_breakpoint sub-types do;
+     generally, user created breakpoint types don't set this field, though
+     things might be more consistent if they did.
+
+     When this variable is nullptr then a breakpoint might be associated
+     with multiple program spaces, though you need to check the thread,
+     inferior and task variables to see if a breakpoint was created for a
+     specific thread, inferior, or Ada task respectively.  */
   program_space *pspace = NULL;
 
   /* The location specification we used to set the breakpoint.  */
@@ -935,7 +958,7 @@ struct code_breakpoint : public breakpoint
   /* Add a location for SAL to this breakpoint.  */
   bp_location *add_location (const symtab_and_line &sal);
 
-  void re_set () override;
+  void re_set (program_space *pspace) override;
   int insert_location (struct bp_location *) override;
   int remove_location (struct bp_location *,
 		       enum remove_bp_reason reason) override;
@@ -957,7 +980,7 @@ protected:
      struct program_space *search_pspace);
 
   /* Helper method that does the basic work of re_set.  */
-  void re_set_default ();
+  void re_set_default (program_space *pspace);
 
   /* Find the SaL locations corresponding to the given LOCATION.
      On return, FOUND will be 1 if any SaL was found, zero otherwise.  */
@@ -979,7 +1002,7 @@ struct watchpoint : public breakpoint
 {
   using breakpoint::breakpoint;
 
-  void re_set () override;
+  void re_set (program_space *pspace) override;
   int insert_location (struct bp_location *) override;
   int remove_location (struct bp_location *,
 		       enum remove_bp_reason reason) override;
@@ -1120,6 +1143,10 @@ struct catchpoint : public breakpoint
   catchpoint (struct gdbarch *gdbarch, bool temp, const char *cond_string);
 
   ~catchpoint () override = 0;
+
+  /* If the catchpoint has a condition set then recompute the cached
+     expression within the single dummy location.  */
+  void re_set (program_space *filter_pspace) override;
 };
 
 
@@ -1943,6 +1970,14 @@ public:
   scoped_rbreak_breakpoints ();
   ~scoped_rbreak_breakpoints ();
 
+  /* Return the number of first breakpoint made while this object is
+     in scope.  */
+  int first_breakpoint () const;
+
+  /* Return the number of the most recent breakpoint made while this
+     object is in scope, or -1 if no breakpoints were made.  */
+  int last_breakpoint () const;
+
   DISABLE_COPY_AND_ASSIGN (scoped_rbreak_breakpoints);
 };
 
@@ -2002,10 +2037,10 @@ extern int pc_at_non_inline_function (const address_space *aspace,
 				      CORE_ADDR pc,
 				      const target_waitstatus &ws);
 
-extern int user_breakpoint_p (struct breakpoint *);
+extern int user_breakpoint_p (const breakpoint *);
 
 /* Return true if this breakpoint is pending, false if not.  */
-extern int pending_breakpoint_p (struct breakpoint *);
+extern int pending_breakpoint_p (const breakpoint *);
 
 /* Attempt to determine architecture of location identified by SAL.  */
 extern struct gdbarch *get_sal_arch (struct symtab_and_line sal);
@@ -2068,4 +2103,4 @@ extern void enable_disable_bp_location (bp_location *loc, bool enable);
 
 extern void notify_breakpoint_modified (breakpoint *b);
 
-#endif /* !defined (BREAKPOINT_H) */
+#endif /* GDB_BREAKPOINT_H */

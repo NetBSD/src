@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef IA64_LIBUNWIND_TDEP_H
-#define IA64_LIBUNWIND_TDEP_H 1
+#ifndef GDB_IA64_LIBUNWIND_TDEP_H
+#define GDB_IA64_LIBUNWIND_TDEP_H
 
 class frame_info_ptr;
 struct frame_id;
@@ -76,4 +76,4 @@ int libunwind_get_reg_special (struct gdbarch *gdbarch,
 			       readable_regcache *regcache,
 			       int regnum, void *buf);
 
-#endif /* IA64_LIBUNWIND_TDEP_H */
+#endif /* GDB_IA64_LIBUNWIND_TDEP_H */

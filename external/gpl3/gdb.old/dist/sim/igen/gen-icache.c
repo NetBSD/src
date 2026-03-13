@@ -152,7 +152,7 @@ print_icache_extraction (lf *file,
   switch (what_to_declare)
     {
     case undef_variables:
-      /* We've finished with the #define value - destory it */
+      /* We've finished with the #define value - destroy it */
       lf_indent_suppress (file);
       lf_printf (file, "#undef %s\n", entry_name);
       return;
@@ -632,7 +632,7 @@ print_icache_struct (lf *file, const insn_table *isa, cache_entry *cache_rules)
   else
     {
       /* alernativly, since no cache, emit a dummy definition for
-         idecode_cache so that code refering to the type can still compile */
+         idecode_cache so that code referring to the type can still compile */
       lf_printf (file, "typedef void %sidecode_cache;\n",
 		 options.module.global.prefix.l);
     }

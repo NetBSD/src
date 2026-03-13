@@ -43,12 +43,20 @@ proc test_basic_parsing_of_type_kinds {} {
     test_cast_1_to_type_kind "complex" "" "\\(1,0\\)" "8"
     test_cast_1_to_type_kind "complex" "4" "\\(1,0\\)" "8"
     test_cast_1_to_type_kind "complex" "8" "\\(1,0\\)" "16"
-    test_cast_1_to_type_kind "complex" "16" "\\(1,0\\)" "32"
+    set re_unsupported_kind \
+	[string_to_regexp "unsupported kind 16 for type complex*4"]
+    test_cast_1_to_type_kind "complex" "16" \
+	[string_to_regexp (1,0)]|$re_unsupported_kind \
+	32|$re_unsupported_kind
 
     test_cast_1_to_type_kind "real" "" "1" "4"
     test_cast_1_to_type_kind "real" "4" "1" "4"
     test_cast_1_to_type_kind "real" "8" "1" "8"
-    test_cast_1_to_type_kind "real" "16" "1" "16"
+    set re_unsupported_kind \
+	[string_to_regexp "unsupported kind 16 for type real*4"]
+    test_cast_1_to_type_kind "real" "16" \
+	1|$re_unsupported_kind \
+	16|$re_unsupported_kind
 
     test_cast_1_to_type_kind "logical" "" "\\.TRUE\\." "4"
     test_cast_1_to_type_kind "logical" "1" "\\.TRUE\\." "1"
@@ -83,11 +91,17 @@ proc test_old_star_type_sizes {} {
 
     gdb_test "p ((complex*4) 1)" " = \\(1,0\\)"
     gdb_test "p ((complex*8) 1)" " = \\(1,0\\)"
-    gdb_test "p ((complex*16) 1)" " = \\(1,0\\)"
+    set re_unsupported_kind \
+	[string_to_regexp "unsupported kind 16 for type complex*4"]
+    gdb_test "p ((complex*16) 1)" \
+	[string_to_regexp " = (1,0)"]|$re_unsupported_kind
 
     gdb_test "p ((real*4) 1)" " = 1"
     gdb_test "p ((real*8) 1)" " = 1"
-    gdb_test "p ((real*16) 1)" " = 1"
+    set re_unsupported_kind \
+	[string_to_regexp "unsupported kind 16 for type real*4"]
+    gdb_test "p ((real*16) 1)" \
+	"( = 1|$re_unsupported_kind)"
 
     gdb_test "p ((logical*1) 1)" " = \\.TRUE\\."
     gdb_test "p ((logical*4) 1)" " = \\.TRUE\\."

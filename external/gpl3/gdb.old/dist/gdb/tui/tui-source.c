@@ -20,7 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <math.h>
-#include <ctype.h>
 #include "symtab.h"
 #include "frame.h"
 #include "breakpoint.h"
@@ -28,16 +27,25 @@
 #include "objfiles.h"
 #include "filenames.h"
 #include "source-cache.h"
-
-#include "tui/tui.h"
-#include "tui/tui-data.h"
-#include "tui/tui-io.h"
 #include "tui/tui-status.h"
 #include "tui/tui-win.h"
 #include "tui/tui-winsource.h"
 #include "tui/tui-source.h"
 #include "tui/tui-location.h"
-#include "gdb_curses.h"
+#include "tui/tui-io.h"
+#include "cli/cli-style.h"
+
+tui_source_window::tui_source_window ()
+{
+  line_number_style.changed.attach
+    (std::bind (&tui_source_window::style_changed, this),
+     m_src_observable, "tui-source");
+}
+
+tui_source_window::~tui_source_window ()
+{
+  line_number_style.changed.detach (m_src_observable);
+}
 
 /* Function to display source in the source window.  */
 bool
@@ -142,7 +150,8 @@ tui_source_window::do_scroll_vertical (int num_to_scroll)
   if (!m_content.empty ())
     {
       struct symtab *s;
-      struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
       struct gdbarch *arch = m_gdbarch;
 
       if (cursal.symtab == NULL)
@@ -155,12 +164,12 @@ tui_source_window::do_scroll_vertical (int num_to_scroll)
 	s = cursal.symtab;
 
       int line_no = m_start_line_or_addr.u.line_no + num_to_scroll;
+      if (line_no <= 0)
+	line_no = 1;
       const std::vector<off_t> *offsets;
       if (g_source_cache.get_line_charpos (s, &offsets)
 	  && line_no > offsets->size ())
 	line_no = m_start_line_or_addr.u.line_no;
-      if (line_no <= 0)
-	line_no = 1;
 
       cursal.line = line_no;
       find_line_pc (cursal.symtab, cursal.line, &cursal.pc);
@@ -226,7 +235,7 @@ void
 tui_source_window::display_start_addr (struct gdbarch **gdbarch_p,
 				       CORE_ADDR *addr_p)
 {
-  struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+  symtab_and_line cursal = get_current_source_symtab_and_line (current_program_space);
 
   *gdbarch_p = m_gdbarch;
   find_line_pc (cursal.symtab, m_start_line_or_addr.u.line_no, addr_p);
@@ -252,5 +261,7 @@ tui_source_window::show_line_number (int offset) const
 		 tui_left_margin_verbose ? "%0*d%c" : "%*d%c", m_digits - 1,
 		 lineno, space);
     }
+  tui_apply_style (handle.get (), line_number_style.style ());
   display_string (text);
+  tui_apply_style (handle.get (), ui_file_style ());
 }

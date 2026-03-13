@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SPARC_TDEP_H
-#define SPARC_TDEP_H 1
+#ifndef GDB_SPARC_TDEP_H
+#define GDB_SPARC_TDEP_H
 
 #include "gdbarch.h"
 
@@ -261,4 +261,4 @@ extern CORE_ADDR sparcnbsd_step_trap (const frame_info_ptr &frame,
 extern struct trad_frame_saved_reg *
   sparc32nbsd_sigcontext_saved_regs (const frame_info_ptr &next_frame);
 
-#endif /* sparc-tdep.h */
+#endif /* GDB_SPARC_TDEP_H */

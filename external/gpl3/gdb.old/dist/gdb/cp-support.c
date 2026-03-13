@@ -1390,7 +1390,6 @@ add_symbol_overload_list_using (const char *func_name,
 				const char *the_namespace,
 				std::vector<symbol *> *overload_list)
 {
-  struct using_direct *current;
   const struct block *block;
 
   /* First, go through the using directives.  If any of them apply,
@@ -1400,9 +1399,7 @@ add_symbol_overload_list_using (const char *func_name,
   for (block = get_selected_block (0);
        block != NULL;
        block = block->superblock ())
-    for (current = block->get_using ();
-	current != NULL;
-	current = current->next)
+    for (using_direct *current : block->get_using ())
       {
 	/* Prevent recursive calls.  */
 	if (current->searched)
@@ -1709,10 +1706,49 @@ cp_search_name_hash (const char *search_name)
   unsigned int hash = 0;
   for (const char *string = search_name; *string != '\0'; ++string)
     {
+      const char *before_skip = string;
       string = skip_spaces (string);
 
       if (*string == '(')
 	break;
+
+      /* Could it be the beginning of a function name?
+	 If yes, does it begin with the keyword "operator"?  */
+      if ((string != before_skip || string == search_name)
+	  && (string[0] == 'o' && startswith (string, CP_OPERATOR_STR)))
+	{
+	  /* Hash the "operator" part.  */
+	  for (size_t i = 0; i < CP_OPERATOR_LEN; ++i)
+	    hash = SYMBOL_HASH_NEXT (hash, *string++);
+
+	  string = skip_spaces (string);
+
+	  /* If no more data to process, stop right now.  This is specially
+	     intended for SEARCH_NAMEs that end with "operator".  In such
+	     cases, the whole string is processed and STRING is pointing to a
+	     null-byte.  Letting the loop body resume naturally would lead to
+	     a "++string" that causes STRING to point past the null-byte.  */
+	  if (string[0] == '\0')
+	    break;
+
+	  /* "<" and "<<" are sequences of interest here.  This covers
+	     "operator{<,<<,<=,<=>}".  In the last 2 cases, the "=" and "=>"
+	     parts are handled by the next iterations of the loop like other
+	     input chars.  The goal is to process all the operator-related '<'
+	     chars, so that later if a '<' is visited it can be inferred for
+	     sure that it is the beginning of a template parameter list.
+
+	     STRING is a null-byte terminated string.  If string[0] is not
+	     a null-byte, according to the previous check, string[1] is not
+	     past the end of the allocation and can be referenced safely.  */
+	  if (string[0] == '<')
+	    {
+	      hash = SYMBOL_HASH_NEXT (hash, *string);
+	      if (string[1] == '<')
+		hash = SYMBOL_HASH_NEXT (hash, *++string);
+	      continue;
+	    }
+	}
 
       /* Ignore ABI tags such as "[abi:cxx11].  */
       if (*string == '['
@@ -1720,16 +1756,54 @@ cp_search_name_hash (const char *search_name)
 	  && string[5] != ':')
 	break;
 
-      /* Ignore template parameter lists.  */
-      if (string[0] == '<'
-	  && string[1] != '(' && string[1] != '<' && string[1] != '='
-	  && string[1] != ' ' && string[1] != '\0')
+      /* Ignore template parameter lists.  The likely "operator{<,<<,<=,<=>}"
+	 are already taken care of.  Therefore, any encounter of '<' character
+	 at this point is related to template lists.  */
+      if (*string == '<')
 	break;
 
       hash = SYMBOL_HASH_NEXT (hash, *string);
     }
   return hash;
 }
+
+#if GDB_SELF_TEST
+
+namespace selftests {
+
+static void
+test_cp_search_name_hash ()
+{
+   SELF_CHECK (cp_search_name_hash ("void func<(enum_test)0>(int*, int)")
+	       == cp_search_name_hash ("void func"));
+   SELF_CHECK (cp_search_name_hash ("operator")
+	       != cp_search_name_hash ("operator<"));
+   SELF_CHECK (cp_search_name_hash ("operator")
+	       != cp_search_name_hash ("operator<<"));
+   SELF_CHECK (cp_search_name_hash ("operator<")
+	       != cp_search_name_hash ("operator<<"));
+   SELF_CHECK (cp_search_name_hash ("operator<")
+	       == cp_search_name_hash ("operator <"));
+   SELF_CHECK (cp_search_name_hash ("operator")
+	       != cp_search_name_hash ("foo_operator"));
+   SELF_CHECK (cp_search_name_hash ("operator")
+	       != cp_search_name_hash ("operator_foo"));
+   SELF_CHECK (cp_search_name_hash ("operator<")
+	       != cp_search_name_hash ("foo_operator"));
+   SELF_CHECK (cp_search_name_hash ("operator<")
+	       != cp_search_name_hash ("operator_foo"));
+   SELF_CHECK (cp_search_name_hash ("operator<<")
+	       != cp_search_name_hash ("foo_operator"));
+   SELF_CHECK (cp_search_name_hash ("operator<<")
+	       != cp_search_name_hash ("operator_foo"));
+
+   SELF_CHECK (cp_search_name_hash ("func")
+	       == cp_search_name_hash ("func[abi:cxx11]"));
+}
+
+} /* namespace selftests */
+
+#endif /* GDB_SELF_TEST */
 
 /* Helper for cp_symbol_name_matches (i.e., symbol_name_matcher_ftype
    implementation for symbol_name_match_type::WILD matching).  Split
@@ -2343,5 +2417,7 @@ display the offending symbol."),
 			    selftests::test_cp_symbol_name_matches);
   selftests::register_test ("cp_remove_params",
 			    selftests::test_cp_remove_params);
+  selftests::register_test ("cp_search_name_hash",
+			    selftests::test_cp_search_name_hash);
 #endif
 }

@@ -22,6 +22,11 @@
 #if !defined (IN_PROCESS_AGENT)
 extern bool remote_debug;
 
+/* If true, do not print the packet content sent with the next putpkt.
+   This flag is reset to false after each putpkt logging.  Useful to
+   omit printing binary packet contents.  */
+extern bool suppressed_remote_debug;
+
 /* Print a "remote" debug statement.  */
 
 #define remote_debug_printf(fmt, ...) \
@@ -58,5 +63,10 @@ void debug_flush (void);
 
 /* Async signal safe debug output function that calls write directly.  */
 ssize_t debug_write (const void *buf, size_t nbyte);
+
+/* Suppress the next putpkt debug log by omitting the packet contents.
+   Useful to reduce the logs when sending binary packets.  */
+
+void suppress_next_putpkt_log ();
 
 #endif /* GDBSERVER_DEBUG_H */

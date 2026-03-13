@@ -21,17 +21,22 @@ require gnat_runtime_has_debug_info
 
 standard_ada_testfile p
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } {
-  return -1
+foreach_gnat_encoding scenario flags {all minimal} {
+    lappend flags debug
+
+    if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" \
+	     executable $flags] != ""} {
+	return -1
+    }
+
+    clean_restart ${testfile}-${scenario}
+
+    set bp_location [gdb_get_line_number "BREAK" ${testdir}/p.adb]
+    runto "p.adb:$bp_location"
+
+    gdb_test "ptype c.all" \
+	" = new pack\\.interactive_command with record\r\n\\s+menu_name: pack\\.string_access;\r\nend record"
+
+    gdb_test "ptype c.menu_name" \
+	" = access array \\(<>\\) of character"
 }
-
-clean_restart ${testfile}
-
-set bp_location [gdb_get_line_number "BREAK" ${testdir}/p.adb]
-runto "p.adb:$bp_location"
-
-gdb_test "ptype c.all" \
-         " = new pack\\.interactive_command with record\r\n\\s+menu_name: pack\\.string_access;\r\nend record"
-
-gdb_test "ptype c.menu_name" \
-         " = access array \\(<>\\) of character"

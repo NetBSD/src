@@ -17,9 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MINSYMS_H
-#define MINSYMS_H
+#ifndef GDB_MINSYMS_H
+#define GDB_MINSYMS_H
 
+struct program_space;
 struct type;
 
 /* Several lookup functions return both a minimal symbol and the
@@ -205,16 +206,12 @@ unsigned int msymbol_hash_iw (const char *);
    symbols are still preferred).  Returns a bound minimal symbol that
    matches, or an empty bound minimal symbol if no match is found.  */
 
-struct bound_minimal_symbol lookup_minimal_symbol (const char *,
-						   const char *,
-						   struct objfile *);
+bound_minimal_symbol lookup_minimal_symbol (program_space *pspace,
+					    const char *name,
+					    objfile *obj = nullptr,
+					    const char *sfile = nullptr);
 
-/* Like lookup_minimal_symbol, but searches all files and
-   objfiles.  */
-
-struct bound_minimal_symbol lookup_bound_minimal_symbol (const char *);
-
-/* Look through all the current minimal symbol tables and find the
+/* Look through all the minimal symbol tables in PSPACE and find the
    first minimal symbol that matches NAME and has text type.  If OBJF
    is non-NULL, limit the search to that objfile.  Returns a bound
    minimal symbol that matches, or an "empty" bound minimal symbol
@@ -222,26 +219,28 @@ struct bound_minimal_symbol lookup_bound_minimal_symbol (const char *);
 
    This function only searches the mangled (linkage) names.  */
 
-struct bound_minimal_symbol lookup_minimal_symbol_text (const char *,
-							struct objfile *);
+bound_minimal_symbol lookup_minimal_symbol_text (program_space *pspace,
+						 const char *name,
+						 objfile *objf);
 
 /* Look through the minimal symbols in OBJF (and its separate debug
    objfiles) for a global (not file-local) minsym whose linkage name
    is NAME.  This is somewhat similar to lookup_minimal_symbol_text,
    only data symbols (not text symbols) are considered, and a non-NULL
-   objfile is not accepted.  Returns a bound minimal symbol that
-   matches, or an "empty" bound minimal symbol otherwise.  */
+   objfile is not accepted.  The boolean argument allows matching the
+   static types of data symbols also.  Returns a bound minimal symbol
+   that matches, or an "empty" bound minimal symbol otherwise.  */
 
-extern struct bound_minimal_symbol lookup_minimal_symbol_linkage
-  (const char *name, struct objfile *objf)
+extern bound_minimal_symbol lookup_minimal_symbol_linkage
+  (const char *name, struct objfile *objf, bool match_static_type)
   ATTRIBUTE_NONNULL (1) ATTRIBUTE_NONNULL (2);
 
 /* A variant of lookup_minimal_symbol_linkage that iterates over all
-   objfiles.  If ONLY_MAIN is true, then only an objfile with
+   objfiles of PSPACE.  If ONLY_MAIN is true, then only an objfile with
    OBJF_MAINLINE will be considered.  */
 
-extern struct bound_minimal_symbol lookup_minimal_symbol_linkage
-  (const char *name, bool only_main)
+extern bound_minimal_symbol lookup_minimal_symbol_linkage
+  (program_space *pspace, const char *name, bool only_main)
   ATTRIBUTE_NONNULL (1);
 
 /* Look through all the current minimal symbol tables and find the
@@ -287,7 +286,7 @@ enum class lookup_msym_prefer
    then the contents will be set to reference the closest symbol before
    PC_IN.  */
 
-struct bound_minimal_symbol lookup_minimal_symbol_by_pc_section
+bound_minimal_symbol lookup_minimal_symbol_by_pc_section
   (CORE_ADDR pc_in,
    struct obj_section *section,
    lookup_msym_prefer prefer = lookup_msym_prefer::TEXT,
@@ -299,7 +298,7 @@ struct bound_minimal_symbol lookup_minimal_symbol_by_pc_section
    This is a wrapper that calls lookup_minimal_symbol_by_pc_section
    with a NULL section argument.  */
 
-struct bound_minimal_symbol lookup_minimal_symbol_by_pc (CORE_ADDR);
+bound_minimal_symbol lookup_minimal_symbol_by_pc (CORE_ADDR);
 
 /* Iterate over all the minimal symbols in the objfile OBJF which
    match NAME.  Both the ordinary and demangled names of each symbol
@@ -318,7 +317,7 @@ void iterate_over_minimal_symbols
    symbol in the same section, or the end of the section, as the end
    of the function.  */
 
-CORE_ADDR minimal_symbol_upper_bound (struct bound_minimal_symbol minsym);
+CORE_ADDR minimal_symbol_upper_bound (bound_minimal_symbol minsym);
 
 /* Return the type of MSYMBOL, a minimal symbol of OBJFILE.  If
    ADDRESS_P is not NULL, set it to the MSYMBOL's resolved
@@ -327,4 +326,4 @@ CORE_ADDR minimal_symbol_upper_bound (struct bound_minimal_symbol minsym);
 type *find_minsym_type_and_address (minimal_symbol *msymbol, objfile *objf,
 				    CORE_ADDR *address_p);
 
-#endif /* MINSYMS_H */
+#endif /* GDB_MINSYMS_H */

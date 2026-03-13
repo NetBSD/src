@@ -196,7 +196,7 @@ proc check_field { t } {
     gdb_test "continue" "register struct f_${t} u = f_${t};" \
 	    "continue field ${t}"
 
-    # Match either the return statement, or the line immediatly after
+    # Match either the return statement, or the line immediately after
     # it.  The compiler can end up merging the return statement into
     # the return instruction.
     gdb_test "next" "(return u;|\})" "next field ${t}"

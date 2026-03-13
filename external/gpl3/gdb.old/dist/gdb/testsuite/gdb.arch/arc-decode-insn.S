@@ -394,7 +394,7 @@ start_branch_tests:
 
 #ifdef TEST_B
 .Lb_target:
-    ; Artifical nop, so that first b will not branch to itself.
+    ; Artificial nop, so that first b will not branch to itself.
     nop_s
     ; b s25
     .set b_s25_target, @.Lb_target

@@ -54,8 +54,8 @@ proc test_menu {expr function menu_entries selection output} {
 with_test_prefix "func" {
     test_menu "f (1, null)" "f" \
 	[multi_line \
-	     "\\\[1\\\] foo\.f \\(integer; foo\.integer_access\\) return boolean at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\.f \\(foo\.new_integer; foo\.integer_access\\) return boolean at .*foo.adb:.*"] \
+	     "\\\[1\\\] foo\\.f \\(integer; foo\\.integer_access\\) return boolean at .*foo.adb:.*" \
+	     "\\\[2\\\] foo\\.f \\(foo\\.new_integer; foo\\.integer_access\\) return boolean at .*foo.adb:.*"] \
 	"1" "= true"
 }
 
@@ -63,8 +63,8 @@ with_test_prefix "func" {
 with_test_prefix "proc" {
     test_menu "p (1, null)" "p" \
 	[multi_line \
-	     "\\\[1\\\] foo\.p \\(integer; foo\.integer_access\\) at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\.p \\(foo\.new_integer; foo\.integer_access\\) at .*foo.adb:.*" ] \
+	     "\\\[1\\\] foo\\.p \\(integer; foo\\.integer_access\\) at .*foo.adb:.*" \
+	     "\\\[2\\\] foo\\.p \\(foo\\.new_integer; foo\\.integer_access\\) at .*foo.adb:.*" ] \
 	"1" "= (void)"
 }
 
@@ -73,7 +73,7 @@ gdb_test "set ada print-signatures off" ""
 with_test_prefix "signatures disabled" {
     test_menu "f (1, null)" "f" \
 	[multi_line \
-	     "\\\[1\\\] foo\.f at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\.f at .*foo.adb:.*"] \
+	     "\\\[1\\\] foo\\.f at .*foo.adb:.*" \
+	     "\\\[2\\\] foo\\.f at .*foo.adb:.*"] \
 	"1" "= true"
 }

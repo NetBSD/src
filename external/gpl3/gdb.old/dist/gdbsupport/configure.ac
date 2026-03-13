@@ -16,9 +16,9 @@ dnl along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 dnl Process this file with autoconf to produce a configure script.
 
-AC_INIT([gdbsupport], 1.0)
+AC_INIT([gdbsupport], [1.0])
 AC_CONFIG_SRCDIR(common-defs.h)
-AC_CONFIG_HEADER(config.h:config.in)
+AC_CONFIG_HEADERS([config.h:config.in])
 
 # Set build, build_cpu, build_vendor and build_os.
 AC_CANONICAL_BUILD
@@ -55,6 +55,11 @@ AM_CONDITIONAL(SELFTEST, $enable_unittests)
 
 AM_CONDITIONAL(HAVE_PIPE_OR_PIPE2,
    [test x$ac_cv_func_pipe = xyes -o x$ac_cv_func_pipe2 = xyes ])
+
+AC_CHECK_FUNCS([ \
+    waitpid \
+    wait
+  ])
 
 # Check the return and argument types of ptrace.
 GDB_AC_PTRACE

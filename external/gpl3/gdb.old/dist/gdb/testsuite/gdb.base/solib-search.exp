@@ -43,7 +43,11 @@ set right_binfile2_lib \
 set binfile1_lib [standard_output_file ${libname1}.so]
 set binfile2_lib [standard_output_file ${libname2}.so]
 
-set lib_flags [list debug ldflags=-Wl,-Bsymbolic]
+# When this test was written, GDB's ability to track down shared
+# libraries for a core file based on the build-id much poorer.  As GDB
+# has improved we now need to disable build-ids in order for this test
+# to function as expected.
+set lib_flags [list debug no-build-id ldflags=-Wl,-Bsymbolic]
 set wrong_lib_flags "$lib_flags additional_flags=-DARRAY_SIZE=1"
 set right_lib_flags "$lib_flags additional_flags=-DARRAY_SIZE=8192 additional_flags=-DRIGHT"
 
@@ -108,9 +112,9 @@ proc test_backtrace { expect_fail } {
     set total_expected 5
 
     if { $expect_fail } {
-	set testname "backtrace (with wrong libs)"
+	set testname "backtrace, with wrong libs"
     } else {
-	set testname "backtrace (with right libs)"
+	set testname "backtrace, with right libs"
     }
     # N.B. The order of the tests here is important.
     # We need to count each function in the backtrace, and expect matches
@@ -137,7 +141,7 @@ proc test_backtrace { expect_fail } {
 	    exp_continue
 	}
 	-re "\[\r\n\]$gdb_prompt $" {
-	    pass "$testname (data collection)"
+	    pass "$testname, data collection"
 	}
     }
 

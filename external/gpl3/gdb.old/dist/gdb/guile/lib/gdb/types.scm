@@ -55,6 +55,25 @@
 
   (search-class type))
 
+(define-public (get-basic-type type)
+  "Return the \"basic\" type of a given type.
+
+  Arguments:
+    type: The type to reduce to its basic type.
+
+  Returns:
+    TYPE with const/volatile stripped away, and typedefs/references
+    converted to the underlying type."
+
+  (while (or (= (type-code type) TYPE_CODE_REF)
+	     (= (type-code type) TYPE_CODE_RVALUE_REF)
+	     (= (type-code type) TYPE_CODE_TYPEDEF))
+	 (if (= (type-code type) TYPE_CODE_TYPEDEF)
+	     (set! type (type-strip-typedefs type))
+	     (set! type (type-target type))))
+
+  (type-unqualified type))
+
 (define-public (make-enum-hashtable enum-type)
   "Return a hash table from a program's enum type.
 

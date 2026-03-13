@@ -50,11 +50,11 @@ proc test_break { lang } {
         incr idx
     }
     set expect [join $menu_items {.*[\r\n]*}]
-    gdb_test_multiple "break A::method" "breaking in method ($lang)" {
+    gdb_test_multiple "break A::method" "breaking in method, $lang" {
         -re $expect {
 	    gdb_test "0" \
 		"canceled" \
-		"breaking in method ($lang)"
+		$gdb_test_name
 	}
     }
 }

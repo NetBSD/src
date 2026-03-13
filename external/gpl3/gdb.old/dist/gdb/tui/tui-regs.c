@@ -21,10 +21,8 @@
 
 #include "arch-utils.h"
 #include "tui/tui.h"
-#include "tui/tui-data.h"
 #include "symtab.h"
-#include "gdbtypes.h"
-#include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "frame.h"
 #include "regcache.h"
 #include "inferior.h"
@@ -32,11 +30,8 @@
 #include "tui/tui-layout.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
-#include "tui/tui-file.h"
 #include "tui/tui-regs.h"
-#include "tui/tui-io.h"
 #include "reggroups.h"
-#include "valprint.h"
 #include "completer.h"
 
 #include "gdb_curses.h"
@@ -101,13 +96,13 @@ tui_register_format (const frame_info_ptr &frame, int regnum)
 }
 
 /* Compute the register value from the given frame and format it for
-   the display.  update 'content' and set 'highlight' if the contents
-   changed.  */
+   the display.  Update 'content' and set 'm_highlight' if the
+   contents changed.  */
 void
 tui_register_info::update (const frame_info_ptr &frame)
 {
   std::string new_content = tui_register_format (frame, m_regno);
-  highlight = content != new_content;
+  m_highlight = content != new_content;
   content = std::move (new_content);
 }
 
@@ -157,8 +152,8 @@ tui_data_window::first_reg_element_no_inline (int line_no) const
     return (-1);
 }
 
-/* Show the registers of the given group in the data window
-   and refresh the window.  */
+/* See tui-regs.h.  */
+
 void
 tui_data_window::set_register_group (const reggroup *group)
 {
@@ -172,9 +167,6 @@ tui_data_window::set_register_group (const reggroup *group)
 void
 tui_data_window::update_register_data (const reggroup *group)
 {
-  if (group == nullptr)
-    group = general_reggroup;
-
   if (!target_has_registers ()
       || !target_has_stack ()
       || !target_has_memory ())
@@ -185,6 +177,9 @@ tui_data_window::update_register_data (const reggroup *group)
       m_regs_content.clear ();
       return;
     }
+
+  if (group == nullptr)
+    group = general_reggroup;
 
   frame_info_ptr frame = get_selected_frame (nullptr);
   struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -275,8 +270,6 @@ tui_data_window::display_registers_from (int start_element_no)
   /* Mark register windows below the visible area.  */
   for (; i < m_regs_content.size (); i++)
     m_regs_content[i].y = 0;
-
-  refresh_window ();
 }
 
 /* See tui-regs.h.  */
@@ -365,7 +358,7 @@ tui_data_window::rerender ()
     erase_data_content ();
   else
     display_registers_from (0);
-  tui_wrefresh (handle.get ());
+  refresh_window ();
 }
 
 
@@ -388,6 +381,7 @@ tui_data_window::do_scroll_vertical (int num_to_scroll)
     {
       first_line += num_to_scroll;
       display_registers_from_line (first_line);
+      refresh_window ();
     }
 }
 
@@ -397,39 +391,31 @@ tui_data_window::do_scroll_vertical (int num_to_scroll)
 void
 tui_data_window::check_register_values (const frame_info_ptr &frame)
 {
-  if (frame == nullptr)
+  /* If the frame architecture changed, we need to reset the register
+     group.  */
+  if (frame == nullptr || get_frame_arch (frame) != m_gdbarch)
     set_register_group (nullptr);
   else
     {
-      /* If the frame architecture changed, we need to reset the
-	 register group.  */
-      struct gdbarch *gdbarch = get_frame_arch (frame);
-      if (gdbarch != m_gdbarch)
-	set_register_group (nullptr);
-      else
+      for (tui_register_info &data_item_win : m_regs_content)
 	{
-	  for (tui_register_info &data_item_win : m_regs_content)
-	    {
-	      bool was_hilighted = data_item_win.highlight;
+	  bool was_hilighted = data_item_win.highlighted ();
 
-	      data_item_win.update (frame);
+	  data_item_win.update (frame);
 
-	      /* Register windows whose y == 0 are outside the visible area.  */
-	      if ((data_item_win.highlight || was_hilighted)
-		  && data_item_win.visible ())
-		data_item_win.rerender (handle.get (), m_item_width);
-	    }
+	  if ((data_item_win.highlighted () || was_hilighted)
+	      && data_item_win.visible ())
+	    data_item_win.rerender (handle.get (), m_item_width);
 	}
-      tui_wrefresh (handle.get ());
+      refresh_window ();
     }
 }
 
-/* Display a register in a window.  If hilite is TRUE, then the value
-   will be displayed in reverse video.  */
+/* Display a register in a window.  */
 void
 tui_register_info::rerender (WINDOW *handle, int field_width)
 {
-  if (highlight)
+  if (m_highlight)
     /* We ignore the return value, casting it to void in order to avoid
        a compiler warning.  The warning itself was introduced by a patch
        to ncurses 5.7 dated 2009-08-29, changing this macro to expand
@@ -441,7 +427,7 @@ tui_register_info::rerender (WINDOW *handle, int field_width)
   if (content.size () < field_width)
     waddstr (handle, n_spaces (field_width - content.size ()));
 
-  if (highlight)
+  if (m_highlight)
     /* We ignore the return value, casting it to void in order to avoid
        a compiler warning.  The warning itself was introduced by a patch
        to ncurses 5.7 dated 2009-08-29, changing this macro to expand
@@ -452,7 +438,7 @@ tui_register_info::rerender (WINDOW *handle, int field_width)
 
 /* Helper for "tui reg next", returns the next register group after
    CURRENT_GROUP in the register group list for GDBARCH, with wrap around
-   behaviour.
+   behavior.
 
    If CURRENT_GROUP is nullptr (e.g. if the tui register window has only
    just been displayed and has no current group selected) or the currently
@@ -474,7 +460,7 @@ tui_reg_next (const reggroup *current_group, struct gdbarch *gdbarch)
 
 /* Helper for "tui reg prev", returns the register group previous to
    CURRENT_GROUP in the register group list for GDBARCH, with wrap around
-   behaviour.
+   behavior.
 
    If CURRENT_GROUP is nullptr (e.g. if the tui register window has only
    just been displayed and has no current group selected) or the currently
@@ -507,19 +493,19 @@ tui_reg_command (const char *args, int from_tty)
     {
       size_t len = strlen (args);
 
+      tui_batch_rendering suppress;
+
       /* Make sure the curses mode is enabled.  */
       tui_enable ();
-
-      tui_suppress_output suppress;
 
       /* Make sure the register window is visible.  If not, select an
 	 appropriate layout.  We need to do this before trying to run the
 	 'next' or 'prev' commands.  */
-      if (TUI_DATA_WIN == NULL || !TUI_DATA_WIN->is_visible ())
+      if (tui_data_win () == nullptr || !tui_data_win ()->is_visible ())
 	tui_regs_layout ();
 
       const reggroup *match = nullptr;
-      const reggroup *current_group = TUI_DATA_WIN->get_current_group ();
+      const reggroup *current_group = tui_data_win ()->get_current_group ();
       if (strncmp (args, "next", len) == 0)
 	match = tui_reg_next (current_group, gdbarch);
       else if (strncmp (args, "prev", len) == 0)
@@ -543,13 +529,14 @@ tui_reg_command (const char *args, int from_tty)
       if (match == NULL)
 	error (_("unknown register group '%s'"), args);
 
-      TUI_DATA_WIN->set_register_group (match);
+      tui_data_win ()->set_register_group (match);
     }
   else
     {
-      gdb_printf (_("\"tui reg\" must be followed by the name of "
+      gdb_printf (_("\"%ps\" must be followed by the name of "
 		    "either a register group,\nor one of 'next' "
-		    "or 'prev'.  Known register groups are:\n"));
+		    "or 'prev'.  Known register groups are:\n"),
+		  styled_string (command_style.style (), "tui reg"));
 
       bool first = true;
       for (const struct reggroup *group : gdbarch_reggroups (gdbarch))

@@ -512,19 +512,14 @@ static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_symtabs (void)
 {
   symtab_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&symtab_object_type) < 0)
+  if (gdbpy_type_ready (&symtab_object_type) < 0)
     return -1;
 
   sal_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&sal_object_type) < 0)
+  if (gdbpy_type_ready (&sal_object_type) < 0)
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "Symtab",
-			      (PyObject *) &symtab_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Symtab_and_line",
-				 (PyObject *) &sal_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_symtabs);

@@ -124,6 +124,7 @@ static const struct extension_language_ops guile_extension_ops =
   gdbscm_apply_val_pretty_printer,
 
   NULL, /* gdbscm_apply_frame_filter, */
+  NULL, /* gdbscm_load_ptwrite_filter, */
 
   gdbscm_preserve_values,
 

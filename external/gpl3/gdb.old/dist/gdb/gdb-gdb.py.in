@@ -342,7 +342,7 @@ class IntrusiveListPrinter:
         corresponding intrusive_list_node.
         """
 
-        assert elem_ptr.type.code == gdb.TYPE_CODE_PTR
+        assert elem_ptr.type.strip_typedefs().code == gdb.TYPE_CODE_PTR
 
         if self._uses_member_node():
             # Node as a member: add the member node offset from to the element's

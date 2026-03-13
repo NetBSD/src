@@ -50,7 +50,7 @@
 #define E_MSP430_MACH_MSP430x47  47
 #define E_MSP430_MACH_MSP430x54  54
 
-#define SHT_MSP430_ATTRIBUTES	0x70000003	/* Section holds ABI attributes.  */
+#define SHT_MSP430_ATTRIBUTES	(SHT_LOPROC + 3)/* Section holds ABI attributes.  */
 #define SHT_MSP430_SEC_FLAGS	0x7f000005	/* Holds TI compiler's section flags.  */
 #define SHT_MSP430_SYM_ALIASES	0x7f000006	/* Holds TI compiler's symbol aliases.  */
 

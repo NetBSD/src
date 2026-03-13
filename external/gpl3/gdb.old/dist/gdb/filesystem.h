@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef FILESYSTEM_H
-#define FILESYSTEM_H
+#ifndef GDB_FILESYSTEM_H
+#define GDB_FILESYSTEM_H
 
 extern const char file_system_kind_auto[];
 extern const char file_system_kind_unix[];
@@ -55,4 +55,4 @@ extern const char *target_lbasename (const char *kind, const char *name);
    result from this function.  */
 extern const char *effective_target_file_system_kind (void);
 
-#endif
+#endif /* GDB_FILESYSTEM_H */

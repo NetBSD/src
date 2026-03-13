@@ -402,6 +402,12 @@ aarch64_ext_reglane (const aarch64_operand *self, aarch64_opnd_info *info,
 	  info->reglane.index = extract_fields (code, 0, 2, FLD_H, FLD_L);
 	  info->reglane.regno &= 0x1f;
 	  break;
+	case AARCH64_OPND_QLF_S_2B:
+	  /* h:l:m */
+	  info->reglane.index = extract_fields (code, 0, 3, FLD_H, FLD_L,
+						FLD_M);
+	  info->reglane.regno &= 0xf;
+	  break;
 	default:
 	  return false;
 	}
@@ -422,7 +428,15 @@ aarch64_ext_reglane (const aarch64_operand *self, aarch64_opnd_info *info,
 	return 0;
       switch (info->qualifier)
 	{
+	case AARCH64_OPND_QLF_S_B:
+	  /* H:imm3 */
+	  info->reglane.index = extract_fields (code, 0, 2, FLD_H,
+						FLD_imm3_19);
+	  info->reglane.regno &= 0x7;
+	  break;
+
 	case AARCH64_OPND_QLF_S_H:
+	case AARCH64_OPND_QLF_S_2B:
 	  if (info->type == AARCH64_OPND_Em16)
 	    {
 	      /* h:l:m */
@@ -437,6 +451,7 @@ aarch64_ext_reglane (const aarch64_operand *self, aarch64_opnd_info *info,
 	    }
 	  break;
 	case AARCH64_OPND_QLF_S_S:
+	case AARCH64_OPND_QLF_S_4B:
 	  /* h:l */
 	  info->reglane.index = extract_fields (code, 0, 2, FLD_H, FLD_L);
 	  break;
@@ -544,6 +559,21 @@ aarch64_ext_ldst_reglist_r (const aarch64_operand *self ATTRIBUTE_UNUSED,
   if (info->reglist.num_regs == 1 && value == (aarch64_insn) 1)
     info->reglist.num_regs = 2;
 
+  info->reglist.stride = 1;
+  return true;
+}
+
+/* Decode AdvSIMD vector register list for AdvSIMD lut instructions.
+   The number of of registers in the list is determined by the opcode
+   flag.  */
+bool
+aarch64_ext_lut_reglist (const aarch64_operand *self, aarch64_opnd_info *info,
+		     const aarch64_insn code,
+		     const aarch64_inst *inst ATTRIBUTE_UNUSED,
+		     aarch64_operand_error *errors ATTRIBUTE_UNUSED)
+{
+  info->reglist.first_regno = extract_field (self->fields[0], code, 0);
+  info->reglist.num_regs = get_opcode_dependent_value (inst->opcode);
   info->reglist.stride = 1;
   return true;
 }
@@ -1926,6 +1956,55 @@ aarch64_ext_sve_float_zero_one (const aarch64_operand *self,
   return true;
 }
 
+/* Decode SME instruction such as MOVZA ZA tile slice to vector.  */
+bool
+aarch64_ext_sme_za_tile_to_vec (const aarch64_operand *self,
+				aarch64_opnd_info *info, aarch64_insn code,
+				const aarch64_inst *inst ATTRIBUTE_UNUSED,
+				aarch64_operand_error *errors ATTRIBUTE_UNUSED)
+{
+  aarch64_insn Qsize;		/* fields Q:S:size.  */
+  int fld_v = extract_field (self->fields[0], code, 0);
+  int fld_rv = extract_field (self->fields[1], code, 0);
+  int fld_zan_imm =  extract_field (FLD_imm4_5, code, 0);
+
+  Qsize = extract_fields (inst->value, 0, 2, FLD_SME_size_22, FLD_SME_Q);
+  switch (Qsize)
+    {
+    case 0x0:
+      info->qualifier = AARCH64_OPND_QLF_S_B;
+      info->indexed_za.regno = 0;
+      info->indexed_za.index.imm = fld_zan_imm;
+      break;
+    case 0x2:
+      info->qualifier = AARCH64_OPND_QLF_S_H;
+      info->indexed_za.regno = fld_zan_imm >> 3;
+      info->indexed_za.index.imm = fld_zan_imm & 0x07;
+      break;
+    case 0x4:
+      info->qualifier = AARCH64_OPND_QLF_S_S;
+      info->indexed_za.regno = fld_zan_imm >> 2;
+      info->indexed_za.index.imm = fld_zan_imm & 0x03;
+      break;
+    case 0x6:
+      info->qualifier = AARCH64_OPND_QLF_S_D;
+      info->indexed_za.regno = fld_zan_imm >> 1;
+      info->indexed_za.index.imm = fld_zan_imm & 0x01;
+      break;
+    case 0x7:
+      info->qualifier = AARCH64_OPND_QLF_S_Q;
+      info->indexed_za.regno = fld_zan_imm;
+      break;
+    default:
+      return false;
+    }
+
+  info->indexed_za.index.regno = fld_rv + 12;
+  info->indexed_za.v = fld_v;
+
+  return true;
+}
+
 /* Decode ZA tile vector, vector indicator, vector selector, qualifier and
    immediate on numerous SME instruction fields such as MOVA.  */
 bool
@@ -2207,28 +2286,8 @@ aarch64_ext_sve_index (const aarch64_operand *self,
   int val;
 
   info->reglane.regno = extract_field (self->fields[0], code, 0);
-  val = extract_fields (code, 0, 2, FLD_SVE_tszh, FLD_imm5);
+  val = extract_all_fields_after (self, 1, code);
   if ((val & 31) == 0)
-    return 0;
-  while ((val & 1) == 0)
-    val /= 2;
-  info->reglane.index = val / 2;
-  return true;
-}
-
-/* Decode Zn.<T>[<imm>], where <imm> is an immediate with range of 0 to one less
-   than the number of elements in 128 bit, which can encode il:tsz.  */
-bool
-aarch64_ext_sve_index_imm (const aarch64_operand *self,
-			   aarch64_opnd_info *info, aarch64_insn code,
-			   const aarch64_inst *inst ATTRIBUTE_UNUSED,
-			   aarch64_operand_error *errors ATTRIBUTE_UNUSED)
-{
-  int val;
-
-  info->reglane.regno = extract_field (self->fields[0], code, 0);
-  val = extract_fields (code, 0, 2, self->fields[2], self->fields[1]);
-  if ((val & 15) == 0)
     return 0;
   while ((val & 1) == 0)
     val /= 2;
@@ -3387,6 +3446,12 @@ aarch64_decode_variant_using_iclass (aarch64_inst *inst)
       i = extract_field (FLD_SVE_tszh, inst->value, 0);
       goto sve_shift;
 
+    case sme_size_12_bh:
+      variant = extract_field (FLD_S, inst->value, 0);
+      if (variant > 1)
+	return false;
+      break;
+
     case sme_size_12_bhs:
       variant = extract_field (FLD_SME_size_12, inst->value, 0);
       if (variant >= 3)
@@ -3398,6 +3463,12 @@ aarch64_decode_variant_using_iclass (aarch64_inst *inst)
       if (variant != 1 && variant != 2)
 	return false;
       variant -= 1;
+      break;
+
+    case sme_size_12_b:
+      variant = extract_field (FLD_SME_size_12, inst->value, 0);
+      if (variant != 0)
+	return false;
       break;
 
     case sme_size_22:
@@ -3420,19 +3491,9 @@ aarch64_decode_variant_using_iclass (aarch64_inst *inst)
       break;
 
     case sve_index:
-      i = extract_fields (inst->value, 0, 2, FLD_SVE_tszh, FLD_imm5);
-      if ((i & 31) == 0)
-	return false;
-      while ((i & 1) == 0)
-	{
-	  i >>= 1;
-	  variant += 1;
-	}
-      break;
+      i = extract_field (FLD_imm5, inst->value, 0);
 
-    case sve_index1:
-      i = extract_fields (inst->value, 0, 2, FLD_SVE_tsz, FLD_SVE_i2h);
-      if ((i & 15) == 0)
+      if ((i & 31) == 0)
 	return false;
       while ((i & 1) == 0)
 	{

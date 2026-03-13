@@ -30,7 +30,7 @@ set srclibfile ${testfile}-lib.c
 set binlibfile [standard_output_file ${testfile}.so]
 
 if { [gdb_compile_shlib "${srcdir}/${subdir}/${srclibfile}" "${binlibfile}" {debug}] != ""
-     || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "shlib=${binlibfile}"] != "" } {
+     || [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable "shlib=${binlibfile} build-id"] != "" } {
     untested "failed to compile"
     return -1
 }

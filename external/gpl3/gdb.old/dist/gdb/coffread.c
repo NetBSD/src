@@ -37,6 +37,7 @@
 #include "block.h"
 #include "dictionary.h"
 #include "dwarf2/public.h"
+#include "gdb-stabs.h"
 
 #include "coff-pe-read.h"
 
@@ -121,7 +122,7 @@ static unsigned local_auxesz;
 static int pe_file;
 
 /* Chain of typedefs of pointers to empty struct/union types.
-   They are chained thru the SYMBOL_VALUE_CHAIN.  */
+   They are chained through the SYMBOL_VALUE_CHAIN.  */
 
 static struct symbol *opaque_type_chain[HASHSIZE];
 
@@ -203,6 +204,98 @@ static void read_one_sym (struct coff_symbol *,
 
 static void coff_symtab_read (minimal_symbol_reader &,
 			      file_ptr, unsigned int, struct objfile *);
+
+/* Scan and build partial symbols for an coff symbol file.
+   The coff file has already been processed to get its minimal symbols.
+
+   This routine is the equivalent of dbx_symfile_init and dbx_symfile_read
+   rolled into one.
+
+   OBJFILE is the object file we are reading symbols from.
+   ADDR is the address relative to which the symbols are (e.g.
+   the base address of the text segment).
+   TEXTADDR is the address of the text section.
+   TEXTSIZE is the size of the text section.
+   STABSECTS is the list of .stab sections in OBJFILE.
+   STABSTROFFSET and STABSTRSIZE define the location in OBJFILE where the
+   .stabstr section exists.
+
+   This routine is mostly copied from dbx_symfile_init and dbx_symfile_read,
+   adjusted for coff details.  */
+
+void
+coffstab_build_psymtabs (struct objfile *objfile,
+			 CORE_ADDR textaddr, unsigned int textsize,
+			 const std::vector<asection *> &stabsects,
+			 file_ptr stabstroffset, unsigned int stabstrsize)
+{
+  int val;
+  bfd *sym_bfd = objfile->obfd.get ();
+  const char *name = bfd_get_filename (sym_bfd);
+  unsigned int stabsize;
+
+  /* Allocate struct to keep track of stab reading.  */
+  dbx_objfile_data_key.emplace (objfile);
+  dbx_symfile_info *key = dbx_objfile_data_key.get (objfile);
+
+  DBX_TEXT_ADDR (objfile) = textaddr;
+  DBX_TEXT_SIZE (objfile) = textsize;
+
+#define	COFF_STABS_SYMBOL_SIZE	12	/* XXX FIXME XXX */
+  DBX_SYMBOL_SIZE (objfile) = COFF_STABS_SYMBOL_SIZE;
+  DBX_STRINGTAB_SIZE (objfile) = stabstrsize;
+
+  if (stabstrsize > bfd_get_size (sym_bfd))
+    error (_("ridiculous string table size: %d bytes"), stabstrsize);
+  DBX_STRINGTAB (objfile) = (char *)
+    obstack_alloc (&objfile->objfile_obstack, stabstrsize + 1);
+  OBJSTAT (objfile, sz_strtab += stabstrsize + 1);
+
+  /* Now read in the string table in one big gulp.  */
+
+  val = bfd_seek (sym_bfd, stabstroffset, SEEK_SET);
+  if (val < 0)
+    perror_with_name (name);
+  val = bfd_read (DBX_STRINGTAB (objfile), stabstrsize, sym_bfd);
+  if (val != stabstrsize)
+    perror_with_name (name);
+
+  stabsread_new_init ();
+  free_header_files ();
+  init_header_files ();
+
+  key->ctx.processing_acc_compilation = 1;
+
+  /* In a coff file, we've already installed the minimal symbols that came
+     from the coff (non-stab) symbol table, so always act like an
+     incremental load here.  */
+  scoped_restore save_symbuf_sections
+    = make_scoped_restore (&key->ctx.symbuf_sections);
+  if (stabsects.size () == 1)
+    {
+      stabsize = bfd_section_size (stabsects[0]);
+      DBX_SYMCOUNT (objfile) = stabsize / DBX_SYMBOL_SIZE (objfile);
+      DBX_SYMTAB_OFFSET (objfile) = stabsects[0]->filepos;
+    }
+  else
+    {
+      DBX_SYMCOUNT (objfile) = 0;
+      for (asection *section : stabsects)
+	{
+	  stabsize = bfd_section_size (section);
+	  DBX_SYMCOUNT (objfile) += stabsize / DBX_SYMBOL_SIZE (objfile);
+	}
+
+      DBX_SYMTAB_OFFSET (objfile) = stabsects[0]->filepos;
+
+      key->ctx.sect_idx = 1;
+      key->ctx.symbuf_sections = &stabsects;
+      key->ctx.symbuf_left = bfd_section_size (stabsects[0]);
+      key->ctx.symbuf_read = 0;
+    }
+
+  read_stabs_symtab (objfile, 0);
+}
 
 /* We are called once per section from coff_symfile_read.  We
    need to examine each section we are passed, check to see
@@ -574,12 +667,13 @@ coff_read_minsyms (file_ptr symtab_offset, unsigned int nsyms,
 		{
 		  int lead
 		    = bfd_get_symbol_leading_char (objfile->obfd.get ());
-		  struct bound_minimal_symbol found;
 
 		  if (lead != '\0' && *name1 == lead)
 		    name1 += 1;
 
-		  found = lookup_minimal_symbol (name1, NULL, objfile);
+		  bound_minimal_symbol found
+		    = lookup_minimal_symbol (current_program_space, name1,
+					     objfile);
 
 		  /* If found, there are symbols named "_imp_foo" and "foo"
 		     respectively in OBJFILE.  Set the type of symbol "foo"
@@ -1643,7 +1737,7 @@ process_coff_symbol (struct coff_symbol *cs,
 		     This is not just a consequence of GDB's type
 		     management; CC and GCC (at least through version
 		     2.4) both output variables of either type char *
-		     or caddr_t with the type refering to the C_TPDEF
+		     or caddr_t with the type referring to the C_TPDEF
 		     symbol for caddr_t.  If a future compiler cleans
 		     this up it GDB is not ready for it yet, but if it
 		     becomes ready we somehow need to disable this

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RECORD_H
-#define RECORD_H
+#ifndef GDB_RECORD_H
+#define GDB_RECORD_H
 
 #include "target/waitstatus.h"
 #include "gdbsupport/enum-flags.h"
@@ -62,7 +62,10 @@ enum record_print_flag
   RECORD_PRINT_INSN_RANGE = (1 << 1),
 
   /* Indent based on call stack depth (if applicable).  */
-  RECORD_PRINT_INDENT_CALLS = (1 << 2)
+  RECORD_PRINT_INDENT_CALLS = (1 << 2),
+
+  /* Deactivate printing auxiliary data (if applicable).  */
+  RECORD_DONT_PRINT_AUX = (1 << 3)
 };
 DEF_ENUM_FLAGS_TYPE (enum record_print_flag, record_print_flags);
 
@@ -114,4 +117,4 @@ extern void record_start (const char *method, const char *format,
 /* Stop recording.  Throw on failure.  */
 extern void record_stop (int from_tty);
 
-#endif /* RECORD_H */
+#endif /* GDB_RECORD_H */

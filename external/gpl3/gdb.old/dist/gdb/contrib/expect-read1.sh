@@ -26,17 +26,32 @@
 # or
 # bash$ EXPECT=../contrib/expect-read1.sh runtest
 
-C=`echo $0|sed 's/\.sh$/.c/'`
-if ! test -e $C; then
+# Find source file.
+C=$(echo "$0" | sed 's/\.sh$/.c/')
+if ! test -e "$C"; then
   echo >&2 "$0: Cannot find 'srcdir/gdb/contrib/expect-read1.c' at '$C'."
   exit 2
 fi
-SO=/tmp/expect-read1.$$.so
-rm -f $SO
+
+# Create temp directory.
+tmpdir=$(mktemp -d)
+
+# Schedule cleanup.
+trap 'rm -rf $tmpdir' EXIT
+
+# Compile shared library.
+SO=$tmpdir/expect-read1.so
 CMD="${CC_FOR_TARGET:-gcc} -o $SO -Wall -fPIC -shared $C"
 if ! $CMD; then
   echo >&2 "$0: Failed: $CMD"
   exit 2
 fi
-trap "rm -f $SO" EXIT
+
+# Call expect with the shared library preloaded.
 LD_PRELOAD=$SO expect "$@"
+
+# Local Variables:
+# mode:shell-script
+# sh-indentation:2
+# End:
+# vi:sw=2

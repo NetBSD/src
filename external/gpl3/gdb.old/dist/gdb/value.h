@@ -17,19 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (VALUE_H)
-#define VALUE_H 1
+#ifndef GDB_VALUE_H
+#define GDB_VALUE_H
 
 #include "frame.h"
 #include "extension.h"
 #include "gdbsupport/gdb_ref_ptr.h"
 #include "gmp-utils.h"
+#include "gdbtypes.h"
 
 struct block;
 struct expression;
 struct regcache;
 struct symbol;
-struct type;
 struct ui_file;
 struct language_defn;
 struct value_print_options;
@@ -593,7 +593,7 @@ public:
 
   /* Update this value before discarding OBJFILE.  COPIED_TYPES is
      used to prevent cycles / duplicates.  */
-  void preserve (struct objfile *objfile, htab_t copied_types);
+  void preserve (struct objfile *objfile, copied_types_hash_t &copied_types);
 
   /* Unpack a bitfield of BITSIZE bits found at BITPOS in the object
      at VALADDR + EMBEDDEDOFFSET that has the type of DEST_VAL and
@@ -1598,13 +1598,24 @@ extern struct value *find_function_in_inferior (const char *,
 
 extern struct value *value_allocate_space_in_inferior (int);
 
-/* User function handler.  */
+/* User function handler.  The internal_function_fn variant assumes return
+   type int.  The internal_function_fn_noside returns some value with the
+   return type when passed noside == EVAL_AVOID_SIDE_EFFECTS.  */
 
-typedef struct value *(*internal_function_fn) (struct gdbarch *gdbarch,
-					       const struct language_defn *language,
-					       void *cookie,
-					       int argc,
-					       struct value **argv);
+using internal_function_fn
+  = std::function<struct value *(struct gdbarch *gdbarch,
+				 const struct language_defn *language,
+				 void *cookie,
+				 int argc,
+				 struct value **argv)>;
+
+using internal_function_fn_noside
+  = std::function<struct value *(struct gdbarch *gdbarch,
+				 const struct language_defn *language,
+				 void *cookie,
+				 int argc,
+				 struct value **argv,
+				 enum noside noside)>;
 
 /* Add a new internal function.  NAME is the name of the function; DOC
    is a documentation string describing the function.  HANDLER is
@@ -1615,6 +1626,9 @@ typedef struct value *(*internal_function_fn) (struct gdbarch *gdbarch,
 extern void add_internal_function (const char *name, const char *doc,
 				   internal_function_fn handler,
 				   void *cookie);
+extern void add_internal_function (const char *name, const char *doc,
+				   internal_function_fn_noside handler,
+				   void *cookie);
 
 /* This overload takes an allocated documentation string.  */
 
@@ -1622,11 +1636,16 @@ extern void add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
 				   gdb::unique_xmalloc_ptr<char> &&doc,
 				   internal_function_fn handler,
 				   void *cookie);
+extern void add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
+				   gdb::unique_xmalloc_ptr<char> &&doc,
+				   internal_function_fn_noside handler,
+				   void *cookie);
 
 struct value *call_internal_function (struct gdbarch *gdbarch,
 				      const struct language_defn *language,
 				      struct value *function,
-				      int argc, struct value **argv);
+				      int argc, struct value **argv,
+				      enum noside noside);
 
 const char *value_internal_function_name (struct value *);
 
@@ -1704,4 +1723,4 @@ void pseudo_to_concat_raw (const frame_info_ptr &next_frame,
 			   int raw_reg_1_num, int raw_reg_2_num,
 			   int raw_reg_3_num);
 
-#endif /* !defined (VALUE_H) */
+#endif /* GDB_VALUE_H */

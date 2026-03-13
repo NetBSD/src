@@ -105,9 +105,9 @@ do_module_cleanup (void *arg, int registers_valid)
 static type *
 create_copied_type_recursive (objfile *objfile, type *func_type)
 {
-  htab_up copied_types = create_copied_types_hash ();
-  func_type = copy_type_recursive (func_type, copied_types.get ());
-  return func_type;
+  copied_types_hash_t copied_types;
+
+  return copy_type_recursive (func_type, copied_types);
 }
 
 /* Perform inferior call of MODULE.  This function may throw an error.

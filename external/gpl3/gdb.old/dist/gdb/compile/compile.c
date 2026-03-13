@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "progspace.h"
 #include "ui.h"
 #include "ui-out.h"
 #include "command.h"
@@ -59,112 +60,15 @@ static struct cmd_list_element *compile_command_list;
 
 bool compile_debug;
 
-/* Object of this type are stored in the compiler's symbol_err_map.  */
-
-struct symbol_error
-{
-  /* The symbol.  */
-
-  const struct symbol *sym;
-
-  /* The error message to emit.  This is malloc'd and owned by the
-     hash table.  */
-
-  char *message;
-};
-
-/* An object that maps a gdb type to a gcc type.  */
-
-struct type_map_instance
-{
-  /* The gdb type.  */
-
-  struct type *type;
-
-  /* The corresponding gcc type handle.  */
-
-  gcc_type gcc_type_handle;
-};
-
-/* Hash a type_map_instance.  */
-
-static hashval_t
-hash_type_map_instance (const void *p)
-{
-  const struct type_map_instance *inst = (const struct type_map_instance *) p;
-
-  return htab_hash_pointer (inst->type);
-}
-
-/* Check two type_map_instance objects for equality.  */
-
-static int
-eq_type_map_instance (const void *a, const void *b)
-{
-  const struct type_map_instance *insta = (const struct type_map_instance *) a;
-  const struct type_map_instance *instb = (const struct type_map_instance *) b;
-
-  return insta->type == instb->type;
-}
-
-/* Hash function for struct symbol_error.  */
-
-static hashval_t
-hash_symbol_error (const void *a)
-{
-  const struct symbol_error *se = (const struct symbol_error *) a;
-
-  return htab_hash_pointer (se->sym);
-}
-
-/* Equality function for struct symbol_error.  */
-
-static int
-eq_symbol_error (const void *a, const void *b)
-{
-  const struct symbol_error *sea = (const struct symbol_error *) a;
-  const struct symbol_error *seb = (const struct symbol_error *) b;
-
-  return sea->sym == seb->sym;
-}
-
-/* Deletion function for struct symbol_error.  */
-
-static void
-del_symbol_error (void *a)
-{
-  struct symbol_error *se = (struct symbol_error *) a;
-
-  xfree (se->message);
-  xfree (se);
-}
-
-/* Constructor for compile_instance.  */
-
-compile_instance::compile_instance (struct gcc_base_context *gcc_fe,
-				    const char *options)
-  : m_gcc_fe (gcc_fe), m_gcc_target_options (options),
-    m_type_map (htab_create_alloc (10, hash_type_map_instance,
-				   eq_type_map_instance,
-				   xfree, xcalloc, xfree)),
-    m_symbol_err_map (htab_create_alloc (10, hash_symbol_error,
-					 eq_symbol_error, del_symbol_error,
-					 xcalloc, xfree))
-{
-}
-
 /* See compile-internal.h.  */
 
 bool
 compile_instance::get_cached_type (struct type *type, gcc_type *ret) const
 {
-  struct type_map_instance inst, *found;
-
-  inst.type = type;
-  found = (struct type_map_instance *) htab_find (m_type_map.get (), &inst);
-  if (found != NULL)
+  if (auto iter = m_type_map.find (type);
+      iter != m_type_map.end ())
     {
-      *ret = found->gcc_type_handle;
+      *ret = iter->second;
       return true;
     }
 
@@ -176,25 +80,12 @@ compile_instance::get_cached_type (struct type *type, gcc_type *ret) const
 void
 compile_instance::insert_type (struct type *type, gcc_type gcc_type)
 {
-  struct type_map_instance inst, *add;
-  void **slot;
+  auto [it, inserted] = m_type_map.emplace (type, gcc_type);
 
-  inst.type = type;
-  inst.gcc_type_handle = gcc_type;
-  slot = htab_find_slot (m_type_map.get (), &inst, INSERT);
-
-  add = (struct type_map_instance *) *slot;
   /* The type might have already been inserted in order to handle
      recursive types.  */
-  if (add != NULL && add->gcc_type_handle != gcc_type)
+  if (!inserted && it->second != gcc_type)
     error (_("Unexpected type id from GCC, check you use recent enough GCC."));
-
-  if (add == NULL)
-    {
-      add = XNEW (struct type_map_instance);
-      *add = inst;
-      *slot = add;
-    }
 }
 
 /* See compile-internal.h.  */
@@ -203,19 +94,7 @@ void
 compile_instance::insert_symbol_error (const struct symbol *sym,
 				       const char *text)
 {
-  struct symbol_error e;
-  void **slot;
-
-  e.sym = sym;
-  slot = htab_find_slot (m_symbol_err_map.get (), &e, INSERT);
-  if (*slot == NULL)
-    {
-      struct symbol_error *ep = XNEW (struct symbol_error);
-
-      ep->sym = sym;
-      ep->message = xstrdup (text);
-      *slot = ep;
-    }
+  m_symbol_err_map.emplace (sym, text);
 }
 
 /* See compile-internal.h.  */
@@ -223,20 +102,12 @@ compile_instance::insert_symbol_error (const struct symbol *sym,
 void
 compile_instance::error_symbol_once (const struct symbol *sym)
 {
-  struct symbol_error search;
-  struct symbol_error *err;
-
-  if (m_symbol_err_map == NULL)
-    return;
-
-  search.sym = sym;
-  err = (struct symbol_error *) htab_find (m_symbol_err_map.get (), &search);
-  if (err == NULL || err->message == NULL)
-    return;
-
-  gdb::unique_xmalloc_ptr<char> message (err->message);
-  err->message = NULL;
-  error (_("%s"), message.get ());
+  if (auto iter = m_symbol_err_map.find (sym);
+      iter != m_symbol_err_map.end () && !iter->second.empty ())
+    {
+      std::string message = std::move (iter->second);
+      error (_("%s"), message.c_str ());
+    }
 }
 
 /* Implement "show debug compile".  */
@@ -302,14 +173,13 @@ compile_file_command (const char *args, int from_tty)
   enum compile_i_scope_types scope
     = options.raw ? COMPILE_I_RAW_SCOPE : COMPILE_I_SIMPLE_SCOPE;
 
-  args = skip_spaces (args);
+  std::string filename = extract_single_filename_arg (args);
 
   /* After processing options, check whether we have a filename.  */
-  if (args == nullptr || args[0] == '\0')
+  if (filename.empty ())
     error (_("You must provide a filename for this command."));
 
-  args = skip_spaces (args);
-  std::string abspath = gdb_abspath (args);
+  std::string abspath = gdb_abspath (filename.c_str ());
   std::string buffer = string_printf ("#include \"%s\"\n", abspath.c_str ());
   eval_compile_command (NULL, buffer.c_str (), scope, NULL);
 }
@@ -327,8 +197,8 @@ compile_file_command_completer (struct cmd_list_element *ignore,
       (tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, group))
     return;
 
-  word = advance_to_filename_complete_word_point (tracker, text);
-  filename_completer (ignore, tracker, text, word);
+  word = advance_to_filename_maybe_quoted_complete_word_point (tracker, text);
+  filename_maybe_quoted_completer (ignore, tracker, text, word);
 }
 
 /* Handle the input from the 'compile code' command.  The
@@ -487,7 +357,8 @@ get_expr_block_and_pc (CORE_ADDR *pc)
 
   if (block == NULL)
     {
-      struct symtab_and_line cursal = get_current_source_symtab_and_line ();
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
 
       if (cursal.symtab)
 	block = cursal.symtab->compunit ()->blockvector ()->static_block ();

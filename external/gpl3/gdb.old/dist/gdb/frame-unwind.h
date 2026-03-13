@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_UNWIND_H)
-#define FRAME_UNWIND_H 1
+#ifndef GDB_FRAME_UNWIND_H
+#define GDB_FRAME_UNWIND_H
 
 struct frame_data;
 class frame_info_ptr;
@@ -235,4 +235,4 @@ value *frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum,
 value *frame_unwind_got_address (const frame_info_ptr &frame, int regnum,
 				 CORE_ADDR addr);
 
-#endif
+#endif /* GDB_FRAME_UNWIND_H */

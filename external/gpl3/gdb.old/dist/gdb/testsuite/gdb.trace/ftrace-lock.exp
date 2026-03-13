@@ -48,6 +48,7 @@ with_test_prefix "runtime trace support check" {
 }
 
 # Compile the test case with the in-process agent library.
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 

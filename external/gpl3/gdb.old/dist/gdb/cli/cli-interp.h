@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_INTERP_H
-#define CLI_CLI_INTERP_H
+#ifndef GDB_CLI_CLI_INTERP_H
+#define GDB_CLI_CLI_INTERP_H
 
 #include "interps.h"
 
@@ -68,4 +68,4 @@ private:
 extern int should_print_stop_to_console (struct interp *interp,
 					 struct thread_info *tp);
 
-#endif /* CLI_CLI_INTERP_H */
+#endif /* GDB_CLI_CLI_INTERP_H */

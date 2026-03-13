@@ -59,7 +59,7 @@ handler (int sig)
   while (1)
     {
       /* Wait until a signal has become pending, that way when this
-	 handler returns it will be immediatly delivered leading to
+	 handler returns it will be immediately delivered leading to
 	 back-to-back signals.  */
       sigset_t set;
       sigemptyset (&set);

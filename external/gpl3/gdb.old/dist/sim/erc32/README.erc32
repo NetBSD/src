@@ -59,7 +59,7 @@ register is updated accordingly. Implemeted registers are:
 - Breakpoint register				(0x01f800c4, write-only)
 - Watchpoint register				(0x01f800c8, write-only)
 - System fault status register			(0x01f800a0, read-write)
-- Firts failing address register		(0x01f800a4, read-write)
+- First failing address register		(0x01f800a4, read-write)
 
 
 1.5 Memory interface

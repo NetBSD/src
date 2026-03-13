@@ -1052,8 +1052,7 @@ struct ppc_elf_obj_tdata
 static bool
 ppc_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata),
-				  PPC32_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata));
 }
 
 /* When defaulting arch/mach, decode apuinfo to find a better match.  */
@@ -2279,8 +2278,7 @@ ppc_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      ppc_elf_link_hash_newfunc,
-				      sizeof (struct ppc_elf_link_hash_entry),
-				      PPC32_ELF_DATA))
+				      sizeof (struct ppc_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4352,7 +4350,7 @@ ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
 		      _bfd_elf_strtab_delref (elf_hash_table (info)->dynstr,
 					      opt->dynstr_index);
 		      if (!bfd_elf_link_record_dynamic_symbol (info, opt))
-			return false;
+			return NULL;
 		    }
 		  htab->tls_get_addr = opt;
 		}

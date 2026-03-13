@@ -305,9 +305,9 @@
 // suggest they don't.
 //
 // In reality, some MIPS IV parts, such as the VR5000 and VR5400, do have
-// these restrictions, while others, like the VR5500, don't.  To accomodate
+// these restrictions, while others, like the VR5500, don't.  To accommodate
 // such differences, the MIPS IV and MIPS V version of these helper functions
-// use auxillary routines to determine whether the restriction applies.
+// use auxiliary routines to determine whether the restriction applies.
 
 // check_mf_cycles:
 //
@@ -474,7 +474,7 @@
 *micromips32:
 *micromips64:
 {
-  /* FIXME: could record the fact that a stall occured if we want */
+  /* FIXME: could record the fact that a stall occurred if we want */
   int64_t time = sim_events_time (SD);
   hi->op.timestamp = time;
   lo->op.timestamp = time;

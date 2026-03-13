@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SIGNALS_STATE_SAVE_RESTORE_H
-#define COMMON_SIGNALS_STATE_SAVE_RESTORE_H
+#ifndef GDBSUPPORT_SIGNALS_STATE_SAVE_RESTORE_H
+#define GDBSUPPORT_SIGNALS_STATE_SAVE_RESTORE_H
 
 /* Save/restore the signal actions of all signals, and the signal
    mask.
@@ -37,4 +37,4 @@ extern void save_original_signals_state (bool quiet);
 
 extern void restore_original_signals_state (void);
 
-#endif /* COMMON_SIGNALS_STATE_SAVE_RESTORE_H */
+#endif /* GDBSUPPORT_SIGNALS_STATE_SAVE_RESTORE_H */

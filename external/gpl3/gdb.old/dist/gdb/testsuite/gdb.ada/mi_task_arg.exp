@@ -49,7 +49,8 @@ set frame1 "frame=\{level=\"1\",args=\\\[${frame1_args}(,$frame1_opt_args)?\\\]\
 # Frame for system.tasking.stages.task_wrapper
 set frame2_args "(\{name=\"self_id\",value=\"($hex|<optimized out>)\"\})?"
 set frame2 "frame=\{level=\"2\",args=\\\[$frame2_args\\\]\}"
-mi_gdb_test "-stack-list-arguments 1" \
-            "\\^done,stack-args=\\\[$frame0,$frame1,$frame2,.*" \
-            "-stack-list-arguments 1"
 
+set frames "$frame0,$frame1,${frame2}(,.*)?"
+mi_gdb_test "-stack-list-arguments 1" \
+    "\\^done,stack-args=\\\[$frames\\\]" \
+    "-stack-list-arguments 1"

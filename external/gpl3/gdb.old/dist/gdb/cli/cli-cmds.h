@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_CMDS_H
-#define CLI_CLI_CMDS_H
+#ifndef GDB_CLI_CLI_CMDS_H
+#define GDB_CLI_CLI_CMDS_H
 
 #include "gdbsupport/filestuff.h"
 #include <optional>
@@ -202,4 +202,4 @@ extern void with_command_completer_1 (const char *set_cmd_prefix,
 				      completion_tracker &tracker,
 				      const char *text);
 
-#endif /* CLI_CLI_CMDS_H */
+#endif /* GDB_CLI_CLI_CMDS_H */

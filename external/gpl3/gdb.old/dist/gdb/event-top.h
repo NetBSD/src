@@ -19,10 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EVENT_TOP_H
-#define EVENT_TOP_H
+#ifndef GDB_EVENT_TOP_H
+#define GDB_EVENT_TOP_H
 
 #include <signal.h>
+
+#include "extension.h"
 
 struct cmd_list_element;
 
@@ -80,6 +82,29 @@ extern void quit_serial_event_set ();
 /* Clear the serial event associated with the quit flag.  */
 
 extern void quit_serial_event_clear ();
+
+/* Wrap f (args) and handle exceptions by:
+   - returning val, and
+   - calling set_quit_flag or set_force_quit_flag, if needed.  */
+
+template <typename R, R val, typename F, typename... Args>
+static R
+catch_exceptions (F &&f, Args&&... args)
+{
+   try
+     {
+       return f (std::forward<Args> (args)...);
+     }
+   catch (const gdb_exception &ex)
+     {
+       if (ex.reason == RETURN_QUIT)
+	 set_quit_flag ();
+       else if (ex.reason == RETURN_FORCED_QUIT)
+	 set_force_quit_flag ();
+     }
+
+   return val;
+}
 
 extern void display_gdb_prompt (const char *new_prompt);
 extern void gdb_setup_readline (int);
@@ -142,4 +167,4 @@ class scoped_segv_handler_restore
   segv_handler_t m_old_handler;
 };
 
-#endif
+#endif /* GDB_EVENT_TOP_H */

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF_INDEX_COMMON_H
-#define DWARF_INDEX_COMMON_H
+#ifndef GDB_DWARF2_INDEX_COMMON_H
+#define GDB_DWARF2_INDEX_COMMON_H
 
 #include "extract-store-integer.h"
 #include "hashtab.h"
@@ -59,4 +59,4 @@ uint32_t dwarf5_djb_hash (const char *str_);
 
 uint32_t dwarf5_djb_hash (std::string_view str_);
 
-#endif /* DWARF_INDEX_COMMON_H */
+#endif /* GDB_DWARF2_INDEX_COMMON_H */

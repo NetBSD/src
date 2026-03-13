@@ -487,6 +487,42 @@ handle_fstat (char *own_buf, int *new_packet_len)
 }
 
 static void
+handle_stat (char *own_buf, int *new_packet_len)
+{
+  int bytes_sent;
+  char *p;
+  struct stat st;
+  struct fio_stat fst;
+  char filename[HOSTIO_PATH_MAX];
+
+  p = own_buf + strlen ("vFile:stat:");
+
+  if (require_filename (&p, filename)
+      || require_end (p))
+    {
+      hostio_packet_error (own_buf);
+      return;
+    }
+
+  if (lstat (filename, &st) == -1)
+    {
+      hostio_error (own_buf);
+      return;
+    }
+
+  host_to_fileio_stat (&st, &fst);
+
+  bytes_sent = hostio_reply_with_data (own_buf,
+				       (char *) &fst, sizeof (fst),
+				       new_packet_len);
+
+  /* If the response does not fit into a single packet, do not attempt
+     to return a partial response, but simply fail.  */
+  if (bytes_sent < sizeof (fst))
+    write_enn (own_buf);
+}
+
+static void
 handle_close (char *own_buf)
 {
   int fd, ret;
@@ -603,6 +639,8 @@ handle_vFile (char *own_buf, int packet_len, int *new_packet_len)
     handle_pwrite (own_buf, packet_len);
   else if (startswith (own_buf, "vFile:fstat:"))
     handle_fstat (own_buf, new_packet_len);
+  else if (startswith (own_buf, "vFile:stat:"))
+    handle_stat (own_buf, new_packet_len);
   else if (startswith (own_buf, "vFile:close:"))
     handle_close (own_buf);
   else if (startswith (own_buf, "vFile:unlink:"))

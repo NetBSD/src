@@ -17,8 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_DEFS_H
-#define COMMON_COMMON_DEFS_H
+#ifndef GDBSUPPORT_COMMON_DEFS_H
+#define GDBSUPPORT_COMMON_DEFS_H
+
+#if defined (__SANITIZE_THREAD__) && defined (__GNUC__) \
+  && !defined (__clang__) && __GNUC__ <= 13
+
+/* Work around PR gcc/110799.  */
+#pragma GCC optimize("-fno-hoist-adjacent-loads")
+#endif
 
 #include <gdbsupport/config.h>
 
@@ -217,4 +224,4 @@
 #define HAVE_USEFUL_SBRK 1
 #endif
 
-#endif /* COMMON_COMMON_DEFS_H */
+#endif /* GDBSUPPORT_COMMON_DEFS_H */

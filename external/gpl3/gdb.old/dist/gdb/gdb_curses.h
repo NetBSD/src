@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_CURSES_H
-#define GDB_CURSES_H 1
+#ifndef GDB_GDB_CURSES_H
+#define GDB_GDB_CURSES_H
 
 #ifdef __MINGW32__
 /* Windows API headers, included e.g. by serial.h, define MOUSE_MOVED,
@@ -40,21 +40,21 @@
 #define NCURSES_NOMACROS
 
 #if defined (HAVE_NCURSESW_NCURSES_H)
-#include <ncursesw/ncurses.h>
+#include <ncursesw/ncurses.h> /* IWYU pragma: export */
 #elif defined (HAVE_NCURSES_NCURSES_H)
-#include <ncurses/ncurses.h>
+#include <ncurses/ncurses.h> /* IWYU pragma: export */
 #elif defined (HAVE_NCURSES_H)
-#include <ncurses.h>
+#include <ncurses.h> /* IWYU pragma: export */
 #elif defined (HAVE_CURSESX_H)
-#include <cursesX.h>
+#include <cursesX.h> /* IWYU pragma: export */
 #elif defined (HAVE_CURSES_H)
-#include <curses.h>
+#include <curses.h> /* IWYU pragma: export */
 #endif
 
 #if defined (HAVE_NCURSES_TERM_H)
-#include <ncurses/term.h>
+#include <ncurses/term.h> /* IWYU pragma: export */
 #elif defined (HAVE_TERM_H)
-#include <term.h>
+#include <term.h> /* IWYU pragma: export */
 #else
 /* On MinGW, a real termcap library is usually not present.  Stub versions
    of the termcap functions will be built from stub-termcap.c.  Readline
@@ -71,4 +71,4 @@ extern "C" int tgetnum (const char *);
 #undef reg
 #endif
 
-#endif /* gdb_curses.h */
+#endif /* GDB_GDB_CURSES_H */

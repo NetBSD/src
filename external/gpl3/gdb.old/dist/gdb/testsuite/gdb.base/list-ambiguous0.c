@@ -37,6 +37,6 @@ static int __attribute__ ((used)) ambiguous_var;
 
 int
 main (void)
-{
+{ /* main prologue */
   return 0;
 }

@@ -1,6 +1,215 @@
 		What has changed in GDB?
 	     (Organized release by release)
 
+*** Changes in GDB 16
+
+* Support for Nios II targets has been removed as this architecture
+  has been EOL'ed by Intel.
+
+* GDB now supports watchpoints for tagged data pointers (see
+  https://en.wikipedia.org/wiki/Tagged_pointer) on amd64, such as the
+  one used by the Linear Address Masking (LAM) feature provided by
+  Intel.
+
+* Debugging support for Intel MPX has been removed.  This includes the
+  removal of
+  ** MPX register support
+  ** the commands "show/set mpx bound" (deprecated since GDB 15)
+  ** i386 and amd64 implementation of the hooks report_signal_info and
+     get_siginfo_type.
+
+* GDB now supports printing of asynchronous events from the Intel Processor
+  Trace during 'record instruction-history', 'record function-call-history'
+  and all stepping commands.  This can be controlled with the new
+  "set record btrace pt event-tracing" command.
+
+* GDB now supports printing of ptwrite payloads from the Intel Processor
+  Trace during 'record instruction-history', 'record function-call-history'
+  and all stepping commands.  The payload is also accessible in Python as a
+  RecordAuxiliary object.  Printing is customizable via a ptwrite filter
+  function in Python.  By default, the raw ptwrite payload is printed for
+  each ptwrite that is encountered.
+
+* For breakpoints that are created in the 'pending' state, any
+  'thread' or 'task' keywords are parsed at the time the breakpoint is
+  created, rather than at the time the breakpoint becomes non-pending.
+
+* Thread-specific breakpoints are only inserted into the program space
+  in which the thread of interest is running.  In most cases program
+  spaces are unique for each inferior, so this means that
+  thread-specific breakpoints will usually only be inserted for the
+  inferior containing the thread of interest.  The breakpoint will
+  be hit no less than before.
+
+* For ARM targets, the offset of the pc in the jmp_buf has been fixed to match
+  glibc 2.20 and later.  This should only matter when not using libc probes.
+  This may cause breakage when using an incompatible libc, like uclibc or
+  newlib, or an older glibc.
+
+* MTE (Memory Tagging Extension) debugging is now supported on AArch64 baremetal
+  targets.
+
+* Remove support (native and remote) for QNX Neutrino (triplet
+  `i[3456]86-*-nto*`).
+
+* In a record session, when a forward emulation reaches the end of the reverse
+  history, the warning message has been changed to indicate that the end of the
+  history has been reached.  It also specifies that the forward execution can
+  continue, and the recording will also continue.
+
+* The Ada 'Object_Size attribute is now supported.
+
+* Support for process record/replay and reverse debugging on loongarch*-linux*
+  targets has been added.
+
+* New bash script gstack uses GDB to print stack traces of running processes.
+
+* Python API
+
+  ** Added gdb.record.clear.  Clears the trace data of the current recording.
+     This forces re-decoding of the trace for successive commands.
+
+  ** Added the new event source gdb.tui_enabled.
+
+  ** New module gdb.missing_objfile that facilitates dealing with
+     missing objfiles when opening a core-file.
+
+  ** New function gdb.missing_objfile.register_handler that can
+     register an instance of a sub-class of
+     gdb.missing_debug.MissingObjfileHandler as a handler for missing
+     objfiles.
+
+  ** New class gdb.missing_objfile.MissingObjfileHandler which can be
+     sub-classed to create handlers for missing objfiles.
+
+  ** The 'signed' argument to gdb.Architecture.integer_type() will no
+     longer accept non-bool types.
+
+  ** The gdb.MICommand.installed property can only be set to True or
+     False.
+
+  ** The 'qualified' argument to gdb.Breakpoint constructor will no
+     longer accept non-bool types.
+
+  ** Added the gdb.Symbol.is_artificial attribute.
+
+* Debugger Adapter Protocol changes
+
+  ** The "scopes" request will now return a scope holding global
+     variables from the stack frame's compilation unit.
+
+  ** The "scopes" request will return a "returnValue" scope holding
+     the return value from the latest "stepOut" command, when
+     appropriate.
+
+  ** The "launch" and "attach" requests were rewritten in accordance
+     with some clarifications to the spec.  Now they can be sent at
+     any time after the "initialized" event, but will not take effect
+     (or send a response) until after the "configurationDone" request
+     has been sent.
+
+  ** The "variables" request will not return artificial symbols.
+
+* New commands
+
+show jit-reader-directory
+  Show the name of the directory that "jit-reader-load" uses for
+  relative file names.
+
+set style line-number foreground COLOR
+set style line-number background COLOR
+set style line-number intensity VALUE
+  Control the styling of line numbers printed by GDB.
+
+set style command foreground COLOR
+set style command background COLOR
+set style command intensity VALUE
+  Control the styling of GDB commands when displayed by GDB.
+
+set style title foreground COLOR
+set style title background COLOR
+set style title intensity VALUE
+  This style now applies to the header line of lists, for example the
+  first line of the output of "info breakpoints".  Previous uses of
+  this style have been replaced with the new "command" style.
+
+set warn-language-frame-mismatch [on|off]
+show warn-language-frame-mismatch
+  Control the warning that is emitted when specifying a language that
+  does not match the current frame's language.
+
+maintenance info inline-frames [ADDRESS]
+  New command which displays GDB's inline-frame information for the
+  current address, or for ADDRESS if specified.  The output identifies
+  inlined frames which start at the specified address.
+
+maintenance info blocks [ADDRESS]
+  New command which displays information about all of the blocks at
+  ADDRESS, or at the current address if ADDRESS is not given.  Blocks
+  are listed starting at the inner global block out to the most inner
+  block.
+
+info missing-objfile-handlers
+  List all the registered missing-objfile handlers.
+
+enable missing-objfile-handler LOCUS HANDLER
+disable missing-objfile-handler LOCUS HANDLER
+  Enable or disable a missing-objfile handler with a name matching the
+  regular expression HANDLER, in LOCUS.
+
+  LOCUS can be 'global' to operate on global missing-objfile handler,
+  'progspace' to operate on handlers within the current program space,
+  or can be a regular expression which is matched against the filename
+  of the primary executable in each program space.
+
+* Changed commands
+
+remove-symbol-file
+  This command now supports file-name completion.
+
+remove-symbol-file -a ADDRESS
+  The ADDRESS expression can now be a full expression consisting of
+  multiple terms, e.g. 'function + 0x1000' (without quotes),
+  previously only a single term could be given.
+
+target core
+target exec
+target tfile
+target ctf
+compile file
+maint print c-tdesc
+save gdb-index
+  These commands now require their filename argument to be quoted if
+  it contains white space or quote characters.  If the argument
+  contains no such special characters then quoting is not required.
+
+maintenance print remote-registers
+  Add an "Expedited" column to the output of the command.  It indicates
+  which registers were included in the last stop reply packet received by
+  GDB.
+
+show configuration
+  Now includes the version of GNU Readline library that GDB is using.
+
+* New remote packets
+
+vFile:stat
+  Return information about files on the remote system.  Like
+  vFile:fstat but takes a filename rather than an open file
+  descriptor.
+
+x addr,length
+  Given ADDR and LENGTH, fetch LENGTH units from the memory at address
+  ADDR and send the fetched data in binary format.  This packet is
+  equivalent to 'm', except that the data in the response are in
+  binary format.
+
+binary-upload in qSupported reply
+  If the stub sends back 'binary-upload+' in it's qSupported reply,
+  then GDB will, where possible, make use of the 'x' packet.  If the
+  stub doesn't report this feature supported, then GDB will not use
+  the 'x' packet.
+
 *** Changes in GDB 15
 
 * The MPX commands "show/set mpx bound" have been deprecated, as Intel
@@ -296,7 +505,7 @@ qIsAddressTagged
 
 * The printf command now accepts a '%V' output format which will
   format an expression just as the 'print' command would.  Print
-  options can be placed withing '[...]' after the '%V' to modify how
+  options can be placed within '[...]' after the '%V' to modify how
   the value is printed.  E.g:
     printf "%V", some_array
     printf "%V[-array-indexes on]", some_array
@@ -438,7 +647,7 @@ show tui mouse-events
      changed.
 
   ** New methods added to the gdb.PendingFrame class.  These methods
-     have the same behaviour as the corresponding methods on
+     have the same behavior as the corresponding methods on
      gdb.Frame.  The new methods are:
 
      - gdb.PendingFrame.name: Return the name for the frame's
@@ -1064,7 +1273,7 @@ winheight
 * MI changes
 
  ** The '-add-inferior' with no option flags now inherits the
-    connection of the current inferior, this restores the behaviour of
+    connection of the current inferior, this restores the behavior of
     GDB as it was prior to GDB 10.
 
  ** The '-add-inferior' command now accepts a '--no-connection'
@@ -1845,7 +2054,7 @@ set print frame-info [short-location|location|location-and-address
                         |source-and-location|source-line|auto]
 show print frame-info
   This controls what frame information is printed by the commands printing
-  a frame.  This setting will e.g. influence the behaviour of 'backtrace',
+  a frame.  This setting will e.g. influence the behavior of 'backtrace',
   'frame', 'stepi'.  The python frame filtering also respect this setting.
   The 'backtrace' '-frame-info' option can override this global setting.
 
@@ -6573,7 +6782,7 @@ qSupported:
   target.
 
 qXfer:auxv:read:
-  Fetch an OS auxilliary vector from the remote stub.  This packet is a
+  Fetch an OS auxiliary vector from the remote stub.  This packet is a
   more efficient replacement for qPart:auxv:read.
 
 qXfer:memory-map:read:
@@ -7781,7 +7990,7 @@ with that.  The sub-program to run is specified using the syntax
 * MIPS 64 remote protocol
 
 A long standing bug in the mips64 remote protocol where by GDB
-expected certain 32 bit registers (ex SR) to be transfered as 32
+expected certain 32 bit registers (ex SR) to be transferred as 32
 instead of 64 bits has been fixed.
 
 The command ``set remote-mips64-transfers-32bit-regs on'' has been
@@ -7931,7 +8140,7 @@ full 64-bit address.  The command
 
 	set remoteaddresssize 32
 
-can be used to revert to the old behaviour.  For existing remote stubs
+can be used to revert to the old behavior.  For existing remote stubs
 the change should not be noticed, as the additional address information
 will be discarded.
 
@@ -8537,7 +8746,7 @@ MIPS remote debugging protocol.
 
 This version includes preliminary support for Chill, a Pascal like language
 used by telecommunications companies.  Chill support is also being integrated
-into the GNU compiler, but we don't know when it will be publically available.
+into the GNU compiler, but we don't know when it will be publicly available.
 
 
 *** Changes in GDB-4.8:

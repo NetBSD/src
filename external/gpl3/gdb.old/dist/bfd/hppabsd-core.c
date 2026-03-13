@@ -179,7 +179,8 @@ hppabsd_core_core_file_p (bfd *abfd)
     goto fail;
   core_regsec (abfd)->vma = 0;
 
-  strncpy (core_command (abfd), u.u_comm, MAXCOMLEN + 1);
+  strncpy (core_command (abfd), u.u_comm, MAXCOMLEN);
+  core_command (abfd)[MAXCOMLEN] = 0;
   core_signal (abfd) = u.u_code;
   return _bfd_no_cleanup;
 

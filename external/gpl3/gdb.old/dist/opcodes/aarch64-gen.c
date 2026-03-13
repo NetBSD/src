@@ -123,6 +123,8 @@ get_aarch64_opcode (const opcode_node *opcode_node)
   return &index2table (opcode_node->index)[real_index (opcode_node->index)];
 }
 
+static bool iclass_has_subclasses_p[last_iclass];
+
 static void
 read_table (const struct aarch64_opcode* table)
 {
@@ -181,12 +183,29 @@ read_table (const struct aarch64_opcode* table)
 	  ++errors;
 	}
 
+      if (ent->flags & F_SUBCLASS)
+	iclass_has_subclasses_p[ent->iclass] = true;
+
       *new_ent = new_opcode_node ();
       (*new_ent)->opcode = ent->opcode;
       (*new_ent)->mask = ent->mask;
       (*new_ent)->index = index++;
       new_ent = &((*new_ent)->next);
     } while ((++ent)->name);
+
+  ent = table;
+  do
+    {
+      /* If a subclass is set for one insn of an iclass, every insn of that
+	 iclass must have non-zero subclass field.  */
+      if ((iclass_has_subclasses_p[ent->iclass] && !(ent->flags & F_SUBCLASS))
+	  || (!iclass_has_subclasses_p[ent->iclass] && (ent->flags & F_SUBCLASS)))
+	{
+	  fprintf (stderr, "%s: unexpected subclass\n", ent->name);
+	  ++errors;
+	}
+      ent++;
+    } while (ent->name);
 
   if (errors)
     {

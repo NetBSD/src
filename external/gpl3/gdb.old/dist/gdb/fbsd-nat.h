@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef FBSD_NAT_H
-#define FBSD_NAT_H
+#ifndef GDB_FBSD_NAT_H
+#define GDB_FBSD_NAT_H
 
 #include <optional>
 #include "inf-ptrace.h"
@@ -285,4 +285,4 @@ private:
    Return true if successful.  */
 bool fbsd_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
-#endif /* fbsd-nat.h */
+#endif /* GDB_FBSD_NAT_H */

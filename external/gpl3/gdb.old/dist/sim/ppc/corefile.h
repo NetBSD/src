@@ -85,7 +85,7 @@ INLINE_CORE\
 	restarting it.
 
    For callback maps it is possible to further order them by
-   specifiying specifying a callback level (eg callback + 1).
+   specifying specifying a callback level (eg callback + 1).
 
    When the core is resolving an access it searches each of the maps
    in order.  First raw-memory and then callback maps (in assending
@@ -119,7 +119,7 @@ INLINE_CORE\
    The operation of mapping between an address and its destination
    device or memory array is currently implemented using a simple
    linked list.  The posibility of replacing this list with a more
-   powerfull data structure exists.
+   powerful data structure exists.
 
    */
 
@@ -171,7 +171,7 @@ INLINE_CORE\
 
    Transfer (zero) a variable size block of data between the host and
    target (possibly byte swapping it).  Should any problems occure,
-   the number of bytes actually transfered is returned. */
+   the number of bytes actually transferred is returned. */
 
 INLINE_CORE\
 (unsigned) core_map_read_buffer

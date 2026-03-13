@@ -179,8 +179,8 @@ gdb_test_no_output "python gdb.set_parameter('max-value-size', 16)"
 gdb_test "p a1.getarray()" \
   "From Python <A_getarray>.*value requires $decimal bytes,\
    which is more than max-value-size" \
-  "after: a1.getarray (max-value-size)"
+  "after: a1.getarray, max-value-size"
 gdb_test "p b1.getarray()" \
   "From Python <B_getarray>.*value requires $decimal bytes,\
    which is more than max-value-size" \
-  "after: b1.getarray (max-value-size)"
+  "after: b1.getarray, max-value-size"

@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_DARWIN_H
-#define SOLIB_DARWIN_H
+#ifndef GDB_SOLIB_DARWIN_H
+#define GDB_SOLIB_DARWIN_H
 
 struct solib_ops;
 
 extern const solib_ops darwin_so_ops;
 
-#endif /* solib-darwin.h */
+#endif /* GDB_SOLIB_DARWIN_H */

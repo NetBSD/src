@@ -17,9 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CTF_H
-#define CTF_H
+#ifndef GDB_TRACECTF_H
+#define GDB_TRACECTF_H
 
 extern struct trace_file_writer *ctf_trace_file_writer_new (void);
 
-#endif
+#endif /* GDB_TRACECTF_H */

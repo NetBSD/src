@@ -22,11 +22,14 @@
 #include "addrmap.h"
 #include "block.h"
 #include "frame-unwind.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "inferior.h"
 #include "gdbthread.h"
 #include "regcache.h"
 #include "symtab.h"
 #include "frame.h"
+#include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include <algorithm>
 
 /* We need to save a few variables for every thread stopped at the
@@ -36,9 +39,9 @@
 struct inline_state
 {
   inline_state (thread_info *thread_, int skipped_frames_, CORE_ADDR saved_pc_,
-		std::vector<symbol *> &&skipped_symbols_)
+		std::vector<const symbol *> &&function_symbols_)
     : thread (thread_), skipped_frames (skipped_frames_), saved_pc (saved_pc_),
-      skipped_symbols (std::move (skipped_symbols_))
+      function_symbols (std::move (function_symbols_))
   {}
 
   /* The thread this data relates to.  It should be a currently
@@ -49,16 +52,19 @@ struct inline_state
      functions can be stepped in to.  */
   int skipped_frames;
 
-  /* Only valid if SKIPPED_FRAMES is non-zero.  This is the PC used
-     when calculating SKIPPED_FRAMES; used to check whether we have
-     moved to a new location by user request.  If so, we invalidate
-     any skipped frames.  */
+  /* This is the PC used when calculating FUNCTION_SYMBOLS; used to check
+     whether we have moved to a new location by user request.  If so, we
+     invalidate any skipped frames.  */
   CORE_ADDR saved_pc;
 
-  /* Only valid if SKIPPED_FRAMES is non-zero.  This is the list of all
-     function symbols that have been skipped, from inner most to outer
-     most.  It is used to find the call site of the current frame.  */
-  std::vector<struct symbol *> skipped_symbols;
+  /* The list of all inline functions that start at SAVED_PC, except for
+     the last entry which will either be a non-inline function, or an
+     inline function that doesn't start at SAVED_PC.  This last entry is
+     the function that "contains" all of the earlier functions.
+
+     This list can be empty if SAVED_PC is for a code region which is not
+     covered by any function (inline or non-inline).  */
+  std::vector<const symbol *> function_symbols;
 };
 
 static std::vector<inline_state> inline_states;
@@ -303,10 +309,11 @@ block_starting_point_at (CORE_ADDR pc, const struct block *block)
 
 /* Loop over the stop chain and determine if execution stopped in an
    inlined frame because of a breakpoint with a user-specified location
-   set at FRAME_BLOCK.  */
+   set at FRAME_SYMBOL.  */
 
 static bool
-stopped_by_user_bp_inline_frame (const block *frame_block, bpstat *stop_chain)
+stopped_by_user_bp_inline_frame (const symbol *frame_symbol,
+				 bpstat *stop_chain)
 {
   for (bpstat *s = stop_chain; s != nullptr; s = s->next)
     {
@@ -327,7 +334,7 @@ stopped_by_user_bp_inline_frame (const block *frame_block, bpstat *stop_chain)
 		 to presenting the stop at the innermost inline
 		 function.  */
 	      if (loc->symbol == nullptr
-		  || frame_block == loc->symbol->value_block ())
+		  || frame_symbol == loc->symbol)
 		return true;
 	    }
 	}
@@ -336,58 +343,109 @@ stopped_by_user_bp_inline_frame (const block *frame_block, bpstat *stop_chain)
   return false;
 }
 
+/* Return a list of all the inline function symbols that start at THIS_PC
+   and the symbol for the function which contains all of the inline
+   functions.
+
+   The function symbols are ordered such that the most inner function is
+   first.
+
+   The returned list can be empty if there are no function at THIS_PC.  Or
+   the returned list may have only a single entry if there are no inline
+   functions starting at THIS_PC.  */
+
+static std::vector<const symbol *>
+gather_inline_frames (CORE_ADDR this_pc)
+{
+  /* Build the list of inline frames starting at THIS_PC.  After the loop,
+     CUR_BLOCK is expected to point at the first function symbol (inlined or
+     not) "containing" the inline frames starting at THIS_PC.  */
+  const block *cur_block = block_for_pc (this_pc);
+  if (cur_block == nullptr)
+    return {};
+
+  std::vector<const symbol *> function_symbols;
+  while (cur_block != nullptr)
+    {
+      if (cur_block->inlined_p ())
+	{
+	  gdb_assert (cur_block->function () != nullptr);
+
+	  /* See comments in inline_frame_this_id about this use
+	     of BLOCK_ENTRY_PC.  */
+	  if (cur_block->entry_pc () == this_pc
+	      || block_starting_point_at (this_pc, cur_block))
+	    function_symbols.push_back (cur_block->function ());
+	  else
+	    break;
+	}
+      else if (cur_block->function () != nullptr)
+	break;
+
+      cur_block = cur_block->superblock ();
+    }
+
+  /* If we have a code region for which we have no function blocks,
+     possibly due to bad debug, or possibly just when some debug
+     information has been stripped, then we can end up in a situation where
+     there are global and static blocks for an address, but no function
+     blocks.  In this case the early return above will not trigger as we
+     will find the static block for THIS_PC, but in the loop above we will
+     fail to find any function blocks (inline or non-inline) and so
+     CUR_BLOCK will eventually become NULL.  If this happens then
+     FUNCTION_SYMBOLS must be empty (as we found no function blocks).
+
+     Otherwise, if we did find a function block, then we should only leave
+     the above loop when CUR_BLOCK is pointing to a non-inline function
+     that possibly contains some inline functions, or CUR_BLOCK should
+     point to an inline function that doesn't start at THIS_PC.  */
+  if (cur_block != nullptr)
+    {
+      gdb_assert (cur_block->function () != nullptr);
+      function_symbols.push_back (cur_block->function ());
+    }
+  else
+    gdb_assert (function_symbols.empty ());
+
+  return function_symbols;
+}
+
 /* See inline-frame.h.  */
 
 void
 skip_inline_frames (thread_info *thread, bpstat *stop_chain)
 {
-  const struct block *frame_block, *cur_block;
-  std::vector<struct symbol *> skipped_syms;
-  int skip_count = 0;
+  gdb_assert (find_inline_frame_state (thread) == nullptr);
 
-  /* This function is called right after reinitializing the frame
-     cache.  We try not to do more unwinding than absolutely
-     necessary, for performance.  */
   CORE_ADDR this_pc = get_frame_pc (get_current_frame ());
-  frame_block = block_for_pc (this_pc);
 
-  if (frame_block != NULL)
+  std::vector<const symbol *> function_symbols
+    = gather_inline_frames (this_pc);
+
+  /* Figure out how many of the inlined frames to skip.  Do not skip an
+     inlined frame (and its callers) if execution stopped because of a user
+     breakpoint for this specific function.
+
+     By default, skip all the found inlined frames.
+
+     The last entry in FUNCTION_SYMBOLS is special, this is the function
+     which contains all of the inlined functions, we never skip this.  */
+  int skipped_frames = 0;
+
+  for (const auto sym : function_symbols)
     {
-      cur_block = frame_block;
-      while (cur_block->superblock ())
-	{
-	  if (cur_block->inlined_p ())
-	    {
-	      /* See comments in inline_frame_this_id about this use
-		 of BLOCK_ENTRY_PC.  */
-	      if (cur_block->entry_pc () == this_pc
-		  || block_starting_point_at (this_pc, cur_block))
-		{
-		  /* Do not skip the inlined frame if execution
-		     stopped in an inlined frame because of a user
-		     breakpoint for this inline function.  */
-		  if (stopped_by_user_bp_inline_frame (cur_block, stop_chain))
-		    break;
+      if (stopped_by_user_bp_inline_frame (sym, stop_chain)
+	  || sym == function_symbols.back ())
+	break;
 
-		  skip_count++;
-		  skipped_syms.push_back (cur_block->function ());
-		}
-	      else
-		break;
-	    }
-	  else if (cur_block->function () != NULL)
-	    break;
-
-	  cur_block = cur_block->superblock ();
-	}
+      ++skipped_frames;
     }
 
-  gdb_assert (find_inline_frame_state (thread) == NULL);
-  inline_states.emplace_back (thread, skip_count, this_pc,
-			      std::move (skipped_syms));
-
-  if (skip_count != 0)
+  if (skipped_frames > 0)
     reinit_frame_cache ();
+
+  inline_states.emplace_back (thread, skipped_frames, this_pc,
+			      std::move (function_symbols));
 }
 
 /* Step into an inlined function by unhiding it.  */
@@ -419,20 +477,23 @@ inline_skipped_frames (thread_info *thread)
 /* If one or more inlined functions are hidden, return the symbol for
    the function inlined into the current frame.  */
 
-struct symbol *
+const symbol *
 inline_skipped_symbol (thread_info *thread)
 {
   inline_state *state = find_inline_frame_state (thread);
   gdb_assert (state != NULL);
 
   /* This should only be called when we are skipping at least one frame,
-     hence SKIPPED_FRAMES will be greater than zero when we get here.
-     We initialise SKIPPED_FRAMES at the same time as we build
-     SKIPPED_SYMBOLS, hence it should be true that SKIPPED_FRAMES never
-     indexes outside of the SKIPPED_SYMBOLS vector.  */
+     hence FUNCTION_SYMBOLS will contain more than one entry (the last
+     entry is the "outer" containing function).
+
+     As we initialise SKIPPED_FRAMES at the same time as we build
+     FUNCTION_SYMBOLS it should be true that SKIPPED_FRAMES never indexes
+     outside of the FUNCTION_SYMBOLS vector.  */
+  gdb_assert (state->function_symbols.size () > 1);
   gdb_assert (state->skipped_frames > 0);
-  gdb_assert (state->skipped_frames <= state->skipped_symbols.size ());
-  return state->skipped_symbols[state->skipped_frames - 1];
+  gdb_assert (state->skipped_frames < state->function_symbols.size ());
+  return state->function_symbols[state->skipped_frames - 1];
 }
 
 /* Return the number of functions inlined into THIS_FRAME.  Some of
@@ -459,4 +520,117 @@ frame_inlined_callees (const frame_info_ptr &this_frame)
     inline_count += inline_skipped_frames (inferior_thread ());
 
   return inline_count;
+}
+
+/* The 'maint info inline-frames' command.  Takes an optional address
+   expression and displays inline frames that start at the given address,
+   or at the address of the current thread if no address is given.  */
+
+static void
+maintenance_info_inline_frames (const char *arg, int from_tty)
+{
+  std::optional<std::vector<const symbol *>> local_function_symbols;
+  std::vector<const symbol *> *function_symbols;
+  int skipped_frames;
+  CORE_ADDR addr;
+
+  if (arg == nullptr)
+    {
+      /* With no argument then the user wants to know about the current
+	 inline frame information.  This information is cached per-thread
+	 and can be updated as the user steps between inline functions at
+	 the current address.  */
+
+      if (inferior_ptid == null_ptid)
+	error (_("no inferior thread"));
+
+      thread_info *thread = inferior_thread ();
+      auto it = std::find_if (inline_states.begin (), inline_states.end (),
+			      [thread] (const inline_state &istate)
+			      {
+				return thread == istate.thread;
+			      });
+
+      /* Stopped threads don't always have cached inline_state
+	 information.  We always skip computing the inline_state after a
+	 stepi or nexti, but also in some other cases when we can be sure
+	 that the inferior isn't at the start of an inlined function.
+	 Check out the call to skip_inline_frames in handle_signal_stop
+	 for more details.  */
+      if (it != inline_states.end ())
+	{
+	  /* We do have cached inline frame information, use it.  This
+	     gives us access to the current skipped_frames count so we can
+	     correctly indicate when the inferior is not in the inner most
+	     inlined function.  */
+	  gdb_printf (_("Cached inline state information for thread %s.\n"),
+		      print_thread_id (thread));
+
+	  function_symbols = &it->function_symbols;
+	  skipped_frames = it->skipped_frames;
+	  addr = it->saved_pc;
+	}
+      else
+	{
+	  /* No cached inline frame information, lookup the information for
+	     the current address.  */
+	  gdb_printf (_("Inline state information for thread %s.\n"),
+		      print_thread_id (thread));
+
+	  addr = get_frame_pc (get_current_frame ());
+	  local_function_symbols.emplace (gather_inline_frames (addr));
+
+	  function_symbols = &(local_function_symbols.value ());
+	  skipped_frames = 0;
+	}
+    }
+  else
+    {
+      /* If there is an argument then parse it as an address, the user is
+	 asking about inline functions that start at the given address.  */
+
+      addr = parse_and_eval_address (arg);
+      local_function_symbols.emplace (gather_inline_frames (addr));
+
+      function_symbols = &(local_function_symbols.value ());
+      skipped_frames = function_symbols->size () - 1;
+    }
+
+  /* The address we're analysing.  */
+  gdb_printf (_("program counter = %ps\n"),
+	      styled_string (address_style.style (),
+			     core_addr_to_string_nz (addr)));
+
+  gdb_printf (_("skipped frames = %d\n"), skipped_frames);
+
+  /* Print the full list of function symbols in STATE.  Highlight the
+     current function as indicated by the skipped frames counter.  */
+  for (size_t i = 0; i < function_symbols->size (); ++i)
+    gdb_printf (_("%c %ps\n"),
+		(i == skipped_frames ? '>' : ' '),
+		styled_string (function_name_style.style (),
+			       (*function_symbols)[i]->print_name ()));
+}
+
+
+
+void _initialize_inline_frame ();
+void
+_initialize_inline_frame ()
+{
+  add_cmd ("inline-frames", class_maintenance, maintenance_info_inline_frames,
+	   _("\
+Display inline frame information for current thread.\n\
+\n\
+Usage:\n\
+\n\
+  maintenance info inline-frames [ADDRESS]\n\
+\n\
+With no ADDRESS show all inline frames starting at the current program\n\
+counter address.  When ADDRESS is given, list all inline frames starting\n\
+at ADDRESS.\n\
+\n\
+The last frame listed might not start at ADDRESS, this is the frame that\n\
+contains the other inline frames."),
+	   &maintenanceinfolist);
 }

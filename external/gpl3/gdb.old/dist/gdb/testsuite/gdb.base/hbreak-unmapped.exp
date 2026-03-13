@@ -68,8 +68,7 @@ gdb_test "hbreak *0" "Hardware assisted breakpoint \[0-9\]+ at 0x0"
 gdb_test "info break" "hw breakpoint.*y.*0x0\+\[ \t\]\+" \
     "info break shows hw breakpoint"
 
-gdb_test_no_output "delete \$bpnum" "" "delete" \
-    "delete hw breakpoint"
+gdb_test_no_output "delete \$bpnum" "delete hw breakpoint"
 
 gdb_test "info break" "No breakpoints, watchpoints, tracepoints, or catchpoints\." \
     "info break shows no breakpoints, watchpoints, tracepoints, or catchpoints"

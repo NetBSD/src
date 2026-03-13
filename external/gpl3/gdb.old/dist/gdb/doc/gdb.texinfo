@@ -2491,6 +2491,7 @@ Display information about permission for copying @value{GDBN}.
 Display the @sc{gnu} ``NO WARRANTY'' statement, or a warranty,
 if your version of @value{GDBN} comes with one.
 
+@anchor{show configuration}
 @kindex show configuration
 @item show configuration
 Display detailed information about the way @value{GDBN} was configured
@@ -2500,6 +2501,11 @@ automatically by @command{configure}.  When reporting a @value{GDBN}
 bug (@pxref{GDB Bugs}), it is important to include this information in
 your report.
 
+This commands also displays the version number of the Readline library
+that @value{GDBN} is using.  After the version number will appear
+either @samp{(system)} indicating @value{GDBN} is using the shared
+system Readline library, or @samp{(internal)} indicating @value{GDBN}
+is using a statically linked in version of the Readline library.
 @end table
 
 @node Running
@@ -2742,7 +2748,7 @@ environment:
 @end smallexample
 
 This command is available when debugging locally on most targets, excluding
-@sc{djgpp}, Cygwin, MS Windows, and QNX Neutrino.
+@sc{djgpp}, Cygwin, and MS Windows.
 
 @kindex set startup-with-shell
 @anchor{set startup-with-shell}
@@ -4203,7 +4209,7 @@ call executes, the new target restarts.  To restart the parent
 process, use the @code{file} command with the parent executable name
 as its argument.  By default, after an @code{exec} call executes,
 @value{GDBN} discards the symbols of the previous executable image.
-You can change this behaviour with the @w{@code{set follow-exec-mode}}
+You can change this behavior with the @w{@code{set follow-exec-mode}}
 command.
 
 @table @code
@@ -4289,7 +4295,7 @@ includes changes in memory, registers, and even (within some limits)
 system state.  Effectively, it is like going back in time to the
 moment when the checkpoint was saved.
 
-Thus, if you're stepping thru a program and you think you're 
+Thus, if you're stepping through a program and you think you're
 getting close to the point where things go wrong, you can save
 a checkpoint.  Then, if you accidentally go too far and miss
 the critical statement, instead of having to restart your program
@@ -4971,7 +4977,7 @@ breakpoints set by commands like @code{next} and @code{finish}.  For
 breakpoints set with @code{hbreak}, @value{GDBN} will always use hardware
 breakpoints.
 
-You can control this automatic behaviour with the following commands:
+You can control this automatic behavior with the following commands:
 
 @kindex set breakpoint auto-hw
 @kindex show breakpoint auto-hw
@@ -4992,7 +4998,7 @@ at the breakpoint address with a special instruction, which, when
 executed, given control to the debugger.  By default, the program
 code is so modified only when the program is resumed.  As soon as
 the program stops, @value{GDBN} restores the original instructions.  This
-behaviour guards against leaving breakpoints inserted in the
+behavior guards against leaving breakpoints inserted in the
 target should gdb abrubptly disconnect.  However, with slow remote
 targets, inserting and removing breakpoint can reduce the performance.
 This behavior can be controlled with the following commands::
@@ -7077,33 +7083,6 @@ $1 = (void *) 0x7ffff7ff7000
 
 Depending on target support, @code{$_siginfo} may also be writable.
 
-@cindex Intel MPX boundary violations
-@cindex boundary violations, Intel MPX
-On some targets, a @code{SIGSEGV} can be caused by a boundary
-violation, i.e., accessing an address outside of the allowed range.
-In those cases @value{GDBN} may displays additional information,
-depending on how @value{GDBN} has been told to handle the signal.
-With @code{handle stop SIGSEGV}, @value{GDBN} displays the violation
-kind: "Upper" or "Lower", the memory address accessed and the
-bounds, while with @code{handle nostop SIGSEGV} no additional
-information is displayed.
-
-The usual output of a segfault is:
-@smallexample
-Program received signal SIGSEGV, Segmentation fault
-0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
-68        value = *(p + len);
-@end smallexample
-
-While a bound violation is presented as:
-@smallexample
-Program received signal SIGSEGV, Segmentation fault
-Upper bound violation while accessing address 0x7fffffffc3b3
-Bounds: [lower = 0x7fffffffc390, upper = 0x7fffffffc3a3]
-0x0000000000400d7c in upper () at i386-mpx-sigsegv.c:68
-68        value = *(p + len);
-@end smallexample
-
 @node Thread Stops
 @section Stopping and Starting Multi-thread Programs
 
@@ -7686,7 +7665,7 @@ the called function, stopping at the beginning of the @emph{last}
 statement in the called function (typically a return statement).
 
 Also, as with the @code{step} command, if non-debuggable functions are
-called, @code{reverse-step} will run thru them backward without stopping.
+called, @code{reverse-step} will run through them backward without stopping.
 
 @kindex reverse-stepi
 @kindex rsi @r{(@code{reverse-stepi})}
@@ -7780,9 +7759,12 @@ previous instruction; otherwise, it will work in record mode, if the
 platform supports reverse execution, or stop if not.
 
 Currently, process record and replay is supported on ARM, Aarch64,
-Moxie, PowerPC, PowerPC64, S/390, and x86 (i386/amd64) running
+LoongArch, Moxie, PowerPC, PowerPC64, S/390, and x86 (i386/amd64) running
 GNU/Linux.  Process record and replay can be used both when native
 debugging, and when remote debugging via @code{gdbserver}.
+
+When recording an inferior, @value{GDBN} may print auxiliary information
+during stepping commands and commands displaying the execution history.
 
 For architecture environments that support process record and replay,
 @value{GDBN} provides the following commands:
@@ -8113,6 +8095,16 @@ also need longer to process the branch trace data before it can be used.
 Show the current setting of the requested ring buffer size for branch
 tracing in Intel Processor Trace format.
 
+@item set record btrace pt event-tracing
+Enable or disable event tracing for branch tracing in Intel Processor
+Trace format.  When enabled, events are recorded during execution as
+auxiliary information and will be printed during stepping commands and
+commands displaying the execution history.  Changing this setting has no
+effect on an active recording.  The default is off.
+
+@item show record btrace pt event-tracing
+Show the current setting of Intel Processor Trace event tracing.
+
 @kindex info record
 @item info record
 Show various statistics about the recording depending on the recording
@@ -8185,7 +8177,7 @@ are printed in execution order.
 It can also print mixed source+disassembly if you specify the the
 @code{/m} or @code{/s} modifier, and print the raw instructions in hex
 as well as in symbolic form by specifying the @code{/r} or @code{/b}
-modifier.  The behaviour of the @code{/m}, @code{/s}, @code{/r}, and
+modifier.  The behavior of the @code{/m}, @code{/s}, @code{/r}, and
 @code{/b} modifiers are the same as for the @kbd{disassemble} command
 (@pxref{disassemble,,@kbd{disassemble}}).
 
@@ -8198,6 +8190,9 @@ every time.  To omit the current position marker, specify the
 To better align the printed instructions when the trace contains
 instructions from more than one function, the function name may be
 omitted by specifying the @code{/f} modifier.
+
+Printing auxiliary information is enabled by default and can be
+omitted with the @code{/a} modifier.
 
 Speculatively executed instructions are prefixed with @samp{?}.  This
 feature is not available for all recording formats.
@@ -8252,8 +8247,9 @@ that function, the source lines for this instruction sequence (if the
 @code{/l} modifier is specified), and the instructions numbers that form
 the sequence (if the @code{/i} modifier is specified).  The function names
 are indented to reflect the call stack depth if the @code{/c} modifier is
-specified.  The @code{/l}, @code{/i}, and @code{/c} modifiers can be given
-together.
+specified.  Printing auxiliary information is enabled by default and can be
+omitted with the @code{/a} modifier.  The @code{/l}, @code{/i}, @code{/a},
+and @code{/c} modifiers can be given together.
 
 @smallexample
 (@value{GDBP}) @b{list 1, 10}
@@ -13809,7 +13805,7 @@ Disable @value{GDBN} from caching target memory.  This is the default.
 @value{GDBN} can be instructed to refuse accesses to memory that is
 not explicitly described.  This can be useful if accessing such
 regions has undesired effects for a specific target, or to provide
-better error checking.  The following commands control this behaviour.
+better error checking.  The following commands control this behavior.
 
 @table @code
 @kindex set mem inaccessible-by-default
@@ -16238,6 +16234,9 @@ the data was saved, as well as the current trace frame you are examining.
 Both @var{filename} and @var{dirname} must be on a filesystem accessible to
 the host.
 
+The @var{filename} and @var{dirname} arguments supports escaping and
+quoting, see @ref{Filename Arguments,,Filenames As Command Arguments}.
+
 @smallexample
 (@value{GDBP}) target ctf ctf.ctf
 (@value{GDBP}) tfind
@@ -16801,6 +16800,19 @@ entirely in one source language.  However, program modules and libraries
 written in one source language can be used by a main program written in
 a different source language.  Using @samp{set language auto} in this
 case frees you from having to set the working language manually.
+
+The warning is enabled by default, but it can be controlled via a
+setting:
+
+@table @code
+@item set warn-language-frame-mismatch [on|off]
+@kindex warn-language-frame-mismatch
+Enable or disable the warning that is issued when the current language
+is set to a value that does not match the current frame.
+
+@item show warn-language-frame-mismatch
+Show whether the frame-mismatch warning will be issued.
+@end table
 
 @node Show
 @section Displaying the Language
@@ -17581,7 +17593,7 @@ Because of a limitation in @file{libdecnumber}, the library used by @value{GDBN}
 to manipulate decimal floating point numbers, it is not possible to convert
 (using a cast, for example) integers wider than 32-bit to decimal float.
 
-In addition, in order to imitate @value{GDBN}'s behaviour with binary floating
+In addition, in order to imitate @value{GDBN}'s behavior with binary floating
 point computations, error checking in decimal float operations ignores
 underflow, overflow and divide by zero exceptions.
 
@@ -18305,6 +18317,9 @@ All Modula-2 built-in procedures also return a result, described below.
 @item ABS(@var{n})
 Returns the absolute value of @var{n}.
 
+@item ADR(@var{n})
+Returns the memory address of @var{n}.
+
 @item CAP(@var{c})
 If @var{c} is a lower case letter, it returns its upper case
 equivalent, otherwise it returns its argument.
@@ -18825,6 +18840,12 @@ operand of the membership (@code{in}) operator.
 
 @item
 @t{'Address}.
+
+@item
+@t{'Size} is available for objects (not types).
+
+@item
+@t{'Object_Size} is available, but not for indefinite types.
 @end itemize
 
 @item
@@ -20412,6 +20433,7 @@ libraries.  When set to @code{off} no messages are printed.
 Show whether messages will be printed when a @value{GDBN} command
 entered from the keyboard causes symbol information to be loaded.
 
+@anchor{maint print symbols}
 @kindex maint print symbols
 @cindex symbol dump
 @kindex maint print psymbols
@@ -21098,7 +21120,7 @@ still ongoing, then @value{GDBN} will interrupt the program.
 
 If a function called from @value{GDBN} is interrupted by a timeout,
 then by default the inferior is left in the frame where the timeout
-occurred, this behaviour can be adjusted with @samp{set
+occurred, this behavior can be adjusted with @samp{set
 unwind-on-timeout} (@pxref{set unwind-on-timeout}).
 
 For targets that don't support asynchronous execution
@@ -21337,6 +21359,9 @@ Like @code{compile code}, but take the source code from @var{filename}.
 @smallexample
 compile file /home/user/example.c
 @end smallexample
+
+The @var{filename} argument supports escaping and quoting, see
+@ref{Filename Arguments,,Filenames As Command Arguments}.
 @end table
 
 @table @code
@@ -21786,6 +21811,7 @@ contained in @var{filename} by using the @samp{-readnever} option.
 @c (eg rooted in val of env var GDBSYMS) could exist for mappable symbol
 @c files.
 
+@anchor{core-file command}
 @kindex core-file
 @item core-file @r{[}@var{filename}@r{]}
 @itemx core
@@ -21885,6 +21911,7 @@ Remove symbol table from file "/home/user/gdb/mylib.so"? (y or n) y
 (@value{GDBP})
 @end smallexample
 
+The @var{address} can be any expression which evaluates to an address.
 
 @code{remove-symbol-file} does not repeat if you press @key{RET} after using it.
 
@@ -22011,7 +22038,7 @@ name and remembers it that way.
 @cindex shared libraries
 @anchor{Shared Libraries}
 @value{GDBN} supports @sc{gnu}/Linux, MS-Windows, SunOS,
-Darwin/Mach-O, SVr4, IBM RS/6000 AIX, QNX Neutrino, FDPIC (FR-V), and
+Darwin/Mach-O, SVr4, IBM RS/6000 AIX, FDPIC (FR-V), and
 DSBT (TIC6X) shared libraries.
 
 On MS-Windows @value{GDBN} must be linked with the Expat library to support
@@ -22782,6 +22809,9 @@ the @option{-dwarf-5} option, it produces 2 files:
 @file{@var{symbol-file}.debug_names} and
 @file{@var{symbol-file}.debug_str}.  The files are created in the
 given @var{directory}.
+
+The @var{directory} argument supports escaping and quoting, see
+@ref{Filename Arguments,,Filenames As Command Arguments}.
 @end table
 
 Once you have created an index file you can merge it into your symbol
@@ -22860,6 +22890,19 @@ to delete the content of that directory to free up disk space.
 Print the number of cache hits and misses since the launch of @value{GDBN}.
 
 @end table
+
+@subsection Building the index with GNU @command{gold}
+
+The GNU @command{gold} linker can write the index at link time into
+the resulting ELF file, by passing the @command{--gdb-index} flag to
+@command{gold}.
+
+This is especially helpful if you intend to build a program and immediately
+run it under @value{GDBN}.  You may find that it is faster overall for
+the linker to write the index while it has the relevant information in
+memory anyways, rather than re-reloading the data from disk with
+@command{gdb-add-index}, or debugging the program without an index at
+all, especially for large programs.
 
 @node Debug Names
 @section Extensions to @samp{.debug_names}
@@ -23152,10 +23195,16 @@ configuration):
 An executable file.  @samp{target exec @var{program}} is the same as
 @samp{exec-file @var{program}}.
 
+The @var{program} argument supports escaping and quoting, see
+@ref{Filename Arguments,,Filenames As Command Arguments}.
+
 @item target core @var{filename}
 @cindex core dump file target
 A core dump file.  @samp{target core @var{filename}} is the same as
 @samp{core-file @var{filename}}.
+
+The @var{filename} argument supports escaping and quoting, see
+@ref{Filename Arguments,,Filenames As Command Arguments}.
 
 @item target remote @var{medium}
 @cindex remote target
@@ -24534,6 +24583,10 @@ future connections is shown.  The available settings are:
 @tab @code{vFile:fstat}
 @tab Host I/O
 
+@item @code{hostio-stat-packet}
+@tab @code{vFile:stat}
+@tab Host I/O
+
 @item @code{hostio-setfs-packet}
 @tab @code{vFile:setfs}
 @tab Host I/O
@@ -25203,16 +25256,6 @@ Show the file to which @code{procfs} API trace is written.
 These commands enable and disable tracing of entries into and exits
 from the @code{syscall} interface.
 
-@item info pidlist
-@kindex info pidlist
-@cindex process list, QNX Neutrino
-For QNX Neutrino only, this command displays the list of all the
-processes and all the threads within each process.
-
-@item info meminfo
-@kindex info meminfo
-@cindex mapinfo list, QNX Neutrino
-For QNX Neutrino only, this command displays the list of all mapinfos.
 @end table
 
 @node DJGPP Native
@@ -26383,7 +26426,6 @@ all uses of @value{GDBN} with the architecture, both native and cross.
 * MIPS::
 * HPPA::               HP PA architecture
 * PowerPC::
-* Nios II::
 * Sparc64::
 * S12Z::
 * AMD GPU::            @acronym{AMD GPU} architectures
@@ -26775,91 +26817,6 @@ Show the current setting of the convention to return @code{struct}s
 from functions.
 @end table
 
-
-@subsubsection Intel @dfn{Memory Protection Extensions} (MPX).
-@cindex Intel Memory Protection Extensions (MPX).
-
-Memory Protection Extension (MPX) adds the bound registers @samp{BND0}
-@footnote{The register named with capital letters represent the architecture
-registers.} through @samp{BND3}.  Bound registers store a pair of 64-bit values
-which are the lower bound and upper bound.  Bounds are effective addresses or
-memory locations.  The upper bounds are architecturally represented in 1's
-complement form.  A bound having lower bound = 0, and upper bound = 0
-(1's complement of all bits set) will allow access to the entire address space.
-
-@samp{BND0} through @samp{BND3} are represented in @value{GDBN} as @samp{bnd0raw}
-through @samp{bnd3raw}.  Pseudo registers @samp{bnd0} through @samp{bnd3}
-display the upper bound performing the complement of one operation on the
-upper bound value, i.e.@ when upper bound in @samp{bnd0raw} is 0 in the
-@value{GDBN} @samp{bnd0} it will be @code{0xfff@dots{}}.  In this sense it
-can also be noted that the upper bounds are inclusive.
-
-As an example, assume that the register BND0 holds bounds for a pointer having
-access allowed for the range between 0x32 and 0x71.  The values present on
-bnd0raw and bnd registers are presented as follows:
-
-@smallexample
-	bnd0raw = @{0x32, 0xffffffff8e@}
-	bnd0 = @{lbound = 0x32, ubound = 0x71@} : size 64
-@end smallexample
-
-This way the raw value can be accessed via bnd0raw@dots{}bnd3raw.  Any
-change on bnd0@dots{}bnd3 or bnd0raw@dots{}bnd3raw is reflect on its
-counterpart.  When the bnd0@dots{}bnd3 registers are displayed via
-Python, the display includes the memory size, in bits, accessible to
-the pointer.
-
-Bounds can also be stored in bounds tables, which are stored in
-application memory.  These tables store bounds for pointers by specifying
-the bounds pointer's value along with its bounds.  Evaluating and changing
-bounds located in bound tables is therefore interesting while investigating
-bugs on MPX context.  @value{GDBN} provides commands for this purpose:
-
-@table @code
-@item show mpx bound @var{pointer}
-@kindex show mpx bound
-Display bounds of the given @var{pointer}.
-
-@item set mpx bound @var{pointer}, @var{lbound}, @var{ubound}
-@kindex  set mpx bound
-Set the bounds of a pointer in the bound table.
-This command takes three parameters: @var{pointer} is the pointers
-whose bounds are to be changed, @var{lbound} and @var{ubound} are new values
-for lower and upper bounds respectively.
-@end table
-
-Both commands are deprecated and will be removed in future versions of
-@value{GDBN}.  MPX itself was listed as removed by Intel in 2019.
-
-When you call an inferior function on an Intel MPX enabled program,
-GDB sets the inferior's bound registers to the init (disabled) state
-before calling the function.  As a consequence, bounds checks for the
-pointer arguments passed to the function will always pass.
-
-This is necessary because when you call an inferior function, the
-program is usually in the middle of the execution of other function.
-Since at that point bound registers are in an arbitrary state, not
-clearing them would lead to random bound violations in the called
-function.
-
-You can still examine the influence of the bound registers on the
-execution of the called function by stopping the execution of the
-called function at its prologue, setting bound registers, and
-continuing the execution.  For example:
-
-@smallexample
-	$ break *upper
-	Breakpoint 2 at 0x4009de: file i386-mpx-call.c, line 47.
-	$ print upper (a, b, c, d, 1)
-	Breakpoint 2, upper (a=0x0, b=0x6e0000005b, c=0x0, d=0x0, len=48)....
-	$ print $bnd0
-	@{lbound = 0x0, ubound = ffffffff@} : size -1
-@end smallexample
-
-At this last step the value of bnd0 can be changed for investigation of bound
-violations caused along the execution of the call.  In order to know how to
-set the bound registers or bound table for the call consult the ABI.
-
 @subsubsection x87 registers
 
 @value{GDBN} provides access to the x87 state through the following registers:
@@ -27056,25 +27013,6 @@ by joining the even/odd register pairs @code{f0} and @code{f1} for @code{$dl0},
 
 For POWER7 processors, @value{GDBN} provides a set of pseudo-registers, the 64-bit
 wide Extended Floating Point Registers (@samp{f32} through @samp{f63}).
-
-@node Nios II
-@subsection Nios II
-@cindex Nios II architecture
-
-When @value{GDBN} is debugging the Nios II architecture,
-it provides the following special commands:
-
-@table @code
-
-@item set debug nios2
-@kindex set debug nios2
-This command turns on and off debugging messages for the Nios II
-target code in @value{GDBN}.
-
-@item show debug nios2
-@kindex show debug nios2
-Show the current setting of Nios II debugging messages.
-@end table
 
 @node Sparc64
 @subsection Sparc64
@@ -27582,6 +27520,10 @@ This command accepts the current line for execution and fetches the
 next line relative to the current line from the history for editing.
 Any argument is ignored.
 
+It is possible to discover which version of Readline @value{GDBN} is
+using with the @kbd{show configuration} command (@pxref{show
+configuration}).
+
 @node Command History
 @section Command History
 @cindex command history
@@ -27922,6 +27864,10 @@ their characteristics and the visual aspect of each style.
 
 The style-able objects are:
 @table @code
+@item command
+Control the styling of any @value{GDBN} commands that are displayed by
+@value{GDBN}.  By default, this style's intensity is bold.
+
 @item filename
 Control the styling of file names and URLs.  By default, this style's
 foreground color is green.
@@ -27935,6 +27881,10 @@ This style is also used for symbol names in styled disassembler output
 if @value{GDBN} is using its builtin disassembler library for styling
 (@pxref{style_disassembler_enabled,,@kbd{set style disassembler
 enabled}}).
+
+@item line-number
+Control the styling of line numbers.  By default, this style's
+intensity is dim.
 
 @item variable
 Control the styling of variable names.  These are managed with the
@@ -27965,10 +27915,9 @@ Files}).
 @item title
 Control the styling of titles.  These are managed with the
 @code{set style title} family of commands.  By default, this style's
-intensity is bold.  Commands are using the title style to improve
-the readability of large output.  For example, the commands
-@command{apropos} and @command{help} are using the title style
-for the command names.
+intensity is bold.  The title style is used when displaying the header
+line of a list, for example the first line of the output of
+@code{info breakpoints} (@pxref{Set Breaks}).
 
 @item highlight
 Control the styling of highlightings.  These are managed with the
@@ -29224,9 +29173,21 @@ files.
 @cindex arguments, to user-defined commands
 A @dfn{user-defined command} is a sequence of @value{GDBN} commands to
 which you assign a new name as a command.  This is done with the
-@code{define} command.  User commands may accept an unlimited number of arguments
-separated by whitespace.  Arguments are accessed within the user command
-via @code{$arg0@dots{}$argN}.  A trivial example:
+@code{define} command.
+
+User commands may accept an unlimited number of arguments separated by
+whitespace.  Arguments are accessed within the user command via
+@code{$arg0@dots{}$argN}.  The arguments are text substitutions, so
+they may reference variables, use complex expressions, or even perform
+inferior functions calls.  Note, however, that this textual
+substitution means that working with certain arguments is difficult.
+For example, there is no way for the user to pass an argument
+containing a space; and while stringifying an argument can be done
+using an expression like @code{"$arg1"}, this will fail if the
+argument contains a quote.  For more complicated and robust commands,
+we recommend writing them in Python; see @ref{CLI Commands In Python}.
+
+A trivial example:
 
 @smallexample
 define adder
@@ -29243,9 +29204,7 @@ adder 1 2 3
 
 @noindent
 This defines the command @code{adder}, which prints the sum of
-its three arguments.  Note the arguments are text substitutions, so they may
-reference variables, use complex expressions, or even perform inferior
-functions calls.
+its three arguments.
 
 @cindex argument count in user-defined commands
 @cindex how many arguments (user-defined commands)
@@ -30320,7 +30279,7 @@ There are some things to be aware of, however.
 @subsection Python comes first
 
 Python was @value{GDBN}'s first extension language, and to avoid breaking
-existing behaviour Python comes first.  This is generally solved by the
+existing behavior Python comes first.  This is generally solved by the
 ``first one wins'' principle.  @value{GDBN} maintains a list of enabled
 extension languages, and when it makes a call to an extension language,
 (say to pretty-print a value), it tries each in turn until an extension
@@ -31439,7 +31398,7 @@ if the selected thread in @value{GDBN} is supposed to be identical to the
 thread the frontend wants to operate on.  However, getting this
 optimization right can be tricky.  In particular, if the frontend
 sends several commands to @value{GDBN}, and one of the commands changes the
-selected thread, then the behaviour of subsequent commands will
+selected thread, then the behavior of subsequent commands will
 change.  So, a frontend should either wait for response from such
 problematic commands, or explicitly add @code{-thread-select} for
 all subsequent commands.  No frontend is known to do this exactly
@@ -31806,7 +31765,7 @@ details about the various output records.
 @cindex @sc{gdb/mi}, compatibility with CLI
 
 For the developers convenience CLI commands can be entered directly,
-but there may be some unexpected behaviour.  For example, commands
+but there may be some unexpected behavior.  For example, commands
 that query the user will behave as if the user replied yes, breakpoint
 command lists are not executed and some CLI commands, such as
 @code{if}, @code{when} and @code{define}, prompt for further input with
@@ -31985,7 +31944,7 @@ values.
 @item "^running"
 This result record is equivalent to @samp{^done}.  Historically, it
 was output instead of @samp{^done} if the command has resumed the
-target.  This behaviour is maintained for backward compatibility, but
+target.  This behavior is maintained for backward compatibility, but
 all frontends should treat @samp{^done} and @samp{^running}
 identically and rely on the @samp{*running} output record to determine
 which threads are resumed.
@@ -39822,6 +39781,11 @@ corresponds to the @code{file} command.  @xref{Files}.
 If provided, this must be a boolean.  When @samp{True}, @value{GDBN}
 will set a temporary breakpoint at the program's main procedure, using
 the same approach as the @code{start} command.  @xref{Starting}.
+
+@item stopOnEntry
+If provided, this must be a boolean.  When @samp{True}, @value{GDBN}
+will set a temporary breakpoint at the program's first instruction, using
+the same approach as the @code{starti} command.  @xref{Starting}.
 @end table
 
 @value{GDBN} defines some parameters that can be passed to the
@@ -40065,6 +40029,10 @@ reader when one is already loaded will result in @value{GDBN}
 reporting an error.  A new JIT reader can be loaded by first unloading
 the current one using @code{jit-reader-unload} and then invoking
 @code{jit-reader-load}.
+
+@item show jit-reader-directory
+This command will show the directory that is used by
+@code{jit-reader-load} when a relative file name is specified.
 
 @item jit-reader-unload
 Unload the currently loaded JIT reader.
@@ -41430,7 +41398,8 @@ This command is useful for debugging the agent version of dynamic
 printf (@pxref{Dynamic Printf}).
 
 @kindex maint info breakpoints
-@item @anchor{maint info breakpoints}maint info breakpoints
+@anchor{maint info breakpoints}
+@item maint info breakpoints
 Using the same format as @samp{info breakpoints}, display both the
 breakpoints you've set explicitly, and those @value{GDBN} is using for
 internal purposes.  Internal breakpoints are shown with negative
@@ -41716,7 +41685,7 @@ in @value{GDBN} downloading larger amounts of data.
 When @value{GDBN} reports an internal problem (error or warning) it
 gives the user the opportunity to both quit @value{GDBN} and create a
 core file of the current @value{GDBN} session.  These commands let you
-override the default behaviour for each particular @var{action},
+override the default behavior for each particular @var{action},
 described in the table below.
 
 @table @samp
@@ -41777,6 +41746,9 @@ When the optional flag @samp{-single-feature} is provided then the
 target description being processed (either the default, or from
 @var{file}) must only contain a single feature.  The source file
 produced is different in this case.
+
+The @var{file} argument supports escaping and quoting, see
+@ref{Filename Arguments,,Filenames As Command Arguments}.
 
 @kindex maint print xml-tdesc
 @item maint print xml-tdesc  @r{[}@var{file}@r{]}
@@ -41846,6 +41818,176 @@ frame-id for frame #0: @{stack=0x7fffffffac70,code=0x0000000000401106,!special@}
 frame-id for frame #2: @{stack=0x7fffffffac90,code=0x000000000040111c,!special@}
 @end smallexample
 
+@item maint info inline-frames
+@itemx maint info inline-frames @var{address}
+@cindex frames of inlined functions
+@kindex maint info inline-frames
+Print information about inlined frames which start at the current
+address, or @var{address} if specified.
+
+In order to allow the user to correctly step into inlined functions,
+@value{GDBN} needs to identify which inlined functions start at a
+particular address, and @value{GDBN} also needs to track which of
+these functions was last displayed to the user as the current frame.
+
+Imagine a situation where function @code{main} calls @code{foo}, which
+then calls @code{bar}, something like this:
+
+@smallexample
+@group
+int
+main ()
+@{
+  /* Some interesting code here...  */
+
+  foo ();
+
+  /* More interesting code here... */
+@}
+
+void
+foo ()
+@{
+  bar ();
+@}
+
+void
+bar ()
+@{
+  /* Some interesting code here...  */
+@}
+@end group
+@end smallexample
+
+As both @code{foo} and @code{bar} are inlined within @code{main} then
+there could be one address within @code{main} which is also the start
+of @code{foo} and also the start of @code{bar}.  When the user stops
+at this address they will initially be told the inferior is in
+@code{main}, if the user does a @kbd{step} then @value{GDBN} doesn't
+actually step the inferior, instead the user is told the inferior
+entered @code{foo}.  After the next @kbd{step} the user is told the
+inferior entered @code{bar}.  The @kbd{maint info inline-frames}
+command can be used to view this internal @value{GDBN} state, like
+this:
+
+@smallexample
+@group
+(@value{GDBP}) step
+24	  foo ();
+(@value{GDBP}) maintenance info inline-frames
+Cached inline state information for thread 1.
+program counter = 0x401137
+skipped frames = 2
+  bar
+  foo
+> main
+@end group
+@end smallexample
+
+Here the user is stopped in @code{main} at the call to @code{foo}.  The
+inline-frames information shows that at this address @value{GDBN} has
+found the start of inlined functions @code{bar} and @code{foo}, but
+currently @value{GDBN} has skipped 2 frames and considers @code{main}
+to be the current frame, this is indicated with the @samp{>}.
+
+If the user performs a @kbd{step} to enter @code{foo} then the
+situation is updated:
+
+@smallexample
+@group
+(@value{GDBP}) step
+foo () at inline.c:14
+14	  bar ();
+(@value{GDBP}) maintenance info inline-frames
+Cached inline state information for thread 1.
+program counter = 0x401137
+skipped frames = 1
+  bar
+> foo
+  main
+@end group
+@end smallexample
+
+Notice that the program counter value @code{0x401137} hasn't change,
+but now @value{GDBN} considers @code{foo} to be the current frame, and
+it is marked as such with the @samp{>}.
+
+Finally, the user performs another @kbd{step} to enter @code{bar}:
+
+@smallexample
+@group
+(@value{GDBP}) step
+bar () at inline.c:6
+6	  ++global_counter;
+(@value{GDBP}) maintenance info inline-frames
+Cached inline state information for thread 1.
+program counter = 0x401137
+skipped frames = 0
+> bar
+  foo
+  main
+@end group
+@end smallexample
+
+@kindex maint info blocks
+@item maint info blocks
+@itemx maint info blocks @var{address}
+Print information about all blocks at @var{address}, or at the current
+@code{$pc} if @var{address} is not given.
+
+For information about what blocks are in @value{GDBN} see @ref{Blocks
+In Python}.
+
+Blocks are listed starting from the global block, then the static
+block, and then proceeding through progressively narrower scopes.
+
+Here is an example of the command's output:
+@smallexample
+@group
+(@value{GDBP}) maintenance info blocks
+Blocks at 0x401137:
+  from objfile: [(objfile *) 0x50507d0] /tmp/inline_func_demo
+
+[(block *) 0x504da90] 0x401106..0x40119a
+  entry pc: 0x401106
+  is global block
+  symbol count: 2
+  is contiguous
+@end group
+@group
+[(block *) 0x504d9f0] 0x401106..0x40119a
+  entry pc: 0x401106
+  is static block
+  symbol count: 1
+  is contiguous
+@end group
+@group
+[(block *) 0x504d9a0] 0x401106..0x40119a
+  entry pc: 0x401106
+  function: main
+  is contiguous
+@end group
+@group
+[(block *) 0x504d900] 0x401137..0x401166
+  entry pc: 0x401137
+  inline function: foo
+  symbol count: 1
+  is contiguous
+@end group
+@group
+[(block *) 0x504d860] 0x401137..0x401165
+  entry pc: 0x401137
+  inline function: bar
+  symbol count: 1
+  is contiguous
+@end group
+@end smallexample
+
+The command @kbd{maint info blocks} lists the symbol count for each
+block but doesn't print the symbols themselves.  The symbol names can
+be found using @kbd{maint print symbols} (@pxref{maint print
+symbols}).
+
 @kindex maint print registers
 @kindex maint print raw-registers
 @kindex maint print cooked-registers
@@ -41865,7 +42007,11 @@ including registers which aren't available on the target nor visible
 to user; the command @code{maint print register-groups} includes the
 groups that each register is a member of; and the command @code{maint
 print remote-registers} includes the remote target's register numbers
-and offsets in the `G' packets.
+and offsets in the `G' packets, as well as an indication of which
+registers were included in the last stop reply packet received by
+@value{GDBN} (@pxref{Stop Reply Packets}).  Please note that the list
+of registers included in a stop reply can change from one stop to the
+next.
 
 These commands take an optional parameter, a file name to which to
 write the information.
@@ -42948,29 +43094,32 @@ probes the target state as if a new connection was opened
 @item m @var{addr},@var{length}
 @cindex @samp{m} packet
 Read @var{length} addressable memory units starting at address @var{addr}
-(@pxref{addressable memory unit}).  Note that @var{addr} may not be aligned to
-any particular boundary.
+(@pxref{addressable memory unit}).  Note that @var{addr} does not have to
+be aligned to any particular boundary.
 
+@cindex alignment of remote memory accesses
+@cindex size of remote memory accesses
+@cindex memory, alignment and size of remote accesses
 The stub need not use any particular size or alignment when gathering
 data from memory for the response; even if @var{addr} is word-aligned
 and @var{length} is a multiple of the word size, the stub is free to
 use byte accesses, or not.  For this reason, this packet may not be
 suitable for accessing memory-mapped I/O devices.
-@cindex alignment of remote memory accesses
-@cindex size of remote memory accesses
-@cindex memory, alignment and size of remote accesses
 
 Reply:
 @table @samp
 @item @var{XX@dots{}}
 Memory contents; each byte is transmitted as a two-digit hexadecimal number.
 The reply may contain fewer addressable memory units than requested if the
-server was able to read only part of the region of memory.
+server was reading from a trace frame memory and was able to read only part
+of the region of memory.
 @end table
 
 Unlike most packets, this packet does not support
 @samp{E.@var{errtext}}-style textual error replies (@pxref{textual
-error reply}).
+error reply}) by default.  Stubs should be careful to only send such a
+reply if @value{GDBN} reported support for it with the
+@code{error-message} feature (@pxref{error-message}).
 
 @item M @var{addr},@var{length}:@var{XX@dots{}}
 @cindex @samp{M} packet
@@ -43301,6 +43450,37 @@ for success (@pxref{Stop Reply Packets})
 @item vStopped
 @cindex @samp{vStopped} packet
 @xref{Notification Packets}.
+
+@item x @var{addr},@var{length}
+@anchor{x packet}
+@cindex @samp{x} packet
+Read @var{length} addressable memory units starting at address @var{addr}
+(@pxref{addressable memory unit}).  Note that @var{addr} does not have to
+be aligned to any particular boundary.
+
+@cindex alignment of remote memory accesses
+@cindex size of remote memory accesses
+@cindex memory, alignment and size of remote accesses
+The stub need not use any particular size or alignment when gathering
+data from memory for the response; even if @var{addr} is word-aligned
+and @var{length} is a multiple of the word size, the stub is free to
+use byte accesses, or not.  For this reason, this packet may not be
+suitable for accessing memory-mapped I/O devices.
+
+@value{GDBN} will only use this packet if the stub reports the
+@samp{binary-upload} feature is supported in its @samp{qSupported}
+reply (@pxref{qSupported}).
+
+Reply:
+@table @samp
+@item b @var{XX@dots{}}
+Memory contents as binary data (@pxref{Binary Data}).
+The reply may contain fewer addressable memory units than requested if the
+server was reading from a trace frame memory and was able to read only part
+of the region of memory.
+@item E @var{NN}
+for an error
+@end table
 
 @item X @var{addr},@var{length}:@var{XX@dots{}}
 @anchor{X packet}
@@ -44480,7 +44660,9 @@ A command response with the hex encoded output string @var{OUTPUT}.
 
 Unlike most packets, this packet does not support
 @samp{E.@var{errtext}}-style textual error replies (@pxref{textual
-error reply}).
+error reply}) by default.  Stubs should be careful to only send such a
+reply if @value{GDBN} reported support for it with the
+@code{error-message} feature (@pxref{error-message}).
 
 (Note that the @code{qRcmd} packet's name is separated from the
 command by a @samp{,}, not a @samp{:}, contrary to the naming
@@ -44627,6 +44809,17 @@ including @samp{exec-events+} in its @samp{qSupported} reply.
 @item vContSupported
 This feature indicates whether @value{GDBN} wants to know the
 supported actions in the reply to @samp{vCont?} packet.
+
+@anchor{error-message}
+@item error-message
+This feature indicates whether @value{GDBN} supports accepting a reply
+in @samp{E.@var{errtext}} format (@xref{textual error reply}) from the
+@samp{qRcmd} and @samp{m} packets.  These packets, historically,
+didn't support @samp{E.@var{errtext}}, and older versions of
+@value{GDBN} didn't expect to see a reply in this format.
+
+New packets should be written to support @samp{E.@var{errtext}}
+regardless of this feature being true or not.
 @end table
 
 Stubs should ignore any unknown values for
@@ -44780,6 +44973,16 @@ These are the currently defined stub features and their properties:
 @tab @samp{-}
 @tab Yes
 
+@item @samp{Qbtrace-conf:pt:ptwrite}
+@tab Yes
+@tab @samp{-}
+@tab Yes
+
+@item @samp{Qbtrace-conf:pt:event-tracing}
+@tab Yes
+@tab @samp{-}
+@tab Yes
+
 @item @samp{QNonStop}
 @tab No
 @tab @samp{-}
@@ -44906,6 +45109,16 @@ These are the currently defined stub features and their properties:
 @tab No
 
 @item @samp{memory-tagging}
+@tab No
+@tab @samp{-}
+@tab No
+
+@item @samp{error-message}
+@tab No
+@tab @samp{+}
+@tab No
+
+@item @samp{binary-upload}
 @tab No
 @tab @samp{-}
 @tab No
@@ -45096,6 +45309,12 @@ The remote stub understands the @samp{Qbtrace-conf:bts:size} packet.
 @item Qbtrace-conf:pt:size
 The remote stub understands the @samp{Qbtrace-conf:pt:size} packet.
 
+@item Qbtrace-conf:pt:ptwrite
+The remote stub understands the @samp{Qbtrace-conf:pt:ptwrite} packet.
+
+@item Qbtrace-conf:pt:event-tracing
+The remote stub understands the @samp{Qbtrace-conf:pt:event-tracing} packet.
+
 @item swbreak
 The remote stub reports the @samp{swbreak} stop reason for memory
 breakpoints.
@@ -45143,6 +45362,16 @@ inspected, if @samp{qIsAddressTagged} (@pxref{qIsAddressTagged}) packet
 is not supported by the stub.  Access to the @file{/proc/@var{pid}/smaps}
 file is done via @samp{vFile} requests.
 
+@item error-message
+The remote stub supports replying with an error in a
+@samp{E.@var{errtext}} (@xref{textual error reply}) format from the
+@samp{m} and @samp{qRcmd} packets.  It is not usually necessary to
+send this feature back to @value{GDBN} in the @samp{qSupported} reply,
+@value{GDBN} will always support @samp{E.@var{errtext}} format replies
+if it sent the @samp{error-message} feature.
+
+@item binary-upload
+The remote stub supports the @samp{x} packet (@pxref{x packet}).
 @end table
 
 @item qSymbol::
@@ -45576,6 +45805,30 @@ Reply:
 @table @samp
 @item OK
 The ring buffer size has been set.
+@end table
+
+@item Qbtrace-conf:pt:ptwrite=@var{(yes|no)}
+Indicate support for @code{PTWRITE} packets.  This allows for backwards
+compatibility.
+
+Reply:
+@table @samp
+@item OK
+The ptwrite config parameter has been set.
+@item E.errtext
+A badly formed request or an error was encountered.
+@end table
+
+@item Qbtrace-conf:pt:event-tracing=@var{(yes|no)}
+Indicate support for event-tracing packets.  This allows for backwards
+compatibility.
+
+Reply:
+@table @samp
+@item OK
+The event-tracing config parameter has been set.
+@item E.errtext
+A badly formed request or an error was encountered.
 @end table
 
 @end table
@@ -46299,6 +46552,13 @@ and the return value is the size of this attachment in bytes.
 If an error occurs the return value is -1.  The format of the
 returned binary attachment is as described in @ref{struct stat}.
 
+@item vFile:stat: @var{filename}
+Get information about the file @var{filename} on the target.
+On success the information is returned as a binary attachment
+and the return value is the size of this attachment in bytes.
+If an error occurs the return value is -1.  The format of the
+returned binary attachment is as described in @ref{struct stat}.
+
 @item vFile:unlink: @var{filename}
 Delete the file at @var{filename} on the target.  Return 0,
 or -1 if an error occurs.  The @var{filename} is a string.
@@ -46886,7 +47146,7 @@ conditions is met:
 
 @itemize @bullet
 @item
-The user types @kbd{Ctrl-c}.  The behaviour is as explained above, and the
+The user types @kbd{Ctrl-c}.  The behavior is as explained above, and the
 @code{read}
 system call is treated as finished.
 
@@ -48204,14 +48464,16 @@ branch trace configuration discovery.  @xref{Expat}.
 The formal DTD for the branch trace configuration format is given below:
 
 @smallexample
-<!ELEMENT btrace-conf	(bts?, pt?)>
-<!ATTLIST btrace-conf	version	CDATA	#FIXED "1.0">
+<!ELEMENT btrace-conf		(bts?, pt?)>
+<!ATTLIST btrace-conf		version	CDATA	#FIXED "1.0">
 
 <!ELEMENT bts	EMPTY>
-<!ATTLIST bts	size	CDATA	#IMPLIED>
+<!ATTLIST bts	size		CDATA	#IMPLIED>
 
 <!ELEMENT pt	EMPTY>
-<!ATTLIST pt	size	CDATA	#IMPLIED>
+<!ATTLIST pt	size		CDATA	#IMPLIED>
+<!ATTLIST pt	ptwrite		(yes | no)	#IMPLIED>
+<!ATTLIST pt	event-tracing	(yes | no)	#IMPLIED>
 @end smallexample
 
 @include agentexpr.texi
@@ -48769,7 +49031,6 @@ registers using the capitalization used in the description.
 * MIPS Features::
 * M68K Features::
 * NDS32 Features::
-* Nios II Features::
 * OpenRISC 1000 Features::
 * PowerPC Features::
 * RISC-V Features::
@@ -49449,16 +49710,6 @@ describe the upper 128 bits of @sc{ymm} registers:
 @samp{ymm0h} through @samp{ymm15h} for amd64
 @end itemize
 
-The @samp{org.gnu.gdb.i386.mpx} is an optional feature representing Intel
-Memory Protection Extension (MPX).  It should describe the following registers:
-
-@itemize @minus
-@item
-@samp{bnd0raw} through @samp{bnd3raw} for i386 and amd64.
-@item
-@samp{bndcfgu} and @samp{bndstatus} for i386 and amd64.
-@end itemize
-
 The @samp{org.gnu.gdb.i386.linux} feature is optional.  It should
 describe a single register, @samp{orig_eax}.
 
@@ -49471,7 +49722,7 @@ describe additional @sc{xmm} registers:
 
 @itemize @minus
 @item
-@samp{xmm16h} through @samp{xmm31h}, only valid for amd64.
+@samp{xmm16} through @samp{xmm31}, only valid for amd64.
 @end itemize
 
 It should describe the upper 128 bits of additional @sc{ymm} registers:
@@ -49497,6 +49748,14 @@ describe the additional @sc{zmm} registers:
 @itemize @minus
 @item
 @samp{zmm16h} through @samp{zmm31h}, only valid for amd64.
+@end itemize
+
+It should
+describe the additional 64-bit @sc{k} registers:
+
+@itemize @minus
+@item
+@samp{k0} through @samp{k7}, valid for amd64 and i386.
 @end itemize
 
 The @samp{org.gnu.gdb.i386.pkeys} feature is optional.  It should
@@ -49603,16 +49862,6 @@ not being listed explicitly, will be synthesized from halves of the
 overlapping 64-bit double-precision registers.  Listing 32-bit
 single-precision registers explicitly is deprecated, and the
 support to it could be totally removed some day.
-
-@node Nios II Features
-@subsection Nios II Features
-@cindex target descriptions, Nios II features
-
-The @samp{org.gnu.gdb.nios2.cpu} feature is required for Nios II
-targets.  It should contain the 32 core registers (@samp{zero},
-@samp{at}, @samp{r2} through @samp{r23}, @samp{et} through @samp{ra}),
-@samp{pc}, and the 16 control registers (@samp{status} through
-@samp{mpuacc}).
 
 @node OpenRISC 1000 Features
 @subsection Openrisc 1000 Features
@@ -50347,6 +50596,7 @@ Show the current verbosity setting.
 * gdb man::                     The GNU Debugger man page
 * gdbserver man::               Remote Server for the GNU Debugger man page
 * gcore man::                   Generate a core file of a running program
+* gstack man::                  Print a stack trace of a running program
 * gdbinit man::                 gdbinit scripts
 * gdb-add-index man::           Add index files to speed up GDB
 @end menu
@@ -50976,7 +51226,7 @@ Richard M. Stallman and Roland H. Pesch, July 1991.
 
 @format
 @c man begin SYNOPSIS gcore
-gcore [-a] [-o @var{prefix}] @var{pid1} [@var{pid2}...@var{pidN}]
+gcore [-a] [-o @var{prefix}] [-d @var{directory}] @var{pid1} [@var{pid2}...@var{pidN}]
 @c man end
 @end format
 
@@ -51004,10 +51254,83 @@ when composing the file names of the core dumps.  The file name is
 composed as @file{@var{prefix}.@var{pid}}, where @var{pid} is the
 process ID of the running program being analyzed by @command{gcore}.
 If not specified, @var{prefix} defaults to @var{gcore}.
+
+@item -d @var{directory}
+Use @var{directory} as the data directory when invoking @value{GDBN} for running
+the gcore command. This argument is optional.
 @end table
 @c man end
 
 @c man begin SEEALSO gcore
+@ifset man
+The full documentation for @value{GDBN} is maintained as a Texinfo manual.
+If the @code{info} and @code{gdb} programs and @value{GDBN}'s Texinfo
+documentation are properly installed at your site, the command
+
+@smallexample
+info gdb
+@end smallexample
+
+@noindent
+should give you access to the complete manual.
+
+@cite{Using GDB: A Guide to the GNU Source-Level Debugger},
+Richard M. Stallman and Roland H. Pesch, July 1991.
+@end ifset
+@c man end
+
+@node gstack man
+@heading gstack
+
+@c man title gstack Print a stack trace of a running program
+
+@format
+@c man begin SYNOPSIS gstack
+gstack [-h | --help] [-v | --version] @var{pid}
+@c man end
+@end format
+
+@c man begin DESCRIPTION gstack
+Print a stack trace of a running program with process ID @var{pid}.  If the process
+is multi-threaded, @command{gstack} outputs backtraces for every thread which exists
+in the process.
+
+The script invokes @value{GDBN}, attaches to the given process ID, prints the stack trace,
+and detaches from the process.
+
+@command{gstack} exits with non-zero status if @code{gdb} was unable to attach to
+the given process ID for any reason, such as a non-existent process ID or
+insufficient privileges to attach to the process.
+@c man end
+
+@c man begin OPTIONS gstack
+@table @env
+@item --help
+@itemx -h
+List all options, with brief explanations.
+
+@item --version
+@itemx -v
+Print version information and then exit.
+@end table
+@c man end
+
+@c man begin ENVIRONMENT gstack
+@table @env
+@item AWK
+Full file name for an Awk interpreter to use.  If not set, @env{PATH} will be
+searched for an @code{awk} program.
+
+@item GDB
+Full file name for a @value{GDBN} executable to use to generate stack backtraces.
+If not set, @env{PATH} will be searched for a @code{gdb} program.
+
+@item GDBARGS
+Optional arguments to be passed to the @code{gdb} program.
+@end table
+@c man end
+
+@c man begin SEEALSO gstack
 @ifset man
 The full documentation for @value{GDBN} is maintained as a Texinfo manual.
 If the @code{info} and @code{gdb} programs and @value{GDBN}'s Texinfo
@@ -51146,7 +51469,7 @@ Richard M. Stallman and Roland H. Pesch, July 1991.
 @c man title gdb-add-index Add index files to speed up GDB
 
 @c man begin SYNOPSIS gdb-add-index
-gdb-add-index @var{filename}
+gdb-add-index [-dwarf-5] @var{filename}
 @c man end
 
 @c man begin DESCRIPTION gdb-add-index
@@ -51158,14 +51481,24 @@ provides a way to build an index, which speeds up startup.
 
 To determine whether a file contains such an index, use the command
 @kbd{readelf -S filename}: the index is stored in a section named
-@code{.gdb_index}.  The index file can only be produced on systems
+@code{.gdb_index} (pre-DWARF 5) or @code{.debug_names} and
+@code{.debug_str} (DWARF 5).  Indexes can only be produced on systems
 which use ELF binaries and DWARF debug information (i.e., sections
 named @code{.debug_*}).
 
-@command{gdb-add-index} uses @value{GDBN} and @command{objdump} found
-in the @env{PATH} environment variable.  If you want to use different
-versions of these programs, you can specify them through the
-@env{GDB} and @env{OBJDUMP} environment variables.
+By default @command{gdb-add-index} will add a pre-DWARF 5
+@code{.gdb_index} section to @var{filename}.  With @option{-dwarf-5}
+DWARF 5 sections are added instead.
+
+@var{filename} must be writable.
+
+@command{gdb-add-index} uses @value{GDBN}, @command{objcopy}, and
+@command{readelf} found in the @env{PATH} environment variable.  If
+you want to use different versions of these programs, you can specify
+them through the appropriate environment variables (see below).
+
+@command{gdb-add-index} exits with status 0 if it succeeds in creating
+the index for @var{filename} or greater than 0 if an error occurs.
 
 See more in
 @ifset man
@@ -51175,6 +51508,32 @@ the @value{GDBN} manual in node @code{Index Files}
 @ifclear man
 @ref{Index Files}.
 @end ifclear
+@c man end
+
+@c man begin OPTIONS gdb-add-index
+@table @env
+@item -dwarf-5
+Add DWARF 5 sections instead of previous @code{.debug_index} section.
+
+@end table
+@c man end
+
+@c man begin ENVIRONMENT gdb-add-index
+@table @env
+@item GDB
+Full file name of the @code{gdb} program to use for index generation.
+If not set, the @env{PATH} will be searched for a @code{gdb} program.
+
+@item OBJCOPY
+Full file name of the @code{objcopy} program to use to copy section
+information into the given file.  If not set, the @env{PATH} will be searched
+for a @code{objcopy} program.
+
+@item READELF
+Full file name of the @code{readelf} program to use to inspect
+properties of the given file.  If not set, the @env{PATH} will be searched
+for a @code{readelf} program.
+@end table
 @c man end
 
 @c man begin SEEALSO gdb-add-index

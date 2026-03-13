@@ -67,7 +67,7 @@ proc return_if_nonzero { result } {
     }
 }
 
-# Do one iteration of "c -a& -> interrupt -a".  Return zero on sucess,
+# Do one iteration of "c -a& -> interrupt -a".  Return zero on success,
 # and non-zero if some test fails.
 
 proc test_one_iteration {} {

@@ -21,13 +21,13 @@
 
 #include "event-top.h"
 #include "cli/cli-cmds.h"
+#include "exceptions.h"
 #include "tui/tui.h"
 #include "tui/tui-hooks.h"
 #include "tui/tui-command.h"
 #include "tui/tui-data.h"
 #include "tui/tui-layout.h"
 #include "tui/tui-io.h"
-#include "tui/tui-regs.h"
 #include "tui/tui-status.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
@@ -35,18 +35,14 @@
 #include "tui/tui-source.h"
 #include "target.h"
 #include "frame.h"
-#include "breakpoint.h"
 #include "inferior.h"
 #include "symtab.h"
-#include "source.h"
 #include "terminal.h"
 #include "top.h"
 #include "ui.h"
+#include "observable.h"
 
-#include <ctype.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <setjmp.h>
 
 #include "gdb_curses.h"
 #include "interps.h"
@@ -469,9 +465,9 @@ tui_enable (void)
 
       tui_show_frame_info (deprecated_safe_get_selected_frame ());
       tui_set_initial_layout ();
-      tui_set_win_focus_to (TUI_SRC_WIN);
-      keypad (TUI_CMD_WIN->handle.get (), TRUE);
-      wrefresh (TUI_CMD_WIN->handle.get ());
+      tui_set_win_focus_to (tui_src_win ());
+      keypad (tui_cmd_win ()->handle.get (), TRUE);
+      wrefresh (tui_cmd_win ()->handle.get ());
       tui_finish_init = false;
     }
   else
@@ -514,6 +510,8 @@ tui_enable (void)
   /* Update gdb's knowledge of its terminal.  */
   gdb_save_tty_state ();
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (true);
 }
 
 /* Leave the tui mode.
@@ -552,6 +550,8 @@ tui_disable (void)
 
   tui_active = false;
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (false);
 }
 
 /* Command wrapper for enabling tui mode.  */
@@ -573,7 +573,7 @@ tui_disable_command (const char *args, int from_tty)
 void
 tui_show_assembly (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  tui_suppress_output suppress;
+  tui_batch_rendering suppress;
   tui_add_win_to_layout (DISASSEM_WIN);
   tui_update_source_windows_with_addr (gdbarch, addr);
 }
@@ -594,11 +594,11 @@ bool
 tui_get_command_dimension (unsigned int *width, 
 			   unsigned int *height)
 {
-  if (!tui_active || (TUI_CMD_WIN == NULL))
+  if (!tui_active || (tui_cmd_win () == NULL))
     return false;
   
-  *width = TUI_CMD_WIN->width;
-  *height = TUI_CMD_WIN->height;
+  *width = tui_cmd_win ()->width;
+  *height = tui_cmd_win ()->height;
   return true;
 }
 

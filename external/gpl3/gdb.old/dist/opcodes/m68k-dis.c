@@ -991,6 +991,8 @@ print_insn_arg (const char *d,
       else
 	return PRINT_INSN_ARG_INVALID_OP_TABLE;
 
+      info->target = addr + disp;
+
       (*info->print_address_func) (addr + disp, info);
       break;
 
@@ -1442,6 +1444,27 @@ print_insn_arg (const char *d,
   return p - p0;
 }
 
+/* Return the insn type determined from the opcode information.  */
+
+static enum dis_insn_type
+m68k_opcode_to_insn_type (const struct m68k_opcode *opc)
+{
+  /* All branches have an operand in 'B' format (the 'B' place only comes
+     with the 'B' format).  */
+  if (strchr (opc->args, 'B') == NULL)
+    return dis_nonbranch;
+
+  /* Most branches are conditional branches, detect the ones that aren't
+     from the opcode name.  */
+  if (strncmp (opc->name, "bra", 3) == 0)
+    return dis_branch;
+
+  if (strncmp (opc->name, "bsr", 3) == 0)
+    return dis_jsr;
+
+  return dis_condbranch;
+}
+
 /* Try to match the current instruction to best and if so, return the
    number of bytes consumed from the instruction stream, else zero.
    Return -1 on memory error.  */
@@ -1573,6 +1596,7 @@ match_insn_m68k (bfd_vma memaddr,
   p = save_p;
   info->fprintf_styled_func = save_printer;
   info->print_address_func = save_print_address;
+  info->insn_type = m68k_opcode_to_insn_type (best);
 
   d = args;
 
@@ -1730,6 +1754,7 @@ print_insn_m68k (bfd_vma memaddr, disassemble_info *info)
 
   bfd_byte *buffer = priv.the_buffer;
 
+  info->insn_info_valid = 1;
   info->private_data = & priv;
   /* Tell objdump to use two bytes per chunk
      and six bytes per line for displaying raw data.  */
@@ -1761,6 +1786,8 @@ print_insn_m68k (bfd_vma memaddr, disassemble_info *info)
       info->fprintf_styled_func (info->stream, dis_style_text, " ");
       info->fprintf_styled_func (info->stream, dis_style_immediate,
 				 "0x%04x", (buffer[0] << 8) + buffer[1]);
+
+      info->insn_type = dis_noninsn;
     }
 
   return val ? val : 2;

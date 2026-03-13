@@ -22,6 +22,7 @@ proc gdb_py_test_silent_cmd { cmd name report_pass } {
     global gdb_prompt
 
     gdb_test_multiple $cmd $name {
+	-re "Error occurred in Python:.*$gdb_prompt $" { fail $name }
 	-re "Traceback.*$gdb_prompt $" { fail $name }
 	-re "$gdb_prompt $"            { if $report_pass { pass $name } }
     }

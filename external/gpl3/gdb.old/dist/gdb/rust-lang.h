@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RUST_LANG_H
-#define RUST_LANG_H
+#ifndef GDB_RUST_LANG_H
+#define GDB_RUST_LANG_H
 
 #include "demangle.h"
 #include "language.h"
@@ -45,7 +45,7 @@ extern const char *rust_last_path_segment (const char *path);
 
 /* Create a new slice type.  NAME is the name of the type.  ELT_TYPE
    is the type of the elements of the slice.  USIZE_TYPE is the Rust
-   "usize" type to use.  The new type is allocated whereever ELT_TYPE
+   "usize" type to use.  The new type is allocated wherever ELT_TYPE
    is allocated.  */
 extern struct type *rust_slice_type (const char *name, struct type *elt_type,
 				     struct type *usize_type);
@@ -228,4 +228,4 @@ private:
 		   const struct value_print_options *options) const;
 };
 
-#endif /* RUST_LANG_H */
+#endif /* GDB_RUST_LANG_H */

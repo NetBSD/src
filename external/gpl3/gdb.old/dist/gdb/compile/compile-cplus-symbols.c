@@ -275,7 +275,7 @@ convert_symbol_sym (compile_cplus_instance *instance,
 
 static void
 convert_symbol_bmsym (compile_cplus_instance *instance,
-		      struct bound_minimal_symbol bmsym)
+		      bound_minimal_symbol bmsym)
 {
   struct minimal_symbol *msym = bmsym.minsym;
   struct objfile *objfile = bmsym.objfile;
@@ -453,9 +453,8 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
 	}
       else
 	{
-	  struct bound_minimal_symbol msym;
-
-	  msym = lookup_bound_minimal_symbol (identifier);
+	  bound_minimal_symbol msym
+	    = lookup_minimal_symbol (current_program_space, identifier);
 	  if (msym.minsym != nullptr)
 	    {
 	      if (compile_debug)

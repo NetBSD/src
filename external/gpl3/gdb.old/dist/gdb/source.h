@@ -16,12 +16,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOURCE_H
-#define SOURCE_H
+#ifndef GDB_SOURCE_H
+#define GDB_SOURCE_H
 
+#include "gdbsupport/pathstuff.h"
 #include "gdbsupport/scoped_fd.h"
 
+struct program_space;
 struct symtab;
+struct symtab_and_line;
+struct objfile;
 
 /* See openp function definition for their description.  */
 
@@ -35,7 +39,8 @@ enum openp_flag
 DEF_ENUM_FLAGS_TYPE(openp_flag, openp_flags);
 
 extern int openp (const char *, openp_flags, const char *, int,
-		  gdb::unique_xmalloc_ptr<char> *);
+		  gdb::unique_xmalloc_ptr<char> *,
+		  const char *cwd = current_directory);
 
 extern int source_full_path_of (const char *, gdb::unique_xmalloc_ptr<char> *);
 
@@ -107,7 +112,8 @@ extern int get_lines_to_list (void);
 
 /* Return the current source file for listing and next line to list.
    NOTE: The returned sal pc and end fields are not valid.  */
-extern struct symtab_and_line get_current_source_symtab_and_line (void);
+extern symtab_and_line get_current_source_symtab_and_line
+  (program_space *pspace);
 
 /* If the current source file for listing is not set, try and get a default.
    Usually called before get_current_source_symtab_and_line() is called.
@@ -126,7 +132,8 @@ extern symtab_and_line set_current_source_symtab_and_line
   (const symtab_and_line &sal);
 
 /* Reset any information stored about a default file and line to print.  */
-extern void clear_current_source_symtab_and_line (void);
+extern void clear_current_source_symtab_and_line (program_space *pspace);
+extern void clear_current_source_symtab_and_line (objfile *objfile);
 
 /* Add a source path substitution rule.  */
 extern void add_substitute_path_rule (const char *, const char *);
@@ -216,4 +223,4 @@ extern void forget_cached_source_info (void);
    need to would make things slower than necessary.  */
 extern void select_source_symtab ();
 
-#endif
+#endif /* GDB_SOURCE_H */

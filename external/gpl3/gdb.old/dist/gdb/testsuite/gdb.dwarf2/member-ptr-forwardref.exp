@@ -34,5 +34,19 @@ gdb_test "show cp-abi" {The currently selected C\+\+ ABI is "gnu-v3".*}
 
 gdb_load ${binfile}
 
+set re_address_class "@\[^\r\n\]+"
+
+set re_C_ptr \
+    [string cat \
+	 [string_to_regexp "C *"] "( const)?( $re_address_class)?"]
+
 gdb_test_no_output "set language c++"
-gdb_test "ptype c" "type = struct C {\[\r\n \t\]*private:\[\r\n \t\]*int \\(C::\\*fp\\)\\(C \\*( const)?\\);\[\r\n \t\]*}"
+gdb_test "ptype c" \
+    [multi_line \
+	 "type = struct C {" \
+	 "  private:" \
+	 [string cat \
+	      [string_to_regexp "    int (C::*fp)("] \
+	      $re_C_ptr \
+	      [string_to_regexp ");"]] \
+	 "}"]

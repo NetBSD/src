@@ -209,7 +209,7 @@ endif
 # in the same situation, we avoid invoking DejaGnu, and instead just call
 # the check/no-matching-tests-found rule (which prints a helpful message).
 #
-# To get the same behaviour for check-single we decide here, based on how
+# To get the same behavior for check-single we decide here, based on how
 # TESTS expanded, whether check-single should redirect to do-check-single or
 # to check/no-matching-tests-found.
 ifeq ($(expanded_tests_or_none),no-matching-tests-found)

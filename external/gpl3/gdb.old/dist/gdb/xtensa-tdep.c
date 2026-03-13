@@ -3266,7 +3266,7 @@ _initialize_xtensa_tdep ()
 			     &xtensa_debug_level,
 			    _("Set Xtensa debugging."),
 			    _("Show Xtensa debugging."), _("\
-When non-zero, Xtensa-specific debugging is enabled. \
+When non-zero, Xtensa-specific debugging is enabled.\n\
 Can be 1, 2, 3, or 4 indicating the level of debugging."),
 			     NULL,
 			     NULL,

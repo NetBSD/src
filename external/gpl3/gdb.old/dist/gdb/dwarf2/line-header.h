@@ -17,8 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_LINE_HEADER_H
-#define DWARF2_LINE_HEADER_H
+#ifndef GDB_DWARF2_LINE_HEADER_H
+#define GDB_DWARF2_LINE_HEADER_H
+
+#include "dwarf2/types.h"
+
+struct dwarf2_per_objfile;
 
 /* dir_index is 1-based in DWARF 4 and before, and is 0-based in DWARF 5 and
    later.  */
@@ -217,4 +221,4 @@ extern line_header_up dwarf_decode_line_header
    struct dwarf2_section_info *section, const struct comp_unit_head *cu_header,
    const char *comp_dir);
 
-#endif /* DWARF2_LINE_HEADER_H */
+#endif /* GDB_DWARF2_LINE_HEADER_H */

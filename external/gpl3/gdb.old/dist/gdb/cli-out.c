@@ -73,7 +73,7 @@ cli_ui_out::do_table_header (int width, ui_align alignment,
     return;
 
   do_field_string (0, width, alignment, 0, col_hdr.c_str (),
-		   ui_file_style ());
+		   title_style.style ());
 }
 
 /* Mark beginning of a list */
@@ -94,13 +94,14 @@ cli_ui_out::do_end (ui_out_type type)
 
 void
 cli_ui_out::do_field_signed (int fldno, int width, ui_align alignment,
-			     const char *fldname, LONGEST value)
+			     const char *fldname, LONGEST value,
+			     const ui_file_style &style)
 {
   if (m_suppress_output)
     return;
 
   do_field_string (fldno, width, alignment, fldname, plongest (value),
-		   ui_file_style ());
+		   style);
 }
 
 /* output an unsigned field */

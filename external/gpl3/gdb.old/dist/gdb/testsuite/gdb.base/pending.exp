@@ -39,7 +39,7 @@ clean_restart
 
 gdb_test_multiple "break pendfunc1" "set pending breakpoint" {
      -re ".*Make breakpoint pending.*y or \\\[n\\\]. $" {
-	    gdb_test "y" "Breakpoint.*pendfunc1.*pending." "set pending breakpoint (without symbols)"
+	    gdb_test "y" "Breakpoint.*pendfunc1.*pending." "set pending breakpoint, without symbols"
      }
 }
 
@@ -49,7 +49,7 @@ gdb_test "complete condition " "condition 1"
 gdb_test "info break" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendfunc1.*" \
-"single pending breakpoint info (without symbols)"
+"single pending breakpoint info, without symbols"
 
 with_test_prefix "first load" {
     gdb_load ${binfile}
@@ -170,7 +170,8 @@ gdb_test "info break" \
 \[\t \]+stop only if k == 1.*
 \[\t \]+print k.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
-\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc if x > 3.*" \
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc.*
+\\s+stop only if x > 3.*" \
 "multiple pending breakpoints"
 
 
@@ -195,8 +196,10 @@ gdb_test "info break" \
 \[\t \]+stop only if k == 1.*
 \[\t \]+print k.*
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
-\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc if x > 3.*
-\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp3_loc.*ignore next 2 hits.*" \
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp2_loc.*
+\\s+stop only if x > 3.*
+\[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*pendshr.c:$bp3_loc.*
+\\s+ignore next 2 hits.*" \
 "multiple pending breakpoints 2"
 
 #
@@ -267,3 +270,24 @@ gdb_test "info break" \
 \[0-9\]+\[\t \]+breakpoint     keep y.* in main at .*$srcfile:$mainline.*
 \[0-9\]+\[\t \]+breakpoint     keep y.*PENDING.*imaginary.*" \
 "verify pending breakpoint after restart"
+
+# Test GDB's parsing of pending breakpoint thread and condition.
+
+gdb_test_no_output "set breakpoint pending on"
+gdb_test "break foo if (unknown_var && another_unknown_var) thread 1" \
+    "Breakpoint $decimal \\(foo\\) pending\\."
+set bpnum [get_integer_valueof "\$bpnum" "*INVALID" \
+	       "get number for foo breakpoint"]
+
+if {[gdb_protocol_is_remote]} {
+    set evals_re "(?: \\(\[^) \]+ evals\\))?"
+} else {
+    set evals_re ""
+}
+
+gdb_test "info breakpoints $bpnum" \
+    [multi_line \
+	 "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	 "\\s+stop only if \\(unknown_var && another_unknown_var\\)${evals_re}" \
+	 "\\s+stop only in thread 1"] \
+    "check pending breakpoint on foo"

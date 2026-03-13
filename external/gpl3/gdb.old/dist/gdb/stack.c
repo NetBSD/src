@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "top.h"
 #include "value.h"
@@ -49,7 +50,6 @@
 #include "linespec.h"
 #include "cli/cli-utils.h"
 #include "objfiles.h"
-#include "annotate.h"
 
 #include "symfile.h"
 #include "extension.h"
@@ -1298,13 +1298,12 @@ find_frame_funname (const frame_info_ptr &frame, enum language *funlang,
     }
   else
     {
-      struct bound_minimal_symbol msymbol;
       CORE_ADDR pc;
 
       if (!get_frame_address_in_block_if_available (frame, &pc))
 	return funname;
 
-      msymbol = lookup_minimal_symbol_by_pc (pc);
+      bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
       if (msymbol.minsym != NULL)
 	{
 	  funname.reset (xstrdup (msymbol.minsym->print_name ()));
@@ -1418,7 +1417,7 @@ print_frame (struct ui_out *uiout,
 	annotate_frame_source_file_end ();
 	uiout->text (":");
 	annotate_frame_source_line ();
-	uiout->field_signed ("line", sal.line);
+	uiout->field_signed ("line", sal.line, line_number_style.style ());
 	annotate_frame_source_end ();
       }
 
@@ -1528,9 +1527,7 @@ info_frame_command_core (const frame_info_ptr &fi, bool selected_frame_p)
     }
   else if (frame_pc_p)
     {
-      struct bound_minimal_symbol msymbol;
-
-      msymbol = lookup_minimal_symbol_by_pc (frame_pc);
+      bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (frame_pc);
       if (msymbol.minsym != NULL)
 	{
 	  funname = msymbol.minsym->print_name ();

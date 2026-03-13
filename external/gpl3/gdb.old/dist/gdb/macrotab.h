@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MACROTAB_H
-#define MACROTAB_H
+#ifndef GDB_MACROTAB_H
+#define GDB_MACROTAB_H
 
 #include "gdbsupport/function-view.h"
 
@@ -242,25 +242,22 @@ struct macro_source_file *macro_lookup_inclusion
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
    we #defined a preprocessor symbol named NAME, whose replacement
    string is REPLACEMENT.  This function makes copies of NAME and
-   REPLACEMENT; the caller is responsible for freeing them.  */
+   REPLACEMENT.  */
 void macro_define_object (struct macro_source_file *source, int line,
 			  const char *name, const char *replacement);
 
 
-/* Record an function-like #definition (i.e., one with a parameter list).
+/* Record a function-like #definition (i.e., one with a parameter list).
 
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
-   we #defined a preprocessor symbol named NAME, with ARGC arguments
-   whose names are given in ARGV, whose replacement string is REPLACEMENT.  If
-   the macro takes a variable number of arguments, then ARGC should be
-   one greater than the number of named arguments, and ARGV[ARGC-1]
-   should be the string "...".  This function makes its own copies of
-   NAME, ARGV, and REPLACEMENT; the caller is responsible for freeing
-   them.  */
-void macro_define_function (struct macro_source_file *source, int line,
-			    const char *name, int argc, const char **argv,
+   we #defined a preprocessor symbol named NAME, with argument names given by
+   ARGV, whose replacement string is REPLACEMENT.  If the macro takes a variable
+   number of arguments, then the last element of ARGV should be the string
+   "...".  This function makes copies of NAME, ARGV, and REPLACEMENT.  */
+void macro_define_function (macro_source_file *source, int line,
+			    const char *name,
+			    const std::vector<std::string> &argv,
 			    const char *replacement);
-
 
 /* Record an #undefinition.
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
@@ -361,4 +358,4 @@ void macro_for_each_in_scope (struct macro_source_file *file, int line,
    of macro filenames printing was "absolute".  */
 extern std::string macro_source_fullname (struct macro_source_file *file);
 
-#endif /* MACROTAB_H */
+#endif /* GDB_MACROTAB_H */

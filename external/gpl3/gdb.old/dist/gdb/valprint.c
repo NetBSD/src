@@ -500,6 +500,76 @@ generic_val_print_array (struct value *val,
 
 }
 
+/* generic_val_print helper for TYPE_CODE_STRING.  */
+
+static void
+generic_val_print_string (struct value *val,
+			  struct ui_file *stream, int recurse,
+			  const struct value_print_options *options,
+			  const struct generic_val_print_decorations
+			    *decorations)
+{
+  struct type *type = check_typedef (val->type ());
+  struct type *unresolved_elttype = type->target_type ();
+  struct type *elttype = check_typedef (unresolved_elttype);
+
+  if (type->length () > 0 && unresolved_elttype->length () > 0)
+    {
+      LONGEST low_bound, high_bound;
+
+      if (!get_array_bounds (type, &low_bound, &high_bound))
+	error (_("Could not determine the array high bound"));
+
+      const gdb_byte *valaddr = val->contents_for_printing ().data ();
+      int force_ellipses = 0;
+      enum bfd_endian byte_order = type_byte_order (type);
+      int eltlen, len;
+
+      eltlen = elttype->length ();
+      len = high_bound - low_bound + 1;
+
+      /* If requested, look for the first null char and only
+	 print elements up to it.  */
+      if (options->stop_print_at_null)
+	{
+	  unsigned int print_max_chars = get_print_max_chars (options);
+	  unsigned int temp_len;
+
+	  for (temp_len = 0;
+	      (temp_len < len
+	       && temp_len < print_max_chars
+	       && extract_unsigned_integer (valaddr + temp_len * eltlen,
+					    eltlen, byte_order) != 0);
+	      ++temp_len)
+	      ;
+
+	    /* Force printstr to print ellipses if
+	       we've printed the maximum characters and
+	       the next character is not \000.  */
+	    if (temp_len == print_max_chars && temp_len < len)
+	      {
+		ULONGEST ival
+		  = extract_unsigned_integer (valaddr + temp_len * eltlen,
+					      eltlen, byte_order);
+		if (ival != 0)
+		  force_ellipses = 1;
+	      }
+
+	    len = temp_len;
+	}
+
+	current_language->printstr (stream, unresolved_elttype, valaddr, len,
+				    nullptr, force_ellipses, options);
+    }
+  else
+    {
+      /* Array of unspecified length: treat like pointer to first elt.  */
+      print_unpacked_pointer (type, elttype, val->address (),
+			      stream, options);
+    }
+
+}
+
 /* generic_value_print helper for TYPE_CODE_PTR.  */
 
 static void
@@ -928,6 +998,10 @@ generic_value_print (struct value *val, struct ui_file *stream, int recurse,
     {
     case TYPE_CODE_ARRAY:
       generic_val_print_array (val, stream, recurse, options, decorations);
+      break;
+
+    case TYPE_CODE_STRING:
+      generic_val_print_string (val, stream, recurse, options, decorations);
       break;
 
     case TYPE_CODE_MEMBERPTR:

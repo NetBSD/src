@@ -128,7 +128,7 @@ proc test_one_sig_reverse {prevsig} {
 		xfail "$testmsg (handled)"
 	    }
 	}
-	-re "No more reverse-execution history.*kill.*$gdb_prompt " {
+	-re "Reached end of recorded history.*Backward execution.*kill.*$gdb_prompt " {
 	    if {$saw_signal} {
 		pass "$testmsg (handled)"
 	    } else {
@@ -155,7 +155,7 @@ gdb_test "break $breakloc" \
     "breakpoint at end of main"
 
 # Signal handlers must be disabled
-gdb_test "handle all nostop noprint"
+gdb_test_lines "handle all nostop noprint" "" ""
 
 # The list of signals that the program generates, in the order they
 # are generated.
@@ -276,7 +276,7 @@ gdb_test "record restore $precsave" \
     "reload precord save file"
 
 # Signal handlers must be re-enabled
-gdb_test "handle all stop print"
+gdb_test_lines "handle all stop print" "" ""
 
 # Make the first signal SIGABRT because it is always supported.
 set sig_supported 1

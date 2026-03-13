@@ -34,7 +34,7 @@ Better and more devices.
 PORTABILITY:
 
 (Notes taken from Michael Meissner): Heavy use of the ## operator -
-fix using the clasic X/**/Y hack; Use of the signed keyword.  In
+fix using the classic X/**/Y hack; Use of the signed keyword.  In
 particular, signed char has no analogue in classic C (though most
 implementations of classic C use signed chars); Use of long long which
 restricts the target compiler to be GCC.
@@ -94,7 +94,7 @@ IGEN:
 
 Igen at present can't do the following:
 
-	o	duplication is an all or nothing afair.
+	o	duplication is an all or nothing affair.
 
 		It should be configurable according to
 		the instruction or the sub-table.

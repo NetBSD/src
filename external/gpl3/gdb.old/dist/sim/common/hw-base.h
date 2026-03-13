@@ -23,7 +23,7 @@
 #ifndef HW_BASE
 #define HW_BASE
 
-/* Create a primative device */
+/* Create a primitive device */
 
 struct hw *hw_create
 (struct sim_state *sd,

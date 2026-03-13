@@ -684,7 +684,7 @@ Ignore a file while stepping.\n\
 Usage: skip file [FILE-NAME]\n\
 If no filename is given, ignore the current file."),
 	       &skiplist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   c = add_cmd ("function", class_breakpoint, skip_function_command, _("\
 Ignore a function while stepping.\n\

@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOURCE_CACHE_H
-#define SOURCE_CACHE_H
+#ifndef GDB_SOURCE_CACHE_H
+#define GDB_SOURCE_CACHE_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -104,4 +104,4 @@ private:
 /* The global source cache.  */
 extern source_cache g_source_cache;
 
-#endif /* SOURCE_CACHE_H */
+#endif /* GDB_SOURCE_CACHE_H */

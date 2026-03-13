@@ -28,7 +28,7 @@ if ![runto_main] {
 # internal GDB assert.
 gdb_py_test_silent_cmd "python empty = gdb.Architecture()" "get empty arch" 0
 gdb_test "python print(repr (empty))" "<gdb\\.Architecture \\(invalid\\)>" \
-    "Test empty achitecture __repr__ does not trigger an assert"
+    "Test empty architecture __repr__ does not trigger an assert"
 gdb_test "python print(empty.name())" ".*Architecture is invalid.*" \
     "Test empty architecture.name does not trigger an assert"
 gdb_test "python print(empty.disassemble())" ".*Architecture is invalid.*" \
@@ -70,9 +70,7 @@ if { ![is_address_zero_readable] } {
 foreach size {0 1 2 3 4 8 16} {
     foreach sign_data {{"" True} \
 			   {", True" True} \
-			   {", False" False} \
-			   {", None" False} \
-			   {", \"blah\"" True}} {
+			   {", False" False}} {
 	set sign [lindex $sign_data 0]
 	# GDB's 0 bit type is always signed.
 	if { $size == 0 } {
@@ -93,6 +91,18 @@ foreach size {0 1 2 3 4 8 16} {
 gdb_test "python arch.integer_type(95)" \
     ".*ValueError.* no integer type of that size is available.*" \
     "call integer_type with invalid size"
+
+foreach_with_prefix test_data { {None None} \
+				    {"\"blah\"" str} \
+				    {1 int} } {
+    set bad_sign [lindex $test_data 0]
+    set bad_type [lindex $test_data 1]
+    gdb_test "python arch.integer_type(8, $bad_sign)" \
+	[multi_line \
+	     "Python Exception <class 'TypeError'>: argument 2 must be bool, not $bad_type" \
+	     "Error occurred in Python: argument 2 must be bool, not $bad_type"] \
+	"check 'signed' argument can handle non-bool type $bad_type"
+}
 
 # Test for gdb.architecture_names().  First we're going to grab the
 # complete list of architecture names using the 'complete' command.

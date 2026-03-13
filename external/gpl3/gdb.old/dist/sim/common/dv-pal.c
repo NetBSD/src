@@ -96,7 +96,7 @@
    non-zero 32 bit big-endian value to this register sets the
    countdown timer to expire in VALUE ticks (ticks is target
    dependant).  Reading the countdown register returns the last value
-   writen.
+   written.
 
    COUNTDOWN VALUE (read): Reading this 32 bit big-endian register
    returns the number of ticks remaining until the countdown timer

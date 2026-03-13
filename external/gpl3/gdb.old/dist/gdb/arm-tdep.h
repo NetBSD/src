@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARM_TDEP_H
-#define ARM_TDEP_H
+#ifndef GDB_ARM_TDEP_H
+#define GDB_ARM_TDEP_H
 
 /* Forward declarations.  */
 struct regset;
@@ -326,4 +326,4 @@ const target_desc *arm_read_description (arm_fp_type fp_type, bool tls);
    type.  */
 const target_desc *arm_read_mprofile_description (arm_m_profile_type m_type);
 
-#endif /* arm-tdep.h */
+#endif /* GDB_ARM_TDEP_H */

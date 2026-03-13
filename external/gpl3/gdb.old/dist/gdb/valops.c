@@ -40,7 +40,6 @@
 #include "observable.h"
 #include "objfiles.h"
 #include "extension.h"
-#include "gdbtypes.h"
 #include "gdbsupport/byte-vector.h"
 #include "typeprint.h"
 
@@ -129,8 +128,8 @@ find_function_in_inferior (const char *name, struct objfile **objf_p)
     }
   else
     {
-      struct bound_minimal_symbol msymbol = 
-	lookup_bound_minimal_symbol (name);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, name);
 
       if (msymbol.minsym != NULL)
 	{
@@ -1487,7 +1486,7 @@ value_coerce_to_target (struct value *val)
    nonzero lower bound.
 
    FIXME: A previous comment here indicated that this routine should
-   be substracting the array's lower bound.  It's not clear to me that
+   be subtracting the array's lower bound.  It's not clear to me that
    this is correct.  Given an array subscripting operation, it would
    certainly work to do the adjustment here, essentially computing:
 

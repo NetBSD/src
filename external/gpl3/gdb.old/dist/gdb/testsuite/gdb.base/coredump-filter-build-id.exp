@@ -30,7 +30,7 @@ if { ![istarget *-*-linux*] } {
 }
 require is_x86_64_m64_target
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug build-id}] } {
     return -1
 }
 

@@ -63,7 +63,7 @@ osdata_start_osdata (struct gdb_xml_parser *parser,
     gdb_xml_error (parser, _("Seen more than on osdata element"));
 
   char *type = (char *) xml_find_attribute (attributes, "type")->value.get ();
-  data->osdata.reset (new struct osdata (std::string (type)));
+  data->osdata = std::make_unique<osdata> (std::string (type));
 }
 
 /* Handle the start of a <item> element.  */

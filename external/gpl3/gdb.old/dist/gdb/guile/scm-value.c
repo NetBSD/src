@@ -86,7 +86,8 @@ static SCM substitute_symbol;
 
 void
 gdbscm_preserve_values (const struct extension_language_defn *extlang,
-			struct objfile *objfile, htab_t copied_types)
+			struct objfile *objfile,
+			copied_types_hash_t &copied_types)
 {
   value_smob *iter;
 

@@ -444,7 +444,7 @@ solib_aix_solib_create_inferior_hook (int from_tty)
 
 /* Implement the "current_sos" solib_ops method.  */
 
-static intrusive_list<solib>
+static owning_intrusive_list<solib>
 solib_aix_current_sos ()
 {
   std::optional<std::vector<lm_info_aix>> &library_list
@@ -452,14 +452,13 @@ solib_aix_current_sos ()
   if (!library_list.has_value ())
     return {};
 
-  intrusive_list<solib> sos;
+  owning_intrusive_list<solib> sos;
 
   /* Build a struct solib for each entry on the list.
      We skip the first entry, since this is the entry corresponding
      to the main executable, not a shared library.  */
   for (int ix = 1; ix < library_list->size (); ix++)
     {
-      solib *new_solib = new solib;
       std::string so_name;
 
       lm_info_aix &info = (*library_list)[ix];
@@ -481,12 +480,11 @@ solib_aix_current_sos ()
 				  info.member_name.c_str ());
 	}
 
-      new_solib->so_original_name = so_name;
-      new_solib->so_name = so_name;
-      new_solib->lm_info = std::make_unique<lm_info_aix> (info);
-
       /* Add it to the list.  */
-      sos.push_back (*new_solib);
+      auto &new_solib = sos.emplace_back ();
+      new_solib.so_original_name = so_name;
+      new_solib.so_name = so_name;
+      new_solib.lm_info = std::make_unique<lm_info_aix> (info);
     }
 
   return sos;
@@ -689,6 +687,11 @@ const solib_ops solib_aix_so_ops =
   solib_aix_open_symbol_file_object,
   solib_aix_in_dynsym_resolve_code,
   solib_aix_bfd_open,
+  nullptr,
+  nullptr,
+  nullptr,
+  nullptr,
+  default_find_solib_addr,
 };
 
 void _initialize_solib_aix ();

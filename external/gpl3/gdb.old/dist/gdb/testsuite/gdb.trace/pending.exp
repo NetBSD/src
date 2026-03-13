@@ -494,6 +494,7 @@ pending_tracepoint_with_action_resolved "trace"
 pending_tracepoint_installed_during_trace "trace"
 
 # Re-compile test case with IPA.
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 gdb_load_shlib $libipa
 

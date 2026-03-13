@@ -323,10 +323,7 @@ varobj_create (const char *objname,
 	}
 
       /* Don't allow variables to be created for types.  */
-      enum exp_opcode opcode = var->root->exp->first_opcode ();
-      if (opcode == OP_TYPE
-	  || opcode == OP_TYPEOF
-	  || opcode == OP_DECLTYPE)
+      if (var->root->exp->type_p ())
 	{
 	  gdb_printf (gdb_stderr, "Attempt to use a type name"
 		      " as an expression.\n");
@@ -1186,7 +1183,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
   changeable = varobj_value_is_changeable_p (var);
 
   /* If the type has custom visualizer, we consider it to be always
-     changeable.  FIXME: need to make sure this behaviour will not
+     changeable.  FIXME: need to make sure this behavior will not
      mess up read-sensitive values.  */
   if (var->dynamic->pretty_printer != NULL)
     changeable = true;

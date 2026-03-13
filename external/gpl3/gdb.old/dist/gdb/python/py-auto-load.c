@@ -61,8 +61,8 @@ gdbpy_initialize_auto_load (void)
 {
   add_setshow_boolean_cmd ("python-scripts", class_support,
 			   &auto_load_python_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Python scripts."), _("\
-Show the debugger's behaviour regarding auto-loaded Python scripts."), _("\
+Set the debugger's behavior regarding auto-loaded Python scripts."), _("\
+Show the debugger's behavior regarding auto-loaded Python scripts."), _("\
 If enabled, auto-loaded Python scripts are loaded when the debugger reads\n\
 an executable or shared library.\n\
 This options has security implications for untrusted inferiors."),
@@ -73,10 +73,10 @@ This options has security implications for untrusted inferiors."),
   set_show_commands auto_load_scripts_cmds
     = add_setshow_boolean_cmd ("auto-load-scripts", class_support,
 			       &auto_load_python_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Python scripts, "
+Set the debugger's behavior regarding auto-loaded Python scripts, "
 								 "deprecated."),
 			       _("\
-Show the debugger's behaviour regarding auto-loaded Python scripts, "
+Show the debugger's behavior regarding auto-loaded Python scripts, "
 								 "deprecated."),
 			       NULL, NULL, show_auto_load_python_scripts,
 			       &setlist, &showlist);

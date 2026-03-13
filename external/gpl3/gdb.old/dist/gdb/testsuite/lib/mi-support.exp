@@ -1989,14 +1989,13 @@ proc get_mi_thread_list {name} {
   return $thread_list
 }
 
-# Check that MI and the console know of the same threads.
-# Appends NAME to all test names.
-proc check_mi_and_console_threads {name} {
+# Helper function for check_mi_and_console_threads.
+proc check_mi_and_console_threads_1 { name } {
   global expect_out
 
   mi_gdb_test "-thread-list-ids" \
     {.*\^done,thread-ids={(thread-id="[0-9]+"(,)*)+},current-thread-id="[0-9]+",number-of-threads="[0-9]+"} \
-    "-thread-list-ids ($name)"
+    "-thread-list-ids"
   set mi_output {}
   if {[info exists expect_out(buffer)]} {
     set mi_output $expect_out(buffer)
@@ -2013,7 +2012,7 @@ proc check_mi_and_console_threads {name} {
   # FIXME: kseitz/2002-09-05: Don't use the hack-cli method.
   mi_gdb_test "info threads" \
     {.*(~".*"[\r\n]*)+.*} \
-    "info threads ($name)"
+    "info threads"
   set console_output {}
   if {[info exists expect_out(buffer)]} {
     set console_output $expect_out(buffer)
@@ -2039,29 +2038,29 @@ proc check_mi_and_console_threads {name} {
     }
   }
   if {$mi_result == ""} {
-    fail "finding MI result string ($name)"
+    fail "finding MI result string"
   } else {
-    pass "finding MI result string ($name)"
+    pass "finding MI result string"
   }
 
   # Finally, extract the thread ids and compare them to the console
   set num_mi_threads_str ""
   if {![regexp {number-of-threads="[0-9]+"} $mi_result num_mi_threads_str]} {
-    fail "finding number of threads in MI output ($name)"
+    fail "finding number of threads in MI output"
   } else {
-    pass "finding number of threads in MI output ($name)"
+    pass "finding number of threads in MI output"
 
     # Extract the number of threads from the MI result
     if {![scan $num_mi_threads_str {number-of-threads="%d"} num_mi_threads]} {
-      fail "got number of threads from MI ($name)"
+      fail "got number of threads from MI"
     } else {
-      pass "got number of threads from MI ($name)"
+      pass "got number of threads from MI"
 
       # Check if MI and console have same number of threads
       if {$num_mi_threads != [llength $console_thread_list]} {
-	fail "console and MI have same number of threads ($name)"
+	fail "console and MI have same number of threads"
       } else {
-	pass "console and MI have same number of threads ($name)"
+	pass "console and MI have same number of threads"
 
 	# Get MI thread list
 	set mi_thread_list [get_mi_thread_list $name]
@@ -2074,17 +2073,25 @@ proc check_mi_and_console_threads {name} {
 	  }
 	}
 	if {$fails > 0} {
-	  fail "MI and console have same threads ($name)"
+	  fail "MI and console have same threads"
 
 	  # Send a list of failures to the log
 	  send_log "Console has thread ids: $console_thread_list\n"
 	  send_log "MI has thread ids: $mi_thread_list\n"
 	} else {
-	  pass "MI and console have same threads ($name)"
+	  pass "MI and console have same threads"
 	}
       }
     }
   }
+}
+
+# Check that MI and the console know of the same threads.
+# Appends NAME to all test names.
+proc check_mi_and_console_threads { name } {
+    with_test_prefix $name {
+	check_mi_and_console_threads_1 $name
+    }
 }
 
 # Set solib-search-path to allow gdb to locate shlib FILE.
@@ -2673,7 +2680,7 @@ proc mi_make_info_frame_regexp {args} {
 # build the regexp for matching against the -stack-info-frame output.
 
 proc mi_info_frame { test args } {
-    parse_args {{frame ""} {thread ""}}
+    parse_some_args {{frame ""} {thread ""}}
 
     set re [eval mi_make_info_frame_regexp $args]
 

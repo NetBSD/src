@@ -201,7 +201,7 @@ enum
     E_R149_REGNUM,
     E_NUM_OF_V850E2_REGS,
 
-    /* v850e3v5 system registers, selID 1 thru 7.  */
+    /* v850e3v5 system registers, selID 1 through 7.  */
     E_SELID_1_R0_REGNUM = E_NUM_OF_V850E2_REGS,
     E_SELID_1_R31_REGNUM = E_SELID_1_R0_REGNUM + 31,
 
@@ -1047,7 +1047,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  There are 16 bytes
-     in four registers available.  Loop thru args from first to last.  */
+     in four registers available.  Loop through args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
       int len;

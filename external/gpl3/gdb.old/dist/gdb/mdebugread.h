@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MDEBUGREAD_H
-#define MDEBUGREAD_H
+#ifndef GDB_MDEBUGREAD_H
+#define GDB_MDEBUGREAD_H
 
 #include "coff/sym.h"
 #include "coff/symconst.h"
@@ -46,4 +46,4 @@ extern void elfmdebug_build_psymtabs (struct objfile *,
 				      const struct ecoff_debug_swap *,
 				      asection *);
 
-#endif /* MDEBUGREAD_H */
+#endif /* GDB_MDEBUGREAD_H */

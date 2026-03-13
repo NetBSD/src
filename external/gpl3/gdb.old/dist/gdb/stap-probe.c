@@ -38,7 +38,6 @@
 #include "elf-bfd.h"
 #include "expop.h"
 #include <unordered_map>
-#include "gdbsupport/hash_enum.h"
 
 #include <ctype.h>
 
@@ -435,8 +434,7 @@ typedef expr::operation_up binop_maker_ftype (expr::operation_up &&,
 					      expr::operation_up &&);
 /* Map from an expression opcode to a function that can create a
    binary operation of that type.  */
-static std::unordered_map<exp_opcode, binop_maker_ftype *,
-			  gdb::hash_enum<exp_opcode>> stap_maker_map;
+static std::unordered_map<exp_opcode, binop_maker_ftype *> stap_maker_map;
 
 /* Helper function to create a binary operation.  */
 static expr::operation_up
@@ -1760,8 +1758,9 @@ _initialize_stap_probe ()
 			     &stap_expression_debug,
 			     _("Set SystemTap expression debugging."),
 			     _("Show SystemTap expression debugging."),
-			     _("When non-zero, the internal representation "
-			       "of SystemTap expressions will be printed."),
+			     _("\
+When non-zero, the internal representation of SystemTap expressions\n\
+will be printed."),
 			     NULL,
 			     show_stapexpressiondebug,
 			     &setdebuglist, &showdebuglist);

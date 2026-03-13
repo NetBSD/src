@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PROCESS_STRATUM_TARGET_H
-#define PROCESS_STRATUM_TARGET_H
+#ifndef GDB_PROCESS_STRATUM_TARGET_H
+#define GDB_PROCESS_STRATUM_TARGET_H
 
 #include "target.h"
 #include <set>
@@ -173,4 +173,4 @@ extern std::set<process_stratum_target *> all_non_exited_process_targets ();
 
 extern void switch_to_target_no_thread (process_stratum_target *target);
 
-#endif /* !defined (PROCESS_STRATUM_TARGET_H) */
+#endif /* GDB_PROCESS_STRATUM_TARGET_H */

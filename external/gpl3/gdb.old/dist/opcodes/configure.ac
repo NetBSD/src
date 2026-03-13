@@ -18,7 +18,7 @@ dnl <http://www.gnu.org/licenses/>.
 dnl
 
 m4_include([../bfd/version.m4])
-AC_INIT([opcodes], BFD_VERSION)
+AC_INIT([opcodes], [BFD_VERSION])
 AC_CONFIG_SRCDIR([z8k-dis.c])
 
 AC_CANONICAL_TARGET
@@ -27,7 +27,6 @@ AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
 dnl These must be called before LT_INIT, because it may want
@@ -312,7 +311,6 @@ if test x${all_targets} = xfalse ; then
 	bfd_msp430_arch)	ta="$ta msp430-dis.lo msp430-decode.lo" ;;
 	bfd_nds32_arch)		ta="$ta nds32-asm.lo nds32-dis.lo" ;;
 	bfd_nfp_arch)		ta="$ta nfp-dis.lo" ;;
-	bfd_nios2_arch)		ta="$ta nios2-dis.lo nios2-opc.lo" ;;
 	bfd_ns32k_arch)		ta="$ta ns32k-dis.lo" ;;
 	bfd_or1k_arch)		ta="$ta or1k-asm.lo or1k-desc.lo or1k-dis.lo or1k-ibld.lo or1k-opc.lo" using_cgen=yes ;;
 	bfd_pdp11_arch)		ta="$ta pdp11-dis.lo pdp11-opc.lo" ;;

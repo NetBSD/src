@@ -428,7 +428,7 @@ arc_linux_software_single_step (struct regcache *regcache)
   CORE_ADDR next_pc = arc_insn_get_linear_next_pc (curr_insn);
   std::vector<CORE_ADDR> next_pcs;
 
-  /* For instructions with delay slots, the fall thru is not the
+  /* For instructions with delay slots, the fall through is not the
      instruction immediately after the current instruction, but the one
      after that.  */
   if (curr_insn.has_delay_slot)
@@ -506,8 +506,8 @@ arc_linux_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 
      So we look for the symbol `_dl_linux_resolver', and if we are there,
      gdb sets a breakpoint at the return address, and continues.  */
-  struct bound_minimal_symbol resolver
-    = lookup_minimal_symbol ("_dl_linux_resolver", NULL, NULL);
+  bound_minimal_symbol resolver
+    = lookup_minimal_symbol (current_program_space, "_dl_linux_resolver");
 
   if (arc_debug)
     {

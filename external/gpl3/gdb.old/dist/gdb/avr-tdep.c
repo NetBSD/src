@@ -530,7 +530,6 @@ avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
   int i;
   unsigned short insn;
   int scan_stage = 0;
-  struct bound_minimal_symbol msymbol;
   unsigned char prologue[AVR_MAX_PROLOGUE_SIZE];
   int vpc = 0;
   int len;
@@ -623,7 +622,8 @@ avr_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
       body_addr |= ((insn & 0xf) | ((insn & 0x0f00) >> 4)) << 8;
       pc_offset += 2;
 
-      msymbol = lookup_minimal_symbol ("__prologue_saves__", NULL, NULL);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, "__prologue_saves__");
       if (!msymbol.minsym)
 	break;
 

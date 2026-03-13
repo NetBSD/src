@@ -93,8 +93,8 @@ struct gdb_xml_parser
     ATTRIBUTE_PRINTF (2, 0);
 
   /* Issue an error message, and stop parsing.  */
-  void verror (const char *format, va_list ap)
-    ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
+  [[noreturn]] void verror (const char *format, va_list ap)
+    ATTRIBUTE_PRINTF (2, 0);
 
   void body_text (const XML_Char *text, int length);
   void start_element (const XML_Char *name, const XML_Char **attrs);

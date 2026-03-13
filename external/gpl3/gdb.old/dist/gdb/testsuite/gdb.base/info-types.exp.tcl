@@ -32,11 +32,12 @@ proc run_test { lang } {
 	     "${testfile}" $srcfile "debug $lang"]} {
 	return -1
     }
-    gdb_test_no_output "set auto-solib-add off"
 
     if ![runto_main] then {
 	return 0
     }
+
+    gdb_test_no_output "nosharedlibrary"
 
     set file_re "File .*[string_to_regexp $srcfile]:"
 

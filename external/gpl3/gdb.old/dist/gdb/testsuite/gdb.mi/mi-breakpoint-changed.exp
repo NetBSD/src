@@ -15,6 +15,8 @@
 
 require allow_shlib_tests
 
+set supports_catch_syscall [supports_catch_syscall]
+
 load_lib mi-support.exp
 
 standard_testfile pending.c
@@ -85,17 +87,34 @@ proc test_insert_delete_modify { } {
     mi_gdb_test ${test} \
 	{(&.*)*.*~".*atchpoint 3: .*\\n".*=breakpoint-created,bkpt=\{number="3",type="(hw |)watchpoint".*\}.*\n\^done} \
 	$test
+
     set test "trace marker"
     mi_gdb_test $test \
 	{(&.*)*.*~"Tracepoint 4 at .*\\n".*=breakpoint-created,bkpt=\{number="4",type="tracepoint".*\}.*\n\^done} \
 	$test
+
     set test "catch syscall"
-    mi_gdb_test $test \
-	{(&.*)*.*~"Catchpoint 5 .*\\n".*=breakpoint-created,bkpt=\{number="5",type="catchpoint".*\}.*\n\^done} \
-	$test
+    if { $::supports_catch_syscall } {
+	mi_gdb_test $test \
+	    {(&.*)*.*~"Catchpoint 5 .*\\n".*=breakpoint-created,bkpt=\{number="5",type="catchpoint".*\}.*\n\^done} \
+	    $test
+	set bp_nr 6
+    } else {
+	unsupported $test
+	set bp_nr 5
+    }
+
     set test "dprintf marker, \"arg\" \""
+    set bp_re [mi_make_breakpoint \
+		   -number $bp_nr \
+		   -type dprintf \
+		   -func marker \
+		   -script [string_to_regexp {["printf \"arg\" \""]}]]
     mi_gdb_test $test \
-	{.*=breakpoint-created,bkpt=\{number="6",type="dprintf".*,script=\[\"printf \\\"arg\\\" \\\"\"\].*\}\r\n\^done} \
+	[multi_line \
+	     ".*" \
+	     "=breakpoint-created,${bp_re}" \
+	     "\\^done"] \
 	$test
 
     # 2. when modifying condition
@@ -143,7 +162,7 @@ proc test_insert_delete_modify { } {
 
     # Delete some breakpoints and verify that '=breakpoint-deleted
     # notification is correctly emitted.
-    for {set i 3} {$i < 7} {incr i} {
+    for {set i 3} {$i <= $bp_nr} {incr i} {
 	mi_gdb_test "delete ${i}" ".*=breakpoint-deleted,id=\"${i}\".*\\^done" \
 	    "delete ${i}"
     }
@@ -153,7 +172,7 @@ with_test_prefix "test_insert_delete_modify" {
     test_insert_delete_modify
 }
 
-# Test 'breakpoint-modified' notification is emited when pending breakpoints are
+# Test 'breakpoint-modified' notification is emitted when pending breakpoints are
 # resolved.
 
 proc test_pending_resolved { } {

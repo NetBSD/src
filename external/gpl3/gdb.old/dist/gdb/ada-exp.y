@@ -185,12 +185,12 @@ ada_pop (bool deprocedure_p = true, struct type *context_type = nullptr)
 }
 
 /* Like parser_state::wrap, but use ada_pop to pop the value.  */
-template<typename T>
+template<typename T, typename... Args>
 void
-ada_wrap ()
+ada_wrap (Args... args)
 {
   operation_up arg = ada_pop ();
-  pstate->push_new<T> (std::move (arg));
+  pstate->push_new<T> (std::move (arg), std::forward<Args> (args)...);
 }
 
 /* Create and push an address-of operation, as appropriate for Ada.
@@ -519,7 +519,7 @@ make_tick_completer (struct stoken tok)
 
 %right TICK_ACCESS TICK_ADDRESS TICK_FIRST TICK_LAST TICK_LENGTH
 %right TICK_MAX TICK_MIN TICK_MODULUS
-%right TICK_POS TICK_RANGE TICK_SIZE TICK_TAG TICK_VAL
+%right TICK_POS TICK_RANGE TICK_SIZE TICK_OBJECT_SIZE TICK_TAG TICK_VAL
 %right TICK_COMPLETE TICK_ENUM_REP TICK_ENUM_VAL
  /* The following are right-associative only so that reductions at this
     precedence have lower precedence than '.' and '('.  The syntax still
@@ -914,7 +914,9 @@ primary :	primary TICK_ACCESS
 			    (std::move (arg), OP_ATR_LENGTH, $3);
 			}
 	|       primary TICK_SIZE
-			{ ada_wrap<ada_atr_size_operation> (); }
+			{ ada_wrap<ada_atr_size_operation> (true); }
+	|       primary TICK_OBJECT_SIZE
+			{ ada_wrap<ada_atr_size_operation> (false); }
 	|	primary TICK_TAG
 			{ ada_wrap<ada_atr_tag_operation> (); }
 	|       opt_type_prefix TICK_MIN '(' exp ',' exp ')'
@@ -1232,7 +1234,7 @@ primary	:	'*' primary		%prec '.'
 /* yylex defined in ada-lex.c: Reads one token, getting characters */
 /* through lexptr.  */
 
-/* Remap normal flex interface names (yylex) as well as gratuitiously */
+/* Remap normal flex interface names (yylex) as well as gratuitously */
 /* global symbol names, so we can have multiple flex-generated parsers */
 /* in gdb.  */
 
@@ -1323,7 +1325,6 @@ write_object_renaming (struct parser_state *par_state,
 {
   char *name;
   enum { SIMPLE_INDEX, LOWER_BOUND, UPPER_BOUND } slice_state;
-  struct block_symbol sym_info;
 
   if (max_depth <= 0)
     error (_("Could not find renamed symbol"));
@@ -1333,7 +1334,8 @@ write_object_renaming (struct parser_state *par_state,
 
   name = obstack_strndup (&ada_parser->temp_space, renamed_entity,
 			  renamed_entity_len);
-  ada_lookup_encoded_symbol (name, orig_left_context, SEARCH_VFT, &sym_info);
+  block_symbol sym_info = ada_lookup_encoded_symbol (name, orig_left_context,
+						     SEARCH_VFT);
   if (sym_info.symbol == NULL)
     error (_("Could not find renamed variable: %s"), ada_decode (name).c_str ());
   else if (sym_info.symbol->aclass () == LOC_TYPEDEF)
@@ -1391,7 +1393,6 @@ write_object_renaming (struct parser_state *par_state,
 	  {
 	    const char *end;
 	    char *index_name;
-	    struct block_symbol index_sym_info;
 
 	    end = strchr (renaming_expr, 'X');
 	    if (end == NULL)
@@ -1402,8 +1403,9 @@ write_object_renaming (struct parser_state *par_state,
 					  end - renaming_expr);
 	    renaming_expr = end;
 
-	    ada_lookup_encoded_symbol (index_name, orig_left_context,
-				       SEARCH_VFT, &index_sym_info);
+	    block_symbol index_sym_info
+	      = ada_lookup_encoded_symbol (index_name, orig_left_context,
+					   SEARCH_VFT);
 	    if (index_sym_info.symbol == NULL)
 	      error (_("Could not find %s"), index_name);
 	    else if (index_sym_info.symbol->aclass () == LOC_TYPEDEF)
@@ -1477,7 +1479,7 @@ block_lookup (const struct block *context, const char *raw_name)
 
   if (context == NULL
       && (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK))
-    symtab = lookup_symtab (name);
+    symtab = lookup_symtab (current_program_space, name);
   else
     symtab = NULL;
 
@@ -1831,7 +1833,7 @@ write_var_or_type (struct parser_state *par_state,
 	      if (block != nullptr)
 		objfile = block->objfile ();
 
-	      struct bound_minimal_symbol msym
+	      bound_minimal_symbol msym
 		= ada_lookup_simple_minsym (decoded_name.c_str (), objfile);
 	      if (msym.minsym != NULL)
 		{
@@ -1857,7 +1859,9 @@ write_var_or_type (struct parser_state *par_state,
 	    }
 	}
 
-      if (!have_full_symbols () && !have_partial_symbols () && block == NULL)
+      if (!have_full_symbols (current_program_space)
+	  && !have_partial_symbols (current_program_space)
+	  && block == NULL)
 	error (_("No symbol table is loaded.  Use the \"file\" command."));
       if (block == par_state->expression_context_block)
 	error (_("No definition of \"%s\" in current context."), name0.ptr);

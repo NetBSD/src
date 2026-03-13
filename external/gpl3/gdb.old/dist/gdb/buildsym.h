@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (BUILDSYM_H)
-#define BUILDSYM_H 1
+#ifndef GDB_BUILDSYM_H
+#define GDB_BUILDSYM_H
 
 #include "gdbsupport/gdb_obstack.h"
 #include "symtab.h"
@@ -456,4 +456,4 @@ extern void add_symbol_to_list (struct symbol *symbol,
 extern struct symbol *find_symbol_in_list (struct pending *list,
 					   char *name, int length);
 
-#endif /* defined (BUILDSYM_H) */
+#endif /* GDB_BUILDSYM_H */

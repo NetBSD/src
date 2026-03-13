@@ -19,15 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "arch-utils.h"
 #include "command.h"
 #include "symtab.h"
 #include "frame.h"
-#include "source.h"
-#include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-utils.h"
-#include <ctype.h>
 #include <unordered_set>
 
 #include "tui/tui.h"
@@ -37,7 +33,6 @@
 #include "tui/tui-status.h"
 #include "tui/tui-regs.h"
 #include "tui/tui-win.h"
-#include "tui/tui-winsource.h"
 #include "tui/tui-disasm.h"
 #include "tui/tui-layout.h"
 #include "tui/tui-source.h"
@@ -66,6 +61,8 @@ std::vector<tui_win_info *> tui_windows;
 void
 tui_apply_current_layout (bool preserve_cmd_win_size_p)
 {
+  tui_batch_rendering defer;
+
   for (tui_win_info *win_info : tui_windows)
     win_info->make_visible (false);
 
@@ -79,8 +76,8 @@ tui_apply_current_layout (bool preserve_cmd_win_size_p)
       tui_win_list[win_type] = nullptr;
 
   /* This should always be made visible by a layout.  */
-  gdb_assert (TUI_CMD_WIN != nullptr);
-  gdb_assert (TUI_CMD_WIN->is_visible ());
+  gdb_assert (tui_cmd_win () != nullptr);
+  gdb_assert (tui_cmd_win ()->is_visible ());
 
   /* Get the new list of currently visible windows.  */
   std::vector<tui_win_info *> new_tui_windows;
@@ -132,7 +129,7 @@ tui_set_layout (tui_layout_split *layout)
 
   std::string new_fingerprint = applied_layout->layout_fingerprint ();
   bool preserve_command_window_size
-    = (TUI_CMD_WIN != nullptr && old_fingerprint == new_fingerprint);
+    = (tui_cmd_win () != nullptr && old_fingerprint == new_fingerprint);
 
   tui_apply_current_layout (preserve_command_window_size);
 }
@@ -233,10 +230,10 @@ void
 tui_regs_layout ()
 {
   /* If there's already a register window, we're done.  */
-  if (TUI_DATA_WIN != nullptr)
+  if (tui_data_win () != nullptr)
     return;
 
-  tui_set_layout (TUI_DISASM_WIN != nullptr
+  tui_set_layout (tui_disasm_win () != nullptr
 		  ? asm_regs_layout
 		  : src_regs_layout);
 }
@@ -261,9 +258,9 @@ tui_remove_some_windows ()
     {
       /* Try leaving the source or disassembly window.  If neither
 	 exists, just do nothing.  */
-      focus = TUI_SRC_WIN;
+      focus = tui_src_win ();
       if (focus == nullptr)
-	focus = TUI_DISASM_WIN;
+	focus = tui_disasm_win ();
       if (focus == nullptr)
 	return;
     }
@@ -817,7 +814,7 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_,
   int prev = -1;
   for (int i = 0; i < m_splits.size (); ++i)
     {
-      bool cmd_win_already_exists = TUI_CMD_WIN != nullptr;
+      bool cmd_win_already_exists = tui_cmd_win () != nullptr;
 
       /* Always call get_sizes, to ensure that the window is
 	 instantiated.  This is a bit gross but less gross than adding
@@ -841,8 +838,8 @@ tui_layout_split::apply (int x_, int y_, int width_, int height_,
 	     that the resizing step, below, does the right thing with
 	     this window.  */
 	  info[i].min_size = (m_vertical
-			      ? TUI_CMD_WIN->height
-			      : TUI_CMD_WIN->width);
+			      ? tui_cmd_win ()->height
+			      : tui_cmd_win ()->width);
 	  info[i].max_size = info[i].min_size;
 	}
 

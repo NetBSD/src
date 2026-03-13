@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_PERSONALITY_H
-#define NAT_LINUX_PERSONALITY_H
+#ifndef GDB_NAT_LINUX_PERSONALITY_H
+#define GDB_NAT_LINUX_PERSONALITY_H
 
 class maybe_disable_address_space_randomization
 {
@@ -43,4 +43,4 @@ private:
   int m_personality_orig;
 };
 
-#endif /* ! NAT_LINUX_PERSONALITY_H */
+#endif /* GDB_NAT_LINUX_PERSONALITY_H */

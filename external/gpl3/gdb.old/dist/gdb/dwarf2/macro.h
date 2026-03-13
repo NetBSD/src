@@ -21,6 +21,8 @@
 #define GDB_DWARF2_MACRO_H
 
 struct buildsym_compunit;
+struct dwarf2_per_objfile;
+struct dwarf2_section_info;
 
 extern void dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 				 buildsym_compunit *builder,

@@ -124,23 +124,9 @@ Dwarf::assemble $asm_file {
     }
 }
 
-if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile}1.o \
-	  object {nodebug}] != "" } {
+if { [prepare_for_testing "failed to prepare" $testfile \
+	  [list $srcfile $asm_file] {nodebug}] } {
     return -1
-}
-
-if { [gdb_compile $asm_file ${binfile}2.o object {nodebug}] != "" } {
-    return -1
-}
-
-if { [gdb_compile [list ${binfile}1.o ${binfile}2.o] \
-	  "${binfile}" executable {}] != "" } {
-    return -1
-}
-
-save_vars { GDBFLAGS } {
-    set GDBFLAGS [concat $GDBFLAGS " -readnow"]
-    clean_restart ${testfile}
 }
 
 if ![runto_main] {

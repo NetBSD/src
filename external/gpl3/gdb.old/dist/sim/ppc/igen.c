@@ -365,7 +365,7 @@ main(int argc,
     printf("  -C                    Include semantics in cache functions\n");
     printf("  -S                    Include insn (instruction) in icache\n");
     printf("  -R                    Use defines to reference cache vars\n");
-    printf("  -L                    Supress line numbering in output files\n");
+    printf("  -L                    Suppress line numbering in output files\n");
     printf("  -B <bit-size>         Set the number of bits in an instruction\n");
     printf("  -H <high-bit>         Set the nr of the high (msb bit)\n");
     printf("  -N <nr-cpus>          Specify the max number of cpus the simulation will support\n");

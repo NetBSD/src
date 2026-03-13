@@ -351,7 +351,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
 
           compare = (m68hc11_cpu->ios[i] << 8) + m68hc11_cpu->ios[i + 1];
 
-          /* See if compare is reached; handle wrap arround.  */
+          /* See if compare is reached; handle wrap around.  */
           if ((compare >= tcnt_prev && compare <= tcnt && tcnt_prev < tcnt)
               || (compare >= tcnt_prev && tcnt_prev > tcnt)
               || (compare < tcnt && tcnt_prev > tcnt))

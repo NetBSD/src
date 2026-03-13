@@ -281,6 +281,44 @@ class NoOpScalarPrinter(gdb.ValuePrinter):
         return self.__value.format_string(raw=True)
 
 
+class NoOpStringPrinter(gdb.ValuePrinter):
+    """A no-op pretty printer that wraps a string value."""
+
+    def __init__(self, ty, value):
+        self.__ty = ty
+        self.__value = value
+
+    def to_string(self):
+        # We need some special cases here.
+        #
+        # * If the gdb.Value was created from a Python string, it will
+        #   be a non-lazy array -- but will have address 0 and so the
+        #   contents will be lost on conversion to lazy string.
+        #   (Weirdly, the .address attribute will not be 0 though.)
+        #   Since conversion to lazy string is to avoid fetching too
+        #   much data, and since the array is already non-lazy, just
+        #   return it.
+        #
+        # * To avoid weird printing for a C "string" that is just a
+        #   NULL pointer, special case this as well.
+        #
+        # * Lazy strings only understand arrays and pointers; other
+        #   string-like objects (like a Rust &str) should simply be
+        #   returned.
+        code = self.__ty.code
+        if code == gdb.TYPE_CODE_ARRAY and not self.__value.is_lazy:
+            return self.__value
+        elif code == gdb.TYPE_CODE_PTR and self.__value == 0:
+            return self.__value
+        elif code != gdb.TYPE_CODE_PTR and code != gdb.TYPE_CODE_ARRAY:
+            return self.__value
+        else:
+            return self.__value.lazy_string()
+
+    def display_hint(self):
+        return "string"
+
+
 class NoOpPointerReferencePrinter(gdb.ValuePrinter):
     """A no-op pretty printer that wraps a pointer or reference."""
 
@@ -368,7 +406,7 @@ def make_visualizer(value):
     else:
         ty = value.type.strip_typedefs()
         if ty.is_string_like:
-            result = NoOpScalarPrinter(value)
+            result = NoOpStringPrinter(ty, value)
         elif ty.code == gdb.TYPE_CODE_ARRAY:
             result = NoOpArrayPrinter(ty, value)
         elif ty.is_array_like:

@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DARWIN_NAT_H
-#define DARWIN_NAT_H
+#ifndef GDB_DARWIN_NAT_H
+#define GDB_DARWIN_NAT_H
 
 #include "inf-child.h"
 #include <mach/mach.h>
@@ -210,4 +210,4 @@ void darwin_set_sstep (thread_t thread, int enable);
 
 void darwin_check_osabi (darwin_inferior *inf, thread_t thread);
 
-#endif /* DARWIN_NAT_H */
+#endif /* GDB_DARWIN_NAT_H */

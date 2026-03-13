@@ -222,6 +222,27 @@ extract_string_maybe_quoted (const char **arg)
   return result;
 }
 
+/* See gdbsupport/common-utils.h.  */
+
+std::string
+make_quoted_string (const char *str)
+{
+  gdb_assert (str != nullptr);
+
+  std::string result;
+
+  for (; *str != '\0'; ++str)
+    {
+      const char ch = *str;
+
+      if (strchr ("\"' \t\n", ch) != nullptr)
+       result.push_back ('\\');
+      result.push_back (ch);
+    }
+
+  return result;
+}
+
 /* The bit offset of the highest byte in a ULONGEST, for overflow
    checking.  */
 

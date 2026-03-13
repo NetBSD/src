@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_RISCV_LINUX_TDESC_H
-#define NAT_RISCV_LINUX_TDESC_H
+#ifndef GDB_NAT_RISCV_LINUX_TDESC_H
+#define GDB_NAT_RISCV_LINUX_TDESC_H
 
 #include "arch/riscv.h"
 
@@ -25,4 +25,4 @@
    corresponding features object.  */
 struct riscv_gdbarch_features riscv_linux_read_features (int tid);
 
-#endif /* NAT_RISCV_LINUX_TDESC_H */
+#endif /* GDB_NAT_RISCV_LINUX_TDESC_H */

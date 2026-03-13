@@ -207,7 +207,7 @@ bppy_set_enabled (PyObject *self, PyObject *newvalue, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return 0;
@@ -394,7 +394,7 @@ bppy_set_task (PyObject *self, PyObject *newvalue, void *closure)
 	}
       catch (const gdb_exception &except)
 	{
-	  GDB_PY_SET_HANDLE_EXCEPTION (except);
+	  return gdbpy_handle_gdb_exception (-1, except);
 	}
 
       if (! valid_id)
@@ -443,7 +443,7 @@ bppy_delete_breakpoint (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -484,7 +484,7 @@ bppy_set_ignore_count (PyObject *self, PyObject *newvalue, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return 0;
@@ -611,9 +611,9 @@ bppy_set_condition (PyObject *self, PyObject *newvalue, void *closure)
     {
       set_breakpoint_condition (self_bp->bp, exp, 0, false);
     }
-  catch (gdb_exception &ex)
+  catch (const gdb_exception &ex)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (ex);
+      return gdbpy_handle_gdb_exception (-1, ex);
     }
 
   return 0;
@@ -640,8 +640,7 @@ bppy_get_commands (PyObject *self, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return NULL;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return host_string_to_python_string (stb.c_str ()).release ();
@@ -677,9 +676,9 @@ bppy_set_commands (PyObject *self, PyObject *newvalue, void *closure)
       counted_command_line lines = read_command_lines_1 (reader, 1, nullptr);
       breakpoint_set_commands (self_bp->bp, std::move (lines));
     }
-  catch (gdb_exception &ex)
+  catch (const gdb_exception &ex)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (ex);
+      return gdbpy_handle_gdb_exception (-1, ex);
     }
 
   return 0;
@@ -928,14 +927,14 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
   char *label = NULL;
   char *source = NULL;
   char *function = NULL;
-  PyObject * qualified = NULL;
+  PyObject *qualified = Py_False;
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "|siiOOsssOO", keywords,
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kwargs, "|siiOOsssOO!", keywords,
 					&spec, &type, &access_type,
 					&internal,
 					&temporary, &source,
 					&function, &label, &lineobj,
-					&qualified))
+					&PyBool_Type, &qualified))
     return -1;
 
 
@@ -983,10 +982,11 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
 	case bp_hardware_breakpoint:
 	  {
 	    location_spec_up locspec;
+	    gdb_assert (PyBool_Check (qualified));
 	    symbol_name_match_type func_name_match_type
-	      = (qualified != NULL && PyObject_IsTrue (qualified)
-		  ? symbol_name_match_type::FULL
-		  : symbol_name_match_type::WILD);
+	      = (qualified == Py_True
+		 ? symbol_name_match_type::FULL
+		 : symbol_name_match_type::WILD);
 
 	    if (spec != NULL)
 	      {
@@ -1055,8 +1055,7 @@ bppy_init (PyObject *self, PyObject *args, PyObject *kwargs)
   catch (const gdb_exception &except)
     {
       bppy_pending_object = NULL;
-      gdbpy_convert_exception (except);
-      return -1;
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   BPPY_SET_REQUIRE_VALID ((gdbpy_breakpoint_object *) self);
@@ -1116,7 +1115,7 @@ gdbpy_breakpoint_init_breakpoint_type ()
   if (breakpoint_object_type.tp_new == nullptr)
     {
       breakpoint_object_type.tp_new = PyType_GenericNew;
-      if (PyType_Ready (&breakpoint_object_type) < 0)
+      if (gdbpy_type_ready (&breakpoint_object_type) < 0)
 	{
 	  /* Reset tp_new back to nullptr so future calls to this function
 	     will try calling PyType_Ready again.  */
@@ -1174,7 +1173,7 @@ gdbpy_breakpoint_cond_says_stop (const struct extension_language_defn *extlang,
 
   if (PyObject_HasAttrString (py_bp, stop_func))
     {
-      gdbpy_ref<> result (PyObject_CallMethod (py_bp, stop_func, NULL));
+      gdbpy_ref<> result = gdbpy_call_method (py_bp, stop_func);
 
       stop = 1;
       if (result != NULL)
@@ -1361,10 +1360,6 @@ gdbpy_initialize_breakpoints (void)
   if (!gdbpy_breakpoint_init_breakpoint_type ())
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "Breakpoint",
-			      (PyObject *) &breakpoint_object_type) < 0)
-    return -1;
-
   gdb::observers::breakpoint_created.attach (gdbpy_breakpoint_created,
 					     "py-breakpoint");
   gdb::observers::breakpoint_deleted.attach (gdbpy_breakpoint_deleted,
@@ -1396,14 +1391,7 @@ gdbpy_initialize_breakpoints (void)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_breakpoint_locations ()
 {
-  if (PyType_Ready (&breakpoint_location_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "BreakpointLocation",
-			      (PyObject *) &breakpoint_location_object_type)
-      < 0)
-    return -1;
-  return 0;
+  return gdbpy_type_ready (&breakpoint_location_object_type);
 }
 
 
@@ -1597,7 +1585,7 @@ bplocpy_set_enabled (PyObject *py_self, PyObject *newvalue, void *closure)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_SET_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (-1, except);
     }
   return 0;
 }
@@ -1702,7 +1690,7 @@ bplocpy_get_thread_groups (PyObject *py_self, void *closure)
 	  gdbpy_ref<> num = gdb_py_object_from_ulongest (inf->num);
 	  if (num == nullptr)
 	    return nullptr;
-	  if (PyList_Append (list.get (), num.release ()) != 0)
+	  if (PyList_Append (list.get (), num.get ()) != 0)
 	    return nullptr;
 	}
     }
@@ -1716,10 +1704,10 @@ bplocpy_get_fullname (PyObject *py_self, void *closure)
   BPPY_REQUIRE_VALID (self->owner);
   BPLOCPY_REQUIRE_VALID (self->owner, self);
   const auto symtab = self->bp_loc->symtab;
-  if (symtab != nullptr && symtab->fullname != nullptr)
+  if (symtab != nullptr && symtab->fullname () != nullptr)
     {
       gdbpy_ref<> fullname
-	= host_string_to_python_string (symtab->fullname);
+	= host_string_to_python_string (symtab->fullname ());
       return fullname.release ();
     }
   Py_RETURN_NONE;

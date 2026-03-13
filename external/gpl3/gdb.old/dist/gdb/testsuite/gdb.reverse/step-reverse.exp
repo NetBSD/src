@@ -114,7 +114,7 @@ gdb_test_multiple "stepi" "$test_message" {
     }
 }
 
-# stepi thru return of a function call
+# stepi through return of a function call
 
 set test_message "stepi back from function call"
 gdb_test_multiple "stepi" "$test_message" {
@@ -145,10 +145,10 @@ gdb_test_multiple "stepi" "$test_message" {
 # Set reverse execution direction
 gdb_test_no_output "set exec-dir reverse" "set reverse execution"
 
-# stepi backward thru return and into a function
+# stepi backward through return and into a function
 
 set stepi_location  [gdb_get_line_number "ARRIVED IN CALLEE" "$srcfile"]
-set test_message "reverse stepi thru function return"
+set test_message "reverse stepi through function return"
 gdb_test_multiple "stepi" "$test_message" {
     -re "NEXTI TEST.*$gdb_prompt $" {
 	fail "$test_message (start statement)"
@@ -230,12 +230,12 @@ gdb_test_multiple "stepi" "$test_message" {
     }
 }
 
-# step backward into function (thru return)
+# step backward into function (through return)
 
 gdb_test "step" "(RETURN FROM CALLEE|ARRIVED IN CALLEE).*" \
     "reverse step into fn call"
 
-# step backward out of called function (thru call)
+# step backward out of called function (through call)
 
 set test_message "reverse step out of called fn"
 gdb_test_multiple "step" "$test_message" {

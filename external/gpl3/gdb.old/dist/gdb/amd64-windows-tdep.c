@@ -205,14 +205,16 @@ static void
 amd64_windows_store_arg_in_reg (struct regcache *regcache,
 				struct value *arg, int regno)
 {
-  struct type *type = arg->type ();
-  const gdb_byte *valbuf = arg->contents ().data ();
-  gdb_byte buf[8];
+  gdb::array_view<const gdb_byte> valbuf = arg->contents ();
+  /* We only set 8 bytes, buf if it's a XMM register, 16 bytes are read.  */
+  std::array<gdb_byte, 16> buf {};
 
-  gdb_assert (type->length () <= 8);
-  memset (buf, 0, sizeof buf);
-  memcpy (buf, valbuf, std::min (type->length (), (ULONGEST) 8));
-  regcache->cooked_write (regno, buf);
+  gdb_assert (valbuf.size () <= 8);
+  std::copy (valbuf.begin (), valbuf.end (), buf.begin ());
+  size_t reg_size = regcache_register_size (regcache, regno);
+  gdb_assert (reg_size <= buf.size ());
+  gdb::array_view<gdb_byte> view (buf);
+  regcache->cooked_write (regno, view.slice (0, reg_size));
 }
 
 /* Push the arguments for an inferior function call, and return
@@ -238,6 +240,7 @@ amd64_windows_push_arguments (struct regcache *regcache, int nargs,
      These arguments are replaced by pointers to a copy we are making
      in inferior memory.  So use a copy of the ARGS table, to avoid
      modifying the original one.  */
+  if (nargs > 0)
   {
     struct value **args1 = XALLOCAVEC (struct value *, nargs);
 
@@ -315,7 +318,7 @@ amd64_windows_push_dummy_call
    function_call_return_method return_method, CORE_ADDR struct_addr)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-  gdb_byte buf[8];
+  std::array<gdb_byte, 8> buf;
 
   /* Pass arguments.  */
   sp = amd64_windows_push_arguments (regcache, nargs, args, sp,
@@ -324,11 +327,11 @@ amd64_windows_push_dummy_call
   /* Pass "hidden" argument".  */
   if (return_method == return_method_struct)
     {
-      /* The "hidden" argument is passed throught the first argument
+      /* The "hidden" argument is passed through the first argument
 	 register.  */
       const int arg_regnum = amd64_windows_dummy_call_integer_regs[0];
 
-      store_unsigned_integer (buf, 8, byte_order, struct_addr);
+      store_unsigned_integer (buf, byte_order, struct_addr);
       regcache->cooked_write (arg_regnum, buf);
     }
 
@@ -338,11 +341,11 @@ amd64_windows_push_dummy_call
 
   /* Store return address.  */
   sp -= 8;
-  store_unsigned_integer (buf, 8, byte_order, bp_addr);
-  write_memory (sp, buf, 8);
+  store_unsigned_integer (buf, byte_order, bp_addr);
+  write_memory (sp, buf.data (), buf.size ());
 
   /* Update the stack pointer...  */
-  store_unsigned_integer (buf, 8, byte_order, sp);
+  store_unsigned_integer (buf, byte_order, sp);
   regcache->cooked_write (AMD64_RSP_REGNUM, buf);
 
   /* ...and fake a frame pointer.  */
@@ -431,15 +434,14 @@ amd64_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
   target_read_memory (pc, &op, 1);
   if (op == 0xe8)
     {
-      gdb_byte buf[4];
+      std::array<gdb_byte, 4> buf;
 
-      if (target_read_memory (pc + 1, buf, sizeof buf) == 0)
+      if (target_read_memory (pc + 1, buf.data (), buf.size ()) == 0)
 	{
-	  struct bound_minimal_symbol s;
 	  CORE_ADDR call_dest;
 
-	  call_dest = pc + 5 + extract_signed_integer (buf, 4, byte_order);
-	  s = lookup_minimal_symbol_by_pc (call_dest);
+	  call_dest = pc + 5 + extract_signed_integer (buf, byte_order);
+	  bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 	  if (s.minsym != NULL
 	      && s.minsym->linkage_name () != NULL
 	      && strcmp (s.minsym->linkage_name (), "__main") == 0)
@@ -616,12 +618,12 @@ amd64_windows_frame_decode_epilogue (const frame_info_ptr &this_frame,
     case 0xec:
       {
 	/* jmp rel32  */
-	gdb_byte rel32[4];
+	std::array<gdb_byte, 4> rel32;
 	CORE_ADDR npc;
 
-	if (target_read_memory (pc + 1, rel32, 4) != 0)
+	if (target_read_memory (pc + 1, rel32.data (), rel32.size ()) != 0)
 	  return -1;
-	npc = pc + 5 + extract_signed_integer (rel32, 4, byte_order);
+	npc = pc + 5 + extract_signed_integer (rel32, byte_order);
 
 	/* If the jump is within the function, then this is not a marker,
 	   otherwise this is a tail-call.  */
@@ -631,13 +633,13 @@ amd64_windows_frame_decode_epilogue (const frame_info_ptr &this_frame,
     case 0xc2:
       {
 	/* ret n  */
-	gdb_byte imm16[2];
+	std::array<gdb_byte, 2> imm16;
 
-	if (target_read_memory (pc + 1, imm16, 2) != 0)
+	if (target_read_memory (pc + 1, imm16.data (), imm16.size ()) != 0)
 	  return -1;
 	cache->prev_rip_addr = cur_sp;
 	cache->prev_sp = cur_sp
-	  + extract_unsigned_integer (imm16, 4, byte_order);
+	  + extract_unsigned_integer (imm16, byte_order);
 	return 1;
       }
 
@@ -796,11 +798,11 @@ amd64_windows_frame_decode_insns (const frame_info_ptr &this_frame,
 	  /* According to msdn:
 	     If an FP reg is used, then any unwind code taking an offset must
 	     only be used after the FP reg is established in the prolog.  */
-	  gdb_byte buf[8];
+	  std::array<gdb_byte, 8> buf;
 	  int frreg = amd64_windows_w2gdb_regnum[frame_reg];
 
-	  get_frame_register (this_frame, frreg, buf);
-	  save_addr = extract_unsigned_integer (buf, 8, byte_order);
+	  get_frame_register (this_frame, frreg, buf.data ());
+	  save_addr = extract_unsigned_integer (buf, byte_order);
 
 	  frame_debug_printf ("   frame_reg=%s, val=%s",
 			      gdbarch_register_name (gdbarch, frreg),
@@ -1083,7 +1085,7 @@ amd64_windows_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   struct amd64_windows_frame_cache *cache;
-  gdb_byte buf[8];
+  std::array<gdb_byte, 8> buf;
   CORE_ADDR pc;
   CORE_ADDR unwind_info = 0;
 
@@ -1095,8 +1097,8 @@ amd64_windows_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 
   /* Get current PC and SP.  */
   pc = get_frame_pc (this_frame);
-  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
-  cache->sp = extract_unsigned_integer (buf, 8, byte_order);
+  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf.data ());
+  cache->sp = extract_unsigned_integer (buf, byte_order);
   cache->pc = pc;
 
   /* If we can't find the unwind info, keep trying as though this is a

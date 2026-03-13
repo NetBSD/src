@@ -139,14 +139,14 @@ gdb_test "list commonfun" "from hello.*" "list commonfun in hello"
 
 gdb_test "print hglob" "1"
 
-gdb_test "print glob" "92" "print glob (${exec1})"
+gdb_test "print glob" "92" "print glob, ${exec1}"
 
 
 gdb_test "inferior 3" ".*" "switch to inferior 3 to print globals"
 
 gdb_test "print gglob" "2"
 
-gdb_test "print glob" "45" "print glob (${exec3})"
+gdb_test "print glob" "45" "print glob, ${exec3}"
 
 gdb_test "list commonfun" "from goodbye.*" "list commonfun in goodbye"
 

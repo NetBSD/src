@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INFERIOR_ITER_H
-#define INFERIOR_ITER_H
+#ifndef GDB_INFERIOR_ITER_H
+#define GDB_INFERIOR_ITER_H
 
 #include "gdbsupport/filtered-iterator.h"
 #include "gdbsupport/safe-iterator.h"
@@ -132,4 +132,4 @@ using all_inferiors_safe_iterator
 
 using all_inferiors_safe_range = iterator_range<all_inferiors_safe_iterator>;
 
-#endif /* !defined (INFERIOR_ITER_H) */
+#endif /* GDB_INFERIOR_ITER_H */

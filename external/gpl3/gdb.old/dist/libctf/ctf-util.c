@@ -262,6 +262,8 @@ ctf_next_destroy (ctf_next_t *i)
     free (i->u.ctn_sorted_hkv);
   if (i->ctn_next)
     ctf_next_destroy (i->ctn_next);
+  if (i->ctn_next_inner)
+    ctf_next_destroy (i->ctn_next_inner);
   free (i);
 }
 
@@ -276,16 +278,35 @@ ctf_next_copy (ctf_next_t *i)
     return NULL;
   memcpy (i2, i, sizeof (struct ctf_next));
 
+  if (i2->ctn_next)
+    {
+      i2->ctn_next = ctf_next_copy (i2->ctn_next);
+      if (i2->ctn_next == NULL)
+	goto err_next;
+    }
+
+  if (i2->ctn_next_inner)
+    {
+      i2->ctn_next_inner = ctf_next_copy (i2->ctn_next_inner);
+      if (i2->ctn_next_inner == NULL)
+	goto err_next_inner;
+    }
+
   if (i2->ctn_iter_fun == (void (*) (void)) ctf_dynhash_next_sorted)
     {
       size_t els = ctf_dynhash_elements ((ctf_dynhash_t *) i->cu.ctn_h);
       if ((i2->u.ctn_sorted_hkv = calloc (els, sizeof (ctf_next_hkv_t))) == NULL)
-	{
-	  free (i2);
-	  return NULL;
-	}
+	goto err_sorted_hkv;
       memcpy (i2->u.ctn_sorted_hkv, i->u.ctn_sorted_hkv,
 	      els * sizeof (ctf_next_hkv_t));
     }
   return i2;
+
+ err_sorted_hkv:
+  ctf_next_destroy (i2->ctn_next_inner);
+ err_next_inner:
+  ctf_next_destroy (i2->ctn_next);
+ err_next:
+  ctf_next_destroy (i2);
+  return NULL;
 }

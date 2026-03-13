@@ -114,7 +114,7 @@ test_invalid_filename ()
 
   try {
       ::scoped_mmap m = ::mmap_file ("/this/file/should/not/exist");
-  } catch (gdb_exception &e) {
+  } catch (const gdb_exception &e) {
       threw = true;
   }
 

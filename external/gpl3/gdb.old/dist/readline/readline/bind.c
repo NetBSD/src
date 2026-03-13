@@ -1,6 +1,6 @@
 /* bind.c -- key binding and startup file support for the readline library. */
 
-/* Copyright (C) 1987-2020 Free Software Foundation, Inc.
+/* Copyright (C) 1987-2022 Free Software Foundation, Inc.
 
    This file is part of the GNU Readline Library (Readline), a library
    for reading lines of text with interactive input and history editing.
@@ -72,7 +72,7 @@ extern char *strchr (), *strrchr ();
 /* Variables exported by this file. */
 Keymap rl_binding_keymap;
 
-static int _rl_skip_to_delim PARAMS((char *, int, int));
+static int _rl_skip_to_delim (char *, int, int);
 
 #if defined (USE_VARARGS) && defined (PREFER_STDARG)
 static void _rl_init_file_error (const char *, ...)  __attribute__((__format__ (printf, 1, 2)));
@@ -80,23 +80,23 @@ static void _rl_init_file_error (const char *, ...)  __attribute__((__format__ (
 static void _rl_init_file_error ();
 #endif
 
-static rl_command_func_t *_rl_function_of_keyseq_internal PARAMS((const char *, size_t, Keymap, int *));
+static rl_command_func_t *_rl_function_of_keyseq_internal (const char *, size_t, Keymap, int *);
 
-static char *_rl_read_file PARAMS((char *, size_t *));
-static int _rl_read_init_file PARAMS((const char *, int));
-static int glean_key_from_name PARAMS((char *));
+static char *_rl_read_file (char *, size_t *);
+static int _rl_read_init_file (const char *, int);
+static int glean_key_from_name (char *);
 
-static int find_boolean_var PARAMS((const char *));
-static int find_string_var PARAMS((const char *));
+static int find_boolean_var (const char *);
+static int find_string_var (const char *);
 
-static const char *boolean_varname PARAMS((int));
-static const char *string_varname PARAMS((int));
+static const char *boolean_varname (int);
+static const char *string_varname (int);
 
-static char *_rl_get_string_variable_value PARAMS((const char *));
-static int substring_member_of_array PARAMS((const char *, const char * const *));
+static char *_rl_get_string_variable_value (const char *);
+static int substring_member_of_array (const char *, const char * const *);
 
-static int _rl_get_keymap_by_name PARAMS((const char *));
-static int _rl_get_keymap_by_map PARAMS((Keymap));
+static int _rl_get_keymap_by_name (const char *);
+static int _rl_get_keymap_by_map (Keymap);
 
 static int currently_reading_init_file;
 
@@ -880,6 +880,85 @@ rl_function_of_keyseq_len (const char *keyseq, size_t len, Keymap map, int *type
   return _rl_function_of_keyseq_internal (keyseq, len, map, type);
 }
 
+/* Assuming there is a numeric argument at the beginning of KEYSEQ (the
+   caller is responsible for checking), return the index of the portion of
+   the key sequence following the numeric argument. If there's no numeric
+   argument (?), or if KEYSEQ consists solely of a numeric argument (?),
+   return -1. */
+int
+rl_trim_arg_from_keyseq	(const char *keyseq, size_t len, Keymap map)
+{
+  register int i, j, parsing_digits;
+  unsigned char ic;
+  Keymap map0;
+
+  if (map == 0)
+    map = _rl_keymap;
+  map0 = map;
+
+  /* The digits following the initial one (e.g., the binding to digit-argument)
+    or the optional `-' in a binding to digit-argument or universal-argument
+    are not added to rl_executing_keyseq. This is basically everything read by
+    rl_digit_loop. The parsing_digits logic is here in case they ever are. */
+  for (i = j = parsing_digits = 0; keyseq && i < len; i++)
+    {
+      ic = keyseq[i];
+
+      if (parsing_digits)
+	{
+	  if (_rl_digit_p (ic))
+	    {
+	      j = i + 1;
+	      continue;
+	    }
+	  parsing_digits = 0;
+	}
+
+      if (map[ic].type == ISKMAP)
+	{
+	  if (i + 1 == len)
+	    return -1;
+	  map = FUNCTION_TO_KEYMAP (map, ic);
+	  continue;
+	}
+      if (map[ic].type == ISFUNC)
+	{
+#if defined (VI_MODE)
+	  if (map[ic].function != rl_digit_argument && map[ic].function != rl_universal_argument && map[ic].function != rl_vi_arg_digit)
+#else
+	  if (map[ic].function != rl_digit_argument && map[ic].function != rl_universal_argument)
+#endif
+	    return (j);
+
+	  /* We don't bother with a keyseq that is only a numeric argument */
+	  if (i + 1 == len)
+	    return -1;
+
+	  parsing_digits = 1;
+
+	  /* This logic should be identical to rl_digit_loop */
+	  /* We accept M-- as equivalent to M--1, C-u- as equivalent to C-u-1
+	     but set parsing_digits to 2 to note that we saw `-' */
+	  if (map[ic].function == rl_universal_argument && (i + 1 == '-'))
+	    {
+	      i++;
+	      parsing_digits = 2;
+	    }
+	  if (map[ic].function == rl_digit_argument && ic == '-')
+	    {
+	      parsing_digits = 2;
+	    }
+
+	  map = map0;
+	  j = i + 1;
+	}
+    }
+
+  /* If we're still parsing digits by the time we get here, we don't allow a
+     key sequence that consists solely of a numeric argument */
+  return -1;
+}
+  
 /* The last key bindings file read. */
 static char *last_readline_init_file = (char *)NULL;
 
@@ -899,11 +978,20 @@ _rl_read_file (char *filename, size_t *sizep)
   char *buffer;
   int i, file;
 
-  file = -1;
-  if (((file = open (filename, O_RDONLY, 0666)) < 0) || (fstat (file, &finfo) < 0))
+  file = open (filename, O_RDONLY, 0666);
+  /* If the open is interrupted, retry once */
+  if (file < 0 && errno == EINTR)
     {
+      RL_CHECK_SIGNALS ();
+      file = open (filename, O_RDONLY, 0666);
+    }
+  
+  if ((file < 0) || (fstat (file, &finfo) < 0))
+    {
+      i = errno;
       if (file >= 0)
 	close (file);
+      errno = i;
       return ((char *)NULL);
     }
 
@@ -912,10 +1000,13 @@ _rl_read_file (char *filename, size_t *sizep)
   /* check for overflow on very large files */
   if (file_size != finfo.st_size || file_size + 1 < file_size)
     {
+      i = errno;
       if (file >= 0)
 	close (file);
 #if defined (EFBIG)
       errno = EFBIG;
+#else
+      errno = i;
 #endif
       return ((char *)NULL);
     }
@@ -1088,9 +1179,7 @@ _rl_init_file_error (va_alist)
 /* **************************************************************** */
 
 static int
-parse_comparison_op (s, indp)
-     const char *s;
-     int *indp;
+parse_comparison_op (const char *s, int *indp)
 {
   int i, peekc, op;
 
@@ -1143,7 +1232,7 @@ parse_comparison_op (s, indp)
 /*								    */
 /* **************************************************************** */
 
-typedef int _rl_parser_func_t PARAMS((char *));
+typedef int _rl_parser_func_t (char *);
 
 /* Things that mean `Control'. */
 const char * const _rl_possible_control_prefixes[] = {
@@ -1153,6 +1242,12 @@ const char * const _rl_possible_control_prefixes[] = {
 const char * const _rl_possible_meta_prefixes[] = {
   "Meta", "M-", (const char *)NULL
 };
+
+/* Forward declarations */
+static int parser_if (char *);
+static int parser_else (char *);
+static int parser_endif (char *);
+static int parser_include (char *);
 
 /* Conditionals. */
 
@@ -1234,7 +1329,7 @@ parser_if (char *args)
 #endif /* VI_MODE */
   else if (_rl_strnicmp (args, "version", 7) == 0)
     {
-      int rlversion, versionarg, op, previ, major, minor;
+      int rlversion, versionarg, op, previ, major, minor, opresult;
 
       _rl_parsing_conditionalized_out = 1;
       rlversion = RL_VERSION_MAJOR*10 + RL_VERSION_MINOR;
@@ -1294,24 +1389,25 @@ parser_if (char *args)
       switch (op)
 	{
 	case OP_EQ:
-	  _rl_parsing_conditionalized_out = rlversion == versionarg;
+ 	  opresult = rlversion == versionarg;
 	  break;
 	case OP_NE:
-	  _rl_parsing_conditionalized_out = rlversion != versionarg;
+	  opresult = rlversion != versionarg;
 	  break;
 	case OP_GT:
-	  _rl_parsing_conditionalized_out = rlversion > versionarg;
+	  opresult = rlversion > versionarg;
 	  break;
 	case OP_GE:
-	  _rl_parsing_conditionalized_out = rlversion >= versionarg;
+	  opresult = rlversion >= versionarg;
 	  break;
 	case OP_LT:
-	  _rl_parsing_conditionalized_out = rlversion < versionarg;
+	  opresult = rlversion < versionarg;
 	  break;
 	case OP_LE:
-	  _rl_parsing_conditionalized_out = rlversion <= versionarg;
+	  opresult = rlversion <= versionarg;
 	  break;
 	}
+      _rl_parsing_conditionalized_out = 1 - opresult;
     }
   /* Check to see if the first word in ARGS is the same as the
      value stored in rl_readline_name. */
@@ -1812,6 +1908,7 @@ static const struct {
   { "convert-meta",		&_rl_convert_meta_chars_to_ascii, 0 },
   { "disable-completion",	&rl_inhibit_completion,		0 },
   { "echo-control-characters",	&_rl_echo_control_chars,	0 },
+  { "enable-active-region",	&_rl_enable_active_region,	0 },
   { "enable-bracketed-paste",	&_rl_enable_bracketed_paste,	V_SPECIAL },
   { "enable-keypad",		&_rl_enable_keypad,		0 },
   { "enable-meta-key",		&_rl_enable_meta,		0 },
@@ -1882,7 +1979,7 @@ hack_special_boolean_var (int i)
     _rl_enable_active_region = _rl_enable_bracketed_paste;
 }
 
-typedef int _rl_sv_func_t PARAMS((const char *));
+typedef int _rl_sv_func_t (const char *);
 
 /* These *must* correspond to the array indices for the appropriate
    string variable.  (Though they're not used right now.) */
@@ -1896,25 +1993,29 @@ typedef int _rl_sv_func_t PARAMS((const char *));
 #define V_INT		2
 
 /* Forward declarations */
-static int sv_bell_style PARAMS((const char *));
-static int sv_combegin PARAMS((const char *));
-static int sv_dispprefix PARAMS((const char *));
-static int sv_compquery PARAMS((const char *));
-static int sv_compwidth PARAMS((const char *));
-static int sv_editmode PARAMS((const char *));
-static int sv_emacs_modestr PARAMS((const char *));
-static int sv_histsize PARAMS((const char *));
-static int sv_isrchterm PARAMS((const char *));
-static int sv_keymap PARAMS((const char *));
-static int sv_seqtimeout PARAMS((const char *));
-static int sv_viins_modestr PARAMS((const char *));
-static int sv_vicmd_modestr PARAMS((const char *));
+static int sv_region_start_color (const char *);
+static int sv_region_end_color (const char *);
+static int sv_bell_style (const char *);
+static int sv_combegin (const char *);
+static int sv_dispprefix (const char *);
+static int sv_compquery (const char *);
+static int sv_compwidth (const char *);
+static int sv_editmode (const char *);
+static int sv_emacs_modestr (const char *);
+static int sv_histsize (const char *);
+static int sv_isrchterm (const char *);
+static int sv_keymap (const char *);
+static int sv_seqtimeout (const char *);
+static int sv_viins_modestr (const char *);
+static int sv_vicmd_modestr (const char *);
 
 static const struct {
   const char * const name;
   int flags;
   _rl_sv_func_t *set_func;
 } string_varlist[] = {
+  { "active-region-end-color", V_STRING, sv_region_end_color },
+  { "active-region-start-color", V_STRING, sv_region_start_color },
   { "bell-style",	V_STRING,	sv_bell_style },
   { "comment-begin",	V_STRING,	sv_combegin },
   { "completion-display-width", V_INT,	sv_compwidth },
@@ -2131,6 +2232,18 @@ sv_seqtimeout (const char *value)
     }
   _rl_keyseq_timeout = nval;
   return 0;
+}
+
+static int
+sv_region_start_color (const char *value)
+{
+  return (_rl_reset_region_color (0, value));
+}
+
+static int
+sv_region_end_color (const char *value)
+{
+  return (_rl_reset_region_color (1, value));
 }
 
 static int
@@ -2545,6 +2658,15 @@ _rl_get_keyname (int key)
       keyname[i++] = '2';
       c -= 128;
       keyname[i++] = (c / 8) + '0';
+      c = (c % 8) + '0';
+    }
+  /* These characters are valid UTF-8; convert them into octal escape
+     sequences as well. This changes C. */
+  else if (c >= 160)
+    {
+      keyname[i++] = '\\';
+      keyname[i++] = '0' + ((((unsigned char)c) >> 6) & 0x07);
+      keyname[i++] = '0' + ((((unsigned char)c) >> 3) & 0x07);
       c = (c % 8) + '0';
     }
 

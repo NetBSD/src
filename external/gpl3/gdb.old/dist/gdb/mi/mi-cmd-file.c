@@ -35,7 +35,6 @@ void
 mi_cmd_file_list_exec_source_file (const char *command,
 				   const char *const *argv, int argc)
 {
-  struct symtab_and_line st;
   struct ui_out *uiout = current_uiout;
   
   if (!mi_valid_noargs ("-file-list-exec-source-file", argc, argv))
@@ -43,7 +42,8 @@ mi_cmd_file_list_exec_source_file (const char *command,
 
   /* Set the default file and line, also get them.  */
   set_default_source_symtab_and_line ();
-  st = get_current_source_symtab_and_line ();
+  symtab_and_line st
+    = get_current_source_symtab_and_line (current_program_space);
 
   /* We should always get a symtab.  Apparently, filename does not
      need to be tested for NULL.  The documentation in symtab.h

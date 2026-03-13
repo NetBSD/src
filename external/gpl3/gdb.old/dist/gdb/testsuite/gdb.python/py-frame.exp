@@ -127,10 +127,10 @@ gdb_test "python print (f1 == gdb.newest_frame())" False \
 gdb_test "python print (bframe == gdb.newest_frame())" True \
     "newest frame -vs- newest frame"
 
-gdb_test "python print ('result = %s' % (f0 == f1))" " = False" "test equality comparison (false)"
-gdb_test "python print ('result = %s' % (f0 == f0))" " = True" "test equality comparison (true)"
-gdb_test "python print ('result = %s' % (f0 != f1))" " = True" "test inequality comparison (true)"
-gdb_test "python print ('result = %s' % (f0 != f0))" " = False" "test inequality comparison (false)"
+gdb_test "python print ('result = %s' % (f0 == f1))" " = False" "test equality comparison, false"
+gdb_test "python print ('result = %s' % (f0 == f0))" " = True" "test equality comparison, true"
+gdb_test "python print ('result = %s' % (f0 != f1))" " = True" "test inequality comparison, true"
+gdb_test "python print ('result = %s' % (f0 != f0))" " = False" "test inequality comparison, false"
 gdb_test "python print ('result = %s' % f0.is_valid ())" " = True" "test Frame.is_valid"
 gdb_test "python print ('result = %s' % f0.name ())" " = f2" "test Frame.name"
 gdb_test "python print ('result = %s' % (f0.type () == gdb.NORMAL_FRAME))" " = True" "test Frame.type"

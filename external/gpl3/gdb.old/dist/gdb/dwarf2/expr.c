@@ -1593,8 +1593,9 @@ dwarf_expr_context::execute_stack_op (const gdb_byte *op_ptr,
 					     uoffset)));
 	  result_val = value_from_ulongest (address_type, result);
 	  break;
+	case DW_OP_constx:
 	case DW_OP_GNU_const_index:
-	  ensure_have_per_cu (this->m_per_cu, "DW_OP_GNU_const_index");
+	  ensure_have_per_cu (this->m_per_cu, "DW_OP_constx");
 
 	  op_ptr = safe_read_uleb128 (op_ptr, op_end, &uoffset);
 	  result = (ULONGEST) dwarf2_read_addr_index (this->m_per_cu,

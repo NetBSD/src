@@ -15,11 +15,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMPILE_COMPILE_H
-#define COMPILE_COMPILE_H
+#ifndef GDB_COMPILE_COMPILE_H
+#define GDB_COMPILE_COMPILE_H
 
 #include "gcc-c-interface.h"
-#include "gdbsupport/gdb-hashtab.h"
+#include "gdbsupport/unordered_map.h"
 
 struct ui_file;
 struct gdbarch;
@@ -61,7 +61,10 @@ enum compile_i_scope_types
 class compile_instance
 {
 public:
-  compile_instance (struct gcc_base_context *gcc_fe, const char *options);
+  compile_instance (struct gcc_base_context *gcc_fe, const char *options)
+    : m_gcc_fe (gcc_fe),
+      m_gcc_target_options (options)
+  {}
 
   virtual ~compile_instance ()
   {
@@ -163,10 +166,10 @@ protected:
   std::string m_gcc_target_options;
 
   /* Map from gdb types to gcc types.  */
-  htab_up m_type_map;
+  gdb::unordered_map<type *, gcc_type> m_type_map;
 
   /* Map from gdb symbols to gcc error messages to emit.  */
-  htab_up m_symbol_err_map;
+  gdb::unordered_map<const symbol *, std::string> m_symbol_err_map;
 };
 
 /* Public function that is called from compile_control case in the
@@ -259,4 +262,4 @@ extern void compile_print_value (struct value *val, void *data_voidp);
 /* Command element for the 'compile' command.  */
 extern cmd_list_element *compile_cmd_element;
 
-#endif /* COMPILE_COMPILE_H */
+#endif /* GDB_COMPILE_COMPILE_H */

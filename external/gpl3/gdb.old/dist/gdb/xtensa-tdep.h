@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef XTENSA_TDEP_H
-#define XTENSA_TDEP_H
+#ifndef GDB_XTENSA_TDEP_H
+#define GDB_XTENSA_TDEP_H
 
 #include "arch/xtensa.h"
 #include "gdbarch.h"
@@ -249,4 +249,4 @@ struct xtensa_gdbarch_tdep : gdbarch_tdep_base
    data structure to their corresponding register in the AR register 
    file (see xtensa-tdep.c).  */
 
-#endif /* XTENSA_TDEP_H */
+#endif /* GDB_XTENSA_TDEP_H */

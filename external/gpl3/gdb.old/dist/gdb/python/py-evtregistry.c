@@ -104,11 +104,7 @@ evregpy_dealloc (PyObject *self)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_eventregistry (void)
 {
-  if (PyType_Ready (&eventregistry_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "EventRegistry",
-				 (PyObject *) &eventregistry_object_type);
+  return gdbpy_type_ready (&eventregistry_object_type);
 }
 
 /* Return the number of listeners currently connected to this

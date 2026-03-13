@@ -97,7 +97,7 @@ do_uart_tx_event (struct hw *me, void *data)
       hw_port_event (me, INT_PORT, 1);
     }
 
-  /* Indicate which interrupt has occured.  */
+  /* Indicate which interrupt has occurred.  */
   uart->iir = MICOUART_IIR_TXRDY;
 
   /* Indicate THR is empty.  */

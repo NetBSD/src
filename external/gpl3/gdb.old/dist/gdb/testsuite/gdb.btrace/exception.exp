@@ -64,17 +64,14 @@ gdb_expect_list "flat" "\r\n$gdb_prompt $" [list \
   ]
 
 # show the branch trace with calls indented
-send_gdb "record function-call-history /c 1\n"
-gdb_expect_list "indented" "\r\n$gdb_prompt $" [list \
-  [multi_line \
-    "1\tmain\\(\\)" \
-    "2\t  test\\(\\)" \
-    "3\t    foo\\(\\)" \
-    "4\t      bar\\(\\)" \
-    "5\t        bad\\(\\)\r" \
-  ] "" \
-  [multi_line \
-    "\[0-9\]*\t  test\\(\\)" \
-    "\[0-9\]*\tmain\\(\\)" \
-  ] "" \
-  ]
+gdb_test_lines "record function-call-history /c 1" \
+    "indented" \
+    [multi_line \
+	 "1\tmain\\(\\)" \
+	 "2\t  test\\(\\)" \
+	 "3\t    foo\\(\\)" \
+	 "4\t      bar\\(\\)" \
+	 "5\t        bad\\(\\)" \
+	 ".*" \
+	 "$decimal\t  test\\(\\)" \
+	 "$decimal\tmain\\(\\)"]

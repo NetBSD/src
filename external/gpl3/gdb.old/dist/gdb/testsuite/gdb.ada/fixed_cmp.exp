@@ -19,8 +19,8 @@ require allow_ada_tests
 
 standard_ada_testfile fixed
 
-foreach_with_prefix gnat_encodings {all minimal} {
-    set flags [list debug additional_flags=-fgnat-encodings=$gnat_encodings]
+foreach_gnat_encoding gnat_encodings flags {all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${gnat_encodings}" executable $flags] != "" } {
       return -1

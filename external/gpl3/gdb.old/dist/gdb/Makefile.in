@@ -590,6 +590,7 @@ CONFIG_CLEAN = @CONFIG_CLEAN@
 CONFIG_INSTALL = @CONFIG_INSTALL@
 CONFIG_UNINSTALL = @CONFIG_UNINSTALL@
 HAVE_NATIVE_GCORE_TARGET = @HAVE_NATIVE_GCORE_TARGET@
+HAVE_GSTACK = @HAVE_GSTACK@
 
 CONFIG_SRC_SUBDIR = arch cli dwarf2 mi compile tui unittests guile python \
 	target nat
@@ -603,11 +604,12 @@ CONFIG_DEP_SUBDIR = $(addsuffix /$(DEPDIR),$(CONFIG_SRC_SUBDIR))
 # your system doesn't have fcntl.h in /usr/include (which is where it
 # should be according to Posix).
 DEFS = @DEFS@
+GDB_INCLUDED_HEADER = -include $(srcdir)/defs.h
 GDB_CFLAGS = \
 	-I. \
 	-I$(srcdir) \
 	-I$(srcdir)/config \
-	-include $(srcdir)/defs.h \
+	$(GDB_INCLUDED_HEADER) \
 	-DLOCALEDIR="\"$(localedir)\"" \
 	$(DEFS)
 
@@ -747,8 +749,10 @@ ALL_64_TARGET_OBS = \
 	amd64-windows-tdep.o \
 	arch/aarch64.o \
 	arch/aarch64-insn.o \
+	arch/aarch64-mte.o \
 	arch/aarch64-mte-linux.o \
 	arch/aarch64-scalable-linux.o \
+	arch/amd64-linux-tdesc.o \
 	arch/amd64.o \
 	arch/riscv.o \
 	bpf-tdep.o \
@@ -790,9 +794,11 @@ ALL_TARGET_OBS = \
 	arch/arm.o \
 	arch/arm-get-next-pcs.o \
 	arch/arm-linux.o \
+	arch/i386-linux-tdesc.o \
 	arch/i386.o \
 	arch/loongarch.o \
 	arch/ppc-linux-common.o \
+	arch/x86-linux-tdesc-features.o \
 	arm-bsd-tdep.o \
 	arm-fbsd-tdep.o \
 	arm-linux-tdep.o \
@@ -830,7 +836,6 @@ ALL_TARGET_OBS = \
 	i386-go32-tdep.o \
 	i386-linux-tdep.o \
 	i386-netbsd-tdep.o \
-	i386-nto-tdep.o \
 	i386-obsd-tdep.o \
 	i386-sol2-tdep.o \
 	i386-tdep.o \
@@ -856,9 +861,6 @@ ALL_TARGET_OBS = \
 	msp430-tdep.o \
 	netbsd-tdep.o \
 	nds32-tdep.o \
-	nios2-linux-tdep.o \
-	nios2-tdep.o \
-	nto-tdep.o \
 	obsd-tdep.o \
 	or1k-linux-tdep.o \
 	or1k-tdep.o \
@@ -1051,6 +1053,7 @@ COMMON_SFILES = \
 	break-catch-sig.c \
 	break-catch-syscall.c \
 	break-catch-throw.c \
+	break-cond-parse.c \
 	breakpoint.c \
 	bt-utils.c \
 	btrace.c \
@@ -1087,7 +1090,7 @@ COMMON_SFILES = \
 	displaced-stepping.c \
 	dummy-frame.c \
 	dwarf2/abbrev.c \
-	dwarf2/abbrev-cache.c \
+	dwarf2/abbrev-table-cache.c \
 	dwarf2/ada-imported.c \
 	dwarf2/aranges.c \
 	dwarf2/attribute.c \
@@ -1121,7 +1124,6 @@ COMMON_SFILES = \
 	f-lang.c \
 	f-typeprint.c \
 	f-valprint.c \
-	filename-seen-cache.c \
 	filesystem.c \
 	findcmd.c \
 	findvar.c \
@@ -1320,6 +1322,7 @@ HFILES_NO_SRCDIR = \
 	bfd-target.h \
 	bfin-tdep.h \
 	block.h \
+	break-cond-parse.h \
 	breakpoint.h \
 	bsd-kvm.h \
 	bsd-uthread.h \
@@ -1399,7 +1402,6 @@ HFILES_NO_SRCDIR = \
 	hppa-tdep.h \
 	i386-bsd-nat.h \
 	i386-darwin-tdep.h \
-	i386-linux-nat.h \
 	i386-linux-tdep.h \
 	i386-tdep.h \
 	i387-tdep.h \
@@ -1441,9 +1443,7 @@ HFILES_NO_SRCDIR = \
 	netbsd-nat.h \
 	netbsd-tdep.h \
 	nds32-tdep.h \
-	nios2-tdep.h \
 	elf-none-tdep.h \
-	nto-tdep.h \
 	objc-lang.h \
 	objfiles.h \
 	obsd-nat.h \
@@ -1552,15 +1552,20 @@ HFILES_NO_SRCDIR = \
 	arch/aarch32.h \
 	arch/aarch64.h \
 	arch/aarch64-insn.h \
+	arch/aarch64-mte.h \
 	arch/aarch64-mte-linux.h \
 	arch/aarch64-scalable-linux.h \
+	arch/amd64-linux-tdesc.h \
 	arch/arc.h \
 	arch/arm.h \
+	arch/i386-linux-tdesc.h \
 	arch/i386.h \
 	arch/loongarch.h \
 	arch/ppc-linux-common.h \
 	arch/ppc-linux-tdesc.h \
 	arch/riscv.h \
+	arch/x86-linux-tdesc-features.h \
+	arch/x86-linux-tdesc.h \
 	cli/cli-cmds.h \
 	cli/cli-decode.h \
 	cli/cli-script.h \
@@ -1576,7 +1581,6 @@ HFILES_NO_SRCDIR = \
 	compile/gcc-c-plugin.h \
 	compile/gcc-cp-plugin.h \
 	config/nm-linux.h \
-	config/nm-nto.h \
 	config/djgpp/langinfo.h \
 	config/djgpp/nl_types.h \
 	config/i386/nm-i386gnu.h \
@@ -1597,6 +1601,7 @@ HFILES_NO_SRCDIR = \
 	nat/gdb_ptrace.h \
 	nat/gdb_thread_db.h \
 	nat/fork-inferior.h \
+	nat/i386-linux.h \
 	nat/linux-btrace.h \
 	nat/linux-namespaces.h \
 	nat/linux-nat.h \
@@ -1604,6 +1609,9 @@ HFILES_NO_SRCDIR = \
 	nat/linux-personality.h \
 	nat/linux-ptrace.h \
 	nat/linux-waitpid.h \
+	nat/loongarch-hw-point.h \
+	nat/loongarch-linux.h \
+	nat/loongarch-linux-hw-point.h \
 	nat/mips-linux-watch.h \
 	nat/ppc-linux.h \
 	nat/x86-cpuid.h \
@@ -1611,6 +1619,7 @@ HFILES_NO_SRCDIR = \
 	nat/x86-gcc-cpuid.h \
 	nat/x86-linux.h \
 	nat/x86-linux-dregs.h \
+	nat/x86-linux-tdesc.h \
 	python/py-event.h \
 	python/py-events.h \
 	python/py-stopevent.h \
@@ -1656,6 +1665,7 @@ ALLDEPFILES = \
 	arch/aarch32.c \
 	arch/aarch64.c \
 	arch/aarch64-insn.c \
+	arch/aarch64-mte.c \
 	arch/aarch64-mte-linux.c \
 	arch/aarch64-scalable-linux.c \
 	arch/amd64.c \
@@ -1800,8 +1810,6 @@ ALLDEPFILES = \
 	netbsd-nat.c \
 	netbsd-tdep.c \
 	nds32-tdep.c \
-	nios2-linux-tdep.c \
-	nios2-tdep.c \
 	obsd-nat.c \
 	obsd-tdep.c \
 	or1k-linux-nat.c \
@@ -1944,7 +1952,7 @@ generated_files = \
 # Flags needed to compile Python code
 PYTHON_CFLAGS = @PYTHON_CFLAGS@
 
-all: gdb$(EXEEXT) $(CONFIG_ALL) gdb-gdb.py gdb-gdb.gdb gcore
+all: gdb$(EXEEXT) $(CONFIG_ALL) gdb-gdb.py gdb-gdb.gdb gcore gstack
 	@$(MAKE) $(FLAGS_TO_PASS) DO=all "DODIRS=$(SUBDIRS)" subdir_do
 
 # Rule for compiling .c files in the top-level gdb directory.
@@ -1954,7 +1962,7 @@ all: gdb$(EXEEXT) $(CONFIG_ALL) gdb-gdb.py gdb-gdb.gdb gcore
 	$(POSTCOMPILE)
 
 $(CONFIG_DEP_SUBDIR):
-	$(SHELL) $(srcdir)/../mkinstalldirs $@
+	$(ECHO_GEN) $(SHELL) $(srcdir)/../install-sh -d $@
 
 # Python files need special flags.
 python/%.o: INTERNAL_CFLAGS += $(PYTHON_CFLAGS)
@@ -2103,6 +2111,19 @@ install-only: $(CONFIG_INSTALL)
 		  $(INSTALL_SCRIPT) gcore \
 			  $(DESTDIR)$(bindir)/$$transformed_name; \
 	fi
+	if test "x${HAVE_GSTACK}" != x; \
+	then \
+	  transformed_name=`t='$(program_transform_name)'; \
+			    echo gstack | sed -e "$$t"` ; \
+		  if test "x$$transformed_name" = x; then \
+		    transformed_name=gstack ; \
+		  else \
+		    true ; \
+		  fi ; \
+		  $(SHELL) $(srcdir)/../mkinstalldirs $(DESTDIR)$(bindir) ; \
+		  $(INSTALL_SCRIPT) gstack \
+			  $(DESTDIR)$(bindir)/$$transformed_name; \
+	fi
 	transformed_name=`t='$(program_transform_name)'; \
 			  echo gdb-add-index | sed -e "$$t"` ; \
 	if test "x$$transformed_name" = x; then \
@@ -2142,6 +2163,17 @@ uninstall: force $(CONFIG_UNINSTALL)
 			    echo gcore | sed -e "$$t"` ; \
 		  if test "x$$transformed_name" = x; then \
 		    transformed_name=gcore ; \
+		  else \
+		    true ; \
+		  fi ; \
+		  rm -f $(DESTDIR)$(bindir)/$$transformed_name; \
+	fi
+	if test "x$(HAVE_GSTACK)" != x; \
+	then \
+	  transformed_name=`t='$(program_transform_name)'; \
+			    echo gstack | sed -e "$$t"` ; \
+		  if test "x$$transformed_name" = x; then \
+		    transformed_name=gstack ; \
 		  else \
 		    true ; \
 		  fi ; \
@@ -2258,7 +2290,7 @@ clean mostlyclean: $(CONFIG_CLEAN)
 # functionality described is if the distributed files are unmodified.
 distclean: clean
 	@$(MAKE) $(FLAGS_TO_PASS) DO=distclean "DODIRS=$(CLEANDIRS)" subdir_do
-	rm -f nm.h config.status config.h stamp-h b jit-reader.h gcore stamp-nmh
+	rm -f nm.h config.status config.h stamp-h b jit-reader.h gcore gstack gstack.in stamp-nmh
 	rm -f gdb-gdb.py gdb-gdb.gdb
 	rm -f y.output yacc.acts yacc.tmp y.tab.h
 	rm -f config.log config.cache
@@ -2317,6 +2349,15 @@ jit-reader.h: $(srcdir)/jit-reader.in config.status
 	$(ECHO_GEN) $(SHELL) config.status $(SILENT_FLAG) $@
 
 gcore: $(srcdir)/gcore.in config.status
+	$(ECHO_GEN) $(SHELL) config.status $(SILENT_FLAG) $@
+
+gstack: gstack.in version.c
+	$(ECHO_GEN) \
+	vv=`grep 'version\[\] = ' version.c | grep -o '".*"' | tr -d \"`; \
+	sed -e "s,@VERSION@,$$vv," $< > $@
+	@chmod +x $@
+
+gstack.in: $(srcdir)/gstack-1.in config.status
 	$(ECHO_GEN) $(SHELL) config.status $(SILENT_FLAG) $@
 
 gdb-gdb.py: $(srcdir)/gdb-gdb.py.in config.status
@@ -2521,7 +2562,7 @@ clean-po:
 # rule has no dependencies and always regenerates gdb.pot.  This is
 # relatively harmless since the .po files do not directly depend on
 # it.  The .pot file is left in the build directory.  Since GDB's
-# Makefile lacks a cannonical list of sources (missing xm, tm and nm
+# Makefile lacks a canonical list of sources (missing xm, tm and nm
 # files) force this rule.
 $(PACKAGE).pot: po/$(PACKAGE).pot
 po/$(PACKAGE).pot: force

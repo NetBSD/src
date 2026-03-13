@@ -548,7 +548,7 @@ do { \
 
 
 /* some rotate functions.  The generic macro's ROT, ROTL, ROTR are
-   intentionally omited. */
+   intentionally omitted. */
 
 
 INLINE_SIM_BITS(uint8_t)  ROT8  (uint8_t  val, int shift);

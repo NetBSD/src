@@ -193,7 +193,7 @@ requirements.
 
 The output from a performance run (on a P90) for the program
 psim-test/profile/bench is below.  In this run psim was fairly
-agressively configured (see the file INSTALL for compile time
+aggressively configured (see the file INSTALL for compile time
 configuration).
 
 	CPU #1 executed     41,994 AND instructions.

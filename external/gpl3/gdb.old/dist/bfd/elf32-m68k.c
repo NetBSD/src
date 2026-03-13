@@ -977,8 +977,7 @@ elf_m68k_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf_m68k_link_hash_newfunc,
-				      sizeof (struct elf_m68k_link_hash_entry),
-				      M68K_ELF_DATA))
+				      sizeof (struct elf_m68k_link_hash_entry)))
     {
       free (ret);
       return NULL;

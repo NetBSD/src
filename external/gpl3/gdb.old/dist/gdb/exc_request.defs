@@ -48,4 +48,4 @@ simpleroutine exception_raise_request (
 	task		: mach_port_t;
 	exception	: integer_t;
 	code		: integer_t;
-	subcode		: integer_t);
+	subcode		: rpc_long_integer_t);

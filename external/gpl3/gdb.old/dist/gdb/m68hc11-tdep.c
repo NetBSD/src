@@ -210,9 +210,8 @@ static int soft_reg_initialized = 0;
 static void
 m68hc11_get_register_info (struct m68hc11_soft_reg *reg, const char *name)
 {
-  struct bound_minimal_symbol msymbol;
-
-  msymbol = lookup_minimal_symbol (name, NULL, NULL);
+  bound_minimal_symbol msymbol
+    = lookup_minimal_symbol (current_program_space, name);
   if (msymbol.minsym)
     {
       reg->addr = msymbol.value_address ();
@@ -591,12 +590,10 @@ m68hc11_analyze_instruction (struct gdbarch *gdbarch,
 static enum insn_return_kind
 m68hc11_get_return_insn (CORE_ADDR pc)
 {
-  struct bound_minimal_symbol sym;
-
   /* A flag indicating that this is a STO_M68HC12_FAR or STO_M68HC12_INTERRUPT
      function is stored by elfread.c in the high bit of the info field.
      Use this to decide which instruction the function uses to return.  */
-  sym = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol sym = lookup_minimal_symbol_by_pc (pc);
   if (sym.minsym == 0)
     return RETURN_RTS;
 

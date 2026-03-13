@@ -41,9 +41,10 @@ mi_continue_to_line \
 # The value of NUMCHILD may vary on different systems.  Use generic $decimal
 # to match possible values.
 set re_ok "\\^done,name=\"A_String_Access\",numchild=\"$decimal\",.*"
-set re_error "\\^error,msg=\"Value out of range\.\".*"
+set re_error "\\^error,msg=\"Value out of range\\.\".*"
+set re_error2 "\\^error,msg=\"Cannot access memory at address $hex\""
 mi_gdb_test "-var-create A_String_Access * A_String_Access" \
-    "($re_ok|$re_error)" \
+    "($re_ok|$re_error|$re_error2)" \
     "Create varobj"
 
 set bp_location [gdb_get_line_number "STOP2" ${testdir}/mi_access.adb]

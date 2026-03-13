@@ -32,47 +32,35 @@ if test -e "$output"; then
   exit 1
 fi
 
-echo '#include "xml-builtin.h"' >> $output
+echo '#include "xml-builtin.h"' >> "$output"
+
+awk_script=$(echo "$0" | sed 's/\.sh$/.awk/')
 
 for input; do
-  arrayname=xml_feature_`echo $input | sed 's,.*/,,; s/[-.]/_/g'`
+  arrayname=xml_feature_$(echo "$input" | sed 's,.*/,,; s/[-.]/_/g')
 
-  ${AWK:-awk} 'BEGIN { n = 0
-      print "static const char '$arrayname'[] = {"
-      for (i = 0; i < 255; i++)
-        _ord_[sprintf("%c", i)] = i
-    } {
-      split($0, line, "");
-      printf "  "
-      for (i = 1; i <= length($0); i++) {
-        c = line[i]
-        if (c == "'\''") {
-          printf "'\''\\'\'''\'', "
-        } else if (c == "\\") {
-          printf "'\''\\\\'\'', "
-        } else if (_ord_[c] >= 32 && _ord_[c] < 127) {
-	  printf "'\''%s'\'', ", c
-        } else {
-          printf "'\''\\%03o'\'', ", _ord_[c]
-        }
-        if (i % 10 == 0)
-          printf "\n   "
-      }
-      printf "'\''\\n'\'', \n"
-    } END {
-      print "  0 };"
-    }' < $input >> $output
+  ${AWK:-awk} \
+    -v "arrayname=$arrayname" \
+    -f "$awk_script" \
+    < "$input" \
+    >> "$output"
 done
 
-echo >> $output
+echo >> "$output"
 
-echo "extern const char *const xml_builtin[][2] = {" >> $output
+echo "extern const char *const xml_builtin[][2] = {" >> "$output"
 
 for input; do
-  basename=`echo $input | sed 's,.*/,,'`
-  arrayname=xml_feature_`echo $input | sed 's,.*/,,; s/[-.]/_/g'`
-  echo "  { \"$basename\", $arrayname }," >> $output
+  basename=$(echo "$input" | sed 's,.*/,,')
+  arrayname=xml_feature_$(echo "$input" | sed 's,.*/,,; s/[-.]/_/g')
+  echo "  { \"$basename\", $arrayname }," >> "$output"
 done
 
-echo "  { 0, 0 }" >> $output
-echo "};" >> $output
+echo "  { 0, 0 }" >> "$output"
+echo "};" >> "$output"
+
+# Local Variables:
+# mode:shell-script
+# sh-indentation:2
+# End:
+# vi:sw=2

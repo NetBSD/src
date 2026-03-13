@@ -866,7 +866,7 @@ add_setshow_filename_cmd (const char *name, enum command_class theclass,
 					 nullptr, nullptr, set_func,
 					 show_func, set_list, show_list);
 
-  set_cmd_completer (commands.set, filename_completer);
+  set_cmd_completer (commands.set, deprecated_filename_completer);
 
   return commands;
 }
@@ -890,7 +890,7 @@ add_setshow_filename_cmd (const char *name, command_class theclass,
 						 nullptr, show_func, set_list,
 						 show_list);
 
-  set_cmd_completer (cmds.set, filename_completer);
+  set_cmd_completer (cmds.set, deprecated_filename_completer);
 
   return cmds;
 }
@@ -1015,7 +1015,7 @@ add_setshow_optional_filename_cmd (const char *name, enum command_class theclass
 					 nullptr, nullptr, set_func, show_func,
 					 set_list, show_list);
 
-  set_cmd_completer (commands.set, filename_completer);
+  set_cmd_completer (commands.set, deprecated_filename_completer);
 
   return commands;
 }
@@ -1039,7 +1039,7 @@ add_setshow_optional_filename_cmd (const char *name, command_class theclass,
 				       set_func, get_func, nullptr, show_func,
 				       set_list,show_list);
 
-  set_cmd_completer (cmds.set, filename_completer);
+  set_cmd_completer (cmds.set, deprecated_filename_completer);
 
   return cmds;
 }
@@ -1530,7 +1530,7 @@ add_com_suppress_notification (const char *name, enum command_class theclass,
 					&cmdlist, suppress_notification);
 }
 
-/* Print the prefix of C followed by name of C in title style.  */
+/* Print the prefix of C followed by name of C in command style.  */
 
 static void
 fput_command_name_styled (const cmd_list_element &c, struct ui_file *stream)
@@ -1538,7 +1538,7 @@ fput_command_name_styled (const cmd_list_element &c, struct ui_file *stream)
   std::string prefixname
     = c.prefix == nullptr ? "" : c.prefix->prefixname ();
 
-  fprintf_styled (stream, title_style.style (), "%s%s",
+  fprintf_styled (stream, command_style.style (), "%s%s",
 		  prefixname.c_str (), c.name);
 }
 
@@ -1869,26 +1869,33 @@ help_list (struct cmd_list_element *list, const char *cmdtype,
   if (theclass == all_classes)
     {
       gdb_printf (stream, "\n\
-Type \"help%s\" followed by a class name for a list of commands in ",
-		  cmdtype1);
+Type \"%p[help%s%p]\" followed by a class name for a list of commands in ",
+		  command_style.style ().ptr (),
+		  cmdtype1,
+		  nullptr);
       stream->wrap_here (0);
       gdb_printf (stream, "that class.");
 
       gdb_printf (stream, "\n\
-Type \"help all\" for the list of all commands.");
+Type \"%ps\" for the list of all commands.",
+		  styled_string (command_style.style (), "help all"));
     }
 
-  gdb_printf (stream, "\nType \"help%s\" followed by %scommand name ",
-	      cmdtype1, cmdtype2);
+  gdb_printf (stream, "\nType \"%p[help%s%p]\" followed by %scommand name ",
+	      command_style.style ().ptr (), cmdtype1, nullptr,
+	      cmdtype2);
   stream->wrap_here (0);
   gdb_puts ("for ", stream);
   stream->wrap_here (0);
   gdb_puts ("full ", stream);
   stream->wrap_here (0);
   gdb_puts ("documentation.\n", stream);
-  gdb_puts ("Type \"apropos word\" to search "
-	    "for commands related to \"word\".\n", stream);
-  gdb_puts ("Type \"apropos -v word\" for full documentation", stream);
+  gdb_printf (stream,
+	      "Type \"%ps\" to search "
+	      "for commands related to \"word\".\n",
+	      styled_string (command_style.style (), "apropos word"));
+  gdb_printf (stream, "Type \"%ps\" for full documentation",
+	      styled_string (command_style.style (), "apropos -v word"));
   stream->wrap_here (0);
   gdb_puts (" of commands related to \"word\".\n", stream);
   gdb_puts ("Command name abbreviations are allowed if unambiguous.\n",
@@ -2502,21 +2509,21 @@ deprecated_cmd_warning (const char *text, struct cmd_list_element *list)
 
       if (cmd->cmd_deprecated)
 	gdb_printf (_("Warning: command '%ps' (%ps) is deprecated.\n"),
-		    styled_string (title_style.style (),
+		    styled_string (command_style.style (),
 				   tmp_cmd_str.c_str ()),
-		    styled_string (title_style.style (),
+		    styled_string (command_style.style (),
 				   tmp_alias_str.c_str ()));
       else
 	gdb_printf (_("Warning: '%ps', an alias for the command '%ps', "
 		      "is deprecated.\n"),
-		    styled_string (title_style.style (),
+		    styled_string (command_style.style (),
 				   tmp_alias_str.c_str ()),
-		    styled_string (title_style.style (),
+		    styled_string (command_style.style (),
 				   tmp_cmd_str.c_str ()));
     }
   else
     gdb_printf (_("Warning: command '%ps' is deprecated.\n"),
-		styled_string (title_style.style (),
+		styled_string (command_style.style (),
 			       tmp_cmd_str.c_str ()));
 
   /* Now display a second line indicating what the user should use instead.
@@ -2529,7 +2536,7 @@ deprecated_cmd_warning (const char *text, struct cmd_list_element *list)
     replacement = cmd->replacement;
   if (replacement != nullptr)
     gdb_printf (_("Use '%ps'.\n\n"),
-		styled_string (title_style.style (),
+		styled_string (command_style.style (),
 			       replacement));
   else
     gdb_printf (_("No alternative known.\n\n"));

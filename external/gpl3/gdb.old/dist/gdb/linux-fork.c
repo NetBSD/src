@@ -32,6 +32,7 @@
 
 #include "nat/gdb_ptrace.h"
 #include "gdbsupport/gdb_wait.h"
+#include "gdbsupport/eintr.h"
 #include "target/waitstatus.h"
 #include <dirent.h>
 #include <ctype.h>
@@ -314,7 +315,7 @@ linux_fork_killall (void)
 	/* Use SIGKILL instead of PTRACE_KILL because the former works even
 	   if the thread is running, while the later doesn't.  */
 	kill (pid, SIGKILL);
-	ret = waitpid (pid, &status, 0);
+	ret = gdb::waitpid (pid, &status, 0);
 	/* We might get a SIGCHLD instead of an exit status.  This is
 	 aggravated by the first kill above - a child has just
 	 died.  MVS comment cut-and-pasted from linux-nat.  */
@@ -339,7 +340,7 @@ linux_fork_mourn_inferior (void)
      Do not check whether this succeeds though, since we may be
      dealing with a process that we attached to.  Such a process will
      only report its exit status to its original parent.  */
-  waitpid (inferior_ptid.pid (), &status, 0);
+  gdb::waitpid (inferior_ptid.pid (), &status, 0);
 
   /* OK, presumably inferior_ptid is the one who has exited.
      We need to delete that one from the fork_list, and switch
@@ -484,10 +485,12 @@ inferior_call_waitpid (ptid_t pptid, int pid)
   scoped_switch_fork_info switch_fork_info (pptid);
 
   /* Get the waitpid_fn.  */
-  if (lookup_minimal_symbol ("waitpid", NULL, NULL).minsym != NULL)
+  if (lookup_minimal_symbol (current_program_space, "waitpid").minsym
+      != nullptr)
     waitpid_fn = find_function_in_inferior ("waitpid", &waitpid_objf);
   if (!waitpid_fn
-      && lookup_minimal_symbol ("_waitpid", NULL, NULL).minsym != NULL)
+      && (lookup_minimal_symbol (current_program_space, "_waitpid").minsym
+	  != nullptr))
     waitpid_fn = find_function_in_inferior ("_waitpid", &waitpid_objf);
   if (waitpid_fn != nullptr)
     {
@@ -546,7 +549,7 @@ Please switch to another checkpoint before deleting the current one"));
 	 this succeeds though, since we may be dealing with a process that we
 	 attached to.  Such a process will only report its exit status to its
 	 original parent.  */
-      waitpid (ptid.pid (), &status, 0);
+      gdb::waitpid (ptid.pid (), &status, 0);
       return;
     }
 
@@ -638,9 +641,7 @@ info_checkpoints_command (const char *arg, int from_tty)
 	gdb_printf (_(", line %d"), sal.line);
       if (!sal.symtab && !sal.line)
 	{
-	  struct bound_minimal_symbol msym;
-
-	  msym = lookup_minimal_symbol_by_pc (pc);
+	  bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
 	  if (msym.minsym)
 	    gdb_printf (", <%s>", msym.minsym->linkage_name ());
 	}
@@ -703,10 +704,11 @@ checkpoint_command (const char *args, int from_tty)
   
   /* Make the inferior fork, record its (and gdb's) state.  */
 
-  if (lookup_minimal_symbol ("fork", NULL, NULL).minsym != NULL)
+  if (lookup_minimal_symbol (current_program_space, "fork").minsym != nullptr)
     fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
-    if (lookup_minimal_symbol ("_fork", NULL, NULL).minsym != NULL)
+    if (lookup_minimal_symbol (current_program_space, "_fork").minsym
+	!= nullptr)
       fork_fn = find_function_in_inferior ("fork", &fork_objf);
   if (!fork_fn)
     error (_("checkpoint: can't find fork function in inferior."));

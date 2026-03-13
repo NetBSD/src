@@ -3207,8 +3207,7 @@ struct elf_arm_obj_tdata
 static bool
 elf32_arm_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_arm_obj_tdata),
-				  ARM_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_arm_obj_tdata));
 }
 
 #define elf32_arm_hash_entry(ent) ((struct elf32_arm_link_hash_entry *)(ent))
@@ -4102,8 +4101,7 @@ elf32_arm_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (& ret->root, abfd,
 				      elf32_arm_link_hash_newfunc,
-				      sizeof (struct elf32_arm_link_hash_entry),
-				      ARM_ELF_DATA))
+				      sizeof (struct elf32_arm_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4226,12 +4224,33 @@ arm_type_of_stub (struct bfd_link_info *info,
 
   r_type = ELF32_R_TYPE (rel->r_info);
 
+  /* Don't pretend we know what stub to use (if any) when we target a
+     Thumb-only target and we don't know the actual destination
+     type.  */
+  if (branch_type == ST_BRANCH_UNKNOWN && thumb_only)
+    return stub_type;
+
   /* ST_BRANCH_TO_ARM is nonsense to thumb-only targets when we
      are considering a function call relocation.  */
   if (thumb_only && (r_type == R_ARM_THM_CALL || r_type == R_ARM_THM_JUMP24
 		     || r_type == R_ARM_THM_JUMP19)
       && branch_type == ST_BRANCH_TO_ARM)
-    branch_type = ST_BRANCH_TO_THUMB;
+    {
+      if (sym_sec == bfd_abs_section_ptr)
+	/* As an exception, assume that absolute symbols are of the
+	   right kind (Thumb).  They are presumably defined in the
+	   linker script, where it is not possible to declare them as
+	   Thumb (and thus are seen as Arm mode). We'll inform the
+	   user with a warning, though, in
+	   elf32_arm_final_link_relocate. */
+	branch_type = ST_BRANCH_TO_THUMB;
+      else
+	/* Otherwise do not silently build a stub, and let the users
+	   know they have to fix their code.  Indeed, we could decide
+	   to insert a stub involving Arm code and/or BLX, leading to
+	   a run-time crash.  */
+	return stub_type;
+    }
 
   /* For TLS call relocs, it is the caller's responsibility to provide
      the address of the appropriate trampoline.  */
@@ -10382,14 +10401,6 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
   else
     addend = signed_addend = rel->r_addend;
 
-  /* ST_BRANCH_TO_ARM is nonsense to thumb-only targets when we
-     are resolving a function call relocation.  */
-  if (using_thumb_only (globals)
-      && (r_type == R_ARM_THM_CALL
-	  || r_type == R_ARM_THM_JUMP24)
-      && branch_type == ST_BRANCH_TO_ARM)
-    branch_type = ST_BRANCH_TO_THUMB;
-
   /* Record the symbol information that should be used in dynamic
      relocations.  */
   dynreloc_st_type = st_type;
@@ -10450,6 +10461,73 @@ elf32_arm_final_link_relocate (reloc_howto_type *	    howto,
       splt = NULL;
       plt_offset = (bfd_vma) -1;
       gotplt_offset = (bfd_vma) -1;
+    }
+
+  /* ST_BRANCH_TO_ARM is nonsense to thumb-only targets when we are
+     resolving a function call relocation.  We want to inform the user
+     that something is wrong.  */
+  if (using_thumb_only (globals)
+      && (r_type == R_ARM_THM_CALL
+	  || r_type == R_ARM_THM_JUMP24)
+      && branch_type == ST_BRANCH_TO_ARM
+      /* Calls through a PLT are special: the assembly source code
+	 cannot be annotated with '.type foo(PLT), %function', and
+	 they handled specifically below anyway. */
+      && splt == NULL)
+    {
+      if (sym_sec == bfd_abs_section_ptr)
+	{
+	/* As an exception, assume that absolute symbols are of the
+	   right kind (Thumb).  They are presumably defined in the
+	   linker script, where it is not possible to declare them as
+	   Thumb (and thus are seen as Arm mode). Inform the user with
+	   a warning, though. */
+	  branch_type = ST_BRANCH_TO_THUMB;
+
+	  if (sym_sec->owner)
+	    _bfd_error_handler
+	      (_("warning: %pB(%s): Forcing bramch to absolute symbol in Thumb mode (Thumb-only CPU)"
+		 " in %pB"),
+	       sym_sec->owner, sym_name, input_bfd);
+	  else
+	    _bfd_error_handler
+	      (_("warning: (%s): Forcing branch to absolute symbol in Thumb mode (Thumb-only CPU)"
+		 " in %pB"),
+	       sym_name, input_bfd);
+	}
+      else
+	/* Otherwise do not silently build a stub, and let the users
+	   know they have to fix their code.  Indeed, we could decide
+	   to insert a stub involving Arm code and/or BLX, leading to
+	   a run-time crash.  */
+	branch_type = ST_BRANCH_UNKNOWN;
+    }
+
+  /* Fail early if branch_type is ST_BRANCH_UNKNOWN and we target a
+     Thumb-only CPU.  We could emit a warning on Arm-capable targets
+     too, but that would be too verbose (a lot of legacy code does not
+     use the .type foo, %function directive).  */
+  if (using_thumb_only (globals)
+      && (r_type == R_ARM_THM_CALL
+	  || r_type == R_ARM_THM_JUMP24)
+      && branch_type == ST_BRANCH_UNKNOWN
+      /* Exception to the rule above: a branch to an undefined weak
+	 symbol is turned into a jump to the next instruction unless a
+	 PLT entry will be created (see below).  */
+      && !(h && h->root.type == bfd_link_hash_undefweak
+	   && plt_offset == (bfd_vma) -1))
+    {
+      if (sym_sec != NULL
+	  && sym_sec->owner != NULL)
+	_bfd_error_handler
+	  (_("%pB(%s): Unknown destination type (ARM/Thumb) in %pB"),
+	   sym_sec->owner, sym_name, input_bfd);
+      else
+	_bfd_error_handler
+	  (_("(%s): Unknown destination type (ARM/Thumb) in %pB"),
+	   sym_name, input_bfd);
+
+      return bfd_reloc_notsupported;
     }
 
   resolved_to_zero = (h != NULL
@@ -17838,7 +17916,7 @@ elf32_arm_output_map_sym (output_arch_syminfo *osi,
   sym.st_other = 0;
   sym.st_info = ELF_ST_INFO (STB_LOCAL, STT_NOTYPE);
   sym.st_shndx = osi->sec_shndx;
-  sym.st_target_internal = 0;
+  sym.st_target_internal = ST_BRANCH_TO_ARM;
   elf32_arm_section_map_add (osi->sec, names[type][1], offset);
   return osi->func (osi->flaginfo, names[type], &sym, osi->sec, NULL) == 1;
 }
@@ -17995,7 +18073,7 @@ elf32_arm_output_stub_sym (output_arch_syminfo *osi, const char *name,
   sym.st_other = 0;
   sym.st_info = ELF_ST_INFO (STB_LOCAL, STT_FUNC);
   sym.st_shndx = osi->sec_shndx;
-  sym.st_target_internal = 0;
+  sym.st_target_internal = ST_BRANCH_TO_ARM;
   return osi->func (osi->flaginfo, name, &sym, osi->sec, NULL) == 1;
 }
 
@@ -18455,16 +18533,10 @@ elf32_arm_filter_implib_symbols (bfd *abfd ATTRIBUTE_UNUSED,
 static bool
 elf32_arm_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      _arm_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
-
-      sdata = (_arm_elf_section_data *) bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  _arm_elf_section_data *sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -19743,7 +19815,7 @@ elf32_arm_swap_symbol_in (bfd * abfd,
 {
   if (!bfd_elf32_swap_symbol_in (abfd, psrc, pshn, dst))
     return false;
-  dst->st_target_internal = 0;
+  dst->st_target_internal = ST_BRANCH_TO_ARM;
 
   /* New EABI objects mark thumb function symbols by setting the low bit of
      the address.  */

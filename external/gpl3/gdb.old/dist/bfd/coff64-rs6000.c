@@ -1900,7 +1900,6 @@ xcoff64_slurp_armap (bfd *abfd)
 static bfd_cleanup
 xcoff64_archive_p (bfd *abfd)
 {
-  struct artdata *tdata_hold;
   char magic[SXCOFFARMAG];
   /* This is the new format.  */
   struct xcoff_ar_file_hdr_big hdr;
@@ -1931,30 +1930,22 @@ xcoff64_archive_p (bfd *abfd)
       return NULL;
     }
 
-  tdata_hold = bfd_ardata (abfd);
+  amt = sizeof (struct artdata) + sizeof (struct xcoff_artdata);
+  bfd_ardata (abfd) = bfd_zalloc (abfd, amt);
+  if (bfd_ardata (abfd) == NULL)
+    return NULL;
 
-  amt = sizeof (struct artdata);
-  bfd_ardata (abfd) = (struct artdata *) bfd_zalloc (abfd, amt);
-  if (bfd_ardata (abfd) == (struct artdata *) NULL)
-    goto error_ret_restore;
+  bfd_ardata (abfd)->tdata = (void *) ((struct artdata *) bfd_ardata (abfd) + 1);
 
   bfd_ardata (abfd)->first_file_filepos = bfd_scan_vma (hdr.firstmemoff,
 							(const char **) NULL,
 							10);
 
-  amt = sizeof (struct xcoff_artdata);
-  bfd_ardata (abfd)->tdata = bfd_zalloc (abfd, amt);
-  if (bfd_ardata (abfd)->tdata == NULL)
-    goto error_ret;
-
   memcpy (&x_artdata (abfd)->u.bhdr, &hdr, SIZEOF_AR_FILE_HDR_BIG);
 
   if (! xcoff64_slurp_armap (abfd))
     {
-    error_ret:
       bfd_release (abfd, bfd_ardata (abfd));
-    error_ret_restore:
-      bfd_ardata (abfd) = tdata_hold;
       return NULL;
     }
 

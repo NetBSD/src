@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_RAVENSCAR_THREAD_H
-#define AARCH64_RAVENSCAR_THREAD_H
+#ifndef GDB_AARCH64_RAVENSCAR_THREAD_H
+#define GDB_AARCH64_RAVENSCAR_THREAD_H
 
 struct gdbarch;
 
 extern void register_aarch64_ravenscar_ops (struct gdbarch *gdbarch);
 
-#endif
+#endif /* GDB_AARCH64_RAVENSCAR_THREAD_H */

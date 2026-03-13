@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OBSERVABLE_H
-#define OBSERVABLE_H
+#ifndef GDB_OBSERVABLE_H
+#define GDB_OBSERVABLE_H
 
 #include "gdbsupport/observable.h"
 #include "target/waitstatus.h"
@@ -253,8 +253,10 @@ extern observable <program_space */* pspace */> new_program_space;
 /* The program space PSPACE is about to be deleted.  */
 extern observable <program_space */* pspace */> free_program_space;
 
+extern observable<bool /* enabled */> tui_enabled;
+
 } /* namespace observers */
 
 } /* namespace gdb */
 
-#endif /* OBSERVABLE_H */
+#endif /* GDB_OBSERVABLE_H */

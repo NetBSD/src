@@ -598,9 +598,9 @@ gen_var_ref (struct agent_expr *ax, struct axs_value *value, struct symbol *var)
 
     case LOC_UNRESOLVED:
       {
-	struct bound_minimal_symbol msym
-	  = lookup_minimal_symbol (var->linkage_name (), NULL, NULL);
-
+	bound_minimal_symbol msym
+	  = lookup_minimal_symbol (current_program_space,
+				   var->linkage_name ());
 	if (!msym.minsym)
 	  error (_("Couldn't resolve symbol `%s'."), var->print_name ());
 
@@ -2655,7 +2655,9 @@ If not, generate remote agent bytecode for current frame pc address."),
 	   &maintenancelist);
 
   add_cmd ("agent-printf", class_maintenance, maint_agent_printf_command,
-	   _("Translate an expression into remote "
-	     "agent bytecode for evaluation and display the bytecodes."),
+	   _("\
+Translate a printf into remote agent bytecode and display the bytecodes.\n\
+Usage: maint agent-printf FORMAT, EXPR...\n\
+The expressions are translated for evaluation, not tracing."),
 	   &maintenancelist);
 }

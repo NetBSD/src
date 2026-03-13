@@ -3,6 +3,7 @@
 name:powerpc_isa205_64l
 xmltarget:powerpc-isa205-64l.xml
 expedite:r1,pc
+osabi:unknown
 64:r0
 64:r1
 64:r2

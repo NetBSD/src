@@ -1742,8 +1742,7 @@ bfinfdpic_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      BFIN_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4837,8 +4836,7 @@ bfin_link_hash_table_create (bfd * abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd, bfin_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      BFIN_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;

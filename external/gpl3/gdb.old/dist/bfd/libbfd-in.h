@@ -889,22 +889,6 @@ _bfd_alloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
   return NULL;
 }
 
-#ifdef USE_MMAP
-extern void *_bfd_mmap_readonly_persistent
-  (bfd *, size_t) ATTRIBUTE_HIDDEN;
-extern void *_bfd_mmap_readonly_temporary
-  (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
-extern void _bfd_munmap_readonly_temporary
-  (void *, size_t) ATTRIBUTE_HIDDEN;
-#else
-#define _bfd_mmap_readonly_persistent(abfd, rsize) \
-  _bfd_alloc_and_read (abfd, rsize, rsize)
-#define _bfd_munmap_readonly_temporary(ptr, rsize) free (ptr)
-#endif
-
-extern bool _bfd_mmap_read_temporary
-  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;
-
 static inline void *
 _bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
 {
@@ -928,14 +912,34 @@ _bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
   return NULL;
 }
 
-#ifndef USE_MMAP
+#ifdef USE_MMAP
+extern void *_bfd_mmap_persistent
+  (bfd *, size_t) ATTRIBUTE_HIDDEN;
+extern void *_bfd_mmap_temporary
+  (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
+extern void _bfd_munmap_temporary
+  (void *, size_t) ATTRIBUTE_HIDDEN;
+#else
 static inline void *
-_bfd_mmap_readonly_temporary (bfd *abfd, size_t rsize, void **map_addr,
-			      size_t *map_size)
+_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+{
+  return _bfd_alloc_and_read (abfd, rsize, rsize);
+}
+static inline void *
+_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
+		     size_t *map_size)
 {
   void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
   *map_addr = mem;
   *map_size = rsize;
   return mem;
 }
+static inline void
+_bfd_munmap_temporary (void *ptr, size_t rsize ATTRIBUTE_UNUSED)
+{
+  free (ptr);
+}
 #endif
+
+extern bool _bfd_mmap_read_temporary
+  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;

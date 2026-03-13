@@ -641,7 +641,8 @@ foreach t [list "int" "char" "Empty<int>"] {
     gdb_test "break Foozle::fogey<$t>" "Breakpoint.*at.* \\(3 locations\\)"
     foreach u [list "int" "char" "Empty<int>"] {
 	gdb_breakpoint "Foozle<$t>::fogey<$u>" message
-	gdb_breakpoint "Foozle<$t>::fogey<$u> ($u)" message
+	gdb_assert { [gdb_breakpoint "Foozle<$t>::fogey<$u> ($u)" no-message] } \
+	    "break Foozle<$t>::fogey<$u> ($u), success"
     }
 }
 
@@ -667,10 +668,14 @@ foreach t [list "Empty" "Foozle"] {
 
     # Try a specific instance, both with and without whitespace
     # after the template-template parameter.
-    gdb_breakpoint "operator< <$tt> ($tt&, $tt&)" message
-    gdb_breakpoint "operator< <$tt > ($tt&, $tt&)" message
-    gdb_breakpoint "operator<< <$tt> ($tt&, $tt&)" message
-    gdb_breakpoint "operator<< <$tt > ($tt&, $tt&)" message
+    set loc "operator< <$tt> ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator< <$tt > ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator<< <$tt> ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator<< <$tt > ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
 }
 
 # Test that "-qualified" finds no matching locations.

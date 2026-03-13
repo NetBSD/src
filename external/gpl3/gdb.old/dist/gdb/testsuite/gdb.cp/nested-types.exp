@@ -269,7 +269,7 @@ proc test_nested_limit {limit log} {
 	}
 	gdb_test "show print type nested-type-limit" \
 	    "Will print $lstr nested types defined in a class" \
-	    "show print type nested-type-limit ($limit)"
+	    "show print type nested-type-limit, $limit"
     } else {
 	send_log "Tree to $limit levels:\n"
     }
@@ -283,7 +283,7 @@ proc test_nested_limit {limit log} {
 	# the outermost node.
 	set result [lindex $result 0]
 	lassign $result type access key name children
-	cp_test_ptype_class $name "ptype $name (limit = $limit)" $key \
+	cp_test_ptype_class $name "ptype $name, limit = $limit" $key \
 	    $name $children
     }
 }

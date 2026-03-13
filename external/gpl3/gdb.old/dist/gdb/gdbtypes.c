@@ -631,7 +631,7 @@ address_space_name_to_type_instance_flags (struct gdbarch *gdbarch,
 }
 
 /* Identify address space identifier by type_instance_flags and return
-   the string version of the adress space name.  */
+   the string version of the address space name.  */
 
 const char *
 address_space_type_instance_flags_to_name (struct gdbarch *gdbarch,
@@ -733,7 +733,7 @@ make_type_with_address_space (struct type *type,
    If TYPEPTR and *TYPEPTR are non-zero, then *TYPEPTR points to
    storage to hold the new qualified type; *TYPEPTR and TYPE must be
    in the same objfile.  Otherwise, allocate fresh memory for the new
-   type whereever TYPE lives.  If TYPEPTR is non-zero, set it to the
+   type wherever TYPE lives.  If TYPEPTR is non-zero, set it to the
    new type we construct.  */
 
 struct type *
@@ -816,7 +816,7 @@ make_atomic_type (struct type *type)
 
 /* Replace the contents of ntype with the type *type.  This changes the
    contents, rather than the pointer for TYPE_MAIN_TYPE (ntype); thus
-   the changes are propogated to all types in the TYPE_CHAIN.
+   the changes are propagated to all types in the TYPE_CHAIN.
 
    In order to build recursive types, it's inevitable that we'll need
    to update types in place --- but this sort of indiscriminate
@@ -1371,7 +1371,7 @@ create_array_type_with_stride (type_allocator &alloc,
 	 undefined by setting it to zero.  Although we are not expected
 	 to trust TYPE_LENGTH in this case, setting the size to zero
 	 allows us to avoid allocating objects of random sizes in case
-	 we accidently do.  */
+	 we accidentally do.  */
       result_type->set_length (0);
     }
 
@@ -1553,7 +1553,7 @@ set_type_self_type (struct type *type, struct type *self_type)
 }
 
 /* Smash TYPE to be a type of pointers to members of SELF_TYPE with type
-   TO_TYPE.  A member pointer is a wierd thing -- it amounts to a
+   TO_TYPE.  A member pointer is a weird thing -- it amounts to a
    typed offset into a struct, e.g. "an int at offset 8".  A MEMBER
    TYPE doesn't include the offset (that's the value of the MEMBER
    itself), but does include the structure type into which it points
@@ -2327,10 +2327,42 @@ resolve_dynamic_array_or_string_1 (struct type *type,
 						    frame, rank - 1,
 						    resolve_p);
     }
+  else if (ary_dim != nullptr && ary_dim->code () == TYPE_CODE_STRING)
+    {
+      /* The following special case for TYPE_CODE_STRING should not be
+	 needed, ideally we would defer resolving the dynamic type of the
+	 array elements until needed later, and indeed, the resolved type
+	 of each array element might be different, so attempting to resolve
+	 the type here makes no sense.
+
+	 However, in Fortran, for arrays of strings, each element must be
+	 the same type, as such, the DWARF for the string length relies on
+	 the object address of the array itself.
+
+	 The problem here is that, when we create values from the dynamic
+	 array type, we resolve the data location, and use that as the
+	 value address, this completely discards the original value
+	 address, and it is this original value address that is the
+	 descriptor for the dynamic array, the very address that the DWARF
+	 needs us to push in order to resolve the dynamic string length.
+
+	 What this means then, is that, given the current state of GDB, if
+	 we don't resolve the string length now, then we will have lost
+	 access to the address of the dynamic object descriptor, and so we
+	 will not be able to resolve the dynamic string later.
+
+	 For now then, we handle special case TYPE_CODE_STRING on behalf of
+	 Fortran, and hope that this doesn't cause problems for anyone
+	 else.  */
+      elt_type = resolve_dynamic_type_internal (type->target_type (),
+						addr_stack, frame, 0);
+    }
   else
     elt_type = type->target_type ();
 
   prop = type->dyn_prop (DYN_PROP_BYTE_STRIDE);
+  if (prop != nullptr && type->code () == TYPE_CODE_STRING)
+    prop = nullptr;
   if (prop != NULL && resolve_p)
     {
       if (dwarf2_evaluate_property (prop, frame, addr_stack, &value))
@@ -2351,8 +2383,11 @@ resolve_dynamic_array_or_string_1 (struct type *type,
     bit_stride = type->field (0).bitsize ();
 
   type_allocator alloc (type, type_allocator::SMASH);
-  return create_array_type_with_stride (alloc, elt_type, range_type, NULL,
-					bit_stride);
+  if (type->code () == TYPE_CODE_STRING)
+    return create_string_type (alloc, elt_type, range_type);
+  else
+    return create_array_type_with_stride (alloc, elt_type, range_type, NULL,
+					  bit_stride);
 }
 
 /* Resolve an array or string type with dynamic properties, return a new
@@ -4372,7 +4407,7 @@ check_types_worklist (std::vector<type_equality_entry> *worklist,
 
       /* If the type pair has already been visited, we know it is
 	 ok.  */
-      cache->insert (&entry, sizeof (entry), &added);
+      cache->insert (entry, &added);
       if (!added)
 	continue;
 
@@ -5372,46 +5407,6 @@ recursive_dump_type (struct type *type, int spaces)
     obstack_free (&dont_print_type_obstack, NULL);
 }
 
-/* Trivial helpers for the libiberty hash table, for mapping one
-   type to another.  */
-
-struct type_pair
-{
-  type_pair (struct type *old_, struct type *newobj_)
-    : old (old_), newobj (newobj_)
-  {}
-
-  struct type * const old, * const newobj;
-};
-
-static hashval_t
-type_pair_hash (const void *item)
-{
-  const struct type_pair *pair = (const struct type_pair *) item;
-
-  return htab_hash_pointer (pair->old);
-}
-
-static int
-type_pair_eq (const void *item_lhs, const void *item_rhs)
-{
-  const struct type_pair *lhs = (const struct type_pair *) item_lhs;
-  const struct type_pair *rhs = (const struct type_pair *) item_rhs;
-
-  return lhs->old == rhs->old;
-}
-
-/* Allocate the hash table used by copy_type_recursive to walk
-   types without duplicates.  */
-
-htab_up
-create_copied_types_hash ()
-{
-  return htab_up (htab_create_alloc (1, type_pair_hash, type_pair_eq,
-				     htab_delete_entry<type_pair>,
-				     xcalloc, xfree));
-}
-
 /* Recursively copy (deep copy) a dynamic attribute list of a type.  */
 
 static struct dynamic_prop_list *
@@ -5443,27 +5438,20 @@ copy_dynamic_prop_list (struct obstack *storage,
    it is not associated with OBJFILE.  */
 
 struct type *
-copy_type_recursive (struct type *type, htab_t copied_types)
+copy_type_recursive (struct type *type, copied_types_hash_t &copied_types)
 {
-  void **slot;
-  struct type *new_type;
-
   if (!type->is_objfile_owned ())
     return type;
 
-  struct type_pair pair (type, nullptr);
+  if (auto iter = copied_types.find (type);
+      iter != copied_types.end ())
+    return iter->second;
 
-  slot = htab_find_slot (copied_types, &pair, INSERT);
-  if (*slot != NULL)
-    return ((struct type_pair *) *slot)->newobj;
-
-  new_type = type_allocator (type->arch ()).new_type ();
+  struct type *new_type = type_allocator (type->arch ()).new_type ();
 
   /* We must add the new type to the hash table immediately, in case
      we encounter this type again during a recursive call below.  */
-  struct type_pair *stored = new type_pair (type, new_type);
-
-  *slot = stored;
+  copied_types.emplace (type, new_type);
 
   /* Copy the common fields of types.  For the main type, we simply
      copy the entire thing and then update specific fields as needed.  */
@@ -6150,10 +6138,10 @@ _initialize_gdbtypes ()
   /* Add user knob for controlling resolution of opaque types.  */
   add_setshow_boolean_cmd ("opaque-type-resolution", class_support,
 			   &opaque_type_resolution,
-			   _("Set resolution of opaque struct/class/union"
-			     " types (if set before loading symbols)."),
-			   _("Show resolution of opaque struct/class/union"
-			     " types (if set before loading symbols)."),
+			   _("\
+Set resolution of opaque struct/class/union types."),
+			   _("\
+Show resolution of opaque struct/class/union types."),
 			   NULL, NULL,
 			   show_opaque_type_resolution,
 			   &setlist, &showlist);

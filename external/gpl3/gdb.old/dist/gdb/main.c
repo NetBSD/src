@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "annotate.h"
+#include "exceptions.h"
 #include "top.h"
 #include "ui.h"
 #include "target.h"
@@ -57,6 +58,7 @@
 #include "observable.h"
 #include "serial.h"
 #include "cli-out.h"
+#include "bt-utils.h"
 
 /* The selected interpreter.  */
 std::string interpreter_p;
@@ -120,7 +122,7 @@ set_gdb_data_directory (const char *new_datadir)
      "../foo" and "../foo" doesn't exist then we'll record $(pwd)/../foo which
      isn't canonical, but that's ok.  */
   if (!IS_ABSOLUTE_PATH (gdb_datadir.c_str ()))
-    gdb_datadir = gdb_abspath (gdb_datadir.c_str ());
+    gdb_datadir = gdb_abspath (gdb_datadir);
 }
 
 /* Relocate a file or directory.  PROGNAME is the name by which gdb
@@ -675,6 +677,7 @@ captured_main_1 (struct captured_main_args *context)
   /* Note: `error' cannot be called before this point, because the
      caller will crash when trying to print the exception.  */
   main_ui = new ui (stdin, stdout, stderr);
+  gdb_internal_backtrace_init_str ();
   current_ui = main_ui;
 
   gdb_stdtarg = gdb_stderr;
@@ -1232,7 +1235,8 @@ captured_main_1 (struct captured_main_args *context)
 
   if (corearg != NULL)
     {
-      ret = catch_command_errors (core_file_command, corearg,
+      ret = catch_command_errors (core_file_command,
+				  make_quoted_string (corearg).c_str (),
 				  !batch_flag);
     }
   else if (pidarg != NULL)
@@ -1250,16 +1254,18 @@ captured_main_1 (struct captured_main_args *context)
 	  ret = catch_command_errors (attach_command, pid_or_core_arg,
 				      !batch_flag);
 	  if (ret == 0)
-	    ret = catch_command_errors (core_file_command,
-					pid_or_core_arg,
-					!batch_flag);
+	    ret = catch_command_errors
+	      (core_file_command,
+	       make_quoted_string (pid_or_core_arg).c_str (),
+	       !batch_flag);
 	}
       else
 	{
 	  /* Can't be a pid, better be a corefile.  */
-	  ret = catch_command_errors (core_file_command,
-				      pid_or_core_arg,
-				      !batch_flag);
+	  ret = catch_command_errors
+	    (core_file_command,
+	     make_quoted_string (pid_or_core_arg).c_str (),
+	     !batch_flag);
 	}
     }
 
@@ -1490,10 +1496,11 @@ At startup, GDB reads the following init files and executes their commands:\n\
       && local_gdbinit.empty ())
     gdb_printf (stream, _("\
    None found.\n"));
-  gdb_puts (_("\n\
-For more information, type \"help\" from within GDB, or consult the\n\
+  gdb_printf (stream, _("\n\
+For more information, type \"%ps\" from within GDB, or consult the\n\
 GDB manual (available as on-line info or a printed manual).\n\
-"), stream);
+"),
+	      styled_string (command_style.style (), "stream"));
   if (REPORT_BUGS_TO[0] && stream == gdb_stdout)
     gdb_printf (stream, _("\n\
 Report bugs to %ps.\n\

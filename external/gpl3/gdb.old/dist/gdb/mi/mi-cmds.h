@@ -19,11 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_CMDS_H
-#define MI_MI_CMDS_H
+#ifndef GDB_MI_MI_CMDS_H
+#define GDB_MI_MI_CMDS_H
 
 #include "gdbsupport/function-view.h"
 #include <optional>
+#include "gdbsupport/scoped_restore.h"
 #include "mi/mi-main.h"
 
 enum print_values {
@@ -237,4 +238,4 @@ extern void remove_mi_cmd_entries (remove_mi_cmd_entries_ftype callback);
 
 extern bool mi_simple_type_p (struct type *type);
 
-#endif /* MI_MI_CMDS_H */
+#endif /* GDB_MI_MI_CMDS_H */

@@ -588,7 +588,7 @@ static CORE_ADDR arm_analyze_prologue
   (struct gdbarch *gdbarch, CORE_ADDR prologue_start, CORE_ADDR prologue_end,
    struct arm_prologue_cache *cache, const arm_instruction_reader &insn_reader);
 
-/* Architecture version for displaced stepping.  This effects the behaviour of
+/* Architecture version for displaced stepping.  This effects the behavior of
    certain instructions, and really should not be hard-wired.  */
 
 #define DISPLACED_STEPPING_ARCH_VERSION		5
@@ -712,7 +712,6 @@ arm_find_mapping_symbol (CORE_ADDR memaddr, CORE_ADDR *start)
 int
 arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
 {
-  struct bound_minimal_symbol sym;
   char type;
   arm_displaced_step_copy_insn_closure *dsc = nullptr;
   arm_gdbarch_tdep *tdep = gdbarch_tdep<arm_gdbarch_tdep> (gdbarch);
@@ -752,7 +751,7 @@ arm_pc_is_thumb (struct gdbarch *gdbarch, CORE_ADDR memaddr)
     return type == 't';
 
   /* Thumb functions have a "special" bit set in minimal symbols.  */
-  sym = lookup_minimal_symbol_by_pc (memaddr);
+  bound_minimal_symbol sym = lookup_minimal_symbol_by_pc (memaddr);
   if (sym.minsym)
     return (MSYMBOL_IS_SPECIAL (sym.minsym));
 
@@ -913,9 +912,8 @@ static int
 skip_prologue_function (struct gdbarch *gdbarch, CORE_ADDR pc, int is_thumb)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
-  struct bound_minimal_symbol msym;
 
-  msym = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msym = lookup_minimal_symbol_by_pc (pc);
   if (msym.minsym != NULL
       && msym.value_address () == pc
       && msym.minsym->linkage_name () != NULL)
@@ -1684,7 +1682,6 @@ arm_skip_stack_protector(CORE_ADDR pc, struct gdbarch *gdbarch)
 {
   enum bfd_endian byte_order_for_code = gdbarch_byte_order_for_code (gdbarch);
   unsigned int basereg;
-  struct bound_minimal_symbol stack_chk_guard;
   int offset;
   int is_thumb = arm_pc_is_thumb (gdbarch, pc);
   CORE_ADDR addr;
@@ -1695,7 +1692,7 @@ arm_skip_stack_protector(CORE_ADDR pc, struct gdbarch *gdbarch)
   if (!addr)
     return pc;
 
-  stack_chk_guard = lookup_minimal_symbol_by_pc (addr);
+  bound_minimal_symbol stack_chk_guard = lookup_minimal_symbol_by_pc (addr);
   /* ADDR must correspond to a symbol whose name is __stack_chk_guard.
      Otherwise, this sequence cannot be for stack protector.  */
   if (stack_chk_guard.minsym == NULL
@@ -4860,7 +4857,7 @@ arm_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
       si = pop_stack_item (si);
     }
 
-  /* Finally, update teh SP register.  */
+  /* Finally, update the SP register.  */
   regcache_cooked_write_unsigned (regcache, ARM_SP_REGNUM, sp);
 
   return sp;
@@ -5577,7 +5574,7 @@ bx_write_pc (struct regcache *regs, ULONGEST val)
     }
   else
     {
-      /* Unpredictable behaviour.  Try to do something sensible (switch to ARM
+      /* Unpredictable behavior.  Try to do something sensible (switch to ARM
 	  mode, align dest to 4 bytes).  */
       warning (_("Single-stepping BX to non-word-aligned ARM instruction."));
       regcache_cooked_write_unsigned (regs, ARM_PS_REGNUM, ps & ~t_bit);
@@ -8779,7 +8776,7 @@ gdb_print_insn_arm (bfd_vma memaddr, disassemble_info *info)
    undefined instruction trap.  ARM7TDMI is nominally ARMv4T, but does
    not in fact add the new instructions.  The new undefined
    instructions in ARMv4 are all instructions that had no defined
-   behaviour in earlier chips.  There is no guarantee that they will
+   behavior in earlier chips.  There is no guarantee that they will
    raise an exception, but may be treated as NOP's.  In practice, it
    may only safe to rely on instructions matching:
    
@@ -8986,7 +8983,7 @@ arm_extract_return_value (struct type *type, struct regcache *regs,
     }
   else
     {
-      /* For a structure or union the behaviour is as if the value had
+      /* For a structure or union the behavior is as if the value had
 	 been stored to word-aligned memory and then loaded into 
 	 registers with 32-bit load instruction(s).  */
       int len = type->length ();
@@ -9061,7 +9058,7 @@ arm_return_in_memory (struct gdbarch *gdbarch, struct type *type)
 	 fields are not addressable, and all addressable subfields of
 	 unions always start at offset zero.
 
-	 This function is based on the behaviour of GCC 2.95.1.
+	 This function is based on the behavior of GCC 2.95.1.
 	 See: gcc/arm.c: arm_return_in_memory() for details.
 
 	 Note: All versions of GCC before GCC 2.95.2 do not set up the
@@ -9216,7 +9213,7 @@ arm_store_return_value (struct type *type, struct regcache *regs,
     }
   else
     {
-      /* For a structure or union the behaviour is as if the value had
+      /* For a structure or union the behavior is as if the value had
 	 been stored to word-aligned memory and then loaded into 
 	 registers with 32-bit load instruction(s).  */
       int len = type->length ();
@@ -9391,9 +9388,8 @@ arm_skip_cmse_entry (CORE_ADDR pc, const char *name, struct objfile *objfile)
   char *target_name = (char *) alloca (target_len);
   xsnprintf (target_name, target_len, "%s%s", "__acle_se_", name);
 
-  struct bound_minimal_symbol minsym
-   = lookup_minimal_symbol (target_name, NULL, objfile);
-
+  bound_minimal_symbol minsym
+    = lookup_minimal_symbol (current_program_space, target_name, objfile);
   if (minsym.minsym != nullptr)
     return minsym.value_address ();
 
@@ -9467,7 +9463,6 @@ arm_skip_stub (const frame_info_ptr &frame, CORE_ADDR pc)
     {
       char *target_name;
       int target_len = namelen - 2;
-      struct bound_minimal_symbol minsym;
       struct objfile *objfile;
       struct obj_section *sec;
 
@@ -9482,7 +9477,8 @@ arm_skip_stub (const frame_info_ptr &frame, CORE_ADDR pc)
 
       sec = find_pc_section (pc);
       objfile = (sec == NULL) ? NULL : sec->objfile;
-      minsym = lookup_minimal_symbol (target_name, NULL, objfile);
+      bound_minimal_symbol minsym
+	= lookup_minimal_symbol (current_program_space, target_name, objfile);
       if (minsym.minsym != NULL)
 	return minsym.value_address ();
       else
@@ -9508,7 +9504,7 @@ arm_update_current_architecture (void)
 
   /* Update the architecture.  */
   gdbarch_info info;
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("could not update architecture"));
 }
 
@@ -12143,7 +12139,7 @@ arm_record_ld_st_imm_offset (arm_insn_decode_record *arm_insn_r)
       record_buf[arm_insn_r->reg_rec_count++] = reg_dest;
 
       /* The LDR instruction is capable of doing branching.  If MOV LR, PC
-	 preceeds a LDR instruction having R15 as reg_base, it
+	 precedes a LDR instruction having R15 as reg_base, it
 	 emulates a branch and link instruction, and hence we need to save
 	 CPSR and PC as well.  */
       if (ARM_PC_REGNUM == reg_dest)
@@ -12267,7 +12263,7 @@ arm_record_ld_st_reg_offset (arm_insn_decode_record *arm_insn_r)
 	  if (15 == reg_src2)
 	    {
 	      /* If R15 was used as Rn, hence current PC+8.  */
-	      /* Pre-indexed mode doesnt reach here ; illegal insn.  */
+	      /* Pre-indexed mode doesn't reach here ; illegal insn.  */
 		u_regval[0] = u_regval[0] + 8;
 	    }
 	  /* Calculate target store address, Rn +/- Rm, register offset.  */
@@ -12580,7 +12576,7 @@ arm_record_b_bl (arm_insn_decode_record *arm_insn_r)
 
   /* Handle B, BL, BLX(1) insns.  */
   /* B simply branches so we do nothing here.  */
-  /* Note: BLX(1) doesnt fall here but instead it falls into
+  /* Note: BLX(1) doesn't fall here but instead it falls into
      extension space.  */
   if (bit (arm_insn_r->arm_insn, 24))
     {
@@ -13561,9 +13557,12 @@ thumb_record_misc (arm_insn_decode_record *thumb_insn_r)
 	  record_buf[0] = bits (thumb_insn_r->arm_insn, 0, 2);
 	  thumb_insn_r->reg_rec_count = 1;
 	  break;
-	case 4: /* fall through  */
 	case 5:
-	  /* PUSH.  */
+	  /* PUSH with lr.  */
+	  register_count++;
+	  [[fallthrough]];
+	case 4:
+	  /* PUSH without lr.  */
 	  register_bits = bits (thumb_insn_r->arm_insn, 0, 7);
 	  regcache_raw_read_unsigned (reg_cache, ARM_SP_REGNUM, &u_regval);
 	  while (register_bits)
@@ -13572,8 +13571,7 @@ thumb_record_misc (arm_insn_decode_record *thumb_insn_r)
 		register_count++;
 	      register_bits = register_bits >> 1;
 	    }
-	  start_address = u_regval -  \
-	    (4 * (bit (thumb_insn_r->arm_insn, 8) + register_count));
+	  start_address = u_regval - (4 * register_count);
 	  thumb_insn_r->mem_rec_count = register_count;
 	  while (register_count)
 	    {

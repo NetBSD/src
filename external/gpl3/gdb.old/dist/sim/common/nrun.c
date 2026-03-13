@@ -64,7 +64,7 @@ main (int argc, char **argv)
   enum sim_stop reason;
   int sigrc = 0;
   int single_step = 0;
-  RETSIGTYPE (*prev_sigint) ();
+  RETSIGTYPE (*prev_sigint) (int);
 
   myname = lbasename (argv[0]);
 

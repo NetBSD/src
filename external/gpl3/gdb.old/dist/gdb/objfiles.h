@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (OBJFILES_H)
-#define OBJFILES_H
+#ifndef GDB_OBJFILES_H
+#define GDB_OBJFILES_H
 
 #include "gdbsupport/gdb_obstack.h"
 #include "objfile-flags.h"
@@ -32,6 +32,7 @@
 #include "jit.h"
 #include "quick-symbol.h"
 #include <forward_list>
+#include "gdbsupport/unordered_map.h"
 
 struct htab;
 struct objfile_data;
@@ -228,14 +229,14 @@ struct objfile_per_bfd_storage
 
   const char *intern (const char *str)
   {
-    return (const char *) string_cache.insert (str, strlen (str) + 1);
+    return string_cache.insert (str, strlen (str) + 1);
   }
 
   /* Same as the above, but for an std::string.  */
 
   const char *intern (const std::string &str)
   {
-    return (const char *) string_cache.insert (str.c_str (), str.size () + 1);
+    return string_cache.insert (str.c_str (), str.size () + 1);
   }
 
   /* Get the BFD this object is associated to.  */
@@ -418,12 +419,13 @@ struct obj_section
    symbols, lookup_symbol is used to check if we only have a partial
    symbol and if so, read and expand the full compunit.  */
 
-struct objfile
+struct objfile : intrusive_list_node<objfile>
 {
 private:
 
   /* The only way to create an objfile is to call objfile::make.  */
-  objfile (gdb_bfd_ref_ptr, const char *, objfile_flags);
+  objfile (gdb_bfd_ref_ptr, program_space *pspace, const char *,
+	   objfile_flags);
 
 public:
 
@@ -436,14 +438,18 @@ public:
   ~objfile ();
 
   /* Create an objfile.  */
-  static objfile *make (gdb_bfd_ref_ptr bfd_, const char *name_,
-			objfile_flags flags_, objfile *parent = nullptr);
+  static objfile *make (gdb_bfd_ref_ptr bfd_, program_space *pspace,
+			const char *name_, objfile_flags flags_,
+			objfile *parent = nullptr);
 
-  /* Remove an objfile from the current program space, and free
+  /* Remove this objfile from its program space's objfile list, and frees
      it.  */
   void unlink ();
 
   DISABLE_COPY_AND_ASSIGN (objfile);
+
+  /* Return the program space associated with this objfile.  */
+  program_space *pspace () { return m_pspace; }
 
   /* A range adapter that makes it possible to iterate over all
      compunits in one objfile.  */
@@ -592,14 +598,15 @@ public:
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags domain);
+     domain_search_flags domain,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher
+       = nullptr);
 
   /* See quick_symbol_functions.  */
-  struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct bound_minimal_symbol msymbol,
-     CORE_ADDR pc,
-     struct obj_section *section,
-     int warn_if_readin);
+  struct compunit_symtab *
+  find_pc_sect_compunit_symtab (bound_minimal_symbol msymbol, CORE_ADDR pc,
+				struct obj_section *section,
+				int warn_if_readin);
 
   /* See quick_symbol_functions.  */
   void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
@@ -624,6 +631,9 @@ public:
     gdb_assert (section->owner == nullptr || section->owner == this->obfd);
 
     int idx = gdb_bfd_section_index (this->obfd.get (), section);
+
+    /* Guarantee that the section offsets were initialized.  */
+    gdb_assert (this->section_offsets.size () > idx);
     return this->section_offsets[idx];
   }
 
@@ -635,6 +645,9 @@ public:
     gdb_assert (section->owner == nullptr || section->owner == this->obfd);
 
     int idx = gdb_bfd_section_index (this->obfd.get (), section);
+
+    /* Guarantee that the section offsets were initialized.  */
+    gdb_assert (this->section_offsets.capacity () > idx);
     this->section_offsets[idx] = offset;
   }
 
@@ -716,10 +729,12 @@ public:
 
   objfile_flags flags;
 
+private:
   /* The program space associated with this objfile.  */
 
-  struct program_space *pspace;
+  program_space *m_pspace;
 
+public:
   /* List of compunits.
      These are used to do symbol lookups and file/line-number lookups.  */
 
@@ -849,7 +864,8 @@ public:
      Very few blocks have a static link, so it's more memory efficient to
      store these here rather than in struct block.  Static links must be
      allocated on the objfile's obstack.  */
-  htab_up static_links;
+  gdb::unordered_map<const block *, const dynamic_prop *>
+    static_links;
 
   /* JIT-related data for this objfile, if the objfile is a JITer;
      that is, it produces JITed objfiles.  */
@@ -879,7 +895,7 @@ public:
 
 /* A deleter for objfile.  */
 
-struct objfile_deleter
+struct objfile_unlinker
 {
   void operator() (objfile *ptr) const
   {
@@ -889,7 +905,7 @@ struct objfile_deleter
 
 /* A unique pointer that holds an objfile.  */
 
-typedef std::unique_ptr<objfile, objfile_deleter> objfile_up;
+typedef std::unique_ptr<objfile, objfile_unlinker> scoped_objfile_unlinker;
 
 /* Relocation offset applied to the section.  */
 inline CORE_ADDR
@@ -907,9 +923,15 @@ obj_section::set_offset (CORE_ADDR offset)
 
 /* Declarations for functions defined in objfiles.c */
 
-extern int entry_point_address_query (CORE_ADDR *entry_p);
+/* If there is a valid and known entry point in PSPACE, fill *ENTRY_P with it
+   and return non-zero.  */
 
-extern CORE_ADDR entry_point_address (void);
+extern int entry_point_address_query (program_space *pspace,
+				      CORE_ADDR *entry_p);
+
+/* Get the entry point address in PSPACE.  Call error if it is not known.  */
+
+extern CORE_ADDR entry_point_address (program_space *pspace);
 
 extern void build_objfile_section_table (struct objfile *);
 
@@ -918,18 +940,30 @@ extern void free_objfile_separate_debug (struct objfile *);
 extern void objfile_relocate (struct objfile *, const section_offsets &);
 extern void objfile_rebase (struct objfile *, CORE_ADDR);
 
-extern int objfile_has_full_symbols (struct objfile *objfile);
+/* Return true if OBJFILE has full symbols.  */
 
-extern int objfile_has_symbols (struct objfile *objfile);
+extern bool objfile_has_full_symbols (objfile *objfile);
 
-extern int have_partial_symbols (void);
+/* Return true if OBJFILE has full or partial symbols, either directly
+   or through a separate debug file.  */
 
-extern int have_full_symbols (void);
+extern bool objfile_has_symbols (objfile *objfile);
+
+/* Return true if any objfile of PSPACE has partial symbols.  */
+
+extern bool have_partial_symbols (program_space *pspace);
+
+/* Return true if any objfile of PSPACE has full symbols.  */
+
+extern bool have_full_symbols (program_space *pspace);
 
 extern void objfile_set_sym_fns (struct objfile *objfile,
 				 const struct sym_fns *sf);
 
-extern void objfiles_changed (void);
+/* Set section_map_dirty for PSPACE so the section map will be rebuilt next time
+   it is used.  */
+
+extern void objfiles_changed (program_space *pspace);
 
 /* Return true if ADDR maps into one of the sections of OBJFILE and false
    otherwise.  */
@@ -942,16 +976,18 @@ extern bool is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile);
 extern bool shared_objfile_contains_address_p (struct program_space *pspace,
 					       CORE_ADDR address);
 
-/* This operation deletes all objfile entries that represent solibs that
-   weren't explicitly loaded by the user, via e.g., the add-symbol-file
+/* This operation deletes all objfile entries in PSPACE that represent solibs
+   that weren't explicitly loaded by the user, via e.g., the add-symbol-file
    command.  */
 
-extern void objfile_purge_solibs (void);
+extern void objfile_purge_solibs (program_space *pspace);
 
 /* Functions for dealing with the minimal symbol table, really a misc
    address<->symbol mapping for things we don't have debug symbols for.  */
 
-extern int have_minimal_symbols (void);
+/* Return true if any objfile of PSPACE has minimal symbols.  */
+
+extern bool have_minimal_symbols (program_space *pspace);
 
 extern struct obj_section *find_pc_section (CORE_ADDR pc);
 
@@ -1025,4 +1061,4 @@ extern void objfile_register_static_link
 extern const struct dynamic_prop *objfile_lookup_static_link
   (struct objfile *objfile, const struct block *block);
 
-#endif /* !defined (OBJFILES_H) */
+#endif /* GDB_OBJFILES_H */

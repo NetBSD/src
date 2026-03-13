@@ -47,55 +47,55 @@ proc do_test {dir options} {
 
     gdb_test "whatis (const char) v_char" \
 	"type = const char" \
-	"(const char)"
+	"cast to const char"
     gdb_test "whatis (const signed char) v_signed_char" \
 	"type = const signed char" \
-	"(const signed char)"
+	"cast to const signed char"
     gdb_test "whatis (const unsigned char) v_unsigned_char" \
 	"type = const (unsigned char|char)" \
-	"(const unsigned char)"
+	"cast to const unsigned char"
     gdb_test "whatis (const short) v_short" \
 	"type = const (short|short int)" \
-	"(const short)"
+	"cast to const short"
     gdb_test "whatis (const signed short) v_signed_short" \
 	"type = const (short|short int|signed short|signed short int)" \
-	"(const signed short)"
+	"cast to const signed short"
     gdb_test "whatis (const unsigned short) v_unsigned_short" \
 	"type = const (unsigned short|short unsigned int)" \
-	"(const unsigned short)"
+	"cast to const unsigned short"
     gdb_test "whatis (const int) v_int" \
 	"type = const int" \
-	"(const int)"
+	"cast to const int"
     gdb_test "whatis (const signed int) v_signed_int" \
 	"type = const (signed int|int)" \
-	"(const signed int)"
+	"cast to const signed int"
     gdb_test "whatis (const unsigned int) v_unsigned_int" \
 	"type = const unsigned int" \
-	"(const unsigned int)"
+	"cast to const unsigned int"
     gdb_test "whatis (const long) v_long" \
 	"type = const (long|long int)" \
-	"(const long)"
+	"cast to const long"
     gdb_test "whatis (const signed long) v_signed_long" \
 	"type = const (signed |)long( int|)" \
-	"(const signed long)"
+	"cast to const signed long"
     gdb_test "whatis (const unsigned long) v_unsigned_long" \
 	"type = const (unsigned long|long unsigned int)" \
-	"(const unsigned long)"
+	"cast to const unsigned long"
     gdb_test "whatis (const long long) v_long_long" \
 	"type = const long long( int|)" \
-	"(const long long)"
+	"cast to const long long"
     gdb_test "whatis (const signed long long) v_signed_long_long" \
 	"type = const (signed |)long long( int|)" \
-	"(const signed long long)"
+	"cast to const signed long long"
     gdb_test "whatis (const unsigned long long) v_unsigned_long_long" \
 	"type = const (unsigned long long|long long unsigned int)" \
-	"(const unsigned long long)"
+	"cast to const unsigned long long"
     gdb_test "whatis (const float) v_float" \
 	"type = const float" \
-	"(const float)"
+	"cast to const float"
     gdb_test "whatis (const double) v_double" \
 	"type = const double" \
-	"(const double)"
+	"cast to const double"
 
     #
     # Test casting a scalar to volatile
@@ -103,55 +103,55 @@ proc do_test {dir options} {
 
     gdb_test "whatis (volatile char) v_char" \
 	"type = volatile char" \
-	"(volatile char)"
+	"cast to volatile char"
     gdb_test "whatis (volatile signed char) v_signed_char" \
 	"type = volatile signed char" \
-	"(volatile signed char)"
+	"cast to volatile signed char"
     gdb_test "whatis (volatile unsigned char) v_unsigned_char" \
 	"type = volatile (unsigned char|char)" \
-	"(volatile unsigned char)"
+	"cast to volatile unsigned char"
     gdb_test "whatis (volatile short) v_short" \
 	"type = volatile (short|short int)" \
-	"(volatile short)"
+	"cast to volatile short"
     gdb_test "whatis (volatile signed short) v_signed_short" \
 	"type = volatile (short|short int|signed short|signed short int)" \
-	"(volatile signed short)"
+	"cast to volatile signed short"
     gdb_test "whatis (volatile unsigned short) v_unsigned_short" \
 	"type = volatile (unsigned short|short unsigned int)" \
-	"(volatile unsigned short)"
+	"cast to volatile unsigned short"
     gdb_test "whatis (volatile int) v_int" \
 	"type = volatile int" \
-	"(volatile int)"
+	"cast to volatile int"
     gdb_test "whatis (volatile signed int) v_signed_int" \
 	"type = volatile (signed int|int)" \
-	"(volatile signed int)"
+	"cast to volatile signed int"
     gdb_test "whatis (volatile unsigned int) v_unsigned_int" \
 	"type = volatile unsigned int" \
-	"(volatile unsigned int)"
+	"cast to volatile unsigned int"
     gdb_test "whatis (volatile long) v_long" \
 	"type = volatile (long|long int)" \
-	"(volatile long)"
+	"cast to volatile long"
     gdb_test "whatis (volatile signed long) v_signed_long" \
 	"type = volatile (signed |)long( int|)" \
-	"(volatile signed long)"
+	"cast to volatile signed long"
     gdb_test "whatis (volatile unsigned long) v_unsigned_long" \
 	"type = volatile (unsigned long|long unsigned int)" \
-	"(volatile unsigned long)"
+	"cast to volatile unsigned long"
     gdb_test "whatis (volatile long long) v_long_long" \
 	"type = volatile long long( int|)" \
-	"(volatile long long)"
+	"cast to volatile long long"
     gdb_test "whatis (volatile signed long long) v_signed_long_long" \
 	"type = volatile (signed |)long long( int|)" \
-	"(volatile signed long long)"
+	"cast to volatile signed long long"
     gdb_test "whatis (volatile unsigned long long) v_unsigned_long_long" \
 	"type = volatile (unsigned long long|long long unsigned int)" \
-	"(volatile unsigned long long)"
+	"cast to volatile unsigned long long"
     gdb_test "whatis (volatile float) v_float" \
 	"type = volatile float" \
-	"(volatile float)"
+	"cast to volatile float"
     gdb_test "whatis (volatile double) v_double" \
 	"type = volatile double" \
-	"(volatile double)"
+	"cast to volatile double"
 
     #
     # Combine const and volatile
@@ -159,47 +159,47 @@ proc do_test {dir options} {
 
     gdb_test "whatis (const volatile int) v_int" \
 	"type = const volatile int" \
-	"(const volatile int)"
+	"cast to const volatile int"
     gdb_test "whatis (volatile const int) v_int" \
 	"type = const volatile int" \
-	"(volatile const int)"
+	"cast to volatile const int"
     gdb_test "whatis (const int volatile) v_int" \
 	"type = const volatile int" \
-	"(const int volatile)"
+	"cast to const int volatile"
     gdb_test "whatis (volatile int const) v_int" \
 	"type = const volatile int" \
-	"(volatile int const)"
+	"cast to volatile int const"
     gdb_test "whatis (int const volatile) v_int" \
 	"type = const volatile int" \
-	"(int const volatile)"
+	"cast to int const volatile"
     gdb_test "whatis (int volatile const) v_int" \
 	"type = const volatile int" \
-	"(int volatile const)"
+	"cast to int volatile const"
 
     gdb_test "whatis (const volatile int *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(const volatile int *)"
+	"cast to const volatile int *"
     gdb_test "whatis (volatile const int *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(volatile const int *)"
+	"cast to volatile const int *"
     gdb_test "whatis (const int volatile *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(const int volatile *)"
+	"cast to const int volatile *"
     gdb_test "whatis (volatile int const *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(volatile int const *)"
+	"cast to volatile int const *"
     gdb_test "whatis (int const volatile *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(int const volatile *)"
+	"cast to int const volatile *"
     gdb_test "whatis (int volatile const *) v_int_pointer" \
 	"type = const volatile int${ws}\\*" \
-	"(int volatile const *)"
+	"cast to int volatile const *"
     gdb_test "whatis (int * const volatile) v_int_pointer" \
 	"type = int${ws}\\*${ws}const volatile" \
-	"(int * const volatile)"
+	"cast to int * const volatile"
     gdb_test "whatis (int * volatile const) v_int_pointer" \
 	"type = int${ws}\\*${ws}const volatile" \
-	"(int * volatile const)"
+	"cast to int * volatile const"
 
 
     #
@@ -208,65 +208,65 @@ proc do_test {dir options} {
 
     #gdb_test "whatis (signed const char) v_signed_char" \
 	#	"type = const char" \
-	#	"(signed const char)"
+	#	"cast to signed const char"
     #gdb_test "whatis (unsigned const char) v_unsigned_char" \
 	#	"type = const (unsigned char|char)" \
-	#	"(unsigned const char)"
+	#	"cast to unsigned const char"
     #gdb_test "whatis (signed const short) v_signed_short" \
 	#	"type = const (short|short int|signed short|signed short int)" \
-	#	"(signed const short)"
+	#	"cast to signed const short"
     #gdb_test "whatis (unsigned const short) v_unsigned_short" \
 	#	"type = const (unsigned short|short unsigned int)" \
-	#	"(unsigned const short)"
+	#	"cast to unsigned const short"
     #gdb_test "whatis (signed const int) v_signed_int" \
 	#	"type = const (signed int|int)" \
-	#	"(signed const int)"
+	#	"cast to signed const int"
     #gdb_test "whatis (unsigned const int) v_unsigned_int" \
 	#	"type = const unsigned int" \
-	#	"(unsigned const int)"
+	#	"cast to unsigned const int"
     #gdb_test "whatis (signed const long) v_signed_long" \
 	#	"type = const (signed |)long( int|)" \
-	#	"(signed const long)"
+	#	"cast to signed const long"
     #gdb_test "whatis (unsigned const long) v_unsigned_long" \
 	#	"type = const (unsigned long|long unsigned int)" \
-	#	"(unsigned const long)"
+	#	"cast to unsigned const long"
     #gdb_test "whatis (signed const long long) v_signed_long_long" \
 	#	"type = const (signed |)long long( int|)" \
-	#	"(signed const long long)"
+	#	"cast to signed const long long"
     #gdb_test "whatis (unsigned const long long) v_unsigned_long_long" \
 	#	"type = const (unsigned long long|long long unsigned int)" \
-	#	"(const unsigned long long)"
+	#	"cast to const unsigned long long"
 
     #gdb_test "whatis (signed volatile char) v_signed_char" \
 	#	"type = volatile char" \
-	#	"(signed volatile char)"
+	#	"cast to signed volatile char"
     #gdb_test "whatis (unsigned volatile char) v_unsigned_char" \
 	#	"type = volatile (unsigned char|char)" \
-	#	"(unsigned volatile char)"
+	#	"cast to unsigned volatile char"
     #gdb_test "whatis (signed volatile short) v_signed_short" \
 	#	"type = volatile (short|short int|signed short|signed short int)" \
-	#	"(signed volatile short)"
+	#	"cast to signed volatile short"
     #gdb_test "whatis (unsigned volatile short) v_unsigned_short" \
 	#	"type = volatile (unsigned short|short unsigned int)" \
-	#	"(unsigned volatile short)"
+	#	"cast to unsigned volatile short"
     #gdb_test "whatis (signed volatile int) v_signed_int" \
 	#	"type = volatile (signed int|int)" \
-	#	"(signed volatile int)"
+	#	"cast to signed volatile int"
     #gdb_test "whatis (unsigned volatile int) v_unsigned_int" \
 	#	"type = volatile unsigned int" \
-	#	"(unsigned volatile int)"
+	#	"cast to unsigned volatile int"
     #gdb_test "whatis (signed volatile long) v_signed_long" \
 	#	"type = volatile (signed |)long( int|)" \
-	#	"(signed volatile long)"
+	#	"cast to signed volatile long"
     #gdb_test "whatis (unsigned volatile long) v_unsigned_long" \
 	#	"type = volatile (unsigned long|long unsigned int)" \
-	#	"(unsigned volatile long)"
+	#	"cast to unsigned volatile long"
     #gdb_test "whatis (signed volatile long long) v_signed_long_long" \
 	#	"type = volatile (signed |)long long( int|)" \
-	#	"(signed volatile long long)"
+	#	"cast to signed volatile long long"
     #gdb_test "whatis (unsigned volatile long long) v_unsigned_long_long" \
 	#	"type = volatile (unsigned long long|long long unsigned int)" \
-	#	"(unsigned volatile long long)"
+	#	"cast to unsigned volatile long long"
 
     #
     # Now put the 'const' and 'volatile' keywords after the base type.
@@ -274,107 +274,107 @@ proc do_test {dir options} {
 
     gdb_test "whatis (char const) v_char" \
 	"type = const char" \
-	"(char const)"
+	"cast to char const"
     gdb_test "whatis (signed char const) v_signed_char" \
 	"type = const signed char" \
-	"(signed char const)"
+	"cast to signed char const"
     gdb_test "whatis (unsigned char const) v_unsigned_char" \
 	"type = const (unsigned char|char)" \
-	"(unsigned char const)"
+	"cast to unsigned char const"
     gdb_test "whatis (short const) v_short" \
 	"type = const (short|short int)" \
-	"(short const)"
+	"cast to short const"
     gdb_test "whatis (signed short const) v_signed_short" \
 	"type = const (short|short int|signed short|signed short int)" \
-	"(signed short const)"
+	"cast to signed short const"
     gdb_test "whatis (unsigned short const) v_unsigned_short" \
 	"type = const (unsigned short|short unsigned int)" \
-	"(unsigned short const)"
+	"cast to unsigned short const"
     gdb_test "whatis (int const) v_int" \
 	"type = const int" \
-	"(int const)"
+	"cast to int const"
     gdb_test "whatis (signed int const) v_signed_int" \
 	"type = const (signed int|int)" \
-	"(signed int const)"
+	"cast to signed int const"
     gdb_test "whatis (unsigned int const) v_unsigned_int" \
 	"type = const unsigned int" \
-	"(unsigned int const)"
+	"cast to unsigned int const"
     gdb_test "whatis (long const) v_long" \
 	"type = const (long|long int)" \
-	"(long const)"
+	"cast to long const"
     gdb_test "whatis (signed long const) v_signed_long" \
 	"type = const (signed |)long( int|)" \
-	"(signed long const)"
+	"cast to signed long const"
     gdb_test "whatis (unsigned long const) v_unsigned_long" \
 	"type = const (unsigned long|long unsigned int)" \
-	"(unsigned long const)"
+	"cast to unsigned long const"
     gdb_test "whatis (long long const) v_long_long" \
 	"type = const long long( int|)" \
-	"(long long const)"
+	"cast to long long const"
     gdb_test "whatis (signed long long const) v_signed_long_long" \
 	"type = const (signed |)long long( int|)" \
-	"(signed long long const)"
+	"cast to signed long long const"
     gdb_test "whatis (unsigned long long const) v_unsigned_long_long" \
 	"type = const (unsigned long long|long long unsigned int)" \
-	"(unsigned long long const)"
+	"cast to unsigned long long const"
     gdb_test "whatis (float const) v_float" \
 	"type = const float" \
-	"(float const)"
+	"cast to float const"
     gdb_test "whatis (double const) v_double" \
 	"type = const double" \
-	"(double const)"
+	"cast to double const"
 
     gdb_test "whatis (char volatile) v_char" \
 	"type = volatile char" \
-	"(char volatile)"
+	"cast to char volatile"
     gdb_test "whatis (signed char volatile) v_signed_char" \
 	"type = volatile signed char" \
-	"(signed char volatile)"
+	"cast to signed char volatile"
     gdb_test "whatis (unsigned char volatile) v_unsigned_char" \
 	"type = volatile (unsigned char|char)" \
-	"(unsigned char volatile)"
+	"cast to unsigned char volatile"
     gdb_test "whatis (short volatile) v_short" \
 	"type = volatile (short|short int)" \
-	"(short volatile)"
+	"cast to short volatile"
     gdb_test "whatis (signed short volatile) v_signed_short" \
 	"type = volatile (short|short int|signed short|signed short int)" \
-	"(signed short volatile)"
+	"cast to signed short volatile"
     gdb_test "whatis (unsigned short volatile) v_unsigned_short" \
 	"type = volatile (unsigned short|short unsigned int)" \
-	"(unsigned short volatile)"
+	"cast to unsigned short volatile"
     gdb_test "whatis (int volatile) v_int" \
 	"type = volatile int" \
-	"(int volatile)"
+	"cast to int volatile"
     gdb_test "whatis (signed int volatile) v_signed_int" \
 	"type = volatile (signed int|int)" \
-	"(signed int volatile)"
+	"cast to signed int volatile"
     gdb_test "whatis (unsigned int volatile) v_unsigned_int" \
 	"type = volatile unsigned int" \
-	"(unsigned int volatile)"
+	"cast to unsigned int volatile"
     gdb_test "whatis (long volatile) v_long" \
 	"type = volatile (long|long int)" \
-	"(long volatile)"
+	"cast to long volatile"
     gdb_test "whatis (signed long volatile) v_signed_long" \
 	"type = volatile (signed |)long( int|)" \
-	"(signed long volatile)"
+	"cast to signed long volatile"
     gdb_test "whatis (unsigned long volatile) v_unsigned_long" \
 	"type = volatile (unsigned long|long unsigned int)" \
-	"(unsigned long volatile)"
+	"cast to unsigned long volatile"
     gdb_test "whatis (long long volatile) v_long_long" \
 	"type = volatile long long( int|)" \
-	"(long long volatile)"
+	"cast to long long volatile"
     gdb_test "whatis (signed long long volatile) v_signed_long_long" \
 	"type = volatile (signed |)long long( int|)" \
-	"(signed long long volatile)"
+	"cast to signed long long volatile"
     gdb_test "whatis (unsigned long long volatile) v_unsigned_long_long" \
 	"type = volatile (unsigned long long|long long unsigned int)" \
-	"(unsigned long long volatile)"
+	"cast to unsigned long long volatile"
     gdb_test "whatis (float volatile) v_float" \
 	"type = volatile float" \
-	"(float volatile)"
+	"cast to float volatile"
     gdb_test "whatis (double volatile) v_double" \
 	"type = volatile double" \
-	"(double volatile)"
+	"cast to double volatile"
 
     #
     # enums
@@ -382,16 +382,16 @@ proc do_test {dir options} {
 
     gdb_test "whatis (const enum misordered) v_misordered" \
 	"type = const enum misordered" \
-	"(const enum misordered)"
+	"cast to const enum misordered"
     gdb_test "whatis (enum misordered const) v_misordered" \
 	"type = const enum misordered" \
-	"(enum misordered const)"
+	"cast to enum misordered const"
     gdb_test "whatis (volatile enum misordered) v_misordered" \
 	"type = volatile enum misordered" \
-	"(volatile enum misordered)"
+	"cast to volatile enum misordered"
     gdb_test "whatis (enum misordered volatile) v_misordered" \
 	"type = volatile enum misordered" \
-	"(enum misordered volatile)"
+	"cast to enum misordered volatile"
 
     #
     # Pointers
@@ -399,41 +399,41 @@ proc do_test {dir options} {
 
     gdb_test "whatis (const int *) v_int_pointer" \
 	"type = const int${ws}\\*" \
-	"(const int *)"
+	"cast to const int *"
     gdb_test "whatis (int const *) v_int_pointer" \
 	"type = const int${ws}\\*" \
-	"(int const *)"
+	"cast to int const *"
     gdb_test "whatis (int * const) v_int_pointer" \
 	"type = int \\*${ws}const" \
-	"(int * const)"
+	"cast to int * const"
     gdb_test "whatis (const int * const) v_int_pointer" \
 	"type = const int${ws}\\*${ws}const" \
-	"(const int * const)"
+	"cast to const int * const"
     gdb_test "whatis (int const * const) v_int_pointer" \
 	"type = const int${ws}\\*${ws}const" \
-	"(int const * const)"
+	"cast to int const * const"
 
     gdb_test "whatis (const int **) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}\\*" \
-	"(const int **)"
+	"cast to const int **"
     gdb_test "whatis (int const **) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}\\*" \
-	"(int const **)"
+	"cast to int const **"
     gdb_test "whatis (int ** const) v_int_pointer_pointer" \
 	"type = int \\*${ws}\\*${ws}const" \
-	"(int ** const)"
+	"cast to int ** const"
     gdb_test "whatis (const int * const *) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}const${ws}\\*" \
-	"(const int * const *)"
+	"cast to const int * const *"
     gdb_test "whatis (int const * const *) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}const${ws}\\*" \
-	"(int const * const *)"
+	"cast to int const * const *"
     gdb_test "whatis (const int * const * const) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}const${ws}\\*${ws}const" \
-	"(const int * const * const)"
+	"cast to const int * const * const"
     gdb_test "whatis (int const * const * const) v_int_pointer_pointer" \
 	"type = const int${ws}\\*${ws}const${ws}\\*${ws}const" \
-	"(int const * const * const)"
+	"cast to int const * const * const"
 
     #
     # Arrays TODO
@@ -449,46 +449,46 @@ proc do_test {dir options} {
 
     gdb_test "whatis (const struct t_struct) v_struct1" \
 	"type = const struct t_struct" \
-	"(const struct t_struct)"
+	"cast to const struct t_struct"
     gdb_test "whatis (const union t_union) v_union" \
 	"type = const union t_union" \
-	"(const union t_union)"
+	"cast to const union t_union"
     gdb_test "whatis (struct t_struct const) v_struct1" \
 	"type = const struct t_struct" \
-	"(struct t_struct const)"
+	"cast to struct t_struct const"
     gdb_test "whatis (union t_union const) v_union" \
 	"type = const union t_union" \
-	"(union t_union const)"
+	"cast to union t_union const"
     gdb_test "whatis (const struct t_struct *) &v_struct1" \
 	"type = const struct t_struct${ws}\\*" \
-	"(const struct t_struct *)"
+	"cast to const struct t_struct *"
     gdb_test "whatis (const union t_union *) &v_union" \
 	"type = const union t_union${ws}\\*" \
-	"(const union t_union *)"
+	"cast to const union t_union *"
     gdb_test "whatis (struct t_struct const *) &v_struct1" \
 	"type = const struct t_struct${ws}\\*" \
-	"(struct t_struct const *)"
+	"cast to struct t_struct const *"
     gdb_test "whatis (union t_union const *) &v_union" \
 	"type = const union t_union${ws}\\*" \
-	"(union t_union const *)"
+	"cast to union t_union const *"
     gdb_test "whatis (struct t_struct * const) &v_struct1" \
 	"type = struct t_struct${ws}\\*${ws}const" \
-	"(struct t_struct * const)"
+	"cast to struct t_struct * const"
     gdb_test "whatis (union t_union * const) &v_union" \
 	"type = union t_union${ws}\\*${ws}const" \
-	"(union t_union * const)"
+	"cast to union t_union * const"
     gdb_test "whatis (const struct t_struct * const) &v_struct1" \
 	"type = const struct t_struct${ws}\\*${ws}const" \
-	"(const struct t_struct * const)"
+	"cast to const struct t_struct * const"
     gdb_test "whatis (const union t_union * const) &v_union" \
 	"type = const union t_union${ws}\\*${ws}const" \
-	"(const union t_union * const)"
+	"cast to const union t_union * const"
     gdb_test "whatis (struct t_struct const * const) &v_struct1" \
 	"type = const struct t_struct${ws}\\*${ws}const" \
-	"(struct t_struct const * const)"
+	"cast to struct t_struct const * const"
     gdb_test "whatis (union t_union const * const) &v_union" \
 	"type = const union t_union${ws}\\*${ws}const" \
-	"(union t_union const * const)"
+	"cast to union t_union const * const"
 
     #
     # Function pointers TODO

@@ -58,4 +58,4 @@ set remote_python_file [gdb_remote_download host \
 			    ${srcdir}/${subdir}/${testfile}.py]
 gdb_test_no_output "source ${remote_python_file}" "load python file"
 
-gdb_test "bt" "niam \\(argc=<error reading variable: dwarf expression stack underflow>, argv=0x\[0-9a-f\]+\\) at py-framefilter-invalidarg.c:\[0-9\]+" "bt full with filters"
+gdb_test "bt" "niam \\(argc=<error reading variable: dwarf expression stack underflow>, argv=0x\[0-9a-f\]+\\) at \[^\r\n\]*py-framefilter-invalidarg.c:\[0-9\]+" "bt full with filters"

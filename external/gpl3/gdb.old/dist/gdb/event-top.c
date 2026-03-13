@@ -19,6 +19,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "gdbsupport/job-control.h"
 #include "run-on-main-thread.h"
 #include "top.h"
@@ -183,7 +184,7 @@ extern "C" void _rl_signal_handler (int);
    (sjlj-based) C++ exceptions.  */
 
 static struct gdb_exception
-gdb_rl_callback_read_char_wrapper_noexcept () noexcept
+gdb_rl_callback_read_char_wrapper_sjlj ()
 {
   struct gdb_exception gdb_expt;
 
@@ -226,6 +227,22 @@ gdb_rl_callback_read_char_wrapper_noexcept () noexcept
   END_CATCH_SJLJ
 
   return gdb_expt;
+}
+
+/* Wrapper around gdb_rl_callback_read_char_wrapper_sjlj to ensure
+   noexcept.  */
+
+static struct gdb_exception
+gdb_rl_callback_read_char_wrapper_noexcept () noexcept
+{
+  try
+    {
+      return gdb_rl_callback_read_char_wrapper_sjlj ();
+    }
+  catch (gdb_exception &ex)
+    {
+      return std::move (ex);
+    }
 }
 
 static void
@@ -369,6 +386,23 @@ gdb_rl_callback_handler_install (const char *prompt)
      buffer.  Calling this when we were already processing input
      therefore loses input.  */
   gdb_assert (!callback_handler_installed);
+
+#ifdef RL_STATE_EOF
+  /* Some versions of readline contain a bug where the rl_eof_found flag
+     would not be reset back to 0 in rl_initialize, despite the
+     RL_STATE_EOF flag being cleared in this function.
+
+     The consequence of this mistake is that readline will appear to get
+     stuck in the EOF state, and will emit an extra '\n' character each
+     time an input line is completed.
+
+     Work around this by clearing the EOF state now ourselves.  */
+  if (RL_ISSTATE (RL_STATE_EOF))
+    {
+      RL_UNSETSTATE (RL_STATE_EOF);
+      rl_eof_found = 0;
+    }
+#endif /* RL_STATE_EOF */
 
   rl_callback_handler_install (prompt, gdb_rl_callback_handler);
   callback_handler_installed = true;
@@ -891,9 +925,54 @@ unblock_signal (int sig)
   return false;
 }
 
+/* Signal safe language specific strings.  */
+
+#ifdef GDB_PRINT_INTERNAL_BACKTRACE
+static const char *str_fatal_signal;
+static const char *str_sigsegv;
+#ifdef SIGFPE
+static const char *str_sigfpe;
+#endif
+#ifdef SIGBUS
+static const char *str_sigbus;
+#endif
+#ifdef SIGABRT
+static const char *str_sigabrt;
+#endif
+static const char *str_unknown_signal;
+static const char *str_fatal_error_detected_gdb_will_now_terminate;
+static const char *str_this_is_a_bug;
+static const char *str_for_instructions_see;
+
+/* Initialize language specific strings.  */
+
+static void
+init_str_handle_fatal_signal ()
+{
+  str_fatal_signal = _("Fatal signal: ");
+  str_sigsegv = strsignal (SIGSEGV);
+#ifdef SIGFPE
+  str_sigfpe = strsignal (SIGFPE);
+#endif
+#ifdef SIGBUS
+  str_sigbus = strsignal (SIGBUS);
+#endif
+#ifdef SIGABRT
+  str_sigabrt = strsignal (SIGABRT);
+#endif
+  str_unknown_signal = _("Unknown signal");
+  str_fatal_error_detected_gdb_will_now_terminate =
+	_("A fatal error internal to GDB has been detected, "
+	  "further\ndebugging is not possible.  GDB will now "
+	  "terminate.\n\n");
+  str_this_is_a_bug = _("This is a bug, please report it.");
+  str_for_instructions_see = _("  For instructions, see:\n");
+}
+#endif
+
 /* Called to handle fatal signals.  SIG is the signal number.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 handle_fatal_signal (int sig)
 {
 #ifdef TUI
@@ -909,19 +988,40 @@ handle_fatal_signal (int sig)
   if (bt_on_fatal_signal)
     {
       sig_write ("\n\n");
-      sig_write (_("Fatal signal: "));
-      sig_write (strsignal (sig));
+      sig_write (str_fatal_signal);
+      switch (sig)
+	{
+	case SIGSEGV:
+	  sig_write (str_sigsegv);
+	  break;
+#ifdef SIGFPE
+	case SIGFPE:
+	  sig_write (str_sigfpe);
+	  break;
+#endif
+#ifdef SIGBUS
+	case SIGBUS:
+	  sig_write (str_sigbus);
+	  break;
+#endif
+#ifdef SIGABRT
+	case SIGABRT:
+	  sig_write (str_sigabrt);
+	  break;
+#endif
+	default:
+	  sig_write (str_unknown_signal);
+	  break;
+	}
       sig_write ("\n");
 
       gdb_internal_backtrace ();
 
-      sig_write (_("A fatal error internal to GDB has been detected, "
-		   "further\ndebugging is not possible.  GDB will now "
-		   "terminate.\n\n"));
-      sig_write (_("This is a bug, please report it."));
+      sig_write (str_fatal_error_detected_gdb_will_now_terminate);
+      sig_write (str_this_is_a_bug);
       if (REPORT_BUGS_TO[0] != '\0')
 	{
-	  sig_write (_("  For instructions, see:\n"));
+	  sig_write (str_for_instructions_see);
 	  sig_write (REPORT_BUGS_TO);
 	  sig_write (".");
 	}
@@ -931,7 +1031,7 @@ handle_fatal_signal (int sig)
     }
 #endif
 
-  /* If possible arrange for SIG to have its default behaviour (which
+  /* If possible arrange for SIG to have its default behavior (which
      should be to terminate the current process), unblock SIG, and reraise
      the signal.  This ensures GDB terminates with the expected signal.  */
   if (signal (sig, SIG_DFL) != SIG_ERR
@@ -1049,6 +1149,10 @@ gdb_init_signals (void)
     create_async_signal_handler (async_sigtstp_handler, NULL, "sigtstp");
 #endif
 
+#ifdef GDB_PRINT_INTERNAL_BACKTRACE
+  init_str_handle_fatal_signal ();
+#endif
+
 #ifdef SIGFPE
   signal (SIGFPE, handle_fatal_signal);
 #endif
@@ -1164,6 +1268,60 @@ handle_sigint (int sig)
   mark_async_signal_handler (sigint_token);
 }
 
+/* Copy file descriptors smaller than N from SRC to DST and return DST.
+   Portable version of FD_COPY.  */
+
+static fd_set *
+fd_copy (fd_set *dst, const fd_set *src, int n)
+{
+  FD_ZERO (dst);
+  for (int i = 0; i < n; ++i)
+    if (FD_ISSET (i, const_cast<fd_set *>(src)))
+      FD_SET (i, dst);
+
+  return dst;
+}
+
+/* Copy SRC to DST and return DST.  */
+
+static struct timeval *
+timeval_copy (struct timeval *dst, const struct timeval *src)
+{
+  *dst = *src;
+  return dst;
+}
+
+/* Version of select that can be used in a loop, since unlike select it keeps
+   requested and returned values separate.  */
+
+static int
+gdb_select (int n,
+	    const fd_set *req_readfds, fd_set *ret_readfds,
+	    const fd_set *req_writefds, fd_set *ret_writefds,
+	    const fd_set *req_exceptfds, fd_set *ret_exceptfds,
+	    const struct timeval *req_timeout, struct timeval *ret_timeout)
+{
+  ret_readfds
+    = (req_readfds == nullptr
+       ? nullptr
+       : fd_copy (ret_readfds, req_readfds, n));
+  ret_writefds
+    = (req_writefds == nullptr
+       ? nullptr
+       : fd_copy (ret_writefds, req_writefds, n));
+  ret_exceptfds
+    = (req_exceptfds == nullptr
+       ? nullptr
+       : fd_copy (ret_exceptfds, req_exceptfds, n));
+
+  ret_timeout
+    = (req_timeout == nullptr
+       ? nullptr
+       : timeval_copy (ret_timeout, req_timeout));
+
+  return gdb_select (n, ret_readfds, ret_writefds, ret_exceptfds, ret_timeout);
+}
+
 /* See gdb_select.h.  */
 
 int
@@ -1186,11 +1344,64 @@ interruptible_select (int n,
   if (n <= fd)
     n = fd + 1;
 
-  do
+  bool tsan_forced_timeout = false;
+#if defined (__SANITIZE_THREAD__)
+  struct timeval tv;
+  if (timeout == nullptr)
     {
-      res = gdb_select (n, readfds, writefds, exceptfds, timeout);
+      /* A nullptr timeout means select is blocking, and ThreadSanitizer has
+	 a bug that it considers select non-blocking, and consequently when
+	 intercepting select it will not call signal handlers for pending
+	 signals, and gdb will hang in select waiting for those signal
+	 handlers to be called.
+
+	 Filed here ( https://github.com/google/sanitizers/issues/1813 ).
+
+	 Work around this by:
+	 - forcing a small timeout, and
+	 - upon timeout calling a function that ThreadSanitizer does consider
+	   blocking: usleep, forcing signal handlers to be called for pending
+	   signals.  */
+      tv.tv_sec = 0;
+      tv.tv_usec = 1000;
+      timeout = &tv;
+      tsan_forced_timeout = true;
     }
-  while (res == -1 && errno == EINTR);
+#endif
+
+  {
+    fd_set ret_readfds, ret_writefds, ret_exceptfds;
+    struct timeval ret_timeout;
+
+    while (true)
+      {
+	res = gdb_select (n,
+			  readfds, &ret_readfds,
+			  writefds, &ret_writefds,
+			  exceptfds, &ret_exceptfds,
+			  timeout, &ret_timeout);
+
+	if (res == -1 && errno == EINTR)
+	  continue;
+
+	if (tsan_forced_timeout && res == 0)
+	  {
+	    usleep (0);
+	    continue;
+	  }
+
+	break;
+      }
+
+    if (readfds != nullptr)
+      fd_copy (readfds, &ret_readfds, n);
+    if (writefds != nullptr)
+      fd_copy (writefds, &ret_writefds, n);
+    if (exceptfds != nullptr)
+      fd_copy (exceptfds, &ret_exceptfds, n);
+    if (timeout)
+      timeval_copy (timeout, &ret_timeout);
+  }
 
   if (res == 1 && FD_ISSET (fd, readfds))
     {
@@ -1269,6 +1480,7 @@ async_do_nothing (gdb_client_data arg)
 static void
 handle_sighup (int sig)
 {
+  scoped_restore restore_errno = make_scoped_restore (&errno);
   mark_async_signal_handler (sighup_token);
   signal (sig, handle_sighup);
 }
