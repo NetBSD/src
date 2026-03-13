@@ -59,7 +59,7 @@ in the file called LICENSE.GPL.
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.5 2025/09/06 02:56:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pvscsi.c,v 1.6 2026/03/13 21:13:44 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -1681,7 +1681,7 @@ pvscsi_attach(device_t parent, device_t dev, void *aux)
 	    VMWARE_PVSCSI_DEVSTR, true);
 
 	/*
-	 * Map the device.  All devices support memory-mapped acccess.
+	 * Map the device.  All devices support memory-mapped access.
 	 */
 	bool memh_valid;
 	bus_space_tag_t memt;

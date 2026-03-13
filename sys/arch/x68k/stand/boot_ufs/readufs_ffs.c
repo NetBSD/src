@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs_ffs.c,v 1.15 2022/11/17 06:40:39 chs Exp $	*/
+/*	$NetBSD: readufs_ffs.c,v 1.16 2026/03/13 21:13:45 andvar Exp $	*/
 /*	from Id: readufs_ffs.c,v 1.6 2003/04/08 09:19:32 itohy Exp 	*/
 
 /*
@@ -54,13 +54,13 @@ try_ffs(void)
 		if (magic == FS_UFS1_MAGIC
 		    && !(buf.sblk.fs_old_flags & FS_FLAGS_UPDATED)) {
 			if (*sbl == SBLOCK_UFS2)
-				/* might be an alternate suberblock */
+				/* might be an alternate superblock */
 				continue;
 			break;
 		}
 #endif
 		if (*sbl != buf.sblk.fs_sblockloc)
-			/* must be an alternate suberblock */
+			/* must be an alternate superblock */
 			continue;
 
 #ifdef USE_UFS1

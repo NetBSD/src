@@ -1,4 +1,4 @@
-/*	$NetBSD: g2bus_bus_mem.c,v 1.16 2011/07/19 15:52:29 dyoung Exp $	*/
+/*	$NetBSD: g2bus_bus_mem.c,v 1.17 2026/03/13 21:13:46 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,12 +34,12 @@
  *
  * NOTE: We only implement a small subset of what the bus_space(9)
  * API specifies.  Right now, the GAPS PCI bridge is only used for
- * the Dreamcast Broadband Adatper, so we only provide what the
+ * the Dreamcast Broadband Adapter, so we only provide what the
  * pci(4) and rtk(4) drivers need.
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.16 2011/07/19 15:52:29 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: g2bus_bus_mem.c,v 1.17 2026/03/13 21:13:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

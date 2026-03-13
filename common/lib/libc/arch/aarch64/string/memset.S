@@ -1,4 +1,4 @@
-/* $NetBSD: memset.S,v 1.3 2020/04/11 05:12:52 ryo Exp $ */
+/* $NetBSD: memset.S,v 1.4 2026/03/13 21:13:45 andvar Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -131,7 +131,7 @@ ENTRY(memset)
 	add	x12, x15, x11	/* round start to a block boundary */
 	asr	x12, x12, x9	/* "starting" block number */
 	add	x13, x15, x2	/* get ending address */
-	asr	x13, x13, x9	/* "ending" block numebr */
+	asr	x13, x13, x9	/* "ending" block number */
 	cmp	x13, x12	/* how many blocks? */
 	b.ls	.Lfilled	/*   none, do it 16 bytes at a time */
 

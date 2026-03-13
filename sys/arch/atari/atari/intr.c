@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.33 2024/01/19 20:55:42 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.34 2026/03/13 21:13:45 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.33 2024/01/19 20:55:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.34 2026/03/13 21:13:45 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ intr_init(void)
 /*
  * Establish an interrupt vector.
  *   - vector
- *	The vector numer the interrupt should be hooked on. It can either
+ *	The vector number the interrupt should be hooked on. It can either
  *	be an auto-vector or a user-vector.
  *   - type
  *	A bit-wise of:

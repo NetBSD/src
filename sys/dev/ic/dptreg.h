@@ -1,4 +1,4 @@
-/*	$NetBSD: dptreg.h,v 1.19 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/*	$NetBSD: dptreg.h,v 1.20 2026/03/13 21:13:45 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Andrew Doran <ad@NetBSD.org>
@@ -225,7 +225,7 @@ struct eata_cfg {
 	u_int8_t	ec_feat3;		/* 4th feature byte */
 	u_int8_t	ec_maxlun;		/* Maximum LUN supported */
 	u_int8_t	ec_feat4;		/* 5th feature byte */
-	u_int8_t	ec_raidnum;		/* RAID host adapter humber */
+	u_int8_t	ec_raidnum;		/* RAID host adapter number */
 } __packed;
 
 #define EC_F0_OVERLAP_CMDS	0x01	/* Overlapped cmds supported */

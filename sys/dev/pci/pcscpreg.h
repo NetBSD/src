@@ -1,4 +1,4 @@
-/*	$NetBSD: pcscpreg.h,v 1.2 2008/04/28 20:23:55 martin Exp $	*/
+/*	$NetBSD: pcscpreg.h,v 1.3 2026/03/13 21:13:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,6 +60,6 @@
 #define	 DMASTAT_ERR	0x00000002	/* DMA Transfer Error */
 #define	 DMASTAT_PWDN	0x00000001	/* Power Down Indicator */
 
-#define	DMA_SMDLA	0x58	/* Starting Memory Descpritor List Address */
+#define	DMA_SMDLA	0x58	/* Starting Memory Descriptor List Address */
 #define	DMA_WMAC	0x5C	/* Working MDL Counter */
 #define	DMA_SBAC	0x70	/* SCSI Bus and Control */

@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.38 2026/02/17 07:22:53 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.39 2026/03/13 21:13:46 andvar Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -1235,7 +1235,7 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
  * like most hw info, xf86 3.3 -> nglehdw.h was used as documentation
  * problem is, the PCI EG doesn't quite behave like an S9000_ID_ARTIST
  * the cursor position register behaves like the one on HCRX while using
- * the same address as Artist, incuding the enable bit and weird handling
+ * the same address as Artist, including the enable bit and weird handling
  * of negative coordinates. The rest of it, colour map, sprite image etc.,
  * behave like Artist.
  */

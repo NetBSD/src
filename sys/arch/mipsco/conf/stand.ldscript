@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.ldscript,v 1.6 2021/04/23 08:42:26 simonb Exp $	*/
+/*	$NetBSD: stand.ldscript,v 1.7 2026/03/13 21:13:44 andvar Exp $	*/
 
 /*  ldscript for NetBSD/mipsco standalone bootstraps */
 OUTPUT_FORMAT("elf32-tradbigmips", "elf32-tradbigmips", "elf32-tradlittlemips")
@@ -43,7 +43,7 @@ SECTIONS
   PROVIDE (end = .);
 
   /*
-   * Depending on the nuber of sections and their relative position
+   * Depending on the number of sections and their relative position
    * the Mips PROM firmware incorrectly loads the image into memory
    * 8 bytes higher than expected.  If this happens change the following
    * definition from .reginfo to /DISCARD/ to remove the section

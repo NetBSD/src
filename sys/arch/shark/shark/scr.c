@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.39 2026/03/13 21:13:45 andvar Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.39 2026/03/13 21:13:45 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -1025,7 +1025,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
     struct scr_softc*   sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     
     int                 error = 0;          /* error value returned */
-    int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */
+    int                 masterDoneRetries= 0;         /* number of times we looked at masterDone */
     int                 done;               /* local copy of masterDone */
     
     ScrStatus *         pIoctlStatus;       /* pointer to status ioctl */

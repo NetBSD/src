@@ -1,4 +1,4 @@
-/*	$NetBSD: shf.c,v 1.16 2024/02/05 21:20:09 andvar Exp $	*/
+/*	$NetBSD: shf.c,v 1.17 2026/03/13 21:13:45 andvar Exp $	*/
 
 /*
  *  Shell file I/O routines
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: shf.c,v 1.16 2024/02/05 21:20:09 andvar Exp $");
+__RCSID("$NetBSD: shf.c,v 1.17 2026/03/13 21:13:45 andvar Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -831,7 +831,7 @@ shf_smprintf(const char *fmt, ...)
 				    :					\
 					va_arg((a), unsigned)))
 
-#define ABIGNUM		32000	/* big numer that will fit in a short */
+#define ABIGNUM		32000	/* big number that will fit in a short */
 #define LOG2_10		3.321928094887362347870319429	/* log base 2 of 10 */
 
 #define	FL_HASH		0x001	/* `#' seen */
