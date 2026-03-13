@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.17 2024/10/31 07:30:28 isaki Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.18 2026/03/13 01:17:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,8 @@ ASENTRY_NOPROFILE(fault)
 	moveml	(%sp)+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
+
+	.globl	_ASM_LABEL(faultstkadjnotrap2)
 
 /*
  * Similar to above, but will tidy up the stack, if necessary.
