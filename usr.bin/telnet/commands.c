@@ -1,4 +1,4 @@
-/*	$NetBSD: commands.c,v 1.80 2022/07/08 21:51:24 mlelstv Exp $	*/
+/*	$NetBSD: commands.c,v 1.81 2026/03/13 19:41:02 christos Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: commands.c,v 1.80 2022/07/08 21:51:24 mlelstv Exp $");
+__RCSID("$NetBSD: commands.c,v 1.81 2026/03/13 19:41:02 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -1791,11 +1791,11 @@ env_default(int init, int welldefined)
 }
 
 char *
-env_getvalue(const char *var)
+env_getvalue(const char *var, int exported)
 {
 	struct env_lst *ep;
 
-	if ((ep = env_find(var)) != NULL)
+	if ((ep = env_find(var)) != NULL && (exported || ep->export))
 		return ep->value;
 	return NULL;
 }
