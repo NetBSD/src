@@ -33,7 +33,7 @@
    disks file system.  The operations would be implemented using the
    basic block I/O model provided by the disk.
 
-   This model includes methods that faciliate the creation of device
+   This model includes methods that facilitate the creation of device
    instance and (should a given device support it) standard operations
    on those instances.
 

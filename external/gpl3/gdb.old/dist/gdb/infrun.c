@@ -19,9 +19,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "displaced-stepping.h"
 #include "infrun.h"
 #include <ctype.h>
+#include "exceptions.h"
 #include "symtab.h"
 #include "frame.h"
 #include "inferior.h"
@@ -462,8 +464,10 @@ follow_fork_inferior (bool follow_child, bool detach_fork)
 	 back the terminal, effectively hanging the debug session.  */
       gdb_printf (gdb_stderr, _("\
 Can not resume the parent process over vfork in the foreground while\n\
-holding the child stopped.  Try \"set detach-on-fork\" or \
-\"set schedule-multiple\".\n"));
+holding the child stopped.  Try \"set %ps\" or \"%ps\".\n"),
+		  styled_string (command_style.style (), "set detach-on-fork"),
+		  styled_string (command_style.style (),
+				 "set schedule-multiple"));
       return true;
     }
 
@@ -1307,8 +1311,9 @@ follow_exec (ptid_t ptid, const char *exec_file_target)
      so that the user can specify a file manually before continuing.  */
   if (exec_file_host == nullptr)
     warning (_("Could not load symbols for executable %s.\n"
-	       "Do you need \"set sysroot\"?"),
-	     exec_file_target);
+	       "Do you need \"%ps\"?"),
+	     exec_file_target,
+	     styled_string (command_style.style (), "set sysroot"));
 
   /* Reset the shared library package.  This ensures that we get a
      shlib event when the child reaches "_start", at which point the
@@ -1316,7 +1321,7 @@ follow_exec (ptid_t ptid, const char *exec_file_target)
   /* Also, loading a symbol file below may trigger symbol lookups, and
      we don't want those to be satisfied by the libraries of the
      previous incarnation of this process.  */
-  no_shared_libraries (nullptr, 0);
+  no_shared_libraries (current_program_space);
 
   inferior *execing_inferior = current_inferior ();
   inferior *following_inferior;
@@ -4957,7 +4962,7 @@ adjust_pc_after_break (struct thread_info *thread,
      we would wrongly adjust the PC to 0x08000000, since there's a
      breakpoint at PC - 1.  We'd then report a hit on B1, although
      INSN1 hadn't been de-executed yet.  Doing nothing is the correct
-     behaviour.  */
+     behavior.  */
   if (execution_direction == EXEC_REVERSE)
     return;
 
@@ -8113,6 +8118,34 @@ process_event_stop_test (struct execution_control_state *ecs)
       return;
     }
 
+  /* Handle the case when subroutines have multiple ranges.  When we step
+     from one part to the next part of the same subroutine, all subroutine
+     levels are skipped again which begin here.  Compensate for this by
+     removing all skipped subroutines, which were already executing from
+     the user's perspective.  */
+
+  if (get_stack_frame_id (frame)
+      == ecs->event_thread->control.step_stack_frame_id
+      && inline_skipped_frames (ecs->event_thread) > 0
+      && ecs->event_thread->control.step_frame_id.artificial_depth > 0
+      && ecs->event_thread->control.step_frame_id.code_addr_p)
+    {
+      int depth = 0;
+      const struct block *prev
+	= block_for_pc (ecs->event_thread->control.step_frame_id.code_addr);
+      const struct block *curr = block_for_pc (ecs->event_thread->stop_pc ());
+      while (curr != nullptr && !curr->contains (prev))
+	{
+	  if (curr->inlined_p ())
+	    depth++;
+	  else if (curr->function () != nullptr)
+	    break;
+	  curr = curr->superblock ();
+       }
+      while (inline_skipped_frames (ecs->event_thread) > depth)
+	step_into_inline_frame (ecs->event_thread);
+    }
+
   /* Look for "calls" to inlined functions, part one.  If the inline
      frame machinery detected some skipped call sites, we have entered
      a new inline function.  */
@@ -8244,7 +8277,8 @@ process_event_stop_test (struct execution_control_state *ecs)
 			       "it's not the start of a statement");
 	}
     }
-  else if (execution_direction == EXEC_REVERSE
+
+  if (execution_direction == EXEC_REVERSE
 	  && *curr_frame_id != original_frame_id
 	  && original_frame_id.code_addr_p && curr_frame_id->code_addr_p
 	  && original_frame_id.code_addr == curr_frame_id->code_addr)
@@ -9265,8 +9299,15 @@ print_no_history_reason (struct ui_out *uiout)
 {
   if (uiout->is_mi_like_p ())
     uiout->field_string ("reason", async_reason_lookup (EXEC_ASYNC_NO_HISTORY));
+  else if (execution_direction == EXEC_FORWARD)
+    uiout->text ("\nReached end of recorded history; stopping.\nFollowing "
+		 "forward execution will be added to history.\n");
   else
-    uiout->text ("\nNo more reverse-execution history.\n");
+    {
+      gdb_assert (execution_direction == EXEC_REVERSE);
+      uiout->text ("\nReached end of recorded history; stopping.\nBackward "
+		   "execution from here not possible.\n");
+    }
 }
 
 /* Print current location without a level number, if we have changed
@@ -9295,12 +9336,24 @@ print_stop_location (const target_waitstatus &ws)
 	  && (tp->control.step_start_function
 	      == find_pc_function (tp->stop_pc ())))
 	{
-	  /* Finished step, just print source line.  */
-	  source_flag = SRC_LINE;
+	  symtab_and_line sal = find_frame_sal (get_selected_frame (nullptr));
+	  if (sal.symtab != tp->current_symtab)
+	    {
+	      /* Finished step in same frame but into different file, print
+		 location and source line.  */
+	      source_flag = SRC_AND_LOC;
+	    }
+	  else
+	    {
+	      /* Finished step in same frame and same file, just print source
+		 line.  */
+	      source_flag = SRC_LINE;
+	    }
 	}
       else
 	{
-	  /* Print location and source line.  */
+	  /* Finished step into different frame, print location and source
+	     line.  */
 	  source_flag = SRC_AND_LOC;
 	}
       break;
@@ -9990,8 +10043,8 @@ info_signals_command (const char *signum_exp, int from_tty)
 	sig_print_info (oursig);
     }
 
-  gdb_printf (_("\nUse the \"handle\" command "
-		"to change these tables.\n"));
+  gdb_printf (_("\nUse the \"%ps\" command to change these tables.\n"),
+	      styled_string (command_style.style (), "handle"));
 }
 
 /* The $_siginfo convenience variable is a bit special.  We don't know

@@ -1712,6 +1712,17 @@ f_language::search_name_hash (const char *name) const
 /* See language.h.  */
 
 struct block_symbol
+f_language::lookup_symbol_local (const char *scope,
+				 const char *name,
+				 const struct block *block,
+				 const domain_search_flags domain) const
+{
+  return cp_lookup_symbol_imports (scope, name, block, domain);
+}
+
+/* See language.h.  */
+
+struct block_symbol
 f_language::lookup_symbol_nonlocal (const char *name,
 				    const struct block *block,
 				    const domain_search_flags domain) const

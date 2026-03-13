@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2025/08/27 15:20:56 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2026/03/13 22:08:57 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>

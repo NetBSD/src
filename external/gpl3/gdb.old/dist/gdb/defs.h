@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DEFS_H
-#define DEFS_H
+#ifndef GDB_DEFS_H
+#define GDB_DEFS_H
 
 #ifdef GDBSERVER
 #  error gdbserver should not include gdb/defs.h
@@ -407,4 +407,4 @@ DEF_ENUM_FLAGS_TYPE (enum user_selected_what_flag, user_selected_what);
 
 #include "utils.h"
 
-#endif /* #ifndef DEFS_H */
+#endif /* GDB_DEFS_H */

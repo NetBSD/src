@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2025/08/27 15:23:25 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2026/03/13 22:09:51 christos Exp $
 
 LIBISPRIVATE=	yes
 NOGCCERROR=

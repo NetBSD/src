@@ -1,6 +1,6 @@
 /*******************************************************************************
- * $Revision: 1.2 $
- * $Date: 2024/08/12 20:31:56 $
+ * $Revision: 1.3 $
+ * $Date: 2026/03/13 22:09:27 $
  * $Author: christos $
  *
  * Contents: A streambuf which uses the GNU readline library for line I/O

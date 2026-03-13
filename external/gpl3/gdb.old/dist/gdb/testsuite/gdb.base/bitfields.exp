@@ -45,23 +45,23 @@ proc bitfield_uniqueness {} {
     # treat it correctly as a signed 1bit field (values 0 or -1) while
     # printing its value does not cause a spurious failure.  We do the
     # signedness preservation test later.
-     gdb_test "print flags" ".*uc = 0 .*, s1 = (1|-1), u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (s1)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = (1|-1), u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, s1"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #2"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 1, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (u1)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 1, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, u1"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #3"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 1, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (s2)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 1, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, s2"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #4"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 1, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (u2)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 1, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, u2"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #5"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 1, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (s3)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 1, u3 = 0, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, s3"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #6"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 1, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness (u3)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 1, s9 = 0, u9 = 0, sc = 0.*" "bitfield uniqueness, u3"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #7"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 1, u9 = 0, sc = 0.*" "bitfield uniqueness (s9)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 1, u9 = 0, sc = 0.*" "bitfield uniqueness, s9"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #8"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 1, sc = 0.*" "bitfield uniqueness (u9)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 1, sc = 0.*" "bitfield uniqueness, u9"
      gdb_test "cont" "Break.*break1 \\(\\) at .*$srcfile:$decimal.*" "continuing to break1 #9"
-     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 1.*" "bitfield uniqueness (sc)"
+     gdb_test "print flags" ".*uc = 0 .*, s1 = 0, u1 = 0, s2 = 0, u2 = 0, s3 = 0, u3 = 0, s9 = 0, u9 = 0, sc = 1.*" "bitfield uniqueness, sc"
 }
 
 

@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-script.h"
 #include "cli/cli-setshow.h"
@@ -387,7 +388,7 @@ check_frame_language_change (void)
   /* FIXME: This should be cacheing the frame and only running when
      the frame changes.  */
 
-  if (has_stack_frames ())
+  if (warn_frame_lang_mismatch && has_stack_frames ())
     {
       enum language flang;
 
@@ -631,19 +632,9 @@ execute_fn_to_string (std::string &res, std::function<void(void)> fn,
 {
   string_file str_file (term_out);
 
-  try
-    {
-      execute_fn_to_ui_file (&str_file, fn);
-    }
-  catch (...)
-    {
-      /* Finally.  */
-      res = str_file.release ();
-      throw;
-    }
+  SCOPE_EXIT { res = str_file.release (); };
 
-  /* And finally.  */
-  res = str_file.release ();
+  execute_fn_to_ui_file (&str_file, fn);
 }
 
 /* See top.h.  */
@@ -1063,11 +1054,14 @@ static int operate_saved_history = -1;
 static void
 gdb_rl_operate_and_get_next_completion (void)
 {
-  int delta = where_history () - operate_saved_history;
+  if (operate_saved_history != -1)
+    {
+      int delta = where_history () - operate_saved_history;
 
-  /* The `key' argument to rl_get_previous_history is ignored.  */
-  rl_get_previous_history (delta, 0);
-  operate_saved_history = -1;
+      /* The `key' argument to rl_get_previous_history is ignored.  */
+      rl_get_previous_history (delta, 0);
+      operate_saved_history = -1;
+    }
 
   /* readline doesn't automatically update the display for us.  */
   rl_redisplay ();
@@ -1092,9 +1086,10 @@ gdb_rl_operate_and_get_next (int count, int key)
   /* Find the current line, and find the next line to use.  */
   where = where_history();
 
-  if ((history_is_stifled () && (history_length >= history_max_entries))
-      || (where >= history_length - 1))
+  if (history_is_stifled () && history_length >= history_max_entries)
     operate_saved_history = where;
+  else if (where >= history_length - 1)
+    operate_saved_history = -1;
   else
     operate_saved_history = where + 1;
 
@@ -1339,8 +1334,9 @@ There is NO WARRANTY, to the extent permitted by law.",
   if (!interactive)
     return;
 
-  gdb_printf (stream, ("\nType \"show copying\" and "
-		       "\"show warranty\" for details.\n"));
+  gdb_printf (stream, ("\nType \"%ps\" and \"%ps\" for details.\n"),
+	      styled_string (command_style.style (), "show copying"),
+	      styled_string (command_style.style (), "show warranty"));
 
   /* After the required info we print the configuration information.  */
 
@@ -1356,8 +1352,8 @@ There is NO WARRANTY, to the extent permitted by law.",
     }
   gdb_printf (stream, "\".\n");
 
-  gdb_printf (stream, _("Type \"show configuration\" "
-			"for configuration details.\n"));
+  gdb_printf (stream, _("Type \"%ps\" for configuration details.\n"),
+	      styled_string (command_style.style (), "show configuration"));
 
   if (REPORT_BUGS_TO[0])
     {
@@ -1373,10 +1369,11 @@ resources online at:\n    <%ps>."),
 	      styled_string (file_name_style.style (),
 			     "http://www.gnu.org/software/gdb/documentation/"));
   gdb_printf (stream, "\n\n");
-  gdb_printf (stream, _("For help, type \"help\".\n"));
+  gdb_printf (stream, _("For help, type \"%ps\".\n"),
+	      styled_string (command_style.style (), "help"));
   gdb_printf (stream,
-	      _("Type \"apropos word\" to search for commands \
-related to \"word\"."));
+	      _("Type \"%ps\" to search for commands related to \"word\"."),
+	      styled_string (command_style.style (), "apropos word"));
 }
 
 /* Print the details of GDB build-time configuration.  */
@@ -1387,6 +1384,11 @@ print_gdb_configuration (struct ui_file *stream)
 This GDB was configured as follows:\n\
    configure --host=%s --target=%s\n\
 "), host_name, target_name);
+
+#ifdef ENABLE_TARGETS
+  gdb_printf (stream, _("\
+	     --enable-targets=%s\n"), ENABLE_TARGETS);
+#endif
 
   gdb_printf (stream, _("\
 	     --with-auto-load-dir=%s\n\
@@ -1605,6 +1607,16 @@ This GDB was configured as follows:\n\
 (\"Relocatable\" means the directory can be moved with the GDB installation\n\
 tree, and GDB will still find it.)\n\
 "));
+
+  gdb_printf (stream, "\n");
+  gdb_printf (stream, _("GNU Readline library version: %s\t%s\n"),
+	      rl_library_version,
+#ifdef HAVE_READLINE_READLINE_H
+	      "(system)"
+#else
+	      "(internal)"
+#endif
+	      );
 }
 
 
@@ -2096,7 +2108,7 @@ set_history_filename (const char *args,
      that was read.  */
   if (!history_filename.empty ()
       && !IS_ABSOLUTE_PATH (history_filename.c_str ()))
-    history_filename = gdb_abspath (history_filename.c_str ());
+    history_filename = gdb_abspath (history_filename);
 }
 
 /* Whether we're in quiet startup mode.  */

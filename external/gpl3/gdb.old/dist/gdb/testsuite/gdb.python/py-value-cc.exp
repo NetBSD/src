@@ -99,6 +99,7 @@ gdb_test "python print(uu\[uu_fields\[1\]\]\['a'\])" "1000" "uu.a via field"
 # Test overloaded operators.
 gdb_test_no_output "python a = gdb.parse_and_eval('a')" "init a"
 gdb_test "python print(a + 5)" "10" "a + 5"
+gdb_test "python print(gdb.parse_and_eval('b')\[5\])" "102 'f'"
 
 # Test inferior function calls of methods.
 gdb_test "py print(b_obj\['static_func'\]())" "1111"

@@ -54,8 +54,9 @@
 #include "target-connection.h"
 #include "valprint.h"
 #include "cli/cli-decode.h"
+#include "cli/cli-style.h"
 
-static void generic_tls_error (void) ATTRIBUTE_NORETURN;
+[[noreturn]] static void generic_tls_error (void);
 
 static void default_rcmd (struct target_ops *, const char *, struct ui_file *);
 
@@ -63,7 +64,7 @@ static int default_verify_memory (struct target_ops *self,
 				  const gdb_byte *data,
 				  CORE_ADDR memaddr, ULONGEST size);
 
-static void tcomplain (void) ATTRIBUTE_NORETURN;
+[[noreturn]] static void tcomplain (void);
 
 /* Mapping between target_info objects (which have address identity)
    and corresponding open/factory function/callback.  Each add_target
@@ -1607,7 +1608,8 @@ memory_xfer_partial (struct target_ops *ops, enum target_object object,
   if (len == 0)
     return TARGET_XFER_EOF;
 
-  memaddr = gdbarch_remove_non_address_bits (current_inferior ()->arch (),
+  memaddr
+   = gdbarch_remove_non_address_bits_memory (current_inferior ()->arch (),
 					     memaddr);
 
   /* Fill in READBUF with breakpoint shadows, or WRITEBUF with
@@ -1753,7 +1755,7 @@ target_xfer_partial (struct target_ops *ops,
    If an error occurs, no guarantee is made about the contents of the data at
    MYADDR.  In particular, the caller should not depend upon partial reads
    filling the buffer with good data.  There is no way for the caller to know
-   how much good data might have been transfered anyway.  Callers that can
+   how much good data might have been transferred anyway.  Callers that can
    deal with partial reads should call target_read (which will retry until
    it makes no progress, and then return how much was transferred).  */
 
@@ -2397,8 +2399,9 @@ info_target_command (const char *args, int from_tty)
   if (current_program_space->symfile_object_file != NULL)
     {
       objfile *objf = current_program_space->symfile_object_file;
-      gdb_printf (_("Symbols from \"%s\".\n"),
-		  objfile_name (objf));
+      gdb_printf (_("Symbols from \"%ps\".\n"),
+		  styled_string (file_name_style.style (),
+				 objfile_name (objf)));
     }
 
   for (target_ops *t = current_inferior ()->top_target ();
@@ -2426,7 +2429,7 @@ info_target_command (const char *args, int from_tty)
    resets (things which might change between targets).  */
 
 void
-target_pre_inferior (int from_tty)
+target_pre_inferior ()
 {
   /* Clear out solib state.  Otherwise the solib state of the previous
      inferior might have survived and is entirely wrong for the new
@@ -2450,7 +2453,7 @@ target_pre_inferior (int from_tty)
      memory regions and features.  */
   if (!gdbarch_has_global_solist (current_inferior ()->arch ()))
     {
-      no_shared_libraries (NULL, from_tty);
+      no_shared_libraries (current_program_space);
 
       invalidate_target_mem_regions ();
 
@@ -2502,7 +2505,7 @@ target_preopen (int from_tty)
      live process to a core of the same program.  */
   current_inferior ()->pop_all_targets_above (file_stratum);
 
-  target_pre_inferior (from_tty);
+  target_pre_inferior ();
 }
 
 /* See target.h.  */
@@ -2573,18 +2576,12 @@ target_wait (ptid_t ptid, struct target_waitstatus *status,
   if (!target_can_async_p (target))
     gdb_assert ((options & TARGET_WNOHANG) == 0);
 
-  try
-    {
-      gdb::observers::target_pre_wait.notify (ptid);
-      ptid_t event_ptid = target->wait (ptid, status, options);
-      gdb::observers::target_post_wait.notify (event_ptid);
-      return event_ptid;
-    }
-  catch (...)
-    {
-      gdb::observers::target_post_wait.notify (null_ptid);
-      throw;
-    }
+  ptid_t event_ptid = null_ptid;
+  SCOPE_EXIT { gdb::observers::target_post_wait.notify (event_ptid); };
+  gdb::observers::target_pre_wait.notify (ptid);
+  event_ptid = target->wait (ptid, status, options);
+
+  return event_ptid;
 }
 
 /* See target.h.  */
@@ -3197,6 +3194,14 @@ target_ops::fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno)
 }
 
 int
+target_ops::fileio_stat (struct inferior *inf, const char *filename,
+			 struct stat *sb, fileio_error *target_errno)
+{
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
+}
+
+int
 target_ops::fileio_close (int fd, fileio_error *target_errno)
 {
   *target_errno = FILEIO_ENOSYS;
@@ -3311,6 +3316,29 @@ target_fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno)
   target_debug_printf_nofunc ("target_fileio_fstat (%d) = %d (%d)", fd, ret,
 		       ret != -1 ? 0 : *target_errno);
   return ret;
+}
+
+/* See target.h.  */
+
+int
+target_fileio_stat (struct inferior *inf, const char *filename,
+		    struct stat *sb, fileio_error *target_errno)
+{
+  for (target_ops *t = default_fileio_target (); t != NULL; t = t->beneath ())
+    {
+      int ret = t->fileio_stat (inf, filename, sb, target_errno);
+
+      if (ret == -1 && *target_errno == FILEIO_ENOSYS)
+	continue;
+
+      target_debug_printf_nofunc ("target_fileio_stat (%s) = %d (%d)",
+				  filename, ret,
+				  ret != -1 ? 0 : *target_errno);
+      return ret;
+    }
+
+  *target_errno = FILEIO_ENOSYS;
+  return -1;
 }
 
 /* See target.h.  */
@@ -3572,12 +3600,13 @@ target_announce_detach (int from_tty)
     return;
 
   pid = inferior_ptid.pid ();
-  exec_file = get_exec_file (0);
+  exec_file = current_program_space->exec_filename ();
   if (exec_file == nullptr)
     gdb_printf ("Detaching from pid %s\n",
 		target_pid_to_str (ptid_t (pid)).c_str ());
   else
-    gdb_printf (_("Detaching from program: %s, %s\n"), exec_file,
+    gdb_printf (_("Detaching from program: %ps, %s\n"),
+		styled_string (file_name_style.style (), exec_file),
 		target_pid_to_str (ptid_t (pid)).c_str ());
 }
 
@@ -3589,10 +3618,11 @@ target_announce_attach (int from_tty, int pid)
   if (!from_tty)
     return;
 
-  const char *exec_file = get_exec_file (0);
+  const char *exec_file = current_program_space->exec_filename ();
 
   if (exec_file != nullptr)
-    gdb_printf ("Attaching to program: %s, %s\n", exec_file,
+    gdb_printf ("Attaching to program: %ps, %s\n",
+		styled_string (file_name_style.style (), exec_file),
 		target_pid_to_str (ptid_t (pid)).c_str ());
   else
     gdb_printf ("Attaching to %s\n",
@@ -3663,7 +3693,7 @@ dummy_make_corefile_notes (struct target_ops *self,
   return NULL;
 }
 
-#include "target-delegates.c"
+#include "target-delegates-gen.c"
 
 /* The initial current target, so that there is always a semi-valid
    current target.  */
@@ -4286,7 +4316,7 @@ target_async (bool enable)
 /* See target.h.  */
 
 void
-target_thread_events (int enable)
+target_thread_events (bool enable)
 {
   current_inferior ()->top_target ()->thread_events (enable);
 }

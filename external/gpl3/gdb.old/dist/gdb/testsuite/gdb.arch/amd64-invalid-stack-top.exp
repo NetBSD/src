@@ -19,7 +19,7 @@
 # frame where the stack in unreadable.
 #
 # One interesting bug that has been observed is that gdb will sometime
-# exhibit different behaviour the first time a stack command is run
+# exhibit different behavior the first time a stack command is run
 # compared to the second (and later) times a command is run.  This is
 # because the first time a command is run gdb actually tries to figure out
 # the answer, while the second (and later) times gdb relies on the answer

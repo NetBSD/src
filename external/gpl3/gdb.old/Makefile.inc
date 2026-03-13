@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.15 2025/08/27 15:20:55 christos Exp $
+# $NetBSD: Makefile.inc,v 1.16 2026/03/13 22:08:57 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -23,4 +23,11 @@ DIST:=		${.PARSEDIR}/dist
 # Reduce debugging for these extremely large objects.
 .if ${MKDEBUG:Uno} != "no"
 CXXFLAGS+=      -g1
+.endif
+
+# Enable tas.b usage for __atomic_test_and_set().
+.include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "sh3"
+CFLAGS+=	-mtas
 .endif

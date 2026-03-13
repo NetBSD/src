@@ -23,11 +23,27 @@ foo (void)
   return 0; /* set break here */
 }
 
+static volatile int do_wait;
+
+static void
+wait (void)
+{
+  while (do_wait)
+    usleep (10 * 1000);
+}
+
 int
 main (void)
 {
+  alarm (60);
+
   foo ();
-  sleep (5);
+
+  do_wait = 1;
+  wait ();
+  /* do_wait set to 0 externally.  */
+
   foo ();
+
   return 0;
 }

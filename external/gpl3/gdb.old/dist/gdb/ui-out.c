@@ -353,7 +353,7 @@ ui_out::table_begin (int nr_cols, int nr_rows, const std::string &tblid)
     internal_error (_("tables cannot be nested; table_begin found before \
 previous table_end."));
 
-  m_table_up.reset (new ui_out_table (level () + 1, nr_cols, tblid));
+  m_table_up = std::make_unique<ui_out_table> (level () + 1, nr_cols, tblid);
 
   do_table_begin (nr_cols, nr_rows, tblid.c_str ());
 }
@@ -433,7 +433,8 @@ ui_out::end (ui_out_type type)
 }
 
 void
-ui_out::field_signed (const char *fldname, LONGEST value)
+ui_out::field_signed (const char *fldname, LONGEST value,
+		      const ui_file_style &style)
 {
   int fldno;
   int width;
@@ -441,7 +442,7 @@ ui_out::field_signed (const char *fldname, LONGEST value)
 
   verify_field (&fldno, &width, &align);
 
-  do_field_signed (fldno, width, align, fldname, value);
+  do_field_signed (fldno, width, align, fldname, value, style);
 }
 
 void
@@ -454,7 +455,8 @@ ui_out::field_fmt_signed (int input_width, ui_align input_align,
 
   verify_field (&fldno, &width, &align);
 
-  do_field_signed (fldno, input_width, input_align, fldname, value);
+  do_field_signed (fldno, input_width, input_align, fldname, value,
+		   ui_file_style ());
 }
 
 /* See ui-out.h.  */

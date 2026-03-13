@@ -1667,7 +1667,7 @@ show_user_1 (struct cmd_list_element *c, const char *prefix, const char *name,
 
       gdb_printf (stream, "User %scommand \"",
 		  c->is_prefix () ? "prefix" : "");
-      fprintf_styled (stream, title_style.style (), "%s%s",
+      fprintf_styled (stream, command_style.style (), "%s%s",
 		      prefix, name);
       gdb_printf (stream, "\":\n");
       if (cmdlines)

@@ -555,7 +555,7 @@ remote_fileio_func_read (remote_target *remote, char *buf)
 	break;
       default:
 	buffer = (gdb_byte *) xmalloc (length);
-	/* POSIX defines EINTR behaviour of read in a weird way.  It's allowed
+	/* POSIX defines EINTR behavior of read in a weird way.  It's allowed
 	   for read() to return -1 even if "some" bytes have been read.  It
 	   has been corrected in SUSv2 but that doesn't help us much...
 	   Therefore a complete solution must check how many bytes have been

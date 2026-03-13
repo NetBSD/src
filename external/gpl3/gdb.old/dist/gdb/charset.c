@@ -24,7 +24,6 @@
 #include "charset-list.h"
 #include "gdbsupport/environ.h"
 #include "arch-utils.h"
-#include "gdbsupport/gdb_vecs.h"
 #include <ctype.h>
 
 #ifdef USE_WIN32API

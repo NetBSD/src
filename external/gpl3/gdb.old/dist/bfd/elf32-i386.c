@@ -839,7 +839,7 @@ static const struct elf_x86_non_lazy_plt_layout elf_i386_non_lazy_ibt_plt =
 /* Return TRUE if the TLS access code sequence support transition
    from R_TYPE.  */
 
-static bool
+static enum elf_x86_tls_error_type
 elf_i386_check_tls_transition (asection *sec,
 			       bfd_byte *contents,
 			       Elf_Internal_Shdr *symtab_hdr,
@@ -861,7 +861,7 @@ elf_i386_check_tls_transition (asection *sec,
     case R_386_TLS_GD:
     case R_386_TLS_LDM:
       if (offset < 2 || (rel + 1) >= relend)
-	return false;
+	return elf_x86_tls_error_yes;
 
       indirect_call = false;
       call = contents + offset + 4;
@@ -884,19 +884,19 @@ elf_i386_check_tls_transition (asection *sec,
 	     can transit to different access model.  */
 	  if ((offset + 10) > sec->size
 	      || (type != 0x8d && type != 0x04))
-	    return false;
+	    return elf_x86_tls_error_yes;
 
 	  if (type == 0x04)
 	    {
 	      /* leal foo@tlsgd(,%ebx,1), %eax
 		 call ___tls_get_addr@PLT  */
 	      if (offset < 3)
-		return false;
+		return elf_x86_tls_error_yes;
 
 	      if (*(call - 7) != 0x8d
 		  || val != 0x1d
 		  || call[0] != 0xe8)
-		return false;
+		return elf_x86_tls_error_yes;
 	    }
 	  else
 	    {
@@ -914,7 +914,7 @@ elf_i386_check_tls_transition (asection *sec,
 		 is used to pass parameter to ___tls_get_addr.  */
 	      reg = val & 7;
 	      if ((val & 0xf8) != 0x80 || reg == 4 || reg == 0)
-		return false;
+		return elf_x86_tls_error_yes;
 
 	      indirect_call = call[0] == 0xff;
 	      if (!(reg == 3 && call[0] == 0xe8 && call[5] == 0x90)
@@ -922,7 +922,7 @@ elf_i386_check_tls_transition (asection *sec,
 		  && !(indirect_call
 		       && (call[1] & 0xf8) == 0x90
 		       && (call[1] & 0x7) == reg))
-		return false;
+		return elf_x86_tls_error_yes;
 	    }
 	}
       else
@@ -937,13 +937,13 @@ elf_i386_check_tls_transition (asection *sec,
 		addr32 call ___tls_get_addr
 	     can transit to different access model.  */
 	  if (type != 0x8d || (offset + 9) > sec->size)
-	    return false;
+	    return elf_x86_tls_error_yes;
 
 	  /* %eax can't be used as the GOT base register since it is
 	     used to pass parameter to ___tls_get_addr.  */
 	  reg = val & 7;
 	  if ((val & 0xf8) != 0x80 || reg == 4 || reg == 0)
-	    return false;
+	    return elf_x86_tls_error_yes;
 
 	  indirect_call = call[0] == 0xff;
 	  if (!(reg == 3 && call[0] == 0xe8)
@@ -951,46 +951,53 @@ elf_i386_check_tls_transition (asection *sec,
 	      && !(indirect_call
 		   && (call[1] & 0xf8) == 0x90
 		   && (call[1] & 0x7) == reg))
-	    return false;
+	    return elf_x86_tls_error_yes;
 	}
 
       r_symndx = ELF32_R_SYM (rel[1].r_info);
       if (r_symndx < symtab_hdr->sh_info)
-	return false;
+	return elf_x86_tls_error_yes;
 
       h = sym_hashes[r_symndx - symtab_hdr->sh_info];
       if (h == NULL
 	  || !((struct elf_x86_link_hash_entry *) h)->tls_get_addr)
-	return false;
+	return elf_x86_tls_error_yes;
       else if (indirect_call)
-	return (ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32X
-		|| ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32);
+	return ((ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32X
+		 || ELF32_R_TYPE (rel[1].r_info) == R_386_GOT32)
+		? elf_x86_tls_error_none
+		: elf_x86_tls_error_yes);
       else
-	return (ELF32_R_TYPE (rel[1].r_info) == R_386_PC32
-		|| ELF32_R_TYPE (rel[1].r_info) == R_386_PLT32);
+	return ((ELF32_R_TYPE (rel[1].r_info) == R_386_PC32
+		|| ELF32_R_TYPE (rel[1].r_info) == R_386_PLT32)
+		? elf_x86_tls_error_none
+		: elf_x86_tls_error_yes);
 
     case R_386_TLS_IE:
       /* Check transition from IE access model:
-		movl foo@indntpoff(%rip), %eax
-		movl foo@indntpoff(%rip), %reg
-		addl foo@indntpoff(%rip), %reg
+		movl foo@indntpoff, %eax
+		movl foo@indntpoff, %reg
+		addl foo@indntpoff, %reg
        */
 
       if (offset < 1 || (offset + 4) > sec->size)
-	return false;
+	return elf_x86_tls_error_yes;
 
-      /* Check "movl foo@tpoff(%rip), %eax" first.  */
+      /* Check "movl foo@indntpoff, %eax" first.  */
       val = bfd_get_8 (abfd, contents + offset - 1);
       if (val == 0xa1)
-	return true;
+	return elf_x86_tls_error_none;
 
       if (offset < 2)
-	return false;
+	return elf_x86_tls_error_yes;
 
-      /* Check movl|addl foo@tpoff(%rip), %reg.   */
+      /* Check movl|addl foo@indntpoff, %reg.   */
       type = bfd_get_8 (abfd, contents + offset - 2);
-      return ((type == 0x8b || type == 0x03)
-	      && (val & 0xc7) == 0x05);
+      if (type != 0x8b && type != 0x03)
+	return elf_x86_tls_error_add_mov;
+      return ((val & 0xc7) == 0x05
+	      ? elf_x86_tls_error_none
+	      : elf_x86_tls_error_yes);
 
     case R_386_TLS_GOTIE:
     case R_386_TLS_IE_32:
@@ -1001,14 +1008,16 @@ elf_i386_check_tls_transition (asection *sec,
        */
 
       if (offset < 2 || (offset + 4) > sec->size)
-	return false;
+	return elf_x86_tls_error_yes;
 
       val = bfd_get_8 (abfd, contents + offset - 1);
       if ((val & 0xc0) != 0x80 || (val & 7) == 4)
-	return false;
+	return elf_x86_tls_error_yes;
 
       type = bfd_get_8 (abfd, contents + offset - 2);
-      return type == 0x8b || type == 0x2b || type == 0x03;
+      return (type == 0x8b || type == 0x2b || type == 0x03
+	      ? elf_x86_tls_error_none
+	      : elf_x86_tls_error_add_sub_mov);
 
     case R_386_TLS_GOTDESC:
       /* Check transition from GDesc access model:
@@ -1019,26 +1028,19 @@ elf_i386_check_tls_transition (asection *sec,
 	 going to be eax.  */
 
       if (offset < 2 || (offset + 4) > sec->size)
-	return false;
+	return elf_x86_tls_error_yes;
 
       if (bfd_get_8 (abfd, contents + offset - 2) != 0x8d)
-	return false;
+	return elf_x86_tls_error_lea;
 
       val = bfd_get_8 (abfd, contents + offset - 1);
-      return (val & 0xc7) == 0x83;
+      return ((val & 0xc7) == 0x83
+	      ? elf_x86_tls_error_none
+	      : elf_x86_tls_error_yes);
 
     case R_386_TLS_DESC_CALL:
-      /* Check transition from GDesc access model:
-		call *x@tlsdesc(%eax)
-       */
-      if (offset + 2 <= sec->size)
-	{
-	  /* Make sure that it's a call *x@tlsdesc(%eax).  */
-	  call = contents + offset;
-	  return call[0] == 0xff && call[1] == 0x10;
-	}
-
-      return false;
+      /* It has been checked in elf_i386_tls_transition.  */
+      return elf_x86_tls_error_none;
 
     default:
       abort ();
@@ -1057,13 +1059,15 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 			 const Elf_Internal_Rela *rel,
 			 const Elf_Internal_Rela *relend,
 			 struct elf_link_hash_entry *h,
-			 unsigned long r_symndx,
+			 Elf_Internal_Sym *sym,
 			 bool from_relocate_section)
 {
   unsigned int from_type = *r_type;
   unsigned int to_type = from_type;
   bool check = true;
   unsigned int to_le_type, to_ie_type;
+  bfd_vma offset;
+  bfd_byte *call;
 
   /* Skip TLS transition for functions.  */
   if (h != NULL
@@ -1085,9 +1089,34 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
 
   switch (from_type)
     {
+    case R_386_TLS_DESC_CALL:
+      /* Check valid GDesc call:
+		call *x@tlscall(%eax)
+       */
+      offset = rel->r_offset;
+      call = NULL;
+      if (offset + 2 <= sec->size)
+	{
+	  /* Make sure that it's a call *x@tlscall(%eax).  */
+	  call = contents + offset;
+	  if (call[0] != 0xff || call[1] != 0x10)
+	    call = NULL;
+	}
+
+      if (call == NULL)
+	{
+	  _bfd_x86_elf_link_report_tls_transition_error
+	    (info, abfd, sec, symtab_hdr, h, sym, rel,
+	     "R_386_TLS_DESC_CALL", NULL,
+	     elf_x86_tls_error_indirect_call);
+
+	  return false;
+	}
+
+      /* Fall through.  */
+
     case R_386_TLS_GD:
     case R_386_TLS_GOTDESC:
-    case R_386_TLS_DESC_CALL:
     case R_386_TLS_IE_32:
     case R_386_TLS_IE:
     case R_386_TLS_GOTIE:
@@ -1142,43 +1171,24 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
     return true;
 
   /* Check if the transition can be performed.  */
+  enum elf_x86_tls_error_type tls_error;
   if (check
-      && ! elf_i386_check_tls_transition (sec, contents,
-					  symtab_hdr, sym_hashes,
-					  from_type, rel, relend))
+      && ((tls_error = elf_i386_check_tls_transition (sec, contents,
+						      symtab_hdr,
+						      sym_hashes,
+						      from_type, rel,
+						      relend))
+	  != elf_x86_tls_error_none))
     {
       reloc_howto_type *from, *to;
-      const char *name;
 
       from = elf_i386_rtype_to_howto (from_type);
       to = elf_i386_rtype_to_howto (to_type);
 
-      if (h)
-	name = h->root.root.string;
-      else
-	{
-	  struct elf_x86_link_hash_table *htab;
+      _bfd_x86_elf_link_report_tls_transition_error
+	(info, abfd, sec, symtab_hdr, h, sym, rel, from->name,
+	 to->name, tls_error);
 
-	  htab = elf_x86_hash_table (info, I386_ELF_DATA);
-	  if (htab == NULL)
-	    name = "*unknown*";
-	  else
-	    {
-	      Elf_Internal_Sym *isym;
-
-	      isym = bfd_sym_from_r_symndx (&htab->elf.sym_cache,
-					    abfd, r_symndx);
-	      name = bfd_elf_sym_name (abfd, symtab_hdr, isym, NULL);
-	    }
-	}
-
-      _bfd_error_handler
-	/* xgettext:c-format */
-	(_("%pB: TLS transition from %s to %s against `%s'"
-	   " at %#" PRIx64 " in section `%pA' failed"),
-	 abfd, from->name, to->name, name,
-	 (uint64_t) rel->r_offset, sec);
-      bfd_set_error (bfd_error_bad_value);
       return false;
     }
 
@@ -1600,7 +1610,7 @@ elf_i386_scan_relocs (bfd *abfd,
       if (! elf_i386_tls_transition (info, abfd, sec, contents,
 				     symtab_hdr, sym_hashes,
 				     &r_type, GOT_UNKNOWN,
-				     rel, rel_end, h, r_symndx, false))
+				     rel, rel_end, h, isym, false))
 	goto error_return;
 
       /* Check if _GLOBAL_OFFSET_TABLE_ is referenced.  */
@@ -1713,7 +1723,7 @@ elf_i386_scan_relocs (bfd *abfd,
 		      name = h->root.root.string;
 		    else
 		      name = bfd_elf_sym_name (abfd, symtab_hdr, isym,
-					     NULL);
+					       NULL);
 		    _bfd_error_handler
 		      /* xgettext:c-format */
 		      (_("%pB: `%s' accessed both as normal and "
@@ -2874,7 +2884,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 					 input_section, contents,
 					 symtab_hdr, sym_hashes,
 					 &r_type_tls, tls_type, rel,
-					 relend, h, r_symndx, true))
+					 relend, h, sym, true))
 	    return false;
 
 	  expected_tls_le = htab->elf.target_os == is_solaris
@@ -3364,7 +3374,7 @@ elf_i386_relocate_section (bfd *output_bfd,
 					 input_section, contents,
 					 symtab_hdr, sym_hashes,
 					 &r_type, GOT_UNKNOWN, rel,
-					 relend, h, r_symndx, true))
+					 relend, h, sym, true))
 	    return false;
 
 	  if (r_type != R_386_TLS_LDM)

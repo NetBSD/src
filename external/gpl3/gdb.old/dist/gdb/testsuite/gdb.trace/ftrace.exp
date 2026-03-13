@@ -39,6 +39,7 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 
