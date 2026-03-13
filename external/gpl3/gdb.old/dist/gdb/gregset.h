@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GREGSET_H
-#define GREGSET_H
+#ifndef GDB_GREGSET_H
+#define GDB_GREGSET_H
 
 #ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>
@@ -60,4 +60,4 @@ extern void fill_gregset (const struct regcache *regcache,
 extern void fill_fpregset (const struct regcache *regcache,
 			   gdb_fpregset_t *fpregs, int regno);
 
-#endif
+#endif /* GDB_GREGSET_H */

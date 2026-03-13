@@ -43,7 +43,7 @@ gdb_continue_to_breakpoint "continue to pmi = NULL"
 
 # ptype on pointer to data member
 
-set name "ptype pmi (A::j)"
+set name "ptype pmi, A::j"
 gdb_test_multiple "ptype pmi" $name {
     -re "type = int A::\\*\r\n$gdb_prompt $" {
 	pass $name
@@ -52,7 +52,7 @@ gdb_test_multiple "ptype pmi" $name {
 
 # print pointer to data member
 
-set name "print pmi (A::j) "
+set name "print pmi, A::j"
 gdb_test_multiple "print pmi" $name {
     -re "$vhn = &A::j\r\n$gdb_prompt $" {
 	pass $name
@@ -77,7 +77,7 @@ gdb_test_multiple "print pmi" $name {
 
 # print dereferenced pointer to data member
 
-set name "print a.*pmi (A::j)"
+set name "print a.*pmi, A::j"
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -97,7 +97,7 @@ gdb_test_multiple "print a.*pmi" $name {
 # print dereferenced pointer to data member
 # this time, dereferenced through a pointer
 
-set name "print a_p->*pmi (A::j)"
+set name "print a_p->*pmi, A::j"
 gdb_test_multiple "print a_p->*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -133,7 +133,7 @@ gdb_test_multiple "set var pmi = &A::jj" $name {
 
 # print the pointer again
 
-set name "print pmi (A::jj)"
+set name "print pmi, A::jj"
 gdb_test_multiple "print pmi" $name {
     -re "$vhn = &A::jj\r\n$gdb_prompt $" {
 	pass $name
@@ -150,7 +150,7 @@ gdb_test_multiple "print pmi" $name {
 
 # print dereferenced pointer to data member again
 
-set name "print a.*pmi (A::jj)"
+set name "print a.*pmi, A::jj"
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 1331\r\n$gdb_prompt $" {
 	pass $name
@@ -181,7 +181,7 @@ gdb_test_multiple "set var pmi = &A::j" $name {
 
 # print dereferenced pointer to data member yet again (extra check, why not)
 
-set name "print a.*pmi (A::j) (again)"
+set name "print a.*pmi, A::j, again"
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 121\r\n$gdb_prompt $" {
 	pass $name
@@ -209,7 +209,7 @@ gdb_test_multiple "print a.*pmi = 33" $name {
 
 # Now check that the data really was changed
 
-set name "print a.*pmi (A::j) (33)"
+set name "print a.*pmi, A::j, 33"
 gdb_test_multiple "print a.*pmi" $name {
     -re "$vhn = 33\r\n$gdb_prompt $" {
 	pass $name
@@ -223,7 +223,7 @@ gdb_test_multiple "print a.*pmi" $name {
 
 # Double-check by printing a.
 
-set name "print a (j = 33)"
+set name "print a, j = 33"
 gdb_test_multiple "print a" $name {
     -re "$vhn = \{c = 120 'x', j = 33, jj = 1331, (static|static int) s = 10, (_vptr.A|_vptr\\$) = ($hex|$hex <A virtual table>)\}\r\n$gdb_prompt $" {
 	pass $name
@@ -257,7 +257,7 @@ gdb_test_multiple "print a_p->*pmi = 44" $name {
 
 # Check that the data really was changed
 
-set name "print a_p->*pmi (44)"
+set name "print a_p->*pmi, 44"
 gdb_test_multiple "print a_p->*pmi" $name {
     -re "$vhn = 44\r\n$gdb_prompt $" {
 	pass $name
@@ -271,7 +271,7 @@ gdb_test_multiple "print a_p->*pmi" $name {
 
 # Double-check by printing a.
 
-set name "print a (j = 44)"
+set name "print a, j = 44"
 gdb_test_multiple "print a" $name {
     -re "$vhn = \{c = 120 'x', j = 44, jj = 1331, (static|static int) s = 10, (_vptr.A|_vptr\\$) = ($hex|$hex <A virtual table>)\}\r\n$gdb_prompt $" {
 	pass $name

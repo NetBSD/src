@@ -46,9 +46,9 @@ proc test_expr { args } {
     }
     set last_ent [expr [llength $args] - 1]
     set testname [lindex $args $last_ent]
-    gdb_test [lindex $args 0] ".*" "$testname (setup)"
+    gdb_test [lindex $args 0] ".*" "$testname, setup"
     for {set x 1} {$x < $last_ent} {set x [expr $x + 2]} {
-	gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname ([lindex $args $x])"
+	gdb_test [lindex $args $x] [lindex $args [expr $x + 1]] "$testname, [lindex $args $x]"
     }
 }
 #

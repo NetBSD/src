@@ -127,7 +127,7 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 	# past it.
 	#
 	if {$cmd == "continue"} {
-	    gdb_breakpoint "$execd_line"
+	    gdb_breakpoint "$execd_line" "allow-pending"
 	}
 
 	# Execute past the exec call.

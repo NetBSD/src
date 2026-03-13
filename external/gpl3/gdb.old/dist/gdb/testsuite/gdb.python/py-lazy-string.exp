@@ -48,6 +48,8 @@ gdb_test "python print(null.lazy_string(length=3).value())" \
 gdb_test "python print(null.lazy_string(length=-2))" \
     "ValueError.*: Invalid length.*Error occurred in Python.*" \
     "bad length"
+gdb_py_test_silent_cmd "python nullstr = null.lazy_string()" \
+    "create null lazy string with default length" 1
 
 foreach var_spec { { "ptr" "pointer" "const char \\*" -1 } \
 		   { "array" "array" "const char \\[6\\]" 6 } \
@@ -73,3 +75,8 @@ foreach var_spec { { "ptr" "pointer" "const char \\*" -1 } \
 	#gdb_test "python print ($var.lazy_string(length=0).value())" "\"\"" "empty lazy string value"
     }
 }
+
+gdb_py_test_silent_cmd "python nas = gdb.parse_and_eval('not_a_string')" \
+    "get not_a_string" 1
+gdb_test "python print(nas.lazy_string())" \
+    "Cannot make lazy string from this object"

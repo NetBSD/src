@@ -21,6 +21,16 @@ myfunction (int aa)
   int i;
 
   i = aa + 42;
+
+  /* These lines are intentionally left blank such that the tests trying
+     to place breakpoints at line -10 relative to the "set.breakpoint.here"
+     line below land on a valid breakpoint location, inside the function.  */
+
+
+
+
+
+
   return i;    /* set breakpoint here */
 }
 

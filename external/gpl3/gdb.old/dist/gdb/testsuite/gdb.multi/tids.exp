@@ -433,11 +433,13 @@ if { [allow_python_tests] } {
 
 	gdb_py_test_silent_cmd "python bp = gdb.breakpoints()\[0\]" \
 	    "get python breakpoint" 0
-	gdb_test "python bp.thread = 6" "thread = 6" \
+	gdb_test_no_output "python bp.thread = 6" \
 	    "make breakpoint thread-specific with python"
 	# Check that the inferior-qualified ID is correct.
 	gdb_test "info breakpoint" \
-	    "stop only in thread 1.3\r\n.*" \
+	    [multi_line \
+		 "$decimal\\s+\[^\r\n\]+ in thread_function1 at \[^\r\n\]+" \
+		 "\\s+stop only in thread 1\\.3"] \
 	    "thread specific breakpoint right thread"
     }
 }

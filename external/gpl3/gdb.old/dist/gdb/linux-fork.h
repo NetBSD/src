@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_FORK_H
-#define LINUX_FORK_H
+#ifndef GDB_LINUX_FORK_H
+#define GDB_LINUX_FORK_H
 
 struct fork_info;
 struct lwp_info;
@@ -30,4 +30,4 @@ extern void linux_fork_detach (int, lwp_info *);
 extern int forks_exist_p (void);
 extern int linux_fork_checkpointing_p (int);
 
-#endif /* LINUX_FORK_H */
+#endif /* GDB_LINUX_FORK_H */

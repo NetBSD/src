@@ -46,6 +46,9 @@
    language is requested. */
 #undef ENABLE_NLS
 
+/* Additional targets configured into GDB. */
+#undef ENABLE_TARGETS
+
 /* The .gdbearlyinit filename. */
 #undef GDBEARLYINIT
 
@@ -177,9 +180,6 @@
 
 /* Define if <sys/procfs.h> has elf_fpregset_t. */
 #undef HAVE_ELF_FPREGSET_T
-
-/* Define to 1 if you have the <elf_hp.h> header file. */
-#undef HAVE_ELF_HP_H
 
 /* Define to 1 if your system has the etext variable. */
 #undef HAVE_ETEXT
@@ -481,6 +481,9 @@
 /* Define to 1 if `pl_tdname' is a member of `struct ptrace_lwpinfo'. */
 #undef HAVE_STRUCT_PTRACE_LWPINFO_PL_TDNAME
 
+/* Define to 1 if `variant.ptwrite' is a member of `struct pt_event'. */
+#undef HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE
+
 /* Define to 1 if `enabled' is a member of `struct pt_insn'. */
 #undef HAVE_STRUCT_PT_INSN_ENABLED
 
@@ -582,9 +585,6 @@
 
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
-
-/* Define to 1 if you have the `waitpid' function. */
-#undef HAVE_WAITPID
 
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H

@@ -59,7 +59,7 @@
 #define _NETWR		0x019		/* Write to host */
 #define _NETCFIG	0x01a		/* Configure network parameters */
 #define _NETOPN		0x01b		/* Open file for reading */
-#define _NETFRD		0x01c		/* Retreive specified file blocks */
+#define _NETFRD		0x01c		/* Retrieve specified file blocks */
 #define _NETCTRL	0x01d		/* Implement special control functions */
 #define _OUTCHR		0x020		/* Output character (pointer / pointer format) */
 #define _OUTSTR		0x021		/* Output string (pointer / pointer format) */
@@ -118,7 +118,7 @@ static const struct bug_map bug_mapping[] = {
   { _NETWR,	".NETWR -- Write to host" },
   { _NETCFIG,	".NETCFIG -- Configure network parameters" },
   { _NETOPN,	".NETOPN -- Open file for reading" },
-  { _NETFRD,	".NETFRD -- Retreive specified file blocks" },
+  { _NETFRD,	".NETFRD -- Retrieve specified file blocks" },
   { _NETCTRL,	".NETCTRL -- Implement special control functions" },
   { _OUTCHR,	".OUTCHR -- Output character" },
   { _OUTSTR,	".OUTSTR -- Output string (pointer / pointer format)" },

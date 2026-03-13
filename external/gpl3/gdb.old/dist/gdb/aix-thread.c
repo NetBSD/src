@@ -78,7 +78,6 @@ static bool debug_aix_thread;
 struct aix_thread_info : public private_thread_info
 {
   pthdb_pthread_t pdtid;	 /* thread's libpthdebug id */
-  pthdb_tid_t tid;			/* kernel thread id */
 };
 
 /* Return the aix_thread_info attached to THREAD.  */
@@ -377,7 +376,6 @@ pid_to_prc (ptid_t *ptidp)
 static int
 pdc_symbol_addrs (pthdb_user_t user_current_pid, pthdb_symbol_t *symbols, int count)
 {
-  struct bound_minimal_symbol ms;
   int i;
   char *name;
 
@@ -397,7 +395,8 @@ pdc_symbol_addrs (pthdb_user_t user_current_pid, pthdb_symbol_t *symbols, int co
 	symbols[i].addr = 0;
       else
 	{
-	  ms = lookup_minimal_symbol (name, NULL, NULL);
+	  bound_minimal_symbol ms
+	    = lookup_minimal_symbol (current_program_space, name);
 	  if (ms.minsym == NULL)
 	    {
 	      if (debug_aix_thread)
@@ -805,7 +804,9 @@ sync_threadlists (pid_t pid)
       if (status != PTHDB_SUCCESS || pthid == PTHDB_INVALID_PTID)
 	continue;
 
-      ptid_t ptid (pid, 0, pthid);
+      status = pthdb_pthread_tid (data->pd_session, pdtid, &tid);
+      ptid_t ptid (pid, tid, pthid);
+
       status = pthdb_pthread_state (data->pd_session, pdtid, &state);
       in_queue_threads.insert (pdtid);
 
@@ -822,8 +823,6 @@ sync_threadlists (pid_t pid)
 	  aix_thread_info *priv = new aix_thread_info;
 	  /* init priv */
 	  priv->pdtid = pdtid;
-	  status = pthdb_pthread_tid (data->pd_session, pdtid, &tid);
-	  priv->tid = tid;
 	  /* Check if this is the main thread.  If it is, then change
 	     its ptid and add its private data.  */
 	  if (in_thread_list (proc_target, ptid_t (pid)))
@@ -855,7 +854,7 @@ sync_threadlists (pid_t pid)
        thread exits and gets into a PST_UNKNOWN state.  So this thread
        will not run in the above for loop.  Therefore the below for loop
        is to manually delete such threads.  */
-    for (struct thread_info *it : all_threads ())
+    for (struct thread_info *it : all_threads_safe ())
       {
 	aix_thread_info *priv = get_aix_thread_info (it);
 	if (in_queue_threads.count (priv->pdtid) == 0
@@ -875,9 +874,7 @@ static int
 iter_tid (struct thread_info *thread, void *tidp)
 {
   const pthdb_tid_t tid = *(pthdb_tid_t *)tidp;
-  aix_thread_info *priv = get_aix_thread_info (thread);
-
-  return priv->tid == tid;
+  return thread->ptid.lwp () == tid;
 }
 
 /* Synchronize libpthdebug's state with the inferior and with GDB,
@@ -959,7 +956,6 @@ pd_enable (inferior *inf)
 {
   int status;
   char *stub_name;
-  struct bound_minimal_symbol ms;
   struct aix_thread_variables *data;
 
   if (inf == NULL)
@@ -983,7 +979,8 @@ pd_enable (inferior *inf)
     return;
 
   /* Set a breakpoint on the returned stub function.  */
-  ms = lookup_minimal_symbol (stub_name, NULL, NULL);
+  bound_minimal_symbol ms
+    = lookup_minimal_symbol (current_program_space, stub_name);
   if (ms.minsym == NULL)
     return;
   data->pd_brk_addr = ms.value_address ();
@@ -1079,7 +1076,7 @@ aix_thread_target::resume (ptid_t ptid, int step, enum gdb_signal sig)
 
       aix_thread_info *priv = get_aix_thread_info (thread);
 
-      tid[0] = priv->tid;
+      tid[0] = ptid.lwp ();
       if (tid[0] == PTHDB_INVALID_TID)
 	error (_("aix-thread resume: no tid for pthread %ld"),
 	       ptid.lwp ());
@@ -1468,7 +1465,7 @@ aix_thread_target::fetch_registers (struct regcache *regcache, int regno)
     {
       thread = current_inferior ()->find_thread (regcache->ptid ());
       aix_thread_info *priv = get_aix_thread_info (thread);
-      tid = priv->tid;
+      tid = regcache->ptid().lwp ();
 
       if (tid == PTHDB_INVALID_TID)
 	fetch_regs_user_thread (regcache, priv->pdtid);
@@ -1933,7 +1930,7 @@ aix_thread_target::store_registers (struct regcache *regcache, int regno)
     {
       thread = current_inferior ()->find_thread (regcache->ptid ());
       aix_thread_info *priv = get_aix_thread_info (thread);
-      tid = priv->tid;
+      tid = regcache->ptid ().lwp ();
 
       if (tid == PTHDB_INVALID_TID)
 	store_regs_user_thread (regcache, priv->pdtid);
@@ -1997,7 +1994,7 @@ aix_thread_target::pid_to_str (ptid_t ptid)
       aix_thread_info *priv = get_aix_thread_info (thread_info);
 
       return string_printf (_("Thread %s (tid %s)"), pulongest (ptid.tid ()),
-		pulongest (priv->tid));
+		pulongest (ptid.lwp ()));
     }
 
   return beneath ()->pid_to_str (ptid);

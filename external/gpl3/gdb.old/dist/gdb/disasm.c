@@ -19,6 +19,7 @@
 
 #include "arch-utils.h"
 #include "event-top.h"
+#include "gdbsupport/unordered_set.h"
 #include "target.h"
 #include "value.h"
 #include "ui-out.h"
@@ -122,73 +123,25 @@ struct deprecated_dis_line_entry
 
 struct dis_line_entry
 {
+  dis_line_entry (struct symtab *symtab, int line) noexcept
+    : symtab (symtab),
+      line (line)
+  {}
+
+  bool operator== (const dis_line_entry &other) const noexcept
+  { return this->symtab == other.symtab && this->line == other.line; }
+
   struct symtab *symtab;
   int line;
 };
 
 /* Hash function for dis_line_entry.  */
 
-static hashval_t
-hash_dis_line_entry (const void *item)
+struct dis_line_entry_hash
 {
-  const struct dis_line_entry *dle = (const struct dis_line_entry *) item;
-
-  return htab_hash_pointer (dle->symtab) + dle->line;
-}
-
-/* Equal function for dis_line_entry.  */
-
-static int
-eq_dis_line_entry (const void *item_lhs, const void *item_rhs)
-{
-  const struct dis_line_entry *lhs = (const struct dis_line_entry *) item_lhs;
-  const struct dis_line_entry *rhs = (const struct dis_line_entry *) item_rhs;
-
-  return (lhs->symtab == rhs->symtab
-	  && lhs->line == rhs->line);
-}
-
-/* Create the table to manage lines for mixed source/disassembly.  */
-
-static htab_t
-allocate_dis_line_table (void)
-{
-  return htab_create_alloc (41,
-			    hash_dis_line_entry, eq_dis_line_entry,
-			    xfree, xcalloc, xfree);
-}
-
-/* Add a new dis_line_entry containing SYMTAB and LINE to TABLE.  */
-
-static void
-add_dis_line_entry (htab_t table, struct symtab *symtab, int line)
-{
-  void **slot;
-  struct dis_line_entry dle, *dlep;
-
-  dle.symtab = symtab;
-  dle.line = line;
-  slot = htab_find_slot (table, &dle, INSERT);
-  if (*slot == NULL)
-    {
-      dlep = XNEW (struct dis_line_entry);
-      dlep->symtab = symtab;
-      dlep->line = line;
-      *slot = dlep;
-    }
-}
-
-/* Return non-zero if SYMTAB, LINE are in TABLE.  */
-
-static int
-line_has_code_p (htab_t table, struct symtab *symtab, int line)
-{
-  struct dis_line_entry dle;
-
-  dle.symtab = symtab;
-  dle.line = line;
-  return htab_find (table, &dle) != NULL;
-}
+  std::size_t operator() (const dis_line_entry &x) const noexcept
+  { return std::hash<symtab *> () (x.symtab) + std::hash<int> () (x.line); }
+};
 
 /* Wrapper of target_read_code.  */
 
@@ -197,7 +150,12 @@ gdb_disassembler_memory_reader::dis_asm_read_memory
   (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
    struct disassemble_info *info) noexcept
 {
-  return target_read_code (memaddr, myaddr, len);
+  auto res = catch_exceptions<int, -1> ([&]
+    {
+      return target_read_code (memaddr, myaddr, len);
+    });
+
+  return res;
 }
 
 /* Wrapper of memory_error.  */
@@ -742,7 +700,7 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
      but if that text is for code that will be disassembled later, then
      we'll want to defer printing it until later with its associated code.  */
 
-  htab_up dis_line_table (allocate_dis_line_table ());
+  gdb::unordered_set<dis_line_entry, dis_line_entry_hash> dis_line_table;
 
   struct objfile *objfile = main_symtab->compunit ()->objfile ();
 
@@ -781,7 +739,7 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
       pc += length;
 
       if (sal.symtab != NULL)
-	add_dis_line_entry (dis_line_table.get (), sal.symtab, sal.line);
+	dis_line_table.emplace (sal.symtab, sal.line);
     }
 
   /* Second pass: print the disassembly.
@@ -854,11 +812,9 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
 		  /* Several preceding source lines.  Print the trailing ones
 		     not associated with code that we'll print later.  */
 		  for (l = sal.line - 1; l > last_line; --l)
-		    {
-		      if (line_has_code_p (dis_line_table.get (),
-					   sal.symtab, l))
-			break;
-		    }
+		    if (dis_line_table.contains ({sal.symtab, l}))
+		      break;
+
 		  if (l < sal.line - 1)
 		    {
 		      start_preceding_line_to_display = l + 1;
@@ -894,7 +850,10 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
 		 output includes the source specs for each line.  */
 	      if (sal.symtab != NULL)
 		{
-		  uiout->text (symtab_to_filename_for_display (sal.symtab));
+		  auto filename = symtab_to_filename_for_display (sal.symtab);
+		  uiout->message ("%ps",
+				  styled_string (file_name_style.style (),
+						 filename));
 		}
 	      else
 		uiout->text ("unknown");

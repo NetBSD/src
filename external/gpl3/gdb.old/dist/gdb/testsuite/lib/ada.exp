@@ -13,6 +13,25 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# A wrapper for foreach_with_prefix that applies suitable
+# -fgnat-encodings arguments to a command line.  SCENARIO_ARG is the
+# name of a loop variable that will hold the scenario currently being
+# evaluated.  FLAGS_ARG will be set to the appropriate compiler flags
+# (if any) for this scenario.  LIST is the list of desired scenarios
+# to run, and BODY is what actually does the work.
+
+proc foreach_gnat_encoding {scenario_arg flags_arg list body} {
+    upvar 1 $scenario_arg scenario
+    upvar 1 $flags_arg flags
+    foreach_with_prefix scenario $list {
+	set flags {}
+	if {$scenario != "none"} {
+	    lappend flags additional_flags=-fgnat-encodings=$scenario
+	}
+	uplevel 1 $body
+    }
+}
+
 # Call target_compile with SOURCE DEST TYPE and OPTIONS as argument,
 # after having temporarily changed the current working directory to
 # BUILDDIR.
@@ -167,6 +186,18 @@ proc gnatmake_version_at_least { major } {
 
     # Unknown, return 1
     return 1
+}
+
+# Compare the GNAT version against L2 using version_compare.  If the
+# compiler does not appear to be GCC, this will always return false.
+
+proc gnat_version_compare {op l2} {
+    set gccvers [gcc_major_version]
+    if {$gccvers == -1} {
+	return 0
+    }
+
+    return [version_compare [split $gccvers .] $op $l2]
 }
 
 # Return 1 if the GNAT runtime appears to have debug info.

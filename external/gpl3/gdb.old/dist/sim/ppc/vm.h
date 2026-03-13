@@ -60,7 +60,7 @@ INLINE_VM\
 
 
 /* generic block transfers.  Dependant on the presence of the
-   PROCESSOR arg, either returns the number of bytes transfered or (if
+   PROCESSOR arg, either returns the number of bytes transferred or (if
    PROCESSOR is non NULL) aborts the simulation */
 
 INLINE_VM\

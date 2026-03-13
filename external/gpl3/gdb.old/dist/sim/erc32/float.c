@@ -20,7 +20,7 @@
    FPU.  IEEE trap handling is done as follows:
      1. In the host, all IEEE traps are masked
      2. After each simulated FPU instruction, check if any exception
-        occured by reading the exception bits from the host FPU status
+        occurred by reading the exception bits from the host FPU status
         register (get_accex()).
      3. Propagate any exceptions to the simulated FSR.
      4. Clear host exception bits.

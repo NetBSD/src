@@ -99,7 +99,8 @@ ps_pglobal_lookup (struct ps_prochandle *ph, const char *obj,
   set_current_program_space (inf->pspace);
 
   /* FIXME: kettenis/2000-09-03: What should we do with OBJ?  */
-  bound_minimal_symbol ms = lookup_minimal_symbol (name, NULL, NULL);
+  bound_minimal_symbol ms
+    = lookup_minimal_symbol (current_program_space, name);
   if (ms.minsym == NULL)
     return PS_NOSYM;
 

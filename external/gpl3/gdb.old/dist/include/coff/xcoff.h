@@ -298,13 +298,13 @@ struct internal_ldrel
   bfd_vma l_vaddr;
 
   /* The symbol table index in the .loader section symbol table.  */
-  bfd_size_type l_symndx;
+  uint32_t l_symndx;
 
   /* The relocation type and size.  */
-  short l_rtype;
+  int16_t l_rtype;
 
   /* The section number this relocation applies to.  */
-  short l_rsecnm;
+  int16_t l_rsecnm;
 };
 
 /* An entry in the XCOFF linker hash table.  */

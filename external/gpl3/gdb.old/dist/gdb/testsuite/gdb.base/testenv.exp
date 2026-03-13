@@ -68,7 +68,7 @@ proc find_env {varname} {
 	    }
 	    -re "$gdb_prompt $" {
 		# If this fails, bail out, otherwise we get stuck in
-		# an infinite loop.  The caller will end up emiting a
+		# an infinite loop.  The caller will end up emitting a
 		# FAIL.
 		return "<fail>"
 	    }

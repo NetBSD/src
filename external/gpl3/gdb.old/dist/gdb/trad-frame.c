@@ -154,12 +154,14 @@ trad_frame_set_reg_regmap (struct trad_frame_cache *this_trad_cache,
 	    else
 	      {
 		enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-		gdb_byte buf[slot_size];
+		gdb::byte_vector buf (slot_size);
 
-		if (target_read_memory (addr + offs, buf, sizeof buf) == 0)
+		if (target_read_memory (addr + offs, buf.data (), buf.size ())
+		    == 0)
 		  {
 		    LONGEST val
-		      = extract_unsigned_integer (buf, sizeof buf, byte_order);
+		      = extract_unsigned_integer (buf.data (), buf.size (),
+						  byte_order);
 		    trad_frame_set_reg_value (this_trad_cache, regno, val);
 		  }
 	      }

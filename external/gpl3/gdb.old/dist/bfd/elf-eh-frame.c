@@ -345,7 +345,7 @@ next_cie_fde_offset (const struct eh_cie_fde *ent,
 static bool
 skip_cfa_op (bfd_byte **iter, bfd_byte *end, unsigned int encoded_ptr_width)
 {
-  bfd_byte op;
+  bfd_byte op = 0;
   bfd_vma length;
 
   if (!read_byte (iter, end, &op))
@@ -2145,7 +2145,6 @@ _bfd_elf_write_section_eh_frame (bfd *abfd,
 			/* Fall thru */
 		      case bfd_arch_frv:
 		      case bfd_arch_i386:
-		      case bfd_arch_nios2:
 			BFD_ASSERT (htab->hgot != NULL
 				    && ((htab->hgot->root.type
 					 == bfd_link_hash_defined)

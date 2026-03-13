@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_H
-#define SOLIB_H
+#ifndef GDB_SOLIB_H
+#define GDB_SOLIB_H
 
 /* Forward decl's for prototypes */
 struct solib;
@@ -80,9 +80,9 @@ extern bool solib_keep_data_in_core (CORE_ADDR vaddr, unsigned long size);
 
 extern bool in_solib_dynsym_resolve_code (CORE_ADDR);
 
-/* Discard symbols that were auto-loaded from shared libraries.  */
+/* Discard symbols that were auto-loaded from shared libraries in PSPACE.  */
 
-extern void no_shared_libraries (const char *ignored, int from_tty);
+extern void no_shared_libraries (program_space *pspace);
 
 /* Synchronize GDB's shared object list with inferior's.
 
@@ -136,11 +136,4 @@ extern void update_solib_breakpoints (void);
 
 extern void handle_solib_event (void);
 
-/* Associate SONAME with BUILD_ID in ABFD's registry so that it can be
-   retrieved with get_cbfd_soname_build_id.  */
-
-extern void set_cbfd_soname_build_id (gdb_bfd_ref_ptr abfd,
-				      const char *soname,
-				      const bfd_build_id *build_id);
-
-#endif /* SOLIB_H */
+#endif /* GDB_SOLIB_H */

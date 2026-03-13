@@ -540,6 +540,7 @@ enum elf_target_id
   ARM_ELF_DATA,
   AVR_ELF_DATA,
   BFIN_ELF_DATA,
+  CR16_ELF_DATA,
   CRIS_ELF_DATA,
   CSKY_ELF_DATA,
   FRV_ELF_DATA,
@@ -548,31 +549,33 @@ enum elf_target_id
   I386_ELF_DATA,
   IA64_ELF_DATA,
   KVX_ELF_DATA,
-  LM32_ELF_DATA,
   LARCH_ELF_DATA,
+  LM32_ELF_DATA,
   M32R_ELF_DATA,
   M68HC11_ELF_DATA,
   M68K_ELF_DATA,
   METAG_ELF_DATA,
   MICROBLAZE_ELF_DATA,
   MIPS_ELF_DATA,
+  MMIX_ELF_DATA,
   MN10300_ELF_DATA,
   NDS32_ELF_DATA,
-  NIOS2_ELF_DATA,
   OR1K_ELF_DATA,
   PPC32_ELF_DATA,
   PPC64_ELF_DATA,
   PRU_ELF_DATA,
+  RISCV_ELF_DATA,
   S390_ELF_DATA,
+  SCORE_ELF_DATA,
   SH_ELF_DATA,
   SPARC_ELF_DATA,
   SPU_ELF_DATA,
   TIC6X_ELF_DATA,
-  X86_64_ELF_DATA,
-  XTENSA_ELF_DATA,
   TILEGX_ELF_DATA,
   TILEPRO_ELF_DATA,
-  RISCV_ELF_DATA,
+  X86_64_ELF_DATA,
+  XTENSA_ELF_DATA,
+  VAX_ELF_DATA,
   GENERIC_ELF_DATA
 };
 
@@ -1727,10 +1730,6 @@ struct elf_backend_data
      backend relocate_section routine for relocatable linking.  */
   unsigned rela_normal : 1;
 
-  /* Whether a relocation is rela_normal. Compared with rela_normal,
-     is_rela_normal can set part of relocations to rela_normal.  */
-  bool (*is_rela_normal) (Elf_Internal_Rela *);
-
   /* Set if DT_REL/DT_RELA/DT_RELSZ/DT_RELASZ should not include PLT
      relocations.  */
   unsigned dtrel_excludes_plt : 1;
@@ -2160,13 +2159,6 @@ struct elf_obj_tdata
      in the list.  */
   struct sdt_note *sdt_note_head;
 
-  Elf_Internal_Shdr **group_sect_ptr;
-  unsigned int num_group;
-
-  /* Index into group_sect_ptr, updated by setup_group when finding a
-     section's group.  Used to optimize subsequent group searches.  */
-  unsigned int group_search_offset;
-
   unsigned int symtab_section, dynsymtab_section;
   unsigned int dynversym_section, dynverdef_section, dynverref_section;
 
@@ -2326,7 +2318,7 @@ extern unsigned long bfd_elf_gnu_hash
 extern bfd_reloc_status_type bfd_elf_generic_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 extern bool bfd_elf_allocate_object
-  (bfd *, size_t, enum elf_target_id);
+  (bfd *, size_t);
 extern bool bfd_elf_make_object
   (bfd *);
 extern bool bfd_elf_mkcorefile
@@ -2354,7 +2346,7 @@ extern bool _bfd_elf_link_hash_table_init
   (struct elf_link_hash_table *, bfd *,
    struct bfd_hash_entry *(*)
      (struct bfd_hash_entry *, struct bfd_hash_table *, const char *),
-   unsigned int, enum elf_target_id);
+   unsigned int);
 extern bool _bfd_elf_slurp_version_tables
   (bfd *, bool);
 extern bool _bfd_elf_merge_sections
@@ -2551,7 +2543,7 @@ extern long _bfd_elf_link_lookup_local_dynindx
 extern bool _bfd_elf_compute_section_file_positions
   (bfd *, struct bfd_link_info *);
 extern file_ptr _bfd_elf_assign_file_position_for_section
-  (Elf_Internal_Shdr *, file_ptr, bool);
+  (Elf_Internal_Shdr *, file_ptr, bool, unsigned char);
 extern bool _bfd_elf_modify_headers
   (bfd *, struct bfd_link_info *);
 

@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (DUMMY_FRAME_H)
-#define DUMMY_FRAME_H 1
+#ifndef GDB_DUMMY_FRAME_H
+#define GDB_DUMMY_FRAME_H
 
 #include "frame.h"
 
@@ -80,4 +80,4 @@ extern int find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor,
 extern struct frame_id default_dummy_id (struct gdbarch *gdbarch,
 					 const frame_info_ptr &this_frame);
 
-#endif /* !defined (DUMMY_FRAME_H)  */
+#endif /* GDB_DUMMY_FRAME_H */
