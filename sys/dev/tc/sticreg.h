@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.10 2025/12/10 21:33:04 andvar Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.11 2026/03/13 05:26:19 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ struct stic_regs {
 
 /*
  * Bit definitions for stic_regs::int.  Three four-bit wide fields, for
- * error (E), vertical-blank (V), and packet-done (P) intererupts,
+ * error (E), vertical-blank (V), and packet-done (P) interrupts,
  * respectively.  The low-order three bits of each field are interrupt
  * enable, condition flagged, and nybble write enable.  The top bit of each
  * field is unused.
