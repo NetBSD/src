@@ -46,7 +46,7 @@ struct altivec_regs {
 /* AltiVec endian helpers, wrong endian hosts vs targets need to be
    sure to get the right bytes/halfs/words when the order matters.
    Note that many AltiVec instructions do not depend on byte order and
-   work on N independant bits of data.  This is only for the
+   work on N independent bits of data.  This is only for the
    instructions that actually move data around.  */
 
 #if (HOST_BYTE_ORDER == BIG_ENDIAN)

@@ -99,7 +99,8 @@ proc run_style_tests { } {
 
 	set main_expr [limited_style main function]
 	set base_file_expr [limited_style ".*style\\.c" file]
-	set file_expr "$base_file_expr:\[0-9\]+"
+	set line_expr [limited_style $decimal line-number]
+	set file_expr "$base_file_expr:$line_expr"
 	set arg_expr [limited_style "arg." variable]
 
 	# On some embedded targets that don't fully support argc/argv,
@@ -109,12 +110,13 @@ proc run_style_tests { } {
 	gdb_test "frame" \
 	    [multi_line \
 		 "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
-		 "\[0-9\]+\\s+.*return.* break here .*"]
-	gdb_test "info breakpoints" "$main_expr at $file_expr.*"
+		 "$line_expr\\s+.*return.* break here .*"]
+	gdb_test "info breakpoints" \
+	    ".*[limited_style What title].*$main_expr at $file_expr.*"
 
 	gdb_test_no_output "set style sources off"
 	gdb_test "frame" \
-	    "\r\n\[^\033\]*break here.*" \
+	    "\r\n$line_expr\[^\033\]*break here.*" \
 	    "frame without sources styling"
 	gdb_test_no_output "set style sources on"
 
@@ -139,18 +141,18 @@ proc run_style_tests { } {
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex\\)" \
 		     "\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 	    set re1_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+" \
 		     "\\s+$arg_expr=$hex.*\\)" \
 		     "\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 	    set re2_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=.*" \
 		     "\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 
 	    # The length of the line containing argv containing:
 	    # - 4 leading spaces
@@ -237,8 +239,8 @@ proc run_style_tests { } {
 	    "The ${address_style_expr} foreground color is: ${color}" \
 	    "style name and style word styled using its own style in show style"
 
-	set aliases_expr [limited_style ".*aliases.*" title]
-	set breakpoints_expr [limited_style ".*breakpoints.*" title]
+	set aliases_expr [limited_style ".*aliases.*" command]
+	set breakpoints_expr [limited_style ".*breakpoints.*" command]
 	gdb_test "help" \
 	    [multi_line \
 		 "List of classes of commands:" \
@@ -247,10 +249,10 @@ proc run_style_tests { } {
 		 "${breakpoints_expr} -- Making program stop at certain points\." \
 		 ".*" \
 		] \
-	    "help classes of commands styled with title"
+	    "help classes of commands styled with command"
 
-	set taas_expr  [limited_style ".*taas.*" title]
-	set tfaas_expr  [limited_style ".*tfaas.*" title]
+	set taas_expr  [limited_style ".*taas.*" command]
+	set tfaas_expr  [limited_style ".*tfaas.*" command]
 	set cut_for_thre_expr [limited_style "cut for 'thre" highlight]
 	gdb_test "apropos -v cut for 'thre" \
 	    [multi_line \
@@ -300,7 +302,7 @@ proc run_style_tests { } {
 	gdb_test_no_output "maintenance deprecate p \"new_p\"" \
 	    "maintenance deprecate p \"new_p\" /1/"
 	gdb_test "p 5" \
-	    "Warning: '[limited_style p title]', an alias for the command '[limited_style print title]', is deprecated.*Use '[limited_style new_p title]'.*" \
+	    "Warning: '[limited_style p command]', an alias for the command '[limited_style print command]', is deprecated.*Use '[limited_style new_p command]'.*" \
 	    "p deprecated warning, with replacement"
 
 	# Check that the version string is styled in the output of 'show
@@ -502,7 +504,7 @@ with_test_prefix "all styles enabled" {
 
 # Now, for each style in turn.  Disable that style only and run the
 # test again.  Things in that style should NOT now be styled.
-foreach style { title file function highlight variable \
+foreach style { command title file function highlight variable \
 		    address metadata } {
     set currently_disabled_style $style
     with_test_prefix "disable style $style" {

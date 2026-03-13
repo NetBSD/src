@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ADA_EXP_H
-#define ADA_EXP_H
+#ifndef GDB_ADA_EXP_H
+#define GDB_ADA_EXP_H
 
 #include "expop.h"
 
@@ -30,10 +30,6 @@ extern struct value *ada_atr_tag (struct type *expect_type,
 				  struct expression *exp,
 				  enum noside noside, enum exp_opcode op,
 				  struct value *arg1);
-extern struct value *ada_atr_size (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside, enum exp_opcode op,
-				   struct value *arg1);
 extern struct value *ada_abs (struct type *expect_type,
 			      struct expression *exp,
 			      enum noside noside, enum exp_opcode op,
@@ -200,9 +196,23 @@ public:
 
 using ada_neg_operation = unop_operation<UNOP_NEG, ada_unop_neg>;
 using ada_atr_tag_operation = unop_operation<OP_ATR_TAG, ada_atr_tag>;
-using ada_atr_size_operation = unop_operation<OP_ATR_SIZE, ada_atr_size>;
 using ada_abs_operation = unop_operation<UNOP_ABS, ada_abs>;
 using ada_pos_operation = unop_operation<OP_ATR_POS, ada_pos_atr>;
+
+/* Implementation of the 'Size and 'Object_Size attribute.  The
+   boolean parameter is true for 'Size and false for 'Object_Size.  */
+class ada_atr_size_operation
+  : public maybe_constant_operation<operation_up, bool>
+{
+  using maybe_constant_operation::maybe_constant_operation;
+
+  value *evaluate (struct type *expect_type,
+		   struct expression *exp,
+		   enum noside noside) override;
+
+  enum exp_opcode opcode () const override
+  { return OP_ATR_SIZE; }
+};
 
 /* The in-range operation, given a type.  */
 class ada_unop_range_operation
@@ -981,4 +991,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* ADA_EXP_H */
+#endif /* GDB_ADA_EXP_H */

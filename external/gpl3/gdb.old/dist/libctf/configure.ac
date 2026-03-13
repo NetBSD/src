@@ -18,8 +18,8 @@ dnl along with this program; see the file COPYING.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-AC_PREREQ(2.64)
-AC_INIT([libctf], 1.2.0)
+AC_PREREQ([2.64])
+AC_INIT([libctf], [1.2.0])
 AC_CONFIG_SRCDIR(ctf-impl.h)
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
@@ -109,7 +109,7 @@ if test $ac_cv_libctf_bfd_elf = yes; then
 fi
 
 AC_C_BIGENDIAN
-AC_CHECK_HEADERS(byteswap.h endian.h)
+AC_CHECK_HEADERS(byteswap.h endian.h valgrind/valgrind.h)
 AC_CHECK_FUNCS(pread)
 
 dnl Check for bswap_{16,32,64}

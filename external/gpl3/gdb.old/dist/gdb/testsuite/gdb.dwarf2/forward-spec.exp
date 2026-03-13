@@ -16,6 +16,8 @@
 # Check that the DWARF reader works with a a DW_AT_specification that
 # refers to a later DIE.
 
+require !readnow
+
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
@@ -72,31 +74,13 @@ if {[prepare_for_testing "failed to prepare" ${testfile} \
     return -1
 }
 
-set in_v 0
-gdb_test_multiple "maint print objfiles" "v has a parent" {
-    -re "^ *\\\[\[0-9\]\\\] *\\(\\(cooked_index_entry\[^\r\n\]*" {
-	set in_v 0
-	exp_continue
-    }
-    -re "^ *name: *v\[\r\n\]*" {
-	set in_v 1
-	exp_continue
-    }
-    -re "^ *parent: *\\(\\(cooked_index_entry \\*\\) (0|$hex)\\)" {
-	if {$in_v} {
-	    if {$expect_out(1,string) == "0"} {
-		fail $gdb_test_name
-	    } else {
-		pass $gdb_test_name
-	    }
-	    set in_v 0
-	}
-	exp_continue
-    }
-    -re "^\[^\r\n\]*\[\r\n\]+" {
-	exp_continue
-    }
-    -re "$gdb_prompt " {
-	# Done.
-    }
-}
+require {string equal [have_index $binfile] ""}
+
+set re_ws "\[ \t\]"
+
+gdb_test_lines "maint print objfiles" \
+    "v has a parent" \
+    [multi_line \
+	 "" \
+	 "$re_ws+qualified:$re_ws+ns::v" \
+	 ".*"]

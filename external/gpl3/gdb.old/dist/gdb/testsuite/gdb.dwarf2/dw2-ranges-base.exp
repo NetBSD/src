@@ -40,7 +40,7 @@ Dwarf::assemble $asm_file {
 	[function_range frame3 [list ${srcdir}/${subdir}/$srcfile]]
 
     # Very simple info for this test program.  We don't care about
-    # this information being correct (w.r.t. funtion / argument types)
+    # this information being correct (w.r.t. function / argument types)
     # just so long as the compilation using makes use of the
     # .debug_ranges data then the test achieves its objective.
     cu { label cu_label } {

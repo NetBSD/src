@@ -107,7 +107,7 @@ proc test_d_float_literals {} {
 }
 
 proc test_d_expressions {} {
-    # Test expression behaviour specific to D.
+    # Test expression behavior specific to D.
 
     # Comparison and order expressions have same precedence.
     gdb_test "print 1 == 2 > 0" "A syntax error in expression, near `> 0'\."

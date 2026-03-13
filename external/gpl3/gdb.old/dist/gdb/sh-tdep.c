@@ -1057,7 +1057,7 @@ sh_push_dummy_call_fpu (struct gdbarch *gdbarch,
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  There are 16 bytes
-     in four registers available.  Loop thru args from first to last.  */
+     in four registers available.  Loop through args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
       type = args[argnum]->type ();
@@ -1195,7 +1195,7 @@ sh_push_dummy_call_nofpu (struct gdbarch *gdbarch,
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  There are 16 bytes
-     in four registers available.  Loop thru args from first to last.  */
+     in four registers available.  Loop through args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
       type = args[argnum]->type ();
@@ -2171,7 +2171,7 @@ sh_corefile_collect_regset (const struct regset *regset,
 }
 
 /* The following two regsets have the same contents, so it is tempting to
-   unify them, but they are distiguished by their address, so don't.  */
+   unify them, but they are distinguished by their address, so don't.  */
 
 const struct regset sh_corefile_gregset =
 {

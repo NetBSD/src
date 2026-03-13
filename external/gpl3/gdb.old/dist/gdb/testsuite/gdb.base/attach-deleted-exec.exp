@@ -45,9 +45,27 @@ clean_restart
 
 # Attach.  GDB should spot that the executable is gone and fallback to
 # use /proc/PID/exe.
-gdb_test "attach $testpid" \
-    "Attaching to process $decimal\r\nReading symbols from /proc/${testpid}/exe\\.\\.\\..*" \
-    "attach to process with deleted executable"
+set test "attach to process with deleted executable"
+set re \
+    [multi_line \
+	 "Attaching to process $decimal" \
+	 "Reading symbols from (\[^\r\n\]+)[string_to_regexp ...]" \
+	 ".*"]
+set filename ""
+gdb_test_multiple "attach $testpid" $test {
+    -re -wrap $re {
+	set filename $expect_out(1,string)
+	pass $gdb_test_name
+    }
+}
+
+set test "filename /proc/PID/exe"
+set re_nfs \[^\r\n\]+[string_to_regexp /.nfs]\[^\r\n\]+
+if { [regexp $re_nfs $filename] } {
+    unsupported $test
+} else {
+    gdb_assert { [string equal $filename /proc/${testpid}/exe] } $test
+}
 
 # Cleanup.
 kill_wait_spawned_process $test_spawn_id

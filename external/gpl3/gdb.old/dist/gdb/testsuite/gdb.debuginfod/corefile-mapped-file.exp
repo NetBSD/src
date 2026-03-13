@@ -1,0 +1,380 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# This test checks GDB's ability to use build-ids when setting up file backed
+# mappings as part of reading a core-file.
+#
+# A core-file contains a list of the files that were mapped into the process
+# at the time of the core-file creation.  If the file was mapped read-only
+# then the file contents will not be present in the core-file, but instead GDB
+# is expected to open the mapped file and read the contents from there if
+# needed.  And this is what GDB does.
+#
+# GDB (via the BFD library) will also spot if a mapped looks like a valid ELF
+# and contains a build-id, this build-id is passed back to GDB so that GDB can
+# validate the on-disk file it finds matches the file that was mapped when the
+# core-file was created.
+#
+# In addition, if the on-disk file is found to have a non-matching build-id
+# then GDB can use debuginfod to (try) and download a suitable file.
+#
+# This test is about checking that this file backed mapping mechanism works
+# correctly; that GDB will spot when the build-ids fail to match and will
+# refuse to load an incorrect file.  Additionally we check that the correct
+# file can be downloaded from debuginfod.
+#
+# The test is rather contrived though.  Instead of relying on having a shared
+# library mapped at the time of crash we mmap a shared library into the
+# process and then check this mapping within the test.
+#
+# The problem with using a normal shared library load for this test is that
+# the shared library list is processed as part of a separate step when opening
+# the core file.  Right now this separate step doesn't check the build-ids
+# correctly, so GDB will potentially open the wrong shared library file.  The
+# sections of this incorrect shared library are then added to GDB's list of
+# target sections, and are used to satisfy memory reads, which can give the
+# wrong results.
+#
+# This obviously needs fixing, but is a separate problem from the one being
+# tested here, so this test deliberately checks the mapping using a file that
+# is mmaped rather than loaded as a shared library, as such the file is in the
+# core-files list of mapped files, but is not in the shared library list.
+#
+# Despite this test living in the gdb.debuginfod/ directory, only the last
+# part of this test actually uses debuginfod, everything up to that point is
+# pretty generic.
+
+require {!is_remote host}
+require {!is_remote target}
+
+load_lib debuginfod-support.exp
+
+require allow_shlib_tests
+
+standard_testfile -1.c -2.c -3.c
+
+# Compile an executable that loads the shared library as an actual
+# shared library, then use GDB to figure out the offset of the
+# variable 'library_ptr' within the library.
+set library_filename [standard_output_file "libfoo.so"]
+set binfile2 [standard_output_file "library_loader"]
+
+if {[prepare_for_testing_full "build exec which loads the shared library" \
+	 [list $library_filename \
+	      { debug shlib build-id \
+		    additional_flags=-DPOINTER_VALUE=0x12345678 } \
+	      $srcfile2 {}] \
+	 [list $binfile2 [list debug shlib=$library_filename ] \
+	      $srcfile { debug }]] != 0} {
+    return
+}
+
+if {![runto_main]} {
+    return
+}
+
+if { [is_address_zero_readable] } {
+    return
+}
+
+set ptr_address [get_hexadecimal_valueof "&library_ptr" "unknown"]
+
+set ptr_offset "unknown"
+gdb_test_multiple "info proc mappings" "" {
+    -re "^($hex)\\s+($hex)\\s+$hex\\s+($hex)\[^\r\n\]+$library_filename\\s*\r\n" {
+	set low_addr $expect_out(1,string)
+	set high_addr $expect_out(2,string)
+	set file_offset $expect_out(3,string)
+
+	if {[expr $ptr_address >= $low_addr] && [expr $ptr_address < $high_addr]} {
+	    set mapping_offset [expr $ptr_address - $low_addr]
+	    set ptr_offset [format 0x%x [expr $file_offset + $mapping_offset]]
+	}
+
+	exp_continue
+    }
+
+    -re "^$gdb_prompt $" {
+    }
+
+    -re "(^\[^\r\n\]*)\r\n" {
+	set tmp $expect_out(1,string)
+	exp_continue
+    }
+}
+
+gdb_assert { $ptr_offset ne "unknown" } \
+    "found pointer offset"
+
+set ptr_size [get_integer_valueof "sizeof (library_ptr)" "unknown"]
+set ptr_format_char ""
+if { $ptr_size == 2 } {
+    set ptr_format_char "b"
+} elseif { $ptr_size == 4 } {
+    set ptr_format_char "w"
+} elseif { $ptr_size == 8 } {
+    set ptr_format_char "g"
+}
+if { $ptr_format_char eq "" } {
+    untested "could not figure out size of library_ptr variable"
+    return
+}
+
+# Helper proc to read a value from inferior memory.  Reads at address held in
+# global PTR_ADDRESS, and use PTR_FORMAT_CHAR for the size of the read.
+proc read_ptr_value { } {
+    set value ""
+    gdb_test_multiple "x/1${::ptr_format_char}x ${::ptr_address}" "" {
+	-re -wrap "^${::hex}(?:\\s+<\[^>\]+>)?:\\s+($::hex)" {
+	    set value $expect_out(1,string)
+	}
+	-re -wrap "^${::hex}(?:\\s+<\[^>\]+>)?:\\s+Cannot access memory at address ${::hex}" {
+	    set value "unavailable"
+	}
+    }
+    return $value
+}
+
+set ptr_expected_value [read_ptr_value]
+if { $ptr_expected_value eq "" } {
+    untested "could not find expected value for library_ptr"
+    return
+}
+
+# Now compile a second executable.  This one doesn't load the shared
+# library as an actual shared library, but instead mmaps the library
+# into the executable.
+#
+# Load this executable within GDB and confirm that we can use the
+# offset we calculated previously to view the value of 'library_ptr'.
+set opts [list debug additional_flags=-DSHLIB_FILENAME=\"$library_filename\"]
+if {[prepare_for_testing "prepare second executable" $binfile \
+	 $srcfile3 $opts] != 0} {
+    return
+}
+
+if {![runto_main]} {
+    return
+}
+
+gdb_breakpoint [gdb_get_line_number "Undefined behavior here" $srcfile3]
+gdb_continue_to_breakpoint "run to breakpoint"
+
+set library_base_address \
+    [get_hexadecimal_valueof "library_base_address" "unknown"]
+set ptr_address [format 0x%x [expr $library_base_address + $ptr_offset]]
+
+set ptr_value [read_ptr_value]
+gdb_assert { $ptr_value == $ptr_expected_value } \
+    "check value of pointer variable"
+
+# Now rerun the second executable outside of GDB.  The executable should crash
+# and generate a corefile.
+set corefile [core_find $binfile]
+if {$corefile eq ""} {
+    untested "could not generate core file"
+    return
+}
+
+# Load a core file from the global COREFILE.  Use TESTNAME as the name
+# of the test.
+#
+# If LINE_RE is not the empty string then this is a regexp for a line
+# that we expect to see in the output when loading the core file, if
+# the line is not present then this test will fail.
+#
+# Any lines beginning with 'warning: ' will cause this test to fail.
+#
+# A couple of other standard lines that are produced when loading a
+# core file are also checked for, just to make sure the core file
+# loading has progressed as expected.
+proc load_core_file { testname { line_re "" } } {
+    set code {}
+
+    if { $line_re ne "" } {
+	append code {
+	    -re "^$line_re\r\n" {
+		set saw_expected_line true
+		exp_continue
+	    }
+	}
+	set saw_expected_line false
+    } else {
+	set saw_expected_line true
+    }
+
+    set saw_unknown_warning false
+    set saw_generated_by_line false
+    set saw_prog_terminated_line false
+
+    append code {
+	-re "^warning: \[^\r\n\]+\r\n" {
+	    set saw_unknown_warning true
+	    exp_continue
+	}
+
+	-re "^Core was generated by \[^\r\n\]+\r\n" {
+	    set saw_generated_by_line true
+	    exp_continue
+	}
+
+	-re "^Program terminated with signal SIGSEGV, Segmentation fault\\.\r\n" {
+	    set saw_prog_terminated_line true
+	    exp_continue
+	}
+
+	-re "^$::gdb_prompt $" {
+	    gdb_assert {$saw_generated_by_line \
+			    && $saw_prog_terminated_line \
+			    && $saw_expected_line \
+			    && !$saw_unknown_warning} \
+		$gdb_test_name
+	}
+
+	-re "^\[^\r\n\]*\r\n" {
+	    exp_continue
+	}
+    }
+
+    set res [catch { return [gdb_test_multiple "core-file $::corefile" \
+				 "$testname" $code] } string]
+
+    if {$res == 1} {
+	global errorInfo errorCode
+	return -code error -errorinfo $errorInfo -errorcode $errorCode $string
+    } elseif {$res == 2} {
+	return $string
+    } else {
+	# We expect RES to be 2 (TCL_RETURN) or 1 (TCL_ERROR).  If we get
+	# here then somehow the 'catch' above finished without hitting
+	# either of those cases, which is .... weird.
+	perror "unexepcted return value, code = $res, value = $string"
+	return -1
+    }
+}
+
+# And now restart GDB, load the core-file and check that the library shows as
+# being mapped in, and that we can still read the library_ptr value from
+# memory.
+clean_restart $binfile
+
+load_core_file "load core file"
+
+set library_base_address [get_hexadecimal_valueof "library_base_address" \
+			      "unknown" "get library_base_address in core-file"]
+set ptr_address [format 0x%x [expr $library_base_address + $ptr_offset]]
+
+set ptr_value [read_ptr_value]
+gdb_assert { $ptr_value == $ptr_expected_value } \
+    "check value of pointer variable from core-file"
+
+# Now move the shared library file away and restart GDB.  This time when we
+# load the core-file we should see a warning that GDB has failed to map in the
+# library file.  An attempt to read the variable from the library file should
+# fail / give a warning.
+set library_backup_filename [standard_output_file "libfoo.so.backup"]
+remote_exec build "mv \"$library_filename\" \"$library_backup_filename\""
+
+clean_restart $binfile
+
+load_core_file "load corefile with library file missing" \
+    "warning: Can't open file [string_to_regexp $library_filename] during file-backed mapping note processing"
+
+set ptr_value [read_ptr_value]
+gdb_assert { $ptr_value eq "unavailable" } \
+    "check value of pointer is unavailable with library file missing"
+
+# Now symlink the .build-id/xx/xxx...xxx filename within the debug
+# directory to library we just moved aside.  Restart GDB and setup the
+# debug-file-directory before loading the core file.
+#
+# GDB should lookup the file to map via the build-id link in the
+# .build-id/ directory.
+set debugdir [standard_output_file "debugdir"]
+set build_id_filename \
+    $debugdir/[build_id_debug_filename_get $library_backup_filename ""]
+
+remote_exec build "mkdir -p [file dirname $build_id_filename]"
+remote_exec build "ln -sf $library_backup_filename $build_id_filename"
+
+clean_restart $binfile
+
+gdb_test_no_output "set debug-file-directory $debugdir" \
+    "set debug-file-directory"
+
+load_core_file "load corefile, lookup in debug-file-directory"
+
+set ptr_value [read_ptr_value]
+gdb_assert { $ptr_value == $ptr_expected_value } \
+    "check value of pointer variable from core-file, lookup in debug-file-directory"
+
+# Build a new version of the shared library, keep the library the same size,
+# but change the contents so the build-id changes.  Then restart GDB and load
+# the core-file again.  GDB should spot that the build-id for the shared
+# library is not as expected, and should refuse to map in the shared library.
+if {[build_executable "build second version of shared library" \
+	 $library_filename $srcfile2 \
+	 { debug shlib build-id \
+	       additional_flags=-DPOINTER_VALUE=0x11223344 }] != 0} {
+    return
+}
+
+clean_restart $binfile
+
+load_core_file "load corefile with wrong library in place" \
+    "warning: File [string_to_regexp $library_filename] doesn't match build-id from core-file during file-backed mapping processing"
+
+set ptr_value [read_ptr_value]
+gdb_assert { $ptr_value eq "unavailable" } \
+    "check value of pointer is unavailable with wrong library in place"
+
+# Setup a debuginfod server which can serve the original shared library file.
+# Then restart GDB and load the core-file.  GDB should download the original
+# shared library from debuginfod and use that to provide the file backed
+# mapping.
+if {![allow_debuginfod_tests]} {
+    untested "skippig debuginfod parts of this test"
+    return
+}
+
+set server_dir [standard_output_file "debuginfod.server"]
+file mkdir $server_dir
+file rename -force $library_backup_filename $server_dir
+
+prepare_for_debuginfod cache db
+
+set url [start_debuginfod $db $server_dir]
+if { $url eq "" } {
+    unresolved "failed to start debuginfod server"
+    return
+}
+
+with_debuginfod_env $cache {
+    setenv DEBUGINFOD_URLS $url
+
+    clean_restart
+    gdb_test_no_output "set debuginfod enabled on" \
+	"enabled debuginfod for initial test"
+    gdb_load $binfile
+
+    load_core_file "load corefile, download library from debuginfod" \
+	"Downloading\[^\r\n\]* file [string_to_regexp $library_filename]\\.\\.\\."
+
+    set ptr_value [read_ptr_value]
+    gdb_assert { $ptr_value == $ptr_expected_value } \
+	"check value of pointer variable after downloading library file"
+}
+
+stop_debuginfod

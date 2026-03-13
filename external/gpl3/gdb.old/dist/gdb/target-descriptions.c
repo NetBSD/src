@@ -21,6 +21,7 @@
 
 #include "arch-utils.h"
 #include "cli/cli-cmds.h"
+#include "gdbsupport/unordered_set.h"
 #include "gdbtypes.h"
 #include "reggroups.h"
 #include "target.h"
@@ -30,7 +31,6 @@
 #include "osabi.h"
 
 #include "gdbsupport/gdb_obstack.h"
-#include "hashtab.h"
 #include "inferior.h"
 #include <algorithm>
 #include "completer.h"
@@ -500,7 +500,7 @@ target_find_description (void)
       struct gdbarch_info info;
 
       info.target_desc = tdesc_info->tdesc;
-      if (!gdbarch_update_p (info))
+      if (!gdbarch_update_p (current_inferior (), info))
 	{
 	  warning (_("Architecture rejected target-supplied description"));
 	  tdesc_info->tdesc = nullptr;
@@ -537,18 +537,16 @@ target_clear_description (void)
   tdesc_info->tdesc = nullptr;
 
   gdbarch_info info;
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("Could not remove target-supplied description"));
 }
 
-/* Return the global current target description.  This should only be
-   used by gdbarch initialization code; most access should be through
-   an existing gdbarch.  */
+/* See target-descriptions.h.  */
 
-const struct target_desc *
-target_current_description (void)
+const target_desc *
+target_current_description (inferior *inf)
 {
-  target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
+  target_desc_info *tdesc_info = &inf->tdesc_info;
 
   if (tdesc_info->fetched)
     return tdesc_info->tdesc;
@@ -1044,16 +1042,14 @@ tdesc_use_registers (struct gdbarch *gdbarch,
   data->arch_regs = std::move (early_data->arch_regs);
 
   /* Build up a set of all registers, so that we can assign register
-     numbers where needed.  The hash table expands as necessary, so
-     the initial size is arbitrary.  */
-  htab_up reg_hash (htab_create (37, htab_hash_pointer, htab_eq_pointer,
-				 NULL));
+     numbers where needed.  */
+  gdb::unordered_set<tdesc_reg *> reg_hash;
+
   for (const tdesc_feature_up &feature : target_desc->features)
     for (const tdesc_reg_up &reg : feature->registers)
       {
-	void **slot = htab_find_slot (reg_hash.get (), reg.get (), INSERT);
+	reg_hash.insert (reg.get ());
 
-	*slot = reg.get ();
 	/* Add reggroup if its new.  */
 	if (!reg->group.empty ())
 	  if (reggroup_find (gdbarch, reg->group.c_str ()) == NULL)
@@ -1066,7 +1062,7 @@ tdesc_use_registers (struct gdbarch *gdbarch,
      architecture.  */
   for (const tdesc_arch_reg &arch_reg : data->arch_regs)
     if (arch_reg.reg != NULL)
-      htab_remove_elt (reg_hash.get (), arch_reg.reg);
+      reg_hash.erase (arch_reg.reg);
 
   /* Assign numbers to the remaining registers and add them to the
      list of registers.  The new numbers are always above gdbarch_num_regs.
@@ -1084,7 +1080,7 @@ tdesc_use_registers (struct gdbarch *gdbarch,
     {
       for (const tdesc_feature_up &feature : target_desc->features)
 	for (const tdesc_reg_up &reg : feature->registers)
-	  if (htab_find (reg_hash.get (), reg.get ()) != NULL)
+	  if (reg_hash.contains (reg.get ()))
 	    {
 	      int regno = unk_reg_cb (gdbarch, feature.get (),
 				      reg->name.c_str (), num_regs);
@@ -1095,7 +1091,7 @@ tdesc_use_registers (struct gdbarch *gdbarch,
 		    data->arch_regs.emplace_back (nullptr, nullptr);
 		  data->arch_regs[regno] = tdesc_arch_reg (reg.get (), NULL);
 		  num_regs = regno + 1;
-		  htab_remove_elt (reg_hash.get (), reg.get ());
+		  reg_hash.erase (reg.get ());
 		}
 	    }
     }
@@ -1107,7 +1103,7 @@ tdesc_use_registers (struct gdbarch *gdbarch,
      unnumbered registers.  */
   for (const tdesc_feature_up &feature : target_desc->features)
     for (const tdesc_reg_up &reg : feature->registers)
-      if (htab_find (reg_hash.get (), reg.get ()) != NULL)
+      if (reg_hash.contains (reg.get ()))
 	{
 	  data->arch_regs.emplace_back (reg.get (), nullptr);
 	  num_regs++;
@@ -1200,12 +1196,6 @@ set_tdesc_architecture (struct target_desc *target_desc,
 }
 
 /* See gdbsupport/tdesc.h.  */
-
-void
-set_tdesc_osabi (struct target_desc *target_desc, const char *name)
-{
-  set_tdesc_osabi (target_desc, osabi_from_tdesc_string (name));
-}
 
 void
 set_tdesc_osabi (struct target_desc *target_desc, enum gdb_osabi osabi)
@@ -1319,9 +1309,8 @@ public:
     if (tdesc_osabi (e) > GDB_OSABI_UNKNOWN
 	&& tdesc_osabi (e) < GDB_OSABI_INVALID)
       {
-	gdb_printf
-	  ("  set_tdesc_osabi (result.get (), osabi_from_tdesc_string (\"%s\"));\n",
-	   gdbarch_osabi_name (tdesc_osabi (e)));
+	const char *enum_name = gdbarch_osabi_enum_name (tdesc_osabi (e));
+	gdb_printf ("  set_tdesc_osabi (result.get (), %s);\n", enum_name);
 	gdb_printf ("\n");
       }
 
@@ -1693,14 +1682,15 @@ static void
 maint_print_c_tdesc_cmd (const char *args, int from_tty)
 {
   const struct target_desc *tdesc;
-  const char *filename;
 
   maint_print_c_tdesc_options opts;
   auto grp = make_maint_print_c_tdesc_options_def_group (&opts);
   gdb::option::process_options
     (&args, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, grp);
 
-  if (args == NULL)
+  std::string filename = extract_single_filename_arg (args);
+
+  if (filename.empty ())
     {
       /* Use the global target-supplied description, not the current
 	 architecture's.  This lets a GDB for one architecture generate C
@@ -1708,26 +1698,24 @@ maint_print_c_tdesc_cmd (const char *args, int from_tty)
 	 initialization code will reject the new description.  */
       target_desc_info *tdesc_info = &current_inferior ()->tdesc_info;
       tdesc = tdesc_info->tdesc;
-      filename = tdesc_info->filename.data ();
+      if (tdesc_info->filename.data () != nullptr)
+	filename = std::string (tdesc_info->filename.data ());
     }
   else
     {
       /* Use the target description from the XML file.  */
-      filename = args;
-      tdesc = file_read_description_xml (filename);
+      tdesc = file_read_description_xml (filename.c_str ());
     }
 
   if (tdesc == NULL)
     error (_("There is no target description to print."));
 
-  if (filename == NULL)
+  if (filename.empty ())
     filename = "fetched from target";
 
-  std::string filename_after_features (filename);
-  auto loc = filename_after_features.rfind ("/features/");
-
+  auto loc = filename.rfind ("/features/");
   if (loc != std::string::npos)
-    filename_after_features = filename_after_features.substr (loc + 10);
+    filename = filename.substr (loc + 10);
 
   /* Print c files for target features instead of target descriptions,
      because c files got from target features are more flexible than the
@@ -1738,13 +1726,13 @@ maint_print_c_tdesc_cmd (const char *args, int from_tty)
 	error (_("only target descriptions with 1 feature can be used "
 		 "with -single-feature option"));
 
-      print_c_feature v (filename_after_features);
+      print_c_feature v (filename);
 
       tdesc->accept (v);
     }
   else
     {
-      print_c_tdesc v (filename_after_features);
+      print_c_tdesc v (filename);
 
       tdesc->accept (v);
     }
@@ -1762,8 +1750,8 @@ maint_print_c_tdesc_cmd_completer (struct cmd_list_element *ignore,
       (tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR, grp))
     return;
 
-  word = advance_to_filename_complete_word_point (tracker, text);
-  filename_completer (ignore, tracker, text, word);
+  word = advance_to_filename_maybe_quoted_complete_word_point (tracker, text);
+  filename_maybe_quoted_completer (ignore, tracker, text, word);
 }
 
 /* Implement the maintenance print xml-tdesc command.  */
@@ -1947,7 +1935,7 @@ that feature within an already existing target_desc object."), grp);
   cmd = add_cmd ("xml-tdesc", class_maintenance, maint_print_xml_tdesc_cmd, _("\
 Print the current target description as an XML file."),
 		 &maintenanceprintlist);
-  set_cmd_completer (cmd, filename_completer);
+  set_cmd_completer (cmd, deprecated_filename_completer);
 
   cmd = add_cmd ("xml-descriptions", class_maintenance,
 		 maintenance_check_xml_descriptions, _("\
@@ -1956,5 +1944,5 @@ Check the target descriptions created in GDB equal the descriptions\n\
 created from XML files in the directory.\n\
 The parameter is the directory name."),
 		 &maintenancechecklist);
-  set_cmd_completer (cmd, filename_completer);
+  set_cmd_completer (cmd, deprecated_filename_completer);
 }

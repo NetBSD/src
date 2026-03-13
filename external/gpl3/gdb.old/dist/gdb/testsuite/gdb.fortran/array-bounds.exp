@@ -31,21 +31,38 @@ if {![fortran_runto_main]} {
     return
 }
 
-# Convenience proc to setup for KFAIL
-proc kfail_if {exp bugid triplet} {
-    if {$exp} {
-	setup_kfail $bugid $triplet
+# GCC outputs incorrect range debug info for -m32, gcc PR debug/54934.
+set expect_xfail \
+    [expr \
+	 [test_compiler_info {gfortran-*} f90] \
+	 && [is_ilp32_target]]
+
+set re_ok [string_to_regexp (4294967296:4294967297)]
+set re_xfail [string_to_regexp (0:1)]
+gdb_test_multiple "print &foo" "" {
+    -re -wrap $re_ok.* {
+	pass $gdb_test_name
+    }
+    -re -wrap $re_xfail.* {
+	if { $expect_xfail } {
+	    xfail $gdb_test_name
+	} else {
+	    fail $gdb_test_name
+	}
     }
 }
 
-# GCC outputs incorrect range debug info for -m32.
-set expect_fail false
-if {[is_ilp32_target] && ([istarget "i\[34567\]86-*-linux*"]
-			  || [istarget "x86_64-*-linux*"])} {
-    set expect_fail true
+set re_ok [string_to_regexp (-4294967297:-4294967296)]
+set re_xfail [string_to_regexp (-1:0)]
+gdb_test_multiple "print &bar" "" {
+    -re -wrap $re_ok.* {
+	pass $gdb_test_name
+    }
+    -re -wrap $re_xfail.* {
+	if { $expect_xfail } {
+	    xfail $gdb_test_name
+	} else {
+	    fail $gdb_test_name
+	}
+    }
 }
-
-kfail_if $expect_fail "gcc/54934" "*-*-*"
-gdb_test "print &foo" {.*\(4294967296:4294967297\).*}
-kfail_if $expect_fail "gcc/54934" "*-*-*"
-gdb_test "print &bar" {.*\(-4294967297:-4294967296\).*}

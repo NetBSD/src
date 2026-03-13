@@ -70,7 +70,7 @@
 # #included by a given source file in a list sorted by the line at
 # which they were #included; this gives GDB the chance to detect
 # multiple #inclusions at the same line, complain, and assign
-# distinct, albiet incorrect, line numbers to each #inclusion.
+# distinct, albeit incorrect, line numbers to each #inclusion.
 #
 # However, at one point GDB was sorting the list in reverse order,
 # while the code to assign new, distinct line numbers assumed it was

@@ -25,11 +25,9 @@
 #ifndef IN_PROCESS_AGENT
 
 struct regcache *
-get_thread_regcache (struct thread_info *thread, int fetch)
+get_thread_regcache (thread_info *thread, bool fetch)
 {
-  struct regcache *regcache;
-
-  regcache = thread_regcache_data (thread);
+  regcache *regcache = thread->regcache ();
 
   /* Threads' regcaches are created lazily, because biarch targets add
      the main thread/lwp before seeing it stop for the first time, and
@@ -40,15 +38,15 @@ get_thread_regcache (struct thread_info *thread, int fetch)
      have.  */
   if (regcache == NULL)
     {
-      struct process_info *proc = get_thread_process (thread);
+      process_info *proc = thread->process ();
 
       gdb_assert (proc->tdesc != NULL);
 
       regcache = new_register_cache (proc->tdesc);
-      set_thread_regcache_data (thread, regcache);
+      thread->set_regcache (regcache);
     }
 
-  if (fetch && regcache->registers_valid == 0)
+  if (fetch && !regcache->registers_fetched)
     {
       scoped_restore_current_thread restore_thread;
 
@@ -57,7 +55,7 @@ get_thread_regcache (struct thread_info *thread, int fetch)
       memset (regcache->register_status, REG_UNAVAILABLE,
 	      regcache->tdesc->reg_defs.size ());
       fetch_inferior_registers (regcache, -1);
-      regcache->registers_valid = 1;
+      regcache->registers_fetched = true;
     }
 
   return regcache;
@@ -68,20 +66,18 @@ get_thread_regcache (struct thread_info *thread, int fetch)
 reg_buffer_common *
 get_thread_regcache_for_ptid (ptid_t ptid)
 {
-  return get_thread_regcache (find_thread_ptid (ptid), 1);
+  return get_thread_regcache (find_thread_ptid (ptid));
 }
 
 void
-regcache_invalidate_thread (struct thread_info *thread)
+regcache_invalidate_thread (thread_info *thread)
 {
-  struct regcache *regcache;
-
-  regcache = thread_regcache_data (thread);
+  regcache *regcache = thread->regcache ();
 
   if (regcache == NULL)
     return;
 
-  if (regcache->registers_valid)
+  if (regcache->registers_fetched)
     {
       scoped_restore_current_thread restore_thread;
 
@@ -89,7 +85,7 @@ regcache_invalidate_thread (struct thread_info *thread)
       store_inferior_registers (regcache, -1);
     }
 
-  regcache->registers_valid = 0;
+  regcache->registers_fetched = false;
 }
 
 /* See regcache.h.  */
@@ -97,8 +93,10 @@ regcache_invalidate_thread (struct thread_info *thread)
 void
 regcache_invalidate_pid (int pid)
 {
-  /* Only invalidate the regcaches of threads of this process.  */
-  for_each_thread (pid, regcache_invalidate_thread);
+  process_info *process = find_process_pid (pid);
+
+  if (process != nullptr)
+    process->for_each_thread (regcache_invalidate_thread);
 }
 
 /* See regcache.h.  */
@@ -129,7 +127,7 @@ init_register_cache (struct regcache *regcache,
       regcache->tdesc = tdesc;
       regcache->registers
 	= (unsigned char *) xcalloc (1, tdesc->registers_size);
-      regcache->registers_owned = 1;
+      regcache->registers_owned = true;
       regcache->register_status
 	= (unsigned char *) xmalloc (tdesc->reg_defs.size ());
       memset ((void *) regcache->register_status, REG_UNAVAILABLE,
@@ -142,13 +140,13 @@ init_register_cache (struct regcache *regcache,
     {
       regcache->tdesc = tdesc;
       regcache->registers = regbuf;
-      regcache->registers_owned = 0;
+      regcache->registers_owned = false;
 #ifndef IN_PROCESS_AGENT
       regcache->register_status = NULL;
 #endif
     }
 
-  regcache->registers_valid = 0;
+  regcache->registers_fetched = false;
 
   return regcache;
 }
@@ -180,19 +178,19 @@ free_register_cache (struct regcache *regcache)
 #endif
 
 void
-regcache_cpy (struct regcache *dst, struct regcache *src)
+regcache::copy_from (regcache *src)
 {
-  gdb_assert (src != NULL && dst != NULL);
-  gdb_assert (src->tdesc == dst->tdesc);
-  gdb_assert (src != dst);
+  gdb_assert (src != nullptr);
+  gdb_assert (src->tdesc == this->tdesc);
+  gdb_assert (src != this);
 
-  memcpy (dst->registers, src->registers, src->tdesc->registers_size);
+  memcpy (this->registers, src->registers, src->tdesc->registers_size);
 #ifndef IN_PROCESS_AGENT
-  if (dst->register_status != NULL && src->register_status != NULL)
-    memcpy (dst->register_status, src->register_status,
+  if (this->register_status != nullptr && src->register_status != nullptr)
+    memcpy (this->register_status, src->register_status,
 	    src->tdesc->reg_defs.size ());
 #endif
-  dst->registers_valid = src->registers_valid;
+  this->registers_fetched = src->registers_fetched;
 }
 
 /* Return a reference to the description of register N.  */
@@ -273,15 +271,15 @@ find_regno (const struct target_desc *tdesc, const char *name)
 }
 
 static void
-free_register_cache_thread (struct thread_info *thread)
+free_register_cache_thread (thread_info *thread)
 {
-  struct regcache *regcache = thread_regcache_data (thread);
+  regcache *regcache = thread->regcache ();
 
   if (regcache != NULL)
     {
       regcache_invalidate_thread (thread);
       free_register_cache (regcache);
-      set_thread_regcache_data (thread, NULL);
+      thread->set_regcache (nullptr);
     }
 }
 
@@ -365,6 +363,17 @@ supply_register_zeroed (struct regcache *regcache, int n)
 #ifndef IN_PROCESS_AGENT
   if (regcache->register_status != NULL)
     regcache->register_status[n] = REG_VALID;
+#endif
+}
+
+void
+regcache::raw_supply_part_zeroed (int regnum, int offset, size_t size)
+{
+  auto dst = register_data (this, regnum).slice (offset, size);
+  memset (dst.data (), 0, dst.size ());
+#ifndef IN_PROCESS_AGENT
+  if (register_status != NULL)
+    register_status[regnum] = REG_VALID;
 #endif
 }
 
@@ -465,7 +474,7 @@ regcache_raw_read_unsigned (reg_buffer_common *reg_buf, int regnum,
   *val = 0;
   collect_register (regcache, regnum, val);
 
-  return REG_VALID;
+  return regcache->get_register_status (regnum);
 }
 
 #ifndef IN_PROCESS_AGENT
@@ -517,7 +526,10 @@ regcache::get_register_status (int regnum) const
 {
 #ifndef IN_PROCESS_AGENT
   gdb_assert (regnum >= 0 && regnum < tdesc->reg_defs.size ());
-  return (enum register_status) (register_status[regnum]);
+  if (register_status != nullptr)
+    return (enum register_status) (register_status[regnum]);
+  else
+    return REG_VALID;
 #else
   return REG_VALID;
 #endif
@@ -531,7 +543,7 @@ regcache::raw_compare (int regnum, const void *buf, int offset) const
   gdb_assert (buf != NULL);
 
   gdb::array_view<const gdb_byte> regbuf = register_data (this, regnum);
-  gdb_assert (offset < regbuf.size ());
+  gdb_assert (offset <= regbuf.size ());
   regbuf = regbuf.slice (offset);
 
   return memcmp (buf, regbuf.data (), regbuf.size ()) == 0;

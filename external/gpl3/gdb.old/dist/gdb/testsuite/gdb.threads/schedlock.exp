@@ -45,7 +45,7 @@ proc get_args { description } {
 	append pattern ", (\[0-9\]+)"
     }
 
-    set test "listed args ($description)"
+    set test "listed args, $description"
     gdb_test_multiple "print args" $test {
 	-re "\\\$\[0-9\]+ = {$pattern}.*$gdb_prompt $" {
 	    pass $test
@@ -80,7 +80,7 @@ proc stop_process { description } {
 proc get_current_thread { description } {
     global gdb_prompt
 
-    set test "find current thread ($description)"
+    set test "find current thread, $description"
 
     gdb_test_multiple "bt" $test {
 	-re "thread_function \\(arg=0x(\[0-9\])\\).*$gdb_prompt $" {
@@ -124,7 +124,7 @@ proc step_ten_loops { cmd } {
 
     for {set i 0} {[expr $i < 10]} {set i [expr $i + 1]} {
 	set other_step 0
-	set test "$cmd to increment ($i)"
+	set test "$cmd to increment, $i"
 	gdb_test_multiple $cmd $test {
 	    -re ".*myp\\) \\+\\+;\[\r\n\]+$gdb_prompt $" {
 		pass $test

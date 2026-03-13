@@ -18,9 +18,9 @@
 #ifndef GDB_EXTRACT_STORE_INTEGER_H
 #define GDB_EXTRACT_STORE_INTEGER_H
 
-#include "gdbsupport/traits.h"
+#include <type_traits>
 
-template<typename T, typename = RequireLongest<T>>
+template<typename T, typename = std::is_integral<T>>
 T extract_integer (gdb::array_view<const gdb_byte>, enum bfd_endian byte_order);
 
 static inline LONGEST
@@ -52,9 +52,6 @@ extract_unsigned_integer (const gdb_byte *addr, int len,
   return extract_unsigned_integer (gdb::array_view<const gdb_byte> (addr, len),
 				   byte_order);
 }
-
-extern int extract_long_unsigned_integer (const gdb_byte *, int,
-					  enum bfd_endian, LONGEST *);
 
 extern CORE_ADDR extract_typed_address (const gdb_byte *buf,
 					struct type *type);

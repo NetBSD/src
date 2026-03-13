@@ -28,7 +28,7 @@ typedef struct _v850_regs {
   reg_t mpu0_sregs[28];         /* mpu0 system registers */
   reg_t mpu1_sregs[28];         /* mpu1 system registers */
   reg_t fpu_sregs[28];          /* fpu system registers */
-  reg_t selID_sregs[7][32];	/* system registers, selID 1 thru selID 7 */
+  reg_t selID_sregs[7][32];	/* system registers, selID 1 through selID 7 */
   reg64_t vregs[32];		/* vector registers.  */
 } v850_regs;
 

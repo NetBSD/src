@@ -110,7 +110,6 @@ static void
 bsd_kvm_target_open (const char *arg, int from_tty)
 {
   char errbuf[_POSIX2_LINE_MAX];
-  const char *execfile = NULL;
   kvm_t *temp_kd;
   std::string filename;
   struct inferior *inf;
@@ -121,10 +120,10 @@ bsd_kvm_target_open (const char *arg, int from_tty)
     {
       filename = gdb_tilde_expand (arg);
       if (!IS_ABSOLUTE_PATH (filename))
-	filename = gdb_abspath (filename.c_str ());
+	filename = gdb_abspath (filename);
     }
 
-  execfile = get_exec_file (1);
+  const char *execfile = current_program_space->exec_filename ();
   temp_kd = kvm_openfiles (execfile, filename.c_str (), NULL,
 			   write_files ? O_RDWR : O_RDONLY, errbuf);
   if (temp_kd == NULL)

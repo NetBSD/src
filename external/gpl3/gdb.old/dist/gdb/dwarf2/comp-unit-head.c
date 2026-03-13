@@ -29,6 +29,7 @@
 #include "dwarf2/read.h"
 #include "dwarf2/section.h"
 #include "dwarf2/stringify.h"
+#include "dwarf2/error.h"
 
 /* See comp-unit-head.h.  */
 
@@ -49,8 +50,9 @@ read_comp_unit_head (struct comp_unit_head *cu_header,
   info_ptr += bytes_read;
   unsigned version = read_2_bytes (abfd, info_ptr);
   if (version < 2 || version > 5)
-    error (_("Dwarf Error: wrong version in compilation unit header "
-	   "(is %d, should be 2, 3, 4 or 5) [in module %s]"),
+    error (_(DWARF_ERROR_PREFIX
+	     "wrong version in compilation unit header "
+	     "(is %d, should be 2, 3, 4 or 5) [in module %s]"),
 	   version, filename);
   cu_header->version = version;
   info_ptr += 2;
@@ -78,8 +80,9 @@ read_comp_unit_head (struct comp_unit_head *cu_header,
 	case DW_UT_skeleton:
 	case DW_UT_split_compile:
 	  if (section_kind != rcuh_kind::COMPILE)
-	    error (_("Dwarf Error: wrong unit_type in compilation unit header "
-		   "(is %s, should be %s) [in module %s]"),
+	    error (_(DWARF_ERROR_PREFIX
+		     "wrong unit_type in compilation unit header "
+		     "(is %s, should be %s) [in module %s]"),
 		   dwarf_unit_type_name (cu_header->unit_type),
 		   dwarf_unit_type_name (DW_UT_type), filename);
 	  break;
@@ -88,10 +91,11 @@ read_comp_unit_head (struct comp_unit_head *cu_header,
 	  section_kind = rcuh_kind::TYPE;
 	  break;
 	default:
-	  error (_("Dwarf Error: wrong unit_type in compilation unit header "
-		 "(is %#04x, should be one of: %s, %s, %s, %s or %s) "
-		 "[in module %s]"), cu_header->unit_type,
-		 dwarf_unit_type_name (DW_UT_compile),
+	  error (_(DWARF_ERROR_PREFIX
+		   "wrong unit_type in compilation unit header "
+		   "(is %#04x, should be one of: %s, %s, %s, %s or %s) "
+		   "[in module %s]"),
+		 cu_header->unit_type, dwarf_unit_type_name (DW_UT_compile),
 		 dwarf_unit_type_name (DW_UT_skeleton),
 		 dwarf_unit_type_name (DW_UT_split_compile),
 		 dwarf_unit_type_name (DW_UT_type),
@@ -131,9 +135,10 @@ read_comp_unit_head (struct comp_unit_head *cu_header,
       info_ptr += bytes_read;
       cu_header->type_cu_offset_in_tu = (cu_offset) type_offset;
       if (to_underlying (cu_header->type_cu_offset_in_tu) != type_offset)
-	error (_("Dwarf Error: Too big type_offset in compilation unit "
-	       "header (is %s) [in module %s]"), plongest (type_offset),
-	       filename);
+	error (_(DWARF_ERROR_PREFIX
+		 "Too big type_offset in compilation unit "
+		 "header (is %s) [in module %s]"),
+	       plongest (type_offset), filename);
     }
 
   return info_ptr;
@@ -153,8 +158,9 @@ error_check_comp_unit_head (dwarf2_per_objfile *per_objfile,
 
   if (to_underlying (header->abbrev_sect_off)
       >= abbrev_section->get_size (per_objfile->objfile))
-    error (_("Dwarf Error: bad offset (%s) in compilation unit header "
-	   "(offset %s + 6) [in module %s]"),
+    error (_(DWARF_ERROR_PREFIX
+	     "bad offset (%s) in compilation unit header "
+	     "(offset %s + 6) [in module %s]"),
 	   sect_offset_str (header->abbrev_sect_off),
 	   sect_offset_str (header->sect_off),
 	   filename);
@@ -163,8 +169,9 @@ error_check_comp_unit_head (dwarf2_per_objfile *per_objfile,
      avoid potential 32-bit overflow.  */
   if (((ULONGEST) header->sect_off + header->get_length_with_initial ())
       > section->size)
-    error (_("Dwarf Error: bad length (0x%x) in compilation unit header "
-	   "(offset %s + 0) [in module %s]"),
+    error (_(DWARF_ERROR_PREFIX
+	     "bad length (0x%x) in compilation unit header "
+	     "(offset %s + 0) [in module %s]"),
 	   header->get_length_without_initial (), sect_offset_str (header->sect_off),
 	   filename);
 }

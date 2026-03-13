@@ -35,27 +35,6 @@ die_info::allocate (struct obstack *obstack, int num_attrs)
   return die;
 }
 
-/* See die.h.  */
-
-hashval_t
-die_info::hash (const void *item)
-{
-  const struct die_info *die = (const struct die_info *) item;
-
-  return to_underlying (die->sect_off);
-}
-
-/* See die.h.  */
-
-int
-die_info::eq (const void *item_lhs, const void *item_rhs)
-{
-  const struct die_info *die_lhs = (const struct die_info *) item_lhs;
-  const struct die_info *die_rhs = (const struct die_info *) item_rhs;
-
-  return die_lhs->sect_off == die_rhs->sect_off;
-}
-
 static void
 dump_die_shallow (struct ui_file *f, int indent, struct die_info *die)
 {

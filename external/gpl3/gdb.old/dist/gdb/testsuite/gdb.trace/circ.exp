@@ -113,7 +113,7 @@ if { $circular_supported < 0 } {
 
 gdb_test "show circular-trace-buffer" \
     "Target's use of circular trace buffer is on." \
-    "show circular-trace-buffer (on)"
+    "check circular-trace-buffer is on"
 
 # Use 'set trace-buffer-size' to change the trace buffer size to
 # REQUIRED_SIZE.  Return -1 if the current target doesn't support
@@ -175,7 +175,7 @@ gdb_test_no_output "set circular-trace-buffer off" \
 
 gdb_test "show circular-trace-buffer" \
     "Target's use of circular trace buffer is off." \
-    "show circular-trace-buffer (off)"
+    "check circular-trace-buffer is off"
 
 set total_size -1
 set free_size -1

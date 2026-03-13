@@ -20,6 +20,7 @@
 #include "read-gdb-index.h"
 
 #include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "complaints.h"
 #include "dwz.h"
 #include "event-top.h"
@@ -91,6 +92,9 @@ struct mapped_gdb_index final : public mapped_index_base
   /* The shortcut table data.  */
   gdb::array_view<const gdb_byte> shortcut_table;
 
+  /* An address map that maps from PC to dwarf2_per_cu_data.  */
+  addrmap_fixed *index_addrmap = nullptr;
+
   /* Return the index into the constant pool of the name of the IDXth
      symbol in the symbol table.  */
   offset_type symbol_name_index (offset_type idx) const
@@ -129,6 +133,15 @@ struct mapped_gdb_index final : public mapped_index_base
   {
     return version >= 8;
   }
+
+  dwarf2_per_cu_data *lookup (unrelocated_addr addr) override
+  {
+    if (index_addrmap == nullptr)
+      return nullptr;
+
+    void *obj = index_addrmap->find (static_cast<CORE_ADDR> (addr));
+    return static_cast<dwarf2_per_cu_data *> (obj);
+  }
 };
 
 struct dwarf2_gdb_index : public dwarf2_base_index_functions
@@ -146,7 +159,9 @@ struct dwarf2_gdb_index : public dwarf2_base_index_functions
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags domain) override;
+     domain_search_flags domain,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
+       override;
 };
 
 /* This dumps minimal information about the index.
@@ -175,7 +190,8 @@ dw2_expand_marked_cus
    gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
    gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
    block_search_flags search_flags,
-   domain_search_flags kind)
+   domain_search_flags kind,
+   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
 {
   offset_type vec_len, vec_idx;
   bool global_seen = false;
@@ -256,7 +272,7 @@ dw2_expand_marked_cus
 
       dwarf2_per_cu_data *per_cu = per_objfile->per_bfd->get_cu (cu_index);
       if (!dw2_expand_symtabs_matching_one (per_cu, per_objfile, file_matcher,
-					    expansion_notify))
+					    expansion_notify, lang_matcher))
 	return false;
     }
 
@@ -271,7 +287,8 @@ dwarf2_gdb_index::expand_symtabs_matching
      gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
      gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags domain)
+     domain_search_flags domain,
+     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
 {
   dwarf2_per_objfile *per_objfile = get_dwarf2_per_objfile (objfile);
 
@@ -288,7 +305,8 @@ dwarf2_gdb_index::expand_symtabs_matching
 
 	  if (!dw2_expand_symtabs_matching_one (per_cu, per_objfile,
 						file_matcher,
-						expansion_notify))
+						expansion_notify,
+						lang_matcher))
 	    return false;
 	}
       return true;
@@ -304,10 +322,11 @@ dwarf2_gdb_index::expand_symtabs_matching
 					  [&] (offset_type idx)
     {
       if (!dw2_expand_marked_cus (per_objfile, idx, file_matcher,
-				  expansion_notify, search_flags, domain))
+				  expansion_notify, search_flags, domain,
+				  lang_matcher))
 	return false;
       return true;
-    }, per_objfile);
+    }, per_objfile, lang_matcher);
 
   return result;
 }
@@ -374,9 +393,11 @@ read_gdb_index_from_buffer (const char *filename,
 	{
 	  warning (_("\
 Skipping deprecated .gdb_index section in %s.\n\
-Do \"set use-deprecated-index-sections on\" before the file is read\n\
+Do \"%ps\" before the file is read\n\
 to use the section anyway."),
-		   filename);
+		   filename,
+		   styled_string (command_style.style (),
+				  "set use-deprecated-index-sections on"));
 	  warning_printed = 1;
 	}
       return 0;
@@ -479,7 +500,7 @@ create_cus_from_gdb_index (dwarf2_per_bfd *per_bfd,
   per_bfd->all_units.reserve ((cu_list_elements + dwz_elements) / 2);
 
   create_cus_from_gdb_index_list (per_bfd, cu_list, cu_list_elements,
-				  &per_bfd->info, 0);
+				  &per_bfd->infos[0], 0);
 
   if (dwz_elements == 0)
     return;
@@ -528,8 +549,7 @@ create_signatured_type_table_from_gdb_index
   per_bfd->signatured_types = std::move (sig_types_hash);
 }
 
-/* Read the address map data from the mapped GDB index, and use it to
-   populate the index_addrmap.  */
+/* Read the address map data from the mapped GDB index.  */
 
 static void
 create_addrmap_from_gdb_index (dwarf2_per_objfile *per_objfile,
@@ -570,7 +590,7 @@ create_addrmap_from_gdb_index (dwarf2_per_objfile *per_objfile,
       mutable_map.set_empty (lo, hi - 1, per_bfd->get_cu (cu_index));
     }
 
-  per_bfd->index_addrmap
+  index->index_addrmap
     = new (&per_bfd->obstack) addrmap_fixed (&per_bfd->obstack, &mutable_map);
 }
 
@@ -675,9 +695,10 @@ dwarf2_read_gdb_index
 
   if (types_list_elements)
     {
-      /* We can only handle a single .debug_types when we have an
-	 index.  */
-      if (per_bfd->types.size () > 1)
+      /* We can only handle a single .debug_info and .debug_types when we have
+	 an index.  */
+      if (per_bfd->infos.size () > 1
+	  || per_bfd->types.size () > 1)
 	{
 	  per_bfd->all_units.clear ();
 	  return 0;
@@ -686,7 +707,7 @@ dwarf2_read_gdb_index
       dwarf2_section_info *section
 	= (per_bfd->types.size () == 1
 	   ? &per_bfd->types[0]
-	   : &per_bfd->info);
+	   : &per_bfd->infos[0]);
 
       create_signatured_type_table_from_gdb_index (per_bfd, section, types_list,
 						   types_list_elements);

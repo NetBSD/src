@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef HPPA_TDEP_H
-#define HPPA_TDEP_H
+#ifndef GDB_HPPA_TDEP_H
+#define GDB_HPPA_TDEP_H
 
 #include "gdbarch.h"
 
@@ -214,4 +214,4 @@ extern int hppa_in_solib_call_trampoline (struct gdbarch *gdbarch,
 					  CORE_ADDR pc);
 extern CORE_ADDR hppa_skip_trampoline_code (const frame_info_ptr &, CORE_ADDR pc);
 
-#endif  /* hppa-tdep.h */
+#endif /* GDB_HPPA_TDEP_H */

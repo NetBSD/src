@@ -1,0 +1,198 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test complaints about .debug_macro section.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+require !readnow
+
+standard_testfile main.c .S
+
+lassign [function_range main $srcdir/$subdir/$srcfile] \
+    main_start main_len
+
+set asm_file [standard_output_file $srcfile2]
+
+set line [gdb_get_line_number "return 0;"]
+
+Dwarf::assemble $asm_file {
+    declare_labels L cu_macro1
+
+    cu {} {
+	DW_TAG_compile_unit {
+	    {DW_AT_name $::srcfile}
+	    {DW_AT_macros $cu_macro1 DW_FORM_sec_offset}
+	    {DW_AT_stmt_list $L DW_FORM_sec_offset}
+	} {
+	    declare_labels int_type
+
+	    int_type: DW_TAG_base_type {
+		{DW_AT_byte_size 4 DW_FORM_sdata}
+		{DW_AT_encoding  @DW_ATE_signed}
+		{DW_AT_name int}
+	    }
+	    DW_TAG_subprogram {
+		{MACRO_AT_func {main}}
+		{type :$int_type}
+	    }
+	}
+    }
+
+    lines {version 2} L {
+	file_name $::srcfile 1
+	program {
+	    DW_LNE_set_address $::main_start
+	    line $::line
+	    DW_LNS_copy
+	    DW_LNE_set_address "$::main_start + $::main_len"
+	    DW_LNE_end_sequence
+	}
+    }
+
+    # Define the .debug_macro section.
+    macro {
+	cu_macro1: unit {
+	    "debug-line-offset-label" $L
+	} {
+	    define 0 "M1_01_BUILTIN_OK 1"
+	    define 1 "M1_02_BUILTIN_BADLINE 1"
+
+	    start_file 0 1
+
+	    define 1 "M1_03_OK 1"
+	    define 0 "M1_04_BADLINE 1"
+
+	    start_file 1 1234
+	    define 1 "M1_05_BADFILE 1"
+	    end_file
+
+	    define 1 "M1_06_OK "
+	    define 1 "M1_07_MALFORMED"
+	    define 1 "M1_08_OK() 1"
+	    define 1 "M1_09_OK(ARG) (ARG)"
+	    define 1 "M1_10_OK(ARG1,ARG2) (ARG1+ARG2)"
+
+	    define 1 "M1_11_MALFORMED(ARG"
+	    define 1 "M1_12_MALFORMED(ARG,"
+	    define 1 "M1_13_MALFORMED(ARG,)"
+	    define 1 "M1_14_MALFORMED()1"
+
+	    end_file
+	}
+    }
+}
+
+if { [build_executable "failed to prepare" $testfile \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return
+}
+
+clean_restart
+
+set re_complaint1 \
+    "debug info gives command-line macro definition with non-zero line 1: M1_02_BUILTIN_BADLINE 1"
+
+set re_complaint2 \
+    "debug info gives in-file macro definition with zero line 0: M1_04_BADLINE 1"
+
+set re_complaint3 \
+    [string_to_regexp "bad file number in macro information (1234)"]
+
+set re_complaint4 \
+    [multi_line \
+	 "macro debug info contains a malformed macro definition:" \
+	 "`M1_07_MALFORMED'"]
+
+set re_complaint5 \
+    [multi_line \
+	 "macro debug info contains a malformed macro definition:" \
+	 [string_to_regexp "`M1_11_MALFORMED(ARG'"]]
+
+set re_complaint6 \
+    [multi_line \
+	 "macro debug info contains a malformed macro definition:" \
+	 [string_to_regexp "`M1_12_MALFORMED(ARG,'"]]
+
+set re_complaint7 \
+    [multi_line \
+	 "macro debug info contains a malformed macro definition:" \
+	 [string_to_regexp "`M1_13_MALFORMED(ARG,)'"]]
+
+set re_complaint8 \
+    [multi_line \
+	 "macro debug info contains a malformed macro definition:" \
+	 [string_to_regexp "`M1_14_MALFORMED()1'"]]
+
+set prefix \
+    "During symbol reading"
+
+set re \
+    [multi_line \
+	 "$prefix: $re_complaint1" \
+	 "$prefix: $re_complaint2" \
+	 "$prefix: $re_complaint3" \
+	 "$prefix: $re_complaint4" \
+	 "$prefix: $re_complaint5" \
+	 "$prefix: $re_complaint6" \
+	 "$prefix: $re_complaint7" \
+	 "$prefix: $re_complaint8" \
+	 [string cat [string_to_regexp {$}] "$decimal = \[^\r\n\]+"]]
+
+with_complaints 10 {
+    gdb_load $binfile
+    gdb_test "p main" ^$re "complaints"
+}
+
+set re_explicit \
+    [multi_line \
+	 "Defined at $srcfile:0" \
+	 "-DM1_01_BUILTIN_OK=1" \
+	 "Defined at $srcfile:1" \
+	 "#define M1_02_BUILTIN_BADLINE 1" \
+	 "Defined at $srcfile:1" \
+	 "#define M1_03_OK 1" \
+	 "Defined at $srcfile:0" \
+	 "-DM1_04_BADLINE=1" \
+	 "Defined at <bad macro file number 1234>:1" \
+	 "  included at $srcfile:1" \
+	 "#define M1_05_BADFILE 1" \
+	 "Defined at $srcfile:1" \
+	 "#define M1_06_OK " \
+	 "Defined at $srcfile:1" \
+	 "#define M1_07_MALFORMED " \
+	 "Defined at $srcfile:1" \
+	 [string_to_regexp "#define M1_08_OK() 1"] \
+	 "Defined at $srcfile:1" \
+	 [string_to_regexp "#define M1_09_OK(ARG) (ARG)"] \
+	 "Defined at $srcfile:1" \
+	 [string_to_regexp "#define M1_10_OK(ARG1, ARG2) (ARG1+ARG2)"] \
+	 "Defined at $srcfile:1" \
+	 [string_to_regexp "#define M1_13_MALFORMED(ARG) "]]
+
+set re_implicit \
+    [multi_line \
+	 "Defined at $srcfile:-1" \
+	 "#define __FILE__ \"$srcfile\"" \
+	 "Defined at $srcfile:-1" \
+	 "#define __LINE__ $line"]
+
+gdb_test "info macros $line" \
+    [multi_line \
+	 $re_explicit \
+	 $re_implicit]

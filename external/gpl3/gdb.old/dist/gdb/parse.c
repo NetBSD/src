@@ -100,7 +100,7 @@ void
 parser_state::mark_struct_expression (expr::structop_base_operation *op)
 {
   gdb_assert (parse_completion && m_completion_state == nullptr);
-  m_completion_state.reset (new expr_complete_structop (op));
+  m_completion_state = std::make_unique<expr_complete_structop> (op);
 }
 
 /* Indicate that the current parser invocation is completing a tag.
@@ -145,10 +145,12 @@ parser_state::push_symbol (const char *name, block_symbol sym)
     }
   else
     {
-      struct bound_minimal_symbol msymbol = lookup_bound_minimal_symbol (name);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, name);
       if (msymbol.minsym != NULL)
 	push_new<expr::var_msym_value_operation> (msymbol);
-      else if (!have_full_symbols () && !have_partial_symbols ())
+      else if (!have_full_symbols (current_program_space)
+	       && !have_partial_symbols (current_program_space))
 	error (_("No symbol table is loaded.  Use the \"file\" command."));
       else
 	error (_("No symbol \"%s\" in current context."), name);
@@ -161,7 +163,6 @@ void
 parser_state::push_dollar (struct stoken str)
 {
   struct block_symbol sym;
-  struct bound_minimal_symbol msym;
   struct internalvar *isym = NULL;
   std::string copy;
 
@@ -231,7 +232,8 @@ parser_state::push_dollar (struct stoken str)
       push_new<expr::var_value_operation> (sym);
       return;
     }
-  msym = lookup_bound_minimal_symbol (copy.c_str ());
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, copy.c_str ());
   if (msym.minsym)
     {
       push_new<expr::var_msym_value_operation> (msym);
@@ -374,8 +376,8 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
 
       if (!expression_context_block)
 	{
-	  struct symtab_and_line cursal
-	    = get_current_source_symtab_and_line ();
+	  symtab_and_line cursal
+	    = get_current_source_symtab_and_line (current_program_space);
 
 	  if (cursal.symtab)
 	    expression_context_block
@@ -421,8 +423,7 @@ parse_exp_in_context (const char **stringptr, CORE_ADDR pc,
 		   expression_context_pc, flags, *stringptr,
 		   completer != nullptr, tracker);
 
-  scoped_restore_current_language lang_saver;
-  set_language (lang->la_language);
+  scoped_restore_current_language lang_saver (lang->la_language);
 
   try
     {
@@ -488,10 +489,7 @@ parse_expression_with_language (const char *string, enum language lang)
 {
   std::optional<scoped_restore_current_language> lang_saver;
   if (current_language->la_language != lang)
-    {
-      lang_saver.emplace ();
-      set_language (lang);
-    }
+    lang_saver.emplace (lang);
 
   return parse_expression (string);
 }

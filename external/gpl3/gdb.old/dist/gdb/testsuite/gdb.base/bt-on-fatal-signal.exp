@@ -13,7 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test the 'maint set backtrace-on-fatal-signal' behaviour.  Start up
+# Test the 'maint set backtrace-on-fatal-signal' behavior.  Start up
 # GDB, turn on backtrace-on-fatal-signal, then send fatal signals to
 # GDB and ensure we see the backtrace.
 

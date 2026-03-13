@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #ifndef GDB_FRAME_ID_H
-#define GDB_FRAME_ID_H 1
+#define GDB_FRAME_ID_H
 
 /* Status of a given frame's stack.  */
 
@@ -140,4 +140,4 @@ is_sentinel_frame_id (frame_id id)
   return id.stack_status == FID_STACK_SENTINEL;
 }
 
-#endif /* ifdef GDB_FRAME_ID_H  */
+#endif /* GDB_FRAME_ID_H */

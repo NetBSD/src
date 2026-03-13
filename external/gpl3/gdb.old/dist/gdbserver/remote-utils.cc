@@ -24,7 +24,9 @@
 #include "tdesc.h"
 #include "debug.h"
 #include "dll.h"
+#include "gdbsupport/common-gdbthread.h"
 #include "gdbsupport/rsp-low.h"
+#include "gdbsupport/scope-exit.h"
 #include "gdbsupport/netstuff.h"
 #include "gdbsupport/filestuff.h"
 #include "gdbsupport/gdb-sigmask.h"
@@ -563,10 +565,11 @@ read_ptid (const char *buf, const char **obuf)
 {
   const char *p = buf;
   const char *pp;
-  ULONGEST pid = 0, tid = 0;
 
   if (*p == 'p')
     {
+      ULONGEST pid;
+
       /* Multi-process ptid.  */
       pp = unpack_varlen_hex (p + 1, &pid);
       if (*pp != '.')
@@ -574,23 +577,25 @@ read_ptid (const char *buf, const char **obuf)
 
       p = pp + 1;
 
-      tid = hex_or_minus_one (p, &pp);
+      ULONGEST tid = hex_or_minus_one (p, &pp);
 
       if (obuf)
 	*obuf = pp;
+
       return ptid_t (pid, tid);
     }
 
   /* No multi-process.  Just a tid.  */
-  tid = hex_or_minus_one (p, &pp);
+  ULONGEST tid = hex_or_minus_one (p, &pp);
 
   /* Since GDB is not sending a process id (multi-process extensions
      are off), then there's only one process.  Default to the first in
      the list.  */
-  pid = pid_of (get_first_process ());
+  int pid = get_first_process ()->pid;
 
   if (obuf)
     *obuf = pp;
+
   return ptid_t (pid, tid);
 }
 
@@ -634,6 +639,8 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
   char *p;
   int cc;
 
+  SCOPE_EXIT { suppressed_remote_debug = false; };
+
   buf2 = (char *) xmalloc (strlen ("$") + cnt + strlen ("#nn") + 1);
 
   /* Copy the packet into buffer BUF2, encapsulating it
@@ -668,15 +675,15 @@ putpkt_binary_1 (char *buf, int cnt, int is_notif)
       if (cs.noack_mode || is_notif)
 	{
 	  /* Don't expect an ack then.  */
-	  if (is_notif)
-	    remote_debug_printf ("putpkt (\"%s\"); [notif]", buf2);
-	  else
-	    remote_debug_printf ("putpkt (\"%s\"); [noack mode]", buf2);
+	  remote_debug_printf ("putpkt (\"%s\"); [%s]",
+			       (suppressed_remote_debug ? "..." : buf2),
+			       (is_notif ? "notif" : "noack mode"));
 
 	  break;
 	}
 
-      remote_debug_printf ("putpkt (\"%s\"); [looking for ack]", buf2);
+      remote_debug_printf ("putpkt (\"%s\"); [looking for ack]",
+			   (suppressed_remote_debug ? "..." : buf2));
 
       cc = readchar ();
 
@@ -1171,7 +1178,7 @@ prepare_resume_reply (char *buf, ptid_t ptid, const target_waitstatus &status)
 
 	switch_to_thread (the_target, ptid);
 
-	regcache = get_thread_regcache (current_thread, 1);
+	regcache = get_thread_regcache (current_thread);
 
 	if (the_target->stopped_by_watchpoint ())
 	  {
@@ -1330,6 +1337,13 @@ decode_M_packet (const char *from, CORE_ADDR *mem_addr_ptr,
   hex2bin (from, *to_p, *len_ptr);
 }
 
+void
+decode_x_packet (const char *from, CORE_ADDR *mem_addr_ptr,
+		 unsigned int *len_ptr)
+{
+  decode_m_packet_params (from, mem_addr_ptr, len_ptr, '\0');
+}
+
 int
 decode_X_packet (char *from, int packet_len, CORE_ADDR *mem_addr_ptr,
 		 unsigned int *len_ptr, unsigned char **to_p)
@@ -1474,12 +1488,13 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
      while it figures out the address of the symbol.  */
   while (1)
     {
+      CORE_ADDR mem_addr;
+      unsigned char *mem_buf;
+      unsigned int mem_len;
+      int new_len = -1;
+
       if (cs.own_buf[0] == 'm')
 	{
-	  CORE_ADDR mem_addr;
-	  unsigned char *mem_buf;
-	  unsigned int mem_len;
-
 	  decode_m_packet (&cs.own_buf[1], &mem_addr, &mem_len);
 	  mem_buf = (unsigned char *) xmalloc (mem_len);
 	  if (read_inferior_memory (mem_addr, mem_buf, mem_len) == 0)
@@ -1490,9 +1505,42 @@ look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb)
 	  if (putpkt (cs.own_buf) < 0)
 	    return -1;
 	}
+      else if (cs.own_buf[0] == 'x')
+	{
+	  decode_x_packet (&cs.own_buf[1], &mem_addr, &mem_len);
+	  mem_buf = (unsigned char *) xmalloc (mem_len);
+	  if (read_inferior_memory (mem_addr, mem_buf, mem_len) == 0)
+	    {
+	      gdb_byte *buffer = (gdb_byte *) cs.own_buf;
+	      *buffer++ = 'b';
+
+	      int out_len_units;
+	      new_len = remote_escape_output (mem_buf, mem_len, 1,
+					      buffer,
+					      &out_len_units,
+					      PBUFSIZ);
+	      new_len++; /* For the 'b' marker.  */
+
+	      if (out_len_units != mem_len)
+		{
+		  write_enn (cs.own_buf);
+		  new_len = -1;
+		}
+	      else
+		suppress_next_putpkt_log ();
+	    }
+	  else
+	    write_enn (cs.own_buf);
+
+	  free (mem_buf);
+	  int res = ((new_len == -1)
+		     ? putpkt (cs.own_buf)
+		     : putpkt_binary (cs.own_buf, new_len));
+	  if (res < 0)
+	    return -1;
+	}
       else if (cs.own_buf[0] == 'v')
 	{
-	  int new_len = -1;
 	  handle_v_requests (cs.own_buf, len, &new_len);
 	  if (new_len != -1)
 	    putpkt_binary (cs.own_buf, new_len);
@@ -1567,11 +1615,13 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
      wait for the qRelocInsn "response".  That requires re-entering
      the main loop.  For now, this is an adequate approximation; allow
      GDB to access memory.  */
-  while (cs.own_buf[0] == 'm' || cs.own_buf[0] == 'M' || cs.own_buf[0] == 'X')
+  while (cs.own_buf[0] == 'm' || cs.own_buf[0] == 'M'
+	 || cs.own_buf[0] == 'X' || cs.own_buf[0] == 'x')
     {
       CORE_ADDR mem_addr;
       unsigned char *mem_buf = NULL;
       unsigned int mem_len;
+      int new_len = -1;
 
       if (cs.own_buf[0] == 'm')
 	{
@@ -1579,6 +1629,33 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
 	  mem_buf = (unsigned char *) xmalloc (mem_len);
 	  if (read_inferior_memory (mem_addr, mem_buf, mem_len) == 0)
 	    bin2hex (mem_buf, cs.own_buf, mem_len);
+	  else
+	    write_enn (cs.own_buf);
+	}
+      else if (cs.own_buf[0] == 'x')
+	{
+	  decode_x_packet (&cs.own_buf[1], &mem_addr, &mem_len);
+	  mem_buf = (unsigned char *) xmalloc (mem_len);
+	  if (read_inferior_memory (mem_addr, mem_buf, mem_len) == 0)
+	    {
+	      gdb_byte *buffer = (gdb_byte *) cs.own_buf;
+	      *buffer++ = 'b';
+
+	      int out_len_units;
+	      new_len = remote_escape_output (mem_buf, mem_len, 1,
+					      buffer,
+					      &out_len_units,
+					      PBUFSIZ);
+	      new_len++; /* For the 'b' marker.  */
+
+	      if (out_len_units != mem_len)
+		{
+		  write_enn (cs.own_buf);
+		  new_len = -1;
+		}
+	      else
+		suppress_next_putpkt_log ();
+	    }
 	  else
 	    write_enn (cs.own_buf);
 	}
@@ -1600,7 +1677,11 @@ relocate_instruction (CORE_ADDR *to, CORE_ADDR oldloc)
 	    write_enn (cs.own_buf);
 	}
       free (mem_buf);
-      if (putpkt (cs.own_buf) < 0)
+
+      int res = ((new_len == -1)
+		 ? putpkt (cs.own_buf)
+		 : putpkt_binary (cs.own_buf, new_len));
+      if (res < 0)
 	return -1;
       len = getpkt (cs.own_buf);
       if (len < 0)

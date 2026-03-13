@@ -91,11 +91,11 @@ proc break_trace_same_addr_2 { trace_type1 trace_type2 option } \
 
     gdb_test "${trace_type1} set_point" \
 	"\(Fast t|T\)racepoint \[0-9\] at $hex: file.*" \
-	"${trace_type1} set_point (1)"
+	"${trace_type1} set_point, first trace type"
 
     gdb_test "${trace_type2} set_point" \
 	"\(Fast t|T\)racepoint \[0-9\] at $hex: file.*" \
-	"${trace_type2} set_point (2)"
+	"${trace_type2} set_point, second trace type"
 
     gdb_test_no_output "tstart"
     gdb_test "continue" "Continuing\\.\[ \r\n\]+(Thread .* hit )?Breakpoint.*" \
@@ -243,14 +243,14 @@ proc break_trace_same_addr_5 { trace1 trace2 trace3 trace3_at_first_loc } \
 	"Data collected at tracepoint .*, trace frame \[0-9\]:.*\\$${pcreg} = .*" \
 	"tdump 1"
     gdb_test "tfind 0" "Found trace frame 0, tracepoint .*" \
-	"reset to frame 0 (1)"
+	"reset to frame 0, first time"
     gdb_test "tfind tracepoint 5" "Found trace frame \[0-9\], tracepoint .*" \
 	"tfind test frame of tracepoint 5"
     gdb_test "tdump" \
 	"Data collected at tracepoint .*, trace frame \[0-9\]:.*\\$${spreg} = .*" \
 	"tdump 2"
     gdb_test "tfind 0" "Found trace frame 0, tracepoint .*" \
-	"reset to frame 0 (2)"
+	"reset to frame 0, second time"
     gdb_test "tfind tracepoint 6" "Found trace frame \[0-9\], tracepoint .*" \
 	"tfind test frame of tracepoint 6"
     gdb_test "tdump" \
@@ -307,7 +307,7 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
 	    "Data collected at tracepoint .*, trace frame \[0-9\]:.*\\$${pcreg} = .*" \
 	    "tdump 1"
 	gdb_test "tfind 0" "Found trace frame 0, tracepoint .*" \
-	    "reset to frame 0 (1)"
+	    "reset to frame 0, first time"
     } else {
 	gdb_test "tfind tracepoint 4" "Target failed to find requested trace frame.*" \
 	    "tfind test frame of tracepoint 4"
@@ -320,7 +320,7 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
 	    "Data collected at tracepoint .*, trace frame \[0-9\]:.*\\$${spreg} = .*" \
 	    "tdump 2"
 	gdb_test "tfind 0" "Found trace frame 0, tracepoint .*" \
-	    "reset to frame 0 (2)"
+	    "reset to frame 0, second time"
     } else {
 	gdb_test "tfind tracepoint 5" "Target failed to find requested trace frame.*" \
 	    "tfind test frame of tracepoint 5"
@@ -328,7 +328,7 @@ proc break_trace_same_addr_6 { trace1 enable1 trace2 enable2 } \
 }}
 
 
-foreach break_always_inserted { "on" "off" } {
+foreach_with_prefix break_always_inserted { "on" "off" } {
     break_trace_same_addr_1 "trace" ${break_always_inserted}
     break_trace_same_addr_2 "trace" "trace" ${break_always_inserted}
     break_trace_same_addr_3 "trace" ${break_always_inserted}
@@ -344,6 +344,7 @@ break_trace_same_addr_6 "trace" "disable" "trace" "enable"
 
 require allow_shlib_tests
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 

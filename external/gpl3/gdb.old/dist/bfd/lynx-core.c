@@ -120,7 +120,8 @@ lynx_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), pss.pname, PNMLEN + 1);
+  strncpy (core_command (abfd), pss.pname, PNMLEN);
+  core_command (abfd)[PNMLEN] = 0;
 
   /* Compute the size of the thread contexts */
 

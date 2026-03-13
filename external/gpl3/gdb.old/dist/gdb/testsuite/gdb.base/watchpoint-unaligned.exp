@@ -98,7 +98,7 @@ foreach wpsize $sizes {
     }
 }
 
-foreach wpcount {4 7} {
+foreach_with_prefix wpcount {4 7} {
     array set wpoffset_to_wpnum {}
     for {set wpoffset 1} {$wpoffset <= $wpcount} {incr wpoffset} {
 	set test "$rwatch data.u.size1\[$wpoffset\]"

@@ -77,6 +77,6 @@ gdb_assert {[expr $sp == $new_sp]} \
     "check stack pointer was updated as expected"
 
 # Check the contents of the stack were updated to the expected value.
-set next_insn_addr 0x[format %016X $next_insn_addr]
+set next_insn_addr 0x[format %016x $next_insn_addr]
 gdb_test "x/1gx 0x[format %x $sp]" "$hex:\\s+$next_insn_addr" \
     "check return address was updated correctly"

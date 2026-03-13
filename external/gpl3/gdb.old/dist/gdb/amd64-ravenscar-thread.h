@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_RAVENSCAR_THREAD_H
-#define AMD64_RAVENSCAR_THREAD_H
+#ifndef GDB_AMD64_RAVENSCAR_THREAD_H
+#define GDB_AMD64_RAVENSCAR_THREAD_H
 
 struct gdbarch;
 
 extern void register_amd64_ravenscar_ops (struct gdbarch *gdbarch);
 
-#endif /* AMD64_RAVENSCAR_THREAD_H */
+#endif /* GDB_AMD64_RAVENSCAR_THREAD_H */

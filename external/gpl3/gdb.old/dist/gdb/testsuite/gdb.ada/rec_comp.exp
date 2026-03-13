@@ -33,6 +33,6 @@ if {![runto "bar_o203_012.adb:$bp_location"]} {
 gdb_test "whatis r.ia" " = bar_o203_012.int_access"
 
 gdb_test "ptype r" \
-    " = record\r\n *ia: bar_o203_012\.int_access;\r\nend record"
+    " = record\r\n *ia: bar_o203_012\\.int_access;\r\nend record"
 
 gdb_test "ptype r.ia" " = access <$decimal-byte integer>"

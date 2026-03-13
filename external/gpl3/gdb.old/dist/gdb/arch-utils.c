@@ -37,6 +37,7 @@
 #include "auxv.h"
 #include "observable.h"
 #include "solib-target.h"
+#include "event-top.h"
 
 #include "gdbsupport/version.h"
 
@@ -56,7 +57,7 @@ displaced_step_at_entry_point (struct gdbarch *gdbarch)
   CORE_ADDR addr;
   int bp_len;
 
-  addr = entry_point_address ();
+  addr = entry_point_address (current_program_space);
 
   /* Inferior calls also use the entry point as a breakpoint location.
      We don't want displaced stepping to interfere with those
@@ -74,7 +75,7 @@ legacy_register_sim_regno (struct gdbarch *gdbarch, int regnum)
   gdb_assert (regnum >= 0 && regnum < gdbarch_num_regs (gdbarch));
   /* NOTE: cagney/2002-05-13: The old code did it this way and it is
      suspected that some GDB/SIM combinations may rely on this
-     behaviour.  The default should be one2one_register_sim_regno
+     behavior.  The default should be one2one_register_sim_regno
      (below).  */
   if (gdbarch_register_name (gdbarch, regnum)[0] != '\0')
     return regnum;
@@ -404,13 +405,13 @@ set_endian (const char *ignore_args, int from_tty, struct cmd_list_element *c)
   if (set_endian_string == endian_auto)
     {
       target_byte_order_user = BFD_ENDIAN_UNKNOWN;
-      if (! gdbarch_update_p (info))
+      if (!gdbarch_update_p (current_inferior (), info))
 	internal_error (_("set_endian: architecture update failed"));
     }
   else if (set_endian_string == endian_little)
     {
       info.byte_order = BFD_ENDIAN_LITTLE;
-      if (! gdbarch_update_p (info))
+      if (!gdbarch_update_p (current_inferior (), info))
 	gdb_printf (gdb_stderr,
 		    _("Little endian target not supported by GDB\n"));
       else
@@ -419,7 +420,7 @@ set_endian (const char *ignore_args, int from_tty, struct cmd_list_element *c)
   else if (set_endian_string == endian_big)
     {
       info.byte_order = BFD_ENDIAN_BIG;
-      if (! gdbarch_update_p (info))
+      if (!gdbarch_update_p (current_inferior (), info))
 	gdb_printf (gdb_stderr,
 		    _("Big endian target not supported by GDB\n"));
       else
@@ -561,7 +562,7 @@ set_architecture (const char *ignore_args,
   if (strcmp (set_architecture_string, "auto") == 0)
     {
       target_architecture_user = NULL;
-      if (!gdbarch_update_p (info))
+      if (!gdbarch_update_p (current_inferior (), info))
 	internal_error (_("could not select an architecture automatically"));
     }
   else
@@ -569,7 +570,7 @@ set_architecture (const char *ignore_args,
       info.bfd_arch_info = bfd_scan_arch (set_architecture_string);
       if (info.bfd_arch_info == NULL)
 	internal_error (_("set_architecture: bfd_scan_arch failed"));
-      if (gdbarch_update_p (info))
+      if (gdbarch_update_p (current_inferior (), info))
 	target_architecture_user = info.bfd_arch_info;
       else
 	gdb_printf (gdb_stderr,
@@ -579,22 +580,23 @@ set_architecture (const char *ignore_args,
   show_architecture (gdb_stdout, from_tty, NULL, NULL);
 }
 
-/* Try to select a global architecture that matches "info".  Return
-   non-zero if the attempt succeeds.  */
+/* See arch-utils.h.  */
+
 int
-gdbarch_update_p (struct gdbarch_info info)
+gdbarch_update_p (inferior *inf, struct gdbarch_info info)
 {
   struct gdbarch *new_gdbarch;
 
   /* Check for the current file.  */
   if (info.abfd == NULL)
-    info.abfd = current_program_space->exec_bfd ();
+    info.abfd = inf->pspace->exec_bfd ();
+
   if (info.abfd == NULL)
-    info.abfd = current_program_space->core_bfd ();
+    info.abfd = inf->pspace->core_bfd ();
 
   /* Check for the current target description.  */
   if (info.target_desc == NULL)
-    info.target_desc = target_current_description ();
+    info.target_desc = target_current_description (inf);
 
   new_gdbarch = gdbarch_find_by_info (info);
 
@@ -609,7 +611,7 @@ gdbarch_update_p (struct gdbarch_info info)
 
   /* If it is the same old architecture, accept the request (but don't
      swap anything).  */
-  if (new_gdbarch == current_inferior ()->arch ())
+  if (new_gdbarch == inf->arch ())
     {
       if (gdbarch_debug)
 	gdb_printf (gdb_stdlog, "gdbarch_update_p: "
@@ -626,7 +628,7 @@ gdbarch_update_p (struct gdbarch_info info)
 		host_address_to_string (new_gdbarch),
 		gdbarch_bfd_arch_info (new_gdbarch)->printable_name);
 
-  current_inferior ()->set_arch (new_gdbarch);
+  inf->set_arch (new_gdbarch);
 
   return 1;
 }
@@ -653,7 +655,7 @@ set_gdbarch_from_file (bfd *abfd)
   struct gdbarch *gdbarch;
 
   info.abfd = abfd;
-  info.target_desc = target_current_description ();
+  info.target_desc = target_current_description (current_inferior ());
   gdbarch = gdbarch_find_by_info (info);
 
   if (gdbarch == NULL)
@@ -751,7 +753,7 @@ initialize_current_architecture (void)
   info.byte_order = default_byte_order;
   info.byte_order_for_code = info.byte_order;
 
-  if (! gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("initialize_current_architecture: Selection of "
 		      "initial architecture failed"));
 
@@ -1040,7 +1042,11 @@ default_print_insn (bfd_vma memaddr, disassemble_info *info)
 				 info->mach, current_program_space->exec_bfd ());
 
   gdb_assert (disassemble_fn != NULL);
-  return (*disassemble_fn) (memaddr, info);
+  int res = (*disassemble_fn) (memaddr, info);
+
+  QUIT;
+
+  return res;
 }
 
 /* See arch-utils.h.  */
@@ -1192,7 +1198,7 @@ pstring_list (const char *const *list)
   return ret;
 }
 
-#include "gdbarch.c"
+#include "gdbarch-gen.c"
 
 enum return_value_convention
 default_gdbarch_return_value
@@ -1491,6 +1497,32 @@ bool
 gdbarch_initialized_p (gdbarch *arch)
 {
   return arch->initialized_p;
+}
+
+/* See arch-utils.h.  */
+
+gdb_environ
+core_file_exec_context::environment () const
+{
+  gdb_environ e;
+
+  for (const auto &entry : m_environment)
+    {
+      char *eq = strchr (entry.get (), '=');
+
+      /* If there's no '=' character, then skip this entry.  */
+      if (eq == nullptr)
+	continue;
+
+      const char *value = eq + 1;
+      const char *var = entry.get ();
+
+      *eq = '\0';
+      e.set (var, value);
+      *eq = '=';
+    }
+
+  return e;
 }
 
 void _initialize_gdbarch_utils ();

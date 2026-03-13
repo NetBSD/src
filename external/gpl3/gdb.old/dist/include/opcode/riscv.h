@@ -55,6 +55,7 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define RV_X(x, s, n)  (((x) >> (s)) & ((1 << (n)) - 1))
 #define RV_IMM_SIGN(x) (-(((x) >> 31) & 1))
 #define RV_X_SIGNED(x, s, n) (RV_X(x, s, n) | ((-(RV_X(x, (s + n - 1), 1))) << (n)))
+#define RV_IMM_SIGN_N(x, s, n) (-(((x) >> ((s) + (n) - 1)) & 1))
 
 #define EXTRACT_ITYPE_IMM(x) \
   (RV_X(x, 20, 12) | (RV_IMM_SIGN(x) << 12))
@@ -114,11 +115,23 @@ static inline unsigned int riscv_insn_length (insn_t insn)
   (RV_X(x, 5, 1) << 1)
 #define EXTRACT_ZCMP_SPIMM(x) \
   (RV_X(x, 2, 2) << 4)
+#define EXTRACT_ZCMT_INDEX(x) \
+  (RV_X(x, 2, 8))
 /* Vendor-specific (CORE-V) extract macros.  */
 #define EXTRACT_CV_IS2_UIMM5(x) \
   (RV_X(x, 20, 5))
 #define EXTRACT_CV_IS3_UIMM5(x) \
   (RV_X(x, 25, 5))
+#define EXTRACT_CV_BI_IMM5(x) \
+  (RV_X(x, 20, 5) | (RV_IMM_SIGN_N(x, 20, 5) << 5))
+#define EXTRACT_CV_BITMANIP_UIMM5(x) \
+  (RV_X(x, 25, 5))
+#define EXTRACT_CV_BITMANIP_UIMM2(x) \
+  (RV_X(x, 25, 2))
+#define EXTRACT_CV_SIMD_IMM6(x) \
+  ((RV_X(x, 25, 1)) | (RV_X(x, 20, 5) << 1) | (RV_IMM_SIGN_N(x, 20, 5) << 5))
+#define EXTRACT_CV_SIMD_UIMM6(x) \
+  ((RV_X(x, 25, 1)) | (RV_X(x, 20, 5) << 1))
 
 #define ENCODE_ITYPE_IMM(x) \
   (RV_X(x, 0, 12) << 20)
@@ -172,11 +185,21 @@ static inline unsigned int riscv_insn_length (insn_t insn)
   (RV_X(x, 1, 1) << 5)
 #define ENCODE_ZCMP_SPIMM(x) \
   (RV_X(x, 4, 2) << 2)
+#define ENCODE_ZCMT_INDEX(x) \
+  (RV_X(x, 0, 8) << 2)
 /* Vendor-specific (CORE-V) encode macros.  */
 #define ENCODE_CV_IS2_UIMM5(x) \
   (RV_X(x, 0, 5) << 20)
 #define ENCODE_CV_IS3_UIMM5(x) \
   (RV_X(x, 0, 5) << 25)
+#define ENCODE_CV_BITMANIP_UIMM5(x) \
+  (RV_X(x, 0, 5) << 25)
+#define ENCODE_CV_BITMANIP_UIMM2(x) \
+  (RV_X(x, 0, 2) << 25)
+#define ENCODE_CV_SIMD_IMM6(x) \
+  ((RV_X(x, 0, 1) << 25) | (RV_X(x, 1, 5) << 20))
+#define ENCODE_CV_SIMD_UIMM6(x) \
+  ((RV_X(x, 0, 1) << 25) | (RV_X(x, 1, 5) << 20))
 
 #define VALID_ITYPE_IMM(x) (EXTRACT_ITYPE_IMM(ENCODE_ITYPE_IMM(x)) == (x))
 #define VALID_STYPE_IMM(x) (EXTRACT_STYPE_IMM(ENCODE_STYPE_IMM(x)) == (x))
@@ -346,6 +369,10 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define OP_MASK_REG_LIST	0xf
 #define OP_SH_REG_LIST		4
 #define ZCMP_SP_ALIGNMENT	16
+#define OP_MASK_SREG1		0x7
+#define OP_SH_SREG1		7
+#define OP_MASK_SREG2		0x7
+#define OP_SH_SREG2		2
 
 #define NVECR 32
 #define NVECM 1
@@ -367,7 +394,10 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 #define X_T2 7
 #define X_S0 8
 #define X_S1 9
+#define X_A0 10
+#define X_A1 11
 #define X_S2 18
+#define X_S7 23
 #define X_S10 26
 #define X_S11 27
 #define X_T3 28
@@ -415,6 +445,11 @@ static inline unsigned int riscv_insn_length (insn_t insn)
 /* The maximal number of subset can be required.  */
 #define MAX_SUBSET_NUM 4
 
+/* The range of sregs.  */
+#define RISCV_SREG_0_7(REGNO) \
+	((REGNO == X_S0 || REGNO == X_S1) \
+	 || (REGNO >= X_S2 && REGNO <= X_S7))
+
 /* All RISC-V instructions belong to at least one of these classes.  */
 enum riscv_insn_class
 {
@@ -434,6 +469,7 @@ enum riscv_insn_class
   INSN_CLASS_ZIHINTNTL,
   INSN_CLASS_ZIHINTNTL_AND_C,
   INSN_CLASS_ZIHINTPAUSE,
+  INSN_CLASS_ZIMOP,
   INSN_CLASS_ZMMUL,
   INSN_CLASS_ZAAMO,
   INSN_CLASS_ZALRSC,
@@ -446,6 +482,7 @@ enum riscv_insn_class
   INSN_CLASS_ZFHMIN_INX,
   INSN_CLASS_ZFHMIN_AND_D_INX,
   INSN_CLASS_ZFHMIN_AND_Q_INX,
+  INSN_CLASS_ZFBFMIN,
   INSN_CLASS_ZFA,
   INSN_CLASS_D_AND_ZFA,
   INSN_CLASS_Q_AND_ZFA,
@@ -470,6 +507,8 @@ enum riscv_insn_class
   INSN_CLASS_ZVEF,
   INSN_CLASS_ZVBB,
   INSN_CLASS_ZVBC,
+  INSN_CLASS_ZVFBFMIN,
+  INSN_CLASS_ZVFBFWMA,
   INSN_CLASS_ZVKB,
   INSN_CLASS_ZVKG,
   INSN_CLASS_ZVKNED,
@@ -480,15 +519,24 @@ enum riscv_insn_class
   INSN_CLASS_ZCB_AND_ZBA,
   INSN_CLASS_ZCB_AND_ZBB,
   INSN_CLASS_ZCB_AND_ZMMUL,
+  INSN_CLASS_ZCMOP,
   INSN_CLASS_ZCMP,
+  INSN_CLASS_ZCMT,
   INSN_CLASS_SVINVAL,
   INSN_CLASS_ZICBOM,
   INSN_CLASS_ZICBOP,
   INSN_CLASS_ZICBOZ,
   INSN_CLASS_ZABHA,
+  INSN_CLASS_ZACAS,
+  INSN_CLASS_ZABHA_AND_ZACAS,
   INSN_CLASS_H,
-  INSN_CLASS_XCVMAC,
   INSN_CLASS_XCVALU,
+  INSN_CLASS_XCVBI,
+  INSN_CLASS_XCVBITMANIP,
+  INSN_CLASS_XCVELW,
+  INSN_CLASS_XCVMAC,
+  INSN_CLASS_XCVMEM,
+  INSN_CLASS_XCVSIMD,
   INSN_CLASS_XTHEADBA,
   INSN_CLASS_XTHEADBB,
   INSN_CLASS_XTHEADBS,
@@ -505,6 +553,10 @@ enum riscv_insn_class
   INSN_CLASS_XTHEADZVAMO,
   INSN_CLASS_XVENTANACONDOPS,
   INSN_CLASS_XSFVCP,
+  INSN_CLASS_XSFCEASE,
+  INSN_CLASS_XSFVQMACCQOQ,
+  INSN_CLASS_XSFVQMACCDOD,
+  INSN_CLASS_XSFVFNRCLIPXFQF,
 };
 
 /* This structure holds information for a particular instruction.  */

@@ -16,11 +16,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_VFORK_H
-#define GDB_VFORK_H
+#ifndef GDB_GDB_VFORK_H
+#define GDB_GDB_VFORK_H
 
 #if HAVE_VFORK_H
 #include <vfork.h>
 #endif
 
-#endif /* GDB_VFORK_H */
+#endif /* GDB_GDB_VFORK_H */

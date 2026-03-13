@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DICOS_TDEP_H
-#define DICOS_TDEP_H
+#ifndef GDB_DICOS_TDEP_H
+#define GDB_DICOS_TDEP_H
 
 extern void dicos_init_abi (struct gdbarch *gdbarch);
 extern int dicos_load_module_p (bfd *abfd, int header_size);
 
-#endif /* dicos-tdep.h */
+#endif /* GDB_DICOS_TDEP_H */

@@ -109,6 +109,10 @@ proc jit_reader_test {} {
 	gdb_test_no_output "set debug jit 1"
     }
 
+    # Just test that this is installed and prints something.
+    gdb_test "show jit-reader-directory" \
+	"JIT reader directory is .*\\."
+
     gdb_test_no_output "jit-reader-load ${jit_reader_bin}" "jit-reader-load"
     gdb_run_cmd
     gdb_test "" "Program received signal SIGTRAP, .*" "expect SIGTRAP"

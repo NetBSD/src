@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXTENSION_PRIV_H
-#define EXTENSION_PRIV_H
+#ifndef GDB_EXTENSION_PRIV_H
+#define GDB_EXTENSION_PRIV_H
 
 #include "extension.h"
 #include <signal.h>
@@ -188,6 +188,11 @@ struct extension_language_ops
      enum ext_lang_frame_args args_type,
      struct ui_out *out, int frame_low, int frame_high);
 
+  /* Used for registering the ptwrite filter to the current thread.  */
+  void (*apply_ptwrite_filter)
+    (const struct extension_language_defn *extlang,
+     struct btrace_thread_info *btinfo);
+
   /* Update values held by the extension language when OBJFILE is discarded.
      New global types must be created for every such value, which must then be
      updated to use the new types.
@@ -196,7 +201,8 @@ struct extension_language_ops
      COPIED_TYPES is used to prevent cycles / duplicates and is passed to
      preserve_one_value.  */
   void (*preserve_values) (const struct extension_language_defn *,
-			   struct objfile *objfile, htab_t copied_types);
+			   struct objfile *objfile,
+			   copied_types_hash_t &copied_types);
 
   /* Return non-zero if there is a stop condition for the breakpoint.
      This is used to implement the restriction that a breakpoint may have
@@ -287,9 +293,22 @@ struct extension_language_ops
   /* Give extension languages a chance to deal with missing debug
      information.  OBJFILE is the file for which GDB was unable to find
      any debug information.  */
-  ext_lang_missing_debuginfo_result
+  ext_lang_missing_file_result
     (*handle_missing_debuginfo) (const struct extension_language_defn *,
 				 struct objfile *objfile);
+
+  /* Give extension languages a chance to deal with missing objfiles.
+     PSPACE is the program space in which GDB is searching for a missing
+     objfile, and will not be NULL.  BUILD_ID is the build-id of the
+     objfile we're looking for, and will not be NULL.  FILENAME is the name
+     of the file we're looking for, and will not be NULL.  See
+     ext_lang_find_objfile_from_buildid for some additional information
+     about the meaning of FILENAME.  */
+  ext_lang_missing_file_result
+    (*find_objfile_from_buildid) (const struct extension_language_defn *,
+				  program_space *pspace,
+				  const struct bfd_build_id *build_id,
+				  const char *filename);
 };
 
 /* State necessary to restore a signal handler to its previous value.  */
@@ -320,4 +339,4 @@ extern struct active_ext_lang_state *set_active_ext_lang
 
 extern void restore_active_ext_lang (struct active_ext_lang_state *previous);
 
-#endif /* EXTENSION_PRIV_H */
+#endif /* GDB_EXTENSION_PRIV_H */

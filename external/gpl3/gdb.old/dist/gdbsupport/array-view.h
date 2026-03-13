@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_ARRAY_VIEW_H
-#define COMMON_ARRAY_VIEW_H
+#ifndef GDBSUPPORT_ARRAY_VIEW_H
+#define GDBSUPPORT_ARRAY_VIEW_H
 
 #include "traits.h"
 #include <algorithm>
@@ -88,6 +88,8 @@ public:
   using reference = T &;
   using const_reference = const T &;
   using size_type = size_t;
+  using const_iterator = const T *;
+  using iterator = T *;
 
   /* Default construction creates an empty view.  */
   constexpr array_view () noexcept
@@ -157,11 +159,11 @@ public:
   constexpr T *data () noexcept { return m_array; }
   constexpr const T *data () const noexcept { return m_array; }
 
-  constexpr T *begin () noexcept { return m_array; }
-  constexpr const T *begin () const noexcept { return m_array; }
+  constexpr iterator begin () const noexcept { return m_array; }
+  constexpr const_iterator cbegin () const noexcept { return m_array; }
 
-  constexpr T *end () noexcept { return m_array + m_size; }
-  constexpr const T *end () const noexcept { return m_array + m_size; }
+  constexpr iterator end () const noexcept { return m_array + m_size; }
+  constexpr const_iterator cend () const noexcept { return m_array + m_size; }
 
   constexpr reference operator[] (size_t index) noexcept
   {
@@ -294,4 +296,4 @@ make_array_view (U *array, size_t size) noexcept
 
 } /* namespace gdb */
 
-#endif
+#endif /* GDBSUPPORT_ARRAY_VIEW_H */

@@ -228,7 +228,7 @@ unwind_infopy_str (PyObject *self)
 	      }
 	    catch (const gdb_exception &except)
 	      {
-		GDB_PY_HANDLE_EXCEPTION (except);
+		return gdbpy_handle_gdb_exception (nullptr, except);
 	      }
 	  }
 	else
@@ -378,7 +378,7 @@ unwind_infopy_add_saved_register (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   gdbpy_ref<> new_value = gdbpy_ref<>::new_reference (pyo_reg_value);
@@ -429,7 +429,7 @@ pending_framepy_str (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_FromFormat ("SP=%s,PC=%s", sp_str, pc_str);
@@ -456,7 +456,7 @@ pending_framepy_repr (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_FromFormat ("<%s level=%d, sp=%s, pc=%s>",
@@ -505,7 +505,7 @@ pending_framepy_read_register (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return result;
@@ -546,7 +546,7 @@ pending_framepy_name (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (name != nullptr)
@@ -574,7 +574,7 @@ pending_framepy_pc (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return gdb_py_object_from_ulongest (pc).release ();
@@ -601,7 +601,7 @@ pending_framepy_language (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   Py_RETURN_NONE;
@@ -628,7 +628,7 @@ pending_framepy_find_sal (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return sal_obj;
@@ -653,7 +653,7 @@ pending_framepy_block (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   for (fn_block = block;
@@ -696,7 +696,7 @@ pending_framepy_function (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (sym != nullptr)
@@ -1002,17 +1002,13 @@ gdbpy_initialize_unwind (void)
 {
   gdb::observers::new_architecture.attach (pyuw_on_new_gdbarch, "py-unwind");
 
-  if (PyType_Ready (&pending_frame_object_type) < 0)
+  if (gdbpy_type_ready (&pending_frame_object_type) < 0)
     return -1;
-  int rc = gdb_pymodule_addobject (gdb_module, "PendingFrame",
-				   (PyObject *) &pending_frame_object_type);
-  if (rc != 0)
-    return rc;
 
-  if (PyType_Ready (&unwind_info_object_type) < 0)
+  if (gdbpy_type_ready (&unwind_info_object_type) < 0)
     return -1;
-  return gdb_pymodule_addobject (gdb_module, "UnwindInfo",
-      (PyObject *) &unwind_info_object_type);
+
+  return 0;
 }
 
 void _initialize_py_unwind ();

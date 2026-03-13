@@ -79,37 +79,16 @@ gdb_test "continue" \
 	 "\\\[Inferior $decimal \[^\r\n\]+ exited normally\\\]"] \
     "continue until inferior 2 exits"
 
-gdb_test "inferior 1" "\\\[Switching to inferior 1 .*"
-
-# Step the inferior.  During this process GDB will prune the now
+# Switch to inferior 1.  During this process GDB will prune the now
 # defunct inferior, which deletes its program space, which should
 # trigger the FreeProgspaceEvent.
 #
-# However, there is a slight problem.  When the target is remote, and
-# GDB is accessing files using remote fileio, then GDB will attempt to
-# prune the inferior at a point in time when the remote target is
-# waiting for a stop reply.  Pruning an inferior causes GDB to close
-# files associated with that inferior.
-#
-# In non-async mode we can't send fileio packets while waiting for a
-# stop reply, so the attempts to close files fails, and this shows up
-# as an error.
-#
-# As this error has nothing to do with the feature being tested here,
-# we just accept the error message, the important part is the
-# 'FreeProgspaceEvent' string, so long as that appears (just once)
-# then the test is a success.
-set warning_msg \
-    [multi_line \
-	 "warning: cannot close \"\[^\r\n\]+\": Cannot execute this command while the target is running\\." \
-	 "Use the \"interrupt\" command to stop the target" \
-	 "and then try again\\."]
 
-gdb_test "step" \
+gdb_test "inferior 1" \
     [multi_line \
-	 "^FreeProgspaceEvent.*: <gdb.Progspace object at $hex>(?:\r\n$warning_msg)*" \
-	 "do_parent_stuff \\(\\) at \[^\r\n\]+" \
-	 "$decimal\\s+\[^\r\n\]+"]
+	 "\\\[Switching to inferior 1 .*" \
+	 ".*" \
+	 "FreeProgspaceEvent.*: <gdb.Progspace object at $hex>"]
 
 # Let this inferior run to completion.
 gdb_continue_to_end

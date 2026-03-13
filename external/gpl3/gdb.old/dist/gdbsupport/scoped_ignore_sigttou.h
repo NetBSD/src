@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SCOPED_IGNORE_SIGTTOU_H
-#define SCOPED_IGNORE_SIGTTOU_H
+#ifndef GDBSUPPORT_SCOPED_IGNORE_SIGTTOU_H
+#define GDBSUPPORT_SCOPED_IGNORE_SIGTTOU_H
 
 #include "gdbsupport/scoped_ignore_signal.h"
 #include "gdbsupport/job-control.h"
@@ -84,4 +84,4 @@ using scoped_ignore_sigttou = scoped_ignore_signal_nop;
 
 #endif
 
-#endif /* SCOPED_IGNORE_SIGTTOU_H */
+#endif /* GDBSUPPORT_SCOPED_IGNORE_SIGTTOU_H */

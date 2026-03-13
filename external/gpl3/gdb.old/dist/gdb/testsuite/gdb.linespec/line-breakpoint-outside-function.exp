@@ -1,0 +1,55 @@
+# Copyright 2022-2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that placing a line breakpoint outside a function results in a pending
+# breakpoint.  More importantly, that it does "drift" and place a
+# breakpoint on the next function.
+#
+# See the .c file for more details.
+
+standard_testfile
+
+set shlib_path [standard_output_file ${testfile}-lib.so]
+if {[build_executable "build shlib" $shlib_path $srcfile {debug shlib}]} {
+    return
+}
+
+set opts [list debug shlib_load additional_flags=-DTHE_LIB_PATH="${shlib_path}"]
+if {[build_executable "failed to prepare" ${testfile} ${srcfile} $opts]} {
+    return
+}
+
+proc do_test {} {
+    clean_restart $::binfile
+
+    # To make things easier, just so we don't have to deal with the question.
+    gdb_test_no_output "set breakpoint pending on"
+
+    set lineno [gdb_get_line_number "break here"]
+    gdb_test "break $lineno" \
+	[multi_line \
+	     "No compiled code for line $lineno in the current file\\." \
+	     "Breakpoint 1 \\($lineno\\) pending\\."] \
+	"breakpoint on a line outside any function"
+
+    gdb_run_cmd
+    gdb_test_multiple "" "stop on lib function breakpoint" {
+	-re -wrap "Breakpoint 1, the_lib_func .*29.*x\\+\\+.*" {
+	    pass $gdb_test_name
+	}
+    }
+}
+
+do_test

@@ -25,7 +25,7 @@
 #   (gdb) print enum_var
 #   $1 = 8
 #
-# This test checks this behaviour.
+# This test checks this behavior.
 
 standard_testfile .cc
 

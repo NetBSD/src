@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PPC_FBSD_TDEP_H
-#define PPC_FBSD_TDEP_H
+#ifndef GDB_PPC_FBSD_TDEP_H
+#define GDB_PPC_FBSD_TDEP_H
 
 struct regset;
 
@@ -26,4 +26,4 @@ struct regset;
 const struct regset *ppc_fbsd_gregset (int);
 const struct regset *ppc_fbsd_fpregset (void);
 
-#endif /* PPC_FBSD_TDEP_H  */
+#endif /* GDB_PPC_FBSD_TDEP_H */

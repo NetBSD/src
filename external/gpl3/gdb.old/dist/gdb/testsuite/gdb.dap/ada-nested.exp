@@ -31,6 +31,8 @@ if {[dap_initialize] == ""} {
     return
 }
 
+set launch_id [dap_launch $testfile]
+
 set line [gdb_get_line_number "STOP"]
 set obj [dap_check_request_and_response "set breakpoint" \
 	     setBreakpoints \
@@ -41,9 +43,8 @@ set fn_bpno [dap_get_breakpoint_number $obj]
 
 dap_check_request_and_response "configurationDone" configurationDone
 
-if {[dap_launch $binfile] == ""} {
-    return
-}
+dap_check_response "launch response" launch $launch_id
+
 dap_wait_for_event_and_check "stopped at breakpoint" stopped \
     "body reason" breakpoint \
     "body hitBreakpointIds" $fn_bpno

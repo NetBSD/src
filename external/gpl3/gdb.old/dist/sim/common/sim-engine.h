@@ -134,7 +134,7 @@ extern void sim_engine_vabort
 
 
 /* Called by the generic sim_resume to run the simulation within the
-   above safty net.
+   above safety net.
 
    An example implementation of sim_engine_run can be found in the
    file sim-run.c */

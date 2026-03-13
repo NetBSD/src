@@ -1264,7 +1264,7 @@ hw_tree_find_device (struct hw *root,
   /* parse the path */
   split_device_specifier (root, path_to_device, &spec);
   if (spec.value != NULL)
-    return NULL; /* something wierd */
+    return NULL; /* something weird */
 
   /* now find it */
   node = split_find_device (root, &spec);

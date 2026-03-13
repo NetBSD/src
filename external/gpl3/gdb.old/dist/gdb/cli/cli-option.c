@@ -43,7 +43,7 @@ union option_value
   /* For var_enum options.  */
   const char *enumeration;
 
-  /* For var_string options.  This is malloc-allocated.  */
+  /* For var_string and var_filename options.  This is allocated with new.  */
   std::string *string;
 };
 
@@ -85,7 +85,7 @@ struct option_def_and_value
   {
     if (value.has_value ())
       {
-	if (option.type == var_string)
+	if (option.type == var_string || option.type == var_filename)
 	  delete value->string;
       }
   }
@@ -102,7 +102,7 @@ private:
   {
     if (value.has_value ())
       {
-	if (option.type == var_string)
+	if (option.type == var_string || option.type == var_filename)
 	  value->string = nullptr;
       }
   }
@@ -452,6 +452,78 @@ parse_option (gdb::array_view<const option_def_group> options_group,
 	return option_def_and_value {*match, match_ctx, val};
       }
 
+    case var_filename:
+      {
+	if (check_for_argument (args, "--"))
+	  {
+	    /* Treat e.g., "maint test-options -filename --" as if there
+	       was no argument after "-filename".  */
+	    error (_("-%s requires an argument"), match->name);
+	  }
+
+	const char *arg_start = *args;
+	std::string str = extract_string_maybe_quoted (args);
+
+	/* If we are performing completion, and extracting STR moved ARGS
+	   to the end of the line, then the user is trying to complete the
+	   filename value.
+
+	   If ARGS didn't make it to the end of the line then the filename
+	   value is already complete and the user is trying to complete
+	   something later on the line.  */
+	if (completion != nullptr && **args == '\0')
+	  {
+	    /* Preserve the current custom word point.  If the call to
+	       advance_to_filename_maybe_quoted_complete_word_point below
+	       skips to the end of the command line then the custom word
+	       point will have been updated even though we generate no
+	       completions.
+
+	       However, *ARGS will also have been updated, and the general
+	       option completion code (which we will return too) also
+	       updates the custom word point based on the adjustment made
+	       to *ARGS.
+
+	       And so, if we don't find any completions, we should restore
+	       the custom word point value, this leaves the generic option
+	       completion code free to make its own adjustments.  */
+	    int prev_word_pt = completion->tracker.custom_word_point ();
+
+	    /* From ARG_START move forward to the start of the completion
+	       word, this will skip over any opening quote if there is
+	       one.
+
+	       If the word to complete is fully quoted, i.e. has an
+	       opening and closing quote, then this will skip over the
+	       word entirely and leave WORD pointing to the end of the
+	       input string.  */
+	    const char *word
+	      = advance_to_filename_maybe_quoted_complete_word_point
+	      (completion->tracker, arg_start);
+
+	    if (word == arg_start || *word != '\0')
+	      {
+		filename_maybe_quoted_completer (nullptr, completion->tracker,
+						 arg_start, word);
+
+		if (completion->tracker.have_completions ())
+		  return {};
+	      }
+
+	    /* No completions.  Restore the custom word point.  See the
+	       comment above for why this is needed.  */
+	    completion->tracker.set_custom_word_point (prev_word_pt);
+	  }
+
+	/* Check we did manage to extract something.  */
+	if (*args == arg_start)
+	  error (_("-%s requires an argument"), match->name);
+
+	option_value val;
+	val.string = new std::string (std::move (str));
+	return option_def_and_value {*match, match_ctx, val};
+      }
+
     default:
       /* Not yet.  */
       gdb_assert_not_reached ("option type not supported");
@@ -612,6 +684,7 @@ save_option_value_in_ctx (std::optional<option_def_and_value> &ov)
 	= ov->value->enumeration;
       break;
     case var_string:
+    case var_filename:
       *ov->option.var_address.string (ov->option, ov->ctx)
 	= std::move (*ov->value->string);
       break;
@@ -659,50 +732,71 @@ process_options (const char **args,
     }
 }
 
-/* Helper for build_help.  Return a fragment of a help string showing
-   OPT's possible values.  Returns NULL if OPT doesn't take an
-   argument.  */
+/* Helper for build_help.  Append a fragment of a help string showing
+   OPT's possible values.  LEN_AT_START is the length of HELP at the
+   start of the current line.  This is used when wrapping is
+   needed.  */
 
-static const char *
-get_val_type_str (const option_def &opt, std::string &buffer)
+static void
+append_val_type_str (std::string &help, const option_def &opt,
+		     size_t len_at_start)
 {
   if (!opt.have_argument)
-    return nullptr;
+    return;
 
   switch (opt.type)
     {
     case var_boolean:
-      return "[on|off]";
+      help += " [on|off]";
+      break;
     case var_uinteger:
     case var_integer:
     case var_pinteger:
       {
-	buffer = "NUMBER";
+	help += " NUMBER";
 	if (opt.extra_literals != nullptr)
 	  for (const literal_def *l = opt.extra_literals;
 	       l->literal != nullptr;
 	       l++)
 	    {
-	      buffer += '|';
-	      buffer += l->literal;
+	      help += '|';
+	      help += l->literal;
 	    }
-	return buffer.c_str ();
       }
+      break;
     case var_enum:
       {
-	buffer = "";
+	help += ' ';
+	/* If wrapping is needed, subsequent lines will be indented
+	   this amount.  */
+	size_t indent = help.length () - len_at_start;
 	for (size_t i = 0; opt.enums[i] != nullptr; i++)
 	  {
 	    if (i != 0)
-	      buffer += "|";
-	    buffer += opt.enums[i];
+	      {
+		size_t new_len = help.length () + 1 + strlen (opt.enums[i]);
+
+		if (new_len - len_at_start >= cli_help_line_length)
+		  {
+		    help += "\n";
+		    len_at_start = help.length ();
+
+		    help.append (indent, ' ');
+		  }
+		help += "|";
+	      }
+	    help += opt.enums[i];
 	  }
-	return buffer.c_str ();
       }
+      break;
     case var_string:
-      return "STRING";
+      help += " STRING";
+      break;
+    case var_filename:
+      help += " FILENAME";
+      break;
     default:
-      return nullptr;
+      break;
     }
 }
 
@@ -740,15 +834,11 @@ build_help_option (gdb::array_view<const option_def> options,
       if (o.set_doc == nullptr)
 	continue;
 
+      size_t initial_len = help.length ();
       help += "  -";
       help += o.name;
 
-      const char *val_type_str = get_val_type_str (o, buffer);
-      if (val_type_str != nullptr)
-	{
-	  help += ' ';
-	  help += val_type_str;
-	}
+      append_val_type_str (help, o, initial_len);
       help += "\n";
       append_indented_doc (o.set_doc, help);
       if (o.help_doc != nullptr)
@@ -855,6 +945,15 @@ add_setshow_cmds_for_options (command_class cmd_class,
 				  option.help_doc,
 				  nullptr, option.show_cmd_cb,
 				  set_list, show_list);
+	}
+      else if (option.type == var_filename)
+	{
+	  add_setshow_filename_cmd (option.name, cmd_class,
+				    option.var_address.string (option, data),
+				    option.set_doc, option.show_doc,
+				    option.help_doc,
+				    nullptr, option.show_cmd_cb,
+				    set_list, show_list);
 	}
       else
 	gdb_assert_not_reached ("option type not handled");

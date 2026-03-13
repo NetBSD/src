@@ -78,7 +78,7 @@ linespec_location_spec::linespec_location_spec
       p = remove_trailing_whitespace (orig, *linespec);
 
       /* If there is no valid linespec then this will leave the
-	 spec_string as nullptr.  This behaviour is relied on in the
+	 spec_string as nullptr.  This behavior is relied on in the
 	 breakpoint setting code, where spec_string being nullptr means
 	 to use the default breakpoint location.  */
       if ((p - orig) > 0)

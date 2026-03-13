@@ -19,12 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "symtab.h"
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
-#include "tui/tui-winsource.h"
 #include "tui/tui-status.h"
 #include "gdb_curses.h"
 #include <algorithm>

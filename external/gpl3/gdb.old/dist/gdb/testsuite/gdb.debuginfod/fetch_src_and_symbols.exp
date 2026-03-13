@@ -195,12 +195,6 @@ proc test_urls {urls pattern_re test} {
 	$test
 }
 
-# Used as a replacement for delete_breakpoints while calling
-# runto_main in one case where we don't want to delete all the
-# breakpoints.
-proc disable_delete_breakpoints {} {
-}
-
 # Uses the global variables DEBUGDIR and DB which are setup elsewhere
 # in this script.
 #
@@ -234,13 +228,14 @@ proc_with_prefix local_url { } {
     # the contents of DW_AT_comp_dir and DW_AT_name.
     gdb_test "set cwd $debugdir" "" "file [file tail $binfile] cwd"
     gdb_breakpoint $lineno
-    with_override delete_breakpoints disable_delete_breakpoints {
-	if {![runto_main]} {
-	    return
-	}
-	gdb_continue_to_breakpoint "runto breakpoint in main" \
-	    ".* Breakpoint here\\. .*"
+
+    # Run to main, but don't delete all breakpoints.
+    if {![runto_main no-delete-breakpoints]} {
+	return
     }
+
+    gdb_continue_to_breakpoint "runto breakpoint in main" \
+	".* Breakpoint here\\. .*"
 
     # GDB should now find the executable file.
     set enable_debuginfod_question \

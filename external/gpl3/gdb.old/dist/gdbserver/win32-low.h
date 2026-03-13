@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include "nat/windows-nat.h"
+#include "gdbsupport/osabi.h"
 
 struct target_desc;
 
@@ -29,6 +30,12 @@ struct target_desc;
 extern const struct target_desc *win32_tdesc;
 #ifdef __x86_64__
 extern const struct target_desc *wow64_win32_tdesc;
+#endif
+
+#ifdef __CYGWIN__
+constexpr enum gdb_osabi WINDOWS_OSABI = GDB_OSABI_CYGWIN;
+#else
+constexpr enum gdb_osabi WINDOWS_OSABI = GDB_OSABI_WINDOWS;
 #endif
 
 struct win32_target_ops

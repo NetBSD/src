@@ -1,0 +1,70 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the backtrace command for a function with wrong linkage name.  It
+# verifies the function name matches the name emitted by the compiler in
+# the DIE "DW_AT_NAME".
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+# Only extended remote supports the 'run' command.
+require !use_gdb_stub
+
+standard_testfile .c -dw.S
+
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    declare_labels Llines
+    global srcdir subdir srcfile
+
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_C_plus_plus}
+	    {name $srcfile}
+	} {
+	    subprogram {
+		{MACRO_AT_range {func_demangled_test}}
+		{linkage_name "_FUNC_WRONG_MANGLED__"}
+		{name "func_demangled_test"}
+		{external 1 flag}
+	    }
+	    subprogram {
+		{MACRO_AT_range {main}}
+		{external 1 flag}
+		{name main}
+		{main_subprogram 1 flag}
+	    }
+	}
+    }
+}
+
+if {[prepare_for_testing "failed to prepare" ${testfile} \
+	 [list $srcfile $asm_file] {nodebug}]} {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+gdb_breakpoint "func_demangled_test"
+gdb_continue_to_breakpoint "func_demangled_test"
+
+gdb_test "backtrace" \
+    [multi_line \
+	"#0.*in func_demangled_test ()\[^\r\n\]+" \
+	"#1.*in main ()\[^\r\n\]+" ]

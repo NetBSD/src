@@ -4056,9 +4056,8 @@ static bool
 s3_elf32_score_new_section_hook (bfd *abfd, asection *sec)
 {
   struct _score_elf_section_data *sdata;
-  size_t amt = sizeof (*sdata);
 
-  sdata = bfd_zalloc (abfd, amt);
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
   if (sdata == NULL)
     return false;
   sec->used_by_bfd = sdata;
@@ -4365,8 +4364,7 @@ elf32_score_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd, score_elf_link_hash_newfunc,
-				      sizeof (struct score_elf_link_hash_entry),
-				      GENERIC_ELF_DATA))
+				      sizeof (struct score_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4448,6 +4446,7 @@ _bfd_score_elf_common_definition (Elf_Internal_Sym *sym)
 #define ELF_ARCH			bfd_arch_score
 #define ELF_MACHINE_CODE		EM_SCORE
 #define ELF_MACHINE_ALT1		EM_SCORE_OLD
+#define ELF_TARGET_ID			SCORE_ELF_DATA
 #define ELF_MAXPAGESIZE			0x8000
 
 #define elf_info_to_howto		NULL

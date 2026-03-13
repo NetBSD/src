@@ -14,7 +14,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Run make check with all boards from gdb/testsuite/boards.
+# Run make check with all boards from gdb/testsuite/boards, and other useful
+# test configurations.
 
 # It is recommended to create users on the local system that will act as
 #  "remote host" and "remote target", for the boards that use them.
@@ -82,6 +83,12 @@ target_boards=(
     stabs
 )
 
+# Like target_boards, but not actual files in gdb/testsuite/boards.
+virtual_boards=(
+    read1
+    readmore
+)
+
 # Get RUNTESTFLAGS needed for specific boards.
 rtf_for_board ()
 {
@@ -139,6 +146,25 @@ rtf_for_board ()
     esac
 }
 
+# Get make target needed for specific boards.
+maketarget_for_board ()
+{
+    local b
+    b="$1"
+
+    case $b in
+	read1)
+	    maketarget=check-read1
+	    ;;
+	readmore)
+	    maketarget=check-readmore
+	    ;;
+	*)
+	    maketarget=check
+	    ;;
+    esac
+}
+
 # Summarize make check output.
 summary ()
 {
@@ -164,7 +190,7 @@ do_tests ()
     fi
 
     # Run make check.
-    make check \
+    make $maketarget \
 	 RUNTESTFLAGS="${rtf[*]} ${tests[*]}" \
 	 2>&1 \
 	| summary
@@ -189,7 +215,7 @@ do_tests ()
 	cp gdb.sum gdb.log "$dir"
 
 	# Record the 'make check' command to enable easy re-running.
-	echo "make check RUNTESTFLAGS=\"${rtf[*]} ${tests[*]}\"" \
+	echo "make $maketarget RUNTESTFLAGS=\"${rtf[*]} ${tests[*]}\"" \
 	     > "$dir/make-check.sh"
     fi
 }
@@ -279,7 +305,16 @@ main ()
     # For reference, run the tests without any explicit host or target board.
     echo "LOCAL:"
     rtf=()
+    maketarget_for_board
     do_tests
+
+    # Run the virtual boards.
+    for b in "${virtual_boards[@]}"; do
+	echo "TARGET BOARD: $b"
+	rtf_for_board "$b"
+	maketarget_for_board "$b"
+	do_tests
+    done
 
     # Run the boards for local host and local target.
     for b in "${target_boards[@]}"; do
@@ -288,6 +323,7 @@ main ()
 	    --target_board="$b"
 	)
 	rtf_for_board "$b"
+	maketarget_for_board "$b"
 	do_tests
     done
 
@@ -299,6 +335,7 @@ main ()
 	    --target_board="$b"
 	)
 	rtf_for_board "$b"
+	maketarget_for_board "$b"
 	do_tests
     done
 
@@ -313,6 +350,7 @@ main ()
 	    )
 	    rtf_for_board "$h"
 	    rtf_for_board "$b"
+	    maketarget_for_board "$h-$b"
 	    do_tests
 	done
     done
@@ -326,6 +364,7 @@ main ()
 	    --target_board="$b"
 	)
 	rtf_for_board "$b"
+	maketarget_for_board "$b"
 	do_tests
     done
 }

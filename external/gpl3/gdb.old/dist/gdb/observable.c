@@ -75,6 +75,7 @@ DEFINE_OBSERVABLE (target_pre_wait);
 DEFINE_OBSERVABLE (target_post_wait);
 DEFINE_OBSERVABLE (new_program_space);
 DEFINE_OBSERVABLE (free_program_space);
+DEFINE_OBSERVABLE (tui_enabled);
 
 } /* namespace observers */
 } /* namespace gdb */

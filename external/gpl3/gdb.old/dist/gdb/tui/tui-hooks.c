@@ -19,18 +19,11 @@
 
 #include "symtab.h"
 #include "inferior.h"
-#include "command.h"
-#include "bfd.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "target.h"
-#include "gdbcore.h"
-#include "gdbsupport/event-loop.h"
-#include "event-top.h"
 #include "frame.h"
 #include "breakpoint.h"
-#include "ui-out.h"
-#include "top.h"
 #include "observable.h"
 #include "source.h"
 #include <unistd.h>
@@ -38,15 +31,10 @@
 
 #include "tui/tui.h"
 #include "tui/tui-hooks.h"
-#include "tui/tui-data.h"
 #include "tui/tui-layout.h"
-#include "tui/tui-io.h"
 #include "tui/tui-regs.h"
-#include "tui/tui-win.h"
 #include "tui/tui-status.h"
 #include "tui/tui-winsource.h"
-
-#include "gdb_curses.h"
 
 static void
 tui_new_objfile_hook (struct objfile* objfile)
@@ -71,7 +59,7 @@ tui_register_changed (const frame_info_ptr &frame, int regno)
      up in the other.  So we always use the selected frame here, and ignore
      FRAME.  */
   fi = get_selected_frame (NULL);
-  TUI_DATA_WIN->check_register_values (fi);
+  tui_data_win ()->check_register_values (fi);
 }
 
 /* Breakpoint creation hook.
@@ -132,14 +120,15 @@ tui_refresh_frame_and_register_information ()
 
       /* Refresh the register window if it's visible.  */
       if (tui_is_window_visible (DATA_WIN))
-	TUI_DATA_WIN->check_register_values (fi);
+	tui_data_win ()->check_register_values (fi);
     }
   else
     {
       /* Make sure that the source window is displayed.  */
       tui_add_win_to_layout (SRC_WIN);
 
-      struct symtab_and_line sal = get_current_source_symtab_and_line ();
+      symtab_and_line sal
+	= get_current_source_symtab_and_line (current_program_space);
       tui_update_source_windows_with_line (sal);
     }
 }

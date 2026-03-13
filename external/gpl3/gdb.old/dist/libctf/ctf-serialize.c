@@ -1180,10 +1180,10 @@ ctf_write_mem (ctf_dict_t *fp, size_t *size, size_t threshold)
     alloc_len = compressBound (rawbufsiz - sizeof (ctf_header_t))
       + sizeof (ctf_header_t);
 
-  /* Trivial operation if the buffer is incompressible or too small to bother
-     compressing, and we're not doing a forced write-time flip.  */
+  /* Trivial operation if the buffer is too small to bother compressing, and
+     we're not doing a forced write-time flip.  */
 
-  if (rawbufsiz < threshold || rawbufsiz < alloc_len)
+  if (rawbufsiz < threshold)
     {
       alloc_len = rawbufsiz;
       uncompressed = 1;
@@ -1248,10 +1248,10 @@ err:
   return NULL;
 }
 
-/* Compress the specified CTF data stream and write it to the specified file
-   descriptor.  */
+/* Write the compressed CTF data stream to the specified file descriptor,
+   possibly compressed.  Internal only (for now).  */
 int
-ctf_compress_write (ctf_dict_t *fp, int fd)
+ctf_write_thresholded (ctf_dict_t *fp, int fd, size_t threshold)
 {
   unsigned char *buf;
   unsigned char *bp;
@@ -1260,7 +1260,7 @@ ctf_compress_write (ctf_dict_t *fp, int fd)
   ssize_t len;
   int err = 0;
 
-  if ((buf = ctf_write_mem (fp, &tmp, 0)) == NULL)
+  if ((buf = ctf_write_mem (fp, &tmp, threshold)) == NULL)
     return -1;					/* errno is set for us.  */
 
   buf_len = tmp;
@@ -1283,36 +1283,17 @@ ret:
   return err;
 }
 
+/* Compress the specified CTF data stream and write it to the specified file
+   descriptor.  */
+int
+ctf_compress_write (ctf_dict_t *fp, int fd)
+{
+  return ctf_write_thresholded (fp, fd, 0);
+}
+
 /* Write the uncompressed CTF data stream to the specified file descriptor.  */
 int
 ctf_write (ctf_dict_t *fp, int fd)
 {
-  unsigned char *buf;
-  unsigned char *bp;
-  size_t tmp;
-  ssize_t buf_len;
-  ssize_t len;
-  int err = 0;
-
-  if ((buf = ctf_write_mem (fp, &tmp, (size_t) -1)) == NULL)
-    return -1;					/* errno is set for us.  */
-
-  buf_len = tmp;
-  bp = buf;
-
-  while (buf_len > 0)
-    {
-      if ((len = write (fd, bp, buf_len)) < 0)
-	{
-	  err = ctf_set_errno (fp, errno);
-	  ctf_err_warn (fp, 0, 0, _("ctf_compress_write: error writing"));
-	  goto ret;
-	}
-      buf_len -= len;
-      bp += len;
-    }
-
-ret:
-  free (buf);
-  return err;
+  return ctf_write_thresholded (fp, fd, (size_t) -1);
 }

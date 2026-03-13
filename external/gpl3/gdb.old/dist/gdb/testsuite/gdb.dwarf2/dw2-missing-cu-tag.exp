@@ -52,11 +52,11 @@ clean_restart
 gdb_test_no_output "maint set dwarf synchronous on"
 
 # This pattern is hit when GDB does not use -readnow (i.e. the default
-# behaviour).
+# behavior).
 set pattern1 \
     [multi_line \
 	 "Reading symbols from \[^\r\n\]+" \
-	 "Dwarf Error: unexpected tag 'DW_TAG_subprogram' at offset $hex"]
+	 "DWARF Error: unexpected tag 'DW_TAG_subprogram' at offset $hex"]
 
 # This pattern is hit when GDB does use -readnow (e.g. running with
 # --target_board=readnow).
@@ -64,7 +64,7 @@ set pattern2 \
     [multi_line \
 	 "Reading symbols from \[^\r\n\]+" \
 	 "Expanding full symbols from \[^\r\n\]+" \
-	 "Dwarf Error: unexpected tag 'DW_TAG_subprogram' at offset $hex"]
+	 "DWARF Error: unexpected tag 'DW_TAG_subprogram' at offset $hex"]
 
 # Load the executable, we expect an error from the DWARF parser.
 gdb_test_multiple "file $host_binfile" "file $testfile" {
