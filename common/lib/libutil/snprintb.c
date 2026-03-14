@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.50 2025/10/09 18:51:41 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.51 2026/03/14 14:25:46 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.50 2025/10/09 18:51:41 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.51 2026/03/14 14:25:46 rillig Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.50 2025/10/09 18:51:41 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.50 2025/10/09 18:51:41 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.51 2026/03/14 14:25:46 rillig Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -67,15 +67,6 @@ typedef struct {
 	size_t comma_pos;
 	int in_angle_brackets;
 } state;
-
-static int
-is_ident(char c)
-{
-	return ('0' <= c && c <= '9')
-	    || ('A' <= c && c <= 'Z')
-	    || ('a' <= c && c <= 'z')
-	    || c == '_';
-}
 
 static void
 store(state *s, char c)
@@ -214,10 +205,7 @@ new_style(state *s)
 		case '=':
 		case ':':
 			s->bitfmt += 2;
-			if (kind == '=' && field_kind != 'f')
-				return -1;
-			if (kind == ':' && field_kind != 'F'
-			    && (field_kind != 'f' || is_ident(*s->bitfmt)))
+			if (field_kind == 0)
 				return -1;
 			uint8_t cmp = cur_bitfmt[1];
 			if (cur_bitfmt[2] == '\0')
@@ -234,7 +222,6 @@ new_style(state *s)
 		case '*':
 			if (field_kind == 0)
 				return -1;
-			field_kind = 0;
 			if (cur_bitfmt[1] == '\0')
 				return -1;
 			s->bitfmt++;
