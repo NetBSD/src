@@ -1,9 +1,9 @@
-/*	$NetBSD: msg_193.c,v 1.22 2024/11/13 04:32:49 rillig Exp $	*/
+/*	$NetBSD: msg_193.c,v 1.23 2026/03/14 20:27:12 rillig Exp $	*/
 # 3 "msg_193.c"
 
 // Test for message: '%s' statement not reached [193]
 
-/* lint1-extra-flags: -X 351 */
+/* lint1-extra-flags: -X 351 -h */
 
 /*
  * Test the reachability of statements in a function.
@@ -616,7 +616,122 @@ reachable:
 	reachable();
 }
 
-/* TODO: switch */
+void
+test_switch_case_default_break(int x)
+{
+	switch (x) {
+	case 1:
+		break;
+	default:
+		break;
+	}
+	return;
+}
+
+void
+test_switch_case_default_return(int x)
+{
+	switch (x) {
+	case 1:
+		return;
+	default:
+		return;
+	}
+	/* expect+1: warning: 'return' statement not reached [193] */
+	return;
+}
+
+void
+test_switch_default_case_break(int x)
+{
+	switch (x) {
+	default:
+		break;
+	case 1:
+		break;
+	}
+	return;
+}
+
+void
+test_switch_default_case_return(int x)
+{
+	switch (x) {
+	default:
+		return;
+	case 1:
+		return;
+	}
+	/* expect+1: warning: 'return' statement not reached [193] */
+	return;
+}
+
+void
+test_switch_default_return_case_break(int x)
+{
+	switch (x) {
+	default:
+		return;
+	case 1:
+		break;
+	}
+	return;
+}
+
+void
+test_switch_default_break_case_return(int x)
+{
+	switch (x) {
+	default:
+		break;
+	case 1:
+		return;
+	}
+	return;
+}
+
+void
+test_switch_case_return_default_none(int x)
+{
+	switch (x) {
+	case 1:
+		return;
+	default:
+		;
+	}
+	return;
+}
+
+void
+test_switch_default_none_case_return(int x)
+{
+	switch (x) {
+	default:
+		;
+	/* expect+1: warning: fallthrough on case statement [220] */
+	case 1:
+		return;
+	}
+	/* expect+1: warning: 'return' statement not reached [193] */
+	return;
+}
+
+enum minimal_enum {
+	CONSTANT
+};
+
+void
+test_switch_enum_exhaustive(enum minimal_enum x)
+{
+	switch (x) {
+	case CONSTANT:
+		return;
+	}
+	// FIXME: lint assumes that this statement is not reachable, which
+	//  is wrong since the variable may contain any other int value.
+	/* expect+1: warning: 'return' statement not reached [193] */
+	return;
+}
 
 /* TODO: system-dependent constant expression (see tn_system_dependent) */
 
