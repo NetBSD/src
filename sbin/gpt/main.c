@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2026/02/10 05:08:21 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2026/03/14 19:17:23 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.18 2026/02/10 05:08:21 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.19 2026/03/14 19:17:23 rillig Exp $");
 #endif
 
 #include <stdio.h>
@@ -189,7 +189,7 @@ main(int argc, char *argv[])
 			*/
 			case 'S':
 				if (mediasz > UINTMAX_MAX /
-				    (secsz ? secsz: 512))
+				    (secsz ? secsz : 512))
 					errx(EXIT_FAILURE,
 					    "Media size too large");
 				if (secsz != 0) {
@@ -200,37 +200,33 @@ main(int argc, char *argv[])
 				}
 				continue;
 			case 'K':
-				if (mediasz >= UINTMAX_MAX / 1024)
+				if (mediasz >= UINTMAX_MAX >> 10)
 					usage();
-				mediasz *= 1024;
+				mediasz <<= 10;
 				p++;
 				break;
 			case 'M':
-				if (mediasz >= UINTMAX_MAX / (1024L * 1024L))
+				if (mediasz >= UINTMAX_MAX >> 20)
 					usage();
-				mediasz *= 1024L * 1024L;
+				mediasz <<= 20;
 				p++;
 				break;
 			case 'G':
-				if (mediasz >= UINTMAX_MAX /
-				    (1024L * 1024L * 1024L))
+				if (mediasz >= UINTMAX_MAX >> 30)
 					usage();
-				mediasz *= 1024L * 1024L * 1024L;
+				mediasz <<= 30;
 				p++;
 				break;
 			case 'T':
-				if (mediasz >= UINTMAX_MAX / (uintmax_t)
-				    1024 * 1024 * 1024 * 1024)
+				if (mediasz >= UINTMAX_MAX >> 40)
 					usage();
-				mediasz *= (uintmax_t)1024 * 1024 * 1024 * 1024;
+				mediasz <<= 40;
 				p++;
 				break;
 			case 'P':
-				if (mediasz >= UINTMAX_MAX / (uintmax_t)
-				    1024 * 1024 * 1024 * 1024 * 1024)
+				if (mediasz >= UINTMAX_MAX >> 50)
 					usage();
-				mediasz *= (uintmax_t)
-				    1024 * 1024 * 1024 * 1024 * 1024;
+				mediasz <<= 50;
 				p++;
 				break;
 
