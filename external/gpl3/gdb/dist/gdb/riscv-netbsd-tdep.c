@@ -205,10 +205,8 @@ riscv_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_software_single_step (gdbarch, riscv_software_single_step);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 (riscv_isa_xlen (gdbarch) == 4
-					  ? svr4_ilp32_fetch_link_map_offsets
-					  : svr4_lp64_fetch_link_map_offsets));
+  set_solib_svr4_ops (gdbarch, riscv_isa_xlen (gdbarch) == 4 ?
+      make_svr4_ilp32_solib_ops : make_svr4_lp64_solib_ops);
 
   tramp_frame_prepend_unwinder (gdbarch, &riscv_nbsd_sigframe);
 

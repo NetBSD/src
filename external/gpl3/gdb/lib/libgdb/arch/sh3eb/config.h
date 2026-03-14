@@ -44,6 +44,9 @@
 /* Define to BFD's default target vector. */
 #define DEFAULT_BFD_VEC sh_elf32_nbsd_vec
 
+/* defined if dwarf format was requested. */
+#define DWARF_FORMAT_AVAILABLE 1
+
 /* Handle .ctf type-info sections */
 #define ENABLE_LIBCTF 1
 
@@ -98,6 +101,9 @@
 /* Define if amd-dbgapi is being linked in. */
 /* #undef HAVE_AMD_DBGAPI */
 
+/* Define to 1 if you have the <asm/termios.h> header file. */
+/* #undef HAVE_ASM_TERMIOS_H */
+
 /* Define to 1 if you have the `btowc' function. */
 #define HAVE_BTOWC 1
 
@@ -108,6 +114,9 @@
 /* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
    the CoreFoundation framework. */
 /* #undef HAVE_CFPREFERENCESCOPYAPPVALUE */
+
+/* Define if compiling support to gdb compile. */
+#define HAVE_COMPILE 1
 
 /* Define to 1 if you have the <cursesX.h> header file. */
 /* #undef HAVE_CURSESX_H */
@@ -245,6 +254,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #define HAVE_INTTYPES_H 1
+
+/* Define to 1 if you have the <IOKit/serial/ioss.h> header file. */
+/* #undef HAVE_IOKIT_SERIAL_IOSS_H */
 
 /* Define to 1 if you have the `kinfo_getfile' function. */
 /* #undef HAVE_KINFO_GETFILE */
@@ -641,6 +653,9 @@
    */
 #define LT_OBJDIR ".libs/"
 
+/* defined if mdebug format was requested. */
+#define MDEBUG_FORMAT_AVAILABLE 1
+
 /* Name of this package. */
 #define PACKAGE "gdb"
 
@@ -724,9 +739,6 @@
 /* The size of `unsigned __int128', as computed by sizeof. */
 #define SIZEOF_UNSIGNED___INT128 0
 
-/* The size of `void *', as computed by sizeof. */
-#define SIZEOF_VOID_P 4
-
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at runtime.
@@ -737,6 +749,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
+
+/* Which binary file formats were requested at configure time. */
+/* #undef SUPPORTED_BINARY_FILE_FORMATS */
 
 /* automatically load a system-wide gdbinit file */
 #define SYSTEM_GDBINIT ""

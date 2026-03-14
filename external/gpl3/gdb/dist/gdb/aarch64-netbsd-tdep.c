@@ -185,8 +185,7 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   nbsd_init_abi (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 
   tramp_frame_prepend_unwinder (gdbarch, &aarch64_nbsd_sigframe);
 

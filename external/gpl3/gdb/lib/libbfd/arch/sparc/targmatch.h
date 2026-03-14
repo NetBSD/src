@@ -68,15 +68,6 @@
 
 
     
-#if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_cloudabi_vec)
-
-{ "aarch64-*-cloudabi*",
-&aarch64_elf64_le_cloudabi_vec },
-#endif
-
-
-
-    
 #if !defined (SELECT_VECS) || defined (HAVE_aarch64_elf64_le_vec)
 
 { "aarch64-*-haiku*",
@@ -242,22 +233,6 @@
 
 { "arm*-*-haiku*",
 &arm_elf32_le_vec },
-#endif
-
-
-    
-#if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_nacl_le_vec)
-
-{ "arm-*-nacl*",
-&arm_elf32_nacl_le_vec },
-#endif
-
-
-    
-#if !defined (SELECT_VECS) || defined (HAVE_arm_elf32_nacl_be_vec)
-
-{ "armeb-*-nacl*",
-&arm_elf32_nacl_be_vec },
 #endif
 
 
@@ -760,14 +735,6 @@
 
     
 #ifdef BFD64
-#if !defined (SELECT_VECS) || defined (HAVE_x86_64_elf64_cloudabi_vec)
-
-{ "x86_64-*-cloudabi*",
-&x86_64_elf64_cloudabi_vec },
-#endif
-
-
-    
 #if !defined (SELECT_VECS) || defined (HAVE_x86_64_mach_o_vec)
 
 { "x86_64-*-darwin*",
@@ -1345,7 +1312,6 @@
 #endif
 
 
-
     
 #if !defined (SELECT_VECS) || defined (HAVE_mips_elf32_ntrad_le_vec)
 
@@ -1360,7 +1326,6 @@
 { "mips64*-*-linux*-gnuabi64",
 &mips_elf64_trad_be_vec },
 #endif
-
 
 
     

@@ -1,6 +1,6 @@
 /* Everything about catch/throw catchpoints, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,12 +25,8 @@
 #include "annotate.h"
 #include "valprint.h"
 #include "cli/cli-utils.h"
-#include "completer.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "mi/mi-common.h"
-#include "linespec.h"
 #include "probe.h"
-#include "objfiles.h"
 #include "cp-abi.h"
 #include "gdbsupport/gdb_regex.h"
 #include "cp-support.h"
@@ -499,9 +495,7 @@ static const struct internalvar_funcs exception_funcs =
 
 
 
-void _initialize_break_catch_throw ();
-void
-_initialize_break_catch_throw ()
+INIT_GDB_FILE (break_catch_throw)
 {
   /* Add catch and tcatch sub-commands.  */
   add_catch_command ("catch", _("\

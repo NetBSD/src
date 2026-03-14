@@ -1,6 +1,6 @@
 /* The find command.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -279,9 +279,7 @@ find_command (const char *args, int from_tty)
 		found_count > 1 ? "s" : "");
 }
 
-void _initialize_mem_search ();
-void
-_initialize_mem_search ()
+INIT_GDB_FILE (mem_search)
 {
   add_cmd ("find", class_vars, find_command, _("\
 Search memory for a sequence of bytes.\n\

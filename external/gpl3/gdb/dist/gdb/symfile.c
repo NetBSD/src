@@ -1,6 +1,6 @@
 /* Generic symbol file reading for the GNU debugger, GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -835,9 +835,9 @@ init_entry_point_info (struct objfile *objfile)
 	= gdbarch_addr_bits_remove (objfile->arch (), entry_point);
 
       found = 0;
-      for (obj_section *osect : objfile->sections ())
+      for (obj_section &osect : objfile->sections ())
 	{
-	  struct bfd_section *sect = osect->the_bfd_section;
+	  struct bfd_section *sect = osect.the_bfd_section;
 
 	  if (entry_point >= bfd_section_vma (sect)
 	      && entry_point < (bfd_section_vma (sect)
@@ -1101,7 +1101,7 @@ symbol_file_add_with_addrs (const gdb_bfd_ref_ptr &abfd, const char *name,
      no separate debug file.  If there is a separate debug file which
      does not have symbols, we'll have emitted this message for that
      file, and so printing it twice is just redundant.  */
-  if (should_print && !objfile_has_symbols (objfile)
+  if (should_print && !objfile->has_symbols ()
       && objfile->separate_debug_objfile == nullptr)
     gdb_printf (_("(No debugging symbols found in %ps)\n"),
 		styled_string (file_name_style.style (), name));
@@ -2323,7 +2323,7 @@ add_symbol_file_command (const char *args, int from_tty)
 
   objf = symbol_file_add (filename.get (), add_flags, &section_addrs,
 			  flags);
-  if (!objfile_has_symbols (objf) && objf->per_bfd->minimal_symbol_count <= 0)
+  if (!objf->has_symbols () && objf->per_bfd->minimal_symbol_count <= 0)
     warning (_("newly-added symbol file \"%ps\" does not provide any symbols"),
 	     styled_string (file_name_style.style (), filename.get ()));
 
@@ -2662,7 +2662,7 @@ reread_symbols (int from_tty)
 	      objfile->expand_all_symtabs ();
 	    }
 
-	  if (!objfile_has_symbols (objfile))
+	  if (!objfile->has_symbols ())
 	    {
 	      gdb_stdout->wrap_here (0);
 	      gdb_printf (_("(no debugging symbols found)\n"));
@@ -3007,9 +3007,9 @@ static void
 overlay_invalidate_all (program_space *pspace)
 {
   for (objfile *objfile : pspace->objfiles ())
-    for (obj_section *sect : objfile->sections ())
-      if (section_is_overlay (sect))
-	sect->ovly_mapped = -1;
+    for (obj_section &sect : objfile->sections ())
+      if (section_is_overlay (&sect))
+	sect.ovly_mapped = -1;
 }
 
 /* Function: section_is_mapped (SECTION)
@@ -3035,7 +3035,7 @@ section_is_mapped (struct obj_section *osect)
     case ovly_off:
       return 0;			/* overlay debugging off */
     case ovly_auto:		/* overlay debugging automatic */
-      /* Unles there is a gdbarch_overlay_update function,
+      /* Unless there is a gdbarch_overlay_update function,
 	 there's really nothing useful to do here (can't really go auto).  */
       gdbarch = osect->objfile->arch ();
       if (gdbarch_overlay_update_p (gdbarch))
@@ -3183,18 +3183,18 @@ find_pc_overlay (CORE_ADDR pc)
   if (overlay_debugging)
     {
       for (objfile *objfile : current_program_space->objfiles ())
-	for (obj_section *osect : objfile->sections ())
-	  if (section_is_overlay (osect))
+	for (obj_section &osect : objfile->sections ())
+	  if (section_is_overlay (&osect))
 	    {
-	      if (pc_in_mapped_range (pc, osect))
+	      if (pc_in_mapped_range (pc, &osect))
 		{
-		  if (section_is_mapped (osect))
-		    return osect;
+		  if (section_is_mapped (&osect))
+		    return &osect;
 		  else
-		    best_match = osect;
+		    best_match = &osect;
 		}
-	      else if (pc_in_unmapped_range (pc, osect))
-		best_match = osect;
+	      else if (pc_in_unmapped_range (pc, &osect))
+		best_match = &osect;
 	    }
     }
   return best_match;
@@ -3210,9 +3210,9 @@ find_pc_mapped_section (CORE_ADDR pc)
   if (overlay_debugging)
     {
       for (objfile *objfile : current_program_space->objfiles ())
-	for (obj_section *osect : objfile->sections ())
-	  if (pc_in_mapped_range (pc, osect) && section_is_mapped (osect))
-	    return osect;
+	for (obj_section &osect : objfile->sections ())
+	  if (pc_in_mapped_range (pc, &osect) && section_is_mapped (&osect))
+	    return &osect;
     }
 
   return NULL;
@@ -3229,18 +3229,18 @@ list_overlays_command (const char *args, int from_tty)
   if (overlay_debugging)
     {
       for (objfile *objfile : current_program_space->objfiles ())
-	for (obj_section *osect : objfile->sections ())
-	  if (section_is_mapped (osect))
+	for (obj_section &osect : objfile->sections ())
+	  if (section_is_mapped (&osect))
 	    {
 	      struct gdbarch *gdbarch = objfile->arch ();
 	      const char *name;
 	      bfd_vma lma, vma;
 	      int size;
 
-	      vma = bfd_section_vma (osect->the_bfd_section);
-	      lma = bfd_section_lma (osect->the_bfd_section);
-	      size = bfd_section_size (osect->the_bfd_section);
-	      name = bfd_section_name (osect->the_bfd_section);
+	      vma = bfd_section_vma (osect.the_bfd_section);
+	      lma = bfd_section_lma (osect.the_bfd_section);
+	      size = bfd_section_size (osect.the_bfd_section);
+	      name = bfd_section_name (osect.the_bfd_section);
 
 	      gdb_printf ("Section %s, loaded at ", name);
 	      gdb_puts (paddress (gdbarch, lma));
@@ -3275,27 +3275,27 @@ map_overlay_command (const char *args, int from_tty)
 
   /* First, find a section matching the user supplied argument.  */
   for (objfile *obj_file : current_program_space->objfiles ())
-    for (obj_section *sec : obj_file->sections ())
-      if (!strcmp (bfd_section_name (sec->the_bfd_section), args))
+    for (obj_section &sec : obj_file->sections ())
+      if (!strcmp (bfd_section_name (sec.the_bfd_section), args))
 	{
 	  /* Now, check to see if the section is an overlay.  */
-	  if (!section_is_overlay (sec))
+	  if (!section_is_overlay (&sec))
 	    continue;		/* not an overlay section */
 
 	  /* Mark the overlay as "mapped".  */
-	  sec->ovly_mapped = 1;
+	  sec.ovly_mapped = 1;
 
 	  /* Next, make a pass and unmap any sections that are
 	     overlapped by this new section: */
 	  for (objfile *objfile2 : current_program_space->objfiles ())
-	    for (obj_section *sec2 : objfile2->sections ())
-	      if (sec2->ovly_mapped && sec != sec2 && sections_overlap (sec,
-									sec2))
+	    for (obj_section &sec2 : objfile2->sections ())
+	      if (sec2.ovly_mapped && &sec != &sec2 && sections_overlap (&sec,
+									 &sec2))
 		{
 		  if (info_verbose)
 		    gdb_printf (_("Note: section %s unmapped by overlap\n"),
-				bfd_section_name (sec2->the_bfd_section));
-		  sec2->ovly_mapped = 0; /* sec2 overlaps sec: unmap sec2.  */
+				bfd_section_name (sec2.the_bfd_section));
+		  sec2.ovly_mapped = 0; /* sec2 overlaps sec: unmap sec2.  */
 		}
 	  return;
 	}
@@ -3319,12 +3319,12 @@ unmap_overlay_command (const char *args, int from_tty)
 
   /* First, find a section matching the user supplied argument.  */
   for (objfile *objfile : current_program_space->objfiles ())
-    for (obj_section *sec : objfile->sections ())
-      if (!strcmp (bfd_section_name (sec->the_bfd_section), args))
+    for (obj_section &sec : objfile->sections ())
+      if (!strcmp (bfd_section_name (sec.the_bfd_section), args))
 	{
-	  if (!sec->ovly_mapped)
+	  if (!sec.ovly_mapped)
 	    error (_("Section %s is not mapped"), args);
-	  sec->ovly_mapped = 0;
+	  sec.ovly_mapped = 0;
 	  return;
 	}
   error (_("No overlay section called %s"), args);
@@ -3578,17 +3578,17 @@ simple_overlay_update (struct obj_section *osect)
 
   /* Now may as well update all sections, even if only one was requested.  */
   for (objfile *objfile : current_program_space->objfiles ())
-    for (obj_section *sect : objfile->sections ())
-      if (section_is_overlay (sect))
+    for (obj_section &sect : objfile->sections ())
+      if (section_is_overlay (&sect))
 	{
 	  int i;
-	  asection *bsect = sect->the_bfd_section;
+	  asection *bsect = sect.the_bfd_section;
 
 	  for (i = 0; i < cache_novlys; i++)
 	    if (cache_ovly_table[i][VMA] == bfd_section_vma (bsect)
 		&& cache_ovly_table[i][LMA] == bfd_section_lma (bsect))
 	      { /* obj_section matches i'th entry in ovly_table.  */
-		sect->ovly_mapped = cache_ovly_table[i][MAPPED];
+		sect.ovly_mapped = cache_ovly_table[i][MAPPED];
 		break;		/* finished with inner for loop: break out.  */
 	      }
 	}
@@ -3761,14 +3761,13 @@ symfile_free_objfile (struct objfile *objfile)
    See quick_symbol_functions.expand_symtabs_matching for details.  */
 
 bool
-expand_symtabs_matching
-  (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
-   const lookup_name_info &lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
-   block_search_flags search_flags,
-   domain_search_flags domain,
-   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
+expand_symtabs_matching (expand_symtabs_file_matcher file_matcher,
+			 const lookup_name_info &lookup_name,
+			 expand_symtabs_symbol_matcher symbol_matcher,
+			 expand_symtabs_expansion_listener expansion_notify,
+			 block_search_flags search_flags,
+			 domain_search_flags domain,
+			 expand_symtabs_lang_matcher lang_matcher)
 {
   for (objfile *objfile : current_program_space->objfiles ())
     if (!objfile->expand_symtabs_matching (file_matcher,
@@ -3787,8 +3786,7 @@ expand_symtabs_matching
    See quick_symbol_functions.map_symbol_filenames for details.  */
 
 void
-map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-		      bool need_fullname)
+map_symbol_filenames (symbol_filename_listener fun, bool need_fullname)
 {
   for (objfile *objfile : current_program_space->objfiles ())
     objfile->map_symbol_filenames (fun, need_fullname);
@@ -3851,9 +3849,7 @@ test_set_ext_lang_command ()
 
 #endif /* GDB_SELF_TEST */
 
-void _initialize_symfile ();
-void
-_initialize_symfile ()
+INIT_GDB_FILE (symfile)
 {
   struct cmd_list_element *c;
 

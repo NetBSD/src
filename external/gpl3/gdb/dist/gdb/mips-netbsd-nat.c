@@ -1,6 +1,6 @@
 /* Native-dependent code for MIPS systems running NetBSD.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -152,9 +152,7 @@ mipsnbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 0;
 }
 
-void _initialize_mipsnbsd_nat ();
-void
-_initialize_mipsnbsd_nat ()
+INIT_GDB_FILE (mipsnbsd_nat)
 {
   add_inf_child_target (&the_mips_nbsd_nat_target);
   bsd_kvm_add_target (mipsnbsd_supply_pcb);

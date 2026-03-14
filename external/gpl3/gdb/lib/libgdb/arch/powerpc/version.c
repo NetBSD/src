@@ -3,6 +3,6 @@
 /* Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp  */
 
 #include "gdbsupport/version.h"
-const char version[] = "16.3";
+const char version[] = "17.1";
 const char host_name[] = "powerpc--netbsd";
 const char target_name[] = "powerpc--netbsd";

@@ -1,5 +1,5 @@
 /* Intel 80386/80486-specific support for 32-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1209,6 +1209,10 @@ elf_i386_tls_transition (struct bfd_link_info *info, bfd *abfd,
    to
    test $foo, %reg1
    and convert
+   push foo@GOT[(%reg)]
+   to
+   push $foo
+   and convert
    binop foo@GOT[(%reg1)], %reg2
    to
    binop $foo, %reg2
@@ -1233,7 +1237,7 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
   unsigned int addend;
   unsigned int nop;
   bfd_vma nop_offset;
-  bool is_pic;
+  bool is_pic, is_branch = false;
   bool to_reloc_32;
   bool abs_symbol;
   unsigned int r_type;
@@ -1301,9 +1305,26 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
 
   opcode = bfd_get_8 (abfd, contents + roff - 2);
 
-  /* Convert to R_386_32 if PIC is false or there is no base
-     register.  */
-  to_reloc_32 = !is_pic || baseless;
+  if (opcode == 0xff)
+    {
+      switch (modrm & 0x38)
+	{
+	case 0x10: /* CALL */
+	case 0x20: /* JMP */
+	  is_branch = true;
+	  break;
+
+	case 0x30: /* PUSH */
+	  break;
+
+	default:
+	  return true;
+	}
+    }
+
+  /* Convert to R_386_32 if PIC is false (if PIC is true we already know
+     there is a base register).  */
+  to_reloc_32 = !is_pic;
 
   eh = elf_x86_hash_entry (h);
 
@@ -1311,7 +1332,7 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
      reloc.  */
   if (h == NULL)
     {
-      if (opcode == 0x0ff)
+      if (is_branch)
 	/* Convert "call/jmp *foo@GOT[(%reg)]".  */
 	goto convert_branch;
       else
@@ -1327,7 +1348,7 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
       && !eh->linker_def
       && local_ref)
     {
-      if (opcode == 0xff)
+      if (is_branch)
 	{
 	  /* No direct branch to 0 for PIC.  */
 	  if (is_pic)
@@ -1343,7 +1364,7 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
 	}
     }
 
-  if (opcode == 0xff)
+  if (is_branch)
     {
       /* We have "call/jmp *foo@GOT[(%reg)]".  */
       if ((h->root.type == bfd_link_hash_defined
@@ -1399,7 +1420,8 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
   else
     {
       /* We have "mov foo@GOT[(%re1g)], %reg2",
-	 "test %reg1, foo@GOT(%reg2)" and
+	 "test %reg1, foo@GOT(%reg2)",
+	 "push foo@GOT[(%reg)]", or
 	 "binop foo@GOT[(%reg1)], %reg2".
 
 	 Avoid optimizing _DYNAMIC since ld.so may use its
@@ -1453,15 +1475,23 @@ elf_i386_convert_load_reloc (bfd *abfd, Elf_Internal_Shdr *symtab_hdr,
 		  modrm = 0xc0 | (modrm & 0x38) >> 3;
 		  opcode = 0xf7;
 		}
-	      else
+	      else if ((opcode | 0x38) == 0x3b)
 		{
 		  /* Convert "binop foo@GOT(%reg1), %reg2" to
 		     "binop $foo, %reg2".  */
-		  modrm = (0xc0
-			   | (modrm & 0x38) >> 3
-			   | (opcode & 0x3c));
+		  modrm = 0xc0 | ((modrm & 0x38) >> 3) | (opcode & 0x38);
 		  opcode = 0x81;
 		}
+	      else if (opcode == 0xff)
+		{
+		  /* Convert "push foo@GOT(%reg)" to
+		     "push $foo".  */
+		  modrm = 0x68; /* Really the opcode.  */
+		  opcode = 0x2e; /* Really a meaningless %cs: prefix.  */
+		}
+	      else
+		return true;
+
 	      bfd_put_8 (abfd, modrm, contents + roff - 1);
 	      r_type = R_386_32;
 	    }
@@ -1531,6 +1561,7 @@ elf_i386_scan_relocs (bfd *abfd,
       const char *name;
       bool size_reloc;
       bool no_dynreloc;
+      reloc_howto_type *howto;
 
       r_symndx = ELF32_R_SYM (rel->r_info);
       r_type = ELF32_R_TYPE (rel->r_info);
@@ -1544,6 +1575,17 @@ elf_i386_scan_relocs (bfd *abfd,
 	  /* xgettext:c-format */
 	  _bfd_error_handler (_("%pB: bad symbol index: %d"),
 			      abfd, r_symndx);
+	  goto error_return;
+	}
+
+      howto = elf_i386_rtype_to_howto (r_type);
+      if (rel->r_offset + bfd_get_reloc_size (howto) > sec->size)
+	{
+	  /* xgettext:c-format */
+	  _bfd_error_handler
+	    (_("%pB: bad reloc offset (%#" PRIx32 " > %#" PRIx32 ") for"
+	       " section `%pA'"), abfd, (uint32_t) rel->r_offset,
+	     (uint32_t) sec->size, sec);
 	  goto error_return;
 	}
 
@@ -1645,6 +1687,10 @@ elf_i386_scan_relocs (bfd *abfd,
 	  size_reloc = true;
 	  goto do_size;
 
+	case R_386_TLS_DESC_CALL:
+	  htab->has_tls_desc_call = 1;
+	  goto need_got;
+
 	case R_386_TLS_IE_32:
 	case R_386_TLS_IE:
 	case R_386_TLS_GOTIE:
@@ -1656,7 +1702,7 @@ elf_i386_scan_relocs (bfd *abfd,
 	case R_386_GOT32X:
 	case R_386_TLS_GD:
 	case R_386_TLS_GOTDESC:
-	case R_386_TLS_DESC_CALL:
+ need_got:
 	  /* This symbol requires a global offset table entry.  */
 	  {
 	    int tls_type, old_tls_type;
@@ -3117,7 +3163,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 
 	      if (GOT_TLS_GDESC_P (tls_type))
 		{
-		  bfd_byte *loc;
 		  outrel.r_info = ELF32_R_INFO (indx, R_386_TLS_DESC);
 		  BFD_ASSERT (htab->sgotplt_jump_table_size + offplt + 8
 			      <= htab->elf.sgotplt->size);
@@ -3125,13 +3170,8 @@ elf_i386_relocate_section (bfd *output_bfd,
 				     + htab->elf.sgotplt->output_offset
 				     + offplt
 				     + htab->sgotplt_jump_table_size);
-		  sreloc = htab->elf.srelplt;
-		  loc = sreloc->contents;
-		  loc += (htab->next_tls_desc_index++
-			  * sizeof (Elf32_External_Rel));
-		  BFD_ASSERT (loc + sizeof (Elf32_External_Rel)
-			      <= sreloc->contents + sreloc->size);
-		  bfd_elf32_swap_reloc_out (output_bfd, &outrel, loc);
+		  sreloc = htab->rel_tls_desc;
+		  elf_append_rel (output_bfd, sreloc, &outrel);
 		  if (indx == 0)
 		    {
 		      BFD_ASSERT (! unresolved_reloc);
@@ -3558,14 +3598,6 @@ elf_i386_relocate_section (bfd *output_bfd,
 
       rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
-      if (rel_hdr->sh_size == 0)
-	{
-	  /* It is too late to remove an empty reloc section.  Leave
-	     one NONE reloc.
-	     ??? What is wrong with an empty section???  */
-	  rel_hdr->sh_size = rel_hdr->sh_entsize;
-	  deleted -= 1;
-	}
       rel_hdr = _bfd_elf_single_rel_hdr (input_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
       input_section->reloc_count -= deleted;
@@ -4099,8 +4131,8 @@ elf_i386_finish_dynamic_sections (bfd *output_bfd,
     {
       if (bfd_is_abs_section (htab->elf.splt->output_section))
 	{
-	  info->callbacks->einfo
-	    (_("%F%P: discarded output section: `%pA'\n"),
+	  info->callbacks->fatal
+	    (_("%P: discarded output section: `%pA'\n"),
 	     htab->elf.splt);
 	  return false;
 	}
@@ -4322,7 +4354,7 @@ elf_i386_get_synthetic_symtab (bfd *abfd,
 	      if (lazy_ibt_plt != NULL
 		  && (memcmp (plt_contents + lazy_ibt_plt->plt0_entry_size,
 			      lazy_ibt_plt->plt_entry,
-			      lazy_ibt_plt->plt_got_offset) == 0))
+			      lazy_ibt_plt->plt_reloc_offset) == 0))
 		plt_type = plt_lazy | plt_second;
 	      else
 		plt_type = plt_lazy;
@@ -4335,7 +4367,7 @@ elf_i386_get_synthetic_symtab (bfd *abfd,
 	      if (lazy_ibt_plt != NULL
 		  && (memcmp (plt_contents + lazy_ibt_plt->plt0_entry_size,
 			      lazy_ibt_plt->pic_plt_entry,
-			      lazy_ibt_plt->plt_got_offset) == 0))
+			      lazy_ibt_plt->plt_reloc_offset) == 0))
 		plt_type = plt_lazy | plt_pic | plt_second;
 	      else
 		plt_type = plt_lazy | plt_pic;
@@ -4458,6 +4490,50 @@ elf_i386_link_setup_gnu_properties (struct bfd_link_info *info)
   return _bfd_x86_elf_link_setup_gnu_properties (info, &init_table);
 }
 
+static void
+elf_i386_add_glibc_version_dependency
+  (struct elf_find_verdep_info *rinfo)
+{
+  int i = 0;
+  const char *version[4] = { NULL, NULL, NULL, NULL };
+  bool auto_version[4] = { false, false, false, false };
+  struct elf_x86_link_hash_table *htab;
+
+  if (rinfo->info->enable_dt_relr)
+    {
+      version[i] = "GLIBC_ABI_DT_RELR";
+      i++;
+    }
+
+  htab = elf_x86_hash_table (rinfo->info, I386_ELF_DATA);
+  if (htab != NULL)
+    {
+      if (htab->params->gnu2_tls_version_tag && htab->has_tls_desc_call)
+	{
+	  version[i] = "GLIBC_ABI_GNU2_TLS";
+	  /* 2 == auto, enable if libc.so defines the GLIBC_ABI_GNU2_TLS
+	     version.  */
+	  if (htab->params->gnu2_tls_version_tag == 2)
+	    auto_version[i] = true;
+	  i++;
+	}
+      if (htab->params->gnu_tls_version_tag
+	  && htab->has_tls_get_addr_call)
+	{
+	  version[i] = "GLIBC_ABI_GNU_TLS";
+	  /* 2 == auto, enable if libc.so defines the GLIBC_ABI_GNU_TLS
+	     version.  */
+	  if (htab->params->gnu_tls_version_tag == 2)
+	    auto_version[i] = true;
+	  i++;
+	}
+    }
+
+  if (i != 0)
+    _bfd_elf_link_add_glibc_version_dependency (rinfo, version,
+						auto_version);
+}
+
 #define TARGET_LITTLE_SYM		i386_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-i386"
 #define ELF_ARCH			bfd_arch_i386
@@ -4498,12 +4574,16 @@ elf_i386_link_setup_gnu_properties (struct bfd_link_info *info)
 #define elf_backend_relocate_section	      elf_i386_relocate_section
 #define elf_backend_setup_gnu_properties      elf_i386_link_setup_gnu_properties
 #define elf_backend_hide_symbol		      _bfd_x86_elf_hide_symbol
+#define elf_backend_add_glibc_version_dependency \
+  elf_i386_add_glibc_version_dependency
 
 #define elf_backend_linux_prpsinfo32_ugid16	true
 
 #define	elf32_bed			      elf32_i386_bed
 
 #include "elf32-target.h"
+
+#undef elf_backend_add_glibc_version_dependency
 
 /* FreeBSD support.  */
 
@@ -4551,6 +4631,9 @@ elf_i386_fbsd_init_file_header (bfd *abfd, struct bfd_link_info *info)
 #define	TARGET_LITTLE_SYM		i386_elf32_sol2_vec
 #undef	TARGET_LITTLE_NAME
 #define	TARGET_LITTLE_NAME		"elf32-i386-sol2"
+
+#undef	ELF_MAXPAGESIZE
+#define ELF_MAXPAGESIZE			0x10000
 
 #undef	ELF_TARGET_OS
 #define	ELF_TARGET_OS			is_solaris
@@ -4678,6 +4761,9 @@ elf32_iamcu_elf_object_p (bfd *abfd)
 
 #undef	ELF_MACHINE_CODE
 #define	ELF_MACHINE_CODE		EM_IAMCU
+
+#undef	ELF_MAXPAGESIZE
+#define ELF_MAXPAGESIZE			0x1000
 
 #undef	ELF_TARGET_OS
 #undef	ELF_OSABI

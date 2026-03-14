@@ -85,7 +85,7 @@ hppa*-*-*)
 
 i[34567]86-*-*)
 	cpu_obs="${i386_tobjs}"
-	if test "x$enable_64_bit_bfd" = "xyes"; then
+	if test "x$have_64_bit_bfd" = "xyes"; then
 	   cpu_obs="${amd64_tobjs} ${cpu_obs}"
 	fi
 	;;
@@ -151,6 +151,7 @@ aarch64*-*-linux*)
 			arch/arm.o arch/arm-linux.o arch/arm-get-next-pcs.o \
 			arm-tdep.o arm-linux-tdep.o \
 			glibc-tdep.o linux-tdep.o solib-svr4.o \
+			solib-svr4-linux.o svr4-tls-tdep.o \
 			symfile-mem.o linux-record.o"
 	;;
 
@@ -163,7 +164,7 @@ aarch64*-*-netbsd*)
 alpha*-*-linux*)
 	# Target: Little-endian Alpha running Linux
 	gdb_target_obs="alpha-mdebug-tdep.o alpha-linux-tdep.o \
-			linux-tdep.o solib-svr4.o"
+			linux-tdep.o solib-svr4.o solib-svr4-linux.o"
 	;;
 alpha*-*-netbsd* | alpha*-*-knetbsd*-gnu)
 	# Target: NetBSD/alpha
@@ -185,7 +186,7 @@ amdgcn*-*-*)
 am33_2.0*-*-linux*)
 	# Target: Matsushita mn10300 (AM33) running Linux
 	gdb_target_obs="mn10300-tdep.o mn10300-linux-tdep.o linux-tdep.o \
-			solib-svr4.o"
+			solib-svr4.o solib-svr4-linux.o"
 	;;
 
 arc*-*-elf32)
@@ -195,7 +196,8 @@ arc*-*-elf32)
 
 arc*-*-linux*)
 	# Target: ARC machine running Linux
-	gdb_target_obs="arc-linux-tdep.o linux-tdep.o solib-svr4.o"
+	gdb_target_obs="arc-linux-tdep.o linux-tdep.o solib-svr4.o \
+			solib-svr4-linux.o"
 	;;
 
 arm*-wince-pe | arm*-*-mingw32ce*)
@@ -205,7 +207,8 @@ arm*-wince-pe | arm*-*-mingw32ce*)
 arm*-*-linux*)
 	# Target: ARM based machine running GNU/Linux
 	gdb_target_obs="arch/arm-linux.o arm-linux-tdep.o glibc-tdep.o \
-			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o"
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o \
+			linux-tdep.o linux-record.o"
 	;;
 arm*-*-freebsd*)
 	# Target: FreeBSD/arm
@@ -245,13 +248,14 @@ bpf-*-*)
 
 cris*)
 	# Target: CRIS
-	gdb_target_obs="cris-tdep.o cris-linux-tdep.o linux-tdep.o solib-svr4.o"
+	gdb_target_obs="cris-tdep.o cris-linux-tdep.o linux-tdep.o \
+		        solib-svr4.o solib-svr4-linux.o"
 	;;
 
 csky*-*-linux*)
 	# Target: CSKY running GNU/Linux
 	gdb_target_obs="csky-tdep.o csky-linux-tdep.o glibc-tdep.o \
-			linux-tdep.o solib-svr4.o"
+			linux-tdep.o solib-svr4.o solib-svr4-linux.o"
 	;;
 
 csky*-*-*)
@@ -276,7 +280,8 @@ h8300-*-*)
 hppa*-*-linux*)
 	# Target: HP PA-RISC running Linux
 	gdb_target_obs="hppa-linux-tdep.o glibc-tdep.o \
-			linux-tdep.o solib-svr4.o symfile-mem.o"
+			linux-tdep.o solib-svr4.o solib-svr4-linux.o \
+			symfile-mem.o"
 	;;
 hppa*-*-netbsd*)
 	# Target: NetBSD/hppa
@@ -290,7 +295,7 @@ hppa*-*-openbsd*)
 i[34567]86-*-darwin*)
 	# Target: Darwin/i386
 	gdb_target_obs="i386-darwin-tdep.o solib-darwin.o"
-	if test "x$enable_64_bit_bfd" = "xyes"; then
+	if test "x$have_64_bit_bfd" = "xyes"; then
 	    # Target: GNU/Linux x86-64
 	    gdb_target_obs="amd64-darwin-tdep.o ${gdb_target_obs}"
 	fi
@@ -321,19 +326,19 @@ i[34567]86-*-linux*)
 	# Target: Intel 386 running GNU/Linux
 	gdb_target_obs="i386-linux-tdep.o \
 			glibc-tdep.o \
-			solib-svr4.o symfile-mem.o \
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o \
 			linux-tdep.o linux-record.o \
 			arch/i386-linux-tdesc.o \
 			arch/x86-linux-tdesc-features.o"
-	if test "x$enable_64_bit_bfd" = "xyes"; then
+	if test "x$have_64_bit_bfd" = "xyes"; then
 	    # Target: GNU/Linux x86-64
-	    gdb_target_obs="amd64-linux-tdep.o \
+	    gdb_target_obs="amd64-linux-tdep.o svr4-tls-tdep.o \
 			    arch/amd64-linux-tdesc.o ${gdb_target_obs}"
 	fi
 	;;
 i[34567]86-*-gnu*)
 	# Target: Intel 386 running the GNU Hurd
-	gdb_target_obs="i386-gnu-tdep.o solib-svr4.o"
+	gdb_target_obs="i386-gnu-tdep.o glibc-tdep.o solib-svr4.o"
 	;;
 i[34567]86-*-cygwin*)
 	# Target: Intel 386 running win32
@@ -351,7 +356,7 @@ i[34567]86-*-go32* | i[34567]86-*-msdosdjgpp*)
 ia64-*-linux*)
 	# Target: Intel IA-64 running GNU/Linux
 	gdb_target_obs="ia64-linux-tdep.o linux-tdep.o \
-			solib-svr4.o symfile-mem.o"
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o"
 	;;
 ia64-*-*vms*)
 	# Target: Intel IA-64 running OpenVMS
@@ -374,7 +379,8 @@ lm32-*-*)
 loongarch*-*-linux*)
 	# Target: LoongArch running Linux
 	gdb_target_obs="loongarch-linux-tdep.o glibc-tdep.o \
-			linux-tdep.o solib-svr4.o linux-record.o"
+			linux-tdep.o solib-svr4.o solib-svr4-linux.o \
+			linux-record.o"
 	;;
 
 m32c-*-*)
@@ -385,8 +391,8 @@ m32c-*-*)
 m32r*-*-linux*)
 	# Target: Renesas M32R running GNU/Linux
 	gdb_target_obs="m32r-tdep.o m32r-linux-tdep.o \
-			glibc-tdep.o solib-svr4.o symfile-mem.o \
-			linux-tdep.o"
+			glibc-tdep.o solib-svr4.o solib-svr4-linux.o \
+			symfile-mem.o linux-tdep.o"
 	;;
 m32r*-*-*)
 	# Target: Renesas m32r processor
@@ -406,7 +412,8 @@ fido-*-elf*)
 m68*-*-linux*)
 	# Target: Motorola m68k with a.out and ELF
 	gdb_target_obs="m68k-tdep.o m68k-linux-tdep.o solib-svr4.o \
-			linux-tdep.o glibc-tdep.o symfile-mem.o"
+			solib-svr4-linux.o linux-tdep.o glibc-tdep.o \
+			symfile-mem.o"
 	;;
 m68*-*-netbsd* | m68*-*-knetbsd*-gnu | m5407-*-netbsd*)
 	# Target: NetBSD/m68k
@@ -426,7 +433,7 @@ mep-*-*)
 microblaze*-linux-*|microblaze*-*-linux*)
 	# Target: Xilinx MicroBlaze running Linux
 	gdb_target_obs="microblaze-tdep.o microblaze-linux-tdep.o solib-svr4.o \
-			symfile-mem.o linux-tdep.o"
+			solib-svr4-linux.o symfile-mem.o linux-tdep.o"
 	;;
 microblaze*-*-*)
 	# Target: Xilinx MicroBlaze running standalone
@@ -436,7 +443,8 @@ microblaze*-*-*)
 mips*-*-linux*)
 	# Target: Linux/MIPS
 	gdb_target_obs="mips-tdep.o mips-linux-tdep.o glibc-tdep.o \
-			solib-svr4.o symfile-mem.o linux-tdep.o"
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o \
+			linux-tdep.o"
 	;;
 mips*-*-netbsd* | mips*-*-knetbsd*-gnu)
 	# Target: MIPS running NetBSD
@@ -480,7 +488,8 @@ nds32*-*-elf)
 or1k*-*-linux*)
 	# Target: OpenCores OpenRISC 1000 32-bit running Linux
 	gdb_target_obs="or1k-tdep.o or1k-linux-tdep.o solib-svr4.o \
-			symfile-mem.o glibc-tdep.o linux-tdep.o"
+			solib-svr4-linux.o symfile-mem.o glibc-tdep.o \
+			linux-tdep.o"
 	;;
 
 or1k-*-* | or1knd-*-*)
@@ -507,14 +516,15 @@ powerpc-*-openbsd*)
 	;;
 powerpc-*-aix* | rs6000-*-* | powerpc64-*-aix*)
 	# Target: PowerPC running AIX
-	gdb_target_obs="rs6000-tdep.o rs6000-aix-tdep.o xcoffread.o \
+	gdb_target_obs="rs6000-tdep.o rs6000-aix-tdep.o \
 			ppc-sysv-tdep.o solib-aix.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o"
 	;;
 powerpc*-*-linux*)
 	# Target: PowerPC running Linux
 	gdb_target_obs="rs6000-tdep.o ppc-linux-tdep.o ppc-sysv-tdep.o \
-			ppc64-tdep.o solib-svr4.o \
+			ppc64-tdep.o solib-svr4.o solib-svr4-linux.o \
+			svr4-tls-tdep.o \
 			glibc-tdep.o symfile-mem.o linux-tdep.o \
 			ravenscar-thread.o ppc-ravenscar-thread.o \
 			linux-record.o \
@@ -523,8 +533,8 @@ powerpc*-*-linux*)
 powerpc-*-lynx*178)
 	# Target: PowerPC running Lynx178.
 	gdb_target_obs="rs6000-tdep.o rs6000-lynx178-tdep.o \
-			xcoffread.o ppc-sysv-tdep.o \
-			ravenscar-thread.o ppc-ravenscar-thread.o"
+			ppc-sysv-tdep.o ravenscar-thread.o \
+			ppc-ravenscar-thread.o"
 	;;
 powerpc*-*-*)
 	# Target: PowerPC running eabi
@@ -535,7 +545,9 @@ powerpc*-*-*)
 s390*-*-linux*)
 	# Target: S390 running Linux
 	gdb_target_obs="s390-linux-tdep.o s390-tdep.o solib-svr4.o \
-			linux-tdep.o linux-record.o symfile-mem.o"
+			solib-svr4-linux.o \
+			linux-tdep.o linux-record.o symfile-mem.o \
+			svr4-tls-tdep.o"
 	;;
 
 riscv*-*-freebsd*)
@@ -545,8 +557,10 @@ riscv*-*-freebsd*)
 
 riscv*-*-linux*)
 	# Target: Linux/RISC-V
-	gdb_target_obs="riscv-linux-tdep.o glibc-tdep.o \
- 			linux-tdep.o solib-svr4.o symfile-mem.o linux-record.o"
+	gdb_target_obs="riscv-linux-tdep.o riscv-canonicalize-syscall-gen.o \
+			glibc-tdep.o linux-tdep.o solib-svr4.o solib-svr4-linux.o \
+			symfile-mem.o \
+			linux-record.o svr4-tls-tdep.o"
 	;;
 
 riscv*-*-netbsd*) 
@@ -572,7 +586,7 @@ rx-*-*)
 sh*-*-linux*)
 	# Target: GNU/Linux Super-H
 	gdb_target_obs="sh-tdep.o sh-linux-tdep.o \
-			solib-svr4.o symfile-mem.o \
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o \
 			glibc-tdep.o linux-tdep.o"
 	;;
 sh*-*-netbsd* | sh*-*-knetbsd*-gnu)
@@ -591,10 +605,11 @@ sh*)
 sparc-*-linux*)
 	# Target: GNU/Linux SPARC
 	gdb_target_obs="sparc-tdep.o \
-			sparc-linux-tdep.o solib-svr4.o symfile-mem.o \
+			sparc-linux-tdep.o solib-svr4.o solib-svr4-linux.o \
+			symfile-mem.o \
 			linux-tdep.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
-	if test "x$enable_64_bit_bfd" = "xyes"; then
+	if test "x$have_64_bit_bfd" = "xyes"; then
 	    # Target: GNU/Linux UltraSPARC
 	    gdb_target_obs="sparc64-tdep.o \
 			    sparc64-linux-tdep.o ${gdb_target_obs}"
@@ -604,7 +619,8 @@ sparc64-*-linux*)
 	# Target: GNU/Linux UltraSPARC
 	gdb_target_obs="sparc64-tdep.o \
 			sparc64-linux-tdep.o sparc-tdep.o \
-			sparc-linux-tdep.o solib-svr4.o linux-tdep.o \
+			sparc-linux-tdep.o solib-svr4.o solib-svr4-linux.o \
+			linux-tdep.o \
 			ravenscar-thread.o sparc-ravenscar-thread.o"
 	;;
 sparc*-*-freebsd* | sparc*-*-kfreebsd*-gnu)
@@ -672,6 +688,7 @@ tic6x-*-*)
 tilegx-*-linux*)
 	# Target: TILE-Gx
 	gdb_target_obs="tilegx-tdep.o tilegx-linux-tdep.o solib-svr4.o \
+			solib-svr4-linux.o \
 			symfile-mem.o glibc-tdep.o linux-tdep.o"
 	;;
 
@@ -721,8 +738,9 @@ x86_64-*-elf*)
 x86_64-*-linux*)
 	# Target: GNU/Linux x86-64
 	gdb_target_obs="amd64-linux-tdep.o ${i386_tobjs}  \
-			i386-linux-tdep.o glibc-tdep.o \
-			solib-svr4.o symfile-mem.o linux-tdep.o linux-record.o \
+			i386-linux-tdep.o glibc-tdep.o svr4-tls-tdep.o \
+			solib-svr4.o solib-svr4-linux.o symfile-mem.o \
+			linux-tdep.o linux-record.o \
 			arch/i386-linux-tdesc.o arch/amd64-linux-tdesc.o \
 			arch/x86-linux-tdesc-features.o"
 	;;
@@ -751,9 +769,13 @@ x86_64-*-openbsd*)
 x86_64-*-rtems*)
 	gdb_target_obs="${amd64_tobjs} ${i386_tobjs} i386-bsd-tdep.o"
 	;;
+x86_64-*-gnu*)
+	# Target: x86_64 running the GNU Hurd
+	gdb_target_obs="amd64-gnu-tdep.o i386-gnu-tdep.o glibc-tdep.o solib-svr4.o"
+	;;
 xtensa*-*-*linux*)
 	# Target: GNU/Linux Xtensa
-	gdb_target_obs="xtensa-linux-tdep.o symfile-mem.o linux-tdep.o"
+	gdb_target_obs="xtensa-linux-tdep.o symfile-mem.o linux-tdep.o solib-svr4-linux.o"
 	;;
 z80*)
 	# Target: Z80
@@ -830,4 +852,18 @@ for t in x ${gdb_target_obs}; do
   if test "$t" = linux-tdep.o; then
     gdb_have_gcore=true
   fi
+done
+
+# Decide which file formats are absolutely required based on
+# the requested targets.  Warn later that they are added, in
+# case the user didn't manually request them, or all readers.
+# It's fine to add the same format multiple times since the
+# loop that reads the options to FORMAT_OBS will ensure that
+# they are only added once.
+for i in $gdb_target_obs; do
+    case "${i}" in
+    *"windows-tdep.o" ) target_formats="${target_formats} coff";;
+    "rs6000-aix-tdep.o" ) target_formats="${target_formats} xcoff";;
+    "rs6000-lynx178-tdep.o" ) target_formats="${target_formats} xcoff";;
+    esac
 done

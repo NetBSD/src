@@ -1,6 +1,6 @@
 /* Implementation of the GDB variable objects API.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -1309,7 +1309,7 @@ install_new_value (struct varobj *var, struct value *value, bool initial)
     {
       /* For values that are not changeable, we don't compare the values.
 	 However, we want to notice if a value was not NULL and now is NULL,
-	 or vise versa, so that we report when top-level varobjs come in scope
+	 or vice versa, so that we report when top-level varobjs come in scope
 	 and leave the scope.  */
       changed = (var->value != NULL) != (value != NULL);
     }
@@ -2424,9 +2424,7 @@ eq_varobj_and_string (const void *a, const void *b)
   return obj->obj_name == name;
 }
 
-void _initialize_varobj ();
-void
-_initialize_varobj ()
+INIT_GDB_FILE (varobj)
 {
   varobj_table = htab_create_alloc (5, hash_varobj, eq_varobj_and_string,
 				    nullptr, xcalloc, xfree);

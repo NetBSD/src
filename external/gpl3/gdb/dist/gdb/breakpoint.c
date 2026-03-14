@@ -1,6 +1,6 @@
 /* Everything about breakpoints, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -50,7 +50,6 @@
 #include "cli/cli-script.h"
 #include "block.h"
 #include "solib.h"
-#include "solist.h"
 #include "observable.h"
 #include "memattr.h"
 #include "ada-lang.h"
@@ -70,7 +69,6 @@
 #include "tid-parse.h"
 #include "cli/cli-style.h"
 #include "cli/cli-decode.h"
-#include <unordered_set>
 #include "break-cond-parse.h"
 
 /* readline include files */
@@ -256,14 +254,22 @@ DIAGNOSTIC_POP
 static std::string
 breakpoint_location_address_str (const bp_location *bl)
 {
-  std::string str = string_printf ("Breakpoint %d (%s) at address %s",
+  std::string str = string_printf ("Breakpoint %d (%s) ",
 				   bl->owner->number,
-				   host_address_to_string (bl),
-				   paddress (bl->gdbarch, bl->address));
+				   host_address_to_string (bl));
 
-  std::string loc_string = bl->to_string ();
-  if (!loc_string.empty ())
-    str += string_printf (" %s", loc_string.c_str ());
+  if (bl_address_is_meaningful (bl))
+    {
+      gdb_assert (bl->gdbarch != nullptr);
+      str += string_printf ("at address %s",
+			    paddress (bl->gdbarch, bl->address));
+
+      std::string loc_string = bl->to_string ();
+      if (!loc_string.empty ())
+	str += string_printf (" %s", loc_string.c_str ());
+    }
+  else
+    str += "with dummy location";
 
   return str;
 }
@@ -722,7 +728,8 @@ all_tracepoints ()
 			   tracepoint_iterator (breakpoint_chain.end ()));
 }
 
-/* Array is sorted by bp_location_is_less_than - primarily by the ADDRESS.  */
+/* Array is sorted by bp_location_ptr_is_less_than - primarily by the
+   ADDRESS.  */
 
 static std::vector<bp_location *> bp_locations;
 
@@ -1536,6 +1543,11 @@ void
 breakpoint_set_commands (struct breakpoint *b, 
 			 counted_command_line &&commands)
 {
+  /* If the commands have not changed then there's no need to update
+     anything, and no need to emit a breakpoint modified event.  */
+  if (commands_equal (b->commands.get (), commands.get ()))
+    return;
+
   validate_commands_for_breakpoint (b, commands.get ());
 
   b->commands = std::move (commands);
@@ -3100,7 +3112,6 @@ insert_bp_location (struct bp_location *bl,
 		  || shared_objfile_contains_address_p (bl->pspace,
 							bl->address)))
 	    {
-	      /* See also: disable_breakpoints_in_shlibs.  */
 	      bl->shlib_disabled = 1;
 	      notify_breakpoint_modified (bl->owner);
 	      if (!*disabled_breaks)
@@ -5133,7 +5144,7 @@ print_solib_event (bool is_catchpoint)
 	  if (!first)
 	    current_uiout->text ("    ");
 	  first = false;
-	  current_uiout->field_string ("library", iter->so_name);
+	  current_uiout->field_string ("library", iter->name);
 	  current_uiout->text ("\n");
 	}
     }
@@ -6424,7 +6435,28 @@ print_breakpoint_location (const breakpoint *b, const bp_location *loc)
       uiout->field_stream ("at", stb);
     }
   else
-    uiout->field_string ("pending", b->locspec->to_string ());
+    {
+      /* Internal breakpoints don't have a locspec string, but can become
+	 pending if the shared library the breakpoint is in is unloaded.
+	 For most internal breakpoint types though, after unloading the
+	 shared library, the breakpoint will be deleted and never recreated
+	 (see internal_breakpoint::re_set).  But for two internal
+	 breakpoint types bp_shlib_event and bp_thread_event this is not
+	 true.  Usually we don't expect the libraries that contain these
+	 breakpoints to ever be unloaded, but a buggy inferior might do
+	 such a thing, in which case GDB should be prepared to handle this
+	 case.
+
+	 If these two breakpoint types become pending then there will be no
+	 locspec string.  */
+      gdb_assert (b->locspec != nullptr
+		  || (!user_breakpoint_p (b)
+		      && (b->type == bp_shlib_event
+			  || b->type == bp_thread_event)));
+      const char *locspec_str
+	= (b->locspec != nullptr ? b->locspec->to_string () : "");
+      uiout->field_string ("pending", locspec_str);
+    }
 
   if (loc && is_breakpoint (b)
       && breakpoint_condition_evaluation_mode () == condition_evaluation_target
@@ -7480,7 +7512,7 @@ breakpoint_locations_match (const struct bp_location *loc1,
   else
     /* We compare bp_location.length in order to cover ranged
        breakpoints.  Keep this in sync with
-       bp_location_is_less_than.  */
+       bp_location_ptr_is_less_than.  */
     return (breakpoint_address_match (loc1->pspace->aspace.get (),
 				      loc1->address,
 				      loc2->pspace->aspace.get (),
@@ -7839,7 +7871,7 @@ check_longjmp_breakpoint_for_call_dummy (struct thread_info *tp)
   /* We would need to delete breakpoints other than the current one while
      iterating, so all_breakpoints_safe is not sufficient to make that safe.
      Save all breakpoints to delete in that set and delete them at the end.  */
-  std::unordered_set<breakpoint *> to_delete;
+  gdb::unordered_set<breakpoint *> to_delete;
 
   for (struct breakpoint &b : all_breakpoints ())
     {
@@ -8059,77 +8091,74 @@ create_and_insert_solib_event_breakpoint (struct gdbarch *gdbarch, CORE_ADDR add
   return b;
 }
 
-/* See breakpoint.h.  */
-
-void
-disable_breakpoints_in_shlibs (program_space *pspace)
-{
-  for (bp_location *loc : all_bp_locations ())
-    {
-      /* ALL_BP_LOCATIONS bp_location has LOC->OWNER always non-NULL.  */
-      struct breakpoint *b = loc->owner;
-
-      /* We apply the check to all breakpoints, including disabled for
-	 those with loc->duplicate set.  This is so that when breakpoint
-	 becomes enabled, or the duplicate is removed, gdb will try to
-	 insert all breakpoints.  If we don't set shlib_disabled here,
-	 we'll try to insert those breakpoints and fail.  */
-      if (((b->type == bp_breakpoint)
-	   || (b->type == bp_jit_event)
-	   || (b->type == bp_hardware_breakpoint)
-	   || (is_tracepoint (b)))
-	  && loc->pspace == pspace
-	  && !loc->shlib_disabled
-	  && solib_name_from_address (loc->pspace, loc->address)
-	  )
-	{
-	  loc->shlib_disabled = 1;
-	}
-    }
-}
-
 /* Disable any breakpoints and tracepoints that are in SOLIB upon
    notification of unloaded_shlib.  Only apply to enabled breakpoints,
-   disabled ones can just stay disabled.  */
+   disabled ones can just stay disabled.
+
+   When STILL_IN_USE is true, SOLIB hasn't really been unmapped from
+   the inferior.  In this case, don't disable anything.
+
+   When SILENT is false notify the user if any breakpoints are disabled,
+   otherwise, still disable the breakpoints, but don't tell the user.  */
 
 static void
-disable_breakpoints_in_unloaded_shlib (program_space *pspace, const solib &solib)
+disable_breakpoints_in_unloaded_shlib (program_space *pspace, const solib &solib,
+				       bool still_in_use, bool silent)
 {
+  if (still_in_use)
+    return;
+
   bool disabled_shlib_breaks = false;
 
-  for (bp_location *loc : all_bp_locations ())
+  for (breakpoint &b : all_breakpoints ())
     {
-      /* ALL_BP_LOCATIONS bp_location has LOC->OWNER always non-NULL.  */
-      struct breakpoint *b = loc->owner;
+      bool bp_modified = false;
 
-      if (pspace == loc->pspace
-	  && !loc->shlib_disabled
-	  && (((b->type == bp_breakpoint
-		|| b->type == bp_jit_event
-		|| b->type == bp_hardware_breakpoint)
-	       && (loc->loc_type == bp_loc_hardware_breakpoint
-		   || loc->loc_type == bp_loc_software_breakpoint))
-	      || is_tracepoint (b))
-	  && solib_contains_address_p (solib, loc->address))
+      for (bp_location &loc : b.locations ())
 	{
-	  loc->shlib_disabled = 1;
-	  /* At this point, we cannot rely on remove_breakpoint
-	     succeeding so we must mark the breakpoint as not inserted
-	     to prevent future errors occurring in remove_breakpoints.  */
-	  loc->inserted = 0;
+	  if (pspace != loc.pspace || loc.shlib_disabled)
+	    continue;
 
-	  /* This may cause duplicate notifications for the same breakpoint.  */
-	  notify_breakpoint_modified (b);
+	  if (loc.loc_type != bp_loc_hardware_breakpoint
+	      && loc.loc_type != bp_loc_software_breakpoint
+	      && !is_tracepoint (&b))
+	    continue;
 
-	  if (!disabled_shlib_breaks)
+	  if (!solib_contains_address_p (solib, loc.address))
+	    continue;
+
+	  loc.shlib_disabled = 1;
+
+	  /* At this point, we don't know whether the shared library
+	     was unmapped from the inferior or not, so leave the
+	     inserted flag alone.  We'll handle failure to uninsert
+	     quietly, in case the library was indeed unmapped.
+
+	     The test gdb.base/nostdlib.exp when run on AArch64
+	     GNU/Linux using glibc will cause the dynamic linker to be
+	     unloaded from the inferior, but the linker will never be
+	     unmapped.  Additionally, at the time the dynamic linker
+	     is unloaded the inferior will be stopped within the
+	     dynamic linker.
+
+	     If we clear the inserted flag here then GDB will fail to
+	     remove the internal breakpoints from the dynamic linker
+	     leading to unexpected SIGTRAPs.  */
+
+	  bp_modified = true;
+
+	  if (!disabled_shlib_breaks && !silent && user_breakpoint_p (&b))
 	    {
 	      target_terminal::ours_for_output ();
 	      warning (_("Temporarily disabling breakpoints "
 			 "for unloaded shared library \"%s\""),
-		       solib.so_name.c_str ());
+		       solib.name.c_str ());
+	      disabled_shlib_breaks = true;
 	    }
-	  disabled_shlib_breaks = true;
 	}
+
+      if (bp_modified)
+	notify_breakpoint_modified (&b);
     }
 }
 
@@ -10268,7 +10297,7 @@ masked_watchpoint::print_recreate (struct ui_file *fp) const
     }
 
   gdb_printf (fp, " %s mask 0x%s", exp_string.get (),
-	      phex (hw_wp_mask, sizeof (CORE_ADDR)));
+	      phex (hw_wp_mask));
   print_recreate_thread (fp);
 }
 
@@ -11184,14 +11213,17 @@ breakpoint_auto_delete (bpstat *bs)
       delete_breakpoint (&b);
 }
 
-/* A comparison function for bp_location AP and BP being interfaced to
-   std::sort.  Sort elements primarily by their ADDRESS (no matter what
-   bl_address_is_meaningful says), secondarily by ordering first
-   permanent elements and tertiarily just ensuring the array is sorted
-   stable way despite std::sort being an unstable algorithm.  */
+/* A comparison function for bp_location pointers A and B being interfaced to
+   std::sort, for instance to sort an std::vector<bp_location *>.  Sort
+   elements:
+   - primarily by their ADDRESS (no matter what bl_address_is_meaningful
+     says),
+   - secondarily by ordering first permanent elements, and
+   - tertiarily just ensuring the array is sorted in a stable way despite
+     std::sort being an unstable algorithm.  */
 
-static int
-bp_location_is_less_than (const bp_location *a, const bp_location *b)
+static bool
+bp_location_ptr_is_less_than (const bp_location *a, const bp_location *b)
 {
   if (a->address != b->address)
     return a->address < b->address;
@@ -11227,6 +11259,15 @@ bp_location_is_less_than (const bp_location *a, const bp_location *b)
     return a->owner->number < b->owner->number;
 
   return a < b;
+}
+
+/* A comparison function for bp_locations A and B being interfaced to
+   std::sort, for instance to sort an std::vector<bp_location>.  */
+
+static bool
+bp_location_is_less_than (const bp_location &a, const bp_location &b)
+{
+  return bp_location_ptr_is_less_than (&a, &b);
 }
 
 /* Set bp_locations_placed_address_before_address_max and
@@ -11434,7 +11475,7 @@ update_global_location_list (enum ugll_insert_mode insert_mode)
 	handle_automatic_hardware_breakpoints (loc);
 
   std::sort (bp_locations.begin (), bp_locations.end (),
-	     bp_location_is_less_than);
+	     bp_location_ptr_is_less_than);
 
   bp_locations_target_extensions_update ();
 
@@ -11788,16 +11829,6 @@ bpstat_remove_bp_location (bpstat *bps, struct breakpoint *bpt)
       }
 }
 
-/* Callback for iterate_over_threads.  */
-static int
-bpstat_remove_breakpoint_callback (struct thread_info *th, void *data)
-{
-  struct breakpoint *bpt = (struct breakpoint *) data;
-
-  bpstat_remove_bp_location (th->control.stop_bpstat, bpt);
-  return 0;
-}
-
 /* See breakpoint.h.  */
 
 void
@@ -11892,9 +11923,7 @@ breakpoint::add_location (bp_location &loc)
 
   auto ub = std::upper_bound (m_locations.begin (), m_locations.end (),
 			      loc,
-			      [] (const bp_location &left,
-				  const bp_location &right)
-				{ return left.address < right.address; });
+			      bp_location_is_less_than);
   m_locations.insert (ub, loc);
 }
 
@@ -12642,7 +12671,11 @@ delete_breakpoint (struct breakpoint *bpt)
      event-top.c won't do anything, and temporary breakpoints with
      commands won't work.  */
 
-  iterate_over_threads (bpstat_remove_breakpoint_callback, bpt);
+  iterate_over_threads ([&] (struct thread_info *th)
+    {
+      bpstat_remove_bp_location (th->control.stop_bpstat, bpt);
+      return false;
+    });
 
   /* Now that breakpoint is removed from breakpoint list, update the
      global location list.  This will remove locations that used to
@@ -13036,8 +13069,7 @@ update_breakpoint_locations (code_breakpoint *b,
 
   for (const bp_location &e : existing_locations)
     {
-      if (e.function_name == nullptr
-	  || (e.enabled && !e.disabled_by_cond))
+      if (e.function_name == nullptr || e.enabled)
 	continue;
 
       if (have_ambiguous_names)
@@ -13054,7 +13086,6 @@ update_breakpoint_locations (code_breakpoint *b,
 	      if (breakpoint_locations_match (&e, &l, true))
 		{
 		  l.enabled = e.enabled;
-		  l.disabled_by_cond = e.disabled_by_cond;
 		  break;
 		}
 	    }
@@ -13067,7 +13098,6 @@ update_breakpoint_locations (code_breakpoint *b,
 			   l.function_name.get ()) == 0)
 	      {
 		l.enabled = e.enabled;
-		l.disabled_by_cond = e.disabled_by_cond;
 		break;
 	      }
 	}
@@ -13974,9 +14004,7 @@ int
 insert_single_step_breakpoints (struct gdbarch *gdbarch)
 {
   regcache *regcache = get_thread_regcache (inferior_thread ());
-  std::vector<CORE_ADDR> next_pcs;
-
-  next_pcs = gdbarch_software_single_step (gdbarch, regcache);
+  std::vector<CORE_ADDR> next_pcs = gdbarch_get_next_pcs (gdbarch, regcache);
 
   if (!next_pcs.empty ())
     {
@@ -14735,9 +14763,7 @@ static struct cmd_list_element *enablebreaklist = NULL;
 
 cmd_list_element *commands_cmd_element = nullptr;
 
-void _initialize_breakpoint ();
-void
-_initialize_breakpoint ()
+INIT_GDB_FILE (breakpoint)
 {
   struct cmd_list_element *c;
 

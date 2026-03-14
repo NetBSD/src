@@ -2,4 +2,4 @@
 # Generated from: NetBSD: mknative-gdb,v 1.19 2024/08/27 21:50:20 christos Exp 
 # Generated from: NetBSD: mknative.common,v 1.16 2018/04/15 15:13:37 christos Exp 
 #
-G_OBJECTS=ctf-archive.o ctf-dump.o ctf-create.o ctf-decl.o ctf-error.o ctf-hash.o ctf-labels.o ctf-dedup.o ctf-link.o ctf-lookup.o ctf-open.o ctf-serialize.o ctf-sha1.o ctf-string.o ctf-subr.o ctf-types.o ctf-util.o  ctf-open-bfd.o
+G_OBJECTS=ctf-archive.o ctf-dump.o ctf-create.o ctf-decl.o ctf-error.o ctf-hash.o ctf-labels.o ctf-dedup.o ctf-link.o ctf-lookup.o ctf-open.o ctf-serialize.o ctf-sha1.o ctf-string.o ctf-subr.o ctf-types.o ctf-util.o ctf-qsort_r.o ctf-open-bfd.o

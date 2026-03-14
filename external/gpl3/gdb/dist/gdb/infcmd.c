@@ -1,6 +1,6 @@
 /* Memory-access and commands for "inferior" process, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "inferior.h"
 #include "infrun.h"
 #include "gdbsupport/environ.h"
+#include "gdbsupport/common-inferior.h"
 #include "value.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-style.h"
@@ -224,14 +225,11 @@ strip_bg_char (const char *args, int *bg_char_p)
   return make_unique_xstrdup (args);
 }
 
-/* Common actions to take after creating any sort of inferior, by any
-   means (running, attaching, connecting, et cetera).  The target
-   should be stopped.  */
+/* See inferior.h.  */
 
 void
-post_create_inferior (int from_tty)
+post_create_inferior (int from_tty, bool set_pspace_solib_ops)
 {
-
   /* Be sure we own the terminal in case write operations are performed.  */ 
   target_terminal::ours_for_output ();
 
@@ -260,6 +258,11 @@ post_create_inferior (int from_tty)
       if (ex.error != NOT_AVAILABLE_ERROR)
 	throw;
     }
+
+  if (set_pspace_solib_ops)
+    current_program_space->set_solib_ops
+      (gdbarch_make_solib_ops (current_inferior ()->arch (),
+			       current_program_space));
 
   if (current_program_space->exec_bfd ())
     {
@@ -482,7 +485,7 @@ run_command_1 (const char *args, int from_tty, enum run_how run_how)
 
   /* Pass zero for FROM_TTY, because at this point the "run" command
      has done its thing; now we are setting up the running program.  */
-  post_create_inferior (0);
+  post_create_inferior (0, true);
 
   /* Queue a pending event so that the program stops immediately.  */
   if (run_how == RUN_STOP_AT_FIRST_INSN)
@@ -517,12 +520,6 @@ run_command (const char *args, int from_tty)
 static void
 start_command (const char *args, int from_tty)
 {
-  /* Some languages such as Ada need to search inside the program
-     minimal symbols for the location where to put the temporary
-     breakpoint before starting.  */
-  if (!have_minimal_symbols (current_program_space))
-    error (_("No symbol table loaded.  Use the \"file\" command."));
-
   /* Run the program until reaching the main procedure...  */
   run_command_1 (args, from_tty, RUN_STOP_AT_MAIN);
 }
@@ -536,8 +533,8 @@ starti_command (const char *args, int from_tty)
   run_command_1 (args, from_tty, RUN_STOP_AT_FIRST_INSN);
 } 
 
-static int
-proceed_thread_callback (struct thread_info *thread, void *arg)
+static bool
+proceed_thread_callback (struct thread_info *thread)
 {
   /* We go through all threads individually instead of compressing
      into a single target `resume_all' request, because some threads
@@ -549,15 +546,15 @@ proceed_thread_callback (struct thread_info *thread, void *arg)
      thread stopped until I say otherwise', then we can optimize
      this.  */
   if (thread->state != THREAD_STOPPED)
-    return 0;
+    return false;
 
   if (!thread->inf->has_execution ())
-    return 0;
+    return false;
 
   switch_to_thread (thread);
   clear_proceed_status (0);
   proceed ((CORE_ADDR) -1, GDB_SIGNAL_DEFAULT);
-  return 0;
+  return false;
 }
 
 static void
@@ -614,7 +611,7 @@ continue_1 (int all_threads)
       scoped_disable_commit_resumed disable_commit_resumed
 	("continue all threads in non-stop");
 
-      iterate_over_threads (proceed_thread_callback, nullptr);
+      iterate_over_threads (proceed_thread_callback);
 
       if (current_ui->prompt_state == PROMPT_BLOCKED)
 	{
@@ -994,7 +991,7 @@ prepare_one_step (thread_info *tp, struct step_command_fsm *sm)
 	  if (inline_skipped_frames (tp) > 0)
 	    {
 	      const symbol *sym = inline_skipped_symbol (tp);
-	      if (sym->aclass () == LOC_BLOCK)
+	      if (sym->loc_class () == LOC_BLOCK)
 		{
 		  const block *block = sym->value_block ();
 		  if (block->end () < tp->control.step_range_end)
@@ -2121,9 +2118,10 @@ static const char path_var_name[] = "PATH";
 static void
 path_info (const char *args, int from_tty)
 {
-  gdb_puts ("Executable and object file path: ");
-  gdb_puts (current_inferior ()->environment.get (path_var_name));
-  gdb_puts ("\n");
+  const char *env = current_inferior ()->environment.get (path_var_name);
+
+  gdb_printf (_("Executable and object file path: %s\n"),
+	      env != nullptr ? env : "");
 }
 
 /* Add zero or more directories to the front of the execution path.  */
@@ -2511,7 +2509,7 @@ setup_inferior (int from_tty)
   /* Take any necessary post-attaching actions for this platform.  */
   target_post_attach (inferior_ptid.pid ());
 
-  post_create_inferior (from_tty);
+  post_create_inferior (from_tty, true);
 }
 
 /* What to do after the first program stops after attaching.  */
@@ -2880,7 +2878,7 @@ stop_current_target_threads_ns (ptid_t ptid)
      all-stop mode, we will only get one stop event --- it's undefined
      which thread will report the event.  */
   set_stop_requested (current_inferior ()->process_target (),
-		      ptid, 1);
+		      ptid, true);
 }
 
 /* See inferior.h.  */
@@ -3085,9 +3083,7 @@ use \"set args\" without arguments.\n\
 \n\
 To start the inferior without using a shell, use \"set startup-with-shell off\"."
 
-void _initialize_infcmd ();
-void
-_initialize_infcmd ()
+INIT_GDB_FILE (infcmd)
 {
   static struct cmd_list_element *info_proc_cmdlist;
   struct cmd_list_element *c = nullptr;

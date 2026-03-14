@@ -1,6 +1,6 @@
 /* Common definitions.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,14 @@
 
 /* Work around PR gcc/110799.  */
 #pragma GCC optimize("-fno-hoist-adjacent-loads")
+#endif
+
+#if defined (__GNUC__) && !defined (__clang__) \
+  && ((__GNUC__ >= 12 && __GNUC__ <= 15)       \
+      || (__GNUC__ == 16 && __GNUC_MINOR__ < 1))
+/* Work around PR gcc/120987 starting gcc 12, and assume it will be fixed in
+   the gcc 16.1 release.  */
+#pragma GCC optimize("-fno-ipa-modref")
 #endif
 
 #include <gdbsupport/config.h>
@@ -153,7 +161,7 @@
    and builds with -O2, and ... the assert doesn't trigger, because it's
    optimized away by gcc.
 
-   There's no suppported recipe to prevent the assertion from being optimized
+   There's no supported recipe to prevent the assertion from being optimized
    away (other than: build with -O0, or remove the nonnull attribute).  Note
    that -fno-delete-null-pointer-checks does not help.  A patch was submitted
    to improve gcc documentation to point this out more clearly (
@@ -208,7 +216,6 @@
 #include "errors.h"
 #include "print-utils.h"
 #include "common-debug.h"
-#include "cleanups.h"
 #include "common-exceptions.h"
 #include "gdbsupport/poison.h"
 

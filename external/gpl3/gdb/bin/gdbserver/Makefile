@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2024/08/18 04:03:57 rin Exp $
+#	$NetBSD: Makefile,v 1.10 2026/03/14 22:17:29 christos Exp $
 
 NOCTF=
 .include <bsd.own.mk>
@@ -9,7 +9,7 @@ GDBLIBDIR=${.CURDIR}/../../lib
 PROG=		gdbserver
 
 SERVER_SRCS+=	ax.cc debug.cc dll.cc hostio.cc inferiors.cc
-SERVER_SRCS+=	notif.cc mem-break.cc
+SERVER_SRCS+=	notif.cc mem-break.cc target.c
 SERVER_SRCS+=	regcache.cc remote-utils.cc server.cc symbol.cc target-ser.cc
 SERVER_SRCS+=	tdesc.cc tracepoint.cc utils.cc waitstatus.c version.cc
 

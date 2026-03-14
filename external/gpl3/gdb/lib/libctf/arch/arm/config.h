@@ -88,10 +88,10 @@
 #define HAVE_PREAD 1
 
 /* Define to 1 if you have the `qsort_r' function. */
-#define HAVE_QSORT_R 1
+/* #undef HAVE_QSORT_R */
 
 /* Whether a qsort_r exists with a void *arg as its last arg. */
-#define HAVE_QSORT_R_ARG_LAST 1
+/* #undef HAVE_QSORT_R_ARG_LAST */
 
 /* Whether a qsort_r exists with the compar function as its last arg. */
 /* #undef HAVE_QSORT_R_COMPAR_LAST */

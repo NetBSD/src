@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -529,9 +529,7 @@ adi_assign_command (const char *args, int from_tty)
   do_assign (next_address, cnt, version);
 }
 
-void _initialize_sparc64_adi_tdep ();
-void
-_initialize_sparc64_adi_tdep ()
+INIT_GDB_FILE (sparc64_adi_tdep)
 {
   add_basic_prefix_cmd ("adi", class_support,
 			_("ADI version related commands."),
@@ -1135,16 +1133,16 @@ sparc64_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind sparc64_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc64_frame_unwind (
   "sparc64 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64_frame_this_id,
   sparc64_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 
 static CORE_ADDR

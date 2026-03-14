@@ -1,6 +1,6 @@
 /* Symbol table lookup for the GNU debugger, GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,7 +60,6 @@
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "observable.h"
-#include "solist.h"
 #include "macrotab.h"
 #include "macroscope.h"
 
@@ -75,7 +74,7 @@
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/common-utils.h"
 #include <optional>
-#include <unordered_set>
+#include "gdbsupport/unordered_set.h"
 
 /* Forward declarations for local functions.  */
 
@@ -123,6 +122,41 @@ struct main_info
 /* Program space key for finding name and language of "main".  */
 
 static const registry<program_space>::key<main_info> main_progspace_key;
+
+/* Symbol lookup is not reentrant (though this is not an intrinsic
+   restriction).  Keep track of whether a symbol lookup is active, to be able
+   to detect reentrancy.  */
+static bool in_symbol_lookup;
+
+/* Struct to mark that a symbol lookup is active for the duration of its
+   lifetime.  */
+
+struct enter_symbol_lookup
+{
+  enter_symbol_lookup ()
+  {
+    /* Ensure that the current language has been set.  Normally the
+       language is set lazily.  However, when performing a symbol lookup,
+       this could result in a recursive call into the lookup code in some
+       cases.  Set it now to ensure that this does not happen.  */
+    get_current_language ();
+
+    /* Detect symbol lookup reentrance.  */
+    gdb_assert (!in_symbol_lookup);
+
+    in_symbol_lookup = true;
+  }
+
+  ~enter_symbol_lookup ()
+  {
+    /* Sanity check.  */
+    gdb_assert (in_symbol_lookup);
+
+    in_symbol_lookup = false;
+  }
+
+  DISABLE_COPY_AND_ASSIGN (enter_symbol_lookup);
+};
 
 /* The default symbol cache size.
    There is no extra cpu cost for large N (except when flushing the cache,
@@ -586,40 +620,6 @@ compare_filenames_for_search (const char *filename, const char *search_name)
 	      && IS_DIR_SEPARATOR (filename[len - search_len - 1]))
 	  || (HAS_DRIVE_SPEC (filename)
 	      && STRIP_DRIVE_SPEC (filename) == &filename[len - search_len]));
-}
-
-/* Same as compare_filenames_for_search, but for glob-style patterns.
-   Heads up on the order of the arguments.  They match the order of
-   compare_filenames_for_search, but it's the opposite of the order of
-   arguments to gdb_filename_fnmatch.  */
-
-bool
-compare_glob_filenames_for_search (const char *filename,
-				   const char *search_name)
-{
-  /* We rely on the property of glob-style patterns with FNM_FILE_NAME that
-     all /s have to be explicitly specified.  */
-  int file_path_elements = count_path_elements (filename);
-  int search_path_elements = count_path_elements (search_name);
-
-  if (search_path_elements > file_path_elements)
-    return false;
-
-  if (IS_ABSOLUTE_PATH (search_name))
-    {
-      return (search_path_elements == file_path_elements
-	      && gdb_filename_fnmatch (search_name, filename,
-				       FNM_FILE_NAME | FNM_NOESCAPE) == 0);
-    }
-
-  {
-    const char *file_to_compare
-      = strip_leading_path_elements (filename,
-				     file_path_elements - search_path_elements);
-
-    return gdb_filename_fnmatch (search_name, file_to_compare,
-				 FNM_FILE_NAME | FNM_NOESCAPE) == 0;
-  }
 }
 
 /* Check for a symtab of a specific name by searching some symtabs.
@@ -1780,7 +1780,7 @@ fixup_symbol_section (struct symbol *sym, struct objfile *objfile)
      index without doing the check that is done by the wrapper macros
      like SECT_OFF_TEXT.  */
   int fallback;
-  switch (sym->aclass ())
+  switch (sym->loc_class ())
     {
     case LOC_STATIC:
       fallback = objfile->sect_index_data;
@@ -1846,18 +1846,18 @@ fixup_symbol_section (struct symbol *sym, struct objfile *objfile)
 	 this reason, we still attempt a lookup by name prior to doing
 	 a search of the section table.  */
 
-      for (obj_section *s : objfile->sections ())
+      for (obj_section &s : objfile->sections ())
 	{
-	  if ((bfd_section_flags (s->the_bfd_section) & SEC_ALLOC) == 0)
+	  if ((bfd_section_flags (s.the_bfd_section) & SEC_ALLOC) == 0)
 	    continue;
 
-	  int idx = s - objfile->sections_start;
+	  int idx = &s - objfile->sections_start;
 	  CORE_ADDR offset = objfile->section_offsets[idx];
 
 	  if (fallback == -1)
 	    fallback = idx;
 
-	  if (s->addr () - offset <= addr && addr < s->endaddr () - offset)
+	  if (s.addr () - offset <= addr && addr < s.endaddr () - offset)
 	    {
 	      sym->set_section_index (idx);
 	      return;
@@ -1910,7 +1910,7 @@ lookup_name_info::match_any ()
 {
   /* Lookup any symbol that "" would complete.  I.e., this matches all
      symbol names.  */
-  static const lookup_name_info lookup_name ("", symbol_name_match_type::FULL,
+  static const lookup_name_info lookup_name ("", symbol_name_match_type::WILD,
 					     true);
 
   return lookup_name;
@@ -2162,13 +2162,6 @@ lookup_symbol_aux (const char *name, symbol_name_match_type match_type,
 	 domain_name (domain).c_str (), language_str (language));
     }
 
-  /* Make sure we do something sensible with is_a_field_of_this, since
-     the callers that set this parameter to some non-null value will
-     certainly use it later.  If we don't set it, the contents of
-     is_a_field_of_this are undefined.  */
-  if (is_a_field_of_this != NULL)
-    memset (is_a_field_of_this, 0, sizeof (*is_a_field_of_this));
-
   langdef = language_def (language);
 
   /* Search specified block and its superiors.  Don't search
@@ -2293,6 +2286,8 @@ lookup_symbol_in_block (const char *name, symbol_name_match_type match_type,
 			const struct block *block,
 			const domain_search_flags domain)
 {
+  enter_symbol_lookup tmp;
+
   struct symbol *sym;
 
   if (symbol_lookup_debug)
@@ -2328,6 +2323,8 @@ lookup_global_symbol_from_objfile (struct objfile *main_objfile,
 				   const char *name,
 				   const domain_search_flags domain)
 {
+  enter_symbol_lookup tmp;
+
   gdb_assert (block_index == GLOBAL_BLOCK || block_index == STATIC_BLOCK);
 
   for (objfile *objfile : main_objfile->separate_debug_objfiles ())
@@ -2653,11 +2650,12 @@ lookup_global_or_static_symbol (const char *name,
       return result;
     }
 
+  enter_symbol_lookup tmp;
+
   /* Do a global search (of global blocks, heh).  */
   if (result.symbol == NULL)
-    gdbarch_iterate_over_objfiles_in_search_order
-      (objfile != NULL ? objfile->arch () : current_inferior ()->arch (),
-       [&result, block_index, name, domain] (struct objfile *objfile_iter)
+    current_program_space->iterate_over_objfiles_in_search_order
+      ([&result, block_index, name, domain] (struct objfile *objfile_iter)
 	 {
 	   result = lookup_symbol_in_objfile (objfile_iter, block_index,
 					      name, domain);
@@ -3039,7 +3037,7 @@ find_symbol_at_address (CORE_ADDR address)
 
 	  for (struct symbol *sym : block_iterator_range (b))
 	    {
-	      if (sym->aclass () == LOC_STATIC
+	      if (sym->loc_class () == LOC_STATIC
 		  && sym->value_address () == addr)
 		return sym;
 	    }
@@ -4311,7 +4309,7 @@ find_function_alias_target (bound_minimal_symbol msymbol)
 
   symbol *sym = find_pc_function (func_addr);
   if (sym != NULL
-      && sym->aclass () == LOC_BLOCK
+      && sym->loc_class () == LOC_BLOCK
       && sym->value_block ()->entry_pc () == func_addr)
     return sym;
 
@@ -4492,7 +4490,7 @@ info_sources_filter::matches (const char *fullname) const
       switch (m_match_type)
 	{
 	case match_on::DIRNAME:
-	  dirname = ldirname (fullname);
+	  dirname = gdb_ldirname (fullname);
 	  to_match = dirname.c_str ();
 	  break;
 	case match_on::BASENAME:
@@ -4707,7 +4705,7 @@ info_sources_worker (struct ui_out *uiout,
 	  if (uiout->is_mi_like_p ())
 	    {
 	      const char *debug_info_state;
-	      if (objfile_has_symbols (objfile))
+	      if (objfile->has_symbols ())
 		{
 		  if (debug_fully_readin)
 		    debug_info_state = "fully-read";
@@ -4723,7 +4721,7 @@ info_sources_worker (struct ui_out *uiout,
 	      if (!debug_fully_readin)
 		uiout->text ("(Full debug information has not yet been read "
 			     "for this file.)\n");
-	      if (!objfile_has_symbols (objfile))
+	      if (!objfile->has_symbols ())
 		uiout->text ("(Objfile has no debug information.)\n");
 	      uiout->text ("\n");
 	    }
@@ -4903,7 +4901,7 @@ global_symbol_searcher::expand_symtabs
     {
       return file_matches (filename, m_filenames, basenames);
     };
-  gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher = nullptr;
+  expand_symtabs_file_matcher file_matcher = nullptr;
   if (!m_filenames.empty ())
     file_matcher = do_file_match;
 
@@ -5022,12 +5020,12 @@ global_symbol_searcher::add_matching_symbols
 
 	      if ((kind & SEARCH_VAR_DOMAIN) != 0)
 		{
-		  if (sym->aclass () == LOC_UNRESOLVED
+		  if (sym->loc_class () == LOC_UNRESOLVED
 		      /* LOC_CONST can be used for more than
 			 just enums, e.g., c++ static const
 			 members.  We only want to skip enums
 			 here.  */
-		      || (sym->aclass () == LOC_CONST
+		      || (sym->loc_class () == LOC_CONST
 			  && (sym->type ()->code () == TYPE_CODE_ENUM)))
 		    continue;
 		}
@@ -5235,7 +5233,7 @@ symbol_to_info_string (struct symbol *sym, int block)
       string_file tmp_stream;
 
       type_print (sym->type (),
-		  (sym->aclass () == LOC_TYPEDEF
+		  (sym->loc_class () == LOC_TYPEDEF
 		   ? "" : sym->print_name ()),
 		  &tmp_stream, 0);
 
@@ -5623,7 +5621,7 @@ rbreak_command (const char *regexp, int from_tty)
     spec.add_filename (std::move (file_name));
   std::vector<symbol_search> symbols = spec.search ();
 
-  std::unordered_set<std::string> seen_names;
+  gdb::unordered_set<std::string> seen_names;
   scoped_rbreak_breakpoints finalize;
   int err_count = 0;
 
@@ -5761,7 +5759,7 @@ completion_list_add_symbol (completion_tracker &tracker,
      the msymbol name and removes the msymbol name from the completion
      tracker.  */
   if (sym->language () == language_cplus
-      && sym->aclass () == LOC_BLOCK)
+      && sym->loc_class () == LOC_BLOCK)
     {
       /* The call to canonicalize returns the empty string if the input
 	 string is already in canonical form, thanks to this we don't
@@ -5906,7 +5904,7 @@ completion_list_add_fields (completion_tracker &tracker,
 			    const lookup_name_info &lookup_name,
 			    const char *text, const char *word)
 {
-  if (sym->aclass () == LOC_TYPEDEF)
+  if (sym->loc_class () == LOC_TYPEDEF)
     {
       struct type *t = sym->type ();
       enum type_code c = t->code ();
@@ -5958,7 +5956,7 @@ symbol_is_function_or_method (minimal_symbol *msymbol)
 bound_minimal_symbol
 find_gnu_ifunc (const symbol *sym)
 {
-  if (sym->aclass () != LOC_BLOCK)
+  if (sym->loc_class () != LOC_BLOCK)
     return {};
 
   lookup_name_info lookup_name (sym->search_name (),
@@ -6206,8 +6204,6 @@ default_collect_symbol_completion_matches_break_on
   if (current_language->macro_expansion () == macro_expansion_c
       && code == TYPE_CODE_UNDEF)
     {
-      gdb::unique_xmalloc_ptr<struct macro_scope> scope;
-
       /* This adds a macro's name to the current completion list.  */
       auto add_macro_name = [&] (const char *macro_name,
 				 const macro_definition *,
@@ -6225,10 +6221,9 @@ default_collect_symbol_completion_matches_break_on
 	 resulting expression will be evaluated at "file:line" -- but
 	 at there does not seem to be a way to detect this at
 	 completion time.  */
-      scope = default_macro_scope ();
-      if (scope)
-	macro_for_each_in_scope (scope->file, scope->line,
-				 add_macro_name);
+      macro_scope scope = default_macro_scope ();
+      if (scope.is_valid ())
+	macro_for_each_in_scope (scope.file, scope.line, add_macro_name);
 
       /* User-defined macros are always visible.  */
       macro_for_each (macro_user_macros, add_macro_name);
@@ -6413,7 +6408,7 @@ add_partial_filename_data::operator() (const char *filename,
    program.  */
 
 completion_list
-make_source_files_completion_list (const char *text, const char *word)
+make_source_files_completion_list (const char *text)
 {
   size_t text_len = strlen (text);
   completion_list list;
@@ -6439,7 +6434,7 @@ make_source_files_completion_list (const char *text, const char *word)
 		{
 		  /* This file matches for a completion; add it to the current
 		     list of matches.  */
-		  add_filename_to_list (s->filename, text, word, &list);
+		  add_filename_to_list (s->filename, text, text, &list);
 		}
 	      else
 		{
@@ -6451,7 +6446,7 @@ make_source_files_completion_list (const char *text, const char *word)
 		  if (base_name != s->filename
 		      && !filenames_seen.seen (base_name)
 		      && filename_ncmp (base_name, text, text_len) == 0)
-		    add_filename_to_list (base_name, text, word, &list);
+		    add_filename_to_list (base_name, text, text, &list);
 		}
 	    }
 	}
@@ -6459,7 +6454,7 @@ make_source_files_completion_list (const char *text, const char *word)
 
   datum.filename_seen_cache = &filenames_seen;
   datum.text = text;
-  datum.word = word;
+  datum.word = text;
   datum.text_len = text_len;
   datum.list = &list;
   map_symbol_filenames (datum, false /*need_fullname*/);
@@ -6550,7 +6545,7 @@ find_main_name (void)
      language.  It is easy to guaranty this with Ada, since we use a
      special symbol generated only when the main in Ada to find the name
      of the main procedure.  It is difficult however to see how this can
-     be guarantied for languages such as C, for instance.  This suggests
+     be guaranteed for languages such as C, for instance.  This suggests
      that order of call for these methods becomes important, which means
      a more complicated approach.  */
   new_main_name = ada_main_name ();
@@ -6586,9 +6581,8 @@ find_main_name (void)
 
   /* Try to find language for main in psymtabs.  */
   bool symbol_found_p = false;
-  gdbarch_iterate_over_objfiles_in_search_order
-    (current_inferior ()->arch (),
-     [&symbol_found_p, pspace] (objfile *obj)
+  current_program_space->iterate_over_objfiles_in_search_order
+    ([&symbol_found_p, pspace] (objfile *obj)
        {
 	 language lang
 	   = obj->lookup_global_symbol_language ("main",
@@ -6636,42 +6630,17 @@ main_language (void)
   return info->language_of_main;
 }
 
-/* Return 1 if the supplied producer string matches the ARM RealView
-   compiler (armcc).  */
-
-bool
-producer_is_realview (const char *producer)
-{
-  static const char *const arm_idents[] = {
-    "ARM C Compiler, ADS",
-    "Thumb C Compiler, ADS",
-    "ARM C++ Compiler, ADS",
-    "Thumb C++ Compiler, ADS",
-    "ARM/Thumb C/C++ Compiler, RVCT",
-    "ARM C/C++ Compiler, RVCT"
-  };
-
-  if (producer == NULL)
-    return false;
-
-  for (const char *ident : arm_idents)
-    if (startswith (producer, ident))
-      return true;
-
-  return false;
-}
-
 
 
 /* The next index to hand out in response to a registration request.  */
 
-static int next_aclass_value = LOC_FINAL_VALUE;
+static int next_loc_class_value = LOC_FINAL_VALUE;
 
-/* The maximum number of "aclass" registrations we support.  This is
+/* The maximum number of "loc_class" registrations we support.  This is
    constant for convenience.  */
 #define MAX_SYMBOL_IMPLS (LOC_FINAL_VALUE + 11)
 
-/* The objects representing the various "aclass" values.  The elements
+/* The objects representing the various "loc_class" values.  The elements
    from 0 up to LOC_FINAL_VALUE-1 represent themselves, and subsequent
    elements are those registered at gdb initialization time.  */
 
@@ -6684,22 +6653,22 @@ gdb::array_view<const struct symbol_impl> symbol_impls (symbol_impl);
 
 /* Make sure we saved enough room in struct symbol.  */
 
-static_assert (MAX_SYMBOL_IMPLS <= (1 << SYMBOL_ACLASS_BITS));
+static_assert (MAX_SYMBOL_IMPLS <= (1 << SYMBOL_LOC_CLASS_BITS));
 
-/* Register a computed symbol type.  ACLASS must be LOC_COMPUTED.  OPS
+/* Register a computed symbol type.  LOC_CLASS must be LOC_COMPUTED.  OPS
    is the ops vector associated with this index.  This returns the new
-   index, which should be used as the aclass_index field for symbols
+   index, which should be used as the loc_class_index field for symbols
    of this type.  */
 
 int
-register_symbol_computed_impl (enum address_class aclass,
+register_symbol_computed_impl (location_class loc_class,
 			       const struct symbol_computed_ops *ops)
 {
-  int result = next_aclass_value++;
+  int result = next_loc_class_value++;
 
-  gdb_assert (aclass == LOC_COMPUTED);
+  gdb_assert (loc_class == LOC_COMPUTED);
   gdb_assert (result < MAX_SYMBOL_IMPLS);
-  symbol_impl[result].aclass = aclass;
+  symbol_impl[result].loc_class = loc_class;
   symbol_impl[result].ops_computed = ops;
 
   /* Sanity check OPS.  */
@@ -6712,20 +6681,20 @@ register_symbol_computed_impl (enum address_class aclass,
   return result;
 }
 
-/* Register a function with frame base type.  ACLASS must be LOC_BLOCK.
+/* Register a function with frame base type.  LOC_CLASS must be LOC_BLOCK.
    OPS is the ops vector associated with this index.  This returns the
-   new index, which should be used as the aclass_index field for symbols
+   new index, which should be used as the loc_class_index field for symbols
    of this type.  */
 
 int
-register_symbol_block_impl (enum address_class aclass,
+register_symbol_block_impl (location_class loc_class,
 			    const struct symbol_block_ops *ops)
 {
-  int result = next_aclass_value++;
+  int result = next_loc_class_value++;
 
-  gdb_assert (aclass == LOC_BLOCK);
+  gdb_assert (loc_class == LOC_BLOCK);
   gdb_assert (result < MAX_SYMBOL_IMPLS);
-  symbol_impl[result].aclass = aclass;
+  symbol_impl[result].loc_class = loc_class;
   symbol_impl[result].ops_block = ops;
 
   /* Sanity check OPS.  */
@@ -6736,35 +6705,33 @@ register_symbol_block_impl (enum address_class aclass,
   return result;
 }
 
-/* Register a register symbol type.  ACLASS must be LOC_REGISTER or
+/* Register a register symbol type.  LOC_CLASS must be LOC_REGISTER or
    LOC_REGPARM_ADDR.  OPS is the register ops vector associated with
    this index.  This returns the new index, which should be used as
-   the aclass_index field for symbols of this type.  */
+   the loc_class_index field for symbols of this type.  */
 
 int
-register_symbol_register_impl (enum address_class aclass,
+register_symbol_register_impl (location_class loc_class,
 			       const struct symbol_register_ops *ops)
 {
-  int result = next_aclass_value++;
+  int result = next_loc_class_value++;
 
-  gdb_assert (aclass == LOC_REGISTER || aclass == LOC_REGPARM_ADDR);
+  gdb_assert (loc_class == LOC_REGISTER || loc_class == LOC_REGPARM_ADDR);
   gdb_assert (result < MAX_SYMBOL_IMPLS);
-  symbol_impl[result].aclass = aclass;
+  symbol_impl[result].loc_class = loc_class;
   symbol_impl[result].ops_register = ops;
 
   return result;
 }
 
 /* Initialize elements of 'symbol_impl' for the constants in enum
-   address_class.  */
+   location_class.  */
 
 static void
 initialize_ordinary_address_classes (void)
 {
-  int i;
-
-  for (i = 0; i < LOC_FINAL_VALUE; ++i)
-    symbol_impl[i].aclass = (enum address_class) i;
+  for (int i = 0; i < LOC_FINAL_VALUE; ++i)
+    symbol_impl[i].loc_class = static_cast<location_class> (i);
 }
 
 
@@ -6812,12 +6779,12 @@ CORE_ADDR
 symbol::get_maybe_copied_address () const
 {
   gdb_assert (this->maybe_copied);
-  gdb_assert (this->aclass () == LOC_STATIC);
+  gdb_assert (this->loc_class () == LOC_STATIC);
 
   const char *linkage_name = this->linkage_name ();
   bound_minimal_symbol minsym
     = lookup_minimal_symbol_linkage (this->objfile ()->pspace (), linkage_name,
-				     false);
+				     false, false);
   if (minsym.minsym != nullptr)
     return minsym.value_address ();
 
@@ -6834,7 +6801,8 @@ minimal_symbol::get_maybe_copied_address (objfile *objf) const
 
   const char *linkage_name = this->linkage_name ();
   bound_minimal_symbol found
-    = lookup_minimal_symbol_linkage (objf->pspace (), linkage_name, true);
+    = lookup_minimal_symbol_linkage (objf->pspace (), linkage_name,
+				     false, true);
   if (found.minsym != nullptr)
     return found.value_address ();
 
@@ -7021,11 +6989,8 @@ info_module_subcommand (bool quiet, const char *module_regexp,
 
   const char *last_filename = "";
   const symbol *last_module_symbol = nullptr;
-  for (const module_symbol_search &ms : module_symbols)
+  for (const auto &[p, q] : module_symbols)
     {
-      const symbol_search &p = ms.first;
-      const symbol_search &q = ms.second;
-
       gdb_assert (q.symbol != nullptr);
 
       if (last_module_symbol != p.symbol)
@@ -7144,9 +7109,7 @@ info_module_var_func_command_completer (struct cmd_list_element *ignore,
 
 
 
-void _initialize_symtab ();
-void
-_initialize_symtab ()
+INIT_GDB_FILE (symtab)
 {
   cmd_list_element *c;
 

@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB and GDBserver.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,8 @@
 #include "gdbsupport/signals-state-save-restore.h"
 #include "gdbsupport/gdb_tilde_expand.h"
 #include "gdbsupport/gdb_signals.h"
+#include "gdbsupport/buildargv.h"
+#include "gdbsupport/gdb_argv_vec.h"
 #include <vector>
 
 extern char **environ;
@@ -50,7 +52,7 @@ public:
      strings to which the array point.  */
   char **argv ()
   {
-    return const_cast<char **> (&m_argv[0]);
+    return m_argv.argv ();
   }
 
 private:
@@ -69,66 +71,28 @@ private:
 		       const std::string &allargs,
 		       const char *shell_file);
 
-  /* The argument vector built.  Holds non-owning pointers.  Elements
-     either point to the strings passed to the execv_argv ctor, or
-     inside M_STORAGE.  */
-  std::vector<const char *> m_argv;
-
-  /* Storage.  In the no-shell case, this contains a copy of the
-     arguments passed to the ctor, split by '\0'.  In the shell case,
-     this contains the quoted shell command.  I.e., SHELL_COMMAND in
-     {"$SHELL" "-c", SHELL_COMMAND, NULL}.  */
-  std::string m_storage;
+  /* The argument vector.  This owns the strings within it.  */
+  gdb::argv_vec m_argv;
 };
 
-/* Create argument vector for straight call to execvp.  Breaks up
-   ALLARGS into an argument vector suitable for passing to execvp and
-   stores it in M_ARGV.  E.g., on "run a b c d" this routine would get
-   as input the string "a b c d", and as output it would fill in
-   M_ARGV with the four arguments "a", "b", "c", "d".  Each argument
-   in M_ARGV points to a substring of a copy of ALLARGS stored in
-   M_STORAGE.  */
+/* Create argument vector for straight call to execvp.  Breaks up ALLARGS
+   into an argument vector suitable for passing to execvp and stores it in
+   M_ARGV.  EXEC_FILE is the executable to be run.
+
+   E.g., if EXEC_FILE is "foo", and the user does "run a b c d" then
+   ALLARGS would be "a b c d", and this function would fill M_ARGV with
+   give arguments "foo", "a", "b", "c", and "d".  */
 
 void
 execv_argv::init_for_no_shell (const char *exec_file,
 			       const std::string &allargs)
 {
+  m_argv.push_back (xstrdup (exec_file));
 
-  /* Save/work with a copy stored in our storage.  The pointers pushed
-     to M_ARGV point directly into M_STORAGE, which is modified in
-     place with the necessary NULL terminators.  This avoids N heap
-     allocations and string dups when 1 is sufficient.  */
-  std::string &args_copy = m_storage = allargs;
+  gdb_argv argv (allargs.c_str ());
 
-  m_argv.push_back (exec_file);
-
-  for (size_t cur_pos = 0; cur_pos < args_copy.size ();)
-    {
-      /* Skip whitespace-like chars.  */
-      std::size_t pos = args_copy.find_first_not_of (" \t\n", cur_pos);
-
-      if (pos != std::string::npos)
-	cur_pos = pos;
-
-      /* Find the position of the next separator.  */
-      std::size_t next_sep = args_copy.find_first_of (" \t\n", cur_pos);
-
-      if (next_sep == std::string::npos)
-	{
-	  /* No separator found, which means this is the last
-	     argument.  */
-	  next_sep = args_copy.size ();
-	}
-      else
-	{
-	  /* Replace the separator with a terminator.  */
-	  args_copy[next_sep++] = '\0';
-	}
-
-      m_argv.push_back (&args_copy[cur_pos]);
-
-      cur_pos = next_sep;
-    }
+  for (const auto &a : argv)
+    m_argv.push_back (xstrdup (a));
 
   /* NULL-terminate the vector.  */
   m_argv.push_back (NULL);
@@ -182,11 +146,7 @@ execv_argv::init_for_shell (const char *exec_file,
   /* We're going to call a shell.  */
   bool escape_bang = escape_bang_in_quoted_argument (shell_file);
 
-  /* We need to build a new shell command string, and make argv point
-     to it.  So build it in the storage.  */
-  std::string &shell_command = m_storage;
-
-  shell_command = "exec ";
+  std::string shell_command = "exec ";
 
   /* Add any exec wrapper.  That may be a program name with arguments,
      so the user must handle quoting.  */
@@ -255,10 +215,9 @@ execv_argv::init_for_shell (const char *exec_file,
   /* If we decided above to start up with a shell, we exec the shell.
      "-c" says to interpret the next arg as a shell command to
      execute, and this command is "exec <target-program> <args>".  */
-  m_argv.reserve (4);
-  m_argv.push_back (shell_file);
-  m_argv.push_back ("-c");
-  m_argv.push_back (shell_command.c_str ());
+  m_argv.push_back (xstrdup (shell_file));
+  m_argv.push_back (xstrdup ("-c"));
+  m_argv.push_back (xstrdup (shell_command.c_str ()));
   m_argv.push_back (NULL);
 }
 

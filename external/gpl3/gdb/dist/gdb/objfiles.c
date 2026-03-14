@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "gdbsupport/gdb_obstack.h"
-#include "hashtab.h"
 
 #include "breakpoint.h"
 #include "block.h"
@@ -190,7 +189,7 @@ objfile_lookup_static_link (struct objfile *objfile,
 
 static void
 add_to_objfile_sections (struct bfd *abfd, struct bfd_section *asect,
-			      struct objfile *objfile, int force)
+			 struct objfile *objfile, int force)
 {
   struct obj_section *section;
 
@@ -522,8 +521,8 @@ relocate_one_symbol (struct symbol *sym, struct objfile *objfile,
      any symbols in STRUCT_DOMAIN or UNDEF_DOMAIN.
      But I'm leaving out that test, on the theory that
      they can't possibly pass the tests below.  */
-  if ((sym->aclass () == LOC_LABEL
-       || sym->aclass () == LOC_STATIC)
+  if ((sym->loc_class () == LOC_LABEL
+       || sym->loc_class () == LOC_STATIC)
       && sym->section_index () >= 0)
     sym->set_value_address (sym->value_address ()
 			    + delta[sym->section_index ()]);
@@ -588,12 +587,12 @@ objfile_relocate1 (struct objfile *objfile,
   get_objfile_pspace_data (objfile->pspace ())->section_map_dirty = 1;
 
   /* Update the table in exec_ops, used to read memory.  */
-  for (obj_section *s : objfile->sections ())
+  for (obj_section &s : objfile->sections ())
     {
-      int idx = s - objfile->sections_start;
+      int idx = &s - objfile->sections_start;
 
       exec_set_section_address (bfd_get_filename (objfile->obfd.get ()), idx,
-				s->addr ());
+				s.addr ());
     }
 
   /* Data changed.  */
@@ -674,18 +673,18 @@ objfile_rebase (struct objfile *objfile, CORE_ADDR slide)
 /* See objfiles.h.  */
 
 bool
-objfile_has_full_symbols (objfile *objfile)
+objfile::has_full_symbols ()
 {
-  return objfile->compunit_symtabs != nullptr;
+  return this->compunit_symtabs != nullptr;
 }
 
 /* See objfiles.h.  */
 
 bool
-objfile_has_symbols (objfile *objfile)
+objfile::has_symbols ()
 {
-  for (::objfile *o : objfile->separate_debug_objfiles ())
-    if (o->has_partial_symbols () || objfile_has_full_symbols (o))
+  for (::objfile *o : this->separate_debug_objfiles ())
+    if (o->has_partial_symbols () || o->has_full_symbols ())
       return true;
 
   return false;
@@ -709,7 +708,7 @@ bool
 have_full_symbols (program_space *pspace)
 {
   for (objfile *ofp : pspace->objfiles ())
-    if (objfile_has_full_symbols (ofp))
+    if (ofp->has_full_symbols ())
       return true;
 
   return false;
@@ -791,10 +790,10 @@ sort_cmp (const struct obj_section *sect1, const obj_section *sect2)
 	     second case shouldn't occur during normal use, but std::sort
 	     does check that '!(a < a)' when compiled in debug mode.  */
 
-	  for (const obj_section *osect : objfile1->sections ())
-	    if (osect == sect2)
+	  for (const obj_section &osect : objfile1->sections ())
+	    if (&osect == sect2)
 	      return false;
-	    else if (osect == sect1)
+	    else if (&osect == sect1)
 	      return true;
 
 	  /* We should have found one of the sections before getting here.  */
@@ -995,8 +994,8 @@ update_section_map (struct program_space *pspace,
 
   alloc_size = 0;
   for (objfile *objfile : pspace->objfiles ())
-    for (obj_section *s : objfile->sections ())
-      if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
+    for (obj_section &s : objfile->sections ())
+      if (insert_section_p (objfile->obfd.get (), s.the_bfd_section))
 	alloc_size += 1;
 
   /* This happens on detach/attach (e.g. in gdb.base/attach.exp).  */
@@ -1011,9 +1010,9 @@ update_section_map (struct program_space *pspace,
 
   i = 0;
   for (objfile *objfile : pspace->objfiles ())
-    for (obj_section *s : objfile->sections ())
-      if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
-	map[i++] = s;
+    for (obj_section &s : objfile->sections ())
+      if (insert_section_p (objfile->obfd.get (), s.the_bfd_section))
+	map[i++] = &s;
 
   std::sort (map, map + alloc_size, sort_cmp);
   map_size = filter_debuginfo_sections(map, alloc_size);
@@ -1128,12 +1127,12 @@ is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile)
   if (objfile == NULL)
     return false;
 
-  for (obj_section *osect : objfile->sections ())
+  for (obj_section &osect : objfile->sections ())
     {
-      if (section_is_overlay (osect) && !section_is_mapped (osect))
+      if (section_is_overlay (&osect) && !section_is_mapped (&osect))
 	continue;
 
-      if (osect->contains (addr))
+      if (osect.contains (addr))
 	return true;
     }
   return false;
@@ -1153,24 +1152,6 @@ shared_objfile_contains_address_p (struct program_space *pspace,
     }
 
   return false;
-}
-
-/* The default implementation for the "iterate_over_objfiles_in_search_order"
-   gdbarch method.  It is equivalent to use the objfiles iterable,
-   searching the objfiles in the order they are stored internally,
-   ignoring CURRENT_OBJFILE.
-
-   On most platforms, it should be close enough to doing the best
-   we can without some knowledge specific to the architecture.  */
-
-void
-default_iterate_over_objfiles_in_search_order
-  (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
-   objfile *current_objfile)
-{
-  for (objfile *objfile : current_program_space->objfiles ())
-    if (cb (objfile))
-	return;
 }
 
 /* See objfiles.h.  */

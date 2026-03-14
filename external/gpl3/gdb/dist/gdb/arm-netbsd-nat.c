@@ -1,6 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -424,9 +424,7 @@ arm_netbsd_nat_target::read_description ()
   return arm_read_description (ARM_FP_TYPE_VFPV3, false);
 }
 
-void _initialize_arm_netbsd_nat ();
-void
-_initialize_arm_netbsd_nat ()
+INIT_GDB_FILE (arm_netbsd_nat)
 {
   /* Support debugging kernel virtual memory images.  */
   bsd_kvm_add_target (armnbsd_supply_pcb);

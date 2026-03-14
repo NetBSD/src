@@ -1,6 +1,6 @@
 /* Machine independent support for Solaris /proc (process file system) for GDB.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -3447,9 +3447,7 @@ proc_untrace_sysexit_cmd (const char *args, int from_tty)
   proc_trace_syscalls (args, from_tty, PR_SYSEXIT, FLAG_RESET);
 }
 
-void _initialize_procfs ();
-void
-_initialize_procfs ()
+INIT_GDB_FILE (procfs)
 {
   add_com ("proc-trace-entry", no_class, proc_trace_sysentry_cmd,
 	   _("Give a trace of entries into the syscall."));
@@ -3550,21 +3548,17 @@ procfs_corefile_thread_callback (procinfo *pi, procinfo *thread, void *data)
   return 0;
 }
 
-static int
-find_signalled_thread (struct thread_info *info, void *data)
+static bool
+find_signalled_thread (struct thread_info *info)
 {
-  if (info->stop_signal () != GDB_SIGNAL_0
-      && info->ptid.pid () == inferior_ptid.pid ())
-    return 1;
-
-  return 0;
+  return (info->stop_signal () != GDB_SIGNAL_0
+	  && info->ptid.pid () == inferior_ptid.pid ());
 }
 
 static enum gdb_signal
 find_stop_signal (void)
 {
-  struct thread_info *info =
-    iterate_over_threads (find_signalled_thread, NULL);
+  struct thread_info *info = iterate_over_threads (find_signalled_thread);
 
   if (info)
     return info->stop_signal ();

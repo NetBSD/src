@@ -1,6 +1,6 @@
 /* Target-dependent code for the ALPHA architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,6 +43,9 @@
 #include "alpha-tdep.h"
 #include <algorithm>
 
+#include "target-descriptions.h"
+#include "features/alpha.c"
+
 /* Instruction decoding.  The notations for registers, immediates and
    opcodes are the same as the one used in Compaq's Alpha architecture
    handbook.  */
@@ -75,60 +78,38 @@ static const int subq_opcode = 0x10;
 static const int subq_function = 0x29;
 
 
-/* Return the name of the REGNO register.
+/* Alpha registers using their software names.
 
    An empty name corresponds to a register number that used to
    be used for a virtual register.  That virtual register has
    been removed, but the index is still reserved to maintain
    compatibility with existing remote alpha targets.  */
 
-static const char *
-alpha_register_name (struct gdbarch *gdbarch, int regno)
+static const char * const alpha_register_names[] =
 {
-  static const char * const register_names[] =
-  {
-    "v0",   "t0",   "t1",   "t2",   "t3",   "t4",   "t5",   "t6",
-    "t7",   "s0",   "s1",   "s2",   "s3",   "s4",   "s5",   "fp",
-    "a0",   "a1",   "a2",   "a3",   "a4",   "a5",   "t8",   "t9",
-    "t10",  "t11",  "ra",   "t12",  "at",   "gp",   "sp",   "zero",
-    "f0",   "f1",   "f2",   "f3",   "f4",   "f5",   "f6",   "f7",
-    "f8",   "f9",   "f10",  "f11",  "f12",  "f13",  "f14",  "f15",
-    "f16",  "f17",  "f18",  "f19",  "f20",  "f21",  "f22",  "f23",
-    "f24",  "f25",  "f26",  "f27",  "f28",  "f29",  "f30",  "fpcr",
-    "pc",   "",     "unique"
-  };
-
-  static_assert (ALPHA_NUM_REGS == ARRAY_SIZE (register_names));
-  return register_names[regno];
-}
+  "v0",   "t0",   "t1",   "t2",   "t3",   "t4",   "t5",   "t6",
+  "t7",   "s0",   "s1",   "s2",   "s3",   "s4",   "s5",   "fp",
+  "a0",   "a1",   "a2",   "a3",   "a4",   "a5",   "t8",   "t9",
+  "t10",  "t11",  "ra",   "t12",  "at",   "gp",   "sp",   "zero",
+  "f0",   "f1",   "f2",   "f3",   "f4",   "f5",   "f6",   "f7",
+  "f8",   "f9",   "f10",  "f11",  "f12",  "f13",  "f14",  "f15",
+  "f16",  "f17",  "f18",  "f19",  "f20",  "f21",  "f22",  "f23",
+  "f24",  "f25",  "f26",  "f27",  "f28",  "f29",  "f30",  "fpcr",
+  "pc",   "",     "unique"
+};
+static_assert (ALPHA_NUM_REGS == ARRAY_SIZE (alpha_register_names));
 
 static int
 alpha_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
 {
-  return (strlen (alpha_register_name (gdbarch, regno)) == 0);
+  return (strlen (alpha_register_names[regno]) == 0);
 }
 
 static int
 alpha_cannot_store_register (struct gdbarch *gdbarch, int regno)
 {
   return (regno == ALPHA_ZERO_REGNUM
-	  || strlen (alpha_register_name (gdbarch, regno)) == 0);
-}
-
-static struct type *
-alpha_register_type (struct gdbarch *gdbarch, int regno)
-{
-  if (regno == ALPHA_SP_REGNUM || regno == ALPHA_GP_REGNUM)
-    return builtin_type (gdbarch)->builtin_data_ptr;
-  if (regno == ALPHA_PC_REGNUM)
-    return builtin_type (gdbarch)->builtin_func_ptr;
-
-  /* Don't need to worry about little vs big endian until 
-     some jerk tries to port to alpha-unicosmk.  */
-  if (regno >= ALPHA_FP0_REGNUM && regno < ALPHA_FP0_REGNUM + 31)
-    return builtin_type (gdbarch)->builtin_double;
-
-  return builtin_type (gdbarch)->builtin_int64;
+	  || strlen (alpha_register_names[regno]) == 0);
 }
 
 /* Is REGNUM a member of REGGROUP?  */
@@ -1032,16 +1013,16 @@ alpha_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind alpha_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy alpha_sigtramp_frame_unwind (
   "alpha sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   alpha_sigtramp_frame_this_id,
   alpha_sigtramp_frame_prev_register,
   NULL,
   alpha_sigtramp_frame_sniffer
-};
+);
 
 
 
@@ -1451,16 +1432,16 @@ alpha_heuristic_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind alpha_heuristic_frame_unwind =
-{
+static const struct frame_unwind_legacy alpha_heuristic_frame_unwind (
   "alpha prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   alpha_heuristic_frame_this_id,
   alpha_heuristic_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 alpha_heuristic_frame_base_address (const frame_info_ptr &this_frame,
@@ -1730,7 +1711,7 @@ alpha_software_single_step (struct regcache *regcache)
 }
 
 
-/* Initialize the current architecture based on INFO.  If possible, re-use an
+/* Initialize the current architecture based on INFO.  If possible, reuse an
    architecture from ARCHES, which is a list of architectures already created
    during this debugging session.
 
@@ -1740,10 +1721,38 @@ alpha_software_single_step (struct regcache *regcache)
 static struct gdbarch *
 alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 {
+  tdesc_arch_data_up tdesc_data;
+  const struct target_desc *tdesc = info.target_desc;
+
   /* Find a candidate among extant architectures.  */
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
     return arches->gdbarch;
+
+  if (tdesc == nullptr)
+    tdesc = tdesc_alpha;
+
+  /* Validate target description.  */
+  if (tdesc_has_registers (tdesc))
+    {
+      const struct tdesc_feature *feature;
+      bool valid_p;
+
+      feature = tdesc_find_feature (tdesc, "org.gnu.gdb.alpha.core");
+      if (feature == nullptr)
+	return nullptr;
+
+      tdesc_data = tdesc_data_alloc ();
+      valid_p = true;
+      for (int i = 0; i < ALPHA_NUM_REGS; ++i)
+	valid_p &= tdesc_numbered_register (feature, tdesc_data.get (), i,
+					    alpha_register_names[i]);
+
+      if (!valid_p)
+	return nullptr;
+    }
+
+  gdb_assert (tdesc_data != nullptr);
 
   gdbarch *gdbarch
     = gdbarch_alloc (&info, gdbarch_tdep_up (new alpha_gdbarch_tdep));
@@ -1781,8 +1790,7 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pc_regnum (gdbarch, ALPHA_PC_REGNUM);
   set_gdbarch_fp0_regnum (gdbarch, ALPHA_FP0_REGNUM);
 
-  set_gdbarch_register_name (gdbarch, alpha_register_name);
-  set_gdbarch_register_type (gdbarch, alpha_register_type);
+  tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
   set_gdbarch_cannot_fetch_register (gdbarch, alpha_cannot_fetch_register);
   set_gdbarch_cannot_store_register (gdbarch, alpha_cannot_store_register);
@@ -1817,7 +1825,7 @@ alpha_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_cannot_step_breakpoint (gdbarch, 1);
 
   /* Handles single stepping of atomic sequences.  */
-  set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, alpha_software_single_step);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -1843,12 +1851,12 @@ alpha_dwarf2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_base_append_sniffer (gdbarch, dwarf2_frame_base_sniffer);
 }
 
-void _initialize_alpha_tdep ();
-void
-_initialize_alpha_tdep ()
+INIT_GDB_FILE (alpha_tdep)
 {
 
   gdbarch_register (bfd_arch_alpha, alpha_gdbarch_init, NULL);
+
+  initialize_tdesc_alpha ();
 
   /* Let the user set the fence post for heuristic_proc_start.  */
 
