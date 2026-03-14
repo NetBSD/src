@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2creg.h,v 1.3 2014/10/07 21:32:10 matt Exp $ */
+/* $NetBSD: motoi2creg.h,v 1.4 2026/03/14 20:11:02 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
 #define	 SR_MAAS  0x40	/* 1 means addressed as slave */
 #define	 SR_MBB   0x20	/* 1 before STOP condition is detected */
 #define	 SR_MAL   0x10	/* arbitration was lost */
-#define	 SR_MIF   0x02	/* indicates data transter completion */
+#define	 SR_MIF   0x02	/* indicates data transfer completion */
 #define	 SR_RXAK  0x01	/* 1 to indicate receive has completed */
 #define I2CDR	0x0010	/* data */
 #define	I2CDFSRR 0x0014	/* digital filter sampling rate register */

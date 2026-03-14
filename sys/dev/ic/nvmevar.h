@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.28 2022/08/14 12:08:57 jmcneill Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.29 2026/03/14 20:11:02 andvar Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -145,7 +145,7 @@ struct nvme_softc {
 
 	u_int			sc_rdy_to;	/* RDY timeout */
 	size_t			sc_mps;		/* memory page size */
-	size_t			sc_mdts;	/* max data trasfer size */
+	size_t			sc_mdts;	/* max data transfer size */
 	u_int			sc_max_sgl;	/* max S/G segments */
 	u_int			sc_dstrd;
 

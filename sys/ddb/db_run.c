@@ -1,4 +1,4 @@
-/*	$NetBSD: db_run.c,v 1.33 2014/09/19 17:29:01 matt Exp $	*/
+/*	$NetBSD: db_run.c,v 1.34 2026/03/14 20:11:01 andvar Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.33 2014/09/19 17:29:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_run.c,v 1.34 2026/03/14 20:11:01 andvar Exp $");
 
 #include "opt_ddb.h"
 
@@ -350,7 +350,7 @@ db_continue_cmd(db_expr_t addr, bool have_addr,
  *
  * bool inst_unconditional_flow_transfer(int inst)
  *	returns true if the instruction is an unconditional
- *	transter of flow (i.e. unconditional branch)
+ *	transfer of flow (i.e. unconditional branch)
  *
  * db_addr_t branch_taken(int inst, db_addr_t pc, db_regs_t *regs)
  *	returns the target address of the branch

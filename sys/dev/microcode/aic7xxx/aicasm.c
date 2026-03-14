@@ -1,4 +1,4 @@
-/*	$NetBSD: aicasm.c,v 1.14 2023/09/01 11:23:39 andvar Exp $	*/
+/*	$NetBSD: aicasm.c,v 1.15 2026/03/14 20:11:02 andvar Exp $	*/
 
 /*
  * Aic7xxx SCSI host adapter firmware assembler
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: aicasm.c,v 1.14 2023/09/01 11:23:39 andvar Exp $");
+__RCSID("$NetBSD: aicasm.c,v 1.15 2026/03/14 20:11:02 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -287,7 +287,7 @@ main(int argc, char *argv[])
 		/*
 		 * Descend the tree of scopes and insert/emit
 		 * patches as appropriate.  We perform a depth first
-		 * transversal, recursively handling each scope.
+		 * traversal, recursively handling each scope.
 		 */
 		/* start at the root scope */
 		dump_scope(SLIST_FIRST(&scope_stack));
