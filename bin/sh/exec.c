@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.59 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.60 2026/03/14 16:43:36 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.59 2024/07/12 07:30:30 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.60 2026/03/14 16:43:36 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1132,6 +1132,10 @@ typecmd(int argc, char **argv)
 		    argv[0][0] == 'c' ? " [-p] [-v|-V]" : "");
 
 	while ((arg = *argptr++)) {
+		if (arg[0] == '\0' && !v_flag) {
+			out1str("'' is an empty string\n");
+			continue;
+		}
 		if (!v_flag)
 			out1str(arg);
 		/* First look at the keywords */
@@ -1190,13 +1194,12 @@ typecmd(int argc, char **argv)
 					stunalloc(name);
 				} while (--j >= 0);
 				if (!v_flag)
-					out1fmt(" is%s ",
-					    cmdp ? " a tracked alias for" : "");
+					out1str(" is ");
 				out1fmt("%s\n", name);
 			} else {
 				if (access(arg, X_OK) == 0) {
 					if (!v_flag)
-						out1fmt(" is ");
+						out1str(" is ");
 					out1fmt("%s\n", arg);
 				} else {
 					if (!v_flag)
