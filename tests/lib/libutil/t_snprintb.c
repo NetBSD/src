@@ -1,7 +1,7 @@
-/* $NetBSD: t_snprintb.c,v 1.39 2025/10/09 18:51:41 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.40 2026/03/14 11:46:51 rillig Exp $ */
 
 /*
- * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004, 2008, 2010, 2024-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Christos Zoulas and
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.39 2025/10/09 18:51:41 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.40 2026/03/14 11:46:51 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -60,10 +60,10 @@ check_snprintb_m(const char *file, size_t line,
     size_t line_max,
     int want_rv, const char *want_buf, size_t want_bufsize)
 {
-	char buf[1024], vis_bitfmt[1024], vis_want_buf[1024], vis_buf[1024];
+	char buf_with_padding[1026], vis_bitfmt[1024], vis_want_buf[1024], vis_buf[1024];
 
-	ATF_REQUIRE(bufsize <= sizeof(buf));
-	ATF_REQUIRE(want_bufsize <= sizeof(buf));
+	ATF_REQUIRE(bufsize <= sizeof(buf_with_padding) - 2);
+	ATF_REQUIRE(want_bufsize <= sizeof(buf_with_padding) - 2);
 	if (bitfmtlen > 2 && bitfmt[0] == '\177')
 		ATF_REQUIRE_MSG(
 		    bitfmt[bitfmtlen - 1] == '\0',
@@ -71,11 +71,12 @@ check_snprintb_m(const char *file, size_t line,
 		    file, line);
 	if (bufsize == 0)
 		want_bufsize = 0;
-	memset(buf, 0x5a, sizeof(buf));
+	memset(buf_with_padding, 0x5a, sizeof(buf_with_padding));
 
+	char *buf = buf_with_padding + 1;
 	int rv = snprintb_m(buf, bufsize, bitfmt, val, line_max);
 
-	size_t have_bufsize = sizeof(buf);
+	size_t have_bufsize = sizeof(buf_with_padding) - 2;
 	while (have_bufsize > 0 && buf[have_bufsize - 1] == 0x5a)
 		have_bufsize--;
 	if (rv > 0 && (unsigned)rv < have_bufsize
@@ -85,6 +86,21 @@ check_snprintb_m(const char *file, size_t line,
 		for (size_t i = have_bufsize; i >= 2; i--)
 			if (buf[i - 2] == '\0' && buf[i - 1] == '\0')
 				have_bufsize = i;
+
+	ATF_CHECK_MSG(
+	    buf_with_padding[0] == 0x5a,
+	    "failed:\n"
+	    "\ttest case: %s:%zu\n"
+	    "\tout-of-bounds write before: %02x\n",
+	    file, line,
+	    (unsigned char)buf_with_padding[0]);
+	ATF_CHECK_MSG(
+	    buf_with_padding[sizeof(buf_with_padding) - 1] == 0x5a,
+	    "failed:\n"
+	    "\ttest case: %s:%zu\n"
+	    "\tout-of-bounds write after: %02x\n",
+	    file, line,
+	    (unsigned char)buf_with_padding[sizeof(buf_with_padding) - 1]);
 
 	ATF_CHECK_MSG(
 	    rv == want_rv
