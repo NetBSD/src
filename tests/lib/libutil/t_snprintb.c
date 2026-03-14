@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.40 2026/03/14 11:46:51 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.41 2026/03/14 12:04:01 rillig Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010, 2024-2026 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.40 2026/03/14 11:46:51 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.41 2026/03/14 12:04:01 rillig Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -56,7 +56,8 @@ vis_arr(char *buf, size_t bufsize, const char *arr, size_t arrsize)
 
 static void
 check_snprintb_m(const char *file, size_t line,
-    size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
+    size_t bufsize, const char *bitfmt, size_t bitfmtlen,
+    uint64_t val, const char *val_str,
     size_t line_max,
     int want_rv, const char *want_buf, size_t want_bufsize)
 {
@@ -69,6 +70,13 @@ check_snprintb_m(const char *file, size_t line,
 		    bitfmt[bitfmtlen - 1] == '\0',
 		    "%s:%zu: missing trailing '\\0' in new-style bitfmt",
 		    file, line);
+	ATF_CHECK_MSG(
+	    strncmp(val_str, "0x", 2) == 0 || strcmp(val_str, "ch") == 0,
+	    "%s:%zu: value \"%s\" must be hexadecimal", file, line, val_str);
+	ATF_CHECK_MSG(
+	    ((strlen(val_str) - 2) & (strlen(val_str) - 3)) == 0,
+	    "%s:%zu: the number of digits in value \"%s\" must be a power of two", file, line, val_str);
+
 	if (bufsize == 0)
 		want_bufsize = 0;
 	memset(buf_with_padding, 0x5a, sizeof(buf_with_padding));
@@ -127,7 +135,7 @@ check_snprintb_m(const char *file, size_t line,
 #define	h_snprintb_m_len(bufsize, bitfmt, val, line_max,		\
 	    want_rv, want_buf)						\
 	check_snprintb_m(__FILE__, __LINE__,				\
-	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, line_max,		\
+	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, #val, line_max,	\
 	    want_rv, want_buf, sizeof(want_buf))
 
 #define	h_snprintb(bitfmt, val, want_buf)				\
