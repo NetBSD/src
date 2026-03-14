@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -30,9 +30,19 @@ set libipa [get_in_proc_agent]
 
 gdb_download_shlib $libipa
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
+if { [build_executable "failed to prepare" $testfile $srcfile \
 	  [list debug shlib=$libipa]] } {
     return -1
+}
+
+save_vars { env(ASAN_OPTIONS) } {
+    # Prevent address sanitizer error:
+    # ASan runtime does not come first in initial library list; you should
+    # either link runtime to your application or manually preload it with
+    # LD_PRELOAD.
+    append_environment_default ASAN_OPTIONS verify_asan_link_order 0
+
+    clean_restart $testfile
 }
 
 if {![runto_main]} {

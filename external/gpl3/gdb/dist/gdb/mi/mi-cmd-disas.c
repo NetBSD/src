@@ -1,5 +1,5 @@
 /* MI Command Set - disassemble commands.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -19,7 +19,6 @@
 
 #include "arch-utils.h"
 #include "progspace.h"
-#include "target.h"
 #include "value.h"
 #include "mi-cmds.h"
 #include "mi-getopt.h"

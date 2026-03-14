@@ -1,6 +1,6 @@
 /* Inline frame unwinder for GDB.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -270,15 +270,16 @@ inline_frame_sniffer (const struct frame_unwind *self,
   return 1;
 }
 
-const struct frame_unwind inline_frame_unwind = {
+const struct frame_unwind_legacy inline_frame_unwind (
   "inline",
   INLINE_FRAME,
+  FRAME_UNWIND_GDB,
   default_frame_unwind_stop_reason,
   inline_frame_this_id,
   inline_frame_prev_register,
   NULL,
   inline_frame_sniffer
-};
+);
 
 /* Return non-zero if BLOCK, an inlined function block containing PC,
    has a group of contiguous instructions starting at PC (but not
@@ -614,9 +615,7 @@ maintenance_info_inline_frames (const char *arg, int from_tty)
 
 
 
-void _initialize_inline_frame ();
-void
-_initialize_inline_frame ()
+INIT_GDB_FILE (inline_frame)
 {
   add_cmd ("inline-frames", class_maintenance, maintenance_info_inline_frames,
 	   _("\

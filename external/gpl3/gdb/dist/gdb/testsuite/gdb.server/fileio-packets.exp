@@ -1,0 +1,66 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test some remote file I/O.  The associated Python script uses the
+# Python API to create and send vFile:* packets to gdbserver to
+# perform actions like 'stat'.  The same action is then performed
+# directly from Python (e.g. a 'stat' is performed), and the results,
+# from gdbserver, and from the local syscall, are compared.
+
+load_lib gdb-python.exp
+load_lib gdbserver-support.exp
+
+require allow_python_tests
+require allow_gdbserver_tests
+require {!is_remote host}
+require {!is_remote target}
+
+standard_testfile
+
+clean_restart
+
+# Make sure we're disconnected, in case we're testing with an
+# extended-remote board, therefore already connected.
+gdb_test "disconnect" ".*"
+
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+gdb_test_no_output "source $pyfile" "source the script"
+
+# Start gdbserver, but always in extended-remote mode, and then
+# connect to it from GDB.
+set res [gdbserver_start "--multi --once" ""]
+set gdbserver_protocol "extended-remote"
+set gdbserver_gdbport [lindex $res 1]
+gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport
+
+gdb_test_no_output "set python print-stack full"
+
+set test_file_1 [standard_output_file "test_file_1"]
+remote_exec host "touch $test_file_1"
+
+set test_file_2 [standard_output_file "test_file_2"]
+remote_exec host "ln -s $test_file_1 $test_file_2"
+
+gdb_test "python check_lstat(\"$test_file_1\")" "PASS" \
+    "check remote lstat works on a normal file"
+
+gdb_test "python check_lstat(\"$test_file_2\")" "PASS" \
+    "check remote lstat works on a symbolic link"
+
+gdb_test "python check_stat(\"$test_file_1\")" "PASS" \
+    "check remote stat works on a normal file"
+
+gdb_test "python check_stat(\"$test_file_2\")" "PASS" \
+    "check remote stat works on a symbolic link"

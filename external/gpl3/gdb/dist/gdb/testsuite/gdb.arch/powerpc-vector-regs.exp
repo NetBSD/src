@@ -1,4 +1,4 @@
-# Copyright (C) 2019-2024 Free Software Foundation, Inc.
+# Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable {debug}] 
 }
 
 # Check if our test binary can actually run on this processor.
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_run_cmd
 
@@ -44,7 +44,7 @@ gdb_test_multiple "" "wait for exit" {
 }
 
 # Run the actual test.
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_breakpoint [gdb_get_line_number "marker"]
 

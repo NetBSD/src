@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 # It has been reproduced on a Raspberry Pi running Ubunutu server
 # 20.04.5 LTS with 32-bit kernel + 32-bit userland.  It was NOT reproducible
 # using a circa 2023 Raspberry Pi OS w/ 64-bit kernel and 32-bit userland.
+
+require allow_fork_tests
 
 standard_testfile
 
@@ -65,7 +67,7 @@ proc do_test { fork_func target-non-stop non-stop displaced-stepping } {
     save_vars { ::GDBFLAGS } {
 	append ::GDBFLAGS " -ex \"maintenance set target-non-stop ${target-non-stop}\""
 	append ::GDBFLAGS " -ex \"set non-stop ${non-stop}\""
-	clean_restart ${::binfile}-${fork_func}
+	clean_restart ${::testfile}-${fork_func}
     }
 
     gdb_test_no_output "set displaced-stepping ${displaced-stepping}"

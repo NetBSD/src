@@ -1,6 +1,6 @@
 /* Target-dependent code for LoongArch
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,8 +18,8 @@
 /* The LoongArch opcode and mask definitions in this file are obtained from
    https://sourceware.org/git/?p=binutils-gdb.git;a=blob;f=opcodes/loongarch-opc.c  */
 
-#ifndef ARCH_LOONGARCH_INSN_H
-#define ARCH_LOONGARCH_INSN_H
+#ifndef GDB_ARCH_LOONGARCH_INSN_H
+#define GDB_ARCH_LOONGARCH_INSN_H
 
 /* loongarch fix insn opcode  */
 #define OP_CLO_W             0x00001000
@@ -2093,4 +2093,4 @@ is_special_insn (uint32_t insn)
     return false;
 }
 
-#endif /* ARCH_LOONGARCH_INSN_H */
+#endif /* GDB_ARCH_LOONGARCH_INSN_H */

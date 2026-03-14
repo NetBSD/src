@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -163,12 +163,12 @@ am_libgdbsupport_a_OBJECTS = agent.$(OBJEXT) btrace-common.$(OBJEXT) \
 	gdb_tilde_expand.$(OBJEXT) gdb_wait.$(OBJEXT) \
 	gdb_vecs.$(OBJEXT) job-control.$(OBJEXT) netstuff.$(OBJEXT) \
 	new-op.$(OBJEXT) osabi.$(OBJEXT) pathstuff.$(OBJEXT) \
-	print-utils.$(OBJEXT) ptid.$(OBJEXT) rsp-low.$(OBJEXT) \
-	run-time-clock.$(OBJEXT) safe-strerror.$(OBJEXT) \
-	scoped_mmap.$(OBJEXT) search.$(OBJEXT) signals.$(OBJEXT) \
-	signals-state-save-restore.$(OBJEXT) task-group.$(OBJEXT) \
-	tdesc.$(OBJEXT) thread-pool.$(OBJEXT) xml-utils.$(OBJEXT) \
-	$(am__objects_1) $(am__objects_2)
+	print-utils.$(OBJEXT) ptid.$(OBJEXT) remote-args.$(OBJEXT) \
+	rsp-low.$(OBJEXT) run-time-clock.$(OBJEXT) \
+	safe-strerror.$(OBJEXT) scoped_mmap.$(OBJEXT) search.$(OBJEXT) \
+	signals.$(OBJEXT) signals-state-save-restore.$(OBJEXT) \
+	task-group.$(OBJEXT) tdesc.$(OBJEXT) thread-pool.$(OBJEXT) \
+	xml-utils.$(OBJEXT) $(am__objects_1) $(am__objects_2)
 libgdbsupport_a_OBJECTS = $(am_libgdbsupport_a_OBJECTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -438,6 +438,7 @@ libgdbsupport_a_SOURCES = \
     pathstuff.cc \
     print-utils.cc \
     ptid.cc \
+    remote-args.cc \
     rsp-low.cc \
     run-time-clock.cc \
     safe-strerror.cc \
@@ -548,6 +549,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pathstuff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/print-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ptid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remote-args.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rsp-low.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run-time-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/safe-strerror.Po@am__quote@

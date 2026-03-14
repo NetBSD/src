@@ -1,5 +1,5 @@
 /* Internal interfaces for the Win32 specific target code for gdbserver.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -101,7 +101,7 @@ class win32_process_target : public process_stratum_target
 public:
 
   int create_inferior (const char *program,
-		       const std::vector<char *> &program_args) override;
+		       const std::string &program_args) override;
 
   int attach (unsigned long pid) override;
 

@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,9 @@ if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
     return -1
 }
 
-# PPC currently needs a minimum window width of 90 to work correctly.
+# The wider the window is, the less line truncation happens, so matching
+# pre-scroll to post-scroll lines is more accurate.  But 100% accurate line
+# matching isn't a goal of the test-case.
 set tui_asm_window_width 90
 
 Term::clean_restart 24 ${tui_asm_window_width} $testfile
@@ -33,14 +35,40 @@ if {![Term::prepare_for_tui]} {
     return
 }
 
-# Helper proc, returns a count of the ' ' characters in STRING.
-proc count_whitespace { string } {
-    return [expr {[llength [split $string { }]] - 1}]
-}
-
 # This puts us into TUI mode, and should display the ASM window.
 Term::command_no_prompt_prefix "layout asm"
 Term::check_box_contents "check asm box contents" 0 0 ${tui_asm_window_width} 15 "<main>"
+
+set re_border [string_to_regexp "|"]
+
+proc drop_borders { line } {
+    # Drop left border.
+    set line [regsub -- ^$::re_border $line {}]
+    # Drop right border.
+    set line [regsub -- $::re_border$ $line {}]
+
+    return $line
+}
+
+proc lines_match { line1 line2 } {
+    set line1 [drop_borders $line1]
+    set line2 [drop_borders $line2]
+
+    foreach line [list $line1 $line2] re [list $line2 $line1] {
+	# Convert to regexp.
+	set re [string_to_regexp $re]
+
+	# Ignore whitespace mismatches.
+	regsub -all {\s+} $re {\s+} re
+
+	# Allow a substring match.
+	if { [regexp -- $re $line] } {
+	    return 1
+	}
+    }
+
+    return 0
+}
 
 # Scroll the ASM window down using the down arrow key.  In an ideal
 # world we'd like to use PageDown here, but currently our terminal
@@ -58,51 +86,55 @@ while (1) {
     # below will just timeout.  So for now we avoid testing the edge
     # case.
     if {[regexp -- "^\\| +\\|$" $line]} {
-	# Second line is blank, we're at the end of the assembler.
-	pass $testname
+	# Second line is blank, we're at the end of the assembly.
+	pass "$testname (end of assembly reached)"
 	break
     }
 
     # Send the down key to GDB.
     send_gdb "\033\[B"
     incr down_count
-    set re_line [string_to_regexp $line]
-    # Ignore whitespace mismatches.
-    regsub -all {\s+} $re_line {\s+} re_line
+
+    # Get address from the line.
+    regexp \
+	[join \
+	     [list \
+		  ^ \
+		  $re_border \
+		  {\s+} \
+		  ($hex) \
+		  {\s+}] \
+	     ""] \
+	$line \
+	match \
+	address
+
+    # Regexp to match line containing address.
+    set re_line \
+	[join \
+	     [list \
+		  ^ \
+		  $re_border \
+		  {\s+} \
+		  $address \
+		  {\s+} \
+		  {[^\r\n]+} \
+		  $re_border \
+		  $] \
+	     ""]
+
     if {[Term::wait_for $re_line] \
-	    && [regexp $re_line [Term::get_line 1]]} {
+	    && [lines_match $line [Term::get_line 1]]} {
 	# We scrolled successfully.
     } else {
-	if {[count_whitespace ${line}] != \
-		[count_whitespace [Term::get_line 1]]} {
-	    # GDB's TUI assembler display will widen columns based on
-	    # the longest item that appears in a column on any line.
-	    # As we have just scrolled, and so revealed a new line, it
-	    # is possible that the width of some columns has changed.
-	    #
-	    # As a result it is possible that part of the line we were
-	    # expected to see in the output is now off the screen. And
-	    # this test will fail.
-	    #
-	    # This is unfortunate, but, right now, there's no easy way
-	    # to "lock" the format of the TUI assembler window.  The
-	    # only option appears to be making the window width wider,
-	    # this can be done by adjusting TUI_ASM_WINDOW_WIDTH.
-	    verbose -log "WARNING: The following failure is probably due to the TUI window"
-	    verbose -log "         width.  See the comments in the test script for more"
-	    verbose -log "         details."
-	}
-
 	fail "$testname (scroll failed)"
 	Term::dump_screen
 	break
     }
 
-    if { $down_count > 250 } {
-	# Maybe we should accept this as a pass in case a target
-	# really does have loads of assembler to scroll through.
-	fail "$testname (too much assembler)"
-	Term::dump_screen
+    if { $down_count > 25 } {
+	# We've scrolled enough, we're done.
+	pass "$testname (scroll limit reached)"
 	break
     }
 }

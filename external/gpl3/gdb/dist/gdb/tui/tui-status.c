@@ -1,6 +1,6 @@
 /* TUI status line.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -253,8 +253,8 @@ tui_status_window::rerender ()
   waddstr (handle.get (), string.c_str ());
   wclrtoeol (handle.get ());
   (void) wstandend (handle.get ());
+
   refresh_window ();
-  wmove (handle.get (), 0, 0);
 }
 
 /* Function to print the frame information for the TUI.  The windows
@@ -271,15 +271,20 @@ tui_show_frame_info (const frame_info_ptr &fi)
       symtab_and_line sal = find_frame_sal (fi);
 
       const char *func_name;
+      std::optional<CORE_ADDR> tmp_pc = get_frame_pc_if_available (fi);
       /* find_frame_sal does not always set PC, but we want to ensure
 	 that it is available in the SAL.  */
-      if (get_frame_pc_if_available (fi, &sal.pc))
-	func_name = tui_get_function_from_frame (fi);
+      if (tmp_pc.has_value ())
+	{
+	  sal.pc = *tmp_pc;
+	  func_name = tui_get_function_from_frame (fi);
+	}
       else
 	func_name = _("<unavailable>");
 
+      struct gdbarch *gdbarch = get_frame_arch (fi);
       status_changed_p
-	= tui_location.set_location (get_frame_arch (fi), sal, func_name);
+	= tui_location.set_location (gdbarch, sal, func_name);
 
       /* If the status information has not changed, then frame information has
 	 not changed.  If frame information has not changed, then the windows'
@@ -289,7 +294,7 @@ tui_show_frame_info (const frame_info_ptr &fi)
 
       for (struct tui_source_window_base *win_info : tui_source_windows ())
 	{
-	  win_info->maybe_update (fi, sal);
+	  win_info->maybe_update (gdbarch, sal);
 	  win_info->update_exec_info ();
 	}
     }
@@ -324,9 +329,7 @@ tui_update_command (const char *arg, int from_tty)
 /* Function to initialize gdb commands, for tui window stack
    manipulation.  */
 
-void _initialize_tui_stack ();
-void
-_initialize_tui_stack ()
+INIT_GDB_FILE (tui_stack)
 {
   add_com ("update", class_tui, tui_update_command,
 	   _("\

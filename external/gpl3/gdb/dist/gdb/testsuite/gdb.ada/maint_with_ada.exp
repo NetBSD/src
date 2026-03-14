@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" }
 clean_restart ${testfile}
 
 # Insert a breakpoint in each compilation unit, to force their psymtab's
-# expansion to a full symtab.  This will allow the check-psymtabs command
+# expansion to a full symtab.  This will allow the check psymtabs command
 # to perform a more extensive check regarding those units which are in
 # Ada.
 
@@ -34,6 +34,6 @@ gdb_breakpoint "adainit"
 gdb_breakpoint "Var_Arr_Typedef"
 gdb_breakpoint "Do_Nothing"
 
-gdb_test_no_output "maintenance check-psymtabs"
+gdb_test_no_output "maintenance check psymtabs"
 
-gdb_test_no_output "maintenance check-symtabs"
+gdb_test_no_output "maintenance check symtabs"

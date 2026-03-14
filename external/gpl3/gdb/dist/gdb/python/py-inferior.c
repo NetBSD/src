@@ -1,6 +1,6 @@
 /* Python interface to inferiors.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,10 +30,10 @@
 #include "py-event.h"
 #include "py-stopevent.h"
 #include "progspace-and-thread.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 using thread_map_t
-  = std::unordered_map<thread_info *, gdbpy_ref<thread_object>>;
+  = gdb::unordered_map<thread_info *, gdbpy_ref<thread_object>>;
 
 struct inferior_object
 {
@@ -929,7 +929,7 @@ infpy_set_args (PyObject *self, PyObject *value, void *closure)
       for (const auto &arg : args)
 	argvec.push_back (arg.get ());
       gdb::array_view<char * const> view (argvec.data (), argvec.size ());
-      inf->inferior->set_args (view);
+      inf->inferior->set_args (view, true);
     }
   else
     {

@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -225,8 +225,6 @@
   _bfd_elf_copy_private_symbol_data
 #endif
 
-#define bfd_elfNN_init_private_section_data \
-  _bfd_elf_init_private_section_data
 #ifndef bfd_elfNN_bfd_copy_private_section_data
 #define bfd_elfNN_bfd_copy_private_section_data \
   _bfd_elf_copy_private_section_data

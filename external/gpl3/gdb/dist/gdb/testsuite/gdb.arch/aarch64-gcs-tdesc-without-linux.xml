@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<!DOCTYPE target SYSTEM "gdb-target.dtd">
+<target>
+  <architecture>aarch64</architecture>
+  <feature name="org.gnu.gdb.aarch64.core">
+    <flags id="cpsr_flags" size="4">
+      <field name="SP" start="0" end="0" type="bool"/>
+      <field name="EL" start="2" end="3" type="uint32"/>
+      <field name="nRW" start="4" end="4" type="bool"/>
+      <field name="F" start="6" end="6" type="bool"/>
+      <field name="I" start="7" end="7" type="bool"/>
+      <field name="A" start="8" end="8" type="bool"/>
+      <field name="D" start="9" end="9" type="bool"/>
+      <field name="BTYPE" start="10" end="11" type="uint32"/>
+      <field name="SSBS" start="12" end="12" type="bool"/>
+      <field name="IL" start="20" end="20" type="bool"/>
+      <field name="SS" start="21" end="21" type="bool"/>
+      <field name="PAN" start="22" end="22" type="bool"/>
+      <field name="UAO" start="23" end="23" type="bool"/>
+      <field name="DIT" start="24" end="24" type="bool"/>
+      <field name="TCO" start="25" end="25" type="bool"/>
+      <field name="V" start="28" end="28" type="bool"/>
+      <field name="C" start="29" end="29" type="bool"/>
+      <field name="Z" start="30" end="30" type="bool"/>
+      <field name="N" start="31" end="31" type="bool"/>
+    </flags>
+    <reg name="x0" bitsize="64" type="int" regnum="0"/>
+    <reg name="x1" bitsize="64" type="int" regnum="1"/>
+    <reg name="x2" bitsize="64" type="int" regnum="2"/>
+    <reg name="x3" bitsize="64" type="int" regnum="3"/>
+    <reg name="x4" bitsize="64" type="int" regnum="4"/>
+    <reg name="x5" bitsize="64" type="int" regnum="5"/>
+    <reg name="x6" bitsize="64" type="int" regnum="6"/>
+    <reg name="x7" bitsize="64" type="int" regnum="7"/>
+    <reg name="x8" bitsize="64" type="int" regnum="8"/>
+    <reg name="x9" bitsize="64" type="int" regnum="9"/>
+    <reg name="x10" bitsize="64" type="int" regnum="10"/>
+    <reg name="x11" bitsize="64" type="int" regnum="11"/>
+    <reg name="x12" bitsize="64" type="int" regnum="12"/>
+    <reg name="x13" bitsize="64" type="int" regnum="13"/>
+    <reg name="x14" bitsize="64" type="int" regnum="14"/>
+    <reg name="x15" bitsize="64" type="int" regnum="15"/>
+    <reg name="x16" bitsize="64" type="int" regnum="16"/>
+    <reg name="x17" bitsize="64" type="int" regnum="17"/>
+    <reg name="x18" bitsize="64" type="int" regnum="18"/>
+    <reg name="x19" bitsize="64" type="int" regnum="19"/>
+    <reg name="x20" bitsize="64" type="int" regnum="20"/>
+    <reg name="x21" bitsize="64" type="int" regnum="21"/>
+    <reg name="x22" bitsize="64" type="int" regnum="22"/>
+    <reg name="x23" bitsize="64" type="int" regnum="23"/>
+    <reg name="x24" bitsize="64" type="int" regnum="24"/>
+    <reg name="x25" bitsize="64" type="int" regnum="25"/>
+    <reg name="x26" bitsize="64" type="int" regnum="26"/>
+    <reg name="x27" bitsize="64" type="int" regnum="27"/>
+    <reg name="x28" bitsize="64" type="int" regnum="28"/>
+    <reg name="x29" bitsize="64" type="int" regnum="29"/>
+    <reg name="x30" bitsize="64" type="int" regnum="30"/>
+    <reg name="sp" bitsize="64" type="data_ptr" regnum="31"/>
+    <reg name="pc" bitsize="64" type="code_ptr" regnum="32"/>
+    <reg name="cpsr" bitsize="32" type="cpsr_flags" regnum="33"/>
+  </feature>
+  <feature name="org.gnu.gdb.aarch64.gcs">
+    <reg name="gcspr" bitsize="64" type="data_ptr" regnum="90" group="system"/>
+  </feature>
+</target>

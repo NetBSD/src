@@ -1,5 +1,5 @@
 /* Implementation header.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -22,7 +22,6 @@
 
 #include "config.h"
 #include <errno.h>
-#include <sys/param.h>
 #include "ctf-decls.h"
 #include <ctf-api.h>
 #include "ctf-sha1.h"
@@ -67,8 +66,13 @@ extern "C"
    macros glibc may introduce, which have names of the pattern
    __attribute_blah__.  */
 
+#if defined (__clang__)
 #define _libctf_printflike_(string_index,first_to_check) \
     __attribute__ ((__format__ (__printf__, (string_index), (first_to_check))))
+#else
+#define _libctf_printflike_(string_index,first_to_check) \
+    __attribute__ ((__format__ (__gnu_printf__, (string_index), (first_to_check))))
+#endif
 #define _libctf_unlikely_(x) __builtin_expect ((x), 0)
 #define _libctf_unused_ __attribute__ ((__unused__))
 #define _libctf_malloc_ __attribute__((__malloc__))
@@ -331,6 +335,11 @@ typedef struct ctf_dedup
   /* Used to ensure that we never try to map a single type ID to more than one
      hash.  */
   ctf_dynhash_t *cd_output_mapping_guard;
+
+  /* Maps from type hash values to an indication of their nonroot flag.  0 means
+     all root-visible; 1 means non-root-visible; 2 means a mixture.  All values
+     other than 1 are deleted after hashing.  */
+  ctf_dynhash_t *cd_nonroot_consistency;
 
   /* Maps the global type IDs of structures in input TUs whose members still
      need emission to the global type ID of the already-emitted target type
@@ -672,6 +681,7 @@ extern int ctf_dynhash_next (ctf_dynhash_t *, ctf_next_t **,
 extern int ctf_dynhash_next_sorted (ctf_dynhash_t *, ctf_next_t **,
 				    void **key, void **value, ctf_hash_sort_f,
 				    void *);
+extern int ctf_dynhash_next_remove (ctf_next_t * const *);
 
 extern ctf_dynset_t *ctf_dynset_create (htab_hash, htab_eq, ctf_hash_free_fun);
 extern int ctf_dynset_insert (ctf_dynset_t *, void *);
@@ -718,10 +728,10 @@ extern int ctf_track_enumerator (ctf_dict_t *, ctf_id_t, const char *);
 
 extern int ctf_dedup_atoms_init (ctf_dict_t *);
 extern int ctf_dedup (ctf_dict_t *, ctf_dict_t **, uint32_t ninputs,
-		      int cu_mapped);
+		      int cu_mapped_phase);
 extern ctf_dict_t **ctf_dedup_emit (ctf_dict_t *, ctf_dict_t **,
 				    uint32_t ninputs, uint32_t *parents,
-				    uint32_t *noutputs, int cu_mapped);
+				    uint32_t *noutputs, int cu_mapped_phase);
 extern void ctf_dedup_fini (ctf_dict_t *, ctf_dict_t **, uint32_t);
 extern ctf_id_t ctf_dedup_type_mapping (ctf_dict_t *fp, ctf_dict_t *src_fp,
 					ctf_id_t src_type);

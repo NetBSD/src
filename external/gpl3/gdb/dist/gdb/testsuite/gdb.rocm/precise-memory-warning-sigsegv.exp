@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -29,7 +29,8 @@ if {[build_executable "failed to prepare" $testfile $srcfile {debug hip}]} {
 }
 
 proc do_test { } {
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
 
     with_rocm_gpu_lock {
 	if ![runto_main] {

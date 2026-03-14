@@ -1,6 +1,6 @@
 /* Virtual tail call frames unwinder for GDB.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -321,9 +321,6 @@ tailcall_frame_sniffer (const struct frame_unwind *self,
   int next_levels;
   struct tailcall_cache *cache;
 
-  if (!dwarf2_frame_unwinders_enabled_p)
-    return 0;
-
   /* Inner tail call element does not make sense for a sentinel frame.  */
   next_frame = get_next_frame (this_frame);
   if (next_frame == NULL)
@@ -468,10 +465,10 @@ tailcall_frame_prev_arch (const frame_info_ptr &this_frame,
 /* Virtual tail call frame unwinder if dwarf2_tailcall_sniffer_first finds
    a chain to create.  */
 
-const struct frame_unwind dwarf2_tailcall_frame_unwind =
-{
+const struct frame_unwind_legacy dwarf2_tailcall_frame_unwind (
   "dwarf2 tailcall",
   TAILCALL_FRAME,
+  FRAME_UNWIND_DEBUGINFO,
   default_frame_unwind_stop_reason,
   tailcall_frame_this_id,
   tailcall_frame_prev_register,
@@ -479,11 +476,9 @@ const struct frame_unwind dwarf2_tailcall_frame_unwind =
   tailcall_frame_sniffer,
   tailcall_frame_dealloc_cache,
   tailcall_frame_prev_arch
-};
+);
 
-void _initialize_tailcall_frame ();
-void
-_initialize_tailcall_frame ()
+INIT_GDB_FILE (tailcall_frame)
 {
   cache_htab = htab_create_alloc (50, cache_hash, cache_eq, NULL, xcalloc,
 				  xfree);

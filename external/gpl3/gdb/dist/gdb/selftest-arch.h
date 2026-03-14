@@ -1,5 +1,5 @@
 /* GDB self-test for each gdbarch.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,11 @@ namespace selftests
 extern void
   register_test_foreach_arch (const std::string &name,
 			      self_test_foreach_arch_function *function);
+
+/* Return true if GDBARCH should be skipped in some selftests to avoid
+   warnings.  */
+
+extern bool selftest_skip_warning_arch (struct gdbarch *gdbarch);
 }
 
 #endif /* GDB_SELFTEST_ARCH_H */

@@ -1,6 +1,6 @@
 /* Block-related functions for the GNU debugger, GDB.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -618,7 +618,7 @@ block_iterator_next (struct block_iterator *iterator)
 bool
 best_symbol (struct symbol *a, const domain_search_flags domain)
 {
-  if (a->aclass () == LOC_UNRESOLVED)
+  if (a->loc_class () == LOC_UNRESOLVED)
     return false;
 
   if ((domain & SEARCH_VAR_DOMAIN) != 0)
@@ -644,10 +644,10 @@ better_symbol (struct symbol *a, struct symbol *b,
   if (b->matches (domain) && !a->matches (domain))
     return b;
 
-  if (a->aclass () != LOC_UNRESOLVED && b->aclass () == LOC_UNRESOLVED)
+  if (a->loc_class () != LOC_UNRESOLVED && b->loc_class () == LOC_UNRESOLVED)
     return a;
 
-  if (b->aclass () != LOC_UNRESOLVED && a->aclass () == LOC_UNRESOLVED)
+  if (b->loc_class () != LOC_UNRESOLVED && a->loc_class () == LOC_UNRESOLVED)
     return b;
 
   return a;
@@ -924,9 +924,7 @@ maintenance_info_blocks (const char *arg, int from_tty)
 
 
 
-void _initialize_block ();
-void
-_initialize_block ()
+INIT_GDB_FILE (block)
 {
   add_cmd ("blocks", class_maintenance, maintenance_info_blocks,
 	   _("\

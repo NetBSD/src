@@ -1,4 +1,4 @@
-# Copyright 2008-2024 Free Software Foundation, Inc.
+# Copyright 2008-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,14 +33,15 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	return
     }
 
+    # Accept "foo." prefix for older versions of GNAT.
     gdb_test "print string_p" \
-	"= \\(foo\\.string_access\\) 0x\[0-9a-zA-Z\]+"
+	"= \\((foo\\.)?string_access\\) 0x\[0-9a-zA-Z\]+"
 
     gdb_test "print string_p(3..4)" "= \"ll\""
 
-    gdb_test "print null_string" "= \\(foo\\.string_access\\) 0x0"
+    gdb_test "print null_string" "= \\((foo\\.)?string_access\\) 0x0"
 
-    gdb_test "print arr_ptr" "= \\(access foo\\.little_array\\) 0x\[0-9a-zA-Z\]+"
+    gdb_test "print arr_ptr" "= \\(access (foo\\.)?little_array\\) 0x\[0-9a-zA-Z\]+"
 
     gdb_test "print arr_ptr(2)" "= 22"
 

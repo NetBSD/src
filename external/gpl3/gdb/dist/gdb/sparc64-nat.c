@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,9 +68,7 @@ sparc64_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
   return 0;
 }
 
-void _initialize_sparc64_nat ();
-void
-_initialize_sparc64_nat ()
+INIT_GDB_FILE (sparc64_nat)
 {
   sparc_supply_gregset = sparc64_supply_gregset;
   sparc_collect_gregset = sparc64_collect_gregset;

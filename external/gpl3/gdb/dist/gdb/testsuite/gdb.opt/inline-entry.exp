@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ if { [supports_statement_frontiers] } {
     lappend options additional_flags=-gstatement-frontiers
 }
 
-if { [prepare_for_testing "failed to prepare" $binfile $srcfile $options] } {
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile $options] } {
     return
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -292,6 +292,15 @@ constexpr inline array_view<U>
 make_array_view (U *array, size_t size) noexcept
 {
   return {array, size};
+}
+
+/* Create an array view from an array.  */
+
+template <typename U, std::size_t Size>
+constexpr inline array_view<U>
+make_array_view (U (&array)[Size])
+{
+  return {array};
 }
 
 } /* namespace gdb */

@@ -14,9 +14,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 require !gdb_protocol_is_remote
+require can_spawn_for_attach
+
 standard_testfile
 
-if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug}] == -1} {
+if {[build_executable "failed to prepare" $testfile $srcfile {debug}] == -1} {
     return -1
 }
 
@@ -62,7 +64,7 @@ set saw_backtrace false
 set no_awk false
 set location_re ${srcfile}:${decimal}
 
-gdb_test_multiple "" $test {
+gdb_expect {
     -i "$res" -re "#0 +(0x\[0-9a-f\]+ in )?main \(\).*$location_re.*\r\nGSTACK-END\r\n\$" {
 	set saw_backtrace true
 	pass $test

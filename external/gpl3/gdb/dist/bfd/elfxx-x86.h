@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -224,12 +224,15 @@
 		   || (EH)->elf.root.type == bfd_link_hash_undefined)))
 
 /* TRUE if this input relocation should be copied to output.  H->dynindx
-   may be -1 if this symbol was marked to become local.  */
+   may be -1 if this symbol was marked to become local.  STV_PROTECTED
+   symbols are local. */
 #define COPY_INPUT_RELOC_P(IS_X86_64, INFO, H, R_TYPE) \
   ((H) != NULL \
    && (H)->dynindx != -1 \
    && (X86_PCREL_TYPE_P (IS_X86_64, R_TYPE) \
-       || !(bfd_link_executable (INFO) || SYMBOLIC_BIND ((INFO), (H))) \
+       || !(bfd_link_executable (INFO) \
+	    || SYMBOLIC_BIND ((INFO), (H)) \
+	    || ELF_ST_VISIBILITY ((H)->other) == STV_PROTECTED) \
        || !(H)->def_regular))
 
 /* TRUE if this is actually a static link, or it is a -Bsymbolic link
@@ -647,13 +650,13 @@ struct elf_x86_link_hash_table
   /* The index of the next R_X86_64_IRELATIVE entry in .rela.plt.  */
   bfd_vma next_irelative_index;
 
+  /* The .rela.tls/.rel.tls section for R_386_TLS_DESC or R_X86_64_TLSDESC
+     relocation.  */
+  asection *rel_tls_desc;
+
   /* The (unloaded but important) .rel.plt.unloaded section on VxWorks.
      This is used for i386 only.  */
   asection *srelplt2;
-
-  /* The index of the next unused R_386_TLS_DESC slot in .rel.plt.  This
-     is only used for i386.  */
-  bfd_vma next_tls_desc_index;
 
   /* DT_RELR bitmap.  */
   struct elf_dt_relr_bitmap dt_relr_bitmap;
@@ -666,6 +669,13 @@ struct elf_x86_link_hash_table
 
   /* Number of relative reloc generation pass.  */
   unsigned int generate_relative_reloc_pass;
+
+  /* TRUE if inputs have R_386_TLS_DESC_CALL or R_X86_64_TLSDESC_CALL
+     relocation.  */
+  unsigned int has_tls_desc_call : 1;
+
+  /* TRUE if inputs call ___tls_get_addr.  This is only used for i386.  */
+  unsigned int has_tls_get_addr_call : 1;
 
    /* Value used to fill the unused bytes of the first PLT entry.  This
       is only used for i386.  */
@@ -777,8 +787,8 @@ struct elf_x86_plt
 enum elf_x86_tls_error_type
 {
   elf_x86_tls_error_none,
-  elf_x86_tls_error_add,
   elf_x86_tls_error_add_mov,
+  elf_x86_tls_error_add_movrs,
   elf_x86_tls_error_add_sub_mov,
   elf_x86_tls_error_indirect_call,
   elf_x86_tls_error_lea,
@@ -860,6 +870,9 @@ extern bool _bfd_elf_x86_size_relative_relocs
 
 extern bool _bfd_elf_x86_finish_relative_relocs
   (struct bfd_link_info *) ATTRIBUTE_HIDDEN;
+
+extern asection * _bfd_elf_x86_get_reloc_section
+  (bfd *, const char *) ATTRIBUTE_HIDDEN;
 
 extern void _bfd_elf32_write_addend 
   (bfd *, uint64_t, void *) ATTRIBUTE_HIDDEN;
@@ -984,6 +997,8 @@ extern void _bfd_x86_elf_link_report_tls_transition_error
   _bfd_elf_x86_size_relative_relocs
 #define elf_backend_finish_relative_relocs \
   _bfd_elf_x86_finish_relative_relocs
+#define elf_backend_get_reloc_section \
+  _bfd_elf_x86_get_reloc_section
 #define elf_backend_use_mmap true
 
 #define ELF_P_ALIGN ELF_MINPAGESIZE

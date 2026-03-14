@@ -1,6 +1,6 @@
 /* Interface between gdb and its extension languages.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,6 +34,8 @@
 #include <array>
 #include "inferior.h"
 #include "gdbsupport/scoped_signal_handler.h"
+#include "gdbsupport/scoped_ignore_signal.h"
+#include "run-on-main-thread.h"
 
 static script_sourcer_func source_gdb_script;
 static objfile_script_sourcer_func source_gdb_objfile_script;
@@ -638,7 +640,7 @@ breakpoint_ext_lang_cond_says_stop (struct breakpoint *b)
    This requires cooperation with the extension languages so the support
    is defined here.  */
 
-#if CXX_STD_THREAD
+#if CXX_STD_THREAD && defined __MINGW32__
 
 #include <mutex>
 
@@ -648,10 +650,19 @@ breakpoint_ext_lang_cond_says_stop (struct breakpoint *b)
    available, DAP will not start.
 
    This lock is held for accesses to quit_flag, active_ext_lang, and
-   cooperative_sigint_handling_disabled.  */
+   cooperative_sigint_handling_disabled.
+
+   This lock is only required for targets that don't support kill(), and,
+   it is assumed, handle SIGINT not as a signal, but as a new thread.  For
+   these targets this mutex prevents multiple threads adjusting the above
+   state at the same time.
+
+   For targets that support kill() gdb.interrupt is implemented by just
+   sending SIGINT to the process, which is then handled in the "normal"
+   way.  */
 static std::recursive_mutex ext_lang_mutex;
 
-#endif /* CXX_STD_THREAD */
+#endif /* CXX_STD_THREAD && defined (__MINGW32__)*/
 
 /* This flag tracks quit requests when we haven't called out to an
    extension language.  it also holds quit requests when we transition to
@@ -700,6 +711,44 @@ void (*hook_set_active_ext_lang) () = nullptr;
 }
 #endif
 
+namespace gdb
+{
+/* Wrapper that acquires the global EXT_LANG_MUTEX, but only for hosts
+   that might call quit related functions from a separate thread.
+   Specifically, this is hosts that don't support Unix like signals
+   (currently only Mingw).
+
+   For hosts with signal support, we don't try to use a mutex as a signal
+   might interrupt the lock acquisition, in which case deadlock will
+   occur.  However, for these hosts, all the quit related functions are
+   called on the main thread (there's an assert for this), so the lack of
+   locking shouldn't be an issue.
+
+   For Mingw, without signals, the implementation of the Python
+   gdb.interrupt function can call set_quit_flag() from a second thread,
+   and additionally, the emulation of SIGINT involves the creation of a
+   temporary thread which calls the sigint handler.  So for Mingw, we do
+   need the mutex, but that's OK, as no signal can interrupt the lock
+   acquisition.  */
+struct ext_lang_guard
+{
+  ext_lang_guard ()
+  {
+#if CXX_STD_THREAD && !defined __MINGW32__
+    gdb_assert (is_main_thread ());
+#endif /* CXX_STD_THREAD && ! defined __MINGW32__ */
+  }
+
+  ~ext_lang_guard () { /* Nothing.  */ }
+
+private:
+#if CXX_STD_THREAD && defined __MINGW32__
+  std::lock_guard<typeof (ext_lang_mutex)> m_guard { ext_lang_mutex };
+#endif
+};
+
+}
+
 /* True if cooperative SIGINT handling is disabled.  This is needed so
    that calls to set_active_ext_lang do not re-enable cooperative
    handling, which if enabled would make set_quit_flag store the
@@ -708,9 +757,7 @@ static bool cooperative_sigint_handling_disabled = false;
 
 scoped_disable_cooperative_sigint_handling::scoped_disable_cooperative_sigint_handling ()
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
   /* Force the active extension language to the GDB scripting
      language.  This ensures that a previously saved SIGINT is moved
@@ -729,9 +776,7 @@ scoped_disable_cooperative_sigint_handling::scoped_disable_cooperative_sigint_ha
 
 scoped_disable_cooperative_sigint_handling::~scoped_disable_cooperative_sigint_handling ()
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
   cooperative_sigint_handling_disabled = m_prev_cooperative_sigint_handling_disabled;
   restore_active_ext_lang (m_prev_active_ext_lang_state);
@@ -771,9 +816,7 @@ scoped_disable_cooperative_sigint_handling::~scoped_disable_cooperative_sigint_h
 struct active_ext_lang_state *
 set_active_ext_lang (const struct extension_language_defn *now_active)
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
 #if GDB_SELF_TEST
   if (selftests::hook_set_active_ext_lang)
@@ -827,9 +870,7 @@ set_active_ext_lang (const struct extension_language_defn *now_active)
 void
 restore_active_ext_lang (struct active_ext_lang_state *previous)
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
   if (cooperative_sigint_handling_disabled)
     {
@@ -861,9 +902,7 @@ restore_active_ext_lang (struct active_ext_lang_state *previous)
 void
 set_quit_flag ()
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
   if (active_ext_lang->ops != NULL
       && active_ext_lang->ops->set_quit_flag != NULL)
@@ -886,9 +925,7 @@ set_quit_flag ()
 bool
 check_quit_flag ()
 {
-#if CXX_STD_THREAD
-  std::lock_guard guard (ext_lang_mutex);
-#endif /* CXX_STD_THREAD */
+  gdb::ext_lang_guard guard;
 
   bool result = false;
 
@@ -974,7 +1011,8 @@ xmethod_worker::get_result_type (value *object, gdb::array_view<value *> args)
 /* See extension.h.  */
 
 std::optional<std::string>
-ext_lang_colorize (const std::string &filename, const std::string &contents)
+ext_lang_colorize (const std::string &filename, const std::string &contents,
+		   enum language lang)
 {
   std::optional<std::string> result;
 
@@ -983,7 +1021,7 @@ ext_lang_colorize (const std::string &filename, const std::string &contents)
       if (extlang->ops == nullptr
 	  || extlang->ops->colorize == nullptr)
 	continue;
-      result = extlang->ops->colorize (filename, contents);
+      result = extlang->ops->colorize (filename, contents, lang);
       if (result.has_value ())
 	return result;
     }
@@ -1101,9 +1139,7 @@ ext_lang_before_prompt (const char *current_gdb_prompt)
     }
 }
 
-void _initialize_extension ();
-void
-_initialize_extension ()
+INIT_GDB_FILE (extension)
 {
   gdb::observers::before_prompt.attach (ext_lang_before_prompt, "extension");
 }

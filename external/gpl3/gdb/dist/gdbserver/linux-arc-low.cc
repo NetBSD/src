@@ -1,6 +1,6 @@
 /* Target dependent code for the remote server for GNU/Linux ARC.
 
-   Copyright 2020-2024 Free Software Foundation, Inc.
+   Copyright 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -218,7 +218,7 @@ arc_fill_gregset (struct regcache *regcache, void *buf)
   collect_register_by_name (regcache, "pc", &(regbuf->scratch.ret));
 
   /* Currently ARC Linux ptrace doesn't allow writes to status32 because
-     some of its bits are kernel mode-only and shoudn't be writable from
+     some of its bits are kernel mode-only and shouldn't be writable from
      user-space.  Writing status32 from debugger could be useful, though,
      so ability to write non-privileged bits will be added to kernel
      sooner or later.  */

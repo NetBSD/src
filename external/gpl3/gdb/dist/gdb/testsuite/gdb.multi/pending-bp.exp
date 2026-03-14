@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ if { [build_executable "failed to prepare" $testfile $srcfile \
 # 'breakpoint pending' flag is enabled, so pending breakpoints can be created
 # without GDB prompting the user.
 proc do_test_setup { inf_1_stop inf_2_stop } {
-    clean_restart ${::binfile}
+    clean_restart ${::testfile}
 
     gdb_locate_shlib $::binfile_lib
 
@@ -328,5 +328,7 @@ proc_with_prefix py_test_clear_thread {} {
 # Run all the tests.
 test_no_inf_display
 test_pending_toggle
-py_test_toggle_thread
-py_test_clear_thread
+if { [allow_python_tests] } {
+    py_test_toggle_thread
+    py_test_clear_thread
+}

@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -178,10 +178,7 @@ using register_read_ftype
 struct cached_reg_t
 {
   int num;
-  gdb::unique_xmalloc_ptr<gdb_byte> data;
-
-  cached_reg_t () = default;
-  cached_reg_t (cached_reg_t &&rhs) = default;
+  gdb::byte_vector data;
 };
 
 /* Buffer of registers.  */
@@ -259,6 +256,9 @@ public:
 
   /* See gdbsupport/common-regcache.h.  */
   bool raw_compare (int regnum, const void *buf, int offset) const override;
+
+  /* See gdbsupport/common-regcache.h.  */
+  int register_size (int regnum) const override;
 
 protected:
   /* Assert on the range of REGNUM.  */

@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -132,10 +132,7 @@ public:
   bool can_execute_reverse () override;
 
   bool stopped_by_sw_breakpoint () override;
-  bool supports_stopped_by_sw_breakpoint () override;
-
   bool stopped_by_hw_breakpoint () override;
-  bool supports_stopped_by_hw_breakpoint () override;
 
   enum exec_direction_kind execution_direction () override;
   void prepare_to_generate_core () override;
@@ -1941,29 +1938,29 @@ record_btrace_frame_dealloc_cache (frame_info *self, void *this_cache)
    Therefore this unwinder reports any possibly unwound registers as
    <unavailable>.  */
 
-const struct frame_unwind record_btrace_frame_unwind =
-{
+const struct frame_unwind_legacy record_btrace_frame_unwind (
   "record-btrace",
   NORMAL_FRAME,
+  FRAME_UNWIND_GDB,
   record_btrace_frame_unwind_stop_reason,
   record_btrace_frame_this_id,
   record_btrace_frame_prev_register,
   NULL,
   record_btrace_frame_sniffer,
   record_btrace_frame_dealloc_cache
-};
+);
 
-const struct frame_unwind record_btrace_tailcall_frame_unwind =
-{
+const struct frame_unwind_legacy record_btrace_tailcall_frame_unwind (
   "record-btrace tailcall",
   TAILCALL_FRAME,
+  FRAME_UNWIND_GDB,
   record_btrace_frame_unwind_stop_reason,
   record_btrace_frame_this_id,
   record_btrace_frame_prev_register,
   NULL,
   record_btrace_tailcall_frame_sniffer,
   record_btrace_frame_dealloc_cache
-};
+);
 
 /* Implement the get_unwinder method.  */
 
@@ -2581,7 +2578,7 @@ record_btrace_maybe_mark_async_event
    const std::vector<thread_info *> &no_history)
 {
   bool more_moving = !moving.empty ();
-  bool more_no_history = !no_history.empty ();;
+  bool more_no_history = !no_history.empty ();
 
   if (!more_moving && !more_no_history)
     return;
@@ -2773,18 +2770,6 @@ record_btrace_target::stopped_by_sw_breakpoint ()
   return this->beneath ()->stopped_by_sw_breakpoint ();
 }
 
-/* The supports_stopped_by_sw_breakpoint method of target
-   record-btrace.  */
-
-bool
-record_btrace_target::supports_stopped_by_sw_breakpoint ()
-{
-  if (record_is_replaying (minus_one_ptid))
-    return true;
-
-  return this->beneath ()->supports_stopped_by_sw_breakpoint ();
-}
-
 /* The stopped_by_sw_breakpoint method of target record-btrace.  */
 
 bool
@@ -2798,18 +2783,6 @@ record_btrace_target::stopped_by_hw_breakpoint ()
     }
 
   return this->beneath ()->stopped_by_hw_breakpoint ();
-}
-
-/* The supports_stopped_by_hw_breakpoint method of target
-   record-btrace.  */
-
-bool
-record_btrace_target::supports_stopped_by_hw_breakpoint ()
-{
-  if (record_is_replaying (minus_one_ptid))
-    return true;
-
-  return this->beneath ()->supports_stopped_by_hw_breakpoint ();
 }
 
 /* The update_thread_list method of target record-btrace.  */
@@ -3213,9 +3186,7 @@ set_record_pt_event_tracing_value (const char *args, int from_tty,
 
 /* Initialize btrace commands.  */
 
-void _initialize_record_btrace ();
-void
-_initialize_record_btrace ()
+INIT_GDB_FILE (record_btrace)
 {
   cmd_list_element *record_btrace_cmd
     = add_prefix_cmd ("btrace", class_obscure, cmd_record_btrace_start,

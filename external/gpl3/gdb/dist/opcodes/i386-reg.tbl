@@ -1,5 +1,5 @@
 // i386 register table.
-// Copyright (C) 2007-2024 Free Software Foundation, Inc.
+// Copyright (C) 2007-2025 Free Software Foundation, Inc.
 //
 // This file is part of the GNU opcodes library.
 //
@@ -30,8 +30,8 @@ ah, Class=Reg|Byte, 0, 4, Dw2Inval, Dw2Inval
 ch, Class=Reg|Byte, 0, 5, Dw2Inval, Dw2Inval
 dh, Class=Reg|Byte, 0, 6, Dw2Inval, Dw2Inval
 bh, Class=Reg|Byte, 0, 7, Dw2Inval, Dw2Inval
-axl, Class=Reg|Byte, RegRex64, 0, Dw2Inval, Dw2Inval
-cxl, Class=Reg|Byte, RegRex64, 1, Dw2Inval, Dw2Inval
+axl, Class=Reg|Instance=Accum|Byte, RegRex64, 0, Dw2Inval, Dw2Inval
+cxl, Class=Reg|Instance=RegC|Byte, RegRex64, 1, Dw2Inval, Dw2Inval
 dxl, Class=Reg|Byte, RegRex64, 2, Dw2Inval, Dw2Inval
 bxl, Class=Reg|Byte, RegRex64, 3, Dw2Inval, Dw2Inval
 spl, Class=Reg|Byte, RegRex64, 4, Dw2Inval, Dw2Inval
@@ -367,14 +367,14 @@ eip, Dword, RegRex64, RegIP, 8, Dw2Inval
 riz, Qword|BaseIndex, RegRex64, RegIZ, Dw2Inval, Dw2Inval
 eiz, Dword|BaseIndex, 0, RegIZ, Dw2Inval, Dw2Inval
 // fp regs. No need for an explicit st(0) here.
-st, Class=Reg|Instance=Accum|Tbyte, 0, 0, 11, 33
-st(1), Class=Reg|Tbyte, 0, 1, 12, 34
-st(2), Class=Reg|Tbyte, 0, 2, 13, 35
-st(3), Class=Reg|Tbyte, 0, 3, 14, 36
-st(4), Class=Reg|Tbyte, 0, 4, 15, 37
-st(5), Class=Reg|Tbyte, 0, 5, 16, 38
-st(6), Class=Reg|Tbyte, 0, 6, 17, 39
-st(7), Class=Reg|Tbyte, 0, 7, 18, 40
+st, Class=RegFP|Instance=Accum|Tbyte, 0, 0, 11, 33
+st(1), Class=RegFP|Tbyte, 0, 1, 12, 34
+st(2), Class=RegFP|Tbyte, 0, 2, 13, 35
+st(3), Class=RegFP|Tbyte, 0, 3, 14, 36
+st(4), Class=RegFP|Tbyte, 0, 4, 15, 37
+st(5), Class=RegFP|Tbyte, 0, 5, 16, 38
+st(6), Class=RegFP|Tbyte, 0, 6, 17, 39
+st(7), Class=RegFP|Tbyte, 0, 7, 18, 40
 // Pseudo-register names only used in .cfi_* directives
 eflags, 0, 0, 0, 9, 49
 rflags, 0, 0, 0, Dw2Inval, 49

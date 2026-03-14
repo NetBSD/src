@@ -1,5 +1,5 @@
 /* C preprocessor macro expansion commands for GDB.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -57,11 +57,11 @@ macro_expand_command (const char *exp, int from_tty)
 	   " expression you\n"
 	   "want to expand."));
 
-  gdb::unique_xmalloc_ptr<macro_scope> ms = default_macro_scope ();
+  macro_scope ms = default_macro_scope ();
 
-  if (ms != nullptr)
+  if (ms.is_valid ())
     {
-      gdb::unique_xmalloc_ptr<char> expanded = macro_expand (exp, *ms);
+      gdb::unique_xmalloc_ptr<char> expanded = macro_expand (exp, ms);
 
       gdb_puts ("expands to: ");
       gdb_puts (expanded.get ());
@@ -85,11 +85,11 @@ macro_expand_once_command (const char *exp, int from_tty)
 	   " the expression\n"
 	   "you want to expand."));
 
-  gdb::unique_xmalloc_ptr<macro_scope> ms = default_macro_scope ();
+  macro_scope ms = default_macro_scope ();
 
-  if (ms != nullptr)
+  if (ms.is_valid ())
     {
-      gdb::unique_xmalloc_ptr<char> expanded = macro_expand_once (exp, *ms);
+      gdb::unique_xmalloc_ptr<char> expanded = macro_expand_once (exp, ms);
 
       gdb_puts ("expands to: ");
       gdb_puts (expanded.get ());
@@ -169,7 +169,6 @@ print_macro_definition (const char *name,
 static void
 info_macro_command (const char *args, int from_tty)
 {
-  gdb::unique_xmalloc_ptr<struct macro_scope> ms;
   const char *name;
   int show_all_macros_named = 0;
   const char *arg_start = args;
@@ -201,15 +200,15 @@ info_macro_command (const char *args, int from_tty)
 	     " of the macro\n"
 	     "whose definition you want to see."));
 
-  ms = default_macro_scope ();
+  macro_scope ms = default_macro_scope ();
 
-  if (! ms)
+  if (!ms.is_valid ())
     macro_inform_no_debuginfo ();
   else if (show_all_macros_named)
-    macro_for_each (ms->file->table, [&] (const char *macro_name,
-					  const macro_definition *macro,
-					  macro_source_file *source,
-					  int line)
+    macro_for_each (ms.file->table, [&] (const char *macro_name,
+					 const macro_definition *macro,
+					 macro_source_file *source,
+					 int line)
       {
 	if (strcmp (name, macro_name) == 0)
 	  print_macro_definition (name, macro, source, line);
@@ -218,12 +217,12 @@ info_macro_command (const char *args, int from_tty)
     {
       struct macro_definition *d;
 
-      d = macro_lookup_definition (ms->file, ms->line, name);
+      d = macro_lookup_definition (ms.file, ms.line, name);
       if (d)
 	{
 	  int line;
 	  struct macro_source_file *file
-	    = macro_definition_location (ms->file, ms->line, name, &line);
+	    = macro_definition_location (ms.file, ms.line, name, &line);
 
 	  print_macro_definition (name, d, file, line);
 	}
@@ -232,7 +231,7 @@ info_macro_command (const char *args, int from_tty)
 	  gdb_printf ("The symbol `%s' has no definition as a C/C++"
 		      " preprocessor macro\n"
 		      "at ", name);
-	  show_pp_source_pos (gdb_stdout, ms->file, ms->line);
+	  show_pp_source_pos (gdb_stdout, ms.file, ms.line);
 	}
     }
 }
@@ -241,7 +240,7 @@ info_macro_command (const char *args, int from_tty)
 static void
 info_macros_command (const char *args, int from_tty)
 {
-  gdb::unique_xmalloc_ptr<struct macro_scope> ms;
+  macro_scope ms;
 
   if (args == NULL)
     ms = default_macro_scope ();
@@ -254,10 +253,10 @@ info_macros_command (const char *args, int from_tty)
 	ms = sal_macro_scope (sals[0]);
     }
 
-  if (! ms || ! ms->file || ! ms->file->table)
+  if (!ms.is_valid () || ms.file->table == nullptr)
     macro_inform_no_debuginfo ();
   else
-    macro_for_each_in_scope (ms->file, ms->line, print_macro_definition);
+    macro_for_each_in_scope (ms.file, ms.line, print_macro_definition);
 }
 
 
@@ -409,9 +408,7 @@ macro_list_command (const char *exp, int from_tty)
 
 /* Initializing the `macrocmd' module.  */
 
-void _initialize_macrocmd ();
-void
-_initialize_macrocmd ()
+INIT_GDB_FILE (macrocmd)
 {
   /* We introduce a new command prefix, `macro', under which we'll put
      the various commands for working with preprocessor macros.  */

@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -24,7 +24,7 @@
 #include "frame.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-utils.h"
-#include <unordered_set>
+#include "gdbsupport/unordered_set.h"
 
 #include "tui/tui.h"
 #include "tui/tui-command.h"
@@ -1120,14 +1120,6 @@ destroy_layout (struct cmd_list_element *self, void *context)
 
 static struct cmd_list_element *layout_list;
 
-/* Called to implement 'tui layout'.  */
-
-static void
-tui_layout_command (const char *args, int from_tty)
-{
-  help_list (layout_list, "tui layout ", all_commands, gdb_stdout);
-}
-
 /* Add a "layout" command with name NAME that switches to LAYOUT.  */
 
 static struct cmd_list_element *
@@ -1229,7 +1221,7 @@ tui_new_layout_command (const char *spec, int from_tty)
 
   std::vector<std::unique_ptr<tui_layout_split>> splits;
   splits.emplace_back (new tui_layout_split (is_vertical));
-  std::unordered_set<std::string> seen_windows;
+  gdb::unordered_set<std::string> seen_windows;
   while (true)
     {
       spec = skip_spaces (spec);
@@ -1302,12 +1294,10 @@ tui_new_layout_command (const char *spec, int from_tty)
 /* Function to initialize gdb commands, for tui window layout
    manipulation.  */
 
-void _initialize_tui_layout ();
-void
-_initialize_tui_layout ()
+INIT_GDB_FILE (tui_layout)
 {
   struct cmd_list_element *layout_cmd
-    = add_prefix_cmd ("layout", class_tui, tui_layout_command, _("\
+    = add_basic_prefix_cmd ("layout", class_tui, _("\
 Change the layout of windows.\n\
 Usage: tui layout prev | next | LAYOUT-NAME"),
 		      &layout_list, 0, tui_get_cmd_list ());

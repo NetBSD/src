@@ -1,4 +1,4 @@
-/* Copyright (C) 2023 Free Software Foundation, Inc.
+/* Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "break-cond-parse.h"
 #include "tid-parse.h"
 #include "ada-lang.h"
-#include "exceptions.h"
 
 /* When parsing tokens from a string, which direction are we parsing?
 
@@ -569,10 +568,10 @@ test (const char *input, const char *condition, int thread = -1,
   gdb::unique_xmalloc_ptr<char> extracted_rest;
   int extracted_thread, extracted_inferior, extracted_task;
   bool extracted_force_condition;
-  std::string exception_msg, error_str;
+  std::string exception_msg;
 
-  if (error_msg != nullptr)
-    error_str = std::string (error_msg) + "\n";
+  if (error_msg == nullptr)
+    error_msg = "";
 
   try
     {
@@ -584,10 +583,7 @@ test (const char *input, const char *condition, int thread = -1,
     }
   catch (const gdb_exception_error &ex)
     {
-      string_file buf;
-
-      exception_print (&buf, ex);
-      exception_msg = buf.release ();
+      exception_msg = ex.what ();
     }
 
   if ((condition == nullptr) != (extracted_condition.get () == nullptr)
@@ -599,7 +595,7 @@ test (const char *input, const char *condition, int thread = -1,
       || inferior != extracted_inferior
       || task != extracted_task
       || force != extracted_force_condition
-      || exception_msg != error_str)
+      || exception_msg != error_msg)
     {
       if (run_verbose ())
 	{
@@ -684,12 +680,10 @@ create_breakpoint_parse_arg_string_tests ()
   test_error ("task 1xxx", "Junk 'xxx' after task keyword.");
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_break_cond_parse ();
-void
-_initialize_break_cond_parse ()
+INIT_GDB_FILE (break_cond_parse)
 {
 #if GDB_SELF_TEST
   selftests::register_test

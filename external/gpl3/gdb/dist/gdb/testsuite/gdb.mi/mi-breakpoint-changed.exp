@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -48,7 +48,7 @@ proc test_insert_delete_modify { } {
     global lib_sl1 lib_sl2
     global binfile
 
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
 
     mi_load_shlibs $lib_sl1 $lib_sl2
 
@@ -184,7 +184,7 @@ proc test_pending_resolved { } {
 	global lib_sl1 lib_sl2
 	global mi_gdb_prompt
 
-	if {[mi_clean_restart $binfile]} {
+	if {[mi_clean_restart $::testfile]} {
 	    return
 	}
 	mi_load_shlibs $lib_sl1 $lib_sl2
@@ -279,7 +279,7 @@ proc test_auto_disable { } {
     global lib_sl1 lib_sl2
     global binfile
 
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
 
     mi_load_shlibs $lib_sl1 $lib_sl2
 

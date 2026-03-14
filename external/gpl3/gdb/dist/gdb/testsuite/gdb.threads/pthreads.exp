@@ -1,4 +1,4 @@
-# Copyright (C) 1996-2024 Free Software Foundation, Inc.
+# Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,7 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executab
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_test_no_output "set print sevenbit-strings"
 #gdb_test_no_output "set print address off"

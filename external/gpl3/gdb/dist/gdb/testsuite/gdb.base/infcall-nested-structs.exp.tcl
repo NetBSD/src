@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,8 @@ proc start_nested_structs_test { lang types } {
     }
 
     # Start with a fresh gdb.
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
 
     # Make certain that the output is consistent
     gdb_test_no_output "set print sevenbit-strings"

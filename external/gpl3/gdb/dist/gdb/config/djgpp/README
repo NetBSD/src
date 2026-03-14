@@ -175,7 +175,7 @@ SOMETHING.tst (where SOMETHING is the name of the failed test).  You
 should compare each of the *.tst files with the corresponding *.out
 file and convince yourself that the differences do not indicate a real
 problem.  Examples of differences you can disregard are changes in the
-copyright blurb printed by GDB, values of unitialized variables,
+copyright blurb printed by GDB, values of uninitialized variables,
 addresses of global variables like argv[] and envp[] (which depend on
 the size of your environment), etc.
 

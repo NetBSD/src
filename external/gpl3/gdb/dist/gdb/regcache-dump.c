@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -113,7 +113,7 @@ protected:
   {
     if (regnum < gdbarch_num_regs (m_gdbarch) || m_has_pseudo)
       {
-	auto size = register_size (m_gdbarch, regnum);
+	auto size = register_size (regnum);
 
 	if (size == 0)
 	  return;
@@ -346,9 +346,7 @@ maintenance_print_remote_registers (const char *args, int from_tty)
 		  "maintenance print remote-registers");
 }
 
-void _initialize_regcache_dump ();
-void
-_initialize_regcache_dump ()
+INIT_GDB_FILE (regcache_dump)
 {
   add_cmd ("registers", class_maintenance, maintenance_print_registers,
 	   _("Print the internal register configuration.\n"

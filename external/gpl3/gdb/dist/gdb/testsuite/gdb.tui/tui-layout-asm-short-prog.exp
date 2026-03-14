@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,13 @@ tuiterm_env
 
 standard_testfile tui-layout-asm-short-prog.S
 
-if {[build_executable "failed to prepare" ${testfile} ${srcfile} \
-	 {debug additional_flags=-nostdlib \
-	      additional_flags=-nostartfiles}] == -1} {
+set opts {}
+lappend opts debug
+lappend opts additional_flags=-static
+lappend opts additional_flags=-nostdlib
+lappend opts additional_flags=-nostartfiles
+
+if { [build_executable "failed to prepare" $testfile $srcfile $opts] == -1 } {
     return -1
 }
 

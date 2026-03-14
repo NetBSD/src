@@ -1,7 +1,7 @@
 /* Abstraction of GNU v3 abi.
    Contributed by Jim Blandy <jimb@redhat.com>
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -476,7 +476,7 @@ gnuv3_baseclass_offset (struct type *type, int index,
     return TYPE_BASECLASS_BITPOS (type, index) / 8;
 
   /* If we have a DWARF expression for the offset, evaluate it.  */
-  if (type->field (index).loc_kind () == FIELD_LOC_KIND_DWARF_BLOCK)
+  if (type->field (index).loc_kind () == FIELD_LOC_KIND_DWARF_BLOCK_ADDR)
     {
       struct dwarf2_property_baton baton;
       baton.property_type
@@ -1178,7 +1178,7 @@ gnuv3_get_type_from_type_info (struct value *type_info_ptr)
 {
   /* We have to parse the type name, since in general there is not a
      symbol for a type.  This is somewhat bogus since there may be a
-     mis-parse.  Another approach might be to re-use the demangler's
+     mis-parse.  Another approach might be to reuse the demangler's
      internal form to reconstruct the type somehow.  */
   std::string type_name = gnuv3_get_typename_from_type_info (type_info_ptr);
   expression_up expr (parse_expression (type_name.c_str ()));
@@ -1570,9 +1570,7 @@ init_gnuv3_ops (void)
   gnu_v3_abi_ops.pass_by_reference = gnuv3_pass_by_reference;
 }
 
-void _initialize_gnu_v3_abi ();
-void
-_initialize_gnu_v3_abi ()
+INIT_GDB_FILE (gnu_v3_abi)
 {
   init_gnuv3_ops ();
 

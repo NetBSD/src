@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -751,7 +751,7 @@ linux_process_target::handle_extended_wait (lwp_info **orig_event_lwp,
       /* Set the event status.  */
       event_lwp->waitstatus.set_execd
 	(make_unique_xstrdup
-	   (linux_proc_pid_to_exec_file (event_thr->id.lwp ())));
+	   (pid_to_exec_file (event_thr->id.lwp ())));
 
       /* Mark the exec status as pending.  */
       event_lwp->stopped = 1;
@@ -974,7 +974,7 @@ linux_ptrace_fun ()
 
 int
 linux_process_target::create_inferior (const char *program,
-				       const std::vector<char *> &program_args)
+				       const std::string &program_args)
 {
   client_state &cs = get_client_state ();
   struct lwp_info *new_lwp;
@@ -984,10 +984,9 @@ linux_process_target::create_inferior (const char *program,
   {
     maybe_disable_address_space_randomization restore_personality
       (cs.disable_randomization);
-    std::string str_program_args = construct_inferior_arguments (program_args);
 
     pid = fork_inferior (program,
-			 str_program_args.c_str (),
+			 program_args.c_str (),
 			 get_environ ()->envp (), linux_ptrace_fun,
 			 NULL, NULL, NULL, NULL);
   }
@@ -5007,23 +5006,31 @@ regsets_fetch_inferior_registers (struct regsets_info *regsets_info,
       if (res < 0)
 	{
 	  if (errno == EIO
-	      || (errno == EINVAL && regset->type == OPTIONAL_REGS))
+	      || (errno == EINVAL
+		  && (regset->type == OPTIONAL_REGS
+		      || regset->type == OPTIONAL_RUNTIME_REGS)))
 	    {
 	      /* If we get EIO on a regset, or an EINVAL and the regset is
-		 optional, do not try it again for this process mode.  */
+		 optional, do not try it again for this process mode.
+		 Even if the regset can be enabled at runtime it is safe
+		 to deactivate the regset in case of EINVAL, as we know
+		 the regset itself was the invalid argument of the ptrace
+		 call which means that it's unsupported by the kernel.  */
 	      disable_regset (regsets_info, regset);
 	    }
-	  else if (errno == ENODATA)
+	  else if (errno == ENODATA
+		   || (errno == ENODEV
+		       && regset->type == OPTIONAL_RUNTIME_REGS)
+		   || errno == ESRCH)
 	    {
-	      /* ENODATA may be returned if the regset is currently
-		 not "active".  This can happen in normal operation,
-		 so suppress the warning in this case.  */
-	    }
-	  else if (errno == ESRCH)
-	    {
-	      /* At this point, ESRCH should mean the process is
-		 already gone, in which case we simply ignore attempts
-		 to read its registers.  */
+	      /* ENODATA or ENODEV may be returned if the regset is
+		 currently not "active".  For ENODEV we additionally check
+		 if the register set is of type OPTIONAL_RUNTIME_REGS.
+		 This can happen in normal operation, so suppress the
+		 warning in this case.
+		 ESRCH should mean the process is already gone at this
+		 point, in which case we simply ignore attempts to read
+		 its registers.  */
 	    }
 	  else
 	    {
@@ -5105,11 +5112,25 @@ regsets_store_inferior_registers (struct regsets_info *regsets_info,
       if (res < 0)
 	{
 	  if (errno == EIO
-	      || (errno == EINVAL && regset->type == OPTIONAL_REGS))
+	      || (errno == EINVAL
+		   && (regset->type == OPTIONAL_REGS
+		       || regset->type == OPTIONAL_RUNTIME_REGS)))
 	    {
 	      /* If we get EIO on a regset, or an EINVAL and the regset is
-		 optional, do not try it again for this process mode.  */
+		 optional, do not try it again for this process mode.
+		 Even if the regset can be enabled at runtime it is safe
+		 to deactivate the regset in case of EINVAL, as we know
+		 the regset itself was the invalid argument of the ptrace
+		 call which means that it's unsupported by the kernel.  */
 	      disable_regset (regsets_info, regset);
+	    }
+	  else if (errno == ENODEV
+		   && regset->type == OPTIONAL_RUNTIME_REGS)
+	    {
+	      /* If we get ENODEV on a regset and the regset can be
+		 enabled at runtime try it again for this process mode.
+		 This can happen in normal operation, so suppress the
+		 warning in this case.  */
 	    }
 	  else if (errno == ESRCH)
 	    {
@@ -6034,7 +6055,7 @@ linux_process_target::supports_pid_to_exec_file ()
 const char *
 linux_process_target::pid_to_exec_file (int pid)
 {
-  return linux_proc_pid_to_exec_file (pid);
+  return linux_proc_pid_to_exec_file (pid, linux_ns_same (pid, LINUX_NS_MNT));
 }
 
 bool
@@ -6048,6 +6069,12 @@ linux_process_target::multifs_open (int pid, const char *filename,
 				    int flags, mode_t mode)
 {
   return linux_mntns_open_cloexec (pid, filename, flags, mode);
+}
+
+int
+linux_process_target::multifs_lstat (int pid, const char *filename, struct stat *sb)
+{
+  return linux_mntns_lstat (pid, filename, sb);
 }
 
 int

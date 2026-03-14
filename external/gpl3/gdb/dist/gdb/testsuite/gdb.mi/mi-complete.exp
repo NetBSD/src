@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
      return -1
 }
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 
 # Don't run to main to avoid increasing the search scope to include
 # debug info of shared libraries like glibc, libgcc, etc.

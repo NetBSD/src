@@ -142,6 +142,9 @@ case "${gdbserver_host}" in
 			;;
   loongarch*-*-linux*)	srv_tgtobj="arch/loongarch.o linux-loongarch-low.o"
 			srv_tgtobj="${srv_tgtobj} ${srv_linux_obj}"
+			srv_tgtobj="$srv_tgtobj nat/loongarch-hw-point.o"
+			srv_tgtobj="$srv_tgtobj nat/loongarch-linux.o"
+			srv_tgtobj="$srv_tgtobj nat/loongarch-linux-hw-point.o"
 			srv_linux_regsets=yes
 			srv_linux_usrregs=yes
 			srv_linux_thread_db=yes
@@ -166,6 +169,13 @@ case "${gdbserver_host}" in
 			srv_linux_regsets=yes
 			srv_linux_thread_db=yes
 			;;
+  microblaze*-*-linux*) srv_regobj="microblaze-linux.o"
+                        srv_tgtobj="$srv_linux_obj linux-microblaze-low.o"
+                        srv_xmlfiles="microblaze-linux.xml"
+                        srv_xmlfiles="${srv_xmlfiles} microblaze-core.xml"
+                        srv_linux_usrregs=yes
+                        srv_linux_thread_db=yes
+                        ;;
   mips*-*-linux*)	srv_regobj="mips-linux.o"
 			srv_regobj="${srv_regobj} mips-dsp-linux.o"
 			srv_regobj="${srv_regobj} mips64-linux.o"

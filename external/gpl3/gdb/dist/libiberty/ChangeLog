@@ -1,3 +1,55 @@
+2025-08-06  Matthieu Longo  <matthieu.longo@arm.com>
+
+	* testsuite/test-doubly-linked-list.c: disable debug logging on
+	stdout.
+
+2025-07-09  Matthieu Longo  <matthieu.longo@arm.com>
+
+	* Makefile.in: Add new header.
+	* testsuite/Makefile.in: Add new test.
+	* testsuite/test-doubly-linked-list.c: New test.
+
+2025-05-13  Andreas Schwab  <schwab@suse.de>
+
+	* regex.c (regex_compile): Don't write beyond array bounds when
+	collecting range expression.
+
+2025-03-29  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR cobol/119283
+	* Makefile.in: Add memrchr build rules.
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Check for memrchr.
+	* functions.texi: Document memrchr.
+	* memrchr.c: New file.
+
+2025-03-25  Iain Sandoe  <iain@sandoe.co.uk>
+
+	PR other/119218
+	* config.in: Regenerate.
+	* configure: Regenerate.
+	* configure.ac: Append <libgen.h> to AC_INCLUDES_DEFAULT
+	when checking for the 'basename' decl.
+
+2025-03-18  Jose E. Marchesi  <jose.marchesi@oracle.com>
+
+	* ldirname.c: New file.
+	* Makefile.in (CFILES): Add ldirname.c.
+	(REQUIRED_OFILES): Add ldirname.$(objext).
+	(./ldirname.$(objext)): New rule.
+	* makefile.vms (OBJS): Add ldirname.obj.
+	* configure.com (FILES): Add ldirname.
+
+2024-12-11  Matthieu Longo  <matthieu.longo@arm.com>
+
+	* configure: Regenerate.
+	* configure.ac: Fix autoupdate warnings.
+
+2024-12-11  Sangamesh Mallayya  <swamy.sangamesh@gmail.com>
+
+	* getopt.c: Remove _NO_PROTO block
+
 2024-11-19  Evgeny Karpov  <evgeny.karpov@microsoft.com>
 
 	* simple-object-coff.c: Add aarch64.

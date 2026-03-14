@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,9 @@ unsigned char be30_1_off[4] = { 0x80, 0, 0, 2 };
 /* A 32 bit slot holding a 0 bit value.  We don't use 0 in the array
    here, to catch any situation where gdb tries to use the memory.  */
 unsigned char u32_0[4] = { 0xff, 0xff, 0xff, 0xff };
+
+/* An 8 bit slot holding a 3 bit value.  */
+unsigned char just_bit_0 = 5;
 
 int
 main (void)

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2016-2024 Free Software Foundation, Inc.
+# Copyright (C) 2016-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -62,7 +62,6 @@ sum_matcher = re.compile("^(.?(PASS|FAIL)): (.*)$")
 def parse_sum_line(line: str, dic: dict[str, set[str]]):
     """Parse a single LINE from a sumfile, and store the results in the
     dictionary referenced by DIC."""
-    global sum_matcher
 
     line = line.rstrip()
     m = re.match(sum_matcher, line)
@@ -96,7 +95,6 @@ def read_sum_files(files: list[str]):
     """Read the sumfiles (passed as a list in the FILES variable), and
     process each one, filling the FILES_AND_TESTS global dictionary with
     information about them."""
-    global files_and_tests
 
     for x in files:
         with open(x, "r") as f:
@@ -115,7 +113,6 @@ def identify_racy_tests():
     This function does that for all sets (PASS, FAIL, KPASS, KFAIL, etc.),
     and then print a sorted list (without duplicates) of all the tests
     that were found to be racy."""
-    global files_and_tests
 
     # First, construct two dictionaries that will hold one set of
     # testcases for each state (PASS, FAIL, etc.).
@@ -147,7 +144,7 @@ def identify_racy_tests():
     for s1, s2 in ignore_relations.items():
         try:
             ignored_tests |= all_tests[s1] & all_tests[s2]
-        except:
+        except Exception:
             continue
 
     racy_tests: set[str] = set()

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -278,13 +278,7 @@ gdb_test_multiline "input multi-line-output command" \
 
 set test "verify pagination from test_multiline"
 gdb_test_multiple "test_multiline" $test {
-    -re "--Type <RET>" {
-	exp_continue
-    }
-    -re " for more, q to quit" {
-	exp_continue
-    }
-    -re ", c to continue without paging--$" {
+    -re "$pagination_prompt$" {
 	pass $test
     }
 }
@@ -328,4 +322,89 @@ proc_with_prefix test_command_redefining_itself {} {
 	"call command redefining itself 2"
 }
 
+# Try to create commands using unknown prefixes and check GDB gives an
+# error.  There's also a test in here for an ambiguous prefix, which
+# gives the same error.
+proc_with_prefix test_unknown_prefix {} {
+    clean_restart
+
+    gdb_test_no_output "python gdb.Command('foo1', gdb.COMMAND_NONE, prefix=True)"
+    gdb_test_no_output "python gdb.Command('foo cmd', gdb.COMMAND_NONE)"
+
+    foreach prefix { "xxx" "foo xxx" "foo1 xxx" } {
+	gdb_test "python gdb.Command('$prefix cmd', gdb.COMMAND_NONE)" \
+	    [multi_line \
+		 "Python Exception <class 'RuntimeError'>: Could not find command prefix $prefix\\." \
+		 "Error occurred in Python: Could not find command prefix $prefix\\."]
+    }
+
+    gdb_test_no_output "python gdb.Command('foo2', gdb.COMMAND_NONE, prefix=True)"
+
+    foreach prefix { "foo" "foo xxx" "foo1 xxx" "foo2 xxx" } {
+	gdb_test "python gdb.Command('$prefix cmd2', gdb.COMMAND_NONE)" \
+	    [multi_line \
+		 "Python Exception <class 'RuntimeError'>: Could not find command prefix $prefix\\." \
+		 "Error occurred in Python: Could not find command prefix $prefix\\."]
+    }
+}
+
+# Check what happens if a command object is called without an 'invoke'
+# method.
+proc_with_prefix test_deleting_invoke_methods {} {
+    clean_restart
+
+    gdb_test_multiline "create 'foo' prefix command" \
+	"python" "" \
+	"class test_prefix(gdb.Command):" "" \
+	"  def __init__ (self):" "" \
+	"    super().__init__ (\"foo\", gdb.COMMAND_USER, prefix=True)" "" \
+	"  def invoke (self, arg, from_tty):" "" \
+	"    print(\"In 'foo' invoke: %s\" % arg)" "" \
+	"foo = test_prefix()" "" \
+	"end" ""
+
+    gdb_test_multiline "create 'foo bar' command" \
+	"python" "" \
+	"class test_cmd(gdb.Command):" "" \
+	"  def __init__ (self):" "" \
+	"    super().__init__ (\"foo bar\", gdb.COMMAND_USER)" "" \
+	"  def invoke (self, arg, from_tty):" "" \
+	"    print(\"In 'foo bar' invoke: %s\" % arg)" "" \
+	"foo_bar = test_cmd()" "" \
+	"end" ""
+
+    gdb_test "foo def" "In 'foo' invoke: def" \
+	"call 'foo' with an unknown sub-command"
+
+    gdb_test "foo bar def" "In 'foo bar' invoke: def" \
+	"call 'foo bar' with arguments"
+
+    gdb_test_no_output "python del(foo_bar.__class__.invoke)" \
+	"delete invoke from test_cmd class"
+
+    with_test_prefix "after deleting test_cmd.invoke" {
+	gdb_test "foo def" "In 'foo' invoke: def" \
+	    "call 'foo' with an unknown sub-command"
+
+	gdb_test "foo bar def" \
+	    "^Python command object missing 'invoke' method\\." \
+	    "call 'foo bar' with arguments"
+    }
+
+    gdb_test_no_output "python del(foo.__class__.invoke)" \
+	"delete invoke from test_prefix class"
+
+    with_test_prefix "after deleting test_prefix.invoke" {
+	gdb_test "foo def" \
+	    "^Python command object missing 'invoke' method\\." \
+	    "call 'foo' with an unknown sub-command"
+
+	gdb_test "foo bar def" \
+	    "^Python command object missing 'invoke' method\\." \
+	    "call 'foo bar' with arguments"
+    }
+}
+
 test_command_redefining_itself
+test_unknown_prefix
+test_deleting_invoke_methods

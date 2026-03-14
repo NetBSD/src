@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -128,7 +128,7 @@ loongarch_dr_state_insert_one_point (ptid_t ptid,
 	{
 	  gdb_assert (dr_ref_count[i] == 0);
 	  idx = i;
-	  /* no break; continue hunting for an exising one.  */
+	  /* no break; continue hunting for an existing one.  */
 	}
       else if (dr_addr_p[i] == addr && dr_ctrl_p[i] == ctrl)
 	{
@@ -316,4 +316,28 @@ loongarch_region_ok_for_watchpoint (CORE_ADDR addr, int len)
     return 0;
 
   return 1;
+}
+
+/* See nat/loongarch-hw-point.h*/
+
+bool
+loongarch_stopped_data_address (const struct loongarch_debug_reg_state *state,
+				CORE_ADDR addr_trap, CORE_ADDR *addr_p)
+{
+  int i;
+
+  for (i = loongarch_num_wp_regs - 1; i >= 0; --i)
+    {
+      const CORE_ADDR addr_watch = state->dr_addr_wp[i];
+
+      if (state->dr_ref_count_wp[i]
+	  && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])
+	  && addr_trap == addr_watch)
+	{
+	  *addr_p = addr_watch;
+	  return true;
+	}
+    }
+
+  return false;
 }

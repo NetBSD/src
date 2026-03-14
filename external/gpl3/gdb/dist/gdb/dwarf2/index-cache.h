@@ -1,6 +1,6 @@
 /* Caching of GDB/DWARF index files.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,8 @@ struct index_cache_resource
 {
   virtual ~index_cache_resource () = 0;
 };
+
+using index_cache_resource_up = std::unique_ptr<index_cache_resource>;
 
 /* Information to be captured in the main thread, and to be used by worker
    threads during store ().  */
@@ -89,7 +91,7 @@ public:
      If no matching index file is found, return an empty array view.  */
   gdb::array_view<const gdb_byte>
   lookup_gdb_index (const bfd_build_id *build_id,
-		    std::unique_ptr<index_cache_resource> *resource);
+		    index_cache_resource_up *resource);
 
   /* Return the number of cache hits.  */
   unsigned int n_hits () const

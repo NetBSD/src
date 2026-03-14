@@ -1,0 +1,63 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the gdb.warning() function.
+
+load_lib gdb-python.exp
+
+require allow_python_tests
+
+clean_restart
+
+# Basic usage.
+gdb_test "python gdb.warning(\"some text\")" \
+    "warning: some text"
+
+# Basic usage with named argument.
+gdb_test "python gdb.warning(text=\"a warning message\")" \
+    "warning: a warning message"
+
+# Make sure GDB prints format specifiers correctly.
+gdb_test "python gdb.warning(\"%s %d %p\")" \
+    "warning: %s %d %p"
+
+# Empty string gives an error.
+gdb_test "python gdb.warning(\"\")" \
+    [multi_line \
+	 "Python Exception <class 'ValueError'>: Empty text string passed to gdb\\.warning" \
+	 "Error occurred in Python: Empty text string passed to gdb\\.warning"]
+
+# Missing argument gives an error.
+set re1 \
+    [multi_line \
+	 [string_to_regexp \
+	      [concat \
+		   "Python Exception <class 'TypeError'>:" \
+		   "function missing required argument 'text' (pos 1)"]] \
+	 [string_to_regexp \
+	      [concat \
+		   "Error occurred in Python:" \
+		   "function missing required argument 'text' (pos 1)"]]]
+set re2 \
+    [multi_line \
+	 [string_to_regexp \
+	      [concat \
+		   "Python Exception <class 'TypeError'>:" \
+		   "Required argument 'text' (pos 1) not found"]] \
+	 [string_to_regexp \
+	      [concat \
+		   "Error occurred in Python:" \
+		   "Required argument 'text' (pos 1) not found"]]]
+gdb_test "python gdb.warning()" $re1|$re2

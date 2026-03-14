@@ -1,4 +1,4 @@
-#   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 #   Contributed by Hui Zhu  <hui@codesourcery.com>
 
 # This program is free software; you can redistribute it and/or modify
@@ -31,7 +31,7 @@ if {[build_executable $testfile.exp $testfile $srcfile $flags] == -1} {
 set bp_location1 [gdb_get_line_number "set breakpoint 1 here"]
 set dp_location1 [gdb_get_line_number "set dprintf 1 here"]
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 mi_runto_main
 
 set i 0

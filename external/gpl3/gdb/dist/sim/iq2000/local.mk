@@ -1,6 +1,6 @@
 ## See sim/Makefile.am
 ##
-## Copyright (C) 1998-2024 Free Software Foundation, Inc.
+## Copyright (C) 1998-2025 Free Software Foundation, Inc.
 ## Contributed by Red Hat.
 ##
 ## This program is free software; you can redistribute it and/or modify

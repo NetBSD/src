@@ -1,6 +1,6 @@
 /* GNU/Linux/aarch64 specific target description, for the remote server
    for GDB.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,7 @@
 #include "arch/aarch64.h"
 #include "linux-aarch32-low.h"
 #include <inttypes.h>
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 /* Create the aarch64 target description.  */
 
@@ -35,7 +35,7 @@ aarch64_linux_read_description (const aarch64_features &features)
      this function as the in-process-agent calls this function from a
      constructor function, when globals might not yet have been
      initialised.  */
-  static std::unordered_map<aarch64_features, target_desc *> tdesc_aarch64_map;
+  static gdb::unordered_map<aarch64_features, target_desc *> tdesc_aarch64_map;
 
   if (features.vq > AARCH64_MAX_SVE_VQ)
     error (_("VQ is %" PRIu64 ", maximum supported value is %d"), features.vq,

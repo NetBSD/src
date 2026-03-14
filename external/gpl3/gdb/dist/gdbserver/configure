@@ -637,8 +637,6 @@ REPORT_BUGS_TO
 PKGVERSION
 WERROR_CFLAGS
 WARN_CFLAGS
-ustinc
-ustlibs
 CCDEPMODE
 CONFIG_SRC_SUBDIR
 CATOBJEXT
@@ -775,9 +773,6 @@ with_libiconv_prefix
 with_libiconv_type
 with_libintl_prefix
 with_libintl_type
-with_ust
-with_ust_include
-with_ust_lib
 enable_werror
 enable_build_warnings
 enable_gdb_build_warnings
@@ -1451,11 +1446,6 @@ Optional Packages:
   --with-libintl-prefix[=DIR]  search for libintl in DIR/include and DIR/lib
   --without-libintl-prefix     don't search for libintl in includedir and libdir
   --with-libintl-type=TYPE     type of library to search for (auto/static/shared)
-  --with-ust=PATH       Specify prefix directory for the installed UST package
-                          Equivalent to --with-ust-include=PATH/include
-                          plus --with-ust-lib=PATH/lib
-  --with-ust-include=PATH Specify directory for installed UST include files
-  --with-ust-lib=PATH   Specify the directory for the installed UST library
   --with-pkgversion=PKG   Use PKG in the version string in place of "GDB"
   --with-bugurl=URL       Direct users to URL to report a bug
   --with-libthread-db=PATH
@@ -7541,119 +7531,6 @@ $as_echo "#define HAVE_CXX17 1" >>confdefs.h
 
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
-$as_echo_n "checking for ANSI C header files... " >&6; }
-if ${ac_cv_header_stdc+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_header_stdc=yes
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then :
-  :
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ctype.h>
-#include <stdlib.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      return 2;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
-$as_echo "$ac_cv_header_stdc" >&6; }
-if test $ac_cv_header_stdc = yes; then
-
-$as_echo "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
-
-
 ac_fn_c_check_type "$LINENO" "size_t" "ac_cv_type_size_t" "$ac_includes_default"
 if test "x$ac_cv_type_size_t" = xyes; then :
 
@@ -7929,118 +7806,6 @@ fi
 
   # Set the 'development' global.
   . $srcdir/../bfd/development.sh
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
-$as_echo_n "checking for ANSI C header files... " >&6; }
-if ${ac_cv_header_stdc+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_header_stdc=yes
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then :
-  :
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ctype.h>
-#include <stdlib.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      return 2;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
-$as_echo "$ac_cv_header_stdc" >&6; }
-if test $ac_cv_header_stdc = yes; then
-
-$as_echo "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
 
   # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
 # for constant arguments.  Useless!
@@ -13601,90 +13366,6 @@ _ACEOF
 fi
 
 
-# Check for UST
-ustlibs=""
-ustinc=""
-
-
-# Check whether --with-ust was given.
-if test "${with_ust+set}" = set; then :
-  withval=$with_ust;
-fi
-
-
-# Check whether --with-ust_include was given.
-if test "${with_ust_include+set}" = set; then :
-  withval=$with_ust_include;
-fi
-
-
-# Check whether --with-ust_lib was given.
-if test "${with_ust_lib+set}" = set; then :
-  withval=$with_ust_lib;
-fi
-
-
-case $with_ust in
-  no)
-    ustlibs=
-    ustinc=
-    ;;
-  "" | yes)
-    ustlibs=" -lust "
-    ustinc=""
-    ;;
-  *)
-    ustlibs="-L$with_ust/lib -lust"
-    ustinc="-I$with_ust/include "
-    ;;
-esac
-if test "x$with_ust_include" != x; then
-  ustinc="-I$with_ust_include "
-fi
-if test "x$with_ust_lib" != x; then
-  ustlibs="-L$with_ust_lib -lust"
-fi
-
-if test "x$with_ust" != "xno"; then
-  saved_CFLAGS="$CFLAGS"
-  CFLAGS="$CFLAGS $ustinc"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ust" >&5
-$as_echo_n "checking for ust... " >&6; }
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#define CONFIG_UST_GDB_INTEGRATION
-#include <ust/ust.h>
-
-int
-main ()
-{
-
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; };
-
-$as_echo "#define HAVE_UST 1" >>confdefs.h
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-     ustlibs= ; ustinc=
-
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-  CFLAGS="$saved_CFLAGS"
-fi
-
-# Flags needed for UST
-
-
-
 
 
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking the compiler type" >&5
@@ -13765,22 +13446,36 @@ if test "${ERROR_ON_WARNING}" = yes ; then
 fi
 
 # The options we'll try to enable.
-build_warnings="-Wall -Wpointer-arith \
--Wno-unused -Wunused-value -Wunused-variable -Wunused-function \
--Wno-switch -Wno-char-subscripts \
--Wempty-body -Wunused-but-set-parameter -Wunused-but-set-variable \
--Wno-sign-compare -Wno-error=maybe-uninitialized \
--Wno-mismatched-tags \
--Wno-error=deprecated-register \
--Wsuggest-override \
--Wimplicit-fallthrough=5 \
--Wduplicated-cond \
--Wshadow=local \
+build_warnings=" \
+-Wall \
 -Wdeprecated-copy \
 -Wdeprecated-copy-dtor \
--Wredundant-move \
+-Wduplicated-cond \
+-Wempty-body \
+-Wimplicit-fallthrough=5 \
 -Wmissing-declarations \
+-Wno-char-subscripts \
+-Wno-error=deprecated-register \
+-Wno-mismatched-tags \
+-Wno-sign-compare -Wno-error=maybe-uninitialized \
+-Wno-switch \
+-Wno-unused \
+-Wpointer-arith \
+-Wredundant-move \
+-Wshadow=local \
 -Wstrict-null-sentinel \
+-Wsuggest-override \
+-Wunused-but-set-parameter \
+-Wunused-but-set-variable \
+-Wunused-const-variable=1 \
+-Wunused-function \
+-Wunused-label \
+-Wunused-lambda-capture \
+-Wunused-local-typedefs \
+-Wunused-member-function \
+-Wunused-private-field \
+-Wunused-value \
+-Wunused-variable \
 -Wvla \
 "
 
@@ -14177,7 +13872,7 @@ case "${target}" in
     # Starting with NDK version 9, <elf.h> actually includes definitions
     # of Elf32_auxv_t and Elf64_auxv_t. But sadly, <elf.h> includes
     # <sys/exec_elf.h> which defines some of the ELF types incorrectly,
-    # leading to conflicts with the defintions from <linux/elf.h>.
+    # leading to conflicts with the definitions from <linux/elf.h>.
     # This makes it impossible for us to include both <elf.h> and
     # <linux/elf.h>, which means that, in practice, we do not have
     # access to Elf32_auxv_t and Elf64_auxv_t on this platform.

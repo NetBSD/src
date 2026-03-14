@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ set host_binfile [gdb_remote_download host $binfile]
 
 # First test that reading symbols fails.
 gdb_test "file $host_binfile" \
-    {Reading symbols.*DWARF Error: wrong version in compilation unit header \(is 153, should be 2, 3, 4 or 5\).*} \
+    {Reading symbols.*DWARF Error: wrong version in unit header \(is 153, should be 2, 3, 4 or 5\).*} \
     "file $testfile"
 
 # We can't use proc readnow, because the PR makes it return 0.

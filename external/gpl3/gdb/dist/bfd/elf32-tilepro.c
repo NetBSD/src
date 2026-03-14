@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2203,6 +2203,7 @@ tilepro_elf_late_size_sections (bfd *output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF32_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF32_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -2368,6 +2369,7 @@ tilepro_elf_late_size_sections (bfd *output_bfd,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, true);
@@ -2605,7 +2607,8 @@ tilepro_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_TILEPRO_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;

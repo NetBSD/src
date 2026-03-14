@@ -1,6 +1,6 @@
 /* Linux namespaces(7) support.
 
-   Copyright (C) 2015-2024 Free Software Foundation, Inc.
+   Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -233,6 +233,12 @@ enum mnsh_msg_type
        MNSH_RET_INT.  */
     MNSH_REQ_SETNS,
 
+    /* A request that the helper call lstat.  The single
+       argument (the filename) should be passed in BUF, and
+       should include a terminating NUL character.  The helper
+       should respond with a MNSH_RET_INTSTR.  */
+    MNSH_REQ_LSTAT,
+
     /* A request that the helper call open.  Arguments should
        be passed in BUF, INT1 and INT2.  The filename (in BUF)
        should include a terminating NUL character.  The helper
@@ -265,62 +271,69 @@ enum mnsh_msg_type
     MNSH_RET_INTSTR,
   };
 
-/* Print a string representation of a message using debug_printf.
-   This function is not async-signal-safe so should never be
-   called from the helper.  */
+/* Return a string representation of a message.  This function is not
+   async-signal-safe so should never be called from the helper.  */
 
-static void
+static std::string
 mnsh_debug_print_message (enum mnsh_msg_type type,
 			  int fd, int int1, int int2,
 			  const void *buf, int bufsiz)
 {
+  std::string res;
+
   gdb_byte *c = (gdb_byte *) buf;
   gdb_byte *cl = c + bufsiz;
 
   switch (type)
     {
     case MNSH_MSG_ERROR:
-      debug_printf ("ERROR");
+      res += "ERROR";
+      break;
+
+    case MNSH_REQ_LSTAT:
+      res += "LSTAT";
       break;
 
     case MNSH_REQ_SETNS:
-      debug_printf ("SETNS");
+      res += "SETNS";
       break;
 
     case MNSH_REQ_OPEN:
-      debug_printf ("OPEN");
+      res += "OPEN";
       break;
 
     case MNSH_REQ_UNLINK:
-      debug_printf ("UNLINK");
+      res += "UNLINK";
       break;
 
     case MNSH_REQ_READLINK:
-      debug_printf ("READLINK");
+      res += "READLINK";
       break;
 
     case MNSH_RET_INT:
-      debug_printf ("INT");
+      res += "INT";
       break;
 
     case MNSH_RET_FD:
-      debug_printf ("FD");
+      res += "FD";
       break;
 
     case MNSH_RET_INTSTR:
-      debug_printf ("INTSTR");
+      res += "INTSTR";
       break;
 
     default:
-      debug_printf ("unknown-packet-%d", type);
+      res += string_printf ("unknown-packet-%d", type);
     }
 
-  debug_printf (" %d %d %d \"", fd, int1, int2);
+  res += string_printf (" %d %d %d \"", fd, int1, int2);
 
   for (; c < cl; c++)
-    debug_printf (*c >= ' ' && *c <= '~' ? "%c" : "\\%o", *c);
+    res += string_printf (*c >= ' ' && *c <= '~' ? "%c" : "\\%o", *c);
 
-  debug_printf ("\"");
+  res += "\"";
+
+  return res;
 }
 
 /* Forward declaration.  */
@@ -390,12 +403,10 @@ mnsh_send_message (int sock, enum mnsh_msg_type type,
   if (size < 0)
     mnsh_maybe_mourn_peer ();
 
-  if (debug_linux_namespaces)
-    {
-      debug_printf ("mnsh: send: ");
-      mnsh_debug_print_message (type, fd, int1, int2, buf, bufsiz);
-      debug_printf (" -> %s\n", pulongest (size));
-    }
+  linux_namespaces_debug_printf
+    ("send: %s -> %s",
+     mnsh_debug_print_message (type, fd, int1, int2, buf, bufsiz).c_str (),
+     pulongest (size));
 
   return size;
 }
@@ -445,9 +456,8 @@ mnsh_recv_message (int sock, enum mnsh_msg_type *type,
   size = recvmsg (sock, &msg, MSG_CMSG_CLOEXEC);
   if (size < 0)
     {
-      if (debug_linux_namespaces)
-	debug_printf ("namespace-helper: recv failed (%s)\n",
-		      pulongest (size));
+      linux_namespaces_debug_printf
+	("namespace-helper: recv failed (%s)", pulongest (size));
 
       mnsh_maybe_mourn_peer ();
 
@@ -457,9 +467,9 @@ mnsh_recv_message (int sock, enum mnsh_msg_type *type,
   /* Check for truncation.  */
   if (size < fixed_size || (msg.msg_flags & (MSG_TRUNC | MSG_CTRUNC)))
     {
-      if (debug_linux_namespaces)
-	debug_printf ("namespace-helper: recv truncated (%s 0x%x)\n",
-		      pulongest (size), msg.msg_flags);
+      linux_namespaces_debug_printf
+	("namespace-helper: recv truncated (%s 0x%x)",
+	 pulongest (size), msg.msg_flags);
 
       mnsh_maybe_mourn_peer ();
 
@@ -477,13 +487,10 @@ mnsh_recv_message (int sock, enum mnsh_msg_type *type,
   else
     *fd = -1;
 
-  if (debug_linux_namespaces)
-    {
-      debug_printf ("mnsh: recv: ");
-      mnsh_debug_print_message (*type, *fd, *int1, *int2, buf,
-				size - fixed_size);
-      debug_printf ("\n");
-    }
+  linux_namespaces_debug_printf
+    ("recv: %s",
+     mnsh_debug_print_message (*type, *fd, *int1, *int2, buf,
+			       size - fixed_size).c_str ());
 
   /* Return the number of bytes of data in BUF.  */
   return size - fixed_size;
@@ -512,6 +519,20 @@ mnsh_handle_setns (int sock, int fd, int nstype)
   int result = do_setns (fd, nstype);
 
   return mnsh_return_int (sock, result, errno);
+}
+
+
+/* Handle a MNSH_REQ_LSTAT message.  Must be async-signal-safe.  */
+
+static ssize_t
+mnsh_handle_lstat (int sock, const char *filename)
+{
+  struct stat sb;
+  int stat_ok = lstat (filename, &sb);
+
+  return mnsh_return_intstr (sock, stat_ok, &sb,
+			     stat_ok == -1 ? 0 : sizeof (sb),
+			     errno);
 }
 
 /* Handle a MNSH_REQ_OPEN message.  Must be async-signal-safe.  */
@@ -572,6 +593,11 @@ mnsh_main (int sock)
 	    case MNSH_REQ_SETNS:
 	      if (fd > 0)
 		response = mnsh_handle_setns (sock, fd, int1);
+	      break;
+
+	    case MNSH_REQ_LSTAT:
+	      if (size > 0 && buf[size - 1] == '\0')
+		response = mnsh_handle_lstat (sock, buf);
 	      break;
 
 	    case MNSH_REQ_OPEN:
@@ -673,7 +699,7 @@ linux_mntns_get_helper (void)
 	  mnsh_creator_pid = helper_creator;
 
 	  /* Debug printing isn't async-signal-safe.  */
-	  debug_linux_namespaces = 0;
+	  debug_linux_namespaces = false;
 
 	  mnsh_main (sv[1]);
 	}
@@ -685,9 +711,8 @@ linux_mntns_get_helper (void)
       helper->sock = sv[0];
       helper->nsid = ns->id;
 
-      if (debug_linux_namespaces)
-	debug_printf ("Started mount namespace helper process %d\n",
-		      helper->pid);
+      linux_namespaces_debug_printf
+	("Started mount namespace helper process %d", helper->pid);
     }
 
   return helper;
@@ -763,6 +788,10 @@ mnsh_maybe_mourn_peer (void)
 
 #define mnsh_send_open(helper, filename, flags, mode) \
   mnsh_send_message (helper->sock, MNSH_REQ_OPEN, -1, flags, mode, \
+		     filename, strlen (filename) + 1)
+
+#define mnsh_send_lstat(helper, filename) \
+  mnsh_send_message (helper->sock, MNSH_REQ_LSTAT, -1, 0, 0, \
 		     filename, strlen (filename) + 1)
 
 #define mnsh_send_unlink(helper, filename) \
@@ -884,7 +913,7 @@ linux_mntns_access_fs (pid_t pid)
   struct stat sb;
   struct linux_mnsh *helper;
   ssize_t size;
-  int fd;
+  int fd, fd_user = -1;
 
   if (pid == getpid ())
     return MNSH_FS_DIRECT;
@@ -901,6 +930,8 @@ linux_mntns_access_fs (pid_t pid)
     {
       int save_errno = errno;
       close (fd);
+      if (fd_user >= 0)
+	close (fd_user);
       errno = save_errno;
     };
 
@@ -910,6 +941,13 @@ linux_mntns_access_fs (pid_t pid)
   if (sb.st_ino == ns->id)
     return MNSH_FS_DIRECT;
 
+  struct linux_ns *ns_user = linux_ns_get_namespace (LINUX_NS_USER);
+  if (ns_user != nullptr)
+    {
+      const char *ns_filename = linux_ns_filename (ns_user, pid);
+      fd_user = gdb_open_cloexec (ns_filename, O_RDONLY, 0).release ();
+    }
+
   helper = linux_mntns_get_helper ();
   if (helper == NULL)
     return MNSH_FS_ERROR;
@@ -917,6 +955,19 @@ linux_mntns_access_fs (pid_t pid)
   if (sb.st_ino != helper->nsid)
     {
       int result, error;
+
+      /* Try to enter the user namespace first.  The current user might
+	 have elevated privileges within the user namespace, which would
+	 then allow the attempt to enter the mount namespace to succeed.  */
+      if (fd_user >= 0)
+	{
+	  size = mnsh_send_setns (helper, fd_user, 0);
+	  if (size < 0)
+	    return MNSH_FS_ERROR;
+
+	  if (mnsh_recv_int (helper, &result, &error) != 0)
+	    return MNSH_FS_ERROR;
+	}
 
       size = mnsh_send_setns (helper, fd, 0);
       if (size < 0)
@@ -943,6 +994,42 @@ linux_mntns_access_fs (pid_t pid)
     }
 
   return MNSH_FS_HELPER;
+}
+
+/* See nat/linux-namespaces.h.  */
+
+int
+linux_mntns_lstat (pid_t pid, const char *filename,
+		   struct stat *sb)
+{
+  enum mnsh_fs_code access = linux_mntns_access_fs (pid);
+
+  if (access == MNSH_FS_ERROR)
+    return -1;
+
+  if (access == MNSH_FS_DIRECT)
+    return lstat (filename, sb);
+
+  gdb_assert (access == MNSH_FS_HELPER);
+
+  struct linux_mnsh *helper = linux_mntns_get_helper ();
+
+  ssize_t size = mnsh_send_lstat (helper, filename);
+  if (size < 0)
+    return -1;
+
+  int stat_ok, error;
+  size = mnsh_recv_intstr (helper, &stat_ok, &error, sb, sizeof (*sb));
+
+  if (size < 0)
+    {
+      stat_ok = -1;
+      errno = error;
+    }
+  else
+    gdb_assert (stat_ok == -1 || size == sizeof (*sb));
+
+  return stat_ok;
 }
 
 /* See nat/linux-namespaces.h.  */

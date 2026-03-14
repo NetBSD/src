@@ -2,7 +2,7 @@
 
 # GDB script to list of problems using awk.
 #
-# Copyright (C) 2002-2024 Free Software Foundation, Inc.
+# Copyright (C) 2002-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -60,7 +60,7 @@ Options:
   -Werror        Treat all problems as errors.
   -Wall          Report all problems.
   -Wari          Report problems that should be fixed in new code.
-  -WCATEGORY     Report problems in the specifed category.  The category
+  -WCATEGORY     Report problems in the specified category.  The category
                  can be prefixed with "no-".  Valid categories
                  are: ${all}
 EOF
@@ -159,7 +159,7 @@ BEGIN {
     PWD = "'`pwd`'"
 }
 
-# Print the error message for BUG.  Append SUPLEMENT if non-empty.
+# Print the error message for BUG.  Append SUPPLEMENT if non-empty.
 function print_bug(file,line,prefix,category,bug,doc,supplement, suffix,idx) {
     if (print_idx) {
 	idx = bug ": "

@@ -1,6 +1,6 @@
 /* YACC parser for Go expressions, for GDB.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1290,7 +1290,7 @@ package_name_p (const char *name, const struct block *block)
 		       &is_a_field_of_this).symbol;
 
   if (sym
-      && sym->aclass () == LOC_TYPEDEF
+      && sym->loc_class () == LOC_TYPEDEF
       && sym->type ()->code () == TYPE_CODE_MODULE)
     return 1;
 

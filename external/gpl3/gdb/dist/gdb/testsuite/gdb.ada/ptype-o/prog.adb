@@ -1,4 +1,4 @@
---  Copyright 2023-2024 Free Software Foundation, Inc.
+--  Copyright 2023-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -13,16 +13,9 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+with Pck; use Pck;
+
 procedure Prog is
-  type Index is range 0 .. 31;
-  type Char_Array is array ( Index range <>) of Character;
-
-  type Rec (Length : Index) is
-    record
-      TV_Description        : Char_Array (1 .. Length);
-      Note                  : Char_Array (1 .. Length);
-    end record;
-
   X : Rec (7);
 begin
   null; -- BREAK

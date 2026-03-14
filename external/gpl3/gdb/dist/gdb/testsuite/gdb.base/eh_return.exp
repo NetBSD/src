@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,8 @@ if { $address == -1 } {
     return 0
 }
 
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 
 gdb_assert [gdb_breakpoint "*$address" no-message] "set breakpoint on address"
 

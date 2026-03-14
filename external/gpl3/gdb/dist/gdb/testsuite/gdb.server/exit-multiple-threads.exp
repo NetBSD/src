@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,8 @@ proc prepare_for_test { executable target_executable disable_multi_process } {
 	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
 	}
 
-	clean_restart ${executable}
+	clean_restart
+	gdb_load $executable
     }
 
     # Make sure we're disconnected, in case we're testing with an

@@ -1,6 +1,6 @@
 /* Self tests for gdb::unique_xmalloc_ptr<char>.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,9 +47,7 @@ unique_xmalloc_ptr_char ()
 }
 }
 
-void _initialize_unique_xmalloc_ptr_char ();
-void
-_initialize_unique_xmalloc_ptr_char ()
+INIT_GDB_FILE (unique_xmalloc_ptr_char)
 {
   selftests::register_test ("unique_xmalloc_ptr_char",
 			    selftests::unpack::unique_xmalloc_ptr_char);

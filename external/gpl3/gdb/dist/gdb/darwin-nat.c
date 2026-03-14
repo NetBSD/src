@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    Contributed by AdaCore.
 
@@ -1853,7 +1853,7 @@ copy_shell_to_cache (const char *shell, const std::string &new_name)
     error (_("Could not open shell (%s) for reading: %s"),
 	   shell, safe_strerror (errno));
 
-  std::string new_dir = ldirname (new_name.c_str ());
+  std::string new_dir = gdb_ldirname (new_name.c_str ());
   if (!mkdir_recursive (new_dir.c_str ()))
     error (_("Could not make cache directory \"%s\": %s"),
 	   new_dir.c_str (), safe_strerror (errno));
@@ -2469,9 +2469,7 @@ darwin_nat_target::supports_multi_process ()
   return true;
 }
 
-void _initialize_darwin_nat ();
-void
-_initialize_darwin_nat ()
+INIT_GDB_FILE (darwin_nat)
 {
   kern_return_t kret;
 

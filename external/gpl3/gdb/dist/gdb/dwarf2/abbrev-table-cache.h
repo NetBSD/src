@@ -1,6 +1,6 @@
 /* DWARF abbrev table cache
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,9 @@ class abbrev_table_cache
 public:
   abbrev_table_cache () = default;
   DISABLE_COPY_AND_ASSIGN (abbrev_table_cache);
+
+  abbrev_table_cache (abbrev_table_cache &&) = default;
+  abbrev_table_cache &operator= (abbrev_table_cache &&) = default;
 
   /* Find an abbrev table coming from the abbrev section SECTION at
      offset OFFSET.  Return the table, or nullptr if it has not yet

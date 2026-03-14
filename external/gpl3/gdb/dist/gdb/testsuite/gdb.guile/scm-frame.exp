@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ gdb_test "guile (print (frame-read-var bf1 \"b\"))" \
     "\"bar\"" "test b"
 
 # Test the read-var function in another block other than the current
-# block (in this case, the super block). Test thar read-var is reading
+# block (in this case, the super block). Test that read-var is reading
 # the correct variables of i and f but they are the correct value and type.
 gdb_scm_test_silent_cmd "guile (define sb (block-superblock (frame-block bf1)))" \
     "get superblock"

@@ -1,5 +1,5 @@
 /* Opening CTF files.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -1425,6 +1425,8 @@ ctf_bufopen (const ctf_sect_t *ctfsect, const ctf_sect_t *symsect,
   int err;
 
   libctf_init_debug();
+
+  ctf_set_open_errno (errp, 0);
 
   if ((ctfsect == NULL) || ((symsect != NULL) && (strsect == NULL)))
     return (ctf_set_open_errno (errp, EINVAL));

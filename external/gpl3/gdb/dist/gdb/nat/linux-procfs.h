@@ -1,5 +1,5 @@
 /* Linux-specific PROCFS manipulation routines.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -87,9 +87,19 @@ extern int linux_proc_task_list_dir_exists (pid_t pid);
 
 /* Return the full absolute name of the executable file that was run
    to create the process PID.  The returned value persists until this
-   function is next called.  */
+   function is next called.
 
-extern const char *linux_proc_pid_to_exec_file (int pid);
+   LOCAL_FS should be true if the file returned from the function will
+   be searched for in the same filesystem as GDB itself is running.
+   In practice, this means LOCAL_FS should be true if PID and GDB are
+   running in the same MNT namespace and GDB's sysroot is either the
+   empty string, or is 'target:'.
+
+   When used from gdbserver, where there is no sysroot, the only check
+   that matters is that PID and gdbserver are running in the same MNT
+   namespace.  */
+
+extern const char *linux_proc_pid_to_exec_file (int pid, bool local_fs);
 
 /* Display possible problems on this system.  Display them only once
    per GDB execution.  */

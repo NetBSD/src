@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,4 +30,5 @@ if {![runto "dyn.adb:$bp_location"]} {
     return -1
 }
 
-gdb_test "whatis d" "type = dyn.dyn_range"
+# Accept "dyn." prefix for older versions of GNAT.
+gdb_test "whatis d" "type = (dyn.)?dyn_range"

@@ -2,7 +2,7 @@
    http://www.spansion.com/Support/AppNotes/CFI_Spec_AN_03.pdf
    http://www.spansion.com/Support/AppNotes/cfi_100_20011201.pdf
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.

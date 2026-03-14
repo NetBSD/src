@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,41 +19,65 @@
 # This option places an `endbr32`/`endbr64` instruction at the start of
 # all functions, which can interfere with prologue analysis.
 
-standard_testfile .c
-set binfile ${binfile}
+standard_testfile .c -stackalign.c
 
 require {is_any_target x86_64-*-* i?86-*-*}
-
 require supports_fcf_protection
 
-set opts {debug additional_flags=-fcf-protection=full}
+# Tests if breakpoint set on main is placed past main's entry.
+proc test_run {} {
+    # Get start address of function main.
+    set main_addr [get_integer_valueof &main -1]
+    gdb_assert {$main_addr != -1}
 
-if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $opts] != "" } {
-    untested "failed to compile"
-    return
-}
+    set bp_addr -1
 
-clean_restart ${binfile}
+    # Put breakpoint on main, get the address where the breakpoint was installed.
+    gdb_test_multiple "break -q main" "break on main, get address" {
+	-re -wrap "Breakpoint $::decimal at ($::hex).*" {
+	    set bp_addr $expect_out(1,string)
 
-# Get start address of function main.
-set main_addr [get_integer_valueof &main -1]
-gdb_assert {$main_addr != -1}
+	    # Convert to decimal.
+	    set bp_addr [expr $bp_addr]
 
-set bp_addr -1
-
-# Put breakpoint on main, get the address where the breakpoint was installed.
-gdb_test_multiple "break -q main" "break on main, get address" {
-    -re -wrap "Breakpoint $decimal at ($hex).*" {
-	set bp_addr $expect_out(1,string)
-
-	# Convert to decimal.
-	set bp_addr [expr $bp_addr]
-
-	pass $gdb_test_name
+	    pass $gdb_test_name
+	}
     }
+
+    # Make sure some prologue was skipped.
+    gdb_assert {$bp_addr != -1 && $bp_addr > $main_addr} \
+	"breakpoint placed past main's entry"
 }
 
-if { $bp_addr != -1 } {
-    # Make sure some prologue was skipped.
-    gdb_assert {$bp_addr > $main_addr}
+with_test_prefix "skip-cf-protection" {
+    set opts {debug additional_flags=-fcf-protection=full}
+
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+	$opts] != "" } {
+	untested "failed to compile"
+	return
+    }
+
+    clean_restart ${::testfile}
+
+    test_run
+}
+
+# Now, make sure that the prologue analysis does not end up at function's entry
+# when stack alignment sequence is generated right after 'endbr64'/'endbr32'.
+# That could happen if GDB handled those incorrectly - there was a bug that
+# checked for those two in incorrect order, which caused such issue.
+with_test_prefix "skip-cf-protection-stackalign" {
+    # gcc is easier to make it produce the sequence of interest.
+    if { ![is_c_compiler_gcc] } {
+	unsupported "stackalign test part requires gcc compiler"
+	return
+    }
+
+    if { [prepare_for_testing "failed to prepare" "${testfile}-stackalign" \
+	$srcfile2 [list optimize=-O0 additional_flags=-fcf-protection=full]] } {
+	return
+    }
+
+    test_run
 }

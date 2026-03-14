@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 # terminal").
 
 standard_testfile
+
+require allow_multi_inferior_tests
 
 require can_spawn_for_attach
 
@@ -136,7 +138,7 @@ proc coretest {inf1_how inf2_how} {
     global gdb_spawn_id
     global decimal
 
-    clean_restart $binfile
+    clean_restart $::testfile
 
     with_test_prefix "inf1" {
 	set inf1_spawn_id [create_inferior 1 $inf1_how]

@@ -1,6 +1,6 @@
 
 /* YACC parser for Fortran expressions, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -1663,7 +1663,7 @@ yylex (void)
       {
 	result = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 				domain, NULL);
-	if (result.symbol && result.symbol->aclass () == LOC_TYPEDEF)
+	if (result.symbol && result.symbol->loc_class () == LOC_TYPEDEF)
 	  {
 	    yylval.tsym.type = result.symbol->type ();
 	    return TYPENAME;

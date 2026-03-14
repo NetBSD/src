@@ -1,5 +1,5 @@
 /* Read AIX xcoff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
    Derived from coffread.c, dbxread.c, and a lot of hacking.
    Contributed by IBM Corporation.
 
@@ -970,7 +970,7 @@ read_xcoff_symtab (struct objfile *objfile, legacy_psymtab *pst)
 
   while (symnum < max_symnum)
     {
-      QUIT;			/* make this command interruptable.  */
+      QUIT;			/* make this command interruptible.  */
 
       /* READ_ONE_SYMBOL (symbol, cs, symname_alloced); */
       /* read one symbol into `cs' structure.  After processing the
@@ -1371,7 +1371,7 @@ read_xcoff_symtab (struct objfile *objfile, legacy_psymtab *pst)
 	case C_BINCL:
 	  /* beginning of include file */
 	  /* In xlc output, C_BINCL/C_EINCL pair doesn't show up in sorted
-	     order.  Thus, when wee see them, we might not know enough info
+	     order.  Thus, when we see them, we might not know enough info
 	     to process them.  Thus, we'll be saving them into a table 
 	     (inclTable) and postpone their processing.  */
 
@@ -1491,7 +1491,7 @@ process_xcoff_symbol (struct xcoff_symbol *cs, struct objfile *objfile)
       sym->set_type (builtin_type (objfile)->nodebug_text_symbol);
 
       sym->set_domain (FUNCTION_DOMAIN);
-      sym->set_aclass_index (LOC_BLOCK);
+      sym->set_loc_class_index (LOC_BLOCK);
       sym2 = new (&objfile->objfile_obstack) symbol (*sym);
 
       if (cs->c_sclass == C_EXT || C_WEAKEXT)
@@ -2807,6 +2807,7 @@ xcoff_initial_scan (struct objfile *objfile, symfile_add_flags symfile_flags)
 
   if (num_symbols > 0)
     {
+      stabs_deprecated_warning ();
       /* Read the string table.  */
       init_stringtab (abfd, stringtab_offset, objfile);
 
@@ -2998,9 +2999,7 @@ xcoff_get_n_import_files (bfd *abfd)
   return l_nimpid - 1;
 }
 
-void _initialize_xcoffread ();
-void
-_initialize_xcoffread ()
+INIT_GDB_FILE (xcoffread)
 {
   add_symtab_fns (bfd_target_xcoff_flavour, &xcoff_sym_fns);
 }

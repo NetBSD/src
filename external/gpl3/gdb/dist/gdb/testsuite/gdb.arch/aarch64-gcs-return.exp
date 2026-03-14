@@ -1,0 +1,132 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the GDB return command in a program that uses a Guarded Control Stack.
+# Based on the return tests in gdb.arch/amd64-shadow-stack-cmds.exp.
+# Note that potential GCS violations often only occur after resuming normal
+# execution.  Therefore, it is important to test normal program
+# completion after testing the return command.
+
+require allow_aarch64_gcs_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+    return
+}
+
+set begin_line [gdb_get_line_number "Break begin"]
+set call1_line [gdb_get_line_number "Break call1"]
+set call2_line [gdb_get_line_number "Break call2"]
+
+if ![runto ${begin_line}] {
+    return
+}
+
+proc restart_and_run_infcall_call2 {} {
+    global binfile call2_line
+    clean_restart
+    gdb_load $binfile
+    if ![runto_main] {
+	return
+    }
+    set inside_infcall_str "The program being debugged stopped while in a function called from GDB"
+    gdb_breakpoint ${call2_line}
+    gdb_continue_to_breakpoint "Break call2" ".*Break call2.*"
+    gdb_test "call (int) call2()" \
+	"Breakpoint \[0-9\]*, call2.*$inside_infcall_str.*"
+}
+
+with_test_prefix "test inferior call and continue" {
+    gdb_breakpoint ${call1_line}
+    gdb_continue_to_breakpoint "Break call1" ".*Break call1.*"
+
+    gdb_test "call (int) call2()" "= 42"
+
+    gdb_continue_to_end
+}
+
+with_test_prefix "test return inside an inferior call" {
+    restart_and_run_infcall_call2
+
+    gdb_test "return" "\#0.*call2.*" \
+	"Test GCS return inside an inferior call" \
+	"Make.*return now\\? \\(y or n\\) " "y"
+
+    gdb_continue_to_end
+}
+
+with_test_prefix "test return 'above' an inferior call" {
+    restart_and_run_infcall_call2
+
+    gdb_test "frame 2" "call2 ().*" "move to frame 'above' inferior call"
+
+    gdb_test "return" "\#0.*call1.*" \
+	"Test GCS return 'above' an inferior call" \
+	"Make.*return now\\? \\(y or n\\) " "y"
+
+    gdb_continue_to_end
+}
+
+clean_restart
+gdb_load $binfile
+if ![runto ${begin_line}] {
+    return
+}
+
+# Extract GCS pointer inside main, call1 and call2 function.
+gdb_breakpoint ${call1_line}
+gdb_breakpoint ${call2_line}
+set gcspr_main [get_valueof /x "\$gcspr" 0 "get value of gcspr in main"]
+gdb_continue_to_breakpoint "Break call1" ".*Break call1.*"
+set gcspr_call1 [get_valueof /x "\$gcspr" 0 "get value of gcspr in call1"]
+gdb_continue_to_breakpoint "Break call2" ".*Break call2.*"
+set gcspr_call2 [get_valueof /x "\$gcspr" 0 "get value of gcspr in call2"]
+
+with_test_prefix "test frame level update" {
+    gdb_test "up" "call1.*" "move to frame 1"
+    gdb_test "print /x \$gcspr" "= $gcspr_call1" "check gcspr of frame 1"
+    gdb_test "up" "main.*" "move to frame 2"
+    gdb_test "print /x \$gcspr" "= $gcspr_main" "check gcspr of frame 2"
+    gdb_test "frame 0" "call2.*" "move to frame 0"
+    gdb_test "print /x \$gcspr" "= $gcspr_call2" "check gcspr of frame 0"
+}
+
+with_test_prefix "test return from current frame" {
+    gdb_test "return (int) 1" "#0.*call1.*" \
+	"Test GCS return from current frame" \
+	"Make.*return now\\? \\(y or n\\) " "y"
+
+    gdb_continue_to_end
+}
+
+clean_restart
+gdb_load $binfile
+if ![runto_main] {
+    return
+}
+
+with_test_prefix "test return from past frame" {
+    gdb_breakpoint ${call2_line}
+    gdb_continue_to_breakpoint "Break call2" ".*Break call2.*"
+
+    gdb_test "frame 1" ".*in call1.*"
+
+    gdb_test "return (int) 1" "#0.*main.*" \
+	"Test GCS return from past frame" \
+	"Make.*return now\\? \\(y or n\\) " "y"
+
+    gdb_continue_to_end
+}

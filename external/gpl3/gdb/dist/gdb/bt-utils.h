@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,5 +74,10 @@ extern void gdb_internal_backtrace_set_cmd (const char *args, int from_tty,
 /* Initialize language specific strings.  */
 
 extern void gdb_internal_backtrace_init_str ();
+
+/* Print MSG to gdb_stderr or stderr in a way that is safe to do from an
+   interrupt handler.  */
+
+extern void sig_write (const char *msg);
 
 #endif /* GDB_BT_UTILS_H */

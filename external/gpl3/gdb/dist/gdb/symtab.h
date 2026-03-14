@@ -1,6 +1,6 @@
 /* Symbol table definitions for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,7 +33,6 @@
 #include <optional>
 #include <string_view>
 #include "gdbsupport/next-iterator.h"
-#include "gdbsupport/iterator-range.h"
 #include "completer.h"
 #include "gdb-demangle.h"
 #include "split-name.h"
@@ -968,9 +967,9 @@ to_scripting_domain (domain_search_flags val)
    Throws an exception if VAL is not one of the allowable values.  */
 extern domain_search_flags from_scripting_domain (int val);
 
-/* An address-class says where to find the value of a symbol.  */
+/* A location class says where to find the value of a symbol.  */
 
-enum address_class
+enum location_class
 {
   /* Not used; catches errors.  */
 
@@ -1079,14 +1078,14 @@ enum address_class
   LOC_FINAL_VALUE
 };
 
-/* The number of bits needed for values in enum address_class, with some
+/* The number of bits needed for values in enum location_class, with some
    padding for reasonable growth, and room for run-time registered address
    classes. See symtab.c:MAX_SYMBOL_IMPLS.
    This is a #define so that we can have a assertion elsewhere to
    verify that we have reserved enough space for synthetic address
    classes.  */
-#define SYMBOL_ACLASS_BITS 5
-static_assert (LOC_FINAL_VALUE <= (1 << SYMBOL_ACLASS_BITS));
+#define SYMBOL_LOC_CLASS_BITS 5
+static_assert (LOC_FINAL_VALUE <= (1 << SYMBOL_LOC_CLASS_BITS));
 
 /* The methods needed to implement LOC_COMPUTED.  These methods can
    use the symbol's .aux_value for additional per-symbol information.
@@ -1203,7 +1202,7 @@ struct symbol_register_ops
 
 struct symbol_impl
 {
-  enum address_class aclass;
+  location_class loc_class;
 
   /* Used with LOC_COMPUTED.  */
   const struct symbol_computed_ops *ops_computed;
@@ -1239,7 +1238,7 @@ struct symbol : public general_symbol_info, public allocate_on_obstack<symbol>
   symbol ()
     /* Class-initialization of bitfields is only allowed in C++20.  */
     : m_domain (UNDEF_DOMAIN),
-      m_aclass_index (0),
+      m_loc_class_index (0),
       m_is_objfile_owned (1),
       m_is_argument (0),
       m_is_inlined (0),
@@ -1263,14 +1262,14 @@ struct symbol : public general_symbol_info, public allocate_on_obstack<symbol>
   symbol (const symbol &) = default;
   symbol &operator= (const symbol &) = default;
 
-  void set_aclass_index (unsigned int aclass_index)
+  void set_loc_class_index (unsigned int loc_class_index)
   {
-    m_aclass_index = aclass_index;
+    m_loc_class_index = loc_class_index;
   }
 
   const symbol_impl &impl () const
   {
-    return symbol_impls[this->m_aclass_index];
+    return symbol_impls[this->m_loc_class_index];
   }
 
   const symbol_block_ops *block_ops () const
@@ -1288,9 +1287,9 @@ struct symbol : public general_symbol_info, public allocate_on_obstack<symbol>
     return this->impl ().ops_register;
   }
 
-  address_class aclass () const
+  location_class loc_class () const
   {
-    return this->impl ().aclass;
+    return this->impl ().loc_class;
   }
 
   /* Return true if this symbol's domain matches FLAGS.  */
@@ -1481,11 +1480,11 @@ struct symbol : public general_symbol_info, public allocate_on_obstack<symbol>
 
   ENUM_BITFIELD(domain_enum) m_domain : SYMBOL_DOMAIN_BITS;
 
-  /* Address class.  This holds an index into the 'symbol_impls'
-     table.  The actual enum address_class value is stored there,
+  /* Location class.  This holds an index into the 'symbol_impls'
+     table.  The actual location_class value is stored there,
      alongside any per-class ops vectors.  */
 
-  unsigned int m_aclass_index : SYMBOL_ACLASS_BITS;
+  unsigned int m_loc_class_index : SYMBOL_LOC_CLASS_BITS;
 
   /* If non-zero then symbol is objfile-owned, use owner.symtab.
        Otherwise symbol is arch-owned, use owner.arch.  */
@@ -1576,13 +1575,13 @@ symbol::value_block () const
   return m_value.block;
 }
 
-extern int register_symbol_computed_impl (enum address_class,
+extern int register_symbol_computed_impl (location_class,
 					  const struct symbol_computed_ops *);
 
-extern int register_symbol_block_impl (enum address_class aclass,
+extern int register_symbol_block_impl (location_class loc_class,
 				       const struct symbol_block_ops *ops);
 
-extern int register_symbol_register_impl (enum address_class,
+extern int register_symbol_register_impl (location_class,
 					  const struct symbol_register_ops *);
 
 /* An instance of this type is used to represent a C++ template
@@ -2102,17 +2101,17 @@ struct field_of_this_result
      symbol was not found in 'this'.  If non-NULL, then one of the
      other fields will be non-NULL as well.  */
 
-  struct type *type;
+  struct type *type = nullptr;
 
   /* If the symbol was found as an ordinary field of 'this', then this
      is non-NULL and points to the particular field.  */
 
-  struct field *field;
+  struct field *field = nullptr;
 
   /* If the symbol was found as a function field of 'this', then this
      is non-NULL and points to the particular field.  */
 
-  struct fn_fieldlist *fn_field;
+  struct fn_fieldlist *fn_field = nullptr;
 };
 
 /* Find the definition for a specified symbol name NAME
@@ -2483,8 +2482,7 @@ extern void collect_file_symbol_completion_matches
    symbol_name_match_type name_match_type,
    const char *, const char *, const char *);
 
-extern completion_list
-  make_source_files_completion_list (const char *, const char *);
+extern completion_list make_source_files_completion_list (const char *);
 
 /* Return whether SYM is a function/method, as opposed to a data symbol.  */
 
@@ -2750,10 +2748,6 @@ extern struct block_symbol
 				     enum block_enum block_index,
 				     const char *name,
 				     const domain_search_flags domain);
-
-/* Return 1 if the supplied producer string matches the ARM RealView
-   compiler (armcc).  */
-bool producer_is_realview (const char *producer);
 
 extern unsigned int symtab_create_debug;
 

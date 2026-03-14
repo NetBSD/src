@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@ if {[build_executable $testfile.exp $testfile ${srcfile} ${compile_options}] == 
 proc test_set_inferior_tty { command } {
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
 
     gdb_test_no_output "$command hello" "set inferior-tty to hello"
     gdb_test "show inferior-tty" \

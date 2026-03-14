@@ -1,6 +1,6 @@
 /* Code dealing with register stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,15 +78,15 @@ sentinel_frame_prev_arch (const frame_info_ptr &this_frame,
   return cache->regcache->arch ();
 }
 
-const struct frame_unwind sentinel_frame_unwind =
-{
+const struct frame_unwind_legacy sentinel_frame_unwind (
   "sentinel",
   SENTINEL_FRAME,
+  FRAME_UNWIND_GDB,
   default_frame_unwind_stop_reason,
   sentinel_frame_this_id,
   sentinel_frame_prev_register,
   NULL,
   NULL,
   NULL,
-  sentinel_frame_prev_arch,
-};
+  sentinel_frame_prev_arch
+);

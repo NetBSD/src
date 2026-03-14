@@ -1,6 +1,6 @@
 /* <proc_service.h> implementation.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -206,9 +206,7 @@ ps_getpid (struct ps_prochandle *ph)
   return ph->thread->ptid.pid ();
 }
 
-void _initialize_proc_service ();
-void
-_initialize_proc_service ()
+INIT_GDB_FILE (proc_service)
 {
   /* This function solely exists to make sure this module is linked
      into the final binary.  */

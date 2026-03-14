@@ -1,6 +1,6 @@
 /* Perform tilde expansion on paths for GDB and gdbserver.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -51,7 +51,7 @@ public:
   }
 
   /* Return the GL_PATHC component of M_GLOB.  */
-  int pathc () const
+  int pathc () const /* codespell:ignore */
   {
     return m_glob.gl_pathc;
   }
@@ -96,6 +96,6 @@ gdb_tilde_expand (const char *dir)
 
   const gdb_glob glob (to_expand.c_str (), GLOB_TILDE_CHECK, nullptr);
 
-  gdb_assert (glob.pathc () == 1);
+  gdb_assert (glob.pathc () == 1); /* codespell:ignore */
   return std::string (glob.pathv ()[0]) + remainder;
 }

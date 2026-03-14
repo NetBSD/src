@@ -1,4 +1,4 @@
-/* Copyright 2010-2024 Free Software Foundation, Inc.
+/* Copyright 2010-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -344,7 +344,11 @@ die149:	.uleb128 0x16		/* DW_TAG_variable */
 	.byte	0x0
 	.byte	0x0
 	.byte	0x0
-	.section	.debug_str
+#ifdef __arm__
+	.section	.debug_str,"MS",%progbits,1
+#else
+	.section	.debug_str,"MS",@progbits,1
+#endif
 .LASF0:
 	.string	"_ZN1N1fE"
 .LASF7:

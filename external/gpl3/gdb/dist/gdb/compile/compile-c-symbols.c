@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ convert_one_symbol (compile_c_instance *context,
 
   context->error_symbol_once (sym.symbol);
 
-  if (sym.symbol->aclass () == LOC_LABEL)
+  if (sym.symbol->loc_class () == LOC_LABEL)
     sym_type = 0;
   else
     sym_type = context->convert_type (sym.symbol->type ());
@@ -79,7 +79,7 @@ convert_one_symbol (compile_c_instance *context,
       CORE_ADDR addr = 0;
       gdb::unique_xmalloc_ptr<char> symbol_name;
 
-      switch (sym.symbol->aclass ())
+      switch (sym.symbol->loc_class ())
 	{
 	case LOC_TYPEDEF:
 	  kind = GCC_C_SYMBOL_TYPEDEF;
@@ -536,7 +536,7 @@ generate_c_for_for_one_variable (compile_instance *compiler,
 	}
       else
 	{
-	  switch (sym->aclass ())
+	  switch (sym->loc_class ())
 	    {
 	    case LOC_REGISTER:
 	    case LOC_ARG:

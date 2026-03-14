@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -32,6 +32,7 @@
 #include "amd64-tdep.h"
 #include "amd64-linux-tdep.h"
 #include "i386-linux-tdep.h"
+#include "x86-tdep.h"
 #include "gdbsupport/x86-xstate.h"
 
 #include "x86-linux-nat.h"
@@ -237,6 +238,14 @@ amd64_linux_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 
       if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
+	  if ((regnum == -1 && tdep->ssp_regnum != -1)
+	      || (regnum != -1 && regnum == tdep->ssp_regnum))
+	    {
+	      x86_linux_fetch_ssp (regcache, tid);
+	      if (regnum != -1)
+		return;
+	    }
+
 	  /* Pre-4.14 kernels have a bug (fixed by commit 0852b374173b
 	     "x86/fpu: Add FPU state copying quirk to handle XRSTOR failure on
 	     Intel Skylake CPUs") that sometimes causes the mxcsr location in
@@ -302,6 +311,14 @@ amd64_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
       if (have_ptrace_getregset == TRIBOOL_TRUE)
 	{
 	  gdb::byte_vector xstateregs (tdep->xsave_layout.sizeof_xsave);
+	  if ((regnum == -1 && tdep->ssp_regnum != -1)
+	      || (regnum != -1 && regnum == tdep->ssp_regnum))
+	    {
+	      x86_linux_store_ssp (regcache, tid);
+	      if (regnum != -1)
+		return;
+	    }
+
 	  struct iovec iov;
 
 	  iov.iov_base = xstateregs.data ();
@@ -424,9 +441,7 @@ amd64_linux_nat_target::low_siginfo_fixup (siginfo_t *ptrace,
     return false;
 }
 
-void _initialize_amd64_linux_nat ();
-void
-_initialize_amd64_linux_nat ()
+INIT_GDB_FILE (amd64_linux_nat)
 {
   amd64_native_gregset32_reg_offset = amd64_linux_gregset32_reg_offset;
   amd64_native_gregset32_num_regs = I386_LINUX_NUM_REGS;

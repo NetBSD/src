@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,27 +16,32 @@
 import gdb
 
 from .server import request
+from .startup import in_gdb_thread
 
 
+@in_gdb_thread
 def _thread_name(thr):
     if thr.name is not None:
         return thr.name
     if thr.details is not None:
         return thr.details
-    return None
+    # Always return a name, as the protocol doesn't allow for nameless
+    # threads.  Use the local thread number here... it doesn't matter
+    # without multi-inferior but in that case it might make more
+    # sense.
+    return f"Thread #{thr.num}"
 
 
-@request("threads")
+@request("threads", expect_stopped=False)
 def threads(**args):
     result = []
     for thr in gdb.selected_inferior().threads():
-        one_result = {
-            "id": thr.global_num,
-        }
-        name = _thread_name(thr)
-        if name is not None:
-            one_result["name"] = name
-        result.append(one_result)
+        result.append(
+            {
+                "id": thr.global_num,
+                "name": _thread_name(thr),
+            }
+        )
     return {
         "threads": result,
     }

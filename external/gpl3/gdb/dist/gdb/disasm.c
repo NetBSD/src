@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1470,9 +1470,7 @@ disassembler_options_completer (struct cmd_list_element *ignore,
 
 /* Initialization code.  */
 
-void _initialize_disasm ();
-void
-_initialize_disasm ()
+INIT_GDB_FILE (disasm)
 {
   /* Add the command that controls the disassembler options.  */
   set_show_commands set_show_disas_opts

@@ -1,6 +1,6 @@
 /* Debug logging for the symbol file functions for the GNU debugger, GDB.
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -33,7 +33,6 @@
 #include "symfile.h"
 #include "block.h"
 #include "filenames.h"
-#include "cli/cli-style.h"
 #include "build-id.h"
 #include "debuginfod-support.h"
 
@@ -371,13 +370,13 @@ objfile::expand_symtabs_with_fullname (const char *fullname)
 
 bool
 objfile::expand_symtabs_matching
-  (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+  (expand_symtabs_file_matcher file_matcher,
    const lookup_name_info *lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   expand_symtabs_symbol_matcher symbol_matcher,
+   expand_symtabs_expansion_listener expansion_notify,
    block_search_flags search_flags,
    domain_search_flags domain,
-   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
+   expand_symtabs_lang_matcher lang_matcher)
 {
   /* This invariant is documented in quick-functions.h.  */
   gdb_assert (lookup_name != nullptr || symbol_matcher == nullptr);
@@ -436,8 +435,7 @@ objfile::find_pc_sect_compunit_symtab (bound_minimal_symbol msymbol,
 }
 
 void
-objfile::map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-			       bool need_fullname)
+objfile::map_symbol_filenames (symbol_filename_listener fun, bool need_fullname)
 {
   if (debug_symfile)
     gdb_printf (gdb_stdlog,
@@ -791,24 +789,6 @@ debug_sym_relocate (struct objfile *objfile, asection *sectp, bfd_byte *buf)
   return retval;
 }
 
-/* Template of debugging version of struct sym_fns.
-   A copy is made, with sym_flavour updated, and a pointer to the real table
-   installed in real_sf, and then a pointer to the copy is installed in the
-   objfile.  */
-
-static const struct sym_fns debug_sym_fns =
-{
-  debug_sym_new_init,
-  debug_sym_init,
-  debug_sym_read,
-  debug_sym_finish,
-  debug_sym_offsets,
-  debug_sym_segments,
-  debug_sym_read_linetable,
-  debug_sym_relocate,
-  &debug_sym_probe_fns,
-};
-
 /* Install the debugging versions of the symfile functions for OBJFILE.
    Do not call this if the debug versions are already installed.  */
 
@@ -915,9 +895,7 @@ show_debug_symfile (struct ui_file *file, int from_tty,
   gdb_printf (file, _("Symfile debugging is %s.\n"), value);
 }
 
-void _initialize_symfile_debug ();
-void
-_initialize_symfile_debug ()
+INIT_GDB_FILE (symfile_debug)
 {
   add_setshow_boolean_cmd ("symfile", no_class, &debug_symfile, _("\
 Set debugging of the symfile functions."), _("\

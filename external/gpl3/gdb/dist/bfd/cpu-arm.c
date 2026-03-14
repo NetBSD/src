@@ -1,5 +1,5 @@
 /* BFD support for the ARM processor
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
 
    This file is part of BFD, the Binary File Descriptor library.

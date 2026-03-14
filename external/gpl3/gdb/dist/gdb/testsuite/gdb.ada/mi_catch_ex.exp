@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ set any_nb "\[0-9\]+"
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 
 ####################################
 # 1. Try catching all exceptions.  #

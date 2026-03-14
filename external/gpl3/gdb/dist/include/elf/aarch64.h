@@ -1,6 +1,6 @@
 /* AArch64 ELF support for BFD.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -30,6 +30,8 @@
 /* MTE memory tag segment type.  */
 #define PT_AARCH64_MEMTAG_MTE     (PT_LOPROC + 0x2)
 
+/* Name of the ELF section holding the attributes.  */
+#define SEC_AARCH64_ATTRIBUTES	".ARM.attributes"
 /* Additional section types.  */
 /* Section holds attributes.  */
 #define SHT_AARCH64_ATTRIBUTES	(SHT_LOPROC + 3)
@@ -50,6 +52,8 @@
 #define DT_AARCH64_BTI_PLT	(DT_LOPROC + 1)
 #define DT_AARCH64_PAC_PLT	(DT_LOPROC + 3)
 #define DT_AARCH64_VARIANT_PCS	(DT_LOPROC + 5)
+#define DT_AARCH64_MEMTAG_MODE	(DT_LOPROC + 9)
+#define DT_AARCH64_MEMTAG_STACK (DT_LOPROC + 12)
 
 /* AArch64-specific values for st_other.  */
 #define STO_AARCH64_VARIANT_PCS	0x80  /* Symbol may follow different call

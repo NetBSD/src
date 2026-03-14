@@ -1,0 +1,208 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This test verifies that when placing a breakpoint on a function with a frame
+# pointer, instructions that push callee-saved registers and stack allocation
+# in the prologue are skipped, without debug info.  When stopped on such
+# breakpoint, the pushed registers should be able to be immediately unwound.
+# With debug info present, GDB would try to use prologue-end markers found in
+# the line table to determine where the prologue ends.
+#
+# It is also tested both with and without .eh_frame's .cfi directives - with
+# them, GDB can only unwind a register once stopped after .cfi directive for
+# that register's push.
+
+require is_x86_64_m64_target
+standard_testfile .c -no-cfi.S .S -offset.S
+
+proc test_run {} {
+    gdb_breakpoint "foo"
+    gdb_continue_to_breakpoint "Continue to foo"
+
+    gdb_test "backtrace" "#0\[^\r\n\]+in foo\[^s\]+#1\[^\r\n\]+in main\[^s\]+" \
+	"Verify backtrace output in foo"
+
+    set main_r12 [get_integer_valueof "\$r12" "null"]
+    gdb_assert { $main_r12 ne "null" }
+
+    set foo_r12 [expr "$main_r12 + 2"]
+    gdb_test "print \$r12=$foo_r12" "$foo_r12" "Set foo's %r12=$foo_r12"
+    gdb_test "up" ".*main.*" "Go up a frame from foo"
+    gdb_test "print \$r12" "$main_r12" "foo's %r12 unwound"
+    gdb_test "down" ".*foo.*" "Go back down a frame to foo"
+    gdb_test "print \$r12" "$foo_r12" "foo's %r12 unwound back"
+}
+
+proc offset_test_run {} {
+    gdb_breakpoint "*foo"
+    gdb_continue_to_breakpoint "Continue to entry of foo"
+
+    set old_reg_val [get_integer_valueof "\$r12" "null"]
+    gdb_assert { $old_reg_val ne "null" }
+
+    set new_reg_val [expr "$old_reg_val + 3"]
+    gdb_test "print \$r14=$new_reg_val" "$new_reg_val" "Set %r14=$new_reg_val"
+    gdb_test "print \$r13=$new_reg_val" "$new_reg_val" "Set %r13=$new_reg_val"
+    gdb_test "print \$r12=$new_reg_val" "$new_reg_val" "Set %r12=$new_reg_val"
+
+    set addr_past_prologue "null"
+    gdb_test_multiple "disassemble" "Disassemble foo" -lbl {
+	-re "\r\n\\s*($::hex) <\\+($::decimal)>:\\s*mov.*(?=\r\n)" {
+	    set addr_past_prologue $expect_out(1,string)
+	    exp_continue
+	}
+
+	-re -wrap "" {
+	    gdb_assert { $addr_past_prologue ne "null" } $gdb_test_name
+	}
+    }
+
+    gdb_assert { $addr_past_prologue ne "null" }
+
+    gdb_breakpoint "*$addr_past_prologue"
+    gdb_continue_to_breakpoint "Continue past foo's prologue"
+
+    gdb_test "up" ".*main.*" "Go up a frame from foo"
+    gdb_test "print \$r14" "$new_reg_val" "Verify %r14 value"
+    gdb_test "print \$r13" "$new_reg_val" "Verify %r13 value"
+    gdb_test "print \$r12" "$new_reg_val" "Verify %r12 value"
+}
+
+# Tests are done for two versions (not counting with and w/o .cfi):
+#   - binary compiled from C source, which verifies we actually test against
+#     the code that compilers produce and we expect
+#   - binary compiled from ASM source, which verifies that we properly analyze
+#     prologue sequences even when compiler introduces a sudden change in how
+#     it generates assembly
+#
+# With those 2 versions, we can easily distinguish GDB breaking analyzer and
+# compilers behaving differently, if there ever is an impactful change in how
+# they generate prologues.
+with_test_prefix "w/o .cfi directives" {
+    with_test_prefix "compiler gen" {
+	# -fno-asynchronous-unwind-tables is needed to get rid of .cfi
+	# directives in .eh_frame section.
+	if { [gdb_can_simple_compile fno-asynchronous-unwind-tables \
+	    { void foo () { } } object -fno-asynchronous-unwind-tables] == 0 } {
+	    unsupported \
+		"compiler doesn't support -fno-asynchronous-unwind-tables flag"
+	} else {
+	    # For at least gcc 11.4/clang 14.0.0 and later, -O1 makes them more
+	    # eager to use registers in the prologue.
+	    #
+	    # At least gcc 11.4 and later by default does not generate full
+	    # debug info, "nodebug" is there for other compilers.
+	    if { [prepare_for_testing "failed to prepare" "$testfile-no-cfi-C" \
+		$srcfile { optimize=-O1 nodebug
+		additional_flags=-fno-asynchronous-unwind-tables
+		additional_flags=-fno-omit-frame-pointer}] } {
+		return
+	    }
+
+	    if { ![runto_main] } {
+		untested "unable to run to main"
+		return
+	    }
+
+	    test_run
+	}
+    }
+
+    with_test_prefix "ASM source" {
+	if { [prepare_for_testing "failed to prepare" "$testfile-no-cfi-S" \
+	    $srcfile2 nodebug ] } {
+	    return
+	}
+
+	if { ![runto_main] } {
+	    untested "unable to run to main"
+	    return
+	}
+
+	test_run
+    }
+}
+
+with_test_prefix "with .cfi directives" {
+    with_test_prefix "compiler gen" {
+	if { [prepare_for_testing "failed to prepare" "$testfile-cfi-C" \
+	    $srcfile { optimize=-O1
+	    nodebug additional_flags=-fno-omit-frame-pointer}] } {
+	    return
+	}
+
+	if { ![runto_main] } {
+	    untested "unable to run to main"
+	    return
+	}
+
+	test_run
+    }
+
+    with_test_prefix "ASM source" {
+	if { [prepare_for_testing "failed to prepare" "$testfile-cfi-S" \
+	    $srcfile3 nodebug ] } {
+	    return
+	}
+
+	if { ![runto_main] } {
+	    untested "unable to run to main"
+	    return
+	}
+
+	test_run
+    }
+}
+
+# This section exists to verify that we properly assign offsets for functions
+# w/o a frame pointer, for registers when they're pushed.  If they were assigned
+# in a wrong way, we might end up unwinding improper register values.
+with_test_prefix "offset initialization" {
+    with_test_prefix "compiler gen" {
+	if { [gdb_can_simple_compile fno-asynchronous-unwind-tables \
+	    { void foo () { } } object -fno-asynchronous-unwind-tables] == 0 } {
+	    unsupported \
+		"compiler doesn't support -fno-asynchronous-unwind-tables flag"
+	} else {
+	    if { [prepare_for_testing "failed to prepare" "$testfile-offset-C" \
+		$srcfile { optimize=-O1 nodebug
+		additional_flags=-fno-asynchronous-unwind-tables
+		additional_flags=-fomit-frame-pointer}] } {
+		return
+	    }
+
+	    if { ![runto_main] } {
+		untested "unable to run to main"
+		return
+	    }
+
+	    offset_test_run
+	}
+    }
+
+    with_test_prefix "ASM source" {
+	if { [prepare_for_testing "failed to prepare" "$testfile-offset-S" \
+	    $srcfile4 nodebug ] } {
+	    return
+	}
+
+	if { ![runto_main] } {
+	    untested "unable to run to main"
+	    return
+	}
+
+	offset_test_run
+    }
+}

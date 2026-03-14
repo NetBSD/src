@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug additional
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 
 if {[mi_runto_main] < 0} {
    return 0

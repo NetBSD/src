@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -112,5 +112,9 @@ set re_noattr "\[^<\]"
 set status_window_line 15
 
 set status [Term::get_line_with_attrs $status_window_line]
-gdb_assert { [regexp "^<reverse:1>$re_noattr*<reverse:0>$" $status] == 1} \
+verbose -log "status line: '$status'"
+
+# The status line uses standout, which may translate to different attributes
+# depending on the terminal settings.  Just check for at least one attribute.
+gdb_assert { [regexp "^<.*>(exec|extended-r)" $status] == 1 } \
     "status window: reverse"

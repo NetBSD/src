@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -96,7 +96,8 @@ proc_with_prefix set-break {resolver_attr resolver_debug final_debug} {
     set suffix [make_binsuffix $resolver_attr $resolver_debug $final_debug]
 
     set lib_so [standard_output_file ${libfile}-$suffix.so]
-    clean_restart $binfile-$suffix
+    clean_restart
+    gdb_load $binfile-$suffix
     gdb_load_shlib ${lib_so}
 
     if {![runto_main]} {
@@ -185,6 +186,11 @@ proc_with_prefix set-break {resolver_attr resolver_debug final_debug} {
 	# other two locations.
 	gdb_test "info breakpoints" "$location\r\n.*$location\r\n$location"
     }
+
+    # At one point a bug existed such that GDB would trigger an assert
+    # while restarting the inferior with ifunc breakpoints set.
+    gdb_run_cmd
+    gdb_test "" "Breakpoint $::decimal,.*final \\(\[^\r\n\]*\\).*" "restart, run until breakpoint"
 }
 
 # Misc GNU ifunc tests.  For the description of RESOLVER_ATTR,
@@ -218,7 +224,8 @@ proc misc_tests {resolver_attr resolver_debug final_debug} {
 
     # Start with a fresh gdb.
 
-    clean_restart $binfile-$suffix
+    clean_restart
+    gdb_load $binfile-$suffix
     gdb_load_shlib ${lib_so}
 
     if {![runto_main]} {

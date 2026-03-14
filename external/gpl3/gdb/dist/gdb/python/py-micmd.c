@@ -1,6 +1,6 @@
 /* MI Command Set for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -578,9 +578,7 @@ PyTypeObject micmdpy_object_type = {
   0,						   /* tp_alloc */
 };
 
-void _initialize_py_micmd ();
-void
-_initialize_py_micmd ()
+INIT_GDB_FILE (py_micmd)
 {
   add_setshow_boolean_cmd
     ("py-micmd", class_maintenance, &pymicmd_debug,

@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -81,6 +81,7 @@ enum amd64_regnum
   AMD64_ZMM0H_REGNUM,
   AMD64_ZMM31H_REGNUM = AMD64_ZMM0H_REGNUM + 31,
   AMD64_PKRU_REGNUM,
+  AMD64_PL3_SSP_REGNUM,
   AMD64_FSBASE_REGNUM,
   AMD64_GSBASE_REGNUM
 };
@@ -108,8 +109,12 @@ extern void amd64_init_abi (struct gdbarch_info info,
 extern void amd64_x32_init_abi (struct gdbarch_info info,
 				struct gdbarch *gdbarch,
 				const target_desc *default_tdesc);
-extern const struct target_desc *amd64_target_description (uint64_t xcr0,
-							   bool segments);
+
+/* Return the target description for the specified xsave features as
+   defined in XSTATE_BV and SEGMENTS.  */
+
+extern const struct target_desc *amd64_target_description
+  (uint64_t xstate_bv, bool segments);
 
 /* Fill register REGNUM in REGCACHE with the appropriate
    floating-point or SSE register value from *FXSAVE.  If REGNUM is

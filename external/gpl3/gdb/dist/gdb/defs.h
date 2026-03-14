@@ -1,5 +1,5 @@
 /* Basic, host-specific, and target-specific definitions for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,8 +189,6 @@ struct value;
 extern std::string relocate_gdb_directory (const char *initial, bool relocatable);
 
 /* From top.c */
-
-typedef void initialize_file_ftype (void);
 
 extern char *gdb_readline_wrapper (const char *);
 
@@ -406,5 +404,11 @@ enum user_selected_what_flag
 DEF_ENUM_FLAGS_TYPE (enum user_selected_what_flag, user_selected_what);
 
 #include "utils.h"
+
+/* File initialization macro.  This is found by make-init-c and used
+   to construct the gdb initialization function.  */
+#define INIT_GDB_FILE(NAME) \
+  extern void _initialize_ ## NAME (); \
+  void _initialize_ ## NAME ()
 
 #endif /* GDB_DEFS_H */

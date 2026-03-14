@@ -1,5 +1,5 @@
 /* Common definitions for remote server for GDB.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,6 +68,7 @@ void initialize_low ();
 extern bool server_waiting;
 
 extern bool disable_packet_vCont;
+extern bool disable_packet_vCont_step;
 extern bool disable_packet_Tthread;
 extern bool disable_packet_qC;
 extern bool disable_packet_qfThreadInfo;

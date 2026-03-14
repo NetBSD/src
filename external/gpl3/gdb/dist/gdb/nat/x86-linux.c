@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "elf/common.h"
+#include "gdbsupport/common-defs.h"
+#include "nat/gdb_ptrace.h"
+#include "nat/linux-ptrace.h"
+#include "nat/x86-cpuid.h"
+#include <sys/uio.h>
 #include "x86-linux.h"
 #include "x86-linux-dregs.h"
 #include "nat/gdb_ptrace.h"
@@ -125,4 +131,57 @@ x86_linux_ptrace_get_arch_size (int tid)
 #else
   return x86_linux_arch_size (false, false);
 #endif
+}
+
+/* See nat/x86-linux.h.  */
+
+bool
+x86_check_ssp_support (const int tid)
+{
+  /* It's not enough to check shadow stack support with the ptrace call
+     below only, as we cannot distinguish between shadow stack not enabled
+     for the current thread and shadow stack is not supported by HW.  In
+     both scenarios the ptrace call fails with ENODEV.  In case shadow
+     stack is not enabled for the current thread, we still want to return
+     true.  */
+  unsigned int eax, ebx, ecx, edx;
+  eax = ebx = ecx = edx = 0;
+
+  if (!__get_cpuid_count (7, 0, &eax, &ebx, &ecx, &edx))
+    return false;
+
+  if ((ecx & bit_SHSTK) == 0)
+    return false;
+
+  /* Further check for NT_X86_SHSTK kernel support.  */
+  uint64_t ssp;
+  iovec iov {&ssp, sizeof (ssp) };
+
+  errno = 0;
+  int res = ptrace (PTRACE_GETREGSET, tid, NT_X86_SHSTK, &iov);
+  if (res < 0)
+    {
+      if (errno == EINVAL)
+	{
+	  /* The errno EINVAL for a PTRACE_GETREGSET call indicates that
+	     kernel support is not available.  */
+	  return false;
+	}
+      else if (errno == ENODEV)
+	{
+	  /* At this point, since we already checked CPUID, the errno
+	     ENODEV for a PTRACE_GETREGSET call indicates that shadow
+	     stack is not enabled for the current thread.  As it could be
+	     enabled later, we still want to return true here.  */
+	  return true;
+	}
+      else
+	{
+	  warning (_("Unknown ptrace error for NT_X86_SHSTK: %s"),
+		   safe_strerror (errno));
+	  return false;
+	}
+    }
+
+  return true;
 }

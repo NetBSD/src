@@ -1,7 +1,7 @@
 /* Internal format of COFF object file data structures, for GNU BFD.
    This file is part of BFD, the Binary File Descriptor library.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,15 +20,6 @@
 
 #ifndef GNU_COFF_INTERNAL_H
 #define GNU_COFF_INTERNAL_H 1
-
-/* First, make "signed char" work, even on old compilers. */
-#ifndef signed
-#ifndef __STDC__
-#define	signed			/**/
-#endif
-#endif
-
-/********************** FILE HEADER **********************/
 
 /* extra stuff in a PE header. */
 
@@ -55,7 +46,7 @@ struct internal_extra_pe_filehdr
   unsigned short e_res2[10];	/* Reserved words, all 0x0 */
   bfd_vma  e_lfanew;		/* File address of new exe header, 0x80 */
   char dos_message[64];		/* Text which always follows DOS header.  */
-  bfd_vma  nt_signature;   	/* required NT signature, 0x4550 */
+  bfd_vma  nt_signature;	/* required NT signature, 0x4550 */
 };
 
 struct internal_filehdr
@@ -75,27 +66,27 @@ struct internal_filehdr
 
 
 /* Bits for f_flags:
- 	F_RELFLG	relocation info stripped from file
- 	F_EXEC		file is executable (no unresolved external references)
- 	F_LNNO		line numbers stripped from file
- 	F_LSYMS		local symbols stripped from file
- 	F_AR16WR	file is 16-bit little-endian
- 	F_AR32WR	file is 32-bit little-endian
- 	F_AR32W		file is 32-bit big-endian
- 	F_DYNLOAD	rs/6000 aix: dynamically loadable w/imports & exports
- 	F_SHROBJ	rs/6000 aix: file is a shared object
+	F_RELFLG	relocation info stripped from file
+	F_EXEC		file is executable (no unresolved external references)
+	F_LNNO		line numbers stripped from file
+	F_LSYMS		local symbols stripped from file
+	F_AR16WR	file is 16-bit little-endian
+	F_AR32WR	file is 32-bit little-endian
+	F_AR32W		file is 32-bit big-endian
+	F_DYNLOAD	rs/6000 aix: dynamically loadable w/imports & exports
+	F_SHROBJ	rs/6000 aix: file is a shared object
 	F_DLL           PE format DLL  */
 
-#define	F_RELFLG	(0x0001)
-#define	F_EXEC		(0x0002)
-#define	F_LNNO		(0x0004)
-#define	F_LSYMS		(0x0008)
-#define	F_AR16WR	(0x0080)
-#define	F_AR32WR	(0x0100)
-#define	F_AR32W     	(0x0200)
-#define	F_DYNLOAD	(0x1000)
-#define	F_SHROBJ	(0x2000)
-#define F_DLL           (0x2000)
+#define F_RELFLG	(0x0001)
+#define F_EXEC		(0x0002)
+#define F_LNNO		(0x0004)
+#define F_LSYMS		(0x0008)
+#define F_AR16WR	(0x0080)
+#define F_AR32WR	(0x0100)
+#define F_AR32W		(0x0200)
+#define F_DYNLOAD	(0x1000)
+#define F_SHROBJ	(0x2000)
+#define F_DLL		(0x2000)
 
 /* Extra structure which is used in the optional header.  */
 typedef struct _IMAGE_DATA_DIRECTORY
@@ -189,7 +180,7 @@ struct internal_extra_pe_aouthdr
   /* Linker major version number.  */
   char MajorLinkerVersion;
   /* Linker minor version number.  */
-  char MinorLinkerVersion;	
+  char MinorLinkerVersion;
   /* Total size of all code sections.  */
   bfd_vma SizeOfCode;
   /* Total size of all initialized data sections.  */
@@ -239,7 +230,6 @@ struct internal_extra_pe_aouthdr
   IMAGE_DATA_DIRECTORY DataDirectory[IMAGE_NUMBEROF_DIRECTORY_ENTRIES];
 };
 
-/********************** AOUT "OPTIONAL HEADER" **********************/
 struct internal_aouthdr
 {
   short magic;			/* type of file				*/
@@ -286,7 +276,7 @@ struct internal_aouthdr
   struct internal_extra_pe_aouthdr pe;
 };
 
-/********************** STORAGE CLASSES **********************/
+/* Storage classes.  */
 
 /* This used to be defined as -1, but now n_sclass is unsigned.  */
 #define C_EFCN		0xff	/* physical end of function	*/
@@ -316,7 +306,7 @@ struct internal_aouthdr
 #define C_EOS		102	/* end of structure		*/
 #define C_FILE		103	/* file name			*/
 #define C_LINE		104	/* line # reformatted as symbol table entry */
-#define C_ALIAS	 	105	/* duplicate tag		*/
+#define C_ALIAS		105	/* duplicate tag		*/
 #define C_HIDDEN	106	/* ext symbol in dmert public lib */
 #define C_WEAKEXT	127	/* weak symbol -- GNU extension.  */
 
@@ -327,67 +317,65 @@ struct internal_aouthdr
 #define C_SYSTEM	23	/* System Wide variable */
 
 /* New storage classes for WINDOWS_NT   */
-#define C_SECTION       104     /* section name */
+#define C_SECTION	104	/* section name */
 #define C_NT_WEAK	105	/* weak external */
 
- /* New storage classes for 80960 */
+/* New storage classes for 80960 */
 
 /* C_LEAFPROC is obsolete.  Use C_LEAFEXT or C_LEAFSTAT */
 #define C_LEAFPROC	108	/* Leaf procedure, "call" via BAL */
 
 #define C_SCALL		107	/* Procedure reachable via system call */
-#define C_LEAFEXT       108	/* External leaf */
-#define C_LEAFSTAT      113	/* Static leaf */
+#define C_LEAFEXT	108	/* External leaf */
+#define C_LEAFSTAT	113	/* Static leaf */
 #define C_OPTVAR	109	/* Optimized variable		*/
 #define C_DEFINE	110	/* Preprocessor #define		*/
 #define C_PRAGMA	111	/* Advice to compiler or linker	*/
 #define C_SEGMENT	112	/* 80960 segment name		*/
 
- /* New storage classes for RS/6000 */
-#define C_HIDEXT        107	/* Un-named external symbol */
-#define C_BINCL         108	/* Marks beginning of include file */
-#define C_EINCL         109	/* Marks ending of include file */
-#define C_AIX_WEAKEXT   111	/* AIX definition of C_WEAKEXT.  */
-#define C_DWARF         112	/* DWARF symbol  */
+/* New storage classes for RS/6000 */
+#define C_HIDEXT	107	/* Un-named external symbol */
+#define C_BINCL		108	/* Marks beginning of include file */
+#define C_EINCL		109	/* Marks ending of include file */
+#define C_AIX_WEAKEXT	111	/* AIX definition of C_WEAKEXT.  */
+#define C_DWARF		112	/* DWARF symbol  */
 
 #define C_NULL_VALUE	0x00de1e00    /* Value for a C_NULL deleted entry.  */
 
 #ifdef AIX_WEAK_SUPPORT
 #undef C_WEAKEXT
-#define C_WEAKEXT       C_AIX_WEAKEXT
+#define C_WEAKEXT	C_AIX_WEAKEXT
 #endif
 
- /* storage classes for stab symbols for RS/6000 */
-#define C_GSYM          (0x80)
-#define C_LSYM          (0x81)
-#define C_PSYM          (0x82)
-#define C_RSYM          (0x83)
-#define C_RPSYM         (0x84)
-#define C_STSYM         (0x85)
-#define C_TCSYM         (0x86)
-#define C_BCOMM         (0x87)
-#define C_ECOML         (0x88)
-#define C_ECOMM         (0x89)
-#define C_DECL          (0x8c)
-#define C_ENTRY         (0x8d)
-#define C_FUN           (0x8e)
-#define C_BSTAT         (0x8f)
-#define C_ESTAT         (0x90)
-#define C_GTLS          (0x97)
-#define C_STTLS         (0x98)
+/* storage classes for stab symbols for RS/6000 */
+#define C_GSYM		(0x80)
+#define C_LSYM		(0x81)
+#define C_PSYM		(0x82)
+#define C_RSYM		(0x83)
+#define C_RPSYM		(0x84)
+#define C_STSYM		(0x85)
+#define C_TCSYM		(0x86)
+#define C_BCOMM		(0x87)
+#define C_ECOML		(0x88)
+#define C_ECOMM		(0x89)
+#define C_DECL		(0x8c)
+#define C_ENTRY		(0x8d)
+#define C_FUN		(0x8e)
+#define C_BSTAT		(0x8f)
+#define C_ESTAT		(0x90)
+#define C_GTLS		(0x97)
+#define C_STTLS		(0x98)
 
 /* Storage classes for Thumb symbols */
-#define C_THUMBEXT      (128 + C_EXT)		/* 130 */
-#define C_THUMBSTAT     (128 + C_STAT)		/* 131 */
-#define C_THUMBLABEL    (128 + C_LABEL)		/* 134 */
-#define C_THUMBEXTFUNC  (C_THUMBEXT  + 20)	/* 150 */
+#define C_THUMBEXT	(128 + C_EXT)		/* 130 */
+#define C_THUMBSTAT	(128 + C_STAT)		/* 131 */
+#define C_THUMBLABEL	(128 + C_LABEL)		/* 134 */
+#define C_THUMBEXTFUNC	(C_THUMBEXT  + 20)	/* 150 */
 #define C_THUMBSTATFUNC (C_THUMBSTAT + 20)	/* 151 */
 
 /* True if XCOFF symbols of class CLASS have auxiliary csect information.  */
 #define CSECT_SYM_P(CLASS) \
   ((CLASS) == C_EXT || (CLASS) == C_AIX_WEAKEXT || (CLASS) == C_HIDEXT)
-
-/********************** SECTION HEADER **********************/
 
 #define SCNNMLEN (8)
 
@@ -413,33 +401,43 @@ struct internal_scnhdr
 };
 
 /* s_flags "type".  */
-#define STYP_REG	 (0x0000)	/* "regular": allocated, relocated, loaded */
-#define STYP_DSECT	 (0x0001)	/* "dummy":  relocated only*/
-#define STYP_NOLOAD	 (0x0002)	/* "noload": allocated, relocated, not loaded */
-#define STYP_GROUP	 (0x0004)	/* "grouped": formed of input sections */
-#define STYP_PAD	 (0x0008)	/* "padding": not allocated, not relocated, loaded */
-#define STYP_COPY	 (0x0010)	/* "copy": for decision function used by field update;  not allocated, not relocated,
-									     loaded; reloc & lineno entries processed normally */
-#define STYP_TEXT	 (0x0020)	/* section contains text only */
-#define S_SHRSEG	 (0x0020)	/* In 3b Update files (output of ogen), sections which appear in SHARED segments of the Pfile
-									     will have the S_SHRSEG flag set by ogen, to inform dufr that updating 1 copy of the proc. will
-									     update all process invocations. */
-#define STYP_DATA	 (0x0040)	/* section contains data only */
-#define STYP_BSS	 (0x0080)	/* section contains bss only */
-#define S_NEWFCN	 (0x0100)	/* In a minimal file or an update file, a new function (as compared with a replaced function) */
-#define STYP_INFO	 (0x0200)	/* comment: not allocated not relocated, not loaded */
-#define STYP_OVER	 (0x0400)	/* overlay: relocated not allocated or loaded */
-#define STYP_LIB	 (0x0800)	/* for .lib: same as INFO */
-#define STYP_MERGE	 (0x2000)	/* merge section -- combines with text, data or bss sections only */
-#define STYP_REVERSE_PAD (0x4000)	/* section will be padded with no-op instructions
-					   wherever padding is necessary and there is a
-					   word of contiguous bytes beginning on a word
-					   boundary. */
+#define STYP_REG	 (0x0000) /* "regular": allocated, relocated, loaded */
+#define STYP_DSECT	 (0x0001) /* "dummy":  relocated only*/
+#define STYP_NOLOAD	 (0x0002) /* "noload": allocated, relocated,
+				     not loaded */
+#define STYP_GROUP	 (0x0004) /* "grouped": formed of input sections */
+#define STYP_PAD	 (0x0008) /* "padding": not allocated, not relocated,
+				     loaded */
+#define STYP_COPY	 (0x0010) /* "copy": for decision function used by field
+				     update; not allocated, not relocated,
+				     loaded;
+				     reloc & lineno entries processed normally */
+#define STYP_TEXT	 (0x0020) /* section contains text only */
+#define S_SHRSEG	 (0x0020) /* In 3b Update files (output of ogen),
+				     sections which appear in SHARED segments
+				     of the Pfile will have the S_SHRSEG flag
+				     set by ogen, to inform dufr that updating
+				     1 copy of the proc. will update all
+				     process invocations. */
+#define STYP_DATA	 (0x0040) /* section contains data only */
+#define STYP_BSS	 (0x0080) /* section contains bss only */
+#define S_NEWFCN	 (0x0100) /* In a minimal file or an update file,
+				     a new function (as compared with a
+				     replaced function) */
+#define STYP_INFO	 (0x0200) /* comment: not allocated not relocated,
+				     not loaded */
+#define STYP_OVER	 (0x0400) /* overlay: relocated not allocated or
+				     loaded */
+#define STYP_LIB	 (0x0800) /* for .lib: same as INFO */
+#define STYP_MERGE	 (0x2000) /* merge section -- combines with text,
+				     data or bss sections only */
+#define STYP_REVERSE_PAD (0x4000) /* section will be padded with no-op
+				     instructions wherever padding is necessary
+				     and there is a word of contiguous bytes
+				     beginning on a word boundary. */
 
-#define STYP_LIT	0x8020	/* Literal data (like STYP_TEXT) */
+#define STYP_LIT	 (0x8020) /* Literal data (like STYP_TEXT) */
 
-
-/********************** LINE NUMBERS **********************/
 
 /* 1 line number entry for every "breakpointable" source line in a section.
    Line numbers are grouped on a per function basis; first entry in a function
@@ -450,17 +448,13 @@ struct internal_lineno
 {
   union
   {
-    bfd_signed_vma l_symndx;		/* function name symbol index, iff l_lnno == 0*/
-    bfd_signed_vma l_paddr;		/* (physical) address of line number	*/
+    bfd_signed_vma l_symndx;	/* function name symbol index, iff l_lnno == 0 */
+    bfd_signed_vma l_paddr;	/* (physical) address of line number	*/
   }     l_addr;
   unsigned long l_lnno;		/* line number		*/
 };
 
-/********************** SYMBOLS **********************/
-
 #define SYMNMLEN	8	/* # characters in a symbol name	*/
-#define FILNMLEN	14	/* # characters in a file name		*/
-#define DIMNUM		4	/* # array dimensions in auxiliary entry */
 
 struct internal_syment
 {
@@ -492,8 +486,10 @@ struct internal_syment
 #define N_UNDEF	((int)0)	/* undefined symbol */
 #define N_ABS	((int)-1)	/* value of symbol is absolute */
 #define N_DEBUG	((int)-2)	/* debugging symbol -- value is meaningless */
-#define N_TV	((int)-3)	/* indicates symbol needs preload transfer vector */
-#define P_TV	((int)-4)	/* indicates symbol needs postload transfer vector*/
+#define N_TV	((int)-3)	/* indicates symbol needs preload transfer
+				   vector */
+#define P_TV	((int)-4)	/* indicates symbol needs postload transfer
+				   vector */
 
 /* Type of a symbol, in low N bits of the word.  */
 
@@ -505,9 +501,9 @@ struct internal_syment
 #define T_LONG		5	/* long integer		*/
 #define T_FLOAT		6	/* floating point	*/
 #define T_DOUBLE	7	/* double word		*/
-#define T_STRUCT	8	/* structure 		*/
-#define T_UNION		9	/* union 		*/
-#define T_ENUM		10	/* enumeration 		*/
+#define T_STRUCT	8	/* structure		*/
+#define T_UNION		9	/* union		*/
+#define T_ENUM		10	/* enumeration		*/
 #define T_MOE		11	/* member of enumeration*/
 #define T_UCHAR		12	/* unsigned character	*/
 #define T_USHORT	13	/* unsigned short	*/
@@ -539,9 +535,12 @@ struct internal_syment
 /* Visibility flag, in XCOFF n_type.  */
 #define SYM_V_INTERNAL		0x1000
 #define SYM_V_HIDDEN		0x2000
-#define SYM_V_PROTECTED 	0x3000
+#define SYM_V_PROTECTED		0x3000
 #define SYM_V_EXPORTED		0x4000
 #define SYM_V_MASK		0xF000
+
+#define FILNMLEN	14	/* # characters in a file name		*/
+#define DIMNUM		4	/* # array dimensions in auxiliary entry */
 
 union internal_auxent
 {
@@ -616,16 +615,15 @@ union internal_auxent
     uint8_t x_comdat;		/* COMDAT selection number for PE */
   } x_scn;
 
+  /* info about .tv section (in auxent of symbol .tv).  */
   struct
   {
     uint32_t x_tvfill;		/* tv fill value */
     uint16_t x_tvlen;		/* length of .tv */
     uint16_t x_tvran[2];	/* tv range */
-  } x_tv;			/* info about .tv section (in auxent of symbol .tv)) */
+  } x_tv;
 
-  /******************************************
-   * RS/6000-specific auxent - last auxent for every external symbol
-   ******************************************/
+  /* RS/6000-specific auxent - last auxent for every external symbol.  */
   struct
   {
     union
@@ -645,34 +643,34 @@ union internal_auxent
 
 /* x_smtyp values:  */
 
-#define	SMTYP_ALIGN(x)	((x) >> 3)	/* log2 of alignment */
-#define	SMTYP_SMTYP(x)	((x) & 0x7)	/* symbol type */
+#define SMTYP_ALIGN(x)	((x) >> 3)	/* log2 of alignment */
+#define SMTYP_SMTYP(x)	((x) & 0x7)	/* symbol type */
 /* Symbol type values:  */
-#define	XTY_ER	0		/* External reference */
-#define	XTY_SD	1		/* Csect definition */
-#define	XTY_LD	2		/* Label definition */
+#define XTY_ER	0		/* External reference */
+#define XTY_SD	1		/* Csect definition */
+#define XTY_LD	2		/* Label definition */
 #define XTY_CM	3		/* .BSS */
-#define	XTY_EM	4		/* Error message */
-#define	XTY_US	5		/* "Reserved for internal use" */
+#define XTY_EM	4		/* Error message */
+#define XTY_US	5		/* "Reserved for internal use" */
 
 /* x_smclas values:  */
 
-#define	XMC_PR	0		/* Read-only program code */
-#define	XMC_RO	1		/* Read-only constant */
-#define	XMC_DB	2		/* Read-only debug dictionary table */
-#define	XMC_TC	3		/* Read-write general TOC entry */
-#define	XMC_UA	4		/* Read-write unclassified */
-#define	XMC_RW	5		/* Read-write data */
-#define	XMC_GL	6		/* Read-only global linkage */
-#define	XMC_XO	7		/* Read-only extended operation */
-#define	XMC_SV	8		/* Read-only supervisor call */
-#define	XMC_BS	9		/* Read-write BSS */
-#define	XMC_DS	10		/* Read-write descriptor csect */
-#define	XMC_UC	11		/* Read-write unnamed Fortran common */
-#define	XMC_TI	12		/* Read-only traceback index csect */
-#define	XMC_TB	13		/* Read-only traceback table csect */
-/* 		14	??? */
-#define	XMC_TC0	15		/* Read-write TOC anchor */
+#define XMC_PR	0		/* Read-only program code */
+#define XMC_RO	1		/* Read-only constant */
+#define XMC_DB	2		/* Read-only debug dictionary table */
+#define XMC_TC	3		/* Read-write general TOC entry */
+#define XMC_UA	4		/* Read-write unclassified */
+#define XMC_RW	5		/* Read-write data */
+#define XMC_GL	6		/* Read-only global linkage */
+#define XMC_XO	7		/* Read-only extended operation */
+#define XMC_SV	8		/* Read-only supervisor call */
+#define XMC_BS	9		/* Read-write BSS */
+#define XMC_DS	10		/* Read-write descriptor csect */
+#define XMC_UC	11		/* Read-write unnamed Fortran common */
+#define XMC_TI	12		/* Read-only traceback index csect */
+#define XMC_TB	13		/* Read-only traceback table csect */
+/*		14	??? */
+#define XMC_TC0	15		/* Read-write TOC anchor */
 #define XMC_TD	16		/* Read-write data in TOC */
 
   struct
@@ -681,8 +679,6 @@ union internal_auxent
     uint64_t x_nreloc;		/* Number of relocation entries */
   } x_sect;
 };
-
-/********************** RELOCATION DIRECTIVES **********************/
 
 struct internal_reloc
 {

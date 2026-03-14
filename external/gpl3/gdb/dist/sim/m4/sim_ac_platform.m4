@@ -1,4 +1,4 @@
-dnl Copyright (C) 1997-2024 Free Software Foundation, Inc.
+dnl Copyright (C) 1997-2025 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -112,9 +112,6 @@ AC_CHECK_FUNCS_ONCE(m4_flatten([
   utime
 ]))
 
-AC_STRUCT_ST_BLKSIZE
-AC_STRUCT_ST_BLOCKS
-AC_STRUCT_ST_RDEV
 AC_STRUCT_TIMEZONE
 
 AC_CHECK_MEMBERS([[struct stat.st_dev], [struct stat.st_ino],
@@ -138,7 +135,7 @@ AC_CHECK_SIZEOF([void *])
 dnl Check for struct statfs.
 AC_CACHE_CHECK([for struct statfs],
   [sim_cv_struct_statfs],
-  [AC_TRY_COMPILE([
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
@@ -151,9 +148,9 @@ AC_CACHE_CHECK([for struct statfs],
 #endif
 #ifdef HAVE_SYS_STATFS_H
 #include <sys/statfs.h>
-#endif], [
+#endif]], [[
   struct statfs s;
-], [sim_cv_struct_statfs="yes"], [sim_cv_struct_statfs="no"])])
+]])],[sim_cv_struct_statfs="yes"],[sim_cv_struct_statfs="no"])])
 AS_IF([test x"sim_cv_struct_statfs" = x"yes"], [dnl
   AC_DEFINE(HAVE_STRUCT_STATFS, 1,
 	    [Define if struct statfs is defined in <sys/mount.h>])
@@ -162,12 +159,12 @@ AS_IF([test x"sim_cv_struct_statfs" = x"yes"], [dnl
 dnl Some System V related checks.
 AC_CACHE_CHECK([if union semun defined],
   [sim_cv_has_union_semun],
-  [AC_TRY_COMPILE([
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/sem.h>], [
+#include <sys/sem.h>]], [[
   union semun arg;
-], [sim_cv_has_union_semun="yes"], [sim_cv_has_union_semun="no"])])
+]])],[sim_cv_has_union_semun="yes"],[sim_cv_has_union_semun="no"])])
 AS_IF([test x"$sim_cv_has_union_semun" = x"yes"], [dnl
   AC_DEFINE(HAVE_UNION_SEMUN, 1,
 	    [Define if union semun is defined in <sys/sem.h>])
@@ -175,7 +172,7 @@ AS_IF([test x"$sim_cv_has_union_semun" = x"yes"], [dnl
 
 AC_CACHE_CHECK([whether System V semaphores are supported],
   [sim_cv_sysv_sem],
-  [AC_TRY_COMPILE([
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
   #include <sys/types.h>
   #include <sys/ipc.h>
   #include <sys/sem.h>
@@ -185,7 +182,7 @@ AC_CACHE_CHECK([whether System V semaphores are supported],
     struct semid_ds *buf;
     ushort *array;
   };
-#endif], [
+#endif]], [[
   union semun arg;
   int id = semget(IPC_PRIVATE, 1, IPC_CREAT|0400);
   if (id == -1)
@@ -193,23 +190,23 @@ AC_CACHE_CHECK([whether System V semaphores are supported],
   arg.val = 0; /* avoid implicit type cast to union */
   if (semctl(id, 0, IPC_RMID, arg) == -1)
     return 1;
-], [sim_cv_sysv_sem="yes"], [sim_cv_sysv_sem="no"])])
+]])],[sim_cv_sysv_sem="yes"],[sim_cv_sysv_sem="no"])])
 AS_IF([test x"$sim_cv_sysv_sem" = x"yes"], [dnl
   AC_DEFINE(HAVE_SYSV_SEM, 1, [Define if System V semaphores are supported])
 ])
 
 AC_CACHE_CHECK([whether System V shared memory is supported],
   [sim_cv_sysv_shm],
-  [AC_TRY_COMPILE([
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/ipc.h>
-#include <sys/shm.h>], [
+#include <sys/shm.h>]], [[
   int id = shmget(IPC_PRIVATE, 1, IPC_CREAT|0400);
   if (id == -1)
     return 1;
   if (shmctl(id, IPC_RMID, 0) == -1)
     return 1;
-], [sim_cv_sysv_shm="yes"], [sim_cv_sysv_shm="no"])])
+]])],[sim_cv_sysv_shm="yes"],[sim_cv_sysv_shm="no"])])
 AS_IF([test x"$sim_cv_sysv_shm" = x"yes"], [dnl
   AC_DEFINE(HAVE_SYSV_SHM, 1, [Define if System V shared memory is supported])
 ])
@@ -217,16 +214,16 @@ AS_IF([test x"$sim_cv_sysv_shm" = x"yes"], [dnl
 dnl Figure out what type of termio/termios support there is
 AC_CACHE_CHECK([for struct termios],
   [sim_cv_termios_struct],
-  [AC_TRY_COMPILE([
+  [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
-#include <sys/termios.h>], [
+#include <sys/termios.h>]], [[
   static struct termios x;
   x.c_iflag = 0;
   x.c_oflag = 0;
   x.c_cflag = 0;
   x.c_lflag = 0;
   x.c_cc[NCCS] = 0;
-], [sim_cv_termios_struct="yes"], [sim_cv_termios_struct="no"])])
+]])],[sim_cv_termios_struct="yes"],[sim_cv_termios_struct="no"])])
 if test $sim_cv_termios_struct = yes; then
   AC_DEFINE([HAVE_TERMIOS_STRUCTURE], 1, [Define if struct termios exists.])
 fi
@@ -250,16 +247,16 @@ fi
 if test "$sim_cv_termios_struct" != "yes"; then
   AC_CACHE_CHECK([for struct termio],
     [sim_cv_termio_struct],
-    [AC_TRY_COMPILE([
+    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
-#include <sys/termio.h>], [
+#include <sys/termio.h>]], [[
   static struct termio x;
   x.c_iflag = 0;
   x.c_oflag = 0;
   x.c_cflag = 0;
   x.c_lflag = 0;
   x.c_cc[NCC] = 0;
-], [sim_cv_termio_struct="yes"], [sim_cv_termio_struct="no"])])
+]])],[sim_cv_termio_struct="yes"],[sim_cv_termio_struct="no"])])
   if test $sim_cv_termio_struct = yes; then
     AC_DEFINE([HAVE_TERMIO_STRUCTURE], 1, [Define if struct termio exists.])
   fi
@@ -288,7 +285,6 @@ AC_TYPE_GETGROUPS
 AC_TYPE_MODE_T
 AC_TYPE_OFF_T
 AC_TYPE_PID_T
-AC_TYPE_SIGNAL
 AC_TYPE_SIZE_T
 AC_TYPE_UID_T
 
@@ -344,7 +340,7 @@ if test -r ../readline/Makefile; then
   READLINE_CFLAGS='-I$(READLINE_SRC)/..'
 else
   AC_CHECK_LIB(readline, readline, READLINE_LIB=-lreadline,
-	       AC_ERROR([the required "readline" library is missing]), $TERMCAP_LIB)
+	       AC_MSG_ERROR(the required "readline" library is missing), $TERMCAP_LIB)
   READLINE_CFLAGS=
 fi
 AC_SUBST(READLINE_LIB)

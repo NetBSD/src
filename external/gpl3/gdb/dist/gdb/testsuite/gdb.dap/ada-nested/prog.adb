@@ -1,4 +1,4 @@
---  Copyright 2023-2024 Free Software Foundation, Inc.
+--  Copyright 2023-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-procedure Foo is
+procedure Prog is
    X  : Integer := 12;
 
    procedure Outer (Outer_Arg : Integer) is
@@ -29,4 +29,4 @@ begin
    for I in 1 .. 20 loop
       Outer (1);
    end loop;
-end Foo;
+end Prog;

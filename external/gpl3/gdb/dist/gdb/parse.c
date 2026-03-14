@@ -1,6 +1,6 @@
 /* Parse expressions for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    Modified from expread.y by the Department of Computer Science at the
    State University of New York at Buffalo, 1991.
@@ -60,8 +60,8 @@ show_expressiondebug (struct ui_file *file, int from_tty,
 }
 
 
-/* True if an expression parser should set yydebug.  */
-static bool parser_debug;
+/* See parser-defs.h.  */
+bool parser_debug;
 
 static void
 show_parserdebug (struct ui_file *file, int from_tty,
@@ -617,9 +617,7 @@ parser_fprintf (FILE *x, const char *y, ...)
   va_end (args);
 }
 
-void _initialize_parse ();
-void
-_initialize_parse ()
+INIT_GDB_FILE (parse)
 {
   add_setshow_zuinteger_cmd ("expression", class_maintenance,
 			     &expressiondebug,

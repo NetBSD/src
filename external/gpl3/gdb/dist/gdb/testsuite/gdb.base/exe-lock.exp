@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,8 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debu
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 
 # Sanity-check: Verify that the executable exists. This is just to
 # make sure that, when we verify later that the file does not exist,

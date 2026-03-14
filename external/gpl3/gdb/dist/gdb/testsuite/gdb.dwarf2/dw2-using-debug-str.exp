@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -97,6 +97,18 @@ if ![runto_main] {
 # fictional, it only exists in the DWARF, but it contains lots of nice
 # field names, all of which are stored in the .debug_str section.
 gdb_test "p global_var" " = \\{aa = 0, bb = 0, cc = 0\\}"
+
+# If we have a .gdb_index already, this test isn't going to work,
+# because the .gdb_index reader doesn't check for .debug_str.
+if {[get_index_type $testfile] == "gdb"} {
+    untested ".gdb_index does not handle this case"
+    return
+}
+
+# objcopy, even with --dump-section, will try to open the executable
+# for writing.  To avoid "text file busy", exit gdb here, stopping the
+# inferior as a side effect.
+gdb_exit
 
 set host_binfile [gdb_remote_download host $binfile]
 

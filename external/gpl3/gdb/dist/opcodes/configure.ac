@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -87,7 +87,6 @@ AC_EXEEXT
 
 ALL_LINGUAS="da de es fi fr ga id it nl pt_BR ro sr sv tr uk vi zh_CN"
 ZW_GNU_GETTEXT_SISTER_DIR
-AM_PO_SUBDIRS
 
 . ${srcdir}/../bfd/configure.host
 
@@ -102,10 +101,10 @@ AC_CHECK_DECLS([basename, stpcpy])
 # Check if sigsetjmp is available.  Using AC_CHECK_FUNCS won't do
 # since sigsetjmp might only be defined as a macro.
 AC_CACHE_CHECK([for sigsetjmp], gdb_cv_func_sigsetjmp,
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <setjmp.h>
-], [sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);],
-bfd_cv_func_sigsetjmp=yes, bfd_cv_func_sigsetjmp=no)])
+]], [[sigjmp_buf env; while (! sigsetjmp (env, 1)) siglongjmp (env, 1);]])],
+[bfd_cv_func_sigsetjmp=yes], [bfd_cv_func_sigsetjmp=no])])
 if test $bfd_cv_func_sigsetjmp = yes; then
   AC_DEFINE(HAVE_SIGSETJMP, 1, [Define if sigsetjmp is available. ])
 fi
@@ -383,7 +382,7 @@ if test x${all_targets} = xfalse ; then
 
 else	# all_targets is true
     archdefs=-DARCH_all
-    if test "$enable_64_bit_bfd" = "yes" ; then
+    if test "$have_64_bit_bfd" = "yes" ; then
 	BFD_MACHINES='$(ALL32_MACHINES) $(ALL64_MACHINES)'
     else
 	BFD_MACHINES='$(ALL32_MACHINES)'

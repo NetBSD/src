@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -608,7 +608,7 @@ namespace eval $testfile {
     }
 
     # Test interaction of condition command and explicit linespec conditons.
-    clean_restart [standard_output_file $exefile]
+    clean_restart $exefile
 
     set tst "condition_command overrides explicit linespec condition"
     if {![runto_main]} {

@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -82,7 +82,7 @@ public:
   /* STRING is the string to be parsed.  */
   void init (const char *string);
 
-  /* While processing a range, this fuction is called iteratively; At
+  /* While processing a range, this function is called iteratively; At
      each call it will return the next value in the range.
 
      At the beginning of parsing a range, the char pointer

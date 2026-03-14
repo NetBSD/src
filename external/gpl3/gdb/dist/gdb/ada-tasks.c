@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1650,9 +1650,7 @@ task_apply_command (const char *tidlist, int from_tty)
 			    from_tty, flags);
 }
 
-void _initialize_tasks ();
-void
-_initialize_tasks ()
+INIT_GDB_FILE (tasks)
 {
   /* Attach various observers.  */
   gdb::observers::normal_stop.attach (ada_tasks_normal_stop_observer,

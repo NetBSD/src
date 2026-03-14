@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -36,7 +36,7 @@ gdb_download_shlib $binfile2
 
 # test -catch-load
 with_test_prefix "catch-load" {
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
     mi_locate_shlib $binfile2
     mi_runto_main
 
@@ -63,7 +63,7 @@ with_test_prefix "catch-load" {
 
 # test -catch-unload
 with_test_prefix "catch-unload" {
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
     mi_locate_shlib $binfile2
     mi_runto_main
 

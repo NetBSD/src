@@ -1,6 +1,6 @@
 /* Target description related code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,9 +27,9 @@ struct x86_xsave_layout;
 
 /* Return the target description for Linux thread TID.
 
-   The storage pointed to by XCR0_STORAGE and XSAVE_LAYOUT_STORAGE must
+   The storage pointed to by XSTATE_BV_STORAGE and XSAVE_LAYOUT_STORAGE must
    exist until the program (GDB or gdbserver) terminates, this storage is
-   used to cache the xcr0 and xsave layout values.  The values pointed to
+   used to cache the xstate_bv and xsave layout values.  The values pointed to
    by these arguments are only updated at most once, the first time this
    function is called if the have_ptrace_getregset global is set to
    TRIBOOL_UNKNOWN.
@@ -45,6 +45,7 @@ struct x86_xsave_layout;
    returned.  */
 
 extern const target_desc *x86_linux_tdesc_for_tid
-  (int tid, uint64_t *xcr0_storage, x86_xsave_layout *xsave_layout_storage);
+  (int tid, uint64_t *xstate_bv_storage,
+   x86_xsave_layout *xsave_layout_storage);
 
 #endif /* GDB_NAT_X86_LINUX_TDESC_H */

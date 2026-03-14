@@ -1,5 +1,5 @@
 /* AArch64-specific support for ELF.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -698,35 +698,51 @@ _bfd_aarch64_elf_write_core_note (bfd *abfd, char *buf, int *bufsiz, int note_ty
     }
 }
 
+typedef struct
+{
+  bfd *pbfd;
+  asection* sec;
+} bfd_search_result_t;
+
+static inline bool
+bfd_is_non_dynamic_elf_object (bfd *abfd, const struct elf_backend_data *out_be)
+{
+  const struct elf_backend_data *in_be = get_elf_backend_data (abfd);
+
+  return bfd_get_flavour (abfd) == bfd_target_elf_flavour
+    && bfd_count_sections (abfd) != 0
+    && (abfd->flags & (DYNAMIC | BFD_PLUGIN | BFD_LINKER_CREATED)) == 0
+    && out_be->elf_machine_code == in_be->elf_machine_code
+    && out_be->s->elfclass == in_be->s->elfclass;
+}
+
 /* Find the first input bfd with GNU properties.
    If such an input is found, set found to true and return the relevant input.
    Otherwise, return the last input of bfd inputs.  */
-static bfd *
-_bfd_aarch64_elf_find_1st_bfd_input_with_gnu_property (
-  struct bfd_link_info *info,
-  bool *has_gnu_property)
+static bfd_search_result_t
+bfd_linear_search_one_with_gnu_property (struct bfd_link_info *info)
 {
-  BFD_ASSERT (has_gnu_property);
-  const struct elf_backend_data *obfd = get_elf_backend_data (info->output_bfd);
-  bfd *pbfd = info->input_bfds;
-  bfd *prev = NULL;
-  for (; pbfd != NULL; pbfd = pbfd->link.next)
-    if (bfd_get_flavour (pbfd) == bfd_target_elf_flavour
-	&& bfd_count_sections (pbfd) != 0
-	&& (pbfd->flags & (DYNAMIC | BFD_PLUGIN | BFD_LINKER_CREATED)) == 0
-	&& (obfd->elf_machine_code
-	    == get_elf_backend_data (pbfd)->elf_machine_code)
-	&& (obfd->s->elfclass == get_elf_backend_data (pbfd)->s->elfclass))
+  const struct elf_backend_data *be = get_elf_backend_data (info->output_bfd);
+
+  bfd_search_result_t res = {
+    .pbfd = NULL,
+    .sec = NULL,
+  };
+
+  for (bfd *pbfd = info->input_bfds; pbfd != NULL; pbfd = pbfd->link.next)
+    if (bfd_is_non_dynamic_elf_object (pbfd, be))
       {
+	res.pbfd = pbfd;
+
 	/* Does the input have a list of GNU properties ? */
 	if (elf_properties (pbfd) != NULL)
-	  {
-	    *has_gnu_property = true;
-	    return pbfd;
-	  }
-	prev = pbfd;
+	  break;
       }
-  return prev;
+
+  if (res.pbfd != NULL)
+    res.sec = bfd_get_section_by_name (res.pbfd, NOTE_GNU_PROPERTY_SECTION_NAME);
+
+  return res;
 }
 
 /* Create a GNU property section for the given bfd input.  */
@@ -743,14 +759,11 @@ _bfd_aarch64_elf_create_gnu_property_section (struct bfd_link_info *info,
 				      | SEC_READONLY
 				      | SEC_HAS_CONTENTS
 				      | SEC_DATA));
-  if (sec == NULL)
-    info->callbacks->einfo (
-      _("%F%P: failed to create GNU property section\n"));
-
   unsigned align = (bfd_get_mach (ebfd) & bfd_mach_aarch64_ilp32) ? 2 : 3;
-  if (!bfd_set_section_alignment (sec, align))
-    info->callbacks->einfo (_("%F%pA: failed to align section\n"),
-			    sec);
+  if (sec == NULL
+      || !bfd_set_section_alignment (sec, align))
+    info->callbacks->fatal (_("%P: failed to create %s\n"),
+			    NOTE_GNU_PROPERTY_SECTION_NAME);
 
   elf_section_type (sec) = SHT_NOTE;
 }
@@ -764,11 +777,9 @@ _bfd_aarch64_report_summary_merge_issues (struct bfd_link_info *info)
 {
   const struct elf_aarch64_obj_tdata * tdata
     = elf_aarch64_tdata (info->output_bfd);
-  aarch64_feature_marking_report bti_report = tdata->sw_protections.bti_report;
-  aarch64_feature_marking_report gcs_report = tdata->sw_protections.gcs_report;
 
   if (tdata->n_bti_issues > GNU_PROPERTY_ISSUES_MAX
-      && bti_report != MARKING_NONE)
+      && tdata->sw_protections.bti_report != MARKING_NONE)
     {
       const char *msg
 	= (tdata->sw_protections.bti_report == MARKING_ERROR)
@@ -780,7 +791,7 @@ _bfd_aarch64_report_summary_merge_issues (struct bfd_link_info *info)
     }
 
   if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX
-      && gcs_report != MARKING_NONE)
+      && tdata->sw_protections.gcs_report != MARKING_NONE)
     {
       const char *msg
 	= (tdata->sw_protections.gcs_report == MARKING_ERROR)
@@ -790,6 +801,71 @@ _bfd_aarch64_report_summary_merge_issues (struct bfd_link_info *info)
 	    "GCS requirements.\n");
       info->callbacks->einfo (msg, tdata->n_gcs_issues);
     }
+
+  if (tdata->n_gcs_dynamic_issues > GNU_PROPERTY_ISSUES_MAX
+      && tdata->sw_protections.gcs_report_dynamic != MARKING_NONE)
+    {
+      const char *msg
+	= (tdata->sw_protections.gcs_report_dynamic == MARKING_ERROR)
+	? _("%Xerror: found a total of %d dynamically-linked objects "
+	    "incompatible with GCS requirements.\n")
+	: _("warning: found a total of %d dynamically-linked objects "
+	    "incompatible with GCS requirements.\n");
+      info->callbacks->einfo (msg, tdata->n_gcs_dynamic_issues);
+    }
+}
+
+/* Perform a look-up of a property in an unsorted list of properties.  This is
+   useful when the list of properties of an object has not been sorted yet.  */
+static uint32_t
+_bfd_aarch64_prop_linear_lookup (elf_property_list *properties,
+				 unsigned int pr_type)
+{
+  for (elf_property_list *p = properties; p != NULL; p = p->next)
+    if (p->property.pr_type == pr_type)
+      return p->property.u.number;
+  return 0;
+}
+
+/* Compare the GNU properties of the current dynamic object, with the ones of
+   the output BFD.  Today, we only care about GCS feature stored in
+   GNU_PROPERTY_AARCH64_FEATURE_1.  */
+static void
+_bfd_aarch64_compare_dynamic_obj_prop_against_outprop(
+  struct bfd_link_info *info,
+  const uint32_t outprop,
+  bfd *pbfd)
+{
+  if (!(outprop & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
+    return;
+
+  const uint32_t dyn_obj_aarch64_feature_prop =
+    _bfd_aarch64_prop_linear_lookup (elf_properties (pbfd),
+				     GNU_PROPERTY_AARCH64_FEATURE_1_AND);
+  if (!(dyn_obj_aarch64_feature_prop & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
+    _bfd_aarch64_elf_check_gcs_report (info, pbfd);
+}
+
+/* Check compatibility between the GNU properties of the ouput BFD and the
+   linked dynamic objects.  */
+static void
+_bfd_aarch64_elf_check_gnu_properties_linked_dynamic_objects (
+  struct bfd_link_info * info,
+  const uint32_t outprop)
+{
+  const struct elf_backend_data *bed = get_elf_backend_data (info->output_bfd);
+  const int elf_machine_code = bed->elf_machine_code;
+  const unsigned int elfclass = bed->s->elfclass;
+
+  for (bfd *pbfd = info->input_bfds; pbfd != NULL; pbfd = pbfd->link.next)
+    /* Ignore GNU properties from non-ELF objects or ELF objects with different
+       machine code.  */
+    if ((pbfd->flags & DYNAMIC) != 0
+	&& (bfd_get_flavour (pbfd) == bfd_target_elf_flavour)
+	&& (get_elf_backend_data (pbfd)->elf_machine_code == elf_machine_code)
+	&& (get_elf_backend_data (pbfd)->s->elfclass == elfclass))
+      _bfd_aarch64_compare_dynamic_obj_prop_against_outprop(info, outprop,
+	pbfd);
 }
 
 /* Find the first input bfd with GNU property and merge it with GPROP.  If no
@@ -801,25 +877,31 @@ _bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info)
   struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
   uint32_t outprop = tdata->gnu_property_aarch64_feature_1_and;
 
-  bool has_gnu_property = false;
-  bfd *ebfd =
-    _bfd_aarch64_elf_find_1st_bfd_input_with_gnu_property (info,
-							   &has_gnu_property);
+  bfd_search_result_t res = bfd_linear_search_one_with_gnu_property (info);
 
   /* If ebfd != NULL it is either an input with property note or the last input.
      Either way if we have an output GNU property that was provided, we should
      add it (by creating a section if needed).  */
-  if (ebfd != NULL)
+  if (res.pbfd != NULL)
     {
-      /* If no GNU property node was found, create the GNU property note
-	 section.  */
-      if (!has_gnu_property)
-	_bfd_aarch64_elf_create_gnu_property_section (info, ebfd);
+      /* If no GNU property note section was found, create one.
+
+	 Note: If there is no .gnu.note.property section, we might think that
+	 elf_properties (res.pbfd) is always NULL.  However, this is not always
+	 true.  In PR23900: old linkers were treating .note.gnu.property as a
+	 generic note section, so old objects might contain properties inside
+	 .note instead of .note.gnu.property. In this case, the section won't be
+	 detected but the properties are still parsed. Consequently,
+	 elf_properties (res.pbfd) is populated and different from NULL (see
+	 https://sourceware.org/bugzilla/show_bug.cgi?id=23900 for more
+	 details).  */
+      if (res.sec == NULL && elf_properties (res.pbfd) == NULL)
+	_bfd_aarch64_elf_create_gnu_property_section (info, res.pbfd);
 
       /* Merge the found input property with output properties. Note: if no
 	 property was found, _bfd_elf_get_property will create one.  */
       elf_property *prop =
-	_bfd_elf_get_property (ebfd,
+	_bfd_elf_get_property (res.pbfd,
 			       GNU_PROPERTY_AARCH64_FEATURE_1_AND,
 			       4);
 
@@ -828,13 +910,13 @@ _bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info)
 	 outprop.  */
       if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
 	   && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
-	_bfd_aarch64_elf_check_bti_report (info, ebfd);
+	_bfd_aarch64_elf_check_bti_report (info, res.pbfd);
 
       if (tdata->sw_protections.gcs_type == GCS_NEVER)
 	prop->u.number &= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
       else if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_GCS)
 	       && !(prop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
-	_bfd_aarch64_elf_check_gcs_report (info, ebfd);
+	_bfd_aarch64_elf_check_gcs_report (info, res.pbfd);
 
       prop->u.number |= outprop;
       if (prop->u.number == 0)
@@ -848,33 +930,28 @@ _bfd_aarch64_elf_link_setup_gnu_properties (struct bfd_link_info *info)
      GNU properties (if found).  */
   bfd *pbfd = _bfd_elf_link_setup_gnu_properties (info);
 
-  /* If pbfd has any GNU_PROPERTY_AARCH64_FEATURE_1_AND properties, update
-     outprop accordingly.  */
   if (pbfd != NULL)
     {
-      /* The property list is sorted in order of type.  */
-      for (elf_property_list *p = elf_properties (pbfd);
-	   (p != NULL)
-	     && (GNU_PROPERTY_AARCH64_FEATURE_1_AND <= p->property.pr_type);
-	   p = p->next)
-	{
-	  /* This merge of features should happen only once as all the identical
-	     properties are supposed to have been merged at this stage by
-	     _bfd_elf_link_setup_gnu_properties().  */
-	  if (p->property.pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
-	    {
-	      outprop = (p->property.u.number
-			 & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI
-			  | GNU_PROPERTY_AARCH64_FEATURE_1_PAC
-			  | GNU_PROPERTY_AARCH64_FEATURE_1_GCS));
-	      break;
-	    }
-	}
+      elf_property_list *p;
+      elf_property_list *plist = elf_properties (pbfd);
+
+      /* If pbfd has any GNU_PROPERTY_AARCH64_FEATURE_1_AND properties, update
+	 outprop accordingly.  */
+      if ((p = _bfd_elf_find_property (plist,
+				       GNU_PROPERTY_AARCH64_FEATURE_1_AND, NULL))
+				       != NULL)
+        outprop = p->property.u.number
+		  & (GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+		     | GNU_PROPERTY_AARCH64_FEATURE_1_PAC
+		     | GNU_PROPERTY_AARCH64_FEATURE_1_GCS);
     }
+
+  tdata->gnu_property_aarch64_feature_1_and = outprop;
+
+  _bfd_aarch64_elf_check_gnu_properties_linked_dynamic_objects (info, outprop);
 
   _bfd_aarch64_report_summary_merge_issues (info);
 
-  tdata->gnu_property_aarch64_feature_1_and = outprop;
   return pbfd;
 }
 
@@ -1047,21 +1124,42 @@ void
 _bfd_aarch64_elf_check_gcs_report (struct bfd_link_info *info, bfd *ebfd)
 {
   struct elf_aarch64_obj_tdata *tdata = elf_aarch64_tdata (info->output_bfd);
+  bool dynamic_obj = (ebfd->flags & DYNAMIC) != 0;
 
-  if (tdata->sw_protections.gcs_report == MARKING_NONE)
-    return;
+  if (dynamic_obj)
+    {
+      if (tdata->sw_protections.gcs_report_dynamic == MARKING_NONE)
+	return;
+      ++tdata->n_gcs_dynamic_issues;
+      if (tdata->n_gcs_dynamic_issues > GNU_PROPERTY_ISSUES_MAX)
+	return;
+    }
+  else
+    {
+      if (tdata->sw_protections.gcs_report == MARKING_NONE)
+	return;
+      ++tdata->n_gcs_issues;
+      if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX)
+	return;
+    }
 
-  ++tdata->n_gcs_issues;
-
-  if (tdata->n_gcs_issues > GNU_PROPERTY_ISSUES_MAX)
-    return;
-
-  const char *msg
-    = (tdata->sw_protections.gcs_report == MARKING_WARN)
-    ? _("%pB: warning: GCS is required by -z gcs, but this input object file "
-	"lacks the necessary property note.\n")
-    : _("%X%pB: error: GCS is required by -z gcs, but this input object file "
-	"lacks the necessary property note.\n");
+  const char *msg;
+  if (dynamic_obj)
+    msg = (tdata->sw_protections.gcs_report_dynamic == MARKING_WARN)
+      ? _("%pB: warning: GCS is required by -z gcs, but this shared library "
+	  "lacks the necessary property note. The dynamic loader might not "
+	  "enable GCS or refuse to load the program unless all the shared "
+	  "library dependencies have the GCS marking.\n")
+      : _("%X%pB: error: GCS is required by -z gcs, but this shared library "
+	  "lacks the necessary property note. The dynamic loader might not "
+	  "enable GCS or refuse to load the program unless all the shared "
+	  "library dependencies have the GCS marking.\n");
+  else
+    msg = (tdata->sw_protections.gcs_report == MARKING_WARN)
+      ? _("%pB: warning: GCS is required by -z gcs, but this input object file "
+	  "lacks the necessary property note.\n")
+      : _("%X%pB: error: GCS is required by -z gcs, but this input object file "
+	  "lacks the necessary property note.\n");
 
   info->callbacks->einfo (msg, ebfd);
 }

@@ -1,5 +1,5 @@
 /* Data structures associated with breakpoints in GDB.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -425,7 +425,9 @@ public:
      simplicity is more important than memory usage for breakpoints.  */
 
   /* Architecture associated with this location's address.  May be
-     different from the breakpoint architecture.  */
+     different from the breakpoint architecture.  Not every location has
+     an address (e.g. see add_dummy_location), so not every location has
+     an associated gdbarch -- this can be NULL for a valid location.  */
   struct gdbarch *gdbarch = NULL;
 
   /* The program space associated with this breakpoint location
@@ -1740,7 +1742,7 @@ extern void disable_overlay_breakpoints (void);
 extern void set_std_terminate_breakpoint (void);
 extern void delete_std_terminate_breakpoint (void);
 
-/* These functions respectively disable or reenable all currently
+/* These functions respectively disable or re-enable all currently
    enabled watchpoints.  When disabled, the watchpoints are marked
    call_disabled.  When re-enabled, they are marked enabled.
 

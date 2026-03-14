@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if {[build_executable "failed to prepare" ${testfile} \
     return -1
 }
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 
 # Don't run to main to avoid increasing the search scope to include
 # debug info of shared libraries like libc, libgcc, etc.
@@ -245,22 +245,34 @@ mi_gdb_test "120-symbol-info-types --name _int_" \
     "120\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile\",fullname=\"\[^\"\]+$srcfile\",symbols=\\\[$my_int_re\\\]\},\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$another_int_re\\\]\}\\\]\}" \
     "List all types matching _int_"
 
+# Return the number of matched symbols in the last match.
+
+proc count_symbol_matches { } {
+    # `0,string`, `1,string` and `2,string` respectively contain the
+    # command + result, command and result.  The symbols match is at
+    # `3,string`.
+    return [regexp -all $::fun_re $::expect_out(3,string)]
+}
+
 # Test the --max-results parameter.
 mi_gdb_test "121-symbol-info-functions --max-results 0" \
     "121\\^done,symbols=\{\}" \
     "-symbol-info-functions --max-results 0"
 
 mi_gdb_test "122-symbol-info-functions --max-results 1 --name ^\[^_\]" \
-    "122\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[(?:$f2_re|$f3_re)\\\]\}\\\]\}" \
+    "122\\^done,($debug_only_syms)" \
     "-symbol-info-functions --max-results 1"
+gdb_assert {[count_symbol_matches] == 1} "-symbol-info-functions --max-results 1, result count"
 
 mi_gdb_test "123-symbol-info-functions --max-results 2 --name ^\[^_\]" \
-    "123\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$f2_re,$f3_re\\\]\}\\\]\}" \
+    "123\\^done,($debug_only_syms)" \
     "-symbol-info-functions --max-results 2"
+gdb_assert {[count_symbol_matches] == 2} "-symbol-info-functions --max-results 2, result count"
 
 mi_gdb_test "124-symbol-info-variables --max-results 3 --name ^\[^_\]" \
-    "124\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$global_f2_re,$global_i2_re,(?:$global_i1_re|$global_f1_s2_re)\\\]\}\\\]\}" \
-    "-symbol-info-types --max-results 3"
+    "124\\^done,($debug_only_syms)" \
+    "-symbol-info-variables --max-results 3"
+gdb_assert {[count_symbol_matches] == 3} "-symbol-info-variables --max-results 3, result count"
 
 mi_gdb_test "125-symbol-info-types --max-results 4 --name another_" \
     "125\\^done,symbols=\{debug=\\\[\{filename=\"\[^\"\]*$srcfile2\",fullname=\"\[^\"\]+$srcfile2\",symbols=\\\[$another_char_re,$another_float_re,$another_int_re,$another_short_re\\\]\}\\\]\}" \

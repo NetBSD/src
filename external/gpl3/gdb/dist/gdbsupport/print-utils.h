@@ -1,6 +1,6 @@
 /* Cell-based print utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -34,15 +34,35 @@ extern const char *pulongest (ULONGEST u);
 
 extern const char *plongest (LONGEST l);
 
-/* Convert a ULONGEST into a HEX string, like %lx, with leading zeros.
+/* Convert L (of type ULONGEST) into a hex string, like %lx, with leading
+   zeros.  The result is stored in a circular static buffer, NUMCELLS
+   deep.  */
+
+extern const char *phex_ulongest (ULONGEST l, int sizeof_l);
+
+/* Convert L into a HEX string, like %lx, with leading zeros.
    The result is stored in a circular static buffer, NUMCELLS deep.  */
 
-extern const char *phex (ULONGEST l, int sizeof_l);
+template<typename T>
+const char *phex (T l, int sizeof_l = sizeof (T))
+{
+  return phex_ulongest (l, sizeof_l);
+}
 
-/* Convert a ULONGEST into a HEX string, like %lx, without leading zeros.
-   The result is  stored in a circular static buffer, NUMCELLS deep.  */
+/* Convert L (of type ULONGEST) into a hex string, like %lx, without leading
+   zeros.  The result is stored in a circular static buffer, NUMCELLS
+   deep.  */
 
-extern const char *phex_nz (ULONGEST l, int sizeof_l);
+extern const char *phex_nz_ulongest (ULONGEST l, int sizeof_l);
+
+/* Convert L into a hex string, like %lx, without leading zeros.
+   The result is stored in a circular static buffer, NUMCELLS deep.  */
+
+template<typename T>
+const char *phex_nz (T l, int sizeof_l = sizeof (T))
+{
+  return phex_nz_ulongest (l, sizeof_l);
+}
 
 /* Converts a LONGEST to a C-format hexadecimal literal and stores it
    in a static string.  Returns a pointer to this string.  */

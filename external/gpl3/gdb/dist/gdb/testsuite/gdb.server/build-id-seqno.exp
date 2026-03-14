@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,13 +90,13 @@ proc load_binfile_check_debug_is_found { debuginfo_file testname } {
     with_test_prefix "$testname" {
 	with_timeout_factor 5 {
 	    # Probing for .build-id based debug files on remote
-	    # targets uses the vFile:stat packet by default, though
+	    # targets uses the vFile:lstat packet by default, though
 	    # there is a work around that avoids this which can be
 	    # used if GDB is connected to an older gdbserver without
 	    # 'stat' support.
 	    #
 	    # Check the work around works by disabling use of the
-	    # vFile:stat packet.
+	    # vFile:lstat packet.
 	    foreach_with_prefix stat_pkt {auto off} {
 		clean_restart
 
@@ -105,7 +105,7 @@ proc load_binfile_check_debug_is_found { debuginfo_file testname } {
 
 		gdb_test_no_output "set sysroot target:"
 
-		gdb_test "set remote hostio-stat-packet $stat_pkt"
+		gdb_test "set remote hostio-lstat-packet $stat_pkt"
 
 		# Make sure we're disconnected, in case we're testing with an
 		# extended-remote board, therefore already connected.

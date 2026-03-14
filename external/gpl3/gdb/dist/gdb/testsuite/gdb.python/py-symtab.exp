@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,6 +89,34 @@ gdb_test_multiple "python print (\"simple_struct\" in static_symbols)" \
 	    }
 	}
     }
+
+# Test symtab identity
+gdb_test "python print (symtab is symtab)"\
+    "True" \
+    "test symtab identity 1"
+gdb_test "python print (symtab is gdb.selected_frame().find_sal().symtab)"\
+    "True" \
+    "test symtab identity 2"
+gdb_test "python print (sal.symtab is gdb.selected_frame().find_sal().symtab)"\
+    "True" \
+    "test symtab identity 3"
+gdb_test "python print (symtab is not \"xxx\")"\
+    "True" \
+    "test symtab non-identity with non-symtab"
+
+# Test symtab equality
+gdb_test "python print (symtab == symtab)"\
+    "True" \
+    "test symtab equality 1"
+gdb_test "python print (symtab == gdb.selected_frame().find_sal().symtab)"\
+    "True" \
+    "test symtab equality 2"
+gdb_test "python print (sal.symtab == gdb.selected_frame().find_sal().symtab)"\
+    "True" \
+    "test symtab equality 3"
+gdb_test "python print (symtab != \"xxx\")"\
+    "True" \
+    "test symtab non-equality with non-symtab"
 
 # Test is_valid when the objfile is unloaded.  This must be the last
 # test as it unloads the object file in GDB.

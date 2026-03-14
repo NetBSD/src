@@ -1,6 +1,6 @@
 /* CTF format support.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
    Contributed by Hui Zhu <hui_zhu@mentor.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -1174,7 +1174,7 @@ ctf_target_open (const char *args, int from_tty)
   merge_uploaded_trace_state_variables (&uploaded_tsvs);
   merge_uploaded_tracepoints (&uploaded_tps);
 
-  post_create_inferior (from_tty);
+  post_create_inferior (from_tty, true);
 }
 
 /* This is the implementation of target_ops method to_close.  Destroy
@@ -1717,9 +1717,7 @@ ctf_target::traceframe_info ()
 
 /* module initialization */
 
-void _initialize_ctf ();
-void
-_initialize_ctf ()
+INIT_GDB_FILE (ctf)
 {
 #if HAVE_LIBBABELTRACE
   add_target (ctf_target_info, ctf_target_open,

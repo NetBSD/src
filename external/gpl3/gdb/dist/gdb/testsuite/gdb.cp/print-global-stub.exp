@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,15 @@
 require allow_cplus_tests
 
 standard_testfile .cc
-set objfile [standard_output_file ${testfile}.o]
+set testfile $testfile.o
+set binfile [standard_output_file $testfile]
 
-if { [gdb_compile $srcdir/$subdir/$srcfile $objfile object \
+if { [gdb_compile $srcdir/$subdir/$srcfile $binfile object \
 	  {c++ debug}] != "" } {
     untested "failed to compile"
     return -1
 }
 
-clean_restart $objfile
+clean_restart $testfile
 
 gdb_test "print s" " = <incomplete type>"

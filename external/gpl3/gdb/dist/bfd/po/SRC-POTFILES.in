@@ -140,8 +140,6 @@ elf-linker-x86.h
 elf-linux-core.h
 elf-m10200.c
 elf-m10300.c
-elf-nacl.c
-elf-nacl.h
 elf-properties.c
 elf-s390.h
 elf-sframe.c

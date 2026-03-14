@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -274,11 +274,10 @@ i386_fbsd_core_read_xsave_info (bfd *abfd, x86_xsave_layout &layout)
 /* See i386-fbsd-tdep.h.  */
 
 bool
-i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch, bfd &cbfd,
 				      x86_xsave_layout &layout)
 {
-  return i386_fbsd_core_read_xsave_info (current_program_space->core_bfd (),
-					 layout) != 0;
+  return i386_fbsd_core_read_xsave_info (&cbfd, layout) != 0;
 }
 
 /* Implement the core_read_description gdbarch method.  */
@@ -402,8 +401,7 @@ i386fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				     i386fbsd_core_read_description);
 
   /* FreeBSD uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
@@ -411,9 +409,7 @@ i386fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					i386fbsd_get_thread_local_address);
 }
 
-void _initialize_i386fbsd_tdep ();
-void
-_initialize_i386fbsd_tdep ()
+INIT_GDB_FILE (i386fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_FREEBSD,
 			  i386fbsd_init_abi);

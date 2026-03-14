@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -179,16 +179,16 @@ sparc32_sol2_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return sol2_sigtramp_p (this_frame);
 }
 
-static const struct frame_unwind sparc32_sol2_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc32_sol2_sigtramp_frame_unwind (
   "sparc32 solaris sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc32_sol2_sigtramp_frame_this_id,
   sparc32_sol2_sigtramp_frame_prev_register,
   NULL,
   sparc32_sol2_sigtramp_frame_sniffer
-};
+);
 
 
 
@@ -207,22 +207,19 @@ sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Solaris has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
   /* ...which means that we need some special handling when doing
      prologue analysis.  */
   tdep->plt_entry_size = 12;
 
   /* Solaris has kernel-assisted single-stepping support.  */
-  set_gdbarch_software_single_step (gdbarch, NULL);
+  set_gdbarch_get_next_pcs (gdbarch, NULL);
 
   frame_unwind_append_unwinder (gdbarch, &sparc32_sol2_sigtramp_frame_unwind);
 }
 
-void _initialize_sparc_sol2_tdep ();
-void
-_initialize_sparc_sol2_tdep ()
+INIT_GDB_FILE (sparc_sol2_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, 0,
 			  GDB_OSABI_SOLARIS, sparc32_sol2_init_abi);

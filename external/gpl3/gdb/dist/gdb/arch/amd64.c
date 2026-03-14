@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,16 +28,15 @@
 #include "../features/i386/64bit-sse.c"
 #include "../features/i386/pkeys.c"
 
+#include "../features/i386/64bit-ssp.c"
+#include "../features/i386/32bit-ssp.c"
 #include "../features/i386/x32-core.c"
 
-/* Create amd64 target descriptions according to XCR0.  If IS_X32 is
-   true, create the x32 ones.  If IS_LINUX is true, create target
-   descriptions for Linux.  If SEGMENTS is true, then include
-   the "org.gnu.gdb.i386.segments" feature registers.  */
+/* See arch/amd64.h.  */
 
 target_desc *
-amd64_create_target_description (uint64_t xcr0, bool is_x32, bool is_linux,
-				 bool segments)
+amd64_create_target_description (uint64_t xstate_bv, bool is_x32,
+				 bool is_linux, bool segments)
 {
   target_desc_up tdesc = allocate_target_description ();
 
@@ -62,14 +61,22 @@ amd64_create_target_description (uint64_t xcr0, bool is_x32, bool is_linux,
   if (segments)
     regnum = create_feature_i386_64bit_segments (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_AVX)
+  if (xstate_bv & X86_XSTATE_AVX)
     regnum = create_feature_i386_64bit_avx (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_AVX512)
+  if (xstate_bv & X86_XSTATE_AVX512)
     regnum = create_feature_i386_64bit_avx512 (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_PKRU)
+  if (xstate_bv & X86_XSTATE_PKRU)
     regnum = create_feature_i386_pkeys (tdesc.get (), regnum);
+
+  if (xstate_bv & X86_XSTATE_CET_U)
+    {
+      if (!is_x32)
+	regnum = create_feature_i386_64bit_ssp (tdesc.get (), regnum);
+      else
+	regnum = create_feature_i386_32bit_ssp (tdesc.get (), regnum);
+    }
 
   return tdesc.release ();
 }

@@ -1,0 +1,73 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test TUI resizing while showing "No Source Available".
+
+require allow_tui_tests
+
+standard_testfile -main.c -foo.c
+
+if { [build_executable_from_specs "failed to prepare" \
+	  $testfile {debug} \
+	  $srcfile {debug} \
+	  $srcfile2 {nodebug}] == -1 } {
+    return -1
+}
+
+tuiterm_env
+
+Term::clean_restart 24 80 $testfile
+
+# It would be simpler to run directly to foo and then enter TUI, but that
+# fails to trigger PR32614.  So instead, we first run to main, enter TUI and
+# then run to foo.
+if {![runto_main]} {
+    perror "test suppressed"
+    return
+}
+
+# Set a breakpoint on foo, easier to do before entering TUI.
+gdb_breakpoint foo
+
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+# Continue to foo.
+Term::command continue
+
+with_test_prefix "before resize" {
+    Term::check_contents "Source window empty" \
+	"No Source Available"
+}
+
+Term::resize 40 90
+
+with_test_prefix "after resize" {
+    # Regression test for PR32614.
+    Term::check_contents "Source window empty" \
+	"No Source Available"
+
+    Term::command "layout asm"
+
+    # Check that, when we switch to the assembler window, the
+    # disassembly is still shown.
+    Term::check_contents_not \
+	"No Assembly message is not displayed" \
+	"No Assembly Available"
+    Term::check_contents "Assembler for foo is shown" \
+	"$hex\\s+<foo"
+}

@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -195,6 +195,16 @@ in_inclusive_range (T value, T low, T high)
 
 extern ULONGEST align_up (ULONGEST v, int n);
 extern ULONGEST align_down (ULONGEST v, int n);
+
+/* Sign-extend the value V, using N as the number of valid bits.  That
+   is, bit N-1 is the sign bit.  The higher-order bits (those outside
+   0..N-1) must be zero.  */
+static inline ULONGEST
+sign_extend (ULONGEST v, int n)
+{
+  ULONGEST mask = (ULONGEST) 1 << (n - 1);
+  return (v ^ mask) - mask;
+}
 
 /* Convert hex digit A to a number, or throw an exception.  */
 extern int fromhex (int a);

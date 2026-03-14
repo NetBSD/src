@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,14 +62,18 @@ proc_with_prefix check_pc_after_cross_syscall { displaced syscall syscall_insn_n
 # Verify the syscall number is the correct one.
 
 proc syscall_number_matches { syscall } {
-  global syscall_register syscall_number
+    global syscall_register syscall_number
 
-  if {[gdb_test "p \$$syscall_register" ".*= $syscall_number($syscall)" \
-    "syscall number matches"] != 0} {
-      return 0
-  }
+    set res 0
+    gdb_test_multiple "p \$$syscall_register" "syscall number matches" {
+	-re -wrap ".*= $syscall_number($syscall)" {
+	    set res 1
+	}
+	-re -wrap "" {
+	}
+    }
 
-  return 1
+    return $res
 }
 
 # Restart GDB and set up the test.  Return a list in which the first one
@@ -139,7 +143,13 @@ proc setup { syscall } {
 		if {[syscall_number_matches $syscall]} {
 		    pass $gdb_test_name
 		} else {
-		    exp_continue
+		    incr steps
+		    if {$steps == $max_steps} {
+			fail $gdb_test_name
+		    } else {
+			send_gdb "stepi\n"
+			exp_continue
+		    }
 		}
 	    }
 	    -re "x/i .*=>.*\r\n$gdb_prompt $" {
@@ -176,7 +186,7 @@ proc setup { syscall } {
     #   0xf7fd5159 <__kernel_vsyscall+9>:    pop    %ebp
     # then a stepi at sysenter will step over the int insn, so make sure
     # next_insn_addr points after the int insn.
-    if { $actual_syscall_insn == "sysenter" } {
+    if { $actual_syscall_insn == "sysenter" || $actual_syscall_insn == "syscall" } {
 	set test "pc after sysenter instruction"
 	set re_int_insn "\[ \t\]*int\[ \t\]\[^\r\n\]*"
 	set re [multi_line \

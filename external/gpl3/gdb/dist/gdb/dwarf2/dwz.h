@@ -1,6 +1,6 @@
 /* DWARF DWZ handling for GDB.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,10 +31,12 @@ struct dwarf2_per_objfile;
 
 struct dwz_file
 {
-  dwz_file (gdb_bfd_ref_ptr &&bfd)
-    : dwz_bfd (std::move (bfd))
-  {
-  }
+  /* Open the separate '.dwz' debug file, if needed.  This will set
+     the appropriate field in the per-BFD structure.  If the DWZ file
+     exists, the relevant sections are read in as well.  Throws an
+     exception if the .gnu_debugaltlink or .debug_sup section exists
+     but is invalid or if the file cannot be found.  */
+  static void read_dwz_file (dwarf2_per_objfile *per_objfile);
 
   const char *filename () const
   {
@@ -56,7 +58,7 @@ struct dwz_file
 
   /* If we loaded the index from an external file, this contains the
      resources associated to the open file, memory mapping, etc.  */
-  std::unique_ptr<index_cache_resource> index_cache_res;
+  index_cache_resource_up index_cache_res;
 
   /* Read a string at offset STR_OFFSET in the .debug_str section from
      this dwz file.  Throw an error if the offset is too large.  If
@@ -64,22 +66,15 @@ struct dwz_file
      return a pointer to the string.  */
 
   const char *read_string (struct objfile *objfile, LONGEST str_offset);
+
+private:
+
+  explicit dwz_file (gdb_bfd_ref_ptr &&bfd)
+    : dwz_bfd (std::move (bfd))
+  {
+  }
 };
 
-/* Return the separate '.dwz' debug file.  If there is no
-   .gnu_debugaltlink section in the file, then the result depends on
-   REQUIRE: if REQUIRE is true, then error; if REQUIRE is false,
-   return NULL.  */
-
-extern dwz_file *dwarf2_get_dwz_file (dwarf2_per_bfd *per_bfd,
-				      bool require = false);
-
-/* Open the separate '.dwz' debug file, if needed.  This just sets the
-   appropriate field in the per-BFD structure.  If the DWZ file
-   exists, the relevant sections are read in as well.  Throws an error
-   if the .gnu_debugaltlink section exists but the file cannot be
-   found.  */
-
-extern void dwarf2_read_dwz_file (dwarf2_per_objfile *per_objfile);
+using dwz_file_up = std::unique_ptr<dwz_file>;
 
 #endif /* GDB_DWARF2_DWZ_H */

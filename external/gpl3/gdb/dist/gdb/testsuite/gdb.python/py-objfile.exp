@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2024 Free Software Foundation, Inc.
+# Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,7 +144,8 @@ gdb_test "python print (sep_objfile.owner.filename)" "${testfile}2" \
 gdb_test "python print (sep_objfile.owner.username)" "${testfile}2" \
     "Test user-name of owner of separate debug file"
 
-gdb_test "p main" "= {int \\(\\)} $hex <main>" \
+set re_prototype [string_to_regexp "int (void)"]
+gdb_test "p main" "= {$re_prototype} $hex <main>" \
     "print main with debug info"
 
 # Separate debug files are not findable.
@@ -162,7 +163,8 @@ if ![ishost *-*-mingw*] {
     remote_exec host "rm -f ${symlink_binary}"
     remote_exec host "ln -sf ${testfile} ${symlink_binary}"
     if [remote_file host exists "${symlink_binary}"] {
-	clean_restart "${symlink_binary}"
+	clean_restart
+	gdb_load "${symlink_binary}"
 	gdb_test "python print (gdb.lookup_objfile (\"${symlink_binary}\").filename)" \
 	    "${testfile}" "gdb.lookup_objfile of symlinked binary"
     }

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/i386.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,7 +92,7 @@ i386_fbsd_nat_target::fetch_registers (struct regcache *regcache, int regnum)
 
   /* There is no i386_fxsave_supplies or i386_xsave_supplies.
      Instead, the earlier register sets return early if the request
-     was for a specific register that was already satisified to avoid
+     was for a specific register that was already satisfied to avoid
      fetching the FPU/XSAVE state unnecessarily.  */
 
 #ifdef PT_GETXSTATE_INFO
@@ -171,7 +171,7 @@ i386_fbsd_nat_target::store_registers (struct regcache *regcache, int regnum)
 
   /* There is no i386_fxsave_supplies or i386_xsave_supplies.
      Instead, the earlier register sets return early if the request
-     was for a specific register that was already satisified to avoid
+     was for a specific register that was already satisfied to avoid
      fetching the FPU/XSAVE state unnecessarily.  */
 
 #ifdef PT_GETXSTATE_INFO
@@ -330,9 +330,7 @@ i386_fbsd_nat_target::read_description ()
   return i386_target_description (X86_XSTATE_X87_MASK, true);
 }
 
-void _initialize_i386fbsd_nat ();
-void
-_initialize_i386fbsd_nat ()
+INIT_GDB_FILE (i386fbsd_nat)
 {
   add_inf_child_target (&the_i386_fbsd_nat_target);
 

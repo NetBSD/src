@@ -51,11 +51,29 @@ main (int argc, char *argv[])
   while ((offset = ctf_member_next (fp, type, &i, &name, &membtype,
 				    CTF_MN_RECURSE)) >= 0)
     {
+      ctf_membinfo_t memb;
       char *type_name = ctf_type_aname (fp, membtype);
 
       printf ("next test: %s, offset %zx, has type %lx/%s\n",
 	      name, offset, membtype, type_name);
       free (type_name);
+
+      /* Check that we can get the same member via ctf_member_info too.  */
+      if (name[0] != '\0')
+	{
+	  if (ctf_member_info (fp, type, name, &memb) != 0)
+	    {
+	      fprintf (stderr, "Cannot get member info for %s: %s\n",
+		       name, ctf_errmsg (ctf_errno (fp)));
+	      exit (1);
+	    }
+	  if (memb.ctm_offset != offset || memb.ctm_type != membtype)
+	    {
+	      fprintf (stderr, "ctf_member_info versus iteration comparison "
+		       "failure: types %lx/%lx, offsets %zx/%lx\n",
+		       membtype, memb.ctm_type, offset, memb.ctm_offset);
+	    }
+	}
     }
   if (ctf_errno (fp) != ECTF_NEXT_END)
     goto nerr;

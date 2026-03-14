@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Free Software Foundation, Inc.
+# Copyright (C) 2024-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,6 +66,50 @@ if { [regexp $re_nfs $filename] } {
 } else {
     gdb_assert { [string equal $filename /proc/${testpid}/exe] } $test
 }
+
+# Restart GDB.
+clean_restart
+
+# Setup an empty sysroot.  GDB will fail to find the executable within
+# the sysroot.  Additionally, the presence of a sysroot should prevent
+# GDB from trying to load the executable from /proc/PID/exe.
+set sysroot [standard_output_file "sysroot"]
+gdb_test_no_output "set sysroot $sysroot" \
+    "setup sysroot"
+
+# Attach to the inferior.  GDB should complain about failing to find
+# the executable.  It is the name of the executable that GDB doesn't
+# find that we're interesting in here.  For native targets GDB should
+# be looking for BINFILE, not /proc/PID/exe.
+#
+# For extended-remote targets things are unfortunately harder.  Native
+# GDB looks for BINFILE because it understands that GDB will be
+# looking in the sysroot.  But remote GDB doesn't know if GDB is using
+# a sysroot or not.  As such, gdbserver will return /proc/PID/exe if
+# it knows that the file has been deleted locally.  This isn't great
+# if GDB then plans to look in a sysroot, but equally, if the remote
+# file has been deleted, then the name GDB will return, will have had
+# " (deleted" appended, so we're unlikely to get a hit in the sysroot
+# either way.
+if { [target_info gdb_protocol] == "extended-remote" } {
+    set filename_re "/proc/$testpid/exe"
+} else {
+    set filename_re "\[^\r\n\]+/${testfile} \\(deleted\\)"
+}
+
+verbose -log "APB: warning: No executable has been specified, and target executable $filename_re could not be found\\.  Try using the \"file\" command\\."
+
+gdb_test "attach $testpid" \
+    [multi_line \
+	 "Attaching to process $decimal" \
+	 "warning: No executable has been specified, and target executable $filename_re could not be found\\.  Try using the \"file\" command\\." \
+	 ".*"] \
+    "attach to inferior"
+
+# Check GDB hasn't managed to load an executable.
+gdb_test "info inferior" \
+    "\\*\[^)\]+\\)\\s*" \
+    "confirm no executable is loaded."
 
 # Cleanup.
 kill_wait_spawned_process $test_spawn_id

@@ -1,6 +1,6 @@
 /* Caching code for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -679,9 +679,7 @@ set_dcache_line_size (const char *args, int from_tty,
   target_dcache_invalidate (current_program_space->aspace);
 }
 
-void _initialize_dcache ();
-void
-_initialize_dcache ()
+INIT_GDB_FILE (dcache)
 {
   add_setshow_boolean_cmd ("remotecache", class_support,
 			   &dcache_enabled_p, _("\

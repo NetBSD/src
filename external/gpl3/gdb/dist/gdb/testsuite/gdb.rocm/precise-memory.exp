@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -28,7 +28,8 @@ if {[build_executable "failed to prepare" $testfile $srcfile {debug hip}]} {
 }
 
 proc do_test { } {
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
 
     with_rocm_gpu_lock {
 	if ![runto_main] {
@@ -39,18 +40,40 @@ proc do_test { } {
 	    "AMDGPU precise memory access reporting is off \\(currently disabled\\)." \
 	    "show precise-memory setting in CLI before"
 
-	if {[hip_devices_support_precise_memory]} {
-	    gdb_test_no_output "set amdgpu precise-memory on"
-	    set cli_effective_value "enabled"
-	} else {
-	    gdb_test "set amdgpu precise-memory on" \
-		"warning: AMDGPU precise memory access reporting could not be enabled."
-	    set cli_effective_value "disabled"
+	# Assume precise-memory is available, unless GDB reports otherwise.
+	gdb_test_multiple "set amdgpu precise-memory on" "" {
+	    -re -wrap "warning: AMDGPU precise memory access reporting could not be enabled\\." {
+		set cli_effective_value "disabled"
+		pass $gdb_test_name
+	    }
+	    -re -wrap "^" {
+		set cli_effective_value "enabled"
+		pass $gdb_test_name
+	    }
 	}
 
 	gdb_test "show amdgpu precise-memory" \
-	    "AMDGPU precise memory access reporting is on \\(currently ${cli_effective_value}\\)." \
+	    "AMDGPU precise memory access reporting is on \\(currently ${cli_effective_value}\\)\\." \
 	    "show precise-memory setting in CLI after"
+
+	if { $cli_effective_value eq "disabled" } {
+	    return
+	}
+
+	# Get to the beginning of the GPU kernel without precise memory enabled.
+	with_test_prefix "goto gpu code" {
+	    gdb_test_no_output "set amdgpu precise-memory off"
+	    gdb_breakpoint "kernel" allow-pending
+	    gdb_test "continue" "Thread ${::decimal}.* hit Breakpoint .*"
+	    gdb_test_no_output "set amdgpu precise-memory on"
+	}
+
+	# If precise-memory is available, run until a SIGSEGV is reported.  At
+	# that point, the PC should point to the s_nop instruction (the one
+	# following the one which caused the memory violation).
+	gdb_test "continue" "Thread ${::decimal}\[^\r\n\]* received signal SIGSEGV, Segmentation fault.*"
+
+	gdb_test "x/i \$pc" "=> ${::hex} <_Z6kernelv\\+${::decimal}>:\[ \t\]+s_nop\[ \t\]+0"
     }
 }
 

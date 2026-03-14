@@ -1,0 +1,127 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+#
+# Starts a communication with gdbserver setting the remotelog file.
+# Modifies the remotelog with update_log proc, injects an error message
+# instead of the expected replay to the vMustReplyEmpty packet in order
+# to test GDB reacts to the error response properly. After the remotelog
+# modification, this test restarts GDB and starts communication with gdbreply
+# instead of the gdbserver using the remotelog.
+
+load_lib gdbserver-support.exp
+load_lib gdbreplay-support.exp
+
+require allow_gdbserver_tests
+require has_gdbreplay
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+    return -1
+}
+
+# Connect to gdbserver and run to a breakpoint in main.  Record the
+# remotelogfile into the global REMOTELOG.
+proc_with_prefix record_initial_logfile {} {
+    global binfile
+    global remotelog
+    # Make sure we're disconnected, in case we're testing with an
+    # extended-remote board, therefore already connected.
+    gdb_test "disconnect" ".*"
+
+    gdb_test_no_output "set sysroot" \
+	"setting sysroot before starting gdbserver"
+
+    # Start gdbserver like:
+    #   gdbserver :PORT ....
+    set res [gdbserver_start "" $binfile]
+    set gdbserver_protocol [lindex $res 0]
+    set gdbserver_gdbport [lindex $res 1]
+
+    # The replay log is placed in 'replay.log'.
+    set remotelog [standard_output_file replay.log]
+
+    gdb_test_no_output "set remotelogfile $remotelog" \
+	"setup remotelogfile"
+
+    # Connect to gdbserver.
+    if {![gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport] == 0} {
+	unsupported "$testfile (couldn't start gdbserver)"
+	return
+    }
+
+    # If we're connecting as 'remote' then we can't use 'runto'.
+    gdb_breakpoint main
+    gdb_continue_to_breakpoint "continuing to main"
+}
+
+# Connect to gdbreply using the global REMOTELOG.  Runs to a breakpoint
+# in main.
+proc_with_prefix replay_without_error {} {
+    global remotelog
+    clean_restart $::testfile
+    # Make sure we're disconnected, in case we're testing with an
+    # extended-remote board, therefore already connected.
+    gdb_test "disconnect" ".*"
+
+    gdb_test_no_output "set sysroot" "setting sysroot"
+
+    set res [gdbreplay_start $remotelog]
+    set gdbserver_protocol [lindex $res 0]
+    set gdbserver_gdbport [lindex $res 1]
+
+    # Connect to gdbreplay.
+    if {![gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport] == 0} {
+	unsupported "$testfile (couldn't start gdbreplay)"
+	return
+    }
+    gdb_breakpoint main
+    gdb_continue_to_breakpoint "continue to main"
+}
+
+# Create a modified copy of global REMOTELOG, returning an error for the
+# vMustReplyEmpty packet.  Then use gdbreplay to play back the modified
+# copy of REMOTELOG.  Attempt to connect to the remote and expect to see
+# the error reported by GDB.
+proc_with_prefix replay_with_mustreplyempty_error {} {
+    global remotelog
+    global testfile
+    set newline E.errtext
+    set output_file [standard_output_file ${testfile}_out.log]
+
+    # Modify the log file by changing the *response* to
+    # the vMustReplayEmty packet to an error.
+    update_log $remotelog $output_file "vMustReplyEmpty" $newline
+
+    clean_restart $::testfile
+    # Make sure we're disconnected, in case we're testing with an
+    # extended-remote board, therefore already connected.
+    gdb_test "disconnect" ".*"
+
+    gdb_test_no_output "set sysroot"
+
+    set res [gdbreplay_start $output_file]
+    set gdbserver_protocol [lindex $res 0]
+    set gdbserver_gdbport [lindex $res 1]
+
+    # Connect to gdbreplay.
+    gdb_assert {[gdb_target_cmd_ext $gdbserver_protocol $gdbserver_gdbport \
+	".*Remote replied unexpectedly to 'vMustReplyEmpty': E.errtext"] == 0} \
+	"remote replied with an error"
+}
+
+record_initial_logfile
+replay_without_error
+replay_with_mustreplyempty_error

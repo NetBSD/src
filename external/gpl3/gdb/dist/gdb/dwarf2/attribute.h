@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -69,7 +69,7 @@ struct attribute
      form.  */
   LONGEST as_signed () const
   {
-    gdb_assert (form_is_signed ());
+    gdb_assert (form_is_strictly_signed ());
     return u.snd;
   }
 
@@ -91,28 +91,6 @@ struct attribute
     return u.unsnd;
   }
 
-  /* Return true if the value is nonnegative.  Requires that that
-     reprocessing not be needed.  */
-  bool is_nonnegative () const
-  {
-    if (form_is_unsigned ())
-      return true;
-    if (form_is_signed ())
-      return as_signed () >= 0;
-    return false;
-  }
-
-  /* Return the nonnegative value.  Requires that that reprocessing not be
-     needed.  */
-  ULONGEST as_nonnegative () const
-  {
-    if (form_is_unsigned ())
-      return as_unsigned ();
-    if (form_is_signed ())
-      return (ULONGEST)as_signed ();
-    gdb_assert (false);
-  }
-
   /* Return non-zero if ATTR's value is a section offset --- classes
      lineptr, loclistptr, macptr or rangelistptr --- or zero, otherwise.
      You may use the as_unsigned method to retrieve such offsets.
@@ -123,6 +101,46 @@ struct attribute
      of them.  */
 
   bool form_is_section_offset () const;
+
+  /* Return an unsigned constant value.  This only handles constant
+     forms (i.e., form_is_constant -- and not the extended list of
+     "unsigned" forms) and assumes an unsigned value is desired.  This
+     can be used with DWARF-defined enumerations like DW_CC_* or
+     DW_INL_*, but also in situations where a nonnegative constant
+     integer is specified by DWARF.
+
+     If a signed form and negative value is used, or if a non-constant
+     form is used, then complaint is issued and an empty value is
+     returned.  */
+  std::optional<ULONGEST> unsigned_constant () const;
+
+  /* Return a signed constant value.  This only handles constant forms
+     (i.e., form_is_constant -- and not the extended list of
+     "unsigned" forms) and assumes a signed value is desired.  This
+     function will sign-extend DW_FORM_data* values.
+
+     If non-constant form is used, then complaint is issued and an
+     empty value is returned.  */
+  std::optional<LONGEST> signed_constant () const;
+
+  /* Return a signed constant value.  However, for narrow forms like
+     DW_FORM_data1, sign extension is not done.
+
+     DWARF advises compilers to generally use DW_FORM_[su]data to
+     avoid ambiguity.  However, both GCC and LLVM ignore this for
+     certain attributes.  Furthermore in DWARF, whether a narrower
+     form causes sign-extension depends on the attribute -- for
+     attributes that can only assume non-negative values, sign
+     extension is not done.
+
+     Unfortunately, both compilers also emit certain attributes in a
+     "confused" way, using DW_FORM_sdata for signed values, and
+     possibly choosing a narrow form (e.g., DW_FORM_data1) otherwise
+     -- assuming that sign-extension will not be done.
+
+     This method should only be called when this "confused" treatment
+     is necessary.  */
+  std::optional<LONGEST> confused_constant () const;
 
   /* Return non-zero if ATTR's value falls in the 'constant' class, or
      zero otherwise.  When this function returns true, you can apply
@@ -154,7 +172,9 @@ struct attribute
 	    || form == DW_FORM_ref4
 	    || form == DW_FORM_ref8
 	    || form == DW_FORM_ref_udata
-	    || form == DW_FORM_GNU_ref_alt);
+	    || form == DW_FORM_GNU_ref_alt
+	    || form == DW_FORM_ref_sup4
+	    || form == DW_FORM_ref_sup8);
   }
 
   /* Check if the attribute's form is a DW_FORM_block*
@@ -168,12 +188,34 @@ struct attribute
   /* Check if the attribute's form is an unsigned integer form.  */
   bool form_is_unsigned () const;
 
-  /* Check if the attribute's form is a signed integer form.  */
-  bool form_is_signed () const;
+  /* Check if the attribute's form is a signed integer form.  This
+     only returns true for forms that are strictly signed -- that is,
+     for a context-dependent form like DW_FORM_data1, this returns
+     false.  */
+  bool form_is_strictly_signed () const;
+
+  /* Check if the attribute's form is an unsigned constant form.  This
+     only returns true for forms that are strictly unsigned -- that
+     is, for a context-dependent form like DW_FORM_data1, this returns
+     false.  */
+  bool form_is_strictly_unsigned () const
+  {
+    return form == DW_FORM_udata;
+  }
 
   /* Check if the attribute's form is a form that requires
      "reprocessing".  */
   bool form_requires_reprocessing () const;
+
+  /* Check if attribute's form refers to the separate "dwz" file.
+     This is only useful for references to the .debug_info section,
+     not to the supplementary .debug_str section.  */
+  bool form_is_alt () const
+  {
+    return (form == DW_FORM_GNU_ref_alt
+	    || form == DW_FORM_ref_sup4
+	    || form == DW_FORM_ref_sup8);
+  }
 
   /* Return DIE offset of this attribute.  Return 0 with complaint if
      the attribute is not of the required kind.  */

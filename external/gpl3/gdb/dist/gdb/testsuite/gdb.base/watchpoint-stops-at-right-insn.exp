@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -129,7 +129,8 @@ proc test {always_inserted} {
 
     with_test_prefix "always-inserted $always_inserted" {
 
-	clean_restart $binfile
+	clean_restart
+	gdb_load $binfile
 
 	if {![runto_main]} {
 	    return

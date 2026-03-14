@@ -1,5 +1,5 @@
 /* MI Command Set - varobj commands.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -29,7 +29,6 @@
 #include "mi-getopt.h"
 #include "gdbthread.h"
 #include "mi-parse.h"
-#include <optional>
 #include "inferior.h"
 
 static void varobj_update_one (struct varobj *var,

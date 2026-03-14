@@ -1,5 +1,5 @@
 /* MI Command Set - stack commands.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -18,18 +18,15 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
-#include "target.h"
 #include "frame.h"
 #include "value.h"
 #include "mi-cmds.h"
 #include "ui-out.h"
 #include "symtab.h"
 #include "block.h"
-#include "stack.h"
 #include "dictionary.h"
 #include "language.h"
 #include "valprint.h"
-#include "utils.h"
 #include "mi-getopt.h"
 #include "extension.h"
 #include <ctype.h>
@@ -37,7 +34,6 @@
 #include <optional>
 #include "gdbsupport/gdb-safe-ctype.h"
 #include "inferior.h"
-#include "observable.h"
 
 enum what_to_list { locals, arguments, all };
 
@@ -608,7 +604,7 @@ list_args_or_locals (const frame_print_options &fp_opts,
 	{
 	  int print_me = 0;
 
-	  switch (sym->aclass ())
+	  switch (sym->loc_class ())
 	    {
 	    default:
 	    case LOC_UNDEF:	/* catches errors        */

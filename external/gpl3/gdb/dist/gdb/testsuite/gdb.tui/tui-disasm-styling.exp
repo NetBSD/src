@@ -1,0 +1,68 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that disassembler styling can be switched off.
+
+require allow_tui_tests
+
+tuiterm_env
+
+standard_testfile tui-layout.c
+
+if {[build_executable "failed to build" ${testfile} ${srcfile}] == -1} {
+    return
+}
+
+# Grab the contents of the asm box and check for styling.  If
+# EXPECT_STYLED is true then expect styling in the asm box, otherwise,
+# don't expect styling.
+
+proc check_asm_output { expect_styled testname } {
+    set asm_output [Term::get_region 1 1 78 13 "\n" true]
+    set has_styling [regexp -- "<fg:" $asm_output]
+    # The !! converts the booleans to a canonical form for comparison.
+    gdb_assert { [expr !!$has_styling == !!$expect_styled] } \
+	$testname
+}
+
+Term::clean_restart 24 80 $testfile
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+# Proc enter_tui switches off styling, re-enable it.
+Term::command "set style enabled on"
+
+Term::command "layout asm"
+Term::check_box "asm box" 0 0 80 15
+
+check_asm_output true "asm output is styled by default"
+
+Term::command "set style disassembler enabled off"
+check_asm_output false \
+    "asm output is not styled when disassembler styling is off"
+
+Term::command "set style disassembler enabled on"
+check_asm_output true "asm output is styled again"
+
+Term::command "set style enabled off"
+check_asm_output false "asm output is not styled when global switch is off"
+
+Term::command "set style enabled on"
+check_asm_output true "asm output is styled once again"
+
+Term::command "set style sources off"
+check_asm_output true "asm output is styled when source styling is off"

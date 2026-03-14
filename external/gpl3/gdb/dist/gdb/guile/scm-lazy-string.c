@@ -1,6 +1,6 @@
 /* Scheme interface to lazy strings.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,7 @@ struct lazy_string_smob
 
   /*  Holds the encoding that will be applied to the string when the string
       is printed by GDB.  If the encoding is set to NULL then GDB will select
-      the most appropriate encoding when the sting is printed.
+      the most appropriate encoding when the string is printed.
       Space for this is malloc'd and will be freed when the object is
       freed.  */
   char *encoding;

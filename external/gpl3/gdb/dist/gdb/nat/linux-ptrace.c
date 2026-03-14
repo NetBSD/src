@@ -1,5 +1,5 @@
 /* Linux-specific ptrace manipulation routines.
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 #include <sys/procfs.h>
 #endif
 #include "gdbsupport/eintr.h"
+#include "gdbsupport/signals-state-save-restore.h"
 
 /* Stores the ptrace options supported by the running kernel.
    A value of -1 means we did not check for features yet.  A value
@@ -148,6 +149,9 @@ linux_ptrace_test_ret_to_nx (void)
       return;
 
     case 0:
+      /* Set signal handlers to their default because it doesn't make sense
+	 to call GDB-specific handlers any more in the child process. */
+      restore_original_signals_state ();
       l = ptrace (PTRACE_TRACEME, 0, (PTRACE_TYPE_ARG3) NULL,
 		  (PTRACE_TYPE_ARG4) NULL);
       if (l != 0)

@@ -1,6 +1,6 @@
 /* gdb commands implemented in Python
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -105,19 +105,17 @@ cmdpy_function (const char *args, int from_tty, cmd_list_element *command)
 
   gdbpy_enter enter_py;
 
-  if (! obj)
+  if (obj == nullptr)
     error (_("Invalid invocation of Python command object."));
-  if (! PyObject_HasAttr ((PyObject *) obj, invoke_cst))
-    {
-      if (obj->command->is_prefix ())
-	{
-	  /* A prefix command does not need an invoke method.  */
-	  return;
-	}
-      error (_("Python command object missing 'invoke' method."));
-    }
 
-  if (! args)
+  /* If we get here for a prefix command then the prefix command had an
+     'invoke' method when it was created.  If the 'invoke' method is now
+     missing, then the user has done something weird (like deleting the
+     invoke method, yuck!).  */
+  if (!PyObject_HasAttr ((PyObject *) obj, invoke_cst))
+    error (_("Python command object missing 'invoke' method."));
+
+  if (args == nullptr)
     args = "";
   gdbpy_ref<> argobj (PyUnicode_Decode (args, strlen (args), host_charset (),
 					NULL));
@@ -336,10 +334,12 @@ cmdpy_completer (struct cmd_list_element *command,
    name of the new command.  All earlier words must be existing prefix
    commands.
 
-   *BASE_LIST is set to the final prefix command's list of
-   *sub-commands.
+   *BASE_LIST is set to the final prefix command's list of sub-commands.
 
    START_LIST is the list in which the search starts.
+
+   When PREFIX_CMD is not NULL then *PREFIX_CMD is set to the prefix
+   command itself, or NULL, if there is no prefix command.
 
    This function returns the name of the new command.  On error sets the Python
    error and returns NULL.  */
@@ -347,12 +347,16 @@ cmdpy_completer (struct cmd_list_element *command,
 gdb::unique_xmalloc_ptr<char>
 gdbpy_parse_command_name (const char *name,
 			  struct cmd_list_element ***base_list,
-			  struct cmd_list_element **start_list)
+			  struct cmd_list_element **start_list,
+			  struct cmd_list_element **prefix_cmd)
 {
   struct cmd_list_element *elt;
   int len = strlen (name);
   int i, lastchar;
   const char *prefix_text2;
+
+  if (prefix_cmd != nullptr)
+    *prefix_cmd = nullptr;
 
   /* Skip trailing whitespace.  */
   for (i = len - 1; i >= 0 && (name[i] == ' ' || name[i] == '\t'); --i)
@@ -368,9 +372,8 @@ gdbpy_parse_command_name (const char *name,
   for (; i > 0 && valid_cmd_char_p (name[i - 1]); --i)
     ;
 
-  gdb::unique_xmalloc_ptr<char> result ((char *) xmalloc (lastchar - i + 2));
-  memcpy (result.get (), &name[i], lastchar - i + 1);
-  result.get ()[lastchar - i + 1] = '\0';
+  gdb::unique_xmalloc_ptr<char> result
+    = make_unique_xstrndup (&name[i], lastchar - i + 1);
 
   /* Skip whitespace again.  */
   for (--i; i >= 0 && (name[i] == ' ' || name[i] == '\t'); --i)
@@ -385,7 +388,7 @@ gdbpy_parse_command_name (const char *name,
 
   prefix_text2 = prefix_text.c_str ();
   elt = lookup_cmd_1 (&prefix_text2, *start_list, NULL, NULL, 1);
-  if (elt == NULL || elt == CMD_LIST_AMBIGUOUS)
+  if (elt == nullptr || elt == CMD_LIST_AMBIGUOUS || *prefix_text2 != '\0')
     {
       PyErr_Format (PyExc_RuntimeError, _("Could not find command prefix %s."),
 		    prefix_text.c_str ());
@@ -395,6 +398,8 @@ gdbpy_parse_command_name (const char *name,
   if (elt->is_prefix ())
     {
       *base_list = elt->subcommands;
+      if (prefix_cmd != nullptr)
+	*prefix_cmd = elt;
       return result;
     }
 
@@ -469,8 +474,9 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
       return -1;
     }
 
+  cmd_list_element *prefix_cmd = nullptr;
   gdb::unique_xmalloc_ptr<char> cmd_name
-    = gdbpy_parse_command_name (name, &cmd_list, &cmdlist);
+    = gdbpy_parse_command_name (name, &cmd_list, &cmdlist, &prefix_cmd);
   if (cmd_name == nullptr)
     return -1;
 
@@ -507,26 +513,64 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
 
       if (is_prefix)
 	{
-	  int allow_unknown;
+	  bool has_invoke = PyObject_HasAttr (self, invoke_cst) == 1;
+	  if (has_invoke)
+	    {
+	      /* If there's an 'invoke' method, then create the prefix
+		 command, but call cmdpy_function to dispatch to the invoke
+		 method when the user runs the prefix with no sub-command.  */
+	      cmd = add_prefix_cmd (cmd_name.get (),
+				    (enum command_class) cmdtype,
+				    nullptr,
+				    docstring.release (), &obj->sub_list,
+				    1 /* allow_unknown */, cmd_list);
+	      cmd->func = cmdpy_function;
+	    }
+	  else
+	    {
+	      /* If there is no 'invoke' method, then create the prefix
+		 using the standard prefix callbacks.  This means that for
+		 'set prefix' the user will get the help text listing all
+		 of the sub-commands, and for 'show prefix', the user will
+		 see all of the sub-command values.  */
+	      if (prefix_cmd != nullptr)
+		{
+		  while (prefix_cmd->prefix != nullptr)
+		    prefix_cmd = prefix_cmd->prefix;
+		}
 
-	  /* If we have our own "invoke" method, then allow unknown
-	     sub-commands.  */
-	  allow_unknown = PyObject_HasAttr (self, invoke_cst);
-	  cmd = add_prefix_cmd (cmd_name.get (),
-				(enum command_class) cmdtype,
-				NULL, docstring.release (), &obj->sub_list,
-				allow_unknown, cmd_list);
+	      bool is_show = (prefix_cmd != nullptr
+			      && prefix_cmd->subcommands == &showlist);
+
+	      if (is_show)
+		cmd = add_show_prefix_cmd (cmd_name.get (),
+					   (enum command_class) cmdtype,
+					   docstring.release (),
+					   &obj->sub_list,
+					   0 /* allow_unknown */, cmd_list);
+	      else
+		cmd = add_basic_prefix_cmd (cmd_name.get (),
+					    (enum command_class) cmdtype,
+					    docstring.release (),
+					    &obj->sub_list,
+					    0 /* allow_unknown */, cmd_list);
+	    }
 	}
       else
-	cmd = add_cmd (cmd_name.get (), (enum command_class) cmdtype,
-		       docstring.release (), cmd_list);
+	{
+	  /* For non-prefix commands, arrange to call cmdpy_function, which
+	     invokes the Python 'invoke' method, or raises an exception if
+	     the 'invoke' method is missing.  */
+	  cmd = add_cmd (cmd_name.get (), (enum command_class) cmdtype,
+			 docstring.release (), cmd_list);
+	  cmd->func = cmdpy_function;
+	}
 
       /* If successful, the above takes ownership of the name, since we set
 	 name_allocated, so release it.  */
       cmd_name.release ();
 
-      /* There appears to be no API to set this.  */
-      cmd->func = cmdpy_function;
+      /* There appears to be no API to set these member variables.  */
       cmd->destroyer = cmdpy_destroyer;
       cmd->doc_allocated = 1;
       cmd->name_allocated = 1;

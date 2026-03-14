@@ -1,5 +1,5 @@
 # Basic expect script for libctf lookup tests
-#   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -34,6 +34,10 @@ if ![info exists as] then {
     set as [findfile $base_dir/../gas/as-new $base_dir/../gas/as-new [transform as]]
 }
 
+if ![info exists objdump] then {
+    set objdump [findfile $base_dir/../binutils/objdump]
+}
+
 remote_exec host "mkdir -p tmpdir"
 
 # Make symlinks from tmpdir/libctf to the linker and assembler in the
@@ -63,9 +67,11 @@ if {![info exists CFLAGS_FOR_TARGET]} {
 if ![info exists AR] then {
     set AR [findfile $base_dir/../binutils/ar]
 }
-
 if {![info exists OBJDUMP]} {
     set OBJDUMP [findfile $base_dir/../binutils/objdump]
+}
+if ![info exists OBJDUMPFLAGS] then {
+    set OBJDUMPFLAGS {}
 }
 
 # load the utility procedures

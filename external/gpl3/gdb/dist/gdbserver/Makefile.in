@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2024 Free Software Foundation, Inc.
+# Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -104,10 +104,6 @@ LIBIBERTY = $(LIBIBERTY_NORMAL)
 GDBSUPPORT_BUILDDIR = ../gdbsupport
 GDBSUPPORT = $(GDBSUPPORT_BUILDDIR)/libgdbsupport.a
 
-# Where is ust?  These will be empty if ust was not available.
-ustlibs = @ustlibs@
-ustinc = @ustinc@
-
 # gnulib
 GNULIB_PARENT_DIR = ..
 include $(GNULIB_PARENT_DIR)/gnulib/Makefile.gnulib.inc
@@ -198,6 +194,7 @@ SFILES = \
 	$(srcdir)/linux-loongarch-low.cc \
 	$(srcdir)/linux-low.cc \
 	$(srcdir)/linux-m68k-low.cc \
+        $(srcdir)/linux-microblaze-low.cc \
 	$(srcdir)/linux-mips-low.cc \
 	$(srcdir)/linux-or1k-low.cc \
 	$(srcdir)/linux-ppc-low.cc \
@@ -489,10 +486,6 @@ MAKEOVERRIDES =
 regdat_sh = $(srcdir)/../gdb/regformats/regdat.sh
 osabi_def = $(srcdir)/../gdbsupport/osabi.def
 
-UST_CFLAGS = \
-	$(ustinc) \
-	-DCONFIG_UST_GDB_INTEGRATION
-
 # Undo gnulib replacements for the IPA shared library build.
 # The gnulib headers are still needed, but gnulib is not linked
 # into the IPA lib so replacement apis don't work.
@@ -506,7 +499,6 @@ UNDO_GNULIB_CFLAGS = \
 # the first place.
 IPAGENT_CFLAGS = \
 	$(INTERNAL_CFLAGS) \
-	$(UST_CFLAGS) \
 	$(UNDO_GNULIB_CFLAGS) \
 	-fPIC -DIN_PROCESS_AGENT \
 	-fvisibility=hidden

@@ -1,6 +1,6 @@
 /* YACC parser for D expressions, for GDB.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -444,7 +444,7 @@ PrimaryExpression:
 		  sym = lookup_symbol (copy.c_str (),
 				       pstate->expression_context_block,
 				       SEARCH_VFT, &is_a_field_of_this);
-		  if (sym.symbol && sym.symbol->aclass () != LOC_TYPEDEF)
+		  if (sym.symbol && sym.symbol->loc_class () != LOC_TYPEDEF)
 		    {
 		      if (symbol_read_needs_frame (sym.symbol))
 			pstate->block_tracker->update (sym);
@@ -1334,7 +1334,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
   std::string copy = copy_name (yylval.sval);
 
   sym = lookup_symbol (copy.c_str (), block, SEARCH_VFT, &is_a_field_of_this);
-  if (sym.symbol && sym.symbol->aclass () == LOC_TYPEDEF)
+  if (sym.symbol && sym.symbol->loc_class () == LOC_TYPEDEF)
     {
       yylval.tsym.type = sym.symbol->type ();
       return TYPENAME;
@@ -1383,7 +1383,7 @@ classify_inner_name (struct parser_state *par_state,
   if (yylval.ssym.sym.symbol == NULL)
     return ERROR;
 
-  if (yylval.ssym.sym.symbol->aclass () == LOC_TYPEDEF)
+  if (yylval.ssym.sym.symbol->loc_class () == LOC_TYPEDEF)
     {
       yylval.tsym.type = yylval.ssym.sym.symbol->type ();
       return TYPENAME;

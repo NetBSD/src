@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/mips.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -476,12 +476,30 @@ mips_fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
   return fbsd_skip_solib_resolver (gdbarch, pc);
 }
 
-/* FreeBSD/mips uses a slightly different `struct link_map' than the
-   other FreeBSD platforms as it includes an additional `l_off'
-   member.  */
+/* solib_ops for ILP32 FreeBSD/MIPS systems.  */
 
-static struct link_map_offsets *
-mips_fbsd_ilp32_fetch_link_map_offsets (void)
+struct mips_fbsd_ilp32_solib_ops : public svr4_solib_ops
+{
+  using svr4_solib_ops::svr4_solib_ops;
+
+  /* FreeBSD/MIPS uses a slightly different `struct link_map' than the
+     other FreeBSD platforms as it includes an additional `l_off' member.  */
+
+  link_map_offsets *fetch_link_map_offsets () const override;
+};
+
+/* Return a new solib_ops for ILP32 FreeBSD/MIPS systems.  */
+
+static solib_ops_up
+make_mips_fbsd_ilp32_solib_ops (program_space *pspace)
+{
+  return std::make_unique<mips_fbsd_ilp32_solib_ops> (pspace);
+}
+
+/* See mips_fbsd_ilp32_solib_ops.  */
+
+link_map_offsets *
+mips_fbsd_ilp32_solib_ops::fetch_link_map_offsets () const
 {
   static struct link_map_offsets lmo;
   static struct link_map_offsets *lmp = NULL;
@@ -508,8 +526,30 @@ mips_fbsd_ilp32_fetch_link_map_offsets (void)
   return lmp;
 }
 
-static struct link_map_offsets *
-mips_fbsd_lp64_fetch_link_map_offsets (void)
+/* solib_ops for LP64 FreeBSD/MIPS systems.  */
+
+struct mips_fbsd_lp64_solib_ops : public svr4_solib_ops
+{
+  using svr4_solib_ops::svr4_solib_ops;
+
+  /* FreeBSD/MIPS uses a slightly different `struct link_map' than the
+     other FreeBSD platforms as it includes an additional `l_off' member.  */
+
+  link_map_offsets *fetch_link_map_offsets () const override;
+};
+
+/* Return a new solib_ops for LP64 FreeBSD/MIPS systems.  */
+
+static solib_ops_up
+make_mips_fbsd_lp64_solib_ops (program_space *pspace)
+{
+  return std::make_unique<mips_fbsd_lp64_solib_ops> (pspace);
+}
+
+/* See mips_fbsd_lp64_solib_ops.  */
+
+link_map_offsets *
+mips_fbsd_lp64_solib_ops::fetch_link_map_offsets () const
 {
   static struct link_map_offsets lmo;
   static struct link_map_offsets *lmp = NULL;
@@ -544,7 +584,7 @@ mips_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Generic FreeBSD support.  */
   fbsd_init_abi (info, gdbarch);
 
-  set_gdbarch_software_single_step (gdbarch, mips_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, mips_software_single_step);
 
   switch (abi)
     {
@@ -565,15 +605,12 @@ mips_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_skip_solib_resolver (gdbarch, mips_fbsd_skip_solib_resolver);
 
   /* FreeBSD/mips has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, (gdbarch_ptr_bit (gdbarch) == 32 ?
-	       mips_fbsd_ilp32_fetch_link_map_offsets :
-	       mips_fbsd_lp64_fetch_link_map_offsets));
+  set_solib_svr4_ops (gdbarch, (gdbarch_ptr_bit (gdbarch) == 32
+				? make_mips_fbsd_ilp32_solib_ops
+				: make_mips_fbsd_lp64_solib_ops));
 }
 
-void _initialize_mips_fbsd_tdep ();
-void
-_initialize_mips_fbsd_tdep ()
+INIT_GDB_FILE (mips_fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_FREEBSD,
 			  mips_fbsd_init_abi);

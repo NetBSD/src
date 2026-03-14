@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64 Solaris.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by Joseph Myers, CodeSourcery, LLC.
 
@@ -96,13 +96,10 @@ amd64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_num_regs = tdep->gregset_num_regs;
 
   /* Solaris uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 }
 
-void _initialize_amd64_sol2_tdep ();
-void
-_initialize_amd64_sol2_tdep ()
+INIT_GDB_FILE (amd64_sol2_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
 			  GDB_OSABI_SOLARIS, amd64_sol2_init_abi);

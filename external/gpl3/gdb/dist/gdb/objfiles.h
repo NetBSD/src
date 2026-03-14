@@ -1,6 +1,6 @@
 /* Definitions for symbol file management in GDB.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -395,7 +395,9 @@ struct obj_section
     return addr >= this->addr () && addr < endaddr ();
   }
 
-  /* BFD section pointer */
+  /* BFD section pointer.  This is nullptr if the corresponding BFD section is
+     not allocatable (!SEC_ALLOC), in which case this obj_section can be
+     considered NULL / empty.  */
   struct bfd_section *the_bfd_section;
 
   /* Objfile this section is part of.  */
@@ -515,9 +517,15 @@ public:
     return per_bfd->gdbarch;
   }
 
-  /* Return true if OBJFILE has partial symbols.  */
-
+  /* Return true if this objfile has partial symbols.  */
   bool has_partial_symbols ();
+
+  /* Return true if this objfile has full symbols.  */
+  bool has_full_symbols ();
+
+  /* Return true if this objfile has full or partial symbols, either directly
+     or through a separate debug file.  */
+  bool has_symbols ();
 
   /* Look for a separate debug symbol file for this objfile, make use of
      build-id, debug-link, and debuginfod as necessary.  If a suitable
@@ -593,14 +601,13 @@ public:
 
   /* See quick_symbol_functions.  */
   bool expand_symtabs_matching
-    (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+    (expand_symtabs_file_matcher file_matcher,
      const lookup_name_info *lookup_name,
-     gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-     gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+     expand_symtabs_symbol_matcher symbol_matcher,
+     expand_symtabs_expansion_listener expansion_notify,
      block_search_flags search_flags,
      domain_search_flags domain,
-     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher
-       = nullptr);
+     expand_symtabs_lang_matcher lang_matcher = nullptr);
 
   /* See quick_symbol_functions.  */
   struct compunit_symtab *
@@ -609,8 +616,7 @@ public:
 				int warn_if_readin);
 
   /* See quick_symbol_functions.  */
-  void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-			     bool need_fullname);
+  void map_symbol_filenames (symbol_filename_listener fun, bool need_fullname);
 
   /* See quick_symbol_functions.  */
   void compute_main_name ();
@@ -651,61 +657,18 @@ public:
     this->section_offsets[idx] = offset;
   }
 
-  class section_iterator
+  /* Filter function for section_iterator.  */
+  struct filter_out_null_bfd_section
   {
-  public:
-    section_iterator (const section_iterator &) = default;
-    section_iterator (section_iterator &&) = default;
-    section_iterator &operator= (const section_iterator &) = default;
-    section_iterator &operator= (section_iterator &&) = default;
-
-    typedef section_iterator self_type;
-    typedef obj_section *value_type;
-
-    value_type operator* ()
-    { return m_iter; }
-
-    section_iterator &operator++ ()
-    {
-      ++m_iter;
-      skip_null ();
-      return *this;
-    }
-
-    bool operator== (const section_iterator &other) const
-    { return m_iter == other.m_iter && m_end == other.m_end; }
-
-    bool operator!= (const section_iterator &other) const
-    { return !(*this == other); }
-
-  private:
-
-    friend class objfile;
-
-    section_iterator (obj_section *iter, obj_section *end)
-      : m_iter (iter),
-	m_end (end)
-    {
-      skip_null ();
-    }
-
-    void skip_null ()
-    {
-      while (m_iter < m_end && m_iter->the_bfd_section == nullptr)
-	++m_iter;
-    }
-
-    value_type m_iter;
-    value_type m_end;
+    bool operator() (const obj_section &sec) const noexcept
+    { return sec.the_bfd_section != nullptr; }
   };
 
-  iterator_range<section_iterator> sections ()
-  {
-    return (iterator_range<section_iterator>
-	    (section_iterator (sections_start, sections_end),
-	     section_iterator (sections_end, sections_end)));
-  }
+  using section_iterator = filtered_iterator<obj_section *, filter_out_null_bfd_section>;
 
+  /* Return an iterable that yields the "non-null" sections of this objfile.
+     That is, the sections for which obj_section::the_bfd_section is
+     non-nullptr.  */
   iterator_range<section_iterator> sections () const
   {
     return (iterator_range<section_iterator>
@@ -940,15 +903,6 @@ extern void free_objfile_separate_debug (struct objfile *);
 extern void objfile_relocate (struct objfile *, const section_offsets &);
 extern void objfile_rebase (struct objfile *, CORE_ADDR);
 
-/* Return true if OBJFILE has full symbols.  */
-
-extern bool objfile_has_full_symbols (objfile *objfile);
-
-/* Return true if OBJFILE has full or partial symbols, either directly
-   or through a separate debug file.  */
-
-extern bool objfile_has_symbols (objfile *objfile);
-
 /* Return true if any objfile of PSPACE has partial symbols.  */
 
 extern bool have_partial_symbols (program_space *pspace);
@@ -994,10 +948,10 @@ extern struct obj_section *find_pc_section (CORE_ADDR pc);
 /* Return true if PC is in a section called NAME.  */
 extern bool pc_in_section (CORE_ADDR, const char *);
 
-/* Return non-zero if PC is in a SVR4-style procedure linkage table
+/* Return true  if PC is in a SVR4-style procedure linkage table
    section.  */
 
-static inline int
+static inline bool
 in_plt_section (CORE_ADDR pc)
 {
   return (pc_in_section (pc, ".plt")
@@ -1014,10 +968,6 @@ in_plt_section (CORE_ADDR pc)
    removed or relocated.  */
 extern scoped_restore_tmpl<int> inhibit_section_map_updates
     (struct program_space *pspace);
-
-extern void default_iterate_over_objfiles_in_search_order
-  (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
-   objfile *current_objfile);
 
 /* Reset the per-BFD storage area on OBJ.  */
 

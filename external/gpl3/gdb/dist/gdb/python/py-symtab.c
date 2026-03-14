@@ -1,6 +1,6 @@
 /* Python interface to symbol tables.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,39 +28,12 @@ struct symtab_object {
   PyObject_HEAD
   /* The GDB Symbol table structure.  */
   struct symtab *symtab;
-  /* A symtab object is associated with an objfile, so keep track with
-     a doubly-linked list, rooted in the objfile.  This allows
-     invalidation of the underlying struct symtab when the objfile is
-     deleted.  */
-  symtab_object *prev;
-  symtab_object *next;
-};
-
-/* This function is called when an objfile is about to be freed.
-   Invalidate the symbol table as further actions on the symbol table
-   would result in bad data.  All access to obj->symtab should be
-   gated by STPY_REQUIRE_VALID which will raise an exception on
-   invalid symbol tables.  */
-struct stpy_deleter
-{
-  void operator() (symtab_object *obj)
-  {
-    while (obj)
-      {
-	symtab_object *next = obj->next;
-
-	obj->symtab = NULL;
-	obj->next = NULL;
-	obj->prev = NULL;
-	obj = next;
-      }
-  }
 };
 
 extern PyTypeObject symtab_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("symtab_object");
-static const registry<objfile>::key<symtab_object, stpy_deleter>
-     stpy_objfile_data_key;
+static const gdbpy_registry<gdbpy_memoizing_registry_storage<symtab_object,
+  symtab, &symtab_object::symtab>> stpy_registry;
 
 /* Require a valid symbol table.  All access to symtab_object->symtab
    should be gated by this call.  */
@@ -77,8 +50,6 @@ static const registry<objfile>::key<symtab_object, stpy_deleter>
 
 struct sal_object {
   PyObject_HEAD
-  /* The GDB Symbol table structure.  */
-  PyObject *symtab;
   /* The GDB Symbol table and line structure.  */
   struct symtab_and_line *sal;
   /* A Symtab and line object is associated with an objfile, so keep
@@ -94,34 +65,19 @@ struct sal_object {
    data.  All access to obj->sal should be gated by
    SALPY_REQUIRE_VALID which will raise an exception on invalid symbol
    table and line objects.  */
-struct salpy_deleter
+struct salpy_invalidator
 {
   void operator() (sal_object *obj)
   {
-    gdbpy_enter enter_py;
-
-    while (obj)
-      {
-	sal_object *next = obj->next;
-
-	gdbpy_ref<> tmp (obj->symtab);
-	obj->symtab = Py_None;
-	Py_INCREF (Py_None);
-
-	obj->next = NULL;
-	obj->prev = NULL;
-	xfree (obj->sal);
-	obj->sal = NULL;
-
-	obj = next;
-      }
+    xfree (obj->sal);
+    obj->sal = nullptr;
   }
 };
 
 extern PyTypeObject sal_object_type
     CPYCHECKER_TYPE_OBJECT_FOR_TYPEDEF ("sal_object");
-static const registry<objfile>::key<sal_object, salpy_deleter>
-     salpy_objfile_data_key;
+static const gdbpy_registry<gdbpy_tracking_registry_storage<sal_object,
+  symtab_and_line, &sal_object::sal, salpy_invalidator>> salpy_registry;
 
 /* Require a valid symbol table and line object.  All access to
    sal_object->sal should be gated by this call.  */
@@ -272,18 +228,15 @@ salpy_str (PyObject *self)
 {
   const char *filename;
   sal_object *sal_obj;
-  struct symtab_and_line *sal = NULL;
+  struct symtab_and_line *sal = nullptr;
 
   SALPY_REQUIRE_VALID (self, sal);
 
   sal_obj = (sal_object *) self;
-  if (sal_obj->symtab == Py_None)
+  if (sal_obj->sal->symtab == nullptr)
     filename = "<unknown>";
   else
-    {
-      symtab *symtab = symtab_object_to_symtab (sal_obj->symtab);
-      filename = symtab_to_filename_for_display (symtab);
-    }
+    filename = symtab_to_filename_for_display (sal_obj->sal->symtab);
 
   return PyUnicode_FromFormat ("symbol and line for %s, line %d", filename,
 			       sal->line);
@@ -292,16 +245,12 @@ salpy_str (PyObject *self)
 static void
 stpy_dealloc (PyObject *obj)
 {
-  symtab_object *symtab = (symtab_object *) obj;
+  symtab_object *symtab_obj = (symtab_object *) obj;
 
-  if (symtab->prev)
-    symtab->prev->next = symtab->next;
-  else if (symtab->symtab)
-    stpy_objfile_data_key.set (symtab->symtab->compunit ()->objfile (),
-			       symtab->next);
-  if (symtab->next)
-    symtab->next->prev = symtab->prev;
-  symtab->symtab = NULL;
+  if (symtab_obj->symtab != nullptr)
+    stpy_registry.remove (symtab_obj->symtab->compunit ()->objfile(),
+			  symtab_obj);
+
   Py_TYPE (obj)->tp_free (obj);
 }
 
@@ -346,13 +295,13 @@ static PyObject *
 salpy_get_symtab (PyObject *self, void *closure)
 {
   struct symtab_and_line *sal;
-  sal_object *self_sal = (sal_object *) self;
 
   SALPY_REQUIRE_VALID (self, sal);
 
-  Py_INCREF (self_sal->symtab);
-
-  return (PyObject *) self_sal->symtab;
+  if (sal->symtab == nullptr)
+    Py_RETURN_NONE;
+  else
+    return symtab_to_symtab_object (sal->symtab);
 }
 
 /* Implementation of gdb.Symtab_and_line.is_valid (self) -> Boolean.
@@ -375,17 +324,10 @@ salpy_dealloc (PyObject *self)
 {
   sal_object *self_sal = (sal_object *) self;
 
-  if (self_sal->prev)
-    self_sal->prev->next = self_sal->next;
-  else if (self_sal->symtab != Py_None)
-    salpy_objfile_data_key.set
-      (symtab_object_to_symtab (self_sal->symtab)->compunit ()->objfile (),
-       self_sal->next);
+  if (self_sal->sal != nullptr && self_sal->sal->symtab != nullptr)
+    salpy_registry.remove (self_sal->sal->symtab->compunit ()->objfile (),
+			   self_sal);
 
-  if (self_sal->next)
-    self_sal->next->prev = self_sal->prev;
-
-  Py_DECREF (self_sal->symtab);
   xfree (self_sal->sal);
   Py_TYPE (self)->tp_free (self);
 }
@@ -395,48 +337,20 @@ salpy_dealloc (PyObject *self)
    Also, register the sal_object life-cycle with the life-cycle of the
    object file associated with this sal, if needed.  If a failure
    occurs during the sal population, this function will return -1.  */
-static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
+static void
 set_sal (sal_object *sal_obj, struct symtab_and_line sal)
 {
-  PyObject *symtab_obj;
-
-  if (sal.symtab)
-    {
-      symtab_obj = symtab_to_symtab_object  (sal.symtab);
-      /* If a symtab existed in the sal, but it cannot be duplicated,
-	 we exit.  */
-      if (symtab_obj == NULL)
-	return -1;
-    }
-  else
-    {
-      symtab_obj = Py_None;
-      Py_INCREF (Py_None);
-    }
-
   sal_obj->sal = ((struct symtab_and_line *)
 		  xmemdup (&sal, sizeof (struct symtab_and_line),
 			   sizeof (struct symtab_and_line)));
-  sal_obj->symtab = symtab_obj;
-  sal_obj->prev = NULL;
+  sal_obj->prev = nullptr;
+  sal_obj->next = nullptr;
 
   /* If the SAL does not have a symtab, we do not add it to the
      objfile cleanup observer linked list.  */
-  if (sal_obj->symtab != Py_None)
-    {
-      symtab *symtab = symtab_object_to_symtab (sal_obj->symtab);
-
-      sal_obj->next
-	= salpy_objfile_data_key.get (symtab->compunit ()->objfile ());
-      if (sal_obj->next)
-	sal_obj->next->prev = sal_obj;
-
-      salpy_objfile_data_key.set (symtab->compunit ()->objfile (), sal_obj);
-    }
-  else
-    sal_obj->next = NULL;
-
-  return 0;
+  symtab *symtab = sal_obj->sal->symtab;
+  if (symtab != nullptr)
+    salpy_registry.add (symtab->compunit ()->objfile (), sal_obj);
 }
 
 /* Given a symtab, and a symtab_object that has previously been
@@ -448,16 +362,8 @@ static void
 set_symtab (symtab_object *obj, struct symtab *symtab)
 {
   obj->symtab = symtab;
-  obj->prev = NULL;
-  if (symtab)
-    {
-      obj->next = stpy_objfile_data_key.get (symtab->compunit ()->objfile ());
-      if (obj->next)
-	obj->next->prev = obj;
-      stpy_objfile_data_key.set (symtab->compunit ()->objfile (), obj);
-    }
-  else
-    obj->next = NULL;
+  if (symtab != nullptr)
+    stpy_registry.add (symtab->compunit ()->objfile (), obj);
 }
 
 /* Create a new symbol table (gdb.Symtab) object that encapsulates the
@@ -466,6 +372,16 @@ PyObject *
 symtab_to_symtab_object (struct symtab *symtab)
 {
   symtab_object *symtab_obj;
+
+  /* Look if there's already a gdb.Symtab object for given SYMTAB
+     and if so, return it.  */
+  if (symtab != nullptr)
+    {
+      symtab_obj = stpy_registry.lookup (symtab->compunit ()->objfile (),
+					 symtab);
+      if (symtab_obj != nullptr)
+	return (PyObject*)symtab_obj;
+    }
 
   symtab_obj = PyObject_New (symtab_object, &symtab_object_type);
   if (symtab_obj)
@@ -479,14 +395,13 @@ symtab_to_symtab_object (struct symtab *symtab)
 PyObject *
 symtab_and_line_to_sal_object (struct symtab_and_line sal)
 {
-  gdbpy_ref<sal_object> sal_obj (PyObject_New (sal_object, &sal_object_type));
-  if (sal_obj != NULL)
-    {
-      if (set_sal (sal_obj.get (), sal) < 0)
-	return NULL;
-    }
+  sal_object *sal_obj;
 
-  return (PyObject *) sal_obj.release ();
+  sal_obj = PyObject_New (sal_object, &sal_object_type);
+  if (sal_obj != nullptr)
+    set_sal (sal_obj, sal);
+
+  return (PyObject *) sal_obj;
 }
 
 /* Return struct symtab_and_line reference that is wrapped by this
@@ -560,7 +475,7 @@ PyTypeObject symtab_object_type = {
   "gdb.Symtab",			  /*tp_name*/
   sizeof (symtab_object),	  /*tp_basicsize*/
   0,				  /*tp_itemsize*/
-  stpy_dealloc,			  /*tp_dealloc*/
+  stpy_dealloc,		          /*tp_dealloc*/
   0,				  /*tp_print*/
   0,				  /*tp_getattr*/
   0,				  /*tp_setattr*/

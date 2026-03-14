@@ -1,5 +1,5 @@
 /* Cache of styled source file text
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -325,11 +325,26 @@ source_cache::ensure (struct symtab *s)
 	     least one caller.  */
 	  if (i != size - 1)
 	    std::swap (m_source_map[i], m_source_map[size - 1]);
-	  return true;
+
+	  /* If the styling status of the cached entry matches our desired
+	     styling status, or we know this file cannot be styled, in
+	     which case, this (unstyled) content, is the best we can do.  */
+	  if (((source_styling && gdb_stdout->can_emit_style_escape ())
+	       == m_source_map[size - 1].styled)
+	      || m_no_styling_files.count (fullname) > 0)
+	    return true;
+
+	  /* We found a match, but styling status doesn't match the desired
+	     styling status.  We already moved the matching item to the
+	     back of M_SOURCE_MAP, so drop the entry now, and then
+	     recompute with the desired styling.  */
+	  m_source_map.pop_back ();
+	  break;
 	}
     }
 
   std::string contents;
+  bool styled_p = false;
   try
     {
       contents = get_plain_source_lines (s, fullname);
@@ -343,21 +358,22 @@ source_cache::ensure (struct symtab *s)
   if (source_styling && gdb_stdout->can_emit_style_escape ()
       && m_no_styling_files.count (fullname) == 0)
     {
-      bool already_styled
+      styled_p
 	= try_source_highlight (contents, s->language (), fullname);
 
-      if (!already_styled)
+      if (!styled_p)
 	{
 	  std::optional<std::string> ext_contents;
-	  ext_contents = ext_lang_colorize (fullname, contents);
+	  ext_contents = ext_lang_colorize (fullname, contents,
+					    s->language ());
 	  if (ext_contents.has_value ())
 	    {
 	      contents = std::move (*ext_contents);
-	      already_styled = true;
+	      styled_p = true;
 	    }
 	}
 
-      if (!already_styled)
+      if (!styled_p)
 	{
 	  /* Styling failed.  Styling can fail for instance for these
 	     reasons:
@@ -374,7 +390,8 @@ source_cache::ensure (struct symtab *s)
 	}
     }
 
-  source_text result = { std::move (fullname), std::move (contents) };
+  source_text result
+    = { std::move (fullname), std::move (contents), styled_p };
   m_source_map.push_back (std::move (result));
 
   if (m_source_map.size () > MAX_ENTRIES)
@@ -494,9 +511,7 @@ static void extract_lines_test ()
 }
 #endif
 
-void _initialize_source_cache ();
-void
-_initialize_source_cache ()
+INIT_GDB_FILE (source_cache)
 {
   add_cmd ("source-cache", class_maintenance, source_cache_flush_command,
 	   _("Force gdb to flush its source code cache."),

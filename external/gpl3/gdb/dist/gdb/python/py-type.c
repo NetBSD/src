@@ -1,6 +1,6 @@
 /* Python interface to types.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,12 +32,6 @@ struct type_object
 {
   PyObject_HEAD
   struct type *type;
-
-  /* If a Type object is associated with an objfile, it is kept on a
-     doubly-linked list, rooted in the objfile.  This lets us copy the
-     underlying struct type when the objfile is deleted.  */
-  struct type_object *prev;
-  struct type_object *next;
 };
 
 extern PyTypeObject type_object_type
@@ -164,7 +158,7 @@ convert_field (struct type *type, int field)
 	}
       else
 	{
-	  if (type->field (field).loc_kind () == FIELD_LOC_KIND_DWARF_BLOCK)
+	  if (type->field (field).loc_is_dwarf_block ())
 	    arg = gdbpy_ref<>::new_reference (Py_None);
 	  else
 	    arg = gdb_py_object_from_longest (type->field (field).loc_bitpos ());
@@ -1051,9 +1045,9 @@ typy_template_argument (PyObject *self, PyObject *args)
     }
 
   sym = TYPE_TEMPLATE_ARGUMENT (type, argno);
-  if (sym->aclass () == LOC_TYPEDEF)
+  if (sym->loc_class () == LOC_TYPEDEF)
     return type_to_type_object (sym->type ());
-  else if (sym->aclass () == LOC_OPTIMIZED_OUT)
+  else if (sym->loc_class () == LOC_OPTIMIZED_OUT)
     {
       PyErr_Format (PyExc_RuntimeError,
 		    _("Template argument is optimized out"));
@@ -1162,75 +1156,61 @@ typy_richcompare (PyObject *self, PyObject *other, int op)
 
 
 
-/* Deleter that saves types when an objfile is being destroyed.  */
-struct typy_deleter
+/* Forward declaration, see below.  */
+static void set_type (type_object *obj, struct type *type);
+
+/* Invalidator that saves types when an objfile is being destroyed.  */
+struct typy_invalidator
 {
   void operator() (type_object *obj)
   {
-    if (!gdb_python_initialized)
-      return;
-
-    /* This prevents another thread from freeing the objects we're
-       operating on.  */
-    gdbpy_enter enter_py;
-
-    copied_types_hash_t copied_types;
-
-    while (obj)
+    if (obj->type->is_objfile_owned ())
       {
-	type_object *next = obj->next;
+	copied_types_hash_t copied_types;
 
-	copied_types.clear ();
-	obj->type = copy_type_recursive (obj->type, copied_types);
-
-	obj->next = NULL;
-	obj->prev = NULL;
-
-	obj = next;
+	/* Set a copied (now arch-owned) type.  As a side-effect this
+	   adds OBJ to per-arch list.  We do not need to remove it from
+	   per-objfile list since the objfile is going to go completely
+	   anyway.  */
+	set_type (obj, copy_type_recursive (obj->type, copied_types));
+      }
+    else
+      {
+	obj->type = nullptr;
       }
   }
 };
 
-static const registry<objfile>::key<type_object, typy_deleter>
-     typy_objfile_data_key;
+static const gdbpy_registry<gdbpy_memoizing_registry_storage<type_object,
+  type, &type_object::type, typy_invalidator>> typy_registry;
 
 static void
 set_type (type_object *obj, struct type *type)
 {
-  obj->type = type;
-  obj->prev = NULL;
-  if (type != nullptr && type->objfile_owner () != nullptr)
-    {
-      struct objfile *objfile = type->objfile_owner ();
+  gdb_assert (type != nullptr);
 
-      obj->next = typy_objfile_data_key.get (objfile);
-      if (obj->next)
-	obj->next->prev = obj;
-      typy_objfile_data_key.set (objfile, obj);
-    }
+  obj->type = type;
+
+  if (type->objfile_owner () != nullptr)
+    typy_registry.add (type->objfile_owner (), obj);
   else
-    obj->next = NULL;
+    typy_registry.add (type->arch_owner (), obj);
 }
 
 static void
 typy_dealloc (PyObject *obj)
 {
-  type_object *type = (type_object *) obj;
+  type_object *type_obj = (type_object *) obj;
 
-  if (type->prev)
-    type->prev->next = type->next;
-  else if (type->type != nullptr && type->type->objfile_owner () != nullptr)
+  if (type_obj->type != nullptr)
     {
-      /* Must reset head of list.  */
-      struct objfile *objfile = type->type->objfile_owner ();
-
-      if (objfile)
-	typy_objfile_data_key.set (objfile, type->next);
+      if (type_obj->type->is_objfile_owned ())
+	typy_registry.remove (type_obj->type->objfile_owner (), type_obj);
+      else
+	typy_registry.remove (type_obj->type->arch_owner (), type_obj);
     }
-  if (type->next)
-    type->next->prev = type->prev;
 
-  Py_TYPE (type)->tp_free (type);
+  Py_TYPE (obj)->tp_free (obj);
 }
 
 /* Return number of fields ("length" of the field dictionary).  */
@@ -1332,10 +1312,9 @@ static PyObject *
 typy_has_key (PyObject *self, PyObject *args)
 {
   struct type *type = ((type_object *) self)->type;
-  const char *field;
-  int i;
+  const char *field_name;
 
-  if (!PyArg_ParseTuple (args, "s", &field))
+  if (!PyArg_ParseTuple (args, "s", &field_name))
     return NULL;
 
   /* We want just fields of this type, not of base types, so instead of
@@ -1346,11 +1325,11 @@ typy_has_key (PyObject *self, PyObject *args)
   if (type == NULL)
     return NULL;
 
-  for (i = 0; i < type->num_fields (); i++)
+  for (const auto &field : type->fields ())
     {
-      const char *t_field_name = type->field (i).name ();
+      const char *t_field_name = field.name ();
 
-      if (t_field_name && (strcmp_iw (t_field_name, field) == 0))
+      if (t_field_name && (strcmp_iw (t_field_name, field_name) == 0))
 	Py_RETURN_TRUE;
     }
   Py_RETURN_FALSE;
@@ -1472,6 +1451,16 @@ type_to_type_object (struct type *type)
     {
       return gdbpy_handle_gdb_exception (nullptr, except);
     }
+
+  /* Look if there's already a gdb.Type object for given TYPE
+     and if so, return it.  */
+  if (type->is_objfile_owned ())
+    type_obj = typy_registry.lookup (type->objfile_owner (), type);
+  else
+    type_obj = typy_registry.lookup (type->arch_owner (), type);
+
+  if (type_obj != nullptr)
+    return (PyObject*)type_obj;
 
   type_obj = PyObject_New (type_object, &type_object_type);
   if (type_obj)
@@ -1684,7 +1673,7 @@ PyTypeObject type_object_type =
   "gdb.Type",			  /*tp_name*/
   sizeof (type_object),		  /*tp_basicsize*/
   0,				  /*tp_itemsize*/
-  typy_dealloc,			  /*tp_dealloc*/
+  typy_dealloc,		          /*tp_dealloc*/
   0,				  /*tp_print*/
   0,				  /*tp_getattr*/
   0,				  /*tp_setattr*/

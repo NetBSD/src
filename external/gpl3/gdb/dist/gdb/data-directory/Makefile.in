@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # Makefile for building a staged copy of the data-directory.
 # This file is part of GDB.
@@ -97,6 +97,7 @@ PYTHON_FILE_LIST = \
 	gdb/command/xmethods.py \
 	gdb/dap/breakpoint.py \
 	gdb/dap/bt.py \
+	gdb/dap/completions.py \
 	gdb/dap/disassemble.py \
 	gdb/dap/evaluate.py \
 	gdb/dap/events.py \

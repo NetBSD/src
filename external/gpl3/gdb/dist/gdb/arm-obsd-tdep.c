@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/arm.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -83,8 +83,7 @@ armobsd_init_abi (struct gdbarch_info info,
   tramp_frame_prepend_unwinder (gdbarch, &armobsd_sigframe);
 
   /* OpenBSD/arm uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
   set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
 
   tdep->jb_pc = 24;
@@ -97,7 +96,7 @@ armobsd_init_abi (struct gdbarch_info info,
   tdep->struct_return = pcc_struct_return;
 
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, arm_software_single_step);
 
   /* Breakpoints.  */
   switch (info.byte_order)
@@ -114,9 +113,7 @@ armobsd_init_abi (struct gdbarch_info info,
     }
 }
 
-void _initialize_armobsd_tdep ();
-void
-_initialize_armobsd_tdep ()
+INIT_GDB_FILE (armobsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_OPENBSD,
 			  armobsd_init_abi);

@@ -1,6 +1,6 @@
 /* Support for complaint handling during symbol reading in GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,14 +23,14 @@
 #include "run-on-main-thread.h"
 #include "top.h"
 #include "gdbsupport/selftest.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 #if CXX_STD_THREAD
 #include <mutex>
 #endif
 
 /* Map format strings to counters.  */
 
-static std::unordered_map<const char *, int> counters;
+static gdb::unordered_map<const char *, int> counters;
 
 /* How many complaints about a particular thing should be printed
    before we stop whining about it?  Default is no whining at all,
@@ -149,7 +149,7 @@ namespace selftests {
 static void
 test_complaints ()
 {
-  std::unordered_map<const char *, int> tmp;
+  gdb::unordered_map<const char *, int> tmp;
   scoped_restore reset_counters = make_scoped_restore (&counters, tmp);
   scoped_restore reset_stop_whining = make_scoped_restore (&stop_whining, 2);
 
@@ -185,12 +185,10 @@ test_complaints ()
 }
 
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_complaints ();
-void
-_initialize_complaints ()
+INIT_GDB_FILE (complaints)
 {
   add_setshow_zinteger_cmd ("complaints", class_support, 
 			    &stop_whining, _("\

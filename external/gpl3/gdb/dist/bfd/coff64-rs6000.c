@@ -1,5 +1,5 @@
 /* BFD back-end for IBM RS/6000 "XCOFF64" files.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Written Clinton Popetz.
    Contributed by Cygnus Support.
 
@@ -2495,7 +2495,6 @@ static const struct xcoff_backend_data_rec bfd_xcoff_backend_data =
       xcoff64_ppc_relocate_section,
       coff_rtype_to_howto,
       NULL,			/* _bfd_coff_adjust_symndx */
-      _bfd_generic_link_add_one_symbol,
       coff_link_output_has_begun,
       coff_final_link_postscript,
       NULL			/* print_pdata.  */
@@ -2622,7 +2621,6 @@ const bfd_target rs6000_xcoff64_vec =
     /* Copy */
     _bfd_xcoff_copy_private_bfd_data,
     _bfd_generic_bfd_merge_private_bfd_data,
-    _bfd_generic_init_private_section_data,
     _bfd_generic_bfd_copy_private_section_data,
     _bfd_generic_bfd_copy_private_symbol_data,
     _bfd_generic_bfd_copy_private_header_data,
@@ -2768,7 +2766,6 @@ static const struct xcoff_backend_data_rec bfd_xcoff_aix5_backend_data =
       xcoff64_ppc_relocate_section,
       coff_rtype_to_howto,
       NULL,			/* _bfd_coff_adjust_symndx */
-      _bfd_generic_link_add_one_symbol,
       coff_link_output_has_begun,
       coff_final_link_postscript,
       NULL			/* print_pdata.  */
@@ -2894,7 +2891,6 @@ const bfd_target rs6000_xcoff64_aix_vec =
     /* Copy */
     _bfd_xcoff_copy_private_bfd_data,
     _bfd_generic_bfd_merge_private_bfd_data,
-    _bfd_generic_init_private_section_data,
     _bfd_generic_bfd_copy_private_section_data,
     _bfd_generic_bfd_copy_private_symbol_data,
     _bfd_generic_bfd_copy_private_header_data,

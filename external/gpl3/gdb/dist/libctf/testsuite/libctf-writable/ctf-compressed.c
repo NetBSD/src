@@ -119,9 +119,13 @@ main (int argc, char *argv[])
 
   /* Dump the header of each archive member, and search for CTF_F_COMPRESS in
      the resulting dump.  */
+  err = 666;
   while ((dump_fp = ctf_archive_next (final_arc, &i, NULL, 0, &err)) != NULL)
     {
       char *dumpstr;
+
+      if (err != 0)
+	fprintf (stderr, "err not set to success on success\n");
 
       while ((dumpstr = ctf_dump (dump_fp, &dump_state, CTF_SECT_HEADER,
 				  NULL, NULL)) != NULL)

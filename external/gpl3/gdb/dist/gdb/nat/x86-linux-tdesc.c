@@ -1,6 +1,6 @@
 /* Target description related code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,7 +43,7 @@
 /* See nat/x86-linux-tdesc.h.  */
 
 const target_desc *
-x86_linux_tdesc_for_tid (int tid, uint64_t *xcr0_storage,
+x86_linux_tdesc_for_tid (int tid, uint64_t *xstate_bv_storage,
 			 x86_xsave_layout *xsave_layout_storage)
 {
 #ifdef __x86_64__
@@ -96,30 +96,34 @@ x86_linux_tdesc_for_tid (int tid, uint64_t *xcr0_storage,
 	     these bits being set we generate a completely empty tdesc for
 	     i386 which will be rejected by GDB.  */
 	  have_ptrace_getregset = TRIBOOL_FALSE;
-	  *xcr0_storage = X86_XSTATE_SSE_MASK;
+	  *xstate_bv_storage = X86_XSTATE_SSE_MASK;
 	}
       else
 	{
 	  have_ptrace_getregset = TRIBOOL_TRUE;
 
 	  /* Get XCR0 from XSAVE extended state.  */
-	  *xcr0_storage = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
+	  uint64_t xcr0 = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
 				      / sizeof (uint64_t))];
 
 	  *xsave_layout_storage
-	    = x86_fetch_xsave_layout (*xcr0_storage, x86_xsave_length ());
+	    = x86_fetch_xsave_layout (xcr0, x86_xsave_length ());
+
+	  *xstate_bv_storage = xcr0;
+	  if (x86_check_ssp_support (tid))
+	    *xstate_bv_storage |= X86_XSTATE_CET_U;
 	}
     }
 
-  /* Use cached xcr0 value.  */
-  uint64_t xcr0_features_bits = *xcr0_storage & X86_XSTATE_ALL_MASK;
+  /* Use cached XSTATE_BV_STORAGE value.  */
+  uint64_t xstate_bv_features_bits = *xstate_bv_storage & X86_XSTATE_ALL_MASK;
 
 #ifdef __x86_64__
   if (is_64bit)
-    return amd64_linux_read_description (xcr0_features_bits, is_x32);
+    return amd64_linux_read_description (xstate_bv_features_bits, is_x32);
   else
 #endif
-    return i386_linux_read_description (xcr0_features_bits);
+    return i386_linux_read_description (xstate_bv_features_bits);
 }
 
 #endif /* !IN_PROCESS_AGENT */

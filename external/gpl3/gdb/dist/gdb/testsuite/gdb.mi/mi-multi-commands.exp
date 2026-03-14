@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ proc run_test { args } {
 	# looking for.  However, due to the unpredictable
 	# intermingling, it's much easier if we drop the ^ anchor.
 	# However, with this gone dejagnu would sometimes match the
-	# second comand output before the first commands output.
+	# second command output before the first commands output.
 	#
 	# This approach just looks for the first command output, then,
 	# once that has been found, we start looking for the second
@@ -123,6 +123,10 @@ proc run_test { args } {
 	    break
 	}
     }
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
 }
 
 foreach_with_prefix args { "" "separate-mi-tty" } {

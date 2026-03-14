@@ -1,6 +1,6 @@
 /* Self tests for lookup_name_info for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -96,15 +96,16 @@ run_tests ()
   CHECK (language_cplus, "A::B::C()", "A::B::C");
   CHECK (language_cplus, "A::B::C", "A::B::C");
 
+  CHECK (language_cplus, "Foozle<int>::fogey<Empty<int>> (Empty<int>)",
+	 "Foozle<int>::fogey<Empty<int> >");
+
 #undef CHECK
 #undef CHECK_INCOMPL
 }
 
-}} // namespace selftests::lookup_name
+}} /* namespace selftests::lookup_name */
 
-void _initialize_lookup_name_info_selftests ();
-void
-_initialize_lookup_name_info_selftests ()
+INIT_GDB_FILE (lookup_name_info_selftests)
 {
   selftests::register_test ("lookup_name_info",
 			    selftests::lookup_name::run_tests);

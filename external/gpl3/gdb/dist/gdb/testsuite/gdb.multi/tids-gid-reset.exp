@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ with_test_prefix "single-inferior" {
 # For the following tests, multiple inferiors are needed, therefore
 # non-extended gdbserver is not supported.
 require !use_gdb_stub
+
+require allow_multi_inferior_tests
 
 # Test with multiple inferiors.  This time, since we restart inferior
 # 1 while inferior 2 still has threads, then the new thread 1.1 should

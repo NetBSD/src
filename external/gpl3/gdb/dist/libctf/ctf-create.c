@@ -1,5 +1,5 @@
 /* CTF dict creation.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -18,7 +18,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 #include <ctf-impl.h>
-#include <sys/param.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -789,7 +788,7 @@ ctf_add_struct_sized (ctf_dict_t *fp, uint32_t flag, const char *name,
   size_t initial_vlen = sizeof (ctf_lmember_t) * INITIAL_VLEN;
 
   /* Promote root-visible forwards to structs.  */
-  if (name != NULL)
+  if (name != NULL && flag == CTF_ADD_ROOT)
     type = ctf_lookup_by_rawname (fp, CTF_K_STRUCT, name);
 
   /* Prohibit promotion if this type was ctf_open()ed.  */
@@ -833,7 +832,7 @@ ctf_add_union_sized (ctf_dict_t *fp, uint32_t flag, const char *name,
   size_t initial_vlen = sizeof (ctf_lmember_t) * INITIAL_VLEN;
 
   /* Promote root-visible forwards to unions.  */
-  if (name != NULL)
+  if (name != NULL && flag == CTF_ADD_ROOT)
     type = ctf_lookup_by_rawname (fp, CTF_K_UNION, name);
 
   /* Prohibit promotion if this type was ctf_open()ed.  */
@@ -876,7 +875,7 @@ ctf_add_enum (ctf_dict_t *fp, uint32_t flag, const char *name)
   size_t initial_vlen = sizeof (ctf_enum_t) * INITIAL_VLEN;
 
   /* Promote root-visible forwards to enums.  */
-  if (name != NULL)
+  if (name != NULL && flag == CTF_ADD_ROOT)
     type = ctf_lookup_by_rawname (fp, CTF_K_ENUM, name);
 
   /* Prohibit promotion if this type was ctf_open()ed.  */
@@ -1045,7 +1044,7 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
 		    int value)
 {
   ctf_dict_t *ofp = fp;
-  ctf_dtdef_t *dtd = ctf_dtd_lookup (fp, enid);
+  ctf_dtdef_t *dtd;
   unsigned char *old_vlen;
   ctf_enum_t *en;
 
@@ -1054,6 +1053,10 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
   if (name == NULL)
     return (ctf_set_errno (fp, EINVAL));
 
+  if ((enid = ctf_type_resolve_unsliced (fp, enid)) == CTF_ERR)
+      return -1;				/* errno is set for us.  */
+
+  dtd = ctf_dtd_lookup (fp, enid);
   if ((fp->ctf_flags & LCTF_CHILD) && LCTF_TYPE_ISPARENT (fp, enid))
     fp = fp->ctf_parent;
 
@@ -1070,7 +1073,7 @@ ctf_add_enumerator (ctf_dict_t *fp, ctf_id_t enid, const char *name,
   /* Enumeration constant names are only added, and only checked for duplicates,
      if the enum they are part of is a root-visible type.  */
 
-  if (root == CTF_ADD_ROOT && ctf_dynhash_lookup (fp->ctf_names, name))
+  if (root && ctf_dynhash_lookup (fp->ctf_names, name))
     {
       if (fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS)
 	return (ctf_set_errno (ofp, ECTF_DUPLICATE));

@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 ##
-##   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+##   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 ##
 ## This file is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -72,7 +72,7 @@ TEXIDIR = $(srcdir)/../texinfo/fsf
 info_TEXINFOS = %D%/bfd.texi
 %C%_bfd_TEXINFOS = $(DOCFILES) %D%/bfdsumm.texi
 
-AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/%D%" -I %D%
+AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/%D%" -P %D%
 TEXI2DVI = texi2dvi -I "$(srcdir)/%D%" -I %D%
 
 MKDOC = %D%/chew$(EXEEXT_FOR_BUILD)

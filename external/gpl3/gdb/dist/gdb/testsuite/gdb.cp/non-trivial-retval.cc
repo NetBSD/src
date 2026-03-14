@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2024 Free Software Foundation, Inc.
+   Copyright 2014-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -142,6 +142,24 @@ f4 (int i1, int i2)
   return e;
 }
 
+class F
+{
+public:
+  ~F () {}
+
+  int f;
+};
+
+F
+f5 (int i1, int i2)
+{
+  F f;
+
+  f.f = i1 + i2;
+
+  return f;
+}
+
 /* We place a breakpoint on the call to this function.  */
 
 void
@@ -164,6 +182,7 @@ main (void)
   B1 b1 = f22 (i1, i2);
   C c = f3 (i1, i2);
   E e = f4 (i1, i2);
+  F f = f5 (i1, i2);
 
   return 0;
 }

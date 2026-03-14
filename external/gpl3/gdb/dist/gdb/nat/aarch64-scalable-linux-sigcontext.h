@@ -1,7 +1,7 @@
 /* Linux Kernel sigcontext definitions for AArch64 Scalable Extensions
    (SVE/SME).
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
    Contributed by Arm Ltd.
 
    This file is part of GDB.

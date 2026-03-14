@@ -1,4 +1,4 @@
-#   Copyright 1997-2024 Free Software Foundation, Inc.
+#   Copyright 1997-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -630,7 +630,8 @@ proc test_catch_syscall_multi_arch {} {
     test_catch_syscall_multi_arch_1 $arch1 $arch2 $syscall1_name \
 	$syscall2_name $syscall_number
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 }
 
 proc do_syscall_tests_without_xml {} {
@@ -801,18 +802,21 @@ fill_all_syscalls_numbers
 # Execute the tests, using XML support
 gdb_exit
 if { [allow_xml_test] } {
-  clean_restart $binfile
+  clean_restart
+  gdb_load $binfile
   do_syscall_tests
 
   # Now, we have to see if GDB displays a warning when we
   # don't set the data-directory but try to use catch syscall
   # anyway.  For that, we must restart GDB first.
-  clean_restart $binfile
+  clean_restart
+  gdb_load $binfile
   test_catch_syscall_fail_nodatadir
 }
 
 # Restart gdb
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 # Execute the tests, without XML support.  In this case, GDB will
 # only display syscall numbers, and not syscall names.

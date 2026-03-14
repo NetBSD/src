@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -46,11 +46,15 @@ struct tui_source_window : public tui_source_window_base
 
   bool showing_source_p (const char *filename) const;
 
-  void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) override;
+  void maybe_update (struct gdbarch *gdbarch, symtab_and_line sal) override;
 
   void erase_source_content () override
   {
     do_erase_source_content (_("[ No Source Available ]"));
+
+    /* The source window's title shows the filename, so no source available
+       means no title.  */
+    set_title ("");
   }
 
   void display_start_addr (struct gdbarch **gdbarch_p,

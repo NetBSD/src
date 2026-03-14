@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -264,13 +264,31 @@ proc test_python_helper {} {
     gdb_test -prompt $outer_prompt_re "print varobj_table" \
 	"htab_t with ${::decimal} elements"
 
+    set inferior_list_supported 1
+    set inferior_list_unsupported_re "type = intrusive_list"
+    gdb_test_multiple "what inferior_list" "" -prompt $outer_prompt_re {
+	-re -wrap $inferior_list_unsupported_re {
+	    set inferior_list_supported 0
+	    pass $gdb_test_name
+	}
+	-re -wrap "" {
+	    pass $gdb_test_name
+	}
+    }
+
     # Test the intrusive_list pretty-printer.  A bug occurred in the
     # pretty-printer for lists with more than one element.  Verify that
     # we see both elements of the inferior_list list being printed.
-    gdb_test -prompt $outer_prompt_re "print inferior_list" "intrusive list of inferior = {.*, num = 1,.*, num = 2,.*}"
+    set test "print inferior_list"
+    if { $inferior_list_supported } {
+	gdb_test -prompt $outer_prompt_re $test \
+	    "intrusive list of inferior = {.*, num = 1,.*, num = 2,.*}"
+    } else {
+	unsupported $test
+    }
 
     return 0
 }
 
 # Use the self-test framework to run the test.
-do_self_tests captured_main test_python_helper
+do_self_tests test_python_helper

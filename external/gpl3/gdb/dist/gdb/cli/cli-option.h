@@ -1,6 +1,6 @@
 /* CLI options framework, for GDB.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -91,6 +91,7 @@ public:
       int *(*integer) (const option_def &, void *ctx);
       const char **(*enumeration) (const option_def &, void *ctx);
       std::string *(*string) (const option_def &, void *ctx);
+      ui_file_style::color *(*color) (const option_def &, void *ctx);
     }
   var_address;
 
@@ -325,6 +326,26 @@ struct filename_option_def : option_def
 		  set_doc_, show_doc_, help_doc_)
   {
     var_address.string = detail::get_var_address<std::string, Context>;
+  }
+};
+
+/* A var_color command line option.  */
+
+template<typename Context>
+struct color_option_def : option_def
+{
+  color_option_def (const char *long_option_,
+		    ui_file_style::color *(*get_var_address_cb_) (Context *),
+		    show_value_ftype *show_cmd_cb_,
+		    const char *set_doc_,
+		    const char *show_doc_ = nullptr,
+		    const char *help_doc_ = nullptr)
+    : option_def (long_option_, var_color, nullptr,
+		  (erased_get_var_address_ftype *) get_var_address_cb_,
+		  show_cmd_cb_,
+		  set_doc_, show_doc_, help_doc_)
+  {
+    var_address.color = detail::get_var_address<ui_file_style::color, Context>;
   }
 };
 

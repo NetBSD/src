@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Free Software Foundation, Inc.
+/* Copyright 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,8 @@ int main ()
   dei_type dei = { 2, { 3, 5, 7, 11, 13 } };
 
   static int scalar = 23;
+
+  void *ptr = (void *) &scalar;
 
   {
     const char *inner = "inner block";

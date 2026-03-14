@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86-64.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -33,7 +33,10 @@
 #include "amd64-linux-tdep.h"
 #include "i386-linux-tdep.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
+#include "svr4-tls-tdep.h"
 #include "gdbsupport/x86-xstate.h"
+#include "inferior.h"
 
 #include "amd64-tdep.h"
 #include "solib-svr4.h"
@@ -44,6 +47,9 @@
 #include "expop.h"
 #include "arch/amd64-linux-tdesc.h"
 #include "inferior.h"
+#include "x86-tdep.h"
+#include "dwarf2/frame.h"
+#include "frame-unwind.h"
 
 /* The syscall's XML filename for i386.  */
 #define XML_SYSCALL_FILENAME_AMD64 "syscalls/amd64-linux.xml"
@@ -105,6 +111,7 @@ int amd64_linux_gregset_reg_offset[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1,				/* PKEYS register pkru  */
+  -1, 				/* CET user mode register PL3_SSP.  */
 
   /* End of hardware registers */
   21 * 8, 22 * 8,		      /* fs_base and gs_base.  */
@@ -412,7 +419,7 @@ amd64_canonicalize_syscall (enum amd64_syscall syscall_number)
 
   case amd64_sys_mmap:
   case amd64_x32_sys_mmap:
-    return gdb_sys_mmap2;
+    return gdb_sys_old_mmap;
 
   case amd64_sys_mprotect:
   case amd64_x32_sys_mprotect:
@@ -555,6 +562,10 @@ amd64_canonicalize_syscall (enum amd64_syscall syscall_number)
   case amd64_sys_accept:
   case amd64_x32_sys_accept:
     return gdb_sys_accept;
+
+  case amd64_sys_accept4:
+  case amd64_x32_sys_accept4:
+    return gdb_sys_accept4;
 
   case amd64_sys_sendto:
   case amd64_x32_sys_sendto:
@@ -1585,6 +1596,15 @@ amd64_linux_record_signal (struct gdbarch *gdbarch,
   return 0;
 }
 
+/* Return true if the core file ABFD contains shadow stack pointer state.
+   Otherwise, return false.  */
+
+static bool
+amd64_linux_core_read_ssp_state_p (bfd *abfd)
+{
+  return bfd_get_section_by_name (abfd, ".reg-ssp") != nullptr;
+}
+
 /* Get Linux/x86 target description from core dump.  */
 
 static const struct target_desc *
@@ -1594,11 +1614,14 @@ amd64_linux_core_read_description (struct gdbarch *gdbarch,
 {
   /* Linux/x86-64.  */
   x86_xsave_layout layout;
-  uint64_t xcr0 = i386_linux_core_read_xsave_info (abfd, layout);
-  if (xcr0 == 0)
-    xcr0 = X86_XSTATE_SSE_MASK;
+  uint64_t xstate_bv = i386_linux_core_read_xsave_info (abfd, layout);
+  if (xstate_bv == 0)
+    xstate_bv = X86_XSTATE_SSE_MASK;
 
-  return amd64_linux_read_description (xcr0 & X86_XSTATE_ALL_MASK,
+  if (amd64_linux_core_read_ssp_state_p (abfd))
+    xstate_bv |= X86_XSTATE_CET_U;
+
+  return amd64_linux_read_description (xstate_bv & X86_XSTATE_ALL_MASK,
 				       gdbarch_ptr_bit (gdbarch) == 32);
 }
 
@@ -1629,6 +1652,37 @@ static const struct regset amd64_linux_xstateregset =
     amd64_linux_collect_xstateregset
   };
 
+/* Supply shadow stack pointer register from SSP to the register cache
+   REGCACHE.  */
+
+static void
+amd64_linux_supply_ssp (const regset *regset,
+			regcache *regcache, int regnum,
+			const void *ssp, size_t len)
+{
+  gdb_assert (len == sizeof (uint64_t));
+  x86_supply_ssp (regcache, *static_cast<const uint64_t *> (ssp));
+}
+
+/* Collect the shadow stack pointer register from the register cache
+   REGCACHE and store it in SSP.  */
+
+static void
+amd64_linux_collect_ssp (const regset *regset,
+			 const regcache *regcache, int regnum,
+			 void *ssp, size_t len)
+{
+  gdb_assert (len == sizeof (uint64_t));
+  x86_collect_ssp (regcache, *static_cast<uint64_t *> (ssp));
+}
+
+/* Shadow stack pointer register.  */
+
+static const struct regset amd64_linux_ssp_register
+  {
+    NULL, amd64_linux_supply_ssp, amd64_linux_collect_ssp
+  };
+
 /* Iterate over core file register note sections.  */
 
 static void
@@ -1645,6 +1699,14 @@ amd64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
     cb (".reg-xstate", tdep->xsave_layout.sizeof_xsave,
 	tdep->xsave_layout.sizeof_xsave, &amd64_linux_xstateregset,
 	"XSAVE extended state", cb_data);
+
+  /* SSP can be unavailable.  Thus, we need to check the register status
+     in case we write a core file (regcache != nullptr).  */
+  if (tdep->ssp_regnum != -1
+      && (regcache == nullptr
+	  || REG_VALID == regcache->get_register_status (tdep->ssp_regnum)))
+    cb (".reg-ssp", 8, 8, &amd64_linux_ssp_register,
+	"shadow stack pointer", cb_data);
 }
 
 /* The instruction sequences used in x86_64 machines for a
@@ -1828,9 +1890,198 @@ amd64_linux_remove_non_address_bits_watchpoint (gdbarch *gdbarch,
   return (addr & amd64_linux_lam_untag_mask ());
 }
 
+/* Fetch and return the TLS DTV (dynamic thread vector) address for PTID.
+   Throw a suitable TLS error if something goes wrong.  */
+
+static CORE_ADDR
+amd64_linux_get_tls_dtv_addr (struct gdbarch *gdbarch, ptid_t ptid,
+			      enum svr4_tls_libc libc)
+{
+  /* On x86-64, the thread pointer is found in the fsbase register.  */
+  regcache *regcache
+    = get_thread_arch_regcache (current_inferior (), ptid, gdbarch);
+  target_fetch_registers (regcache, AMD64_FSBASE_REGNUM);
+  ULONGEST fsbase;
+  if (regcache->cooked_read (AMD64_FSBASE_REGNUM, &fsbase) != REG_VALID)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch thread pointer"));
+
+  /* The thread pointer (fsbase) points at the TCB (thread control
+     block).  The first two members of this struct are both pointers,
+     where the first will be a pointer to the TCB (i.e. it points at
+     itself) and the second will be a pointer to the DTV (dynamic
+     thread vector).  There are many other fields too, but the one
+     we care about here is the DTV pointer.  Compute the address
+     of the DTV pointer, fetch it, and convert it to an address.  */
+  CORE_ADDR dtv_ptr_addr = fsbase + gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT;
+  gdb::byte_vector buf (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  if (target_read_memory (dtv_ptr_addr, buf.data (), buf.size ()) != 0)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch DTV address"));
+
+  const struct builtin_type *builtin = builtin_type (gdbarch);
+  CORE_ADDR dtv_addr = gdbarch_pointer_to_address
+			 (gdbarch, builtin->builtin_data_ptr, buf.data ());
+  return dtv_addr;
+}
+
+/* Return the number of bytes required to update the shadow stack pointer
+   by one element.  For x32 the shadow stack elements are still 64-bit
+   aligned.  Thus, gdbarch_addr_bit cannot be used to compute the new
+   stack pointer.  */
+
+static inline int
+amd64_linux_shadow_stack_element_size_aligned (gdbarch *gdbarch)
+{
+  const bfd_arch_info *binfo = gdbarch_bfd_arch_info (gdbarch);
+  return (binfo->bits_per_word / binfo->bits_per_byte);
+}
+
+/* Read the shadow stack pointer register and return its value, if
+   possible.  */
+
+static std::optional<CORE_ADDR>
+amd64_linux_get_shadow_stack_pointer (gdbarch *gdbarch, regcache *regcache,
+				      bool &shadow_stack_enabled)
+{
+  shadow_stack_enabled = false;
+  const i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+
+  if (tdep->ssp_regnum < 0)
+    return {};
+
+  CORE_ADDR ssp;
+  if (regcache_raw_read_unsigned (regcache, tdep->ssp_regnum, &ssp)
+      != REG_VALID)
+    return {};
+
+  /* Dependent on the target in case the shadow stack pointer is
+     unavailable, the ssp register can be invalid or 0x0 when shadow stack
+     is supported by HW and the linux kernel but not enabled for the
+     current thread.  */
+  if (ssp == 0x0)
+    return {};
+
+  /* In case there is a shadow stack pointer available which is non-null,
+     the shadow stack feature is enabled.  */
+  shadow_stack_enabled = true;
+  return ssp;
+}
+
+/* If shadow stack is enabled, push the address NEW_ADDR to the shadow
+   stack and increment the shadow stack pointer accordingly.  */
+
 static void
-amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch,
-			    int num_disp_step_buffers)
+amd64_linux_shadow_stack_push (gdbarch *gdbarch, CORE_ADDR new_addr,
+			       regcache *regcache)
+{
+  bool shadow_stack_enabled;
+  std::optional<CORE_ADDR> ssp
+    = amd64_linux_get_shadow_stack_pointer (gdbarch, regcache,
+					    shadow_stack_enabled);
+
+  /* For amd64/Linux, if SSP has a value that means shadow stack is
+     enabled.  */
+  if (!ssp.has_value ())
+    return;
+  else
+    gdb_assert (shadow_stack_enabled);
+
+  /* The shadow stack grows downwards.  To push addresses to the stack,
+     we need to decrement SSP.  */
+  const int element_size
+    = amd64_linux_shadow_stack_element_size_aligned (gdbarch);
+  const CORE_ADDR new_ssp = *ssp - element_size;
+
+  /* Using /proc/PID/smaps we can only check if NEW_SSP points to shadow
+     stack memory.  If it doesn't, we assume the stack is full.  */
+  std::pair<CORE_ADDR, CORE_ADDR> memrange;
+  if (!linux_address_in_shadow_stack_mem_range (new_ssp, &memrange))
+    error (_("No space left on the shadow stack."));
+
+  /* On x86 there can be a shadow stack token at bit 63.  For x32,  the
+     address size is only 32 bit.   Always write back the full 8 bytes to
+     include the shadow stack token.  */
+  const bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+  write_memory_unsigned_integer (new_ssp, element_size, byte_order,
+				 (ULONGEST) new_addr);
+
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
+  gdb_assert (tdep->ssp_regnum > -1);
+
+  regcache_raw_write_unsigned (regcache, tdep->ssp_regnum, new_ssp);
+}
+
+/* Implement shadow stack pointer unwinding.  For each new shadow stack
+   pointer check if its address is still in the shadow stack memory range.
+   If it's outside the range set the returned value to unavailable,
+   otherwise return a value containing the new shadow stack pointer.  */
+
+static value *
+amd64_linux_dwarf2_prev_ssp (const frame_info_ptr &this_frame,
+			     void **this_cache, int regnum)
+{
+  value *v = frame_unwind_got_register (this_frame, regnum, regnum);
+  gdb_assert (v != nullptr);
+
+  gdbarch *gdbarch = get_frame_arch (this_frame);
+
+  if (v->entirely_available () && !v->optimized_out ())
+    {
+      int size = register_size (gdbarch, regnum);
+      bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+      CORE_ADDR ssp = extract_unsigned_integer (v->contents_all ().data (),
+						size, byte_order);
+
+      /* Using /proc/PID/smaps we can only check if the current shadow
+	 stack pointer SSP points to shadow stack memory.  Only if this is
+	 the case a valid previous shadow stack pointer can be
+	 calculated.  */
+      std::pair<CORE_ADDR, CORE_ADDR> range;
+      if (linux_address_in_shadow_stack_mem_range (ssp, &range))
+	{
+	  /* The shadow stack grows downwards.  To compute the previous
+	     shadow stack pointer, we need to increment SSP.  */
+	  CORE_ADDR new_ssp
+	    = ssp + amd64_linux_shadow_stack_element_size_aligned (gdbarch);
+
+	  /* There can be scenarios where we have a shadow stack pointer
+	     but the shadow stack is empty, as no call instruction has
+	     been executed yet.  If NEW_SSP points to the end of or before
+	     (<=) the current shadow stack memory range we consider
+	     NEW_SSP as valid (but empty).  */
+	  if (new_ssp <= range.second)
+	    return frame_unwind_got_address (this_frame, regnum, new_ssp);
+	}
+    }
+
+  /* Return a value which is marked as unavailable in case we could not
+     calculate a valid previous shadow stack pointer.  */
+  value *retval
+    = value::allocate_register (get_next_frame_sentinel_okay (this_frame),
+				regnum, register_type (gdbarch, regnum));
+  retval->mark_bytes_unavailable (0, retval->type ()->length ());
+  return retval;
+}
+
+/* Implement the "init_reg" dwarf2_frame_ops method.  */
+
+static void
+amd64_init_reg (gdbarch *gdbarch, int regnum, dwarf2_frame_state_reg *reg,
+		const frame_info_ptr &this_frame)
+{
+  if (regnum == gdbarch_pc_regnum (gdbarch))
+    reg->how = DWARF2_FRAME_REG_RA;
+  else if (regnum == gdbarch_sp_regnum (gdbarch))
+    reg->how = DWARF2_FRAME_REG_CFA;
+  else if (regnum == AMD64_PL3_SSP_REGNUM)
+    {
+      reg->how = DWARF2_FRAME_REG_FN;
+      reg->loc.fn = amd64_linux_dwarf2_prev_ssp;
+    }
+}
+
+static void
+amd64_linux_init_abi_common (struct gdbarch_info info, struct gdbarch *gdbarch,
+			     int num_disp_step_buffers)
 {
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
 
@@ -1858,6 +2109,9 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch,
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
+  set_gdbarch_get_thread_local_address (gdbarch,
+					svr4_tls_get_thread_local_address);
+  svr4_tls_register_tls_methods (info, gdbarch, amd64_linux_get_tls_dtv_addr);
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -1882,6 +2136,11 @@ amd64_linux_init_abi_common(struct gdbarch_info info, struct gdbarch *gdbarch,
 
   set_gdbarch_remove_non_address_bits_watchpoint
     (gdbarch, amd64_linux_remove_non_address_bits_watchpoint);
+
+  set_gdbarch_shadow_stack_push (gdbarch, amd64_linux_shadow_stack_push);
+  set_gdbarch_get_shadow_stack_pointer (gdbarch,
+					amd64_linux_get_shadow_stack_pointer);
+  dwarf2_frame_set_init_reg (gdbarch, amd64_init_reg);
 }
 
 static void
@@ -2088,8 +2347,7 @@ amd64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->i386_syscall_record = amd64_linux_syscall_record;
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* Register DTrace handlers.  */
   set_gdbarch_dtrace_parse_probe_argument (gdbarch, amd64_dtrace_parse_probe_argument);
@@ -2302,13 +2560,10 @@ amd64_x32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->i386_syscall_record = amd64_x32_linux_syscall_record;
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 }
 
-void _initialize_amd64_linux_tdep ();
-void
-_initialize_amd64_linux_tdep ()
+INIT_GDB_FILE (amd64_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64,
 			  GDB_OSABI_LINUX, amd64_linux_init_abi);

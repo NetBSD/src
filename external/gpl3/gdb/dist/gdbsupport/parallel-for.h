@@ -1,6 +1,6 @@
 /* Parallel for loops
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,10 +40,9 @@ namespace gdb
    at least N elements processed per thread.  Setting N to 0 is not
    allowed.  */
 
-template<class RandomIt, class RangeFunction>
+template<std::size_t n, class RandomIt, class RangeFunction>
 void
-parallel_for_each (unsigned n, RandomIt first, RandomIt last,
-		   RangeFunction callback)
+parallel_for_each (RandomIt first, RandomIt last, RangeFunction callback)
 {
   /* If enabled, print debug info about how the work is distributed across
      the threads.  */
@@ -73,7 +72,7 @@ parallel_for_each (unsigned n, RandomIt first, RandomIt last,
   if (parallel_for_each_debug)
     {
       debug_printf (_("Parallel for: n_elements: %zu\n"), n_elements);
-      debug_printf (_("Parallel for: minimum elements per thread: %u\n"), n);
+      debug_printf (_("Parallel for: minimum elements per thread: %zu\n"), n);
       debug_printf (_("Parallel for: elts_per_thread: %zu\n"), elts_per_thread);
     }
 
@@ -141,8 +140,7 @@ parallel_for_each (unsigned n, RandomIt first, RandomIt last,
 
 template<class RandomIt, class RangeFunction>
 void
-sequential_for_each (unsigned n, RandomIt first, RandomIt last,
-		     RangeFunction callback)
+sequential_for_each (RandomIt first, RandomIt last, RangeFunction callback)
 {
   callback (first, last);
 }

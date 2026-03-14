@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if { [build_executable "failed to prepare" ${testfile} ${srcfile} \
 
 save_vars { GDBFLAGS } {
     append GDBFLAGS " --readnever"
-    if { [clean_restart ${binfile}] == -1 } {
+    if { [clean_restart $testfile] == -1 } {
 	return -1
     }
 }

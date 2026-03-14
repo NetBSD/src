@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,8 +66,12 @@ proc do_tests { dwarf_version dwarf_bits strict_dwarf } {
     gdb_test "info macro FOURTH" "#define FOURTH 4"
 }
 
-foreach_with_prefix dwarf_version {5} {
-    foreach_with_prefix dwarf_bits {32} {
+foreach_with_prefix dwarf_version {4 5} {
+    if { $dwarf_version == 4 && [gcc_major_version] < 15 } {
+	# Gcc does not contain fix for PR debug/115066.
+	continue
+    }
+    foreach_with_prefix dwarf_bits {32 64} {
 	foreach_with_prefix strict_dwarf {0 1} {
 	    do_tests $dwarf_version $dwarf_bits $strict_dwarf
 	}

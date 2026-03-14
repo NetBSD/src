@@ -1,5 +1,5 @@
 /* LoongArch opcode support.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of the GNU opcodes library.
@@ -454,6 +454,9 @@ static struct loongarch_opcode loongarch_macro_opcodes[] =
 static struct loongarch_opcode loongarch_alias_opcodes[] =
 {
   /* match,	mask,		name,		format,				macro,	include, exclude, pinfo.  */
+  { 0x00006000, 0xffffffe0,	"rdcntvl.w",	"r0:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimel.w rd, zero */
+  { 0x00006000, 0xfffffc1f,	"rdcntid.w",	"r5:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimel.w zero, rj */
+  { 0x00006400, 0xffffffe0,	"rdcntvh.w",	"r0:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimeh.w rd, zero */
   { 0x00150000,	0xfffffc00,	"move",		"r0:5,r5:5",			0,	0, 0, INSN_DIS_ALIAS }, /* or rd, rj, zero */
   { 0x02800000, 0xffc003e0,	"li.w",		"r0:5,s10:12",			0,	0, 0, INSN_DIS_ALIAS }, /* addi.w rd, zero, simm */
   { 0x02c00000, 0xffc003e0,	"li.d",		"r0:5,s10:12",			0,	0, 0, INSN_DIS_ALIAS }, /* addi.d rd, zero, simm */
@@ -494,7 +497,10 @@ static struct loongarch_opcode loongarch_fix_opcodes[] =
   { 0x00005400, 0xfffffc00,	"bitrev.d",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00005800, 0xfffffc00,	"ext.w.h",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00005c00, 0xfffffc00,	"ext.w.b",	"r0:5,r5:5",			0,			0,	0,	0 },
+  { 0x0,	0x0,		"rdcntvl.w",	"r",				"rdtimel.w %1,$r0",	0,	0,	0 },
+  { 0x0,	0x0,		"rdcntid.w",	"r",				"rdtimel.w $r0,%1",	0,	0,	0 },
   { 0x00006000, 0xfffffc00,	"rdtimel.w",	"r0:5,r5:5",			0,			0,	0,	0 },
+  { 0x0,	0x0,		"rdcntvh.w",	"r",				"rdtimeh.w %1,$r0",	0,	0,	0 },
   { 0x00006400, 0xfffffc00,	"rdtimeh.w",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00006800, 0xfffffc00,	"rdtime.d",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00006c00, 0xfffffc00,	"cpucfg",	"r0:5,r5:5",			0,			0,	0,	0 },

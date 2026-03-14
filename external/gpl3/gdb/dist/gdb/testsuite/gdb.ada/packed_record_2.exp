@@ -1,0 +1,61 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+require allow_ada_tests
+
+standard_ada_testfile exam
+
+set flags {debug}
+if {[ada_minimal_encodings]} {
+    lappend flags additional_flags=-fgnat-encodings=minimal
+}
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $flags] != ""} {
+    return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "STOP" ${testdir}/exam.adb]
+runto "exam.adb:$bp_location"
+
+set spr_contents "discr => 3, field => -4, array_field => \\(-5, -6, -7\\)"
+
+gdb_test "print spr" " = \\($spr_contents\\)"
+
+gdb_test "print spr.discr" " = 3"
+
+# See PR ada/32880 -- gdb should probably print array (1 .. 3) here,
+# but instead shows array (<>).  However as this isn't totally
+# relevant to this test, we just accept it.
+gdb_test "ptype spr" \
+    [multi_line \
+	 "type = tagged record" \
+	 "    discr: range 1 .. 8;" \
+	 "    field: range -7 .. -4;" \
+	 "    array_field: array \\(<>\\) of exam.small <packed: 2-bit elements>;" \
+	 "end record"]
+
+gdb_test_multiple "print sc" "" {
+    -re " \\($spr_contents, outer => 2, another_array => \\(-7, -6\\)\\)" {
+	pass $gdb_test_name
+    }
+    -re " \\($spr_contents, outer => $decimal, another_array => \\(.*\\)\\)" {
+	# Other output is a known GCC bug.
+	xfail $gdb_test_name
+    }
+}

@@ -1,6 +1,6 @@
 /* C/C++ language support for compilation.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -185,18 +185,18 @@ static void
 write_macro_definitions (const struct block *block, CORE_ADDR pc,
 			 struct ui_file *file)
 {
-  gdb::unique_xmalloc_ptr<struct macro_scope> scope;
+  macro_scope scope;
 
   if (block != NULL)
     scope = sal_macro_scope (find_pc_line (pc, 0));
   else
     scope = default_macro_scope ();
-  if (scope == NULL)
+  if (!scope.is_valid ())
     scope = user_macro_scope ();
 
-  if (scope != NULL && scope->file != NULL && scope->file->table != NULL)
+  if (scope.is_valid () && scope.file->table != nullptr)
     {
-      macro_for_each_in_scope (scope->file, scope->line,
+      macro_for_each_in_scope (scope.file, scope.line,
 			       [&] (const char *name,
 				    const macro_definition *macro,
 				    macro_source_file *source,

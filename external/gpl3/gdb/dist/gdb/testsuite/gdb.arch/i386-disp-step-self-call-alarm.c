@@ -1,6 +1,6 @@
 /* This file is part of GDB, the GNU debugger.
 
-   Copyright 2023-2024 Free Software Foundation, Inc.
+   Copyright 2023-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,9 +16,27 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <unistd.h>
+#include <stdlib.h>
+
+extern void test_call (void);
+
+void
+unreachable (void)
+{
+  abort ();
+}
 
 void
 setup_alarm (void)
 {
   alarm (300);
+}
+
+int
+main ()
+{
+  setup_alarm ();
+  test_call ();
+  unreachable ();
+  return 0;
 }

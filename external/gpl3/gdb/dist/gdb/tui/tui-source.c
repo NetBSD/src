@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -207,7 +207,7 @@ tui_source_window::line_is_displayed (int line) const
 }
 
 void
-tui_source_window::maybe_update (const frame_info_ptr &fi, symtab_and_line sal)
+tui_source_window::maybe_update (struct gdbarch *gdbarch, symtab_and_line sal)
 {
   int start_line = (sal.line - ((height - box_size ()) / 2)) + 1;
   if (start_line <= 0)
@@ -219,7 +219,7 @@ tui_source_window::maybe_update (const frame_info_ptr &fi, symtab_and_line sal)
   if (!(source_already_displayed && line_is_displayed (sal.line)))
     {
       sal.line = start_line;
-      update_source_window (get_frame_arch (fi), sal);
+      update_source_window (gdbarch, sal);
     }
   else
     {

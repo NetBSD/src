@@ -1,4 +1,4 @@
-# Copyright 2010-2024 Free Software Foundation, Inc.
+# Copyright 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,8 @@ gdb_test_multiple $test $test {
 }
 
 set interp_system [section_get [standard_output_file $binfile_test] .interp]
-clean_restart $interp_system
+clean_restart
+gdb_load $interp_system
 set dl_main_found 0
 gdb_test_multiple "info addr dl_main" "" {
     -re -wrap "Symbol \"dl_main\" is a function at address $hex\\." {
@@ -218,6 +219,7 @@ proc test_core {file displacement} {
 
 	set corefile [core_find $file {} "segv"]
 	if {$corefile == ""} {
+	    untested "unable to create or find corefile"
 	    return
 	}
 

@@ -1,6 +1,6 @@
 /* DIE indexing 
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,10 +21,10 @@
 #define GDB_DWARF2_PARENT_MAP_H
 
 #include "addrmap.h"
-#include "dwarf2/types.h"
 #include "gdbsupport/gdb_obstack.h"
 
 class cooked_index_entry;
+struct dwarf2_per_bfd;
 
 /* A class that handles mapping from a DIE range to a parent
    entry.

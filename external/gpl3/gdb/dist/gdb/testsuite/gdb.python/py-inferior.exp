@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,8 +32,8 @@ save_vars { env(ASAN_OPTIONS) env(TSAN_OPTIONS) } {
     # triggers address sanitizer.  Suppress the error, leaving us with just
     # this warning:
     #   WARNING: AddressSanitizer failed to allocate 0xffffffffffffffff bytes
-    set_sanitizer ASAN_OPTIONS allocator_may_return_null 1
-    set_sanitizer TSAN_OPTIONS allocator_may_return_null 1
+    append_environment ASAN_OPTIONS allocator_may_return_null 1
+    append_environment TSAN_OPTIONS allocator_may_return_null 1
 
     clean_restart ${testfile}
 }

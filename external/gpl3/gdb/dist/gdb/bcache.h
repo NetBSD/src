@@ -2,7 +2,7 @@
    Written by Fred Fish <fnf@cygnus.com>
    Rewritten by Jim Blandy <jimb@cygnus.com>
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -173,7 +173,7 @@ struct bcache
 				     added);
   }
 
-  /* Print statistics on this bcache's memory usage and efficacity at
+  /* Print statistics on this bcache's memory usage and efficacy at
      eliminating duplication.  TYPE should be a string describing the
      kind of data this bcache holds.  Statistics are printed using
      `gdb_printf' and its ilk.  */

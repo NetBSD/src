@@ -2,7 +2,7 @@
    Written by Fred Fish <fnf@cygnus.com>
    Rewritten by Jim Blandy <jimb@cygnus.com>
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -250,7 +250,7 @@ print_percentage (int portion, int total)
 }
 
 
-/* Print statistics on BCACHE's memory usage and efficacity at
+/* Print statistics on BCACHE's memory usage and efficacy at
    eliminating duplication.  NAME should describe the kind of data
    BCACHE holds.  Statistics are printed using `gdb_printf' and
    its ilk.  */

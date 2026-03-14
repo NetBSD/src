@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -517,40 +517,23 @@ decompress_contents (bool is_zstd, bfd_byte *compressed_buffer,
 #endif
     }
 
-  z_stream strm;
-  int rc;
-
   /* It is possible the section consists of several compressed
      buffers concatenated together, so we uncompress in a loop.  */
-  /* PR 18313: The state field in the z_stream structure is supposed
-     to be invisible to the user (ie us), but some compilers will
-     still complain about it being used without initialisation.  So
-     we first zero the entire z_stream structure and then set the fields
-     that we need.  */
-  memset (& strm, 0, sizeof strm);
-  strm.avail_in = compressed_size;
-  strm.next_in = (Bytef*) compressed_buffer;
-  strm.avail_out = uncompressed_size;
-  /* FIXME: strm.avail_in and strm.avail_out are typically unsigned
-     int.  Supporting sizes that don't fit in an unsigned int is
-     possible but will require some rewriting of this function.  */
-  if (strm.avail_in != compressed_size || strm.avail_out != uncompressed_size)
-    return false;
-
-  BFD_ASSERT (Z_OK == 0);
-  rc = inflateInit (&strm);
-  while (strm.avail_in > 0 && strm.avail_out > 0)
+  do
     {
+      uLongf dst_len = uncompressed_size;
+      uLong src_len = compressed_size;
+      int rc = uncompress2 ((Bytef *) uncompressed_buffer, &dst_len,
+			    (Bytef *) compressed_buffer, &src_len);
       if (rc != Z_OK)
-	break;
-      strm.next_out = ((Bytef*) uncompressed_buffer
-		       + (uncompressed_size - strm.avail_out));
-      rc = inflate (&strm, Z_FINISH);
-      if (rc != Z_STREAM_END)
-	break;
-      rc = inflateReset (&strm);
+	return false;
+      uncompressed_buffer += dst_len;
+      uncompressed_size -= dst_len;
+      compressed_buffer += src_len;
+      compressed_size -= src_len;
     }
-  return inflateEnd (&strm) == Z_OK && rc == Z_OK && strm.avail_out == 0;
+  while (compressed_size > 0 && uncompressed_size > 0);
+  return compressed_size == 0 && uncompressed_size == 0;
 }
 
 /* Compress section contents using zlib/zstd and store
@@ -694,6 +677,7 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec)
       sec->size = compressed_size;
       sec->compress_status = COMPRESS_SECTION_DONE;
     }
+  sec->alloced = 1;
   sec->contents = buffer;
   sec->flags |= SEC_IN_MEMORY;
   free (input_buffer);
@@ -986,7 +970,6 @@ bfd_init_section_decompress_status (bfd *abfd, sec_ptr sec)
   bfd_size_type uncompressed_size;
   unsigned int uncompressed_alignment_power = 0;
   enum compression_type ch_type;
-  z_stream strm;
 
   compression_header_size = bfd_get_compression_header_size (abfd, sec);
   if (compression_header_size > MAX_COMPRESSION_HEADER_SIZE)
@@ -1024,10 +1007,11 @@ bfd_init_section_decompress_status (bfd *abfd, sec_ptr sec)
       return false;
     }
 
-  /* PR28530, reject sizes unsupported by decompress_contents.  */
-  strm.avail_in = sec->size;
-  strm.avail_out = uncompressed_size;
-  if (strm.avail_in != sec->size || strm.avail_out != uncompressed_size)
+  /* PR28530, reject sizes unsupported by decompress_contents. zlib
+     supports only up to 4 GiB input on machines whose long is 32 bits. */
+  if (ch_type == ch_compress_zlib
+      && (sec->size != (uLong) sec->size
+	  || uncompressed_size != (uLongf) uncompressed_size))
     {
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;

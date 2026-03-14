@@ -1,5 +1,5 @@
 /* ppc-dis.c -- Disassemble PowerPC instructions
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support
 
    This file is part of the GNU opcodes library.
@@ -72,7 +72,7 @@ struct ppc_mopt {
   ppc_cpu_t sticky;
 };
 
-struct ppc_mopt ppc_opts[] = {
+static const struct ppc_mopt ppc_opts[] = {
   { "403",     PPC_OPCODE_PPC | PPC_OPCODE_403,
     0 },
   { "405",     PPC_OPCODE_PPC | PPC_OPCODE_403 | PPC_OPCODE_405,
@@ -534,6 +534,16 @@ disassemble_init_powerpc (struct disassemble_info *info)
     {
       private_data (info)->special[0].name = ".got";
       private_data (info)->special[1].name = ".plt";
+    }
+}
+
+void
+disassemble_free_powerpc (struct disassemble_info *info)
+{
+  if (info->private_data != NULL)
+    {
+      free (private_data (info)->special[0].buf);
+      free (private_data (info)->special[1].buf);
     }
 }
 

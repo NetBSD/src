@@ -1,6 +1,6 @@
 /* Self tests for run_on_main_thread
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -73,9 +73,7 @@ run_tests ()
 }
 }
 
-void _initialize_main_thread_selftests ();
-void
-_initialize_main_thread_selftests ()
+INIT_GDB_FILE (main_thread_selftests)
 {
 #if CXX_STD_THREAD
   selftests::register_test ("run_on_main_thread",

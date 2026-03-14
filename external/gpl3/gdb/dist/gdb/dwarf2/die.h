@@ -1,6 +1,6 @@
 /* DWARF DIEs
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 
 #include "complaints.h"
 #include "dwarf2/attribute.h"
+#include "gdbsupport/next-iterator.h"
 
 /* This data structure holds a complete die structure.  */
 struct die_info
@@ -103,6 +104,13 @@ struct die_info
     return 0;
   }
 
+  /* Return a range suitable for iterating over the children of this
+     DIE.  */
+  next_range<die_info> children () const
+  {
+    return next_range<die_info> (child);
+  }
+
   /* DWARF-2 tag for this DIE.  */
   ENUM_BITFIELD(dwarf_tag) tag : 16;
 
@@ -128,9 +136,9 @@ struct die_info
   /* The dies in a compilation unit form an n-ary tree.  PARENT
      points to this die's parent; CHILD points to the first child of
      this node; and all the children of a given node are chained
-     together via their SIBLING fields.  */
+     together via their NEXT fields.  */
   struct die_info *child;	/* Its first child, if any.  */
-  struct die_info *sibling;	/* Its next sibling, if any.  */
+  struct die_info *next;	/* Its next sibling, if any.  */
   struct die_info *parent;	/* Its parent, if any.  */
 
   /* An array of attributes, with NUM_ATTRS elements.  There may be

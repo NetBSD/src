@@ -1,0 +1,110 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check the the output of gdb.execute can be styled or not depending
+# on the value of the third argument passed to gdb.execute.
+
+require allow_python_tests
+require {!is_remote host}
+
+load_lib gdb-python.exp
+
+# Use gdb.execute() to run CMD passing different argument values.  The
+# output should match either STYLED_RE or UNSTYLED_RE depending on
+# whether the 'styling' argument is True or False.
+proc do_gdb_execute { cmd styled_re unstyled_re } {
+    gdb_test "python gdb.execute('$cmd')" $styled_re
+
+    foreach from_tty { True False } {
+	gdb_test \
+	    "python gdb.execute('$cmd', $from_tty)" \
+	    $styled_re
+	gdb_test \
+	    "python gdb.execute('$cmd', $from_tty, False)" \
+	    $styled_re
+	gdb_test \
+	    "python gdb.execute('$cmd', $from_tty, False, True)" \
+	    $styled_re
+	gdb_test \
+	    "python gdb.execute('$cmd', $from_tty, False, False)" \
+	    $unstyled_re
+	gdb_test \
+	    "python print(gdb.execute('$cmd', $from_tty, True), end='')" \
+	    $unstyled_re
+	gdb_test \
+	    "python print(gdb.execute('$cmd', $from_tty, True, False), end='')" \
+	    $unstyled_re
+	gdb_test \
+	    "python print(gdb.execute('$cmd', $from_tty, True, True), end='')" \
+	    $styled_re
+    }
+}
+
+# Test that the output from gdb.execute is styled or not based on the
+# arguments passed in.
+proc test_gdb_execute_styling {} {
+    clean_restart
+
+    # Two possible outputs, BASIC_RE, the unstyled output text, or
+    # STYLED_RE, the same things, but with styling applied.
+    set text "\"version\" style"
+    set styled_text \
+	[style "\"" version][style "version" version][style "\" style" version]
+    set basic_re "The $text foreground color is: \[^\r\n\]+"
+    set styled_re "The $styled_text foreground color is: \[^\r\n\]+"
+
+    # The command we'll run.  It's output matches the above regexp.
+    set show_style_version_cmd "show style version foreground"
+
+    # Another command we'll run.  The output of this command is never
+    # styled, but we run this to check that the output doesn't change
+    # even when gdb.execute() asks for styled, or unstyled output.
+    set show_style_enabled_cmd "show style enabled"
+
+    with_test_prefix "with style enabled on" {
+	do_gdb_execute $show_style_version_cmd $styled_re $basic_re
+
+	# This time, print the value of 'show style enabled'.  This
+	# output is unstyled, so there's only one regexp.  The
+	# interesting thing here is that we don't expect the output to
+	# change, even when gdb.execute() is printing unstyled output.
+	# The "styling=False" argument to gdb.execute() is separate to
+	# the 'set style enabled on|off' setting.
+	set re "CLI output styling is enabled\\."
+	do_gdb_execute $show_style_enabled_cmd $re $re
+    }
+
+    gdb_test_no_output "set style enabled off"
+
+    with_test_prefix "with style enabled off" {
+	# With 'set style enabled off' in use, even a request to
+	# gdb.execute() to produce styled output should produce
+	# unstyled output.  The assumption is that 'set style enabled
+	# off' is done by the user, while the gdb.execute() is likely
+	# from some Python extension.  The users request for no
+	# styling overrules the extensions request for styled output.
+	do_gdb_execute $show_style_version_cmd $basic_re $basic_re
+
+	# Now check that even when we request styled output, the 'show
+	# style enabled' value is always reported as disabled.
+	set re "CLI output styling is disabled\\."
+	do_gdb_execute $show_style_enabled_cmd $re $re
+    }
+}
+
+# Run the tests.
+with_ansi_styling_terminal {
+    test_gdb_execute_styling
+}

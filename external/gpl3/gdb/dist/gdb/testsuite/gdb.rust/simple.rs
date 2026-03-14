@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2024 Free Software Foundation, Inc.
+// Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -180,6 +180,8 @@ fn main () {
     let empty_enum_value: EmptyEnum;
 
     let nonzero_offset = EnumWithNonzeroOffset { a: Some(1), b: None };
+
+    let tuple_tuple = ((23i32, 24i32), 25i32);
 
     println!("{}, {}", x.0, x.1);        // set breakpoint here
     println!("{}", diff2(92, 45));

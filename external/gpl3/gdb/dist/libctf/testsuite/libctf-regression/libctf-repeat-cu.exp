@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -34,6 +34,11 @@ if ![is_elf_format] {
 
 if {![check_ctf_available]} {
     unsupported "no CTF format support in the compiler"
+    return 0
+}
+
+if {![check_ctf_linker_dedup]} {
+    unsupported "no CTF deduplication support in the linker"
     return 0
 }
 

@@ -1,6 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -961,7 +961,7 @@ struct lval_funcs
      This may simply return the same closure, if VALUE's is
      reference-counted or statically allocated.
 
-     This may be NULL, in which case VALUE's closure is re-used in the
+     This may be NULL, in which case VALUE's closure is reused in the
      new value.  */
   void *(*copy_closure) (const struct value *v);
 
@@ -1058,9 +1058,18 @@ extern gdb_mpz value_as_mpz (struct value *val);
 extern LONGEST unpack_long (struct type *type, const gdb_byte *valaddr);
 extern CORE_ADDR unpack_pointer (struct type *type, const gdb_byte *valaddr);
 
+/* Unpack a field FIELDNO of the specified TYPE, from the anonymous
+   object at VALADDR.  See unpack_bits_as_long for more details.  */
+
 extern LONGEST unpack_field_as_long (struct type *type,
 				     const gdb_byte *valaddr,
 				     int fieldno);
+
+/* Unpack a field, FIELD, from the anonymous object at VALADDR.  See
+   unpack_bits_as_long for more details.  */
+
+extern LONGEST unpack_field_as_long (const gdb_byte *valaddr,
+				     struct field *field);
 
 /* Unpack a bitfield of the specified FIELD_TYPE, from the object at
    VALADDR, and store the result in *RESULT.
@@ -1127,6 +1136,8 @@ extern struct value *value_from_contents (struct type *, const gdb_byte *);
 extern value *default_value_from_register (gdbarch *gdbarch, type *type,
 					   int regnum,
 					   const frame_info_ptr &this_frame);
+
+extern ULONGEST default_dwarf2_reg_piece_offset (gdbarch *gdbarch, int regnum, ULONGEST size);
 
 extern struct value *value_from_register (struct type *type, int regnum,
 					  const frame_info_ptr &frame);
@@ -1295,10 +1306,9 @@ extern struct value *value_struct_elt (struct value **argp,
 				       const char *name, int *static_memfuncp,
 				       const char *err);
 
-extern struct value *value_struct_elt_bitpos (struct value **argp,
+extern struct value *value_struct_elt_bitpos (struct value *val,
 					      int bitpos,
-					      struct type *field_type,
-					      const char *err);
+					      struct type *field_type);
 
 extern struct value *value_aggregate_elt (struct type *curtype,
 					  const char *name,

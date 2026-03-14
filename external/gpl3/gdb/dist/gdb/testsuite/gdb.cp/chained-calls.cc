@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2024 Free Software Foundation, Inc.
+   Copyright 2014-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,6 +23,8 @@ public:
 
   S operator+ (const S &s);
 
+  int get ();
+
   int a;
 };
 
@@ -39,6 +41,12 @@ S::operator+ (const S &s)
   res.a = a + s.a;
 
   return res;
+}
+
+int
+S::get ()
+{
+  return a;
 }
 
 S
@@ -162,6 +170,8 @@ public:
   U (type t);
   type get_type ();
 
+  int get ();
+
   int a;
   char c;
   type tp[2];
@@ -191,6 +201,12 @@ U::get_type ()
 }
 
 int
+U::get ()
+{
+  return a;
+}
+
+int
 main ()
 {
   int i = g(f(0));
@@ -198,6 +214,7 @@ main ()
 
   B b = makeb ();
   C c;
+  int z = f (42).get ();
 
   return i + getb(b, 0);  /* Break here  */
 }

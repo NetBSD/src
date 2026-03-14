@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ if { [compile_jit_main ${main_srcfile} ${main_binfile} {}] != 0 } {
     return
 }
 
-clean_restart $::main_binfile
+clean_restart
+gdb_load $::main_binfile
 if { ![runto_main] } {
     return
 }
@@ -67,11 +68,13 @@ gdb_breakpoint [gdb_get_line_number "break here 1" $::main_srcfile]
 gdb_continue_to_breakpoint "break here 1"
 
 # Confirm that the two expected functions are available.
+set re_f1 [string_to_regexp "int jit_function_0001(void)"]
+set re_f2 [string_to_regexp "int jit_function_0002(void)"]
 gdb_test "info function ^jit_function" \
     [multi_line \
 	 "File \[^\r\n\]+jit-elf-solib.c:" \
-	 "${decimal}:\\s+int jit_function_0001\\(\\);" \
-	 "${decimal}:\\s+int jit_function_0002\\(\\);"]
+	 "${decimal}:\\s+$re_f1;" \
+	 "${decimal}:\\s+$re_f2;"]
 
 # Capture the addresses of each JIT symfile.
 set symfile_addrs {}

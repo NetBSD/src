@@ -1,6 +1,6 @@
 /* Visium-specific support for 32-bit ELF.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -615,17 +615,9 @@ visium_elf_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && discarded_section (sec))
-	{
-	  /* For relocs against symbols from removed linkonce sections,
-	     or sections discarded by a linker script, we just want the
-	     section contents zeroed.  Avoid any special processing.  */
-	  _bfd_clear_contents (howto, input_bfd, input_section,
-			       contents, rel->r_offset);
-
-	  rel->r_info = 0;
-	  rel->r_addend = 0;
-	  continue;
-	}
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, 1, relend, R_VISIUM_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;

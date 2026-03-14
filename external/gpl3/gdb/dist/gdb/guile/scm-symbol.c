@@ -1,6 +1,6 @@
 /* Scheme interface to symbols.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -405,7 +405,7 @@ gdbscm_symbol_addr_class (SCM self)
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
 
-  return scm_from_int (symbol->aclass ());
+  return scm_from_int (symbol->loc_class ());
 }
 
 /* (symbol-argument? <gdb:symbol>) -> boolean */
@@ -428,11 +428,9 @@ gdbscm_symbol_constant_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class theclass;
+  location_class loc_class = symbol->loc_class ();
 
-  theclass = symbol->aclass ();
-
-  return scm_from_bool (theclass == LOC_CONST || theclass == LOC_CONST_BYTES);
+  return scm_from_bool (loc_class == LOC_CONST || loc_class == LOC_CONST_BYTES);
 }
 
 /* (symbol-function? <gdb:symbol>) -> boolean */
@@ -443,11 +441,9 @@ gdbscm_symbol_function_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class theclass;
+  location_class loc_class = symbol->loc_class ();
 
-  theclass = symbol->aclass ();
-
-  return scm_from_bool (theclass == LOC_BLOCK);
+  return scm_from_bool (loc_class == LOC_BLOCK);
 }
 
 /* (symbol-variable? <gdb:symbol>) -> boolean */
@@ -458,14 +454,12 @@ gdbscm_symbol_variable_p (SCM self)
   symbol_smob *s_smob
     = syscm_get_valid_symbol_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   const struct symbol *symbol = s_smob->symbol;
-  enum address_class theclass;
-
-  theclass = symbol->aclass ();
+  location_class loc_class = symbol->loc_class ();
 
   return scm_from_bool (!symbol->is_argument ()
-			&& (theclass == LOC_LOCAL || theclass == LOC_REGISTER
-			    || theclass == LOC_STATIC || theclass == LOC_COMPUTED
-			    || theclass == LOC_OPTIMIZED_OUT));
+			&& (loc_class == LOC_LOCAL || loc_class == LOC_REGISTER
+			    || loc_class == LOC_STATIC || loc_class == LOC_COMPUTED
+			    || loc_class == LOC_OPTIMIZED_OUT));
 }
 
 /* (symbol-needs-frame? <gdb:symbol>) -> boolean
@@ -526,7 +520,7 @@ gdbscm_symbol_value (SCM self, SCM rest)
   if (!gdbscm_is_false (frame_scm))
     f_smob = frscm_get_frame_smob_arg_unsafe (frame_scm, frame_pos, FUNC_NAME);
 
-  if (symbol->aclass () == LOC_TYPEDEF)
+  if (symbol->loc_class () == LOC_TYPEDEF)
     {
       gdbscm_out_of_range_error (FUNC_NAME, SCM_ARG1, self,
 				 _("cannot get the value of a typedef"));

@@ -1,6 +1,6 @@
 /* Traditional frame unwind support, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -122,6 +122,7 @@ struct trad_frame_saved_reg
 
     m_kind = trad_frame_saved_reg_kind::VALUE_BYTES;
     m_reg.value_bytes = data;
+    m_reg.bytes_len = bytes.size ();
   }
 
   /* Getters */
@@ -144,10 +145,10 @@ struct trad_frame_saved_reg
     return m_reg.addr;
   }
 
-  const gdb_byte *value_bytes () const
+  gdb::array_view<const gdb_byte> value_bytes () const
   {
     gdb_assert (m_kind == trad_frame_saved_reg_kind::VALUE_BYTES);
-    return m_reg.value_bytes;
+    return { m_reg.value_bytes, m_reg.bytes_len };
   }
 
   /* Convenience functions, return true if the register has been
@@ -185,7 +186,10 @@ private:
     LONGEST value;
     int realreg;
     LONGEST addr;
-    const gdb_byte *value_bytes;
+    struct {
+      const gdb_byte *value_bytes;
+      size_t bytes_len;
+    };
   } m_reg;
 };
 

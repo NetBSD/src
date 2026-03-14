@@ -1,7 +1,7 @@
 /* GNU/Linux/x86 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -111,83 +111,6 @@ get_raw_reg (const unsigned char *raw_regs, int regnum)
     return *(int *) (raw_regs + i386_ft_collect_regmap[regnum]);
 }
 
-#ifdef HAVE_UST
-
-#include <ust/processor.h>
-
-/* "struct registers" is the UST object type holding the registers at
-   the time of the static tracepoint marker call.  This doesn't
-   contain EIP, but we know what it must have been (the marker
-   address).  */
-
-#define ST_REGENTRY(REG)			\
-  {						\
-    offsetof (struct registers, REG),		\
-    sizeof (((struct registers *) NULL)->REG)	\
-  }
-
-static struct
-{
-  int offset;
-  int size;
-} i386_st_collect_regmap[] =
-  {
-    ST_REGENTRY(eax),
-    ST_REGENTRY(ecx),
-    ST_REGENTRY(edx),
-    ST_REGENTRY(ebx),
-    ST_REGENTRY(esp),
-    ST_REGENTRY(ebp),
-    ST_REGENTRY(esi),
-    ST_REGENTRY(edi),
-    { -1, 0 }, /* eip */
-    ST_REGENTRY(eflags),
-    ST_REGENTRY(cs),
-    ST_REGENTRY(ss),
-  };
-
-#define i386_NUM_ST_COLLECT_GREGS \
-  (sizeof (i386_st_collect_regmap) / sizeof (i386_st_collect_regmap[0]))
-
-void
-supply_static_tracepoint_registers (struct regcache *regcache,
-				    const unsigned char *buf,
-				    CORE_ADDR pc)
-{
-  int i;
-  unsigned int newpc = pc;
-
-  supply_register (regcache, I386_EIP_REGNUM, &newpc);
-
-  for (i = 0; i < i386_NUM_ST_COLLECT_GREGS; i++)
-    if (i386_st_collect_regmap[i].offset != -1)
-      {
-	switch (i386_st_collect_regmap[i].size)
-	  {
-	  case 4:
-	    supply_register (regcache, i,
-			     ((char *) buf)
-			     + i386_st_collect_regmap[i].offset);
-	    break;
-	  case 2:
-	    {
-	      unsigned long reg
-		= * (short *) (((char *) buf)
-			       + i386_st_collect_regmap[i].offset);
-	      reg &= 0xffff;
-	      supply_register (regcache, i, &reg);
-	    }
-	    break;
-	  default:
-	    internal_error ("unhandled register size: %d",
-			    i386_st_collect_regmap[i].size);
-	  }
-      }
-}
-
-#endif /* HAVE_UST */
-
-
 /* This is only needed because reg-i386-linux-lib.o references it.  We
    may use it proper at some point.  */
 const char *gdbserver_xmltarget;
@@ -251,9 +174,9 @@ initialize_fast_tracepoint_trampoline_buffer (void)
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
-  uint64_t xcr0 = x86_linux_tdesc_idx_to_xcr0 (idx);
+  uint64_t xstate_bv = x86_linux_tdesc_idx_to_xstate_bv (idx);
 
-  return i386_linux_read_description (xcr0);
+  return i386_linux_read_description (xstate_bv);
 }
 
 /* Allocate buffer for the jump pads.  On i386, we can reach an arbitrary
@@ -276,5 +199,5 @@ initialize_low_tracepoint (void)
 {
   initialize_fast_tracepoint_trampoline_buffer ();
   for (int i = 0; i < x86_linux_i386_tdesc_count (); i++)
-    i386_linux_read_description (x86_linux_tdesc_idx_to_xcr0 (i));
+    i386_linux_read_description (x86_linux_tdesc_idx_to_xstate_bv (i));
 }

@@ -1,6 +1,6 @@
 /* Compact ANSI-C Type Format (CTF) support in GDB.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -328,7 +328,7 @@ set_symbol_address (struct objfile *of, struct symbol *sym, const char *name)
   if (msym.minsym != NULL)
     {
       sym->set_value_address (msym.value_address ());
-      sym->set_aclass_index (LOC_STATIC);
+      sym->set_loc_class_index (LOC_STATIC);
       sym->set_section_index (msym.minsym->section_index ());
     }
 }
@@ -447,7 +447,7 @@ ctf_add_enum_member_cb (const char *name, int enum_value, void *arg)
 
       sym->set_language (language_c, &ccp->of->objfile_obstack);
       sym->compute_and_set_names (name, false, ccp->of->per_bfd);
-      sym->set_aclass_index (LOC_CONST);
+      sym->set_loc_class_index (LOC_CONST);
       sym->set_domain (VAR_DOMAIN);
       sym->set_type (fip->ptype);
       add_symbol_to_list (sym, ccp->builder->get_global_symbols ());
@@ -477,7 +477,7 @@ new_symbol (struct ctf_context *ccp, struct type *type, ctf_id_t tid)
       sym->set_language (language_c, &objfile->objfile_obstack);
       sym->compute_and_set_names (name, false, objfile->per_bfd);
       sym->set_domain (VAR_DOMAIN);
-      sym->set_aclass_index (LOC_OPTIMIZED_OUT);
+      sym->set_loc_class_index (LOC_OPTIMIZED_OUT);
 
       if (type != nullptr)
 	sym->set_type (type);
@@ -488,11 +488,11 @@ new_symbol (struct ctf_context *ccp, struct type *type, ctf_id_t tid)
 	  case CTF_K_STRUCT:
 	  case CTF_K_UNION:
 	  case CTF_K_ENUM:
-	    sym->set_aclass_index (LOC_TYPEDEF);
+	    sym->set_loc_class_index (LOC_TYPEDEF);
 	    sym->set_domain (STRUCT_DOMAIN);
 	    break;
 	  case CTF_K_FUNCTION:
-	    sym->set_aclass_index (LOC_STATIC);
+	    sym->set_loc_class_index (LOC_STATIC);
 	    set_symbol_address (objfile, sym, sym->linkage_name ());
 	    break;
 	  case CTF_K_CONST:
@@ -502,7 +502,7 @@ new_symbol (struct ctf_context *ccp, struct type *type, ctf_id_t tid)
 	  case CTF_K_TYPEDEF:
 	  case CTF_K_INTEGER:
 	  case CTF_K_FLOAT:
-	    sym->set_aclass_index (LOC_TYPEDEF);
+	    sym->set_loc_class_index (LOC_TYPEDEF);
 	    sym->set_domain (TYPE_DOMAIN);
 	    break;
 	  case CTF_K_POINTER:
@@ -1169,7 +1169,7 @@ ctf_add_var_cb (const char *name, ctf_id_t id, void *arg)
 	OBJSTAT (ccp->of, n_syms++);
 	sym->set_type (type);
 	sym->set_domain (VAR_DOMAIN);
-	sym->set_aclass_index (LOC_OPTIMIZED_OUT);
+	sym->set_loc_class_index (LOC_OPTIMIZED_OUT);
 	sym->compute_and_set_names (name, false, ccp->of->per_bfd);
 	add_symbol_to_list (sym, ccp->builder->get_file_symbols ());
 	break;
@@ -1205,7 +1205,7 @@ add_stt_entries (struct ctf_context *ccp, int functions)
       OBJSTAT (ccp->of, n_syms++);
       sym->set_type (type);
       sym->set_domain (VAR_DOMAIN);
-      sym->set_aclass_index (LOC_STATIC);
+      sym->set_loc_class_index (LOC_STATIC);
       sym->compute_and_set_names (tname, false, ccp->of->per_bfd);
       add_symbol_to_list (sym, ccp->builder->get_global_symbols ());
       set_symbol_address (ccp->of, sym, tname);
@@ -1309,7 +1309,7 @@ ctf_psymtab_add_stt_entries (ctf_dict_t *cfp, ctf_psymtab *pst,
   while ((tid = ctf_symbol_next (cfp, &i, &tname, functions)) != CTF_ERR)
     {
       uint32_t kind = ctf_type_kind (cfp, tid);
-      address_class aclass;
+      location_class loc_class;
       domain_enum tdomain;
       switch (kind)
 	{
@@ -1324,14 +1324,14 @@ ctf_psymtab_add_stt_entries (ctf_dict_t *cfp, ctf_psymtab *pst,
 	}
 
       if (kind == CTF_K_FUNCTION)
-	aclass = LOC_STATIC;
+	loc_class = LOC_STATIC;
       else if (kind == CTF_K_CONST)
-	aclass = LOC_CONST;
+	loc_class = LOC_CONST;
       else
-	aclass = LOC_TYPEDEF;
+	loc_class = LOC_TYPEDEF;
 
       pst->add_psymbol (tname, true,
-			tdomain, aclass, -1,
+			tdomain, loc_class, -1,
 			psymbol_placement::GLOBAL,
 			unrelocated_addr (0),
 			language_c, pst->context.partial_symtabs, of);
@@ -1465,7 +1465,7 @@ ctf_psymtab_type_cb (ctf_id_t tid, void *arg)
   ccp = (struct ctf_context *) arg;
 
   domain_enum domain = UNDEF_DOMAIN;
-  enum address_class aclass = LOC_UNDEF;
+  location_class loc_class = LOC_UNDEF;
   kind = ctf_type_kind (ccp->fp, tid);
   switch (kind)
     {
@@ -1475,29 +1475,29 @@ ctf_psymtab_type_cb (ctf_id_t tid, void *arg)
       case CTF_K_STRUCT:
       case CTF_K_UNION:
 	domain = STRUCT_DOMAIN;
-	aclass = LOC_TYPEDEF;
+	loc_class = LOC_TYPEDEF;
 	break;
       case CTF_K_FUNCTION:
       case CTF_K_FORWARD:
 	domain = VAR_DOMAIN;
-	aclass = LOC_STATIC;
+	loc_class = LOC_STATIC;
 	section = SECT_OFF_TEXT (ccp->of);
 	break;
       case CTF_K_CONST:
 	domain = VAR_DOMAIN;
-	aclass = LOC_STATIC;
+	loc_class = LOC_STATIC;
 	break;
       case CTF_K_TYPEDEF:
       case CTF_K_POINTER:
       case CTF_K_VOLATILE:
       case CTF_K_RESTRICT:
 	domain = VAR_DOMAIN;
-	aclass = LOC_TYPEDEF;
+	loc_class = LOC_TYPEDEF;
 	break;
       case CTF_K_INTEGER:
       case CTF_K_FLOAT:
 	domain = VAR_DOMAIN;
-	aclass = LOC_TYPEDEF;
+	loc_class = LOC_TYPEDEF;
 	break;
       case CTF_K_ARRAY:
       case CTF_K_UNKNOWN:
@@ -1509,7 +1509,7 @@ ctf_psymtab_type_cb (ctf_id_t tid, void *arg)
     return 0;
 
   ccp->pst->add_psymbol (name, false,
-			 domain, aclass, section,
+			 domain, loc_class, section,
 			 psymbol_placement::STATIC,
 			 unrelocated_addr (0),
 			 language_c, ccp->partial_symtabs, ccp->of);

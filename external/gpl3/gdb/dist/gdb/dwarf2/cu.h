@@ -1,6 +1,6 @@
 /* DWARF CU data structure
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #define GDB_DWARF2_CU_H
 
 #include "buildsym.h"
-#include "dwarf2/comp-unit-head.h"
+#include "dwarf2/unit-head.h"
 #include <optional>
 #include "language.h"
 #include "gdbsupport/unordered_set.h"
@@ -50,10 +50,14 @@ struct delayed_method_info
 /* Internal state when decoding a particular compilation unit.  */
 struct dwarf2_cu
 {
-  explicit dwarf2_cu (dwarf2_per_cu_data *per_cu,
-		      dwarf2_per_objfile *per_objfile);
+  explicit dwarf2_cu (dwarf2_per_cu *per_cu, dwarf2_per_objfile *per_objfile);
 
   DISABLE_COPY_AND_ASSIGN (dwarf2_cu);
+
+  /* The section the DIEs were effectively read from.  This could be
+     .debug_info, .debug_types, or with split DWARF, their .dwo
+     variants.  */
+  const dwarf2_section_info &section () const;
 
   /* TU version of handle_DW_AT_stmt_list for read_type_unit_scope.
      Create the set of symtabs used by this TU, or if this TU is sharing
@@ -97,11 +101,20 @@ struct dwarf2_cu
   }
 
   /* Add a dependence relationship from this cu to REF_PER_CU.  */
-  void add_dependence (struct dwarf2_per_cu_data *ref_per_cu)
+  void add_dependence (dwarf2_per_cu *ref_per_cu)
   { m_dependencies.emplace (ref_per_cu); }
 
+  /* Find the DIE at section offset SECT_OFF.
+
+     Return nullptr if not found.  */
+  die_info *find_die (sect_offset sect_off) const
+  {
+    auto it = die_hash.find (sect_off);
+    return it != die_hash.end () ? *it : nullptr;
+  }
+
   /* The header of the compilation unit.  */
-  struct comp_unit_head header;
+  struct unit_head header;
 
   /* Base address of this compilation unit.  */
   std::optional<unrelocated_addr> base_address;
@@ -115,17 +128,163 @@ struct dwarf2_cu
     return language_defn->la_language;
   }
 
-  const char *producer = nullptr;
+  /* Set the producer string and check various properties of it.  */
+  void set_producer (const char *producer);
+
+  /* Check for GCC PR debug/45124 fix which is not present in any G++
+     version up to 4.5.any while it is present already in G++ 4.6.0 -
+     the PR has been fixed during 4.6.0 experimental.  */
+  bool producer_is_gxx_lt_4_6 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gxx_lt_4_6;
+  }
+
+  /* Check for GCC < 4.5.x.  */
+  bool producer_is_gcc_lt_4_5 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gcc_lt_4_5;
+  }
+
+  /* Codewarrior (at least as of version 5.0.40) generates dwarf line
+     information with incorrect is_stmt attributes.  */
+  bool producer_is_codewarrior () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_codewarrior;
+  }
+
+  bool producer_is_gas_lt_2_38 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gas_lt_2_38;
+  }
+
+  bool producer_is_gas_2_39 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gas_2_39;
+  }
+
+  /* Return true if CU is produced by GAS 2.39 or later.  */
+  bool producer_is_gas_ge_2_39 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gas_2_39 || m_producer_is_gas_ge_2_40;
+  }
+
+  /* ICC<14 does not output the required DW_AT_declaration on
+     incomplete types, but gives them a size of zero.  Starting with
+     version 14, ICC is compatible with GCC.  */
+  bool producer_is_icc_lt_14 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_icc_lt_14;
+  }
+
+  /* ICC generates a DW_AT_type for C void functions.  This was
+     observed on ICC 14.0.5.212, and appears to be against the DWARF
+     spec (V5 3.3.2) which says that void functions should not have a
+     DW_AT_type.  */
+  bool producer_is_icc () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_icc;
+  }
+
+  /* Check for possibly missing DW_AT_comp_dir with relative
+     .debug_line directory paths.  GCC SVN r127613 (new option
+     -fdebug-prefix-map) fixed this, it was first present in GCC
+     release 4.3.0.  */
+  bool producer_is_gcc_lt_4_3 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gcc_lt_4_3;
+  }
+
+  /* Check for GCC 4 or later.  */
+  bool producer_is_gcc_ge_4 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gcc_ge_4;
+  }
+
+  /* Check for GCC 11 exactly.  */
+  bool producer_is_gcc_11 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gcc_11;
+  }
+
+  /* Check for any version of GCC.  */
+  bool producer_is_gcc () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gcc;
+  }
+
+  /* Return true if the producer of the inferior is clang.  */
+  bool producer_is_clang () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_clang;
+  }
+
+  /* Return true if the producer is RealView.  */
+  bool producer_is_realview () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_realview;
+  }
+
+  /* Return true if the producer is IBM XLC.  */
+  bool producer_is_xlc () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_xlc;
+  }
+
+  /* Return true if the producer is IBM XLC for OpenCL.  */
+  bool producer_is_xlc_opencl () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_xlc_opencl;
+  }
+
+  /* Return true if the producer is GNU F77.  */
+  bool producer_is_gf77 () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_gf77;
+  }
+
+  /* Return true if the producer is GNU Go.  */
+  bool producer_is_ggo () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer_is_ggo;
+  }
+
+  /* Return the producer.  In general this should not be used and
+     instead new checks should be added to set_producer.  */
+  const char *get_producer () const
+  {
+    gdb_assert (m_checked_producer);
+    return m_producer;
+  }
 
 private:
+  const char *m_producer = nullptr;
+
   /* The symtab builder for this CU.  This is only non-NULL when full
      symbols are being read.  */
-  std::unique_ptr<buildsym_compunit> m_builder;
+  buildsym_compunit_up m_builder;
 
-  /* A set of pointers to dwarf2_per_cu_data objects for compilation
-     units referenced by this one.  Only used during full symbol processing;
-     partial symbol tables do not have dependencies.  */
-  gdb::unordered_set<dwarf2_per_cu_data *> m_dependencies;
+  /* A set of pointers to dwarf2_per_cu objects for compilation units referenced
+     by this one.  Only used during full symbol processing; partial symbol
+     tables do not have dependencies.  */
+  gdb::unordered_set<dwarf2_per_cu *> m_dependencies;
 
 public:
   /* The generic symbol table building routines have separate lists for
@@ -144,7 +303,7 @@ public:
   auto_obstack comp_unit_obstack;
 
   /* Backlink to our per_cu entry.  */
-  struct dwarf2_per_cu_data *per_cu;
+  dwarf2_per_cu *per_cu;
 
   /* The dwarf2_per_objfile that owns this.  */
   dwarf2_per_objfile *per_objfile;
@@ -215,7 +374,7 @@ public:
      right place.  And since the DW_TAG_compile_unit DIE in the split-unit can't
      have a DW_AT_ranges attribute, we can use the
 
-       die->tag != DW_AT_compile_unit
+       die->tag != DW_TAG_compile_unit
 
      to determine whether the base should be added or not.  */
   ULONGEST gnu_ranges_base = 0;
@@ -258,17 +417,25 @@ public:
      if all the producer_is_* fields are valid.  This information is cached
      because profiling CU expansion showed excessive time spent in
      producer_is_gxx_lt_4_6.  */
-  bool checked_producer : 1;
-  bool producer_is_gxx_lt_4_6 : 1;
-  bool producer_is_gcc_lt_4_3 : 1;
-  bool producer_is_gcc_11 : 1;
-  bool producer_is_icc : 1;
-  bool producer_is_icc_lt_14 : 1;
-  bool producer_is_codewarrior : 1;
-  bool producer_is_clang : 1;
-  bool producer_is_gas_lt_2_38 : 1;
-  bool producer_is_gas_2_39 : 1;
-  bool producer_is_gas_ge_2_40 : 1;
+  bool m_checked_producer : 1;
+  bool m_producer_is_gxx_lt_4_6 : 1;
+  bool m_producer_is_gcc_lt_4_5 : 1;
+  bool m_producer_is_gcc_lt_4_3 : 1;
+  bool m_producer_is_gcc_ge_4 : 1;
+  bool m_producer_is_gcc_11 : 1;
+  bool m_producer_is_gcc : 1;
+  bool m_producer_is_icc : 1;
+  bool m_producer_is_icc_lt_14 : 1;
+  bool m_producer_is_codewarrior : 1;
+  bool m_producer_is_clang : 1;
+  bool m_producer_is_gas_lt_2_38 : 1;
+  bool m_producer_is_gas_2_39 : 1;
+  bool m_producer_is_gas_ge_2_40 : 1;
+  bool m_producer_is_realview : 1;
+  bool m_producer_is_xlc : 1;
+  bool m_producer_is_xlc_opencl : 1;
+  bool m_producer_is_gf77 : 1;
+  bool m_producer_is_ggo : 1;
 
   /* When true, the file that we're processing is known to have
      debugging info for C++ namespaces.  GCC 3.3.x did not produce
@@ -279,5 +446,7 @@ public:
   /* Get the buildsym_compunit for this CU.  */
   buildsym_compunit *get_builder ();
 };
+
+using dwarf2_cu_up = std::unique_ptr<dwarf2_cu>;
 
 #endif /* GDB_DWARF2_CU_H */

@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -289,7 +289,6 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
-	elf-nacl.lo \
 	elf-sframe.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
@@ -423,7 +422,6 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
-	elf-nacl.c \
 	elf-sframe.c \
 	elf-strtab.c \
 	elf-vxworks.c \
@@ -709,7 +707,7 @@ SOURCE_HFILES = \
 	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
 	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
 	elf-bfd.h elfcode.h elfcore.h elf-hppa.h elf-linker-x86.h \
-	elf-linux-core.h elf-nacl.h elf-s390.h elf-vxworks.h \
+	elf-linux-core.h elf-s390.h elf-vxworks.h \
 	elfxx-aarch64.h elfxx-ia64.h elfxx-mips.h elfxx-riscv.h \
 	elfxx-sparc.h elfxx-tilegx.h elfxx-x86.h elfxx-loongarch.h \
 	genlink.h go32stub.h \

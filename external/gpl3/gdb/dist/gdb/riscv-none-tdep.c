@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -163,9 +163,7 @@ riscv_none_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
 /* Initialize RISC-V bare-metal target support.  */
 
-void _initialize_riscv_none_tdep ();
-void
-_initialize_riscv_none_tdep ()
+INIT_GDB_FILE (riscv_none_tdep)
 {
   gdbarch_register_osabi (bfd_arch_riscv, 0, GDB_OSABI_NONE,
 			  riscv_none_init_abi);

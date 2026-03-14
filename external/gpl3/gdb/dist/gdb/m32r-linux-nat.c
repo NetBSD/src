@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -234,9 +234,7 @@ m32r_linux_nat_target::store_registers (struct regcache *regcache, int regno)
   internal_error (_("Got request to store bad register number %d."), regno);
 }
 
-void _initialize_m32r_linux_nat ();
-void
-_initialize_m32r_linux_nat ()
+INIT_GDB_FILE (m32r_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_m32r_linux_nat_target;

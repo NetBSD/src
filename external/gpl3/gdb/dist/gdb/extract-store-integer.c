@@ -1,4 +1,4 @@
-/* Copyright (C) 1986-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -333,13 +333,11 @@ extract_integer_test ()
   do_extract_tests<int8_t> (0x00, 0x00, 0x00);
 }
 
-} // namespace selftests
+} /* namespace selftests */
 
 #endif
 
-void _initialize_extract_store_integer ();
-void
-_initialize_extract_store_integer ()
+INIT_GDB_FILE (extract_store_integer)
 {
 #if GDB_SELF_TEST
   selftests::register_test ("copy_integer_to_size",

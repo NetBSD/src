@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,13 +30,13 @@
 #include "gdbtypes.h"
 #include "objfiles.h"
 #include "solib.h"
-#include "solist.h"
 #include "symtab.h"
 #include "target-descriptions.h"
 #include "regset.h"
 #include "mips-linux-tdep.h"
 #include "glibc-tdep.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "xml-syscall.h"
 #include "gdbsupport/gdb_signals.h"
 #include "inferior.h"
@@ -45,8 +45,6 @@
 #include "features/mips-dsp-linux.c"
 #include "features/mips64-linux.c"
 #include "features/mips64-dsp-linux.c"
-
-static solib_ops mips_svr4_so_ops;
 
 /* This enum represents the signals' numbers on the MIPS
    architecture.  It just contains the signal definitions which are
@@ -667,24 +665,59 @@ mips_linux_in_dynsym_stub (CORE_ADDR pc)
   return 1;
 }
 
-/* Return non-zero iff PC belongs to the dynamic linker resolution
-   code, a PLT entry, or a lazy binding stub.  */
+/* Mix-in class to add Linux/MIPS-specific methods to a base solib_ops
+   class.  */
 
-static int
-mips_linux_in_dynsym_resolve_code (CORE_ADDR pc)
+template <typename Base>
+struct mips_linux_svr4_solib_ops : public Base
+{
+  using Base::Base;
+
+  bool in_dynsym_resolve_code (CORE_ADDR pc) const override;
+};
+
+template <typename Base>
+bool
+mips_linux_svr4_solib_ops<Base>::in_dynsym_resolve_code (CORE_ADDR pc) const
 {
   /* Check whether PC is in the dynamic linker.  This also checks
      whether it is in the .plt section, used by non-PIC executables.  */
-  if (svr4_in_dynsym_resolve_code (pc))
-    return 1;
+  if (Base::in_dynsym_resolve_code (pc))
+    return true;
 
   /* Likewise for the stubs.  They live in the .MIPS.stubs section these
      days, so we check if the PC is within, than fall back to a pattern
      match.  */
   if (mips_linux_in_dynsym_stub (pc))
-    return 1;
+    return true;
 
-  return 0;
+  return false;
+}
+
+/* solib_ops for ILP32 Linux/MIPS systems.  */
+
+using mips_linux_ilp32_svr4_solib_ops
+  = mips_linux_svr4_solib_ops<linux_ilp32_svr4_solib_ops>;
+
+/* Return a new solib_ops for ILP32 Linux/MIPS systems.  */
+
+static solib_ops_up
+make_mips_linux_ilp32_svr4_solib_ops (program_space *pspace)
+{
+  return std::make_unique<mips_linux_ilp32_svr4_solib_ops> (pspace);
+}
+
+/* solib_ops for LP64 Linux/MIPS systems.  */
+
+using mips_linux_lp64_svr4_solib_ops
+  = mips_linux_svr4_solib_ops<linux_lp64_svr4_solib_ops>;
+
+/* Return a new solib_ops for LP64 Linux/MIPS systems.  */
+
+static solib_ops_up
+make_mips_linux_lp64_svr4_solib_ops (program_space *pspace)
+{
+  return std::make_unique<mips_linux_lp64_svr4_solib_ops> (pspace);
 }
 
 /* See the comments for SKIP_SOLIB_RESOLVER at the top of infrun.c,
@@ -1538,8 +1571,7 @@ mips_linux_init_abi (struct gdbarch_info info,
       case MIPS_ABI_O32:
 	set_gdbarch_get_longjmp_target (gdbarch,
 					mips_linux_get_longjmp_target);
-	set_solib_svr4_fetch_link_map_offsets
-	  (gdbarch, linux_ilp32_fetch_link_map_offsets);
+	set_solib_svr4_ops (gdbarch, make_mips_linux_ilp32_svr4_solib_ops);
 	tramp_frame_prepend_unwinder (gdbarch, &micromips_linux_o32_sigframe);
 	tramp_frame_prepend_unwinder (gdbarch,
 				      &micromips_linux_o32_rt_sigframe);
@@ -1550,8 +1582,7 @@ mips_linux_init_abi (struct gdbarch_info info,
       case MIPS_ABI_N32:
 	set_gdbarch_get_longjmp_target (gdbarch,
 					mips_linux_get_longjmp_target);
-	set_solib_svr4_fetch_link_map_offsets
-	  (gdbarch, linux_ilp32_fetch_link_map_offsets);
+	set_solib_svr4_ops (gdbarch, make_mips_linux_ilp32_svr4_solib_ops);
 	set_gdbarch_long_double_bit (gdbarch, 128);
 	set_gdbarch_long_double_format (gdbarch, floatformats_ieee_quad);
 	tramp_frame_prepend_unwinder (gdbarch,
@@ -1562,8 +1593,7 @@ mips_linux_init_abi (struct gdbarch_info info,
       case MIPS_ABI_N64:
 	set_gdbarch_get_longjmp_target (gdbarch,
 					mips64_linux_get_longjmp_target);
-	set_solib_svr4_fetch_link_map_offsets
-	  (gdbarch, linux_lp64_fetch_link_map_offsets);
+	set_solib_svr4_ops (gdbarch, make_mips_linux_lp64_svr4_solib_ops);
 	set_gdbarch_long_double_bit (gdbarch, 128);
 	set_gdbarch_long_double_format (gdbarch, floatformats_ieee_quad);
 	tramp_frame_prepend_unwinder (gdbarch,
@@ -1577,21 +1607,11 @@ mips_linux_init_abi (struct gdbarch_info info,
 
   set_gdbarch_skip_solib_resolver (gdbarch, mips_linux_skip_resolver);
 
-  set_gdbarch_software_single_step (gdbarch, mips_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, mips_software_single_step);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
-
-  /* Initialize this lazily, to avoid an initialization order
-     dependency on solib-svr4.c's _initialize routine.  */
-  if (mips_svr4_so_ops.in_dynsym_resolve_code == NULL)
-    {
-      mips_svr4_so_ops = svr4_so_ops;
-      mips_svr4_so_ops.in_dynsym_resolve_code
-	= mips_linux_in_dynsym_resolve_code;
-    }
-  set_gdbarch_so_ops (gdbarch, &mips_svr4_so_ops);
 
   set_gdbarch_write_pc (gdbarch, mips_linux_write_pc);
 
@@ -1629,9 +1649,7 @@ mips_linux_init_abi (struct gdbarch_info info,
     }
 }
 
-void _initialize_mips_linux_tdep ();
-void
-_initialize_mips_linux_tdep ()
+INIT_GDB_FILE (mips_linux_tdep)
 {
   const struct bfd_arch_info *arch_info;
 

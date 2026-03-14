@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -35,14 +35,6 @@
 #include <asm/ptrace.h>
 
 #include "elf/common.h"
-
-/* Hash table storing per-process data.  We don't bind this to a
-   per-inferior registry because of targets like x86 GNU/Linux that
-   need to keep track of processes that aren't bound to any inferior
-   (e.g., fork children, checkpoints).  */
-
-static std::unordered_map<pid_t, loongarch_debug_reg_state>
-loongarch_debug_process_state;
 
 /* See loongarch-linux-hw-point.h  */
 
@@ -218,34 +210,4 @@ loongarch_linux_get_debug_reg_capacity (int tid)
 		 " available."));
       loongarch_num_bp_regs = 0;
     }
-}
-
-/* Return the debug register state for process PID.  If no existing
-   state is found for this process, return nullptr.  */
-
-struct loongarch_debug_reg_state *
-loongarch_lookup_debug_reg_state (pid_t pid)
-{
-  auto it = loongarch_debug_process_state.find (pid);
-  if (it != loongarch_debug_process_state.end ())
-    return &it->second;
-
-  return nullptr;
-}
-
-/* Return the debug register state for process PID.  If no existing
-   state is found for this process, create new state.  */
-
-struct loongarch_debug_reg_state *
-loongarch_get_debug_reg_state (pid_t pid)
-{
-  return &loongarch_debug_process_state[pid];
-}
-
-/* Remove any existing per-process debug state for process PID.  */
-
-void
-loongarch_remove_debug_reg_state (pid_t pid)
-{
-  loongarch_debug_process_state.erase (pid);
 }

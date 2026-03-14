@@ -1,6 +1,6 @@
 /* Public partial symbol table definitions.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -184,10 +184,10 @@ struct partial_symbol
   ENUM_BITFIELD(domain_enum) domain : SYMBOL_DOMAIN_BITS;
 
   /* Address class (for info_symbols).  Note that we don't allow
-     synthetic "aclass" values here at present, simply because there's
+     synthetic "loc_class" values here at present, simply because there's
      no need.  */
 
-  ENUM_BITFIELD(address_class) aclass : SYMBOL_ACLASS_BITS;
+  ENUM_BITFIELD(location_class) loc_class : SYMBOL_LOC_CLASS_BITS;
 };
 
 /* A convenience enum to give names to some constants used when
@@ -333,7 +333,7 @@ struct partial_symtab
      If COPY_NAME is true, make a copy of NAME, otherwise use the passed
      reference.
 
-     THECLASS is the type of symbol.
+     LOC_CLASS is the type of symbol.
 
      SECTION is the index of the section of OBJFILE in which the symbol is found.
 
@@ -348,7 +348,7 @@ struct partial_symtab
 
   void add_psymbol (std::string_view name,
 		    bool copy_name, domain_enum domain,
-		    enum address_class theclass,
+		    location_class loc_class,
 		    int section,
 		    psymbol_placement where,
 		    unrelocated_addr coreaddr,
@@ -628,14 +628,13 @@ struct psymbol_functions : public quick_symbol_functions
 
   bool expand_symtabs_matching
     (struct objfile *objfile,
-     gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+     expand_symtabs_file_matcher file_matcher,
      const lookup_name_info *lookup_name,
-     gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-     gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+     expand_symtabs_symbol_matcher symbol_matcher,
+     expand_symtabs_expansion_listener expansion_notify,
      block_search_flags search_flags,
      domain_search_flags kind,
-     gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher)
-       override;
+     expand_symtabs_lang_matcher lang_matcher) override;
 
   struct compunit_symtab *find_pc_sect_compunit_symtab
     (struct objfile *objfile, bound_minimal_symbol msymbol, CORE_ADDR pc,
@@ -647,8 +646,7 @@ struct psymbol_functions : public quick_symbol_functions
     return nullptr;
   }
 
-  void map_symbol_filenames (struct objfile *objfile,
-			     gdb::function_view<symbol_filename_ftype> fun,
+  void map_symbol_filenames (objfile *objfile, symbol_filename_listener fun,
 			     bool need_fullname) override;
 
   /* Return a range adapter for the psymtabs.  */

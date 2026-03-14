@@ -1,6 +1,6 @@
 /* Reading symbol files from memory.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -204,9 +204,7 @@ add_vsyscall_page (inferior *inf)
     }
 }
 
-void _initialize_symfile_mem ();
-void
-_initialize_symfile_mem ()
+INIT_GDB_FILE (symfile_mem)
 {
   add_cmd ("add-symbol-file-from-memory", class_files,
 	   add_symbol_file_from_memory_command,

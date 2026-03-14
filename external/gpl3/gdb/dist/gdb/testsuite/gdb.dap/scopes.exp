@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,7 +70,8 @@ lassign $scopes scope reg_scope
 gdb_assert {[dict get $scope name] == "Locals"} "scope is locals"
 gdb_assert {[dict get $scope presentationHint] == "locals"} \
     "locals presentation hint"
-gdb_assert {[dict get $scope namedVariables] == 3} "three vars in scope"
+set count [dict get $scope namedVariables]
+gdb_assert {$count == 4} "four vars in scope"
 
 gdb_assert {[dict get $reg_scope name] == "Registers"} \
     "second scope is registers"
@@ -89,8 +90,8 @@ set refs1 [lindex [dap_check_request_and_response "fetch variables 0,1" \
 set refs2 [lindex [dap_check_request_and_response "fetch variables 2" \
 		       "variables" \
 		       [format {o variablesReference [i %d] \
-				    start [i 2] count [i 1]} \
-			    $num]] \
+				    start [i 2] count [i %d]} \
+			    $num [expr {$count - 2}]]] \
 	       0]
 
 set vars [concat [dict get $refs1 body variables] \
@@ -115,6 +116,10 @@ foreach var $vars {
 	"scalar" {
 	    gdb_assert {[dict get $var value] == 23} "check value of scalar"
 	}
+	"ptr" {
+	    gdb_assert {[dict get $var memoryReference] != ""} \
+		"check memoryReference of ptr"
+	}
 	default {
 	    fail "unknown variable $name"
 	}
@@ -128,11 +133,38 @@ set refs [lindex [dap_check_request_and_response "fetch contents of dei" \
 set deivals [dict get $refs body variables]
 gdb_assert {[llength $deivals] == 2} "dei has two members"
 
+# Request more children than exist.  See PR dap/33228.
+set seq [dap_send_request variables \
+	     [format {o variablesReference [i %d] count [i 100]} $dei_ref]]
+lassign [dap_read_response variables $seq] response ignore
+gdb_assert {[dict get $response success] == "false"} \
+    "variables with invalid count"
+
 set num [dict get $reg_scope variablesReference]
-# The request succeeding is sufficient.
-set val [dap_check_request_and_response "fetch first register" \
+lassign [dap_check_request_and_response "fetch all registers" \
 	     "variables" \
-	     [format {o variablesReference [i %d] count [i 1]} $num]]
+	     [format {o variablesReference [i %d] count [i %d]} $num\
+		  [dict get $reg_scope namedVariables]]] \
+    val events
+
+# If any register has children, try to fetch those as well.  This is a
+# regression test for part of PR dap/33228.
+foreach var [dict get $val body variables] {
+    set regvar [dict get $var variablesReference]
+    if {$regvar > 0} {
+	# If variablesReference is non-zero, then there must be either
+	# named or indexed children.
+	if {[dict exists $var namedVariables]} {
+	    set n [dict get $var namedVariables]
+	} else {
+	    set n [dict get $var indexedVariables]
+	}
+
+	dap_check_request_and_response "fetch register children for $regvar" \
+	    "variables" \
+	    [format {o variablesReference [i %d] count [i %d]} $regvar $n]
+    }
+}
 
 set num [dict get $scope variablesReference]
 set refs [lindex [dap_check_request_and_response "set variable scalar" \

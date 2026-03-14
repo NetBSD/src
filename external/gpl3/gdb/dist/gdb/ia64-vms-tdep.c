@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenVMS IA-64.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -118,7 +118,7 @@ ia64_vms_get_dyn_info_list (unw_addr_space_t as,
   return -UNW_ENOINFO;
 }
 
-/* Set of libunwind callback acccessor functions.  */
+/* Set of libunwind callback accessor functions.  */
 static unw_accessors_t ia64_vms_unw_accessors;
 static unw_accessors_t ia64_vms_unw_rse_accessors;
 
@@ -153,9 +153,7 @@ ia64_openvms_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 #endif
 }
 
-void _initialize_ia64_vms_tdep ();
-void
-_initialize_ia64_vms_tdep ()
+INIT_GDB_FILE (ia64_vms_tdep)
 {
   gdbarch_register_osabi (bfd_arch_ia64, 0, GDB_OSABI_OPENVMS,
 			  ia64_openvms_init_abi);

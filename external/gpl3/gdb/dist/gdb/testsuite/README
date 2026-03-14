@@ -319,14 +319,28 @@ GDBSERVER_DEBUG
 
 When set gdbserver debug is sent to the a file in the test output directory.
 It should be set to a comma separated list of the following options:
-	debug  - write gdbserver debug to gdbserver.debug.
-	remote - write gdbserver remote debug to gdbserver.debug.
+	debug-all - write gdbserver debug for threads remote and event-loop.
+	debug-threads - write gdbserver threads debug to gdbserver.debug.
+	debug-remote - write gdbserver remote debug to gdbserver.debug.
+	debug-event-loop - write gdbserver event-loog debug to gdbserver.debug.
 	replay - write a replay log to the file gdbserver.replay for use
 		 with gdbreplay.
-Alternatively, it can be set to "all" to turn on all the above
-For example, to turn on gdbserver debugging, you can do:
+Alternatively, it can be set to "all" to turn on all the above, e.g.:
 
-	make check GDBSERVER_DEBUG="debug,replay"
+	make check GDBSERVER_DEBUG="all"
+
+To turn on all --debug gdbserver parameter options but without replay logging,
+use the following:
+
+	make check GDBSERVER_DEBUG="debug-all"
+
+To turn on gdbserver debugging for all remote debug and replay logging,
+you can do:
+
+	make check GDBSERVER_DEBUG="debug-remote, replay"
+
+Note that the GDBSERVER_DEBUG options are not equivalent to the gdbserver
+parameter options of "--debug", as also the replay logging is supported.
 
 GDB_TARGET_USERNAME
 GDB_HOST_USERNAME

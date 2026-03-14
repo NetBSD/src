@@ -1,0 +1,128 @@
+# Copyright 2010-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that GDB can generate accurate backtraces even if some of the stack
+# trace goes through a function with no debug information.
+
+standard_testfile -caller.c -main.c
+set objmainfile [standard_output_file ${testfile}-main.o]
+set objcallerfile [standard_output_file ${testfile}-caller.o]
+
+# Recompile the inferior with or without CFI information, then run the
+# inferior until the point where the important test starts.
+# Returns FALSE on an ERROR.
+proc prepare_test {has_cfi} {
+    global srcdir subdir srcfile srcfile2 objmainfile objcallerfile binfile
+    if {$has_cfi} {
+	set extension "cfi"
+	if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" \
+	     "${objcallerfile}" \
+	     object [list {additional_flags=-fomit-frame-pointer \
+		 -funwind-tables -fasynchronous-unwind-tables}]] != "" } {
+	    untested "couldn't compile"
+	    return false
+      }
+    } else {
+	set extension "no-cfi"
+	if {[gdb_compile "${srcdir}/${subdir}/${srcfile}" \
+	     "${objcallerfile}" \
+	     object [list {additional_flags=-fomit-frame-pointer \
+		 -fno-unwind-tables \
+		 -fno-asynchronous-unwind-tables}]] != "" } {
+	    untested "couldn't compile"
+	    return false
+      }
+    }
+    if {[gdb_compile [list "${objmainfile}" \
+	    "${objcallerfile}"] \
+	    "${binfile}-${extension}" binfile {}] != ""} {
+	untested "couldn't link object files"
+	return false
+    }
+
+    clean_restart
+    gdb_load $binfile-$extension
+
+    if ![runto callback] then {
+	fail "has_cfi=$has_cfi: Can't run to callback"
+	return false
+    }
+    gdb_test_no_output "maint frame-unwinder disable ARCH"
+    return true
+}
+
+if {[gdb_compile "${srcdir}/${subdir}/${srcfile2}" \
+	"${objmainfile}" \
+	object {debug}] != "" } {
+    untested "couldn't compile main file"
+    return
+}
+
+proc_with_prefix no-cfi {} {
+    if { ![prepare_test false] } {
+	return
+    }
+
+    set re_msg \
+	[string_list_to_regexp \
+	     "Required frame unwinder may have been disabled," \
+	     " see 'maint info frame-unwinders'"]
+    set hs {[^\r\n]}
+    set re_bt_line "#0\\s+[string_to_regexp {callback ()}] $hs+"
+    set re_bt_no_filters \
+	[multi_line \
+	     $re_bt_line \
+	     $re_msg]
+    gdb_test "bt -no-filters" \
+	$re_bt_no_filters \
+	"verify no-filters unwind fail"
+
+    # Flush frame cache to retrigger the message.
+    gdb_test "maint flush register-cache" \
+	[string_to_regexp "Register cache flushed."]
+
+    # This output may occur when we run into the message while applying the
+    # frame filters.
+    set re_bt \
+	[multi_line \
+	     $hs+$re_msg \
+	     $re_bt_line]
+    gdb_test "bt" \
+	"($re_bt|$re_bt_no_filters)" \
+	"verify unwind fail"
+}
+
+proc_with_prefix cfi {} {
+    if { ![prepare_test true] } {
+	return
+    }
+
+    if { [istarget "arm*-*-*"] } {
+	setup_kfail backtrace/31950 *-*-*
+    }
+    set text {[^\r\n]+}
+    # #0  callback () at ...
+    # #1  0x00000000004004e9 in caller ()
+    # #2  0x00000000004004cd in main () at ...
+    gdb_test "bt" \
+	[multi_line \
+	     "#0 +callback $text" \
+	     "#1 $text in caller $text" \
+	     "#2 $text in main $text"] \
+	"Verify unwinding works"
+}
+
+no-cfi
+cfi

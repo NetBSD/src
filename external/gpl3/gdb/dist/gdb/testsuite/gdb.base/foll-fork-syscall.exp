@@ -1,0 +1,143 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test catching syscalls with all permutations of follow-fork parent/child
+# and detach-on-fork on/off.
+
+# Test relies on checking follow-fork output. Do not run if gdb debug is
+# enabled because it will be redirected to the log.
+require !gdb_debug_enabled
+require {is_any_target "i?86-*-*" "x86_64-*-*"}
+require allow_fork_tests
+
+standard_testfile
+
+if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
+    return -1
+}
+
+proc setup_gdb {} {
+    global testfile
+
+    clean_restart $testfile
+
+    if {![runto_main]} {
+	return false
+    }
+
+    # Set a breakpoint after the fork is "complete."
+    if {![gdb_breakpoint [gdb_get_line_number "set breakpoint here"]]} {
+	return false
+    }
+
+    # Set exit breakpoint (to prevent inferior from exiting).
+    if {![gdb_breakpoint [gdb_get_line_number "set exit breakpoint here"]]} {
+	return false
+    }
+    return true
+}
+
+# Check that fork catchpoints are supported, as an indicator for whether
+# fork-following is supported.  Return 1 if they are, else 0.
+
+proc_with_prefix check_fork_catchpoints {} {
+  global gdb_prompt
+
+  if { ![setup_gdb] } {
+      return false
+  }
+
+  # Verify that the system supports "catch fork".
+  gdb_test "catch fork" "Catchpoint \[0-9\]* \\(fork\\)" "insert first fork catchpoint"
+  set has_fork_catchpoints false
+  gdb_test_multiple "continue" "continue to first fork catchpoint" {
+    -re ".*Your system does not support this type\r\nof catchpoint.*$gdb_prompt $" {
+      unsupported "continue to first fork catchpoint"
+    }
+    -re ".*Catchpoint.*$gdb_prompt $" {
+      set has_fork_catchpoints true
+      pass "continue to first fork catchpoint"
+    }
+  }
+
+  return $has_fork_catchpoints
+}
+
+proc_with_prefix test_catch_syscall {follow-fork-mode detach-on-fork} {
+    # Start with shiny new gdb instance.
+    if {![setup_gdb]} {
+	return
+    }
+
+    # The "Detaching..." and "Attaching..." messages may be hidden by
+    # default.
+    gdb_test_no_output "set verbose"
+
+    # Setup modes to test.
+    gdb_test_no_output "set follow-fork-mode ${follow-fork-mode}"
+    gdb_test_no_output "set detach-on-fork ${detach-on-fork}"
+
+    gdb_test "catch fork" "Catchpoint . \\(fork\\)"
+    gdb_test "catch syscall chdir" "Catchpoint . \\(syscall 'chdir'.*\\)"
+
+    # Which inferior we're expecting to follow.  Assuming the parent
+    # will be inferior #1, and the child will be inferior #2.
+    if {${follow-fork-mode} == "parent"} {
+	set following_inf 1
+    } else {
+	set followin_inf 2
+    }
+    # Next stop should be the fork catchpoint.
+    set expected_re ""
+    append expected_re "Catchpoint . \\(forked process.*"
+    gdb_test "continue" $expected_re "continue to fork catchpoint"
+
+    # Next stop should be the breakpoint after the fork.
+    set expected_re ".*"
+    if {${follow-fork-mode} == "child" || ${detach-on-fork} == "off"} {
+	append expected_re "\\\[New inferior.*"
+    }
+    if {${detach-on-fork} == "on"} {
+	append expected_re "\\\[Detaching after fork from "
+	if {${follow-fork-mode} == "parent"} {
+	    append expected_re "child"
+	} else {
+	    append expected_re "parent"
+	}
+	append expected_re " process.*"
+    }
+    append expected_re "Breakpoint .*set breakpoint here.*"
+    gdb_test "continue" $expected_re "continue to breakpoint after fork"
+
+    # Next stop should be the syscall catchpoint.
+    set expected_re ".*Catchpoint . \\(call to syscall chdir\\).*"
+    gdb_test continue $expected_re "continue to chdir syscall"
+}
+
+# Check for follow-fork support.
+if {![check_fork_catchpoints]} {
+    untested "follow-fork not supported"
+    return
+}
+
+# Test all permutations.
+foreach_with_prefix follow-fork-mode {"parent" "child"} {
+
+    # Do not run tests when not detaching from the parent.
+    # See breakpoints/13457 for discussion.
+    foreach_with_prefix detach-on-fork {"on"} {
+	test_catch_syscall ${follow-fork-mode} ${detach-on-fork}
+    }
+}

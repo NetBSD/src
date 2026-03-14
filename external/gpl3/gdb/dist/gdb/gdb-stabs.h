@@ -1,5 +1,5 @@
 /* Definitions for symbol-reading containing "stabs", for GDB.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.  Written by John Gilmore.
 
    This file is part of GDB.
@@ -20,9 +20,9 @@
 #ifndef GDB_GDB_STABS_H
 #define GDB_GDB_STABS_H
 
-/* During initial symbol readin, we need to have a structure to keep
+/* During initial symbol reading, we need to have a structure to keep
    track of which psymtabs have which bincls in them.  This structure
-   is used during readin to setup the list of dependencies within each
+   is used during reading to setup the list of dependencies within each
    partial symbol table.  */
 struct legacy_psymtab;
 

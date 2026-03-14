@@ -1,7 +1,7 @@
 /* GNU/Linux/AArch64 specific low level interface, for the remote server for
    GDB.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -39,6 +39,7 @@
 
 #include "gdb_proc_service.h"
 #include "arch/aarch64.h"
+#include "arch/aarch64-gcs-linux.h"
 #include "arch/aarch64-mte-linux.h"
 #include "arch/aarch64-scalable-linux.h"
 #include "linux-aarch32-tdesc.h"
@@ -319,6 +320,42 @@ aarch64_store_tlsregset (struct regcache *regcache, const void *buf)
 
   if (regnum.has_value ())
     supply_register (regcache, *regnum, tls_buf + sizeof (uint64_t));
+}
+
+/* Fill BUF with the GCS registers from REGCACHE.  */
+
+static void
+aarch64_fill_gcsregset (regcache *regcache, void *buf)
+{
+  user_gcs *regset = (user_gcs *) buf;
+  int gcspr_regnum  = find_regno (regcache->tdesc, "gcspr");
+  int features_enabled_regnum  = find_regno (regcache->tdesc,
+					     "gcs_features_enabled");
+  int features_locked_regnum  = find_regno (regcache->tdesc,
+					    "gcs_features_locked");
+
+  collect_register (regcache, gcspr_regnum, &regset->gcspr_el0);
+  collect_register (regcache, features_enabled_regnum,
+		    &regset->features_enabled);
+  collect_register (regcache, features_locked_regnum, &regset->features_locked);
+}
+
+/* Store the GCS registers in BUF to REGCACHE.  */
+
+static void
+aarch64_store_gcsregset (regcache *regcache, const void *buf)
+{
+  const user_gcs *regset = (const user_gcs *) buf;
+  int gcspr_regnum  = find_regno (regcache->tdesc, "gcspr");
+  int features_enabled_regnum  = find_regno (regcache->tdesc,
+					     "gcs_features_enabled");
+  int features_locked_regnum  = find_regno (regcache->tdesc,
+					    "gcs_features_locked");
+
+  supply_register (regcache, gcspr_regnum, &regset->gcspr_el0);
+  supply_register (regcache, features_enabled_regnum,
+		   &regset->features_enabled);
+  supply_register (regcache, features_locked_regnum, &regset->features_locked);
 }
 
 bool
@@ -846,6 +883,10 @@ static struct regset_info aarch64_regsets[] =
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_ARM_TLS,
     0, OPTIONAL_REGS,
     aarch64_fill_tlsregset, aarch64_store_tlsregset },
+  /* Guarded Control Stack registers.  */
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_ARM_GCS,
+    0, OPTIONAL_REGS,
+    aarch64_fill_gcsregset, aarch64_store_gcsregset },
   NULL_REGSET
 };
 
@@ -909,6 +950,10 @@ aarch64_adjust_register_sets (const struct aarch64_features &features)
 	  if (features.sme2)
 	    regset->size = AARCH64_SME2_ZT0_SIZE;
 	  break;
+	case NT_ARM_GCS:
+	  if (features.gcs_linux)
+	    regset->size = sizeof (user_gcs);
+	  break;
 	default:
 	  gdb_assert_not_reached ("Unknown register set found.");
 	}
@@ -940,6 +985,7 @@ aarch64_target::low_arch_setup ()
       /* A-profile MTE is 64-bit only.  */
       features.mte = linux_get_hwcap2 (pid, 8) & HWCAP2_MTE;
       features.tls = aarch64_tls_register_count (tid);
+      features.gcs = features.gcs_linux = linux_get_hwcap (pid, 8) & HWCAP_GCS;
 
       /* Scalable Matrix Extension feature and size check.  */
       if (linux_get_hwcap2 (pid, 8) & HWCAP2_SME)

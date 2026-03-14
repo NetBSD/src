@@ -1,7 +1,7 @@
 /* Functions to deal with the inferior being executed on GDB or
    GDBserver.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,9 +52,13 @@ extern const std::string &get_inferior_cwd ();
    the target is started up with a shell.  */
 extern bool startup_with_shell;
 
-/* Compute command-line string given argument vector. This does the
-   same shell processing as fork_inferior.  */
+/* Combine elements of ARGV into a single string, placing a single
+   whitespace character between each element.  When ESCAPE_SHELL_CHAR is
+   true then any special shell characters in elements of ARGV will be
+   escaped.  When ESCAPE_SHELL_CHAR is false only the characters that GDB
+   sees as special (quotes and whitespace) are escaped.  */
 extern std::string
-construct_inferior_arguments (gdb::array_view<char * const>);
+construct_inferior_arguments (gdb::array_view<char * const> argv,
+			      bool escape_shell_char);
 
 #endif /* GDBSUPPORT_COMMON_INFERIOR_H */

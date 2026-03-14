@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -914,9 +914,7 @@ ia64_linux_nat_target::low_status_is_event (int status)
 				 || WSTOPSIG (status) == SIGILL);
 }
 
-void _initialize_ia64_linux_nat ();
-void
-_initialize_ia64_linux_nat ()
+INIT_GDB_FILE (ia64_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_ia64_linux_nat_target;

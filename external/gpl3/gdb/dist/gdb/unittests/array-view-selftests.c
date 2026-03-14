@@ -1,6 +1,6 @@
 /* Self tests for array_view for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -554,6 +554,19 @@ run_tests ()
       SELF_CHECK (view[i] == data[i]);
   }
 
+  /* gdb::make_array_view with an array.  */
+  {
+    const gdb_byte data[] = {0x55, 0x66, 0x77, 0x88};
+    const auto len = sizeof (data) / sizeof (data[0]);
+    const auto view = gdb::make_array_view (data);
+
+    SELF_CHECK (view.data () == data);
+    SELF_CHECK (view.size () == len);
+
+    for (std::size_t i = 0; i < len; ++i)
+      SELF_CHECK (view[i] == data[i]);
+  }
+
   /* Test slicing.  */
   {
     gdb_byte data[] = {0x55, 0x66, 0x77, 0x88, 0x99};
@@ -682,9 +695,7 @@ run_copy_tests ()
 } /* namespace array_view_tests */
 } /* namespace selftests */
 
-void _initialize_array_view_selftests ();
-void
-_initialize_array_view_selftests ()
+INIT_GDB_FILE (array_view_selftests)
 {
   selftests::register_test ("array_view",
 			    selftests::array_view_tests::run_tests);

@@ -1,6 +1,6 @@
 /* Definitions for expressions in GDB
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,10 +45,6 @@ extern void gen_expr_unop (struct expression *exp,
 			   expr::operation *lhs,
 			   struct agent_expr *ax, struct axs_value *value);
 
-extern struct value *eval_op_scope (struct type *expect_type,
-				    struct expression *exp,
-				    enum noside noside,
-				    struct type *type, const char *string);
 extern struct value *eval_op_var_msym_value (struct type *expect_type,
 					     struct expression *exp,
 					     enum noside noside,
@@ -480,11 +476,11 @@ check_constant (const gdb_mpz &cst)
 static inline bool
 check_constant (struct symbol *sym)
 {
-  enum address_class sc = sym->aclass ();
-  return (sc == LOC_BLOCK
-	  || sc == LOC_CONST
-	  || sc == LOC_CONST_BYTES
-	  || sc == LOC_LABEL);
+  location_class lc = sym->loc_class ();
+  return (lc == LOC_BLOCK
+	  || lc == LOC_CONST
+	  || lc == LOC_CONST_BYTES
+	  || lc == LOC_LABEL);
 }
 
 static inline bool
@@ -600,13 +596,14 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    return eval_op_scope (expect_type, exp, noside,
-			  std::get<0> (m_storage),
-			  std::get<1> (m_storage).c_str ());
+    return evaluate_internal (expect_type, exp, noside, false);
   }
 
   value *evaluate_for_address (struct expression *exp,
-			       enum noside noside) override;
+			       enum noside noside) override
+  {
+    return evaluate_internal (nullptr, exp, noside, true);
+  }
 
   value *evaluate_funcall (struct type *expect_type,
 			   struct expression *exp,
@@ -623,6 +620,11 @@ protected:
 		       struct axs_value *value,
 		       struct type *cast_type)
     override;
+
+private:
+
+  value *evaluate_internal (struct type *expect_type, struct expression *exp,
+			    enum noside noside, bool want_address);
 };
 
 /* Compute the value of a variable.  */

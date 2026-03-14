@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -259,9 +259,7 @@ const reggroup *const all_reggroup = &all_group;
 const reggroup *const save_reggroup = &save_group;
 const reggroup *const restore_reggroup = &restore_group;
 
-void _initialize_reggroup ();
-void
-_initialize_reggroup ()
+INIT_GDB_FILE (reggroup)
 {
   add_cmd ("reggroups", class_maintenance,
 	   maintenance_print_reggroups, _("\

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1127,15 +1127,16 @@ mn10300_frame_prev_register (const frame_info_ptr &this_frame,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind mn10300_frame_unwind = {
+static const struct frame_unwind_legacy mn10300_frame_unwind (
   "mn10300 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   mn10300_frame_this_id, 
   mn10300_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static void
 mn10300_frame_unwind_init (struct gdbarch *gdbarch)
@@ -1412,9 +1413,7 @@ mn10300_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 	      tdep->am33_mode);
 }
 
-void _initialize_mn10300_tdep ();
-void
-_initialize_mn10300_tdep ()
+INIT_GDB_FILE (mn10300_tdep)
 {
   gdbarch_register (bfd_arch_mn10300, mn10300_gdbarch_init, mn10300_dump_tdep);
 }

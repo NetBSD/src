@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 #include "frame-unwind.h"
 #include "tramp-frame.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 
 static int
 microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch, 
@@ -49,6 +50,9 @@ microblaze_linux_memory_remove_breakpoint (struct gdbarch *gdbarch,
   /* Determine appropriate breakpoint contents and size for this address.  */
   bp = gdbarch_breakpoint_from_pc (gdbarch, &addr, &bplen);
 
+  /* Make sure we see the memory breakpoints.  */
+  scoped_restore restore_memory
+    = make_scoped_restore_show_memory_breakpoints (1);
   val = target_read_memory (addr, old_contents, bplen);
 
   /* If our breakpoint is no longer at the address, this means that the
@@ -122,17 +126,14 @@ microblaze_linux_init_abi (struct gdbarch_info info,
 					microblaze_linux_memory_remove_breakpoint);
 
   /* Shared library handling.  */
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 
   /* Trampolines.  */
   tramp_frame_prepend_unwinder (gdbarch,
 				&microblaze_linux_sighandler_tramp_frame);
 }
 
-void _initialize_microblaze_linux_tdep ();
-void
-_initialize_microblaze_linux_tdep ()
+INIT_GDB_FILE (microblaze_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_microblaze, 0, GDB_OSABI_LINUX, 
 			  microblaze_linux_init_abi);

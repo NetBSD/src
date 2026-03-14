@@ -1,6 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -566,9 +566,7 @@ tui_reggroup_completer (struct cmd_list_element *ignore,
   complete_on_enum (tracker, extra, text, word);
 }
 
-void _initialize_tui_regs ();
-void
-_initialize_tui_regs ()
+INIT_GDB_FILE (tui_regs)
 {
   struct cmd_list_element **tuicmd, *cmd;
 

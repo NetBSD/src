@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if {[build_executable $testfile.exp $testfile ${srcfile} "debug"] == -1} {
 # UI_TO_RUN is the UI that should issue the run command.
 
 proc do_test { ui_to_run } {
-    if {[mi_clean_restart $::binfile "separate-mi-tty"] != 0} {
+    if {[mi_clean_restart $::testfile "separate-mi-tty"] != 0} {
 	fail "could not start gdb"
 	return
     }
@@ -59,6 +59,10 @@ proc do_test { ui_to_run } {
 	# the expected ^running record.
 	mi_runto_main
     }
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
 }
 
 foreach_with_prefix ui_to_run {first second} {

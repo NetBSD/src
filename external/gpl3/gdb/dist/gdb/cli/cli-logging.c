@@ -1,6 +1,6 @@
 /* Command-line output logging for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -202,9 +202,7 @@ show_logging_enabled (struct ui_file *file, int from_tty,
     gdb_printf (file, _("off: Logging is disabled.\n"));
 }
 
-void _initialize_cli_logging ();
-void
-_initialize_cli_logging ()
+INIT_GDB_FILE (cli_logging)
 {
   static struct cmd_list_element *set_logging_cmdlist, *show_logging_cmdlist;
 

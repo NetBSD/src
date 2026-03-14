@@ -1,4 +1,4 @@
---  Copyright 2023-2024 Free Software Foundation, Inc.
+--  Copyright 2023-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 with Pack; use Pack;
 
-procedure Foo is
+procedure Prog is
    type Enum_Type is (one, two, three);
    Value : Enum_Type := three;
 
@@ -23,4 +23,4 @@ procedure Foo is
 begin
    Do_Nothing (Value'address);
    Do_Nothing (My_String'address);  -- STOP
-end Foo;
+end Prog;

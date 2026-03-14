@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Free Software Foundation, Inc.
+# Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -114,6 +114,10 @@ gdb_test "print \[mut 1,2,3,4\]" " = \\\[1, 2, 3, 4\\\]"
 gdb_test "print \[1,2 3" "',' or ']' expected"
 gdb_test "print \[1 2" "',', ';', or ']' expected"
 gdb_test "print \[23\]" " = \\\[23\\\]"
+
+gdb_test "print \[0;0\]" " = \\\[\\\]"
+gdb_test "print \[1;0\]" " = \\\[\\\]"
+gdb_test "print \[0;1\]" " = \\\[0\\\]"
 
 gdb_test "print b\"hi rust\"" " = b\"hi rust\""
 # This isn't rusty syntax yet, but that's another bug -- this is just

@@ -1,6 +1,6 @@
 /* C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -484,13 +484,6 @@ convert_hex (struct type *type, const char *p,
   return p;
 }
 
-#define ADVANCE					\
-  do {						\
-    ++p;					\
-    if (p == limit)				\
-      error (_("Malformed escape sequence"));	\
-  } while (0)
-
 /* Convert an escape sequence to a target format.  TYPE is the target
    character type to use, and DEST_CHARSET is the name of the target
    character set.  The backslash of the escape sequence is at *P, and
@@ -502,18 +495,29 @@ static const char *
 convert_escape (struct type *type, const char *dest_charset,
 		const char *p, const char *limit, struct obstack *output)
 {
+  auto advance = [&] ()
+    {
+      ++p;
+      if (p == limit)
+	error (_("Malformed escape sequence"));
+    };
+
   /* Skip the backslash.  */
-  ADVANCE;
+  advance ();
 
   switch (*p)
     {
     case '\\':
-      obstack_1grow (output, '\\');
+      /* Convert the backslash itself.  This is probably overkill but
+	 it doesn't hurt to do the full conversion.  */
+      convert_between_encodings (host_charset (), dest_charset,
+				 (const gdb_byte *) p, 1, 1,
+				 output, translit_none);
       ++p;
       break;
 
     case 'x':
-      ADVANCE;
+      advance ();
       if (!ISXDIGIT (*p))
 	error (_("\\x used with no following hex digits."));
       p = convert_hex (type, p, limit, output);
@@ -535,7 +539,7 @@ convert_escape (struct type *type, const char *dest_charset,
       {
 	int length = *p == 'u' ? 4 : 8;
 
-	ADVANCE;
+	advance ();
 	if (!ISXDIGIT (*p))
 	  error (_("\\u used with no following hex digits"));
 	p = convert_ucn (p, limit, dest_charset, output, length);
@@ -807,22 +811,6 @@ public:
   }
 
   /* See language.h.  */
-  std::unique_ptr<compile_instance> get_compile_instance () const override
-  {
-    return c_get_compile_context ();
-  }
-
-  /* See language.h.  */
-  std::string compute_program (compile_instance *inst,
-			       const char *input,
-			       struct gdbarch *gdbarch,
-			       const struct block *expr_block,
-			       CORE_ADDR expr_pc) const override
-  {
-    return c_compute_program (inst, input, gdbarch, expr_block, expr_pc);
-  }
-
-  /* See language.h.  */
 
   bool can_print_type_offsets () const override
   {
@@ -940,22 +928,6 @@ public:
     const override
   {
     return cp_lookup_transparent_type (name, flags);
-  }
-
-  /* See language.h.  */
-  std::unique_ptr<compile_instance> get_compile_instance () const override
-  {
-    return cplus_get_compile_context ();
-  }
-
-  /* See language.h.  */
-  std::string compute_program (compile_instance *inst,
-			       const char *input,
-			       struct gdbarch *gdbarch,
-			       const struct block *expr_block,
-			       CORE_ADDR expr_pc) const override
-  {
-    return cplus_compute_program (inst, input, gdbarch, expr_block, expr_pc);
   }
 
   /* See language.h.  */

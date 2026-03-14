@@ -1,0 +1,49 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Check that GDBserver's vFile::pread implementation is able to access
+# large files (> 2GB).
+
+load_lib gdbserver-support.exp
+
+require allow_gdbserver_tests
+
+standard_testfile .S
+
+if { [prepare_for_testing ${testfile}.exp $testfile \
+	$srcfile {debug additional_flags=-nostdlib} ] } {
+    return -1
+}
+
+clean_restart
+
+gdb_test_no_output "set remote exec-file $binfile" \
+    "set remote exec-file"
+
+# Make sure we're disconnected, in case we're testing with an
+# extended-remote board, therefore already connected.
+gdb_test "disconnect" ".*"
+
+set res [gdbserver_spawn ""]
+set gdbserver_protocol [lindex $res 0]
+set gdbserver_gdbport [lindex $res 1]
+
+gdb_test "target $gdbserver_protocol $gdbserver_gdbport" \
+    "Remote debugging using .*" \
+    "target $gdbserver_protocol"
+
+# If loading the large binary was successful, we should be able to
+# place a breakpoint on f.
+gdb_test "break f" "Breakpoint 1.*"

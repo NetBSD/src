@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "tui/tui-command.h"
 
 void
-tui_file::puts (const char *linebuffer)
+tui_file::do_puts (const char *linebuffer)
 {
   tui_puts (linebuffer);
   if (!m_buffered)
@@ -29,7 +29,7 @@ tui_file::puts (const char *linebuffer)
 }
 
 void
-tui_file::write (const char *buf, long length_buf)
+tui_file::do_write (const char *buf, long length_buf)
 {
   tui_write (buf, length_buf);
   if (!m_buffered)
@@ -41,5 +41,5 @@ tui_file::flush ()
 {
   if (m_buffered)
     tui_cmd_win ()->refresh_window ();
-  stdio_file::flush ();
+  escape_buffering_file::flush ();
 }

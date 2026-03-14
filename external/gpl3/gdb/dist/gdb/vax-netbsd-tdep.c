@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/vax.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,13 +32,10 @@ vaxnbsd_elf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   nbsd_init_abi (info, gdbarch);
 
   /* NetBSD ELF uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 }
 
-void _initialize_vaxnbsd_tdep ();
-void
-_initialize_vaxnbsd_tdep ()
+INIT_GDB_FILE (vaxnbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_vax, 0, GDB_OSABI_NETBSD,
 			  vaxnbsd_elf_init_abi);

@@ -1,6 +1,6 @@
 /* Read ELF (Executable and Linking Format) object files for GDB.
 
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -592,7 +592,7 @@ elf_rel_plt_read (minimal_symbol_reader &reader,
   std::string string_buffer;
 
   /* Does ADDRESS reside in SECTION of OBFD?  */
-  auto within_section = [obfd] (asection *section, CORE_ADDR address)
+  auto within_section = [] (asection *section, CORE_ADDR address)
     {
       if (section == NULL)
 	return false;
@@ -776,9 +776,8 @@ elf_gnu_ifunc_resolve_by_cache (const char *name, CORE_ADDR *addr_p)
 
      To search other namespaces, we would need to provide context, e.g. in
      form of an objfile in that namespace.  */
-  gdbarch_iterate_over_objfiles_in_search_order
-    (current_inferior ()->arch (),
-     [name, &addr_p, &found] (struct objfile *objfile)
+  current_program_space->iterate_over_objfiles_in_search_order
+    ([name, &addr_p, &found] (struct objfile *objfile)
        {
 	 htab_t htab;
 	 elf_gnu_ifunc_cache *entry_p;
@@ -830,9 +829,8 @@ elf_gnu_ifunc_resolve_by_got (const char *name, CORE_ADDR *addr_p)
 
      To search other namespaces, we would need to provide context, e.g. in
      form of an objfile in that namespace.  */
-  gdbarch_iterate_over_objfiles_in_search_order
-    (current_inferior ()->arch (),
-     [name, name_got_plt, &addr_p, &found] (struct objfile *objfile)
+  current_program_space->iterate_over_objfiles_in_search_order
+    ([name, name_got_plt, &addr_p, &found] (struct objfile *objfile)
        {
 	 bfd *obfd = objfile->obfd.get ();
 	 struct gdbarch *gdbarch = objfile->arch ();
@@ -898,7 +896,7 @@ elf_gnu_ifunc_resolve_name (const char *name, CORE_ADDR *addr_p)
   return false;
 }
 
-/* Call STT_GNU_IFUNC - a function returning addresss of a real function to
+/* Call STT_GNU_IFUNC - a function returning address of a real function to
    call.  PC is theSTT_GNU_IFUNC resolving function entry.  The value returned
    is the entry point of the resolved STT_GNU_IFUNC target function to call.
    */
@@ -1062,8 +1060,8 @@ elf_read_minimal_symbols (struct objfile *objfile, int symfile_flags,
 			  const struct elfinfo *ei)
 {
   bfd *synth_abfd, *abfd = objfile->obfd.get ();
-  long symcount = 0, dynsymcount = 0, synthcount, storage_needed;
-  asymbol **symbol_table = NULL, **dyn_symbol_table = NULL;
+  long dynsymcount = 0, synthcount;
+  asymbol **dyn_symbol_table = NULL;
   asymbol *synthsyms;
 
   symtab_create_debug_printf ("reading minimal symbols of objfile %s",
@@ -1087,32 +1085,16 @@ elf_read_minimal_symbols (struct objfile *objfile, int symfile_flags,
 
   /* Process the normal ELF symbol table first.  */
 
-  storage_needed = bfd_get_symtab_upper_bound (objfile->obfd.get ());
-  if (storage_needed < 0)
-    error (_("Can't read symbols from %s: %s"),
-	   bfd_get_filename (objfile->obfd.get ()),
-	   bfd_errmsg (bfd_get_error ()));
+  gdb::array_view<asymbol *> symbol_table
+    = gdb_bfd_canonicalize_symtab (objfile->obfd.get ());
 
-  if (storage_needed > 0)
-    {
-      /* Memory gets permanently referenced from ABFD after
-	 bfd_canonicalize_symtab so it must not get freed before ABFD gets.  */
-
-      symbol_table = (asymbol **) bfd_alloc (abfd, storage_needed);
-      symcount = bfd_canonicalize_symtab (objfile->obfd.get (), symbol_table);
-
-      if (symcount < 0)
-	error (_("Can't read symbols from %s: %s"),
-	       bfd_get_filename (objfile->obfd.get ()),
-	       bfd_errmsg (bfd_get_error ()));
-
-      elf_symtab_read (reader, objfile, ST_REGULAR, symcount, symbol_table,
-		       false);
-    }
+  elf_symtab_read (reader, objfile, ST_REGULAR, symbol_table.size (),
+		   symbol_table.data (), false);
 
   /* Add the dynamic symbols.  */
 
-  storage_needed = bfd_get_dynamic_symtab_upper_bound (objfile->obfd.get ());
+  long storage_needed
+    = bfd_get_dynamic_symtab_upper_bound (objfile->obfd.get ());
 
   if (storage_needed > 0)
     {
@@ -1157,7 +1139,8 @@ elf_read_minimal_symbols (struct objfile *objfile, int symfile_flags,
 
   /* Add synthetic symbols - for instance, names for any PLT entries.  */
 
-  synthcount = bfd_get_synthetic_symtab (synth_abfd, symcount, symbol_table,
+  synthcount = bfd_get_synthetic_symtab (synth_abfd, symbol_table.size (),
+					 symbol_table.data (),
 					 dynsymcount, dyn_symbol_table,
 					 &synthsyms);
   if (synthcount > 0)
@@ -1528,9 +1511,7 @@ static const struct gnu_ifunc_fns elf_gnu_ifunc_fns =
   elf_gnu_ifunc_resolver_return_stop
 };
 
-void _initialize_elfread ();
-void
-_initialize_elfread ()
+INIT_GDB_FILE (elfread)
 {
   add_symtab_fns (bfd_target_elf_flavour, &elf_sym_fns);
 

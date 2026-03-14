@@ -1,6 +1,6 @@
 /* aarch64-sim.h -- Internal aarch64 settings.
 
-   Copyright (C) 2015-2024 Free Software Foundation, Inc.
+   Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

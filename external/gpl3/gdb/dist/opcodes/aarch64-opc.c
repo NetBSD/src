@@ -1,5 +1,5 @@
 /* aarch64-opc.c -- AArch64 opcode support.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -223,7 +223,7 @@ aarch64_select_operand_for_sizeq_field_coding (const aarch64_opcode *opcode)
 
 /* Instruction bit-fields.
 +   Keep synced with 'enum aarch64_field_kind'.  */
-const aarch64_field fields[] =
+const aarch64_field aarch64_fields[] =
 {
     {  0,  0 },	/* NIL.  */
     {  8,  4 },	/* CRm: in the system instructions.  */
@@ -259,9 +259,7 @@ const aarch64_field fields[] =
     {  0,  1 }, /* SME_ZAda_1b: tile ZA0-ZA1.  */
     {  0,  2 }, /* SME_ZAda_2b: tile ZA0-ZA3.  */
     {  0,  3 }, /* SME_ZAda_3b: tile ZA0-ZA7.  */
-    {  4,  1 }, /* SME_ZdnT: upper bit of Zt, bit [4].  */
     {  1,  4 }, /* SME_Zdn2: Z0-Z31, multiple of 2, bits [4:1].  */
-    {  0,  2 }, /* SME_Zdn2_0: lower 2 bits of Zt, bits [1:0].  */
     {  2,  3 }, /* SME_Zdn4: Z0-Z31, multiple of 4, bits [4:2].  */
     { 16,  4 }, /* SME_Zm: Z0-Z15, bits [19:16].  */
     { 17,  4 }, /* SME_Zm2: Z0-Z31, multiple of 2, bits [20:17].  */
@@ -331,6 +329,8 @@ const aarch64_field fields[] =
     { 17,  2 }, /* SVE_size: 2-bit element size, bits [18,17].  */
     { 22,  1 }, /* SVE_sz: 1-bit element size select.  */
     { 30,  1 }, /* SVE_sz2: 1-bit element size select.  */
+    { 17,  1 }, /* SVE_sz3: 1-bit element size select.  */
+    { 14,  1 }, /* SVE_sz4: 1-bit element size select.  */
     { 16,  4 }, /* SVE_tsz: triangular size select.  */
     { 22,  2 }, /* SVE_tszh: triangular size select high, bits [23,22].  */
     {  8,  2 }, /* SVE_tszl_8: triangular size select low, bits [9,8].  */
@@ -383,6 +383,7 @@ const aarch64_field fields[] =
     { 15,  7 },	/* imm7: in load/store pair pre/post index instructions.  */
     { 13,  8 },	/* imm8: in floating-point scalar move immediate inst.  */
     { 12,  9 },	/* imm9: in load/store pre/post index instructions.  */
+    {  5,  9 },	/* imm9_5: in CB<cc> (immediate).  */
     { 10, 12 },	/* imm12: in ld/st unsigned imm or add/sub shifted inst.  */
     {  5, 14 },	/* imm14: in test bit and branch instructions.  */
     {  0, 16 },	/* imm16_0: in udf instruction. */
@@ -598,6 +599,8 @@ const struct aarch64_name_value_pair aarch64_hint_options[] =
   { "c",	HINT_OPD_C },		/* BTI C.  */
   { "j",	HINT_OPD_J },		/* BTI J.  */
   { "jc",	HINT_OPD_JC },		/* BTI JC.  */
+  { "keep",	HINT_OPD_KEEP },	/* STSHH KEEP  */
+  { "strm",	HINT_OPD_STRM },	/* STSHH STRM  */
   { NULL,	HINT_OPD_NULL },
 };
 
@@ -631,7 +634,7 @@ const struct aarch64_name_value_pair aarch64_prfops[32] =
   { "pstl3strm", B(2, 3, 1) },
   { "pstslckeep", B(2, 4, 0) },
   { "pstslcstrm", B(2, 4, 1) },
-  { NULL, 0x18 },
+  { "ir", B(3, 1, 0) },
   { NULL, 0x19 },
   { NULL, 0x1a },
   { NULL, 0x1b },
@@ -811,7 +814,7 @@ struct operand_qualifier_data
 };
 
 /* Indexed by the operand qualifier enumerators.  */
-struct operand_qualifier_data aarch64_opnd_qualifiers[] =
+static const struct operand_qualifier_data aarch64_opnd_qualifiers[] =
 {
   {0, 0, 0, "NIL", OQK_NIL},
 
@@ -1895,6 +1898,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	    return 0;
 	  break;
 
+	case AARCH64_OPND_SME_Zn_INDEX2_19:
 	case AARCH64_OPND_SVE_Zm2_22_INDEX:
 	  size = get_operand_fields_width (get_operand_from_code (type));
 	  if (!check_reglane (opnd, mismatch_detail, idx, "z", 0, 31, 0, 3))
@@ -1962,6 +1966,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	  break;
 
 	case AARCH64_OPND_SME_Zm:
+	case AARCH64_OPND_SME_Zm_17:
 	  if (opnd->reg.regno > 15)
 	    {
 	      set_invalid_regno_error (mismatch_detail, idx, "z", 0, 15);
@@ -2004,7 +2009,6 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	    }
 	  break;
 
-	case AARCH64_OPND_SME_Zdnx4_STRIDED:
 	case AARCH64_OPND_SME_Ztx2_STRIDED:
 	case AARCH64_OPND_SME_Ztx4_STRIDED:
 	  /* 2-register lists have a stride of 8 and 4-register lists
@@ -2420,6 +2424,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	    }
 	  break;
 
+	case AARCH64_OPND_ADDR_PCREL9:
 	case AARCH64_OPND_ADDR_PCREL14:
 	case AARCH64_OPND_ADDR_PCREL19:
 	case AARCH64_OPND_ADDR_PCREL21:
@@ -2545,12 +2550,16 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	  assert (opnd->shifter.operator_present == 0);
 	  break;
 
-	case AARCH64_OPND_SVE_ADDR_R:
 	case AARCH64_OPND_SVE_ADDR_RR:
 	case AARCH64_OPND_SVE_ADDR_RR_LSL1:
 	case AARCH64_OPND_SVE_ADDR_RR_LSL2:
 	case AARCH64_OPND_SVE_ADDR_RR_LSL3:
 	case AARCH64_OPND_SVE_ADDR_RR_LSL4:
+	case AARCH64_OPND_SVE_ADDR_RM:
+	case AARCH64_OPND_SVE_ADDR_RM_LSL1:
+	case AARCH64_OPND_SVE_ADDR_RM_LSL2:
+	case AARCH64_OPND_SVE_ADDR_RM_LSL3:
+	case AARCH64_OPND_SVE_ADDR_RM_LSL4:
 	case AARCH64_OPND_SVE_ADDR_RX:
 	case AARCH64_OPND_SVE_ADDR_RX_LSL1:
 	case AARCH64_OPND_SVE_ADDR_RX_LSL2:
@@ -3245,7 +3254,7 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
 	    }
 	  break;
 
-	case AARCH64_OPND_SME_ZT0_INDEX2_12:
+	case AARCH64_OPND_SME_ZT0_INDEX_MUL_VL:
 	  if (!value_in_range_p (opnd->imm.value, 0, 3))
 	    {
 	      set_elem_idx_out_of_range_error (mismatch_detail, idx, 0, 3);
@@ -4015,28 +4024,41 @@ static void
 print_sme_za_list (char *buf, size_t size, int mask,
 		   struct aarch64_styler *styler)
 {
-  const char* zan[] = { "za",    "za0.h", "za1.h", "za0.s",
-                        "za1.s", "za2.s", "za3.s", "za0.d",
-                        "za1.d", "za2.d", "za3.d", "za4.d",
-                        "za5.d", "za6.d", "za7.d", " " };
-  const int zan_v[] = { 0xff, 0x55, 0xaa, 0x11,
-                        0x22, 0x44, 0x88, 0x01,
-                        0x02, 0x04, 0x08, 0x10,
-                        0x20, 0x40, 0x80, 0x00 };
-  int i, k;
-  const int ZAN_SIZE = sizeof(zan) / sizeof(zan[0]);
+  static const struct {
+    unsigned char mask;
+    char name[7];
+  } zan[] = {
+    { 0xff, "za" },
+    { 0x55, "za0.h" },
+    { 0xaa, "za1.h" },
+    { 0x11, "za0.s" },
+    { 0x22, "za1.s" },
+    { 0x44, "za2.s" },
+    { 0x88, "za3.s" },
+    { 0x01, "za0.d" },
+    { 0x02, "za1.d" },
+    { 0x04, "za2.d" },
+    { 0x08, "za3.d" },
+    { 0x10, "za4.d" },
+    { 0x20, "za5.d" },
+    { 0x40, "za6.d" },
+    { 0x80, "za7.d" },
+    { 0x00, " " },
+  };
+  int k;
 
   k = snprintf (buf, size, "{");
-  for (i = 0; i < ZAN_SIZE; i++)
+  for (unsigned int i = 0; i < ARRAY_SIZE (zan); i++)
     {
-      if ((mask & zan_v[i]) == zan_v[i])
-        {
-          mask &= ~zan_v[i];
-          if (k > 1)
+      if ((mask & zan[i].mask) == zan[i].mask)
+	{
+	  mask &= ~zan[i].mask;
+	  if (k > 1)
 	    k += snprintf (buf + k, size - k, ", ");
 
-	  k += snprintf (buf + k, size - k, "%s", style_reg (styler, zan[i]));
-        }
+	  k += snprintf (buf + k, size - k, "%s",
+			 style_reg (styler, zan[i].name));
+	}
       if (mask == 0)
         break;
     }
@@ -4330,6 +4352,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_SVE_Zn:
     case AARCH64_OPND_SVE_Zt:
     case AARCH64_OPND_SME_Zm:
+    case AARCH64_OPND_SME_Zm_17:
       if (opnd->qualifier == AARCH64_OPND_QLF_NIL)
        snprintf (buf, size, "%s", style_reg (styler, "z%d", opnd->reg.regno));
       else
@@ -4342,7 +4365,6 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_SVE_ZtxN:
     case AARCH64_OPND_SME_Zdnx2:
     case AARCH64_OPND_SME_Zdnx4:
-    case AARCH64_OPND_SME_Zdnx4_STRIDED:
     case AARCH64_OPND_SME_Zmx2:
     case AARCH64_OPND_SME_Zmx4:
     case AARCH64_OPND_SME_Znx2:
@@ -4379,6 +4401,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_SME_Zn_INDEX1_16:
     case AARCH64_OPND_SME_Zn_INDEX2_15:
     case AARCH64_OPND_SME_Zn_INDEX2_16:
+    case AARCH64_OPND_SME_Zn_INDEX2_19:
     case AARCH64_OPND_SME_Zn_INDEX3_14:
     case AARCH64_OPND_SME_Zn_INDEX3_15:
     case AARCH64_OPND_SME_Zn_INDEX4_14:
@@ -4785,6 +4808,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       snprintf (buf, size, "%s", style_addr (styler, "#0x%" PRIx64 , addr));
       break;
 
+    case AARCH64_OPND_ADDR_PCREL9:
     case AARCH64_OPND_ADDR_PCREL14:
     case AARCH64_OPND_ADDR_PCREL19:
     case AARCH64_OPND_ADDR_PCREL21:
@@ -4821,12 +4845,16 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       break;
 
     case AARCH64_OPND_ADDR_REGOFF:
-    case AARCH64_OPND_SVE_ADDR_R:
     case AARCH64_OPND_SVE_ADDR_RR:
     case AARCH64_OPND_SVE_ADDR_RR_LSL1:
     case AARCH64_OPND_SVE_ADDR_RR_LSL2:
     case AARCH64_OPND_SVE_ADDR_RR_LSL3:
     case AARCH64_OPND_SVE_ADDR_RR_LSL4:
+    case AARCH64_OPND_SVE_ADDR_RM:
+    case AARCH64_OPND_SVE_ADDR_RM_LSL1:
+    case AARCH64_OPND_SVE_ADDR_RM_LSL2:
+    case AARCH64_OPND_SVE_ADDR_RM_LSL3:
+    case AARCH64_OPND_SVE_ADDR_RM_LSL4:
     case AARCH64_OPND_SVE_ADDR_RX:
     case AARCH64_OPND_SVE_ADDR_RX_LSL1:
     case AARCH64_OPND_SVE_ADDR_RX_LSL2:
@@ -5021,11 +5049,12 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       break;
 
     case AARCH64_OPND_PRFOP:
-      if (opnd->prfop->name != NULL)
-	snprintf (buf, size, "%s", style_sub_mnem (styler, opnd->prfop->name));
+      if ((opnd->prfop->name == NULL)
+          || (opcode->iclass != ldst_pos && opnd->prfop->value == 0x18))
+        snprintf (buf, size, "%s",
+                  style_imm (styler, "#0x%02x", opnd->prfop->value));
       else
-	snprintf (buf, size, "%s", style_imm (styler, "#0x%02x",
-					      opnd->prfop->value));
+        snprintf (buf, size, "%s", style_sub_mnem (styler, opnd->prfop->name));
       break;
 
     case AARCH64_OPND_RPRFMOP:
@@ -5055,7 +5084,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       snprintf (buf, size, "%s[%s]", style_reg (styler, "zt0"),
 		style_imm (styler, "%d", (int) opnd->imm.value));
       break;
-    case AARCH64_OPND_SME_ZT0_INDEX2_12:
+    case AARCH64_OPND_SME_ZT0_INDEX_MUL_VL:
       snprintf (buf, size, "%s[%s, %s]", style_reg (styler, "zt0"),
 		style_imm (styler, "%d", (int) opnd->imm.value),
 		style_sub_mnem (styler, "mul vl"));
@@ -5073,6 +5102,10 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
       if ((HINT_FLAG (opnd->hint_option->value) & HINT_OPD_F_NOPRINT) == 0)
 	snprintf (buf, size, "%s",
 		  style_sub_mnem (styler, opnd->hint_option->name));
+      break;
+
+    case AARCH64_OPND_STSHH_POLICY:
+      snprintf (buf, size, "%s", style_sub_mnem (styler, opnd->hint_option->name));
       break;
 
     case AARCH64_OPND_MOPS_ADDR_Rd:
@@ -5207,9 +5240,13 @@ const aarch64_sys_ins_reg aarch64_sys_regs_dc[] =
     { "isw",	    CPENS (0, C7, C6, 2),  F_HASXT, AARCH64_NO_FEATURES },
     { "igdvac",	    CPENS (0, C7, C6, 5),  F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
     { "igdsw",	    CPENS (0, C7, C6, 6),  F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
+    { "cigdvaps",   CPENS (0, C7, C15, 5), F_HASXT | F_ARCHEXT, AARCH64_FEATURES (2, MEMTAG, PoPS) },
+    { "civaps",     CPENS (0, C7, C15, 1), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (PoPS) },
     { "cvac",       CPENS (3, C7, C10, 1), F_HASXT, AARCH64_NO_FEATURES },
     { "cgvac",      CPENS (3, C7, C10, 3), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
     { "cgdvac",     CPENS (3, C7, C10, 5), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
+    { "cvaoc",      CPENS (3, C7, C11, 0), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (OCCMO) },
+    { "cgdvaoc",    CPENS (3, C7, C11, 7), F_HASXT | F_ARCHEXT, AARCH64_FEATURES (2, OCCMO, MEMTAG) },
     { "csw",	    CPENS (0, C7, C10, 2), F_HASXT, AARCH64_NO_FEATURES },
     { "cgsw",       CPENS (0, C7, C10, 4), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
     { "cgdsw",	    CPENS (0, C7, C10, 6), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
@@ -5226,6 +5263,10 @@ const aarch64_sys_ins_reg aarch64_sys_regs_dc[] =
     { "cisw",       CPENS (0, C7, C14, 2), F_HASXT, AARCH64_NO_FEATURES },
     { "cigsw",      CPENS (0, C7, C14, 4), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
     { "cigdsw",     CPENS (0, C7, C14, 6), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (MEMTAG) },
+    { "civaoc",     CPENS (3, C7, C15, 0), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (OCCMO) },
+    { "cigdvaoc",   CPENS (3, C7, C15, 7), F_HASXT | F_ARCHEXT, AARCH64_FEATURES (2, OCCMO, MEMTAG) },
+    { "cipae",      CPENS (4, C7, C14, 0), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (V8_7A) },
+    { "cigdpae",    CPENS (4, C7, C14, 7), F_HASXT | F_ARCHEXT, AARCH64_FEATURE (V8_7A) },
     { "cipapa",     CPENS (6, C7, C14, 1), F_HASXT, AARCH64_NO_FEATURES },
     { "cigdpapa",   CPENS (6, C7, C14, 5), F_HASXT, AARCH64_NO_FEATURES },
     { 0,       CPENS(0,0,0,0), 0, AARCH64_NO_FEATURES }
@@ -5692,10 +5733,21 @@ verify_constraints (const struct aarch64_inst *inst,
 	{
 	  /* Check to see if the MOVPRFX SVE instruction is followed by an SVE
 	     instruction for better error messages.  */
-	  if (!opcode->avariant
-	      || (!AARCH64_CPU_HAS_FEATURE (*opcode->avariant, SVE)
-		  && !AARCH64_CPU_HAS_FEATURE (*opcode->avariant, SVE2)
-		  && !AARCH64_CPU_HAS_FEATURE (*opcode->avariant, SVE2p1)))
+	  bool sve_operand_p = false;
+	  for (int i = 0; i < AARCH64_MAX_OPND_NUM; ++i)
+	    {
+	      enum aarch64_operand_class op_class
+		= aarch64_get_operand_class (opcode->operands[i]);
+	      if (op_class == AARCH64_OPND_CLASS_SVE_REG
+		  || op_class == AARCH64_OPND_CLASS_SVE_REGLIST
+		  || op_class == AARCH64_OPND_CLASS_PRED_REG)
+		{
+		  sve_operand_p = true;
+		  break;
+		}
+	    }
+
+	  if (!sve_operand_p)
 	    {
 	      mismatch_detail->kind = AARCH64_OPDE_SYNTAX_ERROR;
 	      mismatch_detail->error = _("SVE instruction expected after "

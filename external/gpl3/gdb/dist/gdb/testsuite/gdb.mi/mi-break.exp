@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -398,7 +398,7 @@ proc test_break {mi_mode} {
     } else {
 	set start_ops ""
     }
-    if [mi_clean_restart $binfile $start_ops ] {
+    if [mi_clean_restart $::testfile $start_ops ] {
 	return
     }
 
@@ -417,6 +417,10 @@ proc test_break {mi_mode} {
     test_explicit_breakpoints
 
     test_forced_conditions
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
 }
 
 foreach_mi_ui_mode mi-mode {

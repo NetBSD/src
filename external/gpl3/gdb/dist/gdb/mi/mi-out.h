@@ -1,5 +1,5 @@
 /* MI Command Set - MI output generating routines for GDB.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -139,7 +139,6 @@ private:
   }
 
   bool m_suppress_field_separator;
-  bool m_suppress_output;
   int m_mi_version;
   std::vector<ui_file *> m_streams;
 };

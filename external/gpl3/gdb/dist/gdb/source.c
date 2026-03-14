@@ -1,5 +1,5 @@
 /* List lines of source files for GDB, the GNU debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1312,13 +1312,11 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
   int nlines = stopline - line;
   struct ui_out *uiout = current_uiout;
 
-  /* Regardless of whether we can open the file, set current_source_symtab.  */
+  /* Regardless of whether we can open the file, we'll want to set
+     current_source_symtab, but not if throw an error, or return without
+     printing any source lines.  */
   current_source_location *loc
     = get_source_location (current_program_space);
-
-  loc->set (s, line);
-  first_line_listed = line;
-  last_line_listed = line;
 
   /* If printing of source lines is disabled, just print file and line
      number.  */
@@ -1380,6 +1378,10 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 	  uiout->text ("\n");
 	}
 
+      loc->set (s, line);
+      first_line_listed = line;
+      last_line_listed = line;
+
       return;
     }
 
@@ -1399,12 +1401,9 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
     }
 
   const char *iter = lines.c_str ();
-  int new_lineno = loc->line ();
-  while (nlines-- > 0 && *iter != '\0')
+  int new_lineno = line;
+  for (; nlines-- > 0 && *iter != '\0'; ++new_lineno)
     {
-      char buf[20];
-
-      last_line_listed = loc->line ();
       if (flags & PRINT_SOURCE_LINES_FILENAME)
 	{
 	  uiout->message ("%ps",
@@ -1415,7 +1414,6 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 
       uiout->message ("%ps\t", styled_string (line_number_style.style (),
 					      pulongest (new_lineno)));
-      ++new_lineno;
 
       while (*iter != '\0')
 	{
@@ -1457,6 +1455,8 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
 	    }
 	  else if (*iter > 0 && *iter < 040)
 	    {
+	      char buf[20];
+
 	      xsnprintf (buf, sizeof (buf), "^%c", *iter + 0100);
 	      uiout->text (buf);
 	      ++iter;
@@ -1470,7 +1470,11 @@ print_source_lines_base (struct symtab *s, int line, int stopline,
       uiout->text ("\n");
     }
 
-  loc->set (loc->symtab (), new_lineno);
+  /* As NEW_LINENO was incremented after displaying the last source line,
+     the last line shown was the one before NEW_LINENO.  */
+  first_line_listed = line;
+  last_line_listed = new_lineno - 1;
+  loc->set (s, new_lineno);
 }
 
 
@@ -1909,26 +1913,8 @@ source_lines_range::source_lines_range (int startline,
     }
 }
 
-/* Handle the "set source" base command.  */
-
-static void
-set_source (const char *arg, int from_tty)
-{
-  help_list (setsourcelist, "set source ", all_commands, gdb_stdout);
-}
-
-/* Handle the "show source" base command.  */
-
-static void
-show_source (const char *args, int from_tty)
-{
-  help_list (showsourcelist, "show source ", all_commands, gdb_stdout);
-}
-
 
-void _initialize_source ();
-void
-_initialize_source ()
+INIT_GDB_FILE (source)
 {
   init_source_path ();
 
@@ -2045,13 +2031,12 @@ By default, relative filenames are displayed."),
 			show_filename_display_string,
 			&setlist, &showlist);
 
-  add_prefix_cmd ("source", no_class, set_source,
-		  _("Generic command for setting how sources are handled."),
-		  &setsourcelist, 0, &setlist);
-
-  add_prefix_cmd ("source", no_class, show_source,
-		  _("Generic command for showing source settings."),
-		  &showsourcelist, 0, &showlist);
+  add_setshow_prefix_cmd
+    ("source", no_class,
+     _("Generic command for setting how sources are handled."),
+     _("Generic command for showing source settings."),
+     &setsourcelist, &showsourcelist,
+     &setlist, &showlist);
 
   add_setshow_boolean_cmd ("open", class_files, &source_open, _("\
 Set whether GDB should open source files."), _("\

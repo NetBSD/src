@@ -1,6 +1,6 @@
 /* DWARF file and directory
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -125,5 +125,7 @@ private:
   /* The full name.  */
   gdb::unique_xmalloc_ptr<char> m_fullname;
 };
+
+using file_and_directory_up = std::unique_ptr<file_and_directory>;
 
 #endif /* GDB_DWARF2_FILE_AND_DIR_H */

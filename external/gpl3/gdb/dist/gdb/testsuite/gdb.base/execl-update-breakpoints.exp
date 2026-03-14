@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,8 @@ if { [gdb_compile $objfile $exec1 executable {debug text_segment=0x1000000}] != 
 # First check whether the address of "main" in exec1 is readable in
 # exec2.  If it is, then skip the test as unsupported.
 
-clean_restart ${exec1}
+clean_restart
+gdb_load $exec1
 if {![runto_main]} {
     return -1
 }
@@ -55,7 +56,8 @@ gdb_test_multiple "p/x &main" $test {
     }
 }
 
-clean_restart ${exec2}
+clean_restart
+gdb_load $exec2
 if {![runto_main]} {
     return -1
 }
@@ -84,7 +86,8 @@ proc test { always_inserted } {
     global exec1
     global gdb_prompt
 
-    clean_restart ${exec1}
+    clean_restart
+    gdb_load $exec1
 
     gdb_test_no_output "set breakpoint always-inserted $always_inserted"
 

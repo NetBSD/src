@@ -1,6 +1,6 @@
 /* Load module for 'compile' command.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -299,6 +299,7 @@ static const struct bfd_link_callbacks link_callbacks =
   link_callbacks_reloc_dangerous, /* reloc_dangerous */
   link_callbacks_unattached_reloc, /* unattached_reloc */
   NULL, /* notice */
+  NULL, /* fatal */
   link_callbacks_einfo, /* einfo */
   NULL, /* info */
   NULL, /* minfo */
@@ -604,9 +605,7 @@ compile_object_load (const compile_file_names &file_names,
   CORE_ADDR regs_addr, out_value_addr = 0;
   struct symbol *func_sym;
   struct type *func_type;
-  long storage_needed;
-  asymbol **symbol_table, **symp;
-  long number_of_symbols, missing_symbols;
+  long missing_symbols;
   struct type *regs_type, *out_value_type = NULL;
   char **matching;
   struct objfile *objfile;
@@ -633,11 +632,6 @@ compile_object_load (const compile_file_names &file_names,
   for (asection *sect = abfd->sections; sect != nullptr; sect = sect->next)
     setup_sections_data.setup_one_section (sect);
   setup_sections_data.setup_one_section (nullptr);
-
-  storage_needed = bfd_get_symtab_upper_bound (abfd.get ());
-  if (storage_needed < 0)
-    error (_("Cannot read symbols of compiled module \"%s\": %s"),
-	   filename.get (), bfd_errmsg (bfd_get_error ()));
 
   /* SYMFILE_VERBOSE is not passed even if FROM_TTY, user is not interested in
      "Reading symbols from ..." message for automatically generated file.  */
@@ -691,21 +685,12 @@ compile_object_load (const compile_file_names &file_names,
 	     "module \"%s\"."),
 	   GCC_FE_WRAPPER_FUNCTION, objfile_name (objfile));
 
-  /* The memory may be later needed
-     by bfd_generic_get_relocated_section_contents
-     called from default_symfile_relocate.  */
-  symbol_table = (asymbol **) obstack_alloc (&objfile->objfile_obstack,
-					     storage_needed);
-  number_of_symbols = bfd_canonicalize_symtab (abfd.get (), symbol_table);
-  if (number_of_symbols < 0)
-    error (_("Cannot parse symbols of compiled module \"%s\": %s"),
-	   filename.get (), bfd_errmsg (bfd_get_error ()));
+  gdb::array_view<asymbol *> symbol_table
+    = gdb_bfd_canonicalize_symtab (abfd.get ());
 
   missing_symbols = 0;
-  for (symp = symbol_table; symp < symbol_table + number_of_symbols; symp++)
+  for (asymbol *sym : symbol_table)
     {
-      asymbol *sym = *symp;
-
       if (sym->flags != 0)
 	continue;
       sym->flags = BSF_GLOBAL;
@@ -799,7 +784,7 @@ compile_object_load (const compile_file_names &file_names,
   if (missing_symbols)
     error (_("%ld symbols were missing, cannot continue."), missing_symbols);
 
-  bfd_map_over_sections (abfd.get (), copy_sections, symbol_table);
+  bfd_map_over_sections (abfd.get (), copy_sections, symbol_table.data ());
 
   regs_type = get_regs_type (func_sym, objfile);
   if (regs_type == NULL)

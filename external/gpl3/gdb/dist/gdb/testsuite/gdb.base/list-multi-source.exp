@@ -1,0 +1,129 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that 'list FILE:LINE' can print multiple results if FILE
+# matches multiple files from the source tree.
+#
+# Then test that we can use 'list DIR/FILE:LINE' to restrict the
+# results to a single source file.
+
+# With a remote host, source files are automatically copied to the
+# host by dejagnu, and this drops the directory structure that is
+# needed for this test to work, i.e. we need a/foo.c and b/foo.c, but
+# dejagnu's automatic copying just gives us a single foo.c.  Instead
+# of trying to fix this, for now at least, just skip remote host
+# testing.
+require {!is_remote host}
+
+# This test uses a single source file that is copied into the build
+# tree 3 times.  The three copies are then copied with different
+# defines set so that we see different functions in each copy.
+standard_testfile .c
+
+# Create the source tree within the build directory.
+set src_root [standard_output_file "src"]
+set src_a "$src_root/a"
+set src_b "$src_root/b"
+set file_a "$src_a/foo.c"
+set file_b "$src_b/foo.c"
+set file_main "$src_root/main.c"
+file mkdir "$src_root"
+file mkdir "$src_a"
+file mkdir "$src_b"
+
+# Helper proc.  Copy global SRCFILE to DEST, replacing
+# 'value_to_return' with VALUE during the copy.
+proc copy_and_update_source_file { dest value } {
+    # Open the source file for reading.
+    set in [open "$::srcdir/$::subdir/$::srcfile" r]
+
+    # Read in the entire contents of the file.  This should be fine as
+    # the input file is not large.
+    set file_content [read $in]
+
+    # Close the input file.
+    close $in
+
+    # Perform the replacement over the entire file contents.
+    set updated_content [string map \
+			     [list "value_to_return" $value] \
+			     $file_content]
+
+    # Open the destination file for writing.
+    set out [open $dest w]
+
+    # Write the modified content to the destination file.
+    puts -nonewline $out $updated_content
+
+    # Close the output file.
+    close $out
+}
+
+# Make three copies of the single source file in the build directory
+# based source tree.  Two of the source files are modified slighly to
+# make the output of 'list' unique for each copy.
+file copy "$srcdir/$subdir/$srcfile" "$file_main"
+copy_and_update_source_file $file_a "3"
+copy_and_update_source_file $file_b "-3"
+
+# Build the executable.  Use defines to make the source files
+# different.
+if { [prepare_for_testing_full "failed to prepare" \
+	  [list $testfile debug \
+	       $file_main [list debug additional_flags=-DMAIN] \
+	       $file_a [list debug additional_flags=-DFILE_A] \
+	       $file_b [list debug additional_flags=-DFILE_B]]]} {
+    return
+}
+
+# The LINENUM we should list, and the first and last lines that should
+# appear in the list output.
+set linenum [gdb_get_line_number "List this line"]
+set first_linenum [expr {$linenum - 5}]
+set last_linenum [expr {$linenum + 4}]
+
+# List using FILE:LINE for a filename that is ambiguous.
+gdb_test "list foo.c:$linenum" \
+    [multi_line \
+	 "file: \"\[^\r\n\]+/a/foo.c\", line number: $linenum, symbol: \"\[^\r\n\]+\"" \
+	 "$first_linenum\\s+\[^\r\n\]+" \
+	 ".*" \
+	 "$linenum\\s+[string_to_regexp {return 3;	/* List this line.  */}]" \
+	 ".*" \
+	 "$last_linenum\\s+\[^\r\n\]+" \
+	 "file: \"\[^\r\n\]+/b/foo.c\", line number: $linenum, symbol: \"\[^\r\n\]+\"" \
+	 "$first_linenum\\s+\[^\r\n\]+" \
+	 ".*" \
+	 "$linenum\\s+[string_to_regexp {return -3;	/* List this line.  */}]" \
+	 ".*" \
+	 "$last_linenum\\s+\[^\r\n\]+"]
+
+# Now list using a more acurate filename, we should only get a single
+# result.
+gdb_test "list a/foo.c:$linenum" \
+    [multi_line \
+	 "^$first_linenum\\s+\[^\r\n\]+" \
+	 ".*" \
+	 "$linenum\\s+[string_to_regexp {return 3;	/* List this line.  */}]" \
+	 ".*" \
+	 "$last_linenum\\s+\[^\r\n\]+"]
+
+gdb_test "list b/foo.c:$linenum" \
+    [multi_line \
+	 "^$first_linenum\\s+\[^\r\n\]+" \
+	 ".*" \
+	 "$linenum\\s+[string_to_regexp {return -3;	/* List this line.  */}]" \
+	 ".*" \
+	 "$last_linenum\\s+\[^\r\n\]+"]

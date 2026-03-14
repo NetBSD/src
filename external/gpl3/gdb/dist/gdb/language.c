@@ -1,6 +1,6 @@
 /* Multiple source language support for GDB.
 
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -677,14 +677,6 @@ language_defn::is_string_type_p (struct type *type) const
   return c_is_string_type_p (type);
 }
 
-/* See language.h.  */
-
-std::unique_ptr<compile_instance>
-language_defn::get_compile_instance () const
-{
-  return {};
-}
-
 /* The default implementation of the get_symbol_name_matcher_inner method
    from the language_defn class.  Matches with strncmp_iw.  */
 
@@ -984,7 +976,7 @@ language_arch_info::type_and_symbol::alloc_type_symbol
   symbol->set_section_index (0);
   symbol->set_type (type);
   symbol->set_domain (TYPE_DOMAIN);
-  symbol->set_aclass_index (LOC_TYPEDEF);
+  symbol->set_loc_class_index (LOC_TYPEDEF);
   return symbol;
 }
 
@@ -1103,9 +1095,7 @@ language_lookup_primitive_type_as_symbol (const struct language_defn *la,
 
 /* Initialize the language routines.  */
 
-void _initialize_language ();
-void
-_initialize_language ()
+INIT_GDB_FILE (language)
 {
   static const char *const type_or_range_names[]
     = { "on", "off", "warn", "auto", NULL };

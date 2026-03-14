@@ -1,5 +1,5 @@
 /* Tracepoint code for remote server for GDB.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -86,10 +86,6 @@ int traceframe_read_mem (int tfnum, CORE_ADDR addr,
 int fetch_traceframe_registers (int tfnum,
 				struct regcache *regcache,
 				int regnum);
-
-int traceframe_read_sdata (int tfnum, ULONGEST offset,
-			   unsigned char *buf, ULONGEST length,
-			   ULONGEST *nbytes);
 
 int traceframe_read_info (int tfnum, std::string *buffer);
 

@@ -1,7 +1,7 @@
 /* Target-dependent code for Windows (including Cygwin) running on i386's,
    for GDB.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -229,9 +229,7 @@ i386_cygwin_core_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
-void _initialize_i386_windows_tdep ();
-void
-_initialize_i386_windows_tdep ()
+INIT_GDB_FILE (i386_windows_tdep)
 {
   gdbarch_register_osabi_sniffer (bfd_arch_i386, bfd_target_coff_flavour,
 				  i386_windows_osabi_sniffer);

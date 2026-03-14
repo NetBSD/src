@@ -1,4 +1,4 @@
-# Copyright (C) 2002-2024 Free Software Foundation, Inc.
+# Copyright (C) 2002-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ proc altivec_abi_tests { extra_flags force_abi } {
 	}
     }
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $::binfile
 
     # Run to `main' where we begin our tests.
     if {![runto_main]} {

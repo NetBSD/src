@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -27,8 +27,7 @@
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "gdbsupport/iterator-range.h"
-
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 /* Values that can be returned when handling a request to adjust a
    window's size.  */
@@ -368,7 +367,7 @@ typedef std::function<tui_win_info * (const char *name)> window_factory;
 
 /* The type for a data structure that maps a window name to that window's
    factory function.  */
-typedef std::unordered_map<std::string, window_factory> window_types_map;
+typedef gdb::unordered_map<std::string, window_factory> window_types_map;
 
 /* Register a new TUI window type.  NAME is the name of the window
    type.  FACTORY is a function that can be called to instantiate the

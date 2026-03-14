@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Free Software Foundation, Inc.
+/* Copyright 2023-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -33,11 +33,28 @@ bar_helper (void)
   asm ("foobar_entry_label: .globl foobar_entry_label");
 }
 
+__attribute__ ((noinline))
+void
+barso_helper (void)
+{
+  asm ("barso_helper_label: .globl barso_helper_label");
+  I++;
+  J++;
+  asm ("fooso_entry_label: .globl fooso_entry_label");
+  J++;
+  K++;
+  asm ("foobarso_entry_label: .globl foobarso_entry_label");
+}
+
 int
 main (void)
 {
   asm ("main_label: .globl main_label");
   bar_helper ();
+  I = 0;
+  J = 0;
+  K = 0;
+  barso_helper ();
 
   return 0;
 }

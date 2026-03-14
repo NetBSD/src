@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,17 +28,29 @@ clean_restart ${testfile}
 set bp_location [gdb_get_line_number "BREAK" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"
 
+set line1 [gdb_get_line_number "LINE 1" ${testdir}/foo.adb]
+set line2 [gdb_get_line_number "LINE 2" ${testdir}/foo.adb]
 
-proc test_menu {expr function menu_entries selection output} {
-    set menu [multi_line "Multiple matches for $function" \
-                         "\\\[0\\\] cancel" \
-                         "$menu_entries" \
-                         "> $"]
+proc test_menu {expr function first second selection output} {
+    set menu1 [multi_line "Multiple matches for $function" \
+		   "\\\[0\\\] cancel" \
+		   "\\\[1\\\] $first" \
+		   "\\\[2\\\] $second" \
+		   "> $"]
+    set menu2 [multi_line "Multiple matches for $function" \
+		   "\\\[0\\\] cancel" \
+		   "\\\[1\\\] $second" \
+		   "\\\[2\\\] $first" \
+		   "> $"]
     set test_name "multiple matches for $function {$expr}"
-    gdb_test_multiple "print $expr" "$test_name" \
-    {
-        -re "$menu" {
+    gdb_test_multiple "print $expr" "$test_name" {
+        -re "$menu1" {
             pass "$test_name"
+        }
+        -re "$menu2" {
+            pass "$test_name"
+	    # Make sure we pick the correct one.
+	    set selection [expr {3 - $selection}]
         }
         default {
             fail "$test_name"
@@ -53,18 +65,16 @@ proc test_menu {expr function menu_entries selection output} {
 # 1. Test with overloaded functions
 with_test_prefix "func" {
     test_menu "f (1, null)" "f" \
-	[multi_line \
-	     "\\\[1\\\] foo\\.f \\(integer; foo\\.integer_access\\) return boolean at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\\.f \\(foo\\.new_integer; foo\\.integer_access\\) return boolean at .*foo.adb:.*"] \
+	"foo\\.f \\(integer; (foo\\.)?integer_access\\) return boolean at .*foo.adb:.*" \
+	"foo\\.f \\((foo\\.)?new_integer; (foo\\.)?integer_access\\) return boolean at .*foo.adb:.*" \
 	"1" "= true"
 }
 
 # 2. Test with overloaded procedures
 with_test_prefix "proc" {
     test_menu "p (1, null)" "p" \
-	[multi_line \
-	     "\\\[1\\\] foo\\.p \\(integer; foo\\.integer_access\\) at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\\.p \\(foo\\.new_integer; foo\\.integer_access\\) at .*foo.adb:.*" ] \
+	"foo\\.p \\(integer; (foo\\.)?integer_access\\) at .*foo.adb:.*" \
+	"foo\\.p \\((foo\\.)?new_integer; (foo\\.)?integer_access\\) at .*foo.adb:.*" \
 	"1" "= (void)"
 }
 
@@ -72,8 +82,7 @@ with_test_prefix "proc" {
 gdb_test "set ada print-signatures off" ""
 with_test_prefix "signatures disabled" {
     test_menu "f (1, null)" "f" \
-	[multi_line \
-	     "\\\[1\\\] foo\\.f at .*foo.adb:.*" \
-	     "\\\[2\\\] foo\\.f at .*foo.adb:.*"] \
+	"foo\\.f at .*foo.adb:$line1.*" \
+	"foo\\.f at .*foo.adb:$line2.*" \
 	"1" "= true"
 }

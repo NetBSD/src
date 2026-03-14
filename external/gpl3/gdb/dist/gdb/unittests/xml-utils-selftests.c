@@ -1,6 +1,6 @@
 /* Unit tests for the xml-utils.c file.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,9 +47,7 @@ static void test_xml_escape_text_append ()
 }
 }
 
-void _initialize_xml_utils ();
-void
-_initialize_xml_utils ()
+INIT_GDB_FILE (xml_utils)
 {
   selftests::register_test ("xml_escape_text",
 			    selftests::xml_utils::test_xml_escape_text);

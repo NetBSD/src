@@ -1,5 +1,5 @@
 /* s390-dis.c -- Disassemble S390 instructions
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Martin Schwidefsky (schwidefsky@de.ibm.com).
 
    This file is part of the GNU opcodes library.
@@ -267,8 +267,9 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
       union operand_value val = s390_extract_operand (buffer, operand);
       unsigned long flags = operand->flags;
 
-      /* Omit index register 0.  */
-      if ((flags & S390_OPERAND_INDEX) && val.u == 0)
+      /* Omit index register 0, except for vector index register 0.  */
+      if ((flags & S390_OPERAND_INDEX) && !(flags & S390_OPERAND_VR)
+	  && val.u == 0)
 	continue;
       /* Omit base register 0, if no or omitted index register 0.  */
       if ((flags & S390_OPERAND_BASE) && val.u == 0 && separator == '(')
@@ -310,12 +311,8 @@ s390_print_insn_with_opcode (bfd_vma memaddr,
 	{
 	  info->fprintf_styled_func (info->stream, dis_style_text,
 				     "%c", separator);
-	  if ((flags & S390_OPERAND_INDEX) && val.u == 0)
-	    info->fprintf_styled_func (info->stream, dis_style_register,
-				       "%u", val.u);
-	  else
-	    info->fprintf_styled_func (info->stream, dis_style_register,
-				       "%%v%i", val.u);
+	  info->fprintf_styled_func (info->stream, dis_style_register,
+				     "%%v%u", val.u);
 	}
       else if (flags & S390_OPERAND_AR)
 	{

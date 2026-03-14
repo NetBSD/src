@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # Contributed by Intel Corp. <keven.boell@intel.com>
 #
@@ -29,7 +29,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" \
      return -1
 }
 
-if {[mi_clean_restart $binfile]} {
+if {[mi_clean_restart $::testfile]} {
     return
 }
 

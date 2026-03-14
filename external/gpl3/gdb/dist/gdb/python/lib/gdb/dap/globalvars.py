@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,8 +37,8 @@ gdb.events.cont.connect(clear)
 class _Globals(BaseReference):
     def __init__(self, filename, var_list):
         super().__init__("Globals")
-        self.filename = filename
-        self.var_list = var_list
+        self._filename = filename
+        self._var_list = var_list
 
     def to_object(self):
         result = super().to_object()
@@ -46,8 +46,8 @@ class _Globals(BaseReference):
         # How would we know?
         result["expensive"] = False
         result["namedVariables"] = self.child_count()
-        if self.filename is not None:
-            result["source"] = make_source(self.filename)
+        if self._filename is not None:
+            result["source"] = make_source(self._filename)
         return result
 
     def has_children(self):
@@ -56,11 +56,11 @@ class _Globals(BaseReference):
         return True
 
     def child_count(self):
-        return len(self.var_list)
+        return len(self._var_list)
 
     @in_gdb_thread
     def fetch_one_child(self, idx):
-        sym = self.var_list[idx]
+        sym = self._var_list[idx]
         return (sym.name, sym.value())
 
 
@@ -78,7 +78,6 @@ def get_global_scope(frame):
     except RuntimeError:
         return None
 
-    global _id_to_scope
     block = block.static_block
     if block in _id_to_scope:
         return _id_to_scope[block]

@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,8 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile1}" "${binfile1}" executable {d
 # on the first instruction of function "main" ("*main"), then
 # run to that breakpoint.
 
-clean_restart ${binfile1}
+clean_restart
+gdb_load $binfile1
 
 with_test_prefix "${testfile1}" {
 

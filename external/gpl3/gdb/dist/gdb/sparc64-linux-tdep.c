@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux UltraSPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,6 +32,7 @@
 #include "tramp-frame.h"
 #include "xml-syscall.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 
 /* ADI specific si_code */
 #ifndef SEGV_ACCADI
@@ -383,8 +384,7 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* GNU/Linux has SVR4-style shared libraries...  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* ...which means that we need some special handling when doing
      prologue analysis.  */
@@ -409,9 +409,7 @@ sparc64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_report_signal_info (gdbarch, sparc64_linux_report_signal_info);
 }
 
-void _initialize_sparc64_linux_tdep ();
-void
-_initialize_sparc64_linux_tdep ()
+INIT_GDB_FILE (sparc64_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_LINUX, sparc64_linux_init_abi);

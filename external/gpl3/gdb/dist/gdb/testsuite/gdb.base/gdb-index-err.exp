@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,13 +90,15 @@ foreach_with_prefix flag { "" "-dwarf-5" } {
     }
 
     # Add the index section to the executable.
-    clean_restart ${binfile}.${extension}
+    clean_restart
+    gdb_load $binfile.$extension
     gdb_assert {[ensure_gdb_index ${binfile}.${extension} ${flag}] == 1} \
 	"add index to executable"
 
     # Reload the executable (which now has an index), and try to
     # generate and index from it.  This will fail.
-    clean_restart ${binfile}.${extension}
+    clean_restart
+    gdb_load $binfile.$extension
     gdb_test "save gdb-index ${flag} $already_indexed_dir" \
 	"Error while writing index for `[string_to_regexp $binfile.$extension]': Cannot use an index to create the index" \
 	"try to generate an index from a binary with an index"

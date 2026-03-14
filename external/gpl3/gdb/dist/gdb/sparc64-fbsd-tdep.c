@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/sparc64.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -196,16 +196,16 @@ sparc64fbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind sparc64fbsd_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc64fbsd_sigtramp_frame_unwind (
   "sparc64 freebsd sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64fbsd_sigtramp_frame_this_id,
   sparc64fbsd_sigtramp_frame_prev_register,
   NULL,
   sparc64fbsd_sigtramp_frame_sniffer
-};
+);
 
 
 static const struct regset sparc64fbsd_gregset =
@@ -238,13 +238,10 @@ sparc64fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* FreeBSD/sparc64 has SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 }
 
-void _initialize_sparc64fbsd_tdep ();
-void
-_initialize_sparc64fbsd_tdep ()
+INIT_GDB_FILE (sparc64fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_FREEBSD, sparc64fbsd_init_abi);

@@ -1,5 +1,5 @@
 /* I/O, string, cleanup, and other random utilities for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -133,10 +133,7 @@ private:
 extern int gdb_filename_fnmatch (const char *pattern, const char *string,
 				 int flags);
 
-extern void substitute_path_component (char **stringp, const char *from,
-				       const char *to);
-
-std::string ldirname (const char *filename);
+std::string gdb_ldirname (const char *filename);
 
 extern int count_path_elements (const char *path);
 

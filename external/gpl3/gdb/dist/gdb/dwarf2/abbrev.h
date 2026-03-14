@@ -1,6 +1,6 @@
 /* DWARF abbrev table
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -61,7 +61,7 @@ struct abbrev_info
 };
 
 struct abbrev_table;
-typedef std::unique_ptr<struct abbrev_table> abbrev_table_up;
+using abbrev_table_up = std::unique_ptr<abbrev_table>;
 
 /* Top level data structure to contain an abbreviation table.
 

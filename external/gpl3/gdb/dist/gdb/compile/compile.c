@@ -1,6 +1,6 @@
 /* General Compile and inject code
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,16 +45,18 @@
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/scoped_ignore_signal.h"
 #include "gdbsupport/buildargv.h"
-
-
-
-/* Initial filename for temporary files.  */
-
-#define TMP_PREFIX "/tmp/gdbobj-"
+#include "gdbsupport/cleanups.h"
 
 /* Hold "compile" commands.  */
 
 static struct cmd_list_element *compile_command_list;
+
+
+#ifdef HAVE_COMPILE
+
+/* Initial filename for temporary files.  */
+
+#define TMP_PREFIX "/tmp/gdbobj-"
 
 /* Debug flag for "compile" commands.  */
 
@@ -527,6 +529,41 @@ print_callback (void *ignore, const char *message)
   gdb_puts (message, gdb_stderr);
 }
 
+/* Helper for compile_to_object, to find the compile context
+   based on the current language.  */
+static std::unique_ptr<compile_instance>
+get_language_compile_context ()
+{
+  switch (current_language->la_language)
+    {
+    case language_c:
+      return c_get_compile_context ();
+    case language_cplus:
+      return cplus_get_compile_context ();
+    default:
+      return {};
+    }
+}
+
+/* Helper for compile_to_object, to call the correct
+   compute_program based on the current language.  */
+static std::string
+compute_program_language (compile_instance *inst, const char *input,
+			  struct gdbarch *gdbarch,
+			  const struct block *block,
+			  CORE_ADDR pc)
+{
+  switch (current_language->la_language)
+    {
+    case language_c:
+      return c_compute_program (inst, input, gdbarch, block, pc);
+    case language_cplus:
+      return cplus_compute_program (inst, input, gdbarch, block, pc);
+    default:
+      gdb_assert_not_reached ("Unsupported language");
+    }
+}
+
 /* Process the compilation request.  On success it returns the object
    and source file names.  On an error condition, error () is
    called.  */
@@ -550,7 +587,8 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
 
   /* Set up instance and context for the compiler.  */
   std::unique_ptr<compile_instance> compiler
-    = current_language->get_compile_instance ();
+    = get_language_compile_context ();
+
   if (compiler == nullptr)
     error (_("No compiler support for language %s."),
 	   current_language->name ());
@@ -582,8 +620,8 @@ compile_to_object (struct command_line *cmd, const char *cmd_string,
     error (_("Neither a simple expression, or a multi-line specified."));
 
   std::string code
-    = current_language->compute_program (compiler.get (), input, gdbarch,
-					 expr_block, expr_pc);
+    = compute_program_language (compiler.get (), input, gdbarch,
+				expr_block, expr_pc);
   if (compile_debug)
     gdb_printf (gdb_stdlog, "debug output:\n\n%s", code.c_str ());
 
@@ -816,20 +854,41 @@ compile_instance::compile (const char *filename, int verbose_level)
 
 #undef FORWARD
 
+#else /* HAVE_COMPILE */
+
+/* The "compile" prefix command, when support was disabled.  */
+
+static void
+compile_command (const char *args, int from_tty)
+{
+  error (_("This command is not supported."));
+}
+
+#endif /* HAVE_COMPILE */
+
 /* See compile.h.  */
 cmd_list_element *compile_cmd_element = nullptr;
 
-void _initialize_compile ();
-void
-_initialize_compile ()
+INIT_GDB_FILE (compile)
 {
-  struct cmd_list_element *c = NULL;
-
   compile_cmd_element = add_prefix_cmd ("compile", class_obscure,
-					compile_command, _("\
+					compile_command,
+#ifdef HAVE_COMPILE
+					_("\
 Command to compile source code and inject it into the inferior."),
+#else /* HAVE_COMPILE */
+					_("\
+Command to compile source code and inject it into the inferior.\n\
+\n\
+Code compilation and injection is not supported in this copy of GDB.\n\
+This command is only a placeholder."),
+#endif /* HAVE_COMPILE */
 		  &compile_command_list, 1, &cmdlist);
   add_com_alias ("expression", compile_cmd_element, class_obscure, 0);
+
+#ifdef HAVE_COMPILE
+
+  struct cmd_list_element *c = NULL;
 
   const auto compile_opts = make_compile_options_def_group (nullptr);
 
@@ -937,4 +996,5 @@ It should be absolute filename of the gcc executable.\n\
 If empty the default target triplet will be searched in $PATH."),
 				     NULL, show_compile_gcc, &setlist,
 				     &showlist);
+#endif /* HAVE_COMPILE */
 }

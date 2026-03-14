@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2024 Free Software Foundation, Inc.
+# Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 # ld.so probes before reaching main, and ptrace flags were set then.  But a
 # static executable would just keep running and never catch the fork.
 
-# Until "catch fork" is implemented on other targets...
-#
-require {is_any_target "*-*-linux*" "*-*-openbsd*"}
+require allow_fork_tests
 
 # Reusing foll-fork.c since it's a simple forking program.
 standard_testfile foll-fork.c

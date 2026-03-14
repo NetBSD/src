@@ -1,6 +1,6 @@
 ## See sim/Makefile.am
 ##
-## Copyright (C) 2004-2024 Free Software Foundation, Inc.
+## Copyright (C) 2004-2025 Free Software Foundation, Inc.
 ## Contributed by Axis Communications.
 ##
 ## This program is free software; you can redistribute it and/or modify

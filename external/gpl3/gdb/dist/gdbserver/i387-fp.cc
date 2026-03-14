@@ -1,5 +1,5 @@
 /* i387-specific utility functions, for the remote server for GDB.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,7 @@
 #include "nat/x86-xstate.h"
 
 /* Default to SSE.  */
-static uint64_t x86_xcr0 = X86_XSTATE_SSE_MASK;
+static uint64_t x86_xstate_bv = X86_XSTATE_SSE_MASK;
 
 static const int num_avx512_k_registers = 8;
 static const int num_pkeys_registers = 1;
@@ -230,7 +230,7 @@ i387_cache_to_fxsave (struct regcache *regcache, void *buf)
   fp->fctrl = regcache_raw_get_unsigned_by_name (regcache, "fctrl");
   fp->fstat = regcache_raw_get_unsigned_by_name (regcache, "fstat");
 
-  /* Convert to the simplifed tag form stored in fxsave data.  */
+  /* Convert to the simplified tag form stored in fxsave data.  */
   val = regcache_raw_get_unsigned_by_name (regcache, "ftag");
   val2 = 0;
   for (i = 7; i >= 0; i--)
@@ -265,7 +265,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 
   /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
-  clear_bv = (~fp->xstate_bv) & x86_xcr0;
+  clear_bv = (~fp->xstate_bv) & x86_xstate_bv;
 
   /* Clear part in x87 and vector registers if its bit in xstat_bv is
      zero.  */
@@ -315,7 +315,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any x87 registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_X87))
+  if ((x86_xstate_bv & X86_XSTATE_X87))
     {
       int st0_regnum = find_regno (regcache->tdesc, "st0");
 
@@ -332,7 +332,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any SSE registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_SSE))
+  if ((x86_xstate_bv & X86_XSTATE_SSE))
     {
       int xmm0_regnum = find_regno (regcache->tdesc, "xmm0");
 
@@ -349,7 +349,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any AVX registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_AVX))
+  if ((x86_xstate_bv & X86_XSTATE_AVX))
     {
       int ymm0h_regnum = find_regno (regcache->tdesc, "ymm0h");
 
@@ -366,7 +366,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any K registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_K))
+  if ((x86_xstate_bv & X86_XSTATE_K))
     {
       int k0_regnum = find_regno (regcache->tdesc, "k0");
 
@@ -383,7 +383,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any of ZMM0H-ZMM15H registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_ZMM_H))
+  if ((x86_xstate_bv & X86_XSTATE_ZMM_H))
     {
       int zmm0h_regnum = find_regno (regcache->tdesc, "zmm0h");
 
@@ -400,7 +400,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any of ZMM16-ZMM31 registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_ZMM) && num_zmm_high_registers != 0)
+  if ((x86_xstate_bv & X86_XSTATE_ZMM) && num_zmm_high_registers != 0)
     {
       int zmm16h_regnum = find_regno (regcache->tdesc, "zmm16h");
       int ymm16h_regnum = find_regno (regcache->tdesc, "ymm16h");
@@ -437,7 +437,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
     }
 
   /* Check if any PKEYS registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_PKRU))
+  if ((x86_xstate_bv & X86_XSTATE_PKRU))
     {
       int pkru_regnum = find_regno (regcache->tdesc, "pkru");
 
@@ -453,7 +453,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_SSE) || (x86_xcr0 & X86_XSTATE_AVX))
+  if ((x86_xstate_bv & X86_XSTATE_SSE) || (x86_xstate_bv & X86_XSTATE_AVX))
     {
       collect_register_by_name (regcache, "mxcsr", raw);
       if (memcmp (raw, &fp->mxcsr, 4) != 0)
@@ -465,7 +465,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 	}
     }
 
-  if (x86_xcr0 & X86_XSTATE_X87)
+  if (x86_xstate_bv & X86_XSTATE_X87)
     {
       collect_register_by_name (regcache, "fioff", raw);
       if (memcmp (raw, &fp->fioff, 4) != 0)
@@ -505,7 +505,7 @@ i387_cache_to_xsave (struct regcache *regcache, void *buf)
 	  fp->fstat = val;
 	}
 
-      /* Convert to the simplifed tag form stored in fxsave data.  */
+      /* Convert to the simplified tag form stored in fxsave data.  */
       val = regcache_raw_get_unsigned_by_name (regcache, "ftag");
       val2 = 0;
       for (i = 7; i >= 0; i--)
@@ -658,10 +658,10 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 
   /* The supported bits in `xstat_bv' are 8 bytes.  Clear part in
      vector registers if its bit in xstat_bv is zero.  */
-  clear_bv = (~fp->xstate_bv) & x86_xcr0;
+  clear_bv = (~fp->xstate_bv) & x86_xstate_bv;
 
   /* Check if any x87 registers are changed.  */
-  if ((x86_xcr0 & X86_XSTATE_X87) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_X87) != 0)
     {
       int st0_regnum = find_regno (regcache->tdesc, "st0");
 
@@ -678,7 +678,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_SSE) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_SSE) != 0)
     {
       int xmm0_regnum = find_regno (regcache->tdesc, "xmm0");
 
@@ -695,7 +695,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_AVX) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_AVX) != 0)
     {
       int ymm0h_regnum = find_regno (regcache->tdesc, "ymm0h");
 
@@ -712,7 +712,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_K) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_K) != 0)
     {
       int k0_regnum = find_regno (regcache->tdesc, "k0");
 
@@ -729,7 +729,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_ZMM_H) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_ZMM_H) != 0)
     {
       int zmm0h_regnum = find_regno (regcache->tdesc, "zmm0h");
 
@@ -746,7 +746,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_ZMM) != 0 && num_zmm_high_registers != 0)
+  if ((x86_xstate_bv & X86_XSTATE_ZMM) != 0 && num_zmm_high_registers != 0)
     {
       int zmm16h_regnum = find_regno (regcache->tdesc, "zmm16h");
       int ymm16h_regnum = find_regno (regcache->tdesc, "ymm16h");
@@ -773,7 +773,7 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 	}
     }
 
-  if ((x86_xcr0 & X86_XSTATE_PKRU) != 0)
+  if ((x86_xstate_bv & X86_XSTATE_PKRU) != 0)
     {
       int pkru_regnum = find_regno (regcache->tdesc, "pkru");
 
@@ -858,5 +858,5 @@ i387_xsave_to_cache (struct regcache *regcache, const void *buf)
 std::pair<uint64_t *, x86_xsave_layout *>
 i387_get_xsave_storage ()
 {
-  return { &x86_xcr0, &xsave_layout };
+  return { &x86_xstate_bv, &xsave_layout };
 }

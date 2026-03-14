@@ -1,6 +1,6 @@
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -157,5 +157,13 @@ static inline bool
 startswith (const char *str, const char *prefix)
 {
   return strncmp (str, prefix, strlen (prefix)) == 0;
+}
+
+/* Return true if plugin is enabled.  */
+
+static inline bool
+bfd_plugin_enabled (void)
+{
+  return BFD_SUPPORTS_PLUGINS != 0;
 }
 

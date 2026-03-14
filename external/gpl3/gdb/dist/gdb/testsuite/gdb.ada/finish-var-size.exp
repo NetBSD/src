@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,13 @@ require {expr [gcc_major_version] >= 12}
 
 standard_ada_testfile p
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable debug] != ""} {
+set opts {}
+lappend opts debug
+if { [have_fvar_tracking] } {
+    lappend opts additional_flags=-fvar-tracking
+}
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $opts] != ""} {
   return -1
 }
 

@@ -1,5 +1,5 @@
 /* Interface to hashtable implementations.
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -406,8 +406,9 @@ ctf_dynhash_iter_remove (ctf_dynhash_t *hp, ctf_hash_iter_remove_f fun,
 
 /* Traverse a dynhash in arbitrary order, in _next iterator form.
 
-   Mutating the dynhash while iterating is not supported (just as it isn't for
-   htab_traverse).
+   Adding entries to the dynhash while iterating is not supported (just as it
+   isn't for htab_traverse).  Deleting is fine (see ctf_dynhash_next_remove,
+   below).
 
    Note: unusually, this returns zero on success and a *positive* value on
    error, because it does not take an fp, taking an error pointer would be
@@ -477,6 +478,30 @@ ctf_dynhash_next (ctf_dynhash_t *h, ctf_next_t **it, void **key, void **value)
   ctf_next_destroy (i);
   *it = NULL;
   return ECTF_NEXT_END;
+}
+
+/* Remove the entry most recently returned by ctf_dynhash_next.
+
+   Returns ECTF_NEXT_END if this is impossible (already removed, iterator not
+   initialized, iterator off the end).  */
+
+int
+ctf_dynhash_next_remove (ctf_next_t * const *it)
+{
+  ctf_next_t *i = *it;
+
+  if ((void (*) (void)) ctf_dynhash_next != i->ctn_iter_fun)
+    return ECTF_NEXT_WRONGFUN;
+
+  if (!i)
+    return ECTF_NEXT_END;
+
+  if (i->ctn_n == 0)
+    return ECTF_NEXT_END;
+
+  htab_clear_slot (i->cu.ctn_h->htab, i->u.ctn_hash_slot - 1);
+
+  return 0;
 }
 
 int

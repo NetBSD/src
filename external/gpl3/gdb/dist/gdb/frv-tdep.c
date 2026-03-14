@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
+#include "solib-frv.h"
 #include "trad-frame.h"
 #include "dis-asm.h"
 #include "sim-regno.h"
@@ -1404,15 +1405,16 @@ frv_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind frv_frame_unwind = {
+static const struct frame_unwind_legacy frv_frame_unwind (
   "frv prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   frv_frame_this_id,
   frv_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 frv_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1553,7 +1555,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     set_gdbarch_convert_from_func_ptr_addr (gdbarch,
 					    frv_convert_from_func_ptr_addr);
 
-  set_gdbarch_so_ops (gdbarch, &frv_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_frv_solib_ops);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -1568,9 +1570,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_frv_tdep ();
-void
-_initialize_frv_tdep ()
+INIT_GDB_FILE (frv_tdep)
 {
   gdbarch_register (bfd_arch_frv, frv_gdbarch_init);
 }

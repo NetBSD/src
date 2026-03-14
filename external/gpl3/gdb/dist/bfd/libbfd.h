@@ -7,7 +7,7 @@
 /* libbfd.h -- Declarations used by bfd library *implementation*.
    (This include file is not for users of the library.)
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -254,7 +254,7 @@ extern int bfd_generic_stat_arch_elt
 #define _bfd_read_ar_hdr(abfd) \
 	BFD_SEND (abfd, _bfd_read_ar_hdr_fn, (abfd))
 #define _bfd_write_ar_hdr(archive, abfd)	 \
-	BFD_SEND (abfd, _bfd_write_ar_hdr_fn, (archive, abfd))
+	BFD_SEND (archive, _bfd_write_ar_hdr_fn, (archive, abfd))
 
 /* Generic routines to use for BFD_JUMP_TABLE_GENERIC.  Use
    BFD_JUMP_TABLE_GENERIC (_bfd_generic).  */
@@ -276,16 +276,13 @@ extern bool _bfd_generic_get_section_contents
 #define _bfd_generic_bfd_merge_private_bfd_data \
   _bfd_bool_bfd_link_true
 #define _bfd_generic_bfd_set_private_flags _bfd_bool_bfd_uint_true
-#define _bfd_generic_bfd_copy_private_section_data \
-  _bfd_bool_bfd_asection_bfd_asection_true
+extern bool _bfd_generic_bfd_copy_private_section_data
+  (bfd *, asection *, bfd *, asection *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 #define _bfd_generic_bfd_copy_private_symbol_data \
   _bfd_bool_bfd_asymbol_bfd_asymbol_true
 #define _bfd_generic_bfd_copy_private_header_data _bfd_bool_bfd_bfd_true
 #define _bfd_generic_bfd_print_private_bfd_data _bfd_bool_bfd_ptr_true
-
-extern bool _bfd_generic_init_private_section_data
-  (bfd *, asection *, bfd *, asection *, struct bfd_link_info *)
-  ATTRIBUTE_HIDDEN;
 
 /* Routines to use for BFD_JUMP_TABLE_CORE when there is no core file
    support.  Use BFD_JUMP_TABLE_CORE (_bfd_nocore).  */
@@ -421,7 +418,7 @@ extern bool _bfd_vms_lib_ia64_mkarchive
 /* Routines to use for BFD_JUMP_TABLE_SYMBOLS where there is no symbol
    support.  Use BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols).  */
 
-#define _bfd_nosymbols_get_symtab_upper_bound _bfd_long_bfd_n1_error
+#define _bfd_nosymbols_get_symtab_upper_bound _bfd_long_bfd_0
 extern long _bfd_nosymbols_canonicalize_symtab
   (bfd *, asymbol **) ATTRIBUTE_HIDDEN;
 #define _bfd_nosymbols_make_empty_symbol _bfd_generic_make_empty_symbol
@@ -650,12 +647,6 @@ extern bool _bfd_generic_link_add_archive_symbols
 
 /* Forward declaration to avoid prototype errors.  */
 typedef struct bfd_link_hash_entry _bfd_link_hash_entry;
-
-/* Generic routine to add a single symbol.  */
-extern bool _bfd_generic_link_add_one_symbol
-  (struct bfd_link_info *, bfd *, const char *name, flagword,
-   asection *, bfd_vma, const char *, bool copy,
-   bool constructor, struct bfd_link_hash_entry **) ATTRIBUTE_HIDDEN;
 
 /* Generic routine to mark section as supplying symbols only.  */
 extern void _bfd_generic_link_just_syms
@@ -963,8 +954,6 @@ bool bfd_write_bigendian_4byte_int (bfd *, unsigned int) ATTRIBUTE_HIDDEN;
 unsigned int bfd_log2 (bfd_vma x) ATTRIBUTE_HIDDEN;
 
 /* Extracted from bfd.c.  */
-void _bfd_clear_error_data (void) ATTRIBUTE_HIDDEN;
-
 char *bfd_asprintf (const char *fmt, ...) ATTRIBUTE_HIDDEN;
 
 /* Cached _bfd_check_format messages are put in this.  */
@@ -1022,7 +1011,7 @@ struct bfd_iovec
   int (*bstat) (struct bfd *abfd, struct stat *sb);
   /* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
      mmap parameter, except that LEN and OFFSET do not need to be page
-     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+     aligned.  Returns MAP_FAILED on failure, mmapped address on success.
      Also write in MAP_ADDR the address of the page aligned buffer and in
      MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
      MAP_LEN to unmap.  */
@@ -3238,6 +3227,7 @@ static const char *const bfd_reloc_code_real_names[] = { "@@uninitialized@@",
   "BFD_RELOC_AARCH64_LD_GOT_LO12_NC",
   "BFD_RELOC_AARCH64_TLSIE_LD_GOTTPREL_LO12_NC",
   "BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC",
+  "BFD_RELOC_AARCH64_BRANCH9",
   "BFD_RELOC_TILEPRO_COPY",
   "BFD_RELOC_TILEPRO_GLOB_DAT",
   "BFD_RELOC_TILEPRO_JMP_SLOT",
@@ -3670,6 +3660,49 @@ bool _bfd_unrecognized_reloc
     unsigned int r_type) ATTRIBUTE_HIDDEN;
 
 /* Extracted from section.c.  */
+#define BFD_FAKE_SECTION(SEC, SYM, NAME, IDX, FLAGS)                   \
+  /* name, next, prev, id,  section_id, index, flags, user_set_vma, */ \
+  {  NAME, NULL, NULL, IDX, 0,          0,     FLAGS, 0,               \
+								       \
+  /* linker_mark, linker_has_input, gc_mark, decompress_status,     */ \
+     0,           0,                1,       0,                        \
+								       \
+  /* segment_mark, sec_info_type, use_rela_p, mmapped_p, alloced,   */ \
+     0,            0,             0,          0,         0,            \
+								       \
+  /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,    */ \
+     0,        0,        0,        0,        0,        0,              \
+								       \
+  /* vma, lma, size, rawsize, compressed_size,                      */ \
+     0,   0,   0,    0,       0,                                       \
+								       \
+  /* output_offset, output_section, relocation, orelocation,        */ \
+     0,             &SEC,           NULL,       NULL,                  \
+								       \
+  /* reloc_count, alignment_power, filepos, rel_filepos,            */ \
+     0,           0,               0,       0,                         \
+								       \
+  /* line_filepos, userdata, contents, lineno, lineno_count,        */ \
+     0,            NULL,     NULL,     NULL,   0,                      \
+								       \
+  /* entsize, kept_section, moving_line_filepos,                    */ \
+     0,       NULL,         0,                                         \
+								       \
+  /* target_index, used_by_bfd, constructor_chain, owner,           */ \
+     0,            NULL,        NULL,              NULL,               \
+								       \
+  /* symbol,                                                        */ \
+     (struct bfd_symbol *) SYM,                                        \
+								       \
+  /* map_head, map_tail, already_assigned, type                     */ \
+     { NULL }, { NULL }, NULL,             0                           \
+								       \
+  }
+
+#define GLOBAL_SYM_INIT(NAME, SECTION)                                 \
+  /* the_bfd, name, value, attr,            section, udata  */         \
+  {  0,       NAME, 0,     BSF_SECTION_SYM, SECTION, { 0 } }
+
 /* Extracted from stabs.c.  */
 bool _bfd_link_section_stabs
    (bfd *, struct stab_info *, asection *, asection *, void **,

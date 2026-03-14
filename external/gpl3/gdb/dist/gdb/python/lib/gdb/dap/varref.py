@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,8 +60,6 @@ class BaseReference(ABC):
 
     This class is just a base class, some methods must be implemented in
     subclasses.
-
-    The 'ref' field can be used as the variablesReference in the protocol.
     """
 
     @in_gdb_thread
@@ -71,10 +69,9 @@ class BaseReference(ABC):
         NAME is a string or None.  None means this does not have a
         name, e.g., the result of expression evaluation."""
 
-        global all_variables
         all_variables.append(self)
-        self.ref = len(all_variables)
-        self.name = name
+        self._ref = len(all_variables)
+        self._name = name
         self.reset_children()
 
     @in_gdb_thread
@@ -83,9 +80,9 @@ class BaseReference(ABC):
 
         The resulting object is a starting point that can be filled in
         further.  See the Scope or Variable types in the spec"""
-        result = {"variablesReference": self.ref if self.has_children() else 0}
-        if self.name is not None:
-            result["name"] = str(self.name)
+        result = {"variablesReference": self._ref if self.has_children() else 0}
+        if self._name is not None:
+            result["name"] = str(self._name)
         return result
 
     @abstractmethod
@@ -97,13 +94,13 @@ class BaseReference(ABC):
         """Reset any cached information about the children of this object."""
         # A list of all the children.  Each child is a BaseReference
         # of some kind.
-        self.children = None
+        self._children = None
         # Map from the name of a child to a BaseReference.
-        self.by_name = {}
+        self._by_name = {}
         # Keep track of how many duplicates there are of a given name,
         # so that unique names can be generated.  Map from base name
         # to a count.
-        self.name_counts = defaultdict(lambda: 1)
+        self._name_counts = defaultdict(lambda: 1)
 
     @abstractmethod
     def fetch_one_child(self, index):
@@ -128,13 +125,13 @@ class BaseReference(ABC):
     # and
     # https://github.com/microsoft/debug-adapter-protocol/issues/149
     def _compute_name(self, name):
-        if name in self.by_name:
-            self.name_counts[name] += 1
+        if name in self._by_name:
+            self._name_counts[name] += 1
             # In theory there's no safe way to compute a name, because
             # a pretty-printer might already be generating names of
             # that form.  In practice I think we should not worry too
             # much.
-            name = name + " #" + str(self.name_counts[name])
+            name = name + " #" + str(self._name_counts[name])
         return name
 
     @in_gdb_thread
@@ -146,16 +143,20 @@ class BaseReference(ABC):
         Returns an iterable of some kind."""
         if count == 0:
             count = self.child_count()
-        if self.children is None:
-            self.children = [None] * self.child_count()
+        if self._children is None:
+            self._children = [None] * self.child_count()
         for idx in range(start, start + count):
-            if self.children[idx] is None:
+            if idx >= len(self._children):
+                raise DAPException(
+                    f"requested child {idx} outside range of variable {self._ref}"
+                )
+            if self._children[idx] is None:
                 (name, value) = self.fetch_one_child(idx)
                 name = self._compute_name(name)
                 var = VariableReference(name, value)
-                self.children[idx] = var
-                self.by_name[name] = var
-            yield self.children[idx]
+                self._children[idx] = var
+                self._by_name[name] = var
+            yield self._children[idx]
 
     @in_gdb_thread
     def find_child_by_name(self, name):
@@ -165,8 +166,8 @@ class BaseReference(ABC):
         # A lookup by name can only be done using names previously
         # provided to the client, so we can simply rely on the by-name
         # map here.
-        if name in self.by_name:
-            return self.by_name[name]
+        if name in self._by_name:
+            return self._by_name[name]
         raise DAPException("no variable named '" + name + "'")
 
 
@@ -181,15 +182,15 @@ class VariableReference(BaseReference):
         RESULT_NAME can be used to change how the simple string result
         is emitted in the result dictionary."""
         super().__init__(name)
-        self.result_name = result_name
-        self.value = value
+        self._result_name = result_name
+        self._value = value
         self._update_value()
 
     # Internal method to update local data when the value changes.
     def _update_value(self):
         self.reset_children()
-        self.printer = gdb.printing.make_visualizer(self.value)
-        self.child_cache = None
+        self._printer = gdb.printing.make_visualizer(self._value)
+        self._child_cache = None
         if self.has_children():
             self.count = -1
         else:
@@ -197,32 +198,32 @@ class VariableReference(BaseReference):
 
     def assign(self, value):
         """Assign VALUE to this object and update."""
-        self.value.assign(value)
+        self._value.assign(value)
         self._update_value()
 
     def has_children(self):
-        return hasattr(self.printer, "children")
+        return hasattr(self._printer, "children")
 
     def cache_children(self):
-        if self.child_cache is None:
+        if self._child_cache is None:
             # This discards all laziness.  This could be improved
             # slightly by lazily evaluating children, but because this
             # code also generally needs to know the number of
             # children, it probably wouldn't help much.  Note that
             # this is only needed with legacy (non-ValuePrinter)
             # printers.
-            self.child_cache = list(self.printer.children())
-        return self.child_cache
+            self._child_cache = list(self._printer.children())
+        return self._child_cache
 
     def child_count(self):
         if self.count is None:
             return None
         if self.count == -1:
             num_children = None
-            if isinstance(self.printer, gdb.ValuePrinter) and hasattr(
-                self.printer, "num_children"
+            if isinstance(self._printer, gdb.ValuePrinter) and hasattr(
+                self._printer, "num_children"
             ):
-                num_children = self.printer.num_children()
+                num_children = self._printer.num_children()
             if num_children is None:
                 num_children = len(self.cache_children())
             self.count = num_children
@@ -230,12 +231,12 @@ class VariableReference(BaseReference):
 
     def to_object(self):
         result = super().to_object()
-        result[self.result_name] = str(self.printer.to_string())
+        result[self._result_name] = str(self._printer.to_string())
         num_children = self.child_count()
         if num_children is not None:
             if (
-                hasattr(self.printer, "display_hint")
-                and self.printer.display_hint() == "array"
+                hasattr(self._printer, "display_hint")
+                and self._printer.display_hint() == "array"
             ):
                 result["indexedVariables"] = num_children
             else:
@@ -245,18 +246,22 @@ class VariableReference(BaseReference):
             # changed DAP to allow memory references for any of the
             # variable response requests, and to lift the restriction
             # to pointer-to-function from Variable.
-            if self.value.type.strip_typedefs().code == gdb.TYPE_CODE_PTR:
-                result["memoryReference"] = hex(int(self.value))
+            if (
+                self._value.type.strip_typedefs().code == gdb.TYPE_CODE_PTR
+                and not self._value.is_optimized_out
+                and not self._value.is_unavailable
+            ):
+                result["memoryReference"] = hex(int(self._value))
         if client_bool_capability("supportsVariableType"):
-            result["type"] = str(self.value.type)
+            result["type"] = str(self._value.type)
         return result
 
     @in_gdb_thread
     def fetch_one_child(self, idx):
-        if isinstance(self.printer, gdb.ValuePrinter) and hasattr(
-            self.printer, "child"
+        if isinstance(self._printer, gdb.ValuePrinter) and hasattr(
+            self._printer, "child"
         ):
-            (name, val) = self.printer.child(idx)
+            (name, val) = self._printer.child(idx)
         else:
             (name, val) = self.cache_children()[idx]
         # A pretty-printer can return something other than a
@@ -269,7 +274,7 @@ class VariableReference(BaseReference):
 @in_gdb_thread
 def find_variable(ref):
     """Given a variable reference, return the corresponding variable object."""
-    global all_variables
+
     # Variable references are offset by 1.
     ref = ref - 1
     if ref < 0 or ref > len(all_variables):

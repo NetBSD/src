@@ -1,0 +1,33 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib rocm.exp
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+require can_spawn_for_attach allow_hipcc_tests
+
+standard_testfile .cpp
+
+if {[build_executable "failed to prepare" $testfile $srcfile {debug hip}]} {
+    return
+}
+
+set spawn_id [spawn_wait_for_attach $::binfile]
+set prog_pid [spawn_id_get_pid $spawn_id]
+
+mi_clean_restart
+
+mi_gdb_test "-target-attach $prog_pid" ".*\\^done.*" "attach \$PROG_PID"

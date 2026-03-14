@@ -1,5 +1,5 @@
 /* KVX-specific support for NN-bit ELF.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -926,7 +926,7 @@ kvx_build_one_stub (struct bfd_hash_entry *gen_entry,
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->fatal (_("%P: Could not assign '%pA' to an output section. "
 			      "Retry without "
 			      "--enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
@@ -1610,6 +1610,7 @@ elfNN_kvx_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 
@@ -2540,7 +2541,8 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_KVX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -4049,6 +4051,7 @@ elfNN_kvx_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -4210,6 +4213,7 @@ elfNN_kvx_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->root.dynamic_sections_created)

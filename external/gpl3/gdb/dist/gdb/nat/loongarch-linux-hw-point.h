@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -32,7 +32,7 @@ struct loongarch_user_watch_state {
 		uint64_t    mask;
 		uint32_t    ctrl;
 		uint32_t    pad;
-	} dbg_regs[8];
+	} dbg_regs[14];
 };
 
 
@@ -109,18 +109,8 @@ void loongarch_linux_set_debug_regs (struct loongarch_debug_reg_state *state,
 void loongarch_linux_get_debug_reg_capacity (int tid);
 
 /* Return the debug register state for process PID.  If no existing
-   state is found for this process, return nullptr.  */
-
-struct loongarch_debug_reg_state *loongarch_lookup_debug_reg_state (pid_t pid);
-
-/* Return the debug register state for process PID.  If no existing
    state is found for this process, create new state.  */
 
 struct loongarch_debug_reg_state *loongarch_get_debug_reg_state (pid_t pid);
-
-/* Remove any existing per-process debug state for process PID.  */
-
-void loongarch_remove_debug_reg_state (pid_t pid);
-
 
 #endif /* GDB_NAT_LOONGARCH_LINUX_HW_POINT_H */

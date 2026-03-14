@@ -1,5 +1,5 @@
 /* Replay a remote debug session logfile for GDB.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
    Written by Fred Fish (fnf@cygnus.com) from pieces of gdbserver.
 
    This file is part of GDB.
@@ -205,6 +205,8 @@ remote_open (const char *name)
   if (bind (tmp_desc, p->ai_addr, p->ai_addrlen) != 0)
     perror_with_name ("Can't bind address");
 
+  fprintf (stderr, "Replay logfile using %s\n", name);
+  fflush (stderr);
   if (p->ai_socktype == SOCK_DGRAM)
     remote_desc_in = tmp_desc;
   else
@@ -258,9 +260,6 @@ remote_open (const char *name)
   fcntl (remote_desc_in, F_SETFL, FASYNC);
 #endif
   remote_desc_out = remote_desc_in;
-
-  fprintf (stderr, "Replay logfile using %s\n", name);
-  fflush (stderr);
 }
 
 static int
@@ -442,7 +441,7 @@ play (FILE *fp)
     }
 
   /* Packet starts with '+$' or '$', we don't want to calculate those
-     to the checksum, substract the offset to adjust the line length.
+     to the checksum, subtract the offset to adjust the line length.
      If the line starts with '$', the offset remains set to 1.  */
   if (line[0] == '+')
     offset = 2;
@@ -463,7 +462,7 @@ static void
 gdbreplay_version (void)
 {
   printf ("GNU gdbreplay %s%s\n"
-	  "Copyright (C) 2024 Free Software Foundation, Inc.\n"
+	  "Copyright (C) 2025 Free Software Foundation, Inc.\n"
 	  "gdbreplay is free software, covered by "
 	  "the GNU General Public License.\n"
 	  "This gdbreplay was configured as \"%s\"\n",

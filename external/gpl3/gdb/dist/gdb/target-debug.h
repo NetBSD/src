@@ -1,6 +1,6 @@
 /* GDB target debugging macros
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -144,6 +144,10 @@ target_debug_print_expression_p (expression *exp)
 static std::string
 target_debug_print_CORE_ADDR_p (CORE_ADDR *p)
 { return core_addr_to_string (*p); }
+
+static std::string
+target_debug_print_CORE_ADDR_r (CORE_ADDR &p)
+{ return core_addr_to_string (p); }
 
 static std::string
 target_debug_print_int_p (int *p)
@@ -306,6 +310,10 @@ static std::string
 target_debug_print_target_waitstatus_p (struct target_waitstatus *status)
 { return status->to_string (); }
 
+static std::string
+target_debug_print_const_target_waitstatus_r (const target_waitstatus &status)
+{ return status.to_string (); }
+
 /* Functions that are used via TARGET_DEBUG_PRINTER.  */
 
 static std::string
@@ -379,4 +387,14 @@ target_debug_print_x86_xsave_layout (const x86_xsave_layout &layout)
 
   return s;
 }
+
+static std::string
+target_debug_print_displaced_step_finish_status (displaced_step_finish_status s)
+{ return displaced_step_finish_status_str (s); }
+
+static std::string
+target_debug_print_displaced_step_prepare_status
+  (displaced_step_prepare_status s)
+{ return displaced_step_prepare_status_str (s); }
+
 #endif /* GDB_TARGET_DEBUG_H */

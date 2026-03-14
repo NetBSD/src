@@ -1,5 +1,5 @@
 /* Native-dependent code for GNU/Linux RISC-V.
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -329,9 +329,7 @@ riscv_linux_nat_target::store_registers (struct regcache *regcache, int regnum)
 
 /* Initialize RISC-V Linux native support.  */
 
-void _initialize_riscv_linux_nat ();
-void
-_initialize_riscv_linux_nat ()
+INIT_GDB_FILE (riscv_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_riscv_linux_nat_target;

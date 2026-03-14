@@ -1,4 +1,4 @@
-/* Copyright 2007-2024 Free Software Foundation, Inc.
+/* Copyright 2007-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,15 +21,15 @@
 #include <sys/wait.h>
 #include <errno.h>
 
-/* Expects 4 arguments:
+/* Expects 3 arguments:
 
    1. Either 'standard' or 'detached', where 'standard' tests
    a general gcore script spawn with its controlling terminal available
    and 'detached' tests gcore script spawn without its controlling
    terminal available.
-   2. Path to the gcore script.
-   3. Path to the data-directory to pass to the gcore script.
-   4. The core file output name.  */
+   2. The command to invoke gcore (path to the gcore script and any necessary
+   flags).
+   3. The core file output name.  */
 
 int
 main (int argc, char **argv)
@@ -39,7 +39,7 @@ main (int argc, char **argv)
   char buf[1024*2 + 500];
   int gotint, res;
 
-  assert (argc == 5);
+  assert (argc == 4);
 
   pid = fork ();
 
@@ -49,8 +49,8 @@ main (int argc, char **argv)
       if (strcmp (argv[1], "detached") == 0)
 	setpgrp ();
       ppid = getppid ();
-      gotint = snprintf (buf, sizeof (buf), "%s -d %s -o %s %d",
-			 argv[2], argv[3], argv[4], (int) ppid);
+      gotint = snprintf (buf, sizeof (buf), "%s -o %s %d",
+			 argv[2], argv[3], (int) ppid);
       assert (gotint < sizeof (buf));
       res = system (buf);
       assert (res != -1);

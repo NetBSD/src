@@ -1,5 +1,5 @@
 /* Generic symbol-table support for the BFD library.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -594,6 +594,7 @@ struct section_to_type
    adding entries.  Since it is so short, a linear search is used.  */
 static const struct section_to_type stt[] =
 {
+  {".didat", 'i'},		/* MSVC's .didat (delay import) section */
   {".drectve", 'i'},		/* MSVC's .drective section */
   {".edata", 'e'},		/* MSVC's .edata (export) section */
   {".idata", 'i'},		/* MSVC's .idata (import) section */

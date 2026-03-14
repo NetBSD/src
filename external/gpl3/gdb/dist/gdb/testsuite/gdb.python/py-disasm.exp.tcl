@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,14 +24,16 @@ standard_testfile py-disasm.c
 
 if { $kind == "obj" } {
 
-    set obj [standard_output_file ${gdb_test_file_name}.o]
+    set testfile $testfile.o
+    set binfile [standard_output_file $testfile]
 
-    if { [gdb_compile "$srcdir/$subdir/$srcfile" $obj object "debug"] != "" } {
-	untested "failed to compile object file [file tail $obj]"
+    if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile object \
+	      "debug"] != "" } {
+	untested "failed to compile object file $testfile"
 	return -1
     }
 
-    clean_restart $obj
+    clean_restart $testfile
 
 } else {
 
@@ -152,7 +154,10 @@ set test_plans \
 		   "Buffer returned from read_memory is sized $decimal instead of the expected $decimal"]] \
 	 [list "ResultOfWrongType" \
 	      [make_exception_pattern "TypeError" \
-		   "Result is not a DisassemblerResult."]] \
+		   "Result from Disassembler must be gdb.DisassemblerResult, not Blah."]] \
+	 [list "ResultOfVeryWrongType" \
+	      [make_exception_pattern "TypeError" \
+		   "Result from Disassembler must be gdb.DisassemblerResult, not Blah."]] \
 	 [list "ErrorCreatingTextPart_NoArgs" \
 	      [make_exception_pattern "TypeError" \
 		   [missing_arg_pattern "style" 1]]] \
