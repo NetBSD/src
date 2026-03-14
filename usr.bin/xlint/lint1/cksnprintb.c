@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.16 2025/08/31 20:43:27 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.17 2026/03/14 15:10:25 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.16 2025/08/31 20:43:27 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.17 2026/03/14 15:10:25 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -135,6 +135,16 @@ check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
 }
 
 static bool
+descr_starts_with_identifier(const checker *ck)
+{
+	quoted_iterator it = ck->it;
+
+	return quoted_next(ck->fmt, &it)
+	    && it.value <= 0x7f
+	    && (ch_isalnum((char)it.value) || it.value == '_');
+}
+
+static bool
 parse_description(checker *ck, const quoted_iterator *dir)
 {
 	size_t descr_start = 0;
@@ -214,6 +224,7 @@ check_conversion(checker *ck)
 		warning(362, len(dir), start(dir, fmt));
 
 	bool needs_descr = !(new_style && dir.value == 'F');
+	bool descr_ident = descr_starts_with_identifier(ck);
 	bool seen_descr = parse_description(ck, &dir);
 	bool seen_null = new_style
 	    && quoted_next(ck->fmt, &ck->it) && ck->it.value == 0;
@@ -222,7 +233,8 @@ check_conversion(checker *ck)
 		ck->field_kind = (char)dir.value;
 	if (ck->field_kind != '\0'
 	    && ((dir.value == '=' && ck->field_kind != 'f')
-		|| (dir.value == ':' && ck->field_kind != 'F')))
+		|| (dir.value == ':' && ck->field_kind != 'F'
+		    && !(ck->field_kind == 'f' && !descr_ident))))
 		/* conversion '%.*s' does not mix with '%c' */
 		warning(386, len(dir), start(dir, fmt), ck->field_kind);
 
