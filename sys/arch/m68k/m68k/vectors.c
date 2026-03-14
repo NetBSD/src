@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.5 2025/11/23 13:44:17 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.6 2026/03/14 21:03:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -82,39 +82,25 @@ extern char MACHINE_AV5_HANDLER[];
 extern char MACHINE_AV6_HANDLER[];
 extern char MACHINE_AV7_HANDLER[];
 
-#ifdef MACHINE_BUSERR_HANDLER
-extern char MACHINE_BUSERR_HANDLER[];
-#endif
-
-#ifdef MACHINE_ADDRERR_HANDLER
-extern char MACHINE_ADDRERR_HANDLER[];
-#endif
-
 #ifdef __mc68010__
 
-#define	BUSERR_HANDLER		MACHINE_BUSERR_HANDLER
-#define	ADDRERR_HANDLER		MACHINE_ADDRERR_HANDLER
+extern char buserr10[];
+#define	BUSERR_HANDLER		buserr10
+
+extern char addrerr10[];
+#define	ADDRERR_HANDLER		addrerr10
 
 #else
 
 #if defined(M68020) || defined(M68030)
-#ifdef MACHINE_BUSERR_HANDLER
-#define	BUSERR_HANDLER2030	MACHINE_BUSERR_HANDLER
-#else
 extern char buserr2030[];
-#define	BUSERR_HANDLER2030	buserr2030
-#endif
-#ifdef MACHINE_ADDRERR_HANDLER
-#define	ADDRERR_HANDLER2030	MACHINE_ADDRERR_HANDLER
-#else
 extern char addrerr2030[];
-#define	ADDRERR_HANDLER2030	addrerr2030
-#endif
+
 #if defined(M68040) || defined(M68060)
 #define	NEED_FIXUP_2030
 #else
-#define	BUSERR_HANDLER		BUSERR_HANDLER2030
-#define	ADDRERR_HANDLER		ADDRERR_HANDLER2030
+#define	BUSERR_HANDLER		buserr2030
+#define	ADDRERR_HANDLER		addrerr2030
 #endif
 #endif /* M68020 || M68030 */
 
@@ -537,8 +523,8 @@ vec_init(void)
 #ifdef NEED_FIXUP_2030
 	case CPU_68020:
 	case CPU_68030:
-		vectab[VECI_BUSERR]        = BUSERR_HANDLER2030;
-		vectab[VECI_ADDRERR]       = ADDRERR_HANDLER2030;
+		vectab[VECI_BUSERR]        = buserr2030;
+		vectab[VECI_ADDRERR]       = addrerr2030;
 		break;
 #endif /* NEED_FIXUP_2030 */
 

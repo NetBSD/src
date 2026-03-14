@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.190 2026/03/14 20:48:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.191 2026/03/14 21:03:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -471,8 +471,6 @@ GLOBAL(mac68k_a2_fromfault)
 	.long	0
 GLOBAL(m68k_fault_addr)
 	.long	0
-
-#include <m68k/m68k/busaddrerr.s>
 
 /*
  * FP exceptions.

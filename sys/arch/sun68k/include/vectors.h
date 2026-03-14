@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.2 2024/01/14 22:34:54 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.3 2026/03/14 21:03:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2024 The NetBSD Foundation, Inc.
@@ -38,9 +38,6 @@
 
 #define	MACHINE_RESET_SP	(void *)0xfffe000
 #define	MACHINE_RESET_PC	(void *)0xfef0000
-
-#define	MACHINE_BUSERR_HANDLER	buserr
-#define	MACHINE_ADDRERR_HANDLER	addrerr
 
 #define	MACHINE_AV0_HANDLER	intrstub_autovec
 #define	MACHINE_AV1_HANDLER	intrstub_autovec

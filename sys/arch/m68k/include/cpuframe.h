@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuframe.h,v 1.10 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: cpuframe.h,v 1.11 2026/03/14 21:03:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,8 +48,10 @@ struct frame {
 		short	tf_stackadj;
 		u_short	tf_sr;
 		u_int	tf_pc __packed;
-		u_short /* BITFIELDTYPE */ tf_format:4,
-			/* BITFIELDTYPE */ tf_vector:12;
+		struct {
+			u_short /* BITFIELDTYPE */ fv_format:4,
+			        /* BITFIELDTYPE */ fv_vector:12;
+		} tf_forvec __packed;
 	} F_t;
 	union F_u {
 		struct fmt2 {
@@ -128,11 +130,13 @@ struct frame {
 };
 
 #define	f_regs		F_t.tf_regs
+#define	_f_pad		F_t.tf_pad
 #define	f_stackadj	F_t.tf_stackadj
 #define	f_sr		F_t.tf_sr
 #define	f_pc		F_t.tf_pc
-#define	f_format	F_t.tf_format
-#define	f_vector	F_t.tf_vector
+#define	f_forvec	F_t.tf_forvec
+#define	f_format	F_t.tf_forvec.fv_format
+#define	f_vector	F_t.tf_forvec.fv_vector
 #define	f_fmt2		F_u.F_fmt2
 #define	f_fmt3		F_u.F_fmt3
 #define	f_fmt4		F_u.F_fmt4
@@ -141,6 +145,9 @@ struct frame {
 #define	f_fmt9		F_u.F_fmt9
 #define	f_fmtA		F_u.F_fmtA
 #define	f_fmtB		F_u.F_fmtB
+
+#define	tf_format	tf_forvec.fv_format
+#define	tf_vector	tf_forvec.fv_vector
 
 struct switchframe {
 	u_int	sf_pc;

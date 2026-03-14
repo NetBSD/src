@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 2024/01/17 12:33:50 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 2026/03/14 21:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -186,62 +186,6 @@ L_high_code:
  * Trap/interrupt vector routines
  */
 #include <m68k/m68k/trap_subr.s>
-
-GLOBAL(buserr)
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	_C_LABEL(addrerr)	| no, handle as usual
-	movl	_C_LABEL(nofault),%sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-GLOBAL(addrerr)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	lea	%sp@(FR_HW),%a1		| grab base of HW berr frame
-	moveq	#0,%d0
-	movw	%a1@(8),%d0		| grab SSW for fault processing
-	movl	%a1@(10),%d1		| fault address is as given in frame
-	movl	%d1,%sp@-		| push fault VA
-	movl	%d0,%sp@-		| and padded SSW
-	movw	%a1@(6),%d0		| get frame format/vector offset
-	andw	#0x0FFF,%d0		| clear out frame format
-	cmpw	#12,%d0			| address error vector?
-	jeq	Lisaerr			| yes, go to it
-
-/*
- * the sun2 specific code
- *
- * our mission: figure out whether what we are looking at is
- *              bus error in the UNIX sense, or
- *	        a memory error i.e a page fault
- *
- * [this code replaces similarly mmu specific code in the hp300 code]
- */
-sun2_mmu_specific:
-	clrl %d0			| make sure top bits are cleared too
-	movl %d1,%sp@-			| save %d1
-	movc %sfc,%d1			| save %sfc to %d1
-	moveq #FC_CONTROL,%d0		| %sfc = FC_CONTROL
-	movc %d0,%sfc
-	movsw BUSERR_REG,%d0		| get value of bus error register
-	movc %d1,%sfc			| restore %sfc
-	movl %sp@+,%d1			| restore %d1
-#ifdef	DEBUG
-	movw %d0, _C_LABEL(buserr_reg)	| save bus error register value
-#endif
-	andb #BUSERR_PROTERR, %d0 	| is this an MMU (protection *or* page unavailable) fault?
-	jeq Lisberr			| non-MMU bus error
-/* End of sun2 specific code. */
-
-Lismerr:
-	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lisaerr:
-	movl	#T_ADDRERR,%sp@-	| mark address error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lisberr:
-	movl	#T_BUSERR,%sp@-		| mark bus error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 /*
  * FP exceptions.

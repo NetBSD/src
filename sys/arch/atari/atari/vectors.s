@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.24 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: vectors.s,v 1.25 2026/03/14 21:03:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -36,8 +36,8 @@
 GLOBAL(vectab)
 	.long	0x4ef80400	| 0: jmp 0x400:w (unused reset SSP)
 	.long	0		| 1: NOT USED (reset PC)
-	VECTOR(buserr)		| 2: bus error
-	VECTOR(addrerr)		| 3: address error
+	VECTOR(buserr_early)	| 2: bus error
+	VECTOR(addrerr_early)	| 3: address error
 	VECTOR(illinst)		| 4: illegal instruction
 	VECTOR(zerodiv)		| 5: zero divide
 	VECTOR(chkinst)		| 6: CHK instruction

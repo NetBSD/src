@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.18 2011/02/08 20:20:08 rmind Exp $	*/
+/*	$NetBSD: vectors.s,v 1.19 2026/03/14 21:03:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -37,8 +37,13 @@
 GLOBAL(vectab)
 	.long	0x4ef80400	/* 0: jmp 0x400:w (unused reset SSP) */
 	.long	0		/* 1: NOT USED (reset PC) */
-	VECTOR(buserr)		/* 2: bus error */
-	VECTOR(addrerr)		/* 3: address error */
+#if defined(M68020) || defined(M68030)
+	VECTOR(buserr2030)	/* 2: bus error */
+	VECTOR(addrerr2030)	/* 3: address error */
+#else
+	VECTOR(badtrap)		/* 2: bus error */	/* initialized in */
+	VECTOR(badtrap)		/* 3: address error */	/* initcpu() */
+#endif
 	VECTOR(illinst)		/* 4: illegal instruction */
 	VECTOR(zerodiv)		/* 5: zero divide */
 	VECTOR(chkinst)		/* 6: CHK instruction */

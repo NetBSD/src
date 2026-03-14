@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.22 2025/12/05 22:48:44 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.23 2026/03/14 21:03:41 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -173,12 +173,19 @@ define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
 
 # frame offsets
+# XXX G/C
 define	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
-define	FR_SP			offsetof(struct trapframe, tf_regs[15])
-define	FR_ADJ			offsetof(struct trapframe, tf_stackadj)
-define	FR_HW			offsetof(struct trapframe, tf_sr)
+define	FR_SP			offsetof(struct frame, f_regs[15])
+define	FR_ADJ			offsetof(struct frame, f_stackadj)
+define	FR_HW			offsetof(struct frame, f_sr)
+define	FR_SR			offsetof(struct frame, f_sr)
+define	FR_PC			offsetof(struct frame, f_pc)
+define	FR_FORVEC		offsetof(struct frame, f_forvec)
+define	FR_FMTA_SSW		offsetof(struct frame, f_fmtA.f_ssw)
+define	FR_FMTA_DCFA		offsetof(struct frame, f_fmtA.f_dcfa)
+define	FR_FMTB_SBA		offsetof(struct frame, f_fmtB.f_sba)
 define	FR_SIZE			sizeof(struct trapframe)
 
 # FP frame offsets

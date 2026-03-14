@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.32 2025/12/11 11:00:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.33 2026/03/14 21:03:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -221,11 +221,6 @@ Lmmuenabled:
  * Trap/interrupt vector routines
  */
 #include <m68k/m68k/trap_subr.s>
-
-/*
- * Use common m68k bus error and address error handlers.
- */
-#include <m68k/m68k/busaddrerr.s>
 
 /*
  * FP exceptions.

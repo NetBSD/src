@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.18 2026/03/13 01:17:42 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.19 2026/03/14 21:03:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,8 +66,6 @@ ASENTRY_NOPROFILE(fault)
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
-	.globl	_ASM_LABEL(faultstkadjnotrap2)
-
 /*
  * Similar to above, but will tidy up the stack, if necessary.
  */
@@ -76,7 +74,7 @@ ASENTRY(faultstkadj)
 	jbsr	_C_LABEL(trap)		| handle the error
 	lea	16(%sp),%sp		| pop value args
 /* for new 68060 Branch Prediction Error handler */
-_ASM_LABEL(faultstkadjnotrap2):
+ASGLOBAL(faultstkadjnotrap2)
 	movl	FR_SP(%sp),%a0		| restore user SP
 	movl	%a0,%usp		|   from save area
 	movw	FR_ADJ(%sp),%d0		| need to adjust stack?
@@ -95,6 +93,21 @@ _ASM_LABEL(faultstkadjnotrap2):
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	movl	(%sp),%sp		| and our SP
 	jra	_ASM_LABEL(rei)		| all done
+
+ASGLOBAL(buserr_common)
+	tstl	_C_LABEL(nofault)	| catch bus error?
+	jeq	1f			| no, handle as usual
+#ifdef mac68k
+	/* XXX should find a cleaner way to do this. */
+	movl	%a2,_C_LABEL(mac68k_a2_fromfault) | save %a2
+	movl	%sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
+#endif
+	movl	_C_LABEL(nofault),%sp@-	| yes,
+	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
+	/* NOTREACHED */
+1:
+	movl	#T_BUSERR,%sp@-		| mark bus error
+	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 #if defined(COMPAT_13) || defined(COMPAT_SUNOS)
 /*
