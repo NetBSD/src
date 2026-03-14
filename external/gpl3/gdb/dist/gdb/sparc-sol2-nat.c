@@ -1,6 +1,6 @@
 /* Native-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@
 #include "target.h"
 #include "procfs.h"
 
-/* This file provids the (temporary) glue between the Solaris SPARC
+/* This file provides the (temporary) glue between the Solaris SPARC
    target dependent code and the machine independent SVR4 /proc
    support.  */
 

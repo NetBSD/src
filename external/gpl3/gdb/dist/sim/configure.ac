@@ -96,7 +96,6 @@ if test "${enable_sim}" != no; then
   do
     m4_map([SIM_TARGET], [
       [[aarch64*-*-*], [aarch64]],
-      [[arm*-*-*], [arm]],
       [[avr*-*-*], [avr]],
       [[bfin-*-*], [bfin]],
       [[bpf-*-*], [bpf]],

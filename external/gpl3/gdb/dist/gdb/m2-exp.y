@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -507,7 +507,7 @@ fblock	:	block COLONCOLON BLOCKNAME
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3).c_str (), $1,
 					     SEARCH_VFT, 0).symbol;
-			  if (!tem || tem->aclass () != LOC_BLOCK)
+			  if (!tem || tem->loc_class () != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ($3).c_str ());
 			  $$ = tem;
@@ -928,7 +928,7 @@ yylex (void)
 
     sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			 SEARCH_VFT, 0).symbol;
-    if (sym && sym->aclass () == LOC_BLOCK)
+    if (sym && sym->loc_class () == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (pstate->language (),
 			 tmp.c_str (), pstate->expression_context_block, 1))
@@ -936,7 +936,7 @@ yylex (void)
 
     if(sym)
     {
-      switch(sym->aclass ())
+      switch(sym->loc_class ())
        {
        case LOC_STATIC:
        case LOC_REGISTER:

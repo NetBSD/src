@@ -2851,7 +2851,7 @@ package_name_p (const char *name, const struct block *block)
 		       &is_a_field_of_this).symbol;
 
   if (sym
-      && sym->aclass () == LOC_TYPEDEF
+      && sym->loc_class () == LOC_TYPEDEF
       && sym->type ()->code () == TYPE_CODE_MODULE)
     return 1;
 

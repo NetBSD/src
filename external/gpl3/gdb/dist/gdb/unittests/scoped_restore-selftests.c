@@ -1,6 +1,6 @@
 /* Self tests for scoped_restore for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -102,9 +102,7 @@ run_tests ()
 } /* namespace scoped_restore_tests */
 } /* namespace selftests */
 
-void _initialize_scoped_restore_selftests ();
-void
-_initialize_scoped_restore_selftests ()
+INIT_GDB_FILE (scoped_restore_selftests)
 {
   selftests::register_test ("scoped_restore",
 			    selftests::scoped_restore_tests::run_tests);

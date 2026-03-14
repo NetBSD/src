@@ -13,6 +13,8 @@ int body_elsewhere()
 #include "body.h"
 }
 
+void no_multi_locs () { {int var = 0;} }
+
 int main()
 {
   return dupname(0) + m(0) + n(0) + f1() + f2() + body_elsewhere();

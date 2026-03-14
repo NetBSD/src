@@ -1,6 +1,6 @@
 /* Native-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -225,9 +225,7 @@ m68kbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
-void _initialize_m68kbsd_nat ();
-void
-_initialize_m68kbsd_nat ()
+INIT_GDB_FILE (m68kbsd_nat)
 {
   add_inf_child_target (&the_m68k_bsd_nat_target);
 

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2024 Free Software Foundation, Inc.
+   Copyright 2008-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -41,8 +41,20 @@ time_t time_global = -1;
 int
 main (void)
 {
-  marker1 ();
+  /* Call once before recording to resolve the PLT, if any.  This reduces the
+     amount of instructions that is recorded.  */
   my_time (&time_global);
+
+  /* Reset back to initial value.  */
+  time_global = -1;
+
+  /* Start recording here.  */
+  marker1 ();
+
+  my_time (&time_global);
+
+  /* Stop recording here.  */
   marker2 ();
+
   return 0;
 }

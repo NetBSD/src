@@ -1,6 +1,6 @@
 /* Target-dependent code for Motorola 68000 BSD's.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -147,13 +147,10 @@ m68kbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->struct_return = pcc_struct_return;
 
   /* NetBSD ELF uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 }
 
-void _initialize_m68kbsd_tdep ();
-void
-_initialize_m68kbsd_tdep ()
+INIT_GDB_FILE (m68kbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_m68k, 0, GDB_OSABI_NETBSD,
 			  m68kbsd_init_abi);

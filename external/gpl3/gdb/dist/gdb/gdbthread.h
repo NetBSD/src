@@ -1,5 +1,5 @@
 /* Multi-process/thread control defs for GDB, the GNU debugger.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
    
 
@@ -70,10 +70,10 @@ extern bool debug_threads;
    you want.  */
 enum thread_state
 {
-  /* In the frontend's perpective, the thread is stopped.  */
+  /* In the frontend's perspective, the thread is stopped.  */
   THREAD_STOPPED,
 
-  /* In the frontend's perpective, the thread is running.  */
+  /* In the frontend's perspective, the thread is running.  */
   THREAD_RUNNING,
 
   /* The thread is listed, but known to have exited.  We keep it
@@ -533,7 +533,7 @@ public:
   struct target_waitstatus pending_follow;
 
   /* True if this thread has been explicitly requested to stop.  */
-  int stop_requested = 0;
+  bool stop_requested = false;
 
   /* The initiating frame of a nexting operation, used for deciding
      which exceptions to intercept.  If it is null_frame_id no
@@ -734,8 +734,8 @@ void thread_change_ptid (process_stratum_target *targ,
 
 /* Iterator function to call a user-provided callback function
    once for each known thread.  */
-typedef int (*thread_callback_func) (struct thread_info *, void *);
-extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
+typedef gdb::function_view<bool (struct thread_info *)> thread_callback_func;
+extern struct thread_info *iterate_over_threads (thread_callback_func);
 
 /* Pull in the internals of the inferiors/threads ranges and
    iterators.  Must be done after struct thread_info is defined.  */

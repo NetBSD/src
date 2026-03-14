@@ -1,5 +1,5 @@
 /* CTF type deduplication.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -96,9 +96,9 @@
    value: it is also stashed in the *output mapping*, a mapping from hash value
    to the set of GIDs corresponding to that type in all inputs.  We also keep
    track of the GID of the first appearance of the type in any input (in
-   cd_output_first_gid), and the GID of structs, unions, and forwards that only
-   appear in one TU (in cd_struct_origin).  See below for where these things are
-   used.
+   cd_output_first_gid), the GID of structs, unions, and forwards that only
+   appear in one TU (in cd_struct_origin), and an indication of whether this
+   type is root-visible or not.  See below for where these things are used.
 
    Everything in this phase is time-critical, because it is operating over
    non-deduplicated types and so may have hundreds or thousands of times the
@@ -492,6 +492,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
 					  ctf_dict_t **inputs,
 					  int input_num,
 					  ctf_id_t type,
+					  int isroot,
 					  void *id,
 					  const char *decorated_name,
 					  const char *hash));
@@ -560,6 +561,7 @@ ctf_dedup_rhash_type (ctf_dict_t *fp, ctf_dict_t *input, ctf_dict_t **inputs,
 					   ctf_dict_t **inputs,
 					   int input_num,
 					   ctf_id_t type,
+					   int isroot,
 					   void *id,
 					   const char *decorated_name,
 					   const char *hash))
@@ -666,7 +668,11 @@ ctf_dedup_rhash_type (ctf_dict_t *fp, ctf_dict_t *input, ctf_dict_t **inputs,
      possible.  Equally, we do not want to hash in the isroot flag: both the
      compiler and the deduplicator set the nonroot flag to indicate clashes with
      *other types in the same TU* with the same name: so two types can easily
-     have distinct nonroot flags, yet be exactly the same type.*/
+     have distinct nonroot flags, yet be exactly the same type.  This means we
+     can never use the non-root-visible flag from the input for anything,
+     because if there are several distinct values the one chosen is basically
+     random.  We unify non-root-visible flags separately: see the uses of
+     cd_nonroot_consistency.  */
 
   ctf_sha1_init (&hash);
   if (name)
@@ -1015,6 +1021,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
 					  ctf_dict_t **inputs,
 					  int input_num,
 					  ctf_id_t type,
+					  int isroot,
 					  void *id,
 					  const char *decorated_name,
 					  const char *hash))
@@ -1027,6 +1034,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
   const char *whaterr;
   const char *decorated = NULL;
   uint32_t kind, fwdkind;
+  int isroot;
 
   depth++;
 
@@ -1056,6 +1064,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
 
   kind = LCTF_INFO_KIND (input, tp->ctt_info);
   name = ctf_strraw (input, tp->ctt_name);
+  isroot = LCTF_INFO_ISROOT (input, tp->ctt_info);
 
   if (tp->ctt_name == 0 || !name || name[0] == '\0')
     name = NULL;
@@ -1086,7 +1095,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
 	  ctf_dprintf ("%lu: Known hash for ID %i/%lx: %s\n", depth, input_num,
 		       type,  hval);
 #endif
-	  populate_fun (fp, input, inputs, input_num, type, type_id,
+	  populate_fun (fp, input, inputs, input_num, type, isroot, type_id,
 			decorated, hval);
 
 	  return hval;
@@ -1121,7 +1130,7 @@ ctf_dedup_hash_type (ctf_dict_t *fp, ctf_dict_t *input,
 	  goto oom;
 	}
 
-      if (populate_fun (fp, input, inputs, input_num, type, type_id,
+      if (populate_fun (fp, input, inputs, input_num, type, isroot, type_id,
 			decorated, hval) < 0)
 	{
 	  whaterr = N_("error calling population function");
@@ -1150,19 +1159,20 @@ ctf_dedup_count_name (ctf_dict_t *fp, const char *name, void *id);
 
 /* Populate a number of useful mappings not directly used by the hashing
    machinery: the output mapping, the cd_name_counts mapping from name -> hash
-   -> count of hashval deduplication state for a given hashed type, and the
-   cd_output_first_tu mapping.  */
+   -> count of hashval deduplication state for a given hashed type; the
+   cd_output_first_gid mapping; and the cd_nonroot_consistency mapping.  */
 
 static int
 ctf_dedup_populate_mappings (ctf_dict_t *fp, ctf_dict_t *input _libctf_unused_,
 			     ctf_dict_t **inputs _libctf_unused_,
 			     int input_num _libctf_unused_,
-			     ctf_id_t type _libctf_unused_, void *id,
-			     const char *decorated_name,
+			     ctf_id_t type _libctf_unused_, int isroot,
+			     void *id, const char *decorated_name,
 			     const char *hval)
 {
   ctf_dedup_t *d = &fp->ctf_dedup;
   ctf_dynset_t *type_ids;
+  void *root_visible;
 
 #ifdef ENABLE_LIBCTF_HASH_DEBUGGING
   ctf_dprintf ("Hash %s, %s, into output mapping for %i/%lx @ %s\n",
@@ -1249,6 +1259,32 @@ ctf_dedup_populate_mappings (ctf_dict_t *fp, ctf_dict_t *input _libctf_unused_,
     }
 #endif
 
+  /* Track the consistency of the non-root flag for this type.
+     0: all root-visible; 1: all non-root-visible; 2: inconsistent.  */
+
+  if (!ctf_dynhash_lookup_kv (d->cd_nonroot_consistency, hval, NULL,
+			      &root_visible))
+    {
+      if (isroot)
+	root_visible = (void *) 0;
+      else
+	root_visible = (void *) 1;
+
+      if (ctf_dynhash_cinsert (d->cd_nonroot_consistency, hval, root_visible) < 0)
+	return ctf_set_errno (fp, errno);
+    }
+  else
+    {
+      if (((uintptr_t) root_visible == 0 && !isroot)
+	  || ((uintptr_t) root_visible == 1 && isroot))
+	{
+	  root_visible = (void *) 2;
+
+	  if (ctf_dynhash_cinsert (d->cd_nonroot_consistency, hval, root_visible) < 0)
+	    return ctf_set_errno (fp, errno);
+	}
+    }
+
   /* This function will be repeatedly called for the same types many times:
      don't waste time reinserting the same keys in that case.  */
   if (!ctf_dynset_exists (type_ids, id, NULL)
@@ -1280,6 +1316,33 @@ ctf_dedup_populate_mappings (ctf_dict_t *fp, ctf_dict_t *input _libctf_unused_,
     return -1;					/* errno is set for us. */
 
   return 0;
+}
+
+/* Clean up things no longer needed after hashing is over.  */
+static int
+ctf_dedup_hash_type_fini (ctf_dict_t *fp)
+{
+  ctf_next_t *i = NULL;
+  int err;
+  void *hval, *root_visible;
+
+  /* Clean up cd_nonroot_consistency.  We only care now about types we are sure
+     are non-root-visible everywhere: root-visible types and types that are
+     sometimes root-visible and sometimes not are treated as root-visible.  */
+
+  while ((err = ctf_dynhash_next (fp->ctf_dedup.cd_nonroot_consistency, &i,
+				  &hval, &root_visible)) == 0)
+    {
+      if ((uintptr_t) root_visible != 1)
+	ctf_dynhash_next_remove (&i);
+    }
+    if (err != ECTF_NEXT_END)
+    {
+      ctf_err_warn (fp, 0, err, _("iteration failure cleaning up type hashes"));
+      return ctf_set_errno (fp, err);
+    }
+
+    return 0;
 }
 
 static int
@@ -1678,6 +1741,12 @@ ctf_dedup_init (ctf_dict_t *fp)
 			     NULL, NULL)) == NULL)
     goto oom;
 
+  if ((d->cd_nonroot_consistency
+       = ctf_dynhash_create (ctf_hash_string,
+			     ctf_hash_eq_string,
+			     NULL, NULL)) == NULL)
+    goto oom;
+
 #ifdef ENABLE_LIBCTF_HASH_DEBUGGING
   if ((d->cd_output_mapping_guard
        = ctf_dynhash_create (ctf_hash_integer,
@@ -1730,6 +1799,7 @@ ctf_dedup_fini (ctf_dict_t *fp, ctf_dict_t **outputs, uint32_t noutputs)
   ctf_dynhash_destroy (d->cd_citers);
   ctf_dynhash_destroy (d->cd_output_mapping);
   ctf_dynhash_destroy (d->cd_output_first_gid);
+  ctf_dynhash_destroy (d->cd_nonroot_consistency);
 #ifdef ENABLE_LIBCTF_HASH_DEBUGGING
   ctf_dynhash_destroy (d->cd_output_mapping_guard);
 #endif
@@ -1912,15 +1982,15 @@ ctf_dedup_conflictify_unshared (ctf_dict_t *output, ctf_dict_t **inputs)
    OUTPUT is the top-level output: INPUTS is the array of input dicts; NINPUTS is the
    size of that array.
 
-   If CU_MAPPED is set, this is a first pass for a link with a non-empty CU
-   mapping: only one output will result.
+   If CU_MAPPING_PHASE is nonzero, this is a link with a non-empty CU mapping:
+   in phase 1, only one output will result.
 
    Only deduplicates: does not emit the types into the output.  Call
    ctf_dedup_emit afterwards to do that.  */
 
 int
 ctf_dedup (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
-	   int cu_mapped)
+	   int cu_mapping_phase)
 {
   ctf_dedup_t *d = &output->ctf_dedup;
   size_t i;
@@ -1942,12 +2012,13 @@ ctf_dedup (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
 	}
     }
 
-  /* Some flags do not apply when CU-mapping: this is not a duplicated link,
-     because there is only one output and we really don't want to end up marking
-     all nonconflicting but appears-only-once types as conflicting (which in the
-     CU-mapped link means we'd mark them all as non-root-visible!).  */
+  /* Some flags do not apply in the first phase of CU-mapped links: this is not
+     a share-duplicated link, because there is only one output and we really
+     don't want to end up marking all nonconflicting but appears-only-once types
+     as conflicting.  */
+
   d->cd_link_flags = output->ctf_link_flags;
-  if (cu_mapped)
+  if (cu_mapping_phase == 1)
     d->cd_link_flags &= ~(CTF_LINK_SHARE_DUPLICATED);
 
   /* Compute hash values for all types, recursively, treating child structures
@@ -1978,6 +2049,10 @@ ctf_dedup (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
 	  goto err;
 	}
     }
+
+  /* Drop state no longer needed after hashing is over.  */
+
+  ctf_dedup_hash_type_fini (output);
 
   /* Go through the cd_name_counts name->hash->count mapping for all CTF
      namespaces: any name with many hashes associated with it at this stage is
@@ -2638,8 +2713,8 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
   const ctf_type_t *tp;
   int input_num = CTF_DEDUP_GID_TO_INPUT (id);
   int output_num = (uint32_t) -1;		/* 'shared' */
-  int cu_mapped = *(int *)arg;
-  int isroot;
+  int cu_mapping_phase = *(int *)arg;
+  int isroot = 1;
   int is_conflicting;
 
   ctf_next_t *i = NULL;
@@ -2663,7 +2738,7 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
      ctf_link_outputs dict of the output that is its parent.  */
   is_conflicting = ctf_dynset_exists (d->cd_conflicting_types, hval, NULL);
 
-  if (is_conflicting && !cu_mapped)
+  if (is_conflicting && cu_mapping_phase != 1)
     {
       ctf_dprintf ("%i: Type %s in %i/%lx is conflicted: "
 		   "inserting into per-CU target.\n",
@@ -2698,33 +2773,6 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
       output_num = input_num;
     }
 
-  real_input = input;
-  if ((tp = ctf_lookup_by_id (&real_input, type)) == NULL)
-    {
-      ctf_err_warn (output, 0, ctf_errno (input),
-		    _("%s: lookup failure for type %lx"),
-		    ctf_link_input_name (real_input), type);
-      return ctf_set_errno (output, ctf_errno (input));
-    }
-
-  name = ctf_strraw (real_input, tp->ctt_name);
-  isroot = LCTF_INFO_ISROOT (real_input, tp->ctt_info);
-
-  /* Hide conflicting types, if we were asked to: also hide if a type with this
-     name already exists and is not a forward, or if this type is hidden on the
-     input.  */
-  if (cu_mapped && is_conflicting)
-    isroot = 0;
-  else if (name
-	   && (maybe_dup = ctf_lookup_by_rawname (target, kind, name)) != 0)
-    {
-      if (ctf_type_kind (target, maybe_dup) != CTF_K_FORWARD)
-	isroot = 0;
-    }
-
-  ctf_dprintf ("%i: Emitting type with hash %s (%s), into target %i/%p\n",
-	       depth, hval, name ? name : "", input_num, (void *) target);
-
   if (!target->ctf_dedup.cd_output_emission_hashes)
     if ((target->ctf_dedup.cd_output_emission_hashes
 	 = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
@@ -2736,6 +2784,90 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
 	 = ctf_dynhash_create (ctf_hash_string, ctf_hash_eq_string,
 			      NULL, NULL)) == NULL)
       goto oom_hash;
+
+  /* When cu-mapping mode is turned on, we merge types derived from multiple CUs
+     into one target dict: in phase 1, by merging them according to the mapping;
+     in phase 2, as a consequence of taking the merged results from phase 1.
+     Any given type appears only once in the type mapping, but in
+     ctf_dedup_rwalk_output_mapping we loop inserting conflicting types into a
+     child dict corresponding to every input dict they came from.  This means
+     that if those dicts are mapped together, in phase 1 we can attempt to
+     insert them *multiple times* into the same dict, which then causes them to
+     be duplicated in phase 2 as well.  Avoid this by making sure this hval
+     isn't already present in the emission hash in phase 1: if it is, we in
+     effect already visited this type, and can return as we did above.  */
+
+  if (cu_mapping_phase == 1
+      && ctf_dynhash_lookup (target->ctf_dedup.cd_output_emission_hashes, hval))
+    return 0;
+
+  real_input = input;
+  if ((tp = ctf_lookup_by_id (&real_input, type)) == NULL)
+    {
+      ctf_err_warn (output, 0, ctf_errno (input),
+		    _("%s: lookup failure for type %lx"),
+		    ctf_link_input_name (real_input), type);
+      return ctf_set_errno (output, ctf_errno (input));
+    }
+
+  name = ctf_strraw (real_input, tp->ctt_name);
+
+  /* cu_mapped links at phase 1 get absolutely *everything* marked non-root,
+     named or not.  Such links, when we are merging multiple child CUs into one,
+     are the only point at which we can ever put conflicting and nonconflicting
+     instances of the same type into the same dict, and which one comes first is
+     arbitrary.  Rather than having to figure out when we insert a type whether
+     another one is coming that might conflict with it without being so marked,
+     just mark everything as non-root: we'll disregard it in the next phase of
+     cu-mapped linking anyway.
+
+     In phase 2 (the final dedup phase) of cu-mapped links, we have to deal with
+     the fallout of this, in that single inputs have 100% non-root types (so the
+     non-root bit isn't really meaningful) but some subset of them may be
+     genuinely clashing, conflicting, but already in child dicts (a thing that
+     is impossible in non-CU-mapped links, when child dicts correspond to single
+     CUs).
+
+     So in phase 2, we hide conflicting types, if this type is conflicting and a
+     type with this name already exists in the target and is not a forward.
+
+     Note that enums also get their enumerands checked, below.
+
+     Otherwise, in "phase 0" (i.e. normal links), we can respect the non-root
+     flag the user passed in and simply propagate it directly to the output.
+     If the user provided a mix of root-visible and non-root-visible flags,
+     we treat it as non-root-visible: see ctf_dedup_hash_type_fini.  */
+
+  switch (cu_mapping_phase)
+    {
+    case 0: /* Normal link.  Root-visibility explicitly tracked.  */
+      if (ctf_dynhash_lookup (d->cd_nonroot_consistency, hval))
+	isroot = 0;
+      break;
+    case 1: /* cu-mapped link.  Never root-visible.  */
+      isroot = 0;
+      break;
+    case 2: /* Final phase of cu-mapped link.  Non-root if already present.  */
+      if (is_conflicting && name
+	  && ((maybe_dup = ctf_lookup_by_rawname (target, kind, name)) != 0))
+	{
+	  if (ctf_type_kind (target, maybe_dup) != CTF_K_FORWARD)
+	    {
+	      ctf_dprintf ("%s, kind %i, hval %s: conflicting type marked as "
+			   "non-root because of pre-existing type %s/%lx, "
+			   "kind %i.\n", name, kind, hval, ctf_cuname (target),
+			   maybe_dup, ctf_type_kind (target, maybe_dup));
+	      isroot = 0;
+	    }
+	}
+      break;
+    default:
+      if (!ctf_assert (output, cu_mapping_phase >= 0 && cu_mapping_phase <= 2))
+	return -1;				/* errno is set for us.  */
+    }
+
+  ctf_dprintf ("%i: Emitting type with hash %s (%s), into target %i/%p\n",
+	       depth, hval, name ? name : "", input_num, (void *) target);
 
   switch (kind)
     {
@@ -2771,6 +2903,28 @@ ctf_dedup_emit_type (const char *hval, ctf_dict_t *output, ctf_dict_t **inputs,
       {
 	int val;
 	errtype = _("enum");
+
+	/* Check enumerands for duplication and nonrootify if clashing: this is
+	   an extension of the isroot check above.  */
+
+	if (isroot && cu_mapping_phase == 2)
+	  {
+	    const char *enumerand;
+	    while ((enumerand = ctf_enum_next (input, type, &i, &val)) != NULL)
+	      {
+		if (is_conflicting && name
+		    && ctf_dynhash_lookup (target->ctf_names, enumerand) != NULL)
+		  {
+		    ctf_dprintf ("%s, kind %i, hval %s: conflicting type marked "
+				 "as non-root because of pre-existing enumerand "
+				 "%s.\n", name, kind, hval, enumerand);
+		    isroot = 0;
+		  }
+	      }
+	    if (ctf_errno (input) != ECTF_NEXT_END)
+	      goto err_input;
+	  }
+
 	if ((new_type = ctf_add_enum (target, isroot, name)) == CTF_ERR)
 	  goto err_input;				/* errno is set for us.  */
 
@@ -3086,12 +3240,12 @@ ctf_dedup_emit_struct_members (ctf_dict_t *output, ctf_dict_t **inputs,
    Return an array of fps with content emitted into them (starting with OUTPUT,
    which is the parent of all others, then all the newly-generated outputs).
 
-   If CU_MAPPED is set, this is a first pass for a link with a non-empty CU
-   mapping: only one output will result.  */
+   If CU_MAPPING_PHASE is set to 1, this is a first pass for a link with a
+   non-empty CU mapping: only one output will result.  */
 
 ctf_dict_t **
 ctf_dedup_emit (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
-		uint32_t *parents, uint32_t *noutputs, int cu_mapped)
+		uint32_t *parents, uint32_t *noutputs, int cu_mapping_phase)
 {
   size_t num_outputs = 1;		/* Always at least one output: us.  */
   ctf_dict_t **outputs;
@@ -3100,7 +3254,7 @@ ctf_dedup_emit (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
 
   ctf_dprintf ("Triggering emission.\n");
   if (ctf_dedup_walk_output_mapping (output, inputs, ninputs, parents,
-				     ctf_dedup_emit_type, &cu_mapped) < 0)
+				     ctf_dedup_emit_type, &cu_mapping_phase) < 0)
     return NULL;				/* errno is set for us.  */
 
   ctf_dprintf ("Populating struct members.\n");
@@ -3113,7 +3267,8 @@ ctf_dedup_emit (ctf_dict_t *output, ctf_dict_t **inputs, uint32_t ninputs,
 	num_outputs++;
     }
 
-  if (!ctf_assert (output, !cu_mapped || (cu_mapped && num_outputs == 1)))
+  if (!ctf_assert (output, (cu_mapping_phase != 1
+			    || (cu_mapping_phase == 1 && num_outputs == 1))))
     return NULL;
 
   if ((outputs = calloc (num_outputs, sizeof (ctf_dict_t *))) == NULL)

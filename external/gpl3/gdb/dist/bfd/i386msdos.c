@@ -1,5 +1,5 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -295,13 +295,13 @@ const bfd_target i386_msdos_vec =
     {
       _bfd_bool_bfd_false_error,
       msdos_mkobject,
-      _bfd_generic_mkarchive,
+      _bfd_bool_bfd_false_error,
       _bfd_bool_bfd_false_error,
     },
     {				/* bfd_write_contents */
       _bfd_bool_bfd_false_error,
       msdos_write_object_contents,
-      _bfd_write_archive_contents,
+      _bfd_bool_bfd_false_error,
       _bfd_bool_bfd_false_error,
     },
 

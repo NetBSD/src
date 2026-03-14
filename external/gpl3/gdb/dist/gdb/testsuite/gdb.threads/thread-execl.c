@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2024 Free Software Foundation, Inc.
+   Copyright 2009-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,8 +25,9 @@ static const char *image;
 void *
 thread_execler (void *arg)
 {
-  /* Exec ourselves again.  */
-  if (execl (image, image, NULL) == -1)
+  /* Exec ourselves again.  Pass an extra argument so that the
+     post-exec image knows to not re-exec yet again.  */
+  if (execl (image, image, "1", NULL) == -1)
     {
       perror ("execl");
       abort ();
@@ -39,6 +40,11 @@ int
 main (int argc, char **argv)
 {
   pthread_t thread;
+
+  /* An extra argument means we're in the post-exec image, so we're
+     done.  Don't re-exec again.  */
+  if (argc > 1)
+    exit (0);
 
   image = argv[0];
 

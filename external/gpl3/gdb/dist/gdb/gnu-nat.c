@@ -1,5 +1,5 @@
 /* Interface GDB to the GNU Hurd.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -3434,9 +3434,7 @@ to the thread's initial suspend-count when gdb notices the threads."),
 	   &thread_cmd_list);
 }
 
-void _initialize_gnu_nat ();
-void
-_initialize_gnu_nat ()
+INIT_GDB_FILE (gnu_nat)
 {
   proc_server = getproc ();
 

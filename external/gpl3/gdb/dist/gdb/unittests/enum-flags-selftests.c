@@ -1,6 +1,6 @@
 /* Self tests for enum-flags for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -607,10 +607,7 @@ self_test ()
 } /* namespace enum_flags_tests */
 } /* namespace selftests */
 
-void _initialize_enum_flags_selftests ();
-
-void
-_initialize_enum_flags_selftests ()
+INIT_GDB_FILE (enum_flags_selftests)
 {
   selftests::register_test ("enum-flags",
 			    selftests::enum_flags_tests::self_test);

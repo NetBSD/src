@@ -7223,9 +7223,6 @@ fi
   # Code from module xalloc-oversized:
 
 
-am_cv_prog_cc_stdc=$ac_cv_prog_cc_stdc
-
-
 ac_aux_dir=
 for ac_dir in .. "$srcdir"/..; do
   if test -f "$ac_dir/install-sh"; then
@@ -13813,8 +13810,8 @@ rm -f core conftest.err conftest.$ac_objext \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:13816: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:13817: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:13813: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:13814: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -13839,7 +13836,7 @@ rm -f conftest*
 
           ;;
       esac
-      echo "$as_me:13842: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:13839: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -13993,7 +13990,7 @@ fi
 
         fi
       fi
-      echo "$as_me:13996: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:13993: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 $as_echo_n "checking whether POSIX threads API is available... " >&6; }
@@ -17070,8 +17067,8 @@ rm -f core conftest.err conftest.$ac_objext \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:17073: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:17074: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:17070: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:17071: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -17096,7 +17093,7 @@ rm -f conftest*
 
           ;;
       esac
-      echo "$as_me:17099: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:17096: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -17250,7 +17247,7 @@ fi
 
         fi
       fi
-      echo "$as_me:17253: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:17250: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 $as_echo_n "checking whether POSIX threads API is available... " >&6; }
@@ -17476,8 +17473,8 @@ rm -f core conftest.err conftest.$ac_objext \
         LIBS=$save_LIBS
         test $gl_pthread_api = yes && break
       done
-      echo "$as_me:17479: gl_pthread_api=$gl_pthread_api" >&5
-      echo "$as_me:17480: LIBPTHREAD=$LIBPTHREAD" >&5
+      echo "$as_me:17476: gl_pthread_api=$gl_pthread_api" >&5
+      echo "$as_me:17477: LIBPTHREAD=$LIBPTHREAD" >&5
 
       gl_pthread_in_glibc=no
       # On Linux with glibc >= 2.34, libc contains the fully functional
@@ -17502,7 +17499,7 @@ rm -f conftest*
 
           ;;
       esac
-      echo "$as_me:17505: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
+      echo "$as_me:17502: gl_pthread_in_glibc=$gl_pthread_in_glibc" >&5
 
       # Test for libpthread by looking for pthread_kill. (Not pthread_self,
       # since it is defined as a macro on OSF/1.)
@@ -17656,7 +17653,7 @@ fi
 
         fi
       fi
-      echo "$as_me:17659: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
+      echo "$as_me:17656: LIBPMULTITHREAD=$LIBPMULTITHREAD" >&5
     fi
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether POSIX threads API is available" >&5
 $as_echo_n "checking whether POSIX threads API is available... " >&6; }
@@ -36621,10 +36618,7 @@ fi
 # Checks for libraries.  #
 # ---------------------- #
 
-ac_config_files="$ac_config_files Makefile.gnulib.inc"
-
-
-ac_config_files="$ac_config_files Makefile import/Makefile"
+ac_config_files="$ac_config_files Makefile.gnulib.inc Makefile import/Makefile"
 
 ac_config_commands="$ac_config_commands default"
 
@@ -36722,6 +36716,7 @@ DEFS=-DHAVE_CONFIG_H
 
 ac_libobjs=
 ac_ltlibobjs=
+U=
 for ac_i in : $LIBOBJS; do test "x$ac_i" = x: && continue
   # 1. Remove the extension, and $U if already installed.
   ac_script='s/\$U\././;s/\.o$//;s/\.obj$//'

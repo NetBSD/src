@@ -1,6 +1,6 @@
 /* Target-dependent code for s390.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,9 @@
 #include "trad-frame.h"
 #include "value.h"
 #include "inferior.h"
+#include "dwarf2/loc.h"
+#include "gdbsupport/selftest.h"
+#include "gdb/disasm-selftests.h"
 
 #include "features/s390-linux32.c"
 #include "features/s390x-linux64.c"
@@ -854,6 +857,11 @@ s390_analyze_prologue (struct gdbarch *gdbarch,
 	       || is_rre (insn64, op_lgr, &r1, &r2))
 	data->gpr[r1] = data->gpr[r2];
 
+      /* LDGR r1, r2 --- load from register to floating-point register
+	 (64-bit version).  */
+      else if (is_rre (insn64, op_ldgr, &r1, &r2))
+	data->fpr[r1] = data->gpr[r2];
+
       /* L r1, d2(x2, b2) --- load.  */
       /* LY r1, d2(x2, b2) --- load (long-displacement version).  */
       /* LG r1, d2(x2, b2) --- load (64-bit version).  */
@@ -1252,6 +1260,28 @@ s390_value_from_register (gdbarch *gdbarch, type *type, int regnum,
     value->set_offset (0);
 
   return value;
+}
+
+/* Implementation of the gdbarch_dwarf2_reg_piece_offset hook.  */
+
+static ULONGEST
+s390_dwarf2_reg_piece_offset (gdbarch *gdbarch, int gdb_regnum, ULONGEST size)
+{
+  s390_gdbarch_tdep *tdep = gdbarch_tdep<s390_gdbarch_tdep> (gdbarch);
+
+  /* Floating point register.  */
+  if (gdb_regnum >= S390_F0_REGNUM && gdb_regnum <= S390_F15_REGNUM)
+    return 0;
+
+  /* Vector register, v0 - v15.  */
+  if (regnum_is_vxr_full (tdep, gdb_regnum))
+    return 0;
+
+  /* Vector register, v16 - v31.  */
+  if (gdb_regnum >= S390_V16_REGNUM && gdb_regnum <= S390_V31_REGNUM)
+    return 0;
+
+  return default_dwarf2_reg_piece_offset (gdbarch, gdb_regnum, size);
 }
 
 /* Implement pseudo_register_name tdesc method.  */
@@ -2119,6 +2149,62 @@ s390_return_value (struct gdbarch *gdbarch, struct value *function,
   return rvc;
 }
 
+/* Try to get the value of DWARF_REG in FRAME at function entry.  If successful,
+   return it as value of type VAL_TYPE.  */
+
+static struct value *
+dwarf_reg_on_entry (int dwarf_reg, struct type *val_type,
+		    const frame_info_ptr &frame)
+{
+  enum call_site_parameter_kind kind = CALL_SITE_PARAMETER_DWARF_REG;
+  union call_site_parameter_u kind_u = { .dwarf_reg = dwarf_reg };
+
+  try
+    {
+      return value_of_dwarf_reg_entry (val_type, frame, kind, kind_u);
+    }
+  catch (const gdb_exception_error &e)
+    {
+      if (e.error == NO_ENTRY_VALUE_ERROR)
+	return nullptr;
+
+      throw;
+    }
+}
+
+/* Both the 32-bit and 64-bit ABIs specify that values of some types are
+   returned in a storage buffer provided by the caller.  Return the address of
+   that storage buffer, if possible.  Implements the
+   gdbarch_get_return_buf_addr hook.  */
+
+static CORE_ADDR
+s390_get_return_buf_addr (struct type *val_type,
+			  const frame_info_ptr &cur_frame)
+{
+  /* The address of the storage buffer is provided as a hidden argument in
+     register r2.  */
+  int dwarf_reg = 2;
+
+  /* The ABI does not guarantee that the register will not be changed while
+     executing the function.  Hence, it cannot be assumed that it will still
+     contain the address of the storage buffer when execution reaches the end
+     of the function.
+
+     Attempt to determine the value on entry using the DW_OP_entry_value DWARF
+     entries.  This requires compiling the user program with -fvar-tracking.  */
+  struct value *val_on_entry
+    = dwarf_reg_on_entry (dwarf_reg, lookup_pointer_type (val_type), cur_frame);
+
+  if (val_on_entry == nullptr)
+    {
+      warning ("Cannot determine the function return value.\n"
+	       "Try compiling with -fvar-tracking.");
+      return 0;
+    }
+
+  return value_as_address (val_on_entry);
+}
+
 /* Frame unwinding.  */
 
 /* Implement the stack_frame_destroyed_p gdbarch method.  */
@@ -2246,6 +2332,22 @@ s390_unwind_pseudo_register (const frame_info_ptr &this_frame, int regnum)
       val = frame_unwind_register_value (this_frame, S390_R0_REGNUM + reg);
       if (!val->optimized_out ())
 	return value_cast (type, val);
+    }
+
+  if (regnum_is_vxr_full (tdep, regnum))
+    {
+      struct value *val = value::allocate_register (this_frame, regnum);
+
+      int reg = regnum - tdep->v0_full_regnum;
+      struct value *val1
+	= frame_unwind_register_value (this_frame, S390_F0_REGNUM + reg);
+      struct value *val2
+	= frame_unwind_register_value (this_frame, S390_V0_LOWER_REGNUM + reg);
+
+      val1->contents_copy (val, 0, 0, 8);
+      val2->contents_copy (val, 8, 0, 8);
+
+      return value_cast (type, val);
     }
 
   return value::allocate_optimized_out (type);
@@ -2388,7 +2490,7 @@ s390_prologue_frame_unwind_cache (const frame_info_ptr &this_frame,
 	 size zero.  This is only possible if the next frame is a sentinel
 	 frame, a dummy frame, or a signal trampoline frame.  */
       /* FIXME: cagney/2004-05-01: This sanity check shouldn't be
-	 needed, instead the code should simpliy rely on its
+	 needed, instead the code should simply rely on its
 	 analysis.  */
       next_frame = get_next_frame (this_frame);
       while (next_frame && get_frame_type (next_frame) == INLINE_FRAME)
@@ -2437,7 +2539,7 @@ s390_prologue_frame_unwind_cache (const frame_info_ptr &this_frame,
      code at a point where the frame pointer has already been restored.
      This can only happen in an innermost frame.  */
   /* FIXME: cagney/2004-05-01: This sanity check shouldn't be needed,
-     instead the code should simpliy rely on its analysis.  */
+     instead the code should simply rely on its analysis.  */
   next_frame = get_next_frame (this_frame);
   while (next_frame && get_frame_type (next_frame) == INLINE_FRAME)
     next_frame = get_next_frame (next_frame);
@@ -2475,15 +2577,49 @@ s390_prologue_frame_unwind_cache (const frame_info_ptr &this_frame,
      ABI; for call-clobbered registers the parser may have recognized
      spurious stores.  */
 
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < S390_NUM_GPRS; i++)
     if (s390_register_call_saved (gdbarch, S390_R0_REGNUM + i)
 	&& data.gpr_slot[i] != 0)
       info->saved_regs[S390_R0_REGNUM + i].set_addr (cfa - data.gpr_slot[i]);
 
-  for (i = 0; i < 16; i++)
+  for (i = 0; i < S390_NUM_FPRS; i++)
     if (s390_register_call_saved (gdbarch, S390_F0_REGNUM + i)
 	&& data.fpr_slot[i] != 0)
       info->saved_regs[S390_F0_REGNUM + i].set_addr (cfa - data.fpr_slot[i]);
+
+  /* Handle this type of prologue:
+       ldgr    %f2,%r11
+       ldgr    %f0,%r15
+     where call-clobbered floating point registers are used as register save
+     slots.  */
+  for (i = 0; i < S390_NUM_FPRS; i++)
+    {
+      int fpr = S390_F0_REGNUM + i;
+
+      /* Check that fpr is a call-clobbered register.  */
+      if (s390_register_call_saved (gdbarch, fpr))
+	continue;
+
+      /* Check that fpr contains the value of a register at function
+	 entry.  */
+      if (data.fpr[i].kind != pvk_register)
+	continue;
+
+      int entry_val_reg = data.fpr[i].reg;
+
+      /* Check that entry_val_reg is a call-saved register.  */
+      if (!s390_register_call_saved (gdbarch, entry_val_reg))
+	continue;
+
+      /* In the prologue, we've copied:
+	 - the value of a call-saved register (entry_val_reg) at function
+	   entry, to
+	 - a call-clobbered floating point register (fpr).
+
+	 Heuristic: assume that makes the floating point register a register
+	 save slot, leaving the value constant throughout the function.  */
+      info->saved_regs[entry_val_reg].set_realreg (fpr);
+    }
 
   /* Function return will set PC to %r14.  */
   info->saved_regs[S390_PSWA_REGNUM] = info->saved_regs[S390_RETADDR_REGNUM];
@@ -2646,15 +2782,16 @@ s390_frame_prev_register (const frame_info_ptr &this_frame,
 
 /* Default S390 frame unwinder.  */
 
-static const struct frame_unwind s390_frame_unwind = {
+static const struct frame_unwind_legacy s390_frame_unwind (
   "s390 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   s390_frame_this_id,
   s390_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Code stubs and their stack frames.  For things like PLTs and NULL
    function calls (where there is no true frame and the return address
@@ -2740,15 +2877,16 @@ s390_stub_frame_sniffer (const struct frame_unwind *self,
 
 /* S390 stub frame unwinder.  */
 
-static const struct frame_unwind s390_stub_frame_unwind = {
+static const struct frame_unwind_legacy s390_stub_frame_unwind (
   "s390 stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   s390_stub_frame_this_id,
   s390_stub_frame_prev_register,
   NULL,
   s390_stub_frame_sniffer
-};
+);
 
 /* Frame base handling.  */
 
@@ -7162,7 +7300,7 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 					s390_displaced_step_copy_insn);
   set_gdbarch_displaced_step_fixup (gdbarch, s390_displaced_step_fixup);
   set_gdbarch_displaced_step_hw_singlestep (gdbarch, s390_displaced_step_hw_singlestep);
-  set_gdbarch_software_single_step (gdbarch, s390_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, s390_software_single_step);
   set_gdbarch_max_insn_length (gdbarch, S390_MAX_INSTR_SIZE);
 
   /* Prologue analysis.  */
@@ -7177,6 +7315,7 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_stab_reg_to_regnum (gdbarch, s390_dwarf_reg_to_regnum);
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, s390_dwarf_reg_to_regnum);
   set_gdbarch_value_from_register (gdbarch, s390_value_from_register);
+  set_gdbarch_dwarf2_reg_piece_offset (gdbarch, s390_dwarf2_reg_piece_offset);
 
   /* Pseudo registers.  */
   set_gdbarch_pseudo_register_read (gdbarch, s390_pseudo_register_read);
@@ -7197,6 +7336,7 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_dummy_id (gdbarch, s390_dummy_id);
   set_gdbarch_frame_align (gdbarch, s390_frame_align);
   set_gdbarch_return_value (gdbarch, s390_return_value);
+  set_gdbarch_get_return_buf_addr (gdbarch, s390_get_return_buf_addr);
 
   /* Frame handling.  */
   /* Stack grows downward.  */
@@ -7330,13 +7470,61 @@ s390_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_s390_tdep ();
-void
-_initialize_s390_tdep ()
+#if GDB_SELF_TEST
+namespace selftests {
+
+/* Return bfd_arch_info representing s390x.  */
+
+static const bfd_arch_info *
+bfd_arch_info_s390x ()
+{
+  return bfd_lookup_arch (bfd_arch_s390, bfd_mach_s390_64);
+}
+
+/* Return gdbarch representing s390x.  */
+
+static gdbarch *
+gdbarch_s390x ()
+{
+  struct gdbarch_info info;
+  info.bfd_arch_info = bfd_arch_info_s390x ();
+  if (info.bfd_arch_info == nullptr)
+    return nullptr;
+
+  info.osabi = GDB_OSABI_NONE;
+  return gdbarch_find_by_info (info);
+}
+
+/* Check disassembly of s390x instructions.  */
+
+static void
+disassemble_s390x ()
+{
+  gdbarch *gdbarch = gdbarch_s390x ();
+  if (gdbarch == nullptr)
+    return;
+
+  scoped_restore disassembler_options_restore
+    = make_scoped_restore (&s390_disassembler_options, "zarch");
+
+  gdb::byte_vector insn = { 0xb9, 0x68, 0x00, 0x03 };
+  disassemble_insn (gdbarch, insn, "clzg\t%r0,%r3");
+}
+
+} /* namespace selftests */
+
+#endif /* GDB_SELF_TEST */
+
+INIT_GDB_FILE (s390_tdep)
 {
   /* Hook us into the gdbarch mechanism.  */
   gdbarch_register (bfd_arch_s390, s390_gdbarch_init);
 
   initialize_tdesc_s390_linux32 ();
   initialize_tdesc_s390x_linux64 ();
+
+#if GDB_SELF_TEST
+  selftests::register_test ("disassemble-s390x",
+			    selftests::disassemble_s390x);
+#endif /* GDB_SELF_TEST */
 }

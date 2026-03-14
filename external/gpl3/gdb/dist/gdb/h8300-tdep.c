@@ -1,6 +1,6 @@
 /* Target-machine dependent code for Renesas H8/300, for GDB.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -500,15 +500,16 @@ h8300_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind h8300_frame_unwind = {
+static const struct frame_unwind_legacy h8300_frame_unwind (
   "h8300 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   h8300_frame_this_id,
   h8300_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 h8300_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -540,7 +541,7 @@ h8300_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	/* Found a line number, use it as end of prologue.  */
 	return sal.end;
 
-      /* No useable line symbol.  Use prologue parsing method.  */
+      /* No usable line symbol.  Use prologue parsing method.  */
       h8300_init_frame_cache (gdbarch, &cache);
       return h8300_analyze_prologue (gdbarch, func_addr, func_end, &cache);
     }
@@ -1373,9 +1374,7 @@ h8300_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 }
 
-void _initialize_h8300_tdep ();
-void
-_initialize_h8300_tdep ()
+INIT_GDB_FILE (h8300_tdep)
 {
   gdbarch_register (bfd_arch_h8300, h8300_gdbarch_init);
 }

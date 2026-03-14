@@ -1,6 +1,6 @@
 /* Self tests for GDB command definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,7 @@
 #include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "gdbsupport/selftest.h"
-
-#include <map>
+#include "gdbsupport/unordered_map.h"
 
 namespace selftests {
 
@@ -134,7 +133,7 @@ static unsigned int nr_invalid_prefixcmd = 0;
 
 /* A map associating a list with the prefix leading to it.  */
 
-static std::map<cmd_list_element **, const char *> lists;
+static gdb::unordered_map<cmd_list_element **, const char *> lists;
 
 /* Store each command list in lists, associated with the prefix to reach it.  A
    list must only be found once.
@@ -220,9 +219,7 @@ command_structure_invariants_tests ()
 
 } /* namespace selftests */
 
-void _initialize_command_def_selftests ();
-void
-_initialize_command_def_selftests ()
+INIT_GDB_FILE (command_def_selftests)
 {
   selftests::register_test
     ("help_doc_invariants",

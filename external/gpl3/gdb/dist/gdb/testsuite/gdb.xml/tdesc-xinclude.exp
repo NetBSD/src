@@ -1,4 +1,4 @@
-# Copyright 2007-2024 Free Software Foundation, Inc.
+# Copyright 2007-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,7 @@ set_arch "includes.xml" \
 # This file contains a missing include.  We should warn the user about
 # it.
 set_arch "bad-include.xml" \
-    "warning:.*Could not load XML document \"nonexistant.xml\"$common_warn"
+    "warning:.*Could not load XML document \"nonexistent.xml\"$common_warn"
 
 # Make sure we detect infinite loops, eventually.
 set_arch "loop.xml" \

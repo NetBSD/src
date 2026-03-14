@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -25,6 +25,7 @@
 #include "inferior.h"
 #include "linux-record.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "loongarch-tdep.h"
 #include "record-full.h"
 #include "regset.h"
@@ -581,11 +582,17 @@ static linux_record_tdep loongarch_linux_record_tdep;
 static enum gdb_syscall
 loongarch_canonicalize_syscall (enum loongarch_syscall syscall_number)
 {
-#define SYSCALL_MAP(SYSCALL) case loongarch_sys_##SYSCALL:              \
-  return gdb_sys_##SYSCALL
+#define SYSCALL_MAP(SYSCALL)			\
+  case loongarch_sys_ ## SYSCALL:		\
+    return gdb_sys_ ## SYSCALL
 
-#define UNSUPPORTED_SYSCALL_MAP(SYSCALL) case loongarch_sys_##SYSCALL:  \
-  return gdb_sys_no_syscall
+#define SYSCALL_MAP_RENAME(SYSCALL, GDB_SYSCALL)	\
+  case loongarch_sys_ ## SYSCALL:			\
+    return GDB_SYSCALL;
+
+#define UNSUPPORTED_SYSCALL_MAP(SYSCALL)	\
+  case loongarch_sys_ ## SYSCALL:		\
+    return gdb_sys_no_syscall
 
   switch(syscall_number)
     {
@@ -806,8 +813,7 @@ loongarch_canonicalize_syscall (enum loongarch_syscall syscall_number)
       SYSCALL_MAP (clone);
       SYSCALL_MAP (execve);
 
-    case loongarch_sys_mmap:
-      return gdb_sys_mmap2;
+      SYSCALL_MAP_RENAME (mmap, gdb_sys_old_mmap);
 
       SYSCALL_MAP (fadvise64);
       SYSCALL_MAP (swapon);
@@ -828,7 +834,7 @@ loongarch_canonicalize_syscall (enum loongarch_syscall syscall_number)
       SYSCALL_MAP (move_pages);
       UNSUPPORTED_SYSCALL_MAP (rt_tgsigqueueinfo);
       UNSUPPORTED_SYSCALL_MAP (perf_event_open);
-      UNSUPPORTED_SYSCALL_MAP (accept4);
+      SYSCALL_MAP (accept4);
       UNSUPPORTED_SYSCALL_MAP (recvmmsg);
       SYSCALL_MAP (wait4);
       UNSUPPORTED_SYSCALL_MAP (prlimit64);
@@ -907,7 +913,9 @@ loongarch_canonicalize_syscall (enum loongarch_syscall syscall_number)
     default:
       return gdb_sys_no_syscall;
     }
+
 #undef SYSCALL_MAP
+#undef SYSCALL_MAP_RENAME
 #undef UNSUPPORTED_SYSCALL_MAP
 }
 
@@ -931,7 +939,7 @@ loongarch_record_all_but_pc_registers (struct regcache *regcache)
   return 0;
 }
 
-/* Handler for LoongArch architechture system call instruction recording.  */
+/* Handler for LoongArch architecture system call instruction recording.  */
 
 static int
 loongarch_linux_syscall_record (struct regcache *regcache,
@@ -1138,10 +1146,9 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 info.bfd_arch_info->bits_per_address == 32
-					 ? linux_ilp32_fetch_link_map_offsets
-					 : linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, (info.bfd_arch_info->bits_per_address == 32
+				? make_linux_ilp32_svr4_solib_ops
+				: make_linux_lp64_svr4_solib_ops));
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -1176,9 +1183,7 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
 /* Initialize LoongArch Linux target support.  */
 
-void _initialize_loongarch_linux_tdep ();
-void
-_initialize_loongarch_linux_tdep ()
+INIT_GDB_FILE (loongarch_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_loongarch, bfd_mach_loongarch32,
 			  GDB_OSABI_LINUX, loongarch_linux_init_abi);

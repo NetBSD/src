@@ -1,6 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 #include "tui/tui-regs.h"
 #include "tui/tui-status.h"
 #include "tui/tui-winsource.h"
+#include "tui/tui-wingeneral.h"
 
 static void
 tui_new_objfile_hook (struct objfile* objfile)
@@ -106,6 +107,8 @@ tui_refresh_frame_and_register_information ()
   target_terminal::scoped_restore_terminal_state term_state;
   target_terminal::ours_for_output ();
 
+  tui_batch_rendering defer;
+
   if (from_stack)
     {
       frame_info_ptr fi;
@@ -150,6 +153,8 @@ tui_dummy_print_frame_info_listing_hook (struct symtab *s,
 static void
 tui_inferior_exit (struct inferior *inf)
 {
+  tui_batch_rendering defer;
+
   /* Leave the SingleKey mode to make sure the gdb prompt is visible.  */
   tui_set_key_mode (TUI_COMMAND_MODE);
   tui_show_frame_info (0);
@@ -257,9 +262,7 @@ tui_remove_hooks (void)
   tui_attach_detach_observers (false);
 }
 
-void _initialize_tui_hooks ();
-void
-_initialize_tui_hooks ()
+INIT_GDB_FILE (tui_hooks)
 {
   /* Install the permanent hooks.  */
   gdb::observers::new_objfile.attach (tui_new_objfile_hook, "tui-hooks");

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,6 +26,8 @@ def thread_exited_handler(event):
     global threadOneExit, threadTwoExit, mainThreadExit
     print("{}".format(event))
     assert isinstance(event, gdb.ThreadExitedEvent)
+    # Also check the inheritance.
+    assert isinstance(event, gdb.ThreadEvent)
     if threadOneExit == "":
         threadOneExit = "event type: thread-exited. global num: {}".format(
             event.inferior_thread.global_num

@@ -1,4 +1,4 @@
-# Copyright 1997-2024 Free Software Foundation, Inc.
+# Copyright 1997-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,8 @@ proc_with_prefix do_attach_failure_tests {} {
     global escapedbinfile
     global srcfile
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     # Figure out a regular expression that will match the sysroot,
     # noting that the default sysroot is "target:", and also noting
@@ -215,7 +216,8 @@ proc_with_prefix do_attach_tests {} {
     global timeout
     global decimal
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     # Figure out a regular expression that will match the sysroot,
     # noting that the default sysroot is "target:", and also noting
@@ -519,7 +521,8 @@ proc_with_prefix do_attach_exec_mismatch_handling_tests {} {
     global binfile2
     global binfile3
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     # Start two programs that can be attached to.
     # The first program contains a 'int bidule' variable, the second a 'float bidule'.

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    Based on code contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -222,16 +222,16 @@ sparc64nbsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind sparc64nbsd_sigcontext_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc64nbsd_sigcontext_frame_unwind (
   "sparc64 netbsd sigcontext",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64nbsd_sigcontext_frame_this_id,
   sparc64nbsd_sigcontext_frame_prev_register,
   NULL,
   sparc64nbsd_sigtramp_frame_sniffer
-};
+);
 
 
 static const struct regset sparc64nbsd_gregset =
@@ -266,13 +266,10 @@ sparc64nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* NetBSD/sparc64 has SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 }
 
-void _initialize_sparc64nbsd_tdep ();
-void
-_initialize_sparc64nbsd_tdep ()
+INIT_GDB_FILE (sparc64nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_NETBSD, sparc64nbsd_init_abi);

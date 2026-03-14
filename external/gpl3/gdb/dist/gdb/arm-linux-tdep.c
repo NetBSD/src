@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,6 +41,7 @@
 #include "arm-tdep.h"
 #include "arm-linux-tdep.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "glibc-tdep.h"
 #include "arch-utils.h"
 #include "inferior.h"
@@ -1361,8 +1362,8 @@ arm_canonicalize_syscall (int syscall)
     case 86: return gdb_sys_uselib;
     case 87: return gdb_sys_swapon;
     case 88: return gdb_sys_reboot;
-    case 89: return gdb_old_readdir;
-    case 90: return gdb_old_mmap;
+    case 89: return gdb_sys_old_readdir;
+    case 90: return gdb_sys_old_mmap;
     case 91: return gdb_sys_munmap;
     case 92: return gdb_sys_truncate;
     case 93: return gdb_sys_ftruncate;
@@ -1629,7 +1630,9 @@ arm_canonicalize_syscall (int syscall)
     case 363: return gdb_sys_rt_tgsigqueueinfo;
     case 364: return gdb_sys_perf_event_open;
     case 365: return gdb_sys_recvmmsg;
+      */
     case 366: return gdb_sys_accept4;
+      /*
     case 367: return gdb_sys_fanotify_init;
     case 368: return gdb_sys_fanotify_mark;
     case 369: return gdb_sys_prlimit64;
@@ -1799,11 +1802,10 @@ arm_linux_init_abi (struct gdbarch_info info,
     }
   tdep->jb_elt_size = ARM_LINUX_JB_ELEMENT_SIZE;
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, arm_linux_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, arm_linux_software_single_step);
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, arm_linux_skip_trampoline_code);
@@ -2024,9 +2026,7 @@ arm_linux_init_abi (struct gdbarch_info info,
   set_gdbarch_gcc_target_options (gdbarch, arm_linux_gcc_target_options);
 }
 
-void _initialize_arm_linux_tdep ();
-void
-_initialize_arm_linux_tdep ()
+INIT_GDB_FILE (arm_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_LINUX,
 			  arm_linux_init_abi);

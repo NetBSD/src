@@ -1,6 +1,6 @@
 /* Python interface to objfiles.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -619,9 +619,8 @@ gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw)
 
   struct objfile *objfile = nullptr;
   if (by_build_id)
-    gdbarch_iterate_over_objfiles_in_search_order
-      (current_inferior ()->arch (),
-       [&objfile, name] (struct objfile *obj)
+    current_program_space->iterate_over_objfiles_in_search_order
+      ([&objfile, name] (struct objfile *obj)
 	 {
 	   /* Don't return separate debug files.  */
 	   if (obj->separate_debug_objfile_backlink != nullptr)
@@ -642,9 +641,8 @@ gdbpy_lookup_objfile (PyObject *self, PyObject *args, PyObject *kw)
 	   return 1;
 	 }, gdbpy_current_objfile);
   else
-    gdbarch_iterate_over_objfiles_in_search_order
-      (current_inferior ()->arch (),
-       [&objfile, name] (struct objfile *obj)
+    current_program_space->iterate_over_objfiles_in_search_order
+      ([&objfile, name] (struct objfile *obj)
 	 {
 	   /* Don't return separate debug files.  */
 	   if (obj->separate_debug_objfile_backlink != nullptr)

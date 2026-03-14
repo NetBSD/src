@@ -267,7 +267,7 @@ inline void mum(uint64_t* a, uint64_t* b) {
     return detail::wyhash::mix(x, UINT64_C(0x9E3779B97F4A7C15));
 }
 
-} // namespace detail::wyhash
+} /* namespace detail::wyhash */
 
 ANKERL_UNORDERED_DENSE_EXPORT template <typename T, typename Enable = void>
 struct hash {
@@ -431,7 +431,7 @@ ANKERL_UNORDERED_DENSE_PACK(struct big {
     size_t m_value_idx;              // index into the m_values vector.
 });
 
-} // namespace bucket_type
+} /* namespace bucket_type */
 
 namespace detail {
 
@@ -492,7 +492,7 @@ struct base_table_type_map {
 // base type for set doesn't have mapped_type
 struct base_table_type_set {};
 
-} // namespace detail
+} /* namespace detail */
 
 // Very much like std::deque, but faster for indexing (in most cases). As of now this doesn't implement the full std::vector
 // API, but merely what's necessary to work as an underlying container for ankerl::unordered_dense::{map, set}.
@@ -1918,7 +1918,7 @@ public:
     }
 };
 
-} // namespace detail
+} /* namespace detail */
 
 ANKERL_UNORDERED_DENSE_EXPORT template <class Key,
                                         class T,
@@ -1983,7 +1983,7 @@ ANKERL_UNORDERED_DENSE_EXPORT template <class Key,
 using segmented_set =
     detail::table<Key, void, Hash, KeyEqual, ANKERL_UNORDERED_DENSE_PMR::polymorphic_allocator<Key>, Bucket, true>;
 
-} // namespace pmr
+} /* namespace pmr */
 
 #    endif
 
@@ -1992,8 +1992,8 @@ using segmented_set =
 // deduction guides for alias templates are only possible since C++20
 // see https://en.cppreference.com/w/cpp/language/class_template_argument_deduction
 
-} // namespace ANKERL_UNORDERED_DENSE_NAMESPACE
-} // namespace ankerl::unordered_dense
+} /* namespace ANKERL_UNORDERED_DENSE_NAMESPACE */
+} /* namespace ankerl::unordered_dense */
 
 // std extensions /////////////////////////////////////////////////////////////
 
@@ -2026,7 +2026,7 @@ auto erase_if(ankerl::unordered_dense::detail::table<Key, T, Hash, KeyEqual, All
     return old_size - map.size();
 }
 
-} // namespace std
+} /* namespace std */
 
 #endif
 #endif

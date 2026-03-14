@@ -372,23 +372,34 @@ gas_release()
     tar_compress $package $tool "$GAS_DIRS" "$compressors"
 }
 
-# The FSF "binutils" release includes gprof and ld.
-NO_GOLD_BIN_DIRS="$GAS_DIRS binutils cpu gprof gprofng ld libsframe libctf "
-no_gold_binutils_release()
-{
-    compressors=$1
-    package=binutils
-    tool=binutils
-    tar_compress $package $tool "$NO_GOLD_BIN_DIRS" "$compressors"
-}
-
-BINUTILS_DIRS="$NO_GOLD_BIN_DIRS elfcpp gold"
+BINUTILS_DIRS="$GAS_DIRS binutils cpu gprof gprofng ld libsframe libctf"
 binutils_release()
 {
     compressors=$1
     package=binutils
     tool=binutils
     tar_compress $package $tool "$BINUTILS_DIRS" "$compressors"
+}
+
+BINUTILS_GOLD_DIRS="$BINUTILS_DIRS elfcpp gold"
+binutils_gold_release()
+{
+    compressors=$1
+    package=binutils-with-gold
+    tool=binutils
+    tar_compress $package $tool "$BINUTILS_GOLD_DIRS" "$compressors"
+}
+
+GOLD_DIRS="gold elfcpp include"
+# These extra directories whilst not directly related to
+# gold are needed in order to be able to build and test it.
+GOLD_DIRS="$GOLD_DIRS bfd libsframe libctf libiberty binutils opcodes gas"
+gold_release()
+{
+    compressors=$1
+    package=gold
+    tool=binutils
+    tar_compress $package $tool "$GOLD_DIRS" "$compressors"
 }
 
 GDB_SUPPORT_DIRS="libsframe bfd include libiberty libctf opcodes readline sim libdecnumber cpu zlib contrib gnulib gdbsupport gdbserver libbacktrace"
@@ -421,10 +432,11 @@ usage()
     echo "  -z: Compress with zstd"
     echo "  -r <date>: Create a reproducible tarball using <date> as the mtime"
     echo "release:"
-    echo "  binutils:     All the binutils including gold"
-    echo "  no_gold_bin:  All the binutils except gold"
+    echo "  binutils:     All the binutils except gold"
+    echo "  binutils_with_gold:  All the binutils including gold"
     echo "  gas:          Just the assembler"
     echo "  gdb:          All of GDB"
+    echo "  gold:         Just the gold linker"
     echo "  sim:          Just the simulator"
     exit 1
 }
@@ -436,12 +448,14 @@ build_release()
     case $release in
 	binutils)
 	    binutils_release "$compressors";;
+	binutils_with_gold)
+	    binutils_gold_release "$compressors";;
 	gas)
 	    gas_release "$compressors";;
 	gdb)
 	    gdb_release "$compressors";;
-	no_gold_bin)
-	    no_gold_binutils_release "$compressors";;
+	gold)
+	    gold_release "$compressors";;
 	sim)
 	    sim_release "$compressors";;
 	*)

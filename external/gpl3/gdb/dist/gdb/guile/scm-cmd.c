@@ -1,6 +1,6 @@
 /* GDB commands implemented in Scheme.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -457,10 +457,12 @@ cmdscm_completer (struct cmd_list_element *command,
    name of the new command.  All earlier words must be existing prefix
    commands.
 
-   *BASE_LIST is set to the final prefix command's list of
-   *sub-commands.
+   *BASE_LIST is set to the final prefix command's list of sub-commands.
 
    START_LIST is the list in which the search starts.
+
+   When PREFIX_CMD is not NULL then *PREFIX_CMD is set to the prefix
+   command itself, or NULL, if there is no prefix command.
 
    This function returns the xmalloc()d name of the new command.
    On error a Scheme exception is thrown.  */
@@ -469,12 +471,16 @@ char *
 gdbscm_parse_command_name (const char *name,
 			   const char *func_name, int arg_pos,
 			   struct cmd_list_element ***base_list,
-			   struct cmd_list_element **start_list)
+			   struct cmd_list_element **start_list,
+			   struct cmd_list_element **prefix_cmd)
 {
   struct cmd_list_element *elt;
   int len = strlen (name);
   int i, lastchar;
   char *msg;
+
+  if (prefix_cmd != nullptr)
+    *prefix_cmd = nullptr;
 
   /* Skip trailing whitespace.  */
   for (i = len - 1; i >= 0 && (name[i] == ' ' || name[i] == '\t'); --i)
@@ -490,9 +496,9 @@ gdbscm_parse_command_name (const char *name,
   /* Find first character of the final word.  */
   for (; i > 0 && valid_cmd_char_p (name[i - 1]); --i)
     ;
-  gdb::unique_xmalloc_ptr<char> result ((char *) xmalloc (lastchar - i + 2));
-  memcpy (result.get (), &name[i], lastchar - i + 1);
-  result.get ()[lastchar - i + 1] = '\0';
+
+  gdb::unique_xmalloc_ptr<char> result
+    = make_unique_xstrndup (&name[i], lastchar - i + 1);
 
   /* Skip whitespace again.  */
   for (--i; i >= 0 && (name[i] == ' ' || name[i] == '\t'); --i)
@@ -503,18 +509,21 @@ gdbscm_parse_command_name (const char *name,
       return result.release ();
     }
 
-  gdb::unique_xmalloc_ptr<char> prefix_text ((char *) xmalloc (i + 2));
-  memcpy (prefix_text.get (), name, i + 1);
-  prefix_text.get ()[i + 1] = '\0';
+  gdb::unique_xmalloc_ptr<char> prefix_text
+    = make_unique_xstrndup (name, i + 1);
 
   const char *prefix_text2 = prefix_text.get ();
   elt = lookup_cmd_1 (&prefix_text2, *start_list, NULL, NULL, 1);
-  if (elt == NULL || elt == CMD_LIST_AMBIGUOUS)
+  if (elt == nullptr || elt == CMD_LIST_AMBIGUOUS || *prefix_text2 != '\0')
     {
       msg = xstrprintf (_("could not find command prefix '%s'"),
 			prefix_text.get ()).release ();
       scm_dynwind_begin ((scm_t_dynwind_flags) 0);
       gdbscm_dynwind_xfree (msg);
+      /* Release memory now as the destructors will not be run when the
+	 guile exception is thrown.  */
+      result = nullptr;
+      prefix_text = nullptr;
       gdbscm_out_of_range_error (func_name, arg_pos,
 				 gdbscm_scm_from_c_string (name), msg);
     }
@@ -522,6 +531,8 @@ gdbscm_parse_command_name (const char *name,
   if (elt->is_prefix ())
     {
       *base_list = elt->subcommands;
+      if (prefix_cmd != nullptr)
+	*prefix_cmd = elt;
       return result.release ();
     }
 
@@ -529,6 +540,10 @@ gdbscm_parse_command_name (const char *name,
 		    prefix_text.get ()).release ();
   scm_dynwind_begin ((scm_t_dynwind_flags) 0);
   gdbscm_dynwind_xfree (msg);
+  /* Release memory now as the destructors will not be run when the guile
+     exception is thrown.  */
+  result = nullptr;
+  prefix_text = nullptr;
   gdbscm_out_of_range_error (func_name, arg_pos,
 			     gdbscm_scm_from_c_string (name), msg);
   /* NOTREACHED */
@@ -743,8 +758,9 @@ gdbscm_register_command_x (SCM self)
   if (cmdscm_is_valid (c_smob))
     scm_misc_error (FUNC_NAME, _("command is already registered"), SCM_EOL);
 
+  struct cmd_list_element *prefix_cmd = nullptr;
   cmd_name = gdbscm_parse_command_name (c_smob->name, FUNC_NAME, SCM_ARG1,
-					&cmd_list, &cmdlist);
+					&cmd_list, &cmdlist, &prefix_cmd);
   c_smob->cmd_name = gdbscm_gc_xstrdup (cmd_name);
   xfree (cmd_name);
 
@@ -753,18 +769,50 @@ gdbscm_register_command_x (SCM self)
     {
       if (c_smob->is_prefix)
 	{
-	  /* If we have our own "invoke" method, then allow unknown
-	     sub-commands.  */
-	  int allow_unknown = gdbscm_is_true (c_smob->invoke);
+	  bool has_invoke = gdbscm_is_true (c_smob->invoke) == 1;
 
-	  cmd = add_prefix_cmd (c_smob->cmd_name, c_smob->cmd_class,
-				NULL, c_smob->doc, &c_smob->sub_list,
-				allow_unknown, cmd_list);
+	  if (has_invoke)
+	    {
+	      cmd = add_prefix_cmd (c_smob->cmd_name, c_smob->cmd_class,
+				    NULL, c_smob->doc, &c_smob->sub_list,
+				    1 /* allow_unknown */, cmd_list);
+	      cmd->func = cmdscm_function;
+	    }
+	  else
+	    {
+	      /* If there is no 'invoke' method, then create the prefix
+		 using the standard prefix callbacks.  This means that for
+		 'set prefix' the user will get the help text listing all
+		 of the sub-commands, and for 'show prefix', the user will
+		 see all of the sub-command values.  */
+	      if (prefix_cmd != nullptr)
+		{
+		  while (prefix_cmd->prefix != nullptr)
+		    prefix_cmd = prefix_cmd->prefix;
+		}
+
+	      bool is_show = (prefix_cmd != nullptr
+			      && prefix_cmd->subcommands == &showlist);
+
+	      if (is_show)
+		cmd = add_show_prefix_cmd (c_smob->cmd_name,
+					   c_smob->cmd_class,
+					   c_smob->doc,
+					   &c_smob->sub_list,
+					   0 /* allow_unknown */, cmd_list);
+	      else
+		cmd = add_basic_prefix_cmd (c_smob->cmd_name,
+					    c_smob->cmd_class,
+					    c_smob->doc,
+					    &c_smob->sub_list,
+					    0 /* allow_unknown */, cmd_list);
+	    }
 	}
       else
 	{
 	  cmd = add_cmd (c_smob->cmd_name, c_smob->cmd_class,
 			 c_smob->doc, cmd_list);
+	  cmd->func = cmdscm_function;
 	}
     }
   catch (const gdb_exception &except)
@@ -777,7 +825,6 @@ gdbscm_register_command_x (SCM self)
      So no more errors after this point.  */
 
   /* There appears to be no API to set this.  */
-  cmd->func = cmdscm_function;
   cmd->destroyer = cmdscm_destroyer;
 
   c_smob->command = cmd;

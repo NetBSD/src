@@ -1,6 +1,6 @@
 /* Self tests for gdb::observers, GDB notifications to observers.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -237,9 +237,7 @@ run_tests ()
 } /* namespace observers */
 } /* namespace selftests */
 
-void _initialize_observer_selftest ();
-void
-_initialize_observer_selftest ()
+INIT_GDB_FILE (observer_selftest)
 {
   selftests::register_test ("gdb::observers",
 			    selftests::observers::run_tests);

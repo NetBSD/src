@@ -1,6 +1,6 @@
 /* Print values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -3194,9 +3194,7 @@ test_print_flags (gdbarch *arch)
 
 #endif
 
-void _initialize_valprint ();
-void
-_initialize_valprint ()
+INIT_GDB_FILE (valprint)
 {
 #if GDB_SELF_TEST
   selftests::register_test_foreach_arch ("print-flags", test_print_flags);

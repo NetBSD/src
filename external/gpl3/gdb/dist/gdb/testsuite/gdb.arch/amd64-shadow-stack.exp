@@ -1,0 +1,71 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test accessing the shadow stack pointer register.
+
+require allow_ssp_tests
+
+standard_testfile
+
+# Write PL3_SSP register with invalid shadow stack pointer value.
+proc write_invalid_ssp {} {
+    gdb_test "print /x \$pl3_ssp = 0x12345678" "= 0x12345678" "set pl3_ssp value"
+    gdb_test "print /x \$pl3_ssp" "= 0x12345678" "read pl3_ssp value after setting"
+}
+
+save_vars { ::env(GLIBC_TUNABLES) } {
+
+    append_environment GLIBC_TUNABLES "glibc.cpu.hwcaps" "SHSTK"
+
+    if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  additional_flags="-fcf-protection=return"] } {
+	return
+    }
+
+    if {![runto_main]} {
+	return
+    }
+
+    with_test_prefix "invalid ssp" {
+	write_invalid_ssp
+
+	# Continue until SIGSEV to test that the value is written back to HW.
+	gdb_test "continue" \
+	    [multi_line \
+		"Continuing\\." \
+		"" \
+		"Program received signal SIGSEGV, Segmentation fault\\." \
+		"$hex in main \\(\\)"] \
+	    "continue to SIGSEGV"
+    }
+
+    clean_restart ${::testfile}
+    if { ![runto_main] } {
+	return
+    }
+
+    with_test_prefix "restore original ssp" {
+	# Read PL3_SSP register.
+	set ssp_main [get_hexadecimal_valueof "\$pl3_ssp" "read pl3_ssp value"]
+
+	write_invalid_ssp
+
+	# Restore original value.
+	gdb_test "print /x \$pl3_ssp = $ssp_main" "= $ssp_main" "restore original value"
+
+	# Now we should not see a SIGSEV, since the original value is restored.
+	gdb_continue_to_end
+    }
+}

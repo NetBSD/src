@@ -1,4 +1,4 @@
-# Copyright 2000-2024 Free Software Foundation, Inc.
+# Copyright 2000-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -69,7 +69,7 @@ proc gdb_target_cmd_ext { targetname serialport {additional_text ""} } {
 	    }
 	    -re "Non-stop mode requested, but remote does not support non-stop.*$gdb_prompt $" {
 		verbose "remote does not support non-stop"
-		return 1
+		return 2
 	    }
 	    -re "Remote MIPS debugging.*$additional_text.*$gdb_prompt" {
 		verbose "Set target to $targetname"
@@ -367,12 +367,26 @@ proc gdbserver_start { options arguments } {
 	    set enabled 0
 	    foreach entry [split $gdbserverdebug ,] {
 	      switch -- $entry {
-		"debug" {
-		  append gdbserver_command " --debug"
+		"debug-all" {
+		  append gdbserver_command " --debug=all"
 		  set enabled 1
 		}
-		"remote" {
-		  append gdbserver_command " --remote-debug"
+		"all" {
+		  # Different from the debug-all option, all argument sets
+		  # the replay log file.  See gdb_debug_init.
+		  append gdbserver_command " --debug=all"
+		  set enabled 1
+		}
+		"debug-threads" {
+		  append gdbserver_command " --debug=threads"
+		  set enabled 1
+		}
+		"debug-remote" {
+		  append gdbserver_command " --debug=remote"
+		  set enabled 1
+		}
+		"debug-event-loop" {
+		  append gdbserver_command " --debug=event-loop"
 		  set enabled 1
 		}
 	      }
@@ -707,11 +721,6 @@ proc gdbserver_debug_enabled { } {
 	}
     }
 
-    # Expand the all option
-    if { $gdbserverdebug == "all" } {
-      set gdbserverdebug "debug,remote,replay"
-    }
-
     # Ensure it is not empty.
     return [expr { $gdbserverdebug != "" }]
 }
@@ -736,7 +745,7 @@ proc gdb_debug_init { } {
 
     if [gdbserver_debug_enabled] {
       foreach entry [split $gdbserverdebug ,] {
-	if { $entry == "replay" } {
+	if { $entry == "replay" || $entry == "all"} {
 	  set replayfile [standard_output_file_with_gdb_instance gdbserver.replay]
           send_gdb "set remotelogfile $replayfile\n" optional
 	  gdb_expect 10 {

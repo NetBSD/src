@@ -1,0 +1,232 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# Using different compilation/linking scenarios, attempt to access
+# thread-local variables in a non-threaded program using multiple
+# shared objects.
+
+source $srcdir/$subdir/tls-common.exp.tcl
+
+standard_testfile
+
+set lib1src "${srcdir}/${subdir}/${testfile}1.c"
+set lib2src "${srcdir}/${subdir}/${testfile}2.c"
+set lib3src "${srcdir}/${subdir}/${testfile}3.c"
+
+set lib1obj [standard_output_file "${testfile}1-lib.so"]
+set lib2obj [standard_output_file "${testfile}2-lib.so"]
+set lib3obj [standard_output_file "${testfile}3-lib.so"]
+
+proc do_tests {force_internal_tls {do_kfail_tls_access 0}} {
+    clean_restart
+    gdb_load $::binfile
+    if ![runto_main] {
+	return
+    }
+
+    if $force_internal_tls {
+	gdb_test_no_output "maint set force-internal-tls-address-lookup on"
+    }
+
+    if { $do_kfail_tls_access && [istarget "*-*-linux*"] } {
+	# Turn off do_kfail_tls_access when libthread_db is loaded.
+	# This can happen for the default case when testing x86_64
+	# w/ -m32 using glibc versions 2.34 or newer.
+	gdb_test_multiple "maint check libthread-db" "Check for loaded libthread_db" {
+	    -re -wrap "libthread_db integrity checks passed." {
+		set do_kfail_tls_access 0
+		pass $gdb_test_name
+	    }
+	    -re -wrap "No libthread_db loaded" {
+		pass $gdb_test_name
+	    }
+	}
+	# Also turn off do_kfail_tls_access when connected to a
+	# gdbserver and we observe that accessing a TLS variable
+	# works.
+	if [target_is_gdbserver] {
+	    gdb_test_multiple "print tls_main_tbss_1" \
+		"Check TLS accessibility when connected to a gdbserver" {
+		-re -wrap "= 0" {
+		    set do_kfail_tls_access 0
+		    pass $gdb_test_name
+		}
+		-re -wrap "Remote target failed to process qGetTLSAddr request" {
+		    pass $gdb_test_name
+		}
+	    }
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-1"]
+    gdb_continue_to_breakpoint "main-breakpoint-1"
+
+    set t $do_kfail_tls_access
+    set m "tls not available"
+    with_test_prefix "before assignments" {
+	gdb_test_with_kfail "print tls_main_tbss_1" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_main_tbss_2" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_1" ".* = 96" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_2" ".* = 97" $t $m
+
+	gdb_test_with_kfail "print tls_lib1_tbss_1" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib1_tbss_2" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_1" ".* = 196" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_2" ".* = 197" $t $m
+
+	gdb_test_with_kfail "print tls_lib2_tbss_1" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib2_tbss_2" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_1" ".* = 296" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_2" ".* = 297" $t $m
+
+	gdb_test_with_kfail "print tls_lib3_tbss_1" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib3_tbss_2" ".* = 0" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_1" ".* = 396" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_2" ".* = 397" $t $m
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-2"]
+    gdb_continue_to_breakpoint "main-breakpoint-2"
+
+    with_test_prefix "after assignments" {
+	gdb_test_with_kfail "print tls_main_tbss_1" ".* = 51" $t $m
+	gdb_test_with_kfail "print tls_main_tbss_2" ".* = 52" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_1" ".* = 53" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_2" ".* = 54" $t $m
+
+	gdb_test_with_kfail "print tls_lib1_tbss_1" ".* = 151" $t $m
+	gdb_test_with_kfail "print tls_lib1_tbss_2" ".* = 152" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_1" ".* = 153" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_2" ".* = 154" $t $m
+
+	gdb_test_with_kfail "print tls_lib2_tbss_1" ".* = 251" $t $m
+	gdb_test_with_kfail "print tls_lib2_tbss_2" ".* = 252" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_1" ".* = 253" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_2" ".* = 254" $t $m
+
+	gdb_test_with_kfail "print tls_lib3_tbss_1" ".* = 351" $t $m
+	gdb_test_with_kfail "print tls_lib3_tbss_2" ".* = 352" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_1" ".* = 353" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_2" ".* = 354" $t $m
+    }
+
+    set corefile ${::binfile}.core
+    set core_supported 0
+    if { ![is_remote host] } {
+	set core_supported [gdb_gcore_cmd $corefile "save corefile"]
+    }
+
+    # Finish test early if no core file was made.
+    if !$core_supported {
+	return
+    }
+
+    clean_restart
+    gdb_load $::binfile
+
+    set core_loaded [gdb_core_cmd $corefile "load corefile"]
+    if { $core_loaded == -1 } {
+	return
+    }
+
+    with_test_prefix "core file" {
+	if $force_internal_tls {
+	    gdb_test_no_output "maint set force-internal-tls-address-lookup on"
+	}
+
+	gdb_test_with_kfail "print tls_main_tbss_1" ".* = 51" $t $m
+	gdb_test_with_kfail "print tls_main_tbss_2" ".* = 52" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_1" ".* = 53" $t $m
+	gdb_test_with_kfail "print tls_main_tdata_2" ".* = 54" $t $m
+
+	gdb_test_with_kfail "print tls_lib1_tbss_1" ".* = 151" $t $m
+	gdb_test_with_kfail "print tls_lib1_tbss_2" ".* = 152" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_1" ".* = 153" $t $m
+	gdb_test_with_kfail "print tls_lib1_tdata_2" ".* = 154" $t $m
+
+	gdb_test_with_kfail "print tls_lib2_tbss_1" ".* = 251" $t $m
+	gdb_test_with_kfail "print tls_lib2_tbss_2" ".* = 252" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_1" ".* = 253" $t $m
+	gdb_test_with_kfail "print tls_lib2_tdata_2" ".* = 254" $t $m
+
+	gdb_test_with_kfail "print tls_lib3_tbss_1" ".* = 351" $t $m
+	gdb_test_with_kfail "print tls_lib3_tbss_2" ".* = 352" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_1" ".* = 353" $t $m
+	gdb_test_with_kfail "print tls_lib3_tdata_2" ".* = 354" $t $m
+    }
+}
+
+if { [gdb_compile_shlib $lib1src $lib1obj {debug}] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $lib2src $lib2obj {debug}] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $lib3src $lib3obj {debug}] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+
+# Certain linux target architectures implement support for internal
+# TLS lookup which is used when thread stratum support (via
+# libthread_db) is missing or when the linux-only GDB maintenance
+# setting 'force-internal-tls-address-lookup' is 'on'.  Thus for some
+# of the testing scenarios, such as statically linked executables,
+# this internal support will be used.  Set 'do_kfail_tls_access' to 1
+# for those architectures which don't implement internal tls support.
+if {[istarget *-*-linux*]
+    && ![is_any_target {*}$internal_tls_linux_targets]} {
+    set do_kfail_tls_access 1
+} elseif {[istarget *-*-linux*] && [is_x86_like_target]} {
+    # This covers the case of x86_64 with -m32:
+    set do_kfail_tls_access 1
+} else {
+    set do_kfail_tls_access 0
+}
+
+set binprefix $binfile
+
+with_test_prefix "default" {
+    set binfile $binprefix-default
+    if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+			[list debug shlib=${lib1obj} \
+				    shlib=${lib2obj} \
+				    shlib=${lib3obj}]] != "" } {
+	untested "failed to compile"
+    } else {
+	foreach_with_prefix force_internal_tls $internal_tls_iters {
+	    # Depending on glibc version, it might not be appropriate
+	    # for do_kfail_tls_access to be set here.  That will be
+	    # handled in 'do_tests', disabling it if necessary.
+	    #
+	    # Specifically, glibc versions 2.34 and later have the
+	    # thread library (and libthread_db availability) in
+	    # programs not linked against libpthread.so
+	    do_tests $force_internal_tls $do_kfail_tls_access
+	}
+    }
+}
+
+with_test_prefix "pthreads" {
+    set binfile $binprefix-pthreads
+    if	{ [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+				 [list debug shlib=${lib1obj} \
+					     shlib=${lib2obj} \
+					     shlib=${lib3obj}]] != "" } {
+	untested "failed to compile"
+    } else {
+	foreach_with_prefix force_internal_tls $internal_tls_iters {
+	    do_tests $force_internal_tls
+	}
+    }
+}

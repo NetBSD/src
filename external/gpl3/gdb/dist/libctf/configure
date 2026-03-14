@@ -15966,6 +15966,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+case "${host}" in
+  # PR libctf/29292
+  # libctf's use of mmap doesn't work on Solaris 11.4, so disable it.
+  *-*-solaris2.11*)
+    ac_cv_func_mmap_fixed_mapped=no
+  ;;
+esac
+
 
 
 
@@ -17015,7 +17023,7 @@ if test -n "$decommented_version_script"; then
    # used by GNU ld.  Use cpp to strip the comments out.  (cpp exists under this
    # name on all platforms that support ld -z gnu-version-script.)
    /lib/cpp < $srcdir/libctf.ver > libctf-decommented.ver
-   /lib/cpp < $srcdir/libctf-nobfd.ver > libctf-nobfd-decommented.ver
+   /lib/cpp < libctf-nobfd.ver > libctf-nobfd-decommented.ver
    VERSION_FLAGS="$ac_cv_libctf_version_script='libctf-decommented.ver'"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd-decommented.ver'"
 elif test -z "$no_version_script"; then

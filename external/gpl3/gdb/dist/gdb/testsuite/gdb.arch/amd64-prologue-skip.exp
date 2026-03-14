@@ -1,4 +1,4 @@
-# Copyright 2010-2024 Free Software Foundation, Inc.
+# Copyright 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 standard_testfile .S
-set binfile ${binfile}.o
+set testfile $testfile.o
+set binfile [standard_output_file $testfile]
 
 require is_x86_64_m64_target
 
@@ -23,7 +24,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" object {debug}] 
     return
 }
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_test "break *pushrbp" " at 0x1: file .*"
 gdb_test "break pushrbp" " at 0x1: file .*"

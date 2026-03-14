@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -186,9 +186,7 @@ ppcobsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
-void _initialize_ppcobsd_nat ();
-void
-_initialize_ppcobsd_nat ()
+INIT_GDB_FILE (ppcobsd_nat)
 {
   add_inf_child_target (&the_ppc_obsd_nat_target);
 

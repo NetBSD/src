@@ -1,4 +1,4 @@
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable debug] != ""} {
 # If it doesn't, Bad Things Happen(TM).
 
 # Run to main
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 mi_runto_main
 
 # Step over "foo = 0"

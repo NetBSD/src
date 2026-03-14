@@ -1,5 +1,5 @@
 /* Multi-thread control defs for remote server for GDB.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 
 #include "gdbsupport/function-view.h"
 #include "gdbsupport/intrusive_list.h"
+#include <memory>
 
 struct btrace_target_info;
 struct regcache;
@@ -31,20 +32,15 @@ struct thread_info : public intrusive_list_node<thread_info>
     : id (id), m_process (process), m_target_data (target_data)
   {}
 
-  ~thread_info ()
-  {
-    free_register_cache (m_regcache);
-  }
-
   /* Return the process owning this thread.  */
   process_info *process () const
   { return m_process; }
 
   struct regcache *regcache ()
-  { return m_regcache; }
+  { return m_regcache.get (); }
 
-  void set_regcache (struct regcache *regcache)
-  { m_regcache = regcache; }
+  void set_regcache (std::unique_ptr<struct regcache> regcache)
+  { m_regcache = std::move (regcache); }
 
   void *target_data ()
   { return m_target_data; }
@@ -94,7 +90,7 @@ struct thread_info : public intrusive_list_node<thread_info>
   
 private:
   process_info *m_process;
-  struct regcache *m_regcache = nullptr;
+  std::unique_ptr<struct regcache> m_regcache = nullptr;
   void *m_target_data;
 };
 

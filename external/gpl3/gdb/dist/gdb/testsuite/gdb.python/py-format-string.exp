@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,7 +47,8 @@ proc build_inferior {exefile lang} {
 proc prepare_gdb {exefile} {
   global srcdir subdir srcfile testfile hex
 
-  clean_restart $exefile
+  clean_restart
+  gdb_load $exefile
 
   if {![runto_main]} {
       return
@@ -1202,7 +1203,9 @@ with_test_prefix "format_string" {
 	set current_lang "c"
 	prepare_gdb "${binfile}"
 	test_all_common
-	test_styling
+	if { ![is_remote host] } {
+	    test_styling
+	}
       }
     }
   }

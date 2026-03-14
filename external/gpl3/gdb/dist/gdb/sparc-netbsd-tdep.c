@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -248,16 +248,16 @@ sparc32nbsd_sigcontext_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind sparc32nbsd_sigcontext_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc32nbsd_sigcontext_frame_unwind (
   "sparc32 netbsd sigcontext",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc32nbsd_sigcontext_frame_this_id,
   sparc32nbsd_sigcontext_frame_prev_register,
   NULL,
   sparc32nbsd_sigcontext_frame_sniffer
-};
+);
 
 /* Return the address of a system call's alternative return
    address.  */
@@ -313,13 +313,10 @@ sparc32nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   frame_unwind_append_unwinder (gdbarch, &sparc32nbsd_sigcontext_frame_unwind);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 }
 
-void _initialize_sparcnbsd_tdep ();
-void
-_initialize_sparcnbsd_tdep ()
+INIT_GDB_FILE (sparcnbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, 0, GDB_OSABI_NETBSD,
 			  sparc32nbsd_init_abi);

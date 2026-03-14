@@ -1,6 +1,6 @@
 /* This test program is part of GDB, the GNU debugger.
 
-   Copyright 2011-2024 Free Software Foundation, Inc.
+   Copyright 2011-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,4 +22,4 @@
 #error "Must define the FUNCTION_NAME macro to set a jited function name"
 #endif
 
-int FUNCTION_NAME() { return 42; }
+int FUNCTION_NAME(void) { return 42; }

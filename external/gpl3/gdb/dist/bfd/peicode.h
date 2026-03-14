@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI, for BFD.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -815,14 +815,8 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
     {
     case IMPORT_CODE:
     case IMPORT_DATA:
-      break;
-
     case IMPORT_CONST:
-      /* XXX code yet to be written.  */
-      /* xgettext:c-format */
-      _bfd_error_handler (_("%pB: unhandled import type; %x"),
-			  abfd, import_type);
-      return false;
+      break;
 
     default:
       /* xgettext:c-format */
@@ -1082,6 +1076,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
       break;
 
     case IMPORT_DATA:
+    case IMPORT_CONST:
       break;
 
     default:
@@ -1100,6 +1095,10 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
 
     case IMPORT_DATA:
       /* Nothing to do here.  */
+      break;
+
+    case IMPORT_CONST:
+      pe_ILF_make_a_symbol (&vars, "", symbol_name, id5, 0);
       break;
 
     default:
@@ -1155,6 +1154,7 @@ pe_ILF_build_a_bfd (bfd *	    abfd,
 
   obj_raw_syments (abfd) = vars.native_syms;
   obj_raw_syment_count (abfd) = vars.sym_index;
+  obj_coff_keep_raw_syms (abfd) = true;
 
   obj_coff_external_syms (abfd) = (void *) vars.esym_table;
   obj_coff_keep_syms (abfd) = true;

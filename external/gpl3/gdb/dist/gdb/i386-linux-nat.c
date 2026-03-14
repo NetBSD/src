@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux i386.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -696,9 +696,7 @@ i386_linux_nat_target::low_resume (ptid_t ptid, int step, enum gdb_signal signal
     perror_with_name (("ptrace"));
 }
 
-void _initialize_i386_linux_nat ();
-void
-_initialize_i386_linux_nat ()
+INIT_GDB_FILE (i386_linux_nat)
 {
   linux_target = &the_i386_linux_nat_target;
 

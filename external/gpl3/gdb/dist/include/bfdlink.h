@@ -1,5 +1,5 @@
 /* bfdlink.h -- header file for BFD link routines
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -428,6 +428,9 @@ struct bfd_link_info
 
   /* TRUE if only one read-only, non-code segment should be created.  */
   unsigned int one_rosegment: 1;
+
+  /* TRUE if GNU_PROPERTY_MEMORY_SEAL should be generated.  */
+  unsigned int memory_seal: 1;
 
   /* Nonzero if .eh_frame_hdr section and PT_GNU_EH_FRAME ELF segment
      should be created.  1 for DWARF2 tables, 2 for compact tables.  */
@@ -874,6 +877,9 @@ struct bfd_link_callbacks
     (struct bfd_link_info *, struct bfd_link_hash_entry *h,
      struct bfd_link_hash_entry *inh,
      bfd *abfd, asection *section, bfd_vma address, flagword flags);
+  /* Fatal error.  */
+  void (*fatal)
+    (const char *fmt, ...) ATTRIBUTE_NORETURN;
   /* Error or warning link info message.  */
   void (*einfo)
     (const char *fmt, ...);

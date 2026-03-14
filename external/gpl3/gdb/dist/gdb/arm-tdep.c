@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on ARM systems.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1669,7 +1669,7 @@ arm_analyze_load_stack_chk_guard(CORE_ADDR pc, struct gdbarch *gdbarch,
 
 	ldr	Rn, .Label
 	....
-	.Lable:
+	.Label:
 	.word	__stack_chk_guard
 
    Since ldr/str is a very popular instruction, we can't use them as
@@ -2466,15 +2466,16 @@ arm_prologue_prev_register (const frame_info_ptr &this_frame,
 				       prev_regnum);
 }
 
-static frame_unwind arm_prologue_unwind = {
+static const frame_unwind_legacy arm_prologue_unwind (
   "arm prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   arm_prologue_unwind_stop_reason,
   arm_prologue_this_id,
   arm_prologue_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Maintain a list of ARM exception table entries per objfile, similar to the
    list of mapping symbols.  We only cache entries for standard ARM-defined
@@ -2503,15 +2504,15 @@ static const registry<bfd>::key<arm_exidx_data> arm_exidx_data_key;
 static struct obj_section *
 arm_obj_section_from_vma (struct objfile *objfile, bfd_vma vma)
 {
-  for (obj_section *osect : objfile->sections ())
-    if (bfd_section_flags (osect->the_bfd_section) & SEC_ALLOC)
+  for (obj_section &osect : objfile->sections ())
+    if (bfd_section_flags (osect.the_bfd_section) & SEC_ALLOC)
       {
 	bfd_vma start, size;
-	start = bfd_section_vma (osect->the_bfd_section);
-	size = bfd_section_size (osect->the_bfd_section);
+	start = bfd_section_vma (osect.the_bfd_section);
+	size = bfd_section_size (osect.the_bfd_section);
 
 	if (start <= vma && vma < start + size)
-	  return osect;
+	  return &osect;
       }
 
   return NULL;
@@ -3185,15 +3186,16 @@ arm_exidx_unwind_sniffer (const struct frame_unwind *self,
   return 1;
 }
 
-struct frame_unwind arm_exidx_unwind = {
+struct frame_unwind_legacy arm_exidx_unwind (
   "arm exidx",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   arm_prologue_this_id,
   arm_prologue_prev_register,
   NULL,
   arm_exidx_unwind_sniffer
-};
+);
 
 static struct arm_prologue_cache *
 arm_make_epilogue_frame_cache (const frame_info_ptr &this_frame)
@@ -3294,16 +3296,16 @@ arm_epilogue_frame_sniffer (const struct frame_unwind *self,
 
 /* Frame unwinder from epilogue.  */
 
-static const struct frame_unwind arm_epilogue_frame_unwind =
-{
+static const struct frame_unwind_legacy arm_epilogue_frame_unwind (
   "arm epilogue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   arm_epilogue_frame_this_id,
   arm_epilogue_frame_prev_register,
   NULL,
-  arm_epilogue_frame_sniffer,
-};
+  arm_epilogue_frame_sniffer
+);
 
 /* Recognize GCC's trampoline for thumb call-indirect.  If we are in a
    trampoline, return the target PC.  Otherwise return 0.
@@ -3424,15 +3426,16 @@ arm_stub_unwind_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-struct frame_unwind arm_stub_unwind = {
+struct frame_unwind_legacy arm_stub_unwind (
   "arm stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   arm_stub_this_id,
   arm_prologue_prev_register,
   NULL,
   arm_stub_unwind_sniffer
-};
+);
 
 /* Put here the code to store, into CACHE->saved_regs, the addresses
    of the saved registers of frame described by THIS_FRAME.  CACHE is
@@ -3949,16 +3952,16 @@ arm_m_exception_unwind_sniffer (const struct frame_unwind *self,
 /* Frame unwinder for M-profile exceptions (EXC_RETURN on stack),
    lockup and secure/nonsecure interstate function calls (FNC_RETURN).  */
 
-struct frame_unwind arm_m_exception_unwind =
-{
+struct frame_unwind_legacy arm_m_exception_unwind (
   "arm m exception lockup sec_fnc",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   arm_m_exception_frame_unwind_stop_reason,
   arm_m_exception_this_id,
   arm_m_exception_prev_register,
   NULL,
   arm_m_exception_unwind_sniffer
-};
+);
 
 static CORE_ADDR
 arm_normal_frame_base (const frame_info_ptr &this_frame, void **this_cache)
@@ -6666,7 +6669,7 @@ install_load_store (struct gdbarch *gdbarch, struct regcache *regs,
      Otherwise we don't know what value to write for PC, since the offset is
      architecture-dependent (sometimes PC+8, sometimes PC+12).  More details
      of this can be found in Section "Saving from r15" in
-     http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0204g/Cihbjifh.html */
+     https://developer.arm.com/documentation/dui0204/g/ */
 
   dsc->cleanup = load ? &cleanup_load : &cleanup_store;
 }
@@ -9199,7 +9202,7 @@ arm_store_return_value (struct type *type, struct regcache *regs,
 	{
 	  /* Integral values greater than one word are stored in consecutive
 	     registers starting with r0.  This will always be a multiple of
-	     the regiser size.  */
+	     the register size.  */
 	  int len = type->length ();
 	  int regno = ARM_A1_REGNUM;
 
@@ -9716,9 +9719,9 @@ coff_sym_is_thumb (int val)
    symbol to indicate that it does.  */
    
 static void
-arm_elf_make_msymbol_special(asymbol *sym, struct minimal_symbol *msym)
+arm_elf_make_msymbol_special (const asymbol *sym, struct minimal_symbol *msym)
 {
-  elf_symbol_type *elfsym = (elf_symbol_type *) sym;
+  const elf_symbol_type *elfsym = (const elf_symbol_type *) sym;
 
   if (ARM_GET_SYM_BRANCH_TYPE (elfsym->internal_elf_sym.st_target_internal)
       == ST_BRANCH_TO_THUMB)
@@ -9734,7 +9737,7 @@ arm_coff_make_msymbol_special(int val, struct minimal_symbol *msym)
 
 static void
 arm_record_special_symbol (struct gdbarch *gdbarch, struct objfile *objfile,
-			   asymbol *sym)
+			   const asymbol *sym)
 {
   const char *name = bfd_asymbol_name (sym);
   struct arm_per_bfd *data;
@@ -10100,7 +10103,7 @@ arm_get_pc_address_flags (const frame_info_ptr &frame, CORE_ADDR pc)
 }
 
 /* Initialize the current architecture based on INFO.  If possible,
-   re-use an architecture from ARCHES, which is a list of
+   reuse an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
 
    Called e.g. at program startup, when reading a core file, and when
@@ -11012,9 +11015,7 @@ static void arm_analyze_prologue_test ();
 }
 #endif
 
-void _initialize_arm_tdep ();
-void
-_initialize_arm_tdep ()
+INIT_GDB_FILE (arm_tdep)
 {
   long length;
   int i, j;
@@ -14843,7 +14844,7 @@ arm_analyze_prologue_test ()
     }
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
 /* Cleans up local record registers and memory allocations.  */

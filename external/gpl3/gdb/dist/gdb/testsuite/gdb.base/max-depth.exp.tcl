@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ proc compile_and_run_tests { lang } {
 	lappend flags "additional_flags=-std=c++11"
     }
 
-    if { [prepare_for_testing "failed to prepare" "${binfile}" "${srcfile}" "${flags}"] } {
+    if { [prepare_for_testing "failed to prepare" $testfile $srcfile $flags] } {
 	return 0
     }
 

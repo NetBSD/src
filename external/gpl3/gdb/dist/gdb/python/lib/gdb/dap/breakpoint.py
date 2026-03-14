@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -51,7 +51,6 @@ def suppress_new_breakpoint_event():
 
 @in_gdb_thread
 def _bp_modified(event):
-    global _suppress_bp
     if not _suppress_bp:
         send_event(
             "breakpoint",
@@ -64,7 +63,6 @@ def _bp_modified(event):
 
 @in_gdb_thread
 def _bp_created(event):
-    global _suppress_bp
     if not _suppress_bp:
         send_event(
             "breakpoint",
@@ -77,7 +75,6 @@ def _bp_created(event):
 
 @in_gdb_thread
 def _bp_deleted(event):
-    global _suppress_bp
     if not _suppress_bp:
         send_event(
             "breakpoint",
@@ -151,7 +148,6 @@ def _remove_entries(table, *names):
 # the breakpoint.
 @in_gdb_thread
 def _set_breakpoints_callback(kind, specs, creator):
-    global breakpoint_map
     # Try to reuse existing breakpoints if possible.
     if kind in breakpoint_map:
         saved_map = breakpoint_map[kind]
@@ -218,11 +214,11 @@ class _PrintBreakpoint(gdb.Breakpoint):
     def __init__(self, logMessage, **args):
         super().__init__(**args)
         # Split the message up for easier processing.
-        self.message = re.split("{(.*?)}", logMessage)
+        self._message = re.split("{(.*?)}", logMessage)
 
     def stop(self):
         output = ""
-        for idx, item in enumerate(self.message):
+        for idx, item in enumerate(self._message):
             if idx % 2 == 0:
                 # Even indices are plain text.
                 output += item
@@ -330,7 +326,7 @@ def _rewrite_fn_breakpoint(
     }
 
 
-@request("setFunctionBreakpoints")
+@request("setFunctionBreakpoints", expect_stopped=False)
 @capability("supportsFunctionBreakpoints")
 def set_fn_breakpoint(*, breakpoints: Sequence, **args):
     specs = [_rewrite_fn_breakpoint(**bp) for bp in breakpoints]
@@ -363,7 +359,7 @@ def _rewrite_insn_breakpoint(
     }
 
 
-@request("setInstructionBreakpoints")
+@request("setInstructionBreakpoints", expect_stopped=False)
 @capability("supportsInstructionBreakpoints")
 def set_insn_breakpoints(
     *, breakpoints: Sequence, offset: Optional[int] = None, **args
@@ -414,7 +410,7 @@ def _rewrite_exception_breakpoint(
     }
 
 
-@request("setExceptionBreakpoints")
+@request("setExceptionBreakpoints", expect_stopped=False)
 @capability("supportsExceptionFilterOptions")
 @capability(
     "exceptionBreakpointFilters",

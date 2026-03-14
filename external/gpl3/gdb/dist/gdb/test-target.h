@@ -1,6 +1,6 @@
 /* A mock process_stratum target_ops
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -59,7 +59,7 @@ public:
   }
 };
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
 #endif /* GDB_TEST_TARGET_H */

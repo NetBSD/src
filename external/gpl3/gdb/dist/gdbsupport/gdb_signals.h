@@ -1,5 +1,5 @@
 /* Target signal translation functions for GDB.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GDB.

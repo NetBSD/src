@@ -2,7 +2,7 @@
 
 # Add a .gdb_index section to a file.
 
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -22,16 +22,73 @@ GDB=${GDB:=gdb}
 OBJCOPY=${OBJCOPY:=objcopy}
 READELF=${READELF:=readelf}
 
+PKGVERSION="@PKGVERSION@"
+VERSION="@VERSION@"
+
 myname="${0##*/}"
 
+print_usage() {
+    prefix="Usage: $myname"
+    echo "$prefix [-h|--help] [-v|--version] [--dwarf-5] FILENAME"
+}
+
+print_try_help() {
+    echo "Try '$myname --help' for more information."
+}
+
+print_help() {
+    print_usage
+    echo
+    echo "Add a .gdb_index section to FILENAME to facilitate faster debug"
+    echo "information loading by GDB."
+    echo
+    echo "  -h, --help         Print this message then exit."
+    echo "  -v, --version      Print version information then exit."
+    echo "  --dwarf-5          Add the DWARF-5 style .debug_names section"
+    echo "                       instead of .gdb_index."
+}
+
+print_version() {
+    echo "GNU gdb-add-index (${PKGVERSION}) ${VERSION}"
+}
+
 dwarf5=""
-if [ "$1" = "-dwarf-5" ]; then
-    dwarf5="$1"
+
+# Parse options.
+until
+opt=$1
+case ${opt} in
+    --dwarf-5 | -dwarf-5)
+	dwarf5="-dwarf-5"
+	;;
+
+    --help | -help | -h)
+	print_help
+	exit 0
+	;;
+
+    --version | -version | -v)
+	print_version
+	exit 0
+	;;
+
+    -?*)
+	print_try_help 1>&2
+	exit 2
+	;;
+
+    *)
+	# No arguments remaining.
+	;;
+esac
+# Break from loop if the first character of OPT is not '-'.
+[ "x$(printf %.1s "$opt")" != "x-" ]
+do
     shift
-fi
+done
 
 if test $# != 1; then
-    echo "usage: $myname [-dwarf-5] FILE" 1>&2
+    print_try_help
     exit 1
 fi
 

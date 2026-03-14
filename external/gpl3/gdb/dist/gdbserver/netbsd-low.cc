@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,11 +78,9 @@ netbsd_ptrace_fun ()
 
 int
 netbsd_process_target::create_inferior (const char *program,
-					const std::vector<char *> &program_args)
+					const std::string &program_args)
 {
-  std::string str_program_args = construct_inferior_arguments (program_args);
-
-  pid_t pid = fork_inferior (program, str_program_args.c_str (),
+  pid_t pid = fork_inferior (program, program_args.c_str (),
 			     get_environ ()->envp (), netbsd_ptrace_fun,
 			     nullptr, nullptr, nullptr, nullptr);
 
@@ -455,7 +453,10 @@ netbsd_process_target::detach (process_info *process)
 void
 netbsd_process_target::mourn (struct process_info *proc)
 {
-  proc->for_each_thread (remove_thread);
+  proc->for_each_thread ([proc] (thread_info *thread)
+    {
+      proc->remove_thread (thread);
+    });
 
   remove_process (proc);
 }

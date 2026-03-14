@@ -1,6 +1,6 @@
 /* Interface between GDB and target environments, including files and processes
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -1016,8 +1016,8 @@ struct target_ops
        filesystem seen by the debugger (GDB or, for remote targets, the
        remote stub).  Return 0 on success, or -1 if an error occurs (and
        set *TARGET_ERRNO).  */
-    virtual int fileio_stat (struct inferior *inf, const char *filename,
-			     struct stat *sb, fileio_error *target_errno);
+    virtual int fileio_lstat (struct inferior *inf, const char *filename,
+			      struct stat *sb, fileio_error *target_errno);
 
     /* Close FD on the target.  Return 0, or -1 if an error occurs
        (and set *TARGET_ERRNO).  */
@@ -1162,8 +1162,12 @@ struct target_ops
 			       CORE_ADDR memaddr, ULONGEST size)
       TARGET_DEFAULT_FUNC (default_verify_memory);
 
-    /* Return the address of the start of the Thread Information Block
-       a Windows OS specific feature.  */
+    /* Set *ADDR to the address of the start of the Thread Information
+       Block (TIB) for thread PTID.  Return true on success and false
+       otherwise.
+
+       ADDR may be nullptr, in which case the checks will be done but
+       the result will be discarded.  */
     virtual bool get_tib_address (ptid_t ptid, CORE_ADDR *addr)
       TARGET_DEFAULT_NORETURN (tcomplain ());
 
@@ -1376,6 +1380,25 @@ struct target_ops
     /* Return the x86 XSAVE extended state area layout.  */
     virtual x86_xsave_layout fetch_x86_xsave_layout ()
       TARGET_DEFAULT_RETURN (x86_xsave_layout ());
+
+    /* Return true if the target supports displaced stepping for THREAD.  */
+    virtual bool supports_displaced_step (thread_info *thread)
+      TARGET_DEFAULT_FUNC (default_supports_displaced_step);
+
+    /* See documentation of gdbarch_displaced_step_prepare.  */
+    virtual displaced_step_prepare_status displaced_step_prepare (thread_info *thread,
+								  CORE_ADDR &displaced_pc)
+      TARGET_DEFAULT_FUNC (default_displaced_step_prepare);
+
+    /* See documentation of gdbarch_displaced_step_finish.  */
+    virtual displaced_step_finish_status displaced_step_finish
+      (thread_info *thread, const target_waitstatus &status)
+      TARGET_DEFAULT_FUNC (default_displaced_step_finish);
+
+    /* See documentation of gdbarch_displaced_step_restore_all_in_ptid.  */
+    virtual void displaced_step_restore_all_in_ptid (inferior *parent_inf,
+						     ptid_t child_ptid)
+      TARGET_DEFAULT_FUNC (default_displaced_step_restore_all_in_ptid);
   };
 
 /* Deleter for std::unique_ptr.  See comments in
@@ -2233,8 +2256,8 @@ extern int target_fileio_fstat (int fd, struct stat *sb,
    filesystem seen by the debugger (GDB or, for remote targets, the remote
    stub).  Return 0 on success, or -1 if an error occurs (and set
    *TARGET_ERRNO).  */
-extern int target_fileio_stat (struct inferior *inf, const char *filename,
-			       struct stat *sb, fileio_error *target_errno);
+extern int target_fileio_lstat (struct inferior *inf, const char *filename,
+				struct stat *sb, fileio_error *target_errno);
 
 /* Close FD on the target.  Return 0, or -1 if an error occurs
    (and set *TARGET_ERRNO).  */
@@ -2338,6 +2361,8 @@ extern void target_set_trace_buffer_size (LONGEST val);
 extern bool target_set_trace_notes (const char *user, const char *notes,
 				    const char *stopnotes);
 
+/* A wrapper that calls get_tib_address on the top target of the
+   current inferior.  */
 extern bool target_get_tib_address (ptid_t ptid, CORE_ADDR *addr);
 
 extern void target_set_permissions ();
@@ -2447,8 +2472,14 @@ extern void target_pre_inferior ();
 
 extern void target_preopen (int);
 
+/* Using the objfile specified in OBJFILE, find the address for the
+   current thread's thread-local storage with offset OFFSET.  If it's
+   provided, NAME might be used to indicate the relevant variable
+   in an error message.  */
+
 extern CORE_ADDR target_translate_tls_address (struct objfile *objfile,
-					       CORE_ADDR offset);
+					       CORE_ADDR offset,
+					       const char *name = nullptr);
 
 /* Return the "section" containing the specified address.  */
 const struct target_section *target_section_by_addr (struct target_ops *target,

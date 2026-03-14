@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -107,6 +107,9 @@ public:
     fileio_readlink (struct inferior *inf,
 		     const char *filename,
 		     fileio_error *target_errno) override;
+
+  int fileio_lstat (struct inferior *inf, const char *filename,
+		   struct stat *sb, fileio_error *target_errno) override;
 
   int fileio_unlink (struct inferior *inf,
 		     const char *filename,
@@ -276,12 +279,12 @@ struct lwp_info : intrusive_list_node<lwp_info>
      will be recorded here, while 'status == 0' is ambiguous.  */
   struct target_waitstatus waitstatus;
 
-  /* Signal whether we are in a SYSCALL_ENTRY or
-     in a SYSCALL_RETURN event.
-     Values:
-     - TARGET_WAITKIND_SYSCALL_ENTRY
-     - TARGET_WAITKIND_SYSCALL_RETURN */
-  enum target_waitkind syscall_state;
+  /* Signal whether we are in a SYSCALL_ENTRY or SYSCALL_RETURN event.
+
+     Valid values are TARGET_WAITKIND_SYSCALL_ENTRY,
+     TARGET_WAITKIND_SYSCALL_RETURN, or TARGET_WAITKIND_SYSCALL_IGNORE, when
+     not stopped at a syscall.  */
+  target_waitkind syscall_state = TARGET_WAITKIND_IGNORE;
 
   /* The processor core this LWP was last seen on.  */
   int core = -1;

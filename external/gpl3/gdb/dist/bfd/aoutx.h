@@ -1,5 +1,5 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2973,9 +2973,6 @@ NAME (aout, link_hash_table_create) (bfd *abfd)
 static bool
 aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 {
-  bool (*add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword, asection *,
-     bfd_vma, const char *, bool, bool, struct bfd_link_hash_entry **);
   struct external_nlist *syms;
   bfd_size_type sym_count;
   char *strings;
@@ -3012,10 +3009,6 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   if (sym_hash == NULL)
     return false;
   obj_aout_sym_hashes (abfd) = sym_hash;
-
-  add_one_symbol = aout_backend_info (abfd)->add_one_symbol;
-  if (add_one_symbol == NULL)
-    add_one_symbol = _bfd_generic_link_add_one_symbol;
 
   p = syms;
   pend = p + sym_count;
@@ -3167,7 +3160,7 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	}
 
-      if (! ((*add_one_symbol)
+      if (! (_bfd_generic_link_add_one_symbol
 	     (info, abfd, name, flags, section, value, string, copy, false,
 	      (struct bfd_link_hash_entry **) sym_hash)))
 	return false;

@@ -1,6 +1,6 @@
 /* Self tests for unpack_field_as_long
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,9 +52,7 @@ unpack_field_as_long_tests (struct gdbarch *arch)
 }
 }
 
-void _initialize_unpack_selftests ();
-void
-_initialize_unpack_selftests ()
+INIT_GDB_FILE (unpack_selftests)
 {
   selftests::register_test_foreach_arch
     ("unpack_field_as_long", selftests::unpack::unpack_field_as_long_tests);

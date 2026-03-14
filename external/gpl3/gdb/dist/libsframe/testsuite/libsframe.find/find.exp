@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -26,6 +26,7 @@ if [string equal $COMPAT_DEJAGNU "no"] {
     unsupported findfre-1
     unsupported findfunc-1
     unsupported plt-findfre-1
+    unsupported plt-findfre-2
     return;
 }
 
@@ -39,4 +40,8 @@ if { [host_execute "testsuite/libsframe.find/findfunc-1"] ne "" } {
 
 if { [host_execute "testsuite/libsframe.find/plt-findfre-1"] ne "" } {
     fail "plt-findfre-1"
+}
+
+if { [host_execute "testsuite/libsframe.find/plt-findfre-2"] ne "" } {
+    fail "plt-findfre-2"
 }

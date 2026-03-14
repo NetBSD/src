@@ -1,6 +1,6 @@
 /* Fortran language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -1836,9 +1836,7 @@ builtin_f_type (struct gdbarch *gdbarch)
 static struct cmd_list_element *set_fortran_list;
 static struct cmd_list_element *show_fortran_list;
 
-void _initialize_f_language ();
-void
-_initialize_f_language ()
+INIT_GDB_FILE (f_language)
 {
   add_setshow_prefix_cmd
     ("fortran", no_class,

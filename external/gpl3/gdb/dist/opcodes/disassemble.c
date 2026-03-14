@@ -1,5 +1,5 @@
 /* Select disassembly routine for specified architecture.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -382,7 +382,7 @@ disassembler (enum bfd_architecture a,
 #endif
 #ifdef ARCH_riscv
     case bfd_arch_riscv:
-      disassemble = riscv_get_disassembler (abfd);
+      disassemble = print_insn_riscv;
       break;
 #endif
 #ifdef ARCH_rl78
@@ -767,6 +767,7 @@ disassemble_free_target (struct disassemble_info *info)
 #endif
 #ifdef ARCH_powerpc
     case bfd_arch_powerpc:
+      disassemble_free_powerpc (info);
       break;
 #endif
 #ifdef ARCH_riscv

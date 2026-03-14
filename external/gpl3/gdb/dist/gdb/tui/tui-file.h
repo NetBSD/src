@@ -1,5 +1,5 @@
 /* TUI_FILE - a STDIO-like output stream for the TUI.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,17 +23,20 @@
 
 /* A STDIO-like output stream for the TUI.  */
 
-class tui_file : public stdio_file
+class tui_file : public escape_buffering_file
 {
 public:
   tui_file (FILE *stream, bool buffered)
-    : stdio_file (stream),
+    : escape_buffering_file (stream),
       m_buffered (buffered)
   {}
 
-  void write (const char *buf, long length_buf) override;
-  void puts (const char *) override;
   void flush () override;
+
+protected:
+
+  void do_write (const char *buf, long length_buf) override;
+  void do_puts (const char *) override;
 
 private:
 

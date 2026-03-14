@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,804 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: GDB/MI File Commands,  Next: GDB/MI Target Manipulation,  Prev: GDB/MI Symbol Query,  Up: GDB/MI
+
+27.19 GDB/MI File Commands
+==========================
+
+This section describes the GDB/MI commands to specify executable file
+names and to read in and obtain symbol table information.
+
+The '-file-exec-and-symbols' Command
+------------------------------------
+
+Synopsis
+........
+
+      -file-exec-and-symbols FILE
+
+   Specify the executable file to be debugged.  This file is the one
+from which the symbol table is also read.  If no file is specified, the
+command clears the executable and symbol information.  If breakpoints
+are set when using this command with no arguments, GDB will produce
+error messages.  Otherwise, no output is produced, except a completion
+notification.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'file'.
+
+Example
+.......
+
+     (gdb)
+     -file-exec-and-symbols /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
+     ^done
+     (gdb)
+
+The '-file-exec-file' Command
+-----------------------------
+
+Synopsis
+........
+
+      -file-exec-file FILE
+
+   Specify the executable file to be debugged.  Unlike
+'-file-exec-and-symbols', the symbol table is _not_ read from this file.
+If used without argument, GDB clears the information about the
+executable file.  No output is produced, except a completion
+notification.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'exec-file'.
+
+Example
+.......
+
+     (gdb)
+     -file-exec-file /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
+     ^done
+     (gdb)
+
+The '-file-list-exec-source-file' Command
+-----------------------------------------
+
+Synopsis
+........
+
+      -file-list-exec-source-file
+
+   List the line number, the current source file, and the absolute path
+to the current source file for the current executable.  The macro
+information field has a value of '1' or '0' depending on whether or not
+the file includes preprocessor macro information.
+
+GDB Command
+...........
+
+The GDB equivalent is 'info source'
+
+Example
+.......
+
+     (gdb)
+     123-file-list-exec-source-file
+     123^done,line="1",file="foo.c",fullname="/home/bar/foo.c,macro-info="1"
+     (gdb)
+
+The '-file-list-exec-source-files' Command
+------------------------------------------
+
+Synopsis
+........
+
+      -file-list-exec-source-files [ --GROUP-BY-OBJFILE ]
+                                   [ --DIRNAME | --BASENAME ]
+                                   [ -- ]
+                                   [ REGEXP ]
+
+   This command returns information about the source files GDB knows
+about, it will output both the filename and fullname (absolute file
+name) of a source file, though the fullname can be elided if this
+information is not known to GDB.
+
+   With no arguments this command returns a list of source files.  Each
+source file is represented by a tuple with the fields; FILE, FULLNAME,
+and DEBUG-FULLY-READ.  The FILE is the display name for the file, while
+FULLNAME is the absolute name of the file.  The FULLNAME field can be
+elided if the absolute name of the source file can't be computed.  The
+field DEBUG-FULLY-READ will be a string, either 'true' or 'false'.  When
+'true', this indicates the full debug information for the compilation
+unit describing this file has been read in.  When 'false', the full
+debug information has not yet been read in.  While reading in the full
+debug information it is possible that GDB could become aware of
+additional source files.
+
+   The optional REGEXP can be used to filter the list of source files
+returned.  The REGEXP will be matched against the full source file name.
+The matching is case-sensitive, except on operating systems that have
+case-insensitive filesystem (e.g., MS-Windows).  '--' can be used before
+REGEXP to prevent GDB interpreting REGEXP as a command option (e.g. if
+REGEXP starts with '-').
+
+   If '--dirname' is provided, then REGEXP is matched only against the
+directory name of each source file.  If '--basename' is provided, then
+REGEXP is matched against the basename of each source file.  Only one of
+'--dirname' or '--basename' may be given, and if either is given then
+REGEXP is required.
+
+   If '--group-by-objfile' is used then the format of the results is
+changed.  The results will now be a list of tuples, with each tuple
+representing an object file (executable or shared library) loaded into
+GDB.  The fields of these tuples are; FILENAME, DEBUG-INFO, and SOURCES.
+The FILENAME is the absolute name of the object file, DEBUG-INFO is a
+string with one of the following values:
+
+'none'
+     This object file has no debug information.
+'partially-read'
+     This object file has debug information, but it is not fully read in
+     yet.  When it is read in later, GDB might become aware of
+     additional source files.
+'fully-read'
+     This object file has debug information, and this information is
+     fully read into GDB. The list of source files is complete.
+
+   The SOURCES is a list or tuples, with each tuple describing a single
+source file with the same fields as described previously.  The SOURCES
+list can be empty for object files that have no debug information.
+
+GDB Command
+...........
+
+The GDB equivalent is 'info sources'.  'gdbtk' has an analogous command
+'gdb_listfiles'.
+
+Example
+.......
+
+     (gdb)
+     -file-list-exec-source-files
+     ^done,files=[{file="foo.c",fullname="/home/foo.c",debug-fully-read="true"},
+                  {file="/home/bar.c",fullname="/home/bar.c",debug-fully-read="true"},
+                  {file="gdb_could_not_find_fullpath.c",debug-fully-read="true"}]
+     (gdb)
+     -file-list-exec-source-files
+     ^done,files=[{file="test.c",
+                   fullname="/tmp/info-sources/test.c",
+                   debug-fully-read="true"},
+                  {file="/usr/include/stdc-predef.h",
+                   fullname="/usr/include/stdc-predef.h",
+                   debug-fully-read="true"},
+                  {file="header.h",
+                   fullname="/tmp/info-sources/header.h",
+                   debug-fully-read="true"},
+                  {file="helper.c",
+                   fullname="/tmp/info-sources/helper.c",
+                   debug-fully-read="true"}]
+     (gdb)
+     -file-list-exec-source-files -- \\.c
+     ^done,files=[{file="test.c",
+                   fullname="/tmp/info-sources/test.c",
+                   debug-fully-read="true"},
+                  {file="helper.c",
+                   fullname="/tmp/info-sources/helper.c",
+                   debug-fully-read="true"}]
+     (gdb)
+     -file-list-exec-source-files --group-by-objfile
+     ^done,files=[{filename="/tmp/info-sources/test.x",
+                   debug-info="fully-read",
+                   sources=[{file="test.c",
+                             fullname="/tmp/info-sources/test.c",
+                             debug-fully-read="true"},
+                            {file="/usr/include/stdc-predef.h",
+                             fullname="/usr/include/stdc-predef.h",
+                             debug-fully-read="true"},
+                            {file="header.h",
+                             fullname="/tmp/info-sources/header.h",
+                             debug-fully-read="true"}]},
+                  {filename="/lib64/ld-linux-x86-64.so.2",
+                   debug-info="none",
+                   sources=[]},
+                  {filename="system-supplied DSO at 0x7ffff7fcf000",
+                   debug-info="none",
+                   sources=[]},
+                  {filename="/tmp/info-sources/libhelper.so",
+                   debug-info="fully-read",
+                   sources=[{file="helper.c",
+                             fullname="/tmp/info-sources/helper.c",
+                             debug-fully-read="true"},
+                            {file="/usr/include/stdc-predef.h",
+                             fullname="/usr/include/stdc-predef.h",
+                             debug-fully-read="true"},
+                            {file="header.h",
+                             fullname="/tmp/info-sources/header.h",
+                             debug-fully-read="true"}]},
+                  {filename="/lib64/libc.so.6",
+                   debug-info="none",
+                   sources=[]}]
+
+The '-file-list-shared-libraries' Command
+-----------------------------------------
+
+Synopsis
+........
+
+      -file-list-shared-libraries [ REGEXP ]
+
+   List the shared libraries in the program.  With a regular expression
+REGEXP, only those libraries whose names match REGEXP are listed.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'info shared'.  The fields have a
+similar meaning to the '=library-loaded' notification.  The 'ranges'
+field specifies the multiple segments belonging to this library.  Each
+range has the following fields:
+
+'from'
+     The address defining the inclusive lower bound of the segment.
+'to'
+     The address defining the exclusive upper bound of the segment.
+
+Example
+.......
+
+     (gdb)
+     -file-list-exec-source-files
+     ^done,shared-libraries=[
+     {id="/lib/libfoo.so",target-name="/lib/libfoo.so",host-name="/lib/libfoo.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x72815989",to="0x728162c0"}]},
+     {id="/lib/libbar.so",target-name="/lib/libbar.so",host-name="/lib/libbar.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x76ee48c0",to="0x76ee9160"}]}]
+     (gdb)
+
+The '-file-symbol-file' Command
+-------------------------------
+
+Synopsis
+........
+
+      -file-symbol-file FILE
+
+   Read symbol table info from the specified FILE argument.  When used
+without arguments, clears GDB's symbol table info.  No output is
+produced, except for a completion notification.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'symbol-file'.
+
+Example
+.......
+
+     (gdb)
+     -file-symbol-file /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
+     ^done
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI Target Manipulation,  Next: GDB/MI File Transfer Commands,  Prev: GDB/MI File Commands,  Up: GDB/MI
+
+27.20 GDB/MI Target Manipulation Commands
+=========================================
+
+The '-target-attach' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-attach PID | GID | FILE
+
+   Attach to a process PID or a file FILE outside of GDB, or a thread
+group GID.  If attaching to a thread group, the id previously returned
+by '-list-thread-groups --available' must be used.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'attach'.
+
+Example
+.......
+
+     (gdb)
+     -target-attach 34
+     =thread-created,id="1"
+     *stopped,thread-id="1",frame={addr="0xb7f7e410",func="bar",args=[]}
+     ^done
+     (gdb)
+
+The '-target-detach' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-detach [ PID | GID ]
+
+   Detach from the remote target which normally resumes its execution.
+If either PID or GID is specified, detaches from either the specified
+process, or specified thread group.  There's no output.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'detach'.
+
+Example
+.......
+
+     (gdb)
+     -target-detach
+     ^done
+     (gdb)
+
+The '-target-disconnect' Command
+--------------------------------
+
+Synopsis
+........
+
+      -target-disconnect
+
+   Disconnect from the remote target.  There's no output and the target
+is generally not resumed.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'disconnect'.
+
+Example
+.......
+
+     (gdb)
+     -target-disconnect
+     ^done
+     (gdb)
+
+The '-target-download' Command
+------------------------------
+
+Synopsis
+........
+
+      -target-download
+
+   Loads the executable onto the remote target.  It prints out an update
+message every half second, which includes the fields:
+
+'section'
+     The name of the section.
+'section-sent'
+     The size of what has been sent so far for that section.
+'section-size'
+     The size of the section.
+'total-sent'
+     The total size of what was sent so far (the current and the
+     previous sections).
+'total-size'
+     The size of the overall executable to download.
+
+Each message is sent as status record (*note GDB/MI Output Syntax:
+GDB/MI Output Syntax.).
+
+   In addition, it prints the name and size of the sections, as they are
+downloaded.  These messages include the following fields:
+
+'section'
+     The name of the section.
+'section-size'
+     The size of the section.
+'total-size'
+     The size of the overall executable to download.
+
+At the end, a summary is printed.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'load'.
+
+Example
+.......
+
+Note: each status message appears on a single line.  Here the messages
+have been broken down so that they can fit onto a page.
+
+     (gdb)
+     -target-download
+     +download,{section=".text",section-size="6668",total-size="9880"}
+     +download,{section=".text",section-sent="512",section-size="6668",
+     total-sent="512",total-size="9880"}
+     +download,{section=".text",section-sent="1024",section-size="6668",
+     total-sent="1024",total-size="9880"}
+     +download,{section=".text",section-sent="1536",section-size="6668",
+     total-sent="1536",total-size="9880"}
+     +download,{section=".text",section-sent="2048",section-size="6668",
+     total-sent="2048",total-size="9880"}
+     +download,{section=".text",section-sent="2560",section-size="6668",
+     total-sent="2560",total-size="9880"}
+     +download,{section=".text",section-sent="3072",section-size="6668",
+     total-sent="3072",total-size="9880"}
+     +download,{section=".text",section-sent="3584",section-size="6668",
+     total-sent="3584",total-size="9880"}
+     +download,{section=".text",section-sent="4096",section-size="6668",
+     total-sent="4096",total-size="9880"}
+     +download,{section=".text",section-sent="4608",section-size="6668",
+     total-sent="4608",total-size="9880"}
+     +download,{section=".text",section-sent="5120",section-size="6668",
+     total-sent="5120",total-size="9880"}
+     +download,{section=".text",section-sent="5632",section-size="6668",
+     total-sent="5632",total-size="9880"}
+     +download,{section=".text",section-sent="6144",section-size="6668",
+     total-sent="6144",total-size="9880"}
+     +download,{section=".text",section-sent="6656",section-size="6668",
+     total-sent="6656",total-size="9880"}
+     +download,{section=".init",section-size="28",total-size="9880"}
+     +download,{section=".fini",section-size="28",total-size="9880"}
+     +download,{section=".data",section-size="3156",total-size="9880"}
+     +download,{section=".data",section-sent="512",section-size="3156",
+     total-sent="7236",total-size="9880"}
+     +download,{section=".data",section-sent="1024",section-size="3156",
+     total-sent="7748",total-size="9880"}
+     +download,{section=".data",section-sent="1536",section-size="3156",
+     total-sent="8260",total-size="9880"}
+     +download,{section=".data",section-sent="2048",section-size="3156",
+     total-sent="8772",total-size="9880"}
+     +download,{section=".data",section-sent="2560",section-size="3156",
+     total-sent="9284",total-size="9880"}
+     +download,{section=".data",section-sent="3072",section-size="3156",
+     total-sent="9796",total-size="9880"}
+     ^done,address="0x10004",load-size="9880",transfer-rate="6586",
+     write-rate="429"
+     (gdb)
+
+GDB Command
+...........
+
+No equivalent.
+
+Example
+.......
+
+N.A.
+
+The '-target-flash-erase' Command
+---------------------------------
+
+Synopsis
+........
+
+      -target-flash-erase
+
+   Erases all known flash memory regions on the target.
+
+   The corresponding GDB command is 'flash-erase'.
+
+   The output is a list of flash regions that have been erased, with
+starting addresses and memory region sizes.
+
+     (gdb)
+     -target-flash-erase
+     ^done,erased-regions={address="0x0",size="0x40000"}
+     (gdb)
+
+The '-target-select' Command
+----------------------------
+
+Synopsis
+........
+
+      -target-select TYPE PARAMETERS ...
+
+   Connect GDB to the remote target.  This command takes two args:
+
+'TYPE'
+     The type of target, for instance 'remote', etc.
+'PARAMETERS'
+     Device names, host names and the like.  *Note Commands for Managing
+     Targets: Target Commands, for more details.
+
+   The output is a connection notification, followed by the address at
+which the target program is, in the following form:
+
+     ^connected,addr="ADDRESS",func="FUNCTION NAME",
+       args=[ARG LIST]
+
+GDB Command
+...........
+
+The corresponding GDB command is 'target'.
+
+Example
+.......
+
+     (gdb)
+     -target-select remote /dev/ttya
+     ^connected,addr="0xfe00a300",func="??",args=[]
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI File Transfer Commands,  Next: GDB/MI Ada Exceptions Commands,  Prev: GDB/MI Target Manipulation,  Up: GDB/MI
+
+27.21 GDB/MI File Transfer Commands
+===================================
+
+The '-target-file-put' Command
+------------------------------
+
+Synopsis
+........
+
+      -target-file-put HOSTFILE TARGETFILE
+
+   Copy file HOSTFILE from the host system (the machine running GDB) to
+TARGETFILE on the target system.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'remote put'.
+
+Example
+.......
+
+     (gdb)
+     -target-file-put localfile remotefile
+     ^done
+     (gdb)
+
+The '-target-file-get' Command
+------------------------------
+
+Synopsis
+........
+
+      -target-file-get TARGETFILE HOSTFILE
+
+   Copy file TARGETFILE from the target system to HOSTFILE on the host
+system.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'remote get'.
+
+Example
+.......
+
+     (gdb)
+     -target-file-get remotefile localfile
+     ^done
+     (gdb)
+
+The '-target-file-delete' Command
+---------------------------------
+
+Synopsis
+........
+
+      -target-file-delete TARGETFILE
+
+   Delete TARGETFILE from the target system.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'remote delete'.
+
+Example
+.......
+
+     (gdb)
+     -target-file-delete remotefile
+     ^done
+     (gdb)
+
+
+File: gdb.info,  Node: GDB/MI Ada Exceptions Commands,  Next: GDB/MI Support Commands,  Prev: GDB/MI File Transfer Commands,  Up: GDB/MI
+
+27.22 Ada Exceptions GDB/MI Commands
+====================================
+
+The '-info-ada-exceptions' Command
+----------------------------------
+
+Synopsis
+........
+
+      -info-ada-exceptions [ REGEXP]
+
+   List all Ada exceptions defined within the program being debugged.
+With a regular expression REGEXP, only those exceptions whose names
+match REGEXP are listed.
+
+GDB Command
+...........
+
+The corresponding GDB command is 'info exceptions'.
+
+Result
+......
+
+The result is a table of Ada exceptions.  The following columns are
+defined for each exception:
+
+'name'
+     The name of the exception.
+
+'address'
+     The address of the exception.
+
+Example
+.......
+
+     -info-ada-exceptions aint
+     ^done,ada-exceptions={nr_rows="2",nr_cols="2",
+     hdr=[{width="1",alignment="-1",col_name="name",colhdr="Name"},
+     {width="1",alignment="-1",col_name="address",colhdr="Address"}],
+     body=[{name="constraint_error",address="0x0000000000613da0"},
+     {name="const.aint_global_e",address="0x0000000000613b00"}]}
+
+Catching Ada Exceptions
+-----------------------
+
+The commands describing how to ask GDB to stop when a program raises an
+exception are described at *note Ada Exception GDB/MI Catchpoint
+Commands::.
+
+
+File: gdb.info,  Node: GDB/MI Support Commands,  Next: GDB/MI Miscellaneous Commands,  Prev: GDB/MI Ada Exceptions Commands,  Up: GDB/MI
+
+27.23 GDB/MI Support Commands
+=============================
+
+Since new commands and features get regularly added to GDB/MI, some
+commands are available to help front-ends query the debugger about
+support for these capabilities.  Similarly, it is also possible to query
+GDB about target support of certain features.
+
+The '-info-gdb-mi-command' Command
+----------------------------------
+
+Synopsis
+........
+
+      -info-gdb-mi-command CMD_NAME
+
+   Query support for the GDB/MI command named CMD_NAME.
+
+   Note that the dash ('-') starting all GDB/MI commands is technically
+not part of the command name (*note GDB/MI Input Syntax::), and thus
+should be omitted in CMD_NAME.  However, for ease of use, this command
+also accepts the form with the leading dash.
+
+GDB Command
+...........
+
+There is no corresponding GDB command.
+
+Result
+......
+
+The result is a tuple.  There is currently only one field:
+
+'exists'
+     This field is equal to '"true"' if the GDB/MI command exists,
+     '"false"' otherwise.
+
+Example
+.......
+
+Here is an example where the GDB/MI command does not exist:
+
+     -info-gdb-mi-command unsupported-command
+     ^done,command={exists="false"}
+
+And here is an example where the GDB/MI command is known to the
+debugger:
+
+     -info-gdb-mi-command symbol-list-lines
+     ^done,command={exists="true"}
+
+The '-list-features' Command
+----------------------------
+
+Returns a list of particular features of the MI protocol that this
+version of gdb implements.  A feature can be a command, or a new field
+in an output of some command, or even an important bugfix.  While a
+frontend can sometimes detect presence of a feature at runtime, it is
+easier to perform detection at debugger startup.
+
+   The command returns a list of strings, with each string naming an
+available feature.  Each returned string is just a name, it does not
+have any internal structure.  The list of possible feature names is
+given below.
+
+   Example output:
+
+     (gdb) -list-features
+     ^done,features=["feature1","feature2"]
+
+   The current list of features is:
+
+'frozen-varobjs'
+     Indicates support for the '-var-set-frozen' command, as well as
+     possible presence of the 'frozen' field in the output of
+     '-varobj-create'.
+'pending-breakpoints'
+     Indicates support for the '-f' option to the '-break-insert'
+     command.
+'python'
+     Indicates Python scripting support, Python-based pretty-printing
+     commands, and possible presence of the 'display_hint' field in the
+     output of '-var-list-children'
+'thread-info'
+     Indicates support for the '-thread-info' command.
+'data-read-memory-bytes'
+     Indicates support for the '-data-read-memory-bytes' and the
+     '-data-write-memory-bytes' commands.
+'breakpoint-notifications'
+     Indicates that changes to breakpoints and breakpoints created via
+     the CLI will be announced via async records.
+'ada-task-info'
+     Indicates support for the '-ada-task-info' command.
+'language-option'
+     Indicates that all GDB/MI commands accept the '--language' option
+     (*note Context management::).
+'info-gdb-mi-command'
+     Indicates support for the '-info-gdb-mi-command' command.
+'undefined-command-error-code'
+     Indicates support for the "undefined-command" error code in error
+     result records, produced when trying to execute an undefined GDB/MI
+     command (*note GDB/MI Result Records::).
+'exec-run-start-option'
+     Indicates that the '-exec-run' command supports the '--start'
+     option (*note GDB/MI Program Execution::).
+'data-disassemble-a-option'
+     Indicates that the '-data-disassemble' command supports the '-a'
+     option (*note GDB/MI Data Manipulation::).
+'simple-values-ref-types'
+     Indicates that the '--simple-values' argument to the
+     '-stack-list-arguments', '-stack-list-locals',
+     '-stack-list-variables', and '-var-list-children' commands takes
+     reference types into account: that is, a value is considered simple
+     if it is neither an array, structure, or union, nor a reference to
+     an array, structure, or union.
+
+The '-list-target-features' Command
+-----------------------------------
+
+Returns a list of particular features that are supported by the target.
+Those features affect the permitted MI commands, but unlike the features
+reported by the '-list-features' command, the features depend on which
+target GDB is using at the moment.  Whenever a target can change, due to
+commands such as '-target-select', '-target-attach' or '-exec-run', the
+list of target features may change, and the frontend should obtain it
+again.  Example output:
+
+     (gdb) -list-target-features
+     ^done,features=["async"]
+
+   The current list of features is:
+
+'async'
+     Indicates that the target is capable of asynchronous command
+     execution, which means that GDB will accept further commands while
+     the target is running.
+
+'reverse'
+     Indicates that the target is capable of reverse execution.  *Note
+     Reverse Execution::, for more information.
 
 
 File: gdb.info,  Node: GDB/MI Miscellaneous Commands,  Prev: GDB/MI Support Commands,  Up: GDB/MI
@@ -3413,7 +4211,7 @@ and TeX (or 'texi2roff') to typeset the printed version.
 
    GDB includes an already formatted copy of the on-line Info version of
 this manual in the 'gdb' subdirectory.  The main Info file is
-'gdb-16.3/gdb/gdb.info', and it refers to subordinate files matching
+'gdb-17.1/gdb/gdb.info', and it refers to subordinate files matching
 'gdb.info*' in the same directory.  If necessary, you can print out
 these files, or read them with any editor; but they are easier to read
 using the 'info' subsystem in GNU Emacs or the standalone 'info'
@@ -3423,7 +4221,7 @@ program, available as part of the GNU Texinfo distribution.
 Info formatting programs, such as 'texinfo-format-buffer' or 'makeinfo'.
 
    If you have 'makeinfo' installed, and are in the top level GDB source
-directory ('gdb-16.3', in the case of version 16.3), you can make the
+directory ('gdb-17.1', in the case of version 17.1), you can make the
 Info file by typing:
 
      cd gdb
@@ -3449,7 +4247,7 @@ On its own, TeX cannot either read or typeset a Texinfo file.
 
    If you have TeX and a DVI printer program installed, you can typeset
 and print this manual.  First switch to the 'gdb' subdirectory of the
-main source directory (for example, to 'gdb-16.3/gdb') and type:
+main source directory (for example, to 'gdb-17.1/gdb') and type:
 
      make gdb.dvi
 
@@ -3457,7 +4255,7 @@ main source directory (for example, to 'gdb-16.3/gdb') and type:
 
    ---------- Footnotes ----------
 
-   (1) In 'gdb-16.3/gdb/refcard.ps' of the version 16.3 release.
+   (1) In 'gdb-17.1/gdb/refcard.ps' of the version 17.1 release.
 
 
 File: gdb.info,  Node: Installing GDB,  Next: Maintenance Commands,  Prev: Formatting Documentation,  Up: Top
@@ -3620,35 +4418,35 @@ preparing GDB for installation; you can then use 'make' to build the
 a single directory, whose name is usually composed by appending the
 version number to 'gdb'.
 
-   For example, the GDB version 16.3 distribution is in the 'gdb-16.3'
+   For example, the GDB version 17.1 distribution is in the 'gdb-17.1'
 directory.  That directory contains:
 
-'gdb-16.3/configure (and supporting files)'
+'gdb-17.1/configure (and supporting files)'
      script for configuring GDB and all its supporting libraries
 
-'gdb-16.3/gdb'
+'gdb-17.1/gdb'
      the source specific to GDB itself
 
-'gdb-16.3/bfd'
+'gdb-17.1/bfd'
      source for the Binary File Descriptor library
 
-'gdb-16.3/include'
+'gdb-17.1/include'
      GNU include files
 
-'gdb-16.3/libiberty'
+'gdb-17.1/libiberty'
      source for the '-liberty' free software library
 
-'gdb-16.3/opcodes'
+'gdb-17.1/opcodes'
      source for the library of opcode tables and disassemblers
 
-'gdb-16.3/readline'
+'gdb-17.1/readline'
      source for the GNU command-line interface
 
    There may be other subdirectories as well.
 
    The simplest way to configure and build GDB is to run 'configure'
 from the 'gdb-VERSION-NUMBER' source directory, which in this example is
-the 'gdb-16.3' directory.
+the 'gdb-17.1' directory.
 
    First switch to the 'gdb-VERSION-NUMBER' source directory if you are
 not already in it; then run 'configure'.  Pass the identifier for the
@@ -3656,7 +4454,7 @@ platform on which GDB will run as an argument.
 
    For example:
 
-     cd gdb-16.3
+     cd gdb-17.1
      ./configure
      make
 
@@ -3704,13 +4502,13 @@ to specify a path to find 'configure' itself from your working
 directory.  If the path to 'configure' would be the same as the argument
 to '--srcdir', you can leave out the '--srcdir' option; it is assumed.)
 
-   For example, with version 16.3, you can build GDB in a separate
+   For example, with version 17.1, you can build GDB in a separate
 directory for a Sun 4 like this:
 
-     cd gdb-16.3
+     cd gdb-17.1
      mkdir ../gdb-sun4
      cd ../gdb-sun4
-     ../gdb-16.3/configure
+     ../gdb-17.1/configure
      make
 
    When 'configure' builds a configuration using a remote source
@@ -3721,7 +4519,7 @@ the example, you'd find the Sun 4 library 'libiberty.a' in the directory
 
    Make sure that your path to the 'configure' script has just one
 instance of 'gdb' in it.  If your path to 'configure' looks like
-'../gdb-16.3/gdb/configure', you are configuring only one subdirectory
+'../gdb-17.1/gdb/configure', you are configuring only one subdirectory
 of GDB, not the whole package.  This leads to build errors about missing
 include files such as 'bfd/bfd.h'.
 
@@ -3737,8 +4535,8 @@ a configured directory--whatever directory you were in when you called
 
    The 'Makefile' that 'configure' generates in each source directory
 also runs recursively.  If you type 'make' in a source directory such as
-'gdb-16.3' (or in a separate configured directory configured with
-'--srcdir=DIRNAME/gdb-16.3'), you will build all the required libraries,
+'gdb-17.1' (or in a separate configured directory configured with
+'--srcdir=DIRNAME/gdb-17.1'), you will build all the required libraries,
 and then build GDB.
 
    When you have multiple hosts or targets configured in separate
@@ -3783,7 +4581,7 @@ you can use it to test your guesses on abbreviations--for example:
      Invalid configuration `i986v': machine `i986v' not recognized
 
 'config.sub' is also distributed in the GDB source directory
-('gdb-16.3', for version 16.3).
+('gdb-17.1', for version 17.1).
 
 
 File: gdb.info,  Node: Configure Options,  Next: System-wide configuration,  Prev: Config Names,  Up: Installing GDB
@@ -3842,6 +4640,13 @@ described here.
      Configure GDB for cross-debugging programs running on the specified
      list of targets.  The special value 'all' configures GDB for
      debugging programs running on any target it supports.
+
+'--enable-binary-file-formats=[FORMAT]...'
+'--enable-binary-file-formats=all'
+     Configure GDB to support certain binary file formats.  If a format
+     is the main (or only) file format for a given target, the configure
+     script may add support to it anyway, and warn the user.  If not
+     given, all file formats that GDB supports are compiled in.
 
 '--with-gdb-datadir=PATH'
      Set the GDB-specific data directory.  GDB will look here for
@@ -3926,8 +4731,8 @@ described here.
      GDB scripting much more powerful than the restricted CLI scripting
      language.  If your host does not have Python installed, you can
      find it on <http://www.python.org/download/>.  The oldest version
-     of Python supported by GDB is 3.0.1.  The optional argument PYTHON
-     is used to find the Python headers and libraries.  It can be either
+     of Python supported by GDB is 3.4.  The optional argument PYTHON is
+     used to find the Python headers and libraries.  It can be either
      the name of a Python executable, or the name of the directory in
      which Python is installed.
 
@@ -4105,6 +4910,12 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      list.  This command is useful for debugging the agent version of
      dynamic printf (*note Dynamic Printf::).
 
+'maint canonicalize NAME'
+     Print the canonical form of NAME, a C++ name.  Because a C++ name
+     may have multiple possible spellings, GDB computes a canonical form
+     of a name for internal use.  For example, 'short int' and 'short'
+     are two ways to name the same type.
+
 'maint info breakpoints'
      Using the same format as 'info breakpoints', display both the
      breakpoints you've set explicitly, and those GDB is using for
@@ -4250,12 +5061,12 @@ commands that turn on debugging messages, see *note Debugging Output::.)
           only if non-stop mode is active (*note Non-Stop Mode::) and
           the target architecture supports displaced stepping.
 
-'maint check-psymtabs'
+'maint check psymtabs'
      Check the consistency of currently expanded psymtabs versus
      symtabs.  Use this to check, for example, whether a symbol is in
      one but not the other.
 
-'maint check-symtabs'
+'maint check symtabs'
      Check the consistency of currently expanded symtabs.
 
 'maint expand-symtabs [REGEXP]'
@@ -4761,32 +5572,41 @@ commands that turn on debugging messages, see *note Debugging Output::.)
      is always done on the main thread, and is therefore always
      synchronous.
 
-'maint set dwarf unwinders'
-'maint show dwarf unwinders'
-     Control use of the DWARF frame unwinders.
-
-     Many targets that support DWARF debugging use GDB's DWARF frame
-     unwinders to build the backtrace.  Many of these targets will also
-     have a second mechanism for building the backtrace for use in cases
-     where DWARF information is not available, this second mechanism is
-     often an analysis of a function's prologue.
-
-     In order to extend testing coverage of the second level stack
-     unwinding mechanisms it is helpful to be able to disable the DWARF
-     stack unwinders, this can be done with this switch.
-
-     In normal use of GDB disabling the DWARF unwinders is not
-     advisable, there are cases that are better handled through DWARF
-     than prologue analysis, and the debug experience is likely to be
-     better with the DWARF frame unwinders enabled.
-
-     If DWARF frame unwinders are not supported for a particular target
-     architecture, then enabling this flag does not cause them to be
-     used.
-
 'maint info frame-unwinders'
      List the frame unwinders currently in effect, starting with the
-     highest priority.
+     highest priority.  This also lists the unwinder class, which is
+     mostly defined by which area of GDB uses it.  The currently
+     available classes are:
+
+     'GDB'
+          Internal unwinders, added by GDB core.
+     'EXTENSION'
+          Unwinders added by extension languages.
+     'DEBUGINFO'
+          Unwinders installed by debug information readers.
+     'ARCH'
+          Unwinders installed by the architecture specific code.
+
+'maint frame-unwinder disable [-all | -name NAME | [-class] CLASS]'
+'maint frame-unwinder enable [-all | -name NAME | [-class] CLASS]'
+     Disable or enable frame unwinders.  This is meant only as a testing
+     tool, and GDB is not guaranteed to work properly if it is unable to
+     find valid frame unwinders.
+
+     The meaning of each of the invocations are as follows:
+
+     ''-all''
+          Disable or enable all unwinders.
+     ''-name' NAME'
+          NAME is the exact name of the unwinder to be disabled or
+          enabled.
+     '['-class'] CLASS'
+          CLASS is the class of frame unwinders to be disabled or
+          enabled.  The class may include the prefix 'FRAME_UNWINDER_',
+          but it is not required.
+
+     NAME and CLASS are always case insensitive.  If no option starting
+     with '-' is given, GDB assumes '-class'.
 
 'maint set worker-threads'
 'maint show worker-threads'
@@ -5192,7 +6012,7 @@ than 126 must not be used.  Runs of six repeats ('#') or seven repeats
 ('$') can be expanded using a repeat count of only five ('"').  For
 example, '00000000' can be encoded as '0*"00'.
 
-   *Note Standard Replies:: for standard error responses, and how to
+   *Note Standard Replies::, for standard error responses, and how to
 respond indicating a command is not supported.
 
    In describing packets (commands and responses), each description has
@@ -6790,7 +7610,7 @@ GDB packet uses spaces to separate its components.
 'qSearch:memory:ADDRESS;LENGTH;SEARCH-PATTERN'
      Search LENGTH bytes at ADDRESS for SEARCH-PATTERN.  Both ADDRESS
      and LENGTH are encoded in hex; SEARCH-PATTERN is a sequence of
-     bytes, also hex encoded.
+     binary-encoded bytes (*note Binary Data::).
 
      Reply:
      '0'

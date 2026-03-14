@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1131,7 +1131,7 @@ gen_ds_form (uint32_t *buf, int opcd, int rst, int ra, int ds, int xo)
   return 1;
 }
 
-/* Followings are frequently used ds-form instructions.  */
+/* Following are frequently used ds-form instructions.  */
 
 #define GEN_STD(buf, rs, ra, offset)	gen_ds_form (buf, 62, rs, ra, offset, 0)
 #define GEN_STDU(buf, rs, ra, offset)	gen_ds_form (buf, 62, rs, ra, offset, 1)
@@ -1157,7 +1157,7 @@ gen_d_form (uint32_t *buf, int opcd, int rst, int ra, int si)
   return 1;
 }
 
-/* Followings are frequently used d-form instructions.  */
+/* Following are frequently used d-form instructions.  */
 
 #define GEN_ADDI(buf, rt, ra, si)	gen_d_form (buf, 14, rt, ra, si)
 #define GEN_ADDIS(buf, rt, ra, si)	gen_d_form (buf, 15, rt, ra, si)
@@ -1190,7 +1190,7 @@ gen_xfx_form (uint32_t *buf, int opcd, int rst, int ri, int xo)
   return 1;
 }
 
-/* Followings are frequently used xfx-form instructions.  */
+/* Following are frequently used xfx-form instructions.  */
 
 #define GEN_MFSPR(buf, rt, spr)		gen_xfx_form (buf, 31, rt, spr, 339)
 #define GEN_MTSPR(buf, rt, spr)		gen_xfx_form (buf, 31, rt, spr, 467)
@@ -1223,7 +1223,7 @@ gen_x_form (uint32_t *buf, int opcd, int rst, int ra, int rb, int xo, int rc)
   return 1;
 }
 
-/* Followings are frequently used x-form instructions.  */
+/* Following are frequently used x-form instructions.  */
 
 #define GEN_OR(buf, ra, rs, rb)		gen_x_form (buf, 31, rs, ra, rb, 444, 0)
 #define GEN_MR(buf, ra, rs)		GEN_OR (buf, ra, rs, rs)

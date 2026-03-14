@@ -1,6 +1,6 @@
 /* Target-dependent, architecture-independent code for DICOS, for GDB.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 void
 dicos_init_abi (struct gdbarch *gdbarch)
 {
-  set_gdbarch_so_ops (gdbarch, &solib_target_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_target_solib_ops);
 
   /* Every process, although has its own address space, sees the same
      list of shared libraries.  There's no "main executable" in DICOS,
@@ -53,9 +53,7 @@ dicos_init_abi (struct gdbarch *gdbarch)
 int
 dicos_load_module_p (bfd *abfd, int header_size)
 {
-  long storage_needed;
   int ret = 0;
-  asymbol **symbol_table = NULL;
   const char *symname = "Dicos_loadModuleInfo";
   asection *section;
 
@@ -75,42 +73,19 @@ dicos_load_module_p (bfd *abfd, int header_size)
   /* Dicos LMs always have a "Dicos_loadModuleInfo" symbol
      defined.  Look for it.  */
 
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
-  if (storage_needed < 0)
+  gdb::array_view<asymbol *> symbol_table
+    = gdb_bfd_canonicalize_symtab (abfd, false);
+
+  for (asymbol *sym : symbol_table)
     {
-      warning (_("Can't read elf symbols from %s: %s"),
-	       bfd_get_filename (abfd),
-	       bfd_errmsg (bfd_get_error ()));
-      return 0;
-    }
-
-  if (storage_needed > 0)
-    {
-      long i, symcount;
-
-      symbol_table = (asymbol **) xmalloc (storage_needed);
-      symcount = bfd_canonicalize_symtab (abfd, symbol_table);
-
-      if (symcount < 0)
-	warning (_("Can't read elf symbols from %s: %s"),
-		 bfd_get_filename (abfd),
-		 bfd_errmsg (bfd_get_error ()));
-      else
+      if (sym->name != NULL
+	  && symname[0] == sym->name[0]
+	  && strcmp (symname + 1, sym->name + 1) == 0)
 	{
-	  for (i = 0; i < symcount; i++)
-	    {
-	      asymbol *sym = symbol_table[i];
-	      if (sym->name != NULL
-		  && symname[0] == sym->name[0]
-		  && strcmp (symname + 1, sym->name + 1) == 0)
-		{
-		  ret = 1;
-		  break;
-		}
-	    }
+	  ret = 1;
+	  break;
 	}
     }
 
-  xfree (symbol_table);
   return ret;
 }

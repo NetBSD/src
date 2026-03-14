@@ -1,4 +1,4 @@
---  Copyright 2004-2024 Free Software Foundation, Inc.
+--  Copyright 2004-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -64,6 +64,12 @@ procedure Fixed_Points is
    for  Another_Type'size  use 64;
    Another_Fixed : Another_Type := Another_Delta * 5;
 
+   Semicircle_Delta : constant := 1.0/(2**31);
+   type Semicircle_Type is delta Semicircle_Delta range -1.0 .. (1.0 - Semicircle_Delta);
+   for  Semicircle_Type'small use Semicircle_Delta;
+   for  Semicircle_Type'size  use 32;
+   Object_Fixed : Semicircle_Type := Semicircle_Delta * 5;
+
 begin
    Base_Object := 1.0/16.0;   -- Set breakpoint here
    Subtype_Object := 1.0/16.0;
@@ -75,4 +81,5 @@ begin
    Do_Nothing (FP4_Var'Address);
    Do_Nothing (FP5_Var'Address);
    Do_Nothing (Another_Fixed'Address);
+   Do_Nothing (Object_Fixed'Address);
 end Fixed_Points;

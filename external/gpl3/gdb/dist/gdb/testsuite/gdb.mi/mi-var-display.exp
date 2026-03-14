@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
     return -1
 }
 
-if {[mi_clean_restart $binfile]} {
+if {[mi_clean_restart $::testfile]} {
     return
 }
 
@@ -96,7 +96,7 @@ mi_gdb_test "-var-evaluate-expression bar" \
 # Desc: change value of bar
 mi_gdb_test "-var-assign bar 3" \
 	"\\^done,value=\"0x3\"" \
-	"assing to variable bar"
+	"assign to variable bar"
 
 mi_gdb_test "-var-set-format bar decimal" \
 	"\\^done,format=\"decimal\",value=\"3\"" \
@@ -152,7 +152,7 @@ mi_gdb_test "-var-evaluate-expression foo" \
 # Desc: change value of foo
 mi_gdb_test "-var-assign foo 3" \
 	"\\^done,value=\"03\"" \
-	"assing to variable foo"
+	"assign to variable foo"
 
 mi_gdb_test "-var-set-format foo decimal" \
 	"\\^done,format=\"decimal\",value=\"3\"" \

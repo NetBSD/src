@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -413,5 +413,10 @@ extern enum return_value_convention default_gdbarch_return_value
      (struct gdbarch *gdbarch, struct value *function, struct type *valtype,
       struct regcache *regcache, struct value **read_value,
       const gdb_byte *writebuf);
+
+/* Default implementation of gdbarch default_get_shadow_stack_pointer
+   method.  */
+extern std::optional<CORE_ADDR> default_get_shadow_stack_pointer
+  (gdbarch *gdbarch, regcache *regcache, bool &shadow_stack_enabled);
 
 #endif /* GDB_ARCH_UTILS_H */

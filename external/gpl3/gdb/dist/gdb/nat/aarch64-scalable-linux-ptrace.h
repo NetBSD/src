@@ -1,7 +1,7 @@
 /* Common native Linux definitions for the AArch64 scalable
    extensions: SVE and SME.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

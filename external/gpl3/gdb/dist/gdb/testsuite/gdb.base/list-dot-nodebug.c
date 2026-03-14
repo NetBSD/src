@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2024 Free Software Foundation, Inc.
+   Copyright 2024-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,4 +30,13 @@ main ()
 {
   foo (&x);
   return 0;
+}
+
+void
+_start ()
+{
+  (void) main ();
+
+  while (1)
+    ;
 }

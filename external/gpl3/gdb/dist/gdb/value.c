@@ -1,6 +1,6 @@
 /* Low level packing and unpacking of values for GDB, the GNU Debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,7 @@
 #include <utility>
 #include <vector>
 #include "completer.h"
+#include "gdbsupport/cleanups.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/array-view.h"
 #include "cli/cli-style.h"
@@ -55,10 +56,17 @@
 /* Definition of a user function.  */
 struct internal_function
 {
+  internal_function (std::string name, internal_function_fn_noside handler,
+		     void *cookie)
+    : name (std::move (name)),
+      handler (handler),
+      cookie (cookie)
+  {}
+
   /* The name of the function.  It is a bit odd to have this in the
      function itself -- the user might use a differently-named
      convenience variable to hold the function.  */
-  char *name;
+  std::string name;
 
   /* The handler.  */
   internal_function_fn_noside handler;
@@ -66,6 +74,8 @@ struct internal_function
   /* User data for the handler.  */
   void *cookie;
 };
+
+using internal_function_up = std::unique_ptr<internal_function>;
 
 /* Returns true if the ranges defined by [offset1, offset1+len1) and
    [offset2, offset2+len2) overlap.  */
@@ -98,7 +108,7 @@ ranges_contain (const std::vector<range> &ranges, LONGEST offset,
      range, we can do a binary search for the position the given range
      would be inserted if we only considered the starting OFFSET of
      ranges.  We call that position I.  Since we also have LENGTH to
-     care for (this is a range afterall), we need to check if the
+     care for (this is a range after all), we need to check if the
      _previous_ range overlaps the I range.  E.g.,
 
 	 R
@@ -258,7 +268,7 @@ insert_into_bit_range_vector (std::vector<range> *vectorp,
   /* Do a binary search for the position the given range would be
      inserted if we only considered the starting OFFSET of ranges.
      Call that position I.  Since we also have LENGTH to care for
-     (this is a range afterall), we need to check if the _previous_
+     (this is a range after all), we need to check if the _previous_
      range overlaps the I range.  E.g., calling R the new range:
 
        #1 - overlaps with previous
@@ -1865,6 +1875,19 @@ struct internalvar
     : name (std::move (name))
   {}
 
+  internalvar (internalvar &&other)
+    : name (std::move(other.name)),
+      kind (other.kind),
+      u (other.u)
+  {
+    other.kind = INTERNALVAR_VOID;
+  }
+
+  ~internalvar ()
+  {
+    clear_internalvar (this);
+  }
+
   std::string name;
 
   /* We support various different kinds of content of an internal variable.
@@ -2277,13 +2300,13 @@ set_internalvar_string (struct internalvar *var, const char *string)
 }
 
 static void
-set_internalvar_function (struct internalvar *var, struct internal_function *f)
+set_internalvar_function (internalvar *var, internal_function_up f)
 {
   /* Clean up old contents.  */
   clear_internalvar (var);
 
   var->kind = INTERNALVAR_FUNCTION;
-  var->u.fn.function = f;
+  var->u.fn.function = f.release ();
   var->u.fn.canonical = 1;
   /* Variables installed here are always the canonical version.  */
 }
@@ -2302,6 +2325,10 @@ clear_internalvar (struct internalvar *var)
       xfree (var->u.string);
       break;
 
+    case INTERNALVAR_FUNCTION:
+      delete var->u.fn.function;
+      break;
+
     default:
       break;
     }
@@ -2316,18 +2343,6 @@ internalvar_name (const struct internalvar *var)
   return var->name.c_str ();
 }
 
-static struct internal_function *
-create_internal_function (const char *name,
-			  internal_function_fn_noside handler, void *cookie)
-{
-  struct internal_function *ifn = new (struct internal_function);
-
-  ifn->name = xstrdup (name);
-  ifn->handler = handler;
-  ifn->cookie = cookie;
-  return ifn;
-}
-
 const char *
 value_internal_function_name (struct value *val)
 {
@@ -2338,7 +2353,7 @@ value_internal_function_name (struct value *val)
   result = get_internalvar_function (VALUE_INTERNALVAR (val), &ifn);
   gdb_assert (result);
 
-  return ifn->name;
+  return ifn->name.c_str ();
 }
 
 struct value *
@@ -2373,11 +2388,9 @@ static struct cmd_list_element *
 do_add_internal_function (const char *name, const char *doc,
 			  internal_function_fn_noside handler, void *cookie)
 {
-  struct internal_function *ifn;
-  struct internalvar *var = lookup_internalvar (name);
-
-  ifn = create_internal_function (name, handler, cookie);
-  set_internalvar_function (var, ifn);
+  set_internalvar_function (lookup_internalvar (name),
+			    std::make_unique<internal_function> (name, handler,
+								 cookie));
 
   return add_cmd (name, no_class, function_command, doc, &functionlist);
 }
@@ -2821,7 +2834,7 @@ value_as_address (struct value *val)
 #endif
 }
 
-/* Unpack raw data (copied from debugee, target byte order) at VALADDR
+/* Unpack raw data (copied from debuggee, target byte order) at VALADDR
    as a long, or as a double, assuming the raw data is described
    by type TYPE.  Knows how to convert different sizes of values
    and can convert between fixed and floating point.  We don't assume
@@ -2912,7 +2925,7 @@ unpack_long (struct type *type, const gdb_byte *valaddr)
     }
 }
 
-/* Unpack raw data (copied from debugee, target byte order) at VALADDR
+/* Unpack raw data (copied from debuggee, target byte order) at VALADDR
    as a CORE_ADDR, assuming the raw data is described by type TYPE.
    We don't assume any alignment for the raw data.  Return value is in
    host byte order.
@@ -3254,6 +3267,9 @@ unpack_bits_as_long (struct type *field_type, const gdb_byte *valaddr,
 	}
     }
 
+  if (field_type->code () == TYPE_CODE_RANGE)
+    val += field_type->bounds ()->bias;
+
   return val;
 }
 
@@ -3284,17 +3300,24 @@ unpack_value_field_as_long (struct type *type, const gdb_byte *valaddr,
   return 1;
 }
 
-/* Unpack a field FIELDNO of the specified TYPE, from the anonymous
-   object at VALADDR.  See unpack_bits_as_long for more details.  */
+/* See value.h.  */
+
+LONGEST
+unpack_field_as_long (const gdb_byte *valaddr, struct field *field)
+{
+  int bitpos = field->loc_bitpos ();
+  int bitsize = field->bitsize ();
+  struct type *field_type = field->type ();
+
+  return unpack_bits_as_long (field_type, valaddr, bitpos, bitsize);
+}
+
+/* See value.h.  */
 
 LONGEST
 unpack_field_as_long (struct type *type, const gdb_byte *valaddr, int fieldno)
 {
-  int bitpos = type->field (fieldno).loc_bitpos ();
-  int bitsize = type->field (fieldno).bitsize ();
-  struct type *field_type = type->field (fieldno).type ();
-
-  return unpack_bits_as_long (field_type, valaddr, bitpos, bitsize);
+  return unpack_field_as_long (valaddr, &type->field (fieldno));
 }
 
 /* See value.h.  */
@@ -4474,9 +4497,7 @@ test_value_copy ()
 } /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_values ();
-void
-_initialize_values ()
+INIT_GDB_FILE (values)
 {
   cmd_list_element *show_convenience_cmd
     = add_cmd ("convenience", no_class, show_convenience, _("\

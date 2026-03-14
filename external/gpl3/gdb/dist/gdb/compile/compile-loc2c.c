@@ -1,6 +1,6 @@
 /* Convert a DWARF location expression to C
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,6 +31,7 @@
 #include "dwarf2/frame.h"
 #include "value.h"
 #include "gdbarch.h"
+#include "extract-store-integer.h"
 
 
 
@@ -596,7 +597,7 @@ do_compile_dwarf_expr_to_c (int indent, string_file *stream,
 			    unsigned int addr_size,
 			    const gdb_byte *op_ptr, const gdb_byte *op_end,
 			    CORE_ADDR *initial,
-			    dwarf2_per_cu_data *per_cu,
+			    dwarf2_per_cu *per_cu,
 			    dwarf2_per_objfile *per_objfile)
 {
   /* We keep a counter so that labels and other objects we create have
@@ -1146,7 +1147,7 @@ compile_dwarf_expr_to_c (string_file *stream, const char *result_name,
 			 std::vector<bool> &registers_used,
 			 unsigned int addr_size,
 			 const gdb_byte *op_ptr, const gdb_byte *op_end,
-			 dwarf2_per_cu_data *per_cu,
+			 dwarf2_per_cu *per_cu,
 			 dwarf2_per_objfile *per_objfile)
 {
   do_compile_dwarf_expr_to_c (2, stream, GCC_UINTPTR, result_name, sym, pc,
@@ -1165,7 +1166,7 @@ compile_dwarf_bounds_to_c (string_file *stream,
 			   std::vector<bool> &registers_used,
 			   unsigned int addr_size,
 			   const gdb_byte *op_ptr, const gdb_byte *op_end,
-			   dwarf2_per_cu_data *per_cu,
+			   dwarf2_per_cu *per_cu,
 			   dwarf2_per_objfile *per_objfile)
 {
   do_compile_dwarf_expr_to_c (2, stream, "unsigned long ", result_name,

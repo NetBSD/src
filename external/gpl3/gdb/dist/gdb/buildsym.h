@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -55,7 +55,7 @@ struct subfile
   struct subfile *next = nullptr;
   std::string name;
 
-  /* This field is analoguous in function to symtab::filename_for_id.
+  /* This field is analogous in function to symtab::filename_for_id.
 
      It is used to look up existing subfiles in calls to start_subfile.  */
   std::string name_for_id;
@@ -448,7 +448,7 @@ private:
   struct pending *m_local_symbols = nullptr;
 };
 
-
+using buildsym_compunit_up = std::unique_ptr<buildsym_compunit>;
 
 extern void add_symbol_to_list (struct symbol *symbol,
 				struct pending **listhead);

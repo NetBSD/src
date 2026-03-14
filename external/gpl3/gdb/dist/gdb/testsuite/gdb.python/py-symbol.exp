@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,11 +20,11 @@ load_lib gdb-python.exp
 
 require allow_python_tests
 
-standard_testfile py-symbol.c py-symbol-2.c
+standard_testfile py-symbol.c py-symbol-2.c py-symbol-3.c
 
 set opts { debug additional_flags=-DUSE_TWO_FILES }
 if {[prepare_for_testing "failed to prepare" $testfile \
-	 [list $srcfile $srcfile2] $opts]} {
+	 [list $srcfile $srcfile2 $srcfile3] $opts]} {
     return -1
 }
 
@@ -36,8 +36,15 @@ set readnow_p [readnow]
 gdb_test "python print (len (gdb.lookup_static_symbols ('rr')))" \
     "2" "print (len (gdb.lookup_static_symbols ('rr')))"
 
+# This test does not make sense when readnow is in effect.
+if {!$readnow_p} {
+    # Make sure that the global symbol's symtab was not expanded.
+    gdb_test_no_output "pipe maint info symtab | grep \"name.*py-symbol-3.c\"" \
+	"global rr symtab was not expanded"
+}
+
 # Restart so we don't have expanded symtabs after the previous test.
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 # Test looking up a global symbol before we runto_main as this is the
 # point where we don't have a current frame, and we don't want to
@@ -65,7 +72,7 @@ gdb_test "python print (gdb.lookup_global_symbol('qq').needs_frame)" \
 # Similarly, test looking up a static symbol before we runto_main.
 set rr_line [gdb_get_line_number "line of rr"]
 set rr_line_alt [gdb_get_line_number "line of other rr" py-symbol-2.c]
-gdb_test "python print (gdb.lookup_global_symbol ('rr') is None)" "True" \
+gdb_test "python print (gdb.lookup_global_symbol ('qqrr') is None)" "True" \
     "lookup_global_symbol for static var"
 
 set cmd "python print (gdb.lookup_static_symbol ('rr').line)"
@@ -93,7 +100,6 @@ gdb_test_multiple $cmd "print value of rr" {
 	fail $gdb_test_name
     }
 }
-    
 
 gdb_test "python print (gdb.lookup_static_symbol ('rr').needs_frame)" \
     "False" \
@@ -135,16 +141,19 @@ gdb_test "python print (func.name)" "func" "test func.name"
 gdb_test "python print (func.print_name)" "func" "test func.print_name"
 gdb_test "python print (func.linkage_name)" "func" "test func.linkage_name"
 gdb_test "python print (func.addr_class == gdb.SYMBOL_LOC_BLOCK)" "True" "test func.addr_class"
+gdb_test "python print (func.domain == gdb.SYMBOL_FUNCTION_DOMAIN)" "True" "test func.domain"
 
 # Stop in a second file and ensure we find its local static symbol.
 gdb_breakpoint "function_in_other_file"
 gdb_continue_to_breakpoint "function_in_other_file"
 gdb_test "python print (gdb.lookup_static_symbol ('rr').value ())" "99" \
     "print value of rr from other file"
-gdb_test "python print (gdb.lookup_static_symbols ('rr')\[0\].value ())" "99" \
-    "print value of gdb.lookup_static_symbols ('rr')\[0\], from the other file"
-gdb_test "python print (gdb.lookup_static_symbols ('rr')\[1\].value ())" "42" \
-    "print value of gdb.lookup_static_symbols ('rr')\[1\], from the other file"
+# GDB doesn't really guarantee the order of these, so sort the values.
+gdb_test_no_output "python rrs = gdb.lookup_static_symbols ('rr')" \
+    "fetch all rr symbols, from the other file"
+gdb_test "python print (sorted(\[int(x.value()) for x in rrs\]))" \
+    "\\\[42, 99\\\]" \
+    "print values of all 'rr' symbols, from the other file"
 
 # Now continue back to the first source file.
 set linenum [gdb_get_line_number "Break at end."]
@@ -156,10 +165,12 @@ gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
 # static symbol from the second source file.
 gdb_test "python print (gdb.lookup_static_symbol ('rr').value ())" "42" \
     "print value of rr from main file"
-gdb_test "python print (gdb.lookup_static_symbols ('rr')\[0\].value ())" "99" \
-    "print value of gdb.lookup_static_symbols ('rr')\[0\], from the main file"
-gdb_test "python print (gdb.lookup_static_symbols ('rr')\[1\].value ())" "42" \
-    "print value of gdb.lookup_static_symbols ('rr')\[1\], from the main file"
+# This should be consistent with the first file.
+gdb_test_no_output "python rrs = gdb.lookup_static_symbols ('rr')" \
+    "fetch all rr symbols, from the main file"
+gdb_test "python print (sorted(\[int(x.value()) for x in rrs\]))" \
+    "\\\[42, 99\\\]" \
+    "print values of all 'rr' symbols, from the main file"
 
 # Test is_variable attribute.
 gdb_py_test_silent_cmd "python a = gdb.lookup_symbol(\'a\')" "Get variable a" 0
@@ -203,8 +214,10 @@ gdb_test "python print (t\[0\].symtab)" "${py_symbol_c}" "get symtab"
 # C++ tests
 # Recompile binary.
 lappend opts c++
-if {[prepare_for_testing "failed to prepare" "${binfile}-cxx" \
-	 [list $srcfile $srcfile2] $opts]} {
+set testfile $testfile-cxx
+set binfile [standard_output_file $testfile]
+if { [prepare_for_testing "failed to prepare" $testfile \
+	  [list $srcfile $srcfile2] $opts] } {
     return -1
 }
 
@@ -240,7 +253,7 @@ gdb_test "python print (cplusfunc.addr_class == gdb.SYMBOL_LOC_BLOCK)" "True" "t
 # Test is_valid when the objfile is unloaded.  This must be the last
 # test as it unloads the object file in GDB.
 # Start with a fresh gdb.
-clean_restart ${binfile}
+clean_restart ${::testfile}
 if {![runto_main]} {
     return 0
 }

@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,6 +39,15 @@ set obj [dap_check_request_and_response "set breakpoint" \
 					      logMessage [s "got {global_variable} - {local} = {global_variable - local}"]]]} \
 		  [list s $srcfile] $line]]
 set fn_bpno [dap_get_breakpoint_number $obj]
+
+set eol {\n}
+dap_wait_for_event_and_check "set breakpoint output, part 1" output \
+    {body category} stdout \
+    {body output} "No source file named log-message.c.$eol"
+
+dap_wait_for_event_and_check "set breakpoint output, part 2" output \
+    {body category} stdout \
+    {body output} "Breakpoint 1 (-source log-message.c -line $line) pending.$eol"
 
 dap_check_request_and_response "configurationDone" configurationDone
 

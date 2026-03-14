@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -89,11 +89,17 @@ require_filename (char **pp, char *filename)
   return 0;
 }
 
+template <typename T>
 static int
-require_int (char **pp, int *value)
+require_int (char **pp, T *value)
 {
+  constexpr bool is_signed = std::is_signed<T>::value;
+
   char *p;
   int count, firstdigit;
+
+  /* Max count of hexadecimal digits in T (1 hex digit is 4 bits).  */
+  int max_count = sizeof (T) * CHAR_BIT / 4;
 
   p = *pp;
   *value = 0;
@@ -111,7 +117,8 @@ require_int (char **pp, int *value)
 	firstdigit = nib;
 
       /* Don't allow overflow.  */
-      if (count >= 8 || (count == 7 && firstdigit >= 0x8))
+      if (count >= max_count
+	  || (is_signed && count == (max_count - 1) && firstdigit >= 0x8))
 	return -1;
 
       *value = *value * 16 + nib;
@@ -343,7 +350,8 @@ handle_open (char *own_buf)
 static void
 handle_pread (char *own_buf, int *new_packet_len)
 {
-  int fd, ret, len, offset, bytes_sent;
+  int fd, ret, len, bytes_sent;
+  off_t offset;
   char *p, *data;
   static int max_reply_size = -1;
 
@@ -410,7 +418,8 @@ handle_pread (char *own_buf, int *new_packet_len)
 static void
 handle_pwrite (char *own_buf, int packet_len)
 {
-  int fd, ret, len, offset;
+  int fd, ret, len;
+  off_t offset;
   char *p, *data;
 
   p = own_buf + strlen ("vFile:pwrite:");
@@ -504,7 +513,48 @@ handle_stat (char *own_buf, int *new_packet_len)
       return;
     }
 
-  if (lstat (filename, &st) == -1)
+  if (stat (filename, &st) == -1)
+    {
+      hostio_error (own_buf);
+      return;
+    }
+
+  host_to_fileio_stat (&st, &fst);
+
+  bytes_sent = hostio_reply_with_data (own_buf,
+				       (char *) &fst, sizeof (fst),
+				       new_packet_len);
+
+  /* If the response does not fit into a single packet, do not attempt
+     to return a partial response, but simply fail.  */
+  if (bytes_sent < sizeof (fst))
+    write_enn (own_buf);
+}
+
+static void
+handle_lstat (char *own_buf, int *new_packet_len)
+{
+  int ret, bytes_sent;
+  char *p;
+  struct stat st;
+  struct fio_stat fst;
+  char filename[HOSTIO_PATH_MAX];
+
+  p = own_buf + strlen ("vFile:lstat:");
+
+  if (require_filename (&p, filename)
+      || require_end (p))
+    {
+      hostio_packet_error (own_buf);
+      return;
+    }
+
+  if (hostio_fs_pid != 0)
+    ret = the_target->multifs_lstat (hostio_fs_pid, filename, &st);
+  else
+    ret = lstat (filename, &st);
+
+  if (ret == -1)
     {
       hostio_error (own_buf);
       return;
@@ -641,6 +691,8 @@ handle_vFile (char *own_buf, int packet_len, int *new_packet_len)
     handle_fstat (own_buf, new_packet_len);
   else if (startswith (own_buf, "vFile:stat:"))
     handle_stat (own_buf, new_packet_len);
+  else if (startswith (own_buf, "vFile:lstat:"))
+    handle_lstat (own_buf, new_packet_len);
   else if (startswith (own_buf, "vFile:close:"))
     handle_close (own_buf);
   else if (startswith (own_buf, "vFile:unlink:"))

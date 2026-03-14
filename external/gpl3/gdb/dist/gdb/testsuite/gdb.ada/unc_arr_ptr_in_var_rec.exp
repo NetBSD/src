@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,8 +37,9 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	"= \\(n => 3, ptr => 0x0, data => \\(3, 5, 8\\)\\)" \
 	"print My_Object with null Ptr"
 
+    # Accept "foo." prefix for older versions of GNAT.
     gdb_test "print my_object.ptr" \
-	"= \\(foo.table_access\\) 0x0" \
+	"= \\((foo.)?table_access\\) 0x0" \
 	"print My_Object.Ptr when null"
 
     # Same for My_P_Object...
@@ -48,7 +49,7 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	"print My_P_Object with null Ptr"
 
     gdb_test "print my_p_object.ptr" \
-	"\\(foo.p_table_access\\) 0x0" \
+	"\\((foo.)?p_table_access\\) 0x0" \
 	"print My_P_Object.Ptr when null"
 
     # Continue until the Ptr component of both objects get allocated.
@@ -68,7 +69,7 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	"print my_object after setting Ptr"
 
     gdb_test "print my_object.ptr" \
-	"\\(foo.table_access\\) $hex" \
+	"\\((foo.)?table_access\\) $hex" \
 	"print my_object.ptr when no longer null"
 
     gdb_test "print my_object.ptr.all" \
@@ -81,7 +82,7 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	"print my_p_object after setting Ptr"
 
     gdb_test "print my_p_object.ptr" \
-	"= \\(foo.p_table_access\\) $hex" \
+	"= \\((foo.)?p_table_access\\) $hex" \
 	"print My_P_Object.Ptr when no longer null"
 
     gdb_test "print my_p_object.ptr.all" \

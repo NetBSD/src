@@ -1,6 +1,6 @@
 /* Python interface to inferior threads.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -190,7 +190,7 @@ thpy_get_ptid (PyObject *self, void *closure)
 
   THPY_REQUIRE_VALID (thread_obj);
 
-  return gdbpy_create_ptid_object (thread_obj->thread->ptid);
+  return gdbpy_create_ptid_object (thread_obj->thread->ptid).release ();
 }
 
 /* Implement gdb.InferiorThread.ptid_string attribute.  */
@@ -361,23 +361,14 @@ thpy_repr (PyObject *self)
 			       target_pid_to_str (thr->ptid).c_str ());
 }
 
-/* Return a reference to a new Python object representing a ptid_t.
-   The object is a tuple containing (pid, lwp, tid). */
-PyObject *
+/* See python-internal.h.  */
+
+gdbpy_ref<>
 gdbpy_create_ptid_object (ptid_t ptid)
 {
-  int pid;
-  long lwp;
-  ULONGEST tid;
-  PyObject *ret;
-
-  ret = PyTuple_New (3);
-  if (!ret)
-    return NULL;
-
-  pid = ptid.pid ();
-  lwp = ptid.lwp ();
-  tid = ptid.tid ();
+  int pid = ptid.pid ();
+  long lwp = ptid.lwp ();
+  ULONGEST tid = ptid.tid ();
 
   gdbpy_ref<> pid_obj = gdb_py_object_from_longest (pid);
   if (pid_obj == nullptr)
@@ -389,10 +380,14 @@ gdbpy_create_ptid_object (ptid_t ptid)
   if (tid_obj == nullptr)
     return nullptr;
 
+  gdbpy_ref<> ret (PyTuple_New (3));
+  if (ret == nullptr)
+    return nullptr;
+
   /* Note that these steal references, hence the use of 'release'.  */
-  PyTuple_SET_ITEM (ret, 0, pid_obj.release ());
-  PyTuple_SET_ITEM (ret, 1, lwp_obj.release ());
-  PyTuple_SET_ITEM (ret, 2, tid_obj.release ());
+  PyTuple_SET_ITEM (ret.get (), 0, pid_obj.release ());
+  PyTuple_SET_ITEM (ret.get (), 1, lwp_obj.release ());
+  PyTuple_SET_ITEM (ret.get (), 2, tid_obj.release ());
 
   return ret;
 }

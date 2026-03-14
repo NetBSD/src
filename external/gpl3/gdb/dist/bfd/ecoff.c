@@ -1,5 +1,5 @@
 /* Generic ECOFF (Extended-COFF) routines.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Original version by Per Bothner.
    Full support added by Ian Lance Taylor, ian@cygnus.com.
 
@@ -661,18 +661,6 @@ _bfd_ecoff_slurp_symbolic_info (bfd *abfd,
 /* ECOFF symbol table routines.  The ECOFF symbol table is described
    in gcc/mips-tfile.c.  */
 
-/* ECOFF uses two common sections.  One is the usual one, and the
-   other is for small objects.  All the small objects are kept
-   together, and then referenced via the gp pointer, which yields
-   faster assembler code.  This is what we use for the small common
-   section.  */
-static asection ecoff_scom_section;
-static const asymbol ecoff_scom_symbol =
-  GLOBAL_SYM_INIT (SCOMMON, &ecoff_scom_section);
-static asection ecoff_scom_section =
-  BFD_FAKE_SECTION (ecoff_scom_section, &ecoff_scom_symbol,
-		    SCOMMON, 0, SEC_IS_COMMON | SEC_SMALL_DATA);
-
 /* Create an empty symbol.  */
 
 asymbol *
@@ -813,7 +801,7 @@ ecoff_set_symbol_info (bfd *abfd,
 	}
       /* Fall through.  */
     case scSCommon:
-      asym->section = &ecoff_scom_section;
+      asym->section = &_bfd_ecoff_scom_section;
       asym->flags = 0;
       break;
     case scVarRegister:
@@ -3144,9 +3132,9 @@ _bfd_ecoff_write_armap (bfd *abfd,
      complain that the index is out of date.  Actually, the Ultrix
      linker just checks the archive name; the GNU linker may check the
      date.  */
-  stat (bfd_get_filename (abfd), &statbuf);
-  _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
-		    (long) (statbuf.st_mtime + 60));
+  if (stat (bfd_get_filename (abfd), &statbuf) == 0)
+    _bfd_ar_spacepad (hdr.ar_date, sizeof (hdr.ar_date), "%ld",
+		      (long) (statbuf.st_mtime + ARMAP_TIME_OFFSET));
 
   /* The DECstation uses zeroes for the uid, gid and mode of the
      armap.  */
@@ -3441,7 +3429,7 @@ ecoff_link_add_externals (bfd *abfd,
 	    }
 	  /* Fall through.  */
 	case scSCommon:
-	  section = &ecoff_scom_section;
+	  section = &_bfd_ecoff_scom_section;
 	  break;
 	case scSUndefined:
 	  section = bfd_und_section_ptr;

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on CRIS processors, for GDB.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, Orjan Friberg,
@@ -23,6 +23,7 @@
 
 #include "osabi.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "gdbarch.h"
@@ -41,14 +42,10 @@ cris_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					       svr4_fetch_objfile_link_map);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
-
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 }
 
-void _initialize_cris_linux_tdep ();
-void
-_initialize_cris_linux_tdep ()
+INIT_GDB_FILE (cris_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_cris, 0, GDB_OSABI_LINUX,
 			  cris_linux_init_abi);

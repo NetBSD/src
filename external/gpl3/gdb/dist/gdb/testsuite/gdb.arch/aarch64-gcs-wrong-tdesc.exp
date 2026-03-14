@@ -1,0 +1,48 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that GDB complains when given a target description with the GCS feature
+# but not the GCS Linux feature.
+
+require allow_aarch64_gcs_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+    return
+}
+
+set xml_path "${srcdir}/${subdir}/aarch64-gcs-tdesc-without-linux.xml"
+
+gdb_test "set tdesc filename ${xml_path}" \
+    "warning: Incomplete GCS support in the target: missing Linux part. GCS feature disabled." \
+    "warn about incomplete GCS support"
+
+# We can't test a debugging session on a remote target because with the
+# wrong tdesc, GDB expects a g packet reply with the wrong size.
+if {[gdb_protocol_is_remote]} {
+    return
+}
+
+if ![runto_main] {
+    return
+}
+
+gdb_test "print \$gcspr" " = <unavailable>" "GCSPR is unavailable"
+
+# Now check that we can continue the debugging session normally.
+gdb_test "next"
+
+gdb_continue_to_end

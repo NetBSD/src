@@ -1,6 +1,6 @@
 /* Ada Pragma Import support.
 
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,8 @@ ada_imported_read_variable (struct symbol *symbol, const frame_info_ptr &frame)
 {
   const char *name = get_imported_name (symbol);
   bound_minimal_symbol minsym
-    = lookup_minimal_symbol_linkage (symbol->objfile ()->pspace (), name, false);
+    = lookup_minimal_symbol_linkage (symbol->objfile ()->pspace (), name,
+				     true, false);
   if (minsym.minsym == nullptr)
     error (_("could not find imported name %s"), name);
   return value_at (symbol->type (), minsym.value_address ());
@@ -108,7 +109,7 @@ ada_alias_get_block_value (const struct symbol *sym)
   if (real_symbol.symbol == nullptr)
     error (_("could not find alias '%s' for function '%s'"),
 	   name, sym->print_name ());
-  if (real_symbol.symbol->aclass () != LOC_BLOCK)
+  if (real_symbol.symbol->loc_class () != LOC_BLOCK)
     error (_("alias '%s' for function '%s' is not a function"),
 	   name, sym->print_name ());
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,8 @@ proc build_inferior {exefile lang} {
 proc restart_gdb {exefile} {
     global srcdir subdir
 
-    clean_restart $exefile
+    clean_restart
+    gdb_load $exefile
 
     if { ![allow_guile_tests] } {
 	return 0

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,10 +27,12 @@ foreach func_name { foo bar } {
     }
 }
 
-set binary_foo [standard_output_file "${testfile}-foo"]
-set binary_bar [standard_output_file "${testfile}-bar"]
+set testfile_foo $testfile-foo
+set testfile_bar $testfile-bar
+set binary_foo [standard_output_file $testfile_foo]
+set binary_bar [standard_output_file $testfile_bar]
 
-clean_restart $binary_foo
+clean_restart $testfile_foo
 
 if ![runto_main] {
    return -1

@@ -1,6 +1,6 @@
 /* Target-dependent code for the CSKY architecture, for GDB.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
@@ -1072,7 +1072,7 @@ csky_analyze_prologue (struct gdbarch *gdbarch,
 	    }
 	  else if (CSKY_32_IS_MOV_FP_SP (insn))
 	    {
-	      /* SP is saved to FP reg, means code afer prologue may
+	      /* SP is saved to FP reg, means code after prologue may
 		 modify SP.  */
 	      is_fp_saved = 1;
 	      adjust_fp = stacksize;
@@ -2159,9 +2159,10 @@ csky_frame_prev_register (const frame_info_ptr &this_frame,
 /* Data structures for the normal prologue-analysis-based
    unwinder.  */
 
-static const struct frame_unwind csky_unwind_cache = {
+static const struct frame_unwind_legacy csky_unwind_cache (
   "cski prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   csky_frame_this_id,
   csky_frame_prev_register,
@@ -2169,7 +2170,7 @@ static const struct frame_unwind csky_unwind_cache = {
   default_frame_sniffer,
   NULL,
   NULL
-};
+);
 
 static CORE_ADDR
 csky_check_long_branch (const frame_info_ptr &frame, CORE_ADDR pc)
@@ -2293,15 +2294,16 @@ csky_stub_prev_register (const frame_info_ptr &this_frame,
 				       prev_regnum);
 }
 
-static frame_unwind csky_stub_unwind = {
+static const frame_unwind_legacy csky_stub_unwind (
   "csky stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   csky_stub_this_id,
   csky_stub_prev_register,
   NULL,
   csky_stub_unwind_sniffer
-};
+);
 
 /* Implement the this_base, this_locals, and this_args hooks
    for the normal unwinder.  */
@@ -2665,7 +2667,7 @@ csky_pseudo_register_write (struct gdbarch *gdbarch, struct regcache *regcache,
 }
 
 /* Initialize the current architecture based on INFO.  If possible,
-   re-use an architecture from ARCHES, which is a list of
+   reuse an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
 
    Called at program startup, when reading a core file, and when
@@ -2880,9 +2882,7 @@ csky_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_csky_tdep ();
-void
-_initialize_csky_tdep ()
+INIT_GDB_FILE (csky_tdep)
 {
 
   gdbarch_register (bfd_arch_csky, csky_gdbarch_init);

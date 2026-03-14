@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -707,7 +707,7 @@ proc_with_prefix test_bkpt_explicit_loc {} {
 
     delete_breakpoints
     gdb_test "python bp1 = gdb.Breakpoint (line=bp1)" \
-	"RuntimeError.*: Line keyword should be an integer or a string.*" \
+	"RuntimeError.*: Line keyword should be an integer or a string\\.\r\n.*" \
 	"set explicit breakpoint by invalid line type"
 
     delete_breakpoints

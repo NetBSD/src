@@ -1,6 +1,6 @@
 /* Python interface to architecture
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -318,6 +318,16 @@ archpy_integer_type (PyObject *self, PyObject *args, PyObject *kw)
   return type_to_type_object (type);
 }
 
+/* Implementation of gdb.void_type.  */
+static PyObject *
+archpy_void_type (PyObject *self, PyObject *args)
+{
+  struct gdbarch *gdbarch;
+  ARCHPY_REQUIRE_VALID (self, gdbarch);
+
+  return type_to_type_object (builtin_type (gdbarch)->builtin_void);
+}
+
 /* __repr__ implementation for gdb.Architecture.  */
 
 static PyObject *
@@ -383,6 +393,10 @@ END_PC." },
     "integer_type (size [, signed]) -> type\n\
 Return an integer Type corresponding to the given bitsize and signed-ness.\n\
 If not specified, the type defaults to signed." },
+  { "void_type", (PyCFunction) archpy_void_type,
+    METH_NOARGS,
+    "void_type () -> type\n\
+Return a void Type." },
   { "registers", (PyCFunction) archpy_registers,
     METH_VARARGS | METH_KEYWORDS,
     "registers ([ group-name ]) -> Iterator.\n\

@@ -1,0 +1,70 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test calling methods and accessing members via reference.
+
+require allow_cplus_tests
+
+standard_testfile .cc
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+if {![runto_main]} {
+    return -1
+}
+
+# Set a breakpoint after the bar object is created and the reference is obtained.
+gdb_breakpoint [gdb_get_line_number "breakpoint here"]
+gdb_continue_to_breakpoint "after reference assignment"
+
+# Test that we can call the method through reference and get the expected result.
+gdb_test_multiple "print b.get_foo()" "print method call returning reference" {
+    -re "\\$\[0-9\]+ = \\(const foo &\\) @$hex: \\{m_a = 42\\}\r\n$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "Could not validate memory tag: Value can't be converted to integer\\." {
+	fail "$gdb_test_name"
+    }
+}
+
+# Test accessing the member through the reference.
+gdb_test "print b.get_foo ().m_a" \
+    "\\$\[0-9\]+ = 42" \
+    "print member access through reference"
+
+# Test calling method on the referenced object.
+gdb_test "print b.get_foo ().get_a()" \
+    "\\$\[0-9\]+ = 42" \
+    "print method call on referenced object"
+
+# Test that the stored reference works correctly.
+gdb_test_multiple "print ref" "print stored reference" {
+    -re "\\$\[0-9\]+ = \\(const foo &\\) @$hex: \\{m_a = 42\\}\r\n$gdb_prompt $" {
+	pass $gdb_test_name
+    }
+    -re "Could not validate memory tag: Value can't be converted to integer\\." {
+	fail "$gdb_test_name"
+    }
+}
+
+gdb_test "print ref.m_a" \
+    "\\$\[0-9\]+ = 42" \
+    "print member through stored reference"
+
+gdb_test "print ref.get_a()" \
+    "\\$\[0-9\]+ = 42" \
+    "print method call through stored reference"

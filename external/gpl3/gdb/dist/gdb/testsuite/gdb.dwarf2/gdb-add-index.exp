@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,7 +33,7 @@ if { [ensure_gdb_index $binfile] == -1 } {
 # Ok, we have a copy of $binfile with an index.
 # Restart gdb and verify the index was used.
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 gdb_test "mt print objfiles ${testfile}" \
     "(gdb_index|debug_names).*" \
     "index used"

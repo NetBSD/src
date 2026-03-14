@@ -1,0 +1,164 @@
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests gdb.Color.
+
+load_lib gdb-python.exp
+
+require allow_python_tests
+require {!is_remote host}
+
+# Start with a fresh GDB, but enable color support.
+with_ansi_styling_terminal {
+    clean_restart
+}
+
+gdb_test_no_output "python get_color_attrs = lambda c: \"%s %s %s %s %s\" % (str(c), c.colorspace, c.is_none, c.is_indexed, c.is_direct)" \
+    "get_color_attrs helper"
+
+gdb_test_no_output "python print_color_attrs = lambda c: print (get_color_attrs (c))" \
+    "print_color_attrs helper"
+
+gdb_test_no_output "python c = gdb.Color ()" \
+    "create color without params"
+gdb_test "python print_color_attrs (c)" "none 0 True False False" \
+    "print attrs of a color without params"
+
+gdb_test_no_output "python c = gdb.Color ('green')" \
+    "create color from basic name string"
+gdb_test "python print_color_attrs (c)" "green 1 False True False" \
+    "print attrs of a basic color name"
+gdb_test "python print (c.index)" "2" \
+    "print index of a basic color name"
+
+gdb_test_no_output "python c = gdb.Color (2)" \
+    "create color from basic index"
+gdb_test "python print_color_attrs (c)" "green 1 False True False" \
+    "print attrs of a basic color"
+gdb_test "python print (c.index)" "2" \
+    "print index of a basic color"
+
+gdb_test_no_output "python c = gdb.Color (14)" \
+    "create color from integer 14"
+gdb_test "python print_color_attrs (c)" "14 2 False True False" \
+    "print attrs of an color 14"
+gdb_test "python print (c.index)" "14" \
+    "print index of color 14"
+
+gdb_test_no_output "python c = gdb.Color (2, gdb.COLORSPACE_ANSI_8COLOR)" \
+    "create color from basic index and ansi colorspace"
+gdb_test "python print_color_attrs (c)" "green 1 False True False" \
+    "print attrs of a basic color with ansi colorspace"
+gdb_test "python print (c.index)" "2" \
+    "print index of a basic color with ansi colorspace"
+
+# Create a color using keyword arguments, and check it matches the
+# non-keyword color.
+gdb_test_no_output "python c2 = gdb.Color (color_space = gdb.COLORSPACE_ANSI_8COLOR, value = 2)" \
+    "create color from basic index and ansi colorspace using keywords"
+gdb_test "python print(get_color_attrs (c) == get_color_attrs (c2))" "True" \
+    "check attributes match"
+gdb_test "python print(c.index == c2.index)" "True" \
+    "check index matches"
+
+gdb_test_no_output "python c = gdb.Color (2, gdb.COLORSPACE_XTERM_256COLOR)" \
+    "create color from basic index and xterm256 colorspace"
+gdb_test "python print_color_attrs (c)" "2 3 False True False" \
+    "print attrs of a basic color with xterm256 colorspace"
+gdb_test "python print (c.index)" "2" \
+    "print index of a basic color with xterm256 colorspace"
+
+gdb_test_no_output "python c = gdb.Color ((171, 205, 239), gdb.COLORSPACE_RGB_24BIT)" \
+    "create color from rgb components"
+gdb_test "python print_color_attrs (c)" "#ABCDEF 4 False False True" \
+    "print attrs of an RGB color"
+gdb_test "python print (c.components)" "\\(171, 205, 239\\)" \
+    "print components of an RGB color"
+
+gdb_test_no_output "python c = gdb.Color ('none')" \
+    "create color from string none"
+gdb_test "python print_color_attrs (c)" "none 0 True False False" \
+    "print attrs of a color none"
+
+gdb_test_no_output "python c = gdb.Color ('254')" \
+    "create color from string 254"
+gdb_test "python print_color_attrs (c)" "254 3 False True False" \
+    "print attrs of an color 254"
+gdb_test "python print (c.index)" "254" \
+    "print index of color 254"
+
+gdb_test_no_output "python c_none = gdb.Color ('none')" \
+    "save default color"
+gdb_test_no_output "python c_red = gdb.Color ('red')" \
+    "save blue color"
+gdb_test_no_output "python c_green = gdb.Color ('green')" \
+    "save yellow color"
+gdb_test [concat "python print (c_red.escape_sequence (True) + " \
+    "c_green.escape_sequence (False) + 'red on green' + " \
+    "c_none.escape_sequence (False) + ' red on default' + " \
+    "c_none.escape_sequence (True))"] \
+    "\033\\\[31m\033\\\[42mred on green\033\\\[49m red on default\033\\\[39m" \
+    "escape sequences"
+gdb_test [concat "python print (c_red.escape_sequence (is_foreground = True) + " \
+    "c_green.escape_sequence (is_foreground = False) + 'red on green' + " \
+    "c_none.escape_sequence (is_foreground = False) + ' red on default' + " \
+    "c_none.escape_sequence (is_foreground = True))"] \
+    "\033\\\[31m\033\\\[42mred on green\033\\\[49m red on default\033\\\[39m" \
+    "escape sequences using keyword arguments"
+
+# Ensure that turning styling off means no escape sequences.
+gdb_test_no_output "set style enabled off"
+gdb_test_no_output "python print (c_red.escape_sequence (True), end='')"
+gdb_test_no_output "python print (c_red.escape_sequence (False), end='')"
+gdb_test_no_output "set style enabled on"
+
+gdb_test_multiline "Try to sub-class gdb.Color" \
+    "python" "" \
+    "class my_color(gdb.Color):" "" \
+    "  def __init__(self):" "" \
+    "    super().__init__('red')" "" \
+    "end" \
+    [multi_line \
+	 "Python Exception <class 'TypeError'>: type 'gdb\\.Color' is not an acceptable base type" \
+	 "Error occurred in Python: type 'gdb\\.Color' is not an acceptable base type"]
+
+gdb_test_multiline "Setup a color parameter and non gdb.Color object" \
+    "python" "" \
+    "class my_param(gdb.Parameter):" "" \
+    "  def __init__(self):" "" \
+    "    super().__init__('color-param', gdb.COMMAND_NONE, gdb.PARAM_COLOR)" "" \
+    "    self.value = gdb.Color('red')" "" \
+    "color_param = my_param()" "" \
+    " " "" \
+    "class bad_type:" "" \
+    "  @property" "" \
+    "  def __class__(self):" "" \
+    "    raise RuntimeError('__class__ error for bad_type')" "" \
+    "bad_obj = bad_type()" "" \
+    "end" ""
+
+gdb_test_no_output "python color_param.value = gdb.Color('blue')" \
+    "set color parameter to blue"
+
+gdb_test "python color_param.value = bad_obj" \
+    [multi_line \
+	 "Python Exception <class 'RuntimeError'>: color argument must be a gdb\\.Color object\\." \
+	 "Error occurred in Python: color argument must be a gdb\\.Color object\\."] \
+    "set color parameter to a non-color type"
+
+gdb_test "python c_none.escape_sequence(c_red)" \
+    [multi_line \
+	 "Python Exception <class 'TypeError'>: argument 1 must be bool, not gdb.Color" \
+	 "Error occurred in Python: argument 1 must be bool, not gdb.Color"]

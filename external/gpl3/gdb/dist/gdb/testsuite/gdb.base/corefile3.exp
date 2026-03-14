@@ -1,0 +1,73 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Create a core file with some mapped file regions, but ensure that
+# the the kernel should write the regions into the core file (e.g. r/w
+# file backed mapping).
+#
+# We then delete the file that backed the mapping and load the core
+# file into GDB.
+#
+# GDB shouldn't warn about the file being missing.  It doesn't matter;
+# the file contents can all be found in the core file itself.
+
+require isnative
+require {!is_remote host}
+
+standard_testfile
+
+if {[build_executable $testfile.exp $testfile $srcfile] == -1} {
+    return
+}
+
+set corefile [core_find $binfile {}]
+if {$corefile == ""} {
+    untested "unable to create or find corefile"
+    return
+}
+
+# Move the coremap.data file out of the way, so it cannot be found
+# when we later load the core file into GDB.  This file was generated
+# by the inferior as it was running.
+set data_filename \
+    [standard_output_file coredir.[getpid]/coremmap.data]
+set backup_filename \
+    [standard_output_file coredir.[getpid]/coremmap.data.backup]
+remote_exec host "mv ${data_filename} ${backup_filename}"
+
+clean_restart
+gdb_load $binfile
+
+# Load the core file.  The 'coremap.data' file cannot be found by GDB,
+# but all the mappings for that file are r/w and should be present in
+# the core file, so we shouldn't get any warnings from GDB about it.
+set warnings_seen 0
+gdb_test_multiple "core-file $corefile" "core-file command" {
+    -re "^warning: Can't open file \[^\r\n\]+ during file-backed mapping note processing\r\n" {
+	incr warnings_seen
+	exp_continue
+    }
+    -re "^$gdb_prompt $" {
+	gdb_assert { $warnings_seen == 0 } $gdb_test_name
+    }
+    -re "^\[^\r\n\]*\r\n" {
+	exp_continue
+    }
+}
+
+# Check the mappings are all readable.
+foreach label { rw_mapping malloc_buffer anon_mapping shm_mapping } {
+    gdb_test "x/1wd $label" "^$hex:\\s+$decimal"
+}

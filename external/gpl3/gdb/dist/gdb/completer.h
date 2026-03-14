@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -722,7 +722,7 @@ extern void complete_nested_command_line (completion_tracker &tracker,
    This function is designed so that trying to complete '/' will offer no
    completions, the user needs to insert the format specification
    themselves.  Trying to complete '/FMT' (where FMT is any non-empty set
-   of alpha-numeric characters) will cause readline to insert a single
+   of alphanumeric characters) will cause readline to insert a single
    space, setting the user up to enter the expression.  */
 
 extern bool skip_over_slash_fmt (completion_tracker &tracker,

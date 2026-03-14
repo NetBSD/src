@@ -1,5 +1,5 @@
 /* S390 native-dependent code for GDB, the GNU debugger.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -1051,9 +1051,7 @@ s390_linux_nat_target::read_description ()
 	  tdesc_s390_linux32);
 }
 
-void _initialize_s390_nat ();
-void
-_initialize_s390_nat ()
+INIT_GDB_FILE (s390_nat)
 {
   /* Register the target.  */
   linux_target = &the_s390_linux_nat_target;

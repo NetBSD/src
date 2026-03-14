@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -157,13 +157,14 @@ E.7 Tracepoint Packets
 Here we describe the packets GDB uses to implement tracepoints (*note
 Tracepoints::).
 
-'QTDP:N:ADDR:ENA:STEP:PASS[:FFLEN][:XLEN,BYTES][-]'
+'QTDP:N:ADDR:ENA:STEP:PASS[:FFLEN][:S][:XLEN,BYTES][-]'
      Create a new tracepoint, number N, at ADDR.  If ENA is 'E', then
      the tracepoint is enabled; if it is 'D', then the tracepoint is
      disabled.  The STEP gives the tracepoint's step count, and PASS
      gives its pass count.  If an 'F' is present, then the tracepoint is
      to be a fast tracepoint, and the FLEN is the number of bytes that
      the target should copy elsewhere to make room for the tracepoint.
+     If an 'S' is present, the tracepoint is to be a static tracepoint.
      If an 'X' is present, it introduces a tracepoint condition, which
      consists of a hexadecimal length, followed by a comma and
      hex-encoded bytes, in a manner similar to action encodings as
@@ -217,6 +218,9 @@ Tracepoints::).
           as a two-digit hex number in the packet; LEN is the number of
           bytes in the expression (and thus one-half the number of hex
           digits in the packet).
+
+     'L'
+          Collect static trace data.
 
      Any number of actions may be packed together in a single 'QTDP'
      packet, as long as the packet does not exceed the maximum packet
@@ -516,7 +520,7 @@ Tracepoints::).
      "last").
 
 'qTSTMat:ADDRESS'
-     This packets requests data about static tracepoint markers in the
+     This packet requests data about static tracepoint markers in the
      target program at ADDRESS.  Replies to this packet follow the
      syntax of the 'qTfSTM' and 'qTsSTM' packets that list static
      tracepoint markers.
@@ -669,11 +673,29 @@ its arguments.  They have this format:
      attachment is as described in *note struct stat::.
 
 'vFile:stat: FILENAME'
-     Get information about the file FILENAME on the target.  On success
-     the information is returned as a binary attachment and the return
-     value is the size of this attachment in bytes.  If an error occurs
-     the return value is -1.  The format of the returned binary
-     attachment is as described in *note struct stat::.
+     Get information about the file FILENAME on the target as if from a
+     'stat' call.  On success the information is returned as a binary
+     attachment and the return value is the size of this attachment in
+     bytes.  If an error occurs the return value is -1.  The format of
+     the returned binary attachment is as described in *note struct
+     stat::.
+
+     If FILENAME is a symbolic link, then the information returned is
+     about the file the link refers to, this is inline with the 'stat'
+     library call.
+
+'vFile:lstat: FILENAME'
+     Get information about the file FILENAME on the target as if from an
+     'lstat' call.  On success the information is returned as a binary
+     attachment and the return value is the size of this attachment in
+     bytes.  If an error occurs the return value is -1.  The format of
+     the returned binary attachment is as described in *note struct
+     stat::.
+
+     This packet is identical to 'vFile:stat', except if FILENAME is a
+     symbolic link, then this packet returns information about the link
+     itself, not the file that the link refers to, this is inline with
+     the 'lstat' library call.
 
 'vFile:unlink: FILENAME'
      Delete the file at FILENAME on the target.  Return 0, or -1 if an
@@ -2229,7 +2251,7 @@ obtains the XML document with the following structure:
 
      <?xml version="1.0"?>
      <threads>
-         <thread id="id" core="0" name="name" handle="1a2b3c">
+         <thread id="id" core="0" name="name" id_str="Thread 12.34" handle="1a2b3c">
          ... description ...
          </thread>
      </threads>
@@ -2239,8 +2261,11 @@ the thread (*note thread-id syntax::).  The 'core' attribute, if
 present, specifies which processor core the thread was last executing
 on.  The 'name' attribute, if present, specifies the human-readable name
 of the thread.  The content of the of 'thread' element is interpreted as
-human-readable auxiliary information.  The 'handle' attribute, if
-present, is a hex encoded representation of the thread handle.
+human-readable auxiliary information.  The 'id_str' attribute, if
+present, specifies what GDB should print as the target ID of the thread
+(e.g. in the 'info threads' command or when switching to the thread).
+The 'handle' attribute, if present, is a hex encoded representation of
+the thread handle.
 
 
 File: gdb.info,  Node: Traceframe Info Format,  Next: Branch Trace Format,  Prev: Thread List Format,  Up: Remote Protocol
@@ -3571,6 +3596,7 @@ the capitalization used in the description.
 * Menu:
 
 * AArch64 Features::
+* Alpha Features::
 * ARC Features::
 * ARM Features::
 * i386 Features::
@@ -3588,7 +3614,7 @@ the capitalization used in the description.
 * TIC6x Features::
 
 
-File: gdb.info,  Node: AArch64 Features,  Next: ARC Features,  Up: Standard Target Features
+File: gdb.info,  Node: AArch64 Features,  Next: Alpha Features,  Up: Standard Target Features
 
 G.5.1 AArch64 Features
 ----------------------
@@ -3837,10 +3863,74 @@ AArch64 SME2::.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-
-File: gdb.info,  Node: ARC Features,  Next: ARM Features,  Prev: AArch64 Features,  Up: Standard Target Features
+G.5.1.9 AArch64 GCS registers feature
+.....................................
 
-G.5.2 ARC Features
+The 'org.gnu.gdb.aarch64.gcs' feature is optional.  If present, it means
+the target supports Guarded Control Stacks and must contain the
+following register:
+
+   - 'gcspr', which points to the thread's Guarded Control Stack.  It is
+     64 bits in size and has a type of 'data_ptr'.
+
+   The 'org.gnu.gdb.aarch64.gcs.linux' feature is optional.  If present,
+then the 'org.gnu.gdb.aarch64.gcs' feature must also be present.  The
+'org.gnu.gdb.aarch64.gcs.linux' feature represents facilities provided
+by the Linux kernel for GCS support and should contain the following:
+
+   - 'gcs_features_enabled' shows the features currently enabled via the
+     prctl or ptrace system calls.  It is represented as if it were a
+     64-bit register with a custom flags type.
+
+   - 'gcs_features_locked' shows the features currently locked via the
+     prctl or ptrace system calls.  It is represented as if it were a
+     64-bit register with a custom flags type.
+
+   The custom flags type allows GDB to print a human-friendly
+representation of the contents of 'gcs_features_enabled' and
+'gcs_features_locked' and should contain:
+
+   - 'PR_SHADOW_STACK_ENABLE'
+
+   - 'PR_SHADOW_STACK_WRITE'
+
+   - 'PR_SHADOW_STACK_PUSH'
+
+   For further information, see the documentation in the Linux kernel.
+
+   Extra registers are allowed in these features, but they will not
+affect GDB.
+
+
+File: gdb.info,  Node: Alpha Features,  Next: ARC Features,  Prev: AArch64 Features,  Up: Standard Target Features
+
+G.5.2 Alpha Features
+--------------------
+
+The 'org.gnu.gdb.alpha.core' feature is required for Alpha targets.  It
+must contain the following 64-bit registers; note that GDB uses the
+software names for Alpha registers:
+
+   - 'v0': function return value
+   - 't0' through 't12': temporary registers
+   - 's0' through 's5': saved registers
+   - 'fp': frame pointer
+   - 'a0' through 'a5': argument registers
+   - 'ra': return address
+   - 'at': assembler temporary register
+   - 'gp': global pointer
+   - 'sp': stack pointer
+   - 'zero': always zero
+   - 'f0' through 'f30': floating-point registers
+   - 'fpcr': floating-point control register
+   - 'pc': program counter
+   - '': an anonymous register for historical purpose
+   - 'unique': PALcode memory slot
+
+
+File: gdb.info,  Node: ARC Features,  Next: ARM Features,  Prev: Alpha Features,  Up: Standard Target Features
+
+G.5.3 ARC Features
 ------------------
 
 ARC processors are so configurable that even core registers and their
@@ -3885,10 +3975,10 @@ Here is the list of registers pertinent to this feature:
 
 File: gdb.info,  Node: ARM Features,  Next: i386 Features,  Prev: ARC Features,  Up: Standard Target Features
 
-G.5.3 ARM Features
+G.5.4 ARM Features
 ------------------
 
-G.5.3.1 Core register set for non-M-profile
+G.5.4.1 Core register set for non-M-profile
 ...........................................
 
 The 'org.gnu.gdb.arm.core' feature is required for non-M-profile ARM
@@ -3909,7 +3999,7 @@ targets.  It must contain the following registers:
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.2 Core register set for M-profile
+G.5.4.2 Core register set for M-profile
 .......................................
 
 For M-profile targets (e.g. Cortex-M3), the 'org.gnu.gdb.arm.core'
@@ -3935,7 +4025,7 @@ configurations that are meaningful to M-profiles.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.3 FPA registers feature (obsolete)
+G.5.4.3 FPA registers feature (obsolete)
 ........................................
 
 The 'org.gnu.gdb.arm.fpa' feature is obsolete and should not be
@@ -3956,7 +4046,7 @@ used to contain the following registers:
      number 16.
    - 'fps', the status register.  It has a size of 32 bits.
 
-G.5.3.4 M-profile Vector Extension (MVE)
+G.5.4.4 M-profile Vector Extension (MVE)
 ........................................
 
 Also known as Helium, the M-profile Vector Extension is advertised via
@@ -3986,7 +4076,7 @@ pseudo-registers from 'd' register contents.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.5 XScale iwMMXt feature
+G.5.4.5 XScale iwMMXt feature
 .............................
 
 The XScale 'org.gnu.gdb.xscale.iwmmxt' feature is optional.  If present,
@@ -4011,7 +4101,7 @@ it must contain the following:
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.6 Vector Floating-Point (VFP) feature
+G.5.4.6 Vector Floating-Point (VFP) feature
 ...........................................
 
 The 'org.gnu.gdb.arm.vfp' feature is optional.  If present, it should
@@ -4039,7 +4129,7 @@ double-precision registers as pseudo-registers.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.7 NEON architecture feature
+G.5.4.7 NEON architecture feature
 .................................
 
 The 'org.gnu.gdb.arm.neon' feature is optional.  It does not need to
@@ -4052,7 +4142,7 @@ double-precision registers.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.8 M-profile Pointer Authentication and Branch Target Identification feature
+G.5.4.8 M-profile Pointer Authentication and Branch Target Identification feature
 .................................................................................
 
 The 'org.gnu.gdb.arm.m-profile-pacbti' feature is optional, and
@@ -4069,7 +4159,7 @@ AArch64's PAC extension.  *Note AArch64 PAC::.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.9 M-profile system registers feature
+G.5.4.9 M-profile system registers feature
 ..........................................
 
 The 'org.gnu.gdb.arm.m-system' optional feature was introduced as a way
@@ -4089,7 +4179,7 @@ sees this feature, it will attempt to track the values of 'msp' and
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.10 M-profile Security Extensions feature
+G.5.4.10 M-profile Security Extensions feature
 ..............................................
 
 The 'org.gnu.gdb.arm.secext' optional feature was introduced so GDB
@@ -4114,7 +4204,7 @@ improving unwinding when applications switch between security states.
    Extra registers are allowed in this feature, but they will not affect
 GDB.
 
-G.5.3.11 TLS registers feature
+G.5.4.11 TLS registers feature
 ..............................
 
 The optional 'org.gnu.gdb.arm.tls' feature contains TLS registers.
@@ -4133,7 +4223,7 @@ GDB.
 
 File: gdb.info,  Node: i386 Features,  Next: LoongArch Features,  Prev: ARM Features,  Up: Standard Target Features
 
-G.5.4 i386 Features
+G.5.5 i386 Features
 -------------------
 
 The 'org.gnu.gdb.i386.core' feature is required for i386/amd64 targets.
@@ -4195,10 +4285,16 @@ registers:
 a single register, 'pkru'.  It is a 32-bit register valid for i386 and
 amd64.
 
+   The 'org.gnu.gdb.i386.pl3_ssp' feature is optional.  It should
+describe the user mode register 'pl3_ssp' which has 64 bits on amd64, 32
+bits on amd64 with 32-bit pointer size (X32) and 32 bits on i386.
+Following the restriction of the Linux kernel, only GDB for amd64
+targets makes use of this feature for now.
+
 
 File: gdb.info,  Node: LoongArch Features,  Next: MicroBlaze Features,  Prev: i386 Features,  Up: Standard Target Features
 
-G.5.5 LoongArch Features
+G.5.6 LoongArch Features
 ------------------------
 
 The 'org.gnu.gdb.loongarch.base' feature is required for LoongArch
@@ -4212,7 +4308,7 @@ should contain registers 'f0' through 'f31', 'fcc', and 'fcsr'.
 
 File: gdb.info,  Node: MicroBlaze Features,  Next: MIPS Features,  Prev: LoongArch Features,  Up: Standard Target Features
 
-G.5.6 MicroBlaze Features
+G.5.7 MicroBlaze Features
 -------------------------
 
 The 'org.gnu.gdb.microblaze.core' feature is required for MicroBlaze
@@ -4226,7 +4322,7 @@ present, it should contain registers 'rshr' and 'rslr'
 
 File: gdb.info,  Node: MIPS Features,  Next: M68K Features,  Prev: MicroBlaze Features,  Up: Standard Target Features
 
-G.5.7 MIPS Features
+G.5.8 MIPS Features
 -------------------
 
 The 'org.gnu.gdb.mips.cpu' feature is required for MIPS targets.  It
@@ -4254,7 +4350,7 @@ control restartable syscalls.
 
 File: gdb.info,  Node: M68K Features,  Next: NDS32 Features,  Prev: MIPS Features,  Up: Standard Target Features
 
-G.5.8 M68K Features
+G.5.9 M68K Features
 -------------------
 
 ''org.gnu.gdb.m68k.core''
@@ -4278,8 +4374,8 @@ G.5.8 M68K Features
 
 File: gdb.info,  Node: NDS32 Features,  Next: OpenRISC 1000 Features,  Prev: M68K Features,  Up: Standard Target Features
 
-G.5.9 NDS32 Features
---------------------
+G.5.10 NDS32 Features
+---------------------
 
 The 'org.gnu.gdb.nds32.core' feature is required for NDS32 targets.  It
 should contain at least registers 'r0' through 'r10', 'r15', 'fp', 'gp',
@@ -4301,7 +4397,7 @@ it could be totally removed some day.
 
 File: gdb.info,  Node: OpenRISC 1000 Features,  Next: PowerPC Features,  Prev: NDS32 Features,  Up: Standard Target Features
 
-G.5.10 Openrisc 1000 Features
+G.5.11 Openrisc 1000 Features
 -----------------------------
 
 The 'org.gnu.gdb.or1k.group0' feature is required for OpenRISC 1000
@@ -4311,7 +4407,7 @@ through 'r31'), 'ppc', 'npc' and 'sr'.
 
 File: gdb.info,  Node: PowerPC Features,  Next: RISC-V Features,  Prev: OpenRISC 1000 Features,  Up: Standard Target Features
 
-G.5.11 PowerPC Features
+G.5.12 PowerPC Features
 -----------------------
 
 The 'org.gnu.gdb.power.core' feature is required for PowerPC targets.
@@ -4396,7 +4492,7 @@ contain the 64-bit checkpointed register 'ctar'.
 
 File: gdb.info,  Node: RISC-V Features,  Next: RX Features,  Prev: PowerPC Features,  Up: Standard Target Features
 
-G.5.12 RISC-V Features
+G.5.13 RISC-V Features
 ----------------------
 
 The 'org.gnu.gdb.riscv.cpu' feature is required for RISC-V targets.  It
@@ -4434,7 +4530,7 @@ same size.
 
 File: gdb.info,  Node: RX Features,  Next: S/390 and System z Features,  Prev: RISC-V Features,  Up: Standard Target Features
 
-G.5.13 RX Features
+G.5.14 RX Features
 ------------------
 
 The 'org.gnu.gdb.rx.core' feature is required for RX targets.  It should
@@ -4444,7 +4540,7 @@ contain the registers 'r0' through 'r15', 'usp', 'isp', 'psw', 'pc',
 
 File: gdb.info,  Node: S/390 and System z Features,  Next: Sparc Features,  Prev: RX Features,  Up: Standard Target Features
 
-G.5.14 S/390 and System z Features
+G.5.15 S/390 and System z Features
 ----------------------------------
 
 The 'org.gnu.gdb.s390.core' feature is required for S/390 and System z
@@ -4490,7 +4586,7 @@ the 64-bit wide guarded-storage broadcast control registers 'bc_gsd',
 
 File: gdb.info,  Node: Sparc Features,  Next: TIC6x Features,  Prev: S/390 and System z Features,  Up: Standard Target Features
 
-G.5.15 Sparc Features
+G.5.16 Sparc Features
 ---------------------
 
 The 'org.gnu.gdb.sparc.cpu' feature is required for sparc32/sparc64
@@ -4518,7 +4614,7 @@ targets.  It should describe the following registers:
 
 File: gdb.info,  Node: TIC6x Features,  Prev: Sparc Features,  Up: Standard Target Features
 
-G.5.16 TMS320C6x Features
+G.5.17 TMS320C6x Features
 -------------------------
 
 The 'org.gnu.gdb.tic6x.core' feature is required for TMS320C6x targets.
@@ -5439,7 +5535,8 @@ File: gdb.info,  Node: gcore man,  Next: gstack man,  Prev: gdbserver man,  Up: 
 gcore
 =====
 
-gcore [-a] [-o PREFIX] [-d DIRECTORY] PID1 [PID2...PIDN]
+gcore [-v | -version] [-h | -help] [-a] [-o PREFIX] [-d DIRECTORY]
+      PID1 [PID2...PIDN]
 
    Generate core dumps of one or more running programs with process IDs
 PID1, PID2, etc.  A core file produced by 'gcore' is equivalent to one
@@ -5459,11 +5556,19 @@ running without any change.
      composing the file names of the core dumps.  The file name is
      composed as 'PREFIX.PID', where PID is the process ID of the
      running program being analyzed by 'gcore'.  If not specified,
-     PREFIX defaults to GCORE.
+     PREFIX defaults to CORE.
 
 '-d DIRECTORY'
      Use DIRECTORY as the data directory when invoking GDB for running
      the gcore command.  This argument is optional.
+
+'--help'
+'-h'
+     List all options, with brief explanations.
+
+'--version'
+'-v'
+     Print version information and then exit.
 
 
 File: gdb.info,  Node: gstack man,  Next: gdbinit man,  Prev: gcore man,  Up: Man Pages
@@ -5548,7 +5653,7 @@ File: gdb.info,  Node: gdb-add-index man,  Prev: gdbinit man,  Up: Man Pages
 gdb-add-index
 =============
 
-gdb-add-index [-dwarf-5] FILENAME
+gdb-add-index [-h | -help] [-v | -version] [-dwarf-5] FILENAME
 
    When GDB finds a symbol file, it scans the symbols in the file in
 order to construct an internal symbol table.  This lets most GDB
@@ -5563,8 +5668,8 @@ Indexes can only be produced on systems which use ELF binaries and DWARF
 debug information (i.e., sections named '.debug_*').
 
    By default 'gdb-add-index' will add a pre-DWARF 5 '.gdb_index'
-section to FILENAME.  With '-dwarf-5' DWARF 5 sections are added
-instead.
+section to FILENAME.  With '--dwarf-5' the DWARF 5 section
+'.debug_names' is added instead.
 
    FILENAME must be writable.
 
@@ -5578,8 +5683,16 @@ index for FILENAME or greater than 0 if an error occurs.
 
    See more in *note Index Files::.
 
-'-dwarf-5'
-     Add DWARF 5 sections instead of previous '.debug_index' section.
+'--dwarf-5'
+     Add DWARF 5 sections instead of previous '.gdb_index' section.
+
+'--help'
+'-h'
+     List all options, with brief explanations.
+
+'--version'
+'-v'
+     Print version information and then exit.
 
 'GDB'
      Full file name of the 'gdb' program to use for index generation.
@@ -6792,2158 +6905,4 @@ situation.
 recommend releasing these examples in parallel under your choice of free
 software license, such as the GNU General Public License, to permit
 their use in free software.
-
-
-File: gdb.info,  Node: Concept Index,  Next: Command and Variable Index,  Prev: GNU Free Documentation License,  Up: Top
-
-Concept Index
-*************
-
- [index ]
-* Menu:
-
-* ! packet:                              Packets.            (line   49)
-* "No symbol "foo" in current context":  Variables.          (line  122)
-* # in Modula-2:                         GDB/M2.             (line   18)
-* $:                                     Value History.      (line   13)
-* $$:                                    Value History.      (line   13)
-* $_ and info breakpoints:               Set Breaks.         (line  244)
-* $_ and info line:                      Machine Code.       (line   35)
-* $_, $__, and value history:            Memory.             (line  136)
-* &, background execution of commands:   Background Execution.
-                                                             (line   16)
-* --annotate:                            Mode Options.       (line  110)
-* --args:                                Mode Options.       (line  123)
-* --attach, gdbserver option:            Server.             (line   86)
-* --batch:                               Mode Options.       (line   33)
-* --batch-silent:                        Mode Options.       (line   51)
-* --baud:                                Mode Options.       (line  129)
-* --cd:                                  Mode Options.       (line   90)
-* --command:                             File Options.       (line   56)
-* --configuration:                       Mode Options.       (line  173)
-* --core:                                File Options.       (line   48)
-* --data-directory:                      Mode Options.       (line   95)
-* --debug, gdbserver option:             Server.             (line  146)
-* --debug-file, gdbserver option:        Server.             (line  174)
-* --debug-format, gdbserver option:      Server.             (line  178)
-* --directory:                           File Options.       (line   92)
-* --early-init-command:                  File Options.       (line   82)
-* --early-init-eval-command:             File Options.       (line   87)
-* --eval-command:                        File Options.       (line   62)
-* --exec:                                File Options.       (line   40)
-* --fullname:                            Mode Options.       (line  100)
-* --init-command:                        File Options.       (line   72)
-* --init-eval-command:                   File Options.       (line   77)
-* --interpreter:                         Mode Options.       (line  148)
-* --multi, gdbserver option:             Connecting.         (line   45)
-* --nh:                                  Mode Options.       (line   15)
-* --nowindows:                           Mode Options.       (line   80)
-* --nx:                                  Mode Options.       (line   11)
-* --once, gdbserver option:              Server.             (line  126)
-* --pid:                                 File Options.       (line   52)
-* --quiet:                               Mode Options.       (line   23)
-* --readnever, command-line option:      File Options.       (line  102)
-* --readnow:                             File Options.       (line   96)
-* --return-child-result:                 Mode Options.       (line   63)
-* --se:                                  File Options.       (line   44)
-* --selftest:                            Server.             (line  212)
-* --silent:                              Mode Options.       (line   23)
-* --statistics:                          Mode Options.       (line  165)
-* --symbols:                             File Options.       (line   36)
-* --tty:                                 Mode Options.       (line  138)
-* --tui:                                 Mode Options.       (line  141)
-* --version:                             Mode Options.       (line  169)
-* --windows:                             Mode Options.       (line   86)
-* --with-gdb-datadir:                    Data Files.         (line   19)
-* --with-relocated-sources:              Source Path.        (line  149)
-* --with-sysroot:                        Files.              (line  479)
-* --wrapper, gdbserver option:           Server.             (line  191)
-* --write:                               Mode Options.       (line  160)
-* -b:                                    Mode Options.       (line  129)
-* -c:                                    File Options.       (line   48)
-* -d:                                    File Options.       (line   92)
-* -D:                                    Mode Options.       (line   95)
-* -e:                                    File Options.       (line   40)
-* -eiex:                                 File Options.       (line   87)
-* -eix:                                  File Options.       (line   82)
-* -ex:                                   File Options.       (line   62)
-* -f:                                    Mode Options.       (line  100)
-* -iex:                                  File Options.       (line   77)
-* -info-gdb-mi-command:                  GDB/MI Support Commands.
-                                                             (line   11)
-* -ix:                                   File Options.       (line   72)
-* -l:                                    Mode Options.       (line  133)
-* -n:                                    Mode Options.       (line   11)
-* -nw:                                   Mode Options.       (line   80)
-* -p:                                    File Options.       (line   52)
-* -q:                                    Mode Options.       (line   23)
-* -r:                                    File Options.       (line   96)
-* -readnever, option for symbol-file command: Files.         (line  110)
-* -s:                                    File Options.       (line   36)
-* -t:                                    Mode Options.       (line  138)
-* -w:                                    Mode Options.       (line   86)
-* -x:                                    File Options.       (line   56)
-* ., Modula-2 scope operator:            M2 Scope.           (line    6)
-* .build-id directory:                   Separate Debug Files.
-                                                             (line    6)
-* .debug subdirectories:                 Separate Debug Files.
-                                                             (line    6)
-* .debug_gdb_scripts section:            dotdebug_gdb_scripts section.
-                                                             (line    6)
-* .debug_names section:                  Debug Names.        (line    6)
-* .gdbinit:                              Initialization Files.
-                                                             (line  107)
-* .gdb_index section:                    Index Files.        (line    6)
-* .gdb_index section format:             Index Section Format.
-                                                             (line    6)
-* .gnu_debugdata section:                MiniDebugInfo.      (line    6)
-* .gnu_debuglink sections:               Separate Debug Files.
-                                                             (line   86)
-* .note.gnu.build-id sections:           Separate Debug Files.
-                                                             (line  102)
-* .o files, reading symbols from:        Files.              (line  158)
-* /proc:                                 Process Information.
-                                                             (line    6)
-* <architecture>:                        Target Description Format.
-                                                             (line   72)
-* <compatible>:                          Target Description Format.
-                                                             (line   95)
-* <feature>:                             Target Description Format.
-                                                             (line  119)
-* <flags>:                               Target Description Format.
-                                                             (line  163)
-* <not saved> values:                    Registers.          (line  106)
-* <osabi>:                               Target Description Format.
-                                                             (line   82)
-* <reg>:                                 Target Description Format.
-                                                             (line  222)
-* <struct>:                              Target Description Format.
-                                                             (line  163)
-* <union>:                               Target Description Format.
-                                                             (line  153)
-* <vector>:                              Target Description Format.
-                                                             (line  146)
-* ? packet:                              Packets.            (line   58)
-* _NSPrintForDebugger, and printing Objective-C objects: The Print Command with Objective-C.
-                                                             (line   11)
-* {TYPE}:                                Expressions.        (line   41)
-* A packet:                              Packets.            (line   66)
-* AArch64 Memory Tagging Extension.:     AArch64.            (line  266)
-* AArch64 Pointer Authentication.:       AArch64.            (line  256)
-* AArch64 SME:                           AArch64.            (line   46)
-* AArch64 SME2:                          AArch64.            (line  220)
-* AArch64 support:                       AArch64.            (line    6)
-* AArch64 SVE.:                          AArch64.            (line   19)
-* abbreviation:                          Command Syntax.     (line   13)
-* acknowledgment, for GDB remote:        Packet Acknowledgment.
-                                                             (line    6)
-* active targets:                        Active Targets.     (line    6)
-* Ada:                                   Ada.                (line    6)
-* Ada exception catching:                Set Catchpoints.    (line   66)
-* Ada exception handlers catching:       Set Catchpoints.    (line   92)
-* Ada mode, general:                     Ada Mode Intro.     (line    6)
-* Ada task switching:                    Ada Tasks.          (line  129)
-* Ada tasking and core file debugging:   Ada Tasks and Core Files.
-                                                             (line    6)
-* Ada, deviations from:                  Additions to Ada.   (line    6)
-* Ada, omissions from:                   Omissions from Ada. (line    6)
-* Ada, problems:                         Ada Glitches.       (line    6)
-* Ada, source character set:             Ada Source Character Set.
-                                                             (line    6)
-* Ada, tasking:                          Ada Tasks.          (line    6)
-* add new commands for external monitor: Connecting.         (line  279)
-* address locations:                     Address Locations.  (line    6)
-* address of a symbol:                   Symbols.            (line   98)
-* address size for remote targets:       Remote Configuration.
-                                                             (line   12)
-* addressable memory unit:               Memory.             (line  150)
-* aggregates (Ada):                      Omissions from Ada. (line   46)
-* AIX threads:                           Debugging Output.   (line   33)
-* aliases for commands:                  Aliases.            (line    6)
-* aliases for commands, default arguments: Command aliases default args.
-                                                             (line    6)
-* alignment of remote memory accesses:   Packets.            (line  243)
-* alignment of remote memory accesses <1>: Packets.          (line  532)
-* all-stop mode:                         All-Stop Mode.      (line    6)
-* Alpha stack:                           MIPS.               (line    6)
-* always-read-ctf:                       Symbols.            (line  763)
-* ambiguous expressions:                 Ambiguous Expressions.
-                                                             (line    6)
-* AMD GPU debugging info:                Debugging Output.   (line   38)
-* AMD GPU precise memory event reporting: AMD GPU.           (line  165)
-* AMD GPU precise memory event reporting <1>: AMD GPU.       (line  186)
-* AMD GPU support:                       AMD GPU.            (line    6)
-* annotations:                           Annotations Overview.
-                                                             (line    6)
-* annotations for errors, warnings and interrupts: Errors.   (line    6)
-* annotations for invalidation messages: Invalidation.       (line    6)
-* annotations for prompts:               Prompting.          (line    6)
-* annotations for running programs:      Annotations for Running.
-                                                             (line    6)
-* annotations for source display:        Source Annotations. (line    6)
-* append data to a file:                 Dump/Restore Files. (line    6)
-* Application Data Integrity:            Sparc64.            (line    5)
-* apply a command to all frames (ignoring errors and empty output): Frame Apply.
-                                                             (line   96)
-* apply a command to all frames of all threads (ignoring errors and empty output): Threads.
-                                                             (line  236)
-* apply command to all threads (ignoring errors and empty output): Threads.
-                                                             (line  229)
-* apply command to several frames:       Frame Apply.        (line    6)
-* apply command to several threads:      Threads.            (line  194)
-* ARC EM:                                ARC.                (line    6)
-* ARC HS:                                ARC.                (line    6)
-* ARC specific commands:                 ARC.                (line    6)
-* ARC600:                                ARC.                (line    6)
-* ARC700:                                ARC.                (line    6)
-* architecture debugging info:           Debugging Output.   (line   26)
-* argument count in user-defined commands: Define.           (line   34)
-* arguments (to your program):           Arguments.          (line    6)
-* arguments, to gdbserver:               Server.             (line   34)
-* arguments, to user-defined commands:   Define.             (line    6)
-* ARM 32-bit mode:                       ARM.                (line   16)
-* ARM AArch64:                           Debugging Output.   (line   19)
-* array aggregates (Ada):                Omissions from Ada. (line   46)
-* arrays:                                Arrays.             (line    6)
-* arrays in expressions:                 Expressions.        (line   13)
-* arrays slices (Fortran):               Special Fortran Commands.
-                                                             (line   13)
-* artificial array:                      Arrays.             (line    6)
-* assembly instructions:                 Machine Code.       (line   44)
-* assignment:                            Assignment.         (line    6)
-* async output in GDB/MI:                GDB/MI Output Syntax.
-                                                             (line   98)
-* async records in GDB/MI:               GDB/MI Async Records.
-                                                             (line    6)
-* asynchronous execution:                Background Execution.
-                                                             (line    6)
-* asynchronous execution <1>:            Asynchronous and non-stop modes.
-                                                             (line   15)
-* asynchronous execution, and process record and replay: Process Record and Replay.
-                                                             (line  104)
-* AT&T disassembly flavor:               Machine Code.       (line  273)
-* attach:                                Attach.             (line    6)
-* attach to a program, gdbserver:        Server.             (line   86)
-* auto-loading:                          Auto-loading.       (line    6)
-* auto-loading extensions:               Auto-loading extensions.
-                                                             (line    6)
-* auto-loading init file in the current directory: Init File in the Current Directory.
-                                                             (line    6)
-* auto-loading libthread_db.so.1:        libthread_db.so.1 file.
-                                                             (line    6)
-* auto-loading safe-path:                Auto-loading safe path.
-                                                             (line    6)
-* auto-loading verbose mode:             Auto-loading verbose mode.
-                                                             (line    6)
-* auto-retry, for remote TCP target:     Remote Configuration.
-                                                             (line  131)
-* automatic display:                     Auto Display.       (line    6)
-* automatic hardware breakpoints:        Set Breaks.         (line  405)
-* automatic overlay debugging:           Automatic Overlay Debugging.
-                                                             (line    6)
-* automatic symbol index cache:          Index Files.        (line   76)
-* automatic thread selection:            All-Stop Mode.      (line   28)
-* auxiliary vector:                      OS Information.     (line    9)
-* AVR:                                   AVR.                (line    6)
-* b packet:                              Packets.            (line   75)
-* B packet:                              Packets.            (line   90)
-* background execution:                  Background Execution.
-                                                             (line    6)
-* background execution <1>:              Asynchronous and non-stop modes.
-                                                             (line   15)
-* backtrace beyond main function:        Backtrace.          (line  155)
-* backtrace limit:                       Backtrace.          (line  192)
-* base name differences:                 Files.              (line  546)
-* baud rate for remote targets:          Remote Configuration.
-                                                             (line   21)
-* bc packet:                             Packets.            (line   95)
-* bcache statistics:                     Maintenance Commands.
-                                                             (line  584)
-* bits in remote address:                Remote Configuration.
-                                                             (line   12)
-* blocks in guile:                       Blocks In Guile.    (line    6)
-* blocks in python:                      Blocks In Python.   (line    6)
-* bookmark:                              Checkpoint/Restart. (line    6)
-* branch trace configuration format:     Branch Trace Configuration Format.
-                                                             (line    6)
-* branch trace format:                   Branch Trace Format.
-                                                             (line    6)
-* branch trace store:                    Process Record and Replay.
-                                                             (line   73)
-* break in overloaded functions:         Debugging C Plus Plus.
-                                                             (line    9)
-* break on a system call.:               Set Catchpoints.    (line  120)
-* break on fork/exec:                    Set Catchpoints.    (line  116)
-* BREAK signal instead of Ctrl-C:        Remote Configuration.
-                                                             (line   36)
-* breakpoint address adjusted:           Breakpoint-related Warnings.
-                                                             (line    6)
-* breakpoint at static probe point:      Linespec Locations. (line   65)
-* breakpoint commands:                   Break Commands.     (line    6)
-* breakpoint commands for GDB/MI:        GDB/MI Breakpoint Commands.
-                                                             (line    6)
-* breakpoint commands, in remote protocol: General Query Packets.
-                                                             (line 1072)
-* breakpoint conditions:                 Conditions.         (line    6)
-* breakpoint debugging info:             Debugging Output.   (line  326)
-* breakpoint kinds, ARM:                 ARM Breakpoint Kinds.
-                                                             (line    6)
-* breakpoint kinds, MIPS:                MIPS Breakpoint Kinds.
-                                                             (line    6)
-* breakpoint lists:                      Breakpoints.        (line   45)
-* breakpoint numbers:                    Breakpoints.        (line   38)
-* breakpoint on events:                  Breakpoints.        (line   30)
-* breakpoint on memory address:          Breakpoints.        (line   17)
-* breakpoint on variable modification:   Breakpoints.        (line   17)
-* breakpoint ranges:                     Breakpoints.        (line   45)
-* breakpoint subroutine, remote:         Stub Contents.      (line   31)
-* breakpointing Ada elaboration code:    Stopping Before Main Program.
-                                                             (line    6)
-* breakpoints:                           Breakpoints.        (line    6)
-* breakpoints and inferiors:             Inferior-Specific Breakpoints.
-                                                             (line    9)
-* breakpoints and tasks, in Ada:         Ada Tasks.          (line  181)
-* breakpoints and threads:               Thread-Specific Breakpoints.
-                                                             (line   10)
-* breakpoints at functions matching a regexp: Set Breaks.    (line  201)
-* breakpoints in guile:                  Breakpoints In Guile.
-                                                             (line    6)
-* breakpoints in overlays:               Overlay Commands.   (line   91)
-* breakpoints in python:                 Breakpoints In Python.
-                                                             (line    6)
-* breakpoints, multiple locations:       Set Breaks.         (line  311)
-* bs packet:                             Packets.            (line  101)
-* bug criteria:                          Bug Criteria.       (line    6)
-* bug reports:                           Bug Reporting.      (line    6)
-* bugs in GDB:                           GDB Bugs.           (line    6)
-* build ID sections:                     Separate Debug Files.
-                                                             (line  102)
-* build ID, and separate debugging files: Separate Debug Files.
-                                                             (line    6)
-* building GDB, requirements for:        Requirements.       (line    6)
-* built-in simulator target:             Target Commands.    (line   79)
-* builtin Go functions:                  Go.                 (line   31)
-* builtin Go types:                      Go.                 (line   28)
-* C and C++:                             C.                  (line    6)
-* C and C++ checks:                      C Checks.           (line    6)
-* C and C++ constants:                   C Constants.        (line    6)
-* C and C++ defaults:                    C Defaults.         (line    6)
-* C and C++ operators:                   C Operators.        (line    6)
-* c packet:                              Packets.            (line  108)
-* C packet:                              Packets.            (line  117)
-* C++:                                   C.                  (line   10)
-* C++ compilers:                         C Plus Plus Expressions.
-                                                             (line    8)
-* C++ demangling:                        Debugging C Plus Plus.
-                                                             (line   36)
-* C++ exception handling:                Debugging C Plus Plus.
-                                                             (line   20)
-* C++ overload debugging info:           Debugging Output.   (line  221)
-* C++ scope resolution:                  Variables.          (line   90)
-* C++ symbol decoding style:             Print Settings.     (line  587)
-* C++ symbol display:                    Debugging C Plus Plus.
-                                                             (line   40)
-* caching data of targets:               Caching Target Data.
-                                                             (line    6)
-* caching of bfd objects:                File Caching.       (line    6)
-* caching of opened files:               File Caching.       (line    6)
-* call dummy stack unwinding:            Calling.            (line   36)
-* call dummy stack unwinding on timeout.: Calling.           (line   65)
-* call dummy stack unwinding on unhandled exception.: Calling.
-                                                             (line   53)
-* call overloaded functions:             C Plus Plus Expressions.
-                                                             (line   26)
-* call stack:                            Stack.              (line    9)
-* call stack traces:                     Backtrace.          (line    6)
-* call-clobbered registers:              Registers.          (line  106)
-* caller-saved registers:                Registers.          (line  106)
-* calling functions:                     Calling.            (line    6)
-* calling functions in the program, disabling: Calling.      (line   76)
-* calling make:                          Shell Commands.     (line   25)
-* case sensitivity in symbol names:      Symbols.            (line   27)
-* case-insensitive symbol names:         Symbols.            (line   27)
-* casts, in expressions:                 Expressions.        (line   26)
-* casts, to view memory:                 Expressions.        (line   41)
-* catch Ada exceptions:                  Set Catchpoints.    (line   66)
-* catch Ada exceptions when handled:     Set Catchpoints.    (line   92)
-* catch syscalls from inferior, remote request: General Query Packets.
-                                                             (line  439)
-* catchpoints:                           Breakpoints.        (line   30)
-* catchpoints, setting:                  Set Catchpoints.    (line    6)
-* change GDB's working directory:        Working Directory.  (line   32)
-* change inferior's working directory:   Working Directory.  (line   13)
-* character sets:                        Character Sets.     (line    6)
-* charset:                               Character Sets.     (line    6)
-* check if a given address is in a memory tagged region: General Query Packets.
-                                                             (line  332)
-* checkpoint:                            Checkpoint/Restart. (line    6)
-* checkpoints and process id:            Checkpoint/Restart. (line   76)
-* checks, range:                         Type Checking.      (line   44)
-* checks, type:                          Checks.             (line   23)
-* checksum, for GDB remote:              Overview.           (line   21)
-* choosing target byte order:            Byte Order.         (line    6)
-* circular trace buffer:                 Starting and Stopping Trace Experiments.
-                                                             (line   80)
-* clearing breakpoints, watchpoints, catchpoints: Delete Breaks.
-                                                             (line    6)
-* CLI commands in python:                CLI Commands In Python.
-                                                             (line    6)
-* close, file-i/o system call:           close.              (line    6)
-* closest symbol and offset for an address: Symbols.         (line  108)
-* code address and its source line:      Machine Code.       (line   29)
-* code compression, MIPS:                MIPS.               (line   49)
-* code location:                         Location Specifications.
-                                                             (line    6)
-* COFF/PE exported symbols:              Debugging Output.   (line   82)
-* collected data discarded:              Starting and Stopping Trace Experiments.
-                                                             (line    6)
-* colon, doubled as scope operator:      M2 Scope.           (line    6)
-* colon-colon, context for variables/functions: Variables.   (line   44)
-* colors:                                Output Styling.     (line    6)
-* command editing:                       Readline Bare Essentials.
-                                                             (line    6)
-* command files:                         Command Files.      (line    6)
-* command history:                       Command History.    (line    6)
-* command hooks:                         Hooks.              (line    6)
-* command interpreters:                  Interpreters.       (line    6)
-* command line editing:                  Editing.            (line    6)
-* command options:                       Command Options.    (line    6)
-* command options, boolean:              Command Options.    (line   21)
-* command options, raw input:            Command Options.    (line   13)
-* command scripts, debugging:            Messages/Warnings.  (line   65)
-* command tracing:                       Messages/Warnings.  (line   60)
-* commands for C++:                      Debugging C Plus Plus.
-                                                             (line    6)
-* commands in guile:                     Commands In Guile.  (line    6)
-* commands in python, CLI:               CLI Commands In Python.
-                                                             (line    6)
-* commands in python, GDB/MI:            GDB/MI Commands In Python.
-                                                             (line    6)
-* commands to access guile:              Guile Commands.     (line    6)
-* commands to access python:             Python Commands.    (line    6)
-* comment:                               Command Syntax.     (line   37)
-* COMMON blocks, Fortran:                Special Fortran Commands.
-                                                             (line    9)
-* common targets:                        Target Commands.    (line   46)
-* compatibility, GDB/MI and CLI:         GDB/MI Compatibility with CLI.
-                                                             (line    6)
-* compilation directory:                 Source Path.        (line   40)
-* compile C++ type conversion:           Compiling and Injecting Code.
-                                                             (line   93)
-* compile command debugging info:        Compiling and Injecting Code.
-                                                             (line   85)
-* compile command driver filename override: Compiling and Injecting Code.
-                                                             (line  303)
-* compile command options override:      Compiling and Injecting Code.
-                                                             (line  128)
-* compiling code:                        Compiling and Injecting Code.
-                                                             (line    6)
-* completion:                            Completion.         (line    6)
-* completion of Guile commands:          Commands In Guile.  (line  100)
-* completion of Python commands:         CLI Commands In Python.
-                                                             (line   72)
-* completion of quoted strings:          Completion.         (line   94)
-* completion of structure field names:   Completion.         (line  146)
-* completion of union field names:       Completion.         (line  146)
-* compressed debug sections:             Requirements.       (line  113)
-* conditional breakpoints:               Conditions.         (line    6)
-* conditional tracepoints:               Tracepoint Conditions.
-                                                             (line    6)
-* configure debuginfod URLs:             Debuginfod Settings.
-                                                             (line   31)
-* configuring GDB:                       Running Configure.  (line    6)
-* confirmation:                          Messages/Warnings.  (line   49)
-* connection timeout, for remote TCP target: Remote Configuration.
-                                                             (line  147)
-* connections in python:                 Connections In Python.
-                                                             (line    6)
-* console i/o as part of file-i/o:       Console I/O.        (line    6)
-* console interpreter:                   Interpreters.       (line   21)
-* console output in GDB/MI:              GDB/MI Output Syntax.
-                                                             (line  106)
-* constants, in file-i/o protocol:       Constants.          (line    6)
-* continuing:                            Continuing and Stepping.
-                                                             (line    6)
-* continuing threads:                    Thread Stops.       (line    6)
-* control C, and remote debugging:       Bootstrapping.      (line   25)
-* controlling terminal:                  Input/Output.       (line   23)
-* convenience functions:                 Convenience Funs.   (line    6)
-* convenience functions in python:       Functions In Python.
-                                                             (line    6)
-* convenience variables:                 Convenience Vars.   (line    6)
-* convenience variables for tracepoints: Tracepoint Variables.
-                                                             (line    6)
-* convenience variables, and trace state variables: Trace State Variables.
-                                                             (line   17)
-* convenience variables, initializing:   Convenience Vars.   (line   42)
-* core dump file:                        Files.              (line    6)
-* core dump file target:                 Target Commands.    (line   57)
-* crash of debugger:                     Bug Criteria.       (line    9)
-* CRC algorithm definition:              Separate Debug Files.
-                                                             (line  147)
-* CRC of memory block, remote request:   General Query Packets.
-                                                             (line   65)
-* CRIS:                                  CRIS.               (line    6)
-* CRIS mode:                             CRIS.               (line   26)
-* CRIS version:                          CRIS.               (line   10)
-* CTF info, when to read:                Symbols.            (line  763)
-* Ctrl-BREAK, MS-Windows:                Cygwin Native.      (line    9)
-* ctrl-c message, in file-i/o protocol:  The Ctrl-C Message. (line    6)
-* current Ada task ID:                   Ada Tasks.          (line  119)
-* current directory:                     Source Path.        (line   40)
-* current Go package:                    Go.                 (line   11)
-* current thread:                        Threads.            (line   29)
-* current thread, remote request:        General Query Packets.
-                                                             (line   55)
-* custom JIT debug info:                 Custom Debug Info.  (line    6)
-* Cygwin DLL, debugging:                 Cygwin Native.      (line   60)
-* Cygwin-specific commands:              Cygwin Native.      (line    6)
-* D:                                     D.                  (line    6)
-* d packet:                              Packets.            (line  126)
-* D packet:                              Packets.            (line  133)
-* DAP:                                   Interpreters.       (line   26)
-* Darwin:                                Darwin.             (line    6)
-* data breakpoints:                      Breakpoints.        (line   17)
-* data manipulation, in GDB/MI:          GDB/MI Data Manipulation.
-                                                             (line    6)
-* dcache line-size:                      Caching Target Data.
-                                                             (line   60)
-* dcache size:                           Caching Target Data.
-                                                             (line   57)
-* dcache, flushing:                      Caching Target Data.
-                                                             (line   71)
-* dead names, GNU Hurd:                  Hurd Native.        (line   84)
-* debug expression parser:               Debugging Output.   (line  228)
-* debug formats and C++:                 C Plus Plus Expressions.
-                                                             (line    8)
-* debug link sections:                   Separate Debug Files.
-                                                             (line   86)
-* debug remote protocol:                 Debugging Output.   (line  236)
-* Debugger Adapter Protocol:             Interpreters.       (line   26)
-* debugger crash:                        Bug Criteria.       (line    9)
-* debugging agent:                       In-Process Agent.   (line    6)
-* debugging C++ programs:                C Plus Plus Expressions.
-                                                             (line    8)
-* debugging information directory, global: Separate Debug Files.
-                                                             (line    6)
-* debugging information in separate files: Separate Debug Files.
-                                                             (line    6)
-* debugging libthread_db:                Threads.            (line  338)
-* debugging multiple processes:          Forks.              (line   55)
-* debugging optimized code:              Optimized Code.     (line    6)
-* debugging stub, example:               Remote Stub.        (line    6)
-* debugging target:                      Targets.            (line    6)
-* debugging the Cygwin DLL:              Cygwin Native.      (line   60)
-* debugging threads:                     Threads.            (line  343)
-* debuginfod:                            Debuginfod.         (line    6)
-* debuginfod verbosity:                  Debuginfod Settings.
-                                                             (line   41)
-* debuginfod, maintenance commands:      Maintenance Commands.
-                                                             (line  241)
-* decimal floating point format:         Decimal Floating Point.
-                                                             (line    6)
-* default behavior of commands, changing: Command Settings.  (line    6)
-* default collection action:             Tracepoint Actions. (line  142)
-* default data directory:                Data Files.         (line   19)
-* default settings, changing:            Command Settings.   (line    6)
-* default source path substitution:      Source Path.        (line  149)
-* default system root:                   Files.              (line  479)
-* define trace state variable, remote request: Tracepoint Packets.
-                                                             (line  117)
-* defining macros interactively:         Macros.             (line   60)
-* definition of a macro, showing:        Macros.             (line   47)
-* delete breakpoints:                    Delete Breaks.      (line   56)
-* deleting breakpoints, watchpoints, catchpoints: Delete Breaks.
-                                                             (line    6)
-* deliver a signal to a program:         Signaling.          (line    6)
-* demangle:                              Symbols.            (line  127)
-* demangler crashes:                     Maintenance Commands.
-                                                             (line  190)
-* demangler crashes <1>:                 Maintenance Commands.
-                                                             (line  217)
-* demangler crashes <2>:                 Maintenance Commands.
-                                                             (line  249)
-* demangling C++ names:                  Print Settings.     (line  568)
-* deprecated commands:                   Maintenance Commands.
-                                                             (line  204)
-* derived type of an object, printing:   Print Settings.     (line  599)
-* descriptor tables display:             DJGPP Native.       (line   24)
-* detach from task, GNU Hurd:            Hurd Native.        (line   59)
-* detach from thread, GNU Hurd:          Hurd Native.        (line  109)
-* direct memory access (DMA) on MS-DOS:  DJGPP Native.       (line   74)
-* directories for source files:          Source Path.        (line    6)
-* directory, compilation:                Source Path.        (line   40)
-* directory, current:                    Source Path.        (line   40)
-* disable address space randomization, remote request: General Query Packets.
-                                                             (line   82)
-* disabling calling functions in the program: Calling.       (line   76)
-* disassembler in Python, global vs. specific: Disassembly In Python.
-                                                             (line  466)
-* disassembler options:                  Machine Code.       (line  258)
-* disconnected tracing:                  Starting and Stopping Trace Experiments.
-                                                             (line   45)
-* displaced stepping debugging info:     Debugging Output.   (line  111)
-* displaced stepping support:            Maintenance Commands.
-                                                             (line  156)
-* displaced stepping, and process record and replay: Process Record and Replay.
-                                                             (line   99)
-* display command history:               Command History.    (line  110)
-* display derived types:                 Print Settings.     (line  599)
-* display disabled out of scope:         Auto Display.       (line   86)
-* display GDB copyright:                 Help.               (line  174)
-* display of expressions:                Auto Display.       (line    6)
-* display remote monitor communications: Target Commands.    (line  113)
-* display remote packets:                Debugging Output.   (line  236)
-* DJGPP debugging:                       DJGPP Native.       (line    6)
-* DLLs with no debugging symbols:        Non-debug DLL Symbols.
-                                                             (line    6)
-* do not print frame arguments:          Print Settings.     (line  200)
-* documentation:                         Formatting Documentation.
-                                                             (line   22)
-* don't repeat command:                  Define.             (line  127)
-* don't repeat Guile command:            Commands In Guile.  (line   67)
-* don't repeat Python command:           CLI Commands In Python.
-                                                             (line   42)
-* DOS file-name semantics of file names.: Files.             (line  502)
-* DOS serial data link, remote debugging: DJGPP Native.      (line  118)
-* DOS serial port status:                DJGPP Native.       (line  139)
-* DPMI:                                  DJGPP Native.       (line    6)
-* dprintf:                               Dynamic Printf.     (line    6)
-* dump all data collected at tracepoint: tdump.              (line    6)
-* dump core from inferior:               Core File Generation.
-                                                             (line    6)
-* dump data to a file:                   Dump/Restore Files. (line    6)
-* dump/restore files:                    Dump/Restore Files. (line    6)
-* DVC register:                          PowerPC Embedded.   (line    6)
-* DWARF compilation units cache:         Maintenance Commands.
-                                                             (line  662)
-* DWARF DIEs:                            Debugging Output.   (line   89)
-* DWARF frame unwinders:                 Maintenance Commands.
-                                                             (line  693)
-* DWARF Line Tables:                     Debugging Output.   (line   95)
-* DWARF Reading:                         Debugging Output.   (line  103)
-* DWARF-2 CFI and CRIS:                  CRIS.               (line   18)
-* dynamic linking:                       Files.              (line  132)
-* dynamic printf:                        Dynamic Printf.     (line    6)
-* dynamic varobj:                        GDB/MI Variable Objects.
-                                                             (line  163)
-* early initialization:                  Initialization Files.
-                                                             (line   14)
-* early initialization file:             Startup.            (line   10)
-* editing:                               Editing.            (line   15)
-* editing command lines:                 Readline Bare Essentials.
-                                                             (line    6)
-* editing source files:                  Edit.               (line    6)
-* eight-bit characters in strings:       Print Settings.     (line  513)
-* elaboration phase:                     Starting.           (line   92)
-* ELinOS system-wide configuration script: System-wide Configuration Scripts.
-                                                             (line   15)
-* Emacs:                                 Emacs.              (line    6)
-* empty response, for unsupported packets: Standard Replies. (line   11)
-* enable debuginfod:                     Debuginfod Settings.
-                                                             (line   10)
-* enable/disable a breakpoint:           Disabling.          (line    6)
-* enabling and disabling probes:         Static Probe Points.
-                                                             (line   52)
-* entering numbers:                      Numbers.            (line    6)
-* environment (of your program):         Environment.        (line    6)
-* errno values, in file-i/o protocol:    Errno Values.       (line    6)
-* error on valid input:                  Bug Criteria.       (line   12)
-* event debugging info:                  Debugging Output.   (line  118)
-* event designators:                     Event Designators.  (line    6)
-* event handling:                        Set Catchpoints.    (line    6)
-* event-loop debugging:                  Debugging Output.   (line  124)
-* examine process image:                 Process Information.
-                                                             (line    6)
-* examining data:                        Data.               (line    6)
-* examining memory:                      Memory.             (line    9)
-* exception handlers:                    Set Catchpoints.    (line    6)
-* exceptions, guile:                     Guile Exception Handling.
-                                                             (line    6)
-* exceptions, python:                    Exception Handling. (line    6)
-* exec events, remote reply:             Stop Reply Packets. (line  141)
-* executable file:                       Files.              (line   16)
-* executable file target:                Target Commands.    (line   50)
-* executable file, for remote target:    Remote Configuration.
-                                                             (line  102)
-* execute commands from a file:          Command Files.      (line   17)
-* execute forward or backward in time:   Reverse Execution.  (line   92)
-* execute remote command, remote request: General Query Packets.
-                                                             (line  613)
-* execution, foreground, background and asynchronous: Background Execution.
-                                                             (line    6)
-* execution, foreground, background and asynchronous <1>: Asynchronous and non-stop modes.
-                                                             (line   15)
-* exit status of shell commands:         Convenience Vars.   (line  192)
-* exiting GDB:                           Quitting GDB.       (line    6)
-* expand macro once:                     Macros.             (line   38)
-* expanding preprocessor macros:         Macros.             (line   29)
-* explicit locations:                    Explicit Locations. (line    6)
-* explore type:                          Data.               (line  254)
-* explore value:                         Data.               (line  247)
-* exploring hierarchical data structures: Data.              (line  145)
-* expression debugging info:             Debugging Output.   (line  133)
-* expression parser, debugging info:     Debugging Output.   (line  228)
-* expressions:                           Expressions.        (line    6)
-* expressions in Ada:                    Ada.                (line   11)
-* expressions in C or C++:               C.                  (line    6)
-* expressions in C++:                    C Plus Plus Expressions.
-                                                             (line    6)
-* expressions in Modula-2:               Modula-2.           (line   12)
-* extend GDB for remote targets:         Connecting.         (line  279)
-* extending GDB:                         Extending GDB.      (line    6)
-* extra signal information:              Signals.            (line  158)
-* F packet:                              Packets.            (line  147)
-* F reply packet:                        The F Reply Packet. (line    6)
-* F request packet:                      The F Request Packet.
-                                                             (line    6)
-* fast tracepoints:                      Set Tracepoints.    (line   24)
-* fast tracepoints, setting:             Create and Delete Tracepoints.
-                                                             (line   50)
-* fatal signal:                          Bug Criteria.       (line    9)
-* fatal signals:                         Signals.            (line   15)
-* features of the remote protocol:       General Query Packets.
-                                                             (line  659)
-* fetch memory tags:                     General Query Packets.
-                                                             (line  312)
-* file name canonicalization:            Files.              (line  546)
-* file names, quoting and escaping:      Filename Arguments. (line    6)
-* file transfer:                         File Transfer.      (line    6)
-* file transfer, remote protocol:        Host I/O Packets.   (line    6)
-* file-i/o examples:                     File-I/O Examples.  (line    6)
-* file-i/o overview:                     File-I/O Overview.  (line    6)
-* File-I/O remote protocol extension:    File-I/O Remote Protocol Extension.
-                                                             (line    6)
-* file-i/o reply packet:                 The F Reply Packet. (line    6)
-* file-i/o request packet:               The F Request Packet.
-                                                             (line    6)
-* filename-display:                      Backtrace.          (line  202)
-* find trace snapshot:                   tfind.              (line    6)
-* flinching:                             Messages/Warnings.  (line   49)
-* float promotion:                       ABI.                (line   34)
-* floating point:                        Floating Point Hardware.
-                                                             (line    6)
-* floating point registers:              Registers.          (line   15)
-* floating point, MIPS remote:           MIPS Embedded.      (line   13)
-* focus of debugging:                    Threads.            (line   29)
-* foo:                                   Symbol Errors.      (line   54)
-* foreground execution:                  Background Execution.
-                                                             (line    6)
-* foreground execution <1>:              Asynchronous and non-stop modes.
-                                                             (line   15)
-* fork events, remote reply:             Stop Reply Packets. (line  104)
-* fork, debugging programs which call:   Forks.              (line    6)
-* format options:                        Print Settings.     (line    6)
-* formatted output:                      Output Formats.     (line    6)
-* Fortran:                               Summary.            (line   40)
-* fortran array slicing debugging info:  Debugging Output.   (line  151)
-* Fortran Defaults:                      Fortran.            (line   14)
-* Fortran Intrinsics:                    Fortran Intrinsics. (line    6)
-* Fortran modules, information about:    Symbols.            (line  589)
-* Fortran operators and expressions:     Fortran Operators.  (line    6)
-* Fortran Types:                         Fortran Types.      (line    6)
-* Fortran-specific support in GDB:       Fortran.            (line    6)
-* frame debugging info:                  Debugging Output.   (line  159)
-* frame decorator api:                   Frame Decorator API.
-                                                             (line    6)
-* frame filters api:                     Frame Filter API.   (line    6)
-* frame information, printing:           Print Settings.     (line  360)
-* frame level:                           Frames.             (line   28)
-* frame number:                          Frames.             (line   28)
-* frame pointer:                         Frames.             (line   21)
-* frame pointer register:                Registers.          (line   31)
-* frame, definition:                     Frames.             (line    6)
-* frameless execution:                   Frames.             (line   34)
-* frames in guile:                       Frames In Guile.    (line    6)
-* frames in python:                      Frames In Python.   (line    6)
-* frames of inlined functions:           Maintenance Commands.
-                                                             (line  369)
-* free memory information (MS-DOS):      DJGPP Native.       (line   19)
-* FreeBSD:                               FreeBSD.            (line    6)
-* FreeBSD LWP debug messages:            Debugging Output.   (line  140)
-* FreeBSD native target debug messages:  Debugging Output.   (line  146)
-* fstat, file-i/o system call:           stat/fstat.         (line    6)
-* Fujitsu:                               Remote Stub.        (line   68)
-* full symbol tables, listing GDB's internal: Symbols.       (line  684)
-* function call arguments, optimized out: Backtrace.         (line  133)
-* function entry/exit, wrong values of variables: Variables. (line  106)
-* functions and variables by Fortran module: Symbols.        (line  589)
-* functions without line info, and stepping: Continuing and Stepping.
-                                                             (line   92)
-* g packet:                              Packets.            (line  152)
-* G packet:                              Packets.            (line  187)
-* g++, GNU C++ compiler:                 C.                  (line   10)
-* garbled pointers:                      DJGPP Native.       (line   42)
-* GCC and C++:                           C Plus Plus Expressions.
-                                                             (line    8)
-* GDB bugs, reporting:                   Bug Reporting.      (line    6)
-* GDB internal error:                    Maintenance Commands.
-                                                             (line  249)
-* gdb module:                            Basic Python.       (line   31)
-* gdb objects:                           GDB Scheme Data Types.
-                                                             (line    6)
-* GDB reference card:                    Formatting Documentation.
-                                                             (line    6)
-* GDB startup:                           Startup.            (line    6)
-* GDB version number:                    Help.               (line  164)
-* gdb.ini:                               Initialization Files.
-                                                             (line  107)
-* gdb.printing:                          gdb.printing.       (line    6)
-* gdb.prompt:                            gdb.prompt.         (line    6)
-* gdb.ptwrite:                           gdb.ptwrite.        (line    6)
-* gdb.types:                             gdb.types.          (line    6)
-* gdb.Value:                             Values From Inferior.
-                                                             (line    6)
-* GDB/MI development:                    GDB/MI Development and Front Ends.
-                                                             (line    6)
-* GDB/MI General Design:                 GDB/MI General Design.
-                                                             (line    6)
-* GDB/MI, async records:                 GDB/MI Async Records.
-                                                             (line    6)
-* GDB/MI, breakpoint commands:           GDB/MI Breakpoint Commands.
-                                                             (line    6)
-* GDB/MI, compatibility with CLI:        GDB/MI Compatibility with CLI.
-                                                             (line    6)
-* GDB/MI, data manipulation:             GDB/MI Data Manipulation.
-                                                             (line    6)
-* GDB/MI, input syntax:                  GDB/MI Input Syntax.
-                                                             (line    6)
-* GDB/MI, its purpose:                   GDB/MI.             (line   36)
-* GDB/MI, output syntax:                 GDB/MI Output Syntax.
-                                                             (line    6)
-* GDB/MI, result records:                GDB/MI Result Records.
-                                                             (line    6)
-* GDB/MI, simple examples:               GDB/MI Simple Examples.
-                                                             (line    6)
-* GDB/MI, stream records:                GDB/MI Stream Records.
-                                                             (line    6)
-* gdbarch debugging info:                Debugging Output.   (line   26)
-* GDBHISTFILE, environment variable:     Command History.    (line   26)
-* GDBHISTSIZE, environment variable:     Command History.    (line   56)
-* gdbinit:                               Initialization Files.
-                                                             (line  107)
-* gdbserver, command-line arguments:     Server.             (line   34)
-* gdbserver, connecting:                 Connecting.         (line    6)
-* gdbserver, search path for libthread_db: Server.           (line  295)
-* gdbserver, send all debug output to a single file: Server. (line  174)
-* gdbserver, target extended-remote mode: Connecting.        (line    6)
-* gdbserver, target remote mode:         Connecting.         (line    6)
-* gdbserver, types of connections:       Connecting.         (line    6)
-* GDT:                                   DJGPP Native.       (line   24)
-* general initialization:                Initialization Files.
-                                                             (line   30)
-* get thread information block address:  General Query Packets.
-                                                             (line  281)
-* get thread-local storage address, remote request: General Query Packets.
-                                                             (line  257)
-* gettimeofday, file-i/o system call:    gettimeofday.       (line    6)
-* getting structure elements using gdb.Field objects as subscripts: Values From Inferior.
-                                                             (line   40)
-* global debugging information directories: Separate Debug Files.
-                                                             (line    6)
-* global thread identifier (GDB):        Threads.            (line   88)
-* global thread number:                  Threads.            (line   88)
-* GNAT descriptive types:                Ada Glitches.       (line   57)
-* GNAT encoding:                         Ada Glitches.       (line   57)
-* GNU C++:                               C.                  (line   10)
-* GNU Emacs:                             Emacs.              (line    6)
-* GNU Hurd debugging:                    Hurd Native.        (line    6)
-* GNU/Hurd debug messages:               Debugging Output.   (line  165)
-* GNU/Linux namespaces debug messages:   Debugging Output.   (line  195)
-* GNU/Linux native target debug messages: Debugging Output.  (line  189)
-* Go (programming language):             Go.                 (line    6)
-* guile api:                             Guile API.          (line    6)
-* guile architectures:                   Architectures In Guile.
-                                                             (line    6)
-* guile auto-loading:                    Guile Auto-loading. (line    6)
-* guile commands:                        Guile Commands.     (line    6)
-* guile commands <1>:                    Commands In Guile.  (line    6)
-* guile configuration:                   Guile Configuration.
-                                                             (line    6)
-* guile exceptions:                      Guile Exception Handling.
-                                                             (line    6)
-* guile gdb module:                      Basic Guile.        (line   37)
-* guile iterators:                       Iterators In Guile. (line    6)
-* guile modules:                         Guile Modules.      (line    6)
-* guile pagination:                      Basic Guile.        (line    6)
-* guile parameters:                      Parameters In Guile.
-                                                             (line    6)
-* guile pretty printing api:             Guile Pretty Printing API.
-                                                             (line    6)
-* guile scripting:                       Guile.              (line    6)
-* guile scripts directory:               Guile Introduction. (line   15)
-* guile stdout:                          Basic Guile.        (line    6)
-* guile, working with types:             Types In Guile.     (line    6)
-* guile, working with values from inferior: Values From Inferior In Guile.
-                                                             (line    6)
-* H packet:                              Packets.            (line  195)
-* handling signals:                      Signals.            (line   27)
-* hardware breakpoints:                  Set Breaks.         (line  172)
-* hardware debug registers:              Maintenance Commands.
-                                                             (line  743)
-* hardware watchpoints:                  Set Watchpoints.    (line   31)
-* hash mark while downloading:           Target Commands.    (line  104)
-* heuristic-fence-post (Alpha, MIPS):    MIPS.               (line   14)
-* history events:                        Event Designators.  (line    8)
-* history expansion:                     History Interaction.
-                                                             (line    6)
-* history expansion, turn on/off:        Command History.    (line   85)
-* history file:                          Command History.    (line   26)
-* history number:                        Value History.      (line   13)
-* history of values printed by GDB:      Value History.      (line    6)
-* history size:                          Command History.    (line   56)
-* history substitution:                  Command History.    (line   26)
-* hooks, for commands:                   Hooks.              (line    6)
-* hooks, post-command:                   Hooks.              (line   11)
-* hooks, pre-command:                    Hooks.              (line    6)
-* host character set:                    Character Sets.     (line    6)
-* Host I/O, remote protocol:             Host I/O Packets.   (line    6)
-* how many arguments (user-defined commands): Define.        (line   34)
-* HPPA support:                          HPPA.               (line    6)
-* i packet:                              Packets.            (line  207)
-* I packet:                              Packets.            (line  212)
-* i/o:                                   Input/Output.       (line    6)
-* I/O registers (Atmel AVR):             AVR.                (line   10)
-* i386:                                  Remote Stub.        (line   56)
-* i386-stub.c:                           Remote Stub.        (line   56)
-* ID list:                               Inferiors Connections and Programs.
-                                                             (line   25)
-* IDT:                                   DJGPP Native.       (line   24)
-* ignore count (of breakpoint):          Conditions.         (line   85)
-* in-process agent protocol:             In-Process Agent Protocol.
-                                                             (line    6)
-* incomplete type:                       Symbols.            (line  367)
-* indentation in structure display:      Print Settings.     (line  475)
-* index files:                           Index Files.        (line    6)
-* index files <1>:                       Debug Names.        (line    6)
-* index section format:                  Index Section Format.
-                                                             (line    6)
-* inferior:                              Inferiors Connections and Programs.
-                                                             (line   15)
-* inferior debugging info:               Debugging Output.   (line  170)
-* inferior events in Python:             Events In Python.   (line    6)
-* inferior function call debugging info: Debugging Output.   (line  178)
-* inferior functions, calling:           Calling.            (line    6)
-* inferior tty:                          Input/Output.       (line   44)
-* inferior-specific breakpoints:         Inferior-Specific Breakpoints.
-                                                             (line    9)
-* inferiors in Python:                   Inferiors In Python.
-                                                             (line    6)
-* infinite recursion in user-defined commands: Define.       (line  144)
-* info for known .debug_gdb_scripts-loaded scripts: Maintenance Commands.
-                                                             (line  577)
-* info for known object files:           Maintenance Commands.
-                                                             (line  562)
-* info line, repeated calls:             Machine Code.       (line   41)
-* info proc cmdline:                     Process Information.
-                                                             (line   41)
-* info proc cwd:                         Process Information.
-                                                             (line   45)
-* info proc exe:                         Process Information.
-                                                             (line   49)
-* info proc files:                       Process Information.
-                                                             (line   53)
-* information about static tracepoint markers: Listing Static Tracepoint Markers.
-                                                             (line    6)
-* information about tracepoints:         Listing Tracepoints.
-                                                             (line    6)
-* inheritance:                           Debugging C Plus Plus.
-                                                             (line   26)
-* init file:                             Startup.            (line   23)
-* init file name:                        Initialization Files.
-                                                             (line    6)
-* initial frame:                         Frames.             (line   12)
-* initialization file:                   Initialization Files.
-                                                             (line   34)
-* initialization file, readline:         Readline Init File. (line    6)
-* injecting code:                        Compiling and Injecting Code.
-                                                             (line    6)
-* inline functions, debugging:           Inline Functions.   (line    6)
-* innermost frame:                       Frames.             (line   12)
-* input syntax for GDB/MI:               GDB/MI Input Syntax.
-                                                             (line    6)
-* installation:                          Installing GDB.     (line    6)
-* instructions, assembly:                Machine Code.       (line   44)
-* integral datatypes, in file-i/o protocol: Integral Datatypes.
-                                                             (line    6)
-* Intel:                                 Remote Stub.        (line   56)
-* Intel disassembly flavor:              Machine Code.       (line  273)
-* Intel Processor Trace:                 Process Record and Replay.
-                                                             (line   78)
-* interaction, readline:                 Readline Interaction.
-                                                             (line    6)
-* internal commands:                     Maintenance Commands.
-                                                             (line    6)
-* internal errors, control of GDB behavior: Maintenance Commands.
-                                                             (line  249)
-* internal GDB breakpoints:              Set Breaks.         (line  483)
-* interrupt:                             Quitting GDB.       (line   15)
-* interrupt debuggee on MS-Windows:      Cygwin Native.      (line    9)
-* interrupt remote programs:             Remote Configuration.
-                                                             (line   36)
-* interrupt remote programs <1>:         Remote Configuration.
-                                                             (line  108)
-* interrupting remote programs:          Connecting.         (line  246)
-* interrupting remote targets:           Bootstrapping.      (line   25)
-* interrupts (remote protocol):          Interrupts.         (line    6)
-* invalid input:                         Bug Criteria.       (line   16)
-* invoke another interpreter:            Interpreters.       (line   44)
-* ipa protocol commands:                 IPA Protocol Commands.
-                                                             (line    6)
-* ipa protocol objects:                  IPA Protocol Objects.
-                                                             (line    6)
-* isatty, file-i/o system call:          isatty.             (line    6)
-* JIT compilation interface:             JIT Interface.      (line    6)
-* JIT debug info reader:                 Custom Debug Info.  (line    6)
-* just-in-time compilation:              JIT Interface.      (line    6)
-* just-in-time compilation, debugging messages: Debugging Output.
-                                                             (line  184)
-* k packet:                              Packets.            (line  216)
-* kernel crash dump:                     BSD libkvm Interface.
-                                                             (line    6)
-* kernel memory image:                   BSD libkvm Interface.
-                                                             (line    6)
-* kill ring:                             Readline Killing Commands.
-                                                             (line   18)
-* killing text:                          Readline Killing Commands.
-                                                             (line    6)
-* languages:                             Languages.          (line    6)
-* last tracepoint number:                Create and Delete Tracepoints.
-                                                             (line  124)
-* latest breakpoint:                     Set Breaks.         (line    6)
-* lazy strings in guile:                 Lazy Strings In Guile.
-                                                             (line    6)
-* lazy strings in python:                Lazy Strings In Python.
-                                                             (line    6)
-* LDT:                                   DJGPP Native.       (line   24)
-* leaving GDB:                           Quitting GDB.       (line    6)
-* libkvm:                                BSD libkvm Interface.
-                                                             (line    6)
-* library list format, remote protocol:  Library List Format.
-                                                             (line    6)
-* library list format, remote protocol <1>: Library List Format for SVR4 Targets.
-                                                             (line    6)
-* limit hardware breakpoints and watchpoints: Remote Configuration.
-                                                             (line   79)
-* limit hardware watchpoints length:     Remote Configuration.
-                                                             (line   91)
-* limit on number of printed array elements: Print Settings. (line  179)
-* limit on number of printed string characters: Print Settings.
-                                                             (line  159)
-* limits, in file-i/o protocol:          Limits.             (line    6)
-* line tables in python:                 Line Tables In Python.
-                                                             (line    6)
-* line tables, listing GDB's internal:   Symbols.            (line  731)
-* linespec locations:                    Linespec Locations. (line    6)
-* Linux native targets:                  Debugging Output.   (line  189)
-* list active threads, remote request:   General Query Packets.
-                                                             (line  224)
-* list of supported file-i/o calls:      List of Supported Calls.
-                                                             (line    6)
-* list output in GDB/MI:                 GDB/MI Output Syntax.
-                                                             (line  117)
-* list, how many lines to display:       List.               (line   40)
-* listing GDB's internal line tables:    Symbols.            (line  731)
-* listing GDB's internal symbol tables:  Symbols.            (line  684)
-* listing machine instructions:          Machine Code.       (line   44)
-* listing mapped overlays:               Overlay Commands.   (line   60)
-* lists of breakpoints:                  Breakpoints.        (line   45)
-* load address, overlay's:               How Overlays Work.  (line    6)
-* load shared library:                   Files.              (line  353)
-* load symbols from memory:              Files.              (line  210)
-* local socket, target remote:           Connecting.         (line  147)
-* local variables:                       Symbols.            (line  436)
-* locate address:                        Output Formats.     (line   36)
-* location resolution:                   Location Specifications.
-                                                             (line   14)
-* location spec:                         Location Specifications.
-                                                             (line    6)
-* lock scheduler:                        All-Stop Mode.      (line   37)
-* locspec:                               Location Specifications.
-                                                             (line    6)
-* log output in GDB/MI:                  GDB/MI Output Syntax.
-                                                             (line  113)
-* logging file name:                     Logging Output.     (line   10)
-* logging GDB output:                    Logging Output.     (line    6)
-* look up of disassembler in Python:     Disassembly In Python.
-                                                             (line  466)
-* lseek flags, in file-i/o protocol:     Lseek Flags.        (line    6)
-* lseek, file-i/o system call:           lseek.              (line    6)
-* m packet:                              Packets.            (line  239)
-* M packet:                              Packets.            (line  264)
-* m680x0:                                Remote Stub.        (line   59)
-* m68k-stub.c:                           Remote Stub.        (line   59)
-* Mach-O symbols processing:             Debugging Output.   (line  201)
-* machine instructions:                  Machine Code.       (line   44)
-* macro definition, showing:             Macros.             (line   47)
-* macro expansion, showing the results of preprocessor: Macros.
-                                                             (line   29)
-* macros, example of debugging with:     Macros.             (line   84)
-* macros, from debug info:               Macros.             (line   47)
-* macros, user-defined:                  Macros.             (line   60)
-* mailing lists:                         GDB/MI Development and Front Ends.
-                                                             (line   93)
-* maintenance commands:                  Maintenance Commands.
-                                                             (line    6)
-* Man pages:                             Man Pages.          (line    6)
-* managing frame filters:                Frame Filter Management.
-                                                             (line    6)
-* manual overlay debugging:              Overlay Commands.   (line   23)
-* map an overlay:                        Overlay Commands.   (line   30)
-* mapped address:                        How Overlays Work.  (line    6)
-* mapped overlays:                       How Overlays Work.  (line    6)
-* markers, static tracepoints:           Set Tracepoints.    (line   28)
-* maximum value for offset of closest symbol: Print Settings.
-                                                             (line   70)
-* member functions:                      C Plus Plus Expressions.
-                                                             (line   16)
-* memory address space mappings:         Process Information.
-                                                             (line   80)
-* memory address space mappings <1>:     Maintenance Commands.
-                                                             (line  332)
-* memory map format:                     Memory Map Format.  (line    6)
-* memory region attributes:              Memory Region Attributes.
-                                                             (line    6)
-* memory tag types, ARM:                 ARM Memory Tag Types.
-                                                             (line    6)
-* memory tracing:                        Breakpoints.        (line   17)
-* memory transfer, in file-i/o protocol: Memory Transfer.    (line    6)
-* memory used by commands:               Maintenance Commands.
-                                                             (line  895)
-* memory used for symbol tables:         Files.              (line  341)
-* memory, alignment and size of remote accesses: Packets.    (line  243)
-* memory, alignment and size of remote accesses <1>: Packets.
-                                                             (line  532)
-* memory, viewing as typed object:       Expressions.        (line   41)
-* MI commands in python:                 GDB/MI Commands In Python.
-                                                             (line    6)
-* mi interpreter:                        Interpreters.       (line   34)
-* MI notifications in python:            GDB/MI Notifications In Python.
-                                                             (line    6)
-* mi2 interpreter:                       Interpreters.       (line   42)
-* mi3 interpreter:                       Interpreters.       (line   39)
-* minimal language:                      Unsupported Languages.
-                                                             (line    6)
-* minimal symbol dump:                   Symbols.            (line  658)
-* Minimal symbols and DLLs:              Non-debug DLL Symbols.
-                                                             (line    6)
-* MIPS addresses, masking:               MIPS.               (line   80)
-* MIPS remote floating point:            MIPS Embedded.      (line   13)
-* MIPS stack:                            MIPS.               (line    6)
-* miscellaneous settings:                Other Misc Settings.
-                                                             (line    6)
-* MMX registers (x86):                   Registers.          (line   76)
-* mode_t values, in file-i/o protocol:   mode_t Values.      (line    6)
-* Modula-2:                              Summary.            (line   29)
-* Modula-2 built-ins:                    Built-In Func/Proc. (line    6)
-* Modula-2 checks:                       M2 Checks.          (line    6)
-* Modula-2 constants:                    Built-In Func/Proc. (line  117)
-* Modula-2 defaults:                     M2 Defaults.        (line    6)
-* Modula-2 operators:                    M2 Operators.       (line    6)
-* Modula-2 types:                        M2 Types.           (line    6)
-* Modula-2, deviations from:             Deviations.         (line    6)
-* Modula-2, GDB support:                 Modula-2.           (line    6)
-* module functions and variables:        Symbols.            (line  589)
-* modules:                               Symbols.            (line  581)
-* monitor commands, for gdbserver:       Server.             (line  243)
-* Motorola 680x0:                        Remote Stub.        (line   59)
-* MS Windows debugging:                  Cygwin Native.      (line    6)
-* MS-DOS system info:                    DJGPP Native.       (line   19)
-* MS-DOS-specific commands:              DJGPP Native.       (line    6)
-* multiple locations, breakpoints:       Set Breaks.         (line  311)
-* multiple processes:                    Forks.              (line    6)
-* multiple targets:                      Active Targets.     (line    6)
-* multiple threads:                      Threads.            (line    6)
-* multiple threads, backtrace:           Backtrace.          (line   97)
-* multiple-symbols menu:                 Ambiguous Expressions.
-                                                             (line   51)
-* multiprocess extensions, in remote protocol: General Query Packets.
-                                                             (line 1002)
-* name a thread:                         Threads.            (line  254)
-* names of symbols:                      Symbols.            (line   14)
-* namespace in C++:                      C Plus Plus Expressions.
-                                                             (line   20)
-* native Cygwin debugging:               Cygwin Native.      (line    6)
-* native DJGPP debugging:                DJGPP Native.       (line    6)
-* native script auto-loading:            Auto-loading sequences.
-                                                             (line    6)
-* native target:                         Target Commands.    (line   91)
-* negative breakpoint numbers:           Set Breaks.         (line  483)
-* never read symbols:                    Files.              (line  110)
-* New SYSTAG message:                    Threads.            (line   35)
-* new user interface:                    Interpreters.       (line   73)
-* Newlib OS ABI and its influence on the longjmp handling: ABI.
-                                                             (line   11)
-* no debug info functions:               Calling.            (line  181)
-* no debug info variables:               Variables.          (line  142)
-* non-member C++ functions, set breakpoint in: Set Breaks.   (line  224)
-* non-stop mode:                         Non-Stop Mode.      (line    6)
-* non-stop mode, and process record and replay: Process Record and Replay.
-                                                             (line  104)
-* non-stop mode, and set displaced-stepping: Maintenance Commands.
-                                                             (line  173)
-* non-stop mode, remote request:         General Query Packets.
-                                                             (line  425)
-* noninvasive task options:              Hurd Native.        (line   72)
-* notation, readline:                    Readline Bare Essentials.
-                                                             (line    6)
-* notational conventions, for GDB/MI:    GDB/MI.             (line   52)
-* notification packets:                  Notification Packets.
-                                                             (line    6)
-* notifications in python, GDB/MI:       GDB/MI Notifications In Python.
-                                                             (line    6)
-* notify output in GDB/MI:               GDB/MI Output Syntax.
-                                                             (line  102)
-* NULL elements in arrays:               Print Settings.     (line  466)
-* number of array elements to print:     Print Settings.     (line  179)
-* number of string characters to print:  Print Settings.     (line  159)
-* number representation:                 Numbers.            (line    6)
-* numbers for breakpoints:               Breakpoints.        (line   38)
-* object files, relocatable, reading symbols from: Files.    (line  158)
-* Objective-C:                           Objective-C.        (line    6)
-* Objective-C, classes and selectors:    Symbols.            (line  609)
-* Objective-C, print objects:            The Print Command with Objective-C.
-                                                             (line    6)
-* OBJFILE-gdb.gdb:                       objfile-gdbdotext file.
-                                                             (line    6)
-* OBJFILE-gdb.py:                        objfile-gdbdotext file.
-                                                             (line    6)
-* OBJFILE-gdb.scm:                       objfile-gdbdotext file.
-                                                             (line    6)
-* objfiles in guile:                     Objfiles In Guile.  (line    6)
-* objfiles in python:                    Objfiles In Python. (line    6)
-* observer debugging info:               Debugging Output.   (line  215)
-* octal escapes in strings:              Print Settings.     (line  513)
-* online documentation:                  Help.               (line    6)
-* opaque data types:                     Symbols.            (line  621)
-* open flags, in file-i/o protocol:      Open Flags.         (line    6)
-* open, file-i/o system call:            open.               (line    6)
-* OpenCL C:                              OpenCL C.           (line    6)
-* OpenCL C Datatypes:                    OpenCL C Datatypes. (line    6)
-* OpenCL C Expressions:                  OpenCL C Expressions.
-                                                             (line    6)
-* OpenCL C Operators:                    OpenCL C Operators. (line    6)
-* OpenRISC 1000:                         OpenRISC 1000.      (line    6)
-* operate-and-get-next:                  Editing.            (line   32)
-* operating system information:          Operating System Information.
-                                                             (line    6)
-* operating system information, process list: Process list.  (line    6)
-* optimized code, debugging:             Optimized Code.     (line    6)
-* optimized code, wrong values of variables: Variables.      (line  106)
-* optimized out value in guile:          Values From Inferior In Guile.
-                                                             (line  102)
-* optimized out value in Python:         Values From Inferior.
-                                                             (line   75)
-* optimized out, in backtrace:           Backtrace.          (line  133)
-* optional debugging messages:           Debugging Output.   (line    6)
-* optional warnings:                     Messages/Warnings.  (line    6)
-* OS ABI:                                ABI.                (line   11)
-* OS information:                        OS Information.     (line    6)
-* out-of-line single-stepping:           Maintenance Commands.
-                                                             (line  156)
-* outermost frame:                       Frames.             (line   12)
-* output formats:                        Output Formats.     (line    6)
-* output syntax of GDB/MI:               GDB/MI Output Syntax.
-                                                             (line    6)
-* overlay area:                          How Overlays Work.  (line    6)
-* overlay example program:               Overlay Sample Program.
-                                                             (line    6)
-* overlays:                              Overlays.           (line    6)
-* overlays, setting breakpoints in:      Overlay Commands.   (line   91)
-* overloaded functions, calling:         C Plus Plus Expressions.
-                                                             (line   26)
-* overloaded functions, overload resolution: Debugging C Plus Plus.
-                                                             (line   59)
-* overloading in C++:                    Debugging C Plus Plus.
-                                                             (line   15)
-* overloading, Ada:                      Overloading support for Ada.
-                                                             (line    6)
-* p packet:                              Packets.            (line  274)
-* P packet:                              Packets.            (line  283)
-* packet acknowledgment, for GDB remote: Packet Acknowledgment.
-                                                             (line    6)
-* packet size, remote protocol:          General Query Packets.
-                                                             (line  908)
-* packet size, remote, configuring:      Remote Configuration.
-                                                             (line  349)
-* packets, notification:                 Notification Packets.
-                                                             (line    6)
-* packets, reporting on stdout:          Debugging Output.   (line  236)
-* packets, tracepoint:                   Tracepoint Packets. (line    6)
-* page size:                             Screen Size.        (line    6)
-* page tables display (MS-DOS):          DJGPP Native.       (line   55)
-* pagination:                            Screen Size.        (line    6)
-* parameters in guile:                   Parameters In Guile.
-                                                             (line    6)
-* parameters in python:                  Parameters In Python.
-                                                             (line    6)
-* partial symbol dump:                   Symbols.            (line  658)
-* partial symbol tables, listing GDB's internal: Symbols.    (line  684)
-* Pascal:                                Summary.            (line   35)
-* Pascal objects, static members display: Print Settings.    (line  628)
-* Pascal support in GDB, limitations:    Pascal.             (line    6)
-* pass signals to inferior, remote request: General Query Packets.
-                                                             (line  471)
-* patching binaries:                     Patching.           (line    6)
-* patching object files:                 Files.              (line   29)
-* pause current task (GNU Hurd):         Hurd Native.        (line   48)
-* pause current thread (GNU Hurd):       Hurd Native.        (line   90)
-* pauses in output:                      Screen Size.        (line    6)
-* pending breakpoints:                   Set Breaks.         (line  353)
-* physical address from linear address:  DJGPP Native.       (line   80)
-* physname:                              Debugging Output.   (line   72)
-* pipe, target remote to:                Connecting.         (line  234)
-* pipes:                                 Starting.           (line   64)
-* pointer values, in file-i/o protocol:  Pointer Values.     (line    6)
-* pointer, finding referent:             Print Settings.     (line   80)
-* port rights, GNU Hurd:                 Hurd Native.        (line   84)
-* port sets, GNU Hurd:                   Hurd Native.        (line   84)
-* PowerPC architecture:                  PowerPC.            (line    6)
-* prefix for data files:                 Data Files.         (line    6)
-* prefix for executable and shared library file names: Files.
-                                                             (line  412)
-* premature return from system calls:    Interrupted System Calls.
-                                                             (line    6)
-* preprocessor macro expansion, showing the results of: Macros.
-                                                             (line   29)
-* pretty print arrays:                   Print Settings.     (line  115)
-* pretty print C++ virtual function tables: Print Settings.  (line  639)
-* pretty-printer commands:               Pretty-Printer Commands.
-                                                             (line    6)
-* print all frame argument values:       Print Settings.     (line  200)
-* print an Objective-C object description: The Print Command with Objective-C.
-                                                             (line   11)
-* print array indexes:                   Print Settings.     (line  125)
-* print binary values in groups of four bits: Print Settings.
-                                                             (line  141)
-* print frame argument values for scalars only: Print Settings.
-                                                             (line  200)
-* print list of auto-loaded canned sequences of commands scripts: Auto-loading sequences.
-                                                             (line   21)
-* print list of auto-loaded Guile scripts: Guile Auto-loading.
-                                                             (line   23)
-* print list of auto-loaded Python scripts: Python Auto-loading.
-                                                             (line   23)
-* print messages on inferior start and exit: Inferiors Connections and Programs.
-                                                             (line  188)
-* print messages on thread start and exit: Threads.          (line  279)
-* print messages when symbols are loaded: Symbols.           (line  639)
-* print settings:                        Print Settings.     (line    6)
-* print structures in indented form:     Print Settings.     (line  475)
-* print/don't print memory addresses:    Print Settings.     (line   13)
-* printing byte arrays:                  Output Formats.     (line   62)
-* printing data:                         Data.               (line    6)
-* printing frame argument values:        Print Settings.     (line  200)
-* printing frame information:            Print Settings.     (line  360)
-* printing memory tag violation information: Print Settings. (line  453)
-* printing nested structures:            Print Settings.     (line  408)
-* printing strings:                      Output Formats.     (line   62)
-* probe static tracepoint marker:        Create and Delete Tracepoints.
-                                                             (line   75)
-* probing markers, static tracepoints:   Set Tracepoints.    (line   28)
-* process detailed status information:   Process Information.
-                                                             (line   89)
-* process ID:                            Process Information.
-                                                             (line   25)
-* process info via /proc:                Process Information.
-                                                             (line    6)
-* process record and replay:             Process Record and Replay.
-                                                             (line    6)
-* process status register:               Registers.          (line   31)
-* processes, multiple:                   Forks.              (line    6)
-* procfs API calls:                      Process Information.
-                                                             (line  106)
-* profiling GDB:                         Maintenance Commands.
-                                                             (line  727)
-* program counter register:              Registers.          (line   31)
-* program entry point:                   Backtrace.          (line  155)
-* programming in guile:                  Guile API.          (line    6)
-* programming in python:                 Python API.         (line    6)
-* progspaces in guile:                   Progspaces In Guile.
-                                                             (line    6)
-* progspaces in python:                  Progspaces In Python.
-                                                             (line    6)
-* prologue-end:                          Symbols.            (line  794)
-* prompt:                                Prompt.             (line    6)
-* protocol basics, file-i/o:             Protocol Basics.    (line    6)
-* protocol, GDB remote serial:           Overview.           (line   14)
-* protocol-specific representation of datatypes, in file-i/o protocol: Protocol-specific Representation of Datatypes.
-                                                             (line    6)
-* python api:                            Python API.         (line    6)
-* Python architectures:                  Architectures In Python.
-                                                             (line    6)
-* Python auto-loading:                   Python Auto-loading.
-                                                             (line    6)
-* python commands:                       Python Commands.    (line    6)
-* python commands, CLI:                  CLI Commands In Python.
-                                                             (line    6)
-* python commands, GDB/MI:               GDB/MI Commands In Python.
-                                                             (line    6)
-* python convenience functions:          Functions In Python.
-                                                             (line    6)
-* python directory:                      Python.             (line   10)
-* python exceptions:                     Exception Handling. (line    6)
-* python finish breakpoints:             Finish Breakpoints in Python.
-                                                             (line    6)
-* python functions:                      Basic Python.       (line   31)
-* python instruction disassembly:        Disassembly In Python.
-                                                             (line    6)
-* python module:                         Basic Python.       (line   31)
-* python modules:                        Python modules.     (line    6)
-* python notifications, GDB/MI:          GDB/MI Notifications In Python.
-                                                             (line    6)
-* python pagination:                     Basic Python.       (line    6)
-* python parameters:                     Parameters In Python.
-                                                             (line    6)
-* python pretty printing api:            Pretty Printing API.
-                                                             (line    6)
-* python scripting:                      Python.             (line    6)
-* python stdout:                         Basic Python.       (line    6)
-* Python TUI Windows:                    TUI Windows In Python.
-                                                             (line    6)
-* python, handle missing debug information: Missing Debug Info In Python.
-                                                             (line    6)
-* python, handle missing objfiles:       Missing Objfiles In Python.
-                                                             (line    6)
-* Python, working with types:            Types In Python.    (line    6)
-* python, working with values from inferior: Values From Inferior.
-                                                             (line    6)
-* q packet:                              Packets.            (line  293)
-* Q packet:                              Packets.            (line  293)
-* QAllow packet:                         General Query Packets.
-                                                             (line   44)
-* qAttached packet:                      General Query Packets.
-                                                             (line 1493)
-* qC packet:                             General Query Packets.
-                                                             (line   55)
-* QCatchSyscalls packet:                 General Query Packets.
-                                                             (line  439)
-* qCRC packet:                           General Query Packets.
-                                                             (line   65)
-* QDisableRandomization packet:          General Query Packets.
-                                                             (line   82)
-* QEnvironmentHexEncoded packet:         General Query Packets.
-                                                             (line  130)
-* QEnvironmentReset packet:              General Query Packets.
-                                                             (line  183)
-* QEnvironmentUnset packet:              General Query Packets.
-                                                             (line  159)
-* qfThreadInfo packet:                   General Query Packets.
-                                                             (line  224)
-* qGetTIBAddr packet:                    General Query Packets.
-                                                             (line  281)
-* qGetTLSAddr packet:                    General Query Packets.
-                                                             (line  257)
-* qIsAddressTagged packet:               General Query Packets.
-                                                             (line  332)
-* qMemTags packet:                       General Query Packets.
-                                                             (line  312)
-* QMemTags packet:                       General Query Packets.
-                                                             (line  350)
-* QNonStop packet:                       General Query Packets.
-                                                             (line  425)
-* qOffsets packet:                       General Query Packets.
-                                                             (line  388)
-* qP packet:                             General Query Packets.
-                                                             (line  415)
-* QPassSignals packet:                   General Query Packets.
-                                                             (line  471)
-* QProgramSignals packet:                General Query Packets.
-                                                             (line  492)
-* qRcmd packet:                          General Query Packets.
-                                                             (line  613)
-* qSearch memory packet:                 General Query Packets.
-                                                             (line  637)
-* QSetWorkingDir packet:                 General Query Packets.
-                                                             (line  205)
-* QStartNoAckMode packet:                General Query Packets.
-                                                             (line  648)
-* QStartupWithShell packet:              General Query Packets.
-                                                             (line  104)
-* qsThreadInfo packet:                   General Query Packets.
-                                                             (line  224)
-* qSupported packet:                     General Query Packets.
-                                                             (line  659)
-* qSymbol packet:                        General Query Packets.
-                                                             (line 1159)
-* qTBuffer packet:                       Tracepoint Packets. (line  380)
-* QTBuffer size packet:                  Tracepoint Packets. (line  393)
-* QTDisable packet:                      Tracepoint Packets. (line  202)
-* QTDisconnected packet:                 Tracepoint Packets. (line  221)
-* QTDP packet:                           Tracepoint Packets. (line   10)
-* QTDPsrc packet:                        Tracepoint Packets. (line   86)
-* QTDV packet:                           Tracepoint Packets. (line  117)
-* QTEnable packet:                       Tracepoint Packets. (line  197)
-* qTfP packet:                           Tracepoint Packets. (line  328)
-* QTFrame packet:                        Tracepoint Packets. (line  129)
-* qTfSTM packet:                         Tracepoint Packets. (line  345)
-* qTfV packet:                           Tracepoint Packets. (line  336)
-* QThreadEvents packet:                  General Query Packets.
-                                                             (line  524)
-* qThreadExtraInfo packet:               General Query Packets.
-                                                             (line 1202)
-* QThreadOptions packet:                 General Query Packets.
-                                                             (line  548)
-* QTinit packet:                         Tracepoint Packets. (line  207)
-* qTMinFTPILen packet:                   Tracepoint Packets. (line  167)
-* QTNotes packet:                        Tracepoint Packets. (line  398)
-* qTP packet:                            Tracepoint Packets. (line  300)
-* QTro packet:                           Tracepoint Packets. (line  210)
-* QTSave packet:                         Tracepoint Packets. (line  374)
-* qTsP packet:                           Tracepoint Packets. (line  329)
-* qTsSTM packet:                         Tracepoint Packets. (line  345)
-* QTStart packet:                        Tracepoint Packets. (line  188)
-* qTStatus packet:                       Tracepoint Packets. (line  227)
-* qTSTMat packet:                        Tracepoint Packets. (line  368)
-* QTStop packet:                         Tracepoint Packets. (line  194)
-* qTsV packet:                           Tracepoint Packets. (line  337)
-* qTV packet:                            Tracepoint Packets. (line  311)
-* qualified thread ID:                   Threads.            (line   52)
-* query attached, remote request:        General Query Packets.
-                                                             (line 1493)
-* quotes in commands:                    Completion.         (line   94)
-* quoting Ada internal identifiers:      Additions to Ada.   (line   86)
-* quoting names:                         Symbols.            (line   14)
-* qXfer packet:                          General Query Packets.
-                                                             (line 1239)
-* r packet:                              Packets.            (line  297)
-* R packet:                              Packets.            (line  302)
-* range checking:                        Type Checking.      (line   45)
-* range stepping:                        Continuing and Stepping.
-                                                             (line  217)
-* ranged breakpoint:                     PowerPC Embedded.   (line   33)
-* ranges of breakpoints:                 Breakpoints.        (line   45)
-* Ravenscar Profile:                     Ravenscar Profile.  (line    6)
-* Ravenscar thread:                      Ravenscar Profile.  (line   26)
-* raw printing:                          Output Formats.     (line   77)
-* read special object, remote request:   General Query Packets.
-                                                             (line 1239)
-* read, file-i/o system call:            read.               (line    6)
-* read-only sections:                    Files.              (line  292)
-* reading symbols from relocatable object files: Files.      (line  158)
-* reading symbols immediately:           Files.              (line  103)
-* readline:                              Editing.            (line    6)
-* Readline application name:             Editing.            (line   29)
-* receive rights, GNU Hurd:              Hurd Native.        (line   84)
-* recent tracepoint number:              Create and Delete Tracepoints.
-                                                             (line  124)
-* record aggregates (Ada):               Omissions from Ada. (line   46)
-* record mode:                           Process Record and Replay.
-                                                             (line   19)
-* record serial communications on file:  Remote Configuration.
-                                                             (line   64)
-* recording a session script:            Bug Reporting.      (line   93)
-* recording inferior's execution and replaying it: Process Record and Replay.
-                                                             (line    6)
-* recordings in python:                  Recordings In Python.
-                                                             (line    6)
-* redirection:                           Input/Output.       (line    6)
-* reference card:                        Formatting Documentation.
-                                                             (line    6)
-* reference declarations:                C Plus Plus Expressions.
-                                                             (line   50)
-* register cache, flushing:              Maintenance Commands.
-                                                             (line  544)
-* register packet format, MIPS:          MIPS Register packet Format.
-                                                             (line    6)
-* registers:                             Registers.          (line    6)
-* Registers In Python:                   Registers In Python.
-                                                             (line    6)
-* regular expression:                    Set Breaks.         (line  201)
-* reloading the overlay table:           Overlay Commands.   (line   52)
-* relocatable object files, reading symbols from: Files.     (line  158)
-* remote async notification debugging info: Debugging Output.
-                                                             (line  208)
-* remote connection commands:            Connecting.         (line  127)
-* remote connection without stubs:       Server.             (line    6)
-* remote debugging:                      Remote Debugging.   (line    6)
-* remote debugging, connecting:          Connecting.         (line    6)
-* remote debugging, detach and program exit: Connecting.     (line   19)
-* remote debugging, symbol files:        Connecting.         (line   97)
-* remote debugging, types of connections: Connecting.        (line    6)
-* remote memory comparison:              Memory.             (line  159)
-* remote packets, enabling and disabling: Remote Configuration.
-                                                             (line  159)
-* remote packets, standard replies:      Standard Replies.   (line    6)
-* remote programs, interrupting:         Connecting.         (line  246)
-* remote protocol debugging:             Debugging Output.   (line  236)
-* remote protocol, binary data:          Overview.           (line   63)
-* remote protocol, field separator:      Overview.           (line   55)
-* remote query requests:                 General Query Packets.
-                                                             (line    6)
-* remote serial debugging summary:       Debug Session.      (line    6)
-* remote serial debugging, overview:     Remote Stub.        (line   14)
-* remote serial protocol:                Overview.           (line   14)
-* remote serial stub:                    Stub Contents.      (line    6)
-* remote serial stub list:               Remote Stub.        (line   53)
-* remote serial stub, initialization:    Stub Contents.      (line   10)
-* remote serial stub, main routine:      Stub Contents.      (line   15)
-* remote stub, example:                  Remote Stub.        (line    6)
-* remote stub, support routines:         Bootstrapping.      (line    6)
-* remote target:                         Target Commands.    (line   64)
-* remote target, file transfer:          File Transfer.      (line    6)
-* remote target, limit break- and watchpoints: Remote Configuration.
-                                                             (line   79)
-* remote target, limit watchpoints length: Remote Configuration.
-                                                             (line   91)
-* remote timeout:                        Remote Configuration.
-                                                             (line   72)
-* remove actions from a tracepoint:      Tracepoint Actions. (line   21)
-* remove duplicate history:              Command History.    (line   69)
-* rename, file-i/o system call:          rename.             (line    6)
-* Renesas:                               Remote Stub.        (line   62)
-* repeated array elements:               Print Settings.     (line  394)
-* repeating command sequences:           Command Syntax.     (line   41)
-* repeating commands:                    Command Syntax.     (line   21)
-* replay log events, remote reply:       Stop Reply Packets. (line   70)
-* replay mode:                           Process Record and Replay.
-                                                             (line   10)
-* reporting bugs in GDB:                 GDB Bugs.           (line    6)
-* reprint the last value:                Data.               (line  128)
-* reprint the last value <1>:            Compiling and Injecting Code.
-                                                             (line   77)
-* reset environment, remote request:     General Query Packets.
-                                                             (line  183)
-* resolution of location spec:           Location Specifications.
-                                                             (line   14)
-* resources used by commands:            Maintenance Commands.
-                                                             (line  807)
-* response time, MIPS debugging:         MIPS.               (line   10)
-* restart:                               Checkpoint/Restart. (line    6)
-* restore data from a file:              Dump/Restore Files. (line    6)
-* restrictions on Go expressions:        Go.                 (line   35)
-* result records in GDB/MI:              GDB/MI Result Records.
-                                                             (line    6)
-* resume threads of multiple processes simultaneously: All-Stop Mode.
-                                                             (line   68)
-* resuming execution:                    Continuing and Stepping.
-                                                             (line    6)
-* returning from a function:             Returning.          (line    6)
-* reverse execution:                     Reverse Execution.  (line    6)
-* rewind program state:                  Checkpoint/Restart. (line    6)
-* run to first instruction:              Starting.           (line  114)
-* run to main procedure:                 Starting.           (line   81)
-* run until specified location:          Continuing and Stepping.
-                                                             (line  124)
-* running:                               Starting.           (line    6)
-* running programs backward:             Reverse Execution.  (line    6)
-* s packet:                              Packets.            (line  309)
-* S packet:                              Packets.            (line  318)
-* S12Z support:                          S12Z.               (line    6)
-* save breakpoints to a file for future sessions: Save Breakpoints.
-                                                             (line    9)
-* save command history:                  Command History.    (line   44)
-* save GDB output to a file:             Logging Output.     (line    6)
-* save tracepoints for future sessions:  save tracepoints.   (line    6)
-* Scalable Matrix Extension:             AArch64.            (line   46)
-* Scalable Matrix Extension 2:           AArch64.            (line  220)
-* scheduler locking mode:                All-Stop Mode.      (line   37)
-* scheduler-locking:                     All-Stop Mode.      (line   37)
-* scope:                                 M2 Scope.           (line    6)
-* screen size:                           Screen Size.        (line    6)
-* scripting commands:                    Command Files.      (line    6)
-* scripting with guile:                  Guile.              (line    6)
-* scripting with python:                 Python.             (line    6)
-* search for a thread:                   Threads.            (line  265)
-* search order for disassembler in Python: Disassembly In Python.
-                                                             (line  466)
-* search path for libthread_db:          Threads.            (line  300)
-* searching memory:                      Searching Memory.   (line    6)
-* searching memory, in remote debugging: General Query Packets.
-                                                             (line  637)
-* searching source files:                Search.             (line    6)
-* section offsets, remote request:       General Query Packets.
-                                                             (line  388)
-* segment descriptor tables:             DJGPP Native.       (line   24)
-* select Ctrl-C, BREAK or BREAK-g:       Remote Configuration.
-                                                             (line  108)
-* select trace snapshot:                 tfind.              (line    6)
-* selected frame:                        Stack.              (line   19)
-* selecting guile pretty-printers:       Selecting Guile Pretty-Printers.
-                                                             (line    6)
-* selecting python pretty-printers:      Selecting Pretty-Printers.
-                                                             (line    6)
-* self tests:                            Maintenance Commands.
-                                                             (line  624)
-* self tests <1>:                        Maintenance Commands.
-                                                             (line  630)
-* self tests <2>:                        Maintenance Commands.
-                                                             (line  634)
-* semaphores on static probe points:     Static Probe Points.
-                                                             (line   20)
-* send command to remote monitor:        Connecting.         (line  279)
-* send command to simulator:             Embedded Processors.
-                                                             (line    9)
-* send interrupt-sequence on start:      Remote Configuration.
-                                                             (line  121)
-* send rights, GNU Hurd:                 Hurd Native.        (line   84)
-* send the output of a gdb command to a shell command: Shell Commands.
-                                                             (line   29)
-* sending files to remote systems:       File Transfer.      (line    6)
-* separate debug sections:               MiniDebugInfo.      (line    6)
-* separate debugging information files:  Separate Debug Files.
-                                                             (line    6)
-* sequence-id, for GDB remote:           Overview.           (line   30)
-* serial connections, debugging:         Debugging Output.   (line  236)
-* serial line, target remote:            Connecting.         (line  136)
-* serial protocol, GDB remote:           Overview.           (line   14)
-* server prefix:                         Server Prefix.      (line    6)
-* server, command prefix:                Command History.    (line   20)
-* set ABI for MIPS:                      MIPS.               (line   32)
-* set breakpoints in many functions:     Set Breaks.         (line  201)
-* set breakpoints on all functions:      Set Breaks.         (line  228)
-* set environment variable, remote request: General Query Packets.
-                                                             (line  130)
-* set exec-file-mismatch:                Attach.             (line   34)
-* set fast tracepoint:                   Create and Delete Tracepoints.
-                                                             (line   50)
-* set inferior controlling terminal:     Input/Output.       (line   44)
-* set static tracepoint:                 Create and Delete Tracepoints.
-                                                             (line   75)
-* set tdesc filename:                    Retrieving Descriptions.
-                                                             (line   18)
-* set tracepoint:                        Create and Delete Tracepoints.
-                                                             (line    6)
-* set working directory, remote request: General Query Packets.
-                                                             (line  205)
-* setting variables:                     Assignment.         (line    6)
-* setting watchpoints:                   Set Watchpoints.    (line    6)
-* settings:                              Command Settings.   (line   39)
-* SH:                                    Remote Stub.        (line   62)
-* sh-stub.c:                             Remote Stub.        (line   62)
-* shared libraries:                      Files.              (line  314)
-* shared library events, remote reply:   Stop Reply Packets. (line   65)
-* shell command, exit code:              Convenience Vars.   (line  192)
-* shell command, exit signal:            Convenience Vars.   (line  192)
-* shell escape:                          Shell Commands.     (line   10)
-* show all convenience functions:        Convenience Funs.   (line  280)
-* show all user variables and functions: Convenience Vars.   (line   37)
-* show exec-file-mismatch:               Attach.             (line   44)
-* show inferior's working directory:     Working Directory.  (line   27)
-* show last commands:                    Command History.    (line  110)
-* show screen characteristics:           Maintenance Commands.
-                                                             (line  891)
-* show tdesc filename:                   Retrieving Descriptions.
-                                                             (line   25)
-* signals:                               Signals.            (line    6)
-* signals the inferior may see, remote request: General Query Packets.
-                                                             (line  492)
-* SIGQUIT signal, dump core of GDB:      Maintenance Commands.
-                                                             (line  213)
-* SingleKey keymap name:                 TUI Single Key Mode.
-                                                             (line   71)
-* size of remote memory accesses:        Packets.            (line  243)
-* size of remote memory accesses <1>:    Packets.            (line  532)
-* size of screen:                        Screen Size.        (line    6)
-* skipping over files via glob-style patterns: Skipping Over Functions and Files.
-                                                             (line   55)
-* skipping over functions and files:     Skipping Over Functions and Files.
-                                                             (line    6)
-* skipping over functions via regular expressions: Skipping Over Functions and Files.
-                                                             (line   68)
-* SME:                                   AArch64.            (line   46)
-* SME2:                                  AArch64.            (line  220)
-* snapshot of a process:                 Checkpoint/Restart. (line    6)
-* software watchpoints:                  Set Watchpoints.    (line   31)
-* source code, caching:                  Maintenance Commands.
-                                                             (line  551)
-* source code, disable access:           Disable Reading Source.
-                                                             (line    6)
-* source file and line of a symbol:      Print Settings.     (line   50)
-* source line and its code address:      Machine Code.       (line    6)
-* source location:                       Location Specifications.
-                                                             (line    6)
-* source path:                           Source Path.        (line    6)
-* Sparc:                                 Remote Stub.        (line   65)
-* sparc-stub.c:                          Remote Stub.        (line   65)
-* Sparc64 support:                       Sparc64.            (line    6)
-* sparcl-stub.c:                         Remote Stub.        (line   68)
-* SparcLite:                             Remote Stub.        (line   68)
-* Special Fortran commands:              Special Fortran Commands.
-                                                             (line    6)
-* specifying location:                   Location Specifications.
-                                                             (line    6)
-* SSE registers (x86):                   Registers.          (line   76)
-* stack frame:                           Frames.             (line    6)
-* stack on Alpha:                        MIPS.               (line    6)
-* stack on MIPS:                         MIPS.               (line    6)
-* stack pointer register:                Registers.          (line   31)
-* stacking targets:                      Active Targets.     (line    6)
-* standard registers:                    Registers.          (line   31)
-* standard responses for remote packets: Standard Replies.   (line    6)
-* start a new independent interpreter:   Interpreters.       (line   57)
-* start a new trace experiment:          Starting and Stopping Trace Experiments.
-                                                             (line    6)
-* starting:                              Starting.           (line    6)
-* startup code, and backtrace:           Backtrace.          (line  155)
-* startup with shell, remote request:    General Query Packets.
-                                                             (line  104)
-* stat, file-i/o system call:            stat/fstat.         (line    6)
-* static members of C++ objects:         Print Settings.     (line  617)
-* static members of Pascal objects:      Print Settings.     (line  628)
-* static probe point, DTrace:            Static Probe Points.
-                                                             (line    6)
-* static probe point, SystemTap:         Static Probe Points.
-                                                             (line    6)
-* static tracepoints:                    Set Tracepoints.    (line   28)
-* static tracepoints, in remote protocol: General Query Packets.
-                                                             (line 1050)
-* static tracepoints, setting:           Create and Delete Tracepoints.
-                                                             (line   75)
-* status of trace data collection:       Starting and Stopping Trace Experiments.
-                                                             (line   27)
-* status output in GDB/MI:               GDB/MI Output Syntax.
-                                                             (line   94)
-* stepping:                              Continuing and Stepping.
-                                                             (line    6)
-* stepping and signal handlers:          Signals.            (line  108)
-* stepping into functions with no line info: Continuing and Stepping.
-                                                             (line   92)
-* stop a running trace experiment:       Starting and Stopping Trace Experiments.
-                                                             (line   16)
-* stop on C++ exceptions:                Set Catchpoints.    (line   16)
-* stop reply packets:                    Stop Reply Packets. (line    6)
-* stopped threads:                       Thread Stops.       (line    6)
-* store memory tags:                     General Query Packets.
-                                                             (line  350)
-* stream records in GDB/MI:              GDB/MI Stream Records.
-                                                             (line    6)
-* string tracing, in remote protocol:    General Query Packets.
-                                                             (line 1067)
-* struct gdb_reader_funcs:               Writing JIT Debug Info Readers.
-                                                             (line   22)
-* struct gdb_symbol_callbacks:           Writing JIT Debug Info Readers.
-                                                             (line   43)
-* struct gdb_unwind_callbacks:           Writing JIT Debug Info Readers.
-                                                             (line   43)
-* struct return convention:              x86.                (line    7)
-* struct stat, in file-i/o protocol:     struct stat.        (line    6)
-* struct timeval, in file-i/o protocol:  struct timeval.     (line    6)
-* struct/union returned in registers:    x86.                (line    7)
-* structure field name completion:       Completion.         (line  146)
-* stub example, remote debugging:        Remote Stub.        (line    6)
-* stupid questions:                      Messages/Warnings.  (line   49)
-* styling:                               Output Styling.     (line    6)
-* Super-H:                               Super-H.            (line    6)
-* supported GDB/MI features, list:       GDB/MI Support Commands.
-                                                             (line   54)
-* supported packets, remote query:       General Query Packets.
-                                                             (line  659)
-* svg:                                   AArch64.            (line   88)
-* svl:                                   AArch64.            (line   81)
-* svq:                                   AArch64.            (line   85)
-* switching threads:                     Threads.            (line    6)
-* switching threads automatically:       All-Stop Mode.      (line   28)
-* symbol cache size:                     Symbols.            (line  770)
-* symbol cache, flushing:                Symbols.            (line  786)
-* symbol cache, printing its contents:   Symbols.            (line  778)
-* symbol cache, printing usage statistics: Symbols.          (line  782)
-* symbol decoding style, C++:            Print Settings.     (line  587)
-* symbol dump:                           Symbols.            (line  658)
-* symbol file functions:                 Debugging Output.   (line  284)
-* symbol files, remote debugging:        Connecting.         (line   97)
-* symbol from address:                   Symbols.            (line  108)
-* symbol lookup:                         Debugging Output.   (line  276)
-* symbol lookup, remote request:         General Query Packets.
-                                                             (line 1159)
-* symbol names:                          Symbols.            (line   14)
-* symbol table:                          Files.              (line    6)
-* symbol table creation:                 Debugging Output.   (line  290)
-* symbol tables in guile:                Symbol Tables In Guile.
-                                                             (line    6)
-* symbol tables in python:               Symbol Tables In Python.
-                                                             (line    6)
-* symbol tables, listing GDB's internal: Symbols.            (line  684)
-* symbol, source file and line:          Print Settings.     (line   50)
-* symbols in guile:                      Symbols In Guile.   (line    6)
-* symbols in python:                     Symbols In Python.  (line    6)
-* symbols, never read:                   Files.              (line  110)
-* symbols, reading from relocatable object files: Files.     (line  158)
-* symbols, reading immediately:          Files.              (line  103)
-* Synopsys ARC:                          ARC.                (line    6)
-* syscall DSO:                           Files.              (line  210)
-* system calls and thread breakpoints:   Interrupted System Calls.
-                                                             (line    6)
-* system root, alternate:                Files.              (line  412)
-* system, file-i/o system call:          system.             (line    6)
-* system-wide configuration scripts:     System-wide Configuration Scripts.
-                                                             (line    6)
-* system-wide init file:                 System-wide configuration.
-                                                             (line    6)
-* t packet:                              Packets.            (line  328)
-* T packet:                              Packets.            (line  333)
-* T packet reply:                        Stop Reply Packets. (line   26)
-* tail call frames, debugging:           Tail Call Frames.   (line    6)
-* target architecture:                   Targets.            (line   17)
-* target byte order:                     Byte Order.         (line    6)
-* target character set:                  Character Sets.     (line    6)
-* target debugging info:                 Debugging Output.   (line  298)
-* target descriptions:                   Target Descriptions.
-                                                             (line    6)
-* target descriptions, AArch64 features: AArch64 Features.   (line    5)
-* target descriptions, ARC Features:     ARC Features.       (line    6)
-* target descriptions, ARM features:     ARM Features.       (line    5)
-* target descriptions, enum types:       Enum Target Types.  (line    6)
-* target descriptions, i386 features:    i386 Features.      (line    6)
-* target descriptions, inclusion:        Target Description Format.
-                                                             (line   53)
-* target descriptions, LoongArch Features: LoongArch Features.
-                                                             (line    6)
-* target descriptions, M68K features:    M68K Features.      (line    6)
-* target descriptions, MicroBlaze features: MicroBlaze Features.
-                                                             (line    6)
-* target descriptions, MIPS features:    MIPS Features.      (line    6)
-* target descriptions, NDS32 features:   NDS32 Features.     (line    6)
-* target descriptions, OpenRISC 1000 features: OpenRISC 1000 Features.
-                                                             (line    6)
-* target descriptions, PowerPC features: PowerPC Features.   (line    6)
-* target descriptions, predefined types: Predefined Target Types.
-                                                             (line    6)
-* target descriptions, RISC-V Features:  RISC-V Features.    (line    6)
-* target descriptions, RX Features:      RX Features.        (line    6)
-* target descriptions, S/390 features:   S/390 and System z Features.
-                                                             (line    6)
-* target descriptions, sparc32 features: Sparc Features.     (line    6)
-* target descriptions, sparc64 features: Sparc Features.     (line    6)
-* target descriptions, standard features: Standard Target Features.
-                                                             (line    6)
-* target descriptions, System z features: S/390 and System z Features.
-                                                             (line    6)
-* target descriptions, TIC6x features:   TIC6x Features.     (line    6)
-* target descriptions, TMS320C6x features: TIC6x Features.   (line    6)
-* target descriptions, XML format:       Target Description Format.
-                                                             (line    6)
-* target memory comparison:              Memory.             (line  159)
-* target output in GDB/MI:               GDB/MI Output Syntax.
-                                                             (line  110)
-* target stack description:              Maintenance Commands.
-                                                             (line  597)
-* target-assisted range stepping:        Continuing and Stepping.
-                                                             (line  217)
-* task attributes (GNU Hurd):            Hurd Native.        (line   48)
-* task breakpoints, in Ada:              Ada Tasks.          (line  181)
-* task exception port, GNU Hurd:         Hurd Native.        (line   67)
-* task suspend count:                    Hurd Native.        (line   59)
-* task switching with program using Ravenscar Profile: Ravenscar Profile.
-                                                             (line   10)
-* TCP port, target remote:               Connecting.         (line  173)
-* temporarily change settings:           Command Settings.   (line   39)
-* terminal:                              Input/Output.       (line    6)
-* Text User Interface:                   TUI.                (line    6)
-* thread attributes info, remote request: General Query Packets.
-                                                             (line 1202)
-* thread breakpoints:                    Thread-Specific Breakpoints.
-                                                             (line   10)
-* thread breakpoints and system calls:   Interrupted System Calls.
-                                                             (line    6)
-* thread clone events, remote reply:     Stop Reply Packets. (line  152)
-* thread create event, remote reply:     Stop Reply Packets. (line  161)
-* thread create/exit events, remote request: General Query Packets.
-                                                             (line  524)
-* thread default settings, GNU Hurd:     Hurd Native.        (line  130)
-* thread exit event, remote reply:       Stop Reply Packets. (line  190)
-* thread ID lists:                       Threads.            (line   65)
-* thread identifier (GDB):               Threads.            (line   47)
-* thread identifier (system):            Threads.            (line   35)
-* thread info (Solaris):                 Threads.            (line  174)
-* thread information, remote request:    General Query Packets.
-                                                             (line  415)
-* thread list format:                    Thread List Format. (line    6)
-* thread number, per inferior:           Threads.            (line   47)
-* thread options, remote request:        General Query Packets.
-                                                             (line  548)
-* thread properties, GNU Hurd:           Hurd Native.        (line   90)
-* thread suspend count, GNU Hurd:        Hurd Native.        (line  109)
-* THREAD-ID, in remote protocol:         Packets.            (line   20)
-* threads and watchpoints:               Set Watchpoints.    (line  182)
-* threads in python:                     Threads In Python.  (line    6)
-* threads of execution:                  Threads.            (line    6)
-* threads, automatic switching:          All-Stop Mode.      (line   28)
-* threads, continuing:                   Thread Stops.       (line    6)
-* threads, stopped:                      Thread Stops.       (line    6)
-* time of command execution:             Maintenance Commands.
-                                                             (line  899)
-* timeout for called functions:          Calling.            (line  138)
-* timeout for called functions <1>:      Calling.            (line  151)
-* timeout for called functions <2>:      Calling.            (line  160)
-* timeout for called functions <3>:      Calling.            (line  175)
-* timeout for commands:                  Maintenance Commands.
-                                                             (line  989)
-* timeout for serial communications:     Remote Configuration.
-                                                             (line   72)
-* timeout, for remote target connection: Remote Configuration.
-                                                             (line  147)
-* timestamping debugging info:           Debugging Output.   (line  306)
-* trace experiment, status of:           Starting and Stopping Trace Experiments.
-                                                             (line   27)
-* trace file format:                     Trace File Format.  (line    6)
-* trace files:                           Trace Files.        (line    6)
-* trace state variable value, remote request: Tracepoint Packets.
-                                                             (line  311)
-* trace state variables:                 Trace State Variables.
-                                                             (line    6)
-* traceback:                             Backtrace.          (line    6)
-* traceframe info format:                Traceframe Info Format.
-                                                             (line    6)
-* tracepoint actions:                    Tracepoint Actions. (line    6)
-* tracepoint conditions:                 Tracepoint Conditions.
-                                                             (line    6)
-* tracepoint data, display:              tdump.              (line    6)
-* tracepoint deletion:                   Create and Delete Tracepoints.
-                                                             (line  127)
-* tracepoint number:                     Create and Delete Tracepoints.
-                                                             (line  124)
-* tracepoint packets:                    Tracepoint Packets. (line    6)
-* tracepoint pass count:                 Tracepoint Passcounts.
-                                                             (line    6)
-* tracepoint restrictions:               Tracepoint Restrictions.
-                                                             (line    6)
-* tracepoint status, remote request:     Tracepoint Packets. (line  300)
-* tracepoint variables:                  Tracepoint Variables.
-                                                             (line    6)
-* tracepoints:                           Tracepoints.        (line    6)
-* tracepoints support in gdbserver:      Server.             (line  313)
-* trailing underscore, in Fortran symbols: Fortran.          (line    9)
-* translating between character sets:    Character Sets.     (line    6)
-* TUI:                                   TUI.                (line    6)
-* TUI commands:                          TUI Commands.       (line    6)
-* TUI configuration variables:           TUI Configuration.  (line    6)
-* TUI key bindings:                      TUI Keys.           (line    6)
-* TUI mouse support:                     TUI Mouse Support.  (line    6)
-* TUI single key mode:                   TUI Single Key Mode.
-                                                             (line    6)
-* type casting memory:                   Expressions.        (line   41)
-* type chain of a data type:             Maintenance Commands.
-                                                             (line  609)
-* type checking:                         Checks.             (line   24)
-* type conversions in C++:               C Plus Plus Expressions.
-                                                             (line   26)
-* type printer:                          Type Printing API.  (line    9)
-* type printing API for Python:          Type Printing API.  (line    6)
-* types in guile:                        Types In Guile.     (line    6)
-* types in Python:                       Types In Python.    (line    6)
-* UDP port, target remote:               Connecting.         (line  222)
-* union field name completion:           Completion.         (line  146)
-* unions in structures, printing:        Print Settings.     (line  527)
-* Unix domain socket:                    Connecting.         (line  147)
-* unknown address, locating:             Output Formats.     (line   36)
-* unknown type:                          Symbols.            (line  384)
-* unlink, file-i/o system call:          unlink.             (line    6)
-* unlinked object files:                 Files.              (line   29)
-* unload symbols from shared libraries:  Files.              (line  374)
-* unmap an overlay:                      Overlay Commands.   (line   39)
-* unmapped overlays:                     How Overlays Work.  (line    6)
-* unset environment variable, remote request: General Query Packets.
-                                                             (line  159)
-* unset tdesc filename:                  Retrieving Descriptions.
-                                                             (line   21)
-* unsupported languages:                 Unsupported Languages.
-                                                             (line    6)
-* unsupported packets, empty response for: Standard Replies. (line   11)
-* unwind stack in called functions:      Calling.            (line   36)
-* unwind stack in called functions when timing out: Calling. (line   65)
-* unwind stack in called functions with unhandled exceptions: Calling.
-                                                             (line   53)
-* unwinding frames in Python:            Unwinding Frames in Python.
-                                                             (line    6)
-* use only software watchpoints:         Set Watchpoints.    (line  111)
-* user registers:                        Maintenance Commands.
-                                                             (line  568)
-* user-defined command:                  Define.             (line    6)
-* user-defined macros:                   Macros.             (line   60)
-* user-defined variables:                Convenience Vars.   (line    6)
-* value history:                         Value History.      (line    6)
-* values from inferior, in guile:        Values From Inferior In Guile.
-                                                             (line    6)
-* values from inferior, with Python:     Values From Inferior.
-                                                             (line    6)
-* variable name conflict:                Variables.          (line   36)
-* variable object debugging info:        Debugging Output.   (line  314)
-* variable objects in GDB/MI:            GDB/MI Variable Objects.
-                                                             (line    9)
-* variable values, wrong:                Variables.          (line  106)
-* variables, readline:                   Readline Init File Syntax.
-                                                             (line   34)
-* variables, setting:                    Assignment.         (line   16)
-* vAttach packet:                        Packets.            (line  345)
-* vCont packet:                          Packets.            (line  361)
-* vCont? packet:                         Packets.            (line  428)
-* vCtrlC packet:                         Packets.            (line  436)
-* vector unit:                           Vector Unit.        (line    6)
-* vector, auxiliary:                     OS Information.     (line    9)
-* verbose operation:                     Messages/Warnings.  (line    6)
-* verify remote memory image:            Memory.             (line  159)
-* verify target memory image:            Memory.             (line  159)
-* vFile packet:                          Packets.            (line  448)
-* vFlashDone packet:                     Packets.            (line  483)
-* vFlashErase packet:                    Packets.            (line  452)
-* vFlashWrite packet:                    Packets.            (line  465)
-* vfork events, remote reply:            Stop Reply Packets. (line  116)
-* vforkdone events, remote reply:        Stop Reply Packets. (line  128)
-* vg:                                    AArch64.            (line   41)
-* virtual functions (C++) display:       Print Settings.     (line  639)
-* vKill packet:                          Packets.            (line  490)
-* vl:                                    AArch64.            (line   35)
-* vMustReplyEmpty packet:                Packets.            (line  500)
-* volatile registers:                    Registers.          (line  106)
-* vq:                                    AArch64.            (line   38)
-* vRun packet:                           Packets.            (line  512)
-* vStopped packet:                       Packets.            (line  525)
-* VTBL display:                          Print Settings.     (line  639)
-* watchdog timer:                        Maintenance Commands.
-                                                             (line  989)
-* watchpoints:                           Breakpoints.        (line   17)
-* watchpoints and threads:               Set Watchpoints.    (line  182)
-* wavefronts:                            AMD GPU.            (line   40)
-* where to look for shared libraries:    Files.              (line  407)
-* wild pointer, interpreting:            Print Settings.     (line   80)
-* Wind River Linux system-wide configuration script: System-wide Configuration Scripts.
-                                                             (line   22)
-* word completion:                       Completion.         (line    6)
-* working directory:                     Source Path.        (line   40)
-* working directory (of your program):   Working Directory.  (line    6)
-* working language:                      Languages.          (line   13)
-* write data into object, remote request: General Query Packets.
-                                                             (line 1461)
-* write, file-i/o system call:           write.              (line    6)
-* writing a frame filter:                Writing a Frame Filter.
-                                                             (line    6)
-* writing a Guile pretty-printer:        Writing a Guile Pretty-Printer.
-                                                             (line    6)
-* writing a pretty-printer:              Writing a Pretty-Printer.
-                                                             (line    6)
-* writing convenience functions:         Functions In Python.
-                                                             (line    6)
-* writing into corefiles:                Patching.           (line    6)
-* writing into executables:              Patching.           (line    6)
-* writing into executables <1>:          Compiling and Injecting Code.
-                                                             (line    6)
-* writing JIT debug info readers:        Writing JIT Debug Info Readers.
-                                                             (line    6)
-* writing xmethods in Python:            Writing an Xmethod. (line    6)
-* wrong values:                          Variables.          (line  106)
-* x command, default address:            Machine Code.       (line   35)
-* x packet:                              Packets.            (line  528)
-* X packet:                              Packets.            (line  552)
-* Xilinx MicroBlaze:                     MicroBlaze.         (line    6)
-* XInclude:                              Target Description Format.
-                                                             (line   53)
-* XMD, Xilinx Microprocessor Debugger:   MicroBlaze.         (line    6)
-* xmethod API:                           Xmethod API.        (line    6)
-* xmethods in Python:                    Xmethods In Python. (line    6)
-* XML parser debugging:                  Debugging Output.   (line  321)
-* yanking text:                          Readline Killing Commands.
-                                                             (line    6)
-* z packet:                              Packets.            (line  563)
-* Z packets:                             Packets.            (line  563)
-* z0 packet:                             Packets.            (line  578)
-* Z0 packet:                             Packets.            (line  578)
-* z1 packet:                             Packets.            (line  629)
-* Z1 packet:                             Packets.            (line  629)
-* z2 packet:                             Packets.            (line  646)
-* Z2 packet:                             Packets.            (line  646)
-* z3 packet:                             Packets.            (line  655)
-* Z3 packet:                             Packets.            (line  655)
-* z4 packet:                             Packets.            (line  664)
-* Z4 packet:                             Packets.            (line  664)
 

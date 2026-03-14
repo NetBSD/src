@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,6 +61,10 @@ gdb_py_test_silent_cmd "python sblock = block.static_block" \
     "Get block, static_block" 1
 gdb_test "python print (gblock.is_global)" "True" "is the global block"
 gdb_test "python print (sblock.is_static)" "True" "is the static block"
+gdb_test "python print (len(gblock.subblocks) > 0)" "True" \
+	"global block contains at least one block"
+gdb_test "python print (sblock in gblock.subblocks)" "True" \
+	"global block contains at static block"
 
 # Move up superblock(s) until we reach function block_func.
 gdb_test_no_output "python block = block.superblock" "get superblock"

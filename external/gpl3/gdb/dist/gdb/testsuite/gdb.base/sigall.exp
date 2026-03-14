@@ -1,4 +1,4 @@
-#   Copyright 1995-2024 Free Software Foundation, Inc.
+#   Copyright 1995-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,13 +41,14 @@ proc test_one_sig {nextsig} {
 	    setup_xfail "i*86-pc-linuxoldld-gnu" "i*86-pc-linuxaout-gnu"
 	}
 	# On Linux SPARC64 systems SIGLOST==SIGPWR and gdb identifies
-	# the raised signal as PWR.
-	if {$thissig == "LOST" && [istarget "sparc64-*-linux*"]} {
+	# the raised signal as PWR.  Same for Cygwin.
+	if {$thissig == "LOST"
+	    && ([istarget "sparc64-*-linux*"] || [istarget "*-*-cygwin*"])} {
 	    set esig "PWR"
 	}
 
 	gdb_test "continue" \
-	    "Continuing.*Program received signal SIG$esig.*" \
+	    "Continuing.* received signal SIG$esig.*" \
 		"get signal $esig"
     }
 
@@ -177,7 +178,7 @@ gdb_test "handle SIGTERM stop print" \
     "SIGTERM\[ \t\]*Yes\[ \t\]*Yes\[ \t\]*Yes.*"
 gdb_test "b handle_TERM" "Breakpoint \[0-9\]+ .*"
 gdb_test "continue" \
-    "Continuing.*Program received signal SIGTERM.*" \
+    "Continuing.* received signal SIGTERM.*" \
     "get signal TERM"
 gdb_test "continue" "Breakpoint.*handle_TERM.*" "send signal TERM"
 gdb_continue_to_end "continue to sigall exit"

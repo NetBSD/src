@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,6 +23,7 @@
 # in the source of the shlib, and "list" should display the source where
 # the program stopped.
 
+require allow_fork_tests
 require allow_shlib_tests
 
 standard_testfile .c -shlib.c
@@ -40,7 +41,8 @@ if { [build_executable "failed to prepare" ${testfile} ${srcfile} $opts] } {
 }
 
 proc do_test {} {
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
     gdb_locate_shlib $::shlib_path
     gdb_test_no_output "set follow-fork-mode child"
     gdb_test_no_output "set detach-on-fork off"

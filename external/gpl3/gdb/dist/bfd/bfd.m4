@@ -1,6 +1,6 @@
 dnl This file was derived from acinclude.m4.
 dnl
-dnl   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -29,12 +29,12 @@ AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE],
 [AC_REQUIRE([BFD_SYS_PROCFS_H])
  AC_MSG_CHECKING([for $1 in sys/procfs.h])
  AC_CACHE_VAL(bfd_cv_have_sys_procfs_type_$1,
-   [AC_TRY_COMPILE([
+   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _SYSCALL32
-#include <sys/procfs.h>],
-      [$1 avar],
-      bfd_cv_have_sys_procfs_type_$1=yes,
-      bfd_cv_have_sys_procfs_type_$1=no
+#include <sys/procfs.h>]],
+      [[$1 avar]])],
+      [bfd_cv_have_sys_procfs_type_$1=yes],
+      [bfd_cv_have_sys_procfs_type_$1=no]
    )])
  if test $bfd_cv_have_sys_procfs_type_$1 = yes; then
    AC_DEFINE([HAVE_]translit($1, [a-z], [A-Z]), 1,
@@ -49,12 +49,12 @@ AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE_MEMBER],
 [AC_REQUIRE([BFD_SYS_PROCFS_H])
  AC_MSG_CHECKING([for $1.$2 in sys/procfs.h])
  AC_CACHE_VAL(bfd_cv_have_sys_procfs_type_member_$1_$2,
-   [AC_TRY_COMPILE([
+   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _SYSCALL32
-#include <sys/procfs.h>],
-      [$1 avar; void* aref = (void*) &avar.$2],
-      bfd_cv_have_sys_procfs_type_member_$1_$2=yes,
-      bfd_cv_have_sys_procfs_type_member_$1_$2=no
+#include <sys/procfs.h>]],
+      [[$1 avar; void* aref = (void*) &avar.$2]])],
+      [bfd_cv_have_sys_procfs_type_member_$1_$2=yes],
+      [bfd_cv_have_sys_procfs_type_member_$1_$2=no]
    )])
  if test $bfd_cv_have_sys_procfs_type_member_$1_$2 = yes; then
    AC_DEFINE([HAVE_]translit($1, [a-z], [A-Z])[_]translit($2, [a-z], [A-Z]), 1,
@@ -62,4 +62,3 @@ AC_DEFUN([BFD_HAVE_SYS_PROCFS_TYPE_MEMBER],
  fi
  AC_MSG_RESULT($bfd_cv_have_sys_procfs_type_member_$1_$2)
 ])
-

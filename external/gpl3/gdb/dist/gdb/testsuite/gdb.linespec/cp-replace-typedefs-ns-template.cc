@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2024 Free Software Foundation, Inc.
+   Copyright 2019-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -70,9 +70,9 @@ int_Templ1_t_func (int_Templ1_t *)
 {
 }
 
-} // namespace NS2
+} /* namespace NS2 */
 
-} // namespace NS1
+} /* namespace NS1 */
 
 /* These typedefs have the same name as some of the components within
    NS1 that they alias to, on purpose, to try to confuse GDB and cause

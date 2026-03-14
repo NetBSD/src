@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,8 +41,10 @@ gdb_test "break read_small" \
 
 for {set i 0} {$i < 4} {incr i} {
     with_test_prefix "iteration $i" {
+	# gnat-llvm may emit a call to an out-of-line copy, so allow
+	# for this here.
 	gdb_test "continue" \
-	    "Breakpoint $bkptno_num_re, b\\.read_small \\(\\).*" \
+	    "Breakpoint $bkptno_num_re, ($hex in )?b\\.read_small \\(\\).*" \
 	    "stopped in read_small"
     }
 }

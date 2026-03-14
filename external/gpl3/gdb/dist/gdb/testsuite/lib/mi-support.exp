@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -131,7 +131,7 @@ proc mi_create_inferior_pty {} {
     }
 }
 
-# Create a new pty, and reate a new MI UI (using the new-ui command) on it.
+# Create a new pty, and create a new MI UI (using the new-ui command) on it.
 #
 # Return a list with the spawn id for that pty and the pty file name.
 
@@ -247,7 +247,7 @@ proc default_mi_gdb_start { { flags {} } } {
 	return [mi_gdb_start_separate_mi_tty $flags]
     }
 
-    # Set the default value, it may be overriden later by specific testfile.
+    # Set the default value, it may be overridden later by specific testfile.
     set use_gdb_stub [target_info exists use_gdb_stub]
 
     # Start SID.
@@ -1953,40 +1953,41 @@ proc mi_run_inline_test { testcase } {
 }
 
 proc get_mi_thread_list {name} {
-  global expect_out
-
-  # MI will return a list of thread ids:
-  #
-  # -thread-list-ids
-  # ^done,thread-ids=[thread-id="1",thread-id="2",...],number-of-threads="N"
-  # (gdb)
-  mi_gdb_test "-thread-list-ids" \
-    {.*\^done,thread-ids={(thread-id="[0-9]+"(,)?)+},current-thread-id="[0-9]+",number-of-threads="[0-9]+"} \
-    "-thread_list_ids ($name)"
-
-  set output {}
-  if {[info exists expect_out(buffer)]} {
-    set output $expect_out(buffer)
-  }
-
-  set thread_list {}
-  if {![regexp {thread-ids=\{(thread-id="[0-9]+"(,)?)*\}} $output threads]} {
-    fail "finding threads in MI output ($name)"
-  } else {
-    pass "finding threads in MI output ($name)"
-
-    # Make list of console threads
-    set start [expr {[string first \{ $threads] + 1}]
-    set end   [expr {[string first \} $threads] - 1}]
-    set threads [string range $threads $start $end]
-    foreach thread [split $threads ,] {
-      if {[scan $thread {thread-id="%d"} num]} {
-	lappend thread_list $num
-      }
+    # MI will return a list of thread ids:
+    #
+    # -thread-list-ids
+    # ^done,thread-ids={thread-id="1",thread-id="2",...},number-of-threads="N"
+    # (gdb)
+    #
+    # In case there are too many threads, the expect buffer would
+    # become full.  Process the buffer contents in small chunks.
+    set thread_list {}
+    set num_threads "unknown"
+    set test "$name: get MI thread list"
+    gdb_test_multiple "-thread-list-ids" $test -prompt "$::mi_gdb_prompt" {
+	-re "done,thread-ids=\{" {
+	    exp_continue
+	}
+	-re "^thread-id=\"($::decimal)\"(,|\})" {
+	    lappend thread_list $expect_out(1,string)
+	    exp_continue
+	}
+	-re "^,current-thread-id=\"$::decimal\"" {
+	    exp_continue
+	}
+	-re "^,number-of-threads=\"($::decimal)\"" {
+	    set num_threads $expect_out(1,string)
+	    exp_continue
+	}
+	-re "^\r\n$::mi_gdb_prompt" {
+	    pass $gdb_test_name
+	}
     }
-  }
 
-  return $thread_list
+    gdb_assert {[llength $thread_list] == $num_threads} \
+	"$name: found thread ids in MI output"
+
+    return $thread_list
 }
 
 # Helper function for check_mi_and_console_threads.

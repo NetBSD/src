@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2024 Free Software Foundation, Inc.
+   Copyright 2014-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,9 +37,9 @@ main (void)
 {
   alarm (60);
 
+  do_wait = 1;
   foo ();
 
-  do_wait = 1;
   wait ();
   /* do_wait set to 0 externally.  */
 

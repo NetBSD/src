@@ -1,4 +1,4 @@
-# Copyright 2005-2024 Free Software Foundation, Inc.
+# Copyright 2005-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,51 +19,64 @@
 
 require !use_gdb_stub
 
-set linkflags [list additional_flags="-static"]
-
-if { ![gdb_can_simple_compile static-libc \
-	   {
-	       int main (void) { return 0; }
-	   } \
-	   executable $linkflags] } {
-    untested "Can't statically link"
-    return -1
-}
-
 standard_testfile .c -extra.c
 
-foreach_with_prefix debug {"none" "some"} {
+proc do_test { debug } {
+
+    set opts {}
+    lappend opts additional_flags=-nostdlib
 
     if {$debug == "some"} {
+	lappend opts debug
+
 	if {[prepare_for_testing_full "failed to prepare" \
-		[list ${testfile}-${debug} $linkflags \
-		    $srcfile [list nodebug] \
-		    $srcfile2 [list debug]]]} {
+		[list ${::testfile}-${debug} $opts \
+		    $::srcfile [list nodebug] \
+		    $::srcfile2 [list debug]]]} {
 	    return -1
 	}
 
-	# We don't test "list ." before starting with some debug info
-	# because GDB will choose the symtab that has debuginfo, and
-	# print the copyright blurb.  This test isn't interested (yet?)
-	# in checking if this default location choice is consistent.
+
+	with_test_prefix "before list" {
+	    gdb_test "info source" \
+		[string_to_regexp "No current source file."]
+	}
+
+	gdb_test "list ." \
+	    .*[string_to_regexp \
+		 "This testcase is part of GDB, the GNU debugger."].* \
+	    "print before start"
+
+	with_test_prefix "after list" {
+	    gdb_test "info source" \
+		.*[string_to_regexp $::srcfile2].*
+	}
+
     } else {
-	set executable ${testfile}-none
+	lappend opts nodebug
+
+	set executable ${::testfile}-none
 	if {[build_executable "failed to prepare" ${executable} \
-		[list $srcfile $srcfile2] $linkflags]} {
+		[list $::srcfile $::srcfile2] $opts]} {
 	    return -1
 	}
-
-	# Stripping is a backup in case the system has static libc debuginfo.
-	# We can continue the test even if it fails.
-	gdb_gnu_strip_debug $executable no-debuglink
 
 	clean_restart ${executable}
+
+	with_test_prefix "before list" {
+	    gdb_test "info source" \
+		[string_to_regexp "No current source file."]
+	}
 
 	gdb_test "list ." \
 	    "^Insufficient debug info for showing source lines at default location" \
 	    "print before start"
-    }
 
+	with_test_prefix "after list" {
+	    gdb_test "info source" \
+		[string_to_regexp "No current source file."]
+	}
+    }
 
     if { ![runto bar] } {
 	return -1
@@ -72,4 +85,8 @@ foreach_with_prefix debug {"none" "some"} {
     gdb_test "list ." \
 	"^Insufficient debug info for showing source lines at current PC \\($::hex\\)\\." \
 	"print after start"
+}
+
+foreach_with_prefix debug {"none" "some"} {
+    do_test $debug
 }

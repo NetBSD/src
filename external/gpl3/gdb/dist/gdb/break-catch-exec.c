@@ -1,6 +1,6 @@
 /* Everything about exec catchpoints, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -213,9 +213,7 @@ catch_exec_command_1 (const char *arg, int from_tty,
   install_breakpoint (0, std::move (c), 1);
 }
 
-void _initialize_break_catch_exec ();
-void
-_initialize_break_catch_exec ()
+INIT_GDB_FILE (break_catch_exec)
 {
   add_catch_command ("exec", _("Catch calls to exec."),
 		     catch_exec_command_1,

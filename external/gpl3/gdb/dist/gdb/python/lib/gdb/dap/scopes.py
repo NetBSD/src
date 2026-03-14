@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ from .sources import make_source
 from .startup import in_gdb_thread
 from .varref import BaseReference
 
-# Map DAP frame IDs to scopes.  This ensures that scopes are re-used.
+# Map DAP frame IDs to scopes.  This ensures that scopes are reused.
 frame_to_scope = {}
 
 
@@ -78,19 +78,19 @@ def symbol_value(sym, frame):
 class _ScopeReference(BaseReference):
     def __init__(self, name, hint, frameId: int, var_list):
         super().__init__(name)
-        self.hint = hint
-        self.frameId = frameId
+        self._hint = hint
+        self._frameId = frameId
         # VAR_LIST might be any kind of iterator, but it's convenient
         # here if it is just a collection.
-        self.var_list = tuple(var_list)
+        self._var_list = tuple(var_list)
 
     def to_object(self):
         result = super().to_object()
-        result["presentationHint"] = self.hint
+        result["presentationHint"] = self._hint
         # How would we know?
         result["expensive"] = False
         result["namedVariables"] = self.child_count()
-        frame = frame_for_id(self.frameId)
+        frame = frame_for_id(self._frameId)
         if frame.line() is not None:
             result["line"] = export_line(frame.line())
         filename = frame.filename()
@@ -102,11 +102,11 @@ class _ScopeReference(BaseReference):
         return True
 
     def child_count(self):
-        return len(self.var_list)
+        return len(self._var_list)
 
     @in_gdb_thread
     def fetch_one_child(self, idx):
-        return symbol_value(self.var_list[idx], frame_for_id(self.frameId))
+        return symbol_value(self._var_list[idx], frame_for_id(self._frameId))
 
 
 # A _ScopeReference that wraps the 'finish' value.  Note that this
@@ -120,7 +120,6 @@ class _FinishScopeReference(_ScopeReference):
 
     def fetch_one_child(self, idx):
         assert idx == 0
-        global _last_return_value
         return ("(return)", _last_return_value)
 
 
@@ -136,17 +135,15 @@ class _RegisterReference(_ScopeReference):
     @in_gdb_thread
     def fetch_one_child(self, idx):
         return (
-            self.var_list[idx].name,
-            frame_for_id(self.frameId)
+            self._var_list[idx].name,
+            frame_for_id(self._frameId)
             .inferior_frame()
-            .read_register(self.var_list[idx]),
+            .read_register(self._var_list[idx]),
         )
 
 
 @request("scopes")
 def scopes(*, frameId: int, **extra):
-    global _last_return_value
-    global frame_to_scope
     if frameId in frame_to_scope:
         scopes = frame_to_scope[frameId]
     else:

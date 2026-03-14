@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,8 @@
 #include "../features/aarch64-sme.c"
 #include "../features/aarch64-sme2.c"
 #include "../features/aarch64-tls.c"
+#include "../features/aarch64-gcs.c"
+#include "../features/aarch64-gcs-linux.c"
 
 /* See arch/aarch64.h.  */
 
@@ -64,6 +66,12 @@ aarch64_create_target_description (const aarch64_features &features)
 
   if (features.sme2)
     regnum = create_feature_aarch64_sme2 (tdesc.get (), regnum);
+
+  if (features.gcs)
+    regnum = create_feature_aarch64_gcs (tdesc.get (), regnum);
+
+  if (features.gcs_linux)
+    regnum = create_feature_aarch64_gcs_linux (tdesc.get (), regnum);
 
   return tdesc.release ();
 }

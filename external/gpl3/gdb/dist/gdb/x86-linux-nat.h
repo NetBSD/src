@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -91,5 +91,16 @@ private:
 
 extern ps_err_e x86_linux_get_thread_area (pid_t pid, void *addr,
 					   unsigned int *base_addr);
+
+/* Fetch the value of the shadow stack pointer register from process/thread
+   TID and store it to GDB's register cache.  */
+
+extern void x86_linux_fetch_ssp (regcache *regcache, const int tid);
+
+/* Read the value of the shadow stack pointer from GDB's register cache
+   and store it in the shadow stack pointer register of process/thread TID.
+   Throw an error in case of failure.  */
+
+extern void x86_linux_store_ssp (const regcache *regcache, const int tid);
 
 #endif /* GDB_X86_LINUX_NAT_H */

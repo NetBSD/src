@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,17 +33,7 @@ proc make_loc {num} {
     return [mi_make_breakpoint_loc -thread "1" -number "$::decimal\\.$num"]
 }
 
-foreach_mi_ui_mode mode {
-
-    if {$mode == "separate"} {
-	set start_ops "separate-mi-tty"
-    } else {
-	set start_ops ""
-    }
-
-    if {[mi_clean_restart $binfile $start_ops]} {
-	return -1
-    }
+proc do_test { mode } {
 
     # Ensure we get an error when placing a b/p for thread 1 at a point
     # where thread 1 doesn't exist.
@@ -55,7 +45,7 @@ foreach_mi_ui_mode mode {
     # would succeed, and then 'info breakpoint' on the CLI would
     # trigger an assertion.
     if {$mode eq "separate"} {
-	with_spawn_id $gdb_main_spawn_id {
+	with_spawn_id $::gdb_main_spawn_id {
 	    gdb_test "info breakpoints" "No breakpoints, watchpoints, tracepoints, or catchpoints\\." \
 		"check CLI 'info breakpoints' when there are no breakpoints"
 	}
@@ -83,9 +73,34 @@ foreach_mi_ui_mode mode {
 
     # Check that 'info breakpoints' on the CLI succeeds.
     if {$mode eq "separate"} {
-	with_spawn_id $gdb_main_spawn_id {
+	with_spawn_id $::gdb_main_spawn_id {
 	    gdb_test "info breakpoints" ".*" \
 		"check CLI 'info breakpoints' when there are some breakpoints"
 	}
+    }
+
+    return 1
+}
+
+foreach_mi_ui_mode mode {
+
+    if {$mode == "separate"} {
+	set start_ops "separate-mi-tty"
+    } else {
+	set start_ops ""
+    }
+
+    if {[mi_clean_restart $::testfile $start_ops]} {
+	break
+    }
+
+    set res [do_test $mode]
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
+
+    if { $res == -1 } {
+	break
     }
 }

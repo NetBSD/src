@@ -1,6 +1,6 @@
 /* DTrace probe support for GDB.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Contributed by Oracle, Inc.
 
@@ -424,7 +424,7 @@ dtrace_process_dof_probe (struct objfile *objfile,
 
      It follows that if there are DTrace is-enabled probes defined for
      some provider/name but no DTrace regular probes defined then the
-     GDB user wont be able to enable/disable these conditionals.  */
+     GDB user won't be able to enable/disable these conditionals.  */
 
   num_probes = DOF_UINT (dof, probe->dofpr_noffs);
   if (num_probes == 0)
@@ -889,9 +889,7 @@ info_probes_dtrace_command (const char *arg, int from_tty)
   info_probes_for_spops (arg, from_tty, &dtrace_static_probe_ops);
 }
 
-void _initialize_dtrace_probe ();
-void
-_initialize_dtrace_probe ()
+INIT_GDB_FILE (dtrace_probe)
 {
   all_static_probe_ops.push_back (&dtrace_static_probe_ops);
 

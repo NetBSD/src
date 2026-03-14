@@ -1,6 +1,6 @@
 /* Target-dependent code for the Sanyo Xstormy16a (LC590000) processor.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -435,7 +435,7 @@ xstormy16_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 	      return sal.end;
 	    }
 	}
-      /* No useable line symbol.  Use result of prologue parsing method.  */
+      /* No usable line symbol.  Use result of prologue parsing method.  */
       return plg_end;
     }
 
@@ -546,14 +546,14 @@ xstormy16_find_jmp_table_entry (struct gdbarch *gdbarch, CORE_ADDR faddr)
       if (!strcmp (faddr_sect->the_bfd_section->name, ".plt"))
 	return faddr;
 
-      for (obj_section *osect : faddr_sect->objfile->sections ())
+      for (obj_section &osect : faddr_sect->objfile->sections ())
 	{
-	  if (!strcmp (osect->the_bfd_section->name, ".plt"))
+	  if (!strcmp (osect.the_bfd_section->name, ".plt"))
 	    {
 	      CORE_ADDR addr, endaddr;
 
-	      addr = osect->addr ();
-	      endaddr = osect->endaddr ();
+	      addr = osect.addr ();
+	      endaddr = osect.endaddr ();
 
 	      for (; addr < endaddr; addr += 2 * xstormy16_inst_size)
 		{
@@ -728,15 +728,16 @@ xstormy16_frame_base_address (const frame_info_ptr &this_frame, void **this_cach
   return cache->base;
 }
 
-static const struct frame_unwind xstormy16_frame_unwind = {
+static const struct frame_unwind_legacy xstormy16_frame_unwind (
   "xstormy16 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   xstormy16_frame_this_id,
   xstormy16_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static const struct frame_base xstormy16_frame_base = {
   &xstormy16_frame_unwind,
@@ -827,9 +828,7 @@ xstormy16_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
    Initializer function for the Sanyo Xstormy16a module.
    Called by gdb at start-up.  */
 
-void _initialize_xstormy16_tdep ();
-void
-_initialize_xstormy16_tdep ()
+INIT_GDB_FILE (xstormy16_tdep)
 {
   gdbarch_register (bfd_arch_xstormy16, xstormy16_gdbarch_init);
 }

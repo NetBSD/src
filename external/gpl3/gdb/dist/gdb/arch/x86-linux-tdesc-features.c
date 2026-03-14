@@ -1,6 +1,6 @@
 /* Target description related code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,18 +28,21 @@
 
    We want to cache target descriptions, and this is currently done in
    three separate caches, one each for i386, amd64, and x32.  Additionally,
-   the caching we're discussing here is Linux only, and for Linux, the only
-   thing that has an impact on target description creation is the xcr0
-   value.
+   the caching we're discussing here is Linux only.  Currently for Linux,
+   the only thing that has an impact on target description creation are
+   the supported features in xsave which are modelled by a xstate_bv
+   value, which has the same format than the state component bitmap.
 
-   In order to ensure the cache functions correctly we need to filter out
-   only those xcr0 feature bits that are relevant, we can then cache target
-   descriptions based on the relevant feature bits.  Two xcr0 values might
-   be different, but have the same relevant feature bits.  In this case we
-   would expect the two xcr0 values to map to the same cache entry.  */
+   In order to ensure the cache functions correctly we need to filter only
+   those xstate_bv feature bits that are relevant, we can then cache
+   target descriptions based on the relevant feature bits.  Two xstate_bv
+   values might be different, but have the same relevant feature bits.  In
+   this case we would expect the two xstate_bv values to map to the same
+   cache entry.  */
 
 struct x86_xstate_feature {
-  /* The xstate feature mask.  This is a mask against an xcr0 value.  */
+  /* The xstate feature mask.  This is a mask against the state component
+     bitmap.  */
   uint64_t feature;
 
   /* Is this feature checked when creating an i386 target description.  */
@@ -56,12 +59,13 @@ struct x86_xstate_feature {
    checked when building a target description for i386, amd64, or x32.
 
    If in the future, due to simplifications or refactoring, this table ever
-   ends up with 'true' for every xcr0 feature on every target type, then this
-   is an indication that this table should probably be removed, and that the
-   rest of the code in this file can be simplified.  */
+   ends up with 'true' for every xsave feature on every target type, then
+   this is an indication that this table should probably be removed, and
+   that the rest of the code in this file can be simplified.  */
 
 static constexpr x86_xstate_feature x86_linux_all_xstate_features[] = {
   /* Feature,           i386,	amd64,	x32.  */
+  { X86_XSTATE_CET_U,	false,	true, 	true },
   { X86_XSTATE_PKRU,	true,	true, 	true },
   { X86_XSTATE_AVX512,	true,	true, 	true },
   { X86_XSTATE_AVX,	true,	true, 	true },
@@ -73,7 +77,7 @@ static constexpr x86_xstate_feature x86_linux_all_xstate_features[] = {
    that are checked for when building an i386 target description.  */
 
 static constexpr uint64_t
-x86_linux_i386_xcr0_feature_mask_1 ()
+x86_linux_i386_xstate_bv_feature_mask_1 ()
 {
   uint64_t mask = 0;
 
@@ -88,7 +92,7 @@ x86_linux_i386_xcr0_feature_mask_1 ()
    that are checked for when building an amd64 target description.  */
 
 static constexpr uint64_t
-x86_linux_amd64_xcr0_feature_mask_1 ()
+x86_linux_amd64_xstate_bv_feature_mask_1 ()
 {
   uint64_t mask = 0;
 
@@ -103,7 +107,7 @@ x86_linux_amd64_xcr0_feature_mask_1 ()
    that are checked for when building an x32 target description.  */
 
 static constexpr uint64_t
-x86_linux_x32_xcr0_feature_mask_1 ()
+x86_linux_x32_xstate_bv_feature_mask_1 ()
 {
   uint64_t mask = 0;
 
@@ -117,25 +121,25 @@ x86_linux_x32_xcr0_feature_mask_1 ()
 /* See arch/x86-linux-tdesc-features.h.  */
 
 uint64_t
-x86_linux_i386_xcr0_feature_mask ()
+x86_linux_i386_xstate_bv_feature_mask ()
 {
-  return x86_linux_i386_xcr0_feature_mask_1 ();
+  return x86_linux_i386_xstate_bv_feature_mask_1 ();
 }
 
 /* See arch/x86-linux-tdesc-features.h.  */
 
 uint64_t
-x86_linux_amd64_xcr0_feature_mask ()
+x86_linux_amd64_xstate_bv_feature_mask ()
 {
-  return x86_linux_amd64_xcr0_feature_mask_1 ();
+  return x86_linux_amd64_xstate_bv_feature_mask_1 ();
 }
 
 /* See arch/x86-linux-tdesc-features.h.  */
 
 uint64_t
-x86_linux_x32_xcr0_feature_mask ()
+x86_linux_x32_xstate_bv_feature_mask ()
 {
-  return x86_linux_x32_xcr0_feature_mask_1 ();
+  return x86_linux_x32_xstate_bv_feature_mask_1 ();
 }
 
 #ifdef GDBSERVER
@@ -143,7 +147,7 @@ x86_linux_x32_xcr0_feature_mask ()
 /* See arch/x86-linux-tdesc-features.h.  */
 
 int
-x86_linux_xcr0_to_tdesc_idx (uint64_t xcr0)
+x86_linux_xstate_bv_to_tdesc_idx (uint64_t xstate_bv)
 {
   /* The following table shows which features are checked for when creating
      the target descriptions (see nat/x86-linux-tdesc.c), the feature order
@@ -160,7 +164,7 @@ x86_linux_xcr0_to_tdesc_idx (uint64_t xcr0)
 
   for (int i = 0; i < ARRAY_SIZE (x86_linux_all_xstate_features); ++i)
     {
-      if ((xcr0 & x86_linux_all_xstate_features[i].feature)
+      if ((xstate_bv & x86_linux_all_xstate_features[i].feature)
 	  == x86_linux_all_xstate_features[i].feature)
 	idx |= (1 << i);
     }
@@ -250,17 +254,17 @@ x86_linux_i386_tdesc_count ()
 /* See arch/x86-linux-tdesc-features.h.  */
 
 uint64_t
-x86_linux_tdesc_idx_to_xcr0 (int idx)
+x86_linux_tdesc_idx_to_xstate_bv (int idx)
 {
-  uint64_t xcr0 = 0;
+  uint64_t xstate_bv = 0;
 
   for (int i = 0; i < ARRAY_SIZE (x86_linux_all_xstate_features); ++i)
     {
       if ((idx & (1 << i)) != 0)
-	xcr0 |= x86_linux_all_xstate_features[i].feature;
+	xstate_bv |= x86_linux_all_xstate_features[i].feature;
     }
 
-  return xcr0;
+  return xstate_bv;
 }
 
 #endif /* IN_PROCESS_AGENT */

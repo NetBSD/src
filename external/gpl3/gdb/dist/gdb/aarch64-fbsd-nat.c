@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -348,9 +348,7 @@ aarch64_notify_debug_reg_change (ptid_t ptid,
 }
 #endif
 
-void _initialize_aarch64_fbsd_nat ();
-void
-_initialize_aarch64_fbsd_nat ()
+INIT_GDB_FILE (aarch64_fbsd_nat)
 {
 #ifdef HAVE_DBREG
   aarch64_initialize_hw_point ();

@@ -1,5 +1,5 @@
 /* DWARF 2 support.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -5513,7 +5513,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
   if (! find_debug_info (debug_bfd, debug_sections, msec))
     {
       /* Case 1: only one info section.  */
-      total_size = msec->size;
+      total_size = bfd_get_section_limit_octets (debug_bfd, msec);
       if (! read_section (debug_bfd, &stash->debug_sections[debug_info],
 			  symbols, 0,
 			  &stash->f.dwarf_info_buffer, &total_size))
@@ -5528,13 +5528,14 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	{
 	  if (bfd_section_size_insane (debug_bfd, msec))
 	    goto restore_vma;
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
 	  /* Catch PR25070 testcase overflowing size calculation here.  */
-	  if (total_size + msec->size < total_size)
+	  if (total_size + readsz < total_size)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
 	      goto restore_vma;
 	    }
-	  total_size += msec->size;
+	  total_size += readsz;
 	}
 
       stash->f.dwarf_info_buffer = (bfd_byte *) bfd_malloc (total_size);
@@ -5546,10 +5547,8 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	   msec;
 	   msec = find_debug_info (debug_bfd, debug_sections, msec))
 	{
-	  bfd_size_type size;
-
-	  size = msec->size;
-	  if (size == 0)
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
+	  if (readsz == 0)
 	    continue;
 
 	  if (!(bfd_simple_get_relocated_section_contents
@@ -5557,7 +5556,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 		 symbols)))
 	    goto restore_vma;
 
-	  total_size += size;
+	  total_size += readsz;
 	}
     }
 

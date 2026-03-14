@@ -1,6 +1,6 @@
 /* CLI options framework, for GDB.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,9 @@ union option_value
 
   /* For var_string and var_filename options.  This is allocated with new.  */
   std::string *string;
+
+  /* For var_color options.  */
+  ui_file_style::color color = ui_file_style::NONE;
 };
 
 /* Holds an options definition and its value.  */
@@ -433,6 +436,35 @@ parse_option (gdb::array_view<const option_def_group> options_group,
 	val.enumeration = parse_cli_var_enum (args, match->enums);
 	return option_def_and_value {*match, match_ctx, val};
       }
+    case var_color:
+      {
+	if (completion != nullptr)
+	  {
+	    const char *after_arg = skip_to_space (*args);
+	    if (*after_arg == '\0')
+	      {
+		complete_on_color (completion->tracker, *args, *args);
+
+		if (completion->tracker.have_completions ())
+		  return {};
+	      }
+	  }
+
+	if (check_for_argument (args, "--"))
+	  {
+	    /* Treat e.g., "backtrace -entry-values --" as if there
+	       was no argument after "-entry-values".  This makes
+	       parse_cli_var_color throw an error with a suggestion of
+	       what are the valid options.  */
+	    args = nullptr;
+	  }
+
+	option_value val;
+	ui_file_style::color color = parse_cli_var_color (args);
+	ui_file_style::color approx_color = color.approximate (colorsupport ());
+	val.color = approx_color;
+	return option_def_and_value {*match, match_ctx, val};
+      }
     case var_string:
       {
 	if (check_for_argument (args, "--"))
@@ -683,6 +715,10 @@ save_option_value_in_ctx (std::optional<option_def_and_value> &ov)
       *ov->option.var_address.enumeration (ov->option, ov->ctx)
 	= ov->value->enumeration;
       break;
+    case var_color:
+      *ov->option.var_address.color (ov->option, ov->ctx)
+	= ov->value->color;
+      break;
     case var_string:
     case var_filename:
       *ov->option.var_address.string (ov->option, ov->ctx)
@@ -788,6 +824,12 @@ append_val_type_str (std::string &help, const option_def &opt,
 	    help += opt.enums[i];
 	  }
       }
+      break;
+    case var_color:
+      help += ' ';
+      for (size_t i = 0; ui_file_style::basic_color_enums[i]; ++i)
+	help.append (ui_file_style::basic_color_enums[i]).append ("|");
+      help += "NUMBER|#RRGGBB";
       break;
     case var_string:
       help += " STRING";

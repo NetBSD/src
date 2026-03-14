@@ -1,6 +1,6 @@
 /* Python interface to record targets.
 
-   Copyright 2016-2024 Free Software Foundation, Inc.
+   Copyright 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -696,6 +696,9 @@ gdbpy_current_recording (PyObject *self, PyObject *args)
     Py_RETURN_NONE;
 
   ret = PyObject_New (recpy_record_object, &recpy_record_type);
+  if (ret == nullptr)
+    return nullptr;
+
   ret->thread = inferior_thread ();
   ret->method = target_record_method (ret->thread->ptid);
 

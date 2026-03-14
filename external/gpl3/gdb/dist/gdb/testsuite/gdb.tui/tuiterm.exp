@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -102,7 +102,7 @@ proc test_backspace {} {
 
     Term::_move_cursor 1 2
 
-    Term::_ctl_0x08
+    Term::_ctl_0x08 0
     check "backspace one" {
 	"abcdefgh"
 	"ijklmnop"
@@ -111,13 +111,22 @@ proc test_backspace {} {
     } 0 2
 
     # Cursor should not move if it is already at column 0.
-    Term::_ctl_0x08
+    Term::_ctl_0x08 0
     check "backspace 2" {
 	"abcdefgh"
 	"ijklmnop"
 	"qrstuvwx"
 	"yz01234 "
     } 0 2
+
+    # Cursor should wrap to previous line.
+    Term::_ctl_0x08 1
+    check "backspace 3" {
+	"abcdefgh"
+	"ijklmnop"
+	"qrstuvwx"
+	"yz01234 "
+    } 7 1
 }
 
 proc test_linefeed { } {
@@ -435,6 +444,30 @@ proc test_horizontal_absolute { } {
 	"qrstuvwx"
 	"yz01234 "
     } 3 2
+
+    Term::_csi_G 8
+    check "cursor horizontal absolute 3" {
+	"abcdefgh"
+	"ijklmnop"
+	"qrstuvwx"
+	"yz01234 "
+    } 7 2
+
+    Term::_csi_G 9
+    check "cursor horizontal absolute 4" {
+	"abcdefgh"
+	"ijklmnop"
+	"qrstuvwx"
+	"yz01234 "
+    } 7 2
+
+    Term::_csi_`
+    check "horizontal position absolute 1" {
+	"abcdefgh"
+	"ijklmnop"
+	"qrstuvwx"
+	"yz01234 "
+    } 0 2
 }
 
 proc test_cursor_position { } {
@@ -620,13 +653,21 @@ proc test_cursor_backward_tabulation { } {
 }
 
 proc test_repeat { } {
-    Term::_move_cursor 2 1
-    set Term::_last_char X
+    Term::_move_cursor 0 1
 
-    Term::_csi_b 3
+    Term::_insert "xxX"
+    gdb_assert { $Term::_last_char == "X"  }
+    check "insert" {
+	"abcdefgh"
+	"xxXlmnop"
+	"qrstuvwx"
+	"yz01234 "
+    } 3 1
+
+    Term::_csi_b 2
     check "repeat" {
 	"abcdefgh"
-	"ijXXXnop"
+	"xxXXXnop"
 	"qrstuvwx"
 	"yz01234 "
     } 5 1
@@ -750,6 +791,15 @@ proc test_attrs {} {
 	set line [Term::get_line_with_attrs 0]
 	gdb_assert { [regexp $re $line] } "attribute: $attr"
     }
+
+    # Regression test: Check that _csi_m works without arguments.
+    setup_terminal 4 1
+    Term::_csi_m 7
+    Term::_insert "a"
+    Term::_csi_m
+    Term::_insert "a"
+    set line [Term::get_line_with_attrs 0]
+    gdb_assert { [string equal $line "<reverse:1>a<reverse:0>a  "] }
 }
 
 # Run proc TEST_PROC_NAME with a "small" terminal.

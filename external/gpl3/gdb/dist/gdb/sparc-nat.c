@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -309,9 +309,7 @@ sparc_xfer_wcookie (enum target_object object,
 }
 
 
-void _initialize_sparc_nat ();
-void
-_initialize_sparc_nat ()
+INIT_GDB_FILE (sparc_nat)
 {
   /* Default to using SunOS 4 register sets.  */
   if (sparc_gregmap == NULL)

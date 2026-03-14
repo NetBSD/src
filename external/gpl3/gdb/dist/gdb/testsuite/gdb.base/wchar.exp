@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,3 +72,7 @@ gdb_test "print repeat_p" "= $hex L\"A$cent$cent\"\.\.\." \
 
 # From PR cli/14977, but here because it requires wchar_t.
 gdb_test "printf \"%ls\\n\", 0" "\\(null\\)"
+
+# From PR exp/33124 - a bug when converting escapes.
+set wbs {L'\\'}
+gdb_test "print $wbs" " = $decimal [string_to_regexp $wbs]"

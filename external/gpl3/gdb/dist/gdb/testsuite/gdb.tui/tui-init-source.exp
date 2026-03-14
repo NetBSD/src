@@ -1,0 +1,41 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# When enabling TUI prior to starting the inferior, check that the
+# default source code location is centred within the window.
+
+require allow_tui_tests
+
+tuiterm_env
+
+standard_testfile
+
+if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
+    return -1
+}
+
+Term::clean_restart 24 80 $testfile
+
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+# Check the source code box displays at least one line before main,
+# the type and name of the main function, and one line after main.
+Term::check_region_contents \
+    "check source is reasonably centred" \
+    1 1 78 13 \
+    "/\\* 10 \\*/.*int.*main \\(void\\).*/\\* 11 \\*/"

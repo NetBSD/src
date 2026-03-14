@@ -1,5 +1,5 @@
 /* vms.c -- BFD back-end for EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    Initial version written by Klaus Kaempf (kkaempf@rmi.de)
    Major rewrite by Adacore.
@@ -9280,6 +9280,7 @@ alpha_vms_build_fixups (struct bfd_link_info *info)
 
   sec = alpha_vms_link_hash (info)->fixup;
   sec->contents = content;
+  sec->alloced = 1;
   sec->size = sz;
 
   eiaf = (struct vms_eiaf *)content;
@@ -9685,6 +9686,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	  o->contents = bfd_alloc (abfd, o->size);
 	  if (o->contents == NULL)
 	    return false;
+	  o->alloced = 1;
 	}
       if (o->flags & SEC_LOAD)
 	{
@@ -9833,6 +9835,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	      if (contents == NULL)
 		return false;
 	      dmt->contents = contents;
+	      dmt->alloced = 1;
 	      dmt->size = off;
 	    }
 	  else
@@ -9891,6 +9894,7 @@ alpha_vms_get_section_contents (bfd *abfd, asection *section,
 	      sec->flags |= SEC_IN_MEMORY;
 	      if (sec->contents == NULL)
 		return false;
+	      sec->alloced = 1;
 	    }
 	}
       if (!alpha_vms_read_sections_content (abfd, NULL))
@@ -10111,6 +10115,7 @@ _bfd_vms_set_section_contents (bfd * abfd,
       section->contents = bfd_alloc (abfd, section->size);
       if (section->contents == NULL)
 	return false;
+      section->alloced = 1;
 
       memcpy (section->contents + offset, location, (size_t) count);
     }
@@ -10151,7 +10156,6 @@ bfd_vms_get_data (bfd *abfd)
 
 #define vms_bfd_copy_private_bfd_data	  _bfd_generic_bfd_copy_private_bfd_data
 #define vms_bfd_merge_private_bfd_data	  _bfd_generic_bfd_merge_private_bfd_data
-#define vms_init_private_section_data	  _bfd_generic_init_private_section_data
 #define vms_bfd_copy_private_section_data _bfd_generic_bfd_copy_private_section_data
 #define vms_bfd_copy_private_symbol_data  _bfd_generic_bfd_copy_private_symbol_data
 #define vms_bfd_copy_private_header_data  _bfd_generic_bfd_copy_private_header_data

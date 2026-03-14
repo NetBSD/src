@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,7 +49,7 @@
 #
 # This obviously needs fixing, but is a separate problem from the one being
 # tested here, so this test deliberately checks the mapping using a file that
-# is mmaped rather than loaded as a shared library, as such the file is in the
+# is mmapped rather than loaded as a shared library, as such the file is in the
 # core-files list of mapped files, but is not in the shared library list.
 #
 # Despite this test living in the gdb.debuginfod/ directory, only the last
@@ -69,14 +69,15 @@ standard_testfile -1.c -2.c -3.c
 # shared library, then use GDB to figure out the offset of the
 # variable 'library_ptr' within the library.
 set library_filename [standard_output_file "libfoo.so"]
-set binfile2 [standard_output_file "library_loader"]
+set testfile2 "library_loader"
+set binfile2 [standard_output_file $testfile2]
 
 if {[prepare_for_testing_full "build exec which loads the shared library" \
 	 [list $library_filename \
 	      { debug shlib build-id \
 		    additional_flags=-DPOINTER_VALUE=0x12345678 } \
 	      $srcfile2 {}] \
-	 [list $binfile2 [list debug shlib=$library_filename ] \
+	 [list $testfile2 [list debug shlib=$library_filename ] \
 	      $srcfile { debug }]] != 0} {
     return
 }
@@ -160,7 +161,7 @@ if { $ptr_expected_value eq "" } {
 # Load this executable within GDB and confirm that we can use the
 # offset we calculated previously to view the value of 'library_ptr'.
 set opts [list debug additional_flags=-DSHLIB_FILENAME=\"$library_filename\"]
-if {[prepare_for_testing "prepare second executable" $binfile \
+if {[prepare_for_testing "prepare second executable" $testfile \
 	 $srcfile3 $opts] != 0} {
     return
 }
@@ -260,7 +261,7 @@ proc load_core_file { testname { line_re "" } } {
 	# We expect RES to be 2 (TCL_RETURN) or 1 (TCL_ERROR).  If we get
 	# here then somehow the 'catch' above finished without hitting
 	# either of those cases, which is .... weird.
-	perror "unexepcted return value, code = $res, value = $string"
+	perror "unexpected return value, code = $res, value = $string"
 	return -1
     }
 }
@@ -268,7 +269,7 @@ proc load_core_file { testname { line_re "" } } {
 # And now restart GDB, load the core-file and check that the library shows as
 # being mapped in, and that we can still read the library_ptr value from
 # memory.
-clean_restart $binfile
+clean_restart $::testfile
 
 load_core_file "load core file"
 
@@ -287,7 +288,7 @@ gdb_assert { $ptr_value == $ptr_expected_value } \
 set library_backup_filename [standard_output_file "libfoo.so.backup"]
 remote_exec build "mv \"$library_filename\" \"$library_backup_filename\""
 
-clean_restart $binfile
+clean_restart $::testfile
 
 load_core_file "load corefile with library file missing" \
     "warning: Can't open file [string_to_regexp $library_filename] during file-backed mapping note processing"
@@ -309,7 +310,7 @@ set build_id_filename \
 remote_exec build "mkdir -p [file dirname $build_id_filename]"
 remote_exec build "ln -sf $library_backup_filename $build_id_filename"
 
-clean_restart $binfile
+clean_restart $::testfile
 
 gdb_test_no_output "set debug-file-directory $debugdir" \
     "set debug-file-directory"
@@ -331,7 +332,7 @@ if {[build_executable "build second version of shared library" \
     return
 }
 
-clean_restart $binfile
+clean_restart $::testfile
 
 load_core_file "load corefile with wrong library in place" \
     "warning: File [string_to_regexp $library_filename] doesn't match build-id from core-file during file-backed mapping processing"

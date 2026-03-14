@@ -1,0 +1,99 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that gcore doesn't end up using excessive memory.
+
+require {istarget "*-*-linux*"}
+require can_spawn_for_attach
+
+standard_testfile
+
+if {[build_executable "failed to prepare" $testfile $srcfile {debug}] == -1} {
+    return -1
+}
+
+# Read the proc_pid_status page, to find how much memory the given
+# PID is using.  This is meant to be used to find the
+# memory usage for the GDB in this test.
+# Returns memory usage in Kb, or -1 if it couldn't be found.
+proc get_mem_usage {pid prefix} {
+    set fd [open "/proc/$pid/status"]
+    set memory -1
+    while {[gets $fd line] != -1} {
+	if {[regexp {VmSize:\s*([0-9]+) kB} $line full mem]} {
+	    set memory $mem
+	    break
+	}
+    }
+    close $fd
+
+    gdb_assert {$memory != -1} "$prefix: Managed to read the memory usage"
+
+    return $memory
+}
+
+# This proc restarts GDB, runs the inferior with the desired
+# amount of memory, then checks how much memory is necessary
+# to run the gcore command.  It will return -1 if the gcore
+# command fails, otherwise the amount of memory used by GDB
+# to generate that gcore.  MAX_MEM is the maximum amount of
+# memory GDB is allowed to use, in megabytes.
+proc run_test {megs max_mem} {
+    with_test_prefix "$megs Mb" {
+	clean_restart $::testfile
+
+	set corefile [standard_output_file "${::testfile}.core"]
+	set inferior_spawn_id [spawn_wait_for_attach [list "$::binfile $megs"]]
+	set inferior_pid [spawn_id_get_pid $inferior_spawn_id]
+	set gdb_pid [exp_pid -i [board_info host fileid]]
+
+	gdb_test "attach $inferior_pid" "Attaching to.*" attach
+	set line [gdb_get_line_number "TAG: BREAK HERE" $::testfile.c]
+	gdb_breakpoint "${::srcfile}:$line" "break at to known line"
+	gdb_continue_to_breakpoint "continue to known line"
+
+	# Get the important info.
+	set mem_before [get_mem_usage $gdb_pid before]
+	if {![gdb_gcore_cmd $corefile "create the corefile"]} {
+	    return -1
+	}
+	set mem_after [get_mem_usage $gdb_pid after]
+
+	# Do the main part of the test: How much is the memory
+	# usage of GDB going to grow after using the gcore command.
+	set diff_k [expr $mem_after - $mem_before]
+	set diff [expr $diff_k/1024]
+	verbose -log "The gcore command used $diff Mb ($diff_k Kb)"
+	gdb_assert {$diff <= $max_mem} "gdb did not use too much memory"
+
+	gdb_test_no_output "set spin=0" "Allow program to exit"
+    }
+    return $diff
+}
+
+# If we couldn't create the first corefile, there's no point
+# in running the second part of the test.  The maximum amount
+# of memory allowed is the same as the memory used by the
+# inferior.
+set mem_limit [run_test 4 4]
+if {$mem_limit < 0} {
+    return
+}
+# Surprisingly enough, the larger inferior doesn't seem to use
+# any extra memory, it usually uses less memory.  Which is good,
+# it means our memory requirements aren't growing with the inferior.
+# This test ensures that it remains true that a larger inferior will
+# not grow the memory requirements.
+run_test 64 $mem_limit

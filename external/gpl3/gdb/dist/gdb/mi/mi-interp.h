@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,7 +61,7 @@ public:
 			  const char *format) override;
   void on_target_resumed (ptid_t ptid) override;
   void on_solib_loaded (const solib &so) override;
-  void on_solib_unloaded (const solib &so) override;
+  void on_solib_unloaded (const solib &so, bool still_in_use) override;
   void on_about_to_proceed () override;
   void on_traceframe_changed (int tfnum, int tpnum) override;
   void on_tsv_created (const trace_state_variable *tsv) override;
@@ -103,7 +103,7 @@ public:
      command was issued.  */
   int mi_proceeded;
 
-  const char *current_token;
+  const char *current_token = nullptr;
 };
 
 /* Output the shared object attributes to UIOUT.  */

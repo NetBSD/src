@@ -1,6 +1,6 @@
 /* Internal header for GDB/Scheme code.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,12 +30,25 @@
 #include "objfiles.h"
 #include "top.h"
 
-#if __cplusplus >= 202002L
-/* Work around Werror=volatile in SCM_UNPACK for
-   SCM_DEBUG_TYPING_STRICTNESS == 1.  Reported upstream:
-   https://debbugs.gnu.org/cgi/bugreport.cgi?bug=65333 .  */
+/* For libguile v2.0.9 and SCM_DEBUG_TYPING_STRICTNESS == 1, SCM_UNPACK(x) is
+   defined as:
+
+     ((scm_t_bits) (0? (*(SCM*)0=(x)): x))
+
+   and for v2.0.10 it's defined as:
+
+     ((scm_t_bits) (0? (*(volatile SCM *)0=(x)): x))
+
+   The volatile was added to avoid a clang warning.
+
+   The latter form causes a Werror=volatile with C++20.
+   This was reported upstream (
+   https://debbugs.gnu.org/cgi/bugreport.cgi?bug=65333 ).
+
+   The former form causes a Werror=sequence-point with gcc 7-14.
+
+   Work around these problem by using SCM_DEBUG_TYPING_STRICTNESS == 0.  */
 #define SCM_DEBUG_TYPING_STRICTNESS 0
-#endif
 #include "libguile.h"
 
 struct block;
@@ -436,15 +449,24 @@ extern const struct block *bkscm_scm_to_block
 
 /* scm-cmd.c */
 
-extern char *gdbscm_parse_command_name (const char *name,
-					const char *func_name, int arg_pos,
-					struct cmd_list_element ***base_list,
-					struct cmd_list_element **start_list);
+extern char *gdbscm_parse_command_name
+  (const char *name, const char *func_name, int arg_pos,
+   struct cmd_list_element ***base_list,
+   struct cmd_list_element **start_list,
+   struct cmd_list_element **prefix_cmd = nullptr);
 
 extern int gdbscm_valid_command_class_p (int command_class);
 
 extern char *gdbscm_canonicalize_command_name (const char *name,
 					       int want_trailing_space);
+
+/* scm-color.c */
+
+extern SCM coscm_scm_from_color (const ui_file_style::color &color);
+
+extern int coscm_is_color (SCM scm);
+
+extern const ui_file_style::color & coscm_get_color (SCM color_scm);
 
 /* scm-frame.c */
 
@@ -624,6 +646,7 @@ extern void gdbscm_initialize_arches (void);
 extern void gdbscm_initialize_auto_load (void);
 extern void gdbscm_initialize_blocks (void);
 extern void gdbscm_initialize_breakpoints (void);
+extern void gdbscm_initialize_colors (void);
 extern void gdbscm_initialize_commands (void);
 extern void gdbscm_initialize_disasm (void);
 extern void gdbscm_initialize_exceptions (void);

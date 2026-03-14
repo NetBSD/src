@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,6 +78,9 @@ proc check_info_shared { test expect1 expect2 } {
 	}
     }
 }
+
+# Check that "info shared" before running doesn't crash.
+check_info_shared "info sharedlibrary before running" 0 0
 
 # Start the inferior, and check neither of the libraries are loaded at
 # the start.

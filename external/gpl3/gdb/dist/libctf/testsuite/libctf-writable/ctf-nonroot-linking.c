@@ -24,16 +24,6 @@ main (int argc, char *argv[])
   ctf_next_t *i = NULL;
   int err;
 
-  /* Linking does not currently work on mingw because of an unreliable tmpfile
-     implementation on that platform (see
-     https://github.com/msys2/MINGW-packages/issues/18878).  Simply skip for
-     now.  */
-
-#ifdef __MINGW32__
-  printf ("UNSUPPORTED: platform bug breaks ctf_link\n");
-  return 0;
-#else
-
   if ((fp = ctf_create (&err)) == NULL)
     goto create_err;
 
@@ -123,5 +113,4 @@ main (int argc, char *argv[])
  link_err:
   fprintf (stderr, "Cannot link: %s\n", ctf_errmsg (ctf_errno (fp)));
   return 1;
-#endif
 }

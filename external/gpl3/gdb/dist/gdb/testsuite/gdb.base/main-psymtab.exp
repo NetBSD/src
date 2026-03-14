@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,11 @@
 
 standard_testfile persistent-lang.cc
 
-if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
+set flags {}
+lappend flags debug
+lappend flags c++
+
+if {[build_executable "failed to prepare" $testfile $srcfile $flags]} {
     return -1
 }
 

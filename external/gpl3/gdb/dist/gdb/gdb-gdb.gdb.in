@@ -37,3 +37,6 @@ document pdie
 Pretty print a DWARF DIE.
 Syntax: pdie die [depth]
 end
+
+# Trivial and uninteresting functions to skip.
+skip -rfu "^gdb::ref_ptr<.*>::get"

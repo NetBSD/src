@@ -1,5 +1,5 @@
 /* Internal interfaces for the GNU/Linux specific target code for gdbserver.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -42,7 +42,12 @@ enum regset_type {
   GENERAL_REGS,
   FP_REGS,
   EXTENDED_REGS,
-  OPTIONAL_REGS, /* Do not error if the regset cannot be accessed.  */
+  OPTIONAL_REGS, /* Do not error if the regset cannot be accessed.
+		    Disable the regset instead.  */
+  OPTIONAL_RUNTIME_REGS, /* Some optional regsets can only be accessed
+			    dependent on the execution flow.  For such
+			    access errors don't show a warning and don't
+			    disable the regset.  */
 };
 
 /* The arch's regsets array initializer must be terminated with a NULL
@@ -141,7 +146,7 @@ class linux_process_target : public process_stratum_target
 public:
 
   int create_inferior (const char *program,
-		       const std::vector<char *> &program_args) override;
+		       const std::string &program_args) override;
 
   void post_create_inferior () override;
 
@@ -303,6 +308,8 @@ public:
 
   int multifs_open (int pid, const char *filename, int flags,
 		    mode_t mode) override;
+
+  int multifs_lstat (int pid, const char *filename, struct stat *st) override;
 
   int multifs_unlink (int pid, const char *filename) override;
 

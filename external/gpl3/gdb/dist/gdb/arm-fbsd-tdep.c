@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/arm.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -300,8 +300,7 @@ arm_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tramp_frame_prepend_unwinder (gdbarch, &arm_fbsd_sigframe);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
   tdep->jb_pc = 24;
   tdep->jb_elt_size = 4;
@@ -319,12 +318,10 @@ arm_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     }
 
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, arm_software_single_step);
 }
 
-void _initialize_arm_fbsd_tdep ();
-void
-_initialize_arm_fbsd_tdep ()
+INIT_GDB_FILE (arm_fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_FREEBSD,
 			  arm_fbsd_init_abi);

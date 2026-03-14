@@ -1,4 +1,4 @@
-# Copyright 1992-2024 Free Software Foundation, Inc.
+# Copyright 1992-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,9 +58,9 @@ proc test_ptype_of_templates {} {
 	    xfail "ptype T5<int> (obsolescent gcc or gdb)"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-	    # This also triggers gdb/1113...
-	    kfail "gdb/1111" "ptype T5<int>"
-	    # Add here a PASS case when PR gdb/1111 gets fixed.
+	    # This also triggers gdb/8218...
+	    kfail "gdb/8216" "ptype T5<int>"
+	    # Add here a PASS case when PR gdb/8216 gets fixed.
 	    # These are really:
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8216
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
@@ -98,9 +98,9 @@ proc test_ptype_of_templates {} {
 	    xfail "ptype t5i (obsolescent gcc or gdb) -- without size_t"
 	}
 	-re "type = class T5<int> \{${ws}public:${ws}static int X;${ws}int x;${ws}int val;${ws}void T5\\(int\\);${ws}void T5\\((T5<int> const|const T5<int>) ?&\\);${ws}~T5\\(\\);${ws}static void \\* operator new\\((size_t|unsigned( int| long|))\\);${ws}static void operator delete\\(void ?\\*\\);${ws}int value\\((void|)\\);${ws}\}\r\n$gdb_prompt $" {
-	    # This also triggers gdb/1113...
-	    kfail "gdb/1111" "ptype t5i"
-	    # Add here a PASS case when PR gdb/1111 gets fixed.
+	    # This also triggers gdb/8218...
+	    kfail "gdb/8216" "ptype t5i"
+	    # Add here a PASS case when PR gdb/8216 gets fixed.
 	    # These are really:
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8216
 	    # http://sourceware.org/bugzilla/show_bug.cgi?id=8218
@@ -132,7 +132,7 @@ proc test_template_breakpoints {} {
 		"constructor breakpoint"
 	}
 	-re "0. cancel.*\[\r\n\]*.1. all.*\[\r\n\]*.2. T5 at .*\[\r\n\]*.3. T5 at .*\[\r\n\]*> $" {
-	    setup_kfail "gdb/1062" "*-*-*"
+	    setup_kfail "gdb/8167" "*-*-*"
 	    gdb_test "0" \
 		"nonsense intended to insure that this test fails" \
 		"constructor breakpoint"
@@ -151,7 +151,7 @@ proc test_template_breakpoints {} {
 	}
 	-re "the class `T5<int>' does not have destructor defined\r\nHint: try 'T5<int>::~T5<TAB> or 'T5<int>::~T5<ESC-\\?>\r\n\\(Note leading single quote.\\)\r\n$gdb_prompt $"
 	{
-	    kfail "gdb/1112" "destructor breakpoint"
+	    kfail "gdb/8217" "destructor breakpoint"
 	}
     }
     
@@ -307,7 +307,7 @@ gdb_test_multiple "ptype/r Foo" "ptype Foo" {
     }
     -re "type = class Foo<int> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int foo\\(int, int\\);\r\n\\}\r\n$gdb_prompt $" {
 	# GCC 3.1, DWARF-2 output.
-	kfail "gdb/57" "ptype Foo"
+	kfail "gdb/7162" "ptype Foo"
     }
     -re "No symbol \"Foo\" in current context.\r\n$gdb_prompt $" {
 	# GCC 2.95.3, stabs+ output.
@@ -342,28 +342,25 @@ gdb_test_multiple "ptype/r fchar" "ptype fchar" {
 # ptype Foo<volatile char *>
 
 gdb_test_multiple "ptype/r fvpchar" "ptype fvpchar" {
-    -re "type = (class |)Foo<volatile char ?\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*.*char.*\\*t;\r\n\r\n\[ \t\]*.*char \\* foo\\(int,.*char.*\\*\\);\r\n\\}\r\n$gdb_prompt $" {
-	pass "ptype fvpchar"
-    }
-    -re "type = (class |)Foo<volatile char ?\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*.*char.*\\*t;\r\n\r\n\[ \t\]*.*char \\* foo\\(int,.*char.*\\*\\);.*\r\n\\}\r\n$gdb_prompt $" {
+    -re "type = class Foo<char volatile\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*volatile char \\*t;\r\n\r\n\[ \t\]*volatile char \\* foo\\(int, volatile char \\*\\);.*\r\n\\}\r\n$gdb_prompt $" {
 	pass "ptype fvpchar"
     }
     -re "type = (class |)Foo<char volatile ?\\*> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*.*char.*\\*t;\r\n\r\n\[ \t\]*.*char \\* foo\\(int,.*char.*\\*\\);\r\n\\}\r\n$gdb_prompt $" {
-	kfail "gdb/1512" "ptype fvpchar"
+	kfail "gdb/8617" "ptype fvpchar"
     }
 }
 
 # print a function from Foo<volatile char *>
 
 # This test is sensitive to whitespace matching, so we'll do it twice,
-# varying the spacing, because of PR gdb/33.
+# varying the spacing, because of PR gdb/7138.
 
 gdb_test_multiple "print Foo<volatile char *>::foo" "print Foo<volatile char *>::foo" {
     -re "\\$\[0-9\]* = \\{.*char \\*\\((class |)Foo<(volatile char|char volatile) ?\\*> \\*(| const), int, .*char \\*\\)\\} $hex <Foo<.*char.*\\*>::foo\\(int, .*char.*\\*\\)>\r\n$gdb_prompt $" {
 	pass "print Foo<volatile char *>::foo"
     }
     -re "No symbol \"Foo<volatile char \\*>\" in current context.\r\n$gdb_prompt $" {
-	# This used to be a kfail gdb/33 and then kfail gdb/931.
+	# This used to be a kfail gdb/7138 and then kfail gdb/8036.
 	fail "print Foo<volatile char *>::foo"
     }
 }
@@ -373,7 +370,7 @@ gdb_test_multiple "print Foo<volatile char*>::foo" "print Foo<volatile char*>::f
 	pass "print Foo<volatile char*>::foo"
     }
     -re "No symbol \"Foo<volatile char\\*>\" in current context.\r\n$gdb_prompt $" {
-	# This used to be a kfail gdb/33 and then kfail gdb/931.
+	# This used to be a kfail gdb/7138 and then kfail gdb/8036.
 	fail "print Foo<volatile char*>::foo"
     }
 }
@@ -390,7 +387,7 @@ gdb_test_multiple "ptype/r Bar" "ptype Bar" {
     }
     -re "ptype Bar\r\ntype = class Bar<int, ?33> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int bar\\(int, int\\);\r\n}\r\n$gdb_prompt $" {
 	# GCC 3.1, DWARF-2 output.
-	kfail "gdb/57" "ptype Bar"
+	kfail "gdb/7162" "ptype Bar"
     }
     -re "No symbol \"Bar\" in current context.\r\n$gdb_prompt $" {
 	# GCC 2.95.3, stabs+ output.
@@ -433,11 +430,11 @@ gdb_test_multiple "ptype/r Baz" "ptype Baz" {
     }
     -re "type = class Baz<int, ?'s'> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int baz\\(int, int\\);\r\n}\r\n$gdb_prompt $" {
 	# GCC 3.1, DWARF-2 output.
-	kfail "gdb/57" "ptype Baz"
+	kfail "gdb/7162" "ptype Baz"
     }
     -re "type = class Baz<int, ?(\\(char\\))?115> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int baz\\(int, int\\);\r\n}\r\n$gdb_prompt $" {
-	# GCC 3.x, DWARF-2 output, running into gdb/57 and gdb/1512.
-	kfail "gdb/57" "ptype Baz"
+	# GCC 3.x, DWARF-2 output, running into gdb/7162 and gdb/8617.
+	kfail "gdb/7162" "ptype Baz"
     }
     -re "No symbol \"Baz\" in current context.\r\n$gdb_prompt $" {
 	# GCC 2.95.3, stabs+ output.
@@ -479,11 +476,11 @@ gdb_test_multiple "ptype/r Qux" "ptype Qux" {
     }
     -re "type = class Qux<char, ?&string> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*char t;\r\n\r\n\[ \t\]*char qux\\(int, char\\);\r\n}\r\n$gdb_prompt $" {
 	# GCC 3.1, DWARF-2 output.
-	kfail "gdb/57" "ptype Qux"
+	kfail "gdb/7162" "ptype Qux"
     }
     -re "type = class Qux<char, ?&\\(string\\)> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*char t;\r\n\r\n\[ \t\]*char qux\\(int, char\\);\r\n}\r\n$gdb_prompt $" {
-	# GCC 3.x, DWARF-2 output; gdb/57 + gdb/1512.
-	kfail "gdb/57" "ptype Qux"
+	# GCC 3.x, DWARF-2 output; gdb/7162 + gdb/8617.
+	kfail "gdb/7162" "ptype Qux"
     }
     -re "No symbol \"Qux\" in current context.\r\n$gdb_prompt $" {
 	# GCC 2.95.3, stabs+ output.
@@ -507,7 +504,7 @@ gdb_test_multiple "ptype/r quxint" "ptype quxint" {
 	pass "ptype quxint"
     }
     -re "type = class Qux<int, ?& ?\\(string\\)> \\{\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\[ \t\]*int t;\r\n\r\n\[ \t\]*int qux\\(int, int\\);.*\r\n\\}\r\n$gdb_prompt $" {
-	kfail "gdb/1512" "ptype quxint"
+	kfail "gdb/8617" "ptype quxint"
     }
 }
 
@@ -524,7 +521,7 @@ gdb_test_multiple "ptype/r Spec" "ptype Spec" {
     }
     -re "type = class Spec<int, ?char> {\r\n\[ \t\]*public:\r\n\[ \t\]*int x;\r\n\r\n\[ \t\]*int spec\\(char\\);\r\n}\r\n$gdb_prompt $" {
 	# GCC 3.1, DWARF-2 output.
-	kfail "gdb/57" "ptype Spec"
+	kfail "gdb/7162" "ptype Spec"
     }
     -re "No symbol \"Spec\" in current context.\r\n$gdb_prompt $" {
 	# GCC 2.95.3, stabs+ output.

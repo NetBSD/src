@@ -1,6 +1,6 @@
 /* Target-dependent code for Renesas M32R, for GDB.
 
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -831,15 +831,16 @@ m32r_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind m32r_frame_unwind = {
+static const struct frame_unwind_legacy m32r_frame_unwind (
   "m32r prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   m32r_frame_this_id,
   m32r_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 m32r_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -907,9 +908,7 @@ m32r_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_m32r_tdep ();
-void
-_initialize_m32r_tdep ()
+INIT_GDB_FILE (m32r_tdep)
 {
   gdbarch_register (bfd_arch_m32r, m32r_gdbarch_init);
 }

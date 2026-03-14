@@ -1,6 +1,6 @@
 /* GNU/Linux/x86-64 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -253,7 +253,8 @@ static const int x86_64_regmap[] =
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
   -1, -1, -1, -1, -1, -1, -1, -1,
-  -1					/* pkru  */
+  -1,					/* pkru  */
+  -1					/* CET user mode register PL3_SSP.  */
 };
 
 #define X86_64_NUM_REGS (sizeof (x86_64_regmap) / sizeof (x86_64_regmap[0]))
@@ -406,6 +407,18 @@ x86_target::low_cannot_fetch_register (int regno)
 }
 
 static void
+x86_fill_ssp_reg (regcache *regcache, void *buf)
+{
+  collect_register_by_name (regcache, "pl3_ssp", buf);
+}
+
+static void
+x86_store_ssp_reg (regcache *regcache, const void *buf)
+{
+  supply_register_by_name (regcache, "pl3_ssp", buf);
+}
+
+static void
 collect_register_i386 (struct regcache *regcache, int regno, void *buf)
 {
   collect_register (regcache, regno, buf);
@@ -544,6 +557,8 @@ static struct regset_info x86_regsets[] =
     x86_fill_gregset, x86_store_gregset },
   { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_X86_XSTATE, 0,
     EXTENDED_REGS, x86_fill_xstateregset, x86_store_xstateregset },
+  { PTRACE_GETREGSET, PTRACE_SETREGSET, NT_X86_SHSTK, 0,
+    OPTIONAL_RUNTIME_REGS, x86_fill_ssp_reg, x86_store_ssp_reg },
 # ifndef __x86_64__
 #  ifdef HAVE_PTRACE_GETFPXREGS
   { PTRACE_GETFPXREGS, PTRACE_SETFPXREGS, 0, sizeof (elf_fpxregset_t),
@@ -873,7 +888,7 @@ x86_linux_read_description ()
   bool have_ptrace_getregset_was_unknown
     = have_ptrace_getregset == TRIBOOL_UNKNOWN;
 
-  /* Get pointers to where we should store the xcr0 and xsave_layout
+  /* Get pointers to where we should store the xstate_bv and xsave_layout
      values.  These will be filled in by x86_linux_tdesc_for_tid the first
      time that the function is called.  Subsequent calls will not modify
      the stored values.  */
@@ -894,7 +909,23 @@ x86_linux_read_description ()
 	   regset++)
 	{
 	  if (regset->get_request == PTRACE_GETREGSET)
-	    regset->size = xsave_len;
+	    {
+	      if (regset->nt_type == NT_X86_XSTATE)
+		regset->size = xsave_len;
+	      else if (regset->nt_type == NT_X86_SHSTK)
+		{
+		  /* We must configure the size of the NT_X86_SHSTK regset
+		     from non-zero value to it's appropriate size, even though
+		     the ptrace call is only tested for NT_X86_XSTATE request,
+		     because the NT_X86_SHSTK regset is of type
+		     OPTIONAL_RUNTIME_REGS.  A ptrace call with NT_X86_SHSTK
+		     request may only be successful later on, once shadow
+		     stack is enabled for the current thread.  */
+		    regset->size = sizeof (CORE_ADDR);
+		}
+	      else
+		gdb_assert_not_reached ("invalid regset type.");
+	    }
 	  else if (regset->type != GENERAL_REGS)
 	    regset->size = 0;
 	}
@@ -2887,17 +2918,16 @@ x86_target::get_ipa_tdesc_idx ()
 		  || tdesc == tdesc_amd64_linux_no_xml.get ()
 #endif /* __x86_64__ */
 		  );
-      return x86_linux_xcr0_to_tdesc_idx (X86_XSTATE_SSE_MASK);
+      return x86_linux_xstate_bv_to_tdesc_idx (X86_XSTATE_SSE_MASK);
     }
 
-  /* The xcr0 value and xsave layout value are cached when the target
+  /* The xstate_bv value and xsave layout value are cached when the target
      description is read.  Grab their cache location, and use the cached
      value to calculate a tdesc index.  */
   std::pair<uint64_t *, x86_xsave_layout *> storage
     = i387_get_xsave_storage ();
-  uint64_t xcr0 = *storage.first;
 
-  return x86_linux_xcr0_to_tdesc_idx (xcr0);
+  return x86_linux_xstate_bv_to_tdesc_idx (*storage.first);
 }
 
 /* The linux target ops object.  */

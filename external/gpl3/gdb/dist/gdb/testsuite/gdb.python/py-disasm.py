@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -292,6 +292,24 @@ class ResultOfWrongType(TestDisassembler):
 
     def disassemble(self, info):
         return self.Blah(1, "ABC")
+
+
+class ResultOfVeryWrongType(TestDisassembler):
+    """Return something that is not a DisassemblerResult from disassemble
+    method.  The thing returned will raise an exception if used in an
+    isinstance() call, or in PyObject_IsInstance from C++.
+    """
+
+    class Blah:
+        def __init__(self):
+            pass
+
+        @property
+        def __class__(self):
+            raise RuntimeError("error from __class__ in Blah")
+
+    def disassemble(self, info):
+        return self.Blah()
 
 
 class TaggingDisassembler(TestDisassembler):

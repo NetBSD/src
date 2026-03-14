@@ -1,5 +1,5 @@
 /* BFD back-end for LoongArch64 COFF files.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -18,9 +18,8 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-
-#ifndef COFF_WITH_peLoongArch64
-#define COFF_WITH_peLoongArch64
+#ifndef COFF_WITH_PE
+#error non-PE COFF unsupported
 #endif
 
 #include "sysdep.h"

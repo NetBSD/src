@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1992-2024 Free Software Foundation, Inc.
+# Copyright 1992-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -744,6 +744,12 @@ proc test_print_char_arrays {} {
     gdb_test_no_output "set print address off" "address off char arrays"
 }
 
+proc test_print_arrays_negative {} {
+    # Check whether correct error messages are printed
+    gdb_test "p 1 == { }" "size of the array element must not be zero"
+    gdb_test "p 1 == { 1, 'a' }" "array elements must all be the same size"
+}
+
 proc test_print_nibbles {} {
     gdb_test_no_output "set print nibbles on"
     foreach lang_line {
@@ -1235,6 +1241,7 @@ test_print_int_arrays
 test_print_typedef_arrays
 test_artificial_arrays
 test_print_char_arrays
+test_print_arrays_negative
 test_print_nibbles
 # We used to do the runto main here.
 test_print_string_constants

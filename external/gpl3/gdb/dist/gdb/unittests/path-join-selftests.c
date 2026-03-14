@@ -1,6 +1,6 @@
 /* Self tests for path_join for GDB, the GNU debugger.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -63,9 +63,7 @@ test ()
 }
 }
 
-void _initialize_path_join_selftests ();
-void
-_initialize_path_join_selftests ()
+INIT_GDB_FILE (path_join_selftests)
 {
   selftests::register_test ("path_join",
 			    selftests::path_join::test);

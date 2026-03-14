@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/arm.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -139,7 +139,7 @@ arm_netbsd_init_abi_common (struct gdbarch_info info,
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, arm_nbsd_iterate_over_regset_sections);
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, arm_software_single_step);
 }
 
 static void
@@ -156,13 +156,10 @@ arm_netbsd_elf_init_abi (struct gdbarch_info info,
     tdep->fp_model = ARM_FLOAT_SOFT_VFP;
 
   /* NetBSD ELF uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 }
 
-void _initialize_arm_netbsd_tdep ();
-void
-_initialize_arm_netbsd_tdep ()
+INIT_GDB_FILE (arm_netbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_NETBSD,
 			  arm_netbsd_elf_init_abi);

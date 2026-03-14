@@ -307,18 +307,6 @@
 /* Define to 1 if `tm_zone' is a member of `struct tm'. */
 #undef HAVE_STRUCT_TM_TM_ZONE
 
-/* Define to 1 if your `struct stat' has `st_blksize'. Deprecated, use
-   `HAVE_STRUCT_STAT_ST_BLKSIZE' instead. */
-#undef HAVE_ST_BLKSIZE
-
-/* Define to 1 if your `struct stat' has `st_blocks'. Deprecated, use
-   `HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
-#undef HAVE_ST_BLOCKS
-
-/* Define to 1 if your `struct stat' has `st_rdev'. Deprecated, use
-   `HAVE_STRUCT_STAT_ST_RDEV' instead. */
-#undef HAVE_ST_RDEV
-
 /* Define to 1 if you have the `symlink' function. */
 #undef HAVE_SYMLINK
 
@@ -482,9 +470,6 @@
 
 /* Bug reporting address */
 #undef REPORT_BUGS_TO
-
-/* Define as the return type of signal handlers (`int' or `void'). */
-#undef RETSIGTYPE
 
 /* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG

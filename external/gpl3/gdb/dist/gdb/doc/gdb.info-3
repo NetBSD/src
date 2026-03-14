@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,158 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Overlay Commands,  Next: Automatic Overlay Debugging,  Prev: How Overlays Work,  Up: Overlays
+
+14.2 Overlay Commands
+=====================
+
+To use GDB's overlay support, each overlay in your program must
+correspond to a separate section of the executable file.  The section's
+virtual memory address and load memory address must be the overlay's
+mapped and load addresses.  Identifying overlays with sections allows
+GDB to determine the appropriate address of a function or variable,
+depending on whether the overlay is mapped or not.
+
+   GDB's overlay commands all start with the word 'overlay'; you can
+abbreviate this as 'ov' or 'ovly'.  The commands are:
+
+'overlay off'
+     Disable GDB's overlay support.  When overlay support is disabled,
+     GDB assumes that all functions and variables are always present at
+     their mapped addresses.  By default, GDB's overlay support is
+     disabled.
+
+'overlay manual'
+     Enable "manual" overlay debugging.  In this mode, GDB relies on you
+     to tell it which overlays are mapped, and which are not, using the
+     'overlay map-overlay' and 'overlay unmap-overlay' commands
+     described below.
+
+'overlay map-overlay OVERLAY'
+'overlay map OVERLAY'
+     Tell GDB that OVERLAY is now mapped; OVERLAY must be the name of
+     the object file section containing the overlay.  When an overlay is
+     mapped, GDB assumes it can find the overlay's functions and
+     variables at their mapped addresses.  GDB assumes that any other
+     overlays whose mapped ranges overlap that of OVERLAY are now
+     unmapped.
+
+'overlay unmap-overlay OVERLAY'
+'overlay unmap OVERLAY'
+     Tell GDB that OVERLAY is no longer mapped; OVERLAY must be the name
+     of the object file section containing the overlay.  When an overlay
+     is unmapped, GDB assumes it can find the overlay's functions and
+     variables at their load addresses.
+
+'overlay auto'
+     Enable "automatic" overlay debugging.  In this mode, GDB consults a
+     data structure the overlay manager maintains in the inferior to see
+     which overlays are mapped.  For details, see *note Automatic
+     Overlay Debugging::.
+
+'overlay load-target'
+'overlay load'
+     Re-read the overlay table from the inferior.  Normally, GDB
+     re-reads the table GDB automatically each time the inferior stops,
+     so this command should only be necessary if you have changed the
+     overlay mapping yourself using GDB.  This command is only useful
+     when using automatic overlay debugging.
+
+'overlay list-overlays'
+'overlay list'
+     Display a list of the overlays currently mapped, along with their
+     mapped addresses, load addresses, and sizes.
+
+   Normally, when GDB prints a code address, it includes the name of the
+function the address falls in:
+
+     (gdb) print main
+     $3 = {int ()} 0x11a0 <main>
+When overlay debugging is enabled, GDB recognizes code in unmapped
+overlays, and prints the names of unmapped functions with asterisks
+around them.  For example, if 'foo' is a function in an unmapped
+overlay, GDB prints it this way:
+
+     (gdb) overlay list
+     No sections are mapped.
+     (gdb) print foo
+     $5 = {int (int)} 0x100000 <*foo*>
+When 'foo''s overlay is mapped, GDB prints the function's name normally:
+
+     (gdb) overlay list
+     Section .ov.foo.text, loaded at 0x100000 - 0x100034,
+             mapped at 0x1016 - 0x104a
+     (gdb) print foo
+     $6 = {int (int)} 0x1016 <foo>
+
+   When overlay debugging is enabled, GDB can find the correct address
+for functions and variables in an overlay, whether or not the overlay is
+mapped.  This allows most GDB commands, like 'break' and 'disassemble',
+to work normally, even on unmapped code.  However, GDB's breakpoint
+support has some limitations:
+
+   * You can set breakpoints in functions in unmapped overlays, as long
+     as GDB can write to the overlay at its load address.
+   * GDB can not set hardware or simulator-based breakpoints in unmapped
+     overlays.  However, if you set a breakpoint at the end of your
+     overlay manager (and tell GDB which overlays are now mapped, if you
+     are using manual overlay management), GDB will re-set its
+     breakpoints properly.
+
+
+File: gdb.info,  Node: Automatic Overlay Debugging,  Next: Overlay Sample Program,  Prev: Overlay Commands,  Up: Overlays
+
+14.3 Automatic Overlay Debugging
+================================
+
+GDB can automatically track which overlays are mapped and which are not,
+given some simple co-operation from the overlay manager in the inferior.
+If you enable automatic overlay debugging with the 'overlay auto'
+command (*note Overlay Commands::), GDB looks in the inferior's memory
+for certain variables describing the current state of the overlays.
+
+   Here are the variables your overlay manager must define to support
+GDB's automatic overlay debugging:
+
+'_ovly_table':
+     This variable must be an array of the following structures:
+
+          struct
+          {
+            /* The overlay's mapped address.  */
+            unsigned long vma;
+
+            /* The size of the overlay, in bytes.  */
+            unsigned long size;
+
+            /* The overlay's load address.  */
+            unsigned long lma;
+
+            /* Non-zero if the overlay is currently mapped;
+               zero otherwise.  */
+            unsigned long mapped;
+          }
+
+'_novlys':
+     This variable must be a four-byte signed integer, holding the total
+     number of elements in '_ovly_table'.
+
+   To decide whether a particular overlay is mapped or not, GDB looks
+for an entry in '_ovly_table' whose 'vma' and 'lma' members equal the
+VMA and LMA of the overlay's section in the executable file.  When GDB
+finds a matching entry, it consults the entry's 'mapped' member to
+determine whether the overlay is currently mapped.
+
+   In addition, your overlay manager may define a function called
+'_ovly_debug_event'.  If this function is defined, GDB will silently set
+a breakpoint there.  If the overlay manager then calls this function
+whenever it has changed the overlay table, this will enable GDB to
+accurately keep track of which overlays are in program memory, and
+update any breakpoints that may be set in overlays.  This will allow
+breakpoints to work even if the overlays are kept in ROM or other
+non-writable memory while they are not being executed.
 
 
 File: gdb.info,  Node: Overlay Sample Program,  Prev: Automatic Overlay Debugging,  Up: Overlays
@@ -4790,6 +4942,24 @@ command:
      that match REGEX.  If REGEX is omitted then print all shared
      libraries that are loaded.
 
+     For each library, GDB also lists the address range allocated to
+     that library if it can be determined.  If the address range cannot
+     be determined then the address range for the '.text' section from
+     the library will be listed.  If the '.text' section cannot be found
+     then no addresses will be listed.
+
+     On systems that support linker namespaces, the output includes an
+     additional column 'NS' if the inferior has more than one active
+     namespace when the command is used.  This column the linker
+     namespace that the shared library was loaded into.
+
+     "Linker namespaces" are a feature of some standard libraries, that
+     allow shared objects to be loaded in isolated environment,
+     eliminating the possibility that those objects may cross-talk.
+     Each set of isolated shared objects is said to belong to a
+     "namespace", and linker related actions such as relocations do not
+     cross namespace boundaries.
+
 'info dll REGEX'
      This is an alias of 'info sharedlibrary'.
 
@@ -4815,6 +4985,19 @@ of shared library events happen.  The best way to do this is to use
 This command exists for historical reasons.  It is less useful than
 setting a catchpoint, because it does not allow for conditions or
 commands as a catchpoint does.
+
+'info linker-namespaces'
+'info linker-namespaces [[N]]'
+
+     With no argument, print the number of linker namespaces which are
+     currently active -- that is, namespaces that have libraries loaded
+     into them.  Then, it prints the number of libraries loaded into
+     each namespace, and all the libraries loaded into them, in the same
+     way as 'info sharedlibrary'.
+
+     If an argument '[[N]]' is provided, only prints the library count
+     and the libraried for the provided namespace N.  The surrounding
+     square brackets are optional.
 
 'set stop-on-solib-events'
      This command controls whether GDB should give you control when the
@@ -5357,9 +5540,9 @@ the index to a file, then you can put it into the symbol file using
 
 'save gdb-index [-dwarf-5] DIRECTORY'
      Create index files for all symbol files currently known by GDB.
-     For each known SYMBOL-FILE, this command by default creates it
-     produces a single file 'SYMBOL-FILE.gdb-index'.  If you invoke this
-     command with the '-dwarf-5' option, it produces 2 files:
+     For each known SYMBOL-FILE, this command by default produces a
+     single file 'SYMBOL-FILE.gdb-index'.  If you invoke this command
+     with the '-dwarf-5' option, it produces 2 files:
      'SYMBOL-FILE.debug_names' and 'SYMBOL-FILE.debug_str'.  The files
      are created in the given DIRECTORY.
 
@@ -5453,13 +5636,38 @@ The DWARF specification documents an optional index section called
 '.debug_names'.  GDB can both read and create this section.  However, in
 order to work with GDB, some extensions were necessary.
 
-   GDB uses the augmentation string 'GDB2'.  Earlier versions used the
-string 'GDB', but these versions of the index are no longer supported.
+   GDB uses an augmentation string to specify which extensions are in
+use and to allow support of backwards-incompatible changes in this
+functionality.  The augmentation string has the form 'GDBN', where N is
+an integral version number of the extensions, which is incremented when
+the extensions are added or modified.  The smallest N is 2; earlier
+versions of GDB used just 'GDB' with no version number, but these
+versions of the index are no longer supported.
+
+   Here is a list of augmentation string versions along with the changes
+introduced with each version, compared to the previous version.
+
+'GDB2'
+     Specifies the use of attributes 'DW_IDX_GNU_internal',
+     'DW_IDX_GNU_main', 'DW_IDX_GNU_language' and
+     'DW_IDX_GNU_linkage_name', described below.
+
+'GDB3'
+     Changes the semantic of the 'DW_IDX_parent' attribute.  With
+     'GDB2', 'DW_IDX_parent' provided an offset into the name table.
+     With 'GDB3', it now provides an offset to the index entry of the
+     parent, relative to the start of the entry pool region.
+
+   GDB produces indexes with the augmentation string 'GDB3'.
+
+   GDB can read indexes with augmentation strings 'GDB2' or 'GDB3'.  GDB
+does not support reading indexes with any other augmentation strings.
 
    GDB does not use the specified hash table.  Therefore, because this
 hash table is optional, GDB also does not write it.
 
-   GDB also generates and uses some extra index attributes:
+   GDB generates and uses the following non-standard index attributes:
+
 'DW_IDX_GNU_internal'
      This has the value '0x2000'.  It is a flag that, when set,
      indicates that the associated entry has 'static' linkage.
@@ -5469,8 +5677,8 @@ hash table is optional, GDB also does not write it.
      indicates that the associated entry is the program's 'main'.
 
 'DW_IDX_GNU_language'
-     This has the value '0x2003'.  It is 'DW_LANG_' constant, indicating
-     the language of the associated entry.
+     This has the value '0x2003'.  It is a 'DW_LANG_' constant,
+     indicating the language of the associated entry.
 
 'DW_IDX_GNU_linkage_name'
      This has the value '0x2004'.  It is a flag that, when set,
@@ -6327,7 +6535,7 @@ closes its port after the first connection.
 You can use the '--multi' option to start 'gdbserver' without specifying
 a program to debug or a process to attach to.  Then you can attach in
 'target extended-remote' mode and run or attach to a program.  For more
-information, *note --multi Option in Types of Remote Connnections::.
+information, *note --multi Option in Types of Remote Connections::.
 
    The '--debug[=option1,option2,...]' option tells 'gdbserver' to
 display extra diagnostic information about the debugging process.  The
@@ -6496,20 +6704,11 @@ commands.
 20.3.4 Tracepoints support in 'gdbserver'
 -----------------------------------------
 
-On some targets, 'gdbserver' supports tracepoints, fast tracepoints and
-static tracepoints.
+On some targets, 'gdbserver' supports tracepoints and fast tracepoints.
 
-   For fast or static tracepoints to work, a special library called the
+   For fast tracepoints to work, a special library called the
 "in-process agent" (IPA), must be loaded in the inferior process.  This
-library is built and distributed as an integral part of 'gdbserver'.  In
-addition, support for static tracepoints requires building the
-in-process agent library with static tracepoints support.  At present,
-the UST (LTTng Userspace Tracer, <http://lttng.org/ust>) tracing engine
-is supported.  This support is automatically available if UST
-development headers are found in the standard include path when
-'gdbserver' is built, or if 'gdbserver' was explicitly configured using
-'--with-ust' to point at such headers.  You can explicitly disable the
-support using '--with-ust=no'.
+library is built and distributed as an integral part of 'gdbserver'.
 
    There are several ways to load the in-process agent in your program:
 
@@ -6846,6 +7045,8 @@ storage-address'                             '__thread'
                                              
 'hostio-stat-packet' 'vFile:stat'            Host I/O
                                              
+'hostio-lstat-packet''vFile:lstat'           Host I/O
+                                             
 'hostio-setfs-packet''vFile:setfs'           Host I/O
                                              
 'noack-packet'       'QStartNoAckMode'       Packet
@@ -6935,209 +7136,4 @@ selected target can be displayed using the commands
 'show remote memory-read-packet-size' and
 'show remote memory-write-packet-size'.  If no remote target is
 selected, the default configuration for future connections is shown.
-
-
-File: gdb.info,  Node: Remote Stub,  Prev: Remote Configuration,  Up: Remote Debugging
-
-20.5 Implementing a Remote Stub
-===============================
-
-The stub files provided with GDB implement the target side of the
-communication protocol, and the GDB side is implemented in the GDB
-source file 'remote.c'.  Normally, you can simply allow these
-subroutines to communicate, and ignore the details.  (If you're
-implementing your own stub file, you can still ignore the details: start
-with one of the existing stub files.  'sparc-stub.c' is the best
-organized, and therefore the easiest to read.)
-
-   To debug a program running on another machine (the debugging "target"
-machine), you must first arrange for all the usual prerequisites for the
-program to run by itself.  For example, for a C program, you need:
-
-  1. A startup routine to set up the C runtime environment; these
-     usually have a name like 'crt0'.  The startup routine may be
-     supplied by your hardware supplier, or you may have to write your
-     own.
-
-  2. A C subroutine library to support your program's subroutine calls,
-     notably managing input and output.
-
-  3. A way of getting your program to the other machine--for example, a
-     download program.  These are often supplied by the hardware
-     manufacturer, but you may have to write your own from hardware
-     documentation.
-
-   The next step is to arrange for your program to use a serial port to
-communicate with the machine where GDB is running (the "host" machine).
-In general terms, the scheme looks like this:
-
-_On the host,_
-     GDB already understands how to use this protocol; when everything
-     else is set up, you can simply use the 'target remote' command
-     (*note Specifying a Debugging Target: Targets.).
-
-_On the target,_
-     you must link with your program a few special-purpose subroutines
-     that implement the GDB remote serial protocol.  The file containing
-     these subroutines is called a "debugging stub".
-
-     On certain remote targets, you can use an auxiliary program
-     'gdbserver' instead of linking a stub into your program.  *Note
-     Using the 'gdbserver' Program: Server, for details.
-
-   The debugging stub is specific to the architecture of the remote
-machine; for example, use 'sparc-stub.c' to debug programs on SPARC
-boards.
-
-   These working remote stubs are distributed with GDB:
-
-'i386-stub.c'
-     For Intel 386 and compatible architectures.
-
-'m68k-stub.c'
-     For Motorola 680x0 architectures.
-
-'sh-stub.c'
-     For Renesas SH architectures.
-
-'sparc-stub.c'
-     For SPARC architectures.
-
-'sparcl-stub.c'
-     For Fujitsu SPARCLITE architectures.
-
-   The 'README' file in the GDB distribution may list other recently
-added stubs.
-
-* Menu:
-
-* Stub Contents::       What the stub can do for you
-* Bootstrapping::       What you must do for the stub
-* Debug Session::       Putting it all together
-
-
-File: gdb.info,  Node: Stub Contents,  Next: Bootstrapping,  Up: Remote Stub
-
-20.5.1 What the Stub Can Do for You
------------------------------------
-
-The debugging stub for your architecture supplies these three
-subroutines:
-
-'set_debug_traps'
-     This routine arranges for 'handle_exception' to run when your
-     program stops.  You must call this subroutine explicitly in your
-     program's startup code.
-
-'handle_exception'
-     This is the central workhorse, but your program never calls it
-     explicitly--the setup code arranges for 'handle_exception' to run
-     when a trap is triggered.
-
-     'handle_exception' takes control when your program stops during
-     execution (for example, on a breakpoint), and mediates
-     communications with GDB on the host machine.  This is where the
-     communications protocol is implemented; 'handle_exception' acts as
-     the GDB representative on the target machine.  It begins by sending
-     summary information on the state of your program, then continues to
-     execute, retrieving and transmitting any information GDB needs,
-     until you execute a GDB command that makes your program resume; at
-     that point, 'handle_exception' returns control to your own code on
-     the target machine.
-
-'breakpoint'
-     Use this auxiliary subroutine to make your program contain a
-     breakpoint.  Depending on the particular situation, this may be the
-     only way for GDB to get control.  For instance, if your target
-     machine has some sort of interrupt button, you won't need to call
-     this; pressing the interrupt button transfers control to
-     'handle_exception'--in effect, to GDB.  On some machines, simply
-     receiving characters on the serial port may also trigger a trap;
-     again, in that situation, you don't need to call 'breakpoint' from
-     your own program--simply running 'target remote' from the host GDB
-     session gets control.
-
-     Call 'breakpoint' if none of these is true, or if you simply want
-     to make certain your program stops at a predetermined point for the
-     start of your debugging session.
-
-
-File: gdb.info,  Node: Bootstrapping,  Next: Debug Session,  Prev: Stub Contents,  Up: Remote Stub
-
-20.5.2 What You Must Do for the Stub
-------------------------------------
-
-The debugging stubs that come with GDB are set up for a particular chip
-architecture, but they have no information about the rest of your
-debugging target machine.
-
-   First of all you need to tell the stub how to communicate with the
-serial port.
-
-'int getDebugChar()'
-     Write this subroutine to read a single character from the serial
-     port.  It may be identical to 'getchar' for your target system; a
-     different name is used to allow you to distinguish the two if you
-     wish.
-
-'void putDebugChar(int)'
-     Write this subroutine to write a single character to the serial
-     port.  It may be identical to 'putchar' for your target system; a
-     different name is used to allow you to distinguish the two if you
-     wish.
-
-   If you want GDB to be able to stop your program while it is running,
-you need to use an interrupt-driven serial driver, and arrange for it to
-stop when it receives a '^C' ('\003', the control-C character).  That is
-the character which GDB uses to tell the remote system to stop.
-
-   Getting the debugging target to return the proper status to GDB
-probably requires changes to the standard stub; one quick and dirty way
-is to just execute a breakpoint instruction (the "dirty" part is that
-GDB reports a 'SIGTRAP' instead of a 'SIGINT').
-
-   Other routines you need to supply are:
-
-'void exceptionHandler (int EXCEPTION_NUMBER, void *EXCEPTION_ADDRESS)'
-     Write this function to install EXCEPTION_ADDRESS in the exception
-     handling tables.  You need to do this because the stub does not
-     have any way of knowing what the exception handling tables on your
-     target system are like (for example, the processor's table might be
-     in ROM, containing entries which point to a table in RAM).  The
-     EXCEPTION_NUMBER specifies the exception which should be changed;
-     its meaning is architecture-dependent (for example, different
-     numbers might represent divide by zero, misaligned access, etc).
-     When this exception occurs, control should be transferred directly
-     to EXCEPTION_ADDRESS, and the processor state (stack, registers,
-     and so on) should be just as it is when a processor exception
-     occurs.  So if you want to use a jump instruction to reach
-     EXCEPTION_ADDRESS, it should be a simple jump, not a jump to
-     subroutine.
-
-     For the 386, EXCEPTION_ADDRESS should be installed as an interrupt
-     gate so that interrupts are masked while the handler runs.  The
-     gate should be at privilege level 0 (the most privileged level).
-     The SPARC and 68k stubs are able to mask interrupts themselves
-     without help from 'exceptionHandler'.
-
-'void flush_i_cache()'
-     On SPARC and SPARCLITE only, write this subroutine to flush the
-     instruction cache, if any, on your target machine.  If there is no
-     instruction cache, this subroutine may be a no-op.
-
-     On target machines that have instruction caches, GDB requires this
-     function to make certain that the state of your program is stable.
-
-You must also make sure this library routine is available:
-
-'void *memset(void *, int, int)'
-     This is the standard library function 'memset' that sets an area of
-     memory to a known value.  If you have one of the free versions of
-     'libc.a', 'memset' can be found there; otherwise, you must either
-     obtain it from your hardware manufacturer, or write your own.
-
-   If you do not use the GNU C compiler, you may need other standard
-library subroutines as well; this varies from one stub to another, but
-in general the stubs are likely to use any of the common library
-subroutines which 'GCC' generates as inline code.
 

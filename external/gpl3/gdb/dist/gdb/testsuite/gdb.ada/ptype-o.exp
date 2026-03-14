@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,5 +43,5 @@ foreach_gnat_encoding scenario flags {all minimal} {
 	# crash.
 	set exp ".*"
     }
-    gdb_test "ptype/o prog__rec" $exp
+    gdb_test "ptype/o pck__rec" $exp
 }

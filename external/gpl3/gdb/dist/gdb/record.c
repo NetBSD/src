@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -769,9 +769,7 @@ set_record_call_history_size (const char *args, int from_tty,
 			 &record_call_history_size);
 }
 
-void _initialize_record ();
-void
-_initialize_record ()
+INIT_GDB_FILE (record)
 {
   struct cmd_list_element *c;
 

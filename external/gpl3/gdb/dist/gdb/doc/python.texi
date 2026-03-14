@@ -1,4 +1,4 @@
-@c Copyright (C) 2008--2024 Free Software Foundation, Inc.
+@c Copyright (C) 2008--2025 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -225,6 +225,7 @@ optional arguments while skipping others.  Example:
 * Finish Breakpoints in Python:: Setting Breakpoints on function return
                                 using Python.
 * Lazy Strings In Python::      Python representation of lazy strings.
+* Colors In Python::            Python representation of colors.
 * Architectures In Python::     Python representation of architectures.
 * Registers In Python::         Python representation of registers.
 * Connections In Python::       Python representation of connections.
@@ -256,7 +257,7 @@ Python code must not override these, or even change the options using
 signals, @value{GDBN} will most likely stop working correctly.  Note
 that it is unfortunately common for GUI toolkits to install a
 @code{SIGCHLD} handler.  When creating a new Python thread, you can
-use @code{gdb.block_signals} or @code{gdb.Thread} to handle this
+use @code{gdb.blocked_signals} or @code{gdb.Thread} to handle this
 correctly; see @ref{Threading in GDB}.
 
 @item
@@ -284,7 +285,7 @@ offered for debugging purposes only, expect them to change over time.
 A string containing the python directory (@pxref{Python}).
 @end defvar
 
-@defun gdb.execute (command @r{[}, from_tty @r{[}, to_string@r{]]})
+@defun gdb.execute (command @r{[}, from_tty @r{[}, to_string @w{@r{[}, styling @r{]]]}})
 Evaluate @var{command}, a string, as a @value{GDBN} CLI command.
 If a GDB exception happens while @var{command} runs, it is
 translated as described in @ref{Exception Handling,,Exception Handling}.
@@ -301,6 +302,14 @@ returned as a string.  The default is @code{False}, in which case the
 return value is @code{None}.  If @var{to_string} is @code{True}, the
 @value{GDBN} virtual terminal will be temporarily set to unlimited width
 and height, and its pagination will be disabled; @pxref{Screen Size}.
+
+When @var{styling} is @code{True}, the output, whether sent to
+standard output, or to a string, will have styling applied, if
+@value{GDBN}'s standard output supports styling, and @kbd{show style
+enabled} is @kbd{on}.  When @var{styling} is @code{False} then no
+styling is applied.  The default for @var{styling} is @code{True} when
+@var{to_string} is @code{False}, and @code{False} when @var{to_string}
+is @code{True}.
 @end defun
 
 @defun gdb.breakpoints ()
@@ -470,7 +479,7 @@ call this function and will automatically direct the output to the
 relevant stream.
 @end defun
 
-@defun gdb.flush (@r{[}, stream@r{]})
+@defun gdb.flush (@r{[}stream@r{]})
 Flush the buffer of a @value{GDBN} paginated stream so that the
 contents are displayed immediately.  @value{GDBN} will flush the
 contents of a stream automatically when it encounters a newline in the
@@ -498,6 +507,17 @@ stream values are:
 
 Flushing @code{sys.stdout} or @code{sys.stderr} will automatically
 call this function for the relevant stream.
+@end defun
+
+@defun gdb.warning (text)
+Print a warning message to @value{GDBN}'s standard output stream.  The
+warning message is the warning prefix (@pxref{warning-prefix}), the
+string @w{@samp{warning: }}, and then @var{text}, which must be a
+non-empty string.
+
+Due to the warning prefix, @var{text} should not begin with a capital
+letter (except for proper nouns), and @var{text} should end with a
+period.
 @end defun
 
 @defun gdb.target_charset ()
@@ -645,22 +665,22 @@ threads, you must be careful to only call @value{GDBN}-specific
 functions in the @value{GDBN} thread.  @value{GDBN} provides some
 functions to help with this.
 
-@defun gdb.block_signals ()
+@defun gdb.blocked_signals ()
 As mentioned earlier (@pxref{Basic Python}), certain signals must be
-delivered to the @value{GDBN} main thread.  The @code{block_signals}
+delivered to the @value{GDBN} main thread.  The @code{blocked_signals}
 function returns a context manager that will block these signals on
 entry.  This can be used when starting a new thread to ensure that the
 signals are blocked there, like:
 
 @smallexample
-with gdb.block_signals():
+with gdb.blocked_signals():
    start_new_thread()
 @end smallexample
 @end defun
 
 @deftp {class} gdb.Thread
 This is a subclass of Python's @code{threading.Thread} class.  It
-overrides the @code{start} method to call @code{block_signals}, making
+overrides the @code{start} method to call @code{blocked_signals}, making
 this an easy-to-use drop-in replacement for creating threads that will
 work well in @value{GDBN}.
 @end deftp
@@ -890,7 +910,26 @@ this attribute holds @code{None}.
 @cindex optimized out value in Python
 @defvar Value.is_optimized_out
 This read-only boolean attribute is true if the compiler optimized out
-this value, thus it is not available for fetching from the inferior.
+this value, or any part of this value, and thus it is not available
+for fetching from the inferior.
+@end defvar
+
+@cindex unavailable values in Python
+@defvar Value.is_unavailable
+This read-only boolean attribute is true if this value, or any part of
+this value, is not available to @value{GDBN}.  Where an optimized out
+value has been removed from the program by the compiler, an
+unavailable value does exist in the program, but @value{GDBN} is
+unable to fetch it.
+
+Some reasons why this might occur include, but are not limited to: a
+core file format that @value{GDBN} doesn't fully understand; during
+live debugging if the debug API has no mechanism to access the
+required state, e.g.@: the kernel gives an error when trying to read a
+particular register set; or reading a value from @value{GDBN}'s
+history, when only a partial value was stored, e.g.@: due to the
+@kbd{max-value-size} setting (@pxref{set
+max-value-size,,max-value-size}).
 @end defvar
 
 @defvar Value.type
@@ -3013,7 +3052,7 @@ unwinders can derive, though it is not required that unwinders derive
 from this class, so long as any user created unwinder has the required
 @code{name} and @code{enabled} attributes.
 
-@defun gdb.unwinder.Unwinder.__init__(name)
+@defun gdb.unwinder.Unwinder.__init__ (name)
 The @var{name} is a string used to reference this unwinder within some
 @value{GDBN} commands (@pxref{Managing Registered Unwinders}).
 @end defun
@@ -3039,7 +3078,7 @@ most cases this class will be sufficient.
 
 @code{gdb.unwinder.FrameId} has the following method:
 
-@defun gdb.unwinder.FrameId.__init__(sp, pc, special = @code{None})
+@defun gdb.unwinder.FrameId.__init__ (sp, pc, special = @code{None})
 The @var{sp} and @var{pc} arguments are required and should be either
 a @code{gdb.Value} object, or an integer.
 
@@ -4516,6 +4555,7 @@ You can implement new @value{GDBN} CLI commands in Python.  A CLI
 command is implemented using an instance of the @code{gdb.Command}
 class, most commonly using a subclass.
 
+@anchor{Command.__init__}
 @defun Command.__init__ (name, command_class @r{[}, completer_class @r{[}, prefix@r{]]})
 The object initializer for @code{Command} registers the new command
 with @value{GDBN}.  This initializer is normally invoked from the
@@ -4545,10 +4585,11 @@ registered.
 
 The help text for the new command is taken from the Python
 documentation string for the command's class, if there is one.  If no
-documentation string is provided, the default value ``This command is
-not documented.'' is used.
+documentation string is provided, the default value @samp{This command
+is not documented.} is used.
 @end defun
 
+@anchor{Command.dont_repeat}
 @cindex don't repeat Python command
 @defun Command.dont_repeat ()
 By default, a @value{GDBN} command is repeated when the user enters a
@@ -4559,6 +4600,7 @@ exception).  This is similar to the user command @code{dont-repeat},
 see @ref{Define, dont-repeat}.
 @end defun
 
+@anchor{Command.invoke}
 @defun Command.invoke (argument, from_tty)
 This method is called by @value{GDBN} when this command is invoked.
 
@@ -4571,6 +4613,17 @@ that the command came from elsewhere.
 
 If this method throws an exception, it is turned into a @value{GDBN}
 @code{error} call.  Otherwise, the return value is ignored.
+
+For non-prefix commands (@pxref{Command.__init__}), the @code{invoke}
+method is required.  For prefix commands the @code{invoke} method is
+optional.  Only prefix commands that need to handle unknown
+sub-commands should implement the @code{invoke} method.
+
+For prefix commands that don't implement @code{invoke}, if the prefix
+command is used without a sub-command name then @value{GDBN} will
+display the help text for every sub-command, unless the prefix command
+is a @kbd{show} sub-command, in which case @value{GDBN} will list the
+values of all sub-commands.
 
 @findex gdb.string_to_argv
 To break @var{argument} up into an argv-like string use
@@ -4951,7 +5004,7 @@ command, a string.  The arguments, @var{arg}, are passed to the
 command.  Each argument must also be a string.
 
 This function returns a Python dictionary whose contents reflect the
-corresponding @sc{GDB/MI} command's output.  Refer to the
+corresponding @sc{gdb/mi} command's output.  Refer to the
 documentation for these commands for details.  Lists are represented
 as Python lists, and tuples are represented as Python dictionaries.
 
@@ -5070,7 +5123,9 @@ string from the parameter's class, if there is one.  If there is no
 documentation string, a default value is used.  The documentation
 string is included in the output of the parameters @code{help set} and
 @code{help show} commands, and should be written taking this into
-account.
+account.  If the documentation string for the parameter's class is the
+empty string then @value{GDBN} will only use @code{Parameter.set_doc}
+or @code{Parameter.show_doc} (see below) in the @kbd{help} output.
 @end defun
 
 @defvar Parameter.set_doc
@@ -5242,7 +5297,105 @@ except the special value -1 is returned for the setting of ``unlimited''.
 @item gdb.PARAM_ENUM
 The value is a string, which must be one of a collection string
 constants provided when the parameter is created.
+
+@findex PARAM_COLOR
+@findex gdb.PARAM_COLOR
+@item gdb.PARAM_COLOR
+The value is @code{gdb.Color} instance.
 @end table
+
+When creating multiple new parameters using @code{gdb.Parameter}, it
+is often desirable to create a prefix command that can be used to
+group related parameters together, for example, if you wished to add
+the parameters @kbd{plugin-name feature-1} and @kbd{plugin-name
+feature-2}, then the @kbd{plugin-name} would need to be a prefix
+command (@pxref{CLI Commands In Python}).
+
+However, when creating parameters, you will almost always need to
+create two prefix commands, one as a @kbd{set} sub-command, and one as
+a @kbd{show} sub-command.  @value{GDBN} provides the
+@code{gdb.ParameterPrefix} helper class to make creation of these two
+prefixes easier.
+
+@defun ParameterPrefix.__init__ (name, command_class, doc = @code{None})
+The object initializer for @code{ParameterPrefix} registers two new
+@code{gdb.Command} prefixes, one as a @kbd{set} sub-command, and the
+other as a @kbd{show} sub-command.
+
+@var{name}, a string, is the name of the new prefix, without either
+@kbd{set} or @kbd{show}, similar to the @var{name} passed to
+@code{gdb.Parameter} (@pxref{Parameters In Python}).  For example, to
+create the prefixes @kbd{set plugin-name} and @kbd{show plugin-name},
+you would pass the string @kbd{plugin-name}.
+
+@var{command_class} should be one of the @samp{COMMAND_} constants
+(@pxref{CLI Commands In Python}).  This argument tells @value{GDBN} how to
+categorize the new parameter prefixes in the help system.
+
+There are a number of ways in which the help text for the two new
+prefix commands can be provided.  If the @var{doc} parameter is not
+@code{None}, then this will be used as the documentation string for
+both prefix commands.
+
+If @var{doc} is @code{None}, but @code{gdb.ParameterPrefix} has been
+sub-classed, then the prefix command documentation will be taken from
+sub-classes documentation string (i.e., the @code{__doc__} attribute).
+
+If @var{doc} is @code{None}, and there is no @code{__doc__} string,
+then the default value @samp{This command is not documented.} is used.
+
+When writing the help text, keep in mind that the same text is used
+for both the @kbd{set} and @kbd{show} prefix commands.
+@end defun
+
+@defun ParameterPrefix.invoke_set (argument, from_tty)
+If a sub-class defines this method, then @value{GDBN} will call this
+when the prefix command is used with an unknown sub-command.  The
+@var{argument} and @var{from_tty} parameters are the same as for
+@code{gdb.Command.invoke} (@pxref{Command.invoke}).
+
+If this method throws an exception, it is turned into a @value{GDBN}
+@code{error} call.  Otherwise, the return value is ignored.
+
+It is not required that a @code{ParameterPrefix} sub-class override
+this method.  Usually, a parameter prefix only exists as a means to
+group related parameters together.  @value{GDBN} handles this use case
+automatically with no need to implement @code{invoke_set}.
+@end defun
+
+@defun ParameterPrefix.invoke_show (argument, from_tty)
+This is like the @code{invoke_set} method, but for the @kbd{show}
+prefix command.  As with @code{invoke_set}, implementation of this
+method is optional, and usually not required.
+@end defun
+
+@cindex don't repeat Python command
+@defun ParameterPrefix.dont_repeat ()
+Like @code{Command.dont_repeat} (@pxref{Command.dont_repeat}), this
+can be called from @code{ParameterPrefix.invoke_set} or
+@code{ParameterPrefix.invoke_show} to prevent the prefix commands from
+being repeated.
+@end defun
+
+Here is a small example that uses @code{gdb.ParameterPrefix} along
+with @code{gdb.Parameter} to create two new parameters
+@kbd{plugin-name feature-1} and @kbd{plugin-name feature-2}.  As
+neither @code{invoke_set} or @code{invoke_show} is needed, this
+example does not sub-class @code{gdb.ParameterPrefix}:
+
+@smallexample
+class ExampleParam(gdb.Parameter):
+   def __init__ (self, name):
+      super ().__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_BOOLEAN)
+      self.value = True
+
+gdb.ParameterPrefix("plugin-name", gdb.COMMAND_NONE,
+                    """An example parameter prefix.
+
+                    This groups together some parameters.""")
+ExampleParam("plugin-name feature-1")
+ExampleParam("plugin-name feature-2")
+@end smallexample
 
 @node Functions In Python
 @subsubsection Writing new convenience functions
@@ -6040,6 +6193,11 @@ The block containing this block.  If this parent block does not exist,
 this attribute holds @code{None}.  This attribute is not writable.
 @end defvar
 
+@defvar Block.subblocks
+A list of blocks nested in this block.  If there are no blocks nested,
+this attribute holds an empty list.  This attribute is not writable.
+@end defvar
+
 @defvar Block.global_block
 The global block associated with this block.  This attribute is not
 writable.
@@ -6195,6 +6353,11 @@ asked @value{GDBN} to display demangled or mangled names.
 @defvar Symbol.addr_class
 The address class of the symbol.  This classifies how to find the value
 of a symbol.  Each address class is a constant defined in the
+@code{gdb} module and described later in this chapter.
+@end defvar
+
+@defvar Symbol.domain
+The domain of the symbol.  Each domain is a constant defined in the
 @code{gdb} module and described later in this chapter.
 @end defvar
 
@@ -7020,6 +7183,104 @@ resolve this to the lazy string's character type, use the type's
 writable.
 @end defvar
 
+@node Colors In Python
+@subsubsection Python representation of colors
+
+@cindex colors in python
+@tindex gdb.Color
+You can assign instance of @code{gdb.Color} to the @code{value} of
+a @code{Parameter} instance created with @code{PARAM_COLOR}.
+
+@code{gdb.Color} may refer to an index from a color palette or contain
+components of a color from some color space.
+
+@defun Color.__init__ (@r{[}value @r{[}, color_space@r{]}@r{]})
+
+@var{value} is @code{None} (meaning the terminal's default color),
+an integer index of a color in palette, tuple with color components
+or a string.  String can be a hex RGB triplet in @samp{#RRGGBB} format
+or one of the following color names:
+@samp{none} (meaning the terminal's default color), @samp{black}, @samp{red},
+@samp{green}, @samp{yellow}, @samp{blue}, @samp{magenta}, @samp{cyan},
+or @samp{white}.
+
+@var{color_space} should be one of the @samp{COLORSPACE_} constants
+listed below.  This argument tells @value{GDBN} which color space
+@var{value} belongs.
+@end defun
+
+@defvar Color.is_none
+This attribute is boolean.  If its value is @code{True} then color is terminal's
+default.
+@end defvar
+
+@defvar Color.is_indexed
+This attribute is boolean.  If its value is @code{True} then color is indexed,
+i.e. belongs to some palette.
+@end defvar
+
+@defvar Color.is_direct
+This attribute is boolean.  If its value is @code{True} then this object
+describes direct colour in the sense of ISO/IEC 8613-6.
+@end defvar
+
+@defvar Color.index
+This attribute exist if @code{is_indexed} is @code{True}.  Its integer value is
+index of a color in a palette.
+@end defvar
+
+@defvar Color.components
+This attribute exist if @code{is_direct} is @code{True}.  Its value is tuple
+with integer components of a color.
+@end defvar
+
+@defun Color.escape_sequence (is_foreground)
+Returns string to change terminal's color to this.
+
+If @var{is_foreground} is @code{True}, then the returned sequence will change
+foreground color.  Otherwise, the returned sequence will change background
+color.
+
+If styling is currently disabled (@pxref{Output Styling,,@kbd{set style
+enabled}}), then this method will return an empty string.
+@end defun
+
+When color is initialized, its color space must be specified.  The
+available color spaces are represented by constants defined in the @code{gdb}
+module:
+
+@table @code
+@findex COLORSPACE_MONOCHROME
+@findex gdb.COLORSPACE_MONOCHROME
+@item gdb.COLORSPACE_MONOCHROME
+Palette with only terminal's default color.
+
+@findex COLORSPACE_ANSI_8COLOR
+@findex gdb.COLORSPACE_ANSI_8COLOR
+@item gdb.COLORSPACE_ANSI_8COLOR
+Palette with eight standard colors of ISO/IEC 6429 "black", "red", "green", etc.
+
+@findex COLORSPACE_AIXTERM_16COLOR
+@findex gdb.COLORSPACE_AIXTERM_16COLOR
+@item gdb.COLORSPACE_AIXTERM_16COLOR
+Palette with 16 colors.  First eight are standard colors of ISO/IEC 6429
+"black", "red", "green", etc.  Next eight are their bright version.
+
+@findex COLORSPACE_XTERM_256COLOR
+@findex gdb.COLORSPACE_XTERM_256COLOR
+@item gdb.COLORSPACE_XTERM_256COLOR
+Palette with 256 colors.  First 16 are from COLORSPACE_AIXTERM_16COLOR.  Next
+216 colors are 6x6x6 RGB cube.  And last 24 colors form grayscale ramp.
+
+@findex COLORSPACE_RGB_24BIT
+@findex gdb.COLORSPACE_RGB_24BIT
+@item gdb.COLORSPACE_RGB_24BIT
+Direct 24-bit RGB colors.
+
+@end table
+
+It is not possible to sub-class the @code{Color} class.
+
 @node Architectures In Python
 @subsubsection Python representation of architectures
 @cindex Python architectures
@@ -7083,6 +7344,10 @@ If @var{signed} is not specified, it defaults to @code{True}.  If
 
 If the indicated type cannot be found, this function will throw a
 @code{ValueError} exception.
+@end defun
+
+@defun Architecture.void_type ()
+This function returns a void type.
 @end defun
 
 @anchor{gdbpy_architecture_registers}

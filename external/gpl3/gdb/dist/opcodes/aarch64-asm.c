@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -40,7 +40,6 @@ static inline void
 insert_fields (aarch64_insn *code, aarch64_insn value, aarch64_insn mask, ...)
 {
   uint32_t num;
-  const aarch64_field *field;
   enum aarch64_field_kind kind;
   va_list va;
 
@@ -50,9 +49,8 @@ insert_fields (aarch64_insn *code, aarch64_insn value, aarch64_insn mask, ...)
   while (num--)
     {
       kind = va_arg (va, enum aarch64_field_kind);
-      field = &fields[kind];
       insert_field (kind, code, value, mask);
-      value >>= field->width;
+      value >>= aarch64_fields[kind].width;
     }
   va_end (va);
 }
@@ -72,7 +70,7 @@ insert_all_fields_after (const aarch64_operand *self, unsigned int start,
       {
 	kind = self->fields[i];
 	insert_field (kind, code, value, 0);
-	value >>= fields[kind].width;
+	value >>= aarch64_fields[kind].width;
       }
 }
 
@@ -2033,7 +2031,8 @@ do_special_encoding (struct aarch64_inst *inst)
     {
       idx = select_operand_for_sf_field_coding (inst->opcode);
       value = (inst->operands[idx].qualifier == AARCH64_OPND_QLF_X
-	       || inst->operands[idx].qualifier == AARCH64_OPND_QLF_SP)
+	       || inst->operands[idx].qualifier == AARCH64_OPND_QLF_SP
+	       || inst->operands[idx].qualifier == AARCH64_OPND_QLF_S_D)
 	? 1 : 0;
       insert_field (FLD_sf, &inst->value, value, 0);
       if (inst->opcode->flags & F_N)
@@ -2061,6 +2060,13 @@ do_special_encoding (struct aarch64_inst *inst)
 	default: return;
 	}
       insert_field (FLD_rcpc3_size, &inst->value, value, 0);
+    }
+
+  if (inst->opcode->flags & F_LSFE_SZ)
+    {
+      value = aarch64_get_qualifier_standard_value (inst->operands[0].qualifier);
+      insert_field (FLD_ldst_size, &inst->value, value, 0);
+      return;
     }
 
   if (inst->opcode->flags & F_SIZEQ)
@@ -2271,8 +2277,21 @@ aarch64_encode_variant_using_iclass (struct aarch64_inst *inst)
       insert_field (FLD_SVE_sz2, &inst->value, aarch64_get_variant (inst), 0);
       break;
 
+    case sve_size_sd3:
+      insert_field (FLD_SVE_sz3, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
+    case sve_size_sd4:
+      insert_field (FLD_SVE_sz4, &inst->value, aarch64_get_variant (inst), 0);
+      break;
+
     case sve_size_hsd2:
       insert_field (FLD_SVE_size, &inst->value,
+		    aarch64_get_variant (inst) + 1, 0);
+      break;
+
+    case sve_size_hsd3:
+      insert_field (FLD_len, &inst->value,
 		    aarch64_get_variant (inst) + 1, 0);
       break;
 

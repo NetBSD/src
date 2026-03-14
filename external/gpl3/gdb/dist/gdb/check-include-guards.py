@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2024 Free Software Foundation, Inc.
+# Copyright (C) 2024-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -99,12 +99,14 @@ def check_header(filename: str):
             failure(filename, i, "no header guard")
         force_rewrite = True
     symbol = m.group(1)
-    updated = False
+    # Either None or a tuple like (LINE, TEXT) that describes a needed
+    # update.
+    updated = None
     if symbol != expected:
         force_rewrite = True
     if force_rewrite:
         contents[i] = "#ifndef " + expected + "\n"
-        updated = True
+        updated = (i, "wrong symbol in ifndef")
     i += 1
     if i == len(contents):
         failure(filename, i, "premature EOF")
@@ -112,15 +114,20 @@ def check_header(filename: str):
         failure(filename, i, "no define of header guard")
     if contents[i] != "#define " + expected + "\n":
         contents[i] = "#define " + expected + "\n"
-        updated = True
+        if updated is None:
+            updated = (i, "wrong symbol in define")
     i = len(contents) - 1
     if not contents[i].startswith("#endif"):
         failure(filename, i, "no trailing endif")
     if contents[i] != "#endif /* " + expected + " */\n":
         contents[i] = "#endif /* " + expected + " */\n"
-        updated = True
-    if updated and write_files:
-        write_header(filename, contents)
+        if updated is None:
+            updated = (i, "wrong endif line")
+    if updated is not None:
+        if write_files:
+            write_header(filename, contents)
+        else:
+            failure(filename, *updated)
 
 
 for filename in args:

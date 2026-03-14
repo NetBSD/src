@@ -9,7 +9,7 @@
 @synindex vr cp
 
 @copying
-Copyright @copyright{} 2021-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 2021-2025 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU General Public License, Version 3 or any
@@ -806,7 +806,7 @@ just very frequently @emph{referenced}.)
 Here's the set of kinds so far.  Each kind has a @code{#define} associated with
 it, also given here.
 
-@multitable {Kind} {@code{CTF_K_VOLATILE}} {Indicates a type that cannot be represented in CTF, or that} {@xref{Pointers typedefs and cvr-quals}}
+@multitable {Kind} {@code{CTF_K_VOLATILE}} {Indicates a type that cannot be represented in CTF, or that}
 @headitem Kind @tab Macro @tab Purpose
 @item 0
 @tab @code{CTF_K_UNKNOWN}
@@ -829,7 +829,7 @@ of kind @code{CTF_K_UNKNOWN}.
 
 @item 4
 @tab @code{CTF_K_ARRAY}
-@tab An array. @xref{Arrays}.
+@tab An array or SIMD vector. @xref{Arrays}.
 
 @item 5
 @tab @code{CTF_K_FUNCTION}
@@ -1064,7 +1064,7 @@ unused and will become used in future.
 @tindex CTF_FP_LDCPLX
 @item 6
 @tab @code{CTF_FP_LDOUBLE}
-@tab This is a @code{long double}.
+@tab This is a @code{long double}, or quad-precision IEEE 754-2008 @code{__float128}.
 @tindex CTF_FP_LDOUBLE
 @item 7
 @tab @code{CTF_FP_INTRVL}
@@ -1232,6 +1232,13 @@ Arrays are encoded as types of kind @code{CTF_K_ARRAY} in a @code{ctf_stype_t}.
 Both size and kind for arrays are zero.  The variable-length data is a
 @code{ctf_array_t}: @code{vlen} in the info word should be disregarded and is
 always zero.
+@c In CTFv4 and BTF, the @code{kind_flag} member of @{ctf_array_t} is not set.
+
+SIMD vectors are also encoded as types of kind @code{CTF_K_ARRAY} in a
+@code{ctf_stype_t}.  Both size and kind for arrays are zero.  The
+variable-length data is a @code{ctf_array_t}: @code{vlen} in the info word
+should be disregarded and is always zero.
+@c In CTFv4 and BTF, the @code{kind_flag} member of @{ctf_array_t} is set.
 
 @verbatim
 typedef struct ctf_array

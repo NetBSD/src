@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -23,6 +23,7 @@
 #define GDB_AARCH64_TDEP_H
 
 #include "arch/aarch64.h"
+#include "dwarf2/frame.h"
 #include "displaced-stepping.h"
 #include "infrun.h"
 #include "gdbarch.h"
@@ -181,6 +182,30 @@ struct aarch64_gdbarch_tdep : gdbarch_tdep_base
   bool has_sme2 () const
   {
     return sme2_zt0_regnum > 0;
+  }
+
+  /* First GCS register.  This is -1 if no GCS registers are available.  */
+  int gcs_reg_base = -1;
+
+  /* First GCS Linux-specific register.  This is -1 if no GCS Linux feature is
+     available.  */
+  int gcs_linux_reg_base = -1;
+
+  /* Function to unwind the GCSPR from the given frame.  */
+  fn_prev_register fn_prev_gcspr = nullptr;
+
+  /* Returns true if the target supports GCS.  */
+  bool
+  has_gcs () const
+  {
+    return gcs_reg_base != -1;
+  }
+
+  /* Returns true if the target supports the Linux GCS feature.  */
+  bool
+  has_gcs_linux () const
+  {
+    return gcs_linux_reg_base != -1;
   }
 };
 

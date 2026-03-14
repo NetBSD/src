@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,7 @@
 
 # Test fork handling of an inferior that has JIT-ed objfiles.
 
+require allow_fork_tests
 require allow_shlib_tests
 
 load_lib jit-elf-helpers.exp
@@ -53,7 +54,8 @@ if { [compile_jit_main ${main_srcfile} ${main_binfile} {}] != 0 } {
 # that the callers can continue execution until there.
 
 proc do_setup { detach-on-fork follow-fork-mode } {
-	clean_restart ${::main_binfile}
+	clean_restart
+	gdb_load $::main_binfile
 
 	gdb_test_no_output "set detach-on-fork ${detach-on-fork}"
 	gdb_test_no_output "set follow-fork-mode ${follow-fork-mode}"

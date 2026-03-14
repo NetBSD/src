@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -211,7 +211,7 @@ amd64_windows_store_arg_in_reg (struct regcache *regcache,
 
   gdb_assert (valbuf.size () <= 8);
   std::copy (valbuf.begin (), valbuf.end (), buf.begin ());
-  size_t reg_size = regcache_register_size (regcache, regno);
+  size_t reg_size = regcache->register_size (regno);
   gdb_assert (reg_size <= buf.size ());
   gdb::array_view<gdb_byte> view (buf);
   regcache->cooked_write (regno, view.slice (0, reg_size));
@@ -801,7 +801,7 @@ amd64_windows_frame_decode_insns (const frame_info_ptr &this_frame,
 	  std::array<gdb_byte, 8> buf;
 	  int frreg = amd64_windows_w2gdb_regnum[frame_reg];
 
-	  get_frame_register (this_frame, frreg, buf.data ());
+	  get_frame_register (this_frame, frreg, buf);
 	  save_addr = extract_unsigned_integer (buf, byte_order);
 
 	  frame_debug_printf ("   frame_reg=%s, val=%s",
@@ -1097,7 +1097,7 @@ amd64_windows_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 
   /* Get current PC and SP.  */
   pc = get_frame_pc (this_frame);
-  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf.data ());
+  get_frame_register (this_frame, AMD64_RSP_REGNUM, buf);
   cache->sp = extract_unsigned_integer (buf, byte_order);
   cache->pc = pc;
 
@@ -1184,16 +1184,16 @@ amd64_windows_frame_this_id (const frame_info_ptr &this_frame, void **this_cache
 
 /* Windows x64 SEH unwinder.  */
 
-static const struct frame_unwind amd64_windows_frame_unwind =
-{
+static const struct frame_unwind_legacy amd64_windows_frame_unwind (
   "amd64 windows",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   &amd64_windows_frame_this_id,
   &amd64_windows_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Implement the "skip_prologue" gdbarch method.  */
 
@@ -1404,9 +1404,7 @@ amd64_cygwin_core_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
-void _initialize_amd64_windows_tdep ();
-void
-_initialize_amd64_windows_tdep ()
+INIT_GDB_FILE (amd64_windows_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, bfd_mach_x86_64, GDB_OSABI_WINDOWS,
 			  amd64_windows_init_abi);

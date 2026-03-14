@@ -1,6 +1,6 @@
 /* Support for printing Pascal values for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -860,9 +860,7 @@ pascal_object_print_static_field (struct value *val,
   common_val_print (val, stream, recurse, &opts, current_language);
 }
 
-void _initialize_pascal_valprint ();
-void
-_initialize_pascal_valprint ()
+INIT_GDB_FILE (pascal_valprint)
 {
   add_setshow_boolean_cmd ("pascal_static-members", class_support,
 			   &user_print_options.pascal_static_field_print, _("\

@@ -2061,7 +2061,7 @@ yyreduce:
                         { struct symbol *tem
 			    = lookup_symbol (copy_name ((yyvsp[0].sval)).c_str (), (yyvsp[-2].bval),
 					     SEARCH_VFT, 0).symbol;
-			  if (!tem || tem->aclass () != LOC_BLOCK)
+			  if (!tem || tem->loc_class () != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ((yyvsp[0].sval)).c_str ());
 			  (yyval.sym) = tem;
@@ -2682,7 +2682,7 @@ yylex (void)
 
     sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 			 SEARCH_VFT, 0).symbol;
-    if (sym && sym->aclass () == LOC_BLOCK)
+    if (sym && sym->loc_class () == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (pstate->language (),
 			 tmp.c_str (), pstate->expression_context_block, 1))
@@ -2690,7 +2690,7 @@ yylex (void)
 
     if(sym)
     {
-      switch(sym->aclass ())
+      switch(sym->loc_class ())
        {
        case LOC_STATIC:
        case LOC_REGISTER:

@@ -1,6 +1,6 @@
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -48,7 +48,7 @@
 bool
 default_displaced_step_hw_singlestep (struct gdbarch *gdbarch)
 {
-  return !gdbarch_software_single_step_p (gdbarch);
+  return !gdbarch_get_next_pcs_p (gdbarch);
 }
 
 CORE_ADDR
@@ -1218,6 +1218,16 @@ default_gdbarch_return_value
 				readbuf, writebuf);
 }
 
+/* See arch-utils.h.  */
+
+std::optional<CORE_ADDR>
+default_get_shadow_stack_pointer (gdbarch *gdbarch, regcache *regcache,
+				  bool &shadow_stack_enabled)
+{
+  shadow_stack_enabled = false;
+  return {};
+}
+
 obstack *gdbarch_obstack (gdbarch *arch)
 {
   return &arch->obstack;
@@ -1525,9 +1535,7 @@ core_file_exec_context::environment () const
   return e;
 }
 
-void _initialize_gdbarch_utils ();
-void
-_initialize_gdbarch_utils ()
+INIT_GDB_FILE (gdbarch_utils)
 {
   add_setshow_enum_cmd ("endian", class_support,
 			endian_enum, &set_endian_string, 

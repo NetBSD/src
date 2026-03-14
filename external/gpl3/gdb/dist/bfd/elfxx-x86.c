@@ -1,5 +1,5 @@
 /* x86 specific support for ELF
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -366,7 +366,7 @@ elf_x86_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	htab->elf.srelgot->size += htab->sizeof_reloc;
       if (GOT_TLS_GDESC_P (tls_type))
 	{
-	  htab->elf.srelplt->size += htab->sizeof_reloc;
+	  htab->rel_tls_desc->size += htab->sizeof_reloc;
 	  if (bed->target_id == X86_64_ELF_DATA)
 	    htab->elf.tlsdesc_plt = (bfd_vma) -1;
 	}
@@ -529,9 +529,9 @@ elf_x86_allocate_dynrelocs (struct elf_link_hash_entry *h, void *inf)
 	  asection *s = p->sec->output_section;
 	  if (s != NULL && (s->flags & SEC_READONLY) != 0)
 	    {
-	      info->callbacks->einfo
+	      info->callbacks->fatal
 		/* xgettext:c-format */
-		(_("%F%P: %pB: copy relocation against non-copyable "
+		(_("%P: %pB: copy relocation against non-copyable "
 		   "protected symbol `%s' in %pB\n"),
 		 p->sec->owner, h->root.root.string,
 		 h->root.u.def.section->owner);
@@ -609,8 +609,7 @@ _bfd_elf_x86_get_local_sym_hash (struct elf_x86_link_hash_table *htab,
   return &ret->elf;
 }
 
-/* Create an entry in a x86 ELF linker hash table.  NB: THIS MUST BE IN
-   SYNC WITH _bfd_elf_link_hash_newfunc.  */
+/* Create an entry in an x86 ELF linker hash table.  */
 
 struct bfd_hash_entry *
 _bfd_x86_elf_link_hash_newfunc (struct bfd_hash_entry *entry,
@@ -629,27 +628,14 @@ _bfd_x86_elf_link_hash_newfunc (struct bfd_hash_entry *entry,
     }
 
   /* Call the allocation method of the superclass.  */
-  entry = _bfd_link_hash_newfunc (entry, table, string);
+  entry = _bfd_elf_link_hash_newfunc (entry, table, string);
   if (entry != NULL)
     {
       struct elf_x86_link_hash_entry *eh
        = (struct elf_x86_link_hash_entry *) entry;
-      struct elf_link_hash_table *htab
-	= (struct elf_link_hash_table *) table;
 
-      memset (&eh->elf.size, 0,
-	      (sizeof (struct elf_x86_link_hash_entry)
-	       - offsetof (struct elf_link_hash_entry, size)));
+      memset (&eh->elf + 1, 0, sizeof (*eh) - sizeof (eh->elf));
       /* Set local fields.  */
-      eh->elf.indx = -1;
-      eh->elf.dynindx = -1;
-      eh->elf.got = htab->init_got_refcount;
-      eh->elf.plt = htab->init_plt_refcount;
-      /* Assume that we have been called by a non-ELF symbol reader.
-	 This flag is then reset by the code which reads an ELF input
-	 file.  This ensures that a symbol created by a non-ELF symbol
-	 reader will have the flag set correctly.  */
-      eh->elf.non_elf = 1;
       eh->plt_second.offset = (bfd_vma) -1;
       eh->plt_got.offset = (bfd_vma) -1;
       eh->tlsdesc_got = (bfd_vma) -1;
@@ -693,6 +679,9 @@ elf_x86_link_hash_table_free (bfd *obfd)
   struct elf_x86_link_hash_table *htab
     = (struct elf_x86_link_hash_table *) obfd->link.hash;
 
+  free (htab->dt_relr_bitmap.u.elf64);
+  free (htab->unaligned_relative_reloc.data);
+  free (htab->relative_reloc.data);
   if (htab->loc_hash_table)
     htab_delete (htab->loc_hash_table);
   if (htab->loc_hash_memory)
@@ -823,8 +812,12 @@ elf_x86_linker_defined (struct bfd_link_info *info, const char *name)
 {
   struct elf_link_hash_entry *h;
 
-  h = elf_link_hash_lookup (elf_hash_table (info), name,
-			    false, false, false);
+  /* NULL indicates __ehdr_start.  */
+  if (name == NULL)
+    h = elf_hash_table (info)->hehdr_start;
+  else
+    h = elf_link_hash_lookup (elf_hash_table (info), name,
+			      false, false, false);
   if (h == NULL)
     return;
 
@@ -889,11 +882,14 @@ _bfd_x86_elf_link_check_relocs (bfd *abfd, struct bfd_link_info *info)
 		  h = (struct elf_link_hash_entry *) h->root.u.i.link;
 		  elf_x86_hash_entry (h)->tls_get_addr = 1;
 		}
+
+	      htab->has_tls_get_addr_call = 1;
 	    }
 
-	  /* "__ehdr_start" will be defined by linker as a hidden symbol
-	     later if it is referenced and not defined.  */
-	  elf_x86_linker_defined (info, "__ehdr_start");
+	  /* Pass NULL for __ehdr_start which will be defined by
+	     linker as a hidden symbol later if it is referenced and
+	     not defined.  */
+	  elf_x86_linker_defined (info, NULL);
 
 	  if (bfd_link_executable (info))
 	    {
@@ -970,15 +966,7 @@ _bfd_x86_elf_check_relocs (bfd *abfd,
 	  goto error_return;
 	}
 
-      if (r_symndx < symtab_hdr->sh_info)
-	h = NULL;
-      else
-	{
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
-	}
+      h = _bfd_elf_get_link_hash_entry (sym_hashes, r_symndx, symtab_hdr);
 
       if (X86_NEED_DYNAMIC_RELOC_TYPE_P (is_x86_64, r_type)
 	  && NEED_DYNAMIC_RELOCATION_P (is_x86_64, info, true, h, sec,
@@ -1036,9 +1024,9 @@ elf_x86_relative_reloc_record_add
 
   if (relative_reloc->data == NULL)
     {
-      info->callbacks->einfo
+      info->callbacks->fatal
 	/* xgettext:c-format */
-	(_("%F%P: %pB: failed to allocate relative reloc record\n"),
+	(_("%P: %pB: failed to allocate relative reloc record\n"),
 	 info->output_bfd);
       return false;
     }
@@ -1089,12 +1077,15 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
   bool return_status = false;
   bool keep_symbuf = false;
 
-  if (bfd_link_relocatable (info))
-    return true;
-
   /* Assume we're not going to change any sizes, and we'll only need
      one pass.  */
   *again = false;
+
+  if (bfd_link_relocatable (info))
+    return true;
+
+  if (!info->enable_dt_relr)
+    return true;
 
   bed = get_elf_backend_data (abfd);
   htab = elf_x86_hash_table (info, bed->target_id);
@@ -1203,10 +1194,12 @@ _bfd_x86_elf_link_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
       else
 	{
 	  /* Get H and SEC for GENERATE_DYNAMIC_RELOCATION_P below.  */
-	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
-	  while (h->root.type == bfd_link_hash_indirect
-		 || h->root.type == bfd_link_hash_warning)
-	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+	  h = _bfd_elf_get_link_hash_entry (sym_hashes, r_symndx, symtab_hdr);
+	  if (h == NULL)
+	    {
+	      /* FIXMEL: Issue an error message ?  */
+	      continue;
+	    }
 
 	  if (h->root.type == bfd_link_hash_defined
 	      || h->root.type == bfd_link_hash_defweak)
@@ -1392,9 +1385,9 @@ elf64_dt_relr_bitmap_add
 
   if (bitmap->u.elf64 == NULL)
     {
-      info->callbacks->einfo
+      info->callbacks->fatal
 	/* xgettext:c-format */
-	(_("%F%P: %pB: failed to allocate 64-bit DT_RELR bitmap\n"),
+	(_("%P: %pB: failed to allocate 64-bit DT_RELR bitmap\n"),
 	 info->output_bfd);
     }
 
@@ -1428,9 +1421,9 @@ elf32_dt_relr_bitmap_add
 
   if (bitmap->u.elf32 == NULL)
     {
-      info->callbacks->einfo
+      info->callbacks->fatal
 	/* xgettext:c-format */
-	(_("%F%P: %pB: failed to allocate 32-bit DT_RELR bitmap\n"),
+	(_("%P: %pB: failed to allocate 32-bit DT_RELR bitmap\n"),
 	 info->output_bfd);
     }
 
@@ -1567,9 +1560,9 @@ elf_x86_size_or_finish_relative_reloc
 			  if (!_bfd_elf_mmap_section_contents (sec->owner,
 							       sec,
 							       &contents))
-			    info->callbacks->einfo
+			    info->callbacks->fatal
 			      /* xgettext:c-format */
-			      (_("%F%P: %pB: failed to allocate memory for section `%pA'\n"),
+			      (_("%P: %pB: failed to allocate memory for section `%pA'\n"),
 			       info->output_bfd, sec);
 
 			  /* Cache the section contents for
@@ -1754,9 +1747,9 @@ elf_x86_compute_dl_relr_bitmap
 	  *need_layout = true;
 	}
       else
-	info->callbacks->einfo
+	info->callbacks->fatal
 	  /* xgettext:c-format */
-	  (_("%F%P: %pB: size of compact relative reloc section is "
+	  (_("%P: %pB: size of compact relative reloc section is "
 	     "changed: new (%lu) != old (%lu)\n"),
 	   info->output_bfd, htab->dt_relr_bitmap.count,
 	   dt_relr_bitmap_count);
@@ -1776,13 +1769,14 @@ elf_x86_write_dl_relr_bitmap (struct bfd_link_info *info,
 
   contents = (unsigned char *) bfd_alloc (sec->owner, size);
   if (contents == NULL)
-    info->callbacks->einfo
+    info->callbacks->fatal
       /* xgettext:c-format */
-      (_("%F%P: %pB: failed to allocate compact relative reloc section\n"),
+      (_("%P: %pB: failed to allocate compact relative reloc section\n"),
        info->output_bfd);
 
   /* Cache the section contents for elf_link_input_bfd.  */
   sec->contents = contents;
+  sec->alloced = 1;
 
   if (ABI_64_P (info->output_bfd))
     for (i = 0; i < htab->dt_relr_bitmap.count; i++, contents += 8)
@@ -1899,7 +1893,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
     }
 
   *ectx = sframe_encode (SFRAME_VERSION_2,
-			 0,
+			 SFRAME_F_FDE_FUNC_START_PCREL,
 			 SFRAME_ABI_AMD64_ENDIAN_LITTLE,
 			 SFRAME_CFA_FIXED_FP_INVALID,
 			 -8, /*  Fixed RA offset.  */
@@ -1919,7 +1913,7 @@ _bfd_x86_elf_create_sframe_plt (bfd *output_bfd,
 				      0, /* func start addr.  */
 				      plt0_entry_size,
 				      func_info,
-				      16,
+				      0,
 				      0 /* Num FREs.  */);
       sframe_frame_row_entry plt0_fre;
       unsigned int num_plt0_fres = htab->sframe_plt->plt0_num_fres;
@@ -2012,6 +2006,7 @@ _bfd_x86_elf_write_sframe_plt (bfd *output_bfd,
 
   sec->size = (bfd_size_type) sec_size;
   sec->contents = (unsigned char *) bfd_zalloc (dynobj, sec->size);
+  sec->alloced = 1;
   memcpy (sec->contents, contents, sec_size);
 
   sframe_encoder_free (&ectx);
@@ -2162,6 +2157,16 @@ _bfd_elf_x86_finish_relative_relocs (struct bfd_link_info *info)
   return true;
 }
 
+asection *
+_bfd_elf_x86_get_reloc_section (bfd *abfd, const char *name)
+{
+  /* Treat .rel.tls/.rela.tls section the same as .rel.plt/.rela.plt
+     section.  */
+  if (strcmp (name, ".tls") == 0)
+    name = ".plt";
+  return _bfd_elf_plt_get_reloc_section (abfd, name);
+}
+
 bool
 _bfd_elf_x86_valid_reloc_p (asection *input_section,
 			    struct bfd_link_info *info,
@@ -2245,9 +2250,9 @@ _bfd_elf_x86_valid_reloc_p (asection *input_section,
 	  else
 	    name = bfd_elf_sym_name (input_section->owner, symtab_hdr,
 				     sym, NULL);
-	  info->callbacks->einfo
+	  info->callbacks->fatal
 	    /* xgettext:c-format */
-	    (_("%F%P: %pB: relocation %s against absolute symbol "
+	    (_("%P: %pB: relocation %s against absolute symbol "
 	       "`%s' in section `%pA' is disallowed\n"),
 	     input_section->owner, internal_reloc.howto->name, name,
 	     input_section);
@@ -2381,7 +2386,7 @@ _bfd_x86_elf_late_size_sections (bfd *output_bfd,
 		    srel->size += htab->sizeof_reloc;
 		  if (GOT_TLS_GDESC_P (*local_tls_type))
 		    {
-		      htab->elf.srelplt->size += htab->sizeof_reloc;
+		      htab->rel_tls_desc->size += htab->sizeof_reloc;
 		      if (bed->target_id == X86_64_ELF_DATA)
 			htab->elf.tlsdesc_plt = (bfd_vma) -1;
 		    }
@@ -2422,7 +2427,6 @@ _bfd_x86_elf_late_size_sections (bfd *output_bfd,
      so that R_{386,X86_64}_IRELATIVE entries come last.  */
   if (htab->elf.srelplt)
     {
-      htab->next_tls_desc_index = htab->elf.srelplt->reloc_count;
       htab->sgotplt_jump_table_size
 	= elf_x86_compute_jump_table_size (htab);
       htab->next_irelative_index = htab->elf.srelplt->reloc_count - 1;
@@ -2658,8 +2662,9 @@ _bfd_x86_elf_late_size_sections (bfd *output_bfd,
 	 avoid moving dot of the following section backwards when
 	 it is empty.  Update its section alignment now since it
 	 is non-empty.  */
-      if (s == htab->elf.iplt)
-	bfd_set_section_alignment (s, htab->plt.iplt_alignment);
+      if (s == htab->elf.iplt
+	  && !bfd_link_align_section (s, htab->plt.iplt_alignment))
+	abort ();
 
       /* Allocate memory for the section contents.  We use bfd_zalloc
 	 here in case unused entries are not reclaimed before the
@@ -2669,6 +2674,7 @@ _bfd_x86_elf_late_size_sections (bfd *output_bfd,
       s->contents = (unsigned char *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->plt_eh_frame != NULL
@@ -3304,19 +3310,19 @@ _bfd_x86_elf_link_report_tls_transition_error
 	 asect);
       break;
 
-    case elf_x86_tls_error_add:
-      info->callbacks->einfo
-	/* xgettext:c-format */
-	(_("%pB(%pA+0x%v): relocation %s against `%s' must be used "
-	   "in ADD only\n"),
-	 abfd, asect, rel->r_offset, from_reloc_name, name);
-      break;
-
     case elf_x86_tls_error_add_mov:
       info->callbacks->einfo
 	/* xgettext:c-format */
 	(_("%pB(%pA+0x%v): relocation %s against `%s' must be used "
 	   "in ADD or MOV only\n"),
+	 abfd, asect, rel->r_offset, from_reloc_name, name);
+      break;
+
+    case elf_x86_tls_error_add_movrs:
+      info->callbacks->einfo
+	/* xgettext:c-format */
+	(_("%pB(%pA+0x%v): relocation %s against `%s' must be used "
+	   "in ADD or MOVRS only\n"),
 	 abfd, asect, rel->r_offset, from_reloc_name, name);
       break;
 
@@ -3586,9 +3592,9 @@ _bfd_x86_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	    s = p->sec->output_section;
 	    if (s != NULL && (s->flags & SEC_READONLY) != 0)
 	      {
-		info->callbacks->einfo
+		info->callbacks->fatal
 		  /* xgettext:c-format */
-		  (_("%F%P: %pB: copy relocation against non-copyable "
+		  (_("%P: %pB: copy relocation against non-copyable "
 		     "protected symbol `%s' in %pB\n"),
 		   p->sec->owner, h->root.root.string,
 		   h->root.u.def.section->owner);
@@ -4338,15 +4344,10 @@ _bfd_x86_elf_link_setup_gnu_properties
 					      | SEC_READONLY
 					      | SEC_HAS_CONTENTS
 					      | SEC_DATA));
-	  if (sec == NULL)
-	    info->callbacks->einfo (_("%F%P: failed to create GNU property section\n"));
-
-	  if (!bfd_set_section_alignment (sec, class_align))
-	    {
-	    error_alignment:
-	      info->callbacks->einfo (_("%F%pA: failed to align section\n"),
-				      sec);
-	    }
+	  if (sec == NULL
+	      || !bfd_set_section_alignment (sec, class_align))
+	    info->callbacks->fatal (_("%P: failed to create %sn"),
+				    NOTE_GNU_PROPERTY_SECTION_NAME);
 
 	  elf_section_type (sec) = SHT_NOTE;
 	}
@@ -4614,6 +4615,8 @@ _bfd_x86_elf_link_setup_gnu_properties
 	    htab->sframe_plt = init_table->sframe_non_lazy_plt;
 	}
     }
+  else if (lazy_plt)
+    htab->sframe_plt = init_table->sframe_lazy_plt;
   else
     htab->sframe_plt = NULL;
 
@@ -4658,7 +4661,7 @@ _bfd_x86_elf_link_setup_gnu_properties
       && !elf_vxworks_create_dynamic_sections (dynobj, info,
 					       &htab->srelplt2))
     {
-      info->callbacks->einfo (_("%F%P: failed to create VxWorks dynamic sections\n"));
+      info->callbacks->fatal (_("%P: failed to create VxWorks dynamic sections\n"));
       return pbfd;
     }
 
@@ -4667,7 +4670,7 @@ _bfd_x86_elf_link_setup_gnu_properties
      don't need to do it in check_relocs.  */
   if (htab->elf.sgot == NULL
       && !_bfd_elf_create_got_section (dynobj, info))
-    info->callbacks->einfo (_("%F%P: failed to create GOT sections\n"));
+    info->callbacks->fatal (_("%P: failed to create GOT sections\n"));
 
   got_align = (bed->target_id == X86_64_ELF_DATA) ? 3 : 2;
 
@@ -4676,16 +4679,16 @@ _bfd_x86_elf_link_setup_gnu_properties
      properly aligned even if create_dynamic_sections isn't called.  */
   sec = htab->elf.sgot;
   if (!bfd_set_section_alignment (sec, got_align))
-    goto error_alignment;
+    abort ();
 
   sec = htab->elf.sgotplt;
   if (!bfd_set_section_alignment (sec, got_align))
-    goto error_alignment;
+    abort ();
 
   /* Create the ifunc sections here so that check_relocs can be
      simplified.  */
   if (!_bfd_elf_create_ifunc_sections (dynobj, info))
-    info->callbacks->einfo (_("%F%P: failed to create ifunc sections\n"));
+    info->callbacks->fatal (_("%P: failed to create ifunc sections\n"));
 
   plt_alignment = bfd_log2 (htab->plt.plt_entry_size);
 
@@ -4700,6 +4703,7 @@ _bfd_x86_elf_link_setup_gnu_properties
 	    abort ();
 	  s->size = htab->dynamic_interpreter_size;
 	  s->contents = (unsigned char *) htab->dynamic_interpreter;
+	  s->alloced = 1;
 	  htab->interp = s;
 	}
 
@@ -4715,17 +4719,15 @@ _bfd_x86_elf_link_setup_gnu_properties
 
 	  sec = pltsec;
 	  if (!bfd_set_section_alignment (sec, plt_alignment))
-	    goto error_alignment;
+	    abort ();
 
 	  /* Create the GOT procedure linkage table.  */
 	  sec = bfd_make_section_anyway_with_flags (dynobj,
 						    ".plt.got",
 						    pltflags);
-	  if (sec == NULL)
-	    info->callbacks->einfo (_("%F%P: failed to create GOT PLT section\n"));
-
-	  if (!bfd_set_section_alignment (sec, non_lazy_plt_alignment))
-	    goto error_alignment;
+	  if (sec == NULL
+	      || !bfd_set_section_alignment (sec, non_lazy_plt_alignment))
+	    info->callbacks->fatal (_("%P: failed to create GOT PLT section\n"));
 
 	  htab->plt_got = sec;
 
@@ -4740,16 +4742,22 @@ _bfd_x86_elf_link_setup_gnu_properties
 		  sec = bfd_make_section_anyway_with_flags (dynobj,
 							    ".plt.sec",
 							    pltflags);
-		  if (sec == NULL)
-		    info->callbacks->einfo (_("%F%P: failed to create IBT-enabled PLT section\n"));
-
-		  if (!bfd_set_section_alignment (sec, plt_alignment))
-		    goto error_alignment;
+		  if (sec == NULL
+		      || !bfd_set_section_alignment (sec, plt_alignment))
+		    info->callbacks->fatal (_("%P: failed to create IBT-enabled PLT section\n"));
 		}
 
 	      htab->plt_second = sec;
 	    }
 	}
+
+      sec = bfd_make_section_anyway_with_flags
+	(dynobj, bed->rela_plts_and_copies_p ? ".rela.tls" : ".rel.tls",
+	 bed->dynamic_sec_flags | SEC_READONLY);
+      if (sec == NULL
+	  || !bfd_set_section_alignment (sec, bed->s->log_file_align))
+	return false;
+      htab->rel_tls_desc = sec;
 
       if (!info->no_ld_generated_unwind_info)
 	{
@@ -4760,11 +4768,9 @@ _bfd_x86_elf_link_setup_gnu_properties
 	  sec = bfd_make_section_anyway_with_flags (dynobj,
 						    ".eh_frame",
 						    flags);
-	  if (sec == NULL)
-	    info->callbacks->einfo (_("%F%P: failed to create PLT .eh_frame section\n"));
-
-	  if (!bfd_set_section_alignment (sec, class_align))
-	    goto error_alignment;
+	  if (sec == NULL
+	      || !bfd_set_section_alignment (sec, class_align))
+	    info->callbacks->fatal (_("%P: failed to create PLT .eh_frame section\n"));
 
 	  htab->plt_eh_frame = sec;
 
@@ -4773,11 +4779,9 @@ _bfd_x86_elf_link_setup_gnu_properties
 	      sec = bfd_make_section_anyway_with_flags (dynobj,
 							".eh_frame",
 							flags);
-	      if (sec == NULL)
-		info->callbacks->einfo (_("%F%P: failed to create GOT PLT .eh_frame section\n"));
-
-	      if (!bfd_set_section_alignment (sec, class_align))
-		goto error_alignment;
+	      if (sec == NULL
+		  || !bfd_set_section_alignment (sec, class_align))
+		info->callbacks->fatal (_("%P: failed to create GOT PLT .eh_frame section\n"));
 
 	      htab->plt_got_eh_frame = sec;
 	    }
@@ -4787,11 +4791,9 @@ _bfd_x86_elf_link_setup_gnu_properties
 	      sec = bfd_make_section_anyway_with_flags (dynobj,
 							".eh_frame",
 							flags);
-	      if (sec == NULL)
-		info->callbacks->einfo (_("%F%P: failed to create the second PLT .eh_frame section\n"));
-
-	      if (!bfd_set_section_alignment (sec, class_align))
-		goto error_alignment;
+	      if (sec == NULL
+		  || !bfd_set_section_alignment (sec, class_align))
+		info->callbacks->fatal (_("%P: failed to create the second PLT .eh_frame section\n"));
 
 	      htab->plt_second_eh_frame = sec;
 	    }
@@ -4804,11 +4806,10 @@ _bfd_x86_elf_link_setup_gnu_properties
 			    | SEC_HAS_CONTENTS | SEC_IN_MEMORY
 			    | SEC_LINKER_CREATED);
 
-	  sec = bfd_make_section_anyway_with_flags (dynobj,
-						    ".sframe",
-						    flags);
+	  sec = bfd_make_section_anyway_with_flags (dynobj, ".sframe", flags);
 	  if (sec == NULL)
-	    info->callbacks->einfo (_("%F%P: failed to create PLT .sframe section\n"));
+	    info->callbacks->fatal (_("%P: failed to create PLT .sframe section\n"));
+	  elf_section_type (sec) = SHT_GNU_SFRAME;
 
 	  // FIXME check this
 	  // if (!bfd_set_section_alignment (sec, class_align))
@@ -4823,7 +4824,8 @@ _bfd_x86_elf_link_setup_gnu_properties
 							".sframe",
 							flags);
 	      if (sec == NULL)
-		info->callbacks->einfo (_("%F%P: failed to create second PLT .sframe section\n"));
+		info->callbacks->fatal (_("%P: failed to create second PLT .sframe section\n"));
+	      elf_section_type (sec) = SHT_GNU_SFRAME;
 
 	      htab->plt_second_sframe = sec;
 	    }
@@ -4835,7 +4837,8 @@ _bfd_x86_elf_link_setup_gnu_properties
 							".sframe",
 							flags);
 	      if (sec == NULL)
-		info->callbacks->einfo (_("%F%P: failed to create PLT GOT .sframe section\n"));
+		info->callbacks->fatal (_("%P: failed to create PLT GOT .sframe section\n"));
+	      elf_section_type (sec) = SHT_GNU_SFRAME;
 
 	      htab->plt_got_sframe = sec;
 	    }
@@ -4854,7 +4857,7 @@ _bfd_x86_elf_link_setup_gnu_properties
 	 being set properly.  It later leads to a "File truncated"
 	 error.  */
       if (!bfd_set_section_alignment (sec, 0))
-	goto error_alignment;
+	abort ();
 
       htab->plt.iplt_alignment = (normal_target
 				  ? plt_alignment
@@ -4892,7 +4895,8 @@ _bfd_x86_elf_link_fixup_gnu_properties
   for (p = *listp; p; p = p->next)
     {
       unsigned int type = p->property.pr_type;
-      if (type == GNU_PROPERTY_X86_COMPAT_ISA_1_USED
+      if (type == GNU_PROPERTY_MEMORY_SEAL
+	  || type == GNU_PROPERTY_X86_COMPAT_ISA_1_USED
 	  || type == GNU_PROPERTY_X86_COMPAT_ISA_1_NEEDED
 	  || (type >= GNU_PROPERTY_X86_UINT32_AND_LO
 	      && type <= GNU_PROPERTY_X86_UINT32_AND_HI)

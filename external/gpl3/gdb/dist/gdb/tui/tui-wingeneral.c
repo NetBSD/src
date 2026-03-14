@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -80,7 +80,7 @@ box_win (struct tui_win_info *win_info,
 
   /* tui_apply_style resets the style entirely, so be sure to call it
      before applying ATTRS.  */
-  if (cli_styling)
+  if (term_cli_styling ())
     tui_apply_style (win, (highlight_flag
 			   ? tui_active_border_style.style ()
 			   : tui_border_style.style ()));

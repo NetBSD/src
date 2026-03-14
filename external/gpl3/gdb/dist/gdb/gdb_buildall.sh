@@ -2,7 +2,7 @@
 
 # Build script to build GDB with all targets enabled.
 
-# Copyright (C) 2008-2024 Free Software Foundation, Inc.
+# Copyright (C) 2008-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -261,7 +261,7 @@ echo "done."
 # Clean up build directory if necessary.
 if ${clean}
 then
-  echo "cleanning up $dir"
+  echo "cleaning up $dir"
   rm -rf ${dir}
 fi
 

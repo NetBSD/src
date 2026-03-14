@@ -1,0 +1,211 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that END markers are placed into the correct symtabs line
+# table.  Of particular interest is the case where we switch symtabs
+# in order to add a line, but then decide that we shouldn't actually
+# record the new line because the new line is a non-statement line at
+# the same address as a previous statement line in a different symtab.
+#
+# If we then switch symtabs again we used to add the END marker to the
+# wrong symtab.
+#
+# For a (possibly) better explanation, see the comment on the line
+# table in the DWARF assembler block below.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+# The -1.c, -2.c, and -3.c source files don't actually exist.  We just
+# want the filenames so we can use them in the generated DWARF.
+standard_testfile .c -dw.S -1.c -2.c -3.c
+
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    declare_labels lines_label
+
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_C}
+	    {name $::srcfile}
+	    {low_pc 0 addr}
+	    {stmt_list ${lines_label} DW_FORM_sec_offset}
+	} {
+	    subprogram {
+		{external 1 flag}
+		{MACRO_AT_func {main}}
+	    }
+	}
+    }
+
+    lines {version 2 default_is_stmt 1} lines_label {
+	include_dir "${::srcdir}/${::subdir}"
+	file_name "$::srcfile3" 1
+	file_name "$::srcfile4" 1
+	file_name "$::srcfile5" 1
+
+	# Generate the following line table:
+	#
+	# Index | Address | Symtab | Line | Statment
+	# ------|---------|--------|------------
+	#  0    |  A1     | F1     | 101  | X
+	#  1    |  A2     | F2     | 201  | X
+	#  2    |  A3     | F3     | 301  | X
+	#  3    |  A4     | F1     | 102  | X
+	#  4    |  A4     | F1     | 103  | X
+	#  5    |  A4     | F1     | 104  | X
+	#  6    |  A4     | F2     | 211  |
+	#  7    |  A5     | F3     | 311  |
+	#  8    |  A6     | F1     | 104  |
+	#  9    |  A7     | F1     | 105  | X
+	#  10   |  A8     | F1     | END  |
+	#
+	# GDB switches from F1 to F2 in order to add the entry at
+	# index 6, however the entry at index 6 is a non-statement
+	# line at the same address as entries 3, 4, and 5.
+	#
+	# If GDB then added an END marker in F1 at A4 in order to add
+	# entry 6 in F2, then END marker in F1 would effectively
+	# prevent the use of entries 3, 4, and 5.
+	#
+	# To avoid this, GDB discards entry 6.
+	#
+	# When GDB then switches to F3 to add entry 7, which is at a
+	# different address, GDB finally gets to add an END marker to
+	# the previous symtab's line table.
+	#
+	# This END marker should go into F1, that is, after all, the
+	# last symtab that had line table entries added too it.
+	#
+	# At one point, a bug in GDB meant that we added the END
+	# marker into F2, but we never actually added any entries to
+	# F2, so the END marker was redundant.
+
+	program {
+	    DW_LNE_set_address line_label_1
+	    DW_LNS_advance_line 100
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 2
+	    DW_LNE_set_address line_label_2
+	    DW_LNS_advance_line 100
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 3
+	    DW_LNE_set_address line_label_3
+	    DW_LNS_advance_line 100
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 1
+	    DW_LNE_set_address line_label_4
+	    DW_LNS_advance_line -199
+	    DW_LNS_copy
+
+	    DW_LNE_set_address line_label_4
+	    DW_LNS_advance_line 1
+	    DW_LNS_copy
+
+	    DW_LNE_set_address line_label_4
+	    DW_LNS_advance_line 1
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 2
+	    DW_LNE_set_address line_label_4
+	    DW_LNS_advance_line 107
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 3
+	    DW_LNE_set_address line_label_5
+	    DW_LNS_advance_line 100
+	    DW_LNS_copy
+
+	    DW_LNS_set_file 1
+	    DW_LNE_set_address line_label_6
+	    DW_LNS_advance_line -207
+	    DW_LNS_copy
+
+	    DW_LNE_set_address line_label_7
+	    DW_LNS_advance_line 1
+	    DW_LNS_negate_stmt
+	    DW_LNS_copy
+
+	    DW_LNE_set_address line_label_8
+	    DW_LNE_end_sequence
+	}
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+if { ![runto_main] } {
+    return -1
+}
+
+# Check the END markers using 'maint info line-table'.
+# EXPECTED_SYMTAB is the basename of the source file being checked.
+# TEST_SPEC is a list of lists.  Each inner list if a pair made of a
+# line table index number and a string, the name of a variable in the
+# parent scope that holds the address we expect the END marker to
+# appear at.
+proc check_end_markers { expected_symtab test_spec } {
+    foreach spec $test_spec {
+	set index [lindex $spec 0]
+	set varname [lindex $spec 1]
+
+	upvar 1 $varname upvar_addr
+	set addr [string range $upvar_addr 2 end]
+
+	verbose -log "APB: index: $index, addr: $addr"
+
+	set symtab ""
+	set saw_line false
+	gdb_test_multiple "maint info line-table" \
+	    "check END marker at index $index in $expected_symtab" {
+	    -re "^symtab: \[^\r\n\]+/($::testfile-$::decimal.c) \\(\\(\[^\r\n\]+\r\n" {
+		set symtab $expect_out(1,string)
+		exp_continue
+	    }
+	    -re "^${index}\\s+END\\s+0x0*$addr\\s+$::hex\\s+Y\\s*\r\n" {
+		if { $symtab eq $expected_symtab } {
+		    set saw_line true
+		}
+		exp_continue
+	    }
+	    -re "^$::gdb_prompt $" {
+		gdb_assert $saw_line $gdb_test_name
+	    }
+	    -re "^\[^\r\n\]*\r\n" {
+		exp_continue
+	    }
+	}
+    }
+}
+
+set addr_2 [get_hexadecimal_valueof "&line_label_2" "UNKNOWN"]
+set addr_3 [get_hexadecimal_valueof "&line_label_3" "UNKNOWN"]
+set addr_4 [get_hexadecimal_valueof "&line_label_4" "UNKNOWN"]
+set addr_5 [get_hexadecimal_valueof "&line_label_5" "UNKNOWN"]
+set addr_6 [get_hexadecimal_valueof "&line_label_6" "UNKNOWN"]
+set addr_8 [get_hexadecimal_valueof "&line_label_8" "UNKNOWN"]
+
+check_end_markers "$testfile-1.c" { { 1 addr_2 } { 5 addr_5} { 8 addr_8 } }
+check_end_markers "$testfile-2.c" { { 1 addr_3 } }
+check_end_markers "$testfile-3.c" { { 1 addr_4 } { 3 addr_6} }

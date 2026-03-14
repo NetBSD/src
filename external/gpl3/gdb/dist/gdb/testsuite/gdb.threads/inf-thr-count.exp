@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,8 +43,8 @@ if {[build_executable "failed to prepare" $testfile $srcfile \
 # Start GDB.  Ensure we are in non-stop mode as we need to read from
 # the inferior while it is running.
 save_vars {GDBFLAGS} {
-    append GDBFLAGS " -ex \"set non-stop on\""
-    clean_restart $binfile
+    append GDBFLAGS { -ex "set non-stop on"}
+    clean_restart $::testfile
 }
 
 if ![runto_main] {
@@ -54,22 +54,20 @@ if ![runto_main] {
 gdb_breakpoint breakpt
 gdb_continue_to_breakpoint "first breakpt call"
 
+set re_var [string_to_regexp "$"]$decimal
+
 # Check we can see a single thread to begin with.
-gdb_test "p \$_inferior_thread_count" \
-    "^\\\$$::decimal = 1" \
-    "only one thread in \$_inferior_thread_count"
+gdb_test {p $_inferior_thread_count} \
+    "^$re_var = 1" \
+    {only one thread in $_inferior_thread_count}
 
 # We don't want thread events, it makes it harder to match GDB's
 # output.
 gdb_test_no_output "set print thread-events off"
 
 # Continue the program in the background.
-set test "continue&"
-gdb_test_multiple "continue&" $test {
-    -re "Continuing\\.\r\n$gdb_prompt " {
-	pass $test
-    }
-}
+gdb_test -no-prompt-anchor "continue&" \
+    [string_to_regexp "Continuing."]
 
 # Read the 'stage' flag from the inferior.  This is initially 0, but
 # will be set to 1 once the extra thread has been created, and then 2
@@ -88,8 +86,17 @@ proc wait_for_stage { num } {
     set failure_count 0
     set cmd "print /d stage"
     set stage_flag 0
+
+    set re_int -?$::decimal
+
+    set re_msg \
+	[multi_line \
+	     "Cannot execute this command while the target is running" \
+	     {Use the "interrupt" command to stop the target} \
+	     [string_to_regexp "and then try again."]]
+
     gdb_test_multiple "$cmd" "wait for 'stage' flag to be $num" {
-	-re -wrap "^Cannot execute this command while the target is running\\.\r\nUse the \"interrupt\" command to stop the target\r\nand then try again\\." {
+	-re -wrap ^$re_msg {
 	    fail "$gdb_test_name (can't read asynchronously)"
 	    gdb_test_no_output "interrupt"
 
@@ -101,7 +108,7 @@ proc wait_for_stage { num } {
 	    }
 	}
 
-	-re -wrap "^\\$\[0-9\]* = (\[-\]*\[0-9\]*).*" {
+	-re -wrap "^$::re_var = ($re_int).*" {
 	    set stage_flag $expect_out(1,string)
 	    if {$stage_flag != $num} {
 		set stage_flag 0
@@ -131,8 +138,8 @@ if {![wait_for_stage 1]} {
 if {[target_info exists gdb_protocol]
     && ([target_info gdb_protocol] == "remote"
 	|| [target_info gdb_protocol] == "extended-remote")} {
-    set new_thread_re "\\\[New Thread \[^\r\n\]+\\\]\r\n"
-    set exit_thread_re "\\\[Thread \[^\r\n\]+ exited\\\]\r\n"
+    set new_thread_re {\[New Thread [^\r\n]+\]\r\n}
+    set exit_thread_re {\[Thread [^\r\n]+ exited\]\r\n}
 } else {
     set new_thread_re ""
     set exit_thread_re ""
@@ -141,9 +148,9 @@ if {[target_info exists gdb_protocol]
 # This is the test we actually care about.  Check that the
 # $_inferior_thread_count convenience variable shows the correct
 # thread count; the new thread should be visible.
-gdb_test "with print thread-events on -- p \$_inferior_thread_count" \
-    "^${new_thread_re}\\\$$::decimal = 2" \
-    "second thread visible in \$_inferior_thread_count"
+gdb_test {with print thread-events on -- p $_inferior_thread_count} \
+    "^${new_thread_re}$re_var = 2" \
+    {second thread visible in $_inferior_thread_count}
 
 # Set a variable in the inferior, this will cause the second thread to
 # exit.
@@ -157,19 +164,25 @@ if {![wait_for_stage 2]} {
 }
 
 # Check that the second thread has gone away.
-gdb_test "with print thread-events on -- p \$_inferior_thread_count" \
-    "^${exit_thread_re}\\\$$::decimal = 1" \
-    "back to one thread visible in \$_inferior_thread_count"
+gdb_test {with print thread-events on -- p $_inferior_thread_count} \
+    "^${exit_thread_re}$re_var = 1" \
+    {back to one thread visible in $_inferior_thread_count}
 
 # Set a variable in the inferior, this will cause the second thread to
 # exit.
-gdb_test_no_output "set variable spin = 0" \
+gdb_test_no_output -no-prompt-anchor "set variable spin = 0" \
     "set 'spin' flag to allow main thread to exit"
 
 # When the second thread exits, the main thread joins with it, and
 # then proceeds to hit the breakpt function again.
+set re_breakpt [string_to_regexp "breakpt ()"]
+set re \
+    [multi_line \
+	 "Thread 1 \[^\r\n\]+ hit Breakpoint $decimal, $re_breakpt\[^\r\n\]+" \
+	 "\[^\r\n\]+" \
+	 ""]
 gdb_test_multiple "" "wait for main thread to stop" {
-    -re "Thread 1 \[^\r\n\]+ hit Breakpoint $decimal, breakpt \\(\\)\[^\r\n\]+\r\n\[^\r\n\]+\r\n" {
+    -re $re {
 	pass $gdb_test_name
     }
 }

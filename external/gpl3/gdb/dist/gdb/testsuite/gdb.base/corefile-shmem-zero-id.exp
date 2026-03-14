@@ -1,0 +1,230 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test script tries to check GDB's ability to create a core file
+# (e.g. with 'gcore' command) when there's a shared memory mapping
+# with the id zero.
+#
+# Testing this case is hard.  Older kernels don't even seem to give
+# out the shared memory id zero.  And on new kernels you still cannot
+# guarantee to grab the zero id for testing; the id might be in use by
+# some other process, or the kernel might just not give out that id
+# for some other reason.
+#
+# To figure out which mappings to include in the core file, GDB reads
+# the /proc/PID/smaps file.  There is a field in this file which for
+# file backed mappings, holds the inode of the file.  But for shared
+# memory mappings this field holds the shared memory id.  The problem
+# was that GDB would ignore any entry in /proc/PID/smaps with an inode
+# entry of zero, which would catch the shared memory mapping with a
+# zero id.
+#
+# There was an attempt to write a test which spammed out requests for
+# shared memory mappings and tried to find the one with id zero, but
+# this was still really unreliable.
+#
+# This test takes a different approach.  We compile a library which we
+# preload into the GDB process.  This library intercepts calls to
+# open, close, read, and pread, and watches for an attempt to open the
+# /proc/PID/smaps file.
+#
+# When we see that file being opened, we copy the file contents into a
+# memory buffer and modify the buffer so that the inode field for any
+# shared memory mappings is set to zero.  We then intercept calls to
+# read and pread and return results from that in memory buffer.
+#
+# The test executable itself create a shared memory mapping (which
+# might have any id).
+#
+# GDB, with the pre-load library in place, start the inferior and then
+# uses the 'gcore' command to dump a core file.  When GDB opens the
+# smaps file and reads from it, the preload library ensures that GDB
+# sees an inode of zero.
+#
+
+# This test only works on Linux
+require isnative
+require {!is_remote host}
+require {!is_remote target}
+require {istarget *-linux*}
+require gcore_cmd_available
+
+standard_testfile .c -lib.c
+
+set libfile ${testfile}-lib
+set libobj [standard_output_file ${libfile}.so]
+
+# Compile the preload library.  We only get away with this as we
+# limit this test to running when ISNATIVE is true.
+if { [build_executable "build preload lib" $libobj $srcfile2 \
+	  {debug shlib libs=-ldl}] == -1 } {
+    return
+}
+
+# Now compile the inferior executable.
+if {[build_executable "build executable" $testfile $srcfile] == -1} {
+    return
+}
+
+# Spawn GDB with LIBOBJ preloaded using LD_PRELOAD.
+save_vars { env(LD_PRELOAD) env(ASAN_OPTIONS) } {
+    if { ![info exists env(LD_PRELOAD) ]
+	 || $env(LD_PRELOAD) == "" } {
+	set env(LD_PRELOAD) "$libobj"
+    } else {
+	append env(LD_PRELOAD) ":$libobj"
+    }
+
+    # Prevent address sanitizer error:
+    # ASan runtime does not come first in initial library list; you should
+    # either link runtime to your application or manually preload it with
+    # LD_PRELOAD.
+    append_environment_default ASAN_OPTIONS verify_asan_link_order 0
+
+    clean_restart
+    gdb_load $binfile
+
+    # Start GDB with the modified environment, this means that, when
+    # using remote targets, gdbserver will also use the preload
+    # library.
+    if {![runto_main]} {
+	return
+    }
+}
+
+gdb_breakpoint breakpt
+gdb_continue_to_breakpoint "run to breakpt"
+
+# Check the /proc/PID/smaps file itself.  The call to 'cat' should
+# inherit the preload library, so should see the modified file
+# contents.  Check that the shared memory mapping line has an id of
+# zero.  This confirms that the preload library is working.  If the
+# preload library breaks then we'll start seeing non-zero shared
+# memory ids, which always worked, so we'd never know that this test
+# is broken!
+#
+# This check ensures the test is working as expected.
+set shmem_line_count 0
+set fixup_line_count 0
+set inf_pid [get_inferior_pid]
+gdb_test_multiple "shell cat /proc/${inf_pid}/smaps" "check smaps" {
+    -re "^\\\[LD_PRELOAD\\\] updated a shared memory mapping\r\n" {
+	incr fixup_line_count
+	exp_continue
+    }
+    -re "^\[^\r\n\]+($decimal)\\s+/SYSV\[0-9\]{8}(?: \\(deleted\\))?\r\n" {
+	set id $expect_out(1,string)
+	if { $id == 0 } {
+	    incr shmem_line_count
+	}
+	exp_continue
+    }
+    -re "^$gdb_prompt $" {
+	with_test_prefix $gdb_test_name {
+	    gdb_assert { $shmem_line_count == 1 } \
+		"single shared memory mapping found"
+	    gdb_assert { $fixup_line_count == 1 } \
+		"single fixup line found"
+	}
+    }
+    -re "^\[^\r\n\]+\r\n" {
+	exp_continue
+    }
+}
+
+# Now generate a core file.  This will use the preload library to read
+# the smaps file.  The code below is copied from 'proc gdb_gcore_cmd',
+# but we don't use that as we also look for a message that is printed
+# by the LD_PRELOAD library.  This is an extra level of check that the
+# preload library is triggering when needed.
+set corefile [standard_output_file ${testfile}.core]
+set saw_ld_preload_msg false
+set saw_saved_msg false
+with_timeout_factor 3 {
+    gdb_test_multiple "gcore $corefile" "save core file" {
+	-re "^\\\[LD_PRELOAD\\\] updated a shared memory mapping\r\n" {
+	    # GDB actually reads the smaps file multiple times when
+	    # creating a core file, so we'll see multiple of these
+	    # fixup lines.
+	    set saw_ld_preload_msg true
+	    exp_continue
+	}
+	-re "^Saved corefile \[^\r\n\]+\r\n" {
+	    set saw_saved_msg true
+	    exp_continue
+	}
+	-re "^$gdb_prompt $" {
+	    with_test_prefix $gdb_test_name {
+		gdb_assert { $saw_saved_msg } \
+		    "saw 'Saved corefile' message"
+
+		# If we're using a remote target then the message from
+		# the preload library will go to gdbservers stdout,
+		# not GDB's, so don't check for it.
+		if { [gdb_protocol_is_native] } {
+		    gdb_assert { $saw_ld_preload_msg } \
+			"saw LD_PRELOAD message from library"
+		}
+	    }
+	}
+	-re "^\[^\r\n\]*\r\n" {
+	    exp_continue
+	}
+    }
+}
+
+# Restart GDB.  This time we are _not_ using the preload library.  We
+# no longer need it as we are only analysing the core file now.
+clean_restart
+gdb_load $binfile
+
+# Load the core file.
+gdb_test "core-file $corefile" \
+    "Program terminated with signal SIGTRAP, Trace/breakpoint trap\\..*" \
+    "load core file"
+
+# Look through the mappings.  We _should_ see the shared memory
+# mapping.  We _should_not_ see any of the special '[blah]' style
+# mappings, e.g. [vdso], [vstack], [vsyscalls], etc.
+set saw_special_mapping false
+set saw_shmem_mapping false
+gdb_test_multiple "info proc mappings" "" {
+    -re "\r\nStart Addr\[^\r\n\]+File\\s*\r\n" {
+	exp_continue
+    }
+
+    -re "^$hex\\s+$hex\\s+$hex\\s+$hex\\s+\\\[\\S+\\\]\\s*\r\n" {
+	set saw_special_mapping true
+	exp_continue
+    }
+
+    -re "^$hex\\s+$hex\\s+$hex\\s+$hex\\s+/SYSV\[0-9\]+ \\(deleted\\)\\s*\r\n" {
+	set saw_shmem_mapping true
+	exp_continue
+    }
+
+    -re "^$hex\\s+$hex\\s+$hex\\s+$hex\[^\r\n\]*\r\n" {
+	exp_continue
+    }
+
+    -re "^$gdb_prompt $" {
+	with_test_prefix $gdb_test_name {
+	    gdb_assert { $saw_shmem_mapping } \
+		"check shared memory mapping exists"
+	    gdb_assert { !$saw_special_mapping } \
+		"check no special mappings added"
+	}
+    }
+}

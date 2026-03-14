@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,20 @@ require allow_ada_tests
 
 standard_ada_testfile caller
 
+# The ordering here works around a bug in older versions of dejagnu.
+# In particular we use "additional_flags" and not "ldflags" to ensure
+# the ordering (this is ok because the distinction doesn't really
+# matter for gnatmake anyway) and furthermore we take care to end with
+# "-margs" so that any flags appended by dejagnu are applied in the
+# correct mode.
 set options {
     debug
     optimize=-O2
     additional_flags=-ffunction-sections
-    ldflags=-largs
-    ldflags=-Wl,--gc-sections
-    ldflags=-margs
     additional_flags=-gnatn
+    additional_flags=-largs
+    additional_flags=-Wl,--gc-sections
+    additional_flags=-margs
 }
 if {[gdb_compile_ada "${srcfile}" "${binfile}" executable $options] != ""} {
     return -1

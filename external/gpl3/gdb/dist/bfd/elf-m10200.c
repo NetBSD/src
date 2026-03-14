@@ -1,5 +1,5 @@
 /* Matsushita 10200 specific support for 32-bit ELF
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -390,7 +390,8 @@ mn10200_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MN10200_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;

@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,10 +43,16 @@ if {![Term::enter_tui]} {
 }
 
 send_gdb "file [standard_output_file $testfile]\n"
-gdb_assert { [Term::wait_for "Reading symbols from"] } "file command"
+# Matching the output is difficult because it may or may not wrap.  Simply
+# match the resulting prompt.
+gdb_assert { [Term::wait_for ""] } "file command"
+
 Term::check_contents "show main after file" \
     [string_to_regexp "|___[format %06d $nr]_$line"]
 
 # Ensure that "file" clears the source window.
 Term::command "file"
 Term::check_contents "file clears window" "No Source Available"
+
+Term::check_region_contents "empty title" \
+    0 0 80 1 {^\+-*\+$}

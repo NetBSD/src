@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -68,13 +68,10 @@ shnbsd_init_abi (struct gdbarch_info info,
   tdep->core_gregmap = (struct sh_corefile_regmap *)regmap;
   tdep->sizeof_gregset = 84;
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 }
 
-void _initialize_shnbsd_tdep ();
-void
-_initialize_shnbsd_tdep ()
+INIT_GDB_FILE (shnbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sh, 0, GDB_OSABI_NETBSD,
 			  shnbsd_init_abi);

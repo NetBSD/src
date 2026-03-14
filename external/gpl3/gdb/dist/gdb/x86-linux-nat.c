@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,6 +41,7 @@
 #include "nat/x86-linux.h"
 #include "nat/x86-linux-dregs.h"
 #include "nat/linux-ptrace.h"
+#include "x86-tdep.h"
 #include "nat/x86-linux-tdesc.h"
 
 /* linux_nat_target::low_new_fork implementation.  */
@@ -97,15 +98,19 @@ const struct target_desc *
 x86_linux_nat_target::read_description ()
 {
   /* The x86_linux_tdesc_for_tid call only reads xcr0 the first time it is
-     called, the xcr0 value is stored here and reused on subsequent calls.  */
-  static uint64_t xcr0_storage;
+     called.  Also it checks the enablement state of features which are
+     not configured in xcr0, such as CET shadow stack.  Once the supported
+     features are identified, the XSTATE_BV_STORAGE value is configured
+     accordingly and preserved for subsequent calls of this function.  */
+  static uint64_t xstate_bv_storage;
 
   if (inferior_ptid == null_ptid)
     return this->beneath ()->read_description ();
 
   int tid = inferior_ptid.pid ();
 
-  return x86_linux_tdesc_for_tid (tid, &xcr0_storage, &this->m_xsave_layout);
+  return x86_linux_tdesc_for_tid (tid, &xstate_bv_storage,
+				  &this->m_xsave_layout);
 }
 
 
@@ -210,9 +215,46 @@ x86_linux_get_thread_area (pid_t pid, void *addr, unsigned int *base_addr)
 }
 
 
-void _initialize_x86_linux_nat ();
+/* See x86-linux-nat.h.  */
+
 void
-_initialize_x86_linux_nat ()
+x86_linux_fetch_ssp (regcache *regcache, const int tid)
+{
+  uint64_t ssp = 0x0;
+  iovec iov {&ssp, sizeof (ssp)};
+
+  /* The shadow stack may be enabled and disabled at runtime.  Reading the
+     ssp might fail as shadow stack was not activated for the current
+     thread.  We don't want to show a warning but silently return.  The
+     register will be shown as unavailable for the user.  */
+  if (ptrace (PTRACE_GETREGSET, tid, NT_X86_SHSTK, &iov) != 0)
+    return;
+
+  x86_supply_ssp (regcache, ssp);
+}
+
+/* See x86-linux-nat.h.  */
+
+void
+x86_linux_store_ssp (const regcache *regcache, const int tid)
+{
+  uint64_t ssp = 0x0;
+  iovec iov {&ssp, sizeof (ssp)};
+  x86_collect_ssp (regcache, ssp);
+
+  /* Dependent on the target the ssp register can be unavailable or
+     nullptr when shadow stack is supported by HW and the Linux kernel but
+     not enabled for the current thread.  In case of nullptr, GDB tries to
+     restore the shadow stack pointer after an inferior call.  The ptrace
+     call with PTRACE_SETREGSET will fail here with errno ENODEV.  We
+     don't want to throw an error in this case but silently continue.  */
+  errno = 0;
+  if ((ptrace (PTRACE_SETREGSET, tid, NT_X86_SHSTK, &iov) != 0)
+      && (errno != ENODEV))
+    perror_with_name (_("Failed to write pl3_ssp register"));
+}
+
+INIT_GDB_FILE (x86_linux_nat)
 {
   /* Initialize the debug register function vectors.  */
   x86_dr_low.set_control = x86_linux_dr_set_control;

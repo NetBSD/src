@@ -1,6 +1,6 @@
 /* Low level interface for debugging AIX 4.3+ pthreads.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Written by Nick Duffek <nsd@redhat.com>.
 
    This file is part of GDB.
@@ -867,16 +867,6 @@ sync_threadlists (pid_t pid)
       }
 }
 
-/* Iterate_over_threads() callback for locating a thread, using
-   the TID of its associated kernel thread.  */
-
-static int
-iter_tid (struct thread_info *thread, void *tidp)
-{
-  const pthdb_tid_t tid = *(pthdb_tid_t *)tidp;
-  return thread->ptid.lwp () == tid;
-}
-
 /* Synchronize libpthdebug's state with the inferior and with GDB,
    generate a composite process/thread <pid> for the current thread,
    Return the ptid of the event thread if one can be found, else
@@ -906,7 +896,10 @@ pd_update (pid_t pid)
 
   tid = get_signaled_thread (pid);
   if (tid != 0)
-    thread = iterate_over_threads (iter_tid, &tid);
+    thread = iterate_over_threads ([&] (struct thread_info *thread)
+      {
+	return thread->ptid.lwp () == tid;
+      });
   if (!thread)
     ptid = ptid_t (pid);
   else
@@ -2069,9 +2062,7 @@ aix_thread_target::get_ada_task_ptid (long lwp, ULONGEST thread)
 /* Module startup initialization function, automagically called by
    init.c.  */
 
-void _initialize_aix_thread ();
-void
-_initialize_aix_thread ()
+INIT_GDB_FILE (aix_thread)
 {
   /* Notice when object files get loaded and unloaded.  */
   gdb::observers::new_objfile.attach (new_objfile, "aix-thread");

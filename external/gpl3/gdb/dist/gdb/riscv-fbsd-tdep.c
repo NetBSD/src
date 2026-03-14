@@ -1,5 +1,5 @@
 /* Target-dependent code for FreeBSD on RISC-V processors.
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -189,12 +189,11 @@ riscv_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Generic FreeBSD support.  */
   fbsd_init_abi (info, gdbarch);
 
-  set_gdbarch_software_single_step (gdbarch, riscv_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, riscv_software_single_step);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 (riscv_isa_xlen (gdbarch) == 4
-					  ? svr4_ilp32_fetch_link_map_offsets
-					  : svr4_lp64_fetch_link_map_offsets));
+  set_solib_svr4_ops (gdbarch, (riscv_isa_xlen (gdbarch) == 4
+				? make_svr4_ilp32_solib_ops
+				: make_svr4_lp64_solib_ops));
 
   tramp_frame_prepend_unwinder (gdbarch, &riscv_fbsd_sigframe);
 
@@ -207,9 +206,7 @@ riscv_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					riscv_fbsd_get_thread_local_address);
 }
 
-void _initialize_riscv_fbsd_tdep ();
-void
-_initialize_riscv_fbsd_tdep ()
+INIT_GDB_FILE (riscv_fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_riscv, 0, GDB_OSABI_FREEBSD,
 			  riscv_fbsd_init_abi);

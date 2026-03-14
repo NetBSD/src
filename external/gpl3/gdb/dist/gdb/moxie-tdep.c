@@ -1,6 +1,6 @@
 /* Target-dependent code for Moxie.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -240,7 +240,7 @@ moxie_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 		  return sal.end;
 		}
 	    }
-	  /* No useable line symbol.  Use result of prologue parsing
+	  /* No usable line symbol.  Use result of prologue parsing
 	     method.  */
 	  return plg_end;
 	}
@@ -585,15 +585,16 @@ moxie_frame_prev_register (const frame_info_ptr &this_frame,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind moxie_frame_unwind = {
+static const struct frame_unwind_legacy moxie_frame_unwind (
   "moxie prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   moxie_frame_this_id,
   moxie_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Return the base address of this_frame.  */
 
@@ -1087,7 +1088,7 @@ moxie_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   frame_unwind_append_unwinder (gdbarch, &moxie_frame_unwind);
 
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, moxie_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, moxie_software_single_step);
 
   /* Support simple overlay manager.  */
   set_gdbarch_overlay_update (gdbarch, simple_overlay_update);
@@ -1100,9 +1101,7 @@ moxie_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register this machine's init routine.  */
 
-void _initialize_moxie_tdep ();
-void
-_initialize_moxie_tdep ()
+INIT_GDB_FILE (moxie_tdep)
 {
   gdbarch_register (bfd_arch_moxie, moxie_gdbarch_init);
 }

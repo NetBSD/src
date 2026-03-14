@@ -1,6 +1,6 @@
 /* Self tests for general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -127,9 +127,7 @@ string_vappendf_tests ()
 
 } /* namespace selftests */
 
-void _initialize_common_utils_selftests ();
-void
-_initialize_common_utils_selftests ()
+INIT_GDB_FILE (common_utils_selftests)
 {
   selftests::register_test ("string_printf", selftests::string_printf_tests);
   selftests::register_test ("string_vprintf", selftests::string_vprintf_tests);

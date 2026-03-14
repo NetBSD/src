@@ -2,7 +2,7 @@ This is bfd.info, produced by makeinfo version 6.8 from bfd.texi.
 
 This file documents the BFD library.
 
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -535,7 +535,7 @@ major data about the file and pointers to the rest of the data.
        unsigned int read_only : 1;
 
        /* LTO object type.  */
-       ENUM_BITFIELD (bfd_lto_object_type) lto_type : 2;
+       ENUM_BITFIELD (bfd_lto_object_type) lto_type : 3;
 
        /* Set if this BFD is currently being processed by
           bfd_check_format_matches.  This is checked by the cache to
@@ -566,6 +566,9 @@ major data about the file and pointers to the rest of the data.
 
        /* The last section on the section list.  */
        struct bfd_section *section_last;
+
+       /* The object-only section on the section list.  */
+       struct bfd_section *object_only_section;
 
        /* The number of sections.  */
        unsigned int section_count;
@@ -763,13 +766,7 @@ type 'bfd_error_type'.
      the error string printed is preceded by MESSAGE, a colon, and a
      space.  It is followed by a newline.
 
-2.2.1.6 '_bfd_clear_error_data'
-...............................
-
- -- Function: void _bfd_clear_error_data (void);
-     Free any data associated with the BFD error.
-
-2.2.1.7 'bfd_asprintf'
+2.2.1.6 'bfd_asprintf'
 ......................
 
  -- Function: char *bfd_asprintf (const char *fmt, ...);
@@ -930,9 +927,10 @@ different threads to work on different BFD objects at the same time.
      Initialize BFD threading.  The functions passed in will be used to
      lock and unlock global data structures.  This may only be called a
      single time in a given process.  Returns true on success and false
-     on error.  DATA is passed verbatim to the lock and unlock
-     functions.  The lock and unlock functions should return true on
-     success, or set the BFD error and return false on failure.  Note
+     on error.  On error, the caller should assume that BFD cannot be
+     used by multiple threads.  DATA is passed verbatim to the lock and
+     unlock functions.  The lock and unlock functions should return true
+     on success, or set the BFD error and return false on failure.  Note
      also that the lock must be a recursive lock: BFD may attempt to
      acquire the lock when it is already held by the current thread.
 
@@ -1287,7 +1285,14 @@ The following functions exist but have not yet been documented.
      malloc holding the demangled name.  Returns NULL otherwise and on
      memory alloc failure.
 
-2.4.1.23 'struct bfd_iovec'
+2.4.1.23 'bfd_group_signature'
+..............................
+
+ -- Function: asymbol *bfd_group_signature (asection *group, asymbol
+          **isympp);
+     Return a pointer to the symbol used as a signature for GROUP.
+
+2.4.1.24 'struct bfd_iovec'
 ...........................
 
 The 'struct bfd_iovec' contains the internal file I/O class.  Each 'BFD'
@@ -1315,7 +1320,7 @@ is assumed that the instance implements all methods listed below).
        int (*bstat) (struct bfd *abfd, struct stat *sb);
        /* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
           mmap parameter, except that LEN and OFFSET do not need to be page
-          aligned.  Returns (void *)-1 on failure, mmapped address on success.
+          aligned.  Returns MAP_FAILED on failure, mmapped address on success.
           Also write in MAP_ADDR the address of the page aligned buffer and in
           MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
           MAP_LEN to unmap.  */
@@ -1326,7 +1331,7 @@ is assumed that the instance implements all methods listed below).
      extern const struct bfd_iovec _bfd_memory_iovec;
 
 
-2.4.1.24 'bfd_read'
+2.4.1.25 'bfd_read'
 ...................
 
  -- Function: bfd_size_type bfd_read (void *, bfd_size_type, bfd *)
@@ -1334,7 +1339,7 @@ is assumed that the instance implements all methods listed below).
      Attempt to read SIZE bytes from ABFD's iostream to PTR. Return the
      amount read.
 
-2.4.1.25 'bfd_write'
+2.4.1.26 'bfd_write'
 ....................
 
  -- Function: bfd_size_type bfd_write (const void *, bfd_size_type, bfd
@@ -1342,19 +1347,19 @@ is assumed that the instance implements all methods listed below).
      Attempt to write SIZE bytes to ABFD's iostream from PTR. Return the
      amount written.
 
-2.4.1.26 'bfd_tell'
+2.4.1.27 'bfd_tell'
 ...................
 
  -- Function: file_ptr bfd_tell (bfd *) ATTRIBUTE_WARN_UNUSED_RESULT;
      Return ABFD's iostream file position.
 
-2.4.1.27 'bfd_flush'
+2.4.1.28 'bfd_flush'
 ....................
 
  -- Function: int bfd_flush (bfd *);
      Flush ABFD's iostream pending IO.
 
-2.4.1.28 'bfd_stat'
+2.4.1.29 'bfd_stat'
 ...................
 
  -- Function: int bfd_stat (bfd *, struct stat *)
@@ -1362,7 +1367,7 @@ is assumed that the instance implements all methods listed below).
      Call fstat on ABFD's iostream.  Return 0 on success, and a negative
      value on failure.
 
-2.4.1.29 'bfd_seek'
+2.4.1.30 'bfd_seek'
 ...................
 
  -- Function: int bfd_seek (bfd *, file_ptr, int)
@@ -1370,14 +1375,14 @@ is assumed that the instance implements all methods listed below).
      Call fseek on ABFD's iostream.  Return 0 on success, and a negative
      value on failure.
 
-2.4.1.30 'bfd_get_mtime'
+2.4.1.31 'bfd_get_mtime'
 ........................
 
  -- Function: long bfd_get_mtime (bfd *abfd);
      Return the file modification time (as read from the file system, or
      from the archive header for archive members).
 
-2.4.1.31 'bfd_get_size'
+2.4.1.32 'bfd_get_size'
 .......................
 
  -- Function: ufile_ptr bfd_get_size (bfd *abfd);
@@ -1407,7 +1412,7 @@ is assumed that the instance implements all methods listed below).
 
      A return value of zero indicates the file size is unknown.
 
-2.4.1.32 'bfd_get_file_size'
+2.4.1.33 'bfd_get_file_size'
 ............................
 
  -- Function: ufile_ptr bfd_get_file_size (bfd *abfd);
@@ -1415,7 +1420,7 @@ is assumed that the instance implements all methods listed below).
      associated with BFD ABFD.  It supports both normal files and
      archive elements.
 
-2.4.1.33 'bfd_mmap'
+2.4.1.34 'bfd_mmap'
 ...................
 
  -- Function: void *bfd_mmap (bfd *abfd, void *addr, size_t len, int
@@ -1423,9 +1428,10 @@ is assumed that the instance implements all methods listed below).
           *map_len) ATTRIBUTE_WARN_UNUSED_RESULT;
      Return mmap()ed region of the file, if possible and implemented.
      LEN and OFFSET do not need to be page aligned.  The page aligned
-     address and length are written to MAP_ADDR and MAP_LEN.
+     address and length are written to MAP_ADDR and MAP_LEN. Returns
+     MAP_FAILED on failure.
 
-2.4.1.34 'bfd_get_current_time'
+2.4.1.35 'bfd_get_current_time'
 ...............................
 
  -- Function: time_t bfd_get_current_time (time_t now);
@@ -1841,8 +1847,11 @@ Here is the section structure:
        /* Nonzero if this section uses RELA relocations, rather than REL.  */
        unsigned int use_rela_p:1;
 
-       /* Nonzero if this section contents are mmapped, rather than malloced.  */
+       /* Nonzero if section contents are mmapped.  */
        unsigned int mmapped_p:1;
+
+       /* Nonzero if section contents should not be freed.  */
+       unsigned int alloced:1;
 
        /* Bits used by various backends.  The generic code doesn't touch
           these fields.  */
@@ -2239,16 +2248,17 @@ These are the functions exported by the section handling part of BFD.
 ........................................
 
  -- Function: bool bfd_copy_private_section_data (bfd *ibfd, asection
-          *isec, bfd *obfd, asection *osec);
+          *isec, bfd *obfd, asection *osec, struct bfd_link_info
+          *link_info);
      Copy private section information from ISEC in the BFD IBFD to the
      section OSEC in the BFD OBFD.  Return 'TRUE' on success, 'FALSE' on
      error.  Possible error returns are:
 
         * 'bfd_error_no_memory' - Not enough memory exists to create
           private data for OSEC.
-          #define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
+          #define bfd_copy_private_section_data(ibfd, isec, obfd, osec, link_info) \
                  BFD_SEND (obfd, _bfd_copy_private_section_data, \
-                           (ibfd, isection, obfd, osection))
+                           (ibfd, isec, obfd, osec, link_info))
 
 2.6.5.21 'bfd_generic_is_group_section'
 .......................................
@@ -6450,6 +6460,10 @@ attributes.
  -- : BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC
      AArch64 pseudo relocation code to be used internally by the AArch64
      assembler and not (currently) written to any object files.
+ -- : BFD_RELOC_AARCH64_BRANCH9
+     AArch64 9 bit pc-relative conditional branch and compare & branch.
+     The lowest two bits must be zero and are not stored in the
+     instruction, giving an 11 bit signed byte offset.
  -- : BFD_RELOC_TILEPRO_COPY
  -- : BFD_RELOC_TILEPRO_GLOB_DAT
  -- : BFD_RELOC_TILEPRO_JMP_SLOT
@@ -7202,7 +7216,6 @@ BFD_JUMP_TABLE macros.
      #define BFD_JUMP_TABLE_COPY(NAME) \
        NAME##_bfd_copy_private_bfd_data, \
        NAME##_bfd_merge_private_bfd_data, \
-       NAME##_init_private_section_data, \
        NAME##_bfd_copy_private_section_data, \
        NAME##_bfd_copy_private_symbol_data, \
        NAME##_bfd_copy_private_header_data, \
@@ -7215,16 +7228,10 @@ BFD_JUMP_TABLE macros.
        /* Called to merge BFD general private data from one object file
           to a common output file when linking.  */
        bool (*_bfd_merge_private_bfd_data) (bfd *, struct bfd_link_info *);
-       /* Called to initialize BFD private section data from one object file
-          to another.  */
-     #define bfd_init_private_section_data(ibfd, isec, obfd, osec, link_info) \
-            BFD_SEND (obfd, _bfd_init_private_section_data, \
-                      (ibfd, isec, obfd, osec, link_info))
-       bool (*_bfd_init_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
-                                               struct bfd_link_info *);
        /* Called to copy BFD private section data from one object file
           to another.  */
-       bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr);
+       bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
+                                               struct bfd_link_info *);
        /* Called to copy BFD private symbol data from one symbol
           to another.  */
        bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
@@ -7582,6 +7589,13 @@ to find an alternative output format that is suitable.
      bfd_keep_unused_section_symbols (const bfd *abfd)
      {
        return abfd->xvec->keep_unused_section_symbols;
+     }
+
+     static inline bool
+     bfd_target_supports_archives (const bfd *abfd)
+     {
+       return (abfd->xvec->_bfd_check_format[bfd_archive]
+               != abfd->xvec->_bfd_check_format[bfd_unknown]);
      }
 
 
@@ -8788,6 +8802,13 @@ File: bfd.info,  Node: Opening and Closing,  Next: Internal,  Prev: Architecture
      bfd_alloc'd memory owned by ABFD.  Returns a pointer the newly
      allocated name, or NULL if the allocation failed.
 
+2.14.1.26 'bfd_extract_object_only_section'
+...........................................
+
+ -- Function: const char *bfd_extract_object_only_section (bfd *abfd);
+     Takes a ABFD and extract the .gnu_object_only section into a
+     temporary file.
+
 
 File: bfd.info,  Node: Internal,  Next: File Caching,  Prev: Opening and Closing,  Up: BFD front end
 
@@ -9493,7 +9514,46 @@ global hash table with the function 'aout_link_write_other_symbol'.  It
 builds a string table while writing out the symbols, which is written to
 the output file at the end of 'NAME(aout,final_link)'.
 
-2.17.3.4 'bfd_link_split_section'
+2.17.3.4 '_bfd_generic_link_add_one_symbol'
+...........................................
+
+ -- Function: bool _bfd_generic_link_add_one_symbol (struct
+          bfd_link_info *info, bfd *abfd, const char *name, flagword
+          flags, asection *section, bfd_vma value, const char *string,
+          bool copy, bool collect, struct bfd_link_hash_entry **hashp);
+     Add a symbol to the global hash table.  ABFD is the BFD the symbol
+     comes from.  NAME is the name of the symbol.  FLAGS is the BSF_*
+     bits associated with the symbol.  SECTION is the section in which
+     the symbol is defined; this may be bfd_und_section_ptr or
+     bfd_com_section_ptr.  VALUE is the value of the symbol, relative to
+     the section.  STRING is used for either an indirect symbol, in
+     which case it is the name of the symbol to indirect to, or a
+     warning symbol, in which case it is the warning string.  COPY is
+     TRUE if NAME or STRING must be copied into locally allocated memory
+     if they need to be saved.  COLLECT is TRUE if we should
+     automatically collect gcc constructor or destructor names as
+     collect2 does.  HASHP, if not NULL, is a place to store the created
+     hash table entry; if *HASHP is not NULL, the caller has already
+     looked up the hash table entry, and stored it in *HASHP.
+
+2.17.3.5 'bfd_link_align_section'
+.................................
+
+ -- Function: bool bfd_link_align_section (asection *, unsigned int);
+     Increase section alignment if the current section alignment is less
+     than the requested value.  Adjust output section alignment too, so
+     that linker layout adjusts for alignment on the current
+     lang_size_sections pass.  This is important for
+     lang_size_relro_segment.  If the output section alignment isn't
+     adjusted, the linker will place the output section at an address
+     depending on its current alignment.  When sizing the output
+     section, input sections attached transfer any increase in alignment
+     to the output section, which will affect layout for the next sizing
+     pass.  Which is all well and good except that
+     lang_size_relro_segment for the current sizing pass uses that
+     possibly increased alignment with a layout that doesn't suit.
+
+2.17.3.6 'bfd_link_split_section'
 .................................
 
  -- Function: bool bfd_link_split_section (bfd *abfd, asection *sec);
@@ -9503,7 +9563,7 @@ the output file at the end of 'NAME(aout,final_link)'.
                  BFD_SEND (abfd, _bfd_link_split_section, (abfd, sec))
 
 
-2.17.3.5 'bfd_section_already_linked'
+2.17.3.7 'bfd_section_already_linked'
 .....................................
 
  -- Function: bool bfd_section_already_linked (bfd *abfd, asection *sec,
@@ -9514,7 +9574,7 @@ the output file at the end of 'NAME(aout,final_link)'.
                  BFD_SEND (abfd, _section_already_linked, (abfd, sec, info))
 
 
-2.17.3.6 'bfd_generic_define_common_symbol'
+2.17.3.8 'bfd_generic_define_common_symbol'
 ...........................................
 
  -- Function: bool bfd_generic_define_common_symbol (bfd *output_bfd,
@@ -9525,7 +9585,7 @@ the output file at the end of 'NAME(aout,final_link)'.
                  BFD_SEND (output_bfd, _bfd_define_common_symbol, (output_bfd, info, h))
 
 
-2.17.3.7 '_bfd_generic_link_hide_symbol'
+2.17.3.9 '_bfd_generic_link_hide_symbol'
 ........................................
 
  -- Function: void _bfd_generic_link_hide_symbol (bfd *output_bfd,
@@ -9536,8 +9596,8 @@ the output file at the end of 'NAME(aout,final_link)'.
                  BFD_SEND (output_bfd, _bfd_link_hide_symbol, (output_bfd, info, h))
 
 
-2.17.3.8 'bfd_generic_define_start_stop'
-........................................
+2.17.3.10 'bfd_generic_define_start_stop'
+.........................................
 
  -- Function: struct bfd_link_hash_entry *bfd_generic_define_start_stop
           (struct bfd_link_info *info, const char *symbol, asection
@@ -9548,8 +9608,8 @@ the output file at the end of 'NAME(aout,final_link)'.
                  BFD_SEND (output_bfd, _bfd_define_start_stop, (info, symbol, sec))
 
 
-2.17.3.9 'bfd_find_version_for_sym'
-...................................
+2.17.3.11 'bfd_find_version_for_sym'
+....................................
 
  -- Function: struct bfd_elf_version_tree * bfd_find_version_for_sym
           (struct bfd_elf_version_tree *verdefs, const char *sym_name,
@@ -9559,7 +9619,7 @@ the output file at the end of 'NAME(aout,final_link)'.
      on success and NULL on failure; also sets the output 'hide' boolean
      parameter.
 
-2.17.3.10 'bfd_hide_sym_by_version'
+2.17.3.12 'bfd_hide_sym_by_version'
 ...................................
 
  -- Function: bool bfd_hide_sym_by_version (struct bfd_elf_version_tree
@@ -9567,7 +9627,7 @@ the output file at the end of 'NAME(aout,final_link)'.
      Search an elf version script tree for symbol versioning info for a
      given symbol.  Return TRUE if the symbol is hidden.
 
-2.17.3.11 'bfd_link_check_relocs'
+2.17.3.13 'bfd_link_check_relocs'
 .................................
 
  -- Function: bool bfd_link_check_relocs (bfd *abfd, struct
@@ -9576,7 +9636,7 @@ the output file at the end of 'NAME(aout,final_link)'.
      relocs.  Return TRUE if everything is OK, FALSE otherwise.  This is
      the external entry point to this code.
 
-2.17.3.12 '_bfd_generic_link_check_relocs'
+2.17.3.14 '_bfd_generic_link_check_relocs'
 ..........................................
 
  -- Function: bool _bfd_generic_link_check_relocs (bfd *abfd, struct
@@ -9585,7 +9645,7 @@ the output file at the end of 'NAME(aout,final_link)'.
      Return TRUE. This is an internal function.  It should not be called
      from outside the BFD library.
 
-2.17.3.13 'bfd_merge_private_bfd_data'
+2.17.3.15 'bfd_merge_private_bfd_data'
 ......................................
 
  -- Function: bool bfd_merge_private_bfd_data (bfd *ibfd, struct
@@ -9601,7 +9661,7 @@ the output file at the end of 'NAME(aout,final_link)'.
                            (ibfd, info))
 
 
-2.17.3.14 '_bfd_generic_verify_endian_match'
+2.17.3.16 '_bfd_generic_verify_endian_match'
 ............................................
 
  -- Function: bool _bfd_generic_verify_endian_match (bfd *ibfd, struct
@@ -10589,11 +10649,6 @@ The hidden information for an 'asymbol' is described in a
          (bfd *, struct bfd_link_info *, bfd *, asection *,
           struct internal_reloc *, bool *);
 
-       bool (*_bfd_coff_link_add_one_symbol)
-         (struct bfd_link_info *, bfd *, const char *, flagword,
-          asection *, bfd_vma, const char *, bool, bool,
-          struct bfd_link_hash_entry **);
-
        bool (*_bfd_coff_link_output_has_begun)
          (bfd *, struct coff_final_link_info *);
 
@@ -11518,10 +11573,10 @@ BFD Index
 
 * *bfd_alloc:                            Internal.           (line   74)
 * *bfd_arch_default_fill:                Architectures.      (line  740)
-* *bfd_asprintf:                         Error reporting.    (line  102)
+* *bfd_asprintf:                         Error reporting.    (line   96)
 * *bfd_create:                           Opening and Closing.
                                                              (line  226)
-* *bfd_default_reloc_type_lookup:        howto manager.      (line 3604)
+* *bfd_default_reloc_type_lookup:        howto manager.      (line 3608)
 * *bfd_demangle:                         Miscellaneous.      (line  321)
 * *bfd_elf_bfd_from_remote_memory:       Opening and Closing.
                                                              (line  172)
@@ -11538,7 +11593,7 @@ BFD Index
 * *bfd_fopen:                            Opening and Closing.
                                                              (line   30)
 * *bfd_generic_get_relocated_section_contents: howto manager.
-                                                             (line 3652)
+                                                             (line 3656)
 * *bfd_get_alt_debug_link_info:          Opening and Closing.
                                                              (line  286)
 * *bfd_get_debug_link_info:              Opening and Closing.
@@ -11549,6 +11604,7 @@ BFD Index
 * *bfd_get_section_by_name:              section prototypes. (line   18)
 * *bfd_get_section_by_name_if:           section prototypes. (line   45)
 * *bfd_get_unique_section_name:          section prototypes. (line   60)
+* *bfd_group_signature:                  Miscellaneous.      (line  331)
 * *bfd_hash_allocate:                    Write Other Derived Routines.
                                                              (line   83)
 * *bfd_make_section:                     section prototypes. (line  132)
@@ -11557,7 +11613,7 @@ BFD Index
 * *bfd_make_section_old_way:             section prototypes. (line   71)
 * *bfd_make_section_with_flags:          section prototypes. (line  121)
 * *bfd_malloc:                           Internal.           (line   15)
-* *bfd_mmap:                             Miscellaneous.      (line  459)
+* *bfd_mmap:                             Miscellaneous.      (line  466)
 * *bfd_openr:                            Opening and Closing.
                                                              (line   54)
 * *bfd_openr_iovec:                      Opening and Closing.
@@ -11569,7 +11625,7 @@ BFD Index
                                                              (line  159)
 * *bfd_realloc:                          Internal.           (line   24)
 * *bfd_realloc_or_free:                  Internal.           (line   42)
-* *bfd_reloc_type_lookup:                howto manager.      (line 3595)
+* *bfd_reloc_type_lookup:                howto manager.      (line 3599)
 * *bfd_sections_find_if:                 section prototypes. (line  178)
 * *bfd_zalloc:                           Internal.           (line   81)
 * *bfd_zmalloc:                          Internal.           (line   62)
@@ -11579,10 +11635,8 @@ BFD Index
                                                              (line   12)
 * *_bfd_new_bfd_contained_in:            Opening and Closing.
                                                              (line   18)
-* _bfd_clear_error_data:                 Error reporting.    (line   92)
-* _bfd_clear_error_data <1>:             Error reporting.    (line   96)
-* _bfd_error_handler:                    Error reporting.    (line  135)
-* _bfd_error_handler <1>:                Error reporting.    (line  139)
+* _bfd_error_handler:                    Error reporting.    (line  129)
+* _bfd_error_handler <1>:                Error reporting.    (line  133)
 * _bfd_final_link_relocate:              Relocating the section contents.
                                                              (line   22)
 * _bfd_free_cached_info:                 Opening and Closing.
@@ -11593,23 +11647,27 @@ BFD Index
                                                              (line   15)
 * _bfd_generic_link_add_one_symbol:      Adding symbols from an object file.
                                                              (line   19)
+* _bfd_generic_link_add_one_symbol <1>:  Writing the symbol table.
+                                                             (line   43)
+* _bfd_generic_link_add_one_symbol <2>:  Writing the symbol table.
+                                                             (line   47)
 * _bfd_generic_link_check_relocs:        Writing the symbol table.
-                                                             (line  126)
+                                                             (line  165)
 * _bfd_generic_link_check_relocs <1>:    Writing the symbol table.
-                                                             (line  130)
+                                                             (line  169)
 * _bfd_generic_link_hide_symbol:         Writing the symbol table.
-                                                             (line   75)
+                                                             (line  114)
 * _bfd_generic_link_hide_symbol <1>:     Writing the symbol table.
-                                                             (line   79)
+                                                             (line  118)
 * _bfd_generic_make_empty_symbol:        symbol handling functions.
                                                              (line   87)
-* _bfd_generic_set_reloc:                howto manager.      (line 3658)
-* _bfd_generic_set_reloc <1>:            howto manager.      (line 3662)
+* _bfd_generic_set_reloc:                howto manager.      (line 3662)
+* _bfd_generic_set_reloc <1>:            howto manager.      (line 3666)
 * _bfd_generic_verify_endian_match:      Writing the symbol table.
-                                                             (line  151)
+                                                             (line  190)
 * _bfd_generic_verify_endian_match <1>:  Writing the symbol table.
-                                                             (line  155)
-* _bfd_get_error_program_name:           Error reporting.    (line  183)
+                                                             (line  194)
+* _bfd_get_error_program_name:           Error reporting.    (line  177)
 * _bfd_link_add_symbols in target vector: Adding Symbols to the Hash Table.
                                                              (line    6)
 * _bfd_link_final_link in target vector: Performing the Final Link.
@@ -11622,9 +11680,9 @@ BFD Index
                                                              (line   14)
 * _bfd_relocate_contents:                Relocating the section contents.
                                                              (line   22)
-* _bfd_restore_error_handler_caching:    Error reporting.    (line  168)
-* _bfd_restore_error_handler_caching <1>: Error reporting.   (line  172)
-* _bfd_set_error_handler_caching:        Error reporting.    (line  157)
+* _bfd_restore_error_handler_caching:    Error reporting.    (line  162)
+* _bfd_restore_error_handler_caching <1>: Error reporting.   (line  166)
+* _bfd_set_error_handler_caching:        Error reporting.    (line  151)
 * _bfd_stringtab_add:                    Write Other Derived Routines.
                                                              (line  127)
 * _bfd_stringtab_add <1>:                Write Other Derived Routines.
@@ -11645,8 +11703,8 @@ BFD Index
                                                              (line  141)
 * _bfd_threading_enabled:                Threading.          (line   15)
 * _bfd_threading_enabled <1>:            Threading.          (line   20)
-* _bfd_unrecognized_reloc:               howto manager.      (line 3665)
-* _bfd_unrecognized_reloc <1>:           howto manager.      (line 3669)
+* _bfd_unrecognized_reloc:               howto manager.      (line 3669)
+* _bfd_unrecognized_reloc <1>:           howto manager.      (line 3673)
 * _bfd_xcoff_stringtab_init:             Write Other Derived Routines.
                                                              (line  112)
 * aout_SIZE_machine_type:                aout.               (line  130)
@@ -11700,7 +11758,7 @@ BFD Index
 * BFD_ARELOC_BFIN_RSHIFT:                howto manager.      (line 1179)
 * BFD_ARELOC_BFIN_SUB:                   howto manager.      (line 1169)
 * BFD_ARELOC_BFIN_XOR:                   howto manager.      (line 1185)
-* bfd_asprintf:                          Error reporting.    (line   98)
+* bfd_asprintf:                          Error reporting.    (line   92)
 * bfd_cache_close:                       File Caching.       (line   23)
 * bfd_cache_close <1>:                   File Caching.       (line   27)
 * bfd_cache_close_all:                   File Caching.       (line   33)
@@ -11759,7 +11817,7 @@ BFD Index
                                                              (line  108)
 * bfd_default_arch_struct:               Architectures.      (line  624)
 * bfd_default_compatible:                Architectures.      (line  677)
-* bfd_default_reloc_type_lookup:         howto manager.      (line 3600)
+* bfd_default_reloc_type_lookup:         howto manager.      (line 3604)
 * bfd_default_scan:                      Architectures.      (line  684)
 * bfd_default_scan <1>:                  Architectures.      (line  688)
 * bfd_default_set_arch_mach:             Architectures.      (line  641)
@@ -11768,12 +11826,14 @@ BFD Index
 * bfd_elf_bfd_from_remote_memory:        Opening and Closing.
                                                              (line  168)
 * bfd_elf_version_tree:                  Writing the symbol table.
-                                                             (line  102)
+                                                             (line  141)
 * bfd_emul_get_commonpagesize:           Miscellaneous.      (line  311)
 * bfd_emul_get_commonpagesize <1>:       Miscellaneous.      (line  315)
 * bfd_emul_get_maxpagesize:              Miscellaneous.      (line  304)
 * bfd_emul_get_maxpagesize <1>:          Miscellaneous.      (line  308)
 * bfd_errmsg:                            Error reporting.    (line   75)
+* bfd_extract_object_only_section:       Opening and Closing.
+                                                             (line  387)
 * bfd_fdopenr:                           Opening and Closing.
                                                              (line   67)
 * bfd_fdopenw:                           Opening and Closing.
@@ -11784,10 +11844,10 @@ BFD Index
                                                              (line  347)
 * bfd_find_target:                       bfd_target.         (line  545)
 * bfd_find_version_for_sym:              Writing the symbol table.
-                                                             (line   98)
+                                                             (line  137)
 * bfd_flavour_name:                      bfd_target.         (line  600)
-* bfd_flush:                             Miscellaneous.      (line  388)
-* bfd_flush <1>:                         Miscellaneous.      (line  392)
+* bfd_flush:                             Miscellaneous.      (line  395)
+* bfd_flush <1>:                         Miscellaneous.      (line  399)
 * bfd_follow_build_id_debuglink:         Opening and Closing.
                                                              (line  356)
 * bfd_follow_gnu_debugaltlink:           Opening and Closing.
@@ -11798,25 +11858,25 @@ BFD Index
                                                              (line   26)
 * bfd_format_string:                     Formats.            (line   79)
 * bfd_generic_define_common_symbol:      Writing the symbol table.
-                                                             (line   64)
+                                                             (line  103)
 * bfd_generic_define_common_symbol <1>:  Writing the symbol table.
-                                                             (line   68)
+                                                             (line  107)
 * bfd_generic_define_start_stop:         Writing the symbol table.
-                                                             (line   86)
-* bfd_generic_discard_group:             section prototypes. (line  276)
-* bfd_generic_discard_group <1>:         section prototypes. (line  280)
-* bfd_generic_gc_sections:               howto manager.      (line 3623)
-* bfd_generic_gc_sections <1>:           howto manager.      (line 3627)
-* bfd_generic_get_relocated_section_contents: howto manager. (line 3648)
-* bfd_generic_group_name:                section prototypes. (line  269)
-* bfd_generic_is_group_section:          section prototypes. (line  262)
-* bfd_generic_is_group_section <1>:      section prototypes. (line  266)
-* bfd_generic_lookup_section_flags:      howto manager.      (line 3631)
-* bfd_generic_lookup_section_flags <1>:  howto manager.      (line 3635)
-* bfd_generic_merge_sections:            howto manager.      (line 3640)
-* bfd_generic_merge_sections <1>:        howto manager.      (line 3644)
-* bfd_generic_relax_section:             howto manager.      (line 3615)
-* bfd_generic_relax_section <1>:         howto manager.      (line 3619)
+                                                             (line  125)
+* bfd_generic_discard_group:             section prototypes. (line  277)
+* bfd_generic_discard_group <1>:         section prototypes. (line  281)
+* bfd_generic_gc_sections:               howto manager.      (line 3627)
+* bfd_generic_gc_sections <1>:           howto manager.      (line 3631)
+* bfd_generic_get_relocated_section_contents: howto manager. (line 3652)
+* bfd_generic_group_name:                section prototypes. (line  270)
+* bfd_generic_is_group_section:          section prototypes. (line  263)
+* bfd_generic_is_group_section <1>:      section prototypes. (line  267)
+* bfd_generic_lookup_section_flags:      howto manager.      (line 3635)
+* bfd_generic_lookup_section_flags <1>:  howto manager.      (line 3639)
+* bfd_generic_merge_sections:            howto manager.      (line 3644)
+* bfd_generic_merge_sections <1>:        howto manager.      (line 3648)
+* bfd_generic_relax_section:             howto manager.      (line 3619)
+* bfd_generic_relax_section <1>:         howto manager.      (line 3623)
 * bfd_getb64:                            Internal.           (line  260)
 * bfd_get_alt_debug_link_info:           Opening and Closing.
                                                              (line  282)
@@ -11824,24 +11884,24 @@ BFD Index
 * bfd_get_arch_info:                     Architectures.      (line  692)
 * bfd_get_arch_size:                     Miscellaneous.      (line   58)
 * bfd_get_arch_size <1>:                 Miscellaneous.      (line   62)
-* bfd_get_current_time:                  Miscellaneous.      (line  465)
-* bfd_get_current_time <1>:              Miscellaneous.      (line  469)
+* bfd_get_current_time:                  Miscellaneous.      (line  473)
+* bfd_get_current_time <1>:              Miscellaneous.      (line  477)
 * bfd_get_debug_link_info:               Opening and Closing.
                                                              (line  266)
 * bfd_get_error:                         Error reporting.    (line   50)
 * bfd_get_error <1>:                     Error reporting.    (line   55)
-* bfd_get_file_size:                     Miscellaneous.      (line  447)
-* bfd_get_file_size <1>:                 Miscellaneous.      (line  451)
+* bfd_get_file_size:                     Miscellaneous.      (line  454)
+* bfd_get_file_size <1>:                 Miscellaneous.      (line  458)
 * bfd_get_gp_size:                       Miscellaneous.      (line   92)
 * bfd_get_linker_section:                section prototypes. (line   33)
 * bfd_get_mach:                          Architectures.      (line  657)
-* bfd_get_mtime:                         Miscellaneous.      (line  410)
-* bfd_get_mtime <1>:                     Miscellaneous.      (line  414)
+* bfd_get_mtime:                         Miscellaneous.      (line  417)
+* bfd_get_mtime <1>:                     Miscellaneous.      (line  421)
 * bfd_get_next_mapent:                   Archives.           (line   56)
 * bfd_get_next_mapent <1>:               Archives.           (line   60)
 * bfd_get_next_section_by_name:          section prototypes. (line   22)
 * bfd_get_relocated_section_contents:    Miscellaneous.      (line  269)
-* bfd_get_reloc_code_name:               howto manager.      (line 3607)
+* bfd_get_reloc_code_name:               howto manager.      (line 3611)
 * bfd_get_reloc_upper_bound:             Miscellaneous.      (line    8)
 * bfd_get_reloc_upper_bound <1>:         Miscellaneous.      (line   12)
 * bfd_get_section_by_name:               section prototypes. (line   14)
@@ -11850,13 +11910,14 @@ BFD Index
 * bfd_get_section_contents <1>:          section prototypes. (line  227)
 * bfd_get_sign_extend_vma:               Miscellaneous.      (line   70)
 * bfd_get_sign_extend_vma <1>:           Miscellaneous.      (line   74)
-* bfd_get_size:                          Miscellaneous.      (line  417)
-* bfd_get_size <1>:                      Miscellaneous.      (line  421)
+* bfd_get_size:                          Miscellaneous.      (line  424)
+* bfd_get_size <1>:                      Miscellaneous.      (line  428)
 * bfd_get_size <2>:                      Internal.           (line  102)
 * bfd_get_symtab_upper_bound:            symbol handling functions.
                                                              (line    5)
 * bfd_get_target_info:                   bfd_target.         (line  560)
 * bfd_get_unique_section_name:           section prototypes. (line   56)
+* bfd_group_signature:                   Miscellaneous.      (line  327)
 * bfd_hash_allocate:                     Creating and Freeing a Hash Table.
                                                              (line   17)
 * bfd_hash_allocate <1>:                 Write Other Derived Routines.
@@ -11914,9 +11975,9 @@ BFD Index
 * bfd_hash_traverse <2>:                 Write Other Derived Routines.
                                                              (line   97)
 * bfd_hide_sym_by_version:               Writing the symbol table.
-                                                             (line  109)
+                                                             (line  148)
 * bfd_hide_sym_by_version <1>:           Writing the symbol table.
-                                                             (line  113)
+                                                             (line  152)
 * bfd_h_put_size:                        Internal.           (line  188)
 * bfd_init:                              Initialization.     (line    3)
 * bfd_install_relocation:                typedef arelent.    (line  331)
@@ -11938,18 +11999,22 @@ BFD Index
 * bfd_is_undefined_symclass <1>:         symbol handling functions.
                                                              (line  115)
 * bfd_iterate_over_targets:              bfd_target.         (line  590)
+* bfd_link_align_section:                Writing the symbol table.
+                                                             (line   65)
+* bfd_link_align_section <1>:            Writing the symbol table.
+                                                             (line   69)
 * bfd_link_check_relocs:                 Writing the symbol table.
-                                                             (line  117)
+                                                             (line  156)
 * bfd_link_check_relocs <1>:             Writing the symbol table.
-                                                             (line  121)
+                                                             (line  160)
 * bfd_link_hash_entry:                   Writing the symbol table.
-                                                             (line   90)
+                                                             (line  129)
 * bfd_link_split_section:                Writing the symbol table.
-                                                             (line   43)
+                                                             (line   82)
 * bfd_link_split_section <1>:            Writing the symbol table.
-                                                             (line   47)
-* bfd_lock:                              Threading.          (line   45)
-* bfd_lock <1>:                          Threading.          (line   49)
+                                                             (line   86)
+* bfd_lock:                              Threading.          (line   46)
+* bfd_lock <1>:                          Threading.          (line   50)
 * bfd_log2:                              Internal.           (line  280)
 * bfd_lookup_arch:                       Architectures.      (line  698)
 * bfd_make_debug_symbol:                 symbol handling functions.
@@ -11975,10 +12040,10 @@ BFD Index
 * bfd_map_over_sections:                 section prototypes. (line  156)
 * bfd_map_over_sections <1>:             section prototypes. (line  160)
 * bfd_merge_private_bfd_data:            Writing the symbol table.
-                                                             (line  135)
+                                                             (line  174)
 * bfd_merge_private_bfd_data <1>:        Writing the symbol table.
-                                                             (line  139)
-* bfd_mmap:                              Miscellaneous.      (line  455)
+                                                             (line  178)
+* bfd_mmap:                              Miscellaneous.      (line  462)
 * bfd_octets_per_byte:                   Architectures.      (line  717)
 * bfd_openr:                             Opening and Closing.
                                                              (line   50)
@@ -11997,15 +12062,15 @@ BFD Index
 * bfd_perror <1>:                        Error reporting.    (line   86)
 * bfd_printable_arch_mach:               Architectures.      (line  707)
 * bfd_printable_name:                    Architectures.      (line  590)
-* bfd_print_error:                       Error reporting.    (line  122)
-* bfd_print_error <1>:                   Error reporting.    (line  127)
+* bfd_print_error:                       Error reporting.    (line  116)
+* bfd_print_error <1>:                   Error reporting.    (line  121)
 * bfd_print_symbol_vandf:                symbol handling functions.
                                                              (line   65)
 * bfd_print_symbol_vandf <1>:            symbol handling functions.
                                                              (line   69)
 * bfd_put_size:                          Internal.           (line   99)
-* bfd_read:                              Miscellaneous.      (line  366)
-* bfd_read <1>:                          Miscellaneous.      (line  370)
+* bfd_read:                              Miscellaneous.      (line  373)
+* bfd_read <1>:                          Miscellaneous.      (line  377)
 * bfd_realloc:                           Internal.           (line   20)
 * bfd_realloc_or_free:                   Internal.           (line   38)
 * bfd_record_phdr:                       Miscellaneous.      (line  279)
@@ -12159,6 +12224,7 @@ BFD Index
 * BFD_RELOC_AARCH64_ADR_HI21_PCREL:      howto manager.      (line 2922)
 * BFD_RELOC_AARCH64_ADR_LO21_PCREL:      howto manager.      (line 2919)
 * BFD_RELOC_AARCH64_BRANCH19:            howto manager.      (line 2941)
+* BFD_RELOC_AARCH64_BRANCH9:             howto manager.      (line 3182)
 * BFD_RELOC_AARCH64_CALL26:              howto manager.      (line 2949)
 * BFD_RELOC_AARCH64_COPY:                howto manager.      (line 3134)
 * BFD_RELOC_AARCH64_GAS_INTERNAL_FIXUP:  howto manager.      (line 3152)
@@ -12556,10 +12622,10 @@ BFD Index
 * BFD_RELOC_BFIN_GOTOFFHI:               howto manager.      (line 1156)
 * BFD_RELOC_BFIN_GOTOFFLO:               howto manager.      (line 1157)
 * BFD_RELOC_BFIN_PLTPC:                  howto manager.      (line 1161)
-* BFD_RELOC_BPF_64:                      howto manager.      (line 3372)
-* BFD_RELOC_BPF_DISP16:                  howto manager.      (line 3375)
-* BFD_RELOC_BPF_DISP32:                  howto manager.      (line 3373)
-* BFD_RELOC_BPF_DISPCALL32:              howto manager.      (line 3374)
+* BFD_RELOC_BPF_64:                      howto manager.      (line 3376)
+* BFD_RELOC_BPF_DISP16:                  howto manager.      (line 3379)
+* BFD_RELOC_BPF_DISP32:                  howto manager.      (line 3377)
+* BFD_RELOC_BPF_DISPCALL32:              howto manager.      (line 3378)
 * BFD_RELOC_C6000_ABS_H16:               howto manager.      (line 1587)
 * BFD_RELOC_C6000_ABS_L16:               howto manager.      (line 1586)
 * BFD_RELOC_C6000_ABS_S16:               howto manager.      (line 1585)
@@ -12590,71 +12656,71 @@ BFD Index
 * BFD_RELOC_C6000_SBR_U15_B:             howto manager.      (line 1588)
 * BFD_RELOC_C6000_SBR_U15_H:             howto manager.      (line 1589)
 * BFD_RELOC_C6000_SBR_U15_W:             howto manager.      (line 1590)
-* BFD_RELOC_CKCORE_ADDR32:               howto manager.      (line 3412)
-* BFD_RELOC_CKCORE_ADDRGOT:              howto manager.      (line 3428)
-* BFD_RELOC_CKCORE_ADDRGOT_HI16:         howto manager.      (line 3447)
-* BFD_RELOC_CKCORE_ADDRGOT_LO16:         howto manager.      (line 3448)
-* BFD_RELOC_CKCORE_ADDRPLT:              howto manager.      (line 3429)
-* BFD_RELOC_CKCORE_ADDRPLT_HI16:         howto manager.      (line 3449)
-* BFD_RELOC_CKCORE_ADDRPLT_LO16:         howto manager.      (line 3450)
-* BFD_RELOC_CKCORE_ADDR_HI16:            howto manager.      (line 3435)
-* BFD_RELOC_CKCORE_ADDR_LO16:            howto manager.      (line 3436)
-* BFD_RELOC_CKCORE_CALLGRAPH:            howto manager.      (line 3472)
-* BFD_RELOC_CKCORE_COPY:                 howto manager.      (line 3421)
-* BFD_RELOC_CKCORE_DOFFSET_IMM18:        howto manager.      (line 3455)
-* BFD_RELOC_CKCORE_DOFFSET_IMM18BY2:     howto manager.      (line 3456)
-* BFD_RELOC_CKCORE_DOFFSET_IMM18BY4:     howto manager.      (line 3457)
-* BFD_RELOC_CKCORE_DOFFSET_LO16:         howto manager.      (line 3453)
-* BFD_RELOC_CKCORE_GLOB_DAT:             howto manager.      (line 3422)
-* BFD_RELOC_CKCORE_GNU_VTENTRY:          howto manager.      (line 3419)
-* BFD_RELOC_CKCORE_GNU_VTINHERIT:        howto manager.      (line 3418)
-* BFD_RELOC_CKCORE_GOT12:                howto manager.      (line 3441)
-* BFD_RELOC_CKCORE_GOT32:                howto manager.      (line 3426)
-* BFD_RELOC_CKCORE_GOTOFF:               howto manager.      (line 3424)
-* BFD_RELOC_CKCORE_GOTOFF_HI16:          howto manager.      (line 3439)
-* BFD_RELOC_CKCORE_GOTOFF_IMM18:         howto manager.      (line 3458)
-* BFD_RELOC_CKCORE_GOTOFF_LO16:          howto manager.      (line 3440)
-* BFD_RELOC_CKCORE_GOTPC:                howto manager.      (line 3425)
-* BFD_RELOC_CKCORE_GOTPC_HI16:           howto manager.      (line 3437)
-* BFD_RELOC_CKCORE_GOTPC_LO16:           howto manager.      (line 3438)
-* BFD_RELOC_CKCORE_GOT_HI16:             howto manager.      (line 3442)
-* BFD_RELOC_CKCORE_GOT_IMM18BY4:         howto manager.      (line 3459)
-* BFD_RELOC_CKCORE_GOT_LO16:             howto manager.      (line 3443)
-* BFD_RELOC_CKCORE_IRELATIVE:            howto manager.      (line 3473)
-* BFD_RELOC_CKCORE_JUMP_SLOT:            howto manager.      (line 3423)
-* BFD_RELOC_CKCORE_NOJSRI:               howto manager.      (line 3471)
-* BFD_RELOC_CKCORE_NONE:                 howto manager.      (line 3411)
-* BFD_RELOC_CKCORE_PCREL32:              howto manager.      (line 3416)
-* BFD_RELOC_CKCORE_PCREL_BLOOP_IMM12BY4: howto manager.      (line 3475)
-* BFD_RELOC_CKCORE_PCREL_BLOOP_IMM4BY4:  howto manager.      (line 3474)
-* BFD_RELOC_CKCORE_PCREL_FLRW_IMM8BY4:   howto manager.      (line 3470)
-* BFD_RELOC_CKCORE_PCREL_IMM10BY2:       howto manager.      (line 3433)
-* BFD_RELOC_CKCORE_PCREL_IMM10BY4:       howto manager.      (line 3434)
-* BFD_RELOC_CKCORE_PCREL_IMM11BY2:       howto manager.      (line 3414)
-* BFD_RELOC_CKCORE_PCREL_IMM16BY2:       howto manager.      (line 3431)
-* BFD_RELOC_CKCORE_PCREL_IMM16BY4:       howto manager.      (line 3432)
-* BFD_RELOC_CKCORE_PCREL_IMM18BY2:       howto manager.      (line 3454)
-* BFD_RELOC_CKCORE_PCREL_IMM26BY2:       howto manager.      (line 3430)
-* BFD_RELOC_CKCORE_PCREL_IMM4BY2:        howto manager.      (line 3415)
-* BFD_RELOC_CKCORE_PCREL_IMM7BY4:        howto manager.      (line 3461)
-* BFD_RELOC_CKCORE_PCREL_IMM8BY4:        howto manager.      (line 3413)
-* BFD_RELOC_CKCORE_PCREL_JSR_IMM11BY2:   howto manager.      (line 3417)
-* BFD_RELOC_CKCORE_PCREL_JSR_IMM26BY2:   howto manager.      (line 3451)
-* BFD_RELOC_CKCORE_PLT12:                howto manager.      (line 3444)
-* BFD_RELOC_CKCORE_PLT32:                howto manager.      (line 3427)
-* BFD_RELOC_CKCORE_PLT_HI16:             howto manager.      (line 3445)
-* BFD_RELOC_CKCORE_PLT_IMM18BY4:         howto manager.      (line 3460)
-* BFD_RELOC_CKCORE_PLT_LO16:             howto manager.      (line 3446)
-* BFD_RELOC_CKCORE_RELATIVE:             howto manager.      (line 3420)
-* BFD_RELOC_CKCORE_TLS_DTPMOD32:         howto manager.      (line 3467)
-* BFD_RELOC_CKCORE_TLS_DTPOFF32:         howto manager.      (line 3468)
-* BFD_RELOC_CKCORE_TLS_GD32:             howto manager.      (line 3464)
-* BFD_RELOC_CKCORE_TLS_IE32:             howto manager.      (line 3463)
-* BFD_RELOC_CKCORE_TLS_LDM32:            howto manager.      (line 3465)
-* BFD_RELOC_CKCORE_TLS_LDO32:            howto manager.      (line 3466)
-* BFD_RELOC_CKCORE_TLS_LE32:             howto manager.      (line 3462)
-* BFD_RELOC_CKCORE_TLS_TPOFF32:          howto manager.      (line 3469)
-* BFD_RELOC_CKCORE_TOFFSET_LO16:         howto manager.      (line 3452)
+* BFD_RELOC_CKCORE_ADDR32:               howto manager.      (line 3416)
+* BFD_RELOC_CKCORE_ADDRGOT:              howto manager.      (line 3432)
+* BFD_RELOC_CKCORE_ADDRGOT_HI16:         howto manager.      (line 3451)
+* BFD_RELOC_CKCORE_ADDRGOT_LO16:         howto manager.      (line 3452)
+* BFD_RELOC_CKCORE_ADDRPLT:              howto manager.      (line 3433)
+* BFD_RELOC_CKCORE_ADDRPLT_HI16:         howto manager.      (line 3453)
+* BFD_RELOC_CKCORE_ADDRPLT_LO16:         howto manager.      (line 3454)
+* BFD_RELOC_CKCORE_ADDR_HI16:            howto manager.      (line 3439)
+* BFD_RELOC_CKCORE_ADDR_LO16:            howto manager.      (line 3440)
+* BFD_RELOC_CKCORE_CALLGRAPH:            howto manager.      (line 3476)
+* BFD_RELOC_CKCORE_COPY:                 howto manager.      (line 3425)
+* BFD_RELOC_CKCORE_DOFFSET_IMM18:        howto manager.      (line 3459)
+* BFD_RELOC_CKCORE_DOFFSET_IMM18BY2:     howto manager.      (line 3460)
+* BFD_RELOC_CKCORE_DOFFSET_IMM18BY4:     howto manager.      (line 3461)
+* BFD_RELOC_CKCORE_DOFFSET_LO16:         howto manager.      (line 3457)
+* BFD_RELOC_CKCORE_GLOB_DAT:             howto manager.      (line 3426)
+* BFD_RELOC_CKCORE_GNU_VTENTRY:          howto manager.      (line 3423)
+* BFD_RELOC_CKCORE_GNU_VTINHERIT:        howto manager.      (line 3422)
+* BFD_RELOC_CKCORE_GOT12:                howto manager.      (line 3445)
+* BFD_RELOC_CKCORE_GOT32:                howto manager.      (line 3430)
+* BFD_RELOC_CKCORE_GOTOFF:               howto manager.      (line 3428)
+* BFD_RELOC_CKCORE_GOTOFF_HI16:          howto manager.      (line 3443)
+* BFD_RELOC_CKCORE_GOTOFF_IMM18:         howto manager.      (line 3462)
+* BFD_RELOC_CKCORE_GOTOFF_LO16:          howto manager.      (line 3444)
+* BFD_RELOC_CKCORE_GOTPC:                howto manager.      (line 3429)
+* BFD_RELOC_CKCORE_GOTPC_HI16:           howto manager.      (line 3441)
+* BFD_RELOC_CKCORE_GOTPC_LO16:           howto manager.      (line 3442)
+* BFD_RELOC_CKCORE_GOT_HI16:             howto manager.      (line 3446)
+* BFD_RELOC_CKCORE_GOT_IMM18BY4:         howto manager.      (line 3463)
+* BFD_RELOC_CKCORE_GOT_LO16:             howto manager.      (line 3447)
+* BFD_RELOC_CKCORE_IRELATIVE:            howto manager.      (line 3477)
+* BFD_RELOC_CKCORE_JUMP_SLOT:            howto manager.      (line 3427)
+* BFD_RELOC_CKCORE_NOJSRI:               howto manager.      (line 3475)
+* BFD_RELOC_CKCORE_NONE:                 howto manager.      (line 3415)
+* BFD_RELOC_CKCORE_PCREL32:              howto manager.      (line 3420)
+* BFD_RELOC_CKCORE_PCREL_BLOOP_IMM12BY4: howto manager.      (line 3479)
+* BFD_RELOC_CKCORE_PCREL_BLOOP_IMM4BY4:  howto manager.      (line 3478)
+* BFD_RELOC_CKCORE_PCREL_FLRW_IMM8BY4:   howto manager.      (line 3474)
+* BFD_RELOC_CKCORE_PCREL_IMM10BY2:       howto manager.      (line 3437)
+* BFD_RELOC_CKCORE_PCREL_IMM10BY4:       howto manager.      (line 3438)
+* BFD_RELOC_CKCORE_PCREL_IMM11BY2:       howto manager.      (line 3418)
+* BFD_RELOC_CKCORE_PCREL_IMM16BY2:       howto manager.      (line 3435)
+* BFD_RELOC_CKCORE_PCREL_IMM16BY4:       howto manager.      (line 3436)
+* BFD_RELOC_CKCORE_PCREL_IMM18BY2:       howto manager.      (line 3458)
+* BFD_RELOC_CKCORE_PCREL_IMM26BY2:       howto manager.      (line 3434)
+* BFD_RELOC_CKCORE_PCREL_IMM4BY2:        howto manager.      (line 3419)
+* BFD_RELOC_CKCORE_PCREL_IMM7BY4:        howto manager.      (line 3465)
+* BFD_RELOC_CKCORE_PCREL_IMM8BY4:        howto manager.      (line 3417)
+* BFD_RELOC_CKCORE_PCREL_JSR_IMM11BY2:   howto manager.      (line 3421)
+* BFD_RELOC_CKCORE_PCREL_JSR_IMM26BY2:   howto manager.      (line 3455)
+* BFD_RELOC_CKCORE_PLT12:                howto manager.      (line 3448)
+* BFD_RELOC_CKCORE_PLT32:                howto manager.      (line 3431)
+* BFD_RELOC_CKCORE_PLT_HI16:             howto manager.      (line 3449)
+* BFD_RELOC_CKCORE_PLT_IMM18BY4:         howto manager.      (line 3464)
+* BFD_RELOC_CKCORE_PLT_LO16:             howto manager.      (line 3450)
+* BFD_RELOC_CKCORE_RELATIVE:             howto manager.      (line 3424)
+* BFD_RELOC_CKCORE_TLS_DTPMOD32:         howto manager.      (line 3471)
+* BFD_RELOC_CKCORE_TLS_DTPOFF32:         howto manager.      (line 3472)
+* BFD_RELOC_CKCORE_TLS_GD32:             howto manager.      (line 3468)
+* BFD_RELOC_CKCORE_TLS_IE32:             howto manager.      (line 3467)
+* BFD_RELOC_CKCORE_TLS_LDM32:            howto manager.      (line 3469)
+* BFD_RELOC_CKCORE_TLS_LDO32:            howto manager.      (line 3470)
+* BFD_RELOC_CKCORE_TLS_LE32:             howto manager.      (line 3466)
+* BFD_RELOC_CKCORE_TLS_TPOFF32:          howto manager.      (line 3473)
+* BFD_RELOC_CKCORE_TOFFSET_LO16:         howto manager.      (line 3456)
 * bfd_reloc_code_real_type:              howto manager.      (line    9)
 * BFD_RELOC_CR16_ABS20:                  howto manager.      (line 2288)
 * BFD_RELOC_CR16_ABS24:                  howto manager.      (line 2289)
@@ -12761,13 +12827,13 @@ BFD Index
 * BFD_RELOC_DLX_HI16_S:                  howto manager.      (line 1247)
 * BFD_RELOC_DLX_JMP26:                   howto manager.      (line 1249)
 * BFD_RELOC_DLX_LO16:                    howto manager.      (line 1248)
-* BFD_RELOC_EPIPHANY_HIGH:               howto manager.      (line 3381)
-* BFD_RELOC_EPIPHANY_IMM11:              howto manager.      (line 3387)
-* BFD_RELOC_EPIPHANY_IMM8:               howto manager.      (line 3390)
-* BFD_RELOC_EPIPHANY_LOW:                howto manager.      (line 3383)
-* BFD_RELOC_EPIPHANY_SIMM11:             howto manager.      (line 3385)
-* BFD_RELOC_EPIPHANY_SIMM24:             howto manager.      (line 3379)
-* BFD_RELOC_EPIPHANY_SIMM8:              howto manager.      (line 3377)
+* BFD_RELOC_EPIPHANY_HIGH:               howto manager.      (line 3385)
+* BFD_RELOC_EPIPHANY_IMM11:              howto manager.      (line 3391)
+* BFD_RELOC_EPIPHANY_IMM8:               howto manager.      (line 3394)
+* BFD_RELOC_EPIPHANY_LOW:                howto manager.      (line 3387)
+* BFD_RELOC_EPIPHANY_SIMM11:             howto manager.      (line 3389)
+* BFD_RELOC_EPIPHANY_SIMM24:             howto manager.      (line 3383)
+* BFD_RELOC_EPIPHANY_SIMM8:              howto manager.      (line 3381)
 * BFD_RELOC_FR30_10_IN_8:                howto manager.      (line 1626)
 * BFD_RELOC_FR30_12_PCREL:               howto manager.      (line 1632)
 * BFD_RELOC_FR30_20:                     howto manager.      (line 1614)
@@ -13023,114 +13089,114 @@ BFD Index
 * BFD_RELOC_KVX_S64_PCREL_LO10:          howto manager.      (line 2762)
 * BFD_RELOC_KVX_S64_PCREL_UP27:          howto manager.      (line 2763)
 * BFD_RELOC_KVX_S64_UP27:                howto manager.      (line 2793)
-* BFD_RELOC_LARCH_32_PCREL:              howto manager.      (line 3559)
-* BFD_RELOC_LARCH_64_PCREL:              howto manager.      (line 3569)
-* BFD_RELOC_LARCH_ABS64_HI12:            howto manager.      (line 3530)
-* BFD_RELOC_LARCH_ABS64_LO20:            howto manager.      (line 3529)
-* BFD_RELOC_LARCH_ABS_HI20:              howto manager.      (line 3527)
-* BFD_RELOC_LARCH_ABS_LO12:              howto manager.      (line 3528)
-* BFD_RELOC_LARCH_ADD16:                 howto manager.      (line 3515)
-* BFD_RELOC_LARCH_ADD24:                 howto manager.      (line 3516)
-* BFD_RELOC_LARCH_ADD32:                 howto manager.      (line 3517)
-* BFD_RELOC_LARCH_ADD6:                  howto manager.      (line 3565)
-* BFD_RELOC_LARCH_ADD64:                 howto manager.      (line 3518)
-* BFD_RELOC_LARCH_ADD8:                  howto manager.      (line 3514)
-* BFD_RELOC_LARCH_ADD_ULEB128:           howto manager.      (line 3567)
-* BFD_RELOC_LARCH_ALIGN:                 howto manager.      (line 3562)
-* BFD_RELOC_LARCH_B16:                   howto manager.      (line 3524)
-* BFD_RELOC_LARCH_B21:                   howto manager.      (line 3525)
-* BFD_RELOC_LARCH_B26:                   howto manager.      (line 3526)
-* BFD_RELOC_LARCH_CALL36:                howto manager.      (line 3570)
-* BFD_RELOC_LARCH_CFA:                   howto manager.      (line 3564)
-* BFD_RELOC_LARCH_DELETE:                howto manager.      (line 3561)
-* BFD_RELOC_LARCH_GOT64_HI12:            howto manager.      (line 3542)
-* BFD_RELOC_LARCH_GOT64_LO20:            howto manager.      (line 3541)
-* BFD_RELOC_LARCH_GOT64_PC_HI12:         howto manager.      (line 3538)
-* BFD_RELOC_LARCH_GOT64_PC_LO20:         howto manager.      (line 3537)
-* BFD_RELOC_LARCH_GOT_HI20:              howto manager.      (line 3539)
-* BFD_RELOC_LARCH_GOT_LO12:              howto manager.      (line 3540)
-* BFD_RELOC_LARCH_GOT_PC_HI20:           howto manager.      (line 3535)
-* BFD_RELOC_LARCH_GOT_PC_LO12:           howto manager.      (line 3536)
-* BFD_RELOC_LARCH_MARK_LA:               howto manager.      (line 3487)
-* BFD_RELOC_LARCH_MARK_PCREL:            howto manager.      (line 3488)
-* BFD_RELOC_LARCH_PCALA64_HI12:          howto manager.      (line 3534)
-* BFD_RELOC_LARCH_PCALA64_LO20:          howto manager.      (line 3533)
-* BFD_RELOC_LARCH_PCALA_HI20:            howto manager.      (line 3531)
-* BFD_RELOC_LARCH_PCALA_LO12:            howto manager.      (line 3532)
-* BFD_RELOC_LARCH_PCREL20_S2:            howto manager.      (line 3563)
-* BFD_RELOC_LARCH_RELAX:                 howto manager.      (line 3560)
-* BFD_RELOC_LARCH_SOP_ADD:               howto manager.      (line 3502)
-* BFD_RELOC_LARCH_SOP_AND:               howto manager.      (line 3503)
-* BFD_RELOC_LARCH_SOP_ASSERT:            howto manager.      (line 3497)
-* BFD_RELOC_LARCH_SOP_IF_ELSE:           howto manager.      (line 3504)
-* BFD_RELOC_LARCH_SOP_NOT:               howto manager.      (line 3498)
-* BFD_RELOC_LARCH_SOP_POP_32_S_0_10_10_16_S2: howto manager. (line 3512)
-* BFD_RELOC_LARCH_SOP_POP_32_S_0_5_10_16_S2: howto manager.  (line 3511)
-* BFD_RELOC_LARCH_SOP_POP_32_S_10_12:    howto manager.      (line 3507)
-* BFD_RELOC_LARCH_SOP_POP_32_S_10_16:    howto manager.      (line 3508)
-* BFD_RELOC_LARCH_SOP_POP_32_S_10_16_S2: howto manager.      (line 3509)
-* BFD_RELOC_LARCH_SOP_POP_32_S_10_5:     howto manager.      (line 3505)
-* BFD_RELOC_LARCH_SOP_POP_32_S_5_20:     howto manager.      (line 3510)
-* BFD_RELOC_LARCH_SOP_POP_32_U:          howto manager.      (line 3513)
-* BFD_RELOC_LARCH_SOP_POP_32_U_10_12:    howto manager.      (line 3506)
-* BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE:     howto manager.      (line 3490)
-* BFD_RELOC_LARCH_SOP_PUSH_DUP:          howto manager.      (line 3491)
-* BFD_RELOC_LARCH_SOP_PUSH_GPREL:        howto manager.      (line 3492)
-* BFD_RELOC_LARCH_SOP_PUSH_PCREL:        howto manager.      (line 3489)
-* BFD_RELOC_LARCH_SOP_PUSH_PLT_PCREL:    howto manager.      (line 3496)
-* BFD_RELOC_LARCH_SOP_PUSH_TLS_GD:       howto manager.      (line 3495)
-* BFD_RELOC_LARCH_SOP_PUSH_TLS_GOT:      howto manager.      (line 3494)
-* BFD_RELOC_LARCH_SOP_PUSH_TLS_TPREL:    howto manager.      (line 3493)
-* BFD_RELOC_LARCH_SOP_SL:                howto manager.      (line 3500)
-* BFD_RELOC_LARCH_SOP_SR:                howto manager.      (line 3501)
-* BFD_RELOC_LARCH_SOP_SUB:               howto manager.      (line 3499)
-* BFD_RELOC_LARCH_SUB16:                 howto manager.      (line 3520)
-* BFD_RELOC_LARCH_SUB24:                 howto manager.      (line 3521)
-* BFD_RELOC_LARCH_SUB32:                 howto manager.      (line 3522)
-* BFD_RELOC_LARCH_SUB6:                  howto manager.      (line 3566)
-* BFD_RELOC_LARCH_SUB64:                 howto manager.      (line 3523)
-* BFD_RELOC_LARCH_SUB8:                  howto manager.      (line 3519)
-* BFD_RELOC_LARCH_SUB_ULEB128:           howto manager.      (line 3568)
-* BFD_RELOC_LARCH_TLS_DESC32:            howto manager.      (line 3485)
-* BFD_RELOC_LARCH_TLS_DESC64:            howto manager.      (line 3486)
-* BFD_RELOC_LARCH_TLS_DESC64_HI12:       howto manager.      (line 3578)
-* BFD_RELOC_LARCH_TLS_DESC64_LO20:       howto manager.      (line 3577)
-* BFD_RELOC_LARCH_TLS_DESC64_PC_HI12:    howto manager.      (line 3574)
-* BFD_RELOC_LARCH_TLS_DESC64_PC_LO20:    howto manager.      (line 3573)
-* BFD_RELOC_LARCH_TLS_DESC_CALL:         howto manager.      (line 3580)
-* BFD_RELOC_LARCH_TLS_DESC_HI20:         howto manager.      (line 3575)
-* BFD_RELOC_LARCH_TLS_DESC_LD:           howto manager.      (line 3579)
-* BFD_RELOC_LARCH_TLS_DESC_LO12:         howto manager.      (line 3576)
-* BFD_RELOC_LARCH_TLS_DESC_PCREL20_S2:   howto manager.      (line 3586)
-* BFD_RELOC_LARCH_TLS_DESC_PC_HI20:      howto manager.      (line 3571)
-* BFD_RELOC_LARCH_TLS_DESC_PC_LO12:      howto manager.      (line 3572)
-* BFD_RELOC_LARCH_TLS_DTPMOD32:          howto manager.      (line 3479)
-* BFD_RELOC_LARCH_TLS_DTPMOD64:          howto manager.      (line 3481)
-* BFD_RELOC_LARCH_TLS_DTPREL32:          howto manager.      (line 3480)
-* BFD_RELOC_LARCH_TLS_DTPREL64:          howto manager.      (line 3482)
-* BFD_RELOC_LARCH_TLS_GD_HI20:           howto manager.      (line 3558)
-* BFD_RELOC_LARCH_TLS_GD_PCREL20_S2:     howto manager.      (line 3585)
-* BFD_RELOC_LARCH_TLS_GD_PC_HI20:        howto manager.      (line 3557)
-* BFD_RELOC_LARCH_TLS_IE64_HI12:         howto manager.      (line 3554)
-* BFD_RELOC_LARCH_TLS_IE64_LO20:         howto manager.      (line 3553)
-* BFD_RELOC_LARCH_TLS_IE64_PC_HI12:      howto manager.      (line 3550)
-* BFD_RELOC_LARCH_TLS_IE64_PC_LO20:      howto manager.      (line 3549)
-* BFD_RELOC_LARCH_TLS_IE_HI20:           howto manager.      (line 3551)
-* BFD_RELOC_LARCH_TLS_IE_LO12:           howto manager.      (line 3552)
-* BFD_RELOC_LARCH_TLS_IE_PC_HI20:        howto manager.      (line 3547)
-* BFD_RELOC_LARCH_TLS_IE_PC_LO12:        howto manager.      (line 3548)
-* BFD_RELOC_LARCH_TLS_LD_HI20:           howto manager.      (line 3556)
-* BFD_RELOC_LARCH_TLS_LD_PCREL20_S2:     howto manager.      (line 3584)
-* BFD_RELOC_LARCH_TLS_LD_PC_HI20:        howto manager.      (line 3555)
-* BFD_RELOC_LARCH_TLS_LE64_HI12:         howto manager.      (line 3546)
-* BFD_RELOC_LARCH_TLS_LE64_LO20:         howto manager.      (line 3545)
-* BFD_RELOC_LARCH_TLS_LE_ADD_R:          howto manager.      (line 3582)
-* BFD_RELOC_LARCH_TLS_LE_HI20:           howto manager.      (line 3543)
-* BFD_RELOC_LARCH_TLS_LE_HI20_R:         howto manager.      (line 3581)
-* BFD_RELOC_LARCH_TLS_LE_LO12:           howto manager.      (line 3544)
-* BFD_RELOC_LARCH_TLS_LE_LO12_R:         howto manager.      (line 3583)
-* BFD_RELOC_LARCH_TLS_TPREL32:           howto manager.      (line 3483)
-* BFD_RELOC_LARCH_TLS_TPREL64:           howto manager.      (line 3484)
+* BFD_RELOC_LARCH_32_PCREL:              howto manager.      (line 3563)
+* BFD_RELOC_LARCH_64_PCREL:              howto manager.      (line 3573)
+* BFD_RELOC_LARCH_ABS64_HI12:            howto manager.      (line 3534)
+* BFD_RELOC_LARCH_ABS64_LO20:            howto manager.      (line 3533)
+* BFD_RELOC_LARCH_ABS_HI20:              howto manager.      (line 3531)
+* BFD_RELOC_LARCH_ABS_LO12:              howto manager.      (line 3532)
+* BFD_RELOC_LARCH_ADD16:                 howto manager.      (line 3519)
+* BFD_RELOC_LARCH_ADD24:                 howto manager.      (line 3520)
+* BFD_RELOC_LARCH_ADD32:                 howto manager.      (line 3521)
+* BFD_RELOC_LARCH_ADD6:                  howto manager.      (line 3569)
+* BFD_RELOC_LARCH_ADD64:                 howto manager.      (line 3522)
+* BFD_RELOC_LARCH_ADD8:                  howto manager.      (line 3518)
+* BFD_RELOC_LARCH_ADD_ULEB128:           howto manager.      (line 3571)
+* BFD_RELOC_LARCH_ALIGN:                 howto manager.      (line 3566)
+* BFD_RELOC_LARCH_B16:                   howto manager.      (line 3528)
+* BFD_RELOC_LARCH_B21:                   howto manager.      (line 3529)
+* BFD_RELOC_LARCH_B26:                   howto manager.      (line 3530)
+* BFD_RELOC_LARCH_CALL36:                howto manager.      (line 3574)
+* BFD_RELOC_LARCH_CFA:                   howto manager.      (line 3568)
+* BFD_RELOC_LARCH_DELETE:                howto manager.      (line 3565)
+* BFD_RELOC_LARCH_GOT64_HI12:            howto manager.      (line 3546)
+* BFD_RELOC_LARCH_GOT64_LO20:            howto manager.      (line 3545)
+* BFD_RELOC_LARCH_GOT64_PC_HI12:         howto manager.      (line 3542)
+* BFD_RELOC_LARCH_GOT64_PC_LO20:         howto manager.      (line 3541)
+* BFD_RELOC_LARCH_GOT_HI20:              howto manager.      (line 3543)
+* BFD_RELOC_LARCH_GOT_LO12:              howto manager.      (line 3544)
+* BFD_RELOC_LARCH_GOT_PC_HI20:           howto manager.      (line 3539)
+* BFD_RELOC_LARCH_GOT_PC_LO12:           howto manager.      (line 3540)
+* BFD_RELOC_LARCH_MARK_LA:               howto manager.      (line 3491)
+* BFD_RELOC_LARCH_MARK_PCREL:            howto manager.      (line 3492)
+* BFD_RELOC_LARCH_PCALA64_HI12:          howto manager.      (line 3538)
+* BFD_RELOC_LARCH_PCALA64_LO20:          howto manager.      (line 3537)
+* BFD_RELOC_LARCH_PCALA_HI20:            howto manager.      (line 3535)
+* BFD_RELOC_LARCH_PCALA_LO12:            howto manager.      (line 3536)
+* BFD_RELOC_LARCH_PCREL20_S2:            howto manager.      (line 3567)
+* BFD_RELOC_LARCH_RELAX:                 howto manager.      (line 3564)
+* BFD_RELOC_LARCH_SOP_ADD:               howto manager.      (line 3506)
+* BFD_RELOC_LARCH_SOP_AND:               howto manager.      (line 3507)
+* BFD_RELOC_LARCH_SOP_ASSERT:            howto manager.      (line 3501)
+* BFD_RELOC_LARCH_SOP_IF_ELSE:           howto manager.      (line 3508)
+* BFD_RELOC_LARCH_SOP_NOT:               howto manager.      (line 3502)
+* BFD_RELOC_LARCH_SOP_POP_32_S_0_10_10_16_S2: howto manager. (line 3516)
+* BFD_RELOC_LARCH_SOP_POP_32_S_0_5_10_16_S2: howto manager.  (line 3515)
+* BFD_RELOC_LARCH_SOP_POP_32_S_10_12:    howto manager.      (line 3511)
+* BFD_RELOC_LARCH_SOP_POP_32_S_10_16:    howto manager.      (line 3512)
+* BFD_RELOC_LARCH_SOP_POP_32_S_10_16_S2: howto manager.      (line 3513)
+* BFD_RELOC_LARCH_SOP_POP_32_S_10_5:     howto manager.      (line 3509)
+* BFD_RELOC_LARCH_SOP_POP_32_S_5_20:     howto manager.      (line 3514)
+* BFD_RELOC_LARCH_SOP_POP_32_U:          howto manager.      (line 3517)
+* BFD_RELOC_LARCH_SOP_POP_32_U_10_12:    howto manager.      (line 3510)
+* BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE:     howto manager.      (line 3494)
+* BFD_RELOC_LARCH_SOP_PUSH_DUP:          howto manager.      (line 3495)
+* BFD_RELOC_LARCH_SOP_PUSH_GPREL:        howto manager.      (line 3496)
+* BFD_RELOC_LARCH_SOP_PUSH_PCREL:        howto manager.      (line 3493)
+* BFD_RELOC_LARCH_SOP_PUSH_PLT_PCREL:    howto manager.      (line 3500)
+* BFD_RELOC_LARCH_SOP_PUSH_TLS_GD:       howto manager.      (line 3499)
+* BFD_RELOC_LARCH_SOP_PUSH_TLS_GOT:      howto manager.      (line 3498)
+* BFD_RELOC_LARCH_SOP_PUSH_TLS_TPREL:    howto manager.      (line 3497)
+* BFD_RELOC_LARCH_SOP_SL:                howto manager.      (line 3504)
+* BFD_RELOC_LARCH_SOP_SR:                howto manager.      (line 3505)
+* BFD_RELOC_LARCH_SOP_SUB:               howto manager.      (line 3503)
+* BFD_RELOC_LARCH_SUB16:                 howto manager.      (line 3524)
+* BFD_RELOC_LARCH_SUB24:                 howto manager.      (line 3525)
+* BFD_RELOC_LARCH_SUB32:                 howto manager.      (line 3526)
+* BFD_RELOC_LARCH_SUB6:                  howto manager.      (line 3570)
+* BFD_RELOC_LARCH_SUB64:                 howto manager.      (line 3527)
+* BFD_RELOC_LARCH_SUB8:                  howto manager.      (line 3523)
+* BFD_RELOC_LARCH_SUB_ULEB128:           howto manager.      (line 3572)
+* BFD_RELOC_LARCH_TLS_DESC32:            howto manager.      (line 3489)
+* BFD_RELOC_LARCH_TLS_DESC64:            howto manager.      (line 3490)
+* BFD_RELOC_LARCH_TLS_DESC64_HI12:       howto manager.      (line 3582)
+* BFD_RELOC_LARCH_TLS_DESC64_LO20:       howto manager.      (line 3581)
+* BFD_RELOC_LARCH_TLS_DESC64_PC_HI12:    howto manager.      (line 3578)
+* BFD_RELOC_LARCH_TLS_DESC64_PC_LO20:    howto manager.      (line 3577)
+* BFD_RELOC_LARCH_TLS_DESC_CALL:         howto manager.      (line 3584)
+* BFD_RELOC_LARCH_TLS_DESC_HI20:         howto manager.      (line 3579)
+* BFD_RELOC_LARCH_TLS_DESC_LD:           howto manager.      (line 3583)
+* BFD_RELOC_LARCH_TLS_DESC_LO12:         howto manager.      (line 3580)
+* BFD_RELOC_LARCH_TLS_DESC_PCREL20_S2:   howto manager.      (line 3590)
+* BFD_RELOC_LARCH_TLS_DESC_PC_HI20:      howto manager.      (line 3575)
+* BFD_RELOC_LARCH_TLS_DESC_PC_LO12:      howto manager.      (line 3576)
+* BFD_RELOC_LARCH_TLS_DTPMOD32:          howto manager.      (line 3483)
+* BFD_RELOC_LARCH_TLS_DTPMOD64:          howto manager.      (line 3485)
+* BFD_RELOC_LARCH_TLS_DTPREL32:          howto manager.      (line 3484)
+* BFD_RELOC_LARCH_TLS_DTPREL64:          howto manager.      (line 3486)
+* BFD_RELOC_LARCH_TLS_GD_HI20:           howto manager.      (line 3562)
+* BFD_RELOC_LARCH_TLS_GD_PCREL20_S2:     howto manager.      (line 3589)
+* BFD_RELOC_LARCH_TLS_GD_PC_HI20:        howto manager.      (line 3561)
+* BFD_RELOC_LARCH_TLS_IE64_HI12:         howto manager.      (line 3558)
+* BFD_RELOC_LARCH_TLS_IE64_LO20:         howto manager.      (line 3557)
+* BFD_RELOC_LARCH_TLS_IE64_PC_HI12:      howto manager.      (line 3554)
+* BFD_RELOC_LARCH_TLS_IE64_PC_LO20:      howto manager.      (line 3553)
+* BFD_RELOC_LARCH_TLS_IE_HI20:           howto manager.      (line 3555)
+* BFD_RELOC_LARCH_TLS_IE_LO12:           howto manager.      (line 3556)
+* BFD_RELOC_LARCH_TLS_IE_PC_HI20:        howto manager.      (line 3551)
+* BFD_RELOC_LARCH_TLS_IE_PC_LO12:        howto manager.      (line 3552)
+* BFD_RELOC_LARCH_TLS_LD_HI20:           howto manager.      (line 3560)
+* BFD_RELOC_LARCH_TLS_LD_PCREL20_S2:     howto manager.      (line 3588)
+* BFD_RELOC_LARCH_TLS_LD_PC_HI20:        howto manager.      (line 3559)
+* BFD_RELOC_LARCH_TLS_LE64_HI12:         howto manager.      (line 3550)
+* BFD_RELOC_LARCH_TLS_LE64_LO20:         howto manager.      (line 3549)
+* BFD_RELOC_LARCH_TLS_LE_ADD_R:          howto manager.      (line 3586)
+* BFD_RELOC_LARCH_TLS_LE_HI20:           howto manager.      (line 3547)
+* BFD_RELOC_LARCH_TLS_LE_HI20_R:         howto manager.      (line 3585)
+* BFD_RELOC_LARCH_TLS_LE_LO12:           howto manager.      (line 3548)
+* BFD_RELOC_LARCH_TLS_LE_LO12_R:         howto manager.      (line 3587)
+* BFD_RELOC_LARCH_TLS_TPREL32:           howto manager.      (line 3487)
+* BFD_RELOC_LARCH_TLS_TPREL64:           howto manager.      (line 3488)
 * BFD_RELOC_LM32_16_GOT:                 howto manager.      (line 2623)
 * BFD_RELOC_LM32_BRANCH:                 howto manager.      (line 2622)
 * BFD_RELOC_LM32_CALL:                   howto manager.      (line 2621)
@@ -13944,7 +14010,7 @@ BFD Index
 * BFD_RELOC_RX_RELAX:                    howto manager.      (line 1960)
 * BFD_RELOC_RX_SYM:                      howto manager.      (line 1949)
 * BFD_RELOC_S12Z_15_PCREL:               howto manager.      (line 2272)
-* BFD_RELOC_S12Z_OPR:                    howto manager.      (line 3477)
+* BFD_RELOC_S12Z_OPR:                    howto manager.      (line 3481)
 * BFD_RELOC_SCORE16_BRANCH:              howto manager.      (line 2063)
 * BFD_RELOC_SCORE16_JMP:                 howto manager.      (line 2061)
 * BFD_RELOC_SCORE_BCMP:                  howto manager.      (line 2065)
@@ -14165,201 +14231,201 @@ BFD Index
 * BFD_RELOC_TIC54X_MS7_OF_23:            howto manager.      (line 1578)
 * BFD_RELOC_TIC54X_PARTLS7:              howto manager.      (line 1564)
 * BFD_RELOC_TIC54X_PARTMS9:              howto manager.      (line 1568)
-* BFD_RELOC_TILEGX_BROFF_X1:             howto manager.      (line 3273)
-* BFD_RELOC_TILEGX_COPY:                 howto manager.      (line 3269)
-* BFD_RELOC_TILEGX_DEST_IMM8_X1:         howto manager.      (line 3280)
-* BFD_RELOC_TILEGX_GLOB_DAT:             howto manager.      (line 3270)
-* BFD_RELOC_TILEGX_HW0:                  howto manager.      (line 3262)
-* BFD_RELOC_TILEGX_HW0_LAST:             howto manager.      (line 3266)
-* BFD_RELOC_TILEGX_HW1:                  howto manager.      (line 3263)
-* BFD_RELOC_TILEGX_HW1_LAST:             howto manager.      (line 3267)
-* BFD_RELOC_TILEGX_HW2:                  howto manager.      (line 3264)
-* BFD_RELOC_TILEGX_HW2_LAST:             howto manager.      (line 3268)
-* BFD_RELOC_TILEGX_HW3:                  howto manager.      (line 3265)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0:         howto manager.      (line 3289)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_GOT:     howto manager.      (line 3317)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST:    howto manager.      (line 3297)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_GOT: howto manager.     (line 3325)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_PCREL: howto manager.   (line 3311)
+* BFD_RELOC_TILEGX_BROFF_X1:             howto manager.      (line 3277)
+* BFD_RELOC_TILEGX_COPY:                 howto manager.      (line 3273)
+* BFD_RELOC_TILEGX_DEST_IMM8_X1:         howto manager.      (line 3284)
+* BFD_RELOC_TILEGX_GLOB_DAT:             howto manager.      (line 3274)
+* BFD_RELOC_TILEGX_HW0:                  howto manager.      (line 3266)
+* BFD_RELOC_TILEGX_HW0_LAST:             howto manager.      (line 3270)
+* BFD_RELOC_TILEGX_HW1:                  howto manager.      (line 3267)
+* BFD_RELOC_TILEGX_HW1_LAST:             howto manager.      (line 3271)
+* BFD_RELOC_TILEGX_HW2:                  howto manager.      (line 3268)
+* BFD_RELOC_TILEGX_HW2_LAST:             howto manager.      (line 3272)
+* BFD_RELOC_TILEGX_HW3:                  howto manager.      (line 3269)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0:         howto manager.      (line 3293)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_GOT:     howto manager.      (line 3321)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST:    howto manager.      (line 3301)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_GOT: howto manager.     (line 3329)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_PCREL: howto manager.   (line 3315)
 * BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_PLT_PCREL: howto manager.
-                                                             (line 3345)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_GD: howto manager.  (line 3339)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_IE: howto manager.  (line 3351)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_LE: howto manager.  (line 3335)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_PCREL:   howto manager.      (line 3303)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_PLT_PCREL: howto manager.    (line 3319)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_GD:  howto manager.      (line 3331)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_IE:  howto manager.      (line 3343)
-* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_LE:  howto manager.      (line 3333)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1:         howto manager.      (line 3291)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST:    howto manager.      (line 3299)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_GOT: howto manager.     (line 3327)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_PCREL: howto manager.   (line 3313)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_PLT_PCREL: howto manager.
-                                                             (line 3347)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_GD: howto manager.  (line 3341)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_IE: howto manager.  (line 3353)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_LE: howto manager.  (line 3337)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_PCREL:   howto manager.      (line 3305)
-* BFD_RELOC_TILEGX_IMM16_X0_HW1_PLT_PCREL: howto manager.    (line 3321)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2:         howto manager.      (line 3293)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST:    howto manager.      (line 3301)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_PCREL: howto manager.   (line 3315)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_PLT_PCREL: howto manager.
                                                              (line 3349)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2_PCREL:   howto manager.      (line 3307)
-* BFD_RELOC_TILEGX_IMM16_X0_HW2_PLT_PCREL: howto manager.    (line 3323)
-* BFD_RELOC_TILEGX_IMM16_X0_HW3:         howto manager.      (line 3295)
-* BFD_RELOC_TILEGX_IMM16_X0_HW3_PCREL:   howto manager.      (line 3309)
-* BFD_RELOC_TILEGX_IMM16_X0_HW3_PLT_PCREL: howto manager.    (line 3329)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0:         howto manager.      (line 3290)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_GOT:     howto manager.      (line 3318)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST:    howto manager.      (line 3298)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_GOT: howto manager.     (line 3326)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_PCREL: howto manager.   (line 3312)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_GD: howto manager.  (line 3343)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_IE: howto manager.  (line 3355)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_LAST_TLS_LE: howto manager.  (line 3339)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_PCREL:   howto manager.      (line 3307)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_PLT_PCREL: howto manager.    (line 3323)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_GD:  howto manager.      (line 3335)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_IE:  howto manager.      (line 3347)
+* BFD_RELOC_TILEGX_IMM16_X0_HW0_TLS_LE:  howto manager.      (line 3337)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1:         howto manager.      (line 3295)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST:    howto manager.      (line 3303)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_GOT: howto manager.     (line 3331)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_PCREL: howto manager.   (line 3317)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_PLT_PCREL: howto manager.
+                                                             (line 3351)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_GD: howto manager.  (line 3345)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_IE: howto manager.  (line 3357)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_LAST_TLS_LE: howto manager.  (line 3341)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_PCREL:   howto manager.      (line 3309)
+* BFD_RELOC_TILEGX_IMM16_X0_HW1_PLT_PCREL: howto manager.    (line 3325)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2:         howto manager.      (line 3297)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST:    howto manager.      (line 3305)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_PCREL: howto manager.   (line 3319)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2_LAST_PLT_PCREL: howto manager.
+                                                             (line 3353)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2_PCREL:   howto manager.      (line 3311)
+* BFD_RELOC_TILEGX_IMM16_X0_HW2_PLT_PCREL: howto manager.    (line 3327)
+* BFD_RELOC_TILEGX_IMM16_X0_HW3:         howto manager.      (line 3299)
+* BFD_RELOC_TILEGX_IMM16_X0_HW3_PCREL:   howto manager.      (line 3313)
+* BFD_RELOC_TILEGX_IMM16_X0_HW3_PLT_PCREL: howto manager.    (line 3333)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0:         howto manager.      (line 3294)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_GOT:     howto manager.      (line 3322)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST:    howto manager.      (line 3302)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_GOT: howto manager.     (line 3330)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_PCREL: howto manager.   (line 3316)
 * BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_PLT_PCREL: howto manager.
-                                                             (line 3346)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_GD: howto manager.  (line 3340)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_IE: howto manager.  (line 3352)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_LE: howto manager.  (line 3336)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_PCREL:   howto manager.      (line 3304)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_PLT_PCREL: howto manager.    (line 3320)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_GD:  howto manager.      (line 3332)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_IE:  howto manager.      (line 3344)
-* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_LE:  howto manager.      (line 3334)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1:         howto manager.      (line 3292)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST:    howto manager.      (line 3300)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_GOT: howto manager.     (line 3328)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_PCREL: howto manager.   (line 3314)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_PLT_PCREL: howto manager.
-                                                             (line 3348)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_GD: howto manager.  (line 3342)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_IE: howto manager.  (line 3354)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_LE: howto manager.  (line 3338)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_PCREL:   howto manager.      (line 3306)
-* BFD_RELOC_TILEGX_IMM16_X1_HW1_PLT_PCREL: howto manager.    (line 3322)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2:         howto manager.      (line 3294)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST:    howto manager.      (line 3302)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_PCREL: howto manager.   (line 3316)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_PLT_PCREL: howto manager.
                                                              (line 3350)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2_PCREL:   howto manager.      (line 3308)
-* BFD_RELOC_TILEGX_IMM16_X1_HW2_PLT_PCREL: howto manager.    (line 3324)
-* BFD_RELOC_TILEGX_IMM16_X1_HW3:         howto manager.      (line 3296)
-* BFD_RELOC_TILEGX_IMM16_X1_HW3_PCREL:   howto manager.      (line 3310)
-* BFD_RELOC_TILEGX_IMM16_X1_HW3_PLT_PCREL: howto manager.    (line 3330)
-* BFD_RELOC_TILEGX_IMM8_X0:              howto manager.      (line 3276)
-* BFD_RELOC_TILEGX_IMM8_X0_TLS_ADD:      howto manager.      (line 3367)
-* BFD_RELOC_TILEGX_IMM8_X0_TLS_GD_ADD:   howto manager.      (line 3362)
-* BFD_RELOC_TILEGX_IMM8_X1:              howto manager.      (line 3278)
-* BFD_RELOC_TILEGX_IMM8_X1_TLS_ADD:      howto manager.      (line 3368)
-* BFD_RELOC_TILEGX_IMM8_X1_TLS_GD_ADD:   howto manager.      (line 3363)
-* BFD_RELOC_TILEGX_IMM8_Y0:              howto manager.      (line 3277)
-* BFD_RELOC_TILEGX_IMM8_Y0_TLS_ADD:      howto manager.      (line 3369)
-* BFD_RELOC_TILEGX_IMM8_Y0_TLS_GD_ADD:   howto manager.      (line 3364)
-* BFD_RELOC_TILEGX_IMM8_Y1:              howto manager.      (line 3279)
-* BFD_RELOC_TILEGX_IMM8_Y1_TLS_ADD:      howto manager.      (line 3370)
-* BFD_RELOC_TILEGX_IMM8_Y1_TLS_GD_ADD:   howto manager.      (line 3365)
-* BFD_RELOC_TILEGX_JMP_SLOT:             howto manager.      (line 3271)
-* BFD_RELOC_TILEGX_JUMPOFF_X1:           howto manager.      (line 3274)
-* BFD_RELOC_TILEGX_JUMPOFF_X1_PLT:       howto manager.      (line 3275)
-* BFD_RELOC_TILEGX_MF_IMM14_X1:          howto manager.      (line 3282)
-* BFD_RELOC_TILEGX_MMEND_X0:             howto manager.      (line 3284)
-* BFD_RELOC_TILEGX_MMSTART_X0:           howto manager.      (line 3283)
-* BFD_RELOC_TILEGX_MT_IMM14_X1:          howto manager.      (line 3281)
-* BFD_RELOC_TILEGX_RELATIVE:             howto manager.      (line 3272)
-* BFD_RELOC_TILEGX_SHAMT_X0:             howto manager.      (line 3285)
-* BFD_RELOC_TILEGX_SHAMT_X1:             howto manager.      (line 3286)
-* BFD_RELOC_TILEGX_SHAMT_Y0:             howto manager.      (line 3287)
-* BFD_RELOC_TILEGX_SHAMT_Y1:             howto manager.      (line 3288)
-* BFD_RELOC_TILEGX_TLS_DTPMOD32:         howto manager.      (line 3358)
-* BFD_RELOC_TILEGX_TLS_DTPMOD64:         howto manager.      (line 3355)
-* BFD_RELOC_TILEGX_TLS_DTPOFF32:         howto manager.      (line 3359)
-* BFD_RELOC_TILEGX_TLS_DTPOFF64:         howto manager.      (line 3356)
-* BFD_RELOC_TILEGX_TLS_GD_CALL:          howto manager.      (line 3361)
-* BFD_RELOC_TILEGX_TLS_IE_LOAD:          howto manager.      (line 3366)
-* BFD_RELOC_TILEGX_TLS_TPOFF32:          howto manager.      (line 3360)
-* BFD_RELOC_TILEGX_TLS_TPOFF64:          howto manager.      (line 3357)
-* BFD_RELOC_TILEPRO_BROFF_X1:            howto manager.      (line 3186)
-* BFD_RELOC_TILEPRO_COPY:                howto manager.      (line 3182)
-* BFD_RELOC_TILEPRO_DEST_IMM8_X1:        howto manager.      (line 3193)
-* BFD_RELOC_TILEPRO_GLOB_DAT:            howto manager.      (line 3183)
-* BFD_RELOC_TILEPRO_IMM16_X0:            howto manager.      (line 3196)
-* BFD_RELOC_TILEPRO_IMM16_X0_GOT:        howto manager.      (line 3212)
-* BFD_RELOC_TILEPRO_IMM16_X0_GOT_HA:     howto manager.      (line 3218)
-* BFD_RELOC_TILEPRO_IMM16_X0_GOT_HI:     howto manager.      (line 3216)
-* BFD_RELOC_TILEPRO_IMM16_X0_GOT_LO:     howto manager.      (line 3214)
-* BFD_RELOC_TILEPRO_IMM16_X0_HA:         howto manager.      (line 3202)
-* BFD_RELOC_TILEPRO_IMM16_X0_HA_PCREL:   howto manager.      (line 3210)
-* BFD_RELOC_TILEPRO_IMM16_X0_HI:         howto manager.      (line 3200)
-* BFD_RELOC_TILEPRO_IMM16_X0_HI_PCREL:   howto manager.      (line 3208)
-* BFD_RELOC_TILEPRO_IMM16_X0_LO:         howto manager.      (line 3198)
-* BFD_RELOC_TILEPRO_IMM16_X0_LO_PCREL:   howto manager.      (line 3206)
-* BFD_RELOC_TILEPRO_IMM16_X0_PCREL:      howto manager.      (line 3204)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD:     howto manager.      (line 3234)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HA:  howto manager.      (line 3240)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HI:  howto manager.      (line 3238)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_LO:  howto manager.      (line 3236)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE:     howto manager.      (line 3242)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_HA:  howto manager.      (line 3248)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_HI:  howto manager.      (line 3246)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_LO:  howto manager.      (line 3244)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE:     howto manager.      (line 3253)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HA:  howto manager.      (line 3259)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HI:  howto manager.      (line 3257)
-* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_LO:  howto manager.      (line 3255)
-* BFD_RELOC_TILEPRO_IMM16_X1:            howto manager.      (line 3197)
-* BFD_RELOC_TILEPRO_IMM16_X1_GOT:        howto manager.      (line 3213)
-* BFD_RELOC_TILEPRO_IMM16_X1_GOT_HA:     howto manager.      (line 3219)
-* BFD_RELOC_TILEPRO_IMM16_X1_GOT_HI:     howto manager.      (line 3217)
-* BFD_RELOC_TILEPRO_IMM16_X1_GOT_LO:     howto manager.      (line 3215)
-* BFD_RELOC_TILEPRO_IMM16_X1_HA:         howto manager.      (line 3203)
-* BFD_RELOC_TILEPRO_IMM16_X1_HA_PCREL:   howto manager.      (line 3211)
-* BFD_RELOC_TILEPRO_IMM16_X1_HI:         howto manager.      (line 3201)
-* BFD_RELOC_TILEPRO_IMM16_X1_HI_PCREL:   howto manager.      (line 3209)
-* BFD_RELOC_TILEPRO_IMM16_X1_LO:         howto manager.      (line 3199)
-* BFD_RELOC_TILEPRO_IMM16_X1_LO_PCREL:   howto manager.      (line 3207)
-* BFD_RELOC_TILEPRO_IMM16_X1_PCREL:      howto manager.      (line 3205)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD:     howto manager.      (line 3235)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_HA:  howto manager.      (line 3241)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_HI:  howto manager.      (line 3239)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_LO:  howto manager.      (line 3237)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE:     howto manager.      (line 3243)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_HA:  howto manager.      (line 3249)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_HI:  howto manager.      (line 3247)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_LO:  howto manager.      (line 3245)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE:     howto manager.      (line 3254)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HA:  howto manager.      (line 3260)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HI:  howto manager.      (line 3258)
-* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_LO:  howto manager.      (line 3256)
-* BFD_RELOC_TILEPRO_IMM8_X0:             howto manager.      (line 3189)
-* BFD_RELOC_TILEPRO_IMM8_X0_TLS_GD_ADD:  howto manager.      (line 3229)
-* BFD_RELOC_TILEPRO_IMM8_X1:             howto manager.      (line 3191)
-* BFD_RELOC_TILEPRO_IMM8_X1_TLS_GD_ADD:  howto manager.      (line 3230)
-* BFD_RELOC_TILEPRO_IMM8_Y0:             howto manager.      (line 3190)
-* BFD_RELOC_TILEPRO_IMM8_Y0_TLS_GD_ADD:  howto manager.      (line 3231)
-* BFD_RELOC_TILEPRO_IMM8_Y1:             howto manager.      (line 3192)
-* BFD_RELOC_TILEPRO_IMM8_Y1_TLS_GD_ADD:  howto manager.      (line 3232)
-* BFD_RELOC_TILEPRO_JMP_SLOT:            howto manager.      (line 3184)
-* BFD_RELOC_TILEPRO_JOFFLONG_X1:         howto manager.      (line 3187)
-* BFD_RELOC_TILEPRO_JOFFLONG_X1_PLT:     howto manager.      (line 3188)
-* BFD_RELOC_TILEPRO_MF_IMM15_X1:         howto manager.      (line 3195)
-* BFD_RELOC_TILEPRO_MMEND_X0:            howto manager.      (line 3221)
-* BFD_RELOC_TILEPRO_MMEND_X1:            howto manager.      (line 3223)
-* BFD_RELOC_TILEPRO_MMSTART_X0:          howto manager.      (line 3220)
-* BFD_RELOC_TILEPRO_MMSTART_X1:          howto manager.      (line 3222)
-* BFD_RELOC_TILEPRO_MT_IMM15_X1:         howto manager.      (line 3194)
-* BFD_RELOC_TILEPRO_RELATIVE:            howto manager.      (line 3185)
-* BFD_RELOC_TILEPRO_SHAMT_X0:            howto manager.      (line 3224)
-* BFD_RELOC_TILEPRO_SHAMT_X1:            howto manager.      (line 3225)
-* BFD_RELOC_TILEPRO_SHAMT_Y0:            howto manager.      (line 3226)
-* BFD_RELOC_TILEPRO_SHAMT_Y1:            howto manager.      (line 3227)
-* BFD_RELOC_TILEPRO_TLS_DTPMOD32:        howto manager.      (line 3250)
-* BFD_RELOC_TILEPRO_TLS_DTPOFF32:        howto manager.      (line 3251)
-* BFD_RELOC_TILEPRO_TLS_GD_CALL:         howto manager.      (line 3228)
-* BFD_RELOC_TILEPRO_TLS_IE_LOAD:         howto manager.      (line 3233)
-* BFD_RELOC_TILEPRO_TLS_TPOFF32:         howto manager.      (line 3252)
-* bfd_reloc_type_lookup:                 howto manager.      (line 3590)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_GD: howto manager.  (line 3344)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_IE: howto manager.  (line 3356)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_LAST_TLS_LE: howto manager.  (line 3340)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_PCREL:   howto manager.      (line 3308)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_PLT_PCREL: howto manager.    (line 3324)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_GD:  howto manager.      (line 3336)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_IE:  howto manager.      (line 3348)
+* BFD_RELOC_TILEGX_IMM16_X1_HW0_TLS_LE:  howto manager.      (line 3338)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1:         howto manager.      (line 3296)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST:    howto manager.      (line 3304)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_GOT: howto manager.     (line 3332)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_PCREL: howto manager.   (line 3318)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_PLT_PCREL: howto manager.
+                                                             (line 3352)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_GD: howto manager.  (line 3346)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_IE: howto manager.  (line 3358)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_LAST_TLS_LE: howto manager.  (line 3342)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_PCREL:   howto manager.      (line 3310)
+* BFD_RELOC_TILEGX_IMM16_X1_HW1_PLT_PCREL: howto manager.    (line 3326)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2:         howto manager.      (line 3298)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST:    howto manager.      (line 3306)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_PCREL: howto manager.   (line 3320)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2_LAST_PLT_PCREL: howto manager.
+                                                             (line 3354)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2_PCREL:   howto manager.      (line 3312)
+* BFD_RELOC_TILEGX_IMM16_X1_HW2_PLT_PCREL: howto manager.    (line 3328)
+* BFD_RELOC_TILEGX_IMM16_X1_HW3:         howto manager.      (line 3300)
+* BFD_RELOC_TILEGX_IMM16_X1_HW3_PCREL:   howto manager.      (line 3314)
+* BFD_RELOC_TILEGX_IMM16_X1_HW3_PLT_PCREL: howto manager.    (line 3334)
+* BFD_RELOC_TILEGX_IMM8_X0:              howto manager.      (line 3280)
+* BFD_RELOC_TILEGX_IMM8_X0_TLS_ADD:      howto manager.      (line 3371)
+* BFD_RELOC_TILEGX_IMM8_X0_TLS_GD_ADD:   howto manager.      (line 3366)
+* BFD_RELOC_TILEGX_IMM8_X1:              howto manager.      (line 3282)
+* BFD_RELOC_TILEGX_IMM8_X1_TLS_ADD:      howto manager.      (line 3372)
+* BFD_RELOC_TILEGX_IMM8_X1_TLS_GD_ADD:   howto manager.      (line 3367)
+* BFD_RELOC_TILEGX_IMM8_Y0:              howto manager.      (line 3281)
+* BFD_RELOC_TILEGX_IMM8_Y0_TLS_ADD:      howto manager.      (line 3373)
+* BFD_RELOC_TILEGX_IMM8_Y0_TLS_GD_ADD:   howto manager.      (line 3368)
+* BFD_RELOC_TILEGX_IMM8_Y1:              howto manager.      (line 3283)
+* BFD_RELOC_TILEGX_IMM8_Y1_TLS_ADD:      howto manager.      (line 3374)
+* BFD_RELOC_TILEGX_IMM8_Y1_TLS_GD_ADD:   howto manager.      (line 3369)
+* BFD_RELOC_TILEGX_JMP_SLOT:             howto manager.      (line 3275)
+* BFD_RELOC_TILEGX_JUMPOFF_X1:           howto manager.      (line 3278)
+* BFD_RELOC_TILEGX_JUMPOFF_X1_PLT:       howto manager.      (line 3279)
+* BFD_RELOC_TILEGX_MF_IMM14_X1:          howto manager.      (line 3286)
+* BFD_RELOC_TILEGX_MMEND_X0:             howto manager.      (line 3288)
+* BFD_RELOC_TILEGX_MMSTART_X0:           howto manager.      (line 3287)
+* BFD_RELOC_TILEGX_MT_IMM14_X1:          howto manager.      (line 3285)
+* BFD_RELOC_TILEGX_RELATIVE:             howto manager.      (line 3276)
+* BFD_RELOC_TILEGX_SHAMT_X0:             howto manager.      (line 3289)
+* BFD_RELOC_TILEGX_SHAMT_X1:             howto manager.      (line 3290)
+* BFD_RELOC_TILEGX_SHAMT_Y0:             howto manager.      (line 3291)
+* BFD_RELOC_TILEGX_SHAMT_Y1:             howto manager.      (line 3292)
+* BFD_RELOC_TILEGX_TLS_DTPMOD32:         howto manager.      (line 3362)
+* BFD_RELOC_TILEGX_TLS_DTPMOD64:         howto manager.      (line 3359)
+* BFD_RELOC_TILEGX_TLS_DTPOFF32:         howto manager.      (line 3363)
+* BFD_RELOC_TILEGX_TLS_DTPOFF64:         howto manager.      (line 3360)
+* BFD_RELOC_TILEGX_TLS_GD_CALL:          howto manager.      (line 3365)
+* BFD_RELOC_TILEGX_TLS_IE_LOAD:          howto manager.      (line 3370)
+* BFD_RELOC_TILEGX_TLS_TPOFF32:          howto manager.      (line 3364)
+* BFD_RELOC_TILEGX_TLS_TPOFF64:          howto manager.      (line 3361)
+* BFD_RELOC_TILEPRO_BROFF_X1:            howto manager.      (line 3190)
+* BFD_RELOC_TILEPRO_COPY:                howto manager.      (line 3186)
+* BFD_RELOC_TILEPRO_DEST_IMM8_X1:        howto manager.      (line 3197)
+* BFD_RELOC_TILEPRO_GLOB_DAT:            howto manager.      (line 3187)
+* BFD_RELOC_TILEPRO_IMM16_X0:            howto manager.      (line 3200)
+* BFD_RELOC_TILEPRO_IMM16_X0_GOT:        howto manager.      (line 3216)
+* BFD_RELOC_TILEPRO_IMM16_X0_GOT_HA:     howto manager.      (line 3222)
+* BFD_RELOC_TILEPRO_IMM16_X0_GOT_HI:     howto manager.      (line 3220)
+* BFD_RELOC_TILEPRO_IMM16_X0_GOT_LO:     howto manager.      (line 3218)
+* BFD_RELOC_TILEPRO_IMM16_X0_HA:         howto manager.      (line 3206)
+* BFD_RELOC_TILEPRO_IMM16_X0_HA_PCREL:   howto manager.      (line 3214)
+* BFD_RELOC_TILEPRO_IMM16_X0_HI:         howto manager.      (line 3204)
+* BFD_RELOC_TILEPRO_IMM16_X0_HI_PCREL:   howto manager.      (line 3212)
+* BFD_RELOC_TILEPRO_IMM16_X0_LO:         howto manager.      (line 3202)
+* BFD_RELOC_TILEPRO_IMM16_X0_LO_PCREL:   howto manager.      (line 3210)
+* BFD_RELOC_TILEPRO_IMM16_X0_PCREL:      howto manager.      (line 3208)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD:     howto manager.      (line 3238)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HA:  howto manager.      (line 3244)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_HI:  howto manager.      (line 3242)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_GD_LO:  howto manager.      (line 3240)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE:     howto manager.      (line 3246)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_HA:  howto manager.      (line 3252)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_HI:  howto manager.      (line 3250)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_IE_LO:  howto manager.      (line 3248)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE:     howto manager.      (line 3257)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HA:  howto manager.      (line 3263)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_HI:  howto manager.      (line 3261)
+* BFD_RELOC_TILEPRO_IMM16_X0_TLS_LE_LO:  howto manager.      (line 3259)
+* BFD_RELOC_TILEPRO_IMM16_X1:            howto manager.      (line 3201)
+* BFD_RELOC_TILEPRO_IMM16_X1_GOT:        howto manager.      (line 3217)
+* BFD_RELOC_TILEPRO_IMM16_X1_GOT_HA:     howto manager.      (line 3223)
+* BFD_RELOC_TILEPRO_IMM16_X1_GOT_HI:     howto manager.      (line 3221)
+* BFD_RELOC_TILEPRO_IMM16_X1_GOT_LO:     howto manager.      (line 3219)
+* BFD_RELOC_TILEPRO_IMM16_X1_HA:         howto manager.      (line 3207)
+* BFD_RELOC_TILEPRO_IMM16_X1_HA_PCREL:   howto manager.      (line 3215)
+* BFD_RELOC_TILEPRO_IMM16_X1_HI:         howto manager.      (line 3205)
+* BFD_RELOC_TILEPRO_IMM16_X1_HI_PCREL:   howto manager.      (line 3213)
+* BFD_RELOC_TILEPRO_IMM16_X1_LO:         howto manager.      (line 3203)
+* BFD_RELOC_TILEPRO_IMM16_X1_LO_PCREL:   howto manager.      (line 3211)
+* BFD_RELOC_TILEPRO_IMM16_X1_PCREL:      howto manager.      (line 3209)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD:     howto manager.      (line 3239)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_HA:  howto manager.      (line 3245)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_HI:  howto manager.      (line 3243)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_GD_LO:  howto manager.      (line 3241)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE:     howto manager.      (line 3247)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_HA:  howto manager.      (line 3253)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_HI:  howto manager.      (line 3251)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_IE_LO:  howto manager.      (line 3249)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE:     howto manager.      (line 3258)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HA:  howto manager.      (line 3264)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_HI:  howto manager.      (line 3262)
+* BFD_RELOC_TILEPRO_IMM16_X1_TLS_LE_LO:  howto manager.      (line 3260)
+* BFD_RELOC_TILEPRO_IMM8_X0:             howto manager.      (line 3193)
+* BFD_RELOC_TILEPRO_IMM8_X0_TLS_GD_ADD:  howto manager.      (line 3233)
+* BFD_RELOC_TILEPRO_IMM8_X1:             howto manager.      (line 3195)
+* BFD_RELOC_TILEPRO_IMM8_X1_TLS_GD_ADD:  howto manager.      (line 3234)
+* BFD_RELOC_TILEPRO_IMM8_Y0:             howto manager.      (line 3194)
+* BFD_RELOC_TILEPRO_IMM8_Y0_TLS_GD_ADD:  howto manager.      (line 3235)
+* BFD_RELOC_TILEPRO_IMM8_Y1:             howto manager.      (line 3196)
+* BFD_RELOC_TILEPRO_IMM8_Y1_TLS_GD_ADD:  howto manager.      (line 3236)
+* BFD_RELOC_TILEPRO_JMP_SLOT:            howto manager.      (line 3188)
+* BFD_RELOC_TILEPRO_JOFFLONG_X1:         howto manager.      (line 3191)
+* BFD_RELOC_TILEPRO_JOFFLONG_X1_PLT:     howto manager.      (line 3192)
+* BFD_RELOC_TILEPRO_MF_IMM15_X1:         howto manager.      (line 3199)
+* BFD_RELOC_TILEPRO_MMEND_X0:            howto manager.      (line 3225)
+* BFD_RELOC_TILEPRO_MMEND_X1:            howto manager.      (line 3227)
+* BFD_RELOC_TILEPRO_MMSTART_X0:          howto manager.      (line 3224)
+* BFD_RELOC_TILEPRO_MMSTART_X1:          howto manager.      (line 3226)
+* BFD_RELOC_TILEPRO_MT_IMM15_X1:         howto manager.      (line 3198)
+* BFD_RELOC_TILEPRO_RELATIVE:            howto manager.      (line 3189)
+* BFD_RELOC_TILEPRO_SHAMT_X0:            howto manager.      (line 3228)
+* BFD_RELOC_TILEPRO_SHAMT_X1:            howto manager.      (line 3229)
+* BFD_RELOC_TILEPRO_SHAMT_Y0:            howto manager.      (line 3230)
+* BFD_RELOC_TILEPRO_SHAMT_Y1:            howto manager.      (line 3231)
+* BFD_RELOC_TILEPRO_TLS_DTPMOD32:        howto manager.      (line 3254)
+* BFD_RELOC_TILEPRO_TLS_DTPOFF32:        howto manager.      (line 3255)
+* BFD_RELOC_TILEPRO_TLS_GD_CALL:         howto manager.      (line 3232)
+* BFD_RELOC_TILEPRO_TLS_IE_LOAD:         howto manager.      (line 3237)
+* BFD_RELOC_TILEPRO_TLS_TPOFF32:         howto manager.      (line 3256)
+* bfd_reloc_type_lookup:                 howto manager.      (line 3594)
 * BFD_RELOC_V850_16_GOT:                 howto manager.      (line 1545)
 * BFD_RELOC_V850_16_GOTOFF:              howto manager.      (line 1553)
 * BFD_RELOC_V850_16_PCREL:               howto manager.      (line 1526)
@@ -14405,27 +14471,27 @@ BFD Index
 * BFD_RELOC_VAX_GLOB_DAT:                howto manager.      (line 2431)
 * BFD_RELOC_VAX_JMP_SLOT:                howto manager.      (line 2432)
 * BFD_RELOC_VAX_RELATIVE:                howto manager.      (line 2433)
-* BFD_RELOC_VISIUM_HI16:                 howto manager.      (line 3392)
-* BFD_RELOC_VISIUM_HI16_PCREL:           howto manager.      (line 3396)
-* BFD_RELOC_VISIUM_IM16:                 howto manager.      (line 3394)
-* BFD_RELOC_VISIUM_IM16_PCREL:           howto manager.      (line 3398)
-* BFD_RELOC_VISIUM_LO16:                 howto manager.      (line 3393)
-* BFD_RELOC_VISIUM_LO16_PCREL:           howto manager.      (line 3397)
-* BFD_RELOC_VISIUM_REL16:                howto manager.      (line 3395)
+* BFD_RELOC_VISIUM_HI16:                 howto manager.      (line 3396)
+* BFD_RELOC_VISIUM_HI16_PCREL:           howto manager.      (line 3400)
+* BFD_RELOC_VISIUM_IM16:                 howto manager.      (line 3398)
+* BFD_RELOC_VISIUM_IM16_PCREL:           howto manager.      (line 3402)
+* BFD_RELOC_VISIUM_LO16:                 howto manager.      (line 3397)
+* BFD_RELOC_VISIUM_LO16_PCREL:           howto manager.      (line 3401)
+* BFD_RELOC_VISIUM_REL16:                howto manager.      (line 3399)
 * BFD_RELOC_VPE4KMATH_DATA:              howto manager.      (line 2093)
 * BFD_RELOC_VPE4KMATH_INSN:              howto manager.      (line 2094)
 * BFD_RELOC_VTABLE_ENTRY:                howto manager.      (line 2097)
 * BFD_RELOC_VTABLE_INHERIT:              howto manager.      (line 2096)
-* BFD_RELOC_WASM32_ABS32_CODE:           howto manager.      (line 3405)
-* BFD_RELOC_WASM32_CODE_POINTER:         howto manager.      (line 3407)
-* BFD_RELOC_WASM32_COPY:                 howto manager.      (line 3406)
-* BFD_RELOC_WASM32_INDEX:                howto manager.      (line 3408)
-* BFD_RELOC_WASM32_LEB128:               howto manager.      (line 3400)
-* BFD_RELOC_WASM32_LEB128_GOT:           howto manager.      (line 3401)
-* BFD_RELOC_WASM32_LEB128_GOT_CODE:      howto manager.      (line 3402)
-* BFD_RELOC_WASM32_LEB128_PLT:           howto manager.      (line 3403)
-* BFD_RELOC_WASM32_PLT_INDEX:            howto manager.      (line 3404)
-* BFD_RELOC_WASM32_PLT_SIG:              howto manager.      (line 3409)
+* BFD_RELOC_WASM32_ABS32_CODE:           howto manager.      (line 3409)
+* BFD_RELOC_WASM32_CODE_POINTER:         howto manager.      (line 3411)
+* BFD_RELOC_WASM32_COPY:                 howto manager.      (line 3410)
+* BFD_RELOC_WASM32_INDEX:                howto manager.      (line 3412)
+* BFD_RELOC_WASM32_LEB128:               howto manager.      (line 3404)
+* BFD_RELOC_WASM32_LEB128_GOT:           howto manager.      (line 3405)
+* BFD_RELOC_WASM32_LEB128_GOT_CODE:      howto manager.      (line 3406)
+* BFD_RELOC_WASM32_LEB128_PLT:           howto manager.      (line 3407)
+* BFD_RELOC_WASM32_PLT_INDEX:            howto manager.      (line 3408)
+* BFD_RELOC_WASM32_PLT_SIG:              howto manager.      (line 3413)
 * BFD_RELOC_X86_64_32S:                  howto manager.      (line  554)
 * BFD_RELOC_X86_64_CODE_4_GOTPC32_TLSDESC: howto manager.    (line  580)
 * BFD_RELOC_X86_64_CODE_4_GOTPCRELX:     howto manager.      (line  578)
@@ -14558,29 +14624,29 @@ BFD Index
                                                              (line  335)
 * bfd_sections_find_if:                  section prototypes. (line  174)
 * bfd_section_already_linked:            Writing the symbol table.
-                                                             (line   53)
+                                                             (line   92)
 * bfd_section_already_linked <1>:        Writing the symbol table.
-                                                             (line   57)
+                                                             (line   96)
 * bfd_section_list_clear:                section prototypes. (line    7)
 * bfd_section_list_clear <1>:            section prototypes. (line   11)
-* bfd_section_size_insane:               section prototypes. (line  283)
-* bfd_section_size_insane <1>:           section prototypes. (line  287)
-* bfd_seek:                              Miscellaneous.      (line  402)
-* bfd_seek <1>:                          Miscellaneous.      (line  406)
+* bfd_section_size_insane:               section prototypes. (line  284)
+* bfd_section_size_insane <1>:           section prototypes. (line  288)
+* bfd_seek:                              Miscellaneous.      (line  409)
+* bfd_seek <1>:                          Miscellaneous.      (line  413)
 * bfd_set_archive_head:                  Archives.           (line   72)
 * bfd_set_archive_head <1>:              Archives.           (line   76)
 * bfd_set_arch_info:                     Architectures.      (line  634)
 * bfd_set_arch_info <1>:                 Architectures.      (line  638)
-* bfd_set_assert_handler:                Error reporting.    (line  204)
-* bfd_set_assert_handler <1>:            Error reporting.    (line  209)
+* bfd_set_assert_handler:                Error reporting.    (line  198)
+* bfd_set_assert_handler <1>:            Error reporting.    (line  203)
 * bfd_set_default_target:                bfd_target.         (line  536)
 * bfd_set_default_target <1>:            bfd_target.         (line  541)
 * bfd_set_error:                         Error reporting.    (line   57)
 * bfd_set_error <1>:                     Error reporting.    (line   61)
-* bfd_set_error_handler:                 Error reporting.    (line  150)
-* bfd_set_error_handler <1>:             Error reporting.    (line  154)
-* bfd_set_error_program_name:            Error reporting.    (line  175)
-* bfd_set_error_program_name <1>:        Error reporting.    (line  179)
+* bfd_set_error_handler:                 Error reporting.    (line  144)
+* bfd_set_error_handler <1>:             Error reporting.    (line  148)
+* bfd_set_error_program_name:            Error reporting.    (line  169)
+* bfd_set_error_program_name <1>:        Error reporting.    (line  173)
 * bfd_set_filename:                      Opening and Closing.
                                                              (line  378)
 * bfd_set_file_flags:                    Miscellaneous.      (line   41)
@@ -14611,8 +14677,8 @@ BFD Index
                                                              (line   61)
 * bfd_sprintf_vma:                       Miscellaneous.      (line  287)
 * bfd_sprintf_vma <1>:                   Miscellaneous.      (line  291)
-* bfd_stat:                              Miscellaneous.      (line  394)
-* bfd_stat <1>:                          Miscellaneous.      (line  398)
+* bfd_stat:                              Miscellaneous.      (line  401)
+* bfd_stat <1>:                          Miscellaneous.      (line  405)
 * bfd_strtab_hash:                       Write Other Derived Routines.
                                                              (line  110)
 * bfd_strtab_hash <1>:                   Write Other Derived Routines.
@@ -14625,26 +14691,26 @@ BFD Index
 * bfd_target <1>:                        bfd_target.         (line  564)
 * bfd_target <2>:                        bfd_target.         (line  594)
 * bfd_target_list:                       bfd_target.         (line  583)
-* bfd_tell:                              Miscellaneous.      (line  382)
-* bfd_tell <1>:                          Miscellaneous.      (line  386)
-* bfd_thread_cleanup:                    Threading.          (line   36)
-* bfd_thread_cleanup <1>:                Threading.          (line   40)
+* bfd_tell:                              Miscellaneous.      (line  389)
+* bfd_tell <1>:                          Miscellaneous.      (line  393)
+* bfd_thread_cleanup:                    Threading.          (line   37)
+* bfd_thread_cleanup <1>:                Threading.          (line   41)
 * bfd_thread_init:                       Threading.          (line   22)
 * bfd_thread_init <1>:                   Threading.          (line   26)
-* bfd_unlock:                            Threading.          (line   52)
-* bfd_unlock <1>:                        Threading.          (line   56)
-* bfd_write:                             Miscellaneous.      (line  374)
-* bfd_write <1>:                         Miscellaneous.      (line  378)
+* bfd_unlock:                            Threading.          (line   53)
+* bfd_unlock <1>:                        Threading.          (line   57)
+* bfd_write:                             Miscellaneous.      (line  381)
+* bfd_write <1>:                         Miscellaneous.      (line  385)
 * bfd_write_bigendian_4byte_int:         Internal.           (line   91)
 * bfd_write_bigendian_4byte_int <1>:     Internal.           (line   95)
 * bfd_zalloc:                            Internal.           (line   77)
 * bfd_zmalloc:                           Internal.           (line   58)
 * Byte swapping routines.:               Internal.           (line  256)
 * char:                                  Error reporting.    (line   79)
-* char <1>:                              Error reporting.    (line  187)
-* char <2>:                              section prototypes. (line  273)
+* char <1>:                              Error reporting.    (line  181)
+* char <2>:                              section prototypes. (line  274)
 * char <3>:                              Formats.            (line   83)
-* char <4>:                              howto manager.      (line 3611)
+* char <4>:                              howto manager.      (line 3615)
 * char <5>:                              Core Files.         (line   14)
 * char <6>:                              bfd_target.         (line  587)
 * char <7>:                              bfd_target.         (line  604)
@@ -14653,6 +14719,8 @@ BFD Index
 * char <10>:                             Architectures.      (line  711)
 * char <11>:                             Opening and Closing.
                                                              (line  382)
+* char <12>:                             Opening and Closing.
+                                                             (line  391)
 * coff_symbol_type:                      coff.               (line  234)
 * core_file_matches_executable_p:        Core Files.         (line   31)
 * core_file_matches_executable_p <1>:    Core Files.         (line   35)
@@ -14673,8 +14741,8 @@ BFD Index
 * long:                                  Architectures.      (line  661)
 * machine_type:                          aout.               (line  134)
 * Other functions:                       Miscellaneous.      (line  165)
-* per_xvec_messages:                     Error reporting.    (line  161)
-* struct bfd_iovec:                      Miscellaneous.      (line  327)
+* per_xvec_messages:                     Error reporting.    (line  155)
+* struct bfd_iovec:                      Miscellaneous.      (line  334)
 * target vector (_bfd_final_link):       Performing the Final Link.
                                                              (line    6)
 * target vector (_bfd_link_add_symbols): Adding Symbols to the Hash Table.
@@ -14696,63 +14764,63 @@ Node: BFD information loss6244
 Node: Canonical format8785
 Node: BFD front end13128
 Node: typedef bfd13566
-Node: Error reporting27315
-Node: Initialization34811
-Node: Threading35342
-Node: Miscellaneous37539
-Node: Memory Usage56750
-Node: Sections57975
-Node: Section Input58456
-Node: Section Output59650
-Node: typedef asection62137
-Node: section prototypes79491
-Node: Symbols90761
-Node: Reading Symbols92364
-Node: Writing Symbols93472
-Node: Mini Symbols95216
-Node: typedef asymbol96190
-Node: symbol handling functions102396
-Node: Archives107611
-Node: Formats111759
-Node: Relocations115102
-Node: typedef arelent115829
-Node: howto manager129704
-Node: Core Files268894
-Node: Targets270895
-Node: bfd_target272856
-Node: Architectures298749
-Node: Opening and Closing331043
-Node: Internal346654
-Node: File Caching357989
-Node: Linker Functions360752
-Node: Creating a Linker Hash Table362426
-Node: Adding Symbols to the Hash Table364165
-Node: Differing file formats365065
-Node: Adding symbols from an object file366790
-Node: Adding symbols from an archive368940
-Node: Performing the Final Link371286
-Node: Information provided by the linker372527
-Node: Relocating the section contents373681
-Node: Writing the symbol table375433
-Node: Hash Tables382524
-Node: Creating and Freeing a Hash Table383722
-Node: Looking Up or Entering a String384972
-Node: Traversing a Hash Table386225
-Node: Deriving a New Hash Table Type387014
-Node: Define the Derived Structures388080
-Node: Write the Derived Creation Routine389161
-Node: Write Other Derived Routines391772
-Node: BFD back ends397197
-Node: What to Put Where397467
-Node: aout397647
-Node: coff403732
-Node: elf424875
-Node: mmo425276
-Node: File layout426146
-Node: Symbol-table432059
-Node: mmo section mapping435822
-Node: GNU Free Documentation License439476
-Node: BFD Index464540
+Node: Error reporting27423
+Node: Initialization34754
+Node: Threading35285
+Node: Miscellaneous37568
+Node: Memory Usage57036
+Node: Sections58261
+Node: Section Input58742
+Node: Section Output59936
+Node: typedef asection62423
+Node: section prototypes79845
+Node: Symbols91164
+Node: Reading Symbols92767
+Node: Writing Symbols93875
+Node: Mini Symbols95619
+Node: typedef asymbol96593
+Node: symbol handling functions102799
+Node: Archives108014
+Node: Formats112162
+Node: Relocations115505
+Node: typedef arelent116232
+Node: howto manager130107
+Node: Core Files269520
+Node: Targets271521
+Node: bfd_target273482
+Node: Architectures299160
+Node: Opening and Closing331454
+Node: Internal347313
+Node: File Caching358648
+Node: Linker Functions361411
+Node: Creating a Linker Hash Table363085
+Node: Adding Symbols to the Hash Table364824
+Node: Differing file formats365724
+Node: Adding symbols from an object file367449
+Node: Adding symbols from an archive369599
+Node: Performing the Final Link371945
+Node: Information provided by the linker373186
+Node: Relocating the section contents374340
+Node: Writing the symbol table376092
+Node: Hash Tables385440
+Node: Creating and Freeing a Hash Table386638
+Node: Looking Up or Entering a String387888
+Node: Traversing a Hash Table389141
+Node: Deriving a New Hash Table Type389930
+Node: Define the Derived Structures390996
+Node: Write the Derived Creation Routine392077
+Node: Write Other Derived Routines394688
+Node: BFD back ends400113
+Node: What to Put Where400383
+Node: aout400563
+Node: coff406648
+Node: elf427581
+Node: mmo427982
+Node: File layout428852
+Node: Symbol-table434765
+Node: mmo section mapping438528
+Node: GNU Free Documentation License442182
+Node: BFD Index467246
 
 End Tag Table
 

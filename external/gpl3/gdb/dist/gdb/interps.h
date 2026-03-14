@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -23,6 +23,7 @@
 #define GDB_INTERPS_H
 
 #include "gdbsupport/intrusive_list.h"
+#include "gdbsupport/event-loop.h"
 
 struct bpstat;
 struct ui_out;
@@ -77,6 +78,13 @@ public:
      chance to e.g., print a prompt.  */
   virtual void pre_command_loop ()
   {}
+
+  /* Service one event.
+     This gives the interpreter a chance to handle its own private
+     events that cannot be fed into the gdb event mechanism.
+     In all cases, this should call gdb_do_one_event at some point.  */
+  virtual int do_one_event (int mstimeout = -1)
+  { return gdb_do_one_event (mstimeout); }
 
   /* Returns true if this interpreter supports using the readline
      library; false if it uses GDB's own simplified readline
@@ -153,8 +161,11 @@ public:
   /* Notify the interpreter that solib SO has been loaded.  */
   virtual void on_solib_loaded (const solib &so) {}
 
-  /* Notify the interpreter that solib SO has been unloaded.  */
-  virtual void on_solib_unloaded (const solib &so) {}
+  /* Notify the interpreter that solib SO has been unloaded.  When
+     STILL_IN_USE is true, the objfile backing SO is still in use,
+     this indicates that SO was loaded multiple times, but only mapped
+     in once (the mapping was reused).  */
+  virtual void on_solib_unloaded (const solib &so, bool still_in_use) {}
 
   /* Notify the interpreter that a command it is executing is about to cause
      the inferior to proceed.  */
@@ -332,8 +343,11 @@ extern void interps_notify_target_resumed (ptid_t ptid);
 /* Notify all interpreters that solib SO has been loaded.  */
 extern void interps_notify_solib_loaded (const solib &so);
 
-/* Notify all interpreters that solib SO has been unloaded.  */
-extern void interps_notify_solib_unloaded (const solib &so);
+/* Notify all interpreters that solib SO has been unloaded.  When
+   STILL_IN_USE is true, the objfile backing SO is still in use, this
+   indicates that SO was loaded multiple times, but only mapped in
+   once (the mapping was reused).  */
+extern void interps_notify_solib_unloaded (const solib &so, bool still_in_use);
 
 /* Notify all interpreters that the selected traceframe changed.
 

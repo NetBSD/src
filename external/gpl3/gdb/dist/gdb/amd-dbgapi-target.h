@@ -1,6 +1,6 @@
 /* Target used to communicate with the AMD Debugger API.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,6 +53,11 @@ using is_amd_dbgapi_handle
 
 const gdb::observers::token &
   get_amd_dbgapi_target_inferior_created_observer_token ();
+
+/* Get the token of amd-dbgapi's inferior_execd observer.  */
+
+const gdb::observers::token &
+  get_amd_dbgapi_target_inferior_execd_observer_token ();
 
 /* Comparison operators for amd-dbgapi handle types.  */
 

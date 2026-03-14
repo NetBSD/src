@@ -1,5 +1,5 @@
 /* BFD support for handling relocation entries.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -7419,6 +7419,12 @@ ENUMDOC
   AArch64 pseudo relocation code to be used internally by the AArch64
   assembler and not (currently) written to any object files.
 ENUM
+  BFD_RELOC_AARCH64_BRANCH9
+ENUMDOC
+  AArch64 9 bit pc-relative conditional branch and compare & branch.
+  The lowest two bits must be zero and are not stored in the
+  instruction, giving an 11 bit signed byte offset.
+ENUM
   BFD_RELOC_TILEPRO_COPY
 ENUMX
   BFD_RELOC_TILEPRO_GLOB_DAT
@@ -8366,8 +8372,8 @@ bfd_generic_relax_section (bfd *abfd ATTRIBUTE_UNUSED,
 			   bool *again)
 {
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   *again = false;
   return true;

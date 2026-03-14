@@ -1,6 +1,6 @@
 /* Ada Ravenscar thread support.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "top.h"
 #include "regcache.h"
 #include "objfiles.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 /* This module provides support for "Ravenscar" tasks (Ada) when
    debugging on bare-metal targets.
@@ -194,7 +194,7 @@ private:
      needed because sometimes the runtime will report an active task
      that hasn't yet been put on the list of tasks that is read by
      ada-tasks.c.  */
-  std::unordered_map<ULONGEST, int> m_cpu_map;
+  gdb::unordered_map<ULONGEST, int> m_cpu_map;
 };
 
 /* Return true iff PTID corresponds to a ravenscar task.  */
@@ -503,7 +503,7 @@ ravenscar_thread_target::pid_to_str (ptid_t ptid)
     return beneath ()->pid_to_str (ptid);
 
   return string_printf ("Ravenscar Thread 0x%s",
-			phex_nz (ptid.tid (), sizeof (ULONGEST)));
+			phex_nz (ptid.tid ()));
 }
 
 CORE_ADDR
@@ -921,9 +921,7 @@ Support for Ravenscar task/thread switching is disabled\n"));
 /* Module startup initialization function, automagically called by
    init.c.  */
 
-void _initialize_ravenscar ();
-void
-_initialize_ravenscar ()
+INIT_GDB_FILE (ravenscar)
 {
   /* Notice when the inferior is created in order to push the
      ravenscar ops if needed.  */

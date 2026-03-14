@@ -1,4 +1,4 @@
-# Copyright 2013-2024 Free Software Foundation, Inc.
+# Copyright 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -103,6 +103,15 @@ foreach_with_prefix test_data { {None None} \
 	     "Error occurred in Python: argument 2 must be bool, not $bad_type"] \
 	"check 'signed' argument can handle non-bool type $bad_type"
 }
+
+gdb_test "python print(arch.void_type())" \
+    "void" \
+    "get void type"
+
+# Test type identity
+gdb_test "python print(arch.integer_type(32) is arch.integer_type(32))" \
+    "True" \
+    "arch.integer_type(32) always return the same Python object"
 
 # Test for gdb.architecture_names().  First we're going to grab the
 # complete list of architecture names using the 'complete' command.

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,10 @@ if {[use_gdb_stub]} {
 }
 
 set srcfile1 ${srcfile}
-set binfile1 ${binfile}-1
-set binfile2 ${binfile}-2
+set testfile1 $testfile-1
+set testfile2 $testfile-2
+set binfile1 [standard_output_file $testfile1]
+set binfile2 [standard_output_file $testfile2]
 
 if {[build_executable ${testfile}.exp ${binfile1} "${srcfile1}"] != 0} {
     return -1
@@ -34,7 +36,7 @@ if {[build_executable ${testfile}.exp ${binfile2} "${srcfile2}"] != 0} {
 }
 
 # Start the first inferior.
-clean_restart ${binfile1}
+clean_restart $testfile1
 if {![runto_main]} {
     return
 }

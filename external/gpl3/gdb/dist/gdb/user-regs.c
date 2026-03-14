@@ -1,6 +1,6 @@
 /* User visible, per-frame registers, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -237,9 +237,7 @@ maintenance_print_user_registers (const char *args, int from_tty)
     }
 }
 
-void _initialize_user_regs ();
-void
-_initialize_user_regs ()
+INIT_GDB_FILE (user_regs)
 {
   add_cmd ("user-registers", class_maintenance,
 	   maintenance_print_user_registers,

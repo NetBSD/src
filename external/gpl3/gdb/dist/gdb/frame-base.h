@@ -1,6 +1,6 @@
 /* Definitions for a frame base, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,7 +32,7 @@ struct regcache;
    the NEXT frame's register unwind method, to determine the address
    of THIS frame's `base'.
 
-   The exact meaning of `base' is highly dependant on the type of the
+   The exact meaning of `base' is highly dependent on the type of the
    debug info.  It is assumed that dwarf2, stabs, ... will each
    provide their own methods.
 

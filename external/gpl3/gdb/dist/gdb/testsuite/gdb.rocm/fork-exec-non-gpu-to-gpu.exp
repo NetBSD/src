@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -20,6 +20,7 @@
 load_lib rocm.exp
 
 require allow_hipcc_tests
+require allow_fork_tests
 
 standard_testfile -execer.cpp -execee.cpp
 
@@ -52,7 +53,8 @@ proc do_test { detach-on-fork follow-fork-mode fork_func } {
     }
 
     with_rocm_gpu_lock {
-	clean_restart ${::binfile}-execer-${fork_func}
+	clean_restart
+	gdb_load ${::binfile}-execer-${fork_func}
 
 	gdb_test_no_output "set detach-on-fork ${detach-on-fork}"
 	gdb_test_no_output "set follow-fork-mode ${follow-fork-mode}"

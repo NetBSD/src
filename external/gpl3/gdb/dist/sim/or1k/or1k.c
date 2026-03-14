@@ -1,5 +1,5 @@
 /* OpenRISC simulator support code
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -206,6 +206,10 @@ or1k_cpu_init (SIM_DESC sd, sim_cpu *current_cpu, const USI or1k_vr,
 
   /* Clear the floating point control status register.  */
   SET_H_SYS_FPCSR (0);
+
+  /* Set this as the one and only core.  */
+  SET_H_SYS_NUMCORES (1);
+  SET_H_SYS_COREID (0);
 }
 
 void

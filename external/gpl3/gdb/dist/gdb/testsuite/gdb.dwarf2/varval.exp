@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -348,6 +348,6 @@ if ![runto_main] {
 }
 gdb_test "print badval" "value has been optimized out"
 gdb_test "print bad_die_val1" \
-         "invalid dwarf2 offset 0xabcdef11"
+	 {DWARF Error: could not find unit containing offset 0xabcdef11 \[in module .*/varval\]}
 gdb_test "print bad_die_val2" \
          "Bad DW_OP_GNU_variable_value DIE\\."

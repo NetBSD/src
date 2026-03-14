@@ -1094,19 +1094,19 @@ convert_to_solaris_stat(unsigned_word addr,
   target.st_gid   = H2T_4(host->st_gid);
   target.st_size  = H2T_4(host->st_size);
 
-#ifdef HAVE_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
   target.st_rdev  = H2T_4(host->st_rdev);
 #else
   target.st_rdev  = 0;
 #endif
 
-#ifdef HAVE_ST_BLKSIZE
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
   target.st_blksize = H2T_4(host->st_blksize);
 #else
   target.st_blksize = 0;
 #endif
 
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
   target.st_blocks  = H2T_4(host->st_blocks);
 #else
   target.st_blocks  = 0;
@@ -2043,19 +2043,19 @@ convert_to_linux_stat(unsigned_word addr,
   target.st_gid   = H2T_4(host->st_gid);
   target.st_size  = H2T_4(host->st_size);
 
-#ifdef HAVE_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
   target.st_rdev  = H2T_4(host->st_rdev);
 #else
   target.st_rdev  = 0;
 #endif
 
-#ifdef HAVE_ST_BLKSIZE
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
   target.st_blksize = H2T_4(host->st_blksize);
 #else
   target.st_blksize = 0;
 #endif
 
-#ifdef HAVE_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
   target.st_blocks  = H2T_4(host->st_blocks);
 #else
   target.st_blocks  = 0;

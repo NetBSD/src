@@ -1,4 +1,4 @@
-# Copyright 2003-2024 Free Software Foundation, Inc.
+# Copyright 2003-2025 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -136,7 +136,8 @@ gdb_expect_list "info vector" ".*$gdb_prompt $" {
 # We must restart everything, because we have set important registers to
 # some unusual values.
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 if {![runto_main]} {
     return 0
 }

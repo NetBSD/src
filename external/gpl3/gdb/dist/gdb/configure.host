@@ -183,6 +183,7 @@ x86_64-*-mingw*)        gdb_host=mingw64
 			gdb_host_obs=mingw-hdep.o
 			;;
 x86_64-*-cygwin*)	gdb_host=cygwin64 ;;
+x86_64-*-gnu*)		gdb_host=gnu64 ;;
 m32r*-*-linux*)          gdb_host=linux ;;
 
 xtensa*-*-linux*)	gdb_host=linux ;;

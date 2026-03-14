@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -609,9 +609,7 @@ info_auxv_command (const char *cmd, int from_tty)
     }
 }
 
-void _initialize_auxv ();
-void
-_initialize_auxv ()
+INIT_GDB_FILE (auxv)
 {
   add_info ("auxv", info_auxv_command,
 	    _("Display the inferior's auxiliary vector.\n\

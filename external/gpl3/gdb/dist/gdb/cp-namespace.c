@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    Contributed by David Carlton and by Kealia, Inc.
 
@@ -32,7 +32,7 @@
 #include "language.h"
 #include "namespace.h"
 #include "inferior.h"
-#include <map>
+#include "gdbsupport/unordered_map.h"
 #include <string>
 #include <string.h>
 
@@ -352,6 +352,9 @@ cp_lookup_symbol_in_namespace (const char *the_namespace, const char *name,
   return sym;
 }
 
+/* Type used for collecting symbols.  Maps names to symbols.  */
+using symbol_map = gdb::unordered_map<std::string, block_symbol>;
+
 /* This version of the function is internal, use the wrapper unless
    the list of ambiguous symbols is needed.
 
@@ -391,8 +394,7 @@ cp_lookup_symbol_via_imports (const char *scope,
 			      const int search_scope_first,
 			      const int declaration_only,
 			      const int search_parents,
-			      std::map<std::string,
-				       struct block_symbol>& found_symbols)
+			      symbol_map &found_symbols)
 {
   struct block_symbol sym = {};
   int len;
@@ -509,7 +511,7 @@ cp_lookup_symbol_via_imports (const char *scope,
 			      const int declaration_only,
 			      const int search_parents)
 {
-  std::map<std::string, struct block_symbol> found_symbols;
+  symbol_map found_symbols;
 
   cp_lookup_symbol_via_imports(scope, name, block, domain, 0,
 			       declaration_only, search_parents,
@@ -924,7 +926,7 @@ cp_lookup_nested_symbol (struct type *parent_type,
     case TYPE_CODE_NAMESPACE:
     case TYPE_CODE_UNION:
     case TYPE_CODE_ENUM:
-    /* NOTE: Handle modules here as well, because Fortran is re-using the C++
+    /* NOTE: Handle modules here as well, because Fortran is reusing the C++
        specific code to lookup nested symbols in modules, by calling the
        method lookup_symbol_nonlocal, which ends up here.  */
     case TYPE_CODE_MODULE:
@@ -1047,9 +1049,7 @@ maintenance_cplus_namespace (const char *args, int from_tty)
   gdb_printf (_("The `maint namespace' command was removed.\n"));
 }
 
-void _initialize_cp_namespace ();
-void
-_initialize_cp_namespace ()
+INIT_GDB_FILE (cp_namespace)
 {
   struct cmd_list_element *cmd;
 

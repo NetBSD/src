@@ -1712,7 +1712,7 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
   register int endianw = global_endianw;
 
   int tick_start = get_now ();
-  void (*prev_fpe) ();
+  void (*prev_fpe) (int);
 
   register unsigned short *jump_table = sh_jump_table;
 

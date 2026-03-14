@@ -2,7 +2,7 @@
 
 # GDB script to create GDB ARI web page.
 #
-# Copyright (C) 2001-2024 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -176,7 +176,7 @@ fi
 # THIS HAS SUFFERED BIT ROT
 if ${check_indent_p} && test -d "${srcdir}"
 then
-    printf "Analizing file indentation:" 1>&2
+    printf "Analyzing file indentation:" 1>&2
     ( cd "${srcdir}" && /bin/sh ${aridir}/gdb_find.sh ${project} | while read f
     do
 	if /bin/sh ${aridir}/gdb_indent.sh < ${f} 2>/dev/null | cmp -s - ${f}
@@ -550,7 +550,7 @@ function print_heading (nb_file, where, bug_i) {
     for (bug_i = 1; bug_i <= nr_bug; bug_i++) {
 	bug = i2bug[bug_i];
 	printf "<th>"
-	# The title names are offset by one.  Otherwize, when the browser
+	# The title names are offset by one.  Otherwise, when the browser
 	# jumps to the name it leaves out half the relevant column.
 	#printf "<a name=\",%s\">&nbsp;</a>", bug
 	printf "<a name=\",%s\">&nbsp;</a>", i2bug[bug_i-1]
@@ -851,7 +851,7 @@ EOF
     print_toc 0 -1 deprecate Deprecate <<EOF
 Mechanisms that are a candidate for being made obsolete.  Once core
 GDB no longer depends on these mechanisms and/or there is a
-replacement available, these mechanims can be deprecated (adding the
+replacement available, these mechanisms can be deprecated (adding the
 deprecated prefix) obsoleted (put into category obsolete) or deleted.
 See obsolete and deprecated.
 EOF

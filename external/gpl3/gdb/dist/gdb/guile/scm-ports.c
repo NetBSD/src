@@ -1,7 +1,7 @@
 /* Support for connecting Guile's stdio to GDB's.
    as well as r/w memory via ports.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -336,9 +336,15 @@ ioscm_flush (SCM port)
     return;
 
   if (scm_is_eq (port, error_port_scm))
-    gdb_flush (gdb_stderr);
+    {
+      if (gdb_stderr != nullptr)
+	gdb_flush (gdb_stderr);
+    }
   else
-    gdb_flush (gdb_stdout);
+    {
+      if (gdb_stdout != nullptr)
+	gdb_flush (gdb_stdout);
+    }
 }
 
 #else /* !USING_GUILE_BEFORE_2_2 */

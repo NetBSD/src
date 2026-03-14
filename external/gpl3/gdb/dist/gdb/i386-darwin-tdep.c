@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -271,7 +271,7 @@ i386_darwin_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
      alignment.  */
   set_gdbarch_long_double_bit (gdbarch, 128);
 
-  set_gdbarch_so_ops (gdbarch, &darwin_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_darwin_solib_ops);
 }
 
 static enum gdb_osabi
@@ -286,9 +286,7 @@ i386_mach_o_osabi_sniffer (bfd *abfd)
   return GDB_OSABI_UNKNOWN;
 }
 
-void _initialize_i386_darwin_tdep ();
-void
-_initialize_i386_darwin_tdep ()
+INIT_GDB_FILE (i386_darwin_tdep)
 {
   gdbarch_register_osabi_sniffer (bfd_arch_unknown, bfd_target_mach_o_flavour,
 				  i386_mach_o_osabi_sniffer);

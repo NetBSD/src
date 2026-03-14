@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,9 +56,7 @@ sparc32nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
 static sparc_target<inf_ptrace_target> the_sparc_nbsd_nat_target;
 
-void _initialize_sparcnbsd_nat ();
-void
-_initialize_sparcnbsd_nat ()
+INIT_GDB_FILE (sparcnbsd_nat)
 {
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;

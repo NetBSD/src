@@ -1,4 +1,4 @@
-# Copyright 2005-2024 Free Software Foundation, Inc.
+# Copyright 2005-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,17 @@ set bp_location [gdb_get_line_number "START" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"
 
 set eol "\r\n"
+
+# Like multi_line, but if a line is optional (like "(mumble)?"), then
+# insert the \r\n into the optional part.
+proc multi_line_with_optional {args} {
+    set result ""
+    foreach line $args {
+	append result [regsub -- "(\\)\\?)?$" $line "\r\n\\1"]
+    }
+    # Remove the final \r\n.
+    return [string range $result 0 end-2]
+}
 
 # A convenience function that verifies that the "complete EXPR" command
 # returns the EXPECTED_OUTPUT.
@@ -155,29 +166,35 @@ test_gdb_complete "external_ident" \
 
 # Complete on the name of package. 
 test_gdb_complete "pck" \
-                  [multi_line "(p pck\\.ad\[sb\])?" \
-                              "(p pck\\.ad\[sb\])?" \
-                              "p pck.ambiguous_func" \
-                              "p pck.external_identical_one" \
-                              "p pck.inner.inside_variable" \
-			      "p pck.internal_capitalized" \
-                              "p pck.local_identical_one" \
-                              "p pck.local_identical_two" \
-                              "p pck.my_global_variable" \
-                              "p pck.proc" ]
+    [multi_line_with_optional \
+	 "(p pck)?" \
+	 "(p pck\\.ad\[sb\])?" \
+	 "(p pck\\.ad\[sb\])?" \
+	 "p pck.ambiguous_func" \
+	 "p pck.external_identical_one" \
+	 "(p pck.inner)?" \
+	 "p pck.inner.inside_variable" \
+	 "p pck.internal_capitalized" \
+	 "p pck.local_identical_one" \
+	 "p pck.local_identical_two" \
+	 "p pck.my_global_variable" \
+	 "p pck.proc" ]
 
 # Complete on the name of a package followed by a dot:
 test_gdb_complete "pck." \
-                  [multi_line "(p pck\\.ad\[sb\])?" \
-                              "(p pck\\.ad\[sb\])?" \
-                              "p pck.ambiguous_func" \
-                              "p pck.external_identical_one" \
-                              "p pck.inner.inside_variable" \
-			      "p pck.internal_capitalized" \
-                              "p pck.local_identical_one" \
-                              "p pck.local_identical_two" \
-                              "p pck.my_global_variable" \
-                              "p pck.proc" ]
+    [multi_line_with_optional \
+	 "(p pck\\.)?" \
+	 "(p pck\\.ad\[sb\])?" \
+	 "(p pck\\.ad\[sb\])?" \
+	 "p pck.ambiguous_func" \
+	 "p pck.external_identical_one" \
+	 "(p pck.inner)?" \
+	 "p pck.inner.inside_variable" \
+	 "p pck.internal_capitalized" \
+	 "p pck.local_identical_one" \
+	 "p pck.local_identical_two" \
+	 "p pck.my_global_variable" \
+	 "p pck.proc" ]
 
 # Complete a mangled symbol name, but using the '<...>' notation.
 test_gdb_complete "<pck__my" \

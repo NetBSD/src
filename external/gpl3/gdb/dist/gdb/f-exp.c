@@ -3550,7 +3550,7 @@ yylex (void)
       {
 	result = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 				domain, NULL);
-	if (result.symbol && result.symbol->aclass () == LOC_TYPEDEF)
+	if (result.symbol && result.symbol->loc_class () == LOC_TYPEDEF)
 	  {
 	    yylval.tsym.type = result.symbol->type ();
 	    return TYPENAME;

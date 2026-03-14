@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -592,9 +592,7 @@ delete_mem_command (const char *args, int from_tty)
 static struct cmd_list_element *mem_set_cmdlist;
 static struct cmd_list_element *mem_show_cmdlist;
 
-void _initialize_mem ();
-void
-_initialize_mem ()
+INIT_GDB_FILE (mem)
 {
   add_com ("mem", class_vars, mem_command, _("\
 Define or reset attributes for memory regions.\n\

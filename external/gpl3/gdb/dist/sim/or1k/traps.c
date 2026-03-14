@@ -1,5 +1,5 @@
 /* OpenRISC exception, interrupts, syscall and trap support
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -224,6 +224,8 @@ or1k32bf_mfspr (sim_cpu *current_cpu, USI addr)
     case SPR_ADDR (SYS, PPC):
     case SPR_ADDR (SYS, FPCSR):
     case SPR_ADDR (SYS, EPCR0):
+    case SPR_ADDR (SYS, COREID):
+    case SPR_ADDR (SYS, NUMCORES):
     case SPR_ADDR (MAC, MACLO):
     case SPR_ADDR (MAC, MACHI):
       break;

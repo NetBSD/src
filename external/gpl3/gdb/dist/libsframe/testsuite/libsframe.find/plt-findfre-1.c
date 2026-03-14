@@ -1,6 +1,6 @@
 /* plt-findfre-1.c -- Test for sframe_find_fre for SFRAME_FDE_TYPE_PCMASK.
 
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -28,12 +28,13 @@
 #include <dejagnu.h>
 
 static int
-add_plt_fde1 (sframe_encoder_ctx *ectx, int idx)
+add_plt_fde1 (sframe_encoder_ctx *ectx, uint32_t plt_vaddr,
+	      uint32_t sframe_vaddr, int idx)
 {
-  int i, err;
   /* A contiguous block containing 3 FREs.  The start_ip_offset must remain
      less than 16 bytes.  */
-  sframe_frame_row_entry fres[]
+#define PLT1_NUM_FRES    3
+  sframe_frame_row_entry fres[PLT1_NUM_FRES]
     = { {0x0, {0x1, 0, 0}, 0x3},
 	{0x6, {0x2, 0xf0, 0}, 0x5},
 	{0xc, {0x3, 0xf0, 0}, 0x4}
@@ -41,19 +42,29 @@ add_plt_fde1 (sframe_encoder_ctx *ectx, int idx)
 
   unsigned char finfo = sframe_fde_create_func_info (SFRAME_FRE_TYPE_ADDR1,
 						     SFRAME_FDE_TYPE_PCMASK);
+  uint32_t offsetof_fde_in_sec
+    = sframe_encoder_get_offsetof_fde_start_addr (ectx, idx, NULL);
+  int32_t func_start_addr = (plt_vaddr
+			     - (sframe_vaddr + offsetof_fde_in_sec));
+
   /* 5 pltN entries of 16 bytes each.  */
-  err = sframe_encoder_add_funcdesc_v2 (ectx, 0x1000, 16*5, finfo, 16, 3);
+  int err = sframe_encoder_add_funcdesc_v2 (ectx, func_start_addr,
+					    16 * 5 /* func size in bytes.  */,
+					    finfo,
+					    16 /* rep block size in bytes.  */,
+					    PLT1_NUM_FRES);
   if (err == -1)
     return err;
 
-  for (i = 0; i < 3; i++)
-    if (sframe_encoder_add_fre (ectx, idx, fres+i) == SFRAME_ERR)
+  for (unsigned i = 0; i < PLT1_NUM_FRES; i++)
+    if (sframe_encoder_add_fre (ectx, idx, fres + i) == SFRAME_ERR)
       return -1;
 
   return 0;
 }
 
-int main (void)
+static
+void test_plt_findfre (uint32_t plt_vaddr, uint32_t sframe_vaddr)
 {
   sframe_encoder_ctx *ectx;
   sframe_decoder_ctx *dctx;
@@ -61,7 +72,7 @@ int main (void)
   char *sframe_buf;
   size_t sf_size;
   int err = 0;
-  unsigned int fde_cnt = 0;
+  uint32_t fde_cnt = 0;
 
 #define TEST(name, cond)                                                      \
   do                                                                          \
@@ -73,12 +84,13 @@ int main (void)
     }                                                                         \
     while (0)
 
-  ectx = sframe_encode (SFRAME_VERSION, 0, SFRAME_ABI_AMD64_ENDIAN_LITTLE,
+  ectx = sframe_encode (SFRAME_VERSION, SFRAME_F_FDE_FUNC_START_PCREL,
+			SFRAME_ABI_AMD64_ENDIAN_LITTLE,
 			SFRAME_CFA_FIXED_FP_INVALID,
 			-8, /* Fixed RA offset for AMD64.  */
 			&err);
 
-  err = add_plt_fde1 (ectx, 0);
+  err = add_plt_fde1 (ectx, plt_vaddr, sframe_vaddr, 0);
   TEST ("plt-findfre-1: Adding FDE1 for plt", err == 0);
 
   fde_cnt = sframe_encoder_get_num_fidx (ectx);
@@ -88,40 +100,57 @@ int main (void)
   TEST ("plt-findfre-1: Encoder write", err == 0);
 
   dctx = sframe_decode (sframe_buf, sf_size, &err);
-  TEST("plt-findfre-1: Decoder setup", dctx != NULL);
+  TEST ("plt-findfre-1: Decoder setup", dctx != NULL);
 
   /* Find the first FRE in PLT1.  */
-  err = sframe_find_fre (dctx, (0x1000 + 0x0), &frep);
-  TEST("plt-findfre-1: Find first FRE in PLT1",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x1)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 0x0 - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find first FRE in PLT1",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x1));
 
   /* Find the second FRE.  */
-  err = sframe_find_fre (dctx, (0x1000 + 0x6), &frep);
-  TEST("plt-findfre-1: Find second FRE in PLT1",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x2)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 0x6 - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find second FRE in PLT1",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x2));
 
   /* Find the last FRE.  */
-  err = sframe_find_fre (dctx, (0x1000 + 0xc), &frep);
-  TEST("plt-findfre-1: Find last FRE in PLT1",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x3)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 0xc - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find last FRE in PLT1",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x3));
 
   /* Find the first FRE in PLT4.  */
-  err = sframe_find_fre (dctx, (0x1000 + 16*3 + 0x0), &frep);
-  TEST("plt-findfre-1: Find first FRE in PLT4",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x1)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 16*3 + 0x0 - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find first FRE in PLT4",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x1));
 
   /* Find the second FRE in PLT4.  */
-  err = sframe_find_fre (dctx, (0x1000 + 16*3 + 0x6), &frep);
-  TEST("plt-findfre-1: Find second FRE in PLT4",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x2)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 16*3 + 0x6 - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find second FRE in PLT4",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x2));
 
   /* Find the last FRE in PLT4.  */
-  err = sframe_find_fre (dctx, (0x1000 + 16*3 + 0xc), &frep);
-  TEST("plt-findfre-1: Find last FRE in PLT4",
-       ((err == 0) && (sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x3)));
+  err = sframe_find_fre (dctx, (plt_vaddr + 16*3 + 0xc - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find last FRE in PLT4",
+	(err == 0 && sframe_fre_get_cfa_offset (dctx, &frep, &err) == 0x3));
+
+  /* Find no FRE for out of range PLT6.  */
+  err = sframe_find_fre (dctx, (plt_vaddr + 16*5 + 0x0 - sframe_vaddr), &frep);
+  TEST ("plt-findfre-1: Find no FRE for out of range PLT6", err != 0);
 
   sframe_encoder_free (&ectx);
   sframe_decoder_free (&dctx);
+}
 
-  return 0;
+int main (void)
+{
+  uint32_t sframe_vaddr = 0x402220;
+  uint32_t plt_vaddr = 0x401020;
+  printf ("Testing with plt_vaddr = %#x; sframe_vaddr = %#x\n", plt_vaddr,
+	  sframe_vaddr);
+  test_plt_findfre (plt_vaddr, sframe_vaddr);
+
+  sframe_vaddr = 0x401020;
+  plt_vaddr = 0x402220;
+  printf ("Testing with plt_vaddr = %#x; sframe_vaddr = %#x\n", plt_vaddr,
+	  sframe_vaddr);
+  test_plt_findfre (plt_vaddr, sframe_vaddr);
 }

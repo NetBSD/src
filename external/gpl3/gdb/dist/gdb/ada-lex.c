@@ -835,7 +835,7 @@ int yy_flex_debug = 0;
 char *yytext;
 #line 1 "ada-lex.l"
 /* FLEX lexer for Ada expressions, for GDB. -*- c++ -*-
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

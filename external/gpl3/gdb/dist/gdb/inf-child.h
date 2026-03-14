@@ -1,6 +1,6 @@
 /* Base/prototype target for default child (native) targets.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -81,8 +81,8 @@ public:
   int fileio_pread (int fd, gdb_byte *read_buf, int len,
 		    ULONGEST offset, fileio_error *target_errno) override;
   int fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno) override;
-  int fileio_stat (struct inferior *inf, const char *filename,
-		   struct stat *sb, fileio_error *target_errno) override;
+  int fileio_lstat (struct inferior *inf, const char *filename,
+		    struct stat *sb, fileio_error *target_errno) override;
   int fileio_close (int fd, fileio_error *target_errno) override;
   int fileio_unlink (struct inferior *inf,
 		     const char *filename,

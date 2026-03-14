@@ -1,4 +1,4 @@
-# Copyright 2013-2024 Free Software Foundation, Inc.
+# Copyright 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -61,7 +61,8 @@ if {[gdb_compile_shlib $libsrc $lib_so {debug}] != ""} {
     return
 }
 
-if {[prepare_for_testing "failed to prepare"  $binfile "$srcfile $srcfile2" $exec_opts]} {
+if { [prepare_for_testing "failed to prepare" $testfile "$srcfile $srcfile2" \
+	  $exec_opts] } {
     return
 }
 
@@ -70,7 +71,8 @@ gdb_load_shlib ${lib_so}
 proc do_test { remove_expr } {
     global lib_basename lib_syms srcfile srcfile3
 
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
 
     if {![runto_main]} {
 	return

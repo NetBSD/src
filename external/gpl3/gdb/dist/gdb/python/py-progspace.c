@@ -1,6 +1,6 @@
 /* Python interface to program spaces.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -116,7 +116,7 @@ pspy_get_filename (PyObject *self, void *closure)
   Py_RETURN_NONE;
 }
 
-/* Implement the gdb.Progspace.symbol_file attribute.  Retun the
+/* Implement the gdb.Progspace.symbol_file attribute.  Return the
    gdb.Objfile corresponding to the currently loaded symbol-file, or None
    if no symbol-file is loaded.  If the Progspace is invalid then raise an
    exception.  */
@@ -136,7 +136,7 @@ pspy_get_symbol_file (PyObject *self, void *closure)
   Py_RETURN_NONE;
 }
 
-/* Implement the gdb.Progspace.executable_filename attribute.  Retun a
+/* Implement the gdb.Progspace.executable_filename attribute.  Return a
    string containing the name of the current executable, or None if no
    executable is currently set.  If the Progspace is invalid then raise an
    exception.  */

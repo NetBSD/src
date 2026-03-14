@@ -1,6 +1,6 @@
 /* Scheme interface to types.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -510,7 +510,7 @@ tyscm_field_smob_to_field (field_smob *f_smob)
   struct type *type = tyscm_field_smob_containing_type (f_smob);
 
   /* This should be non-NULL by construction.  */
-  gdb_assert (type->fields () != NULL);
+  gdb_assert (type->fields ().data () != nullptr);
 
   return &type->field (f_smob->field_num);
 }

@@ -1,6 +1,6 @@
 /* Displaced stepping related things.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -315,9 +315,7 @@ displaced_step_buffers::restore_in_ptid (ptid_t ptid)
     }
 }
 
-void _initialize_displaced_stepping ();
-void
-_initialize_displaced_stepping ()
+INIT_GDB_FILE (displaced_stepping)
 {
   add_setshow_boolean_cmd ("displaced", class_maintenance,
 			   &debug_displaced, _("\
@@ -327,4 +325,47 @@ When non-zero, displaced stepping specific debugging is enabled."),
 			    NULL,
 			    show_debug_displaced,
 			    &setdebuglist, &showdebuglist);
+}
+
+/* See displaced-stepping.h.  */
+
+bool
+default_supports_displaced_step (target_ops *target, thread_info *thread)
+{
+  /* Only check for the presence of `prepare`.  The gdbarch verification ensures
+     that if `prepare` is provided, so is `finish`.  */
+  gdbarch *arch = get_thread_regcache (thread)->arch ();
+  return gdbarch_displaced_step_prepare_p (arch);
+}
+
+/* See displaced-stepping.h.  */
+
+displaced_step_prepare_status
+default_displaced_step_prepare (target_ops *target, thread_info *thread,
+				CORE_ADDR &displaced_pc)
+{
+  gdbarch *arch = get_thread_regcache (thread)->arch ();
+  return gdbarch_displaced_step_prepare (arch, thread, displaced_pc);
+}
+
+/* See displaced-stepping.h.  */
+
+displaced_step_finish_status
+default_displaced_step_finish (target_ops *target,
+			       thread_info *thread,
+			       const target_waitstatus &status)
+{
+  gdbarch *arch = thread->displaced_step_state.get_original_gdbarch ();
+  return gdbarch_displaced_step_finish (arch, thread, status);
+}
+
+/* See displaced-stepping.h.  */
+
+void
+default_displaced_step_restore_all_in_ptid (target_ops *target,
+					    inferior *parent_inf,
+					    ptid_t child_ptid)
+{
+  return gdbarch_displaced_step_restore_all_in_ptid (parent_inf->arch (),
+						     parent_inf, child_ptid);
 }

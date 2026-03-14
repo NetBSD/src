@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola MCore COFF/PE
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -17,6 +17,10 @@
    along with this program; if not, write to the Free Software
    Foundation, 51 Franklin Street - Fifth Floor,
    Boston, MA 02110-1301, USA.  */
+
+#ifndef COFF_WITH_PE
+#error non-PE COFF unsupported
+#endif
 
 #include "sysdep.h"
 #include "bfd.h"

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,30 +26,30 @@ class _BlockTracker:
         # Map from PC to symbol names.  A given PC is assumed to have
         # just one label -- DAP wouldn't let us return multiple labels
         # anyway.
-        self.labels = {}
+        self._labels = {}
         # Blocks that have already been handled.
-        self.blocks = set()
+        self._blocks = set()
 
     # Add a gdb.Block and its superblocks, ignoring the static and
     # global block.  BLOCK can also be None, which is ignored.
     def add_block(self, block):
         while block is not None:
-            if block.is_static or block.is_global or block in self.blocks:
+            if block.is_static or block.is_global or block in self._blocks:
                 return
-            self.blocks.add(block)
+            self._blocks.add(block)
             if block.function is not None:
-                self.labels[block.start] = block.function.name
+                self._labels[block.start] = block.function.name
             for sym in block:
                 if sym.addr_class == gdb.SYMBOL_LOC_LABEL:
-                    self.labels[int(sym.value())] = sym.name
+                    self._labels[int(sym.value())] = sym.name
             block = block.superblock
 
     # Add PC to this tracker.  Update RESULT as appropriate with
     # information about the source and any label.
     def add_pc(self, pc, result):
         self.add_block(gdb.block_for_pc(pc))
-        if pc in self.labels:
-            result["symbol"] = self.labels[pc]
+        if pc in self._labels:
+            result["symbol"] = self._labels[pc]
         sal = gdb.find_pc_line(pc)
         if sal.symtab is not None:
             if sal.line != 0:

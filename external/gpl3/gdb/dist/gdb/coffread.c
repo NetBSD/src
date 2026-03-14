@@ -1,5 +1,5 @@
 /* Read coff symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
    Contributed by David D. Johnson, Brown University (ddj@cs.brown.edu).
 
    This file is part of GDB.
@@ -234,6 +234,7 @@ coffstab_build_psymtabs (struct objfile *objfile,
   const char *name = bfd_get_filename (sym_bfd);
   unsigned int stabsize;
 
+  stabs_deprecated_warning ();
   /* Allocate struct to keep track of stab reading.  */
   dbx_objfile_data_key.emplace (objfile);
   dbx_symfile_info *key = dbx_objfile_data_key.get (objfile);
@@ -902,7 +903,7 @@ coff_symtab_read (minimal_symbol_reader &reader,
   symnum = 0;
   while (symnum < nsyms)
     {
-      QUIT;			/* Make this command interruptable.  */
+      QUIT;			/* Make this command interruptible.  */
 
       read_one_sym (cs, &main_sym, &main_aux);
 
@@ -1566,7 +1567,7 @@ patch_opaque_types (struct symtab *s)
 	 Remove syms from the chain when their types are stored,
 	 but search the whole chain, as there may be several syms
 	 from different files with the same name.  */
-      if (real_sym->aclass () == LOC_TYPEDEF
+      if (real_sym->loc_class () == LOC_TYPEDEF
 	  && real_sym->domain () == TYPE_DOMAIN
 	  && real_sym->type ()->code () == TYPE_CODE_PTR
 	  && real_sym->type ()->target_type ()->length () != 0)
@@ -1613,7 +1614,7 @@ static const struct symbol_register_ops coff_register_funcs = {
   coff_reg_to_regnum
 };
 
-/* The "aclass" index for computed COFF symbols.  */
+/* The "loc_class" index for computed COFF symbols.  */
 
 static int coff_register_index;
 
@@ -1645,7 +1646,7 @@ process_coff_symbol (struct coff_symbol *cs,
 	(lookup_function_type (decode_function_type (cs, cs->c_type,
 						     aux, objfile)));
 
-      sym->set_aclass_index (LOC_BLOCK);
+      sym->set_loc_class_index (LOC_BLOCK);
       if (cs->c_sclass == C_STAT || cs->c_sclass == C_THUMBSTAT
 	  || cs->c_sclass == C_THUMBSTATFUNC)
 	add_symbol_to_list (sym, get_file_symbols ());
@@ -1662,14 +1663,14 @@ process_coff_symbol (struct coff_symbol *cs,
 	  break;
 
 	case C_AUTO:
-	  sym->set_aclass_index (LOC_LOCAL);
+	  sym->set_loc_class_index (LOC_LOCAL);
 	  add_symbol_to_list (sym, get_local_symbols ());
 	  break;
 
 	case C_THUMBEXT:
 	case C_THUMBEXTFUNC:
 	case C_EXT:
-	  sym->set_aclass_index (LOC_STATIC);
+	  sym->set_loc_class_index (LOC_STATIC);
 	  sym->set_value_address ((CORE_ADDR) cs->c_value
 				  + objfile->section_offsets[SECT_OFF_TEXT (objfile)]);
 	  add_symbol_to_list (sym, get_global_symbols ());
@@ -1678,7 +1679,7 @@ process_coff_symbol (struct coff_symbol *cs,
 	case C_THUMBSTAT:
 	case C_THUMBSTATFUNC:
 	case C_STAT:
-	  sym->set_aclass_index (LOC_STATIC);
+	  sym->set_loc_class_index (LOC_STATIC);
 	  sym->set_value_address ((CORE_ADDR) cs->c_value
 				  + objfile->section_offsets[SECT_OFF_TEXT (objfile)]);
 	  if (within_function)
@@ -1697,7 +1698,7 @@ process_coff_symbol (struct coff_symbol *cs,
 	case C_GLBLREG:
 #endif
 	case C_REG:
-	  sym->set_aclass_index (coff_register_index);
+	  sym->set_loc_class_index (coff_register_index);
 	  sym->set_value_longest (cs->c_value);
 	  add_symbol_to_list (sym, get_local_symbols ());
 	  break;
@@ -1707,20 +1708,20 @@ process_coff_symbol (struct coff_symbol *cs,
 	  break;
 
 	case C_ARG:
-	  sym->set_aclass_index (LOC_ARG);
+	  sym->set_loc_class_index (LOC_ARG);
 	  sym->set_is_argument (1);
 	  add_symbol_to_list (sym, get_local_symbols ());
 	  break;
 
 	case C_REGPARM:
-	  sym->set_aclass_index (coff_register_index);
+	  sym->set_loc_class_index (coff_register_index);
 	  sym->set_is_argument (1);
 	  sym->set_value_longest (cs->c_value);
 	  add_symbol_to_list (sym, get_local_symbols ());
 	  break;
 
 	case C_TPDEF:
-	  sym->set_aclass_index (LOC_TYPEDEF);
+	  sym->set_loc_class_index (LOC_TYPEDEF);
 	  sym->set_domain (TYPE_DOMAIN);
 
 	  /* If type has no name, give it one.  */
@@ -1775,7 +1776,7 @@ process_coff_symbol (struct coff_symbol *cs,
 	case C_STRTAG:
 	case C_UNTAG:
 	case C_ENTAG:
-	  sym->set_aclass_index (LOC_TYPEDEF);
+	  sym->set_loc_class_index (LOC_TYPEDEF);
 	  sym->set_domain (STRUCT_DOMAIN);
 
 	  /* Some compilers try to be helpful by inventing "fake"
@@ -2164,7 +2165,7 @@ coff_read_enum_type (int index, int length, int lastsym,
 
 	  name = obstack_strdup (&objfile->objfile_obstack, name);
 	  sym->set_linkage_name (name);
-	  sym->set_aclass_index (LOC_CONST);
+	  sym->set_loc_class_index (LOC_CONST);
 	  sym->set_domain (VAR_DOMAIN);
 	  sym->set_value_longest (ms->c_value);
 	  add_symbol_to_list (sym, symlist);
@@ -2247,9 +2248,7 @@ static const struct sym_fns coff_sym_fns =
   NULL,				/* sym_probe_fns */
 };
 
-void _initialize_coffread ();
-void
-_initialize_coffread ()
+INIT_GDB_FILE (coffread)
 {
   add_symtab_fns (bfd_target_coff_flavour, &coff_sym_fns);
 

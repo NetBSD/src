@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -62,6 +62,8 @@ struct cmd_list_element
       type (not_set_cmd),
       doc (doc_)
   {
+    gdb_assert (name != nullptr);
+    gdb_assert (doc != nullptr);
     memset (&function, 0, sizeof (function));
   }
 
@@ -82,6 +84,9 @@ struct cmd_list_element
 
      For non-prefix commands, return an empty string.  */
   std::string prefixname () const;
+
+  /* Like prefixname, but do not append a trailing space.  */
+  std::string prefixname_no_space () const;
 
   /* Return a vector of strings describing the components of the full name
      of this command.  For example, if this command is 'set AA BB CC',
@@ -308,6 +313,27 @@ extern const char * const boolean_enums[];
 
 /* The enums of auto-boolean commands.  */
 extern const char * const auto_boolean_enums[];
+
+/* Add the different possible completions of TEXT with color.
+
+   WORD points in the same buffer as TEXT, and completions should be
+   returned relative to this position.  For example, suppose TEXT is "foo"
+   and we want to complete to "foobar".  If WORD is "oo", return
+   "oobar"; if WORD is "baz/foo", return "baz/foobar".  */
+
+extern void complete_on_color (completion_tracker &tracker,
+			       const char *text, const char *word);
+
+/* Parse ARGS, an option to a var_color variable.
+ *
+   Either returns the parsed value on success or throws an error.  ARGS may be
+   one of strings {none, black, red, green, yellow, blue, magenta,
+   cyan, white}, or color number from 0 to 255, or RGB hex triplet #RRGGBB.
+   */
+extern ui_file_style::color parse_cli_var_color (const char **args);
+
+/* Same as above but additionally check that there is no junk in the end.  */
+extern ui_file_style::color parse_var_color (const char *arg);
 
 /* Verify whether a given cmd_list_element is a user-defined command.
    Return 1 if it is user-defined.  Return 0 otherwise.  */

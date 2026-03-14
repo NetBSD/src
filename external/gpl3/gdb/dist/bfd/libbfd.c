@@ -1,5 +1,5 @@
 /* Assorted BFD support routines, only used internally.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1098,24 +1098,26 @@ bfd_mmap_local (bfd *abfd, size_t rsize, void **map_addr, size_t *map_size)
 
 /* Mmap a memory region of RSIZE bytes at the current offset.
    Return mmap address and size in MAP_ADDR and MAP_SIZE.  Return NULL
-   on invalid input and MAP_FAILED for mmap failure.  */
+   on invalid input.  */
 
 void *
 _bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
 		     size_t *map_size)
 {
   /* Use mmap only if section size >= the minimum mmap section size.  */
-  if (rsize < _bfd_minimum_mmap_size)
+  if (rsize >= _bfd_minimum_mmap_size)
     {
-      void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
-      /* NB: Set *MAP_ADDR to MEM and *MAP_SIZE to 0 to indicate that
-	 _bfd_malloc_and_read is called.  */
-      *map_addr = mem;
-      *map_size = 0;
-      return mem;
+      void *result = bfd_mmap_local (abfd, rsize, map_addr, map_size);
+      if (result != MAP_FAILED)
+	return result;
     }
 
-  return bfd_mmap_local (abfd, rsize, map_addr, map_size);
+  void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
+  /* NB: Set *MAP_ADDR to MEM and *MAP_SIZE to 0 to indicate that
+     _bfd_malloc_and_read is called.  */
+  *map_addr = mem;
+  *map_size = 0;
+  return mem;
 }
 
 /* Munmap RSIZE bytes at PTR.  */
@@ -1213,15 +1215,10 @@ _bfd_mmap_read_temporary (void **data_p, size_t *size_p,
   if (use_mmmap)
     {
       void *mmaped = _bfd_mmap_temporary (abfd, size, mmap_base, size_p);
-      /* MAP_FAILED is returned when called from GDB on an object with
-	 opncls_iovec.  Use bfd_read in this case.  */
-      if (mmaped != MAP_FAILED)
-	{
-	  if (mmaped == NULL)
-	    abort ();
-	  *data_p = mmaped;
-	  return true;
-	}
+      if (mmaped == NULL)
+	return false;
+      *data_p = mmaped;
+      return true;
     }
 #endif
 
@@ -1514,11 +1511,11 @@ _bfd_write_unsigned_leb128 (bfd_byte *p, bfd_byte *end, bfd_vma val)
 }
 
 bool
-_bfd_generic_init_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
-					asection *isec ATTRIBUTE_UNUSED,
-					bfd *obfd ATTRIBUTE_UNUSED,
-					asection *osec ATTRIBUTE_UNUSED,
-					struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
+_bfd_generic_bfd_copy_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
+					    asection *isec ATTRIBUTE_UNUSED,
+					    bfd *obfd ATTRIBUTE_UNUSED,
+					    asection *osec ATTRIBUTE_UNUSED,
+					    struct bfd_link_info *link_info ATTRIBUTE_UNUSED)
 {
   return true;
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,6 +33,8 @@
 # would notice the thread of the child process of the (still unprocessed) fork
 # event, and erroneously create a new inferior for it.  Once fixed, the child
 # process' thread is hidden by whoever holds the pending fork event.
+
+require allow_fork_tests
 
 standard_testfile .c -touch-file.c
 
@@ -91,7 +93,8 @@ proc do_test { target-non-stop who_forks fork_function stop_mode } {
 
     save_vars { ::GDBFLAGS } {
 	append ::GDBFLAGS " -ex \"maintenance set target-non-stop ${target-non-stop}\""
-	clean_restart $this_binfile
+	clean_restart
+	gdb_load $this_binfile
     }
 
     if {![runto_main]} {

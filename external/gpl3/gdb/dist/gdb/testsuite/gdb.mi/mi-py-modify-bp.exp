@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ if {[build_executable $testfile.exp $testfile $srcfile] == -1} {
 set remote_python_file [gdb_remote_download host \
 			    ${srcdir}/${subdir}/${testfile}.py]
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 mi_runto_main
 
 # Delete all breakpoints, watchpoints, tracepoints, and catchpoints.

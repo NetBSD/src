@@ -1,6 +1,6 @@
 /* Self tests for format_pieces for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -147,9 +147,7 @@ run_tests ()
 } /* namespace format_pieces */
 } /* namespace selftests */
 
-void _initialize_format_pieces_selftests ();
-void
-_initialize_format_pieces_selftests ()
+INIT_GDB_FILE (format_pieces_selftests)
 {
   selftests::register_test ("format_pieces",
 			    selftests::format_pieces::run_tests);

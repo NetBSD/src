@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -25,7 +25,7 @@
 #include "xml-tdesc.h"
 #include "osabi.h"
 #include "filenames.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 #include <string>
 
 /* Maximum sizes.
@@ -64,7 +64,7 @@ tdesc_parse_xml (const char *document, xml_fetch_another fetcher)
    then we will create unnecessary duplicate gdbarches.  See
    gdbarch_list_lookup_by_info.  */
 
-static std::unordered_map<std::string, target_desc_up> xml_cache;
+static gdb::unordered_map<std::string, target_desc_up> xml_cache;
 
 /* Callback data for target description parsing.  */
 
@@ -670,7 +670,7 @@ file_read_description_xml (const char *filename)
       return NULL;
     }
 
-  const std::string dirname = ldirname (filename);
+  const std::string dirname = gdb_ldirname (filename);
   auto fetch_another = [&dirname] (const char *name)
     {
       return xml_fetch_content_from_file (name, dirname.c_str ());

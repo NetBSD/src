@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Alpha.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "frame.h"
+#include "solib-svr4-linux.h"
 #include "osabi.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -369,9 +370,7 @@ alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->jb_elt_size = 8;
 
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -386,9 +385,7 @@ alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				    alpha_linux_gdb_signal_to_target);
 }
 
-void _initialize_alpha_linux_tdep ();
-void
-_initialize_alpha_linux_tdep ()
+INIT_GDB_FILE (alpha_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_alpha, 0, GDB_OSABI_LINUX,
 			  alpha_linux_init_abi);

@@ -1,5 +1,5 @@
 # ; -*- mode: sh ; -*-
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -211,23 +211,44 @@ case ${gdb_host} in
 		;;
 	esac
 	;;
+    gnu64)
+	case ${gdb_host_cpu} in
+	    i386)
+		# Host: x86_64 running the GNU Hurd
+		NATDEPFILES='x86-gnu-nat.o gnu-nat.o \
+		     x86-nat.o nat/x86-dregs.o \
+		     amd64-nat.o fork-child.o \
+		     nat/fork-inferior.o \
+		     notify_S.o process_reply_S.o msg_reply_S.o \
+		     msg_U.o exc_request_U.o exc_request_S.o'
+		HAVE_NATIVE_GCORE_HOST=1
+
+		NAT_FILE='nm-x86-gnu.h'
+		MH_CFLAGS='-D_GNU_SOURCE'
+
+		XM_CLIBS='-lshouldbeinlibc'
+
+		nat_makefile_frag="${srcdir}/config/${gdb_host_cpu}/x86-gnu.mn"
+		;;
+	esac
+	;;
     i386gnu)
 	case ${gdb_host_cpu} in
 	    i386)
 		# Host: Intel 386 running the GNU Hurd
-		NATDEPFILES='i386-gnu-nat.o gnu-nat.o \
+		NATDEPFILES='x86-gnu-nat.o gnu-nat.o \
 		     x86-nat.o nat/x86-dregs.o fork-child.o \
 		     nat/fork-inferior.o \
 		     notify_S.o process_reply_S.o msg_reply_S.o \
 		     msg_U.o exc_request_U.o exc_request_S.o'
 		HAVE_NATIVE_GCORE_HOST=1
 
-		NAT_FILE='nm-i386gnu.h'
+		NAT_FILE='nm-x86-gnu.h'
 		MH_CFLAGS='-D_GNU_SOURCE'
 
 		XM_CLIBS='-lshouldbeinlibc'
 
-		nat_makefile_frag="${srcdir}/config/${gdb_host_cpu}/i386gnu.mn"
+		nat_makefile_frag="${srcdir}/config/${gdb_host_cpu}/x86-gnu.mn"
 		;;
 	esac
 	;;

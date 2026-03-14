@@ -1,6 +1,6 @@
 /* Main interface for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,6 +43,9 @@ extern std::string interpreter_p;
 /* Return argv[0] in absolute form, if possible, or ARGV0 if not.  The
    return value is in malloc'ed storage.  */
 extern char *windows_get_absolute_argv0 (const char *argv0);
+
+/* Initialize Windows console settings.  */
+extern void windows_initialize_console ();
 
 extern void set_gdb_data_directory (const char *new_data_dir);
 

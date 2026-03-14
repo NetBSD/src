@@ -1,0 +1,99 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test a binary that uses a Guarded Control Stack.
+
+require allow_aarch64_gcs_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+    return
+}
+
+set linespec ${srcfile}:[gdb_get_line_number "Break here"]
+
+if ![runto ${linespec}] {
+    return
+}
+
+gdb_test "print \$gcs_features_enabled" \
+    [string_to_regexp { = [ PR_SHADOW_STACK_ENABLE ]}] \
+    "GCS is enabled"
+
+gdb_test "print \$gcspr" ". = \\(void \\*\\) $hex" "GDB knows about gcspr"
+gdb_test "print \$gcspr == gcspr" ". = 1" "GDB has the correct gcspr value"
+gdb_test_no_output "set \$gcspr_in_main = \$gcspr" \
+    "save gcspr value in main for later"
+
+# If the inferior function call fails, we don't want the tests following it
+# to be affected.
+gdb_test_no_output "set unwindonsignal on"
+gdb_test "print called_from_gdb (41)" ". = 42" "call inferior function"
+
+gdb_test "break handler" "Breakpoint \[0-9\]+ .*aarch64-gcs.c, line \[0-9\]+\\."
+gdb_test "handle SIGUSR1 nostop" \
+    ".*\r\nSIGUSR1\\s+No\\s+Yes\\s+Yes\\s+User defined signal 1" \
+    "let the inferior receive SIGUSR1 uninterrupted"
+gdb_test "continue" \
+    ".*\r\nBreakpoint \[0-9\]+, handler \\(sig=10\\) at .*aarch64-gcs.c.*handler_gcspr = get_gcspr \\(\\);" \
+    "continue to signal handler"
+
+gdb_test_no_output "set \$gcspr_in_handler = \$gcspr" \
+    "save gcspr value in handler for later"
+# Select the frame above the <signal handler called> frame, which makes GDB
+# unwind the gcspr from the signal frame GCS context.
+gdb_test "frame 2" "#2  ($hex in )?\\S+ \\(.*\\) (at|from) \\S+.*" \
+    "reached frame 2"
+gdb_test "print \$gcspr" ". = \\(void \\*\\) $hex" "gcspr in frame level 2"
+gdb_test "print \$gcspr == \$gcspr_in_handler + 8" ". = 1" \
+    "gcspr unwound from signal context is correct"
+
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Program received signal SIGSEGV, Segmentation fault" \
+	 "Guarded Control Stack error\\." \
+	 "normal_function2 \\(\\) at .*aarch64-gcs.c:$decimal" \
+	 "${decimal}\\s+__asm__ volatile \\(\"ret\\\\n\"\\);"] \
+    "continue to SIGSEGV"
+
+gdb_test "print \$_siginfo.si_code" ". = 10" \
+    "test value of si_code when GCS SIGSEGV happens"
+# The GCS grows down, and there are two real frames until main.
+gdb_test "print \$gcspr == \$gcspr_in_main - 16" ". = 1" \
+    "test value of gcspr when GCS SIGSEGV happens"
+
+# Test writing to GCSPR.
+clean_restart
+gdb_load $binfile
+if ![runto normal_function0] {
+    return
+}
+
+gdb_test_no_output "set \$gcspr = 0xbadc0ffee" "set bogus gcspr value"
+# Continue to make sure that the value was actually written to the register.
+# The SIGSEGV isn't a GCS error because the problem isn't that the GCS entry
+# doesn't match the return address, but rather that that GCSPR is pointing
+# to an invalid address.
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Program received signal SIGSEGV, Segmentation fault\\." \
+	 "normal_function0 \\(\\) at .*aarch64-gcs.c:$decimal" \
+	 "${decimal}\\s+__asm__ volatile \\(\"ret\\\\n\"\\);"] \
+    "continue after bad gcspr"

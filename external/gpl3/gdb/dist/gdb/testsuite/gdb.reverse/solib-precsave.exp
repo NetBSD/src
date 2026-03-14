@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,7 +60,7 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable \
 # and is no longer attempted.  Instead, the test does not make assumptions
 # about whether the debug info is present or not.
 
-clean_restart $binfile
+clean_restart $::testfile
 gdb_load_shlib $library1
 gdb_load_shlib $library2
 
@@ -140,7 +140,7 @@ gdb_test_multiple "reverse-step" "reverse-step into solib function one" {
 	pass $gdb_test_name
     }
 }
-# Depending on wether the closing } has a line associated, we might have
+# Depending on whether the closing } has a line associated, we might have
 # different acceptable results here
 gdb_test_multiple "reverse-step" "reverse-step within solib function one" {
     -re -wrap "return y;.*" {

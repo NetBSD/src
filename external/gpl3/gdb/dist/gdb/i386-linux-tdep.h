@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux x86.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,6 +47,7 @@ extern uint64_t i386_linux_core_read_xsave_info (bfd *abfd,
 
 /* Implement the core_read_x86_xsave_layout gdbarch method.  */
 extern bool i386_linux_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+						   bfd &cbfd,
 						   x86_xsave_layout &layout);
 
 extern int i386_linux_gregset_reg_offset[];

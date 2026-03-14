@@ -1,6 +1,6 @@
 /* Target-dependent code for X86-based targets.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "i386-tdep.h"
 #include "x86-tdep.h"
 #include "symtab.h"
 
+
+/* See x86-tdep.h.  */
+
+void
+x86_supply_ssp (regcache *regcache, const uint64_t ssp)
+{
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (regcache->arch ());
+  gdb_assert (tdep != nullptr && tdep->ssp_regnum != -1);
+  regcache->raw_supply (tdep->ssp_regnum, &ssp);
+}
+
+/* See x86-tdep.h.  */
+
+void
+x86_collect_ssp (const regcache *regcache, uint64_t &ssp)
+{
+  i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (regcache->arch ());
+  gdb_assert (tdep != nullptr && tdep->ssp_regnum != -1);
+  regcache->raw_collect (tdep->ssp_regnum, &ssp);
+}
 
 /* Check whether NAME is included in NAMES[LO] (inclusive) to NAMES[HI]
    (exclusive).  */

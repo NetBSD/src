@@ -1,6 +1,6 @@
 /* Remote notification in GDB protocol
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -234,9 +234,7 @@ remote_notif_state::~remote_notif_state ()
     delete_async_event_handler (&get_pending_events_token);
 }
 
-void _initialize_notif ();
-void
-_initialize_notif ()
+INIT_GDB_FILE (notif)
 {
   add_setshow_boolean_cmd ("notification", no_class, &notif_debug,
 			   _("\

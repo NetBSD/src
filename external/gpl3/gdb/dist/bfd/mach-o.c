@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -583,14 +583,16 @@ bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
 
 bool
 bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd, asection *isection,
-					  bfd *obfd, asection *osection)
+					  bfd *obfd, asection *osection,
+					  struct bfd_link_info *link_info)
 {
-  bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
-  bfd_mach_o_section *is = bfd_mach_o_get_mach_o_section (isection);
-
-  if (ibfd->xvec->flavour != bfd_target_mach_o_flavour
+  if (link_info != NULL
+      || ibfd->xvec->flavour != bfd_target_mach_o_flavour
       || obfd->xvec->flavour != bfd_target_mach_o_flavour)
     return true;
+
+  bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
+  bfd_mach_o_section *is = bfd_mach_o_get_mach_o_section (isection);
 
   BFD_ASSERT (is != NULL && os != NULL);
 

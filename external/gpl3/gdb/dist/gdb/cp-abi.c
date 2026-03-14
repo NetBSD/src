@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -384,9 +384,7 @@ show_cp_abi_cmd (const char *args, int from_tty)
   uiout->text (").\n");
 }
 
-void _initialize_cp_abi ();
-void
-_initialize_cp_abi ()
+INIT_GDB_FILE (cp_abi)
 {
   struct cmd_list_element *c;
 

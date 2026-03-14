@@ -1,6 +1,6 @@
 /* be-flipping.c -- Test for handling different endianness in libsframe.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -55,6 +55,7 @@ main (void)
   struct stat st;
   char *sf_buf;
   size_t sf_size;
+  uint8_t rep_block_size;
 
 #define TEST(name, cond)                                                      \
   do                                                                          \
@@ -101,7 +102,8 @@ main (void)
   unsigned int fde_cnt = sframe_decoder_get_num_fidx (dctx);
   TEST ("be-flipping: Decoder FDE count", fde_cnt == 1);
 
-  err = sframe_decoder_get_funcdesc (dctx, 0, &nfres, &fsize, &fstart, &finfo);
+  err = sframe_decoder_get_funcdesc_v2 (dctx, 0, &nfres, &fsize, &fstart,
+					&finfo, &rep_block_size);
   TEST ("be-flipping: Decoder get FDE", err == 0);
   TEST ("be-flipping: Decoder FRE count", nfres == 5);
 

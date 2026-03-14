@@ -73,6 +73,10 @@ static const char *strerrno (int err);
 
 #define STRING      "Hello World"
 
+#define STRINGIFY(s) STRINGIFY_(s)
+#define STRINGIFY_(s) #s
+#define OUTDIR STRINGIFY (OUTDIR_)
+
 static void stop (void) {}
 
 /* A NULL string.  We pass this to stat below instead of a NULL

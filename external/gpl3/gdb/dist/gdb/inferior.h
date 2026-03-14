@@ -1,7 +1,7 @@
 /* Variables that describe the inferior process running under GDB:
    Where it is, why it stopped, and how to step it.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,16 +54,14 @@ struct thread_info;
 #include "symfile-add-flags.h"
 #include "gdbsupport/refcounted-object.h"
 #include "gdbsupport/forward-scope-exit.h"
-#include "gdbsupport/gdb_unique_ptr.h"
 #include "gdbsupport/intrusive_list.h"
 
-#include "gdbsupport/common-inferior.h"
 #include "gdbthread.h"
 
 #include "process-stratum-target.h"
 #include "displaced-stepping.h"
 
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 struct infcall_suspend_state;
 struct infcall_control_state;
@@ -213,7 +211,14 @@ extern ptid_t gdb_startup_inferior (pid_t pid, int num_traps);
 
 extern void setup_inferior (int from_tty);
 
-extern void post_create_inferior (int from_tty);
+/* Common actions to take after creating any sort of inferior, by any
+   means (running, attaching, connecting, et cetera).  The target
+   should be stopped.
+
+   If SET_PSPACE_SOLIB_OPS is true, initialize the program space's solib
+   provider using the current inferior's architecture.  */
+
+extern void post_create_inferior (int from_tty, bool set_pspace_solib_ops);
 
 extern void attach_command (const char *, int);
 
@@ -459,7 +464,7 @@ public:
 
   /* A map of ptid_t to thread_info*, for average O(1) ptid_t lookup.
      Exited threads do not appear in the map.  */
-  std::unordered_map<ptid_t, thread_info *> ptid_thread_map;
+  gdb::unordered_map<ptid_t, thread_info *> ptid_thread_map;
 
   /* Returns a range adapter covering the inferior's threads,
      including exited threads.  Used like this:
@@ -522,8 +527,11 @@ public:
     m_args = std::move (args);
   };
 
-  /* Set the argument string from some strings.  */
-  void set_args (gdb::array_view<char * const> args);
+  /* Set the argument string from some strings in ARGS.  When
+     ESCAPE_SHELL_CHAR is true all special shell characters in ARGS are
+     escaped, When false only the characters that GDB sees as special will
+     be escaped.  See construct_inferior_arguments for more details.  */
+  void set_args (gdb::array_view<char * const> args, bool escape_shell_char);
 
   /* Get the argument string to use when running this inferior.
 

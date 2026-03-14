@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,6 @@
 #include "symfile-add-flags.h"
 #include "objfile-flags.h"
 #include "gdb_bfd.h"
-#include "gdbsupport/function-view.h"
 #include "target-section.h"
 #include "quick-symbol.h"
 
@@ -347,17 +346,15 @@ symfile_segment_data_up get_symfile_segment_data (bfd *abfd);
 extern scoped_restore_tmpl<int> increment_reading_symtab (void);
 
 bool expand_symtabs_matching
-  (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+  (expand_symtabs_file_matcher file_matcher,
    const lookup_name_info &lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   expand_symtabs_symbol_matcher symbol_matcher,
+   expand_symtabs_expansion_listener expansion_notify,
    block_search_flags search_flags,
    domain_search_flags kind,
-   gdb::function_view<expand_symtabs_lang_matcher_ftype> lang_matcher
-     = nullptr);
+   expand_symtabs_lang_matcher lang_matcher = nullptr);
 
-void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-			   bool need_fullname);
+void map_symbol_filenames (symbol_filename_listener fun, bool need_fullname);
 
 /* Target-agnostic function to load the sections of an executable into memory.
 

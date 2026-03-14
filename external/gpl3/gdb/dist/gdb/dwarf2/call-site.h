@@ -1,6 +1,6 @@
 /* Call site information.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -28,7 +28,7 @@
 #include "gdbsupport/unordered_set.h"
 
 struct dwarf2_locexpr_baton;
-struct dwarf2_per_cu_data;
+struct dwarf2_per_cu;
 struct dwarf2_per_objfile;
 
 /* struct call_site_parameter can be referenced in callees by several ways.  */
@@ -164,7 +164,7 @@ struct call_site_parameter
 
 struct call_site
 {
-  call_site (unrelocated_addr pc, dwarf2_per_cu_data *per_cu,
+  call_site (unrelocated_addr pc, dwarf2_per_cu *per_cu,
 	     dwarf2_per_objfile *per_objfile)
     : per_cu (per_cu), per_objfile (per_objfile), m_unrelocated_pc (pc)
   {}
@@ -198,7 +198,7 @@ struct call_site
   struct call_site *tail_call_next = nullptr;
 
   /* * Describe DW_AT_call_target.  Missing attribute uses
-     FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
+     m_loc_kind == DWARF_BLOCK with m_loc.dwarf_block == nullptr.  */
 
   struct call_site_target target {};
 
@@ -209,7 +209,7 @@ struct call_site
   /* * CU of the function where the call is located.  It gets used
      for DWARF blocks execution in the parameter array below.  */
 
-  dwarf2_per_cu_data *const per_cu = nullptr;
+  dwarf2_per_cu *const per_cu = nullptr;
 
   /* objfile of the function where the call is located.  */
 

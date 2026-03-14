@@ -1,5 +1,5 @@
 /* Print SPARC instructions.
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -387,40 +387,12 @@ compare_opcodes (const void * a, const void * b)
       return length_diff;
   }
 
-  /* Put 1+i before i+1.  */
-  {
-    char *p0 = (char *) strchr (op0->args, '+');
-    char *p1 = (char *) strchr (op1->args, '+');
-
-    if (p0 && p1)
-      {
-	/* There is a plus in both operands.  Note that a plus
-	   sign cannot be the first character in args,
-	   so the following [-1]'s are valid.  */
-	if (p0[-1] == 'i' && p1[1] == 'i')
-	  /* op0 is i+1 and op1 is 1+i, so op1 goes first.  */
-	  return 1;
-	if (p0[1] == 'i' && p1[-1] == 'i')
-	  /* op0 is 1+i and op1 is i+1, so op0 goes first.  */
-	  return -1;
-      }
-  }
-
-  /* Put 1,i before i,1.  */
-  {
-    int i0 = strncmp (op0->args, "i,1", 3) == 0;
-    int i1 = strncmp (op1->args, "i,1", 3) == 0;
-
-    if (i0 ^ i1)
-      return i0 - i1;
-  }
-
-  /* They are, as far as we can tell, identical.
-     Since qsort may have rearranged the table partially, there is
-     no way to tell which one was first in the opcode table as
-     written, so just say there are equal.  */
-  /* ??? This is no longer true now that we sort a vector of pointers,
-     not the table itself.  */
+  /* They are, as far as we can tell, identical.  Keep the order in
+     the sparc_opcodes table.  */
+  if (op0 < op1)
+    return -1;
+  if (op0 > op1)
+    return 1;
   return 0;
 }
 

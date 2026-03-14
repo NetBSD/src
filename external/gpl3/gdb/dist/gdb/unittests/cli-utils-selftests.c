@@ -1,6 +1,6 @@
 /* Unit tests for the cli-utils.c file.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -109,9 +109,7 @@ test_cli_utils ()
 }
 }
 
-void _initialize_cli_utils_selftests ();
-void
-_initialize_cli_utils_selftests ()
+INIT_GDB_FILE (cli_utils_selftests)
 {
   selftests::register_test ("cli_utils",
 			    selftests::cli_utils::test_cli_utils);

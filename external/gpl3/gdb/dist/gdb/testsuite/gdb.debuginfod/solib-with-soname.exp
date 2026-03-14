@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,7 +89,7 @@ if {[lindex $status 0] != 0} {
 }
 
 # Build the executable.  This links against libfoo.so, which is
-# poining at libfoo_1.so.  Just to confuse things even more, this
+# pointing at libfoo_1.so.  Just to confuse things even more, this
 # executable uses dlopen to load libfoo_2.so.  Weird!
 if { [build_executable "build executable" ${binfile} ${srcfile2} \
 	  [list debug shlib=${library_filename} shlib_load]] == -1 } {
@@ -132,7 +132,7 @@ if {$corefile eq ""} {
 proc load_exec_and_core_file { expect_warning expect_download testname \
 				   {debugdir ""} } {
     with_test_prefix $testname {
-	clean_restart $::binfile
+	clean_restart $::testfile
 
 	if { $debugdir ne "" } {
 	    gdb_test_no_output "set debug-file-directory $debugdir" \

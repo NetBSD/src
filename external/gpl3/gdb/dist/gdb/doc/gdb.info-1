@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -44,9 +44,9 @@ Debugging with GDB
 
 This file describes GDB, the GNU symbolic debugger.
 
-   This is the Tenth Edition, for GDB (GDB) Version 16.3.
+   This is the Tenth Edition, for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This edition of the GDB manual is dedicated to the memory of Fred
 Fish.  Fred was a long-standing contributor to GDB and to Free software
@@ -513,7 +513,7 @@ Let us use GDB to try to see what is going on.
      There is absolutely no warranty for GDB; type "show warranty"
       for details.
 
-     GDB 16.3, Copyright 1999 Free Software Foundation, Inc...
+     GDB 17.1, Copyright 1999 Free Software Foundation, Inc...
      (gdb)
 
 GDB reads only enough symbol data to know where to find the rest when
@@ -977,6 +977,15 @@ or quiet mode.
 '-D DIRECTORY'
      Run GDB using DIRECTORY as its data directory.  The data directory
      is where GDB searches for its auxiliary files.  *Note Data Files::.
+
+'-binary-output'
+
+     Instructs GDB to set the translation mode of its 'stdout'/'stderr'
+     to binary.  MS-Windows only.  Useful for running the GDB testsuite.
+     By default, GDB opens 'stdout'/'stderr' in text mode, and
+     translates '\n' (LF, a single Line Feed) into '\r\n' (CR-LF, a
+     Carriage Return-Line Feed combination).  If this option is set, no
+     translation is done.
 
 '-fullname'
 '-f'
@@ -3114,7 +3123,7 @@ thread that hit the breakpoint.
 
      Thread 1 "main" received signal SIGINT, Interrupt.
 
-'info threads [-gid] [THREAD-ID-LIST]'
+'info threads [-gid] [-stopped] [-running] [THREAD-ID-LIST]'
 
      Display information about one or more threads.  With no arguments
      displays information about all threads.  You can specify the list
@@ -3151,6 +3160,13 @@ thread that hit the breakpoint.
    If you're debugging multiple inferiors, GDB displays thread IDs using
 the qualified INFERIOR-NUM.THREAD-NUM format.  Otherwise, only
 THREAD-NUM is shown.
+
+   If you specify the '-stopped' option, GDB filters the output of the
+command to print the stopped threads only.  Similarly, if you specify
+the '-running' option, GDB filters the output to print the running
+threads only.  These options can be helpful to reduce the output list if
+there is a large number of threads.  If you specify both options, GDB
+prints both stopped and running threads.
 
    If you specify the '-gid' option, GDB displays a column indicating
 each thread's global thread ID:
@@ -3339,6 +3355,46 @@ watchpoints in programs with multiple threads.
 'show debug threads'
      When 'on' GDB will print additional messages when threads are
      created and deleted.
+
+   For some debugging targets, GDB has support for accessing variables
+that reside in Thread Local Storage (TLS).  TLS variables are similar to
+global variables, except that each thread has its own copy of the
+variable.  While often used in multi-threaded programs, TLS variables
+can also be used in programs without threads.  The C library variable
+ERRNO is, perhaps, the most prominent example of a TLS variable that is
+frequently used in non-threaded programs.  For targets where GDB does
+not have good TLS support, printing or changing the value of ERRNO might
+not be directly possible.
+
+   GNU/Linux and FreeBSD targets have support for accessing TLS
+variables.  On GNU/Linux, the helper library, 'libthread_db', is used to
+help resolve the addresses of TLS variables.  Some FreeBSD and some
+GNU/Linux targets also have GDB-internal TLS resolution code.  GNU/Linux
+targets will attempt to use the TLS address lookup functionality
+provided by 'libthread_db', but will fall back to using its internal TLS
+support when 'libthread_db' is not available.  This can happen in
+cross-debugging scenarios or when debugging programs that are linked in
+such a way that 'libthread_db' support is unavailable - this includes
+statically linked programs, linking against GLIBC versions earlier than
+2.34, but not with 'libpthread', and use of other (non-GLIBC) C
+libraries.
+
+'maint set force-internal-tls-address-lookup'
+'maint show force-internal-tls-address-lookup'
+     Turns on or off forced use of GDB-internal TLS address lookup code.
+     Use 'on' to enable and 'off' to disable.  The default for this
+     setting is 'off'.
+
+     When disabled, GDB will attempt to use a helper 'libthread_db'
+     library if possible, but will fall back to use of its own internal
+     TLS address lookup mechanisms if necessary.
+
+     When enabled, GDB will only use GDB's internal TLS address lookup
+     mechanisms, if they exist.
+
+     This command is only available for GNU/Linux targets.  Its primary
+     use is for testing - certain tests in the GDB test suite use this
+     command to force use of internal TLS address lookup.
 
 
 File: gdb.info,  Node: Forks,  Next: Checkpoint/Restart,  Prev: Threads,  Up: Running
@@ -3535,16 +3591,33 @@ reach the point where you think the bug occurs.
      listed:
 
      'Checkpoint ID'
+     'Active state indicator'
      'Process ID'
      'Code Address'
      'Source line, or label'
+
+     Checkpoint IDs will be displayed as either a non-negative integer
+     or in the form I.N, where I is the inferior number, a positive
+     integer, as shown by the command 'info inferiors', and N, a
+     non-negative integer, is the checkpoint number for that inferior.
+     The single non-negative integer form is used when there is only one
+     inferior.  The I.N form is used when there are multiple inferiors.
+
+     The active state indicator is a single letter, either 'y' or 'n',
+     indicating yes or no.  Only one checkpoint per inferior may be
+     active at once.  The active checkpoint in the current inferior is
+     also shown by a '*' at the start of the line.  Checkpoints whose
+     active state is 'n' can be switched to using the 'restart' command
+     or deleted using the 'delete checkpoint' command.
 
 'restart CHECKPOINT-ID'
      Restore the program state that was saved as checkpoint number
      CHECKPOINT-ID.  All program variables, registers, stack frames etc.
      will be returned to the values that they had when the checkpoint
      was saved.  In essence, gdb will "wind back the clock" to the point
-     in time when the checkpoint was saved.
+     in time when the checkpoint was saved.  The checkpoint number
+     CHECKPOINT-ID is specified in the same form as that output by the
+     'info checkpoints' command.
 
      Note that breakpoints, GDB variables, command history etc.  are not
      affected by restoring a checkpoint.  In general, a checkpoint only
@@ -5631,7 +5704,9 @@ See for example 'man 7 glob' on GNU/Linux systems for a description of
      '-gfile FILE-GLOB-PATTERN'
      '-gfi FILE-GLOB-PATTERN'
           Functions in files matching FILE-GLOB-PATTERN will be skipped
-          over when stepping.
+          over when stepping.  The directory separator character '/' is
+          treated as a regular character, so it can be matched by
+          wildcard characters '*' and '?'.
 
                (gdb) skip -gfi utils/*.c
 
@@ -5757,7 +5832,34 @@ the program.
 
    GDB has the ability to detect any occurrence of a signal in your
 program.  You can tell GDB in advance what to do for each kind of
-signal.
+signal, apart from SIGKILL, which has its usual effect regardless.
+
+   When specifying a signal by number, GDB translates the number to the
+target platform according to the corresponding signal name.  For
+example, GDB always treats signal 1 as 'SIGHUP'.  So, when specifying
+'1' as a signal, GDB will translate this to the target's 'SIGHUP',
+whatever that might be.
+
+   Numbers may only be used for signals 1 through 15.  GDB uses this
+mapping:
+
+Number   Name
+-------------------
+1        SIGHUP
+2        SIGINT
+3        SIGQUIT
+4        SIGILL
+5        SIGTRAP
+6        SIGABRT
+7        SIGEMT
+8        SIGFPE
+9        SIGKILL
+10       SIGBUS
+11       SIGSEGV
+12       SIGSYS
+13       SIGPIPE
+14       SIGALRM
+15       SIGTERM
 
    Normally, GDB is set up to let the non-erroneous signals like
 'SIGALRM' be silently passed to your program (so as not to interfere
@@ -6519,7 +6621,7 @@ instruction; otherwise, it will work in record mode, if the platform
 supports reverse execution, or stop if not.
 
    Currently, process record and replay is supported on ARM, Aarch64,
-LoongArch, Moxie, PowerPC, PowerPC64, S/390, and x86 (i386/amd64)
+LoongArch, Moxie, PowerPC, PowerPC64, S/390, RISC-V and x86 (i386/amd64)
 running GNU/Linux.  Process record and replay can be used both when
 native debugging, and when remote debugging via 'gdbserver'.
 

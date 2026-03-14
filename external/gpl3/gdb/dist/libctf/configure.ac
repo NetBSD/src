@@ -1,7 +1,7 @@
 dnl                                            -*- Autoconf -*-
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+dnl   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -65,6 +65,14 @@ AM_MAINTAINER_MODE
 AM_INSTALL_LIBBFD
 ACX_PROG_CC_WARNING_OPTS([-Wall], [ac_libctf_warn_cflags])
 
+case "${host}" in
+  # PR libctf/29292
+  # libctf's use of mmap doesn't work on Solaris 11.4, so disable it.
+  *-*-solaris2.11*)
+    ac_cv_func_mmap_fixed_mapped=no
+  ;;
+esac
+
 GCC_AC_FUNC_MMAP
 # Needed for BFD capability checks.
 AC_SEARCH_LIBS(dlsym, dl)
@@ -90,12 +98,12 @@ LDFLAGS="-L../bfd -L../libiberty $LDFLAGS"
 intl=`echo $LIBINTL | sed 's,${top_builddir}/,,g'`
 LIBS="-lbfd -liberty $intl $LIBS"
 AC_CACHE_CHECK([for ELF support in BFD], ac_cv_libctf_bfd_elf,
-[AC_TRY_LINK([#include <stdlib.h>
+[AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <stdlib.h>
 	     #include <string.h>
 	     #include "bfd.h"
-	     #include "elf-bfd.h"],
-	    [(void) bfd_section_from_elf_index (NULL, 0);
-	     return 0;],
+	     #include "elf-bfd.h"]],
+	   [[(void) bfd_section_from_elf_index (NULL, 0);
+	     return 0;]])],
 	    [ac_cv_libctf_bfd_elf=yes],
 	    [ac_cv_libctf_bfd_elf=no])])
 CFLAGS=$OLD_CFLAGS
@@ -293,7 +301,7 @@ if test -n "$decommented_version_script"; then
    # used by GNU ld.  Use cpp to strip the comments out.  (cpp exists under this
    # name on all platforms that support ld -z gnu-version-script.)
    /lib/cpp < $srcdir/libctf.ver > libctf-decommented.ver
-   /lib/cpp < $srcdir/libctf-nobfd.ver > libctf-nobfd-decommented.ver
+   /lib/cpp < libctf-nobfd.ver > libctf-nobfd-decommented.ver
    VERSION_FLAGS="$ac_cv_libctf_version_script='libctf-decommented.ver'"
    VERSION_FLAGS_NOBFD="$ac_cv_libctf_version_script='libctf-nobfd-decommented.ver'"
 elif test -z "$no_version_script"; then

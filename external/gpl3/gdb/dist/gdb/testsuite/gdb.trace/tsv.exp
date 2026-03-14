@@ -1,4 +1,4 @@
-#   Copyright 2009-2024 Free Software Foundation, Inc.
+#   Copyright 2009-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
     return -1
 }
 
-clean_restart $binfile
+clean_restart $testfile
 
 # PR gdb/21352: Command tsave does not support -r argument
 gdb_test "tsave -r" "Argument required \\\(file in which to save trace data\\\)\." \
@@ -193,7 +193,7 @@ gdb_test_multiple "target ctf ${tracefile}.ctf" "" {
 }
 
 # Restart.
-clean_restart ${binfile}
+clean_restart $testfile
 
 if {![runto_main]} {
     return

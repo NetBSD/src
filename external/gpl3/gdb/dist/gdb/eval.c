@@ -1,6 +1,6 @@
 /* Evaluate expressions for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -492,7 +492,7 @@ fake_method::fake_method (type_instance_flags flags,
 
 fake_method::~fake_method ()
 {
-  xfree (m_type.fields ());
+  xfree (m_type.fields ().data ());
 }
 
 namespace expr
@@ -994,9 +994,10 @@ add_struct_fields (struct type *type, completion_list &output,
 		output.emplace_back (concat (prefix, type->field (i).name (),
 					     nullptr));
 	    }
-	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION)
+	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION
+		   || type->field (i).type ()->code () == TYPE_CODE_STRUCT)
 	    {
-	      /* Recurse into anonymous unions.  */
+	      /* Recurse into anonymous unions and structures.  */
 	      add_struct_fields (type->field (i).type (),
 				 output, fieldname, namelen, prefix);
 	    }
@@ -1069,20 +1070,6 @@ is_integral_or_integral_reference (struct type *type)
   return (type != nullptr
 	  && TYPE_IS_REFERENCE (type)
 	  && is_integral_type (type->target_type ()));
-}
-
-/* Helper function that implements the body of OP_SCOPE.  */
-
-struct value *
-eval_op_scope (struct type *expect_type, struct expression *exp,
-	       enum noside noside,
-	       struct type *type, const char *string)
-{
-  struct value *arg1 = value_aggregate_elt (type, string, expect_type,
-					    0, noside);
-  if (arg1 == NULL)
-    error (_("There is no field named %s"), string);
-  return arg1;
 }
 
 /* Helper function that implements the body of OP_VAR_ENTRY_VALUE.  */
@@ -2571,27 +2558,26 @@ unop_extract_operation::evaluate (struct type *expect_type,
 
 }
 
-
 /* Helper for evaluate_subexp_for_address.  */
 
 static value *
-evaluate_subexp_for_address_base (struct expression *exp, enum noside noside,
-				  value *x)
+evaluate_subexp_for_address_base (enum noside noside, value *x)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       struct type *type = check_typedef (x->type ());
+      enum type_code typecode = type->code ();
 
       if (TYPE_IS_REFERENCE (type))
 	return value::zero (lookup_pointer_type (type->target_type ()),
-			   not_lval);
-      else if (x->lval () == lval_memory || value_must_coerce_to_target (x))
-	return value::zero (lookup_pointer_type (x->type ()),
-			   not_lval);
+			    not_lval);
+      else if (x->lval () == lval_memory || value_must_coerce_to_target (x)
+	       || typecode == TYPE_CODE_STRUCT || typecode == TYPE_CODE_UNION)
+	return value::zero (lookup_pointer_type (x->type ()), not_lval);
       else
-	error (_("Attempt to take address of "
-		 "value not located in memory."));
+	error (_("Attempt to take address of value not located in memory."));
     }
+
   return value_addr (x);
 }
 
@@ -2611,18 +2597,20 @@ value *
 operation::evaluate_for_address (struct expression *exp, enum noside noside)
 {
   value *val = evaluate (nullptr, exp, noside);
-  return evaluate_subexp_for_address_base (exp, noside, val);
+  return evaluate_subexp_for_address_base (noside, val);
 }
 
 value *
-scope_operation::evaluate_for_address (struct expression *exp,
-				       enum noside noside)
+scope_operation::evaluate_internal (struct type *expect_type,
+				    struct expression *exp,
+				    enum noside noside,
+				    bool want_address)
 {
-  value *x = value_aggregate_elt (std::get<0> (m_storage),
-				  std::get<1> (m_storage).c_str (),
-				  NULL, 1, noside);
-  if (x == NULL)
-    error (_("There is no field named %s"), std::get<1> (m_storage).c_str ());
+  const char *string = std::get<1> (m_storage).c_str ();
+  value *x = value_aggregate_elt (std::get<0> (m_storage), string,
+				  expect_type, want_address, noside);
+  if (x == nullptr)
+    error (_("There is no field named %s"), string);
   return x;
 }
 
@@ -2636,7 +2624,7 @@ unop_ind_base_operation::evaluate_for_address (struct expression *exp,
   if (unop_user_defined_p (UNOP_IND, x))
     {
       x = value_x_unop (x, UNOP_IND, noside);
-      return evaluate_subexp_for_address_base (exp, noside, x);
+      return evaluate_subexp_for_address_base (noside, x);
     }
 
   return coerce_array (x);
@@ -2690,11 +2678,11 @@ var_value_operation::evaluate_for_address (struct expression *exp,
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       struct type *type = lookup_pointer_type (var->type ());
-      enum address_class sym_class = var->aclass ();
+      location_class loc_class = var->loc_class ();
 
-      if (sym_class == LOC_CONST
-	  || sym_class == LOC_CONST_BYTES
-	  || sym_class == LOC_REGISTER)
+      if (loc_class == LOC_CONST
+	  || loc_class == LOC_CONST_BYTES
+	  || loc_class == LOC_REGISTER)
 	error (_("Attempt to take address of register or constant."));
 
       return value::zero (type, not_lval);

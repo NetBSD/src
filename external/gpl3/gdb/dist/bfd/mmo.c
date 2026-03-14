@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
    binary.c.
@@ -3350,7 +3350,6 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_bfd_copy_private_header_data _bfd_generic_bfd_copy_private_header_data
 #define mmo_bfd_set_private_flags _bfd_generic_bfd_set_private_flags
 #define mmo_bfd_print_private_bfd_data _bfd_generic_bfd_print_private_bfd_data
-#define mmo_init_private_section_data _bfd_generic_init_private_section_data
 
 const bfd_target mmix_mmo_vec =
 {

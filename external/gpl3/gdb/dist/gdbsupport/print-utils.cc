@@ -1,6 +1,6 @@
 /* Cell-based print utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -145,7 +145,7 @@ static int thirty_two = 32;
 /* See print-utils.h.  */
 
 const char *
-phex (ULONGEST l, int sizeof_l)
+phex_ulongest (ULONGEST l, int sizeof_l)
 {
   char *str;
 
@@ -170,7 +170,7 @@ phex (ULONGEST l, int sizeof_l)
       xsnprintf (str, PRINT_CELL_SIZE, "%02x", (unsigned short) (l & 0xff));
       break;
     default:
-      return phex (l, sizeof (l));
+      return phex (l);
       break;
     }
 
@@ -180,7 +180,7 @@ phex (ULONGEST l, int sizeof_l)
 /* See print-utils.h.  */
 
 const char *
-phex_nz (ULONGEST l, int sizeof_l)
+phex_nz_ulongest (ULONGEST l, int sizeof_l)
 {
   char *str;
 
@@ -212,7 +212,7 @@ phex_nz (ULONGEST l, int sizeof_l)
       xsnprintf (str, PRINT_CELL_SIZE, "%x", (unsigned short) (l & 0xff));
       break;
     default:
-      return phex_nz (l, sizeof (l));
+      return phex_nz (l);
       break;
     }
 
@@ -226,7 +226,7 @@ hex_string (LONGEST num)
 {
   char *result = get_print_cell ();
 
-  xsnprintf (result, PRINT_CELL_SIZE, "0x%s", phex_nz (num, sizeof (num)));
+  xsnprintf (result, PRINT_CELL_SIZE, "0x%s", phex_nz (num));
   return result;
 }
 
@@ -237,7 +237,7 @@ hex_string_custom (LONGEST num, int width)
 {
   char *result = get_print_cell ();
   char *result_end = result + PRINT_CELL_SIZE - 1;
-  const char *hex = phex_nz (num, sizeof (num));
+  const char *hex = phex_nz (num);
   int hex_len = strlen (hex);
 
   if (hex_len > width)
@@ -304,8 +304,7 @@ core_addr_to_string (const CORE_ADDR addr)
 {
   char *str = get_print_cell ();
 
-  strcpy (str, "0x");
-  strcat (str, phex (addr, sizeof (addr)));
+  xsnprintf (str, PRINT_CELL_SIZE, "0x%s", phex (addr));
   return str;
 }
 
@@ -316,8 +315,7 @@ core_addr_to_string_nz (const CORE_ADDR addr)
 {
   char *str = get_print_cell ();
 
-  strcpy (str, "0x");
-  strcat (str, phex_nz (addr, sizeof (addr)));
+  xsnprintf (str, PRINT_CELL_SIZE, "0x%s", phex_nz (addr));
   return str;
 }
 

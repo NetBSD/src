@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -149,6 +149,7 @@ proc tracepoint_change_loc_1 { trace_type } {
 (4\.\[1-3].* in func4.*\tinstalled on target.*){2}" \
 	    "tracepoint with two locations - installed (unload)"
 
+	setup_kfail gdb/32404 "*-*-*"
 	gdb_test "info trace" \
 	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*
@@ -263,6 +264,7 @@ proc tracepoint_change_loc_2 { trace_type } {
 (1\.\[1-3].* in func4.*\tinstalled on target.*){2}" \
 	    "tracepoint with two locations - installed (unload)"
 
+	setup_kfail gdb/32404 "*-*-*"
 	gdb_test "info trace" \
 	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*\<MULTIPLE\>.*

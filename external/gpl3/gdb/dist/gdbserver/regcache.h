@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define GDBSERVER_REGCACHE_H
 
 #include "gdbsupport/common-regcache.h"
+#include <memory>
 
 struct thread_info;
 struct target_desc;
@@ -43,12 +44,35 @@ struct regcache : public reg_buffer_common
   bool registers_owned = false;
   unsigned char *registers = nullptr;
 #ifndef IN_PROCESS_AGENT
-  /* One of REG_UNAVAILABLE or REG_VALID.  */
-  unsigned char *register_status = nullptr;
+  /* Construct a regcache using the register layout described by TDESC.
+
+     The regcache dynamically allocates its register buffer.  */
+  regcache (const target_desc *tdesc);
+
+  /* Destructor.  */
+  ~regcache ();
 #endif
+
+  /* Construct a regcache using the register layout described by TDESC
+     and REGBUF as the register buffer.
+
+     The regcache does *not* take ownership of the buffer.  */
+  regcache (const target_desc *tdesc, unsigned char *regbuf);
+
+  DISABLE_COPY_AND_ASSIGN (regcache);
+
+  /* Clear the register values to all zeros and set the register
+     statuses to STATUS.  */
+  void reset (enum register_status status);
 
   /* See gdbsupport/common-regcache.h.  */
   enum register_status get_register_status (int regnum) const override;
+
+  /* Set the status of register REGNUM to STATUS.  */
+  void set_register_status (int regnum, enum register_status status);
+
+  /* See gdbsupport/common-regcache.h.  */
+  int register_size (int regnum) const override;
 
   /* See gdbsupport/common-regcache.h.  */
   void raw_supply (int regnum, gdb::array_view<const gdb_byte> src) override;
@@ -64,21 +88,16 @@ struct regcache : public reg_buffer_common
 
   /* Copy the contents of SRC into this regcache.  */
   void copy_from (regcache *src);
+
+private:
+
+#ifndef IN_PROCESS_AGENT
+  /* See gdbsupport/common-regcache.h.  */
+  std::unique_ptr<enum register_status[]> m_register_status;
+#endif
 };
 
-struct regcache *init_register_cache (struct regcache *regcache,
-				      const struct target_desc *tdesc,
-				      unsigned char *regbuf);
-
-/* Create a new register cache for INFERIOR.  */
-
-struct regcache *new_register_cache (const struct target_desc *tdesc);
-
 regcache *get_thread_regcache (thread_info *thread, bool fetch = true);
-
-/* Release all memory associated with the register cache for INFERIOR.  */
-
-void free_register_cache (struct regcache *regcache);
 
 /* Invalidate cached registers for one thread.  */
 

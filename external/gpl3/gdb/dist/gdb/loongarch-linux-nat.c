@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -32,6 +32,30 @@
 
 #include <asm/ptrace.h>
 
+/* Hash table storing per-process data.  We don't bind this to a
+   per-inferior registry because of targets like x86 GNU/Linux that
+   need to keep track of processes that aren't bound to any inferior
+   (e.g., fork children, checkpoints).  */
+
+static std::unordered_map<pid_t, loongarch_debug_reg_state>
+loongarch_debug_process_state;
+
+/* See nat/loongarch-linux-hw-point.h.  */
+
+struct loongarch_debug_reg_state *
+loongarch_get_debug_reg_state (pid_t pid)
+{
+  return &loongarch_debug_process_state[pid];
+}
+
+/* Remove any existing per-process debug state for process PID.  */
+
+static void
+loongarch_remove_debug_reg_state (pid_t pid)
+{
+  loongarch_debug_process_state.erase (pid);
+}
+
 /* LoongArch Linux native additions to the default Linux support.  */
 
 class loongarch_linux_nat_target final : public linux_nat_trad_target
@@ -48,8 +72,6 @@ public:
 			 struct expression *cond) override;
   int remove_watchpoint (CORE_ADDR addr, int len, enum target_hw_bp_type type,
 			 struct expression *cond) override;
-  bool watchpoint_addr_within_range (CORE_ADDR addr, CORE_ADDR start,
-				     int length) override;
 
   /* Add our hardware breakpoint and watchpoint implementation.  */
   bool stopped_by_watchpoint () override;
@@ -446,33 +468,6 @@ fill_fpregset (const struct regcache *regcache, gdb_fpregset_t *fpregset,
 				     sizeof (gdb_fpregset_t));
 }
 
-/* Helper for the "stopped_data_address" target method.  Returns TRUE
-   if a hardware watchpoint trap at ADDR_TRAP matches a set watchpoint.
-   The address of the matched watchpoint is returned in *ADDR_P.  */
-
-static bool
-loongarch_stopped_data_address (const struct loongarch_debug_reg_state *state,
-			      CORE_ADDR addr_trap, CORE_ADDR *addr_p)
-{
-
-  int i;
-
-  for (i = loongarch_num_wp_regs - 1; i >= 0; --i)
-    {
-      const CORE_ADDR addr_watch = state->dr_addr_wp[i];
-
-      if (state->dr_ref_count_wp[i]
-	  && DR_CONTROL_ENABLED (state->dr_ctrl_wp[i])
-	  && addr_trap == addr_watch)
-	{
-	  *addr_p = addr_watch;
-	  return true;
-	}
-    }
-  return false;
-}
-
-
 /* Returns the number of hardware watchpoints of type TYPE that we can
    set.  Value is positive if we can set CNT watchpoints, zero if
    setting watchpoints of type TYPE is not supported, and negative if
@@ -583,15 +578,6 @@ loongarch_linux_nat_target::remove_watchpoint (CORE_ADDR addr, int len,
   return ret;
 
 }
-
-bool
-loongarch_linux_nat_target::watchpoint_addr_within_range (CORE_ADDR addr,
-							  CORE_ADDR start,
-							  int length)
-{
-  return start <= addr && start + length - 1 >= addr;
-}
-
 
 /* Implement the "stopped_data_address" target_ops method.  */
 
@@ -754,9 +740,7 @@ loongarch_linux_nat_target::low_forget_process (pid_t pid)
 
 /* Initialize LoongArch Linux native support.  */
 
-void _initialize_loongarch_linux_nat ();
-void
-_initialize_loongarch_linux_nat ()
+INIT_GDB_FILE (loongarch_linux_nat)
 {
   linux_target = &the_loongarch_linux_nat_target;
   add_inf_child_target (&the_loongarch_linux_nat_target);

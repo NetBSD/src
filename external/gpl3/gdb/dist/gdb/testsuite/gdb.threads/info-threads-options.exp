@@ -1,0 +1,131 @@
+# Copyright (C) 2022-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test the filter flags of the "info threads" command.
+
+standard_testfile
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
+	 executable debug] != "" } {
+    return -1
+}
+
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -ex \"set non-stop on\""
+    clean_restart $::testfile
+}
+
+if ![runto_main] {
+    return -1
+}
+
+gdb_breakpoint "stop_here"
+gdb_test_multiple "continue -a&" "" {
+    -re "Continuing.\r\n$gdb_prompt " {
+	pass $gdb_test_name
+    }
+}
+
+set expected_hits 3
+set fill "\[^\r\n\]+"
+set num_hits 0
+gdb_test_multiple "" "hit the breakpoint" -lbl {
+    -re "\r\nThread ${fill} hit Breakpoint ${decimal}," {
+	incr num_hits
+	if {$num_hits < $expected_hits} {
+	    exp_continue
+	}
+    }
+}
+gdb_assert {$num_hits == $expected_hits} "expected threads hit the bp"
+
+# Count the number of running/stopped threads reported
+# by the "info threads" command.  We also capture thread ids
+# for additional tests.
+set running_tid "invalid"
+set stopped_tid "invalid"
+
+set eol "(?=\r\n)"
+
+foreach_with_prefix flag {"" "-running" "-stopped" "-running -stopped"} {
+    set num_running 0
+    set num_stopped 0
+    gdb_test_multiple "info threads $flag" "info threads $flag" -lbl {
+	-re "Id${fill}Target Id${fill}Frame${fill}${eol}" {
+	    exp_continue
+	}
+	-re "^\r\n. (${decimal})${fill}Thread ${fill}.running.${eol}" {
+	    incr num_running
+	    set running_tid $expect_out(1,string)
+	    exp_continue
+	}
+	-re "^\r\n. (${decimal})${fill}Thread ${fill}stop_here ${fill}${eol}" {
+	    incr num_stopped
+	    set stopped_tid $expect_out(1,string)
+	    exp_continue
+	}
+	-re "^\r\n$gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+    }
+
+    if {$flag eq "-running"} {
+	gdb_assert {$num_running == 2} "num running"
+	gdb_assert {$num_stopped == 0} "num stopped"
+    } elseif {$flag  eq "-stopped"} {
+	gdb_assert {$num_running == 0} "num running"
+	gdb_assert {$num_stopped == 3} "num stopped"
+    } else {
+	gdb_assert {$num_running == 2} "num running"
+	gdb_assert {$num_stopped == 3} "num stopped"
+    }
+}
+
+verbose -log "running_tid=$running_tid, stopped_tid=$stopped_tid"
+
+# Test specifying thread ids.
+gdb_test "info threads -running $stopped_tid" \
+    "No threads matched\\." \
+    "info thread -running for a stopped thread"
+gdb_test "info threads -stopped $running_tid" \
+    "No threads matched\\." \
+    "info thread -stopped for a running thread"
+
+set ws "\[ \t\]+"
+foreach tid "\"$running_tid\" \"$running_tid $stopped_tid\"" {
+    gdb_test "info threads -running $tid" \
+	[multi_line \
+	     "${ws}Id${ws}Target Id${ws}Frame${ws}" \
+	     "${ws}${running_tid}${ws}Thread ${fill}.running."] \
+	"info thread -running with [llength $tid] thread ids"
+}
+
+foreach tid "\"$stopped_tid\" \"$stopped_tid $running_tid\"" {
+    gdb_test "info threads -stopped $tid" \
+	[multi_line \
+	     "${ws}Id${ws}Target Id${ws}Frame${ws}" \
+	     "${ws}${stopped_tid}${ws}Thread ${fill} stop_here ${fill}"] \
+	"info thread -stopped with [llength $tid] thread ids"
+}
+
+gdb_test_multiple "info threads -stopped -running $stopped_tid $running_tid" \
+    "filter flags and tids combined" {
+    -re -wrap ".*stop_here.*running.*" {
+	pass $gdb_test_name
+    }
+    -re -wrap ".*running.*stop_here.*" {
+	pass $gdb_test_name
+    }
+}

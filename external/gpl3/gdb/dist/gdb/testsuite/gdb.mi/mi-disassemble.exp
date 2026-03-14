@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -345,7 +345,7 @@ proc test_disassembly_opcode_format {} {
 	"data-disassemble checking the opcodes bytes format"
 }
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 mi_runto_main
 test_disassembly_only
 test_disassembly_with_opcodes

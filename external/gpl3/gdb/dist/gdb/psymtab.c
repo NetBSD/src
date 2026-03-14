@@ -1,6 +1,6 @@
 /* Partial symbol tables.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -228,7 +228,7 @@ find_pc_sect_psymbol (struct objfile *objfile,
   for (const partial_symbol *p : psymtab->global_psymbols)
     {
       if (p->domain == VAR_DOMAIN
-	  && p->aclass == LOC_BLOCK
+	  && p->loc_class == LOC_BLOCK
 	  && pc >= p->address (objfile)
 	  && (p->address (objfile) > best_pc
 	      || (psymtab->text_low (objfile) == 0
@@ -248,7 +248,7 @@ find_pc_sect_psymbol (struct objfile *objfile,
   for (const partial_symbol *p : psymtab->static_psymbols)
     {
       if (p->domain == VAR_DOMAIN
-	  && p->aclass == LOC_BLOCK
+	  && p->loc_class == LOC_BLOCK
 	  && pc >= p->address (objfile)
 	  && (p->address (objfile) > best_pc
 	      || (psymtab->text_low (objfile) == 0
@@ -527,11 +527,17 @@ print_partial_symbols (struct gdbarch *gdbarch, struct objfile *objfile,
 	case COMMON_BLOCK_DOMAIN:
 	  gdb_puts ("common block domain, ", outfile);
 	  break;
+	case TYPE_DOMAIN:
+	  gdb_puts ("type domain, ", outfile);
+	  break;
+	case FUNCTION_DOMAIN:
+	  gdb_puts ("function domain, ", outfile);
+	  break;
 	default:
 	  gdb_puts ("<invalid domain>, ", outfile);
 	  break;
 	}
-      switch (p->aclass)
+      switch (p->loc_class)
 	{
 	case LOC_UNDEF:
 	  gdb_puts ("undefined", outfile);
@@ -729,10 +735,9 @@ psymbol_functions::expand_all_symtabs (struct objfile *objfile)
    the definition of quick_symbol_functions in symfile.h.  */
 
 void
-psymbol_functions::map_symbol_filenames
-     (struct objfile *objfile,
-      gdb::function_view<symbol_filename_ftype> fun,
-      bool need_fullname)
+psymbol_functions::map_symbol_filenames (objfile *objfile,
+					 symbol_filename_listener fun,
+					 bool need_fullname)
 {
   for (partial_symtab *ps : partial_symbols (objfile))
     {
@@ -791,13 +796,11 @@ psymtab_to_fullname (struct partial_symtab *ps)
    various psymtabs that it searches.  */
 
 static bool
-recursively_search_psymtabs
-  (struct partial_symtab *ps,
-   struct objfile *objfile,
-   block_search_flags search_flags,
-   domain_search_flags domain,
-   const lookup_name_info &lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> sym_matcher)
+recursively_search_psymtabs (partial_symtab *ps, objfile *objfile,
+			     block_search_flags search_flags,
+			     domain_search_flags domain,
+			     const lookup_name_info &lookup_name,
+			     expand_symtabs_symbol_matcher sym_matcher)
 {
   int keep_going = 1;
   enum psymtab_search_status result = PST_SEARCHED_AND_NOT_FOUND;
@@ -888,14 +891,13 @@ recursively_search_psymtabs
 bool
 psymbol_functions::expand_symtabs_matching
   (struct objfile *objfile,
-   gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+   expand_symtabs_file_matcher file_matcher,
    const lookup_name_info *lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   expand_symtabs_symbol_matcher symbol_matcher,
+   expand_symtabs_expansion_listener expansion_notify,
    block_search_flags search_flags,
    domain_search_flags domain,
-   gdb::function_view<expand_symtabs_lang_matcher_ftype>
-     lang_matcher ATTRIBUTE_UNUSED)
+   expand_symtabs_lang_matcher lang_matcher ATTRIBUTE_UNUSED)
 {
   /* Clear the search flags.  */
   for (partial_symtab *ps : partial_symbols (objfile))
@@ -1020,12 +1022,12 @@ psymbol_bcache::hash (const void *addr, int length)
   struct partial_symbol *psymbol = (struct partial_symbol *) addr;
   unsigned int lang = psymbol->ginfo.language ();
   unsigned int domain = psymbol->domain;
-  unsigned int theclass = psymbol->aclass;
+  unsigned int loc_class = psymbol->loc_class;
 
   h = fast_hash (&psymbol->ginfo.m_value, sizeof (psymbol->ginfo.m_value), h);
   h = fast_hash (&lang, sizeof (unsigned int), h);
   h = fast_hash (&domain, sizeof (unsigned int), h);
-  h = fast_hash (&theclass, sizeof (unsigned int), h);
+  h = fast_hash (&loc_class, sizeof (unsigned int), h);
   /* Note that psymbol names are interned via compute_and_set_names, so
      there's no need to hash the contents of the name here.  */
   h = fast_hash (&psymbol->ginfo.m_name, sizeof (psymbol->ginfo.m_name), h);
@@ -1045,7 +1047,7 @@ psymbol_bcache::compare (const void *addr1, const void *addr2, int length)
 		  sizeof (sym1->ginfo.m_value)) == 0
 	  && sym1->ginfo.language () == sym2->ginfo.language ()
 	  && sym1->domain == sym2->domain
-	  && sym1->aclass == sym2->aclass
+	  && sym1->loc_class == sym2->loc_class
 	  /* Note that psymbol names are interned via
 	     compute_and_set_names, so there's no need to compare the
 	     contents of the name here.  */
@@ -1083,7 +1085,7 @@ partial_symtab::add_psymbol (const partial_symbol &psymbol,
 void
 partial_symtab::add_psymbol (std::string_view name, bool copy_name,
 			     domain_enum domain,
-			     enum address_class theclass,
+			     location_class loc_class,
 			     int section,
 			     psymbol_placement where,
 			     unrelocated_addr coreaddr,
@@ -1097,7 +1099,7 @@ partial_symtab::add_psymbol (std::string_view name, bool copy_name,
   psymbol.set_unrelocated_address (coreaddr);
   psymbol.ginfo.set_section_index (section);
   psymbol.domain = domain;
-  psymbol.aclass = theclass;
+  psymbol.loc_class = loc_class;
   psymbol.ginfo.set_language (language, partial_symtabs->obstack ());
   psymbol.ginfo.compute_and_set_names (name, copy_name, objfile->per_bfd);
 
@@ -1496,7 +1498,7 @@ maintenance_check_psymtabs (const char *ignore, int from_tty)
 		{
 		  /* Skip symbols for inlined functions without address.  These may
 		     or may not have a match in the full symtab.  */
-		  if (psym->aclass == LOC_BLOCK
+		  if (psym->loc_class == LOC_BLOCK
 		      && psym->ginfo.value_address () == 0)
 		    continue;
 
@@ -1550,9 +1552,7 @@ maintenance_check_psymtabs (const char *ignore, int from_tty)
     }
 }
 
-void _initialize_psymtab ();
-void
-_initialize_psymtab ()
+INIT_GDB_FILE (psymtab)
 {
   add_cmd ("psymbols", class_maintenance, maintenance_print_psymbols, _("\
 Print dump of current partial symbol definitions.\n\
@@ -1572,8 +1572,8 @@ This does not include information about individual partial symbols,\n\
 just the symbol table structures themselves."),
 	   &maintenanceinfolist);
 
-  add_cmd ("check-psymtabs", class_maintenance, maintenance_check_psymtabs,
+  add_cmd ("psymtabs", class_maintenance, maintenance_check_psymtabs,
 	   _("\
 Check consistency of currently expanded psymtabs versus symtabs."),
-	   &maintenancelist);
+	   &maintenancechecklist);
 }

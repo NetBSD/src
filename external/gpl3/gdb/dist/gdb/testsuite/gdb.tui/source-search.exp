@@ -1,0 +1,72 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test forward-search and reverse-search within the TUI src window.
+
+tuiterm_env
+
+standard_testfile .c
+
+if {[build_executable "failed to build" ${testfile} ${srcfile}] == -1} {
+    return
+}
+
+Term::clean_restart 24 80 $testfile
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+proc check_src_window { testname first_line } {
+    set last_line [expr $first_line + 12]
+    Term::check_box_contents $testname 0 0 80 15 \
+	"^\\s+${first_line}\\s+.*\\s+${last_line}\\s+/\\* Line ${last_line}  \\*/\\s+$"
+
+}
+
+# Initialise the src window so that it is displaying known contents.
+# Check that the expected contents are displayed.
+Term::command "list 20"
+set first_line 15
+check_src_window "initial src contents" $first_line
+
+# Search forward.  Searches are from the last line displayed, so this
+# will move the next source line onto the screen each time.
+for { set i 1 } { $i < 4 } { incr i } {
+    incr first_line
+    Term::command "forward-search Line"
+    check_src_window "src windows after forward-search $i" $first_line
+}
+
+# Reverse search.  Like forward-search, but move backward through the
+# source.
+for { set i 1 } { $i < 3 } { incr i } {
+    incr first_line -1
+    Term::command "reverse-search Line"
+    check_src_window "src windows after reverse-search $i" $first_line
+}
+
+# Until there are no matching lines left.
+Term::command "reverse-search Line"
+gdb_assert {[regexp -- "^Expression not found\\s+$" [Term::get_line 22]]} \
+    "check start of source was reached"
+
+Term::command "forward-search Last line"
+Term::check_box_contents "forward-search to end of file" 0 0 80 15 \
+    "^\\s+122\\s+.*/\\* Last line\\.  \\*/\\s+$"
+
+Term::command "reverse-search This testcase is part"
+Term::check_box_contents "reverse-search to start of file" 0 0 80 15 \
+    "^\\s+1\\s+.*\\s+13\\s+GNU General Public License for more details\\.\\s+$"

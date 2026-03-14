@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -187,6 +187,21 @@ gdb_test "python print(gdb.selected_frame().language())" "c" \
 gdb_test "python print(gdb.selected_frame().read_register(list()))" \
     ".*Invalid type for register.*" \
     "test Frame.read_register with list"
+
+gdb_test_multiline "setup a bad object" \
+    "python" "" \
+    "class bad_type:" "" \
+    "  def __init__ (self):" "" \
+    "    pass" "" \
+    "  @property" "" \
+    "  def __class__(self):" "" \
+    "    raise RuntimeError('error from __class in bad_type')" "" \
+    "bad_object = bad_type()" "" \
+    "end" ""
+
+gdb_test "python print(gdb.selected_frame().read_register(bad_object))" \
+    ".*Invalid type for register.*" \
+    "test Frame.read_register with bad_type object"
 
 # Compile again without debug info.
 gdb_exit

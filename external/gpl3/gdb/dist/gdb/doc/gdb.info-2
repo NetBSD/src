@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -1198,20 +1198,21 @@ ADDRESS:
 
 'FUNCADDR'
      An address of a function or procedure derived from its name.  In C,
-     C++, Objective-C, Fortran, minimal, and assembly, this is simply
-     the function's name FUNCTION (and actually a special case of a
-     valid expression).  In Pascal and Modula-2, this is '&FUNCTION'.
-     In Ada, this is 'FUNCTION'Address' (although the Pascal form also
-     works).
+     C++, Objective-C, Fortran, Pascal, Modula-2, minimal, and assembly,
+     this is simply the function's name FUNCTION (and actually a special
+     case of a valid expression).  In Ada, this is 'FUNCTION'Address'
+     (although '&FUNCTION' also works).
 
      This form specifies the address of the function's first
      instruction, before the stack frame and arguments have been set up.
 
-''FILENAME':FUNCADDR'
+''FILENAME'::FUNCADDR'
      Like FUNCADDR above, but also specifies the name of the source file
      explicitly.  This is useful if the name of the function does not
      specify the function unambiguously, e.g., if there are several
-     functions with identical names in different source files.
+     functions with identical names in different source files, see *note
+     variable name conflict::.  This may not be supported for all
+     languages, see *note Expressions::.
 
 
 File: gdb.info,  Node: Edit,  Next: Search,  Prev: Location Specifications,  Up: Source
@@ -2166,8 +2167,9 @@ array to memory that is 'malloc'ed in the target program.
 in this manual are in C. *Note Using GDB with Different Languages:
 Languages, for information on how to use expressions in other languages.
 
-   In this section, we discuss operators that you can use in GDB
-expressions regardless of your programming language.
+   In this section, we discuss operators that may be available in GDB
+expressions in addition to those of your programming language.  However,
+they are not necessarily available in all working languages.
 
    Casts are supported in all languages, not just in C, because it is so
 useful to cast a number into a pointer in order to examine a structure
@@ -2183,6 +2185,8 @@ programming languages:
 '::'
      '::' allows you to specify a variable in terms of the file or
      function where it is defined.  *Note Program Variables: Variables.
+     This is currently not supported in Ada, Rust, Pascal, Modula-2 and
+     D.
 
 '{TYPE} ADDR'
      Refers to an object of type TYPE stored at address ADDR in memory.
@@ -2306,7 +2310,8 @@ in this file.  But it is possible to have more than one such variable or
 function with the same name (in different source files).  If that
 happens, referring to that name has unpredictable effects.  If you wish,
 you can specify a static variable in a particular function or file by
-using the colon-colon ('::') notation:
+using the colon-colon ('::') notation (this may not be supported for all
+languages, *note Expressions::):
 
      FILE::VARIABLE
      FUNCTION::VARIABLE
@@ -4029,6 +4034,29 @@ values likely to be useful.
      the exit status of the last launched command.  These variables are
      set and used similarly to the variables '$_exitcode' and
      '$_exitsignal'.
+
+'$_colorsupport'
+     Comma-separated list of "color space" names supported by terminal.
+     Names could be any of 'monochrome', 'ansi_8color',
+     'aixterm_16color', 'xterm_256color', 'rgb_24bit'.  E.g., for plain
+     linux terminal the value could be 'monochrome,ansi_8color' and for
+     terminal with truecolor support it could be
+     'monochrome,ansi_8color,aixterm_16color,xterm_256color,rgb_24bit'.
+     'rgb_24bit' availability is determined by the 'COLORTERM'
+     environment variable which may be 'truecolor' or '24bit'.  Other
+     color spaces are determined by the "Co" termcap which in turn
+     depends on the 'TERM' environment variable.
+
+'$_linker_namespace_count'
+     Number of active linker namespaces in the inferior (*note Files::).
+     In systems with no support for linker namespaces or if the inferior
+     hasn't started, this variable will always be set to '0'.
+
+'$_linker_namespace'
+     The namespace which contains the current location in the inferior.
+     This returns GDB's internal numbering for the namespace.  In
+     systems with no support for linker namespaces, this variable will
+     always be set to '0'.
 
 
 File: gdb.info,  Node: Convenience Funs,  Next: Registers,  Prev: Convenience Vars,  Up: Data
@@ -6986,156 +7014,4 @@ improved in many ways:
      data overlay, you must copy its contents back out to its load
      address before you can copy a different data overlay into the same
      mapped area.
-
-
-File: gdb.info,  Node: Overlay Commands,  Next: Automatic Overlay Debugging,  Prev: How Overlays Work,  Up: Overlays
-
-14.2 Overlay Commands
-=====================
-
-To use GDB's overlay support, each overlay in your program must
-correspond to a separate section of the executable file.  The section's
-virtual memory address and load memory address must be the overlay's
-mapped and load addresses.  Identifying overlays with sections allows
-GDB to determine the appropriate address of a function or variable,
-depending on whether the overlay is mapped or not.
-
-   GDB's overlay commands all start with the word 'overlay'; you can
-abbreviate this as 'ov' or 'ovly'.  The commands are:
-
-'overlay off'
-     Disable GDB's overlay support.  When overlay support is disabled,
-     GDB assumes that all functions and variables are always present at
-     their mapped addresses.  By default, GDB's overlay support is
-     disabled.
-
-'overlay manual'
-     Enable "manual" overlay debugging.  In this mode, GDB relies on you
-     to tell it which overlays are mapped, and which are not, using the
-     'overlay map-overlay' and 'overlay unmap-overlay' commands
-     described below.
-
-'overlay map-overlay OVERLAY'
-'overlay map OVERLAY'
-     Tell GDB that OVERLAY is now mapped; OVERLAY must be the name of
-     the object file section containing the overlay.  When an overlay is
-     mapped, GDB assumes it can find the overlay's functions and
-     variables at their mapped addresses.  GDB assumes that any other
-     overlays whose mapped ranges overlap that of OVERLAY are now
-     unmapped.
-
-'overlay unmap-overlay OVERLAY'
-'overlay unmap OVERLAY'
-     Tell GDB that OVERLAY is no longer mapped; OVERLAY must be the name
-     of the object file section containing the overlay.  When an overlay
-     is unmapped, GDB assumes it can find the overlay's functions and
-     variables at their load addresses.
-
-'overlay auto'
-     Enable "automatic" overlay debugging.  In this mode, GDB consults a
-     data structure the overlay manager maintains in the inferior to see
-     which overlays are mapped.  For details, see *note Automatic
-     Overlay Debugging::.
-
-'overlay load-target'
-'overlay load'
-     Re-read the overlay table from the inferior.  Normally, GDB
-     re-reads the table GDB automatically each time the inferior stops,
-     so this command should only be necessary if you have changed the
-     overlay mapping yourself using GDB.  This command is only useful
-     when using automatic overlay debugging.
-
-'overlay list-overlays'
-'overlay list'
-     Display a list of the overlays currently mapped, along with their
-     mapped addresses, load addresses, and sizes.
-
-   Normally, when GDB prints a code address, it includes the name of the
-function the address falls in:
-
-     (gdb) print main
-     $3 = {int ()} 0x11a0 <main>
-When overlay debugging is enabled, GDB recognizes code in unmapped
-overlays, and prints the names of unmapped functions with asterisks
-around them.  For example, if 'foo' is a function in an unmapped
-overlay, GDB prints it this way:
-
-     (gdb) overlay list
-     No sections are mapped.
-     (gdb) print foo
-     $5 = {int (int)} 0x100000 <*foo*>
-When 'foo''s overlay is mapped, GDB prints the function's name normally:
-
-     (gdb) overlay list
-     Section .ov.foo.text, loaded at 0x100000 - 0x100034,
-             mapped at 0x1016 - 0x104a
-     (gdb) print foo
-     $6 = {int (int)} 0x1016 <foo>
-
-   When overlay debugging is enabled, GDB can find the correct address
-for functions and variables in an overlay, whether or not the overlay is
-mapped.  This allows most GDB commands, like 'break' and 'disassemble',
-to work normally, even on unmapped code.  However, GDB's breakpoint
-support has some limitations:
-
-   * You can set breakpoints in functions in unmapped overlays, as long
-     as GDB can write to the overlay at its load address.
-   * GDB can not set hardware or simulator-based breakpoints in unmapped
-     overlays.  However, if you set a breakpoint at the end of your
-     overlay manager (and tell GDB which overlays are now mapped, if you
-     are using manual overlay management), GDB will re-set its
-     breakpoints properly.
-
-
-File: gdb.info,  Node: Automatic Overlay Debugging,  Next: Overlay Sample Program,  Prev: Overlay Commands,  Up: Overlays
-
-14.3 Automatic Overlay Debugging
-================================
-
-GDB can automatically track which overlays are mapped and which are not,
-given some simple co-operation from the overlay manager in the inferior.
-If you enable automatic overlay debugging with the 'overlay auto'
-command (*note Overlay Commands::), GDB looks in the inferior's memory
-for certain variables describing the current state of the overlays.
-
-   Here are the variables your overlay manager must define to support
-GDB's automatic overlay debugging:
-
-'_ovly_table':
-     This variable must be an array of the following structures:
-
-          struct
-          {
-            /* The overlay's mapped address.  */
-            unsigned long vma;
-
-            /* The size of the overlay, in bytes.  */
-            unsigned long size;
-
-            /* The overlay's load address.  */
-            unsigned long lma;
-
-            /* Non-zero if the overlay is currently mapped;
-               zero otherwise.  */
-            unsigned long mapped;
-          }
-
-'_novlys':
-     This variable must be a four-byte signed integer, holding the total
-     number of elements in '_ovly_table'.
-
-   To decide whether a particular overlay is mapped or not, GDB looks
-for an entry in '_ovly_table' whose 'vma' and 'lma' members equal the
-VMA and LMA of the overlay's section in the executable file.  When GDB
-finds a matching entry, it consults the entry's 'mapped' member to
-determine whether the overlay is currently mapped.
-
-   In addition, your overlay manager may define a function called
-'_ovly_debug_event'.  If this function is defined, GDB will silently set
-a breakpoint there.  If the overlay manager then calls this function
-whenever it has changed the overlay table, this will enable GDB to
-accurately keep track of which overlays are in program memory, and
-update any breakpoints that may be set in overlays.  This will allow
-breakpoints to work even if the overlays are kept in ROM or other
-non-writable memory while they are not being executed.
 

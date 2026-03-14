@@ -1,6 +1,6 @@
 /* Poison symbols at compile time.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -183,7 +183,7 @@ xnewvar (size_t s)
 {
   static_assert (IsMallocable<T>::value, "Trying to use XNEWVAR with a \
 non-POD data type.");
-  return XNEWVAR (T, s);;
+  return XNEWVAR (T, s);
 }
 
 #undef XNEWVAR

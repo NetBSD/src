@@ -76,10 +76,10 @@ itself.
 @subsubsection @code{bfd_check_format_matches}
 @deftypefn {Function} bool bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching); 
 Like @code{bfd_check_format}, except when it returns FALSE with
-@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.  In that
-case, if @var{matching} is not NULL, it will be filled in with
-a NULL-terminated list of the names of the formats that matched,
-allocated with @code{malloc}.
+@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.
+In that case, if @var{matching} is not NULL, it will be filled
+in with a NULL-terminated list of the names of the formats
+that matched, allocated with @code{malloc}.
 Then the user may choose a format and try again.
 
 When done with the list that @var{matching} points to, the caller

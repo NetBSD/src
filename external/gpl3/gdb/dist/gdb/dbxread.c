@@ -1,5 +1,5 @@
 /* Read dbx symbol tables and convert to internal format, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,35 +31,17 @@
    for real.  dbx_psymtab_to_symtab() is the function that does this */
 
 
-#include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
 #include <sys/stat.h>
 #include "symtab.h"
-#include "breakpoint.h"
 #include "target.h"
-#include "gdbcore.h"
 #include "libaout.h"
-#include "filenames.h"
 #include "objfiles.h"
-#include "buildsym-legacy.h"
 #include "stabsread.h"
 #include "gdb-stabs.h"
-#include "demangle.h"
-#include "complaints.h"
-#include "cp-abi.h"
 #include "cp-support.h"
-#include "c-lang.h"
-#include "psymtab.h"
-#include "block.h"
-#include "aout/aout64.h"
-#include "aout/stab_gnu.h"
-
+
 /* Required for the following registry.  */
 #include "gdb-stabs.h"
-
-
-
-
 
 /* Local function prototypes.  */
 
@@ -110,6 +92,7 @@ dbx_new_init (struct objfile *ignore)
 {
   stabsread_new_init ();
   init_header_files ();
+  warning (_("The a.out file format is deprecated and will be removed soon."));
 }
 
 
@@ -265,9 +248,7 @@ static const struct sym_fns aout_sym_fns =
   NULL,				/* sym_probe_fns */
 };
 
-void _initialize_dbxread ();
-void
-_initialize_dbxread ()
+INIT_GDB_FILE (dbxread)
 {
   add_symtab_fns (bfd_target_aout_flavour, &aout_sym_fns);
 }

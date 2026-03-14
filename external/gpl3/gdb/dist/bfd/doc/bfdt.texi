@@ -216,7 +216,7 @@ struct bfd
   unsigned int read_only : 1;
 
   /* LTO object type.  */
-  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 2;
+  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 3;
 
   /* Set if this BFD is currently being processed by
      bfd_check_format_matches.  This is checked by the cache to
@@ -247,6 +247,9 @@ struct bfd
 
   /* The last section on the section list.  */
   struct bfd_section *section_last;
+
+  /* The object-only section on the section list.  */
+  struct bfd_section *object_only_section;
 
   /* The number of sections.  */
   unsigned int section_count;
@@ -440,12 +443,6 @@ is non-NULL and non-empty, the error string printed is preceded
 by @var{message}, a colon, and a space.  It is followed by a newline.
 
 @end deftypefn
-@findex _bfd_clear_error_data
-@subsubsection @code{_bfd_clear_error_data}
-@deftypefn {Function} void _bfd_clear_error_data (void); 
-Free any data associated with the BFD error.
-
-@end deftypefn
 @findex bfd_asprintf
 @subsubsection @code{bfd_asprintf}
 @deftypefn {Function} char *bfd_asprintf (const char *fmt, ...); 
@@ -605,12 +602,13 @@ Return true if threading is enabled, false if not.
 Initialize BFD threading.  The functions passed in will be
 used to lock and unlock global data structures.  This may only
 be called a single time in a given process.  Returns true on
-success and false on error.  DATA is passed verbatim to the
-lock and unlock functions.  The lock and unlock functions
-should return true on success, or set the BFD error and return
-false on failure.  Note also that the lock must be a recursive
-lock: BFD may attempt to acquire the lock when it is already
-held by the current thread.
+success and false on error.  On error, the caller should
+assume that BFD cannot be used by multiple threads.  DATA is
+passed verbatim to the lock and unlock functions.  The lock
+and unlock functions should return true on success, or set the
+BFD error and return false on failure.  Note also that the
+lock must be a recursive lock: BFD may attempt to acquire the
+lock when it is already held by the current thread.
 
 @end deftypefn
 @findex bfd_thread_cleanup
@@ -983,5 +981,11 @@ other such chars that would otherwise confuse the demangler.
 If passed a g++ v3 ABI mangled name, returns a buffer allocated
 with malloc holding the demangled name.  Returns NULL otherwise
 and on memory alloc failure.
+
+@end deftypefn
+@findex bfd_group_signature
+@subsubsection @code{bfd_group_signature}
+@deftypefn {Function} asymbol *bfd_group_signature (asection *group, asymbol **isympp); 
+Return a pointer to the symbol used as a signature for GROUP.
 
 @end deftypefn

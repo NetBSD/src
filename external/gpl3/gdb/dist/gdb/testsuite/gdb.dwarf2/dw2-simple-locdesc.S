@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2024 Free Software Foundation, Inc.
+   Copyright 2011-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -160,7 +160,11 @@ d:
 	.byte	0
 	.byte	0
 	.byte	0
-	.section	.debug_str
+#ifdef __arm__
+	.section	.debug_str,"MS",%progbits,1
+#else
+	.section	.debug_str,"MS",@progbits,1
+#endif
 .LASF2:
 	.string	"GNU C 4.7.0 20110727 (experimental)"
 .LASF0:

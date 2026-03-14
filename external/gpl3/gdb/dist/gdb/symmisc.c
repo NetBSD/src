@@ -1,6 +1,6 @@
 /* Do various things to symbol tables (other than lookup), for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -537,7 +537,7 @@ print_symbol (struct gdbarch *gdbarch, struct symbol *symbol,
     }
   else
     {
-      if (symbol->aclass () == LOC_TYPEDEF)
+      if (symbol->loc_class () == LOC_TYPEDEF)
 	gdb_printf (outfile, "typedef ");
       if (symbol->type ())
 	{
@@ -552,7 +552,7 @@ print_symbol (struct gdbarch *gdbarch, struct symbol *symbol,
       else
 	gdb_printf (outfile, "%s ", symbol->print_name ());
 
-      switch (symbol->aclass ())
+      switch (symbol->loc_class ())
 	{
 	case LOC_CONST:
 	  gdb_printf (outfile, "const %s (%s)",
@@ -646,7 +646,7 @@ print_symbol (struct gdbarch *gdbarch, struct symbol *symbol,
 
 	default:
 	  gdb_printf (outfile, "botched symbol class %x",
-		      symbol->aclass ());
+		      symbol->loc_class ());
 	  break;
 	}
     }
@@ -838,7 +838,7 @@ maintenance_info_symtabs (const char *regexp, int from_tty)
    GDB assumes they are always non-NULL.
 
    Note: This does not check for psymtab vs symtab consistency.
-   Use "maint check-psymtabs" for that.  */
+   Use "maint check psymtabs" for that.  */
 
 static void
 maintenance_check_symtabs (const char *ignore, int from_tty)
@@ -1051,9 +1051,7 @@ maintenance_info_line_tables (const char *regexp, int from_tty)
 
 /* Do early runtime initializations.  */
 
-void _initialize_symmisc ();
-void
-_initialize_symmisc ()
+INIT_GDB_FILE (symmisc)
 {
   add_cmd ("symbols", class_maintenance, maintenance_print_symbols, _("\
 Print dump of current symbol definitions.\n\
@@ -1093,10 +1091,10 @@ With an argument REGEXP, list just the line tables for the symbol\n\
 tables with matching names."),
 	   &maintenanceinfolist);
 
-  add_cmd ("check-symtabs", class_maintenance, maintenance_check_symtabs,
+  add_cmd ("symtabs", class_maintenance, maintenance_check_symtabs,
 	   _("\
 Check consistency of currently expanded symtabs."),
-	   &maintenancelist);
+	   &maintenancechecklist);
 
   add_cmd ("expand-symtabs", class_maintenance, maintenance_expand_symtabs,
 	   _("Expand symbol tables.\n\

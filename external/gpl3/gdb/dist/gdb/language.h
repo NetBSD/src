@@ -1,6 +1,6 @@
 /* Source-language-related definitions for GDB.
 
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -36,7 +36,6 @@ struct value_print_options;
 struct type_print_options;
 struct lang_varobj_ops;
 struct parser_state;
-class compile_instance;
 struct completion_match_for_lcd;
 class innermost_block_tracker;
 
@@ -389,37 +388,6 @@ struct language_defn
 
   symbol_name_matcher_ftype *get_symbol_name_matcher
 	(const lookup_name_info &lookup_name) const;
-
-  /* If this language allows compilation from the gdb command line,
-     then this method will return an instance of struct gcc_context
-     appropriate to the language.  If compilation for this language is
-     generally supported, but something goes wrong then an exception
-     is thrown.  If compilation is not supported for this language
-     then this method returns NULL.  */
-
-  virtual std::unique_ptr<compile_instance> get_compile_instance () const;
-
-  /* This method must be overridden if 'get_compile_instance' is
-     overridden.
-
-     This takes the user-supplied text and returns a new bit of code
-     to compile.
-
-     INST is the compiler instance being used.
-     INPUT is the user's input text.
-     GDBARCH is the architecture to use.
-     EXPR_BLOCK is the block in which the expression is being
-     parsed.
-     EXPR_PC is the PC at which the expression is being parsed.  */
-
-  virtual std::string compute_program (compile_instance *inst,
-				       const char *input,
-				       struct gdbarch *gdbarch,
-				       const struct block *expr_block,
-				       CORE_ADDR expr_pc) const
-  {
-    gdb_assert_not_reached ("language_defn::compute_program");
-  }
 
   /* Hash the given symbol search name.  */
   virtual unsigned int search_name_hash (const char *name) const;

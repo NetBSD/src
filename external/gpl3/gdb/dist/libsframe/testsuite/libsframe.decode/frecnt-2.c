@@ -1,6 +1,6 @@
 /* frecnt-2.c -- Test for decoder in libsframe.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,6 +48,7 @@ main (void)
   struct stat st;
   char *sf_buf;
   size_t sf_size;
+  uint8_t rep_block_size;
 
 #define TEST(name, cond)                                                      \
   do                                                                          \
@@ -88,8 +89,8 @@ main (void)
 
   for (i = 0; i < fde_cnt; ++i)
     {
-      err = sframe_decoder_get_funcdesc (dctx, i, &nfres, &fsize, &fstart,
-					 &finfo);
+      err = sframe_decoder_get_funcdesc_v2 (dctx, i, &nfres, &fsize, &fstart,
+					    &finfo, &rep_block_size);
       TEST ("frecnt-2: Decode get FDE", err == 0);
       TEST ("frecnt-2: Decode get FRE", nfres == 4);
     }

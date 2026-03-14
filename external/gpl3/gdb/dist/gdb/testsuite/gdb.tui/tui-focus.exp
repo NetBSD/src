@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ foreach spec {{src true} {cmd true} {status true} {regs false} \
     lassign $spec window valid_p
     with_test_prefix "window=$window" {
 
-	Term::clean_restart 24 80 $binfile
+	Term::clean_restart 24 80 $testfile
 	if {![Term::prepare_for_tui]} {
 	    unsupported "TUI not supported"
 	    return
@@ -73,9 +73,9 @@ foreach spec {{src true} {cmd true} {status true} {regs false} \
     }
 }
 
-# Use the Python TUI API to exercise some of the ambigous window name
+# Use the Python TUI API to exercise some of the ambiguous window name
 # handling parts of the 'focus' command.
-Term::clean_restart 24 80 $binfile
+Term::clean_restart 24 80 $testfile
 if {[allow_python_tests]} {
     # Create a very simple tui window.
     gdb_py_test_silent_cmd \

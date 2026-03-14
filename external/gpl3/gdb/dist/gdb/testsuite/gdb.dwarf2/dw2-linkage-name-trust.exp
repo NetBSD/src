@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ standard_testfile .S
 set executable ${testfile}
 
 if {[prepare_for_testing_full "failed to prepare" \
-	 [list $testfile c++ $testfile-main.cc {c++ debug} \
+	 [list $testfile c++ $testfile-main.cc {c++ nodebug} \
 	      $srcfile {}]]} {
     return -1
 }

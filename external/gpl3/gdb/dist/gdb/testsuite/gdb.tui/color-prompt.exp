@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,18 +15,16 @@
 
 # Check using a prompt with color in TUI.
 
+require allow_tui_tests
+
 tuiterm_env
 
 Term::clean_restart 24 80
 
-# Set colored prompt.
 if {![Term::enter_tui]} {
     unsupported "TUI not supported"
     return
 }
 
-Term::command "set prompt \\033\[31m(gdb) \\033\[0m"
-
-set line [Term::get_line_with_attrs $Term::_cur_row]
-gdb_assert { [regexp "^<fg:red>$gdb_prompt <fg:default> *$" $line] } \
-    "prompt with color"
+set tui 1
+source $srcdir/$subdir/color-prompt.exp.tcl

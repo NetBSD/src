@@ -1,6 +1,6 @@
 /* Solaris threads debugging interface.
 
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1108,33 +1108,24 @@ info_solthreads (const char *args, int from_tty)
 		    TD_SIGNO_MASK, TD_THR_ANY_USER_FLAGS);
 }
 
-/* Callback routine used to find a thread based on the TID part of
-   its PTID.  */
-
-static int
-thread_db_find_thread_from_tid (struct thread_info *thread, void *data)
-{
-  ULONGEST *tid = (ULONGEST *) data;
-
-  if (thread->ptid.tid () == *tid)
-    return 1;
-
-  return 0;
-}
-
 ptid_t
 sol_thread_target::get_ada_task_ptid (long lwp, ULONGEST thread)
 {
-  struct thread_info *thread_info =
-    iterate_over_threads (thread_db_find_thread_from_tid, &thread);
+  auto thread_db_find_thread_from_tid
+    = [&] (struct thread_info *iter)
+       {
+	 return iter->ptid.tid () == thread;
+       };
+
+  struct thread_info *thread_info
+    = iterate_over_threads (thread_db_find_thread_from_tid);
 
   if (thread_info == NULL)
     {
       /* The list of threads is probably not up to date.  Find any
 	 thread that is missing from the list, and try again.  */
       update_thread_list ();
-      thread_info = iterate_over_threads (thread_db_find_thread_from_tid,
-					  &thread);
+      thread_info = iterate_over_threads (thread_db_find_thread_from_tid);
     }
 
   gdb_assert (thread_info != NULL);
@@ -1142,9 +1133,7 @@ sol_thread_target::get_ada_task_ptid (long lwp, ULONGEST thread)
   return (thread_info->ptid);
 }
 
-void _initialize_sol_thread ();
-void
-_initialize_sol_thread ()
+INIT_GDB_FILE (sol_thread)
 {
   void *dlhandle;
 

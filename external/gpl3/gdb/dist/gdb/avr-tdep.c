@@ -1,6 +1,6 @@
 /* Target-dependent code for Atmel AVR, for GDB.
 
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1155,15 +1155,16 @@ avr_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind avr_frame_unwind = {
+static const struct frame_unwind_legacy avr_frame_unwind (
   "avr prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   avr_frame_this_id,
   avr_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 avr_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1628,9 +1629,7 @@ avr_io_reg_read_command (const char *args, int from_tty)
     }
 }
 
-void _initialize_avr_tdep ();
-void
-_initialize_avr_tdep ()
+INIT_GDB_FILE (avr_tdep)
 {
   gdbarch_register (bfd_arch_avr, avr_gdbarch_init);
 

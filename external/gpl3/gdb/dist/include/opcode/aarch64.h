@@ -1,6 +1,6 @@
 /* AArch64 assembler/disassembler support.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GNU Binutils.
@@ -79,6 +79,8 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_CRC,
   /* LSE instructions.  */
   AARCH64_FEATURE_LSE,
+  /* LSFE instructions.  */
+  AARCH64_FEATURE_LSFE,
   /* PAN instructions.  */
   AARCH64_FEATURE_PAN,
   /* LOR instructions.  */
@@ -135,8 +137,12 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_ID_PFR2,
   /* SSBS mechanism enabled.  */
   AARCH64_FEATURE_SSBS,
+  /* Compare and branch instructions.  */
+  AARCH64_FEATURE_CMPBR,
   /* Memory Tagging Extension.  */
   AARCH64_FEATURE_MEMTAG,
+  /* Outer Cacheable Cache Maintenance Operation.  */
+  AARCH64_FEATURE_OCCMO,
   /* Transactional Memory Extension.  */
   AARCH64_FEATURE_TME,
   /* XS memory attribute.  */
@@ -181,6 +187,8 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_THE,
   /* LSE128.  */
   AARCH64_FEATURE_LSE128,
+  /* LSUI - Unprivileged Load Store.  */
+  AARCH64_FEATURE_LSUI,
   /* ARMv8.9-A RAS Extensions.  */
   AARCH64_FEATURE_RASv2,
   /* Delegated SError exceptions for EL3. */
@@ -210,7 +218,7 @@ enum aarch64_feature_bit {
   /* Instrumentation Extension.  */
   AARCH64_FEATURE_ITE,
   /* 128-bit page table descriptor, system registers
-     and isntructions.  */
+     and instructions.  */
   AARCH64_FEATURE_D128,
   /* Armv8.9-A/Armv9.4-A architecture Debug extension.  */
   AARCH64_FEATURE_DEBUGv8p9,
@@ -226,12 +234,22 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_SPMU2,
   /* Performance Monitors Synchronous-Exception-Based Event Extension.  */
   AARCH64_FEATURE_SEBEP,
-  /* SVE2.1 and SME2.1 non-widening BFloat16 instructions.  */
-  AARCH64_FEATURE_B16B16,
   /* SME2.1 instructions.  */
   AARCH64_FEATURE_SME2p1,
   /* SVE2.1 instructions.  */
   AARCH64_FEATURE_SVE2p1,
+  /* SVE_F16F32MM instructions.  */
+  AARCH64_FEATURE_SVE_F16F32MM,
+  /* F8F32MM instructions.  */
+  AARCH64_FEATURE_F8F32MM,
+  /* F8F16MM instructions.  */
+  AARCH64_FEATURE_F8F16MM,
+  /* SVE_PMULL128 extension. */
+  AARCH64_FEATURE_SVE_AES,
+  /* SVE AES2 instructions.  */
+  AARCH64_FEATURE_SVE_AES2,
+  /* SSVE_AES extension. */
+  AARCH64_FEATURE_SSVE_AES,
   /* RCPC3 instructions.  */
   AARCH64_FEATURE_RCPC3,
   /* Enhanced Software Step Extension. */
@@ -264,9 +282,39 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_SME_F8F32,
   /* SME F8F16 instructions.  */
   AARCH64_FEATURE_SME_F8F16,
+  /* Non-widening half-precision FP16 to FP16 arithmetic for SME2.  */
+  AARCH64_FEATURE_SME_F16F16,
+  /* FEAT_SVE_BFSCALE.  */
+  AARCH64_FEATURE_SVE_BFSCALE,
+  /* SVE Z-targeting non-widening BFloat16 instructions.  */
+  AARCH64_FEATURE_SVE_B16B16,
+  /* SME non-widening BFloat16 instructions.  */
+  AARCH64_FEATURE_SME_B16B16,
+  /* SVE2.2.  */
+  AARCH64_FEATURE_SVE2p2,
+  /* SME2.2.  */
+  AARCH64_FEATURE_SME2p2,
+  /* Armv9.1-A processors.  */
+  AARCH64_FEATURE_V9_1A,
+  /* Armv9.2-A processors.  */
+  AARCH64_FEATURE_V9_2A,
+  /* Armv9.3-A processors.  */
+  AARCH64_FEATURE_V9_3A,
+  /* Armv9.4-A processors.  */
+  AARCH64_FEATURE_V9_4A,
+  /* Armv9.5-A processors.  */
+  AARCH64_FEATURE_V9_5A,
+  /* Armv9.6-A processors.  */
+  AARCH64_FEATURE_V9_6A,
+  /* FPRCVT instructions.  */
+  AARCH64_FEATURE_FPRCVT,
+  /* Point of Physical Storage.  */
+  AARCH64_FEATURE_PoPS,
 
   /* Virtual features.  These are used to gate instructions that are enabled
      by either of two (or more) sets of command line flags.  */
+  /* +sve2 or +ssve-aes */
+  AARCH64_FEATURE_SVE2_SSVE_AES,
   /* +fp8fma+sve or +ssve-fp8fma  */
   AARCH64_FEATURE_FP8FMA_SVE,
   /* +fp8dot4+sve or +ssve-fp8dot4  */
@@ -275,18 +323,64 @@ enum aarch64_feature_bit {
   AARCH64_FEATURE_FP8DOT2_SVE,
   /* +sme-f16f16 or +sme-f8f16  */
   AARCH64_FEATURE_SME_F16F16_F8F16,
-  /* Armv9.5-A processors.  */
-  AARCH64_FEATURE_V9_5A,
+  /* +sve or +sme2p2 */
+  AARCH64_FEATURE_SVE_SME2p2,
+  /* +sve2 or +sme2 */
+  AARCH64_FEATURE_SVE2_SME2,
+  /* +sve2p1 or +sme */
+  AARCH64_FEATURE_SVE2p1_SME,
+  /* +sve2p1 or +sme2 */
+  AARCH64_FEATURE_SVE2p1_SME2,
+  /* +sve2p1 or +sme2p1 */
+  AARCH64_FEATURE_SVE2p1_SME2p1,
+  /* +sve2p2 or +sme2p2 */
+  AARCH64_FEATURE_SVE2p2_SME2p2,
   AARCH64_NUM_FEATURES
 };
+
+typedef uint64_t aarch64_feature_word;
+#define AARCH64_BITS_PER_FEATURE_WORD 64
+
+#define AA64_REPLICATE(SEP, BODY, ...)	\
+  BODY (0, __VA_ARGS__) SEP		\
+  BODY (1, __VA_ARGS__) SEP		\
+  BODY (2, __VA_ARGS__)
+
+/* Some useful SEP operators for use with replication.  */
+#define REP_COMMA ,
+#define REP_SEMICOLON ;
+#define REP_OR_OR ||
+#define REP_AND_AND &&
+#define REP_PLUS +
+
+/* Not currently needed, but if an empty SEP is required define:
+  #define REP_NO_SEP
+  Then use REP_NO_SEP in the SEP field.  */
+
+/* Used to generate one instance of VAL for each value of ELT (ELT is
+   not otherwise used).  */
+#define AA64_REPVAL(ELT, VAL) VAL
+
+/* static_assert requires C11 (or C++11) or later.  Support older
+   versions by disabling this check since compilers without this are
+   pretty uncommon these days.  */
+#if ((defined __STDC_VERSION__ && __STDC_VERSION__ >= 201112L)	\
+     || (defined __cplusplus && __cplusplus >= 201103L))
+static_assert ((AA64_REPLICATE (REP_PLUS, AA64_REPVAL,
+				AARCH64_BITS_PER_FEATURE_WORD))
+	       >= AARCH64_NUM_FEATURES,
+	       "Insufficient repetitions in AA64_REPLICATE()");
+#endif
 
 /* These macros take an initial argument X that gives the index into
    an aarch64_feature_set.  The macros then return the bitmask for
    that array index.  */
 
 /* A mask in which feature bit BIT is set and all other bits are clear.  */
-#define AARCH64_UINT64_BIT(X, BIT) \
-  ((X) == (BIT) / 64 ? 1ULL << (BIT) % 64 : 0)
+#define AARCH64_UINT64_BIT(X, BIT)			\
+  ((X) == (BIT) / AARCH64_BITS_PER_FEATURE_WORD		\
+   ? 1ULL << (BIT) % AARCH64_BITS_PER_FEATURE_WORD	\
+   : 0)
 
 /* A mask that includes only AARCH64_FEATURE_<NAME>.  */
 #define AARCH64_FEATBIT(X, NAME) \
@@ -364,10 +458,14 @@ enum aarch64_feature_bit {
 					 | AARCH64_FEATBIT (X, F16)	\
 					 | AARCH64_FEATBIT (X, SVE)	\
 					 | AARCH64_FEATBIT (X, SVE2))
-#define AARCH64_ARCH_V9_1A_FEATURES(X)	AARCH64_ARCH_V8_6A_FEATURES (X)
-#define AARCH64_ARCH_V9_2A_FEATURES(X)	AARCH64_ARCH_V8_7A_FEATURES (X)
-#define AARCH64_ARCH_V9_3A_FEATURES(X)	AARCH64_ARCH_V8_8A_FEATURES (X)
-#define AARCH64_ARCH_V9_4A_FEATURES(X)	(AARCH64_ARCH_V8_9A_FEATURES (X) \
+#define AARCH64_ARCH_V9_1A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_1A)	\
+					 | AARCH64_ARCH_V8_6A_FEATURES (X))
+#define AARCH64_ARCH_V9_2A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_2A)	\
+					 | AARCH64_ARCH_V8_7A_FEATURES (X))
+#define AARCH64_ARCH_V9_3A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_3A)	\
+					 | AARCH64_ARCH_V8_8A_FEATURES (X))
+#define AARCH64_ARCH_V9_4A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_4A)	\
+					 | AARCH64_ARCH_V8_9A_FEATURES (X) \
 					 | AARCH64_FEATBIT (X, SVE2p1))
 #define AARCH64_ARCH_V9_5A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_5A)	\
 					 | AARCH64_FEATBIT (X, CPA)	\
@@ -377,6 +475,12 @@ enum aarch64_feature_bit {
 					 | AARCH64_FEATBIT (X, SPMU2)	\
 					 | AARCH64_FEATBIT (X, STEP2)	\
 					)
+#define AARCH64_ARCH_V9_6A_FEATURES(X)	(AARCH64_FEATBIT (X, V9_6A)	\
+					 | AARCH64_FEATBIT (X, CMPBR)	\
+					 | AARCH64_FEATBIT (X, FPRCVT)	\
+					 | AARCH64_FEATBIT (X, LSUI)	\
+					 | AARCH64_FEATBIT (X, OCCMO)	\
+					 | AARCH64_FEATBIT (X, SVE2p2))
 
 /* Architectures are the sum of the base and extensions.  */
 #define AARCH64_ARCH_V8A(X)	(AARCH64_FEATBIT (X, V8) \
@@ -416,65 +520,81 @@ enum aarch64_feature_bit {
 				 | AARCH64_ARCH_V9_4A_FEATURES (X))
 #define AARCH64_ARCH_V9_5A(X)	(AARCH64_ARCH_V9_4A (X) \
 				 | AARCH64_ARCH_V9_5A_FEATURES (X))
+#define AARCH64_ARCH_V9_6A(X)	(AARCH64_ARCH_V9_5A (X) \
+				 | AARCH64_ARCH_V9_6A_FEATURES (X))
 
 #define AARCH64_ARCH_NONE(X)	0
 
 /* CPU-specific features.  */
 typedef struct {
-  uint64_t flags[(AARCH64_NUM_FEATURES + 63) / 64];
+  aarch64_feature_word flags[AA64_REPLICATE (REP_PLUS, AA64_REPVAL, 1)];
 } aarch64_feature_set;
 
-#define AARCH64_CPU_HAS_FEATURE(CPU,FEAT)	\
-  ((~(CPU).flags[0] & AARCH64_FEATBIT (0, FEAT)) == 0		\
-   && (~(CPU).flags[1] & AARCH64_FEATBIT (1, FEAT)) == 0)
+#define AARCH64_CPU_HAS_FEATURE_BODY(ELT, CPU, FEAT)	\
+  ((~(CPU).flags[ELT] & AARCH64_FEATBIT (ELT, FEAT)) == 0)
+#define AARCH64_CPU_HAS_FEATURE(CPU, FEAT)	\
+  (AA64_REPLICATE (REP_AND_AND, AARCH64_CPU_HAS_FEATURE_BODY, CPU, FEAT))
 
-#define AARCH64_CPU_HAS_ALL_FEATURES(CPU,FEAT)	\
-  ((~(CPU).flags[0] & (FEAT).flags[0]) == 0	\
-   && (~(CPU).flags[1] & (FEAT).flags[1]) == 0)
+#define AARCH64_CPU_HAS_ALL_FEATURES_BODY(ELT, CPU, FEAT) \
+  ((~(CPU).flags[ELT] & (FEAT).flags[ELT]) == 0)
+#define AARCH64_CPU_HAS_ALL_FEATURES(CPU, FEAT)	\
+  (AA64_REPLICATE (REP_AND_AND, AARCH64_CPU_HAS_ALL_FEATURES_BODY, CPU, FEAT))
 
+#define AARCH64_CPU_HAS_ANY_FEATURES_BODY(ELT, CPU, FEAT)	\
+  (((CPU).flags[ELT] & (FEAT).flags[ELT]) != 0)
 #define AARCH64_CPU_HAS_ANY_FEATURES(CPU,FEAT)	\
-  (((CPU).flags[0] & (FEAT).flags[0]) != 0	\
-   || ((CPU).flags[1] & (FEAT).flags[1]) != 0)
+  (AA64_REPLICATE (REP_OR_OR, AARCH64_CPU_HAS_ANY_FEATURES_BODY, CPU, FEAT))
 
+#define AARCH64_SET_FEATURE_BODY(ELT, DEST, FEAT)	\
+  (DEST).flags[ELT] = FEAT (ELT)
 #define AARCH64_SET_FEATURE(DEST, FEAT) \
-  ((DEST).flags[0] = FEAT (0),		\
-   (DEST).flags[1] = FEAT (1))
+  (AA64_REPLICATE (REP_COMMA, AARCH64_SET_FEATURE_BODY, DEST, FEAT))
 
+#define AARCH64_CLEAR_FEATURE_BODY(ELT, DEST, SRC, FEAT)	\
+  (DEST).flags[ELT] = ((SRC).flags[ELT]			\
+			 & ~AARCH64_FEATBIT (ELT, FEAT))
 #define AARCH64_CLEAR_FEATURE(DEST, SRC, FEAT)		\
-  ((DEST).flags[0] = (SRC).flags[0] & ~AARCH64_FEATBIT (0, FEAT), \
-   (DEST).flags[1] = (SRC).flags[1] & ~AARCH64_FEATBIT (1, FEAT))
+  (AA64_REPLICATE (REP_COMMA, AARCH64_CLEAR_FEATURE_BODY, DEST, SRC, FEAT))
 
-#define AARCH64_MERGE_FEATURE_SETS(TARG,F1,F2)		\
-  do							\
-    {							\
-      (TARG).flags[0] = (F1).flags[0] | (F2).flags[0];	\
-      (TARG).flags[1] = (F1).flags[1] | (F2).flags[1];	\
-    }							\
+#define AARCH64_MERGE_FEATURE_SETS_BODY(ELT, TARG, F1, F2)	\
+  (TARG).flags[ELT] = (F1).flags[ELT] | (F2).flags[ELT];
+#define AARCH64_MERGE_FEATURE_SETS(TARG, F1, F2)			\
+  do									\
+    {									\
+      AA64_REPLICATE (REP_SEMICOLON,					\
+		      AARCH64_MERGE_FEATURE_SETS_BODY, TARG, F1, F2);	\
+    }									\
   while (0)
 
-#define AARCH64_CLEAR_FEATURES(TARG,F1,F2)		\
-  do							\
-    {							\
-      (TARG).flags[0] = (F1).flags[0] &~ (F2).flags[0];	\
-      (TARG).flags[1] = (F1).flags[1] &~ (F2).flags[1];	\
-    }							\
+#define AARCH64_CLEAR_FEATURES_BODY(ELT, TARG, F1, F2)	\
+  (TARG).flags[ELT] = (F1).flags[ELT] &~ (F2).flags[ELT];
+#define AARCH64_CLEAR_FEATURES(TARG,F1,F2)				\
+  do									\
+    {									\
+      AA64_REPLICATE (REP_SEMICOLON,					\
+		      AARCH64_CLEAR_FEATURES_BODY, TARG, F1, F2);	\
+    }									\
   while (0)
 
 /* aarch64_feature_set initializers for no features and all features,
    respectively.  */
-#define AARCH64_NO_FEATURES { { 0, 0 } }
-#define AARCH64_ALL_FEATURES { { -1, -1 } }
+#define AARCH64_NO_FEATURES { { AA64_REPLICATE (REP_COMMA, AA64_REPVAL, 0) } }
+#define AARCH64_ALL_FEATURES { { AA64_REPLICATE (REP_COMMA, AA64_REPVAL, -1) } }
 
 /* An aarch64_feature_set initializer for a single feature,
    AARCH64_FEATURE_<FEAT>.  */
-#define AARCH64_FEATURE(FEAT) \
-  { { AARCH64_FEATBIT (0, FEAT), AARCH64_FEATBIT (1, FEAT) } }
+#define AARCH64_FEATURE_BODY(ELT, FEAT)		\
+  AARCH64_FEATBIT (ELT, FEAT)
+#define AARCH64_FEATURE(FEAT)					\
+  { { AA64_REPLICATE (REP_COMMA, AARCH64_FEATURE_BODY, FEAT) } }
 
 /* An aarch64_feature_set initializer for a specific architecture version,
    including all the features that are enabled by default for that architecture
    version.  */
-#define AARCH64_ARCH_FEATURES(ARCH) \
-  { { AARCH64_ARCH_##ARCH (0), AARCH64_ARCH_##ARCH (1) } }
+#define AARCH64_ARCH_FEATURES_BODY(ELT, ARCH)	\
+  AARCH64_ARCH_##ARCH (ELT)
+#define AARCH64_ARCH_FEATURES(ARCH)		\
+  { { AA64_REPLICATE (REP_COMMA, AARCH64_ARCH_FEATURES_BODY, ARCH) } }
 
 /* Used by AARCH64_CPU_FEATURES.  */
 #define AARCH64_OR_FEATURES_1(X, ARCH, F1) \
@@ -498,9 +618,11 @@ typedef struct {
 
 /* An aarch64_feature_set initializer for a CPU that implements architecture
    version ARCH, and additionally provides the N features listed in "...".  */
+#define AARCH64_CPU_FEATURES_BODY(ELT, ARCH, N, ...)		\
+  AARCH64_OR_FEATURES_##N (ELT, ARCH, __VA_ARGS__)
 #define AARCH64_CPU_FEATURES(ARCH, N, ...)			\
-  { { AARCH64_OR_FEATURES_##N (0, ARCH, __VA_ARGS__),		\
-      AARCH64_OR_FEATURES_##N (1, ARCH, __VA_ARGS__) } }
+  { { AA64_REPLICATE (REP_COMMA, AARCH64_CPU_FEATURES_BODY,	\
+		      ARCH, N, __VA_ARGS__) } }
 
 /* An aarch64_feature_set initializer for the N features listed in "...".  */
 #define AARCH64_FEATURES(N, ...) \
@@ -608,6 +730,8 @@ enum aarch64_opnd
   AARCH64_OPND_WIDTH,	/* Immediate #<width> in e.g. BFI.  */
   AARCH64_OPND_IMM,	/* Immediate.  */
   AARCH64_OPND_IMM_2,	/* Immediate.  */
+  AARCH64_OPND_IMMP1_2,	/* Immediate plus 1.  */
+  AARCH64_OPND_IMMS1_2,	/* Immediate minus 1.  */
   AARCH64_OPND_UIMM3_OP1,/* Unsigned 3-bit immediate in the op1 field.  */
   AARCH64_OPND_UIMM3_OP2,/* Unsigned 3-bit immediate in the op2 field.  */
   AARCH64_OPND_UIMM4,	/* Unsigned 4-bit immediate in the CRm field.  */
@@ -635,6 +759,7 @@ enum aarch64_opnd
   AARCH64_OPND_COND1,	/* Same as the above, but excluding AL and NV.  */
 
   AARCH64_OPND_ADDR_ADRP,	/* Memory address for ADRP */
+  AARCH64_OPND_ADDR_PCREL9,	/* 9-bit PC-relative address for e.g. CB<cc>.  */
   AARCH64_OPND_ADDR_PCREL14,	/* 14-bit PC-relative address for e.g. TBZ.  */
   AARCH64_OPND_ADDR_PCREL19,	/* 19-bit PC-relative address for e.g. LDR.  */
   AARCH64_OPND_ADDR_PCREL21,	/* 21-bit PC-relative address for e.g. ADR.  */
@@ -678,6 +803,7 @@ enum aarch64_opnd
   AARCH64_OPND_BARRIER_PSB,	/* Barrier operand for PSB.  */
   AARCH64_OPND_BARRIER_GCSB,	/* Barrier operand for GCSB.  */
   AARCH64_OPND_BTI_TARGET,	/* BTI {<target>}.  */
+  AARCH64_OPND_STSHH_POLICY,	/* STSHH {<policy>}.  */
   AARCH64_OPND_BRBOP,		/* BRB operation IALL or INJ in bit 5.  */
   AARCH64_OPND_Rt_IN_SYS_ALIASES,	/* Defaulted and omitted Rt used in SYS aliases such as brb.  */
   AARCH64_OPND_LSE128_Rt,	/* LSE128 <Xt1>.  */
@@ -694,12 +820,16 @@ enum aarch64_opnd
   AARCH64_OPND_SVE_ADDR_RI_U6x2,    /* SVE [<Xn|SP>, #<uimm6>*2].  */
   AARCH64_OPND_SVE_ADDR_RI_U6x4,    /* SVE [<Xn|SP>, #<uimm6>*4].  */
   AARCH64_OPND_SVE_ADDR_RI_U6x8,    /* SVE [<Xn|SP>, #<uimm6>*8].  */
-  AARCH64_OPND_SVE_ADDR_R,	    /* SVE [<Xn|SP>].  */
-  AARCH64_OPND_SVE_ADDR_RR,	    /* SVE [<Xn|SP>, <Xm|XZR>].  */
-  AARCH64_OPND_SVE_ADDR_RR_LSL1,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #1].  */
-  AARCH64_OPND_SVE_ADDR_RR_LSL2,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #2].  */
-  AARCH64_OPND_SVE_ADDR_RR_LSL3,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #3].  */
-  AARCH64_OPND_SVE_ADDR_RR_LSL4,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #4].  */
+  AARCH64_OPND_SVE_ADDR_RR,	    /* SVE [<Xn|SP>{, <Xm|XZR>}].  */
+  AARCH64_OPND_SVE_ADDR_RR_LSL1,    /* SVE [<Xn|SP>{, <Xm|XZR>, LSL #1}].  */
+  AARCH64_OPND_SVE_ADDR_RR_LSL2,    /* SVE [<Xn|SP>{, <Xm|XZR>, LSL #2}].  */
+  AARCH64_OPND_SVE_ADDR_RR_LSL3,    /* SVE [<Xn|SP>{, <Xm|XZR>, LSL #3}].  */
+  AARCH64_OPND_SVE_ADDR_RR_LSL4,    /* SVE [<Xn|SP>{, <Xm|XZR>, LSL #4}].  */
+  AARCH64_OPND_SVE_ADDR_RM,	    /* SVE [<Xn|SP>, <Xm|XZR>].  */
+  AARCH64_OPND_SVE_ADDR_RM_LSL1,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #1].  */
+  AARCH64_OPND_SVE_ADDR_RM_LSL2,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #2].  */
+  AARCH64_OPND_SVE_ADDR_RM_LSL3,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #3].  */
+  AARCH64_OPND_SVE_ADDR_RM_LSL4,    /* SVE [<Xn|SP>, <Xm|XZR>, LSL #4].  */
   AARCH64_OPND_SVE_ADDR_RX,	    /* SVE [<Xn|SP>, <Xm>].  */
   AARCH64_OPND_SVE_ADDR_RX_LSL1,    /* SVE [<Xn|SP>, <Xm>, LSL #1].  */
   AARCH64_OPND_SVE_ADDR_RX_LSL2,    /* SVE [<Xn|SP>, <Xm>, LSL #2].  */
@@ -813,8 +943,8 @@ enum aarch64_opnd
   AARCH64_OPND_SVE_ZtxN,	/* SVE vector register list in Zt.  */
   AARCH64_OPND_SME_Zdnx2,	/* SVE vector register list from [4:1]*2.  */
   AARCH64_OPND_SME_Zdnx4,	/* SVE vector register list from [4:2]*4.  */
-  AARCH64_OPND_SME_Zdnx4_STRIDED, /* SVE vector register list from [4:2]*4.  */
   AARCH64_OPND_SME_Zm,		/* SVE vector register list in 4-bit Zm.  */
+  AARCH64_OPND_SME_Zm_17,	/* SVE vector register list in [20:17].  */
   AARCH64_OPND_SME_Zmx2,	/* SVE vector register list from [20:17]*2.  */
   AARCH64_OPND_SME_Zmx4,	/* SVE vector register list from [20:18]*4.  */
   AARCH64_OPND_SME_Znx2,	/* SVE vector register list from [9:6]*2.  */
@@ -865,6 +995,7 @@ enum aarch64_opnd
   AARCH64_OPND_SME_Zn_INDEX1_16,    /* Zn[index], bits [9:5] and [16:16].  */
   AARCH64_OPND_SME_Zn_INDEX2_15,    /* Zn[index], bits [9:5] and [16:15].  */
   AARCH64_OPND_SME_Zn_INDEX2_16,    /* Zn[index], bits [9:5] and [17:16].  */
+  AARCH64_OPND_SME_Zn_INDEX2_19,    /* Zn[index], bits [9:5] and [20:19].  */
   AARCH64_OPND_SME_Zn_INDEX3_14,    /* Zn[index], bits [9:5] and [16:14].  */
   AARCH64_OPND_SME_Zn_INDEX3_15,    /* Zn[index], bits [9:5] and [17:15].  */
   AARCH64_OPND_SME_Zn_INDEX4_14,    /* Zn[index], bits [9:5] and [17:14].  */
@@ -880,7 +1011,7 @@ enum aarch64_opnd
   AARCH64_OPND_SME_VLxN_13,	/* VLx2 or VLx4, in bit 13.  */
   AARCH64_OPND_SME_ZT0,		/* The fixed token zt0/ZT0 (not encoded).  */
   AARCH64_OPND_SME_ZT0_INDEX,	/* ZT0[<imm>], bits [14:12].  */
-  AARCH64_OPND_SME_ZT0_INDEX2_12, /* ZT0[<imm>], bits [13:12].  */
+  AARCH64_OPND_SME_ZT0_INDEX_MUL_VL,/* ZT0[<imm>], bits [13:12].  */
   AARCH64_OPND_SME_ZT0_LIST,	/* { zt0/ZT0 } (not encoded).  */
   AARCH64_OPND_TME_UIMM16,	/* TME unsigned 16-bit immediate.  */
   AARCH64_OPND_SM3_IMM2,	/* SM3 encodes lane in bits [13, 14].  */
@@ -1042,6 +1173,8 @@ enum aarch64_insn_class
   floatdp3,
   floatimm,
   floatsel,
+  fprcvtfloat2int,
+  fprcvtint2float,
   ldst_immpost,
   ldst_immpre,
   ldst_imm9,	/* immpost or immpre */
@@ -1089,13 +1222,16 @@ enum aarch64_insn_class
   sve_pred_zm,
   sve_shift_pred,
   sve_shift_unpred,
+  sve_size_bh,
   sve_size_bhs,
   sve_size_bhsd,
   sve_size_hsd,
   sve_size_hsd2,
+  sve_size_hsd3,
   sve_size_sd,
-  sve_size_bh,
   sve_size_sd2,
+  sve_size_sd3,
+  sve_size_sd4,
   sve_size_13,
   sve_shift_tsz_hsd,
   sve_shift_tsz_bhsd,
@@ -1382,7 +1518,7 @@ extern const aarch64_opcode aarch64_opcode_table[];
 #define F_OPD_PAIR_OPT (1ULL << 32)
 /* This instruction does not allow the full range of values that the
    width of fields in the assembler instruction would theoretically
-   allow.  This impacts the constraintts on assembly but yelds no
+   allow.  This impacts the constraints on assembly but yields no
    impact on disassembly.  */
 #define F_OPD_NARROW (1ULL << 33)
 /* For the instruction with size[22:23] field.  */
@@ -1412,7 +1548,27 @@ extern const aarch64_opcode aarch64_opcode_table[];
 #define F_DP_TAG_ONLY (1ULL << 37)
 
 #define F_SUBCLASS_OTHER (F_SUBCLASS)
-/* Next bit is 41.  */
+
+/* For LSFE instructions with size[30:31] field.  */
+#define F_LSFE_SZ (1ULL << 41)
+
+/* When parsing immediate values, register names should not be misinterpreted
+   as symbols.  However, for backwards compatibility we need to permit some
+   newer register names within older instructions.  These flags specify which
+   register names are invalid immediate value, and are required for all
+   instructions with immediate operands (and are otherwise ignored).  */
+#define F_INVALID_IMM_SYMS (3ULL << 42)
+
+/* Any GP or SIMD register except WSP/SP.  */
+#define F_INVALID_IMM_SYMS_1 (1ULL << 42)
+
+/* As above, plus WSP/SP, and Z and P registers.  */
+#define F_INVALID_IMM_SYMS_2 (2ULL << 42)
+
+/* As above, plus PN registers.  */
+#define F_INVALID_IMM_SYMS_3 (3ULL << 42)
+
+/* Next bit is 44.  */
 
 /* Instruction constraints.  */
 /* This instruction has a predication constraint on the instruction at PC+4.  */
@@ -1496,7 +1652,7 @@ opcode_has_special_coder (const aarch64_opcode *opcode)
 {
   return (opcode->flags & (F_SF | F_LSE_SZ | F_SIZEQ | F_FPTYPE | F_SSIZE | F_T
 	  | F_GPRSIZE_IN_Q | F_LDS_SIZE | F_MISC | F_N | F_COND
-	  | F_OPD_SIZE | F_RCPC3_SIZE)) != 0;
+	  | F_OPD_SIZE | F_RCPC3_SIZE | F_LSFE_SZ )) != 0;
 }
 
 struct aarch64_name_value_pair
@@ -1748,7 +1904,7 @@ struct aarch64_inst
   /* Corresponding opcode entry.  */
   const aarch64_opcode *opcode;
 
-  /* Condition for a truly conditional-executed instrutions, e.g. b.cond.  */
+  /* Condition for a truly conditional-executed instruction, e.g. b.cond.  */
   const aarch64_cond *cond;
 
   /* Operands information.  */
@@ -1761,6 +1917,8 @@ struct aarch64_inst
 #define HINT_OPD_C	0x22
 #define HINT_OPD_J	0x24
 #define HINT_OPD_JC	0x26
+#define HINT_OPD_KEEP	0x30
+#define HINT_OPD_STRM	0x31
 #define HINT_OPD_NULL	0x00
 
 
@@ -1848,7 +2006,7 @@ struct aarch64_inst
      yet still accept a wider range of registers.
 
    AARCH64_OPDE_RECOVERABLE, AARCH64_OPDE_SYNTAX_ERROR and
-   AARCH64_OPDE_FATAL_SYNTAX_ERROR are only deteced by GAS while the
+   AARCH64_OPDE_FATAL_SYNTAX_ERROR are only detected by GAS while the
    AARCH64_OPDE_INVALID_VARIANT error can only be spotted by libopcodes as
    only libopcodes has the information about the valid variants of each
    instruction.

@@ -146,13 +146,13 @@ write_stat(unsigned_word addr,
   /* H2T(buf.st_spare2); */
   H2T(buf.st_ctime);
   /* H2T(buf.st_spare3); */
-#ifdef AC_STRUCT_ST_RDEV
+#ifdef HAVE_STRUCT_STAT_ST_RDEV
   H2T(buf.st_rdev);
 #endif
-#ifdef AC_STRUCT_ST_BLKSIZE
+#ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
   H2T(buf.st_blksize);
 #endif
-#ifdef AC_STRUCT_ST_BLOCKS
+#ifdef HAVE_STRUCT_STAT_ST_BLOCKS
   H2T(buf.st_blocks);
 #endif
 #if WITH_NetBSD_HOST

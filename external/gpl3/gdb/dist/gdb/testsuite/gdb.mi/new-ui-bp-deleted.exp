@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,8 +45,6 @@ proc make_bp_loc { num } {
 }
 
 foreach_mi_ui_mode mode {
-    mi_gdb_exit
-
     if {$mode eq "separate"} {
 	set start_ops "separate-mi-tty"
     } else {
@@ -109,4 +107,8 @@ foreach_mi_ui_mode mode {
 		 "=breakpoint-deleted,id=\"$bpnum\"" \
 		 "\\^done"]
     }
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
 }

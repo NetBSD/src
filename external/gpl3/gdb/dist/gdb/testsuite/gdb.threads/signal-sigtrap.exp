@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ proc test { sigtrap_thread } {
     global srcfile binfile tdlabel_re
 
     with_test_prefix "sigtrap thread $sigtrap_thread" {
-	clean_restart ${binfile}
+	clean_restart ${::testfile}
 
 	if {![runto "thread_function"]} {
 	    return 0

@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ if {[prepare_for_testing "failed to prepare" ${testfile} ${srcfile}]} {
 # happens to be in after a call to clean_restart.
 
 proc test_layout_or_focus {layout_name terminal execution} {
-    global binfile gdb_prompt
+    global gdb_prompt
 
     set dumb_terminal [string equal $terminal "dumb"]
 
@@ -48,9 +48,9 @@ proc test_layout_or_focus {layout_name terminal execution} {
     save_vars { env(TERM) } {
 	setenv TERM $terminal
 	if {$dumb_terminal} {
-	    clean_restart $binfile
+	    clean_restart $::testfile
 	} else {
-	    Term::clean_restart 24 80 $binfile
+	    Term::clean_restart 24 80 $::testfile
 	    if {![Term::prepare_for_tui]} {
 		unsupported "TUI not supported"
 		return

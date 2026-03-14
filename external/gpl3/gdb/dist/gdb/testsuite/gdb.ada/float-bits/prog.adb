@@ -1,4 +1,4 @@
---  Copyright 2022-2024 Free Software Foundation, Inc.
+--  Copyright 2022-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -13,10 +13,14 @@
 --  You should have received a copy of the GNU General Public License
 --  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+with Pck; use Pck;
+
 procedure Prog is
    Val_Float : Float := 23.0;
    Val_Double : Long_Float := -2.0e-19;
    Val_Long_Double : Long_Long_Float := 5.0e+25;
 begin
-   null; -- BREAK
+   Do_Nothing (Val_Float'Address); -- BREAK
+   Do_Nothing (Val_Double'Address);
+   Do_Nothing (Val_Long_Double'Address);
 end Prog;

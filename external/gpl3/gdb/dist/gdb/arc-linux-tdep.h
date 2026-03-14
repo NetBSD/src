@@ -1,6 +1,6 @@
 /* Target dependent code for GNU/Linux ARC.
 
-   Copyright 2020-2024 Free Software Foundation, Inc.
+   Copyright 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

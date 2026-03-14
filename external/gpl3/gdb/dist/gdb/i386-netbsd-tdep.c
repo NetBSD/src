@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/i386.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -415,16 +415,13 @@ i386nbsdelf_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   i386_elf_init_abi (info, gdbarch);
 
   /* NetBSD ELF uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
   /* NetBSD ELF uses -fpcc-struct-return by default.  */
   tdep->struct_return = pcc_struct_return;
 }
 
-void _initialize_i386nbsd_tdep ();
-void
-_initialize_i386nbsd_tdep ()
+INIT_GDB_FILE (i386nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_NETBSD,
 			  i386nbsdelf_init_abi);

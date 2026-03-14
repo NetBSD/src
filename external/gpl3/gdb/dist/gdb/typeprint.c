@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -219,7 +219,7 @@ typedef_hash_table::add_template_parameters (struct type *t)
       struct decl_field *tf;
 
       /* We only want type-valued template parameters in the hash.  */
-      if (TYPE_TEMPLATE_ARGUMENT (t, i)->aclass () != LOC_TYPEDEF)
+      if (TYPE_TEMPLATE_ARGUMENT (t, i)->loc_class () != LOC_TYPEDEF)
 	continue;
 
       tf = XOBNEW (&m_storage, struct decl_field);
@@ -735,9 +735,7 @@ Display of struct members offsets and sizes in hexadecimal is %s\n"),
 	      value);
 }
 
-void _initialize_typeprint ();
-void
-_initialize_typeprint ()
+INIT_GDB_FILE (typeprint)
 {
   struct cmd_list_element *c;
 

@@ -1,5 +1,5 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
    This file is part of the GNU opcodes library.
@@ -90,6 +90,14 @@ static const char * const mips_fpr_names_32[32] =
   "fs2",  "fs2f", "fs3",  "fs3f", "fs4",  "fs4f", "fs5",  "fs5f"
 };
 
+static const char * const mips_fpr_names_o64[32] =
+{
+  "fv0",  "fv1",  "ft0",  "ft1",  "ft2",  "ft3",  "ft4",  "ft5",
+  "ft6",  "ft7",  "ft8",  "ft9",  "fa0",  "fa1",  "ft10", "ft11",
+  "ft12", "ft13", "ft14", "ft15", "fs0",  "fs1",  "fs2",  "fs3",
+  "fs4",  "fs5",  "fs6",  "fs7",  "fs8",  "fs9",  "fs10", "fs11",
+};
+
 static const char * const mips_fpr_names_n32[32] =
 {
   "fv0",  "ft14", "fv1",  "ft15", "ft0",  "ft1",  "ft2",  "ft3",
@@ -104,6 +112,22 @@ static const char * const mips_fpr_names_64[32] =
   "ft4",  "ft5",  "ft6",  "ft7",  "fa0",  "fa1",  "fa2",  "fa3",
   "fa4",  "fa5",  "fa6",  "fa7",  "ft8",  "ft9",  "ft10", "ft11",
   "fs0",  "fs1",  "fs2",  "fs3",  "fs4",  "fs5",  "fs6",  "fs7"
+};
+
+static const char * const mips_fpr_names_eabi32[32] =
+{
+  "fv0",  "fv0f", "fv1",  "fv1f", "ft0",  "ft0f",  "ft1", "ft1f",
+  "ft2",  "ft2f", "ft3",  "ft3f", "fa0",  "fa0f",  "fa1", "fa1f",
+  "fa2",  "fa2f", "fa3",  "fa3f", "fs0",  "fs0f",  "fs1", "fs1f",
+  "fs2",  "fs2f", "fs3",  "fs3f", "fs4",  "fs4f",  "fs5", "fs5f",
+};
+
+static const char * const mips_fpr_names_eabi64[32] =
+{
+  "fv0",  "fv1",  "ft0",  "ft1",  "ft2",  "ft3",  "ft4",  "ft5",
+  "ft6",  "ft7",  "ft8",  "ft9",  "fa0",  "fa1",  "fa2",  "fa3",
+  "fa4",  "fa5",  "fa6",  "fa7",  "fs0",  "fs1",  "fs2",  "fs3",
+  "fs4",  "fs5",  "fs6",  "fs7",  "fs8",  "fs9",  "fs10", "fs11",
 };
 
 static const char * const mips_cp0_names_numeric[32] =
@@ -452,8 +476,11 @@ struct mips_abi_choice mips_abi_choices[] =
 {
   { "numeric", mips_gpr_names_numeric, mips_fpr_names_numeric },
   { "32", mips_gpr_names_oldabi, mips_fpr_names_32 },
+  { "o64", mips_gpr_names_oldabi, mips_fpr_names_o64 },
   { "n32", mips_gpr_names_newabi, mips_fpr_names_n32 },
   { "64", mips_gpr_names_newabi, mips_fpr_names_64 },
+  { "eabi32", mips_gpr_names_newabi, mips_fpr_names_eabi32 },
+  { "eabi64", mips_gpr_names_newabi, mips_fpr_names_eabi64 },
 };
 
 struct mips_arch_choice

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -114,7 +114,8 @@ if { [gdb_compile ${srcfile_main} ${binfile_main} executable $main_flags] != "" 
     return -1
 }
 
-clean_restart ${binfile_main}
+clean_restart
+gdb_load $binfile_main
 
 if {![runto_main]} {
     return 0

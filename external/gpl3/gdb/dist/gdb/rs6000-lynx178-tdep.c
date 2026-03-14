@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -407,9 +407,7 @@ rs6000_lynx178_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_long_double_bit (gdbarch, 8 * TARGET_CHAR_BIT);
 }
 
-void _initialize_rs6000_lynx178_tdep ();
-void
-_initialize_rs6000_lynx178_tdep ()
+INIT_GDB_FILE (rs6000_lynx178_tdep)
 {
   gdbarch_register_osabi_sniffer (bfd_arch_rs6000,
 				  bfd_target_xcoff_flavour,

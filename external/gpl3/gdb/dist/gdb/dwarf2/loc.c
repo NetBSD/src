@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    Contributed by Daniel Jacobowitz, MontaVista Software, Inc.
 
@@ -43,13 +43,13 @@
 #include "compile/compile.h"
 #include <algorithm>
 #include <vector>
-#include <unordered_set>
 #include "gdbsupport/underlying.h"
 #include "gdbsupport/byte-vector.h"
+#include "extract-store-integer.h"
 
 static struct value *dwarf2_evaluate_loc_desc_full
   (struct type *type, const frame_info_ptr &frame, const gdb_byte *data,
-   size_t size, dwarf2_per_cu_data *per_cu, dwarf2_per_objfile *per_objfile,
+   size_t size, dwarf2_per_cu *per_cu, dwarf2_per_objfile *per_objfile,
    struct type *subobj_type, LONGEST subobj_byte_offset, bool as_lval = true);
 
 /* Until these have formal names, we define these here.
@@ -153,7 +153,7 @@ decode_debug_loc_addresses (const gdb_byte *loc_ptr, const gdb_byte *buf_end,
    The result indicates the kind of entry found.  */
 
 static enum debug_loc_kind
-decode_debug_loclists_addresses (dwarf2_per_cu_data *per_cu,
+decode_debug_loclists_addresses (dwarf2_per_cu *per_cu,
 				 dwarf2_per_objfile *per_objfile,
 				 const gdb_byte *loc_ptr,
 				 const gdb_byte *buf_end,
@@ -288,7 +288,7 @@ decode_debug_loclists_addresses (dwarf2_per_cu_data *per_cu,
    The result indicates the kind of entry found.  */
 
 static enum debug_loc_kind
-decode_debug_loc_dwo_addresses (dwarf2_per_cu_data *per_cu,
+decode_debug_loc_dwo_addresses (dwarf2_per_cu *per_cu,
 				dwarf2_per_objfile *per_objfile,
 				const gdb_byte *loc_ptr,
 				const gdb_byte *buf_end,
@@ -794,7 +794,7 @@ func_verify_no_selftailcall (struct gdbarch *gdbarch, CORE_ADDR verify_addr)
   std::vector<CORE_ADDR> todo;
 
   /* Track here CORE_ADDRs which were already visited.  */
-  std::unordered_set<CORE_ADDR> addr_hash;
+  gdb::unordered_set<CORE_ADDR> addr_hash;
 
   todo.push_back (verify_addr);
   while (!todo.empty ())
@@ -963,7 +963,7 @@ call_site_find_chain_2
      (struct gdbarch *gdbarch,
       gdb::unique_xmalloc_ptr<struct call_site_chain> *resultp,
       std::vector<struct call_site *> &chain,
-      std::unordered_set<CORE_ADDR> &addr_hash,
+      gdb::unordered_set<CORE_ADDR> &addr_hash,
       struct call_site *call_site,
       CORE_ADDR callee_pc)
 {
@@ -1046,7 +1046,7 @@ call_site_find_chain_1 (struct gdbarch *gdbarch, CORE_ADDR caller_pc,
 		 paddress (gdbarch, save_callee_pc));
 
   /* Mark CALL_SITEs so we do not visit the same ones twice.  */
-  std::unordered_set<CORE_ADDR> addr_hash;
+  gdb::unordered_set<CORE_ADDR> addr_hash;
 
   /* Do not push CALL_SITE to CHAIN.  Push there only the first tail call site
      at the target's function.  All the possible tail call sites in the
@@ -1137,7 +1137,7 @@ struct call_site_parameter *
 dwarf_expr_reg_to_entry_parameter (const frame_info_ptr &initial_frame,
 				   call_site_parameter_kind kind,
 				   call_site_parameter_u kind_u,
-				   dwarf2_per_cu_data **per_cu_return,
+				   dwarf2_per_cu **per_cu_return,
 				   dwarf2_per_objfile **per_objfile_return)
 {
   CORE_ADDR func_addr, caller_pc;
@@ -1259,7 +1259,7 @@ static struct value *
 dwarf_entry_parameter_to_value (struct call_site_parameter *parameter,
 				CORE_ADDR deref_size, struct type *type,
 				const frame_info_ptr &caller_frame,
-				dwarf2_per_cu_data *per_cu,
+				dwarf2_per_cu *per_cu,
 				dwarf2_per_objfile *per_objfile)
 {
   const gdb_byte *data_src;
@@ -1343,7 +1343,7 @@ value_of_dwarf_reg_entry (struct type *type, const frame_info_ptr &frame,
   frame_info_ptr caller_frame = get_prev_frame (frame);
   struct value *outer_val, *target_val, *val;
   struct call_site_parameter *parameter;
-  dwarf2_per_cu_data *caller_per_cu;
+  dwarf2_per_cu *caller_per_cu;
   dwarf2_per_objfile *caller_per_objfile;
 
   parameter = dwarf_expr_reg_to_entry_parameter (frame, kind, kind_u,
@@ -1416,7 +1416,7 @@ value_of_dwarf_block_entry (struct type *type, const frame_info_ptr &frame,
 
 static struct value *
 fetch_const_value_from_synthetic_pointer (sect_offset die, LONGEST byte_offset,
-					  dwarf2_per_cu_data *per_cu,
+					  dwarf2_per_cu *per_cu,
 					  dwarf2_per_objfile *per_objfile,
 					  struct type *type)
 {
@@ -1449,7 +1449,7 @@ fetch_const_value_from_synthetic_pointer (sect_offset die, LONGEST byte_offset,
 
 struct value *
 indirect_synthetic_pointer (sect_offset die, LONGEST byte_offset,
-			    dwarf2_per_cu_data *per_cu,
+			    dwarf2_per_cu *per_cu,
 			    dwarf2_per_objfile *per_objfile,
 			    const frame_info_ptr &frame, struct type *type,
 			    bool resolve_abstract_p)
@@ -1493,7 +1493,7 @@ indirect_synthetic_pointer (sect_offset die, LONGEST byte_offset,
 static struct value *
 dwarf2_evaluate_loc_desc_full (struct type *type, const frame_info_ptr &frame,
 			       const gdb_byte *data, size_t size,
-			       dwarf2_per_cu_data *per_cu,
+			       dwarf2_per_cu *per_cu,
 			       dwarf2_per_objfile *per_objfile,
 			       struct type *subobj_type,
 			       LONGEST subobj_byte_offset,
@@ -1558,7 +1558,7 @@ dwarf2_evaluate_loc_desc_full (struct type *type, const frame_info_ptr &frame,
 struct value *
 dwarf2_evaluate_loc_desc (struct type *type, const frame_info_ptr &frame,
 			  const gdb_byte *data, size_t size,
-			  dwarf2_per_cu_data *per_cu,
+			  dwarf2_per_cu *per_cu,
 			  dwarf2_per_objfile *per_objfile, bool as_lval)
 {
   return dwarf2_evaluate_loc_desc_full (type, frame, data, size, per_cu,
@@ -1589,7 +1589,7 @@ dwarf2_locexpr_baton_eval (const struct dwarf2_locexpr_baton *dlbaton,
     return 0;
 
   dwarf2_per_objfile *per_objfile = dlbaton->per_objfile;
-  dwarf2_per_cu_data *per_cu = dlbaton->per_cu;
+  dwarf2_per_cu *per_cu = dlbaton->per_cu;
   dwarf_expr_context ctx (per_objfile, per_cu->addr_size ());
 
   value *result;
@@ -1732,11 +1732,10 @@ dwarf2_evaluate_property (const dynamic_prop *prop,
       *value = prop->const_val ();
       return true;
 
-    case PROP_ADDR_OFFSET:
+    case PROP_FIELD:
       {
 	const dwarf2_property_baton *baton = prop->baton ();
 	const struct property_addr_info *pinfo;
-	struct value *val;
 
 	for (pinfo = addr_stack; pinfo != NULL; pinfo = pinfo->next)
 	  {
@@ -1747,14 +1746,40 @@ dwarf2_evaluate_property (const dynamic_prop *prop,
 	  }
 	if (pinfo == NULL)
 	  error (_("cannot find reference address for offset property"));
-	if (pinfo->valaddr.data () != NULL)
-	  val = value_from_contents
-		  (baton->offset_info.type,
-		   pinfo->valaddr.data () + baton->offset_info.offset);
-	else
-	  val = value_at (baton->offset_info.type,
-			  pinfo->addr + baton->offset_info.offset);
-	*value = value_as_address (val);
+
+	struct field resolved_field = baton->field;
+	resolve_dynamic_field (resolved_field, pinfo, initial_frame);
+
+	/* Storage for memory if we need to read it.  */
+	gdb::byte_vector memory;
+	const gdb_byte *bytes = pinfo->valaddr.data ();
+	if (bytes == nullptr)
+	  {
+	    int bitpos = resolved_field.loc_bitpos ();
+	    int bitsize = resolved_field.bitsize ();
+	    if (bitsize == 0)
+	      bitsize = check_typedef (resolved_field.type ())->length () * 8;
+
+	    /* Read just the minimum number of bytes needed to satisfy
+	       unpack_field_as_long.  So, update the resolved field's
+	       starting offset to remove any unnecessary leading
+	       bytes.  */
+	    int byte_offset = bitpos / 8;
+
+	    bitpos %= 8;
+	    resolved_field.set_loc_bitpos (bitpos);
+
+	    /* Make sure to include any remaining bit offset in the
+	       size computation, in case the value straddles a
+	       byte.  */
+	    int byte_length = align_up (bitsize + bitpos, 8) / 8;
+	    memory.resize (byte_length);
+
+	    read_memory (pinfo->addr + byte_offset, memory.data (),
+			 byte_length);
+	    bytes = memory.data ();
+	  }
+	*value = unpack_field_as_long (bytes, &resolved_field);
 	return true;
       }
 
@@ -1784,10 +1809,11 @@ dwarf2_compile_property_to_c (string_file *stream,
 			      CORE_ADDR pc,
 			      struct symbol *sym)
 {
+#if defined (HAVE_COMPILE)
   const dwarf2_property_baton *baton = prop->baton ();
   const gdb_byte *data;
   size_t size;
-  dwarf2_per_cu_data *per_cu;
+  dwarf2_per_cu *per_cu;
   dwarf2_per_objfile *per_objfile;
 
   if (prop->kind () == PROP_LOCEXPR)
@@ -1810,6 +1836,9 @@ dwarf2_compile_property_to_c (string_file *stream,
 			     gdbarch, registers_used,
 			     per_cu->addr_size (),
 			     data, data + size, per_cu, per_objfile);
+#else
+  gdb_assert_not_reached ("Compile support was disabled");
+#endif
 }
 
 /* Compute the correct symbol_needs_kind value for the location
@@ -1820,7 +1849,7 @@ dwarf2_compile_property_to_c (string_file *stream,
 
 static enum symbol_needs_kind
 dwarf2_get_symbol_read_needs (gdb::array_view<const gdb_byte> expr,
-			      dwarf2_per_cu_data *per_cu,
+			      dwarf2_per_cu *per_cu,
 			      dwarf2_per_objfile *per_objfile,
 			      bfd_endian byte_order,
 			      int addr_size,
@@ -1840,7 +1869,7 @@ dwarf2_get_symbol_read_needs (gdb::array_view<const gdb_byte> expr,
   std::vector<const gdb_byte *> ops_to_visit;
 
   /* Operations already visited.  */
-  std::unordered_set<const gdb_byte *> visited_ops;
+  gdb::unordered_set<const gdb_byte *> visited_ops;
 
   /* Insert OP in OPS_TO_VISIT if it is within the expression's range and
      hasn't been visited yet.  */
@@ -2371,8 +2400,7 @@ access_memory (struct gdbarch *arch, struct agent_expr *expr, ULONGEST nbits)
 static void
 dwarf2_compile_expr_to_ax (struct agent_expr *expr, struct axs_value *loc,
 			   unsigned int addr_size, const gdb_byte *op_ptr,
-			   const gdb_byte *op_end,
-			   dwarf2_per_cu_data *per_cu,
+			   const gdb_byte *op_end, dwarf2_per_cu *per_cu,
 			   dwarf2_per_objfile *per_objfile)
 {
   gdbarch *arch = expr->gdbarch;
@@ -3134,7 +3162,7 @@ locexpr_regname (struct gdbarch *gdbarch, int dwarf_regnum)
 
 static const gdb_byte *
 locexpr_describe_location_piece (struct symbol *symbol, struct ui_file *stream,
-				 CORE_ADDR addr, dwarf2_per_cu_data *per_cu,
+				 CORE_ADDR addr, dwarf2_per_cu *per_cu,
 				 dwarf2_per_objfile *per_objfile,
 				 const gdb_byte *data, const gdb_byte *end,
 				 unsigned int addr_size)
@@ -3314,7 +3342,7 @@ disassemble_dwarf_expression (struct ui_file *stream,
 			      int offset_size, const gdb_byte *start,
 			      const gdb_byte *data, const gdb_byte *end,
 			      int indent, int all,
-			      dwarf2_per_cu_data *per_cu,
+			      dwarf2_per_cu *per_cu,
 			      dwarf2_per_objfile *per_objfile)
 {
   while (data < end
@@ -3720,7 +3748,7 @@ locexpr_describe_location_1 (struct symbol *symbol, CORE_ADDR addr,
 			     struct ui_file *stream,
 			     const gdb_byte *data, size_t size,
 			     unsigned int addr_size,
-			     int offset_size, dwarf2_per_cu_data *per_cu,
+			     int offset_size, dwarf2_per_cu *per_cu,
 			     dwarf2_per_objfile *per_objfile)
 {
   const gdb_byte *end = data + size;
@@ -3853,6 +3881,7 @@ locexpr_generate_c_location (struct symbol *sym, string_file *stream,
 			     std::vector<bool> &registers_used,
 			     CORE_ADDR pc, const char *result_name)
 {
+#if defined (HAVE_COMPILE)
   struct dwarf2_locexpr_baton *dlbaton
     = (struct dwarf2_locexpr_baton *) SYMBOL_LOCATION_BATON (sym);
   unsigned int addr_size = dlbaton->per_cu->addr_size ();
@@ -3864,6 +3893,9 @@ locexpr_generate_c_location (struct symbol *sym, string_file *stream,
 			   sym, pc, gdbarch, registers_used, addr_size,
 			   dlbaton->data, dlbaton->data + dlbaton->size,
 			   dlbaton->per_cu, dlbaton->per_objfile);
+#else
+  gdb_assert_not_reached ("Compile support was disabled");
+#endif
 }
 
 /* The set of location functions used with the DWARF-2 expression
@@ -4089,6 +4121,7 @@ loclist_generate_c_location (struct symbol *sym, string_file *stream,
 			     std::vector<bool> &registers_used,
 			     CORE_ADDR pc, const char *result_name)
 {
+#if defined (HAVE_COMPILE)
   struct dwarf2_loclist_baton *dlbaton
     = (struct dwarf2_loclist_baton *) SYMBOL_LOCATION_BATON (sym);
   unsigned int addr_size = dlbaton->per_cu->addr_size ();
@@ -4104,6 +4137,9 @@ loclist_generate_c_location (struct symbol *sym, string_file *stream,
 			   data, data + size,
 			   dlbaton->per_cu,
 			   dlbaton->per_objfile);
+#else
+  gdb_assert_not_reached ("Compile support was disabled");
+#endif
 }
 
 /* The set of location functions used with the DWARF-2 expression
@@ -4118,9 +4154,7 @@ const struct symbol_computed_ops dwarf2_loclist_funcs = {
   loclist_generate_c_location
 };
 
-void _initialize_dwarf2loc ();
-void
-_initialize_dwarf2loc ()
+INIT_GDB_FILE (dwarf2loc)
 {
   add_setshow_zuinteger_cmd ("entry-values", class_maintenance,
 			     &entry_values_debug,

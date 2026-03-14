@@ -15,7 +15,7 @@ main (int argc, char *argv[])
   ctf_encoding_t en = { CTF_INT_SIGNED, 0, sizeof (int) };
   unsigned char *ctf_written;
   size_t size;
-  int err;
+  int err = 666;
 
   if (argc != 2)
     {
@@ -25,8 +25,17 @@ main (int argc, char *argv[])
 
   if ((ctf = ctf_open (argv[1], NULL, &err)) == NULL)
     goto open_err;
+
+  /* The error int should be reset on success as well as on error.  */
+  if (err != 0)
+    goto err_err;
+
+  err = 666;
   if ((fp = ctf_dict_open (ctf, NULL, &err)) == NULL)
     goto open_err;
+
+  if (err != 0)
+    goto err_err;
 
   /* Check that various modifications to already-written types
      are prohibited.  */
@@ -144,5 +153,9 @@ main (int argc, char *argv[])
  
  open_err:
   fprintf (stderr, "%s: cannot open: %s\n", argv[0], ctf_errmsg (err));
+  return 1;
+
+ err_err:
+  fprintf (stderr, "%s: open error not set to success on success\n", argv[0]);
   return 1;
 }    

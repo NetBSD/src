@@ -1,5 +1,5 @@
 # Pretty-printer utilities.
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -415,11 +415,17 @@ def make_visualizer(value):
             result = NoOpArrayPrinter(ty, value)
         elif ty.code in (gdb.TYPE_CODE_STRUCT, gdb.TYPE_CODE_UNION):
             result = NoOpStructPrinter(ty, value)
-        elif ty.code in (
-            gdb.TYPE_CODE_PTR,
-            gdb.TYPE_CODE_REF,
-            gdb.TYPE_CODE_RVALUE_REF,
+        elif (
+            ty.code
+            in (
+                gdb.TYPE_CODE_PTR,
+                gdb.TYPE_CODE_REF,
+                gdb.TYPE_CODE_RVALUE_REF,
+            )
+            and ty.target().code != gdb.TYPE_CODE_VOID
         ):
+            # Note we avoid "void *" here because those pointers can't
+            # be dereferenced without a cast.
             result = NoOpPointerReferencePrinter(value)
         else:
             result = NoOpScalarPrinter(value)

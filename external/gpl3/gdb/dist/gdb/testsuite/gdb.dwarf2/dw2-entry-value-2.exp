@@ -1,0 +1,125 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that we can get DW_OP_entry_value at function entry.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile .c -debug.S
+
+set test "get dwarf regnum for first argument register"
+if { [is_x86_64_m64_target] } {
+    set dwarf_regnum 5
+} elseif { [istarget riscv64*] } {
+    set dwarf_regnum 10
+} else {
+    set reason "architecture-specific setting missing"
+    unsupported "$test ($reason)"
+    return
+}
+pass $test
+
+# Set up the DWARF for the test.
+
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    global srcdir subdir srcfile
+
+    get_func_info main
+    get_func_info bar
+
+    cu {} {
+	DW_TAG_compile_unit {
+		{DW_AT_name $srcfile}
+	} {
+	    declare_labels integer
+
+	    integer: DW_TAG_base_type {
+		{DW_AT_byte_size 8 DW_FORM_sdata}
+		{DW_AT_encoding @DW_ATE_signed}
+		{DW_AT_name integer}
+	    }
+
+	    DW_TAG_subprogram {
+		{ DW_AT_name main }
+		{ DW_AT_low_pc $main_start DW_FORM_addr }
+		{ DW_AT_high_pc $main_end DW_FORM_addr }
+	    } {
+		DW_TAG_variable {
+		    { DW_AT_name argc }
+		    { DW_AT_type :$integer }
+		    { DW_AT_location {
+			DW_OP_entry_value {
+			    DW_OP_regx $::dwarf_regnum
+			}
+		    } SPECIAL_expr }
+		}
+	    }
+
+	    DW_TAG_subprogram {
+		{ DW_AT_name bar }
+		{ DW_AT_low_pc $bar_start DW_FORM_addr }
+		{ DW_AT_high_pc $bar_end DW_FORM_addr }
+	    } {
+		DW_TAG_variable {
+		    { DW_AT_name foo }
+		    { DW_AT_type :$integer }
+		    { DW_AT_location {
+			DW_OP_entry_value {
+			    DW_OP_bregx $::dwarf_regnum 0
+			    DW_OP_deref_size 4
+			}
+			DW_OP_stack_value
+		    } SPECIAL_expr }
+		}
+	    }
+	}
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" $testfile \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+if { ![runto *main] } {
+    return
+}
+
+with_test_prefix "at main+0" {
+    gdb_test "p argc" " = 1"
+
+    gdb_test "stepi"
+}
+
+with_test_prefix "at main+1" {
+    gdb_test "p argc" " = <optimized out>"
+}
+
+gdb_breakpoint "*bar"
+gdb_continue_to_breakpoint "bar"
+
+with_test_prefix "at bar+0" {
+    gdb_test "p foo" " = 2"
+
+    gdb_test "stepi"
+}
+
+with_test_prefix "at bar+1" {
+    gdb_test "p foo" " = <optimized out>"
+}

@@ -1,6 +1,6 @@
 /* Read DWARF macro information
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -259,6 +259,7 @@ skip_form_bytes (bfd *abfd, const gdb_byte *bytes, const gdb_byte *buffer_end,
     case DW_FORM_sec_offset:
     case DW_FORM_strp:
     case DW_FORM_GNU_strp_alt:
+    case DW_FORM_strp_sup:
       bytes += offset_size;
       break;
 
@@ -503,8 +504,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 		    || macinfo_type == DW_MACRO_undef_sup
 		    || section_is_dwz)
 		  {
-		    dwz_file *dwz = dwarf2_get_dwz_file (per_objfile->per_bfd,
-							 true);
+		    dwz_file *dwz = per_objfile->per_bfd->get_dwz_file (true);
 
 		    body = dwz->read_string (objfile, str_offset);
 		  }
@@ -652,7 +652,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	    complaint (_("macro debug info has an unmatched "
 			 "`close_file' directive"));
 	  else if (current_file->included_by == nullptr
-		   && producer_is_clang (cu))
+		   && cu->producer_is_clang ())
 	    {
 	      /* Clang, until the current version, misplaces some macro
 		 definitions - such as ones defined in the command line,
@@ -710,8 +710,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 
 	    if (macinfo_type == DW_MACRO_import_sup)
 	      {
-		dwz_file *dwz = dwarf2_get_dwz_file (per_objfile->per_bfd,
-						     true);
+		dwz_file *dwz = per_objfile->per_bfd->get_dwz_file (true);
 
 		include_section = &dwz->macro;
 		include_bfd = include_section->get_bfd_owner ();

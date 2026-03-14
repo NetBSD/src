@@ -1,6 +1,6 @@
 /* Self tests for scoped_mmap for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,7 +41,7 @@ test_destroy ()
   errno = 0;
   {
     ::scoped_mmap smmap (nullptr, sysconf (_SC_PAGESIZE), PROT_WRITE,
-			 MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+			 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
     mem = smmap.get ();
     SELF_CHECK (mem != nullptr);
@@ -59,7 +59,7 @@ test_release ()
   errno = 0;
   {
     ::scoped_mmap smmap (nullptr, sysconf (_SC_PAGESIZE), PROT_WRITE,
-			 MAP_ANONYMOUS | MAP_PRIVATE, 0, 0);
+			 MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
 
     mem = smmap.release ();
     SELF_CHECK (mem != nullptr);
@@ -135,9 +135,7 @@ run_tests ()
 
 #endif /* !defined(HAVE_SYS_MMAN_H) */
 
-void _initialize_scoped_mmap_selftests ();
-void
-_initialize_scoped_mmap_selftests ()
+INIT_GDB_FILE (scoped_mmap_selftests)
 {
 #if defined(HAVE_SYS_MMAN_H)
   selftests::register_test ("scoped_mmap",

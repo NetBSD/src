@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,13 @@
 #include "gdbsupport/tdesc.h"
 #include <stdint.h>
 
-target_desc *amd64_create_target_description (uint64_t xcr0, bool is_x32,
-					      bool is_linux, bool segments);
+/* Create amd64 target descriptions according to XSTATE_BV.  If
+   IS_X32 is true, create the x32 ones.  If IS_LINUX is true, create
+   target descriptions for Linux.  If SEGMENTS is true, then include
+   the "org.gnu.gdb.i386.segments" feature registers.  */
+
+target_desc *amd64_create_target_description (uint64_t xstate_bv,
+					      bool is_x32, bool is_linux,
+					      bool segments);
 
 #endif /* GDB_ARCH_AMD64_H */

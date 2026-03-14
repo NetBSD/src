@@ -1,6 +1,6 @@
 /* MI Command Set - MI parser.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -21,7 +21,6 @@
 
 #include "mi-cmds.h"
 #include "mi-parse.h"
-#include "charset.h"
 
 #include <ctype.h>
 #include "cli/cli-utils.h"

@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,630 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Progspaces In Guile,  Next: Objfiles In Guile,  Prev: Parameters In Guile,  Up: Guile API
+
+23.4.3.13 Program Spaces In Guile
+.................................
+
+A program space, or "progspace", represents a symbolic view of an
+address space.  It consists of all of the objfiles of the program.
+*Note Objfiles In Guile::.  *Note program spaces: Inferiors Connections
+and Programs, for more details about program spaces.
+
+   Each progspace is represented by an instance of the '<gdb:progspace>'
+smob.  *Note GDB Scheme Data Types::.
+
+   The following progspace-related functions are available in the
+'(gdb)' module:
+
+ -- Scheme Procedure: progspace? object
+     Return '#t' if OBJECT is a '<gdb:progspace>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: progspace-valid? progspace
+     Return '#t' if PROGSPACE is valid, '#f' if not.  A
+     '<gdb:progspace>' object can become invalid if the program it
+     refers to is not loaded in GDB any longer.
+
+ -- Scheme Procedure: current-progspace
+     This function returns the program space of the currently selected
+     inferior.  There is always a current progspace, this never returns
+     '#f'.  *Note Inferiors Connections and Programs::.
+
+ -- Scheme Procedure: progspaces
+     Return a list of all the progspaces currently known to GDB.
+
+ -- Scheme Procedure: progspace-filename progspace
+     Return the absolute file name of PROGSPACE as a string.  This is
+     the name of the file passed as the argument to the 'file' or
+     'symbol-file' commands.  If the program space does not have an
+     associated file name, then '#f' is returned.  This occurs, for
+     example, when GDB is started without a program to debug.
+
+     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
+     invalid.
+
+ -- Scheme Procedure: progspace-objfiles progspace
+     Return the list of objfiles of PROGSPACE.  The order of objfiles in
+     the result is arbitrary.  Each element is an object of type
+     '<gdb:objfile>'.  *Note Objfiles In Guile::.
+
+     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
+     invalid.
+
+ -- Scheme Procedure: progspace-pretty-printers progspace
+     Return the list of pretty-printers of PROGSPACE.  Each element is
+     an object of type '<gdb:pretty-printer>'.  *Note Guile Pretty
+     Printing API::, for more information.
+
+ -- Scheme Procedure: set-progspace-pretty-printers! progspace
+          printer-list
+     Set the list of registered '<gdb:pretty-printer>' objects for
+     PROGSPACE to PRINTER-LIST.  *Note Guile Pretty Printing API::, for
+     more information.
+
+
+File: gdb.info,  Node: Objfiles In Guile,  Next: Frames In Guile,  Prev: Progspaces In Guile,  Up: Guile API
+
+23.4.3.14 Objfiles In Guile
+...........................
+
+GDB loads symbols for an inferior from various symbol-containing files
+(*note Files::).  These include the primary executable file, any shared
+libraries used by the inferior, and any separate debug info files (*note
+Separate Debug Files::).  GDB calls these symbol-containing files
+"objfiles".
+
+   Each objfile is represented as an object of type '<gdb:objfile>'.
+
+   The following objfile-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: objfile? object
+     Return '#t' if OBJECT is a '<gdb:objfile>' object.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: objfile-valid? objfile
+     Return '#t' if OBJFILE is valid, '#f' if not.  A '<gdb:objfile>'
+     object can become invalid if the object file it refers to is not
+     loaded in GDB any longer.  All other '<gdb:objfile>' procedures
+     will throw an exception if it is invalid at the time the procedure
+     is called.
+
+ -- Scheme Procedure: objfile-filename objfile
+     Return the file name of OBJFILE as a string, with symbolic links
+     resolved.
+
+ -- Scheme Procedure: objfile-progspace objfile
+     Return the '<gdb:progspace>' that this object file lives in.  *Note
+     Progspaces In Guile::, for more on progspaces.
+
+ -- Scheme Procedure: objfile-pretty-printers objfile
+     Return the list of registered '<gdb:pretty-printer>' objects for
+     OBJFILE.  *Note Guile Pretty Printing API::, for more information.
+
+ -- Scheme Procedure: set-objfile-pretty-printers! objfile printer-list
+     Set the list of registered '<gdb:pretty-printer>' objects for
+     OBJFILE to PRINTER-LIST.  The PRINTER-LIST must be a list of
+     '<gdb:pretty-printer>' objects.  *Note Guile Pretty Printing API::,
+     for more information.
+
+ -- Scheme Procedure: current-objfile
+     When auto-loading a Guile script (*note Guile Auto-loading::), GDB
+     sets the "current objfile" to the corresponding objfile.  This
+     function returns the current objfile.  If there is no current
+     objfile, this function returns '#f'.
+
+ -- Scheme Procedure: objfiles
+     Return a list of all the objfiles in the current program space.
+
+
+File: gdb.info,  Node: Frames In Guile,  Next: Blocks In Guile,  Prev: Objfiles In Guile,  Up: Guile API
+
+23.4.3.15 Accessing inferior stack frames from Guile.
+.....................................................
+
+When the debugged program stops, GDB is able to analyze its call stack
+(*note Stack frames: Frames.).  The '<gdb:frame>' class represents a
+frame in the stack.  A '<gdb:frame>' object is only valid while its
+corresponding frame exists in the inferior's stack.  If you try to use
+an invalid frame object, GDB will throw a 'gdb:invalid-object' exception
+(*note Guile Exception Handling::).
+
+   Two '<gdb:frame>' objects can be compared for equality with the
+'equal?' function, like:
+
+     (gdb) guile (equal? (newest-frame) (selected-frame))
+     #t
+
+   The following frame-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: frame? object
+     Return '#t' if OBJECT is a '<gdb:frame>' object.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: frame-valid? frame
+     Returns '#t' if FRAME is valid, '#f' if not.  A frame object can
+     become invalid if the frame it refers to doesn't exist anymore in
+     the inferior.  All '<gdb:frame>' procedures will throw an exception
+     if the frame is invalid at the time the procedure is called.
+
+ -- Scheme Procedure: frame-name frame
+     Return the function name of FRAME, or '#f' if it can't be obtained.
+
+ -- Scheme Procedure: frame-arch frame
+     Return the '<gdb:architecture>' object corresponding to FRAME's
+     architecture.  *Note Architectures In Guile::.
+
+ -- Scheme Procedure: frame-type frame
+     Return the type of FRAME.  The value can be one of:
+
+     'NORMAL_FRAME'
+          An ordinary stack frame.
+
+     'DUMMY_FRAME'
+          A fake stack frame that was created by GDB when performing an
+          inferior function call.
+
+     'INLINE_FRAME'
+          A frame representing an inlined function.  The function was
+          inlined into a 'NORMAL_FRAME' that is older than this one.
+
+     'TAILCALL_FRAME'
+          A frame representing a tail call.  *Note Tail Call Frames::.
+
+     'SIGTRAMP_FRAME'
+          A signal trampoline frame.  This is the frame created by the
+          OS when it calls into a signal handler.
+
+     'ARCH_FRAME'
+          A fake stack frame representing a cross-architecture call.
+
+     'SENTINEL_FRAME'
+          This is like 'NORMAL_FRAME', but it is only used for the
+          newest frame.
+
+ -- Scheme Procedure: frame-unwind-stop-reason frame
+     Return an integer representing the reason why it's not possible to
+     find more frames toward the outermost frame.  Use
+     'unwind-stop-reason-string' to convert the value returned by this
+     function to a string.  The value can be one of:
+
+     'FRAME_UNWIND_NO_REASON'
+          No particular reason (older frames should be available).
+
+     'FRAME_UNWIND_NULL_ID'
+          The previous frame's analyzer returns an invalid result.
+
+     'FRAME_UNWIND_OUTERMOST'
+          This frame is the outermost.
+
+     'FRAME_UNWIND_UNAVAILABLE'
+          Cannot unwind further, because that would require knowing the
+          values of registers or memory that have not been collected.
+
+     'FRAME_UNWIND_INNER_ID'
+          This frame ID looks like it ought to belong to a NEXT frame,
+          but we got it for a PREV frame.  Normally, this is a sign of
+          unwinder failure.  It could also indicate stack corruption.
+
+     'FRAME_UNWIND_SAME_ID'
+          This frame has the same ID as the previous one.  That means
+          that unwinding further would almost certainly give us another
+          frame with exactly the same ID, so break the chain.  Normally,
+          this is a sign of unwinder failure.  It could also indicate
+          stack corruption.
+
+     'FRAME_UNWIND_NO_SAVED_PC'
+          The frame unwinder did not find any saved PC, but we needed
+          one to unwind further.
+
+     'FRAME_UNWIND_MEMORY_ERROR'
+          The frame unwinder caused an error while trying to access
+          memory.
+
+     'FRAME_UNWIND_FIRST_ERROR'
+          Any stop reason greater or equal to this value indicates some
+          kind of error.  This special value facilitates writing code
+          that tests for errors in unwinding in a way that will work
+          correctly even if the list of the other values is modified in
+          future GDB versions.  Using it, you could write:
+
+               (define reason (frame-unwind-stop-readon (selected-frame)))
+               (define reason-str (unwind-stop-reason-string reason))
+               (if (>= reason FRAME_UNWIND_FIRST_ERROR)
+                   (format #t "An error occurred: ~s\n" reason-str))
+
+ -- Scheme Procedure: frame-pc frame
+     Return the frame's resume address.
+
+ -- Scheme Procedure: frame-block frame
+     Return the frame's code block as a '<gdb:block>' object.  *Note
+     Blocks In Guile::.
+
+ -- Scheme Procedure: frame-function frame
+     Return the symbol for the function corresponding to this frame as a
+     '<gdb:symbol>' object, or '#f' if there isn't one.  *Note Symbols
+     In Guile::.
+
+ -- Scheme Procedure: frame-older frame
+     Return the frame that called FRAME.
+
+ -- Scheme Procedure: frame-newer frame
+     Return the frame called by FRAME.
+
+ -- Scheme Procedure: frame-sal frame
+     Return the frame's '<gdb:sal>' (symtab and line) object.  *Note
+     Symbol Tables In Guile::.
+
+ -- Scheme Procedure: frame-read-register frame register
+     Return the value of REGISTER in FRAME.  REGISTER should be a
+     string, like 'pc'.
+
+ -- Scheme Procedure: frame-read-var frame variable [#:block block]
+     Return the value of VARIABLE in FRAME.  If the optional argument
+     BLOCK is provided, search for the variable from that block;
+     otherwise start at the frame's current block (which is determined
+     by the frame's current program counter).  The VARIABLE must be
+     given as a string or a '<gdb:symbol>' object, and BLOCK must be a
+     '<gdb:block>' object.
+
+ -- Scheme Procedure: frame-select frame
+     Set FRAME to be the selected frame.  *Note Examining the Stack:
+     Stack.
+
+ -- Scheme Procedure: selected-frame
+     Return the selected frame object.  *Note Selecting a Frame:
+     Selection.
+
+ -- Scheme Procedure: newest-frame
+     Return the newest frame object for the selected thread.
+
+ -- Scheme Procedure: unwind-stop-reason-string reason
+     Return a string explaining the reason why GDB stopped unwinding
+     frames, as expressed by the given REASON code (an integer, see the
+     'frame-unwind-stop-reason' procedure above in this section).
+
+
+File: gdb.info,  Node: Blocks In Guile,  Next: Symbols In Guile,  Prev: Frames In Guile,  Up: Guile API
+
+23.4.3.16 Accessing blocks from Guile.
+......................................
+
+In GDB, symbols are stored in blocks.  A block corresponds roughly to a
+scope in the source code.  Blocks are organized hierarchically, and are
+represented individually in Guile as an object of type '<gdb:block>'.
+Blocks rely on debugging information being available.
+
+   A frame has a block.  Please see *note Frames In Guile::, for a more
+in-depth discussion of frames.
+
+   The outermost block is known as the "global block".  The global block
+typically holds public global variables and functions.
+
+   The block nested just inside the global block is the "static block".
+The static block typically holds file-scoped variables and functions.
+
+   GDB provides a method to get a block's superblock, but there is
+currently no way to examine the sub-blocks of a block, or to iterate
+over all the blocks in a symbol table (*note Symbol Tables In Guile::).
+
+   Here is a short example that should help explain blocks:
+
+     /* This is in the global block.  */
+     int global;
+
+     /* This is in the static block.  */
+     static int file_scope;
+
+     /* 'function' is in the global block, and 'argument' is
+        in a block nested inside of 'function'.  */
+     int function (int argument)
+     {
+       /* 'local' is in a block inside 'function'.  It may or may
+          not be in the same block as 'argument'.  */
+       int local;
+
+       {
+          /* 'inner' is in a block whose superblock is the one holding
+             'local'.  */
+          int inner;
+
+          /* If this call is expanded by the compiler, you may see
+             a nested block here whose function is 'inline_function'
+             and whose superblock is the one holding 'inner'.  */
+          inline_function ();
+       }
+     }
+
+   The following block-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: block? object
+     Return '#t' if OBJECT is a '<gdb:block>' object.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: block-valid? block
+     Returns '#t' if '<gdb:block>' BLOCK is valid, '#f' if not.  A block
+     object can become invalid if the block it refers to doesn't exist
+     anymore in the inferior.  All other '<gdb:block>' methods will
+     throw an exception if it is invalid at the time the procedure is
+     called.  The block's validity is also checked during iteration over
+     symbols of the block.
+
+ -- Scheme Procedure: block-start block
+     Return the start address of '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-end block
+     Return the end address of '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-function block
+     Return the name of '<gdb:block>' BLOCK represented as a
+     '<gdb:symbol>' object.  If the block is not named, then '#f' is
+     returned.
+
+     For ordinary function blocks, the superblock is the static block.
+     However, you should note that it is possible for a function block
+     to have a superblock that is not the static block - for instance
+     this happens for an inlined function.
+
+ -- Scheme Procedure: block-superblock block
+     Return the block containing '<gdb:block>' BLOCK.  If the parent
+     block does not exist, then '#f' is returned.
+
+ -- Scheme Procedure: block-global-block block
+     Return the global block associated with '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-static-block block
+     Return the static block associated with '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: block-global? block
+     Return '#t' if '<gdb:block>' BLOCK is a global block.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: block-static? block
+     Return '#t' if '<gdb:block>' BLOCK is a static block.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: block-symbols
+     Return a list of all symbols (as <gdb:symbol> objects) in
+     '<gdb:block>' BLOCK.
+
+ -- Scheme Procedure: make-block-symbols-iterator block
+     Return an object of type '<gdb:iterator>' that will iterate over
+     all symbols of the block.  Guile programs should not assume that a
+     specific block object will always contain a given symbol, since
+     changes in GDB features and infrastructure may cause symbols move
+     across blocks in a symbol table.  *Note Iterators In Guile::.
+
+ -- Scheme Procedure: block-symbols-progress?
+     Return #t if the object is a <gdb:block-symbols-progress> object.
+     This object would be obtained from the 'progress' element of the
+     '<gdb:iterator>' object returned by 'make-block-symbols-iterator'.
+
+ -- Scheme Procedure: lookup-block pc
+     Return the innermost '<gdb:block>' containing the given PC value.
+     If the block cannot be found for the PC value specified, the
+     function will return '#f'.
+
+
+File: gdb.info,  Node: Symbols In Guile,  Next: Symbol Tables In Guile,  Prev: Blocks In Guile,  Up: Guile API
+
+23.4.3.17 Guile representation of Symbols.
+..........................................
+
+GDB represents every variable, function and type as an entry in a symbol
+table.  *Note Examining the Symbol Table: Symbols.  Guile represents
+these symbols in GDB with the '<gdb:symbol>' object.
+
+   The following symbol-related procedures are provided by the '(gdb)'
+module:
+
+ -- Scheme Procedure: symbol? object
+     Return '#t' if OBJECT is an object of type '<gdb:symbol>'.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-valid? symbol
+     Return '#t' if the '<gdb:symbol>' object is valid, '#f' if not.  A
+     '<gdb:symbol>' object can become invalid if the symbol it refers to
+     does not exist in GDB any longer.  All other '<gdb:symbol>'
+     procedures will throw an exception if it is invalid at the time the
+     procedure is called.
+
+ -- Scheme Procedure: symbol-type symbol
+     Return the type of SYMBOL or '#f' if no type is recorded.  The
+     result is an object of type '<gdb:type>'.  *Note Types In Guile::.
+
+ -- Scheme Procedure: symbol-symtab symbol
+     Return the symbol table in which SYMBOL appears.  The result is an
+     object of type '<gdb:symtab>'.  *Note Symbol Tables In Guile::.
+
+ -- Scheme Procedure: symbol-line symbol
+     Return the line number in the source code at which SYMBOL was
+     defined.  This is an integer.
+
+ -- Scheme Procedure: symbol-name symbol
+     Return the name of SYMBOL as a string.
+
+ -- Scheme Procedure: symbol-linkage-name symbol
+     Return the name of SYMBOL, as used by the linker (i.e., may be
+     mangled).
+
+ -- Scheme Procedure: symbol-print-name symbol
+     Return the name of SYMBOL in a form suitable for output.  This is
+     either 'name' or 'linkage_name', depending on whether the user
+     asked GDB to display demangled or mangled names.
+
+ -- Scheme Procedure: symbol-addr-class symbol
+     Return the address class of the symbol.  This classifies how to
+     find the value of a symbol.  Each address class is a constant
+     defined in the '(gdb)' module and described later in this chapter.
+
+ -- Scheme Procedure: symbol-needs-frame? symbol
+     Return '#t' if evaluating SYMBOL's value requires a frame (*note
+     Frames In Guile::) and '#f' otherwise.  Typically, local variables
+     will require a frame, but other symbols will not.
+
+ -- Scheme Procedure: symbol-argument? symbol
+     Return '#t' if SYMBOL is an argument of a function.  Otherwise
+     return '#f'.
+
+ -- Scheme Procedure: symbol-constant? symbol
+     Return '#t' if SYMBOL is a constant.  Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-function? symbol
+     Return '#t' if SYMBOL is a function or a method.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: symbol-variable? symbol
+     Return '#t' if SYMBOL is a variable.  Otherwise return '#f'.
+
+ -- Scheme Procedure: symbol-value symbol [#:frame frame]
+     Compute the value of SYMBOL, as a '<gdb:value>'.  For functions,
+     this computes the address of the function, cast to the appropriate
+     type.  If the symbol requires a frame in order to compute its
+     value, then FRAME must be given.  If FRAME is not given, or if
+     FRAME is invalid, then an exception is thrown.
+
+ -- Scheme Procedure: lookup-symbol name [#:block block]
+          [#:domain domain]
+     This function searches for a symbol by name.  The search scope can
+     be restricted to the parameters defined in the optional domain and
+     block arguments.
+
+     NAME is the name of the symbol.  It must be a string.  The optional
+     BLOCK argument restricts the search to symbols visible in that
+     BLOCK.  The BLOCK argument must be a '<gdb:block>' object.  If
+     omitted, the block for the current frame is used.  The optional
+     DOMAIN argument restricts the search to the domain type.  The
+     DOMAIN argument must be a domain constant defined in the '(gdb)'
+     module and described later in this chapter.
+
+     The result is a list of two elements.  The first element is a
+     '<gdb:symbol>' object or '#f' if the symbol is not found.  If the
+     symbol is found, the second element is '#t' if the symbol is a
+     field of a method's object (e.g., 'this' in C++), otherwise it is
+     '#f'.  If the symbol is not found, the second element is '#f'.
+
+ -- Scheme Procedure: lookup-global-symbol name [#:domain domain]
+     This function searches for a global symbol by name.  The search
+     scope can be restricted by the domain argument.
+
+     NAME is the name of the symbol.  It must be a string.  The optional
+     DOMAIN argument restricts the search to the domain type.  The
+     DOMAIN argument must be a domain constant defined in the '(gdb)'
+     module and described later in this chapter.
+
+     The result is a '<gdb:symbol>' object or '#f' if the symbol is not
+     found.
+
+   The available domain categories in '<gdb:symbol>' are represented as
+constants in the '(gdb)' module:
+
+'SYMBOL_UNDEF_DOMAIN'
+     This is used when a domain has not been discovered or none of the
+     following domains apply.  This usually indicates an error either in
+     the symbol information or in GDB's handling of symbols.
+
+'SYMBOL_VAR_DOMAIN'
+     This domain contains variables, function names, typedef names and
+     enum type values.
+
+'SYMBOL_FUNCTION_DOMAIN'
+     This domain contains functions.
+
+'SYMBOL_TYPE_DOMAIN'
+     This domain contains types.  In a C-like language, types using a
+     tag (the name appearing after a 'struct', 'union', or 'enum'
+     keyword) will not appear here; in other languages, all types are in
+     this domain.
+
+'SYMBOL_STRUCT_DOMAIN'
+     This domain holds struct, union and enum tag names.  This domain is
+     only used for C-like languages.  For example, in this code:
+          struct type_one { int x; };
+          typedef struct type_one type_two;
+     Here 'type_one' will be in 'SYMBOL_STRUCT_DOMAIN', but 'type_two'
+     will be in 'SYMBOL_TYPE_DOMAIN'.
+
+'SYMBOL_LABEL_DOMAIN'
+     This domain contains names of labels (for gotos).
+
+'SYMBOL_VARIABLES_DOMAIN'
+     This domain holds a subset of the 'SYMBOLS_VAR_DOMAIN'; it contains
+     everything minus functions and types.
+
+'SYMBOL_FUNCTIONS_DOMAIN'
+     This domain contains all functions.
+
+'SYMBOL_TYPES_DOMAIN'
+     This domain contains all types.
+
+   The available address class categories in '<gdb:symbol>' are
+represented as constants in the 'gdb' module:
+
+   When searching for a symbol, the desired domain constant can be
+passed verbatim to the lookup function.
+
+   For more complex searches, there is a corresponding set of constants,
+each named after one of the preceding constants, but with the 'SEARCH'
+prefix replacing the 'SYMBOL' prefix; for example,
+'SEARCH_LABEL_DOMAIN'.  These may be or'd together to form a search
+constant.
+
+'SYMBOL_LOC_UNDEF'
+     If this is returned by address class, it indicates an error either
+     in the symbol information or in GDB's handling of symbols.
+
+'SYMBOL_LOC_CONST'
+     Value is constant int.
+
+'SYMBOL_LOC_STATIC'
+     Value is at a fixed address.
+
+'SYMBOL_LOC_REGISTER'
+     Value is in a register.
+
+'SYMBOL_LOC_ARG'
+     Value is an argument.  This value is at the offset stored within
+     the symbol inside the frame's argument list.
+
+'SYMBOL_LOC_REF_ARG'
+     Value address is stored in the frame's argument list.  Just like
+     'LOC_ARG' except that the value's address is stored at the offset,
+     not the value itself.
+
+'SYMBOL_LOC_REGPARM_ADDR'
+     Value is a specified register.  Just like 'LOC_REGISTER' except the
+     register holds the address of the argument instead of the argument
+     itself.
+
+'SYMBOL_LOC_LOCAL'
+     Value is a local variable.
+
+'SYMBOL_LOC_TYPEDEF'
+     Value not used.  Symbols in the domain 'SYMBOL_STRUCT_DOMAIN' all
+     have this class.
+
+'SYMBOL_LOC_BLOCK'
+     Value is a block.
+
+'SYMBOL_LOC_CONST_BYTES'
+     Value is a byte-sequence.
+
+'SYMBOL_LOC_UNRESOLVED'
+     Value is at a fixed address, but the address of the variable has to
+     be determined from the minimal symbol table whenever the variable
+     is referenced.
+
+'SYMBOL_LOC_OPTIMIZED_OUT'
+     The value does not actually exist in the program.
+
+'SYMBOL_LOC_COMPUTED'
+     The value's address is a computed location.
 
 
 File: gdb.info,  Node: Symbol Tables In Guile,  Next: Breakpoints In Guile,  Prev: Symbols In Guile,  Up: Guile API
@@ -731,7 +1355,7 @@ can do something like the following.
      (close-port mem-port)
 
 
-File: gdb.info,  Node: Iterators In Guile,  Prev: Memory Ports in Guile,  Up: Guile API
+File: gdb.info,  Node: Iterators In Guile,  Next: Colors In Guile,  Prev: Memory Ports in Guile,  Up: Guile API
 
 23.4.3.25 Iterators In Guile
 ............................
@@ -831,6 +1455,90 @@ in using iterators.
  -- Scheme Procedure: iterator-until pred iterator
      Run ITERATOR until the result of '(pred element)' is true and
      return that as the result.  Otherwise return '#f'.
+
+
+File: gdb.info,  Node: Colors In Guile,  Prev: Iterators In Guile,  Up: Guile API
+
+23.4.3.26 Colors In Guile
+.........................
+
+You can assign instance of '<gdb:color>' to the value of a
+'<gdb:parameter>' object created with 'PARAM_COLOR'.
+
+   '<gdb:color>' may refer to an index from color palette or contain
+components of a color from some colorspace.
+
+ -- Scheme Procedure: make-color [value [#:color-space color-space]]
+
+     VALUE is an integer index of a color in palette, tuple with color
+     components or a string.  String can be a hex RGB triplet in
+     '#RRGGBB' format or one of the following color names: 'none'
+     (meaning the terminal's default color), 'black', 'red', 'green',
+     'yellow', 'blue', 'magenta', 'cyan', or 'white'.
+
+     COLOR-SPACE should be one of the 'COLORSPACE_' constants.  This
+     argument tells GDB which color space VALUE belongs.
+
+ -- Scheme Procedure: color? object
+     Return '#t' if OBJECT is a '<gdb:color>' object.  Otherwise return
+     '#f'.
+
+ -- Scheme Procedure: color-none? color
+     Return '#t' if COLOR is terminal's default.  Otherwise return '#f'.
+
+ -- Scheme Procedure: color-indexed? color
+     Return '#t' if COLOR is indexed, i.e.  belongs to some palette.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: color-direct? color
+     Return '#t' if COLOR is direct in the sense of ISO/IEC 8613-6.
+     Otherwise return '#f'.
+
+ -- Scheme Procedure: color-string color
+     Return the textual representation of a '<gdb:color>' object.
+
+ -- Scheme Procedure: color-colorspace color
+     Return the color space of a '<gdb:color>' object.
+
+ -- Scheme Procedure: color-index color
+     Return index of the color of a '<gdb:color>' object in a palette.
+
+ -- Scheme Procedure: color-components color
+     Return components of the direct '<gdb:color>' object.
+
+ -- Scheme Procedure: color-escape-sequence color is_foreground
+     Return string to change terminal's color to this.
+
+     If IS_FOREGROUND is '#t', then the returned sequence will change
+     foreground color.  Otherwise, the returned sequence will change
+     background color.
+
+     If styling is currently disabled (*note 'set style enabled': Output
+     Styling.), then this procedure will return an empty string.
+
+   When color is initialized, its color space must be specified.  The
+available color spaces are represented by constants defined in the 'gdb'
+module:
+
+'COLORSPACE_MONOCHROME'
+     Palette with only terminal's default color.
+
+'COLORSPACE_ANSI_8COLOR'
+     Palette with eight standard colors of ISO/IEC 6429 "black", "red",
+     "green", etc.
+
+'COLORSPACE_AIXTERM_16COLOR'
+     Palette with 16 colors.  First eight are standard colors of ISO/IEC
+     6429 "black", "red", "green", etc.  Next eight are their bright
+     version.
+
+'COLORSPACE_XTERM_256COLOR'
+     Palette with 256 colors.  First 16 are from
+     COLORSPACE_AIXTERM_16COLOR. Next 216 colors are 6x6x6 RGB cube.
+     And last 24 colors form grayscale ramp.
+
+'COLORSPACE_RGB_24BIT'
+     Direct 24-bit RGB colors.
 
 
 File: gdb.info,  Node: Guile Auto-loading,  Next: Guile Modules,  Prev: Guile API,  Up: Guile
@@ -1901,128 +2609,13 @@ File: gdb.info,  Node: Emacs,  Next: GDB/MI,  Prev: TUI,  Up: Top
 26 Using GDB under GNU Emacs
 ****************************
 
-A special interface allows you to use GNU Emacs to view (and edit) the
-source files for the program you are debugging with GDB.
+In GNU Emacs there is a special interface to GDB, which facilitates
+viewing the source code for the program you are debugging.  There is
+also an IDE-like interface to GDB, with specialized buffers for
+breakpoints, stack frames and other aspects of the debugger state.
 
-   To use this interface, use the command 'M-x gdb' in Emacs.  Give the
-executable file you want to debug as an argument.  This command starts
-GDB as a subprocess of Emacs, with input and output through a newly
-created Emacs buffer.
-
-   Running GDB under Emacs can be just like running GDB normally except
-for two things:
-
-   * All "terminal" input and output goes through an Emacs buffer,
-     called the GUD buffer.
-
-     This applies both to GDB commands and their output, and to the
-     input and output done by the program you are debugging.
-
-     This is useful because it means that you can copy the text of
-     previous commands and input them again; you can even use parts of
-     the output in this way.
-
-     All the facilities of Emacs' Shell mode are available for
-     interacting with your program.  In particular, you can send signals
-     the usual way--for example, 'C-c C-c' for an interrupt, 'C-c C-z'
-     for a stop.
-
-   * GDB displays source code through Emacs.
-
-     Each time GDB displays a stack frame, Emacs automatically finds the
-     source file for that frame and puts an arrow ('=>') at the left
-     margin of the current line.  Emacs uses a separate buffer for
-     source display, and splits the screen to show both your GDB session
-     and the source.
-
-     Explicit GDB 'list' or search commands still produce output as
-     usual, but you probably have no reason to use them from Emacs.
-
-   We call this "text command mode".  Emacs 22.1, and later, also uses a
-graphical mode, enabled by default, which provides further buffers that
-can control the execution and describe the state of your program.  *Note
-(Emacs)GDB Graphical Interface::.
-
-   If you specify an absolute file name when prompted for the 'M-x gdb'
-argument, then Emacs sets your current working directory to where your
-program resides.  If you only specify the file name, then Emacs sets
-your current working directory to the directory associated with the
-previous buffer.  In this case, GDB may find your program by searching
-your environment's 'PATH' variable, but on some operating systems it
-might not find the source.  So, although the GDB input and output
-session proceeds normally, the auxiliary buffer does not display the
-current source and line of execution.
-
-   The initial working directory of GDB is printed on the top line of
-the GUD buffer and this serves as a default for the commands that
-specify files for GDB to operate on.  *Note Commands to Specify Files:
-Files.
-
-   By default, 'M-x gdb' calls the program called 'gdb'.  If you need to
-call GDB by a different name (for example, if you keep several
-configurations around, with different names) you can customize the Emacs
-variable 'gud-gdb-command-name' to run the one you want.
-
-   In the GUD buffer, you can use these special Emacs commands in
-addition to the standard Shell mode commands:
-
-'C-h m'
-     Describe the features of Emacs' GUD Mode.
-
-'C-c C-s'
-     Execute to another source line, like the GDB 'step' command; also
-     update the display window to show the current file and location.
-
-'C-c C-n'
-     Execute to next source line in this function, skipping all function
-     calls, like the GDB 'next' command.  Then update the display window
-     to show the current file and location.
-
-'C-c C-i'
-     Execute one instruction, like the GDB 'stepi' command; update
-     display window accordingly.
-
-'C-c C-f'
-     Execute until exit from the selected stack frame, like the GDB
-     'finish' command.
-
-'C-c C-r'
-     Continue execution of your program, like the GDB 'continue'
-     command.
-
-'C-c <'
-     Go up the number of frames indicated by the numeric argument (*note
-     Numeric Arguments: (Emacs)Arguments.), like the GDB 'up' command.
-
-'C-c >'
-     Go down the number of frames indicated by the numeric argument,
-     like the GDB 'down' command.
-
-   In any source file, the Emacs command 'C-x <SPC>' ('gud-break') tells
-GDB to set a breakpoint on the source line point is on.
-
-   In text command mode, if you type 'M-x speedbar', Emacs displays a
-separate frame which shows a backtrace when the GUD buffer is current.
-Move point to any frame in the stack and type <RET> to make it become
-the current frame and display the associated source in the source
-buffer.  Alternatively, click 'Mouse-2' to make the selected frame
-become the current one.  In graphical mode, the speedbar displays watch
-expressions.
-
-   If you accidentally delete the source-display buffer, an easy way to
-get it back is to type the command 'f' in the GDB buffer, to request a
-frame display; when you run under Emacs, this recreates the source
-buffer if necessary to show you the context of the current frame.
-
-   The source files displayed in Emacs are in ordinary Emacs buffers
-which are visiting the source files in the usual way.  You can edit the
-files with these buffers if you wish; but keep in mind that GDB
-communicates with Emacs in terms of line numbers.  If you add or delete
-lines from the text, the line numbers that GDB knows cease to correspond
-properly with the code.
-
-   A more detailed description of Emacs' interaction with GDB is given
-in the Emacs manual (*note (Emacs)Debuggers::).
+   A detailed description of Emacs' interaction with GDB is given in the
+Emacs manual (*note (Emacs)Debuggers::).
 
 
 File: gdb.info,  Node: GDB/MI,  Next: Annotations,  Prev: Emacs,  Up: Top
@@ -2893,9 +3486,18 @@ activity (e.g., target stopped).
 
 '=library-unloaded,...'
      Reports that a library was unloaded by the program.  This
-     notification has 3 fields--ID, TARGET-NAME and HOST-NAME with the
-     same meaning as for the '=library-loaded' notification.  The
-     THREAD-GROUP field, if present, specifies the id of the thread
+     notification has the following fields--ID, TARGET-NAME, HOST-NAME
+     and RANGES with the same meaning as for the '=library-loaded'
+     notification.
+
+     It is possible that a library can appear multiple times in an
+     inferior's library list, but the library is only mapped once into
+     the inferior's address space.  When this happens, and one copy of
+     the library is unloaded, but there are remaining copies, the
+     STILL-IN-USE field will be 'true'.  In all other situations, the
+     STILL-IN-USE field will have the value 'false'.
+
+     The THREAD-GROUP field, if present, specifies the id of the thread
      group in whose context the library was unloaded.  If the field is
      absent, it means the library was unloaded in the context of all
      present thread groups.
@@ -3025,6 +3627,11 @@ watchpoint, or a catchpoint, it uses a tuple with the following fields:
 'pending'
      If this breakpoint is pending, this field is present and holds the
      text used to set the breakpoint, as entered by the user.
+
+     GDB's internal breakpoints (*note maint info breakpoints::) can
+     sometimes become pending too, for these breakpoints the PENDING
+     field will be empty as GDB automatically creates these breakpoints
+     as shared libraries are loaded.
 
 'evaluated-by'
      Where this breakpoint's condition is evaluated, either 'host' or
@@ -7862,802 +8469,4 @@ Example
      -symbol-list-lines basics.c
      ^done,lines=[{pc="0x08048554",line="7"},{pc="0x0804855a",line="8"}]
      (gdb)
-
-
-File: gdb.info,  Node: GDB/MI File Commands,  Next: GDB/MI Target Manipulation,  Prev: GDB/MI Symbol Query,  Up: GDB/MI
-
-27.19 GDB/MI File Commands
-==========================
-
-This section describes the GDB/MI commands to specify executable file
-names and to read in and obtain symbol table information.
-
-The '-file-exec-and-symbols' Command
-------------------------------------
-
-Synopsis
-........
-
-      -file-exec-and-symbols FILE
-
-   Specify the executable file to be debugged.  This file is the one
-from which the symbol table is also read.  If no file is specified, the
-command clears the executable and symbol information.  If breakpoints
-are set when using this command with no arguments, GDB will produce
-error messages.  Otherwise, no output is produced, except a completion
-notification.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'file'.
-
-Example
-.......
-
-     (gdb)
-     -file-exec-and-symbols /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
-     ^done
-     (gdb)
-
-The '-file-exec-file' Command
------------------------------
-
-Synopsis
-........
-
-      -file-exec-file FILE
-
-   Specify the executable file to be debugged.  Unlike
-'-file-exec-and-symbols', the symbol table is _not_ read from this file.
-If used without argument, GDB clears the information about the
-executable file.  No output is produced, except a completion
-notification.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'exec-file'.
-
-Example
-.......
-
-     (gdb)
-     -file-exec-file /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
-     ^done
-     (gdb)
-
-The '-file-list-exec-source-file' Command
------------------------------------------
-
-Synopsis
-........
-
-      -file-list-exec-source-file
-
-   List the line number, the current source file, and the absolute path
-to the current source file for the current executable.  The macro
-information field has a value of '1' or '0' depending on whether or not
-the file includes preprocessor macro information.
-
-GDB Command
-...........
-
-The GDB equivalent is 'info source'
-
-Example
-.......
-
-     (gdb)
-     123-file-list-exec-source-file
-     123^done,line="1",file="foo.c",fullname="/home/bar/foo.c,macro-info="1"
-     (gdb)
-
-The '-file-list-exec-source-files' Command
-------------------------------------------
-
-Synopsis
-........
-
-      -file-list-exec-source-files [ --GROUP-BY-OBJFILE ]
-                                   [ --DIRNAME | --BASENAME ]
-                                   [ -- ]
-                                   [ REGEXP ]
-
-   This command returns information about the source files GDB knows
-about, it will output both the filename and fullname (absolute file
-name) of a source file, though the fullname can be elided if this
-information is not known to GDB.
-
-   With no arguments this command returns a list of source files.  Each
-source file is represented by a tuple with the fields; FILE, FULLNAME,
-and DEBUG-FULLY-READ.  The FILE is the display name for the file, while
-FULLNAME is the absolute name of the file.  The FULLNAME field can be
-elided if the absolute name of the source file can't be computed.  The
-field DEBUG-FULLY-READ will be a string, either 'true' or 'false'.  When
-'true', this indicates the full debug information for the compilation
-unit describing this file has been read in.  When 'false', the full
-debug information has not yet been read in.  While reading in the full
-debug information it is possible that GDB could become aware of
-additional source files.
-
-   The optional REGEXP can be used to filter the list of source files
-returned.  The REGEXP will be matched against the full source file name.
-The matching is case-sensitive, except on operating systems that have
-case-insensitive filesystem (e.g., MS-Windows).  '--' can be used before
-REGEXP to prevent GDB interpreting REGEXP as a command option (e.g. if
-REGEXP starts with '-').
-
-   If '--dirname' is provided, then REGEXP is matched only against the
-directory name of each source file.  If '--basename' is provided, then
-REGEXP is matched against the basename of each source file.  Only one of
-'--dirname' or '--basename' may be given, and if either is given then
-REGEXP is required.
-
-   If '--group-by-objfile' is used then the format of the results is
-changed.  The results will now be a list of tuples, with each tuple
-representing an object file (executable or shared library) loaded into
-GDB.  The fields of these tuples are; FILENAME, DEBUG-INFO, and SOURCES.
-The FILENAME is the absolute name of the object file, DEBUG-INFO is a
-string with one of the following values:
-
-'none'
-     This object file has no debug information.
-'partially-read'
-     This object file has debug information, but it is not fully read in
-     yet.  When it is read in later, GDB might become aware of
-     additional source files.
-'fully-read'
-     This object file has debug information, and this information is
-     fully read into GDB. The list of source files is complete.
-
-   The SOURCES is a list or tuples, with each tuple describing a single
-source file with the same fields as described previously.  The SOURCES
-list can be empty for object files that have no debug information.
-
-GDB Command
-...........
-
-The GDB equivalent is 'info sources'.  'gdbtk' has an analogous command
-'gdb_listfiles'.
-
-Example
-.......
-
-     (gdb)
-     -file-list-exec-source-files
-     ^done,files=[{file="foo.c",fullname="/home/foo.c",debug-fully-read="true"},
-                  {file="/home/bar.c",fullname="/home/bar.c",debug-fully-read="true"},
-                  {file="gdb_could_not_find_fullpath.c",debug-fully-read="true"}]
-     (gdb)
-     -file-list-exec-source-files
-     ^done,files=[{file="test.c",
-                   fullname="/tmp/info-sources/test.c",
-                   debug-fully-read="true"},
-                  {file="/usr/include/stdc-predef.h",
-                   fullname="/usr/include/stdc-predef.h",
-                   debug-fully-read="true"},
-                  {file="header.h",
-                   fullname="/tmp/info-sources/header.h",
-                   debug-fully-read="true"},
-                  {file="helper.c",
-                   fullname="/tmp/info-sources/helper.c",
-                   debug-fully-read="true"}]
-     (gdb)
-     -file-list-exec-source-files -- \\.c
-     ^done,files=[{file="test.c",
-                   fullname="/tmp/info-sources/test.c",
-                   debug-fully-read="true"},
-                  {file="helper.c",
-                   fullname="/tmp/info-sources/helper.c",
-                   debug-fully-read="true"}]
-     (gdb)
-     -file-list-exec-source-files --group-by-objfile
-     ^done,files=[{filename="/tmp/info-sources/test.x",
-                   debug-info="fully-read",
-                   sources=[{file="test.c",
-                             fullname="/tmp/info-sources/test.c",
-                             debug-fully-read="true"},
-                            {file="/usr/include/stdc-predef.h",
-                             fullname="/usr/include/stdc-predef.h",
-                             debug-fully-read="true"},
-                            {file="header.h",
-                             fullname="/tmp/info-sources/header.h",
-                             debug-fully-read="true"}]},
-                  {filename="/lib64/ld-linux-x86-64.so.2",
-                   debug-info="none",
-                   sources=[]},
-                  {filename="system-supplied DSO at 0x7ffff7fcf000",
-                   debug-info="none",
-                   sources=[]},
-                  {filename="/tmp/info-sources/libhelper.so",
-                   debug-info="fully-read",
-                   sources=[{file="helper.c",
-                             fullname="/tmp/info-sources/helper.c",
-                             debug-fully-read="true"},
-                            {file="/usr/include/stdc-predef.h",
-                             fullname="/usr/include/stdc-predef.h",
-                             debug-fully-read="true"},
-                            {file="header.h",
-                             fullname="/tmp/info-sources/header.h",
-                             debug-fully-read="true"}]},
-                  {filename="/lib64/libc.so.6",
-                   debug-info="none",
-                   sources=[]}]
-
-The '-file-list-shared-libraries' Command
------------------------------------------
-
-Synopsis
-........
-
-      -file-list-shared-libraries [ REGEXP ]
-
-   List the shared libraries in the program.  With a regular expression
-REGEXP, only those libraries whose names match REGEXP are listed.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'info shared'.  The fields have a
-similar meaning to the '=library-loaded' notification.  The 'ranges'
-field specifies the multiple segments belonging to this library.  Each
-range has the following fields:
-
-'from'
-     The address defining the inclusive lower bound of the segment.
-'to'
-     The address defining the exclusive upper bound of the segment.
-
-Example
-.......
-
-     (gdb)
-     -file-list-exec-source-files
-     ^done,shared-libraries=[
-     {id="/lib/libfoo.so",target-name="/lib/libfoo.so",host-name="/lib/libfoo.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x72815989",to="0x728162c0"}]},
-     {id="/lib/libbar.so",target-name="/lib/libbar.so",host-name="/lib/libbar.so",symbols-loaded="1",thread-group="i1",ranges=[{from="0x76ee48c0",to="0x76ee9160"}]}]
-     (gdb)
-
-The '-file-symbol-file' Command
--------------------------------
-
-Synopsis
-........
-
-      -file-symbol-file FILE
-
-   Read symbol table info from the specified FILE argument.  When used
-without arguments, clears GDB's symbol table info.  No output is
-produced, except for a completion notification.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'symbol-file'.
-
-Example
-.......
-
-     (gdb)
-     -file-symbol-file /kwikemart/marge/ezannoni/TRUNK/mbx/hello.mbx
-     ^done
-     (gdb)
-
-
-File: gdb.info,  Node: GDB/MI Target Manipulation,  Next: GDB/MI File Transfer Commands,  Prev: GDB/MI File Commands,  Up: GDB/MI
-
-27.20 GDB/MI Target Manipulation Commands
-=========================================
-
-The '-target-attach' Command
-----------------------------
-
-Synopsis
-........
-
-      -target-attach PID | GID | FILE
-
-   Attach to a process PID or a file FILE outside of GDB, or a thread
-group GID.  If attaching to a thread group, the id previously returned
-by '-list-thread-groups --available' must be used.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'attach'.
-
-Example
-.......
-
-     (gdb)
-     -target-attach 34
-     =thread-created,id="1"
-     *stopped,thread-id="1",frame={addr="0xb7f7e410",func="bar",args=[]}
-     ^done
-     (gdb)
-
-The '-target-detach' Command
-----------------------------
-
-Synopsis
-........
-
-      -target-detach [ PID | GID ]
-
-   Detach from the remote target which normally resumes its execution.
-If either PID or GID is specified, detaches from either the specified
-process, or specified thread group.  There's no output.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'detach'.
-
-Example
-.......
-
-     (gdb)
-     -target-detach
-     ^done
-     (gdb)
-
-The '-target-disconnect' Command
---------------------------------
-
-Synopsis
-........
-
-      -target-disconnect
-
-   Disconnect from the remote target.  There's no output and the target
-is generally not resumed.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'disconnect'.
-
-Example
-.......
-
-     (gdb)
-     -target-disconnect
-     ^done
-     (gdb)
-
-The '-target-download' Command
-------------------------------
-
-Synopsis
-........
-
-      -target-download
-
-   Loads the executable onto the remote target.  It prints out an update
-message every half second, which includes the fields:
-
-'section'
-     The name of the section.
-'section-sent'
-     The size of what has been sent so far for that section.
-'section-size'
-     The size of the section.
-'total-sent'
-     The total size of what was sent so far (the current and the
-     previous sections).
-'total-size'
-     The size of the overall executable to download.
-
-Each message is sent as status record (*note GDB/MI Output Syntax:
-GDB/MI Output Syntax.).
-
-   In addition, it prints the name and size of the sections, as they are
-downloaded.  These messages include the following fields:
-
-'section'
-     The name of the section.
-'section-size'
-     The size of the section.
-'total-size'
-     The size of the overall executable to download.
-
-At the end, a summary is printed.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'load'.
-
-Example
-.......
-
-Note: each status message appears on a single line.  Here the messages
-have been broken down so that they can fit onto a page.
-
-     (gdb)
-     -target-download
-     +download,{section=".text",section-size="6668",total-size="9880"}
-     +download,{section=".text",section-sent="512",section-size="6668",
-     total-sent="512",total-size="9880"}
-     +download,{section=".text",section-sent="1024",section-size="6668",
-     total-sent="1024",total-size="9880"}
-     +download,{section=".text",section-sent="1536",section-size="6668",
-     total-sent="1536",total-size="9880"}
-     +download,{section=".text",section-sent="2048",section-size="6668",
-     total-sent="2048",total-size="9880"}
-     +download,{section=".text",section-sent="2560",section-size="6668",
-     total-sent="2560",total-size="9880"}
-     +download,{section=".text",section-sent="3072",section-size="6668",
-     total-sent="3072",total-size="9880"}
-     +download,{section=".text",section-sent="3584",section-size="6668",
-     total-sent="3584",total-size="9880"}
-     +download,{section=".text",section-sent="4096",section-size="6668",
-     total-sent="4096",total-size="9880"}
-     +download,{section=".text",section-sent="4608",section-size="6668",
-     total-sent="4608",total-size="9880"}
-     +download,{section=".text",section-sent="5120",section-size="6668",
-     total-sent="5120",total-size="9880"}
-     +download,{section=".text",section-sent="5632",section-size="6668",
-     total-sent="5632",total-size="9880"}
-     +download,{section=".text",section-sent="6144",section-size="6668",
-     total-sent="6144",total-size="9880"}
-     +download,{section=".text",section-sent="6656",section-size="6668",
-     total-sent="6656",total-size="9880"}
-     +download,{section=".init",section-size="28",total-size="9880"}
-     +download,{section=".fini",section-size="28",total-size="9880"}
-     +download,{section=".data",section-size="3156",total-size="9880"}
-     +download,{section=".data",section-sent="512",section-size="3156",
-     total-sent="7236",total-size="9880"}
-     +download,{section=".data",section-sent="1024",section-size="3156",
-     total-sent="7748",total-size="9880"}
-     +download,{section=".data",section-sent="1536",section-size="3156",
-     total-sent="8260",total-size="9880"}
-     +download,{section=".data",section-sent="2048",section-size="3156",
-     total-sent="8772",total-size="9880"}
-     +download,{section=".data",section-sent="2560",section-size="3156",
-     total-sent="9284",total-size="9880"}
-     +download,{section=".data",section-sent="3072",section-size="3156",
-     total-sent="9796",total-size="9880"}
-     ^done,address="0x10004",load-size="9880",transfer-rate="6586",
-     write-rate="429"
-     (gdb)
-
-GDB Command
-...........
-
-No equivalent.
-
-Example
-.......
-
-N.A.
-
-The '-target-flash-erase' Command
----------------------------------
-
-Synopsis
-........
-
-      -target-flash-erase
-
-   Erases all known flash memory regions on the target.
-
-   The corresponding GDB command is 'flash-erase'.
-
-   The output is a list of flash regions that have been erased, with
-starting addresses and memory region sizes.
-
-     (gdb)
-     -target-flash-erase
-     ^done,erased-regions={address="0x0",size="0x40000"}
-     (gdb)
-
-The '-target-select' Command
-----------------------------
-
-Synopsis
-........
-
-      -target-select TYPE PARAMETERS ...
-
-   Connect GDB to the remote target.  This command takes two args:
-
-'TYPE'
-     The type of target, for instance 'remote', etc.
-'PARAMETERS'
-     Device names, host names and the like.  *Note Commands for Managing
-     Targets: Target Commands, for more details.
-
-   The output is a connection notification, followed by the address at
-which the target program is, in the following form:
-
-     ^connected,addr="ADDRESS",func="FUNCTION NAME",
-       args=[ARG LIST]
-
-GDB Command
-...........
-
-The corresponding GDB command is 'target'.
-
-Example
-.......
-
-     (gdb)
-     -target-select remote /dev/ttya
-     ^connected,addr="0xfe00a300",func="??",args=[]
-     (gdb)
-
-
-File: gdb.info,  Node: GDB/MI File Transfer Commands,  Next: GDB/MI Ada Exceptions Commands,  Prev: GDB/MI Target Manipulation,  Up: GDB/MI
-
-27.21 GDB/MI File Transfer Commands
-===================================
-
-The '-target-file-put' Command
-------------------------------
-
-Synopsis
-........
-
-      -target-file-put HOSTFILE TARGETFILE
-
-   Copy file HOSTFILE from the host system (the machine running GDB) to
-TARGETFILE on the target system.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'remote put'.
-
-Example
-.......
-
-     (gdb)
-     -target-file-put localfile remotefile
-     ^done
-     (gdb)
-
-The '-target-file-get' Command
-------------------------------
-
-Synopsis
-........
-
-      -target-file-get TARGETFILE HOSTFILE
-
-   Copy file TARGETFILE from the target system to HOSTFILE on the host
-system.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'remote get'.
-
-Example
-.......
-
-     (gdb)
-     -target-file-get remotefile localfile
-     ^done
-     (gdb)
-
-The '-target-file-delete' Command
----------------------------------
-
-Synopsis
-........
-
-      -target-file-delete TARGETFILE
-
-   Delete TARGETFILE from the target system.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'remote delete'.
-
-Example
-.......
-
-     (gdb)
-     -target-file-delete remotefile
-     ^done
-     (gdb)
-
-
-File: gdb.info,  Node: GDB/MI Ada Exceptions Commands,  Next: GDB/MI Support Commands,  Prev: GDB/MI File Transfer Commands,  Up: GDB/MI
-
-27.22 Ada Exceptions GDB/MI Commands
-====================================
-
-The '-info-ada-exceptions' Command
-----------------------------------
-
-Synopsis
-........
-
-      -info-ada-exceptions [ REGEXP]
-
-   List all Ada exceptions defined within the program being debugged.
-With a regular expression REGEXP, only those exceptions whose names
-match REGEXP are listed.
-
-GDB Command
-...........
-
-The corresponding GDB command is 'info exceptions'.
-
-Result
-......
-
-The result is a table of Ada exceptions.  The following columns are
-defined for each exception:
-
-'name'
-     The name of the exception.
-
-'address'
-     The address of the exception.
-
-Example
-.......
-
-     -info-ada-exceptions aint
-     ^done,ada-exceptions={nr_rows="2",nr_cols="2",
-     hdr=[{width="1",alignment="-1",col_name="name",colhdr="Name"},
-     {width="1",alignment="-1",col_name="address",colhdr="Address"}],
-     body=[{name="constraint_error",address="0x0000000000613da0"},
-     {name="const.aint_global_e",address="0x0000000000613b00"}]}
-
-Catching Ada Exceptions
------------------------
-
-The commands describing how to ask GDB to stop when a program raises an
-exception are described at *note Ada Exception GDB/MI Catchpoint
-Commands::.
-
-
-File: gdb.info,  Node: GDB/MI Support Commands,  Next: GDB/MI Miscellaneous Commands,  Prev: GDB/MI Ada Exceptions Commands,  Up: GDB/MI
-
-27.23 GDB/MI Support Commands
-=============================
-
-Since new commands and features get regularly added to GDB/MI, some
-commands are available to help front-ends query the debugger about
-support for these capabilities.  Similarly, it is also possible to query
-GDB about target support of certain features.
-
-The '-info-gdb-mi-command' Command
-----------------------------------
-
-Synopsis
-........
-
-      -info-gdb-mi-command CMD_NAME
-
-   Query support for the GDB/MI command named CMD_NAME.
-
-   Note that the dash ('-') starting all GDB/MI commands is technically
-not part of the command name (*note GDB/MI Input Syntax::), and thus
-should be omitted in CMD_NAME.  However, for ease of use, this command
-also accepts the form with the leading dash.
-
-GDB Command
-...........
-
-There is no corresponding GDB command.
-
-Result
-......
-
-The result is a tuple.  There is currently only one field:
-
-'exists'
-     This field is equal to '"true"' if the GDB/MI command exists,
-     '"false"' otherwise.
-
-Example
-.......
-
-Here is an example where the GDB/MI command does not exist:
-
-     -info-gdb-mi-command unsupported-command
-     ^done,command={exists="false"}
-
-And here is an example where the GDB/MI command is known to the
-debugger:
-
-     -info-gdb-mi-command symbol-list-lines
-     ^done,command={exists="true"}
-
-The '-list-features' Command
-----------------------------
-
-Returns a list of particular features of the MI protocol that this
-version of gdb implements.  A feature can be a command, or a new field
-in an output of some command, or even an important bugfix.  While a
-frontend can sometimes detect presence of a feature at runtime, it is
-easier to perform detection at debugger startup.
-
-   The command returns a list of strings, with each string naming an
-available feature.  Each returned string is just a name, it does not
-have any internal structure.  The list of possible feature names is
-given below.
-
-   Example output:
-
-     (gdb) -list-features
-     ^done,result=["feature1","feature2"]
-
-   The current list of features is:
-
-'frozen-varobjs'
-     Indicates support for the '-var-set-frozen' command, as well as
-     possible presence of the 'frozen' field in the output of
-     '-varobj-create'.
-'pending-breakpoints'
-     Indicates support for the '-f' option to the '-break-insert'
-     command.
-'python'
-     Indicates Python scripting support, Python-based pretty-printing
-     commands, and possible presence of the 'display_hint' field in the
-     output of '-var-list-children'
-'thread-info'
-     Indicates support for the '-thread-info' command.
-'data-read-memory-bytes'
-     Indicates support for the '-data-read-memory-bytes' and the
-     '-data-write-memory-bytes' commands.
-'breakpoint-notifications'
-     Indicates that changes to breakpoints and breakpoints created via
-     the CLI will be announced via async records.
-'ada-task-info'
-     Indicates support for the '-ada-task-info' command.
-'language-option'
-     Indicates that all GDB/MI commands accept the '--language' option
-     (*note Context management::).
-'info-gdb-mi-command'
-     Indicates support for the '-info-gdb-mi-command' command.
-'undefined-command-error-code'
-     Indicates support for the "undefined-command" error code in error
-     result records, produced when trying to execute an undefined GDB/MI
-     command (*note GDB/MI Result Records::).
-'exec-run-start-option'
-     Indicates that the '-exec-run' command supports the '--start'
-     option (*note GDB/MI Program Execution::).
-'data-disassemble-a-option'
-     Indicates that the '-data-disassemble' command supports the '-a'
-     option (*note GDB/MI Data Manipulation::).
-'simple-values-ref-types'
-     Indicates that the '--simple-values' argument to the
-     '-stack-list-arguments', '-stack-list-locals',
-     '-stack-list-variables', and '-var-list-children' commands takes
-     reference types into account: that is, a value is considered simple
-     if it is neither an array, structure, or union, nor a reference to
-     an array, structure, or union.
-
-The '-list-target-features' Command
------------------------------------
-
-Returns a list of particular features that are supported by the target.
-Those features affect the permitted MI commands, but unlike the features
-reported by the '-list-features' command, the features depend on which
-target GDB is using at the moment.  Whenever a target can change, due to
-commands such as '-target-select', '-target-attach' or '-exec-run', the
-list of target features may change, and the frontend should obtain it
-again.  Example output:
-
-     (gdb) -list-target-features
-     ^done,result=["async"]
-
-   The current list of features is:
-
-'async'
-     Indicates that the target is capable of asynchronous command
-     execution, which means that GDB will accept further commands while
-     the target is running.
-
-'reverse'
-     Indicates that the target is capable of reverse execution.  *Note
-     Reverse Execution::, for more information.
 

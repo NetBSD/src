@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Contributed by Denis Chertykov <denisc@overta.ru>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1474,7 +1474,8 @@ elf32_avr_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_AVR_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2479,8 +2480,8 @@ elf32_avr_relax_section (bfd *abfd,
     shrinkable = false;
 
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   htab = avr_link_hash_table (link_info);
   if (htab == NULL)
@@ -3893,6 +3894,7 @@ elf32_avr_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 

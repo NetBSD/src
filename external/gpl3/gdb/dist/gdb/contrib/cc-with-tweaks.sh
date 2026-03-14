@@ -2,7 +2,7 @@
 # Wrapper around gcc to tweak the output in various ways when running
 # the testsuite.
 
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -42,6 +42,7 @@
 # -Z invoke objcopy --compress-debug-sections
 # -z compress using dwz
 # -m compress using dwz -m
+# -5 compress using dwz -m -5
 # -i make an index (.gdb_index)
 # -c make an index (currently .gdb_index) in a cache dir
 # -n make a dwarf5 index (.debug_names)
@@ -88,6 +89,7 @@ want_index=false
 index_options=""
 want_index_cache=false
 want_dwz=false
+dwz_5flag=
 want_multi=false
 want_dwp=false
 want_objcopy_compress=false
@@ -101,6 +103,7 @@ while [ $# -gt 0 ]; do
 	-n) want_index=true; index_options=-dwarf-5;;
 	-c) want_index_cache=true ;;
 	-m) want_multi=true ;;
+	-5) want_multi=true; dwz_5flag=-5 ;;
 	-p) want_dwp=true ;;
 	-l) want_gnu_debuglink=true ;;
 	*) break ;;
@@ -269,7 +272,7 @@ elif [ "$want_multi" = true ]; then
     rm -f "$dwz_file"
 
     cp "$output_file" "${output_file}.alt"
-    $DWZ -m "$dwz_file" "$output_file" "${output_file}.alt" > /dev/null
+    $DWZ $dwz_5flag -m "$dwz_file" "$output_file" "${output_file}.alt" > /dev/null
     rm -f "${output_file}.alt"
 
     # Validate dwz's work by checking if the expected output file exists.

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/hppa
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -210,9 +210,7 @@ hppanbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tramp_frame_prepend_unwinder (gdbarch, &hppanbsd_sigtramp_si4);
 }
 
-void _initialize_hppanbsd_tdep ();
-void
-_initialize_hppanbsd_tdep ()
+INIT_GDB_FILE (hppanbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_hppa, 0, GDB_OSABI_NETBSD,
 			  hppanbsd_init_abi);

@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -160,7 +160,7 @@ public:
 
   /* Update the window to display the given location.  Does nothing if
      the location is already displayed.  */
-  virtual void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) = 0;
+  virtual void maybe_update (struct gdbarch *gdbarch, symtab_and_line sal) = 0;
 
   void update_source_window_as_is  (struct gdbarch *gdbarch,
 				    const struct symtab_and_line &sal);

@@ -1,7 +1,7 @@
 /* Common code for targets with the none ABI (bare-metal), but where the
    BFD library is build with ELF support.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

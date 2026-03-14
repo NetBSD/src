@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    Contributed by AdaCore.
 
@@ -164,7 +164,7 @@ macho_symtab_read (minimal_symbol_reader &reader,
     S_NO_SO,
 
     /* First SO read.  Introduce an SO section, and may be followed by a second
-       SO.  The SO section should contain onl debugging symbols.  */
+       SO.  The SO section should contain only debugging symbols.  */
     S_FIRST_SO,
 
     /* Second non-null SO found, just after the first one.  Means that the first
@@ -901,13 +901,13 @@ macho_symfile_offsets (struct objfile *objfile,
 
   for (i = 0; i < addrs.size (); i++)
     {
-      for (obj_section *osect : objfile->sections ())
+      for (obj_section &osect : objfile->sections ())
 	{
-	  const char *bfd_sect_name = osect->the_bfd_section->name;
+	  const char *bfd_sect_name = osect.the_bfd_section->name;
 
 	  if (bfd_sect_name == addrs[i].name)
 	    {
-	      osect->set_offset (addrs[i].addr);
+	      osect.set_offset (addrs[i].addr);
 	      break;
 	    }
 	}
@@ -915,10 +915,10 @@ macho_symfile_offsets (struct objfile *objfile,
 
   objfile->sect_index_text = 0;
 
-  for (obj_section *osect : objfile->sections ())
+  for (obj_section &osect : objfile->sections ())
     {
-      const char *bfd_sect_name = osect->the_bfd_section->name;
-      int sect_index = osect - objfile->sections_start;
+      const char *bfd_sect_name = osect.the_bfd_section->name;
+      int sect_index = &osect - objfile->sections_start;
 
       if (startswith (bfd_sect_name, "LC_SEGMENT."))
 	bfd_sect_name += 11;
@@ -940,9 +940,7 @@ static const struct sym_fns macho_sym_fns = {
   NULL,				/* sym_get_probes */
 };
 
-void _initialize_machoread ();
-void
-_initialize_machoread ()
+INIT_GDB_FILE (machoread)
 {
   add_symtab_fns (bfd_target_mach_o_flavour, &macho_sym_fns);
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/hppa
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -166,9 +166,7 @@ hppaobsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, hppaobsd_iterate_over_regset_sections);
 }
 
-void _initialize_hppabsd_tdep ();
-void
-_initialize_hppabsd_tdep ()
+INIT_GDB_FILE (hppabsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_hppa, 0, GDB_OSABI_OPENBSD,
 			  hppaobsd_init_abi);

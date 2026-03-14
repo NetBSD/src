@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,7 +164,6 @@ def attach(
 @request("configurationDone", on_dap_thread=True)
 def config_done(**args):
     # Handle the launch or attach.
-    global _launch_or_attach_promise
     if _launch_or_attach_promise is None:
         raise DAPException("launch or attach not specified")
     # Resolve the launch or attach, but only after the

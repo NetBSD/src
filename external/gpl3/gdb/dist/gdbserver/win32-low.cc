@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -490,14 +490,11 @@ create_process (const char *program, char *args,
   return ret;
 }
 
-/* Start a new process.
-   PROGRAM is the program name.
-   PROGRAM_ARGS is the vector containing the inferior's args.
-   Returns the new PID on success, -1 on failure.  Registers the new
-   process with the process list.  */
+/* See target.h.  */
+
 int
 win32_process_target::create_inferior (const char *program,
-				       const std::vector<char *> &program_args)
+				       const std::string &program_args)
 {
   client_state &cs = get_client_state ();
 #ifndef USE_WIN32API
@@ -508,8 +505,7 @@ win32_process_target::create_inferior (const char *program,
   DWORD flags;
   PROCESS_INFORMATION pi;
   DWORD err;
-  std::string str_program_args = construct_inferior_arguments (program_args);
-  char *args = (char *) str_program_args.c_str ();
+  char *args = (char *) program_args.c_str ();
 
   /* win32_wait needs to know we're not attaching.  */
   windows_process.attaching = 0;

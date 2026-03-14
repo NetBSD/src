@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -130,7 +130,6 @@ extern void async_enable_stdin (void);
 
 extern bool set_editing_cmd_var;
 extern bool exec_done_display_p;
-extern struct prompts the_prompts;
 extern void (*after_char_processing_hook) (void);
 extern int call_stdin_event_handler_again_p;
 extern void gdb_readline_no_editing_callback (void *client_data);

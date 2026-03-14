@@ -1,6 +1,6 @@
 /* Python frame filters
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -168,7 +168,7 @@ mi_should_print (struct symbol *sym, enum mi_print_types type)
 {
   int print_me = 0;
 
-  switch (sym->aclass ())
+  switch (sym->loc_class ())
     {
     default:
     case LOC_UNDEF:	/* catches errors        */
@@ -746,7 +746,7 @@ using levels_printed_hash = gdb::unordered_set<frame_info *>;
 
     OUT is the output stream to print to.
 
-    INDENT is the level of indention for this frame  (in the case of elided
+    INDENT is the level of indentation for this frame  (in the case of elided
     frames).
 
     LEVELS_PRINTED is a hash-table containing all the frames for which the
@@ -834,7 +834,7 @@ py_print_frame (PyObject *filter, frame_filter_flags flags,
   if (print_frame_info)
     {
       /* Elided frames are also printed with this function (recursively)
-	 and are printed with indention.  */
+	 and are printed with indentation.  */
       if (indent > 0)
 	out->spaces (indent * 4);
 

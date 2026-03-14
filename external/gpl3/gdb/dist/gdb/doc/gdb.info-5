@@ -1,6 +1,6 @@
 This is gdb.info, produced by makeinfo version 6.8 from gdb.texinfo.
 
-Copyright (C) 1988-2024 Free Software Foundation, Inc.
+Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -21,9 +21,9 @@ END-INFO-DIR-ENTRY
    This file documents the GNU debugger GDB.
 
    This is the Tenth Edition, of 'Debugging with GDB: the GNU
-Source-Level Debugger' for GDB (GDB) Version 16.3.
+Source-Level Debugger' for GDB (GDB) Version 17.1.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -35,6 +35,327 @@ with the Back-Cover Texts as in (a) below.
    (a) The FSF's Back-Cover Text is: "You are free to copy and modify
 this GNU Manual.  Buying copies from GNU Press supports the FSF in
 developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Xmethods In Python,  Next: Xmethod API,  Prev: Unwinding Frames in Python,  Up: Python API
+
+23.3.2.14 Xmethods In Python
+............................
+
+"Xmethods" are additional methods or replacements for existing methods
+of a C++ class.  This feature is useful for those cases where a method
+defined in C++ source code could be inlined or optimized out by the
+compiler, making it unavailable to GDB.  For such cases, one can define
+an xmethod to serve as a replacement for the method defined in the C++
+source code.  GDB will then invoke the xmethod, instead of the C++
+method, to evaluate expressions.  One can also use xmethods when
+debugging with core files.  Moreover, when debugging live programs,
+invoking an xmethod need not involve running the inferior (which can
+potentially perturb its state).  Hence, even if the C++ method is
+available, it is better to use its replacement xmethod if one is
+defined.
+
+   The xmethods feature in Python is available via the concepts of an
+"xmethod matcher" and an "xmethod worker".  To implement an xmethod, one
+has to implement a matcher and a corresponding worker for it (more than
+one worker can be implemented, each catering to a different overloaded
+instance of the method).  Internally, GDB invokes the 'match' method of
+a matcher to match the class type and method name.  On a match, the
+'match' method returns a list of matching _worker_ objects.  Each worker
+object typically corresponds to an overloaded instance of the xmethod.
+They implement a 'get_arg_types' method which returns a sequence of
+types corresponding to the arguments the xmethod requires.  GDB uses
+this sequence of types to perform overload resolution and picks a
+winning xmethod worker.  A winner is also selected from among the
+methods GDB finds in the C++ source code.  Next, the winning xmethod
+worker and the winning C++ method are compared to select an overall
+winner.  In case of a tie between a xmethod worker and a C++ method, the
+xmethod worker is selected as the winner.  That is, if a winning xmethod
+worker is found to be equivalent to the winning C++ method, then the
+xmethod worker is treated as a replacement for the C++ method.  GDB uses
+the overall winner to invoke the method.  If the winning xmethod worker
+is the overall winner, then the corresponding xmethod is invoked via the
+'__call__' method of the worker object.
+
+   If one wants to implement an xmethod as a replacement for an existing
+C++ method, then they have to implement an equivalent xmethod which has
+exactly the same name and takes arguments of exactly the same type as
+the C++ method.  If the user wants to invoke the C++ method even though
+a replacement xmethod is available for that method, then they can
+disable the xmethod.
+
+   *Note Xmethod API::, for API to implement xmethods in Python.  *Note
+Writing an Xmethod::, for implementing xmethods in Python.
+
+
+File: gdb.info,  Node: Xmethod API,  Next: Writing an Xmethod,  Prev: Xmethods In Python,  Up: Python API
+
+23.3.2.15 Xmethod API
+.....................
+
+The GDB Python API provides classes, interfaces and functions to
+implement, register and manipulate xmethods.  *Note Xmethods In
+Python::.
+
+   An xmethod matcher should be an instance of a class derived from
+'XMethodMatcher' defined in the module 'gdb.xmethod', or an object with
+similar interface and attributes.  An instance of 'XMethodMatcher' has
+the following attributes:
+
+ -- Variable: name
+     The name of the matcher.
+
+ -- Variable: enabled
+     A boolean value indicating whether the matcher is enabled or
+     disabled.
+
+ -- Variable: methods
+     A list of named methods managed by the matcher.  Each object in the
+     list is an instance of the class 'XMethod' defined in the module
+     'gdb.xmethod', or any object with the following attributes:
+
+     'name'
+          Name of the xmethod which should be unique for each xmethod
+          managed by the matcher.
+
+     'enabled'
+          A boolean value indicating whether the xmethod is enabled or
+          disabled.
+
+     The class 'XMethod' is a convenience class with same attributes as
+     above along with the following constructor:
+
+      -- Function: XMethod.__init__ (self, name)
+          Constructs an enabled xmethod with name NAME.
+
+The 'XMethodMatcher' class has the following methods:
+
+ -- Function: XMethodMatcher.__init__ (self, name)
+     Constructs an enabled xmethod matcher with name NAME.  The
+     'methods' attribute is initialized to 'None'.
+
+ -- Function: XMethodMatcher.match (self, class_type, method_name)
+     Derived classes should override this method.  It should return a
+     xmethod worker object (or a sequence of xmethod worker objects)
+     matching the CLASS_TYPE and METHOD_NAME.  CLASS_TYPE is a
+     'gdb.Type' object, and METHOD_NAME is a string value.  If the
+     matcher manages named methods as listed in its 'methods' attribute,
+     then only those worker objects whose corresponding entries in the
+     'methods' list are enabled should be returned.
+
+   An xmethod worker should be an instance of a class derived from
+'XMethodWorker' defined in the module 'gdb.xmethod', or support the
+following interface:
+
+ -- Function: XMethodWorker.get_arg_types (self)
+     This method returns a sequence of 'gdb.Type' objects corresponding
+     to the arguments that the xmethod takes.  It can return an empty
+     sequence or 'None' if the xmethod does not take any arguments.  If
+     the xmethod takes a single argument, then a single 'gdb.Type'
+     object corresponding to it can be returned.
+
+ -- Function: XMethodWorker.get_result_type (self, *args)
+     This method returns a 'gdb.Type' object representing the type of
+     the result of invoking this xmethod.  The ARGS argument is the same
+     tuple of arguments that would be passed to the '__call__' method of
+     this worker.
+
+ -- Function: XMethodWorker.__call__ (self, *args)
+     This is the method which does the _work_ of the xmethod.  The ARGS
+     arguments is the tuple of arguments to the xmethod.  Each element
+     in this tuple is a gdb.Value object.  The first element is always
+     the 'this' pointer value.
+
+   For GDB to lookup xmethods, the xmethod matchers should be registered
+using the following function defined in the module 'gdb.xmethod':
+
+ -- Function: register_xmethod_matcher (locus, matcher, replace=False)
+     The 'matcher' is registered with 'locus', replacing an existing
+     matcher with the same name as 'matcher' if 'replace' is 'True'.
+     'locus' can be a 'gdb.Objfile' object (*note Objfiles In Python::),
+     or a 'gdb.Progspace' object (*note Progspaces In Python::), or
+     'None'.  If it is 'None', then 'matcher' is registered globally.
+
+
+File: gdb.info,  Node: Writing an Xmethod,  Next: Inferiors In Python,  Prev: Xmethod API,  Up: Python API
+
+23.3.2.16 Writing an Xmethod
+............................
+
+Implementing xmethods in Python will require implementing xmethod
+matchers and xmethod workers (*note Xmethods In Python::).  Consider the
+following C++ class:
+
+     class MyClass
+     {
+     public:
+       MyClass (int a) : a_(a) { }
+
+       int geta (void) { return a_; }
+       int operator+ (int b);
+
+     private:
+       int a_;
+     };
+
+     int
+     MyClass::operator+ (int b)
+     {
+       return a_ + b;
+     }
+
+Let us define two xmethods for the class 'MyClass', one replacing the
+method 'geta', and another adding an overloaded flavor of 'operator+'
+which takes a 'MyClass' argument (the C++ code above already has an
+overloaded 'operator+' which takes an 'int' argument).  The xmethod
+matcher can be defined as follows:
+
+     class MyClass_geta(gdb.xmethod.XMethod):
+         def __init__(self):
+             gdb.xmethod.XMethod.__init__(self, 'geta')
+
+         def get_worker(self, method_name):
+             if method_name == 'geta':
+                 return MyClassWorker_geta()
+
+
+     class MyClass_sum(gdb.xmethod.XMethod):
+         def __init__(self):
+             gdb.xmethod.XMethod.__init__(self, 'sum')
+
+         def get_worker(self, method_name):
+             if method_name == 'operator+':
+                 return MyClassWorker_plus()
+
+
+     class MyClassMatcher(gdb.xmethod.XMethodMatcher):
+         def __init__(self):
+             gdb.xmethod.XMethodMatcher.__init__(self, 'MyClassMatcher')
+             # List of methods 'managed' by this matcher
+             self.methods = [MyClass_geta(), MyClass_sum()]
+
+         def match(self, class_type, method_name):
+             if class_type.tag != 'MyClass':
+                 return None
+             workers = []
+             for method in self.methods:
+                 if method.enabled:
+                     worker = method.get_worker(method_name)
+                     if worker:
+                         workers.append(worker)
+
+             return workers
+
+Notice that the 'match' method of 'MyClassMatcher' returns a worker
+object of type 'MyClassWorker_geta' for the 'geta' method, and a worker
+object of type 'MyClassWorker_plus' for the 'operator+' method.  This is
+done indirectly via helper classes derived from 'gdb.xmethod.XMethod'.
+One does not need to use the 'methods' attribute in a matcher as it is
+optional.  However, if a matcher manages more than one xmethod, it is a
+good practice to list the xmethods in the 'methods' attribute of the
+matcher.  This will then facilitate enabling and disabling individual
+xmethods via the 'enable/disable' commands.  Notice also that a worker
+object is returned only if the corresponding entry in the 'methods'
+attribute of the matcher is enabled.
+
+   The implementation of the worker classes returned by the matcher
+setup above is as follows:
+
+     class MyClassWorker_geta(gdb.xmethod.XMethodWorker):
+         def get_arg_types(self):
+             return None
+
+         def get_result_type(self, obj):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj):
+             return obj['a_']
+
+
+     class MyClassWorker_plus(gdb.xmethod.XMethodWorker):
+         def get_arg_types(self):
+             return gdb.lookup_type('MyClass')
+
+         def get_result_type(self, obj):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj, other):
+             return obj['a_'] + other['a_']
+
+   For GDB to actually lookup a xmethod, it has to be registered with
+it.  The matcher defined above is registered with GDB globally as
+follows:
+
+     gdb.xmethod.register_xmethod_matcher(None, MyClassMatcher())
+
+   If an object 'obj' of type 'MyClass' is initialized in C++ code as
+follows:
+
+     MyClass obj(5);
+
+then, after loading the Python script defining the xmethod matchers and
+workers into GDB, invoking the method 'geta' or using the operator '+'
+on 'obj' will invoke the xmethods defined above:
+
+     (gdb) p obj.geta()
+     $1 = 5
+
+     (gdb) p obj + obj
+     $2 = 10
+
+   Consider another example with a C++ template class:
+
+     template <class T>
+     class MyTemplate
+     {
+     public:
+       MyTemplate () : dsize_(10), data_ (new T [10]) { }
+       ~MyTemplate () { delete [] data_; }
+
+       int footprint (void)
+       {
+         return sizeof (T) * dsize_ + sizeof (MyTemplate<T>);
+       }
+
+     private:
+       int dsize_;
+       T *data_;
+     };
+
+   Let us implement an xmethod for the above class which serves as a
+replacement for the 'footprint' method.  The full code listing of the
+xmethod workers and xmethod matchers is as follows:
+
+     class MyTemplateWorker_footprint(gdb.xmethod.XMethodWorker):
+         def __init__(self, class_type):
+             self.class_type = class_type
+
+         def get_arg_types(self):
+             return None
+
+         def get_result_type(self):
+             return gdb.lookup_type('int')
+
+         def __call__(self, obj):
+             return (self.class_type.sizeof +
+                     obj['dsize_'] *
+                     self.class_type.template_argument(0).sizeof)
+
+
+     class MyTemplateMatcher_footprint(gdb.xmethod.XMethodMatcher):
+         def __init__(self):
+             gdb.xmethod.XMethodMatcher.__init__(self, 'MyTemplateMatcher')
+
+         def match(self, class_type, method_name):
+             if (re.match('MyTemplate<[ \t\n]*[_a-zA-Z][ _a-zA-Z0-9]*>',
+                          class_type.tag) and
+                 method_name == 'footprint'):
+                 return MyTemplateWorker_footprint(class_type)
+
+   Notice that, in this example, we have not used the 'methods'
+attribute of the matcher as the matcher manages only one xmethod.  The
+user can enable/disable this xmethod by enabling/disabling the matcher
+itself.
 
 
 File: gdb.info,  Node: Inferiors In Python,  Next: Events In Python,  Prev: Writing an Xmethod,  Up: Python API
@@ -948,8 +1269,8 @@ using a subclass.
 
      The help text for the new command is taken from the Python
      documentation string for the command's class, if there is one.  If
-     no documentation string is provided, the default value "This
-     command is not documented."  is used.
+     no documentation string is provided, the default value 'This
+     command is not documented.' is used.
 
  -- Function: Command.dont_repeat ()
      By default, a GDB command is repeated when the user enters a blank
@@ -971,6 +1292,17 @@ using a subclass.
 
      If this method throws an exception, it is turned into a GDB 'error'
      call.  Otherwise, the return value is ignored.
+
+     For non-prefix commands (*note Command.__init__::), the 'invoke'
+     method is required.  For prefix commands the 'invoke' method is
+     optional.  Only prefix commands that need to handle unknown
+     sub-commands should implement the 'invoke' method.
+
+     For prefix commands that don't implement 'invoke', if the prefix
+     command is used without a sub-command name then GDB will display
+     the help text for every sub-command, unless the prefix command is a
+     'show' sub-command, in which case GDB will list the values of all
+     sub-commands.
 
      To break ARGUMENT up into an argv-like string use
      'gdb.string_to_argv'.  This function behaves identically to GDB's
@@ -1386,7 +1718,10 @@ Python scripts and commands.
      If there is no documentation string, a default value is used.  The
      documentation string is included in the output of the parameters
      'help set' and 'help show' commands, and should be written taking
-     this into account.
+     this into account.  If the documentation string for the parameter's
+     class is the empty string then GDB will only use
+     'Parameter.set_doc' or 'Parameter.show_doc' (see below) in the
+     'help' output.
 
  -- Variable: Parameter.set_doc
      If this attribute exists, and is a string, then its value is used
@@ -1525,6 +1860,93 @@ module:
 'gdb.PARAM_ENUM'
      The value is a string, which must be one of a collection string
      constants provided when the parameter is created.
+
+'gdb.PARAM_COLOR'
+     The value is 'gdb.Color' instance.
+
+   When creating multiple new parameters using 'gdb.Parameter', it is
+often desirable to create a prefix command that can be used to group
+related parameters together, for example, if you wished to add the
+parameters 'plugin-name feature-1' and 'plugin-name feature-2', then the
+'plugin-name' would need to be a prefix command (*note CLI Commands In
+Python::).
+
+   However, when creating parameters, you will almost always need to
+create two prefix commands, one as a 'set' sub-command, and one as a
+'show' sub-command.  GDB provides the 'gdb.ParameterPrefix' helper class
+to make creation of these two prefixes easier.
+
+ -- Function: ParameterPrefix.__init__ (name, command_class, doc = None)
+     The object initializer for 'ParameterPrefix' registers two new
+     'gdb.Command' prefixes, one as a 'set' sub-command, and the other
+     as a 'show' sub-command.
+
+     NAME, a string, is the name of the new prefix, without either 'set'
+     or 'show', similar to the NAME passed to 'gdb.Parameter' (*note
+     Parameters In Python::).  For example, to create the prefixes 'set
+     plugin-name' and 'show plugin-name', you would pass the string
+     'plugin-name'.
+
+     COMMAND_CLASS should be one of the 'COMMAND_' constants (*note CLI
+     Commands In Python::).  This argument tells GDB how to categorize
+     the new parameter prefixes in the help system.
+
+     There are a number of ways in which the help text for the two new
+     prefix commands can be provided.  If the DOC parameter is not
+     'None', then this will be used as the documentation string for both
+     prefix commands.
+
+     If DOC is 'None', but 'gdb.ParameterPrefix' has been sub-classed,
+     then the prefix command documentation will be taken from
+     sub-classes documentation string (i.e., the '__doc__' attribute).
+
+     If DOC is 'None', and there is no '__doc__' string, then the
+     default value 'This command is not documented.' is used.
+
+     When writing the help text, keep in mind that the same text is used
+     for both the 'set' and 'show' prefix commands.
+
+ -- Function: ParameterPrefix.invoke_set (argument, from_tty)
+     If a sub-class defines this method, then GDB will call this when
+     the prefix command is used with an unknown sub-command.  The
+     ARGUMENT and FROM_TTY parameters are the same as for
+     'gdb.Command.invoke' (*note Command.invoke::).
+
+     If this method throws an exception, it is turned into a GDB 'error'
+     call.  Otherwise, the return value is ignored.
+
+     It is not required that a 'ParameterPrefix' sub-class override this
+     method.  Usually, a parameter prefix only exists as a means to
+     group related parameters together.  GDB handles this use case
+     automatically with no need to implement 'invoke_set'.
+
+ -- Function: ParameterPrefix.invoke_show (argument, from_tty)
+     This is like the 'invoke_set' method, but for the 'show' prefix
+     command.  As with 'invoke_set', implementation of this method is
+     optional, and usually not required.
+
+ -- Function: ParameterPrefix.dont_repeat ()
+     Like 'Command.dont_repeat' (*note Command.dont_repeat::), this can
+     be called from 'ParameterPrefix.invoke_set' or
+     'ParameterPrefix.invoke_show' to prevent the prefix commands from
+     being repeated.
+
+   Here is a small example that uses 'gdb.ParameterPrefix' along with
+'gdb.Parameter' to create two new parameters 'plugin-name feature-1' and
+'plugin-name feature-2'.  As neither 'invoke_set' or 'invoke_show' is
+needed, this example does not sub-class 'gdb.ParameterPrefix':
+
+     class ExampleParam(gdb.Parameter):
+        def __init__ (self, name):
+           super ().__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_BOOLEAN)
+           self.value = True
+
+     gdb.ParameterPrefix("plugin-name", gdb.COMMAND_NONE,
+                         """An example parameter prefix.
+
+                         This groups together some parameters.""")
+     ExampleParam("plugin-name feature-1")
+     ExampleParam("plugin-name feature-2")
 
 
 File: gdb.info,  Node: Functions In Python,  Next: Progspaces In Python,  Prev: Parameters In Python,  Up: Python API
@@ -2217,6 +2639,11 @@ module:
      exist, this attribute holds 'None'.  This attribute is not
      writable.
 
+ -- Variable: Block.subblocks
+     A list of blocks nested in this block.  If there are no blocks
+     nested, this attribute holds an empty list.  This attribute is not
+     writable.
+
  -- Variable: Block.global_block
      The global block associated with this block.  This attribute is not
      writable.
@@ -2355,6 +2782,10 @@ module:
  -- Variable: Symbol.addr_class
      The address class of the symbol.  This classifies how to find the
      value of a symbol.  Each address class is a constant defined in the
+     'gdb' module and described later in this chapter.
+
+ -- Variable: Symbol.domain
+     The domain of the symbol.  Each domain is a constant defined in the
      'gdb' module and described later in this chapter.
 
  -- Variable: Symbol.needs_frame
@@ -3007,7 +3438,7 @@ thread selected.
      computable.  This attribute is not writable.
 
 
-File: gdb.info,  Node: Lazy Strings In Python,  Next: Architectures In Python,  Prev: Finish Breakpoints in Python,  Up: Python API
+File: gdb.info,  Node: Lazy Strings In Python,  Next: Colors In Python,  Prev: Finish Breakpoints in Python,  Up: Python API
 
 23.3.2.35 Python representation of lazy strings
 ...............................................
@@ -3059,9 +3490,89 @@ method (*note Values From Inferior::).
      writable.
 
 
-File: gdb.info,  Node: Architectures In Python,  Next: Registers In Python,  Prev: Lazy Strings In Python,  Up: Python API
+File: gdb.info,  Node: Colors In Python,  Next: Architectures In Python,  Prev: Lazy Strings In Python,  Up: Python API
 
-23.3.2.36 Python representation of architectures
+23.3.2.36 Python representation of colors
+.........................................
+
+You can assign instance of 'gdb.Color' to the 'value' of a 'Parameter'
+instance created with 'PARAM_COLOR'.
+
+   'gdb.Color' may refer to an index from a color palette or contain
+components of a color from some color space.
+
+ -- Function: Color.__init__ ([value [, color_space]])
+
+     VALUE is 'None' (meaning the terminal's default color), an integer
+     index of a color in palette, tuple with color components or a
+     string.  String can be a hex RGB triplet in '#RRGGBB' format or one
+     of the following color names: 'none' (meaning the terminal's
+     default color), 'black', 'red', 'green', 'yellow', 'blue',
+     'magenta', 'cyan', or 'white'.
+
+     COLOR_SPACE should be one of the 'COLORSPACE_' constants listed
+     below.  This argument tells GDB which color space VALUE belongs.
+
+ -- Variable: Color.is_none
+     This attribute is boolean.  If its value is 'True' then color is
+     terminal's default.
+
+ -- Variable: Color.is_indexed
+     This attribute is boolean.  If its value is 'True' then color is
+     indexed, i.e.  belongs to some palette.
+
+ -- Variable: Color.is_direct
+     This attribute is boolean.  If its value is 'True' then this object
+     describes direct colour in the sense of ISO/IEC 8613-6.
+
+ -- Variable: Color.index
+     This attribute exist if 'is_indexed' is 'True'.  Its integer value
+     is index of a color in a palette.
+
+ -- Variable: Color.components
+     This attribute exist if 'is_direct' is 'True'.  Its value is tuple
+     with integer components of a color.
+
+ -- Function: Color.escape_sequence (is_foreground)
+     Returns string to change terminal's color to this.
+
+     If IS_FOREGROUND is 'True', then the returned sequence will change
+     foreground color.  Otherwise, the returned sequence will change
+     background color.
+
+     If styling is currently disabled (*note 'set style enabled': Output
+     Styling.), then this method will return an empty string.
+
+   When color is initialized, its color space must be specified.  The
+available color spaces are represented by constants defined in the 'gdb'
+module:
+
+'gdb.COLORSPACE_MONOCHROME'
+     Palette with only terminal's default color.
+
+'gdb.COLORSPACE_ANSI_8COLOR'
+     Palette with eight standard colors of ISO/IEC 6429 "black", "red",
+     "green", etc.
+
+'gdb.COLORSPACE_AIXTERM_16COLOR'
+     Palette with 16 colors.  First eight are standard colors of ISO/IEC
+     6429 "black", "red", "green", etc.  Next eight are their bright
+     version.
+
+'gdb.COLORSPACE_XTERM_256COLOR'
+     Palette with 256 colors.  First 16 are from
+     COLORSPACE_AIXTERM_16COLOR. Next 216 colors are 6x6x6 RGB cube.
+     And last 24 colors form grayscale ramp.
+
+'gdb.COLORSPACE_RGB_24BIT'
+     Direct 24-bit RGB colors.
+
+   It is not possible to sub-class the 'Color' class.
+
+
+File: gdb.info,  Node: Architectures In Python,  Next: Registers In Python,  Prev: Colors In Python,  Up: Python API
+
+23.3.2.37 Python representation of architectures
 ................................................
 
 GDB uses architecture specific parameters and artifacts in a number of
@@ -3119,6 +3630,9 @@ of the 'gdb.Architecture' class.
      If the indicated type cannot be found, this function will throw a
      'ValueError' exception.
 
+ -- Function: Architecture.void_type ()
+     This function returns a void type.
+
  -- Function: Architecture.registers ([ reggroup ])
      Return a 'gdb.RegisterDescriptorIterator' (*note Registers In
      Python::) for all of the registers in REGGROUP, a string that is
@@ -3133,7 +3647,7 @@ of the 'gdb.Architecture' class.
 
 File: gdb.info,  Node: Registers In Python,  Next: Connections In Python,  Prev: Architectures In Python,  Up: Python API
 
-23.3.2.37 Registers In Python
+23.3.2.38 Registers In Python
 .............................
 
 Python code can request from a 'gdb.Architecture' information about the
@@ -3184,7 +3698,7 @@ info_registers_reggroup.).
 
 File: gdb.info,  Node: Connections In Python,  Next: TUI Windows In Python,  Prev: Registers In Python,  Up: Python API
 
-23.3.2.38 Connections In Python
+23.3.2.39 Connections In Python
 ...............................
 
 GDB lets you run and debug multiple programs in a single session.  Each
@@ -3296,7 +3810,7 @@ methods available from the 'gdb.TargetConnection' base class, a
 
 File: gdb.info,  Node: TUI Windows In Python,  Next: Disassembly In Python,  Prev: Connections In Python,  Up: Python API
 
-23.3.2.39 Implementing new TUI windows
+23.3.2.40 Implementing new TUI windows
 ......................................
 
 New TUI (*note TUI::) windows can be implemented in Python.
@@ -3412,7 +3926,7 @@ underscore to avoid any future conflicts.
 
 File: gdb.info,  Node: Disassembly In Python,  Next: Missing Debug Info In Python,  Prev: TUI Windows In Python,  Up: Python API
 
-23.3.2.40 Instruction Disassembly In Python
+23.3.2.41 Instruction Disassembly In Python
 ...........................................
 
 GDB's builtin disassembler can be extended, or even replaced, using the
@@ -3987,7 +4501,7 @@ isn't a very useful adjustment, but serves as an example.
 
 File: gdb.info,  Node: Missing Debug Info In Python,  Next: Missing Objfiles In Python,  Prev: Disassembly In Python,  Up: Python API
 
-23.3.2.41 Missing Debug Info In Python
+23.3.2.42 Missing Debug Info In Python
 ......................................
 
 When GDB encounters a new objfile (*note Objfiles In Python::), e.g. the
@@ -4115,7 +4629,7 @@ class and global function:
 
 File: gdb.info,  Node: Missing Objfiles In Python,  Prev: Missing Debug Info In Python,  Up: Python API
 
-23.3.2.42 Missing Objfiles In Python
+23.3.2.43 Missing Objfiles In Python
 ....................................
 
 When GDB opens a core file, for example with the 'core-file' command
@@ -4784,6 +5298,7 @@ PROCEDURE-NAME' from the Guile interactive prompt.
 * I/O Ports in Guile::       GDB I/O ports
 * Memory Ports in Guile::    Accessing memory through ports and bytevectors
 * Iterators In Guile::       Basic iterator support
+* Colors In Guile::          Colorize output with Guile
 
 
 File: gdb.info,  Node: Basic Guile,  Next: Guile Configuration,  Up: Guile API
@@ -5012,6 +5527,9 @@ types known to Guile.
 
 '<gdb:value>'
      *Note Values From Inferior In Guile::.
+
+'<gdb:color>'
+     *Note Colors In Guile::.
 
    The following GDB objects are managed internally so that the Scheme
 function 'eq?' may be applied to them.
@@ -6200,6 +6718,16 @@ consist of multiple lines and are terminated with 'end'.
      interactively.  If this function throws an exception, it is turned
      into a GDB 'error' call.  Otherwise, the return value is ignored.
 
+     For non-prefix commands, INVOKE is required.  For prefix commands
+     INVOKE is optional.  Only prefix commands that need to handle
+     unknown sub-commands should supply INVOKE.
+
+     For prefix commands that don't supply INVOKE, if the prefix command
+     is used without a sub-command name then GDB will display the help
+     text for every sub-command, unless the prefix command is a 'show'
+     sub-command, in which case GDB will list the values of all
+     sub-commands.
+
      The argument COMMAND-CLASS is one of the 'COMMAND_' constants
      defined below.  This argument tells GDB how to categorize the new
      command in the help system.  The default is 'COMMAND_NONE'.
@@ -6488,7 +7016,9 @@ parameter to GDB from 'make-parameter'.
      newline.
 
      The argument DOC is the help text for the new parameter.  If there
-     is no documentation string, a default value is used.
+     is no documentation string, a default value is used.  If the
+     documentation string is empty, then GDB will print just the SET-DOC
+     and SHOW-DOC strings (see below).
 
      The argument SET-DOC is the help text for this parameter's 'set'
      command.
@@ -6570,632 +7100,15 @@ module:
      The value is a string, which must be one of a collection of string
      constants provided when the parameter is created.
 
+'PARAM_COLOR'
+     The value is either a string or an unsigned integer.  Integer from
+     0 to 255 means index into terminal's color palette.  String can be
+     a hex RGB triplet in '#RRGGBB' format or one of the following color
+     names: 'none' (meaning the terminal's default color), 'black',
+     'red', 'green', 'yellow', 'blue', 'magenta', 'cyan', or 'white'.
+
    ---------- Footnotes ----------
 
    (1) Note that GDB parameters must not be confused with Guile’s
 parameter objects (*note (guile)Parameters::).
-
-
-File: gdb.info,  Node: Progspaces In Guile,  Next: Objfiles In Guile,  Prev: Parameters In Guile,  Up: Guile API
-
-23.4.3.13 Program Spaces In Guile
-.................................
-
-A program space, or "progspace", represents a symbolic view of an
-address space.  It consists of all of the objfiles of the program.
-*Note Objfiles In Guile::.  *Note program spaces: Inferiors Connections
-and Programs, for more details about program spaces.
-
-   Each progspace is represented by an instance of the '<gdb:progspace>'
-smob.  *Note GDB Scheme Data Types::.
-
-   The following progspace-related functions are available in the
-'(gdb)' module:
-
- -- Scheme Procedure: progspace? object
-     Return '#t' if OBJECT is a '<gdb:progspace>' object.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: progspace-valid? progspace
-     Return '#t' if PROGSPACE is valid, '#f' if not.  A
-     '<gdb:progspace>' object can become invalid if the program it
-     refers to is not loaded in GDB any longer.
-
- -- Scheme Procedure: current-progspace
-     This function returns the program space of the currently selected
-     inferior.  There is always a current progspace, this never returns
-     '#f'.  *Note Inferiors Connections and Programs::.
-
- -- Scheme Procedure: progspaces
-     Return a list of all the progspaces currently known to GDB.
-
- -- Scheme Procedure: progspace-filename progspace
-     Return the absolute file name of PROGSPACE as a string.  This is
-     the name of the file passed as the argument to the 'file' or
-     'symbol-file' commands.  If the program space does not have an
-     associated file name, then '#f' is returned.  This occurs, for
-     example, when GDB is started without a program to debug.
-
-     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
-     invalid.
-
- -- Scheme Procedure: progspace-objfiles progspace
-     Return the list of objfiles of PROGSPACE.  The order of objfiles in
-     the result is arbitrary.  Each element is an object of type
-     '<gdb:objfile>'.  *Note Objfiles In Guile::.
-
-     A 'gdb:invalid-object-error' exception is thrown if PROGSPACE is
-     invalid.
-
- -- Scheme Procedure: progspace-pretty-printers progspace
-     Return the list of pretty-printers of PROGSPACE.  Each element is
-     an object of type '<gdb:pretty-printer>'.  *Note Guile Pretty
-     Printing API::, for more information.
-
- -- Scheme Procedure: set-progspace-pretty-printers! progspace
-          printer-list
-     Set the list of registered '<gdb:pretty-printer>' objects for
-     PROGSPACE to PRINTER-LIST.  *Note Guile Pretty Printing API::, for
-     more information.
-
-
-File: gdb.info,  Node: Objfiles In Guile,  Next: Frames In Guile,  Prev: Progspaces In Guile,  Up: Guile API
-
-23.4.3.14 Objfiles In Guile
-...........................
-
-GDB loads symbols for an inferior from various symbol-containing files
-(*note Files::).  These include the primary executable file, any shared
-libraries used by the inferior, and any separate debug info files (*note
-Separate Debug Files::).  GDB calls these symbol-containing files
-"objfiles".
-
-   Each objfile is represented as an object of type '<gdb:objfile>'.
-
-   The following objfile-related procedures are provided by the '(gdb)'
-module:
-
- -- Scheme Procedure: objfile? object
-     Return '#t' if OBJECT is a '<gdb:objfile>' object.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: objfile-valid? objfile
-     Return '#t' if OBJFILE is valid, '#f' if not.  A '<gdb:objfile>'
-     object can become invalid if the object file it refers to is not
-     loaded in GDB any longer.  All other '<gdb:objfile>' procedures
-     will throw an exception if it is invalid at the time the procedure
-     is called.
-
- -- Scheme Procedure: objfile-filename objfile
-     Return the file name of OBJFILE as a string, with symbolic links
-     resolved.
-
- -- Scheme Procedure: objfile-progspace objfile
-     Return the '<gdb:progspace>' that this object file lives in.  *Note
-     Progspaces In Guile::, for more on progspaces.
-
- -- Scheme Procedure: objfile-pretty-printers objfile
-     Return the list of registered '<gdb:pretty-printer>' objects for
-     OBJFILE.  *Note Guile Pretty Printing API::, for more information.
-
- -- Scheme Procedure: set-objfile-pretty-printers! objfile printer-list
-     Set the list of registered '<gdb:pretty-printer>' objects for
-     OBJFILE to PRINTER-LIST.  The PRINTER-LIST must be a list of
-     '<gdb:pretty-printer>' objects.  *Note Guile Pretty Printing API::,
-     for more information.
-
- -- Scheme Procedure: current-objfile
-     When auto-loading a Guile script (*note Guile Auto-loading::), GDB
-     sets the "current objfile" to the corresponding objfile.  This
-     function returns the current objfile.  If there is no current
-     objfile, this function returns '#f'.
-
- -- Scheme Procedure: objfiles
-     Return a list of all the objfiles in the current program space.
-
-
-File: gdb.info,  Node: Frames In Guile,  Next: Blocks In Guile,  Prev: Objfiles In Guile,  Up: Guile API
-
-23.4.3.15 Accessing inferior stack frames from Guile.
-.....................................................
-
-When the debugged program stops, GDB is able to analyze its call stack
-(*note Stack frames: Frames.).  The '<gdb:frame>' class represents a
-frame in the stack.  A '<gdb:frame>' object is only valid while its
-corresponding frame exists in the inferior's stack.  If you try to use
-an invalid frame object, GDB will throw a 'gdb:invalid-object' exception
-(*note Guile Exception Handling::).
-
-   Two '<gdb:frame>' objects can be compared for equality with the
-'equal?' function, like:
-
-     (gdb) guile (equal? (newest-frame) (selected-frame))
-     #t
-
-   The following frame-related procedures are provided by the '(gdb)'
-module:
-
- -- Scheme Procedure: frame? object
-     Return '#t' if OBJECT is a '<gdb:frame>' object.  Otherwise return
-     '#f'.
-
- -- Scheme Procedure: frame-valid? frame
-     Returns '#t' if FRAME is valid, '#f' if not.  A frame object can
-     become invalid if the frame it refers to doesn't exist anymore in
-     the inferior.  All '<gdb:frame>' procedures will throw an exception
-     if the frame is invalid at the time the procedure is called.
-
- -- Scheme Procedure: frame-name frame
-     Return the function name of FRAME, or '#f' if it can't be obtained.
-
- -- Scheme Procedure: frame-arch frame
-     Return the '<gdb:architecture>' object corresponding to FRAME's
-     architecture.  *Note Architectures In Guile::.
-
- -- Scheme Procedure: frame-type frame
-     Return the type of FRAME.  The value can be one of:
-
-     'NORMAL_FRAME'
-          An ordinary stack frame.
-
-     'DUMMY_FRAME'
-          A fake stack frame that was created by GDB when performing an
-          inferior function call.
-
-     'INLINE_FRAME'
-          A frame representing an inlined function.  The function was
-          inlined into a 'NORMAL_FRAME' that is older than this one.
-
-     'TAILCALL_FRAME'
-          A frame representing a tail call.  *Note Tail Call Frames::.
-
-     'SIGTRAMP_FRAME'
-          A signal trampoline frame.  This is the frame created by the
-          OS when it calls into a signal handler.
-
-     'ARCH_FRAME'
-          A fake stack frame representing a cross-architecture call.
-
-     'SENTINEL_FRAME'
-          This is like 'NORMAL_FRAME', but it is only used for the
-          newest frame.
-
- -- Scheme Procedure: frame-unwind-stop-reason frame
-     Return an integer representing the reason why it's not possible to
-     find more frames toward the outermost frame.  Use
-     'unwind-stop-reason-string' to convert the value returned by this
-     function to a string.  The value can be one of:
-
-     'FRAME_UNWIND_NO_REASON'
-          No particular reason (older frames should be available).
-
-     'FRAME_UNWIND_NULL_ID'
-          The previous frame's analyzer returns an invalid result.
-
-     'FRAME_UNWIND_OUTERMOST'
-          This frame is the outermost.
-
-     'FRAME_UNWIND_UNAVAILABLE'
-          Cannot unwind further, because that would require knowing the
-          values of registers or memory that have not been collected.
-
-     'FRAME_UNWIND_INNER_ID'
-          This frame ID looks like it ought to belong to a NEXT frame,
-          but we got it for a PREV frame.  Normally, this is a sign of
-          unwinder failure.  It could also indicate stack corruption.
-
-     'FRAME_UNWIND_SAME_ID'
-          This frame has the same ID as the previous one.  That means
-          that unwinding further would almost certainly give us another
-          frame with exactly the same ID, so break the chain.  Normally,
-          this is a sign of unwinder failure.  It could also indicate
-          stack corruption.
-
-     'FRAME_UNWIND_NO_SAVED_PC'
-          The frame unwinder did not find any saved PC, but we needed
-          one to unwind further.
-
-     'FRAME_UNWIND_MEMORY_ERROR'
-          The frame unwinder caused an error while trying to access
-          memory.
-
-     'FRAME_UNWIND_FIRST_ERROR'
-          Any stop reason greater or equal to this value indicates some
-          kind of error.  This special value facilitates writing code
-          that tests for errors in unwinding in a way that will work
-          correctly even if the list of the other values is modified in
-          future GDB versions.  Using it, you could write:
-
-               (define reason (frame-unwind-stop-readon (selected-frame)))
-               (define reason-str (unwind-stop-reason-string reason))
-               (if (>= reason FRAME_UNWIND_FIRST_ERROR)
-                   (format #t "An error occurred: ~s\n" reason-str))
-
- -- Scheme Procedure: frame-pc frame
-     Return the frame's resume address.
-
- -- Scheme Procedure: frame-block frame
-     Return the frame's code block as a '<gdb:block>' object.  *Note
-     Blocks In Guile::.
-
- -- Scheme Procedure: frame-function frame
-     Return the symbol for the function corresponding to this frame as a
-     '<gdb:symbol>' object, or '#f' if there isn't one.  *Note Symbols
-     In Guile::.
-
- -- Scheme Procedure: frame-older frame
-     Return the frame that called FRAME.
-
- -- Scheme Procedure: frame-newer frame
-     Return the frame called by FRAME.
-
- -- Scheme Procedure: frame-sal frame
-     Return the frame's '<gdb:sal>' (symtab and line) object.  *Note
-     Symbol Tables In Guile::.
-
- -- Scheme Procedure: frame-read-register frame register
-     Return the value of REGISTER in FRAME.  REGISTER should be a
-     string, like 'pc'.
-
- -- Scheme Procedure: frame-read-var frame variable [#:block block]
-     Return the value of VARIABLE in FRAME.  If the optional argument
-     BLOCK is provided, search for the variable from that block;
-     otherwise start at the frame's current block (which is determined
-     by the frame's current program counter).  The VARIABLE must be
-     given as a string or a '<gdb:symbol>' object, and BLOCK must be a
-     '<gdb:block>' object.
-
- -- Scheme Procedure: frame-select frame
-     Set FRAME to be the selected frame.  *Note Examining the Stack:
-     Stack.
-
- -- Scheme Procedure: selected-frame
-     Return the selected frame object.  *Note Selecting a Frame:
-     Selection.
-
- -- Scheme Procedure: newest-frame
-     Return the newest frame object for the selected thread.
-
- -- Scheme Procedure: unwind-stop-reason-string reason
-     Return a string explaining the reason why GDB stopped unwinding
-     frames, as expressed by the given REASON code (an integer, see the
-     'frame-unwind-stop-reason' procedure above in this section).
-
-
-File: gdb.info,  Node: Blocks In Guile,  Next: Symbols In Guile,  Prev: Frames In Guile,  Up: Guile API
-
-23.4.3.16 Accessing blocks from Guile.
-......................................
-
-In GDB, symbols are stored in blocks.  A block corresponds roughly to a
-scope in the source code.  Blocks are organized hierarchically, and are
-represented individually in Guile as an object of type '<gdb:block>'.
-Blocks rely on debugging information being available.
-
-   A frame has a block.  Please see *note Frames In Guile::, for a more
-in-depth discussion of frames.
-
-   The outermost block is known as the "global block".  The global block
-typically holds public global variables and functions.
-
-   The block nested just inside the global block is the "static block".
-The static block typically holds file-scoped variables and functions.
-
-   GDB provides a method to get a block's superblock, but there is
-currently no way to examine the sub-blocks of a block, or to iterate
-over all the blocks in a symbol table (*note Symbol Tables In Guile::).
-
-   Here is a short example that should help explain blocks:
-
-     /* This is in the global block.  */
-     int global;
-
-     /* This is in the static block.  */
-     static int file_scope;
-
-     /* 'function' is in the global block, and 'argument' is
-        in a block nested inside of 'function'.  */
-     int function (int argument)
-     {
-       /* 'local' is in a block inside 'function'.  It may or may
-          not be in the same block as 'argument'.  */
-       int local;
-
-       {
-          /* 'inner' is in a block whose superblock is the one holding
-             'local'.  */
-          int inner;
-
-          /* If this call is expanded by the compiler, you may see
-             a nested block here whose function is 'inline_function'
-             and whose superblock is the one holding 'inner'.  */
-          inline_function ();
-       }
-     }
-
-   The following block-related procedures are provided by the '(gdb)'
-module:
-
- -- Scheme Procedure: block? object
-     Return '#t' if OBJECT is a '<gdb:block>' object.  Otherwise return
-     '#f'.
-
- -- Scheme Procedure: block-valid? block
-     Returns '#t' if '<gdb:block>' BLOCK is valid, '#f' if not.  A block
-     object can become invalid if the block it refers to doesn't exist
-     anymore in the inferior.  All other '<gdb:block>' methods will
-     throw an exception if it is invalid at the time the procedure is
-     called.  The block's validity is also checked during iteration over
-     symbols of the block.
-
- -- Scheme Procedure: block-start block
-     Return the start address of '<gdb:block>' BLOCK.
-
- -- Scheme Procedure: block-end block
-     Return the end address of '<gdb:block>' BLOCK.
-
- -- Scheme Procedure: block-function block
-     Return the name of '<gdb:block>' BLOCK represented as a
-     '<gdb:symbol>' object.  If the block is not named, then '#f' is
-     returned.
-
-     For ordinary function blocks, the superblock is the static block.
-     However, you should note that it is possible for a function block
-     to have a superblock that is not the static block - for instance
-     this happens for an inlined function.
-
- -- Scheme Procedure: block-superblock block
-     Return the block containing '<gdb:block>' BLOCK.  If the parent
-     block does not exist, then '#f' is returned.
-
- -- Scheme Procedure: block-global-block block
-     Return the global block associated with '<gdb:block>' BLOCK.
-
- -- Scheme Procedure: block-static-block block
-     Return the static block associated with '<gdb:block>' BLOCK.
-
- -- Scheme Procedure: block-global? block
-     Return '#t' if '<gdb:block>' BLOCK is a global block.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: block-static? block
-     Return '#t' if '<gdb:block>' BLOCK is a static block.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: block-symbols
-     Return a list of all symbols (as <gdb:symbol> objects) in
-     '<gdb:block>' BLOCK.
-
- -- Scheme Procedure: make-block-symbols-iterator block
-     Return an object of type '<gdb:iterator>' that will iterate over
-     all symbols of the block.  Guile programs should not assume that a
-     specific block object will always contain a given symbol, since
-     changes in GDB features and infrastructure may cause symbols move
-     across blocks in a symbol table.  *Note Iterators In Guile::.
-
- -- Scheme Procedure: block-symbols-progress?
-     Return #t if the object is a <gdb:block-symbols-progress> object.
-     This object would be obtained from the 'progress' element of the
-     '<gdb:iterator>' object returned by 'make-block-symbols-iterator'.
-
- -- Scheme Procedure: lookup-block pc
-     Return the innermost '<gdb:block>' containing the given PC value.
-     If the block cannot be found for the PC value specified, the
-     function will return '#f'.
-
-
-File: gdb.info,  Node: Symbols In Guile,  Next: Symbol Tables In Guile,  Prev: Blocks In Guile,  Up: Guile API
-
-23.4.3.17 Guile representation of Symbols.
-..........................................
-
-GDB represents every variable, function and type as an entry in a symbol
-table.  *Note Examining the Symbol Table: Symbols.  Guile represents
-these symbols in GDB with the '<gdb:symbol>' object.
-
-   The following symbol-related procedures are provided by the '(gdb)'
-module:
-
- -- Scheme Procedure: symbol? object
-     Return '#t' if OBJECT is an object of type '<gdb:symbol>'.
-     Otherwise return '#f'.
-
- -- Scheme Procedure: symbol-valid? symbol
-     Return '#t' if the '<gdb:symbol>' object is valid, '#f' if not.  A
-     '<gdb:symbol>' object can become invalid if the symbol it refers to
-     does not exist in GDB any longer.  All other '<gdb:symbol>'
-     procedures will throw an exception if it is invalid at the time the
-     procedure is called.
-
- -- Scheme Procedure: symbol-type symbol
-     Return the type of SYMBOL or '#f' if no type is recorded.  The
-     result is an object of type '<gdb:type>'.  *Note Types In Guile::.
-
- -- Scheme Procedure: symbol-symtab symbol
-     Return the symbol table in which SYMBOL appears.  The result is an
-     object of type '<gdb:symtab>'.  *Note Symbol Tables In Guile::.
-
- -- Scheme Procedure: symbol-line symbol
-     Return the line number in the source code at which SYMBOL was
-     defined.  This is an integer.
-
- -- Scheme Procedure: symbol-name symbol
-     Return the name of SYMBOL as a string.
-
- -- Scheme Procedure: symbol-linkage-name symbol
-     Return the name of SYMBOL, as used by the linker (i.e., may be
-     mangled).
-
- -- Scheme Procedure: symbol-print-name symbol
-     Return the name of SYMBOL in a form suitable for output.  This is
-     either 'name' or 'linkage_name', depending on whether the user
-     asked GDB to display demangled or mangled names.
-
- -- Scheme Procedure: symbol-addr-class symbol
-     Return the address class of the symbol.  This classifies how to
-     find the value of a symbol.  Each address class is a constant
-     defined in the '(gdb)' module and described later in this chapter.
-
- -- Scheme Procedure: symbol-needs-frame? symbol
-     Return '#t' if evaluating SYMBOL's value requires a frame (*note
-     Frames In Guile::) and '#f' otherwise.  Typically, local variables
-     will require a frame, but other symbols will not.
-
- -- Scheme Procedure: symbol-argument? symbol
-     Return '#t' if SYMBOL is an argument of a function.  Otherwise
-     return '#f'.
-
- -- Scheme Procedure: symbol-constant? symbol
-     Return '#t' if SYMBOL is a constant.  Otherwise return '#f'.
-
- -- Scheme Procedure: symbol-function? symbol
-     Return '#t' if SYMBOL is a function or a method.  Otherwise return
-     '#f'.
-
- -- Scheme Procedure: symbol-variable? symbol
-     Return '#t' if SYMBOL is a variable.  Otherwise return '#f'.
-
- -- Scheme Procedure: symbol-value symbol [#:frame frame]
-     Compute the value of SYMBOL, as a '<gdb:value>'.  For functions,
-     this computes the address of the function, cast to the appropriate
-     type.  If the symbol requires a frame in order to compute its
-     value, then FRAME must be given.  If FRAME is not given, or if
-     FRAME is invalid, then an exception is thrown.
-
- -- Scheme Procedure: lookup-symbol name [#:block block]
-          [#:domain domain]
-     This function searches for a symbol by name.  The search scope can
-     be restricted to the parameters defined in the optional domain and
-     block arguments.
-
-     NAME is the name of the symbol.  It must be a string.  The optional
-     BLOCK argument restricts the search to symbols visible in that
-     BLOCK.  The BLOCK argument must be a '<gdb:block>' object.  If
-     omitted, the block for the current frame is used.  The optional
-     DOMAIN argument restricts the search to the domain type.  The
-     DOMAIN argument must be a domain constant defined in the '(gdb)'
-     module and described later in this chapter.
-
-     The result is a list of two elements.  The first element is a
-     '<gdb:symbol>' object or '#f' if the symbol is not found.  If the
-     symbol is found, the second element is '#t' if the symbol is a
-     field of a method's object (e.g., 'this' in C++), otherwise it is
-     '#f'.  If the symbol is not found, the second element is '#f'.
-
- -- Scheme Procedure: lookup-global-symbol name [#:domain domain]
-     This function searches for a global symbol by name.  The search
-     scope can be restricted by the domain argument.
-
-     NAME is the name of the symbol.  It must be a string.  The optional
-     DOMAIN argument restricts the search to the domain type.  The
-     DOMAIN argument must be a domain constant defined in the '(gdb)'
-     module and described later in this chapter.
-
-     The result is a '<gdb:symbol>' object or '#f' if the symbol is not
-     found.
-
-   The available domain categories in '<gdb:symbol>' are represented as
-constants in the '(gdb)' module:
-
-'SYMBOL_UNDEF_DOMAIN'
-     This is used when a domain has not been discovered or none of the
-     following domains apply.  This usually indicates an error either in
-     the symbol information or in GDB's handling of symbols.
-
-'SYMBOL_VAR_DOMAIN'
-     This domain contains variables, function names, typedef names and
-     enum type values.
-
-'SYMBOL_FUNCTION_DOMAIN'
-     This domain contains functions.
-
-'SYMBOL_TYPE_DOMAIN'
-     This domain contains types.  In a C-like language, types using a
-     tag (the name appearing after a 'struct', 'union', or 'enum'
-     keyword) will not appear here; in other languages, all types are in
-     this domain.
-
-'SYMBOL_STRUCT_DOMAIN'
-     This domain holds struct, union and enum tag names.  This domain is
-     only used for C-like languages.  For example, in this code:
-          struct type_one { int x; };
-          typedef struct type_one type_two;
-     Here 'type_one' will be in 'SYMBOL_STRUCT_DOMAIN', but 'type_two'
-     will be in 'SYMBOL_TYPE_DOMAIN'.
-
-'SYMBOL_LABEL_DOMAIN'
-     This domain contains names of labels (for gotos).
-
-'SYMBOL_VARIABLES_DOMAIN'
-     This domain holds a subset of the 'SYMBOLS_VAR_DOMAIN'; it contains
-     everything minus functions and types.
-
-'SYMBOL_FUNCTIONS_DOMAIN'
-     This domain contains all functions.
-
-'SYMBOL_TYPES_DOMAIN'
-     This domain contains all types.
-
-   The available address class categories in '<gdb:symbol>' are
-represented as constants in the 'gdb' module:
-
-   When searching for a symbol, the desired domain constant can be
-passed verbatim to the lookup function.
-
-   For more complex searches, there is a corresponding set of constants,
-each named after one of the preceding constants, but with the 'SEARCH'
-prefix replacing the 'SYMBOL' prefix; for example,
-'SEARCH_LABEL_DOMAIN'.  These may be or'd together to form a search
-constant.
-
-'SYMBOL_LOC_UNDEF'
-     If this is returned by address class, it indicates an error either
-     in the symbol information or in GDB's handling of symbols.
-
-'SYMBOL_LOC_CONST'
-     Value is constant int.
-
-'SYMBOL_LOC_STATIC'
-     Value is at a fixed address.
-
-'SYMBOL_LOC_REGISTER'
-     Value is in a register.
-
-'SYMBOL_LOC_ARG'
-     Value is an argument.  This value is at the offset stored within
-     the symbol inside the frame's argument list.
-
-'SYMBOL_LOC_REF_ARG'
-     Value address is stored in the frame's argument list.  Just like
-     'LOC_ARG' except that the value's address is stored at the offset,
-     not the value itself.
-
-'SYMBOL_LOC_REGPARM_ADDR'
-     Value is a specified register.  Just like 'LOC_REGISTER' except the
-     register holds the address of the argument instead of the argument
-     itself.
-
-'SYMBOL_LOC_LOCAL'
-     Value is a local variable.
-
-'SYMBOL_LOC_TYPEDEF'
-     Value not used.  Symbols in the domain 'SYMBOL_STRUCT_DOMAIN' all
-     have this class.
-
-'SYMBOL_LOC_BLOCK'
-     Value is a block.
-
-'SYMBOL_LOC_CONST_BYTES'
-     Value is a byte-sequence.
-
-'SYMBOL_LOC_UNRESOLVED'
-     Value is at a fixed address, but the address of the variable has to
-     be determined from the minimal symbol table whenever the variable
-     is referenced.
-
-'SYMBOL_LOC_OPTIMIZED_OUT'
-     The value does not actually exist in the program.
-
-'SYMBOL_LOC_COMPUTED'
-     The value's address is a computed location.
 

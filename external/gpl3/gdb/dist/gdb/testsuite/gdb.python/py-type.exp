@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,7 +34,8 @@ proc build_inferior {exefile lang} {
 
 # Restart GDB.
 proc restart_gdb {exefile} { 
-  clean_restart $exefile
+  clean_restart
+  gdb_load $exefile
 
   if {![runto_main]} {
       return
@@ -324,6 +325,19 @@ proc test_type_equality {} {
     }
 }
 
+# Test type identity
+proc test_type_identity {} {
+    gdb_test_no_output "python v1 = gdb.parse_and_eval('global_unsigned_int')"
+    gdb_test_no_output "python v2 = gdb.parse_and_eval('global_unsigned_int')"
+
+    gdb_test "python print(v1.type is v2.type)" "True"
+
+    gdb_test_no_output "python t1 = gdb.lookup_type ('char')"
+    gdb_test_no_output "python t2 = gdb.lookup_type ('char')"
+
+    gdb_test "python print(t1 is t2)" "True"
+}
+
 # Test the gdb.Type.is_scalar property.
 proc test_is_scalar { lang } {
     if {$lang == "c++"} {
@@ -376,6 +390,7 @@ if { [build_inferior "${binfile}" "c"] == 0 } {
       test_is_scalar "c"
       test_is_signed "c"
       test_type_equality
+      test_type_identity
   }
 }
 
@@ -392,6 +407,7 @@ if { [build_inferior "${binfile}-cxx" "c++"] == 0 } {
       test_is_scalar "c++"
       test_is_signed "c++"
       test_type_equality
+      test_type_identity
   }
 }
 

@@ -1,6 +1,6 @@
 /* addrmap.h --- interface to address map data structure.
 
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -52,10 +52,6 @@ struct addrmap
   void *find (CORE_ADDR addr)
   { return this->do_find (addr); }
 
-  /* Relocate all the addresses in MAP by OFFSET.  (This can be applied
-     to either mutable or immutable maps.)  */
-  virtual void relocate (CORE_ADDR offset) = 0;
-
   /* Call FN for every address in MAP, following an in-order traversal.
      If FN ever returns a non-zero value, the iteration ceases
      immediately, and the value is returned.  Otherwise, this function
@@ -94,7 +90,8 @@ public:
   addrmap_fixed (addrmap_fixed &&other) = default;
   addrmap_fixed &operator= (addrmap_fixed &&) = default;
 
-  void relocate (CORE_ADDR offset) override;
+  /* Relocate all the addresses in this map by OFFSET.  */
+  void relocate (CORE_ADDR offset);
 
 private:
   void *do_find (CORE_ADDR addr) const override;
@@ -126,8 +123,12 @@ struct addrmap_mutable final : public addrmap
 {
 public:
 
-  addrmap_mutable ();
-  ~addrmap_mutable ();
+  addrmap_mutable () = default;
+  ~addrmap_mutable ()
+  {
+    clear ();
+  }
+
   DISABLE_COPY_AND_ASSIGN (addrmap_mutable);
 
   addrmap_mutable (addrmap_mutable &&other)
@@ -138,14 +139,20 @@ public:
 
   addrmap_mutable &operator= (addrmap_mutable &&other)
   {
-    std::swap (tree, other.tree);
+    /* Handle self-move.  */
+    if (this != &other)
+      {
+	clear ();
+	tree = other.tree;
+	other.tree = nullptr;
+      }
     return *this;
   }
 
   /* In the mutable address map MAP, associate the addresses from START
      to END_INCLUSIVE that are currently associated with NULL with OBJ
      instead.  Addresses mapped to an object other than NULL are left
-     unchanged.
+     unchanged.  Return true if the full range is mapped to OBJ.
 
      As the name suggests, END_INCLUSIVE is also mapped to OBJ.  This
      convention is unusual, but it allows callers to accurately specify
@@ -179,9 +186,11 @@ public:
      semantics than to provide an interface which allows it to be
      implemented efficiently, but doesn't reveal too much of the
      representation.  */
-  void set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
+  bool set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
 		  void *obj);
-  void relocate (CORE_ADDR offset) override;
+
+  /* Clear this addrmap.  */
+  void clear ();
 
 private:
   void *do_find (CORE_ADDR addr) const override;
@@ -204,7 +213,7 @@ private:
      function, we can't keep a freelist for keys.  Since mutable
      addrmaps are only used temporarily right now, we just leak keys
      from deleted nodes; they'll be freed when the obstack is freed.  */
-  splay_tree tree;
+  splay_tree tree = nullptr;
 
   /* Various helper methods.  */
   splay_tree_key allocate_key (CORE_ADDR addr);

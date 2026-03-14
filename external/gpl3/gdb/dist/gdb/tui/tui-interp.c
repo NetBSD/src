@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -161,9 +161,7 @@ tui_interp_factory (const char *name)
   return new tui_interp (name);
 }
 
-void _initialize_tui_interp ();
-void
-_initialize_tui_interp ()
+INIT_GDB_FILE (tui_interp)
 {
   interp_factory_register (INTERP_TUI, tui_interp_factory);
 

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,12 +53,11 @@ gdb.events.cont.connect(_clear_frame_ids)
 @in_gdb_thread
 def frame_for_id(id):
     """Given a frame identifier ID, return the corresponding frame."""
-    global thread_ids
     if id in thread_ids:
         thread_id = thread_ids[id]
         if thread_id != gdb.selected_thread().global_num:
             set_thread(thread_id)
-    global _all_frames
+
     return _all_frames[id]
 
 
@@ -75,16 +74,16 @@ def select_frame(id):
 # what is needed for the current callers.
 class _MemoizingIterator:
     def __init__(self, iterator):
-        self.iterator = iterator
-        self.seen = []
+        self._iterator = iterator
+        self._seen = []
 
     def __iter__(self):
         # First the memoized items.
-        for item in self.seen:
+        for item in self._seen:
             yield item
         # Now memoize new items.
-        for item in self.iterator:
-            self.seen.append(item)
+        for item in self._iterator:
+            self._seen.append(item)
             yield item
 
 
@@ -103,10 +102,8 @@ def _frame_id_generator():
 
     # Helper function to assign an ID to a frame.
     def get_id(frame):
-        global _all_frames
         num = len(_all_frames)
         _all_frames.append(frame)
-        global thread_ids
         thread_ids[num] = gdb.selected_thread().global_num
         return num
 
@@ -128,7 +125,6 @@ def _frame_id_generator():
 @in_gdb_thread
 def _get_frame_iterator():
     thread_id = gdb.selected_thread().global_num
-    global _iter_map
     if thread_id not in _iter_map:
         _iter_map[thread_id] = _MemoizingIterator(_frame_id_generator())
     return _iter_map[thread_id]

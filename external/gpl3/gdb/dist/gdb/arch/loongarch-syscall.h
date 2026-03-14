@@ -1,6 +1,6 @@
 /* Target-dependent code for LoongArch
 
-   Copyright (C) 2024 Free Software Foundation, Inc.
+   Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
    https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/asm-generic/unistd.h
    https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/arch/loongarch/include/asm/unistd.h  */
 
-#ifndef ARCH_LOONGARCH_SYSCALL_H
-#define ARCH_LOONGARCH_SYSCALL_H
+#ifndef GDB_ARCH_LOONGARCH_SYSCALL_H
+#define GDB_ARCH_LOONGARCH_SYSCALL_H
 
 enum loongarch_syscall
 {
@@ -345,4 +345,4 @@ enum loongarch_syscall
   loongarch_sys_syscalls = 463,
 };
 
-#endif /* ARCH_LOONGARCH_SYSCALL_H */
+#endif /* GDB_ARCH_LOONGARCH_SYSCALL_H */

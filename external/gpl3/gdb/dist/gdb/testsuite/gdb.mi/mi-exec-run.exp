@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,8 @@ set MIFLAGS "-i=mi"
 # The purpose of this testcase is to test the -exec-run command. If we
 # cannot use it, then there is no point in running this testcase.
 require !use_gdb_stub
+
+set have_startup_shell [have_startup_shell]
 
 standard_testfile mi-start.c
 
@@ -172,6 +174,9 @@ remote_exec target "chmod \"a-x\" $binfile.nox"
 foreach_with_prefix inferior-tty {"main" "separate"} {
     foreach_with_prefix mi {"main" "separate"} {
 	foreach_with_prefix force-fail {0 1} {
+	    if { ${force-fail} && $have_startup_shell == -1 } {
+		continue
+	    }
 	    test ${inferior-tty} ${mi} ${force-fail}
 	}
     }

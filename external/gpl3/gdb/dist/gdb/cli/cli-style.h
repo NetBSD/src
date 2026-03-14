@@ -1,6 +1,6 @@
 /* CLI stylizing
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -67,9 +67,9 @@ private:
   const char *m_name;
 
   /* The foreground.  */
-  const char *m_foreground;
+  ui_file_style::color m_foreground;
   /* The background.  */
-  const char *m_background;
+  ui_file_style::color m_background;
   /* The intensity.  */
   const char *m_intensity;
 
@@ -157,7 +157,51 @@ extern bool source_styling;
 /* True if disassembler styling is enabled.  */
 extern bool disassembler_styling;
 
-/* True if styling is enabled.  */
-extern bool cli_styling;
+/* Check for environment variables that indicate styling should start as
+   disabled.  If any are found then disable styling.  Styling is never
+   enabled by this call.  If styling was already disabled then it remains
+   disabled after this call.  */
+extern void disable_styling_from_environment ();
+
+/* Equivalent to 'set style enabled off'.  Can be used during GDB's start
+   up if a command line option, or environment variable, indicates that
+   styling should be turned off.  */
+extern void disable_cli_styling ();
+
+/* Return true styled output is currently enabled.  */
+extern bool term_cli_styling ();
+
+/* Allow styling to be temporarily suppressed without changing the value of
+   'set style enabled' user setting.  This is useful in, for example, the
+   Python gdb.execute() call which can produce unstyled output.  */
+struct scoped_disable_styling
+{
+  /* Temporarily suppress styling without changing the value of 'set
+     style enabled' user setting.  */
+  scoped_disable_styling ();
+
+  /* If the constructor started suppressing styling, then styling is
+     resumed after this destructor call.  */
+  ~scoped_disable_styling ();
+
+private:
+
+  /* The value to restore in the destructor.  */
+  bool m_old_value;
+};
+
+/* Return true if emoji styling is allowed.  */
+extern bool emojis_ok ();
+
+/* Disable emoji styling.  This is here so that Windows can disable
+   emoji when the console is in use.  It shouldn't be called
+   elsewhere.  */
+extern void no_emojis ();
+
+/* Print the warning prefix, if desired.  */
+extern void print_warning_prefix (ui_file *file);
+
+/* Print the error prefix, if desired.  */
+extern void print_error_prefix (ui_file *file);
 
 #endif /* GDB_CLI_CLI_STYLE_H */

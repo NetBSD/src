@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -702,7 +702,7 @@ print_variant_part (const variant_part &part,
     name = "?";
   else
     {
-      name = type->field (part.discriminant_index).name ();;
+      name = type->field (part.discriminant_index).name ();
       discr_type = type->field (part.discriminant_index).type ();
     }
 
