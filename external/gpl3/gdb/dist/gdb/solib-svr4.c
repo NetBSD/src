@@ -22,6 +22,8 @@
 #include "elf/common.h"
 #include "elf/mips.h"
 
+#include <unordered_map>
+
 #include "exceptions.h"
 #include "extract-store-integer.h"
 #include "symtab.h"
