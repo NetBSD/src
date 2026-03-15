@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_getcwd.c,v 1.63 2024/12/07 02:27:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_getcwd.c,v 1.64 2026/03/15 12:02:57 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.63 2024/12/07 02:27:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.64 2026/03/15 12:02:57 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -521,9 +521,15 @@ out:
 }
 
 /*
- * Try to find a pathname for a vnode.  Since there is no mapping vnode ->
- * parent directory, this needs the namecache to succeed.  Caller holds a
- * reference to the vnode.
+ * Try to find a pathname for a vnode.
+ *
+ * Note: This is inherently unreliable.
+ * Since there is no mapping vnode -> parent directory, this needs
+ * the namecache to succeed. This function returns ENOENT when the
+ * vnode was not found in the namecache. It's the caller's
+ * responsibility to deal with the case.
+ *
+ * Caller holds a reference to the vnode.
  */
 int
 vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
