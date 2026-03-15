@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.17 2026/03/15 12:04:23 yamt Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.18 2026/03/15 21:24:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.17 2026/03/15 12:04:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.18 2026/03/15 21:24:17 christos Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -217,7 +217,8 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				    l.l_stat, cpuno, l.l_flag, (long)lp,
 				    db_nbuf, wbuf);
 				if (*mode == 'L') {
-					db_stack_trace_print((db_expr_t)lp,
+					db_stack_trace_print(\
+					    (db_expr_t)(uintptr_t)lp,
 					    true, -1, "a", db_printf);
 				}
 				lp = LIST_NEXT((&l), l_sibling);
