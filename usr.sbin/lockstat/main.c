@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2021/12/12 22:20:53 andvar Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2026/03/15 13:08:15 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.21 2021/12/12 22:20:53 andvar Exp $");
+__RCSID("$NetBSD: main.c,v 1.22 2026/03/15 13:08:15 rillig Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -207,7 +207,7 @@ main(int argc, char **argv)
 			break;
 		case 'b':
 			nbufs = (int)strtol(optarg, &p, 0);
-			if (!isdigit((u_int)*optarg) || *p != '\0')
+			if (!isdigit((unsigned char)*optarg) || *p != '\0')
 				usage();
 			break;
 		case 'c':
@@ -515,7 +515,7 @@ findsym(findsym_t find, char *name, uintptr_t *start, uintptr_t *end, bool chg)
 		end = &tend;
 
 	if (find == LOCK_BYNAME) {
-		if (isdigit((u_int)name[0])) {
+		if (isdigit((unsigned char)name[0])) {
 			*start = (uintptr_t)strtoul(name, &p, 0);
 			if (*p == '\0')
 				return;
