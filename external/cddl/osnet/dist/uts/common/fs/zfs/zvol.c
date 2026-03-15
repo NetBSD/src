@@ -2381,6 +2381,7 @@ zvol_log_write_minor(void *minor_hdl, dmu_tx_t *tx, offset_t off, ssize_t resid,
  */
 #endif	/* illumos */
 
+#if !defined(__NetBSD__)
 /*
  * Log a DKIOCFREE/free-long-range to the ZIL with TX_TRUNCATE.
  */
@@ -2404,6 +2405,7 @@ zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
 	itx->itx_sync = (sync || zv->zv_sync_cnt != 0);
 	zil_itx_assign(zilog, itx, tx);
 }
+#endif /* !defined(__NetBSD__) */
 
 #ifdef illumos
 /*
