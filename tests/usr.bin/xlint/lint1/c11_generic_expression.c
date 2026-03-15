@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.23 2026/01/10 08:42:48 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.24 2026/03/15 06:37:41 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -135,4 +135,28 @@ type_conversions(const char *str)
 		int *: str,
 		default: primary_expression
 	);
+}
+
+
+void
+skip_blank(const char *p)
+{
+	static const unsigned short *_ctype_tab_;
+
+	while (
+		// TODO: In a _Generic expression, do not evaluate the
+		//  controlling expression, only determine its type.
+		//
+		// TODO: In a _Generic expression, only evaluate the
+		//  result expression, but not the others. Only parse
+		//  the others, don't determine their type.
+		_Generic(
+			*p,
+			/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
+			unsigned char: (_ctype_tab_ + 1)[*p] & 0x0200,
+			/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
+			int: (_ctype_tab_ + 1)[*p] & 0x0200
+		)
+	)
+		p++;
 }
