@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.204 2024/06/29 06:39:34 rin Exp $
+.\"	$NetBSD: ddb.4,v 1.205 2026/03/15 12:12:49 yamt Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd June 29, 2024
+.Dd March 15, 2026
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -509,7 +509,7 @@ will produce:
 eax = xxxxxx
 ecx = yyyyyy
 .Ed
-.It Ic ps Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns Oo Cm /l Oc
+.It Ic ps Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns Oo Cm /l Oc Ns Oo Cm /L Oc
 A synonym for
 .Ic show all procs .
 .It Ic reboot Op Ar flags
@@ -587,7 +587,7 @@ Display all pool information.
 Modifiers are the same as
 .Ic show pool .
 .It Ic "show\ all\ procs" Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns \
-Oo Cm /l Oc
+Oo Cm /l Oc Ns Oo Cm /L Oc
 Display all process information.
 Valid modifiers:
 .Bl -tag -width 3n
@@ -615,6 +615,10 @@ process flags, kernel virtual address of LWP structure,
 LWP name and wait channel message.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 This is the default.
+.It Cm /L
+In addition to what
+.Cm /l
+shows, print the stack trace of each LWPs.
 .El
 .It Ic show all tstiles Ns Oo Cm /t Oc
 Display all lwps that are currently waiting in turnstiles to acquire
