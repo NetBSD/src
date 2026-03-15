@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.278 2026/01/10 19:50:40 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.279 2026/03/15 05:44:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.278 2026/01/10 19:50:40 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.279 2026/03/15 05:44:00 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -259,7 +259,7 @@ static const char *const msgs[] = {
 	"default outside switch",					// 201
 	"duplicate default in switch",					// 202
 	"case label must be of type 'int' in traditional C",		// 203
-	"controlling expressions must have scalar type",		// 204
+	"controlling expressions must have scalar type, not '%s'",	// 204
 	"switch expression must have integral type, not '%s'",		// 205
 	"enumeration value(s) not handled in switch",			// 206
 	"",			/* no longer used */			// 207

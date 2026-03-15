@@ -1,13 +1,12 @@
-/*	$NetBSD: msg_204.c,v 1.11 2023/08/06 19:44:50 rillig Exp $	*/
+/*	$NetBSD: msg_204.c,v 1.12 2026/03/15 05:44:00 rillig Exp $	*/
 # 3 "msg_204.c"
 
-// Test for message: controlling expressions must have scalar type [204]
+// Test for message: controlling expressions must have scalar type, not '%s' [204]
 
 /* Suppress messages for unused parameters and for 'extern' declarations. */
 /* lint1-extra-flags: -X 231 -X 351 */
 
-extern void
-extern_function(void);
+extern void extern_function(void);
 
 void (*function_pointer)(void);
 
@@ -87,20 +86,20 @@ void if_enum(enum e e)			{ if (e) return; }
 
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
-/* expect+1: error: controlling expressions must have scalar type [204] */
+/* expect+1: error: controlling expressions must have scalar type, not 'struct s' [204] */
 void if_struct(struct s s)		{ if (s) return; }
-/* expect+1: error: controlling expressions must have scalar type [204] */
+/* expect+1: error: controlling expressions must have scalar type, not 'union u' [204] */
 void if_union(union u u)		{ if (u) return; }
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
-/* expect+1: error: controlling expressions must have scalar type [204] */
+/* expect+1: error: controlling expressions must have scalar type, not 'struct s' [204] */
 void while_struct(struct s s)		{ while (s) return; }
-/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+2: error: controlling expressions must have scalar type, not 'struct s' [204] */
 /* expect+1: warning: end-of-loop code not reached [223] */
 void for_struct(struct s s)		{ for (;s;) return; }
-/* expect+1: error: controlling expressions must have scalar type [204] */
+/* expect+1: error: controlling expressions must have scalar type, not 'struct s' [204] */
 void do_while_struct(struct s s)	{ do { return; } while (s); }
 
 /*

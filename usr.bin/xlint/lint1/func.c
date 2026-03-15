@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.197 2026/01/10 19:50:40 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.198 2026/03/15 05:44:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.197 2026/01/10 19:50:40 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.198 2026/03/15 05:44:00 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -555,8 +555,8 @@ check_controlling_expression(tnode_t *tn, bool is_do_while)
 		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
 		/* C99 6.8.4.1p1 for if statements */
 		/* C99 6.8.5p2 for while, do and for loops */
-		/* controlling expressions must have scalar type */
-		error(204);
+		/* controlling expressions must have scalar type, not '%s' */
+		error(204, type_name(tn->tn_type));
 		return NULL;
 	}
 
