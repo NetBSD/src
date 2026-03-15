@@ -1368,8 +1368,9 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			(void) sa_update(zp->z_sa_hdl, SA_ZPL_MODE(zfsvfs),
 			    (void *)&newmode, sizeof (uint64_t), tx);
 #ifdef __NetBSD__
-			cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid,
-			    true);
+			if (zfsvfs->z_use_namecache)
+				cache_enter_id(vp, zp->z_mode, zp->z_uid,
+				    zp->z_gid, true);
 #endif
 		}
 		mutex_exit(&zp->z_acl_lock);
@@ -5260,6 +5261,8 @@ zfs_netbsd_lookup(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	znode_t *zdp = VTOZ(dvp);
+	zfsvfs_t *zfsvfs = zdp->z_zfsvfs;
 	char *nm, short_nm[31];
 	int error;
 	int iswhiteout;
@@ -5360,9 +5363,12 @@ out:
 	 * Insert name into cache if appropriate.
 	 */
 
-	if (error == 0 || (error == ENOENT && cnp->cn_nameiop != CREATE))
-		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
-		    cnp->cn_flags);
+	if (zfsvfs->z_use_namecache) {
+		if (error == 0 ||
+		    (error == ENOENT && cnp->cn_nameiop != CREATE))
+			cache_enter(dvp, *vpp, cnp->cn_nameptr,
+			    cnp->cn_namelen, cnp->cn_flags);
+	}
 
 	return (error);
 }
@@ -5625,6 +5631,7 @@ zfs_netbsd_setattr(void *v)
 	vattr_t *vap = ap->a_vap;
 	cred_t *cred = ap->a_cred;
 	znode_t *zp = VTOZ(vp);
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	xvattr_t xvap;
 	kauth_action_t action;
 	u_long fflags, sfflags = 0;
@@ -5703,7 +5710,8 @@ zfs_netbsd_setattr(void *v)
 	if (error)
 		return error;
 
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	return error;
 }

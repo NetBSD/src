@@ -871,7 +871,8 @@ zfs_loadvnode(struct mount *mp, struct vnode *vp,
 		return (SET_ERROR(ENOENT));
 	}
 	ASSERT(zp == VTOZ(vp));
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 
@@ -886,13 +887,15 @@ zfs_newvnode(struct mount *mp, vnode_t *dvp, vnode_t *vp, vattr_t *vap,
 {
 	struct zfs_newvnode_args *args = extra;
 	znode_t *zp, *dzp = VTOZ(dvp);
+	zfsvfs_t *zfsvfs = dzp->z_zfsvfs;
 	dmu_tx_t *tx = args->tx;
 	uint_t flag = args->flag;
 	zfs_acl_ids_t *acl_ids = args->acl_ids;
 
 	zfs_mknode1(dzp, vap, tx, cr, flag, &zp, acl_ids, vp);
 	ASSERT(zp == VTOZ(vp));
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	*key_len = sizeof(zp->z_id);
 	*new_key = &zp->z_id;
