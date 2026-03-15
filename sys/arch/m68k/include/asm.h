@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.37 2025/01/06 10:46:44 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.38 2026/03/15 17:10:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -94,11 +94,7 @@
 #define GOT_SETUP(reg)		/* nothing */
 #endif
 
-#if __STDC__
-# define _C_LABEL(name)	name
-#else
-# define _C_LABEL(name)	name
-#endif /* __STDC__ */
+#define _C_LABEL(x)	x
 
 #define	_ASM_LABEL(name)	name
 
