@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.702 2026/01/17 16:22:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.703 2026/03/15 07:56:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.702 2026/01/17 16:22:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.703 2026/03/15 07:56:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -632,6 +632,47 @@ possible_bits(const tnode_t *tn)
 	return ~ic_expr(tn).bclr;
 }
 
+
+static struct {
+	size_t len;
+	size_t cap;
+	evaluation_mode *items;
+} evaluation_modes;
+
+/* Push the minimum of the given mode and the already active mode. */
+void
+push_evaluation_mode(evaluation_mode m)
+{
+	if (evaluation_modes.len >= evaluation_modes.cap) {
+		evaluation_modes.cap = 2 * evaluation_modes.cap + 16;
+		evaluation_modes.items = xrealloc(
+		    evaluation_modes.items,
+		    evaluation_modes.cap * sizeof(*evaluation_modes.items));
+	}
+
+	evaluation_mode top = evaluation_modes.len > 0
+	    ? evaluation_modes.items[evaluation_modes.len - 1]
+	    : EM_EVAL;
+	evaluation_modes.items[evaluation_modes.len++] =
+	    (int)top < (int)m ? top : m;
+}
+
+void
+pop_evaluation_mode(void)
+{
+	evaluation_modes.len--;
+}
+
+bool
+is_evaluation_mode(evaluation_mode m)
+{
+	evaluation_mode top = evaluation_modes.len > 0
+	    ? evaluation_modes.items[evaluation_modes.len - 1]
+	    : EM_EVAL;
+	return (int)top >= (int)m;
+}
+
+
 bool
 attributes_contain(const attribute_list *attrs, const char *str)
 {
@@ -1170,15 +1211,17 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 		return l * r;
 	case DIV:
 		if (r == 0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			return max_value;
 		}
 		return l / r;
 	case MOD:
 		if (r == 0) {
-			/* modulus by 0 */
-			error(140);
+			if (is_evaluation_mode(EM_EVAL))
+				/* modulus by 0 */
+				error(140);
 			return 0;
 		}
 		return l % r;
@@ -1243,8 +1286,9 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l * r;
 	case DIV:
 		if (r == 0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			return max_value;
 		}
 		if (l == min_value && r == -1) {
@@ -1254,8 +1298,9 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l / r;
 	case MOD:
 		if (r == 0) {
-			/* modulus by 0 */
-			error(140);
+			if (is_evaluation_mode(EM_EVAL))
+				/* modulus by 0 */
+				error(140);
 			return 0;
 		}
 		if (l == min_value && r == -1) {
@@ -2012,8 +2057,9 @@ fold_constant_floating(tnode_t *tn)
 		break;
 	case DIV:
 		if (rv == 0.0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			v->u.floating = floating_error_value(t, lv);
 		} else {
 			v->u.floating = lv / rv;

@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.243 2026/01/17 14:27:08 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.244 2026/03/15 07:55:59 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -319,6 +319,10 @@ void begin_statement_expr(void);
 void do_statement_expr(tnode_t *);
 tnode_t *end_statement_expr(void);
 bool in_statement_expr(void);
+
+void push_evaluation_mode(evaluation_mode);
+void pop_evaluation_mode(void);
+bool is_evaluation_mode(evaluation_mode);
 
 /*
  * func.c

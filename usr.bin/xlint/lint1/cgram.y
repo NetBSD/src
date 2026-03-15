@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.535 2026/01/17 14:27:08 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.536 2026/03/15 07:55:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.535 2026/01/17 14:27:08 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.536 2026/03/15 07:55:59 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -363,6 +363,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 %type	<y_arguments>	argument_expression_list
 %type	<y_scl>		storage_class_specifiers
 %type	<y_tnode>	unary_expression
+%type	<y_tnode>	sizeof_argument
 %type	<y_tnode>	cast_expression
 %type	<y_tnode>	expression_opt
 %type	<y_tnode>	conditional_expression
@@ -799,14 +800,11 @@ unary_expression:
 |	T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
 	}
-|	T_SIZEOF unary_expression {
-		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
-		if ($$ != NULL)
-			check_expr_misc($2,
-			    false, false, false, false, false, true);
-	}
-|	T_SIZEOF T_LPAREN type_name T_RPAREN {
-		$$ = build_sizeof($3);
+|	T_SIZEOF {
+		push_evaluation_mode(EM_TYPE);
+	} sizeof_argument {
+		pop_evaluation_mode();
+		$$ = $3;
 	}
 |	T_ALIGNOF unary_expression {
 		/* non type argument to alignof is a GCC extension */
@@ -819,6 +817,18 @@ unary_expression:
 		/* TODO: c11ism */
 		$$ = build_alignof($3);
 	}
+;
+
+sizeof_argument:			/* specific to lint */
+	unary_expression {
+		$$ = $1 == NULL ? NULL : build_sizeof($1->tn_type);
+		if ($$ != NULL)
+			check_expr_misc($1,
+			    false, false, false, false, false, true);
+	}
+|	T_LPAREN type_name T_RPAREN {
+       		$$ = build_sizeof($2);
+       	}
 ;
 
 /* C23 6.5.4 */

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.238 2026/02/03 20:41:38 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.239 2026/03/15 07:55:59 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -52,6 +52,21 @@ typedef struct memory_pool {
 	size_t	len;
 	size_t	cap;
 } memory_pool;
+
+/*
+ * By default, all expressions are fully evaluated. In some cases such as the
+ * sizeof operator, only the type of an expression is needed, but not its
+ * value. In yet other cases such as a _Generic expression, not even the type
+ * is needed, so just parsing the expression suffices.
+ */
+typedef enum {
+	/* Only parse expressions, don't determine their type. */
+	EM_PARSE,
+	/* Determine the type of the expressions, but don't evaluate them. */
+	EM_TYPE,
+	/* Fully evaluate expressions. */
+	EM_EVAL,
+} evaluation_mode;
 
 /* See saved_lwarn in cgram.y. */
 #define LWARN_ALL	(-2)
