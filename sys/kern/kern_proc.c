@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.280 2025/06/02 16:27:04 andvar Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.281 2026/03/15 02:15:50 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.280 2025/06/02 16:27:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.281 2026/03/15 02:15:50 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2095,7 +2095,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			return SET_ERROR(EINVAL);
 		switch (op = name[0]) {
 		case KERN_PROC_ALL:
-			if (namelen != 1)
+			/*
+			 * note: kvm_getprocs(KERN_PROC_ALL) gives
+			 * us namelen=2. ignore the extra argument,
+			 * which is typically 0.
+			 */
+			if (namelen != 1 && namelen != 2)
 				return SET_ERROR(EINVAL);
 			arg = 0;
 			break;
