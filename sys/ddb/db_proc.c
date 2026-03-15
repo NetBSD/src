@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.16 2024/04/15 06:48:06 skrll Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.17 2026/03/15 12:04:23 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.16 2024/04/15 06:48:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.17 2026/03/15 12:04:23 yamt Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -136,7 +136,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 	if (modif[0] == 0)
 		mode = "l";			/* default == lwp mode */
 	else
-		mode = strchr("mawln", modif[0]);
+		mode = strchr("mawlLn", modif[0]);
 
 	if (mode == NULL || *mode == 'm') {
 		db_printf("usage: show all procs [/a] [/l] [/n] [/w]\n");
@@ -153,6 +153,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 		    "COMMAND", "STRUCT PROC *", "UAREA *", "VMSPACE/VM_MAP");
 		break;
 	case 'l':
+	case 'L':
 		db_printf("PID   %5s S %3s %9s %18s %18s %-8s\n",
 		    "LID", "CPU", "FLAGS", "STRUCT LWP *", "NAME", "WAIT");
 		break;
@@ -186,8 +187,9 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 			    (long)p.p_vmspace);
 			break;
 		case 'l':
-			 while (lp != NULL) {
-			 	if (l.l_name != NULL) {
+		case 'L':
+			while (lp != NULL) {
+				if (l.l_name != NULL) {
 					db_read_string(l.l_name,
 					    MAXCOMLEN, db_nbuf);
 					db_nbuf[MAXCOMLEN] = '\0';
@@ -214,6 +216,10 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				    (run ? '>' : ' '), l.l_lid,
 				    l.l_stat, cpuno, l.l_flag, (long)lp,
 				    db_nbuf, wbuf);
+				if (*mode == 'L') {
+					db_stack_trace_print((db_expr_t)lp,
+					    true, -1, "a", db_printf);
+				}
 				lp = LIST_NEXT((&l), l_sibling);
 				if (lp != NULL) {
 					db_printf("%-5d", p.p_pid);
