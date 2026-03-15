@@ -1,12 +1,15 @@
-/*	$NetBSD: msg_386.c,v 1.2 2026/03/14 15:10:25 rillig Exp $	*/
+/*	$NetBSD: msg_386.c,v 1.3 2026/03/15 18:21:44 rillig Exp $	*/
 # 3 "msg_386.c"
 
 // Test for message: conversion '%.*s' does not mix with '%c' [386]
 
 /*
  * In the snprintb format string, the conversions 'f' and '=' mix well, and so
- * do 'F' and ':'.  But 'f' doesn't mix with ':', and neither does 'F' mix with
- * '='.
+ * do 'F' and ':'.
+ *
+ * The other combinations, that is 'f' with ':', as well as 'F' with '=', need
+ * more careful construction, to avoid tokens being merged together in the
+ * output, and to avoid several separators next to each other.
  */
 
 /* lint1-extra-flags: -X 351 */

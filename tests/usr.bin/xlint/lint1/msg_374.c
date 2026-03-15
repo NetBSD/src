@@ -1,11 +1,11 @@
-/*	$NetBSD: msg_374.c,v 1.6 2024/08/31 06:57:31 rillig Exp $	*/
+/*	$NetBSD: msg_374.c,v 1.7 2026/03/15 18:21:44 rillig Exp $	*/
 # 3 "msg_374.c"
 
 // Test for message: unknown conversion '%.*s', must be one of 'bfF=:*' [374]
 
 /*
- * In the new-style format, an unknown conversion is assumed to have a single
- * argument, followed by a null-terminated description.
+ * In the new-style format, an unknown conversion terminates the output with
+ * an error marker.
  */
 
 /* lint1-extra-flags: -X 351 */
