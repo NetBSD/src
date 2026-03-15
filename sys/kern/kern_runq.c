@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.72 2025/10/03 16:40:26 thorpej Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.73 2026/03/15 04:19:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.72 2025/10/03 16:40:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.73 2026/03/15 04:19:11 yamt Exp $");
 
 #include "opt_dtrace.h"
 
@@ -664,7 +664,7 @@ sched_catchlwp(struct cpu_info *ci)
 	 * Be more aggressive if this CPU is first class, and the other
 	 * is not.
 	 */
-	gentle = cpu_is_better(curci, ci);
+	gentle = !cpu_is_better(curci, ci);
 
 	if (atomic_load_relaxed(&spc->spc_mcount) < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {
