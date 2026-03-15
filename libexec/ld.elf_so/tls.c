@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.28 2026/01/17 10:47:45 skrll Exp $	*/
+/*	$NetBSD: tls.c,v 1.29 2026/03/15 13:56:17 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.28 2026/01/17 10:47:45 skrll Exp $");
+__RCSID("$NetBSD: tls.c,v 1.29 2026/03/15 13:56:17 skrll Exp $");
 
 /*
  * Thread-local storage
@@ -74,11 +74,36 @@ static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
 #define	TLS_DTV_OFFSET	0
 #endif
 
-#if defined(__HAVE_TLS_VARIANT_I)
+/*
+ * Alignment of the static data
+ *
+ * In Variant I, the thread pointer (TP) can be anchored in three ways
+ * depending on the architecture. It either points
+ *
+ * - directly to the TCB (e.g. Arm, and AArch64); or
+ * - at a specific "biased" offset within the data (e.g. PowerPC), or
+ *   directly at the data (e.g. RISC-V). These architectures define
+ *   __HAVE___LWP_SETTCB to handle the offset
+ *
+ * An area of memory with the correct alignment is allocated and the
+ * struct tcb placed as follows for each case above
+ *
+ * - at the start of the aligned memory with data starting at the first
+ *   object's required alignment.
+ * - just below the second max alignment boundary so that data starts
+ *   on the second max alignment boundary.
+ *
+ * The code is written such that obj->tlsoffset is always relative to
+ * the end of the struct tcb. Maybe this is suboptimal?
+ *
+ */
+
+#if defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE___LWP_SETTCB)
 #define _RTLD_TLS_INITIAL_OFFSET	sizeof(struct tls_tcb)
 #endif
-#if defined(__HAVE_TLS_VARIANT_II)
-#define _RTLD_TLS_INITIAL_OFFSET	0
+
+#ifndef _RTLD_TLS_INITIAL_OFFSET
+#define _RTLD_TLS_INITIAL_OFFSET		0
 #endif
 
 static size_t _rtld_tls_static_space;	/* Static TLS space allocated */
@@ -225,6 +250,13 @@ _rtld_tls_initial_allocation(void)
 #ifndef __HAVE_TLS_VARIANT_I
 	_rtld_tls_static_space = roundup2(_rtld_tls_static_space,
 	    alignof(max_align_t));
+
+#ifdef __HAVE___LWP_SETTCB
+	if (_rtld_tls_static_max_align > sizeof(struct tls_tcb))
+		_rtld_tls_static_space +=
+		     _rtld_tls_static_max_align - sizeof(struct tls_tcb);
+#endif
+
 #endif
 	dbg(("_rtld_tls_static_space %zu", _rtld_tls_static_space));
 
@@ -262,6 +294,10 @@ _rtld_tls_allocate_locked(void)
 
 	memset(p, 0, _rtld_tls_static_space + sizeof(struct tls_tcb));
 #ifdef __HAVE_TLS_VARIANT_I
+#ifdef __HAVE___LWP_SETTCB
+	if (_rtld_tls_static_max_align > sizeof(struct tls_tcb))
+		p += _rtld_tls_static_max_align - sizeof(struct tls_tcb);
+#endif
 	tcb = (struct tls_tcb *)p;
 	p += sizeof(struct tls_tcb);
 #else
@@ -293,6 +329,9 @@ _rtld_tls_allocate_locked(void)
 			    obj->tlsoffset, obj->tlsalign, obj->tlsinit,
 			    ALIGNED_P(q, obj->tlsalign) ? "" :
 				 " BAD ALIGNMENT"));
+
+			assert(ALIGNED_P(q, obj->tlsalign));
+
 			if (obj->tlsinitsize)
 				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
@@ -436,7 +475,9 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 #ifdef __HAVE_TLS_VARIANT_I
 	offset = roundup2(_rtld_tls_static_offset, obj->tlsalign);
 	next_offset = offset + obj->tlssize;
+#ifndef __HAVE___LWP_GETTCB_FAST
 	offset -= sizeof(struct tls_tcb);
+#endif
 #else
 	offset = roundup2(_rtld_tls_static_offset + obj->tlssize,
 	    obj->tlsalign);
