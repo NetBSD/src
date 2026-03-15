@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.28 2025/03/09 08:26:30 mrg Exp $
+#	$NetBSD: Makefile.libx11,v 1.29 2026/03/15 16:44:53 rillig Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -473,5 +473,13 @@ COPTS.XlibInt.c+=	-Wno-error	# XXX xcmiscstr.h
 COPTS.XKBBind.c+=	-Wno-deprecated-declarations	# uses XKeycodeToKeysym
 
 CWARNFLAGS.clang+=	-Wno-string-plus-int
+
+LINTFLAGS+=	-X 117	# bitwise 'X' on signed 'Y' possibly nonportable
+LINTFLAGS+=	-X 132	# conversion from 'X' to 'Y' may lose accuracy
+LINTFLAGS+=	-X 231	# parameter 'X' unused in function 'Y'
+LINTFLAGS+=	-X 247	# pointer cast from 'X' to unrelated 'Y'
+LINTFLAGS+=	-X 275	# cast discards 'const' from type 'X'
+LINTFLAGS+=	-X 298	# conversion from 'X' to 'Y' may lose accuracy, arg #Z
+LINTFLAGS+=	-X 309	# '&' converts 'X' with its most significant bit being set to 'Y'
 
 .include "${NETBSDSRCDIR}/external/mit/xorg/tools/makekeys/Makefile.makekeys"
