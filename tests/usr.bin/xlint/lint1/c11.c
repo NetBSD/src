@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.13 2026/01/17 14:27:08 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.14 2026/03/15 08:16:53 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -127,8 +127,8 @@ void fvla(int m, int C[m][m])
 }
 
 // C11 6.7.6.3p15
-/* expect+2: warning: function declaration is not a prototype [287] */
-/* expect+1: warning: function declaration is not a prototype [287] */
+/* expect+2: warning: function declaration for 'fip' is not a prototype [287] */
+/* expect+1: warning: function declaration for 'pfi' is not a prototype [287] */
 int f(void), *fip(), (*pfi)();
 
 // C11 6.7.6.3p17
@@ -164,7 +164,7 @@ double maximum(int n, int m, double a[ ][m]);
 void f1(double (* restrict a)[5]);
 void f2(double a[restrict][5]);
 /* expect+2: error: syntax error '3' [249] */
-/* expect+1: warning: function declaration is not a prototype [287] */
+/* expect+1: warning: function declaration for 'f3' is not a prototype [287] */
 void f3(double a[restrict 3][5]);
 void f4(double a[restrict static 3][5]);
 
@@ -174,7 +174,7 @@ int _Alignas(double) int_aligned_as_double;
 
 // C23 6.7.7.4p13 says that "()" is equivalent to "(void)".
 // In C11 6.7.6.3p14, "()" means "no information about the number of types".
-/* expect+1: warning: function declaration is not a prototype [287] */
+/* expect+1: warning: function declaration for 'function_without_parameters' is not a prototype [287] */
 void function_without_parameters();
 
 

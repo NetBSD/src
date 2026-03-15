@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.279 2026/03/15 05:44:00 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.280 2026/03/15 08:16:53 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.279 2026/03/15 05:44:00 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.280 2026/03/15 08:16:53 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -341,8 +341,8 @@ static const char *const msgs[] = {
 	"parameter number mismatch in comment /* %s */",		// 283
 	"fallthrough on default statement",				// 284
 	"prototype declaration",					// 285
-	"function definition is not a prototype",			// 286
-	"function declaration is not a prototype",			// 287
+	"function definition for '%s' is not a prototype",		// 286
+	"function declaration for '%s' is not a prototype",		// 287
 	"dubious use of /* VARARGS */ with /* %s */",			// 288
 	"/* PRINTFLIKE */ and /* SCANFLIKE */ cannot be combined",	// 289
 	"static function '%s' declared but not defined",		// 290

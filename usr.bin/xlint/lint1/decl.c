@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.425 2026/02/03 20:41:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.426 2026/03/15 08:16:53 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.425 2026/02/03 20:41:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.426 2026/03/15 08:16:53 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -910,11 +910,10 @@ check_type(sym_t *sym)
 		 * better warning is printed in begin_function().
 		 */
 		if (t == FUNC && !tp->t_proto &&
-		    !(to == NO_TSPEC && sym->s_osdef)) {
-			if (!allow_trad && hflag && !allow_c23)
-				/* function declaration is not a prototype */
-				warning(287);
-		}
+		    !(to == NO_TSPEC && sym->s_osdef) &&
+		    !allow_trad && hflag && !allow_c23)
+			/* function declaration for '%s' is not a prototype */
+			warning(287, sym->s_name);
 		if (to == FUNC) {
 			if (t == FUNC || t == ARRAY) {
 				/* function returns invalid type '%s' */
