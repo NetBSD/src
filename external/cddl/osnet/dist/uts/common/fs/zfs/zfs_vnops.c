@@ -5265,7 +5265,6 @@ zfs_netbsd_lookup(void *v)
 	zfsvfs_t *zfsvfs = zdp->z_zfsvfs;
 	char *nm, short_nm[31];
 	int error;
-	int iswhiteout;
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
@@ -5286,10 +5285,7 @@ zfs_netbsd_lookup(void *v)
 	 * cache_lookup does the locking dance for us.
 	 */
 	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
-	    cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
-		if (iswhiteout) {
-			cnp->cn_flags |= ISWHITEOUT;
-		}
+	    cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return *vpp == NULL ? ENOENT : 0;
 	}
 
