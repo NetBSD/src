@@ -1,4 +1,4 @@
-/*	$NetBSD: expr_sizeof.c,v 1.20 2026/02/03 20:41:38 rillig Exp $	*/
+/*	$NetBSD: expr_sizeof.c,v 1.21 2026/03/15 07:44:10 rillig Exp $	*/
 # 3 "expr_sizeof.c"
 
 /*
@@ -256,4 +256,39 @@ sequence_of_structs(void)
 	typedef int o2[-(int)((unsigned long)(&(((struct save87 *)0)->s87_ac)))];
 	/* expect+1: error: negative array dimension (-108) [20] */
 	typedef int reveal[-(int)sizeof(struct save87)];
+}
+
+
+void
+only_determine_type(void)
+{
+	// TODO: Only determine the type, not the value.
+	/* expect+1: error: division by 0 [139] */
+	int sizeof_signed_division_by_zero = sizeof (1 / 0);
+	/* expect+1: error: division by 0 [139] */
+	int signed_division_by_zero = 1 / 0;
+
+	// TODO: Only determine the type, not the value.
+	/* expect+1: error: division by 0 [139] */
+	int sizeof_unsigned_division_by_zero = sizeof (1U / 0);
+	/* expect+1: error: division by 0 [139] */
+	unsigned unsigned_division_by_zero = 1U / 0;
+
+	// TODO: Only determine the type, not the value.
+	/* expect+1: error: division by 0 [139] */
+	double sizeof_floating_division_by_zero = sizeof (1.0 / 0.0);
+	/* expect+1: error: division by 0 [139] */
+	double floating_division_by_zero = 1.0 / 0.0;
+
+	// TODO: Only determine the type, not the value.
+	/* expect+1: error: modulus by 0 [140] */
+	int sizeof_signed_modulo_by_zero = sizeof (1 % 0);
+	/* expect+1: error: modulus by 0 [140] */
+	int signed_modulo_by_zero = 1 % 0;
+
+	// TODO: Only determine the type, not the value.
+	/* expect+1: error: modulus by 0 [140] */
+	int sizeof_unsigned_modulo_by_zero = sizeof (1U % 0);
+	/* expect+1: error: modulus by 0 [140] */
+	unsigned unsigned_modulo_by_zero = 1U % 0;
 }
