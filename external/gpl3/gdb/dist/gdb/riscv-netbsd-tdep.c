@@ -203,7 +203,7 @@ riscv_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Generic NetBSD support.  */
   nbsd_init_abi (info, gdbarch);
 
-  set_gdbarch_software_single_step (gdbarch, riscv_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, riscv_software_single_step);
 
   set_solib_svr4_ops (gdbarch, riscv_isa_xlen (gdbarch) == 4 ?
       make_svr4_ilp32_solib_ops : make_svr4_lp64_solib_ops);
