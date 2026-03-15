@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.215 2026/02/13 19:16:41 kre Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.216 2026/03/15 05:05:51 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.215 2026/02/13 19:16:41 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.216 2026/03/15 05:05:51 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1075,7 +1075,11 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 
 	/*
 	 * allocate space to for swap encryption state and mark the
-	 * keys uninitialized so we generate them lazily
+	 * keys uninitialized so we generate them lazily.
+	 *
+	 * we defer the key generation to help to maximize the amount
+	 * of data fed into the entropy pool before generating a key,
+	 * for the benefit of machines without HWRNG.
 	 */
 	sdp->swd_encmap = kmem_zalloc(encmap_size(npages), KM_SLEEP);
 	sdp->swd_encinit = false;
