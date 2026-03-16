@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.536 2026/03/15 07:55:59 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.537 2026/03/16 20:09:15 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.536 2026/03/15 07:55:59 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.537 2026/03/16 20:09:15 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -605,11 +605,14 @@ member_designator:
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
 generic_selection:
-	T_GENERIC T_LPAREN assignment_expression T_COMMA
-	    generic_assoc_list T_RPAREN {
+	T_GENERIC T_LPAREN {
+		push_evaluation_mode(EM_TYPE);
+	} assignment_expression {
+		pop_evaluation_mode();
+	} T_COMMA generic_assoc_list T_RPAREN {
 		/* generic selection requires C11 or later */
 		c11ism(345);
-		$$ = build_generic_selection($3, $5);
+		$$ = build_generic_selection($4, $7);
 	}
 ;
 
@@ -827,8 +830,8 @@ sizeof_argument:			/* specific to lint */
 			    false, false, false, false, false, true);
 	}
 |	T_LPAREN type_name T_RPAREN {
-       		$$ = build_sizeof($2);
-       	}
+		$$ = build_sizeof($2);
+	}
 ;
 
 /* C23 6.5.4 */
