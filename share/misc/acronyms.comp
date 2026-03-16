@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.421 2026/02/09 02:31:28 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.422 2026/03/16 18:08:47 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -439,6 +439,7 @@ DL	diode logic
 DL	discrete logarithm
 DL	download
 DLCI	data link connection identifier
+DLIES	Discrete Logarithm Integrated Encryption Scheme
 DLE	data link escape
 DLL	dynamic link library
 DLNA	digital living network alliance
@@ -540,6 +541,7 @@ ECDH	elliptic curve Diffie-Hellman
 ECDL	elliptic curve discrete logarithm
 ECDLP	elliptic curve discrete logarithm problem
 ECDSA	elliptic curve digital signature algorithm
+ECIES	Elliptic Curve Integrated Encryption Scheme
 EDDSA	Edwards-curve digital signature algorithm
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
@@ -796,6 +798,7 @@ IDT	interrupt descriptor table
 IE	Internet Explorer
 IEC	International Electrotechnical Commission
 IEEE	Institute of Electrical and Electronics Engineers
+IES	Integrated Encryption Scheme
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
 IF	intermediate frequency
