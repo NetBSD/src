@@ -342,7 +342,7 @@ ps_processhangup(void *arg, unsigned short events)
 	if (!(ctx->options & DHCPCD_EXITING))
 		return;
 	if (!(ps_waitforprocs(ctx)))
-		eloop_exit(ctx->ps_eloop, EXIT_SUCCESS);
+		eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 #endif
 
@@ -350,7 +350,7 @@ pid_t
 ps_startprocess(struct ps_process *psp,
     void (*recv_msg)(void *, unsigned short),
     void (*recv_unpriv_msg)(void *, unsigned short),
-    int (*callback)(struct ps_process *), void (*signal_cb)(int, void *),
+    int (*callback)(struct ps_process *),
     unsigned int flags)
 {
 	struct dhcpcd_ctx *ctx = psp->psp_ctx;
@@ -433,28 +433,15 @@ ps_startprocess(struct ps_process *psp,
 	    getpid(), ctx->ps_log_fd, ctx->ps_data_fd, psp->psp_fd);
 #endif
 
-	eloop_clear(ctx->eloop, -1);
-	eloop_forked(ctx->eloop);
-	eloop_signal_set_cb(ctx->eloop,
-	    dhcpcd_signals, dhcpcd_signals_len, signal_cb, ctx);
-	/* ctx->sigset aready has the initial sigmask set in main() */
-	if (eloop_signal_mask(ctx->eloop, NULL) == -1) {
-		logerr("%s: eloop_signal_mask", __func__);
-		goto errexit;
-	}
-
 	if (ctx->fork_fd != -1) {
-		/* Already removed from eloop thanks to above clear. */
 		close(ctx->fork_fd);
 		ctx->fork_fd = -1;
 	}
 
-	/* This process has no need of the blocking inner eloop. */
-	if (!(flags & PSF_ELOOP)) {
-		eloop_free(ctx->ps_eloop);
-		ctx->ps_eloop = NULL;
-	} else
-		eloop_forked(ctx->ps_eloop);
+	if (eloop_forked(ctx->eloop, ELF_KEEP_SIGNALS) == -1) {
+		logerr("%s: eloop_forked", __func__);
+		goto errexit;
+	}
 
 	pidfile_clean();
 	ps_freeprocesses(ctx, psp);
@@ -478,7 +465,7 @@ ps_startprocess(struct ps_process *psp,
 	if (eloop_event_add(ctx->eloop, psp->psp_fd, ELE_READ,
 	    recv_msg, psp) == -1)
 	{
-		logerr("%d %s: eloop_event_add XX fd %d", getpid(), __func__, psp->psp_fd);
+		logerr("%s: eloop_event_add", __func__);
 		goto errexit;
 	}
 
@@ -554,13 +541,6 @@ ps_start(struct dhcpcd_ctx *ctx)
 	pid_t pid;
 
 	TAILQ_INIT(&ctx->ps_processes);
-
-	/* We need an inner eloop to block with. */
-	if ((ctx->ps_eloop = eloop_new()) == NULL)
-		return -1;
-	eloop_signal_set_cb(ctx->ps_eloop,
-	    dhcpcd_signals, dhcpcd_signals_len,
-	    dhcpcd_signal_cb, ctx);
 
 	switch (pid = ps_root_start(ctx)) {
 	case -1:
@@ -744,14 +724,13 @@ ps_stopwait(struct dhcpcd_ctx *ctx)
 {
 	int error = EXIT_SUCCESS;
 
-	if (ctx->ps_eloop == NULL || !ps_waitforprocs(ctx))
+	if (!ps_waitforprocs(ctx))
 		return 0;
 
 	ctx->options |= DHCPCD_EXITING;
-	if (eloop_timeout_add_sec(ctx->ps_eloop, PS_PROCESS_TIMEOUT,
+	if (eloop_timeout_add_sec(ctx->eloop, PS_PROCESS_TIMEOUT,
 	    ps_process_timeout, ctx) == -1)
 		logerr("%s: eloop_timeout_add_sec", __func__);
-	eloop_enter(ctx->ps_eloop);
 
 #ifdef HAVE_CAPSICUM
 	struct ps_process *psp;
@@ -759,18 +738,18 @@ ps_stopwait(struct dhcpcd_ctx *ctx)
 	TAILQ_FOREACH(psp, &ctx->ps_processes, next) {
 		if (psp->psp_pfd == -1)
 			continue;
-		if (eloop_event_add(ctx->ps_eloop, psp->psp_pfd,
+		if (eloop_event_add(ctx->eloop, psp->psp_pfd,
 		    ELE_HANGUP, ps_processhangup, psp) == -1)
 			logerr("%s: eloop_event_add pfd %d",
 			    __func__, psp->psp_pfd);
 	}
 #endif
 
-	error = eloop_start(ctx->ps_eloop, &ctx->sigset);
-	if (error != EXIT_SUCCESS)
+	error = eloop_start(ctx->eloop);
+	if (error < 0)
 		logerr("%s: eloop_start", __func__);
 
-	eloop_timeout_delete(ctx->ps_eloop, ps_process_timeout, ctx);
+	eloop_timeout_delete(ctx->eloop, ps_process_timeout, ctx);
 
 	return error;
 }
@@ -793,8 +772,6 @@ ps_freeprocess(struct ps_process *psp)
 #ifdef HAVE_CAPSICUM
 	if (psp->psp_pfd != -1) {
 		eloop_event_delete(ctx->eloop, psp->psp_pfd);
-		if (ctx->ps_eloop != NULL)
-			eloop_event_delete(ctx->ps_eloop, psp->psp_pfd);
 		close(psp->psp_pfd);
 	}
 #endif
@@ -895,7 +872,7 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 		{ .iov_base = NULL, },	/* payload 2 */
 		{ .iov_base = NULL, },	/* payload 3 */
 	};
-	int iovlen;
+	struct msghdr m = { .msg_iov = iov, .msg_iovlen = 1 };
 	ssize_t len;
 
 	if (msg != NULL) {
@@ -909,6 +886,7 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 		iovp->iov_base = msg->msg_name;
 		iovp->iov_len = msg->msg_namelen;
 		iovp++;
+		m.msg_iovlen++;
 
 		cmsg_padlen =
 		    CALC_CMSG_PADLEN(msg->msg_controllen, msg->msg_namelen);
@@ -916,26 +894,27 @@ ps_sendpsmmsg(struct dhcpcd_ctx *ctx, int fd,
 		iovp->iov_len = cmsg_padlen;
 		iovp->iov_base = cmsg_padlen != 0 ? padding : NULL;
 		iovp++;
+		m.msg_iovlen++;
 
 		iovp->iov_base = msg->msg_control;
 		iovp->iov_len = msg->msg_controllen;
-		iovlen = 4;
+		iovp++;
+		m.msg_iovlen++;
 
 		for (i = 0; i < (int)msg->msg_iovlen; i++) {
-			if ((size_t)(iovlen + i) > __arraycount(iov)) {
+			if ((size_t)(m.msg_iovlen++) > __arraycount(iov)) {
 				errno =	ENOBUFS;
 				return -1;
 			}
-			iovp++;
 			iovp->iov_base = msg->msg_iov[i].iov_base;
 			iovp->iov_len = msg->msg_iov[i].iov_len;
+			iovp++;
 		}
-		iovlen += i;
-	} else
-		iovlen = 1;
+	}
 
-	len = writev(fd, iov, iovlen);
-	if (len == -1) {
+	len = sendmsg(fd, &m, MSG_EOR);
+
+	if (len == -1 && ctx != NULL) {
 		if (ctx->options & DHCPCD_FORKED &&
 		    !(ctx->options & DHCPCD_PRIVSEPROOT))
 			eloop_exit(ctx->eloop, EXIT_FAILURE);
@@ -1019,55 +998,13 @@ ps_sendcmd(struct dhcpcd_ctx *ctx, int fd, uint16_t cmd, unsigned long flags,
 	return ps_sendpsmmsg(ctx, fd, &psm, &msg);
 }
 
-static ssize_t
-ps_sendcmdmsg(int fd, uint16_t cmd, const struct msghdr *msg)
+ssize_t
+ps_sendcmdmsg(struct dhcpcd_ctx *ctx, int fd, uint16_t cmd,
+    unsigned long flags, const struct msghdr *msg)
 {
-	struct ps_msghdr psm = { .ps_cmd = cmd };
-	uint8_t data[PS_BUFLEN], *p = data;
-	struct iovec iov[] = {
-		{ .iov_base = &psm, .iov_len = sizeof(psm) },
-		{ .iov_base = data, .iov_len = 0 },
-	};
-	size_t dl = sizeof(data);
-	socklen_t cmsg_padlen =
-	    CALC_CMSG_PADLEN(msg->msg_controllen, msg->msg_namelen);
+	struct ps_msghdr psm = { .ps_cmd = cmd, .ps_flags = flags };
 
-	if (msg->msg_namelen != 0) {
-		if (msg->msg_namelen > dl)
-			goto nobufs;
-		psm.ps_namelen = msg->msg_namelen;
-		memcpy(p, msg->msg_name, msg->msg_namelen);
-		p += msg->msg_namelen;
-		dl -= msg->msg_namelen;
-	}
-
-	if (msg->msg_controllen != 0) {
-		if (msg->msg_controllen + cmsg_padlen > dl)
-			goto nobufs;
-		if (cmsg_padlen != 0) {
-			memset(p, 0, cmsg_padlen);
-			p += cmsg_padlen;
-			dl -= cmsg_padlen;
-		}
-		psm.ps_controllen = (socklen_t)msg->msg_controllen;
-		memcpy(p, msg->msg_control, msg->msg_controllen);
-		p += msg->msg_controllen;
-		dl -= msg->msg_controllen;
-	}
-
-	psm.ps_datalen = msg->msg_iov[0].iov_len;
-	if (psm.ps_datalen > dl)
-		goto nobufs;
-
-	iov[1].iov_len =
-	    psm.ps_namelen + psm.ps_controllen + psm.ps_datalen + cmsg_padlen;
-	if (psm.ps_datalen != 0)
-		memcpy(p, msg->msg_iov[0].iov_base, psm.ps_datalen);
-	return writev(fd, iov, __arraycount(iov));
-
-nobufs:
-	errno = ENOBUFS;
-	return -1;
+	return ps_sendpsmmsg(ctx, fd, &psm, msg);
 }
 
 ssize_t
@@ -1089,14 +1026,14 @@ ps_recvmsg(int rfd, unsigned short events, uint16_t cmd, int wfd)
 	if (!(events & ELE_READ))
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
-	len = recvmsg(rfd, &msg, 0);
+	len = recvmsg(rfd, &msg, MSG_WAITALL);
 	if (len == -1) {
 		logerr("%s: recvmsg", __func__);
 		return len;
 	}
 
 	iov[0].iov_len = (size_t)len;
-	len = ps_sendcmdmsg(wfd, cmd, &msg);
+	len = ps_sendcmdmsg(NULL, wfd, cmd, 0, &msg);
 	if (len == -1)
 		logerr("%s: ps_sendcmdmsg", __func__);
 	return len;
@@ -1134,6 +1071,10 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd, unsigned short events,
 	struct msghdr msg = { .msg_iov = iov, .msg_iovlen = 1 };
 	bool stop = false;
 
+	if (events & ELE_HANGUP) {
+		len = 0;
+		goto stop;
+	}
 	if (!(events & ELE_READ))
 		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
@@ -1161,6 +1102,7 @@ ps_recvpsmsg(struct dhcpcd_ctx *ctx, int fd, unsigned short events,
 	}
 
 	if (stop) {
+stop:
 		ctx->options |= DHCPCD_EXITING;
 #ifdef PRIVSEP_DEBUG
 		logdebugx("process %d stopping", getpid());

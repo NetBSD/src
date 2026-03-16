@@ -100,6 +100,7 @@ if_free(struct interface *ifp)
 #endif
 	rt_freeif(ifp);
 	free_options(ifp->ctx, ifp->options);
+	free(ifp->argv);
 	free(ifp);
 }
 

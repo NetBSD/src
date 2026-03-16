@@ -259,7 +259,8 @@ ps_bpf_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	    addr != NULL ? " " : "", addr != NULL ? addr : "");
 
 	start = ps_startprocess(psp, ps_bpf_recvmsg, NULL,
-	    ps_bpf_start_bpf, NULL, PSF_DROPPRIVS);
+	    ps_bpf_start_bpf, PSF_DROPPRIVS);
+
 	switch (start) {
 	case -1:
 		ps_freeprocess(psp);

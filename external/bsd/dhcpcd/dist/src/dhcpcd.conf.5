@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd April 15, 2025
+.Dd June 12, 2025
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -957,6 +957,10 @@ The option can appear more than once and will be indexed.
 .It Ic array
 The option data is split into a space separated array, each element being
 the same type.
+.It Ic truncated
+The option might truncated from its normal length.
+The end of the normal size is zero padded on expansion.
+Currently this is only supported for ip6address where it's a prefix.
 .El
 .Ss Types to define
 The type directly affects the length of data consumed inside the option.
@@ -979,6 +983,7 @@ C 00100000, etc.
 If the bit is not set, the flag is not printed.
 A flag of 0 is not printed even if the bit position is set.
 This is to allow reservation of the first bits while assigning the last bits.
+A flag of 1 prints the bit set or unset.
 .It Ic int16
 A signed 16bit integer, 2 bytes.
 .It Ic uint16

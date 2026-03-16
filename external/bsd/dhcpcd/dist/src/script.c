@@ -420,6 +420,7 @@ make_env(struct dhcpcd_ctx *ctx, const struct interface *ifp,
 	} else if (strcmp(reason, "TEST") == 0 ||
 	    strcmp(reason, "PREINIT") == 0 ||
 	    strcmp(reason, "CARRIER") == 0 ||
+	    strcmp(reason, "STOP") == 0 ||
 	    strcmp(reason, "UNKNOWN") == 0)
 	{
 		if_up = false_str;

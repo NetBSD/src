@@ -55,7 +55,7 @@
 #define MAX(a,b)		((/*CONSTCOND*/(a)>(b))?(a):(b))
 #endif
 
-#define UNCONST(a)		((void *)(unsigned long)(const void *)(a))
+#define UNCONST(a)		((void *)(uintptr_t)(const void *)(a))
 #define STRINGIFY(a)		#a
 #define TOSTRING(a)		STRINGIFY(a)
 #define UNUSED(a)		(void)(a)

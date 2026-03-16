@@ -149,18 +149,30 @@ ps_root_doindirectioctl(struct dhcpcd_ctx *ctx,
 {
 	char *p = data;
 	struct ifreq ifr = { .ifr_flags = 0 };
+	size_t ifnamelen;
 
 	/* ioctl filtering is done in ps_root_doioctldom */
 
-	if (len < IFNAMSIZ + 1) {
+	if (len < sizeof(ifnamelen)) {
+		errno = EINVAL;
+		return -1;
+	}
+	memcpy(&ifnamelen, p, sizeof(ifnamelen));
+	len -= sizeof(ifnamelen);
+
+	if (len < ifnamelen || ifnamelen > sizeof(ifr.ifr_name)) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	strlcpy(ifr.ifr_name, p, IFNAMSIZ);
-	len -= IFNAMSIZ;
-	memmove(data, p + IFNAMSIZ, len);
-	ifr.ifr_data = data;
+	memcpy(ifr.ifr_name, p, ifnamelen);
+	len -= ifnamelen;
+
+	if (len != 0) {
+		/* Ensure data is now aligned */
+		memmove(data, p + ifnamelen, len);
+		ifr.ifr_data = data;
+	}
 
 	return ps_root_doioctldom(ctx, PF_INET, req, &ifr, sizeof(ifr));
 }
@@ -337,17 +349,29 @@ ssize_t
 ps_root_indirectioctl(struct dhcpcd_ctx *ctx, unsigned long request,
     const char *ifname, void *data, size_t len)
 {
-	char buf[PS_BUFLEN];
+	size_t ifnamelen = strlen(ifname + 1);
 
-	if (IFNAMSIZ + len > sizeof(buf)) {
-		errno = ENOBUFS;
-		return -1;
-	}
+	struct iovec iov[] = {
+		{
+			.iov_base = &ifnamelen,
+			.iov_len = sizeof(ifnamelen),
+		},
+		{
+			.iov_base = UNCONST(ifname),
+			.iov_len = ifnamelen,
+		},
+		{
+			.iov_base = data,
+			.iov_len = len,
+		}
+	};
+	struct msghdr msg = {
+		.msg_iov = iov,
+		.msg_iovlen = __arraycount(iov),
+	};
 
-	strlcpy(buf, ifname, IFNAMSIZ);
-	memcpy(buf + IFNAMSIZ, data, len);
-	if (ps_sendcmd(ctx, PS_ROOT_FD(ctx), PS_IOCTLINDIRECT,
-	    request, buf, IFNAMSIZ + len) == -1)
+	if (ps_sendcmdmsg(ctx, PS_ROOT_FD(ctx), PS_IOCTLINDIRECT,
+	    request, &msg) == -1)
 		return -1;
 	return ps_root_readerror(ctx, data, len);
 }

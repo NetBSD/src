@@ -189,6 +189,11 @@ static void routeinfohead_free(struct routeinfohead *);
 #define ipv6nd_free_ra(ra) ipv6nd_freedrop_ra((ra),  0)
 #define ipv6nd_drop_ra(ra) ipv6nd_freedrop_ra((ra),  1)
 
+/* Clear these addrflags on receipt of a new RA before adding the new flags
+ * dervived from the RA. */
+#define RA_STALE_FLAGS \
+	(IPV6_AF_ONLINK | IPV6_AF_AUTOCONF | IPV6_AF_ROUTER | IPV6_AF_STALE)
+
 void
 ipv6nd_printoptions(const struct dhcpcd_ctx *ctx,
     const struct dhcp_opt *opts, size_t opts_len)
@@ -502,7 +507,7 @@ ipv6nd_sortrouters(struct dhcpcd_ctx *ctx)
 				continue;
 			if (ra1->lifetime == 0 && ra2->lifetime != 0)
 				continue;
-			if (!ra1->isreachable && ra2->reachable)
+			if (!ra1->isreachable && ra2->isreachable)
 				continue;
 			if (ipv6nd_rtpref(ra1->flags) <= ipv6nd_rtpref(ra2->flags))
 				continue;
@@ -676,11 +681,14 @@ ipv6nd_iffindprefix(struct interface *ifp,
 static void
 ipv6nd_removefreedrop_ra(struct ra *rap, int remove_ra, int drop_ra)
 {
+	struct dhcpcd_ctx *ctx = rap->iface->ctx;
 
-	eloop_timeout_delete(rap->iface->ctx->eloop, NULL, rap->iface);
-	eloop_timeout_delete(rap->iface->ctx->eloop, NULL, rap);
+	eloop_q_timeout_delete(ctx->eloop, ELOOP_IPV6RA_EXPIRE, NULL,
+	    rap->iface);
+	eloop_timeout_delete(ctx->eloop, NULL, rap->iface);
+	eloop_timeout_delete(ctx->eloop, NULL, rap);
 	if (remove_ra)
-		TAILQ_REMOVE(rap->iface->ctx->ra_routers, rap, next);
+		TAILQ_REMOVE(ctx->ra_routers, rap, next);
 	ipv6_freedrop_addrs(&rap->addrs, drop_ra, 0, NULL);
 	routeinfohead_free(&rap->rinfos);
 	free(rap->data);
@@ -1294,8 +1302,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 				else
 					ia->prefix_pltime = ia->prefix_vltime;
 
+				ia->flags &= ~RA_STALE_FLAGS;
 				ia->flags |= flags;
-				ia->flags &= ~IPV6_AF_STALE;
 				ia->acquired = rap->acquired;
 
 #ifdef IPV6_MANAGETEMPADDR
@@ -1922,6 +1930,7 @@ ipv6nd_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg)
 
 	/* Don't do anything if the user hasn't configured it. */
 	if (ifp->active != IF_ACTIVE_USER ||
+	    ifp->options->options & DHCPCD_STOPPING ||
 	    !(ifp->options->options & DHCPCD_IPV6))
 		return;
 
