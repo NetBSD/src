@@ -1818,8 +1818,9 @@ dhcp6_startinform(void *arg)
 	 * merely one facet of the lease as a whole.
 	 * This poor wording might explain the lack of similar text for INFORM
 	 * in 18.1.5 because there are no addresses in the INFORM message. */
-	eloop_timeout_add_sec(ifp->ctx->eloop,
-	    INF_MAX_RD, dhcp6_failinform, ifp);
+	if (!state->failed)
+		eloop_timeout_add_sec(ifp->ctx->eloop,
+		    INF_MAX_RD, dhcp6_failinform, ifp);
 }
 
 static bool
@@ -2110,29 +2111,25 @@ dhcp6_startrelease(struct interface *ifp)
 	struct dhcp6_state *state;
 
 	state = D6_STATE(ifp);
-	if (state->state != DH6S_BOUND)
+	if (state->state != DH6S_BOUND) {
+		dhcp6_finishrelease(ifp);
 		return;
+	}
 
 	state->state = DH6S_RELEASE;
 	state->RTC = 0;
 	state->IMD = REL_MAX_DELAY;
 	state->IRT = REL_TIMEOUT;
 	state->MRT = REL_MAX_RT;
-	/* MRC of REL_MAX_RC is optional in RFC 3315 18.1.6 */
-#if 0
 	state->MRC = REL_MAX_RC;
 	state->MRCcallback = dhcp6_finishrelease;
-#else
-	state->MRC = 0;
-	state->MRCcallback = NULL;
-#endif
 
-	if (dhcp6_makemessage(ifp) == -1)
+	if (dhcp6_makemessage(ifp) == -1) {
 		logerr("%s: %s", __func__, ifp->name);
-	else {
-		dhcp6_sendrelease(ifp);
+		/* not much we can do apart from finish now */
 		dhcp6_finishrelease(ifp);
-	}
+	} else
+		dhcp6_sendrelease(ifp);
 }
 
 static int
@@ -3403,12 +3400,8 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 		dhcp6_script_try_run(ifp, 0);
 	}
 
-	if (ifp->ctx->options & DHCPCD_TEST ||
-	    (ifp->options->options & DHCPCD_INFORM &&
-	    !(ifp->ctx->options & DHCPCD_MANAGER)))
-	{
+	if (ifp->ctx->options & DHCPCD_TEST)
 		eloop_exit(ifp->ctx->eloop, EXIT_SUCCESS);
-	}
 }
 
 static void
@@ -3613,6 +3606,11 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 			loginfox("%s: %s acknowledged DECLINE6",
 			    ifp->name, sfrom);
 			dhcp6_fail(ifp, true);
+			return;
+		case DH6S_RELEASE:
+			loginfox("%s: %s acknowledged RELEASE6",
+			    ifp->name, sfrom);
+			dhcp6_finishrelease(ifp);
 			return;
 		default:
 			valid_op = false;
@@ -4297,6 +4295,7 @@ dhcp6_freedrop(struct interface *ifp, int drop, const char *reason)
 		free(state);
 		ifp->if_data[IF_DATA_DHCP6] = NULL;
 	}
+	dhcpcd_dropped(ifp);
 
 	/* If we don't have any more DHCP6 enabled interfaces,
 	 * close the global socket and release resources */

@@ -313,9 +313,9 @@ rt_headclear0(struct dhcpcd_ctx *ctx, rb_tree_t *rts, int af)
 
 	if (rts == NULL)
 		return;
-	assert(ctx != NULL);
 #ifdef RT_FREE_ROUTE_TABLE
-	assert(&ctx->froutes != rts);
+	if (ctx != NULL)
+		assert(&ctx->froutes != rts);
 #endif
 
 	RB_TREE_FOREACH_SAFE(rt, rts, rtn) {
@@ -335,7 +335,7 @@ rt_headclear(rb_tree_t *rts, int af)
 
 	if (rts == NULL || (rt = RB_TREE_MIN(rts)) == NULL)
 		return;
-	rt_headclear0(rt->rt_ifp->ctx, rts, af);
+	rt_headclear0(rt->rt_ifp ? rt->rt_ifp->ctx : NULL, rts, af);
 }
 
 static void
@@ -769,6 +769,12 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 	struct rt *rt, *rtn;
 	unsigned long long o;
 
+	/* When exiting with persistence, don't change any routing
+	 * which maybe affected by interfaces stopping. */
+	if ((ctx->options & (DHCPCD_EXITING | DHCPCD_PERSISTENT)) ==
+	    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
+		return;
+
 	rb_tree_init(&routes, &rt_compare_proto_ops);
 	rb_tree_init(&added, &rt_compare_os_ops);
 	rb_tree_init(&kroutes, &rt_compare_os_ops);
@@ -821,7 +827,8 @@ rt_build(struct dhcpcd_ctx *ctx, int af)
 	}
 
 #ifdef BSD
-	if (if_missfilter_apply(ctx) == -1 && errno != ENOTSUP)
+	if (!(ctx->options & DHCPCD_EXITING) &&
+	    if_missfilter_apply(ctx) == -1 && errno != ENOTSUP)
 		logerr("if_missfilter_apply");
 #endif
 

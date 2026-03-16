@@ -44,6 +44,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
+#include <assert.h>
 
 #include "config.h"
 #include "common.h"
@@ -936,7 +937,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		return -1;
 #else
 		fp = strwhite(arg);
-		if (fp)
+		if (fp != NULL)
 			*fp++ = '\0';
 		u = (uint32_t)strtou(arg, NULL, 0, 0, UINT32_MAX, &e);
 		if (e) {
@@ -944,9 +945,13 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			return -1;
 		}
 
-		fp = strskipwhite(fp);
-		p = strchr(fp, ',');
-		if (!p || !p[1]) {
+		if (fp != NULL)
+			fp = strskipwhite(fp);
+		if (fp != NULL)
+			p = strchr(fp, ',');
+		else
+			p = NULL;
+		if (p == NULL || p[1] == '\0') {
 			logerrx("invalid vendor format: %s", arg);
 			return -1;
 		}
@@ -1882,7 +1887,7 @@ err_sla:
 			if (*edop) {
 				dop = &(*edop)->embopts;
 				dop_len = &(*edop)->embopts_len;
-			} else if (ldop) {
+			} else if (*ldop) {
 				dop = &(*ldop)->embopts;
 				dop_len = &(*ldop)->embopts_len;
 			} else {
@@ -1995,6 +2000,15 @@ err_sla:
 				return -1;
 			}
 			*fp++ = '\0';
+		} else if (strcasecmp(arg, "truncated") == 0) {
+			t |= OT_TRUNCATED;
+			arg = strskipwhite(fp);
+			fp = strwhite(arg);
+			if (fp == NULL) {
+				logerrx("incomplete truncated type");
+				return -1;
+			}
+			*fp++ = '\0';
 		}
 		if (strcasecmp(arg, "ipaddress") == 0)
 			t |= OT_ADDRIPV4;
@@ -2084,6 +2098,10 @@ err_sla:
 				t |= OT_RESERVED;
 			}
 		}
+		if (t & OT_TRUNCATED && !(t & OT_ADDRIPV6)) {
+			logerrx("truncated only works for ip6address");
+			return -1;
+		}
 		if (opt != O_EMBED) {
 			for (dl = 0, ndop = *dop; dl < *dop_len; dl++, ndop++)
 			{
@@ -2117,6 +2135,10 @@ err_sla:
 		ndop->var = np;
 		if (bp) {
 			dl = strlen(bp);
+			if (dl > sizeof(ndop->bitflags)) {
+				logwarnx("bitflag string too long %s", bp);
+				dl = sizeof(ndop->bitflags);
+			}
 			memcpy(ndop->bitflags, bp, dl);
 			memset(ndop->bitflags + dl, 0,
 			    sizeof(ndop->bitflags) - dl);
@@ -2533,7 +2555,7 @@ invalid_token:
 #ifdef INET
 	case O_FALLBACK_TIME:
 		ARG_REQUIRED;
-		ifo->request_time =
+		ifo->fallback_time =
 		    (uint32_t)strtou(arg, NULL, 0, 0, UINT32_MAX, &e);
 		if (e) {
 			logerrx("invalid fallback time: %s", arg);
@@ -2971,6 +2993,48 @@ add_options(struct dhcpcd_ctx *ctx, const char *ifname,
 
 	finish_config(ifo);
 	return r;
+}
+
+char
+**alloc_args(int argc, char **argv)
+{
+	int i;
+	size_t strslen = 0, len;
+	size_t nptrs = (size_t)argc;
+	size_t ptrslen =  nptrs * sizeof(char *);
+	void *buf;
+	char **ptrs, *strsp;
+
+	for (i = 0; i < argc; i++) {
+		strslen += strlen(argv[i]) + 1;
+	}
+	if (strslen == 0)
+		return NULL;
+
+	buf = malloc(ptrslen + strslen);
+	if (!buf)
+		return NULL;
+
+	ptrs = buf;
+	strsp = (char *)&ptrs[nptrs];
+
+	for (i = 0; i < argc; i++) {
+		len = strlcpy(strsp, argv[i], strslen);
+		if (len >= strslen) /* truncated */
+			goto err;
+
+		ptrs[i] = strsp;
+		strsp += len + 1;
+		assert(strslen >= len + 1);
+		strslen -= len + 1;
+	}
+
+	assert(strslen == 0);
+	return ptrs;
+
+err:
+	free(buf);
+	return NULL;
 }
 
 void

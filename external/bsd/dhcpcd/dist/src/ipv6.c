@@ -227,6 +227,49 @@ ipv6_reserved(const struct in6_addr *addr)
 	return false;
 }
 
+static int
+ipv6_makehwaddr(struct in6_addr *addr,
+    const struct in6_addr *prefix, int prefix_len, const struct interface *ifp)
+{
+
+	if (prefix_len > 64) {
+		errno = EINVAL;
+		return -1;
+	}
+
+	memcpy(addr->s6_addr, prefix->s6_addr, 8);
+	switch (ifp->hwtype) {
+	case ARPHRD_ETHER:
+		if (ifp->hwlen == 6) {
+			addr->s6_addr[ 8] = ifp->hwaddr[0];
+			addr->s6_addr[ 9] = ifp->hwaddr[1];
+			addr->s6_addr[10] = ifp->hwaddr[2];
+			addr->s6_addr[11] = 0xff;
+			addr->s6_addr[12] = 0xfe;
+			addr->s6_addr[13] = ifp->hwaddr[3];
+			addr->s6_addr[14] = ifp->hwaddr[4];
+			addr->s6_addr[15] = ifp->hwaddr[5];
+		} else if (ifp->hwlen == 8)
+			memcpy(&addr->s6_addr[8], ifp->hwaddr, 8);
+		else {
+			errno = ENOTSUP;
+			return -1;
+		}
+		break;
+	default:
+		errno = ENOTSUP;
+		return -1;
+	}
+
+	/* Sanity check: g bit must not indciate "group" */
+	if (EUI64_GROUP(addr)) {
+		errno = EINVAL;
+		return -1;
+	}
+	EUI64_TO_IFID(addr);
+	return 0;
+}
+
 /* RFC7217 */
 static int
 ipv6_makestableprivate1(struct dhcpcd_ctx *ctx,
@@ -480,18 +523,25 @@ ipv6_makeaddr(struct in6_addr *addr, struct interface *ifp,
 		errno = EINVAL;
 		return -1;
 	}
-	if ((ap = ipv6_linklocal(ifp)) == NULL) {
-		/* We delay a few functions until we get a local-link address
-		 * so this should never be hit. */
-		errno = ENOENT;
-		return -1;
+
+	/* If we don't have a hardware address, then use the first link-local
+	 * address to base it on. */
+	if (ifp->hwlen == 0) {
+		if ((ap = ipv6_linklocal(ifp)) == NULL) {
+			/* We delay a few functions until we get a local-link address
+			 * so this should never be hit. */
+			errno = ENOENT;
+			return -1;
+		}
+
+		/* Make the address from the first local-link address */
+		memcpy(addr, prefix, sizeof(*prefix));
+		addr->s6_addr32[2] = ap->addr.s6_addr32[2];
+		addr->s6_addr32[3] = ap->addr.s6_addr32[3];
+		return 0;
 	}
 
-	/* Make the address from the first local-link address */
-	memcpy(addr, prefix, sizeof(*prefix));
-	addr->s6_addr32[2] = ap->addr.s6_addr32[2];
-	addr->s6_addr32[3] = ap->addr.s6_addr32[3];
-	return 0;
+	return ipv6_makehwaddr(addr, prefix, prefix_len, ifp);
 }
 
 static void
@@ -1467,36 +1517,10 @@ nextslaacprivate:
 			return -1;
 		}
 		ap->dadcounter = dadcounter;
-	} else {
-		memcpy(ap->addr.s6_addr, ap->prefix.s6_addr, 8);
-		switch (ifp->hwtype) {
-		case ARPHRD_ETHER:
-			if (ifp->hwlen == 6) {
-				ap->addr.s6_addr[ 8] = ifp->hwaddr[0];
-				ap->addr.s6_addr[ 9] = ifp->hwaddr[1];
-				ap->addr.s6_addr[10] = ifp->hwaddr[2];
-				ap->addr.s6_addr[11] = 0xff;
-				ap->addr.s6_addr[12] = 0xfe;
-				ap->addr.s6_addr[13] = ifp->hwaddr[3];
-				ap->addr.s6_addr[14] = ifp->hwaddr[4];
-				ap->addr.s6_addr[15] = ifp->hwaddr[5];
-			} else if (ifp->hwlen == 8)
-				memcpy(&ap->addr.s6_addr[8], ifp->hwaddr, 8);
-			else {
-				free(ap);
-				errno = ENOTSUP;
-				return -1;
-			}
-			break;
-		}
-
-		/* Sanity check: g bit must not indciate "group" */
-		if (EUI64_GROUP(&ap->addr)) {
-			free(ap);
-			errno = EINVAL;
-			return -1;
-		}
-		EUI64_TO_IFID(&ap->addr);
+	} else if (ipv6_makehwaddr(&ap->addr,
+	    &ap->prefix, ap->prefix_len, ifp) == -1) {
+		free(ap);
+		return -1;
 	}
 
 	/* Do we already have this address? */

@@ -98,8 +98,8 @@
 __CTASSERT(sizeof(struct ip)		== 20);
 __CTASSERT(sizeof(struct udphdr)	== 8);
 __CTASSERT(sizeof(struct bootp)		== 300);
-#define IP_UDP_SIZE	sizeof(struct ip) + sizeof(struct udphdr)
-#define BOOTP_MIN_MTU	IP_UDP_SIZE + sizeof(struct bootp)
+#define IP_UDP_SIZE	(sizeof(struct ip) + sizeof(struct udphdr))
+#define BOOTP_MIN_MTU	(IP_UDP_SIZE + sizeof(struct bootp))
 
 struct dhcp_op {
 	uint8_t value;
@@ -894,8 +894,20 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 	p += 4;				\
 } while (0 /* CONSTCOND */)
 
-	/* Options are listed in numerical order as per RFC 7844 Section 3.1
-	 * XXX: They should be randomised. */
+	/*
+	 * RFC 7844 3.1 says options should be randomised, but if not
+	 * then in numerical order.
+	 * RFC 2131 makes no mention of any ordering requirement by the client.
+	 * RFC 2132 says this about the Parameter Request List option:
+	 *     The client MAY list the options in order of preference.
+	 *
+	 * Some DHCP servers sadly ignore this and require message type first.
+	 */
+
+	AREA_CHECK(3);
+	*p++ = DHO_MESSAGETYPE;
+	*p++ = 1;
+	*p++ = type;
 
 	bool putip = false;
 	if (lease->addr.s_addr && lease->cookie == htonl(MAGIC_COOKIE)) {
@@ -909,11 +921,6 @@ make_message(struct bootp **bootpm, const struct interface *ifp, uint8_t type)
 			PUT_ADDR(DHO_IPADDRESS, &lease->addr);
 		}
 	}
-
-	AREA_CHECK(3);
-	*p++ = DHO_MESSAGETYPE;
-	*p++ = 1;
-	*p++ = type;
 
 	if (lease->addr.s_addr && lease->cookie == htonl(MAGIC_COOKIE)) {
 		if (type == DHCP_RELEASE || putip) {
@@ -2859,6 +2866,51 @@ dhcp_reboot(struct interface *ifp)
 	send_request(ifp);
 }
 
+static void
+dhcp_deconfigure(void *arg)
+{
+	struct interface *ifp = arg;
+	struct dhcp_state *state = D_STATE(ifp);
+	struct if_options *ifo = ifp->options;
+	const char *reason;
+
+#ifdef AUTH
+	dhcp_auth_reset(&state->auth);
+#endif
+
+	if (state->state == DHS_RELEASE)
+		reason = "RELEASE";
+	else
+		reason = state->reason;
+	state->state = DHS_NONE;
+	free(state->offer);
+	state->offer = NULL;
+	state->offer_len = 0;
+	free(state->old);
+	state->old = state->new;
+	state->old_len = state->new_len;
+	state->new = NULL;
+	state->new_len = 0;
+	if (ifo->options & DHCPCD_CONFIGURE)
+		ipv4_applyaddr(ifp);
+	else {
+		state->addr = NULL;
+		state->added = 0;
+	}
+	script_runreason(ifp, reason);
+	free(state->old);
+	state->old = NULL;
+	state->old_len = 0;
+	state->lease.addr.s_addr = 0;
+	ifo->options &= ~(DHCPCD_CSR_WARNED | DHCPCD_ROUTER_HOST_ROUTE_WARNED);
+
+	if (ifo->options & DHCPCD_STOPPING) {
+		dhcp_free(ifp);
+		dhcpcd_dropped(ifp);
+	} else
+		dhcp_close(ifp);
+}
+
 void
 dhcp_drop(struct interface *ifp, const char *reason)
 {
@@ -2869,6 +2921,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	 * but we do have a timeout, so punt it. */
 	if (state == NULL || state->state == DHS_NONE) {
 		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+		dhcpcd_dropped(ifp);
 		return;
 	}
 
@@ -2879,6 +2932,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 #ifdef ARPING
 	state->arping_index = -1;
 #endif
+	state->reason = reason;
 
 	if (ifo->options & DHCPCD_RELEASE && !(ifo->options & DHCPCD_INFORM)) {
 		/* Failure to send the release may cause this function to
@@ -2892,10 +2946,21 @@ dhcp_drop(struct interface *ifp, const char *reason)
 		    state->new != NULL &&
 		    state->lease.server.s_addr != INADDR_ANY)
 		{
+			/* We need to delay removal of the IP address so the
+			 * message can be sent.
+			 * Unlike DHCPv6, there is no acknowledgement. */
+			const struct timespec delay = {
+				.tv_sec = 1,
+			};
+
 			loginfox("%s: releasing lease of %s",
 			    ifp->name, inet_ntoa(state->lease.addr));
 			dhcp_new_xid(ifp);
 			send_message(ifp, DHCP_RELEASE, NULL);
+			eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+			eloop_timeout_add_tv(ifp->ctx->eloop,
+			    &delay, dhcp_deconfigure, ifp);
+			return;
 		}
 	}
 #ifdef AUTH
@@ -2912,36 +2977,7 @@ dhcp_drop(struct interface *ifp, const char *reason)
 #endif
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-#ifdef AUTH
-	dhcp_auth_reset(&state->auth);
-#endif
-
-	state->state = DHS_NONE;
-	free(state->offer);
-	state->offer = NULL;
-	state->offer_len = 0;
-	free(state->old);
-	state->old = state->new;
-	state->old_len = state->new_len;
-	state->new = NULL;
-	state->new_len = 0;
-	state->reason = reason;
-	if (ifo->options & DHCPCD_CONFIGURE)
-		ipv4_applyaddr(ifp);
-	else {
-		state->addr = NULL;
-		state->added = 0;
-		script_runreason(ifp, state->reason);
-	}
-	free(state->old);
-	state->old = NULL;
-	state->old_len = 0;
-	state->lease.addr.s_addr = 0;
-	ifo->options &= ~(DHCPCD_CSR_WARNED | DHCPCD_ROUTER_HOST_ROUTE_WARNED);
-
-	/* Close DHCP ports so a changed interface family is picked
-	 * up by a new BPF state. */
-	dhcp_close(ifp);
+	dhcp_deconfigure(ifp);
 }
 
 static int
@@ -3100,6 +3136,12 @@ dhcp_handledhcp(struct interface *ifp, struct bootp *bootp, size_t bootp_len,
 
 #define IS_STATE_ACTIVE(s) ((s)-state != DHS_NONE && \
 	(s)->state != DHS_INIT && (s)->state != DHS_BOUND)
+
+	/* Don't do anything if the user hasn't configured it. */
+	if (ifp->active != IF_ACTIVE_USER ||
+	    ifp->options->options & DHCPCD_STOPPING ||
+	    !(ifp->options->options & DHCPCD_DHCP))
+		return;
 
 	if (bootp->op != BOOTREPLY) {
 		if (IS_STATE_ACTIVE(state))
@@ -3925,6 +3967,7 @@ dhcp_free(struct interface *ifp)
 		free(state->offer);
 		free(state->clientid);
 		free(state);
+		ifp->if_data[IF_DATA_DHCP] = NULL;
 	}
 
 	ctx = ifp->ctx;
