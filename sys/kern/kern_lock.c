@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.191 2026/01/03 23:08:16 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.192 2026/03/16 14:56:27 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.191 2026/01/03 23:08:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.192 2026/03/16 14:56:27 yamt Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -182,6 +182,13 @@ kernel_lock_spinout(void)
 	struct cpu_info *holder;
 
 	/*
+	 * Disable preemption so that curcpu() is stable in this function.
+	 * Otherwise, it's possible for the curlwp to be migrated to the
+	 * holder cpu in the meantime.
+	 */
+	kpreempt_disable();
+
+	/*
 	 * Find who holds the kernel lock.  If nobody, we can't report
 	 * anything, so pass -- but while this is possible in principle
 	 * because we first take the lock and then set the holder, it
@@ -192,6 +199,11 @@ kernel_lock_spinout(void)
 	holder = atomic_load_relaxed(&kernel_lock_holder);
 	if (holder == NULL)
 		goto out;
+
+	/*
+	 * We know we don't have the kernel lock.
+	 */
+	KASSERT(holder != curcpu());
 
 	/*
 	 * If we already reported kernel lock hogging in the last ten
@@ -207,19 +219,17 @@ kernel_lock_spinout(void)
 	if (atomic_cas_uint(&kernel_lock_last_report, then, now) != then)
 		goto out;
 
-	/*
-	 * Disable preemption while we send an IPI to whatever CPU
-	 * holds the kernel lock.
-	 */
 	printf("%s[%d %s]: kernel lock spinout\n", cpu_name(curcpu()),
 	    curlwp->l_lid,
 	    curlwp->l_name ? curlwp->l_name : curproc->p_comm);
-	kpreempt_disable();
+	/*
+	 * Send an IPI to whatever CPU holds the kernel lock.
+	 */
 	ipi_unicast(&msg, holder);
 	ipi_wait(&msg);
+out:
 	kpreempt_enable();
 
-out:
 #ifdef LOCKDEBUG
 	_KERNEL_LOCK_ABORT("spinout");
 #endif
