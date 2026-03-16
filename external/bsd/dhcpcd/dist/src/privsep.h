@@ -222,6 +222,8 @@ ssize_t ps_sendmsg(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const struct msghdr *);
 ssize_t ps_sendcmd(struct dhcpcd_ctx *, int, uint16_t, unsigned long,
     const void *data, size_t len);
+ssize_t ps_sendcmdmsg(struct dhcpcd_ctx *, int fd, uint16_t cmd,
+    unsigned long flags, const struct msghdr *msg);
 ssize_t ps_recvmsg(int, unsigned short, uint16_t, int);
 ssize_t ps_recvpsmsg(struct dhcpcd_ctx *, int, unsigned short,
     ssize_t (*callback)(void *, struct ps_msghdr *, struct msghdr *), void *);
@@ -245,7 +247,7 @@ int ps_seccomp_enter(void);
 pid_t ps_startprocess(struct ps_process *,
     void (*recv_msg)(void *, unsigned short),
     void (*recv_unpriv_msg)(void *, unsigned short),
-    int (*callback)(struct ps_process *), void (*)(int, void *),
+    int (*callback)(struct ps_process *),
     unsigned int);
 int ps_stopprocess(struct ps_process *);
 struct ps_process *ps_findprocess(struct dhcpcd_ctx *, struct ps_id *);

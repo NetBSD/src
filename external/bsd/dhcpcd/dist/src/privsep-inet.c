@@ -370,7 +370,7 @@ ps_inet_start(struct dhcpcd_ctx *ctx)
 
 	strlcpy(psp->psp_name, "network proxy", sizeof(psp->psp_name));
 	pid = ps_startprocess(psp, ps_inet_recvmsg, ps_inet_dodispatch,
-	    ps_inet_startcb, NULL, PSF_DROPPRIVS);
+	    ps_inet_startcb, PSF_DROPPRIVS);
 
 	if (pid == 0)
 		ps_entersandbox("stdio", NULL);
@@ -594,7 +594,7 @@ ps_inet_cmd(struct dhcpcd_ctx *ctx, struct ps_msghdr *psm, struct msghdr *msg)
 	    "%s proxy %s", psp->psp_protostr,
 	    inet_ntop(psa->psa_family, ia, buf, sizeof(buf)));
 	start = ps_startprocess(psp, ps_inet_recvmsgpsp, NULL,
-	    start_func, NULL, PSF_DROPPRIVS);
+	    start_func, PSF_DROPPRIVS);
 	switch (start) {
 	case -1:
 		ps_freeprocess(psp);

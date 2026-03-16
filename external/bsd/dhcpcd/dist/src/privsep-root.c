@@ -71,131 +71,120 @@ struct psr_ctx {
 	struct psr_error psr_error;
 	size_t psr_datalen;
 	void *psr_data;
+	bool psr_mallocdata;
 };
 
-static void
-ps_root_readerrorcb(void *arg, unsigned short events)
+static ssize_t
+ps_root_readerrorcb(struct psr_ctx *pc)
 {
-	struct psr_ctx *psr_ctx = arg;
-	struct dhcpcd_ctx *ctx = psr_ctx->psr_ctx;
-	struct psr_error *psr_error = &psr_ctx->psr_error;
+	struct dhcpcd_ctx *ctx = pc->psr_ctx;
+	int fd = PS_ROOT_FD(ctx);
+	struct psr_error *psr_error = &pc->psr_error;
 	struct iovec iov[] = {
 		{ .iov_base = psr_error, .iov_len = sizeof(*psr_error) },
-		{ .iov_base = psr_ctx->psr_data,
-		  .iov_len = psr_ctx->psr_datalen },
+		{ .iov_base = pc->psr_data, .iov_len = pc->psr_datalen },
 	};
+	struct msghdr msg = { .msg_iov = iov, .msg_iovlen = __arraycount(iov) };
 	ssize_t len;
-	int exit_code = EXIT_FAILURE;
-
-	if (events != ELE_READ)
-		logerrx("%s: unexpected event 0x%04x", __func__, events);
 
 #define PSR_ERROR(e)				\
 	do {					\
-		psr_error->psr_result = -1;	\
 		psr_error->psr_errno = (e);	\
-		goto out;			\
+		goto error;			\
 	} while (0 /* CONSTCOND */)
 
-	len = readv(PS_ROOT_FD(ctx), iov, __arraycount(iov));
+	if (eloop_waitfd(fd) == -1)
+		PSR_ERROR(errno);
+
+	if (!pc->psr_mallocdata)
+		goto recv;
+
+	/* We peek at the psr_error structure to tell us how much of a buffer
+	 * we need to read the whole packet. */
+	msg.msg_iovlen--;
+	len = recvmsg(fd, &msg, MSG_PEEK | MSG_WAITALL);
+	if (len == -1)
+		PSR_ERROR(errno);
+
+	/* After this point, we MUST do another recvmsg even on a failure
+	 * to remove the message after peeking. */
+	if ((size_t)len < sizeof(*psr_error)) {
+		/* We can't use the header to work out buffers, so
+		 * remove the message and bail. */
+		(void)recvmsg(fd, &msg, MSG_WAITALL);
+		PSR_ERROR(EINVAL);
+	}
+
+	/* No data to read? Unlikely but ... */
+	if (psr_error->psr_datalen == 0)
+		goto recv;
+
+	pc->psr_data = malloc(psr_error->psr_datalen);
+	if (pc->psr_data != NULL) {
+		iov[1].iov_base = pc->psr_data;
+		iov[1].iov_len = psr_error->psr_datalen;
+		msg.msg_iovlen++;
+	}
+
+recv:
+	len = recvmsg(fd, &msg, MSG_WAITALL);
 	if (len == -1)
 		PSR_ERROR(errno);
 	else if ((size_t)len < sizeof(*psr_error))
 		PSR_ERROR(EINVAL);
-	exit_code = EXIT_SUCCESS;
+	else if (msg.msg_flags & MSG_TRUNC)
+		PSR_ERROR(ENOBUFS);
+	else if ((size_t)len != sizeof(*psr_error) + psr_error->psr_datalen) {
+#ifdef PRIVSEP_DEBUG
+		logerrx("%s: recvmsg returned %zd, expecting %zu", __func__,
+		    len, sizeof(*psr_error) + psr_error->psr_datalen);
+#endif
+		PSR_ERROR(EBADMSG);
+	}
+	return len;
 
-out:
-	eloop_exit(ctx->ps_eloop, exit_code);
+error:
+	psr_error->psr_result = -1;
+	if (pc->psr_mallocdata && pc->psr_data != NULL) {
+		free(pc->psr_data);
+		pc->psr_data = NULL;
+	}
+	return -1;
 }
 
 ssize_t
 ps_root_readerror(struct dhcpcd_ctx *ctx, void *data, size_t len)
 {
-	struct psr_ctx psr_ctx = {
-	    .psr_ctx = ctx,
-	    .psr_data = data, .psr_datalen = len,
+	struct psr_ctx pc = {
+		.psr_ctx = ctx,
+		.psr_data = data,
+		.psr_datalen = len,
+		.psr_mallocdata = false
 	};
-	int fd = PS_ROOT_FD(ctx);
 
-	if (eloop_event_add(ctx->ps_eloop, fd, ELE_READ,
-	    ps_root_readerrorcb, &psr_ctx) == -1)
-		return -1;
+	ps_root_readerrorcb(&pc);
 
-	eloop_enter(ctx->ps_eloop);
-	eloop_start(ctx->ps_eloop, &ctx->sigset);
-	eloop_event_delete(ctx->ps_eloop, fd);
-
-	errno = psr_ctx.psr_error.psr_errno;
-	return psr_ctx.psr_error.psr_result;
-}
-
-#ifdef PRIVSEP_GETIFADDRS
-static void
-ps_root_mreaderrorcb(void *arg, unsigned short events)
-{
-	struct psr_ctx *psr_ctx = arg;
-	struct dhcpcd_ctx *ctx = psr_ctx->psr_ctx;
-	struct psr_error *psr_error = &psr_ctx->psr_error;
-	struct iovec iov[] = {
-		{ .iov_base = psr_error, .iov_len = sizeof(*psr_error) },
-		{ .iov_base = NULL, .iov_len = 0 },
-	};
-	ssize_t len;
-	int exit_code = EXIT_FAILURE;
-
-	if (events != ELE_READ)
-		logerrx("%s: unexpected event 0x%04x", __func__, events);
-
-	len = recv(PS_ROOT_FD(ctx), psr_error, sizeof(*psr_error), MSG_PEEK);
-	if (len == -1)
-		PSR_ERROR(errno);
-	else if ((size_t)len < sizeof(*psr_error))
-		PSR_ERROR(EINVAL);
-
-	if (psr_error->psr_datalen > SSIZE_MAX)
-		PSR_ERROR(ENOBUFS);
-	else if (psr_error->psr_datalen != 0) {
-		psr_ctx->psr_data = malloc(psr_error->psr_datalen);
-		if (psr_ctx->psr_data == NULL)
-			PSR_ERROR(errno);
-		psr_ctx->psr_datalen = psr_error->psr_datalen;
-		iov[1].iov_base = psr_ctx->psr_data;
-		iov[1].iov_len = psr_ctx->psr_datalen;
-	}
-
-	len = readv(PS_ROOT_FD(ctx), iov, __arraycount(iov));
-	if (len == -1)
-		PSR_ERROR(errno);
-	else if ((size_t)len != sizeof(*psr_error) + psr_ctx->psr_datalen)
-		PSR_ERROR(EINVAL);
-	exit_code = EXIT_SUCCESS;
-
-out:
-	eloop_exit(ctx->ps_eloop, exit_code);
+	errno = pc.psr_error.psr_errno;
+	return pc.psr_error.psr_result;
 }
 
 ssize_t
 ps_root_mreaderror(struct dhcpcd_ctx *ctx, void **data, size_t *len)
 {
-	struct psr_ctx psr_ctx = {
-	    .psr_ctx = ctx,
+	struct psr_ctx pc = {
+		.psr_ctx = ctx,
+		.psr_data = NULL,
+		.psr_datalen = 0,
+		.psr_mallocdata = true
 	};
-	int fd = PS_ROOT_FD(ctx);
 
-	if (eloop_event_add(ctx->ps_eloop, fd, ELE_READ,
-	    ps_root_mreaderrorcb, &psr_ctx) == -1)
-		return -1;
+	ps_root_readerrorcb(&pc);
 
-	eloop_enter(ctx->ps_eloop);
-	eloop_start(ctx->ps_eloop, &ctx->sigset);
-	eloop_event_delete(ctx->ps_eloop, fd);
-
-	errno = psr_ctx.psr_error.psr_errno;
-	*data = psr_ctx.psr_data;
-	*len = psr_ctx.psr_datalen;
-	return psr_ctx.psr_error.psr_result;
+	errno = pc.psr_error.psr_errno;
+	*data = pc.psr_data;
+	*len = pc.psr_error.psr_datalen;
+	return pc.psr_error.psr_result;
 }
-#endif
 
 static ssize_t
 ps_root_writeerror(struct dhcpcd_ctx *ctx, ssize_t result,
@@ -210,6 +199,7 @@ ps_root_writeerror(struct dhcpcd_ctx *ctx, ssize_t result,
 		{ .iov_base = &psr, .iov_len = sizeof(psr) },
 		{ .iov_base = data, .iov_len = len },
 	};
+	struct msghdr msg = { .msg_iov = iov, .msg_iovlen = __arraycount(iov) };
 	ssize_t err;
 	int fd = PS_ROOT_FD(ctx);
 
@@ -217,17 +207,19 @@ ps_root_writeerror(struct dhcpcd_ctx *ctx, ssize_t result,
 	logdebugx("%s: result %zd errno %d", __func__, result, errno);
 #endif
 
-	err = writev(fd, iov, __arraycount(iov));
+	if (len == 0)
+		msg.msg_iovlen = 1;
+	err = sendmsg(fd, &msg, MSG_EOR);
 
 	/* Error sending the message? Try sending the error of sending. */
-	if (err == -1) {
+	if (err == -1 && errno != EPIPE) {
 		logerr("%s: result=%zd, data=%p, len=%zu",
 		    __func__, result, data, len);
 		psr.psr_result = err;
 		psr.psr_errno = errno;
-		iov[1].iov_base = NULL;
-		iov[1].iov_len = 0;
-		err = writev(fd, iov, __arraycount(iov));
+		psr.psr_datalen = 0;
+		msg.msg_iovlen = 1;
+		err = sendmsg(fd, &msg, MSG_EOR);
 	}
 
 	return err;
@@ -623,7 +615,7 @@ ps_root_recvmsgcb(void *arg, struct ps_msghdr *psm, struct msghdr *msg)
 		break;
 	}
 
-	err = ps_root_writeerror(ctx, err, rlen != 0 ? rdata : 0, rlen);
+	err = ps_root_writeerror(ctx, err, rdata, rlen);
 	if (free_rdata)
 		free(rdata);
 	return err;
@@ -784,7 +776,7 @@ ps_root_signalcb(int sig, void *arg)
 	if (!(ctx->options & DHCPCD_EXITING))
 		return;
 	if (!(ps_waitforprocs(ctx)))
-		eloop_exit(ctx->ps_eloop, EXIT_SUCCESS);
+		eloop_exit(ctx->eloop, EXIT_SUCCESS);
 }
 
 int (*handle_interface)(void *, int, const char *);
@@ -872,7 +864,7 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 		.psi_cmd = PS_ROOT,
 	};
 	struct ps_process *psp;
-	int logfd[2], datafd[2];
+	int logfd[2] = { -1, -1}, datafd[2] = { -1, -1};
 	pid_t pid;
 
 	if (xsocketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CXNB, 0, logfd) == -1)
@@ -884,6 +876,7 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 
 	if (xsocketpair(AF_UNIX, SOCK_SEQPACKET | SOCK_CXNB, 0, datafd) == -1)
 		return -1;
+
 	if (ps_setbuf_fdpair(datafd) == -1)
 		return -1;
 #ifdef PRIVSEP_RIGHTS
@@ -892,9 +885,14 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 #endif
 
 	psp = ctx->ps_root = ps_newprocess(ctx, &id);
+	if (psp == NULL)
+		return -1;
+
 	strlcpy(psp->psp_name, "privileged proxy", sizeof(psp->psp_name));
 	pid = ps_startprocess(psp, ps_root_recvmsg, NULL,
-	    ps_root_startcb, ps_root_signalcb, PSF_ELOOP);
+	    ps_root_startcb, PSF_ELOOP);
+	if (pid == -1)
+		return -1;
 
 	if (pid == 0) {
 		ctx->ps_log_fd = logfd[0]; /* Keep open to pass to processes */
@@ -915,7 +913,7 @@ ps_root_start(struct dhcpcd_ctx *ctx)
 	close(datafd[1]);
 	if (eloop_event_add(ctx->eloop, ctx->ps_data_fd, ELE_READ,
 	    ps_root_dispatch, ctx) == -1)
-		return 1;
+		return -1;
 
 	return pid;
 }
@@ -950,17 +948,37 @@ int
 ps_root_stop(struct dhcpcd_ctx *ctx)
 {
 	struct ps_process *psp = ctx->ps_root;
+	int err;
 
-	if (!(ctx->options & DHCPCD_PRIVSEP) ||
-	    ctx->eloop == NULL)
+	if (!(ctx->options & DHCPCD_PRIVSEP))
 		return 0;
 
 	/* If we are the root process then remove the pidfile */
-	if (ctx->options & DHCPCD_PRIVSEPROOT &&
-	    !(ctx->options & DHCPCD_TEST))
-	{
-		if (unlink(ctx->pidfile) == -1)
+	if (ctx->options & DHCPCD_PRIVSEPROOT) {
+		if (!(ctx->options & DHCPCD_TEST) && unlink(ctx->pidfile) == -1)
 			logerr("%s: unlink: %s", __func__, ctx->pidfile);
+
+		/* drain the log */
+		if (ctx->ps_log_root_fd != -1) {
+			ssize_t loglen;
+
+#ifdef __linux__
+			/* Seems to help to get the last parts,
+			 * sched_yield(2) does not. */
+			sleep(0);
+#endif
+			do {
+				loglen = logreadfd(ctx->ps_log_root_fd);
+			} while (loglen != 0 && loglen != -1);
+			close(ctx->ps_log_root_fd);
+			ctx->ps_log_root_fd = -1;
+		}
+	}
+
+	if (ctx->ps_data_fd != -1) {
+		eloop_event_delete(ctx->eloop, ctx->ps_data_fd);
+		close(ctx->ps_data_fd);
+		ctx->ps_data_fd = -1;
 	}
 
 	/* Only the manager process gets past this point. */
@@ -981,7 +999,10 @@ ps_root_stop(struct dhcpcd_ctx *ctx)
 			return -1;
 	} /* else the root process has already exited :( */
 
-	return ps_stopwait(ctx);
+	err = ps_stopwait(ctx);
+	if (ctx->ps_root != NULL)
+		ps_freeprocess(ctx->ps_root);
+	return err;
 }
 
 ssize_t

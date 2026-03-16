@@ -27,11 +27,11 @@
 
 #ifdef SMALL
 #define INITDEFINES	      25
-#define INITDEFINENDS	       6
+#define INITDEFINENDS	       7
 #define INITDEFINE6S	      15
 #else
 #define INITDEFINES	     157
-#define INITDEFINENDS	       7
+#define INITDEFINENDS	       8
 #define INITDEFINE6S	      74
 #endif
 

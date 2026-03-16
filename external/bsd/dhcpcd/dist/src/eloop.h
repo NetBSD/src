@@ -32,33 +32,41 @@
 #include <time.h>
 
 /* Handy macros to create subsecond timeouts */
-#define	CSEC_PER_SEC		100
-#define	MSEC_PER_SEC		1000
-#define	NSEC_PER_CSEC		10000000
-#define	NSEC_PER_MSEC		1000000
-#define	NSEC_PER_SEC		1000000000
+#define CSEC_PER_SEC  100
+#define MSEC_PER_SEC  1000
+#define NSEC_PER_CSEC 10000000
+#define NSEC_PER_MSEC 1000000
+#define NSEC_PER_SEC  1000000000
 
 /* eloop queues are really only for deleting timeouts registered
  * for a function or object.
  * The idea being that one interface has different timeouts for
  * say DHCP and DHCPv6. */
 #ifndef ELOOP_QUEUE
-  #define ELOOP_QUEUE 1
+#define ELOOP_QUEUE 1
 #endif
 
 /* Used for deleting a timeout for all queues. */
-#define	ELOOP_QUEUE_ALL	0
+#define ELOOP_QUEUE_ALL 0
 
 /* Forward declare eloop - the content should be invisible to the outside */
 struct eloop;
 
-#define	ELE_READ	0x0001
-#define	ELE_WRITE	0x0002
-#define	ELE_ERROR	0x0100
-#define	ELE_HANGUP	0x0200
-#define	ELE_NVAL	0x0400
+/* eloop fd events */
+#define ELE_READ   0x0001
+#define ELE_WRITE  0x0002
+#define ELE_ERROR  0x0100
+#define ELE_HANGUP 0x0200
+#define ELE_NVAL   0x0400
 
-size_t eloop_event_count(const struct eloop  *);
+/* What to keep when forking */
+#define ELF_KEEP_SIGNALS  0x0001
+#define ELF_KEEP_EVENTS	  0x0002
+#define ELF_KEEP_TIMEOUTS 0x0004
+
+#define ELF_KEEP_ALL	  (ELF_KEEP_SIGNALS | ELF_KEEP_EVENTS | ELF_KEEP_TIMEOUTS)
+
+size_t eloop_event_count(const struct eloop *);
 int eloop_event_add(struct eloop *, int, unsigned short,
     void (*)(void *, unsigned short), void *);
 int eloop_event_delete(struct eloop *, int);
@@ -66,32 +74,30 @@ int eloop_event_delete(struct eloop *, int);
 unsigned long long eloop_timespec_diff(const struct timespec *tsp,
     const struct timespec *usp, unsigned int *nsp);
 #define eloop_timeout_add_tv(eloop, tv, cb, ctx) \
-    eloop_q_timeout_add_tv((eloop), ELOOP_QUEUE, (tv), (cb), (ctx))
+	eloop_q_timeout_add_tv((eloop), ELOOP_QUEUE, (tv), (cb), (ctx))
 #define eloop_timeout_add_sec(eloop, tv, cb, ctx) \
-    eloop_q_timeout_add_sec((eloop), ELOOP_QUEUE, (tv), (cb), (ctx))
+	eloop_q_timeout_add_sec((eloop), ELOOP_QUEUE, (tv), (cb), (ctx))
 #define eloop_timeout_add_msec(eloop, ms, cb, ctx) \
-    eloop_q_timeout_add_msec((eloop), ELOOP_QUEUE, (ms), (cb), (ctx))
+	eloop_q_timeout_add_msec((eloop), ELOOP_QUEUE, (ms), (cb), (ctx))
 #define eloop_timeout_delete(eloop, cb, ctx) \
-    eloop_q_timeout_delete((eloop), ELOOP_QUEUE, (cb), (ctx))
-int eloop_q_timeout_add_tv(struct eloop *, int,
-    const struct timespec *, void (*)(void *), void *);
-int eloop_q_timeout_add_sec(struct eloop *, int,
-    unsigned int, void (*)(void *), void *);
-int eloop_q_timeout_add_msec(struct eloop *, int,
-    unsigned long, void (*)(void *), void *);
+	eloop_q_timeout_delete((eloop), ELOOP_QUEUE, (cb), (ctx))
+int eloop_q_timeout_add_tv(struct eloop *, int, const struct timespec *,
+    void (*)(void *), void *);
+int eloop_q_timeout_add_sec(struct eloop *, int, unsigned int, void (*)(void *),
+    void *);
+int eloop_q_timeout_add_msec(struct eloop *, int, unsigned long,
+    void (*)(void *), void *);
 int eloop_q_timeout_delete(struct eloop *, int, void (*)(void *), void *);
 
 int eloop_signal_set_cb(struct eloop *, const int *, size_t,
     void (*)(int, void *), void *);
-int eloop_signal_mask(struct eloop *, sigset_t *oldset);
+int eloop_signal_mask(struct eloop *);
 
-struct eloop * eloop_new(void);
-void eloop_clear(struct eloop *, ...);
+struct eloop *eloop_new(void);
 void eloop_free(struct eloop *);
 void eloop_exit(struct eloop *, int);
-void eloop_enter(struct eloop *);
-int eloop_forked(struct eloop *);
-int eloop_open(struct eloop *);
-int eloop_start(struct eloop *, sigset_t *);
+int eloop_forked(struct eloop *, unsigned short);
+int eloop_waitfd(int);
+int eloop_start(struct eloop *);
 
 #endif

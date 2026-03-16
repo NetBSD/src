@@ -236,7 +236,7 @@ ps_ctl_start(struct dhcpcd_ctx *ctx)
 	psp = ctx->ps_ctl = ps_newprocess(ctx, &id);
 	strlcpy(psp->psp_name, "control proxy", sizeof(psp->psp_name));
 	pid = ps_startprocess(psp, ps_ctl_recvmsg, ps_ctl_dodispatch,
-	    ps_ctl_startcb, NULL, PSF_DROPPRIVS);
+	    ps_ctl_startcb, PSF_DROPPRIVS);
 
 	if (pid == -1)
 		return -1;

@@ -135,6 +135,8 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" request");
 	if (opt->type & OT_NOREQ)
 		printf(" norequest");
+	if (opt->type & OT_TRUNCATED)
+		printf(" truncated");
 	putchar('\n');
 	fflush(stdout);
 }
@@ -614,6 +616,8 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 		return (ssize_t)dl;
 	}
 	if (dl < sz) {
+		if (opt->type & OT_TRUNCATED)
+			return (ssize_t)dl;
 		errno = EOVERFLOW;
 		return -1;
 	}
@@ -751,6 +755,11 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 		    l < sizeof(opt->bitflags);
 		    l++, sl--)
 		{
+			if (opt->bitflags[l] == '1') {
+				if (fprintf(fp, "%d", *data & (1 << sl)) == -1)
+					goto err;
+				continue;
+			}
 			/* Don't print NULL or 0 flags */
 			if (opt->bitflags[l] != '\0' &&
 			    opt->bitflags[l] != '0' &&
@@ -808,9 +817,14 @@ print_option(FILE *fp, const char *prefix, const struct dhcp_opt *opt,
 				goto err;
 			data += sizeof(addr.s_addr);
 		} else if (opt->type & OT_ADDRIPV6) {
+			uint8_t databuf[sizeof(struct in6_addr)] = { 0 };
+			size_t datalen = e - data >= 16 ? 16 : (size_t)(e - data);
 			char buf[INET6_ADDRSTRLEN];
 
-			if (inet_ntop(AF_INET6, data, buf, sizeof(buf)) == NULL)
+			/* avoid inet_ntop going beyond our option space by
+			 * copying out into a temporary buffer. */
+			memcpy(databuf, data, datalen);
+			if (inet_ntop(AF_INET6, databuf, buf, sizeof(buf)) == NULL)
 				goto err;
 			if (fprintf(fp, "%s", buf) == -1)
 				goto err;
