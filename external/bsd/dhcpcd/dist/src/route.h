@@ -31,6 +31,8 @@
 
 #ifdef HAVE_SYS_RBTREE_H
 #include <sys/rbtree.h>
+#else
+#include "rbtree.h"
 #endif
 
 #include <sys/socket.h>

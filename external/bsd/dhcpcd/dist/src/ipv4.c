@@ -291,7 +291,7 @@ inet_dhcproutes(rb_tree_t *routes, struct interface *ifp, bool *have_default)
 	int n;
 
 	state = D_CSTATE(ifp);
-	if (state == NULL || state->state != DHS_BOUND || !state->added)
+	if (state == NULL || !(state->added & STATE_ADDED))
 		return 0;
 
 	/* An address does have to exist. */
@@ -359,6 +359,8 @@ inet_dhcproutes(rb_tree_t *routes, struct interface *ifp, bool *have_default)
 		rt->rt_mtu = mtu;
 		if (!(rt->rt_dflags & RTDF_STATIC))
 			rt->rt_dflags |= RTDF_DHCP;
+		if (state->added & STATE_FAKE)
+			rt->rt_dflags |= RTDF_FAKE;
 		sa_in_init(&rt->rt_ifa, &state->addr->addr);
 		if (rb_tree_insert_node(routes, rt) != rt) {
 			rt_free(rt);

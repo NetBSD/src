@@ -322,4 +322,6 @@ int add_options(struct dhcpcd_ctx *, const char *,
 void free_dhcp_opt_embenc(struct dhcp_opt *);
 void free_options(struct dhcpcd_ctx *, struct if_options *);
 
+char **alloc_args(int argc, char **argv);
+
 #endif
