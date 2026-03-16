@@ -173,8 +173,7 @@ aarch64_nbsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
   return 1;
 }
 
-void
-_initialize_aarch64_nbsd_nat ()
+INIT_GDB_FILE (aarch64_nbsd_nat)
 {
   add_inf_child_target (&the_aarch64_nbsd_nat_target);
 
