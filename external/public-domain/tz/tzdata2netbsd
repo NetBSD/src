@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.17 2025/12/19 01:17:21 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.18 2026/03/16 11:51:35 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -52,8 +52,13 @@ GTZURL=https://github.com/JodaOrg/global-tz/releases/download
 
 EDITOR=${EDITOR:-vi}
 
-TZBASE=$(pwd)	|| fail 'Cannot find myself ($PWD)'
+TZBASE=$(pwd)	|| fail "Cannot find myself (${PWD})"
 cd -P "$TZBASE"	|| fail "Cannot return home: ${TZBASE}"
+
+if [ "${TZBASE}" != "${PWD}" ]
+then
+	fail "TZBASE!=PWD ?? TZBASE='${TZBASE}' PWD='${PWD}'"
+fi
 
 WORK_PFX=${TZBASE}/update-work
 UPDATE_FROM=${WORK_PFX}/updating.from.version
@@ -81,6 +86,22 @@ fail()
 
 	printf >&2 '%s\n'	"Error detected:" "   $*" "Aborting."
 	exit 1
+}
+
+find_netbsdsrc()
+{
+	while ! [ -f UPDATING ] || ! [ -f BUILDING ]
+	do
+		if [ "${PWD}" = / ]
+		then
+			printf '%s\n' 'Unable to find NETBSDSRCDIR'
+			return 1
+		fi
+		cd -P ..
+	done
+	NETBSDSRCDIR=${PWD}
+	cd -P "${TZBASE:-/nowhere/that/exists}" ||
+		fail 'Unable to return to TZBASE:' "${TZBASE}"
 }
 
 valid_vers()
@@ -425,14 +446,30 @@ validate_pwd()
 	local P="$(pwd)" || return 1
 
 	test -d "${P}" &&
-	    test -d "${P}/CVS" &&
 	    test -d "${P}/dist" &&
 	    test -f "${P}/dist/zone.tab" &&
 	    test -f "${P}/tzdata2netbsd" || {
-		printf >&2 '%s\n' "Please change to the correct directory"
+		printf >&2 '%s\n' 'Please change to the correct directory' \
+		    'It is the one (in src) containing the tzdata2netbsd script, and dist subdir'
 		return 1
 	}
-	
+}
+
+check_branch()
+{
+	local P="$(pwd)" || return 1
+
+	if ${Hg:-false}
+	then
+		if [ "$(hg branch)" = trunk ]
+		then
+			return 0
+		fi
+		printf >&2 '%s\n' \
+		    "This script should be run in a checkout of trunk only"
+		return 1
+
+	fi
 	test -f "${P}/CVS/Tag" && {
 
 		# Here (for local use only) if needed for private branch work
@@ -457,14 +494,61 @@ validate_pwd()
 
 findcvsroot()
 {
+	Hg=false
+	if HGREPO=$(hg paths default 2>/dev/null)
+	then
+		test -n "${HGREPO}" && Hg=true && return 0
+	fi
 	[ -n "${CVSROOT}" ] && return 0
-	CVSROOT="$( cat ./CVS/Root )" || {
-		printf 'No CVS/Root in %s\n' "$(pwd)"
+	CVSROOT="$( cat ./CVS/Root 2>/dev/null )" || {
+		printf 'No CVS/Root or Hg repository in %s\n' "$(pwd)"
 		return 1
 	}
 	[ -n "${CVSROOT}" ] && return 0
 	printf >&2 'Failed to set CVSROOT value\n'
 	return 1
+}
+
+hginit()
+{
+	local P=
+
+	if ! "${Hg:-false}"
+	then
+		return 0
+	fi
+
+	P=$(cd -P "${NETBSDSRCDIR}/.." && pwd) ||
+		fail 'Unable to name parent of NETBSDSRCDIR'
+
+	TZDATASRC=${P}/tzdatasrc
+
+	if ! [ -d "${TZDATASRC}" ]
+	then
+		printf 2>&1 '%s\n' \
+		    'Make the tzdatasrc clone of src first.'		\
+		    'It should be a sibling of src in the filesys:'	\
+		    "	${TZDATASRC}"					\
+		    'It should contain just the TZDATA branch.'
+
+		exit 3
+	fi
+
+	if [ "$( ls "${TZDATASRC}" )" != external ]			  ||
+	   [ "$( ls "${TZDATASRC}/external" )" != public-domain ]	  ||
+	   [ "$( ls "${TZDATASRC}/external/public-domain" )" != tz ]	  ||
+	   [ "$( ls "${TZDATASRC}/external/public-domain/tz" )" != dist ] ||
+	 ! [ -d "${TZDATASRC}/external/public-domain/tz/dist" ]
+	then
+		printf 2>&1 '%s\n' \
+			"TZDATASRC (${TZDATASRC}) set up improperly"	\
+			'Correct it and restart.'			\
+			'It should contain only the TZDATA branch'
+		exit 4
+	fi
+
+	WORK_PFX=${P}/tzdata-update-work
+	UPDATE_FROM=${WORK_PFX}/updating.from.version
 }
 
 mkworkpfx()
@@ -479,8 +563,39 @@ mkworkdir()
 cvsupdate()
 (
 	# Make sure our working directory is up to date (and HEAD)
-	cd "${TZBASE}/dist"			|| exit 1
-	cvs -d "${CVSROOT}" -q update -AdP	|| exit 2
+
+	if "${Hg:-false}"
+	then
+		if [ -n "$(hg status | sed 1q)" ]
+		then
+			printf 'There are modified files in the tree:\n'
+			hg status
+			printf 'Commit, revert, or shelve any modified files\n'
+			return 1
+		fi
+
+		if [ hg outgoing >/dev/null 2>&1 ]
+		then
+			printf 'There are unpushed changesets in the tree:\n'
+			hg outgoing | sed -e 1,2d
+			printf \
+			  'These changes will be pushed as part of the update\n'
+			read -r -p 'Is that OK? [Y/n] ' reply
+			case ${reply} in
+			[Yy]*)	;;
+			*)	printf 'Aborting.  Nothing has changed\n'
+				exit 1
+				;;
+			esac
+		fi
+		hg pull -u -b trunk "${HGREPO}"
+		return 0
+	fi
+
+	(
+		cd -P "${TZBASE}/dist"			|| exit 1
+		cvs -d "${CVSROOT}" -q update -AdP	|| exit 2
+	) || exit $?
 )
 
 fetch()
@@ -531,7 +646,7 @@ extract()
 
 rflist()
 (
-	 test "${1}" && cd "${1}" && find * -print | sort
+	 test "${1}" && cd -P "${1}" && find * -print | sort
 )
 
 zonelists()
@@ -541,7 +656,7 @@ zonelists()
 	rm -fr "${WORK_PFX}"/oldzones "${WORK_PFX}"/newzones
 
 	(
-		cd "${TZBASE}/share/zoneinfo" || exit 1
+		cd -P "${TZBASE}/share/zoneinfo" || exit 1
 
 		make	TOOL_ZIC=/usr/sbin/zic			\
 			DESTDIR=				\
@@ -553,7 +668,7 @@ zonelists()
 	) || fail 'Unable to compile old zone data files'
 
 	(
-		cd "${TZBASE}/share/zoneinfo" || exit 1
+		cd -P "${TZBASE}/share/zoneinfo" || exit 1
 
 		make	TOOL_ZIC=/usr/sbin/zic			\
 			DESTDIR=				\
@@ -609,7 +724,7 @@ updatedzones()
 	rm -fr "${WORK_PFX}"/updzones
 
 	(
-		cd "${TZBASE}/share/zoneinfo" || exit 1
+		cd -P "${TZBASE}/share/zoneinfo" || exit 1
 
 		make	TOOL_ZIC=/usr/sbin/zic			\
 			DESTDIR=				\
@@ -678,7 +793,7 @@ trimnews()
 		printf '%s\n' "tzdata-${NEWVER}gtz"
 	else
 		printf '%s\n' "tzdata-${NEWVER}"
-	fi > ${TZDISTDIR}/TZDATA_VERSION
+	fi > "${TZDISTDIR}/TZDATA_VERSION"
 }
 
 # Create IMPORTMSGFILE from NEWSTRIMFILE, by ignoring some sections,
@@ -787,16 +902,83 @@ Not performing cvs import.
 EOF
 		return 1
 	fi
-	( cd "${EXTRACTDIR}" &&
+	( cd -P "${EXTRACTDIR}" &&
 	  DOIT cvs -d "${CVSROOT}" import -I ! -m "$(cat "${IMPORTMSGFILE}")" \
 		"${REPODIR}" "${CVSBRANCHTAG}" "${CVSNEWTAG}"
 	) && touch "${IMPORTDONEFILE}"
 }
 
+hgimport()
+(
+	set -e		# Just to make sure
+
+	if [ -e "${IMPORTDONEFILE}" ]; then
+		cat >&2 <<EOF
+The hg TZDATA branch update has already been performed.
+EOF
+		return 0
+	fi
+	if ! [ -s "${IMPORTMSGFILE}" ] || grep -q '^EDIT' "${IMPORTMSGFILE}"
+	then
+		cat >&2 <<EOF
+The message file ${IMPORTMSGFILE}
+has not been properly edited.
+Not performing hg import.
+EOF
+		return 1
+	fi
+
+	RELPATH=${TZBASE#${NETBSDSRCDIR}/}
+
+	cd -P "${TZDATASRC}/${RELPATH}/dist"
+
+	ls -1 > "${WORKDIR}"/old-dist-files
+	ls -1 "${EXTRACTDIR}" >"${WORKDIR}"/new-dist-files
+
+	rm -f *
+	cp -f ${EXTRACTDIR}/* .
+
+	if cmp "${WORKDIR}"/old-dist-files "${WORKDIR}"/new-dist-files
+	then
+		DOIT hg commit -l "${IMPORTMSGFILE}" &&
+			touch "${IMPORTDONEFILE}"
+		return
+	fi
+
+	NEW=$(comm -13 "${WORKDIR}"/old-dist-files "${WORKDIR}"/new-dist-files)
+	OLD=$(comm -23 "${WORKDIR}"/old-dist-files "${WORKDIR}"/new-dist-files)
+
+	if [ -n "${NEW}" ]
+	then
+		printf '\nThe following files have been added:\n%s\n' "${NEW}"\
+			>>"${IMPORTMSGFILE}"
+	fi
+	if [ -n "${OLD}" ]
+	then
+		printf '\nThe following files have been removed:\n%s\n' \
+			"${OLD}" >>"${IMPORTMSGFILE}"
+
+		test -n "${NEW}" &&
+		printf '\nThe following files have been added:\n%s\n' "${NEW}"
+		printf '\nThe following files have been removed:\n%s\n' \
+			"${OLD}"
+
+		read -r -p 'Do you want to do this ? ' reply
+		case $reply in
+		[Yy]*)	;;
+		*)	return 1;;
+		esac
+	fi
+
+	DOIT hg addremove -s 90 &&
+	DOIT hg commit -l "${IMPORTMSGFILE}" &&
+	touch "${IMPORTDONEFILE}"
+)
+
 cvsmerge()
 {
 
-	cd "${TZDISTDIR}" || exit 1
+	cd -P "${TZDISTDIR}" || exit 1
 	if [ -e "${MERGEDONEFILE}" ]
 	then
 		cat >&2 <<EOF
@@ -813,9 +995,46 @@ EOF
 	printf '%s\n' ==================================
 }
 
+hgmerge()
+{
+	cd -P "${TZDISTDIR}" || exit 1
+	if [ -e "${MERGEDONEFILE}" ]
+	then
+		cat >&2 <<EOF
+The hg merge has already been performed.
+EOF
+		return 0
+	fi
+	DOIT hg merge TZDATA &&
+		touch "${MERGEDONEFILE}" &&
+		return 0
+
+	if [ -z "$( ht resolve -l | grep -v '^R' >/dev/null 2>&1 )" ]
+	then
+		# All conflicts already resolved, just note that
+		printf 'Auto-resolving merge "conflicts"\n.'
+		hg resolve -m &&
+			touch "${MERGEDONEFILE}"
+		return 0
+	fi
+
+	printf '\n*********************************** CONFLICTS\n'
+	printf 'The following files have conflicts:\n'
+
+	hg resolve -l
+
+	printf '%s\n' \
+	    'Resolve these issues, and run\n\thg resolve -m file...'	\
+	    'as each file listed above is corrected.' ''		\
+	    'Then re-run this script.'
+
+	touch "${MERGEDONEFILE}"
+	exit 1
+}
+
 resolveconflicts()
 {
-	cd "${TZDISTDIR}" || exit 1
+	cd -P "${TZDISTDIR}" || exit 1
 	if grep -l '^[<=>][<=>][<=>]' *
 	then
 		cat <<EOF
@@ -838,7 +1057,7 @@ checkfilecontents()
 
 	auto=false
 
-	cd "${EXTRACTDIR}" || exit 1
+	cd -P "${EXTRACTDIR}" || exit 1
 	set -- *
 
 	if test "$1" = '*'
@@ -858,7 +1077,7 @@ checkfilecontents()
 	unset -v LESS MORE
 
 	exit=0
-	cd "${TZDISTDIR}" || exit 1
+	cd -P "${TZDISTDIR}" || exit 1
 
 	for file
 	do
@@ -867,8 +1086,13 @@ checkfilecontents()
 			printf 'In distribution but not in new tree: %s\n' \
 			    "${file}"
 			cp "${EXTRACTDIR}${file}" .
-			DOIT cvs -d "${CVSROOT}" add \
-			    -m "Added by ${NEWVER}" "${file}"
+			if "${Hg:-false}"
+			then
+				DOIT hg add "${file}"
+			else
+				DOIT cvs -d "${CVSROOT}" add \
+				    -m "Added by ${NEWVER}" "${file}"
+			fi
 			continue
 		fi
 
@@ -930,8 +1154,14 @@ checkfilecontents()
 		(*)	exit 1;;
 		esac
 
-		rm -f "$@"
-		DOIT cvs -d "${CVSROOT}" remove "${@}"
+		if "${Hg:-false}"
+		then
+			DOIT hg remove "$@" || continue
+		else
+			rm -f "$@"
+			DOIT cvs -d "${CVSROOT}" remove "${@}" || continue
+		fi
+		break
 	done
 
 	touch "${FILECONTENTCHECKDONE}" || exit 1
@@ -941,7 +1171,7 @@ checkfilecontents()
 
 cvscommitmerge()
 {
-	cd "${TZDISTDIR}" || exit 1
+	cd -P "${TZDISTDIR}" || exit 1
 	if grep -l '^[<=>][<=>][<=>]' *
 	then
 		cat >&2 <<EOF
@@ -952,11 +1182,33 @@ EOF
 	fi
 	if [ -e "${COMMITMERGEDONEFILE}" ]; then
 		cat >&2 <<EOF
-The CVS commmit (of the merge result) has already been performed.
+The CVS commit (of the merge result) has already been performed.
 EOF
 		return 0
 	fi
 	DOIT cvs -d "${CVSROOT}" commit -m "Merge tzdata${NEWVER}" &&
+		touch "${COMMITMERGEDONEFILE}"
+}
+
+hgcommitmerge()
+{
+	cd -P "${TZDISTDIR}" || exit 1
+
+	if ! hg resolve -l
+	then
+		cat >&2 <<EOF
+There still appear to be conflicts in the files listed above.
+Not performing hg commit.   Resolve conflicts first.
+EOF
+		return 1
+	fi
+	if [ -e "${COMMITMERGEDONEFILE}" ]; then
+		cat >&2 <<EOF
+The hg commit (of the merge result) has already been performed.
+EOF
+		return 0
+	fi
+	DOIT hg commit -m "Merge tzdata${NEWVER}" &&
 		touch "${COMMITMERGEDONEFILE}"
 }
 
@@ -1042,14 +1294,22 @@ setlistupdate()
 
 			# Now is where the changes start happening...
 
-			cd ${TZBASE}/../../../distrib/sets || exit 1
-			cd lists/base || exit 2
-			cvs -d "${CVSROOT}" -q update -A mi || exit 3
+			cd -P "${NETBSDSRCDIR}/distrib/sets" || exit 1
+			cd -P lists/base || exit 2
+			"${Hg:-false}" ||
+			    cvs -d "${CVSROOT}" -q update -A mi || exit 3
 			cp -p mi mi.unsorted || exit 4
 			sh ../../sort-list mi || exit 5
-			cmp -s mi mi.unsorted ||
-				DOIT cvs -d "${CVSROOT}" -q commit \
-					-m 'Sort (NFCI)' mi || exit 6
+			cmp -s mi mi.unsorted || {
+				if "${Hg:-false}"
+				then
+					DOIT hg commit -m 'Sort (NFCI)' mi ||
+						exit 6
+				else
+					DOIT cvs -d "${CVSROOT}" -q commit \
+						-m 'Sort (NFCI)' mi || exit 6
+				fi
+			}
 			rm -f mi.unsorted
 			sed -f "${WORKDIR}/sedcmds" < mi > mi.new || exit 7
 			! test -s mi.new || cmp -s mi mi.new && {
@@ -1058,8 +1318,13 @@ setlistupdate()
 			}
 			mv mi.new mi || exit 9
 			sh ../../sort-list mi || exit 10
-			DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" mi ||
-				exit 11
+			if "${Hg:-false}"
+			then
+				DOIT hg commit -m "${MSG}" mi || exit 11
+			else
+				DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" mi||
+					exit 11
+			fi
 			printf 'Sets list successfully updated'
 			exit 0
 		) || {
@@ -1082,39 +1347,38 @@ setlistupdate()
 
 docupdate()
 {
-	cd "${TZBASE}"
+	cd -P "${TZBASE}"
 
 	MSG='CHANGES and 3RDPARTY must be updated manually'
 
-	while ! [ -f UPDATING ] || ! [ -f BUILDING ]
-	do
-		if [ "${PWD}" = / ]
-		then
-			printf '%s\n' 'Unable to find NETBSDSRCDIR' "${MSG}"
-			return 1
-		fi
-		cd ..
-	done
+	cd -P "${NETBSDSRCDIR:-/nowhere/at/all}" 2>/dev/null || {
+		printf >&2 '%s\n' "${MSG}"
+		return 1
+	}
+
 	if ! [ -d doc ]
 	then
 		printf '%s\n' "No doc directory in ${PWD}" "${MSG}"
 		return 1
 	fi
-	cd doc
-	if ! [ -d CVS ]
+	cd -P doc
+	if ! "${Hg:-false}" && ! [ -d CVS ]
 	then
 		printf '%s\n' "No CVS directory in ${PWD}" "${MSG}"
 		return 1
 	fi
 
-	printf 'Making sure doc/CHANGES and doc/3RDPARTY are up to date\n'
-	cvs -d "${CVSROOT}" -q update -A CHANGES 3RDPARTY
+	if ! "${Hg:-false}"
+	then
+	    printf 'Making sure doc/CHANGES and doc/3RDPARTY are up to date\n'
+	    cvs -d "${CVSROOT}" -q update -A CHANGES 3RDPARTY
+	fi
 
 	local commit=false
 
 	if grep "tzdata: Updated to ${NEWVER}" CHANGES
 	then
-		printf 'doc/CHANGES has already been updated'
+		printf 'doc/CHANGES has already been updated\n'
 	else
 	    {
 		printf '\ttzdata: Updated to %s' "${NEWVER}"
@@ -1126,7 +1390,7 @@ docupdate()
 
 	if grep "^Version:	tzcode[^ 	]* / tzdata${NEWVER}" 3RDPARTY
 	then
-		printf 'doc/3RDPARTY has already been updated'
+		printf 'doc/3RDPARTY has already been updated\n'
 	else
 		# These just make the sed script below manageable.
 		C=tzcode D=tzdata V=${NEWVER} T=${CVSNEWTAG}
@@ -1149,18 +1413,29 @@ docupdate()
 	then
 		printf 'These are the changes that will be made:\n\n'
 
-		cvs -d "${CVSROOT}" diff -u CHANGES 3RDPARTY || :  # Ugh -e!
+		if "${Hg:-false}"
+		then
+			hg diff CHANGES 3RDPARTY || :  # Ugh -e!
+		else
+			cvs -d "${CVSROOT}" diff -u CHANGES 3RDPARTY || :
+		fi
 
 		read -p $'\nAre those OK? [y/n] ' reply
 
-		MSG="Note tzdata${NEWVER} update"
+		
 		if "${GLOBAL}"
 		then
 			MSG="${MSG} (via ${NEWVER}gtz)"
 		fi
 		case "${reply}" in
-		([Yy]*)   DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" \
-				CHANGES 3RDPARTY
+		([Yy]*)
+			if "${Hg:-false}"
+			then
+				DOIT hg commit -m "${MSG}" CHANGES 3RDPARTY
+			else
+				DOIT cvs -d "${CVSROOT}" commit -m "${MSG}" \
+					CHANGES 3RDPARTY
+			fi
 			;;
 		(*)	printf '%s\n' \
 			   'OK, correct and commit those files manually' \
@@ -1182,9 +1457,9 @@ Also do the following:
  * no longer exists.
 
 And if necessary (if not already done by the script):
+ * Edit and commit  src/distrib/sets/lists/base/mi
  * Edit and commit  src/doc/3RDPARTY
  * Edit and commit  src/doc/CHANGES
- * Edit and commit  src/distrib/sets/lists/base/mi
 EOF
 
 	rm -f "${UPDATE_FROM}"	# just to try to make sure, as we're done!
@@ -1194,12 +1469,19 @@ main()
 {
 	set -e
 	validate_pwd
+
+	find_netbsdsrc
 	findcvsroot
+	hginit
+
+	if ! [ -f "${UPDATE_FROM}" ]
+	then
+		cvsupdate || fail 'working directory (dist) update failed:'" $?"
+	fi
+
 	mkworkpfx
 
 	argparse "$@"
-
-	cvsupdate || fail 'working directory (dist) cvs update failed:'" $?"
 
 	setup_versions
 	mkworkdir
@@ -1213,11 +1495,23 @@ main()
 	trimnews
 	mkimportmsg
 	editimportmsg
-	cvsimport
-	cvsmerge
-	resolveconflicts
+
+	if "${Hg:-false}"
+	then
+		hgimport
+		hgmerge
+	else
+		cvsimport
+		cvsmerge
+		resolveconflicts
+	fi
 	checkfilecontents
-	cvscommitmerge
+	if "${Hg:-false}"
+	then
+		hgcommitmerge
+	else
+		cvscommitmerge
+	fi
 	updatedzones
 
 	setlistupdate
@@ -1228,6 +1522,12 @@ main()
 		"${WORK_PFX}"/updzones
 
 	docupdate
+
+	if "${hg:-false}"
+	then
+		DOIT hg push	# Publish it all!
+	fi
+
 	extra
 }
 
