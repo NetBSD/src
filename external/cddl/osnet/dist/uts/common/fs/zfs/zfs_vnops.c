@@ -6400,7 +6400,7 @@ zfs_netbsd_print(void *v)
 }
 
 const struct genfs_ops zfs_genfsops = {
-        .gop_write = zfs_putapage,
+	.gop_write = zfs_putapage,
 	.gop_markupdate = zfs_netbsd_gop_markupdate,
 	.gop_putrange = zfs_netbsd_gop_putrange,
 };
