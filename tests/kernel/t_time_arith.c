@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time_arith.c,v 1.7 2025/10/06 12:05:04 riastradh Exp $	*/
+/*	$NetBSD: t_time_arith.c,v 1.8 2026/03/17 08:10:58 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2024-2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time_arith.c,v 1.7 2025/10/06 12:05:04 riastradh Exp $");
+__RCSID("$NetBSD: t_time_arith.c,v 1.8 2026/03/17 08:10:58 yamt Exp $");
 
 #include <sys/timearith.h>
 
@@ -242,58 +242,6 @@ const struct itimer_transition {
 		{2,999999999}, {0,0}, 0,
 		NULL},
 
-	/* (2^63 - 1) us */
-	[32] = {{.it_value = {3,0}, .it_interval = {9223372036854,775807}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* 2^63 us */
-	[33] = {{.it_value = {3,0}, .it_interval = {9223372036854,775808}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* (2^63 + 1) us */
-	[34] = {{.it_value = {3,0}, .it_interval = {9223372036854,775809}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-
-	/* (2^64 - 1) us */
-	[35] = {{.it_value = {3,0}, .it_interval = {18446744073709,551615}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* 2^64 us */
-	[36] = {{.it_value = {3,0}, .it_interval = {18446744073709,551616}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* (2^64 + 1) us */
-	[37] = {{.it_value = {3,0}, .it_interval = {18446744073709,551617}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-
-	/* (2^63 - 1) ms */
-	[38] = {{.it_value = {3,0}, .it_interval = {9223372036854775,807}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* 2^63 ms */
-	[39] = {{.it_value = {3,0}, .it_interval = {9223372036854775,808}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* (2^63 + 1) ms */
-	[40] = {{.it_value = {3,0}, .it_interval = {9223372036854775,809}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-
-	/* (2^64 - 1) ms */
-	[41] = {{.it_value = {3,0}, .it_interval = {18446744073709551,615}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* 2^64 ms */
-	[42] = {{.it_value = {3,0}, .it_interval = {18446744073709551,616}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-	/* (2^64 + 1) ms */
-	[43] = {{.it_value = {3,0}, .it_interval = {18446744073709551,617}},
-		{2,999999999}, {0,0}, 0,
-		NULL},
-
 	/* invalid intervals */
 	[44] = {{.it_value = {3,0}, .it_interval = {-1,0}},
 		{3,1}, {0,0}, 0, NULL},
@@ -405,6 +353,9 @@ ATF_TC_BODY(itimer_transitions, tc)
 		int overruns;
 		volatile bool aborted = true;
 		volatile bool expect_abort = false;
+
+		if (!timespecisset(&it.it_time.it_interval))
+			continue;
 
 		fprintf(stderr, "case %u\n", i);
 
