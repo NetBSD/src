@@ -6237,6 +6237,8 @@ zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
 	KASSERT(flags == GOP_UPDATE_MODIFIED);
 
 	tx = dmu_tx_create(zfsvfs->z_os);
+	dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
+	zfs_sa_upgrade_txholds(tx, zp);
 	err = dmu_tx_assign(tx, TXG_WAIT);
 	if (err != 0) {
 		dmu_tx_abort(tx);
@@ -6245,7 +6247,11 @@ zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs), NULL, &mtime, 16);
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs), NULL, &ctime, 16);
 	zfs_tstamp_update_setup(zp, CONTENT_MODIFIED, mtime, ctime, B_TRUE);
+	err = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 	dmu_tx_commit(tx);
+	if (err != 0) {
+		printf("%s: sa_bulk_update failed with %d\n", __func__, err);
+	}
 }
 
 static int
