@@ -1982,6 +1982,22 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	cred_t		*cr = CRED();
 	struct mounta	*uap = data;
 
+	/*
+	 * reject all op flags for now.
+	 *
+	 * - the code below is inconsistent. sometimes it checks uap->flags,
+	 *   sometimes vfsp->vfs_flag. (aka mnt_flag)
+	 *
+	 * - our userland tools (zfs, mount_zfs) currently don't seem to have
+	 *   a way to pass these flags anyway. (zmount in libzfs always passes
+	 *   0 to both of mount(2) 'flags' argument and 'uap->flags'. although
+	 *   it stores something in uap->mflag and uap->optptr, nothing uses
+	 *   them. it doesn't even set MS_OPTIONSTR. we don't implement
+	 *   MS_OPTIONSTR anyway.)
+	 */
+	if ((vfsp->mnt_flag & MNT_OP_FLAGS) != 0)
+		return (SET_ERROR(ENOTSUP));
+
 	if (uap == NULL)
 		return (SET_ERROR(EINVAL));
 
