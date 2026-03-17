@@ -1064,6 +1064,8 @@ doc/$(am__dirstamp):
 	@: > doc/$(am__dirstamp)
 
 @BUILD_INFO_TRUE@doc/sframe-spec.info: doc/sframe-spec.texi 
+@BUILD_INFO_TRUE@	@echo "NOT REBUILDING $@"
+@BUILD_INFO_TRUE@NetBSD_DISABLED_sframe-spec.info:
 @BUILD_INFO_TRUE@	@test -f doc/$(am__dirstamp) || $(MAKE) $(AM_MAKEFLAGS) doc/$(am__dirstamp)
 @BUILD_INFO_TRUE@	$(AM_V_MAKEINFO)restore=: && backupdir="$(am__leading_dot)am$$$$" && \
 @BUILD_INFO_TRUE@	rm -rf $$backupdir && mkdir $$backupdir && \
