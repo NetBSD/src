@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.21 2023/12/08 21:46:02 andvar Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.22 2026/03/17 02:16:39 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.21 2023/12/08 21:46:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.22 2026/03/17 02:16:39 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -433,6 +433,19 @@ pmap_tlb_shootnow(void)
 			splx(s);
 			return;
 		}
+		/*
+		 * ...otherwise, interrupts should not have modified
+		 * our states.
+		 *
+		 * Note: If the following KASSERTs fail, it probably
+		 * means a missing pmap_update() in the interrupt handler.
+		 * We don't allow such a usage. (Otherwise, we need to
+		 * recalculate rcpucount here.)
+		 */
+		KASSERT(local == kcpuset_isset(target, cid) ? 1 : 0);
+		KASSERT(rcpucount == kcpuset_countset(target) - local);
+		KASSERT(memcmp(__UNVOLATILE(ts), __UNVOLATILE(tp),
+		    sizeof(*ts)) == 0);
 	}
 
 	/*
