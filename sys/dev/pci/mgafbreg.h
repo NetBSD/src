@@ -1,4 +1,4 @@
-/*	$NetBSD: mgafbreg.h,v 1.1 2026/03/17 10:03:02 macallan Exp $	*/
+/*	$NetBSD: mgafbreg.h,v 1.2 2026/03/17 12:51:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -62,15 +62,22 @@
 #define MGA_MACCESS_WRAM_INIT	0x00008000	/* trigger WRAM init cycle */
 
 #define MGA_DWGCTL_BITBLT	0x00000008UL	/* opcode: screen-to-screen */
+#define MGA_DWGCTL_FASTBLT	0x0000000cUL	/* opcode: screen-to-screen */
 #define MGA_DWGCTL_RPL		0x00000000UL	/* atype: replace */
 #define MGA_DWGCTL_BOP_COPY	0x000C0000UL	/* bop: GXcopy */
 #define MGA_DWGCTL_SHIFTZERO	0x00004000UL	/* shfzero: no pixel shift */
+#define MGA_DWGCTL_SGNZERO	0x00002000UL	/* shfzero: no pixel shift */
 #define MGA_DWGCTL_BFCOL	0x04000000UL	/* bfcol: source from WRAM */
 
 /* Combined DWGCTL value for a plain screen-to-screen copy. */
 #define MGA_DWGCTL_COPY \
     (MGA_DWGCTL_BITBLT | MGA_DWGCTL_RPL | MGA_DWGCTL_BOP_COPY | \
      MGA_DWGCTL_SHIFTZERO | MGA_DWGCTL_BFCOL)
+
+/* fast copy */
+#define MGA_DWGCTL_FASTCOPY \
+    (MGA_DWGCTL_FASTBLT | MGA_DWGCTL_RPL | 0x000a0000 | \
+     MGA_DWGCTL_SHIFTZERO | MGA_DWGCTL_SGNZERO | MGA_DWGCTL_BFCOL)
 
 #define MGA_DWGCTL_TRAP		0x00000004UL	/* opcode: trap/fill */
 #define MGA_DWGCTL_SOLID	0x00000800UL	/* solid: fill from FCOL */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mgafb.c,v 1.1 2026/03/17 10:03:02 macallan Exp $	*/
+/*	$NetBSD: mgafb.c,v 1.2 2026/03/17 12:51:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgafb.c,v 1.1 2026/03/17 10:03:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgafb.c,v 1.2 2026/03/17 12:51:37 macallan Exp $");
 
 #include "opt_mgafb.h"
 
@@ -1827,8 +1827,13 @@ mgafb_blit_rect(struct mgafb_softc *sc,
 	src_right = adj_srcy * pitch + srcx + w - 1;
 
 	mgafb_wait_fifo(sc, 7);
-	MGA_WRITE4(sc, MGA_DWGCTL, MGA_DWGCTL_COPY);
-	MGA_WRITE4(sc, MGA_SGN,    sgn);
+	if ((srcx & 127) == (dstx & 127) && (sgn == 0)) {
+		/* fast copy */
+		MGA_WRITE4(sc, MGA_DWGCTL, MGA_DWGCTL_FASTCOPY);
+	} else {
+		MGA_WRITE4(sc, MGA_DWGCTL, MGA_DWGCTL_COPY);
+		MGA_WRITE4(sc, MGA_SGN,    sgn);
+	}
 	MGA_WRITE4(sc, MGA_AR5,    (uint32_t)ar5);
 	/* AR3 = scan start, AR0 = scan end */
 	if (sgn & MGA_SGN_BLIT_LEFT) {
