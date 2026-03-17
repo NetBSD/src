@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuio.h,v 1.10 2022/07/10 09:59:22 riastradh Exp $	*/
+/*	$NetBSD: cpuio.h,v 1.11 2026/03/17 06:46:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2009, 2012 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  * are better returned via autoconf.
  */
 typedef struct cpustate {
-	u_int		cs_id;		/* matching ci_cpuid */
+	u_int		cs_id;		/* matching cpu_index() */
 	uint8_t		cs_online;	/* running unbound LWPs */
 	uint8_t		cs_intr;	/* fielding interrupts */
 	uint8_t		cs_unused[2];	/* reserved */
