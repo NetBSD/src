@@ -1,4 +1,4 @@
-/* $NetBSD: user.c,v 1.135 2021/12/12 14:33:13 nia Exp $ */
+/* $NetBSD: user.c,v 1.136 2026/03/17 17:37:50 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1999\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: user.c,v 1.135 2021/12/12 14:33:13 nia Exp $");
+__RCSID("$NetBSD: user.c,v 1.136 2026/03/17 17:37:50 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -2424,16 +2424,20 @@ groupmod(int argc, char **argv)
 	if (!is_local(*argv, _PATH_GROUP)) {
 		errx(EXIT_FAILURE, "Group `%s' must be a local group", *argv);
 	}
-	if (newname != NULL && !valid_group(newname)) {
-		warnx("Invalid group name `%s'", newname);
+	if (newname != NULL) {
+		if (!valid_group(newname))
+			errx(EXIT_FAILURE, "Invalid group name `%s'", newname);
+		if (getgrnam(newname))
+			errx(EXIT_FAILURE, "Can't rename group `%s' to `%s': "
+			    "group `%s' already exists",
+			    *argv, newname, newname);
 	}
 	cc = snprintf(buf, sizeof(buf), "%s:%s:%d:",
-			(newname) ? newname : grp->gr_name,
-			grp->gr_passwd,
-			(gid < 0) ? grp->gr_gid : gid);
-	for (cpp = grp->gr_mem ; *cpp && cc < sizeof(buf) ; cpp++) {
+	    newname ? newname : grp->gr_name, grp->gr_passwd,
+	    gid < 0 ? grp->gr_gid : gid);
+	for (cpp = grp->gr_mem; *cpp && cc < sizeof(buf); cpp++) {
 		cc += snprintf(&buf[cc], sizeof(buf) - cc, "%s%s", *cpp,
-			(cpp[1] == NULL) ? "" : ",");
+		    (cpp[1] == NULL) ? "" : ",");
 	}
 	cc += snprintf(&buf[cc], sizeof(buf) - cc, "\n");
 	if (newname != NULL)
