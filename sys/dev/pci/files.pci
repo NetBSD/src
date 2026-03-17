@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.452 2026/01/31 12:12:58 nia Exp $
+#	$NetBSD: files.pci,v 1.453 2026/03/17 10:03:02 macallan Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1229,3 +1229,9 @@ file	dev/pci/if_rge.c		rge
 device	bochsfb: wsemuldisplaydev, rasops32, fb, vcons, videomode, edid
 attach	bochsfb at pci
 file	dev/pci/bochsfb.c		bochsfb
+
+defflag	opt_mgafb.h		MGAFB_NO_HW_INIT MGAFB_CONSOLE MGAFB_ACCEL MGAFB_PINS MGAFB_8BPP
+device	mgafb: wsemuldisplaydev, rasops8, rasops16, vcons, videomode, i2cexec, i2c_bitbang, ddc_read_edid, edid, glyphcache
+attach	mgafb at pci
+file	dev/pci/mgafb.c		mgafb
+
