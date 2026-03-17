@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.321 2025/11/19 10:15:52 nia Exp $
+$NetBSD: acronyms,v 1.322 2026/03/17 21:16:12 jschauma Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -422,6 +422,7 @@ NXT	next
 NYPA	not your personal army
 O2W	off to work
 OAO	over and out
+OBE	overcome by events
 OBV	obviously
 OBVS	obviously
 ODTW	others do the work (cf. "otdw source")
