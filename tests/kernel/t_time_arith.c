@@ -1,4 +1,4 @@
-/*	$NetBSD: t_time_arith.c,v 1.8 2026/03/17 08:10:58 yamt Exp $	*/
+/*	$NetBSD: t_time_arith.c,v 1.9 2026/03/17 08:12:53 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2024-2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_time_arith.c,v 1.8 2026/03/17 08:10:58 yamt Exp $");
+__RCSID("$NetBSD: t_time_arith.c,v 1.9 2026/03/17 08:12:53 yamt Exp $");
 
 #include <sys/timearith.h>
 
@@ -89,25 +89,25 @@ const struct itimer_transition {
 	 * integral multiple of it_interval starting from it_value.
 	 */
 	[0] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {0,1}, {1,0}, 0,
+	       {0,1}, {4,0}, 0,
 	       NULL},
 	[1] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {0,500000000}, {1,0}, 0,
+	       {0,500000000}, {4,0}, 0,
 	       NULL},
 	[2] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {0,999999999}, {1,0}, 0,
+	       {0,999999999}, {4,0}, 0,
 	       NULL},
 	[3] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {1,0}, {2,0}, 0,
+	       {1,0}, {4,0}, 0,
 	       NULL},
 	[4] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {1,1}, {2,0}, 0,
+	       {1,1}, {4,0}, 0,
 	       NULL},
 	[5] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {1,500000000}, {2,0}, 0,
+	       {1,500000000}, {4,0}, 0,
 	       NULL},
 	[6] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {1,999999999}, {2,0}, 0,
+	       {1,999999999}, {4,0}, 0,
 	       NULL},
 
 	/*
@@ -115,7 +115,7 @@ const struct itimer_transition {
 	 * wound backwards.
 	 */
 	[7] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {2,0}, {3,0}, 0,
+	       {2,0}, {4,0}, 0,
 	       NULL},
 
 	/*
@@ -124,13 +124,13 @@ const struct itimer_transition {
 	 * overruns.  Advance by one interval from the scheduled time.
 	 */
 	[8] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {2,1}, {3,0}, 0,
+	       {2,1}, {4,0}, 0,
 	       NULL},
 	[9] = {{.it_value = {3,0}, .it_interval = {1,0}},
-	       {2,500000000}, {3,0}, 0,
+	       {2,500000000}, {4,0}, 0,
 	       NULL},
 	[10] = {{.it_value = {3,0}, .it_interval = {1,0}},
-		{2,999999999}, {3,0}, 0,
+		{2,999999999}, {4,0}, 0,
 		NULL},
 
 	/*
@@ -222,24 +222,19 @@ const struct itimer_transition {
 	[28] = {{.it_value = {3,0}, .it_interval = {9223372036,854775809}},
 		{3,1}, {9223372039,854775809}, 0, NULL},
 
-	/*
-	 * Overflows -- we should (XXX but currently don't) reject
-	 * intervals of at least 2^64 nanoseconds up front, since this
-	 * is more time than it is reasonable to wait (more than 584
-	 * years).
-	 */
+	/* Large intervals */
 
 	/* (2^64 - 1) ns */
 	[29] = {{.it_value = {3,0}, .it_interval = {18446744073,709551615}},
-		{2,999999999}, {0,0}, 0,
+		{2,999999999}, {18446744076,709551615}, 0,
 		NULL},
 	/* 2^64 ns */
 	[30] = {{.it_value = {3,0}, .it_interval = {18446744073,709551616}},
-		{2,999999999}, {0,0}, 0,
+		{2,999999999}, {18446744076,709551616}, 0,
 		NULL},
 	/* (2^64 + 1) ns */
 	[31] = {{.it_value = {3,0}, .it_interval = {18446744073,709551617}},
-		{2,999999999}, {0,0}, 0,
+		{2,999999999}, {18446744076,709551617}, 0,
 		NULL},
 
 	/* invalid intervals */
