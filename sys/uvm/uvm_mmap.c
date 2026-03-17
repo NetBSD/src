@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.187 2025/12/11 07:25:11 andvar Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.188 2026/03/17 02:07:31 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.187 2025/12/11 07:25:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.188 2026/03/17 02:07:31 yamt Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -100,10 +100,12 @@ round_and_check(const struct vm_map *map, vaddr_t *addr, vsize_t *size)
 	*addr -= pageoff;
 
 	if (*size != 0) {
+		vsize_t orig = *size;
 		*size += pageoff;
 		*size = (vsize_t)round_page(*size);
-	} else if (*addr + *size < *addr) {
-		return ENOMEM;
+		if (*size < orig || *addr + *size < *addr) {
+			return ENOMEM;
+		}
 	}
 
 	return range_test(map, *addr, *size, false);
