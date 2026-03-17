@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.63 2024/05/12 18:02:16 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.64 2026/03/17 17:24:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.63 2024/05/12 18:02:16 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.64 2026/03/17 17:24:47 christos Exp $");
 #endif
 
 #ifdef HAVE_ARGON2
@@ -1213,6 +1213,7 @@ verify_zfs(int fd)
 		return rv;
 	}
 
+	vdev_size = P2ALIGN(vdev_size, (uint64_t)sizeof(vdev_label_t));
 	vdev_phys_t *vdev_phys = emalloc(sizeof(*vdev_phys));
 	for (size_t i = 0; i < VDEV_LABELS; i++) {
 		off_t vdev_phys_off = (i < VDEV_LABELS / 2 ?
