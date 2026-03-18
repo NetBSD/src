@@ -1,4 +1,4 @@
-/*	$NetBSD: dlt.h,v 1.25 2024/09/02 15:34:08 christos Exp $	*/
+/*	$NetBSD: dlt.h,v 1.26 2026/03/18 21:50:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -78,7 +78,7 @@
 #define DLT_PPP		9	/* Point-to-point Protocol */
 #define DLT_FDDI	10	/* FDDI */
 
- /*
+/*
  * In case the code that includes this file (directly or indirectly)
  * has also included OS files that happen to define DLT_LOW_MATCHING_MAX,
  * with a different value (perhaps because that OS hasn't picked up
@@ -392,7 +392,7 @@
  * 121 was reserved for Siemens HiPath HDLC on 2002-01-25, as
  * requested by Tomas Kukosa.
  *
- * On 2004-02-25, a FreeBSD checkin to sys/net/bpf.h was made that
+ * On 2004-02-25, a FreeBSD check in to sys/net/bpf.h was made that
  * assigned 121 as DLT_PFSYNC.  In current versions, its libpcap
  * does DLT_ <-> LINKTYPE_ mapping, mapping DLT_PFSYNC to a
  * LINKTYPE_PFSYNC value of 246, so it should write out DLT_PFSYNC
@@ -1572,6 +1572,8 @@
 
 /*
  * USB 2.0, 1.1, and 1.0 packets as transmitted over the cable.
+ * Deprecated in favor of speed specific DLTs: DLT_USB_2_0_LOW_SPEED,
+ * DLT_USB_2_0_FULL_SPEED and DLT_USB_2_0_HIGH_SPEED.
  */
 #define DLT_USB_2_0		288
 
@@ -1579,6 +1581,102 @@
  * ATSC Link-Layer Protocol (A/330) packets.
  */
 #define DLT_ATSC_ALP		289
+
+/*
+ * Event Tracing for Windows messages.
+ */
+#define DLT_ETW			290
+
+/*
+ * Hilscher Gesellschaft fuer Systemautomation mbH
+ * netANALYZER NG hardware and software.
+ *
+ * The specification for this footer can be found at:
+ * https://kb.hilscher.com/x/brDJBw
+ *
+ * Requested by Jan Adam <jadam@hilscher.com>
+ */
+#define DLT_NETANALYZER_NG	291
+
+/*
+ * Serial NCP (Network Co-Processor) protocol for Zigbee stack ZBOSS
+ * by DSR, https://dsr-iot.com/downloads
+ */
+#define DLT_ZBOSS_NCP		292
+
+/*
+ * USB 2.0, 1.1, and 1.0 packets as transmitted over the cable.
+ */
+#define DLT_USB_2_0_LOW_SPEED	293
+#define DLT_USB_2_0_FULL_SPEED	294
+#define DLT_USB_2_0_HIGH_SPEED	295
+
+/*
+ * Auerswald Logger Protocol
+ * description is provided on
+ * https://github.com/Auerswald-GmbH/auerlog/blob/master/auerlog.txt
+ */
+#define DLT_AUERSWALD_LOG	296
+
+/*
+ * Z-Wave packets with a TAP meta-data header
+ * https://gitlab.com/exegin/zwave-g9959-tap
+ * requested on tcpdump-workers@
+ */
+#define DLT_ZWAVE_TAP		297
+
+/*
+ * Silicon Labs debug channel protocol:
+ */
+#define DLT_SILABS_DEBUG_CHANNEL 298
+
+/*
+ * Ultra-wideband (UWB) controller interface protocol (UCI).
+ * requested by Henri Chataing <henrichataing@google.com>
+ */
+#define DLT_FIRA_UCI		299
+
+/*
+ * MDB (Multi-Drop Bus) protocol between a vending machine controller and
+ * peripherals inside the vending machine. See
+ *
+ *	https://www.kaiser.cx/pcap-mdb.html
+ *
+ * for the specification.
+ *
+ * Requested by Martin Kaiser <martin@kaiser.cx>.
+ */
+#define DLT_MDB			300
+
+/*
+ * DECT-2020 New Radio (NR) - ETSI TS 103 636.
+ * Requested by Stig Bjorlykke <stig@bjorlykke.org>.
+ */
+#define DLT_DECT_NR		301
+
+/*
+ * Request serialization protocol used by edk2 firmware to communicate between
+ * normal mode and management mode ('MM' for short).
+ *
+ * The qemu uefi variable store implementation reuses the request serialization
+ * protocol for firmware <-> qemu communication.
+ */
+#define DLT_EDK2_MM		302
+
+/*
+ * Unstructured data for manual debugging only.  In other words, this DLT is
+ * suitable for expert interpretation of hex dumps, and that's it.  Do not use
+ * this DLT for any other purpose.  For any automated (identification, saving,
+ * loading, filtering, decoding) processing please either use another existing
+ * DLT that fits the use case or document, assign and implement a new, properly
+ * structured DLT.
+ *
+ * In this DLT do not assume any specification, any structure, any format, any
+ * version, any header, any payload, any byte order, any implementation, any
+ * software/firmware/hardware particulars, any source, any destination, any
+ * direction, any protocol or any data integrity/consistency whatsoever.
+ */
+#define DLT_DEBUG_ONLY		303
 
 /*
  * In case the code that includes this file (directly or indirectly)
@@ -1590,7 +1688,7 @@
 #ifdef DLT_HIGH_MATCHING_MAX
 #undef DLT_HIGH_MATCHING_MAX
 #endif
-#define DLT_HIGH_MATCHING_MAX	289	/* highest value in the "matching" range */
+#define DLT_HIGH_MATCHING_MAX	303	/* highest value in the "matching" range */
 
 /*
  * DLT and savefile link type values are split into a class and
