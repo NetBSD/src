@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 2026/03/18 15:50:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 2026/03/18 16:28:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -215,14 +215,6 @@ GLOBAL(fpfault)
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall"
- *	cachectl(command, addr, length)
- * command in %d0, addr in %a1, length in %d1
- */
-GLOBAL(trap12)
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.

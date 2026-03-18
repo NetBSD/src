@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205 2026/03/18 15:50:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.206 2026/03/18 16:28:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -620,21 +620,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
- *	cachectl(command, addr, length)
- * command in %d0, addr in %a1, length in %d1
- */
-ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%sp@-	| push current proc pointer
-	movl	%d1,%sp@-		| push length
-	movl	%a1,%sp@-		| push addr
-	movl	%d0,%sp@-		| push command
-	jbsr	_C_LABEL(cachectl1)	| do it
-	lea	%sp@(16),%sp		| pop args
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
