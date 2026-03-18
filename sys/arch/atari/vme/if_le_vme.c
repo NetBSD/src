@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_vme.c,v 1.35 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: if_le_vme.c,v 1.36 2026/03/18 04:01:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 maximum entropy.  All rights reserved.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.35 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_vme.c,v 1.36 2026/03/18 04:01:15 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -334,7 +334,7 @@ lepseudointr(struct le_softc *lesc, void *sc)
 {
 	int s;
 
-	s = splx(lesc->sc_splval);
+	s = _spl(lesc->sc_splval);
 	am7990_intr(sc);
 	splx(s);
 }
