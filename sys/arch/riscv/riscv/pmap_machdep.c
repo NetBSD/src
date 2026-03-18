@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.23 2025/10/12 19:44:04 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.24 2026/03/18 06:41:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.23 2025/10/12 19:44:04 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.24 2026/03/18 06:41:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -321,32 +321,13 @@ pmap_md_grow(pmap_pdetab_t *ptb, vaddr_t va, vsize_t vshift,
 }
 
 void
-pmap_probe_pbmt(void)
+pmap_pte_xmae(void)
 {
 #ifdef _LP64
-	const register_t mvendorid = sbi_get_mvendorid().value;
-
-	switch (mvendorid) {
-	case CPU_VENDOR_THEAD:
-		if (csr_thead_sxstatus_read() & TX_SXSTATUS_MAEE) {
-			VPRINTF("T-Head XMAE detected.\n");
-			pmap_pte_pbmt_mask = PTE_XMAE;
-			pmap_pte_pma       = PTE_XMAE_PMA;
-			pmap_pte_nc        = PTE_XMAE_NC;
-			pmap_pte_io        = PTE_XMAE_IO;
-		}
-		break;
-
-	default:
-		break;
-	}
-
-	/*
-	 * No fixups of the initial MMU tables.  We have to assume
-	 * that those were set up correctly in locore.S.  The variables
-	 * set above are for new mappings created now that the kernel
-	 * is up and running.
-	 */
+	pmap_pte_pbmt_mask = PTE_XMAE;
+	pmap_pte_pma       = PTE_XMAE_PMA;
+	pmap_pte_nc        = PTE_XMAE_NC;
+	pmap_pte_io        = PTE_XMAE_IO;
 #endif
 }
 

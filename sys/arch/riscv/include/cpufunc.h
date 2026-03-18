@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.1 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.2 2026/03/18 06:41:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -35,12 +35,14 @@
 #ifdef _KERNEL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.h,v 1.1 2023/05/07 12:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.h,v 1.2 2026/03/18 06:41:41 skrll Exp $");
 
 #include <sys/param.h>
 
 #include <sys/bus.h>
 #include <sys/cpu.h>
+
+int set_cpufuncs(void);
 
 /* cache op */
 #define cpu_dcache_wbinv_all()		__nothing
@@ -50,11 +52,12 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.h,v 1.1 2023/05/07 12:41:48 skrll Exp $");
 #define cpu_icache_sync_all()		__nothing
 #define cpu_icache_inv_all()		__nothing
 
-#define cpu_dcache_wbinv_range(v,s)	__nothing
-#define cpu_dcache_inv_range(v,s)	__nothing
-#define cpu_dcache_wb_range(v,s)	__nothing
 #define cpu_idcache_wbinv_range(v,s)	__nothing
 #define cpu_icache_sync_range(v,s)	__nothing
+
+extern void (*cpu_dcache_wbinv_range)(vaddr_t, vsize_t);
+extern void (*cpu_dcache_inv_range)(vaddr_t, vsize_t);
+extern void (*cpu_dcache_wb_range)(vaddr_t, vsize_t);
 
 extern void (*cpu_sdcache_wbinv_range)(vaddr_t, paddr_t, psize_t);
 extern void (*cpu_sdcache_inv_range)(vaddr_t, paddr_t, psize_t);

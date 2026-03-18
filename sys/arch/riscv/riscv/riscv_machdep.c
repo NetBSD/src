@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.47 2026/01/17 07:13:25 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.48 2026/03/18 06:41:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.47 2026/01/17 07:13:25 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.48 2026/03/18 06:41:41 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.47 2026/01/17 07:13:25 skrll Exp $");
 
 #include <uvm/uvm_extern.h>
 
+#include <riscv/cpufunc.h>
 #include <riscv/frame.h>
 #include <riscv/locore.h>
 #include <riscv/machdep.h>
@@ -702,9 +703,6 @@ init_riscv(register_t hartid, paddr_t dtb)
 	/* set temporally to work printf()/panic() even before consinit() */
 	cn_tab = &earlycons;
 
-	/* Critical to do this before mucking around with any more mappings. */
-	pmap_probe_pbmt();
-
 	/* Load FDT */
 	const vaddr_t dtbva = VM_KERNEL_DTB_BASE + (dtb & (NBSEG - 1));
 	void *fdt_data = (void *)dtbva;
@@ -723,6 +721,11 @@ init_riscv(register_t hartid, paddr_t dtb)
 	VPRINTF("FDT<%p>\n", fdt_data);
 
 	boot_args = fdt_get_bootargs();
+
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	VPRINTF("cpufunc\n");
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
 
 	VPRINTF("devmap %p\n", plat->fp_devmap());
 	pmap_devmap_bootstrap(0, plat->fp_devmap());
