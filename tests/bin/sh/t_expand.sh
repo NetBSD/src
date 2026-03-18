@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.23 2023/03/06 05:54:54 kre Exp $
+# $NetBSD: t_expand.sh,v 1.24 2026/03/18 14:30:21 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1289,6 +1289,55 @@ dollar_at_in_field_split_context_body() {
 	results
 }
 
+atf_test_case dollar_star_unquoted
+dollar_star_unquoted_head() {
+	atf_set descr 'Test unquoted $* in various contexts'
+}
+dollar_star_unquoted_body() {
+	reset dollar_star_unquoted_body
+
+	check 'set -- ; set -- $* ; printf %d "$#"'		0	0   # 1
+	check 'set -- a ; set -- $* ; printf %d "$#"'		1	0   # 2
+	check 'set -- a b ; set -- $* ; printf %d "$#"'		2	0   # 3
+	check 'set -- "" ; printf %d+ "$#"; set -- x$* ; printf %d "$#"' \
+								1+1	0   # 4
+	check 'set -- "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
+								2+2	0   # 5
+
+	# expect the following sub-test to fail currently, PR bin/60099
+	check 'set -- a b+ c +d e; IFS=+; set -- $* ; printf %d "$#"' \
+								6	0   # 6
+
+		# The following tests test unspecified POSIX behaviour
+		# (empty fields MAY be omitted from $* unquoted in this context)
+		# They are included to detect unexpected changes in how
+		# the NetBSD shell works, failures using other shells
+		# should be investigated, but are not necessarily wrong.
+	check 'set -- a "" b ; set -- $* ; printf %d "$#"'	2	0   # 7
+	check 'set -- a b "" ; set -- $* ; printf %d "$#"'	2	0   # 8
+	check 'set -- "" a b ; set -- $* ; printf %d "$#"'	2	0   # 9
+	check 'set -- "" a "" b "" ; set -- $* ; printf %d "$#"' 2	0   #10
+	check 'set -- "" "" a b ; set -- $* ; printf %d "$#"'	2	0   #11
+	check 'set -- a b "" "" ; set -- $* ; printf %d "$#"'	2	0   #12
+
+	check 'set -- "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
+								1+0	0   #13
+	check 'set -- "" "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
+								2+0	0   #14
+	check 'set -- "" "" ; printf %d+ "$#"; set -- x$* ; printf %d "$#"' \
+								2+1	0   #15
+	check  \
+	   'set -- "" "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
+								3+2	0   #16
+	check  \
+	   'set -- "" "" "" "";printf %d+ "$#";set -- x$*y ;printf %d "$#"' \
+								4+2	0   #17
+	check 'set "" "";  for i in $* ; do printf %s\\n "z${i}z"; done' \
+								''	0   #18
+
+	results
+}
+
 atf_test_case embedded_nl
 embedded_nl_head() {
 	atf_set descr 'Test literal \n in xxx string in ${var-xxx}'
@@ -1628,6 +1677,7 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_star_in_quoted_word
 	atf_add_test_case dollar_star_in_word
 	atf_add_test_case dollar_star_in_word_empty_ifs
+	atf_add_test_case dollar_star_unquoted
 	atf_add_test_case dollar_star_with_empty_ifs
 	atf_add_test_case embedded_nl
 	atf_add_test_case error
