@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.193 2026/03/18 04:15:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.194 2026/03/18 13:56:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -563,8 +563,8 @@ ENTRY_NOPROFILE(trap0)
 	movl	%d0,%sp@-		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)
-	jne	.Lrei2
+	tstl	_C_LABEL(astpending)	| AST pending?
+	jne	_ASM_LABEL(doast)	| Yup, go deal with it.
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   %USP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -779,58 +779,6 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movw	%d2,%sr			| restore SPL
 	movl	%sp@+,%d2		| restore %d2
 	rts				| go back from whence we came
-
-/*
- * Emulation of VAX REI instruction.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifying that we need an AST we
- * drop the IPL to allow device interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.
- */
-
-ASENTRY_NOPROFILE(rei)
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	.Ldorte			| nope, done.
-.Lrei1:
-	btst	#5,%sp@			| yes, are we returning to user mode?
-	jne	.Ldorte			| nope, done.
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-	clrl	%sp@-			| stack adjust
-	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1		| including
-	movl	%a1,%sp@(FR_SP)		|    %USP
-.Lrei2:
-	clrl	%sp@-			| VA == none
-	clrl	%sp@-			| code == none
-	movl	#T_ASTFLT,%sp@-		| type == async system trap
-	pea	%sp@(12)		| fp == address of trap frame
-	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(16),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore %USP
-	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	.Laststkadj		| yes, go to it
-	moveml	%sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss %SP and stack adjust
-	rte				| and do real RTE
-.Laststkadj:
-	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	addql	#8,%a1			| source pointer
-	movl	%a1,%a0			| source
-	addw	%d0,%a0			|  + hole size = dest pointer
-	movl	%a1@-,%a0@-		| copy
-	movl	%a1@-,%a0@-		|  8 bytes
-	movl	%a0,%sp@(FR_SP)		| new SSP
-	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp		| and our %SP
-.Ldorte:
-	rte				| real return
 
 /*
  * Primitives

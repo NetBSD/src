@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.151 2026/03/18 04:15:31 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.152 2026/03/18 13:56:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -741,7 +741,7 @@ ENTRY_NOPROFILE(trap0)
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
 	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	Lrei1			| Yup, go deal with it.
+	jne	_ASM_LABEL(doast)	| Yup, go deal with it.
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
 	moveml	%sp@+,#0x7FFF		| restore most registers
@@ -862,53 +862,6 @@ Lbrkpt3:
 	moveml	%sp@+,#0x7FFF		| restore all but sp
 	movl	%sp@,%sp		| ... and sp
 	rte				| all done
-
-/*
- * Emulation of VAX REI instruction.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling).
- * After identifying that we need an AST we drop the IPL to allow device
- * interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.
- */
-ASENTRY_NOPROFILE(rei)
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Ldorte			| Nope. Just return.
-	btst	#5,%sp@			| Returning to kernel mode?
-	jne	Ldorte			| Yup. Can't do ASTs
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-	clrl	%sp@-			| stack adjust
-	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1		| including
-	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lrei1:	clrl	%sp@-			| VA == none
-	clrl	%sp@-			| code == none
-	movl	#T_ASTFLT,%sp@-		| type == async system trap
-	pea	%sp@(12)		| fp == address of trap frame
-	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(16),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore user SP
-	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	Laststkadj		| yes, go to it
-	moveml	%sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-Ldorte:	rte				| and do real RTE
-
-Laststkadj:
-	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	addql	#8,%a1			| source pointer
-	movl	%a1,%a0			| source
-	addw	%d0,%a0			|  + hole size = dest pointer
-	movl	%a1@-,%a0@-		| copy
-	movl	%a1@-,%a0@-		|  8 bytes
-	movl	%a0,%sp@(FR_SP)		| new SSP
-	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp		| and our SP
-	rte				| and do real RTE
 
 /*
  * Primitives
