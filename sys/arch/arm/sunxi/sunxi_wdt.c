@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_wdt.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_wdt.c,v 1.7 2026/03/18 06:37:09 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.7 2026/03/18 06:37:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -68,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_wdt.c,v 1.6 2021/01/27 03:10:20 thorpej Exp $"
 #define	 SUN6I_WDT_MODE_INTV		__BITS(7,4)
 #define	 SUN6I_WDT_MODE_EN		__BIT(0)
 
+#define	 SUNXI_WDT_KEY_FIELD		__BITS(31,16)
+#define	  SUNXI_WDT_KEY_FIELD_V		0x16aa
+
 static const int sunxi_periods[] = {
 	500, 1000, 2000, 3000,
 	4000, 5000, 6000, 8000,
@@ -78,11 +81,13 @@ static const int sunxi_periods[] = {
 enum sunxi_wdt_type {
 	WDT_SUN4I = 1,
 	WDT_SUN6I,
+	WDT_SUN20I,
 };
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "allwinner,sun4i-a10-wdt",	.value = WDT_SUN4I },
 	{ .compat = "allwinner,sun6i-a31-wdt",	.value = WDT_SUN6I },
+	{ .compat = "allwinner,sun20i-d1-wdt",	.value = WDT_SUN20I },
 	DEVICE_COMPAT_EOL
 };
 
@@ -198,6 +203,36 @@ sun6i_wdt_tickle(struct sysmon_wdog *smw)
 }
 
 static int
+sun20i_wdt_setmode(struct sysmon_wdog *smw)
+{
+	struct sunxi_wdt_softc * const sc = smw->smw_cookie;
+	uint32_t cfg, mode;
+	int intv;
+
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		mode = __SHIFTIN(SUNXI_WDT_KEY_FIELD_V, SUNXI_WDT_KEY_FIELD);
+		WDT_WRITE(sc, SUN6I_WDT_MODE_REG, mode);
+	} else {
+		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
+			smw->smw_period = SUNXI_WDT_PERIOD_DEFAULT;
+		intv = sunxi_wdt_map_period(sc, smw->smw_period,
+		    &sc->sc_smw.smw_period);
+		if (intv == -1)
+			return EINVAL;
+
+		cfg = __SHIFTIN(SUN6I_WDT_CFG_CONFIG_SYS, SUN6I_WDT_CFG_CONFIG);
+		cfg |= __SHIFTIN(SUNXI_WDT_KEY_FIELD_V, SUNXI_WDT_KEY_FIELD);
+		mode = SUN6I_WDT_MODE_EN | __SHIFTIN(intv, SUN6I_WDT_MODE_INTV);
+		mode |= __SHIFTIN(SUNXI_WDT_KEY_FIELD_V, SUNXI_WDT_KEY_FIELD);
+
+		WDT_WRITE(sc, SUN6I_WDT_CFG_REG, cfg);
+		WDT_WRITE(sc, SUN6I_WDT_MODE_REG, mode);
+	}
+
+	return 0;
+}
+
+static int
 sunxi_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -214,6 +249,7 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 	enum sunxi_wdt_type type;
 	bus_addr_t addr;
 	bus_size_t size;
+	uint32_t mode;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -244,6 +280,17 @@ sunxi_wdt_attach(device_t parent, device_t self, void *aux)
 	case WDT_SUN6I:
 		sc->sc_smw.smw_setmode = sun6i_wdt_setmode;
 		sc->sc_smw.smw_tickle = sun6i_wdt_tickle;
+
+		/* Disable watchdog IRQs */
+		WDT_WRITE(sc, SUN6I_WDT_IRQ_EN_REG, 0);
+		break;
+	case WDT_SUN20I:
+		sc->sc_smw.smw_setmode = sun20i_wdt_setmode;
+		sc->sc_smw.smw_tickle = sun6i_wdt_tickle;
+
+		/* Disable watchdog */
+		mode = __SHIFTIN(SUNXI_WDT_KEY_FIELD_V, SUNXI_WDT_KEY_FIELD);
+		WDT_WRITE(sc, SUN6I_WDT_MODE_REG, mode);
 
 		/* Disable watchdog IRQs */
 		WDT_WRITE(sc, SUN6I_WDT_IRQ_EN_REG, 0);
