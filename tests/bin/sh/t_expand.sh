@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.24 2026/03/18 14:30:21 kre Exp $
+# $NetBSD: t_expand.sh,v 1.25 2026/03/18 14:46:28 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1294,7 +1294,7 @@ dollar_star_unquoted_head() {
 	atf_set descr 'Test unquoted $* in various contexts'
 }
 dollar_star_unquoted_body() {
-	reset dollar_star_unquoted_body
+	reset dollar_star_unquoted
 
 	check 'set -- ; set -- $* ; printf %d "$#"'		0	0   # 1
 	check 'set -- a ; set -- $* ; printf %d "$#"'		1	0   # 2
