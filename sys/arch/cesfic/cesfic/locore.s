@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 2026/03/18 04:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -368,11 +368,6 @@ Lnocache0:
 Lmainreturned:
 	.asciz	"main() returned"
 	.even
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

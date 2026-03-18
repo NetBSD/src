@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.33 2026/03/14 21:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.34 2026/03/18 04:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,11 +216,6 @@ Lmmuenabled:
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

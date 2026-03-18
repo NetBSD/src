@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.39 2026/03/14 21:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.40 2026/03/18 04:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -181,11 +181,6 @@ L_high_code:
 
 | That is all the assembly startup code we need on the sun3!
 | The rest of this is like the hp300/locore.s where possible.
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

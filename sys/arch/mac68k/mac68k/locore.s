@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.192 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.193 2026/03/18 04:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -457,11 +457,6 @@ Lnocache0:
 	jra	_C_LABEL(main)		| main()
 	PANIC("main() returned")
 	/* NOTREACHED */
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * Use common m68k bus error and address error handlers.

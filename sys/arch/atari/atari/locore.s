@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 2026/03/18 04:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,11 +85,6 @@ ENTRY_NOPROFILE(doadump)
 	jbsr	_C_LABEL(dumpsys)
 	jbsr	_C_LABEL(doboot)
 	/*NOTREACHED*/
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 	/*
 	 * This is where the default vectors end-up!

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.19 2026/03/14 21:03:40 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.20 2026/03/18 04:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,14 +38,17 @@
  *	@(#)locore.s	8.6 (Berkeley) 5/27/94
  */
 
+#include "opt_m68k_arch.h"
+#include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 
-/*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/trap_subr.s>
- */
+#include <machine/asm.h>
+#include <machine/trap.h>
+
+#include "assym.h"
+
+	.file	"trap_subr.s"
+	.text
 
 /*
  * Common fault handling code.  Called by exception vector handlers.

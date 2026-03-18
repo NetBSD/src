@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.175 2026/03/14 21:03:39 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.176 2026/03/18 04:15:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,11 +99,6 @@ ENTRY_NOPROFILE(doadump)
 	jbsr	_C_LABEL(dumpsys)
 	jbsr	_C_LABEL(doboot)
 	/*NOTREACHED*/
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 2026/03/14 21:03:40 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 2026/03/18 04:15:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -647,11 +647,6 @@ Lmemc040berr:
 	movql	#0,%d0			| No ASIC at this location, then!
 	jbra	Lmemc040ret		| Done
 #endif
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

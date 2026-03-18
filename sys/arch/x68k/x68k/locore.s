@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 2026/03/14 21:03:41 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 2026/03/18 04:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -385,11 +385,6 @@ Lenab3:
 
 	PANIC("main() returned")	| Yow!  Main returned!
 	/* NOTREACHED */
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.

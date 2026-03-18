@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.99 2026/03/14 21:03:40 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.100 2026/03/18 04:15:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -392,11 +392,6 @@ Lenab3:
 	jra	_C_LABEL(main)		| main()
 
 	SETLED2(3);			| main returned?
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
 
 /*
  * FP exceptions.
