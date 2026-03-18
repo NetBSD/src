@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.23 2026/03/18 06:37:09 skrll Exp $
+# $NetBSD: GENERIC64,v 1.24 2026/03/18 06:42:35 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -83,6 +83,7 @@ sunxiwdt* 	at fdt?			# Allwinner watchdog
 
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
+sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc* 		at sdmmcbus?
 ld0 		at sdmmc0
 ld1 		at sdmmc1
