@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 2026/03/18 14:44:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 2026/03/18 15:50:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -215,23 +215,6 @@ GLOBAL(fpfault)
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-/*
- * Trap 0 is for system calls
- */
-GLOBAL(trap0)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most registers
-	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall"

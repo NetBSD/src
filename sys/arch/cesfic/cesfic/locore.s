@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.57 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.58 2026/03/18 15:50:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -448,22 +448,6 @@ Lfptnull:
 	movl	#T_FPERR,%sp@-	| push type arg
 	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	_ASM_LABEL(doast)	| Yup, go deal with it.
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most registers
-	addql	#8,%sp			| pop SP and stack adjust
-	rte
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)

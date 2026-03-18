@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.133 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.134 2026/03/18 15:50:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -315,20 +315,6 @@ ENTRY_NOPROFILE(badmfpint)
 	addql	#8,%sp			|  pop args
 	INTERRUPT_RESTOREREG		|  restore regs
 	subql	#1,_C_LABEL(intr_depth)
-	jra	_ASM_LABEL(rei)		|  all done
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			|  stack adjust count
-	moveml	#0xFFFF,%sp@-		|  save user registers
-	movl	%usp,%a0		|  save the user SP
-	movl	%a0,%sp@(FR_SP)		|    in the savearea
-	movl	%d0,%sp@-		|  push syscall number
-	jbsr	_C_LABEL(syscall)	|  handle it
-	addql	#4,%sp			|  pop syscall arg
-	movl	%sp@(FR_SP),%a0		|  grab and restore
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  restore most registers
-	addql	#8,%sp			|  pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		|  all done
 
 /*

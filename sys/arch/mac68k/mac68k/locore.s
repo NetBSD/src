@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.195 2026/03/18 14:44:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.196 2026/03/18 15:50:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -544,22 +544,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			| pad SR to longword
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save %USP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	_ASM_LABEL(doast)	| Yup, go deal with it.
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   %USP
-	moveml	%sp@+,#0x7FFF		| restore most registers
-	addql	#8,%sp			| pop SSP and align word
-	rte
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall" (both HP-UX & BSD)

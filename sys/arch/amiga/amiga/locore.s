@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.178 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.179 2026/03/18 15:50:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,20 +177,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			| stack adjust count
-	moveml	%d0-%d7/%a0-%a7,%sp@-	| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,%d0-%d7/%a0-%a6	| restore most registers
-	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap 12 is the entry point for the cachectl "syscall"
