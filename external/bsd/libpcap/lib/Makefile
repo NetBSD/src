@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2024/09/02 15:33:39 christos Exp $	
+# $NetBSD: Makefile,v 1.36 2026/03/18 23:43:21 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -6,6 +6,9 @@ USE_FORT?= yes	# network protocol library
 
 CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -DENABLE_REMOTE
 CPPFLAGS+= -DPCAP_SUPPORT_RPCAP
+# The following is for a pure build but we can't do that because other
+# programs use the internal functions (rpcapd for example)
+#CPPFLAGS+= -fvisibility=hidden -Dpcap_EXPORTS
 CPPFLAGS+= -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
@@ -23,11 +26,14 @@ CPPFLAGS+= -I${.OBJDIR}
 
 LIB=	pcap
 MAN3= \
+pcap.3pcap \
 pcap_activate.3pcap \
 pcap_breakloop.3pcap \
 pcap_can_set_rfmon.3pcap \
 pcap_close.3pcap \
+pcap_compile.3pcap \
 pcap_create.3pcap \
+pcap_datalink.3pcap \
 pcap_datalink_name_to_val.3pcap \
 pcap_datalink_val_to_name.3pcap \
 pcap_dump.3pcap \
@@ -35,29 +41,40 @@ pcap_dump_close.3pcap \
 pcap_dump_file.3pcap \
 pcap_dump_flush.3pcap \
 pcap_dump_ftell.3pcap \
+pcap_dump_open.3pcap \
 pcap_file.3pcap \
 pcap_fileno.3pcap \
 pcap_findalldevs.3pcap \
 pcap_freecode.3pcap \
 pcap_get_required_select_timeout.3pcap \
 pcap_get_selectable_fd.3pcap \
+pcap_get_tstamp_precision.3pcap \
 pcap_geterr.3pcap \
+pcap_init.3pcap \
 pcap_inject.3pcap \
 pcap_is_swapped.3pcap \
 pcap_lib_version.3pcap \
+pcap_list_datalinks.3pcap \
+pcap_list_tstamp_types.3pcap \
 pcap_lookupdev.3pcap \
 pcap_lookupnet.3pcap \
 pcap_loop.3pcap \
 pcap_major_version.3pcap \
 pcap_next_ex.3pcap \
 pcap_offline_filter.3pcap \
+pcap_open_dead.3pcap \
 pcap_open_live.3pcap \
+pcap_open_offline.3pcap \
 pcap_set_buffer_size.3pcap \
 pcap_set_datalink.3pcap \
+pcap_set_immediate_mode.3pcap \
 pcap_set_promisc.3pcap \
+pcap_set_protocol_linux.3pcap \
 pcap_set_rfmon.3pcap \
 pcap_set_snaplen.3pcap \
 pcap_set_timeout.3pcap \
+pcap_set_tstamp_precision.3pcap \
+pcap_set_tstamp_type.3pcap \
 pcap_setdirection.3pcap \
 pcap_setfilter.3pcap \
 pcap_setnonblock.3pcap \

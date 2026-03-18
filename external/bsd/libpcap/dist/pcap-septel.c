@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-septel.c,v 1.8 2024/09/02 15:33:37 christos Exp $	*/
+/*	$NetBSD: pcap-septel.c,v 1.9 2026/03/18 23:43:20 christos Exp $	*/
 
 /*
  * pcap-septel.c: Packet capture interface for Intel/Septel card.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-septel.c,v 1.8 2024/09/02 15:33:37 christos Exp $");
+__RCSID("$NetBSD: pcap-septel.c,v 1.9 2026/03/18 23:43:20 christos Exp $");
 
 #include <config.h>
 
@@ -317,8 +317,7 @@ pcapint_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
 pcap_t *
 pcapint_create_interface(const char *device, char *errbuf)
 {
-  snprintf(errbuf, PCAP_ERRBUF_SIZE,
-                "This version of libpcap only supports Septel cards");
+  snprintf(errbuf, PCAP_ERRBUF_SIZE, PCAP_ENODEV_MESSAGE, "Septel");
   return (NULL);
 }
 

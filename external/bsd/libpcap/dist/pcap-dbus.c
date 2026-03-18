@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-dbus.c,v 1.7 2024/09/02 15:33:37 christos Exp $	*/
+/*	$NetBSD: pcap-dbus.c,v 1.8 2026/03/18 23:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Jakub Zawadzki
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-dbus.c,v 1.7 2024/09/02 15:33:37 christos Exp $");
+__RCSID("$NetBSD: pcap-dbus.c,v 1.8 2026/03/18 23:43:20 christos Exp $");
 
 #include <config.h>
 
@@ -85,6 +85,7 @@ dbus_read(pcap_t *handle, int max_packets _U_, pcap_handler callback, u_char *us
 
 	if (dbus_message_is_signal(message, DBUS_INTERFACE_LOCAL, "Disconnected")) {
 		snprintf(handle->errbuf, PCAP_ERRBUF_SIZE, "Disconnected");
+		dbus_message_unref(message);
 		return -1;
 	}
 
@@ -102,6 +103,9 @@ dbus_read(pcap_t *handle, int max_packets _U_, pcap_handler callback, u_char *us
 
 		dbus_free(raw_msg);
 	}
+
+	dbus_message_unref(message);
+
 	return count;
 }
 

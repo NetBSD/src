@@ -207,6 +207,7 @@ pcapint_add_addr_to_if
 pcapint_add_dev
 pcapint_add_to_pcaps_to_close
 pcapint_adjust_snapshot
+pcapint_atoan
 pcapint_breakloop_common
 pcapint_check_activated
 pcapint_cleanup_live_common

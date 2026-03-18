@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.12 2024/09/02 15:33:37 christos Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.13 2026/03/18 23:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-bpf.c,v 1.12 2024/09/02 15:33:37 christos Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.13 2026/03/18 23:43:20 christos Exp $");
 
 #include <config.h>
 
@@ -81,16 +81,6 @@ static const char usbus_prefix[] = "usbus";
 #include <net/bpf.h>
 #define _AIX
 
-/*
- * If both BIOCROTZBUF and BPF_BUFMODE_ZBUF are defined, we have
- * zero-copy BPF.
- */
-#if defined(BIOCROTZBUF) && defined(BPF_BUFMODE_ZBUF)
-  #define HAVE_ZEROCOPY_BPF
-  #include <sys/mman.h>
-  #include <machine/atomic.h>
-#endif
-
 #include <net/if_types.h>		/* for IFT_ values */
 #include <sys/sysconfig.h>
 #include <sys/device.h>
@@ -132,6 +122,16 @@ static int bpf_load(char *errbuf);
 
 #ifdef SIOCGIFMEDIA
 # include <net/if_media.h>
+#endif
+
+/*
+ * If both BIOCROTZBUF and BPF_BUFMODE_ZBUF are defined, we have
+ * zero-copy BPF.
+ */
+#if defined(BIOCROTZBUF) && defined(BPF_BUFMODE_ZBUF)
+  #define HAVE_ZEROCOPY_BPF
+  #include <sys/mman.h>
+  #include <machine/atomic.h>
 #endif
 
 #include "pcap-int.h"
@@ -298,7 +298,7 @@ pcap_setnonblock_bpf(pcap_t *p, int nonblock)
  * buffer filled for a fresh BPF session.
  */
 static int
-pcap_next_zbuf_shm(pcap_t *p, int *cc)
+pcap_next_zbuf_shm(pcap_t *p, ssize_t *cc)
 {
 	struct pcap_bpf *pb = p->priv;
 	struct bpf_zbuf_header *bzh;
@@ -336,7 +336,7 @@ pcap_next_zbuf_shm(pcap_t *p, int *cc)
  * work.
  */
 static int
-pcap_next_zbuf(pcap_t *p, int *cc)
+pcap_next_zbuf(pcap_t *p, ssize_t *cc)
 {
 	struct pcap_bpf *pb = p->priv;
 	struct bpf_zbuf bz;
@@ -344,7 +344,7 @@ pcap_next_zbuf(pcap_t *p, int *cc)
 	struct timespec cur;
 	fd_set r_set;
 	int data, r;
-	int expire, tmout;
+	long expire, tmout;
 
 #define TSTOMILLI(ts) (((ts)->tv_sec * 1000) + ((ts)->tv_nsec / 1000000))
 	/*
@@ -2190,7 +2190,7 @@ pcap_activate_bpf(pcap_t *p)
 			status = PCAP_ERROR;
 			goto bad;
 		}
-		status = bpf_bind(fd, p->opt.device, ifnamsiz, p->errbuf);
+		status = bpf_bind(fd, p->opt.device, p->errbuf);
 		if (status != BPF_BIND_SUCCEEDED) {
 			if (status == BPF_BIND_BUFFER_TOO_BIG) {
 				/*
@@ -3690,11 +3690,19 @@ pcap_set_datalink_bpf(pcap_t *p _U_, int dlt _U_)
 /*
  * Platform-specific information.
  */
+#if defined(HAVE_ZEROCOPY_BPF) && defined(PCAP_SUPPORT_NETMAP)
+  #define ADDITIONAL_INFO_STRING	"with zerocopy and netmap support"
+#elif defined(HAVE_ZEROCOPY_BPF)
+  #define ADDITIONAL_INFO_STRING	"with zerocopy support"
+#elif defined(PCAP_SUPPORT_NETMAP)
+  #define ADDITIONAL_INFO_STRING	"with netmap support"
+#endif
+
 const char *
 pcap_lib_version(void)
 {
-#ifdef HAVE_ZEROCOPY_BPF
-	return (PCAP_VERSION_STRING " (with zerocopy support)");
+#ifdef ADDITIONAL_INFO_STRING
+	return (PCAP_VERSION_STRING_WITH_ADDITIONAL_INFO(ADDITIONAL_INFO_STRING));
 #else
 	return (PCAP_VERSION_STRING);
 #endif

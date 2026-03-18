@@ -1,4 +1,4 @@
-/*	$NetBSD: sf-pcap.c,v 1.11 2024/09/02 15:33:38 christos Exp $	*/
+/*	$NetBSD: sf-pcap.c,v 1.12 2026/03/18 23:43:21 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sf-pcap.c,v 1.11 2024/09/02 15:33:38 christos Exp $");
+__RCSID("$NetBSD: sf-pcap.c,v 1.12 2026/03/18 23:43:21 christos Exp $");
 
 #include <config.h>
 
@@ -113,7 +113,7 @@ __RCSID("$NetBSD: sf-pcap.c,v 1.11 2024/09/02 15:33:38 christos Exp $");
  * read on systems with the same tv_sec size as the system on which
  * the file was written.
  *
- * THe fields are unsigned, as that's what the pcap draft specification
+ * The fields are unsigned, as that's what the pcap draft specification
  * says they are.  (That gives pcap a 68-year Y2.038K reprieve, although
  * in 2106 it runs out for good.  pcapng doesn't have that problem,
  * unless you pick a *really* high time stamp precision.)
@@ -1229,7 +1229,7 @@ pcap_dump_ftell64(pcap_dumper_t *p)
 }
 #elif defined(_MSC_VER)
 /*
- * We have Visual Studio; we support only 2005 and later, so we have
+ * We have Visual Studio; we support only 2015 and later, so we have
  * _ftelli64().
  */
 int64_t
@@ -1267,11 +1267,16 @@ pcap_dump_flush(pcap_dumper_t *p)
 void
 pcap_dump_close(pcap_dumper_t *p)
 {
+	FILE *fp = (FILE *)p;
 
 #ifdef notyet
-	if (ferror((FILE *)p))
+	if (ferror(fp))
 		return-an-error;
-	/* XXX should check return from fclose() too */
+	/* XXX should check return from fflush()/fclose() too */
 #endif
-	(void)fclose((FILE *)p);
+	/* Don't close the standard output, but *do* flush it */
+	if (fp == stdout)
+		(void)fflush(fp);
+	else
+		(void)fclose(fp);
 }

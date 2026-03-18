@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-dlpi.c,v 1.8 2024/09/02 15:33:37 christos Exp $	*/
+/*	$NetBSD: pcap-dlpi.c,v 1.9 2026/03/18 23:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -22,7 +22,7 @@
  *
  * This code contributed by Atanu Ghosh (atanu@cs.ucl.ac.uk),
  * University College London, and subsequently modified by
- * Guy Harris (guy@alum.mit.edu), Mark Pizzolato
+ * Guy Harris, Mark Pizzolato
  * <List-tcpdump-workers@subscriptions.pizzolato.net>,
  * Mark C. Brown (mbrown@hp.com), and Sagun Shakya <Sagun.Shakya@Sun.COM>.
  */
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-dlpi.c,v 1.8 2024/09/02 15:33:37 christos Exp $");
+__RCSID("$NetBSD: pcap-dlpi.c,v 1.9 2026/03/18 23:43:20 christos Exp $");
 
 #include <config.h>
 
@@ -341,14 +341,156 @@ pcap_cleanup_dlpi(pcap_t *p)
 	pcapint_cleanup_live_common(p);
 }
 
+#ifdef HAVE_DEV_DLPI
+static int
+handle_dev_dlpi_open_error(const char *ifname, int error, char *errbuf)
+{
+	/*
+	 * An attempt to open /dev/dlpi failed.
+	 * Report the appropriate error.
+	 */
+	if (error == ENOENT) {
+		/*
+		 * Missing; I guess that means we don't support
+		 * opening DLPI devices, and thus can't capture
+		 * traffic at all.
+		 */
+		snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "Capturing network traffic not supported - /dev/dlpi doesn't exist");
+		return (PCAP_ERROR_CAPTURE_NOTSUP);
+	} else if (error == EPERM || error == EACCES) {
+		/*
+		 * We lack permission to open it.
+		 *
+		 * If the interface exists, report the permission error,
+		 * otherwise report "no such interface".
+		 */
+		int fd;
+		struct ifreq ifr;
+
+		if (strlen(ifname) >= sizeof(ifr.ifr_name)) {
+			/*
+			 * The name is too long, so it can't possibly exist.
+			 * Report that.
+			 *
+			 * There's nothing more to say, so clear
+			 * the error message.
+			 */
+			errbuf[0] = '\0';
+			return (PCAP_ERROR_NO_SUCH_DEVICE);
+		}
+
+		/*
+		 * Try to get a socket on which to do an ioctl to get the
+		 * interface's flags.
+		 */
+		fd = socket(AF_INET, SOCK_DGRAM, 0);
+		if (fd < 0) {
+			/* That failed; report that as the error. */
+			pcapint_fmt_errmsg_for_errno(errbuf,  PCAP_ERRBUF_SIZE,
+			    errno, "Can't open socket to get interface flags");
+			return (PCAP_ERROR);
+		}
+
+		pcapint_strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+		if (ioctl(fd, SIOCGIFFLAGS, (char *)&ifr) < 0) {
+			if (errno == ENXIO || errno == EINVAL) {
+				/*
+				 * macOS, *BSD, and Solaris return one of
+				 * those two errors if the device doesn't
+				 * exist. Report that.
+				 * XXX - what about HP-UX?
+				 *
+				 * There's nothing more to say, so clear
+				 * the error message.
+				 */
+				errbuf[0] = '\0';
+				close(fd);
+				return (PCAP_ERROR_NO_SUCH_DEVICE);
+			}
+
+			/*
+			 * Some other error.
+			 */
+			pcapint_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
+			    errno, "Can't get interface flags");
+			close(fd);
+			return (PCAP_ERROR);
+		}
+
+		/*
+		 * The device exists; report this as a permissions problem.
+		 */
+		snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "Attempt to open /dev/dlpi failed with %s - root privilege may be required",
+		    (error == EPERM) ? "EPERM" : "EACCES");
+		close(fd);
+		return (PCAP_ERROR_PERM_DENIED);
+	} else {
+		/*
+		 * Soe other error.
+		 */
+		pcapint_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
+		    error, "Attempt to open /dev/dlpi failed");
+		return (PCAP_ERROR);
+	}
+}
+#else /* HAVE_DEV_DLPI */
+static int
+handle_dlpi_device_open_error(const char *ifname, const char *device,
+    int error, char *errbuf)
+{
+	/*
+	 * We couldn't open a DLPI device.
+	 * Was that due to a permission error?
+	 */
+	if (error == EPERM || error == EACCES) {
+		/*
+		 * We lack permission to open it.
+		 *
+		 * If the interface doesn't exist, there wouldn't be
+		 * a DLPI device corresponding to it, so we wouldn't
+		 * have gotten a permissions error.
+		 */
+		snprintf(errbuf, PCAP_ERRBUF_SIZE,
+		    "Attempt to open %s failed with %s - root privilege may be required",
+		    device, (error == EPERM) ? "EPERM" : "EACCES");
+		return (PCAP_ERROR_PERM_DENIED);
+	}
+
+	/*
+	 * Was that due to the DLPI device not existing?
+	 */
+	if (error != ENOENT) {
+		/*
+		 * No; report it as a generic error, giving the error
+		 * message for the error code and the name of the
+		 * device we tried to open.
+		 */
+		pcapint_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
+		    error, "Attempt to open %s failed", device);
+		return (PCAP_ERROR);
+	}
+
+	/*
+	 * Yes.  That means we can't do DLPI capturing, at least not
+	 * on that interface.
+	 *
+	 * Test whether it exists and, if it does, whether it's
+	 * a loopback interface.
+	 */
+	return (handle_nonexistent_dlpi_device(ifname, errbuf));
+}
+#endif /* not HAVE_DEV_DLPI */
+
 static int
 open_dlpi_device(const char *name, u_int *ppa, char *errbuf)
 {
-	int status;
 	char dname[100];
-	char *cp;
+	char *cp, *cq;
 	int fd;
 #ifdef HAVE_DEV_DLPI
+	int status;
 	u_int unit;
 #else
 	char dname2[100];
@@ -363,6 +505,32 @@ open_dlpi_device(const char *name, u_int *ppa, char *errbuf)
 		pcapint_strlcpy(dname, name, sizeof(dname));
 	else
 		pcapint_strlcpy(dname, cp + 1, sizeof(dname));
+
+	/*
+	 * If this name has a colon followed by a number at
+	 * the end, it's a logical interface.  Those are just
+	 * the way you assign multiple IP addresses to a real
+	 * interface, so an entry for a logical interface should
+	 * be treated like the entry for the real interface;
+	 * we do that by stripping off the ":" and the number.
+	 */
+	cp = strchr(dname, ':');
+	if (cp != NULL) {
+		/*
+		 * We have a ":"; is it followed by a number?
+		 */
+		cq = cp + 1;
+		while (PCAP_ISDIGIT(*cq))
+			cq++;
+		if (*cq == '\0') {
+			/*
+			 * All digits after the ":" until the end.
+			 * Strip off the ":" and everything after
+			 * it.
+			 */
+			*cp = '\0';
+		}
+	}
 
 	/*
 	 * Split the device name into a device type name and a unit number;
@@ -388,20 +556,8 @@ open_dlpi_device(const char *name, u_int *ppa, char *errbuf)
 	 * search "/dev" for the appropriate device with that major
 	 * device number, rather than hardwiring "/dev/dlpi".
 	 */
-	cp = "/dev/dlpi";
-	if ((fd = open(cp, O_RDWR)) < 0) {
-		if (errno == EPERM || errno == EACCES) {
-			status = PCAP_ERROR_PERM_DENIED;
-			snprintf(errbuf, PCAP_ERRBUF_SIZE,
-			    "Attempt to open %s failed with %s - root privilege may be required",
-			    cp, (errno == EPERM) ? "EPERM" : "EACCES");
-		} else {
-			status = PCAP_ERROR;
-			pcapint_fmt_errmsg_for_errno(errbuf, PCAP_ERRBUF_SIZE,
-			    errno, "Attempt to open %s failed", cp);
-		}
-		return (status);
-	}
+	if ((fd = open("/dev/dlpi", O_RDWR)) < 0)
+		return (handle_dev_dlpi_open_error(name, errno, errbuf));
 
 	/*
 	 * Get a table of all PPAs for that device, and search that
@@ -426,6 +582,32 @@ open_dlpi_device(const char *name, u_int *ppa, char *errbuf)
 		    name);
 
 	/*
+	 * If this name has a colon followed by a number at
+	 * the end, it's a logical interface.  Those are just
+	 * the way you assign multiple IP addresses to a real
+	 * interface, so an entry for a logical interface should
+	 * be treated like the entry for the real interface;
+	 * we do that by stripping off the ":" and the number.
+	 */
+	cp = strchr(dname, ':');
+	if (cp != NULL) {
+		/*
+		 * We have a ":"; is it followed by a number?
+		 */
+		cq = cp + 1;
+		while (PCAP_ISDIGIT(*cq))
+			cq++;
+		if (*cq == '\0') {
+			/*
+			 * All digits after the ":" until the end.
+			 * Strip off the ":" and everything after
+			 * it.
+			 */
+			*cp = '\0';
+		}
+	}
+
+	/*
 	 * Get the unit number, and a pointer to the end of the device
 	 * type name.
 	 */
@@ -446,69 +628,20 @@ open_dlpi_device(const char *name, u_int *ppa, char *errbuf)
 
 	/* Try device without unit number */
 	if ((fd = open(dname, O_RDWR)) < 0) {
-		if (errno != ENOENT) {
-			if (errno == EPERM || errno == EACCES) {
-				status = PCAP_ERROR_PERM_DENIED;
-				snprintf(errbuf, PCAP_ERRBUF_SIZE,
-				    "Attempt to open %s failed with %s - root privilege may be required",
-				    dname,
-				    (errno == EPERM) ? "EPERM" : "EACCES");
-			} else {
-				status = PCAP_ERROR;
-				pcapint_fmt_errmsg_for_errno(errbuf,
-				    PCAP_ERRBUF_SIZE, errno,
-				    "Attempt to open %s failed", dname);
-			}
-			return (status);
-		}
+		if (errno != ENOENT)
+			return (handle_dlpi_device_open_error(name, dname,
+			    errno, errbuf));
 
-		/* Try again with unit number */
-		if ((fd = open(dname2, O_RDWR)) < 0) {
-			if (errno == ENOENT) {
-				status = PCAP_ERROR_NO_SUCH_DEVICE;
-
-				/*
-				 * We provide an error message even
-				 * for this error, for diagnostic
-				 * purposes (so that, for example,
-				 * the app can show the message if the
-				 * user requests it).
-				 *
-				 * In it, we just report "No DLPI device
-				 * found" with the device name, so people
-				 * don't get confused and think, for example,
-				 * that if they can't capture on "lo0"
-				 * on Solaris prior to Solaris 11 the fix
-				 * is to change libpcap (or the application
-				 * that uses it) to look for something other
-				 * than "/dev/lo0", as the fix is to use
-				 * Solaris 11 or some operating system
-				 * other than Solaris - you just *can't*
-				 * capture on a loopback interface
-				 * on Solaris prior to Solaris 11, the lack
-				 * of a DLPI device for the loopback
-				 * interface is just a symptom of that
-				 * inability.
-				 */
-				snprintf(errbuf, PCAP_ERRBUF_SIZE,
-				    "%s: No DLPI device found", name);
-			} else {
-				if (errno == EPERM || errno == EACCES) {
-					status = PCAP_ERROR_PERM_DENIED;
-					snprintf(errbuf, PCAP_ERRBUF_SIZE,
-					    "Attempt to open %s failed with %s - root privilege may be required",
-					    dname2,
-					    (errno == EPERM) ? "EPERM" : "EACCES");
-				} else {
-					status = PCAP_ERROR;
-					pcapint_fmt_errmsg_for_errno(errbuf,
-					    PCAP_ERRBUF_SIZE, errno,
-					    "Attempt to open %s failed",
-					    dname2);
-				}
-			}
-			return (status);
-		}
+		/*
+		 * There's no DLPI device whose name is the interface
+		 * name with the unit number removed.
+		 *
+		 * Try again with a device name that includes the
+		 * unit number.
+		 */
+		if ((fd = open(dname2, O_RDWR)) < 0)
+			return (handle_dlpi_device_open_error(name, dname2,
+			    errno, errbuf));
 		/* XXX Assume unit zero */
 		*ppa = 0;
 	}
@@ -910,6 +1043,11 @@ split_dname(char *device, u_int *unitp, char *ebuf)
 	/* Digits at end of string are unit number */
 	while (cp-1 >= device && *(cp-1) >= '0' && *(cp-1) <= '9')
 		cp--;
+	if (cp == device || *(cp-1) == '/') {
+		snprintf(ebuf, PCAP_ERRBUF_SIZE, "%s has only a unit number",
+		    device);
+		return (NULL);
+	}
 
 	errno = 0;
 	unit = strtol(cp, &eos, 10);
@@ -1030,52 +1168,16 @@ dlpromiscon(pcap_t *p, bpf_u_int32 level)
 }
 
 /*
- * Not all interfaces are DLPI interfaces, and thus not all interfaces
- * can be opened with DLPI (for example, the loopback interface is not
- * a DLPI interface on Solaris prior to Solaris 11), so try to open
- * the specified interface; return 0 if we fail with PCAP_ERROR_NO_SUCH_DEVICE
- * and 1 otherwise.
+ * Show all interfaces, so users don't ask "why is this interface not
+ * showing up?" or "why are no interfaces showing up?"  We report
+ * PCAP_ERROR_CAPTURE_NOTSUP if there's no DLPI device, with an
+ * error message that tries to explain the source of the problem,
+ * which is some flavor of "sorry, that's simply not supported by
+ * your OS".
  */
 static int
-is_dlpi_interface(const char *name)
+show_them_all(const char *name _U_)
 {
-	int fd;
-	u_int ppa;
-	char errbuf[PCAP_ERRBUF_SIZE];
-
-	fd = open_dlpi_device(name, &ppa, errbuf);
-	if (fd < 0) {
-		/*
-		 * Error - was it PCAP_ERROR_NO_SUCH_DEVICE?
-		 */
-		if (fd == PCAP_ERROR_NO_SUCH_DEVICE) {
-			/*
-			 * Yes, so we can't open this because it's
-			 * not a DLPI interface.
-			 */
-			return (0);
-		}
-		/*
-		 * No, so, in the case where there's a single DLPI
-		 * device for all interfaces of this type ("style
-		 * 2" providers?), we don't know whether it's a DLPI
-		 * interface or not, as we didn't try an attach.
-		 * Say it is a DLPI device, so that the user can at
-		 * least try to open it and report the error (which
-		 * is probably "you don't have permission to open that
-		 * DLPI device"; reporting those interfaces means
-		 * users will ask "why am I getting a permissions error
-		 * when I try to capture" rather than "why am I not
-		 * seeing any interfaces", making the underlying problem
-		 * clearer).
-		 */
-		return (1);
-	}
-
-	/*
-	 * Success.
-	 */
-	close(fd);
 	return (1);
 }
 
@@ -1119,7 +1221,7 @@ pcapint_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
 	/*
 	 * Get the list of regular interfaces first.
 	 */
-	if (pcapint_findalldevs_interfaces(devlistp, errbuf, is_dlpi_interface,
+	if (pcapint_findalldevs_interfaces(devlistp, errbuf, show_them_all,
 	    get_if_flags) == -1)
 		return (-1);	/* failure */
 

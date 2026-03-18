@@ -1,4 +1,4 @@
-/*	$NetBSD: scanner.l,v 1.14 2024/09/02 15:33:38 christos Exp $	*/
+/*	$NetBSD: scanner.l,v 1.15 2026/03/18 23:43:21 christos Exp $	*/
 
 %top {
 /* Must come first for _LARGE_FILE_API on AIX. */
@@ -112,7 +112,7 @@ stoulen_ret stoulen(const char *string, size_t stringlen, bpf_u_int32 *val,
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scanner.l,v 1.14 2024/09/02 15:33:38 christos Exp $");
+__RCSID("$NetBSD: scanner.l,v 1.15 2026/03/18 23:43:21 christos Exp $");
 
 #include <string.h>
 
@@ -130,28 +130,6 @@ void pcap_set_column(int, yyscan_t);
 #ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-/*
- * To quote the MSDN page for getaddrinfo() at
- *
- *    https://msdn.microsoft.com/en-us/library/windows/desktop/ms738520(v=vs.85).aspx
- *
- * "Support for getaddrinfo on Windows 2000 and older versions
- * The getaddrinfo function was added to the Ws2_32.dll on Windows XP and
- * later. To execute an application that uses this function on earlier
- * versions of Windows, then you need to include the Ws2tcpip.h and
- * Wspiapi.h files. When the Wspiapi.h include file is added, the
- * getaddrinfo function is defined to the WspiapiGetAddrInfo inline
- * function in the Wspiapi.h file. At runtime, the WspiapiGetAddrInfo
- * function is implemented in such a way that if the Ws2_32.dll or the
- * Wship6.dll (the file containing getaddrinfo in the IPv6 Technology
- * Preview for Windows 2000) does not include getaddrinfo, then a
- * version of getaddrinfo is implemented inline based on code in the
- * Wspiapi.h header file. This inline code will be used on older Windows
- * platforms that do not natively support the getaddrinfo function."
- *
- * We use getaddrinfo(), so we include Wspiapi.h here.
- */
-#include <wspiapi.h>
 #else /* _WIN32 */
 #include <sys/socket.h>	/* for "struct sockaddr" in "struct addrinfo" */
 #include <netdb.h>	/* for "struct addrinfo" */

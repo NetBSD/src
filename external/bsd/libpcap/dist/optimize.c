@@ -1,4 +1,4 @@
-/*	$NetBSD: optimize.c,v 1.13 2024/09/02 15:33:37 christos Exp $	*/
+/*	$NetBSD: optimize.c,v 1.14 2026/03/18 23:43:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: optimize.c,v 1.13 2024/09/02 15:33:37 christos Exp $");
+__RCSID("$NetBSD: optimize.c,v 1.14 2026/03/18 23:43:20 christos Exp $");
 
 #include <config.h>
 
@@ -122,7 +122,7 @@ pcap_set_print_dot_graph(int value)
   #define lowest_set_bit(mask) ((u_int)__builtin_ctz(mask))
 #elif defined(_MSC_VER)
   /*
-   * Visual Studio; we support only 2005 and later, so use
+   * Visual Studio; we support only 2015 and later, so use
    * _BitScanForward().
    */
 #include <intrin.h>
