@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.5 2020/12/05 11:18:21 skrll Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.6 2026/03/18 18:23:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -46,12 +46,13 @@
  */
 
 ENTRY(setjmp)
-	/* Block all signals and retrieve the old signal mask */
+	/* Retrieve the old signal mask */
 	push	{r0, lr}
 	movs	r0, #0x00000000
 
 	bl	PLT_SYM(_C_LABEL(sigblock))
 	mov	r1, r0
+	pop	{r0, lr}
 
 	/* Store signal mask */
 	str	r1, [r0, #(_JB_SIGMASK * 4)]
@@ -83,7 +84,7 @@ ENTRY(setjmp)
 	stmia	r0, {r4-lr}
 #endif
 	movs	r0, #0
-	pop	{r3, pc}
+	RET
 END(setjmp)
 
 ENTRY(longjmp)
