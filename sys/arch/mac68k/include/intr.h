@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.33 2024/02/28 13:05:40 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.34 2026/03/18 04:08:38 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,8 +40,6 @@ typedef struct {
 
 #ifdef _KERNEL
 
-/* spl0 requires checking for software interrupts */
-
 #define	IPL_NONE	0
 #define	IPL_SOFTCLOCK	1
 #define	IPL_SOFTBIO	2
@@ -68,8 +66,8 @@ extern uint16_t ipl2psl_table[NIPL];
  */
 
 /* watch out for side effects */
-#define splx(s)         ((s) & PSL_IPL ? _spl(s) : spl0())
-
+#define	spl0()		_spl0()
+#define	splx(s)		_splx(s)
 
 typedef int ipl_t;
 
@@ -95,9 +93,6 @@ void	intr_init(void);
 void	intr_establish(int (*)(void *), void *, int);
 void	intr_disestablish(int);
 void	intr_dispatch(struct clockframe);
-
-/* locore.s */
-int	spl0(void);
 #endif /* _KERNEL */
 
 #endif /* _MAC68K_INTR_H_ */

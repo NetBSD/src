@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.25 2024/01/19 20:55:42 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.26 2026/03/18 04:08:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2007 The NetBSD Foundation, Inc.
@@ -59,8 +59,6 @@ typedef struct {
  */
 #include <machine/psl.h>
 
-/* spl0 requires checking for software interrupts */
-
 #define splsoftclock()		splraise1()
 #define splsoftbio()		splraise1()
 #define splsoftnet()		splraise1()
@@ -68,11 +66,10 @@ typedef struct {
 #define splvm()			splraise4()
 #define splsched()		splraise6()
 #define splhigh()		spl7()
-#define splx(s)			((s) & PSL_IPL ? _spl(s) : spl0())
+#define	spl0()			_spl0()
+#define	splx(s)			_splx(s)
 
 #ifdef _KERNEL
-int spl0(void);
-
 extern const uint16_t ipl2psl_table[NIPL];
 extern volatile unsigned int intr_depth;
 

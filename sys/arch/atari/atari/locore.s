@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.129 2026/03/14 21:03:39 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.130 2026/03/18 04:08:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -619,10 +619,10 @@ ASENTRY_NOPROFILE(rei)
 	jne	Ldorte			|  yes, do not make matters worse
 #endif
 	tstl	_C_LABEL(astpending)	|  AST pending?
-	jeq	Lchksir			|  no, go check for SIR
+	jeq	Ldorte			|  Nope. Just return.
 Lrei1:
 	btst	#5,%sp@			|  yes, are we returning to user mode?
-	jne	Lchksir			|  no, go check for SIR
+	jne	Ldorte			|  Nope. Just return.
 	movw	#PSL_LOWIPL,%sr		|  lower SPL
 	clrl	%sp@-			|  stack adjust
 	moveml	#0xFFFF,%sp@-		|  save all registers
@@ -651,38 +651,8 @@ Laststkadj:
 	movl	%a0,%sp@(FR_SP)		|  new SSP
 	moveml	%sp@+,#0x7FFF		|  restore user registers
 	movl	%sp@,%sp		|  and our SP
-	rte				|  and do real RTE
-Lchksir:
-	tstb	_C_LABEL(ssir)		|  SIR pending?
-	jeq	Ldorte			|  no, all done
-	movl	%d0,%sp@-		|  need a scratch register
-	movw	%sp@(4),%d0		|  get SR
-	andw	#PSL_IPL7,%d0		|  mask all but IPL
-	jne	Lnosir			|  came from interrupt, no can do
-	movl	%sp@+,%d0		|  restore scratch register
-Lgotsir:
-	movw	#SPL1,%sr		|  prevent others from servicing int
-	tstb	_C_LABEL(ssir)		|  too late?
-	jeq	Ldorte			|  yes, oh well...
-	clrl	%sp@-			|  stack adjust
-	moveml	#0xFFFF,%sp@-		|  save all registers
-	movl	%usp,%a1		|  including
-	movl	%a1,%sp@(FR_SP)		|     the users SP
-	clrl	%sp@-			|  VA == none
-	clrl	%sp@-			|  code == none
-	movl	#T_SSIR,%sp@-		|  type == software interrupt
-	pea	%sp@(12)		|  fp == address of trap frame
-	jbsr	_C_LABEL(trap)		|  go handle it
-	lea	%sp@(16),%sp		|  pop value args
-	movl	%sp@(FR_SP),%a0		|  restore
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  and all remaining registers
-	addql	#8,%sp			|  pop SP and stack adjust
-	rte
-Lnosir:
-	movl	%sp@+,%d0		|  restore scratch register
 Ldorte:
-	rte				|  real return
+	rte				|  and do real RTE
 
 /*
  * Initialization
@@ -939,26 +909,6 @@ ENTRY(probeva)
 	moveq	#FC_USERD,%d0		|  restore DFC to user space
 	movc	%d0,%dfc
 	.word	0x4e7a,0x0805		|  movec  MMUSR,d0
-	rts
-
-/*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,%d0
-	movw	%sr,%d0			|  get old SR for return
-	movw	#PSL_LOWIPL,%sr		|  restore new SR
-	tstb	_C_LABEL(ssir)		|  software interrupt pending?
-	jeq	Lspldone		|  no, all done
-	subql	#4,%sp			|  make room for RTE frame
-	movl	%sp@(4),%sp@(2)		|  position return address
-	clrw	%sp@(6)			|  set frame type 0
-	movw	#PSL_LOWIPL,%sp@	|  and new SR
-	jra	Lgotsir			|  go handle it
-Lspldone:
 	rts
 
 /*
