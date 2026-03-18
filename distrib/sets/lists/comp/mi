@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2519 2026/01/30 14:01:39 christos Exp $
+#	$NetBSD: mi,v 1.2520 2026/03/18 23:53:57 christos Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -9949,6 +9949,7 @@
 ./usr/share/man/cat3/pcap_get_selectable_fd.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_get_tstamp_precision.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pcap_geterr.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_inject.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_is_swapped.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_lib_version.0		comp-c-catman		.cat
@@ -9967,6 +9968,7 @@
 ./usr/share/man/cat3/pcap_set_datalink.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_immediate_mode.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_promisc.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_set_protocol_linux.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_rfmon.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_snaplen.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_set_timeout.0		comp-c-catman		.cat
@@ -18910,6 +18912,7 @@
 ./usr/share/man/html3/pcap_get_selectable_fd.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_get_tstamp_precision.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_geterr.html		comp-c-htmlman		html
+./usr/share/man/html3/pcap_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_inject.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_is_swapped.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_lib_version.html	comp-c-htmlman		html
@@ -18928,6 +18931,7 @@
 ./usr/share/man/html3/pcap_set_datalink.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_immediate_mode.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_promisc.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_set_protocol_linux.html		comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_rfmon.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_snaplen.html	comp-c-htmlman		html
 ./usr/share/man/html3/pcap_set_timeout.html	comp-c-htmlman		html
@@ -27863,6 +27867,7 @@
 ./usr/share/man/man3/pcap_get_selectable_fd.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_get_tstamp_precision.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_geterr.3		comp-c-man		.man
+./usr/share/man/man3/pcap_init.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_inject.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_is_swapped.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_lib_version.3		comp-c-man		.man
@@ -27881,6 +27886,7 @@
 ./usr/share/man/man3/pcap_set_datalink.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_set_immediate_mode.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_set_promisc.3		comp-c-man		.man
+./usr/share/man/man3/pcap_set_protocol_linux.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_rfmon.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_snaplen.3		comp-c-man		.man
 ./usr/share/man/man3/pcap_set_timeout.3		comp-c-man		.man
