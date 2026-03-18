@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.174 2025/12/21 07:00:27 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.175 2026/03/18 14:44:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.174 2025/12/21 07:00:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.175 2026/03/18 14:44:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -147,7 +147,7 @@ int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 u_long	cpu_dump_mempagecnt(void);
 int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
-void	straytrap(int, u_short);
+void	straytrap(struct trapframe);
 
 /*
  * Machine-independent crash dump header info.
@@ -954,11 +954,10 @@ initcpu(void)
 }
 
 void
-straytrap(int pc, u_short evec)
+straytrap(struct trapframe tf)
 {
-
-	printf("unexpected trap (vector offset %x) from %x\n",
-	    evec & 0xFFF, pc);
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 }
 
 /*

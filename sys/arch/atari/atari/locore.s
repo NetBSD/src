@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.132 2026/03/18 13:56:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.133 2026/03/18 14:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -294,7 +294,6 @@ ENTRY_NOPROFILE(lev7intr)
 #endif /* _MILANHW_ */
 
 ENTRY_NOPROFILE(lev3intr)
-ENTRY_NOPROFILE(badtrap)
 	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		|  push exception vector info

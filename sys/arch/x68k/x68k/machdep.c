@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2025/12/20 10:51:05 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2026/03/18 14:44:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2025/12/20 10:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2026/03/18 14:44:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -135,7 +135,7 @@ void	cpu_init_kcore_hdr(void);
 /* functions called from locore.s */
 void	x68k_init(paddr_t);
 void	dumpsys(void);
-void	straytrap(int, u_short);
+void	straytrap(struct trapframe);
 void	nmihand(struct frame);
 void	intrhand(int);
 
@@ -851,11 +851,10 @@ initcpu(void)
 }
 
 void
-straytrap(int pc, u_short evec)
+straytrap(struct trapframe tf)
 {
-
-	printf("unexpected trap (vector offset %x) from %x\n",
-	    evec & 0xFFF, pc);
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 #if defined(DDB)
 	Debugger();
 #endif

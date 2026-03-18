@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.194 2025/12/20 10:51:01 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.195 2026/03/18 14:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2025/12/20 10:51:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2026/03/18 14:44:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -97,7 +97,7 @@ static void bootsync(void);
 static void call_sicallbacks(void);
 static void identifycpu(void);
 void	straymfpint(int, u_short);
-void	straytrap(int, u_short);
+void	straytrap(struct trapframe);
 
 #ifdef _MILANHW_
 void	nmihandler(void);
@@ -519,18 +519,18 @@ dumpsys(void)
 }
 
 void
-straytrap(int pc, u_short evec)
+straytrap(struct trapframe tf)
 {
 	static int prev_evec;
 
-	printf("unexpected trap (vector offset 0x%x) from 0x%x\n",
-	    evec & 0xFFF, pc);
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 
-	if (prev_evec == evec) {
+	if (prev_evec == tf.tf_vector) {
 		delay(1000000);
 		prev_evec = 0;
 	} else
-		prev_evec = evec;
+		prev_evec = tf.tf_vector;
 }
 
 void

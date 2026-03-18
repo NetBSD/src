@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.21 2026/03/18 13:56:07 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.22 2026/03/18 14:44:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -200,6 +200,19 @@ ENTRY_NOPROFILE(fmterr)
 	movl	#T_FMTERR,-(%sp)	| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments
+
+/*
+ * Other exceptions only cause four and six word stack frame and require
+ * no post-trap stack adjustment.
+ */
+
+ENTRY_NOPROFILE(badtrap)
+	clrl	-(%sp)			| stack adjust count
+	moveml	#0xFFFF,-(%sp)		| save standard frame regs
+	jbsr	_C_LABEL(straytrap)	| report
+	moveml	(%sp)+,#0x7FFF		| restore all except %sp
+	addql	#8,%sp			| pop stack adjust count and %sp
+	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Emulation of VAX REI instruction.

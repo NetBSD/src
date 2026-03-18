@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.118 2025/12/20 10:51:03 skrll Exp $ */
+/* $NetBSD: machdep.c,v 1.119 2026/03/18 14:44:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.118 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2026/03/18 14:44:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -114,7 +114,7 @@ void machine_init(paddr_t);
 void identifycpu(void);
 void dumpsys(void);
 
-void straytrap(int, u_short);
+void straytrap(struct trapframe);
 void nmihand(struct frame);
 
 int  cpu_dumpsize(void);
@@ -691,11 +691,10 @@ dumpsys(void)
 }
 
 void
-straytrap(int pc, u_short evec)
+straytrap(struct trapframe tf)
 {
-
-	printf("unexpected trap (vector offset %x) from %x\n",
-	    evec & 0xFFF, pc);
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 }
 
 int	*nofault;

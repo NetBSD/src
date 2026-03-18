@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.194 2026/03/18 13:56:07 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.195 2026/03/18 14:44:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -544,16 +544,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-ENTRY_NOPROFILE(badtrap)
-	moveml	#0xC0C0,%sp@-		| save scratch regs
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	movl	%sp@(22),%sp@-		| and PC
-	jbsr	_C_LABEL(straytrap)	| report
-	addql	#8,%sp			| pop args
-	moveml	%sp@+,#0x0303		| restore regs
-	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(trap0)
 	clrl	%sp@-			| pad SR to longword

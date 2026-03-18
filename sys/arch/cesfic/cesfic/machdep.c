@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.77 2025/12/21 07:00:26 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78 2026/03/18 14:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.77 2025/12/21 07:00:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2026/03/18 14:44:09 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -116,7 +116,7 @@ char	*hexstr(int, int);
 
 /* functions called from locore.s */
 void    dumpsys(void);
-void    straytrap(int, u_short);
+void    straytrap(struct trapframe);
 void	nmihand(struct frame);
 
 int	delay_divisor;		/* delay constant */
@@ -471,10 +471,10 @@ dumpsys(void)
 }
 
 void
-straytrap(int pc, u_short evec)
+straytrap(struct trapframe tf)
 {
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 }
 
 /* XXX should change the interface, and make one badaddr() function */

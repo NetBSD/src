@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 2026/03/18 13:56:06 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 2026/03/18 14:44:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -448,16 +448,6 @@ Lfptnull:
 	movl	#T_FPERR,%sp@-	| push type arg
 	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
-
-ENTRY_NOPROFILE(badtrap)
-	moveml	#0xC0C0,%sp@-		| save scratch regs
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	movl	%sp@(22),%sp@-		| and PC
-	jbsr	_C_LABEL(straytrap)	| report
-	addql	#8,%sp			| pop args
-	moveml	%sp@+,#0x0303		| restore regs
-	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY_NOPROFILE(trap0)
 	clrl	%sp@-			| stack adjust count

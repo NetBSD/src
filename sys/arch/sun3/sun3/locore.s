@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 2026/03/18 13:56:07 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 2026/03/18 14:44:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -225,13 +225,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-GLOBAL(badtrap)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save std frame regs
-	jbsr	_C_LABEL(straytrap)	| report
-	moveml	%sp@+,#0xFFFF		| restore regs
-	addql	#4,%sp			| stack adjust count
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trap 0 is for system calls
