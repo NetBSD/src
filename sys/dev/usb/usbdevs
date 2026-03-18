@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.825 2025/11/05 20:41:57 brad Exp $
+$NetBSD: usbdevs,v 1.826 2026/03/18 05:43:01 mrg Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -557,6 +557,7 @@ vendor QUANTA		0x1a32	Quanta
 vendor TERMINUS		0x1a40	Terminus Technology
 vendor QINHENG		0x1a86	QinHeng Electronics
 vendor OVISLINK		0x1b75	OvisLink
+vendor SIGMACHIP	0x1c4f	Sigma Chip
 vendor LONGCHEER	0x1c9e	Longcheer Technology
 vendor MPMAN		0x1cae	MPMan
 vendor PEGATRON		0x1d4d	Pegatron
@@ -2670,6 +2671,9 @@ product OTI FLASHDISK		0x6828	Flash Disk 128M
 /* OvisLink product */
 product OVISLINK RT3071		0x3071	RT3071
 product OVISLINK RT3072		0x3072	RT3072
+
+/* Sigma Chip */
+product SIGMACHIP USBMOUSE	0x0048	USB Mouse
 
 /* Palm Computing, Inc. product */
 product PALM SERIAL		0x0080	USB Serial Adaptor
