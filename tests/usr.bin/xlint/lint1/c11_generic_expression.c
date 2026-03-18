@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.25 2026/03/16 20:09:15 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.26 2026/03/18 06:17:55 rillig Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -100,7 +100,7 @@ primary_expression(void)
 }
 
 /*
- * The types don't match, therefore build_generic_selection returns NULL,
+ * The types don't match, therefore the _Generic selection evaluates to NULL,
  * which is then silently ignored by init_expr.  This situation is already
  * covered by the compilers, so there is no need for lint to double-check it.
  */
@@ -143,17 +143,53 @@ skip_blank(const char *p)
 {
 	static const unsigned short *_ctype_tab_;
 
-	while (
-		// TODO: In a _Generic expression, only evaluate the
-		//  result expression, but not the others. Only parse
-		//  the others, don't determine their type.
-		_Generic(
-			*p + 1 / 0,
-			/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
-			unsigned char: (_ctype_tab_ + 1)[*p] & 0x0200,
-			/* expect+1: warning: argument to 'function from <ctype.h>' must be 'unsigned char' or EOF, not 'char' [341] */
-			int: (_ctype_tab_ + 1)[*p] & 0x0200
-		)
-	)
+	while (_Generic(
+	    p[1 / 0],
+	    unsigned char: (_ctype_tab_ + 1)[*p] & 0x0200,
+	    int: (_ctype_tab_ + 1)[*p] & 0x0200
+	))
 		p++;
+}
+
+const char *
+evaluation_mode(void)
+{
+	return _Generic(
+	    0,
+
+	    // Only parse since 'double' does not match 'int'.
+	    double: 1 / 0,
+
+	    int: "matched",
+
+	    // Only parse since 'const char *' does not match 'int'.
+	    const char *: 1 / 0,
+
+	    // Only parse since a previous branch already matched,
+	    // so the fallback branch is not used.
+	    default: 1 / 0
+	);
+}
+
+const char *
+evaluation_mode_early_default(void)
+{
+	return _Generic(
+	    0,
+
+	    // Lint decides at parse time whether it fully evaluates the
+	    // branch or only parses it. Since the default branch comes
+	    // first, it is not yet known whether any of the other branches
+	    // will match, so evaluate it.
+	    /* expect+1: error: division by 0 [139] */
+	    default: 1 / 0,
+
+	    // Only parse since 'double' does not match 'int'.
+	    double: 1 / 0,
+
+	    int: "matched",
+
+	    // Only parse since 'const char *' does not match 'int'.
+	    const char *: 1 / 0
+	);
 }

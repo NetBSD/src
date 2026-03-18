@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.244 2026/03/15 07:55:59 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.245 2026/03/18 06:17:55 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -286,8 +286,6 @@ bool is_compiler_builtin(const char *);
 tnode_t *build_constant(type_t *, val_t *);
 tnode_t *build_name(sym_t *, bool);
 tnode_t *build_string(buffer *);
-tnode_t *build_generic_selection(const tnode_t *,
-		    struct generic_association *);
 
 tnode_t *build_binary(tnode_t *, op_t, bool, tnode_t *);
 tnode_t *build_unary(op_t, bool, tnode_t *);

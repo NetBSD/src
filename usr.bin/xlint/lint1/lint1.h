@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.239 2026/03/15 07:55:59 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.240 2026/03/18 06:17:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -329,10 +329,11 @@ struct tnode {
 	} u;
 };
 
-struct generic_association {
-	type_t *ga_arg;		/* NULL means default or error */
-	tnode_t *ga_result;	/* NULL means error */
-	struct generic_association *ga_prev;
+struct generic_selection {
+	const type_t *expr_type;
+	tnode_t *fallback;
+	tnode_t *matched;
+	bool assoc_matched;
 };
 
 typedef struct {

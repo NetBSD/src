@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.537 2026/03/16 20:09:15 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.538 2026/03/18 06:17:55 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.537 2026/03/16 20:09:15 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.538 2026/03/18 06:17:55 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -148,6 +148,15 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	return attr;
 }
 
+static tnode_t *
+unconst_tnode(const tnode_t *p)
+{
+	void *r;
+
+	memcpy(&r, &p, sizeof(r));
+	return r;
+}
+
 #if YYDEBUG && YYBYACC
 #define YYSTYPE_TOSTRING cgram_to_string
 #endif
@@ -175,7 +184,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	buffer	*y_string;
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
-	struct generic_association *y_generic;
+	struct generic_selection y_generic_selection;
 	array_size y_array_size;
 	bool	y_in_system_header;
 	designation y_designation;
@@ -238,7 +247,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	fprintf(yyo, "%s *", type_qualifiers_string($$->qualifiers));
 } <y_qual_ptr>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_seen_statement>
-%printer { fprintf(yyo, "%s", type_name($$->ga_arg)); } <y_generic>
+%printer { fprintf(yyo, "%s", type_name($$.expr_type)); } <y_generic_selection>
 %printer { fprintf(yyo, "%d", $$.dim); } <y_array_size>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_in_system_header>
 %printer {
@@ -354,8 +363,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 %type	<y_tnode>	primary_expression
 %type	<y_designation>	member_designator
 %type	<y_tnode>	generic_selection
-%type	<y_generic>	generic_assoc_list
-%type	<y_generic>	generic_association
+%type	<y_generic_selection>	generic_inner
 %type	<y_tnode>	postfix_expression
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
@@ -605,37 +613,46 @@ member_designator:
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
 generic_selection:
-	T_GENERIC T_LPAREN {
+	T_GENERIC {
+		/* generic selection requires C11 or later */
+		c11ism(345);
+	} T_LPAREN generic_inner T_RPAREN {
+		$$ = $4.matched != NULL ? $4.matched : $4.fallback;
+	}
+;
+
+/* The rule 'generic_assoc_list' is inlined into 'generic_inner'. */
+/* The rule 'generic_association' is inlined into 'generic_inner'. */
+
+generic_inner:
+	{
 		push_evaluation_mode(EM_TYPE);
 	} assignment_expression {
 		pop_evaluation_mode();
-	} T_COMMA generic_assoc_list T_RPAREN {
-		/* generic selection requires C11 or later */
-		c11ism(345);
-		$$ = build_generic_selection($4, $7);
+	} {
+		$$ = (struct generic_selection){
+			/* C23 6.5.2.1p2 */
+			.expr_type = $2 != NULL
+			    ? cconv(unconst_tnode($2))->tn_type
+			    : NULL
+		};
 	}
-;
-
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
-generic_assoc_list:
-	generic_association
-|	generic_assoc_list T_COMMA generic_association {
-		$3->ga_prev = $1;
-		$$ = $3;
+|	generic_inner T_COMMA type_name T_COLON {
+		$1.assoc_matched = $1.expr_type != NULL && $3 != NULL
+		    && types_compatible($1.expr_type, $3, true, false, NULL);
+		push_evaluation_mode($1.assoc_matched ? EM_EVAL : EM_PARSE);
+	} assignment_expression {
+		pop_evaluation_mode();
+		$$ = $1;
+		if ($$.assoc_matched)
+			$$.matched = $6;
 	}
-;
-
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
-generic_association:
-	type_name T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$), "generic");
-		$$->ga_arg = $1;
-		$$->ga_result = $3;
-	}
-|	T_DEFAULT T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$), "generic");
-		$$->ga_arg = NULL;
-		$$->ga_result = $3;
+|	generic_inner T_COMMA T_DEFAULT T_COLON {
+		push_evaluation_mode($1.matched != NULL ? EM_PARSE : EM_EVAL);
+	} assignment_expression {
+		pop_evaluation_mode();
+		$$ = $1;
+		$$.fallback = $6;
 	}
 ;
 
