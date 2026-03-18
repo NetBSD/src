@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc.c,v 1.54 2019/11/10 21:16:35 chs Exp $ */
+/*	$NetBSD: clmpcc.c,v 1.55 2026/03/18 05:09:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.54 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc.c,v 1.55 2026/03/18 05:09:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -310,8 +310,8 @@ clmpcc_attach(struct clmpcc_softc *sc)
 		tty_attach(tp);
 	}
 
-	aprint_error_dev(sc->sc_dev, "%d channels available",
-					    CLMPCC_NUM_CHANS);
+	device_printf(sc->sc_dev, "%d channels available",
+	    CLMPCC_NUM_CHANS);
 	if ( cons_sc == sc ) {
 		printf(", console on channel %d.\n", cons_chan);
 		SET(sc->sc_chans[cons_chan].ch_flags, CLMPCC_FLG_IS_CONSOLE);
