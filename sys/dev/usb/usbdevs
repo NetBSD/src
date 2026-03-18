@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.826 2026/03/18 05:43:01 mrg Exp $
+$NetBSD: usbdevs,v 1.827 2026/03/18 05:54:44 mrg Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -371,6 +371,7 @@ vendor TOSHIBA		0x0930	Toshiba
 vendor PIXART		0x093a	PixArt
 vendor PLEXTOR		0x093b	Plextor
 vendor INTREPIDCS	0x093c	Intrepid
+vendor KORG		0x0944	KORG Incorporated
 vendor YANO		0x094f	Yano
 vendor KINGSTON		0x0951	Kingston Technology
 vendor BLUEWATER	0x0956	BlueWater Systems
@@ -835,6 +836,7 @@ product AMBIT NTL_250		0x6098	NTL 250 cable modem
 
 /* AMD product */
 product AMD TV_WONDER_600_USB	0xb002	TV Wonder 600 USB
+product AMD ROOT_HUB		0x7900	USB Root Hub
 
 /* Amigo products */
 product AMIGO RT2870_1		0x9031	RT2870
@@ -2108,6 +2110,10 @@ product KINGSTON DT100_G2	0x6544	DT 100 G2
 
 /* KingSun products */
 product KINGSUN IRDA		0x4200	KingSun/DonShine IrDA
+
+/* KORG Incorporated products */
+product KORG MINILOGUE_XD	0x0142	minilogue xd
+product KORG MICROKORG_XL	0x010b	microKORG XL
 
 /* Kodak products */
 product KODAK DC220		0x0100	Digital Science DC220
