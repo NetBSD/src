@@ -1,4 +1,4 @@
-/* $NetBSD: t_setjmp.c,v 1.13 2025/04/28 18:29:09 martin Exp $ */
+/* $NetBSD: t_setjmp.c,v 1.14 2026/03/18 18:24:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_setjmp.c,v 1.13 2025/04/28 18:29:09 martin Exp $");
+__RCSID("$NetBSD: t_setjmp.c,v 1.14 2026/03/18 18:24:59 skrll Exp $");
 
 #include <sys/types.h>
 
@@ -352,9 +352,6 @@ ATF_TC_HEAD(compat13_setjmp, tc)
 }
 ATF_TC_BODY(compat13_setjmp, tc)
 {
-#ifdef __arm__
-	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
-#endif
 	h_check(TEST_COMPAT13_SETJMP);
 }
 
@@ -366,9 +363,6 @@ ATF_TC_HEAD(compat13_sigsetjmp_save, tc)
 }
 ATF_TC_BODY(compat13_sigsetjmp_save, tc)
 {
-#ifdef __arm__
-	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
-#endif
 	h_check(TEST_COMPAT13_SIGSETJMP_SAVE);
 }
 
@@ -391,9 +385,6 @@ ATF_TC_HEAD(compat13_longjmp_zero, tc)
 }
 ATF_TC_BODY(compat13_longjmp_zero, tc)
 {
-#ifdef __arm__
-	atf_tc_expect_signal(-1, "PR port-arm/59351: compat_setjmp is busted");
-#endif
 	h_check(TEST_COMPAT13_LONGJMP_ZERO);
 }
 
