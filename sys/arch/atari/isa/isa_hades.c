@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_hades.c,v 1.10 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: isa_hades.c,v 1.11 2026/03/19 22:17:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.10 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_hades.c,v 1.11 2026/03/19 22:17:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -92,7 +92,7 @@ iifun(int slot, int sr)
 		add_sicallback((si_farg)iifun, (void*)slot, 0);
 	}
 	else {
-		s = splx(iinfo_p->ipl);
+		s = _spl(iinfo_p->ipl);
 		if (slot == 0) {
 			do {
 				MFP->mf_iprb = (u_int8_t)~IB_ISA1;
