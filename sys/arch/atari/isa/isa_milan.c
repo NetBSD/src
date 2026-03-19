@@ -1,4 +1,4 @@
-/*	$NetBSD: isa_milan.c,v 1.16 2018/01/20 19:36:47 tsutsui Exp $	*/
+/*	$NetBSD: isa_milan.c,v 1.17 2026/03/19 19:26:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.16 2018/01/20 19:36:47 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isa_milan.c,v 1.17 2026/03/19 19:26:57 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -120,7 +120,7 @@ isa_callback(int vector)
 
 	iinfo_p = &milan_isa_iinfo[vector];
 
-	s = splx(iinfo_p->ipl);
+	s = _spl(iinfo_p->ipl);
 	(void) (iinfo_p->ifunc)(iinfo_p->iarg);
 	if (vector > 7) {
 		WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
@@ -155,7 +155,7 @@ milan_isa_intr(int vector, int sr)
 		add_sicallback((si_farg)isa_callback, (void*)vector, 0);
 	}
 	else {
-		s = splx(iinfo_p->ipl);
+		s = _spl(iinfo_p->ipl);
 		(void) (iinfo_p->ifunc)(iinfo_p->iarg);
 		if (vector > 7) {
 			WICU(AD_8259_SLAVE, 0x60 | (vector & 7));
