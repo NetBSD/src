@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.80 2026/03/18 04:15:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.81 2026/03/19 12:39:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -202,45 +202,6 @@ Lfptnull:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-GLOBAL(badtrap)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save std frame regs
-	jbsr	_C_LABEL(straytrap)	| report
-	moveml	%sp@+,#0xFFFF		| restore regs
-	addql	#4,%sp			| stack adjust count
-	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Trap 0 is for system calls
- */
-GLOBAL(trap0)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most registers
-	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall"
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-GLOBAL(trap12)
-	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%sp@-	| push curproc pointer
-	movl	%d1,%sp@-		| push length
-	movl	%a1,%sp@-		| push addr
-	movl	%d0,%sp@-		| push command
-	jbsr	_C_LABEL(cachectl1)	| do it
-	lea	%sp@(16),%sp		| pop args
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
@@ -340,65 +301,6 @@ GLOBAL(_isr_clock)
 	jbsr	_C_LABEL(clock_intr)
 	INTERRUPT_RESTOREREG
 	jra	_ASM_LABEL(rei)
-
-/*
- * Emulation of VAX REI instruction.
- *
- * This code is (mostly) un-altered from the hp300 code,
- * except that sun machines do not need a simulated SIR
- * because they have a real software interrupt register.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifying that we need an AST we
- * drop the IPL to allow device interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.
- */
-
-ASGLOBAL(rei)
-#ifdef	DIAGNOSTIC
-	tstl	_C_LABEL(panicstr)	| have we panicked?
-	jne	Ldorte			| yes, do not make matters worse
-#endif
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Ldorte			| no, done
-Lrei1:
-	btst	#5,%sp@			| yes, are we returning to user mode?
-	jne	Ldorte			| no, done
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-	clrl	%sp@-			| stack adjust
-	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1		| including
-	movl	%a1,%sp@(FR_SP)		|    the users SP
-	clrl	%sp@-			| VA == none
-	clrl	%sp@-			| code == none
-	movl	#T_ASTFLT,%sp@-		| type == async system trap
-	pea	%sp@(12)		| fp == address of trap frame
-	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(16),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore user SP
-	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	Laststkadj		| yes, go to it
-	moveml	%sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-	rte				| and do real RTE
-Laststkadj:
-	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	addql	#8,%a1			| source pointer
-	movl	%a1,%a0			| source
-	addw	%d0,%a0			|  + hole size = dest pointer
-	movl	%a1@-,%a0@-		| copy
-	movl	%a1@-,%a0@-		|  8 bytes
-	movl	%a0,%sp@(FR_SP)		| new SSP
-	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp		| and our SP
-Ldorte:
-	rte				| real return
 
 /*
  * Initialization is at the beginning of this file, because the
