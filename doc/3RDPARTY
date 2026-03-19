@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2174 2026/03/17 20:55:20 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2175 2026/03/19 00:08:02 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -821,12 +821,12 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.10.5
+Version:	1.10.6
 Current Vers:	1.10.6
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2026-01-18
+Date:		2026-03-18
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -837,12 +837,12 @@ tree. sys/net/dlt.h is a copy of the dlt constants from dlt.h. We use our
 own copy of bpf_filter.c
 
 Package:	tcpdump
-Version:	4.99.5
+Version:	4.99.6
 Current Vers:	4.99.6
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2026-01-18
+Date:		2026-03-18
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
