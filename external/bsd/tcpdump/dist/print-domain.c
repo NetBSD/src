@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-domain.c,v 1.11 2024/09/02 16:15:31 christos Exp $");
+__RCSID("$NetBSD: print-domain.c,v 1.12 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /* \summary: Domain Name System (DNS) printer */
@@ -727,11 +727,10 @@ ns_rprint(netdissect_options *ndo,
 	len = GET_BE_U_2(cp);
 	cp += 2;
 
-	rp = cp + len;
-
 	ND_PRINT(" %s", tok2str(ns_type2str, "Type%u", typ));
-	if (rp > ndo->ndo_snapend)
-		return(NULL);
+
+	ND_TCHECK_LEN(cp, len);
+	rp = cp + len;
 
 	switch (typ) {
 	case T_A:
@@ -901,6 +900,9 @@ ns_rprint(netdissect_options *ndo,
 	    }
 	}
 	return (rp);		/* XXX This isn't always right */
+
+trunc:
+	return(NULL);
 }
 
 void

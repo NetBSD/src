@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: checksum.c,v 1.9 2024/09/02 16:15:29 christos Exp $");
+__RCSID("$NetBSD: checksum.c,v 1.10 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 #include <config.h>
@@ -111,9 +111,9 @@ create_osi_cksum (const uint8_t *pptr, int checksum_offset, int length)
 
     int x;
     int y;
-    uint32_t mul;
+    int32_t mul;
     uint32_t c0;
-    uint32_t c1;
+    uint64_t c1;
     uint16_t checksum;
     int idx;
 
@@ -139,21 +139,23 @@ create_osi_cksum (const uint8_t *pptr, int checksum_offset, int length)
 
     mul = (length - checksum_offset)*(c0);
 
-    x = mul - c0 - c1;
-    y = c1 - mul - 1;
-
-    if ( y >= 0 ) y++;
-    if ( x < 0 ) x--;
+    /*
+     * Casting c0 and c1 here is guaranteed to be safe, because we know
+     * they have values between 0 and 254 inclusive.  These casts are
+     * done to ensure that all of the arithmetic operations are
+     * well-defined (i.e., not mixing signed and unsigned integers).
+     */
+    x = mul - (int)c0 - (int)c1;
+    y = (int)c1 - mul;
 
     x %= 255;
     y %= 255;
 
-
-    if (x == 0) x = 255;
-    if (y == 0) y = 255;
+    if (x <= 0) x += 255;
+    if (y <= 0) y += 255;
 
     y &= 0x00FF;
-    checksum = ((x << 8) | y);
+    checksum = (uint16_t)((x << 8) | y);
 
     return checksum;
 }

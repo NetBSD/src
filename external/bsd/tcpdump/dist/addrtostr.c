@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: addrtostr.c,v 1.6 2024/09/02 16:15:29 christos Exp $");
+__RCSID("$NetBSD: addrtostr.c,v 1.7 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 #include <config.h>
@@ -132,9 +132,11 @@ addrtostr6 (const void *src, char *dst, size_t size)
   cur.base  = -1;
   for (i = 0; i < (IN6ADDRSZ / INT16SZ); i++) {
     if (words[i] == 0) {
-      if (cur.base == -1)
-           cur.base = i, cur.len = 1;
-      else cur.len++;
+      if (cur.base == -1) {
+         cur.base = i;
+         cur.len = 1;
+      } else
+         cur.len++;
     } else if (cur.base != -1) {
       if (best.base == -1 || cur.len > best.len)
          best = cur;

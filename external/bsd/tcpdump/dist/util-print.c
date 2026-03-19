@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util-print.c,v 1.8 2024/09/02 16:15:33 christos Exp $");
+__RCSID("$NetBSD: util-print.c,v 1.9 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 #include <config.h>
@@ -221,10 +221,14 @@ ts_frac_print(netdissect_options *ndo, const struct timeval *tv)
 
 	case PCAP_TSTAMP_PRECISION_MICRO:
 		ND_PRINT(".%06u", (unsigned)tv->tv_usec);
+		if ((unsigned)tv->tv_usec > ND_MICRO_PER_SEC - 1)
+			ND_PRINT(" " ND_INVALID_MICRO_SEC_STR);
 		break;
 
 	case PCAP_TSTAMP_PRECISION_NANO:
 		ND_PRINT(".%09u", (unsigned)tv->tv_usec);
+		if ((unsigned)tv->tv_usec > ND_NANO_PER_SEC - 1)
+			ND_PRINT(" " ND_INVALID_NANO_SEC_STR);
 		break;
 
 	default:
@@ -233,6 +237,8 @@ ts_frac_print(netdissect_options *ndo, const struct timeval *tv)
 	}
 #else
 	ND_PRINT(".%06u", (unsigned)tv->tv_usec);
+	if ((unsigned)tv->tv_usec > ND_MICRO_PER_SEC - 1)
+		ND_PRINT(" " ND_INVALID_MICRO_SEC_STR);
 #endif
 }
 
@@ -248,16 +254,32 @@ ts_date_hmsfrac_print(netdissect_options *ndo, const struct timeval *tv,
 	struct tm *tm;
 	char timebuf[32];
 	const char *timestr;
+#ifdef _WIN32
+	time_t sec;
+#endif
 
 	if (tv->tv_sec < 0) {
-		ND_PRINT("[timestamp < 1970-01-01 00:00:00 UTC]");
+		ND_PRINT("[timestamp overflow]");
 		return;
 	}
 
+#ifdef _WIN32
+	/* on Windows tv->tv_sec is a long not a 64-bit time_t. */
+	sec = tv->tv_sec;
+#endif
+
 	if (time_flag == LOCAL_TIME)
+#ifdef _WIN32
+		tm = localtime(&sec);
+#else
 		tm = localtime(&tv->tv_sec);
+#endif
 	else
+#ifdef _WIN32
+		tm = gmtime(&sec);
+#else
 		tm = gmtime(&tv->tv_sec);
+#endif
 
 	if (date_flag == WITH_DATE) {
 		timestr = nd_format_time(timebuf, sizeof(timebuf),
@@ -278,11 +300,11 @@ static void
 ts_unix_print(netdissect_options *ndo, const struct timeval *tv)
 {
 	if (tv->tv_sec < 0) {
-		ND_PRINT("[timestamp < 1970-01-01 00:00:00 UTC]");
+		ND_PRINT("[timestamp overflow]");
 		return;
 	}
 
-	ND_PRINT("%u", (unsigned)tv->tv_sec);
+	ND_PRINT("%" PRId64, (int64_t)tv->tv_sec);
 	ts_frac_print(ndo, tv);
 }
 
@@ -472,19 +494,14 @@ void nd_print_invalid(netdissect_options *ndo)
 
 int
 print_unknown_data(netdissect_options *ndo, const u_char *cp,
-                   const char *ident, u_int len)
+                   const char *indent, u_int len)
 {
-	u_int len_to_print;
-
-	len_to_print = len;
 	if (!ND_TTEST_LEN(cp, 0)) {
-		ND_PRINT("%sDissector error: print_unknown_data called with pointer past end of packet",
-		    ident);
+		ND_PRINT("%sDissector error: %s() called with pointer past end of packet",
+		    indent, __func__);
 		return(0);
 	}
-	if (ND_BYTES_AVAILABLE_AFTER(cp) < len_to_print)
-		len_to_print = ND_BYTES_AVAILABLE_AFTER(cp);
-	hex_print(ndo, ident, cp, len_to_print);
+	hex_print(ndo, indent, cp, ND_MIN(len, ND_BYTES_AVAILABLE_AFTER(cp)));
 	return(1); /* everything is ok */
 }
 
@@ -493,7 +510,7 @@ print_unknown_data(netdissect_options *ndo, const u_char *cp,
  */
 static const char *
 tok2strbuf(const struct tok *lp, const char *fmt,
-	   u_int v, char *buf, size_t bufsize)
+	   const u_int v, char *buf, const size_t bufsize)
 {
 	if (lp != NULL) {
 		while (lp->s != NULL) {
@@ -515,8 +532,7 @@ tok2strbuf(const struct tok *lp, const char *fmt,
  * in round-robin fashion.
  */
 const char *
-tok2str(const struct tok *lp, const char *fmt,
-	u_int v)
+tok2str(const struct tok *lp, const char *fmt, const u_int v)
 {
 	static char buf[4][TOKBUFSIZE];
 	static int idx = 0;
@@ -537,7 +553,7 @@ tok2str(const struct tok *lp, const char *fmt,
  */
 static char *
 bittok2str_internal(const struct tok *lp, const char *fmt,
-	   u_int v, const char *sep)
+		    const u_int v, const char *sep)
 {
         static char buf[1024+1]; /* our string buffer */
         char *bufp = buf;
@@ -577,8 +593,7 @@ bittok2str_internal(const struct tok *lp, const char *fmt,
  * this is useful for parsing bitfields, the output strings are not separated.
  */
 char *
-bittok2str_nosep(const struct tok *lp, const char *fmt,
-	   u_int v)
+bittok2str_nosep(const struct tok *lp, const char *fmt, const u_int v)
 {
     return (bittok2str_internal(lp, fmt, v, ""));
 }
@@ -588,8 +603,7 @@ bittok2str_nosep(const struct tok *lp, const char *fmt,
  * this is useful for parsing bitfields, the output strings are comma separated.
  */
 char *
-bittok2str(const struct tok *lp, const char *fmt,
-	   u_int v)
+bittok2str(const struct tok *lp, const char *fmt, const u_int v)
 {
     return (bittok2str_internal(lp, fmt, v, ", "));
 }
@@ -601,8 +615,7 @@ bittok2str(const struct tok *lp, const char *fmt,
  * correct for bounds-checking.
  */
 const char *
-tok2strary_internal(const char **lp, int n, const char *fmt,
-	int v)
+tok2strary_internal(const char **lp, int n, const char *fmt, const int v)
 {
 	static char buf[TOKBUFSIZE];
 
@@ -635,7 +648,7 @@ uint2tokary_internal(const struct uint_tokary dict[], const size_t size,
  */
 
 int
-mask2plen(uint32_t mask)
+mask2plen(const uint32_t mask)
 {
 	const uint32_t bitmasks[33] = {
 		0x00000000,
@@ -701,9 +714,9 @@ mask62plen(const u_char *mask)
  * either a space character at the beginning of the line (this
  * includes a blank line) or no more tokens remaining on the line.
  */
-static int
+static u_int
 fetch_token(netdissect_options *ndo, const u_char *pptr, u_int idx, u_int len,
-    u_char *tbuf, size_t tbuflen)
+	    u_char *tbuf, size_t tbuflen)
 {
 	size_t toklen = 0;
 	u_char c;

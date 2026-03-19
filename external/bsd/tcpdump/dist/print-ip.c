@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ip.c,v 1.14 2024/09/02 16:15:31 christos Exp $");
+__RCSID("$NetBSD: print-ip.c,v 1.15 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /* \summary: IP printer */
@@ -358,14 +358,19 @@ ip_print(netdissect_options *ndo,
 		/* we guess that it is a TSO send */
 		len = length;
 		presumed_tso = 1;
-	} else
-		ND_ICHECKMSG_U("total length", len, <, hlen);
+	}
+	if (len < hlen) {
+		ND_PRINT("[total length %u < header length %u]", len, hlen);
+		goto invalid;
+	}
 
 	ND_TCHECK_SIZE(ip);
 	/*
-	 * Cut off the snapshot length to the end of the IP payload.
+	 * Cut off the snapshot length to the end of the IP payload
+	 * or the end of the data in which it's contained, whichever
+	 * comes first.
 	 */
-	if (!nd_push_snaplen(ndo, bp, len)) {
+	if (!nd_push_snaplen(ndo, bp, ND_MIN(length, len))) {
 		(*ndo->ndo_error)(ndo, S_ERR_ND_MEM_ALLOC,
 			"%s: can't push snaplen on buffer stack", __func__);
 	}
@@ -419,7 +424,7 @@ ip_print(netdissect_options *ndo,
 	    else
                 ND_PRINT(", length %u", GET_BE_U_2(ip->ip_len));
 
-            if ((hlen - sizeof(struct ip)) > 0) {
+            if ((hlen > sizeof(struct ip))) {
                 ND_PRINT(", options (");
                 if (ip_optprint(ndo, (const u_char *)(ip + 1),
                     hlen - sizeof(struct ip)) == -1) {
@@ -429,7 +434,7 @@ ip_print(netdissect_options *ndo,
                 ND_PRINT(")");
             }
 
-	    if (!ndo->ndo_Kflag && (const u_char *)ip + hlen <= ndo->ndo_snapend) {
+	    if (!ndo->ndo_Kflag && ND_TTEST_LEN((const u_char *)ip, hlen)) {
 	        vec[0].ptr = (const uint8_t *)(const void *)ip;
 	        vec[0].len = hlen;
 	        sum = in_cksum(vec, 1);
@@ -440,7 +445,10 @@ ip_print(netdissect_options *ndo,
 		}
 	    }
 
-	    ND_PRINT(")\n    ");
+	    if (ndo->ndo_gflag)
+		ND_PRINT(") ");
+	    else
+		ND_PRINT(")\n    ");
 	    if (truncated) {
 		ND_PRINT("%s > %s: ",
 			 GET_IPADDR_STRING(ip->ip_src),

@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ipproto.c,v 1.8 2024/09/02 16:15:30 christos Exp $");
+__RCSID("$NetBSD: ipproto.c,v 1.9 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 #include <config.h>
@@ -26,7 +26,7 @@ __RCSID("$NetBSD: ipproto.c,v 1.8 2024/09/02 16:15:30 christos Exp $");
 #include "ipproto.h"
 
 const struct tok ipproto_values[] = {
-    { IPPROTO_HOPOPTS, "Options" },
+    { IPPROTO_HOPOPTS, "HBH" },
     { IPPROTO_ICMP, "ICMP" },
     { IPPROTO_IGMP, "IGMP" },
     { IPPROTO_IPV4, "IPIP" },
@@ -44,6 +44,7 @@ const struct tok ipproto_values[] = {
     { IPPROTO_AH, "AH" },
     { IPPROTO_MOBILE, "Mobile IP" },
     { IPPROTO_ICMPV6, "ICMPv6" },
+    { IPPROTO_DSTOPTS, "DSTOPT" },
     { IPPROTO_MOBILITY_OLD, "Mobile IP (old)" },
     { IPPROTO_EIGRP, "EIGRP" },
     { IPPROTO_OSPF, "OSPF" },

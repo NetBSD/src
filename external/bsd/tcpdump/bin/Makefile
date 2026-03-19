@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2025/12/24 18:19:12 thorpej Exp $	
+#	$NetBSD: Makefile,v 1.31 2026/03/19 00:05:12 christos Exp $	
 
 WARNS?=	1	# XXX: need to cleanup later
 
@@ -118,7 +118,6 @@ print-openflow-1.0.c \
 print-openflow-1.3.c \
 print-openflow.c \
 print-ospf.c \
-print-otv.c \
 print-pflog.c \
 print-pfsync.c \
 print-pgm.c \

@@ -1,6 +1,11 @@
 /* config.h.  Generated from config.h.in by configure.  */
 /* config.h.in.  Generated from configure.ac by autoheader.  */
 
+
+#ifndef TCPDUMP_CONFIG_H_
+#define TCPDUMP_CONFIG_H_
+
+
 /* Define to 1 if arpa/inet.h declares `ether_ntohost' */
 /* #undef ARPA_INET_H_DECLARES_ETHER_NTOHOST */
 
@@ -79,7 +84,7 @@
 #define HAVE_OS_IPV6_SUPPORT 1
 #endif
 
-/* if there's an os_proto.h for this platform, to use additional prototypes */
+/* if there's an os-proto.h for this platform, to use additional prototypes */
 /* #undef HAVE_OS_PROTO_H */
 
 /* Define to 1 if you have the `pcap_breakloop' function. */
@@ -230,7 +235,7 @@
 #define PACKAGE_NAME "tcpdump"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "tcpdump 4.99.5"
+#define PACKAGE_STRING "tcpdump 4.99.6"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "tcpdump"
@@ -239,7 +244,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.99.5"
+#define PACKAGE_VERSION "4.99.6"
 
 /* The size of `time_t', as computed by sizeof. */
 #define SIZEOF_TIME_T 8
@@ -295,3 +300,7 @@
 /* Define to the type of an unsigned integer type wide enough to hold a
    pointer, if such a type exists, and if the system does not define it. */
 /* #undef uintptr_t */
+
+
+#endif // TCPDUMP_CONFIG_H_
+

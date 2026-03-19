@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ascii.c,v 1.9 2024/09/02 16:15:30 christos Exp $");
+__RCSID("$NetBSD: print-ascii.c,v 1.10 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /* \summary: ASCII packet dump printer */
@@ -98,7 +98,7 @@ ascii_print(netdissect_options *ndo,
 }
 
 static void
-hex_and_ascii_print_with_offset(netdissect_options *ndo, const char *ident,
+hex_and_ascii_print_with_offset(netdissect_options *ndo, const char *indent,
     const u_char *cp, u_int length, u_int oset)
 {
 	u_int caplength;
@@ -131,7 +131,7 @@ hex_and_ascii_print_with_offset(netdissect_options *ndo, const char *ident,
 		if (i >= HEXDUMP_SHORTS_PER_LINE) {
 			*hsp = *asp = '\0';
 			ND_PRINT("%s0x%04x: %-*s  %s",
-			    ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
+			    indent, oset, HEXDUMP_HEXSTUFF_PER_LINE,
 			    hexstuff, asciistuff);
 			i = 0; hsp = hexstuff; asp = asciistuff;
 			oset += HEXDUMP_BYTES_PER_LINE;
@@ -150,7 +150,7 @@ hex_and_ascii_print_with_offset(netdissect_options *ndo, const char *ident,
 	if (i > 0) {
 		*hsp = *asp = '\0';
 		ND_PRINT("%s0x%04x: %-*s  %s",
-		     ident, oset, HEXDUMP_HEXSTUFF_PER_LINE,
+		     indent, oset, HEXDUMP_HEXSTUFF_PER_LINE,
 		     hexstuff, asciistuff);
 	}
 	if (truncated)
@@ -158,10 +158,10 @@ hex_and_ascii_print_with_offset(netdissect_options *ndo, const char *ident,
 }
 
 void
-hex_and_ascii_print(netdissect_options *ndo, const char *ident,
+hex_and_ascii_print(netdissect_options *ndo, const char *indent,
     const u_char *cp, u_int length)
 {
-	hex_and_ascii_print_with_offset(ndo, ident, cp, length, 0);
+	hex_and_ascii_print_with_offset(ndo, indent, cp, length, 0);
 }
 
 /*
@@ -169,7 +169,7 @@ hex_and_ascii_print(netdissect_options *ndo, const char *ident,
  */
 void
 hex_print_with_offset(netdissect_options *ndo,
-                      const char *ident, const u_char *cp, u_int length,
+                      const char *indent, const u_char *cp, u_int length,
 		      u_int oset)
 {
 	u_int caplength;
@@ -186,7 +186,7 @@ hex_print_with_offset(netdissect_options *ndo,
 	i = 0;
 	while (nshorts != 0) {
 		if ((i++ % 8) == 0) {
-			ND_PRINT("%s0x%04x: ", ident, oset);
+			ND_PRINT("%s0x%04x: ", indent, oset);
 			oset += HEXDUMP_BYTES_PER_LINE;
 		}
 		s = GET_U_1(cp);
@@ -197,7 +197,7 @@ hex_print_with_offset(netdissect_options *ndo,
 	}
 	if (length & 1) {
 		if ((i % 8) == 0)
-			ND_PRINT("%s0x%04x: ", ident, oset);
+			ND_PRINT("%s0x%04x: ", indent, oset);
 		ND_PRINT(" %02x", GET_U_1(cp));
 	}
 	if (truncated)
@@ -206,9 +206,9 @@ hex_print_with_offset(netdissect_options *ndo,
 
 void
 hex_print(netdissect_options *ndo,
-	  const char *ident, const u_char *cp, u_int length)
+	  const char *indent, const u_char *cp, u_int length)
 {
-	hex_print_with_offset(ndo, ident, cp, length, 0);
+	hex_print_with_offset(ndo, indent, cp, length, 0);
 }
 
 #ifdef MAIN

@@ -26,7 +26,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ntp.c,v 1.10 2024/09/02 16:15:32 christos Exp $");
+__RCSID("$NetBSD: print-ntp.c,v 1.11 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /*
@@ -69,7 +69,7 @@ __RCSID("$NetBSD: print-ntp.c,v 1.10 2024/09/02 16:15:32 christos Exp $");
  * |                                                               |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
- * |                   Originate Timestamp (64)                    |
+ * |                     Origin Timestamp (64)                     |
  * |                                                               |
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  * |                                                               |
@@ -289,7 +289,7 @@ ntp_time_print(netdissect_options *ndo,
 	p_ntp_time(ndo, &(bp->ref_timestamp));
 
 	ND_TCHECK_SIZE(&bp->org_timestamp);
-	ND_PRINT("\n\t  Originator Timestamp: ");
+	ND_PRINT("\n\t  Origin Timestamp:     ");
 	p_ntp_time(ndo, &(bp->org_timestamp));
 
 	ND_TCHECK_SIZE(&bp->rec_timestamp);

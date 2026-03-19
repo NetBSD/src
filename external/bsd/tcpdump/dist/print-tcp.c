@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-tcp.c,v 1.12 2024/09/02 16:15:33 christos Exp $");
+__RCSID("$NetBSD: print-tcp.c,v 1.13 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 #include <config.h>
@@ -303,15 +303,21 @@ tcp_print(netdissect_options *ndo,
                                                         "%s: calloc", __func__);
                                 }
                                 th->addr = tha;
-                                if (rev)
-                                        th->ack = seq, th->seq = ack - 1;
-                                else
-                                        th->seq = seq, th->ack = ack - 1;
+                                if (rev) {
+                                        th->ack = seq;
+                                        th->seq = ack - 1;
+                                } else {
+                                        th->seq = seq;
+                                        th->ack = ack - 1;
+                                }
                         } else {
-                                if (rev)
-                                        seq -= th->ack, ack -= th->seq;
-                                else
-                                        seq -= th->seq, ack -= th->ack;
+                                if (rev) {
+                                        seq -= th->ack;
+                                        ack -= th->seq;
+                                } else {
+                                        seq -= th->seq;
+                                        ack -= th->ack;
+                                }
                         }
 
                         thseq = th->seq;
@@ -361,15 +367,21 @@ tcp_print(netdissect_options *ndo,
                                                         "%s: calloc", __func__);
                                 }
                                 th->addr = tha;
-                                if (rev)
-                                        th->ack = seq, th->seq = ack - 1;
-                                else
-                                        th->seq = seq, th->ack = ack - 1;
+                                if (rev) {
+                                        th->ack = seq;
+                                        th->seq = ack - 1;
+                                } else {
+                                        th->seq = seq;
+                                        th->ack = ack - 1;
+                                }
                         } else {
-                                if (rev)
-                                        seq -= th->ack, ack -= th->seq;
-                                else
-                                        seq -= th->seq, ack -= th->ack;
+                                if (rev) {
+                                        seq -= th->ack;
+                                        ack -= th->seq;
+                                } else {
+                                        seq -= th->seq;
+                                        ack -= th->ack;
+                                }
                         }
 
                         thseq = th->seq;
@@ -426,14 +438,19 @@ tcp_print(netdissect_options *ndo,
                 }
         }
 
-        if (flags & TH_ACK) {
+        if (flags & TH_ACK)
                 ND_PRINT(", ack %u", ack);
-        }
+        else
+                if (ndo->ndo_vflag > 1 && ack != 0)
+                        ND_PRINT(", [ack %u != 0 while ACK flag not set]", ack);
 
         ND_PRINT(", win %u", win);
 
         if (flags & TH_URG)
                 ND_PRINT(", urg %u", urp);
+        else
+                if (ndo->ndo_vflag > 1 && urp != 0)
+                        ND_PRINT(", [urg %u != 0 while URG flag not set]", urp);
         /*
          * Handle any options.
          */
@@ -716,8 +733,11 @@ tcp_print(netdissect_options *ndo,
                 nd_trunc_longjmp(ndo);
         }
         bp += header_len;
-        if ((flags & TH_RST) && ndo->ndo_vflag) {
-                print_tcp_rst_data(ndo, bp, length);
+        if (flags & TH_RST) {
+                if(ndo->ndo_vflag)
+                        print_tcp_rst_data(ndo, bp, length);
+                else
+                        ND_TCHECK_LEN(bp, length);
                 return;
         }
 

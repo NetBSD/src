@@ -18,13 +18,14 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-msdp.c,v 1.8 2024/09/02 16:15:32 christos Exp $");
+__RCSID("$NetBSD: print-msdp.c,v 1.9 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /* \summary: Multicast Source Discovery Protocol (MSDP) printer */
 
 #include <config.h>
 
+#define ND_LONGJMP_FROM_TCHECK
 #include "netdissect-stdinc.h"
 
 #include "netdissect.h"
@@ -47,6 +48,10 @@ msdp_print(netdissect_options *ndo, const u_char *sp, u_int length)
 	if (len > 1500 || len < 3 || type == 0 || type > MSDP_TYPE_MAX)
 		goto trunc;	/* not really truncated, but still not decodable */
 	while (length != 0) {
+		unsigned int entry_count;
+
+		if (length < 3)
+			goto trunc;
 		type = GET_U_1(sp);
 		len = GET_BE_U_2(sp + 1);
 		if (len > 1400 || ndo->ndo_vflag)
@@ -55,8 +60,6 @@ msdp_print(netdissect_options *ndo, const u_char *sp, u_int length)
 			goto trunc;
 		if (length < len)
 			goto trunc;
-		sp += 3;
-		length -= 3;
 		switch (type) {
 		case 1:	/* IPv4 Source-Active */
 		case 3: /* IPv4 Source-Active Response */
@@ -64,20 +67,47 @@ msdp_print(netdissect_options *ndo, const u_char *sp, u_int length)
 				ND_PRINT(" SA");
 			else
 				ND_PRINT(" SA-Response");
-			ND_PRINT(" %u entries", GET_U_1(sp));
-			if ((u_int)((GET_U_1(sp) * 12) + 8) < len) {
+
+			/* Entry Count */
+			if (len < 4)
+				goto trunc;
+			entry_count = GET_U_1(sp + 3);
+			ND_PRINT(" %u entries", entry_count);
+
+			/* RP Address */
+			if (len < 8)
+				goto trunc;
+			/* XXX -print this based on ndo_vflag? */
+			ND_TCHECK_LEN(sp + 4, 4);
+
+			/* Entries */
+			ND_TCHECK_LEN(sp + 8, entry_count*12);
+
+			if (len > (8 + entry_count*12)) {
+				/* Encapsulated IP packet */
 				ND_PRINT(" [w/data]");
 				if (ndo->ndo_vflag > 1) {
 					ND_PRINT(" ");
-					ip_print(ndo, sp +
-						 GET_U_1(sp) * 12 + 8 - 3,
-						 len - (GET_U_1(sp) * 12 + 8));
+					ip_print(ndo, sp + (8 + entry_count*12),
+					    len - (8 + entry_count*12));
 				}
 			}
 			break;
 		case 2:
+			/* draft-ietf-msdp-spec-13 */
 			ND_PRINT(" SA-Request");
-			ND_PRINT(" for %s", GET_IPADDR_STRING(sp + 1));
+
+			/* Reserved */
+			if (len < 4)
+				goto trunc;
+			ND_TCHECK_1(sp + 3);
+
+			/* Group Address */
+			if (len < 8)
+				goto trunc;
+			if (len != 8)
+				ND_PRINT("[len=%u] ", len);
+			ND_PRINT(" for %s", GET_IPADDR_STRING(sp + 4));
 			break;
 		case 4:
 			ND_PRINT(" Keepalive");
@@ -91,8 +121,9 @@ msdp_print(netdissect_options *ndo, const u_char *sp, u_int length)
 			ND_PRINT(" [type=%u len=%u]", type, len);
 			break;
 		}
-		sp += (len - 3);
-		length -= (len - 3);
+		ND_TCHECK_LEN(sp, len);
+		sp += len;
+		length -= len;
 	}
 	return;
 trunc:

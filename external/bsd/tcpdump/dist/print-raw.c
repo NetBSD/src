@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-raw.c,v 1.8 2024/09/02 16:15:32 christos Exp $");
+__RCSID("$NetBSD: print-raw.c,v 1.9 2026/03/19 00:05:13 christos Exp $");
 #endif
 
 /* \summary: Raw IP printer */
@@ -33,7 +33,7 @@ __RCSID("$NetBSD: print-raw.c,v 1.8 2024/09/02 16:15:32 christos Exp $");
 #include "netdissect.h"
 
 /*
- * The DLT_RAW packet has no header. It contains a raw IP packet.
+ * The DLT_RAW packet has no header. It contains a raw IPv4 or IPv6 packet.
  */
 
 void
