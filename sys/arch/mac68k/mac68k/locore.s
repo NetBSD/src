@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.197 2026/03/18 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.198 2026/03/19 13:51:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,36 +189,6 @@ Lis68020:
 	movl	#CPU_68020,%a0@		| and 68020 MPU
 
 Lstart1:
-	/*
-	 * Now that we know what CPU we have, initialize the address error
-	 * and bus error handlers in the vector table:
-	 *
-	 *	vectab+8	bus error
-	 *	vectab+12	address error
-	 */
-	lea	_C_LABEL(cputype),%a0
-	lea	_C_LABEL(vectab),%a2
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f			| no, skip
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68020) || defined(M68030)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jeq	1f			| yes, skip
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-	/* Config botch; no hope. */
-	movl	_C_LABEL(MacOSROMBase),%a1 | Load MacOS ROMBase
-	jra	Ldoboot1
-
-Lstart2:
 	jbsr	_C_LABEL(setmachdep)	| Set some machine-dep stuff
 	jbsr	_C_LABEL(consinit)	| XXX Should only be if graybar on
 
@@ -255,9 +225,8 @@ Lstart3:
 	 * Set up the vector table, and race to get the MMU
 	 * enabled.
 	 */
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
-	
+	jbsr	_C_LABEL(vec_init)
+
 	movl	_C_LABEL(Sysseg_pa),%a1	| system segment table PA
 	cmpl	#MMU_68040,_C_LABEL(mmutype)
 	jne	Lenablepre040MMU	| if not 040, skip

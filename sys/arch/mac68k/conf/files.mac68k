@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.136 2025/12/02 03:03:20 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.137 2026/03/19 13:51:25 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -188,6 +188,7 @@ file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
 file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
+file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag
