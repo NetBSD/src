@@ -1,4 +1,4 @@
-/*	$NetBSD: privsep.c,v 1.8 2019/02/03 10:48:47 mrg Exp $	*/
+/*	$NetBSD: privsep.c,v 1.9 2026/03/19 15:04:53 martin Exp $	*/
 /*	$OpenBSD: privsep.c,v 1.16 2006/10/25 20:55:04 moritz Exp $	*/
 
 /*
@@ -39,6 +39,7 @@
 #define HAVE_STRLCPY
 #define HAVE_SNPRINTF
 #define HAVE_VSNPRINTF
+#define SIZEOF_TIME_T  8
 #include <pcap-int.h>
 #include <pwd.h>
 #include <signal.h>
