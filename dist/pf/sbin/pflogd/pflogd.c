@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.13 2024/09/03 09:03:18 rin Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.14 2026/03/19 15:02:32 martin Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #define HAVE_STRLCPY
 #define HAVE_SNPRINTF
 #define HAVE_VSNPRINTF
+#define SIZEOF_TIME_T	8
 #include <pcap-int.h>
 #include <pcap.h>
 #include <syslog.h>
