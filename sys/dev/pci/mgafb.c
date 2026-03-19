@@ -1,4 +1,4 @@
-/*	$NetBSD: mgafb.c,v 1.2 2026/03/17 12:51:37 macallan Exp $	*/
+/*	$NetBSD: mgafb.c,v 1.3 2026/03/19 14:39:50 snj Exp $	*/
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mgafb.c,v 1.2 2026/03/17 12:51:37 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mgafb.c,v 1.3 2026/03/19 14:39:50 snj Exp $");
 
 #include "opt_mgafb.h"
 
@@ -1106,7 +1106,7 @@ mgafb_calc_pll(int target_khz, uint8_t *n_out, uint8_t *m_out, uint8_t *p_out)
 	int best_err, best_n, best_m, best_p;
 
 	/* 
-	 * Millenium I comes with two variants of DACs - we should detect it.
+	 * Millennium I comes with two variants of DACs - we should detect it.
 	 * 175MHz DAC can do 220MHz VCO, 250MHz DAC can do 250MHz VCO. 
 	 */
 	const int fvco_min = 110000;
