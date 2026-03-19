@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.149 2026/03/18 16:28:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.150 2026/03/19 15:34:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -189,37 +189,6 @@ Lis68020:
 	movl	#CPU_68020,%a0@		| and a 68020 CPU
 
 Lstart1:
-	/*
-	 * Now that we know what CPU we have, initialize the address error
-	 * and bus error handlers in the vector table:
-	 *
-	 *      vectab+8        bus error
-	 *      vectab+12       address error
-	 */
-	RELOC(cputype,%a0)
-	RELOC(vectab,%a2)
-#if defined(M68060)
-	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	1f
-	movl	#_C_LABEL(buserr60),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68040)
-	cmpl	#CPU_68040,%a0@		| 68040?
-	jne	1f
-	movl	#_C_LABEL(buserr40),%a2@(8)
-	movl	#_C_LABEL(addrerr4060),%a2@(12)
-	jra	Lstart2
-1:
-#endif
-#if defined(M68030)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
-	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
-#endif
-
-Lstart2:
 /* initialize memory sizes (for pmap_bootstrap) */
 	movl	%d5,%d1			| last page
 	moveq	#PGSHIFT,%d2
@@ -330,10 +299,8 @@ Lmotommu2:
  * Should be running mapped from this point on
  */
 Lenab1:
-/* set vector base in virtual address */
-	movl	#_C_LABEL(vectab),%d0	| set Vector Base Register
-	movc	%d0,%vbr
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 /* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 /* set kernel stack, user SP */
