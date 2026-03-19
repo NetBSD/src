@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.6 2026/03/14 21:03:40 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.7 2026/03/19 13:50:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ extern char addrerr10[];
 extern char buserr2030[];
 extern char addrerr2030[];
 
-#if defined(M68040) || defined(M68060)
+#if defined(M68040) || defined(M68060) || defined(__HAVE_M68K_PRIVATE_VECTAB)
 #define	NEED_FIXUP_2030
 #else
 #define	BUSERR_HANDLER		buserr2030
@@ -124,7 +124,8 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 #define	FP_OVFL_HANDLER40	fpfault
 #define	FP_SNAN_HANDLER40	fpfault
 #endif
-#if defined(M68020) || defined(M68030) || defined(M68060)
+#if defined(M68020) || defined(M68030) || defined(M68060) || \
+    defined(__HAVE_M68K_PRIVATE_VECTAB)
 #define	NEED_FIXUP_40
 #else
 #define	BUSERR_HANDLER		buserr40
@@ -165,7 +166,8 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	UNIMP_EA_HANDLER60	badtrap		/* XXX illinst? */
 #define	UNIMP_II_HANDLER60	illinst
 #endif
-#if defined(M68020) || defined(M68030) || defined(M68040)
+#if defined(M68020) || defined(M68030) || defined(M68040) || \
+    defined(__HAVE_M68K_PRIVATE_VECTAB)
 #define	NEED_FIXUP_60
 #else
 #define	BUSERR_HANDLER		buserr60
@@ -245,6 +247,15 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	UNIMP_II_HANDLER	badtrap
 #endif
 
+/*
+ * Some platforms (e.g. mac68k) have a specific requirement to
+ * declare their vector table storage in a specific way, so we
+ * accommodate that here.
+ *
+ * N.B. any platform that uses this hook always gets the "fixup"
+ * treatment in vec_init().
+ */
+#ifndef __HAVE_M68K_PRIVATE_VECTAB
 void *vectab[NVECTORS] = {
 	[VECI_RIISP]		=	MACHINE_RESET_SP,
 	[VECI_RIPC]		=	MACHINE_RESET_PC,
@@ -503,6 +514,7 @@ void *vectab[NVECTORS] = {
 	[VECI_USRVEC_START+190]	=	badtrap,
 	[VECI_USRVEC_START+191]	=	badtrap,
 };
+#endif /* __HAVE_M68K_PRIVATE_VECTAB */
 
 void **saved_vbr;
 
