@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx_inline.h,v 1.15 2018/04/19 21:50:08 christos Exp $	*/
+/*	$NetBSD: aic7xxx_inline.h,v 1.16 2026/03/19 21:32:11 hans Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -606,6 +606,11 @@ ahc_intr(void *arg)
 	}
 
 	if (intstat & CMDCMPLT) {
+		struct scsipi_channel *sc_channel = &ahc->sc_channel;
+
+		if ((ahc->features & AHC_TWIN) != 0 && ahc->channel == 'B')
+			sc_channel = &ahc->sc_channel_b;
+
 		ahc_outb(ahc, CLRINT, CLRCMDINT);
 		/*
 		 * Ensure that the chip sees that we've cleared
@@ -616,9 +621,9 @@ ahc_intr(void *arg)
 		 * and asserted the interrupt again.
 		 */
 		ahc_flush_device_writes(ahc);
-		scsipi_channel_freeze(ahc->channel == 'A' ? &ahc->sc_channel : &ahc->sc_channel_b, 1);
+		scsipi_channel_freeze(sc_channel, 1);
 		ahc_run_qoutfifo(ahc);
-		scsipi_channel_thaw(ahc->channel == 'A' ? &ahc->sc_channel : &ahc->sc_channel_b, 1);
+		scsipi_channel_thaw(sc_channel, 1);
 #ifdef AHC_TARGET_MODE
 		if ((ahc->flags & AHC_TARGETROLE) != 0)
 			ahc_run_tqinfifo(ahc, /*paused*/FALSE);
