@@ -393,6 +393,7 @@
 ./sbin/fsck_v7fs				base-sysutil-root	v7fs
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
+./sbin/fullfsctl				base-miscfs-root	fullfs
 ./sbin/gpt					base-sysutil-root
 ./sbin/halt					base-sysutil-root
 ./sbin/ifconfig					base-netutil-root

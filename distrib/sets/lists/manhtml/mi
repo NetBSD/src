@@ -2612,6 +2612,7 @@
 ./usr/share/man/html8/ftp-proxy.html		man-pf-htmlman		pf,html
 ./usr/share/man/html8/ftpd.html			man-netutil-htmlman	html
 ./usr/share/man/html8/fusermount.html		man-refuse-htmlman	html
+./usr/share/man/html8/fullfsctl.html		man-miscfs-htmlman	fullfs,html
 ./usr/share/man/html8/fwctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/getNAME.html		man-man-htmlman		!makemandb,html
 ./usr/share/man/html8/getencstat.html		man-sysutil-htmlman	html

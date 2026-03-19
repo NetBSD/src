@@ -368,6 +368,7 @@
 ./usr/libdata/debug/sbin/fsck_v7fs.debug	comp-sysutil-debug	v7fs,debug
 ./usr/libdata/debug/sbin/fsdb.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/fsirand.debug		comp-sysutil-debug	debug
+./usr/libdata/debug/sbin/fullfsctl.debug	comp-miscfs-debug	fullfs,debug
 ./usr/libdata/debug/sbin/gpt.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/ifconfig.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/sbin/init.debug		comp-sysutil-debug	debug

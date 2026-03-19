@@ -2788,6 +2788,7 @@
 ./usr/include/miscfs/fdesc/fdesc.h		comp-c-include
 ./usr/include/miscfs/fifofs/fifo.h		comp-c-include
 ./usr/include/miscfs/fullfs/full.h		comp-c-include
+./usr/include/miscfs/fullfs/full_ioctl.h		comp-c-include
 ./usr/include/miscfs/genfs/genfs.h		comp-c-include
 ./usr/include/miscfs/genfs/genfs_node.h		comp-c-include
 ./usr/include/miscfs/genfs/layer.h		comp-c-include

@@ -93,6 +93,7 @@ SUBDIR+= mount_null
 .endif
 
 .if (${MKFULLFS} != "no")
+SUBDIR+= fullfsctl
 SUBDIR+= mount_full
 .endif
 

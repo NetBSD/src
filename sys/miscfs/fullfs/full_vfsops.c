@@ -1,75 +1,6 @@
 /*	$NetBSD$	*/
 
 /*
- * Copyright (c) 1999 National Aeronautics & Space Administration
- * All rights reserved.
- *
- * This software was written by William Studenmund of the
- * Numerical Aerospace Simulation Facility, NASA Ames Research Center.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the National Aeronautics & Space Administration
- *    nor the names of its contributors may be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NATIONAL AERONAUTICS & SPACE ADMINISTRATION
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE ADMINISTRATION OR CONTRIB-
- * UTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY,
- * OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-/*
- * Copyright (c) 1992, 1993, 1995
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software donated to Berkeley by
- * Jan-Simon Pendry.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	from: Id: lofs_vfsops.c,v 1.9 1992/05/30 10:26:24 jsp Exp
- *	from: @(#)lofs_vfsops.c	1.2 (Berkeley) 6/18/92
- *	@(#)null_vfsops.c	8.7 (Berkeley) 5/14/95
- */
-
-/*
  * Full file-system: VFS operations.
  *
  * See full_vnops.c for a description.
@@ -86,6 +17,7 @@ __KERNEL_RCSID(0, "$NetBSD$");
 #include <sys/module.h>
 
 #include <miscfs/fullfs/full.h>
+#include <miscfs/fullfs/full_ioctl.h>
 #include <miscfs/genfs/layer_extern.h>
 
 MODULE(MODULE_CLASS_VFS, full, "layerfs");
@@ -152,6 +84,13 @@ fullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		return error;
 	}
 
+	mutex_init(&nmp->fullm_lock, MUTEX_DEFAULT, IPL_NONE);
+	nmp->fullm_mode = FULLFS_MODE_FAIL;
+	nmp->fullm_error = ENOSPC;
+	nmp->fullm_opmask = FULLFS_OP_ALL;
+	nmp->fullm_rate = 0;
+	nmp->fullm_doom = 0;
+
 	nmp->fullm_size = sizeof(struct full_node);
 	nmp->fullm_tag = VT_FULL;
 	nmp->fullm_bypass = layer_bypass;
@@ -162,6 +101,7 @@ fullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	error = layer_node_create(mp, lowerrootvp, &vp);
 	if (error) {
 		vrele(lowerrootvp);
+		mutex_destroy(&nmp->fullm_lock);
 		kmem_free(nmp, sizeof(struct full_mount));
 		return error;
 	}
@@ -176,8 +116,12 @@ fullfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->la.target,
 	    UIO_USERSPACE, mp->mnt_op->vfs_name, mp, curlwp);
-	if (error)
+	if (error) {
+		vgone(nmp->fullm_rootvp);
+		mutex_destroy(&nmp->fullm_lock);
+		kmem_free(nmp, sizeof(struct full_mount));
 		return error;
+	}
 
 	if (mp->mnt_lower->mnt_flag & MNT_LOCAL)
 		mp->mnt_flag |= MNT_LOCAL;
@@ -204,6 +148,7 @@ fullfs_unmount(struct mount *mp, int mntflags)
 	vgone(full_rootvp);
 
 	/* Finally, destroy the mount point structures. */
+	mutex_destroy(&nmp->fullm_lock);
 	kmem_free(mp->mnt_data, sizeof(struct full_mount));
 	mp->mnt_data = NULL;
 	return 0;
@@ -212,6 +157,7 @@ fullfs_unmount(struct mount *mp, int mntflags)
 int
 fullfs_statvfs(struct mount *mp, struct statvfs *sbp)
 {
+	struct full_mount *nmp = MOUNTTOFULLMOUNT(mp);
 	int error;
 
 	error = layerfs_statvfs(mp, sbp);
@@ -219,13 +165,17 @@ fullfs_statvfs(struct mount *mp, struct statvfs *sbp)
 		return error;
 
 	/* A full filesystem has no free space. */
-	sbp->f_bfree = 0;
-	sbp->f_bavail = 0;
-	sbp->f_bresvd = 0;
-	sbp->f_ffree = 0;
-	sbp->f_favail = 0;
-	sbp->f_fresvd = 0;
+	mutex_enter(&nmp->fullm_lock);
+	if (nmp->fullm_mode != FULLFS_MODE_PASS) {
+		sbp->f_bfree = 0;
+		sbp->f_bavail = 0;
+		sbp->f_bresvd = 0;
+		sbp->f_ffree = 0;
+		sbp->f_favail = 0;
+		sbp->f_fresvd = 0;
+	}
 
+	mutex_exit(&nmp->fullm_lock);
 	return 0;
 }
 
@@ -269,13 +219,9 @@ full_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		error = vfs_attach(&fullfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&fullfs_vfsops);
-		if (error != 0)
-			break;
 		break;
 	default:
 		error = ENOTTY;

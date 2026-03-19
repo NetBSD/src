@@ -2891,6 +2891,7 @@
 ./usr/share/man/cat8/ftp-proxy.0		man-pf-catman		pf,.cat
 ./usr/share/man/cat8/ftpd.0			man-netutil-catman	.cat
 ./usr/share/man/cat8/fusermount.0		man-refuse-catman	.cat
+./usr/share/man/cat8/fullfsctl.0		man-miscfs-catman	fullfs,.cat
 ./usr/share/man/cat8/fwctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/genassym.sh.0		man-obsolete		obsolete
 ./usr/share/man/cat8/getNAME.0			man-man-catman		!makemandb,.cat
@@ -6483,6 +6484,7 @@
 ./usr/share/man/man8/fstyp.8			man-sysutil-man		.man
 ./usr/share/man/man8/ftp-proxy.8		man-pf-man		pf,.man
 ./usr/share/man/man8/ftpd.8			man-netutil-man		.man
+./usr/share/man/man8/fullfsctl.8		man-miscfs-man		fullfs,.man
 ./usr/share/man/man8/fusermount.8		man-refuse-man		.man
 ./usr/share/man/man8/fwctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/genassym.sh.8		man-obsolete		obsolete
