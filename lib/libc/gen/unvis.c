@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.45 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: unvis.c,v 1.46 2026/03/20 17:54:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.45 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.46 2026/03/20 17:54:11 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -470,7 +470,7 @@ unvis(char *cp, int c, int *astate, int flag)
 			return UNVIS_VALID;
 		if (!isdigit(uc))
 			goto bad;
-		*cp += (*cp * 10) + uc - '0';
+		*cp = (*cp * 10) + uc - '0';
 		return UNVIS_NOCHAR;
 
 	default:
