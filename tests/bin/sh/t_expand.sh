@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.25 2026/03/18 14:46:28 kre Exp $
+# $NetBSD: t_expand.sh,v 1.26 2026/03/20 20:10:04 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1304,36 +1304,83 @@ dollar_star_unquoted_body() {
 	check 'set -- "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
 								2+2	0   # 5
 
-	# expect the following sub-test to fail currently, PR bin/60099
+	# expect the following sub-test (+more) to fail currently, PR bin/60099
 	check 'set -- a b+ c +d e; IFS=+; set -- $* ; printf %d "$#"' \
 								6	0   # 6
+
+	check 'set -- ; set -- x$*y; printf "%s," "$@"'		xy,	0   # 7
+	check 'IFS=+ ; set -- ; set -- x$*y; printf "%s," "$@"' xy,	0   # 8
+	check 'set -- ""; set -- x$*y; printf "%s," "$@"'	xy,	0   # 9
+	check 'IFS=+ ; set -- ""; set -- x$*y; printf "%s," "$@"' \
+								xy,	0   #10
+	check 'set -- "" ""; set -- x$*y; printf "%s," "$@"'	x,y,	0   #11
+	check 'IFS=+ ; set -- "" ""; set -- x$*y; printf "%s," "$@"' \
+								x,y,	0   #12
 
 		# The following tests test unspecified POSIX behaviour
 		# (empty fields MAY be omitted from $* unquoted in this context)
 		# They are included to detect unexpected changes in how
 		# the NetBSD shell works, failures using other shells
 		# should be investigated, but are not necessarily wrong.
-	check 'set -- a "" b ; set -- $* ; printf %d "$#"'	2	0   # 7
-	check 'set -- a b "" ; set -- $* ; printf %d "$#"'	2	0   # 8
-	check 'set -- "" a b ; set -- $* ; printf %d "$#"'	2	0   # 9
-	check 'set -- "" a "" b "" ; set -- $* ; printf %d "$#"' 2	0   #10
-	check 'set -- "" "" a b ; set -- $* ; printf %d "$#"'	2	0   #11
-	check 'set -- a b "" "" ; set -- $* ; printf %d "$#"'	2	0   #12
+	check 'set -- a "" b ; set -- $* ; printf %d "$#"'	2	0   #13
+	check 'set -- a b "" ; set -- $* ; printf %d "$#"'	2	0   #14
+	check 'set -- "" a b ; set -- $* ; printf %d "$#"'	2	0   #15
+	check 'set -- "" a "" b "" ; set -- $* ; printf %d "$#"' 2	0   #16
+	check 'set -- "" "" a b ; set -- $* ; printf %d "$#"'	2	0   #17
+	check 'set -- a b "" "" ; set -- $* ; printf %d "$#"'	2	0   #18
 
 	check 'set -- "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
-								1+0	0   #13
+								1+0	0   #19
 	check 'set -- "" "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
-								2+0	0   #14
+								2+0	0   #20
 	check 'set -- "" "" ; printf %d+ "$#"; set -- x$* ; printf %d "$#"' \
-								2+1	0   #15
+								2+1	0   #21
 	check  \
 	   'set -- "" "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
-								3+2	0   #16
+								3+2	0   #22
 	check  \
 	   'set -- "" "" "" "";printf %d+ "$#";set -- x$*y ;printf %d "$#"' \
-								4+2	0   #17
+								4+2	0   #23
 	check 'set "" "";  for i in $* ; do printf %s\\n "z${i}z"; done' \
-								''	0   #18
+								''	0   #24
+
+	# The following check that using a non-whitespace IFS[0] alters nothing.
+
+	# While in the following, the actual answers might not be specified
+	# by POSIX, that the same answer is generated in each of the tests
+	# in each pair below is.
+
+	# That is, empty fields are deleted or not, before field splitting
+	# happens (according to the standard) so the value of IFS cannot be
+	# relevant to whether that happens or not.
+
+	check 'set -- "" "" ""; set -- x$*y; printf "%s," "$@"'	x,y,	0   #25
+	check 'IFS=+ ; set -- "" "" ""; set -- x$*y; printf "%s," "$@"' \
+								x,y,	0   #26
+
+	check 'set -- a "" b ; set -- $* $* ; printf %d "$#"'	4	0   #27
+	check 'IFS=+ ; set -- a "" b ; set -- $* $* ; printf %d "$#"' \
+								4	0   #28
+
+	check 'set -- "" a "" b "" ; set -- $* $* ; printf %d "$#"' 4	0   #29
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $* $* ; printf %d "$#"' \
+								4	0   #30
+
+	check 'set -- a "" b ; set -- $*$* ; printf %d "$#"'	3	0   #31
+	check 'IFS=+ ; set -- a "" b ; set -- $*$* ; printf %d "$#"' \
+								3	0   #32
+
+	check 'set -- "" a "" b "" ; set -- $*$* ; printf %d "$#"' 4	0   #33
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*$* ; printf %d "$#"' \
+								4	0   #34
+
+	check 'set -- "" a "" b "" ; set -- $*x$* ; printf %d "$#"' 5	0   #35
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*x$* ; printf %d "$#"' \
+								5	0   #36
+
+	check 'set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' 5	0   #35
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' \
+								5	0   #36
 
 	results
 }
