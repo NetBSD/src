@@ -1096,21 +1096,59 @@ zpool_open_func(void *arg)
 	}
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
-	struct dkwedge_list dkwl;
-	off_t size;
-
-	/* skip devices with wedges */
-	memset(&dkwl, 0, sizeof(dkwl));
-	if (native_ioctl(fd, DIOCLWEDGES, &dkwl) == 0 &&
-	    dkwl.dkwl_nwedges > 0) {
+	if (S_ISREG(statbuf.st_mode) &&
+	    statbuf.st_size < SPA_MINDEVSIZE) {
 		(void) close(fd);
 		return;
 	}
-
-	if (native_ioctl(fd, DIOCGMEDIASIZE, &size) < 0 ||
-	    size < SPA_MINDEVSIZE) {
+	/*
+	 * skip character devices.
+	 * note: for NetBSD, we abuse rn_name for block device names
+	 * like dk0.
+	 */
+	if (S_ISCHR(statbuf.st_mode)) {
 		(void) close(fd);
 		return;
+	}
+	if (S_ISBLK(statbuf.st_mode)) {
+		/*
+		 * if the corresponding raw device is also available,
+		 * we prefer to use it for zpool_read_label.
+		 * otherwise, just use the block device.
+		 */
+		char raw_name[MAXPATHLEN];
+
+		/* eg. dk0 -> rdk0 */
+		snprintf(raw_name, sizeof(raw_name), "r%s", rn->rn_name);
+		int raw_fd = openat64(rn->rn_dfd, raw_name, O_RDONLY);
+		if (raw_fd >= 0) {
+			struct stat64 raw_statbuf;
+
+			if (fstat64(raw_fd, &raw_statbuf) == 0 &&
+			    S_ISCHR(raw_statbuf.st_mode)) {
+				(void) close(fd);
+				fd = raw_fd;
+			} else {
+				(void) close(raw_fd);
+			}
+		}
+
+		struct dkwedge_list dkwl;
+		off_t size;
+
+		/* skip devices with wedges */
+		memset(&dkwl, 0, sizeof(dkwl));
+		if (native_ioctl(fd, DIOCLWEDGES, &dkwl) == 0 &&
+		    dkwl.dkwl_nwedges > 0) {
+			(void) close(fd);
+			return;
+		}
+
+		if (native_ioctl(fd, DIOCGMEDIASIZE, &size) < 0 ||
+		    size < SPA_MINDEVSIZE) {
+			(void) close(fd);
+			return;
+		}
 	}
 #endif
 
@@ -1273,6 +1311,12 @@ zpool_find_import_impl(libzfs_handle_t *hdl, importargs_t *iarg)
 			size_t len;
 			char *disknames, *last, *name;
 
+			/*
+			 * note: hw.disknames contains block device names
+			 * like "dk0". we store them to rn_name.
+			 * zpool_open_func() will try to find the
+			 * corresponding character device.
+			 */
 			if (sysctlbyname(mib_name, NULL, &len, NULL, 0) == -1) {
 				zfs_error_aux(hdl, strerror(errno));
 				(void) zfs_error_fmt(hdl, EZFS_BADPATH,
