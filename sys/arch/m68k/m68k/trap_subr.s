@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.25 2026/03/20 14:07:35 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.26 2026/03/20 14:56:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,6 +192,7 @@ ENTRY_NOPROFILE(privinst)
  * frames and cause signal delivery, hence we need to check for potential
  * stack adjustment.
  */
+#ifndef __mc68010__
 ENTRY_NOPROFILE(coperr)
 	clrl	-(%sp)			| stack adjust count
 	moveml	#0xFFFF,-(%sp)
@@ -202,6 +203,7 @@ ENTRY_NOPROFILE(coperr)
 	movl	#T_COPERR,-(%sp)	| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments
+#endif /* ! __mc68010__ */
 
 ENTRY_NOPROFILE(fmterr)
 	clrl	-(%sp)			| stack adjust count

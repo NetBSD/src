@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.7 2026/03/19 13:50:28 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.8 2026/03/20 14:56:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -91,6 +91,9 @@ extern char addrerr10[];
 #define	ADDRERR_HANDLER		addrerr10
 
 #else
+
+extern char coperr[];
+#define	CPV_HANDLER		coperr
 
 #if defined(M68020) || defined(M68030)
 extern char buserr2030[];
@@ -207,6 +210,10 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	LINE1111_HANDLER	fpfline
 #endif
 
+#ifndef CPV_HANDLER
+#define	CPV_HANDLER		badtrap
+#endif
+
 #ifndef FP_BSUN_HANDLER
 #define	FP_BSUN_HANDLER		fpfault
 #endif
@@ -270,7 +277,7 @@ void *vectab[NVECTORS] = {
 	[VECI_LINE1010]		=	illinst,
 	[VECI_LINE1111]		=	LINE1111_HANDLER,
 	[VECI_rsvd12]		=	badtrap,
-	[VECI_CPV]		=	coperr,
+	[VECI_CPV]		=	CPV_HANDLER,
 	[VECI_FORMATERR]	=	fmterr,
 	[VECI_UNINT_INTR]	=	badtrap,
 	[VECI_rsvd16]		=	badtrap,
