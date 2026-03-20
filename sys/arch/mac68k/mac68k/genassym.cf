@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.48 2026/03/14 21:03:40 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.49 2026/03/20 14:07:35 thorpej Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -138,6 +138,7 @@ define	PCB_TRCB		5
 define	TF_PC			offsetof(struct frame, f_pc)
 
 # exception frame offset/sizes
+define	FR_A2			offsetof(struct frame, f_regs[10])
 define	FR_SP			offsetof(struct frame, f_regs[15])
 define	FR_ADJ			offsetof(struct frame, f_stackadj)
 define	FR_HW			offsetof(struct frame, f_sr)

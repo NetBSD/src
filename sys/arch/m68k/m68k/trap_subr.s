@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.24 2026/03/18 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.25 2026/03/20 14:07:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -101,9 +101,22 @@ ASGLOBAL(buserr_common)
 	tstl	_C_LABEL(nofault)	| catch bus error?
 	jeq	1f			| no, handle as usual
 #ifdef mac68k
-	/* XXX should find a cleaner way to do this. */
-	movl	%a2,_C_LABEL(mac68k_a2_fromfault) | save %a2
-	movl	%sp@(FR_HW+8+8),_C_LABEL(m68k_fault_addr) | save fault addr
+	/*
+	 * TL;DR - mac68k SCSI DMA needs to peek under the covers
+	 * here, and needs the value of %a2 when the fault occurred
+	 * as well as the faulting address.
+	 *
+	 * %a2 can be retrieved from the saved registers in the stack
+	 * frame, and the faulting address has already been pushed
+	 * onto the stack by the CPU-specific stub and currently resides
+	 * at 4(%sp) (it's the 4th argument to trap(), and the trap type
+	 * and frame address are yet to be pushed).  Yes, 2 args for trap()
+	 * have already been pushed onto the stack, hence the +8 adjustment.
+	 *
+	 * XXX should find a cleaner way to do this.
+	 */
+	movl	%sp@(FR_A2+8),_C_LABEL(mac68k_a2_fromfault)
+	movl	%sp@(4),_C_LABEL(m68k_fault_addr)
 #endif
 	movl	_C_LABEL(nofault),%sp@-	| yes,
 	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
