@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.16 2019/05/04 09:03:08 tsutsui Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.17 2026/03/20 08:42:48 martin Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.16 2019/05/04 09:03:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.17 2026/03/20 08:42:48 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -129,7 +129,7 @@ iifun(int slot, int sr)
 		 */
 		add_sicallback((si_farg)iifun, (void*)slot, 0);
 	} else {
-		s = splx(iinfo_p->ipl);
+		s = _spl(iinfo_p->ipl);
 		(void)(iinfo_p->ifunc)(iinfo_p->iarg);
 		splx(s);
 
