@@ -169,8 +169,7 @@ npf_fragment(npf_t *npf, struct ifnet *ifp, struct ip *ip1,
 		npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
 		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_NEEDFRAG, 0,
 			ifp->if_mtu);
-		error = EINVAL;
-		return error;
+		return EINVAL;
 	}
 	/*
 		* We can't use HW checksumming if we're about to fragment the packet.
@@ -314,7 +313,7 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 	const npf_ext_route_t *route = meta;
 	npf_t *npf = npf_getkernctx();
 	struct ifnet *ifp;
-	int error = 0;
+	int error;
 	int sw_csum;
 
 	union {
@@ -364,6 +363,10 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 			} else
 				error = ip6_if_output(ifp, ifp, m0, &dst.v6, NULL);
 
+			if (error) {
+				goto bad;
+			}
+
 		} else {
 			/* router not allowed to fragmenrt */
 			npf_stats_inc(npf, NPF_STAT_NOFRAGMENT);
@@ -409,19 +412,12 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi, int
 
 fragment:
 		error = npf_fragment(npf, ifp, ip, &m0, &dst.v4);
-
-	}
-
-	/* check for any error and exit */
-	if (error) {
-		goto bad;
+		if (error) {
+			goto bad;
+		}
 	}
 
 /*
- * 		if (error || m == NULL) {
- *		IP_STATINC(IP_STAT_PFILDROP_OUT);
- *			goto done;
- *		}
  * for routing procedures, we reverse the returns
  * because we need the kernel to stop processing the mbuf
  * after we leave the filtering context
