@@ -1,4 +1,4 @@
-/*	$NetBSD: macromasm.s,v 1.22 2009/11/01 01:51:35 snj Exp $	*/
+/*	$NetBSD: macromasm.s,v 1.23 2026/03/20 14:02:53 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -429,7 +429,6 @@ ENTRY_NOPROFILE(alinetrap)
 	movql	#T_ILLINST,%d0	| user-mode fault
 	jra	_ASM_LABEL(fault)
 Lalnosup:
-#define FR_PC (FR_HW+2)
 	movl	%sp@(FR_PC + 4),%a0	| retrieve PC
 	movw	%a0@,%d0 	| retrieve trap word
 	btst	#11,%d0 	| ToolBox trap?
