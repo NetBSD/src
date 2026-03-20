@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.1 2026/03/18 06:41:41 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.2 2026/03/20 09:03:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1 2026/03/18 06:41:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.2 2026/03/20 09:03:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,7 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.1 2026/03/18 06:41:41 skrll Exp $");
 #endif
 
 static void
-cache_nullop(vaddr_t va, psize_t sz)
+cache_nullop(vaddr_t va, vsize_t sz)
 {
 }
 
@@ -85,9 +85,9 @@ scache_nullop(vaddr_t va, paddr_t pa, psize_t sz)
 {
 }
 
-void (*cpu_dcache_wbinv_range)(vaddr_t, psize_t) = cache_nullop;
-void (*cpu_dcache_inv_range)(vaddr_t, psize_t) = cache_nullop;
-void (*cpu_dcache_wb_range)(vaddr_t, psize_t) = cache_nullop;
+void (*cpu_dcache_wbinv_range)(vaddr_t, vsize_t) = cache_nullop;
+void (*cpu_dcache_inv_range)(vaddr_t, vsize_t) = cache_nullop;
+void (*cpu_dcache_wb_range)(vaddr_t, vsize_t) = cache_nullop;
 
 void (*cpu_sdcache_wbinv_range)(vaddr_t, paddr_t, psize_t) = scache_nullop;
 void (*cpu_sdcache_inv_range)(vaddr_t, paddr_t, psize_t) = scache_nullop;
@@ -196,7 +196,6 @@ set_cpufuncs(void)
 		cpu_dcache_wbinv_range = thead_dcache_wbinv_range;
 		cpu_dcache_inv_range = thead_dcache_inv_range;
 		cpu_dcache_wb_range = thead_dcache_wb_range;
-
 
 		break;
 	default:
