@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.205 2026/03/15 12:12:49 yamt Exp $
+.\"	$NetBSD: ddb.4,v 1.206 2026/03/21 16:44:03 uwe Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -212,11 +212,12 @@ with
 Multiple commands can be separated by a semi-colon.
 .Sh COMMAND SYNTAX
 The general command syntax is:
+.
 .Bd -ragged -offset indent
-.Ic command Ns Op / Ns Ar modifier
-.Ar address
-.Op , Ns Ar count
+.Ar command Ns Op Cm / Ns Ar modifiers
+.Ar address Ns Op Cm \&, Ns Ar count
 .Ed
+.
 .Pp
 The current memory location being edited is referred to as
 .Ar dot ,
@@ -307,10 +308,25 @@ retrieve next command in history (if any).
 .Nm
 supports the following commands:
 .Bl -tag -width 5n
-.It Ic \&! Ns Ar address Ns Oo ( Ar expression Ns Oo Ar ,... Oc ) Oc
+.
+.It Ic \&! Ns Xo
+.Ar address Ns Oo
+.Cm ( Ns
+.Ar expression Ns
+.Oo Cm \&, Ns Ar ... Oc Ns
+.Cm )
+.Oc
+.Xc
+.
 A synonym for
 .Ic call .
-.It Ic break Ns Oo Cm /u Oc Ar address Ns Op , Ns Ar count
+.
+.It Ic break Ns Xo
+.Oo Cm /u Oc
+.Ar address Ns
+.Op Cm \&, Ns Ar count
+.Xc
+.
 Set a breakpoint at
 .Ar address .
 If
@@ -341,22 +357,51 @@ Warning: if a user text is shadowed by a normal user-space debugger,
 user-space breakpoints may not work correctly.
 Setting a breakpoint at the low-level code paths may also cause
 strange behavior.
-.It Ic bt Ns Oo Cm /ul Oc Oo Ar frame-address Oc Ns Oo , Ns Ar count Oc
+.
+.It Ic bt Ns Xo
+.Oo Cm /ul Oc
+.Oo Ar frame-address Oc Ns
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 A synonym for
 .Ic trace .
-.It Ic bt/t Ns Oo Cm /ul Oc Oo Ar pid Oc Ns Oo , Ns Ar count Oc
+.
+.It Ic bt/t Ns Xo
+.Oo Cm /ul Oc
+.Oo Ar pid Oc Ns
+.Oo Cm \& , Ns Ar count Oc
+.Xc
+.
 A synonym for
 .Ic trace/t .
-.It Ic bt/a Ns Oo Cm /ul Oc Oo Ar lwpaddr Oc Ns Oo , Ns Ar count Oc
+.
+.It Ic bt/a Ns Xo
+.Oo Cm /ul Oc
+.Oo Ar lwpaddr Oc Ns
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 A synonym for
 .Ic trace/a .
-.It Ic call Ar address Ns Oo ( Ns Ar expression Ns Oo Ar ,... Oc ) Oc
+.
+.It Ic call Xo
+.Ar address Ns Oo
+.Cm ( Ns
+.Ar expression Ns
+.Oo Cm \&, Ns Ar ... Oc Ns
+.Cm )
+.Oc
+.Xc
+.
 Call the function specified by
 .Ar address
 with the argument(s) listed in parentheses.
 Parentheses may be omitted if the function takes no arguments.
 The number of arguments is currently limited to 10.
+.
 .It Ic continue Ns Op Cm /c
+.
 Continue execution until a breakpoint or watchpoint.
 If
 .Cm /c
@@ -367,7 +412,9 @@ Warning: when counting, the debugger is really silently
 single-stepping.
 This means that single-stepping on low-level may cause strange
 behavior.
-.It Ic delete Ar "address" | Cm # Ns Ar number
+.
+.It Ic delete Ar address | Cm # Ns Ar number
+.
 Delete a breakpoint.
 The target breakpoint may be specified by
 .Ar address ,
@@ -376,21 +423,30 @@ as per
 or by the breakpoint number returned by
 .Ic break
 if it's prefixed with
-.Sq Cm \&# .
+.Ql \&# .
+.
 .It Ic dmesg Op Ar count
+.
 Prints the contents of the kernel message buffer.
 The optional
 .Ar count
 argument will limit printing to at most the last
 .Ar count
 bytes of the message buffer.
+.
 .It Ic dwatch Ar address
+.
 Delete the watchpoint at
 .Ar address
 that was previously set with
 .Ic watch
 command.
-.It Ic examine Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op , Ns Ar count
+.
+.It Ic examine Ns Xo
+.Oo Cm / Ns Ar modifier Oc
+.Ar address Ns Op Cm \&, Ns Ar count
+.Xc
+.
 Display the address locations according to the format in
 .Ar modifier .
 Multiple modifier formats display multiple locations.
@@ -457,7 +513,9 @@ use Motorola syntax
 don't assume that each external label is a procedure entry mask
 .El
 .El
-.It Ic kill Ar pid Ns Op , Ns Ar signal_number
+.
+.It Ic kill Ar pid Ns Op Cm \&, Ns Ar signal_number
+.
 Send a signal to the process specified by the
 .Ar pid .
 Note that
@@ -468,17 +526,23 @@ command for details).
 If
 .Ar signal_number
 isn't specified, the SIGTERM signal is sent.
+.
 .It Ic match Ns Op Cm /p
+.
 A synonym for
 .Ic next .
+.
 .It Ic next Ns Op Cm /p
+.
 Stop at the matching return instruction.
 If
 .Cm /p
 is specified, print the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, only print when the matching return is hit.
+.
 .It Ic print Ns Oo Cm /axzodurc Oc Ar address Op Ar address ...
+.
 Print addresses
 .Ar address
 according to the modifier character, as per
@@ -509,10 +573,20 @@ will produce:
 eax = xxxxxx
 ecx = yyyyyy
 .Ed
-.It Ic ps Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns Oo Cm /l Oc Ns Oo Cm /L Oc
+.
+.It Ic ps Ns Xo
+.Oo Cm /a Oc Ns
+.Oo Cm /n Oc Ns
+.Oo Cm /w Oc Ns
+.Oo Cm /l Oc Ns
+.Oo Cm /L Oc Ns
+.Xc
+.
 A synonym for
 .Ic show all procs .
+.
 .It Ic reboot Op Ar flags
+.
 Reboot, using the optionally supplied boot
 .Ar flags ,
 which is a bitmask supporting the same values as for
@@ -531,8 +605,15 @@ Some of the more useful flags:
 .Pp
 Note: Limitations of the command line interface preclude
 specification of a boot string.
-.It Ic search Ns Oo Cm /bhl Oc Ar address Ar value \
-Oo Ar mask Oc Oo , Ns Ar count Oc
+.
+.It Ic search Ns Xo
+.Oo Cm /bhl Oc
+.Ar address
+.Ar value
+.Oo Ar mask Oc \" XXX: uwe: space allowed/required?
+.Oo Cm \& , Ns Ar count Oc
+.Xc
+.
 Search memory from
 .Ar address
 for
@@ -556,38 +637,57 @@ doesn't always recover from touching bad memory.
 The optional
 .Ar count
 limits the search.
+.
 .It Ic set Cm $ Ns Ar variable Oo Cm = Oc Ar expression
+.
 Set the named variable or register to the value of
 .Ar expression .
 Valid variable names are described in
 .Sx VARIABLES .
+.
 .It Ic show all callout
+.
 Display information about callouts in the system.
 See
 .Xr callout 9
 for more information on callouts.
+.
 .It Ic show all locks Ns Op Cm /t
+.
 Display details information about all active locks.
 If
 .Cm /t
 is specified, stack traces of LWPs holding locks are also printed.
 This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
+.
 .It Ic show all mount Ns Op Cm /f
+.
 Display all mount points.
 If
 .Cm /f
 is specified, the complete vnode list is printed.
+.
 .It Ic show all pages
+.
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
 .Ic show page .
+.
 .It Ic show all pools Ns Op Cm /clpsS
+.
 Display all pool information.
 Modifiers are the same as
 .Ic show pool .
-.It Ic "show\ all\ procs" Ns Oo Cm /a Oc Ns Oo Cm /n Oc Ns Oo Cm /w Oc Ns \
-Oo Cm /l Oc Ns Oo Cm /L Oc
+.
+.It Ic show all procs Ns Xo
+.Oo Cm /a Oc Ns
+.Oo Cm /n Oc Ns
+.Oo Cm /w Oc Ns
+.Oo Cm /l Oc Ns
+.Oo Cm /L Oc Ns
+.Xc
+.
 Display all process information.
 Valid modifiers:
 .Bl -tag -width 3n
@@ -620,7 +720,9 @@ In addition to what
 .Cm /l
 shows, print the stack trace of each LWPs.
 .El
-.It Ic show all tstiles Ns Oo Cm /t Oc
+.
+.It Ic show all tstiles Ns Op Cm /t
+.
 Display all lwps that are currently waiting in turnstiles to acquire
 locks, which locks they are waiting for, and who currently holds them.
 Valid modifiers:
@@ -628,21 +730,33 @@ Valid modifiers:
 .It Cm /t
 show a stack trace of the lwp that currently holds each lock
 .El
+.
 .It Ic show routes
+.
 Dump the entire
 .Dv AF_INET
 routing table.
 This command is available only on systems which support inet.
+.
 .It Ic show breaks
+.
 Display all breakpoints.
+.
 .It Ic show buf Ns Oo Cm /f Oc Ar address
+.
 Print the struct buf at
 .Ar address .
 The
 .Cm /f
 does nothing at this time.
-.It Ic show event Ns Oo Cm /f Oc Ns Oo Cm /i Oc Ns Oo Cm /m Oc Ns \
-Oo Cm /t Oc
+.
+.It Ic show event Ns Xo
+.Oo Cm /f Oc Ns
+.Oo Cm /i Oc Ns
+.Oo Cm /m Oc Ns
+.Oo Cm /t Oc Ns
+.Xc
+.
 Print all the non-zero
 .Xr evcnt 9
 event counters.
@@ -668,7 +782,9 @@ You can combine any of these.
 For example, the modifier
 .Cm /itf
 will select both interrupt and trap events, including those that are non-zero.
+.
 .It Ic show files Ar address
+.
 Display information about the vnodes of the files that are currently
 open by the process associated with the proc structure at
 .Ar address .
@@ -679,28 +795,38 @@ If the kernel is compiled with
 .Cd options LOCKDEBUG
 then details about the locking of the underlying uvm object will also
 be displayed.
+.
 .It Ic show lock Ar address
+.
 Display information about a lock at
 .Ar address .
 This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
+.
 .It Ic show lockstats
+.
 Display information about lock statistics.
 This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
+.
 .It Ic show map Ns Oo Cm /f Oc Ar address
+.
 Print the vm_map at
 .Ar address .
 If
 .Cm /f
 is specified, the complete map is printed.
+.
 .It Ic show mount Ns Oo Cm /f Oc Ar address
+.
 Print the mount structure at
 .Ar address .
 If
 .Cm /f
 is specified, the complete vnode list is printed.
+.
 .It Ic show mbuf Ns Oo Cm /cdv Oc Ar address
+.
 Print the mbuf structure at
 .Ar address .
 Valid modifiers:
@@ -714,24 +840,34 @@ Decode the mbuf chain as a packet.
 It currently supports Ethernet, PPP, PPPoE, ARP, IPv4, ICMP, IPv6, ICMP6, TCP
 and UDP.
 .El
+.
 .It Ic show ncache Ar address
+.
 Dump the namecache list associated with vnode at
 .Ar address .
+.
 .It Ic show object Ns Oo Cm /f Oc Ar address
+.
 Print the vm_object at
 .Ar address .
 If
 .Cm /f
 is specified, the complete object is printed.
+.
 .It Ic show page Ns Oo Cm /f Oc Ar address
+.
 Print the vm_page at
 .Ar address .
 If
 .Cm /f
 is specified, the complete page is printed.
+.
 .It Ic show panic
+.
 Print the current "panic" string.
+.
 .It Ic show pool Ns Oo Cm /clpsS Oc Ar address
+.
 Print the pool at
 .Ar address .
 Valid modifiers:
@@ -750,7 +886,9 @@ pages freed, and currently idle pages, respectively.
 .It Cm /S
 Skip pools with zero allocations.
 .El
+.
 .It Ic show proc Ns Oo Cm /ap Oc Ar address | pid
+.
 Show information about a process and its LWPs.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 .Bl -tag -width 4n -compact
@@ -766,7 +904,9 @@ is interpreted using the current radix (see
 command for details).
 This is the default.
 .El
+.
 .It Ic show registers Ns Op Cm /u
+.
 Display the register set.
 If
 .Cm /u
@@ -777,14 +917,18 @@ Warning: support for
 .Cm /u
 is machine dependent.
 If not supported, incorrect information will be displayed.
+.
 .It Ic show sched_qs
+.
 Print the state of the scheduler's run queues.
 For each run queue that has an LWP, the run queue index and the list
 of LWPs will be shown.
 If the run queue has LWPs, but the sched_whichqs bit is not set for that
 queue, the queue index will be prefixed with a
 .Sq \&! .
-.It Ic show socket Ns Oo Cm /ampv Oc
+.
+.It Ic show socket Ns Op Cm /ampv
+.
 Print usage of system's socket buffers.
 By default, empty sockets aren't printed.
 .Bl -tag -width 4n -compact
@@ -803,9 +947,16 @@ If
 .Cm /v
 is specified, all sockets are printed.
 .El
+.
 .It Ic show uvmexp
+.
 Print a selection of UVM counters and statistics.
-.It Ic show kernhist Ns Oo Cm /i Oc Oo Ar addr Ns Oo , Ns Ar count Oc Oc
+.
+.It Ic show kernhist Ns Xo
+.Oo Cm /i Oc
+.Oo Ar address Ns Oo Cm \&, Ns Ar count Oc Oc
+.Xc
+.
 Dumps all the kernel histories if no address is specified, or the history
 at the address.
 If
@@ -828,26 +979,38 @@ of the kernel history options
 .Cd BIOHIST ,
 or
 .Cd UVMHIST .
+.
 .It Ic show vmem Ar address
+.
 Print the vmem at
 .Ar address .
+.
 .It Ic show vmems
+.
 Display all vmems.
+.
 .It Ic show vnode Ns Oo Cm /f Oc Ar address
+.
 Print the vnode at
 .Ar address .
 If
 .Cm /f
 is specified, the complete vnode is printed.
+.
 .It Ic show vnode_lock Ns Oo Cm /f Oc Ar address
+.
 Print the vnode which has its lock at
 .Ar address .
 If
 .Cm /f
 is specified, the complete vnode is printed.
+.
 .It Ic show watches
+.
 Display all watchpoints.
+.
 .It Ic sifting Ns Oo Cm /F Oc Ar string
+.
 Search the symbol tables for all symbols of which
 .Ar string
 is a substring, and display them.
@@ -870,7 +1033,13 @@ character with a backslash as:
 .Bd -literal -offset indent
 sifting \\386
 .Ed
-.It Ic step Ns Oo Cm /p Oc Op , Ns Ar count
+.
+.It Ic step Ns Xo
+.Oo Cm /p Oc
+.\" NB: no address
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 Single-step
 .Ar count
 times.
@@ -885,10 +1054,17 @@ code.
 On machines with software-emulated single-stepping (e.g., pmax),
 stepping through code executed by interrupt handlers will probably
 do the wrong thing.
+.
 .It Ic sync
+.
 Sync the disks, force a crash dump, and then reboot.
-.It Ic trace Ns Oo Cm /u Ns Oo Cm l Oc Oc Oo Ar frame-address Oc Ns \
-Oo , Ns Ar count Oc
+.
+.It Ic trace Ns Xo
+.Oo Cm /u Ns Oo Cm l Oc Oc
+.Oo Ar frame-address Oc Ns
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 Stack trace from
 .Ar frame-address .
 If
@@ -906,7 +1082,13 @@ message buffer.
 .Pp
 Warning: user-space stack trace is valid only if the machine dependent
 code supports it.
-.It Ic trace/t Ns Oo Cm l Oc Oo Ar pid Oc Ns Oo , Ns Ar count Oc
+.
+.It Ic trace/t Ns Xo
+.Oo Cm l Oc
+.Oo Ar pid Oc Ns
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 Stack trace by
 .Dq thread
 (process, on
@@ -930,7 +1112,13 @@ message buffer.
 .Pp
 Warning: trace by pid is valid only if the machine dependent code
 supports it.
-.It Ic trace/a Ns Oo Cm l Oc Oo Ar lwpaddr Oc Ns Oo , Ns Ar count Oc
+.
+.It Ic trace/a Ns Xo
+.Oo Cm l Oc
+.Oo Ar lwpaddr Oc Ns
+.Oo Cm \&, Ns Ar count Oc
+.Xc
+.
 Stack trace by light weight process (LWP) address
 rather than by stack frame address.
 If
@@ -940,14 +1128,18 @@ message buffer.
 .Pp
 Warning: trace by LWP address is valid only if the machine dependent
 code supports it.
+.
 .It Ic until Ns Op Cm /p
+.
 Stop at the next call or return instruction.
 If
 .Cm /p
 is specified, print the call nesting depth and the
 cumulative instruction count at each call or return.
 Otherwise, only print when the matching return is hit.
-.It Ic watch Ar address Ns Oo , Ns Ar size Oc
+.
+.It Ic watch Ar address Ns Op Cm \&, Ns Ar size
+.
 Set a watchpoint for a region.
 Execution stops when an attempt to modify the region occurs.
 .Ar size
@@ -959,11 +1151,20 @@ rejected with an error message.
 Warning: attempts to watch wired kernel memory may cause
 an unrecoverable error in some systems such as i386.
 Watchpoints on user addresses work the best.
+.
 .It Ic whatis Ar address
+.
 Describe what an address is.
-.It Ic write Ns Oo Cm /bhlqBHLQ Oc Ar address Ar expression Oo Ar expression ... Oc
+.
+.It Ic write Ns Xo
+.Oo Cm /bhlqBHLQ Oc
+.Ar address
+.Ar expression
+.Op Ar expression ...
+.Xc
+.
 Write the
-.Ar expression Ns s
+.Ar expression\^ Ns s
 at succeeding locations.
 The unit size is specified with a modifier character, as per
 .Ic examine .
@@ -993,7 +1194,12 @@ strange things may occur.
 It's best to enclose each
 .Ar expression
 in parentheses.
-.It Ic x Ns Oo Cm / Ns Ar modifier Oc Ar address Ns Op , Ns Ar count
+.
+.It Ic x Ns Xo
+.Oo Cm / Ns Ar modifier Oc
+.Ar address Ns Op Cm \&, Ns Ar count
+.Xc
+.
 A synonym for
 .Ic examine .
 .\" XXX - these commands aren't implemented; jhawk 19 May 2000
