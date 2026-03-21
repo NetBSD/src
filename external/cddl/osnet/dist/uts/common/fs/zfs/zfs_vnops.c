@@ -5284,9 +5284,11 @@ zfs_netbsd_lookup(void *v)
 	 * Check the namecache before entering zfs_lookup.
 	 * cache_lookup does the locking dance for us.
 	 */
-	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
-	    cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
-		return *vpp == NULL ? ENOENT : 0;
+	if (zfsvfs->z_use_namecache) {
+		if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+			return *vpp == NULL ? ENOENT : 0;
+		}
 	}
 
 	/*
