@@ -1,4 +1,4 @@
-# $NetBSD: std.sun2,v 1.9 2024/01/18 14:39:07 thorpej Exp $
+# $NetBSD: std.sun2,v 1.10 2026/03/21 17:29:17 thorpej Exp $
 
 # Standard information for Sun2 machines.
 machine	sun2 m68k sun68k
@@ -11,3 +11,9 @@ options 	M68K_MMU_SUN2
 
 # XXX temporary option until sun3 port migrates to all sun68k stuff
 options 	_SUN2_
+
+# Bootloader has size limit (~2MB). Kernel should be smaller than this
+# hard limit. Otherwise, it freezes before adding swap even with 7MB
+# memory. -fno-omit-frame-pointer is necessary for backtraces in DDB.
+options		NO_KERNEL_RCSIDS
+makeoptions	COPTS="-Os -fno-inline-small-functions -fno-asynchronous-unwind-tables -fno-unwind-tables -fno-omit-frame-pointer"

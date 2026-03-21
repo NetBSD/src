@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.63 2018/08/01 20:04:14 maxv Exp $
+# $NetBSD: FOURMEG,v 1.64 2026/03/21 17:29:17 thorpej Exp $
 
 # FOURMEG Sun2 (2/120, 2/170, 2/50, ...)
 # Supports root on: ie0, sd*, ...
@@ -7,9 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"FOURMEG-$Revision: 1.63 $"
-
-makeoptions	COPTS="-Os -fno-inline-small-functions"	# optimize for size
+#ident 		"FOURMEG-$Revision: 1.64 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
