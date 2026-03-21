@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.4 2026/03/21 20:14:56 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.5 2026/03/21 20:38:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2026 The NetBSD Foundation, Inc.
@@ -37,14 +37,15 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2026/03/21 20:14:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2026/03/21 20:38:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/lwp.h>
 
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -73,8 +74,12 @@ fpu_init(void)
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
+	struct pcb *pcb = lwp_getpcb(&lwp0);
 	struct fpframe fpframe;
 	label_t faultbuf;
+
+	/* Make sure lwp0 has a NULL state frame. */
+	memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
 
 	if (fputype != FPU_UNKNOWN) {
 		goto done;
