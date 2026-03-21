@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.304 2022/10/26 23:40:30 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.305 2026/03/21 14:26:06 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -393,28 +393,32 @@ extern const int	vttoif_tab[];
 /*
  * Flags to various vnode functions.
  */
-#define	SKIPSYSTEM	0x0001		/* vflush: skip vnodes marked VSYSTEM */
-#define	FORCECLOSE	0x0002		/* vflush: force file closeure */
-#define	WRITECLOSE	0x0004		/* vflush: only close writable files */
-#define	V_SAVE		0x0001		/* vinvalbuf: sync file first */
+#define	SKIPSYSTEM	0x0001	/* vflush: skip vnodes marked VSYSTEM */
+#define	FORCECLOSE	0x0002	/* vflush: force file closeure */
+#define	WRITECLOSE	0x0004	/* vflush: only close writable files */
+#define	V_SAVE		0x0001	/* vinvalbuf: sync file first */
 
 /*
  * Flags to various vnode operations.
  */
-#define	REVOKEALL	0x0001		/* revoke: revoke all aliases */
+#define	REVOKEALL	0x0001	/* revoke: revoke all aliases */
 
-#define	FSYNC_WAIT	0x0001		/* fsync: wait for completion */
-#define	FSYNC_DATAONLY	0x0002		/* fsync: hint: sync file data only */
-#define	FSYNC_RECLAIM	0x0004		/* fsync: hint: vnode is being reclaimed */
-#define	FSYNC_LAZY	0x0008		/* fsync: lazy sync (trickle) */
-#define	FSYNC_NOLOG	0x0010		/* fsync: do not flush the log */
-#define	FSYNC_CACHE	0x0100		/* fsync: flush disk caches too */
+#define	FSYNC_WAIT	0x0001	/* fsync: wait for completion */
+#define	FSYNC_DATAONLY	0x0002	/* fsync: hint: sync file data only */
+#define	FSYNC_RECLAIM	0x0004	/* fsync: hint: vnode is being reclaimed */
+#define	FSYNC_LAZY	0x0008	/* fsync: lazy sync (trickle) */
+#define	FSYNC_NOLOG	0x0010	/* fsync: don't flush the log (ffs internal) */
+#define	FSYNC_CACHE	0x0100	/* fsync: flush disk caches too */
 
-#define	UPDATE_WAIT	0x0001		/* update: wait for completion */
-#define	UPDATE_DIROP	0x0002		/* update: hint to fs to wait or not */
-#define	UPDATE_CLOSE	0x0004		/* update: clean up on close */
+#define VDEAD_NOWAIT	0x0001	/* vdead_check: do not sleep */
 
-#define VDEAD_NOWAIT	0x0001		/* vdead_check: do not sleep */
+/*
+ * Flags some filesystems intenally use for their "UPDATE" functions.
+ * (Historically, these used to be VOP_UPDATE flags.)
+ */
+#define	UPDATE_WAIT	0x0001	/* update: wait for completion */
+#define	UPDATE_DIROP	0x0002	/* update: hint to fs to wait or not */
+#define	UPDATE_CLOSE	0x0004	/* update: clean up on close */
 
 void holdrelel(struct vnode *);
 void holdrele(struct vnode *);
