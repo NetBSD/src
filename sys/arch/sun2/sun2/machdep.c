@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2025/12/22 07:45:47 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2025/12/22 07:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2026/03/21 20:14:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -235,7 +235,6 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
-int	fputype;
 void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
@@ -302,7 +301,6 @@ cpu_startup(void)
 	 */
 	printf("%s%s", copyright, version);
 	identifycpu();
-	fputype = FPU_NONE;
 #ifdef  FPU_EMULATE
 	printf("fpu: emulator\n");
 #else

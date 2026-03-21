@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.198 2026/03/19 13:51:25 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.199 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -435,79 +435,6 @@ GLOBAL(mac68k_a2_fromfault)
 	.long	0
 GLOBAL(m68k_fault_addr)
 	.long	0
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	Lfp_unimp		| no, skip FPSP
-	cmpw	#0x202c,%sp@(6)		| format type 2?
-	jne	_C_LABEL(illinst)	| no, not an FP emulation
-Ldofp_unimp:
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
-#endif
-Lfp_unimp:
-#endif /* M68040 */
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-ENTRY_NOPROFILE(fpunsupp)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	_C_LABEL(illinst)	| no, treat as illinst
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
-#endif
-Lfp_unsupp:
-#endif /* M68040 */
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
-	movl	%usp,%a0	| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0 | current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
-#if defined(M68040) || defined(M68060)
-	/* always null state frame on 68040, 68060 */
-	cmpl	#FPU_68040,_C_LABEL(fputype)
-	jge	Lfptnull
-#endif
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
-	bset	#3,%a0@(0,%d0:w) | set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-	| push %fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -1141,9 +1068,6 @@ GLOBAL(cputype)
 GLOBAL(ectype)
 	.long	EC_NONE		| external cache type, default to none
 #endif
-
-GLOBAL(fputype)
-	.long	FPU_68882	| default to 68882 FPU
 
 GLOBAL(intiolimit)
 	.long	0		| KVA of end of internal IO space

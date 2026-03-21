@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.virt68k,v 1.1 2024/01/02 07:40:59 thorpej Exp $
+#	$NetBSD: Makefile.virt68k,v 1.2 2026/03/21 20:14:58 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -45,6 +45,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

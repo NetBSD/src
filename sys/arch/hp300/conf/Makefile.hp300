@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.95 2019/08/21 20:31:23 skrll Exp $
+#	$NetBSD: Makefile.hp300,v 1.96 2026/03/21 20:14:55 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -43,6 +43,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

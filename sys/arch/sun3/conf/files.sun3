@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.83 2018/12/19 13:57:50 maxv Exp $
+#	$NetBSD: files.sun3,v 1.84 2026/03/21 20:14:57 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -39,7 +39,6 @@ file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/sys_machdep.c
 file arch/sun3/sun3/trap.c
 file arch/m68k/m68k/cacheops.c			_sun3x_
-file arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 
 include "arch/m68k/fpe/files.fpe"
 

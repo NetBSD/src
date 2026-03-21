@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.100 2025/11/23 17:42:00 tsutsui Exp $
+#	$NetBSD: files.hp300,v 1.101 2026/03/21 20:14:55 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -237,7 +237,6 @@ file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
-file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
@@ -247,7 +246,6 @@ file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
 file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c

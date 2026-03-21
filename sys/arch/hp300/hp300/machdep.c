@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.253 2026/03/18 14:44:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.254 2026/03/21 20:14:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.253 2026/03/18 14:44:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2026/03/21 20:14:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -358,12 +358,10 @@ cpu_startup(void)
 
 	hp300_cninit_deferred();
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
-	/*
-	 * Initialize the kernel crash dump header.
-	 */
+	/* Initialize the kernel crash dump header. */
 	cpu_init_kcore_hdr();
 
 	/*

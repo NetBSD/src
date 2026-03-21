@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.259 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.260 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2026/03/18 14:44:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2026/03/21 20:14:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,6 +97,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2026/03/18 14:44:09 thorpej Exp $"
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>
+#include <machine/vectors.h>
 #include <dev/cons.h>
 #include <dev/mm.h>
 #include <amiga/amiga/isr.h>
@@ -676,39 +677,9 @@ dumpsys(void)
 void
 initcpu(void)
 {
-	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
-	typedef void trapfun(void);
-	extern trapfun *vectab[256];
-#endif
-
-#if defined(M68060) || defined(M68040)
-	extern trapfun addrerr4060;
-#endif
-
-#ifdef M68060
-	extern trapfun buserr60;
-#if defined(M060SP)
-	/*extern u_int8_t I_CALL_TOP[];*/
-	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
-	extern u_int8_t FP_CALL_TOP[];
-#else
-	extern trapfun illinst;
-#endif
-	extern trapfun fpfault;
-#endif
-
-#ifdef M68040
-	extern trapfun buserr40;
-#endif
-
 #ifdef DRACO
-	extern trapfun DraCoIntr, DraCoLev1intr, DraCoLev2intr;
+	extern char DraCoIntr[], DraCoLev1intr[], DraCoLev2intr[];
 	u_char dracorev;
-#endif
-
-#ifdef FPU_EMULATE
-	extern trapfun fpemuli;
 #endif
 
 #ifdef M68060
@@ -736,64 +707,28 @@ initcpu(void)
 		}
 		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
 			"d"(m68060_pcr_init):"d0" );
-
-		/* bus/addrerr vectors */
-		vectab[2] = buserr60;
-		vectab[3] = addrerr4060;
-#if defined(M060SP)
-
-		/* integer support */
-		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
-
-		/* floating point support */
-		/*
-		 * XXX maybe we really should run-time check for the
-		 * stack frame format here:
-		 */
-		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
-
-		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
-		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
-
-		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
-		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
-		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
-		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
-		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
-		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
-
-#else
-		vectab[61] = illinst;
-#endif
-		vectab[48] = fpfault;
 	}
-#endif
+#endif /* M68060 */
 
-/*
- * Vector initialization for special motherboards
- */
-#ifdef M68040
-#ifdef M68060
-	else
-#endif
-	if (machineid & AMIGA_68040) {
-		/* addrerr vector */
-		vectab[2] = buserr40;
-		vectab[3] = addrerr4060;
-	}
-#endif
+	/* Initialize the vector table. */
+	vec_init();
+
+	/*
+	 * fpu_init() won't need to probe (and we assert this here), but
+	 * it does initialize the vector table for the configured FPU.
+	 */
+	KASSERT(fputype != FPU_UNKNOWN);
+	fpu_init();
 
 #ifdef FPU_EMULATE
-	if (!(machineid & (AMIGA_68881|AMIGA_68882|AMIGA_FPU40))) {
-		vectab[11] = fpemuli;
+	if (fputype == FPU_NONE) {
 		printf("FPU software emulation initialized.\n");
 	}
 #endif
 
-/*
- * Vector initialization for special motherboards
- */
-
+	/*
+	 * Vector initialization for special motherboards
+	 */
 #ifdef DRACO
 	dracorev = is_draco();
 	if (dracorev) {

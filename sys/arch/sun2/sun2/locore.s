@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.44 2026/03/18 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.45 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -181,35 +181,6 @@ L_high_code:
 
 | That is all the assembly startup code we need on the sun3!
 | The rest of this is like the hp300/locore.s where possible.
-
-/*
- * FP exceptions.
- */
-GLOBAL(fpfline)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-
-GLOBAL(fpunsupp)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-
-| Message for fpfault panic
-Lfp0:   
-	.asciz	"fpfault"
-	.even   
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Since we can never have an FP coprocessor, this just panics.
- */
-GLOBAL(fpfault)
-	movl	#Lfp0,%sp@-
-	jbsr	_C_LABEL(panic)
-	/*NOTREACHED*/
 
 /*
  * Other exceptions only cause four and six word stack frame and require

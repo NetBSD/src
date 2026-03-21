@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.115 2025/11/28 21:52:53 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.116 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.115 2025/11/28 21:52:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.116 2026/03/21 20:14:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.115 2025/11/28 21:52:53 thorpej Exp
 #include <machine/acia.h>
 #include <machine/kcore.h>
 #include <machine/intr.h>
+#include <machine/vectors.h>
 
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
@@ -1299,83 +1300,14 @@ int m68060_pcr_init = 0x21;	/* make this patchable */
 static void
 initcpu(void)
 {
-	typedef void trapfun(void);
-
-	switch (cputype) {
-
 #if defined(M68060)
-	case CPU_68060:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr60, addrerr4060, fpfault;
-#if defined(M060SP)
-			extern u_int8_t FP_CALL_TOP[], I_CALL_TOP[];
-#else
-			extern trapfun illinst;
-#endif
-
-			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
-					"d"(m68060_pcr_init):"d0" );
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr60;
-			vectab[3] = addrerr4060;
-
-#if defined(M060SP)
-			/* integer support */
-			vectab[61] = (trapfun *)&I_CALL_TOP[128 + 0x00];
-
-			/* floating point support */
-			/*
-			 * XXX maybe we really should run-time check for the
-			 * stack frame format here:
-			 */
-			vectab[11] = (trapfun *)&FP_CALL_TOP[128 + 0x30];
-
-			vectab[55] = (trapfun *)&FP_CALL_TOP[128 + 0x38];
-			vectab[60] = (trapfun *)&FP_CALL_TOP[128 + 0x40];
-
-			vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
-			vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
-			vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
-			vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
-			vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
-			vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
-#else
-			vectab[61] = illinst;
-#endif
-			vectab[48] = fpfault;
-		}
-		break;
-#endif /* defined(M68060) */
-#if defined(M68040)
-	case CPU_68040:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr40, addrerr4060;
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr40;
-			vectab[3] = addrerr4060;
-		}
-		break;
-#endif /* defined(M68040) */
-#if defined(M68030) || defined(M68020)
-	case CPU_68030:
-	case CPU_68020:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr2030, addrerr2030;
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr2030;
-			vectab[3] = addrerr2030;
-		}
-		break;
-#endif /* defined(M68030) || defined(M68020) */
+	if (cputype == CPU_68060) {
+		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
+				"d"(m68060_pcr_init):"d0" );
 	}
-
-	DCIS();
+#endif
+	/* Initialize the vector table. */
+	vec_init();
 }
 
 #ifdef DEBUG

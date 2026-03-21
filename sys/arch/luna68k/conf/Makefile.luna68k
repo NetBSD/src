@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.30 2023/04/11 13:26:19 tsutsui Exp $
+#	$NetBSD: Makefile.luna68k,v 1.31 2026/03/21 20:14:55 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -42,6 +42,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

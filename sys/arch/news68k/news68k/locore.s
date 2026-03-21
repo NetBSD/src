@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.104 2026/03/18 16:28:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.105 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -345,13 +345,6 @@ Lmmuenabled:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
-	tstl	_C_LABEL(fputype)	| Have an FPU?
-	jeq	Lenab2			| No, skip.
-	clrl	%a0@(PCB_FPCTX)		| ensure null FP context
-	pea	%a0@(PCB_FPCTX)
-	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill %a0)
-	addql	#4,%sp
-Lenab2:
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	Ltbia040		| yes, cache already on
@@ -392,56 +385,6 @@ Lenab3:
 	jra	_C_LABEL(main)		| main()
 
 	SETLED2(3);			| main returned?
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-ENTRY_NOPROFILE(fpunsupp)
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
-	movl	%usp,%a0	| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0 | current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
-	bset	#3,%a0@(0,%d0:w)| set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-	| push fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
-
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -750,9 +693,6 @@ GLOBAL(mmutype)
 
 GLOBAL(cputype)
 	.long	CPU_68030	| default to CPU_68030
-
-GLOBAL(fputype)
-	.long	FPU_68882	| default to FPU_68882
 
 GLOBAL(ectype)
 	.long	EC_NONE		| external cache type, default to none

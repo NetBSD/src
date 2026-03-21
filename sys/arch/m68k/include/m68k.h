@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.29 2026/03/10 01:46:58 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.30 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -118,7 +118,7 @@ void	w16zero(void *, u_int);
 void	w16copy(const void *, void *, u_int);
 
 /* fpu.c */
-int	fpu_probe(void);
+void	fpu_init(void);
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);

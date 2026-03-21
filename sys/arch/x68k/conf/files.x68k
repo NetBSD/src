@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.88 2026/03/19 15:34:28 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.89 2026/03/21 20:14:58 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -31,14 +31,12 @@ file	arch/x68k/x68k/trap.c
 file	arch/x68k/x68k/bus.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c	ddb
-file	arch/m68k/m68k/fpu.c		compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
 file	arch/m68k/m68k/pmap_motorola.c	!__have_new_pmap_68k
 file	arch/m68k/m68k/pmap_68k.c	__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c	procfs
 file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/bus_dma/bus_dmamem_common.c

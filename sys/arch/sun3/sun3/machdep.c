@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.215 2025/12/22 07:45:47 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.216 2026/03/21 20:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.215 2025/12/22 07:45:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.216 2026/03/21 20:14:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -154,7 +154,6 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
-int	fputype;
 void *	msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */

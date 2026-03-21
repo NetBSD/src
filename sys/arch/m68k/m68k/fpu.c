@@ -1,7 +1,7 @@
-/*	$NetBSD: fpu.c,v 1.3 2025/04/10 19:22:20 nat Exp $	*/
+/*	$NetBSD: fpu.c,v 1.4 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,8 +34,10 @@
  * Probe for the FPU at early bootstrap.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2025/04/10 19:22:20 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.4 2026/03/21 20:14:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,24 +48,43 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.3 2025/04/10 19:22:20 nat Exp $");
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/vectors.h>
 
 extern int *nofault;
 
-int
-fpu_probe(void)
+/*
+ * This is the default, but may be overridden as we determine
+ * the machine / cpu type before we ever get to fpu_init().
+ *
+ * For systems that lack a coprocessor interface, we just default
+ * to NONE.
+ */
+#ifdef M68K_FPCOPROC
+int	fputype = FPU_UNKNOWN;
+#else
+int	fputype = FPU_NONE;
+#endif
+
+void
+fpu_init(void)
 {
+#ifdef M68K_FPCOPROC
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
 	struct fpframe fpframe;
 	label_t faultbuf;
-	uint8_t b;
+
+	if (fputype != FPU_UNKNOWN) {
+		goto done;
+	}
 
 	nofault = (int *)&faultbuf;
 	if (setjmp(&faultbuf)) {
 		nofault = (int *)0;
-		return FPU_NONE;
+		fputype = FPU_NONE;
+		return;
 	}
 
 	/*
@@ -72,7 +93,7 @@ fpu_probe(void)
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
-	__asm("fnop");
+	__asm volatile("fnop");
 
 	nofault = NULL;
 
@@ -80,38 +101,42 @@ fpu_probe(void)
 	 * Presumably, if we're an 040/060 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (cputype == CPU_68060)
-		return FPU_68060;
-	if (cputype == CPU_68040)
-		return FPU_68040;
+	if (cputype == CPU_68060) {
+		fputype = FPU_68060;
+	} else if (cputype == CPU_68040) {
+		fputype = FPU_68040;
+	}
 
-	/*
-	 * Presumably, this will not cause a fault--the fnop should
-	 * have if this will.  We save the state in order to get the
-	 * size of the frame.
-	 */
-	__asm("fsave %0@" : : "a" (&fpframe) : "memory");
+	if (fputype == FPU_UNKNOWN) {
+		/*
+		 * fpu_doprobe() will have saved an FP state frame for us,
+		 * and can consult it to intuit the FP type.
+		 *
+		 * The size of a 68881 IDLE frame is 0x18
+		 *         and a 68882 frame is 0x38
+		 */
+		__asm volatile("fsave %0@" : : "a" (&fpframe) : "memory");
+		if (fpframe.fpf_fsize == 0x18) {
+			fputype = FPU_68881;
+		} else if (fpframe.fpf_fsize == 0x38) {
+			fputype = FPU_68882;
+		}
+		/*
+		 * If it's not one of the above, we have no clue
+		 * what it is.
+		 */
+	}
 
-	b = fpframe.fpf_fsize;
-
-	/*
-	 * Now, restore a NULL state to reset the FPU.
-	 */
-	fpframe.fpf_null = 0;
-	fpframe.fpf_idle.fpf_ccr = 0;
-	m68881_restore(&fpframe);
-
-	/*
-	 * The size of a 68881 IDLE frame is 0x18
-	 *         and a 68882 frame is 0x38
-	 */
-	if (b == 0x18)
-		return FPU_68881;
-	if (b == 0x38)
-		return FPU_68882;
-
-	/*
-	 * If it's not one of the above, we have no clue what it is.
-	 */
-	return FPU_UNKNOWN;
+ done:
+	/* Avoid crazy values. */
+	if (fputype < 0 || fputype > FPU_UNKNOWN) {
+		fputype = FPU_UNKNOWN;
+	}
+	if (fputype != FPU_UNKNOWN) {
+		m68k_make_fpu_idle_frame();
+		vec_init_fp();
+	}
+#else
+	fputype = FPU_NONE;
+#endif
 }

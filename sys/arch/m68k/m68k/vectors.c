@@ -1,7 +1,7 @@
-/*	$NetBSD: vectors.c,v 1.8 2026/03/20 14:56:08 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.9 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2024, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.         
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,6 +34,7 @@
 #include "opt_compat_sunos.h"
 #include "opt_fpsp.h"
 #include "opt_m060sp.h"
+#include "opt_m68k_arch.h"
 #endif 
 
 #include <sys/types.h>
@@ -52,7 +53,6 @@ extern char privinst[];
 extern char trace[];
 extern char fpfline[];
 extern char badtrap[];
-extern char coperr[];
 extern char fmterr[];
 extern char trap0[];
 #if defined(COMPAT_13) || defined(COMPAT_SUNOS)
@@ -110,7 +110,9 @@ extern char addrerr2030[];
 #if defined(M68040)
 extern char buserr40[], addrerr4060[];
 #ifdef FPSP
+extern char fpfline_fpsp40[], fpunsupp_fpsp40[];
 extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
+#define	LINE1111_HANDLER40	fpfline_fpsp40
 #define	FP_BSUN_HANDLER40	bsun
 #define	FP_INEX_HANDLER40	inex
 #define	FP_DZ_HANDLER40		dz
@@ -118,7 +120,10 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 #define	FP_OPERR_HANDLER40	operr
 #define	FP_OVFL_HANDLER40	ovfl
 #define	FP_SNAN_HANDLER40	snan
+#define	UNIMP_FP_DATA_HANDLER40	fpunsupp_fpsp40
 #else
+extern char fpunsupp_40[];
+#define	LINE1111_HANDLER40	fpfline
 #define	FP_BSUN_HANDLER40	fpfault
 #define	FP_INEX_HANDLER40	fpfault
 #define	FP_DZ_HANDLER40		fpfault
@@ -126,6 +131,7 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 #define	FP_OPERR_HANDLER40	fpfault
 #define	FP_OVFL_HANDLER40	fpfault
 #define	FP_SNAN_HANDLER40	fpfault
+#define	UNIMP_FP_DATA_HANDLER40	fpunsupp_40
 #endif
 #if defined(M68020) || defined(M68030) || defined(M68060) || \
     defined(__HAVE_M68K_PRIVATE_VECTAB)
@@ -133,13 +139,6 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 #else
 #define	BUSERR_HANDLER		buserr40
 #define	ADDRERR_HANDLER		addrerr4060
-#define	FP_BSUN_HANDLER		FP_BSUN_HANDLER40
-#define	FP_INEX_HANDLER		FP_INEX_HANDLER40
-#define	FP_DZ_HANDLER		FP_DZ_HANDLER40
-#define	FP_UNFL_HANDLER		FP_UNFL_HANDLER40
-#define	FP_OPERR_HANDLER	FP_OPERR_HANDLER40
-#define	FP_OVFL_HANDLER		FP_OVFL_HANDLER40
-#define	FP_SNAN_HANDLER		FP_SNAN_HANDLER40
 #endif
 #endif /* M68040 */
 
@@ -165,8 +164,8 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	FP_OPERR_HANDLER60	fpfault
 #define	FP_OVFL_HANDLER60	fpfault
 #define	FP_SNAN_HANDLER60	fpfault
-#define	UNIMP_FP_DATA_HANDLER60	fpunsupp
-#define	UNIMP_EA_HANDLER60	badtrap		/* XXX illinst? */
+#define	UNIMP_FP_DATA_HANDLER60	fpunsupp_4060
+#define	UNIMP_EA_HANDLER60	illinst
 #define	UNIMP_II_HANDLER60	illinst
 #endif
 #if defined(M68020) || defined(M68030) || defined(M68040) || \
@@ -175,15 +174,6 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #else
 #define	BUSERR_HANDLER		buserr60
 #define	ADDRERR_HANDLER		addrerr4060
-#define	LINE1111_HANDLER	LINE1111_HANDLER60
-#define	FP_INEX_HANDLER		FP_INEX_HANDLER60
-#define	FP_DZ_HANDLER		FP_DZ_HANDLER60
-#define	FP_UNFL_HANDLER		FP_UNFL_HANDLER60
-#define	FP_OPERR_HANDLER	FP_OPERR_HANDLER60
-#define	FP_OVFL_HANDLER		FP_OVFL_HANDLER60
-#define	FP_SNAN_HANDLER		FP_SNAN_HANDLER60
-#define	UNIMP_FP_DATA_HANDLER	UNIMP_FP_DATA_HANDLER60
-#define	UNIMP_EA_HANDLER	UNIMP_EA_HANDLER60
 #define	UNIMP_II_HANDLER	UNIMP_II_HANDLER60
 #endif
 #endif /* M68060 */
@@ -206,48 +196,8 @@ extern char FP_CALL_TOP[], I_CALL_TOP[];
 #define	ADDRERR_HANDLER		badtrap
 #endif
 
-#ifndef LINE1111_HANDLER
-#define	LINE1111_HANDLER	fpfline
-#endif
-
 #ifndef CPV_HANDLER
 #define	CPV_HANDLER		badtrap
-#endif
-
-#ifndef FP_BSUN_HANDLER
-#define	FP_BSUN_HANDLER		fpfault
-#endif
-
-#ifndef	FP_INEX_HANDLER
-#define	FP_INEX_HANDLER		fpfault
-#endif
-
-#ifndef FP_DZ_HANDLER
-#define	FP_DZ_HANDLER		fpfault
-#endif
-
-#ifndef FP_UNFL_HANDLER
-#define	FP_UNFL_HANDLER		fpfault
-#endif
-
-#ifndef FP_OPERR_HANDLER
-#define	FP_OPERR_HANDLER	fpfault
-#endif
-
-#ifndef FP_OVFL_HANDLER
-#define	FP_OVFL_HANDLER		fpfault
-#endif
-
-#ifndef FP_SNAN_HANDLER
-#define	FP_SNAN_HANDLER		fpfault
-#endif
-
-#ifndef UNIMP_FP_DATA_HANDLER
-#define	UNIMP_FP_DATA_HANDLER	fpunsupp
-#endif
-
-#ifndef UNIMP_EA_HANDLER
-#define	UNIMP_EA_HANDLER	badtrap
 #endif
 
 #ifndef UNIMP_II_HANDLER
@@ -275,7 +225,7 @@ void *vectab[NVECTORS] = {
 	[VECI_PRIV]		=	privinst,
 	[VECI_TRACE]		=	trace,
 	[VECI_LINE1010]		=	illinst,
-	[VECI_LINE1111]		=	LINE1111_HANDLER,
+	[VECI_LINE1111]		=	fpfline,
 	[VECI_rsvd12]		=	badtrap,
 	[VECI_CPV]		=	CPV_HANDLER,
 	[VECI_FORMATERR]	=	fmterr,
@@ -312,19 +262,19 @@ void *vectab[NVECTORS] = {
 	[VECI_TRAP13]		=	illinst,
 	[VECI_TRAP14]		=	illinst,
 	[VECI_TRAP15]		=	trap15,
-	[VECI_FP_BSUN]		=	FP_BSUN_HANDLER,
-	[VECI_FP_INEX]		=	FP_INEX_HANDLER,
-	[VECI_FP_DZ]		=	FP_DZ_HANDLER,
-	[VECI_FP_UNFL]		=	FP_UNFL_HANDLER,
-	[VECI_FP_OPERR]		=	FP_OPERR_HANDLER,
-	[VECI_FP_OVFL]		=	FP_OVFL_HANDLER,
-	[VECI_FP_SNAN]		=	FP_SNAN_HANDLER,
-	[VECI_UNIMP_FP_DATA]	=	UNIMP_FP_DATA_HANDLER,
+	[VECI_FP_BSUN]		=	badtrap,
+	[VECI_FP_INEX]		=	badtrap,
+	[VECI_FP_DZ]		=	badtrap,
+	[VECI_FP_UNFL]		=	badtrap,
+	[VECI_FP_OPERR]		=	badtrap,
+	[VECI_FP_OVFL]		=	badtrap,
+	[VECI_FP_SNAN]		=	badtrap,
+	[VECI_UNIMP_FP_DATA]	=	badtrap,
 	[VECI_PMMU_CONF]	=	badtrap,
-	[VECI_PMMU_ILLOP]	=	badtrap,
-	[VECI_PMMU_ACCESS]	=	badtrap,
+	[VECI_PMMU_ILLOP]	=	badtrap, /* not used by 68030 */
+	[VECI_PMMU_ACCESS]	=	badtrap, /* not used by 68030 */
 	[VECI_rsvd59]		=	badtrap,
-	[VECI_UNIMP_EA]		=	UNIMP_EA_HANDLER,
+	[VECI_UNIMP_EA]		=	badtrap,
 	[VECI_UNIMP_II]		=	UNIMP_II_HANDLER,
 	[VECI_rsvd62]		=	badtrap,
 	[VECI_rsvd63]		=	badtrap,
@@ -551,13 +501,6 @@ vec_init(void)
 	case CPU_68040:
 		vectab[VECI_BUSERR]        = buserr40;
 		vectab[VECI_ADDRERR]       = addrerr4060;
-		vectab[VECI_FP_BSUN]       = FP_BSUN_HANDLER40;
-		vectab[VECI_FP_INEX]       = FP_INEX_HANDLER40;
-		vectab[VECI_FP_DZ]         = FP_DZ_HANDLER40;
-		vectab[VECI_FP_UNFL]       = FP_UNFL_HANDLER40;
-		vectab[VECI_FP_OPERR]      = FP_OPERR_HANDLER40;
-		vectab[VECI_FP_OVFL]       = FP_OVFL_HANDLER40;
-		vectab[VECI_FP_SNAN]       = FP_SNAN_HANDLER40;
 		DCIS();
 		break;
 #endif /* NEED_FIXUP_40 */
@@ -566,15 +509,6 @@ vec_init(void)
 	case CPU_68060:
 		vectab[VECI_BUSERR]        = buserr60;
 		vectab[VECI_ADDRERR]       = addrerr4060;
-		vectab[VECI_LINE1111]      = LINE1111_HANDLER60;
-		vectab[VECI_FP_INEX]       = FP_INEX_HANDLER60;
-		vectab[VECI_FP_DZ]         = FP_DZ_HANDLER60;
-		vectab[VECI_FP_UNFL]       = FP_UNFL_HANDLER60;
-		vectab[VECI_FP_OPERR]      = FP_OPERR_HANDLER60;
-		vectab[VECI_FP_OVFL]       = FP_OVFL_HANDLER60;
-		vectab[VECI_FP_SNAN]       = FP_SNAN_HANDLER60;
-		vectab[VECI_UNIMP_FP_DATA] = UNIMP_FP_DATA_HANDLER60;
-		vectab[VECI_UNIMP_EA]      = UNIMP_EA_HANDLER60;
 		vectab[VECI_UNIMP_II]      = UNIMP_II_HANDLER60;
 		DCIS();
 		break;
@@ -586,6 +520,62 @@ vec_init(void)
 #endif
 	saved_vbr = getvbr();
 	setvbr(vectab);
+}
+
+/*
+ * vec_init_fp --
+ *	Initialize the vectors related to FP exceptions.  This is
+ *	called via fpu_init().
+ */
+void
+vec_init_fp(void)
+{
+#ifdef M68K_FPCOPROC
+	switch (fputype) {
+#if defined(M68020) || defined(M68030)
+	case FPU_68881:
+	case FPU_68882:
+		vectab[VECI_FP_BSUN]       = fpfault;
+		vectab[VECI_FP_INEX]       = fpfault;
+		vectab[VECI_FP_DZ]         = fpfault;
+		vectab[VECI_FP_UNFL]       = fpfault;
+		vectab[VECI_FP_OPERR]      = fpfault;
+		vectab[VECI_FP_OVFL]       = fpfault;
+		vectab[VECI_FP_SNAN]       = fpfault;
+		break;
+#endif /* M68020 || M68030 */
+#if defined(M68040)
+	case FPU_68040:
+		vectab[VECI_LINE1111]      = LINE1111_HANDLER40;
+		vectab[VECI_FP_BSUN]       = FP_BSUN_HANDLER40;
+		vectab[VECI_FP_INEX]       = FP_INEX_HANDLER40;
+		vectab[VECI_FP_DZ]         = FP_DZ_HANDLER40;
+		vectab[VECI_FP_UNFL]       = FP_UNFL_HANDLER40;
+		vectab[VECI_FP_OPERR]      = FP_OPERR_HANDLER40;
+		vectab[VECI_FP_OVFL]       = FP_OVFL_HANDLER40;
+		vectab[VECI_FP_SNAN]       = FP_SNAN_HANDLER40;
+		vectab[VECI_UNIMP_FP_DATA] = UNIMP_FP_DATA_HANDLER40;
+		DCIS();
+		break;
+#endif /* M68040 */
+#if defined(M68060)
+	case FPU_68060:
+		vectab[VECI_LINE1111]      = LINE1111_HANDLER60;
+		vectab[VECI_FP_INEX]       = FP_INEX_HANDLER60;
+		vectab[VECI_FP_DZ]         = FP_DZ_HANDLER60;
+		vectab[VECI_FP_UNFL]       = FP_UNFL_HANDLER60;
+		vectab[VECI_FP_OPERR]      = FP_OPERR_HANDLER60;
+		vectab[VECI_FP_OVFL]       = FP_OVFL_HANDLER60;
+		vectab[VECI_FP_SNAN]       = FP_SNAN_HANDLER60;
+		vectab[VECI_UNIMP_FP_DATA] = UNIMP_FP_DATA_HANDLER60;
+		vectab[VECI_UNIMP_EA]      = UNIMP_EA_HANDLER60;
+		DCIS();
+		break;
+#endif /* M68060 */
+	default:
+		break;
+	}
+#endif /* M68K_FPCOPROC */
 }
 
 /*

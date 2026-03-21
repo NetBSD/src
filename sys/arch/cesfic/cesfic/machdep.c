@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79 2026/03/21 20:14:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2026/03/18 14:44:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2026/03/21 20:14:55 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -232,8 +232,9 @@ cpu_startup(void)
 #endif
 
 	cpu_setmodel("FIC8234");
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
+
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

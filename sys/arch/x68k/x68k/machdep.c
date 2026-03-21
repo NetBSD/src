@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2026/03/18 14:44:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.219 2026/03/21 20:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2026/03/18 14:44:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2026/03/21 20:14:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -127,7 +127,6 @@ int	maxmem;			/* max memory per process */
 /* prototypes for local functions */
 void	identifycpu(void);
 static int check_emulator(char *, int);
-void	initcpu(void);
 int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
@@ -296,12 +295,10 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
-	/*
-	 * Initialize the kernel crash dump header.
-	 */
+	/* Initialize the kernel crash dump header. */
 	cpu_init_kcore_hdr();
 
 	/*
@@ -326,25 +323,21 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
 
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-
 	callout_init(&candbtimer_ch, 0);
 }
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	", emulator FPU",	/* 0 */
+	[FPU_NONE]    = ", emulator FPU",
 #else
-	", no math support",	/* 0 */
+	[FPU_NONE]    = ", no math support",
 #endif
-	", m68881 FPU",		/* 1 */
-	", m68882 FPU",		/* 2 */
-	"/FPU",			/* 3 */
-	"/FPU",			/* 4 */
-	};
+	[FPU_68881]   = ", m68881 FPU",
+	[FPU_68882]   = ", m68882 FPU",
+	[FPU_68040]   = "/FPU",
+	[FPU_68060]   = "/FPU",
+	[FPU_UNKNOWN] = ", unknown FPU",
+};
 
 void
 identifycpu(void)
@@ -429,10 +422,9 @@ identifycpu(void)
 		mmu = ", unknown MMU";
 		break;
 	}
-	if (fputype >= 0 && fputype < sizeof(fpu_descr)/sizeof(fpu_descr[0]))
-		fpu = fpu_descr[fputype];
-	else
-		fpu = ", unknown FPU";
+	KASSERT(fputype >= 0 && fputype < __arraycount(fpu_descr));
+	fpu = fpu_descr[fputype];
+
 	cpu_setmodel("X68%s (%s CPU%s%s%s)%s%s",
 	    mach, cpu_type, mmu, fpu, clock,
 		emubuf[0] ? " on " : "", emubuf);
@@ -807,47 +799,6 @@ dumpsys(void)
 		}
 	}
 	printf("succeeded\n");
-}
-
-void
-initcpu(void)
-{
-	/* XXX should init '40 vecs here, too */
-#if defined(M68060)
-	extern void *vectab[256];
-#if defined(M060SP)
-	extern uint8_t I_CALL_TOP[];
-	extern uint8_t FP_CALL_TOP[];
-#else
-	extern uint8_t illinst;
-#endif
-	extern uint8_t fpfault;
-#endif
-
-#if defined(M68060)
-	if (cputype == CPU_68060) {
-#if defined(M060SP)
-		/* integer support */
-		vectab[61] = &I_CALL_TOP[128 + 0x00];
-
-		/* floating point support */
-		vectab[11] = &FP_CALL_TOP[128 + 0x30];
-		vectab[55] = &FP_CALL_TOP[128 + 0x38];
-		vectab[60] = &FP_CALL_TOP[128 + 0x40];
-
-		vectab[54] = &FP_CALL_TOP[128 + 0x00];
-		vectab[52] = &FP_CALL_TOP[128 + 0x08];
-		vectab[53] = &FP_CALL_TOP[128 + 0x10];
-		vectab[51] = &FP_CALL_TOP[128 + 0x18];
-		vectab[50] = &FP_CALL_TOP[128 + 0x20];
-		vectab[49] = &FP_CALL_TOP[128 + 0x28];
-#else
-		vectab[61] = &illinst;
-#endif
-		vectab[48] = &fpfault;
-	}
-	DCIS();
-#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.26 2026/03/20 14:56:08 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.27 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
 #include "opt_m68k_arch.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_fpsp.h"
+#include "opt_m060sp.h"
 
 #include <machine/asm.h>
 #include <machine/trap.h>
@@ -215,6 +217,80 @@ ENTRY_NOPROFILE(fmterr)
 	movl	#T_FMTERR,-(%sp)	| push trap type
 	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack
 					|   adjustments
+
+/*
+ * Floating point exceptions.
+ */
+
+#if defined(M68040) && defined(FPSP)
+/*
+ * These two stubs are used when a 68040 FPU is present and the FPSP
+ * is compiled into the kernel.
+ */
+ENTRY_NOPROFILE(fpfline_fpsp40)
+	cmpw	#0x202c,6(%sp)		| format type 2?
+	jne	_C_LABEL(illinst)	| no, not an FP emulation
+	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
+
+ENTRY_NOPROFILE(fpunsupp_fpsp40)
+	jmp	_ASM_LABEL(fpsp_unsupp)
+#endif /* M68040 && FPSP */
+
+#if (defined(M68040) && !defined(FPSP)) || \
+    (defined(M68060) && !defined(M060SP))
+/*
+ * This stub is used on either the 68040 or the 68060, but only
+ * then that CPU's corresponding FP support package is **not**
+ * compiled into the kernel.
+ */
+ENTRY_NOPROFILE(fpunsupp_4060)
+	clrl	-(%sp)			| stack adjust count
+	moveml	#0xFFFF,-(%sp)		| save registers
+	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
+#endif /* (M68040 && ! FPSP) || (M68060 && ! M060SP) */
+
+ENTRY_NOPROFILE(fpfline)
+	clrl	-(%sp)			| stack adjust count
+	moveml	#0xFFFF,-(%sp)		| save registers
+	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
+	jra	_ASM_LABEL(fault)	| do it
+
+#ifdef M68K_FPCOPROC
+/*
+ * Handles all other FP coprocessor exceptions.
+ *
+ * Note that since some FP exceptions generate mid-instruction frames
+ * and may cause signal delivery, we need to test for stack adjustment
+ * after the trap call.
+ */
+ENTRY_NOPROFILE(fpfault)
+	clrl	-(%sp)			| stack adjust count
+	moveml	#0xFFFF,-(%sp)		| save registers
+	movl	%usp,%a0		| and save
+	movl	%a0,FR_SP(%sp)		|   the user stack pointer
+	clrl	-(%sp)			| no VA arg
+	movl	_C_LABEL(curpcb),%a0	| current pcb
+	lea	PCB_FPCTX(%a0),%a0	| address of FP savearea
+	fsave	(%a0)			| save state
+#if defined(M68020) || defined(M68030)
+#if defined(M68040) || defined(M68060)
+	/* not needed on 68040, 68040, skip for unknown */
+	cmpl	#FPU_68040,_C_LABEL(fputype)
+	jge	Lfptnull
+#endif
+	tstb	(%a0)			| null state frame?
+	jeq	Lfptnull		| yes, safe
+	clrw	%d0			| no, need to tweak BIU
+	movb	1(%a0),%d0		| get frame size
+	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
+Lfptnull:
+#endif
+	fmovem	%fpsr,-(%sp)		| push %fpsr as code argument
+	frestore (%a0)			| restore state
+	movl	#T_FPERR,-(%sp)		| push type arg
+	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
+#endif /* M68K_FPCOPROC */
 
 /*
  * Other exceptions only cause four and six word stack frame and require

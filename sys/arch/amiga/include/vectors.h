@@ -1,11 +1,11 @@
-/*	$NetBSD: fpu_machdep.c,v 1.2 2026/03/21 20:14:56 thorpej Exp $	*/
+/*	$NetBSD: vectors.h,v 1.1 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Gordon W. Ross.
+ * by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,48 +29,19 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.2 2026/03/21 20:14:56 thorpej Exp $");
+#ifndef _AMIGA_VECTORS_H_
+#define	_AMIGA_VECTORS_H_
 
-#include "opt_fpu_emulate.h"
-
-/*
- * Floating Point Unit (MC68881/882/040) initialization.
- */
-
-#include <sys/param.h>
-
-#include <machine/cpu.h>
-#include <machine/frame.h>
+#ifdef _KERNEL
 
 /*
- * FPU type; emulator uses FPU_NONE
+ * We need to define the vector table ourselves, but only as a
+ * transitional step.
  */
+#define	__HAVE_M68K_PRIVATE_VECTAB
 
-extern label_t *nofault;
+#include <m68k/vectors.h>
 
-static const char *fpu_descr[] = {
-#ifdef	FPU_EMULATE
-	[FPU_NONE]    = "emulator",
-#else
-	[FPU_NONE]    = "no math support",
-#endif
-	[FPU_68881]   = "mc68881",
-	[FPU_68882]   = "mc68882",
-	[FPU_68040]   = "mc68040",
-	[FPU_68060]   = "mc68060",
-	[FPU_UNKNOWN] = "unknown"
-};
+#endif /* _KERNEL */
 
-void
-initfpu(void)
-{
-	const char *descr;
-
-	fpu_init();
-	KASSERT(fputype >= 0 && fputype < __arraycount(fpu_descr));
-
-	descr = fpu_descr[fputype];
-
-	printf("fpu: %s\n", descr);
-}
+#endif /* _AMIGA_VECTORS_H_ */

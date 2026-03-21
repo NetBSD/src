@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.195 2026/03/18 14:44:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.196 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2026/03/18 14:44:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2026/03/21 20:14:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -110,11 +110,6 @@ vaddr_t	msgbufpa;
 
 extern  int   freebufspace;
 extern	u_int lowram;
-
-/*
- * For the fpu emulation and the fpu driver
- */
-int	fputype = 0;
 
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;	/* from <machine/param.h> */
@@ -189,8 +184,8 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -245,7 +240,6 @@ identifycpu(void)
 	}
 
 	cpu     = "m68k";
-	fputype = fpu_probe();
 	fpu     = fpu_describe(fputype);
 
 	switch (cputype) {

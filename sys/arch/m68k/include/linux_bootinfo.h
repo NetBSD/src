@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.h,v 1.1 2026/03/10 01:27:23 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.h,v 1.2 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -69,6 +69,10 @@ struct bi_record {
 #define	BI_VIRT_VIRTIO_BASE	BI_MACHDEP(4)
 #define	BI_VIRT_CTRL_BASE	BI_MACHDEP(5)
 
+#define	BI_FDT_PLATFORM		BI_MACHDEP(0)	/* C string */
+#define	BI_FDT_BLOB		BI_MACHDEP(1)	/* bi_data */
+#define	BI_FDT_ELF_SYMS		BI_MACHDEP(2)	/* bi_mem_info */
+
 struct bi_mem_info {
 	uint32_t	mem_addr;	/* PA of memory segment */
 	uint32_t	mem_size;	/* size in bytes */
@@ -101,6 +105,7 @@ struct bi_virt_dev {
 #define	BI_MACH_M54XX		12
 #define	BI_MACH_M5441X		13
 #define	BI_MACH_VIRT		14
+#define	BI_MACH_FDT		15	/* XXX non-standard extension */
 
 /*
  * Values for BI_CPUTYPE.

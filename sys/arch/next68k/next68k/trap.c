@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.98 2025/12/20 10:51:04 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.99 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/trap.c
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.98 2025/12/20 10:51:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.99 2026/03/21 20:14:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -390,6 +390,24 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		ksi.ksi_signo = SIGFPE;
 		ksi.ksi_code = fpsr2siginfocode(code);
 		break;
+
+	/*
+	 * FPU faults in supervisor mode.
+	 */
+	case T_ILLINST:	/* fnop generates this, apparently. */
+	case T_FPEMULI:
+	case T_FPEMULD:
+	{
+		extern label_t *nofault;
+
+		if (nofault)	/* If we're probing. */
+			longjmp(nofault);
+		if (type == T_ILLINST)
+			printf("Kernel Illegal Instruction trap.\n");
+		else
+			printf("Kernel FPU trap.\n");
+		goto dopanic;
+	}
 
 #ifdef M68040
 	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */

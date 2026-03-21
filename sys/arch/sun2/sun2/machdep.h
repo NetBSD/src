@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.16 2024/01/13 00:44:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.17 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -98,8 +98,6 @@ struct proc;
 struct reg;
 struct trapframe;
 struct uio;
-
-extern int fputype;
 
 extern label_t *nofault;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2026/03/18 14:44:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2026/03/18 14:44:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/03/21 20:14:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -339,12 +339,10 @@ cpu_startup(void)
 	pmapdebug = 0;
 #endif
 
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
-	/*
-	 * Initialize the kernel crash dump header.
-	 */
+	/* Initialize the kernel crash dump header. */
 	cpu_init_kcore_hdr();
 
 	/*

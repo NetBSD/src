@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.137 2026/03/19 13:51:25 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.138 2026/03/21 20:14:56 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -180,7 +180,6 @@ file	arch/mac68k/mac68k/via.c
 file	arch/m68k/m68k/bus_dma.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
-file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/mmu_subr.s
@@ -188,7 +187,6 @@ file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
 file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vectors.c
 file	arch/m68k/m68k/vm_machdep.c
 
 file	arch/mac68k/dev/grf_compat.c		grf needs-flag

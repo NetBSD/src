@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.7 2026/03/10 01:27:23 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.8 2026/03/21 20:14:58 thorpej Exp $
 
 # config file for virt68k
 
@@ -50,7 +50,6 @@ file arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
 file arch/m68k/m68k/pmap_68k.c			__have_new_pmap_68k
 file arch/m68k/m68k/procfs_machdep.c		procfs
 file arch/m68k/m68k/sys_machdep.c
-file arch/m68k/m68k/vectors.c
 file arch/m68k/m68k/vm_machdep.c
 file dev/cons.c
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.s,v 1.25 2026/03/14 21:03:39 thorpej Exp $	*/
+/*	$NetBSD: vectors.s,v 1.26 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah
@@ -96,25 +96,15 @@ GLOBAL(autovects)
 	VECTOR(illinst)		| 45: TRAP instruction vector
 	VECTOR(illinst)		| 46: TRAP instruction vector
 	VECTOR(trap15)		| 47: TRAP instruction vector
-#ifdef FPSP
-	ASVECTOR(bsun)		| 48: FPCP branch/set on unordered cond
-	ASVECTOR(inex)		| 49: FPCP inexact result
-	ASVECTOR(dz)		| 50: FPCP divide by zero
-	ASVECTOR(unfl)		| 51: FPCP underflow
-	ASVECTOR(operr)		| 52: FPCP operand error
-	ASVECTOR(ovfl)		| 53: FPCP overflow
-	ASVECTOR(snan)		| 54: FPCP signalling NAN
-#else
-	VECTOR(fpfault)		| 48: FPCP branch/set on unordered cond
-	VECTOR(fpfault)		| 49: FPCP inexact result
-	VECTOR(fpfault)		| 50: FPCP divide by zero
-	VECTOR(fpfault)		| 51: FPCP underflow
-	VECTOR(fpfault)		| 52: FPCP operand error
-	VECTOR(fpfault)		| 53: FPCP overflow
-	VECTOR(fpfault)		| 54: FPCP signalling NAN
-#endif
-
-	VECTOR(fpunsupp)	| 55: FPCP unimplemented data type
+	/* N.B. FPCP vectors are patched up after initializing the FPU. */
+	VECTOR(badtrap)		| 48: FPCP branch/set on unordered cond
+	VECTOR(badtrap)		| 49: FPCP inexact result
+	VECTOR(badtrap)		| 50: FPCP divide by zero
+	VECTOR(badtrap)		| 51: FPCP underflow
+	VECTOR(badtrap)		| 52: FPCP operand error
+	VECTOR(badtrap)		| 53: FPCP overflow
+	VECTOR(badtrap)		| 54: FPCP signalling NAN
+	VECTOR(badtrap)		| 55: FPCP unimplemented data type
 	VECTOR(badtrap)		| 56: unassigned, reserved
 	VECTOR(badtrap)		| 57: unassigned, reserved
 	VECTOR(badtrap)		| 58: unassigned, reserved

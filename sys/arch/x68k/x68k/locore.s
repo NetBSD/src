@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.150 2026/03/19 15:34:28 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.151 2026/03/21 20:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -308,17 +308,6 @@ Lenab1:
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
-/* detect FPU type */
-	movl	%a0,%a5			| preserve uarea pointer
-	jbsr	_C_LABEL(fpu_probe)
-	movl	%d0,_C_LABEL(fputype)
-	tstl	_C_LABEL(fputype)	| Have an FPU?
-	jeq	Lenab2			| No, skip.
-	clrl	%a5@(PCB_FPCTX)		| ensure null FP context
-	pea	%a5@(PCB_FPCTX)
-	jbsr	_C_LABEL(m68881_restore) | restore it
-	addql	#4,%sp
-Lenab2:
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	Ltbia040		| yes, cache already on
 	pflusha
@@ -352,88 +341,6 @@ Lenab3:
 
 	PANIC("main() returned")	| Yow!  Main returned!
 	/* NOTREACHED */
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	Lfp_unimp		| no, skip FPSP
-	cmpw	#0x202c,%sp@(6)		| format type 2?
-	jne	_C_LABEL(illinst)	| no, not an FP emulation
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
-#else
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif
-Lfp_unimp:
-#endif /* M68040 */
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-ENTRY_NOPROFILE(fpunsupp)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	Lfp_unsupp		| no, skip FPSP
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
-#else
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif /* M68040 */
-Lfp_unsupp:
-#endif
-#ifdef FPU_EMULATE
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#else
-	jra	_C_LABEL(illinst)
-#endif
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	clrl	%sp@-			| no VA arg
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	lea	%a0@(PCB_FPCTX),%a0	| address of FP savearea
-	fsave	%a0@			| save state
-#if defined(M68040) || defined(M68060)
-	/* always null state frame on 68040, 68060 */
-	cmpl	#FPU_68040,_C_LABEL(fputype)
-	jge	Lfptnull
-#endif
-	tstb	%a0@			| null state frame?
-	jeq	Lfptnull		| yes, safe
-	clrw	%d0			| no, need to tweak BIU
-	movb	%a0@(1),%d0		| get frame size
-	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-		| push fpsr as code argument
-	frestore %a0@			| restore state
-	movl	#T_FPERR,%sp@-		| push type arg
-	jra	_ASM_LABEL(faultstkadj)	| call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -747,9 +654,6 @@ GLOBAL(cputype)
 GLOBAL(ectype)
 	.long	EC_NONE			| external cache type, default to none
 #endif
-
-GLOBAL(fputype)
-	.long	FPU_NONE
 
 GLOBAL(intiobase)
 	.long	0			| KVA of base of internal IO space

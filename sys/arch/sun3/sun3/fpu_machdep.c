@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_machdep.c,v 1.3 2013/09/07 15:56:11 tsutsui Exp $	*/
+/*	$NetBSD: fpu_machdep.c,v 1.4 2026/03/21 20:14:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.3 2013/09/07 15:56:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.4 2026/03/21 20:14:57 thorpej Exp $");
 
 #include "opt_fpu_emulate.h"
 
@@ -48,28 +48,27 @@ __KERNEL_RCSID(0, "$NetBSD: fpu_machdep.c,v 1.3 2013/09/07 15:56:11 tsutsui Exp 
 
 static const char *fpu_descr[] = {
 #ifdef	FPU_EMULATE
-	"emulator",		/* 0 */
+	[FPU_NONE]    = "emulator",
 #else
-	"no math support",	/* 0 */
+	[FPU_NONE]    = "no math support",
 #endif
-	"mc68881",		/* 1 */
-	"mc68882",		/* 2 */
-	"mc68040 internal",	/* 3 */
-	"mc68060 internal",	/* 4 */
-	"unknown type" };	/* 5 */
+	[FPU_68881]   = "mc68881",
+	[FPU_68882]   = "mc68882",
+	[FPU_68040]   = "mc68040 internal",
+	[FPU_68060]   = "mc68060 internal",
+	[FPU_UNKNOWN] = "unknown type"
+};
 
 void
 initfpu(void)
 {
 	const char *descr;
-	int maxtype = sizeof(fpu_descr) / sizeof(fpu_descr[0]) - 1;
 
 	/* Set the FPU bit in the "system enable register" */
 	enable_fpu(1);
 
-	fputype = fpu_probe();
-	if (fputype < 0 || fputype > maxtype)
-		fputype = FPU_UNKNOWN;
+	fpu_init();
+	KASSERT(fputype >= 0 && fputype < __arraycount(fpu_descr));
 
 	descr = fpu_descr[fputype];
 
@@ -78,6 +77,5 @@ initfpu(void)
 	if (fputype == FPU_NONE) {
 		/* Might as well turn the enable bit back off. */
 		enable_fpu(0);
-	} else
-		m68k_make_fpu_idle_frame();
+	}
 }

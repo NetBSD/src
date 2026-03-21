@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.180 2026/03/18 16:28:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.181 2026/03/21 20:14:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -99,79 +99,6 @@ ENTRY_NOPROFILE(doadump)
 	jbsr	_C_LABEL(dumpsys)
 	jbsr	_C_LABEL(doboot)
 	/*NOTREACHED*/
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-#if defined(M68040)
-	cmpw	#0x202c,%sp@(6)		| format type 2?
-	jne	_C_LABEL(illinst)	| no, not an FP emulation
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
-#endif
-#endif
-
-#ifdef FPU_EMULATE
-ENTRY_NOPROFILE(fpemuli)
-	addql	#1,Lfpecnt
-	clrl	%sp@-			| stack adjust count
-	moveml	%d0-%d7/%a0-%a7,%sp@-	| save registers
-	movql	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif
-
-ENTRY_NOPROFILE(fpunsupp)
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jne	_C_LABEL(illinst)	| no, treat as illinst
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
-#else
-	clrl	%sp@-			| stack adjust count
-	moveml	%d0-%d7/%a0-%a7,%sp@-	| save registers
-	movql	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif
-#else
-	jra	_C_LABEL(illinst)
-#endif
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-#ifdef FPCOPROC
-	clrl	%sp@-			| stack adjust count
-	moveml	%d0-%d7/%a0-%a7,%sp@-	| save user registers
-	movl	%usp,%a0		| and save
-	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
-	clrl	%sp@-			| no VA arg
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	lea	%a0@(PCB_FPCTX),%a0	| address of FP savearea
-	fsave	%a0@			| save state
-#if defined(M68020) || defined(M68030)
-#if defined(M68060) || defined(M68040)
-	movb	_C_LABEL(machineid)+3,%d0
-	andb	#0x90,%d0		| AMIGA_68060 | AMIGA_68040
-	jne	Lfptnull		| XXX
-#endif
-	tstb	%a0@			| null state frame?
-	jeq	Lfptnull		| yes, safe
-	clrw	%d0			| no, need to tweak BIU
-	movb	%a0@(1),%d0		| get frame size
-	bset	#3,%a0@(0,%d0:w)	| set exc_pend bit of BIU
-Lfptnull:
-#endif
-	fmovem	%fpsr,%sp@-		| push fpsr as code argument
-	frestore %a0@			| restore state
-	movl	#T_FPERR,%sp@-		| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
-#else
-	jra	_C_LABEL(badtrap)	| treat as an unexpected trap
-#endif
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -1061,21 +988,6 @@ Ldelay:				| longword aligned again.
 	jcc Ldelay
 	rts
 
-#ifdef M68060
-ENTRY_NOPROFILE(intemu60)
-	addql	#1,L60iem
-	jra	_C_LABEL(I_CALL_TOP)+128+0x00
-ENTRY_NOPROFILE(fpiemu60)
-	addql	#1,L60fpiem
-	jra	_C_LABEL(FP_CALL_TOP)+128+0x30
-ENTRY_NOPROFILE(fpdemu60)
-	addql	#1,L60fpdem
-	jra	_C_LABEL(FP_CALL_TOP)+128+0x38
-ENTRY_NOPROFILE(fpeaemu60)
-	addql	#1,L60fpeaem
-	jra	_C_LABEL(FP_CALL_TOP)+128+0x40
-#endif
-
 	.data
 	.space	PAGE_SIZE
 	.align	4
@@ -1087,8 +999,6 @@ GLOBAL(cputype)
 	.long	CPU_68020
 GLOBAL(ectype)
 	.long	EC_NONE
-GLOBAL(fputype)
-	.long	FPU_NONE
 GLOBAL(delaydivisor)
 	.long	12		| should be enough for 80 MHz 68060
 				| will be adapted to other CPUs in
@@ -1123,15 +1033,6 @@ GLOBAL(intrnames)
 	.asciz	"lcl/zbus"	| 6: lcl/zorro lev6
 	.asciz	"buserr"	| 7: nmi: bus timeout
 #endif
-#ifdef M68060
-	.asciz	"60intemu"
-	.asciz	"60fpiemu"
-	.asciz	"60fpdemu"
-	.asciz	"60fpeaemu"
-#endif
-#ifdef FPU_EMULATE
-	.asciz	"fpe"
-#endif
 GLOBAL(eintrnames)
 #ifdef __ELF__
 	.align	4
@@ -1143,14 +1044,5 @@ GLOBAL(intrcnt)
 #ifdef DRACO
 ASLOCAL(Drintrcnt)
 	.long	0,0,0,0,0,0,0
-#endif
-#ifdef M68060
-L60iem:		.long	0
-L60fpiem:	.long	0
-L60fpdem:	.long	0
-L60fpeaem:	.long	0
-#endif
-#ifdef FPU_EMULATE
-Lfpecnt:	.long	0
 #endif
 GLOBAL(eintrcnt)

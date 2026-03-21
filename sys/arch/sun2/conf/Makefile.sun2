@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.29 2021/08/30 19:01:05 christos Exp $
+# $NetBSD: Makefile.sun2,v 1.30 2026/03/21 20:14:57 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -49,6 +49,8 @@ KERNMISCMAKEFLAGS=	MACHINE_ARCH=${MACHINE_ARCH}
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 MD_OBJS=	locore.o
 MD_CFILES=
 MD_SFILES=	${SUN2}/sun2/locore.s

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.81 2026/03/19 12:39:03 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.82 2026/03/21 20:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -156,47 +156,6 @@ L_high_code:
 
 | That is all the assembly startup code we need on the sun3x!
 | The rest of this is like the hp300/locore.s where possible.
-
-/*
- * FP exceptions.
- */
-GLOBAL(fpfline)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULI,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-
-GLOBAL(fpunsupp)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-GLOBAL(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
-	movl	%usp,%a0	| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0	| current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
-	bset	#3,%a0@(0,%d0:w) | set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-	| push fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require

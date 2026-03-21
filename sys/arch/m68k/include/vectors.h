@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.h,v 1.6 2024/02/01 22:00:29 andvar Exp $	*/
+/*	$NetBSD: vectors.h,v 1.7 2026/03/21 20:14:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -130,6 +130,7 @@ extern void *vectab[NVECTORS];
 extern void **saved_vbr;
 
 void	vec_init(void);
+void	vec_init_fp(void);
 void	vec_reset(void);
 void	*vec_get_entry(int);
 void	vec_set_entry(int, void *);

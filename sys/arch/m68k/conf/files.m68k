@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.60 2026/03/18 04:15:31 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.61 2026/03/21 20:14:56 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -16,11 +16,13 @@ defflag	opt_m68k_arch.h		M68K_MMU_68030: M68K_MMU_MOTOROLA
 defflag	opt_m68k_arch.h		M68K_MMU_68040: M68K_MMU_MOTOROLA
 defflag	opt_m68k_arch.h		M68K_MMU_68060: M68K_MMU_MOTOROLA
 
+defflag opt_m68k_arch.h		M68K_FPCOPROC
+
 defflag	opt_m68k_arch.h		M68010
-defflag	opt_m68k_arch.h		M68020
-defflag	opt_m68k_arch.h		M68030: M68K_MMU_68030
-defflag	opt_m68k_arch.h		M68040: M68K_MMU_68040
-defflag	opt_m68k_arch.h		M68060: M68K_MMU_68060
+defflag	opt_m68k_arch.h		M68020: M68K_FPCOPROC
+defflag	opt_m68k_arch.h		M68030: M68K_MMU_68030, M68K_FPCOPROC
+defflag	opt_m68k_arch.h		M68040: M68K_MMU_68040, M68K_FPCOPROC
+defflag	opt_m68k_arch.h		M68060: M68K_MMU_68060, M68K_FPCOPROC
 
 # Emit Makefile vars for these kernel options so that compiler flags
 # can be tuned for CPU support.
@@ -39,6 +41,7 @@ file	arch/m68k/m68k/cpu_in_cksum.c		(inet | inet6) & cpu_in_cksum
 file	arch/m68k/m68k/db_disasm.c		ddb
 file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
+file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_m68k.c		kgdb
 file	arch/m68k/m68k/kobj_machdep.c		modular
 file	arch/m68k/m68k/lock_stubs.s
@@ -52,6 +55,7 @@ file	arch/m68k/m68k/sigcode.s
 file	arch/m68k/m68k/support.s
 file	arch/m68k/m68k/trap_subr.s
 file	arch/m68k/m68k/m68k_syscall.c
+file	arch/m68k/m68k/vectors.c
 
 file	arch/m68k/m68k/sunos_sigcode.s		compat_sunos
 file	arch/m68k/m68k/sunos_syscall.c		compat_sunos
