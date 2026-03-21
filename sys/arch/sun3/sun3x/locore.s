@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.82 2026/03/21 20:14:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.83 2026/03/21 22:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -279,8 +279,6 @@ GLOBAL(_isr_clock)
 #define FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
-
-/* suline() */
 
 #ifdef DEBUG
 	.data

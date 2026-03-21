@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.60 2026/03/21 20:14:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.61 2026/03/21 22:00:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -491,35 +491,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
  */
 #define	FPCOPROC	/* XXX: Temporarily required */
 #include <m68k/m68k/switch_subr.s>
-
-
-#if defined(M68040)
-ENTRY(suline)
-	movl	%sp@(4),%a0		| address to write
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	movl	#Lslerr,%a1@(PCB_ONFAULT) | where to return to on a fault
-	movl	%sp@(8),%a1		| address of line
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
-	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
-	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
-	nop				| sync
-	movl	%a1@+,%d0			| get lword
-	movsl	%d0,%a0@+			| put lword
-	nop				| sync
-	moveq	#0,%d0			| indicate no fault
-	jra	Lsldone
-Lslerr:
-	moveq	#-1,%d0
-Lsldone:
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	clrl	%a1@(PCB_ONFAULT) 	| clear fault address
-	rts
-#endif
 
 /*
  * _delay(u_int N)

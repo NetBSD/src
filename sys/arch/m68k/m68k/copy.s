@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.50 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: copy.s,v 1.51 2026/03/21 22:00:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -66,6 +66,8 @@
  * This file contains the functions for user-space access:
  * copyin/copyout, ufetch/ustore, etc.
  */
+
+#include "opt_m68k_arch.h"
 
 #include <sys/errno.h>
 #include <machine/asm.h>
@@ -394,3 +396,36 @@ ENTRY(_ustore_32)
 .Lufetchstore_fault:
 	clrl	PCB_ONFAULT(%a1)	| clear fault handler
 	rts
+
+#if defined(M68040) || defined(M68060)
+ENTRY(suline)
+	CHECK_DFC
+	movl	4(%sp),%a0		| address to write
+	GETCURPCB(%a1)			| current pcb
+	movl	.Lsuline_fault,PCB_ONFAULT(%a1) | fault handler
+	movl	8(%sp),%a1		| address of line data
+
+	movl	(%a1)+,%d0		| get lword
+	movsl	%d0,(%a0)+		| put lword
+	nop
+
+	movl	(%a1)+,%d0		| get lword
+	movsl	%d0,(%a0)+		| put lword
+	nop
+
+	movl	(%a1)+,%d0		| get lword
+	movsl	%d0,(%a0)+		| put lword
+	nop
+
+	movl	(%a1)+,%d0		| get lword
+	movsl	%d0,(%a0)+		| put lword
+	nop
+
+	moveq	#0,%d0			| return 0 for success
+1:	GETCURPCB(%a1)			| current pcb
+	clrl	PCB_ONFAULT(%a1)	| clear fault handler
+	rts
+.Lsuline_fault:
+	moveq	#-1,%d0			| return -1 for error
+	jra	1b
+#endif /* M68040 || M68060 */

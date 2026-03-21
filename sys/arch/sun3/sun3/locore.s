@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 2026/03/21 22:00:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -303,7 +303,6 @@ GLOBAL(_isr_clock)
 #include <m68k/m68k/switch_subr.s>
 
 
-/* suline() */
 /* TBIA, TBIS, TBIAS, TBIAU */
 
 /*
