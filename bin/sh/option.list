@@ -1,4 +1,4 @@
-/* $NetBSD: option.list,v 1.12 2025/09/10 23:58:21 kre Exp $ */
+/* $NetBSD: option.list,v 1.13 2026/03/22 19:18:56 kre Exp $ */
 
 /*
  * define the shell's settable options
@@ -43,6 +43,7 @@ fflag	noglob		f		# no pathname expansion
 uflag	nounset		u		# expanding unset var is an error
 vflag	verbose		v		# echo commands as read
 xflag	xtrace		x		# trace command execution
+pipefail	pipefail		# pipe exit status
 
 // the long name (ignoreeof) is standard, the I flag is not
 Iflag	ignoreeof	I		# do not exit interactive shell on EOF
@@ -56,7 +57,6 @@ hflag	trackall	h		# [U] locate cmds in funcs during defn
 // 's' is standard for command line, not as 'set' option, nor 'stdin' name
 sflag	stdin		s		# read from standard input
 // minusc		c		# command line option only.
-// --			r		# command line option only.
 // --			o		# handled differently...
 
 // non-standard options -- 'i' is just a state, not an option in standard.
@@ -69,8 +69,9 @@ posix	posix				# be closer to POSIX compat
 qflag	quietprofile	q		# disable -v/-x in startup files
 fnline1	local_lineno	L on		# number lines in funcs starting at 1
 promptcmds	promptcmds		# allow $( ) in PS1 (et al).
-pipefail	pipefail		# pipe exit status
 Xflag	xlock		X #ifndef SMALL	# sticky stderr for -x (implies -x)
+
+// --			r		# command line option only.
 
 // editline/history related options ("vi" is standard, 'V' and others are not)
 // only one of vi/emacs can be set, hence the "set" definition, value
