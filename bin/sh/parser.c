@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.184 2024/10/21 15:57:45 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.185 2026/03/22 19:16:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.184 2024/10/21 15:57:45 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.185 2026/03/22 19:16:18 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2703,13 +2703,13 @@ getprompt(void *unused)
  * behaviour.
  */
 static const char *
-expandonstack(char *ps, int cmdsub, int lineno)
+expandonstack(const char *ps, int cmdsub, int lineno)
 {
 	union node n;
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
 	struct parsefile *const savetopfile = getcurrentfile();
-	char * const save_ps = ps;
+	const char * const save_ps = ps;
 	const int save_x = xflag;
 	const int save_e_s = errors_suppressed;
 	struct parse_state new_state = init_parse_state;
@@ -2767,7 +2767,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 }
 
 const char *
-expandstr(char *ps, int lineno)
+expandstr(const char *ps, int lineno)
 {
 	const char *result = NULL;
 	struct stackmark smark;
@@ -2842,7 +2842,7 @@ expandstr(char *ps, int lineno)
  */
 
 const char *
-expandvar(char *var, int flags)
+expandvar(const char *var, int flags)
 {
 	const char *result = NULL;
 	struct stackmark smark;
@@ -2918,7 +2918,7 @@ expandvar(char *var, int flags)
  * Simply return the result, even if it is on the stack
  */
 const char *
-expandenv(char *arg)
+expandenv(const char *arg)
 {
 	return expandonstack(arg, 0, 0);
 }

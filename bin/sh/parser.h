@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.30 2024/10/21 15:57:45 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.31 2026/03/22 19:16:18 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -78,9 +78,9 @@ void fixredir(union node *, const char *, int);
 int goodname(const char *);
 int isassignment(const char *);
 const char *getprompt(void *);
-const char *expandstr(char *, int);
-const char *expandvar(char *, int);
-const char *expandenv(char *);
+const char *expandstr(const char *, int);
+const char *expandvar(const char *, int);
+const char *expandenv(const char *);
 
 struct HereDoc;
 union node;
