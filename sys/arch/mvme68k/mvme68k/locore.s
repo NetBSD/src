@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.157 2026/03/21 22:00:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.158 2026/03/22 15:10:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -586,16 +586,15 @@ Lmmuenabled:
 Ltbia040:
 	.word	0xf518
 Lenab3:
+/* final setup for C code */
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
+	addql	#4,%sp
 /*
- * final setup for C code:
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
-	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
-	addql	#4,%sp
-
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"
