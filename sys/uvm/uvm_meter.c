@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.80 2020/06/14 21:41:42 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.81 2026/03/22 11:25:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.80 2020/06/14 21:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.81 2026/03/22 11:25:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,7 +164,6 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.pdreact = uvmexp.pdreact;
 	u.pdbusy = uvmexp.pdbusy;
 	u.pdpageouts = uvmexp.pdpageouts;
-	u.pdpending = uvmexp.pdpending;
 	u.pddeact = uvmexp.pddeact;
 	u.execpages = cpu_count_get(CPU_COUNT_EXECPAGES);
 	u.colorhit = cpu_count_get(CPU_COUNT_COLORHIT);

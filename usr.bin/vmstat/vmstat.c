@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.264 2025/12/29 06:57:06 andvar Exp $ */
+/* $NetBSD: vmstat.c,v 1.265 2026/03/22 11:25:12 yamt Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.264 2025/12/29 06:57:06 andvar Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.265 2026/03/22 11:25:12 yamt Exp $");
 #endif
 #endif /* not lint */
 
@@ -967,7 +967,6 @@ dosum(void)
 		COPY(pdobscan);
 		COPY(pdreact);
 		COPY(pdbusy);
-		COPY(pdpending);
 		COPY(pddeact);
 		COPY(bootpages);
 #undef COPY
@@ -1074,7 +1073,6 @@ dosum(void)
 	(void)printf("%9" PRIu64 " object pages scanned by daemon\n", uvmexp.pdobscan);
 	(void)printf("%9" PRIu64 " pages reactivated\n", uvmexp.pdreact);
 	(void)printf("%9" PRIu64 " pages found busy by daemon\n", uvmexp.pdbusy);
-	(void)printf("%9" PRIu64 " total pending pageouts\n", uvmexp.pdpending);
 	(void)printf("%9" PRIu64 " pages deactivated\n", uvmexp.pddeact);
 	(void)printf("%9" PRIu64 " per-cpu stats synced\n", uvmexp.countsyncall);
 	(void)printf("%9" PRIu64 " anon pages possibly dirty\n", uvmexp.anonunknown);

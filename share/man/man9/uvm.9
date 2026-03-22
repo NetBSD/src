@@ -1,4 +1,4 @@
-.\"	$NetBSD: uvm.9,v 1.115 2024/02/04 05:43:06 mrg Exp $
+.\"	$NetBSD: uvm.9,v 1.116 2026/03/22 11:25:12 yamt Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
 .\" All rights reserved.
@@ -635,7 +635,6 @@ int pdobscan;   /* number of object pages scanned by daemon */
 int pdreact;    /* number of pages daemon reactivated since boot */
 int pdbusy;     /* number of times daemon found a busy page */
 int pdpageouts; /* number of times daemon started a pageout */
-int pdpending;  /* number of times daemon got a pending pageout */
 int pddeact;    /* number of pages daemon deactivates */
 .Ed
 .Sh NOTES

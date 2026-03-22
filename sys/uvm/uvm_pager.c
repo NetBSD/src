@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.132 2026/03/22 11:25:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.132 2026/03/22 11:25:12 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -491,7 +491,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			else
 				uvm_swap_free(swslot, npages);
 		}
-		atomic_dec_uint(&uvmexp.pdpending);
 #endif /* defined(VMSWAP) */
 	}
 }

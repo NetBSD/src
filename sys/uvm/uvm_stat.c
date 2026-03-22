@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.46 2020/06/14 21:41:42 ad Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.47 2026/03/22 11:25:12 yamt Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.46 2020/06/14 21:41:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.47 2026/03/22 11:25:12 yamt Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -133,8 +133,8 @@ uvmexp_print(void (*pr)(const char *, ...)
 	    uvmexp.pdanscan);
 	(*pr)("    busy=%d, freed=%d, reactivate=%d, deactivate=%d\n",
 	    uvmexp.pdbusy, uvmexp.pdfreed, uvmexp.pdreact, uvmexp.pddeact);
-	(*pr)("    pageouts=%d, pending=%d, nswget=%d\n", uvmexp.pdpageouts,
-	    uvmexp.pdpending, uvmexp.nswget);
+	(*pr)("    pageouts=%d, nswget=%d\n", uvmexp.pdpageouts,
+	    uvmexp.nswget);
 	(*pr)("    nswapdev=%d, swpgavail=%d\n",
 	    uvmexp.nswapdev, uvmexp.swpgavail);
 	(*pr)("    swpages=%d, swpginuse=%d, swpgonly=%d, paging=%d\n",
