@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.105 2026/03/22 20:52:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.105 2026/03/22 20:52:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -100,14 +100,9 @@ int delay_divisor = 82;		/* assume the fastest (3/260) */
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
-void _bootstrap(void);
-
-static void _verify_hardware(void);
-static void _vm_init(void);
+void *_bootstrap(void);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-static void _save_symtab(void);
-
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
@@ -174,8 +169,10 @@ _save_symtab(void)
  * things that may be needed very early (lwp0 upages).
  * Once that is done, pmap_bootstrap() is called to do the
  * usual preparations for our use of the MMU.
+ *
+ * Returns the new kernel %sp value for lwp0.
  */
-static void
+static void *
 _vm_init(void)
 {
 	vaddr_t nextva;
@@ -205,17 +202,20 @@ _vm_init(void)
 	 */
 	memset((void *)nextva, 0, USPACE);
 	uvm_lwp_setuarea(&lwp0, nextva);
-
-	nextva += USPACE;
-
-	/*
-	 * Now that lwp0 exists, make it the "current" one.
-	 */
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
 
+	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
+	struct trapframe *tf = (struct trapframe *)(nextva + USPACE) - 1;
+	tf->tf_sr = PSL_USER;
+	lwp0.l_md.md_regs = (int *)tf;
+
+	nextva += USPACE;
+
 	/* This does most of the real work. */
 	pmap_bootstrap(nextva);
+
+	return tf;
 }
 
 /*
@@ -303,7 +303,7 @@ _verify_hardware(void)
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void
+void *
 _bootstrap(void)
 {
 	extern struct consdev consdev_prom;	/* XXX */
@@ -327,7 +327,7 @@ _bootstrap(void)
 	_verify_hardware();
 
 	/* Handle kernel mapping, pmap_bootstrap(), etc. */
-	_vm_init();
+	void *ksp = _vm_init();
 
 	/*
 	 * Find and save OBIO mappings needed early,
@@ -352,4 +352,6 @@ _bootstrap(void)
 	 * Needs idprom_init and obio_init earlier.
 	 */
 	leds_init();
+
+	return ksp;
 }

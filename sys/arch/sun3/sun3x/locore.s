@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.83 2026/03/21 22:00:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.84 2026/03/22 20:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,9 +111,12 @@ L_high_code:
 | Pass the struct exec at tmpstk-32 to _bootstrap().
 | Also, make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
+|
+| _bootstrap() returns lwp0 SP in %a0
 	lea	_ASM_LABEL(tmpstk)-32,%sp
 	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
+	movl	%a0,%sp			| now running on lwp0's stack
 
 | Now turn off the transparent translation of the low 1GB.
 | (this also flushes the ATC)
@@ -127,10 +130,7 @@ L_high_code:
 	movc	%d0,%sfc		| space for copyin/copyout
 	movc	%d0,%dfc
 
-| Setup process zero user/kernel stacks.
-	lea	_C_LABEL(lwp0),%a0	| get lwp0
-	movl	%a0@(L_PCB),%a1		| XXXuvm_lwp_getuarea
-	lea	%a1@(USPACE-4),%sp	| set SSP to last word
+	/* set user SP */
 	movl	#USRSTACK3X-4,%a2
 	movl	%a2,%usp		| init user SP
 
@@ -140,19 +140,7 @@ L_high_code:
 | Interrupts will be enabled later, AFTER  autoconfiguration
 | is finished, to avoid spurrious interrupts.
 
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	clrw	%sp@-			| tf_format,tf_vector
-	clrl	%sp@-			| tf_pc (filled in later)
-	movw	#PSL_USER,%sp@-		| tf_sr for user mode
-	clrl	%sp@-			| tf_stackadj
-	lea	%sp@(-64),%sp		| tf_regs[16]
-	movl	%a1,%a0@(L_MD_REGS)	| lwp0.l_md.md_regs = trapframe
-	jbsr	_C_LABEL(main)		| main(&trapframe)
-	PANIC("main() returned")
+	jra	_C_LABEL(main)		| main() (never returns)
 
 | That is all the assembly startup code we need on the sun3x!
 | The rest of this is like the hp300/locore.s where possible.
