@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.200 2026/03/21 22:00:15 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.201 2026/03/22 15:10:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -409,7 +409,6 @@ Ltbia040:
 Lnocache0:
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(mac68k_init)
-
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
@@ -424,8 +423,6 @@ Lnocache0:
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
-	PANIC("main() returned")
-	/* NOTREACHED */
 
 /*
  * Use common m68k bus error and address error handlers.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.61 2026/03/21 22:00:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.62 2026/03/22 15:10:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -338,7 +338,6 @@ Lnocache0:
 
 /* Final setup for call to main(). */
 	jbsr	_C_LABEL(fic_init)
-
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
@@ -353,13 +352,6 @@ Lnocache0:
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
-
-	pea	Lmainreturned		| Yow!  Main returned!
-	jbsr	_C_LABEL(panic)
-	/* NOTREACHED */
-Lmainreturned:
-	.asciz	"main() returned"
-	.even
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.

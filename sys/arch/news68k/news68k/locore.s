@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.105 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.106 2026/03/22 15:10:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -383,8 +383,6 @@ Lenab3:
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
-
-	SETLED2(3);			| main returned?
 
 /*
  * Other exceptions only cause four and six word stack frame and require

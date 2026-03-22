@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.152 2026/03/21 22:00:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.153 2026/03/22 15:10:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -323,7 +323,6 @@ Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
 	addql	#4,%sp
-
 /*
  * Create a fake exception frame so that cpu_lwp_fork() can copy it.
  * main() nevers returns; we exit to user mode from a forked process
@@ -338,9 +337,6 @@ Lenab3:
 	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
 	jra	_C_LABEL(main)		| main()
-
-	PANIC("main() returned")	| Yow!  Main returned!
-	/* NOTREACHED */
 
 /*
  * Other exceptions only cause four and six word stack frame and require
