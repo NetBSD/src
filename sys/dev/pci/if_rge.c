@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.49 2026/03/08 19:40:52 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.50 2026/03/22 09:26:43 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.49 2026/03/08 19:40:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.50 2026/03/22 09:26:43 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -1101,7 +1101,7 @@ rge_ifmedia_upd(struct ifnet *ifp)
 	if (RGE_TYPE_R26(sc) || sc->rge_type == MAC_R27)
 		RGE_PHY_CLRBIT(sc, 0xa5ea, 0x0007);
 
-	if (sc->rge_sfpmode)
+	if (sc->rge_sfpmode == RGE_SFPMODE_RTL8127ATF)
 		return rge_ifmedia_upd_sds(sc);
 
 	val = rge_read_phy_ocp(sc, 0xa5d4);
@@ -1197,7 +1197,7 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 		else
 			ifmr->ifm_active |= IFM_HDX;
 
-		if (sc->rge_sfpmode) {
+		if (sc->rge_sfpmode == RGE_SFPMODE_RTL8127ATF) {
 			if (status & RGE_PHYSTAT_1000MBPS)
 				ifmr->ifm_active |= IFM_1000_LX;
 			else if (status & RGE_PHYSTAT_10000MBPS)
