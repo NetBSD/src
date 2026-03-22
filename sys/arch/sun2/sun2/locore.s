@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.45 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.46 2026/03/22 15:11:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -170,14 +170,14 @@ L_high_code:
  * main() nevers returns; we exit to user mode from a forked process
  * later on.
  */
-	clrw	%sp@-			| tf_format,tf_vector
-	clrl	%sp@-			| tf_pc (filled in later)
-	movw	#PSL_USER,%sp@-		| tf_sr for user mode
-	clrl	%sp@-			| tf_stackadj
-	lea	%sp@(-64),%sp		| tf_regs[16]
-	movl	%a1,%a0@(L_MD_REGS)	| lwp0.p_md.md_regs = trapframe
-	jbsr	_C_LABEL(main)		| main(&trapframe)
-	PANIC("main() returned")
+	clrw	%sp@-			| vector offset/frame type
+	clrl	%sp@-			| PC - filled in by "execve"
+	movw	#PSL_USER,%sp@-		| in user mode
+	clrl	%sp@-			| stack adjust count and padding
+	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
+	movl	%sp,%a0@(L_MD_REGS)	| lwp0.p_md.md_regs = trapframe
+
+	jra	_C_LABEL(main)		| main()
 
 | That is all the assembly startup code we need on the sun3!
 | The rest of this is like the hp300/locore.s where possible.
