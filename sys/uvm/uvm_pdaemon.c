@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.136 2026/03/22 11:25:12 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.137 2026/03/22 12:00:08 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.136 2026/03/22 11:25:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.137 2026/03/22 12:00:08 wiz Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -792,9 +792,11 @@ uvmpd_scan_queue(void)
 			}
 			if (slot > 0) {
 				/* this page is now only in swap. */
+#ifdef ENABLE_UNRELIABLE_CHECK_PR_56764
 				KASSERTMSG(uvmexp.swpgonly < uvmexp.swpginuse,
 					   "swpgonly %d swpginuse %d",
 					   uvmexp.swpgonly, uvmexp.swpginuse);
+#endif
 				atomic_inc_uint(&uvmexp.swpgonly);
 			}
 			rw_exit(slock);
