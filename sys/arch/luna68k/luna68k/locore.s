@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.104 2026/03/21 22:00:15 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.105 2026/03/22 15:10:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -257,13 +257,10 @@ Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
-
 /*
- * Create a fake exception frame that returns to user mode,
- * and save its address in p->p_md.md_regs for cpu_lwp_fork().
- * The new frames for process 1 and 2 will be adjusted by
- * cpu_set_kpc() to arrange for a call to a kernel function
- * before the new process does its rte out to user mode.
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
  */
 	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"
