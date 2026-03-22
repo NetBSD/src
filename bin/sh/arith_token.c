@@ -1,4 +1,4 @@
-/*	$NetBSD: arith_token.c,v 1.7 2017/12/17 04:06:03 kre Exp $	*/
+/*	$NetBSD: arith_token.c,v 1.8 2026/03/22 19:18:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: arith_token.c,v 1.7 2017/12/17 04:06:03 kre Exp $");
+__RCSID("$NetBSD: arith_token.c,v 1.8 2026/03/22 19:18:50 kre Exp $");
 #endif /* not lint */
 
 #include <inttypes.h>
@@ -80,7 +80,7 @@ arith_token(void)
 	for (;;) {
 		token = *buf;
 
-		if (isdigit(token)) {
+		if (is_digit(token)) {
 			/*
 			 * Numbers all start with a digit, and nothing
 			 * else does, the number ends wherever

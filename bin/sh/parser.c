@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.185 2026/03/22 19:16:18 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.186 2026/03/22 19:18:50 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.185 2026/03/22 19:16:18 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.186 2026/03/22 19:18:50 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2244,7 +2244,7 @@ parsesub: {
 			if (c == '#') {
 				if ((c = pgetc_linecont()) == CLOSEBRACE)
 					c = '#';
-				else if (is_name(c) || isdigit(c))
+				else if (is_name(c) || is_digit(c))
 					subtype = VSLENGTH;
 				else if (is_special(c)) {
 					/*
