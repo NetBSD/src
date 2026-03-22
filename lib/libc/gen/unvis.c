@@ -1,4 +1,4 @@
-/*	$NetBSD: unvis.c,v 1.46 2026/03/20 17:54:11 kre Exp $	*/
+/*	$NetBSD: unvis.c,v 1.47 2026/03/22 20:18:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)unvis.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: unvis.c,v 1.46 2026/03/20 17:54:11 kre Exp $");
+__RCSID("$NetBSD: unvis.c,v 1.47 2026/03/22 20:18:15 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -43,9 +43,10 @@ __RCSID("$NetBSD: unvis.c,v 1.46 2026/03/20 17:54:11 kre Exp $");
 
 #include <assert.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <errno.h>
 #include <vis.h>
 
 #ifdef __weak_alias
@@ -362,6 +363,9 @@ unvis(char *cp, int c, int *astate, int flag)
 	case S_OCTAL3:	/* third possible octal digit */
 		*astate = SS(0, S_GROUND);
 		if (isoctal(uc)) {
+			/* check possible overflow of 8 bit char */
+			if (*cp & 040)
+				goto bad;
 			*cp = (*cp << 3) + (c - '0');
 			return UNVIS_VALID;
 		}
@@ -470,7 +474,14 @@ unvis(char *cp, int c, int *astate, int flag)
 			return UNVIS_VALID;
 		if (!isdigit(uc))
 			goto bad;
-		*cp = (*cp * 10) + uc - '0';
+		/*
+		 * I doubt any of this really works on a system where
+		 * chars are not 8 bits, but use UCHAR_MAX rather than
+		 * 255 (or 0xFF), just in case it does.
+		 */
+		if ((int)(*cp & UCHAR_MAX) * 10 > UCHAR_MAX - (uc - '0'))
+			goto bad;
+		*cp = ((*cp & UCHAR_MAX) * 10) + uc - '0';
 		return UNVIS_NOCHAR;
 
 	default:
