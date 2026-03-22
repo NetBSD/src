@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.51 2026/03/22 09:27:56 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.52 2026/03/22 09:29:22 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.51 2026/03/22 09:27:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.52 2026/03/22 09:29:22 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -67,15 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.51 2026/03/22 09:27:56 mlelstv Exp $");
 
 #include <dev/pci/if_rgereg.h>
 
-#ifdef __NetBSD__
-
-#ifdef NET_MPSAFE
-#define 	RGE_MPSAFE	1
-#define 	CALLOUT_FLAGS	CALLOUT_MPSAFE
-#else
-#define 	CALLOUT_FLAGS	0
-#endif
-#endif
+#define RGE_LOCK(sc)		mutex_enter(&(sc)->sc_lock)
+#define RGE_UNLOCK(sc)		mutex_exit(&(sc)->sc_lock)
+#define RGE_ASSERT_LOCKED(sc)	KASSERT(mutex_owned(&(sc)->sc_lock))
 
 #ifdef RGE_DEBUG
 #define DPRINTF(x)	do { if (rge_debug > 0) printf x; } while (0)
@@ -94,7 +88,9 @@ static int	rge_ioctl(struct ifnet *, u_long, void *);
 static void	rge_start(struct ifnet *);
 static void	rge_watchdog(struct ifnet *);
 static int	rge_init(struct ifnet *);
+static int	rge_init_locked(struct rge_softc *);
 static void	rge_stop(struct ifnet *, int);
+static void	rge_stop_locked(struct rge_softc *, int);
 static int	rge_ifmedia_upd(struct ifnet *);
 static void	rge_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 static int	rge_allocmem(struct rge_softc *);
@@ -107,6 +103,7 @@ static int	rge_rxeof(struct rge_softc *);
 static int	rge_txeof(struct rge_softc *);
 static int	rge_reset(struct rge_softc *);
 static void	rge_iff(struct rge_softc *);
+static int	rge_ifflags_cb(struct ethercom *);
 static void	rge_mac_config_mcu(struct rge_softc *, enum rge_mac_type);
 static void	rge_mac_config_ext_mcu(struct rge_softc *, enum rge_mac_type);
 static uint64_t	rge_mcu_get_bin_version(const uint16_t *, uint16_t);
@@ -209,6 +206,8 @@ rge_attach(device_t parent, device_t self, void *aux)
 	pcireg_t command;
 	const char *revstr;
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NET);
+
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
 	sc->sc_dev = self;
@@ -278,6 +277,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
+	pci_intr_setattr(pc, sc->sc_ihs[0], PCI_INTR_MPSAFE, true);
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (pci_dma64_available(pa))
@@ -358,9 +358,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-#ifdef RGE_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
-#endif
 	ifp->if_ioctl = rge_ioctl;
 	ifp->if_stop = rge_stop;
 	ifp->if_start = rge_start;
@@ -375,7 +373,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 
-	callout_init(&sc->sc_timeout, CALLOUT_FLAGS);
+	callout_init(&sc->sc_timeout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_timeout, rge_tick, sc);
 
 	command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
@@ -394,6 +392,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, eaddr);
+	ether_set_ifflags_cb(&sc->sc_ec, rge_ifflags_cb);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
@@ -429,6 +428,8 @@ rge_detach(device_t self, int flags)
 
 	free(sc->sc_queues, M_DEVBUF);
 
+	mutex_destroy(&sc->sc_lock);
+
 	return 0;
 }
 static int
@@ -439,15 +440,17 @@ rge_intr(void *arg)
 	uint32_t status;
 	int claimed = 0, rx, tx;
 
+	RGE_LOCK(sc);
+
 	if (!(ifp->if_flags & IFF_RUNNING))
-		return (0);
+		goto done;
 
 	/* Disable interrupts. */
 	RGE_WRITE_4(sc, RGE_IMR, 0);
 
 	if (!(sc->rge_flags & RGE_FLAG_MSI)) {
 		if ((RGE_READ_4(sc, RGE_ISR) & sc->rge_intrs) == 0)
-			return (0);
+			goto done;
 	}
 
 	status = RGE_READ_4(sc, RGE_ISR);
@@ -471,9 +474,7 @@ rge_intr(void *arg)
 		}
 
 		if (status & RGE_ISR_SYSTEM_ERR) {
-			KERNEL_LOCK(1, NULL);
-			rge_init(ifp);
-			KERNEL_UNLOCK_ONE(NULL);
+			rge_init_locked(sc);
 			claimed = 1;
 		}
 	}
@@ -506,6 +507,8 @@ rge_intr(void *arg)
 
 	RGE_WRITE_4(sc, RGE_IMR, sc->rge_intrs);
 
+done:
+	RGE_UNLOCK(sc);
 	return (claimed);
 }
 
@@ -633,39 +636,51 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu < ETHERMIN || ifr->ifr_mtu > RGE_JUMBO_MTU) {
 			error = EINVAL;
-		} else { 
-			ifp->if_mtu = ifr->ifr_mtu;
-			error = 0;      /* no need to reset (no ENETRESET) */
-		} 
-		break; 
-	case SIOCSIFFLAGS:
-		if ((error = ifioctl_common(ifp, cmd, data)) != 0)
-			break;
-		/* XXX set an ifflags callback and let ether_ioctl
-		 * handle all of this.
-		 */
-		if (ifp->if_flags & IFF_UP) {
-			if (ifp->if_flags & IFF_RUNNING)
-				error = ENETRESET;
-			else
-				rge_init(ifp);
 		} else {
-			if (ifp->if_flags & IFF_RUNNING)
-				rge_stop(ifp, 1);
+			ifp->if_mtu = ifr->ifr_mtu;
+			error = 0;	/* no need to reset (no ENETRESET) */
 		}
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
+		break;
 	}
 
 	if (error == ENETRESET) {
-		if (ifp->if_flags & IFF_RUNNING)
+		RGE_LOCK(sc);
+		if (sc->sc_if_flags & IFF_RUNNING)
 			rge_iff(sc);
+		RGE_UNLOCK(sc);
 		error = 0;
 	}
 
 	splx(s);
 	return (error);
+}
+
+static int
+rge_ifflags_cb(struct ethercom *ec)
+{
+	struct ifnet * const ifp = &ec->ec_if;
+	struct rge_softc * const sc = ifp->if_softc;
+	int ret = 0;
+	u_short change;
+
+	KASSERT(IFNET_LOCKED(ifp));
+	RGE_LOCK(sc);
+
+	change = ifp->if_flags ^ sc->sc_if_flags;
+	sc->sc_if_flags = ifp->if_flags;
+
+	if ((change & ~(IFF_CANTCHANGE | IFF_DEBUG)) != 0) {
+		ret = ENETRESET;
+	} else if ((change & IFF_PROMISC) != 0) {
+		if ((sc->sc_if_flags & IFF_RUNNING) != 0)
+			rge_iff(sc);
+	}
+
+	RGE_UNLOCK(sc);
+	return ret;
 }
 
 static void
@@ -735,22 +750,25 @@ rge_watchdog(struct ifnet *ifp)
 {
 	struct rge_softc *sc = ifp->if_softc;
 
+	RGE_LOCK(sc);
+
 	device_printf(sc->sc_dev, "watchdog timeout\n");
 	if_statinc(ifp, if_oerrors);
 
-	rge_init(ifp);
+	rge_init_locked(sc);
+	RGE_UNLOCK(sc);
 }
 
 static int
-rge_init(struct ifnet *ifp)
+rge_init_locked(struct rge_softc *sc)
 {
-	struct rge_softc *sc = ifp->if_softc;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct rge_queues *q = sc->sc_queues;
 	uint32_t rxconf, val;
 	unsigned i, num_miti;
-	int error = 0;
+	int error;
 
-	rge_stop(ifp, 0);
+	rge_stop_locked(sc, 0);
 
 	/* Set MAC address. */
 	rge_set_macaddr(sc, CLLADDR(ifp->if_sadl));
@@ -760,10 +778,10 @@ rge_init(struct ifnet *ifp)
 	rge_tx_list_init(q);
 
 	if ((error = rge_chipinit(sc)))
-		return error;
+		return (error);
 
 	if ((error = rge_phy_config(sc)))
-		return error;
+		return (error);
 
 	RGE_SETBIT_1(sc, RGE_EECMD, RGE_EECMD_WRITECFG);
 
@@ -951,6 +969,7 @@ rge_init(struct ifnet *ifp)
 	DELAY(2000);
 
 	/* Program promiscuous mode and multicast filters. */
+	sc->sc_if_flags = ifp->if_flags;
 	rge_iff(sc);
 
 	if (sc->rge_type == MAC_R27)
@@ -970,20 +989,34 @@ rge_init(struct ifnet *ifp)
 	rge_setup_intr(sc, RGE_IMTYPE_SIM);
 
 	ifp->if_flags |= IFF_RUNNING;
+	sc->sc_if_flags |= IFF_RUNNING;
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
 	callout_schedule(&sc->sc_timeout, 1);
 
-	return 0;
+	return error;
+}
+
+static int
+rge_init(struct ifnet *ifp)
+{
+	struct rge_softc *sc = ifp->if_softc;
+	int error;
+
+	RGE_LOCK(sc);
+	error = rge_init_locked(sc);
+	RGE_UNLOCK(sc);
+
+	return error;
 }
 
 /*
  * Stop the adapter and free any mbufs allocated to the RX and TX lists.
  */
 static void
-rge_stop(struct ifnet *ifp, int disable)
+rge_stop_locked(struct rge_softc *sc, int disable)
 {
-	struct rge_softc *sc = ifp->if_softc;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct rge_queues *q = sc->sc_queues;
 	unsigned i;
 
@@ -991,6 +1024,7 @@ rge_stop(struct ifnet *ifp, int disable)
 
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~IFF_RUNNING;
+	sc->sc_if_flags &= ~IFF_RUNNING;
 	sc->rge_timerintr = 0;
 
 	RGE_CLRBIT_4(sc, RGE_RXCFG, RGE_RXCFG_ALLPHYS | RGE_RXCFG_INDIV |
@@ -1032,6 +1066,15 @@ rge_stop(struct ifnet *ifp, int disable)
 	}
 }
 
+static void
+rge_stop(struct ifnet *ifp, int disable)
+{
+	struct rge_softc *sc = ifp->if_softc;
+
+	RGE_LOCK(sc);
+	rge_stop_locked(sc, disable);
+	RGE_UNLOCK(sc);
+}
 
 
 /*
@@ -1749,7 +1792,6 @@ rge_reset(struct rge_softc *sc)
 static void
 rge_iff(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
@@ -1757,9 +1799,11 @@ rge_iff(struct rge_softc *sc)
 	uint32_t rxfilt;
 	int h = 0;
 
+	RGE_ASSERT_LOCKED(sc);
+
 	rxfilt = RGE_READ_4(sc, RGE_RXCFG);
 	rxfilt &= ~(RGE_RXCFG_ALLPHYS | RGE_RXCFG_MULTI);
-	ifp->if_flags &= ~IFF_ALLMULTI;
+	ec->ec_flags &= ~ETHER_F_ALLMULTI;
 
 	/*
 	 * Always accept frames destined to our station address.
@@ -1767,11 +1811,11 @@ rge_iff(struct rge_softc *sc)
 	 */
 	rxfilt |= RGE_RXCFG_INDIV | RGE_RXCFG_BROAD;
 
-	if (ifp->if_flags & IFF_PROMISC) {
+	if (sc->sc_if_flags & IFF_PROMISC) {
  allmulti:
-		ifp->if_flags |= IFF_ALLMULTI;
+		ec->ec_flags |= ETHER_F_ALLMULTI;
 		rxfilt |= RGE_RXCFG_MULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+		if (sc->sc_if_flags & IFF_PROMISC)
 			rxfilt |= RGE_RXCFG_ALLPHYS;
 		hashes[0] = hashes[1] = 0xffffffff;
 	} else {
@@ -3935,11 +3979,10 @@ static void
 rge_tick(void *arg)
 {
 	struct rge_softc *sc = arg;
-	int s;
 
-	s = splnet();
+	RGE_LOCK(sc);
 	rge_link_state(sc);
-	splx(s);
+	RGE_UNLOCK(sc);
 
 	callout_schedule(&sc->sc_timeout, hz);
 }

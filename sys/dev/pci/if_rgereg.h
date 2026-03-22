@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.20 2026/03/08 19:40:52 mlelstv Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.21 2026/03/22 09:29:22 mlelstv Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.16 2025/10/27 03:18:36 kevlo Exp $	*/
 
 /*
@@ -430,6 +430,9 @@ struct rge_softc {
 	int			rge_timerintr;
 #define RGE_IMTYPE_NONE		0
 #define RGE_IMTYPE_SIM		1
+
+	kmutex_t		sc_lock;
+	u_short			sc_if_flags;
 };
 
 /*
