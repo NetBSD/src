@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.50 2026/03/22 09:26:43 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.51 2026/03/22 09:27:56 mlelstv Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.50 2026/03/22 09:26:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.51 2026/03/22 09:27:56 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -1427,6 +1427,8 @@ rge_newbuf(struct rge_queues *q, int idx)
 		return (ENOBUFS);
 	}
 	m->m_len = m->m_pkthdr.len = MCLBYTES;
+
+	m_adj(m, ETHER_ALIGN);
 
 	rxq = &q->q_rx.rge_rxq[idx];
 	rxmap = rxq->rxq_dmamap;
