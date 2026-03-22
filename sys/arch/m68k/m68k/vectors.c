@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.c,v 1.9 2026/03/21 20:14:56 thorpej Exp $	*/
+/*	$NetBSD: vectors.c,v 1.10 2026/03/22 01:13:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2024, 2026 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@ extern char bsun[], inex[], dz[], unfl[], operr[], ovfl[], snan[];
 #define	FP_SNAN_HANDLER40	snan
 #define	UNIMP_FP_DATA_HANDLER40	fpunsupp_fpsp40
 #else
-extern char fpunsupp_40[];
+extern char fpunsupp_4060[];
 #define	LINE1111_HANDLER40	fpfline
 #define	FP_BSUN_HANDLER40	fpfault
 #define	FP_INEX_HANDLER40	fpfault
@@ -131,7 +131,7 @@ extern char fpunsupp_40[];
 #define	FP_OPERR_HANDLER40	fpfault
 #define	FP_OVFL_HANDLER40	fpfault
 #define	FP_SNAN_HANDLER40	fpfault
-#define	UNIMP_FP_DATA_HANDLER40	fpunsupp_40
+#define	UNIMP_FP_DATA_HANDLER40	fpunsupp_4060
 #endif
 #if defined(M68020) || defined(M68030) || defined(M68060) || \
     defined(__HAVE_M68K_PRIVATE_VECTAB)
