@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.201 2026/03/22 15:10:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.202 2026/03/22 17:52:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -224,6 +224,9 @@ Lstart3:
 	/*
 	 * Set up the vector table, and race to get the MMU
 	 * enabled.
+	 *
+	 * XXX Should move vec_init() call to Lloaddone, like other
+	 * XXX m68k platforms do.
 	 */
 	jbsr	_C_LABEL(vec_init)
 
@@ -377,16 +380,17 @@ LnokillTT:
 	pmove	%a2@,%tc		| load it
 #endif /* M68020 || M68030 */
 
-Lloaddone:
-
 /*
  * Should be running mapped from this point on
  */
+Lloaddone:
 	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
-/* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
+
+	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-/* set kernel stack, user SP, lwp0, and initial pcb */
-	lea	%a0@(USPACE-4),%sp	| set kernel stack to end of area
+	movl	%a0,%sp			| now running on lwp0's stack
+
+	/* set user SP */
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init %USP
 
@@ -407,22 +411,8 @@ Ltbia040:
 	.word	0xf518			| pflusha
 
 Lnocache0:
-/* Final setup for call to main(). */
-	jbsr	_C_LABEL(mac68k_init)
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
-
-	jra	_C_LABEL(main)		| main()
+	jbsr	_C_LABEL(mac68k_init)	| additional pre-main initialization
+	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
  * Use common m68k bus error and address error handlers.

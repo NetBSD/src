@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.50 2026/03/09 16:09:17 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.51 2026/03/22 17:52:46 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.50 2026/03/09 16:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.51 2026/03/22 17:52:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4252,6 +4252,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
  *	Phase 2 of bootstrapping virtual memory.  This is called after
  *	the MMU has been enabled to finish setting up run-time-computed
  *	global pmap data, plus the lwp0 u-area, curlwp, and curpcb.
+ *
+ *	Returns the new kernel %sp value for lwp0.
  */
 void *
 pmap_bootstrap2(void)
@@ -4275,6 +4277,11 @@ pmap_bootstrap2(void)
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
 
+	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
+	struct trapframe *tf = (struct trapframe *)(lwp0uarea + USPACE) - 1;
+	tf->tf_sr = PSL_USER;
+	lwp0.l_md.md_regs = (int *)tf;
+
 	/*
 	 * Initialize the source/destination control registers for
 	 * movs.
@@ -4282,5 +4289,5 @@ pmap_bootstrap2(void)
 	setsfc(FC_USERD);
 	setdfc(FC_USERD);
 
-	return (void *)lwp0uarea;
+	return tf;
 }

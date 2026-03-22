@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.40 2026/03/21 22:00:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.41 2026/03/22 17:52:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -175,10 +175,12 @@ ASENTRY_NOPROFILE(start)
 Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load the temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
-/* phase 2 of pmap setup, returns pointer to lwp0 uarea in %a0 */
+
+	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-/* set kernel stack, user SP */
-	lea	%a0@(USPACE-4),%sp	| set kernel stack to end of area
+	movl	%a0,%sp			| now running on lwp0's stack
+
+	/* set user SP */
 	movl	#USRSTACK-4,%a2
 	movl	%a2,%usp		| init user SP
 
@@ -191,24 +193,10 @@ Lmmuenabled:
 1:
 	.word	0xf518			| pflusha
 2:
-/* final setup for C code */
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
-
-	jra	_C_LABEL(main)		| main()
+	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
  * Other exceptions only cause four and six word stack frame and require
