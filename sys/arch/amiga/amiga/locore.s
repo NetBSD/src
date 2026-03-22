@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.181 2026/03/21 20:14:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.182 2026/03/22 15:06:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -669,39 +669,19 @@ Lcacheon:
 
 	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
 /*
- * Create a fake exception frame that returns to user mode,
- * make space for the rest of a fake saved register set, and
- * pass the first available RAM and a pointer to the register
- * set to "main()".  "main()" will do an "execve()" using that
- * stack frame.
- * When "main()" returns, we're running in process 1 and have
- * successfully executed the "execve()".  We load up the registers from
- * that set; the "rte" loads the PC and PSR, which jumps to "init".
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
  */
   	clrw	%sp@-			| vector offset/frame type
 	clrl	%sp@-			| PC - filled in by "execve"
   	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count
+	clrl	%sp@-			| stack adjust count and padding
 	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0		| lwp0 in a0
-	movl	%sp,%a0@(L_MD_REGS)	| save frame for lwp0
-	movl	%usp,%a1
-	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
-	pea	%sp@			| addr of space for D0
+	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
+	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
-	jbsr	_C_LABEL(main)		| main(firstaddr, r0)
-	addql	#4,%sp			| pop args
-
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jne	Lnoflush		| no, skip
-	.word	0xf478			| cpusha dc
-	.word	0xf498			| cinva ic, also clears the 060 btc
-Lnoflush:
-	movl	%sp@(FR_SP),%a0		| grab and load
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,%d0-%d7/%a0-%a6	| load most registers (all but SSP)
-	addql	#8,%sp			| pop SSP and stack adjust count
-  	rte
+	jra	_C_LABEL(main)		| main()
 
 /*
  * Primitives

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.137 2026/03/21 22:00:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.138 2026/03/22 15:06:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -644,40 +644,21 @@ Lcacheon:
 	movl	%d6,_C_LABEL(bootdev)	|    and boot device
 #endif
 
-	/*
-	 * Create a fake exception frame that returns to user mode,
-	 * make space for the rest of a fake saved register set, and
-	 * pass a pointer to the register set to "main()".
-	 * "main()" will call "icode()", which fakes
-	 * an "execve()" system call, which is why we need to do that
-	 * ("main()" sets "u.u_ar0" to point to the register set).
-	 * When "main()" returns, we're running in process 1 and have
-	 * successfully faked the "execve()".  We load up the registers from
-	 * that set; the "rte" loads the PC and PSR, which jumps to "init".
-	 */
-	movl	#0,%a6			|  make DDB stack_trace() work
-	clrw	%sp@-			|  vector offset/frame type
-	clrl	%sp@-			|  PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		|  in user mode
-	clrl	%sp@-			|  stack adjust count
-	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
-	movl	%sp,%a0@(L_MD_REGS)     | save frame for lwp0
-	movl	%usp,%a1
-	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
-	pea	%sp@			|  addr of space for D0
-	jbsr	_C_LABEL(main)		|  main(r0)
-	addql	#4,%sp			|  pop args
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jne	Lnoflush		|  Not an 68040, skip flush
-	.word	0xf478			|  cpusha dc
-	.word	0xf498			|  cinva ic
-Lnoflush:
-	movl	%sp@(FR_SP),%a0		|  grab and load
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  load most registers (all but SSP)
-	addql	#8,%sp			|  pop SSP and stack adjust count
-	rte
+/*
+ * Create a fake exception frame so that cpu_lwp_fork() can copy it.
+ * main() nevers returns; we exit to user mode from a forked process
+ * later on.
+ */
+	movl	#0,%a6			| make DDB stack_trace() work
+	clrw	%sp@-			| vector offset/frame type
+	clrl	%sp@-			| PC - filled in by "execve"
+	movw	#PSL_USER,%sp@-		| in user mode
+	clrl	%sp@-			| stack adjust count and padding
+	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
+	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
+	movl	%sp,%a0@(L_MD_REGS)     |   in lwp0.l_md.md_regs
+
+	jra	_C_LABEL(main)		| main()
 
 /*
  * Primitives
