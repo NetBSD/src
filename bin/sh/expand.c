@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.147 2025/05/07 14:01:01 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.148 2026/03/22 20:27:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.147 2025/05/07 14:01:01 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.148 2026/03/22 20:27:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,8 @@ STATIC void add_args(struct strlist *);
 STATIC void rmescapes_nl(char *);
 
 #ifdef	DEBUG
+static char *showchar(char *, char, int *);
+static char *showstr(const char *, int);
 #define	NULLTERM_4_TRACE(p)	STACKSTRNUL(p)
 #else
 #define	NULLTERM_4_TRACE(p)	do { /* nothing */ } while (0)
@@ -180,6 +182,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 {
 	struct strlist *sp;
 	char *p;
+	DEBUG_ONLY(int len);
 
 	CTRACE(DBG_EXPAND, ("expandarg(fl=%#x)\n", flag));
 	if (fflag)		/* no filename expandsion */
@@ -194,14 +197,16 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	argstr(arg->narg.text, flag);
 	if (arglist == NULL) {
 		STACKSTRNUL(expdest);
+		DEBUG_ONLY(len = expdest - stackblock());
 		CTRACE(DBG_EXPAND,
 		    ("expandarg: no arglist, done[%d] (len %d) \"%s\"\n",
-		    back_exitstatus, expdest - stackblock(), stackblock()));
+		    back_exitstatus, len, showstr(stackblock(), len)));
 		return;			/* here document expanded */
 	}
 	STPUTC('\0', expdest);
+	DEBUG_ONLY(len = expdest - stackblock() - 1);
 	CTRACE(DBG_EXPAND, ("expandarg: arglist got (%d) \"%s\"\n",
-		    expdest - stackblock() - 1, stackblock()));
+		    len, showstr(stackblock(), len)));
 	p = grabstackstr(expdest);
 	exparg.lastp = &exparg.list;
 	/*
@@ -235,8 +240,6 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 	}
 }
 
-
-
 /*
  * Perform variable and command substitution.
  * If EXP_GLOB is set, output CTLESC characters to allow for further processing.
@@ -258,7 +261,8 @@ argstr(const char *p, int flag)
 	if (flag & EXP_IFS_SPLIT)
 		ifs = ifsval();
 
-	CTRACE(DBG_EXPAND, ("argstr(\"%s\", %#x) quotes=%#x\n", p,flag,quotes));
+	CTRACE(DBG_EXPAND, ("argstr(\"%s\", %#x)%s\n",
+	    showstr(p, -1), flag, quotes ? " EXP_QNEEDED" : ""));
 
 	startoff = expdest - stackblock();
 	if (*p == '~' && (flag & (EXP_TILDE | EXP_VARTILDE)))
@@ -268,7 +272,8 @@ argstr(const char *p, int flag)
 		case '\0':
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"\" "
-			   "added \"%s\" to expdest\n", stackblock()));
+			   "added \"%s\" to expdest\n",
+			   showstr(stackblock(), expdest - stackblock())));
 			return p - 1;
 		case CTLENDVAR: /* end of expanding yyy in ${xxx-yyy} */
 		case CTLENDARI: /* end of a $(( )) string */
@@ -277,7 +282,8 @@ argstr(const char *p, int flag)
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
 			    " after %2.2X; added \"%s\" to expdest\n",
-			    p, (c & 0xff), stackblock()));
+			    p, (c & 0xff),
+			    showstr(stackblock(), expdest - stackblock())));
 			return p;
 		case CTLQUOTEMARK:
 			/* "$@" syntax adherence hack */
@@ -319,34 +325,58 @@ argstr(const char *p, int flag)
 				line_number++;
 			break;
 		case CTLVAR: {
-#ifdef DEBUG
-			unsigned int pos = expdest - stackblock();
+			int xf = 0;
+			DEBUG_ONLY(unsigned int pos = expdest - stackblock());
+
 			NULLTERM_4_TRACE(expdest);
-#endif
-			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) | (flag & ifs_split));
+			if (shellparam.nparam > 1) {
+				/*
+				 * Flags just in case we are expanding $* ($@)
+				 * in a field splitting context.  These are
+				 * irrelevant (unused) in all other cases.
+				 *
+				 * If there are 0 or 1 numeric params, then $*
+				 * should just vanish if $1 exists and is ""
+				 *
+				 * But for 2 or more params, we need to keep
+				 * "" first and last params, if our expansion
+				 * abuts other text (before or after)
+				 */
+				if (expdest != stackblock() &&
+				    expdest[-1] != '\0')
+					xf |= EXP_NEEDFIRST;	/* $* magic */
+				if (p[0] == VSNORMAL &&  /* p[2] == '=' && */
+				    (p[1] == '*' || p[1] == '@') &&
+				    p[3] != '\0')
+					xf |= EXP_NEEDLAST;	/* magic++ */
+			}
+
+			p = evalvar(p, (flag & ~EXP_IFS_SPLIT) |
+			    (flag & ifs_split) | xf);
+
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr evalvar "
 			   "added %zd \"%s\" to expdest\n",
 			   (size_t)(expdest - (stackblock() + pos)),
-			   stackblock() + pos));
+			   showstr(stackblock() + pos,
+			     (int)(expdest - (stackblock() + pos)))));
 			break;
 		}
 		case CTLBACKQ:
 		case CTLBACKQ|CTLQUOTE: {
-#ifdef DEBUG
-			unsigned int pos = expdest - stackblock();
-#endif
+			DEBUG_ONLY(unsigned int pos = expdest - stackblock());
+
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr expbackq added \"%s\" "
-			   "to expdest\n", stackblock() + pos));
+			   "to expdest\n", showstr(stackblock() + pos,
+			     (int)(expdest - (stackblock() + pos)))));
 			break;
 		}
 		case CTLARI: {
-#ifdef DEBUG
-			unsigned int pos = expdest - stackblock();
-#endif
+			DEBUG_ONLY(unsigned int pos = expdest - stackblock());
+
 			p = expari(p);
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr expari "
@@ -395,9 +425,7 @@ exptilde(const char *p, int flag)
 	const int quotes = flag & EXP_QNEEDED;
 	char *user;
 	struct stackmark smark;
-#ifdef DEBUG
-	unsigned int offs = expdest - stackblock();
-#endif
+	DEBUG_ONLY(unsigned int offs = expdest - stackblock());
 
 	setstackmark(&smark);
 	(void) grabstackstr(expdest);
@@ -435,8 +463,8 @@ exptilde(const char *p, int flag)
 	if (*user == '\0') {
 		home = lookupvar("HOME");
 		/*
-		 * if HOME is unset, results are unspecified...
-		 * we used to just leave the ~ unchanged, but
+		 * If HOME is unset, results are unspecified.
+		 * We used to just leave the ~ unchanged, but
 		 * (some) other shells do ... and this seems more useful.
 		 */
 		if (home == NULL && (pw = getpwuid(getuid())) != NULL)
@@ -467,14 +495,22 @@ exptilde(const char *p, int flag)
 		return startp;
 	}
 	while ((c = *home++) != '\0') {
+		/* The value must be quoted to prevent globbing */
 		if ((quotes && NEEDESC(c)) || ISCTL(c))
 			STPUTC(CTLESC, expdest);
 		STPUTC(c, expdest);
 		last = c;
 	}
+	/*
+	 * No need for special handling of empty strings,
+	 * the results from tilde expansions are not subject
+	 * to field splitting, so nothing that follows (in the
+	 * execution flow) will alter the data here, even an
+	 * empty string.
+	 */
 
 	/*
-	 * If HOME (or whatver) ended in a '/' (last == '/'), and
+	 * If HOME (or whatever) ended in a '/' (last == '/'), and
 	 * the ~prefix was terminated by a '/', then only keep one
 	 * of them - since we already took the one from HOME, just
 	 * skip over the one that ended the tilde prefix.
@@ -529,7 +565,7 @@ removerecordregions(int endoff)
 	ifslastp = &ifsfirst;
 	while (ifslastp->next && ifslastp->next->begoff < endoff)
 		ifslastp=ifslastp->next;
-	VTRACE(DBG_EXPAND, (" found(%d,%d)", ifslastp->begoff,ifslastp->endoff));
+	VTRACE(DBG_EXPAND, (" found(%d,%d)",ifslastp->begoff,ifslastp->endoff));
 	while (ifslastp->next != NULL) {
 		struct ifsregion *ifsp;
 		INTOFF;
@@ -540,7 +576,7 @@ removerecordregions(int endoff)
 	}
 	if (ifslastp->endoff > endoff)
 		ifslastp->endoff = endoff;
-	VTRACE(DBG_EXPAND, ("->(%d,%d)", ifslastp->begoff,ifslastp->endoff));
+	VTRACE(DBG_EXPAND, ("->(%d,%d)", ifslastp->begoff, ifslastp->endoff));
 }
 
 
@@ -562,8 +598,6 @@ expari(const char *p)
 	int begoff;
 	int quoted;
 	struct stackmark smark;
-
-	/*	ifsfree(); */
 
 	/*
 	 * SPACE_NEEDED is enough for all possible digits (rounded up)
@@ -657,7 +691,8 @@ expbackq(union node *cmd, int quoted, int flag)
 			if (in.fd < 0)
 				break;
 			INTON;
-			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR)
+			while ((i = read(in.fd, buf, sizeof buf)) < 0 &&
+			    errno == EINTR)
 				continue;
 			INTOFF;
 			VTRACE(DBG_EXPAND, ("expbackq: read returns %d\n", i));
@@ -717,6 +752,7 @@ expbackq(union node *cmd, int quoted, int flag)
 		back_exitstatus = waitforjob(in.jp);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
+
 	CTRACE(DBG_EXPAND, ("evalbackq: [%d] size=%d: \"%.*s\"\n",
 		back_exitstatus,
 		(int)((dest - stackblock()) - startloc),
@@ -951,12 +987,6 @@ evalvar(const char *p, int flag)
 		}
 	}
 
-#if 0		/* no longer need this $@ evil ... */
-	if (!set && subtype != VSPLUS && special && *var == '@')
-		if (startloc > 0 && expdest[-1] == CTLQUOTEMARK)
-			expdest--, startloc--;
-#endif
-
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
@@ -1024,7 +1054,8 @@ evalvar(const char *p, int flag)
 		    flag |= EXP_IN_QUOTES;
 		    apply_ifs = 0;
 		}
-	} else if (flag & EXP_IN_QUOTES) {
+	} else if (flag & EXP_IN_QUOTES ||
+		   !(flag & (EXP_SPLIT|EXP_IFS_SPLIT))) {
 		apply_ifs = 0;
 	} else
 		apply_ifs = 1;
@@ -1099,7 +1130,7 @@ evalvar(const char *p, int flag)
 	case VSUNKNOWN:
 		VTRACE(DBG_EXPAND,
 	    	   ("evalvar \"%.*s\", unknown [%p %p] \"%.3s\" (%#2x %#2x)\n",
-		    (int)(p - var - 1), var, var, p, p, p[0] & 0xFF, p[1] & 0xFF));
+		    (int)(p-var-1), var, var, p, p, p[0]&0xFF, p[1]&0xFF));
 
 		if ((p - var) <= 1)
 			error("%d: unknown expansion type", line_number);
@@ -1208,9 +1239,10 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	int i;
 	int sep;
 	char **ap;
-#ifdef DEBUG
-	char *start = expdest;
-#endif
+	const int start = expdest - stackblock();
+
+#define	START	(stackblock() + start)
+#define	LENGTH	(expdest - START)
 
 	VTRACE(DBG_EXPAND, ("varvalue(%c%s, sub=%d, fl=%#x)", *name,
 	    quoted ? ", quoted" : "", subtype, flag));
@@ -1253,19 +1285,13 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			if (optlist[optorder[i]].val)
 				STPUTC(optlist[optorder[i]].letter, expdest);
 		}
-		VTRACE(DBG_EXPAND, (": %.*s\n", expdest-start, start));
+		VTRACE(DBG_EXPAND, (": %.*s\n", LENGTH, START));
 		return;
+
 	case '@':
 		if (flag & EXP_SPLIT && quoted) {
 			VTRACE(DBG_EXPAND, (": $@ split (%d)\n",
 			    shellparam.nparam));
-#if 0
-		/* GROSS HACK */
-			if (shellparam.nparam == 0 &&
-				expdest[-1] == CTLQUOTEMARK)
-					expdest--;
-		/* KCAH SSORG */
-#endif
 			if (shellparam.nparam == 0)
 				empty_dollar_at = 1;
 
@@ -1280,10 +1306,36 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 					/* A NUL separates args inside "" */
 					STPUTC('\0', expdest);
 			}
+			VTRACE(DBG_EXPAND,
+			    (":= \"%s\"\n", showstr(START, LENGTH)));
 			return;
 		}
 		/* fall through */
 	case '*':
+		if (!quoted && (flag & EXP_SPLIT)) {
+			int first = 1; int lastnull = 0;
+
+			for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
+				if (*p == '\0') {
+					lastnull = 1;
+					if (first && flag & EXP_NEEDFIRST)
+						STPUTC('\0', expdest);
+					first = 0;
+					continue;
+				}
+				first = lastnull = 0;
+				STRTODEST(p);
+				STPUTC('\0', expdest);
+			}
+			if (expdest > START &&
+			   (!lastnull || !(flag & EXP_NEEDLAST)))
+				expdest--;	/* delete the final \0 */
+			VTRACE(DBG_EXPAND,
+			    (":: \"%s\"\n", showstr(START, LENGTH)));
+			return;
+		}
+
+		/* the "$*" case, and others which act the same */
 		sep = ifsval()[0];
 		for (ap = shellparam.p ; (p = *ap++) != NULL ; ) {
 			STRTODEST(p);
@@ -1294,13 +1346,11 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 				    NEEDESC(sep))
 					STPUTC(CTLESC, expdest);
 				STPUTC(sep, expdest);
-			} else
-			    if ((flag & (EXP_SPLIT|EXP_IN_QUOTES)) == EXP_SPLIT
-			      && !quoted && **ap != '\0')
-				STPUTC('\0', expdest);
+			}
 		}
-		VTRACE(DBG_EXPAND, (": %.*s\n", expdest-start, start));
+		VTRACE(DBG_EXPAND, (": \"%s\"\n", showstr(START, LENGTH)));
 		return;
+
 	default:
 		if (is_digit(*name)) {
 			long lnum;
@@ -1318,7 +1368,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 				return;
 			STRTODEST(p);
 		}
-		VTRACE(DBG_EXPAND, (": %.*s\n", expdest-start, start));
+		VTRACE(DBG_EXPAND, (": \"%s\"\n", showstr(START, LENGTH)));
 		return;
 	}
 	/*
@@ -1326,7 +1376,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 	 */
 	VTRACE(DBG_EXPAND, ("(%d)", num));
 	expdest = cvtnum(num, expdest);
-	VTRACE(DBG_EXPAND, (": %.*s\n", expdest-start, start));
+	VTRACE(DBG_EXPAND, (": %.*s\n", LENGTH, START));
 }
 
 
@@ -1340,6 +1390,8 @@ STATIC void
 recordregion(int start, int end, int inquotes)
 {
 	struct ifsregion *ifsp;
+
+	inquotes = !!inquotes;
 
 	VTRACE(DBG_EXPAND, ("recordregion(%d,%d,%d)\n", start, end, inquotes));
 	if (ifslastp == NULL) {
@@ -1382,7 +1434,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	start = string;
 
-	VTRACE(DBG_EXPAND, ("ifsbreakup(\"%s\")", string)); /* misses \0's */
+	VTRACE(DBG_EXPAND, ("ifsbreakup(\"%s\")", showstr(string, -1)));
 	if (ifslastp == NULL) {
 		/* Return entire argument, IFS doesn't apply to any of it */
 		VTRACE(DBG_EXPAND, ("no regions\n", string));
@@ -1397,8 +1449,11 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	for (ifsp = &ifsfirst; ifsp != NULL; ifsp = ifsp->next) {
 		p = string + ifsp->begoff;
-		VTRACE(DBG_EXPAND, (" !%.*s!(%d)", ifsp->endoff-ifsp->begoff,
-		    p, ifsp->endoff-ifsp->begoff));
+		VTRACE(DBG_EXPAND, ("\n%d..%d%s !%s!(%d)",
+		    ifsp->begoff, ifsp->endoff,
+		    ifsp->inquotes ? "Q" : "",
+		    showstr(p, ifsp->endoff - ifsp->begoff),
+		    ifsp->endoff - ifsp->begoff));
 		while (p < string + ifsp->endoff) {
 			had_param_ch = 1;
 			q = p;
@@ -1408,15 +1463,21 @@ ifsbreakup(char *string, struct arglist *arglist)
 			}
 			if (*p == CTLESC)
 				p++;
-			if (ifsp->inquotes) {
-				/* Only NULs (should be from "$@") end args */
+			if (*p == '\0') {
+				ifsspc = NULL;
+				VTRACE(DBG_EXPAND,
+				    (" \\0 Nxt:\"%s\" ",
+				    showstr(p+1,ifsp->endoff-(p-string-1))));
+			} else if (ifsp->inquotes) {
+				/* NULs (should be from "$@") end args */
 				if (*p != 0) {
 					p++;
 					continue;
 				}
+				/* This can no longer happen */
 				ifsspc = NULL;
 				VTRACE(DBG_EXPAND, (" \\0 nxt:\"%s\" ", p));
-			} else {
+			} else if (*p != '\0') {
 				if (!strchr(ifs, *p)) {
 					p++;
 					continue;
@@ -1430,18 +1491,25 @@ ifsbreakup(char *string, struct arglist *arglist)
 					start = p;
 					continue;
 				}
+			} else {
+				ifsspc = NULL;
+				had_param_ch = 0;
 			}
-
 			/* Save this argument... */
 			*q = '\0';
-			VTRACE(DBG_EXPAND, ("<%s>", start));
+			VTRACE(DBG_EXPAND,
+			    ("<%s>", showstr(start,(int)(q-start))));
 			sp = stalloc(sizeof(*sp));
 			sp->text = start;
 			*arglist->lastp = sp;
 			arglist->lastp = &sp->next;
 			p++;
-
-			if (ifsspc != NULL) {
+			if (*p == '\0') {
+				if (!ifsp->inquotes && 
+				    p - string + 1 < ifsp->endoff)
+					/* skip embedded \0 */
+					p++;
+			} else if (ifsspc != NULL) {
 				/* Ignore further trailing IFS whitespace */
 				for (; p < string + ifsp->endoff; p++) {
 					q = p;
@@ -1453,7 +1521,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 						p = q;
 						break;
 					}
-					if (strchr(" \t\n", *p) == NULL) {
+					if (*p != '\0' &&
+					    strchr(" \t\n", *p) == NULL) {
 						p++;
 						break;
 					}
@@ -1463,17 +1532,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 		}
 	}
 
-/*
-	while (*start == CTLQUOTEEND)
-		start++;
-*/
-
 	/*
-	 * Save anything left as an argument.
-	 * Traditionally we have treated 'IFS=':'; set -- x$IFS' as
-	 * generating 2 arguments, the second of which is empty.
-	 * Some recent clarification of the Posix spec say that it
-	 * should only generate one....
+	 * Save anything left as an argument (as long as not empty).
 	 */
 	if (had_param_ch || *start != 0) {
 		VTRACE(DBG_EXPAND, (" T<%s>", start));
@@ -1500,6 +1560,91 @@ ifsfree(void)
 	ifsfirst.next = NULL;
 }
 
+#ifdef DEBUG
+	/*
+	 * DEBUG mode only utility routines so tracing can show
+	 * exactly what is in strings that are being processed
+	 * (including embedded \0's sometimes)
+	 */
+static char *
+showchar(char *o, char c, int *l)
+{
+	if (c >= ' ' && c <= '~') {
+		if (c == '\\') {
+			*o++ = c;
+			(*l)--;
+		}
+		*o++ = c;
+	} else {
+		if (c == 0) {
+			*o++ = '\\';
+			*o++ = '0';
+			*l -= 1;
+		} else {
+			sprintf(o, "\\x%2.2X", (c & 0xFF));
+			o += 4;
+			*l -= 3;
+		}
+	}
+	return o;
+}
+
+static char *
+showstr(const char *str, int len)
+{
+	static char strbuf[128];
+	int lhs, rhs;
+	const char *p;
+	char *q;
+
+	if (len < 0)
+		len = (int)strlen(str);
+	if (len >= (int)sizeof strbuf - 4) {
+		lhs = ((int)sizeof strbuf - 8) / 2;
+		rhs = (int)sizeof strbuf - lhs - 8;
+	} else {
+		lhs = len;
+		rhs = 0;
+	}
+
+	for (p = str, q = strbuf; --lhs >= 0; ) {
+		q = showchar(q, *p++, &rhs);
+		if (q >= &strbuf[sizeof strbuf - 6]) {
+			while (q < &strbuf[sizeof strbuf - 1])
+				*q++ = '.';
+			*q = '\0';
+			return strbuf;
+		}
+	}
+	if (p < str + len) {
+		if (rhs <= 0 || q >= &strbuf[sizeof strbuf - 6]) {
+			while (q < &strbuf[sizeof strbuf - 1])
+				*q++ = '.';
+			*q = '\0';
+			return strbuf;
+		}
+
+		if (p < str + len - rhs)
+			p = str + len - rhs;
+		else
+			rhs = str + len - p;
+
+		while (--rhs >= 0) {
+			q = showchar(q, *p++, &lhs);
+			if (q >= &strbuf[sizeof strbuf - 6]) {
+				while (q < &strbuf[sizeof strbuf - 1])
+					*q++ = '.';
+				*q = '\0';
+				return strbuf;
+			}
+		}
+	}
+	*q = '\0';
+	return strbuf;
+
+}
+#endif /* DEBUG */
+
 
 
 /*
@@ -1508,7 +1653,6 @@ ifsfree(void)
  */
 
 char *expdir;
-
 
 STATIC void
 expandmeta(struct strlist *str, int flag)

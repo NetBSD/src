@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.h,v 1.26 2021/11/22 05:17:43 kre Exp $	*/
+/*	$NetBSD: expand.h,v 1.27 2026/03/22 20:27:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -50,15 +50,17 @@ struct arglist {
 /*
  * expandarg() flags
  */
-#define EXP_SPLIT	0x1	/* perform word splitting */
-#define EXP_TILDE	0x2	/* do normal tilde expansion */
-#define EXP_VARTILDE	0x4	/* expand tildes in an assignment */
-#define EXP_REDIR	0x8	/* file glob for a redirection (1 match only) */
-#define EXP_CASE	0x10	/* keeps quotes around for CASE pattern */
-#define EXP_IFS_SPLIT	0x20	/* need to record arguments for ifs breakup */
-#define EXP_IN_QUOTES	0x40	/* don't set EXP_IFS_SPLIT again */
-#define EXP_GLOB	0x80	/* perform filename globbing */
-#define EXP_NL		0x100	/* keep CRTNONL in output */
+#define EXP_SPLIT	0x0001	/* perform word splitting */
+#define EXP_TILDE	0x0002	/* do normal tilde expansion */
+#define EXP_VARTILDE	0x0004	/* expand tildes in an assignment */
+#define EXP_REDIR	0x0008	/* file glob for a redirection (1 match only) */
+#define EXP_CASE	0x0010	/* keeps quotes around for CASE pattern */
+#define EXP_IFS_SPLIT	0x0020	/* need to record arguments for ifs breakup */
+#define EXP_IN_QUOTES	0x0040	/* don't set EXP_IFS_SPLIT again */
+#define EXP_GLOB	0x0080	/* perform filename globbing */
+#define EXP_NL		0x0100	/* keep CRTNONL in output */
+#define EXP_NEEDFIRST	0x0200	/* always need $1 when expanding $* */
+#define EXP_NEEDLAST	0x0400	/* always need ${$#} when expanding $* */
 
 #define EXP_FULL	(EXP_SPLIT | EXP_GLOB)
 #define EXP_QNEEDED	(EXP_GLOB | EXP_CASE | EXP_REDIR)
