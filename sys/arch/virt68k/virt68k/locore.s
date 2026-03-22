@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.42 2026/03/22 22:23:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.43 2026/03/22 22:47:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -349,7 +349,7 @@ ENTRY(paravirt_membar_sync)
 	 * instruction set, but qemu implements CAS with
 	 * store-before-load ordering, so this should work for virtio.
 	 */
-	clrl	%d0
+	moveq	#0,%d0
 	casl	%d0,%d0,%sp@
 	rts
 END(paravirt_membar_sync)
