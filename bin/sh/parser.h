@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.h,v 1.31 2026/03/22 19:16:18 kre Exp $	*/
+/*	$NetBSD: parser.h,v 1.32 2026/03/22 20:27:47 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -36,27 +36,31 @@
 
 /* control characters in argument strings */
 #define CTL_FIRST '\201'	/* first 'special' character */
-#define CTLESC '\201'		/* escape next character */
-#define CTLVAR '\202'		/* variable defn */
-#define CTLENDVAR '\203'
-#define CTLBACKQ '\204'
-#define CTLQUOTE 01		/* ored with CTLBACKQ code if in quotes */
-/*	CTLBACKQ | CTLQUOTE == '\205' */
-#define	CTLARI	'\206'		/* arithmetic expression */
-#define	CTLENDARI '\207'
-#define	CTLQUOTEMARK '\210'
-#define	CTLQUOTEEND '\211'	/* only inside ${...} */
-#define	CTLNONL '\212'		/* The \n in a deleted \ \n sequence */
+
+#define CTLESC		'\201'	/* 0x81 escape next character */
+#define CTLVAR		'\202'	/* 0x82 variable expansion ${... */
+#define CTLENDVAR	'\203'	/* 0x83 (the '}' in ${var:-word}; not ${var} */
+#define CTLBACKQ	'\204'	/* 0x84 $( (cmdsub)   0x85 "$( " */
+#define CTLQUOTE	 01	/* ored with CTLBACKQ code if in quotes */
+/* CTLBACKQ | CTLQUOTE	'\205'	  (0x85) */
+#define CTLARI		'\206'	/* 0x86 "$(("  arithmetic expression */
+#define CTLENDARI	'\207'	/* 0x87 "))" which ends arith expr */
+#define CTLQUOTEMARK	'\210'	/* 0x88 quoted text ('|" only when needed) */
+#define CTLQUOTEEND	'\211'	/* 0x89 closing quote (ditto) */
+#define CTLNONL		'\212'	/* 0x8a The \n in a deleted \ \n sequence */
 			/* pure concidence that (CTLNONL & 0x7f) == '\n' */
-#define	CTLCNL	'\213'		/* A $'\n' - newline not counted */
-#define	CTLVARMOD '\214'	/* a modifier in a variable expansion */
-#define	CTL_LAST '\214'		/* last 'special' character */
+#define CTLCNL		'\213'	/* 0x8b A $'\n' - newline not counted */
+#define CTLVARMOD	'\214'	/* 0x8c (UNUSED) modifier in a var expansion */
+
+#define CTL_LAST '\214'		/* last 'special' character */
 
 /* variable substitution byte (follows CTLVAR) */
-#define VSTYPE		0x0f	/* type of variable substitution */
+
+#define VSTYPE		0x0f	/* type of variable substitution (below) */
+
 #define VSNUL		0x10	/* colon--treat the empty string as unset */
 #define VSLINENO	0x20	/* expansion of $LINENO, the line number
-				   follows immediately */
+				   follows immediately  (OBSOLETE) */
 #define VSPATQ		0x40	/* ensure correct pattern quoting in ${x#pat} */
 #define VSQUOTE	 	0x80	/* inside double quotes--suppress splitting */
 
@@ -162,7 +166,7 @@ extern union parse_state_p psp;
 /*
  * NEOF is returned by parsecmd when it encounters an end of file.  It
  * must be distinct from NULL, so we use the address of a variable that
- * happens to be handy.
+ * happens to be handy (it isn't a "node", no confusion is possible).
  */
 #define NEOF ((union node *)&psp)
 
