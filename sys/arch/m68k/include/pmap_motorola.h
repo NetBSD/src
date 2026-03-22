@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.50 2025/11/17 05:59:51 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.51 2026/03/22 17:15:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -260,5 +260,52 @@ paddr_t	vtophys(vaddr_t va);
 #define	PMBM_F_VAONLY	__BIT(0)
 #define	PMBM_F_KEEPOUT	__BIT(1)
 #define	PMBM_F_CI	__BIT(2)	/* cache-inhibited mapping */
+
+/*
+ * pmap_bootstrap1() may need to relocate global references, and perform
+ * VA <-> PA conversions.  These macros facilitate these conversions, and
+ * can be overridden in <machine/pmap.h> before including <m68k/pmap_68k.h>
+ * if needed.
+ *
+ * The first two macros are specifically for converting addresses within
+ * the confines of pmap_bootstrap1().  We may be running with the MMU off
+ * (and either VA==PA or VA!=PA) or with the MMU on with some mappings.
+ * The default ones are suitable for the "MMU off" case with the relocation
+ * offset passed in the "reloff" variable.
+ *
+ * - PMAP_BOOTSTRAP_RELOC_GLOB() -- relocate a global reference in order
+ *   to access it during bootstrap.
+ *
+ * - PMAP_BOOTSTRAP_RELOC_PA() -- relocate a physical address in order to
+ *   access it during bootstrap.
+ *
+ * The next two macros are intended to convert kernel virtual <-> physical
+ * addresses that will be used in the context of the running kernel once
+ * the MMU is enabled and running on the kernel's ultimate mappings:
+ *
+ * - PMAP_BOOTSTRAP_VA_TO_PA() -- convert a kernel virtual address to
+ *   a physical address using linear relocation.
+ *
+ * - PMAP_BOOTSTRAP_PA_TO_VA() -- and vice versa.
+ */
+#ifndef PMAP_BOOTSTRAP_RELOC_GLOB
+#define	PMAP_BOOTSTRAP_RELOC_GLOB(va)					\
+	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
+#endif
+
+#ifndef PMAP_BOOTSTRAP_RELOC_PA
+#define	PMAP_BOOTSTRAP_RELOC_PA(pa)					\
+	((vaddr_t)(pa))
+#endif
+
+#ifndef PMAP_BOOTSTRAP_VA_TO_PA
+#define	PMAP_BOOTSTRAP_VA_TO_PA(va)					\
+	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
+#endif
+
+#ifndef PMAP_BOOTSTRAP_PA_TO_VA
+#define	PMAP_BOOTSTRAP_PA_TO_VA(pa)					\
+	(VM_MIN_KERNEL_ADDRESS + (((paddr_t)(pa)) - reloff))
+#endif
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */
