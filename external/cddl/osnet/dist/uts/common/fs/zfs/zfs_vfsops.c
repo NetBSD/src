@@ -2389,6 +2389,8 @@ zfs_umount(vfs_t *vfsp, int fflag)
 #endif
 #ifdef __NetBSD__
 	cred_t *cr = CRED();
+	struct vnode_iterator *marker;
+	vnode_t *vp;
 #endif
 
 	ret = secpolicy_fs_unmount(cr, vfsp);
@@ -2431,12 +2433,27 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	 */
 #ifdef __FreeBSD_kernel__
 	ret = vflush(vfsp, 0, (fflag & MS_FORCE) ? FORCECLOSE : 0, td);
-#endif
-#ifdef __NetBSD__
-	ret = vflush(vfsp, NULL, (fflag & MS_FORCE) ? FORCECLOSE : 0);
-#endif
 	if (ret != 0)
 		return (ret);
+#endif
+#ifdef __NetBSD__
+	/*
+	 * we loop here because zil_commit can bring some vnodes
+	 * back to mnt_vnodelist via zfs_get_data.
+	 */
+	vfs_vnode_iterator_init(vfsp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		VN_RELE(vp);
+		vfs_vnode_iterator_destroy(marker);
+		ret = vflush(vfsp, NULL, (fflag & MS_FORCE) ? FORCECLOSE : 0);
+		if (ret != 0)
+			return (ret);
+		if (zfsvfs->z_log)
+			zil_commit(zfsvfs->z_log, 0);
+		vfs_vnode_iterator_init(vfsp, &marker);
+	}
+	vfs_vnode_iterator_destroy(marker);
+#endif
 
 #ifdef illumos
 	if (!(fflag & MS_FORCE)) {

@@ -1463,7 +1463,7 @@ zfs_get_done(zgd_t *zgd, int error)
 	 * Release the vnode asynchronously as we currently have the
 	 * txg stopped from syncing.
 	 */
-	VN_RELE_CLEANER(ZTOV(zp), dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
+	VN_RELE_ASYNC(ZTOV(zp), dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
 
 	if (error == 0 && zgd->zgd_bp)
 		zil_add_block(zgd->zgd_zilog, zgd->zgd_bp);
@@ -1498,14 +1498,14 @@ zfs_get_data(void *arg, lr_write_t *lr, char *buf, zio_t *zio)
 	/*
 	 * Nothing to do if the file has been removed
 	 */
-	if (zfs_zget_cleaner(zfsvfs, object, &zp) != 0)
+	if (zfs_zget(zfsvfs, object, &zp) != 0)
 		return (SET_ERROR(ENOENT));
 	if (zp->z_unlinked) {
 		/*
 		 * Release the vnode asynchronously as we currently have the
 		 * txg stopped from syncing.
 		 */
-		VN_RELE_CLEANER(ZTOV(zp),
+		VN_RELE_ASYNC(ZTOV(zp),
 		    dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
 		return (SET_ERROR(ENOENT));
 	}
@@ -5563,6 +5563,20 @@ zfs_netbsd_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
 
+	/*
+	 * it isn't safe or necessary to call zil_commit when reclaiming
+	 * a vnode.
+	 *
+	 * - it can deadlock by attempting vcache_get on itself.
+	 *   (zfs_get_data)
+	 *
+	 * - for the purpose of vnode reclaim, we only need to push the
+	 *   data to the txg. no need to log the intent.
+	 */
+	if ((ap->a_flags & FSYNC_RECLAIM) != 0) {
+		return (0);
+	}
+
 	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
 }
 
@@ -5924,14 +5938,6 @@ zfs_netbsd_reclaim(void *v)
 		}
 	}
 
-	/*
-	 * Operation zfs_znode.c::zfs_zget_cleaner() depends on this
-	 * zil_commit() as a barrier to guarantee the znode cannot
-	 * get freed before its log entries are resolved.
-	 */
-	if (zfsvfs->z_log)
-		zil_commit(zfsvfs->z_log, zp->z_id);
-
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
 	else
@@ -6277,8 +6283,6 @@ zfs_netbsd_putpages(void *v)
 	uint64_t len;
 	int error;
 	bool cleaned = false;
-
-	bool async = (flags & PGO_SYNCIO) == 0;
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
 	if (cleaning) {
@@ -6330,11 +6334,16 @@ zfs_netbsd_putpages(void *v)
 		/*
 		 * Only zil_commit() if we cleaned something.  This avoids 
 		 * deadlock if we're called from zfs_netbsd_setsize().
+		 *
+		 * Also, it isn't safe or nessesary to call it for vnode
+		 * reclaim. See the comment in zfs_netbsd_fsync.
 		 */
 
-		if (cleaned)
-		if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
-			zil_commit(zfsvfs->z_log, zp->z_id);
+		if (cleaned && (flags & PGO_RECLAIM) == 0) {
+			if ((flags & PGO_SYNCIO) != 0
+			    || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+				zil_commit(zfsvfs->z_log, zp->z_id);
+		}
 fail:
 		ZFS_EXIT(zfsvfs);
 		fstrans_done(vp->v_mount);
