@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.182 2026/03/22 15:06:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.183 2026/03/23 02:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -631,24 +631,13 @@ Ltc:	.long	MMU51_TCR_BITS		| see pmap.h
 
 LMMUenable_end:
 
+	/* start_c_finish() returns lwp0 SP in %a0 */
 	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_finish)
+	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
-/* set kernel stack, user SP */
-	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea 
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-	movl	%a2,%a1@(PCB_USP)	| and save it
-	clrw	%a1@(PCB_FLAGS)		| clear flags
-#ifdef FPCOPROC
-	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
-|	pea	%a1@(PCB_FPCTX)
-|	jbsr	_C_LABEL(m68881_restore)	| restore it (does not kill a1)
-|	addql	#4,%sp
-#endif
 /* flush TLB and turn on caches */
-
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
 	movl	#CACHE_ON,%d0
 	tstl	%d5
@@ -668,20 +657,8 @@ Lcacheon:
 	movw	#PSL_LOWIPL,%sr		| lower SPL
 
 	movl	%d7,_C_LABEL(boothowto)	| save reboot flags
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-  	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-  	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
-	jra	_C_LABEL(main)		| main()
+	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
  * Primitives

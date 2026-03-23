@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.136 2025/11/30 20:09:17 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.137 2026/03/23 02:50:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.136 2025/11/30 20:09:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.137 2026/03/23 02:50:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ extern void kernel_reload(char *, u_long, u_long, u_long, u_long,
 	u_long, u_long, u_long, u_long, u_long, u_long);
 #endif
 extern void etext(void);
-void start_c_finish(void);
+void *start_c_finish(void);
 
 void *
 chipmem_steal(long amount)
@@ -791,7 +791,7 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 #endif /* M68020 || M68030 */
 }
 
-void
+void *
 start_c_finish(void)
 {
 	extern u_int32_t delaydivisor;
@@ -818,7 +818,7 @@ start_c_finish(void)
 #endif
 
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
-	pmap_bootstrap2();
+	void *ksp = pmap_bootstrap2();
 
 	/*
 	 * to make life easier in locore.s, set these addresses explicitly
@@ -940,6 +940,8 @@ start_c_finish(void)
 
 	else
 		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
+
+	return ksp;
 }
 
 void
