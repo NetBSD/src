@@ -5562,6 +5562,22 @@ static int
 zfs_netbsd_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
+	int error;
+
+	/*
+	 * Regardless of whether this is required for standards conformance,
+	 * this is the logical behavior when fsync() is called on a file with
+	 * dirty pages.  We use async putpages since the ZIL transactions are
+	 * already going to be pushed out as part of the zil_commit().
+	 */
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+	    round_page(ap->a_offhi), PGO_CLEANIT);
+	if (error != 0) {
+		return error;
+	}
 
 	/*
 	 * it isn't safe or necessary to call zil_commit when reclaiming
@@ -5573,11 +5589,11 @@ zfs_netbsd_fsync(void *v)
 	 * - for the purpose of vnode reclaim, we only need to push the
 	 *   data to the txg. no need to log the intent.
 	 */
-	if ((ap->a_flags & FSYNC_RECLAIM) != 0) {
+	if ((flags & FSYNC_RECLAIM) != 0) {
 		return (0);
 	}
 
-	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
+	return (zfs_fsync(vp, flags, ap->a_cred, NULL));
 }
 
 static int
