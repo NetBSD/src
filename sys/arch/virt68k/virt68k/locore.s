@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.43 2026/03/22 22:47:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.44 2026/03/23 02:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -179,6 +179,7 @@ Lmmuenabled:
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	1f			| yes, cache already on

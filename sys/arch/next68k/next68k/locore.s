@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.106 2026/03/22 17:52:47 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.107 2026/03/23 02:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -340,6 +340,7 @@ Lmmuenabled:
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 	/* set user SP */
 	movl	#USRSTACK-4,%a2

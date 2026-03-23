@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2026/03/23 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2026/03/23 02:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -143,9 +143,9 @@ L_high_code:
 |
 | _bootstrap() returns lwp0 SP in %a0
 	lea	_ASM_LABEL(tmpstk),%sp
-	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 	jra	_C_LABEL(main)		| main() (never returns)
 

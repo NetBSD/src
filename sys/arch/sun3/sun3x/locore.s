@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.85 2026/03/23 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.86 2026/03/23 02:43:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -114,9 +114,9 @@ L_high_code:
 |
 | _bootstrap() returns lwp0 SP in %a0
 	lea	_ASM_LABEL(tmpstk)-32,%sp
-	movl	#0,%a6
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 | Now turn off the transparent translation of the low 1GB.
 | (this also flushes the ATC)

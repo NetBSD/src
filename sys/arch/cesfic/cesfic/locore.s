@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.64 2026/03/22 22:23:55 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.65 2026/03/23 02:43:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -325,6 +325,7 @@ Lenab1:
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 /* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
