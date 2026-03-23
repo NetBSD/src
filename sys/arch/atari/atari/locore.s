@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.138 2026/03/22 15:06:00 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.139 2026/03/23 02:51:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -608,18 +608,11 @@ Lend_cpuset:
 
 	/*
 	 * let the C function initialize everything and enable the MMU
+	 * start_c() returns lwp0 SP in %a0
 	 */
 	jsr	_C_LABEL(start_c)
-
-	/*
-	 * set kernel stack, user SP
-	 */
-	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-	movl	%a2,%a1@(PCB_USP)	| and save it
-	clrw	%a1@(PCB_FLAGS)		| clear flags
+	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 	/* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		|  invalidate TLB
@@ -644,21 +637,7 @@ Lcacheon:
 	movl	%d6,_C_LABEL(bootdev)	|    and boot device
 #endif
 
-/*
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	movl	#0,%a6			| make DDB stack_trace() work
-	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)     |   in lwp0.l_md.md_regs
-
-	jra	_C_LABEL(main)		| main()
+	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
  * Primitives

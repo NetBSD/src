@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.116 2026/03/21 20:14:54 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.117 2026/03/23 02:51:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.116 2026/03/21 20:14:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.117 2026/03/23 02:51:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.116 2026/03/21 20:14:54 thorpej Exp
 
 #include "pci.h"
 
-void start_c(int, u_int, u_int, u_int, char *);
+void *start_c(int, u_int, u_int, u_int, char *);
 static void atari_hwinit(void);
 static void cpu_init_kcorehdr(paddr_t, paddr_t);
 static void initcpu(void);
@@ -194,7 +194,7 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  */
 int kernel_copyback = 1;
 
-void
+void *
 start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
     char *esym_addr)
 	/* id:			 Machine id			*/
@@ -658,7 +658,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	/*
 	 * Initialize the "u-area" pages etc.
 	 */
-	pmap_bootstrap2();
+	void *ksp = pmap_bootstrap2();
 
 	/*
 	 * Get the hardware into a defined state
@@ -688,6 +688,8 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * Initialize interrupt mapping.
 	 */
 	intr_init();
+
+	return ksp;
 }
 
 #if defined(_MILANHW_)
