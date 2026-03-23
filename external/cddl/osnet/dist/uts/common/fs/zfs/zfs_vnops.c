@@ -5588,8 +5588,10 @@ zfs_netbsd_fsync(void *v)
 	 *
 	 * - for the purpose of vnode reclaim, we only need to push the
 	 *   data to the txg. no need to log the intent.
+	 *
+	 * no need to commit the zil for ioflush either. (FSYNC_LAZY)
 	 */
-	if ((flags & FSYNC_RECLAIM) != 0) {
+	if ((flags & (FSYNC_RECLAIM|FSYNC_LAZY)) != 0) {
 		return (0);
 	}
 
