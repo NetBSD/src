@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.h,v 1.12 2024/05/20 01:30:34 christos Exp $	*/
+/*	$NetBSD: compat_mod.h,v 1.13 2026/03/23 23:44:11 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2019 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #ifdef COMPAT_110
 int compat_110_init(void);
 int compat_110_fini(void);
+void uvm_110_init(void);
+void uvm_110_fini(void);
 #endif
 
 #ifdef COMPAT_100

@@ -1,4 +1,4 @@
-/*	$NetBSD: swap.h,v 1.9 2024/02/09 22:08:38 andvar Exp $	*/
+/*	$NetBSD: swap.h,v 1.10 2026/03/23 23:44:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1998, 2009 Matthew R. Green
@@ -39,7 +39,12 @@ struct swapent {
 	int	se_inuse;		/* blocks in use */
 	int	se_priority;		/* priority of this device */
 	char	se_path[PATH_MAX+1];	/* path name */
+	char	se_reserved1[7];	/* padding for 8-byte alignment */
+	int	se_npgbad;		/* bad pages */
+	int	se_reserved2[31];	/* reserved for future use */
 };
+
+__CTASSERT(sizeof(struct swapent) == 1184); /* user abi */
 
 #define SWAP_ON		1		/* begin swapping on device */
 #define SWAP_OFF	2		/* stop swapping on device */
@@ -50,7 +55,8 @@ struct swapent {
 #define SWAP_DUMPDEV	7		/* use this device as dump device */
 #define SWAP_GETDUMPDEV	8		/* use this device as dump device */
 #define SWAP_DUMPOFF	9		/* stop using the dump device */
-#define SWAP_STATS	10		/* get device info */
+#define SWAP_STATS110	10		/* get device info */
+#define SWAP_STATS	11		/* get device info */
 
 #define SWF_INUSE	0x00000001	/* in use: we have swapped here */
 #define SWF_ENABLE	0x00000002	/* enabled: we can swap here */

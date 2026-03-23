@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2024/05/20 01:30:34 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2026/03/23 23:44:12 yamt Exp $
 
 .include "../Makefile.inc"
 
@@ -8,6 +8,6 @@ KMOD=	compat_110
 
 CPPFLAGS+=	-DCOMPAT_110
 
-SRCS+=	compat_110_mod.c
+SRCS+=	compat_110_mod.c uvm_110.c
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_110_mod.c,v 1.2 2024/05/20 01:30:34 christos Exp $ */
+/*	$NetBSD: compat_110_mod.c,v 1.3 2026/03/23 23:44:11 yamt Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_110_mod.c,v 1.2 2024/05/20 01:30:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_110_mod.c,v 1.3 2026/03/23 23:44:11 yamt Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -49,12 +49,14 @@ __KERNEL_RCSID(0, "$NetBSD: compat_110_mod.c,v 1.2 2024/05/20 01:30:34 christos 
 int
 compat_110_init(void)
 {
+	uvm_110_init();
 	return 0;
 }
 
 int
 compat_110_fini(void)
 {
+	uvm_110_fini();
 	return 0;
 }
 

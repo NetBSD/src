@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swapstub.c,v 1.9 2024/03/15 07:09:37 andvar Exp $	*/
+/*	$NetBSD: uvm_swapstub.c,v 1.10 2026/03/23 23:44:12 yamt Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.9 2024/03/15 07:09:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.10 2026/03/23 23:44:12 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_swapstub.c,v 1.9 2024/03/15 07:09:37 andvar Exp 
 #include <uvm/uvm.h>
 
 int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
+int (*uvm_swap_stats110)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;
 
 void

@@ -1,4 +1,4 @@
-#	$NetBSD: files.common,v 1.14 2024/05/20 02:36:33 christos Exp $
+#	$NetBSD: files.common,v 1.15 2026/03/23 23:44:11 yamt Exp $
 
 #
 # Generic utility files, used by various compat options.
@@ -118,6 +118,7 @@ file	compat/common/sys_descrip_100.c		compat_100
 
 # Compatibility code for NetBSD 11.0
 file	compat/common/compat_110_mod.c		compat_110
+file	compat/common/uvm_110.c			compat_110
 
 #
 # Sources for sysv ipc compatibility across the versions.

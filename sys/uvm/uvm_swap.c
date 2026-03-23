@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.217 2026/03/16 14:31:46 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.218 2026/03/23 23:44:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.217 2026/03/16 14:31:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.218 2026/03/23 23:44:12 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -461,6 +461,7 @@ swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 	se->se_dev = sdp->swd_dev;
 	se->se_flags = sdp->swd_flags;
 	se->se_nblks = sdp->swd_nblks;
+	se->se_npgbad = sdp->swd_npgbad;
 	se->se_inuse = inuse;
 	se->se_priority = sdp->swd_priority;
 	KASSERT(sdp->swd_pathlen < sizeof(se->se_path));
@@ -470,6 +471,8 @@ swapent_cvt(struct swapent *se, const struct swapdev *sdp, int inuse)
 int (*uvm_swap_stats13)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;
 int (*uvm_swap_stats50)(const struct sys_swapctl_args *, register_t *) =
+    (void *)enosys;
+int (*uvm_swap_stats110)(const struct sys_swapctl_args *, register_t *) =
     (void *)enosys;
 
 /*
@@ -531,6 +534,9 @@ sys_swapctl(struct lwp *l, const struct sys_swapctl_args *uap,
 		goto out;
 	case SWAP_STATS50:
 		error = (*uvm_swap_stats50)(uap, retval);
+		goto out;
+	case SWAP_STATS110:
+		error = (*uvm_swap_stats110)(uap, retval);
 		goto out;
 	case SWAP_STATS:
 		error = uvm_swap_stats(SCARG(uap, arg), SCARG(uap, misc),
