@@ -6175,6 +6175,18 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	}
 
 	/*
+	 * writing to zfs needs memory allocation, locks, etc,
+	 * which are not safe for the page daemon.
+	 * ENOMEM to signal a transient error to uvm.
+	 * hopefully it can find other pages to free.
+	 */
+
+	if (curlwp == uvm.pagedaemon_lwp) {
+		err = SET_ERROR(ENOMEM);
+		goto out;
+	}
+
+	/*
 	 * Calculate the length and assert that no whole pages are past EOF.
 	 * This check is equivalent to "off + len <= round_page(zp->z_size)",
 	 * with gyrations to avoid signed integer overflow.
