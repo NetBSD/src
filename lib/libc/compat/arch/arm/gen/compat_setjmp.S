@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_setjmp.S,v 1.6 2026/03/18 18:23:53 skrll Exp $	*/
+/*	$NetBSD: compat_setjmp.S,v 1.7 2026/03/23 19:50:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe
@@ -93,16 +93,41 @@ ENTRY(longjmp)
 	cmp	r2, r3
 	bne	botch
 
+	/* Validate sp and lr */
+	ldr	r2, [r0, #(_JB_REG_R13 * 4)]
+
+	/* Validate sp */
+	cmp	r2, #0
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r2, botch
+#else
+	cmp	r2, #0
+	beq	botch
+#endif
+
+	ldr	r3, [r0, #(_JB_REG_R14 * 4)]
+#if defined(__thumb__) && defined(_ARM_ARCH_T2)
+	cbz	r3, botch
+#else
+	cmp	r3, #0
+	beq	botch
+#endif
+
+	cmp	r3, #0
+
+	mov	sp, r2
+	mov	lr, r3
+
 	/* Fetch signal mask */
 	ldr	r2, [r0, #(_JB_SIGMASK * 4)]
 
 	/* Set signal mask */
-	push	{r0, r1}	/* don't care about lr */
+	push	{r0-r2, lr}
 
 	mov	r0, r2
 	bl	PLT_SYM(_C_LABEL(sigsetmask))
 
-	pop	{r0, r1}
+	pop	{r0-r2, lr}
 
 	/* Restore integer registers */
 	adds	r0, r0, #(_JB_REG_R4 * 4)
@@ -119,18 +144,6 @@ ENTRY(longjmp)
 	ldmia	r0!, {r2}
 	mov	r12, r2
 #endif
-
-	ldmia	r0!, {r2-r3}	/* r2 = sp, r3 = lr */
-
-	/* Validate sp */
-	cmp	r2, #0
-	beq	botch
-	mov	sp, r2
-
-	/* Validate lr */
-	cmp	r3, #0
-	beq	botch
-	mov	lr, r3
 
 	/* Set return value */
 	mov	r0, r1
