@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.56 2025/11/12 18:55:10 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57 2026/03/23 16:49:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_newsconf.h"
+#include "opt_m68k_arch.h"
 #endif
 
 /*
@@ -81,6 +82,12 @@
 
 #if defined(news1700)
 #define CACHE_HAVE_PAC
+#ifndef M68K_EC_PAC
+#error M68K_EC_PAC should be defined
+#endif
+#ifndef M68K_EC
+#error M68K_EC should be defined
+#endif
 #endif
 
 extern int systype;
@@ -132,15 +139,15 @@ int badbaddr(void *);
 #define ISIIOPA(pa) \
 	((uint8_t *)(pa) >= intiobase && (uint8_t *)(pa) < intiotop)
 
-#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC)
 #define M68K_CACHEOPS_MACHDEP
 #endif
 
-#ifdef CACHE_HAVE_PAC
+#ifdef M68K_EC_PAC
 #define M68K_CACHEOPS_MACHDEP_PCIA
 #endif
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 #define M68K_CACHEOPS_MACHDEP_DCIA
 #define M68K_CACHEOPS_MACHDEP_DCIS
 #define M68K_CACHEOPS_MACHDEP_DCIU

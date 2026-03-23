@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.101 2026/03/21 20:14:55 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.102 2026/03/23 16:49:33 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -8,17 +8,17 @@ maxpartitions 8
 maxusers 2 8 64
 
 # SPU configuration options.
-defflag	opt_spuconf.h	HP320: M68020, M68K_MMU_HP
+defflag	opt_spuconf.h	HP320: M68020, M68K_MMU_HP, M68K_EC_VAC
 defflag	opt_spuconf.h	HP330: M68020, M68K_MMU_68851
-defflag	opt_spuconf.h	HP350: M68020, M68K_MMU_HP
+defflag	opt_spuconf.h	HP350: M68020, M68K_MMU_HP, M68K_EC_VAC
 
 defflag	opt_spuconf.h	HP340: M68030
-defflag	opt_spuconf.h	HP345: M68030
+defflag	opt_spuconf.h	HP345: M68030, M68K_EC_PAC
 defflag	opt_spuconf.h	HP360: M68030
 defflag	opt_spuconf.h	HP362: M68030
-defflag	opt_spuconf.h	HP370: M68030
-defflag	opt_spuconf.h	HP375: M68030
-defflag	opt_spuconf.h	HP400: M68030
+defflag	opt_spuconf.h	HP370: M68030, M68K_EC_PAC
+defflag	opt_spuconf.h	HP375: M68030, M68K_EC_PAC
+defflag	opt_spuconf.h	HP400: M68030, M68K_EC_PAC
 
 defflag	opt_spuconf.h	HP380: M68040
 defflag	opt_spuconf.h	HP382: M68040

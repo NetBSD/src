@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.79 2025/11/20 13:48:05 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.80 2026/03/23 16:49:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,6 +43,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
+#include "opt_m68k_arch.h"
 #endif
 
 /*
@@ -154,15 +155,15 @@ int	badbaddr(void *);
 #define	MMU_FAULT	(MMU_PTF|MMU_PF|MMU_WPF|MMU_BERR)
 #define	MMU_ENAB	(MMU_UMEN|MMU_SMEN|MMU_IEN|MMU_FPE)
 
-#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC)
 #define M68K_CACHEOPS_MACHDEP
 #endif
 
-#ifdef CACHE_HAVE_PAC
+#ifdef M68K_EC_PAC
 #define M68K_CACHEOPS_MACHDEP_PCIA
 #endif
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 #define M68K_CACHEOPS_MACHDEP_DCIA
 #define M68K_CACHEOPS_MACHDEP_DCIS
 #define M68K_CACHEOPS_MACHDEP_DCIU
