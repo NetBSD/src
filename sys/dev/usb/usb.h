@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.h,v 1.125 2026/01/01 00:48:30 riastradh Exp $	*/
+/*	$NetBSD: usb.h,v 1.126 2026/03/23 09:56:19 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -662,11 +662,6 @@ typedef struct {
 #define  UISUBCLASS_AUDIOSTREAM		2
 #define  UISUBCLASS_MIDISTREAM		3
 
-#define UICLASS_VIDEO		0x0e
-#define  UISUBCLASS_VIDEOCONTROL	1
-#define  UISUBCLASS_VIDEOSTREAMING	2
-#define  UISUBCLASS_VIDEOCOLLECTION	3
-
 #define UICLASS_CDC		0x02 /* communication */
 #define  UISUBCLASS_DIRECT_LINE_CONTROL_MODEL	1
 #define  UISUBCLASS_ABSTRACT_CONTROL_MODEL	2
@@ -738,6 +733,11 @@ typedef struct {
 /*#define UICLASS_FIRM_UPD	0x0c*/
 
 #define UICLASS_SECURITY	0x0d
+
+#define UICLASS_VIDEO		0x0e
+#define  UISUBCLASS_VIDEOCONTROL	1
+#define  UISUBCLASS_VIDEOSTREAMING	2
+#define  UISUBCLASS_VIDEOCOLLECTION	3
 
 #define UICLASS_DIAGNOSTIC	0xdc
 
