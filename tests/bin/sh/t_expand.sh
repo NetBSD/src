@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.26 2026/03/20 20:10:04 kre Exp $
+# $NetBSD: t_expand.sh,v 1.27 2026/03/23 17:16:03 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -348,7 +348,7 @@ EOF
 	atf_check -s exit:0 -o inline:'>a a++b + ca a< >< >b < > c<\n'	\
 		-e empty ${TEST_SH} -c					\
 		'. ./h-f3; set -- "a a" "" "b " " c"; IFS=+; delim_argv "$*$@"'
-	atf_check -s exit:0 -o inline:'>a< >a< >< >b < > ca+a< >< >b < > c<\n' \
+	atf_check -s exit:0 -o inline:'>a< >a< >b < > ca+a< >< >b < > c<\n' \
 		-e empty ${TEST_SH} -c					       \
 		'. ./h-f3; set -- "a+a" "" "b " " c"; IFS=+; delim_argv $*"$@"'
 }

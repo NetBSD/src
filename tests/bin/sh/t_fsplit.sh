@@ -1,4 +1,4 @@
-# $NetBSD: t_fsplit.sh,v 1.10 2024/10/19 11:59:51 kre Exp $
+# $NetBSD: t_fsplit.sh,v 1.11 2026/03/23 17:16:03 kre Exp $
 #
 # Copyright (c) 2007-2016 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -503,7 +503,7 @@ split_arith_body()
 	check 'IFS=37; set -- $(( 123456789 )); echo "$#: $*"' \
 		'3: 123456389'	# [sic]
 
-	check 'IFS=1; set -- $(( 1111 )); echo "$#:" $*'	'4:   '
+	check 'IFS=1; set -- $(( 1111 )); echo "$#:" $*'	'4:'
 	check 'IFS=" 1"; set -- $(( 1231231231 )); echo "$#: $*"' \
 		'4:  23 23 23'
 	check 'IFS="1 "; set -- $(( 1231231231 )); echo "$#: $*"' \
