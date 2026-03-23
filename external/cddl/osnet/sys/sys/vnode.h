@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.22 2026/03/20 12:25:16 yamt Exp $	*/
+/*	$NetBSD: vnode.h,v 1.23 2026/03/23 23:43:28 yamt Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -172,7 +172,6 @@ do {								      \
 #define	VN_URELE(v)	vput(v)
 #undef VN_RELE_ASYNC
 #define VN_RELE_ASYNC(vp, taskq) 	vrele_async((vp))
-#define VN_RELE_CLEANER(vp, taskq)	/* nothing */
 
 #define	vnevent_create(vp, ct)			do { } while (0)
 #define	vnevent_link(vp, ct)			do { } while (0)
