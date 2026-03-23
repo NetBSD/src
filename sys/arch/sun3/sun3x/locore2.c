@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.44 2026/03/22 20:52:14 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.45 2026/03/23 00:30:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.44 2026/03/22 20:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.45 2026/03/23 00:30:43 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.44 2026/03/22 20:52:14 thorpej Exp $")
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/dvma.h>
+#include <machine/fcode.h>
 #include <machine/idprom.h>
 #include <machine/leds.h>
 #include <machine/mon.h>
@@ -241,6 +242,13 @@ _bootstrap(void)
 	 * Needs idprom_init and obio_init earlier.
 	 */
 	leds_init();
+
+	/*
+	 * Initialize the source/destination control registers for
+	 * movs.
+	 */
+	setsfc(FC_USERD);
+	setdfc(FC_USERD);
 
 	return ksp;
 }

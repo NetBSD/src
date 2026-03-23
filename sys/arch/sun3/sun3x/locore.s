@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.84 2026/03/22 20:52:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.85 2026/03/23 00:30:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -123,22 +123,6 @@ L_high_code:
 	clrl	%sp@-
 	.long	0xf0170800		| pmove	sp@,tt0
 	addql	#4,%sp
-
-| Now that _bootstrap() is done using the PROM functions,
-| we can safely set the sfc/dfc to something != FC_CONTROL
-	moveq	#FC_USERD,%d0		| make movs access "user data"
-	movc	%d0,%sfc		| space for copyin/copyout
-	movc	%d0,%dfc
-
-	/* set user SP */
-	movl	#USRSTACK3X-4,%a2
-	movl	%a2,%usp		| init user SP
-
-| Note curpcb was already set in _bootstrap().
-| Will do fpu initialization during autoconfig (see fpu.c)
-| The interrupt vector table and stack are now ready.
-| Interrupts will be enabled later, AFTER  autoconfiguration
-| is finished, to avoid spurrious interrupts.
 
 	jra	_C_LABEL(main)		| main() (never returns)
 
