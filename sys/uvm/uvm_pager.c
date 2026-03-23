@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.132 2026/03/22 11:25:12 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.133 2026/03/23 23:47:35 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.132 2026/03/22 11:25:12 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.133 2026/03/23 23:47:35 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -399,17 +399,21 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		 * process errors.  for reads, just mark the page to be freed.
 		 * for writes, if the error was ENOMEM, we assume this was
 		 * a transient failure so we mark the page dirty so that
-		 * we'll try to write it again later.  for all other write
-		 * errors, we assume the error is permanent, thus the data
-		 * in the page is lost.  bummer.
+		 * we'll try to write it again later. for all other write
+		 * errors for non swap backed pages, we assume the error
+		 * is permanent, thus the data in the page is lost.  bummer.
+		 *
+		 * for swap backed pages, disassociate the swap slot and
+		 * cancel the pageout attempt. mark the swap slot bad for
+		 * errors except ENOMEM.
 		 */
 
 		if (error) {
-			int slot __unused;	/* used for VMSWAP */
 			if (!write) {
 				pg->flags |= PG_RELEASED;
 				continue;
-			} else if (error == ENOMEM) {
+			}
+			if (swap || error == ENOMEM) {
 				if (pg->flags & PG_PAGEOUT) {
 					pg->flags &= ~PG_PAGEOUT;
 					pageout_done++;
@@ -418,21 +422,24 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 				uvm_pagelock(pg);
 				uvm_pageactivate(pg);
 				uvm_pageunlock(pg);
-				slot = 0;
-			} else
-				slot = SWSLOT_BAD;
+			}
 
 #if defined(VMSWAP)
 			if (swap) {
+				/*
+				 * disassociate the swap slot from the page.
+				 * these slots will be either freed or
+				 * marked bad later in this function.
+				 */
 				if (pg->uobject != NULL) {
 					int oldslot __diagused;
 					oldslot = uao_set_swslot(pg->uobject,
-						pg->offset >> PAGE_SHIFT, slot);
+						pg->offset >> PAGE_SHIFT, 0);
 					KASSERT(oldslot == swslot + i);
 				} else {
 					KASSERT(pg->uanon->an_swslot ==
 						swslot + i);
-					pg->uanon->an_swslot = slot;
+					pg->uanon->an_swslot = 0;
 				}
 			}
 #endif /* defined(VMSWAP) */
