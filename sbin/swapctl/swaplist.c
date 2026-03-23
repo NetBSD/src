@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.23 2026/02/16 23:18:54 kre Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.24 2026/03/23 23:46:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.23 2026/02/16 23:18:54 kre Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.24 2026/03/23 23:46:46 yamt Exp $");
 #endif
 
 
@@ -46,6 +46,7 @@ __RCSID("$NetBSD: swaplist.c,v 1.23 2026/02/16 23:18:54 kre Exp $");
 #include <util.h>
 
 #define	dbtoqb(b) dbtob((int64_t)(b))
+#define	pgtoqb(b) ((int64_t)(b) << PGSHIFT)
 
 /*
  * NOTE:  This file is separate from swapctl.c so that pstat can grab it.
@@ -87,12 +88,13 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 {
 	struct	swapent *sep, *fsep;
 	long	blocksize;
-	char	szbuf[5], usbuf[5], avbuf[5]; /* size, used, avail */
+	/* size, used, bad, avail */
+	char	szbuf[5], usbuf[5], badbuf[5], avbuf[5];
 	const	char *header, *suff;
 	size_t	l;
-	int	hlen, size, inuse, ncounted, pathmax, cw;
+	int	hlen, size, inuse, npgbad, ncounted, pathmax, cw;
 	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
-	int64_t	totalsize, totalinuse;
+	int64_t	totalsize, totalinuse, totalbad;
 
 	if (nswap < 1) {
 		puts("no swap devices configured");
@@ -194,19 +196,21 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 		 * the units digit of the priority is under the 'o'
 		 * of "Priority".    This looks reasonably good.
 		 */
-		(void)printf("%-*s %*s %*s %*s %8s  %s\n",
+		(void)printf("%-*s %*s %*s %*s %*s %8s  %s\n",
 		    pathmax, "Device", hlen, header, cw, "Used",
-		    cw, "Avail", "Capacity", "Priority");
+		    cw, "Bad", cw, "Avail", "Capacity", "Priority");
 	}
-	totalsize = totalinuse = ncounted = 0;
+	totalsize = totalinuse = totalbad = ncounted = 0;
 	for (; rnswap-- > 0; sep++) {
 		if (pflag && sep->se_priority != pri)
 			continue;
 		ncounted++;
 		size = sep->se_nblks;
 		inuse = sep->se_inuse;
+		npgbad = sep->se_npgbad;
 		totalsize += size;
 		totalinuse += inuse;
+		totalbad += npgbad;
 
 		if (dolong && tflag == 0) {
 			if (hflag == 0) {
@@ -214,8 +218,9 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 				    pathmax, sep->se_path, hlen,
 				    (long)(dbtoqb(size) / blocksize));
 
-				(void)printf("%*ld %*ld  %5.0f%%    %3d\n",
+				(void)printf("%*ld %*ld %*ld  %5.0f%%    %3d\n",
 				    cw, (long)(dbtoqb(inuse) / blocksize), cw,
+				    (long)(pgtoqb(npgbad) / blocksize), cw,
 				    (long)(dbtoqb(size - inuse) / blocksize),
 				    (double)inuse / (double)size * 100.0,
 				    sep->se_priority);
@@ -228,6 +233,10 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 				    (dbtoqb(inuse)), "", HN_AUTOSCALE,
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 					err(1, "humanize_number");
+				if ((humanize_number(badbuf, sizeof(badbuf),
+				    (pgtoqb(npgbad)), "", HN_AUTOSCALE,
+				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+					err(1, "humanize_number");
 				if ((humanize_number(avbuf, sizeof(avbuf),
 				    (dbtoqb(size-inuse)), "", HN_AUTOSCALE,
 				    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
@@ -235,8 +244,8 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 				(void)printf("%-*s %*s ",
 				    pathmax, sep->se_path, hlen, szbuf);
 
-				(void)printf("%*s %*s  %5.0f%%    %3d\n",
-				    cw, usbuf, cw, avbuf,
+				(void)printf("%*s %*s %*s  %5.0f%%    %3d\n",
+				    cw, usbuf, cw, badbuf, cw, avbuf,
 				    (double)inuse / (double)size * 100.0,
 				    sep->se_priority);
 			}
@@ -293,18 +302,24 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 			    (dbtoqb(totalinuse)), "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
+			if ((humanize_number(badbuf, sizeof(badbuf),
+			    (pgtoqb(totalbad)), "", HN_AUTOSCALE,
+			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
+				err(1, "humanize_number");
 			if ((humanize_number(avbuf, sizeof(avbuf),
 			    (dbtoqb(totalsize-totalinuse)), "", HN_AUTOSCALE,
 			    (HN_DECIMAL | HN_B | HN_NOSPACE))) == -1)
 				err(1, "humanize_number");
-			(void)printf("%-*s %*s %*s %*s  %5.0f%%\n",
-			    pathmax, "Total", hlen, szbuf, cw, usbuf, cw, avbuf,
+			(void)printf("%-*s %*s %*s %*s %*s  %5.0f%%\n",
+			    pathmax, "Total", hlen, szbuf, cw, usbuf,
+                            cw, badbuf, cw, avbuf,
 			    (double)(totalinuse) / (double)totalsize * 100.0);
 		} else {
-			(void)printf("%-*s %*ld %*ld %*ld  %5.0f%%\n",
+			(void)printf("%-*s %*ld %*ld %*ld %*ld  %5.0f%%\n",
 			    pathmax, "Total", hlen,
 			    (long)(dbtoqb(totalsize) / blocksize),
-			    cw, (long)(dbtoqb(totalinuse) / blocksize), cw,
+			    cw, (long)(dbtoqb(totalinuse) / blocksize),
+			    cw, (long)(pgtoqb(totalbad) / blocksize), cw,
 			    (long)(dbtoqb(totalsize - totalinuse) / blocksize),
 			    (double)(totalinuse) / (double)totalsize * 100.0);
 		}
