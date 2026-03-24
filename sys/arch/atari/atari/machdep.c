@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.196 2026/03/21 20:14:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.197 2026/03/24 06:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2026/03/21 20:14:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.197 2026/03/24 06:23:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.196 2026/03/21 20:14:54 thorpej Exp $"
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+
+#include <m68k/pcr.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -247,7 +249,8 @@ identifycpu(void)
 		__asm(".word 0x4e7a,0x0808;"
 		    "movl %%d0,%0" : "=d"(pcr) : : "d0");
 		snprintf(cputxt, sizeof(cputxt), "MC68%s060 rev.%d",
-		    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
+		    __SHIFTOUT(pcr, PCR_IDMASK) & 1 ? "LC/EC" : "",
+		    (int)__SHIFTOUT(pcr, PCR_REVMASK));
 		cpu = cputxt;
 		mmu = "/MMU";
 		break;

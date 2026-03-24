@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.117 2026/03/23 02:51:24 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.118 2026/03/24 06:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.117 2026/03/23 02:51:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.118 2026/03/24 06:23:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.117 2026/03/23 02:51:24 thorpej Exp
 
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
+#include <m68k/pcr.h>
 
 #include <atari/atari/stalloc.h>
 #include <atari/dev/clockvar.h>
@@ -1296,7 +1297,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 #endif /* M68040 */
 
 #if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
+int m68060_pcr_init = PCR_ESS;	/* make this patchable */
 #endif
 
 static void

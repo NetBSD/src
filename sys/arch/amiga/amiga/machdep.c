@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260 2026/03/21 20:14:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.261 2026/03/24 06:23:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2026/03/21 20:14:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2026/03/24 06:23:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,6 +113,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2026/03/21 20:14:54 thorpej Exp $"
 #if NEMPM > 0
 #include <amiga/pci/empmvar.h>
 #endif /* NEMPM > 0 */
+
+#ifdef M68060
+#include <m68k/pcr.h>
+#endif
 
 #include "fd.h"
 #include "ser.h"
@@ -286,7 +290,7 @@ cpu_startup(void)
  * Info for CTL_HW
  */
 #if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
+int m68060_pcr_init = PCR_ESS;	/* make this patchable */
 #endif
 
 
@@ -325,13 +329,14 @@ identifycpu(void)
 	if (machineid & AMIGA_68060) {
 		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
 		snprintf(cpubuf, sizeof(cpubuf), "68%s060 rev.%d",
-		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
+		    __SHIFTOUT(pcr, PCR_IDMASK) & 1 ? "LC/EC" : "",
+		    (int)__SHIFTOUT(pcr, PCR_REVMASK));
 		cpu_type = cpubuf;
 		mmu = "/MMU";
 		if (pcr & 2) {
 			fpu = "/FPU disabled";
 			fputype = FPU_NONE;
-		} else if (m68060_pcr_init & 2){
+		} else if (m68060_pcr_init & PCR_DFP) {
 			fpu = "/FPU will be disabled";
 			fputype = FPU_NONE;
 		} else  if (machineid & AMIGA_FPU40) {
@@ -684,7 +689,8 @@ initcpu(void)
 
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
-		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
+		if ((machineid & AMIGA_FPU40) != 0 &&
+		    (m68060_pcr_init & PCR_DFP) != 0) {
 			/*
 			 * in this case, we're about to switch the FPU off;
 			 * do a FNOP to avoid stray FP traps later
