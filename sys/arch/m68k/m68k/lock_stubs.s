@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.12 2025/11/29 21:57:14 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.13 2026/03/24 06:00:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -55,6 +55,10 @@
  * is checked for upon return from interrupt (see ATOMIC_CAS_CHECK() in
  * <m68k/frame.h>), and if the return PC falls within the atomic sequence,
  * the PC is reset to the beginning of the sequence.
+ *
+ * On platforms where this comes into play, atomic_cas_16() and
+ * atomic_cas_8() are provided by atomic_cas_by_cas32.c from libkern,
+ * which implements those functions in terms of atomic_cas_32().
  */
 ENTRY(_atomic_cas_32)
 	movl	4(%sp),%a0
@@ -79,6 +83,7 @@ STRONG_ALIAS(_atomic_cas_uint,_atomic_cas_32)
 STRONG_ALIAS(atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_ulong,_atomic_cas_32)
 STRONG_ALIAS(atomic_cas_32,_atomic_cas_32)
+STRONG_ALIAS(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
 STRONG_ALIAS(atomic_cas_32_ni,_atomic_cas_32)
 STRONG_ALIAS(_atomic_cas_32_ni,_atomic_cas_32)

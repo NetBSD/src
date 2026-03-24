@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.6 2026/03/14 21:03:41 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.7 2026/03/24 06:00:40 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -46,6 +46,8 @@ include <machine/fcode.h>
 include <machine/psl.h>
 include <machine/pcb.h>
 include <machine/pte.h>
+
+include <m68k/pcr.h>
 
 # MMU options
 define	M68K_MMU_MOTOROLA	1

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2025/12/17 23:41:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2026/03/24 06:00:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,23 +58,6 @@
  */
 
 #include <m68k/m68k.h>
-
-/* XXX - Move this stuff into <m68k/pcr.h> maybe? */
-
-/* fields in the 68060 Processor Configuration Register */
-
-#define	PCR_ESS		__BIT(0)     /* enable superscalar dispatch */
-#define	PCR_DFP		__BIT(1)     /* disable floating point unit */
-#define	PCR_mbz		__BITS(2,6)  /* reserved - must be zero */
-#define	PCR_EDEBUG	__BIT(7)     /* enable debug features */
-#define	PCR_REVMASK	__BITS(8,15) /* revision number */
-#define	PCR_IDMASK	__BITS(16,31)/* identification */
-
-#define	PCR_REVISION(x)	__SHIFTOUT((x), PCR_REVMASK)
-#define	PCR_ID(x)	__SHIFTOUT((x), PCR_IDMASK)
-
-#define	PCR_ID_MC68060   0x0430
-#define	PCR_ID_MC68xC060 0x0431	/* MC68LC060 / MC60EC060 */
 
 /* XXX - Move this stuff into <m68k/cacr.h> maybe? */
 
