@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.17 2026/03/24 03:31:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.17 2026/03/24 03:31:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -158,7 +158,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(CACHE_HAVE_PAC)
+#if defined(M68K_EC_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -168,7 +168,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(CACHE_HAVE_PAC)
+#if defined(M68K_EC_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else

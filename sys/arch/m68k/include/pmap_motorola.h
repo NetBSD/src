@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.51 2026/03/22 17:15:29 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.52 2026/03/24 03:31:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -242,7 +242,7 @@ void *	pmap_bootstrap2(void);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))

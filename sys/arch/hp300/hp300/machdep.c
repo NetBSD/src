@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.254 2026/03/21 20:14:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255 2026/03/24 03:31:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.254 2026/03/21 20:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2026/03/24 03:31:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -218,7 +218,7 @@ machine_init(paddr_t nextpa)
 	struct btinfo_magic *bt_mag;
 	int i;
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	/*
 	 * Determine VA aliasing distance if any
 	 */

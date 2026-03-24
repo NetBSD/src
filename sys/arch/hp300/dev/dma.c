@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.48 2024/04/30 09:55:45 tsutsui Exp $	*/
+/*	$NetBSD: dma.c,v 1.49 2026/03/24 03:31:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.48 2024/04/30 09:55:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.49 2026/03/24 03:31:54 thorpej Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -353,7 +353,7 @@ dmafree(struct dmaqueue *dq)
 
 	DMA_CLEAR(dc);
 
-#if defined(CACHE_HAVE_PAC) || defined(M68040)
+#if defined(M68K_EC_PAC) || defined(M68040)
 	/*
 	 * XXX we may not always go thru the flush code in dmastop()
 	 */
@@ -363,7 +363,7 @@ dmafree(struct dmaqueue *dq)
 	}
 #endif
 
-#if defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC_VAC)
 	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.
@@ -504,7 +504,7 @@ dmago(int unit, char *addr, int count, int flags)
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 
-#if defined(CACHE_HAVE_PAC)
+#if defined(M68K_EC_PAC)
 	/*
 	 * Remember if we need to flush external physical cache when
 	 * DMA is done.  We only do this if we are reading (writing memory).
@@ -513,7 +513,7 @@ dmago(int unit, char *addr, int count, int flags)
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 
-#if defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC_VAC)
 	if (ectype == EC_VIRT && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_VCFLUSH;
 #endif
@@ -558,14 +558,14 @@ dmastop(int unit)
 #endif
 	DMA_CLEAR(dc);
 
-#if defined(CACHE_HAVE_PAC) || defined(M68040)
+#if defined(M68K_EC_PAC) || defined(M68040)
 	if (dc->dm_flags & DMAF_PCFLUSH) {
 		PCIA();
 		dc->dm_flags &= ~DMAF_PCFLUSH;
 	}
 #endif
 
-#if defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC_VAC)
 	if (dc->dm_flags & DMAF_VCFLUSH) {
 		/*
 		 * 320/350s have VACs that may also need flushing.

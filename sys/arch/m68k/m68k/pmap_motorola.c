@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.102 2026/03/22 17:52:46 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.103 2026/03/24 03:31:55 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.102 2026/03/22 17:52:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.103 2026/03/24 03:31:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -277,7 +277,7 @@ struct pv_header *pv_table;
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 static u_int	pmap_aliasmask;	/* separation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
@@ -348,7 +348,7 @@ pmap_load_urp(paddr_t urp)
 	(*pmap_load_urp_func)(urp);
 }
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 /*
  * pmap_init_vac:
  *
@@ -362,7 +362,7 @@ pmap_init_vac(size_t vacsize)
 	KASSERT(powerof2(vacsize));
 	pmap_aliasmask = vacsize - 1;
 }
-#endif /* CACHE_HAVE_VAC */
+#endif /* M68K_EC_VAC */
 
 /*
  * pmap_bootstrap2:		[ INTERFACE ]
@@ -870,7 +870,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	int flags;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	bool firstpage = true, needcflush = false;
 #endif
 
@@ -901,7 +901,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			}
 
 			if (pmap_pte_v(pte)) {
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 				if (pmap_aliasmask) {
 
 					/*
@@ -933,7 +933,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * Didn't do anything, no need for cache flushes
@@ -1068,7 +1068,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 				/*
 				 * Purge kernel side of VAC to ensure we
@@ -1277,7 +1277,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			npv->pv_ptpmap = NULL;
 			pv->pv_next = npv;
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 			/*
 			 * Since there is another logical mapping for the
@@ -1355,7 +1355,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap->pm_stats.wired_count++;
 
 validate:
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	/*
 	 * Purge kernel side of VAC to ensure we get correct state
 	 * of HW bits so we don't clobber them.
@@ -1412,7 +1412,7 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		TBIS(va);
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	/*
 	 * The following is executed if we are entering a second
 	 * (or greater) mapping for a physical page and the mappings
@@ -1507,14 +1507,14 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	pt_entry_t *pte;
 	vaddr_t nssva;
 	vaddr_t eva = va + size;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	bool firstpage, needcflush;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", va, size));
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	firstpage = true;
 	needcflush = false;
 #endif
@@ -1544,7 +1544,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				va += PAGE_SIZE;
 				continue;
 			}
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 			if (pmap_aliasmask) {
 
 				/*
@@ -1575,7 +1575,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		}
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * In a couple of cases, we don't need to worry about flushing
@@ -1862,7 +1862,7 @@ pmap_zero_page(paddr_t phys)
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
 	npte = phys | PG_V;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask) {
 
 		/*
@@ -1920,7 +1920,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 
 	npte1 = src | PG_RO | PG_V;
 	npte2 = dst | PG_V;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask) {
 
 		/*
@@ -2039,7 +2039,7 @@ pmap_phys_address(paddr_t ppn)
 	return m68k_ptob(ppn);
 }
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 /*
  * pmap_prefer:			[ INTERFACE ]
  *
@@ -2062,7 +2062,7 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
 		*vap = va + d;
 	}
 }
-#endif /* CACHE_HAVE_VAC */
+#endif /* M68K_EC_VAC */
 
 /*
  * Miscellaneous support routines follow
@@ -2112,7 +2112,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 			return;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask && (flags & PRM_CFLUSH)) {
 
 		/*
@@ -2270,7 +2270,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 		pv = &pvh->pvh_first;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * If only one mapping left we no longer need to cache inhibit
@@ -2403,7 +2403,7 @@ pmap_testbit(paddr_t pa, int bit)
 		return true;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * Flush VAC to get correct state of any hardware maintained bits.
@@ -2447,7 +2447,7 @@ pmap_changebit(paddr_t pa, pt_entry_t set, pt_entry_t mask)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	int s;
-#if defined(CACHE_HAVE_VAC) || defined(M68040) || defined(M68060)
+#if defined(M68K_EC_VAC) || defined(M68040) || defined(M68060)
 	bool firstpage = true;
 #endif
 	bool r;
@@ -2481,7 +2481,7 @@ pmap_changebit(paddr_t pa, pt_entry_t set, pt_entry_t mask)
 #endif
 			va = pv->pv_va;
 			pte = pmap_pte(pv->pv_pmap, va);
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 			/*
 			 * Flush VAC to ensure we get correct state of HW bits
