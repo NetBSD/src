@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.52 2026/03/22 09:29:22 mlelstv Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.53 2026/03/24 07:23:46 skrll Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.42 2026/01/26 01:45:18 kevlo Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.52 2026/03/22 09:29:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.53 2026/03/24 07:23:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_net_mpsafe.h"
@@ -277,7 +277,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
-	pci_intr_setattr(pc, sc->sc_ihs[0], PCI_INTR_MPSAFE, true);
+	pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 
 	if (pci_dma64_available(pa))
