@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.133 2026/03/23 23:47:35 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.134 2026/03/24 00:50:36 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.133 2026/03/23 23:47:35 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.134 2026/03/24 00:50:36 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -488,7 +488,17 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #if defined(VMSWAP)
 		KASSERT(write);
 
-		/* these pages are now only in swap. */
+		/*
+		 * these pages are now only in swap.
+		 *
+		 * note about swpgonly:
+		 *
+		 * if no errors, we increase swpgonly.
+		 *
+		 * on error which is not ENOMEM, we increase swpgonly.
+		 * and then uvm_swap_markbad() decreases it by the same
+		 * amount.
+		 */
 		if (error != ENOMEM) {
 			atomic_add_int(&uvmexp.swpgonly, npages);
 		}
