@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.11 2025/09/22 09:24:38 macallan Exp $ */
+/*	$NetBSD: interrupts.c,v 1.12 2026/03/24 07:30:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.11 2025/09/22 09:24:38 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.12 2026/03/24 07:30:19 macallan Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -173,4 +173,66 @@ done:
 		setup_hammerhead_ipi();
 #endif
 #endif /*MULTIPROCESSOR*/
+}
+
+/*
+ * this is for extracting an interrupt number, and optional type and description
+ * for non-PCI devices from OpenFirmware, taking care to check which interrupt
+ * controller the device is connected to
+ */
+int
+OF_get_intr(int node, char *buf, int buflen, int *type)
+{
+	int intr[2], irq, intrparent;
+	uint32_t picbase;
+
+	if(OF_getprop(node, "interrupts", intr, 8) != 8) {
+		aprint_error(": can't find interrupt\n");
+		return -1;
+	}
+	irq = intr[0];
+
+	if (type != NULL) {
+		*type = (intr[1] & 1) ? IST_LEVEL : IST_EDGE;
+	}
+
+	/*
+	 * on some G5 we have two openpics, one in mac-io, one in /u3
+	 * in order to get interrupts we need to know which one we're
+	 * connected to
+	 */
+	if (OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
+		uint32_t preg[8];
+		struct pic_ops *pic;
+
+		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
+			/* now look for a pic with that base... */
+			picbase = preg[0];
+			if ((picbase & 0x80000000) == 0) {
+				/* some OF versions have the openpic's reg as
+				 * an offset into mac-io just to be annoying */
+				int mio = OF_parent(intrparent);
+				if (OF_getprop(mio, "ranges", preg, 20) == 20)
+					picbase += preg[3];
+			}
+			pic = find_pic_by_cookie((void *)picbase);
+			if (pic != NULL) {
+				irq = intr[0];
+				if (buf != NULL) {
+					snprintf(buf, buflen, "%s irq %d",
+					    pic->pic_name, irq);
+				}
+				irq += pic->pic_intrbase;
+				return irq;
+			}
+		}
+		/* if we get here we couldn't find a matching PIC */
+		aprint_error("failed to find a PIC for node %08x\n",
+		    intrparent);
+		return -1;
+	}
+	if (buf != NULL) {
+		snprintf(buf, buflen, "irq %d", irq);
+	}
+	return irq;
 }

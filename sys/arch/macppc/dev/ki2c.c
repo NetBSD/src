@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.44 2025/09/28 11:32:23 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.45 2026/03/24 07:30:19 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -70,7 +70,7 @@ static void
 ki2c_select_channel(struct ki2c_softc *sc, int channel)
 {
 	uint8_t val = channel ? 0x10 : 0x00;
-	
+
 	/* We handle the subaddress stuff ourselves. */
 	ki2c_setmode(sc, val | I2C_STDMODE);	
 }
@@ -152,21 +152,15 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct ki2c_softc *sc = device_private(self);
 	struct confargs *ca = aux;
-	int node = ca->ca_node, root;
-	uint32_t addr, channel, intr[2];
-	int rate, child;
-	int intrparent;
-	char name[32], intr_xname[32], model[32];
-	uint32_t picbase;
+	int node = ca->ca_node;
+	uint32_t addr, channel;
+	int rate, child, irq, type;
+	char name[32], intr_xname[32];
 
 	sc->sc_dev = self;
 	sc->sc_tag = ca->ca_tag;
 	ca->ca_reg[0] += ca->ca_baseaddr;
 
-	root = OF_finddevice("/");
-	model[0] = 0;
-	OF_getprop(root, "model", model, 32);
-	DPRINTF("model %s\n", model);
 	if (OF_getprop(node, "AAPL,i2c-rate", &rate, 4) != 4) {
 		aprint_error(": cannot get i2c-rate\n");
 		return;
@@ -185,45 +179,12 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if(OF_getprop(node, "interrupts", intr, 8) != 8) {
-		aprint_error(": can't find interrupt\n");
-		return;
-	}
-
-	/*
-	 * on some G5 we have two openpics, one in mac-io, one in /u3
-	 * in order to get interrupts we need to know which one we're
-	 * connected to
-	 */
-	sc->sc_poll = 0;
-
-	if(OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
-		uint32_t preg[8];
-		struct pic_ops *pic;
-		
-		sc->sc_poll = 1;
-		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
-			/* now look for a pic with that base... */
-			picbase = preg[0];
-			if ((picbase & 0x80000000) == 0) {
-				/* some OF versions have the openpic's reg as
-				 * an offset into mac-io just to be annoying */
-				int mio = OF_parent(intrparent);
-				if (OF_getprop(mio, "ranges", preg, 20) == 20)
-					picbase += preg[3];
-			}
-			DPRINTF("PIC base %08x\n", picbase);
-			pic = find_pic_by_cookie((void *)picbase);
-			if (pic != NULL) {
-				sc->sc_poll = 0;
-				intr[0] += pic->pic_intrbase;
-			}
-		}
-	}
+	irq = OF_get_intr(node, intr_xname, 32, &type);
+	sc->sc_poll = (irq == -1);
 
 	if (sc->sc_poll) {
 		aprint_normal(" polling");
-	} else aprint_normal(" irq %d", intr[0]);
+	} else aprint_normal(" %s", intr_xname);
 
 	printf("\n");
 
@@ -281,8 +242,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 
 	if(sc->sc_poll == 0) {
 		snprintf(intr_xname, sizeof(intr_xname), "%s intr", device_xname(self));
-		intr_establish_xname(intr[0], (intr[1] & 1) ? IST_LEVEL : IST_EDGE,
-		    IPL_BIO, ki2c_intr, sc, intr_xname);
+		intr_establish_xname(irq, type, IPL_BIO, ki2c_intr, sc,
+		    intr_xname);
 
 		ki2c_writereg(sc, IER, I2C_INT_DATA | I2C_INT_ADDR| I2C_INT_STOP);
 	}
@@ -308,7 +269,7 @@ ki2c_readreg(struct ki2c_softc *sc, int reg)
 void
 ki2c_writereg(struct ki2c_softc *sc, int reg, uint8_t val)
 {
-	
+
 	bus_space_write_1(sc->sc_tag, sc->sc_bh, reg * sc->sc_regstep, val);
 	delay(10);
 }

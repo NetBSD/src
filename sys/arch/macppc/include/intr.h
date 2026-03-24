@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.32 2013/04/20 13:32:40 macallan Exp $	*/
+/*	$NetBSD: intr.h,v 1.33 2026/03/24 07:30:19 macallan Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@ int init_heathrow(void);
 int init_u3_ht(void);
 int init_grandcentral(void);
 void setup_hammerhead_ipi(void);
+int OF_get_intr(int, char *, int, int *);
 #endif
 #endif /* _LOCORE */
 
