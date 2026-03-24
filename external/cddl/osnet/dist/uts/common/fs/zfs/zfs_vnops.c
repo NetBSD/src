@@ -5103,6 +5103,8 @@ ioflags(int ioflags)
 
 #ifdef __NetBSD__
 
+static void zfs_netbsd_update_mctime(vnode_t *vp);
+
 static int
 zfs_netbsd_open(void *v)
 {
@@ -5176,10 +5178,10 @@ zfs_netbsd_write(void *v)
 	switch (vp->v_type) {
 	case VBLK:
 	case VCHR:
-		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		zfs_netbsd_update_mctime(vp);
 		return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
 	case VFIFO:
-		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		zfs_netbsd_update_mctime(vp);
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
 	case VREG:
 		break;
@@ -6263,7 +6265,7 @@ out:
 }
 
 static void
-zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
+zfs_netbsd_update_mctime(vnode_t *vp)
 {
 	znode_t		*zp = VTOZ(vp);
 	zfsvfs_t	*zfsvfs = zp->z_zfsvfs;
@@ -6271,8 +6273,6 @@ zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
 	sa_bulk_attr_t	bulk[2];
 	uint64_t	mtime[2], ctime[2];
 	int		count = 0, err;
-
-	KASSERT(flags == GOP_UPDATE_MODIFIED);
 
 	tx = dmu_tx_create(zfsvfs->z_os);
 	dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
@@ -6448,7 +6448,6 @@ zfs_netbsd_print(void *v)
 
 const struct genfs_ops zfs_genfsops = {
 	.gop_write = zfs_putapage,
-	.gop_markupdate = zfs_netbsd_gop_markupdate,
 	.gop_putrange = zfs_netbsd_gop_putrange,
 };
 
