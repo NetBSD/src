@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.h,v 1.61 2024/12/06 18:36:09 riastradh Exp $	*/
+/*	$NetBSD: icmp6.h,v 1.62 2026/03/24 21:32:17 christos Exp $	*/
 /*	$KAME: icmp6.h,v 1.84 2003/04/23 10:26:51 itojun Exp $	*/
 
 
@@ -646,6 +646,7 @@ struct icmp6_filter {
 #define	ICMPV6CTL_ND6_MAXQLEN	24
 #define	ICMPV6CTL_REFLECT_PMTU	25
 #define	ICMPV6CTL_DYNAMIC_RT_MSG	26
+#define	ICMPV6CTL_ND6_GCTIMER	27
 
 #ifdef _KERNEL
 struct	rtentry;

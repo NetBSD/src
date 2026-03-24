@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.8 2025/08/18 06:46:43 ozaki-r Exp $	*/
+/*	$NetBSD: nd.c,v 1.9 2026/03/24 21:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.8 2025/08/18 06:46:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.9 2026/03/24 21:32:17 christos Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.8 2025/08/18 06:46:43 ozaki-r Exp $");
 #include <netinet/ip6.h>
 
 static struct nd_domain *nd_domains[AF_MAX];
-
-static int nd_gctimer = (60 * 60 * 24); /* 1 day: garbage collection timer */
 
 static void nd_set_timertick(struct llentry *, time_t);
 static struct nd_domain *nd_find_domain(int);
@@ -293,13 +291,13 @@ nd_set_timer(struct llentry *ln, int type)
 		if (ln->ln_expire > time_uptime)
 			xtick = (ln->ln_expire - time_uptime) * hz;
 		else
-			xtick = nd_gctimer * hz;
+			xtick = nd->nd_gctimer * hz;
 		break;
 	case ND_TIMER_DELAY:
 		xtick = nd->nd_delay * hz;
 		break;
 	case ND_TIMER_GC:
-		xtick = nd_gctimer * hz;
+		xtick = nd->nd_gctimer * hz;
 		break;
 	default:
 		panic("%s: invalid timer type\n", __func__);

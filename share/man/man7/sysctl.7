@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.169 2026/03/11 21:46:54 andvar Exp $
+.\"	$NetBSD: sysctl.7,v 1.170 2026/03/24 21:32:16 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 7, 2024
+.Dd March 18, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1874,6 +1874,7 @@ The currently defined protocols and names are:
 .It icmp6	nd6_delay	integer	yes
 .It icmp6	nd6_maxnudhint	integer	yes
 .It icmp6	nd6_mmaxtries	integer	yes
+.It icmp6	nd6_gctimer	integer	yes
 .It icmp6	nd6_prune	integer	yes
 .It icmp6	nd6_umaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
@@ -2113,6 +2114,9 @@ The variable specifies
 .Dv MAX_MULTICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
 .Pq RFC 2461 .
+.It Li icmp6.nd6_gctimer
+The duration stale neighbors will be kept for, before being garbage collected,
+in seconds.
 .It Li icmp6.nd6_prune
 The variable specifies interval between IPv6 neighbor cache babysitting,
 in seconds.

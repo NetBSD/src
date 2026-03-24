@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.284 2025/06/05 06:31:07 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.285 2026/03/24 21:32:17 christos Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.284 2025/06/05 06:31:07 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.285 2026/03/24 21:32:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,7 @@ struct nd_domain nd6_nd_domain = {
 	.nd_retransmultiple = BACKOFF_MULTIPLE,
 	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
+	.nd_gctimer = 24*60*60,	/* stale neighbor GC timer duration */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
 	.nd_nud_enabled = nd6_nud_enabled,
 	.nd_reachable = nd6_llinfo_reachable,

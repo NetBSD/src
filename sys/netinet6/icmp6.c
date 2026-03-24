@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.258 2024/07/05 04:31:54 rin Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.259 2026/03/24 21:32:17 christos Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.258 2024/07/05 04:31:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.259 2026/03/24 21:32:17 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -3031,6 +3031,13 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       NULL, 0, &nd6_useloopback, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_ND6_USELOOPBACK, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "nd6_gctimer",
+		       SYSCTL_DESCR("stale neighbor GC timer duration"),
+		       NULL, 0, &nd6_nd_domain.nd_gctimer, 0,
+		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
+		       ICMPV6CTL_ND6_GCTIMER, CTL_EOL);
 #if 0 /* obsoleted */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

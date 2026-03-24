@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.h,v 1.3 2020/09/15 10:05:36 roy Exp $	*/
+/*	$NetBSD: nd.h,v 1.4 2026/03/24 21:32:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@ struct nd_domain {
 	int nd_maxretrans;	/* maximum retransmission time in msec */
 	int nd_maxnudhint;	/* max # of subsequent upper layer hints */
 	int nd_maxqueuelen;	/* max # of packets in unresolved ND entries */
+	int nd_gctimer;		/* stale neighbor GC timer duration */
 	bool (*nd_nud_enabled)(struct ifnet *);
 	unsigned int (*nd_reachable)(struct ifnet *);	/* msec */
 	unsigned int (*nd_retrans)(struct ifnet *);	/* msec */
