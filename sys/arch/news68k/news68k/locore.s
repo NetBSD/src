@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 2026/03/24 14:31:33 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.111 2026/03/24 15:56:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -223,6 +223,18 @@ Lnot1200:
 1:
 	RELOC(ectype, %a0)		| yes, we are news1600/1700
 	movl	#EC_PHYS,%a0@		|  and have a physical address cache
+
+	/*
+	 * the news1700 EC is not compatible with the 68030 cache burst
+	 * mode, so patch up the CACR values used for various high-level
+	 * cache operations.
+	 */
+	RELOC(cacr_cache_on, %a0)
+	movl	#CACHE_ON_EC,%a0@
+	RELOC(cacr_ic_clr, %a0)
+	movl	#IC_CLR_EC,%a0@
+	RELOC(cacr_dc_clr, %a0)
+	movl	#DC_CLR_EC,%a0@
 2:
 	/*
 	 * Fix up the physical addresses of the news1700's onboard
@@ -350,11 +362,7 @@ Lmmuenabled:
 	pflusha
 	tstl	_C_LABEL(mmutype)
 	jpl	Lenab3			| 68851 implies no d-cache
-	movl	#CACHE_ON,%d0
-	tstl	_C_LABEL(ectype)	| have external cache?
-	jne	1f			| Yes, skip
-	orl	#CACHE2030_BE,%d0	| set cache burst enable
-1:
+	movl	_C_LABEL(cacr_cache_on),%d0
 	movc	%d0,%cacr		| clear cache
 	tstl	_C_LABEL(ectype)	| have external cache?
 	jeq	Lenab3			| No, skip
@@ -709,6 +717,14 @@ GLOBAL(cache_ctl)
 
 GLOBAL(cache_clr)
 	.long	0		| PA/KVA (via %tt0) of ext cache clear port
+
+GLOBAL(cacr_cache_on)
+GLOBAL(cacr_cache_clr)
+	.long	CACHE_ON_DFLT
+GLOBAL(cacr_ic_clr)
+	.long	IC_CLR_DFLT
+GLOBAL(cacr_dc_clr)
+	.long	DC_CLR_DFLT
 
 GLOBAL(romcallvec)
 	.long	0

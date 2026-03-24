@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2026/03/24 14:31:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2026/03/24 15:56:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,19 +56,6 @@
 /*
  * Exported definitions unique to news68k cpu support.
  */
-
-/*
- * XXX news1700 L2 cache would be corrupted with DC_BE and IC_BE...
- * XXX Should these be defined in machine/cpu.h?
- */
-#undef CACHE_ON
-#define	CACHE_ON	CACHE2030_ON
-#undef CACHE_CLR
-#define	CACHE_CLR	CACHE2030_ON
-#undef IC_CLEAR
-#define	IC_CLEAR	_IC_CLEAR(CACHE2030_ON)
-#undef DC_CLEAR
-#define	DC_CLEAR	_DC_CLEAR(CACHE2030_ON)
 
 #define	cpu_set_hw_ast(l)						\
 	do {								\
