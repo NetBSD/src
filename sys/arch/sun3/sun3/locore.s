@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 2026/03/23 02:43:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 2026/03/24 00:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -294,7 +294,7 @@ ENTRY(DCIU)
 	rts
 
 /* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
-/* PCIA, ecacheon, ecacheoff */
+/* PCIA */
 
 /* loadustp, ptest_addr */
 

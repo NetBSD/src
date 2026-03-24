@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.156 2026/03/23 02:43:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.157 2026/03/24 00:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -523,12 +523,6 @@ ENTRY_NOPROFILE(fdeject)
  */
 #define FPCOPROC	/* XXX: Temp. reqd. */
 #include <m68k/m68k/switch_subr.s>
-
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
-	rts
 
 /*
  * _delay(u_int N)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.86 2026/03/23 02:43:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.87 2026/03/24 00:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -260,12 +260,6 @@ ASGLOBAL(fullcflush)
 	.long	0
 	.text
 #endif
-
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
-	rts
 
 /*
  * Load a new CPU Root Pointer (CRP) into the MMU.

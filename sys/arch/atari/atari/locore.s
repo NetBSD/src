@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139 2026/03/23 02:51:24 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.140 2026/03/24 00:16:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -660,12 +660,6 @@ ENTRY(qsetjmp)
  */
 #define FPCOPROC
 #include <m68k/m68k/switch_subr.s>
-
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
-	rts
 
 /*
  * Check out a virtual address to see if it's okay to write to.
