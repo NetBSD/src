@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2026/03/24 06:00:40 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2026/03/24 14:31:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,11 +93,17 @@
 #define	IC60_NAI	0x00004000	/* no allocate mode, instr. cache */
 #define	IC60_FIC	0x00002000	/* four kB instr. cache (else 8) */
 
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
+#define	CACHE2030_ON	(DC_WA|DC_CLR|DC_ENABLE|IC_CLR|IC_ENABLE)
+#define	CACHE2030_BE	(DC_BE|IC_BE)
 #define	CACHE_OFF	(DC_CLR|IC_CLR)
+
+#define	_IC_CLEAR(x)	((x) & ~DC_CLR)
+#define	_DC_CLEAR(x)	((x) & ~IC_CLR)
+
+#define	CACHE_ON	(CACHE2030_ON | CACHE2030_BE)
 #define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|       DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|       IC_ENABLE)
+#define	IC_CLEAR	_IC_CLEAR(CACHE_CLR)
+#define	DC_CLEAR	_DC_CLEAR(CACHE_CLR)
 
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	(0x00000000)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 2026/03/23 02:43:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 2026/03/24 14:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -353,7 +353,7 @@ Lmmuenabled:
 	movl	#CACHE_ON,%d0
 	tstl	_C_LABEL(ectype)	| have external cache?
 	jne	1f			| Yes, skip
-	orl	#CACHE_BE,%d0		| set cache burst enable
+	orl	#CACHE2030_BE,%d0	| set cache burst enable
 1:
 	movc	%d0,%cacr		| clear cache
 	tstl	_C_LABEL(ectype)	| have external cache?

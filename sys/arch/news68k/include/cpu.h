@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2026/03/23 16:49:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58 2026/03/24 14:31:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,16 +62,13 @@
  * XXX Should these be defined in machine/cpu.h?
  */
 #undef CACHE_ON
+#define	CACHE_ON	CACHE2030_ON
 #undef CACHE_CLR
+#define	CACHE_CLR	CACHE2030_ON
 #undef IC_CLEAR
+#define	IC_CLEAR	_IC_CLEAR(CACHE2030_ON)
 #undef DC_CLEAR
-#define CACHE_ON	(DC_WA|DC_CLR|DC_ENABLE|IC_CLR|IC_ENABLE)
-#define CACHE_CLR	CACHE_ON
-#define IC_CLEAR	(DC_WA|DC_ENABLE|IC_CLR|IC_ENABLE)
-#define DC_CLEAR	(DC_WA|DC_CLR|DC_ENABLE|IC_ENABLE)
-
-#define DCIC_CLR	(DC_CLR|IC_CLR)
-#define CACHE_BE	(DC_BE|IC_BE)
+#define	DC_CLEAR	_DC_CLEAR(CACHE2030_ON)
 
 #define	cpu_set_hw_ast(l)						\
 	do {								\

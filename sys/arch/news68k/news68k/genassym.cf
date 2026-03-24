@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.41 2026/03/14 21:03:40 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.42 2026/03/24 14:31:33 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -157,9 +157,8 @@ define	CACHE40_ON		CACHE40_ON
 
 define	CACHE_ON		CACHE_ON
 define	CACHE_OFF		CACHE_OFF
-define	DCIC_CLR		DCIC_CLR
 define	CACHE_CLR		CACHE_CLR
-define	CACHE_BE		CACHE_BE
+define	CACHE2030_BE		CACHE2030_BE
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
