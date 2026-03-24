@@ -1,4 +1,4 @@
-/*	$NetBSD: swaplist.c,v 1.24 2026/03/23 23:46:46 yamt Exp $	*/
+/*	$NetBSD: swaplist.c,v 1.25 2026/03/24 16:38:12 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: swaplist.c,v 1.24 2026/03/23 23:46:46 yamt Exp $");
+__RCSID("$NetBSD: swaplist.c,v 1.25 2026/03/24 16:38:12 yamt Exp $");
 #endif
 
 
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: swaplist.c,v 1.24 2026/03/23 23:46:46 yamt Exp $");
 #include <util.h>
 
 #define	dbtoqb(b) dbtob((int64_t)(b))
-#define	pgtoqb(b) ((int64_t)(b) << PGSHIFT)
+#define	pgtoqb(b) ((int64_t)(b) * page_size)
 
 /*
  * NOTE:  This file is separate from swapctl.c so that pstat can grab it.
@@ -95,6 +95,7 @@ list_swap(int pri, int kflag, int pflag, int tflag, int dolong, int hflag)
 	int	hlen, size, inuse, npgbad, ncounted, pathmax, cw;
 	int	rnswap, nswap = swapctl(SWAP_NSWAP, 0, 0), i;
 	int64_t	totalsize, totalinuse, totalbad;
+	int	page_size = sysconf(_SC_PAGESIZE);
 
 	if (nswap < 1) {
 		puts("no swap devices configured");
