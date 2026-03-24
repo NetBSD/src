@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3240 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3241 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -194,9 +194,27 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[yamt 20260301]
 	zfs: Various reliability improvements. [yamt 20260301]
 	zfs: Reject read(2) on directories. [yamt 20260301]
+	rge(4): Add support for RTL8127ATF with SFP+ interface.
+		[mlelstv 20260308]
 	tzcode: Updated to 2026a. [christos 20260308]
 	tzdata: Updated to 2026a (using 2026agtz) [kre 20260309]
+	riscv: Add support for MKPROFILE. [skrll 20260309]
+	telnet(1): Only send exported environment variables,
+		from OpenBSD. [christos 20260313]
 	gdb: Import 17.1 and switch everyone to it [christos 20260314]
+	sh(1): Improve feedback from 'type' builtin. [kre 20260314]
 	dhcpcd: Updated to 10.3.11 [roy 20260316]
 	tcpdump(8): Import 4.99.6. [christos 20260318]
 	libpcap: Import 1.10.6. [christos 20260318]
+	kernel: Make the uvm swap drum(4) MPSAFE. [yamt 20260316]
+	mgafb(4): New driver for Matrox Millennium I graphics cards,
+		from Radoslaw Kujawa. [macallan 20260317]
+	riscv: Provide and use hooks for L1 cache operations on the
+		T-Head processors, from Rui-Xiang Guo.
+		[skrll 20260318]
+	riscv: Add support for allwinner,sun20i-d1-mmc and
+		allwinner,sun20i-d1-wdt, from Rui-Xiang Guo.
+		[skrll 20260318]
+	m68k: Refactor FP exception handling to be less
+		machine-dependent. [thorpej 20260321]
+	zfs: Improve performance of removing files. [yamt 20260322]
