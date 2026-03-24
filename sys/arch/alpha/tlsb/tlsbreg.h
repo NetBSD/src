@@ -1,4 +1,4 @@
-/* $NetBSD: tlsbreg.h,v 1.8 2025/12/11 07:25:10 andvar Exp $ */
+/* $NetBSD: tlsbreg.h,v 1.9 2026/03/24 03:39:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 2000 by Matthew Jacob
@@ -58,7 +58,7 @@
  */
 
 #define TLSB_NODE_BASE		0x000000ff88000000	/* Dense */
-#define TLSB_NODE_SIZE		0x00400000
+#define TLSB_NODE_SIZE		        0x00400000
 #define TLSB_NODE_MAX		8	/* inclusive */
 
 /* Translate a node number to an address. */
@@ -93,6 +93,23 @@
  * console hardware.
  */
 #define TLSB_GBUS_BASE		0x000000ff90000000	/* Dense */
+	/* offsets from GBUS_BASE */
+#define	TLSB_GBUS_FPROM0	        0x00000000
+#define	TLSB_GBUS_FPROM1	        0x04000000
+	/* reserved			0x08000000		*/
+	/* reserved			0x0c000000		*/
+#define	TLSB_GBUS_DUART0	        0x10000000
+#define	TLSB_GBUS_DUART1	        0x11000000
+#define	TLSB_GBUS_RTC		        0x20000000
+#define	TLSB_GBUS_GBUS_WHAMI	        0x30000000
+#define	TLSB_GBUS_GBUS_LEDS0	        0x31000000
+#define	TLSB_GBUS_GBUS_LEDS1	        0x32000000
+#define	TLSB_GBUS_GBUS_LEDS2	        0x33000000
+#define	TLSB_GBUS_GBUS_MISCR	        0x34000000
+#define	TLSB_GBUS_GBUS_MISCW	        0x35000000
+#define	TLSB_GBUS_GBUS_TLSBRST	        0x36000000
+#define	TLSB_GBUS_GBUS_SERNUM	        0x37000000
+#define	TLSB_GBUS_GBUS_TEST	        0x38000000
 
 /*
  * Note that not every module type supports each TurboLaser register.
