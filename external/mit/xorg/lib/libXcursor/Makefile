@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2022/05/03 13:46:22 uwe Exp $
+#	$NetBSD: Makefile,v 1.9 2026/03/25 21:55:08 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,13 @@ SRCS=	cursor.c display.c file.c library.c xlib.c
 INCS=	Xcursor.h
 INCSDIR=${X11INCDIR}/X11/Xcursor
 
+PKGDIR?=	/usr/pkg
+ICONDIR=	${X11LIBDIR}/icons
+XCURSORPATH=	~/.local/share/icons:~/.icons:${PKGDIR}/share/icons:${X11LIBDIR}/icons:${PKGDIR}/share/pixmaps:${X11LIBDIR}/pixmaps:${ICONDIR}
+
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
-CPPFLAGS+=	-DICONDIR=\"${X11LIBDIR}/icons\"
+CPPFLAGS+=	-DICONDIR=\"${ICONDIR}\"
+CPPFLAGS+=	-DXCURSORPATH=\"${XCURSORPATH}\"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/Xcursor
 CPPFLAGS+=	-I${X11SRCDIR.${LIB}}/../include
 
@@ -29,12 +34,7 @@ MAN = Xcursor.3
 
 X11EXTRAMANDEFS += -e s%__XCURSORPATH__%${__XCURSORPATH__:Q}%g
 
-__XCURSORPATH__	= \
-	~/.local/share/icons, \
-	~/.icons, \
-	/usr/share/icons, \
-	/usr/share/pixmaps, \
-	${X11LIBDIR}/icons
+__XCURSORPATH__	= ${XCURSORPATH:S/:/, /g}
 
 MLINKS += Xcursor.3 XcursorCursorsCreate.3
 MLINKS += Xcursor.3 XcursorCursorsDestroy.3
