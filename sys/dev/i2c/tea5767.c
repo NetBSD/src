@@ -1,4 +1,4 @@
-/*	$NetBSD: tea5767.c,v 1.2 2019/12/23 20:49:09 thorpej Exp $	*/
+/*	$NetBSD: tea5767.c,v 1.3 2026/03/25 22:21:37 andvar Exp $	*/
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tea5767.c,v 1.2 2019/12/23 20:49:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tea5767.c,v 1.3 2026/03/25 22:21:37 andvar Exp $");
 
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -152,7 +152,7 @@ tea5767_write(struct tea5767_softc *sc, uint8_t *reg)
 	int exec_result;
 
 	if (iic_acquire_bus(sc->sc_i2c_tag, 0)) {
-		device_printf(sc->sc_dev, "bus acquiration failed.\n");
+		device_printf(sc->sc_dev, "bus acquisition failed.\n");
 		return 1;
 	}
 
@@ -178,7 +178,7 @@ tea5767_read(struct tea5767_softc *sc, uint8_t *reg)
 	int exec_result;
 
 	if (iic_acquire_bus(sc->sc_i2c_tag, 0)) {
-		device_printf(sc->sc_dev, "bus acquiration failed.\n");
+		device_printf(sc->sc_dev, "bus acquisition failed.\n");
 		return 1;
 	}
 

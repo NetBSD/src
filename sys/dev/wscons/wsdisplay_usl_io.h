@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay_usl_io.h,v 1.5 2019/02/26 10:30:28 msaitoh Exp $ */
+/* $NetBSD: wsdisplay_usl_io.h,v 1.6 2026/03/25 22:21:37 andvar Exp $ */
 
 #ifndef _DEV_WSCONS_WSDISPLAY_USL_IO_H_
 #define _DEV_WSCONS_WSDISPLAY_USL_IO_H_
@@ -25,7 +25,7 @@ typedef struct vt_mode vtmode_t;
 #define VT_RELDISP	_IO('v', 4)
 #define VT_FALSE	0		/* release of VT refused */
 #define VT_TRUE		1		/* VT released */
-#define VT_ACKACQ	2		/* acknowledging VT acquiration */
+#define VT_ACKACQ	2		/* acknowledging VT acquisition */
 
 #define VT_ACTIVATE	_IO('v', 5)
 #define VT_WAITACTIVE	_IO('v', 6)
