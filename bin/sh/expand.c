@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.148 2026/03/22 20:27:52 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.149 2026/03/26 01:39:32 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.148 2026/03/22 20:27:52 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.149 2026/03/26 01:39:32 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ STATIC int varisset(const char *, int);
 STATIC void varvalue(const char *, int, int, int);
 STATIC void recordregion(int, int, int);
 STATIC void removerecordregions(int);
-STATIC void ifsbreakup(char *, struct arglist *);
+STATIC void ifsbreakup(char *, size_t, struct arglist *);
 STATIC void ifsfree(void);
 STATIC void expandmeta(struct strlist *, int);
 STATIC void expmeta(char *, char *);
@@ -182,7 +182,7 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 {
 	struct strlist *sp;
 	char *p;
-	DEBUG_ONLY(int len);
+	size_t len;
 
 	CTRACE(DBG_EXPAND, ("expandarg(fl=%#x)\n", flag));
 	if (fflag)		/* no filename expandsion */
@@ -199,21 +199,21 @@ expandarg(union node *arg, struct arglist *arglist, int flag)
 		STACKSTRNUL(expdest);
 		DEBUG_ONLY(len = expdest - stackblock());
 		CTRACE(DBG_EXPAND,
-		    ("expandarg: no arglist, done[%d] (len %d) \"%s\"\n",
-		    back_exitstatus, len, showstr(stackblock(), len)));
+		    ("expandarg: no arglist, done[%d] (len %zu) \"%s\"\n",
+		    back_exitstatus, len, showstr(stackblock(), (int)len)));
 		return;			/* here document expanded */
 	}
 	STPUTC('\0', expdest);
-	DEBUG_ONLY(len = expdest - stackblock() - 1);
-	CTRACE(DBG_EXPAND, ("expandarg: arglist got (%d) \"%s\"\n",
-		    len, showstr(stackblock(), len)));
+	len = expdest - stackblock() - 1;
+	CTRACE(DBG_EXPAND, ("expandarg: arglist got (%zu) \"%s\"\n",
+		    len, showstr(stackblock(), (int)len)));
 	p = grabstackstr(expdest);
 	exparg.lastp = &exparg.list;
 	/*
 	 * TODO - EXP_REDIR
 	 */
 	if (flag & EXP_SPLIT) {
-		ifsbreakup(p, &exparg);
+		ifsbreakup(p, len, &exparg);
 		*exparg.lastp = NULL;
 		exparg.lastp = &exparg.list;
 		if (flag & EXP_GLOB)
@@ -310,7 +310,7 @@ argstr(const char *p, int flag)
 			if (empty_dollar_at &&
 			    expdest - stackblock() > startoff &&
 			    expdest[-1] == CTLQUOTEMARK)
-				expdest--;
+				STUNPUTC(expdest);
 			else if (!had_dol_at && (flag & EXP_SPLIT) != 0)
 				STPUTC(c, expdest);
 			ifs_split = EXP_IFS_SPLIT;
@@ -391,6 +391,11 @@ argstr(const char *p, int flag)
 			 * assignments (after the first '=' and after ':'s).
 			 */
 			STPUTC(c, expdest);
+			if (flag & ifs_split && strchr(ifs, c) != NULL) {
+				/* We need to get the output split here... */
+				recordregion(expdest - stackblock() - 1,
+						expdest - stackblock(), 0);
+			}
 			if (flag & EXP_VARTILDE && *p == '~') {
 				if (c == '=') {
 					if (firsteq)
@@ -1329,7 +1334,7 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			}
 			if (expdest > START &&
 			   (!lastnull || !(flag & EXP_NEEDLAST)))
-				expdest--;	/* delete the final \0 */
+				STUNPUTC(expdest); /* delete the final \0 */
 			VTRACE(DBG_EXPAND,
 			    (":: \"%s\"\n", showstr(START, LENGTH)));
 			return;
@@ -1421,7 +1426,7 @@ recordregion(int start, int end, int inquotes)
  * searched for IFS characters have been stored by recordregion.
  */
 STATIC void
-ifsbreakup(char *string, struct arglist *arglist)
+ifsbreakup(char *string, size_t len __debugused, struct arglist *arglist)
 {
 	struct ifsregion *ifsp;
 	struct strlist *sp;
@@ -1434,7 +1439,7 @@ ifsbreakup(char *string, struct arglist *arglist)
 
 	start = string;
 
-	VTRACE(DBG_EXPAND, ("ifsbreakup(\"%s\")", showstr(string, -1)));
+	VTRACE(DBG_EXPAND, ("ifsbreakup(\"%s\")", showstr(string, (int)len)));
 	if (ifslastp == NULL) {
 		/* Return entire argument, IFS doesn't apply to any of it */
 		VTRACE(DBG_EXPAND, ("no regions\n", string));
@@ -1469,17 +1474,11 @@ ifsbreakup(char *string, struct arglist *arglist)
 				    (" \\0 Nxt:\"%s\" ",
 				    showstr(p+1,ifsp->endoff-(p-string-1))));
 			} else if (ifsp->inquotes) {
-				/* NULs (should be from "$@") end args */
-				if (*p != 0) {
-					p++;
-					continue;
-				}
-				/* This can no longer happen */
-				ifsspc = NULL;
-				VTRACE(DBG_EXPAND, (" \\0 nxt:\"%s\" ", p));
-			} else if (*p != '\0') {
+				p++;	/* A quoted char to keep */
+				continue;
+			} else {
 				if (!strchr(ifs, *p)) {
-					p++;
+					p++;	/* Not an IFS char, keep it */
 					continue;
 				}
 				had_param_ch = 0;
@@ -1491,9 +1490,6 @@ ifsbreakup(char *string, struct arglist *arglist)
 					start = p;
 					continue;
 				}
-			} else {
-				ifsspc = NULL;
-				had_param_ch = 0;
 			}
 			/* Save this argument... */
 			*q = '\0';
@@ -1536,7 +1532,8 @@ ifsbreakup(char *string, struct arglist *arglist)
 	 * Save anything left as an argument (as long as not empty).
 	 */
 	if (had_param_ch || *start != 0) {
-		VTRACE(DBG_EXPAND, (" T<%s>", start));
+		VTRACE(DBG_EXPAND, (" T(%zu)<%s>", strlen(start),
+		    showstr(start, strlen(start))));
 		sp = stalloc(sizeof(*sp));
 		sp->text = start;
 		*arglist->lastp = sp;
@@ -1609,7 +1606,7 @@ showstr(const char *str, int len)
 
 	for (p = str, q = strbuf; --lhs >= 0; ) {
 		q = showchar(q, *p++, &rhs);
-		if (q >= &strbuf[sizeof strbuf - 6]) {
+		if (q >= &strbuf[sizeof strbuf - 4]) {
 			while (q < &strbuf[sizeof strbuf - 1])
 				*q++ = '.';
 			*q = '\0';
@@ -1617,12 +1614,14 @@ showstr(const char *str, int len)
 		}
 	}
 	if (p < str + len) {
-		if (rhs <= 0 || q >= &strbuf[sizeof strbuf - 6]) {
+		if (rhs <= 0 || q >= &strbuf[sizeof strbuf - 8]) {
 			while (q < &strbuf[sizeof strbuf - 1])
 				*q++ = '.';
 			*q = '\0';
 			return strbuf;
 		}
+
+		*q++ = '.'; *q++ = '|'; *q++='.';
 
 		if (p < str + len - rhs)
 			p = str + len - rhs;
@@ -1631,7 +1630,7 @@ showstr(const char *str, int len)
 
 		while (--rhs >= 0) {
 			q = showchar(q, *p++, &lhs);
-			if (q >= &strbuf[sizeof strbuf - 6]) {
+			if (q >= &strbuf[sizeof strbuf - 5]) {
 				while (q < &strbuf[sizeof strbuf - 1])
 					*q++ = '.';
 				*q = '\0';
