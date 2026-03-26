@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.20 2026/03/26 18:06:03 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.21 2026/03/26 18:06:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -41,9 +41,9 @@
 #define	PLTSYM
 
 #if defined (_ARM_ARCH_4T)
-# define RET		"bx	lr"
+# define RET		"bx	ip"
 #else
-# define RET		"mov	pc, lr"
+# define RET		"mov	pc, ip"
 #endif
 
 #if defined(__ARM_DWARF_EH__)
