@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.128 2026/03/21 20:19:52 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.129 2026/03/26 12:47:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2026/03/21 20:19:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/03/26 12:47:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -74,6 +74,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2026/03/21 20:19:52 thorpej Exp $"
 #ifdef __ELF__
 #include <sys/exec_elf.h>
 #endif
+
+#include <m68k/cacheops.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -176,6 +178,10 @@ void
 machine_init(paddr_t nextpa)
 {
 	int i;
+
+	/* Clear and enable the external cache, if any. */
+	PCIA();
+	ecacheon();
 
 	/*
 	 * Tell the VM system about available physical memory.  The

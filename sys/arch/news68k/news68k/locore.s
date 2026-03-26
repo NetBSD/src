@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 2026/03/26 12:20:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 2026/03/26 12:47:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -356,11 +356,6 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-	tstl	_C_LABEL(ectype)	| have external cache?
-	jeq	1f			| No, skip
-	movl	_C_LABEL(cache_clr),%a0
-	st	%a0@			| flush external cache
-1:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
@@ -556,18 +551,18 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 
 ENTRY(ecacheon)
 	tstl	_C_LABEL(ectype)
-	jeq	Lnocache7
+	jeq	1f
 	movl	_C_LABEL(cache_ctl),%a0
 	st	%a0@			| NEWS-OS does `st 0xe1300000'
-Lnocache7:
+1:
 	rts
 
 ENTRY(ecacheoff)
 	tstl	_C_LABEL(ectype)
-	jeq	Lnocache8
+	jeq	1f
 	movl	_C_LABEL(cache_ctl),%a0
 	sf	%a0@			| NEWS-OS does `sf 0xe1300000'
-Lnocache8:
+1:
 	rts
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.213 2026/03/26 12:20:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.214 2026/03/26 12:47:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -501,11 +501,6 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-	tstl	_C_LABEL(ectype)
-	jeq	1f
-	MMUADDR(%a0)
-	orl	#MMU_CEN,%a0@(MMUCMD)	| turn on external cache
-1:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
@@ -735,18 +730,18 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 
 ENTRY(ecacheon)
 	tstl	_C_LABEL(ectype)
-	jeq	Lnocache7
+	jeq	1f
 	MMUADDR(%a0)
 	orl	#MMU_CEN,%a0@(MMUCMD)
-Lnocache7:
+1:
 	rts
 
 ENTRY(ecacheoff)
 	tstl	_C_LABEL(ectype)
-	jeq	Lnocache8
+	jeq	1f
 	MMUADDR(%a0)
 	andl	#~MMU_CEN,%a0@(MMUCMD)
-Lnocache8:
+1:
 	rts
 
 /*

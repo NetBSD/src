@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2026/03/24 03:31:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.256 2026/03/26 12:47:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2026/03/24 03:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.256 2026/03/26 12:47:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -233,6 +233,9 @@ machine_init(paddr_t nextpa)
 		break;
 	}
 #endif
+
+	/* Enable the external cache, if any. */
+	ecacheon();
 
 #ifdef __HAVE_NEW_PMAP_68K
 	/*
