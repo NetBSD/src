@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.422 2026/03/16 18:08:47 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.423 2026/03/26 00:47:33 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -82,6 +82,7 @@ AQM	active queue management
 ARAT	always running APIC timer
 ARC	Advanced RISC Computing
 ARC	adaptive replacement cache
+ARC	Authenticated Received Chain (RFC8617)
 ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
