@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.5 2026/03/24 15:56:59 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.6 2026/03/26 11:53:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -134,6 +134,7 @@ ENTRY_NOPROFILE(mmu_load_tt30)
 	.long 0xf0100800		| pmove %a0@,%tt0
 	addql	#4,%a0
 	.long 0xf0100c00		| pmove %a0@,%tt1
+	pflusha				| flush ATC
 	rts
 #endif /* M68030 */
 #endif /* M68020 || M68030 */
@@ -183,6 +184,7 @@ ENTRY_NOPROFILE(mmu_load_tt40)
 	.long 0x4e7b0006		| movec %d0,%dtt0
 	movl	%a0@+,%d0		| load DTT1
 	.long 0x4e7b0007		| movec %d0,%dtt1
+	.word 0xf518	 |pflusha	| flush ATC
 	rts
 #endif /* M68040 || M68060 */
 #endif /* M68K_MMU_MOTOROLA */
