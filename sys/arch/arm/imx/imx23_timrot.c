@@ -78,7 +78,7 @@ static const struct device_compatible_entry compat_data[] = {
 	DEVICE_COMPAT_EOL
 };
 
-static struct imx23_timrot_softc *timer_sc;
+static struct imx23_timrot_softc *timer_sc = NULL;
 
 #define TIMROT_SOFT_RST_LOOP 455 /* At least 1 us ... */
 #define TIMROT_READ(sc, reg)						\
@@ -197,9 +197,11 @@ setstatclockrate(int newhz)
 {
 	struct imx23_timrot_softc *sc = timer_sc;
 
-	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
-		      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
-				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
+	if(sc != NULL) {
+		TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
+			      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
+					HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
+	}
 }
 
 /*
