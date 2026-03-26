@@ -80,6 +80,10 @@ device	omaptimer
 attach  omaptimer at fdt
 file	arch/arm/ti/ti_omaptimer.c	omaptimer
 
+device	am18xxtimer
+attach  am18xxtimer at fdt
+file	arch/arm/ti/am18xx_timer.c	am18xxtimer
+
 # GPIO
 device	tigpio: fdt_gpio, gpiobus
 attach	tigpio at fdt with ti_gpio
