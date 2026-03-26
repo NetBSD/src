@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2025/05/07 16:26:47 uwe Exp $	*/
+/*	$NetBSD: asm.h,v 1.40 2026/03/26 07:48:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@
 
 #ifdef GPROF
 # define _PROF_PROLOGUE	\
-	mov ip, lr; bl __mcount
+	push {lr}; bl __gnu_mcount_nc
 #else
 # define _PROF_PROLOGUE
 #endif
