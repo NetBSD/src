@@ -1,4 +1,4 @@
-/*	$NetBSD: profile.h,v 1.19 2026/03/26 07:48:18 skrll Exp $	*/
+/*	$NetBSD: profile.h,v 1.20 2026/03/26 18:06:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Ben Harris
@@ -39,6 +39,12 @@
  */
 
 #define	PLTSYM
+
+#if defined (_ARM_ARCH_4T)
+# define RET		"bx	lr"
+#else
+# define RET		"mov	pc, lr"
+#endif
 
 #if defined(__ARM_DWARF_EH__)
 #define _PROF_UNWINDER_SAVE	""
@@ -90,7 +96,7 @@
 	 * Restore registers that were trashed during mcount		\
 	 */								\
 	__asm("pop	{r0-r3, ip, lr}");				\
-	__asm("bx ip");							\
+	__asm(RET);							\
 	__asm(".cfi_endproc");						\
 	__asm(".size	" MCOUNT_ASM_NAME ", .-" MCOUNT_ASM_NAME);
 
