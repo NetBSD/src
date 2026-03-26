@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.19 2022/11/19 08:00:51 yamt Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.20 2026/03/26 04:35:17 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -249,6 +249,7 @@ MALLOC_DECLARE(M_LLTABLE);
 #define	LLE_VALID	0x0008	/* ll_addr is valid */
 #define	LLE_PUB		0x0020	/* publish entry ??? */
 #define	LLE_LINKED	0x0040	/* linked to lookup structure */
+#define	LLE_UNRESOLVED	0x0080	/* address unresolved */
 /* LLE request flags */
 #define	LLE_EXCLUSIVE	0x2000	/* return lle xlocked  */
 
