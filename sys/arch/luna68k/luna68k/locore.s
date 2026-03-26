@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.109 2026/03/24 00:16:32 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.110 2026/03/26 12:20:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -243,14 +243,6 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lenab3			| yes, cache already on
-	tstl	_C_LABEL(mmutype)
-	jpl	Lenab3			| 68851 implies no d-cache
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp

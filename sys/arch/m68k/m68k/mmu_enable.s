@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_enable.s,v 1.2 2025/12/05 15:19:50 thorpej Exp $	*/
+/*	$NetBSD: mmu_enable.s,v 1.3 2026/03/26 12:20:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 /*
- * Code fragment for enabling the MMU.
+ * Code fragment for enabling the MMU and on-chip caches.
  */
 
 /*
@@ -51,7 +51,8 @@
  * Your port's locore.s also must provide the local label "Lmmuenabled",
  * which will be used as a jump target after the MMU is enabled.
  *
- * This provides MMU enablement for 68020+68851, 68030, 68040, and 68060.
+ * This provides MMU and on-chip cache enablement for 68020+68851, 68030,
+ * 68040, and 68060.
  */
 
 	RELOC(Sysseg_pa, %a0)		| system segment table addr
@@ -77,7 +78,7 @@
 	cmpl	#CPU_68060,%a0@		| 68060?
 	jne	1f
 	movl	#PCR_ESS,%d0		| enable superscalar dispatch
-	.long	0x4e7b0808		| movcl %d0,%pcr
+	.long	0x4e7b0808		| movc %d0,%pcr
 	movl	#CACHE60_ON,%d0
 	movc	%d0,%cacr		| enable store buffer, I/D/B caches
 	jmp	Lmmuenabled:l		| forced not be pc-relative
@@ -104,8 +105,15 @@
 	addql	#4,%sp
 1:
 #endif /* M68030 */
+#ifdef __HAVE_M68K_DYNAMIC_CACR
+	RELOC(cacr_cache_on,%a0)
+	movl	%a0@,%d0
+#else
+	movl	#CACHE_ON,%d0
+#endif
 	pflusha
 	movl	#MMU51_TCR_BITS,%sp@-	| value to load TC with
 	pmove	%sp@,%tc		| load it
+	movc	%d0,%cacr		| clear and enable caches
 	jmp	Lmmuenabled:l		| forced not be pc-relative
 #endif /* M68020 || M68030 */

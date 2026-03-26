@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.107 2026/03/23 02:43:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.108 2026/03/26 12:20:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -342,19 +342,6 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-	/* set user SP */
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Ltbia040		| yes, cache already on
-	pflusha
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-	jra	Lenab3
-Ltbia040:
-	.word	0xf518			| pflusha
-Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp

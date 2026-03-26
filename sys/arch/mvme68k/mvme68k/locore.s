@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.162 2026/03/24 00:16:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.163 2026/03/26 12:20:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -567,7 +567,6 @@ Lstart2:
  * Should be running mapped from this point on
  */
 Lmmuenabled:
-/* Point the CPU VBR at our vector table */
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
@@ -576,15 +575,6 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Ltbia040		| yes, cache already on
-	pflusha
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-	jra	Lenab3
-Ltbia040:
-	.word	0xf518
-Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp

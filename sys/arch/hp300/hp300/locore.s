@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.212 2026/03/23 02:43:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.213 2026/03/26 12:20:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -467,8 +467,10 @@ Lmmutramp_start:
 	lsrl	%d2,%d1			      | convert to page frame
 	movl	%d1,INTIOBASE+MMUBASE+MMUSSTP | load in sysseg table register
 
+	movl	#CACHE_ON,%d0
 	movl	#0,INTIOBASE+MMUBASE+MMUCMD        | clear external cache
 	movl	#MMU_ENAB,INTIOBASE+MMUBASE+MMUCMD | turn on MMU
+	movc	%d0,%cacr		| clear and enable caches
 	jmp	Lmmuenabled:l		| forced not be pc-relative
 1:
 	cmpl	#MMU_68040,%a0@		| 68040?
@@ -499,17 +501,11 @@ Lmmuenabled:
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace
 
-/* flush TLB and turn on caches */
-	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
-	jeq	Lnocache0		| yes, cache already on
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
 	tstl	_C_LABEL(ectype)
-	jeq	Lnocache0
+	jeq	1f
 	MMUADDR(%a0)
 	orl	#MMU_CEN,%a0@(MMUCMD)	| turn on external cache
-Lnocache0:
+1:
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
