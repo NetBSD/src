@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_timrot.c,v 1.10 2026/02/02 09:51:40 yurix Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.11 2026/03/26 20:14:37 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -54,9 +55,6 @@ struct imx23_timrot_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_hdl;
 };
-
-extern int hz;
-extern int stathz;
 
 static int	imx23_timrot_match(device_t, cfdata_t, void *);
 static void	imx23_timrot_attach(device_t, device_t, void *);
