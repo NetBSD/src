@@ -18,6 +18,7 @@ file	arch/arm/arm/bus_space_a4x.S
 
 # Add other board files here
 include "arch/arm/imx/files.imx23"
+include "arch/arm/ti/files.ti"
 
 #
 # Stack-less Just-In-Time compiler
