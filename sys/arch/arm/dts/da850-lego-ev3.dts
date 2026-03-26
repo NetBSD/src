@@ -32,6 +32,10 @@
 #include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/ti/davinci/da850-lego-ev3.dts"
 
 / {
+	chosen {
+		stdout-path = &serial1;
+	};
+
 	arm {
 		compatible = "simple-bus";
 	};
