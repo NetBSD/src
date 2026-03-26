@@ -4845,6 +4845,7 @@ zfs_link(vnode_t *tdvp, vnode_t *svp, char *name, cred_t *cr,
 }
 
 
+#if !defined(__NetBSD__)
 /*ARGSUSED*/
 void
 zfs_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
@@ -4890,6 +4891,7 @@ zfs_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
 	}
 	rw_exit(&zfsvfs->z_teardown_inactive_lock);
 }
+#endif /* !defined(__NetBSD__) */
 
 
 #ifdef __FreeBSD__
@@ -5909,14 +5911,47 @@ zfs_netbsd_inactive(void *v)
 	struct vop_inactive_v2_args *ap = v;
 	vnode_t *vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
+	int error;
 
-	/*
-	 * NetBSD: nothing to do here, other than indicate if the
-	 * vnode should be reclaimed.  No need to lock, if we race
-	 * vrele() will call us again.
-	 */
-	*ap->a_recycle = (zp->z_unlinked != 0);
+	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
+	if (zp->z_sa_hdl == NULL) {
+		/*
+		 * The fs has been unmounted, or we did a
+		 * suspend/resume and this file no longer exists.
+		 */
+		rw_exit(&zfsvfs->z_teardown_inactive_lock);
+		*ap->a_recycle = true;
+		return (0);
+	}
 
+	if (zp->z_unlinked) {
+		/*
+		 * Fast path to recycle a vnode of a removed file.
+		 */
+		rw_exit(&zfsvfs->z_teardown_inactive_lock);
+		*ap->a_recycle = true;
+		return (0);
+	}
+
+	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
+		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
+
+		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
+		zfs_sa_upgrade_txholds(tx, zp);
+		error = dmu_tx_assign(tx, TXG_WAIT);
+		if (error) {
+			dmu_tx_abort(tx);
+		} else {
+			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
+			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
+			zp->z_atime_dirty = 0;
+			dmu_tx_commit(tx);
+		}
+	}
+	rw_exit(&zfsvfs->z_teardown_inactive_lock);
+
+	*ap->a_recycle = false;
 	return (0);
 }
 
@@ -5938,26 +5973,6 @@ zfs_netbsd_reclaim(void *v)
 	KASSERTMSG(!vn_has_cached_data(vp), "vp %p", vp);
 
 	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
-
-	/*
-	 * Process a deferred atime update.
-	 */
-	if (zp->z_atime_dirty && zp->z_unlinked == 0 && zp->z_sa_hdl != NULL) {
-		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
-
-		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
-		zfs_sa_upgrade_txholds(tx, zp);
-		error = dmu_tx_assign(tx, TXG_WAIT);
-		if (error) {
-			dmu_tx_abort(tx);
-		} else {
-			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
-			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
-			zp->z_atime_dirty = 0;
-			dmu_tx_commit(tx);
-		}
-	}
-
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
 	else

@@ -186,68 +186,11 @@ struct vfsops zfs_vfsops = {
 	.vfs_fsync = (void *)eopnotsupp,
 };
 
-static bool
-zfs_sync_selector(void *cl, struct vnode *vp)
-{
-	znode_t *zp;
-
-	/*
-	 * Skip the vnode/inode if inaccessible, is control node or if the
-	 * atime is clean.
-	 */
-	if (zfsctl_is_node(vp))
-		return false;
-	zp = VTOZ(vp);
-	return zp != NULL && vp->v_type != VNON && zp->z_atime_dirty != 0
-	    && !zp->z_unlinked;
-}
-
 static int
 zfs_netbsd_sync(vfs_t *vfsp, int waitfor, cred_t *cr)
 {
-	struct vnode_iterator *marker;
-	zfsvfs_t *zfsvfs = vfsp->vfs_data;
-	vnode_t *vp;
-
 	/*
-	 * On NetBSD, we need to push out atime updates.  Solaris does
-	 * this during VOP_INACTIVE, but that does not work well with the
-	 * BSD VFS, so we do it in batch here.
-	 */
-	vfs_vnode_iterator_init(vfsp, &marker);
-	while ((vp = vfs_vnode_iterator_next(marker, zfs_sync_selector, NULL)))
-	{
-		znode_t *zp;
-		dmu_buf_t *dbp;
-		dmu_tx_t *tx;
-		int error;
-
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error) {
-			VN_RELE(vp);
-			continue;
-		}
-		ZFS_ENTER(zfsvfs);
-		zp = VTOZ(vp);
-		tx = dmu_tx_create(zfsvfs->z_os);
-		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
-		zfs_sa_upgrade_txholds(tx, zp);
-		error = dmu_tx_assign(tx, TXG_WAIT);
-		if (error) {
-			dmu_tx_abort(tx);
-		} else {
-			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
-			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
-			zp->z_atime_dirty = 0;
-			dmu_tx_commit(tx);
-		}
-		ZFS_EXIT(zfsvfs);
-		vput(vp);
-	}
-	vfs_vnode_iterator_destroy(marker);
-
-	/*
-	 * Then do the regular ZFS stuff.
+	 * Do the regular ZFS stuff.
 	 */
 	return zfs_sync(vfsp, waitfor);
 }
