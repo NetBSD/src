@@ -72,6 +72,7 @@ imx23apbdma* 	at fdt? pass 1			# NXP i.MX23 DMA controller
 
 # Clock Controllers
 imx23clkctrl*	at fdt? pass 1			# i.MX23 clock controller
+am18xxpsc*	at fdt? pass 3				# TI AM18XX power&sleep controller
 
 # general FDT devices
 fclock* 	at fdt? pass 1
