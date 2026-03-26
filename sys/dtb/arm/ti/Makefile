@@ -3,5 +3,6 @@
 TARGETS+=	dtblist
 
 SUBDIR+=	omap
+SUBDIR+=	davinci
 
 .include <bsd.subdir.mk>
