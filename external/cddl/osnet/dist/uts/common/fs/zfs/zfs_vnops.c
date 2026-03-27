@@ -218,9 +218,15 @@ zfs_open(vnode_t **vpp, int flag, cred_t *cr, caller_context_t *ct)
 		}
 	}
 
-	/* Keep a count of the synchronous opens in the znode */
-	if (flag & (FSYNC | FDSYNC))
-		atomic_inc_32(&zp->z_sync_cnt);
+	/*
+	 * Keep a count of the synchronous opens in the znode. On first
+	 * synchronous open we must convert all previous async transactions
+	 * into sync to keep correct ordering.
+	 */
+	if (flag & (FSYNC | FDSYNC)) {
+		if (atomic_inc_32_nv(&zp->z_sync_cnt) == 1)
+			zil_async_to_sync(zfsvfs->z_log, zp->z_id);
+	}
 
 	ZFS_EXIT(zfsvfs);
 	return (0);
@@ -1044,6 +1050,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	sa_bulk_attr_t	bulk[4];
 	uint64_t	mtime[2], ctime[2];
 	int		segflg;
+	boolean_t	commit;
 
 #ifdef __NetBSD__
 	segflg = VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ?
@@ -1180,6 +1187,9 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	write_eof = (woff + n > zp->z_size);
 
 	end_size = MAX(zp->z_size, woff + n);
+
+	commit = ((ioflag & (FSYNC | FDSYNC)) != 0 ||
+	    zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS);
 
 	/*
 	 * Write the file in reasonable size chunks.  Each chunk is written
@@ -1404,7 +1414,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 		else
 			(void) sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 
-		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, ioflag);
+		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, commit);
 		dmu_tx_commit(tx);
 
 		if (error != 0)
@@ -1440,8 +1450,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	}
 #endif
 
-	if (ioflag & (FSYNC | FDSYNC) ||
-	    zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+	if (commit)
 		zil_commit(zilog, zp->z_id);
 
 	ZFS_EXIT(zfsvfs);
@@ -3010,15 +3019,11 @@ update:
 	return (error);
 }
 
-ulong_t zfs_fsync_sync_cnt = 4;
-
 static int
 zfs_fsync(vnode_t *vp, int syncflag, cred_t *cr, caller_context_t *ct)
 {
 	znode_t	*zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-
-	(void) tsd_set(zfs_fsyncer_key, (void *)zfs_fsync_sync_cnt);
 
 	if (zfsvfs->z_os->os_sync != ZFS_SYNC_DISABLED) {
 		ZFS_ENTER(zfsvfs);
@@ -6274,7 +6279,8 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 		    B_TRUE);
 		err = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 		ASSERT0(err);
-		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len, 0);
+		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len,
+		    B_FALSE);
 	}
 	dmu_tx_commit(tx);
 
