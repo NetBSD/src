@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.28 2026/03/27 09:06:09 kre Exp $
+# $NetBSD: t_expand.sh,v 1.29 2026/03/27 09:39:39 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1511,6 +1511,56 @@ alternative_body() {
 	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#136
 	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#139
 	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#142
+
+	# Tests for odd cases of field splitting (a long standing NetBSD sh bug)
+	# Nb: fixed (a day) before these tests were added, no PR ever generated
+
+	# The A B... just guarantee an arg for printf (and make test id easier)
+
+	check3	'IFS=:; printf %s, A ${X:-a:b}'	   A,foo, A,a,b, A,a,b, #145
+	check3	'IFS=:; printf %s, B "${X:-a:b}"'  B,foo, B,a:b, B,a:b, #148
+	check3	'IFS=:; printf %s, C ${X:-"a:b"}'  C,foo, C,a:b, C,a:b, #151
+
+	check3	'IFS=:; printf %s, D ${X:+a:b}'	   D,a,b, D,     D,     #154
+	check3	'IFS=:; printf %s, E "${X:+a:b}"'  E,a:b, E,,    E,,    #157
+	check3	'IFS=:; printf %s, F ${X:+"a:b"}'  F,a:b, F,     F,     #160
+
+	check3	'IFS=:; printf %s, G ${X:=a:b}'	   G,foo, G,a,b, G,a,b, #163
+	check3	'IFS=:; printf %s, H "${X:=a:b}"'  H,foo, H,a:b, H,a:b, #166
+	check3	'IFS=:; printf %s, I ${X:="a:b"}'  I,foo, I,a,b, I,a,b, #169
+
+	check3	'IFS=:; printf %s, J ${X-a:b}'     J,foo, J,     J,a,b, #172
+	check3	'IFS=:; printf %s, K "${X-a:b}"'   K,foo, K,,    K,a:b, #175
+	check3	'IFS=:; printf %s, L ${X-"a:b"}'   L,foo, L,     L,a:b, #178
+
+	check3	'IFS=:; printf %s, M ${X+a:b}'     M,a,b, M,a,b, M,     #181
+	check3	'IFS=:; printf %s, N "${X+a:b}"'   N,a:b, N,a:b, N,,    #184
+	check3	'IFS=:; printf %s, O ${X+"a:b"}'   O,a:b, O,a:b, O,     #187
+
+	check3	'IFS=:; printf %s, P ${X=a:b}'     P,foo, P,     P,a,b, #190
+	check3	'IFS=:; printf %s, Q "${X=a:b}"'   Q,foo, Q,,    Q,a:b, #193
+	check3	'IFS=:; printf %s, R ${X="a:b"}'   R,foo, R,     R,a,b, #196
+
+	# It should make no difference what the IFS char is (but these passed).
+	# (These are copies of the old NetBSD sh failing sub-tests from above)
+	# The 6 tests that failed above are numbers 144 145 152 172 179 180
+
+	# 144 & 145 are here as 198&199, 152=200, 172=205, 179=206, 180=207
+	check3	'IFS=+; printf %s, S ${X:-a+b}'	   S,foo, S,a,b, S,a,b, #199
+	check3	'IFS=+; printf %s, T ${X:+a+b}'	   T,a,b, T,     T,     #202
+	check3	'IFS=+; printf %s, U ${X-a+b}'     U,foo, U,     U,a,b, #205
+	check3	'IFS=+; printf %s, V ${X+a+b}'     V,a,b, V,a,b, V,     #208
+
+	# But it did, ':' and '=' were treated differently than all others
+
+	# These are more repeats of the failing tests from above, and add
+	# 6 more failures (in old NetBSD shells) (the same failures as above)
+
+	# 144 & 145 are here as 210&211, 152=212, 172=217, 179=218, 180=219
+	check3	'IFS==; printf %s, W ${X:-a=b}'	   W,foo, W,a,b, W,a,b, #211
+	check3	'IFS==; printf %s, X ${X:+a=b}'	   X,a,b, X,     X,     #214
+	check3	'IFS==; printf %s, Y ${X-a=b}'     Y,foo, Y,     Y,a,b, #217
+	check3	'IFS==; printf %s, Z ${X+a=b}'     Z,a,b, Z,a,b, Z,     #220
 
 	results
 }
