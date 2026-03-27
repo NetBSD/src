@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.30 2026/03/27 18:10:10 kre Exp $
+# $NetBSD: t_expand.sh,v 1.31 2026/03/27 19:02:46 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -521,8 +521,13 @@ arithmetic_body() {
 		'printf %s $((1 + 2))'
 	atf_check -o inline:'2147483647' -e empty ${TEST_SH} -c \
 		'printf %s $((0x7fffffff))'
+
+	# The following used to use $(( (1 << 63) - 1 ))
+	# but 1 << 63 in a 64 bit int overflows into the sign bit
+	# which some shells treat as as error.   So use the following
+	# less obvious formula instead:
 	atf_check -o inline:'9223372036854775807' -e empty ${TEST_SH} -c \
-		'printf %s $(((1 << 63) - 1))'
+		'printf %s $(( (( 1 << 62 ) - 1) * 2 + 1))'
 }
 
 atf_test_case iteration_on_null_parameter
@@ -1757,6 +1762,126 @@ error_body() {
 	results
 }
 
+atf_test_case land_mine
+land_mine_head() {
+	atf_set descr 'Attempt to test for land mines left by expansions'
+}
+land_mine_body() {
+	reset land_mine
+
+	# Land mines (in this sense) are bugs left in the shell state
+	# after an expansion, which very often are benign, and unnoticed
+	# by the vast majority of ordinary code, but in odd cases can
+	# cause weird failures.   Generally this happens when the word
+	# containing the expansion is very long (after the expansion)
+
+	# So this test case borrows a random sampling of other tests, adds
+	# a whole bunch of text after the expansion in question, then
+	# validates that the expansion happened exactly as it should.
+
+	# A few of these were not all that randomly selected!
+
+	# First, we need a long string to use.  We will use it both
+	# expanded before the test (by ATF_SH), and expanded during
+	# the test (by TEST_SH).
+
+	# In what follows, use ${L} when ATF_SH is to expand L, and
+	# just $L when TEST_SH is intended to expand it (except if the
+	# braces are essential, naturally).  Just for clarity.
+
+	L=AAAAAAAA			# ${#L} == 8
+	L=${L}${L}${L}${L}		# ${#L} == 32
+	L=${L}${L}${L}${L}		# ${#L} == 128
+	L=${L}${L}${L}${L}		# ${#L} == 512
+	L=${L}${L}			# ${#L} == 1024
+	B=' '				# to insert a splitting place
+
+	test ${#L} -eq 1024 || atf_skip "ATF_SH cannot make long strings"
+
+	check	'set -- XX;
+		 set -- word$@'"${L}"'; printf %d, "${#1}"'       1030,   0 # 1
+	check "L='${L}'; "'set -- XX;
+		 set -- word$@$L;       printf %d, "${#1}"'	  1030,   0 # 2
+	check "L='${L}'; "'set -- XX;
+		 set -- word$@"$L";     printf %d, "${#1}"'	  1030,   0 # 3
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@$L$B$L;   printf %d, "$#" "${#1}" "${#2}"'    \
+							   2,1030,1024,   0 # 4
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@"$L"$B"$L"; printf %d, "$#" "${#1}" "${#2}"'  \
+							   2,1030,1024,   0 # 5
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@"$L$B$L"; printf %d, "$#" "${#1}" "${#2}"'    \
+							       1,2055,0,  0 # 6
+
+
+	check	'X=set; set --;
+		 set -- "${X+$@}"'"${L}"'; printf %d, "${#1}"'    1024,   0 # 7
+	check "L='${L}'; "'X=set; set --;
+		 set -- "${X+$@}"$L;       printf %d, "${#1}"'    1024,   0 # 8
+	check "L='${L}'; "'X=set; set --;
+		 set -- "${X+$@}""$L";     printf %d, "${#1}"'    1024,   0 # 9
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}"$L$B$L;   printf %d, "$#" "${#1}" "${#2}"' \
+							   2,1024,1024,   0 #10
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}""$L"$B"$L"; printf %d, "$#" "${#1}" "${#2}"' \
+							   2,1024,1024,   0 #11
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}""$L$B$L"; printf %d, "$#" "${#1}" "${#2}"' \
+							      1,2049,0,   0 #12
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}$L$B$L";   printf %d, "$#" "${#1}" "${#2}"' \
+							      1,2049,0,   0 #13
+
+
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L%AAA};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #14
+	check "L='${L}' B='${B}'; "'
+		 set -- "${L%AAA}";	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #15
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L#AAA};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #16
+	check "L='${L}' B='${B}'; "'
+		 set -- "${L#AAA}";	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #17
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L%AAA}$B${L#AAAA}; printf %d, "$#" "${#1}" "${#2}"' \
+							    2,1021,1020,  0 #18
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L#AAA}$B${L%AAAA}; printf %d, "$#" "${#1}" "${#2}"' \
+							    2,1021,1020,  0 #19
+	check "L='foo${L}${B}bar' B='${B}'; "'
+		 set -- ${L#f?o};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      2,1024,3,   0 #20
+	check "L='foo${L}${B}bar' B='${B}'; "'
+		 set -- ${L%?ar};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1027,0,   0 #21
+	check "L='foo${B}${L}bar' B='${B}'; "'
+		 set -- ${L#fo?};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1027,0,   0 #22
+	check "L='foo${B}${L}bar' B='${B}'; "'
+		 set -- ${L%b??};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      2,3,1024,   0 #23
+
+	check "set -- '${L}'"' a b c; shift;
+		echo "$#: ${1-A} ${2-B} ${3-C} ${4-D} ${5-E}"'		    \
+							 '3: a b c D E'   0 #24
+	check 'set -- a "" c "" e '"'${L}'"';
+	       echo "$#: ${1:-A} ${2:-B} ${3:-C} ${4:-D} ${5:-E} ${#6}"'    \
+						    '6: a B c D e 1024'   0 #25
+	check 'set -- a "" c "" e "" '"'${L}'"';
+	       echo "$#: ${1:+A} ${2:+B} ${3:+C} ${4:+D} ${5:+E} ${6:+F}"'  \
+							   '7: A  C  E '  0 #26
+
+	check 'set -- "$(echo a)" $(echo b) "$(echo c d)" $(echo e f) '"'${L}'"'
+		echo "$#: $1.$2.$3.$4.$5.${#6}"'  '6: a.b.c d.e.f.1024'   0 #27
+
+	results
+}
+
 atf_init_test_cases() {
 	# Listed here in the order ATF runs them, not the order from above
 
@@ -1782,6 +1907,7 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
 	atf_add_test_case iteration_on_null_or_missing_parameter
+	atf_add_test_case land_mine
 	atf_add_test_case shell_params
 	atf_add_test_case strip
 	atf_add_test_case tilde
