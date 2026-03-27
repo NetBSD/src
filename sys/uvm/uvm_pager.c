@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.134 2026/03/24 00:50:36 yamt Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.135 2026/03/27 07:14:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.134 2026/03/24 00:50:36 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.135 2026/03/27 07:14:46 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -323,6 +323,21 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
+static int
+uvm_page_swapslot(struct vm_page *pg)
+{
+	int swslot;
+
+	KASSERT((pg->flags & PG_SWAPBACKED) != 0);
+	if (pg->uobject != NULL) {
+		swslot = uao_find_swslot(pg->uobject, pg->offset >> PAGE_SHIFT);
+	} else {
+		KASSERT(pg->uanon != NULL);
+		swslot = pg->uanon->an_swslot;
+	}
+	return swslot;
+}
+
 void
 uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 {
@@ -349,13 +364,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	} else {
 #if defined(VMSWAP)
 		if (error) {
-			if (pg->uobject != NULL) {
-				swslot = uao_find_swslot(pg->uobject,
-				    pg->offset >> PAGE_SHIFT);
-			} else {
-				KASSERT(pg->uanon != NULL);
-				swslot = pg->uanon->an_swslot;
-			}
+			swslot = uvm_page_swapslot(pg);
 			KASSERT(swslot);
 		}
 #else /* defined(VMSWAP) */
@@ -537,6 +546,17 @@ uvm_aio_aiodone(struct buf *bp)
 		UVMHIST_LOG(ubchist, "pgs[%jd] = %#jx", i,
 		    (uintptr_t)pgs[i], 0, 0);
 	}
+
+#if defined(VMSWAP)
+	if (__predict_false(error != 0) &&
+	    ((pgs[0]->flags & PG_SWAPBACKED) != 0)) {
+		int swslot = uvm_page_swapslot(pgs[0]);
+
+		KASSERT(swslot > 0);
+		uvm_swap_decrypt_pages(swslot, bp->b_data, npages);
+	}
+#endif
+
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 
 	uvm_aio_aiodone_pages(pgs, npages, write, error);

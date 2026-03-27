@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.h,v 1.29 2024/03/15 22:15:21 andvar Exp $	*/
+/*	$NetBSD: uvm_swap.h,v 1.30 2026/03/27 07:14:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1997 Matthew R. Green
@@ -55,6 +55,7 @@ void	swapsys_lock(krw_t);
 void	swapsys_unlock(void);
 int	uvm_swap_stats(char *, int,
     void (*)(void *, const struct swapent *), size_t, register_t *);
+void	uvm_swap_decrypt_pages(int startslot, void *p, int npages);
 
 #else /* defined(VMSWAP) */
 

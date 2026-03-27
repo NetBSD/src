@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.221 2026/03/27 07:13:49 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.222 2026/03/27 07:14:46 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.221 2026/03/27 07:13:49 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.222 2026/03/27 07:14:46 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1865,6 +1865,92 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 	return error;
 }
 
+static void
+uvm_swap_encrypt_pages(int startslot, void *p, int npages)
+{
+	struct swapdev *sdp;
+	int i;
+
+	if (!atomic_load_relaxed(&uvm_swap_encrypt)) {
+		return;
+	}
+
+	/*
+	 * Get the swapdev so we can discriminate on the
+	 * encryption state.  There may or may not be an
+	 * encryption key generated; we may or may not be asked
+	 * to encrypt swap.
+	 *
+	 * 1. NO KEY, NO ENCRYPTION: Nothing to do.
+	 *
+	 * 2. NO KEY, BUT ENCRYPTION: Generate a key, encrypt,
+	 *    and mark the slots encrypted.
+	 *
+	 * 3. KEY, BUT NO ENCRYPTION: The slots may already be
+	 *    marked encrypted from a past life.  Mark them not
+	 *    encrypted.
+	 *
+	 * 4. KEY, ENCRYPTION: Encrypt and mark the slots
+	 *    encrypted.
+	 */
+	mutex_enter(&uvm_swap_data_lock);
+	sdp = swapdrum_getsdp(startslot);
+	if (!sdp->swd_encinit) {
+		uvm_swap_genkey(sdp);
+	}
+	KASSERT(sdp->swd_encinit);
+	mutex_exit(&uvm_swap_data_lock);
+
+	for (i = 0; i < npages; i++) {
+		int s = startslot + i;
+		KDASSERT(swapdrum_sdp_is(s, sdp));
+		KASSERT(s >= sdp->swd_drumoffset);
+		s -= sdp->swd_drumoffset;
+		KASSERT(s < sdp->swd_drumsize);
+		uvm_swap_encryptpage(sdp,
+		    (void *)((uint8_t *)p + (vsize_t)i*PAGE_SIZE), s);
+	}
+}
+
+void
+uvm_swap_decrypt_pages(int startslot, void *p, int npages)
+{
+	struct swapdev *sdp;
+	bool encinit;
+	int i;
+
+	if (!atomic_load_relaxed(&uvm_swap_encrypt)) {
+		return;
+	}
+
+	/*
+	 * Get the sdp.  Everything about it except the encinit
+	 * bit, saying whether the encryption key is
+	 * initialized or not, and the encrypted bit for each
+	 * page, is stable until all swap pages have been
+	 * released and the device is removed.
+	 */
+	mutex_enter(&uvm_swap_data_lock);
+	sdp = swapdrum_getsdp(startslot);
+	encinit = sdp->swd_encinit;
+	mutex_exit(&uvm_swap_data_lock);
+
+	/*
+	 * !encinit here means we are swapping in a page which
+	 * has neven been swapped out. it should be a bug.
+	 */
+	KASSERT(encinit);
+	for (i = 0; i < npages; i++) {
+		int s = startslot + i;
+		KDASSERT(swapdrum_sdp_is(s, sdp));
+		KASSERT(s >= sdp->swd_drumoffset);
+		s -= sdp->swd_drumoffset;
+		KASSERT(s < sdp->swd_drumsize);
+		uvm_swap_decryptpage(sdp,
+		    (void *)((uint8_t *)p + (vsize_t)i*PAGE_SIZE), s);
+	}
+}
+
 /*
  * uvm_swap_io: do an i/o operation to swap
  */
@@ -1919,45 +2005,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * encrypt writes in place if requested
 	 */
 
-	if (write && swap_encrypt) {
-		struct swapdev *sdp;
-		int i;
-
-		/*
-		 * Get the swapdev so we can discriminate on the
-		 * encryption state.  There may or may not be an
-		 * encryption key generated; we may or may not be asked
-		 * to encrypt swap.
-		 *
-		 * 1. NO KEY, NO ENCRYPTION: Nothing to do.
-		 *
-		 * 2. NO KEY, BUT ENCRYPTION: Generate a key, encrypt,
-		 *    and mark the slots encrypted.
-		 *
-		 * 3. KEY, BUT NO ENCRYPTION: The slots may already be
-		 *    marked encrypted from a past life.  Mark them not
-		 *    encrypted.
-		 *
-		 * 4. KEY, ENCRYPTION: Encrypt and mark the slots
-		 *    encrypted.
-		 */
-		mutex_enter(&uvm_swap_data_lock);
-		sdp = swapdrum_getsdp(startslot);
-		if (!sdp->swd_encinit) {
-			uvm_swap_genkey(sdp);
-		}
-		KASSERT(sdp->swd_encinit);
-		mutex_exit(&uvm_swap_data_lock);
-
-		for (i = 0; i < npages; i++) {
-			int s = startslot + i;
-			KDASSERT(swapdrum_sdp_is(s, sdp));
-			KASSERT(s >= sdp->swd_drumoffset);
-			s -= sdp->swd_drumoffset;
-			KASSERT(s < sdp->swd_drumsize);
-			uvm_swap_encryptpage(sdp,
-			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
-		}
+	if (write) {
+		uvm_swap_encrypt_pages(startslot, (void *)kva, npages);
 	}
 
 	/*
@@ -2028,37 +2077,8 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * decrypt reads in place if needed
 	 */
 
-	if (!write && swap_encrypt) {
-		struct swapdev *sdp;
-		bool encinit;
-		int i;
-
-		/*
-		 * Get the sdp.  Everything about it except the encinit
-		 * bit, saying whether the encryption key is
-		 * initialized or not, and the encrypted bit for each
-		 * page, is stable until all swap pages have been
-		 * released and the device is removed.
-		 */
-		mutex_enter(&uvm_swap_data_lock);
-		sdp = swapdrum_getsdp(startslot);
-		encinit = sdp->swd_encinit;
-		mutex_exit(&uvm_swap_data_lock);
-
-		/*
-		 * !encinit here means we are swapping in a page which
-		 * has neven been swapped out. it should be a bug.
-		 */
-		KASSERT(encinit);
-		for (i = 0; i < npages; i++) {
-			int s = startslot + i;
-			KDASSERT(swapdrum_sdp_is(s, sdp));
-			KASSERT(s >= sdp->swd_drumoffset);
-			s -= sdp->swd_drumoffset;
-			KASSERT(s < sdp->swd_drumsize);
-			uvm_swap_decryptpage(sdp,
-			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
-		}
+	if (!write) {
+		uvm_swap_decrypt_pages(startslot, (void *)kva, npages);
 	}
 out:
 	/*
