@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.219 2026/03/23 23:51:48 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.220 2026/03/27 07:13:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.219 2026/03/23 23:51:48 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.220 2026/03/27 07:13:05 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -144,7 +144,6 @@ struct swapdev {
 	struct vnode		*swd_vp;	/* backing vnode */
 	TAILQ_ENTRY(swapdev)	swd_next;	/* priority tailq */
 
-	volatile uint32_t	*swd_encmap;	/* bitmap of encrypted slots */
 	struct aesenc		swd_enckey;	/* AES key expanded for enc */
 	struct aesdec		swd_deckey;	/* AES key expanded for dec */
 	bool			swd_encinit;	/* true if keys initialized */
@@ -219,19 +218,6 @@ static int uvm_swap_io(struct vm_page **, int, int, int);
 static void uvm_swap_genkey(struct swapdev *);
 static void uvm_swap_encryptpage(struct swapdev *, void *, int);
 static void uvm_swap_decryptpage(struct swapdev *, void *, int);
-
-static size_t
-encmap_size(size_t npages)
-{
-	struct swapdev *sdp;
-	const size_t bytesperword = sizeof(sdp->swd_encmap[0]);
-	const size_t bitsperword = NBBY * bytesperword;
-	const size_t nbits = npages; /* one bit for each page */
-	const size_t nwords = howmany(nbits, bitsperword);
-	const size_t nbytes = nwords * bytesperword;
-
-	return nbytes;
-}
 
 /*
  * uvm_swap_init: init the swap system data structures and locks
@@ -1057,14 +1043,12 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 	blist_free(sdp->swd_blist, addr, size);
 
 	/*
-	 * allocate space to for swap encryption state and mark the
-	 * keys uninitialized so we generate them lazily.
+	 * mark the keys uninitialized so we generate them lazily.
 	 *
 	 * we defer the key generation to help to maximize the amount
 	 * of data fed into the entropy pool before generating a key,
 	 * for the benefit of machines without HWRNG.
 	 */
-	sdp->swd_encmap = kmem_zalloc(encmap_size(npages), KM_SLEEP);
 	sdp->swd_encinit = false;
 
 	/*
@@ -1246,8 +1230,6 @@ swap_off(struct lwp *l, struct swapdev *sdp)
 	vmem_free(swapmap, sdp->swd_drumoffset, sdp->swd_drumsize);
 	blist_destroy(sdp->swd_blist);
 	bufq_free(sdp->swd_tab);
-	kmem_free(__UNVOLATILE(sdp->swd_encmap),
-	    encmap_size(sdp->swd_drumsize));
 	explicit_memset(&sdp->swd_enckey, 0, sizeof sdp->swd_enckey);
 	explicit_memset(&sdp->swd_deckey, 0, sizeof sdp->swd_deckey);
 	mutex_destroy(&sdp->swd_lock);
@@ -1923,7 +1905,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * encrypt writes in place if requested
 	 */
 
-	if (write) do {
+	if (write && swap_encrypt) {
 		struct swapdev *sdp;
 		int i;
 
@@ -1948,10 +1930,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		mutex_enter(&uvm_swap_data_lock);
 		sdp = swapdrum_getsdp(startslot);
 		if (!sdp->swd_encinit) {
-			if (!swap_encrypt) {
-				mutex_exit(&uvm_swap_data_lock);
-				break;
-			}
 			uvm_swap_genkey(sdp);
 		}
 		KASSERT(sdp->swd_encinit);
@@ -1963,18 +1941,10 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 			KASSERT(s >= sdp->swd_drumoffset);
 			s -= sdp->swd_drumoffset;
 			KASSERT(s < sdp->swd_drumsize);
-
-			if (swap_encrypt) {
-				uvm_swap_encryptpage(sdp,
-				    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
-				atomic_or_32(&sdp->swd_encmap[s/32],
-				    __BIT(s%32));
-			} else {
-				atomic_and_32(&sdp->swd_encmap[s/32],
-				    ~__BIT(s%32));
-			}
+			uvm_swap_encryptpage(sdp,
+			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 		}
-	} while (0);
+	}
 
 	/*
 	 * fill in the bp/sbp.   we currently route our i/o through
@@ -2044,7 +2014,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * decrypt reads in place if needed
 	 */
 
-	if (!write) do {
+	if (!write && swap_encrypt) {
 		struct swapdev *sdp;
 		bool encinit;
 		int i;
@@ -2061,26 +2031,21 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 		encinit = sdp->swd_encinit;
 		mutex_exit(&uvm_swap_data_lock);
 
-		if (!encinit)
-			/*
-			 * If there's no encryption key, there's no way
-			 * any of these slots can be encrypted, so
-			 * nothing to do here.
-			 */
-			break;
+		/*
+		 * !encinit here means we are swapping in a page which
+		 * has neven been swapped out. it should be a bug.
+		 */
+		KASSERT(encinit);
 		for (i = 0; i < npages; i++) {
 			int s = startslot + i;
 			KDASSERT(swapdrum_sdp_is(s, sdp));
 			KASSERT(s >= sdp->swd_drumoffset);
 			s -= sdp->swd_drumoffset;
 			KASSERT(s < sdp->swd_drumsize);
-			if ((atomic_load_relaxed(&sdp->swd_encmap[s/32]) &
-				__BIT(s%32)) == 0)
-				continue;
 			uvm_swap_decryptpage(sdp,
 			    (void *)(kva + (vsize_t)i*PAGE_SIZE), s);
 		}
-	} while (0);
+	}
 out:
 	/*
 	 * kill the pager mapping
@@ -2167,12 +2132,44 @@ uvm_swap_decryptpage(struct swapdev *sdp, void *kva, int slot)
 	explicit_memset(&iv, 0, sizeof iv);
 }
 
+static int
+sysctl_kern_uvm_swap_encrytp(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int swap_encrypt = uvm_swap_encrypt;
+	int error;
+
+	node = *rnode;
+	node.sysctl_data = &swap_encrypt;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error != 0 || newp == NULL) {
+		return error;
+	}
+	/*
+	 * allow a change only when no swap is configured to ensure
+	 * that uvm_swap_encrypt is a constant from the POV of
+	 * any swap devices.
+	 */
+	error = 0;
+	mutex_enter(&uvm_swap_data_lock);
+	if (uvm_swap_encrypt != swap_encrypt) {
+		if (LIST_EMPTY(&swap_priority)) {
+			uvm_swap_encrypt = swap_encrypt;
+		} else {
+			error = EBUSY;
+		}
+	}
+	mutex_exit(&uvm_swap_data_lock);
+
+	return error;
+}
+
 SYSCTL_SETUP(sysctl_uvmswap_setup, "sysctl uvmswap setup")
 {
 
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_BOOL, "swap_encrypt",
 	    SYSCTL_DESCR("Encrypt data when swapped out to disk"),
-	    NULL, 0, &uvm_swap_encrypt, 0,
+	    sysctl_kern_uvm_swap_encrytp, 0, NULL, 0,
 	    CTL_VM, CTL_CREATE, CTL_EOL);
 }
