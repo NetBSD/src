@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.29 2026/03/27 09:39:39 kre Exp $
+# $NetBSD: t_expand.sh,v 1.30 2026/03/27 18:10:10 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -803,7 +803,7 @@ dollar_hash_body() {
 #
 #	Note that some of these are just how we treat expansions that
 #	are unspecified by posix (as noted below.)
-#	
+#
 #		1.   ${#} is just $# (number of params)
 #		1.a	${\#} is nothing at all (error: invalid expansion)
 #		1.b	${\#...} (anything after) is the same (invalid)
@@ -813,7 +813,7 @@ dollar_hash_body() {
 #		3.a	Including ${VAR#} which just removes leading nothing
 #			This is relevant in case of ${VAR#${X}} with X=''
 #				nb: not required by posix, see XCU 2.6.2
-#		3.b	${##} is not a case of 3.a but rather 2.a 
+#		3.b	${##} is not a case of 3.a but rather 2.a
 #		3.c	Yet ${##pat} is a case of 3.a
 #			Including ${##${X}} where X='' or X='#'
 #				nb: not required by posix, see XCU 2.6.2
@@ -1681,7 +1681,7 @@ assign_body() {
 	check3	'printf %s ${X=}}; printf :%s "${X-U}"'  foo}:foo }:  }:   #93
 	check3	'printf %s ${X={}}; printf :%s "${X-U}"' foo}:foo }: {}:{  #96
 
-	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar # 99	
+	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar  #99
 	check3	'set -- ${X:=}; echo "$#:$1"'		1:foo 0: 0:	#102
 	check3	'set -- ${X:=""}; echo "$#:$1"'		1:foo 0: 0:	#105
 	check3	'set -- "${X:=}"; echo "$#:$1"'		1:foo 1: 1:	#108
