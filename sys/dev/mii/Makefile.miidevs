@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.miidevs,v 1.4 2021/06/29 21:03:36 pgoyette Exp $
+#	$NetBSD: Makefile.miidevs,v 1.5 2026/03/27 22:07:50 andvar Exp $
 #
 # As per tron@NetBSD.org, the proper procedure is (adapted from dev/hdaudio)
 #
@@ -7,7 +7,7 @@
 # 3.) Execute "make -f Makefile.miidevs" in "src/sys/dev/mii".
 # 4.) Ensure that the value of MII_MAX_DESCR_LEN is at least as large as
 #     the values reported.  If necessary, update "src/sys/dev/mii/miivar.h"
-#     and bump the kernel version in "src/sys/sys/param/h".
+#     and bump the kernel version in "src/sys/sys/param.h".
 # 5.) Commit "src/sys/dev/mii/miidevs.h" and
 #     "src/sys/dev/mii/miidevs_data.h"; if you changed them, also
 #     commit "src/sys/dev/mii/miivar.h" and "src/sys/sys/param.h".
