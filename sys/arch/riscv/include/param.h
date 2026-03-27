@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.8 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: param.h,v 1.9 2026/03/27 16:40:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -99,8 +99,10 @@
 #define MAXCPUS			32
 
 #ifdef _KERNEL
+#ifndef __HIDE_DELAY
 void delay(unsigned long);
 #define	DELAY(x)		delay(x)
+#endif
 #endif
 
 #define riscv_btop(x)		((unsigned long)(x) >> PGSHIFT)
