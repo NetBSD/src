@@ -1482,7 +1482,22 @@ zfs_domount(vfs_t *vfsp, char *osname)
 	vfsp->mnt_stat.f_fsidx.__fsid_val[0] = fsid_guid;
 	vfsp->mnt_stat.f_fsidx.__fsid_val[1] = ((fsid_guid>>32) << 8) |
 	    makefstype(vfsp->mnt_op->vfs_name) & 0xFF;
-	vfsp->mnt_stat.f_fsid = fsid_guid;
+	/*
+	 * Truncate fsid_guid to 32-bit for f_fsid.
+	 *
+	 * - f_fsid is a long, which can not hold 56-bit fsid_guid
+	 *   on 32-bit architectures.
+	 *
+	 * - We use this value for stat(2)'s st_dev (dev_t) as well.
+	 *   Some applications seem to assume the round-trip with
+	 *   makedev macros. that is,
+	 *
+	 *      st_dev == makedev(major(st_dev), minor(st_dev))
+	 *
+	 *   While NetBSD's dev_t has been 64-bit since 2009, our
+	 *   version of these macros only preserve the lower 32-bits.
+	 */
+	vfsp->mnt_stat.f_fsid = (uint32_t)fsid_guid;
 #endif
 
 	/*
