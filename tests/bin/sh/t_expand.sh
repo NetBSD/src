@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.27 2026/03/23 17:16:03 kre Exp $
+# $NetBSD: t_expand.sh,v 1.28 2026/03/27 09:06:09 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1486,31 +1486,31 @@ alternative_body() {
 	check3	'set -- ${X:+bar}; echo "$#:$1"'	1:bar 0: 0:	# 73
 	check3	'set -- ${X:+}; echo "$#:$1"'		0: 0: 0:	# 76
 	check3	'set -- ${X:+""}; echo "$#:$1"'		1: 0: 0:	# 79
-	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 80
-	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 83
+	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 82
+	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 85
 
-	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 86
-	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 89
-	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 92
-	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 95
-	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	# 98
+	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 88
+	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 91
+	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 94
+	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 97
+	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	#100
 
-	check3	'printf %s "" ${X:+}'			''  ''  ''	#101
-	check3	'printf %s ""${X:+bar}'			bar ''  ''	#104
+	check3	'printf %s "" ${X:+}'			''  ''  ''	#103
+	check3	'printf %s ""${X:+bar}'			bar ''  ''	#106
 
-	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#107
-	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#110
-	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#113
-	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#116
-	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#119
-	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#122
+	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#109
+	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#112
+	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#115
+	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#118
+	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#121
+	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#124
 
-	check3	'printf %s ${X:+}x}'			x}  x}  x}	#125
-	check3	'printf %s ${X:+}}'			 }   }   }	#128
-	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#131
-	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#134
-	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#137
-	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#140
+	check3	'printf %s ${X:+}x}'			x}  x}  x}	#127
+	check3	'printf %s ${X:+}}'			 }   }   }	#130
+	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#133
+	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#136
+	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#139
+	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#142
 
 	results
 }
