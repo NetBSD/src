@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.220 2026/03/27 07:13:05 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.221 2026/03/27 07:13:49 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.220 2026/03/27 07:13:05 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.221 2026/03/27 07:13:49 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -289,6 +289,13 @@ swaplist_insert(struct swapdev *sdp, struct swappri *newspp, int priority)
 	KASSERT(rw_write_held(&swap_syscall_lock));
 	KASSERT(mutex_owned(&uvm_swap_data_lock));
 
+	if (LIST_EMPTY(&swap_priority)) {
+		KASSERT(uvmexp.swpginuse == 0);
+		KASSERT(uvmexp.swpgonly == 0);
+		KASSERT(uvmexp.swpages == 0);
+		KASSERT(uvmexp.swpgavail == 0);
+	}
+
 	/*
 	 * find entry at or after which to insert the new device.
 	 */
@@ -383,6 +390,13 @@ swaplist_trim(void)
 			continue;
 		LIST_REMOVE(spp, spi_swappri);
 		kmem_free(spp, sizeof(*spp));
+	}
+
+	if (LIST_EMPTY(&swap_priority)) {
+		KASSERT(uvmexp.swpginuse == 0);
+		KASSERT(uvmexp.swpgonly == 0);
+		KASSERT(uvmexp.swpages == 0);
+		KASSERT(uvmexp.swpgavail == 0);
 	}
 }
 
