@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.280 2026/03/15 08:16:53 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.281 2026/03/27 21:44:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.280 2026/03/15 08:16:53 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.281 2026/03/27 21:44:08 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -435,8 +435,8 @@ static const char *const msgs[] = {
 	"redundant '\\0' at the end of the format",			// 377
 	"conversion '%.*s' is unreachable by input value",		// 378
 	"comparing integer '%s' to floating point constant %Lg",	// 379
-	"lossy conversion of %Lg to '%s', arg #%d",			// 380
-	"lossy conversion of %Lg to '%s'",				// 381
+	"lossy conversion of %Lg (%La) to '%s', arg #%d",		// 380
+	"lossy conversion of %Lg (%La) to '%s'",			// 381
 	"constant assignment of type '%s' in operand of '%s' always evaluates to '%s'", // 382
 	"passing '%s' as argument %d to '%s' discards '%s'",		// 383
 	"function definition for '%s' with identifier list is obsolete in C23", // 384

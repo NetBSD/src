@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_259.c,v 1.25 2024/06/09 10:27:39 rillig Exp $	*/
+/*	$NetBSD: msg_259.c,v 1.26 2026/03/27 21:44:08 rillig Exp $	*/
 # 3 "msg_259.c"
 
 // Test for message: argument %d is converted from '%s' to '%s' due to prototype [259]
@@ -237,7 +237,7 @@ constants(void)
 	/* expect+1: warning: conversion of 'long long' to 'unsigned int' is out of range, arg #1 [295] */
 	unsigned_int(0x7fffffffffffffffLL);
 	/* expect+2: warning: argument 1 is converted from 'double' to 'unsigned int' due to prototype [259] */
-	/* expect+1: warning: lossy conversion of 2.1 to 'unsigned int', arg #1 [380] */
+	/* expect+1: warning: lossy conversion of 2.1 (.....) to 'unsigned int', arg #1 [380] */
 	unsigned_int(2.1);
 }
 

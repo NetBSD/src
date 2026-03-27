@@ -1,4 +1,4 @@
-/*	$NetBSD: init_c99.c,v 1.5 2025/04/12 15:49:50 rillig Exp $	*/
+/*	$NetBSD: init_c99.c,v 1.6 2026/03/27 21:44:08 rillig Exp $	*/
 # 3 "init_c99.c"
 
 // Tests for initialization in C99 or later, mainly for designators.
@@ -290,7 +290,7 @@ struct ten ten = {
  * covering all tricky edge cases.
  */
 
-/* expect+1: warning: lossy conversion of 3.5 to 'int' [381] */
+/* expect+1: warning: lossy conversion of 3.5 (.....) to 'int' [381] */
 int c99_6_7_8_p24_example1_i = 3.5;
 double _Complex c99_6_7_8_p24_example1_c = 5 + 3 * 1.0fi;
 

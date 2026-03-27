@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.704 2026/03/18 06:17:55 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.705 2026/03/27 21:44:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.704 2026/03/18 06:17:55 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.705 2026/03/27 21:44:08 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3678,11 +3678,11 @@ check_lossy_floating_to_integer_conversion(
 	    : x >= ic.smin && x <= ic.smax && x == (int64_t)x)
 		return;
 	if (op == FARG)
-		/* lossy conversion of %Lg to '%s', arg #%d */
-		warning(380, x, type_name(tp), arg);
+		/* lossy conversion of %Lg (%La) to '%s', arg #%d */
+		warning(380, x, x, type_name(tp), arg);
 	else
-		/* lossy conversion of %Lg to '%s' */
-		warning(381, x, type_name(tp));
+		/* lossy conversion of %Lg (%La) to '%s' */
+		warning(381, x, x, type_name(tp));
 }
 
 static void

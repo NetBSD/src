@@ -1,5 +1,5 @@
 #! /usr/bin/lua
--- $NetBSD: check-expect.lua,v 1.14 2025/02/27 06:48:29 rillig Exp $
+-- $NetBSD: check-expect.lua,v 1.15 2026/03/27 21:44:08 rillig Exp $
 
 --[[
 
@@ -8,6 +8,12 @@ usage: lua ./check-expect.lua [-u] *.c
 Check that the /* expect+-n: ... */ comments in the .c source files match the
 actual messages found in the corresponding .exp files.  The .exp files are
 expected in the current working directory.
+
+The "expect" comment may start with "..." to match arbitrary characters at the
+beginning, it may end with "..." to match arbitrary characters at the end, and
+it may contain "....." in the middle to match arbitrary characters in the
+middle.  The long form "....." instead of "..." is needed since the ellipsis
+"..." occurs in some messages, especially function types.
 
 The .exp files are generated on the fly during the ATF tests, see
 t_integration.sh.  During development, they can be generated using
@@ -145,23 +151,21 @@ local function load_exp(exp_fname)
 end
 
 
-local function matches(comment, pattern)
-  if comment == "" then return false end
+local function matches(expected_message, pattern)
+  if expected_message == "" then return false end
 
   local any_prefix = pattern:sub(1, 3) == "..."
   if any_prefix then pattern = pattern:sub(4) end
   local any_suffix = pattern:sub(-3) == "..."
   if any_suffix then pattern = pattern:sub(1, -4) end
 
-  if any_prefix and any_suffix then
-    return comment:find(pattern, 1, true) ~= nil
-  elseif any_prefix then
-    return pattern ~= "" and comment:sub(-#pattern) == pattern
-  elseif any_suffix then
-    return comment:sub(1, #pattern) == pattern
-  else
-    return comment == pattern
-  end
+  pattern = pattern:gsub("[%^%$%(%)%%%.%[%]%*%+%-%?]", "%%%0")
+  pattern = pattern:gsub("%%%.%%%.%%%.%%%.%%%.", ".*")
+
+  if not any_prefix then pattern = "^" .. pattern end
+  if not any_suffix then pattern = pattern .. "$" end
+
+  return expected_message:find(pattern) ~= nil
 end
 
 test(function()
@@ -186,6 +190,12 @@ test(function()
   assert_equals(matches("abc123xyz", "...z..."), true)
   assert_equals(matches("pattern", "...pattern..."), true)
   assert_equals(matches("pattern", "... pattern ..."), false)
+
+  assert_equals(matches("abc123xyz", "abc.....xyz"), true)
+  assert_equals(matches("abc123xyz", "...abc.....xyz..."), true)
+  assert_equals(matches("abc123xyz", "...c.....z..."), true)
+
+  assert_equals(matches("prefix (middle) suffix", "prefix (.....) suffix"), true)
 end)
 
 
