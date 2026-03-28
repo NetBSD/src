@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.31 2026/03/15 17:54:53 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.32 2026/03/28 04:08:40 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -126,7 +126,6 @@ define	T_TRAPVINST		T_TRAPVINST
 define	T_PRIVINST		T_PRIVINST
 define	T_TRACE			T_TRACE
 define	T_MMUFLT		T_MMUFLT
-define	T_SSIR			T_SSIR
 define	T_FMTERR		T_FMTERR
 define	T_COPERR		T_COPERR
 define	T_FPERR			T_FPERR

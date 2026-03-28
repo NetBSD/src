@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_m68k.c,v 1.7 2006/07/22 06:58:17 tsutsui Exp $	*/
+/*	$NetBSD: kgdb_m68k.c,v 1.8 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.7 2006/07/22 06:58:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_m68k.c,v 1.8 2026/03/28 04:08:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kgdb.h>
@@ -65,7 +65,6 @@ kgdb_signal(int type)
 	switch (type) {
 
 	case T_ASTFLT:
-	case T_SSIR:
 		sigval = SIGINT;
 		break;
 

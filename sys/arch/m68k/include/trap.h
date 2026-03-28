@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.12 2024/10/16 06:54:55 isaki Exp $	*/
+/*	$NetBSD: trap.h,v 1.13 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
 #define	T_PRIVINST	6
 #define	T_TRACE		7
 #define	T_MMUFLT	8
-#define	T_SSIR		9
+/*	T_SSIR		9	no longer used */
 #define	T_FMTERR	10
 #define	T_FPERR		11
 #define	T_COPERR	12

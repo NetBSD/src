@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.151 2026/03/28 01:44:38 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.152 2026/03/28 04:08:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.151 2026/03/28 01:44:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.152 2026/03/28 04:08:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -142,28 +142,6 @@ extern struct emul emul_netbsd_aoutm68k;
 void trap(struct trapframe *, int type, u_int code, u_int v);
 
 static void userret(struct lwp *, struct trapframe *, u_quad_t);
-
-const char *trap_type[] = {
-	"Bus error",
-	"Address error",
-	"Illegal instruction",
-	"Zero divide",
-	"CHK instruction",
-	"TRAPV instruction",
-	"Privilege violation",
-	"Trace trap",
-	"MMU fault",
-	"SSIR trap",
-	"Format error",
-	"68881 exception",
-	"Coprocessor violation",
-	"Async system trap",
-	"Unused? (14)",
-	"Breakpoint",
-	"FPU instruction",
-	"FPU data format",
-};
-u_int trap_types = sizeof(trap_type) / sizeof(trap_type[0]);
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -302,9 +280,7 @@ trap(struct trapframe *tf, int type, u_int code, u_int v)
 		}
 		regdump(tf, 128);
 		type &= ~T_USER;
-		if ((u_int)type < trap_types)
-			panic(trap_type[type]);
-		panic("trap type 0x%x", type);
+		panic("%s", trap_desc(type));
 
 	case T_BUSERR:		/* kernel bus error */
 		if (onfault == NULL)
@@ -616,11 +592,7 @@ int
 _nodb_trap(int type, struct trapframe *tf)
 {
 
-	printf("\r\nKernel ");
-	if ((0 <= type) && (type < trap_types))
-		printf("%s", trap_type[type]);
-	else
-		printf("trap 0x%x", type);
+	printf("\r\nKernel %s", trap_desc(type));
 	printf(", frame=%p\r\n", tf);
 	printf("No debugger; doing PROM abort.\r\n");
 	printf("To continue, type: c <RETURN>\r\n");

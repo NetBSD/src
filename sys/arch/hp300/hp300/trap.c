@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.160 2025/12/20 10:51:03 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.161 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.160 2025/12/20 10:51:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.161 2026/03/28 04:08:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -90,24 +90,6 @@ void	trap(struct frame *fp, int type, u_int code, u_int v);
 void	dumpssw(u_short);
 void	dumpwb(int, u_short, u_int, u_int);
 #endif
-
-const char *trap_type[] = {
-	"Bus error",
-	"Address error",
-	"Illegal instruction",
-	"Zero divide",
-	"CHK instruction",
-	"TRAPV instruction",
-	"Privilege violation",
-	"Trace trap",
-	"MMU fault",
-	"SSIR trap",
-	"Format error",
-	"68881 exception",
-	"Coprocessor violation",
-	"Async system trap"
-};
-const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -308,9 +290,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		}
 		regdump((struct trapframe *)fp, 128);
 		type &= ~T_USER;
-		if ((u_int)type < trap_types)
-			panic(trap_type[type]);
-		panic("trap");
+		panic("%s", trap_desc(type));
 
 	case T_BUSERR:		/* kernel bus error */
 		onfault = pcb->pcb_onfault;
@@ -499,26 +479,6 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 
 	case T_ASTFLT|T_USER:	/* user async trap */
 		astpending = 0;
-		/*
-		 * We check for software interrupts first.  This is because
-		 * they are at a higher level than ASTs, and on a VAX would
-		 * interrupt the AST.  We assume that if we are processing
-		 * an AST that we must be at IPL0 so we don't bother to
-		 * check.  Note that we ensure that we are at least at SIR
-		 * IPL while processing the SIR.
-		 */
-		spl1();
-		/* fall into... */
-
-	case T_SSIR:		/* software interrupt */
-	case T_SSIR|T_USER:
-		/*
-		 * If this was not an AST trap, we are all done.
-		 */
-		if (type != (T_ASTFLT|T_USER)) {
-			curcpu()->ci_data.cpu_ntrap--;
-			return;
-		}
 		spl0();
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;

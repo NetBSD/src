@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.36 2022/10/26 23:38:08 riastradh Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.37 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.36 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.37 2026/03/28 04:08:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -132,22 +132,13 @@ kdb_trap(int type, db_regs_t *regs)
 	return 1;
 }
 
-extern char *trap_type[];
-extern int trap_types;
-
 /*
  * Print trap reason.
  */
 static void
 kdbprinttrap(int type, int code)
 {
-
-	printf("kernel: ");
-	if (type >= trap_types || type < 0)
-		printf("type %d", type);
-	else
-		printf("%s", trap_type[type]);
-	printf(" trap\n");
+	printf("kernel: %s\n", trap_desc(type));
 }
 
 void

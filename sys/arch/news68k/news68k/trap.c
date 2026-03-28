@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.80 2026/03/28 04:08:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79 2026/03/21 20:14:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2026/03/28 04:08:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -83,24 +83,6 @@ void	dumpwb(int, u_short, u_int, u_int);
 
 static inline void userret(struct lwp *l, struct frame *fp,
 	    u_quad_t oticks, u_int faultaddr, int fromtrap);
-
-const char *trap_type[] = {
-	"Bus error",
-	"Address error",
-	"Illegal instruction",
-	"Zero divide",
-	"CHK instruction",
-	"TRAPV instruction",
-	"Privilege violation",
-	"Trace trap",
-	"MMU fault",
-	"SSIR trap",
-	"Format error",
-	"68881 exception",
-	"Coprocessor violation",
-	"Async system trap"
-};
-const int trap_types = sizeof trap_type / sizeof trap_type[0];
 
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
@@ -301,9 +283,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 		}
 		regdump((struct trapframe *)fp, 128);
 		type &= ~T_USER;
-		if ((u_int)type < trap_types)
-			panic(trap_type[type]);
-		panic("trap");
+		panic("%s", trap_desc(type));
 
 	case T_BUSERR:		/* kernel bus error */
 		onfault = pcb->pcb_onfault;

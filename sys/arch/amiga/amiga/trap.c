@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.146 2026/03/28 01:44:34 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.147 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2026/03/28 01:44:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2026/03/28 04:08:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,24 +137,6 @@ extern struct emul emul_sunos;
  * XXX End hack
  */
 
-const char *trap_type[] = {
-	"Bus error",
-	"Address error",
-	"Illegal instruction",
-	"Zero divide",
-	"CHK instruction",
-	"TRAPV instruction",
-	"Privilege violation",
-	"Trace trap",
-	"MMU fault",
-	"SSIR trap",
-	"Format error",
-	"68881 exception",
-	"Coprocessor violation",
-	"Async system trap"
-};
-int	trap_types = sizeof trap_type / sizeof trap_type[0];
-
 /*
  * Size of various exception stack frames (minus the standard 8 bytes)
  */
@@ -235,9 +217,7 @@ panictrap(int type, u_int code, u_int v, struct frame *fp)
 #ifdef DEBUG
 	DCIS(); 		/* XXX? push cache */
 #endif
-	if ((u_int)type < trap_types)
-		panic(trap_type[type]);
-	panic("trap");
+	panic("%s", trap_desc(type));
 	/*NOTREACHED*/
 }
 

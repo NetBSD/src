@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.5 2026/03/28 01:44:36 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.6 2026/03/28 04:08:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.5 2026/03/28 01:44:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.6 2026/03/28 04:08:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -68,6 +68,41 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.5 2026/03/28 01:44:36 thorpej Exp $"
 #endif
 
 volatile int astpending;
+
+static const char * const trap_descriptions[] = {
+	[T_BUSERR]	=	"Bus error",
+	[T_ADDRERR]	=	"Address error",
+	[T_ILLINST]	=	"Illegal instruction",
+	[T_ZERODIV]	=	"Zero divide",
+	[T_CHKINST]	=	"CHK instruction",
+	[T_TRAPVINST]	=	"TRAPV instruction",
+	[T_PRIVINST]	=	"Privilege violation",
+	[T_TRACE]	=	"Trace trap",
+	[T_MMUFLT]	=	"MMU fault",
+	[T_FMTERR]	=	"Format error",
+	[T_FPERR]	=	"Floating Point exception",
+	[T_COPERR]	=	"Coprocessor violation",
+	[T_ASTFLT]	=	"Async system trap",
+	[T_BREAKPOINT]	=	"Breakpoint trap",
+	[T_FPEMULI]	=	"FPU instruction",
+	[T_FPEMULD]	=	"FPU data format",
+};
+const unsigned int trap_description_count = __arraycount(trap_descriptions);
+
+const char *
+trap_desc(int type)
+{
+	static char typestr[sizeof("trap type XXXXXXXX")];
+
+	if (type < 0) {
+		return "stray trap";
+	} else if (type >= trap_description_count ||
+		   trap_descriptions[type] == NULL) {
+		snprintf(typestr, sizeof(typestr), "trap type %d", type);
+		return typestr;
+	}
+	return trap_descriptions[type];
+}
 
 #ifdef M68060
 #define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))
@@ -100,7 +135,6 @@ volatile int astpending;
 
 #define	KDFAULT(c)	(KDFAULT_060(c) || KDFAULT_040(c) || KDFAULT_OTH(c))
 #define	WRFAULT(c)	(WRFAULT_060(c) || WRFAULT_040(c) || WRFAULT_OTH(c))
-
 
 #ifdef DEBUG
 extern int mmudebug, mmupid;
