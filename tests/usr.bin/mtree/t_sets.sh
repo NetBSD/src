@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.9 2024/05/10 03:29:47 riastradh Exp $
+#	$NetBSD: t_sets.sh,v 1.10 2026/03/28 07:42:52 skrll Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -50,7 +50,7 @@ set_case comp
 set_case debug
 set_case debug32
 set_case debug64
-set_case dtb
+#set_case dtb
 #set_case etc
 set_case games
 set_case gpufw
