@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.36 2026/03/28 12:46:47 uwe Exp $
+.\"     $NetBSD: driver.9,v 1.37 2026/03/28 13:01:40 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,20 +110,21 @@ For example, the
 .Vt cdevsw
 structure for driver
 .Ql foo
-is defined with:
+can be defined with:
 .Bd -literal -offset indent
 const struct cdevsw foo_cdevsw {
-        int (*d_open)(dev_t, int, int, struct lwp *);
-        int (*d_close)(dev_t, int, int, struct lwp *);
-        int (*d_read)(dev_t, struct uio *, int);
-        int (*d_write)(dev_t, struct uio *, int);
-        int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
-        void (*d_stop)(struct tty *, int);
-        struct tty *(*d_tty)(dev_t);
-        int (*d_poll)(dev_t, int, struct lwp *);
-        paddr_t (*d_mmap)(dev_t, off_t, int);
-        int (*d_kqfilter)(dev_t, struct knote *);
-        int d_flag;
+        .d_open = fooopen,
+        .d_close = nullclose,
+        .d_read = fooread,
+        .d_write = nowrite,
+        .d_ioctl = fooioctl,
+        .d_stop = nostop,
+        .d_tty = notty,
+        .d_poll = foopoll,
+        .d_mmap = nommap,
+        .d_kqfilter = nokqfilter,
+	.d_discard = nodiscard,
+        .d_flag = D_OTHER | D_MPSAFE,
 };
 .Ed
 .Pp
@@ -147,13 +148,13 @@ structure for driver
 is defined with:
 .Bd -literal -offset indent
 const struct bdevsw foo_bdevsw {
-        int (*d_open)(dev_t, int, int, struct lwp *);
-        int (*d_close)(dev_t, int, int, struct lwp *);
-        void (*d_strategy)(struct buf *);
-        int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
-        int (*d_dump)(dev_t, daddr_t, void *, size_t);
-        int (*d_psize)(dev_t);
-        int d_flag;
+        .d_open = fooopen,
+        .d_close = fooclose,
+        .d_strategy = foostrategy,
+        .d_ioctl = fooioctl,
+        .d_dump = nodump,
+        .d_psize = nosize,
+        .d_flag = D_DISK | D_MPSAFE,
 };
 .Ed
 .Pp
