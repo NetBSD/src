@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.275 2025/07/11 19:03:01 rillig Exp $	*/
+/*	$NetBSD: init.c,v 1.276 2026/03/28 14:17:06 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: init.c,v 1.275 2025/07/11 19:03:01 rillig Exp $");
+__RCSID("$NetBSD: init.c,v 1.276 2026/03/28 14:17:06 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -409,23 +409,13 @@ designation_descend(designation *dn, const type_t *tp)
  * C99 6.7.8p18
  */
 static const type_t *
-designation_type(const designation *dn, const type_t *tp)
+designation_type(const designation *dn, const type_t *tp, size_t skip)
 {
 
-	for (size_t i = 0; i < dn->dn_len && tp != NULL; i++)
+	for (size_t i = 0; i + skip < dn->dn_len && tp != NULL; i++)
 		tp = designator_type(dn->dn_items + i, tp);
 	return tp;
 }
-
-static const type_t *
-designation_parent_type(const designation *dn, const type_t *tp)
-{
-
-	for (size_t i = 0; i + 1 < dn->dn_len && tp != NULL; i++)
-		tp = designator_type(dn->dn_items + i, tp);
-	return tp;
-}
-
 
 static brace_level *
 brace_level_new(const type_t *tp, brace_level *enclosing)
@@ -467,7 +457,7 @@ static const type_t *
 brace_level_sub_type(const brace_level *bl)
 {
 
-	return designation_type(&bl->bl_designation, bl->bl_type);
+	return designation_type(&bl->bl_designation, bl->bl_type, 0);
 }
 
 /*
@@ -483,7 +473,7 @@ brace_level_advance(brace_level *bl, size_t *max_subscript)
 
 	debug_enter();
 	designation *dn = &bl->bl_designation;
-	const type_t *tp = designation_parent_type(dn, bl->bl_type);
+	const type_t *tp = designation_type(dn, bl->bl_type, 1);
 
 	if (bl->bl_designation.dn_len == 0)
 		(void)designation_descend(dn, bl->bl_type);
@@ -539,7 +529,7 @@ brace_level_pop_done(brace_level *bl, size_t *max_subscript)
 {
 	designation *dn = &bl->bl_designation;
 	designator_kind dr_kind = designation_last(dn)->dr_kind;
-	const type_t *sub_type = designation_parent_type(dn, bl->bl_type);
+	const type_t *sub_type = designation_type(dn, bl->bl_type, 1);
 
 	while (designation_last(dn)->dr_done) {
 		dn->dn_len--;
@@ -694,7 +684,7 @@ initialization_lbrace(initialization *in)
 	if (outer_bl != NULL && outer_bl->bl_designation.dn_len == 0) {
 		designation *dn = &outer_bl->bl_designation;
 		(void)designation_descend(dn, outer_bl->bl_type);
-		tp = designation_type(dn, outer_bl->bl_type);
+		tp = designation_type(dn, outer_bl->bl_type, 0);
 	}
 
 	in->in_brace_level = brace_level_new(tp, outer_bl);

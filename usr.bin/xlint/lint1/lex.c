@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.240 2026/01/11 18:11:38 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.241 2026/03/28 14:17:06 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.240 2026/01/11 18:11:38 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.241 2026/03/28 14:17:06 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -617,7 +617,7 @@ convert_integer(int64_t si, tspec_t t, unsigned int bits)
 
 	uint64_t vbits = value_bits(bits);
 	uint64_t ui = (uint64_t)si;
-	return t == PTR || is_uinteger(t) || ((ui & bit(bits - 1)) == 0)
+	return t == PTR || is_uinteger(t) || (ui & bit(bits - 1)) == 0
 	    ? (int64_t)(ui & vbits)
 	    : (int64_t)(ui | ~vbits);
 }
@@ -660,8 +660,7 @@ lex_floating_constant(const char *text, size_t len)
 			warning(248);
 			ld = ld > 0 ? FLT_MAX : -FLT_MAX;
 		}
-	} else if (t == DOUBLE
-	    || LDOUBLE_SIZE == DOUBLE_SIZE) {
+	} else if (t == DOUBLE || LDOUBLE_SIZE == DOUBLE_SIZE) {
 		ld = (double)ld;
 		if (isfinite(ld) == 0) {
 			/* floating-point constant out of range */
