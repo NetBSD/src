@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.36 2025/11/29 21:57:14 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.37 2026/03/28 01:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -217,6 +217,8 @@ void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 #ifdef M68040
 int	m68040_writeback(struct frame *, int);
 #endif
+
+void	trap_kdebug(int, struct trapframe *);
 
 #if defined(__mc68010__) || defined(__HAVE_M68K_BROKEN_RMC)
 /*

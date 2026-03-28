@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.49 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.50 2026/03/28 01:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.49 2024/01/20 00:15:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.50 2026/03/28 01:44:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -131,13 +131,8 @@ extern struct emul emul_netbsd_aoutm68k;
 
 /* These are called from locore.s */
 void trap(struct trapframe *, int type, u_int code, u_int v);
-void trap_kdebug(int type, struct trapframe tf);
-int _nodb_trap(int type, struct trapframe *);
-void straytrap(struct trapframe);
 
 static void userret(struct lwp *, struct trapframe *, u_quad_t);
-
-volatile int astpending;
 
 const char *trap_type[] = {
 	"Bus error",
@@ -618,58 +613,4 @@ _nodb_trap(int type, struct trapframe *tf)
 	/* OK then, just resume... */
 	tf->tf_sr &= ~PSL_T;
 	return(1);
-}
-
-/*
- * This is called by locore for supervisor-mode trace and
- * breakpoint traps.  This is separate from trap() above
- * so that breakpoints in trap() will work.
- *
- * If we have both DDB and KGDB, let KGDB see it first,
- * because KGDB will just return 0 if not connected.
- */
-void 
-trap_kdebug(int type, struct trapframe tf)
-{
-
-#ifdef	KGDB
-	/* Let KGDB handle it (if connected) */
-	if (kgdb_trap(type, &tf))
-		return;
-#endif
-#ifdef	DDB
-	/* Let DDB handle it. */
-	if (kdb_trap(type, &tf))
-		return;
-#endif
-
-	/* Drop into the PROM temporarily... */
-	(void)_nodb_trap(type, &tf);
-}
-
-/*
- * Called by locore.s for an unexpected interrupt.
- * XXX - Almost identical to trap_kdebug...
- */
-void 
-straytrap(struct trapframe tf)
-{
-	int type = -1;
-
-	printf("unexpected trap; vector=0x%x at pc=0x%x\n",
-		tf.tf_vector, tf.tf_pc);
-
-#ifdef	KGDB
-	/* Let KGDB handle it (if connected) */
-	if (kgdb_trap(type, &tf))
-		return;
-#endif
-#ifdef	DDB
-	/* Let DDB handle it. */
-	if (kdb_trap(type, &tf))
-		return;
-#endif
-
-	/* Drop into the PROM temporarily... */
-	(void)_nodb_trap(type, &tf);
 }

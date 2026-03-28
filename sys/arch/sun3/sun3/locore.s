@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.123 2026/03/24 00:16:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.124 2026/03/28 01:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -156,86 +156,6 @@ L_high_code:
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-/*
- * Trace (single-step) trap.  Kernel-mode is special.
- * User mode traps are simply passed on to trap().
- */
-GLOBAL(trace)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRACE,%d0
-
-	| Check PSW and see what happen.
-	|   T=0 S=0	(should not happen)
-	|   T=1 S=0	trace trap from user mode
-	|   T=0 S=1	trace trap on a trap instruction
-	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
-
-	movw	%sp@(FR_HW),%d1		| get PSW
-	notw	%d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,%d1		| from system mode (T=1, S=1)?
-	jeq	_ASM_LABEL(kbrkpt)	|  yes, kernel brkpt
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-/*
- * Trap 15 is used for:
- *	- GDB breakpoints (in user programs)
- *	- KGDB breakpoints (in the kernel)
- *	- trace traps for SUN binaries (not fully supported yet)
- * User mode traps are simply passed to trap().
- */
-GLOBAL(trap15)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRAP15,%d0
-	btst	#5,%sp@(FR_HW)		| was supervisor mode?
-	jne	_ASM_LABEL(kbrkpt)	|  yes, kernel brkpt
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-ASLOCAL(kbrkpt)
-	| Kernel-mode breakpoint or trace trap. (%d0=trap_type)
-	| Save the system sp rather than the user sp.
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
-	movl	%a6,%sp@(FR_SP)		|  from before trap
-
-	| If we are not on tmpstk switch to it.
-	| (so debugger can change the stack pointer)
-	movl	%a6,%d1
-	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2			| already on tmpstk
-	| Copy frame to the temporary stack
-	movl	%sp,%a0			| %a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1	| %a1=dst
-	movl	%a1,%sp			| sp=new frame
-	moveq	#FR_SIZE,%d1
-Lbrkpt1:
-	movl	%a0@+,%a1@+
-	subql	#4,%d1
-	bgt	Lbrkpt1
-
-Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to handle it, so that we can
-	| set breakpoints in trap() if we want.  We know
-	| the trap type is either T_TRACE or T_BREAKPOINT.
-	movl	%d0,%sp@-		| push trap type
-	jbsr	_C_LABEL(trap_kdebug)
-	addql	#4,%sp			| pop args
-
-	| The stack pointer may have been modified, or
-	| data below it modified (by kgdb push call),
-	| so push the hardware frame at the current sp
-	| before restoring registers and returning.
-	movl	%sp@(FR_SP),%a0		| modified sp
-	lea	%sp@(FR_SIZE),%a1	| end of our frame
-	movl	%a1@-,%a0@-		| copy 2 longs with
-	movl	%a1@-,%a0@-		| ... predecrement
-	movl	%a0,%sp@(FR_SP)		| sp = h/w frame
-	moveml	%sp@+,#0x7FFF		| restore all but sp
-	movl	%sp@,%sp		| ... and sp
-	rte				| all done
 
 /*
  * Interrupt handlers.  Most are auto-vectored,

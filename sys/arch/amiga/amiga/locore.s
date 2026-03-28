@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.184 2026/03/24 00:16:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.185 2026/03/28 01:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,46 +104,6 @@ ENTRY_NOPROFILE(doadump)
  * Other exceptions only cause four and six word stack frame and require
  * no post-trap stack adjustment.
  */
-
-/*
- * Trap 15 is used for:
- *	- KGDB traps
- *	- trace traps for SUN binaries (not fully supported yet)
- * We just pass it on and let trap() sort it all out
- */
-ENTRY_NOPROFILE(trap15)
-	clrl	%sp@-
-	moveml	%d0-%d7/%a0-%a7,%sp@-
-#ifdef KGDB
-	moveq	#T_TRAP15,%d0
-	movw	%sp@(FR_HW),%d1		| get PSW
-	andw	#PSL_S,%d1		| from user mode?
-	jeq	_ASM_LABEL(fault)	| yes, just a regular fault
-	movl	%d0,%sp@-
-	jbsr	_C_LABEL(kgdb_trap_glue) | returns if no debugger
-	addl	#4,%sp
-#endif
-	moveq	#T_TRAP15,%d0
-	jra	_ASM_LABEL(fault)
-
-/*
- * Hit a breakpoint (trap 1 or 2) instruction.
- * Push the code and treat as a normal fault.
- */
-ENTRY_NOPROFILE(trace)
-	clrl	%sp@-
-	moveml	%d0-%d7/%a0-%a7,%sp@-
-#ifdef KGDB
-	moveq	#T_TRACE,%d0
-	movw	%sp@(FR_HW),%d1		| get SSW
-	andw	#PSL_S,%d1		| from user mode?
-	jeq	_ASM_LABEL(fault)	| no, regular fault
-	movl	%d0,%sp@-
-	jbsr	_C_LABEL(kgdb_trap_glue) | returns if no debugger
-	addl	#4,%sp
-#endif
-	moveq	#T_TRACE,%d0
-	jra	_ASM_LABEL(fault)
 
 /*
  * Interrupt handlers.
@@ -942,7 +902,7 @@ Ldelay:				| longword aligned again.
 	.data
 	.space	PAGE_SIZE
 	.align	4
-ASLOCAL(tmpstk)
+ASGLOBAL(tmpstk)
 
 GLOBAL(mmutype)
 	.long	MMU_68851

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2026/03/26 12:47:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/03/26 12:47:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -138,7 +138,6 @@ static void news1200_init(void);
 /* functions called from locore.s */
 void dumpsys(void);
 void machine_init(paddr_t);
-void straytrap(struct trapframe);
 
 /*
  * Machine-dependent crash dump header info.
@@ -566,13 +565,6 @@ dumpsys(void)
 static void
 initcpu(void)
 {
-}
-
-void
-straytrap(struct trapframe tf)
-{
-	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
-	    tf.tf_format, tf.tf_vector, tf.tf_pc);
 }
 
 /* XXX should change the interface, and make one badaddr() function */

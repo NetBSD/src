@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.145 2026/03/21 20:14:54 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.146 2026/03/28 01:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.145 2026/03/21 20:14:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.146 2026/03/28 01:44:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,6 @@ extern struct emul emul_sunos;
 /*
  * XXX End hack
  */
-
-volatile int astpending;
 
 const char *trap_type[] = {
 	"Bus error",

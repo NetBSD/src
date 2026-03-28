@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.205 2026/03/24 00:16:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.206 2026/03/28 01:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -419,115 +419,6 @@ GLOBAL(mac68k_a2_fromfault)
 	.long	0
 GLOBAL(m68k_fault_addr)
 	.long	0
-
-/*
- * Other exceptions only cause four and six word stack frame and require
- * no post-trap stack adjustment.
- */
-
-/*
- * Trace (single-step) trap.  Kernel-mode is special.
- * User mode traps are simply passed on to trap().
- */
-ENTRY_NOPROFILE(trace)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRACE,%d0
-
-	| Check PSW and see what happen.
-	|   T=0 S=0	(should not happen)
-	|   T=1 S=0	trace trap from user mode
-	|   T=0 S=1	trace trap on a trap instruction
-	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
-
-	movw	%sp@(FR_HW),%d1		| get PSW
-	notw	%d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,%d1		| from system mode (T=1, S=1)?
-	jeq	Lkbrkpt			| yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-/*
- * Trap 15 is used for:
- *	- GDB breakpoints (in user programs)
- *	- KGDB breakpoints (in the kernel)
- *	- trace traps for SUN binaries (not fully supported yet)
- * User mode traps are simply passed to trap().
- */
-ENTRY_NOPROFILE(trap15)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRAP15,%d0
-	movw	%sp@(FR_HW),%d1		| get PSW
-	andw	#PSL_S,%d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-Lkbrkpt: | Kernel-mode breakpoint or trace trap. (%d0=trap_type)
-	| Save the system %sp rather than the user %usp.
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
-	movl	%a6,%sp@(FR_SP)		|  from before trap
-
-	| If were are not on tmpstk switch to it.
-	| (so debugger can change the stack pointer)
-	movl	%a6,%d1
-	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2			| already on tmpstk
-	| Copy frame to the temporary stack
-	movl	%sp,%a0			| %a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1 | %a1=dst
-	movl	%a1,%sp			| %sp=new frame
-	moveq	#FR_SIZE,%d1
-Lbrkpt1:
-	movl	%a0@+,%a1@+
-	subql	#4,%d1
-	bgt	Lbrkpt1
-
-Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to do it, so that we can
-	| set breakpoints in trap() if we want.  We know
-	| the trap type is either T_TRACE or T_BREAKPOINT.
-	| If we have both DDB and KGDB, let KGDB see it first,
-	| because KGDB will just return 0 if not connected.
-	| Save args in %d2, %a2
-	movl	%d0,%d2			| trap type
-	movl	%sp,%a2			| frame ptr
-#ifdef KGDB
-	| Let KGDB handle it (if connected)
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kgdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-	cmpl	#0,%d0			| did kgdb handle it?
-	jne	Lbrkpt3			| yes, done
-#endif
-#ifdef DDB
-	| Let DDB handle it
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-#if 0	/* not needed on hp300 */
-	cmpl	#0,%d0			| did ddb handle it?
-	jne	Lbrkpt3			| yes, done
-#endif
-#endif
-	/* Sun 3 drops into PROM here. */
-Lbrkpt3:
-	| The stack pointer may have been modified, or
-	| data below it modified (by kgdb push call),
-	| so push the hardware frame at the current %sp
-	| before restoring registers and returning.
-
-	movl	%sp@(FR_SP),%a0		| modified %sp
-	lea	%sp@(FR_SIZE),%a1	| end of our frame
-	movl	%a1@-,%a0@-		| copy 2 longs with
-	movl	%a1@-,%a0@-		| ... predecrement
-	movl	%a0,%sp@(FR_SP)		| %sp = h/w frame
-	moveml	%sp@+,#0x7FFF		| restore all but %sp
-	movl	%sp@,%sp		| ... and %sp
-	rte				| all done
 
 /*
  * Interrupt handlers.
@@ -1003,7 +894,7 @@ GLOBAL(sanity_check)
 
 	.space	4 * PAGE_SIZE
 	.align	4
-ASLOCAL(tmpstk)
+ASGLOBAL(tmpstk)
 
 GLOBAL(machineid)
 	.long	0		| default to 320

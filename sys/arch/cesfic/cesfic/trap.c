@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.65 2026/03/21 20:14:55 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.66 2026/03/28 01:44:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.65 2026/03/21 20:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.66 2026/03/28 01:44:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -85,7 +85,6 @@ extern struct emul emul_sunos;
 
 void	trap(struct frame *fp, int type, u_int code, u_int v);
 void	syscall(register_t code, struct frame frame);
-void	trap_kdebug(int, struct trapframe);
 
 #ifdef DEBUG
 void	dumpssw(u_short);
@@ -639,29 +638,4 @@ trap(struct frame *fp, int type, unsigned code, unsigned v)
 		return;
 out:
 	userret(l, fp, sticks, v, 1);
-}
-
-/*
- * This is called by locore for supervisor-mode trace and
- * breakpoint traps.  This is separate from trap() above
- * so that breakpoints in trap() will work.
- *
- * If we have both DDB and KGDB, let KGDB see it first,
- * because KGDB will just return 0 if not connected.
- */
-void
-trap_kdebug(int type, struct trapframe tf)
-{
-#ifdef	KGDB
-	/* Let KGDB handle it (if connected) */
-	if (kgdb_trap(type, &tf))
-		return;
-#endif
-#ifdef	DDB
-	/* Let DDB handle it. */
-	if (kdb_trap(type, &tf))
-		return;
-#endif
-
-	panic("unexpected BPT trap");
 }

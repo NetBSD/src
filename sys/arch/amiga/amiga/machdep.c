@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.261 2026/03/24 06:23:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262 2026/03/28 01:44:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2026/03/24 06:23:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2026/03/28 01:44:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -127,7 +127,6 @@ void identifycpu(void);
 vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
 void initcpu(void);
-void straytrap(struct trapframe);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -751,14 +750,6 @@ initcpu(void)
 		vectab[24+6] = DraCoIntr;
 	}
 #endif
-}
-
-void
-straytrap(struct trapframe tf)
-{
-	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
-	    tf.tf_format, tf.tf_vector, tf.tf_pc);
-/*XXX*/	panic("straytrap");
 }
 
 int	*nofault;

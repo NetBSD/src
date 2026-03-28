@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.4 2024/01/20 00:15:31 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.5 2026/03/28 01:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,14 +39,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.4 2024/01/20 00:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.5 2026/03/28 01:44:36 thorpej Exp $");
 
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/kauth.h>
+#ifdef KGDB
+#include <sys/kgdb.h>
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -57,7 +62,10 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.4 2024/01/20 00:15:31 thorpej Exp $"
 #include <machine/cpu.h>
 #include <machine/pcb.h>
 
-extern int suline(void *, void *);	/* locore.s */
+#ifdef DDB
+#include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#endif
 
 volatile int astpending;
 
@@ -176,6 +184,8 @@ fastcopy16(u_int *dst, const u_int *src)
 	*dst++ = *src++;
 	*dst = *src;
 }
+
+extern int suline(void *, void *);
 
 int
 m68040_writeback(struct frame *fp, int docachepush)
@@ -413,3 +423,46 @@ m68040_writeback(struct frame *fp, int docachepush)
 	return err;
 }
 #endif /* M68040 */
+
+/*
+ * This is called by the trap15 and trace trap handlers for
+ * supervisor-mode trace and breakpoint traps.  This is separate
+ * from trap() so that breakpoints in trap() will work.
+ *
+ * If we have both DDB and KGDB, let KGDB see it first, because
+ * KGDB will just return 0 if not connected.
+ *
+ * A fallback hook for machine-specific handling is also provided.
+ */
+void
+trap_kdebug(int type, struct trapframe *tf)
+{
+#ifdef KGDB
+	/* Let KGDB handle it (if connected) */
+	if (kgdb_trap(type, tf)) {
+		return;
+	}
+#endif
+#ifdef DDB
+	/* Let DDB handle it. */
+	if (kdb_trap(type, tf)) {
+		return;
+	}
+#endif
+#ifdef MACHINE_KDEBUG_TRAP_FALLBACK
+	MACHINE_KDEBUG_TRAP_FALLBACK(type, tf);
+#else
+	panic("%s trap", type == -1 ? "stray" : "unexpected BPT");
+#endif
+}
+
+void	straytrap(struct trapframe);	/* called from badtrap[] */
+
+void
+straytrap(struct trapframe tf)
+{
+	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
+	    tf.tf_format, tf.tf_vector, tf.tf_pc);
+
+	trap_kdebug(-1, &tf);
+}

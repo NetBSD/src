@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.378 2026/03/18 14:44:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.379 2026/03/28 01:44:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.378 2026/03/18 14:44:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2026/03/28 01:44:36 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -236,7 +236,6 @@ static long	getenv(const char *);
 /* functions called from locore.s */
 void	dumpsys(void);
 void	mac68k_init(void);
-void	straytrap(struct trapframe tf);
 void	nmihand(struct frame);
 
 /*
@@ -748,16 +747,6 @@ dumpsys(void)
 		}
 	}
 	printf("succeeded\n");
-}
-
-void
-straytrap(struct trapframe tf)
-{
-	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
-	    tf.tf_format, tf.tf_vector, tf.tf_pc);
-#ifdef DDB
-	Debugger();
-#endif
 }
 
 /*

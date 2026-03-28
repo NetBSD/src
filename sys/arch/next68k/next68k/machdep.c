@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.129 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/03/21 20:14:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -145,7 +145,6 @@ void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
 void machine_init(paddr_t);
-void straytrap(struct trapframe);
 
 /*
  * Machine-independent crash dump header info.
@@ -727,15 +726,6 @@ dumpsys(void)
 void
 initcpu(void)
 {
-}
-
-void
-straytrap(struct trapframe tf)
-{
-	printf("unexpected trap format=%d vector=0x%x pc=0x%x\n",
-	    tf.tf_format, tf.tf_vector, tf.tf_pc);
-
-	/* XXX kgdb/ddb entry? */
 }
 
 /* XXX should change the interface, and make one badaddr() function */
