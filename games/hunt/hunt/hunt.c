@@ -1,4 +1,4 @@
-/*	$NetBSD: hunt.c,v 1.58 2014/03/30 09:11:50 skrll Exp $	*/
+/*	$NetBSD: hunt.c,v 1.59 2026/03/28 12:40:00 andvar Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hunt.c,v 1.58 2014/03/30 09:11:50 skrll Exp $");
+__RCSID("$NetBSD: hunt.c,v 1.59 2026/03/28 12:40:00 andvar Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -189,7 +189,7 @@ main(int ac, char **av)
 		case 'w':
 		case 'h':
 		case 'p':
-			wanrx("Need TCP/IP for S, q, w, h, and p options.");
+			warnx("Need TCP/IP for S, q, w, h, and p options.");
 			break;
 #endif
 		case 'c':
