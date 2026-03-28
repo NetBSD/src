@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.265 2023/10/24 18:08:16 andvar Exp $	*/
+/*	$NetBSD: trap.c,v 1.266 2026/03/28 15:32:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.265 2023/10/24 18:08:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.266 2026/03/28 15:32:28 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -760,13 +760,11 @@ ast(void)
 		l->l_md.md_astpending = 0;
 
 #ifdef MULTIPROCESSOR
-		{
-			kpreempt_disable();
-			struct cpu_info * const ci = l->l_cpu;
-			if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
-				pmap_tlb_syncicache_ast(ci);
-			kpreempt_enable();
-		}
+		kpreempt_disable();
+		struct cpu_info * const ci = l->l_cpu;
+		if (ci->ci_tlb_info->ti_synci_page_bitmap != 0)
+			pmap_tlb_syncicache_ast(ci);
+		kpreempt_enable();
 #endif
 
 		if (l->l_pflag & LP_OWEUPC) {
