@@ -1,4 +1,4 @@
-.\"     $NetBSD: driver.9,v 1.35 2026/03/28 11:56:04 uwe Exp $
+.\"     $NetBSD: driver.9,v 1.36 2026/03/28 12:46:47 uwe Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,116 +55,124 @@ For a detailed overview of the autoconfiguration framework see
 Each device driver must present to the system a standard
 autoconfiguration interface.
 This interface is provided by the
-.Em cfattach
+.Vt cfattach
 structure.
 The interface to the driver is constant and is defined
 statically inside the driver.
 For example, the interface to driver
-.Dq foo
+.Ql foo
 is defined with:
-.Bd -literal
-CFATTACH_DECL_NEW(foo, 			/* driver name */
-	sizeof(struct foo_softc),	/* size of instance data */
-	foo_match,			/* match/probe function */
-	foo_attach,			/* attach function */
-	foo_detach,			/* detach function */
-	foo_activate);			/* activate function */
+.Bd -literal -offset indent
+CFATTACH_DECL_NEW(foo,                  /* driver name */
+        sizeof(struct foo_softc),       /* size of instance data */
+        foo_match,                      /* match/probe function */
+        foo_attach,                     /* attach function */
+        foo_detach,                     /* detach function */
+        foo_activate);                  /* activate function */
 .Ed
 .Pp
 For each device instance controlled by the driver, the
 autoconfiguration framework allocates a block of memory to record
 device-instance-specific driver variables.
 The size of this memory block is specified by the second argument in the
-.Em CFATTACH_DECL
+.Dv CFATTACH_DECL
 family of macros.
 The memory block is referred to as the driver's
-.Em softc
+.Vt softc
 structure.
 The
-.Em softc
+.Vt softc
 structure is only accessed within the driver, so its definition is
 local to the driver.
 Nevertheless, the
-.Em softc
+.Vt softc
 structure should adopt the standard
 .Nx
 configuration and naming conventions.
 For example, the
-.Em softc
+.Vt softc
 structure for driver
-.Dq foo
+.Ql foo
 is defined with:
-.Bd -literal
+.Bd -literal -offset indent
 struct foo_softc {
-	device_t sc_dev;		/* generic device info */
-	/* device-specific state */
+        device_t sc_dev;                /* generic device info */
+        /* device-specific state */
 };
 .Ed
 .Pp
 If a driver has character device interfaces accessed from userland, the driver
 must define the
-.Em cdevsw
+.Vt cdevsw
 structure.
 The structure is constant and is defined inside the driver.
 For example, the
-.Em cdevsw
+.Vt cdevsw
 structure for driver
-.Dq foo
+.Ql foo
 is defined with:
-.Bd -literal
+.Bd -literal -offset indent
 const struct cdevsw foo_cdevsw {
-	int (*d_open)(dev_t, int, int, struct lwp *);
-	int (*d_close)(dev_t, int, int, struct lwp *);
-	int (*d_read)(dev_t, struct uio *, int);
-	int (*d_write)(dev_t, struct uio *, int);
-	int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
-	void (*d_stop)(struct tty *, int);
-	struct tty *(*d_tty)(dev_t);
-	int (*d_poll)(dev_t, int, struct lwp *);
-	paddr_t (*d_mmap)(dev_t, off_t, int);
-	int (*d_kqfilter)(dev_t, struct knote *);
-	int d_flag;
+        int (*d_open)(dev_t, int, int, struct lwp *);
+        int (*d_close)(dev_t, int, int, struct lwp *);
+        int (*d_read)(dev_t, struct uio *, int);
+        int (*d_write)(dev_t, struct uio *, int);
+        int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
+        void (*d_stop)(struct tty *, int);
+        struct tty *(*d_tty)(dev_t);
+        int (*d_poll)(dev_t, int, struct lwp *);
+        paddr_t (*d_mmap)(dev_t, off_t, int);
+        int (*d_kqfilter)(dev_t, struct knote *);
+        int d_flag;
 };
 .Ed
 .Pp
-The structure variable must be named foo_cdevsw by appending the letters
-.Dq _cdevsw
+The structure variable must be named
+.Va foo_cdevsw
+by appending the letters
+.Ql _cdevsw
 to the driver's base name.
 This convention is mandated by the autoconfiguration framework.
 .Pp
 If the driver
-.Dq foo
+.Ql foo
 has also block device interfaces, the driver must define the
-.Em bdevsw
+.Vt bdevsw
 structure.
 The structure is constant and is defined inside the driver.
 For example, the
-.Em bdevsw
+.Vt bdevsw
 structure for driver
-.Dq foo
+.Ql foo
 is defined with:
-.Bd -literal
+.Bd -literal -offset indent
 const struct bdevsw foo_bdevsw {
-	int (*d_open)(dev_t, int, int, struct lwp *);
-	int (*d_close)(dev_t, int, int, struct lwp *);
-	void (*d_strategy)(struct buf *);
-	int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
-	int (*d_dump)(dev_t, daddr_t, void *, size_t);
-	int (*d_psize)(dev_t);
-	int d_flag;
+        int (*d_open)(dev_t, int, int, struct lwp *);
+        int (*d_close)(dev_t, int, int, struct lwp *);
+        void (*d_strategy)(struct buf *);
+        int (*d_ioctl)(dev_t, u_long, void *, int, struct lwp *);
+        int (*d_dump)(dev_t, daddr_t, void *, size_t);
+        int (*d_psize)(dev_t);
+        int d_flag;
 };
 .Ed
 .Pp
-The structure variable must be named foo_bdevsw by appending the letters
-.Dq _bdevsw
+The structure variable must be named
+.Va foo_bdevsw
+by appending the letters
+.Ql _bdevsw
 to the driver's base name.
 This convention is mandated by the autoconfiguration framework.
 .Pp
 During system bootstrap, the autoconfiguration framework searches the
 system for devices.
-For each device driver, its match function is called (via its
-.Em cfattach
-structure) to match the driver with a device instance.
+For each device driver, its match function is called
+.Po
+via its
+.Vt cfattach
+structure
+.Pc
+to match the driver with a device instance.
 The match function is called with three arguments.
 This first argument
 .Fa parent
@@ -209,9 +217,11 @@ Generally, only a single driver exists for a device, so the match
 function returns 1 for a positive match.
 .Pp
 The autoconfiguration framework will call the attach function
-(via its
-.Em cfattach
-structure)
+.Po
+via its
+.Vt cfattach
+structure
+.Pc
 of the driver which returns the highest value from its match function.
 The attach function is called with three arguments.
 The attach function performs the necessary process to initialise the
@@ -223,11 +233,13 @@ The second argument
 .Fa self
 is a pointer to the driver's device structure.
 The device's
-.Em softc
+.Vt softc
 structure can be obtained from it using the
 .Fn device_private
-function (see
-.Xr disk 9 ) .
+function
+.Po see
+.Xr disk 9
+.Pc .
 The third argument
 .Fa aux
 is a pointer to the attachment structure.
@@ -242,15 +254,20 @@ enabled.
 If interrupts are required during initialisation, then the attach
 function should make use of
 .Fn config_interrupts
-(see
-.Xr autoconf 9 ) .
+.Po
+see
+.Xr autoconf 9
+.Pc .
 .Pp
 Some devices can be removed from the system without requiring a system
 reboot.
 The autoconfiguration framework calls the driver's detach function
-(via its
-.Em cfattach
-structure) during device detachment.
+.Po
+via its
+.Vt cfattach
+structure
+.Pc
+during device detachment.
 If the device does not support detachment, then the driver does not
 have to provide a detach function.
 The detach function is used to relinquish resources allocated to the
@@ -264,9 +281,10 @@ The second argument
 contains detachment flags.
 Valid values are
 .Dv DETACH_FORCE
-(force detachment; hardware gone) and
+.Pq force detachment; hardware gone
+and
 .Dv DETACH_QUIET
-(do not print a notice).
+.Pq do not print a notice .
 .Pp
 The activate function is used by some buses to notify drivers from
 interrupt context when detachment is imminent, with
@@ -295,7 +313,7 @@ Interrupt handlers should return 0 for
 .Dq interrupt not for me ,
 1 for
 .Dq I took care of it ,
-or -1 for
+or \-1 for
 .Do
 I guess it was mine, but I wasn't expecting it
 .Dc .
@@ -306,38 +324,39 @@ must be aware of its existence.
 This is done by including an entry in files.<bus> in the
 directory containing the driver.
 For example, the driver
-.Dq foo
+.Ar foo
 attaching to bus
-.Dq bar
+.Ar bar
 with dependency on kernel module
-.Dq baz
+.Ar baz
 has the entry:
-.Bd -literal
-device	foo: baz
-attach	foo at bar
-file	dev/bar/foo.c		foo
+.Bd -literal -offset indent
+.Cd device Ar foo Ns Cd \&: Ar baz
+.Cd attach Ar foo Cm at Ar bar
+.Cd file Pa dev/ Ns Ar bar Ns Pa / Ns Ar foo Ns Pa \&.c Ar foo
 .Ed
 .Pp
 An entry can now be added to the machine description file:
-.Bd -literal
-foo*	at bar?
+.Bd -ragged -offset indent
+.Ar foo\^ Ns Cm \&* Cm at Ar bar\^ Ns Cm \&?
 .Ed
 .Pp
 For device interfaces of a driver to be compiled into the kernel,
 .Xr config 1
 must be aware of its existence.
-This is done by including an entry in majors.<arch>.
+This is done by including an entry in
+.Pa majors. Ns Aq Ar arch .
 For example, the driver
-.Dq foo
+.Ar foo
 with character device interfaces, a character major device number
-.Dq cmaj ,
+.Ar cmaj ,
 block device interfaces, a block device major number
-.Dq bmaj
+.Ar bmaj
 and dependency on kernel module
-.Dq baz
+.Ar baz
 has the entry:
-.Bd -literal
-device-major	foo	char cmaj block bmaj	baz
+.Bd -ragged -offset indent
+.Cd device-major Ar foo Cm char Ar cmaj Cm block Ar bmaj Ar baz
 .Ed
 .Pp
 For a detailed description of the machine description file and the
