@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.705 2026/03/27 21:44:08 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.706 2026/03/28 11:05:13 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.705 2026/03/27 21:44:08 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.706 2026/03/28 11:05:13 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3696,7 +3696,7 @@ convert_integer_from_floating(
 	else
 		/* implicit conversion from floating point '%s' to ... */
 		query_message(1, type_name(tn->tn_type), type_name(tp));
-	if (tn->tn_op == CON)
+	if (tn->tn_op == CON && op != CVT)
 		check_lossy_floating_to_integer_conversion(op, arg, tp, tn);
 }
 

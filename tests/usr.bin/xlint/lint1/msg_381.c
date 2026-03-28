@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_381.c,v 1.3 2026/03/27 21:44:08 rillig Exp $	*/
+/*	$NetBSD: msg_381.c,v 1.4 2026/03/28 11:05:13 rillig Exp $	*/
 # 3 "msg_381.c"
 
 // Test for message: lossy conversion of %Lg (%La) to '%s' [381]
@@ -68,4 +68,7 @@ conversions(void)
 	//u64 = 18446744073709551615.0;
 	// warning: lossy conversion of 1.84467e+19 (.....) to 'unsigned long long' [381]
 	//u64 = 18446744073709551616.0;
+
+	// A cast is intentional, so don't warn.
+	s32 = (int)3.5;
 }
