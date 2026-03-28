@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.124 2025/12/05 22:48:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.125 2026/03/28 02:48:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2025/12/05 22:48:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2026/03/28 02:48:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -127,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.124 2025/12/05 22:48:44 thorpej Exp $");
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <m68k/cacheops.h>
+#include <m68k/mmu_51.h>
 
 #include <sun3/sun3/machdep.h>
 
@@ -242,11 +243,6 @@ static pv_t 		*pvbase;
 static pv_elem_t	*pvebase;
 static struct pmap	kernel_pmap;
 struct pmap		*const kernel_pmap_ptr = &kernel_pmap;
-
-/*
- * This holds the CRP currently loaded into the MMU.
- */
-struct mmu_rootptr kernel_crp;
 
 /*
  * Just all around global variables.
@@ -822,15 +818,17 @@ pmap_bootstrap(vaddr_t nextva)
 	pmap_init_pv();
 
 	/*
-	 * Fill in the kernel_pmap structure and kernel_crp.
+	 * Fill in the kernel_pmap structure and the prototype CRP.
 	 */
 	kernAphys = mmu_vtop(kernAbase);
 	kernel_pmap.pm_a_tmgr = NULL;
 	kernel_pmap.pm_a_phys = kernAphys;
 	kernel_pmap.pm_refcount = 1; /* always in use */
 
-	kernel_crp.rp_attr = MMU_LONG_DTE_LU | MMU_DT_LONG;
-	kernel_crp.rp_addr = kernAphys;
+	/*
+	 * protorp[] is initialized in mmu_subr.s.  We are not using
+	 * the SRP at all; everything uses the CRP in this implementation.
+	 */
 
 	/*
 	 * Now pmap_enter_kernel() may be used safely and will be
@@ -1029,8 +1027,7 @@ pmap_bootstrap_copyprom(void)
 void
 pmap_takeover_mmu(void)
 {
-
-	loadcrp(&kernel_crp);
+	mmu_load_urp51(kernAphys);
 }
 
 /* pmap_bootstrap_setprom()			INTERNAL
@@ -1753,8 +1750,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * new mappings, so no need to flush anything.
 		 */
 		if (pmap == current_pmap()) {
-			kernel_crp.rp_addr = pmap->pm_a_phys;
-			loadcrp(&kernel_crp);
+			mmu_load_urp51(pmap->pm_a_phys);
 		}
 
 		if (!wired)
@@ -2578,9 +2574,8 @@ pmap_release(pmap_t pmap)
 	 */
 	if (pmap->pm_a_tmgr != NULL) {
 		/* First make sure we are not using it! */
-		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
-			kernel_crp.rp_addr = kernAphys;
-			loadcrp(&kernel_crp);
+		if (protorp[1] == pmap->pm_a_phys) {
+			mmu_load_urp51(kernAphys);
 		}
 #ifdef	PMAP_DEBUG /* XXX - todo! */
 		/* XXX - Now complain... */
@@ -3011,9 +3006,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * with the default 'kernel' map.
 	 */
 	if (pmap_remove_a(pmap->pm_a_tmgr, sva, eva)) {
-		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
-			kernel_crp.rp_addr = kernAphys;
-			loadcrp(&kernel_crp);
+		if (protorp[1] == pmap->pm_a_phys) {
+			mmu_load_urp51(kernAphys);
 			/* will do TLB flush below */
 		}
 		pmap->pm_a_tmgr = NULL;
@@ -3527,10 +3521,9 @@ _pmap_switch(pmap_t pmap)
 	 * then this will NOT flush the TLB.
 	 */
 	rootpa = pmap->pm_a_phys;
-	if (kernel_crp.rp_addr != rootpa) {
+	if (protorp[1] != rootpa) {
 		DPRINT(("pmap_activate(%p)\n", pmap));
-		kernel_crp.rp_addr = rootpa;
-		loadcrp(&kernel_crp);
+		mmu_load_urp51(rootpa);
 		TBIAU();
 	}
 }
