@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2026/03/14 19:17:23 rillig Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2026/03/28 20:43:34 palle Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.19 2026/03/14 19:17:23 rillig Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2026/03/28 20:43:34 palle Exp $");
 #endif
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: main.c,v 1.19 2026/03/14 19:17:23 rillig Exp $");
 #include <ctype.h>
 
 #include <sys/stat.h>
-#ifndef NBTOOL_CONFIG_H
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <util.h>
 #endif
 

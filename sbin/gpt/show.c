@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.49 2026/02/09 17:21:27 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.50 2026/03/28 20:43:34 palle Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: show.c,v 1.49 2026/02/09 17:21:27 kre Exp $");
 #include <unistd.h>
 #include <vis.h>
 
-#ifndef NBTOOL_CONFIG_H
+#ifndef HAVE_NBTOOL_CONFIG_H
 #include <sys/ioctl.h>
 #endif
 
@@ -726,7 +726,7 @@ get_terminal_width(void)
 	unsigned int w;
 	char *p;
 	int err;
-#ifndef NBTOOL_CONFIG_H
+#ifndef HAVE_NBTOOL_CONFIG_H
 	struct winsize wsz;
 #endif
 
@@ -735,7 +735,7 @@ get_terminal_width(void)
 		if (err == 0)
 			return w;
 	}
-#ifndef NBTOOL_CONFIG_H
+#ifndef HAVE_NBTOOL_CONFIG_H
 	if (ioctl(fileno(stdout), TIOCGWINSZ, &wsz) == 0)
 		return wsz.ws_col;
 #endif
