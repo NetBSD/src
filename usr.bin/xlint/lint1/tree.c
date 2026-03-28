@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.706 2026/03/28 11:05:13 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.707 2026/03/28 12:00:49 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.706 2026/03/28 11:05:13 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.707 2026/03/28 12:00:49 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1545,6 +1545,10 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	     strstr(max_ec->s_name, "max") != NULL ||
 	     strstr(max_ec->s_name, "NUM") != NULL ||
 	     strstr(max_ec->s_name, "num") != NULL ||
+	     strncmp(max_ec->s_name, "COUNT_", 6) == 0 ||
+	     str_ends_with(max_ec->s_name, "_COUNT") ||
+	     strncmp(max_ec->s_name, "LAST_", 5) == 0 ||
+	     str_ends_with(max_ec->s_name, "_end") ||
 	     strncmp(max_ec->s_name, "N_", 2) == 0))
 		return;
 

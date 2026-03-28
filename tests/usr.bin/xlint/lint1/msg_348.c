@@ -1,9 +1,12 @@
-/*	$NetBSD: msg_348.c,v 1.14 2025/07/11 19:03:01 rillig Exp $	*/
+/*	$NetBSD: msg_348.c,v 1.15 2026/03/28 12:00:49 rillig Exp $	*/
 # 3 "msg_348.c"
 
 // Test for message: maximum value %d for '%s' of type '%s' does not match maximum array index %d [348]
 
 /* lint1-extra-flags: -r -X 351 */
+
+/* expect+1: warning: static variable 'str' set but not used [307] */
+static const char *str;
 
 enum color {
 	red,
@@ -293,4 +296,76 @@ unit_name(enum unit_prefix prefix)
 	name = "-KMG"[prefix];
 
 	return name;
+}
+
+void
+prefix_last(void)
+{
+	enum {
+		FIRST_CONSTANT,
+		MIDDLE_CONSTANT,
+		/* expect+1: previous declaration of 'LAST_CONSTANT' [260] */
+		LAST_CONSTANT,
+	} x = FIRST_CONSTANT;
+
+	static const char *name_ok[] = { "first", "middle" };
+	str = name_ok[x];
+
+	static const char *name_too_short[] = { "first" };
+	/* expect+1: warning: maximum value 2 for 'LAST_CONSTANT' of type 'enum <unnamed>' does not match maximum array index 0 [348] */
+	str = name_too_short[x];
+}
+
+void
+prefix_count(void)
+{
+	enum {
+		FIRST_CONSTANT,
+		MIDDLE_CONSTANT,
+		/* expect+1: previous declaration of 'COUNT_CONSTANT' [260] */
+		COUNT_CONSTANT,
+	} x = FIRST_CONSTANT;
+
+	static const char *name_ok[] = { "first", "middle" };
+	str = name_ok[x];
+
+	static const char *name_too_short[] = { "first" };
+	/* expect+1: warning: maximum value 2 for 'COUNT_CONSTANT' of type 'enum <unnamed>' does not match maximum array index 0 [348] */
+	str = name_too_short[x];
+}
+
+void
+suffix_count(void)
+{
+	enum {
+		FIRST_CONSTANT,
+		MIDDLE_CONSTANT,
+		/* expect+1: previous declaration of 'CONSTANT_COUNT' [260] */
+		CONSTANT_COUNT,
+	} x = FIRST_CONSTANT;
+
+	static const char *name_ok[] = { "first", "middle" };
+	str = name_ok[x];
+
+	static const char *name_too_short[] = { "first" };
+	/* expect+1: warning: maximum value 2 for 'CONSTANT_COUNT' of type 'enum <unnamed>' does not match maximum array index 0 [348] */
+	str = name_too_short[x];
+}
+
+void
+suffix_end(void)
+{
+	enum {
+		FIRST_CONSTANT,
+		MIDDLE_CONSTANT,
+		/* expect+1: previous declaration of 'CONSTANT_end' [260] */
+		CONSTANT_end,
+	} x = FIRST_CONSTANT;
+
+	static const char *name_ok[] = { "first", "middle" };
+	str = name_ok[x];
+
+	static const char *name_too_short[] = { "first" };
+	/* expect+1: warning: maximum value 2 for 'CONSTANT_end' of type 'enum <unnamed>' does not match maximum array index 0 [348] */
+	str = name_too_short[x];
 }
