@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.147 2026/03/28 04:08:40 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.148 2026/03/28 04:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.147 2026/03/28 04:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2026/03/28 04:32:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,24 +136,6 @@ extern struct emul emul_sunos;
 /*
  * XXX End hack
  */
-
-/*
- * Size of various exception stack frames (minus the standard 8 bytes)
- */
-short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
-	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
-	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
-	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
-	-1, -1,		/* type 5-6 - undefined */
-	FMT7SIZE,	/* type 7 - access error (68040) */
-	58,		/* type 8 - bus fault (68010) */
-	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
-	FMTASIZE,	/* type A - short bus fault (68020/030) */
-	FMTBSIZE,	/* type B - long bus fault (68020/030) */
-	-1, -1, -1, -1	/* type C-F - undefined */
-};
 
 #ifdef DEBUG
 int mmudebug = 0;

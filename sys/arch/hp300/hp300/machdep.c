@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.257 2026/03/28 01:44:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.258 2026/03/28 04:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.257 2026/03/28 01:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2026/03/28 04:32:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -131,7 +131,6 @@ vaddr_t	bootinfo_va;
 int	maxmem;			/* max memory per process */
 
 extern	u_int lowram;
-extern	short exframesize[];
 
 /* prototypes for local functions */
 static void	parityenable(void);

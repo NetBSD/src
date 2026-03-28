@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.12 2025/03/16 15:34:59 riastradh Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.13 2026/03/28 04:32:02 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.12 2025/03/16 15:34:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.13 2026/03/28 04:32:02 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -81,8 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.12 2025/03/16 15:34:59 riastradh 
 
 /* the following is used externally (sysctl_hw) */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-extern short exframesize[];
 
 /*
  * Set registers on exec.

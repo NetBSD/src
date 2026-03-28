@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.38 2026/03/28 04:08:40 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.39 2026/03/28 04:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -197,6 +197,8 @@ struct sigframe_siginfo {
 };
 
 const char *trap_desc(int);
+
+extern const short exframesize[];
 
 /*
  * Utility function to relocate the initial frame, make room to restore an

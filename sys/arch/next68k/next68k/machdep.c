@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 2026/03/28 04:32:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2026/03/28 04:32:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -132,7 +132,6 @@ struct vm_map *phys_map = NULL;
 paddr_t msgbufpa;		/* PA of message buffer */
 
 extern	u_int lowram;
-extern	short exframesize[];
 
 /* prototypes for local functions */
 void	identifycpu(void);

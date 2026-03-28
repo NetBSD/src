@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorpej Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.19 2026/03/28 04:32:02 thorpej Exp $   */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.19 2026/03/28 04:32:02 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -66,8 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorp
 #include <machine/cpu.h>
 #include <machine/reg.h>
 #include <machine/frame.h>
-
-extern  short exframesize[];
 
 #ifdef DEBUG
 extern int sigdebug;

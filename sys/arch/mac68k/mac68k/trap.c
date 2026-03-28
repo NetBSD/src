@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.157 2026/03/28 04:08:41 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.158 2026/03/28 04:32:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2026/03/28 04:08:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.158 2026/03/28 04:32:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_execfmt.h"
@@ -84,24 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.157 2026/03/28 04:08:41 thorpej Exp $");
 #include <compat/sunos/sunos_syscall.h>
 extern struct emul emul_sunos;
 #endif
-
-/*
- * Size of various exception stack frames (minus the standard 8 bytes)
- */
-short	exframesize[] = {
-	FMT0SIZE,	/* type 0 - normal (68020/030/040) */
-	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
-	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040) */
-	FMT3SIZE,	/* type 3 - FP post-instruction (68040) */
-	FMT4SIZE,	/* type 4 - LC040 FP exception (68LC040) */
-	-1, -1,		/* type 5-6 - undefined */
-	FMT7SIZE,	/* type 7 - access error (68040) */
-	58,		/* type 8 - bus fault (68010) */
-	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
-	FMTASIZE,	/* type A - short bus fault (68020/030) */
-	FMTBSIZE,	/* type B - long bus fault (68020/030) */
-	-1, -1, -1, -1	/* type C-F - undefined */
-};
 
 #ifdef M68040
 #define KDFAULT(c)	(mmutype == MMU_68040 ?			\

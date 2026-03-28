@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.6 2026/03/28 04:08:40 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.7 2026/03/28 04:32:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.6 2026/03/28 04:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.7 2026/03/28 04:32:02 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -87,7 +87,8 @@ static const char * const trap_descriptions[] = {
 	[T_FPEMULI]	=	"FPU instruction",
 	[T_FPEMULD]	=	"FPU data format",
 };
-const unsigned int trap_description_count = __arraycount(trap_descriptions);
+static const unsigned int trap_description_count =
+    __arraycount(trap_descriptions);
 
 const char *
 trap_desc(int type)
@@ -103,6 +104,24 @@ trap_desc(int type)
 	}
 	return trap_descriptions[type];
 }
+
+/*
+ * Size of various exception stack frames (minus the standard 8 bytes)
+ */
+const short exframesize[] = {
+	FMT0SIZE,	/* type 0 - normal (68020/030/040/060) */
+	FMT1SIZE,	/* type 1 - throwaway (68020/030/040) */
+	FMT2SIZE,	/* type 2 - normal 6-word (68020/030/040/060) */
+	FMT3SIZE,	/* type 3 - FP post-instruction (68040/060) */
+	FMT4SIZE,	/* type 4 - access error/fp disabled (68060) */
+	-1, -1,		/* type 5-6 - undefined */
+	FMT7SIZE,	/* type 7 - access error (68040) */
+	FMT8SIZE,	/* type 8 - bus fault (68010) */
+	FMT9SIZE,	/* type 9 - coprocessor mid-instruction (68020/030) */
+	FMTASIZE,	/* type A - short bus fault (68020/030) */
+	FMTBSIZE,	/* type B - long bus fault (68020/030) */
+	-1, -1, -1, -1	/* type C-F - undefined */
+};
 
 #ifdef M68060
 #define	KDFAULT_060(c)	(cputype == CPU_68060 && ((c) & FSLW_TM_SV))

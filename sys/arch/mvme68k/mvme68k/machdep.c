@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177 2026/03/28 01:44:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.178 2026/03/28 04:32:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177 2026/03/28 01:44:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2026/03/28 04:32:03 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -135,7 +135,6 @@ u_long	ether_data_buff_size = ETHER_DATA_BUFF_PAGES * PAGE_SIZE;
 uint8_t	mvme_ea[6];
 
 extern	u_int lowram;
-extern	short exframesize[];
 
 /* prototypes for local functions */
 void	identifycpu(void);
