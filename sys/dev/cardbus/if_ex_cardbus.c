@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ex_cardbus.c,v 1.56 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: if_ex_cardbus.c,v 1.57 2026/03/28 13:12:29 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998 and 1999
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.56 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ex_cardbus.c,v 1.57 2026/03/28 13:12:29 andvar Exp $");
 
 /* #define EX_DEBUG 4 */	/* define to report information for debugging */
 
@@ -376,7 +376,7 @@ ex_cardbus_setup(struct ex_cardbus_softc *csc)
 		Cardbus_conf_write(ct, csc->sc_tag,
 			csc->sc_bar_reg1, csc->sc_bar_val1);
 		/*
-		 * Make sure CardBus brigde can access memory space.  Usually
+		 * Make sure CardBus bridge can access memory space.  Usually
 		 * memory access is enabled by BIOS, but some BIOSes do not
 		 * enable it.
 		 */
