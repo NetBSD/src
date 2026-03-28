@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.258 2026/03/28 04:32:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.259 2026/03/28 22:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.258 2026/03/28 04:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.259 2026/03/28 22:19:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -153,13 +153,7 @@ void	nmihand(struct frame);
  */
 static cpu_kcore_hdr_t cpu_kcore_hdr;
 
-/*
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
- * and 68030 systems.  See clock.c for the delay
- * calibration algorithm.
- */
-int	cpuspeed;		/* relative CPU speed; XXX skewed on 68040 */
+int	cpuspeed;		/* relative CPU speed */
 int	delay_divisor;		/* delay constant */
 
 #ifdef __HAVE_NEW_PMAP_68K

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.109 2026/03/28 01:44:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.110 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -384,33 +384,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
  */
 #define FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
-
-/*
- * _delay(u_int N)
- *
- * Delay for at least (N/256) microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- */
-ENTRY_NOPROFILE(_delay)
-	| %d0 = arg = (usecs << 8)
-	movl	%sp@(4),%d0
-	| %d1 = delay_divisor
-	movl	_C_LABEL(delay_divisor),%d1
-	jra	L_delay			/* Jump into the loop! */
-
-	/*
-	 * Align the branch target of the loop to a half-line (8-byte)
-	 * boundary to minimize cache effects.  This guarantees both
-	 * that there will be no prefetch stalls due to cache line burst
-	 * operations and that the loop will run from a single cache
-	 * half-line.
-	 */
-	.align	8
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
-	rts
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.31 2026/03/23 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.32 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.31 2026/03/23 00:30:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.32 2026/03/28 22:19:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -87,12 +87,8 @@ const char *cpu_string = NULL;
 int cpu_has_multibus = 0;
 int cpu_has_vme = 0;
 
-/*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
- */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
+/* XXX This is probably overkill. */
+int delay_divisor = delay_divisor_est(25);
 
 extern struct pcb *curpcb;
 
@@ -227,14 +223,14 @@ _verify_hardware(void)
 	case ID_SUN2_120 :
 		cpu_match++;
 		cpu_string = "{120,170}";
-		delay_divisor = 205;	/* 10 MHz */
+		delay_divisor = delay_divisor_est(10);
 		cpu_has_multibus = true;
 		break;
 
 	case ID_SUN2_50 :
 		cpu_match++;
 		cpu_string = "50";
-		delay_divisor = 205;	/* 10 MHz */
+		delay_divisor = delay_divisor_est(10);
 		cpu_has_vme = true;
 		break;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62 2021/05/31 14:38:56 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.63 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,10 +85,6 @@
 
 extern const vaddr_t kernbase;
 extern const vaddr_t kern_end;
-
-extern void _delay(unsigned);
-#define delay(us)	_delay((us)<<8)
-#define	DELAY(n)	delay(n)
 
 #endif	/* _KERNEL && !_LOCORE */
 #endif	/* !_MACHINE_PARAM_H_ */

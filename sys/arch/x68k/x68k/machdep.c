@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 2026/03/28 01:44:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 2026/03/28 22:19:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2026/03/28 01:44:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/03/28 22:19:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -156,16 +156,10 @@ static phys_seg_t phys_extmem_seg[EXTMEM_SEGS];
 #endif
 
 /*
- * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68040, the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68060, the value of delay_divisor is reported to be
- * 128 / cpuspeed (where cpuspeed is in MHz).
+ * Assume a standard X68030 with 25MHz CPU.  The delay_divisor will
+ * be calibrated later.
  */
-int	delay_divisor = 140;	/* assume some reasonable value to start */
+int	delay_divisor = delay_divisor_est(25);
 static int cpuspeed;		/* MPU clock (in MHz) */
 
 
@@ -400,20 +394,20 @@ identifycpu(void)
 	case CPU_68040:
 		cpu_type = "m68040";
 		mmu = "/MMU";
-		cpuspeed = 759 / delay_divisor;
+		cpuspeed = delay_divisor_est40(delay_divisor);
 		snprintf(clock, sizeof(clock), ", %d/%dMHz clock",
 		    cpuspeed*2, cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_type = "m68030";
 		mmu = "/MMU";
-		cpuspeed = 2048 / delay_divisor;
+		cpuspeed = delay_divisor_est(delay_divisor);
 		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
 		break;
 	case CPU_68020:
 		cpu_type = "m68020";
 		mmu = ", m68851 MMU";
-		cpuspeed = 2048 / delay_divisor;
+		cpuspeed = delay_divisor_est(delay_divisor);
 		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
 		break;
 	default:

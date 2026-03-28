@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.21 2026/03/28 02:48:19 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.22 2026/03/28 22:19:36 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -110,6 +110,9 @@ define	FC_USERD			FC_USERD
 define	IC_CLEAR			IC_CLEAR
 define	DC_CLEAR			DC_CLEAR
 define	CACHE_CLR			CACHE_CLR
+
+define	DELAY_MAXVAL		DELAY_MAXVAL
+define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 
 # sun3 memory map
 define	USRSTACK3X			USRSTACK3X

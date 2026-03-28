@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 2026/03/28 01:44:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 2026/03/28 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -454,33 +454,6 @@ ENTRY(ecacheoff)
 	movl	_C_LABEL(cache_ctl),%a0
 	sf	%a0@			| NEWS-OS does `sf 0xe1300000'
 1:
-	rts
-
-/*
- * _delay(unsigned N)
- *
- * Delay for at least (N/256) microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- */
-ENTRY_NOPROFILE(_delay)
-	| %d0 = arg = (usecs << 8)
-	movl	%sp@(4),%d0
-	| %d1 = delay_divisor
-	movl	_C_LABEL(delay_divisor),%d1
-	jra	L_delay			/* Jump into the loop! */
-
-	/*
-	 * Align the branch target of the loop to a half-line (8-byte)
-	 * boundary to minimize cache effects.  This guarantees both
-	 * that there will be no prefetch stalls due to cache line burst
-	 * operations and that the loop will run from a single cache
-	 * half-line.
-	 */
-	.align  8
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
 	rts
 
 /*

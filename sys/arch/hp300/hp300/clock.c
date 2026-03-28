@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.41 2020/05/29 12:30:40 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.42 2026/03/28 22:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.41 2020/05/29 12:30:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2026/03/28 22:19:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,6 @@ static int statprev;		/* previous value in stat timer */
 void
 hp300_calibrate_delay(void)
 {
-	extern int delay_divisor;
 	volatile struct clkreg *clk;
 	volatile u_char csr;
 	int intvl;
@@ -118,8 +117,12 @@ hp300_calibrate_delay(void)
 	 * Calibrate delay() using the 4 usec counter.
 	 * We adjust delay_divisor until we get the result we want.
 	 * We assume we've been called at splhigh().
+	 *
+	 * See delay_divisor_est() definition and recommendation to
+	 * assume a bit slower than you'll actually see.
 	 */
-	for (delay_divisor = 140; delay_divisor > 1; delay_divisor--) {
+	for (delay_divisor = delay_divisor_est(delay_calibration_weight(16));
+	     delay_divisor > 1; delay_divisor--) {
 		/* Reset clock chip */
 		clk->clk_cr2 = CLK_CR1;
 		clk->clk_cr1 = CLK_RESET;
@@ -170,13 +173,18 @@ hp300_calibrate_delay(void)
 
 	/*
 	 * Sanity check the delay_divisor value.  If we totally lost,
-	 * assume a 50MHz CPU;
+	 * assume the fastest machine HP shipped for the CPU class.
 	 */
-	if (delay_divisor == 0)
-		delay_divisor = 2048 / 50;
+	if (delay_divisor == 0) {
+		delay_divisor = (cputype == CPU_68040)
+		    ? delay_divisor_est40(33)
+		    : delay_divisor_est(50);
+	}
 
 	/* Calculate CPU speed. */
-	cpuspeed = 2048 / delay_divisor;
+	cpuspeed = (cputype == CPU_68040)
+	    ? delay_divisor_est40(delay_divisor)
+	    : delay_divisor_est(delay_divisor);
 }
 
 /*

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2026/03/28 01:44:34 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.40 2026/03/28 22:19:31 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -141,6 +141,9 @@ define	CACHE60_ON	CACHE60_ON
 define	CACHE60_OFF	CACHE60_OFF
 define	IC60_CUBC	IC60_CUBC
 define	IC60_CABC	IC60_CABC
+
+define	DELAY_MAXVAL	DELAY_MAXVAL
+define	DELAY_MAGSHIFT	DELAY_MAGSHIFT
 
 # pcb fields
 define	PCB_FLAGS	offsetof(struct pcb, pcb_flags)

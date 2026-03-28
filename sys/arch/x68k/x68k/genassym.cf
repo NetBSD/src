@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2026/03/28 04:08:41 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.44 2026/03/28 22:19:36 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -159,6 +159,9 @@ define	DC_CLEAR		DC_CLEAR
 define	CACHE40_OFF		CACHE40_OFF
 define	IC60_CUBC		IC60_CUBC
 define	IC60_CABC		IC60_CABC
+
+define	DELAY_MAXVAL		DELAY_MAXVAL
+define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)

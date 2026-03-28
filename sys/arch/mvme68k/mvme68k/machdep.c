@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.178 2026/03/28 04:32:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.179 2026/03/28 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.178 2026/03/28 04:32:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2026/03/28 22:19:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -167,14 +167,10 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
 /*
- * On the 68020/68030 (mvme14x), the value of delay_divisor is roughly
- * 8192 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the other boards (mvme162 and up), the cpuspeed is passed
- * in from the firmware.
+ * Default delay_divisor to the "worst case" 60MHz 68060.
  */
 int	cpuspeed;		/* only used for printing later */
-int	delay_divisor = 512;	/* assume some reasonable value to start */
+int	delay_divisor = delay_divisor_est60(60);
 
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
@@ -342,7 +338,12 @@ mvme147_init(void)
 	bus_space_write_2(bt, bh, PCCREG_TMR1_PRELOAD, 0);
 	bus_space_write_1(bt, bh, PCCREG_TMR1_INTR_CTRL, 0);
 
-	for (delay_divisor = 512; delay_divisor > 0; delay_divisor--) {
+	/*
+	 * See delay_divisor_est() definition and recommendation to
+	 * assume a bit slower than you'll actually see.
+	 */
+	for (delay_divisor = delay_divisor_est(delay_calibration_weight(16));
+	     delay_divisor > 0; delay_divisor--) {
 		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTART);
 		delay(10000);
 		bus_space_write_1(bt, bh, PCCREG_TMR1_CONTROL, PCC_TIMERSTOP);
@@ -362,7 +363,7 @@ mvme147_init(void)
 	bus_space_unmap(bt, bh, PCCREG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = 8192 / delay_divisor;
+	cpuspeed = delay_divisor_est(delay_divisor);
 	cpuspeed *= 100;
 }
 #endif /* MVME147 */
@@ -388,8 +389,20 @@ mvme1xx_init(void)
 
 	bus_space_write_1(bt, bh, PCC2REG_TIMER1_ICSR, 0);
 
-	for (delay_divisor = (cputype == CPU_68060) ? 20 : 154;
-	    delay_divisor > 0; delay_divisor--) {
+	/*
+	 * See delay_divisor_est() definition and recommendation to
+	 * assume a bit slower than you'll actually see.
+	 */
+	if (cputype == CPU_68060) {
+		/* MVME-177 came in a 50MHz variant. */
+		delay_divisor =
+		    delay_divisor_est60(delay_calibration_weight(50));
+	} else {
+		/* MVME-162 came in 25Hz variant. */
+		delay_divisor =
+		    delay_divisor_est40(delay_calibration_weight(25));
+	}
+	for (; delay_divisor > 0; delay_divisor--) {
 		bus_space_write_4(bt, bh, PCC2REG_TIMER1_COUNTER, 0);
 		bus_space_write_1(bt, bh, PCC2REG_TIMER1_CONTROL,
 		    PCCTWO_TT_CTRL_CEN);
@@ -406,8 +419,9 @@ mvme1xx_init(void)
 	if (cpuspeed < 1250 || cpuspeed > 6000) {
 		printf("%s: Warning! Firmware has " \
 		    "bogus CPU speed: `%s'\n", __func__, boardid.speed);
-		cpuspeed = ((cputype == CPU_68060) ? 1000 : 3072) /
-		    delay_divisor;
+		cpuspeed = (cputype == CPU_68060)
+		    ? delay_divisor_est60(delay_divisor)
+		    : delay_divisor_est40(delay_divisor);
 		cpuspeed *= 100;
 		printf("%s: Approximating speed using delay_divisor\n",
 		    __func__);

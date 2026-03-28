@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2026/03/28 01:44:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2026/03/28 22:19:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2026/03/28 01:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2026/03/28 22:19:32 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -131,7 +131,7 @@ void fic_init(void)
 	boothowto = RB_SINGLE; /* XXX for now */
 	boothowto |= RB_KDB; /* XXX for now */
 
-	delay_divisor = 30; /* XXX */
+	delay_divisor = delay_divisor_est40(25); /* XXX */
 
 	/*
 	 * Tell the VM system about available physical memory.  The

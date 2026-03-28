@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2012/02/10 17:35:48 para Exp $	*/
+/*	$NetBSD: param.h,v 1.34 2026/03/28 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,11 +69,5 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern void _delay(unsigned int);
-#define delay(us)	_delay((us)<<10)
-#define DELAY(n)	delay(n)
-#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* !_MACHINE_PARAM_H_ */

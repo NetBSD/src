@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.59 2023/12/20 00:40:42 thorpej Exp $ */
+/*	$NetBSD: clock.c,v 1.60 2026/03/28 22:19:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.59 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.60 2026/03/28 22:19:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -318,17 +318,16 @@ clk_getcounter(struct timecounter *tc)
  * 8 with better than 1%.
  *
  * XXX Note that we MUST stay below 1 tick if using clk_gettick(), even for
- * underestimated values of delaydivisor.
+ * underestimated values of delay_divisor.
  *
  * XXX the "ns" below is only correct for a shift of 10 bits, and even then
  * off by 2.4%
  */
+__CTASSERT(DELAY_MAGSHIFT == 10);	/* XXX assumptions made here */
 static void
 calibrate_delay(device_t self)
 {
 	unsigned long t1, t2;
-	extern u_int32_t delaydivisor;
-		/* XXX this should be defined elsewhere */
 
 	if (self)
 		printf("Calibrating delay loop... ");
@@ -339,21 +338,21 @@ calibrate_delay(device_t self)
 		t2 = clk_gettick();
 	} while (t2 <= t1);
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
-	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+	delay_divisor = (delay_divisor * t2 + 1023) >> 10;
 #ifdef DEBUG
 	if (self)
 		printf("\ndiff %ld us, new divisor %u/1024 us\n", t2,
-		    delaydivisor);
+		    delay_divisor);
 	do {
 		t1 = clk_gettick();
 		delay(1024);
 		t2 = clk_gettick();
 	} while (t2 <= t1);
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
-	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+	delay_divisor = (delay_divisor * t2 + 1023) >> 10;
 	if (self)
 		printf("diff %ld us, new divisor %u/1024 us\n", t2,
-		    delaydivisor);
+		    delay_divisor);
 #endif
 	do {
 		t1 = clk_gettick();
@@ -361,13 +360,13 @@ calibrate_delay(device_t self)
 		t2 = clk_gettick();
 	} while (t2 <= t1);
 	t2 = ((t2 - t1) * 1000000) / (amiga_clk_interval * hz);
-	delaydivisor = (delaydivisor * t2 + 1023) >> 10;
+	delay_divisor = (delay_divisor * t2 + 1023) >> 10;
 #ifdef DEBUG
 	if (self)
 		printf("diff %ld us, new divisor ", t2);
 #endif
 	if (self)
-		printf("%u/1024 us\n", delaydivisor);
+		printf("%u/1024 us\n", delay_divisor);
 }
 
 #if notyet

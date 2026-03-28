@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.124 2026/03/28 01:44:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.125 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -217,38 +217,6 @@ ENTRY(DCIU)
 /* PCIA */
 
 /* loadustp, ptest_addr */
-
-/*
- * _delay(unsigned N)
- * Delay for at least (N/256) microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- * XXX: Currently this is set based on the CPU model,
- * XXX: but this should be determined at run time...
- */
-GLOBAL(_delay)
-	| %d0 = arg = (usecs << 8)
-	movl	%sp@(4),%d0
-	| %d1 = delay_divisor;
-	movl	_C_LABEL(delay_divisor),%d1
-	jra	L_delay			/* Jump into the loop! */
-
-	/*
-	 * Align the branch target of the loop to a half-line (8-byte)
-	 * boundary to minimize cache effects.  This guarantees both
-	 * that there will be no prefetch stalls due to cache line burst
-	 * operations and that the loop will run from a single cache
-	 * half-line.
-	 */
-#ifdef __ELF__
-	.align	8
-#else
-	.align	3
-#endif
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
-	rts
 
 /*
  * void set_segmap_allctx(vaddr_t va, int sme)

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.18 2026/03/14 21:03:41 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.19 2026/03/28 22:19:35 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -109,6 +109,9 @@ define	PSL_TS				PSL_T | PSL_S
 define	FC_CONTROL			FC_CONTROL
 define	FC_SUPERD			FC_SUPERD
 define	FC_USERD			FC_USERD
+
+define	DELAY_MAXVAL		DELAY_MAXVAL
+define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 
 # sun2 control space isms
 define	SCONTEXT_REG			SCONTEXT_REG

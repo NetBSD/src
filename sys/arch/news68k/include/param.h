@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2012/02/10 17:35:48 para Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2026/03/28 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,11 +66,6 @@
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 #include <machine/intr.h>
-
-#define	delay(us)	_delay((us) << 8)
-#define DELAY(us)	delay(us)
-
-void	_delay(u_int);
 #endif /* _KERNEL && !_LOCORE */
 
 #endif	/* !_NEWS68K_PARAM_H_ */

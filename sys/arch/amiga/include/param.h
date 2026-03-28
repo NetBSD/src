@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.50 2015/11/12 12:01:53 phx Exp $	*/
+/*	$NetBSD: param.h,v 1.51 2026/03/28 22:19:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,10 +77,6 @@
  */
 extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
-#ifndef	_LOCORE
-void delay(unsigned int);
-#define	DELAY(x)	delay(x)
-#endif	/* !_LOCORE */
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */

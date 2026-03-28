@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.131 2026/03/28 04:32:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.132 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2026/03/28 04:32:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/03/28 22:19:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -165,15 +165,10 @@ phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int	mem_cluster_cnt;
 
 /*
- * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68040/68060(?), the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
- * XXX -- is the above formula correct?
+ * Default to 33MHz 68040.
  */
-int	cpuspeed = 33;		  /* relative cpu speed; XXX skewed on 68040 */
-int	delay_divisor = 759 / 33;  /* delay constant; assume fastest 33 MHz */
+int	cpuspeed = 33;
+int	delay_divisor = delay_divisor_est40(33);
 
 /****************************************************************/
 
@@ -383,12 +378,12 @@ identifycpu(void)
 	case CPU_68040:
 		cpu_str = "MC68040";
 		cpuspeed = turbo ? 33 : 25;
-		delay_divisor = 759 / cpuspeed;
+		delay_divisor = delay_divisor_est40(cpuspeed);
 		break;
 	case CPU_68030:
 		cpu_str = "MC68030";
 		cpuspeed = 25;
-		delay_divisor = 2048 / cpuspeed;
+		delay_divisor = delay_divisor_est(cpuspeed);
 		break;
 #if 0
 	case CPU_68020:

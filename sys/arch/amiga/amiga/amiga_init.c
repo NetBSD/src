@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.137 2026/03/23 02:50:53 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.138 2026/03/28 22:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.137 2026/03/23 02:50:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.138 2026/03/28 22:19:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -794,7 +794,6 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 void *
 start_c_finish(void)
 {
-	extern u_int32_t delaydivisor;
 #ifdef	P5PPC68KBOARD
         struct cfdev *cdp, *ecdp;
 #endif
@@ -930,16 +929,16 @@ start_c_finish(void)
 	 */
 
 	if (machineid & AMIGA_68060)
-		delaydivisor = (1024 * 1) / 80;	/* 80 MHz 68060 w. BTC */
+		delay_divisor = delay_divisor_est60(80); /* 80 MHz 68060 BTC */
 
 	else if (machineid & AMIGA_68040)
-		delaydivisor = (1024 * 3) / 40;	/* 40 MHz 68040 */
+		delay_divisor = delay_divisor_est40(40); /* 40 MHz 68040 */
 
 	else if (machineid & AMIGA_68030)
-		delaydivisor = (1024 * 8) / 50;	/* 50 MHz 68030 */
+		delay_divisor = delay_divisor_est(50); /* 50 MHz 68030 */
 
 	else
-		delaydivisor = (1024 * 8) / 33; /* 33 MHz 68020 */
+		delay_divisor = delay_divisor_est(33); /* 33 MHz 68020 */
 
 	return ksp;
 }

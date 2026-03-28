@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.121 2026/03/28 01:44:35 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.122 2026/03/28 22:19:33 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.121 2026/03/28 01:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/03/28 22:19:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -138,15 +138,10 @@ extern void omfb_cnattach(void);
 extern void ws_cnattach(void);
 
 /*
- * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68040/68060(?), the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
- * XXX -- is the above formula correct?
+ * Default the delay_divisor to 25MHz 68040.
  */
 int	cpuspeed = 25;		/* only used for printing later */
-int	delay_divisor = 30;	/* for delay() loop count */
+int	delay_divisor = delay_divisor_est40(25);
 
 #ifdef __HAVE_NEW_PMAP_68K
 /*
@@ -394,7 +389,7 @@ identifycpu(void)
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
 		cpuspeed = 20;
-		delay_divisor = 102;
+		delay_divisor = delay_divisor_est(20);
 		hz = 60;
 		break;
 #if defined(M68040)
@@ -406,7 +401,7 @@ identifycpu(void)
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
 		cpuspeed = 25;
-		delay_divisor = 30;
+		delay_divisor = delay_divisor_est40(25);
 		/* hz = 100 on LUNA-II */
 		break;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.32 2024/01/06 05:31:19 isaki Exp $	*/
+/*	$NetBSD: mfp.c,v 1.33 2026/03/28 22:19:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.32 2024/01/06 05:31:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.33 2026/03/28 22:19:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,18 +154,14 @@ static void
 mfp_calibrate_delay(void)
 {
 	/*
-	 * Stolen from mvme68k.
+	 * See delay_divisor_est() definition and recommendation to
+	 * assume a bit slower than you'll actually see.
 	 */
-	/*
-	 * X68k provides 4MHz clock (= 0.25usec) for MFP timer C.
-	 * 10000usec = 0.25usec * 200 * 200
-	 * Our slowest clock is 20MHz (?).  Its delay_divisor value
-	 * should be about 102.  Start from 140 here.
-	 */
-	for (delay_divisor = 140; delay_divisor > 0; delay_divisor--) {
+	for (delay_divisor = delay_divisor_est(delay_calibration_weight(16));
+	     delay_divisor > 0; delay_divisor--) {
 		mfp_set_tcdr(255-0);
 		mfp_set_tcdcr(0x70); /* 1/200 delay mode */
-		_delay(10000);
+		delay(10000);
 		mfp_set_tcdcr(0); /* stop timer */
 		if ((255 - mfp_get_tcdr()) > 200)
 			break;	/* got it! */

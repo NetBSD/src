@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.30 2026/03/21 20:14:56 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.31 2026/03/28 22:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -97,6 +97,44 @@ extern	int mmutype;		/* MMU on this host */
 
 
 #ifdef _KERNEL
+
+/*
+ * Delay divisor estimation for 68020/6830, 68040, and 68060,
+ * based on CPU clock frequency.  This is based on a x1024
+ * delay magnification factor.
+ *
+ * These provide a reasonable starting point; it is always
+ * best to calibrate the delay_divisor against a known clock
+ * source, if possible, a known-rate counter or a timer of
+ * some sort where expiration can be checked reliably.  When
+ * picking a default, it's safest to assume the fastest machine
+ * you're likely to see, which may result in longer delays,
+ * but is a safer bet if those delays are needed for minimum
+ * hardware timings, etc.
+ *
+ * When calibrating the delay_divisor, it is best to start
+ * assuming a slower CPU, which results in a larger delay
+ * divisor and the delay loop completing more quickly.  The
+ * calibration loop can then check to see if the reference
+ * has reached the desired value.  If it has not, decrement
+ * the delay_divisor, thus slowing down the delay loop, and
+ * try again.  For this purpose, we provide a "weight" macro
+ * that drags down the estimated lower CPU speed boundary
+ * by (very) roughly 10%.
+ *
+ * Note that the delay_divisor_est*() macros are reciprocal; given
+ * a calibrated delay_divisor value, you can use that to get the
+ * rough CPU speed in MHz.
+ */
+#define	DELAY_MAGSHIFT		10
+#define	DELAY_MAGFACTOR		(1 << DELAY_MAGSHIFT)
+#define	DELAY_MAXVAL		(0xffffffffU >> DELAY_MAGSHIFT)
+#define	delay_divisor_est(x)	((DELAY_MAGFACTOR * 8) / (x))
+#define	delay_divisor_est40(x)	((DELAY_MAGFACTOR * 3) / (x))
+#define	delay_divisor_est60(x)	((DELAY_MAGFACTOR * 1) / (x))
+#define	delay_calibration_weight(x) ((x) - ((x) / 10))
+
+extern int delay_divisor;
 
 struct pcb;
 struct trapframe;

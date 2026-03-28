@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.131 2026/03/28 22:19:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/03/28 01:44:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2026/03/28 22:19:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -144,13 +144,8 @@ void machine_init(paddr_t);
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
-/*
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz) on 68020
- * and 68030 systems.
- */
-int	cpuspeed = 25;		/* relative CPU speed; XXX skewed on 68040 */
-int	delay_divisor = 82;	/* delay constant */
+int	cpuspeed = 25;		/* relative CPU speed */
+int	delay_divisor = delay_divisor_est(25);
 
 #ifdef __HAVE_NEW_PMAP_68K
 /*
@@ -283,8 +278,6 @@ identifycpu(void)
 
 	printf("SONY NET WORK STATION, Model %s, ", cpu_getmodel());
 	printf("Machine ID #%d\n", news_machine_id);
-
-	delay_divisor = (20480 / cpuspeed + 5) / 10; /* XXX */
 }
 
 /*
@@ -773,6 +766,7 @@ news1700_init(void)
 	parity_vector	= (uint8_t *)(0xe1c00200);
 
 	cpuspeed = 25;
+	delay_divisor = delay_divisor_est(25);
 }
 
 /*
@@ -852,6 +846,7 @@ news1200_init(void)
 	news_machine_id = idrom.id_serial;
 
 	cpuspeed = 25;
+	delay_divisor = delay_divisor_est(25);
 }
 #endif /* news1200 */
 

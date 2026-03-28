@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.106 2026/03/23 00:30:43 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.107 2026/03/28 22:19:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.106 2026/03/23 00:30:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.107 2026/03/28 22:19:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -91,12 +91,7 @@ u_char cpu_machine_id = 0;
 const char *cpu_string = NULL;
 int cpu_has_vme = 0;
 
-/*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
- */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
+int delay_divisor = delay_divisor_est(25); /* assume the fastest (3/260) */
 
 extern struct pcb *curpcb;
 
@@ -241,39 +236,44 @@ _verify_hardware(void)
 		sunmon_abort();
 	}
 
+	/*
+	 * XXX Should really calibrate the delay_divisor against a
+	 * XXX timer, but it's been this way for a long time.
+	 */
+
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
 	case ID_SUN3_50 :
 		cpu_match++;
 		cpu_string = "50";
-		delay_divisor = 128;	/* 16 MHz */
+		delay_divisor = delay_divisor_est(16);
 		break;
 
 	case ID_SUN3_60 :
 		cpu_match++;
 		cpu_string = "60";
-		delay_divisor = 102;	/* 20 MHz */
+		delay_divisor = delay_divisor_est(20);
 		break;
 
 	case ID_SUN3_110:
 		cpu_match++;
 		cpu_string = "110";
-		delay_divisor = 120;	/* 17 MHz */
+		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_160:
 		cpu_match++;
 		cpu_string = "160";
-		delay_divisor = 120;	/* 17 MHz */
+		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_260:
 		cpu_match++;
 		cpu_string = "260";
-		delay_divisor = 82;	/* 25 MHz */
+		delay_divisor = delay_divisor_est(25);
 		cpu_has_vme = true;
 #ifdef	HAVECACHE
 		cache_size = 0x10000;	/* 64K */
@@ -283,7 +283,7 @@ _verify_hardware(void)
 	case ID_SUN3_E  :
 		cpu_match++;
 		cpu_string = "E";
-		delay_divisor = 102;	/* 20 MHz  XXX: Correct? */
+		delay_divisor = delay_divisor_est(20); /* XXX 20MHz correct? */
 		cpu_has_vme = true;
 		break;
 

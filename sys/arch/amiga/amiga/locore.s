@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.185 2026/03/28 01:44:34 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.186 2026/03/28 22:19:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -882,23 +882,6 @@ ASLOCAL(zero)
 	.long	0
 Ldorebootend:
 
-#ifdef __ELF__
-	.align 4
-#else
-	.align 2
-#endif
-	nop
-ENTRY_NOPROFILE(delay)
-ENTRY_NOPROFILE(DELAY)
-	movql #10,%d1		| 2 +2
-	movl %sp@(4),%d0	| 4 +4
-	lsll %d1,%d0		| 8 +2
-	movl _C_LABEL(delaydivisor),%d1	| A +6
-Ldelay:				| longword aligned again.
-	subl %d1,%d0
-	jcc Ldelay
-	rts
-
 	.data
 	.space	PAGE_SIZE
 	.align	4
@@ -910,7 +893,7 @@ GLOBAL(cputype)
 	.long	CPU_68020
 GLOBAL(ectype)
 	.long	EC_NONE
-GLOBAL(delaydivisor)
+GLOBAL(delay_divisor)
 	.long	12		| should be enough for 80 MHz 68060
 				| will be adapted to other CPUs in
 				| start_c_cleanup and calibrated

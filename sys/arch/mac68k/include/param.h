@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.46 2019/06/06 20:42:33 jklos Exp $	*/
+/*	$NetBSD: param.h,v 1.47 2026/03/28 22:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -104,10 +104,5 @@
 #define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #include <machine/psl.h>
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-void	delay(unsigned);
-#define DELAY(ms)	delay(ms)
-#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* !_MACHINE_PARAM_H_ */

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.43 2026/03/24 15:56:59 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.44 2026/03/28 22:19:34 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -159,6 +159,9 @@ define	DC_CLR_DFLT		_DC_CLEAR(CACHE2030_ON | CACHE2030_BE)
 define	CACHE_ON_EC		CACHE2030_ON
 define	IC_CLR_EC		_IC_CLEAR(CACHE2030_ON)
 define	DC_CLR_EC		_DC_CLEAR(CACHE2030_ON)
+
+define	DELAY_MAXVAL		DELAY_MAXVAL
+define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 
 # pcb fields
 define	PCB_PS			offsetof(struct pcb, pcb_ps)

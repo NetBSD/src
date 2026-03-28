@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.158 2026/03/28 01:44:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.159 2026/03/28 22:19:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -414,24 +414,6 @@ ENTRY_NOPROFILE(fdeject)
  */
 #define FPCOPROC	/* XXX: Temp. reqd. */
 #include <m68k/m68k/switch_subr.s>
-
-/*
- * _delay(u_int N)
- *
- * Delay for at least N microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- */
-ENTRY_NOPROFILE(_delay)
-	| %d0 = (usecs * a certain magnification factor)
-	movl	%sp@(4),%d0
-	lsll	#8,%d0
-	| %d1 = delay_divisor
-	movl	_C_LABEL(delay_divisor),%d1
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
-	rts
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

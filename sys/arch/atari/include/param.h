@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.35 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.36 2026/03/28 22:19:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,9 +67,6 @@
 
 #include <machine/intr.h>
 
-void delay(unsigned int);
-
-#define	DELAY(n)	delay(n)
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */

@@ -1,9 +1,9 @@
-/*	$NetBSD: param.h,v 1.14 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: delay.s,v 1.1 2026/03/28 22:19:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1986, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1980, 1990 The Regents of the University of California.
+ * All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -33,39 +33,58 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: machparam.h 1.16 92/12/20$
+ * from: Utah $Hdr: locore.s 1.58 91/04/22$
  *
- *	@(#)param.h	8.1 (Berkeley) 6/10/93
+ *	@(#)locore.s	7.11 (Berkeley) 5/9/91
  */
 
-#ifndef	_MACHINE_PARAM_H_
-#define	_MACHINE_PARAM_H_
+#include <machine/asm.h>
+
+#include "assym.h"
+
+	.file	"delay.s"
+	.text
 
 /*
- * Machine dependent constants for NeXT machines
+ * delay(unsigned int N)
+ *
+ * Delay for at least N microseconds.
+ * This routine depends on the variable:  delay_divisor
+ * which should be set based on the CPU clock rate
+ * (either a known pre-computed value for a given machine
+ * type or calibrated against a known clock source).
  */
-#define	_MACHINE	next68k
-#define	MACHINE		"next68k"
+ENTRY_NOPROFILE(delay)
+	movl	4(%sp),%d0		| %d0 = arg = usecs
+#ifdef DIAGNOSTIC
+	cmpl	#DELAY_MAXVAL,%d0	| exceeds max value?
+	bgt	3f			| yes, go panic.
+#endif
+	moveq	#DELAY_MAGSHIFT,%d1	| magnification factor
+	lsll	%d1,%d0
 
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
+	| %d1 = delay_divisor;
+	movl	_C_LABEL(delay_divisor),%d1
 
-#define	UPAGES		2  		/* pages of u-area */
+	jra	2f			/* Jump into the loop! */
 
-#include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-#ifdef _KERNEL
-#include <machine/intr.h>
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-
-#endif /* _KERNEL */
-
-#endif	/* !_MACHINE_PARAM_H_ */
+	/*
+	 * Align the branch target of the loop to a half-line (8-byte)
+	 * boundary to minimize cache effects.  This guarantees both
+	 * that there will be no prefetch stalls due to cache line burst
+	 * operations and that the loop will run from a single cache
+	 * half-line.
+	 */
+	.align	8
+2:	subl	%d1,%d0
+	bgt	2b
+	rts
+#ifdef DIAGNOSTIC
+3:
+	pea	Ldelaypanicmsg
+	jbsr	_C_LABEL(panic)
+	rts
+Ldelaypanicmsg:
+	.asciz	"delay exceeds max value"
+	.even
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 2026/03/21 20:14:58 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 2026/03/28 22:19:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2026/03/21 20:14:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2026/03/28 22:19:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -247,12 +247,7 @@ cpu_startup(void)
 char	machine[16] = MACHINE;		/* from <machine/param.h> */
 char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
 
-/*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
- */
-int delay_divisor = 62;		/* assume the fastest (33 MHz) */
+int delay_divisor = delay_divisor_est(33); /* assume fastest 33Hz */
 
 void
 identifycpu(void)
@@ -270,13 +265,13 @@ identifycpu(void)
 
 	case ID_SUN3X_80:
 		cpu_string = "80";  	/* Hydra */
-		delay_divisor = 102;	/* 20 MHz */
+		delay_divisor = delay_divisor_est(20);
 		cpu_has_vme = false;
 		break;
 
 	case ID_SUN3X_470:
 		cpu_string = "470"; 	/* Pegasus */
-		delay_divisor = 62; 	/* 33 MHz */
+		delay_divisor = delay_divisor_est(33);
 		cpu_has_vme = true;
 		break;
 

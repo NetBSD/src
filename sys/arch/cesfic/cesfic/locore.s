@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.66 2026/03/28 01:44:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.67 2026/03/28 22:19:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -387,23 +387,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
  */
 #define	FPCOPROC	/* XXX: Temporarily required */
 #include <m68k/m68k/switch_subr.s>
-
-/*
- * _delay(u_int N)
- *
- * Delay for at least (N/256) microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- */
-ENTRY_NOPROFILE(_delay)
-	| d0 = arg = (usecs << 8)
-	movl	%sp@(4),%d0
-	| d1 = delay_divisor
-	movl	_C_LABEL(delay_divisor),%d1
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
-	rts
 
 ENTRY_NOPROFILE(doboot)
 	movl #0x5c00c060, %d0		| want phys addressing
