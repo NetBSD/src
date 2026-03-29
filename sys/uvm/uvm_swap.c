@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.222 2026/03/27 07:14:46 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.223 2026/03/29 05:52:58 simonb Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.222 2026/03/27 07:14:46 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.223 2026/03/29 05:52:58 simonb Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -2167,7 +2167,7 @@ uvm_swap_decryptpage(struct swapdev *sdp, void *kva, int slot)
 }
 
 static int
-sysctl_kern_uvm_swap_encrytp(SYSCTLFN_ARGS)
+sysctl_kern_uvm_swap_encrypt(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int swap_encrypt = uvm_swap_encrypt;
@@ -2204,6 +2204,6 @@ SYSCTL_SETUP(sysctl_uvmswap_setup, "sysctl uvmswap setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_BOOL, "swap_encrypt",
 	    SYSCTL_DESCR("Encrypt data when swapped out to disk"),
-	    sysctl_kern_uvm_swap_encrytp, 0, NULL, 0,
+	    sysctl_kern_uvm_swap_encrypt, 0, NULL, 0,
 	    CTL_VM, CTL_CREATE, CTL_EOL);
 }
