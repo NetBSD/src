@@ -1,4 +1,4 @@
-/* $NetBSD: mcclock.c,v 1.23 2024/03/06 07:34:11 thorpej Exp $ */
+/* $NetBSD: mcclock.c,v 1.24 2026/03/29 12:29:37 tls Exp $ */
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.23 2024/03/06 07:34:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcclock.c,v 1.24 2026/03/29 12:29:37 tls Exp $");
 
 #include "opt_clock_compat_osf1.h"
 #include "opt_multiprocessor.h"
@@ -218,6 +218,16 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 	/* set interval 16Hz to measure pcc */
 	(*sc->sc_mcwrite)(sc, MC_REGA, MC_BASE_32_KHz | MC_RATE_16_Hz);
 
+	/*
+	 * Real hardware doesn't need this, but, the QEMU emulator
+	 * doesn't tick its timer unless PIE is set to enable interrupts.
+	 * It's harmless to enable it here; we are cold (no intr handlers
+	 * and high IPL) and every time we read REG_C, the interrupt
+	 * is cleared anyhow.
+	 */
+	(*sc->sc_mcwrite)(sc, MC_REGB,
+	    MC_REGB_PIE | MC_REGB_BINARY | MC_REGB_24HR);
+
 	/* clear interrupt flags */
 	(void)(*sc->sc_mcread)(sc, MC_REGC);
 
@@ -241,6 +251,9 @@ mcclock_set_pcc_freq(struct mc146818_softc *sc)
 
 	/* restore REG_A */
 	(*sc->sc_mcwrite)(sc, MC_REGA, reg_a);
+
+	/* We set PIE into REG_B above to accommodate QEMU; clear it. */
+	(*sc->sc_mcwrite)(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	/* XXX assume all processors have the same clock and frequency */
 	for (ci = &cpu_info_primary; ci; ci = ci->ci_next)
