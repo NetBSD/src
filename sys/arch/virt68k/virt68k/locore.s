@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.47 2026/03/28 01:44:38 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.48 2026/03/29 00:51:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -216,7 +216,6 @@ ENTRY_NOPROFILE(intrhand_autovec)
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define	FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 ENTRY(paravirt_membar_sync)

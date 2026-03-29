@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.67 2026/03/28 22:19:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.68 2026/03/29 00:51:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -385,7 +385,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define	FPCOPROC	/* XXX: Temporarily required */
 #include <m68k/m68k/switch_subr.s>
 
 ENTRY_NOPROFILE(doboot)

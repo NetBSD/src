@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.148 2026/03/28 04:32:02 thorpej Exp $	*/
+/*	$NetBSD: trap.c,v 1.149 2026/03/29 00:51:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.148 2026/03/28 04:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.149 2026/03/29 00:51:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -570,7 +570,7 @@ trap(struct frame *fp, int type, u_int code, u_int v)
 #endif
 		break;
 
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	/*
 	 * User coprocessor violation
 	 */

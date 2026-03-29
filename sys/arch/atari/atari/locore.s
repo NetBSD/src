@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.141 2026/03/28 01:44:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.142 2026/03/29 00:51:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -553,7 +553,6 @@ ENTRY(qsetjmp)
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define FPCOPROC
 #include <m68k/m68k/switch_subr.s>
 
 /*

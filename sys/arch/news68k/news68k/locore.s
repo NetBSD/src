@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2026/03/28 22:19:34 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2026/03/29 00:51:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -436,7 +436,6 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 

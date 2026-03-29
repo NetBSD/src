@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.43 2026/03/29 00:38:46 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.44 2026/03/29 00:51:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -78,7 +78,7 @@ ENTRY(cpu_switchto)
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,PCB_USP(%a1)	| and save it
 
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
 
@@ -107,7 +107,7 @@ ENTRY(cpu_switchto)
 	fmovem	%fpi,FPF_FPI(%a2)
 #endif
 .Lcpu_switch_nofpsave:
-#endif	/* FPCOPROC */
+#endif	/* M68K_FPCOPROC */
 
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)	| curlwp = new lwp
@@ -143,7 +143,7 @@ ENTRY(cpu_switchto)
 	movl	PCB_USP(%a1),%a0
 	movl	%a0,%usp		      | and USP
 
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
 
@@ -173,7 +173,7 @@ ENTRY(cpu_switchto)
 #endif
 .Lcpu_switch_resfprest:
 	frestore (%a0)			| restore state
-#endif /* FPCOPROC */
+#endif /* M68K_FPCOPROC */
 
 .Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
@@ -191,7 +191,7 @@ ENTRY(savectx)
 	movl	%a0,PCB_USP(%a1)	| and save it
 	moveml	%d2-%d7/%a2-%a7,PCB_REGS(%a1)	| save non-scratch registers
 
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
 	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
 
@@ -220,7 +220,7 @@ ENTRY(savectx)
 	fmovem	%fpi,FPF_FPI(%a0)
 #endif
 .Lsavectx_nofpsave:
-#endif /* FPCOPROC */
+#endif /* M68K_FPCOPROC */
 	moveq	#0,%d0			| return 0
 	rts
 
@@ -259,7 +259,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 /*
  * Save and restore 68881 state.
  */
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 ENTRY(m68881_save)
 	movl	4(%sp),%a0		| save area pointer
 	fsave	(%a0)			| save state

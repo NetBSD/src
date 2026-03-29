@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.125 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.126 2026/03/29 00:51:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -191,7 +191,6 @@ GLOBAL(_isr_clock)
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 

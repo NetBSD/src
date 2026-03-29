@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.110 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.111 2026/03/29 00:51:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -382,7 +382,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 /*
  * Use common m68k process/lwp switch and context save subroutines.
  */
-#define FPCOPROC	/* XXX: Temp. Reqd. */
 #include <m68k/m68k/switch_subr.s>
 
 /*
