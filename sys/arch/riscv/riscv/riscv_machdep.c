@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.48 2026/03/18 06:41:41 skrll Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.49 2026/03/29 12:23:08 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.48 2026/03/18 06:41:41 skrll Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.49 2026/03/29 12:23:08 tls Exp $");
 
 #include <sys/param.h>
 
@@ -454,6 +454,11 @@ cpu_reboot(int howto, char *bootstr)
 	DISABLE_INTERRUPTS();
 
 	if (howto & RB_HALT) {
+		if (howto & RB_POWERDOWN) {
+			printf("power off...\n");
+			sbi_system_reset(SBI_RESET_TYPE_SHUTDOWN,
+					 SBI_RESET_REASON_NONE);
+		} /* FALLTHRU */
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
