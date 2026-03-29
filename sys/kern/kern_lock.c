@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.193 2026/03/27 23:42:11 yamt Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.194 2026/03/29 05:39:21 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020, 2023
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.193 2026/03/27 23:42:11 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.194 2026/03/29 05:39:21 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
@@ -203,7 +203,7 @@ kernel_lock_spinout(void)
 	 * Note: holder == NULL here basically means
 	 * "no one has acquired kernel lock since the boot".
 	 *
-	 * Theoretically it's possbile the first locker has aquired
+	 * Theoretically it's possbile the first locker has acquired
 	 * kernel_lock but has not updated kernel_lock_holder yet.
 	 * But it's only theoretical, I suppose.
 	 */
