@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.4 2026/03/10 13:45:47 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.5 2026/03/29 14:29:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.4 2026/03/10 13:45:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.5 2026/03/29 14:29:55 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -241,10 +241,11 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments_avail);
 
 	/* Set some defaults that we might fix up later. */
-	RELOC(mmutype, int) = MMU_UNKNOWN;
 #ifdef __mc68010__
 	RELOC(fputype, int) = FPU_NONE;
 	RELOC(cputype, int) = CPU_68010;
+#else
+	RELOC(mmutype, int) = MMU_UNKNOWN;
 #endif /* __mc68010__ */
 
 	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
