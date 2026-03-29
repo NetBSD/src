@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.42 2025/04/03 13:44:06 nat Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.43 2026/03/29 00:38:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -47,25 +47,6 @@
  * your port's locore.s, like so:
  *
  *	#include <m68k/m68k/switch_subr.s>
- *
- * If your port uses one or more non-motorola FPU devices, you must use:
- *
- *      #define _M68K_CUSTOM_FPU_CTX 1
- *
- * before including this file. In this case, you must also provide
- * two assembly sub-routines for saving and restoring FPU context:
- *
- *      ASENTRY(m68k_fpuctx_save)
- *        %a1 -> The PCB of the outgoing thread where fpu state should be saved
- *
- *        %a0 and %a1 must be preserved across the call, but all other
- *        registers are available for use.
- *
- *	ASENTRY(m68k_fpuctx_restore)
- *        %a1 -> The PCB of the incoming thread where fpu state is saved
- *
- *	  All registers except %d0, %d1 and %a0 must be preserved across
- *        the call.
  */
 
 	.data
@@ -97,9 +78,6 @@ ENTRY(cpu_switchto)
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,PCB_USP(%a1)	| and save it
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	jbsr	_ASM_LABEL(m68k_fpuctx_save)
-#else
 #ifdef FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
@@ -130,7 +108,6 @@ ENTRY(cpu_switchto)
 #endif
 .Lcpu_switch_nofpsave:
 #endif	/* FPCOPROC */
-#endif	/* !_M68K_CUSTOM_FPU_CTX */
 
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)	| curlwp = new lwp
@@ -166,11 +143,6 @@ ENTRY(cpu_switchto)
 	movl	PCB_USP(%a1),%a0
 	movl	%a0,%usp		      | and USP
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	moveml	%d0/%d1,-(%sp)
-	jbsr	_ASM_LABEL(m68k_fpuctx_restore)
-	moveml	(%sp)+,%d0/%d1
-#else
 #ifdef FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
@@ -202,7 +174,6 @@ ENTRY(cpu_switchto)
 .Lcpu_switch_resfprest:
 	frestore (%a0)			| restore state
 #endif /* FPCOPROC */
-#endif /* !_M68K_CUSTOM_FPU_CTX */
 
 .Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
@@ -220,9 +191,6 @@ ENTRY(savectx)
 	movl	%a0,PCB_USP(%a1)	| and save it
 	moveml	%d2-%d7/%a2-%a7,PCB_REGS(%a1)	| save non-scratch registers
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	jbsr	_ASM_LABEL(m68k_fpuctx_save)
-#else
 #ifdef FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
 	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
@@ -253,7 +221,6 @@ ENTRY(savectx)
 #endif
 .Lsavectx_nofpsave:
 #endif /* FPCOPROC */
-#endif /* !_M68K_CUSTOM_FPU_CTX */
 	moveq	#0,%d0			| return 0
 	rts
 
