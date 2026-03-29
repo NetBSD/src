@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.46 2026/03/28 22:19:34 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.47 2026/03/29 14:00:17 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -30,8 +30,6 @@ file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
-file	arch/m68k/m68k/pmap_motorola.c		!__have_new_pmap_68k
-file	arch/m68k/m68k/pmap_68k.c		__have_new_pmap_68k
 file	arch/m68k/m68k/procfs_machdep.c		procfs
 file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
