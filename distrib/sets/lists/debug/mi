@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.508 2026/02/12 04:04:36 kre Exp $
+# $NetBSD: mi,v 1.509 2026/03/29 01:52:57 tls Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -928,7 +928,7 @@
 ./usr/libdata/debug/usr/games/cgram.debug	comp-games-debug	debug
 ./usr/libdata/debug/usr/games/colorbars.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/cribbage.debug	comp-games-debug	debug
-./usr/libdata/debug/usr/games/dab.debug		comp-games-debug	debug
+./usr/libdata/debug/usr/games/dab.debug		comp-games-debug	debug,cxx
 ./usr/libdata/debug/usr/games/dm.debug		comp-games-debug	debug
 ./usr/libdata/debug/usr/games/factor.debug	comp-utils-debug	debug
 ./usr/libdata/debug/usr/games/fish.debug	comp-games-debug	debug
