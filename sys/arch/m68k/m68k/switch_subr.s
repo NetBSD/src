@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.45 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.46 2026/03/29 13:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -224,7 +224,7 @@ ENTRY(savectx)
 	moveq	#0,%d0			| return 0
 	rts
 
-#if !defined(M68010)
+#ifdef M68K_FPCOPROC
 /*
  * void m68k_make_fpu_idle_frame(void)
  *
@@ -254,12 +254,10 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 	addql	#4,%sp
 	rts
-#endif
 
 /*
  * Save and restore 68881 state.
  */
-#ifdef M68K_FPCOPROC
 ENTRY(m68881_save)
 	movl	4(%sp),%a0		| save area pointer
 	fsave	(%a0)			| save state
@@ -316,7 +314,25 @@ ENTRY(m68881_restore)
 	frestore (%a0)			| restore state
 	rts
 #endif
+
+#else /* ! M68K_FPCOPROC */
+
+#ifdef DIAGNOSTIC
+.L68881panic:
+	.asciz	"m68881 save/restore"
+	.even
 #endif
+
+ENTRY_NOPROFILE(m68881_save)
+GLOBAL(m68881_restore)
+#ifdef  DIAGNOSTIC
+	pea	.L68881panic
+	jbsr	_C_LABEL(panic)
+	/*NOTREACHED*/
+#endif
+	rts
+
+#endif /* M68K_FPCOPROC */
 
 /*
  * lwp_trampoline: call function in register %a2 with %a3 as an arg

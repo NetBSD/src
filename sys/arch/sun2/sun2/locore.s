@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 2026/03/29 13:41:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -180,26 +180,6 @@ GLOBAL(_isr_clock)
  * interrupt vector table for reset is NOT at address zero.
  * (The MMU has a "boot" bit that forces access to the PROM)
  */
-
-#ifdef DIAGNOSTIC
-| Message for 68881 save/restore panic
-Lsr0: 
-	.asciz	"m68881 save/restore"
-	.even   
-#endif
-
-/*
- * Save and restore 68881 state.
- */
-ENTRY(m68881_save)
-ENTRY(m68881_restore)
-#ifdef	DIAGNOSTIC
-	movl	#Lsr0,%sp@-
-        jbsr	_C_LABEL(panic)
-        /*NOTREACHED*/
-#else
-	rts
-#endif
 
 /*
  * Set or clear bits in the enable register.  This mimics the
