@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.160 2026/03/29 00:51:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.161 2026/03/29 03:24:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -406,15 +406,6 @@ ENTRY_NOPROFILE(fdeject)
 	jra	_ASM_LABEL(rei)
 
 /*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
-
-/*
  * Handle the nitty-gritty of rebooting the machine.
  * Basically we just turn off the MMU and jump to the appropriate ROM routine.
  * Note that we must be running in an address range that is mapped one-to-one
@@ -467,11 +458,6 @@ GLOBAL(mmutype)
 
 GLOBAL(cputype)
 	.long	CPU_68030		| default to 68030 CPU
-
-#ifdef M68K_MMU_HP
-GLOBAL(ectype)
-	.long	EC_NONE			| external cache type, default to none
-#endif
 
 GLOBAL(intiobase)
 	.long	0			| KVA of base of internal IO space

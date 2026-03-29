@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.113 2026/03/29 00:51:45 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.114 2026/03/29 03:24:57 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -289,15 +289,6 @@ ENTRY_NOPROFILE(lev5intr)
 	subql	#1,_C_LABEL(intr_depth)
 	jbra	_C_LABEL(intrstub_autovec)
 #endif
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
 
 /*
  * Do a dump.

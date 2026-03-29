@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.44 2026/03/29 00:51:45 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.45 2026/03/29 03:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -42,12 +42,12 @@
 #include "opt_pmap_debug.h"
 #include "opt_m68k_arch.h"
 
-/*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/switch_subr.s>
- */
+#include <machine/asm.h>
+
+#include "assym.h"
+
+	.file	"switch_subr.s"
+	.text
 
 	.data
 GLOBAL(curpcb)

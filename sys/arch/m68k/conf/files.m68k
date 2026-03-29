@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.64 2026/03/28 02:48:19 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.65 2026/03/29 03:24:57 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -57,6 +57,7 @@ file	arch/m68k/m68k/regdump.c
 file	arch/m68k/m68k/sig_machdep.c
 file	arch/m68k/m68k/sigcode.s
 file	arch/m68k/m68k/support.s
+file	arch/m68k/m68k/switch_subr.s
 file	arch/m68k/m68k/trap_subr.s
 file	arch/m68k/m68k/m68k_syscall.c
 file	arch/m68k/m68k/m68k_trap.c

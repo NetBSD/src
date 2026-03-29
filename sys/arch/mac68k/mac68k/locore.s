@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.207 2026/03/29 00:51:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.208 2026/03/29 03:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -509,15 +509,6 @@ ENTRY_NOPROFILE(rtclock_intr)
 	movw	%d2,%sr			| restore SPL
 	movl	%sp@+,%d2		| restore %d2
 	rts				| go back from whence we came
-
-/*
- * Primitives
- */ 
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
 
 /*
  * delay() - delay for a specified number of microseconds

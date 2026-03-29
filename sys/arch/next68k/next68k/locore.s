@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.111 2026/03/29 00:51:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.112 2026/03/29 03:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -374,15 +374,6 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

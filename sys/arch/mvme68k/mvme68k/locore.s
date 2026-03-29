@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2026/03/29 00:51:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 2026/03/29 03:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -615,15 +615,6 @@ Lmemc040berr:
 	movql	#0,%d0			| No ASIC at this location, then!
 	jbra	Lmemc040ret		| Done
 #endif
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

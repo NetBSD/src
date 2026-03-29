@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.142 2026/03/29 00:51:44 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.143 2026/03/29 03:24:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -549,11 +549,6 @@ ENTRY(qsetjmp)
 	movl	%sp@,%a0@		|  and return address
 	moveq	#0,%d0			|  return 0
 	rts
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
 
 /*
  * Check out a virtual address to see if it's okay to write to.

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.16 2024/05/17 22:21:17 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.17 2026/03/29 03:24:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -39,6 +39,7 @@
  */
 struct mdlwp {
 	struct trapframe *md_utf;	/* pointer to user trapframe */
+	unsigned int	  md_fpcsr;	/* floating point control / status */
 };
 
 struct trapframe;

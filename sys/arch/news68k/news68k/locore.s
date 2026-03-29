@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 2026/03/29 00:51:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 2026/03/29 03:24:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -428,16 +428,6 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
  * so only traps (including system call) and
  * the AST interrupt use the REI function.
  */
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
-
 
 ENTRY(ecacheon)
 	tstl	_C_LABEL(ectype)

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.90 2026/03/29 00:51:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.91 2026/03/29 03:24:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -130,11 +130,6 @@ L_high_code:
 | The rest of this is like the hp300/locore.s where possible.
 
 /*
- * Other exceptions only cause four and six word stack frame and require
- * no post-trap stack adjustment.
- */
-
-/*
  * Interrupt handlers.  Most are auto-vectored,
  * and hard-wired the same way on all sun3 models.
  * Format in the stack is:
@@ -160,16 +155,6 @@ GLOBAL(_isr_clock)
  * interrupt vector table for reset is NOT at address zero.
  * (The MMU has a "boot" bit that forces access to the PROM)
  */
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#include <m68k/m68k/switch_subr.s>
-
 
 #ifdef DEBUG
 	.data
