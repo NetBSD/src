@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.24 2024/03/26 10:56:34 riastradh Exp $
+# $NetBSD: std,v 1.25 2026/03/29 12:02:29 tls Exp $
 #
 # standard MI 'options'
 #
@@ -42,6 +42,7 @@ options        COMPAT_UTILS
 # Security model.
 #
 options	secmodel_bsd44	# Traditional 4.4BSD security model
+options secmodel_extensions	# Long-documented, thus not really optional
 
 #
 # Scheduling algorithm
