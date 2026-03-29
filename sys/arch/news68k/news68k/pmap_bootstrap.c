@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.50 2025/11/30 20:09:18 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.51 2026/03/29 20:42:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.50 2025/11/30 20:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.51 2026/03/29 20:42:51 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 #include "opt_newsconf.h"
@@ -82,7 +82,7 @@ paddr_t pmap_bootstrap1(paddr_t, paddr_t);
  * XXX assumes sizeof(u_int) == sizeof(pt_entry_t)
  * XXX a PIC compiler would make this much easier.
  */
-paddr_t
+paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;

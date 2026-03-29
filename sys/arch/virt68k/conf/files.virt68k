@@ -1,4 +1,4 @@
-#	$NetBSD: files.virt68k,v 1.16 2026/03/29 19:57:34 thorpej Exp $
+#	$NetBSD: files.virt68k,v 1.17 2026/03/29 20:42:51 thorpej Exp $
 
 # config file for virt68k
 
@@ -38,7 +38,7 @@ file arch/virt68k/virt68k/clock.c
 file arch/virt68k/virt68k/disksubr.c
 file arch/virt68k/virt68k/intr.c
 file arch/virt68k/virt68k/machdep.c
-file arch/virt68k/virt68k/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
+file arch/virt68k/virt68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file arch/virt68k/virt68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb

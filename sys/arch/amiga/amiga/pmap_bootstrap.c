@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 2026/03/29 20:42:50 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.13 2026/03/29 20:42:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ char	*vmmap;
  *	This is called after mapping has already been enabled
  *	and just syncs the pmap module with what has already been done.
  */
-void
+void __attribute__((no_instrument_function))
 pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 {
 	vaddr_t va;

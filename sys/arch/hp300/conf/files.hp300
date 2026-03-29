@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.111 2026/03/29 19:57:33 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.112 2026/03/29 20:42:50 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -232,7 +232,7 @@ file	arch/hp300/hp300/clock.c
 file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/leds.c			useleds
-file	arch/hp300/hp300/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
+file	arch/hp300/hp300/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/hp300/hp300/trap.c
 file	arch/hp300/hp300/disksubr.c
 file	arch/m68k/m68k/cacheops.c

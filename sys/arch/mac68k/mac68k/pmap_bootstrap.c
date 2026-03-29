@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.113 2025/12/02 02:26:18 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.114 2026/03/29 20:42:50 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.113 2025/12/02 02:26:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.114 2026/03/29 20:42:50 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -90,7 +90,7 @@ void *msgbufaddr;
  *
  * nextpa is the first address following the loaded kernel.
  */
-paddr_t
+paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.12 2025/11/06 15:54:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.13 2026/03/29 20:42:50 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,7 +97,7 @@ char		*vmmap;
  *	This is called after mapping has already been enabled
  *	and just syncs the pmap module with what has already been done.
  */
-void
+void __attribute__((no_instrument_function))
 pmap_bootstrap(vaddr_t vstart)
 {
 	vaddr_t	va;

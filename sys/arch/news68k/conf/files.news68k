@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.52 2026/03/29 19:57:34 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.53 2026/03/29 20:42:51 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -21,7 +21,7 @@ file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/disksubr.c		disk
 file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
-file	arch/news68k/news68k/pmap_bootstrap.c	!__have_new_pmap_68k compile-with "${NOPROF_C}"
+file	arch/news68k/news68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/news68k/news68k/romcalls.S
 file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
