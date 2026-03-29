@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.81 2025/10/04 04:49:20 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.82 2026/03/29 12:41:13 tls Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.81 2025/10/04 04:49:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.82 2026/03/29 12:41:13 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -637,10 +637,28 @@ pcn_attach(device_t parent, device_t self, void *aux)
 			enaddr[2 * i + 1] = (val >> 8) & 0xff;
 		}
 	} else {
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
+		/*
+		 * Read the address ROM 4 bytes at a time; works on
+		 * real hardware, and accommodates some emulators which
+		 * believe that after pcn_reset(), we are in DWIO mode
+		 * where byte access is not supported.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN; i+= 4) {
+			uint32_t word;
+			word = bus_space_read_4(sc->sc_st, sc->sc_sh,
 			    PCN32_APROM + i);
+			enaddr[i] = word & 0xff;
+			if (i + 1 < ETHER_ADDR_LEN) {
+				enaddr[i + 1] = (word >> 8) & 0xff;
+			}
+			if (1 + 2 < ETHER_ADDR_LEN) {
+				enaddr[i + 2] = (word >> 16) & 0xff;
+			}
+			if (i + 3 < ETHER_ADDR_LEN) {
+				enaddr[i + 3] = (word >> 24) & 0xff;
+			}
 		}
+			
 	}
 
 	/* Check to see if this is a VMware emulated network interface. */
