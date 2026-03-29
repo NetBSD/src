@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.85 2026/03/29 15:15:50 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.86 2026/03/29 19:57:34 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -38,8 +38,6 @@ file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/trap.c
 file arch/m68k/m68k/cacheops.c			_sun3x_
-
-include "arch/m68k/fpe/files.fpe"
 
 # Console support
 #file arch/sun3/sun3/cninit.c
@@ -243,23 +241,5 @@ file dev/sun/ms.c			ms needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
-
-
-# Compatibility modules
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c	compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 include "arch/sun3/conf/majors.sun3"

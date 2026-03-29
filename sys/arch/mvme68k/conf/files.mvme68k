@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.80 2026/03/29 19:06:47 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.81 2026/03/29 19:57:34 thorpej Exp $
 
 # config file for mvme68k
 
@@ -107,23 +107,5 @@ file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
 file dev/cons.c
 file dev/cninit.c
-
-# Motorola 68060 support package
-include "arch/m68k/060sp/files.060sp"
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c		compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 include	"arch/mvme68k/conf/majors.mvme68k"
