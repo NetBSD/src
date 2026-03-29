@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.atari,v 1.130 2026/03/29 14:00:16 thorpej Exp $
+#	$NetBSD: files.atari,v 1.131 2026/03/29 15:15:48 thorpej Exp $
 
 maxpartitions 16
 
@@ -218,7 +218,6 @@ file	arch/atari/atari/intr.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 # Emulation modules

@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.51 2026/03/29 14:00:17 thorpej Exp $
+# $NetBSD: files.next68k,v 1.52 2026/03/29 15:15:49 thorpej Exp $
 
 # next68k-specific configuration info
 
@@ -39,7 +39,6 @@ file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/sys_machdep.c
 file	arch/m68k/m68k/vm_machdep.c
 
 # include "arch/m68k/fpe/files.fpe"

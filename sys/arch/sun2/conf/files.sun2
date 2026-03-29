@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.21 2018/12/19 13:57:50 maxv Exp $
+#	$NetBSD: files.sun2,v 1.22 2026/03/29 15:15:50 thorpej Exp $
 
 #
 # sun2-specific configuration info
@@ -20,7 +20,6 @@ file arch/sun2/sun2/leds.c
 file arch/sun2/sun2/mm_md.c
 file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
-file arch/sun2/sun2/sys_machdep.c
 file arch/sun2/sun2/trap.c
 
 include "arch/m68k/fpe/files.fpe"
