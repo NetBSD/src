@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.69 2026/03/29 15:50:23 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.70 2026/03/29 15:55:19 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -66,6 +66,7 @@ file	arch/m68k/m68k/trap_subr.s
 file	arch/m68k/m68k/m68k_syscall.c
 file	arch/m68k/m68k/m68k_trap.c
 file	arch/m68k/m68k/vectors.c
+file	arch/m68k/m68k/vm_machdep.c
 
 file	arch/m68k/m68k/sunos_sigcode.s		compat_sunos
 file	arch/m68k/m68k/sunos_syscall.c		compat_sunos

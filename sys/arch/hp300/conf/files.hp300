@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.108 2026/03/29 15:50:23 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.109 2026/03/29 15:55:18 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -241,7 +241,6 @@ file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
-file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
 

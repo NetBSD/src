@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun68k,v 1.10 2026/03/29 15:50:24 thorpej Exp $
+#	$NetBSD: files.sun68k,v 1.11 2026/03/29 15:55:19 thorpej Exp $
 
 #
 # common sun68k configuration info
@@ -14,7 +14,6 @@ file arch/m68k/m68k/delay.s
 file arch/m68k/m68k/kgdb_machdep.c 		kgdb
 file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
-file arch/m68k/m68k/vm_machdep.c
 
 file dev/sun/disksubr.c
 
