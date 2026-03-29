@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.c,v 1.15 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: cacheops.c,v 1.16 2026/03/29 20:56:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.15 2010/06/06 04:50:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.16 2026/03/29 20:56:00 thorpej Exp $");
 
 #include <sys/types.h>
 #include <machine/cpu.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: cacheops.c,v 1.15 2010/06/06 04:50:07 mrg Exp $");
 #include <machine/cacheops_machdep.h>
 #endif
 
+/* XXX MMU and cache operations should not be intermingled. */
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 void
 _TBIA(void)
 {
@@ -142,6 +144,41 @@ _TBIAU(void)
 #endif
 	}
 }
+
+void
+_TBIS(vaddr_t va)
+{
+
+#ifdef M68K_CACHEOPS_MACHDEP_TBIS
+	if (TBIS_md(va))
+		return;
+#endif
+
+	switch (cputype) {
+	default:
+#ifdef M68020
+	case CPU_68020:
+		TBIS_20(va);
+		break;
+#endif
+#ifdef M68030
+	case CPU_68030:
+		TBIS_30(va);
+		break;
+#endif
+#ifdef M68040
+	case CPU_68040:
+		TBIS_40(va);
+		break;
+#endif
+#ifdef M68060
+	case CPU_68060:
+		TBIS_60(va);
+		break;
+#endif
+	}
+}
+#endif /* M68K_MMU_MOTOROLA || M68K_MMU_HP */
 
 void
 _ICIA(void)
@@ -332,40 +369,6 @@ _PCIA(void)
 #ifdef M68060
 	case CPU_68060:
 		PCIA_60();
-		break;
-#endif
-	}
-}
-
-void
-_TBIS(vaddr_t va)
-{
-
-#ifdef M68K_CACHEOPS_MACHDEP_TBIS
-	if (TBIS_md(va))
-		return;
-#endif
-
-	switch (cputype) {
-	default:
-#ifdef M68020
-	case CPU_68020:
-		TBIS_20(va);
-		break;
-#endif
-#ifdef M68030
-	case CPU_68030:
-		TBIS_30(va);
-		break;
-#endif
-#ifdef M68040
-	case CPU_68040:
-		TBIS_40(va);
-		break;
-#endif
-#ifdef M68060
-	case CPU_68060:
-		TBIS_60(va);
 		break;
 #endif
 	}
