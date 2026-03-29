@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.310 2022/05/31 08:43:15 andvar Exp $ */
+/*	$NetBSD: wdc.c,v 1.311 2026/03/29 12:57:17 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.310 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.311 2026/03/29 12:57:17 tls Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -561,9 +561,30 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 			__func__, chp->ch_channel, st0, st1), DEBUG_PROBE);
 
-		if (st0 == 0xff || st0 == WDSD_IBM)
+		/*
+		 * We don't have a drive if...
+		 *
+		 * A) We read 0xff, which indicates a controller with
+		 *    pull-up resistors and no drive attached (traditional
+		 *    ISA wdc behavior, OR
+		 * 
+		 * B) We read 0x00, which can happen on a non-ISA
+		 *    controller without pullups; some emulated controllers,
+		 *    at least.  0x00 is not a possible status with a drive
+		 *    present; BSY or DRDY would always be set.
+		 *
+		 * C) We read back what we write to the geometry registers,
+		 *    which ought not be fungible.  This test is not reliable
+		 *    on controllers like some pciide which share registers
+		 *    between targets.
+		 *
+		 * It is possible to pass these tests and still have no
+		 * usable drive on a channel, which will be caught later,
+		 * but after seconds of delay - to be avoided if possible.
+		 */
+		if (st0 == 0xff || st0 == WDSD_IBM || st0 == 0x00)
 			ret_value &= ~0x01;
-		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
+		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10) || st1 == 0x00)
 			ret_value &= ~0x02;
 		/* Register writability test, drive 0. */
 		if (ret_value & 0x01) {
