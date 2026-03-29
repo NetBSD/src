@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.274 2026/02/24 16:02:05 roy Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.275 2026/03/29 09:19:48 andvar Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.274 2026/02/24 16:02:05 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.275 2026/03/29 09:19:48 andvar Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -3880,7 +3880,7 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
  * rt_ifmsg requires sppp to be unlocked as it will attempt to lock it again.
  * unlocking sppp is safe here because this logic runs in a single thread,
  * the workqueue, so concurrent state transitions are excluded on that basis;
- * other tlu functions already release and re-aquire the lock already,
+ * other tlu functions already release and re-acquire the lock already,
  * which is only for coordination with threads _other_ than the workqueue
  * thread which doesn't change the state.
  */

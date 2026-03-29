@@ -1,4 +1,4 @@
-#	$NetBSD: majors.mvme68k,v 1.23 2020/04/04 16:06:15 jdolecek Exp $
+#	$NetBSD: majors.mvme68k,v 1.24 2026/03/29 09:19:48 andvar Exp $
 #
 # Device majors for mvme68k
 #
@@ -40,7 +40,7 @@ device-major	clockctl	char 39			clockctl
 device-major	cgd		char 41  block 17	cgd
 device-major	ksyms		char 42			ksyms
 #device-major	obsolete	char 43			obsolete (pf)
-#device-major	obsolete	char 44			obsolete (opencrytpo)
+#device-major	obsolete	char 44			obsolete (opencrypto)
 
 #device-major	obsolete	char 98			obsolete (nsmb)
 
