@@ -1,4 +1,4 @@
-/*	$NetBSD: dma.c,v 1.49 2026/03/24 03:31:54 thorpej Exp $	*/
+/*	$NetBSD: dma.c,v 1.50 2026/03/29 14:23:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.49 2026/03/24 03:31:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dma.c,v 1.50 2026/03/29 14:23:45 thorpej Exp $");
 
 #include <machine/hp300spu.h>	/* XXX param.h includes cpu.h */
 
@@ -438,7 +438,7 @@ dmago(int unit, char *addr, int count, int flags)
 		/*
 		 * Push back dirty cache lines
 		 */
-		if (mmutype == MMU_68040)
+		if (cputype == CPU_68040)
 			DCFP((paddr_t)dc->dm_chain[seg].dc_addr);
 #endif
 		if (count < (tcount = PAGE_SIZE - ((int)addr & PGOFSET)))
@@ -500,7 +500,7 @@ dmago(int unit, char *addr, int count, int flags)
 	 * and purge after a read DMA but if the entire page is not
 	 * involved in the DMA we might purge some valid data.
 	 */
-	if (mmutype == MMU_68040 && (flags & DMAGO_READ))
+	if (cputype == CPU_68040 && (flags & DMAGO_READ))
 		dc->dm_flags |= DMAF_PCFLUSH;
 #endif
 
