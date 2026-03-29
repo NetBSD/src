@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.82 2026/03/29 12:41:13 tls Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.83 2026/03/29 14:46:04 kre Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.82 2026/03/29 12:41:13 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.83 2026/03/29 14:46:04 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -651,14 +651,13 @@ pcn_attach(device_t parent, device_t self, void *aux)
 			if (i + 1 < ETHER_ADDR_LEN) {
 				enaddr[i + 1] = (word >> 8) & 0xff;
 			}
-			if (1 + 2 < ETHER_ADDR_LEN) {
+			if (i + 2 < ETHER_ADDR_LEN) {
 				enaddr[i + 2] = (word >> 16) & 0xff;
 			}
 			if (i + 3 < ETHER_ADDR_LEN) {
 				enaddr[i + 3] = (word >> 24) & 0xff;
 			}
 		}
-			
 	}
 
 	/* Check to see if this is a VMware emulated network interface. */
