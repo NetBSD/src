@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.66 2026/03/29 14:00:17 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.67 2026/03/29 14:05:23 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -51,8 +51,8 @@ file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c
 file	arch/m68k/m68k/mmu_subr.s		m68k_mmu_motorola | m68k_mmu_hp
 file	arch/m68k/m68k/oc_cksum.s		(inet | inet6) & cpu_in_cksum
-file	arch/m68k/m68k/pmap_motorola.c		(m68k_mmu_motorola | m68k_mmu_hp) & !__have_new_pmap_68k
-file	arch/m68k/m68k/pmap_68k.c		(m68k_mmu_motorola | m68k_mmu_hp) & __have_new_pmap_68k
+file	arch/m68k/m68k/pmap_motorola.c		((m68k_mmu_motorola | m68k_mmu_hp) & !_sun3x_) & !__have_new_pmap_68k
+file	arch/m68k/m68k/pmap_68k.c		((m68k_mmu_motorola | m68k_mmu_hp) & !_sun3x_) & __have_new_pmap_68k
 file	arch/m68k/m68k/process_machdep.c
 file	arch/m68k/m68k/reenter_syscall.s
 file	arch/m68k/m68k/regdump.c
