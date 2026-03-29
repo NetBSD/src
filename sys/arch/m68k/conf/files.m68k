@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.70 2026/03/29 15:55:19 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.71 2026/03/29 19:06:46 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -46,6 +46,7 @@ file	arch/m68k/m68k/db_interface.c		ddb
 file	arch/m68k/m68k/db_trace.c		ddb
 file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
 file	arch/m68k/m68k/kgdb_m68k.c		kgdb
+file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/kobj_machdep.c		modular
 file	arch/m68k/m68k/lock_stubs.s
 file	arch/m68k/m68k/m68k_machdep.c

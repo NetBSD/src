@@ -1,5 +1,5 @@
 #
-#	$NetBSD: files.luna68k,v 1.43 2026/03/29 15:55:18 thorpej Exp $
+#	$NetBSD: files.luna68k,v 1.44 2026/03/29 19:06:46 thorpej Exp $
 #
 maxpartitions 8
 maxusers 2 8 64
@@ -16,7 +16,6 @@ file arch/luna68k/luna68k/trap.c
 file arch/m68k/m68k/cacheops.c
 file arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file arch/m68k/m68k/delay.s
-file arch/m68k/m68k/kgdb_machdep.c	kgdb
 file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
 file dev/cons.c

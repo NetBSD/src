@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.50 2026/03/29 15:55:19 thorpej Exp $
+#	$NetBSD: files.news68k,v 1.51 2026/03/29 19:06:47 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -27,7 +27,6 @@ file	arch/news68k/news68k/trap.c
 file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/delay.s
-file	arch/m68k/m68k/kgdb_machdep.c		kgdb
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 file	dev/cons.c
