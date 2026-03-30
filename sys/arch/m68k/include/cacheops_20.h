@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops_20.h,v 1.9 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: cacheops_20.h,v 1.10 2026/03/30 03:30:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -83,10 +83,7 @@ ICPA_20(void)
 
 /*
  * Invalidate data cache.
- * NOTE: we do not flush 68030/20 on-chip cache as there are no aliasing
- * problems with DC_WA.  The only cases we have to worry about are context
- * switch and TLB changes, both of which are handled "in-line" in resume
- * and TBI*.
+ * Well, there isn't one on a 68020, so this is very easy.
  */
 #define	DCIA_20()
 #define	DCIS_20()
@@ -94,9 +91,4 @@ ICPA_20(void)
 #define	DCIAS_20(va)
 #define	DCFA_20()
 #define	DCPA_20()
-
-static __inline void __attribute__((__unused__))
-PCIA_20(void)
-{
-	__asm volatile (" movc %0,%%cacr;" : : "d" (DC_CLEAR));
-}
+#define	PCIA_20()
