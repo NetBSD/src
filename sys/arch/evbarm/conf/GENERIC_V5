@@ -10,6 +10,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 options 	CPU_ARM9E
 
 options 	SOC_IMX23
+options		SOC_AM18XX
 
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
@@ -30,6 +31,7 @@ options 	MSGBUFSIZE=32768
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=imx23, CONSADDR=0x80070000
+#options 	EARLYCONS=am18xx, CONSADDR=0x01D0C000 # serial1
 
 # Kernel Undefined Behavior Sanitizer (kUBSan). Use UBSAN_ALWAYS_FATAL
 # if you want panics instead of warnings.

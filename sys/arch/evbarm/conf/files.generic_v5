@@ -1,4 +1,4 @@
-# $NetBSD: files.generic_v5,v 1.1 2025/10/09 06:15:17 skrll Exp $
+# $NetBSD: files.generic_v5,v 1.2 2026/03/30 08:05:46 yurix Exp $
 #
 # A generic armv5 kernel configuration info
 #
@@ -18,6 +18,7 @@ file	arch/arm/arm/bus_space_a4x.S
 
 # Add other board files here
 include "arch/arm/imx/files.imx23"
+include "arch/arm/ti/files.ti"
 
 #
 # Stack-less Just-In-Time compiler

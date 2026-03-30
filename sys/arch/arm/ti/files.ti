@@ -1,7 +1,8 @@
-#	$NetBSD: files.ti,v 1.24 2025/12/16 12:20:22 skrll Exp $
+#	$NetBSD: files.ti,v 1.25 2026/03/30 08:05:45 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
+file	arch/arm/ti/am18xx_platform.c	soc_am18xx
 file	arch/arm/ti/am3_platform.c	soc_am33xx
 file	arch/arm/ti/omap3_platform.c	soc_omap3 | soc_omap4
 file	arch/arm/ti/omap_smc.S		soc_omap4
@@ -162,6 +163,7 @@ file	arch/arm/ti/ti_wdt.c		ti_wdt
 
 # SOC parameters			XXX FDT_SYSCON
 defflag	opt_soc.h			SOC_TI: FDT_SYSCON
+defflag	opt_soc.h			SOC_AM18XX: SOC_TI
 defflag	opt_soc.h			SOC_AM33XX: SOC_TI
 defflag	opt_soc.h			SOC_OMAP3: SOC_TI
 defflag	opt_soc.h			SOC_OMAP4: SOC_TI
