@@ -61,6 +61,7 @@ cpu*		at fdt? pass 0
 
 # interrupt handlers
 imx23icoll* 		at fdt? pass 1	# imx23 interrupt driver
+am18xxintc*			at fdt?	pass 1	# TI AM18XX interrupt controller
 
 # Timers
 imx23timrot* 		at fdt? pass 2		# imx23 timer

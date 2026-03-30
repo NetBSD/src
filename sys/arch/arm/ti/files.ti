@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.25 2026/03/30 08:05:45 yurix Exp $
+#	$NetBSD: files.ti,v 1.26 2026/03/30 08:08:33 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -11,6 +11,10 @@ file	arch/arm/ti/omap_smc.S		soc_omap4
 device	omapintc: pic, pic_splfuncs
 attach  omapintc at fdt
 file	arch/arm/ti/ti_omapintc.c	omapintc
+
+device	am18xxintc: pic, pic_splfuncs
+attach	am18xxintc at fdt
+file	arch/arm/ti/am18xx_intc.c	am18xxintc
 
 # WakeupGen
 device	omapwugen
