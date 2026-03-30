@@ -79,6 +79,10 @@ device	am18xxpllc: fdt_clock
 attach	am18xxpllc at fdt
 file	arch/arm/ti/am18xx_pllc.c am18xxpllc
 
+device	am18xxaclk: fdt_clock
+attach	am18xxaclk at fdt
+file	arch/arm/ti/am18xx_aclk.c am18xxaclk
+
 # UART
 attach	com at fdt with ti_com: ti_prcm
 file	arch/arm/ti/ti_com.c		ti_com needs-flag
