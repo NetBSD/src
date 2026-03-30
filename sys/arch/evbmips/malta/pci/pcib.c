@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.26 2025/10/19 20:35:02 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.27 2026/03/30 16:43:45 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,12 +36,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.26 2025/10/19 20:35:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.27 2026/03/30 16:43:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
+#include <sys/endian.h>
 #include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
@@ -420,7 +421,7 @@ pcib_intr(void *v)
 		}
 #else
 		/* XXX - should be a function call to gt.c? */
-		irq = GT_REGVAL(GT_PCI0_INTR_ACK) & 0xff;
+		irq = le32toh(GT_REGVAL(GT_PCI0_INTR_ACK)) & 0xff;
 
 		/*
 		 * From YAMON source code:

@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.312 2026/03/30 16:29:37 tls Exp $ */
+/*	$NetBSD: wdc.c,v 1.313 2026/03/30 16:43:45 tls Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.312 2026/03/30 16:29:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.313 2026/03/30 16:43:45 tls Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -561,9 +561,28 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 			__func__, chp->ch_channel, st0, st1), DEBUG_PROBE);
 
+		/*
+		 * Is a drive present?  Originally this code tested either
+		 * for 0xff (ISA controller with no drive present; pull-ups
+		 * take reg values high) or "echo", which meant writing to
+		 * the notionally read-only geometry regs and seeing if we
+		 * could read back what we wrote (if a drive is there, we
+		 * will not).  But some PCI controllers don't have the
+		 * 0xff behavior and also share regs internally in a way
+		 * that tricks the echo test, resulting in a 3 second delay
+		 * later before we find no drive.  We conditionally check for
+		 * 0x00 which should catch this case because a drive that's
+		 * actually present should have at least BSY or DRDY set.
+		 */
 		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
+		else if (st0 == 0x00 &&
+		    (wdc->cap & WDC_CAPABILITY_ZERO_ABSENT))
+			ret_value &= ~0x01;
 		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
+			ret_value &= ~0x02;
+		else if (st0 == 0x00 &&
+		    (wdc->cap & WDC_CAPABILITY_ZERO_ABSENT))
 			ret_value &= ~0x02;
 		/* Register writability test, drive 0. */
 		if (ret_value & 0x01) {

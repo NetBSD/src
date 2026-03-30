@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.18 2023/12/20 14:12:25 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.19 2026/03/30 16:43:45 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.18 2023/12/20 14:12:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.19 2026/03/30 16:43:45 tls Exp $");
 
 #include "opt_pci.h"
 
@@ -93,8 +93,8 @@ const struct mainbusdev mainbusdevs[] = {
 #define	PCI_IO_END	0x0000efff
 #define	PCI_IO_SIZE	((PCI_IO_END - PCI_IO_START) + 1)
 
-#define	PCI_MEM_START	MALTA_PCIMEM1_BASE
-#define	PCI_MEM_SIZE	MALTA_PCIMEM1_SIZE
+#define	PCI_MEM_START	MALTA_PCIMEM2_BASE
+#define	PCI_MEM_SIZE	MALTA_PCIMEM2_SIZE
 
 static int
 mainbus_match(device_t parent, cfdata_t match, void *aux)
@@ -150,6 +150,20 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 	pcitag_t idetag = pci_make_tag(pc, 0, 10, 1);
 	pci_conf_write(pc, idetag, PIIX_IDETIM, idetim);
 #endif
+
+#if defined(PCI_NETBSD_CONFIGURE)
+	/*
+	 * When booting without firmware (as for direct kernel load
+	 * under QEMU) we need to configure the PIIX4 (pcib)'s interrupt
+	 * routing ourselves.  For simplicitly, we rely on our
+	 * change to the Gallileo code which uses IRQ 10 for everything
+	 * if YAMON_IRQ_MAP_BAD.
+	 */
+	pcitag_t isabtag = pci_make_tag(pc, 0, 10, 0);
+	pcireg_t pirqrc = 10 | (10 << 8) | (10 << 16) | (10 << 24);
+	pci_conf_write(pc, isabtag, 0x60, pirqc);	/* 0x60 is PIRQRC */
+#endif
+
 	for (md = mainbusdevs; md->md_name != NULL; md++) {
 		ma.ma_name = md->md_name;
 		ma.ma_addr = md->md_addr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.25 2026/03/30 16:43:45 tls Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.24 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.25 2026/03/30 16:43:45 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,7 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	svwsata_mapreg_dma(sc, pa);
 	aprint_verbose("\n");
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_WIDEREGS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_WIDEREGS;
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;

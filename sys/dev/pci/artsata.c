@@ -1,4 +1,4 @@
-/*	$NetBSD: artsata.c,v 1.30 2023/01/23 21:52:01 andvar Exp $	*/
+/*	$NetBSD: artsata.c,v 1.31 2026/03/30 16:43:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.30 2023/01/23 21:52:01 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: artsata.c,v 1.31 2026/03/30 16:43:45 tls Exp $");
 
 #include "opt_pciide.h"
 
@@ -327,7 +327,7 @@ artisea_chip_map_dpa(struct pciide_softc *sc, const struct pci_attach_args *pa)
 
 	artisea_mapreg_dma(sc, pa);
 
-	sc->sc_wdcdev.cap = WDC_CAPABILITY_WIDEREGS;
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_WIDEREGS;
 
 	sc->sc_wdcdev.sc_atac.atac_cap |= ATAC_CAP_DATA16 | ATAC_CAP_DATA32;
 	sc->sc_wdcdev.sc_atac.atac_pio_cap = 4;

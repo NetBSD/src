@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_common.c,v 1.73 2025/10/03 14:12:03 thorpej Exp $	*/
+/*	$NetBSD: pciide_common.c,v 1.74 2026/03/30 16:43:45 tls Exp $	*/
 
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.73 2025/10/03 14:12:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_common.c,v 1.74 2026/03/30 16:43:45 tls Exp $");
 
 #include <sys/param.h>
 
@@ -158,6 +158,8 @@ pciide_common_attach(struct pciide_softc *sc, const struct pci_attach_args *pa,
 	if (atadebug_pciide_mask & DEBUG_PROBE)
 		pci_conf_print(sc->sc_pc, sc->sc_tag, NULL);
 #endif
+	sc->sc_wdcdev.cap |= WDC_CAPABILITY_ZERO_ABSENT;
+
 	sc->sc_pp->chip_map(sc, pa);
 
 #if NATA_DMA

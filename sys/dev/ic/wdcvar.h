@@ -1,4 +1,4 @@
-/*	$NetBSD: wdcvar.h,v 1.100 2020/04/13 10:49:34 jdolecek Exp $	*/
+/*	$NetBSD: wdcvar.h,v 1.101 2026/03/30 16:43:45 tls Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct wdc_softc {
 #define WDC_CAPABILITY_PREATA	0x0200	/* ctrl can be a pre-ata one */
 #define WDC_CAPABILITY_WIDEREGS 0x0400  /* ctrl has wide (16bit) registers  */
 #define WDC_CAPABILITY_NO_AUXCTL 0x0800 /* ctrl has no aux control registers */
+#define WDC_CAPABILITY_ZERO_ABSENT 0x1000 /* absent drive reads 0x00 (PCI) */
 
 #if NATA_DMA || NATA_PIOBM
 	/* if WDC_CAPABILITY_DMA set in 'cap' */
