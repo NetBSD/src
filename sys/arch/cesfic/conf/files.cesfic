@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.31 2026/03/29 19:57:33 thorpej Exp $
+#	$NetBSD: files.cesfic,v 1.32 2026/03/30 03:32:21 thorpej Exp $
 #
 # cesfic-specific configuration info
 
@@ -54,7 +54,6 @@ file	arch/cesfic/cesfic/clock.c
 file	arch/cesfic/cesfic/machdep.c
 file	arch/cesfic/cesfic/pmap_bootstrap.c
 file	arch/cesfic/cesfic/trap.c
-file	arch/m68k/m68k/cacheops.c
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/m68k_intr.c

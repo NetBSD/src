@@ -1,4 +1,4 @@
-#	$NetBSD: files.m68k,v 1.72 2026/03/29 19:57:33 thorpej Exp $
+#	$NetBSD: files.m68k,v 1.73 2026/03/30 03:32:22 thorpej Exp $
 #
 
 version	20240118		# mkflagvar
@@ -37,6 +37,7 @@ defflag				PMAP_DEBUG
 file	arch/m68k/m68k/buserr_10.s		m68010
 file	arch/m68k/m68k/buserr_2030.s		m68020 | m68030
 file	arch/m68k/m68k/buserr_4060.s		m68040 | m68060
+file	arch/m68k/m68k/cacheops.c		m68020 | m68030 | m68040 | m68060
 file	arch/m68k/m68k/copy.s
 file	arch/m68k/m68k/copypage.s
 file	arch/m68k/m68k/core_machdep.c		coredump

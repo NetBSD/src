@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2026/03/29 03:24:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.128 2026/03/30 03:32:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -183,27 +183,6 @@ GLOBAL(_isr_clock)
  * interrupt vector table for reset is NOT at address zero.
  * (The MMU has a "boot" bit that forces access to the PROM)
  */
-
-/* TBIA, TBIS, TBIAS, TBIAU */
-
-/*
- * Invalidate instruction cache
- */
-ENTRY(ICIA)
-	movl	#IC_CLEAR,%d0
-	movc	%d0,%cacr		| invalidate i-cache
-	rts
-
-/* DCIA, DCIS */
-
-/*
- * Invalidate data cache.
- */
-ENTRY(DCIU)
-	rts
-
-/* ICPL, ICPP, DCPL, DCPP, DCPA, DCFL, DCFP */
-/* PCIA */
 
 /* loadustp, ptest_addr */
 

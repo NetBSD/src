@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.86 2026/03/29 19:57:34 thorpej Exp $
+#	$NetBSD: files.sun3,v 1.87 2026/03/30 03:32:22 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -37,7 +37,6 @@ file arch/sun3/sun3/fpu_machdep.c
 file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/sunmon.c
 file arch/sun3/sun3/trap.c
-file arch/m68k/m68k/cacheops.c			_sun3x_
 
 # Console support
 #file arch/sun3/sun3/cninit.c

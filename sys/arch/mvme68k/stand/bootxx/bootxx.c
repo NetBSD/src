@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.16 2009/08/22 10:02:21 he Exp $ */
+/*	$NetBSD: bootxx.c,v 1.17 2026/03/30 03:32:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -74,9 +74,11 @@ main(void)
 	u_long addr;
 	char *foo;
 	int error;
+	int targ = (bugargs.dev_lun >> 4) & 0xf;
+	int lun  =  bugargs.dev_lun       & 0xf;
 
-	printf("Boot: bug device: ctrl=%d, dev=%d\n",
-	    bugargs.ctrl_lun, bugargs.dev_lun);
+	printf("Boot: bug device: ctrl=%d, dev=%d.%d\n",
+	    bugargs.ctrl_lun, targ, lun);
 	printf("\nbootxx: %s first level bootstrap program [%s]\n\n",
 	    bootprog_name, bootprog_rev);
 
