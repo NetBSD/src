@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.87 2026/02/24 21:44:00 jmcneill Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.88 2026/03/30 10:27:45 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.87 2026/02/24 21:44:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.88 2026/03/30 10:27:45 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -1148,6 +1148,11 @@ oea_dumpsys(void)
 		printf("area unavailable\n");
 		return;
 	}
+
+#ifdef MULTIPROCESSOR
+	cpu_pause_others();
+#endif
+
 	if ((error = cpu_dump()) != 0) {
 		goto done;
 	}
@@ -1207,6 +1212,10 @@ done:
 	}
 	printf("\n\n");
 	delay(5000000);
+
+#ifdef MULTIPROCESSOR
+	cpu_resume_others();
+#endif
 }
 
 /*
