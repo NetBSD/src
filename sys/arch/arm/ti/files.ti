@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.29 2026/03/30 08:15:47 yurix Exp $
+#	$NetBSD: files.ti,v 1.30 2026/03/30 08:17:29 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -78,6 +78,10 @@ file	arch/arm/ti/am18xx_psc.c am18xxpsc
 device	am18xxpllc: fdt_clock
 attach	am18xxpllc at fdt
 file	arch/arm/ti/am18xx_pllc.c am18xxpllc
+
+device	am18xxaclk: fdt_clock
+attach	am18xxaclk at fdt
+file	arch/arm/ti/am18xx_aclk.c am18xxaclk
 
 # UART
 attach	com at fdt with ti_com: ti_prcm

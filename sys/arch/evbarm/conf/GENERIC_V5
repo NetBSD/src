@@ -73,6 +73,7 @@ imx23apbdma* 	at fdt? pass 1			# NXP i.MX23 DMA controller
 # Clock Controllers
 imx23clkctrl*	at fdt? pass 1			# i.MX23 clock controller
 am18xxpllc*	at fdt?	pass 2				# TI AM18XX pll controller
+am18xxaclk*	at fdt? pass 3				# TI AM18XX async-clk clkgates
 am18xxpsc*	at fdt? pass 4				# TI AM18XX power&sleep controller
 
 # System Controller
@@ -104,8 +105,8 @@ imx23pctl* 			at fdt?	pass 1		# imx23 pin control+gpio
 gpio* 					at gpiobus?
 
 # UART
-com* 		at fdt?	pass 4		# UART
-plcom* 		at fdt?	pass 4		# ARM PL011 UART
+com* 		at fdt?	pass 5		# UART
+plcom* 		at fdt?	pass 5		# ARM PL011 UART
 
 # Various
 imx23digctl* at fdt? pass 1		# i.MX23 digctl block
