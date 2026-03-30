@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.26 2026/03/30 08:08:33 yurix Exp $
+#	$NetBSD: files.ti,v 1.27 2026/03/30 08:13:52 yurix Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -79,6 +79,10 @@ file	arch/arm/ti/ti_com.c		ti_com needs-flag
 device	omaptimer
 attach  omaptimer at fdt
 file	arch/arm/ti/ti_omaptimer.c	omaptimer
+
+device	am18xxtimer
+attach  am18xxtimer at fdt
+file	arch/arm/ti/am18xx_timer.c	am18xxtimer
 
 # GPIO
 device	tigpio: fdt_gpio, gpiobus

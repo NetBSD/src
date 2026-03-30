@@ -65,6 +65,7 @@ am18xxintc*			at fdt?	pass 1	# TI AM18XX interrupt controller
 
 # Timers
 imx23timrot* 		at fdt? pass 2		# imx23 timer
+am18xxtimer* 		at fdt? pass 2			# TI AM18XX timer
 
 # DMA controller
 imx23apbdma* 	at fdt? pass 1			# NXP i.MX23 DMA controller
