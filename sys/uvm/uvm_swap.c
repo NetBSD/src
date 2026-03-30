@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.223 2026/03/29 05:52:58 simonb Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.224 2026/03/30 21:13:39 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.223 2026/03/29 05:52:58 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.224 2026/03/30 21:13:39 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1125,7 +1125,8 @@ swap_on(struct lwp *l, struct swapdev *sdp)
 		if (sw_reg_count++ == 0) {
 			KASSERT(sw_reg_workqueue == NULL);
 			if (workqueue_create(&sw_reg_workqueue, "swapiod",
-			    sw_reg_iodone, NULL, PRIBIO, IPL_SOFTBIO, 0) != 0)
+			    sw_reg_iodone, NULL, PRIBIO, IPL_SOFTBIO,
+			    WQ_MPSAFE) != 0)
 				panic("%s: workqueue_create failed", __func__);
 		}
 	}
