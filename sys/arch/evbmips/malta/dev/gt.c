@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.18 2026/03/30 16:43:45 tls Exp $	*/
+/*	$NetBSD: gt.c,v 1.19 2026/03/30 16:49:19 tls Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,12 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.18 2026/03/30 16:43:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.19 2026/03/30 16:49:19 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/endian.h>
 
 #include <dev/pci/pcivar.h>
 
@@ -159,12 +158,6 @@ gt_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 		*fp = (tag >> 8) & 0x7;
 }
 
-/*
- * Careful - On big-endian systems, the GT-64120 swaps PCI configuration
- * data for external targets, but not for itself (bus 0, device 0)
- * with the endearing result that we must conditionally byteswap here.
- * Observed on QEMU 10 and confirmed with the databook.
- */
 static pcireg_t
 gt_conf_read(void *v, pcitag_t tag, int offset)
 {
@@ -189,15 +182,11 @@ gt_conf_read(void *v, pcitag_t tag, int offset)
 	/* Clear cause register bits. */
 	GT_REGVAL(GT_INTR_CAUSE) = 0;
 
-	GT_REGVAL(GT_PCI0_CFG_ADDR) = htole32((1 << 31) | tag | offset);
+	GT_REGVAL(GT_PCI0_CFG_ADDR) = (1 << 31) | tag | offset;
 	data = GT_REGVAL(GT_PCI0_CFG_DATA);
-	if (bus == 0 && dev == 0) {
-		data = le32toh(data);
-	}
 
 	/* Check for master abort. */
-	if (le32toh(GT_REGVAL(GT_INTR_CAUSE)) &
-	    (GTIC_MASABORT0 | GTIC_TARABORT0))
+	if (GT_REGVAL(GT_INTR_CAUSE) & (GTIC_MASABORT0 | GTIC_TARABORT0))
 		data = (pcireg_t) -1;
 
 	PCI_CONF_UNLOCK(s);
@@ -228,11 +217,8 @@ gt_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 	/* Clear cause register bits. */
 	GT_REGVAL(GT_INTR_CAUSE) = 0;
 
-	GT_REGVAL(GT_PCI0_CFG_ADDR) = htole32((1 << 31) | tag | offset);
-	if (bus == 0 && dev == 0)
-		GT_REGVAL(GT_PCI0_CFG_DATA) = htole32(data);
-	else
-		GT_REGVAL(GT_PCI0_CFG_DATA) = data;
+	GT_REGVAL(GT_PCI0_CFG_ADDR) = (1 << 31) | tag | offset;
+	GT_REGVAL(GT_PCI0_CFG_DATA) = data;
 
 	PCI_CONF_UNLOCK(s);
 }

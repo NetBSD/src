@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_intr.c,v 1.28 2026/03/30 16:43:45 tls Exp $	*/
+/*	$NetBSD: malta_intr.c,v 1.29 2026/03/30 16:49:19 tls Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.28 2026/03/30 16:43:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_intr.c,v 1.29 2026/03/30 16:49:19 tls Exp $");
 
 #define	__INTR_PRIVATE
 
@@ -271,13 +271,10 @@ evbmips_iointr(int ipl, uint32_t ipending, struct clockframe *cf)
 }
 
 /*
- * On real hardware, YAMON configures pa_intrline correctly (so far), but
- * on QEMU, the firmware doesn't program the PIIX's IRQ routing registers
- * when directly loading a kernel (or possibly ever), so we do it ourselves,
- * mapping all PIRQ lines to IRQ 10, which matches QEMU's Malta emulation
- * and is hopefully safe on real hardware, which must still exist somewhere.
+ * YAMON configures pa_intrline correctly (so far), so we trust it to DTRT
+ * in the future...
  */
-#define YAMON_IRQ_MAP_BAD
+#undef YAMON_IRQ_MAP_BAD
 
 /*
  * PCI interrupt support
@@ -287,18 +284,18 @@ malta_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
 #ifdef YAMON_IRQ_MAP_BAD
 	static const int pciirqmap[12/*device*/][4/*pin*/] = {
-		{ -1, -1, -1, 10 },	/* 10: USB */
+		{ -1, -1, -1, 11 },	/* 10: USB */
 		{ 10, -1, -1, -1 },	/* 11: Ethernet */
-		{ 10, -1, -1, -1 },	/* 12: Audio */
+		{ 11, -1, -1, -1 },	/* 12: Audio */
 		{ -1, -1, -1, -1 },	/* 13: not used */
 		{ -1, -1, -1, -1 },	/* 14: not used */
 		{ -1, -1, -1, -1 },	/* 15: not used */
 		{ -1, -1, -1, -1 },	/* 16: not used */
 		{ -1, -1, -1, -1 },	/* 17: Core card(?) */
-		{ 10, 10, 10, 10 },	/* 18: PCI Slot 1 */
-		{ 10, 10, 10, 10 },	/* 19: PCI Slot 2 */
-		{ 10, 10, 10, 10 },	/* 20: PCI Slot 3 */
-		{ 10, 10, 10, 10 },	/* 21: PCI Slot 4 */
+		{ 10, 10, 11, 11 },	/* 18: PCI Slot 1 */
+		{ 10, 11, 11, 10 },	/* 19: PCI Slot 2 */
+		{ 11, 11, 10, 10 },	/* 20: PCI Slot 3 */
+		{ 11, 10, 10, 11 },	/* 21: PCI Slot 4 */
 	};
 	int buspin, device, irq;
 #else	/* !YAMON_IRQ_MAP_BAD */

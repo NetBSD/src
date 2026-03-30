@@ -1,4 +1,4 @@
-/*	$NetBSD: malta_bus_io.c,v 1.7 2026/03/30 16:43:45 tls Exp $	*/
+/*	$NetBSD: malta_bus_io.c,v 1.8 2026/03/30 16:49:19 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: malta_bus_io.c,v 1.7 2026/03/30 16:43:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: malta_bus_io.c,v 1.8 2026/03/30 16:49:19 tls Exp $");
 
 #include <sys/param.h>
 
@@ -43,15 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: malta_bus_io.c,v 1.7 2026/03/30 16:43:45 tls Exp $")
 
 #define	CHIP		malta
 #define	CHIP_IO		/* defined */
-
-/*
- * This platform's PCI I/O region is DEVICE_LITTLE_ENDIAN (tested on
- * QEMU 10, which has recently had what purports to be a thorough going
- * over to conform it to the actual hardware) so we need CHIP_LITTLE_ENDIAN
- * here to accommodate big-endian kernels.
- * 
- */
-#define CHIP_LITTLE_ENDIAN
 
 #define	CHIP_EX_MALLOC_SAFE(v)	(((struct malta_config *)(v))->mc_mallocsafe)
 #define	CHIP_EXTENT(v)		(((struct malta_config *)(v))->mc_io_ex)
