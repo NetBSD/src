@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.226 2026/03/31 08:52:55 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.227 2026/03/31 09:06:24 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.226 2026/03/31 08:52:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.227 2026/03/31 09:06:24 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1347,6 +1347,17 @@ swstrategy(struct buf *bp)
 	struct vnode *vp;
 	int pageno, bn;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
+
+	/*
+	 * reject non page aligned i/o.
+	 */
+	if ((dbtob((int64_t)bp->b_blkno) & PAGE_MASK) != 0 ||
+	    (bp->b_bcount & PAGE_MASK) != 0) {
+		bp->b_error = ENOTSUP;
+		bp->b_resid = bp->b_bcount;
+		biodone(bp);
+		return;
+	}
 
 	/*
 	 * convert block number to swapdev.   note that swapdev can't
