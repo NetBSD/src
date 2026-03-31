@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.9 2026/01/18 05:50:28 skrll Exp $
+#	$NetBSD: Makefile,v 1.10 2026/03/31 20:24:19 yurix Exp $
+
+# Important: Regenerate dtb set lists by running 'make update-sets' in
+# sys/arch/dtb after changing this file.
 
 TARGETS+=	dtblist
 

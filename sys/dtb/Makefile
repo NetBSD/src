@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2025/11/10 06:59:26 skrll Exp $
+#	$NetBSD: Makefile,v 1.10 2026/03/31 20:24:19 yurix Exp $
 
 TARGETS+=	dtblist
 
@@ -19,7 +19,8 @@ SUBDIR+=	riscv
 .include <bsd.subdir.mk>
 
 # Regenerate MD set lists in distrib/sets/lists/dtb. Run this whenever
-# new dts files are imported.
+# new dts files are imported. You might want to invoke this with the make from
+# your TOOLDIR: '/path/to/tooldir/bin/nbmake USETOOLS=no update-sets’
 
 TARGET_ARCH_LIST=	earmv5 earmv5hf
 TARGET_ARCH_LIST+=	earmv6 earmv6hf earmv6eb earmv6hfeb

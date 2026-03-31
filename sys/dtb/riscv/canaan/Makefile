@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2025/11/29 08:01:00 skrll Exp $
+#	$NetBSD: Makefile,v 1.4 2026/03/31 20:24:22 yurix Exp $
+
+# Important: Regenerate dtb set lists by running 'make update-sets' in
+# sys/arch/dtb after changing this file.
 
 DTSSUBDIR=	canaan
 DTSMAKEVARS=	CONFIG_ARCH_CANAAN=y

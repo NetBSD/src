@@ -1,5 +1,8 @@
 #	$NetBSD $
 
+# Important: Regenerate dtb set lists by running 'make update-sets' in
+# sys/arch/dtb after changing this file.
+
 DTSSUBDIR=	ti/davinci
 .if !empty(MACHINE_ARCH:Mearmv5*)
 DTSMAKEVARS=	CONFIG_ARCH_DAVINCI=y
