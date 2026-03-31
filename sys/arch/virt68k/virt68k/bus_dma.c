@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.5 2026/03/31 13:45:00 thorpej Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.6 2026/03/31 19:17:04 skrll Exp $	*/
 
 /*
  * This file was taken from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2026/03/31 13:45:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.6 2026/03/31 19:17:04 skrll Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 
@@ -440,7 +440,7 @@ _bus_dmamap_sync_030(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * before a DMA read.
 	 *
 	 * We do this in PREREAD to remain aligned with the 68040/68060
-	 * implemntation, which also needs to do this work in PREREAD
+	 * implementation, which also needs to do this work in PREREAD
 	 * (since write-backs may be involved).  We obviously don't have
 	 * to worry about write-backs here, but this should mean that
 	 * programming errors that cause cache-fills from the memory region
