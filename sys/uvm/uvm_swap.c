@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.228 2026/03/31 09:08:47 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.229 2026/03/31 13:43:13 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.228 2026/03/31 09:08:47 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.229 2026/03/31 13:43:13 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1348,6 +1348,9 @@ swstrategy(struct buf *bp)
 	int pageno, bn;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
+	KASSERT((bp->b_flags & B_RAW) == 0 ||
+		rw_read_held(&swap_syscall_lock));
+
 	/*
 	 * reject non page aligned i/o.
 	 */
@@ -1388,9 +1391,6 @@ swstrategy(struct buf *bp)
 	UVMHIST_LOG(pdhist, "  Rd/Wr (0/1) %jd: mapoff=%#jx bn=%#jx bcount=%jd",
 		((bp->b_flags & B_READ) == 0) ? 1 : 0,
 		sdp->swd_drumoffset, bn, bp->b_bcount);
-
-	KASSERT((bp->b_flags & B_RAW) == 0 ||
-		rw_read_held(&swap_syscall_lock));
 
 	/*
 	 * for block devices we finish up here.
