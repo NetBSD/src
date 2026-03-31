@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.224 2026/03/30 21:13:39 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.225 2026/03/31 08:51:32 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.224 2026/03/30 21:13:39 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.225 2026/03/31 08:51:32 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1356,6 +1356,8 @@ swstrategy(struct buf *bp)
 	pageno = dbtob((int64_t)bp->b_blkno) >> PAGE_SHIFT;
 	mutex_enter(&uvm_swap_data_lock);
 	sdp = swapdrum_getsdp(pageno);
+	KASSERT((bp->b_flags & B_RAW) != 0 ||
+		(sdp != NULL && sdp->swd_npginuse > 0));
 	mutex_exit(&uvm_swap_data_lock);
 	if (sdp == NULL) {
 		bp->b_error = EINVAL;
