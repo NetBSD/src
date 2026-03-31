@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.227 2026/03/31 09:06:24 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.228 2026/03/31 09:08:47 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.227 2026/03/31 09:06:24 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.228 2026/03/31 09:08:47 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1504,8 +1504,6 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	int		off, nra, error, sz, resid;
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pdhist);
 
-	bp->b_private = sdp;
-
 	/*
 	 * setup for main loop where we read filesystem blocks into
 	 * our buffer.
@@ -1562,6 +1560,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		iobuf_redirect(nbp, devvp);
 		nbp->b_blkno = nbn + btodb(off);
 		KASSERT(nbp->b_iodone == nestiobuf_iodone);
+		nbp->b_private2 = sdp;
 		nbp->b_iodone = sw_reg_biodone;
 
 		/* sort it in and start I/O if we are not over our limit */
@@ -1640,8 +1639,7 @@ static void
 sw_reg_iodone(struct work *wk, void *dummy)
 {
 	struct buf *nbp = (void *)wk;
-	struct buf *pbp = nbp->b_private;	/* parent buffer */
-	struct swapdev *sdp = pbp->b_private;
+	struct swapdev *sdp = nbp->b_private2;
 
 	KASSERT(&nbp->b_work == wk);
 	UVMHIST_FUNC(__func__);
