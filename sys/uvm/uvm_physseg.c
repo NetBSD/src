@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.20 2024/01/13 09:44:42 tnn Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.21 2026/03/31 20:34:34 andvar Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -118,7 +118,7 @@ void uvm_physseg_seg_chomp_slab(uvm_physseg_t, struct vm_page *, size_t);
 /* returns a pgs array */
 struct vm_page *uvm_physseg_seg_alloc_from_slab(uvm_physseg_t, size_t);
 
-#if defined(UVM_HOTPLUG) /* rbtree impementation */
+#if defined(UVM_HOTPLUG) /* rbtree implementation */
 
 #define		HANDLE_TO_PHYSSEG_NODE(h)	((struct uvm_physseg *)(h))
 #define		PHYSSEG_NODE_TO_HANDLE(u)	((uvm_physseg_t)(u))

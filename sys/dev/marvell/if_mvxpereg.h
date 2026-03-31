@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpereg.h,v 1.9 2025/12/13 05:40:16 andvar Exp $	*/
+/*	$NetBSD: if_mvxpereg.h,v 1.10 2026/03/31 20:34:34 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -504,7 +504,7 @@
 /*
  * Tx DMA Packet Modification Registers
  */
-/* XXX: not implemeted yet */
+/* XXX: not implemented yet */
 
 /*
  * Tx DMA Queue Arbiter Registers (Version 1 )
