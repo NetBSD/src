@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.24 2026/03/18 06:41:41 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.25 2026/03/31 21:10:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.24 2026/03/18 06:41:41 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.25 2026/03/31 21:10:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -212,7 +212,7 @@ pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
 
 	csr_satp_write(satp);
 
-	if (l && !tlbinfo_asids_p(ti)) {
+	if (l && !tlbinfo_hasasids_p(ti)) {
 		tlb_invalidate_all();
 	}
 }

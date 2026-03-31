@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.h,v 1.17 2023/10/06 08:48:16 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.h,v 1.18 2026/03/31 21:10:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -101,7 +101,7 @@ struct pmap_asid_info {
 #define	TLBINFO_LOCK(ti)		mutex_spin_enter((ti)->ti_lock)
 #define	TLBINFO_UNLOCK(ti)		mutex_spin_exit((ti)->ti_lock)
 #define	TLBINFO_OWNED(ti)		mutex_owned((ti)->ti_lock)
-#define	PMAP_PAI_ASIDVALID_P(pai, ti)	(!tlbinfo_asids_p(ti) || (pai)->pai_asid != 0)
+#define	PMAP_PAI_ASIDVALID_P(pai, ti)	(!tlbinfo_hasasids_p(ti) || (pai)->pai_asid != 0)
 #define	PMAP_PAI(pmap, ti)		(&(pmap)->pm_pai[tlbinfo_index(ti)])
 #define	PAI_PMAP(pai, ti)	\
 	((pmap_t)((intptr_t)(pai) \
@@ -118,7 +118,7 @@ enum tlb_invalidate_op {
 struct pmap_tlb_info {
 	char ti_name[8];
 	uint32_t ti_asids_free;		/* # of ASIDs free */
-#define	tlbinfo_noasids_p(ti)	((ti)->ti_asids_free == 0)
+#define	tlbinfo_freeasids_p(ti)	((ti)->ti_asids_free != 0)
 	kmutex_t *ti_lock;
 	u_int ti_wired;			/* # of wired TLB entries */
 	tlb_asid_t ti_asid_hint;	/* probable next ASID to use */
@@ -193,7 +193,7 @@ void	pmap_tlb_asid_check(void);
 void pmap_db_tlb_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
 
 static inline bool
-tlbinfo_asids_p(struct pmap_tlb_info *ti)
+tlbinfo_hasasids_p(struct pmap_tlb_info *ti)
 {
 	return PMAP_TLB_ALWAYS_ASIDS || (ti)->ti_asid_max != 0;
 }

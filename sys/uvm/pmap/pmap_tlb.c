@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.65 2026/03/31 18:24:29 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.66 2026/03/31 21:10:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.65 2026/03/31 18:24:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.66 2026/03/31 21:10:51 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -936,7 +936,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 	KASSERT(pai->pai_asid > KERNEL_PID || pai->pai_link.le_prev == NULL);
 	pmap_tlb_pai_check(ti, true);
 
-	if (__predict_false(!tlbinfo_asids_p(ti))) {
+	if (__predict_false(!tlbinfo_hasasids_p(ti))) {
 #if defined(MULTIPROCESSOR)
 		/*
 		 * Mark that we are active for all CPUs sharing this TLB.
@@ -953,11 +953,11 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		/*
 		 * If we've run out ASIDs, reinitialize the ASID space.
 		 */
-		if (__predict_false(tlbinfo_noasids_p(ti))) {
+		if (__predict_false(!tlbinfo_freeasids_p(ti))) {
 			KASSERT(l == curlwp);
 			UVMHIST_LOG(maphist, " asid reinit", 0, 0, 0, 0);
 			pmap_tlb_asid_reinitialize(ti, TLBINV_NOBODY);
-			KASSERT(!tlbinfo_noasids_p(ti));
+			KASSERT(tlbinfo_freeasids_p(ti));
 		}
 
 		/*
@@ -1057,7 +1057,7 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 			 */
 			if (ti->ti_victim == pm)
 				ti->ti_victim = NULL;
-			if (__predict_true(tlbinfo_asids_p(ti)))
+			if (__predict_true(tlbinfo_hasasids_p(ti)))
 				pmap_tlb_pai_reset(ti, pai, pm);
 		}
 		KASSERT(pai->pai_link.le_prev == NULL);
