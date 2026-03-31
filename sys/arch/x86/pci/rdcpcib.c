@@ -1,4 +1,4 @@
-/*	$NetBSD: rdcpcib.c,v 1.3 2020/04/07 12:42:11 christos Exp $	*/
+/*	$NetBSD: rdcpcib.c,v 1.4 2026/03/31 19:47:47 andvar Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.3 2020/04/07 12:42:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcpcib.c,v 1.4 2026/03/31 19:47:47 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -68,6 +68,7 @@ struct rdcpcib_softc {
 
 	/* Watchdog suppoprt */
 	struct sysmon_wdog	rdc_smw;
+	bool			wdt0_mapped;
 };
 
 static int rdcpcibmatch(device_t, cfdata_t, void *);
@@ -121,20 +122,16 @@ static void
 rdcpcibattach(device_t parent, device_t self, void *aux)
 {
 	struct rdcpcib_softc *sc = device_private(self);
+	struct pci_attach_args *pa = aux;
 
 	/* generic PCI/ISA bridge */
 	pcibattach(parent, self, aux);
 
-	/* map indirect registers */
-	sc->rdc_iot = x86_bus_space_io;
-	if (bus_space_map(sc->rdc_iot, RDC_IND_BASE, RDC_IND_SIZE, 0,
-	    &sc->rdc_ioh) != 0) {
-		aprint_error_dev(self, "couldn't map indirect registers\n");
-		return;
-	}
-
-	/* Set up the watchdog. */
-	rdc_wdtimer_configure(self);
+	sc->wdt0_mapped = false;
+	/* SB function 0/1 have separate configuration register sets */
+	if (pa->pa_function == 0)
+		/* Set up the watchdog. */
+		rdc_wdtimer_configure(self);
 
 	/* Install power handler XXX */
 	if (!pmf_device_register(self, NULL, NULL))
@@ -149,10 +146,10 @@ rdcpcibdetach(device_t self, int flags)
 
 	pmf_device_deregister(self);
 
-	if ((rc = rdc_wdtimer_unconfigure(self, flags)) != 0)
-		return rc;
+	if (sc->wdt0_mapped)
+		if ((rc = rdc_wdtimer_unconfigure(self, flags)) != 0)
+			return rc;
 
-	bus_space_unmap(sc->rdc_iot, sc->rdc_ioh, RDC_IND_SIZE);
 	return pcibdetach(self, flags);
 }
 
@@ -207,6 +204,15 @@ rdc_wdtimer_configure(device_t self)
 	struct rdcpcib_softc *sc = device_private(self);
 	uint8_t reg;
 
+	/* map indirect access registers */
+	sc->rdc_iot = x86_bus_space_io;
+	if (bus_space_map(sc->rdc_iot, RDC_IND_BASE, RDC_IND_SIZE, 0,
+	    &sc->rdc_ioh) != 0) {
+		aprint_error_dev(self,
+		    "couldn't map indirect access registers\n");
+		return;
+	}
+
 	/* Explicitly stop the timer. */
 	rdc_wdtimer_stop(sc);
 
@@ -222,8 +228,10 @@ rdc_wdtimer_configure(device_t self)
 	if (sysmon_wdog_register(&sc->rdc_smw)) {
 		aprint_error_dev(self, "unable to register wdt"
 		       "as a sysmon watchdog device.\n");
+		bus_space_unmap(sc->rdc_iot, sc->rdc_ioh, RDC_IND_SIZE);
 		return;
 	}
+	sc->wdt0_mapped = true;
 
 	aprint_verbose_dev(self, "watchdog timer configured.\n");
 	reg = rdc_ind_read(sc, RDC_WDT0_CTRL1);
@@ -247,6 +255,8 @@ rdc_wdtimer_unconfigure(device_t self, int flags)
 
 	/* Explicitly stop the timer. */
 	rdc_wdtimer_stop(sc);
+	bus_space_unmap(sc->rdc_iot, sc->rdc_ioh, RDC_IND_SIZE);
+	sc->wdt0_mapped = false;
 
 	return 0;
 }
