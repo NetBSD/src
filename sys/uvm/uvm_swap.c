@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.230 2026/03/31 13:44:23 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.231 2026/03/31 14:28:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.230 2026/03/31 13:44:23 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.231 2026/03/31 14:28:55 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1401,7 +1401,8 @@ swstrategy(struct buf *bp)
 	/*
 	 * convert block number to swapdev.   note that swapdev can't
 	 * be yanked out from under us because we are holding resources
-	 * in it (i.e. the blocks we are doing I/O on).
+	 * in it (i.e. the blocks we are doing I/O on) or read lock on
+	 * swap_syscall_lock.
 	 */
 	pageno = dbtob((int64_t)bp->b_blkno) >> PAGE_SHIFT;
 	mutex_enter(&uvm_swap_data_lock);
