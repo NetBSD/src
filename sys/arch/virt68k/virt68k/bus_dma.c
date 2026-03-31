@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.4 2025/11/09 09:30:22 kre Exp $	*/
+/* $NetBSD: bus_dma.c,v 1.5 2026/03/31 13:45:00 thorpej Exp $	*/
 
 /*
  * This file was taken from next68k/dev/bus_dma.c, which was originally
@@ -39,7 +39,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.4 2025/11/09 09:30:22 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.5 2026/03/31 13:45:00 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE
 
@@ -430,8 +430,26 @@ void
 _bus_dmamap_sync_030(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
     bus_size_t len, int ops)
 {
+	/* If the whole DMA map is uncached, do nothing.  */
+	if (map->_dm_flags & BUS_DMA_COHERENT)
+		return;
 
-	/* Nothing yet */
+	/*
+	 * 68030 caches are write-through, so this is trivial; we only
+	 * need to invalidate the cache (on-chip and external, if present)
+	 * before a DMA read.
+	 *
+	 * We do this in PREREAD to remain aligned with the 68040/68060
+	 * implemntation, which also needs to do this work in PREREAD
+	 * (since write-backs may be involved).  We obviously don't have
+	 * to worry about write-backs here, but this should mean that
+	 * programming errors that cause cache-fills from the memory region
+	 * that's part of the DMA operation would tend to show up on both
+	 * CPU types.
+	 */
+	if (ops & BUS_DMASYNC_PREREAD) {
+		PCIA();
+	}
 }
 
 /*
