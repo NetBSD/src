@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.64 2026/01/27 07:11:32 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.65 2026/03/31 18:24:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.64 2026/01/27 07:11:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.65 2026/03/31 18:24:29 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -816,7 +816,7 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 
 static inline void
 pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
-	struct pmap_asid_info *pai)
+    struct pmap_asid_info *pai)
 {
 	/*
 	 * We shouldn't have an ASID assigned, and thusly must not be onproc
