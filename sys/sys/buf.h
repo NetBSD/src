@@ -1,4 +1,4 @@
-/*     $NetBSD: buf.h,v 1.135 2024/05/12 10:34:56 rillig Exp $ */
+/*     $NetBSD: buf.h,v 1.136 2026/03/31 09:08:05 yamt Exp $ */
 
 /*-
  * Copyright (c) 1999, 2000, 2007, 2008 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ struct buf {
 	off_t	b_dcookie;		/* NFS: Offset cookie if dir block */
 
 	kcondvar_t		b_busy;		/* c: threads waiting on buf */
-	void			*b_unused;	/*  : unused */
+	void			*b_private2;	/*  : private data for owner */
 	LIST_ENTRY(buf)		b_hash;		/* c: hash chain */
 	LIST_ENTRY(buf)		b_vnbufs;	/* c: associated vnode */
 	TAILQ_ENTRY(buf)	b_freelist;	/* c: position if not active */
