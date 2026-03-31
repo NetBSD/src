@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.101 2026/03/15 02:17:11 yamt Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.102 2026/03/31 04:07:18 yamt Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.101 2026/03/15 02:17:11 yamt Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.102 2026/03/31 04:07:18 yamt Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -205,8 +205,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 		if (KREAD(kd, addr, &vme))
 			return (NULL);
 
-		if (va >= vme.start && va < vme.end &&
-		    vme.aref.ar_amap != NULL)
+		if (va >= vme.start && va < vme.end)
 			break;
 
 		addr = (u_long)vme.next;
