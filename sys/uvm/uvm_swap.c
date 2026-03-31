@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.225 2026/03/31 08:51:32 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.226 2026/03/31 08:52:55 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.225 2026/03/31 08:51:32 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.226 2026/03/31 08:52:55 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1378,6 +1378,9 @@ swstrategy(struct buf *bp)
 		((bp->b_flags & B_READ) == 0) ? 1 : 0,
 		sdp->swd_drumoffset, bn, bp->b_bcount);
 
+	KASSERT((bp->b_flags & B_RAW) == 0 ||
+		rw_read_held(&swap_syscall_lock));
+
 	/*
 	 * for block devices we finish up here.
 	 * for regular files we have to do more work which we delegate
@@ -1420,11 +1423,16 @@ swstrategy(struct buf *bp)
 static int
 swread(dev_t dev, struct uio *uio, int ioflag)
 {
+	int ret;
+
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pdhist,
 	    "  dev=%#jx offset=%#jx", dev, uio->uio_offset, 0, 0);
 
-	return (physio(swstrategy, NULL, dev, B_READ, minphys, uio));
+	rw_enter(&swap_syscall_lock, RW_READER);
+	ret = physio(swstrategy, NULL, dev, B_READ, minphys, uio);
+	rw_exit(&swap_syscall_lock);
+	return ret;
 }
 
 /*
@@ -1434,11 +1442,16 @@ swread(dev_t dev, struct uio *uio, int ioflag)
 static int
 swwrite(dev_t dev, struct uio *uio, int ioflag)
 {
+	int ret;
+
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pdhist,
 	    "  dev=%#jx offset=%#jx", dev, uio->uio_offset, 0, 0);
 
-	return (physio(swstrategy, NULL, dev, B_WRITE, minphys, uio));
+	rw_enter(&swap_syscall_lock, RW_READER);
+	ret = physio(swstrategy, NULL, dev, B_WRITE, minphys, uio);
+	rw_exit(&swap_syscall_lock);
+	return ret;
 }
 
 const struct bdevsw swap_bdevsw = {
