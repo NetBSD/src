@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.509 2026/03/29 01:52:57 tls Exp $
+# $NetBSD: mi,v 1.510 2026/04/01 21:00:53 rillig Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2333,6 +2333,7 @@
 ./usr/libdata/debug/usr/tests/lib/libc/t_gdtoa.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/t_hsearch.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/t_inet.debug			tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/lib/libc/t_long_double.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/t_mktime.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/t_ptm.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libc/t_randomid.debug			tests-obsolete		obsolete,compattestfile

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.52 2022/04/29 22:17:49 pgoyette Exp $
+# $NetBSD: Makefile,v 1.53 2026/04/01 21:00:53 rillig Exp $
 
 .include "Makefile.inc"
 .include <bsd.own.mk>
@@ -35,8 +35,9 @@ TESTS_SUBDIRS+=	ssp
 
 TESTSDIR=	${TESTSBASE}/lib/libc
 
+TESTS_C+=	t_cdb
 TESTS_C+=	t_convfp
 TESTS_C+=	t_gdtoa
-TESTS_C+=	t_cdb
+TESTS_C+=	t_long_double
 
 .include <bsd.test.mk>

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1415 2026/03/11 00:43:07 rillig Exp $
+# $NetBSD: mi,v 1.1416 2026/04/01 21:00:53 rillig Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -3578,6 +3578,7 @@
 ./usr/tests/lib/libc/t_gdtoa				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/t_hsearch				tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_inet				tests-obsolete		obsolete
+./usr/tests/lib/libc/t_long_double			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/t_mktime				tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_nsdispatch			tests-obsolete		obsolete
 ./usr/tests/lib/libc/t_protoent				tests-obsolete		obsolete
