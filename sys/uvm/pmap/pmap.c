@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2026/03/13 07:22:24 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2026/04/01 13:10:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2026/03/13 07:22:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2026/04/01 13:10:11 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1559,7 +1559,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			}
 		} else {
 			UVMHIST_LOG(*histp,
-			    "va=%#jx pg %#jx: no syncicache cached %jd",
+			    "va=%#jx pg %#jx: no syncicache, cached %jd",
 			    va, (uintptr_t)pg, pte_cached_p(npte), 0);
 		}
 	} else if (pg != NULL && (prot & VM_PROT_EXECUTE)) {
