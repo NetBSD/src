@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.33 2023/07/23 07:25:36 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.34 2026/04/01 11:55:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.33 2023/07/23 07:25:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.34 2026/04/01 11:55:59 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -280,7 +280,7 @@ pmap_ptpage(struct pmap *pmap, vaddr_t va)
 	vaddr_t pdetab_mask = PMAP_PDETABSIZE - 1;
 	pmap_pdetab_t *ptb = pmap->pm_pdetab;
 
-//	UVMHIST_LOG(pmaphist, "pm_pdetab %#jx", ptb, 0, 0, 0);
+//	UVMHIST_LOG(pmapxtabhist, "pm_pdetab %#jx", ptb, 0, 0, 0);
 
 	KASSERTMSG(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va),
 	    "pmap_kernel: %s, va %#" PRIxVADDR,
@@ -713,7 +713,7 @@ static void
 pmap_pdetab_free(pmap_pdetab_t *ptb)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "ptb %#jx", (uintptr_t)ptb, 0, 0, 0);
+	UVMHIST_CALLARGS(pmapxtabhist, "ptb %#jx", (uintptr_t)ptb, 0, 0, 0);
 	/*
 	 * Insert the pdetab into the pdetab freelist.
 	 */
@@ -735,7 +735,7 @@ static void
 pmap_segtab_free(pmap_segtab_t *stb)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "stb %#jx", (uintptr_t)stb, 0, 0, 0);
+	UVMHIST_CALLARGS(pmapxtabhist, "stb %#jx", (uintptr_t)stb, 0, 0, 0);
 
 	/*
 	 * Insert the segtab into the segtab freelist.
@@ -880,7 +880,7 @@ void
 pmap_segtab_init(pmap_t pmap)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pm %#jx", (uintptr_t)pmap, 0, 0, 0);
+	UVMHIST_CALLARGS(pmapxtabhist, "pm %#jx", (uintptr_t)pmap, 0, 0, 0);
 
 #if !defined(PMAP_HWPAGEWALKER) || !defined(PMAP_MAP_PDETABPAGE)
 	/*
@@ -1027,12 +1027,12 @@ pmap_segtab_reserve(struct pmap *pmap, vaddr_t va)
 #endif
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pm %#jx va %#jx", (uintptr_t)pmap,
+	UVMHIST_CALLARGS(pmapxtabhist, "pm %#jx va %#jx", (uintptr_t)pmap,
 	    (uintptr_t)va, 0, 0);
 
 #if defined(PMAP_HWPAGEWALKER)
 	pmap_pdetab_t *ptb = pmap->pm_pdetab;
-	UVMHIST_LOG(pmaphist, "pm_pdetab %#jx", (uintptr_t)ptb, 0, 0, 0);
+	UVMHIST_LOG(pmapxtabhist, "pm_pdetab %#jx", (uintptr_t)ptb, 0, 0, 0);
 #endif
 #if defined(PMAP_HWPAGEWALKER) && defined(PMAP_MAP_PDETABPAGE)
 	vaddr_t segtab_mask = PMAP_PDETABSIZE - 1;
@@ -1044,7 +1044,7 @@ pmap_segtab_reserve(struct pmap *pmap, vaddr_t va)
 		    &ptb->pde_pde[(va >> segshift) & segtab_mask];
 		pd_entry_t opde = *pde_p;
 
-		UVMHIST_LOG(pmaphist,
+		UVMHIST_LOG(pmapxtabhist,
 		    "ptb %#jx segshift %jd pde_p %#jx opde %#jx",
 		    ptb, segshift, pde_p, opde);
 
@@ -1066,7 +1066,7 @@ pmap_segtab_reserve(struct pmap *pmap, vaddr_t va)
 			}
 		}
 		ptb = pmap_pde_to_pdetab(opde);
-		UVMHIST_LOG(pmaphist, "opde %#jx ptb %#jx", opde, ptb, 0, 0);
+		UVMHIST_LOG(pmapxtabhist, "opde %#jx ptb %#jx", opde, ptb, 0, 0);
 	}
 #elif defined(XSEGSHIFT)
 	size_t segshift = XSEGSHIFT;
@@ -1078,7 +1078,8 @@ pmap_segtab_reserve(struct pmap *pmap, vaddr_t va)
 #endif /* _LP64 */
 	const size_t idx = (va >> SEGSHIFT) & segtab_mask;
 
-	UVMHIST_LOG(pmaphist, "... returning %#jx (idx %jd)", (uintptr_t)&ptb->pde_pde[idx], idx, 0, 0);
+	UVMHIST_LOG(pmapxtabhist, "... returning %#jx (idx %jd)",
+	    (uintptr_t)&ptb->pde_pde[idx], idx, 0, 0);
 
 	return &ptb->pde_pde[idx];
 #else /* PMAP_HWPAGEWALKER && PMAP_MAP_PDETABPAGE */
@@ -1139,7 +1140,7 @@ pt_entry_t *
 pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 {
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pm=%#jx va=%#jx flags=%#jx",
+	UVMHIST_CALLARGS(pmapxtabhist, "pm=%#jx va=%#jx flags=%#jx",
 	    (uintptr_t)pmap, (uintptr_t)va, flags, 0);
 	pmap_ptpage_t *ppg;
 	paddr_t pa = 0;
