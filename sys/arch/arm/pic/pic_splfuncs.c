@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.25 2026/03/31 22:57:30 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.26 2026/04/01 09:37:09 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.25 2026/03/31 22:57:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.26 2026/04/01 09:37:09 jmcneill Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -89,8 +89,7 @@ splx(int savedipl)
 		return;
 	}
 
-	if (ci->ci_intr_depth == 0 &&
-	    (ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
+	if ((ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
 		register_t psw = DISABLE_INTERRUPT_SAVE();
 		KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
 		    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
