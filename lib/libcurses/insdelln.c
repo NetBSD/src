@@ -1,4 +1,4 @@
-/*	$NetBSD: insdelln.c,v 1.24 2024/12/23 02:58:03 blymn Exp $	*/
+/*	$NetBSD: insdelln.c,v 1.25 2026/04/01 20:32:56 hgutch Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: insdelln.c,v 1.24 2024/12/23 02:58:03 blymn Exp $");
+__RCSID("$NetBSD: insdelln.c,v 1.25 2026/04/01 20:32:56 hgutch Exp $");
 #endif				/* not lint */
 
 /*
@@ -76,7 +76,8 @@ winsdelln(WINDOW *win, int nlines)
 	attr_t	attr;
 
 	__CTRACE(__CTRACE_LINE,
-	    "winsdelln: (%p) cury=%d lines=%d\n", win, win->cury, nlines);
+	    "winsdelln: (%p) cury=%d lines=%d\n", win,
+	    (win != NULL) ? win->cury : 0, nlines);
 
 	if (__predict_false(win == NULL))
 		return ERR;

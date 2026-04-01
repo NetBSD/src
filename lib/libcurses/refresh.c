@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.130 2026/02/14 15:46:55 hgutch Exp $	*/
+/*	$NetBSD: refresh.c,v 1.131 2026/04/01 20:32:56 hgutch Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.130 2026/02/14 15:46:55 hgutch Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.131 2026/04/01 20:32:56 hgutch Exp $");
 #endif
 #endif				/* not lint */
 
@@ -104,7 +104,7 @@ pnoutrefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	int pmaxy, pmaxx;
 
 	__CTRACE(__CTRACE_REFRESH, "pnoutrefresh: pad %p, flags 0x%08x\n",
-	    pad, pad->flags);
+	    pad, (pad != NULL) ? pad->flags : 0);
 	__CTRACE(__CTRACE_REFRESH,
 	    "pnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n",
 	    pbegy, pbegx, sbegy, sbegx, smaxy, smaxx);
@@ -150,7 +150,7 @@ static int
 _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
               int maxy, int maxx)
 {
-	SCREEN *screen = win->screen;
+	SCREEN *screen;
 	short	sy, wy, wx, y_off, x_off, mx, dy_off, dx_off, endy;
 	int newy, newx;
 #ifdef HAVE_WCHAR
@@ -161,13 +161,15 @@ _wnoutrefresh(WINDOW *win, int begy, int begx, int wbegy, int wbegx,
 	WINDOW	*sub_win, *orig, *swin, *dwin;
 
 	__CTRACE(__CTRACE_REFRESH, "_wnoutrefresh: win %p, flags 0x%08x\n",
-	    win, win->flags);
+	    win, (win != NULL) ? win->flags : 0);
 	__CTRACE(__CTRACE_REFRESH,
 	    "_wnoutrefresh: (%d, %d), (%d, %d), (%d, %d)\n",
 	    begy, begx, wbegy, wbegx, maxy, maxx);
 
 	if (__predict_false(win == NULL))
 		return ERR;
+
+	screen = win->screen;
 
 	if (screen->curwin)
 		return OK;
@@ -515,7 +517,7 @@ prefresh(WINDOW *pad, int pbegy, int pbegx, int sbegy, int sbegx,
 	int retval;
 
 	__CTRACE(__CTRACE_REFRESH, "prefresh: pad %p, flags 0x%08x\n",
-	    pad, pad->flags);
+	    pad, (pad != NULL) ? pad->flags : 0);
 
 	if (__predict_false(pad == NULL))
 		return ERR;
