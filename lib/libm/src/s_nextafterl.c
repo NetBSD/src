@@ -1,4 +1,4 @@
-/*	$NetBSD: s_nextafterl.c,v 1.6 2019/04/27 23:04:32 kamil Exp $	*/
+/*	$NetBSD: s_nextafterl.c,v 1.7 2026/04/02 22:02:10 nat Exp $	*/
 
 /* @(#)s_nextafter.c 5.1 93/09/24 */
 /*
@@ -13,7 +13,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: s_nextafterl.c,v 1.6 2019/04/27 23:04:32 kamil Exp $");
+__RCSID("$NetBSD: s_nextafterl.c,v 1.7 2026/04/02 22:02:10 nat Exp $");
 
 #include <float.h>
 #include <math.h>
@@ -69,28 +69,43 @@ nextafterl(long double x, long double y)
 			return ux.extu_ld;	/* raise underflow flag */
 	}
 
+	uint32_t nbit = (ux.extu_frach & LDBL_NBIT);
 	if ((x>0.0) ^ (x<y)) {			/* x -= ulp */
 		if (ux.extu_fracl == 0) {
-			if ((ux.extu_frach & ~LDBL_NBIT) == 0)
-				ux.extu_exp -= 1;
-			ux.extu_frach = (ux.extu_frach - 1) |
-					(ux.extu_frach & LDBL_NBIT);
+			if ((ux.extu_frach & ~LDBL_NBIT) == 0) {
+#ifdef __m68k__
+				if (ux.extu_exp == 0)
+					nbit = 0;
+				else
+#endif
+					ux.extu_exp -= 1;
+			}
+			ux.extu_frach = (ux.extu_frach - 1) | nbit;
 		}
 		ux.extu_fracl -= 1;
 	} else {				/* x += ulp */
 		ux.extu_fracl += 1;
 		if (ux.extu_fracl == 0) {
-			ux.extu_frach = (ux.extu_frach + 1) |
-					(ux.extu_frach & LDBL_NBIT);
-			if ((ux.extu_frach & ~LDBL_NBIT) == 0)
-				ux.extu_exp += 1;
+			ux.extu_frach = (ux.extu_frach + 1) | nbit;
+			if ((ux.extu_frach & ~LDBL_NBIT) == 0) {
+#ifdef __m68k__
+				if (nbit == 0)
+					ux.extu_frach |= LDBL_NBIT;
+				else
+#endif
+					ux.extu_exp += 1;
+			}
 		}
 	}
 
 	if (ux.extu_exp == EXT_EXP_INFNAN)
 		return x+x;			/* overflow  */
 
+#ifdef __m68k__
+	if (ux.extu_exp == 0 && (ux.extu_frach & LDBL_NBIT) == 0) {
+#else
 	if (ux.extu_exp == 0) {			/* underflow */
+#endif
 #ifndef LDBL_IMPLICIT_NBIT
 		mask_nbit_l(ux);
 #endif
