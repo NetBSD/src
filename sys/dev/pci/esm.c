@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.63.2.1 2019/11/27 14:04:38 martin Exp $      */
+/*      $NetBSD: esm.c,v 1.63.2.2 2026/04/02 18:01:59 martin Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.63.2.1 2019/11/27 14:04:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.63.2.2 2026/04/02 18:01:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1319,18 +1319,14 @@ esm_intr(void *sc)
 	struct esm_softc *ess;
 	uint16_t status;
 	uint16_t pos;
-	int ret;
 
 	ess = sc;
-	ret = 0;
+
+	status = bus_space_read_1(ess->st, ess->sh, PORT_HOSTINT_STAT);
+	if (!status)
+		return 0;
 
 	mutex_spin_enter(&ess->sc_intr_lock);
-	status = bus_space_read_1(ess->st, ess->sh, PORT_HOSTINT_STAT);
-	if (!status) {
-		mutex_spin_exit(&ess->sc_intr_lock);
-		return 0;
-	}
-
 	/* Acknowledge all. */
 	bus_space_write_2(ess->st, ess->sh, PORT_INT_STAT, 1);
 	bus_space_write_1(ess->st, ess->sh, PORT_HOSTINT_STAT, 0);
@@ -1351,7 +1347,6 @@ esm_intr(void *sc)
 			    + ((delta << 7) & 0x700) - 0x400);
 		}
 		bus_space_write_1(ess->st, ess->sh, PORT_HWVOL_MASTER, 0x88);
-		ret++;
 	}
 #endif	/* XXX - HWVOL */
 
@@ -1375,7 +1370,6 @@ esm_intr(void *sc)
 			}
 
 		}
-		ret++;
 	}
 
 	if (ess->ractive) {
@@ -1403,11 +1397,10 @@ esm_intr(void *sc)
 			}
 
 		}
-		ret++;
 	}
 	mutex_spin_exit(&ess->sc_intr_lock);
 
-	return ret;
+	return 1;
 }
 
 static void
@@ -1554,7 +1547,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	ess->ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, esm_intr, self,
+	ess->ih = pci_intr_establish_xname(pc, ih, IPL_AUDIO, esm_intr, ess,
 	    device_xname(self));
 	if (ess->ih == NULL) {
 		aprint_error_dev(ess->sc_dev, "can't establish interrupt");
@@ -1617,7 +1610,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 	ess->codec_flags |= AC97_HOST_DONT_READ;
 
 	/* initialize AC97 host interface */
-	ess->host_if.arg = self;
+	ess->host_if.arg = ess;
 	ess->host_if.attach = esm_attach_codec;
 	ess->host_if.read = esm_read_codec;
 	ess->host_if.write = esm_write_codec;
@@ -1645,7 +1638,7 @@ esm_attach(device_t parent, device_t self, void *aux)
 		wc_wrreg(ess, pcmbar,
 		    DMAADDR(&ess->sc_dma) >> WAVCACHE_BASEADDR_SHIFT);
 
-	audio_attach_mi(&esm_hw_if, self, ess->sc_dev);
+	audio_attach_mi(&esm_hw_if, ess, ess->sc_dev);
 
 	if (!pmf_device_register(self, esm_suspend, esm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
