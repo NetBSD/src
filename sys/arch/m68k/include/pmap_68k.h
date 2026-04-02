@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.11 2025/12/31 15:33:50 andvar Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.12 2026/04/02 03:56:42 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -455,6 +455,12 @@ extern void *	msgbufaddr;
 void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
 /* PMAP_PREFER() defined in <machine/pmap.h> on machines were it's needed. */
+
+/*
+ * pmap hook for trap()'s page fault handler.  We don't need to
+ * do anything special, so it just goes to uvm_fault().
+ */
+#define	pmap_fault(m, v, t)	uvm_fault((m), (v), (t))
 
 /* Kernel crash dump support. */
 phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);

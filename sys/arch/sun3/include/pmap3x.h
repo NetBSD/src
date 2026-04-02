@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.32 2024/12/20 23:50:00 tsutsui Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.33 2026/04/02 03:56:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -62,6 +62,12 @@ pmap_remove_all(struct pmap *pmap)
 	/* Nothing. */
 	return false;
 }
+
+/*
+ * pmap hook for trap()'s page fault handler.  We don't need to
+ * do anything special, so it just goes to uvm_fault().
+ */
+#define	pmap_fault(m, v, t)	uvm_fault((m), (v), (t))
 
 /*
  * Flags to tell pmap_enter `this is not to be cached', etc.

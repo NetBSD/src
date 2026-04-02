@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun2,v 1.23 2026/03/29 19:57:34 thorpej Exp $
+#	$NetBSD: files.sun2,v 1.24 2026/04/02 03:56:43 thorpej Exp $
 
 #
 # sun2-specific configuration info
@@ -20,7 +20,6 @@ file arch/sun2/sun2/leds.c
 file arch/sun2/sun2/mm_md.c
 file arch/sun2/sun2/idprom.c
 file arch/sun2/sun2/promlib.c
-file arch/sun2/sun2/trap.c
 
 # Console support:
 file arch/sun2/dev/consinit.c

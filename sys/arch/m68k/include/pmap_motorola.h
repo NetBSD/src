@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.52 2026/03/24 03:31:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.53 2026/04/02 03:56:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -247,6 +247,12 @@ void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif
+
+/*
+ * pmap hook for trap()'s page fault handler.  We don't need to
+ * do anything special, so it just goes to uvm_fault().
+ */
+#define	pmap_fault(m, v, t)	uvm_fault((m), (v), (t))
 
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);

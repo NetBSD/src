@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.28 2020/03/14 14:05:43 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.29 2026/04/02 03:56:43 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@ struct pmap {
  * This function does that, and calls vm_fault if it
  * could not resolve the fault by reloading the MMU.
  */
-int _pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
+int pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vaddr_t, vaddr_t *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.181 2025/12/05 22:48:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.182 2026/04/02 03:56:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.181 2025/12/05 22:48:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2026/04/02 03:56:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2540,7 +2540,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
  * XXX: Merge this with the next function?
  */
 int
-_pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
+pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t ftype)
 {
 	pmap_t pmap;
 	int rv;
