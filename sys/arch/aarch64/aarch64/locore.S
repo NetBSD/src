@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.100 2026/04/02 07:06:38 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.101 2026/04/02 16:00:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.100 2026/04/02 07:06:38 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.101 2026/04/02 16:00:47 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -109,7 +109,9 @@ ASENTRY_NP(aarch64_start)
 	DPRINTSREG("HCR_EL2          = ", hcr_el2)
 	DPRINTSREG("VTTBR_EL2        = ", vttbr_el2)
 	DPRINTSREG("MAIR_EL2         = ", mair_el2)
+#if 0
 	DPRINTSREG("ICH_VTR_EL2      = ", ich_vtr_el2)
+#endif
 1:
 	DPRINTSREG("SPSR_EL1         = ", spsr_el1)
 	DPRINTSREG("CNTFREQ_EL0      = ", cntfrq_el0)
