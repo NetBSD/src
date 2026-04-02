@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.98.2.1 2026/04/02 18:24:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.98 2025/01/17 04:11:33 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.98.2.1 2026/04/02 18:24:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -483,9 +483,9 @@ cpu_is_better(struct cpu_info *ci1, struct cpu_info *ci2)
 
 	if ((ci1_flags & SPCF_1STCLASS) != 0 &&
 	    (ci2_flags & SPCF_1STCLASS) == 0)
-		return ci1;
+		return true;
 
-	return ci2;
+	return false;
 }
 
 #if defined(__HAVE_INTR_CONTROL)
