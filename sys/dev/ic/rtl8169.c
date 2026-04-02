@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.179.2.1 2026/04/02 19:04:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.179.2.1 2026/04/02 19:04:52 martin Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $
 
 
 #include <sys/param.h>
+#include <sys/cprng.h>
 #include <sys/endian.h>
 #include <sys/systm.h>
 #include <sys/sockio.h>
@@ -144,6 +145,9 @@ __KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.179 2024/08/12 21:27:34 christos Exp $
 #include <dev/ic/rtl81x9var.h>
 
 #include <dev/ic/rtl8169var.h>
+
+#define ETHER_IS_ZERO(addr) \
+	(!(addr[0] | addr[1] | addr[2] | addr[3] | addr[4] | addr[5]))
 
 static inline void re_set_bufaddr(struct re_desc *, bus_addr_t);
 
@@ -607,6 +611,7 @@ re_attach(struct rtk_softc *sc)
 	int error = 0, i;
 	const struct re_revision *rr;
 	const char *re_name = NULL;
+	uint32_t maclo, machi;
 
 	if ((sc->sc_quirk & RTKQ_8139CPLUS) == 0) {
 		/* Revision of 8169/8169S/8110s in bits 30..26, 23 */
@@ -773,6 +778,20 @@ re_attach(struct rtk_softc *sc)
 	for (i = 0; i < ETHER_ADDR_LEN; i++)
 		eaddr[i] = CSR_READ_1(sc, RTK_IDR0 + i);
 #endif
+	/* 
+	 * Some chips don't provide a viable MAC address, e.g., what's present
+	 * on the NanoPi R4S (non-EE version).
+	 */
+	if (ETHER_IS_ZERO(eaddr)) {
+		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		machi = cprng_strong32() & 0xffff;
+		eaddr[0] = maclo & 0xff;
+		eaddr[1] = (maclo >> 8) & 0xff;
+		eaddr[2] = (maclo >> 16) & 0xff;
+		eaddr[3] = (maclo >> 24) & 0xff;
+		eaddr[4] = machi & 0xff;
+		eaddr[5] = (machi >> 8) & 0xff;
+	}
 
 	/* Take PHY out of power down mode. */
 	if ((sc->sc_quirk & RTKQ_PHYWAKE_PM) != 0)

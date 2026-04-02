@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.15 2025/04/07 18:38:58 gutteridge Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.15.2.1 2026/04/02 19:04:52 martin Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -78,6 +78,13 @@
 		<string>FriendlyElec NanoPi R2S</string>
 		<key>u-boot-pkg</key>
 		<string>nanopi-r2s</string>
+	</dict>
+	<key>friendlyarm,nanopi-r4s</key>
+	<dict>
+		<key>description</key>
+		<string>FriendlyElec NanoPi R4S</string>
+		<key>u-boot-pkg</key>
+		<string>nanopi-r4s</string>
 	</dict>
 	<key>pine64,rock64</key>
 	<dict>
