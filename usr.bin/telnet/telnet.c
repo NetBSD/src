@@ -1,4 +1,4 @@
-/*	$NetBSD: telnet.c,v 1.44 2021/10/30 13:43:40 hannken Exp $	*/
+/*	$NetBSD: telnet.c,v 1.44.6.1 2026/04/02 17:54:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)telnet.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnet.c,v 1.44 2021/10/30 13:43:40 hannken Exp $");
+__RCSID("$NetBSD: telnet.c,v 1.44.6.1 2026/04/02 17:54:31 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -468,7 +468,7 @@ dooption(int option)
 #endif
 
 	    case TELOPT_XDISPLOC:	/* X Display location */
-		if (env_getvalue((const unsigned char *)"DISPLAY"))
+		if (env_getvalue("DISPLAY", 0))
 		    new_state_ok = 1;
 		break;
 
@@ -731,7 +731,7 @@ gettermname(void)
 		resettermname = 0;
 		if (tnamep && tnamep != unknown)
 			free(tnamep);
-		if ((tname = (char *)env_getvalue((const unsigned char *)"TERM")) &&
+		if ((tname = env_getvalue("TERM", 0)) &&
 				(setupterm(tname, 1, &err) == 0)) {
 			tnamep = mklist(termbuf, tname);
 		} else {
@@ -898,7 +898,7 @@ suboption(void)
 	    unsigned char temp[50], *dp;
 	    int len;
 
-	    if ((dp = env_getvalue((const unsigned char *)"DISPLAY")) == NULL) {
+	    if ((dp = env_getvalue("DISPLAY", 0)) == NULL) {
 		/*
 		 * Something happened, we no longer have a DISPLAY
 		 * variable.  So, turn off the option.
@@ -1513,7 +1513,7 @@ env_opt_add(unsigned char *ep)
 			env_opt_add(ep);
 		return;
 	}
-	vp = env_getvalue(ep);
+	vp = env_getvalue(ep, 1);
 	elen = 2 * (vp ? strlen((char *)vp) : 0) +
 		2 * strlen((char *)ep) + 6;
 	if ((unsigned int)(opt_replyend - opt_replyp) < elen)
@@ -2074,7 +2074,7 @@ telnet(const char *user)
 	send_will(TELOPT_LINEMODE, 1);
 	send_will(TELOPT_NEW_ENVIRON, 1);
 	send_do(TELOPT_STATUS, 1);
-	if (env_getvalue((const unsigned char *)"DISPLAY"))
+	if (env_getvalue("DISPLAY", 0))
 	    send_will(TELOPT_XDISPLOC, 1);
 	if (eight)
 	    tel_enter_binary(eight);
