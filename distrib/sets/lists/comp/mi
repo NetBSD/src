@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.12 2025/10/19 10:34:42 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.13 2026/04/02 18:32:44 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -946,6 +946,7 @@
 ./usr/include/evutil.h				comp-c-include
 ./usr/include/execinfo.h			comp-c-include
 ./usr/include/expat.h				comp-c-include
+./usr/include/expat_config.h			comp-c-include
 ./usr/include/expat_external.h			comp-c-include
 ./usr/include/fcntl.h				comp-c-include
 ./usr/include/fenv.h				comp-c-include
