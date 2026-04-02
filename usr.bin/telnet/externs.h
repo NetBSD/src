@@ -1,4 +1,4 @@
-/*	$NetBSD: externs.h,v 1.44 2018/12/14 23:40:17 christos Exp $	*/
+/*	$NetBSD: externs.h,v 1.44.10.1 2026/04/02 17:56:13 martin Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -216,7 +216,7 @@ struct env_lst *env_unexport(const char *, char *);
 struct env_lst *env_send(const char *, char *);
 struct env_lst *env_list(const char *, char *);
 char *env_default(int, int );
-char *env_getvalue(const char *);
+char *env_getvalue(const char *, int);
 void env_varval(const char *);
 int auth_cmd(int, char *[]);
 int ayt_status(void);
