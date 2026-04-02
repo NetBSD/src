@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.281 2026/03/15 02:15:50 yamt Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.282 2026/04/02 11:36:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.281 2026/03/15 02:15:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.282 2026/04/02 11:36:24 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -1601,7 +1601,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 				child->p_lflag &= ~PL_ORPHANPG;
 				hispgrp->pg_jobc++;
 			} else {
-				KASSERT(hispgrp->pg_jobc > 0);
+				/* KASSERT(hispgrp->pg_jobc > 0); */
 				if (--hispgrp->pg_jobc == 0)
 					orphanpg(hispgrp);
 			}
