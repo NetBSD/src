@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.21.2.1 2026/03/04 20:30:39 martin Exp $
+# $NetBSD: GENERIC64,v 1.21.2.2 2026/04/02 18:10:39 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -77,6 +77,9 @@ gpio* 		at gpiobus?
 
 # System control
 jh7110syscon* 	at fdt? pass 1
+
+# Watchdog
+sunxiwdt* 	at fdt?			# Allwinner watchdog
 
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
