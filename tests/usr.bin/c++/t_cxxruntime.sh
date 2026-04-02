@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.8 2025/04/16 01:52:42 riastradh Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.8.2.1 2026/04/02 15:59:59 martin Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,12 +99,6 @@ EOF
 }
 
 cxxruntime_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdlib>
 #include <iostream>
@@ -126,12 +120,6 @@ cxxruntime_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
-
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
 
 	cat > test.cpp << EOF
 #include <cstdlib>
@@ -205,12 +193,6 @@ EOF
 }
 
 cxxruntime_pic_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdlib>
 int callpic(void);
@@ -242,12 +224,6 @@ cxxruntime_pic_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
-
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
 
 	cat > test.cpp << EOF
 #include <cstdlib>

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.11 2025/01/06 10:46:43 martin Exp $	*/
+/*	$NetBSD: asm.h,v 1.11.2.1 2026/04/02 15:59:59 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,20 +41,16 @@
 
 /*
  * Define -pg profile entry code.
- * Must always be noreorder, must never use a macro instruction
- * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
  */
 #define	_KERN_MCOUNT						\
-	.set	push;						\
-	subi	sp, sp, CALLFRAME_SIZE;				\
-	REG_S	a0, CALLFRAME_S0(sp);				\
+	addi	sp, sp, -CALLFRAME_SIZ;				\
 	REG_S	ra, CALLFRAME_RA(sp);				\
-	move	a0, ra;						\
-	call	_mcount 					\
+	REG_S	a0, CALLFRAME_S1(sp);				\
+	mv	a0, ra;						\
+	call	PLT(_mcount); 					\
 	REG_L	ra, CALLFRAME_RA(sp);				\
-	REG_L	a0, CALLFRAME_S0(sp);				\
-	addi	sp, sp, CALLFRAME_SIZ;				\
-	.set	pop;
+	REG_L	a0, CALLFRAME_S1(sp);				\
+	addi	sp, sp, CALLFRAME_SIZ
 
 #ifdef GPROF
 #define	_PROF_PROLOGUE _KERN_MCOUNT
