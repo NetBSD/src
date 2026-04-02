@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.7.2.2 2025/10/26 12:26:27 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.7.2.3 2026/04/02 18:13:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.2.2 2025/10/26 12:26:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.2.3 2026/04/02 18:13:21 martin Exp $");
 
 #include <sys/param.h>
 
@@ -53,18 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.7.2.2 2025/10/26 12:26:27 martin Exp $");
 #else
 #define NCPUINFO	1
 #endif /* MULTIPROCESSOR */
-
-static void
-cache_nullop(vaddr_t va, paddr_t pa, psize_t sz)
-{
-}
-
-void (*cpu_sdcache_wbinv_range)(vaddr_t, paddr_t, psize_t) = cache_nullop;
-void (*cpu_sdcache_inv_range)(vaddr_t, paddr_t, psize_t) = cache_nullop;
-void (*cpu_sdcache_wb_range)(vaddr_t, paddr_t, psize_t) = cache_nullop;
-
-u_int   riscv_dcache_align = CACHE_LINE_SIZE;
-u_int   riscv_dcache_align_mask = CACHE_LINE_SIZE - 1;
 
 struct cpu_arch {
 	uint64_t	 ca_id;
