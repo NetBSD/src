@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.14 2022/08/19 08:17:32 ryo Exp $ */
+/* $NetBSD: pte.h,v 1.15 2026/04/02 07:44:30 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -62,13 +62,17 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define  LX_BLKPAG_OS_2		__SHIFTIN(4,LX_BLKPAG_OS)
 #define  LX_BLKPAG_OS_3		__SHIFTIN(8,LX_BLKPAG_OS)
 #define LX_BLKPAG_UXN		__BIT(54)	/* Unprivileged Execute Never */
+#define LX_BLKPAG_XN		__BIT(54)	/* Execute Never (EL2) */
 #define LX_BLKPAG_PXN		__BIT(53)	/* Privileged Execute Never */
+#define LX_S2_BLKPAG_XN		__BITS(54,53)	/* Execute Never (stage2) */
+#define  LX_S2_BLKPAG_XN_XN	__SHIFTIN(1,LX_S2_BLKPAG_XN)
 #define LX_BLKPAG_CONTIG	__BIT(52)	/* Hint of TLB cache */
 #define LX_BLKPAG_DBM		__BIT(51)	/* Dirty Bit Modifier (V8.1) */
 #define LX_BLKPAG_GP		__BIT(50)	/* Guarded Page (V8.5) */
 #define LX_TBL_PA		__BITS(47, 12)
 #define LX_BLKPAG_OA		__BITS(47, 12)
 #define LX_BLKPAG_NG		__BIT(11)	/* Not Global */
+#define LX_S2_BLKPAG_FnXS	__BIT(11)
 #define LX_BLKPAG_AF		__BIT(10)	/* Access Flag */
 #define LX_BLKPAG_SH		__BITS(9,8)	/* Shareability */
 #define  LX_BLKPAG_SH_NS	__SHIFTIN(0,LX_BLKPAG_SH) /* Non Shareable */
@@ -78,12 +82,27 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define  LX_BLKPAG_AP_RW	__SHIFTIN(0,LX_BLKPAG_AP) /* RW */
 #define  LX_BLKPAG_AP_RO	__SHIFTIN(1,LX_BLKPAG_AP) /* RO */
 #define LX_BLKPAG_APUSER	__BIT(6)
+#define LX_S2_BLKPAG_AP1_RES1	__BIT(6)	/* EL2 */
+#define LX_S2_BLKPAG_S2AP	__BITS(7,6)
+#define  LX_S2_BLKPAG_S2AP_NA	__SHIFTIN(0,LX_S2_BLKPAG_S2AP) /* No access */
+#define  LX_S2_BLKPAG_S2AP_RO	__SHIFTIN(1,LX_S2_BLKPAG_S2AP) /* Read-only */
+#define  LX_S2_BLKPAG_S2AP_WO	__SHIFTIN(2,LX_S2_BLKPAG_S2AP) /* Write-only */
+#define  LX_S2_BLKPAG_S2AP_RW	__SHIFTIN(3,LX_S2_BLKPAG_S2AP) /* Read/Write */
 #define LX_BLKPAG_NS		__BIT(5)
 #define LX_BLKPAG_ATTR_INDX	__BITS(4,2)	/* refer MAIR_EL1 attr<n> */
 #define  LX_BLKPAG_ATTR_INDX_0	__SHIFTIN(0,LX_BLKPAG_ATTR_INDX)
 #define  LX_BLKPAG_ATTR_INDX_1	__SHIFTIN(1,LX_BLKPAG_ATTR_INDX)
 #define  LX_BLKPAG_ATTR_INDX_2	__SHIFTIN(2,LX_BLKPAG_ATTR_INDX)
 #define  LX_BLKPAG_ATTR_INDX_3	__SHIFTIN(3,LX_BLKPAG_ATTR_INDX)
+#define LX_S2_BLKPAG_MEMATTR	__BITS(5,2)
+#define  LX_S2_BLKPAG_MEMATTR_nGnRnE	__SHIFTIN(0x0,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_nGnRE	__SHIFTIN(0x1,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_nGRE	__SHIFTIN(0x2,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_GRE	__SHIFTIN(0x3,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_NC	__SHIFTIN(0x5,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_WT	__SHIFTIN(0xa,LX_S2_BLKPAG_MEMATTR)
+#define  LX_S2_BLKPAG_MEMATTR_WB	__SHIFTIN(0xf,LX_S2_BLKPAG_MEMATTR)
+
 #define LX_TYPE			__BIT(1)
 #define  LX_TYPE_BLK		__SHIFTIN(0, LX_TYPE)
 #define  LX_TYPE_TBL		__SHIFTIN(1, LX_TYPE)
