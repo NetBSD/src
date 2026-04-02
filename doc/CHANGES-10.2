@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.92 2026/03/05 07:15:46 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.93 2026/04/02 19:00:42 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -2084,4 +2084,47 @@ sys/ddb/db_access.c				1.28
 
 	PR 59419: fix kernel compilation when KGDB is defined, but DDB is not.
 	[skrll, ticket #1244]
+
+share/man/man7/sysctl.7				1.168
+
+	sysctl(7): fix typo in kernel parameter name "UVMHIST".
+	[andvar, ticket #1245]
+
+lib/libnpf/npf.c				1.57
+
+	npf: PR 60037: fix mmap(2) handling of const npf table data.
+	[joe, ticket #1247]
+
+sys/arch/vax/boot/boot/conf.c			1.19
+sys/arch/vax/boot/boot/ra.c			1.23
+sys/arch/vax/boot/boot/vaxstand.h		1.12
+sys/arch/vax/uba/uba_mainbus.c			1.15
+
+	vax/uba: fix detection of CMD CQD-22x MSCP controllers.
+	[hans, ticket #1248]
+
+usr.bin/telnet/authenc.c			1.15
+usr.bin/telnet/commands.c			1.81
+usr.bin/telnet/externs.h			1.45
+usr.bin/telnet/telnet.c				1.45
+
+	telnet(1): only send exported variables.
+	[christos, ticket #1249]
+
+sys/dev/pci/esm.c				1.67
+
+	esm(4): PR 59621: fix fallout from the device_t split.
+	[mlelstv, ticket #1250]
+
+distrib/sets/lists/comp/mi			1.2521
+external/mit/expat/lib/libexpat/Makefile	1.5
+
+	install expat_config.h
+	[wiz, ticket #1251]
+
+sys/stand/efiboot/bootarm/Makefile		1.10
+sys/stand/efiboot/version			1.34 (patch)
+
+	arm: PR 60069: fix EFI boot for some firmware.
+	[skrll, ticket #1252]
 
