@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.49 2024/06/16 19:41:39 rillig Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.49.4.1 2026/04/02 19:09:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS)
-__RCSID("$NetBSD: snprintb.c,v 1.49 2024/06/16 19:41:39 rillig Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.49.4.1 2026/04/02 19:09:50 martin Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.49 2024/06/16 19:41:39 rillig Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.49 2024/06/16 19:41:39 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.49.4.1 2026/04/02 19:09:50 martin Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -205,9 +205,7 @@ new_style(state *s)
 		case '=':
 		case ':':
 			s->bitfmt += 2;
-			if (kind == '=' && field_kind != 'f')
-				return -1;
-			if (kind == ':' && field_kind != 'F')
+			if (field_kind == 0)
 				return -1;
 			uint8_t cmp = cur_bitfmt[1];
 			if (cur_bitfmt[2] == '\0')
@@ -224,7 +222,6 @@ new_style(state *s)
 		case '*':
 			if (field_kind == 0)
 				return -1;
-			field_kind = 0;
 			if (cur_bitfmt[1] == '\0')
 				return -1;
 			s->bitfmt++;

@@ -1,7 +1,7 @@
-/* $NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.37.2.1 2026/04/02 19:09:50 martin Exp $ */
 
 /*
- * Copyright (c) 2002, 2004, 2008, 2010, 2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2004, 2008, 2010, 2024-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code was contributed to The NetBSD Foundation by Christos Zoulas and
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010, 2024\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.37 2024/12/31 08:56:21 rillig Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.37.2.1 2026/04/02 19:09:50 martin Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -56,26 +56,35 @@ vis_arr(char *buf, size_t bufsize, const char *arr, size_t arrsize)
 
 static void
 check_snprintb_m(const char *file, size_t line,
-    size_t bufsize, const char *bitfmt, size_t bitfmtlen, uint64_t val,
+    size_t bufsize, const char *bitfmt, size_t bitfmtlen,
+    uint64_t val, const char *val_str,
     size_t line_max,
     int want_rv, const char *want_buf, size_t want_bufsize)
 {
-	char buf[1024], vis_bitfmt[1024], vis_want_buf[1024], vis_buf[1024];
+	char buf_with_padding[1026], vis_bitfmt[1024], vis_want_buf[1024], vis_buf[1024];
 
-	ATF_REQUIRE(bufsize <= sizeof(buf));
-	ATF_REQUIRE(want_bufsize <= sizeof(buf));
+	ATF_REQUIRE(bufsize <= sizeof(buf_with_padding) - 2);
+	ATF_REQUIRE(want_bufsize <= sizeof(buf_with_padding) - 2);
 	if (bitfmtlen > 2 && bitfmt[0] == '\177')
 		ATF_REQUIRE_MSG(
 		    bitfmt[bitfmtlen - 1] == '\0',
 		    "%s:%zu: missing trailing '\\0' in new-style bitfmt",
 		    file, line);
+	ATF_CHECK_MSG(
+	    strncmp(val_str, "0x", 2) == 0 || strcmp(val_str, "ch") == 0,
+	    "%s:%zu: value \"%s\" must be hexadecimal", file, line, val_str);
+	ATF_CHECK_MSG(
+	    ((strlen(val_str) - 2) & (strlen(val_str) - 3)) == 0,
+	    "%s:%zu: the number of digits in value \"%s\" must be a power of two", file, line, val_str);
+
 	if (bufsize == 0)
 		want_bufsize = 0;
-	memset(buf, 0x5a, sizeof(buf));
+	memset(buf_with_padding, 0x5a, sizeof(buf_with_padding));
 
+	char *buf = buf_with_padding + 1;
 	int rv = snprintb_m(buf, bufsize, bitfmt, val, line_max);
 
-	size_t have_bufsize = sizeof(buf);
+	size_t have_bufsize = sizeof(buf_with_padding) - 2;
 	while (have_bufsize > 0 && buf[have_bufsize - 1] == 0x5a)
 		have_bufsize--;
 	if (rv > 0 && (unsigned)rv < have_bufsize
@@ -85,6 +94,21 @@ check_snprintb_m(const char *file, size_t line,
 		for (size_t i = have_bufsize; i >= 2; i--)
 			if (buf[i - 2] == '\0' && buf[i - 1] == '\0')
 				have_bufsize = i;
+
+	ATF_CHECK_MSG(
+	    buf_with_padding[0] == 0x5a,
+	    "failed:\n"
+	    "\ttest case: %s:%zu\n"
+	    "\tout-of-bounds write before: %02x\n",
+	    file, line,
+	    (unsigned char)buf_with_padding[0]);
+	ATF_CHECK_MSG(
+	    buf_with_padding[sizeof(buf_with_padding) - 1] == 0x5a,
+	    "failed:\n"
+	    "\ttest case: %s:%zu\n"
+	    "\tout-of-bounds write after: %02x\n",
+	    file, line,
+	    (unsigned char)buf_with_padding[sizeof(buf_with_padding) - 1]);
 
 	ATF_CHECK_MSG(
 	    rv == want_rv
@@ -111,7 +135,7 @@ check_snprintb_m(const char *file, size_t line,
 #define	h_snprintb_m_len(bufsize, bitfmt, val, line_max,		\
 	    want_rv, want_buf)						\
 	check_snprintb_m(__FILE__, __LINE__,				\
-	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, line_max,		\
+	    bufsize, bitfmt, sizeof(bitfmt) - 1, val, #val, line_max,	\
 	    want_rv, want_buf, sizeof(want_buf))
 
 #define	h_snprintb(bitfmt, val, want_buf)				\
@@ -678,9 +702,10 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, 'F' with non-exhaustive ':'
 	//
-	// A bit-field that does not match any values generates multiple commas
-	// in a row, which looks confusing. The ':' conversions should either be
-	// exhaustive, or there should be a '*' catch-all conversion.
+	// A bit-field that does not match any values generates multiple
+	// commas in a row, which looks confusing. The ':' conversions should
+	// either be exhaustive, or there should be a '*' catch-all
+	// conversion.
 	h_snprintb(
 	    "\177\020"
 	    "b\000bit0\0"
@@ -690,6 +715,18 @@ ATF_TC_BODY(snprintb, tc)
 	    "b\001bit1\0",
 	    0x3,
 	    "0x3<bit0,,bit1>");
+
+	// new style bit-field, 'F', multiple ':' for the same value
+	//
+	// Repeating the same value is probably a mistake, but this is not
+	// checked for at runtime.
+	h_snprintb(
+	    "\177\020"
+	    "F\000\004\0"
+		":\017m1\0"
+		":\017match\0",
+	    0xff,
+	    "0xff<m1match>");
 
 	// new style bit-field, '=', can never match
 	//
@@ -741,11 +778,10 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field, difference between '=' and ':'
 	//
-	// The ':' conversion can almost emulate the '=' conversion, without the
-	// numeric output and with a different separator.
-	//
-	// The 'f' and '=' conversions are used together, the 'F' and ':'
-	// conversions are used together, but these two groups cannot be mixed.
+	// The ':' conversion can almost emulate the '=' conversion by
+	// starting its description with '=', excluding the numeric value of
+	// the field. The 'f' and '=' conversions mix well, and so do 'F' and
+	// ':'. Other combinations don't mix well and are thus erroneous.
 	h_snprintb(
 	    "\177\020"
 	    "f\000\004field\0"
@@ -789,7 +825,7 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style bit-field default, can never match
 	//
-	// The '=' conversion are exhaustive, making the '*' redundant.
+	// The '=' conversions are exhaustive, making the '*' redundant.
 	h_snprintb(
 	    "\177\020"
 	    "f\010\002f\0"
@@ -899,25 +935,56 @@ ATF_TC_BODY(snprintb, tc)
 	    0xa5,
 	    "0xa5<,bit5#");
 
-	// new style combinations, 'f' ':'
+	// new style combinations, 'f' ':' with alphanumeric description
 	//
-	// The ':' conversion requires a preceding 'F' conversion, not 'f'.
-	h_snprintb_val_error(
+	// Combining 'f' with ':' outputs no separator, joining the "0x1" with
+	// the description "one" in this example.
+	//
+	// For simplicity of the code, this case is allowed, but lint warns
+	// about it, to catch accidental mismatches between '=' and ':'.
+	h_snprintb(
 	    "\177\20"
 	    "f\000\004nibble\0"
 		":\001one\0",
 	    0x01,
-	    "0x1<nibble=0x1#");
+	    "0x1<nibble=0x1one>");
+
+	// new style combinations, 'f' ':' with punctuation description
+	//
+	// When the description starts with punctuation, in this case round
+	// parentheses, the resulting string is easily readable.
+	h_snprintb(
+	    "\177\20"
+	    "f\000\002field\0" ":\0(zero)\0"
+	    "f\000\002field\0" "*(catch-all)\0",
+	    0x0000,
+	    "0<field=0(zero),field=0(catch-all)>");
 
 	// new style combinations, 'F' '='
 	//
-	// A '=' conversion requires a preceding 'f' conversion, not 'F'.
-	h_snprintb_val_error(
+	// When 'F' is followed by '=', the output looks garbled, as there is
+	// no field name preceding the '='.
+	h_snprintb(
 	    "\177\20"
 	    "F\000\004\0"
 		"=\001one\0",
 	    0x01,
-	    "0x1<#");
+	    "0x1<=one>");
+
+	// new style combinations, 'F' '*' '='
+	//
+	// When 'F' is followed by '=', the field name can be produced using
+	// the '*' catch-all before comparing the field value using '='.
+	// This pattern can be used to print the field name without its
+	// numeric value, which is useful in cases where the field value
+	// descriptions contain numbers themselves.
+	h_snprintb(
+	    "\177\20"
+	    "F\0\2CKS\0"
+		"*CKS\0"
+		"=\0" "1/4\0",
+	    0x00,
+	    "0<CKS=1/4>");
 
 	// new style combinations, '='
 	//
@@ -948,51 +1015,63 @@ ATF_TC_BODY(snprintb, tc)
 
 	// new style combinations, 'f' '*' '='
 	//
-	// After a catch-all '*' conversions, there must not be further '='
-	// conversions.
-	h_snprintb_val_error(
+	// After a catch-all '*' conversion, further '=' conversions may
+	// follow.
+	h_snprintb(
 	    "\177\020"
 	    "f\000\010f\0"
 		"*=default\0"
 		"=\245match\0",
 	    0xa5,
-	    "0xa5<f=0xa5=default#");
+	    "0xa5<f=0xa5=default=match>");
 
 	// new style combinations, 'F' '*' ':'
 	//
-	// After a catch-all '*' conversion, there must not be further ':'
-	// conversions.
-	h_snprintb_val_error(
+	// After a catch-all '*' conversion, further ':' conversions may
+	// follow. This pattern is seldom used.
+	h_snprintb(
 	    "\177\020"
 	    "F\000\010F\0"
 		"*default\0"
-		":\245-match\0",
+		":\xa5-match\0",
 	    0xa5,
-	    "0xa5<default#");
+	    "0xa5<default-match>");
 
 	// new style combinations, 'f' '*' '*'
 	//
-	// After a catch-all '*' conversion, there must not be further '=' or
-	// '*' conversions.
-	h_snprintb_val_error(
+	// After a catch-all '*' conversion, further '*' conversions are
+	// silently ignored, up to the next 'f' or 'F' conversion.
+	h_snprintb(
 	    "\177\020"
 	    "f\000\010f\0"
 		"*=default-f\0"
 		"*ignored\0",
 	    0xa5,
-	    "0xa5<f=0xa5=default-f#");
+	    "0xa5<f=0xa5=default-f>");
 
 	// new style combinations, 'F' '*' '*'
 	//
-	// After a catch-all '*' conversion, there must not be further ':' or
-	// '*' conversions.
-	h_snprintb_val_error(
+	// After a catch-all '*' conversion, further '*' conversions are
+	// silently ignored, up to the next 'f' or 'F' conversion.
+	h_snprintb(
 	    "\177\020"
 	    "F\000\010\0"
 		"*default-F\0"
 		"*ignored\0",
 	    0xa5,
-	    "0xa5<default-F#");
+	    "0xa5<default-F>");
+
+	// new style bit-field, 'f', multiple '=' for the same value
+	//
+	// Repeating the same value is probably a mistake, but this is not
+	// checked for at runtime.
+	h_snprintb(
+	    "\177\020"
+	    "f\000\004field\0"
+		"=\017m1\0"
+		"=\017match\0",
+	    0xff,
+	    "0xff<field=0xf=m1=match>");
 
 	// example from the manual page, old style octal
 	h_snprintb(
@@ -1443,7 +1522,11 @@ ATF_TC_BODY(snprintb_m, tc)
 	    9,
 	    "0xff<mat#\0");
 
-	// new style, line_max exceeded by unnamed bit-field '>' in line 1
+	// new style, line_max exceeded by '>' after an unnamed bit-field
+	// before a separator, is continued in line 2
+	//
+	// Repeating the same value is probably a mistake, but this is not
+	// checked for at runtime.
 	h_snprintb_m(
 	    "\177\020"
 	    "F\000\004\0"
@@ -1463,15 +1546,19 @@ ATF_TC_BODY(snprintb_m, tc)
 	    10,
 	    "0xff<m1ma#\0");
 
-	// new style, line_max exceeded by unnamed bit-field '>' in line 2
+	// new style, line_max exceeded by the '>' after an unnamed bit-field,
+	// is continued in line 2
+	//
+	// Repeating the same value is probably a mistake, but this is not
+	// checked for at runtime.
 	h_snprintb_m(
 	    "\177\020"
 	    "F\000\004\0"
 		":\017m1\0"
 		":\017match\0",
 	    0xff,
-	    10,
-	    "0xff<m1ma#\0");
+	    12,
+	    "0xff<m1matc#\0");
 
 	// new style unnamed bit-field complete
 	h_snprintb_m(

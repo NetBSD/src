@@ -1,4 +1,4 @@
-.\"     $NetBSD: snprintb.3,v 1.39 2024/04/08 21:28:35 rillig Exp $
+.\"     $NetBSD: snprintb.3,v 1.39.4.1 2026/04/02 19:09:51 martin Exp $
 .\"
 .\" Copyright (c) 1998, 2024 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2024
+.Dd March 14, 2026
 .Dt SNPRINTB 3
 .Os
 .Sh NAME
@@ -222,7 +222,8 @@ and that spans
 .Ar width
 bits.
 To print individual values of the field, see the
-.Sq Cm \&=
+.Sq Cm \&= ,
+.Sq Cm \&:
 and
 .Sq Cm \&*
 conversions below.
@@ -230,6 +231,7 @@ conversions below.
 .It Cm \&= Ar cmp Ar descr
 Compares the field value from the previous
 .Sq Cm f
+.Pq or, in rare cases, Sq Cm F
 conversion to the single-byte value
 .Ar cmp ,
 ranging from
@@ -252,6 +254,7 @@ Describes a multi-bit field like
 .Sq Cm f ,
 but just extracts the value for use with the
 .Sq Cm \&:
+.Pq or, in rare cases, Sq Cm \&=
 and
 .Sq Cm \&*
 conversions below.
@@ -263,6 +266,7 @@ it is only present for uniformity with the other conversions.
 .It Cm \&: Ar cmp Ar descr
 Compares the field value from the previous
 .Sq Cm F
+.Pq or, in rare cases, Sq Cm f
 conversion to the single-byte value
 .Ar cmp ,
 ranging from
@@ -431,6 +435,7 @@ snprintb(buf, bufsize, MAP_FMT, 0x2e000000)
 will fail if:
 .Bl -tag -width Er
 .It Bq Er EINVAL
+.Pq Only in user mode.
 The leading character
 .Po for the
 .Dq old
