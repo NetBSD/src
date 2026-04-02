@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.101 2026/04/02 16:00:47 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.102 2026/04/02 16:06:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.101 2026/04/02 16:00:47 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.102 2026/04/02 16:06:28 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -1027,7 +1027,7 @@ sctlr_clear:
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
 	    SCTLR_UMA |     /* EL0 Controls access to interrupt masks */ \
 	    SCTLR_ITD |     /* IT instruction disable */ \
-	    SCTLR_nAA |     /* ? */ \
+	    SCTLR_nAA |     /* Non-aligned access. FEAT_LSE2 */ \
 	    SCTLR_CP15BEN | /* CP15 barrier enable */ \
 	    SCTLR_SA0 |     /* Enable EL0 stack alignment check */ \
 	    SCTLR_SA |      /* Enable SP alignment check */ \
