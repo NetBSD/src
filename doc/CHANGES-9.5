@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.99 2026/03/05 07:04:42 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.100 2026/04/02 18:04:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1302,4 +1302,14 @@ libexec/ld.elf_so/headers.c			1.78
 
 	ld.elf_so(1): fix typo in debug message.
 	[skrll, ticket #2005]
+
+share/man/man7/sysctl.7				1.168
+
+	sysctl(7): fix typo in kernel parameter name "UVMHIST".
+	[andvar, ticket #2006]
+
+sys/dev/pci/esm.c				1.67
+
+	esm(4): PR 59621: fix fallout from the device_t split.
+	[mlelstv, ticket #2007]
 
