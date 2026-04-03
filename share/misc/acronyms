@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.323 2026/03/18 00:11:30 jschauma Exp $
+$NetBSD: acronyms,v 1.324 2026/04/03 11:39:37 nia Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -635,6 +635,7 @@ WAFWOT	what a foolish waste of time
 WAG	wild-ass guess
 WB	welcome back
 WCPGW	what could possibly go wrong
+WDYM	what do you mean
 WDYMBT	what do you mean by that
 WELC	working effectively with legacy code
 WFH	working from home
@@ -655,6 +656,7 @@ WTH	{what,when,where,who,why} the hell
 WTS	{waiting,want,willing} to sell
 WTT	{waiting,want,willing} to trade
 WWJD	what would Jesus do?
+WWYD	what would you do?
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
 YAOTM	yet another off-topic message
