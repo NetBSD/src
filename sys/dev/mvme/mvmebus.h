@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.h,v 1.4 2012/10/27 17:18:27 chs Exp $	*/
+/*	$NetBSD: mvmebus.h,v 1.5 2026/04/03 17:54:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ struct mvmebus_softc {
 	void			(*sc_intr_disestablish)(void *, int, int, int,
 				    struct evcnt *);
 	struct vme_chipset_tag	sc_vct;
-	struct mvme68k_bus_dma_tag	sc_mvmedmat;
+	struct m68k_bus_dma_tag	sc_mvmedmat;
 };
 
 
