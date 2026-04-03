@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.90.2.1 2026/04/03 12:12:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.90.2.1 2026/04/03 12:12:49 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.90 2025/04/21 22:55:38 riastradh 
 #include <x86/specialreg.h>
 #include <x86/dbregs.h>
 #include <x86/cpu_counter.h>
+#include <x86/nmi.h>
 
 #include <machine/cpuvar.h>
 #include <machine/pmap_private.h>
@@ -1202,6 +1203,7 @@ static void
 vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_vcpu_exit *exit)
 {
+	struct trapframe fake;
 	uint64_t qual;
 
 	qual = vmx_vmread(VMCS_EXIT_INTR_INFO);
@@ -1211,6 +1213,20 @@ vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 	if (__SHIFTOUT(qual, INTR_INFO_TYPE) != INTR_TYPE_NMI) {
 		goto error;
+	}
+
+	/*
+	 * this fake frame is ok for tprof.
+	 */
+	memset(&fake, 0, sizeof(fake));
+#if defined(__x86_64__)
+	fake.tf_rip = (uintptr_t)vmx_exit_exc_nmi;
+#else
+	fake.tf_eip = (uintptr_t)vmx_exit_exc_nmi;
+#endif
+	if (!nmi_dispatch(&fake)) {
+		/* XXX what to do for kgdb/ddb? */
+		x86_nmi();
 	}
 
 	exit->reason = NVMM_VCPU_EXIT_NONE;
@@ -2287,6 +2303,12 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		}
 		cpudata->gcr2 = rcr2();
 		vmx_htlb_flush_ack(cpudata, machgen);
+		exitcode = vmx_vmread(VMCS_EXIT_REASON);
+		exitcode &= __BITS(15,0);
+		if (exitcode == VMCS_EXITCODE_EXC_NMI) {
+			/* handle nmi before vmx_sti() */
+			vmx_exit_exc_nmi(mach, vcpu, exit);
+		}
 		vmx_sti();
 		vmx_vcpu_guest_fpu_leave(vcpu);
 
@@ -2298,12 +2320,9 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 		launched = true;
 
-		exitcode = vmx_vmread(VMCS_EXIT_REASON);
-		exitcode &= __BITS(15,0);
-
 		switch (exitcode) {
 		case VMCS_EXITCODE_EXC_NMI:
-			vmx_exit_exc_nmi(mach, vcpu, exit);
+			/* handled earlier */
 			break;
 		case VMCS_EXITCODE_EXT_INT:
 			exit->reason = NVMM_VCPU_EXIT_NONE;
