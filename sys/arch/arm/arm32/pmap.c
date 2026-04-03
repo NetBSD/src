@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.445 2026/02/04 06:00:02 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.446 2026/04/03 18:30:01 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.445 2026/02/04 06:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.446 2026/04/03 18:30:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5028,11 +5028,24 @@ pmap_activate_efirt(void)
 
 #endif
 
+static inline void
+pmap_blockuserspace(bool flag)
+{
+#if \
+    defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_IXP12X0) || \
+    defined(CPU_XSCALE)
+
+	extern int block_userspace_access;
+
+	block_userspace_access = flag ? 1 : 0;
+#endif
+}
+
 
 void
 pmap_activate(struct lwp *l)
 {
-	extern int block_userspace_access;
 	pmap_t npm = l->l_proc->p_vmspace->vm_map.pmap;
 
 	UVMHIST_FUNC(__func__);
@@ -5085,7 +5098,8 @@ pmap_activate(struct lwp *l)
 #endif /* !ARM_MMU_EXTENDED */
 
 	PMAPCOUNT(activations);
-	block_userspace_access = 1;
+
+	pmap_blockuserspace(true);
 
 #ifndef ARM_MMU_EXTENDED
 	/*
@@ -5166,7 +5180,7 @@ pmap_activate(struct lwp *l)
 	restore_interrupts(oldirqstate);
 #endif /* ARM_MMU_EXTENDED */
 
-	block_userspace_access = 0;
+	pmap_blockuserspace(false);
 
 #ifndef ARM_MMU_EXTENDED
  all_done:

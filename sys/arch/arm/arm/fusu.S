@@ -1,4 +1,4 @@
-/*	$NetBSD: fusu.S,v 1.8 2019/10/28 18:14:38 joerg Exp $	*/
+/*	$NetBSD: fusu.S,v 1.9 2026/04/03 18:30:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -211,9 +211,15 @@ ENTRY_NP(ufetchstore_fault)
 	RETURN_ERROR_ALREADY_IN_R0
 END(ufetchstore_fault)
 
+#if \
+    defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_IXP12X0) || \
+    defined(CPU_XSCALE)
+
 /* XXXJRT Can we G/C this? */
 	.data
 	.align	0
 	.global _C_LABEL(block_userspace_access)
 _C_LABEL(block_userspace_access):
 	.word	0
+#endif
