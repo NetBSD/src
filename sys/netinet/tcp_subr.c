@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.298 2025/02/26 04:49:45 andvar Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.299 2026/04/03 07:37:59 mlelstv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.298 2025/02/26 04:49:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.299 2026/04/03 07:37:59 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -862,6 +862,7 @@ tcp_respond(struct tcpcb *tp, struct mbuf *mtemplate, struct mbuf *m,
 		break;
 #endif
 	default:
+		m_freem(m);
 		error = EAFNOSUPPORT;
 		break;
 	}
