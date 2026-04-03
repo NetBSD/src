@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.24 2024/01/18 05:12:29 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.25 2026/04/03 14:58:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2024/01/18 05:12:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2026/04/03 14:58:00 thorpej Exp $");
 
 #include "opt_mvmeconf.h"
 #include "vmetwo.h"
@@ -43,11 +43,12 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.24 2024/01/18 05:12:29 thorpej Exp $")
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/kcore.h>
 
-#define _MVME68K_BUS_DMA_PRIVATE
+#define _M68K_BUS_DMA_PRIVATE
 #define _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
-#undef _MVME68K_BUS_DMA_PRIVATE
+#undef _M68K_BUS_DMA_PRIVATE
 #undef _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/cpu.h>
 
@@ -67,7 +68,6 @@ int mainbus_print(void *, const char *);
 
 CFATTACH_DECL_NEW(mainbus, 0,
     mainbus_match, mainbus_attach, NULL, NULL);
-
 
 struct mainbus_devices {
 	const char *md_name;
@@ -91,8 +91,28 @@ static struct mainbus_devices mainbusdevs_1x7[] = {
 };
 #endif
 
-struct mvme68k_bus_dma_tag _mainbus_dma_tag = {
+static int
+mvme68k_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
+    bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
+    int flags)
+{
+	extern paddr_t avail_start, avail_end;
+	extern phys_ram_seg_t mem_clusters[];
+	bus_addr_t high;
+
+	if (flags & BUS_DMA_ONBOARD_RAM) {
+		high = mem_clusters[0].size;
+	} else {
+		high = avail_end;
+	}
+
+	return _bus_dmamem_alloc_common(t, avail_start, high,
+	    size, alignment, boundary, segs, nsegs, rsegs, flags);
+}
+
+struct m68k_bus_dma_tag _mainbus_dma_tag = {
 	NULL,
+	0,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load_direct,
@@ -100,8 +120,8 @@ struct mvme68k_bus_dma_tag _mainbus_dma_tag = {
 	_bus_dmamap_load_uio_direct,
 	_bus_dmamap_load_raw_direct,
 	_bus_dmamap_unload,
-	NULL,			/* Set up at run-time */
-	_bus_dmamem_alloc,
+	_bus_dmamap_sync,
+	mvme68k_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
@@ -150,7 +170,6 @@ mainbus_attach(device_t parent, device_t self, void *args)
 #ifdef MVME147
 	case MVME_147:
 		devices = mainbusdevs_147;
-		_mainbus_dma_tag._dmamap_sync = _bus_dmamap_sync_030;
 		break;
 #endif
 
@@ -160,7 +179,6 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	case MVME_172:
 	case MVME_177:
 		devices = mainbusdevs_1x7;
-		_mainbus_dma_tag._dmamap_sync = _bus_dmamap_sync_0460;
 		break;
 #endif
 

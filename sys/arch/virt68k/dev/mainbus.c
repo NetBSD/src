@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.3 2026/03/10 01:27:23 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.4 2026/04/03 14:58:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,9 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2026/03/10 01:27:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.4 2026/04/03 14:58:01 thorpej Exp $");
 
-#define _VIRT68K_BUS_DMA_PRIVATE
+#define _M68K_BUS_DMA_PRIVATE
 #define _VIRT68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
@@ -47,8 +47,9 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.3 2026/03/10 01:27:23 thorpej Exp $");
 
 #include <virt68k/dev/mainbusvar.h>
 
-struct virt68k_bus_dma_tag _mainbus_dma_tag = {
+struct m68k_bus_dma_tag _mainbus_dma_tag = {
 	NULL,
+	0,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load_direct,
@@ -56,7 +57,7 @@ struct virt68k_bus_dma_tag _mainbus_dma_tag = {
 	_bus_dmamap_load_uio_direct,
 	_bus_dmamap_load_raw_direct,
 	_bus_dmamap_unload,
-	NULL,			/* Set up at run-time */
+	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
@@ -246,10 +247,6 @@ mainbus_attach(device_t parent __unused, device_t self, void *args __unused)
 {
 
 	printf("\n");
-
-	_mainbus_dma_tag._dmamap_sync =
-	    (mmutype == MMU_68040) ? _bus_dmamap_sync_0460
-				   : _bus_dmamap_sync_030;
 
 	/* Attach the PICs first. */
 	bootinfo_enumerate(mainbus_attach_gfpic, self);

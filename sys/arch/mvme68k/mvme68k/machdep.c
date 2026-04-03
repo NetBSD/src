@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2026/03/28 22:19:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2026/04/03 14:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2026/03/28 22:19:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2026/04/03 14:58:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -83,9 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2026/03/28 22:19:34 thorpej Exp $"
 #include <sys/sysctl.h>
 
 #include <machine/cpu.h>
-#define _MVME68K_BUS_DMA_PRIVATE
+#define _M68K_BUS_DMA_PRIVATE
 #include <machine/bus.h>
-#undef _MVME68K_BUS_DMA_PRIVATE
+#undef _M68K_BUS_DMA_PRIVATE
 #include <machine/pcb.h>
 #include <machine/prom.h>
 #include <machine/psl.h>

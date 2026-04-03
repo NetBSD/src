@@ -1,12 +1,4 @@
-/* $NetBSD: bus_dma.h,v 1.14 2023/09/26 12:46:30 tsutsui Exp $ */
-
-/*
- * This file was extracted from alpha/include/bus.h
- * and should probably be resynced when needed.
- * Darrin B. Jewell <dbj@NetBSD.org> Sat Jul 31 06:11:33 UTC 1999
- * original cvs id: NetBSD: bus.h,v 1.29 1999/06/18 04:49:24 cgd Exp
- */
-
+/* $NetBSD: bus_dma.h,v 1.15 2026/04/03 14:58:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -88,6 +80,13 @@
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
+/*
+ * Flags used to constrain the physical memory allocated for DMA
+ *
+ * BUS_DMA_BUS4 reserved for machine-specific use.
+ */
+#define	BUS_DMA_24BIT		BUS_DMA_BUS1
+
 /* Forwards needed by prototypes below. */
 struct mbuf;
 struct uio;
@@ -112,6 +111,9 @@ typedef struct m68k_bus_dmamap *bus_dmamap_t;
 struct m68k_bus_dma_segment {
 	bus_addr_t	ds_addr;	/* DMA address */
 	bus_size_t	ds_len;		/* length of transfer */
+
+	/* PRIVATE */
+	bus_addr_t	_ds_cpuaddr;	/* CPU-relative phys addr of segment */
 	u_int		_ds_flags;	/* MD flags */
 };
 typedef struct m68k_bus_dma_segment	bus_dma_segment_t;
@@ -210,9 +212,10 @@ struct m68k_bus_dmamap {
 	bus_size_t	_dm_maxmaxsegsz; /* fixed largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
 	u_int		_dm_flags;	/* misc. flags */
+	void		*_dm_cookie;	/* bus-specific cookie */
 
-	/* Machine dependent fields: */
-	bus_size_t  dm_xfer_len;	/* length of successful transfer */
+	/* XXX spare field for very machine-specific things XXX */
+	bus_size_t	_dm_xxx_md_field;
 
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
@@ -239,7 +242,15 @@ int	_bus_dmamap_load_raw_direct(bus_dma_tag_t,
 	    bus_dmamap_t, bus_dma_segment_t *, int, bus_size_t, int);
 
 void	_bus_dmamap_unload(bus_dma_tag_t, bus_dmamap_t);
+
 void	_bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+
+void	_bus_dmamap_sync_1020(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+void	_bus_dmamap_sync_30(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
+	    bus_size_t, int);
+void	_bus_dmamap_sync_4060(bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
 	    bus_size_t, int);
 
 int	_bus_dmamem_alloc(bus_dma_tag_t tag, bus_size_t size,
@@ -254,5 +265,10 @@ void	_bus_dmamem_unmap(bus_dma_tag_t tag, void *kva,
 paddr_t	_bus_dmamem_mmap(bus_dma_tag_t tag, bus_dma_segment_t *segs,
 	    int nsegs, off_t off, int prot, int flags);
 #endif /* _M68K_BUS_DMA_PRIVATE */
+
+/* semi-private */
+int	_bus_dmamem_alloc_common(bus_dma_tag_t,
+	    bus_addr_t, bus_addr_t, bus_size_t, bus_size_t, bus_size_t,
+	    bus_dma_segment_t *, int, int *, int);
 
 #endif /* _M68K_BUS_DMA_H_ */

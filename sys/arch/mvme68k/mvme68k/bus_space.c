@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.12 2025/11/16 16:25:30 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.13 2026/04/03 14:58:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,17 +35,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.12 2025/11/16 16:25:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2026/04/03 14:58:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
-#define _MVME68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
+#define _M68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
 #define _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
-#undef _MVME68K_BUS_DMA_PRIVATE
+#undef _M68K_BUS_DMA_PRIVATE
 #undef _MVME68K_BUS_SPACE_PRIVATE
 
 static	void	peek1(void *, void *);
