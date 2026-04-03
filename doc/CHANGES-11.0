@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.79 2026/03/08 10:59:15 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.80 2026/04/03 12:00:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2776,4 +2776,199 @@ external/mit/xorg/lib/Makefile			1.62
 
 	build fix: libGL depends upon libXxf86vm.
 	[hgutch, ticket #208]
+
+share/mk/bsd.own.mk				1.1468
+sys/arch/riscv/include/asm.h			1.12
+sys/arch/riscv/include/profile.h		1.2
+tests/usr.bin/c++/t_call_once.sh		1.8
+tests/usr.bin/c++/t_cxxruntime.sh		1.9
+tests/usr.bin/c++/t_hello.sh			1.9
+tests/usr.bin/c++/t_pthread_once.sh		1.8
+tests/usr.bin/c++/t_static_destructor.sh	1.12 (patch)
+tests/usr.bin/cc/t_hello.sh			1.14
+
+	risc-v: PR 59301: add profiling support.
+	[skrll, ticket #210]
+
+usr.sbin/makefs/makefs.8			1.75
+
+	makefs(8): fix typos in the manual page.
+	[andvar, ticket #211]
+
+share/man/man7/sysctl.7				1.168
+
+	sysctl(7): fix typo in kernel parameter name "UVMHIST".
+	[andvar, ticket #212]
+
+sys/net/npf/npf_socket.c			1.5
+
+	npf: PR 60060: fix locking.
+	[joe, ticket #213]
+
+lib/libnpf/npf.c				1.57
+
+	npf: PR 60037: fix mmap(2) handling of const npf table data.
+	[joe, ticket #214]
+
+external/public-domain/tz/dist/CONTRIBUTING     up to 1.1.1.10
+external/public-domain/tz/dist/Makefile         up to 1.5
+external/public-domain/tz/dist/NEWS             up to 1.6
+external/public-domain/tz/dist/README           up to 1.3
+external/public-domain/tz/dist/SECURITY         up to 1.1.1.2
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.44
+external/public-domain/tz/dist/africa           up to 1.3
+external/public-domain/tz/dist/antarctica       up to 1.4
+external/public-domain/tz/dist/asia             up to 1.16
+external/public-domain/tz/dist/australasia      up to 1.12
+external/public-domain/tz/dist/backzone         up to 1.4
+external/public-domain/tz/dist/calendars        up to 1.1.1.3
+external/public-domain/tz/dist/checknow.awk     up to 1.4
+external/public-domain/tz/dist/etcetera         up to 1.4
+external/public-domain/tz/dist/europe           up to 1.5
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.10
+external/public-domain/tz/dist/leap-seconds.list up to 1.11
+external/public-domain/tz/dist/leapseconds      up to 1.11
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.15
+external/public-domain/tz/dist/northamerica     up to 1.5
+external/public-domain/tz/dist/southamerica     up to 1.5
+external/public-domain/tz/dist/theory.html      up to 1.5
+external/public-domain/tz/dist/version          up to 1.17
+external/public-domain/tz/dist/zone1970.tab     up to 1.5
+external/public-domain/tz/dist/zonenow.tab      up to 1.6
+doc/3RDPARTY					(apply patch)
+
+	Import tzdata 2026a (using the 2026agtz data).
+	[kre, ticket #215]
+
+libexec/ld.elf_so/tls.c				1.29
+
+	ld.elf_so(1): PR 60011: fix TLS alignment for some architectures.
+	[skrll, ticket #216]
+
+usr.bin/telnet/authenc.c			1.15
+usr.bin/telnet/commands.c			1.81
+usr.bin/telnet/externs.h			1.45
+usr.bin/telnet/telnet.c				1.45
+
+	telnet(1): only send exported variables.
+	[christos, ticket #217]
+
+sys/dev/pci/esm.c				1.67
+
+	esm(4): PR 59621: fix fallout from the device_t split.
+	[mlelstv, ticket #218]
+
+sys/dev/ic/clmpcc.c				1.55
+
+	clmpcc(4): no need for an informational printf to be flagged
+	as an error.
+	[thorpej, ticket #219]
+
+sys/arch/arm/sunxi/sunxi_wdt.c			1.7
+sys/arch/riscv/conf/GENERIC64			1.23
+sys/arch/riscv/sunxi/files.sunxi		1.4
+
+	riscv: support allwinner,sun20i-d1-wdt
+	[skrll, ticket #220]
+
+sys/arch/riscv/conf/files.riscv			1.18
+sys/arch/riscv/include/cpufunc.h		1.2
+sys/arch/riscv/include/pmap.h			1.26
+sys/arch/riscv/riscv/cpu.c			1.11
+sys/arch/riscv/riscv/cpufunc.c			1.1
+sys/arch/riscv/riscv/cpufunc.c			1.2
+sys/arch/riscv/riscv/pmap_machdep.c		1.24
+sys/arch/riscv/riscv/riscv_machdep.c		1.48
+
+	risc-v: handle T-Head L1 caches.
+	[skrll, ticket #221]
+
+sys/arch/arm/sunxi/sunxi_mmc.c			1.50
+sys/arch/riscv/conf/GENERIC64			1.24
+sys/arch/riscv/sunxi/files.sunxi		1.5
+
+	risc-v: add support for allwinner,sun20i-d1-mmc.
+	[skrll, ticket #222]
+
+sys/arch/riscv/conf/kern.ldscript		1.9
+
+	riscv: provide the kernel_text symbol for the benfit of
+	sys/kern/subr_prof.c
+	[skrll, ticket #223]
+
+sys/kern/kern_cpu.c				1.101
+sys/kern/kern_runq.c				1.73
+
+	scheduler fixes for SMP systems with different CPUs.
+	[mrg, ticket #224]
+
+distrib/sets/lists/comp/mi			1.2521
+external/mit/expat/lib/libexpat/Makefile	1.5
+
+	install expat_config.h
+	[wiz, ticket #225]
+
+lib/libc/compat/arch/arm/gen/compat_setjmp.S	1.6
+tests/lib/libc/setjmp/t_setjmp.c		1.14
+
+	arm: PR 59351: compat_setjmp is busted.
+	[skrll, ticket #226]
+
+sys/stand/efiboot/bootarm/Makefile		1.10
+sys/stand/efiboot/version			1.34
+
+	arm: PR 60069: fix EFI boot for some firmware.
+	[skrll, ticket #227]
+
+share/installboot/evbarm/boards.plist		1.17
+sys/dev/ic/rtl8169.c				1.182
+sys/external/gpl2/dts/dist/arch/arm64/boot/dts/rockchip/rk3399-nanopi-r4s.dts 1.2
+
+	arm: improve NanoPi R4S support.
+	[gutteridge, ticket #228]
+
+common/lib/libutil/snprintb.c			1.50,1.51
+lib/libutil/snprintb.3				1.40,1.41
+tests/lib/libutil/t_snprintb.c			1.38,1.39
+tests/lib/libutil/t_snprintb.c			1.40-1.42
+
+	snprintb(3): re-allow more 'f' and ':' combinations.
+	[rillig, ticket #229]
+
+sys/arch/arm/include/asm.h			1.40
+sys/arch/arm/include/profile.h			1.19-1.21
+
+	arm: fix profile support.
+	[skrll, ticket #230]
+
+external/bsd/unbound/include/config.h		1.15
+
+	unbound: PR 57242: readjust PID path so rc scripts work again.
+	[gutteridge, ticket #231]
+
+sys/dev/acpi/apei_hest.c			1.8
+
+	apei(4): fix a crash seen with some firmwares.
+	[yamt, ticket #232]
+
+sys/kern/sched_4bsd.c				1.48
+
+	sched_4bsd.c: honor the upper bound of l_estcpu.
+	[yamt, ticket #233]
+
+sys/arch/x86/x86/tsc.c				1.64
+
+	x86 tsc: decrease the timecounter quality for NVMM.
+	[yamt, ticket #234]
+
+lib/libkvm/kvm_proc.c				1.101
+sys/kern/kern_proc.c				1.281
+
+	sysctl KERN_PROC_ALL and libkvm fixes.
+	[yamt, ticket #235]
+
+sys/kern/kern_time.c				1.232
+
+	make posix timer family functions reject itimer timer ids.
+	[yamt, ticket #236]
 
