@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.134 2023/09/10 15:01:11 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.134.8.1 2026/04/03 12:22:23 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.134 2023/09/10 15:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.134.8.1 2026/04/03 12:22:23 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -792,7 +792,6 @@ uvmpd_scan_queue(void)
 			}
 			if (slot > 0) {
 				/* this page is now only in swap. */
-				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
 				atomic_inc_uint(&uvmexp.swpgonly);
 			}
 			rw_exit(slock);
