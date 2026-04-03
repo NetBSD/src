@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.147 2025/05/07 14:01:01 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.147.2.1 2026/04/03 13:15:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.147 2025/05/07 14:01:01 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.147.2.1 2026/04/03 13:15:28 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -304,7 +304,7 @@ argstr(const char *p, int flag)
 			if (empty_dollar_at &&
 			    expdest - stackblock() > startoff &&
 			    expdest[-1] == CTLQUOTEMARK)
-				expdest--;
+				STUNPUTC(expdest);
 			else if (!had_dol_at && (flag & EXP_SPLIT) != 0)
 				STPUTC(c, expdest);
 			ifs_split = EXP_IFS_SPLIT;
@@ -361,6 +361,11 @@ argstr(const char *p, int flag)
 			 * assignments (after the first '=' and after ':'s).
 			 */
 			STPUTC(c, expdest);
+			if (flag & ifs_split && strchr(ifs, c) != NULL) {
+				/* We need to get the output split here... */
+				recordregion(expdest - stackblock() - 1,
+						expdest - stackblock(), 0);
+			}
 			if (flag & EXP_VARTILDE && *p == '~') {
 				if (c == '=') {
 					if (firsteq)
