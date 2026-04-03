@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.102 2026/04/02 16:06:28 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.103 2026/04/03 07:15:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.102 2026/04/02 16:06:28 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.103 2026/04/03 07:15:03 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -1017,6 +1017,7 @@ sctlr_set:
 	    SCTLR_SED |     /* SETEND instruction disable */ \
 	    SCTLR_C |       /* Cache enable */ \
 	    SCTLR_M |       /* MMU Enable */ \
+	    SCTLR_EOS |     /* RES1 if no FEAT_ExS */ \
 	    SCTLR_SA0_CONFIG | \
 	    SCTLR_SA_CONFIG | \
 	    SCTLR_A_CONFIG | \
