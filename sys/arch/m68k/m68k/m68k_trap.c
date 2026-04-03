@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.8 2026/04/02 03:56:42 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.9 2026/04/03 14:59:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.8 2026/04/02 03:56:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.9 2026/04/03 14:59:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.8 2026/04/02 03:56:42 thorpej Exp $"
 #include <compat/sunos/sunos_exec.h>
 #endif
 
-void	machine_userret(struct lwp *, struct frame *, u_quad_t);
 void	trap(struct frame *, int, u_int, u_int);
 
 volatile int astpending;
@@ -649,12 +648,8 @@ userret0(struct lwp *l, struct frame *fp, u_quad_t oticks
 #endif /* M68040 */
 }
 
-/*
- * Used by the common m68k syscall() and child_return() functions.
- * XXX Temporary, needs additional clean-up.
- */
 void
-machine_userret(struct lwp *l, struct frame *f, u_quad_t t)
+userret(struct lwp *l, struct frame *f, u_quad_t t)
 {
 	USERRET(l, f, t, 0, 0);
 }

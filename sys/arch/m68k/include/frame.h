@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.39 2026/03/28 04:32:02 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.40 2026/04/03 14:59:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -211,6 +211,8 @@ void	reenter_syscall(struct frame *, int) __attribute__((__noreturn__));
  */
 extern void m68k_make_fpu_idle_frame(void);
 extern struct fpframe m68k_cached_fpu_idle_frame;
+
+void	userret(struct lwp *, struct frame *, u_quad_t);
 
 void	*getframe(struct lwp *, int, int *);
 void	buildcontext(struct lwp *, void *, void *);

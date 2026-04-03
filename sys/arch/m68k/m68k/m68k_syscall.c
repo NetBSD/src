@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: m68k_syscall.c,v 1.56 2026/04/03 14:59:55 thorpej Exp $	*/
 
 /*-
  * Portions Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.56 2026/04/03 14:59:55 thorpej Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_netbsd.h"
@@ -88,18 +88,11 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_syscall.c,v 1.55 2023/10/05 19:41:04 ad Exp $")
 
 #include <uvm/uvm_extern.h>
 
-/*
- * Defined in machine-specific code (usually trap.c)
- * XXX: This will disappear when all m68k ports share common trap() code...
- */
-extern void machine_userret(struct lwp *, struct frame *, u_quad_t);
-
 void syscall(register_t, struct frame);
 
 void	aoutm68k_syscall_intern(struct proc *);
 static void syscall_plain(register_t, struct lwp *, struct frame *);
 static void syscall_fancy(register_t, struct lwp *, struct frame *);
-
 
 /*
  * Process a system call.
@@ -122,7 +115,7 @@ syscall(register_t code, struct frame frame)
 
 	(p->p_md.md_syscall)(code, l, &frame);
 
-	machine_userret(l, &frame, sticks);
+	userret(l, &frame, sticks);
 }
 
 void
@@ -411,7 +404,7 @@ md_child_return(struct lwp *l)
 	f->f_sr &= ~PSL_C;
 	f->f_format = FMT0;
 
-	machine_userret(l, f, 0);
+	userret(l, f, 0);
 }
 
 /*
@@ -433,7 +426,7 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	machine_userret(l, f, 0);
+	userret(l, f, 0);
 }
 
 /*
@@ -444,5 +437,5 @@ cpu_spawn_return(struct lwp *l)
 {
 	struct frame *f = (struct frame *)l->l_md.md_regs;
 
-	machine_userret(l, f, 0);
+	userret(l, f, 0);
 }
