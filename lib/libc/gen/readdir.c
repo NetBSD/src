@@ -1,4 +1,4 @@
-/*	$NetBSD: readdir.c,v 1.27 2024/09/10 17:11:19 riastradh Exp $	*/
+/*	$NetBSD: readdir.c,v 1.28 2026/04/03 08:53:43 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)readdir.c	8.3 (Berkeley) 9/29/94";
 #else
-__RCSID("$NetBSD: readdir.c,v 1.27 2024/09/10 17:11:19 riastradh Exp $");
+__RCSID("$NetBSD: readdir.c,v 1.28 2026/04/03 08:53:43 mlelstv Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -123,10 +123,7 @@ int
 readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 {
 	struct dirent *dp;
-	int saved_errno;
 
-	saved_errno = errno;
-	errno = 0;
 #ifdef _REENTRANT
 	if (__isthreaded) {
 		mutex_lock((mutex_t *)dirp->dd_lock);
@@ -138,12 +135,6 @@ readdir_r(DIR *dirp, struct dirent *entry, struct dirent **result)
 #endif
 		if ((dp = _readdir_unlocked(dirp, 1)) != NULL)
 			memcpy(entry, dp, (size_t)_DIRENT_SIZE(dp));
-
-	if (errno != 0) {
-		if (dp == NULL)
-			return (errno);
-	} else
-		errno = saved_errno;
 
 	if (dp != NULL)
 		*result = entry;
