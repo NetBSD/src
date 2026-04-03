@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.81 2026/04/03 13:54:39 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.82 2026/04/03 13:58:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -3079,4 +3079,10 @@ tests/lib/libc/setjmp/t_sigstack.c		1.26
 
 	arm: PR 57946: fix longjmp(3) for compat.
 	[skrll, ticket #250]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0_RC3!
+	[martin]
 
