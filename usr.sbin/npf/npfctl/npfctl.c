@@ -171,9 +171,13 @@ npfctl_print_stats(int fd)
 
 		{ -1, "Fragmentation"					},
 		{ NPF_STAT_FRAGMENTS,		"fragments"		},
+		{ NPF_STAT_NOFRAGMENT,		"failed fragmentation"	},
 		{ NPF_STAT_REASSEMBLY,		"reassembled"		},
 		{ NPF_STAT_REASSFAIL,		"failed reassembly"	},
 
+		{ -1, "Routing"					},
+		{ NPF_STAT_REROUTE,			"re-routing"		},
+		{ NPF_STAT_NOREROUTE,		"failed re-routing"	},
 		{ -1, "Other"						},
 		{ NPF_STAT_ERROR,		"unexpected errors"	},
 	};

@@ -144,6 +144,7 @@ SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
 SUBDIR+=	npf_ext_normalize
 SUBDIR+=	npf_ext_rndblock
+SUBDIR+=	npf_ext_route
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire

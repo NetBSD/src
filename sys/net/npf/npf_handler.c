@@ -292,8 +292,14 @@ block:
 	if (rp && !npf_rproc_run(&npc, rp, &mi, &decision)) {
 		if (con) {
 			npf_conn_release(con);
+
+			/* ensure that reference is released only on connection in stateful rules */
+			if (is_rproc_route(rp))
+				return 0;
 		}
+
 		npf_rproc_release(rp);
+
 		/* mbuf already freed */
 		return 0;
 	}
