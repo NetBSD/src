@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.131.4.1 2026/04/03 12:38:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.131 2024/03/15 07:09:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.131.4.1 2026/04/03 12:38:34 martin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -323,6 +323,21 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
 }
 
+static int
+uvm_page_swapslot(struct vm_page *pg)
+{
+	int swslot;
+
+	KASSERT((pg->flags & PG_SWAPBACKED) != 0);
+	if (pg->uobject != NULL) {
+		swslot = uao_find_swslot(pg->uobject, pg->offset >> PAGE_SHIFT);
+	} else {
+		KASSERT(pg->uanon != NULL);
+		swslot = pg->uanon->an_swslot;
+	}
+	return swslot;
+}
+
 void
 uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 {
@@ -349,13 +364,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	} else {
 #if defined(VMSWAP)
 		if (error) {
-			if (pg->uobject != NULL) {
-				swslot = uao_find_swslot(pg->uobject,
-				    pg->offset >> PAGE_SHIFT);
-			} else {
-				KASSERT(pg->uanon != NULL);
-				swslot = pg->uanon->an_swslot;
-			}
+			swslot = uvm_page_swapslot(pg);
 			KASSERT(swslot);
 		}
 #else /* defined(VMSWAP) */
@@ -399,17 +408,21 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		 * process errors.  for reads, just mark the page to be freed.
 		 * for writes, if the error was ENOMEM, we assume this was
 		 * a transient failure so we mark the page dirty so that
-		 * we'll try to write it again later.  for all other write
-		 * errors, we assume the error is permanent, thus the data
-		 * in the page is lost.  bummer.
+		 * we'll try to write it again later. for all other write
+		 * errors for non swap backed pages, we assume the error
+		 * is permanent, thus the data in the page is lost.  bummer.
+		 *
+		 * for swap backed pages, disassociate the swap slot and
+		 * cancel the pageout attempt. mark the swap slot bad for
+		 * errors except ENOMEM.
 		 */
 
 		if (error) {
-			int slot __unused;	/* used for VMSWAP */
 			if (!write) {
 				pg->flags |= PG_RELEASED;
 				continue;
-			} else if (error == ENOMEM) {
+			}
+			if (swap || error == ENOMEM) {
 				if (pg->flags & PG_PAGEOUT) {
 					pg->flags &= ~PG_PAGEOUT;
 					pageout_done++;
@@ -418,21 +431,24 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 				uvm_pagelock(pg);
 				uvm_pageactivate(pg);
 				uvm_pageunlock(pg);
-				slot = 0;
-			} else
-				slot = SWSLOT_BAD;
+			}
 
 #if defined(VMSWAP)
 			if (swap) {
+				/*
+				 * disassociate the swap slot from the page.
+				 * these slots will be either freed or
+				 * marked bad later in this function.
+				 */
 				if (pg->uobject != NULL) {
 					int oldslot __diagused;
 					oldslot = uao_set_swslot(pg->uobject,
-						pg->offset >> PAGE_SHIFT, slot);
+						pg->offset >> PAGE_SHIFT, 0);
 					KASSERT(oldslot == swslot + i);
 				} else {
 					KASSERT(pg->uanon->an_swslot ==
 						swslot + i);
-					pg->uanon->an_swslot = slot;
+					pg->uanon->an_swslot = 0;
 				}
 			}
 #endif /* defined(VMSWAP) */
@@ -481,7 +497,17 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 #if defined(VMSWAP)
 		KASSERT(write);
 
-		/* these pages are now only in swap. */
+		/*
+		 * these pages are now only in swap.
+		 *
+		 * note about swpgonly:
+		 *
+		 * if no errors, we increase swpgonly.
+		 *
+		 * on error which is not ENOMEM, we increase swpgonly.
+		 * and then uvm_swap_markbad() decreases it by the same
+		 * amount.
+		 */
 		if (error != ENOMEM) {
 			atomic_add_int(&uvmexp.swpgonly, npages);
 		}
@@ -521,6 +547,17 @@ uvm_aio_aiodone(struct buf *bp)
 		UVMHIST_LOG(ubchist, "pgs[%jd] = %#jx", i,
 		    (uintptr_t)pgs[i], 0, 0);
 	}
+
+#if defined(VMSWAP)
+	if (__predict_false(error != 0) &&
+	    ((pgs[0]->flags & PG_SWAPBACKED) != 0)) {
+		int swslot = uvm_page_swapslot(pgs[0]);
+
+		KASSERT(swslot > 0);
+		uvm_swap_decrypt_pages(swslot, bp->b_data, npages);
+	}
+#endif
+
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 
 	uvm_aio_aiodone_pages(pgs, npages, write, error);
