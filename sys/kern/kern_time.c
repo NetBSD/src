@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.228.2.2 2026/03/04 19:10:31 martin Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.228.2.3 2026/04/03 11:55:28 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.228.2.2 2026/03/04 19:10:31 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.228.2.3 2026/04/03 11:55:28 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -104,10 +104,23 @@ static TAILQ_HEAD(, ptimer) ptimer_queue;
 #define	CLOCK_VIRTUAL_P(clockid)	\
 	((clockid) == CLOCK_VIRTUAL || (clockid) == CLOCK_PROF)
 
+#define IS_ITIMER(id) (0 <= (id) && (id) < TIMER_MIN)
+#define IS_POSIX_TIMER(id)  (TIMER_MIN <= (id) && (id) < TIMER_MAX)
+
 CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
+
+CTASSERT(IS_ITIMER(ITIMER_REAL));
+CTASSERT(IS_ITIMER(ITIMER_VIRTUAL));
+CTASSERT(IS_ITIMER(ITIMER_PROF));
+CTASSERT(IS_ITIMER(ITIMER_MONOTONIC));
+
+CTASSERT(!IS_POSIX_TIMER(ITIMER_REAL));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_VIRTUAL));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_PROF));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_MONOTONIC));
 
 /*
  * Initialize timekeeping.
@@ -1318,7 +1331,7 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 	timerid = SCARG(uap, timerid);
 	pts = p->p_timers;
 
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
 		return SET_ERROR(EINVAL);
 
 	itimer_lock();
@@ -1393,7 +1406,7 @@ dotimer_settime(int timerid, struct itimerspec *value,
 
 	pts = p->p_timers;
 
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
 		return SET_ERROR(EINVAL);
 	val = *value;
 	if (itimespecfix(&val.it_value) != 0 ||
@@ -1495,7 +1508,7 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
 	struct ptimers *pts;
 
 	pts = p->p_timers;
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
 		return SET_ERROR(EINVAL);
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
@@ -1531,7 +1544,7 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 	timerid = SCARG(uap, timerid);
 
 	pts = p->p_timers;
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
 		return SET_ERROR(EINVAL);
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
@@ -1578,7 +1591,7 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itimer *it;
 	struct itimerspec its;
 
-	if ((u_int)which > ITIMER_MONOTONIC)
+	if (!IS_ITIMER(which))
 		return SET_ERROR(EINVAL);
 
 	itimer_lock();
@@ -1643,7 +1656,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itlist *itl;
 	int error;
 
-	if ((u_int)which > ITIMER_MONOTONIC)
+	if (!IS_ITIMER(which))
 		return SET_ERROR(EINVAL);
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
 		return SET_ERROR(EINVAL);
