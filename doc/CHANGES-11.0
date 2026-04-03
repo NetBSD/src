@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.80 2026/04/03 12:00:41 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.81 2026/04/03 13:54:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -2971,4 +2971,112 @@ sys/kern/kern_time.c				1.232
 
 	make posix timer family functions reject itimer timer ids.
 	[yamt, ticket #236]
+
+sys/uvm/uvm_mmap.c				1.188
+
+	uvm: fix overflow check.
+	[yamt, ticket #238]
+
+sys/uvm/uvm_mmap.c				1.189
+
+	sys_mincore: stop locking potentially huge amount of user memory.
+	[yamt, ticket #239]
+
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.93
+
+	nvmm_x86_vmx.c: fixes tprof stalls.
+	[yamt, ticket #240]
+
+etc/etc.amd64/MAKEDEV.conf			1.38
+
+	amd64 MAKEDEV: create 8 nvme devices by default.
+	[yamt, ticket #241]
+
+sys/uvm/uvm_pdaemon.c				1.135,1.137,1.138
+sys/uvm/uvm_swap.c				1.210
+
+	swap: PR 56764: fix wrong kernel assertions.
+	[yamt, ticket #242]
+
+sys/sys/buf.h					1.136
+sys/uvm/uvm_pager.c				1.133-1.135
+sys/uvm/uvm_swap.c				1.216,1.217
+sys/uvm/uvm_swap.c				1.219-1.222,1.224-1.231
+sys/uvm/uvm_swap.h				1.30
+
+	swap: PR 60084, PR 60082, PR 60147:
+	- make the drum(4) device mpsafe
+	- fix data corruption issues on swap i/o errors
+	- fix data corruption issues with swap encryption
+	[yamt, ticket #243]
+
+external/cddl/osnet/dist/lib/libzfs/common/libzfs_import.c 1.9
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_rlock.h 1.4
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_vfsops.h 1.2
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_znode.h 1.10
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/zfs_znode.h 1.11
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_ioctl.c 1.27
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_log.c 1.2
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_rlock.c 1.7
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_rlock.c 1.8
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vfsops.c 1.31-1.35
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.82-1.99
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_znode.c 1.35,1.36
+external/cddl/osnet/dist/uts/common/fs/zfs/zvol.c 1.15,1.16
+external/cddl/osnet/sys/kern/vfs.c		1.10
+external/cddl/osnet/sys/sys/vnode.h		1.22,1.23
+sys/kern/vfs_mount.c				1.111
+
+	zfs: PR 60004, PR 60024, PR 60026, PR 59885, PR 60135, improvements:
+	- fixes for data corruption issues       
+	- fixes for deadlock issues                
+	- fixes for name cache issues            
+	- fixes for property overrides
+	- fixes for some application compatibilities (eg. rsync)
+	- fixes for performance issues  
+	- fixes for spec/fifo mtime updates
+	- fixes for mmap issues                  
+	- fixes for zpool import issues          
+	[yamt, ticket #244]
+
+external/gpl3/gcc.old/dist/gcc/cfgexpand.cc	1.2
+	(applied to external/gpl3/gcc/dist/gcc/cfgexpand.cc)
+
+	gcc(1): PR 59994: fix code generated for the stack protector
+	on some architectures (e.g. m68k).
+	[kalvisd, ticket #245]
+
+bin/sh/expand.c					1.149 (partly, via patch)
+
+	sh(1): fix two old rare bugs unlikely to ever be observed.
+	[kre, ticket #246]
+
+external/gpl3/gcc.old/dist/gcc/genmatch.cc	1.2
+	(applied to external/gpl3/gcc/dist/gcc/genmatch.cc)
+tools/gcc/gcc-version.mk			1.32 (patch)
+
+	gcc(1):  bring across several build enhancements from mainline GCC,
+	allowing vax and sparc to self-host.
+	[mrg, ticket #247]
+
+lib/libcurses/add_wch.c				1.11
+lib/libcurses/addbytes.c			1.71
+lib/libcurses/attributes.c			1.37
+lib/libcurses/insdelln.c			1.25
+lib/libcurses/refresh.c				1.131
+lib/libcurses/touchwin.c			1.36
+
+	libcurses: PR 60153: fix wrong NULL guard.
+	[hgutch, ticket #248]
+
+lib/libkvm/kvm_proc.c				1.102-1.104
+
+	libkvm: various fixes.
+	[yamt, ticket #249]
+
+lib/libc/compat/arch/arm/gen/compat_setjmp.S	1.7
+tests/lib/libc/setjmp/t_sigstack.c		1.26
+
+	arm: PR 57946: fix longjmp(3) for compat.
+	[skrll, ticket #250]
 
