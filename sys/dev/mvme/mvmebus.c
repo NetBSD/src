@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.24 2021/08/07 16:19:13 thorpej Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.25 2026/04/03 17:56:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.24 2021/08/07 16:19:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.25 2026/04/03 17:56:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -746,7 +746,14 @@ mvmebus_dmamem_alloc(void *vsc, vme_size_t len, vme_am_t am, vme_datasize_t data
 	 * constraints as the call to here) must be made. The segments
 	 * of the DMA map will then contain VMEbus-relative physical
 	 * addresses of the memory allocated here.
+	 *
+	 * N.B. since we are already constraining the allocation to match
+	 * the requested VME address space, filter out any flags that might
+	 * conflict.
 	 */
+#ifdef BUS_DMA_24BIT
+	flags &= ~BUS_DMA_24BIT;
+#endif
 	return _bus_dmamem_alloc_common(sc->sc_dmat, low, high,
 	    len, 0, bound, segs, nsegs, rsegs, flags);
 }
