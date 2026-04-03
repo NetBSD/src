@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.86 2026/03/31 22:54:53 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.87 2026/04/03 06:29:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.86 2026/03/31 22:54:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.87 2026/04/03 06:29:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -253,16 +253,13 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 {
 	const uint32_t ipl_mask = __BIT(is->is_ipl);
 	struct cpu_info * const ci = curcpu();
-	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 
-	atomic_or_32(&pcpu->pcpu_pending_irqs[is->is_irq >> 5],
+	atomic_or_32(&pic->pic_pending_irqs[is->is_irq >> 5],
 	    __BIT(is->is_irq & 0x1f));
 
-	atomic_or_32(&pcpu->pcpu_pending_ipls, ipl_mask);
+	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
 	ci->ci_pending_ipls |= ipl_mask;
 	ci->ci_pending_pics |= __BIT(pic->pic_id);
-
-	percpu_putref(is->is_pic->pic_percpu);
 }
 
 void
@@ -282,13 +279,12 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 {
 	struct intrsource ** const isbase = &pic->pic_sources[irq_base];
 	struct cpu_info * const ci = curcpu();
-	struct pic_percpu * const pcpu = percpu_getref(pic->pic_percpu);
 	struct intrsource *is;
-	volatile uint32_t *ipending = &pcpu->pcpu_pending_irqs[irq_base >> 5];
+	volatile uint32_t *ipending = &pic->pic_pending_irqs[irq_base >> 5];
 	uint32_t ipl_mask = 0;
 
 	if (pending == 0)
-		goto done;
+		return ipl_mask;
 
 	KASSERT((irq_base & 31) == 0);
 
@@ -306,12 +302,10 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 		ipl_mask |= __BIT(is->is_ipl);
 	}
 
-	atomic_or_32(&pcpu->pcpu_pending_ipls, ipl_mask);
+	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
 	ci->ci_pending_ipls |= ipl_mask;
 	ci->ci_pending_pics |= __BIT(pic->pic_id);
 
-done:
-	percpu_putref(pic->pic_percpu);
 	return ipl_mask;
 }
 
@@ -399,10 +393,9 @@ pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
     void *frame)
 {
 	const uint32_t ipl_mask = __BIT(ipl);
-	struct pic_percpu * const pcpu = percpu_getref(pic->pic_percpu);
 	struct intrsource *is;
-	volatile uint32_t *ipending = pcpu->pcpu_pending_irqs;
-	volatile uint32_t *iblocked = pcpu->pcpu_blocked_irqs;
+	volatile uint32_t *ipending = pic->pic_pending_irqs;
+	volatile uint32_t *iblocked = pic->pic_blocked_irqs;
 	size_t irq_base;
 #if PIC_MAXSOURCES > 32
 	size_t irq_count;
@@ -413,7 +406,7 @@ pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
 	int irq;
 	bool progress __diagused = false;
 
-	KASSERT(pcpu->pcpu_pending_ipls & ipl_mask);
+	KASSERT(pic->pic_pending_ipls & ipl_mask);
 
 	irq_base = 0;
 #if PIC_MAXSOURCES > 32
@@ -435,8 +428,8 @@ pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
 				irq_base = 0;
 				irq_count = 0;
 				poi = 0;
-				ipending = pcpu->pcpu_pending_irqs;
-				iblocked = pcpu->pcpu_blocked_irqs;
+				ipending = pic->pic_pending_irqs;
+				iblocked = pic->pic_blocked_irqs;
 			} else {
 				irq_base += 32;
 				ipending++;
@@ -486,10 +479,8 @@ pic_deliver_irqs(struct cpu_info *ci, struct pic_softc *pic, int ipl,
 	 * Since interrupts are disabled, we don't have to be too careful
 	 * about these.
 	 */
-	if (atomic_and_32_nv(&pcpu->pcpu_pending_ipls, ~ipl_mask) == 0)
+	if (atomic_and_32_nv(&pic->pic_pending_ipls, ~ipl_mask) == 0)
 		ci->ci_pending_pics &= ~__BIT(pic->pic_id);
-
-	percpu_putref(pic->pic_percpu);
 }
 
 static void
@@ -513,10 +504,8 @@ pic_list_unblock_irqs(struct cpu_info *ci)
 
 		pic = pic_list[pic_id];
 		KASSERT(pic != NULL);
-
-		struct pic_percpu * const pcpu = percpu_getref(pic->pic_percpu);
 #if PIC_MAXSOURCES > 32
-		for (irq_base = 0, iblocked = pcpu->pcpu_blocked_irqs;
+		for (irq_base = 0, iblocked = pic->pic_blocked_irqs;
 		     irq_base < pic->pic_maxsources;
 		     irq_base += 32, iblocked++) {
 			if ((blocked = *iblocked) != 0) {
@@ -526,13 +515,12 @@ pic_list_unblock_irqs(struct cpu_info *ci)
 			}
 		}
 #else
-		KASSERT(pcpu->pcpu_blocked_irqs[0] != 0);
+		KASSERT(pic->pic_blocked_irqs[0] != 0);
 		(*pic->pic_ops->pic_unblock_irqs)(pic,
-		    0, pcpu->pcpu_blocked_irqs[0]);
-		pcpu->pcpu_blocked_irqs[0] = 0;
+		    0, pic->pic_blocked_irqs[0]);
+		pic->pic_blocked_irqs[0] = 0;
 #endif
 		blocked_pics &= ~__BIT(pic_id);
-		percpu_putref(pic->pic_percpu);
 	}
 }
 
@@ -549,12 +537,8 @@ pic_list_find_pic_by_pending_ipl(struct cpu_info *ci, uint32_t ipl_mask)
 
 		pic = pic_list[pic_id];
 		KASSERT(pic != NULL);
-		struct pic_percpu * const pcpu = percpu_getref(pic->pic_percpu);
-		const uint32_t pending_ipls = pcpu->pcpu_pending_ipls & ipl_mask;
-		percpu_putref(pic->pic_percpu);
-		if (pending_ipls) {
+		if (pic->pic_pending_ipls & ipl_mask)
 			return pic;
-		}
 		pending_pics &= ~__BIT(pic_id);
 	}
 }
@@ -568,11 +552,7 @@ pic_list_deliver_irqs(struct cpu_info *ci, register_t psw, int ipl,
 
 	while ((pic = pic_list_find_pic_by_pending_ipl(ci, ipl_mask)) != NULL) {
 		pic_deliver_irqs(ci, pic, ipl, frame);
-#ifdef DIAGNOSTIC
-		struct pic_percpu * const pcpu = percpu_getref(pic->pic_percpu);
-		KASSERT((pcpu->pcpu_pending_ipls & ipl_mask) == 0);
-		percpu_putref(pic->pic_percpu);
-#endif
+		KASSERT((pic->pic_pending_ipls & ipl_mask) == 0);
 	}
 	ci->ci_pending_ipls &= ~ipl_mask;
 }
@@ -633,11 +613,6 @@ pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
 #else
 	strlcpy(pcpu->pcpu_name, pic->pic_name, PCPU_NAMELEN);
 #endif
-	memset(__UNVOLATILE(pcpu->pcpu_pending_irqs), 0,
-	    sizeof(pcpu->pcpu_pending_irqs));
-	memset(__UNVOLATILE(pcpu->pcpu_blocked_irqs), 0,
-	    sizeof(pcpu->pcpu_blocked_irqs));
-	pcpu->pcpu_pending_ipls = 0;
 	pcpu->pcpu_magic = PICPERCPU_MAGIC;
 #if 0
 	printf("%s: %s %s: <%s>\n",

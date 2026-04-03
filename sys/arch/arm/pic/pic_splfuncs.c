@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.28 2026/04/02 10:59:44 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.29 2026/04/03 06:29:01 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.28 2026/04/02 10:59:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.29 2026/04/03 06:29:01 skrll Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>
@@ -83,21 +83,16 @@ void
 splx(int savedipl)
 {
 	struct cpu_info * const ci = curcpu();
-	const int oldipl = ci->ci_cpl;
-
 	KASSERT(savedipl < NIPL);
 
-	if (__predict_false(savedipl == oldipl)) {
+	if (__predict_false(savedipl == ci->ci_cpl)) {
 		return;
 	}
 
-	pic_set_priority(ci, savedipl);
-	__insn_barrier();
-
-	if ((ci->ci_pending_ipls & ~__BIT(savedipl)) > __BIT(savedipl)) {
+	if (ci->ci_cpl >= IPL_VM) {
 		register_t psw = DISABLE_INTERRUPT_SAVE();
-		KASSERTMSG(panicstr != NULL || savedipl < oldipl,
-		    "splx(%d) to a higher ipl than %d", savedipl, oldipl);
+		KASSERTMSG(panicstr != NULL || savedipl < ci->ci_cpl,
+		    "splx(%d) to a higher ipl than %d", savedipl, ci->ci_cpl);
 
 		ci->ci_intr_depth++;
 		pic_do_pending_ints(psw, savedipl, NULL);
@@ -106,9 +101,10 @@ splx(int savedipl)
 		    ci->ci_cpl, savedipl);
 		if ((psw & I32_bit) == 0)
 			ENABLE_INTERRUPT();
+	} else {
+		pic_set_priority(ci, savedipl);
 	}
 
-	__insn_barrier();
 	cpu_dosoftints();
 	KASSERTMSG(ci->ci_cpl == savedipl, "cpl %d savedipl %d",
 	    ci->ci_cpl, savedipl);
