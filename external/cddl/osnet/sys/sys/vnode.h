@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.21 2021/12/17 08:07:12 simonb Exp $	*/
+/*	$NetBSD: vnode.h,v 1.21.6.1 2026/04/03 12:53:54 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -172,7 +172,6 @@ do {								      \
 #define	VN_URELE(v)	vput(v)
 #undef VN_RELE_ASYNC
 #define VN_RELE_ASYNC(vp, taskq) 	vrele_async((vp))
-#define VN_RELE_CLEANER(vp, taskq)	/* nothing */
 
 #define	vnevent_create(vp, ct)			do { } while (0)
 #define	vnevent_link(vp, ct)			do { } while (0)
@@ -238,7 +237,7 @@ vattr_init_mask(vattr_t *vap)
 
 static inline int
 zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
-    vnode_t **vpp, enum create crwhy, mode_t umask)
+    vnode_t **vpp, enum create crwhy, mode_t umask, vnode_t *rootvn)
 {
 	struct pathbuf *pb;
 	int error;
@@ -249,7 +248,7 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	ASSERT(umask == 0);
 
 	pb = pathbuf_create(pnamep);
-	error = vn_open(NULL, pb, 0, filemode, createmode, vpp, NULL, NULL);
+	error = vn_open(rootvn, pb, 0, filemode, createmode, vpp, NULL, NULL);
 	if (error == 0) {
 		VOP_UNLOCK(*vpp, 0);
 	}
@@ -257,10 +256,10 @@ zfs_vn_open(const char *pnamep, enum uio_seg seg, int filemode, int createmode,
 	return (error);
 }
 #define	vn_open(pnamep, seg, filemode, createmode, vpp, crwhy, umask)	\
-	zfs_vn_open((pnamep), (seg), (filemode), (createmode), (vpp), (crwhy), (umask))
+	zfs_vn_open((pnamep), (seg), (filemode), (createmode), (vpp), (crwhy), (umask), NULL)
 
 #define	vn_openat(pnamep, seg, filemode, createmode, vpp, crwhy, umask, rootvn, unk)	\
-	zfs_vn_open((pnamep), (seg), (filemode), (createmode), (vpp), (crwhy), (umask))
+	zfs_vn_open((pnamep), (seg), (filemode), (createmode), (vpp), (crwhy), (umask), (rootvn))
 
 #define	RLIM64_INFINITY	0
 static inline int

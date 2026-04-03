@@ -218,9 +218,15 @@ zfs_open(vnode_t **vpp, int flag, cred_t *cr, caller_context_t *ct)
 		}
 	}
 
-	/* Keep a count of the synchronous opens in the znode */
-	if (flag & (FSYNC | FDSYNC))
-		atomic_inc_32(&zp->z_sync_cnt);
+	/*
+	 * Keep a count of the synchronous opens in the znode. On first
+	 * synchronous open we must convert all previous async transactions
+	 * into sync to keep correct ordering.
+	 */
+	if (flag & (FSYNC | FDSYNC)) {
+		if (atomic_inc_32_nv(&zp->z_sync_cnt) == 1)
+			zil_async_to_sync(zfsvfs->z_log, zp->z_id);
+	}
 
 	ZFS_EXIT(zfsvfs);
 	return (0);
@@ -735,6 +741,7 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 	int off;
 	int error = 0;
 	int npages, found;
+	void *buf = NULL;
 
 	start = uio->uio_loffset;
 	off = start & PAGEOFFSET;
@@ -742,7 +749,7 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 	for (start &= PAGEMASK; len > 0; start += PAGESIZE) {
 		page_t *pp;
 		uint64_t bytes = MIN(PAGESIZE - off, len);
-
+retry:
 		pp = NULL;
 		npages = 1;
 		rw_enter(rw, RW_WRITER);
@@ -750,14 +757,20 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 		    UFP_NOALLOC);
 		rw_exit(rw);
 
-		/* XXXNETBSD shouldn't access userspace with the page busy */
 		if (found) {
-			va = zfs_map_page(pp, S_READ);
-			error = uiomove(va + off, bytes, UIO_READ, uio);
-			zfs_unmap_page(pp, va);
+			if (buf != NULL) {
+				va = zfs_map_page(pp, S_READ);
+				memcpy(buf, va + off, bytes);
+				zfs_unmap_page(pp, va);
+			}
 			rw_enter(rw, RW_WRITER);
 			uvm_page_unbusy(&pp, 1);
 			rw_exit(rw);
+			if (buf == NULL) {
+				buf = kmem_alloc(PAGESIZE, KM_SLEEP);
+				goto retry;
+			}
+			error = uiomove(buf, bytes, UIO_READ, uio);
 		} else {
 			error = dmu_read_uio_dbuf(sa_get_db(zp->z_sa_hdl),
 			    uio, bytes);
@@ -767,6 +780,9 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 		off = 0;
 		if (error)
 			break;
+	}
+	if (buf != NULL) {
+		kmem_free(buf, PAGESIZE);
 	}
 	return (error);
 }
@@ -795,25 +811,28 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
 		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
 		    UFP_NOALLOC);
 		if (found) {
-			/*
-			 * We're about to zap the page's contents and don't
-			 * care about any existing modifications.  We must
-			 * keep track of any new modifications past this
-			 * point.  Clear the modified bit in the pmap, and
-			 * if the page is marked dirty revert to tracking
-			 * the modified bit.
-			 */
-			switch (uvm_pagegetdirty(pp)) {
-			case UVM_PAGE_STATUS_DIRTY:
-				/* Does pmap_clear_modify(). */
-				uvm_pagemarkdirty(pp, UVM_PAGE_STATUS_UNKNOWN);
-				break;
-			case UVM_PAGE_STATUS_UNKNOWN:
-				pmap_clear_modify(pp);
-				break;
-			case UVM_PAGE_STATUS_CLEAN:
-				/* Nothing to do. */
-				break;
+			if (nbytes == PAGESIZE) {
+				/*
+				 * We're about to zap the page's contents
+				 * and don't care about any existing
+				 * modifications.  We must keep track of
+				 * any new modifications past this point.
+				 * Clear the modified bit in the pmap, and
+				 * if the page is marked dirty revert to
+				 * tracking the modified bit.
+				 */
+				switch (uvm_pagegetdirty(pp)) {
+				case UVM_PAGE_STATUS_DIRTY:
+					/* Does pmap_clear_modify(). */
+					uvm_pagemarkdirty(pp, UVM_PAGE_STATUS_UNKNOWN);
+					break;
+				case UVM_PAGE_STATUS_UNKNOWN:
+					pmap_clear_modify(pp);
+					break;
+				case UVM_PAGE_STATUS_CLEAN:
+					/* Nothing to do. */
+					break;
+				}
 			}
 			rw_exit(rw);
 
@@ -1031,6 +1050,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	sa_bulk_attr_t	bulk[4];
 	uint64_t	mtime[2], ctime[2];
 	int		segflg;
+	boolean_t	commit;
 
 #ifdef __NetBSD__
 	segflg = VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ?
@@ -1167,6 +1187,9 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	write_eof = (woff + n > zp->z_size);
 
 	end_size = MAX(zp->z_size, woff + n);
+
+	commit = ((ioflag & (FSYNC | FDSYNC)) != 0 ||
+	    zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS);
 
 	/*
 	 * Write the file in reasonable size chunks.  Each chunk is written
@@ -1355,8 +1378,9 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 			(void) sa_update(zp->z_sa_hdl, SA_ZPL_MODE(zfsvfs),
 			    (void *)&newmode, sizeof (uint64_t), tx);
 #ifdef __NetBSD__
-			cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid,
-			    true);
+			if (zfsvfs->z_use_namecache)
+				cache_enter_id(vp, zp->z_mode, zp->z_uid,
+				    zp->z_gid, true);
 #endif
 		}
 		mutex_exit(&zp->z_acl_lock);
@@ -1390,7 +1414,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 		else
 			(void) sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 
-		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, ioflag);
+		zfs_log_write(zilog, tx, TX_WRITE, zp, woff, tx_bytes, commit);
 		dmu_tx_commit(tx);
 
 		if (error != 0)
@@ -1426,8 +1450,7 @@ zfs_write(vnode_t *vp, uio_t *uio, int ioflag, cred_t *cr, caller_context_t *ct)
 	}
 #endif
 
-	if (ioflag & (FSYNC | FDSYNC) ||
-	    zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+	if (commit)
 		zil_commit(zilog, zp->z_id);
 
 	ZFS_EXIT(zfsvfs);
@@ -1449,7 +1472,7 @@ zfs_get_done(zgd_t *zgd, int error)
 	 * Release the vnode asynchronously as we currently have the
 	 * txg stopped from syncing.
 	 */
-	VN_RELE_CLEANER(ZTOV(zp), dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
+	VN_RELE_ASYNC(ZTOV(zp), dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
 
 	if (error == 0 && zgd->zgd_bp)
 		zil_add_block(zgd->zgd_zilog, zgd->zgd_bp);
@@ -1484,14 +1507,14 @@ zfs_get_data(void *arg, lr_write_t *lr, char *buf, zio_t *zio)
 	/*
 	 * Nothing to do if the file has been removed
 	 */
-	if (zfs_zget_cleaner(zfsvfs, object, &zp) != 0)
+	if (zfs_zget(zfsvfs, object, &zp) != 0)
 		return (SET_ERROR(ENOENT));
 	if (zp->z_unlinked) {
 		/*
 		 * Release the vnode asynchronously as we currently have the
 		 * txg stopped from syncing.
 		 */
-		VN_RELE_CLEANER(ZTOV(zp),
+		VN_RELE_ASYNC(ZTOV(zp),
 		    dsl_pool_vnrele_taskq(dmu_objset_pool(os)));
 		return (SET_ERROR(ENOENT));
 	}
@@ -2996,15 +3019,11 @@ update:
 	return (error);
 }
 
-ulong_t zfs_fsync_sync_cnt = 4;
-
 static int
 zfs_fsync(vnode_t *vp, int syncflag, cred_t *cr, caller_context_t *ct)
 {
 	znode_t	*zp = VTOZ(vp);
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
-
-	(void) tsd_set(zfs_fsyncer_key, (void *)zfs_fsync_sync_cnt);
 
 	if (zfsvfs->z_os->os_sync != ZFS_SYNC_DISABLED) {
 		ZFS_ENTER(zfsvfs);
@@ -3099,7 +3118,11 @@ zfs_getattr(vnode_t *vp, vattr_t *vap, int flags, cred_t *cr,
 	vap->va_nodeid = zp->z_id;
 #endif
 #ifdef __NetBSD__
-	vap->va_fsid = vp->v_mount->mnt_stat.f_fsid;
+	/*
+	 * note: f_fsid is a signed long.
+	 * we don't want sign extension here.
+	 */
+	vap->va_fsid = (uint32_t)vp->v_mount->mnt_stat.f_fsid;
 	vap->va_nodeid = zp->z_id;
 	/*
 	 * If we are a snapshot mounted under .zfs, return
@@ -4831,6 +4854,7 @@ zfs_link(vnode_t *tdvp, vnode_t *svp, char *name, cred_t *cr,
 }
 
 
+#if !defined(__NetBSD__)
 /*ARGSUSED*/
 void
 zfs_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
@@ -4876,6 +4900,7 @@ zfs_inactive(vnode_t *vp, cred_t *cr, caller_context_t *ct)
 	}
 	rw_exit(&zfsvfs->z_teardown_inactive_lock);
 }
+#endif /* !defined(__NetBSD__) */
 
 
 #ifdef __FreeBSD__
@@ -5089,6 +5114,8 @@ ioflags(int ioflags)
 
 #ifdef __NetBSD__
 
+static void zfs_netbsd_update_mctime(vnode_t *vp);
+
 static int
 zfs_netbsd_open(void *v)
 {
@@ -5130,6 +5157,20 @@ zfs_netbsd_read(void *v)
 	case VFIFO:
 		ZFS_ACCESSTIME_STAMP(zp->z_zfsvfs, zp);
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_read), ap));
+	case VREG:
+		break;
+	case VDIR:
+		/*
+		 * Note: this is normal on NetBSD because it historically
+		 * allows read() on a directory.
+		 * We simply reject it here though because it doesn't make
+		 * sense to allow read() unless we implement a conversion
+		 * to the historical version of the UFS dirent structure,
+		 * which i (yamt) don't think is worth the effort.
+		 */
+		return EISDIR;
+	default:
+		return EINVAL;
 	}
 
 	return (zfs_read(vp, ap->a_uio, ioflags(ap->a_ioflag), ap->a_cred, NULL));
@@ -5148,11 +5189,21 @@ zfs_netbsd_write(void *v)
 	switch (vp->v_type) {
 	case VBLK:
 	case VCHR:
-		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		zfs_netbsd_update_mctime(vp);
 		return (VOCALL(spec_vnodeop_p, VOFFSET(vop_write), ap));
 	case VFIFO:
-		GOP_MARKUPDATE(vp, GOP_UPDATE_MODIFIED);
+		zfs_netbsd_update_mctime(vp);
 		return (VOCALL(fifo_vnodeop_p, VOFFSET(vop_write), ap));
+	case VREG:
+		break;
+	case VDIR:
+		/*
+		 * Note: this shouldn't happen as NetBSD's vn_openchk
+		 * rejects FWRITE on VDIR.
+		 */
+		return EIO;
+	default:
+		return EINVAL;
 	}
 
 	resid = uio->uio_resid;
@@ -5223,9 +5274,10 @@ zfs_netbsd_lookup(void *v)
 	struct vnode *dvp = ap->a_dvp;
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
+	znode_t *zdp = VTOZ(dvp);
+	zfsvfs_t *zfsvfs = zdp->z_zfsvfs;
 	char *nm, short_nm[31];
 	int error;
-	int iswhiteout;
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
@@ -5245,12 +5297,11 @@ zfs_netbsd_lookup(void *v)
 	 * Check the namecache before entering zfs_lookup.
 	 * cache_lookup does the locking dance for us.
 	 */
-	if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
-	    cnp->cn_nameiop, cnp->cn_flags, &iswhiteout, vpp)) {
-		if (iswhiteout) {
-			cnp->cn_flags |= ISWHITEOUT;
+	if (zfsvfs->z_use_namecache) {
+		if (cache_lookup(dvp, cnp->cn_nameptr, cnp->cn_namelen,
+		    cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
+			return *vpp == NULL ? ENOENT : 0;
 		}
-		return *vpp == NULL ? ENOENT : 0;
 	}
 
 	/*
@@ -5323,9 +5374,12 @@ out:
 	 * Insert name into cache if appropriate.
 	 */
 
-	if (error == 0 || (error == ENOENT && cnp->cn_nameiop != CREATE))
-		cache_enter(dvp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
-		    cnp->cn_flags);
+	if (zfsvfs->z_use_namecache) {
+		if (error == 0 ||
+		    (error == ENOENT && cnp->cn_nameiop != CREATE))
+			cache_enter(dvp, *vpp, cnp->cn_nameptr,
+			    cnp->cn_namelen, cnp->cn_flags);
+	}
 
 	return (error);
 }
@@ -5521,8 +5575,40 @@ static int
 zfs_netbsd_fsync(void *v)
 {
 	struct vop_fsync_args *ap = v;
+	struct vnode *vp = ap->a_vp;
+	int flags = ap->a_flags;
+	int error;
 
-	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
+	/*
+	 * Regardless of whether this is required for standards conformance,
+	 * this is the logical behavior when fsync() is called on a file with
+	 * dirty pages.  We use async putpages since the ZIL transactions are
+	 * already going to be pushed out as part of the zil_commit().
+	 */
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
+	error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
+	    round_page(ap->a_offhi), PGO_CLEANIT);
+	if (error != 0) {
+		return error;
+	}
+
+	/*
+	 * it isn't safe or necessary to call zil_commit when reclaiming
+	 * a vnode.
+	 *
+	 * - it can deadlock by attempting vcache_get on itself.
+	 *   (zfs_get_data)
+	 *
+	 * - for the purpose of vnode reclaim, we only need to push the
+	 *   data to the txg. no need to log the intent.
+	 *
+	 * no need to commit the zil for ioflush either. (FSYNC_LAZY)
+	 */
+	if ((flags & (FSYNC_RECLAIM|FSYNC_LAZY)) != 0) {
+		return (0);
+	}
+
+	return (zfs_fsync(vp, flags, ap->a_cred, NULL));
 }
 
 static int
@@ -5588,6 +5674,7 @@ zfs_netbsd_setattr(void *v)
 	vattr_t *vap = ap->a_vap;
 	cred_t *cred = ap->a_cred;
 	znode_t *zp = VTOZ(vp);
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 	xvattr_t xvap;
 	kauth_action_t action;
 	u_long fflags, sfflags = 0;
@@ -5666,7 +5753,8 @@ zfs_netbsd_setattr(void *v)
 	if (error)
 		return error;
 
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	return error;
 }
@@ -5832,14 +5920,47 @@ zfs_netbsd_inactive(void *v)
 	struct vop_inactive_v2_args *ap = v;
 	vnode_t *vp = ap->a_vp;
 	znode_t	*zp = VTOZ(vp);
+	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
+	int error;
 
-	/*
-	 * NetBSD: nothing to do here, other than indicate if the
-	 * vnode should be reclaimed.  No need to lock, if we race
-	 * vrele() will call us again.
-	 */
-	*ap->a_recycle = (zp->z_unlinked != 0);
+	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
+	if (zp->z_sa_hdl == NULL) {
+		/*
+		 * The fs has been unmounted, or we did a
+		 * suspend/resume and this file no longer exists.
+		 */
+		rw_exit(&zfsvfs->z_teardown_inactive_lock);
+		*ap->a_recycle = true;
+		return (0);
+	}
 
+	if (zp->z_unlinked) {
+		/*
+		 * Fast path to recycle a vnode of a removed file.
+		 */
+		rw_exit(&zfsvfs->z_teardown_inactive_lock);
+		*ap->a_recycle = true;
+		return (0);
+	}
+
+	if (zp->z_atime_dirty && zp->z_unlinked == 0) {
+		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
+
+		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
+		zfs_sa_upgrade_txholds(tx, zp);
+		error = dmu_tx_assign(tx, TXG_WAIT);
+		if (error) {
+			dmu_tx_abort(tx);
+		} else {
+			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
+			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
+			zp->z_atime_dirty = 0;
+			dmu_tx_commit(tx);
+		}
+	}
+	rw_exit(&zfsvfs->z_teardown_inactive_lock);
+
+	*ap->a_recycle = false;
 	return (0);
 }
 
@@ -5861,34 +5982,6 @@ zfs_netbsd_reclaim(void *v)
 	KASSERTMSG(!vn_has_cached_data(vp), "vp %p", vp);
 
 	rw_enter(&zfsvfs->z_teardown_inactive_lock, RW_READER);
-
-	/*
-	 * Process a deferred atime update.
-	 */
-	if (zp->z_atime_dirty && zp->z_unlinked == 0 && zp->z_sa_hdl != NULL) {
-		dmu_tx_t *tx = dmu_tx_create(zfsvfs->z_os);
-
-		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
-		zfs_sa_upgrade_txholds(tx, zp);
-		error = dmu_tx_assign(tx, TXG_WAIT);
-		if (error) {
-			dmu_tx_abort(tx);
-		} else {
-			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
-			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
-			zp->z_atime_dirty = 0;
-			dmu_tx_commit(tx);
-		}
-	}
-
-	/*
-	 * Operation zfs_znode.c::zfs_zget_cleaner() depends on this
-	 * zil_commit() as a barrier to guarantee the znode cannot
-	 * get freed before its log entries are resolved.
-	 */
-	if (zfsvfs->z_log)
-		zil_commit(zfsvfs->z_log, zp->z_id);
-
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
 	else
@@ -6108,6 +6201,18 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	}
 
 	/*
+	 * writing to zfs needs memory allocation, locks, etc,
+	 * which are not safe for the page daemon.
+	 * ENOMEM to signal a transient error to uvm.
+	 * hopefully it can find other pages to free.
+	 */
+
+	if (curlwp == uvm.pagedaemon_lwp) {
+		err = SET_ERROR(ENOMEM);
+		goto out;
+	}
+
+	/*
 	 * Calculate the length and assert that no whole pages are past EOF.
 	 * This check is equivalent to "off + len <= round_page(zp->z_size)",
 	 * with gyrations to avoid signed integer overflow.
@@ -6174,7 +6279,8 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 		    B_TRUE);
 		err = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 		ASSERT0(err);
-		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len, 0);
+		zfs_log_write(zfsvfs->z_log, tx, TX_WRITE, zp, off, len,
+		    B_FALSE);
 	}
 	dmu_tx_commit(tx);
 
@@ -6184,7 +6290,7 @@ out:
 }
 
 static void
-zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
+zfs_netbsd_update_mctime(vnode_t *vp)
 {
 	znode_t		*zp = VTOZ(vp);
 	zfsvfs_t	*zfsvfs = zp->z_zfsvfs;
@@ -6193,9 +6299,9 @@ zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
 	uint64_t	mtime[2], ctime[2];
 	int		count = 0, err;
 
-	KASSERT(flags == GOP_UPDATE_MODIFIED);
-
 	tx = dmu_tx_create(zfsvfs->z_os);
+	dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
+	zfs_sa_upgrade_txholds(tx, zp);
 	err = dmu_tx_assign(tx, TXG_WAIT);
 	if (err != 0) {
 		dmu_tx_abort(tx);
@@ -6204,7 +6310,11 @@ zfs_netbsd_gop_markupdate(vnode_t *vp, int flags)
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_MTIME(zfsvfs), NULL, &mtime, 16);
 	SA_ADD_BULK_ATTR(bulk, count, SA_ZPL_CTIME(zfsvfs), NULL, &ctime, 16);
 	zfs_tstamp_update_setup(zp, CONTENT_MODIFIED, mtime, ctime, B_TRUE);
+	err = sa_bulk_update(zp->z_sa_hdl, bulk, count, tx);
 	dmu_tx_commit(tx);
+	if (err != 0) {
+		printf("%s: sa_bulk_update failed with %d\n", __func__, err);
+	}
 }
 
 static int
@@ -6228,11 +6338,11 @@ zfs_netbsd_putpages(void *v)
 	uint64_t len;
 	int error;
 	bool cleaned = false;
-
-	bool async = (flags & PGO_SYNCIO) == 0;
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
 	if (cleaning) {
+		bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
+
 		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
 		ASSERT(offlo < offhi || offhi == 0);
 		if (offhi == 0)
@@ -6240,7 +6350,7 @@ zfs_netbsd_putpages(void *v)
 		else
 			len = offhi - offlo;
 		rw_exit(vp->v_uobj.vmobjlock);
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (pagedaemon) {
 			error = fstrans_start_nowait(vp->v_mount);
 			if (error)
 				return error;
@@ -6259,7 +6369,15 @@ zfs_netbsd_putpages(void *v)
 		 */
 		rrm_enter(&zfsvfs->z_teardown_lock, RW_READER, FTAG);
 
-		rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
+		if (pagedaemon) {
+			rl = zfs_range_lock_try(zp, offlo, len, RL_WRITER);
+			if (rl == NULL) {
+				error = EBUSY;
+				goto fail;
+			}
+		} else {
+			rl = zfs_range_lock(zp, offlo, len, RL_WRITER);
+		}
 		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		tsd_set(zfs_putpage_key, &cleaned);
 	}
@@ -6271,11 +6389,17 @@ zfs_netbsd_putpages(void *v)
 		/*
 		 * Only zil_commit() if we cleaned something.  This avoids 
 		 * deadlock if we're called from zfs_netbsd_setsize().
+		 *
+		 * Also, it isn't safe or nessesary to call it for vnode
+		 * reclaim. See the comment in zfs_netbsd_fsync.
 		 */
 
-		if (cleaned)
-		if (!async || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
-			zil_commit(zfsvfs->z_log, zp->z_id);
+		if (cleaned && (flags & PGO_RECLAIM) == 0) {
+			if ((flags & PGO_SYNCIO) != 0
+			    || zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+				zil_commit(zfsvfs->z_log, zp->z_id);
+		}
+fail:
 		ZFS_EXIT(zfsvfs);
 		fstrans_done(vp->v_mount);
 	}
@@ -6348,8 +6472,7 @@ zfs_netbsd_print(void *v)
 }
 
 const struct genfs_ops zfs_genfsops = {
-        .gop_write = zfs_putapage,
-	.gop_markupdate = zfs_netbsd_gop_markupdate,
+	.gop_write = zfs_putapage,
 	.gop_putrange = zfs_netbsd_gop_putrange,
 };
 
@@ -6409,8 +6532,8 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		zfs_netbsd_getattr },
 	{ &vop_setattr_desc,		zfs_netbsd_setattr },
-	{ &vop_read_desc,		/**/zfs_netbsd_read },
-	{ &vop_write_desc,		/**/zfs_netbsd_write },
+	{ &vop_read_desc,		zfs_netbsd_read },
+	{ &vop_write_desc,		zfs_netbsd_write },
 	{ &vop_fsync_desc,		zfs_spec_fsync },
 	{ &vop_lock_desc,		genfs_lock },
 	{ &vop_unlock_desc,		genfs_unlock },
@@ -6435,8 +6558,8 @@ const struct vnodeopv_entry_desc zfs_fifoop_entries[] = {
 	{ &vop_accessx_desc,		genfs_accessx },
 	{ &vop_getattr_desc,		zfs_netbsd_getattr },
 	{ &vop_setattr_desc,		zfs_netbsd_setattr },
-	{ &vop_read_desc,		/**/zfs_netbsd_read },
-	{ &vop_write_desc,		/**/zfs_netbsd_write },
+	{ &vop_read_desc,		zfs_netbsd_read },
+	{ &vop_write_desc,		zfs_netbsd_write },
 	{ &vop_fsync_desc,		zfs_netbsd_fsync },
 	{ &vop_lock_desc,		genfs_lock },
 	{ &vop_unlock_desc,		genfs_unlock },

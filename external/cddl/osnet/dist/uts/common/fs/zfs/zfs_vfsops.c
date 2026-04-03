@@ -186,68 +186,11 @@ struct vfsops zfs_vfsops = {
 	.vfs_fsync = (void *)eopnotsupp,
 };
 
-static bool
-zfs_sync_selector(void *cl, struct vnode *vp)
-{
-	znode_t *zp;
-
-	/*
-	 * Skip the vnode/inode if inaccessible, is control node or if the
-	 * atime is clean.
-	 */
-	if (zfsctl_is_node(vp))
-		return false;
-	zp = VTOZ(vp);
-	return zp != NULL && vp->v_type != VNON && zp->z_atime_dirty != 0
-	    && !zp->z_unlinked;
-}
-
 static int
 zfs_netbsd_sync(vfs_t *vfsp, int waitfor, cred_t *cr)
 {
-	struct vnode_iterator *marker;
-	zfsvfs_t *zfsvfs = vfsp->vfs_data;
-	vnode_t *vp;
-
 	/*
-	 * On NetBSD, we need to push out atime updates.  Solaris does
-	 * this during VOP_INACTIVE, but that does not work well with the
-	 * BSD VFS, so we do it in batch here.
-	 */
-	vfs_vnode_iterator_init(vfsp, &marker);
-	while ((vp = vfs_vnode_iterator_next(marker, zfs_sync_selector, NULL)))
-	{
-		znode_t *zp;
-		dmu_buf_t *dbp;
-		dmu_tx_t *tx;
-		int error;
-
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error) {
-			VN_RELE(vp);
-			continue;
-		}
-		ZFS_ENTER(zfsvfs);
-		zp = VTOZ(vp);
-		tx = dmu_tx_create(zfsvfs->z_os);
-		dmu_tx_hold_sa(tx, zp->z_sa_hdl, B_FALSE);
-		zfs_sa_upgrade_txholds(tx, zp);
-		error = dmu_tx_assign(tx, TXG_WAIT);
-		if (error) {
-			dmu_tx_abort(tx);
-		} else {
-			(void) sa_update(zp->z_sa_hdl, SA_ZPL_ATIME(zfsvfs),
-			    (void *)&zp->z_atime, sizeof (zp->z_atime), tx);
-			zp->z_atime_dirty = 0;
-			dmu_tx_commit(tx);
-		}
-		ZFS_EXIT(zfsvfs);
-		vput(vp);
-	}
-	vfs_vnode_iterator_destroy(marker);
-
-	/*
-	 * Then do the regular ZFS stuff.
+	 * Do the regular ZFS stuff.
 	 */
 	return zfs_sync(vfsp, waitfor);
 }
@@ -1539,7 +1482,22 @@ zfs_domount(vfs_t *vfsp, char *osname)
 	vfsp->mnt_stat.f_fsidx.__fsid_val[0] = fsid_guid;
 	vfsp->mnt_stat.f_fsidx.__fsid_val[1] = ((fsid_guid>>32) << 8) |
 	    makefstype(vfsp->mnt_op->vfs_name) & 0xFF;
-	vfsp->mnt_stat.f_fsid = fsid_guid;
+	/*
+	 * Truncate fsid_guid to 32-bit for f_fsid.
+	 *
+	 * - f_fsid is a long, which can not hold 56-bit fsid_guid
+	 *   on 32-bit architectures.
+	 *
+	 * - We use this value for stat(2)'s st_dev (dev_t) as well.
+	 *   Some applications seem to assume the round-trip with
+	 *   makedev macros. that is,
+	 *
+	 *      st_dev == makedev(major(st_dev), minor(st_dev))
+	 *
+	 *   While NetBSD's dev_t has been 64-bit since 2009, our
+	 *   version of these macros only preserve the lower 32-bits.
+	 */
+	vfsp->mnt_stat.f_fsid = (uint32_t)fsid_guid;
 #endif
 
 	/*
@@ -1982,6 +1940,22 @@ zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len)
 	cred_t		*cr = CRED();
 	struct mounta	*uap = data;
 
+	/*
+	 * reject all op flags for now.
+	 *
+	 * - the code below is inconsistent. sometimes it checks uap->flags,
+	 *   sometimes vfsp->vfs_flag. (aka mnt_flag)
+	 *
+	 * - our userland tools (zfs, mount_zfs) currently don't seem to have
+	 *   a way to pass these flags anyway. (zmount in libzfs always passes
+	 *   0 to both of mount(2) 'flags' argument and 'uap->flags'. although
+	 *   it stores something in uap->mflag and uap->optptr, nothing uses
+	 *   them. it doesn't even set MS_OPTIONSTR. we don't implement
+	 *   MS_OPTIONSTR anyway.)
+	 */
+	if ((vfsp->mnt_flag & MNT_OP_FLAGS) != 0)
+		return (SET_ERROR(ENOTSUP));
+
 	if (uap == NULL)
 		return (SET_ERROR(EINVAL));
 
@@ -2278,6 +2252,9 @@ zfsvfs_teardown(zfsvfs_t *zfsvfs, boolean_t unmounting)
 #ifdef FREEBSD_NAMECACHE
 		cache_purgevfs(zfsvfs->z_parent->z_vfs, true);
 #endif
+#ifdef __NetBSD__
+		cache_purgevfs(zfsvfs->z_parent->z_vfs);
+#endif
 	}
 
 	/*
@@ -2370,6 +2347,8 @@ zfs_umount(vfs_t *vfsp, int fflag)
 #endif
 #ifdef __NetBSD__
 	cred_t *cr = CRED();
+	struct vnode_iterator *marker;
+	vnode_t *vp;
 #endif
 
 	ret = secpolicy_fs_unmount(cr, vfsp);
@@ -2412,12 +2391,27 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	 */
 #ifdef __FreeBSD_kernel__
 	ret = vflush(vfsp, 0, (fflag & MS_FORCE) ? FORCECLOSE : 0, td);
-#endif
-#ifdef __NetBSD__
-	ret = vflush(vfsp, NULL, (fflag & MS_FORCE) ? FORCECLOSE : 0);
-#endif
 	if (ret != 0)
 		return (ret);
+#endif
+#ifdef __NetBSD__
+	/*
+	 * we loop here because zil_commit can bring some vnodes
+	 * back to mnt_vnodelist via zfs_get_data.
+	 */
+	vfs_vnode_iterator_init(vfsp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		VN_RELE(vp);
+		vfs_vnode_iterator_destroy(marker);
+		ret = vflush(vfsp, NULL, (fflag & MS_FORCE) ? FORCECLOSE : 0);
+		if (ret != 0)
+			return (ret);
+		if (zfsvfs->z_log)
+			zil_commit(zfsvfs->z_log, 0);
+		vfs_vnode_iterator_init(vfsp, &marker);
+	}
+	vfs_vnode_iterator_destroy(marker);
+#endif
 
 #ifdef illumos
 	if (!(fflag & MS_FORCE)) {
