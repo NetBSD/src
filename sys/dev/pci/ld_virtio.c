@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.46 2025/10/21 04:27:36 pgoyette Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.47 2026/04/03 15:50:05 yamt Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.46 2025/10/21 04:27:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.47 2026/04/03 15:50:05 yamt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,6 +365,16 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	if (features & VIRTIO_BLK_F_SIZE_MAX) {
 		sc->sc_size_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SIZE_MAX);
+		if (sc->sc_size_max == 0) {
+			/*
+			 * Note: qemu vhost-user-blk-server.c
+			 * has a known bug to advertize size_max=0.
+			 */
+			aprint_verbose_dev(sc->sc_dev,
+			    "Ignore zero SIZE_MAX and use %d\n",
+			    MAXPHYS);
+			sc->sc_size_max = MAXPHYS;
+		}
 		if (sc->sc_size_max < MAXPHYS/sc->sc_seg_max) {
 			aprint_error_dev(sc->sc_dev,
 			    "Too small SIZE_MAX %d minimum is %d\n",
