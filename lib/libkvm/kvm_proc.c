@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.100 2024/12/15 12:58:38 christos Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.100.2.1 2026/04/03 11:53:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.100 2024/12/15 12:58:38 christos Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.100.2.1 2026/04/03 11:53:14 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,7 @@ struct miniproc {
 	do { \
 		(p)->p_stat = (kp)->kp_proc.p_stat; \
 		(p)->p_pid = (kp)->kp_proc.p_pid; \
+		(p)->p_psstrp = (kp)->kp_proc.p_psstrp; \
 		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
 		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
 	} while (0)
