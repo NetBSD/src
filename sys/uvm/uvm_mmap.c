@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.186.2.1 2026/04/03 12:07:56 martin Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.186.2.2 2026/04/03 12:10:19 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.186.2.1 2026/04/03 12:07:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.186.2.2 2026/04/03 12:10:19 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -111,56 +111,18 @@ round_and_check(const struct vm_map *map, vaddr_t *addr, vsize_t *size)
 	return range_test(map, *addr, *size, false);
 }
 
-/*
- * sys_mincore: determine if pages are in core or not.
- */
-
-/* ARGSUSED */
-int
-sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
-    register_t *retval)
+static int
+mincore_chunk(struct vm_map *map, vaddr_t start, vaddr_t end, char *vec)
 {
-	/* {
-		syscallarg(void *) addr;
-		syscallarg(size_t) len;
-		syscallarg(char *) vec;
-	} */
-	struct proc *p = l->l_proc;
 	struct vm_page *pg;
-	char *vec, pgi;
+	char pgi;
 	struct uvm_object *uobj;
 	struct vm_amap *amap;
 	struct vm_anon *anon;
 	struct vm_map_entry *entry;
-	vaddr_t start, end, lim;
-	struct vm_map *map;
-	vsize_t len;
+	vaddr_t lim;
 	int error = 0;
-	size_t npgs;
 
-	map = &p->p_vmspace->vm_map;
-
-	start = (vaddr_t)SCARG(uap, addr);
-	len = SCARG(uap, len);
-	vec = SCARG(uap, vec);
-
-	if (start & PAGE_MASK)
-		return EINVAL;
-	len = round_page(len);
-	end = start + len;
-	if (end <= start)
-		return EINVAL;
-
-	/*
-	 * Lock down vec, so our returned status isn't outdated by
-	 * storing the status byte for a page.
-	 */
-
-	npgs = len >> PAGE_SHIFT;
-	error = uvm_vslock(p->p_vmspace, vec, npgs, VM_PROT_WRITE);
-	if (error) {
-		return error;
-	}
 	vm_map_lock_read(map);
 
 	if (uvm_map_lookup_entry(map, start, &entry) == false) {
@@ -194,7 +156,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 			if (UVM_OBJ_IS_DEVICE(entry->object.uvm_obj)) {
 				for (/* nothing */; start < lim;
 				     start += PAGE_SIZE, vec++)
-					ustore_char(vec, 1);
+					*vec = 1;
 				continue;
 			}
 		}
@@ -238,7 +200,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 					pgi = 1;
 				}
 			}
-			(void) ustore_char(vec, pgi);
+			*vec = pgi;
 		}
 		if (uobj != NULL)
 			rw_exit(uobj->vmobjlock);
@@ -248,7 +210,68 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 
  out:
 	vm_map_unlock_read(map);
-	uvm_vsunlock(p->p_vmspace, SCARG(uap, vec), npgs);
+	return error;
+}
+
+#define MINCORE_CHUNK 256 /* number of pages to process at once */
+
+/*
+ * sys_mincore: determine if pages are in core or not.
+ */
+
+/* ARGSUSED */
+int
+sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(void *) addr;
+		syscallarg(size_t) len;
+		syscallarg(char *) vec;
+	} */
+	struct proc *p = l->l_proc;
+	struct vm_map *map;
+	vsize_t start, end, len;
+	char *vec;
+	vsize_t pgoff;
+	vsize_t pglen;
+	char *buf;
+	size_t bufsize;
+	int error;
+
+	map = &p->p_vmspace->vm_map;
+
+	start = (vaddr_t)SCARG(uap, addr);
+	len = SCARG(uap, len);
+	vec = SCARG(uap, vec);
+
+	if (start & PAGE_MASK)
+		return EINVAL;
+	len = round_page(len);
+	end = start + len;
+	if (end <= start)
+		return EINVAL;
+
+	bufsize = MINCORE_CHUNK;
+	buf = kmem_alloc(bufsize, KM_SLEEP);
+	error = 0;
+	pgoff = 0;
+	pglen = len / PAGE_SIZE;
+	while (pgoff < pglen) {
+		vsize_t npgs = MIN(pglen - pgoff, MINCORE_CHUNK);
+		vaddr_t cstart = start + pgoff * PAGE_SIZE;
+		vaddr_t cend = cstart + npgs * PAGE_SIZE;
+		error = mincore_chunk(map, cstart, cend, buf);
+		if (error != 0) {
+			break;
+		}
+		error = copyout(buf, vec + pgoff, npgs);
+		if (error != 0) {
+			break;
+		}
+		pgoff += npgs;
+	}
+	kmem_free(buf, bufsize);
 	return error;
 }
 
