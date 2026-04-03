@@ -1,4 +1,4 @@
-/* $NetBSD: audiodev.c,v 1.15 2019/08/24 07:39:42 isaki Exp $ */
+/* $NetBSD: audiodev.c,v 1.16 2026/04/03 08:37:46 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -345,12 +345,18 @@ audiodev_test_chmask(struct audiodev *adev, unsigned int chanmask,
 	size_t buflen;
 	off_t off;
 	int rv;
+	const char *number;
 
 	rv = -1;
 
-	dtmf_new(&buf, &buflen, adev->hwinfo.play.sample_rate, 2,
-	    adev->hwinfo.play.channels, chanmask, 350.0, 440.0);
-	if (buf == NULL) {
+	number = getenv("AUDIOCFG_DIAL");
+	if (number == NULL)
+		number = "555-2368";
+
+	if (dtmf_dial(number,
+		adev->hwinfo.play.sample_rate,
+		adev->hwinfo.play.channels,
+		chanmask, &buf, &buflen)) {
 		return -1;
 	}
 

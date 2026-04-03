@@ -1,4 +1,4 @@
-/* $NetBSD: dtmf.h,v 1.1 2010/09/01 09:04:16 jmcneill Exp $ */
+/* $NetBSD: dtmf.h,v 1.2 2026/04/03 08:37:46 mlelstv Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,8 @@
 
 #include <stdint.h>
 
-void	dtmf_new(int16_t **, size_t *, unsigned int, unsigned short,
-		 unsigned short, unsigned int, float, float);
+int dtmf_dial(const char *, unsigned int,
+	      unsigned int, unsigned int,
+	      int16_t **, size_t *);
 
 #endif /* !_HAVE_DTMF_H */

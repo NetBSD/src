@@ -1,4 +1,4 @@
-.\"	$NetBSD: audiocfg.1,v 1.8 2021/04/07 09:58:58 nia Exp $
+.\"	$NetBSD: audiocfg.1,v 1.9 2026/04/03 08:37:46 mlelstv Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -81,9 +81,10 @@ These parameters must be selected from the candidates displayed by
 .Pp
 Called with
 .Dq Cm test ,
-it plays a tone of 2 seconds for each channel of the device with the index
+it plays a dialing sequence for each channel of the device with the index
 .Ar index .
-Called with
+The number dialed is taken from the AUDIOCFG_DIAL environment variable
+and is 555-2368 by default. Called with
 .Dq Cm default ,
 it sets the default audio device to the one with the index
 .Ar index .
