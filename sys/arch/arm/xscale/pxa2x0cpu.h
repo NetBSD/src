@@ -1,4 +1,4 @@
-/*	$NetBSD: pxa2x0cpu.h,v 1.4 2007/02/25 13:46:40 nonaka Exp $ */
+/*	$NetBSD: pxa2x0cpu.h,v 1.5 2026/04/03 05:11:32 andvar Exp $ */
 
 /*
  * Copyright (c) 2005  Genetec Corporation.  All rights reserved.
@@ -53,7 +53,7 @@
 # define  __CPU_XSCALE_PXA2XX
 #endif
 
-#define	CPU_ID_PXA_MASK	(CPU_ID_IMPLEMETOR_MASK|CPU_ID_VARIANT_MASK|\
+#define	CPU_ID_PXA_MASK	(CPU_ID_IMPLEMENTOR_MASK|CPU_ID_VARIANT_MASK|\
 			 CPU_ID_ARCH_MASK|CPU_ID_XSCALE_COREGEN_MASK)
 
 #define	__CPU_IS_PXA250	((cpufunc_id() & CPU_ID_XSCALE_COREGEN_MASK) == 0x2000)
