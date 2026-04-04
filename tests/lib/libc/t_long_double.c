@@ -1,3 +1,5 @@
+/*	$NetBSD: t_long_double.c,v 1.3 2026/04/04 06:15:56 rillig Exp $	*/
+
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_long_double.c,v 1.2 2026/04/04 06:02:59 rillig Exp $");
+__RCSID("$NetBSD: t_long_double.c,v 1.3 2026/04/04 06:15:56 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -59,28 +61,28 @@ test_ldbl_cmp(void)
 		for (size_t j = 0; j < __arraycount(ns); j++) {
 			if (i < j)
 				ATF_CHECK_MSG(ns[i] < ns[j],
-				              "want %Lf (%La) < %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) < %Lf (%La)",
+				    __func__, ns[i], ns[i], ns[j], ns[j]);
 			if (i <= j)
 				ATF_CHECK_MSG(ns[i] <= ns[j],
-				              "want %Lf (%La) <= %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) <= %Lf (%La)",
+				   __func__,  ns[i], ns[i], ns[j], ns[j]);
 			if (i == j)
 				ATF_CHECK_MSG(ns[i] == ns[j],
-				              "want %Lf (%La) == %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) == %Lf (%La)",
+				    __func__, ns[i], ns[i], ns[j], ns[j]);
 			if (i != j)
 				ATF_CHECK_MSG(ns[i] != ns[j],
-				              "want %Lf (%La) != %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) != %Lf (%La)",
+				    __func__, ns[i], ns[i], ns[j], ns[j]);
 			if (i >= j)
 				ATF_CHECK_MSG(ns[i] >= ns[j],
-				              "want %Lf (%La) >= %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) >= %Lf (%La)",
+				    __func__, ns[i], ns[i], ns[j], ns[j]);
 			if (i > j)
 				ATF_CHECK_MSG(ns[i] > ns[j],
-				              "want %Lf (%La) > %Lf (%La)",
-				              ns[i], ns[i], ns[j], ns[j]);
+				    "%s: want %Lf (%La) > %Lf (%La)",
+				    __func__, ns[i], ns[i], ns[j], ns[j]);
 		}
 	}
 }
@@ -113,9 +115,9 @@ test_int64_to_ldbl(void)
 		const struct testcase *c = testcases + i;
 		long double have = (long double)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %Lf (%La) for %" PRId64 " (0x%016" PRIx64 "), "
+		    "%s: want %Lf (%La) for %" PRId64 " (0x%016" PRIx64 "), "
 		    "have %Lf (%La)",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
@@ -138,9 +140,9 @@ test_ldbl_to_int64(void)
 		const struct testcase *c = testcases + i;
 		int64_t have = (int64_t)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %" PRId64 " (0x%016" PRIx64 ") for %Lf (%La), "
+		    "%s: want %" PRId64 " (0x%016" PRIx64 ") for %Lf (%La), "
 		    "have %" PRId64 " (0x%016" PRIx64 ")",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
@@ -160,9 +162,9 @@ test_uint64_to_ldbl(void)
 		const struct testcase *c = testcases + i;
 		long double have = (long double)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %Lf (%La) for %" PRIu64 " (0x%016" PRIx64 "), "
+		    "%s: want %Lf (%La) for %" PRIu64 " (0x%016" PRIx64 "), "
 		    "have %Lf (%La)",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
@@ -184,9 +186,9 @@ test_ldbl_to_uint64(void)
 		const struct testcase *c = testcases + i;
 		uint64_t have = (uint64_t)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %" PRIu64 " (0x%016" PRIx64 ") for %Lf (%La), "
+		    "%s: want %" PRIu64 " (0x%016" PRIx64 ") for %Lf (%La), "
 		    "have %" PRIu64 " (0x%016" PRIx64 ")",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
@@ -211,8 +213,8 @@ test_dbl_to_ldbl(void)
 		const struct testcase *c = testcases + i;
 		long double have = (long double)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %Lf (%La) for %f (%a), have %Lf (%La)",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    "%s: want %Lf (%La) for %f (%a), have %Lf (%La)",
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
@@ -237,8 +239,8 @@ test_ldbl_to_dbl(void)
 		const struct testcase *c = testcases + i;
 		double have = (double)c->arg;
 		ATF_CHECK_MSG(have == c->want,
-		    "want %f (%a) for %Lf (%La), have %f (%a)",
-		    c->want, c->want, c->arg, c->arg, have, have);
+		    "%s: want %f (%a) for %Lf (%La), have %f (%a)",
+		    __func__, c->want, c->want, c->arg, c->arg, have, have);
 	}
 }
 
