@@ -1,8 +1,13 @@
-/*	$NetBSD: disksubr.c,v 1.32 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: subr_disk_4bsd.c,v 1.1 2026/04/04 00:23:09 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
- * All rights reserved.
+ * Copyright (c) 1982, 1986, 1988, 1993
+ *	The Regents of the University of California.  All rights reserved.
+ * (c) UNIX System Laboratories, Inc.
+ * All or some portions of this file are derived from material licensed
+ * to the University of California by American Telephone and Telegraph
+ * Co. or Unix System Laboratories, Inc. and are reproduced herein with
+ * the permission of UNIX System Laboratories, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,28 +33,31 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
+ *	@(#)ufs_disksubr.c	8.5 (Berkeley) 1/21/94
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.32 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_4bsd.c,v 1.1 2026/04/04 00:23:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
-#include <sys/kauth.h>
-#include <sys/proc.h>
 
 /*
- * Attempt to read a disk label from a device
- * using the indicated strategy routine.
- * The label must be partly set up before this:
- * secpercyl and anything required in the strategy routine
- * (e.g., sector size) must be filled in before calling us.
- * Returns null on success and an error string on failure.
+ * Implementation of readdisklabel() and writedisklabel() for the simple
+ * "basic scheme from 4BSD".
+ *
+ * Lifted verbatim from the hp300 copy.
+ */
+
+/*
+ * Attempt to read a disk label from a device using the indicated strategy
+ * routine.  The label must be partly set up before this: secpercyl and
+ * anything required in the strategy routine (e.g., sector size) must be
+ * filled in before calling us.  Returns null on success and an error
+ * string on failure.
  */
 const char *
 readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
@@ -87,8 +95,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if (biowait(bp))
 		msg = "I/O error";
 	else for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)((char *)bp->b_data + DEV_BSIZE
-	    - sizeof(*dlp));
+	    dlp <= (struct disklabel *)((char *)bp->b_data +
+	    DEV_BSIZE - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic != DISKMAGIC || dlp->d_magic2 != DISKMAGIC) {
 			if (msg == NULL)
@@ -133,8 +141,8 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	if ((error = biowait(bp)) != 0)
 		goto done;
 	for (dlp = (struct disklabel *)bp->b_data;
-	    dlp <= (struct disklabel *)((char *)bp->b_data + lp->d_secsize
-	    - sizeof(*dlp));
+	    dlp <= (struct disklabel *)
+	      ((char *)bp->b_data + lp->d_secsize - sizeof(*dlp));
 	    dlp = (struct disklabel *)((char *)dlp + sizeof(long))) {
 		if (dlp->d_magic == DISKMAGIC && dlp->d_magic2 == DISKMAGIC &&
 		    dkcksum(dlp) == 0) {
