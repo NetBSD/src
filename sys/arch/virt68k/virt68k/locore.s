@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.49 2026/03/29 13:40:05 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.50 2026/04/04 00:55:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -185,29 +185,6 @@ Lmmuenabled:
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
 	jra	_C_LABEL(main)		| main() (never returns)
-
-/*
- * Other exceptions only cause four and six word stack frame and require
- * no post-trap stack adjustment.
- */
-
-/*
- * Interrupt handlers.
- *
- * For auto-vectored interrupts, the CPU provides the
- * vector 0x18+level.
- *
- * intrhand_autovec is the entry point for auto-vectored
- * interrupts.
- */
-
-ENTRY_NOPROFILE(intrhand_autovec)
-	addql	#1,_C_LABEL(intr_depth)
-	INTERRUPT_SAVEREG
-	jbsr	_C_LABEL(intr_dispatch)	| call dispatcher
-	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(intr_depth)
-	jra	_ASM_LABEL(rei)		| all done
 
 ENTRY(paravirt_membar_sync)
 	/*
