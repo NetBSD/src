@@ -1,4 +1,4 @@
-/* $NetBSD: ttwoga_dma.c,v 1.11 2021/05/08 00:08:43 thorpej Exp $ */
+/* $NetBSD: ttwoga_dma.c,v 1.12 2026/04/04 21:18:05 andvar Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.11 2021/05/08 00:08:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttwoga_dma.c,v 1.12 2026/04/04 21:18:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -267,7 +267,7 @@ ttwoga_dma_get_tag(bus_dma_tag_t t, alpha_bus_t bustype)
 }
 
 /*
- * Load a T2 SGMAP-mapped DMA map with a liner buffer.
+ * Load a T2 SGMAP-mapped DMA map with a linear buffer.
  */
 static int
 ttwoga_bus_dmamap_load_sgmap(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
