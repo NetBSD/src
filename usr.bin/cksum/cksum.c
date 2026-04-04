@@ -1,4 +1,4 @@
-/*	$NetBSD: cksum.c,v 1.52 2022/06/25 02:22:42 gutteridge Exp $	*/
+/*	$NetBSD: cksum.c,v 1.53 2026/04/04 14:19:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)cksum.c	8.2 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: cksum.c,v 1.52 2022/06/25 02:22:42 gutteridge Exp $");
+__RCSID("$NetBSD: cksum.c,v 1.53 2026/04/04 14:19:48 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -101,6 +101,7 @@ __RCSID("$NetBSD: cksum.c,v 1.52 2022/06/25 02:22:42 gutteridge Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <vis.h>
 
 #include "extern.h"
 
@@ -289,6 +290,7 @@ main(int argc, char **argv)
 		char *s, *p_filename, *p_cksum;
 		int l_filename, l_cksum;
 		char filename[BUFSIZ];
+		char safe_filename[BUFSIZ*4+1];
 		char cksum[BUFSIZ];
 		int ok,cnt,badcnt;
 
@@ -420,6 +422,15 @@ main(int argc, char **argv)
 			strlcpy(filename, p_filename, l_filename+1);
 			strlcpy(cksum, p_cksum, l_cksum+1);
 
+			if (strnvis(safe_filename, sizeof(safe_filename),
+			    filename, VIS_META|VIS_CSTYLE) == -1) {
+				if (check_warn)
+					warnx("strnvis failed, can not print "
+					    "filename");
+				rval = 1;
+				continue;
+			}
+
 			if (hash) {
 				char *h;
 
@@ -432,7 +443,7 @@ main(int argc, char **argv)
 			} else {
 				if ((fd = open(filename, O_RDONLY, 0)) < 0) {
 					if (check_warn)
-						warn("%s", filename);
+						warn("%s", safe_filename);
 					rval = 1;
 					ok = 0;
 				} else {
@@ -455,7 +466,7 @@ main(int argc, char **argv)
 			if (! ok) {
 				if (hash)
 					printf("(%s) ", hash->hashname);
-				printf("%s: FAILED\n", filename);
+				printf("%s: FAILED\n", safe_filename);
 				badcnt++;
 			}
 			cnt++;
