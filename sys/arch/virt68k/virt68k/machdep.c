@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.29 2026/03/28 04:32:03 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.30 2026/04/04 16:45:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2026/03/28 04:32:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.30 2026/04/04 16:45:32 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -88,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2026/03/28 04:32:03 thorpej Exp $")
 #include <machine/vmparam.h>
 #include <m68k/cacheops.h>
 #include <m68k/linux_bootinfo.h>
+#include <m68k/seglist.h>
 #include <dev/cons.h>
 #include <dev/mm.h>
 
@@ -112,7 +113,7 @@ struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
-paddr_t msgbufpa;		/* PA of message buffer */
+paddr_t msgbufpa = (paddr_t)-1;	/* PA of message buffer */
 
 /* prototypes for local functions */
 void	identifycpu(void);
@@ -129,6 +130,12 @@ int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
  * Machine-independent crash dump header info.
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
+
+/*
+ * Memory segments initialized by bootinfo, which are eventually loaded
+ * as managed VM pages.
+ */
+phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
 
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
@@ -168,9 +175,10 @@ machine_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
 void
 machine_init(paddr_t nextpa)
 {
-	struct bootinfo_data *bid = bootinfo_data();
 	struct bi_record *bi __unused;
-	int i;
+	int i, end_seg;
+
+	extern paddr_t avail_start, avail_end;
 
 	/*
 	 * Find the console in the bootinfo and attach it.
@@ -196,46 +204,115 @@ machine_init(paddr_t nextpa)
 	 */
 
 	/*
-	 * Tell the VM system about available physical memory.
+	 * We've arranged the kernel to be linked at >= 0x2000,
+	 * so we can steal the first 8KB of RAM for the kernel
+	 * message buffer.
 	 */
-	for (i = 0; i < bid->bootinfo_mem_nsegments_avail; i++) {
-		if (bid->bootinfo_mem_segments_avail[i].mem_size < PAGE_SIZE) {
-			/*
-			 * Segment has been completely gobbled up.
-			 */
+	KASSERT(MSGBUFSIZE <= 8192);
+	msgbufpa = 0;
+
+	/*
+	 * Compute the boundaries of available memory.
+	 */
+	avail_start = INT_MAX;
+	avail_end = 0;
+	end_seg = 0;
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		/*
+		 * Make sure the memory segment begins/ends on
+		 * page boundaries.
+		 *
+		 * If ps_avail_start and ps_avail_end have not already
+		 * been initialized, go ahead and validate those.
+		 */
+		phys_seg_list[i].ps_start =
+		    m68k_round_page(phys_seg_list[i].ps_start);
+		phys_seg_list[i].ps_end =
+		    m68k_trunc_page(phys_seg_list[i].ps_end);
+
+		if (phys_seg_list[i].ps_avail_start == 0 &&
+		    phys_seg_list[i].ps_avail_end == 0) {
+			phys_seg_list[i].ps_avail_start =
+			    phys_seg_list[i].ps_start;
+			phys_seg_list[i].ps_avail_end =
+			    phys_seg_list[i].ps_end;
+		}
+
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			/* Empty segment. */
 			continue;
 		}
 
-		paddr_t start = bid->bootinfo_mem_segments_avail[i].mem_addr;
-		psize_t size  = bid->bootinfo_mem_segments_avail[i].mem_size;
+		/*
+		 * nextpa represents the next available page after
+		 * the pages already consumed by the bootstrap
+		 * process.  If it falls within this physical segment,
+		 * just the available range as necessary.
+		 */
+		if (nextpa >= phys_seg_list[i].ps_start &&
+		    /* this <= is intentional */
+		    nextpa <= phys_seg_list[i].ps_end &&
+		    nextpa > phys_seg_list[i].ps_avail_start) {
+			phys_seg_list[i].ps_avail_start = nextpa;
+		}
 
-		printf("Memory segment %d: addr=0x%08lx size=0x%08lx\n", i,
-		    start, size);
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
 
-		KASSERT(atop(start + size) == atop(start) + atop(size));
-
-		uvm_page_physload(atop(start),
-				  atop(start) + atop(size),
-				  atop(start),
-				  atop(start) + atop(size),
-				  VM_FREELIST_DEFAULT);
+		if (phys_seg_list[i].ps_avail_start < avail_start) {
+			avail_start = phys_seg_list[i].ps_avail_start;
+		}
+		if (phys_seg_list[i].ps_avail_end > avail_end) {
+			avail_end = phys_seg_list[i].ps_avail_end;
+			end_seg = i;
+		}
 	}
 
 	/*
-	 * Initialize error message buffer.  The kernel is linked
-	 * at 8K so that we can leave VA==0 unmapped.  That leaves
-	 * 8K of physical memory sitting there in front of the kernel
-	 * that we can use for the message buffer.
+	 * If the message buffer has not already been allocated,
+	 * allocate it from the end of physical memory.
 	 */
-	msgbufpa = 0;
-	KASSERT(MSGBUFSIZE <= 8192);
+	if (msgbufpa == (paddr_t)-1) {
+		KASSERT((phys_seg_list[end_seg].ps_avail_end
+			 - phys_seg_list[end_seg].ps_avail_start)
+			>= round_page(MSGBUFSIZE));
+		phys_seg_list[end_seg].ps_avail_end -= round_page(MSGBUFSIZE);
+		msgbufpa = phys_seg_list[end_seg].ps_avail_end;
+	}
+
+#ifndef VM_PHYS_SEG_TO_FREELIST
+#define	VM_PHYS_SEG_TO_FREELIST(s)	VM_FREELIST_DEFAULT
+#endif
+
+	/*
+	 * Now load the pages into the VM system.
+	 */
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
+		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end),
+				  atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end),
+				  VM_PHYS_SEG_TO_FREELIST(i));
+	}
+
+	/*
+	 * Initialize the kernel message buffer.
+	 */
 	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
 			       msgbufpa + i * PAGE_SIZE,
 			       VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 	pmap_update(pmap_kernel());
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/* Check for RND seed from the loader. */
 	bootinfo_setup_rndseed();
@@ -559,13 +636,18 @@ cpu_reboot(int howto, char *bootstr)
 void
 cpu_init_kcore_hdr(void)
 {
-	struct bootinfo_data *bid = bootinfo_data();
-
 	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
+	size_t size;
+	int i, j;
 
-	for (int i = 0; i < bid->bootinfo_mem_nsegments; i++) {
-		ram_segs[i].start = bid->bootinfo_mem_segments[i].mem_addr;
-		ram_segs[i].size  = bid->bootinfo_mem_segments[i].mem_size;
+	for (i = 0, j = 0; i < VM_PHYSSEG_MAX; i++) {
+		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		if (size == 0) {
+			continue;
+		}
+		ram_segs[j].start = phys_seg_list[i].ps_start;
+		ram_segs[j].size = size;
+		j++;
 	}
 }
 
@@ -590,12 +672,16 @@ cpu_dumpsize(void)
 u_long
 cpu_dump_mempagecnt(void)
 {
-	struct bootinfo_data *bid = bootinfo_data();
 	u_long i, n;
+	size_t size;
 
-	n = 0;
-	for (i = 0; i < bid->bootinfo_mem_nsegments; i++)
-		n += atop(bid->bootinfo_mem_segments[i].mem_size);
+	for (n = 0, i = 0; i < VM_PHYSSEG_MAX; i++) {
+		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		if (size == 0) {
+			continue;
+		}
+		n += atop(size);
+	}
 	return n;
 }
 
@@ -675,7 +761,6 @@ cpu_dumpconf(void)
 void
 dumpsys(void)
 {
-	struct bootinfo_data *bid = bootinfo_data();
 	const struct bdevsw *bdev;
 	u_long totalbytesleft, bytes, i, n, memcl;
 	u_long maddr;
@@ -723,9 +808,14 @@ dumpsys(void)
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 
-	for (memcl = 0; memcl < bid->bootinfo_mem_nsegments; memcl++) {
-		maddr = bid->bootinfo_mem_segments[memcl].mem_addr;
-		bytes = bid->bootinfo_mem_segments[memcl].mem_size;
+	for (memcl = 0; memcl < VM_PHYSSEG_MAX; memcl++) {
+		maddr = phys_seg_list[memcl].ps_start;
+		bytes = phys_seg_list[memcl].ps_end -
+		    phys_seg_list[memcl].ps_start;
+
+		if (bytes == 0) {
+			continue;
+		}
 
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 
@@ -849,16 +939,16 @@ const uint16_t ipl2psl_table[NIPL] = {
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	struct bootinfo_data *bid = bootinfo_data();
-	psize_t size;
 	int i;
 
-	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
-		if (pa < bid->bootinfo_mem_segments[i].mem_addr) {
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
 			continue;
 		}
-		size = trunc_page(bid->bootinfo_mem_segments[i].mem_size);
-		if (pa >= bid->bootinfo_mem_segments[i].mem_addr + size) {
+		if (pa < phys_seg_list[i].ps_start) {
+			continue;
+		}
+		if (pa >= phys_seg_list[i].ps_end) {
 			continue;
 		}
 		return 0;

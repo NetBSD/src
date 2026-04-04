@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.5 2026/03/29 14:29:55 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.6 2026/04/04 16:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.5 2026/03/29 14:29:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.6 2026/04/04 16:45:31 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -46,9 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.5 2026/03/29 14:29:55 thorpej E
 #endif
 
 #include <m68k/linux_bootinfo.h>
-
-static struct bi_mem_info	bid_mem_segments[VM_PHYSSEG_MAX];
-static struct bi_mem_info	bid_mem_segments_avail[VM_PHYSSEG_MAX];
 
 static struct bootinfo_data	bootinfo_data_store;
 
@@ -130,9 +127,13 @@ bootinfo_add_mem(struct bootinfo_data *bid, struct bi_record *bi)
 	m->mem_size = m68k_trunc_page(m->mem_size);
 	bid->bootinfo_total_mem_pages += m->mem_size >> PGSHIFT;
 
-	bid->bootinfo_mem_segments[bid->bootinfo_mem_nsegments++] = *m;
-	bid->bootinfo_mem_segments_avail[bid->bootinfo_mem_nsegments_avail++]
-	    = *m;
+	int i = bid->bootinfo_mem_nsegments++;
+
+	bid->bootinfo_mem_segments[i].ps_start =
+	    bid->bootinfo_mem_segments[i].ps_avail_start = m->mem_addr;
+	bid->bootinfo_mem_segments[i].ps_end =
+	    bid->bootinfo_mem_segments[i].ps_avail_end =
+	    m->mem_addr + m->mem_size;
 }
 
 static inline void __attribute__((always_inline))
@@ -167,12 +168,12 @@ bootinfo_reserve_initrd(struct bootinfo_data *bid)
 	 * XXX a single memory segment.
 	 */
 
-	for (i = 0; i < bid->bootinfo_mem_nsegments_avail; i++) {
+	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
 		/* Memory segment start/end already page-aligned. */
 		paddr_t seg_start =
-		    bid->bootinfo_mem_segments_avail[i].mem_addr;
-		paddr_t seg_end = seg_start +
-		    bid->bootinfo_mem_segments_avail[i].mem_size;
+		    bid->bootinfo_mem_segments[i].ps_avail_start;
+		paddr_t seg_end =
+		    bid->bootinfo_mem_segments[i].ps_avail_end;
 
 		if (initrd_start >= seg_end ||
 		    initrd_end <= seg_start) {
@@ -202,9 +203,8 @@ bootinfo_reserve_initrd(struct bootinfo_data *bid)
 		}
 
 		/* Now adjust the segment. */
-		bid->bootinfo_mem_segments_avail[i].mem_addr = seg_start;
-		bid->bootinfo_mem_segments_avail[i].mem_size =
-		    seg_end - seg_start;
+		bid->bootinfo_mem_segments[i].ps_avail_start = seg_start;
+		bid->bootinfo_mem_segments[i].ps_avail_end = seg_end;
 		return;
 	}
 }
@@ -235,10 +235,8 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	 */
 	bid->bootinfo = (struct bi_record *)
 	    PMAP_BOOTSTRAP_RELOC_PA(bootinfo_pa);
-	bid->bootinfo_mem_segments = (struct bi_mem_info *)
-	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments);
-	bid->bootinfo_mem_segments_avail = (struct bi_mem_info *)
-	    PMAP_BOOTSTRAP_RELOC_GLOB(bid_mem_segments_avail);
+	bid->bootinfo_mem_segments = (phys_seg_list_t *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(phys_seg_list);
 
 	/* Set some defaults that we might fix up later. */
 #ifdef __mc68010__
@@ -322,8 +320,7 @@ bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
 	/* Re-initialize these to the virtual addresses. */
 	bid->bootinfo = (struct bi_record *)
 	    PMAP_BOOTSTRAP_PA_TO_VA(bootinfo_pa);
-	bid->bootinfo_mem_segments = bid_mem_segments;
-	bid->bootinfo_mem_segments_avail = bid_mem_segments_avail;
+	bid->bootinfo_mem_segments = phys_seg_list;
 
 	return nextpa;
 }
@@ -342,34 +339,10 @@ bootinfo_startup2(paddr_t nextpa)
 	struct bootinfo_data *bid = &bootinfo_data_store;
 
 	/*
-	 * Scoot the start of available forward to account for:
-	 *
-	 *	(1) The kernel text, data, and bss.
-	 *
-	 *	(2) The pages consumed by pmap bootstrap.
-	 *
-	 * XXX Assumes these come from the first memory segment.
-	 */
-	bid->bootinfo_mem_segments_avail[0].mem_size -=
-	    nextpa - bid->bootinfo_mem_segments_avail[0].mem_addr;
-	bid->bootinfo_mem_segments_avail[0].mem_addr = nextpa;
-
-	/*
 	 * If we have a RAM disk, we need to take it out of the
 	 * available memory segments.
 	 */
 	bootinfo_reserve_initrd(bid);
-
-	/*
-	 * Initialize avail_start and avail_end.
-	 * XXX Assumes segments sorted in ascending address order.
-	 * XXX Legacy nonsense that should go away.
-	 */
-	extern paddr_t avail_start, avail_end;
-	int i = bid->bootinfo_mem_nsegments - 1;
-	avail_start = bid->bootinfo_mem_segments_avail[0].mem_addr;
-	avail_end   = bid->bootinfo_mem_segments_avail[i].mem_addr +
-		      bid->bootinfo_mem_segments_avail[i].mem_size;
 }
 
 /*

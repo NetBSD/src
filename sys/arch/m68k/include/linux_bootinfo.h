@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.h,v 1.3 2026/03/21 20:21:17 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.h,v 1.4 2026/04/04 16:45:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _M68K_LINUX_BOOTINFO_H_
 #define	_M68K_LINUX_BOOTINFO_H_
+
+#include <m68k/seglist.h>
 
 /*
  * Linux/m68k boot information structures.  These records are used to
@@ -142,10 +144,8 @@ struct bootinfo_data {
 	uint32_t		bootinfo_machtype;
 	int			bootinfo_mem_segments_ignored;
 	size_t			bootinfo_mem_segments_ignored_bytes;
-	struct bi_mem_info *	bootinfo_mem_segments;
-	struct bi_mem_info *	bootinfo_mem_segments_avail;
+	phys_seg_list_t *	bootinfo_mem_segments;
 	int			bootinfo_mem_nsegments;
-	int			bootinfo_mem_nsegments_avail;
 	int			bootinfo_total_mem_pages;
 
 	uint32_t		bootinfo_initrd_start;
