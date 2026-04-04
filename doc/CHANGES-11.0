@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.82 2026/04/03 13:58:15 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.83 2026/04/04 06:08:56 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -3084,5 +3084,16 @@ external/gpl2/groff/tmac/mdoc.local		(manually edited)
 sys/sys/param.h					(manually edited)
 
 	Welcome to 11.0_RC3!
+	[martin]
+
+usr.bin/telnet/commands.c			1.82
+
+	Fix inverted logic in previous.
+	[christos, ticket #217]
+
+usr.bin/telnet/commands.c
+doc/CHANGES-11.0
+
+	Tags for 11.0_RC3 moved.
 	[martin]
 
