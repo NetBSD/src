@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.264 2026/04/04 19:55:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265 2026/04/04 20:04:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2026/04/04 19:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2026/04/04 20:04:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,6 @@ int	maxmem;			/* max memory per process */
 
 extern  int   freebufspace;
 extern	u_int lowram;
-
-/* used in init_main.c */
-const char *cpu_type = "m68k";
 
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce
@@ -290,7 +287,7 @@ void
 identifycpu(void)
 {
         /* there's alot of XXX in here... */
-	const char *mach, *mmu, *fpu;
+	const char *mach, *cpu_type, *mmu, *fpu;
 
 #ifdef M68060
 	char cpubuf[16];
