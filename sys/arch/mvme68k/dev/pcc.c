@@ -1,4 +1,4 @@
-/*	$NetBSD: pcc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: pcc.c,v 1.36 2026/04/04 16:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.36 2026/04/04 16:48:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcc.c,v 1.35 2021/08/07 16:19:00 thorpej Exp $");
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include <m68k/seglist.h>
 
 #include <mvme68k/dev/mainbus.h>
 #include <mvme68k/dev/pccreg.h>
@@ -130,7 +132,6 @@ static int pcc_vec2intctrl[] = {
 	PCCREG_SOFT2_INTR_CTRL	/* PCCV_SOFT2 */
 };
 
-extern phys_ram_seg_t mem_clusters[];
 struct pcc_softc *sys_pcc;
 
 /* The base address of the MVME147 from the VMEbus */
@@ -203,7 +204,7 @@ pccattach(device_t parent, device_t self, void *aux)
 	 * (Weird that this register is in the PCC ...)
 	 */
 	reg = pcc_reg_read(sc, PCCREG_SLAVE_BASE_ADDR) & PCC_SLAVE_BASE_MASK;
-	pcc_slave_base_addr = (bus_addr_t)reg * mem_clusters[0].size;
+	pcc_slave_base_addr = (bus_addr_t)reg * phys_seg_list[0].ps_end;
 
 	/*
 	 * Attach configured children.

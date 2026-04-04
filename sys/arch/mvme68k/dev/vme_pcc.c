@@ -1,4 +1,4 @@
-/*	$NetBSD: vme_pcc.c,v 1.27 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: vme_pcc.c,v 1.28 2026/04/04 16:48:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996-2000 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.27 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.28 2026/04/04 16:48:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: vme_pcc.c,v 1.27 2023/12/20 00:40:44 thorpej Exp $")
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+#include <m68k/seglist.h>
 
 #include <dev/vme/vmereg.h>
 #include <dev/vme/vmevar.h>
@@ -68,7 +70,6 @@ CFATTACH_DECL_NEW(vmepcc, sizeof(struct vme_pcc_softc),
 
 extern struct cfdriver vmepcc_cd;
 
-extern phys_ram_seg_t mem_clusters[];
 static int vme_pcc_attached;
 
 void vme_pcc_intr_establish(void *, int, int, int, int,
@@ -183,11 +184,11 @@ vme_pcc_attach(device_t parent, device_t self, void *aux)
 	 * range if onboard memory >= 16Mb, and adjust the start of the
 	 * second range (A32D32).
 	 */
-	vme_pcc_masters[0].vr_vmestart = (vme_addr_t) mem_clusters[0].size;
-	if (mem_clusters[0].size >= 0x01000000) {
+	vme_pcc_masters[0].vr_vmestart = (vme_addr_t) phys_seg_list[0].ps_end;
+	if (phys_seg_list[0].ps_end >= 0x01000000) {
 		vme_pcc_masters[0].vr_am = MVMEBUS_AM_DISABLED;
 		vme_pcc_masters[1].vr_vmestart +=
-		    (vme_addr_t) (mem_clusters[0].size - 0x01000000);
+		    (vme_addr_t) (phys_seg_list[0].ps_end - 0x01000000);
 	}
 
 	am = 0;
@@ -219,7 +220,7 @@ vme_pcc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slave[VME1_SLAVE_A24].vr_locstart = 0;
 		sc->sc_slave[VME1_SLAVE_A24].vr_vmestart = pcc_slave_base_addr;
 		sc->sc_slave[VME1_SLAVE_A24].vr_vmeend = (pcc_slave_base_addr +
-		    mem_clusters[0].size - 1) & 0x00ffffffu;
+		    phys_seg_list[0].ps_end - 1) & 0x00ffffffu;
 	} else
 		sc->sc_slave[VME1_SLAVE_A24].vr_am = MVMEBUS_AM_DISABLED;
 
@@ -231,7 +232,7 @@ vme_pcc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_slave[VME1_SLAVE_A32].vr_locstart = 0;
 		sc->sc_slave[VME1_SLAVE_A32].vr_vmestart = pcc_slave_base_addr;
 		sc->sc_slave[VME1_SLAVE_A32].vr_vmeend =
-		    pcc_slave_base_addr + mem_clusters[0].size - 1;
+		    pcc_slave_base_addr + phys_seg_list[0].ps_end - 1;
 	} else
 		sc->sc_slave[VME1_SLAVE_A32].vr_am = MVMEBUS_AM_DISABLED;
 

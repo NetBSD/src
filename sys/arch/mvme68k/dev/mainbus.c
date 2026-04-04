@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.25 2026/04/03 14:58:00 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2026/04/03 14:58:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $");
 
 #include "opt_mvmeconf.h"
 #include "vmetwo.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.25 2026/04/03 14:58:00 thorpej Exp $")
 #undef _M68K_BUS_DMA_PRIVATE
 #undef _MVME68K_BUS_SPACE_PRIVATE
 #include <machine/cpu.h>
+
+#include <m68k/seglist.h>
 
 #include <mvme68k/dev/mainbus.h>
 
@@ -97,11 +99,10 @@ mvme68k_bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     int flags)
 {
 	extern paddr_t avail_start, avail_end;
-	extern phys_ram_seg_t mem_clusters[];
 	bus_addr_t high;
 
 	if (flags & BUS_DMA_ONBOARD_RAM) {
-		high = mem_clusters[0].size;
+		high = phys_seg_list[0].ps_avail_end;
 	} else {
 		high = avail_end;
 	}

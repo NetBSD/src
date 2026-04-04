@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.181 2026/04/04 12:24:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.182 2026/04/04 16:48:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2026/04/04 12:24:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2026/04/04 16:48:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -121,7 +121,7 @@ struct vm_map *phys_map = NULL;
  */
 struct	mvmeprom_brdid  boardid;
 
-paddr_t msgbufpa;		/* PA of message buffer */
+paddr_t msgbufpa = (paddr_t)-1; /* PA of message buffer */
 
 /*
  * The driver for the ethernet chip appropriate to the
@@ -159,14 +159,6 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
 
 /*
- * Memory segments to dump.  This is initialized from the phys_seg_list
- * before pages are stolen from it for VM system overhead.  I.e. this
- * covers the entire range of physical memory.
- */
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
-
-/*
  * Default delay_divisor to the "worst case" 60MHz 68060.
  */
 int	cpuspeed;		/* only used for printing later */
@@ -191,7 +183,7 @@ void	mvme1xx_init(void);
 void
 machine_init(paddr_t nextpa)
 {
-	int i;
+	int i, end_seg;
 
 	extern paddr_t avail_start, avail_end;
 
@@ -209,18 +201,46 @@ machine_init(paddr_t nextpa)
 		pager_map_size = 16 * 1024 * 1024;
 
 	/*
-	 * Tell the VM system about available physical memory.
+	 * Put the kernel message buffer at the end of on-board RAM;
+	 * VME memory has to be zero'd to initialize parity.
+	 *
+	 * (This means we have to fully initialize the first phys seg
+	 * entry.)
+	 */
+	phys_seg_list[0].ps_start = phys_seg_list[0].ps_avail_start =
+	    m68k_round_page(phys_seg_list[0].ps_start);
+	phys_seg_list[0].ps_end = phys_seg_list[0].ps_avail_end =
+	    m68k_trunc_page(phys_seg_list[0].ps_end);
+
+	phys_seg_list[0].ps_avail_end -= m68k_round_page(MSGBUFSIZE);
+	msgbufpa = phys_seg_list[0].ps_avail_end;
+
+	/*
+	 * Compute the boundaries of available memory.
 	 */
 	avail_start = INT_MAX;
 	avail_end = 0;
+	end_seg = 0;
 	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		/*
+		 * Make sure the memory segment begins/ends on
+		 * page boundaries.
+		 *
+		 * If ps_avail_start and ps_avail_end have not already
+		 * been initialized, go ahead and validate those.
+		 */
 		phys_seg_list[i].ps_start =
 		    m68k_round_page(phys_seg_list[i].ps_start);
 		phys_seg_list[i].ps_end =
 		    m68k_trunc_page(phys_seg_list[i].ps_end);
 
-		phys_seg_list[i].ps_avail_start = phys_seg_list[i].ps_start;
-		phys_seg_list[i].ps_avail_end = phys_seg_list[i].ps_end;
+		if (phys_seg_list[i].ps_avail_start == 0 &&
+		    phys_seg_list[i].ps_avail_end == 0) {
+			phys_seg_list[i].ps_avail_start =
+			    phys_seg_list[i].ps_start;
+			phys_seg_list[i].ps_avail_end =
+			    phys_seg_list[i].ps_end;
+		}
 
 		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
 			/* Empty segment. */
@@ -228,29 +248,16 @@ machine_init(paddr_t nextpa)
 		}
 
 		/*
-		 * Initialize the mem_clusters[] array for the crash dump
-		 * code.
+		 * nextpa represents the next available page after
+		 * the pages already consumed by the bootstrap
+		 * process.  If it falls within this physical segment,
+		 * just the available range as necessary.
 		 */
-		mem_clusters[mem_cluster_cnt].start =
-		    phys_seg_list[i].ps_start;
-		mem_clusters[mem_cluster_cnt].size =
-		    phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
-		mem_cluster_cnt++;
-
-		if (i == 0) {
-			/*
-			 * Adjust on-board RAM for pages already consumed
-			 * by boot loader, kernel, and pmap data, as well
-			 * as the kernel message buffer.
-			 *
-			 * Mesage buffer is at the end of on-board RAM
-			 * because VME RAM needs to be zero'd at boot
-			 * time to initialize parity.
-			 */
+		if (nextpa >= phys_seg_list[i].ps_start &&
+		    /* this <= is intentional */
+		    nextpa <= phys_seg_list[i].ps_end &&
+		    nextpa > phys_seg_list[i].ps_avail_start) {
 			phys_seg_list[i].ps_avail_start = nextpa;
-			phys_seg_list[i].ps_avail_end -=
-			    m68k_round_page(MSGBUFSIZE);
-			msgbufpa = phys_seg_list[i].ps_avail_end;
 		}
 
 		if (phys_seg_list[i].ps_avail_start ==
@@ -264,18 +271,52 @@ machine_init(paddr_t nextpa)
 		}
 		if (phys_seg_list[i].ps_avail_end > avail_end) {
 			avail_end = phys_seg_list[i].ps_avail_end;
+			end_seg = i;
 		}
+	}
 
-		/*
-		 * Note the index of the mem cluster is the free
-		 * list we want to put the memory on (0 == default,
-		 * 1 == VME).  There can only be two.
-		 */
+	/*
+	 * If the message buffer has not already been allocated,
+	 * allocate it from the end of physical memory.
+	 */
+	if (msgbufpa == (paddr_t)-1) {
+		KASSERT((phys_seg_list[end_seg].ps_avail_end
+			 - phys_seg_list[end_seg].ps_avail_start)
+			>= round_page(MSGBUFSIZE));
+		phys_seg_list[end_seg].ps_avail_end -= round_page(MSGBUFSIZE);
+		msgbufpa = phys_seg_list[end_seg].ps_avail_end;
+	}
+
+#ifndef VM_PHYS_SEG_TO_FREELIST
+#define	VM_PHYS_SEG_TO_FREELIST(s)	VM_FREELIST_DEFAULT
+#endif
+
+	/*
+	 * Now load the pages into the VM system.
+	 */
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
 		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
 				  atop(phys_seg_list[i].ps_avail_end),
 				  atop(phys_seg_list[i].ps_avail_start),
-				  atop(phys_seg_list[i].ps_avail_end), i);
+				  atop(phys_seg_list[i].ps_avail_end),
+				  VM_PHYS_SEG_TO_FREELIST(i));
 	}
+
+	/*
+	 * Initialize the kernel message buffer.
+	 */
+	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+			       msgbufpa + i * PAGE_SIZE,
+			       VM_PROT_READ|VM_PROT_WRITE, 0);
+	}
+	pmap_update(pmap_kernel());
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	switch (machineid) {
 #ifdef MVME147
@@ -302,16 +343,6 @@ machine_init(paddr_t nextpa)
 	default:
 		panic("%s: impossible machineid", __func__);
 	}
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-	pmap_update(pmap_kernel());
 }
 
 #ifdef MVME147
@@ -507,10 +538,13 @@ cpu_startup(void)
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
 	printf("total memory = %s", pbuf);
 
-	for (vmememsize = 0, i = 1; i < mem_cluster_cnt; i++)
-		vmememsize += mem_clusters[i].size;
+	for (vmememsize = 0, i = 1; i < VM_PHYSSEG_MAX; i++) {
+		vmememsize +=
+		    phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+	}
 	if (vmememsize != 0) {
-		format_bytes(pbuf, sizeof(pbuf), mem_clusters[0].size);
+		format_bytes(pbuf, sizeof(pbuf),
+		    phys_seg_list[0].ps_end - phys_seg_list[0].ps_start);
 		printf(" (%s on-board", pbuf);
 		format_bytes(pbuf, sizeof(pbuf), vmememsize);
 		printf(", %s VMEbus)", pbuf);
@@ -730,12 +764,17 @@ void
 cpu_init_kcore_hdr(void)
 {
 	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
-	int i;
+	size_t size;
+	int i, j;
 
-	/* The mvme68k has one or two memory segments. */
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		ram_segs[i].start = mem_clusters[i].start;
-		ram_segs[i].size  = mem_clusters[i].size;
+	for (i = 0, j = 0; i < VM_PHYSSEG_MAX; i++) {
+		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		if (size == 0) {
+			continue;
+		}
+		ram_segs[j].start = phys_seg_list[i].ps_start;
+		ram_segs[j].size = size;
+		j++;
 	}
 }
 
@@ -761,10 +800,15 @@ u_long
 cpu_dump_mempagecnt(void)
 {
 	u_long i, n;
+	size_t size;
 
-	n = 0;
-	for (i = 0; i < mem_cluster_cnt; i++)
-		n += atop(mem_clusters[i].size);
+	for (n = 0, i = 0; i < VM_PHYSSEG_MAX; i++) {
+		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		if (size == 0) {
+			continue;
+		}
+		n += atop(size);
+	}
 	return n;
 }
 
@@ -891,9 +935,14 @@ dumpsys(void)
 
 	totalbytesleft = ptoa(cpu_dump_mempagecnt());
 
-	for (memcl = 0; memcl < mem_cluster_cnt; memcl++) {
-		maddr = mem_clusters[memcl].start;
-		bytes = mem_clusters[memcl].size;
+	for (memcl = 0; memcl < VM_PHYSSEG_MAX; memcl++) {
+		maddr = phys_seg_list[memcl].ps_start;
+		bytes = phys_seg_list[memcl].ps_end -
+		    phys_seg_list[memcl].ps_start;
+
+		if (bytes == 0) {
+			continue;
+		}
 
 		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
 
@@ -907,13 +956,16 @@ dumpsys(void)
 			if (n > PAGE_SIZE)
 				n = PAGE_SIZE;
 
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-			    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+			pmap_kenter_pa((vaddr_t)vmmap, maddr, VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 
 			error = (*dump)(dumpdev, blkno, vmmap, n);
 			if (error)
 				goto err;
+
+			pmap_kremove((vaddr_t)vmmap, PAGE_SIZE);
+			pmap_update(pmap_kernel());
+
 			maddr += n;
 			blkno += btodb(n);
 		}

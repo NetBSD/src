@@ -1,4 +1,4 @@
-/*	$NetBSD: mvmebus.c,v 1.25 2026/04/03 17:56:17 thorpej Exp $	*/
+/*	$NetBSD: mvmebus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.25 2026/04/03 17:56:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -46,6 +46,12 @@ __KERNEL_RCSID(0, "$NetBSD: mvmebus.c,v 1.25 2026/04/03 17:56:17 thorpej Exp $")
 #include <dev/vme/vmevar.h>
 
 #include <dev/mvme/mvmebus.h>
+
+#ifdef __m68k__
+#include <m68k/seglist.h>
+#else
+#error Need a solution for non-68k.
+#endif
 
 #ifdef DIAGNOSTIC
 int	mvmebus_dummy_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
@@ -80,10 +86,6 @@ const char *mvmebus_irq_name[] = {
 	"vmeirq4", "vmeirq5", "vmeirq6", "vmeirq7"
 };
 
-extern phys_ram_seg_t mem_clusters[];
-extern int mem_cluster_cnt;
-
-
 static void
 mvmebus_offboard_ram(struct mvmebus_softc *sc)
 {
@@ -99,13 +101,13 @@ mvmebus_offboard_ram(struct mvmebus_softc *sc)
 	 * for exactly this purpose.
 	 */
 	svr = sc->sc_slaves;
-	if (mem_cluster_cnt < 2) {
+	if (phys_seg_list[1].ps_start == phys_seg_list[1].ps_end) {
 		svr->vr_am = MVMEBUS_AM_DISABLED;
 		return;
 	}
 
-	start = mem_clusters[1].start;
-	size = mem_clusters[1].size - 1;
+	start = phys_seg_list[1].ps_start;
+	size = (phys_seg_list[1].ps_end - phys_seg_list[1].ps_start) - 1;
 	end = start + size;
 
 	/*
