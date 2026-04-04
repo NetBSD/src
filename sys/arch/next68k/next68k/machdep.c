@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2026/04/04 12:24:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/03/28 22:19:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/04 12:24:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,7 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/03/28 22:19:35 thorpej Exp $"
 #include <next68k/next68k/isr.h>
 #include <next68k/next68k/nextrom.h>
 #include <next68k/next68k/rtc.h>
-#include <next68k/next68k/seglist.h>
+#include <m68k/seglist.h>
 
 #include <dev/mm.h>
 

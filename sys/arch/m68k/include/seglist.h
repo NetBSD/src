@@ -1,4 +1,4 @@
-/*	$NetBSD: seglist.h,v 1.7 2025/11/16 17:59:52 thorpej Exp $	*/
+/*	$NetBSD: seglist.h,v 1.1 2026/04/04 12:24:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 The Steve Woodford
@@ -25,16 +25,15 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _M68K_SEGLIST_H_
+#define	_M68K_SEGLIST_H_
+
 /*
- * The following structure is passed to pmap_bootstrap by the startup
- * code in locore.s.
- * It simply describes the start and end addresses of the memory
- * segments available to the board.
- * If the offboard RAM segment spans multiple boards, they must be
- * configured to appear physically contiguous in the VMEbus address
- * space.
- *
- * NOTE: If you change this, you'll need to update locore.s ...
+ * Struture describing a physical memory segment.  ps_start and ps_end
+ * cover the entire segment, while ps_avail_start and ps_avail_end
+ * account for memory stolen from the segment for various reasons.
+ * Ultimately, [ps_avail_start,ps_avail_end) is what gets loaded
+ * into UVM.
  */
 typedef struct {
 	paddr_t		ps_start;	/* Start of segment */
@@ -43,5 +42,6 @@ typedef struct {
 	paddr_t		ps_avail_end;	/* Available end of segment */
 } phys_seg_list_t;
 
-/* Instantiated in machdep.c */
 extern phys_seg_list_t phys_seg_list[];
+
+#endif /* _M68K_SEGLIST_H_ */

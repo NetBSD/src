@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.32 2025/11/30 20:09:18 thorpej Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.33 2026/04/04 12:24:41 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.32 2025/11/30 20:09:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.33 2026/04/04 12:24:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -34,7 +34,7 @@ __KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.32 2025/11/30 20:09:18 thorpej Exp $")
 #include <sys/types.h>
 #include <machine/cpu.h>
 
-#include <next68k/next68k/seglist.h>
+#include <m68k/seglist.h>
 #include <next68k/next68k/nextrom.h>
 #include <next68k/dev/intiovar.h>
 

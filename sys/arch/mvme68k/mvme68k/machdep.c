@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.180 2026/04/03 14:58:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.181 2026/04/04 12:24:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2026/04/03 14:58:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.181 2026/04/04 12:24:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -98,7 +98,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2026/04/03 14:58:01 thorpej Exp $"
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
 #include <mvme68k/dev/mainbus.h>
-#include <mvme68k/mvme68k/seglist.h>
+#include <m68k/seglist.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
