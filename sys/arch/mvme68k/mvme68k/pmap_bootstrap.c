@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.65 2026/03/29 20:42:51 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.66 2026/04/04 12:21:02 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.65 2026/03/29 20:42:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.66 2026/04/04 12:21:02 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -47,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.65 2026/03/29 20:42:51 thorpej 
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-
-#include <mvme68k/mvme68k/seglist.h>
 
 #define RELOC(v, t)	*((t*)((uintptr_t)&(v) + firstpa))
 

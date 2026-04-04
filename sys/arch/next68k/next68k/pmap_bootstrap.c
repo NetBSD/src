@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.57 2026/03/29 20:42:51 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.58 2026/04/04 12:21:02 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.57 2026/03/29 20:42:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.58 2026/04/04 12:21:02 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -56,8 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.57 2026/03/29 20:42:51 thorpej 
 #include <machine/cpu.h>
 #include <machine/pte.h>
 #include <machine/vmparam.h>
-
-#include <next68k/next68k/seglist.h>
 
 #include <next68k/dev/intiovar.h>
 
