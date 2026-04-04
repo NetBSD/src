@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2026/04/04 17:05:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2026/03/21 20:14:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2026/04/04 17:05:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -229,9 +229,6 @@ extern char kernel_text[];
 extern char etext[];
 /* Defined in vfs_bio.c */
 extern u_int bufpages;
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
@@ -365,10 +362,6 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char	machine[16] = MACHINE;		/* from <machine/param.h> */
 char	kernel_arch[16] = "sun2";	/* XXX needs a sysctl node */
 
 /*

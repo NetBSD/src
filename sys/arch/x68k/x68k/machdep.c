@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 2026/03/28 22:19:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222 2026/04/04 17:05:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/03/28 22:19:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2026/04/04 17:05:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,12 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/03/28 22:19:36 thorpej Exp $"
 #include <arch/x68k/x68k/iodevice.h>
 
 extern void doboot(void) __attribute__((__noreturn__));
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 

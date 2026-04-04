@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.379 2026/03/28 01:44:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.380 2026/04/04 17:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2026/03/28 01:44:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.380 2026/04/04 17:05:07 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -164,9 +164,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379 2026/03/28 01:44:36 thorpej Exp $"
 
 int symsize, end, *ssym, *esym;
 
-/* The following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
 struct mac68k_machine_S mac68k_machine;
 
 volatile u_char *Via1Base, *Via2Base, *PSCBase = NULL;
@@ -218,9 +215,6 @@ int	maxmem;			/* max memory per process */
 static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *iomem_ex;
 int iomem_malloc_safe;
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 static void	identifycpu(void);
 static u_long	get_physical(u_int, u_long *);

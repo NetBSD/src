@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.198 2026/03/28 01:44:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.199 2026/04/04 17:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.198 2026/03/28 01:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2026/04/04 17:05:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -112,13 +112,7 @@ vaddr_t	msgbufpa;
 extern  int   freebufspace;
 extern	u_int lowram;
 
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
- /*
+/*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.

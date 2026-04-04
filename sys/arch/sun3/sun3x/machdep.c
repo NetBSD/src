@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2026/03/28 22:19:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 2026/04/04 17:05:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2026/03/28 22:19:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2026/04/04 17:05:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -106,9 +106,6 @@ extern char etext[];
 /* kernel_arch specific values required by module(9) */
 const vaddr_t kernbase = KERNBASE3X;
 const vaddr_t kern_end = KERN_END3X;
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 
@@ -241,10 +238,6 @@ cpu_startup(void)
 	initcpu();
 }
 
-/*
- * Info for CTL_HW
- */
-char	machine[16] = MACHINE;		/* from <machine/param.h> */
 char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
 
 int delay_divisor = delay_divisor_est(33); /* assume fastest 33Hz */

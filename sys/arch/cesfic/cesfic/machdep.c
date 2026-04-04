@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2026/03/28 22:19:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2026/04/04 17:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2026/03/28 22:19:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2026/04/04 17:05:07 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -97,12 +97,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2026/03/28 22:19:32 thorpej Exp $")
 #include <cesfic/dev/zsvar.h>
 
 #include "ksyms.h"
-
-/* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;		/* CPU "architecture" */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 

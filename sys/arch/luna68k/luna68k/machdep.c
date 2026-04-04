@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.122 2026/03/28 22:19:33 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.123 2026/04/04 17:05:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/03/28 22:19:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.123 2026/04/04 17:05:07 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -95,14 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2026/03/28 22:19:33 thorpej Exp $"
 #endif
 
 #include "ksyms.h"
-
-/*
- * Info for CTL_HW
- */
-char	machine[] = MACHINE;
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 

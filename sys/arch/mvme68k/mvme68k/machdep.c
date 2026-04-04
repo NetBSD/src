@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.182 2026/04/04 16:48:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.183 2026/04/04 17:05:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2026/04/04 16:48:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.183 2026/04/04 17:05:08 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -107,12 +107,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.182 2026/04/04 16:48:21 thorpej Exp $"
 #endif
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 struct vm_map *phys_map = NULL;
 

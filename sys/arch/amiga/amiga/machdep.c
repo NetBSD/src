@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.262 2026/03/28 01:44:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.263 2026/04/04 17:05:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2026/03/28 01:44:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2026/04/04 17:05:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,11 +150,6 @@ extern	u_int lowram;
 
 /* used in init_main.c */
 const char *cpu_type = "m68k";
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce

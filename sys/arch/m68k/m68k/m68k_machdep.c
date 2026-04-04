@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.13 2026/03/28 04:32:02 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.14 2026/04/04 17:05:07 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.13 2026/03/28 04:32:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.14 2026/04/04 17:05:07 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -80,7 +80,11 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.13 2026/03/28 04:32:02 thorpej Ex
 #include <m68k/reg.h>
 
 /* the following is used externally (sysctl_hw) */
+char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
+
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store;
 
 /*
  * Set registers on exec.
