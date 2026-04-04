@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2026/04/04 17:05:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.135 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2026/04/04 17:05:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2026/04/04 19:55:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -120,8 +120,6 @@ char *ssym;
 extern char *esym;
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
-
-struct vm_map *phys_map = NULL;
 
 paddr_t msgbufpa;		/* PA of message buffer */
 

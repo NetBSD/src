@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.260 2026/04/04 17:05:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.261 2026/04/04 19:55:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2026/04/04 17:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2026/04/04 19:55:18 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -108,8 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.260 2026/04/04 17:05:07 thorpej Exp $"
 #endif
 
 #include "ksyms.h"
-
-struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
 

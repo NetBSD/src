@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.380 2026/04/04 17:05:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.381 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.380 2026/04/04 17:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.381 2026/04/04 19:55:19 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -198,8 +198,6 @@ struct mac68k_video mac68k_video;
 /* Callback and cookie to run bell */
 int	(*mac68k_bell_callback)(void *, int, int, int);
 void *	mac68k_bell_cookie;
-
-struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.132 2026/04/04 17:05:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.133 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/04/04 17:05:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/04 19:55:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -104,8 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/04/04 17:05:08 thorpej Exp $"
 #include "ksyms.h"
 #include "romcons.h"
 /* XXX etc. etc. */
-
-struct vm_map *phys_map = NULL;
 
 int	maxmem;			/* max memory per process */
 

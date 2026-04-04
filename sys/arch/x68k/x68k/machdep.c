@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.222 2026/04/04 17:05:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.223 2026/04/04 19:55:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2026/04/04 17:05:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2026/04/04 19:55:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -109,8 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2026/04/04 17:05:08 thorpej Exp $"
 #include <arch/x68k/x68k/iodevice.h>
 
 extern void doboot(void) __attribute__((__noreturn__));
-
-struct vm_map *phys_map = NULL;
 
 extern paddr_t avail_start, avail_end;
 extern u_int lowram;

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.263 2026/04/04 17:05:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.264 2026/04/04 19:55:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.263 2026/04/04 17:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2026/04/04 19:55:18 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,8 +136,6 @@ void fdintr(int);
 #endif
 
 volatile unsigned int intr_depth = 0;
-
-struct vm_map *phys_map = NULL;
 
 void *	msgbufaddr;
 paddr_t msgbufpa;

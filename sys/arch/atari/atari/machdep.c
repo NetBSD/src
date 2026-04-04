@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.199 2026/04/04 17:05:07 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.200 2026/04/04 19:55:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.199 2026/04/04 17:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2026/04/04 19:55:18 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -103,8 +103,6 @@ void	straymfpint(int, u_short);
 #ifdef _MILANHW_
 void	nmihandler(void);
 #endif
-
-struct vm_map *phys_map = NULL;
 
 void *	msgbufaddr;
 vaddr_t	msgbufpa;

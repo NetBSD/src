@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.217 2026/04/04 17:05:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.218 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.217 2026/04/04 17:05:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2026/04/04 19:55:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -148,8 +148,6 @@ extern char etext[];
 /* kernel_arch specific values required by module(9) */
 const vaddr_t kernbase = KERNBASE3;
 const vaddr_t kern_end = KERN_END3;
-
-struct vm_map *phys_map = NULL;
 
 void *	msgbufaddr;
 

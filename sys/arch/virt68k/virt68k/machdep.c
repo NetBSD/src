@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.31 2026/04/04 17:05:08 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.32 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2026/04/04 17:05:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.32 2026/04/04 19:55:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -104,8 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.31 2026/04/04 17:05:08 thorpej Exp $")
 #if NGFTTY > 0
 #include <dev/goldfish/gfttyvar.h>
 #endif  
-
-struct vm_map *phys_map = NULL;
 
 paddr_t msgbufpa = (paddr_t)-1;	/* PA of message buffer */
 

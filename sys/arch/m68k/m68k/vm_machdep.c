@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.44 2025/11/06 20:28:41 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.45 2026/04/04 19:55:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2025/11/06 20:28:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2026/04/04 19:55:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.44 2025/11/06 20:28:41 thorpej Exp 
 #include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
+
+struct vm_map *phys_map;
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
