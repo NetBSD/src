@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.708 2026/03/31 19:39:17 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.709 2026/04/05 20:51:00 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.708 2026/03/31 19:39:17 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.709 2026/04/05 20:51:00 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3681,22 +3681,6 @@ check_lossy_floating_to_integer_conversion(
 	    ? x >= ic.umin && x <= ic.umax && x == (uint64_t)x
 	    : x >= ic.smin && x <= ic.smax && x == (int64_t)x)
 		return;
-#if __sparc64__
-	if (getenv("ATF_SHELL") != NULL) {
-		printf("umin = %#llx, umax = %#llx\n",
-		    (unsigned long long)ic.umin, (unsigned long long)ic.umax);
-		printf("smin = %#llx, smax = %#llx\n",
-		    (unsigned long long)ic.smin, (unsigned long long)ic.smax);
-		printf("x = %La, ux = %#llx, sx = %#llx\n",
-		    x, (unsigned long long)(uint64_t)x, (long long)(int64_t)x);
-		printf("x %s umin, x %s umax, x %s (uint64_t)x\n",
-		    x >= ic.umin ? ">=" : "<", x <= ic.umax ? "<=" : ">",
-		    x == (uint64_t)x ? "==" : "!=");
-		printf("x %s smin, x %s smax, x %s (int64_t)x\n",
-		    x >= ic.smin ? ">=" : "<", x <= ic.smax ? "<=" : ">",
-		    x == (int64_t)x ? "==" : "!=");
-	}
-#endif
 	if (op == FARG)
 		/* lossy conversion of %Lg (%La) to '%s', arg #%d */
 		warning(380, x, x, type_name(tp), arg);
