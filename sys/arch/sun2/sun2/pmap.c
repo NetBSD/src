@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.54 2026/04/02 03:56:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.55 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.54 2026/04/02 03:56:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2026/04/05 13:22:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1493,6 +1493,7 @@ pmap_bootstrap(vaddr_t nextva)
 	vaddr_t va, eva;
 	int i, pte, sme;
 	extern char etext[];
+	extern void *msgbufaddr;
 
 	nextva = m68k_round_page(nextva);
 
@@ -1602,12 +1603,12 @@ pmap_bootstrap(vaddr_t nextva)
 	 * We use pages four through seven for the msgbuf.
 	 */
 	eva = va + PAGE_SIZE * 4;
+	msgbufaddr = (void *)va;
 	for(; va < eva; va += PAGE_SIZE) {
 		pte = get_pte(va);
 		pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
 		set_pte(va, pte);
 	}
-	/* Initialize msgbufaddr later, in machdep.c */
 
 	/*
 	 * On the Sun3, two of the three dead pages in SUN3_MONSHORTSEG

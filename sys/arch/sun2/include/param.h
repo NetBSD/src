@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,8 +58,7 @@
 #ifdef MSGBUFSIZE
 #error "MSGBUFSIZE is not user-adjustable for this arch"
 #endif
-#define MSGBUFOFF	0x0
-#define MSGBUFSIZE	((NBPG * 4) - MSGBUFOFF)
+#define MSGBUFSIZE	(NBPG * 4)
 
 /* This is needed by ps (actually USPACE). */
 #define	UPAGES		(16384 / NBPG)		/* pages of u-area */

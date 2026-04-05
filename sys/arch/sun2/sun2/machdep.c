@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.91 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.92 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2026/04/05 13:22:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -265,7 +265,6 @@ static void initcpu(void);
 void
 cpu_startup(void)
 {
-	void *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -276,10 +275,7 @@ cpu_startup(void)
 	 * reboot. (physical pages 0-3 are reserved by the PROM
 	 * for its vector table and other stuff.)
 	 * Its mapping was prepared in pmap_bootstrap().
-	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (void *) (PAGE_SIZE * 4);
-	msgbufaddr = (void *)((char *)v + MSGBUFOFF);
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)

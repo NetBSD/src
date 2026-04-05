@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.182 2026/04/02 03:56:44 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.183 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.182 2026/04/02 03:56:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.183 2026/04/05 13:22:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -1500,6 +1500,7 @@ pmap_bootstrap(vaddr_t nextva)
 	vaddr_t va, eva;
 	int i, pte, sme;
 	extern char etext[];
+	extern void *msgbufaddr;
 
 	nextva = m68k_round_page(nextva);
 	rvec = romVectorPtr;
@@ -1636,11 +1637,11 @@ pmap_bootstrap(vaddr_t nextva)
 	 * preserved through a reboot.
 	 */
 	va = KERNBASE3;
+	msgbufaddr = (void *)va;
 	pte = get_pte(va);
 	pte |= (PG_SYSTEM | PG_WRITE | PG_NC);
 	set_pte(va, pte);
 	va += PAGE_SIZE;
-	/* Initialize msgbufaddr later, in machdep.c */
 
 	/* Next is the tmpstack page. */
 	pte = get_pte(va);

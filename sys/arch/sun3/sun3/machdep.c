@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.218 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.219 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.218 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.219 2026/04/05 13:22:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -212,7 +212,6 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	char *v;
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 
@@ -221,10 +220,7 @@ cpu_startup(void)
 	 * This is put in physical page zero so it will
 	 * always be in the same place after a reboot.
 	 * Its mapping was prepared in pmap_bootstrap().
-	 * Also, offset some to avoid PROM scribbles.
 	 */
-	v = (char *)KERNBASE3;
-	msgbufaddr = v + MSGBUFOFF;
 	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*

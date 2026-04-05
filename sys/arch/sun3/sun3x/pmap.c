@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.125 2026/03/28 02:48:19 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.126 2026/04/05 13:22:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.125 2026/03/28 02:48:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.126 2026/04/05 13:22:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -609,6 +609,7 @@ pmap_bootstrap(vaddr_t nextva)
 	paddr_t pa;
 	int b, c, i, j;	/* running table counts */
 	int size, resvmem;
+	extern void *msgbufaddr;
 
 	/*
 	 * This function is called by __bootstrap after it has
@@ -850,6 +851,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * the address is assigned to this global pointer in cpu_startup().
 	 * It is non-cached, mostly due to paranoia.
 	 */
+	msgbufaddr = (void *)va;
 	pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
 	va += PAGE_SIZE;
 	pa += PAGE_SIZE;
