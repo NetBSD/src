@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.28 2025/01/12 05:56:59 nat Exp $	*/
+/*	$NetBSD: akbd.c,v 1.29 2026/04/05 22:11:24 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.28 2025/01/12 05:56:59 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29 2026/04/05 22:11:24 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -113,6 +113,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 	KB_US,
 };
 
+int leds;
 static int akbd_is_console(void);
 
 static int
@@ -437,8 +438,8 @@ blinkleds(struct akbd_softc *ksc)
 	/* make sure that we restore the LED settings */
 	i = 10;
 	do {
-		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0)); 
+		(void)setleds(ksc, (u_char)origleds);
+	} while (setleds(ksc, (u_char)origleds) && (i-- > 0)); 
 
 	return;
 }
@@ -461,20 +462,34 @@ akbd_enable(void *v, int on)
 void
 akbd_set_leds(void *v, int on)
 {
+	leds = on;
 }
 
 int
 akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#ifdef notyet
+	struct akbd_softc *ksc = v;
+#endif
+
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
+#ifdef notyet
+		setleds(ksc, *(int *)data);
+#else
+		leds = *(int *)data;
+#endif
 		return 0;
 	case WSKBDIO_GETLEDS:
-		*(int *)data = 0;
+#ifdef notyet
+		*(int *)data = getleds(ksc->adbaddr);
+#else
+		*(int *)data = leds;
+#endif
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
