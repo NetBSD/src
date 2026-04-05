@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.133 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134 2026/04/05 20:16:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2026/04/05 20:16:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -85,6 +85,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/04 19:55:19 thorpej Exp $"
 #include <machine/intr.h>
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#include <m68k/seglist.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -163,20 +165,14 @@ const struct pmap_bootmap machine_bootmap[] = {
 void
 machine_init(paddr_t nextpa)
 {
-	int i;
-
 	/* Clear and enable the external cache, if any. */
 	PCIA();
 	ecacheon();
 
-	/*
-	 * Tell the VM system about available physical memory.  The
-	 * news68k only has one segment.
-	 */
-	avail_start = nextpa;
-	avail_end = m68k_ptob(maxmem) - m68k_round_page(MSGBUFSIZE);
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	phys_seg_list[0].ps_start = lowram;
+	phys_seg_list[0].ps_end = m68k_ptob(maxmem);
+
+	machine_init_common(nextpa);
 
 	/* Initialize system variables. */
 	switch (systype) {
@@ -193,16 +189,6 @@ machine_init(paddr_t nextpa)
 	default:
 		panic("impossible system type");
 	}
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
 
 /*

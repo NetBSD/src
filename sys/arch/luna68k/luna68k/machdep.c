@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.124 2026/04/04 19:55:18 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.125 2026/04/05 20:10:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2026/04/04 19:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2026/04/05 20:10:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -82,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.124 2026/04/04 19:55:18 thorpej Exp $"
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#include <m68k/seglist.h>
 
 #include <luna68k/dev/siottyvar.h>
 
@@ -158,11 +160,9 @@ void
 machine_init(paddr_t nextpa)
 {
 	volatile uint8_t *pio0 = (void *)OBIO_PIO0_BASE;
-	int sw1, i;
+	int sw1;
 	char *cp;
 	extern char bootarg[64];
-
-	extern paddr_t avail_start, avail_end;
 
 	/* initialize cn_tab for early console */
 #if 1
@@ -171,27 +171,10 @@ machine_init(paddr_t nextpa)
 	cn_tab = &romcons;
 #endif
 
-	/*
-	 * Tell the VM system about available physical memory.  The
-	 * luna68k only has one segment.
-	 *
-	 * Note: msgbuf is initialized just after avail_end below.
-	 */
-	avail_start = nextpa;
-	avail_end = m68k_ptob(maxmem) - m68k_round_page(MSGBUFSIZE);
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	phys_seg_list[0].ps_start = 0;	/* XXX lowram? */
+	phys_seg_list[0].ps_end = m68k_ptob(maxmem);
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
-
+	machine_init_common(nextpa);
 
 	pio0[3] = 0xb6;
 	pio0[2] = 1 << 6;		/* enable parity check */
