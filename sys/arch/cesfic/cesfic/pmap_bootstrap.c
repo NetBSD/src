@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.41 2026/03/29 20:42:50 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.42 2026/04/05 13:59:32 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.41 2026/03/29 20:42:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.42 2026/04/05 13:59:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -63,7 +63,7 @@ void *CADDR1, *CADDR2;
 char *vmmap;
 void *msgbufaddr;
 
-paddr_t pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -77,7 +77,7 @@ paddr_t pmap_bootstrap(paddr_t, paddr_t);
  * XXX a PIC compiler would make this much easier.
  */
 paddr_t __attribute__((no_instrument_function))
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	paddr_t lkptpa;
@@ -422,11 +422,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
-	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) = firstpa
-	  + m68k_ptob(RELOC(physmem, psize_t))
-	  - m68k_round_page(MSGBUFSIZE)
-	  - PAGE_SIZE; /* if that start of last page??? */
 	RELOC(virtual_avail, vaddr_t) =
 		KERNBASE + (nextpa - firstpa);
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;

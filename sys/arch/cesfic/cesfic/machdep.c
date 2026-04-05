@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.84 2026/04/05 13:31:45 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.85 2026/04/05 13:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2026/04/05 13:31:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2026/04/05 13:59:32 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -128,8 +128,11 @@ machine_init(paddr_t nextpa)
 
 	/*
 	 * Tell the VM system about available physical memory.  The
-	 * fic uses one segment.
+	 * FIC only has one segment.
 	 */
+	avail_start = nextpa;
+	avail_end = (lowram + m68k_ptob(physmem)) - m68k_round_page(MSGBUFSIZE);
+
 	uvm_page_physload(atop(avail_start), atop(avail_end),
 	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
 

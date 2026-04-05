@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.70 2026/04/05 13:31:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.71 2026/04/05 13:59:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -213,7 +213,7 @@ Lis68020:
 
 Lstart1:
 
-/* initialize memory size (for pmap_bootstrap) */
+/* initialize memory size (for pmap_bootstrap1) */
 	movl	0x5c00ac00, %d0
 	andb	#0x60, %d0
 	jne	Lnot8M
@@ -250,9 +250,18 @@ Lstart2:
 	subl	#KERNBASE, %a4
 	pea	%a5@			| firstpa
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap_bootstrap1(firstpa, nextpa)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /*
  * Prepare to enable MMU.
@@ -336,7 +345,9 @@ Lenab1:
 Lnocache0:
 
 /* Final setup for call to main(). */
-	jbsr	_C_LABEL(machine_init)
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
+	addql	#4,%sp
 	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
