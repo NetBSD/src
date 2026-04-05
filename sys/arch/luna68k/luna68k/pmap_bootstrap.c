@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.47 2026/03/29 20:42:50 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.48 2026/04/05 14:35:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.47 2026/03/29 20:42:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.48 2026/04/05 14:35:48 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -63,7 +63,7 @@ extern vaddr_t kernel_reloc_offset;
  */
 void *CADDR1, *CADDR2;
 char *vmmap;
-void *msgbufaddr;
+extern void *msgbufaddr;
 
 paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 

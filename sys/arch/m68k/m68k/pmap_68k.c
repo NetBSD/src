@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.51 2026/03/22 17:52:46 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.52 2026/04/05 14:35:49 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.51 2026/03/22 17:52:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.52 2026/04/05 14:35:49 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3719,7 +3719,6 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
 
 static vaddr_t	lwp0uarea;
        char *	vmmap;
-       void *	msgbufaddr;
 
 /* XXX Doesn't belong here. */
 paddr_t		avail_start;	/* PA of first available physical page */
@@ -3727,6 +3726,7 @@ paddr_t		avail_end;	/* PA of last available physical page */
 
 extern char *	kernel_text;
 extern char *	etext;
+extern void *	msgbufaddr;
 
 /*
  * pmap_bootstrap1:

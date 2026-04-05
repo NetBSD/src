@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.114 2026/03/29 20:42:50 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.115 2026/04/05 14:35:49 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.114 2026/03/29 20:42:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.115 2026/04/05 14:35:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -79,7 +79,7 @@ extern void *	ROMBase;
  */
 void *CADDR1, *CADDR2;
 char *vmmap;
-void *msgbufaddr;
+extern void *msgbufaddr;
 
 /*
  * Bootstrap the VM system.

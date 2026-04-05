@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.14 2026/04/04 17:05:07 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.15 2026/04/05 14:35:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.14 2026/04/04 17:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.15 2026/04/05 14:35:49 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -85,6 +85,8 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
+
+void	*msgbufaddr;
 
 /*
  * Set registers on exec.

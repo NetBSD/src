@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2026/04/05 13:22:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2026/04/05 14:35:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2026/04/05 13:22:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2026/04/05 14:35:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -230,7 +230,7 @@ extern char etext[];
 /* Defined in vfs_bio.c */
 extern u_int bufpages;
 
-void *	msgbufaddr;
+extern void *msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;

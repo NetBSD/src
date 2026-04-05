@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.147 2026/04/05 13:22:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.148 2026/04/05 14:35:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.147 2026/04/05 13:22:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.148 2026/04/05 14:35:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -107,7 +107,7 @@ extern char etext[];
 const vaddr_t kernbase = KERNBASE3X;
 const vaddr_t kern_end = KERN_END3X;
 
-void *	msgbufaddr;
+extern void *msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
