@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.137 2026/04/05 16:26:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.138 2026/04/05 19:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2026/04/05 16:26:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2026/04/05 19:18:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -141,20 +141,6 @@ void machine_init(paddr_t);
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /*
- * Memory segments initialized in locore, which are eventually loaded
- * as managed VM pages.
- */
-phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
-
-/*
- * Memory segments to dump.  This is initialized from the phys_seg_list
- * before pages are stolen from it for VM system overhead.  I.e. this
- * covers the entire range of physical memory.
- */
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
-
-/*
  * Default to 33MHz 68040.
  */
 int	cpuspeed = 33;
@@ -179,77 +165,6 @@ const struct pmap_bootmap machine_bootmap[] = {
 void
 machine_init(paddr_t nextpa)
 {
-	int i;
-
-	extern paddr_t msgbufpa;
-	extern paddr_t avail_start, avail_end;
-
-	/*
-	 * Tell the VM system about available physical memory.
-	 */
-	avail_start = INT_MAX;
-	avail_end = 0;
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		phys_seg_list[i].ps_start =
-		    m68k_round_page(phys_seg_list[i].ps_start);
-		phys_seg_list[i].ps_end =
-		    m68k_trunc_page(phys_seg_list[i].ps_end);
-
-		phys_seg_list[i].ps_avail_start = phys_seg_list[i].ps_start;
-		phys_seg_list[i].ps_avail_end = phys_seg_list[i].ps_end;
-
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
-			/* Empty segment. */
-			continue;
-		}
-
-		/*
-		 * Initialize the mem_clusters[] array for the crash dump
-		 * code.
-		 */
-		mem_clusters[mem_cluster_cnt].start =
-		    phys_seg_list[i].ps_start;
-		mem_clusters[mem_cluster_cnt].size =
-		    phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
-		mem_cluster_cnt++;
-
-		if (i == 0) {
-			/*
-			 * Adjust first RAM segment for pages already
-			 * consumed by boot loader, kernel, and pmap
-			 * data, as well as the kernel message buffer.
-			 *
-			 * Mesage buffer is at the end of the first RAM
-			 * segment (probably because that's what mvme68k
-			 * does, for reasons that don't really apply to
-			 * the NeXT).
-			 */
-			phys_seg_list[i].ps_avail_start = nextpa;
-			phys_seg_list[i].ps_avail_end -=
-			    m68k_round_page(MSGBUFSIZE);
-			msgbufpa = phys_seg_list[i].ps_avail_end;
-		}
-
-		if (phys_seg_list[i].ps_avail_start ==
-		    phys_seg_list[i].ps_avail_end) {
-			/* Segment has been completely gobbled up. */
-			continue;
-		}
-
-		if (phys_seg_list[i].ps_avail_start < avail_start) {
-			avail_start = phys_seg_list[i].ps_avail_start;
-		}
-		if (phys_seg_list[i].ps_avail_end > avail_end) {
-			avail_end = phys_seg_list[i].ps_avail_end;
-		}
-
-		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
-				  atop(phys_seg_list[i].ps_avail_end),
-				  atop(phys_seg_list[i].ps_avail_start),
-				  atop(phys_seg_list[i].ps_avail_end),
-				  VM_FREELIST_DEFAULT);
-	}
-
 	machine_init_common(nextpa);
 
 	{
@@ -516,12 +431,17 @@ void
 cpu_init_kcore_hdr(void)
 {
 	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
-	int i;
+	size_t size;
+	int i, j;
 
-	/* The next68k has multiple memory segments. */
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		ram_segs[i].start = mem_clusters[i].start;
-		ram_segs[i].size  = mem_clusters[i].size;
+	for (i = 0, j = 0; i < VM_PHYSSEG_MAX; i++) {
+		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
+		if (size == 0) {
+			continue;
+		}
+		ram_segs[j].start = phys_seg_list[i].ps_start;
+		ram_segs[j].size = size;
+		j++;
 	}
 }
 

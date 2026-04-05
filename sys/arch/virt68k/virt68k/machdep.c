@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.34 2026/04/05 16:26:12 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.35 2026/04/05 19:18:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2026/04/05 16:26:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2026/04/05 19:18:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -121,12 +121,6 @@ int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
  */
 cpu_kcore_hdr_t cpu_kcore_hdr;
 
-/*
- * Memory segments initialized by bootinfo, which are eventually loaded
- * as managed VM pages.
- */
-phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
-
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
 
@@ -166,10 +160,8 @@ void
 machine_init(paddr_t nextpa)
 {
 	struct bi_record *bi __unused;
-	int i, end_seg;
 
 	extern paddr_t msgbufpa;
-	extern paddr_t avail_start, avail_end;
 
 	/*
 	 * Find the console in the bootinfo and attach it.
@@ -201,98 +193,6 @@ machine_init(paddr_t nextpa)
 	 */
 	KASSERT(MSGBUFSIZE <= 8192);
 	msgbufpa = 0;
-
-	/*
-	 * Compute the boundaries of available memory.
-	 */
-	avail_start = INT_MAX;
-	avail_end = 0;
-	end_seg = 0;
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		/*
-		 * Make sure the memory segment begins/ends on
-		 * page boundaries.
-		 *
-		 * If ps_avail_start and ps_avail_end have not already
-		 * been initialized, go ahead and validate those.
-		 */
-		phys_seg_list[i].ps_start =
-		    m68k_round_page(phys_seg_list[i].ps_start);
-		phys_seg_list[i].ps_end =
-		    m68k_trunc_page(phys_seg_list[i].ps_end);
-
-		if (phys_seg_list[i].ps_avail_start == 0 &&
-		    phys_seg_list[i].ps_avail_end == 0) {
-			phys_seg_list[i].ps_avail_start =
-			    phys_seg_list[i].ps_start;
-			phys_seg_list[i].ps_avail_end =
-			    phys_seg_list[i].ps_end;
-		}
-
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
-			/* Empty segment. */
-			continue;
-		}
-
-		/*
-		 * nextpa represents the next available page after
-		 * the pages already consumed by the bootstrap
-		 * process.  If it falls within this physical segment,
-		 * just the available range as necessary.
-		 */
-		if (nextpa >= phys_seg_list[i].ps_start &&
-		    /* this <= is intentional */
-		    nextpa <= phys_seg_list[i].ps_end &&
-		    nextpa > phys_seg_list[i].ps_avail_start) {
-			phys_seg_list[i].ps_avail_start = nextpa;
-		}
-
-		if (phys_seg_list[i].ps_avail_start ==
-		    phys_seg_list[i].ps_avail_end) {
-			/* Segment has been completely gobbled up. */
-			continue;
-		}
-
-		if (phys_seg_list[i].ps_avail_start < avail_start) {
-			avail_start = phys_seg_list[i].ps_avail_start;
-		}
-		if (phys_seg_list[i].ps_avail_end > avail_end) {
-			avail_end = phys_seg_list[i].ps_avail_end;
-			end_seg = i;
-		}
-	}
-
-	/*
-	 * If the message buffer has not already been allocated,
-	 * allocate it from the end of physical memory.
-	 */
-	if (msgbufpa == (paddr_t)-1) {
-		KASSERT((phys_seg_list[end_seg].ps_avail_end
-			 - phys_seg_list[end_seg].ps_avail_start)
-			>= round_page(MSGBUFSIZE));
-		phys_seg_list[end_seg].ps_avail_end -= round_page(MSGBUFSIZE);
-		msgbufpa = phys_seg_list[end_seg].ps_avail_end;
-	}
-
-#ifndef VM_PHYS_SEG_TO_FREELIST
-#define	VM_PHYS_SEG_TO_FREELIST(s)	VM_FREELIST_DEFAULT
-#endif
-
-	/*
-	 * Now load the pages into the VM system.
-	 */
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (phys_seg_list[i].ps_avail_start ==
-		    phys_seg_list[i].ps_avail_end) {
-			/* Segment has been completely gobbled up. */
-			continue;
-		}
-		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
-				  atop(phys_seg_list[i].ps_avail_end),
-				  atop(phys_seg_list[i].ps_avail_start),
-				  atop(phys_seg_list[i].ps_avail_end),
-				  VM_PHYS_SEG_TO_FREELIST(i));
-	}
 
 	machine_init_common(nextpa);
 

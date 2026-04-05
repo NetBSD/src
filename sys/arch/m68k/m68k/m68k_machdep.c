@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.17 2026/04/05 16:26:12 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.18 2026/04/05 19:18:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.17 2026/04/05 16:26:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.18 2026/04/05 19:18:47 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -82,12 +82,21 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.17 2026/04/05 16:26:12 thorpej Ex
 #include <m68k/pcb.h>
 #include <m68k/reg.h>
 
+#include <m68k/seglist.h>
+
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
+
+/*
+ * Physical memory segments.  These segments are included in kernel
+ * crash dumps, and the available ranges of the segments are loaded
+ * into the VM system as managed pages.
+ */
+phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
 
 /*
  * __HAVE_M68K_PRIVATE_MSGSBUF is a hook for the Sun platforms that
@@ -107,13 +116,114 @@ void	*msgbufaddr;
  * Common tasks for machine_init().
  */
 void
-machine_init_common(paddr_t nextpa __unused)
+machine_init_common(paddr_t nextpa)
 {
+	extern paddr_t avail_start, avail_end;
+	int i;
+#ifndef __HAVE_M68K_PRIVATE_MSGSBUF
+	int end_seg = 0;
+#endif
+
+	/*
+	 * Compute the boundaries of available memory.
+	 */
+	avail_start = UINT_MAX;
+	avail_end = 0;
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		/*
+		 * Make sure the memory segment begins/ends on
+		 * page boundaries.
+		 *
+		 * If ps_avail_start and ps_avail_end have not already
+		 * been initialized, go ahead and validate those.
+		 */
+		phys_seg_list[i].ps_start =
+		    m68k_round_page(phys_seg_list[i].ps_start);
+		phys_seg_list[i].ps_end =
+		    m68k_trunc_page(phys_seg_list[i].ps_end);
+
+		if (phys_seg_list[i].ps_avail_start == 0 &&
+		    phys_seg_list[i].ps_avail_end == 0) {
+			phys_seg_list[i].ps_avail_start =
+			    phys_seg_list[i].ps_start;
+			phys_seg_list[i].ps_avail_end =
+			    phys_seg_list[i].ps_end;
+		}
+
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			/* Empty segment. */
+			continue;
+		}
+
+		/*
+		 * nextpa represents the next available page after
+		 * the pages already consumed by the bootstrap
+		 * process.  If it falls within this physical segment,
+		 * just the available range as necessary.
+		 */
+		if (nextpa >= phys_seg_list[i].ps_start &&
+		    /* this <= is intentional */
+		    nextpa <= phys_seg_list[i].ps_end &&
+		    nextpa > phys_seg_list[i].ps_avail_start) {
+			phys_seg_list[i].ps_avail_start = nextpa;
+		}
+
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
+
+		if (phys_seg_list[i].ps_avail_start < avail_start) {
+			avail_start = phys_seg_list[i].ps_avail_start;
+		}
+		if (phys_seg_list[i].ps_avail_end > avail_end) {
+			avail_end = phys_seg_list[i].ps_avail_end;
+#ifndef __HAVE_M68K_PRIVATE_MSGSBUF
+			end_seg = i;
+#endif
+		}
+	}
+
+#ifndef __HAVE_M68K_PRIVATE_MSGSBUF
+	/*
+	 * If the message buffer has not already been allocated,
+	 * allocate it from the end of physical memory.
+	 */
+	if (msgbufpa == (paddr_t)-1) {
+		KASSERT((phys_seg_list[end_seg].ps_avail_end
+			 - phys_seg_list[end_seg].ps_avail_start)
+			>= round_page(MSGBUFSIZE));
+		phys_seg_list[end_seg].ps_avail_end -= round_page(MSGBUFSIZE);
+		msgbufpa = phys_seg_list[end_seg].ps_avail_end;
+	}
+#endif
+
+#ifndef VM_PHYS_SEG_TO_FREELIST
+#define	VM_PHYS_SEG_TO_FREELIST(s)	VM_FREELIST_DEFAULT
+#endif
+
+	/*
+	 * Now load the pages into the VM system.
+	 */
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_avail_start ==
+		    phys_seg_list[i].ps_avail_end) {
+			/* Segment has been completely gobbled up. */
+			continue;
+		}
+		uvm_page_physload(atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end),
+				  atop(phys_seg_list[i].ps_avail_start),
+				  atop(phys_seg_list[i].ps_avail_end),
+				  VM_PHYS_SEG_TO_FREELIST(i));
+	}
+
 	/*
 	 * Initialize the kernel message buffer.
 	 */
 #ifndef __HAVE_M68K_PRIVATE_MSGSBUF
-	for (int i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
+	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
 			       msgbufpa + i * PAGE_SIZE,
 			       VM_PROT_READ|VM_PROT_WRITE, 0);
