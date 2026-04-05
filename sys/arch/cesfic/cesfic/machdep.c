@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.85 2026/04/05 13:59:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.86 2026/04/05 19:45:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2026/04/05 13:59:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.86 2026/04/05 19:45:22 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.85 2026/04/05 13:59:32 thorpej Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#include <m68k/seglist.h>
+
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 #include <uvm/uvm_extern.h>
@@ -117,24 +119,15 @@ extern void sicinit(void*);
 void
 machine_init(paddr_t nextpa)
 {
-	int i;
-
-	extern paddr_t avail_start, avail_end;
-
 	boothowto = RB_SINGLE; /* XXX for now */
 	boothowto |= RB_KDB; /* XXX for now */
 
 	delay_divisor = delay_divisor_est40(25); /* XXX */
 
-	/*
-	 * Tell the VM system about available physical memory.  The
-	 * FIC only has one segment.
-	 */
-	avail_start = nextpa;
-	avail_end = (lowram + m68k_ptob(physmem)) - m68k_round_page(MSGBUFSIZE);
+	phys_seg_list[0].ps_start = lowram;
+	phys_seg_list[0].ps_end = lowram + m68k_ptob(physmem);
 
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	machine_init_common(nextpa);
 
 	/*
 	 * map and init interrupt controller
@@ -143,17 +136,6 @@ machine_init(paddr_t nextpa)
 	    PAGE_SIZE, PG_RW|PG_CI);
 	sicinit((void*)virtual_avail);
 	virtual_avail += PAGE_SIZE;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
 
 int
