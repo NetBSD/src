@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.261 2026/04/04 19:55:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.262 2026/04/05 19:48:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.261 2026/04/04 19:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.262 2026/04/05 19:48:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -266,16 +266,14 @@ machine_init(paddr_t nextpa)
 	bootinfo_va = virtual_avail;
 	virtual_avail += PAGE_SIZE;
 #endif
-	pmap_enter(pmap_kernel(), bootinfo_va, bootinfo_pa,
-	    VM_PROT_READ|VM_PROT_WRITE,
-	    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+	pmap_kenter_pa(bootinfo_va, bootinfo_pa,
+	    VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	bt_mag = lookup_bootinfo(BTINFO_MAGIC);
 	if (bt_mag == NULL ||
 	    bt_mag->magic1 != BOOTINFO_MAGIC1 ||
 	    bt_mag->magic2 != BOOTINFO_MAGIC2) {
-		pmap_remove(pmap_kernel(), bootinfo_va,
-		    bootinfo_va + PAGE_SIZE);
+		pmap_kremove(bootinfo_va, PAGE_SIZE);
 		pmap_update(pmap_kernel());
 #ifndef __HAVE_NEW_PMAP_68K
 		virtual_avail -= PAGE_SIZE;
