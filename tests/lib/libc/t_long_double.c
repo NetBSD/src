@@ -1,4 +1,4 @@
-/*	$NetBSD: t_long_double.c,v 1.3 2026/04/04 06:15:56 rillig Exp $	*/
+/*	$NetBSD: t_long_double.c,v 1.4 2026/04/05 20:45:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_long_double.c,v 1.3 2026/04/04 06:15:56 rillig Exp $");
+__RCSID("$NetBSD: t_long_double.c,v 1.4 2026/04/05 20:45:36 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -108,7 +108,6 @@ test_int64_to_ldbl(void)
 		{ +(1LL << 40), +0x1.0p40L },
 		{ +(1LL << 60), +0x1.0p60L },
 		{ +(1LL << 62), +0x1.0p62L },
-		{ INT64_MAX - (INT64_MAX >> 1), +0x1.0p62L },
 	};
 
 	for (size_t i = 0; i < __arraycount(testcases); i++) {
@@ -133,7 +132,7 @@ test_ldbl_to_int64(void)
 		{ -0.0L, 0 },
 		{ +0.0L, 0 },
 		{ +1.0L, 1 },
-		{  +0x1.0p62L, INT64_MAX - (INT64_MAX >> 1) },
+		{ +0x1.0p62L, +1LL << 62 },
 	};
 
 	for (size_t i = 0; i < __arraycount(testcases); i++) {
@@ -155,7 +154,7 @@ test_uint64_to_ldbl(void)
 	} testcases[] = {
 		{ 0, +0.0L },
 		{ +1, +1.0L },
-		{ UINT64_MAX - (UINT64_MAX >> 1), +0x1.0p63L },
+		{ +1ULL << 63, +0x1.0p63L },
 	};
 
 	for (size_t i = 0; i < __arraycount(testcases); i++) {
@@ -175,11 +174,28 @@ test_ldbl_to_uint64(void)
 		long double arg;
 		uint64_t want;
 	} testcases[] = {
+#if 1 /* Try some values outside the portable range. */
+		// C23 6.3.1.4p1 says the portable range goes from
+		// -1 + epsilon to (1<<64) - epsilon.
+#if __m68k__
+		// Negative values below 0 saturate.
+		{ -0xf.0p60L, 0 },
+		{ -0x8.0p60L, 0 },
+		{ -0x4.0p60L, 0 },
+#else
+		// Negative values below INT64_MIN saturate.
+		{ -0xf.0p60L, 0x8ULL << 60 },
+		{ -0x8.0p60L, 0x8ULL << 60 },
+		{ -0x4.0p60L, 0xcULL << 60 },
+		// The above results were taken on amd64,
+		// other platforms may differ.
+#endif
+#endif
 		{ -1.0L, (uint64_t)-1 },
 		{ -0.0L, 0 },
 		{ +0.0L, 0 },
 		{ +1.0L, 1 },
-		{ +0x1.0p63L, UINT64_MAX - (UINT64_MAX >> 1) },
+		{ +0x1.0p63L, 1ULL << 63 },
 	};
 
 	for (size_t i = 0; i < __arraycount(testcases); i++) {
