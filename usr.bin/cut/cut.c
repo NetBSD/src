@@ -1,4 +1,4 @@
-/*	$NetBSD: cut.c,v 1.32 2025/03/09 05:04:54 gutteridge Exp $	*/
+/*	$NetBSD: cut.c,v 1.33 2026/04/05 03:03:56 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,8 +42,10 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-__RCSID("$NetBSD: cut.c,v 1.32 2025/03/09 05:04:54 gutteridge Exp $");
+__RCSID("$NetBSD: cut.c,v 1.33 2026/04/05 03:03:56 gutteridge Exp $");
 #endif /* not lint */
+
+#include <sys/param.h>
 
 #include <ctype.h>
 #include <err.h>
@@ -56,9 +58,8 @@ __RCSID("$NetBSD: cut.c,v 1.32 2025/03/09 05:04:54 gutteridge Exp $");
 #include <unistd.h>
 #include <util.h>
 #include <wchar.h>
-#include <sys/param.h>
 
-static int bflag;
+static int	bflag;
 static int	cflag;
 static char	dchar;
 static int	dflag;
@@ -157,8 +158,7 @@ static void
 get_list(char *list)
 {
 	size_t setautostart, start, stop;
-	char *pos;
-	char *p;
+	char *p, *pos;
 
 	if (positions == NULL) {
 		numpositions = ALLOC_CHUNK;
@@ -288,11 +288,9 @@ static void
 /*ARGSUSED*/
 f_cut(FILE *fp, const char *fname __unused)
 {
-	int ch, field, isdelim;
-	char *pos, *p, sep;
-	int output;
 	size_t len;
-	char *lbuf, *tbuf;
+	int ch, field, isdelim, output;
+	char *lbuf, *pos, *p, sep, *tbuf;
 
 	for (sep = dchar, tbuf = NULL; (lbuf = fgetln(fp, &len)) != NULL;) {
 		output = 0;
