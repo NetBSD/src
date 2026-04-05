@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.16 2026/04/05 14:58:15 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.17 2026/04/05 16:26:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.16 2026/04/05 14:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.17 2026/04/05 16:26:12 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -73,6 +73,9 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.16 2026/04/05 14:58:15 thorpej Ex
 #include <sys/exec.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
+#include <sys/msgbuf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/m68k.h>
 #include <m68k/frame.h>
@@ -99,6 +102,26 @@ struct cpu_info cpu_info_store;
 paddr_t	msgbufpa = (paddr_t)-1;		/* PA of message buffer */
 #endif
 void	*msgbufaddr;
+
+/*
+ * Common tasks for machine_init().
+ */
+void
+machine_init_common(paddr_t nextpa __unused)
+{
+	/*
+	 * Initialize the kernel message buffer.
+	 */
+#ifndef __HAVE_M68K_PRIVATE_MSGSBUF
+	for (int i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+			       msgbufpa + i * PAGE_SIZE,
+			       VM_PROT_READ|VM_PROT_WRITE, 0);
+	}
+	pmap_update(pmap_kernel());
+#endif
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+}
 
 /*
  * Set registers on exec.

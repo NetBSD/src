@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.33 2026/04/05 14:58:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.34 2026/04/05 16:26:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.33 2026/04/05 14:58:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2026/04/05 16:26:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -294,16 +294,7 @@ machine_init(paddr_t nextpa)
 				  VM_PHYS_SEG_TO_FREELIST(i));
 	}
 
-	/*
-	 * Initialize the kernel message buffer.
-	 */
-	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-			       msgbufpa + i * PAGE_SIZE,
-			       VM_PROT_READ|VM_PROT_WRITE, 0);
-	}
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+	machine_init_common(nextpa);
 
 	/* Check for RND seed from the loader. */
 	bootinfo_setup_rndseed();

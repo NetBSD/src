@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.136 2026/04/05 14:58:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.137 2026/04/05 16:26:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2026/04/05 14:58:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.137 2026/04/05 16:26:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -250,6 +250,8 @@ machine_init(paddr_t nextpa)
 				  VM_FREELIST_DEFAULT);
 	}
 
+	machine_init_common(nextpa);
+
 	{
 		char *p = rom_boot_arg;
 		boothowto = 0;
@@ -258,16 +260,6 @@ machine_init(paddr_t nextpa)
 				BOOT_FLAG(*p, boothowto);
 		}
 	}
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-	pmap_update(pmap_kernel());
 }
 
 /*
