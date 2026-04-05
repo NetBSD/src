@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.266 2026/04/05 14:35:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.267 2026/04/05 14:58:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.266 2026/04/05 14:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2026/04/05 14:58:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,6 @@ void fdintr(int);
 
 volatile unsigned int intr_depth = 0;
 
-paddr_t msgbufpa;
-
 int	machineid;
 int	maxmem;			/* max memory per process */
 
@@ -223,6 +221,7 @@ cpu_startup(void)
 	 * memory segment - map and initialize it now.
 	 */
 
+	extern paddr_t msgbufpa;
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
 		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,

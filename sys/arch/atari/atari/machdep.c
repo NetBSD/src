@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.201 2026/04/05 14:35:48 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.202 2026/04/05 14:58:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2026/04/05 14:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2026/04/05 14:58:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -104,8 +104,6 @@ void	straymfpint(int, u_short);
 void	nmihandler(void);
 #endif
 
-vaddr_t	msgbufpa;
-
 extern  int   freebufspace;
 extern	u_int lowram;
 
@@ -124,6 +122,7 @@ consinit(void)
 	 * positioned this at the end of kernel memory segment - map
 	 * and initialize it now.
 	 */
+	extern paddr_t msgbufpa;
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
 		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);

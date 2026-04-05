@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.15 2026/04/05 14:35:49 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.16 2026/04/05 14:58:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.15 2026/04/05 14:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.16 2026/04/05 14:58:15 thorpej Exp $");
 
 #include "opt_compat_sunos.h"
 
@@ -86,6 +86,18 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
 
+/*
+ * __HAVE_M68K_PRIVATE_MSGSBUF is a hook for the Sun platforms that
+ * are re-using PROM mappings of memory for the messsage buffer that
+ * are not guaranteed to be physically contiguous.
+ *
+ * How we act on this: We don't care about the PA of the message buffer
+ * at all, and we assume that the message buffer has already been mapped
+ * as part of the VM bootstrap.
+ */
+#ifndef __HAVE_M68K_PRIVATE_MSGSBUF
+paddr_t	msgbufpa = (paddr_t)-1;		/* PA of message buffer */
+#endif
 void	*msgbufaddr;
 
 /*

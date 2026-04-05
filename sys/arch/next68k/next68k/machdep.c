@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.135 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.136 2026/04/05 14:58:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.135 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.136 2026/04/05 14:58:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,8 +121,6 @@ extern char *esym;
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
-paddr_t msgbufpa;		/* PA of message buffer */
-
 extern	u_int lowram;
 
 /* prototypes for local functions */
@@ -183,6 +181,7 @@ machine_init(paddr_t nextpa)
 {
 	int i;
 
+	extern paddr_t msgbufpa;
 	extern paddr_t avail_start, avail_end;
 
 	/*
