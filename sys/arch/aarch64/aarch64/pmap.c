@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.152 2026/01/26 08:02:21 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.153 2026/04/05 06:42:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.152 2026/01/26 08:02:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2026/04/05 06:42:57 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -587,8 +587,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 	if (pgp != NULL)
 		*pgp = pg;
 
-	UVMHIST_LOG(pmaphist, "pa=%llx, pg=%llx",
-	    pa, pg, 0, 0);
+	UVMHIST_LOG(pmaphist, "pa=%llx, pg=%llx", pa, pg, 0, 0);
 
 	return pa;
 }
@@ -1153,8 +1152,8 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 	struct pv_entry *pv;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm, va,
-	    pa);
+	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm,
+	    va, pa);
 	UVMHIST_LOG(pmaphist, "ptep=%p, flags=%08x", ptep, flags, 0, 0);
 
 	KASSERT(mutex_owned(&pp->pp_pvlock));
@@ -1401,8 +1400,7 @@ pmap_activate_efirt(void)
 	KASSERT(kpreempt_disabled());
 
 	ci->ci_pmap_asid_cur = pai->pai_asid;
-	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid,
-	    0, 0, 0);
+	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid, 0, 0, 0);
 	tlb_set_asid(pai->pai_asid, pm);
 
 	/* Re-enable translation table walks using TTBR0 */
@@ -1467,8 +1465,7 @@ pmap_deactivate_efirt(void)
 	reg_tcr_el1_write(tcr | TCR_EPD0);
 	isb();
 
-	UVMHIST_LOG(pmaphist, "setting asid to %#jx", KERNEL_PID,
-	    0, 0, 0);
+	UVMHIST_LOG(pmaphist, "setting asid to %#jx", KERNEL_PID, 0, 0, 0);
 
 	ci->ci_pmap_asid_cur = KERNEL_PID;
 	tlb_set_asid(KERNEL_PID, pmap_kernel());
@@ -2435,7 +2432,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	pa = l3pte_pa(*ptep);
 	pp = phys_to_pp(pa);
 	if (pp == NULL) {
-		UVMHIST_LOG(pmaphist, "pmap_page not found: va=%016lx", va, 0, 0, 0);
+		UVMHIST_LOG(pmaphist, "pmap_page not found: va=%016lx",
+		    va, 0, 0, 0);
 		goto done;
 	}
 
