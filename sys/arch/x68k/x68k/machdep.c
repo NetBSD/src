@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2026/04/04 19:55:20 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224 2026/04/05 20:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2026/04/04 19:55:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2026/04/05 20:19:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -124,7 +124,7 @@ int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void	x68k_init(paddr_t);
+void	machine_init(paddr_t);
 void	dumpsys(void);
 void	nmihand(struct frame);
 void	intrhand(int);
@@ -179,7 +179,7 @@ cpu_kcore_hdr_t cpu_kcore_hdr;
 static callout_t candbtimer_ch;
 
 void
-x68k_init(paddr_t nextpa)
+machine_init(paddr_t nextpa)
 {
 	u_int i;
 	paddr_t msgbuf_pa;

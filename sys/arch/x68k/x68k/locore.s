@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.161 2026/03/29 03:24:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.162 2026/04/05 20:19:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -319,7 +319,7 @@ Ltbia040:
 	.word	0xf518			| pflusha
 Lenab3:
 	movl	%d7,%sp@-		| push nextpa saved above
-	jbsr	_C_LABEL(x68k_init)	| additional pre-main initialization
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp
 	jra	_C_LABEL(main)		| main() (never returns)
 
