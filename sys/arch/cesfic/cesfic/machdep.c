@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.83 2026/04/04 19:55:18 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.84 2026/04/05 13:31:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2026/04/04 19:55:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.84 2026/04/05 13:31:45 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -100,7 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.83 2026/04/04 19:55:18 thorpej Exp $")
 
 extern	u_int lowram;
 
-void fic_init(void);
+void machine_init(paddr_t);
 
 /* prototypes for local functions */
 void    identifycpu(void);
@@ -114,7 +114,8 @@ int	delay_divisor;		/* delay constant */
 
 extern void sicinit(void*);
 
-void fic_init(void)
+void
+machine_init(paddr_t nextpa)
 {
 	int i;
 

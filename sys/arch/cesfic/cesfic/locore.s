@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.69 2026/03/29 03:24:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.70 2026/04/05 13:31:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -336,7 +336,7 @@ Lenab1:
 Lnocache0:
 
 /* Final setup for call to main(). */
-	jbsr	_C_LABEL(fic_init)
+	jbsr	_C_LABEL(machine_init)
 	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
