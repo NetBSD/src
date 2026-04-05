@@ -1,4 +1,4 @@
-/* $NetBSD: pte_coldfire.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $ */
+/* $NetBSD: pte_coldfire.h,v 1.3 2026/04/05 06:33:17 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,7 @@ pte_wired_p(pt_entry_t pt_entry)
 }
 
 static inline pt_entry_t
-pte_nv_entry(bool kernel)
+pte_nv_entry(bool kernel_p)
 {
 	return 0;
 }

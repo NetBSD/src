@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2026/04/01 13:10:11 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2026/04/05 06:33:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2026/04/01 13:10:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2026/04/05 06:33:17 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1045,8 +1045,8 @@ pmap_page_remove(struct vm_page_md *mdpg)
 		pmap->pm_stats.resident_count--;
 
 		pmap_tlb_miss_lock_enter();
-		const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
-		pte_set(ptep, npte);
+		const pt_entry_t rpte = pte_nv_entry(is_kernel_pmap_p);
+		pte_set(ptep, rpte);
 		if (__predict_true(!(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE))) {
 			/*
 			 * Flush the TLB for the given address.
@@ -1157,7 +1157,7 @@ void
 pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
-	const pt_entry_t npte = pte_nv_entry(is_kernel_pmap_p);
+	const pt_entry_t rpte = pte_nv_entry(is_kernel_pmap_p);
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx, va=%#jx..%#jx)",
@@ -1175,7 +1175,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 #endif
 	kpreempt_disable();
 	pmap_addr_range_check(pmap, sva, eva, __func__);
-	pmap_pte_process(pmap, sva, eva, pmap_pte_remove, npte);
+	pmap_pte_process(pmap, sva, eva, pmap_pte_remove, rpte);
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
@@ -1649,7 +1649,7 @@ static bool
 pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	uintptr_t flags)
 {
-	const pt_entry_t new_pte = pte_nv_entry(true);
+	const pt_entry_t krpte = pte_nv_entry(true);
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx, sva=%#jx eva=%#jx ptep=%#jx)",
@@ -1671,7 +1671,7 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 #endif
 
 		pmap_tlb_miss_lock_enter();
-		pte_set(ptep, new_pte);
+		pte_set(ptep, krpte);
 		pmap_tlb_invalidate_addr(pmap, sva);
 		pmap_tlb_miss_lock_exit();
 	}
@@ -1690,8 +1690,10 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(va=%#jx len=%#jx)", va, len, 0, 0);
 
+	const pt_entry_t krpte = pte_nv_entry(true);
+
 	kpreempt_disable();
-	pmap_pte_process(pmap_kernel(), sva, eva, pmap_pte_kremove, 0);
+	pmap_pte_process(pmap_kernel(), sva, eva, pmap_pte_kremove, krpte);
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);

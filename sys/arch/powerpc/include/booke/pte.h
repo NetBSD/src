@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.12 2026/04/05 06:33:17 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -127,7 +127,7 @@ pte_wired_p(pt_entry_t pt_entry)
 }
 
 static __inline pt_entry_t
-pte_nv_entry(bool kernel)
+pte_nv_entry(bool kernel_p)
 {
 	return 0;
 }
