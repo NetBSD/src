@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2025/12/21 07:00:28 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2026/04/05 10:19:57 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2025/12/21 07:00:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2026/04/05 10:19:57 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -415,7 +415,7 @@ cpu_startup(void)
 	oea_startup("rs6000");
 
 	/*
-	 * Inititalize the IOCC interrupt stuff
+	 * Initialize the IOCC interrupt stuff
 	 */
 	init_intr();
 

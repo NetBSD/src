@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.81 2024/12/07 02:05:55 riastradh Exp $	*/
+/*	$NetBSD: nfs.h,v 1.82 2026/04/05 10:19:57 andvar Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -206,7 +206,7 @@ struct nfsd_srvargs {
 	struct uucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	u_char		*nsd_authstr;	/* Auth string (ret) */
-	int		nsd_verflen;	/* and the verfier */
+	int		nsd_verflen;	/* and the verifier */
 	u_char		*nsd_verfstr;
 	struct timeval	nsd_timestamp;	/* timestamp from verifier */
 	u_int32_t	nsd_ttl;	/* credential ttl (sec) */

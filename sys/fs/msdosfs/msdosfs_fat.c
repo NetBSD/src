@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_fat.c,v 1.37 2024/05/13 00:24:19 msaitoh Exp $	*/
+/*	$NetBSD: msdosfs_fat.c,v 1.38 2026/04/05 10:19:57 andvar Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -52,7 +52,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.37 2024/05/13 00:24:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_fat.c,v 1.38 2026/04/05 10:19:57 andvar Exp $");
 
 /*
  * kernel include files.
@@ -188,7 +188,7 @@ msdosfs_pcbmap(struct denode *dep,
 	int error;
 	u_long i;
 	u_long cn;
-	u_long prevcn = 0; /* XXX: prevcn could be used unititialized */
+	u_long prevcn = 0; /* XXX: prevcn could be used uninitialized */
 	u_long byteoffset;
 	u_long bn;
 	u_long bo;
@@ -812,7 +812,7 @@ msdosfs_clusteralloc(struct msdosfsmount *pmp, u_long start, u_long count,
 {
 	u_long idx;
 	u_long len, newst, foundl, cn, l;
-	u_long foundcn = 0; /* XXX: foundcn could be used unititialized */
+	u_long foundcn = 0; /* XXX: foundcn could be used uninitialized */
 	u_long fillwith = CLUST_EOFE;
 	u_int map;
 

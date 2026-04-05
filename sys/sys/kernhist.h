@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.29 2026/02/07 06:40:15 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.30 2026/04/05 10:19:57 andvar Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -173,7 +173,7 @@ do { \
 	.f = 0, \
 	.e = (struct kern_history_ent *) (BUF), \
 	.s = 0, \
-	/* BUF will inititalized to zeroes by being in .bss */ \
+	/* BUF will be initialized to zeroes by being in .bss */ \
 }
 
 #ifndef KERNHIST_DELAY

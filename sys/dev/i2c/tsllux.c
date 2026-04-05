@@ -1,4 +1,4 @@
-/* $NetBSD: tsllux.c,v 1.4 2022/02/12 03:24:35 riastradh Exp $ */
+/* $NetBSD: tsllux.c,v 1.5 2026/04/05 10:19:57 andvar Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.4 2022/02/12 03:24:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsllux.c,v 1.5 2026/04/05 10:19:57 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ tsllux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": TSL256x Light-to-Digital converter%s\n",
 		      sc->sc_cs_package ? " (CS package)" : "");
 
-	/* Inititalize timing to reasonable defaults. */
+	/* Initialize timing to reasonable defaults. */
 	sc->sc_auto_gain = true;
 	sc->sc_gain = TIMING6x_GAIN_16X;
 	if (tsllux_set_integration_time(sc, TIMING6x_INTEG_101ms)) {

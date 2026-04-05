@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec.h,v 1.93 2022/10/28 05:23:09 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec.h,v 1.94 2026/04/05 10:19:57 andvar Exp $	*/
 /*	$FreeBSD: ipsec.h,v 1.2.4.2 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: ipsec.h,v 1.53 2001/11/20 08:32:38 itojun Exp $	*/
 
@@ -85,7 +85,7 @@ struct secpolicy {
 
 	/*
 	 * lifetime handler.
-	 * the policy can be used without limitiation if both lifetime and
+	 * the policy can be used without limitation if both lifetime and
 	 * validtime are zero.
 	 * "lifetime" is passed by sadb_lifetime.sadb_lifetime_addtime.
 	 * "validtime" is passed by sadb_lifetime.sadb_lifetime_usetime.

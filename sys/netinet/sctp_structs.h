@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.4 2023/08/10 06:44:12 andvar Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.5 2026/04/05 10:19:57 andvar Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -388,7 +388,7 @@ struct sctp_association {
 	/* various verification tag information */
 	u_int32_t my_vtag;	/*
 				 * The tag to be used. if assoc is
-				 * re-initited by remote end, and
+				 * re-initiated by remote end, and
 				 * I have unlocked this will be
 				 * regenerated to a new random value.
 				 */
