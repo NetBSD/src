@@ -1,4 +1,4 @@
-.\"	$NetBSD: tty.4,v 1.31 2021/08/17 14:11:22 andvar Exp $
+.\"	$NetBSD: tty.4,v 1.32 2026/04/06 19:12:19 gutteridge Exp $
 .\"
 .\" Copyright (c) 1991, 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -76,10 +76,11 @@ These special terminal devices are called
 (pseudo terminals)
 and provide the mechanism necessary to give users the same interface to the
 system when logging in over a network (using
-.Xr rlogin 1 ,
+.Xr rlogin 1
 or
-.Xr telnet 1
-for example.)  Even in these cases the details of how the terminal
+.Xr telnet 1 ,
+for example).
+Even in these cases the details of how the terminal
 file was opened and set up is already handled by special software
 in the system.
 Thus, users do not normally need to worry about the details of
@@ -157,10 +158,10 @@ In addition to the ioctl
 defined here, the specific line discipline
 in effect will define other
 .Em requests
-specific to it (actually
+specific to it (actually,
 .Xr termios 4
 defines them as function calls, not ioctl
-.Em requests . )
+.Em requests ) .
 The following section lists the available ioctl requests.
 The name of the request, a description of its purpose, and the typed
 .Em argp
