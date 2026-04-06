@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.93 2026/04/05 14:35:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.94 2026/04/06 15:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2026/04/05 14:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.94 2026/04/06 15:36:30 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -267,16 +267,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-
-	/*
-	 * Initialize message buffer (for kernel printf).
-	 * This is put in physical pages four through seven
-	 * so it will always be in the same place after a
-	 * reboot. (physical pages 0-3 are reserved by the PROM
-	 * for its vector table and other stuff.)
-	 * Its mapping was prepared in pmap_bootstrap().
-	 */
-	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	{

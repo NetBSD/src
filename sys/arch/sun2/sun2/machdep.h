@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.17 2026/03/21 20:14:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.18 2026/04/06 15:36:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -129,7 +129,7 @@ extern vaddr_t virtual_avail, virtual_end;
 extern paddr_t avail_start, avail_end;
 
 /* pmap.c */
-void	pmap_bootstrap(vaddr_t nextva);
+paddr_t	pmap_bootstrap(vaddr_t nextva);
 void	pmap_kcore_hdr(struct sun2_kcore_hdr *);
 void	pmap_get_pagemap(int *pt, int off);
 

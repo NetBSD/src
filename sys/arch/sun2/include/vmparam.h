@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2020/08/10 10:59:33 rin Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2026/04/06 15:36:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -113,4 +113,4 @@ extern	char KERNBASE[];
 #endif	/* _MODULE */
 
 /* This is needed by some LKMs. */
-#define VM_PHYSSEG_MAX		4
+#define VM_PHYSSEG_MAX		1
