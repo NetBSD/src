@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.528 2026/03/03 20:12:20 sjg Exp $	*/
+/*	$NetBSD: job.c,v 1.529 2026/04/06 17:13:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -124,7 +124,7 @@
 #include "trace.h"
 
 /*	"@(#)job.c	8.2 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: job.c,v 1.528 2026/03/03 20:12:20 sjg Exp $");
+MAKE_RCSID("$NetBSD: job.c,v 1.529 2026/04/06 17:13:54 rillig Exp $");
 
 
 #ifdef USE_SELECT
@@ -1288,8 +1288,7 @@ JobFinish(Job *job, int status)
 	DEBUG3(JOB, "JobFinish: target %s, pid %d, status %#x\n",
 	    job->node->name, job->pid, status);
 
-	if ((WIFEXITED(status) &&
-	     ((WEXITSTATUS(status) != 0 && !job->ignerr))) ||
+	if ((WIFEXITED(status) && WEXITSTATUS(status) != 0 && !job->ignerr) ||
 	    WIFSIGNALED(status)) {
 		/* Finished because of an error. */
 
@@ -1333,7 +1332,7 @@ JobFinish(Job *job, int status)
 	Trace_Log(JOBEND, job);
 	if (!job->special) {
 		if (status != 0 ||
-		    (aborting == ABORT_ERROR) || aborting == ABORT_INTERRUPT)
+		    aborting == ABORT_ERROR || aborting == ABORT_INTERRUPT)
 			return_job_token = true;
 	}
 
@@ -1907,7 +1906,7 @@ again:
 			SwitchOutputTo(job->node);
 #ifdef USE_META
 		if (useMeta)
-			meta_job_output(job, p, (i < max) ? i : max);
+			meta_job_output(job, p, i < max ? i : max);
 #endif
 		(void)fwrite(p, 1, (size_t)(job->outBuf + i - p), stdout);
 		(void)fflush(stdout);
