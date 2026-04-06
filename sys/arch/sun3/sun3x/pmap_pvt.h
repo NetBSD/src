@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.h,v 1.16 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: pmap_pvt.h,v 1.17 2026/04/06 14:45:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -153,10 +153,9 @@ typedef struct pv_elem_struct pv_elem_t;
  * segment with its base address and its size.
  */
 struct pmap_physmem_struct {
-	paddr_t		pmem_start;  /* Starting physical address      */
-	paddr_t		pmem_end;    /* First byte outside of range    */
-	int             pmem_pvbase; /* Offset within the pv list      */
 	struct pmap_physmem_struct *pmem_next; /* Next block of memory */
+	phys_seg_list_t *pmem_seg;   /* physical segment descriptor    */
+	int             pmem_pvbase; /* Offset within the pv list      */
 };
 
 /* These are defined in pmap.c */
