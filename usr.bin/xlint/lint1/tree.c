@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.709 2026/04/05 20:51:00 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.710 2026/04/06 07:10:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.709 2026/04/05 20:51:00 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.710 2026/04/06 07:10:44 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3676,10 +3676,11 @@ check_lossy_floating_to_integer_conversion(
     op_t op, int arg, const type_t *tp, const tnode_t *tn)
 {
 	long double x = tn->u.value.u.floating;
-	integer_constraints ic = ic_any(tp);
+	long double oob = powl(2.0L,
+	    width_in_bits(tp) - (is_uinteger(tp->t_tspec) ? 0 : 1));
 	if (is_uinteger(tp->t_tspec)
-	    ? x >= ic.umin && x <= ic.umax && x == (uint64_t)x
-	    : x >= ic.smin && x <= ic.smax && x == (int64_t)x)
+	    ? x >= 0.0L && x < oob && x == (uint64_t)x
+	    : x >= -oob && x < oob && x == (int64_t)x)
 		return;
 	if (op == FARG)
 		/* lossy conversion of %Lg (%La) to '%s', arg #%d */
