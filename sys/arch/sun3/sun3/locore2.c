@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.107 2026/03/28 22:19:35 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.108 2026/04/06 13:31:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.107 2026/03/28 22:19:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.108 2026/04/06 13:31:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -172,6 +172,7 @@ static void *
 _vm_init(void)
 {
 	vaddr_t nextva;
+	paddr_t nextpa;
 
 	/*
 	 * First preserve our symbol table, which might have been
@@ -209,7 +210,9 @@ _vm_init(void)
 	nextva += USPACE;
 
 	/* This does most of the real work. */
-	pmap_bootstrap(nextva);
+	nextpa = pmap_bootstrap(nextva);
+
+	machine_init_common(nextpa);
 
 	return tf;
 }

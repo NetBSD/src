@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.220 2026/04/05 14:35:49 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.221 2026/04/06 13:31:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.220 2026/04/05 14:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/04/06 13:31:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -214,14 +214,6 @@ cpu_startup(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
-
-	/*
-	 * Initialize message buffer (for kernel printf).
-	 * This is put in physical page zero so it will
-	 * always be in the same place after a reboot.
-	 * Its mapping was prepared in pmap_bootstrap().
-	 */
-	initmsgbuf(msgbufaddr, MSGBUFSIZE);
 
 	/*
 	 * Good {morning,afternoon,evening,night}.

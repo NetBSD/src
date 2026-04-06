@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.41 2024/01/12 23:46:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.42 2026/04/06 13:31:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -154,7 +154,7 @@ void	cache_flush_segment(vaddr_t);
 void	cache_flush_context(void);
 
 /* pmap.c */
-void	pmap_bootstrap(vaddr_t);
+paddr_t	pmap_bootstrap(vaddr_t);
 void	pmap_kcore_hdr(struct sun3_kcore_hdr *);
 void	pmap_get_pagemap(int *, int);
 
