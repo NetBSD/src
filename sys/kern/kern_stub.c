@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.53 2026/02/01 19:41:46 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.54 2026/04/07 14:47:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.53 2026/02/01 19:41:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.54 2026/04/07 14:47:23 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -157,6 +157,10 @@ __strict_weak_alias(bus_space_handle_is_equal,
 __weak_alias(userconf_bootinfo, voidop);
 __weak_alias(userconf_init, voidop);
 __weak_alias(userconf_prompt, voidop);
+
+#ifdef MODULAR
+__weak_alias(module_init_md, voidop);
+#endif
 
 __weak_alias(kobj_renamespace, nullop);
 
