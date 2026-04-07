@@ -1,4 +1,4 @@
-/* $NetBSD: softfloat.c,v 1.21 2026/04/04 17:37:13 rillig Exp $ */
+/* $NetBSD: softfloat.c,v 1.22 2026/04/07 20:08:33 rillig Exp $ */
 
 /*
  * This version hacked for use with gcc -msoft-float by bjh21.
@@ -46,7 +46,7 @@ this code that are retained.
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: softfloat.c,v 1.21 2026/04/04 17:37:13 rillig Exp $");
+__RCSID("$NetBSD: softfloat.c,v 1.22 2026/04/07 20:08:33 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef SOFTFLOAT_FOR_GCC
@@ -1133,7 +1133,7 @@ float32 int32_to_float32( int32 a )
     if ( a == 0 ) return 0;
     if ( a == (sbits32) 0x80000000 ) return packFloat32( 1, 0x9E, 0 );
     zSign = ( a < 0 );
-    return normalizeRoundAndPackFloat32(zSign, 0x9C, (uint32)(zSign ? - a : a));
+    return normalizeRoundAndPackFloat32(zSign, 0x9C, (uint32)(zSign ? - (uint32) a : (uint32) a));
 
 }
 
@@ -1162,7 +1162,7 @@ float64 int32_to_float64( int32 a )
 
     if ( a == 0 ) return 0;
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
+    absA = zSign ? - (uint32) a : (uint32) a;
     shiftCount = countLeadingZeros32( absA ) + 21;
     zSig = absA;
     return packFloat64( zSign, 0x432 - shiftCount, zSig<<shiftCount );
@@ -1199,7 +1199,7 @@ floatx80 int32_to_floatx80( int32 a )
 
     if ( a == 0 ) return packFloatx80( 0, 0, 0 );
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
+    absA = zSign ? - (uint32) a : (uint32) a;
     shiftCount = countLeadingZeros32( absA ) + 32;
     zSig = absA;
     return packFloatx80( zSign, 0x403E - shiftCount, zSig<<shiftCount );
@@ -1237,7 +1237,7 @@ float128 int32_to_float128( int32 a )
 
     if ( a == 0 ) return packFloat128( 0, 0, 0, 0 );
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
+    absA = zSign ? - (uint32) a : (uint32) a;
     shiftCount = countLeadingZeros32( absA ) + 17;
     zSig0 = absA;
     return packFloat128( zSign, 0x402E - shiftCount, zSig0<<shiftCount, 0 );
@@ -1273,7 +1273,7 @@ float32 int64_to_float32( int64 a )
 
     if ( a == 0 ) return 0;
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
+    absA = zSign ? - (uint64) a : (uint64) a;
     shiftCount = countLeadingZeros64( absA ) - 40;
     if ( 0 <= shiftCount ) {
         return packFloat32( zSign, 0x95 - shiftCount, absA<<shiftCount );
@@ -1307,7 +1307,7 @@ float64 int64_to_float64( int64 a )
         return packFloat64( 1, 0x43E, 0 );
     }
     zSign = ( a < 0 );
-    return normalizeRoundAndPackFloat64( zSign, 0x43C, zSign ? - a : a );
+    return normalizeRoundAndPackFloat64( zSign, 0x43C, zSign ? - (uint64) a : (uint64) a );
 
 }
 
@@ -1329,7 +1329,7 @@ floatx80 int64_to_floatx80( int64 a )
 
     if ( a == 0 ) return packFloatx80( 0, 0, 0 );
     zSign = ( a < 0 );
-    absA = zSign ? - a : a;
+    absA = zSign ? - (uint64) a : (uint64) a;
     shiftCount = countLeadingZeros64( absA );
     return packFloatx80( zSign, 0x403E - shiftCount, absA<<shiftCount );
 
