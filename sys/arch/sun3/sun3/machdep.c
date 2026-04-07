@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.221 2026/04/06 13:31:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.222 2026/04/07 13:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/04/06 13:31:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.222 2026/04/07 13:57:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.221 2026/04/06 13:31:09 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
@@ -652,19 +651,6 @@ initcpu(void)
 
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine if the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
-}
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)

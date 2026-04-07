@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.125 2026/04/05 20:10:31 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.126 2026/04/07 13:57:36 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2026/04/05 20:10:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2026/04/07 13:57:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_sunos.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_m68k_arch.h"
@@ -55,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.125 2026/04/05 20:10:31 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kauth.h>
 #include <sys/kcore.h>
@@ -733,19 +731,6 @@ luna68k_abort(const char *cp)
 	printf("%s ignored\n", cp);
 #endif /* PANICBUTTON */
 #endif /* DDB */
-}
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
 }
 
 #ifdef MODULAR

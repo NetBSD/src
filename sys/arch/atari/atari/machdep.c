@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.202 2026/04/05 14:58:15 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.203 2026/04/07 13:57:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2026/04/05 14:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2026/04/07 13:57:35 thorpej Exp $");
 
 #include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_mbtype.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
@@ -68,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2026/04/05 14:58:15 thorpej Exp $"
 #include <sys/module.h>
 #include <sys/intr.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/cpu.h>
 #include <sys/exec_elf.h>
 #include <sys/bus.h>
@@ -720,28 +718,6 @@ candbtimer(void)
 	crashandburn = 0;
 }
 #endif
-
-/*
- * should only get here, if no standard executable. This can currently
- * only mean, we're reading an old ZMAGIC file without MID, but since Atari
- * ZMAGIC always worked the `right' way (;-)) just ignore the missing
- * MID and proceed to new zmagic code ;-)
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	int error = ENOEXEC;
-#ifdef COMPAT_NOMID
-	struct exec *execp = epp->ep_hdr;
-#endif
-
-#ifdef COMPAT_NOMID
-	if (!((execp->a_midmag >> 16) & 0x0fff)
-	    && execp->a_midmag == ZMAGIC)
-		return exec_aout_prep_zmagic(l->l_proc, epp);
-#endif
-	return error;
-}
 
 #ifdef MODULAR
 /*

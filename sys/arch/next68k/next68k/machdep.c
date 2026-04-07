@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2026/04/05 19:18:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2026/04/07 13:57:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2026/04/05 19:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2026/04/07 13:57:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2026/04/05 19:18:47 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
@@ -702,20 +701,6 @@ nmihand(void *frame)
 	innmihand = 0;
 
 	return 0;
-}
-
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2026/04/05 20:19:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225 2026/04/07 13:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2026/04/05 20:19:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2026/04/07 13:57:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_fpu_emulate.h"
 #include "opt_m060sp.h"
 #include "opt_modular.h"
@@ -68,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2026/04/05 20:19:10 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 #include <sys/core.h>
@@ -899,54 +897,6 @@ nmihand(struct frame frame)
 	}
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
-}
-
-/*
- * cpu_exec_aout_makecmds():
- *	cpu-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * XXX what are the special cases for the hp300?
- * XXX why is this COMPAT_NOMID?  was something generating
- *	hp300 binaries with an a_mid of 0?  i thought that was only
- *	done on little-endian machines...  -- cgd
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-#if defined(COMPAT_NOMID) || defined(COMPAT_44)
-	u_long midmag, magic;
-	u_short mid;
-	int error;
-	struct exec *execp = epp->ep_hdr;
-
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16) & 0xffff;
-	magic = midmag & 0xffff;
-
-	midmag = mid << 16 | magic;
-
-	switch (midmag) {
-#ifdef COMPAT_NOMID
-	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l, epp);
-		break;
-#endif
-#ifdef COMPAT_44
-	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l, epp);
-		break;
-#endif
-	default:
-		error = ENOEXEC;
-	}
-
-	return error;
-#else /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
-	return ENOEXEC;
-#endif
 }
 
 #ifdef MODULAR

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267 2026/04/05 14:58:15 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.268 2026/04/07 13:57:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_fpu_emulate.h"
 #include "opt_lev6_defer.h"
 #include "opt_m060sp.h"
@@ -50,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2026/04/05 14:58:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2026/04/07 13:57:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2026/04/05 14:58:15 thorpej Exp $"
 #if defined(DDB) && defined(__ELF__)
 #include <sys/exec_elf.h>
 #endif
-
-#include <sys/exec_aout.h>
 
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
@@ -1095,25 +1092,6 @@ nmihand(struct frame frame)
 	printf("unexpected level 7 interrupt ignored\n");
 }
 #endif
-
-/*
- * should only get here, if no standard executable. This can currently
- * only mean, we're reading an old ZMAGIC file without MID, but since Amiga
- * ZMAGIC always worked the `right' way (;-)) just ignore the missing
- * MID and proceed to new zmagic code ;-)
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-#ifdef COMPAT_NOMID
-	struct exec *execp = epp->ep_hdr;
-
-	if (!((execp->a_midmag >> 16) & 0x0fff)
-	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(l, epp));
-#endif
-	return ENOEXEC;
-}
 
 #ifdef MODULAR
 /*

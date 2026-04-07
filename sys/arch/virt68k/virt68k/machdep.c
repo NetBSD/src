@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.35 2026/04/05 19:18:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.36 2026/04/07 13:57:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2026/04/05 19:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2026/04/07 13:57:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.35 2026/04/05 19:18:47 thorpej Exp $")
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
@@ -114,7 +113,6 @@ int	cpu_dumpsize(void);
 int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 void	cpu_init_kcore_hdr(void);
 u_long	cpu_dump_mempagecnt(void);
-int	cpu_exec_aout_makecmds(struct lwp *, struct exec_package *);
 
 /*
  * Machine-independent crash dump header info.
@@ -781,20 +779,6 @@ nmihand(void *arg)
 	printf("NMI ignored.\n");
 
 	return 1;
-}
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-
-    return ENOEXEC;
 }
 
 #ifdef MODULAR

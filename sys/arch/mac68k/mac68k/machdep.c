@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.382 2026/04/07 12:36:22 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.383 2026/04/07 13:57:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,10 +74,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2026/04/07 12:36:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383 2026/04/07 13:57:36 thorpej Exp $");
 
 #include "opt_adb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -97,7 +96,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2026/04/07 12:36:22 thorpej Exp $"
 #include <sys/conf.h>
 #include <sys/core.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/extent.h>
 #include <sys/file.h>
 #include <sys/kcore.h>
@@ -793,20 +791,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-}
-
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	int error = ENOEXEC;
-
-#ifdef COMPAT_NOMID
-	/* Check to see if MID == 0. */
-	if (((struct exec *)epp->ep_hdr)->a_midmag == ZMAGIC)
-		return exec_aout_prep_oldzmagic(l, epp);
-#endif
-
-	return error;
 }
 
 #ifdef MODULAR

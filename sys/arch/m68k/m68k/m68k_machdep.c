@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.18 2026/04/05 19:18:47 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.19 2026/04/07 13:57:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,15 +65,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.18 2026/04/05 19:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.19 2026/04/07 13:57:36 thorpej Exp $");
 
+#include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
+#include "opt_execfmt.h"
 
 #include <sys/param.h>
 #include <sys/exec.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
+
+#ifdef EXEC_AOUT
+#include <sys/exec_aout.h>	/* for cpu_exec_aout_makecmds() prototype */
+#endif
 
 #include <uvm/uvm_extern.h>
 
@@ -275,3 +281,56 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	l->l_md.md_flags = 0;
 #endif
 }
+
+#ifdef EXEC_AOUT
+/*
+ * cpu_exec_aout_makecmds():
+ *	cpu-dependent a.out format hook for execve().
+ *
+ * Determine of the given exec package refers to something which we
+ * understand and, if so, set up the vmcmds for it.
+ *
+ * XXX what are the special cases for the hp300?
+ * XXX why is this COMPAT_NOMID?  was something generating
+ *	hp300 binaries with an a_mid of 0?  i thought that was only
+ *	done on little-endian machines...  -- cgd
+ * XXX perhaps this whole thing should be relegated to a smoking crater?
+ */
+int
+cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
+{
+#ifdef __mc68010__
+	/* There were never native a.out binaries for NetBSD on 68010. */
+	return ENOEXEC;
+#elif defined(COMPAT_NOMID) || defined(COMPAT_44)
+	struct exec *execp = epp->ep_hdr;
+	u_long midmag, magic;
+	u_short mid;
+	int error;
+
+	midmag = ntohl(execp->a_midmag);
+	mid = (midmag >> 16) & 0xffff;
+	magic = midmag & 0xffff;
+
+	midmag = mid << 16 | magic;
+
+	switch (midmag) {
+#ifdef COMPAT_NOMID
+	case (MID_ZERO << 16) | ZMAGIC:
+		error = exec_aout_prep_oldzmagic(l, epp);
+		break;
+#endif
+#ifdef COMPAT_44
+	case (MID_HP300 << 16) | ZMAGIC:
+		error = exec_aout_prep_oldzmagic(l, epp);
+		break;
+#endif
+	default:
+		error = ENOEXEC;
+	}
+	return error;
+#else /* COMPAT_NOMID || COMPAT_44 */
+	return ENOEXEC;
+#endif
+}
+#endif /* EXEC_AOUT */
