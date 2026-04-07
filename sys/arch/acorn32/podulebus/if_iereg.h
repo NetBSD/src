@@ -1,4 +1,4 @@
-/* $NetBSD: if_iereg.h,v 1.3 2008/04/28 20:23:10 martin Exp $ */
+/* $NetBSD: if_iereg.h,v 1.4 2026/04/07 22:22:13 andvar Exp $ */
 
 /*
  * Copyright (C) 1994 Wolfgang Solfrank.
@@ -214,7 +214,7 @@ struct ie_sys_ctl_block {
 #define IE_RU_STATUS	0x70	/* mask for receiver unit status */
 #define IE_RU_SUSPEND	0x10	/* receiver is suspended */
 #define IE_RU_NOSPACE	0x20	/* receiver has no resources */
-#define IE_RU_READY	0x40	/* reveiver is ready */
+#define IE_RU_READY	0x40	/* receiver is ready */
 
 /*
  * This is filled in partially by the chip, partially by us.

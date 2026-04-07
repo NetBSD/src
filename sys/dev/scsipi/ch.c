@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.96 2025/08/18 20:59:56 andvar Exp $	*/
+/*	$NetBSD: ch.c,v 1.97 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.96 2025/08/18 20:59:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.97 2026/04/07 22:22:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -917,7 +917,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		ces.ces_ascq = desc->sense_qual;
 
 		/*
-		 * For Data Transport elemenets, get the SCSI ID and LUN,
+		 * For Data Transport elements, get the SCSI ID and LUN,
 		 * and attempt to map them to a device name if they're
 		 * on the same SCSI bus.
 		 */

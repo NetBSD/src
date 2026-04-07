@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.24 2021/08/09 20:49:08 andvar Exp $ */
+/* $NetBSD: TODO.modules,v 1.25 2026/04/07 22:22:12 andvar Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -79,7 +79,7 @@ christos and pgoyette.
 	configuration has acpi, then you must include the "sysmon_power"
 	module built-in the kernel.  And therefore you also need to
 	have "sysmon_taskq" and "sysmon" built-in since "sysmon_power"
-	rerefences them.
+	references them.
 
  9. As a corollary to #8 above, having dependencies on modules from code
     which has not been modularized makes it extremely difficult to test

@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.h,v 1.6 1997/03/15 18:10:48 is Exp $ */
+/*	$NetBSD: i82586.h,v 1.7 2026/04/07 22:22:13 andvar Exp $ */
 
 /*-
  * Copyright (c) 1992, University of Vermont and State Agricultural College.
@@ -133,7 +133,7 @@ struct ie_sys_ctl_block {
 #define IE_RU_STATUS	SWAP(0x70)	/* mask for receiver unit status */
 #define IE_RU_SUSPEND	SWAP(0x10)	/* receiver is suspended */
 #define IE_RU_NOSPACE	SWAP(0x20)	/* receiver has no resources */
-#define IE_RU_READY	SWAP(0x40)	/* reveiver is ready */
+#define IE_RU_READY	SWAP(0x40)	/* receiver is ready */
 
 /*
  * This is filled in partially by the chip, partially by us.

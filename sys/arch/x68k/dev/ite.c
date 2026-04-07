@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.72 2024/10/05 03:56:54 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.73 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,13 +39,13 @@
  */
 
 /*
- * ite - bitmaped terminal.
+ * ite - bitmapped terminal.
  * Supports VT200, a few terminal features will be unavailable until
  * the system actually probes the device (i.e. not after consinit())
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.72 2024/10/05 03:56:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.73 2026/04/07 22:22:11 andvar Exp $");
 
 #include "ite.h"
 #if NITE > 0

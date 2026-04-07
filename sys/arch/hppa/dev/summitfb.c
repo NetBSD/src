@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.38 2025/11/02 06:09:51 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.39 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.38 2025/11/02 06:09:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.39 2026/04/07 22:22:12 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -510,7 +510,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa00850, 0);	/* MISC_CTL */
 	summitfb_write4(sc, 0xa0086c, 0);	/* WCE window clipping enable */
 #endif
-	/* initialize drawiing engine */
+	/* initialize drawing engine */
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_CONTROL, 0);	// clear WFC
 	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);

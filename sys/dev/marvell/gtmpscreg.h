@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpscreg.h,v 1.5 2016/01/15 12:09:15 joerg Exp $	*/
+/*	$NetBSD: gtmpscreg.h,v 1.6 2026/04/07 22:22:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -166,8 +166,8 @@
 #define GTMPSC_MMCR_HI_RINV	__BIT(16)	/* RX Bitstream Inversion */
 #define GTMPSC_MMCR_HI_GDW	__BITS(20,17)	/* Clock Glitch Width */
 #define GTMPSC_MMCR_HI_RESb	__BIT(21)
-#define GTMPSC_MMCR_HI_RDW	__BIT(22)	/* Reveive Data Width */
-#define GTMPSC_MMCR_HI_RSYL_MASK  __BITS(24,23)	/* Reveive Sync Width */
+#define GTMPSC_MMCR_HI_RDW	__BIT(22)	/* Receive Data Width */
+#define GTMPSC_MMCR_HI_RSYL_MASK  __BITS(24,23)	/* Receive Sync Width */
 #define GTMPSC_MMCR_HI_RSYL_EXT	  (0 << 23)	/* External sync */
 #define GTMPSC_MMCR_HI_RSYL_4BIT  (1 << 23)	/* 4-bit sync */
 #define GTMPSC_MMCR_HI_RSYL_8BIT  (2 << 23)	/* 8-bit sync */

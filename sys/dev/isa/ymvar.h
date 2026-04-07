@@ -1,4 +1,4 @@
-/*	$NetBSD: ymvar.h,v 1.13 2011/11/23 23:07:33 jmcneill Exp $	*/
+/*	$NetBSD: ymvar.h,v 1.14 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2002, 2008 The NetBSD Foundation, Inc.
@@ -166,7 +166,7 @@ struct ym_softc {
 	uint8_t sc_version;		/* hardware version */
 #define YM_IS_SA3(sc)	((sc)->sc_version > SA3_MISC_VER_711)
 
-	/* 3D encehamcement */
+	/* 3D enhancement */
 	uint8_t sc_eqmode;
 	struct ad1848_volume sc_treble, sc_bass, sc_wide;
 	/*

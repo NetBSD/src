@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.9 2025/12/10 21:33:03 andvar Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.10 2026/04/07 22:22:12 andvar Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -677,7 +677,7 @@ void sctp_move_pcb_and_assoc(struct sctp_inpcb *, struct sctp_inpcb *,
 /*
  * For this call ep_addr, the to is the destination endpoint address
  * of the peer (relative to outbound). The from field is only used if
- * the TCP model is enabled and helps distingush amongst the subset
+ * the TCP model is enabled and helps distinguish amongst the subset
  * bound (non-boundall). The TCP model MAY change the actual ep field,
  * this is why it is passed.
  */

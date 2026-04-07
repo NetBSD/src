@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.20 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.21 2026/04/07 22:22:13 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -205,7 +205,7 @@ INLINE void mvxpsec_packet_enqueue(struct mvxpsec_packet *);
 STATIC void mvxpsec_packet_dealloc(struct mvxpsec_packet *);
 STATIC int mvxpsec_done_packet(struct mvxpsec_packet *);
 
-/* session header manegement */
+/* session header management */
 STATIC int mvxpsec_header_finalize(struct mvxpsec_packet *);
 
 /* packet queue management */

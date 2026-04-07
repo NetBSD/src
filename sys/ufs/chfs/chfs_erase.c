@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_erase.c,v 1.2 2012/10/19 12:44:39 ttoth Exp $	*/
+/*	$NetBSD: chfs_erase.c,v 1.3 2026/04/07 22:22:10 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -117,7 +117,7 @@ chfs_remap_leb(struct chfs_mount *chmp)
 	/* put it to free_queue */
 	TAILQ_INSERT_TAIL(&chmp->chm_free_queue, cheb, queue);
 	chmp->chm_nr_free_blocks++;
-	dbg("remaped (free: %d, erasable: %d)\n", chmp->chm_nr_free_blocks, chmp->chm_nr_erasable_blocks);
+	dbg("remapped (free: %d, erasable: %d)\n", chmp->chm_nr_free_blocks, chmp->chm_nr_erasable_blocks);
 	KASSERT(!TAILQ_EMPTY(&chmp->chm_free_queue));
 
 	return 0;

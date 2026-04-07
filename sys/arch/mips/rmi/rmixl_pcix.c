@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.19 2022/01/22 15:10:31 skrll Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.20 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.19 2022/01/22 15:10:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.20 2026/04/07 22:22:12 andvar Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1004,7 +1004,7 @@ rmixl_pcix_pip_add_1(rmixl_pcix_softc_t *sc, int irq, int ipl)
 			return NULL;
 		}
 		/*
-		 * copy pip_old to pip_new, skipping unused dispatch elemets
+		 * copy pip_old to pip_new, skipping unused dispatch elements
 		 */
 		memcpy(pip_new, pip_old, sizeof(rmixl_pcix_intr_t));
 		for (int j=0, i=0; i < pip_old->dispatch_count; i++) {

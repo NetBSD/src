@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.148 2026/04/07 22:22:13 andvar Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.147 2024/11/09 16:31:31 jschauma Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.148 2026/04/07 22:22:13 andvar Exp $");
 #endif
 #endif /* not lint */
 
@@ -4452,7 +4452,7 @@ send_queue(int fd, short event, void *arg)
  * finds the next queue element to delete
  *
  * has stateful behaviour, before using it call once with reset = true
- * after that every call will return one next queue elemen to delete,
+ * after that every call will return one next queue element to delete,
  * depending on strategy either the oldest or the one with the lowest priority
  */
 static struct buf_queue *

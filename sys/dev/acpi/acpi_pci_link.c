@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.29 2021/12/20 12:01:01 skrll Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.30 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.29 2021/12/20 12:01:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.30 2026/04/07 22:22:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -845,7 +845,7 @@ acpi_pci_link_srs_from_links(struct acpi_pci_link_softc *sc,
 				newres.Data.Irq.Interrupts[0] = 0;
 		} else {
 
-			/* Build an ExtIRQ resuorce. */
+			/* Build an ExtIRQ resource. */
 			bcopy(&link->l_prs_template, &newres,
 			    ACPI_RS_SIZE(newres.Data.ExtendedIrq));
 			newres.Data.ExtendedIrq.InterruptCount = 1;

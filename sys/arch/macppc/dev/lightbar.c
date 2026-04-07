@@ -1,4 +1,4 @@
-/*	$NetBSD: lightbar.c,v 1.3 2026/03/11 21:54:22 andvar Exp $	*/
+/*	$NetBSD: lightbar.c,v 1.4 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.3 2026/03/11 21:54:22 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.4 2026/04/07 22:22:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -76,7 +76,7 @@ CFATTACH_DECL_NEW(lightbar, sizeof(struct lightbar_softc), lightbar_match,
 
 /*
  * upper 16 bit are LEDs from the top right to the bottom left 
- * however, the hardware has them rotated so the uppper left bit is in 1
+ * however, the hardware has them rotated so the upper left bit is in 1
  */
 #define LEDMASK(x) ((x << 1) | (((x) & 0x80000000) >> 31))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.73 2025/06/14 13:57:45 nat Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.74 2026/04/07 22:22:11 andvar Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.73 2025/06/14 13:57:45 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.74 2026/04/07 22:22:11 andvar Exp $");
 
 #include "opt_adb.h"
 
@@ -1177,7 +1177,7 @@ adb_guess_next_device(void)
 			adbLastDevice = 1;
 	} else {
 		/* find the next device using the device table */
-		if (adbLastDevice < 1 || adbLastDevice > 15)	/* let's be parinoid */
+		if (adbLastDevice < 1 || adbLastDevice > 15)	/* let's be paranoid */
 			adbLastDevice = 2;
 		last = 1;	/* default index location */
 

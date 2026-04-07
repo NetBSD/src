@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.220 2025/08/24 10:26:23 rillig Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.221 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -438,7 +438,7 @@
  *	%ecx: Feature bits.
  *	%edx: Feature bits.
  *
- * %ecx == 1: Structure Extendede Feature Enumeration Sub-leaf
+ * %ecx == 1: Structure Extended Feature Enumeration Sub-leaf
  *	%eax: See below.
  */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: i80200_irq.S,v 1.19 2020/11/21 19:55:49 skrll Exp $	*/
+/*	$NetBSD: i80200_irq.S,v 1.20 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -99,7 +99,7 @@ ASENTRY_NP(irq_entry)
 	ldr	pc, [r1]
 .Lextirq_return:
 
-	/* Decremement the nest count. */
+	/* Decrement the nest count. */
 	ldr	r1, [r4, #CI_INTR_DEPTH]
 	sub	r1, r1, #1
 	str	r1, [r4, #CI_INTR_DEPTH]

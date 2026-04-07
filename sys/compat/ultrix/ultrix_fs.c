@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.60 2022/07/05 19:21:26 andvar Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.61 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.60 2022/07/05 19:21:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.61 2026/04/07 22:22:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ make_ultrix_mntent(struct statvfs *sp, struct ultrix_fs_data *tem)
 	 * Translate file system type. NetBSD/1.1 has f_type zero,
 	 * and uses an fstype string instead.
 	 * For now, map types not in Ultrix (kernfs, null, procfs...)
-	 * to UFS, since Ultrix mout will try and call mount_unknown
+	 * to UFS, since Ultrix mount will try and call mount_unknown
 	 * for ULTRIX_FSTYPE_UNKNOWN, but lacks a mount_unknown binary.
 	 */
 	tem->ufsd_fstype = ULTRIX_FSTYPE_NFS;

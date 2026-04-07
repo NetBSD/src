@@ -1,4 +1,4 @@
-$NetBSD: ngle_manual.txt,v 1.6 2026/01/08 08:30:36 macallan Exp $
+$NetBSD: ngle_manual.txt,v 1.7 2026/04/07 22:22:11 andvar Exp $
 
 The Unofficial NGLE Manual
 
@@ -37,7 +37,7 @@ The ones we know what to do with are:
  000c0000 @ 0xf6000000 - this is the STI ROM
  01000000 @ 0xf7000000 - framebuffer aperture
  00280000 @ 0xf6100000 - drawing engine registers
-Sizes vary, but these offsets are the same on my PCI EG and I assue on most if
+Sizes vary, but these offsets are the same on my PCI EG and I assume on most if
 not all other NGLE devices. Nothing is known about the others, I would assume
 the 'sys' region at the end contains DMA engine registers we don't want to show
 to userland.
@@ -212,7 +212,7 @@ possible to copy data between buffers, supported combinations of source and
 destination access modes need to be investigated.
 There are likely other opcodes for things like vectors, triangles and so on.
 HCRX_FASTFILL is implied by the xf86 code, but not actually used. It seems to
-work, more or less, but with strange side effects. More invastigation is needed.
+work, more or less, but with strange side effects. More investigation is needed.
 
 #define	NGLE_CPR		0x01800c	/* control plane register */
 This is used when drawing into BINattr, on EG we use 0x00000102, on HCRX 
@@ -378,7 +378,7 @@ xf86 uses HCRX_VIDEO_ENABLE, the other bits were found by experiment, functions
 are guesswork. There are other bits with unknown function.
 
 8. Visualize EG notes
-All referenves to 'EG' and the like strictly refer to the PCI Visualize EG card
+All references to 'EG' and the like strictly refer to the PCI Visualize EG card
 with 4MB video memory. There is a GSC variant which may have 2MB or 4MB, other
 differences are unknown.
 The xf86 code does not support the PCI EG at all, it seems to be somewhat
@@ -390,7 +390,7 @@ Same with grey scale mode, which may just select a different default palette.
 
 9. HCRX notes
 #define	NGLE_HCRX_PLANE_ENABLE	0x21003c	/* HCRX plane enable */ 
-Controls which bit planes are used for output. The uppper byte seems to control
+Controls which bit planes are used for output. The upper byte seems to control
 the overlay, the lower 24 are for the image plane(s). Exact bit assignment
 needs to be checked. We set it fo 0xffffffff for 24bit with 8bit overlay.
 

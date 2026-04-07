@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dereg.h,v 1.4 2005/12/11 12:23:29 christos Exp $	*/
+/*	$NetBSD: if_dereg.h,v 1.5 2026/04/07 22:22:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
@@ -179,7 +179,7 @@ struct de_ring {
 #define	XFLG_BITS	"\10\10OWN\7ERRS\6MTCH\5MORE\4ONE\3DEF\2STP\1ENP"
 
 #define	XERR_BUFL	0x8000		/* Buffer length error */
-#define	XERR_UBTO	0x4000		/* UNIBUS tiemout */
+#define	XERR_UBTO	0x4000		/* UNIBUS timeout */
 #define	XERR_LCOL	0x1000		/* Late collision */
 #define	XERR_LCAR	0x0800		/* Loss of carrier */
 #define	XERR_RTRY	0x0400		/* Failed after 16 retries */
@@ -198,7 +198,7 @@ struct de_ring {
 #define	RFLG_BITS	"\10\10OWN\7ERRS\6FRAM\5OFLO\4CRC\2STP\1ENP"
 
 #define	RERR_BUFL	0x8000		/* Buffer length error */
-#define	RERR_UBTO	0x4000		/* UNIBUS tiemout */
+#define	RERR_UBTO	0x4000		/* UNIBUS timeout */
 #define	RERR_NCHN	0x2000		/* No data chaining */
 #define	RERR_MLEN	0x0fff		/* Message length */
 

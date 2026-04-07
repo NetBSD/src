@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.21 2023/12/20 00:40:42 thorpej Exp $ */
+/*	$NetBSD: p5pb.c,v 1.22 2026/04/07 22:22:12 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -273,7 +273,7 @@ p5pb_identify_bridge(struct p5pb_softc *sc)
 }
 
 /* 
- * Find AutoConfig(TM) resuorces (for boards running G-REX firmware). Return the
+ * Find AutoConfig(TM) resources (for boards running G-REX firmware). Return the
  * total number of found resources.
  */
 uint8_t

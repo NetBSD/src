@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcie.c,v 1.16 2021/08/07 16:18:59 thorpej Exp $	*/
+/*	$NetBSD: rmixl_pcie.c,v 1.17 2026/04/07 22:22:12 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.16 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcie.c,v 1.17 2026/04/07 22:22:12 andvar Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -1366,7 +1366,7 @@ rmixl_pcie_lip_add_1(rmixl_pcie_softc_t *sc, u_int link, int irq, int ipl)
 			return NULL;
 		}
 		/*
-		 * copy lip_old to lip_new, skipping unused dispatch elemets
+		 * copy lip_old to lip_new, skipping unused dispatch elements
 		 */
 		memcpy(lip_new, lip_old, sizeof(rmixl_pcie_link_intr_t));
 		for (int j=0, i=0; i < lip_old->dispatch_count; i++) {
