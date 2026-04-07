@@ -9,13 +9,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import Iterable, FrozenSet
-
-import dns.name
-import dns.zone
-import dns.rdatatype
+from collections.abc import Iterable
 
 from dns.name import Name
+
+import dns.name
+import dns.rdatatype
+import dns.zone
 
 
 def prepend_label(label: str, name: Name) -> Name:
@@ -26,7 +26,7 @@ def len_wire_uncompressed(name: Name) -> int:
     return len(name) + sum(map(len, name.labels))
 
 
-def get_wildcard_names(names: Iterable[Name]) -> FrozenSet[Name]:
+def get_wildcard_names(names: Iterable[Name]) -> frozenset[Name]:
     return frozenset(name for name in names if name.is_wild())
 
 
@@ -59,7 +59,6 @@ class ZoneAnalyzer:
         return cls(zonedb)
 
     def __init__(self, zone: dns.zone.Zone):
-        self._abort_on_old_dnspython()
         self.zone = zone
         assert self.zone.origin  # mypy hack
         # based on individual nodes but not relationship between nodes
@@ -85,15 +84,7 @@ class ZoneAnalyzer:
             .union(self.reachable_dnames)
         )
 
-    def _abort_on_old_dnspython(self):
-        if not hasattr(dns.name, "NameRelation"):
-            raise RuntimeError(
-                "ZoneAnalyzer requires dnspython>=2.3.0 for dns.name.NameRelation support. "
-                "Use pytest.importorskip('dns', minversion='2.3.0') to the test module to "
-                "skip this test."
-            )
-
-    def get_names_with_type(self, rdtype) -> FrozenSet[Name]:
+    def get_names_with_type(self, rdtype) -> frozenset[Name]:
         return frozenset(
             name for name in self.zone if self.zone.get_rdataset(name, rdtype)
         )
@@ -157,7 +148,7 @@ class ZoneAnalyzer:
         self.reachable_delegations = frozenset(reachable_delegations)
         self.occluded = frozenset(occluded)
 
-    def generate_ents(self) -> FrozenSet[Name]:
+    def generate_ents(self) -> frozenset[Name]:
         """
         Generate reachable names of empty nodes "between" all reachable
         names with a RR and the origin.

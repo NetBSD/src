@@ -9,15 +9,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from collections.abc import Callable
+from typing import Any
+
 import os
 import time
-from typing import Any, Callable, Optional
 
-import dns.query
+import dns.exception
+import dns.flags
 import dns.message
+import dns.query
+import dns.rcode
+import dns.rdataclass
 
 import isctest.log
-from isctest.compat import dns_rcode
 
 QUERY_TIMEOUT = 10
 
@@ -26,15 +31,35 @@ def generic_query(
     query_func: Callable[..., Any],
     message: dns.message.Message,
     ip: str,
-    port: Optional[int] = None,
-    source: Optional[str] = None,
+    port: int | None = None,
+    source: str | None = None,
     timeout: int = QUERY_TIMEOUT,
     attempts: int = 10,
-    expected_rcode: dns_rcode = None,
+    expected_rcode: dns.rcode.Rcode | None = None,
     verify: bool = False,
     log_query: bool = True,
     log_response: bool = True,
 ) -> Any:
+
+    def log_querymsg(exception: Exception | None = None) -> None:
+        """
+        Helper for logging query message. Call this *after* query_func() has
+        been called, as it may modify the message, e.g. with a TSIG.
+
+        If an exception is provided, it will be logged as well.
+        """
+        nonlocal log_query
+        if log_query:
+            isctest.log.debug(
+                f"isc.query.{query_func.__name__}(): query\n{message.to_text()}"
+            )
+            log_query = False  # only log query once
+
+        if exception:
+            isctest.log.debug(
+                f"isc.query.{query_func.__name__}(): the '{exception}' exception raised"
+            )
+
     if port is None:
         if query_func.__name__ == "tls":
             port = int(os.environ["TLSPORT"])
@@ -52,34 +77,36 @@ def generic_query(
         query_args["verify"] = verify
 
     res = None
+
     for attempt in range(attempts):
         log_msg = (
             f"isc.query.{query_func.__name__}(): ip={ip}, port={port}, source={source}, "
             f"timeout={timeout}, attempts left={attempts-attempt}"
         )
-        if log_query:
-            log_msg += f"\n{message.to_text()}"
-            log_query = False  # only log query on first attempt
         isctest.log.debug(log_msg)
+
+        exc = None
         try:
             res = query_func(**query_args)
         except (dns.exception.Timeout, ConnectionRefusedError) as e:
-            isctest.log.debug(
-                f"isc.query.{query_func.__name__}(): the '{e}' exception raised"
-            )
-        else:
+            exc = e
+        finally:
+            log_querymsg(exc)
+
+        if res:
             if log_response:
                 isctest.log.debug(
                     f"isc.query.{query_func.__name__}(): response\n{res.to_text()}"
                 )
             if res.rcode() == expected_rcode or expected_rcode is None:
                 return res
+
         time.sleep(1)
 
     if expected_rcode is not None:
-        last_rcode = dns_rcode.to_text(res.rcode()) if res else None
+        last_rcode = dns.rcode.to_text(res.rcode()) if res else None
         isctest.log.debug(
-            f"isc.query.{query_func.__name__}(): expected rcode={dns_rcode.to_text(expected_rcode)}, last rcode={last_rcode}"
+            f"isc.query.{query_func.__name__}(): expected rcode={dns.rcode.to_text(expected_rcode)}, last rcode={last_rcode}"
         )
     raise dns.exception.Timeout
 

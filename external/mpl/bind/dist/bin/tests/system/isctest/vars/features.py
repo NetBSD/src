@@ -14,7 +14,6 @@ import subprocess
 
 from .basic import BASIC_VARS
 
-
 FEATURES = {
     "DNSRPS": "--enable-dnsrps",
     "DNSTAP": "--enable-dnstap",

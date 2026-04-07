@@ -12,7 +12,7 @@
 
 import os
 
-import dns.message
+import dns.rrset
 import pytest
 
 import isctest

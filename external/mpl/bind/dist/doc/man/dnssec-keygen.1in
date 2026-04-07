@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -36,7 +37,7 @@ dnssec-keygen \- DNSSEC key generation tool
 .SH DESCRIPTION
 .sp
 \fBdnssec\-keygen\fP generates keys for DNSSEC (Secure DNS), as defined in
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' and \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link'\&.
+\fBRFC 2535\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc2535\:.html> and \fBRFC 4034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc4034\:.html>\&.
 .sp
 The \fBname\fP of the key is specified on the command line. For DNSSEC
 keys, this must match the name of the zone for which the key is being
@@ -62,15 +63,15 @@ ECDSAP384SHA384, ED25519, or ED448.
 These values are case\-insensitive. In some cases, abbreviations
 are supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384
 for ECDSAP384SHA384. If RSASHA1 (deprecated) is specified along
-with the \fI\%\-3\fP option, NSEC3RSASHA1 (deprecated) is used
+with the \fB\-3\fP option, NSEC3RSASHA1 (deprecated) is used
 instead.
 .sp
-This parameter \fImust\fP be specified except when using the \fI\%\-S\fP
+This parameter \fImust\fP be specified except when using the \fB\-S\fP
 option, which copies the algorithm from the predecessor key.
 .sp
 In prior releases, HMAC algorithms could be generated for use as TSIG
 keys, but that feature was removed in BIND 9.13.0. Use
-\fI\%tsig\-keygen\fP to generate TSIG keys.
+\fBtsig\-keygen\fP \%<#\:std-iscman-tsig-keygen> to generate TSIG keys.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -83,7 +84,7 @@ curve algorithms do not need this parameter.
 If the key size is not specified, some algorithms have pre\-defined
 defaults. For example, RSA keys for use as DNSSEC zone\-signing keys
 have a default size of 1024 bits; RSA keys for use as key\-signing
-keys (KSKs, generated with \fI\%\-f KSK\fP) default to 2048 bits.
+keys (KSKs, generated with \fB\-f KSK\fP) default to 2048 bits.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -93,7 +94,7 @@ metadata. By default, \fBdnssec\-keygen\fP includes the key\(aqs
 creation date in the metadata stored with the private key; other
 dates may be set there as well, including publication date, activation date,
 etc. Keys that include this data may be incompatible with older
-versions of BIND; the \fI\%\-C\fP option suppresses them.
+versions of BIND; the \fB\-C\fP option suppresses them.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -126,8 +127,8 @@ The only recognized flags are ZSK (Zone\-Signing Key), KSK (Key\-Signing Key)
 and REVOKE.
 .sp
 Note that ZSK is not a physical flag in the DNSKEY record, it is merely used
-to explicitly tell that you want to create a ZSK. Setting \fI\%\-f\fP in
-conjunction with \fI\%\-k\fP will result in generating keys that only
+to explicitly tell that you want to create a ZSK. Setting \fB\-f\fP in
+conjunction with \fB\-k\fP will result in generating keys that only
 match the given role set with this option.
 .UNINDENT
 .INDENT 0.0
@@ -141,7 +142,7 @@ mode.
 .TP
 .B \-G
 This option generates a key, but does not publish it or sign with it. This option is
-incompatible with \fI\%\-P\fP and \fI\%\-A\fP\&.
+incompatible with \fB\-P\fP and \fB\-A\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -180,7 +181,7 @@ is the same as leaving it unset.
 .TP
 .B \-l file
 This option provides a configuration file that contains a \fBdnssec\-policy\fP statement
-(matching the policy set with \fI\%\-k\fP).
+(matching the policy set with \fB\-k\fP).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -209,9 +210,9 @@ case\-insensitive. The default is ZONE for DNSKEY generation.
 .TP
 .B \-p protocol
 This option sets the protocol value for the generated key, for use with
-\fI\%\-T KEY\fP\&. The protocol is a number between 0 and 255. The default
+\fB\-T KEY\fP\&. The protocol is a number between 0 and 255. The default
 is 3 (DNSSEC). Other possible values for this argument are listed in
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' and its successors.
+\fBRFC 2535\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc2535\:.html> and its successors.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -252,7 +253,7 @@ SIG(0).
 .INDENT 0.0
 .TP
 .B \-t type
-This option indicates the type of the key for use with \fI\%\-T KEY\fP\&. \fBtype\fP
+This option indicates the type of the key for use with \fB\-T KEY\fP\&. \fBtype\fP
 must be one of AUTHCONF, NOAUTHCONF, NOAUTH, or NOCONF. The default
 is AUTHCONF. AUTH refers to the ability to authenticate data, and
 CONF to the ability to encrypt data.
@@ -289,7 +290,7 @@ To unset a date, use \fBnone\fP, \fBnever\fP, or \fBunset\fP\&.
 .B \-P date/offset
 This option sets the date on which a key is to be published to the zone. After
 that date, the key is included in the zone but is not used
-to sign it. If not set, and if the \fI\%\-G\fP option has not been used, the
+to sign it. If not set, and if the \fB\-G\fP option has not been used, the
 default is the current date.
 .INDENT 7.0
 .TP
@@ -303,8 +304,8 @@ are to be published to the zone.
 .B \-A date/offset
 This option sets the date on which the key is to be activated. After that date,
 the key is included in the zone and used to sign it. If not set,
-and if the \fI\%\-G\fP option has not been used, the default is the current date. If set,
-and \fI\%\-P\fP is not set, the publication date is set to the
+and if the \fB\-G\fP option has not been used, the default is the current date. If set,
+and \fB\-P\fP is not set, the publication date is set to the
 activation date minus the prepublication interval.
 .UNINDENT
 .INDENT 0.0
@@ -373,7 +374,7 @@ string. \fBKnnnn.+aaa+iiiii.key\fP contains the public key, and
 \fBKnnnn.+aaa+iiiii.private\fP contains the private key.
 .sp
 The \fB\&.key\fP file contains a DNSKEY or KEY record. When a zone is being
-signed by \fI\%named\fP or \fI\%dnssec\-signzone \-S\fP, DNSKEY records are
+signed by \fBnamed\fP \%<#\:std-iscman-named> or \fBdnssec\-signzone \-S\fP \%<#\:cmdoption-dnssec-signzone-S>, DNSKEY records are
 included automatically. In other cases, the \fB\&.key\fP file can be
 inserted into a zone file manually or with an \fB$INCLUDE\fP statement.
 .sp
@@ -398,11 +399,10 @@ To generate a matching key\-signing key, issue the command:
 \fBdnssec\-keygen \-a ECDSAP256SHA256 \-f KSK example.com\fP
 .SH SEE ALSO
 .sp
-\fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc2539.html'\fI\%RFC 2539\fP\X'tty: link',
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc2845.html'\fI\%RFC 2845\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link'\&.
-.SH AUTHOR
+\fBdnssec\-signzone(8)\fP \%<#\:std-iscman-dnssec-signzone>, BIND 9 Administrator Reference Manual, \fBRFC 2539\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc2539\:.html>,
+\fBRFC 2845\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc2845\:.html>, \fBRFC 4034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc4034\:.html>\&.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

@@ -11,19 +11,14 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.rdatatype
 import dns.rrset
 
-from isctest.asyncserver import (
-    DnsResponseSend,
-    QueryContext,
-    ResponseAction,
-)
+from isctest.asyncserver import DnsResponseSend, QueryContext, ResponseAction
 
-from bailiwick_ans import ResponseSpoofer, spoofing_server
-
+from ..bailiwick_ans import ResponseSpoofer, spoofing_server
 
 ATTACKER_IP = "10.53.0.3"
 TTL = 3600

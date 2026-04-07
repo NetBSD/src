@@ -1,0 +1,50 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set zones = ["autosign", "manual"] %}
+
+include "kasp.conf";
+include "named.common.conf";
+
+{% for tld in zones %}
+zone "step1.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step1.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+zone "step2.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step2.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+zone "step3.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step3.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+zone "step4.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step4.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+zone "step5.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step5.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+zone "step6.ksk-doubleksk.@tld@" {
+	type primary;
+	file "step6.ksk-doubleksk.@tld@.db";
+	dnssec-policy "ksk-doubleksk-@tld@";
+};
+{% endfor %}

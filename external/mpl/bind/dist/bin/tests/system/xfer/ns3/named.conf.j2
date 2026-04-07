@@ -52,7 +52,7 @@ zone "example" {
 
 zone "primary" {
 	type secondary;
-        transfer-source 10.53.0.3 port @EXTRAPORT1@;
+	transfer-source 10.53.0.3 port @EXTRAPORT1@;
 	primaries { 10.53.0.6; };
 	file "primary.bk";
 };

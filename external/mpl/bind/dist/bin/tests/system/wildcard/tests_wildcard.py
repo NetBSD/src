@@ -27,19 +27,19 @@ Limitations - untested properties:
     - special behavior of rdtypes like CNAME
 """
 
-import pytest
+# Silence incorrect warnings cause by hypothesis.assume()
+# https://github.com/pylint-dev/pylint/issues/10785#issuecomment-3677224217
+# pylint: disable=unreachable
 
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.message
+from hypothesis import assume, example, given, settings
+
 import dns.name
-import dns.query
-import dns.rcode
 import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
+import pytest
 
 from isctest.hypothesis.strategies import dns_names, dns_rdatatypes_without_meta
-from hypothesis import assume, example, given, settings
 
 import isctest.check
 import isctest.name

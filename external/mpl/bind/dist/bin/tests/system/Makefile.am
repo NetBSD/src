@@ -75,13 +75,13 @@ rpz_dnsrps_LDADD =		\
 TESTS =				\
 	rpz			\
 	rpzrecurse		\
-	serve-stale		\
+	serve_stale		\
 	timeouts		\
 	upforwd			\
 	acl			\
 	additional		\
 	addzone			\
-	allow-query		\
+	allow_query		\
 	auth			\
 	autosign		\
 	builtin			\
@@ -120,7 +120,7 @@ TESTS =				\
 	geoip2			\
 	glue			\
 	idna			\
-	include-multiplecfg	\
+	include_multiplecfg	\
 	inline			\
 	integrity		\
 	ixfr			\
@@ -151,25 +151,25 @@ TESTS =				\
 	proxy			\
 	pipelined		\
 	qmin			\
-	query-source		\
+	query_source		\
 	reclimit		\
 	redirect		\
 	resolver		\
 	rndc			\
 	rollover		\
-	rollover-algo-csk	\
-	rollover-algo-ksk-zsk	\
-	rollover-csk-roll1	\
-	rollover-csk-roll2	\
-	rollover-dynamic2inline	\
-	rollover-enable-dnssec	\
-	rollover-going-insecure	\
-	rollover-ksk-3crowd	\
-	rollover-ksk-doubleksk	\
-	rollover-lifetime	\
-	rollover-multisigner	\
-	rollover-straight2none	\
-	rollover-zsk-prepub	\
+	rollover_algo_csk	\
+	rollover_algo_ksk_zsk	\
+	rollover_csk_roll1	\
+	rollover_csk_roll2	\
+	rollover_dynamic2inline	\
+	rollover_enable_dnssec	\
+	rollover_going_insecure	\
+	rollover_ksk_3crowd	\
+	rollover_ksk_doubleksk	\
+	rollover_lifetime	\
+	rollover_multisigner	\
+	rollover_straight2none	\
+	rollover_zsk_prepub	\
 	rootkeysentinel		\
 	rpzextra		\
 	rrchecker		\
@@ -190,7 +190,7 @@ TESTS =				\
 	synthfromdnssec		\
 	tcp			\
 	tools			\
-	transport-acl		\
+	transport_acl		\
 	tsig			\
 	tsiggss			\
 	ttl			\
@@ -232,4 +232,4 @@ LOG_COMPILER = $(srcdir)/run.sh
 test-local: check
 
 clean-local::
-	-find -L . -mindepth 1 -maxdepth 1 -type d -name "*_*" -and -not -name "_common" -exec rm -rf {} \;
+	-find -L . -mindepth 1 -maxdepth 1 -type d -name "*-*" -exec rm -rf {} \;

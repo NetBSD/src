@@ -31,11 +31,9 @@
 # -- Project information -----------------------------------------------------
 
 project = "BIND 9"
-# pylint: disable=wrong-import-position
 import datetime
 
 year = datetime.datetime.now().year
-# pylint: disable=redefined-builtin
 copyright = "%d, Internet Systems Consortium" % year
 author = "Internet Systems Consortium"
 
@@ -65,7 +63,6 @@ exclude_patterns = [
 # The master toctree document.
 master_doc = "index"
 
-# pylint: disable=line-too-long
 man_pages = [
     (
         "arpaname",

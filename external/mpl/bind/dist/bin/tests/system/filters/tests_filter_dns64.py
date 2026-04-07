@@ -11,10 +11,9 @@
 
 import pytest
 
-import isctest
-
 from filters.common import ARTIFACTS
 
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(ARTIFACTS)
 

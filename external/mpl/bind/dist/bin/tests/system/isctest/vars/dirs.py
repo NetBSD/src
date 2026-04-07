@@ -11,11 +11,7 @@
 
 import os
 
-# pylint: disable=import-error
 from .autoconf import AC_VARS  # type: ignore
-
-# pylint: enable=import-error
-
 
 SYSTEM_TEST_DIR_GIT_PATH = "bin/tests/system"
 

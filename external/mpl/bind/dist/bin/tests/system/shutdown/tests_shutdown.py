@@ -12,17 +12,16 @@
 # information regarding copyright ownership.
 
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from string import ascii_lowercase as letters
+
 import os
 import random
 import signal
 import subprocess
-from string import ascii_lowercase as letters
 import time
 
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
 import dns.exception
+import pytest
 
 import isctest
 

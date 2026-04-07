@@ -46,16 +46,11 @@ nameserver and is listed in the hints file of the others.
 
 To run system tests, make sure you have the following dependencies installed:
 
-- python3
-- pytest
+- python3 (3.10 and newer)
 - perl
-- dnspython
-- pytest-xdist (for parallel execution)
-- python-jinja2
 
-Individual system tests might also require additional dependencies. If those
-are missing, the affected tests will be skipped and should produce a message
-specifying what additional prerequisites they expect.
+List of required python packages and their versions can be found in
+requirements.txt (can be installed with `pip3 install -r requirements.txt`).
 
 ### Network Setup
 
@@ -128,10 +123,10 @@ Each test module is executed inside a unique temporary directory which contains
 all the artifacts from the test run. If the tests succeed, they are deleted by
 default. To override this behaviour, pass `--noclean` to pytest.
 
-The directory name starts with the system test name, followed by `_tmp_XXXXXX`,
-i.e. `dns64_tmp_r07vei9s` for `dns64` test run. Since this name changes each
+The directory name starts with the system test name, followed by `-tmp-XXXXXX`,
+i.e. `dns64-tmp-r07vei9s` for `dns64` test run. Since this name changes each
 run, a convenience symlink that has a stable name is also created. It points to
-the latest test artifacts directory and has a form of `dns64_sh_dns64`
+the latest test artifacts directory and has a form of `dns64-sh_dns64`
 (depending on the particular test module).
 
 To clean up the temporary directories and symlinks, run `make clean-local` in

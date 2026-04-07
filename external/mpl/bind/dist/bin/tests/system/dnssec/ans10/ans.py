@@ -9,7 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.rdatatype
 import dns.rrset
@@ -57,7 +57,7 @@ class AddNsecToTxtHandler(ResponseHandler):
 
 def main() -> None:
     server = AsyncDnsServer()
-    server.install_response_handlers([AddRrsigToAHandler(), AddNsecToTxtHandler()])
+    server.install_response_handlers(AddNsecToTxtHandler(), AddRrsigToAHandler())
     server.run()
 
 

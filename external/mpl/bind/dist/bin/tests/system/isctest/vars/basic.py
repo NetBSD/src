@@ -11,11 +11,7 @@
 
 import os
 
-# pylint: disable=import-error
 from .autoconf import AC_VARS  # type: ignore
-
-# pylint: enable=import-error
-
 
 BASIC_VARS = {
     "ARPANAME": f"{AC_VARS['TOP_BUILDDIR']}/bin/tools/arpaname",

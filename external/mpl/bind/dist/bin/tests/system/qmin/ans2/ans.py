@@ -11,9 +11,8 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
-import dns.message
 import dns.name
 import dns.rcode
 import dns.rdatatype
@@ -27,7 +26,7 @@ from isctest.asyncserver import (
     ResponseAction,
 )
 
-from qmin_ans import (
+from ..qmin_ans import (
     DelayedResponseHandler,
     EntRcodeChanger,
     QueryLogHandler,
@@ -66,7 +65,7 @@ def send_delegation(
     ns_rrset = dns.rrset.from_text(zone_cut, 2, qctx.qclass, dns.rdatatype.NS, ns_name)
     a_rrset = dns.rrset.from_text(ns_name, 2, qctx.qclass, dns.rdatatype.A, target_addr)
 
-    response = dns.message.make_response(qctx.query)
+    response = qctx.prepare_new_response(with_zone_data=False)
     response.set_rcode(dns.rcode.NOERROR)
     response.authority.append(ns_rrset)
     response.additional.append(a_rrset)
@@ -100,13 +99,11 @@ class StaleHandler(DomainHandler):
 def main() -> None:
     server = AsyncDnsServer()
     server.install_response_handlers(
-        [
-            QueryLogger(),
-            BadHandler(),
-            UglyHandler(),
-            SlowHandler(),
-            StaleHandler(),
-        ]
+        QueryLogger(),
+        BadHandler(),
+        UglyHandler(),
+        SlowHandler(),
+        StaleHandler(),
     )
     server.run()
 

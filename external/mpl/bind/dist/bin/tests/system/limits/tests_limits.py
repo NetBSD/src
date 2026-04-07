@@ -11,13 +11,11 @@
 
 import itertools
 
-import isctest
+import dns.flags
+import dns.rrset
 import pytest
 
-# Everything from getting a big answer to creating an RR set with thousands
-# of records takes minutes of CPU and real time with dnspython < 2.0.0.
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.rrset
+import isctest
 
 
 @pytest.mark.parametrize(

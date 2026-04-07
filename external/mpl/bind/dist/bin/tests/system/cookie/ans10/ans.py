@@ -9,7 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from cookie_ans import cookie_server
+from ..cookie_ans import cookie_server
 
 
 def main() -> None:

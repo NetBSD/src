@@ -68,7 +68,7 @@ def test_rndc_deadlock(ns3):
     # Create 4 worker threads running "rndc" commands in a loop.
     with concurrent.futures.ThreadPoolExecutor() as executor:
         for i in range(1, 5):
-            domain = "example%d" % i
+            domain = f"example{i}"
             executor.submit(rndc_loop, test_state, domain, ns3)
 
         # Run "rndc status" 10 times, with 1-second pauses between attempts.

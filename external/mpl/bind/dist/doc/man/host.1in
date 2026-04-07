@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -50,23 +51,23 @@ server or servers listed in \fB/etc/resolv.conf\fP\&.
 .INDENT 0.0
 .TP
 .B \-4
-This option specifies that only IPv4 should be used for query transport. See also the \fI\%\-6\fP option.
+This option specifies that only IPv4 should be used for query transport. See also the \fB\-6\fP option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-6
-This option specifies that only IPv6 should be used for query transport. See also the \fI\%\-4\fP option.
+This option specifies that only IPv6 should be used for query transport. See also the \fB\-4\fP option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-a
-The \fI\%\-a\fP (\(dqall\(dq) option is normally equivalent to \fI\%\-v\fP \fI\%\-t ANY\fP\&. It
-also affects the behavior of the \fI\%\-l\fP list zone option.
+The \fB\-a\fP (\(dqall\(dq) option is normally equivalent to \fB\-v\fP \fB\-t ANY\fP\&. It
+also affects the behavior of the \fB\-l\fP list zone option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-A
-The \fI\%\-A\fP (\(dqalmost all\(dq) option is equivalent to \fI\%\-a\fP, except that RRSIG,
+The \fB\-A\fP (\(dqalmost all\(dq) option is equivalent to \fB\-a\fP, except that RRSIG,
 NSEC, and NSEC3 records are omitted from the output.
 .UNINDENT
 .INDENT 0.0
@@ -78,7 +79,7 @@ class resource records. The default class is IN (Internet).
 .INDENT 0.0
 .TP
 .B \-C
-This option indicates that \fI\%named\fP should check consistency, meaning that \fBhost\fP queries the SOA records for zone
+This option indicates that \fBnamed\fP \%<#\:std-iscman-named> should check consistency, meaning that \fBhost\fP queries the SOA records for zone
 \fBname\fP from all the listed authoritative name servers for that
 zone. The list of name servers is defined by the NS records that are
 found for the zone.
@@ -86,15 +87,15 @@ found for the zone.
 .INDENT 0.0
 .TP
 .B \-d
-This option prints debugging traces, and is equivalent to the \fI\%\-v\fP verbose option.
+This option prints debugging traces, and is equivalent to the \fB\-v\fP verbose option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-l
-This option tells \fI\%named\fP to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
+This option tells \fBnamed\fP \%<#\:std-iscman-named> to list the zone, meaning the \fBhost\fP command performs a zone transfer of zone
 \fBname\fP and prints out the NS, PTR, and address records (A/AAAA).
 .sp
-Together, the \fI\%\-l\fP \fI\%\-a\fP options print all records in the zone.
+Together, the \fB\-l\fP \fB\-a\fP options print all records in the zone.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -116,7 +117,7 @@ This option specifies the port to query on the server. The default is 53.
 .B \-r
 This option specifies a non\-recursive query; setting this option clears the RD (recursion
 desired) bit in the query. This means that the name server
-receiving the query does not attempt to resolve \fBname\fP\&. The \fI\%\-r\fP
+receiving the query does not attempt to resolve \fBname\fP\&. The \fB\-r\fP
 option enables \fBhost\fP to mimic the behavior of a name server by
 making non\-recursive queries, and expecting to receive answers to
 those queries that can be referrals to other name servers.
@@ -131,7 +132,7 @@ the value of the \fBattempts\fP option in \fB/etc/resolv.conf\fP, if set.
 .INDENT 0.0
 .TP
 .B \-s
-This option tells \fI\%named\fP \fInot\fP to send the query to the next nameserver if any server responds
+This option tells \fBnamed\fP \%<#\:std-iscman-named> \fInot\fP to send the query to the next nameserver if any server responds
 with a SERVFAIL response, which is the reverse of normal stub
 resolver behavior.
 .UNINDENT
@@ -143,34 +144,34 @@ CNAME, NS, SOA, TXT, DNSKEY, AXFR, etc.
 .sp
 When no query type is specified, \fBhost\fP automatically selects an
 appropriate query type. By default, it looks for A, AAAA, MX, and HTTPS
-records. If the \fI\%\-C\fP option is given, queries are made for SOA
+records. If the \fB\-C\fP option is given, queries are made for SOA
 records. If \fBname\fP is a dotted\-decimal IPv4 address or
 colon\-delimited IPv6 address, \fBhost\fP queries for PTR records.
 .sp
 If a query type of IXFR is chosen, the starting serial number can be
 specified by appending an equals sign (=), followed by the starting serial
-number, e.g., \fI\%\-t IXFR=12345678\fP\&.
+number, e.g., \fB\-t IXFR=12345678\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-T, \-U
 This option specifies TCP or UDP. By default, \fBhost\fP uses UDP when making queries; the
-\fI\%\-T\fP option makes it use a TCP connection when querying the name
+\fB\-T\fP option makes it use a TCP connection when querying the name
 server. TCP is automatically selected for queries that require
 it, such as zone transfer (AXFR) requests. Type \fBANY\fP queries default
-to TCP, but can be forced to use UDP initially via \fI\%\-U\fP\&.
+to TCP, but can be forced to use UDP initially via \fB\-U\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-m flag
 This option sets memory usage debugging: the flag can be \fBrecord\fP, \fBusage\fP, or
-\fBtrace\fP\&. The \fI\%\-m\fP option can be specified more than once to set
+\fBtrace\fP\&. The \fB\-m\fP option can be specified more than once to set
 multiple flags.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-v
-This option sets verbose output, and is equivalent to the \fI\%\-d\fP debug option. Verbose output
+This option sets verbose output, and is equivalent to the \fB\-d\fP debug option. Verbose output
 can also be enabled by setting the \fBdebug\fP option in
 \fB/etc/resolv.conf\fP\&.
 .UNINDENT
@@ -183,19 +184,19 @@ This option prints the version number and exits.
 .TP
 .B \-w
 This option sets \(dqwait forever\(dq: the query timeout is set to the maximum possible. See
-also the \fI\%\-W\fP option.
+also the \fB\-W\fP option.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-W wait
-This options sets the length of the wait timeout, indicating that \fI\%named\fP should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
+This options sets the length of the wait timeout, indicating that \fBnamed\fP \%<#\:std-iscman-named> should wait for up to \fBwait\fP seconds for a reply. If \fBwait\fP is
 less than 1, the wait interval is set to 1 second.
 .sp
 By default, \fBhost\fP waits for 5 seconds for UDP responses and 10
 seconds for TCP connections. These defaults can be overridden by the
 \fBtimeout\fP option in \fB/etc/resolv.conf\fP\&.
 .sp
-See also the \fI\%\-w\fP option.
+See also the \fB\-w\fP option.
 .UNINDENT
 .SH IDN SUPPORT
 .sp
@@ -211,10 +212,9 @@ when \fBhost\fP runs.
 \fB/etc/resolv.conf\fP
 .SH SEE ALSO
 .sp
-\fI\%dig(1)\fP, \fI\%named(8)\fP\&.
-.SH AUTHOR
+\fBdig(1)\fP \%<#\:std-iscman-dig>, \fBnamed(8)\fP \%<#\:std-iscman-named>\&.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

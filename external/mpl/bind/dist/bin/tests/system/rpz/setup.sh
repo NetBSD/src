@@ -43,6 +43,9 @@ cp ns3/wild-cname.db.in ns3/wild-cname.db
 
 cp ns3/mixed-case-rpz-1.db.in ns3/mixed-case-rpz.db
 
+cp ns3/include-rpz.db.in ns3/include-rpz.db
+cp ns3/include-rpz.inc-1.in ns3/include-rpz.inc
+
 # a "big" zone (tested with '-T rpzslow' enabled to slow down loading)
 cp ns3/slow-rpz.db.in ns3/slow-rpz.db
 

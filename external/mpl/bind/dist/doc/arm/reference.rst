@@ -3066,6 +3066,18 @@ for details on how to specify IP address lists.
    from or or cannot use to resolve a query. Queries from these addresses are not
    responded to. The default is ``none``.
 
+   When configuring this list, note that BIND evaluates Access Control Lists
+   sequentially (first match wins). A common misconception is that the directive
+   ``!address;`` blocks everything except that address. In reality, it only
+   explicitly exempts ``address`` from the blackhole; all other IP addresses
+   reach the end of the list without matching, meaning they are also not
+   blackholed.
+
+   To successfully blackhole all traffic *except* specific addresses, you must
+   explicitly catch the remaining traffic with ``any;`` at the end of the list.
+   For example: ``!address; any;``
+
+
 .. namedconf:statement:: no-case-compress
    :tags: server
    :short: Specifies a list of addresses that require case-insensitive compression in responses.

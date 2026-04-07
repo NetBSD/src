@@ -15,13 +15,12 @@
 # Set up test data for zone transfer quota tests.
 #
 
-zones = 300
+ZONES = 300
 
-for z in range(zones):
+for z in range(ZONES):
     zn = f"zone{z:06d}.example"
     with open(f"ns1/{zn}.db", "w", encoding="utf-8") as f:
-        f.write(
-            """$TTL 300
+        f.write("""$TTL 300
 @    IN SOA    ns1 . 1 300 120 3600 86400
         NS      ns1
         NS      ns2
@@ -31,13 +30,12 @@ ns2     A       10.53.0.2
         MX      20 mail2.isp.example.
 www     A       10.0.0.1
 xyzzy   A       10.0.0.2
-"""
-        )
+""")
 
 with open("ns1/zones.conf", "w", encoding="utf-8") as priconf, open(
     "ns2/zones.conf", "w", encoding="utf-8"
 ) as secconf:
-    for z in range(zones):
+    for z in range(ZONES):
         zn = f"zone{z:06d}.example"
         priconf.write(f'zone "{zn}" {{ type primary; file "{zn}.db"; }};\n')
         secconf.write(

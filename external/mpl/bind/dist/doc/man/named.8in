@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -36,8 +37,8 @@ named \- Internet domain name server
 .SH DESCRIPTION
 .sp
 \fBnamed\fP is a Domain Name System (DNS) server, part of the BIND 9
-distribution from ISC. For more information on the DNS, see \X'tty: link https://datatracker.ietf.org/doc/html/rfc1033.html'\fI\%RFC 1033\fP\X'tty: link',
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', and \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
+distribution from ISC. For more information on the DNS, see \fBRFC 1033\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1033\:.html>,
+\fBRFC 1034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1034\:.html>, and \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html>\&.
 .sp
 When invoked without arguments, \fBnamed\fP reads the default
 configuration file \fB@sysconfdir@/named.conf\fP, reads any initial data, and
@@ -46,14 +47,14 @@ listens for queries.
 .INDENT 0.0
 .TP
 .B \-4
-This option tells \fBnamed\fP to use only IPv4, even if the host machine is capable of IPv6. \fI\%\-4\fP and
-\fI\%\-6\fP are mutually exclusive.
+This option tells \fBnamed\fP to use only IPv4, even if the host machine is capable of IPv6. \fB\-4\fP and
+\fB\-6\fP are mutually exclusive.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-6
-This option tells \fBnamed\fP to use only IPv6, even if the host machine is capable of IPv4. \fI\%\-4\fP and
-\fI\%\-6\fP are mutually exclusive.
+This option tells \fBnamed\fP to use only IPv6, even if the host machine is capable of IPv4. \fB\-4\fP and
+\fB\-6\fP are mutually exclusive.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -70,7 +71,7 @@ due to to a possible \fBdirectory\fP option in the configuration file,
 This option prints out the default built\-in configuration and exits.
 .sp
 NOTE: This is for debugging purposes only and is not an
-accurate representation of the actual configuration used by \fI\%named\fP
+accurate representation of the actual configuration used by \fBnamed\fP
 at runtime.
 .UNINDENT
 .INDENT 0.0
@@ -169,7 +170,7 @@ listen for HTTP queries on \fBportnum\fP; the default is 80.
 This option writes memory usage statistics to \fBstdout\fP on exit.
 .UNINDENT
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 0.0
 .INDENT 3.5
 This option is mainly of interest to BIND 9 developers and may be
@@ -183,10 +184,10 @@ This option tells \fBnamed\fP to chroot to \fBdirectory\fP after processing the 
 before reading the configuration file.
 .UNINDENT
 .sp
-\fBWARNING:\fP
+\fBWarning:\fP
 .INDENT 0.0
 .INDENT 3.5
-This option should be used in conjunction with the \fI\%\-u\fP option,
+This option should be used in conjunction with the \fB\-u\fP option,
 as chrooting a process running as root doesn\(aqt enhance security on
 most systems; the way \fBchroot\fP is defined allows a process
 with root privileges to escape a chroot jail.
@@ -204,13 +205,13 @@ This option sets the setuid to \fBuser\fP after completing privileged operations
 creating sockets that listen on privileged ports.
 .UNINDENT
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 0.0
 .INDENT 3.5
 On Linux, \fBnamed\fP uses the kernel\(aqs capability mechanism to drop
 all root privileges except the ability to \fBbind\fP to a
 privileged port and set process resource limits. Unfortunately,
-this means that the \fI\%\-u\fP option only works when \fBnamed\fP is run
+this means that the \fB\-u\fP option only works when \fBnamed\fP is run
 on kernel 2.2.18 or later, or kernel 2.3.99\-pre3 or later, since
 previous kernels did not allow privileges to be retained after
 \fBsetuid\fP\&.
@@ -235,7 +236,7 @@ This option has been removed and using it will cause a fatal error.
 .SH SIGNALS
 .sp
 In routine operation, signals should not be used to control the
-nameserver; \fI\%rndc\fP should be used instead.
+nameserver; \fBrndc\fP \%<#\:std-iscman-rndc> should be used instead.
 .INDENT 0.0
 .TP
 .B SIGHUP
@@ -267,10 +268,9 @@ The default process\-id file.
 .UNINDENT
 .SH SEE ALSO
 .sp
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc1033.html'\fI\%RFC 1033\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link', \fI\%named\-checkconf(8)\fP, \fI\%named\-checkzone(8)\fP, \fI\%rndc(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator Reference Manual.
-.SH AUTHOR
+\fBRFC 1033\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1033\:.html>, \fBRFC 1034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1034\:.html>, \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html>, \fBnamed\-checkconf(8)\fP \%<#\:std-iscman-named-checkconf>, \fBnamed\-checkzone(8)\fP \%<#\:std-iscman-named-checkzone>, \fBrndc(8)\fP \%<#\:std-iscman-rndc>, \fBnamed.conf(5)\fP \%<#\:std-iscman-named\:.conf>, BIND 9 Administrator Reference Manual.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

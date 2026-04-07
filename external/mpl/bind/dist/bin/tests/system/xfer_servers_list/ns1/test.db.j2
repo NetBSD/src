@@ -1,0 +1,23 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+{% set serial = serial | default(1) %}
+
+$TTL 60
+test. IN SOA	ns.test. op.test. (
+				@serial@ ; serial
+				100      ; refresh
+				100      ; retry
+				300      ; expire
+				60       ; minimum
+				)
+test.		NS	ns.test.
+ns.test.	A	10.53.0.1

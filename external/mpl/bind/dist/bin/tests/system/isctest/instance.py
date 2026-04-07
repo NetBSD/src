@@ -11,18 +11,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import List, NamedTuple, Optional
+from pathlib import Path
+from typing import NamedTuple
 
 import os
-from pathlib import Path
 import re
 
-import dns.message
+import dns.exception
 import dns.rcode
+import dns.update
 
-from .log import debug, WatchLogFromStart, WatchLogFromHere
-from .run import CmdResult, EnvCmd, perl
+from .log import WatchLogFromHere, WatchLogFromStart, debug
 from .query import udp
+from .run import CmdResult, EnvCmd, perl
 from .text import TextFile
 
 
@@ -53,8 +54,8 @@ class NamedInstance:
     def __init__(
         self,
         identifier: str,
-        num: Optional[int] = None,
-        ports: Optional[NamedPorts] = None,
+        num: int | None = None,
+        ports: NamedPorts | None = None,
     ) -> None:
         """
         `identifier` is the name of the instance's directory
@@ -94,7 +95,7 @@ class NamedInstance:
         return f"10.53.0.{self.num}"
 
     @staticmethod
-    def _identifier_to_num(identifier: str, num: Optional[int] = None) -> int:
+    def _identifier_to_num(identifier: str, num: int | None = None) -> int:
         regex_match = re.match(r"^ns(?P<index>[0-9]{1,2})$", identifier)
         if not regex_match:
             if num is None:
@@ -116,14 +117,11 @@ class NamedInstance:
         return self._rndc(command, timeout=timeout, **kwargs)
 
     def nsupdate(
-        self, update_msg: dns.message.Message, expected_rcode=dns.rcode.NOERROR
+        self, update_msg: dns.update.UpdateMessage, expected_rcode=dns.rcode.NOERROR
     ):
         """
         Issue a dynamic update to a server's zone.
         """
-        # FUTURE update_msg is actually dns.update.UpdateMessage, but it not
-        # typed properly here in order to support use of this module with
-        # dnspython<2.0.0
         zone = str(update_msg.zone[0].name)  # type: ignore[attr-defined]
         try:
             response = udp(
@@ -169,7 +167,16 @@ class NamedInstance:
             watcher.wait_for_line("any newly configured zones are now loaded")
         return cmd
 
-    def stop(self, args: Optional[List[str]] = None) -> None:
+    def reload(self, **kwargs) -> CmdResult:
+        """
+        Reload this named `instance` and wait until reload is finished.
+        """
+        with self.watch_log_from_here() as watcher:
+            cmd = self.rndc("reload", **kwargs)
+            watcher.wait_for_line("all zones loaded")
+        return cmd
+
+    def stop(self, args: list[str] | None = None) -> None:
         """Stop the instance."""
         args = args or []
         perl(
@@ -177,7 +184,7 @@ class NamedInstance:
             [self.system_test_name, self.identifier] + args,
         )
 
-    def start(self, args: Optional[List[str]] = None) -> None:
+    def start(self, args: list[str] | None = None) -> None:
         """Start the instance."""
         args = args or []
         perl(

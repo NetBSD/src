@@ -10,14 +10,16 @@
 # information regarding copyright ownership.
 
 from datetime import timedelta
-import os
 from re import compile as Re
 
-import pytest
+import os
 
-pytest.importorskip("dns", minversion="2.0.0")
-import dns
+import dns.name
+import dns.rcode
+import dns.rdataclass
+import dns.rdatatype
 import dns.update
+import pytest
 
 import isctest
 
@@ -46,8 +48,6 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
-ALGORITHM = os.environ["DEFAULT_ALGORITHM_NUMBER"]
-SIZE = os.environ["DEFAULT_BITS"]
 CONFIG = {
     "dnskey-ttl": timedelta(hours=1),
     "ds-ttl": timedelta(days=1),
@@ -503,11 +503,11 @@ def check_remove_cds(
     check_dnssec(server, zone, keys, expected)
 
 
-def test_multisigner(ns3, ns4):
+def test_multisigner(ns3, ns4, default_algorithm):
     zone = "model2.multisigner"
     keyprops = [
-        f"ksk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:omnipresent",
-        f"zsk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:omnipresent zrrsig:omnipresent",
+        f"ksk 0 {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:omnipresent",
+        f"zsk 0 {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent zrrsig:omnipresent",
     ]
 
     # First make sure the zone is properly signed.
@@ -530,10 +530,10 @@ def test_multisigner(ns3, ns4):
     check_dnssec(ns4, zone, keys4, expected4)
 
     # Add DNSKEY to RRset.
-    newprops = [f"zsk unlimited {ALGORITHM} {SIZE}"]
+    newprops = [f"zsk unlimited {default_algorithm.number} {default_algorithm.bits}"]
     extra = isctest.kasp.policy_to_properties(ttl=TTL, keys=newprops)
-    extra[0].private = False  # noqa
-    extra[0].legacy = True  # noqa
+    extra[0].private = False
+    extra[0].legacy = True
 
     check_add_zsk(ns3, zone, keys3, expected3, [zsks4[0]], extra)
     check_add_zsk(ns4, zone, keys4, expected4, [zsks3[0]], extra)
@@ -545,10 +545,10 @@ def test_multisigner(ns3, ns4):
     check_no_dnssec_in_journal(ns4, zone)
 
     # Add CDNSKEY RRset.
-    newprops = [f"ksk unlimited {ALGORITHM} {SIZE}"]
+    newprops = [f"ksk unlimited {default_algorithm.number} {default_algorithm.bits}"]
     extra = isctest.kasp.policy_to_properties(ttl=TTL, keys=newprops)
-    extra[0].private = False  # noqa
-    extra[0].legacy = True  # noqa
+    extra[0].private = False
+    extra[0].legacy = True
 
     check_add_cdnskey(ns3, zone, keys3, expected3, [ksks4[0]], extra)
     check_add_cdnskey(ns4, zone, keys4, expected4, [ksks3[0]], extra)
@@ -574,11 +574,11 @@ def test_multisigner(ns3, ns4):
     check_no_dnssec_in_journal(ns4, zone)
 
 
-def test_multisigner_secondary(ns3, ns4, ns5):
+def test_multisigner_secondary(ns3, ns4, ns5, default_algorithm):
     zone = "model2.secondary"
     keyprops = [
-        f"ksk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:omnipresent",
-        f"zsk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:omnipresent zrrsig:omnipresent",
+        f"ksk 0 {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent krrsig:omnipresent ds:omnipresent",
+        f"zsk 0 {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:omnipresent zrrsig:omnipresent",
     ]
 
     # First make sure the zone is properly signed.
@@ -601,10 +601,10 @@ def test_multisigner_secondary(ns3, ns4, ns5):
     check_dnssec(ns4, zone, keys4, expected4)
 
     # Add DNSKEY to RRset.
-    newprops = [f"zsk unlimited {ALGORITHM} {SIZE}"]
+    newprops = [f"zsk unlimited {default_algorithm.number} {default_algorithm.bits}"]
     extra = isctest.kasp.policy_to_properties(ttl=TTL, keys=newprops)
-    extra[0].private = False  # noqa
-    extra[0].legacy = True  # noqa
+    extra[0].private = False
+    extra[0].legacy = True
 
     check_add_zsk(ns3, zone, keys3, expected3, [zsks4[0]], extra, primary=ns5)
     check_add_zsk(ns4, zone, keys4, expected4, [zsks3[0]], extra, primary=ns5)
@@ -618,10 +618,10 @@ def test_multisigner_secondary(ns3, ns4, ns5):
     check_no_dnssec_in_journal(ns4, zone)
 
     # Add CDNSKEY RRset.
-    newprops = [f"ksk unlimited {ALGORITHM} {SIZE}"]
+    newprops = [f"ksk unlimited {default_algorithm.number} {default_algorithm.bits}"]
     extra = isctest.kasp.policy_to_properties(ttl=TTL, keys=newprops)
-    extra[0].private = False  # noqa
-    extra[0].legacy = True  # noqa
+    extra[0].private = False
+    extra[0].legacy = True
 
     check_add_cdnskey(ns3, zone, keys3, expected3, [ksks4[0]], extra, primary=ns5)
     check_add_cdnskey(ns4, zone, keys4, expected4, [ksks3[0]], extra, primary=ns5)

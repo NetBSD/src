@@ -36,17 +36,12 @@ zone "." {
 	file "root.db";
 };
 
-zone "secondary" {
+{% if enable_only_axfr_max_idle_time | default(False) %}
+zone "axfr-max-idle-time" {
 	type primary;
-	allow-transfer { 10.53.0.1; 10.53.0.2; 10.53.0.6; 10.53.0.7; };
-	file "sec.db";
+	file "axfr-max-idle-time.db";
 };
-
-zone "edns-expire" {
-	type primary;
-	file "edns-expire.db";
-};
-
+{% else %}
 zone "axfr-min-transfer-rate" {
 	type primary;
 	file "axfr-min-transfer-rate.db";
@@ -57,14 +52,21 @@ zone "axfr-max-transfer-time" {
 	file "axfr-max-transfer-time.db";
 };
 
-zone "axfr-max-idle-time" {
-	type primary;
-	file "axfr-max-idle-time.db";
-};
-
 zone "axfr-rndc-retransfer-force" {
 	type primary;
 	file "axfr-rndc-retransfer-force.db";
+};
+
+{% if enable_some_zones | default(True) %}
+zone "secondary" {
+	type primary;
+	allow-transfer { 10.53.0.1; 10.53.0.2; 10.53.0.6; 10.53.0.7; };
+	file "sec.db";
+};
+
+zone "edns-expire" {
+	type primary;
+	file "edns-expire.db";
 };
 
 zone "xot-primary-try-next" {
@@ -92,3 +94,5 @@ zone "dot-fallback" {
 	type primary;
 	file "dot-fallback.db";
 };
+{% endif %}
+{% endif %}

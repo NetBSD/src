@@ -9,18 +9,21 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from typing import cast
+
 import difflib
 import shutil
-from typing import cast, List, Optional
+
+from dns.edns import EDECode, EDEOption
 
 import dns.edns
 import dns.flags
 import dns.message
 import dns.rcode
+import dns.rrset
 import dns.zone
 
 import isctest.log
-from isctest.compat import dns_rcode, EDECode, EDEOption
 
 
 def rcode(message: dns.message.Message, expected_rcode) -> None:
@@ -28,19 +31,19 @@ def rcode(message: dns.message.Message, expected_rcode) -> None:
 
 
 def noerror(message: dns.message.Message) -> None:
-    rcode(message, dns_rcode.NOERROR)
+    rcode(message, dns.rcode.NOERROR)
 
 
 def notimp(message: dns.message.Message) -> None:
-    rcode(message, dns_rcode.NOTIMP)
+    rcode(message, dns.rcode.NOTIMP)
 
 
 def refused(message: dns.message.Message) -> None:
-    rcode(message, dns_rcode.REFUSED)
+    rcode(message, dns.rcode.REFUSED)
 
 
 def servfail(message: dns.message.Message) -> None:
-    rcode(message, dns_rcode.SERVFAIL)
+    rcode(message, dns.rcode.SERVFAIL)
 
 
 def adflag(message: dns.message.Message) -> None:
@@ -69,10 +72,10 @@ def noraflag(message: dns.message.Message) -> None:
 
 def _extract_ede_options(
     message: dns.message.Message,
-) -> List[EDEOption]:
+) -> list[EDEOption]:
     """Extract EDE options from the DNS message."""
     return cast(
-        List[EDEOption],
+        list[EDEOption],
         [
             option
             for option in message.options
@@ -83,22 +86,12 @@ def _extract_ede_options(
 
 def noede(message: dns.message.Message) -> None:
     """Check that message contains no EDE option."""
-    if not hasattr(dns.edns, "EDECode"):
-        # dnspython<2.2.0 doesn't support EDE, skip check
-        return
-
     ede_options = _extract_ede_options(message)
     assert not ede_options, f"unexpected EDE options {ede_options} in {message}"
 
 
-def ede(
-    message: dns.message.Message, code: EDECode, text: Optional[str] = None
-) -> None:
+def ede(message: dns.message.Message, code: EDECode, text: str | None = None) -> None:
     """Check if message contains expected EDE code (and its text)."""
-    if not hasattr(dns.edns, "EDECode"):
-        # dnspython<2.2.0 doesn't support EDE, skip check
-        return
-
     msg_opts = _extract_ede_options(message)
     matching_opts = [opt for opt in msg_opts if opt.code == code]
 
@@ -143,7 +136,7 @@ def same_answer(res1: dns.message.Message, res2: dns.message.Message):
 def rrsets_equal(
     first_rrset: dns.rrset.RRset,
     second_rrset: dns.rrset.RRset,
-    compare_ttl: Optional[bool] = False,
+    compare_ttl: bool | None = False,
 ) -> None:
     """Compare two RRset (optionally including TTL)"""
 
@@ -172,7 +165,7 @@ def rrsets_equal(
 def zones_equal(
     first_zone: dns.zone.Zone,
     second_zone: dns.zone.Zone,
-    compare_ttl: Optional[bool] = False,
+    compare_ttl: bool | None = False,
 ) -> None:
     """Compare two zones (optionally including TTL)"""
 
@@ -205,7 +198,7 @@ def is_executable(cmd: str, errmsg: str) -> None:
 def named_alive(named_proc, resolver_ip):
     assert named_proc.poll() is None, "named isn't running"
     msg = isctest.query.create("version.bind", "TXT", "CH")
-    isctest.query.tcp(msg, resolver_ip, expected_rcode=dns_rcode.NOERROR)
+    isctest.query.tcp(msg, resolver_ip, expected_rcode=dns.rcode.NOERROR)
 
 
 def notauth(message: dns.message.Message) -> None:

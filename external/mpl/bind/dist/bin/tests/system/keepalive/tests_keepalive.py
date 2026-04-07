@@ -9,9 +9,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import isctest
 import pytest
 
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     ["ns2/named.stats"],

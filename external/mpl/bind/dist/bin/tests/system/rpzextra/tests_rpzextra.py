@@ -13,15 +13,11 @@
 
 import os
 
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
 import dns.rcode
 import dns.rrset
+import pytest
 
 import isctest
-from isctest.compat import dns_rcode
-
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -78,13 +74,13 @@ def test_rpz_multiple_views(qname, source, rcode):
         msg,
         ip="10.53.0.3",
         source="10.53.0.2",
-        expected_rcode=dns_rcode.NOERROR,
+        expected_rcode=dns.rcode.NOERROR,
     )
     isctest.query.tcp(
         msg,
         ip="10.53.0.3",
         source="10.53.0.5",
-        expected_rcode=dns_rcode.NOERROR,
+        expected_rcode=dns.rcode.NOERROR,
     )
 
     msg = isctest.query.create(qname, "A")

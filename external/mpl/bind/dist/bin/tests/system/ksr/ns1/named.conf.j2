@@ -93,3 +93,17 @@ dnssec-policy "ksk-roll" {
 		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
 	};
 };
+
+dnssec-policy "invalid-skr" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+zone "invalid-skr.test" {
+	type primary;
+	file "invalid-skr.test.db";
+	dnssec-policy "invalid-skr";
+};

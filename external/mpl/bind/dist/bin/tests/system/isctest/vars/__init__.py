@@ -11,19 +11,29 @@
 
 import os
 
-from .all import ALL
-from .algorithms import init_crypto_supported, set_algorithm_set
-from .features import init_features
-from .openssl import parse_openssl_config
 from .. import log
+from . import algorithms, autoconf, basic, dirs, features, openssl, ports
+from .all import ALL
+
+__all__ = [
+    "ALL",
+    "algorithms",
+    "autoconf",
+    "basic",
+    "dirs",
+    "features",
+    "init_vars",
+    "openssl",
+    "ports",
+]
 
 
 def init_vars():
     """Initializes the environment variables."""
-    init_features()
-    init_crypto_supported()
-    set_algorithm_set(os.getenv("ALGORITHM_SET"))
-    parse_openssl_config(ALL["OPENSSL_CONF"])
+    features.init_features()
+    algorithms.init_crypto_supported()
+    algorithms.set_algorithm_set(os.getenv("ALGORITHM_SET"))
+    openssl.parse_openssl_config(ALL["OPENSSL_CONF"])
 
     os.environ.update(ALL)
     log.debug("setting following env vars: %s", ", ".join([str(key) for key in ALL]))

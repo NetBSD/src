@@ -14,13 +14,11 @@
 from datetime import datetime
 
 import pytest
+import requests
 
 import isctest.mark
 
-pytest.register_assert_rewrite("generic")
-import generic
-
-requests = pytest.importorskip("requests")
+from . import generic
 
 pytestmark = [
     isctest.mark.with_json_c,
@@ -48,9 +46,7 @@ pytestmark = [
 
 # JSON helper functions
 def fetch_zones_json(statsip, statsport):
-    r = requests.get(
-        "http://{}:{}/json/v1/zones".format(statsip, statsport), timeout=600
-    )
+    r = requests.get(f"http://{statsip}:{statsport}/json/v1/zones", timeout=600)
     assert r.status_code == 200
 
     data = r.json()
@@ -58,9 +54,7 @@ def fetch_zones_json(statsip, statsport):
 
 
 def fetch_traffic_json(statsip, statsport):
-    r = requests.get(
-        "http://{}:{}/json/v1/traffic".format(statsip, statsport), timeout=600
-    )
+    r = requests.get(f"http://{statsip}:{statsport}/json/v1/traffic", timeout=600)
     assert r.status_code == 200
 
     data = r.json()
@@ -73,7 +67,7 @@ def load_timers_json(zone, primary=True):
 
     # Check if the primary zone timer exists
     assert "loaded" in zone
-    loaded = datetime.strptime(zone["loaded"], generic.fmt)
+    loaded = datetime.strptime(zone["loaded"], generic.FMT)
 
     if primary:
         # Check if the secondary zone timers does not exist
@@ -84,8 +78,8 @@ def load_timers_json(zone, primary=True):
     else:
         assert "expires" in zone
         assert "refresh" in zone
-        expires = datetime.strptime(zone["expires"], generic.fmt)
-        refresh = datetime.strptime(zone["refresh"], generic.fmt)
+        expires = datetime.strptime(zone["expires"], generic.FMT)
+        refresh = datetime.strptime(zone["refresh"], generic.FMT)
 
     return (name, loaded, expires, refresh)
 

@@ -12,16 +12,15 @@
 import os
 import subprocess
 
+from dns.dnssectypes import NSEC3Hash
+from hypothesis import given, settings, strategies
+
+import dns.dnssec
 import pytest
 
-import isctest
 from isctest.hypothesis.strategies import dns_names
 
-from hypothesis import strategies, given, settings
-
-pytest.importorskip("dns.dnssectypes")
-from dns.dnssectypes import NSEC3Hash
-import dns.dnssec
+import isctest
 
 NSEC3HASH = os.environ.get("NSEC3HASH")
 

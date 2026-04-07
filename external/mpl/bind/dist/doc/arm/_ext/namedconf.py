@@ -15,6 +15,7 @@
 Sphinx domain "namedconf". See iscconf.py for details.
 
 """
+
 from docutils import nodes
 
 import iscconf

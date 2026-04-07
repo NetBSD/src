@@ -11,19 +11,14 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=unused-variable
-
 import socket
 import time
 
-import pytest
-
-# isctest.asyncserver requires dnspython >= 2.0.0
-pytest.importorskip("dns", minversion="2.0.0")
-
 import dns.message
 import dns.query
+import dns.tsig
 import dns.tsigkeyring
+import pytest
 
 pytestmark = pytest.mark.extra_artifacts(
     [

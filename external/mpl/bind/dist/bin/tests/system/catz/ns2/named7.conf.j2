@@ -67,7 +67,8 @@ view "default" {
 		primaries { 10.53.0.1; };
 	};
 
-	zone "catalog2.example" {
+	/* Also test using a different case */
+	zone "Catalog2.Example" {
 		type secondary;
 		file "catalog2.example.db";
 		primaries { 10.53.0.3; };

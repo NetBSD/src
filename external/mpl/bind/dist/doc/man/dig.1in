@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -49,7 +50,7 @@ than \fBdig\fP\&.
 Although \fBdig\fP is normally used with command\-line arguments, it also
 has a batch mode of operation for reading lookup requests from a file. A
 brief summary of its command\-line arguments and options is printed when
-the \fI\%\-h\fP option is given. The BIND 9
+the \fB\-h\fP option is given. The BIND 9
 implementation of \fBdig\fP allows multiple lookups to be issued from the
 command line.
 .sp
@@ -62,12 +63,12 @@ performs an NS query for \(dq.\(dq (the root).
 .sp
 It is possible to set per\-user defaults for \fBdig\fP via
 \fB${HOME}/.digrc\fP\&. This file is read and any options in it are applied
-before the command\-line arguments. The \fI\%\-r\fP option disables this
+before the command\-line arguments. The \fB\-r\fP option disables this
 feature, for scripts that need predictable behavior.
 .sp
 The IN and CH class names overlap with the IN and CH top\-level domain
-names. Either use the \fI\%\-t\fP and \fI\%\-c\fP options to specify the type and
-class, use the \fI\%\-q\fP to specify the domain name, or use \(dqIN.\(dq and
+names. Either use the \fB\-t\fP and \fB\-c\fP options to specify the type and
+class, use the \fB\-q\fP to specify the domain name, or use \(dqIN.\(dq and
 \(dqCH.\(dq when looking up these top\-level domains.
 .SH SIMPLE USAGE
 .sp
@@ -93,7 +94,7 @@ server.
 .sp
 If no \fBserver\fP argument is provided, \fBdig\fP consults
 \fB/etc/resolv.conf\fP; if an address is found there, it queries the
-name server at that address. If either of the \fI\%\-4\fP or \fI\%\-6\fP
+name server at that address. If either of the \fB\-4\fP or \fB\-6\fP
 options are in use, then only addresses for the corresponding
 transport are tried. If no usable addresses are found, \fBdig\fP
 sends the query to the local host. The reply from the name server
@@ -153,11 +154,11 @@ Print a usage summary.
 .B \-k keyfile
 This option tells \fBdig\fP to sign queries using TSIG or
 SIG(0) using a key read from the given file. Key files can be
-generated using \fI\%tsig\-keygen\fP\&. When using TSIG authentication
+generated using \fBtsig\-keygen\fP \%<#\:std-iscman-tsig-keygen>\&. When using TSIG authentication
 with \fBdig\fP, the name server that is queried needs to
 know the key and algorithm that is being used. In BIND, this is
 done by providing appropriate \fBkey\fP and \fBserver\fP statements
-in \fI\%named.conf\fP for TSIG and by looking up the KEY record
+in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf> for TSIG and by looking up the KEY record
 in zone data for SIG(0).
 .UNINDENT
 .INDENT 0.0
@@ -191,7 +192,7 @@ scripts that need predictable behavior.
 This option indicates the resource record type to query, which can be any valid query type. If
 it is a resource record type supported in BIND 9, it can be given by
 the type mnemonic (such as \fBNS\fP or \fBAAAA\fP). The default query type is
-\fBA\fP, unless the \fI\%\-x\fP option is supplied to indicate a reverse
+\fBA\fP, unless the \fB\-x\fP option is supplied to indicate a reverse
 lookup. A zone transfer can be requested by specifying a type of
 AXFR. When an incremental zone transfer (IXFR) is required, set the
 \fBtype\fP to \fBixfr=N\fP\&. The incremental zone transfer contains
@@ -200,7 +201,7 @@ SOA record was \fBN\fP\&.
 .sp
 All resource record types can be expressed as \fBTYPEnn\fP, where \fBnn\fP is
 the number of the type. If the resource record type is not supported
-in BIND 9, the result is displayed as described in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link'\&.
+in BIND 9, the result is displayed as described in \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html>\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -217,7 +218,7 @@ This option prints the version number and exits.
 .B \-x addr
 This option sets simplified reverse lookups, for mapping addresses to names. The
 \fBaddr\fP is an IPv4 address in dotted\-decimal notation, or a
-colon\-delimited IPv6 address. When the \fI\%\-x\fP option is used, there is no
+colon\-delimited IPv6 address. When the \fB\-x\fP option is used, there is no
 need to provide the \fBname\fP, \fBclass\fP, and \fBtype\fP arguments.
 \fBdig\fP automatically performs a lookup for a name like
 \fB94.2.0.192.in\-addr.arpa\fP and sets the query type and class to PTR
@@ -236,11 +237,11 @@ not specified, the default is \fBhmac\-md5\fP; if MD5 was disabled, the default 
 \fBhmac\-sha256\fP\&.
 .UNINDENT
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 0.0
 .INDENT 3.5
-Only the \fI\%\-k\fP option should be used, rather than the \fI\%\-y\fP option,
-because with \fI\%\-y\fP the shared secret is supplied as a command\-line
+Only the \fB\-k\fP option should be used, rather than the \fB\-y\fP option,
+because with \fB\-y\fP the shared secret is supplied as a command\-line
 argument in clear text. This may be visible in the output from \fBps1\fP or
 in a history file maintained by the user\(aqs shell.
 .UNINDENT
@@ -258,12 +259,12 @@ Each query option is identified by a keyword preceded by a plus sign
 the string \fBno\fP to negate the meaning of that keyword. Other keywords
 assign values to options, like the timeout interval. They have the form
 \fB+keyword=value\fP\&. Keywords may be abbreviated, provided the
-abbreviation is unambiguous; for example, \fI\%+cd\fP is equivalent to
-\fI\%+cdflag\fP\&. The query options are:
+abbreviation is unambiguous; for example, \fB+cd\fP is equivalent to
+\fB+cdflag\fP\&. Query options are order sensitive. The query options are:
 .INDENT 0.0
 .TP
 .B +aaflag, +noaaflag
-This option is a synonym for \fI\%+aaonly\fP, \fI\%+noaaonly\fP\&.
+This option is a synonym for \fB+aaonly\fP, \fB+noaaonly\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -359,7 +360,7 @@ the response section. The default is to print these comments.
 .sp
 Other types of comments in the output are not affected by this option, but
 can be controlled using other command\-line switches. These include
-\fI\%+cmd\fP, \fI\%+question\fP, \fI\%+stats\fP, and \fI\%+rrcomments\fP\&.
+\fB+cmd\fP, \fB+question\fP, \fB+stats\fP, and \fB+rrcomments\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -368,7 +369,7 @@ This option sends [or does not send] a COOKIE EDNS option, with an optional valu
 from a previous response allows the server to identify a previous
 client. The default is \fB+cookie\fP\&.
 .sp
-\fB+cookie\fP is also set when \fI\%+trace\fP is set to better emulate the
+\fB+cookie\fP is also set when \fB+trace\fP is set to better emulate the
 default queries from a nameserver.
 .UNINDENT
 .INDENT 0.0
@@ -385,7 +386,7 @@ key ID is displayed as the replacement, e.g. \fB[ key id = value ]\fP\&.
 .TP
 .B +defname, +nodefname
 This option, which is deprecated, is treated as a synonym for
-\fI\%+search\fP, \fI\%+nosearch\fP\&.
+\fB+search\fP, \fB+nosearch\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -403,7 +404,7 @@ the OPT record in the additional section of the query.
 .B +domain=somename
 This option sets the search list to contain the single domain \fBsomename\fP, as if
 specified in a \fBdomain\fP directive in \fB/etc/resolv.conf\fP, and
-enables search list processing as if the \fI\%+search\fP option were
+enables search list processing as if the \fB+search\fP option were
 given.
 .UNINDENT
 .INDENT 0.0
@@ -443,7 +444,7 @@ This option sends an EDNS Expire option.
 .INDENT 0.0
 .TP
 .B +fail, +nofail
-This option indicates that \fI\%named\fP should try [or not try] the next server if a SERVFAIL is received. The default is
+This option indicates that \fBnamed\fP \%<#\:std-iscman-named> should try [or not try] the next server if a SERVFAIL is received. The default is
 to not try the next server, which is the reverse of normal stub
 resolver behavior.
 .UNINDENT
@@ -477,36 +478,36 @@ query URI; the default is \fB/dns\-query\fP\&. So, for example, \fBdig
 .INDENT 0.0
 .TP
 .B +https\-get[=value], +nohttps\-get
-Similar to \fI\%+https\fP, except that the HTTP GET request mode is used
+Similar to \fB+https\fP, except that the HTTP GET request mode is used
 when sending the query.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +https\-post[=value], +nohttps\-post
-Same as \fI\%+https\fP\&.
+Same as \fB+https\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +http\-plain[=value], +nohttp\-plain
-Similar to \fI\%+https\fP, except that HTTP queries will be sent over a
+Similar to \fB+https\fP, except that HTTP queries will be sent over a
 non\-encrypted channel. When this option is in use, the port number
 defaults to 80 and the HTTP request mode is POST.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +http\-plain\-get[=value], +nohttp\-plain\-get
-Similar to \fI\%+http\-plain\fP, except that the HTTP request mode is GET.
+Similar to \fB+http\-plain\fP, except that the HTTP request mode is GET.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +http\-plain\-post[=value], +nohttp\-plain\-post
-Same as \fI\%+http\-plain\fP\&.
+Same as \fB+http\-plain\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +identify, +noidentify
 This option shows [or does not show] the IP address and port number that
-supplied the answer, when the \fI\%+short\fP option is enabled. If short
+supplied the answer, when the \fB+short\fP option is enabled. If short
 form answers are requested, the default is not to show the source
 address and port number of the server that provided the answer.
 .UNINDENT
@@ -554,7 +555,7 @@ the \fBndots\fP statement in \fB/etc/resolv.conf\fP, or 1 if no \fBndots\fP
 statement is present. Names with fewer dots are interpreted as
 relative names, and are searched for in the domains listed in the
 \fBsearch\fP or \fBdomain\fP directive in \fB/etc/resolv.conf\fP if
-\fI\%+search\fP is set.
+\fB+search\fP is set.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -659,7 +660,7 @@ QUERY.
 .INDENT 0.0
 .TP
 .B +rdflag, +nordflag
-This option is a synonym for \fI\%+recurse\fP, \fI\%+norecurse\fP\&.
+This option is a synonym for \fB+recurse\fP, \fB+norecurse\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -667,13 +668,13 @@ This option is a synonym for \fI\%+recurse\fP, \fI\%+norecurse\fP\&.
 This option toggles the setting of the RD (recursion desired) bit in the query.
 This bit is set by default, which means \fBdig\fP normally sends
 recursive queries. Recursion is automatically disabled when the
-\fI\%+nssearch\fP or \fI\%+trace\fP query option is used.
+\fB+nssearch\fP or \fB+trace\fP query option is used.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +retry=T
 This option sets the number of times to retry UDP and TCP queries to server to \fBT\fP
-instead of the default, 2.  Unlike \fI\%+tries\fP, this does not include
+instead of the default, 2.  Unlike \fB+tries\fP, this does not include
 the initial query.
 .UNINDENT
 .INDENT 0.0
@@ -691,7 +692,7 @@ directive in \fBresolv.conf\fP, if any. The search list is not used by
 default.
 .sp
 \fBndots\fP from \fBresolv.conf\fP (default 1), which may be overridden by
-\fI\%+ndots\fP, determines whether the name is treated as relative
+\fB+ndots\fP, determines whether the name is treated as relative
 and hence whether a search is eventually performed.
 .UNINDENT
 .INDENT 0.0
@@ -797,7 +798,7 @@ Both options must be specified at the same time.
 .B +tls\-hostname=hostname, +notls\-hostname
 This option makes \fBdig\fP use the provided hostname during remote
 server TLS certificate verification. Otherwise, the DNS server name
-is used. This option has no effect if \fI\%+tls\-ca\fP is not specified.
+is used. This option has no effect if \fB+tls\-ca\fP is not specified.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -812,11 +813,11 @@ the lookup.
 If \fB@server\fP is also specified, it affects only the initial query for
 the root zone name servers.
 .sp
-\fI\%+dnssec\fP is set when \fI\%+trace\fP is set, to better
+\fB+dnssec\fP is set when \fB+trace\fP is set, to better
 emulate the default queries from a name server.
 .sp
 Note that the \fBdelv +ns\fP option can also be used for tracing the
-resolution of a name from the root (see \fI\%delv\fP).
+resolution of a name from the root (see \fBdelv\fP \%<#\:std-iscman-delv>).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -835,12 +836,12 @@ This option displays [or does not display] the TTL when printing the record.
 .B +ttlunits, +nottlunits
 This option displays [or does not display] the TTL in friendly human\-readable time
 units of \fBs\fP, \fBm\fP, \fBh\fP, \fBd\fP, and \fBw\fP, representing seconds, minutes,
-hours, days, and weeks. This implies \fI\%+ttlid\fP\&.
+hours, days, and weeks. This implies \fB+ttlid\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +unknownformat, +nounknownformat
-This option prints all RDATA in unknown RR type presentation format (\X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link').
+This option prints all RDATA in unknown RR type presentation format (\fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html>).
 The default is to print RDATA for known types in the type\(aqs
 presentation format.
 .UNINDENT
@@ -848,13 +849,13 @@ presentation format.
 .TP
 .B +vc, +novc
 This option uses [or does not use] TCP when querying name servers. This alternate
-syntax to \fI\%+tcp\fP is provided for backwards compatibility. The
+syntax to \fB+tcp\fP is provided for backwards compatibility. The
 \fBvc\fP stands for \(dqvirtual circuit.\(dq
 .UNINDENT
 .INDENT 0.0
 .TP
 .B +yaml, +noyaml
-When enabled, this option prints the responses (and, if \fI\%+qr\fP is in use, also the
+When enabled, this option prints the responses (and, if \fB+qr\fP is in use, also the
 outgoing queries) in a detailed YAML format.
 .UNINDENT
 .INDENT 0.0
@@ -866,7 +867,7 @@ This flag is off by default.
 .SH MULTIPLE QUERIES
 .sp
 The BIND 9 implementation of \fBdig\fP supports specifying multiple
-queries on the command line (in addition to supporting the \fI\%\-f\fP batch
+queries on the command line (in addition to supporting the \fB\-f\fP batch
 file option). Each of those queries can be supplied with its own set of
 flags, options, and query options.
 .sp
@@ -879,8 +880,8 @@ query.
 A global set of query options, which should be applied to all queries,
 can also be supplied. These global query options must precede the first
 tuple of name, class, type, options, flags, and query options supplied
-on the command line. Any global query options (except \fI\%+cmd\fP and
-\fI\%+short\fP options) can be overridden by a query\-specific set of
+on the command line. Any global query options (except \fB+cmd\fP and
+\fB+short\fP options) can be overridden by a query\-specific set of
 query options. For example:
 .INDENT 0.0
 .INDENT 3.5
@@ -894,8 +895,8 @@ dig +qr www.isc.org any \-x 127.0.0.1 isc.org ns +noqr
 shows how \fBdig\fP can be used from the command line to make three
 lookups: an ANY query for \fBwww.isc.org\fP, a reverse lookup of 127.0.0.1,
 and a query for the NS records of \fBisc.org\fP\&. A global query option of
-\fI\%+qr\fP is applied, so that \fBdig\fP shows the initial query it made for
-each lookup. The final query has a local query option of \fI\%+noqr\fP which
+\fB+qr\fP is applied, so that \fBdig\fP shows the initial query it made for
+each lookup. The final query has a local query option of \fB+noqr\fP which
 means that \fBdig\fP does not print the initial query when it looks up the
 NS records for \fBisc.org\fP\&.
 .SH RETURN CODES
@@ -923,15 +924,65 @@ Internal error
 \fB/etc/resolv.conf\fP
 .sp
 \fB${HOME}/.digrc\fP
+.SH EXAMPLES
+.sp
+Only display the IP address(es) for example.com:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dig +short example.com
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Query the nameserver f.gtld\-servers.net for example.com:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dig @f.gtld\-servers.net example.com
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Look up the TXT record for example.com:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dig txt example.com
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Look up the hostname for an IP with reverse DNS:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dig \-x 192.0.2.1
+.EE
+.UNINDENT
+.UNINDENT
+.sp
+Display a much shorter output with just the name, record type, TTL, and value for each answer:
+.INDENT 0.0
+.INDENT 3.5
+.sp
+.EX
+dig +noall +answer example.com
+.EE
+.UNINDENT
+.UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%delv(1)\fP, \fI\%host(1)\fP, \fI\%named(8)\fP, \fI\%dnssec\-keygen(8)\fP, \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link'\&.
+\fBdelv(1)\fP \%<#\:std-iscman-delv>, \fBhost(1)\fP \%<#\:std-iscman-host>, \fBnamed(8)\fP \%<#\:std-iscman-named>, \fBdnssec\-keygen(8)\fP \%<#\:std-iscman-dnssec-keygen>, \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html>\&.
 .SH BUGS
 .sp
 There are probably too many query options.
-.SH AUTHOR
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -38,7 +39,7 @@ dnssec-keyfromlabel \- DNSSEC key generation tool
 \fBdnssec\-keyfromlabel\fP generates a pair of key files that reference a
 key object stored in a cryptographic hardware service module (HSM). The
 private key file can be used for DNSSEC signing of zone data as if it
-were a conventional signing key created by \fI\%dnssec\-keygen\fP, but the
+were a conventional signing key created by \fBdnssec\-keygen\fP \%<#\:std-iscman-dnssec-keygen>, but the
 key material is stored within the HSM and the actual signing takes
 place there.
 .sp
@@ -56,10 +57,10 @@ ED25519, or ED448.
 These values are case\-insensitive. In some cases, abbreviations
 are supported, such as ECDSA256 for ECDSAP256SHA256 and ECDSA384
 for ECDSAP384SHA384. If RSASHA1 (deprecated) is specified along
-with the \fI\%\-3\fP option, then NSEC3RSASHA1 (deprecated) is
+with the \fB\-3\fP option, then NSEC3RSASHA1 (deprecated) is
 used instead.
 .sp
-This option is mandatory except when using the \fI\%\-S\fP
+This option is mandatory except when using the \fB\-S\fP
 option, which copies the algorithm from the predecessory key.
 .sp
 Changed in version 9.12.0: The default value RSASHA1 (deprecated) for newly generated
@@ -111,7 +112,7 @@ By default, \fBdnssec\-keyfromlabel\fP includes the key\(aqs creation
 date in the metadata stored with the private key; other dates may
 be set there as well, including publication date, activation date, etc. Keys
 that include this data may be incompatible with older versions of
-BIND; the \fI\%\-C\fP option suppresses them.
+BIND; the \fB\-C\fP option suppresses them.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -129,7 +130,7 @@ The only recognized flags are KSK (Key\-Signing Key) and REVOKE.
 .TP
 .B \-G
 This option generates a key, but does not publish it or sign with it. This option is
-incompatible with \fI\%\-P\fP and \fI\%\-A\fP\&.
+incompatible with \fB\-P\fP and \fB\-A\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -174,7 +175,7 @@ default allows all key tag values to be accepted.
 .B \-p protocol
 This option sets the protocol value for the key. The protocol is a number between
 0 and 255. The default is 3 (DNSSEC). Other possible values for this
-argument are listed in \X'tty: link https://datatracker.ietf.org/doc/html/rfc2535.html'\fI\%RFC 2535\fP\X'tty: link' and its successors.
+argument are listed in \fBRFC 2535\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc2535\:.html> and its successors.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -210,7 +211,7 @@ This option prints version information.
 This option allows DNSSEC key files to be generated even if the key ID would
 collide with that of an existing key, in the event of either key
 being revoked. (This is only safe to enable if
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' trust anchor maintenance is not used with either of the keys
+\fBRFC 5011\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc5011\:.html> trust anchor maintenance is not used with either of the keys
 involved.)
 .UNINDENT
 .SH TIMING OPTIONS
@@ -238,7 +239,7 @@ All these formats are case\-insensitive.
 .B \-P date/offset
 This option sets the date on which a key is to be published to the zone. After
 that date, the key is included in the zone but is not used
-to sign it. If not set, and if the \fI\%\-G\fP option has not been used, the
+to sign it. If not set, and if the \fB\-G\fP option has not been used, the
 default is the current date.
 .INDENT 7.0
 .TP
@@ -252,7 +253,7 @@ are to be published to the zone.
 .B \-A date/offset
 This option sets the date on which the key is to be activated. After that date,
 the key is included in the zone and used to sign it. If not set,
-and if the \fI\%\-G\fP option has not been used, the default is the current date.
+and if the \fB\-G\fP option has not been used, the default is the current date.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -326,11 +327,10 @@ The \fB\&.private\fP file contains algorithm\-specific fields. For obvious
 security reasons, this file does not have general read permission.
 .SH SEE ALSO
 .sp
-\fI\%dnssec\-keygen(8)\fP, \fI\%dnssec\-signzone(8)\fP, BIND 9 Administrator Reference Manual,
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc4034.html'\fI\%RFC 4034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc7512.html'\fI\%RFC 7512\fP\X'tty: link'\&.
-.SH AUTHOR
+\fBdnssec\-keygen(8)\fP \%<#\:std-iscman-dnssec-keygen>, \fBdnssec\-signzone(8)\fP \%<#\:std-iscman-dnssec-signzone>, BIND 9 Administrator Reference Manual,
+\fBRFC 4034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc4034\:.html>, \fBRFC 7512\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc7512\:.html>\&.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

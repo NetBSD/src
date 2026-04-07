@@ -9,15 +9,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from re import compile as Re
+
 import glob
 import os
 import re
-from re import compile as Re
 import shutil
 import signal
 import time
 
-import dns.message
+import dns.zone
 import pytest
 
 import isctest

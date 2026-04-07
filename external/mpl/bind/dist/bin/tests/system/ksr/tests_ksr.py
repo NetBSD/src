@@ -10,6 +10,7 @@
 # information regarding copyright ownership.
 
 from datetime import timedelta
+
 import os
 import re
 import shutil
@@ -17,8 +18,10 @@ import time
 
 import pytest
 
-import isctest
 from isctest.kasp import KeyTimingMetadata
+from isctest.vars.algorithms import Algorithm
+
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -31,6 +34,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "past.test.*",
         "two-tone.test.*",
         "unlimited.test.*",
+        "invalid-skr.test.*",
         "ns1/K*",
         "ns1/_default.nzd",
         "ns1/_default.nzf",
@@ -74,6 +78,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/unlimited.test.db.signed",
         "ns1/unlimited.test.db.signed.jnl",
         "ns1/unlimited.test.unlimited.skr.1",
+        "ns1/invalid-skr.test.db",
+        "ns1/invalid-skr.test.db.jbk",
+        "ns1/invalid-skr.test.db.signed",
+        "ns1/invalid-skr.test.db.signed.jnl",
+        "ns1/invalid-skr.test.skr.1",
     ]
 )
 
@@ -110,12 +119,17 @@ def ksr(zone, policy, action, options="", raise_on_exception=True, to_file=""):
 def check_keys(
     keys,
     lifetime,
-    alg=os.environ["DEFAULT_ALGORITHM_NUMBER"],
-    size=os.environ["DEFAULT_BITS"],
+    alg=None,
+    size=None,
     offset=0,
     with_state=False,
 ):
     # Check keys that were created.
+    if alg is None:
+        alg = Algorithm.default().number
+    if size is None:
+        size = Algorithm.default().bits
+
     num = 0
 
     now = KeyTimingMetadata.now()
@@ -501,7 +515,6 @@ def check_signedkeyresponse(
                 # collect keys that should be in this bundle
                 # collect lines that should be in this bundle
                 bundle_keys.append(key)
-                # pylint: disable=unused-variable
                 for _arg in expected_cds:
                     bundle_lines.append(lines[line_no])
                     line_no += 1
@@ -1289,3 +1302,21 @@ def test_ksr_kskroll(ns1):
     isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
     isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
+
+
+def test_ksr_oversize(ns1):
+    zone = "invalid-skr.test"
+    n = 1
+
+    skr_fname = f"{zone}.skr.{n}"
+    token_len = 5000
+    with open(skr_fname, "w", encoding="utf-8") as skr:
+        huge_token = "A" * token_len
+        skr.write(f";; SignedKeyResponse 1.0 {huge_token}\n")
+
+    # - try importing invalid SKR file
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
+
+    # - check if named is still running
+    ns1.rndc("status")

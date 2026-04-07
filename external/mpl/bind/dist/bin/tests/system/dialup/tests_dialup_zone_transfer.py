@@ -9,7 +9,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import dns.flags
 import dns.message
+import dns.rcode
 import pytest
 
 import isctest

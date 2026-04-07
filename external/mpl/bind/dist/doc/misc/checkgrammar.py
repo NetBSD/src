@@ -20,6 +20,7 @@ vs. '( unlimited | <duration> ) used in options.
 
 from collections import namedtuple
 from itertools import groupby
+
 import fileinput
 
 import parsegrammar

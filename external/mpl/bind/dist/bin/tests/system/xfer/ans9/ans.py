@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.rcode
 import dns.rdatatype
@@ -19,10 +19,10 @@ import dns.rrset
 
 from isctest.asyncserver import (
     ControllableAsyncDnsServer,
+    DnsResponseSend,
     DomainHandler,
     QueryContext,
     ResponseAction,
-    DnsResponseSend,
     ToggleResponsesCommand,
 )
 

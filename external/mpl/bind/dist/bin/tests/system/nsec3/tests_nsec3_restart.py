@@ -9,25 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=redefined-outer-name,unused-import
-
 import os
 
-import dns.update
+import dns.rdatatype
 import pytest
 
-pytest.importorskip("dns", minversion="2.0.0")
-import isctest
-import isctest.mark
-from nsec3.common import (
-    ALGORITHM,
-    SIZE,
-    default_config,
-    pytestmark,
-    check_nsec3_case,
-    check_nsec3param,
-)
+from isctest.vars.algorithms import Algorithm
+from nsec3.common import NSEC3_MARK, check_nsec3_case, check_nsec3param
 
+import isctest
+
+pytestmark = NSEC3_MARK
 
 # include the following zones when rendering named configs
 ZONES = {
@@ -75,7 +67,7 @@ def perform_nsec3_tests(server, params):
                 "zone": "nsec3.kasp",
                 "policy": "nsec3",
                 "key-properties": [
-                    f"csk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
+                    f"csk 0 {Algorithm.default().number} {Algorithm.default().bits} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
                 ],
             },
             id="nsec3.kasp",
@@ -89,7 +81,7 @@ def perform_nsec3_tests(server, params):
                     "salt-length": 8,
                 },
                 "key-properties": [
-                    f"csk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
+                    f"csk 0 {Algorithm.default().number} {Algorithm.default().bits} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
                 ],
             },
             id="nsec3-other.kasp",

@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.name
 import dns.rcode
@@ -27,13 +27,6 @@ from isctest.asyncserver import (
     QueryContext,
     ResponseAction,
 )
-
-try:
-    dns_namerelation_equal = dns.name.NameRelation.EQUAL
-    dns_namerelation_subdomain = dns.name.NameRelation.SUBDOMAIN
-except AttributeError:  # dnspython < 2.3.0 compat
-    dns_namerelation_equal = dns.name.NAMERELN_EQUAL  # type: ignore
-    dns_namerelation_subdomain = dns.name.NAMERELN_SUBDOMAIN  # type: ignore
 
 
 def get_dname_rrset_at_name(
@@ -94,11 +87,11 @@ class Cve202125215(DomainHandler):
 
         relation, _, _ = qctx.qname.fullcompare(self_example_dname)
 
-        if relation in (dns_namerelation_equal, dns_namerelation_subdomain):
+        if relation in (dns.name.NameRelation.EQUAL, dns.name.NameRelation.SUBDOMAIN):
             del qctx.response.authority[:]
             qctx.response.set_rcode(dns.rcode.NOERROR)
 
-        if relation == dns_namerelation_subdomain:
+        if relation == dns.name.NameRelation.SUBDOMAIN:
             qctx.response.answer.append(dname_rrset)
             cname_rrset = dns.rrset.from_text(
                 qctx.qname,
@@ -114,7 +107,7 @@ class Cve202125215(DomainHandler):
 
 def main() -> None:
     server = AsyncDnsServer(acknowledge_manual_dname_handling=True, default_aa=True)
-    server.install_response_handlers([CnameThenDnameHandler(), Cve202125215()])
+    server.install_response_handlers(CnameThenDnameHandler(), Cve202125215())
     server.run()
 
 

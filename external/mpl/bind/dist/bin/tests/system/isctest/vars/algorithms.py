@@ -9,16 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from typing import NamedTuple
+
 import os
 import platform
 import random
 import subprocess
 import tempfile
 import time
-from typing import Dict, List, NamedTuple, Optional, Union
 
-from .basic import BASIC_VARS
 from .. import log
+from .basic import BASIC_VARS
 
 # Algorithms are selected randomly at runtime from a list of supported
 # algorithms. The randomization is deterministic and remains stable for a
@@ -56,18 +57,26 @@ class Algorithm(NamedTuple):
     number: int
     bits: int
 
+    @classmethod
+    def default(cls):
+        return cls(
+            os.environ["DEFAULT_ALGORITHM"],
+            int(os.environ["DEFAULT_ALGORITHM_NUMBER"]),
+            int(os.environ["DEFAULT_BITS"]),
+        )
+
 
 class AlgorithmSet(NamedTuple):
     """Collection of DEFAULT, ALTERNATIVE and DISABLED algorithms"""
 
-    default: Union[Algorithm, List[Algorithm]]
+    default: Algorithm | list[Algorithm]
     """DEFAULT is the algorithm for testing."""
 
-    alternative: Union[Algorithm, List[Algorithm]]
+    alternative: Algorithm | list[Algorithm]
     """ALTERNATIVE is an alternative algorithm for test cases that require more
     than one algorithm (for example algorithm rollover)."""
 
-    disabled: Union[Algorithm, List[Algorithm]]
+    disabled: Algorithm | list[Algorithm]
     """DISABLED is an algorithm that is used for tests against the
     "disable-algorithms" configuration option."""
 
@@ -151,7 +160,7 @@ CRYPTO_SUPPORTED_VARS = {
     "ED448_SUPPORTED": "0",
 }
 
-SUPPORTED_ALGORITHMS: List[Algorithm] = []
+SUPPORTED_ALGORITHMS: list[Algorithm] = []
 
 
 def init_crypto_supported():
@@ -241,7 +250,7 @@ def _select_random(algs: AlgorithmSet, stable_period=STABLE_PERIOD) -> Algorithm
     return AlgorithmSet(default, alternative, disabled)
 
 
-def _algorithms_env(algs: AlgorithmSet, name: str) -> Dict[str, str]:
+def _algorithms_env(algs: AlgorithmSet, name: str) -> dict[str, str]:
     """Return environment variables with selected algorithms as a dict."""
     algs_env = {
         "ALGORITHM_SET": name,
@@ -264,7 +273,7 @@ def _algorithms_env(algs: AlgorithmSet, name: str) -> Dict[str, str]:
     return algs_env
 
 
-def set_algorithm_set(name: Optional[str]):
+def set_algorithm_set(name: str | None):
     if name is None:
         name = "stable"
     assert name in ALGORITHM_SETS, f'ALGORITHM_SET "{name}" unknown'

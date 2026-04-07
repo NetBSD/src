@@ -11,16 +11,31 @@
 
 from .basic import (
     avoid_duplicated_logs,
+    critical,
+    debug,
     deinit_module_logger,
     deinit_test_logger,
+    error,
+    info,
     init_conftest_logger,
     init_module_logger,
     init_test_logger,
-    debug,
-    info,
     warning,
-    error,
-    critical,
 )
+from .watchlog import WatchLogFromHere, WatchLogFromStart
 
-from .watchlog import WatchLogFromStart, WatchLogFromHere
+__all__ = [
+    "WatchLogFromHere",
+    "WatchLogFromStart",
+    "avoid_duplicated_logs",
+    "critical",
+    "debug",
+    "deinit_module_logger",
+    "deinit_test_logger",
+    "error",
+    "info",
+    "init_conftest_logger",
+    "init_module_logger",
+    "init_test_logger",
+    "warning",
+]
