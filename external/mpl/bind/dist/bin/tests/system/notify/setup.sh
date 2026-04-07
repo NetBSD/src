@@ -15,3 +15,4 @@
 
 cp -f ns2/example1.db ns2/example.db
 cp -f ns2/generic.db ns2/x21.db
+cp -f ns2/generic.db ns2/change-ns.db

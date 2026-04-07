@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -55,9 +56,9 @@ RDATA format is specific to each RRTYPE.
 Leading and trailing whitespace in each field is ignored.
 .UNINDENT
 .sp
-Format details can be found in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' under \fB<rr>\fP
-specification. \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format is also accepted in any of the input fields.
-See \fI\%Examples\fP\&.
+Format details can be found in \fBRFC 1035 Section 5.1\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html#\:section-5.1> under \fB<rr>\fP
+specification. \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html> format is also accepted in any of the input fields.
+See Examples\&.
 .SH OPTIONS
 .INDENT 0.0
 .TP
@@ -69,13 +70,13 @@ it defaults to root (\fI\&.\fP). The specified origin is always taken as an abso
 .TP
 .B \-p
 This option prints out the resulting record in canonical form. If there
-is no canonical form defined, the record is printed in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' unknown
+is no canonical form defined, the record is printed in \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html> unknown
 record format.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B \-u
-This option prints out the resulting record in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' unknown record
+This option prints out the resulting record in \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html> unknown record
 format.
 .UNINDENT
 .INDENT 0.0
@@ -98,7 +99,7 @@ Pay close attention to the \fBecho\fP command line options \fI\-e\fP and \fI\-n\
 .B echo \-n \(aqIN A 192.0.2.1\(aq | named\-rrchecker
 .INDENT 7.0
 .IP \(bu 2
-Valid input is in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format with no newline at the end of the input.
+Valid input is in \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html> format with no newline at the end of the input.
 .IP \(bu 2
 Return code 0.
 .UNINDENT
@@ -148,7 +149,7 @@ The specified origin has no influence if \fItarget\fP from the input is already 
 .UNINDENT
 .SS Special characters
 .sp
-Special characters allowed in zone files by \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' are accepted.
+Special characters allowed in zone files by \fBRFC 1035 Section 5.1\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html#\:section-5.1> are accepted.
 .INDENT 0.0
 .TP
 .B echo \(aqIN CNAME t\e097r\eget\e.\(aq | named\-rrchecker \-p \-o origin.test
@@ -211,7 +212,7 @@ Valid TXT RR with two unquoted words and trailing whitespace.
 .IP \(bu 2
 Output: \fBIN        TXT     \(dqtwo\(dq \(dqwords\(dq\fP
 .IP \(bu 2
-Two unquoted words in the input are treated as two \fI<character\-string>\fPs per \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-3.3.14'\fI\%RFC 1035 Section 3.3.14\fP\X'tty: link'\&.
+Two unquoted words in the input are treated as two \fI<character\-string>\fPs per \fBRFC 1035 Section 3.3.14\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html#\:section-3\:.3\:.14>\&.
 .IP \(bu 2
 Trailing whitespace is omitted from the last \fI<character\-string>\fP\&.
 .UNINDENT
@@ -272,7 +273,7 @@ Output: \fBIN        HTTPS   1 . alpn=\(dqh2,h3\(dq\fP
 .INDENT 7.0
 .IP \(bu 2
 Valid HTTPS record with individual sub\-fields split across multiple lines
-using \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html#section-5.1'\fI\%RFC 1035 Section 5.1\fP\X'tty: link' parentheses syntax to group data that crosses
+using \fBRFC 1035 Section 5.1\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html#\:section-5.1> parentheses syntax to group data that crosses
 a line boundary.
 .IP \(bu 2
 Note the missing whitespace between the closing parenthesis and adjacent tokens.
@@ -286,31 +287,31 @@ Output: \fBIN        HTTPS   1 . alpn=\(dqdot\(dq port=853\fP
 .B echo \(aqIN A 192.0.2.1\(aq | named\-rrchecker \-u
 .INDENT 7.0
 .IP \(bu 2
-Valid input in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format.
+Valid input in \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html> format.
 .IP \(bu 2
-Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3957.html'\fI\%RFC 3957\fP\X'tty: link' format: \fBCLASS1      TYPE1   \e# 4 C0000201\fP
+Output in \fBRFC 3957\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3957\:.html> format: \fBCLASS1      TYPE1   \e# 4 C0000201\fP
 .UNINDENT
 .TP
 .B echo \(aqCLASS1 TYPE1 \e# 4 C0000201\(aq | named\-rrchecker \-p
 .INDENT 7.0
 .IP \(bu 2
-Valid input in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format.
+Valid input in \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html> format.
 .IP \(bu 2
-Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format: \fBIN  A       192.0.2.1\fP
+Output in \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html> format: \fBIN  A       192.0.2.1\fP
 .UNINDENT
 .TP
 .B echo \(aqIN A \e# 4 C0000201\(aq | named\-rrchecker \-p
 .INDENT 7.0
 .IP \(bu 2
-Valid input with class and type in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format and rdata in \X'tty: link https://datatracker.ietf.org/doc/html/rfc3597.html'\fI\%RFC 3597\fP\X'tty: link' format.
+Valid input with class and type in \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html> format and rdata in \fBRFC 3597\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3597\:.html> format.
 .IP \(bu 2
-Output in \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link' format: \fBIN  A       192.0.2.1\fP
+Output in \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html> format: \fBIN  A       192.0.2.1\fP
 .UNINDENT
 .TP
 .B echo \(aqIN HTTPS 1 . key3=\e001\e000\(aq | named\-rrchecker \-p
 .INDENT 7.0
 .IP \(bu 2
-Valid input with \X'tty: link https://datatracker.ietf.org/doc/html/rfc9460.html'\fI\%RFC 9460\fP\X'tty: link' syntax for an unknown \fIkey3\fP field. Syntax \fB\e001\e000\fP produces two octets with values 1 and 0, respectively.
+Valid input with \fBRFC 9460\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc9460\:.html> syntax for an unknown \fIkey3\fP field. Syntax \fB\e001\e000\fP produces two octets with values 1 and 0, respectively.
 .IP \(bu 2
 Output: \fBIN        HTTPS   1 . port=256\fP
 .IP \(bu 2
@@ -364,10 +365,9 @@ supported, or either/both class and type are meta\-values, which should not appe
 .UNINDENT
 .SH SEE ALSO
 .sp
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc1034.html'\fI\%RFC 1034\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc1035.html'\fI\%RFC 1035\fP\X'tty: link', \X'tty: link https://datatracker.ietf.org/doc/html/rfc3957.html'\fI\%RFC 3957\fP\X'tty: link', \fI\%named(8)\fP\&.
-.SH AUTHOR
+\fBRFC 1034\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1034\:.html>, \fBRFC 1035\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1035\:.html>, \fBRFC 3957\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc3957\:.html>, \fBnamed(8)\fP \%<#\:std-iscman-named>\&.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

@@ -196,5 +196,22 @@ grep 'ns\.child\.example\.net\..300.IN.A.10\.53\.0\.1$' dig.out.test$n >/dev/nul
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status + ret))
 
+# Regression tests for #5616 [CVE-2025-13878] BRID and HHIT assertion failure.
+n=$((n + 1))
+echo_i "check that BRID query does not trigger assertion failure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 brid.example.com BRID >dig.out.test$n
+grep "BRID" dig.out.test$n >/dev/null || ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "check that HHIT query does not trigger assertion failure ($n)"
+ret=0
+$DIG $DIGOPTS @10.53.0.1 hhit.example.com HHIT >dig.out.test$n
+grep "HHIT" dig.out.test$n >/dev/null || ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=$((status + ret))
+
 echo_i "exit status: $status"
 [ $status -eq 0 ] || exit 1

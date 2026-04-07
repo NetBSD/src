@@ -1,4 +1,4 @@
-/*	$NetBSD: quota.h,v 1.1.1.10 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: quota.h,v 1.1.1.11 2026/04/07 23:58:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,7 +69,7 @@ struct isc_quota {
 	struct {
 		struct cds_wfcq_head head;
 		uint8_t		     __padding[ISC_OS_CACHELINE_SIZE -
-				       sizeof(struct __cds_wfcq_head)];
+					       sizeof(struct __cds_wfcq_head)];
 		struct cds_wfcq_tail tail;
 	} jobs;
 	ISC_LINK(isc_quota_t) link;

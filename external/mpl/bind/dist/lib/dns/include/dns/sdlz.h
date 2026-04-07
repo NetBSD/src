@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.h,v 1.1.1.6 2024/02/21 21:54:53 christos Exp $	*/
+/*	$NetBSD: sdlz.h,v 1.1.1.7 2026/04/07 23:58:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -334,8 +334,8 @@ dns_sdlz_putrr_t dns_sdlz_putrr;
  */
 
 typedef isc_result_t
-		  dns_sdlz_putsoa_t(dns_sdlzlookup_t *lookup, const char *mname,
-				    const char *rname, uint32_t serial);
+dns_sdlz_putsoa_t(dns_sdlzlookup_t *lookup, const char *mname,
+		  const char *rname, uint32_t serial);
 dns_sdlz_putsoa_t dns_sdlz_putsoa;
 /*%<
  * This function may optionally be called from the 'authority'

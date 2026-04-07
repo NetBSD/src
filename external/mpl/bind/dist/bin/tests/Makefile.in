@@ -512,7 +512,7 @@ LIBISCCC_CFLAGS = \
 LIBISCCC_LIBS = \
 	$(top_builddir)/lib/isccc/libisccc.la
 
-EXTRA_DIST = convert-trs-to-junit.py
+EXTRA_DIST = convert_trs_to_junit.py
 SUBDIRS = system
 test_client_CPPFLAGS = \
 	$(AM_CPPFLAGS)		\

@@ -1,0 +1,50 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set zones = ["autosign", "manual"] %}
+
+include "kasp.conf";
+include "named.common.conf";
+
+{% for tld in zones %}
+zone "step1.zsk-prepub.@tld@" {
+	type primary;
+	file "step1.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+zone "step2.zsk-prepub.@tld@" {
+	type primary;
+	file "step2.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+zone "step3.zsk-prepub.@tld@" {
+	type primary;
+	file "step3.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+zone "step4.zsk-prepub.@tld@" {
+	type primary;
+	file "step4.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+zone "step5.zsk-prepub.@tld@" {
+	type primary;
+	file "step5.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+zone "step6.zsk-prepub.@tld@" {
+	type primary;
+	file "step6.zsk-prepub.@tld@.db";
+	dnssec-policy "zsk-prepub-@tld@";
+};
+{% endfor %}

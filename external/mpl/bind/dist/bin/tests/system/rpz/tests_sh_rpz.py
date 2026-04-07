@@ -39,6 +39,8 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns3/bl.tld2.db",
         "ns3/evil-cname.db",
         "ns3/fast-expire.db",
+        "ns3/include-rpz.db",
+        "ns3/include-rpz.inc",
         "ns3/manual-update-rpz.db",
         "ns3/mixed-case-rpz.db",
         "ns3/named.conf.tmp",

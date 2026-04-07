@@ -9,20 +9,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta
 from time import sleep
+
 import os
 
 import dns.message
-import dns.query
-import dns.rcode
 
 import isctest
 
-
 # ISO datetime format without msec
-fmt = "%Y-%m-%dT%H:%M:%SZ"
+FMT = "%Y-%m-%dT%H:%M:%SZ"
 
 # The constants were taken from BIND 9 source code (lib/dns/zone.c)
 max_refresh = timedelta(seconds=2419200)  # 4 weeks
@@ -30,7 +28,7 @@ max_expires = timedelta(seconds=14515200)  # 24 weeks
 dayzero = datetime.utcfromtimestamp(0).replace(microsecond=0)
 
 # Wait for the secondary zone files to appear to extract their mtime
-max_secondary_zone_waittime_sec = 5
+MAX_SECONDARY_ZONE_WAITTIME_SEC = 5
 
 
 # Generic helper functions
@@ -46,7 +44,7 @@ def check_refresh(refresh, min_time, max_time):
 
 def check_loaded(loaded, expected, now):
     # Sanity check the zone timers values
-    assert (loaded - expected).total_seconds() < max_secondary_zone_waittime_sec
+    assert (loaded - expected).total_seconds() < MAX_SECONDARY_ZONE_WAITTIME_SEC
     assert loaded <= now
 
 
@@ -70,7 +68,7 @@ def check_manykeys(name, zone=None):
 
 def zone_mtime(zonedir, name):
     try:
-        si = os.stat(os.path.join(zonedir, "{}.db".format(name)))
+        si = os.stat(os.path.join(zonedir, f"{name}.db"))
     except FileNotFoundError:
         return dayzero
 
@@ -87,7 +85,7 @@ def test_zone_timers_primary(fetch_zones, load_timers, **kwargs):
     zones = fetch_zones(statsip, statsport)
 
     for zone in zones:
-        (name, loaded, expires, refresh) = load_timers(zone, True)
+        name, loaded, expires, refresh = load_timers(zone, True)
         mtime = zone_mtime(zonedir, name)
         check_zone_timers(loaded, expires, refresh, mtime)
 
@@ -98,12 +96,12 @@ def test_zone_timers_secondary(fetch_zones, load_timers, **kwargs):
     zonedir = kwargs["zonedir"]
 
     # If any one of the zone files isn't ready, then retry until timeout.
-    tries = max_secondary_zone_waittime_sec
+    tries = MAX_SECONDARY_ZONE_WAITTIME_SEC
     while tries >= 0:
         zones = fetch_zones(statsip, statsport)
         again = False
         for zone in zones:
-            (name, loaded, expires, refresh) = load_timers(zone, False)
+            name, loaded, expires, refresh = load_timers(zone, False)
             mtime = zone_mtime(zonedir, name)
             if (mtime != dayzero) or (tries == 0):
                 # mtime was either retrieved successfully or no tries were
@@ -161,7 +159,7 @@ def create_expected(data):
 def update_expected(expected, key, msg):
     msg_len = len(msg.to_wire())
     bucket_num = (msg_len // 16) * 16
-    bucket = "{}-{}".format(bucket_num, bucket_num + 15)
+    bucket = f"{bucket_num}-{bucket_num + 15}"
 
     expected[key][bucket] += 1
 

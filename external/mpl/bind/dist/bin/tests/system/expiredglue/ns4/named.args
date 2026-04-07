@@ -1,0 +1,1 @@
+-D expiredglue-ns4 -m record -c named.conf -d 99 -g -4 -T adbentrywindow=0 -T adbcachemin=1 -T maxcachesize=2097152

@@ -1,4 +1,4 @@
-/*	$NetBSD: dsync_66.c,v 1.1.1.1 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: dsync_66.c,v 1.1.1.2 2026/04/07 23:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -239,7 +239,7 @@ fromstruct_dsync(ARGS_FROMSTRUCT) {
 	UNUSED(rdclass);
 
 	RETERR(uint16_tobuffer(dsync->type, target));
-	RETERR(uint16_tobuffer(dsync->scheme, target));
+	RETERR(uint8_tobuffer(dsync->scheme, target));
 	RETERR(uint16_tobuffer(dsync->port, target));
 	dns_name_toregion(&dsync->target, &region);
 	return isc_buffer_copyregion(target, &region);

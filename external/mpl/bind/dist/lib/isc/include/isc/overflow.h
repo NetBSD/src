@@ -1,4 +1,4 @@
-/*	$NetBSD: overflow.h,v 1.1.1.1 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: overflow.h,v 1.1.1.2 2026/04/07 23:58:26 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@
 	({                                                        \
 		size_t _d;                                        \
 		bool   _overflow = ISC_OVERFLOW_MUL(a, b, &_d) || \
-				 ISC_OVERFLOW_ADD(_d, c, &_d);    \
+				   ISC_OVERFLOW_ADD(_d, c, &_d);  \
 		INSIST(!_overflow);                               \
 		_d;                                               \
 	})

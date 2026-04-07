@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.rdatatype
 import dns.rrset

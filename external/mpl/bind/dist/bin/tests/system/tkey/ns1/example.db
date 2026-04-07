@@ -9,19 +9,15 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-$TTL 1D
-
-@			IN SOA	ns hostmaster (
-				1
-				3600
-				1800
-				1814400
-				3
+$ORIGIN .
+$TTL 300	; 5 minutes
+example.nil		IN SOA	ns1.example.nil. hostmaster.example.nil. (
+				1	   ; serial
+				2000       ; refresh (2000 seconds)
+				2000       ; retry (2000 seconds)
+				1814400    ; expire (3 weeks)
+				3600       ; minimum (1 hour)
 				)
-			NS	ns
-ns			A	10.53.0.1
-mx			MX	10 mail
-a			A	10.53.0.1
-			A	10.53.0.2
-txt			TXT	"this is text"
-
+example.nil.		NS	ns1.example.nil.
+ns1.example.nil.	A	10.53.0.1
+a.example.nil.		A	10.53.0.1

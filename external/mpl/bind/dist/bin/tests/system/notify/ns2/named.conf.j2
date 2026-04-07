@@ -97,3 +97,19 @@ zone x18 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
 zone x19 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
 zone x20 { type primary; file "generic.db"; also-notify { 10.53.0.3; }; };
 zone x21 { type primary; file "x21.db"; allow-update { any; }; also-notify { x21; }; };
+
+key 10.53.0.53 {
+	algorithm hmac-sha256;
+	secret "aaaabbbbccccddddeeeeffffgggghhhhiiii";
+};
+
+server 10.53.0.53 {
+	notify-source 198.51.100.0; // non existant / not configured
+	keys 10.53.0.53;
+};
+
+zone "change-ns" {
+	type primary;
+	file "change-ns.db";
+	allow-update { any; };
+};

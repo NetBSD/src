@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.c,v 1.1.1.11 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.1.1.12 2026/04/07 23:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	 */
 	used = isc_buffer_usedlength(target);
 
-	RETERR(isc_base64_tobuffer(lexer, target, -2));
+	RETERR(isc_base64_tobuffer(lexer, target, isc_one_or_more));
 
 	if (alg == DNS_KEYALG_PRIVATEDNS || alg == DNS_KEYALG_PRIVATEOID) {
 		isc_buffer_t b;

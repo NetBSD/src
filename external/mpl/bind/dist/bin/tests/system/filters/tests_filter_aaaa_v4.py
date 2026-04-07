@@ -11,9 +11,6 @@
 
 import pytest
 
-import isctest
-import isctest.mark
-
 from filters.common import (
     ARTIFACTS,
     check_filter,
@@ -21,6 +18,7 @@ from filters.common import (
     prime_cache,
 )
 
+import isctest.mark
 
 pytestmark = pytest.mark.extra_artifacts(ARTIFACTS)
 

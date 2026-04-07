@@ -9,23 +9,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import Dict
 
 import time
 
 import dns.message
-
+import dns.rrset
 import pytest
 
-# isctest.asyncserver requires dnspython >= 2.0.0
-pytest.importorskip("dns", minversion="2.0.0")
+from isctest.instance import NamedInstance
 
 import isctest
-from isctest.instance import NamedInstance
 
 
 @pytest.fixture(autouse=True)
-def autouse_flush_resolver_cache(servers: Dict[str, NamedInstance]) -> None:
+def autouse_flush_resolver_cache(servers: dict[str, NamedInstance]) -> None:
     servers["ns4"].rndc("flush")
 
 
@@ -81,7 +78,7 @@ def check_domain_hijack(ns4: NamedInstance) -> None:
     )
 
 
-def test_bailiwick_sibling_ns_referral(servers: Dict[str, NamedInstance]) -> None:
+def test_bailiwick_sibling_ns_referral(servers: dict[str, NamedInstance]) -> None:
     set_spoofing_mode(ans1="sibling-ns", ans2="none")
 
     ns4 = servers["ns4"]
@@ -89,7 +86,7 @@ def test_bailiwick_sibling_ns_referral(servers: Dict[str, NamedInstance]) -> Non
     check_domain_hijack(ns4)
 
 
-def test_bailiwick_unsolicited_authority(servers: Dict[str, NamedInstance]) -> None:
+def test_bailiwick_unsolicited_authority(servers: dict[str, NamedInstance]) -> None:
     set_spoofing_mode(ans1="none", ans2="unsolicited-ns")
 
     ns4 = servers["ns4"]
@@ -98,7 +95,7 @@ def test_bailiwick_unsolicited_authority(servers: Dict[str, NamedInstance]) -> N
     check_domain_hijack(ns4)
 
 
-def test_bailiwick_parent_glue(servers: Dict[str, NamedInstance]) -> None:
+def test_bailiwick_parent_glue(servers: dict[str, NamedInstance]) -> None:
     set_spoofing_mode(ans1="none", ans2="parent-glue")
 
     ns4 = servers["ns4"]
@@ -111,7 +108,7 @@ def test_bailiwick_parent_glue(servers: Dict[str, NamedInstance]) -> None:
     check_domain_hijack(ns4)
 
 
-def test_bailiwick_spoofed_dname(servers: Dict[str, NamedInstance]) -> None:
+def test_bailiwick_spoofed_dname(servers: dict[str, NamedInstance]) -> None:
     set_spoofing_mode(ans1="none", ans2="dname")
 
     ns4 = servers["ns4"]

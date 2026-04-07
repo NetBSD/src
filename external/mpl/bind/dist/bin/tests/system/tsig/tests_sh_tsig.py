@@ -21,9 +21,6 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
-# TSIG queries not supported by isctest.asyncserver with old dnspython
-pytest.importorskip("dns", minversion="2.0.0")
-
 
 def test_tsig(run_tests_sh):
     run_tests_sh()

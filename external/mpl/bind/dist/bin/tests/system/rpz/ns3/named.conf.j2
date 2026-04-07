@@ -53,6 +53,7 @@ options {
 	    zone "bl.tld2";
 	    zone "manual-update-rpz"	ede forged;
 	    zone "mixed-case-rpz";
+	    zone "include-rpz";
 	    zone "evil-cname"  policy cname a12.tld2. ede blocked;
 	    zone "wild-cname"  ede blocked;
 	    zone "slow-rpz";
@@ -127,6 +128,12 @@ zone "manual-update-rpz." {
 zone "mixed-case-rpz." {
 	type primary;
 	file "mixed-case-rpz.db";
+	notify no;
+};
+
+zone "include-rpz." {
+	type primary;
+	file "include-rpz.db";
 	notify no;
 };
 

@@ -12,23 +12,19 @@
 # information regarding copyright ownership.
 
 
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 import os
 import sys
 import time
 
-import isctest
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.exception
-import dns.message
 import dns.name
 import dns.rcode
 import dns.rdataclass
 import dns.rdatatype
+import pytest
 
+import isctest
 
 pytestmark = [
     pytest.mark.skipif(
@@ -191,7 +187,7 @@ def keystate_check(server, zone, key):
 
 class CheckDSTest(NamedTuple):
     zone: str
-    logs_to_wait_for: Tuple[str]
+    logs_to_wait_for: tuple[str]
     expected_parent_state: str
 
 

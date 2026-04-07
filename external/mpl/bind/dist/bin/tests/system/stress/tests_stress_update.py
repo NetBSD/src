@@ -12,6 +12,8 @@
 import concurrent.futures
 import time
 
+import dns.exception
+import dns.rcode
 import dns.update
 import pytest
 

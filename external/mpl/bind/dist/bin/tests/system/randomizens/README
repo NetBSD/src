@@ -1,0 +1,21 @@
+Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+
+SPDX-License-Identifier: MPL-2.0
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v. 2.0.  If a copy of the MPL was not distributed with this
+file, you can obtain one at https://mozilla.org/MPL/2.0/.
+
+See the COPYRIGHT file distributed with this work for additional
+information regarding copyright ownership.
+
+ns1 is root
+ns{2-4} are auth server on example. but lame
+ns5 is an auth server on example. and works
+ns6 is a resolver
+
+Because `getaddresses_allowed()` logic won't allow to query more than 3 NS at
+the top-level, only ns{2-4} will be tried without randomization, and example.
+couldn't be resolved. However, with randomization, some queries won't start
+picking example. NS from ns2, but ns3, ns4 or ns5. This enable to resolver
+example.

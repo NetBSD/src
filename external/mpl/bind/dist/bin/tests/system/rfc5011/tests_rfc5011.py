@@ -10,6 +10,7 @@
 # information regarding copyright ownership.
 
 import pytest
+
 from isctest.mark import live_internet_test
 
 pytestmark = pytest.mark.extra_artifacts(

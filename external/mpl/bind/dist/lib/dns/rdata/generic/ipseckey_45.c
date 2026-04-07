@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.1.1.11 2026/01/29 18:19:54 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.1.1.12 2026/04/07 23:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,7 +120,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	/*
 	 * Public key.
 	 */
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t

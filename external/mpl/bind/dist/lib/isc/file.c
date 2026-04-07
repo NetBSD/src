@@ -1,4 +1,4 @@
-/*	$NetBSD: file.c,v 1.1.1.2 2025/01/26 16:12:30 christos Exp $	*/
+/*	$NetBSD: file.c,v 1.1.1.3 2026/04/07 23:58:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -355,7 +355,7 @@ isc_file_openuniquemode(char *templet, int mode, FILE **fp) {
 			return isc__errno2result(errno);
 		}
 		for (cp = x;;) {
-			char *t;
+			const char *t;
 			if (*cp == '\0') {
 				return ISC_R_FAILURE;
 			}

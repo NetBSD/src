@@ -9,27 +9,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=redefined-outer-name,unused-import
-
-import os
 import shutil
 import time
 
-import dns.update
+import dns.name
+import dns.rdataclass
+import dns.rdatatype
 import pytest
 
-pytest.importorskip("dns", minversion="2.0.0")
-import isctest
-import isctest.mark
-from isctest.vars.algorithms import RSASHA1
-from nsec3.common import (
-    ALGORITHM,
-    SIZE,
-    default_config,
-    pytestmark,
-    check_nsec3_case,
-)
+from isctest.vars.algorithms import Algorithm
+from nsec3.common import NSEC3_MARK, check_nsec3_case
 
+import isctest
+
+pytestmark = NSEC3_MARK
 
 # include the following zones when rendering named configs
 ZONES = {
@@ -63,6 +56,7 @@ def after_servers_start(ns3, templates):
     fqdn = f"{zone}."
     isctest.kasp.wait_keymgr_done(ns3, zone)
 
+    time.sleep(1)
     shutil.copyfile(f"{nsdir}/template2.db.in", f"{nsdir}/{zone}.db")
     ns3.rndc(f"reload {zone}")
 
@@ -100,7 +94,7 @@ def test_nsec3_case(ns3):
             "salt-length": 8,
         },
         "key-properties": [
-            f"csk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
+            f"csk 0 {Algorithm.default().number} {Algorithm.default().bits} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
         ],
     }
     zone = params["zone"]

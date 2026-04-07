@@ -11,22 +11,18 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=unused-variable
-
 import socket
 import time
 
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
 import dns.edns
 import dns.message
 import dns.name
 import dns.query
 import dns.rdataclass
 import dns.rdatatype
+import pytest
 
-import isctest.mark  # pylint: disable=import-error
+import isctest.mark
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -170,7 +166,7 @@ def test_long_axfr(named_port):
         dns.query.send_tcp(sock, msg, timeout())
 
         # Receive the initial DNS message with SOA
-        (response, _) = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
+        response, _ = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
         soa = response.get_rrset(
             dns.message.ANSWER, name, dns.rdataclass.IN, dns.rdatatype.SOA
         )
@@ -178,9 +174,7 @@ def test_long_axfr(named_port):
 
         # Pull DNS message from wire until the second SOA is received
         while True:
-            (response, _) = dns.query.receive_tcp(
-                sock, timeout(), one_rr_per_rrset=True
-            )
+            response, _ = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
             soa = response.get_rrset(
                 dns.message.ANSWER, name, dns.rdataclass.IN, dns.rdatatype.SOA
             )
@@ -226,7 +220,7 @@ def test_max_transfer_idle_out(named_port):
         dns.query.send_tcp(sock, msg, timeout())
 
         # Receive the initial DNS message with SOA
-        (response, _) = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
+        response, _ = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
         soa = response.get_rrset(
             dns.message.ANSWER, name, dns.rdataclass.IN, dns.rdatatype.SOA
         )
@@ -237,7 +231,7 @@ def test_max_transfer_idle_out(named_port):
         with pytest.raises(ConnectionResetError):
             # Process queued TCP messages
             while True:
-                (response, _) = dns.query.receive_tcp(
+                response, _ = dns.query.receive_tcp(
                     sock, timeout(), one_rr_per_rrset=True
                 )
                 soa = response.get_rrset(
@@ -258,7 +252,7 @@ def test_max_transfer_time_out(named_port):
         dns.query.send_tcp(sock, msg, timeout())
 
         # Receive the initial DNS message with SOA
-        (response, _) = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
+        response, _ = dns.query.receive_tcp(sock, timeout(), one_rr_per_rrset=True)
         soa = response.get_rrset(
             dns.message.ANSWER, name, dns.rdataclass.IN, dns.rdatatype.SOA
         )
@@ -268,7 +262,7 @@ def test_max_transfer_time_out(named_port):
         with pytest.raises(EOFError):
             while True:
                 time.sleep(1)
-                (response, _) = dns.query.receive_tcp(
+                response, _ = dns.query.receive_tcp(
                     sock, timeout(), one_rr_per_rrset=True
                 )
                 soa = response.get_rrset(

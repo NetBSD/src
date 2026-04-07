@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.1.1.21 2026/01/29 18:19:53 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.1.1.22 2026/04/07 23:58:31 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <isc/hash.h>
 #include <isc/hashmap.h>
 #include <isc/hex.h>
+#include <isc/list.h>
 #include <isc/loop.h>
 #include <isc/md.h>
 #include <isc/mutex.h>
@@ -573,7 +574,7 @@ typedef enum {
 	DNS_ZONEFLG___MAX = UINT64_MAX, /* trick to make the ENUM 64-bit wide */
 } dns_zoneflg_t;
 
-#define DNS_ZONE_OPTION(z, o)	 ((atomic_load_relaxed(&(z)->options) & (o)) != 0)
+#define DNS_ZONE_OPTION(z, o) ((atomic_load_relaxed(&(z)->options) & (o)) != 0)
 #define DNS_ZONE_SETOPTION(z, o) atomic_fetch_or(&(z)->options, (o))
 #define DNS_ZONE_CLROPTION(z, o) atomic_fetch_and(&(z)->options, ~(o))
 
@@ -12749,7 +12750,8 @@ again:
 
 	isc_tlsctx_cache_detach(&zmgr_tlsctx_cache);
 
-	if (result == ISC_R_SUCCESS) {
+	switch (result) {
+	case ISC_R_SUCCESS:
 		if (isc_sockaddr_pf(&notify->dst) == AF_INET) {
 			inc_stats(notify->zone,
 				  dns_zonestatscounter_notifyoutv4);
@@ -12757,14 +12759,24 @@ again:
 			inc_stats(notify->zone,
 				  dns_zonestatscounter_notifyoutv6);
 		}
-	} else if (result == ISC_R_SHUTTINGDOWN || result == ISC_R_CANCELED) {
-		goto cleanup_key;
-	} else if ((notify->flags & DNS_NOTIFY_TCP) == 0) {
+		break;
+	case ISC_R_SHUTTINGDOWN:
+	case ISC_R_CANCELED:
+	case ISC_R_ADDRNOTAVAIL:
+	case DNS_R_BLACKHOLED:
+	case ISC_R_FAMILYNOSUPPORT:
 		notify_log(notify->zone, ISC_LOG_NOTICE,
-			   "notify to %s failed: %s: retrying over TCP",
-			   addrbuf, isc_result_totext(result));
-		notify->flags |= DNS_NOTIFY_TCP;
-		goto again;
+			   "notify to %s failed: %s", addrbuf,
+			   isc_result_totext(result));
+		break;
+	default:
+		if ((notify->flags & DNS_NOTIFY_TCP) == 0) {
+			notify_log(notify->zone, ISC_LOG_NOTICE,
+				   "notify to %s failed: %s: retrying over TCP",
+				   addrbuf, isc_result_totext(result));
+			notify->flags |= DNS_NOTIFY_TCP;
+			goto again;
+		}
 	}
 
 cleanup_key:
@@ -13011,6 +13023,9 @@ zone_notify(dns_zone_t *zone, isc_time_t *now) {
 					      "could not get TLS configuration "
 					      "for zone transfer: %s",
 					      isc_result_totext(result));
+				if (key != NULL) {
+					dns_tsigkey_detach(&key);
+				}
 				goto next;
 			}
 
@@ -13024,6 +13039,12 @@ zone_notify(dns_zone_t *zone, isc_time_t *now) {
 		INSIST(isc_sockaddr_pf(&src) == isc_sockaddr_pf(&dst));
 
 		if (isc_sockaddr_disabled(&dst)) {
+			if (key != NULL) {
+				dns_tsigkey_detach(&key);
+			}
+			if (transport != NULL) {
+				dns_transport_detach(&transport);
+			}
 			goto next;
 		}
 
@@ -14776,7 +14797,7 @@ ns_query(dns_zone_t *zone, dns_rdataset_t *soardataset, dns_stub_t *stub) {
 	bool reqnsid;
 	uint16_t udpsize = SEND_BUFFER_SIZE;
 	isc_sockaddr_t curraddr, sourceaddr;
-	struct stub_cb_args *cb_args;
+	struct stub_cb_args *cb_args = NULL;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 	REQUIRE(LOCKED_ZONE(zone));
@@ -14997,6 +15018,9 @@ cleanup:
 	}
 	if (stub->zone != NULL) {
 		zone_idetach(&stub->zone);
+	}
+	if (cb_args != NULL) {
+		isc_mem_put(zone->mctx, cb_args, sizeof(*cb_args));
 	}
 	isc_mem_put(stub->mctx, stub, sizeof(*stub));
 	if (message != NULL) {
@@ -18276,7 +18300,7 @@ zone_loaddone(void *arg, isc_result_t result) {
 	 * If zone loading failed, remove the update db callbacks prior
 	 * to calling the list of callbacks in the zone load structure.
 	 */
-	if (result != ISC_R_SUCCESS) {
+	if (result != ISC_R_SUCCESS && result != DNS_R_SEENINCLUDE) {
 		dns_zone_rpz_disable_db(zone, load->db);
 		dns_zone_catz_disable_db(zone, load->db);
 	}
@@ -21342,7 +21366,7 @@ checkds_isqueued(dns_zone_t *zone, dns_name_t *name, isc_sockaddr_t *addr,
 	return false;
 }
 
-static isc_result_t
+static void
 checkds_create(isc_mem_t *mctx, unsigned int flags, dns_checkds_t **checkdsp) {
 	dns_checkds_t *checkds;
 
@@ -21350,16 +21374,17 @@ checkds_create(isc_mem_t *mctx, unsigned int flags, dns_checkds_t **checkdsp) {
 
 	checkds = isc_mem_get(mctx, sizeof(*checkds));
 	*checkds = (dns_checkds_t){
+		.magic = CHECKDS_MAGIC,
 		.flags = flags,
+		.link = ISC_LINK_INITIALIZER,
+		.ns = DNS_NAME_INITEMPTY,
 	};
 
 	isc_mem_attach(mctx, &checkds->mctx);
+
 	isc_sockaddr_any(&checkds->dst);
-	dns_name_init(&checkds->ns, NULL);
-	ISC_LINK_INIT(checkds, link);
-	checkds->magic = CHECKDS_MAGIC;
+
 	*checkdsp = checkds;
-	return ISC_R_SUCCESS;
 }
 
 static void
@@ -21652,10 +21677,7 @@ checkds_send_tons(dns_checkds_t *checkds) {
 		}
 
 		newcheckds = NULL;
-		result = checkds_create(checkds->mctx, 0, &newcheckds);
-		if (result != ISC_R_SUCCESS) {
-			goto cleanup;
-		}
+		checkds_create(checkds->mctx, 0, &newcheckds);
 		zone_iattach(zone, &newcheckds->zone);
 		ISC_LIST_APPEND(newcheckds->zone->checkds_requests, newcheckds,
 				link);
@@ -21745,6 +21767,12 @@ checkds_send(dns_zone_t *zone) {
 		INSIST(isc_sockaddr_pf(&src) == isc_sockaddr_pf(&dst));
 
 		if (isc_sockaddr_disabled(&dst)) {
+			if (key != NULL) {
+				dns_tsigkey_detach(&key);
+			}
+			if (transport != NULL) {
+				dns_transport_detach(&transport);
+			}
 			goto next;
 		}
 
@@ -21769,14 +21797,7 @@ checkds_send(dns_zone_t *zone) {
 			     "parent %d",
 			     i);
 
-		result = checkds_create(zone->mctx, flags, &checkds);
-		if (result != ISC_R_SUCCESS) {
-			dns_zone_log(zone, ISC_LOG_DEBUG(3),
-				     "checkds: create DS query for "
-				     "parent %d failed",
-				     i);
-			goto next;
-		}
+		checkds_create(zone->mctx, flags, &checkds);
 		zone_iattach(zone, &checkds->zone);
 		dns_name_dup(dns_rootname, checkds->mctx, &checkds->ns);
 		checkds->src = src;
@@ -21930,13 +21951,7 @@ nsfetch_done(void *arg) {
 		if (isqueued) {
 			continue;
 		}
-		result = checkds_create(zone->mctx, 0, &checkds);
-		if (result != ISC_R_SUCCESS) {
-			dns_zone_log(zone, ISC_LOG_DEBUG(3),
-				     "checkds: checkds_create() failed: %s",
-				     isc_result_totext(result));
-			break;
-		}
+		checkds_create(zone->mctx, 0, &checkds);
 
 		if (isc_log_wouldlog(dns_lctx, ISC_LOG_DEBUG(3))) {
 			char nsnamebuf[DNS_NAME_FORMATSIZE];

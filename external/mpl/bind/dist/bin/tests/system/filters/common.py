@@ -9,11 +9,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import dns
 from dns import rdataclass, rdatatype
 
-import isctest
+import dns.name
 
+import isctest
 
 ARTIFACTS = [
     "conf/*.conf",

@@ -16,18 +16,12 @@ import os
 import re
 import sys
 
-import isctest
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.exception
-import dns.message
-import dns.name
 import dns.query
 import dns.rcode
-import dns.rdataclass
-import dns.rdatatype
+import dns.zone
+import pytest
 
+import isctest
 
 pytestmark = [
     pytest.mark.skipif(

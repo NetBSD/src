@@ -11,6 +11,7 @@
  * information regarding copyright ownership.
  */
 
+{% set ns4_as_secondary_for_nil = ns4_as_secondary_for_nil | default(False) %}
 options {
 	query-source address 10.53.0.4;
 	notify-source 10.53.0.4;
@@ -49,3 +50,11 @@ zone "." {
 	type primary;
 	file "root.db";
 };
+
+{% if ns4_as_secondary_for_nil %}
+zone "nil" {
+    type secondary;
+    file "nil.db";
+    primaries { 10.53.0.5 key tsig_key; };
+};
+{% endif %}

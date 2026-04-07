@@ -9,25 +9,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=redefined-outer-name,unused-import
-
-import os
-import shutil
-
 from datetime import timedelta
 
-import dns.update
-import pytest
+import os
 
-pytest.importorskip("dns", minversion="2.0.0")
-import isctest
-import isctest.mark
+import dns.rcode
+import dns.rdatatype
+
 from isctest.vars.algorithms import RSASHA256
-from nsec3.common import (
-    pytestmark,
-    check_auth_nsec3,
-    check_nsec3param,
-)
+from nsec3.common import NSEC3_MARK, check_auth_nsec3, check_nsec3param
+
+import isctest
+
+pytestmark = NSEC3_MARK
 
 DNSKEY_TTL = int(timedelta(hours=1).total_seconds())
 ZSK_LIFETIME = int(timedelta(days=90).total_seconds())

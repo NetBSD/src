@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -68,9 +69,9 @@ This option indicates the directory where BIND 9 should look for \fBdsset\-\fP o
 .B \-D
 This option indicates that only those record types automatically managed by
 \fBdnssec\-signzone\fP, i.e., RRSIG, NSEC, NSEC3 and NSEC3PARAM records, should be included in the output.
-If smart signing (\fI\%\-S\fP) is used, DNSKEY records are also included.
+If smart signing (\fB\-S\fP) is used, DNSKEY records are also included.
 The resulting file can be included in the original zone file with
-\fB$INCLUDE\fP\&. This option cannot be combined with \fI\%\-O raw\fP
+\fB$INCLUDE\fP\&. This option cannot be combined with \fB\-O raw\fP
 or serial\-number updating.
 .UNINDENT
 .INDENT 0.0
@@ -132,7 +133,7 @@ which is useful to know when rolling keys. The maxttl is the longest
 possible time before signatures that have been retrieved by resolvers
 expire from resolver caches. Zones that are signed with this
 option should be configured to use a matching \fBmax\-zone\-ttl\fP in
-\fI\%named.conf\fP\&. (Note: This option is incompatible with \fI\%\-D\fP,
+\fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&. (Note: This option is incompatible with \fB\-D\fP,
 because it modifies non\-DNSSEC data in the output zone.)
 .UNINDENT
 .INDENT 0.0
@@ -265,7 +266,7 @@ This option sets the SOA serial number format of the signed zone. Possible forma
 This format indicates that the SOA serial number should not be modified.
 .TP
 \fBincrement\fP
-This format increments the SOA serial number using \X'tty: link https://datatracker.ietf.org/doc/html/rfc1982.html'\fI\%RFC 1982\fP\X'tty: link' arithmetic.
+This format increments the SOA serial number using \fBRFC 1982\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc1982\:.html> arithmetic.
 .TP
 \fBunixtime\fP
 This format sets the SOA serial number to the number of seconds
@@ -294,8 +295,8 @@ zone. Possible formats are \fBtext\fP (the default), which is the standard
 textual representation of the zone; \fBfull\fP, which is text output in a
 format suitable for processing by external scripts; and \fBraw\fP and
 \fBraw=N\fP, which store the zone in binary formats for rapid loading by
-\fI\%named\fP\&. \fBraw=N\fP specifies the format version of the raw zone file:
-if N is 0, the raw file can be read by any version of \fI\%named\fP; if N is
+\fBnamed\fP \%<#\:std-iscman-named>\&. \fBraw=N\fP specifies the format version of the raw zone file:
+if N is 0, the raw file can be read by any version of \fBnamed\fP \%<#\:std-iscman-named>; if N is
 1, the file can be read by release 9.9.0 or higher. The default is 1.
 .UNINDENT
 .INDENT 0.0
@@ -317,10 +318,10 @@ Normally, when a previously signed zone is passed as input to the
 signer, and a DNSKEY record has been removed and replaced with a new
 one, signatures from the old key that are still within their validity
 period are retained. This allows the zone to continue to validate
-with cached copies of the old DNSKEY RRset. The \fI\%\-Q\fP option forces
+with cached copies of the old DNSKEY RRset. The \fB\-Q\fP option forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 active. This enables ZSK rollover using the procedure described in
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html#section-4.1.1.1'\fI\%RFC 6781 Section 4.1.1.1\fP\X'tty: link' (\(dqPre\-Publish Zone Signing Key Rollover\(dq).
+\fBRFC 6781 Section 4.1.1.1\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc6781\:.html#\:section-4\:.1\:.1.1> (\(dqPre\-Publish Zone Signing Key Rollover\(dq).
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -336,10 +337,10 @@ zone. With the option that output is suppressed, leaving only the filename.
 .B \-R
 This option removes signatures from keys that are no longer published.
 .sp
-This option is similar to \fI\%\-Q\fP, except it forces
+This option is similar to \fB\-Q\fP, except it forces
 \fBdnssec\-signzone\fP to remove signatures from keys that are no longer
 published. This enables ZSK rollover using the procedure described in
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html#section-4.1.1.2'\fI\%RFC 6781 Section 4.1.1.2\fP\X'tty: link' (\(dqDouble Signature Zone Signing Key
+\fBRFC 6781 Section 4.1.1.2\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc6781\:.html#\:section-4\:.1\:.1.2> (\(dqDouble Signature Zone Signing Key
 Rollover\(dq).
 .UNINDENT
 .INDENT 0.0
@@ -386,7 +387,7 @@ synchronization records (type CDS and/or CDNSKEY) are removed.
 This option specifies a TTL to be used for new DNSKEY records imported into the
 zone from the key repository. If not specified, the default is the
 TTL value from the zone\(aqs SOA record. This option is ignored when
-signing without \fI\%\-S\fP, since DNSKEY records are not imported from
+signing without \fB\-S\fP, since DNSKEY records are not imported from
 the key repository in that case. It is also ignored if there are any
 pre\-existing DNSKEY records at the zone apex, in which case new
 records\(aq TTL values are set to match them, or if any of the
@@ -432,11 +433,11 @@ This option generates an NSEC3 chain with the given hex\-encoded salt. A dash
 (\-) can be used to indicate that no salt is to be used when
 generating the NSEC3 chain.
 .sp
-\fBNOTE:\fP
+\fBNote:\fP
 .INDENT 7.0
 .INDENT 3.5
 \fB\-3 \-\fP is the recommended configuration. Adding salt provides no practical benefits.
-See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
+See \fBRFC 9276\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc9276\:.html>\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -446,11 +447,11 @@ See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 927
 This option indicates that, when generating an NSEC3 chain, BIND 9 should use this many iterations. The default
 is 0.
 .sp
-\fBWARNING:\fP
+\fBWarning:\fP
 .INDENT 7.0
 .INDENT 3.5
 Values greater than 0 cause interoperability issues and also increase the risk of CPU\-exhausting DoS attacks.
-See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
+See \fBRFC 9276\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc9276\:.html>\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -460,11 +461,11 @@ See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 927
 This option indicates that, when generating an NSEC3 chain, BIND 9 should set the OPTOUT flag on all NSEC3
 records and should not generate NSEC3 records for insecure delegations.
 .sp
-\fBWARNING:\fP
+\fBWarning:\fP
 .INDENT 7.0
 .INDENT 3.5
 Do not use this option unless all its implications are fully understood. This option is intended only for extremely large zones (comparable to \fBcom.\fP) with sparse secure delegations.
-See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 9276\fP\X'tty: link'\&.
+See \fBRFC 9276\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc9276\:.html>\&.
 .UNINDENT
 .UNINDENT
 .UNINDENT
@@ -472,7 +473,7 @@ See \X'tty: link https://datatracker.ietf.org/doc/html/rfc9276.html'\fI\%RFC 927
 .TP
 .B \-AA
 This option turns the OPTOUT flag off for
-all records. This is useful when using the \fI\%\-u\fP option to modify an
+all records. This is useful when using the \fB\-u\fP option to modify an
 NSEC3 chain which previously had OPTOUT set.
 .UNINDENT
 .INDENT 0.0
@@ -491,11 +492,11 @@ the current directory, they are used for signing.
 .SH EXAMPLE
 .sp
 The following command signs the \fBexample.com\fP zone with the
-ECDSAP256SHA256 key generated by \fI\%dnssec\-keygen\fP
-(Kexample.com.+013+17247). Because the \fI\%\-S\fP option is not being used,
+ECDSAP256SHA256 key generated by \fBdnssec\-keygen\fP \%<#\:std-iscman-dnssec-keygen>
+(Kexample.com.+013+17247). Because the \fB\-S\fP option is not being used,
 the zone\(aqs keys must be in the master file (\fBdb.example.com\fP). This
 invocation looks for \fBdsset\fP files in the current directory, so that
-DS records can be imported from them (\fI\%\-g\fP).
+DS records can be imported from them (\fB\-g\fP).
 .INDENT 0.0
 .INDENT 3.5
 .sp
@@ -510,7 +511,7 @@ db.example.com.signed
 .sp
 In the above example, \fBdnssec\-signzone\fP creates the file
 \fBdb.example.com.signed\fP\&. This file should be referenced in a zone
-statement in the \fI\%named.conf\fP file.
+statement in the \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf> file.
 .sp
 This example re\-signs a previously signed zone with default parameters.
 The private keys are assumed to be in the current directory.
@@ -527,11 +528,10 @@ db.example.com.signed
 .UNINDENT
 .SH SEE ALSO
 .sp
-\fI\%dnssec\-keygen(8)\fP, BIND 9 Administrator Reference Manual, \X'tty: link https://datatracker.ietf.org/doc/html/rfc4033.html'\fI\%RFC 4033\fP\X'tty: link',
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc6781.html'\fI\%RFC 6781\fP\X'tty: link'\&.
-.SH AUTHOR
+\fBdnssec\-keygen(8)\fP \%<#\:std-iscman-dnssec-keygen>, BIND 9 Administrator Reference Manual, \fBRFC 4033\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc4033\:.html>,
+\fBRFC 6781\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc6781\:.html>\&.
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

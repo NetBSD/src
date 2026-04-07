@@ -9,7 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.edns
 import dns.name
@@ -20,12 +20,11 @@ import dns.tsigkeyring
 
 from isctest.asyncserver import (
     AsyncDnsServer,
-    ResponseHandler,
-    DnsResponseSend,
     DnsProtocol,
+    DnsResponseSend,
     QueryContext,
+    ResponseHandler,
 )
-
 from isctest.name import prepend_label
 from isctest.vars.algorithms import ALG_VARS
 
@@ -194,13 +193,11 @@ def cookie_server(evil: bool) -> AsyncDnsServer:
         keyring=KEYRING, default_aa=True, default_rcode=dns.rcode.NOERROR
     )
     server.install_response_handlers(
-        [
-            NsHandler(evil),
-            GlueHandler(evil),
-            TcpAHandler(),
-            WithtsigUdpAHandler(),
-            UdpAHandler(),
-            FallbackHandler(),
-        ]
+        NsHandler(evil),
+        GlueHandler(evil),
+        TcpAHandler(),
+        WithtsigUdpAHandler(),
+        UdpAHandler(),
     )
+    server.install_response_handler(FallbackHandler())
     return server

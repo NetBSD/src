@@ -13,8 +13,9 @@
 
 # Depends on CWD - Sphinx plugin
 
-import json
 from pathlib import Path
+
+import json
 
 import parsegrammar
 

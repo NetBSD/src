@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.1.1.15 2026/01/29 18:19:44 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.1.1.16 2026/04/07 23:58:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,11 +60,11 @@
 
 #define STATS_XML_VERSION_MAJOR "3"
 #define STATS_XML_VERSION_MINOR "14"
-#define STATS_XML_VERSION	STATS_XML_VERSION_MAJOR "." STATS_XML_VERSION_MINOR
+#define STATS_XML_VERSION STATS_XML_VERSION_MAJOR "." STATS_XML_VERSION_MINOR
 
 #define STATS_JSON_VERSION_MAJOR "1"
 #define STATS_JSON_VERSION_MINOR "8"
-#define STATS_JSON_VERSION	 STATS_JSON_VERSION_MAJOR "." STATS_JSON_VERSION_MINOR
+#define STATS_JSON_VERSION STATS_JSON_VERSION_MAJOR "." STATS_JSON_VERSION_MINOR
 
 struct named_statschannel {
 	/* Unlocked */

@@ -9,17 +9,17 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import Any, List, Match, Optional, Pattern, TextIO, TypeVar, Union
+from re import Match, Pattern
+from typing import Any, TextIO, TypeAlias, TypeVar
 
 import abc
 import os
 import time
 
-from isctest.text import compile_pattern, FlexPattern, LineReader
-
+from isctest.text import FlexPattern, LineReader, compile_pattern
 
 T = TypeVar("T")
-OneOrMore = Union[T, List[T]]
+OneOrMore: TypeAlias = T | list[T]
 
 
 class WatchLogException(Exception):
@@ -63,8 +63,8 @@ class WatchLog(abc.ABC):
           ...
         isctest.log.watchlog.WatchLogException: timeout must be greater than 0
         """
-        self._fd: Optional[TextIO] = None
-        self._reader: Optional[LineReader] = None
+        self._fd: TextIO | None = None
+        self._reader: LineReader | None = None
         self._path = path
         self._wait_function_called = False
         if timeout <= 0.0:
@@ -72,12 +72,12 @@ class WatchLog(abc.ABC):
         self._timeout = timeout
         self._deadline = 0.0
 
-    def _setup_wait(self, patterns: OneOrMore[FlexPattern]) -> List[Pattern]:
+    def _setup_wait(self, patterns: OneOrMore[FlexPattern]) -> list[Pattern]:
         self._wait_function_called = True
         self._deadline = time.monotonic() + self._timeout
         return self._prepare_patterns(patterns)
 
-    def _prepare_patterns(self, strings: OneOrMore[FlexPattern]) -> List[Pattern]:
+    def _prepare_patterns(self, strings: OneOrMore[FlexPattern]) -> list[Pattern]:
         """
         Convert a mix of string(s) and/or pattern(s) into a list of patterns.
 
@@ -91,7 +91,7 @@ class WatchLog(abc.ABC):
             patterns.append(compile_pattern(string))
         return patterns
 
-    def _wait_for_match(self, regexes: List[Pattern]) -> Match:
+    def _wait_for_match(self, regexes: list[Pattern]) -> Match:
         if not self._reader:
             raise WatchLogException(
                 "use WatchLog as context manager before calling wait_for_*() functions"
@@ -210,7 +210,7 @@ class WatchLog(abc.ABC):
 
         return self._wait_for_match(regexes)
 
-    def wait_for_sequence(self, patterns: List[FlexPattern]) -> List[Match]:
+    def wait_for_sequence(self, patterns: list[FlexPattern]) -> list[Match]:
         """
         Block execution until the specified pattern sequence is found in the
         log file.
@@ -286,7 +286,7 @@ class WatchLog(abc.ABC):
 
         return matches
 
-    def wait_for_all(self, patterns: List[FlexPattern]) -> List[Match]:
+    def wait_for_all(self, patterns: list[FlexPattern]) -> list[Match]:
         """
         Block execution until all the specified patterns are found in the
         log file in any order.

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.1.1.14 2026/01/29 18:19:38 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.1.1.15 2026/04/07 23:58:10 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3318,7 +3318,7 @@ usage(int ret) {
 	fprintf(stderr, "\t-n ncpus (number of cpus present)\n");
 	fprintf(stderr, "\t-k key_signing_key\n");
 	fprintf(stderr, "\t-3 NSEC3 salt\n");
-	fprintf(stderr, "\t-H NSEC3 iterations (10)\n");
+	fprintf(stderr, "\t-H NSEC3 additional iterations (%d)\n", nsec3iter);
 	fprintf(stderr, "\t-A NSEC3 optout\n");
 
 	fprintf(stderr, "\n");
@@ -4184,6 +4184,7 @@ main(int argc, char *argv[]) {
 			    &sign_finish);
 	}
 	isc_mutex_destroy(&namelock);
+	isc_rwlock_destroy(&keylist_lock);
 
 	rcu_barrier();
 

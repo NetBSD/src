@@ -32,27 +32,16 @@ n=0
 DIGOPTS="+tcp +noadd +nosea +nostat +noquest +nocomm +nocmd -p ${PORT}"
 RNDCCMD="$RNDC -p ${CONTROLPORT} -c ../_common/rndc.conf -s"
 
-sendcmd() {
-  send 10.53.0.2 "${EXTRAPORT1}"
+switch_responses() {
+  RESPONSES_KEY="${1}"
+  $DIG $DIGOPTS "@10.53.0.2" "${RESPONSES_KEY}.switch._control." TXT +time=5 +tries=1 +tcp >/dev/null 2>&1
 }
 
 n=$((n + 1))
 echo_i "testing initial AXFR ($n)"
 ret=0
 
-sendcmd <<EOF
-/SOA/
-nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
-/AXFR/
-nil.      	300	NS	ns.nil.
-nil.		300	TXT	"initial AXFR"
-a.nil.		60	A	10.0.0.61
-b.nil.		60	A	10.0.0.62
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
-EOF
+switch_responses "initial_axfr"
 
 sleep 1
 
@@ -84,21 +73,7 @@ ret=0
 # We change the IP address of a.nil., and the TXT record at the apex.
 # Then we do a SOA-only update.
 
-sendcmd <<EOF
-/SOA/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-/IXFR/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 1 300 300 604800 300
-a.nil.      	60	A	10.0.0.61
-nil.		300	TXT	"initial AXFR"
-nil.      	300	SOA	ns.nil. root.nil. 2 300 300 604800 300
-nil.		300	TXT	"successful IXFR"
-a.nil.      	60	A	10.0.1.61
-nil.      	300	SOA	ns.nil. root.nil. 2 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-EOF
+switch_responses "successful_ixfr"
 
 sleep 1
 
@@ -115,25 +90,7 @@ echo_i "testing AXFR fallback after IXFR failure (not exact error) ($n)"
 ret=0
 
 # Provide a broken IXFR response and a working fallback AXFR response
-
-sendcmd <<EOF
-/SOA/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/IXFR/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-nil.      	300	TXT	"delete-nonexistent-txt-record"
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-nil.      	300	TXT	"this-txt-record-would-be-added"
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-/AXFR/
-nil.      	300	NS	ns.nil.
-nil.      	300	TXT	"fallback AXFR"
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-EOF
+switch_responses "not_exact"
 
 sleep 1
 
@@ -150,28 +107,7 @@ echo_i "testing AXFR fallback after IXFR failure (too many records) ($n)"
 ret=0
 
 # Provide an IXFR response that would cause a "too many records" condition
-
-sendcmd <<EOF
-/SOA/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/IXFR/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-nil.      	300	TXT	"text 1"
-nil.      	300	TXT	"text 2"
-nil.      	300	TXT	"text 3"
-nil.      	300	TXT	"text 4"
-nil.      	300	TXT	"text 5"
-nil.      	300	TXT	"text 6: causing too many records"
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-nil.      	300	NS	ns.nil.
-nil.      	300	TXT	"fallback AXFR on too many records"
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-EOF
+switch_responses "too_many_records"
 
 sleep 1
 
@@ -196,23 +132,7 @@ ret=0
 nextpart ns1/named.run >/dev/null
 
 # Provide a broken IXFR response and a working fallback AXFR response.
-sendcmd <<EOF
-/SOA/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/IXFR/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-nil.      	300	SOA	ns.nil. root.nil. 3 300 300 604800 300
-bad-owner.    	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-test.nil.	300	TXT	"serial 4, malformed IXFR"
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-/AXFR/
-nil.      	300	NS	ns.nil.
-test.nil.      	300	TXT	"serial 4, fallback AXFR"
-/AXFR/
-nil.      	300	SOA	ns.nil. root.nil. 4 300 300 604800 300
-EOF
+switch_responses "bad_soa_owner"
 $RNDCCMD 10.53.0.1 refresh nil | sed 's/^/ns1 /' | cat_i
 
 # A broken server would accept the malformed IXFR and apply its contents to the

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.1.1.11 2026/01/29 18:19:55 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.1.1.12 2026/04/07 23:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ generic_fromtext_tlsa(ARGS_FROMTEXT) {
 	/*
 	 * Certificate Association Data.
 	 */
-	return isc_hex_tobuffer(lexer, target, -2);
+	return isc_hex_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t

@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set alg_roll = alg_roll | default(False) %}
+{% set policy = "rsasha256" if not alg_roll else "ecdsa256" %}
+{% set zones = ["kasp", "manual"] %}
+
+include "kasp.conf";
+include "named.common.conf";
+
+{% for tld in zones %}
+zone "step1.algorithm-roll.@tld@" {
+	type primary;
+	file "step1.algorithm-roll.@tld@.db";
+	dnssec-policy @policy@-@tld@;
+};
+
+{% if alg_roll %}
+zone "step2.algorithm-roll.@tld@" {
+	type primary;
+	file "step2.algorithm-roll.@tld@.db";
+	dnssec-policy "ecdsa256-@tld@";
+};
+
+zone "step3.algorithm-roll.@tld@" {
+	type primary;
+	file "step3.algorithm-roll.@tld@.db";
+	dnssec-policy "ecdsa256-@tld@";
+};
+
+zone "step4.algorithm-roll.@tld@" {
+	type primary;
+	file "step4.algorithm-roll.@tld@.db";
+	dnssec-policy "ecdsa256-@tld@";
+};
+
+zone "step5.algorithm-roll.@tld@" {
+	type primary;
+	file "step5.algorithm-roll.@tld@.db";
+	dnssec-policy "ecdsa256-@tld@";
+};
+
+zone "step6.algorithm-roll.@tld@" {
+	type primary;
+	file "step6.algorithm-roll.@tld@.db";
+	dnssec-policy "ecdsa256-@tld@";
+};
+
+{% endif %}
+{% endfor %}

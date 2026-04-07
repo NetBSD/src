@@ -15,6 +15,8 @@ pytestmark = pytest.mark.extra_artifacts(
     [
         "awk.out.*",
         "dig.out.*",
+        "ns2/change-ns.db",
+        "ns2/change-ns.db.jnl",
         "ns2/example.db",
         "ns2/named-tls.conf",
         "ns2/x21.db*",

@@ -10,12 +10,11 @@
 # information regarding copyright ownership.
 
 import os
-import pytest
 
 import dns.flags
+import pytest
 
 import isctest
-
 
 pytestmark = pytest.mark.extra_artifacts(
     [

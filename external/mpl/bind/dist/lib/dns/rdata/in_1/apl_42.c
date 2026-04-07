@@ -1,4 +1,4 @@
-/*	$NetBSD: apl_42.c,v 1.1.1.10 2026/01/29 18:19:54 christos Exp $	*/
+/*	$NetBSD: apl_42.c,v 1.1.1.11 2026/04/07 23:58:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -329,9 +329,11 @@ dns_rdata_apl_first(dns_rdata_in_apl_t *apl) {
 	/*
 	 * If no APL return ISC_R_NOMORE.
 	 */
-	if (apl->apl == NULL) {
+	if (apl->apl == NULL || apl->apl_len == 0) {
 		return ISC_R_NOMORE;
 	}
+
+	apl->offset = 0;
 
 	/*
 	 * Sanity check data.
@@ -340,7 +342,6 @@ dns_rdata_apl_first(dns_rdata_in_apl_t *apl) {
 	length = apl->apl[apl->offset + 3] & 0x7f;
 	INSIST(4 + length <= apl->apl_len);
 
-	apl->offset = 0;
 	return ISC_R_SUCCESS;
 }
 

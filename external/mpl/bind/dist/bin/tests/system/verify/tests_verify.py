@@ -9,9 +9,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from re import compile as Re
+
 import os
 import re
-from re import compile as Re
 
 import pytest
 

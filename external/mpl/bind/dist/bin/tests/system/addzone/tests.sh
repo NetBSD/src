@@ -36,6 +36,26 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+# showzone
+echo_i "showzone normally loaded zone ($n)"
+ret=0
+$RNDCCMD 10.53.0.2 showzone normal.example >rndc.out.ns2.$n
+expected='zone "normal.example" { type primary; file "normal.db"; };'
+[ "$(cat rndc.out.ns2.$n)" = "$expected" ] || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+# modzone
+echo_i "modzone normally loaded zone ($n)"
+ret=0
+$RNDCCMD 10.53.0.2 modzone normal.example '{ type primary; file "normal.db"; };' >rndc.out.ns2.$n
+grep "" rndc.out.ns2.$n >/dev/null || ret=1
+grep "zone 'normal.example' must also be reconfigured in" rndc.out.ns2.$n >/dev/null || ret=1
+grep "named.conf to make changes permanent." rndc.out.ns2.$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 # When LMDB support is compiled in, this tests that migration from
 # NZF to NZD occurs during named startup
 echo_i "checking previously added zone ($n)"
@@ -263,7 +283,7 @@ status=$((status + ret))
 echo_i "delete a normally-loaded zone ($n)"
 ret=0
 $RNDCCMD 10.53.0.2 delzone normal.example >rndc.out.ns2.$n 2>&1
-grep "is no longer active and will be deleted" rndc.out.ns2.$n >/dev/null || ret=11
+grep "is no longer active and will be deleted" rndc.out.ns2.$n >/dev/null || ret=1
 grep "To keep it from returning when the server is restarted" rndc.out.ns2.$n >/dev/null || ret=1
 grep "must also be removed from named.conf." rndc.out.ns2.$n >/dev/null || ret=1
 _check_delete_normally_loaded_zone() (
@@ -271,7 +291,6 @@ _check_delete_normally_loaded_zone() (
     && grep 'status: REFUSED' dig.out.ns2.$n >/dev/null
 )
 retry_quiet 5 _check_delete_normally_loaded_zone || ret=1
-
 n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))

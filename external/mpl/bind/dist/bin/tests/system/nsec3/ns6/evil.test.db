@@ -1,0 +1,32 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$ORIGIN evil.test.
+$TTL 86400
+@       IN  SOA     ns1.evil.test. admin.evil.test. (
+                    2024021401  ; serial
+                    3600        ; refresh
+                    900         ; retry
+                    604800      ; expire
+                    86400       ; minimum TTL
+                    )
+        IN  NS      ns1.evil.test.
+ns1     IN  A       127.0.0.1
+; This is a key-signing key, keyid 10491, for evil.test.
+; Created: 20260220135822 (Fri Feb 20 14:58:22 2026)
+; Publish: 20260220135822 (Fri Feb 20 14:58:22 2026)
+; Activate: 20260220135822 (Fri Feb 20 14:58:22 2026)
+evil.test. IN DNSKEY 257 3 13 yh1W7zgrqOsAZdKAh597SI7F2ye4ReiLmBNsDg+TDLJQ+3C2fXfrsQyY MvA+hmzTQdKX24zlVlD3YAVA6+VmrQ==
+; This is a zone-signing key, keyid 12713, for evil.test.
+; Created: 20260220135826 (Fri Feb 20 14:58:26 2026)
+; Publish: 20260220135826 (Fri Feb 20 14:58:26 2026)
+; Activate: 20260220135826 (Fri Feb 20 14:58:26 2026)
+evil.test. IN DNSKEY 256 3 13 JZQgRxLTYVoGfdmaCXm87msxkXgRqs+gLQ8xFHmWf4N183qYbUAW7iE+ 3NMvTdIRTMPeDCh/KHBiVxQk5RJMaA==

@@ -11,8 +11,9 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
+from collections.abc import AsyncGenerator
+
 import ipaddress
-from typing import AsyncGenerator
 
 import dns.rcode
 import dns.rdatatype

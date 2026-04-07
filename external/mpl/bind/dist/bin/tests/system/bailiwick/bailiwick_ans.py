@@ -11,8 +11,6 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import Dict, List, Optional, Type
-
 import abc
 
 import dns.name
@@ -30,14 +28,14 @@ from isctest.asyncserver import (
 
 class ResponseSpoofer(ResponseHandler, abc.ABC):
 
-    spoofers: Dict[str, Type["ResponseSpoofer"]] = {}
+    spoofers: dict[str, type["ResponseSpoofer"]] = {}
 
     def __init_subclass__(cls, mode: str) -> None:
         assert mode not in cls.spoofers
         cls.spoofers[mode] = cls
 
     @classmethod
-    def get_spoofer(cls, mode: str) -> Optional["ResponseSpoofer"]:
+    def get_spoofer(cls, mode: str) -> "ResponseSpoofer | None":
         try:
             return cls.spoofers[mode]()
         except KeyError:
@@ -66,11 +64,11 @@ class SetSpoofingModeCommand(ControlCommand):
     control_subdomain = "set-spoofing-mode"
 
     def __init__(self) -> None:
-        self._current_handler: Optional[ResponseSpoofer] = None
+        self._current_handler: ResponseSpoofer | None = None
 
     def handle(
-        self, args: List[str], server: ControllableAsyncDnsServer, qctx: QueryContext
-    ) -> Optional[str]:
+        self, args: list[str], server: ControllableAsyncDnsServer, qctx: QueryContext
+    ) -> str | None:
         if len(args) != 1:
             qctx.response.set_rcode(dns.rcode.SERVFAIL)
             return "invalid control command"

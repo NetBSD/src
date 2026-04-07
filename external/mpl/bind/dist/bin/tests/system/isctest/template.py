@@ -13,7 +13,7 @@
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import jinja2
 
@@ -26,7 +26,7 @@ class TemplateEngine:
     Engine for rendering jinja2 templates in system test directories.
     """
 
-    def __init__(self, directory: Union[str, Path], env_vars=ALL):
+    def __init__(self, directory: str | Path, env_vars=ALL):
         """
         Initialize the template engine for `directory`, optionally overriding
         the `env_vars` that will be used when rendering the templates (defaults
@@ -44,8 +44,8 @@ class TemplateEngine:
     def render(
         self,
         output: str,
-        data: Optional[Dict[str, Any]] = None,
-        template: Optional[str] = None,
+        data: dict[str, Any] | None = None,
+        template: str | None = None,
     ) -> None:
         """
         Render `output` file from jinja `template` and fill in the `data`. The
@@ -69,7 +69,7 @@ class TemplateEngine:
         stream = self.j2env.get_template(template).stream(data)
         stream.dump(output, encoding="utf-8")
 
-    def render_auto(self, data: Optional[Dict[str, Any]] = None):
+    def render_auto(self, data: dict[str, Any] | None = None):
         """
         Render all *.j2 templates with default (and optionally the provided)
         values and write the output to files without the .j2 extensions.

@@ -260,7 +260,7 @@ file:
 
    # cd /etc/bind/keys/example.com
    # cat Kexample.com.+008+51623.key
-   ; This is a zone-signing key, keyid 11623, for example.com.
+   ; This is a zone-signing key, keyid 51623, for example.com.
    ; Created: 20201130160024 (Mon Dec  1 00:00:24 2020)
    ; Publish: 20201202000000 (Fri Dec  2 08:00:00 2020)
    ; Activate: 20210101000000 (Sun Jan  1 08:00:00 2021)
@@ -475,9 +475,9 @@ DS record based on the new key, 23550:
 
    # cd /etc/bind/keys/example.com/
    # dnssec-settime -I 20210101 -D 20210201 Kexample.com.+007+24828
-   ./Kexample.com.+007+24848.key
-   ./Kexample.com.+007+24848.private
-   # dnssec-keygen -S Kexample.com.+007+24848
+   ./Kexample.com.+007+24828.key
+   ./Kexample.com.+007+24828.private
+   # dnssec-keygen -S Kexample.com.+007+24828
    Generating key pair.......................................................................................++ ...................................++
    Kexample.com.+007+23550
    # dnssec-dsfromkey -a SHA-1 Kexample.com.+007+23550.key
@@ -489,7 +489,7 @@ stored.
 
 The second, :iscman:`dnssec-settime`, sets an inactive (:option:`-I <dnssec-settime -I>`) date of January 1,
 2021, and a deletion (:option:`-D <dnssec-settime -D>`) date of February 1, 2021 for the current KSK
-(``Kexample.com.+007+24848``).
+(``Kexample.com.+007+24828``).
 
 The third command, :iscman:`dnssec-keygen`, creates a successor key, using
 the exact same parameters (algorithms, key sizes, etc.) as the current

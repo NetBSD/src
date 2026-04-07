@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import dns.rcode
 import dns.rdatatype
@@ -52,7 +52,7 @@ class IgnoreNs(ResponseHandler):
 
 def main() -> None:
     server = AsyncDnsServer(default_aa=True, default_rcode=dns.rcode.NOERROR)
-    server.install_response_handlers([ReplyA(), IgnoreNs()])
+    server.install_response_handlers(ReplyA(), IgnoreNs())
     server.run()
 
 

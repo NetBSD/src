@@ -796,6 +796,16 @@ if [ native = "$MODE" ]; then
   grep "walled\.tld2\..*IN.*A.*10\.0\.0\.1" dig.out.$t.after >/dev/null || setret "failed"
 
   t=$((t + 1))
+  echo_i "checking rpz with included rules can reload (${t})"
+  $DIG -p ${PORT} @$ns3 a8-1.tld2 >dig.out.$t.before || setret "failed"
+  grep "status: NOERROR" dig.out.$t.before >/dev/null || setret "failed"
+  cp ns3/include-rpz.inc-2.in ns3/include-rpz.inc
+  rndc_reload ns3 $ns3 include-rpz
+  sleep 1
+  $DIG -p ${PORT} @$ns3 a8-1.tld2 >dig.out.$t.after || setret "failed"
+  grep "status: NXDOMAIN" dig.out.$t.after >/dev/null || setret "failed"
+
+  t=$((t + 1))
   echo_i "checking the default (unset) extended DNS error code (EDE) (${t})"
   $DIG -p ${PORT} @$ns3 a6-2.tld2. A >dig.out.$t || setret "failed"
   grep -F "EDE: " dig.out.$t >/dev/null && setret "failed"

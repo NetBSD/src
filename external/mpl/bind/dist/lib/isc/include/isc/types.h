@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.1.1.10 2025/01/26 16:12:31 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.1.1.11 2026/04/07 23:58:27 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,6 +87,12 @@ typedef struct isc_work	      isc_work_t;	/*%< Work offloaded to an
 typedef struct isc_nm_http_endpoints isc_nm_http_endpoints_t;
 /*%< HTTP endpoints set */
 #endif /* HAVE_LIBNGHTTP2 */
+
+/*% Used by isc_base64 and isc_hex for expected lower bound */
+enum {
+	isc_zero_or_more = -1,
+	isc_one_or_more = -2,
+};
 
 /*% Statistics formats (text file or XML) */
 typedef enum {

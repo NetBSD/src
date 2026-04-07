@@ -1,4 +1,5 @@
-.\" Man page generated from reStructuredText.
+.\" Man page generated from reStructuredText
+.\" by the Docutils 0.22.4 manpage writer.
 .
 .
 .nr rst2man-indent-level 0
@@ -42,7 +43,7 @@ arguments.
 .sp
 \fBrndc\fP communicates with the name server over a TCP connection,
 sending commands authenticated with digital signatures. In the current
-versions of \fBrndc\fP and \fI\%named\fP, the only supported authentication
+versions of \fBrndc\fP and \fBnamed\fP \%<#\:std-iscman-named>, the only supported authentication
 algorithms are HMAC\-MD5 (for compatibility), HMAC\-SHA1, HMAC\-SHA224,
 HMAC\-SHA256 (default), HMAC\-SHA384, and HMAC\-SHA512. They use a shared
 secret on each end of the connection, which provides TSIG\-style
@@ -108,7 +109,7 @@ unless there is an error.
 .INDENT 0.0
 .TP
 .B \-r
-This option instructs \fBrndc\fP to print the result code returned by \fI\%named\fP
+This option instructs \fBrndc\fP to print the result code returned by \fBnamed\fP \%<#\:std-iscman-named>
 after executing the requested command (e.g., ISC_R_SUCCESS,
 ISC_R_FAILURE, etc.).
 .UNINDENT
@@ -128,7 +129,7 @@ This option enables verbose logging.
 .TP
 .B \-y server_key
 This option indicates use of the key \fBserver_key\fP from the configuration file. For control message validation to succeed, \fBserver_key\fP must be known
-by \fI\%named\fP with the same algorithm and secret string. If no \fBserver_key\fP is specified,
+by \fBnamed\fP \%<#\:std-iscman-named> with the same algorithm and secret string. If no \fBserver_key\fP is specified,
 \fBrndc\fP first looks for a key clause in the server statement of
 the server being used, or if no server statement is present for that
 host, then in the default\-key clause of the options statement. Note that
@@ -148,14 +149,14 @@ Currently supported commands are:
 This command adds a zone while the server is running. This command
 requires the \fBallow\-new\-zones\fP option to be set to \fByes\fP\&. The
 configuration string specified on the command line is the zone
-configuration text that would ordinarily be placed in \fI\%named.conf\fP\&.
+configuration text that would ordinarily be placed in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
 The configuration is saved in a file called \fBviewname.nzf\fP (or, if
-\fI\%named\fP is compiled with liblmdb, an LMDB database file called
+\fBnamed\fP \%<#\:std-iscman-named> is compiled with liblmdb, an LMDB database file called
 \fBviewname.nzd\fP). \fBviewname\fP is the name of the view, unless the view
 name contains characters that are incompatible with use as a file
 name, in which case a cryptographic hash of the view name is used
-instead. When \fI\%named\fP is restarted, the file is loaded into
+instead. When \fBnamed\fP \%<#\:std-iscman-named> is restarted, the file is loaded into
 the view configuration so that zones that were added can persist
 after a restart.
 .sp
@@ -167,7 +168,7 @@ the default view:
 (Note the brackets around and semi\-colon after the zone configuration
 text.)
 .sp
-See also \fI\%rndc delzone\fP and \fI\%rndc modzone\fP\&.
+See also \fBrndc delzone\fP and \fBrndc modzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -182,42 +183,57 @@ are reported in the output of the \fBrndc delzone\fP command.)
 .sp
 If the zone was originally added via \fBrndc addzone\fP, then it is
 removed permanently. However, if it was originally configured in
-\fI\%named.conf\fP, then that original configuration remains in place;
+\fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>, then that original configuration remains in place;
 when the server is restarted or reconfigured, the zone is
 recreated. To remove it permanently, it must also be removed from
-\fI\%named.conf\fP\&.
+\fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
-See also \fI\%rndc addzone\fP and \fI\%rndc modzone\fP\&.
+See also \fBrndc addzone\fP and \fBrndc modzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
-.B dnssec (\-status | \-step | \-rollover \-key id [\-alg algorithm] [\-when time] | \-checkds [\-key id [\-alg algorithm]] [\-when time]  published | withdrawn)) zone [class [view]]
-This command allows you to interact with the \(dqdnssec\-policy\(dq of a given
-zone.
-.sp
-\fBrndc dnssec \-status\fP show the DNSSEC signing state for the specified
-zone.
-.sp
-\fBrndc dnssec \-step\fP sends a signal to an instance of \fI\%named\fP for a
+.B dnssec
+The following commands allow you to interact with the \(dqdnssec\-policy\(dq of a
+given zone.
+.INDENT 7.0
+.TP
+.B \-checkds [\-key id [\-alg algorithm]] [\-when time] (published | withdrawn) zone [class [view]]
+This command informs \fBnamed\fP \%<#\:std-iscman-named> that the DS for a specified zone\(aqs
+key\-signing key (KSK) has been confirmed to be published in, or withdrawn
+from, the parent zone. This is required in order to complete a KSK
+rollover.  The \fB\-key id\fP and \fB\-alg algorithm\fP arguments can be used to
+specify a particular KSK, if necessary; if there is only one key acting
+as a KSK for the zone, these arguments can be omitted. The time of
+publication or withdrawal for the DS is set to the current time by
+default, but can be overridden to a specific time with the argument
+\fB\-when time\fP, where \fBtime\fP is expressed in YYYYMMDDHHMMSS notation.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B \-rollover \-key id [\-alg algorithm] [\-when time] zone [class [view]]
+This command allows you to schedule key rollover for a specific key
+(overriding the original key lifetime).  The \fB\-key id\fP and
+\fB\-alg algorithm\fP arguments specify which key to roll.  The time to start
+the rollover can be set with \fB\-when time\fP, where \fBtime\fP is expressed in
+YYYYMMDDHHMMSS. If not set the rollover will start immediately.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B \-status [\-v] zone [class [view]]
+This command shows the DNSSEC signing state for the specified zone.
+Adding \fB\-v\fP also lists no longer used keys and shows the key states of
+the keys.
+.UNINDENT
+.INDENT 7.0
+.TP
+.B \-step zone [class [view]]
+This command sends a signal to an instance of \fBnamed\fP \%<#\:std-iscman-named> for a
 zone configured with \fBdnssec\-policy\fP in manual mode, telling it to
 continue with the operations that had previously been blocked but logged.
 This gives the human operator a chance to review the log messages,
 understand what will happen next and then, using \fBrndc dnssec \-step\fP, to
-inform \fI\%named\fP to proceed to the next stage.
-.sp
-\fBrndc dnssec \-rollover\fP allows you to schedule key rollover for a
-specific key (overriding the original key lifetime).
-.sp
-\fBrndc dnssec \-checkds\fP informs \fI\%named\fP that the DS for
-a specified zone\(aqs key\-signing key has been confirmed to be published
-in, or withdrawn from, the parent zone. This is required in order to
-complete a KSK rollover.  The \fB\-key id\fP and \fB\-alg algorithm\fP arguments
-can be used to specify a particular KSK, if necessary; if there is only
-one key acting as a KSK for the zone, these arguments can be omitted.
-The time of publication or withdrawal for the DS is set to the current
-time by default, but can be overridden to a specific time with the
-argument \fB\-when time\fP, where \fBtime\fP is expressed in YYYYMMDDHHMMSS
-notation.
+inform \fBnamed\fP \%<#\:std-iscman-named> to proceed to the next stage.
+.UNINDENT
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -225,7 +241,7 @@ notation.
 This command closes and re\-opens DNSTAP output files.
 .sp
 \fBrndc dnstap \-reopen\fP allows
-the output file to be renamed externally, so that \fI\%named\fP can
+the output file to be renamed externally, so that \fBnamed\fP \%<#\:std-iscman-named> can
 truncate and re\-open it.
 .sp
 \fBrndc dnstap \-roll\fP causes the output file
@@ -277,7 +293,7 @@ normally updated by dynamic update, and causes changes in the
 journal file to be synced into the master file. All dynamic update
 attempts are refused while the zone is frozen.
 .sp
-See also \fI\%rndc thaw\fP\&.
+See also \fBrndc thaw\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -285,11 +301,11 @@ See also \fI\%rndc thaw\fP\&.
 This command stops the server immediately. Recent changes made through dynamic
 update or IXFR are not saved to the master files, but are rolled
 forward from the journal files when the server is restarted. If
-\fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned. This allows
-an external process to determine when \fI\%named\fP has completed
+\fB\-p\fP is specified, \fBnamed\fP \%<#\:std-iscman-named>\(aqs process ID is returned. This allows
+an external process to determine when \fBnamed\fP \%<#\:std-iscman-named> has completed
 halting.
 .sp
-See also \fI\%rndc stop\fP\&.
+See also \fBrndc stop\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -302,7 +318,7 @@ support offline KSK signing.
 .B loadkeys [zone [class [view]]]
 This command fetches all DNSSEC keys for the given zone from the key directory. If
 they are within their publication period, they are merged into the
-zone\(aqs DNSKEY RRset. Unlike \fI\%rndc sign\fP, however, the zone is not
+zone\(aqs DNSKEY RRset. Unlike \fBrndc sign\fP, however, the zone is not
 immediately re\-signed by the new keys, but is allowed to
 incrementally re\-sign over time.
 .sp
@@ -312,7 +328,7 @@ This command requires that the zone be configured with a \fBdnssec\-policy\fP\&.
 .TP
 .B managed\-keys (status | refresh | sync | destroy) [class [view]]
 This command inspects and controls the \(dqmanaged\-keys\(dq database which handles
-\X'tty: link https://datatracker.ietf.org/doc/html/rfc5011.html'\fI\%RFC 5011\fP\X'tty: link' DNSSEC trust anchor maintenance. If a view is specified, these
+\fBRFC 5011\fP \%<https://\:datatracker\:.ietf\:.org/\:doc/\:html/\:rfc5011\:.html> DNSSEC trust anchor maintenance. If a view is specified, these
 commands are applied to that view; otherwise, they are applied to all
 views.
 .INDENT 7.0
@@ -337,11 +353,11 @@ This command should be used only with extreme caution.
 .sp
 Existing keys that are already trusted are not deleted from
 memory; DNSSEC validation can continue after this command is used.
-However, key maintenance operations cease until \fI\%named\fP is
+However, key maintenance operations cease until \fBnamed\fP \%<#\:std-iscman-named> is
 restarted or reconfigured, and all existing key maintenance states
 are deleted.
 .sp
-Running \fI\%rndc reconfig\fP or restarting \fI\%named\fP immediately
+Running \fBrndc reconfig\fP or restarting \fBnamed\fP \%<#\:std-iscman-named> immediately
 after this command causes key maintenance to be reinitialized
 from scratch, just as if the server were being started for the
 first time. This is primarily intended for testing, but it may
@@ -353,15 +369,15 @@ repair for key maintenance problems.
 .INDENT 0.0
 .TP
 .B memprof [(on | off | dump)]
-This command controls memory profiling. To have any effect, \fI\%named\fP must be
+This command controls memory profiling. To have any effect, \fBnamed\fP \%<#\:std-iscman-named> must be
 built with jemalloc, the library have profiling support enabled and run with the
 \fBprof:true\fP allocator configuration. (either via \fBMALLOC_CONF\fP or \fB/etc/malloc.conf\fP)
 .sp
 The \fBprof_active:false\fP option is recommended to ensure the profiling overhead does
-not affect \fI\%named\fP when not needed.
+not affect \fBnamed\fP \%<#\:std-iscman-named> when not needed.
 .sp
 The \fBon\fP and \fBoff\fP options will start and stop the jemalloc memory profiling respectively.
-When run with the \fIdump\fP option, \fI\%named\fP will dump the profile to the working
+When run with the \fIdump\fP option, \fBnamed\fP \%<#\:std-iscman-named> will dump the profile to the working
 directory. The name will be chosen automatically by jemalloc.
 .UNINDENT
 .INDENT 0.0
@@ -371,18 +387,18 @@ This command modifies the configuration of a zone while the server is
 running. This command requires the \fBallow\-new\-zones\fP option to be set
 to \fByes\fP\&.  As with \fBaddzone\fP, the configuration string specified on
 the command line is the zone configuration text that would ordinarily be
-placed in \fI\%named.conf\fP\&.
+placed in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
-If the zone was originally added via \fI\%rndc addzone\fP, the
+If the zone was originally added via \fBrndc addzone\fP, the
 configuration changes are recorded permanently and are still
 in effect after the server is restarted or reconfigured. However, if
-it was originally configured in \fI\%named.conf\fP, then that original
+it was originally configured in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>, then that original
 configuration remains in place; when the server is restarted or
 reconfigured, the zone reverts to its original configuration. To
 make the changes permanent, it must also be modified in
-\fI\%named.conf\fP\&.
+\fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
-See also \fI\%rndc addzone\fP and \fI\%rndc delzone\fP\&.
+See also \fBrndc addzone\fP and \fBrndc delzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -394,25 +410,25 @@ This command resends NOTIFY messages for the zone.
 .B notrace
 This command sets the server\(aqs debugging level to 0.
 .sp
-See also \fI\%rndc trace\fP\&.
+See also \fBrndc trace\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B nta [(\-class class | \-dump | \-force | \-remove | \-lifetime duration)] domain [view]
 This command sets a DNSSEC negative trust anchor (NTA) for \fBdomain\fP, with a
 lifetime of \fBduration\fP\&. The default lifetime is configured in
-\fI\%named.conf\fP via the \fBnta\-lifetime\fP option, and defaults to one
+\fBnamed.conf\fP \%<#\:std-iscman-named\:.conf> via the \fBnta\-lifetime\fP option, and defaults to one
 hour. The lifetime cannot exceed one week.
 .sp
 A negative trust anchor selectively disables DNSSEC validation for
 zones that are known to be failing because of misconfiguration rather
 than an attack. When data to be validated is at or below an active
-NTA (and above any other configured trust anchors), \fI\%named\fP
+NTA (and above any other configured trust anchors), \fBnamed\fP \%<#\:std-iscman-named>
 aborts the DNSSEC validation process and treats the data as insecure
 rather than bogus. This continues until the NTA\(aqs lifetime has
 elapsed.
 .sp
-NTAs persist across restarts of the \fI\%named\fP server. The NTAs for a
+NTAs persist across restarts of the \fBnamed\fP \%<#\:std-iscman-named> server. The NTAs for a
 view are saved in a file called \fBname.nta\fP, where \fBname\fP is the name
 of the view; if it contains characters that are incompatible with
 use as a file name, a cryptographic hash is generated from the name of
@@ -430,7 +446,7 @@ If \fB\-dump\fP is used, any other arguments are ignored and a list
 of existing NTAs is printed. Note that this may include NTAs that are
 expired but have not yet been cleaned up.
 .sp
-Normally, \fI\%named\fP periodically tests to see whether data below
+Normally, \fBnamed\fP \%<#\:std-iscman-named> periodically tests to see whether data below
 an NTA can now be validated (see the \fBnta\-recheck\fP option in the
 Administrator Reference Manual for details). If data can be
 validated, then the NTA is regarded as no longer necessary and is
@@ -458,21 +474,21 @@ on and off.
 .sp
 Query logging can also be enabled by explicitly directing the
 \fBqueries\fP \fBcategory\fP to a \fBchannel\fP in the \fBlogging\fP section
-of \fI\%named.conf\fP, or by specifying \fBquerylog yes;\fP in the
-\fBoptions\fP section of \fI\%named.conf\fP\&.
+of \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>, or by specifying \fBquerylog yes;\fP in the
+\fBoptions\fP section of \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B reconfig
 This command reloads the configuration file and loads new zones, but does not reload
 existing zone files even if they have changed. This is faster than a
-full \fI\%rndc reload\fP when there is a large number of zones, because it
+full \fBrndc reload\fP when there is a large number of zones, because it
 avoids the need to examine the modification times of the zone files.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B recursing
-This command dumps the list of queries \fI\%named\fP is currently
+This command dumps the list of queries \fBnamed\fP \%<#\:std-iscman-named> is currently
 recursing on, and the list of domains to which iterative queries
 are currently being sent.
 .sp
@@ -525,8 +541,8 @@ on and off.
 .sp
 Unlike query logging, response logging cannot be enabled by explicitly directing
 the \fBresponses\fP \fBcategory\fP to a \fBchannel\fP in the \fBlogging\fP section
-of \fI\%named.conf\fP, but it can still be enabled by specifying
-\fBresponselog yes;\fP in the \fBoptions\fP section of \fI\%named.conf\fP\&.
+of \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>, but it can still be enabled by specifying
+\fBresponselog yes;\fP in the \fBoptions\fP section of \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -544,7 +560,7 @@ transfer is scheduled.
 .TP
 .B scan
 This command scans the list of available network interfaces for changes, without
-performing a full \fI\%rndc reconfig\fP or waiting for the
+performing a full \fBrndc reconfig\fP or waiting for the
 \fBinterface\-interval\fP timer.
 .UNINDENT
 .INDENT 0.0
@@ -562,19 +578,19 @@ If the first argument is \fB\-\fP, then the output is returned via the
 \fBrndc\fP response channel and printed to the standard output.
 Otherwise, it is written to the secroots dump file, which defaults to
 \fBnamed.secroots\fP, but can be overridden via the \fBsecroots\-file\fP
-option in \fI\%named.conf\fP\&.
+option in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
-See also \fI\%rndc managed\-keys\fP\&.
+See also \fBrndc managed\-keys\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
 .B serve\-stale (on | off | reset | status) [class [view]]
 This command enables, disables, resets, or reports the current status of
-the serving of stale answers as configured in \fI\%named.conf\fP\&.
+the serving of stale answers as configured in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
 If serving of stale answers is disabled by \fBrndc\-serve\-stale off\fP, then it
-remains disabled even if \fI\%named\fP is reloaded or reconfigured. \fBrndc
-serve\-stale reset\fP restores the setting as configured in \fI\%named.conf\fP\&.
+remains disabled even if \fBnamed\fP \%<#\:std-iscman-named> is reloaded or reconfigured. \fBrndc
+serve\-stale reset\fP restores the setting as configured in \fBnamed.conf\fP \%<#\:std-iscman-named\:.conf>\&.
 .sp
 \fBrndc serve\-stale status\fP reports whether caching and serving of stale
 answers is currently enabled or disabled. It also reports the values of
@@ -586,8 +602,8 @@ answers is currently enabled or disabled. It also reports the values of
 If the server is configured with \fBallow\-new\-zones\fP set to \fByes\fP,
 then this command prints the configuration of a running zone.
 .sp
-See also \fI\%rndc addzone\fP, \fI\%rndc modzone\fP\&.
-and \fI\%rndc delzone\fP\&.
+See also \fBrndc addzone\fP, \fBrndc modzone\fP\&.
+and \fBrndc delzone\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -602,7 +618,7 @@ expire within the refresh interval.
 .sp
 This command requires that the zone be configured with a \fBdnssec\-policy\fP\&.
 .sp
-See also \fI\%rndc loadkeys\fP\&.
+See also \fBrndc loadkeys\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -634,13 +650,13 @@ depending on whether the opt\-out bit in the NSEC3
 chain should be set. \fBiterations\fP defines the number of additional times to apply
 the algorithm when generating an NSEC3 hash. The \fBsalt\fP is a string
 of data expressed in hexadecimal, a hyphen (\fB\-\fP) if no salt is to be
-used, or the keyword \fBauto\fP, which causes \fI\%named\fP to generate a
+used, or the keyword \fBauto\fP, which causes \fBnamed\fP \%<#\:std-iscman-named> to generate a
 random 64\-bit salt.
 .sp
 The only recommended configuration is \fBrndc signing \-nsec3param 1 0 0 \- zone\fP,
 i.e. no salt, no additional iterations, no opt\-out.
 .sp
-\fBWARNING:\fP
+\fBWarning:\fP
 .INDENT 7.0
 .INDENT 3.5
 Do not use extra iterations, salt, or opt\-out unless all their implications
@@ -676,11 +692,11 @@ there is no explicit root zone configured.
 .B stop \-p
 This command stops the server, making sure any recent changes made through dynamic
 update or IXFR are first saved to the master files of the updated
-zones. If \fB\-p\fP is specified, \fI\%named\fP\(aqs process ID is returned.
-This allows an external process to determine when \fI\%named\fP has
+zones. If \fB\-p\fP is specified, \fBnamed\fP \%<#\:std-iscman-named>\(aqs process ID is returned.
+This allows an external process to determine when \fBnamed\fP \%<#\:std-iscman-named> has
 completed stopping.
 .sp
-See also \fI\%rndc halt\fP\&.
+See also \fBrndc halt\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -713,7 +729,7 @@ changes in the zone. Otherwise, if the zone has changed, any existing
 journal file is removed.  If no zone is specified, the reloading happens
 asynchronously.
 .sp
-See also \fI\%rndc freeze\fP\&.
+See also \fBrndc freeze\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -727,7 +743,7 @@ If specified, this command sets the server\(aqs debugging level to the
 provided value.
 .UNINDENT
 .sp
-See also \fI\%rndc notrace\fP\&.
+See also \fBrndc notrace\fP\&.
 .UNINDENT
 .INDENT 0.0
 .TP
@@ -748,11 +764,11 @@ whether the zone supports dynamic updates, whether the zone is DNSSEC
 signed, whether it uses automatic DNSSEC key management or inline
 signing, and the scheduled refresh or expiry times for the zone.
 .sp
-See also \fI\%rndc showzone\fP\&.
+See also \fBrndc showzone\fP\&.
 .UNINDENT
 .sp
-\fBrndc\fP commands that specify zone names, such as \fI\%reload\fP
-\fI\%retransfer\fP, or \fI\%zonestatus\fP, can be ambiguous when applied to zones
+\fBrndc\fP commands that specify zone names, such as \fBreload\fP
+\fBretransfer\fP, or \fBzonestatus\fP, can be ambiguous when applied to zones
 of type \fBredirect\fP\&. Redirect zones are always called \fB\&.\fP, and can be
 confused with zones of type \fBhint\fP or with secondary copies of the root
 zone. To specify a redirect zone, use the special zone name
@@ -766,12 +782,11 @@ without using the configuration file.
 Several error messages could be clearer.
 .SH SEE ALSO
 .sp
-\fI\%rndc.conf(5)\fP, \fI\%rndc\-confgen(8)\fP,
-\fI\%named(8)\fP, \fI\%named.conf(5)\fP, BIND 9 Administrator
+\fBrndc.conf(5)\fP \%<#\:std-iscman-rndc\:.conf>, \fBrndc\-confgen(8)\fP \%<#\:std-iscman-rndc-confgen>,
+\fBnamed(8)\fP \%<#\:std-iscman-named>, \fBnamed.conf(5)\fP \%<#\:std-iscman-named\:.conf>, BIND 9 Administrator
 Reference Manual.
-.SH AUTHOR
+.SH Author
 Internet Systems Consortium
-.SH COPYRIGHT
+.SH Copyright
 2026, Internet Systems Consortium
-.\" Generated by docutils manpage writer.
-.
+.\" End of generated man page.

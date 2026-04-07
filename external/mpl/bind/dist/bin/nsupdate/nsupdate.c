@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.1.1.15 2025/01/26 16:12:25 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.1.1.16 2026/04/07 23:58:18 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -773,14 +773,12 @@ set_source_ports(dns_dispatchmgr_t *manager) {
 
 	result = isc_portset_create(gmctx, &v4portset);
 	check_result(result, "isc_portset_create (v4)");
-	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
-	check_result(result, "isc_net_getudpportrange (v4)");
+	isc_net_getportrange(AF_INET, &udpport_low, &udpport_high);
 	isc_portset_addrange(v4portset, udpport_low, udpport_high);
 
 	result = isc_portset_create(gmctx, &v6portset);
 	check_result(result, "isc_portset_create (v6)");
-	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
-	check_result(result, "isc_net_getudpportrange (v6)");
+	isc_net_getportrange(AF_INET6, &udpport_low, &udpport_high);
 	isc_portset_addrange(v6portset, udpport_low, udpport_high);
 
 	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);

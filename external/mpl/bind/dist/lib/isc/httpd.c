@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.1.1.10 2026/01/29 18:19:50 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.1.1.11 2026/04/07 23:58:25 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -427,9 +427,8 @@ process_request(isc_httpd_t *httpd, size_t last_len) {
 
 		if (name_match(header, "Content-Length")) {
 			char *endptr;
-			long val = strtol(header->value, &endptr, 10);
-
 			errno = 0;
+			long val = strtol(header->value, &endptr, 10);
 
 			/* ensure we consumed all digits */
 			if ((header->value + header->value_len) != endptr) {

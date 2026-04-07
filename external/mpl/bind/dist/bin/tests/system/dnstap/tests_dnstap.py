@@ -14,12 +14,12 @@
 import os
 import re
 
-import isctest
-import isctest.mark
+import dns.rcode
+import dns.rrset
 import pytest
 
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.rrset
+import isctest
+import isctest.mark
 
 pytestmark = [
     isctest.mark.with_dnstap,

@@ -171,34 +171,51 @@ Currently supported commands are:
 
    See also :option:`rndc addzone` and :option:`rndc modzone`.
 
-.. option:: dnssec (-status | -step | -rollover -key id [-alg algorithm] [-when time] | -checkds [-key id [-alg algorithm]] [-when time]  published | withdrawn)) zone [class [view]]
+.. option:: dnssec
 
-   This command allows you to interact with the "dnssec-policy" of a given
-   zone.
+   The following commands allow you to interact with the "dnssec-policy" of a
+   given zone.
 
-   ``rndc dnssec -status`` show the DNSSEC signing state for the specified
-   zone.
+   .. program:: rndc dnssec
+   .. option:: -checkds [-key id [-alg algorithm]] [-when time] (published | withdrawn) zone [class [view]]
 
-   ``rndc dnssec -step`` sends a signal to an instance of :iscman:`named` for a
-   zone configured with ``dnssec-policy`` in manual mode, telling it to
-   continue with the operations that had previously been blocked but logged.
-   This gives the human operator a chance to review the log messages,
-   understand what will happen next and then, using ``rndc dnssec -step``, to
-   inform :iscman:`named` to proceed to the next stage.
+     This command informs :iscman:`named` that the DS for a specified zone's
+     key-signing key (KSK) has been confirmed to be published in, or withdrawn
+     from, the parent zone. This is required in order to complete a KSK
+     rollover.  The ``-key id`` and ``-alg algorithm`` arguments can be used to
+     specify a particular KSK, if necessary; if there is only one key acting
+     as a KSK for the zone, these arguments can be omitted. The time of
+     publication or withdrawal for the DS is set to the current time by
+     default, but can be overridden to a specific time with the argument
+     ``-when time``, where ``time`` is expressed in YYYYMMDDHHMMSS notation.
 
-   ``rndc dnssec -rollover`` allows you to schedule key rollover for a
-   specific key (overriding the original key lifetime).
+   .. program:: rndc dnssec
+   .. option:: -rollover -key id [-alg algorithm] [-when time] zone [class [view]]
 
-   ``rndc dnssec -checkds`` informs :iscman:`named` that the DS for
-   a specified zone's key-signing key has been confirmed to be published
-   in, or withdrawn from, the parent zone. This is required in order to
-   complete a KSK rollover.  The ``-key id`` and ``-alg algorithm`` arguments
-   can be used to specify a particular KSK, if necessary; if there is only
-   one key acting as a KSK for the zone, these arguments can be omitted.
-   The time of publication or withdrawal for the DS is set to the current
-   time by default, but can be overridden to a specific time with the
-   argument ``-when time``, where ``time`` is expressed in YYYYMMDDHHMMSS
-   notation.
+     This command allows you to schedule key rollover for a specific key
+     (overriding the original key lifetime).  The ``-key id`` and
+     ``-alg algorithm`` arguments specify which key to roll.  The time to start
+     the rollover can be set with ``-when time``, where ``time`` is expressed in
+     YYYYMMDDHHMMSS. If not set the rollover will start immediately.
+
+   .. program:: rndc dnssec
+   .. option:: -status [-v] zone [class [view]]
+
+     This command shows the DNSSEC signing state for the specified zone.
+     Adding ``-v`` also lists no longer used keys and shows the key states of
+     the keys.
+
+   .. program:: rndc dnssec
+   .. option:: -step zone [class [view]]
+
+     This command sends a signal to an instance of :iscman:`named` for a
+     zone configured with ``dnssec-policy`` in manual mode, telling it to
+     continue with the operations that had previously been blocked but logged.
+     This gives the human operator a chance to review the log messages,
+     understand what will happen next and then, using ``rndc dnssec -step``, to
+     inform :iscman:`named` to proceed to the next stage.
+
+.. program:: rndc
 
 .. option:: dnstap (-reopen | -roll [number])
 

@@ -9,22 +9,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=redefined-outer-name,unused-import
-
-import os
 import shutil
-import time
 
-import pytest
+from nsec3.common import NSEC3_MARK, check_nsec3_case
 
-pytest.importorskip("dns", minversion="2.0.0")
 import isctest
-from nsec3.common import (
-    ALGORITHM,
-    SIZE,
-    check_nsec3_case,
-)
 
+pytestmark = NSEC3_MARK
 
 # include the following zones when rendering named configs
 ZONES = {
@@ -38,13 +29,13 @@ def bootstrap():
     }
 
 
-def test_nsec3_case(ns3):
+def test_nsec3_case(ns3, default_algorithm):
     # Get test parameters.
     params = {
         "zone": "nsec3-fails-to-load.kasp",
         "policy": "nsec3",
         "key-properties": [
-            f"csk 0 {ALGORITHM} {SIZE} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
+            f"csk 0 {default_algorithm.number} {default_algorithm.bits} goal:omnipresent dnskey:rumoured krrsig:rumoured zrrsig:rumoured ds:hidden",
         ],
     }
     zone = params["zone"]

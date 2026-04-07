@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.h,v 1.1.1.8 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: nsec3.h,v 1.1.1.9 2026/04/07 23:58:33 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,6 +29,12 @@
 
 #define DNS_NSEC3_SALTSIZE	255
 #define DNS_NSEC3_MAXITERATIONS 50U
+
+/*
+ * The maximum hash that can be encoded in a single label using
+ * base32hexnp.  floor(63*5/8)
+ */
+#define NSEC3_MAX_HASH_LENGTH 39
 
 /*
  * hash = 1, flags =1, iterations = 2, salt length = 1, salt = 255 (max)

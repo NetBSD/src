@@ -11,13 +11,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from collections.abc import Iterator
+from re import Match, Pattern
+from re import compile as Re
+from typing import TextIO
+
 import abc
 import re
-from re import compile as Re
-from typing import Iterator, List, Match, Optional, Pattern, TextIO, Union
 
-
-FlexPattern = Union[str, Pattern]
+FlexPattern = str | Pattern
 
 
 def compile_pattern(string: FlexPattern) -> Pattern:
@@ -48,7 +50,7 @@ class Grep(abc.ABC):
             if match:
                 yield match
 
-    def grep(self, pattern: FlexPattern) -> List[Match]:
+    def grep(self, pattern: FlexPattern) -> list[Match]:
         """
         Get list of lines matching the pattern.
         """
@@ -150,7 +152,7 @@ class LineReader(Grep):
         self._stream = stream
         self._linebuf = ""
 
-    def readline(self) -> Optional[str]:
+    def readline(self) -> str | None:
         """
         Wrapper around io.readline() function to handle unfinished lines.
 

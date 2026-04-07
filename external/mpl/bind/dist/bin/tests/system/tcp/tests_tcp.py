@@ -11,17 +11,16 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-# pylint: disable=unused-variable
-
 import socket
 import struct
 import time
 
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
+import dns.flags
 import dns.message
+import dns.name
 import dns.query
+import dns.rrset
+import pytest
 
 pytestmark = pytest.mark.extra_artifacts(
     [

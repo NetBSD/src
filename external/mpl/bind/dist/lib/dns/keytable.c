@@ -1,4 +1,4 @@
-/*	$NetBSD: keytable.c,v 1.1.1.10 2025/01/26 16:12:32 christos Exp $	*/
+/*	$NetBSD: keytable.c,v 1.1.1.11 2026/04/07 23:58:28 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -249,7 +249,7 @@ delete_ds(dns_qp_t *qp, dns_keytable_t *keytable, dns_keynode_t *knode,
 	result = dns_rdata_fromstruct(&dsrdata, dns_rdataclass_in,
 				      dns_rdatatype_ds, ds, &b);
 	if (result != ISC_R_SUCCESS) {
-		RWUNLOCK(&knode->rwlock, isc_rwlocktype_write);
+		RWUNLOCK(&knode->rwlock, isc_rwlocktype_read);
 		return result;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.c,v 1.1.1.1 2025/01/26 16:12:38 christos Exp $	*/
+/*	$NetBSD: iterated_hash.c,v 1.1.1.2 2026/04/07 23:58:39 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <isc/time.h>
 
 #include <dns/name.h>
+#include <dns/nsec3.h>
 
 static void
 time_it(const int count, const int iterations, const unsigned char *salt,

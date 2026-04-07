@@ -146,7 +146,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "misc"))
 # -- Project information -----------------------------------------------------
 
 project = "BIND 9"
-# pylint: disable=redefined-builtin
 copyright = "2023, Internet Systems Consortium"
 author = "Internet Systems Consortium"
 
@@ -168,6 +167,8 @@ version = "%s.%s.%s%s" % (
 release = version
 
 # -- General configuration ---------------------------------------------------
+
+user_agent = "Mozilla/5.0"
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
