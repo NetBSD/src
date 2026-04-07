@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.85 2026/04/05 06:33:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.86 2026/04/07 20:10:00 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2026/04/05 06:33:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2026/04/07 20:10:00 andvar Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2469,7 +2469,7 @@ pmap_db_mdpg_print(struct vm_page *pg, void (*pr)(const char *, ...) __printflik
 
 	lcount = 0;
 	if (VM_PAGEMD_REFERENCED_P(mdpg)) {
-		pr(" referened");
+		pr(" referenced");
 		lcount++;
 	}
 	if (VM_PAGEMD_MODIFIED_P(mdpg)) {
