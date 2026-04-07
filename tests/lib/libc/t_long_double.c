@@ -1,4 +1,4 @@
-/*	$NetBSD: t_long_double.c,v 1.6 2026/04/07 14:12:16 rillig Exp $	*/
+/*	$NetBSD: t_long_double.c,v 1.7 2026/04/07 14:58:36 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_long_double.c,v 1.6 2026/04/07 14:12:16 rillig Exp $");
+__RCSID("$NetBSD: t_long_double.c,v 1.7 2026/04/07 14:58:36 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -177,32 +177,48 @@ test_ldbl_to_uint64(void)
 #if 1 /* Try some values outside the portable range. */
 		// C23 6.3.1.4p1 says the portable range goes from
 		// -1 + epsilon to (1<<64) - epsilon.
-#if __m68k__
-		// Negative values below 0 saturate.
-		{ -0xf.0p60L, 0 },
-		{ -0x8.0p60L, 0 },
-		{ -0x4.0p60L, 0 },
-		{ -1.0L, 0 },
+#if __aarch64__ || __m68k__ || __riscv__
+		// Negative values saturate to 0.
+		{ -0xf.0p60L,	0 },
+		{ -0x8.0p60L,	0 },
+		{ -0x4.0p60L,	0 },
+		{ -1.0L,	0 },
+#elif __mips__
+		// Negative values produce strange results.
+		{ -0xf.0p60L,	0x1000000000000000 },
+		{ -0x8.0p60L,	0x8000000000000000 },
+		{ -0x4.0p60L,	0xc000000000000000 },
+		{ -1.0L,	0x00000000ffffffff },
+#elif __powerpc__ || __sparc__
+		// Negative values produce strange results.
+		{ -0xf.0p60L,	0x8000000080000000 },
+		{ -0x8.0p60L,	0x8000000080000000 },
+		{ -0x4.0p60L,	0xc000000080000000 },
+		{ -1.0L,	0x00000000ffffffff },
 #elif __sparc64__
 		// Negative values are taken modulo 2^64.
-		{ -0xf.0p60L, 0x1ULL << 60 },
-		{ -0x8.0p60L, 0x8ULL << 60 },
-		{ -0x4.0p60L, 0xcULL << 60 },
-		{ -1.0L, (uint64_t)-1 },
+		{ -0xf.0p60L,	0x1000000000000000 },
+		{ -0x8.0p60L,	0x8000000000000000 },
+		{ -0x4.0p60L,	0xc000000000000000 },
+		{ -1.0L,	0xffffffffffffffff },
 #else
 		// Negative values below INT64_MIN saturate.
-		{ -0xf.0p60L, 0x8ULL << 60 },
-		{ -0x8.0p60L, 0x8ULL << 60 },
-		{ -0x4.0p60L, 0xcULL << 60 },
+		{ -0xf.0p60L,	0x8000000000000000 },
+		{ -0x8.0p60L,	0x8000000000000000 },
+		{ -0x4.0p60L,	0xc000000000000000 },
+		{ -1.0L,	0xffffffffffffffff },
 		// The above results were taken on amd64,
 		// other platforms may differ.
-		{ -1.0L, (uint64_t)-1 },
 #endif
 #endif
-		{ -0.0L, 0 },
-		{ +0.0L, 0 },
-		{ +1.0L, 1 },
-		{ +0x1.0p63L, 1ULL << 63 },
+		{ -0.5L,	0 },
+		{ -0.0L,	0 },
+		{ +0.0L,	0 },
+		{ +0.875L,	0 },
+		{ +1.0L,	1 },
+		{ +0x1.0p63L,	0x8000000000000000 },
+		{ +0xf.0p60L,	0xf000000000000000 },
+		{ +0xf.fffp60L,	0xffff000000000000 },
 	};
 
 	for (size_t i = 0; i < __arraycount(testcases); i++) {
