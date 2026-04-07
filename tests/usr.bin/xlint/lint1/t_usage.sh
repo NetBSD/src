@@ -1,4 +1,4 @@
-# $NetBSD: t_usage.sh,v 1.28 2025/08/31 20:43:27 rillig Exp $
+# $NetBSD: t_usage.sh,v 1.29 2026/04/07 20:05:36 rillig Exp $
 #
 # Copyright (c) 2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -89,13 +89,13 @@ enable_queries_body()
 
 	# The largest known query.
 	atf_check \
-	    "$lint1" -q 24 code.c /dev/null
+	    "$lint1" -q 25 code.c /dev/null
 
 	# Larger than the largest known query.
 	atf_check \
 	    -s 'exit:1' \
-	    -e "inline:lint1: invalid query ID '25'\n" \
-	    "$lint1" -q 25 code.c /dev/null
+	    -e "inline:lint1: invalid query ID '26'\n" \
+	    "$lint1" -q 26 code.c /dev/null
 
 	# Whitespace is not allowed before a query ID.
 	atf_check \

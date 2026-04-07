@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.710 2026/04/06 07:10:44 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.711 2026/04/07 20:05:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.710 2026/04/06 07:10:44 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.711 2026/04/07 20:05:35 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -1432,6 +1432,17 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	return ntn;
 }
 
+static bool
+may_be_signed_min(const tnode_t *tn)
+{
+	if (!is_integer(tn->tn_type->t_tspec))
+		return false;
+	if (is_uinteger(tn->tn_type->t_tspec))
+		return false;
+	integer_constraints c = ic_expr(tn);
+	return c.smin == si_min_value(tn->tn_type);
+}
+
 /*
  * Get the size in bytes of type tp->t_subt, as a constant expression of type
  * ptrdiff_t as seen from the target platform.
@@ -2164,6 +2175,12 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	case POINT:
 	case ARROW:
 		ntn = build_struct_access(op, sys, ln, rn);
+		break;
+	case UMINUS:
+		if (any_query_enabled && may_be_signed_min(ln))
+			/* negation of signed '%s' */
+			query_message(25, expr_type_name(ln));
+		ntn = build_op(op, sys, ln->tn_type, ln, rn);
 		break;
 	case INCAFT:
 	case DECAFT:

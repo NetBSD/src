@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.281 2026/03/27 21:44:08 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.282 2026/04/07 20:05:35 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.281 2026/03/27 21:44:08 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.282 2026/04/07 20:05:35 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -756,6 +756,7 @@ static const char *queries[] = {
 	"typedef '%s' of union type '%s'",				// Q22
 	"typedef '%s' of pointer to struct type '%s'",			// Q23
 	"typedef '%s' of pointer to union type '%s'",			// Q24
+	"negation of signed '%s'",					// Q25
 };
 
 // Omit any expensive computations in the default mode where none of the
