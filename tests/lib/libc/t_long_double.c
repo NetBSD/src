@@ -1,4 +1,4 @@
-/*	$NetBSD: t_long_double.c,v 1.5 2026/04/06 22:55:51 nat Exp $	*/
+/*	$NetBSD: t_long_double.c,v 1.6 2026/04/07 14:12:16 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_long_double.c,v 1.5 2026/04/06 22:55:51 nat Exp $");
+__RCSID("$NetBSD: t_long_double.c,v 1.6 2026/04/07 14:12:16 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -183,6 +183,12 @@ test_ldbl_to_uint64(void)
 		{ -0x8.0p60L, 0 },
 		{ -0x4.0p60L, 0 },
 		{ -1.0L, 0 },
+#elif __sparc64__
+		// Negative values are taken modulo 2^64.
+		{ -0xf.0p60L, 0x1ULL << 60 },
+		{ -0x8.0p60L, 0x8ULL << 60 },
+		{ -0x4.0p60L, 0xcULL << 60 },
+		{ -1.0L, (uint64_t)-1 },
 #else
 		// Negative values below INT64_MIN saturate.
 		{ -0xf.0p60L, 0x8ULL << 60 },
