@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.381 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.382 2026/04/07 12:36:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.381 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2026/04/07 12:36:22 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_compat_netbsd.h"
@@ -227,7 +227,7 @@ static long	getenv(const char *);
 
 /* functions called from locore.s */
 void	dumpsys(void);
-void	mac68k_init(void);
+void	machine_init(paddr_t);
 void	nmihand(struct frame);
 
 /*
@@ -245,7 +245,7 @@ volatile unsigned char *sccA = 0;
  * Early initialization, before main() is called.
  */
 void
-mac68k_init(void)
+machine_init(paddr_t nextpa)
 {
 	int i;
 
@@ -2692,9 +2692,9 @@ struct pmap_bootmap machine_bootmap[] = {
 };
 #endif /* __HAVE_NEW_PMAP_68K */
 
-void bootstrap_mac68k(int);
+paddr_t bootstrap_mac68k(int);
 
-void __attribute__((no_instrument_function))
+paddr_t __attribute__((no_instrument_function))
 bootstrap_mac68k(int tc)
 {
 #if NZSC > 0
@@ -2832,4 +2832,6 @@ bootstrap_mac68k(int tc)
 #endif
 
 	mac68k_video.mv_kvaddr = newvideoaddr;
+
+	return nextpa;
 }

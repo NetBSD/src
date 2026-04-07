@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.208 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.209 2026/04/07 12:36:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -222,6 +222,15 @@ Lstart3:
 	addql	#4,%sp
 
 	/*
+	 * nextpa is returned in %d0.  We need to squirrel that
+	 * away in a callee-saved regstier for use later, after
+	 * the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
+
+	/*
 	 * Set up the vector table, and race to get the MMU
 	 * enabled.
 	 *
@@ -408,7 +417,9 @@ Ltbia040:
 	.word	0xf518			| pflusha
 
 Lnocache0:
-	jbsr	_C_LABEL(mac68k_init)	| additional pre-main initialization
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
+	addql	#4,%sp
 	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
