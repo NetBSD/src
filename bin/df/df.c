@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.105 2025/12/14 16:28:05 kre Exp $ */
+/*	$NetBSD: df.c,v 1.106 2026/04/08 00:54:59 kim Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.105 2025/12/14 16:28:05 kre Exp $");
+__RCSID("$NetBSD: df.c,v 1.106 2026/04/08 00:54:59 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static int	 selected(const char *, size_t);
 static void	 maketypelist(char *);
 static size_t	 regetmntinfo(struct statvfs **, size_t);
 __dead static void usage(void);
-static void	 prthumanval(int64_t, int);
+static void	 prthumanval(bool, int64_t, int);
 static void	 prthuman(const struct statvfs *, int64_t, int64_t);
 
 static int	 aflag, cflag, fflag, gflag, hflag, iflag, lflag;
@@ -82,9 +82,9 @@ static long	 usize;
 static char	**typelist;
 static size_t	 mntcount;
 
-#define WIDTH_INODE	10
 #define WIDTH_BLKSIZE	12
-static int blksize_width = WIDTH_BLKSIZE;
+#define WIDTH_INODE	10
+static int blksize_width = WIDTH_BLKSIZE, inode_width = WIDTH_INODE;
 
 static int fudgeunits = 0;
 
@@ -397,13 +397,14 @@ regetmntinfo(struct statvfs **mntbufp, size_t count)
 }
 
 static void
-prthumanval(int64_t bytes, int width)
+prthumanval(bool bytes, int64_t nbytes, int width)
 {
 	char buf[6];
 
-	(void)humanize_number(buf, sizeof(buf) - (bytes < 0 ? 0 : 1),
-	    bytes, "", HN_AUTOSCALE,
-	    HN_B | HN_NOSPACE | HN_DECIMAL | fudgeunits);
+	(void)humanize_number(buf, sizeof(buf) - (nbytes < 0 ? 0 : 1),
+	    nbytes, "", HN_AUTOSCALE,
+	    (bytes ? HN_B : HN_DIVISOR_1000) |
+	    HN_NOSPACE | HN_DECIMAL | fudgeunits);
 
 	(void)printf("%*s", width, buf);
 }
@@ -412,9 +413,15 @@ static void
 prthuman(const struct statvfs *sfsp, int64_t used, int64_t bavail)
 {
 
-	prthumanval((int64_t)(sfsp->f_blocks * sfsp->f_frsize), blksize_width);
-	prthumanval((int64_t)(used * sfsp->f_frsize), 1 + blksize_width);
-	prthumanval((int64_t)(bavail * sfsp->f_frsize), 1 + blksize_width);
+	prthumanval(true,
+	    (int64_t)(sfsp->f_blocks * sfsp->f_frsize),
+	    blksize_width);
+	prthumanval(true,
+	    (int64_t)(used * sfsp->f_frsize),
+	    1 + blksize_width);
+	prthumanval(true,
+	    (int64_t)(bavail * sfsp->f_frsize),
+	    1 + blksize_width);
 }
 
 /*
@@ -533,7 +540,7 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 			if (hflag) {
 				header = "Size";
 				headerlen = (int)strlen(header);
-				blksize_width = 6;
+				blksize_width = inode_width = 6;
 			} else
 				header = getbsize(&headerlen, &blocksize);
 			break;
@@ -566,8 +573,8 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 			    blksize_width, "Avail");
 			if (iflag) {
 				(void)printf(" %*s %*s %%iCap",
-				    WIDTH_INODE, "iUsed",
-				    WIDTH_INODE, "iAvail");
+				    inode_width, "iUsed",
+				    inode_width, "iAvail");
 			}
 			(void)printf(" Mounted on\n");
 		}
@@ -603,7 +610,7 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 		if (iflag)
 			(void)printf("%jd", sfsp->f_ffree);
 		else if (hflag)
-			prthumanval(bavail * sfsp->f_frsize, 1);
+			prthumanval(true, bavail * sfsp->f_frsize, 1);
 		else
 			(void)printf("%jd", fsbtoblk(bavail,
 			    sfsp->f_frsize, blocksize));
@@ -631,9 +638,18 @@ prtstat(const struct statvfs *sfsp, int maxwidth)
 	if (iflag) {
 		inodes = sfsp->f_files;
 		used = inodes - sfsp->f_ffree;
-		(void)printf(" %*jd %*jd %4s%%",
-		    WIDTH_INODE, (intmax_t)used,
-		    WIDTH_INODE, (intmax_t)sfsp->f_ffree,
+		if (hflag) {
+			prthumanval(false,
+			    (int64_t)used,
+			    1 + inode_width);
+			prthumanval(false,
+			    (int64_t)sfsp->f_ffree,
+			    1 + inode_width);
+		} else
+			(void)printf(" %*jd %*jd",
+			    inode_width, (intmax_t)used,
+			    inode_width, (intmax_t)sfsp->f_ffree);
+		(void)printf(" %4s%%",
 		    inodes == 0 ? (used == 0 ? empty : full) :
 		    strspct(pb, sizeof(pb), used, inodes, 0));
 	}
