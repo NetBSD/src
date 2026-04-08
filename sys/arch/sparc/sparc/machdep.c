@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.343 2025/04/24 01:52:38 riastradh Exp $ */
+/*	$NetBSD: machdep.c,v 1.344 2026/04/08 04:06:41 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2025/04/24 01:52:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344 2026/04/08 04:06:41 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -1236,13 +1236,6 @@ wcopy(const void *vb1, void *vb2, u_int l)
 	if (l & 1)
 		*b2 = *b1e;
 }
-
-#ifdef MODULAR
-void
-module_init_md(void)
-{
-}
-#endif
 
 static size_t 
 _bus_dmamap_mapsize(int const nsegments)

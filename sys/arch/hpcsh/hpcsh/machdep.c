@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.80 2024/03/05 14:15:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.81 2026/04/08 04:06:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.80 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2026/04/08 04:06:40 thorpej Exp $");
 
 #include "opt_md.h"
 #include "opt_ddb.h"
@@ -637,14 +637,3 @@ intc_intr(int ssr, int spc, int ssp)
 		__dbg_heart_beat(HEART_BEAT_BLUE);
 	}
 }
-
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */

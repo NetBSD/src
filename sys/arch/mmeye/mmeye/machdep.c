@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.59 2025/07/13 21:07:04 andvar Exp $	*/
+/*	$NetBSD: machdep.c,v 1.60 2026/04/08 04:06:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.59 2025/07/13 21:07:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2026/04/08 04:06:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -824,16 +824,6 @@ lookup_bootinfo(unsigned int type)
 
 	return NULL;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 #if defined(MMEYE_EPC_WDT)
 callout_t epc_wdtc;

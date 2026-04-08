@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.49 2026/03/29 12:23:08 tls Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.50 2026/04/08 04:06:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.49 2026/03/29 12:23:08 tls Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.50 2026/04/08 04:06:41 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -143,16 +143,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL);
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 /*
  * Set registers on exec.

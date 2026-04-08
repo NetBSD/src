@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.308 2025/04/24 23:55:18 riastradh Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.309 2026/04/08 04:06:41 thorpej Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.308 2025/04/24 23:55:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.309 2026/04/08 04:06:41 thorpej Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -2464,18 +2464,6 @@ std_splsw_test(void)
 }
 
 #endif /* PARANOIA */
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-
-	/* XXX Do something board/machine specific here one day... */
-}
-#endif /* MODULAR */
 
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.88 2026/02/24 21:44:00 jmcneill Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.89 2026/04/08 04:06:41 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.88 2026/02/24 21:44:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.89 2026/04/08 04:06:41 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -883,16 +883,6 @@ emulate_mxmsr(struct lwp *l, struct trapframe *tf, uint32_t opcode)
 
 	return 0;
 }
-
-#if defined(MODULAR) && !defined(__PPC_HAVE_MODULE_INIT_MD)
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2026/01/04 21:16:29 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2026/04/08 04:06:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2026/01/04 21:16:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2026/04/08 04:06:40 thorpej Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -2115,16 +2115,6 @@ blink_lcd_timeout(void *vsc)
 	callout_schedule(&sc->bls_to, t);
 }
 #endif
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
