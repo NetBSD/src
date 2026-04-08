@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.189 2023/10/17 16:06:36 bouyer Exp $
+#	$NetBSD: files.xen,v 1.190 2026/04/08 20:57:36 andvar Exp $
 
 defflag	opt_xen.h			XEN XENPVHVM PAE DOM0OPS
 
@@ -56,7 +56,7 @@ file	arch/xen/xen/xenevt.c		xenevt & dom0ops
 file	arch/xen/xen/xennetback_xenbus.c xvif
 file	arch/xen/xen/xbdback_xenbus.c xbdback
 
-# Xen event peudo-device
+# Xen event pseudo-device
 defpseudo xenevt
 defpseudo xvif
 defpseudo xbdback
