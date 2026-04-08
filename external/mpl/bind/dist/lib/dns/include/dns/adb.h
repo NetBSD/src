@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.10 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.11 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,6 +198,10 @@ struct dns_adbfind {
  *	Only look for glue record for static stub.
  */
 #define DNS_ADBFIND_STATICSTUB 0x00001000
+/*%
+ *      This specific find created a fetch
+ */
+#define DNS_ADBFIND_STARTEDFETCH 0x00010000
 
 /*%
  * The answers to queries come back as a list of these.

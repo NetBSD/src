@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.21 2026/01/29 18:36:27 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.22 2026/04/08 00:15:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -121,6 +121,9 @@
 extern unsigned int dns_zone_mkey_hour;
 extern unsigned int dns_zone_mkey_day;
 extern unsigned int dns_zone_mkey_month;
+
+extern unsigned int dns_adb_entrywindow;
+extern unsigned int dns_adb_cachemin;
 
 static bool want_stats = false;
 static char program_name[NAME_MAX] = "named";
@@ -804,6 +807,10 @@ parse_T_opt(char *option) {
 		transferstuck = true;
 	} else if (!strncmp(option, "tat=", 4)) {
 		named_g_tat_interval = atoi(option + 4);
+	} else if (!strncmp(option, "adbentrywindow=", 15)) {
+		dns_adb_entrywindow = atoi(option + 15);
+	} else if (!strncmp(option, "adbcachemin=", 12)) {
+		dns_adb_cachemin = atoi(option + 12);
 	} else {
 		fprintf(stderr, "unknown -T flag '%s'\n", option);
 	}

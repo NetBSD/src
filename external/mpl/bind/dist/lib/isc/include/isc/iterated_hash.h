@@ -1,4 +1,4 @@
-/*	$NetBSD: iterated_hash.h,v 1.7 2025/01/26 16:25:41 christos Exp $	*/
+/*	$NetBSD: iterated_hash.h,v 1.8 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,18 +16,6 @@
 #pragma once
 
 #include <isc/lang.h>
-
-/*
- * The maximal hash length that can be encoded in a name
- * using base32hex.  floor(255/8)*5
- */
-#define NSEC3_MAX_HASH_LENGTH 155
-
-/*
- * The maximum has that can be encoded in a single label using
- * base32hex.  floor(63/8)*5
- */
-#define NSEC3_MAX_LABEL_HASH 35
 
 ISC_LANG_BEGINDECLS
 

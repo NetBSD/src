@@ -1,4 +1,4 @@
-/*	$NetBSD: kaspconf.c,v 1.11 2026/01/29 18:37:55 christos Exp $	*/
+/*	$NetBSD: kaspconf.c,v 1.12 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -854,6 +854,7 @@ cfg_kasp_fromconfig(const cfg_obj_t *config, dns_kasp_t *default_kasp,
 						    "find keystore (%s)",
 						    isc_result_totext(result));
 				}
+				dns_kasp_key_destroy(new_key);
 				goto cleanup;
 			}
 			dns_kasp_addkey(kasp, new_key);
@@ -974,6 +975,7 @@ cfg_kasp_builtinconfig(isc_mem_t *mctx, const char *name,
 					       DNS_KEYSTORE_KEYDIRECTORY,
 					       &new_key->keystore);
 		if (result != ISC_R_SUCCESS) {
+			dns_kasp_key_destroy(new_key);
 			goto cleanup;
 		}
 		dns_kasp_addkey(kasp, new_key);

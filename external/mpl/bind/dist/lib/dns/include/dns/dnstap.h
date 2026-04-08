@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.h,v 1.10 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: dnstap.h,v 1.11 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,6 +57,8 @@ struct fstrm_iothr_options;
  * RESOLVER RESPONSE: RR
  * FORWARDER QUERY: FQ
  * FORWARDER RESPONSE: FR
+ * UPDATE QUERY: UQ
+ * UPDATE RESPONSE: UR
  */
 
 #define DNS_DTTYPE_SQ 0x0001
@@ -117,6 +119,21 @@ struct dns_dtdata {
 	char classbuf[DNS_RDATACLASS_FORMATSIZE];
 };
 #endif /* HAVE_DNSTAP */
+
+#if DNS_DTENV_TRACE
+#define dns_dtenv_ref(ptr)   dns_dtenv__ref(ptr, __func__, __FILE__, __LINE__)
+#define dns_dtenv_unref(ptr) dns_dtenv__unref(ptr, __func__, __FILE__, __LINE__)
+#define dns_dtenv_attach(ptr, ptrp) \
+	dns_dtenv__attach(ptr, ptrp, __func__, __FILE__, __LINE__)
+#define dns_dtenv_detach(ptrp) \
+	dns_dtenv__detach(ptrp, __func__, __FILE__, __LINE__)
+ISC_REFCOUNT_TRACE_DECL(dns_dtenv);
+#else
+ISC_REFCOUNT_DECL(dns_dtenv);
+#endif /* DNS_DTENV_TRACE */
+/*%
+ * Reference counting for dns_dtenv
+ */
 
 isc_result_t
 dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
@@ -213,36 +230,6 @@ dns_dt_setversion(dns_dtenv_t *env, const char *version);
  * Requires:
  *
  *\li	'env' is a valid dnstap environment.
- */
-
-void
-dns_dt_attach(dns_dtenv_t *source, dns_dtenv_t **destp);
-/*%<
- * Attach '*destp' to 'source', incrementing the reference counter.
- *
- * Requires:
- *
- *\li	'source' is a valid dnstap environment.
- *
- *\li	'destp' is not NULL and '*destp' is NULL.
- *
- *\li	*destp is attached to source.
- */
-
-void
-dns_dt_detach(dns_dtenv_t **envp);
-/*%<
- * Detach '*envp', decrementing the reference counter.
- *
- * Requires:
- *
- *\li	'*envp' is a valid dnstap environment.
- *
- * Ensures:
- *
- *\li	'*envp' will be destroyed when the number of references reaches zero.
- *
- *\li	'*envp' is NULL.
  */
 
 isc_result_t

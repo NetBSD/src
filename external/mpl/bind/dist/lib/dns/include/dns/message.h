@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.17 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.18 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@
  */
 #define DNS_EDNSOPTIONS 7 + DNS_EDE_MAX_ERRORS
 
-#define DNS_MESSAGE_REPLYPRESERVE	 (DNS_MESSAGEFLAG_RD | DNS_MESSAGEFLAG_CD)
+#define DNS_MESSAGE_REPLYPRESERVE (DNS_MESSAGEFLAG_RD | DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
 
 #define DNS_MESSAGE_HEADERLEN 12 /*%< 6 uint16_t's */

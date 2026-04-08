@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone.c,v 1.4 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: qpzone.c,v 1.5 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -45,6 +45,8 @@
 #include <dns/callbacks.h>
 #include <dns/db.h>
 #include <dns/dbiterator.h>
+#include <dns/diff.h>
+#include <dns/dnssec.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
@@ -103,6 +105,17 @@
 
 typedef struct qpzonedb qpzonedb_t;
 typedef struct qpznode qpznode_t;
+
+/*
+ * Qpzone-specific update context that extends dns_updatectx_t, used in IXFR.
+ */
+typedef struct qpzone_updatectx {
+	dns_updatectx_t base;
+	dns_qp_t *qp;
+	dns_qp_t *nsec;
+	dns_qp_t *nsec3;
+	dns_qpread_t qpr;
+} qpzone_updatectx_t;
 
 typedef struct qpz_changed {
 	qpznode_t *node;
@@ -2047,8 +2060,8 @@ addwildcards(qpzonedb_t *qpdb, dns_qp_t *qp, const dns_name_t *name) {
 }
 
 static isc_result_t
-loading_addrdataset(void *arg, const dns_name_t *name,
-		    dns_rdataset_t *rdataset DNS__DB_FLARG) {
+loading_addrdataset(void *arg, const dns_name_t *name, dns_rdataset_t *rdataset,
+		    dns_diffop_t op ISC_ATTR_UNUSED DNS__DB_FLARG) {
 	qpz_load_t *loadctx = arg;
 	qpzonedb_t *qpdb = (qpzonedb_t *)loadctx->db;
 	qpznode_t *node = NULL;
@@ -2193,7 +2206,7 @@ beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 
 	RWUNLOCK(&qpdb->lock, isc_rwlocktype_write);
 
-	callbacks->add = loading_addrdataset;
+	callbacks->update = loading_addrdataset;
 	callbacks->setup = loading_setup;
 	callbacks->commit = loading_commit;
 	callbacks->add_private = loadctx;
@@ -2228,7 +2241,7 @@ endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 		RWUNLOCK(&qpdb->lock, isc_rwlocktype_write);
 	}
 
-	callbacks->add = NULL;
+	callbacks->update = NULL;
 	callbacks->setup = NULL;
 	callbacks->commit = NULL;
 	callbacks->add_private = NULL;
@@ -2436,37 +2449,82 @@ setgluecachestats(dns_db_t *db, isc_stats_t *stats) {
 	return ISC_R_SUCCESS;
 }
 
-static isc_result_t
-findnodeintree(qpzonedb_t *qpdb, const dns_name_t *name, bool create,
-	       bool nsec3, dns_dbnode_t **nodep DNS__DB_FLARG) {
-	isc_result_t result;
-	qpznode_t *node = NULL;
-	dns_qpmulti_t *dbtree = nsec3 ? qpdb->nsec3 : qpdb->tree;
-	dns_qpread_t qpr = { 0 };
+static dns_qp_t *
+begin_transaction(dns_qpmulti_t *dbtree, dns_qpread_t *qprp, bool create) {
 	dns_qp_t *qp = NULL;
 
 	if (create) {
 		dns_qpmulti_write(dbtree, &qp);
 	} else {
-		dns_qpmulti_query(dbtree, &qpr);
-		qp = (dns_qp_t *)&qpr;
+		dns_qpmulti_query(dbtree, qprp);
+		qp = (dns_qp_t *)qprp;
 	}
 
-	result = dns_qp_getname(qp, name, (void **)&node, NULL);
-	if (result != ISC_R_SUCCESS) {
-		if (!create) {
-			dns_qpread_destroy(dbtree, &qpr);
-			return result;
-		}
+	return qp;
+}
 
+static void
+end_transaction(dns_qpmulti_t *dbtree, dns_qp_t *qp, bool create) {
+	if (create) {
+		dns_qp_compact(qp, DNS_QPGC_MAYBE);
+		dns_qpmulti_commit(dbtree, &qp);
+	} else {
+		dns_qpread_t *qprp = (dns_qpread_t *)qp;
+		dns_qpread_destroy(dbtree, qprp);
+	}
+}
+
+static isc_result_t
+findnodeintree(qpzonedb_t *qpdb, dns_qp_t *qp, const dns_name_t *name,
+	       bool create, bool nsec3, dns_dbnode_t **nodep DNS__DB_FLARG) {
+	isc_result_t result;
+	qpznode_t *node = NULL;
+
+	/*
+	 * findnodeintree is a wrapper around dns_qp_getname that does some
+	 * qpzone-specific bookkeeping before returning the lookup result to the
+	 * caller.
+	 *
+	 * First, we do a lookup ...
+	 */
+	result = dns_qp_getname(qp, name, (void **)&node, NULL);
+	if (result == ISC_R_SUCCESS) {
+		/*
+		 * ... if the lookup is successful, we need to increase both the
+		 * internal and external reference count before returning to
+		 * the caller. qpznode_acquire takes care of that.
+		 */
+		qpznode_acquire(qpdb, node DNS__DB_FLARG_PASS);
+	} else if (result != ISC_R_SUCCESS && create) {
+		/*
+		 * ... if the lookup is unsuccessful, but the caller asked us to
+		 * create a new node, create one and insert it into the tree.
+		 */
 		node = new_qpznode(qpdb, name);
+
 		result = dns_qp_insert(qp, node, 0);
 		INSIST(result == ISC_R_SUCCESS);
-		qpznode_unref(node);
+
+		/*
+		 * The new node now has two internal references:
+		 *  - One from new_qpznode, that initializes references at 1.
+		 *  - One from attach_leaf, that increases the reference by
+		 *    one at insertion in the qp-tree.
+		 * We want the node to have two internal and one external
+		 * reference:
+		 *  - One internal reference from the qp-tree.
+		 *  - One internal and one external reference from the caller.
+		 *
+		 * So we increase the external reference count by one.
+		 */
+		qpznode_erefs_increment(qpdb, node DNS__DB_FLARG_PASS);
 
 		if (nsec3) {
 			node->nsec = DNS_DB_NSEC_NSEC3;
 		} else {
+			/*
+			 * Add empty non-terminal nodes to help with wildcards.
+			 */
 			addwildcards(qpdb, qp, name);
 			if (dns_name_iswildcard(name)) {
 				wildcardmagic(qpdb, qp, name);
@@ -2474,20 +2532,15 @@ findnodeintree(qpzonedb_t *qpdb, const dns_name_t *name, bool create,
 		}
 	}
 
-	INSIST(node->nsec == DNS_DB_NSEC_NSEC3 || !nsec3);
-
-	qpznode_acquire(qpdb, node DNS__DB_FLARG_PASS);
-
-	if (create) {
-		dns_qp_compact(qp, DNS_QPGC_MAYBE);
-		dns_qpmulti_commit(dbtree, &qp);
-	} else {
-		dns_qpread_destroy(dbtree, &qpr);
-	}
+	/*
+	 * ... if the lookup is unsuccessful, and the caller didn't ask us
+	 * to create a new node, there is nothing to do. Return the result
+	 * of the lookup to the caller, and set *nodep to NULL
+	 */
 
 	*nodep = (dns_dbnode_t *)node;
 
-	return ISC_R_SUCCESS;
+	return result;
 }
 
 static isc_result_t
@@ -2497,8 +2550,15 @@ findnode(dns_db_t *db, const dns_name_t *name, bool create,
 
 	REQUIRE(VALID_QPZONE(qpdb));
 
-	return findnodeintree(qpdb, name, create, false,
-			      nodep DNS__DB_FLARG_PASS);
+	dns_qpread_t qpr = { 0 };
+	dns_qp_t *qp = begin_transaction(qpdb->tree, &qpr, create);
+
+	isc_result_t result = findnodeintree(qpdb, qp, name, create, false,
+					     nodep DNS__DB_FLARG_PASS);
+
+	end_transaction(qpdb->tree, qp, create);
+
+	return result;
 }
 
 static isc_result_t
@@ -2508,8 +2568,15 @@ findnsec3node(dns_db_t *db, const dns_name_t *name, bool create,
 
 	REQUIRE(VALID_QPZONE(qpdb));
 
-	return findnodeintree(qpdb, name, create, true,
-			      nodep DNS__DB_FLARG_PASS);
+	dns_qpread_t qpr = { 0 };
+	dns_qp_t *qp = begin_transaction(qpdb->nsec3, &qpr, create);
+
+	isc_result_t result = findnodeintree(qpdb, qp, name, create, true,
+					     nodep DNS__DB_FLARG_PASS);
+
+	end_transaction(qpdb->nsec3, qp, create);
+
+	return result;
 }
 
 static bool
@@ -4648,10 +4715,21 @@ createiterator(dns_db_t *db, unsigned int options,
 	return ISC_R_SUCCESS;
 }
 
+/*
+ * Main logic to add a new rdataset to a node.
+ *
+ * The reason this is split from qpzone_addrdataset is to allow the reuse of
+ * the same qp transaction for multiple adds.
+ *
+ * qpzone_subtractrdataset doesn't have the same problem since it cannot delete
+ * nodes, only rdatasets.
+ */
 static isc_result_t
-addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
-	    isc_stdtime_t now ISC_ATTR_UNUSED, dns_rdataset_t *rdataset,
-	    unsigned int options, dns_rdataset_t *addedrdataset DNS__DB_FLARG) {
+qpzone_addrdataset_inner(dns_db_t *db, dns_dbnode_t *dbnode,
+			 dns_dbversion_t *dbversion,
+			 isc_stdtime_t now ISC_ATTR_UNUSED,
+			 dns_rdataset_t *rdataset, unsigned int options,
+			 dns_rdataset_t *addedrdataset, dns_qp_t *nsec) {
 	isc_result_t result;
 	qpzonedb_t *qpdb = (qpzonedb_t *)db;
 	qpznode_t *node = (qpznode_t *)dbnode;
@@ -4662,7 +4740,6 @@ addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
 	isc_rwlock_t *nlock = NULL;
 	dns_fixedname_t fn;
 	dns_name_t *name = dns_fixedname_initname(&fn);
-	dns_qp_t *nsec = NULL;
 
 	REQUIRE(VALID_QPZONE(qpdb));
 	REQUIRE(version != NULL && version->qpdb == qpdb);
@@ -4723,11 +4800,10 @@ addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
 	/*
 	 * Add to the auxiliary NSEC tree if we're adding an NSEC record.
 	 */
-	if (node->nsec != DNS_DB_NSEC_HAS_NSEC &&
-	    rdataset->type == dns_rdatatype_nsec)
-	{
-		dns_qpmulti_write(qpdb->nsec, &nsec);
-	}
+
+	bool is_nsec = node->nsec != DNS_DB_NSEC_HAS_NSEC &&
+		       rdataset->type == dns_rdatatype_nsec;
+	REQUIRE(!is_nsec || nsec != NULL);
 
 	/*
 	 * If we're adding a delegation type or adding to the auxiliary NSEC
@@ -4743,7 +4819,8 @@ addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
 	NODE_WRLOCK(nlock, &nlocktype);
 
 	result = ISC_R_SUCCESS;
-	if (nsec != NULL) {
+
+	if (is_nsec) {
 		node->nsec = DNS_DB_NSEC_HAS_NSEC;
 
 		/*
@@ -4774,7 +4851,34 @@ addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
 
 	NODE_UNLOCK(nlock, &nlocktype);
 
-	if (nsec != NULL) {
+	return result;
+}
+
+static isc_result_t
+addrdataset(dns_db_t *db, dns_dbnode_t *dbnode, dns_dbversion_t *dbversion,
+	    isc_stdtime_t now ISC_ATTR_UNUSED, dns_rdataset_t *rdataset,
+	    unsigned int options, dns_rdataset_t *addedrdataset DNS__DB_FLARG) {
+	qpzonedb_t *qpdb = (qpzonedb_t *)db;
+	qpznode_t *node = (qpznode_t *)dbnode;
+	dns_qp_t *nsec = NULL;
+
+	REQUIRE(VALID_QPZONE(qpdb));
+
+	bool is_nsec = node->nsec != DNS_DB_NSEC_HAS_NSEC &&
+		       rdataset->type == dns_rdatatype_nsec;
+
+	/*
+	 * Add to the auxiliary NSEC tree if we're adding an NSEC record.
+	 */
+	if (is_nsec) {
+		dns_qpmulti_write(qpdb->nsec, &nsec);
+	}
+
+	isc_result_t result = qpzone_addrdataset_inner(db, dbnode, dbversion,
+						       now, rdataset, options,
+						       addedrdataset, nsec);
+
+	if (is_nsec) {
 		dns_qpmulti_commit(qpdb->nsec, &nsec);
 	}
 
@@ -5204,10 +5308,192 @@ setmaxtypepername(dns_db_t *db, uint32_t value) {
 	qpdb->maxtypepername = value;
 }
 
+/*
+ * Qpzone specialization of the update function from dns_rdatacallbacks_t,
+ * meant to reuse the same qp transaction for multiple operations.
+ */
+static isc_result_t
+qpzone_update_rdataset(qpzonedb_t *qpdb, qpz_version_t *version,
+		       qpzone_updatectx_t *ctx, dns_name_t *name,
+		       dns_rdataset_t *rds, dns_diffop_t op) {
+	isc_result_t result;
+	unsigned int options;
+	dns_rdataset_t ardataset;
+	dns_dbnode_t *node = NULL;
+	bool is_nsec3;
+
+	dns_rdataset_init(&ardataset);
+
+	is_nsec3 = (rds->type == dns_rdatatype_nsec3 ||
+		    rds->covers == dns_rdatatype_nsec3);
+	dns_qp_t *dbtree = is_nsec3 ? ctx->nsec3 : ctx->qp;
+
+	result = findnodeintree(qpdb, dbtree, name, true, is_nsec3,
+				&node DNS__DB_FLARG_PASS);
+
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
+	}
+
+	switch (op) {
+	case DNS_DIFFOP_ADD:
+	case DNS_DIFFOP_ADDRESIGN:
+		/*
+		 * See the comment on qpzone_addrdataset_inner for why we
+		 * cannot use qpzone_addrdataset directly.
+		 */
+		options = DNS_DBADD_MERGE | DNS_DBADD_EXACT |
+			  DNS_DBADD_EXACTTTL;
+		result = qpzone_addrdataset_inner(
+			(dns_db_t *)qpdb, node, (dns_dbversion_t *)version, 0,
+			rds, options, &ardataset, ctx->nsec DNS__DB_FLARG_PASS);
+		switch (result) {
+		case ISC_R_SUCCESS:
+			if (dns_rdataset_isassociated(&ardataset)) {
+				dns_rdataset_setownercase(&ardataset, name);
+			}
+			break;
+		case DNS_R_UNCHANGED:
+		case DNS_R_NXRRSET:
+			CHECK(result);
+			break;
+		default:
+			CHECK(result);
+			break;
+		}
+		break;
+	case DNS_DIFFOP_DEL:
+	case DNS_DIFFOP_DELRESIGN:
+		options = DNS_DBSUB_EXACT | DNS_DBSUB_WANTOLD;
+		result = subtractrdataset(
+			(dns_db_t *)qpdb, node, (dns_dbversion_t *)version, rds,
+			options, &ardataset DNS__DB_FLARG_PASS);
+		break;
+	default:
+		UNREACHABLE();
+	}
+
+	bool is_resign = rds->type == dns_rdatatype_rrsig &&
+			 (op == DNS_DIFFOP_DELRESIGN ||
+			  op == DNS_DIFFOP_ADDRESIGN);
+
+	if (result == ISC_R_SUCCESS && is_resign) {
+		if (dns_rdataset_isassociated(&ardataset)) {
+			isc_stdtime_t resign;
+			resign = dns_rdataset_minresign(&ardataset);
+			dns_db_setsigningtime((dns_db_t *)qpdb, &ardataset,
+					      resign);
+		}
+	}
+
+cleanup:
+	if (node != NULL) {
+		dns_db_detachnode((dns_db_t *)qpdb, &node);
+	}
+	if (dns_rdataset_isassociated(&ardataset)) {
+		dns_rdataset_disassociate(&ardataset);
+	}
+	return result;
+}
+
+static isc_result_t
+qpzone_update_callback(void *arg, const dns_name_t *name, dns_rdataset_t *rds,
+		       dns_diffop_t op DNS__DB_FLARG) {
+	qpzone_updatectx_t *ctx = arg;
+	qpzonedb_t *qpdb = (qpzonedb_t *)ctx->base.db;
+	qpz_version_t *version = (qpz_version_t *)ctx->base.ver;
+
+	return qpzone_update_rdataset(qpdb, version, ctx, (dns_name_t *)name,
+				      rds, op);
+}
+
+static isc_result_t
+qpzone_beginupdate(dns_db_t *db, dns_dbversion_t *ver,
+		   dns_rdatacallbacks_t *callbacks) {
+	qpzonedb_t *qpdb = (qpzonedb_t *)db;
+
+	REQUIRE(VALID_QPZONE(qpdb));
+	REQUIRE(ver != NULL);
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	qpzone_updatectx_t *ctx = isc_mem_get(qpdb->common.mctx, sizeof(*ctx));
+	*ctx = (qpzone_updatectx_t){
+		.base.db = db,
+		.base.ver = ver,
+		.base.warn = true,
+		.qpr = (dns_qpread_t){ 0 },
+	};
+	ctx->qp = begin_transaction(qpdb->tree, &ctx->qpr, true);
+	ctx->nsec = begin_transaction(qpdb->nsec, &ctx->qpr, true);
+	ctx->nsec3 = begin_transaction(qpdb->nsec3, &ctx->qpr, true);
+
+	callbacks->update = qpzone_update_callback;
+	callbacks->add_private = ctx;
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+qpzone_commitupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	qpzonedb_t *qpdb = (qpzonedb_t *)db;
+	qpzone_updatectx_t *ctx;
+
+	REQUIRE(VALID_QPZONE(qpdb));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	ctx = (qpzone_updatectx_t *)callbacks->add_private;
+	if (ctx != NULL) {
+		end_transaction(qpdb->nsec3, ctx->nsec3, true);
+		end_transaction(qpdb->nsec, ctx->nsec, true);
+		end_transaction(qpdb->tree, ctx->qp, true);
+
+		isc_mem_put(qpdb->common.mctx, ctx, sizeof(*ctx));
+		/*
+		 * We need to allow the context to be committed or aborted
+		 * multiple times, so we set the callback data to NULL
+		 * to signal that nothing needs to be done with this context.
+		 */
+		callbacks->add_private = NULL;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
+/*
+ * For now, abortupdate needs to *commit* the results, so that closeversion
+ * cleanup might work.
+ */
+static isc_result_t
+qpzone_abortupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	qpzonedb_t *qpdb = (qpzonedb_t *)db;
+	qpzone_updatectx_t *ctx;
+
+	REQUIRE(VALID_QPZONE(qpdb));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	ctx = (qpzone_updatectx_t *)callbacks->add_private;
+	if (ctx != NULL) {
+		end_transaction(qpdb->nsec3, ctx->nsec3, true);
+		end_transaction(qpdb->nsec, ctx->nsec, true);
+		end_transaction(qpdb->tree, ctx->qp, true);
+
+		isc_mem_put(qpdb->common.mctx, ctx, sizeof(*ctx));
+		/*
+		 * See qpzone_commitupdate.
+		 */
+		callbacks->add_private = NULL;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
 static dns_dbmethods_t qpdb_zonemethods = {
 	.destroy = qpdb_destroy,
 	.beginload = beginload,
 	.endload = endload,
+	.beginupdate = qpzone_beginupdate,
+	.commitupdate = qpzone_commitupdate,
+	.abortupdate = qpzone_abortupdate,
 	.currentversion = currentversion,
 	.newversion = newversion,
 	.attachversion = attachversion,

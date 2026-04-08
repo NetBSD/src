@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.c,v 1.13 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: dispatch.c,v 1.14 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,8 +66,8 @@ struct dns_dispatchmgr {
 
 	in_port_t *v4ports;    /*%< available ports for IPv4 */
 	unsigned int nv4ports; /*%< # of available ports for IPv4 */
-	in_port_t *v6ports;    /*%< available ports for IPv4 */
-	unsigned int nv6ports; /*%< # of available ports for IPv4 */
+	in_port_t *v6ports;    /*%< available ports for IPv6 */
+	unsigned int nv6ports; /*%< # of available ports for IPv6 */
 };
 
 typedef enum {
@@ -919,7 +919,7 @@ static void
 create_default_portset(isc_mem_t *mctx, int family, isc_portset_t **portsetp) {
 	in_port_t low, high;
 
-	isc_net_getudpportrange(family, &low, &high);
+	isc_net_getportrange(family, &low, &high);
 
 	isc_portset_create(mctx, portsetp);
 	isc_portset_addrange(*portsetp, low, high);

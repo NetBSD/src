@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.h,v 1.11 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: netmgr.h,v 1.12 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -901,4 +901,11 @@ isc_sockaddr_t
 isc_nmsocket_getaddr(isc_nmsocket_t *sock);
 /*%<
  * Return the local address of 'sock'.
+ */
+
+void
+isc_netmgr_portrange(isc_nm_t *netmgr, sa_family_t af, in_port_t low,
+		     in_port_t high);
+/*%<
+ * Set the ephemeral port range <low, high> for 'af' family.
  */

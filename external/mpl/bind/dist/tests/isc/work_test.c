@@ -1,4 +1,4 @@
-/*	$NetBSD: work_test.c,v 1.2 2025/01/26 16:25:50 christos Exp $	*/
+/*	$NetBSD: work_test.c,v 1.3 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -58,13 +58,8 @@ after_work_cb(void *arg) {
 }
 
 static void
-work_enqueue_cb(void *arg) {
-	UNUSED(arg);
-	uint32_t tid = isc_loopmgr_nloops(loopmgr) - 1;
-
-	isc_loop_t *loop = isc_loop_get(loopmgr, tid);
-
-	isc_work_enqueue(loop, work_cb, after_work_cb, loopmgr);
+work_enqueue_cb(void *arg ISC_ATTR_UNUSED) {
+	isc_work_enqueue(isc_loop(), work_cb, after_work_cb, NULL);
 }
 
 ISC_RUN_TEST_IMPL(isc_work_enqueue) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: callbacks.h,v 1.7 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: callbacks.h,v 1.8 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,18 +39,18 @@ struct dns_rdatacallbacks {
 	unsigned int magic;
 
 	/*%
-	 * dns_load_master calls 'add' when it has an rdataset to add
-	 * to the database. If defined, it calls 'setup' before and
-	 * 'commit' after adding rdatasets.
+	 * dns_load_master calls 'update' when it has an rdataset to update
+	 * in the database. If defined, it calls 'setup' before and
+	 * 'commit' after updating rdatasets.
 	 *
 	 * Some database implementations will commit each rdataset as
-	 * soon as it's added, in which case 'setup' and 'commit' need
+	 * soon as it's updated, in which case 'setup' and 'commit' need
 	 * not be defined.  However, other implementations can be
 	 * optimized by grouping rdatasets into a transaction; the
 	 * setup and commit functions allow this transaction to be
 	 * opened and committed.
 	 */
-	dns_addrdatasetfunc_t add;
+	dns_addrdatasetfunc_t update;
 	dns_transactionfunc_t setup;
 	dns_transactionfunc_t commit;
 

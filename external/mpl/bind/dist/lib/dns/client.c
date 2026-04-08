@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.17 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.18 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -148,20 +148,14 @@ setsourceports(isc_mem_t *mctx, dns_dispatchmgr_t *manager) {
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
-	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	isc_net_getportrange(AF_INET, &udpport_low, &udpport_high);
 	isc_portset_addrange(v4portset, udpport_low, udpport_high);
 
 	result = isc_portset_create(mctx, &v6portset);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}
-	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
+	isc_net_getportrange(AF_INET6, &udpport_low, &udpport_high);
 	isc_portset_addrange(v6portset, udpport_low, udpport_high);
 
 	result = dns_dispatchmgr_setavailports(manager, v4portset, v6portset);
@@ -515,7 +509,7 @@ client_resfind(resctx_t *rctx, dns_fetchresponse_t *resp) {
 	name = dns_fixedname_name(&rctx->name);
 
 	do {
-		dns_name_t *fname = NULL;
+		dns_name_t *fname = dns_fixedname_initname(&foundname);
 		dns_name_t *ansname = NULL;
 		dns_db_t *db = NULL;
 		dns_dbnode_t *node = NULL;
@@ -524,7 +518,6 @@ client_resfind(resctx_t *rctx, dns_fetchresponse_t *resp) {
 		want_restart = false;
 
 		if (resp == NULL) {
-			fname = dns_fixedname_initname(&foundname);
 			INSIST(!dns_rdataset_isassociated(rctx->rdataset));
 			INSIST(rctx->sigrdataset == NULL ||
 			       !dns_rdataset_isassociated(rctx->sigrdataset));
@@ -553,14 +546,13 @@ client_resfind(resctx_t *rctx, dns_fetchresponse_t *resp) {
 				goto done;
 			}
 		} else {
-			INSIST(resp != NULL);
 			INSIST(resp->fetch == rctx->fetch);
 			dns_resolver_destroyfetch(&rctx->fetch);
 			db = resp->db;
 			node = resp->node;
 			result = resp->result;
 			vresult = resp->vresult;
-			fname = resp->foundname;
+			dns_name_copy(resp->foundname, fname);
 			INSIST(resp->rdataset == rctx->rdataset);
 			INSIST(resp->sigrdataset == rctx->sigrdataset);
 			dns_resolver_freefresp(&resp);
@@ -998,7 +990,7 @@ dns_client_resolve(dns_client_t *client, const dns_name_t *name,
 	result = startresolve(client, name, rdclass, type, options,
 			      resolve_done, resarg, &resarg->trans);
 	if (result != ISC_R_SUCCESS) {
-		isc_mem_put(client->mctx, resarg, sizeof(*resarg));
+		isc_mem_putanddetach(&resarg->mctx, resarg, sizeof(*resarg));
 		return result;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.4 2026/01/29 18:37:55 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.5 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -89,8 +89,10 @@ static const cfg_obj_t *
 find_maplist(const cfg_obj_t *config, const char *listname, const char *name);
 
 static isc_result_t
-validate_remotes(const cfg_obj_t *obj, const cfg_obj_t *config,
-		 uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx);
+validate_remotes(const cfg_obj_t *obj, const cfg_obj_t *voptions,
+		 const cfg_obj_t *config, uint32_t *countp, isc_log_t *logctx,
+		 isc_mem_t *mctx);
+
 static void
 freekey(char *key, unsigned int type, isc_symvalue_t value, void *userarg) {
 	UNUSED(type);
@@ -2215,7 +2217,8 @@ check_remoteserverlist(const cfg_obj_t *cctx, const char *list,
 		}
 
 		uint32_t dummy = 0;
-		result = validate_remotes(obj, cctx, &dummy, logctx, mctx);
+		result = validate_remotes(obj, NULL, cctx, &dummy, logctx,
+					  mctx);
 		if (result != ISC_R_SUCCESS) {
 			break;
 		}
@@ -2580,17 +2583,58 @@ get_remoteservers_def(const char *name, const cfg_obj_t *cctx,
 	return get_remotes(cctx, "masters", name, ret);
 }
 
+static bool
+lookup_key(const cfg_obj_t *config, const dns_name_t *keyname) {
+	const cfg_obj_t *keys = NULL;
+
+	if (config == NULL) {
+		return false;
+	}
+
+	(void)cfg_map_get(config, "key", &keys);
+	for (const cfg_listelt_t *elt = cfg_list_first(keys); elt != NULL;
+	     elt = cfg_list_next(elt))
+	{
+		/*
+		 * `key` are normalized TSIG which must be identified by
+		 * a domain name, so this is needed. Otherwise, with a
+		 * raw string comparison we could have:
+		 *
+		 * remote-servers { x.y.z.s key foo };
+		 * key foo. {
+		 *  ...
+		 * };
+		 *
+		 * This would otherwise fail, even though the key
+		 * exists.
+		 */
+		const cfg_obj_t *foundkey = cfg_listelt_value(elt);
+		const char *foundkeystr =
+			cfg_obj_asstring(cfg_map_getname(foundkey));
+		dns_fixedname_t foundfname;
+		dns_name_t *foundkeyname = dns_fixedname_initname(&foundfname);
+		isc_result_t result = dns_name_fromstring(
+			foundkeyname, foundkeystr, dns_rootname, 0, NULL);
+
+		if (result == ISC_R_SUCCESS &&
+		    dns_name_equal(keyname, foundkeyname))
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
 static isc_result_t
-validate_remotes_key(const cfg_obj_t *config, const cfg_obj_t *key,
-		     isc_log_t *logctx) {
+validate_remotes_key(const cfg_obj_t *voptions, const cfg_obj_t *config,
+		     const cfg_obj_t *key, isc_log_t *logctx) {
 	isc_result_t result = ISC_R_SUCCESS;
 
 	if (cfg_obj_isstring(key)) {
-		const cfg_obj_t *keys = NULL;
 		const char *str = cfg_obj_asstring(key);
 		dns_fixedname_t fname;
 		dns_name_t *nm = dns_fixedname_initname(&fname);
-		bool found = false;
 
 		result = dns_name_fromstring(nm, str, dns_rootname, 0, NULL);
 		if (result != ISC_R_SUCCESS) {
@@ -2598,46 +2642,13 @@ validate_remotes_key(const cfg_obj_t *config, const cfg_obj_t *key,
 				    "'%s' is not a valid name", str);
 		}
 
-		result = cfg_map_get(config, "key", &keys);
-
-		for (const cfg_listelt_t *elt = cfg_list_first(keys);
-		     elt != NULL; elt = cfg_list_next(elt))
-		{
-			/*
-			 * `key` are normalized TSIG which must be
-			 * identified by a domain name, so this is
-			 * needed. Otherwise, with a raw string
-			 * comparison we could have:
-			 *
-			 * remote-servers { x.y.z.s key foo };
-			 * key foo. {
-			 *  ...
-			 * };
-			 *
-			 * This would otherwise fail, even though the
-			 * key exists.
-			 */
-			const cfg_obj_t *foundkey = cfg_listelt_value(elt);
-			const char *foundkeystr =
-				cfg_obj_asstring(cfg_map_getname(foundkey));
-			dns_fixedname_t foundfname;
-			dns_name_t *foundkeyname =
-				dns_fixedname_initname(&foundfname);
-
-			result = dns_name_fromstring(foundkeyname, foundkeystr,
-						     dns_rootname, 0, NULL);
-
-			if (dns_name_equal(nm, foundkeyname)) {
-				found = true;
-				break;
+		if (!lookup_key(voptions, nm)) {
+			if (!lookup_key(config, nm)) {
+				cfg_obj_log(key, logctx, ISC_LOG_ERROR,
+					    "key '%s' is not defined",
+					    cfg_obj_asstring(key));
+				result = ISC_R_FAILURE;
 			}
-		}
-
-		if (!found) {
-			cfg_obj_log(key, logctx, ISC_LOG_ERROR,
-				    "key '%s' is not defined",
-				    cfg_obj_asstring(key));
-			result = ISC_R_FAILURE;
 		}
 	}
 
@@ -2677,8 +2688,9 @@ validate_remotes_tls(const cfg_obj_t *config, const cfg_obj_t *tls,
 }
 
 static isc_result_t
-validate_remotes(const cfg_obj_t *obj, const cfg_obj_t *config,
-		 uint32_t *countp, isc_log_t *logctx, isc_mem_t *mctx) {
+validate_remotes(const cfg_obj_t *obj, const cfg_obj_t *voptions,
+		 const cfg_obj_t *config, uint32_t *countp, isc_log_t *logctx,
+		 isc_mem_t *mctx) {
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_result_t tresult;
 	uint32_t count = 0;
@@ -2711,7 +2723,7 @@ resume:
 		key = cfg_tuple_get(cfg_listelt_value(element), "key");
 		tls = cfg_tuple_get(cfg_listelt_value(element), "tls");
 
-		result = validate_remotes_key(config, key, logctx);
+		result = validate_remotes_key(voptions, config, key, logctx);
 		if (result != ISC_R_SUCCESS) {
 			goto out;
 		}
@@ -3778,8 +3790,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		}
 		if (tresult == ISC_R_SUCCESS && donotify) {
 			uint32_t count;
-			tresult = validate_remotes(obj, config, &count, logctx,
-						   mctx);
+			tresult = validate_remotes(obj, voptions, config,
+						   &count, logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -3821,8 +3833,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 			result = ISC_R_FAILURE;
 		} else {
 			uint32_t count;
-			tresult = validate_remotes(obj, config, &count, logctx,
-						   mctx);
+			tresult = validate_remotes(obj, voptions, config,
+						   &count, logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;
@@ -3874,8 +3886,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 		(void)cfg_map_get(zoptions, "parental-agents", &obj);
 		if (obj != NULL) {
 			uint32_t count;
-			tresult = validate_remotes(obj, config, &count, logctx,
-						   mctx);
+			tresult = validate_remotes(obj, voptions, config,
+						   &count, logctx, mctx);
 			if (tresult != ISC_R_SUCCESS && result == ISC_R_SUCCESS)
 			{
 				result = tresult;

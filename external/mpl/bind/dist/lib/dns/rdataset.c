@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.12 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.13 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,8 @@
 #include <dns/ncache.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
+#include <dns/time.h>
+#include <dns/types.h>
 
 static const char *trustnames[] = {
 	"none",		  "pending-additional",
@@ -677,4 +679,42 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 		      ISC_MIN(rrsig->originalttl, ttl));
 	rdataset->ttl = ttl;
 	sigrdataset->ttl = ttl;
+}
+
+isc_stdtime_t
+dns_rdataset_minresign(dns_rdataset_t *rdataset) {
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_rrsig_t sig;
+	int64_t when;
+	isc_result_t result;
+
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+
+	result = dns_rdataset_first(rdataset);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_rdataset_current(rdataset, &rdata);
+	(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+	if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
+		when = 0;
+	} else {
+		when = dns_time64_from32(sig.timeexpire);
+	}
+	dns_rdata_reset(&rdata);
+
+	result = dns_rdataset_next(rdataset);
+	while (result == ISC_R_SUCCESS) {
+		dns_rdataset_current(rdataset, &rdata);
+		(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+		if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
+			goto next_rr;
+		}
+		if (when == 0 || dns_time64_from32(sig.timeexpire) < when) {
+			when = dns_time64_from32(sig.timeexpire);
+		}
+	next_rr:
+		dns_rdata_reset(&rdata);
+		result = dns_rdataset_next(rdataset);
+	}
+	INSIST(result == ISC_R_NOMORE);
+	return (isc_stdtime_t)when;
 }

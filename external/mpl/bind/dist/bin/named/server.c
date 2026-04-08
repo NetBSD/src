@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.26 2026/01/29 18:36:27 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.27 2026/04/08 00:15:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,8 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
+
+#include <dns/acl.h>
 
 #ifdef HAVE_DNSTAP
 #include <fstrm.h>
@@ -282,10 +284,10 @@ struct zonelistentry {
  * asynchronously.
  */
 typedef struct matching_view_ctx {
-	isc_netaddr_t *srcaddr;
-	isc_netaddr_t *destaddr;
+	isc_netaddr_t srcaddr;
+	isc_netaddr_t destaddr;
 	dns_message_t *message;
-	dns_aclenv_t *env;
+	dns_aclenv_t *aclenv;
 	ns_server_t *sctx;
 	isc_loop_t *loop;
 	isc_job_cb cb;
@@ -4087,7 +4089,7 @@ configure_dnstap(const cfg_obj_t **maps, dns_view_t *view) {
 				   cfg_obj_asstring(obj));
 	}
 
-	dns_dt_attach(named_g_server->dtenv, &view->dtenv);
+	dns_dtenv_attach(named_g_server->dtenv, &view->dtenv);
 	view->dttypes = dttypes;
 
 	result = ISC_R_SUCCESS;
@@ -7028,7 +7030,9 @@ configure_zone(const cfg_obj_t *config, const cfg_obj_t *zconfig,
 	/*
 	 * Mark whether the zone was originally added at runtime or not
 	 */
-	dns_zone_setadded(zone, added);
+	if (!modify) {
+		dns_zone_setadded(zone, added);
+	}
 
 	/*
 	 * Determine if we need to set up inline signing.
@@ -8421,7 +8425,7 @@ load_configuration(const char *filename, named_server_t *server,
 	dns_view_t *view_next = NULL;
 	dns_viewlist_t tmpviewlist;
 	dns_viewlist_t viewlist, builtin_viewlist;
-	in_port_t listen_port, udpport_low, udpport_high;
+	in_port_t listen_port, port_low, port_high;
 	int i, backlog;
 	isc_interval_t interval;
 	isc_logconfig_t *logc = NULL;
@@ -8851,28 +8855,18 @@ load_configuration(const char *filename, named_server_t *server,
 	if (usev4ports != NULL) {
 		portset_fromconf(v4portset, usev4ports, true);
 	} else {
-		result = isc_net_getudpportrange(AF_INET, &udpport_low,
-						 &udpport_high);
-		if (result != ISC_R_SUCCESS) {
-			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "get the default UDP/IPv4 port range: %s",
-				      isc_result_totext(result));
-			goto cleanup_v6portset;
-		}
-
-		if (udpport_low == udpport_high) {
-			isc_portset_add(v4portset, udpport_low);
+		isc_net_getportrange(AF_INET, &port_low, &port_high);
+		if (port_low == port_high) {
+			isc_portset_add(v4portset, port_low);
 		} else {
-			isc_portset_addrange(v4portset, udpport_low,
-					     udpport_high);
+			isc_portset_addrange(v4portset, port_low, port_high);
 		}
 		if (!ns_server_getoption(server->sctx, NS_SERVER_DISABLE4)) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 				      "using default UDP/IPv4 port range: "
 				      "[%d, %d]",
-				      udpport_low, udpport_high);
+				      port_low, port_high);
 		}
 	}
 	(void)named_config_get(maps, "avoid-v4-udp-ports", &avoidv4ports);
@@ -8884,27 +8878,18 @@ load_configuration(const char *filename, named_server_t *server,
 	if (usev6ports != NULL) {
 		portset_fromconf(v6portset, usev6ports, true);
 	} else {
-		result = isc_net_getudpportrange(AF_INET6, &udpport_low,
-						 &udpport_high);
-		if (result != ISC_R_SUCCESS) {
-			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
-				      "get the default UDP/IPv6 port range: %s",
-				      isc_result_totext(result));
-			goto cleanup_v6portset;
-		}
-		if (udpport_low == udpport_high) {
-			isc_portset_add(v6portset, udpport_low);
+		isc_net_getportrange(AF_INET6, &port_low, &port_high);
+		if (port_low == port_high) {
+			isc_portset_add(v6portset, port_low);
 		} else {
-			isc_portset_addrange(v6portset, udpport_low,
-					     udpport_high);
+			isc_portset_addrange(v6portset, port_low, port_high);
 		}
 		if (!ns_server_getoption(server->sctx, NS_SERVER_DISABLE6)) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 				      "using default UDP/IPv6 port range: "
 				      "[%d, %d]",
-				      udpport_low, udpport_high);
+				      port_low, port_high);
 		}
 	}
 	(void)named_config_get(maps, "avoid-v6-udp-ports", &avoidv6ports);
@@ -10377,6 +10362,8 @@ get_matching_view_done(void *cbarg) {
 
 	mvctx->cb(mvctx->cbarg);
 
+	dns_aclenv_detach(&mvctx->aclenv);
+
 	if (mvctx->quota_result == ISC_R_SUCCESS) {
 		isc_quota_release(&mvctx->sctx->sig0checksquota);
 	}
@@ -10418,10 +10405,10 @@ get_matching_view_continue(void *cbarg, isc_result_t result) {
 		tsig = dns_tsigkey_identity(mvctx->message->tsigkey);
 	}
 
-	if (dns_acl_allowed(mvctx->srcaddr, tsig, mvctx->view->matchclients,
-			    mvctx->env) &&
-	    dns_acl_allowed(mvctx->destaddr, tsig,
-			    mvctx->view->matchdestinations, mvctx->env) &&
+	if (dns_acl_allowed(&mvctx->srcaddr, tsig, mvctx->view->matchclients,
+			    mvctx->aclenv) &&
+	    dns_acl_allowed(&mvctx->destaddr, tsig,
+			    mvctx->view->matchdestinations, mvctx->aclenv) &&
 	    !(mvctx->view->matchrecursiveonly &&
 	      (mvctx->message->flags & DNS_MESSAGEFLAG_RD) == 0))
 	{
@@ -10493,9 +10480,9 @@ get_matching_view(isc_netaddr_t *srcaddr, isc_netaddr_t *destaddr,
 
 	matching_view_ctx_t *mvctx = isc_mem_get(message->mctx, sizeof(*mvctx));
 	*mvctx = (matching_view_ctx_t){
-		.srcaddr = srcaddr,
-		.destaddr = destaddr,
-		.env = env,
+		.srcaddr = *srcaddr,
+		.destaddr = *destaddr,
+		.aclenv = dns_aclenv_ref(env),
 		.cb = cb,
 		.cbarg = cbarg,
 		.sigresult = sigresult,
@@ -10632,7 +10619,7 @@ named_server_destroy(named_server_t **serverp) {
 
 #ifdef HAVE_DNSTAP
 	if (server->dtenv != NULL) {
-		dns_dt_detach(&server->dtenv);
+		dns_dtenv_detach(&server->dtenv);
 	}
 #endif /* HAVE_DNSTAP */
 
@@ -13884,7 +13871,7 @@ cleanup:
 
 static isc_result_t
 delete_zoneconf(dns_view_t *view, cfg_parser_t *pctx, const cfg_obj_t *config,
-		const dns_name_t *zname, nzfwriter_t nzfwriter) {
+		const dns_name_t *zname, nzfwriter_t nzfwriter, bool locked) {
 	isc_result_t result = ISC_R_NOTFOUND;
 	const cfg_listelt_t *elt = NULL;
 	const cfg_obj_t *zl = NULL;
@@ -13897,7 +13884,9 @@ delete_zoneconf(dns_view_t *view, cfg_parser_t *pctx, const cfg_obj_t *config,
 	REQUIRE(config != NULL);
 	REQUIRE(zname != NULL);
 
-	LOCK(&view->new_zone_lock);
+	if (!locked) {
+		LOCK(&view->new_zone_lock);
+	}
 
 	cfg_map_get(config, "zone", &zl);
 
@@ -13938,7 +13927,9 @@ delete_zoneconf(dns_view_t *view, cfg_parser_t *pctx, const cfg_obj_t *config,
 	}
 
 cleanup:
-	UNLOCK(&view->new_zone_lock);
+	if (!locked) {
+		UNLOCK(&view->new_zone_lock);
+	}
 	return result;
 }
 
@@ -13948,13 +13939,13 @@ do_addzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	   bool redirect, isc_buffer_t **text) {
 	isc_result_t result, tresult;
 	dns_zone_t *zone = NULL;
+	bool locked = false;
 #ifndef HAVE_LMDB
 	FILE *fp = NULL;
 	bool cleanup_config = false;
 #else /* HAVE_LMDB */
 	MDB_txn *txn = NULL;
 	MDB_dbi dbi;
-	bool locked = false;
 
 	UNUSED(zoneconf);
 #endif
@@ -14101,7 +14092,7 @@ cleanup:
 	}
 	if (result != ISC_R_SUCCESS && cleanup_config) {
 		tresult = delete_zoneconf(view, cfg->add_parser,
-					  cfg->nzf_config, name, NULL);
+					  cfg->nzf_config, name, NULL, locked);
 		RUNTIME_CHECK(tresult == ISC_R_SUCCESS);
 	}
 #else  /* HAVE_LMDB */
@@ -14127,13 +14118,14 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	isc_result_t result, tresult;
 	dns_zone_t *zone = NULL;
 	bool added;
+	bool locked = false;
+	const cfg_obj_t *options = NULL;
 #ifndef HAVE_LMDB
 	FILE *fp = NULL;
 	cfg_obj_t *z;
 #else  /* HAVE_LMDB */
 	MDB_txn *txn = NULL;
 	MDB_dbi dbi;
-	bool locked = false;
 #endif /* HAVE_LMDB */
 
 	/* Zone must already exist */
@@ -14196,7 +14188,7 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	dns_view_thaw(view);
 	result = configure_zone(cfg->config, zoneobj, cfg->vconfig, view,
 				&server->viewlist, &server->kasplist,
-				&server->keystorelist, cfg->actx, true, false,
+				&server->keystorelist, cfg->actx, false, false,
 				false, true);
 	dns_view_freeze(view);
 
@@ -14223,7 +14215,7 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 	if (added) {
 		result = delete_zoneconf(view, cfg->add_parser, cfg->nzf_config,
 					 dns_zone_getorigin(zone),
-					 nzf_writeconf);
+					 nzf_writeconf, locked);
 		if (result != ISC_R_SUCCESS) {
 			TCHECK(putstr(text, "former zone configuration "
 					    "not deleted: "));
@@ -14235,17 +14227,13 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 
 	if (!added) {
 		if (cfg->vconfig == NULL) {
-			result = delete_zoneconf(
-				view, cfg->conf_parser, cfg->config,
-				dns_zone_getorigin(zone), NULL);
+			options = cfg->config;
 		} else {
-			const cfg_obj_t *voptions = cfg_tuple_get(cfg->vconfig,
-								  "options");
-			result = delete_zoneconf(
-				view, cfg->conf_parser, voptions,
-				dns_zone_getorigin(zone), NULL);
+			options = cfg_tuple_get(cfg->vconfig, "options");
 		}
-
+		result = delete_zoneconf(view, cfg->conf_parser, options,
+					 dns_zone_getorigin(zone), NULL,
+					 locked);
 		if (result != ISC_R_SUCCESS) {
 			TCHECK(putstr(text, "former zone configuration "
 					    "not deleted: "));
@@ -14292,8 +14280,11 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 
 #ifndef HAVE_LMDB
 	/* Store the new zone configuration; also in NZF if applicable */
-	z = UNCONST(zoneobj);
-	CHECK(cfg_parser_mapadd(cfg->add_parser, cfg->nzf_config, z, "zone"));
+	if (cfg->nzf_config != NULL) {
+		z = UNCONST(zoneobj);
+		CHECK(cfg_parser_mapadd(cfg->add_parser, cfg->nzf_config, z,
+					"zone"));
+	}
 #endif /* HAVE_LMDB */
 
 	if (added) {
@@ -14313,6 +14304,9 @@ do_modzone(named_server_t *server, ns_cfgctx_t *cfg, dns_view_t *view,
 		TCHECK(putstr(text, zname));
 		TCHECK(putstr(text, "' reconfigured."));
 	} else {
+		CHECK(cfg_parser_mapadd(cfg->conf_parser, UNCONST(options),
+					UNCONST(zoneobj), "zone"));
+
 		TCHECK(putstr(text, "zone '"));
 		TCHECK(putstr(text, zname));
 		TCHECK(putstr(text, "' must also be reconfigured in\n"));
@@ -14525,7 +14519,7 @@ rmzone(void *arg) {
 #else  /* ifdef HAVE_LMDB */
 		result = delete_zoneconf(view, cfg->add_parser, cfg->nzf_config,
 					 dns_zone_getorigin(zone),
-					 nzf_writeconf);
+					 nzf_writeconf, false);
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 				      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
@@ -14541,11 +14535,11 @@ rmzone(void *arg) {
 								  "options");
 			result = delete_zoneconf(
 				view, cfg->conf_parser, voptions,
-				dns_zone_getorigin(zone), NULL);
+				dns_zone_getorigin(zone), NULL, false);
 		} else {
 			result = delete_zoneconf(
 				view, cfg->conf_parser, cfg->config,
-				dns_zone_getorigin(zone), NULL);
+				dns_zone_getorigin(zone), NULL, false);
 		}
 		if (result != ISC_R_SUCCESS) {
 			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,

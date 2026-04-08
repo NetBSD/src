@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapictx.c,v 1.12 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: gssapictx.c,v 1.13 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -779,15 +779,6 @@ dst_gssapi_acceptctx(dns_gss_cred_id_t cred, const char *gssapi_keytab,
 
 		CHECK(dns_name_fromtext(principal, &namebuf, dns_rootname, 0,
 					NULL));
-
-		if (gnamebuf.length != 0U) {
-			gret = gss_release_buffer(&minor, &gnamebuf);
-			if (gret != GSS_S_COMPLETE) {
-				gss_log(3, "failed gss_release_buffer: %s",
-					gss_error_tostring(gret, minor, buf,
-							   sizeof(buf)));
-			}
-		}
 	} else {
 		result = DNS_R_CONTINUE;
 	}
@@ -795,6 +786,15 @@ dst_gssapi_acceptctx(dns_gss_cred_id_t cred, const char *gssapi_keytab,
 	*ctxout = context;
 
 cleanup:
+	if (gnamebuf.length != 0U) {
+		gret = gss_release_buffer(&minor, &gnamebuf);
+		if (gret != GSS_S_COMPLETE) {
+			gss_log(3, "failed gss_release_buffer: %s",
+				gss_error_tostring(gret, minor, buf,
+						   sizeof(buf)));
+		}
+	}
+
 	if (gname != NULL) {
 		gret = gss_release_name(&minor, &gname);
 		if (gret != GSS_S_COMPLETE) {

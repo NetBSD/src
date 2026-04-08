@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap_test.c,v 1.3 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: dnstap_test.c,v 1.4 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,7 +92,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -108,7 +108,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -125,7 +125,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 	assert_int_equal(result, ISC_R_FAILURE);
 	assert_null(dtenv);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -171,7 +171,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_send) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	dns_dt_attach(dtenv, &view->dtenv);
+	dns_dtenv_attach(dtenv, &view->dtenv);
 	view->dttypes = DNS_DTTYPE_ALL;
 
 	/*
@@ -260,8 +260,8 @@ ISC_LOOP_TEST_IMPL(dns_dt_send) {
 			    m);
 	}
 
-	dns_dt_detach(&view->dtenv);
-	dns_dt_detach(&dtenv);
+	dns_dtenv_detach(&view->dtenv);
+	dns_dtenv_detach(&dtenv);
 	dns_view_detach(&view);
 
 	result = dns_dt_open(TAPFILE, dns_dtmode_file, mctx, &handle);

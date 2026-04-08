@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.7 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: tls.c,v 1.8 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -528,7 +528,7 @@ isc_tlsctx_createserver(const char *keyfile, const char *certfile,
 
 		X509_set_pubkey(cert, pkey);
 
-		X509_NAME *name = X509_get_subject_name(cert);
+		X509_NAME *name = X509_NAME_dup(X509_get_subject_name(cert));
 
 		X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
 					   (const unsigned char *)"AQ", -1, -1,
@@ -543,6 +543,9 @@ isc_tlsctx_createserver(const char *keyfile, const char *certfile,
 					   -1, -1, 0);
 
 		X509_set_issuer_name(cert, name);
+
+		X509_NAME_free(name);
+
 		X509_sign(cert, pkey, EVP_sha256());
 		rv = SSL_CTX_use_certificate(ctx, cert);
 		if (rv != 1) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata_test.c,v 1.6 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: rdata_test.c,v 1.7 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -259,7 +259,6 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize,
 	isc_buffer_t target;
 	void *rdata_struct;
 	char buf[1024];
-	unsigned int count = 0;
 
 	rdata_struct = isc_mem_allocate(mctx, structsize);
 	assert_non_null(rdata_struct);
@@ -291,53 +290,82 @@ check_struct_conversions(dns_rdata_t *rdata, size_t structsize,
 	 * https/svcb parameters.
 	 */
 	switch (type) {
+	case dns_rdatatype_apl: {
+		dns_rdata_in_apl_t *apl = rdata_struct;
+
+		for (size_t pass = 1; pass < 3; pass++) {
+			unsigned int count = 0;
+			for (result = dns_rdata_apl_first(apl);
+			     result == ISC_R_SUCCESS;
+			     result = dns_rdata_apl_next(apl))
+			{
+				dns_rdata_apl_ent_t apl_ent;
+				dns_rdata_apl_current(apl, &apl_ent);
+				count++;
+			}
+			assert_int_equal(result, ISC_R_NOMORE);
+			assert_int_equal(count, loop);
+		}
+		break;
+	}
 	case dns_rdatatype_hip: {
 		dns_rdata_hip_t *hip = rdata_struct;
 
-		for (result = dns_rdata_hip_first(hip); result == ISC_R_SUCCESS;
-		     result = dns_rdata_hip_next(hip))
-		{
-			dns_name_t name;
-			dns_name_init(&name, NULL);
-			dns_rdata_hip_current(hip, &name);
-			assert_int_not_equal(dns_name_countlabels(&name), 0);
-			assert_true(dns_name_isabsolute(&name));
-			count++;
+		for (size_t pass = 1; pass < 3; pass++) {
+			unsigned int count = 0;
+			for (result = dns_rdata_hip_first(hip);
+			     result == ISC_R_SUCCESS;
+			     result = dns_rdata_hip_next(hip))
+			{
+				dns_name_t name;
+				dns_name_init(&name, NULL);
+				dns_rdata_hip_current(hip, &name);
+				assert_int_not_equal(
+					dns_name_countlabels(&name), 0);
+				assert_true(dns_name_isabsolute(&name));
+				count++;
+			}
+			assert_int_equal(result, ISC_R_NOMORE);
+			assert_int_equal(count, loop);
 		}
-		assert_int_equal(result, ISC_R_NOMORE);
-		assert_int_equal(count, loop);
 		break;
 	}
 	case dns_rdatatype_https: {
 		dns_rdata_in_https_t *https = rdata_struct;
 
-		for (result = dns_rdata_in_https_first(https);
-		     result == ISC_R_SUCCESS;
-		     result = dns_rdata_in_https_next(https))
-		{
-			isc_region_t region;
-			dns_rdata_in_https_current(https, &region);
-			assert_true(region.length >= 4);
-			count++;
+		for (size_t pass = 1; pass < 3; pass++) {
+			unsigned int count = 0;
+			for (result = dns_rdata_in_https_first(https);
+			     result == ISC_R_SUCCESS;
+			     result = dns_rdata_in_https_next(https))
+			{
+				isc_region_t region;
+				dns_rdata_in_https_current(https, &region);
+				assert_true(region.length >= 4);
+				count++;
+			}
+			assert_int_equal(result, ISC_R_NOMORE);
+			assert_int_equal(count, loop);
 		}
-		assert_int_equal(result, ISC_R_NOMORE);
-		assert_int_equal(count, loop);
 		break;
 	}
 	case dns_rdatatype_svcb: {
 		dns_rdata_in_svcb_t *svcb = rdata_struct;
 
-		for (result = dns_rdata_in_svcb_first(svcb);
-		     result == ISC_R_SUCCESS;
-		     result = dns_rdata_in_svcb_next(svcb))
-		{
-			isc_region_t region;
-			dns_rdata_in_svcb_current(svcb, &region);
-			assert_true(region.length >= 4);
-			count++;
+		for (size_t pass = 1; pass < 3; pass++) {
+			unsigned int count = 0;
+			for (result = dns_rdata_in_svcb_first(svcb);
+			     result == ISC_R_SUCCESS;
+			     result = dns_rdata_in_svcb_next(svcb))
+			{
+				isc_region_t region;
+				dns_rdata_in_svcb_current(svcb, &region);
+				assert_true(region.length >= 4);
+				count++;
+			}
+			assert_int_equal(result, ISC_R_NOMORE);
+			assert_int_equal(count, loop);
 		}
-		assert_int_equal(result, ISC_R_NOMORE);
-		assert_int_equal(count, loop);
 		break;
 	}
 	}
@@ -876,23 +904,26 @@ key_required(void **state, dns_rdatatype_t type, size_t size) {
 ISC_RUN_TEST_IMPL(apl) {
 	text_ok_t text_ok[] = {
 		/* empty list */
-		TEXT_VALID(""),
+		TEXT_VALID_LOOP(0, ""),
 		/* min,max prefix IPv4 */
-		TEXT_VALID("1:0.0.0.0/0"), TEXT_VALID("1:127.0.0.1/32"),
+		TEXT_VALID_LOOP(1, "1:0.0.0.0/0"),
+		TEXT_VALID_LOOP(1, "1:127.0.0.1/32"),
 		/* min,max prefix IPv6 */
-		TEXT_VALID("2:::/0"), TEXT_VALID("2:::1/128"),
+		TEXT_VALID_LOOP(1, "2:::/0"), TEXT_VALID_LOOP(1, "2:::1/128"),
 		/* negated */
-		TEXT_VALID("!1:0.0.0.0/0"), TEXT_VALID("!1:127.0.0.1/32"),
-		TEXT_VALID("!2:::/0"), TEXT_VALID("!2:::1/128"),
+		TEXT_VALID_LOOP(1, "!1:0.0.0.0/0"),
+		TEXT_VALID_LOOP(1, "!1:127.0.0.1/32"),
+		TEXT_VALID_LOOP(1, "!2:::/0"), TEXT_VALID_LOOP(1, "!2:::1/128"),
 		/* bits set after prefix length - not disallowed */
-		TEXT_VALID("1:127.0.0.0/0"), TEXT_VALID("2:8000::/0"),
+		TEXT_VALID_LOOP(1, "1:127.0.0.0/0"),
+		TEXT_VALID_LOOP(1, "2:8000::/0"),
 		/* multiple */
-		TEXT_VALID("1:0.0.0.0/0 1:127.0.0.1/32"),
-		TEXT_VALID("1:0.0.0.0/0 !1:127.0.0.1/32"),
+		TEXT_VALID_LOOP(2, "1:0.0.0.0/0 1:127.0.0.1/32"),
+		TEXT_VALID_LOOP(2, "1:0.0.0.0/0 !1:127.0.0.1/32"),
 		/* family 0, prefix 0, positive */
-		TEXT_VALID("\\# 4 00000000"),
+		TEXT_VALID_LOOP(1, "\\# 4 00000000"),
 		/* family 0, prefix 0, negative */
-		TEXT_VALID("\\# 4 00000080"),
+		TEXT_VALID_LOOP(1, "\\# 4 00000080"),
 		/* prefix too long */
 		TEXT_INVALID("1:0.0.0.0/33"), TEXT_INVALID("2:::/129"),
 		/*
@@ -1101,10 +1132,14 @@ ISC_RUN_TEST_IMPL(amtrelay) {
 		    dns_rdatatype_amtrelay, sizeof(dns_rdata_amtrelay_t));
 }
 
-/* BRIB RDATA - base64 encoded opaque */
-ISC_RUN_TEST_IMPL(brib) {
+/* BRID RDATA - base64 encoded opaque */
+ISC_RUN_TEST_IMPL(brid) {
 	text_ok_t text_ok[] = { /* empty  */
 				TEXT_INVALID(""),
+				/* zero length */
+				TEXT_INVALID("\\# 0"),
+				/* valid base64 string - minimum size */
+				TEXT_VALID("AA=="),
 				/* valid base64 string */
 				TEXT_VALID("aaaa"),
 				/* invalid base64 string */
@@ -1790,43 +1825,43 @@ ISC_RUN_TEST_IMPL(dsync) {
 		/*
 		 * Known type and known scheme.
 		 */
-		TEXT_VALID("CDS NOTIFY 0 example.com"),
+		TEXT_VALID("CDS NOTIFY 0 example.com."),
 		/*
 		 * Known type and unknown scheme.
 		 */
-		TEXT_VALID("CDS 3 0 example.com"),
+		TEXT_VALID("CDS 3 0 example.com."),
 		/*
 		 * Unknown type and known scheme.
 		 */
-		TEXT_VALID("TYPE1000 NOTIFY 0 example.com"),
+		TEXT_VALID("TYPE1000 NOTIFY 0 example.com."),
 		/*
 		 * Unknown type and unknown scheme.
 		 */
-		TEXT_VALID("TYPE1000 3 0 example.com"),
+		TEXT_VALID("TYPE1000 3 0 example.com."),
 		/*
 		 * Unknown type and unknown scheme, max port.
 		 */
-		TEXT_VALID("TYPE1000 3 65535 example.com"),
+		TEXT_VALID("TYPE1000 3 65535 example.com."),
 		/*
 		 * Unknown type and max scheme, max port.
 		 */
-		TEXT_VALID("TYPE64000 255 65535 example.com"),
+		TEXT_VALID("TYPE64000 255 65535 example.com."),
 		/*
 		 * Invalid type and max scheme, max port.
 		 */
-		TEXT_INVALID("INVALID 255 65536 example.com"),
+		TEXT_INVALID("INVALID 255 65536 example.com."),
 		/*
 		 * Unknown type and too big scheme, max port.
 		 */
-		TEXT_INVALID("TYPE1000 256 65536 example.com"),
+		TEXT_INVALID("TYPE1000 256 65536 example.com."),
 		/*
 		 * Unknown type and unknown scheme, port too big.
 		 */
-		TEXT_INVALID("TYPE1000 3 65536 example.com"),
+		TEXT_INVALID("TYPE1000 3 65536 example.com."),
 		/*
 		 * Unknown type and bad scheme, max port.
 		 */
-		TEXT_INVALID("TYPE1000 UNKNOWN 65535 example.com"),
+		TEXT_INVALID("TYPE1000 UNKNOWN 65535 example.com."),
 		/*
 		 * Sentinel.
 		 */
@@ -2059,6 +2094,10 @@ ISC_RUN_TEST_IMPL(hip) {
 ISC_RUN_TEST_IMPL(hhit) {
 	text_ok_t text_ok[] = { /* empty  */
 				TEXT_INVALID(""),
+				/* zero length */
+				TEXT_INVALID("\\# 0"),
+				/* valid base64 string - minimum size */
+				TEXT_VALID("AA=="),
 				/* valid base64 string */
 				TEXT_VALID("aaaa"),
 				/* invalid base64 string */
@@ -2414,8 +2453,7 @@ ISC_RUN_TEST_IMPL(nsec) {
  * RFC 5155.
  */
 ISC_RUN_TEST_IMPL(nsec3) {
-	text_ok_t text_ok[] = { TEXT_INVALID(""),
-				TEXT_INVALID("."),
+	text_ok_t text_ok[] = { TEXT_INVALID(""), TEXT_INVALID("."),
 				TEXT_INVALID(". RRSIG"),
 				TEXT_INVALID("1 0 10 76931F"),
 				TEXT_INVALID("1 0 10 76931F "
@@ -2431,9 +2469,38 @@ ISC_RUN_TEST_IMPL(nsec3) {
 					   "AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
 				TEXT_VALID("1 0 10 - "
 					   "AJHVGTICN6K0VDA53GCHFMT219SRRQLM"),
+				/* 123456789012345678901234567890123456789 */
+				TEXT_VALID("2 0 10 - "
+					   "64P36D1L6ORJGE9G64P36D1L6ORJGE9G64P"
+					   "36D1L6ORJGE9G64P36D1L6ORJGE8"),
+				/* 1234567890123456789012345678901234567890 */
+				TEXT_INVALID("2 0 10 - "
+					     "64P36D1L6ORJGE9G64P36D1L6ORJGE9G6"
+					     "4P36D1L6ORJGE9G64P36D1L6ORJGE9G"),
 				TEXT_SENTINEL() };
+	wire_ok_t wire_ok[] = {
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00),
+		/* maximal hash */
+		WIRE_VALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x27, 0x01, 0x02, 0x03,
+			   0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01, 0x02,
+			   0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00, 0x01,
+			   0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00,
+			   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			   0x09),
+		/* Too big hash */
+		WIRE_INVALID(0x00, 0x00, 0x00, 0x00, 0x00, 0x28, 0x01, 0x02,
+			     0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x00,
+			     0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+			     0x09, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+			     0x07, 0x08, 0x09, 0x00, 0x01, 0x02, 0x03, 0x04,
+			     0x05, 0x06, 0x07, 0x08, 0x09, 0x00),
+		/*
+		 * Sentinel.
+		 */
+		WIRE_SENTINEL()
+	};
 
-	check_rdata(text_ok, NULL, NULL, false, dns_rdataclass_in,
+	check_rdata(text_ok, wire_ok, NULL, false, dns_rdataclass_in,
 		    dns_rdatatype_nsec3, sizeof(dns_rdata_nsec3_t));
 }
 
@@ -3328,12 +3395,15 @@ ISC_TEST_LIST_START
 ISC_TEST_ENTRY(amtrelay)
 ISC_TEST_ENTRY(apl)
 ISC_TEST_ENTRY(atma)
+ISC_TEST_ENTRY(brid)
 ISC_TEST_ENTRY(cdnskey)
 ISC_TEST_ENTRY(csync)
 ISC_TEST_ENTRY(dnskey)
 ISC_TEST_ENTRY(doa)
 ISC_TEST_ENTRY(ds)
+ISC_TEST_ENTRY(dsync)
 ISC_TEST_ENTRY(eid)
+ISC_TEST_ENTRY(hhit)
 ISC_TEST_ENTRY(hip)
 ISC_TEST_ENTRY(https_svcb)
 ISC_TEST_ENTRY(isdn)
@@ -3343,8 +3413,8 @@ ISC_TEST_ENTRY(nimloc)
 ISC_TEST_ENTRY(nsec)
 ISC_TEST_ENTRY(nsec3)
 ISC_TEST_ENTRY(nxt)
-ISC_TEST_ENTRY(rkey)
 ISC_TEST_ENTRY(resinfo)
+ISC_TEST_ENTRY(rkey)
 ISC_TEST_ENTRY(sshfp)
 ISC_TEST_ENTRY(wallet)
 ISC_TEST_ENTRY(wks)

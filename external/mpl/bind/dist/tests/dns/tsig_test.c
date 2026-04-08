@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.6 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.7 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -440,7 +440,16 @@ tsig_tcp(isc_stdtime_t now, isc_result_t expected_result, bool mangle_sig) {
 		assert_int_equal(msg->verified_sig, 1);
 		assert_int_equal(msg->tsigstatus, dns_tsigerror_badtime);
 		break;
+	case DNS_R_TSIGVERIFYFAILURE:
+		assert_int_equal(result, DNS_R_TSIGVERIFYFAILURE);
+		assert_int_equal(msg->verified_sig, 0);
+		assert_int_equal(msg->tsigstatus, dns_tsigerror_badsig);
+		break;
 	default:
+		if (debug) {
+			fprintf(stderr, "# result = %s\n",
+				isc_result_totext(result));
+		}
 		UNREACHABLE();
 	}
 
@@ -492,7 +501,7 @@ ISC_RUN_TEST_IMPL(tsig_badtime) {
 }
 
 ISC_RUN_TEST_IMPL(tsig_badsig) {
-	tsig_tcp(isc_stdtime_now(), DNS_R_TSIGERRORSET, true);
+	tsig_tcp(isc_stdtime_now(), DNS_R_TSIGVERIFYFAILURE, true);
 }
 
 /* Tests the dns__tsig_algvalid function */
@@ -511,9 +520,10 @@ ISC_RUN_TEST_IMPL(algvalid) {
 }
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY_CUSTOM(tsig_tcp, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(tsig_badtime, setup_test, teardown_test)
 ISC_TEST_ENTRY(algvalid)
+ISC_TEST_ENTRY_CUSTOM(tsig_badsig, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_badtime, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_tcp, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

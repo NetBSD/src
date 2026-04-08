@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.13 2026/01/29 18:37:51 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.14 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,6 +153,7 @@ struct dns_validator {
 	bool	       digest_sha1;
 	uint8_t	       unsupported_algorithm;
 	uint8_t	       unsupported_digest;
+	uint8_t	       validation_attempts;
 	dns_rdata_t    rdata;
 	bool	       resume;
 	isc_counter_t *nvalidations;

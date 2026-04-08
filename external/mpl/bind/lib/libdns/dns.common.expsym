@@ -122,6 +122,7 @@ dns_adb_adjustsrtt
 dns_adb_agesrtt
 dns_adb_attach
 dns_adb_beginudpfetch
+dns_adb_cachemin
 dns_adb_cancelfind
 dns_adb_changeflags
 dns_adb_create
@@ -132,6 +133,7 @@ dns_adb_dump
 dns_adb_dumpquota
 dns_adb_ednsto
 dns_adb_endudpfetch
+dns_adb_entrywindow
 dns_adb_findaddrinfo
 dns_adb_findstatus
 dns_adb_flush
@@ -250,11 +252,14 @@ dns_compress_name
 dns_compress_rollback
 dns_compress_setpermitted
 dns_counter_fromtext
+dns_db_abortupdate
 dns_db_addglue
 dns_db_attach
 dns_db_attachversion
 dns_db_beginload
+dns_db_beginupdate
 dns_db_class
+dns_db_commitupdate
 dns_db_create
 dns_db_createiterator
 dns_db_createsoatuple
@@ -305,6 +310,7 @@ dns_dbiterator_pause
 dns_diff_append
 dns_diff_appendminimal
 dns_diff_apply
+dns_diff_apply_with_callbacks
 dns_diff_applysilently
 dns_diff_clear
 dns_diff_init
@@ -400,6 +406,8 @@ dns_dumpctx_attach
 dns_dumpctx_cancel
 dns_dumpctx_db
 dns_dumpctx_detach
+dns_dumpctx_ref
+dns_dumpctx_unref
 dns_dumpctx_version
 dns_dyndb_cleanup
 dns_dyndb_createctx
@@ -575,6 +583,8 @@ dns_lctx
 dns_loadctx_attach
 dns_loadctx_cancel
 dns_loadctx_detach
+dns_loadctx_ref
+dns_loadctx_unref
 dns_log_init
 dns_log_setcontext
 dns_master_dump
@@ -979,6 +989,7 @@ dns_rdataset_init
 dns_rdataset_invalidate
 dns_rdataset_isassociated
 dns_rdataset_makequestion
+dns_rdataset_minresign
 dns_rdataset_next
 dns_rdataset_setownercase
 dns_rdataset_settrust
@@ -1774,3 +1785,4 @@ resquery_attach
 resquery_detach
 resquery_ref
 resquery_unref
+update_callback

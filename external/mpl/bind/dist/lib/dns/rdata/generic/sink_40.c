@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.c,v 1.10 2026/01/29 18:37:53 christos Exp $	*/
+/*	$NetBSD: sink_40.c,v 1.11 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@ fromtext_sink(ARGS_FROMTEXT) {
 	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
-	return isc_base64_tobuffer(lexer, target, -1);
+	return isc_base64_tobuffer(lexer, target, isc_zero_or_more);
 }
 
 static isc_result_t

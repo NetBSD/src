@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.11 2026/01/29 18:37:54 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.12 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ fromtext_in_dhcid(ARGS_FROMTEXT) {
 	UNUSED(options);
 	UNUSED(callbacks);
 
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -151,6 +151,7 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 	dns_rdata_toregion(rdata, &region);
 
 	dhcid->dhcid = mem_maybedup(mctx, region.base, region.length);
+	dhcid->length = region.length;
 	dhcid->mctx = mctx;
 	return ISC_R_SUCCESS;
 }

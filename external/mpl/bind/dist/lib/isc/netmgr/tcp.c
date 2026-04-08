@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.13 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.14 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,7 @@
  */
 
 #include <libgen.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <isc/async.h>
@@ -227,6 +228,7 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 	sa_family_t sa_family;
 	isc__networker_t *worker = NULL;
 	uv_os_sock_t fd = -1;
+	in_port_t port_low, port_high;
 
 	REQUIRE(VALID_NM(mgr));
 	REQUIRE(local != NULL);
@@ -263,6 +265,18 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 
 	(void)isc__nm_socket_min_mtu(sock->fd, sa_family);
 	(void)isc__nm_socket_tcp_maxseg(sock->fd, NM_MAXSEG);
+	port_low = (sa_family == AF_INET) ? mgr->port_low4 : mgr->port_low6;
+	port_high = (sa_family == AF_INET) ? mgr->port_high4 : mgr->port_high6;
+	result = isc__nm_socket_max_port_range(sock->fd, sa_family, port_low,
+					       port_high);
+	if (result != ISC_R_SUCCESS) {
+		isc__nmsocket_log(sock, ISC_LOG_DEBUG(99),
+				  "setting up IP_BIND_ADDRESS_NO_PORT or "
+				  "IP_LOCAL_PORT_RANGE failed: %s\n",
+				  result == ISC_R_RANGE
+					  ? isc_result_totext(result)
+					  : strerror(errno));
+	}
 
 	sock->active = true;
 

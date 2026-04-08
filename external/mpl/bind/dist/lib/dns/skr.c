@@ -1,4 +1,4 @@
-/*	$NetBSD: skr.c,v 1.3 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: skr.c,v 1.4 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -233,7 +233,6 @@ dns_skr_read(isc_mem_t *mctx, const char *filename, dns_name_t *origin,
 	     dns_rdataclass_t rdclass, dns_ttl_t dnskeyttl, dns_skr_t **skrp) {
 	isc_result_t result;
 	dns_skrbundle_t *bundle = NULL;
-	char bundlebuf[1024];
 	uint32_t bundle_id;
 	isc_lex_t *lex = NULL;
 	isc_lexspecials_t specials;
@@ -306,8 +305,7 @@ dns_skr_read(isc_mem_t *mctx, const char *filename, dns_name_t *origin,
 			}
 
 			/* Create new bundle */
-			sscanf(STR(token), "%s", bundlebuf);
-			CHECK(dns_time32_fromtext(bundlebuf, &bundle_id));
+			CHECK(dns_time32_fromtext(STR(token), &bundle_id));
 			bundle = NULL;
 			skrbundle_create(mctx, (isc_stdtime_t)bundle_id,
 					 &bundle);

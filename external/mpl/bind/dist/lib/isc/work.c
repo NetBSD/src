@@ -1,4 +1,4 @@
-/*	$NetBSD: work.c,v 1.3 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: work.c,v 1.4 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,6 +60,7 @@ isc_work_enqueue(isc_loop_t *loop, isc_work_cb work_cb,
 	int r;
 
 	REQUIRE(VALID_LOOP(loop));
+	REQUIRE(isc_loop() == loop);
 	REQUIRE(work_cb != NULL);
 	REQUIRE(after_work_cb != NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.14 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.15 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -368,6 +368,11 @@ struct isc_nm {
 	atomic_int_fast32_t send_udp_buffer_size;
 	atomic_int_fast32_t recv_tcp_buffer_size;
 	atomic_int_fast32_t send_tcp_buffer_size;
+
+	_Atomic(in_port_t) port_low4;
+	_Atomic(in_port_t) port_high4;
+	_Atomic(in_port_t) port_low6;
+	_Atomic(in_port_t) port_high6;
 };
 
 /*%
@@ -1373,6 +1378,15 @@ isc_result_t
 isc__nm_socket_min_mtu(uv_os_sock_t fd, sa_family_t sa_family);
 /*%<
  * Use minimum MTU on IPv6 sockets
+ */
+
+isc_result_t
+isc__nm_socket_max_port_range(uv_os_sock_t fd ISC_ATTR_UNUSED,
+			      sa_family_t sa_family ISC_ATTR_UNUSED,
+			      in_port_t port_low, in_port_t port_high);
+/*%<
+ * Set IP_BIND_ADDRESS_NO_PORT and IP_LOCAL_PORT_RANGE on the socket
+ * (Linux only).
  */
 
 void

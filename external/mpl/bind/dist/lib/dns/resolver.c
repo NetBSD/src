@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.24 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.25 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -964,6 +964,10 @@ set_stats(dns_resolver_t *res, isc_statscounter_t counter, uint64_t val) {
 		isc_stats_set(res->stats, val, counter);
 	}
 }
+
+static bool
+waiting_for_fetch(fetchctx_t *fctx, const dns_name_t *name,
+		  dns_rdatatype_t type, const dns_name_t *domain);
 
 static isc_result_t
 valcreate(fetchctx_t *fctx, dns_message_t *message, dns_adbaddrinfo_t *addrinfo,
@@ -2185,10 +2189,11 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 			isc_log_write(
 				dns_lctx, DNS_LOGCATEGORY_RESOLVER,
 				DNS_LOGMODULE_RESOLVER, log_level,
-				"Unable to establish a connection to %s: %s\n",
+				"Unable to establish a connection to %s: %s",
 				peerbuf, isc_result_totext(result));
 		}
 		dns_dispatch_done(&query->dispentry);
+		resquery_unref(query);
 		goto cleanup_fetch;
 	} else {
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
@@ -2740,7 +2745,7 @@ resquery_send(resquery_t *query) {
 	/*
 	 * Log the outgoing query via dnstap.
 	 */
-	if ((fctx->qmessage->flags & DNS_MESSAGEFLAG_RD) != 0) {
+	if (ISFORWARDER(query->addrinfo)) {
 		dtmsgtype = DNS_DTTYPE_FQ;
 	} else {
 		dtmsgtype = DNS_DTTYPE_RQ;
@@ -3245,9 +3250,10 @@ sort_finds(dns_adbfindlist_t *findlist, unsigned int bias) {
 }
 
 /*
- * Return true iff the ADB find has a pending fetch for 'type'.  This is
- * used to find out whether we're in a loop, where a fetch is waiting for a
- * find which is waiting for that same fetch.
+ * Return true iff the ADB find has an already pending fetch for 'type'.  This
+ * is used to find out whether we're in a loop, where a fetch is waiting for a
+ * find which is waiting for that same fetch. So if the current find actually
+ * started the fetch, we know it can't be a loop, so we returns false.
  *
  * Note: This could be done with either an equivalence check (e.g.,
  * query_pending == DNS_ADBFIND_INET) or with a bit check, as below.  If
@@ -3266,7 +3272,11 @@ sort_finds(dns_adbfindlist_t *findlist, unsigned int bias) {
  * evil.
  */
 static bool
-waiting_for(dns_adbfind_t *find, dns_rdatatype_t type) {
+already_waiting_for(dns_adbfind_t *find, dns_rdatatype_t type) {
+	if ((find->options & DNS_ADBFIND_STARTEDFETCH) != 0) {
+		return false;
+	}
+
 	switch (type) {
 	case dns_rdatatype_a:
 		return (find->query_pending & DNS_ADBFIND_INET) != 0;
@@ -3372,22 +3382,25 @@ findname(fetchctx_t *fctx, const dns_name_t *name, in_port_t port,
 	 * We don't know any of the addresses for this name.
 	 *
 	 * The find may be waiting on a resolver fetch for a server
-	 * address. We need to make sure it isn't waiting on *this*
+	 * address. We need to make sure it isn't waiting before *this*
 	 * fetch, because if it is, we won't be answering it and it
 	 * won't be answering us.
 	 */
-	if (waiting_for(find, fctx->type) && dns_name_equal(name, fctx->name)) {
-		fctx->adberr++;
+	if (already_waiting_for(find, fctx->type) &&
+	    dns_name_equal(name, fctx->name))
+	{
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
 			      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
 			      "loop detected resolving '%s'", fctx->info);
 
+		fctx->adberr++;
 		if ((find->options & DNS_ADBFIND_WANTEVENT) != 0) {
 			dns_adb_cancelfind(find);
 		} else {
 			dns_adb_destroyfind(&find);
 			fetchctx_detach(&fctx);
 		}
+
 		return;
 	}
 
@@ -3464,6 +3477,8 @@ fctx_getaddresses(fetchctx_t *fctx) {
 	bool have_address = false;
 	unsigned int ns_processed = 0;
 	size_t fetches_allowed = 0;
+	dns_rdata_t nameservers_s[NS_PROCESSING_LIMIT];
+	dns_rdata_t *nameservers[NS_PROCESSING_LIMIT];
 
 	FCTXTRACE5("getaddresses", "fctx->depth=", fctx->depth);
 
@@ -3647,21 +3662,47 @@ normal_nses:
 		break;
 	}
 
+	for (result = dns_rdataset_first(&fctx->nameservers);
+	     result == ISC_R_SUCCESS;
+	     result = dns_rdataset_next(&fctx->nameservers))
+	{
+		dns_rdata_t *rdata = nameservers[ns_processed] =
+			&nameservers_s[ns_processed];
+
+		dns_rdata_init(rdata);
+
+		dns_rdataset_current(&fctx->nameservers, rdata);
+
+		if (++ns_processed >= NS_PROCESSING_LIMIT) {
+			break;
+		}
+	}
+
+	if (ns_processed > 1 && ns_processed > fetches_allowed) {
+		/*
+		 * Skip the shuffle if:
+		 * - there's nothing to shuffle (no or one nameserver)
+		 * - there are less nameserver than allowed fetches as
+		 *   we are going to start fetches for all of them.
+		 */
+		for (size_t i = 0; i < ns_processed - 1; i++) {
+			size_t j = i + isc_random_uniform(ns_processed - i);
+
+			ISC_SWAP(nameservers[i], nameservers[j]);
+		}
+	}
+
 	for (;;) {
-		for (result = dns_rdataset_first(&fctx->nameservers);
-		     result == ISC_R_SUCCESS;
-		     result = dns_rdataset_next(&fctx->nameservers))
-		{
-			dns_rdata_t rdata = DNS_RDATA_INIT;
+		for (size_t i = 0; i < ns_processed; i++) {
 			bool overquota = false;
 			unsigned int static_stub = 0;
 			unsigned int no_fetch = 0;
+			dns_rdata_t *rdata = nameservers[i];
 
-			dns_rdataset_current(&fctx->nameservers, &rdata);
 			/*
 			 * Extract the name from the NS record.
 			 */
-			result = dns_rdata_tostruct(&rdata, &ns, NULL);
+			result = dns_rdata_tostruct(rdata, &ns, NULL);
 			if (result != ISC_R_SUCCESS) {
 				continue;
 			}
@@ -3688,18 +3729,9 @@ normal_nses:
 				all_spilled = false;
 			}
 
-			dns_rdata_reset(&rdata);
 			dns_rdata_freestruct(&ns);
-
-			if (++ns_processed >= NS_PROCESSING_LIMIT) {
-				result = ISC_R_NOMORE;
-				break;
-			}
 		}
 
-		/*
-		 * Don't start alternate fetch if we just started one above.
-		 */
 		/*
 		 * Don't start alternate fetch if we just started one above.
 		 */
@@ -4937,6 +4969,9 @@ cleanup_nameservers:
 	}
 
 cleanup_fetch:
+
+	dns_ede_invalidate(&fctx->edectx);
+	isc_mutex_destroy(&fctx->lock);
 	dns_resolver_detach(&fctx->res);
 	isc_mem_putanddetach(&fctx->mctx, fctx, sizeof(*fctx));
 
@@ -5302,9 +5337,9 @@ validated(void *arg) {
 	addrinfo = valarg->addrinfo;
 
 	message = val->message;
-	fctx->vresult = val->result;
 
 	LOCK(&fctx->lock);
+	fctx->vresult = val->result;
 	ISC_LIST_UNLINK(fctx->validators, val, link);
 	fctx->validator = NULL;
 	UNLOCK(&fctx->lock);
@@ -9894,7 +9929,13 @@ rctx_logpacket(respctx_t *rctx) {
 	}
 	dns_compress_invalidate(&cctx);
 
-	if ((fctx->qmessage->flags & DNS_MESSAGEFLAG_RD) != 0) {
+	/*
+	 * Check if the response came from a forwarder to correctly
+	 * classify as Forward Response (FR) vs Recursive Response (RR)
+	 * for DNSTAP logging. This is more accurate than using the RD
+	 * flag which only indicates the original query intent.
+	 */
+	if (ISFORWARDER(rctx->query->addrinfo)) {
 		dtmsgtype = DNS_DTTYPE_FR;
 	} else {
 		dtmsgtype = DNS_DTTYPE_RR;
@@ -10626,11 +10667,26 @@ again:
 }
 
 static bool
+is_samedomain(const dns_name_t *domain1, const dns_name_t *domain2) {
+	if (domain1 == NULL && domain2 == NULL) {
+		return true;
+	}
+
+	if (domain1 == NULL || domain2 == NULL) {
+		return false;
+	}
+
+	return !dns_name_compare(domain1, domain2);
+}
+
+static bool
 waiting_for_fetch(fetchctx_t *fctx, const dns_name_t *name,
-		  dns_rdatatype_t type) {
+		  dns_rdatatype_t type, const dns_name_t *domain) {
 	while (fctx != NULL) {
 		if (type == fctx->type && !dns_name_compare(name, fctx->name)) {
-			return true;
+			if (is_samedomain(domain, fctx->domain)) {
+				return true;
+			}
 		}
 		fctx = fctx->parent;
 	}
@@ -10680,18 +10736,30 @@ dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 
 	log_fetch(name, type);
 
-	if (waiting_for_fetch(parent, name, type)) {
+	/*
+	 * This fetch loop detection enable to guard against loop scenarios
+	 * where the DNSSEC is involved. See
+	 * `4d307ac67a0e3f9831c9a4e66ac481e2f9ceebb5`. This is a complementary
+	 * detection with the ADB lookup loop detection (in `findname()`).
+	 */
+	if (waiting_for_fetch(parent, name, type, domain)) {
 		if (isc_log_wouldlog(dns_lctx, ISC_LOG_INFO)) {
 			char namebuf[DNS_NAME_FORMATSIZE + 1];
 			char typebuf[DNS_RDATATYPE_FORMATSIZE];
+			char domainbuf[DNS_NAME_FORMATSIZE + 1] = { 0 };
 
 			dns_name_format(name, namebuf, sizeof(namebuf));
 			dns_rdatatype_format(type, typebuf, sizeof(typebuf));
+			if (domain != NULL) {
+				dns_name_format(domain, domainbuf,
+						sizeof(domainbuf));
+			}
 
 			isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
 				      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(2),
-				      "fetch loop detected resolving '%s/%s'",
-				      namebuf, typebuf);
+				      "fetch loop detected resolving '%s/%s "
+				      "(in '%s'?)",
+				      namebuf, typebuf, domainbuf);
 		}
 		return DNS_R_LOOPDETECTED;
 	}

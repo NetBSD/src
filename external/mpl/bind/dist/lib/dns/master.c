@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.14 2025/01/26 16:25:23 christos Exp $	*/
+/*	$NetBSD: master.c,v 1.15 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,6 +46,8 @@
 #include <dns/soa.h>
 #include <dns/time.h>
 #include <dns/ttl.h>
+
+#include "dns/types.h"
 
 /*!
  * Grow the number of dns_rdatalist_t (#RDLSZ) and dns_rdata_t (#RDSZ)
@@ -402,29 +404,8 @@ gettoken(isc_lex_t *lex, unsigned int options, isc_token_t *token, bool eol,
 	return ISC_R_SUCCESS;
 }
 
-void
-dns_loadctx_attach(dns_loadctx_t *source, dns_loadctx_t **target) {
-	REQUIRE(target != NULL && *target == NULL);
-	REQUIRE(DNS_LCTX_VALID(source));
-
-	isc_refcount_increment(&source->references);
-
-	*target = source;
-}
-
-void
-dns_loadctx_detach(dns_loadctx_t **lctxp) {
-	dns_loadctx_t *lctx;
-
-	REQUIRE(lctxp != NULL);
-	lctx = *lctxp;
-	*lctxp = NULL;
-	REQUIRE(DNS_LCTX_VALID(lctx));
-
-	if (isc_refcount_decrement(&lctx->references) == 1) {
-		loadctx_destroy(lctx);
-	}
-}
+ISC_REFCOUNT_DECL(dns_loadctx);
+ISC_REFCOUNT_IMPL(dns_loadctx, loadctx_destroy);
 
 static void
 incctx_destroy(isc_mem_t *mctx, dns_incctx_t *ictx) {
@@ -513,7 +494,7 @@ loadctx_create(dns_masterformat_t format, isc_mem_t *mctx, unsigned int options,
 
 	REQUIRE(lctxp != NULL && *lctxp == NULL);
 	REQUIRE(callbacks != NULL);
-	REQUIRE(callbacks->add != NULL);
+	REQUIRE(callbacks->update != NULL);
 	REQUIRE(callbacks->error != NULL);
 	REQUIRE(callbacks->warn != NULL);
 	REQUIRE(mctx != NULL);
@@ -2698,6 +2679,21 @@ load_done(void *arg) {
 	dns_loadctx_detach(&lctx);
 }
 
+static void
+load_enqueue(void *lctx) {
+	isc_work_enqueue(isc_loop(), load, load_done, lctx);
+}
+
+static void
+dns_loadctx_enqueue(isc_loop_t *loop, dns_loadctx_t *lctx) {
+	dns_loadctx_ref(lctx);
+	if (loop == isc_loop()) {
+		load_enqueue(lctx);
+	} else {
+		isc_async_run(loop, load_enqueue, lctx);
+	}
+}
+
 isc_result_t
 dns_master_loadfileasync(const char *master_file, dns_name_t *top,
 			 dns_name_t *origin, dns_rdataclass_t zclass,
@@ -2726,8 +2722,8 @@ dns_master_loadfileasync(const char *master_file, dns_name_t *top,
 		return result;
 	}
 
-	dns_loadctx_attach(lctx, lctxp);
-	isc_work_enqueue(loop, load, load_done, lctx);
+	dns_loadctx_enqueue(loop, lctx);
+	*lctxp = lctx;
 
 	return ISC_R_SUCCESS;
 }
@@ -2950,8 +2946,9 @@ commit(dns_rdatacallbacks_t *callbacks, dns_loadctx_t *lctx,
 			dataset.attributes |= DNS_RDATASETATTR_RESIGN;
 			dataset.resign = resign_fromlist(this, lctx);
 		}
-		result = callbacks->add(callbacks->add_private, owner,
-					&dataset DNS__DB_FILELINE);
+		result = callbacks->update(callbacks->add_private, owner,
+					   &dataset,
+					   DNS_DIFFOP_ADD DNS__DB_FILELINE);
 		if (result == ISC_R_NOMEMORY) {
 			(*error)(callbacks, "dns_master_load: %s",
 				 isc_result_totext(result));

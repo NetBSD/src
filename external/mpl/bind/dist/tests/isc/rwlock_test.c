@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock_test.c,v 1.3 2025/05/21 14:48:08 christos Exp $	*/
+/*	$NetBSD: rwlock_test.c,v 1.4 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,9 +54,11 @@ static isc_barrier_t barrier2;
 #define CNT_MIN 800
 #define CNT_MAX 1600
 
+#if !defined(__SANITIZE_THREAD__)
 static size_t shared_counter = 0;
 static size_t expected_counter = SIZE_MAX;
 static uint8_t boundary = 0;
+#endif
 static uint8_t *rnd;
 
 static int
@@ -135,6 +137,7 @@ ISC_RUN_TEST_IMPL(isc_rwlock_wrlock) {
 /*
  * Simple single-threaded lock/tryupgrade/unlock test
  */
+#if !defined(__SANITIZE_THREAD__)
 ISC_RUN_TEST_IMPL(isc_rwlock_tryupgrade) {
 	isc_result_t result;
 	isc_rwlock_lock(&rwlock, isc_rwlocktype_read);
@@ -343,6 +346,7 @@ ISC_RUN_TEST_IMPL(isc_rwlock_benchmark) {
 
 	isc_mem_cput(mctx, threads, workers, sizeof(*threads));
 }
+#endif
 
 ISC_TEST_LIST_START
 

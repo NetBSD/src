@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.h,v 1.8 2025/01/26 16:25:40 christos Exp $	*/
+/*	$NetBSD: base64.h,v 1.9 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,8 +77,11 @@ isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
  * `target`. If 'length' is non-negative, it is the expected number of
  * encoded octets to convert.
  *
- * If 'length' is -1 then 0 or more encoded octets are expected.
- * If 'length' is -2 then 1 or more encoded octets are expected.
+ * If 'length' is isc_zero_or_more then 0 or more encoded octets are
+ * expected.
+ *
+ * If 'length' is isc_one_or_more then 1 or more encoded octets are
+ * expected.
  *
  * Returns:
  *\li	#ISC_R_BADBASE64 -- invalid base64 encoding.

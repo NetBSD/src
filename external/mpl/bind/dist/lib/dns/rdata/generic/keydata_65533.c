@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.12 2026/01/29 18:37:52 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.13 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,7 +85,7 @@ fromtext_keydata(ARGS_FROMTEXT) {
 		return ISC_R_SUCCESS;
 	}
 
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t

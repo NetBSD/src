@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr.c,v 1.15 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: netmgr.c,v 1.16 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -157,6 +157,7 @@ netmgr_teardown(void *arg) {
 void
 isc_netmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t **netmgrp) {
 	isc_nm_t *netmgr = NULL;
+	in_port_t port_low, port_high;
 
 #ifdef MAXIMAL_UV_VERSION
 	if (uv_version() > MAXIMAL_UV_VERSION) {
@@ -188,6 +189,11 @@ isc_netmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t **netmgrp) {
 	atomic_init(&netmgr->send_tcp_buffer_size, 0);
 	atomic_init(&netmgr->recv_udp_buffer_size, 0);
 	atomic_init(&netmgr->send_udp_buffer_size, 0);
+	atomic_init(&netmgr->port_low4, 0);
+	atomic_init(&netmgr->port_high4, 65535);
+	atomic_init(&netmgr->port_low6, 0);
+	atomic_init(&netmgr->port_high6, 65535);
+
 #if HAVE_SO_REUSEPORT_LB
 	netmgr->load_balance_sockets = true;
 #else
@@ -239,6 +245,15 @@ isc_netmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t **netmgrp) {
 	}
 
 	*netmgrp = netmgr;
+
+	/*
+	 * Set the initial port range for IP_LOCAL_PORT_RANGE.
+	 */
+	isc_net_getportrange(AF_INET, &port_low, &port_high);
+	isc_netmgr_portrange(netmgr, AF_INET, port_low, port_high);
+
+	isc_net_getportrange(AF_INET6, &port_low, &port_high);
+	isc_netmgr_portrange(netmgr, AF_INET6, port_low, port_high);
 }
 
 /*
@@ -2845,6 +2860,24 @@ isc_nm_proxyheader_info_init_complete(isc_nm_proxyheader_info_t *restrict info,
 
 	*info = (isc_nm_proxyheader_info_t){ .complete = true,
 					     .complete_header = *header_data };
+}
+
+void
+isc_netmgr_portrange(isc_nm_t *netmgr, sa_family_t af, in_port_t low,
+		     in_port_t high) {
+	REQUIRE(VALID_NM(netmgr));
+	switch (af) {
+	case AF_INET:
+		atomic_store_relaxed(&netmgr->port_low4, low);
+		atomic_store_relaxed(&netmgr->port_high4, high);
+		break;
+	case AF_INET6:
+		atomic_store_relaxed(&netmgr->port_low6, low);
+		atomic_store_relaxed(&netmgr->port_high6, high);
+		break;
+	default:
+		UNREACHABLE();
+	}
 }
 
 #if ISC_NETMGR_TRACE

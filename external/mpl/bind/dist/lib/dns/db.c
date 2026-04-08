@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.13 2025/05/21 14:48:02 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.14 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -312,6 +312,57 @@ dns_db_endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 
 	if (db->methods->endload != NULL) {
 		return (db->methods->endload)(db, callbacks);
+	}
+
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_beginupdate(dns_db_t *db, dns_dbversion_t *ver,
+		   dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Begin updating 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->beginupdate != NULL) {
+		return (db->methods->beginupdate)(db, ver, callbacks);
+	}
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_commitupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Commit the update to 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->commitupdate != NULL) {
+		return (db->methods->commitupdate)(db, callbacks);
+	}
+
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_abortupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Abort the update to 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->abortupdate != NULL) {
+		return (db->methods->abortupdate)(db, callbacks);
 	}
 
 	return ISC_R_NOTIMPLEMENTED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.13 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: request.c,v 1.14 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -651,6 +651,7 @@ again:
 
 cleanup:
 	if (result != ISC_R_SUCCESS) {
+		dns_message_settsigkey(message, NULL);
 		req_cleanup(request);
 		dns_request_detach(&request);
 		req_log(ISC_LOG_DEBUG(3), "%s: failed %s", __func__,

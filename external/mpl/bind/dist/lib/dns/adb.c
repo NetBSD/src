@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.c,v 1.16 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: adb.c,v 1.17 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,12 +62,8 @@
 /*!
  * For type 3 negative cache entries, we will remember that the address is
  * broken for this long.  XXXMLG This is also used for actual addresses, too.
- * The intent is to keep us from constantly asking about A/AAAA records
- * if the zone has extremely low TTLs.
  */
-#define ADB_CACHE_MINIMUM 10	/*%< seconds */
 #define ADB_CACHE_MAXIMUM 86400 /*%< seconds (86400 = 24 hours) */
-#define ADB_ENTRY_WINDOW  60	/*%< seconds */
 
 #ifndef ADB_HASH_BITS
 #define ADB_HASH_BITS 12
@@ -267,6 +263,12 @@ ISC_REFCOUNT_DECL(dns_adbentry);
 #endif
 
 /*
+ * ADB settings that can be tweaked with named -T option
+ */
+unsigned int dns_adb_entrywindow = 60;
+unsigned int dns_adb_cachemin = 10;
+
+/*
  * Internal functions (and prototypes).
  */
 static dns_adbname_t *
@@ -416,11 +418,11 @@ enum {
  */
 #define FIND_WANTEVENT(fn)	(((fn)->options & DNS_ADBFIND_WANTEVENT) != 0)
 #define FIND_WANTEMPTYEVENT(fn) (((fn)->options & DNS_ADBFIND_EMPTYEVENT) != 0)
-#define FIND_AVOIDFETCHES(fn)	(((fn)->options & DNS_ADBFIND_AVOIDFETCHES) != 0)
-#define FIND_STARTATZONE(fn)	(((fn)->options & DNS_ADBFIND_STARTATZONE) != 0)
-#define FIND_STATICSTUB(fn)	(((fn)->options & DNS_ADBFIND_STATICSTUB) != 0)
-#define FIND_HAS_ADDRS(fn)	(!ISC_LIST_EMPTY((fn)->list))
-#define FIND_NOFETCH(fn)	(((fn)->options & DNS_ADBFIND_NOFETCH) != 0)
+#define FIND_AVOIDFETCHES(fn) (((fn)->options & DNS_ADBFIND_AVOIDFETCHES) != 0)
+#define FIND_STARTATZONE(fn)  (((fn)->options & DNS_ADBFIND_STARTATZONE) != 0)
+#define FIND_STATICSTUB(fn)   (((fn)->options & DNS_ADBFIND_STATICSTUB) != 0)
+#define FIND_HAS_ADDRS(fn)    (!ISC_LIST_EMPTY((fn)->list))
+#define FIND_NOFETCH(fn)      (((fn)->options & DNS_ADBFIND_NOFETCH) != 0)
 
 #define ADBNAME_TYPE_MASK (DNS_ADBFIND_STARTATZONE | DNS_ADBFIND_STATICSTUB)
 
@@ -448,10 +450,10 @@ enum {
  * Due to the ttlclamp(), the TTL is never 0 unless the trust is ultimate,
  * in which case we need to set the expiration to have immediate effect.
  */
-#define ADJUSTED_EXPIRE(expire, now, ttl)                                      \
-	((ttl != 0)                                                            \
-		 ? ISC_MIN(expire, ISC_MAX(now + ADB_ENTRY_WINDOW, now + ttl)) \
-		 : INT_MAX)
+#define ADJUSTED_EXPIRE(expire, now, ttl)                                    \
+	((ttl != 0) ? ISC_MIN(expire,                                        \
+			      ISC_MAX(now + dns_adb_entrywindow, now + ttl)) \
+		    : INT_MAX)
 
 /*
  * Error states.
@@ -524,8 +526,12 @@ inc_adbstats(dns_adb_t *adb, isc_statscounter_t counter) {
 
 static dns_ttl_t
 ttlclamp(dns_ttl_t ttl) {
-	if (ttl < ADB_CACHE_MINIMUM) {
-		ttl = ADB_CACHE_MINIMUM;
+	if (ttl < dns_adb_cachemin) {
+		/*
+		 * Avoid to constantly ask about A/AAAA records if the zone has
+		 * extremely low TTLs.
+		 */
+		ttl = dns_adb_cachemin;
 	}
 	if (ttl > ADB_CACHE_MAXIMUM) {
 		ttl = ADB_CACHE_MAXIMUM;
@@ -557,7 +563,7 @@ import_rdataset(dns_adbname_t *adbname, dns_rdataset_t *rdataset,
 	switch (rdataset->trust) {
 	case dns_trust_glue:
 	case dns_trust_additional:
-		rdataset->ttl = ADB_CACHE_MINIMUM;
+		rdataset->ttl = dns_adb_cachemin;
 		break;
 	case dns_trust_ultimate:
 		rdataset->ttl = 0;
@@ -1061,7 +1067,7 @@ new_adbentry(dns_adb_t *adb, const isc_sockaddr_t *addr, isc_stdtime_t now) {
 		.quota = adb->quota,
 		.references = ISC_REFCOUNT_INITIALIZER(1),
 		.adb = dns_adb_ref(adb),
-		.expires = now + ADB_ENTRY_WINDOW,
+		.expires = now + dns_adb_entrywindow,
 		.magic = DNS_ADBENTRY_MAGIC,
 	};
 
@@ -1322,7 +1328,7 @@ get_attached_and_locked_name(dns_adb_t *adb, const dns_name_t *name,
 	dns_adbname_ref(adbname);
 
 	LOCK(&adbname->lock); /* Must be unlocked by the caller */
-	if (adbname->last_used + ADB_CACHE_MINIMUM <= last_update) {
+	if (adbname->last_used + dns_adb_cachemin <= last_update) {
 		adbname->last_used = now;
 	}
 	if (locktype == isc_rwlocktype_write) {
@@ -1431,7 +1437,7 @@ get_attached_and_locked_entry(dns_adb_t *adb, isc_stdtime_t now,
 	}
 
 	/* Did enough time pass to update the LRU? */
-	if (adbentry->last_used + ADB_CACHE_MINIMUM <= last_update) {
+	if (adbentry->last_used + dns_adb_cachemin <= last_update) {
 		adbentry->last_used = now;
 		if (locktype == isc_rwlocktype_write) {
 			ISC_LIST_UNLINK(adb->entries_lru, adbentry, link);
@@ -2187,6 +2193,10 @@ post_copy:
 		atomic_store(&find->status, DNS_ADB_UNSET);
 		find->cb = cb;
 		find->cbarg = cbarg;
+	}
+
+	if (wanted_fetches) {
+		find->options |= DNS_ADBFIND_STARTEDFETCH;
 	}
 
 	*findp = find;
@@ -3021,22 +3031,35 @@ static void
 adjustsrtt(dns_adbaddrinfo_t *addr, unsigned int rtt, unsigned int factor,
 	   isc_stdtime_t now) {
 	unsigned int new_srtt;
+	unsigned int old_srtt;
 
 	if (factor == DNS_ADB_RTTADJAGE) {
-		if (atomic_load(&addr->entry->lastage) != now) {
-			new_srtt = (uint64_t)atomic_load(&addr->entry->srtt) *
-				   98 / 100;
-			atomic_store(&addr->entry->lastage, now);
-			atomic_store(&addr->entry->srtt, new_srtt);
-			addr->srtt = new_srtt;
+		isc_stdtime_t lastage =
+			atomic_load_acquire(&addr->entry->lastage);
+
+		/* prevent double aging */
+		if (lastage == now ||
+		    !atomic_compare_exchange_strong_acq_rel(
+			    &addr->entry->lastage, &lastage, now))
+		{
+			return;
 		}
-	} else {
-		new_srtt = ((uint64_t)atomic_load(&addr->entry->srtt) / 10 *
-			    factor) +
-			   ((uint64_t)rtt / 10 * (10 - factor));
-		atomic_store(&addr->entry->srtt, new_srtt);
-		addr->srtt = new_srtt;
 	}
+
+	/*
+	 * Correct CAS aging...
+	 */
+	old_srtt = atomic_load_acquire(&addr->entry->srtt);
+	do {
+		if (factor == DNS_ADB_RTTADJAGE) {
+			new_srtt = (uint64_t)old_srtt * 98 / 100;
+		} else {
+			new_srtt = ((uint64_t)old_srtt / 10 * factor) +
+				   ((uint64_t)rtt / 10 * (10 - factor));
+		}
+	} while (!atomic_compare_exchange_weak_acq_rel(&addr->entry->srtt,
+						       &old_srtt, new_srtt));
+	addr->srtt = new_srtt;
 }
 
 void

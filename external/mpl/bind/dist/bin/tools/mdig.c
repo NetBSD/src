@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.15 2026/01/29 18:37:47 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.16 2026/04/08 00:16:13 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1648,7 +1648,7 @@ static bool
 dash_option(const char *option, char *next, struct query *query, bool global,
 	    bool *setname) {
 	char opt;
-	const char *value;
+	const char *value, *oldvalue;
 	isc_result_t result;
 	bool value_from_next;
 	isc_consttextregion_t tr;
@@ -1658,7 +1658,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 	struct in_addr in4;
 	struct in6_addr in6;
 	in_port_t srcport;
-	char *hash;
+	const char *hash;
 	uint32_t num;
 
 	while (strpbrk(option, single_dash_opts) == &option[0]) {
@@ -1728,12 +1728,15 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 	case 'b':
 		GLOBAL();
 		hash = strchr(value, '#');
+		oldvalue = value;
 		if (hash != NULL) {
 			result = parse_uint(&num, hash + 1, MAXPORT,
 					    "port number");
 			CHECKM("parse_uint(srcport)", result);
 			srcport = num;
-			*hash = '\0';
+			snprintf(textname, sizeof(textname), "%.*s",
+				 (int)(hash - value), value);
+			value = textname;
 		} else {
 			srcport = 0;
 		}
@@ -1744,13 +1747,7 @@ dash_option(const char *option, char *next, struct query *query, bool global,
 			isc_sockaddr_fromin(&srcaddr, &in4, srcport);
 			isc_net_disableipv6();
 		} else {
-			if (hash != NULL) {
-				*hash = '#';
-			}
-			fatal("invalid address %s", value);
-		}
-		if (hash != NULL) {
-			*hash = '#';
+			fatal("invalid address %s", oldvalue);
 		}
 		have_src = true;
 		return value_from_next;
@@ -2051,10 +2048,7 @@ set_source_ports(dns_dispatchmgr_t *manager) {
 		fatal("isc_portset_create (v4) failed");
 	}
 
-	result = isc_net_getudpportrange(AF_INET, &udpport_low, &udpport_high);
-	if (result != ISC_R_SUCCESS) {
-		fatal("isc_net_getudpportrange (v4) failed");
-	}
+	isc_net_getportrange(AF_INET, &udpport_low, &udpport_high);
 
 	isc_portset_addrange(v4portset, udpport_low, udpport_high);
 
@@ -2062,10 +2056,7 @@ set_source_ports(dns_dispatchmgr_t *manager) {
 	if (result != ISC_R_SUCCESS) {
 		fatal("isc_portset_create (v6) failed");
 	}
-	result = isc_net_getudpportrange(AF_INET6, &udpport_low, &udpport_high);
-	if (result != ISC_R_SUCCESS) {
-		fatal("isc_net_getudpportrange (v6) failed");
-	}
+	isc_net_getportrange(AF_INET6, &udpport_low, &udpport_high);
 
 	isc_portset_addrange(v6portset, udpport_low, udpport_high);
 

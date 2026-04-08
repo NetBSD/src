@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.26 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.27 2026/04/08 00:16:16 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1114,8 +1114,7 @@ no_nsid:
 	}
 	if (((client->attributes & NS_CLIENTATTR_HAVEECS) != 0) &&
 	    (client->ecs.addr.family == AF_INET ||
-	     client->ecs.addr.family == AF_INET6 ||
-	     client->ecs.addr.family == AF_UNSPEC))
+	     client->ecs.addr.family == AF_INET6))
 	{
 		isc_buffer_t buf;
 		uint8_t addr[16];
@@ -1130,10 +1129,6 @@ no_nsid:
 		addrl = (plen + 7) / 8;
 
 		switch (client->ecs.addr.family) {
-		case AF_UNSPEC:
-			INSIST(plen == 0);
-			family = 0;
-			break;
 		case AF_INET:
 			INSIST(plen <= 32);
 			family = 1;
@@ -1424,23 +1419,6 @@ process_ecs(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 
 	memset(&caddr, 0, sizeof(caddr));
 	switch (family) {
-	case 0:
-		/*
-		 * XXXMUKS: In queries, if FAMILY is set to 0, SOURCE
-		 * PREFIX-LENGTH must be 0 and ADDRESS should not be
-		 * present as the address and prefix lengths don't make
-		 * sense because the family is unknown.
-		 */
-		if (addrlen != 0U) {
-			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-				      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(2),
-				      "EDNS client-subnet option: invalid "
-				      "address length (%u) for FAMILY=0",
-				      addrlen);
-			return DNS_R_OPTERR;
-		}
-		caddr.family = AF_UNSPEC;
-		break;
 	case 1:
 		if (addrlen > 32U) {
 			ns_client_log(client, NS_LOGCATEGORY_CLIENT,

@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.10 2026/01/29 18:37:52 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.11 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,7 +69,7 @@ fromtext_doa(ARGS_FROMTEXT) {
 		return ISC_R_SUCCESS;
 	} else {
 		isc_lex_ungettoken(lexer, &token);
-		return isc_base64_tobuffer(lexer, target, -1);
+		return isc_base64_tobuffer(lexer, target, isc_zero_or_more);
 	}
 }
 

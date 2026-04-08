@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3_50.c,v 1.11 2026/01/29 18:37:52 christos Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.12 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,8 @@
 
 #include <isc/base32.h>
 #include <isc/iterated_hash.h>
+
+#include <dns/nsec3.h>
 
 #define RRTYPE_NSEC3_ATTRIBUTES DNS_RDATATYPEATTR_DNSSEC
 
@@ -98,8 +100,17 @@ fromtext_nsec3(ARGS_FROMTEXT) {
 				      false));
 	isc_buffer_init(&b, buf, sizeof(buf));
 	RETTOK(isc_base32hexnp_decodestring(DNS_AS_STR(token), &b));
-	if (isc_buffer_usedlength(&b) > 0xffU) {
-		RETTOK(ISC_R_RANGE);
+	switch (hashalg) {
+	case dns_hash_sha1:
+		if (isc_buffer_usedlength(&b) != ISC_SHA1_DIGESTLENGTH) {
+			RETTOK(ISC_R_RANGE);
+		}
+		break;
+	default:
+		if (isc_buffer_usedlength(&b) > NSEC3_MAX_HASH_LENGTH) {
+			RETTOK(ISC_R_RANGE);
+		}
+		break;
 	}
 	RETERR(uint8_tobuffer(isc_buffer_usedlength(&b), target));
 	RETERR(mem_tobuffer(target, &buf, isc_buffer_usedlength(&b)));
@@ -186,7 +197,7 @@ totext_nsec3(ARGS_TOTEXT) {
 static isc_result_t
 fromwire_nsec3(ARGS_FROMWIRE) {
 	isc_region_t sr, rr;
-	unsigned int saltlen, hashlen;
+	unsigned int hash, saltlen, hashlen;
 
 	REQUIRE(type == dns_rdatatype_nsec3);
 
@@ -201,6 +212,7 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 	if (sr.length < 5U) {
 		RETERR(DNS_R_FORMERR);
 	}
+	hash = sr.base[0];
 	saltlen = sr.base[4];
 	isc_region_consume(&sr, 5);
 
@@ -215,8 +227,19 @@ fromwire_nsec3(ARGS_FROMWIRE) {
 	hashlen = sr.base[0];
 	isc_region_consume(&sr, 1);
 
-	if (hashlen < 1 || sr.length < hashlen) {
-		RETERR(DNS_R_FORMERR);
+	switch (hash) {
+	case dns_hash_sha1:
+		if (hashlen != ISC_SHA1_DIGESTLENGTH || sr.length < hashlen) {
+			RETERR(DNS_R_FORMERR);
+		}
+		break;
+	default:
+		if (hashlen < 1 || hashlen > NSEC3_MAX_HASH_LENGTH ||
+		    sr.length < hashlen)
+		{
+			RETERR(DNS_R_FORMERR);
+		}
+		break;
 	}
 	isc_region_consume(&sr, hashlen);
 
@@ -266,7 +289,6 @@ fromstruct_nsec3(ARGS_FROMSTRUCT) {
 	REQUIRE(nsec3->common.rdtype == type);
 	REQUIRE(nsec3->common.rdclass == rdclass);
 	REQUIRE(nsec3->typebits != NULL || nsec3->len == 0);
-	REQUIRE(nsec3->hash == dns_hash_sha1);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -315,6 +337,7 @@ tostruct_nsec3(ARGS_TOSTRUCT) {
 	nsec3->len = region.length;
 	nsec3->typebits = mem_maybedup(mctx, region.base, region.length);
 	nsec3->mctx = mctx;
+
 	return ISC_R_SUCCESS;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.11 2026/01/29 18:37:53 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.12 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ fromtext_openpgpkey(ARGS_FROMTEXT) {
 	/*
 	 * Keyring.
 	 */
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t

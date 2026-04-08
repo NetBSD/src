@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.18 2026/01/29 18:36:26 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.19 2026/04/08 00:15:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1822,7 +1822,7 @@ append_str(const char *text, int len, char **p, char *end) {
 
 static isc_result_t
 reverse_octets(const char *in, char **p, char *end) {
-	char *dot = strchr(in, '.');
+	const char *dot = strchr(in, '.');
 	int len;
 	if (dot != NULL) {
 		isc_result_t result;

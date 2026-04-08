@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.16 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.17 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -422,7 +422,8 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 		/*
 		 * A delete operation uses the fully specified qname.
 		 */
-		CHECK(process_deletetkey(signer, qname, &tkeyin, &tkeyout,
+		keyname = qname;
+		CHECK(process_deletetkey(signer, keyname, &tkeyin, &tkeyout,
 					 ring));
 		break;
 	case DNS_TKEYMODE_GSSAPI:
@@ -465,6 +466,10 @@ dns_tkey_processquery(dns_message_t *msg, dns_tkeyctx_t *tctx,
 		result = DNS_R_NOTIMP;
 		goto cleanup;
 	default:
+		/*
+		 * For unrecognized modes also use the fully specified qname.
+		 */
+		keyname = qname;
 		tkeyout.error = dns_tsigerror_badmode;
 	}
 

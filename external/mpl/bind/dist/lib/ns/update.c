@@ -1,4 +1,4 @@
-/*	$NetBSD: update.c,v 1.19 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: update.c,v 1.20 2026/04/08 00:16:17 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,6 +203,7 @@ struct update {
 	ns_client_t *client;
 	isc_result_t result;
 	dns_message_t *answer;
+	dns_ssutable_t *ssutable;
 	unsigned int *maxbytype;
 	size_t maxbytypelen;
 };
@@ -1859,14 +1860,14 @@ send_update(ns_client_t *client, dns_zone_t *zone) {
 	*uev = (update_t){
 		.zone = zone,
 		.client = client,
-		.maxbytype = maxbytype,
+		.ssutable = MOVE_OWNERSHIP(ssutable),
+		.maxbytype = MOVE_OWNERSHIP(maxbytype),
 		.maxbytypelen = maxbytypelen,
 		.result = ISC_R_SUCCESS,
 	};
 
 	isc_nmhandle_attach(client->handle, &client->updatehandle);
 	isc_async_run(dns_zone_getloop(zone), update_action, uev);
-	maxbytype = NULL;
 
 cleanup:
 	if (db != NULL) {
@@ -2699,6 +2700,7 @@ update_action(void *arg) {
 	update_t *uev = (update_t *)arg;
 	dns_zone_t *zone = uev->zone;
 	ns_client_t *client = uev->client;
+	dns_ssutable_t *ssutable = uev->ssutable;
 	unsigned int *maxbytype = uev->maxbytype;
 	size_t update = 0, maxbytypelen = uev->maxbytypelen;
 	isc_result_t result;
@@ -2713,7 +2715,6 @@ update_action(void *arg) {
 	dns_message_t *request = client->message;
 	dns_rdataclass_t zoneclass;
 	dns_name_t *zonename = NULL;
-	dns_ssutable_t *ssutable = NULL;
 	dns_fixedname_t tmpnamefixed;
 	dns_name_t *tmpname = NULL;
 	dns_zoneopt_t options;
@@ -2730,7 +2731,6 @@ update_action(void *arg) {
 	CHECK(dns_zone_getdb(zone, &db));
 	zonename = dns_db_origin(db);
 	zoneclass = dns_db_class(db);
-	dns_zone_getssutable(zone, &ssutable);
 	options = dns_zone_getoptions(zone);
 
 	is_inline = (!dns_zone_israw(zone) && dns_zone_issecure(zone));

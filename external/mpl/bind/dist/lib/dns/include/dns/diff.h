@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.h,v 1.8 2025/01/26 16:25:26 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.9 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -61,14 +61,6 @@
  * RRset to be recomputed to be 'resign' seconds before the earliest RRSIG
  * timeexpire.
  */
-
-typedef enum {
-	DNS_DIFFOP_ADD = 0,	  /*%< Add an RR. */
-	DNS_DIFFOP_DEL = 1,	  /*%< Delete an RR. */
-	DNS_DIFFOP_EXISTS = 2,	  /*%< Assert RR existence. */
-	DNS_DIFFOP_ADDRESIGN = 4, /*%< ADD + RESIGN. */
-	DNS_DIFFOP_DELRESIGN = 5  /*%< DEL + RESIGN. */
-} dns_diffop_t;
 
 typedef struct dns_difftuple dns_difftuple_t;
 typedef ISC_LIST(dns_difftuple_t) dns_difftuplelist_t;
@@ -266,6 +258,37 @@ dns_diff_applysilently(const dns_diff_t *diff, dns_db_t *db,
  *	tuples of type #DNS_DIFFOP_ADD and/or
  *	For #DNS_DIFFOP_DEL tuples, the TTL is ignored.
  *
+ */
+
+typedef struct {
+	dns_db_t	*db;
+	dns_dbversion_t *ver;
+	bool		 warn;
+} dns_updatectx_t;
+
+isc_result_t
+dns_diff_apply_with_callbacks(const dns_diff_t	   *diff,
+			      dns_rdatacallbacks_t *callbacks);
+/*%<
+ * Apply 'diff' to the database using the provided callbacks and context.
+ * The context contains the database, version, and warning flag.
+ * This allows for custom callback implementations.
+ *
+ * Requires:
+ *\li	'callbacks' points to a valid dns_rdatacallbacks_t structure
+ *\li	'callbacks->update' is not NULL
+ */
+
+isc_result_t
+update_callback(void *arg, const dns_name_t *name, dns_rdataset_t *rds,
+		dns_diffop_t op DNS__DB_FLARG);
+/*%<
+ * Standard update callback for dns_rdatacallbacks_t.
+ * Updates a database version by applying DNS record operations.
+ * Used with dns_updatectx_t context.
+ *
+ * Requires:
+ *\li	'arg' is a valid dns_updatectx_t pointer
  */
 
 isc_result_t

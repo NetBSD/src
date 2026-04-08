@@ -1,4 +1,4 @@
-/*	$NetBSD: brid_68.c,v 1.2 2026/01/29 18:37:51 christos Exp $	*/
+/*	$NetBSD: brid_68.c,v 1.3 2026/04/08 00:16:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,7 +30,7 @@ fromtext_brid(ARGS_FROMTEXT) {
 	UNUSED(options);
 	UNUSED(callbacks);
 
-	return isc_base64_tobuffer(lexer, target, -1);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -46,8 +46,6 @@ totext_brid(ARGS_TOTEXT) {
 	if ((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0) {
 		RETERR(str_totext(" (", target));
 	}
-
-	RETERR(str_totext(tctx->linebreak, target));
 
 	if (tctx->width == 0) { /* No splitting */
 		RETERR(isc_base64_totext(&sr, 60, "", target));

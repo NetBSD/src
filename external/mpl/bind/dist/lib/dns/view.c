@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.20 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.21 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -379,7 +379,7 @@ destroy(dns_view_t *view) {
 	}
 #ifdef HAVE_DNSTAP
 	if (view->dtenv != NULL) {
-		dns_dt_detach(&view->dtenv);
+		dns_dtenv_detach(&view->dtenv);
 	}
 #endif /* HAVE_DNSTAP */
 	dns_view_setnewzones(view, false, NULL, NULL, 0ULL);

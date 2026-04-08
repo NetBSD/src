@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.h,v 1.15 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: rdataset.h,v 1.16 2026/04/08 00:16:14 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -691,6 +691,19 @@ const char *
 dns_trust_totext(dns_trust_t trust);
 /*%<
  * Display trust in textual form.
+ */
+
+isc_stdtime_t
+dns_rdataset_minresign(dns_rdataset_t *rdataset);
+/*%<
+ * Return the minimum resign time from an RRSIG rdataset.
+ *
+ * This function iterates through all RRSIG records in the rdataset
+ * and returns the earliest expiration time, which indicates when
+ * the signatures should be resigned.
+ *
+ * Requires:
+ * \li	'rdataset' is a valid rdataset.
  */
 
 ISC_LANG_ENDDECLS
