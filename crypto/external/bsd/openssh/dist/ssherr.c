@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssherr.c,v 1.10 2020/01/25 23:13:09 djm Exp $	*/
+/*	$OpenBSD: ssherr.c,v 1.11 2026/02/06 23:31:29 dtucker Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.10 2022/10/19 11:54:02 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.11 2026/04/08 18:58:41 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -27,6 +27,8 @@ __RCSID("$NetBSD: ssherr.c,v 1.10 2022/10/19 11:54:02 christos Exp $");
 const char *
 ssh_err(int n)
 {
+	const char *msg = NULL;
+
 	switch (n) {
 	case SSH_ERR_SUCCESS:
 		return "success";
@@ -73,7 +75,8 @@ ssh_err(int n)
 	case SSH_ERR_SIGNATURE_INVALID:
 		return "incorrect signature";
 	case SSH_ERR_LIBCRYPTO_ERROR:
-		return "error in libcrypto";  /* XXX fetch and return */
+		msg = ssherr_libcrypto();
+		return msg != NULL ? msg : "error in libcrypto";
 	case SSH_ERR_UNEXPECTED_TRAILING_DATA:
 		return "unexpected bytes remain after decoding";
 	case SSH_ERR_SYSTEM_ERROR:

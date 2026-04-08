@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkeyfile.c,v 1.4 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: auth2-pubkeyfile.c,v 1.6 2025/08/14 10:03:44 dtucker Exp $ */
+/*	$NetBSD: auth2-pubkeyfile.c,v 1.5 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: auth2-pubkeyfile.c,v 1.8 2026/04/02 07:48:13 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkeyfile.c,v 1.4 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkeyfile.c,v 1.5 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: auth2-pubkeyfile.c,v 1.4 2025/10/11 15:45:06 christos Exp $");
 #include "authfile.h"
 #include "match.h"
 #include "ssherr.h"
+#include "xmalloc.h"
 
 #ifdef WITH_LDAP_PUBKEY
 #include "servconf.h"
@@ -157,20 +158,23 @@ auth_authorise_keyopts(struct passwd *pw, struct sshauthopt *opts,
 static int
 match_principals_option(const char *principal_list, struct sshkey_cert *cert)
 {
-	char *result;
+	char *list, *olist, *entry;
 	u_int i;
 
-	/* XXX percent_expand() sequences for authorized_principals? */
-
-	for (i = 0; i < cert->nprincipals; i++) {
-		if ((result = match_list(cert->principals[i],
-		    principal_list, NULL)) != NULL) {
-			debug3("matched principal from key options \"%.100s\"",
-			    result);
-			free(result);
-			return 1;
+	olist = list = xstrdup(principal_list);
+	for (;;) {
+		if ((entry = strsep(&list, ",")) == NULL || *entry == '\0')
+			break;
+		for (i = 0; i < cert->nprincipals; i++) {
+			if (strcmp(entry, cert->principals[i]) == 0) {
+				debug3("matched principal from key i"
+				    "options \"%.100s\"", entry);
+				free(olist);
+				return 1;
+			}
 		}
 	}
+	free(olist);
 	return 0;
 }
 
@@ -375,7 +379,7 @@ auth_check_authkey_line(struct passwd *pw, struct sshkey *key,
 		reason = "Certificate does not contain an authorized principal";
 		goto cert_fail_reason;
 	}
-	if (sshkey_cert_check_authority_now(key, 0, 0, 0,
+	if (sshkey_cert_check_authority_now(key, 0, 0,
 	    keyopts->cert_principals == NULL ? pw->pw_name : NULL,
 	    &reason) != 0)
 		goto cert_fail_reason;

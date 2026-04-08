@@ -1,4 +1,4 @@
-.\"	$NetBSD: ssh_config.5,v 1.45 2025/10/11 15:45:08 christos Exp $
+.\"	$NetBSD: ssh_config.5,v 1.46 2026/04/08 18:58:41 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh_config.5,v 1.420 2025/10/04 21:41:35 naddy Exp $
-.Dd October 4 2025
+.\" $OpenBSD: ssh_config.5,v 1.423 2026/03/23 01:33:46 djm Exp $
+.Dd March 23 2026
 .Dt SSH_CONFIG 5
 .Os
 .Sh NAME
@@ -1021,12 +1021,14 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
@@ -1067,11 +1069,13 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com
 sk-ssh-ed25519@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
@@ -1310,10 +1314,9 @@ The default is to use the server specified list.
 The methods available vary depending on what the server supports.
 For an OpenSSH server,
 it may be zero or more of:
-.Cm bsdauth ,
-.Cm pam ,
+.Cm bsdauth
 and
-.Cm skey .
+.Cm pam .
 .It Cm KexAlgorithms
 Specifies the permitted KEX (Key Exchange) algorithms that will be used and
 their preference order.
@@ -1702,12 +1705,14 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
@@ -2312,7 +2317,14 @@ such as a wildcard:
 .Dl from=\&"!host1,!host2,*\&"
 .Sh TOKENS
 Arguments to some keywords can make use of tokens,
-which are expanded at runtime:
+which are expanded at runtime.
+Tokens are expanded without quoting or escaping of shell characters.
+It is the user's responsibility to ensure they are safe in the
+context of their use.
+.Pp
+The supported tokens in
+.Nm
+are:
 .Pp
 .Bl -tag -width XXXX -offset indent -compact
 .It %%

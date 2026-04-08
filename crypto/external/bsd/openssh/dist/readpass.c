@@ -1,5 +1,5 @@
-/*	$NetBSD: readpass.c,v 1.20 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: readpass.c,v 1.72 2025/06/11 13:24:05 dtucker Exp $ */
+/*	$NetBSD: readpass.c,v 1.21 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: readpass.c,v 1.73 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readpass.c,v 1.20 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: readpass.c,v 1.21 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -46,7 +46,6 @@ __RCSID("$NetBSD: readpass.c,v 1.20 2025/10/11 15:45:07 christos Exp $");
 #include "pathnames.h"
 #include "log.h"
 #include "ssh.h"
-#include "uidswap.h"
 
 static char *
 ssh_askpass(const char *askpass, const char *msg, const char *env_hint)

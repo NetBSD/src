@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgex.c,v 1.7 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kexgex.c,v 1.32 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kexgex.c,v 1.8 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: kexgex.c,v 1.33 2026/02/14 00:18:34 jsg Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,14 +27,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgex.c,v 1.7 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: kexgex.c,v 1.8 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 
 #include <openssl/evp.h>
 #include <signal.h>
 
-#include "sshkey.h"
-#include "cipher.h"
 #include "kex.h"
 #include "ssh2.h"
 #include "ssherr.h"

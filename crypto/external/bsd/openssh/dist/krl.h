@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.h,v 1.6 2023/10/25 20:19:57 christos Exp $	*/
+/*	$NetBSD: krl.h,v 1.7 2026/04/08 18:58:40 christos Exp $	*/
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.h,v 1.10 2023/07/17 04:01:10 djm Exp $ */
+/* $OpenBSD: krl.h,v 1.11 2026/03/03 09:57:25 dtucker Exp $ */
 
 #ifndef _KRL_H
 #define _KRL_H
@@ -46,12 +46,12 @@ struct ssh_krl;
 
 struct ssh_krl *ssh_krl_init(void);
 void ssh_krl_free(struct ssh_krl *krl);
-void ssh_krl_set_version(struct ssh_krl *krl, u_int64_t version);
+void ssh_krl_set_version(struct ssh_krl *krl, uint64_t version);
 int ssh_krl_set_comment(struct ssh_krl *krl, const char *comment);
 int ssh_krl_revoke_cert_by_serial(struct ssh_krl *krl,
-    const struct sshkey *ca_key, u_int64_t serial);
+    const struct sshkey *ca_key, uint64_t serial);
 int ssh_krl_revoke_cert_by_serial_range(struct ssh_krl *krl,
-    const struct sshkey *ca_key, u_int64_t lo, u_int64_t hi);
+    const struct sshkey *ca_key, uint64_t lo, uint64_t hi);
 int ssh_krl_revoke_cert_by_key_id(struct ssh_krl *krl,
     const struct sshkey *ca_key, const char *key_id);
 int ssh_krl_revoke_key_explicit(struct ssh_krl *krl, const struct sshkey *key);

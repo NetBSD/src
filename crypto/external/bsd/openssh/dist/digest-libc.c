@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-libc.c,v 1.8 2025/09/05 09:31:31 dtucker Exp $ */
+/* $OpenBSD: digest-libc.c,v 1.10 2026/03/03 09:57:25 dtucker Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-libc.c,v 1.11 2025/12/28 09:54:06 nia Exp $");
+__RCSID("$NetBSD: digest-libc.c,v 1.12 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -32,8 +32,8 @@ __RCSID("$NetBSD: digest-libc.c,v 1.11 2025/12/28 09:54:06 nia Exp $");
 #include "digest.h"
 
 typedef void md_init_fn(void *mdctx);
-typedef void md_update_fn(void *mdctx, const u_int8_t *m, size_t mlen);
-typedef void md_final_fn(u_int8_t[], void *mdctx);
+typedef void md_update_fn(void *mdctx, const uint8_t *m, size_t mlen);
+typedef void md_final_fn(uint8_t[], void *mdctx);
 
 struct ssh_digest_ctx {
 	int alg;
@@ -230,14 +230,15 @@ int
 ssh_digest_memory(int alg, const void *m, size_t mlen, u_char *d, size_t dlen)
 {
 	struct ssh_digest_ctx *ctx = ssh_digest_start(alg);
+	int ret = 0;
 
 	if (ctx == NULL)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (ssh_digest_update(ctx, m, mlen) != 0 ||
 	    ssh_digest_final(ctx, d, dlen) != 0)
-		return SSH_ERR_INVALID_ARGUMENT;
+		ret = SSH_ERR_INVALID_ARGUMENT;
 	ssh_digest_free(ctx);
-	return 0;
+	return ret;
 }
 
 int

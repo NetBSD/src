@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-serv-krb5.c,v 1.12 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: gss-serv-krb5.c,v 1.9 2018/07/09 21:37:55 markus Exp $ */
+/*	$NetBSD: gss-serv-krb5.c,v 1.13 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: gss-serv-krb5.c,v 1.10 2026/02/08 15:28:01 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv-krb5.c,v 1.12 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: gss-serv-krb5.c,v 1.13 2026/04/08 18:58:40 christos Exp $");
 #ifdef GSSAPI
 #ifdef KRB5
 

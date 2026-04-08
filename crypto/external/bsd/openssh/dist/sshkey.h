@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.h,v 1.25 2025/12/28 09:54:07 nia Exp $	*/
-/* $OpenBSD: sshkey.h,v 1.70 2025/08/29 03:50:38 djm Exp $ */
+/*	$NetBSD: sshkey.h,v 1.26 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sshkey.h,v 1.73 2026/03/03 09:57:26 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -94,22 +94,22 @@ enum sshkey_private_format {
 #define SSHKEY_FLAG_EXT		0x0001
 
 #define SSHKEY_CERT_MAX_PRINCIPALS	256
-/* XXX opaquify? */
+/* XXX opacify? */
 struct sshkey_cert {
 	struct sshbuf	*certblob; /* Kept around for use on wire */
 	u_int		 type; /* SSH2_CERT_TYPE_USER or SSH2_CERT_TYPE_HOST */
-	u_int64_t	 serial;
+	uint64_t	 serial;
 	char		*key_id;
 	u_int		 nprincipals;
 	char		**principals;
-	u_int64_t	 valid_after, valid_before;
+	uint64_t	 valid_after, valid_before;
 	struct sshbuf	*critical;
 	struct sshbuf	*extensions;
 	struct sshkey	*signature_key;
 	char		*signature_type;
 };
 
-/* XXX opaquify? */
+/* XXX opacify? */
 struct sshkey {
 	int	 type;
 	int	 flags;
@@ -214,12 +214,12 @@ int	 sshkey_match_keyname_to_sigalgs(const char *, const char *);
 int	 sshkey_to_certified(struct sshkey *);
 int	 sshkey_drop_cert(struct sshkey *);
 int	 sshkey_cert_copy(const struct sshkey *, struct sshkey *);
-int	 sshkey_cert_check_authority(const struct sshkey *, int, int, int,
+int	 sshkey_cert_check_authority(const struct sshkey *, int, int,
     uint64_t, const char *, const char **);
-int	 sshkey_cert_check_authority_now(const struct sshkey *, int, int, int,
+int	 sshkey_cert_check_authority_now(const struct sshkey *, int, int,
     const char *, const char **);
 int	 sshkey_cert_check_host(const struct sshkey *, const char *,
-    int , const char *, const char **);
+    const char *, const char **);
 size_t	 sshkey_format_cert_validity(const struct sshkey_cert *,
     char *, size_t) __attribute__((__bounded__(__string__, 2, 3)));
 int	 sshkey_check_cert_sigtype(const struct sshkey *, const char *);

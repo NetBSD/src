@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.28 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.78 2025/09/25 06:25:38 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.29 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.80 2026/03/19 02:36:28 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.28 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.29 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -186,17 +186,17 @@ main(int argc, char **argv)
 	char *host, *fp, *pkalg;
 	size_t slen, dlen;
 
-#ifdef __OpenBSD__
-	if (pledge("stdio rpath getpw dns id", NULL) != 0)
-		fatal("%s: pledge: %s", __progname, strerror(errno));
-#endif
-
 	/* Ensure that stdin and stdout are connected */
 	if ((fd = open(_PATH_DEVNULL, O_RDWR)) < 2)
 		exit(1);
 	/* Leave /dev/null fd iff it is attached to stderr */
 	if (fd > 2)
 		close(fd);
+
+#ifdef __OpenBSD__
+	if (pledge("stdio rpath getpw dns id", NULL) != 0)
+		fatal("%s: pledge: %s", __progname, strerror(errno));
+#endif
 
 	for (i = 0; i < NUM_KEYTYPES; i++)
 		key_fd[i] = -1;
@@ -237,10 +237,6 @@ main(int argc, char **argv)
 	}
 	if (found == 0)
 		fatal("could not open any host key");
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {

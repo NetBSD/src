@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.39 2025/10/03 00:08:02 djm Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.19 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.42 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.19 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -35,12 +35,12 @@ __RCSID("$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $");
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 
 #include "sshkey.h"
-#include "cipher.h"
 #include "digest.h"
 #include "kex.h"
 #include "log.h"
@@ -53,8 +53,8 @@ __RCSID("$NetBSD: kexgexc.c,v 1.18 2025/10/11 15:45:06 christos Exp $");
 #include "sshbuf.h"
 #include "misc.h"
 
-static int input_kex_dh_gex_group(int, u_int32_t, struct ssh *);
-static int input_kex_dh_gex_reply(int, u_int32_t, struct ssh *);
+static int input_kex_dh_gex_group(int, uint32_t, struct ssh *);
+static int input_kex_dh_gex_reply(int, uint32_t, struct ssh *);
 
 int
 kexgex_client(struct ssh *ssh)
@@ -92,7 +92,7 @@ kexgex_client(struct ssh *ssh)
 }
 
 static int
-input_kex_dh_gex_group(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_dh_gex_group(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	BIGNUM *p = NULL, *g = NULL;
@@ -142,7 +142,7 @@ out:
 }
 
 static int
-input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_dh_gex_reply(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	BIGNUM *dh_server_pub = NULL;

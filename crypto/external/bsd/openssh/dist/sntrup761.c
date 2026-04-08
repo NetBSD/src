@@ -1,5 +1,5 @@
-/*	$NetBSD: sntrup761.c,v 1.4 2024/09/24 21:32:18 christos Exp $	*/
-/*  $OpenBSD: sntrup761.c,v 1.8 2024/09/16 05:37:05 djm Exp $ */
+/*	$NetBSD: sntrup761.c,v 1.5 2026/04/08 18:58:41 christos Exp $	*/
+/*  $OpenBSD: sntrup761.c,v 1.9 2026/01/20 22:56:11 dtucker Exp $ */
 
 /*
  * Public Domain, Authors:
@@ -9,7 +9,7 @@
  * - Christine van Vredendaal
  */
 #include "includes.h"
-__RCSID("$NetBSD: sntrup761.c,v 1.4 2024/09/24 21:32:18 christos Exp $");
+__RCSID("$NetBSD: sntrup761.c,v 1.5 2026/04/08 18:58:41 christos Exp $");
 
 #include <string.h>
 #include "crypto_api.h"
@@ -1959,27 +1959,20 @@ static void Hash_prefix(unsigned char *out, int b, const unsigned char *in, int 
   for (i = 0; i < 32; ++i) out[i] = h[i];
 }
 
-static uint32_t urandom32(void) {
-  unsigned char c[4];
-  uint32_t result = 0;
-  int i;
-  randombytes(c, 4);
-  for (i = 0; i < 4; ++i) result += ((uint32_t)c[i]) << (8 * i);
-  return result;
-}
 
 static void Short_random(small *out) {
   uint32_t L[p];
-  int i;
-  for (i = 0; i < p; ++i) L[i] = urandom32();
+  randombytes(L, sizeof(L));
   Short_fromlist(out, L);
+  explicit_bzero(L, sizeof(L));
 }
-
 static void Small_random(small *out) {
   int i;
-  for (i = 0; i < p; ++i) out[i] = (((urandom32() & 0x3fffffff) * 3) >> 30) - 1;
+  uint32_t L[p];
+  randombytes(L, sizeof(L));
+  for (i = 0; i < p; ++i) out[i] = (((L[i] & 0x3fffffff) * 3) >> 30) - 1;
+  explicit_bzero(L, sizeof(L));
 }
-
 static void KeyGen(Fq *h, small *f, small *ginv) {
   small g[p];
   Fq finv[p];

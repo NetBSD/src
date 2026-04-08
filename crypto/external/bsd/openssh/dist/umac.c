@@ -1,5 +1,5 @@
-/*	$NetBSD: umac.c,v 1.23 2025/10/11 15:45:08 christos Exp $	*/
-/* $OpenBSD: umac.c,v 1.27 2025/09/05 10:34:35 dtucker Exp $ */
+/*	$NetBSD: umac.c,v 1.24 2026/04/08 18:58:42 christos Exp $	*/
+/* $OpenBSD: umac.c,v 1.30 2026/03/03 09:57:26 dtucker Exp $ */
 
 /* -----------------------------------------------------------------------
  *
@@ -42,7 +42,7 @@
   * "Barreto"). The only two files needed are rijndael-alg-fst.c and
   * rijndael-alg-fst.h. Brian Gladman's version is distributed with the GNU
   * Public license at http://fp.gladman.plus.com/AES/index.htm. It
-  * includes a fast IA-32 assembly version. The OpenSSL crypo library is
+  * includes a fast IA-32 assembly version. The OpenSSL crypto library is
   * the third.
   *
   * 5) With FORCE_C_ONLY flags set to 0, incorrect results are sometimes
@@ -55,7 +55,7 @@
 /* ---------------------------------------------------------------------- */
 
 #ifndef UMAC_OUTPUT_LEN
-#define UMAC_OUTPUT_LEN     8  /* Alowable: 4, 8, 12, 16                  */
+#define UMAC_OUTPUT_LEN     8  /* Allowable: 4, 8, 12, 16                  */
 #endif
 /* #define FORCE_C_ONLY        1  ANSI C and 64-bit integers req'd        */
 /* #define AES_IMPLEMENTAION   1  1 = OpenSSL, 2 = Barreto, 3 = Gladman   */
@@ -68,12 +68,11 @@
 /* ---------------------------------------------------------------------- */
 
 #include "includes.h"
-__RCSID("$NetBSD: umac.c,v 1.23 2025/10/11 15:45:08 christos Exp $");
+__RCSID("$NetBSD: umac.c,v 1.24 2026/04/08 18:58:42 christos Exp $");
 #include <sys/types.h>
 #include <sys/endian.h>
 #include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -88,10 +87,10 @@ __RCSID("$NetBSD: umac.c,v 1.23 2025/10/11 15:45:08 christos Exp $");
 /* ---------------------------------------------------------------------- */
 
 /* The following assumptions may need change on your system */
-typedef u_int8_t	UINT8;  /* 1 byte   */
-typedef u_int16_t	UINT16; /* 2 byte   */
-typedef u_int32_t	UINT32; /* 4 byte   */
-typedef u_int64_t	UINT64; /* 8 bytes  */
+typedef uint8_t	UINT8;  /* 1 byte   */
+typedef uint16_t	UINT16; /* 2 byte   */
+typedef uint32_t	UINT32; /* 4 byte   */
+typedef uint64_t	UINT64; /* 8 bytes  */
 typedef unsigned int	UWORD;  /* Register */
 
 /* ---------------------------------------------------------------------- */
@@ -189,7 +188,7 @@ static void kdf(void *buffer_ptr, aes_int_key key, UINT8 ndx, int nbytes)
     UINT8 *dst_buf = (UINT8 *)buffer_ptr;
     int i;
 
-    /* Setup the initial value */
+    /* Set up the initial value */
     in_buf[AES_BLOCK_LEN-9] = ndx;
     in_buf[AES_BLOCK_LEN-1] = i = 1;
 

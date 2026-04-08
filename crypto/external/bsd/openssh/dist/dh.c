@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.21 2025/04/09 15:49:32 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.75 2024/12/03 16:27:53 dtucker Exp $ */
+/*	$NetBSD: dh.c,v 1.22 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.76 2026/02/08 19:54:31 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,9 +26,10 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.21 2025/04/09 15:49:32 christos Exp $");
+__RCSID("$NetBSD: dh.c,v 1.22 2026/04/08 18:58:40 christos Exp $");
 
 #include <errno.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

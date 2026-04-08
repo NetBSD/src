@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-gss.c,v 1.18 2024/07/08 22:33:43 christos Exp $	*/
-/* $OpenBSD: auth2-gss.c,v 1.36 2024/05/17 04:42:13 djm Exp $ */
+/*	$NetBSD: auth2-gss.c,v 1.19 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: auth2-gss.c,v 1.39 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -26,11 +26,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-gss.c,v 1.18 2024/07/08 22:33:43 christos Exp $");
+__RCSID("$NetBSD: auth2-gss.c,v 1.19 2026/04/08 18:58:40 christos Exp $");
 
 #ifdef GSSAPI
 
 #include <sys/types.h>
+#include <stdarg.h>
+
 #include <stdarg.h>
 
 #include "xmalloc.h"
@@ -43,6 +45,7 @@ __RCSID("$NetBSD: auth2-gss.c,v 1.18 2024/07/08 22:33:43 christos Exp $");
 #include "dispatch.h"
 #include "sshbuf.h"
 #include "ssherr.h"
+#include "misc.h"
 #include "servconf.h"
 #include "packet.h"
 #include "kex.h"
@@ -54,10 +57,10 @@ __RCSID("$NetBSD: auth2-gss.c,v 1.18 2024/07/08 22:33:43 christos Exp $");
 extern ServerOptions options;
 extern struct authmethod_cfg methodcfg_gssapi;
 
-static int input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh);
-static int input_gssapi_errtok(int, u_int32_t, struct ssh *);
+static int input_gssapi_token(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_exchange_complete(int type, uint32_t plen, struct ssh *ssh);
+static int input_gssapi_errtok(int, uint32_t, struct ssh *);
 
 /*
  * We only support those mechanisms that we know about (ie ones that we know
@@ -144,7 +147,7 @@ userauth_gssapi(struct ssh *ssh, const char *method)
 }
 
 static int
-input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_token(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;
@@ -208,7 +211,7 @@ input_gssapi_token(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 static int
-input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_errtok(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;
@@ -252,7 +255,7 @@ input_gssapi_errtok(int type, u_int32_t plen, struct ssh *ssh)
  */
 
 static int
-input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_exchange_complete(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	int r, authenticated;
@@ -280,7 +283,7 @@ input_gssapi_exchange_complete(int type, u_int32_t plen, struct ssh *ssh)
 }
 
 static int
-input_gssapi_mic(int type, u_int32_t plen, struct ssh *ssh)
+input_gssapi_mic(int type, uint32_t plen, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Gssctxt *gssctxt;

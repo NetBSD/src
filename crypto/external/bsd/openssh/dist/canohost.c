@@ -1,5 +1,5 @@
-/*	$NetBSD: canohost.c,v 1.16 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: canohost.c,v 1.77 2023/03/31 04:42:29 dtucker Exp $ */
+/*	$NetBSD: canohost.c,v 1.17 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: canohost.c,v 1.78 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: canohost.c,v 1.16 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: canohost.c,v 1.17 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -32,7 +32,6 @@ __RCSID("$NetBSD: canohost.c,v 1.16 2023/10/25 20:19:57 christos Exp $");
 #include <unistd.h>
 
 #include "xmalloc.h"
-#include "packet.h"
 #include "log.h"
 #include "canohost.h"
 #include "misc.h"

@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.c,v 1.28 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: authfd.c,v 1.136 2025/08/29 03:50:38 djm Exp $ */
+/*	$NetBSD: authfd.c,v 1.29 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: authfd.c,v 1.141 2026/03/05 05:44:15 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,29 +38,27 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfd.c,v 1.28 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: authfd.c,v 1.29 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/un.h>
 #include <sys/socket.h>
 
 #include <fcntl.h>
 #include <stdlib.h>
-#include <signal.h>
 #include <string.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
 
-#include "xmalloc.h"
 #include "ssh.h"
 #include "sshbuf.h"
 #include "sshkey.h"
 #include "authfd.h"
-#include "cipher.h"
 #include "log.h"
-#include "atomicio.h"
 #include "misc.h"
+#include "atomicio.h"
 #include "ssherr.h"
+#include "xmalloc.h"
 
 #define MAX_AGENT_IDENTITIES	2048		/* Max keys in agent reply */
 #define MAX_AGENT_REPLY_LEN	(256 * 1024)	/* Max bytes in agent reply */
@@ -68,6 +66,7 @@ __RCSID("$NetBSD: authfd.c,v 1.28 2025/10/11 15:45:06 christos Exp $");
 /* macro to check for "agent failure" message */
 #define agent_failed(x) \
     ((x == SSH_AGENT_FAILURE) || \
+    (x == SSH_AGENT_EXTENSION_FAILURE) || \
     (x == SSH_COM_AGENT2_FAILURE) || \
     (x == SSH2_AGENT_FAILURE))
 
@@ -264,7 +263,7 @@ int
 ssh_fetch_identitylist(int sock, struct ssh_identitylist **idlp)
 {
 	u_char type;
-	u_int32_t num, i;
+	uint32_t num, i;
 	struct sshbuf *msg;
 	struct ssh_identitylist *idl = NULL;
 	int r;
@@ -439,8 +438,15 @@ ssh_agent_sign(int sock, const struct sshkey *key,
 	}
 	if ((r = sshbuf_get_string(msg, &sig, &len)) != 0)
 		goto out;
-	/* Check what we actually got back from the agent. */
-	if ((r = sshkey_check_sigtype(sig, len, alg)) != 0)
+	/*
+	 * Check what we actually got back from the agent, in case it returned
+	 * an incorrect RSA signature algorithm (e.g. "ssh-rsa" (RSA/SHA1) vs.
+	 * "rsa-sha2-256").
+	 * We don't do this for FIDO signatures as webauthn vs plain are just
+	 * different signature formats and not entirely different algorithms.
+	 */
+	if (!sshkey_is_sk(key) &&
+	    (r = sshkey_check_sigtype(sig, len, alg)) != 0)
 		goto out;
 	/* success */
 	*sigp = sig;
@@ -764,6 +770,57 @@ ssh_agent_bind_hostkey(int sock, const struct sshkey *key,
 	/* success */
 	r = 0;
  out:
+	sshbuf_free(msg);
+	return r;
+}
+
+/* Queries supported extension request types */
+int
+ssh_agent_query_extensions(int sock, char ***exts)
+{
+	struct sshbuf *msg;
+	int r;
+	u_char type;
+	char *cp = NULL, **ret = NULL;
+	size_t i = 0;
+
+	*exts = NULL;
+	if ((msg = sshbuf_new()) == NULL)
+		return SSH_ERR_ALLOC_FAIL;
+	if ((r = sshbuf_put_u8(msg, SSH_AGENTC_EXTENSION)) != 0 ||
+	    (r = sshbuf_put_cstring(msg, "query")) != 0)
+		goto out;
+	if ((r = ssh_request_reply(sock, msg, msg)) != 0)
+		goto out;
+	if ((r = sshbuf_get_u8(msg, &type)) != 0)
+		goto out;
+	if (agent_failed(type)) {
+		r = SSH_ERR_AGENT_FAILURE;
+		goto out;
+	}
+	/* Reply should start with "query" */
+	if (type != SSH_AGENT_EXTENSION_RESPONSE ||
+	   (r = sshbuf_get_cstring(msg, &cp, NULL)) != 0 ||
+	   strcmp(cp, "query") != 0) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	ret = calloc(1, sizeof(*ret));
+	while (sshbuf_len(msg)) {
+		ret = xrecallocarray(ret, i + 1, i + 2, sizeof(*ret));
+		if ((r = sshbuf_get_cstring(msg, ret + i, NULL)) != 0) {
+			r = SSH_ERR_INVALID_FORMAT;
+			goto out;
+		}
+		i++;
+	}
+	/* success */
+	r = 0;
+	*exts = ret;
+	ret = NULL; /* transferred */
+ out:
+	free(cp);
+	stringlist_free(ret);
 	sshbuf_free(msg);
 	return r;
 }

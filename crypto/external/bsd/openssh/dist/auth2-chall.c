@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-chall.c,v 1.20 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: auth2-chall.c,v 1.57 2025/10/02 08:38:43 dtucker Exp $ */
+/*	$NetBSD: auth2-chall.c,v 1.21 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: auth2-chall.c,v 1.60 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.20 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.21 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -53,10 +53,10 @@ extern ServerOptions options;
 
 static int auth2_challenge_start(struct ssh *);
 static int send_userauth_info_request(struct ssh *);
-static int input_userauth_info_response(int, u_int32_t, struct ssh *);
+static int input_userauth_info_response(int, uint32_t, struct ssh *);
 
 #ifdef BSD_AUTH
-extern KbdintDevice bsdauth_device;
+extern KbdintDevice mm_bsdauth_device;
 #else
 #ifdef USE_PAM
 extern KbdintDevice sshpam_device;
@@ -176,7 +176,7 @@ kbdint_next_device(Authctxt *authctxt, KbdintAuthctxt *kbdintctxt)
 		for (i = 0; devices[i]; i++) {
 			if (i >= sizeof(kbdintctxt->devices_done) * 8 ||
 			    i >= sizeof(devices) / sizeof(devices[0]))
-				fatal_f("internal error: too may devices");
+				fatal_f("internal error: too many devices");
 			if ((kbdintctxt->devices_done & (1 << i)) != 0 ||
 			    !auth2_method_allowed(authctxt,
 			    "keyboard-interactive", devices[i]->name))
@@ -301,7 +301,7 @@ send_userauth_info_request(struct ssh *ssh)
 }
 
 static int
-input_userauth_info_response(int type, u_int32_t seq, struct ssh *ssh)
+input_userauth_info_response(int type, uint32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	KbdintAuthctxt *kbdintctxt;
@@ -371,31 +371,4 @@ input_userauth_info_response(int type, u_int32_t seq, struct ssh *ssh)
 	userauth_finish(ssh, authenticated, "keyboard-interactive",
 	    devicename);
 	return 0;
-}
-
-void
-privsep_challenge_enable(void)
-{
-#if defined(BSD_AUTH) || defined(USE_PAM) || defined(SKEY)
-	int n = 0;
-#endif
-#ifdef BSD_AUTH
-	extern KbdintDevice mm_bsdauth_device;
-#endif
-#ifdef USE_PAM
-	extern KbdintDevice mm_sshpam_device;
-#endif
-#ifdef SKEY
-	extern KbdintDevice mm_skey_device;
-#endif
-	/* As long as SSHv1 has devices[0] hard coded this is fine */
-#ifdef BSD_AUTH
-	devices[n++] = &mm_bsdauth_device;
-#endif
-#ifdef USE_PAM
-	devices[n++] = &mm_sshpam_device;
-#endif
-#ifdef SKEY
-	devices[n++] = &mm_skey_device;
-#endif
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $	*/
-/* $OpenBSD: sshd-session.c,v 1.16 2025/09/25 06:45:50 djm Exp $ */
+/*	$NetBSD: sshd-session.c,v 1.12 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sshd-session.c,v 1.23 2026/03/11 09:10:59 dtucker Exp $ */
 
 /*
  * SSH2 implementation:
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.12 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -41,6 +41,13 @@ __RCSID("$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $");
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/queue.h>
+
+#ifdef WITH_OPENSSL
+#include <openssl/bn.h>
+#include <openssl/evp.h>
+#endif
+
+#include <netinet/in.h>
 
 #include <errno.h>
 #include <fcntl.h>
@@ -54,13 +61,6 @@ __RCSID("$NetBSD: sshd-session.c,v 1.11 2025/10/11 15:45:08 christos Exp $");
 #include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
-
-#ifdef WITH_OPENSSL
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#endif
-
-#include <netinet/in.h>
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -945,7 +945,6 @@ main(int ac, char **av)
 #ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
 #endif
-
 	/* If requested, redirect the logs to the specified logfile. */
 	if (logfile != NULL) {
 		char *cp, pid_s[32];
@@ -1121,8 +1120,8 @@ main(int ac, char **av)
 	setproctitle("%s", "[accepted]");
 
 	/* Executed child processes don't need these. */
-	fcntl(sock_out, F_SETFD, FD_CLOEXEC);
-	fcntl(sock_in, F_SETFD, FD_CLOEXEC);
+	FD_CLOSEONEXEC(sock_out);
+	FD_CLOSEONEXEC(sock_in);
 
 	/* We will not restart on SIGHUP since it no longer makes sense. */
 	ssh_signal(SIGALRM, SIG_DFL);
@@ -1212,12 +1211,6 @@ main(int ac, char **av)
 
 		if (setitimer(ITIMER_REAL, &itv, NULL) == -1)
 			fatal("login grace time setitimer failed");
-	}
-
-	if ((r = kex_exchange_identification(ssh, -1,
-	    options.version_addendum)) != 0) {
-		pfilter_notify(1);
-		sshpkt_fatal(ssh, r, "banner exchange");
 	}
 
 	ssh_packet_set_nonblocking(ssh);
@@ -1336,8 +1329,6 @@ sshd_hostkey_sign(struct ssh *ssh, struct sshkey *privkey,
 void
 cleanup_exit(int i)
 {
-	extern int auth_attempted; /* monitor.c */
-
 	if (the_active_state != NULL && the_authctxt != NULL) {
 		do_cleanup(the_active_state, the_authctxt);
 		if (privsep_is_preauth &&
@@ -1351,9 +1342,9 @@ cleanup_exit(int i)
 		}
 	}
 	/* Override default fatal exit value when auth was attempted */
-	if (i == 255 && auth_attempted) {
-		pfilter_notify(1);
+	if (i == 255 && monitor_auth_attempted())
 		_exit(EXIT_AUTH_ATTEMPTED);
-	}
+	if (i == 255 && monitor_invalid_user())
+		_exit(EXIT_INVALID_USER);
 	_exit(i);
 }

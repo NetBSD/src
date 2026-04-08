@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-sk-client.c,v 1.8 2025/04/09 15:49:33 christos Exp $	*/
-/* $OpenBSD: ssh-sk-client.c,v 1.13 2025/02/18 08:02:48 djm Exp $ */
+/*	$NetBSD: ssh-sk-client.c,v 1.9 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ssh-sk-client.c,v 1.18 2026/03/11 09:10:59 dtucker Exp $ */
+
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -16,13 +17,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk-client.c,v 1.8 2025/04/09 15:49:33 christos Exp $");
+__RCSID("$NetBSD: ssh-sk-client.c,v 1.9 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/wait.h>
 
-#include <fcntl.h>
 #include <limits.h>
 #include <errno.h>
 #include <signal.h>
@@ -31,13 +31,13 @@ __RCSID("$NetBSD: ssh-sk-client.c,v 1.8 2025/04/09 15:49:33 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "log.h"
 #include "ssherr.h"
 #include "sshbuf.h"
 #include "sshkey.h"
 #include "msg.h"
-#include "digest.h"
 #include "pathnames.h"
 #include "ssh-sk.h"
 #include "misc.h"
@@ -48,9 +48,11 @@ static int
 start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 {
 	void (*osigchld)(int);
-	int oerrno, pair[2];
+	int oerrno, pair[2], execpipe[2];
+	ssize_t n;
 	pid_t pid;
 	const char *helper, *verbosity = NULL;
+	char execbuf[100];
 
 	*fdp = -1;
 	*pidp = 0;
@@ -59,19 +61,20 @@ start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 	helper = getenv("SSH_SK_HELPER");
 	if (helper == NULL || strlen(helper) == 0)
 		helper = _PATH_SSH_SK_HELPER;
-	if (access(helper, X_OK) != 0) {
-		oerrno = errno;
-		error_f("helper \"%s\" unusable: %s", helper, strerror(errno));
-		errno = oerrno;
-		return SSH_ERR_SYSTEM_ERROR;
-	}
 #ifdef DEBUG_SK
 	verbosity = "-vvv";
 #endif
 
+	/* Create a O_CLOEXEC pipe to capture the execve() failure */
+	if (pipe(execpipe) == -1) {
+		error("pipe:  %s", strerror(errno));
+		return SSH_ERR_SYSTEM_ERROR;
+	}
 	/* Start helper */
 	if (socketpair(AF_UNIX, SOCK_STREAM, 0, pair) == -1) {
 		error("socketpair: %s", strerror(errno));
+		close(execpipe[0]);
+		close(execpipe[1]);
 		return SSH_ERR_SYSTEM_ERROR;
 	}
 	osigchld = ssh_signal(SIGCHLD, SIG_DFL);
@@ -80,14 +83,20 @@ start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 		error("fork: %s", strerror(errno));
 		close(pair[0]);
 		close(pair[1]);
+		close(execpipe[0]);
+		close(execpipe[1]);
 		ssh_signal(SIGCHLD, osigchld);
 		errno = oerrno;
 		return SSH_ERR_SYSTEM_ERROR;
 	}
 	if (pid == 0) {
+		close(execpipe[0]);
+		FD_CLOSEONEXEC(execpipe[1]);
 		if ((dup2(pair[1], STDIN_FILENO) == -1) ||
 		    (dup2(pair[1], STDOUT_FILENO) == -1)) {
-			error_f("dup2: %s", strerror(errno));
+			snprintf(execbuf, sizeof execbuf,
+			    "dup2: %s", strerror(errno));
+			write(execpipe[1], execbuf, strlen(execbuf)+1);
 			_exit(1);
 		}
 		close(pair[0]);
@@ -96,10 +105,21 @@ start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 		debug_f("starting %s %s", helper,
 		    verbosity == NULL ? "" : verbosity);
 		execlp(helper, helper, verbosity, (char *)NULL);
-		error_f("execlp: %s", strerror(errno));
+		snprintf(execbuf, sizeof execbuf,
+		    "execlp: %s", strerror(errno));
+		write(execpipe[1], execbuf, strlen(execbuf)+1);
 		_exit(1);
 	}
 	close(pair[1]);
+
+	close(execpipe[1]);
+	n = read(execpipe[0], execbuf, sizeof execbuf);
+	close(execpipe[0]);
+	if (n > 0) {
+		execbuf[n - 1] = '\0';
+		error_f("%s", execbuf);
+		return SSH_ERR_AGENT_FAILURE;
+	}
 
 	/* success */
 	debug3_f("started pid=%ld", (long)pid);

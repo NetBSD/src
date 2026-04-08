@@ -1,5 +1,6 @@
-/*	$NetBSD: ssh-ed25519-sk.c,v 1.5 2023/07/26 17:58:16 christos Exp $	*/
-/* $OpenBSD: ssh-ed25519-sk.c,v 1.15 2022/10/28 00:44:44 djm Exp $ */
+/*	$NetBSD: ssh-ed25519-sk.c,v 1.6 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ssh-ed25519-sk.c,v 1.16 2026/02/14 00:18:34 jsg Exp $ */
+
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -16,13 +17,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ed25519-sk.c,v 1.5 2023/07/26 17:58:16 christos Exp $");
+__RCSID("$NetBSD: ssh-ed25519-sk.c,v 1.6 2026/04/08 18:58:41 christos Exp $");
 
 /* #define DEBUG_SK 1 */
 
 #define SSHKEY_INTERNAL
 #include <sys/types.h>
-#include <limits.h>
 
 #include "crypto_api.h"
 
@@ -33,7 +33,6 @@ __RCSID("$NetBSD: ssh-ed25519-sk.c,v 1.5 2023/07/26 17:58:16 christos Exp $");
 #include "sshbuf.h"
 #include "sshkey.h"
 #include "ssherr.h"
-#include "ssh.h"
 #include "digest.h"
 
 /* Reuse some ED25519 internals */

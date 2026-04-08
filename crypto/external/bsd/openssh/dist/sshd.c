@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.56 2025/10/11 15:45:08 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.622 2025/08/29 03:50:38 djm Exp $ */
+/*	$NetBSD: sshd.c,v 1.57 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.626 2026/02/09 21:21:39 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.56 2025/10/11 15:45:08 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.57 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -54,11 +54,6 @@ __RCSID("$NetBSD: sshd.c,v 1.56 2025/10/11 15:45:08 christos Exp $");
 #include <unistd.h>
 #include <limits.h>
 
-#ifdef WITH_OPENSSL
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#endif
-
 #include "xmalloc.h"
 #include "ssh.h"
 #include "sshpty.h"
@@ -83,6 +78,9 @@ __RCSID("$NetBSD: sshd.c,v 1.56 2025/10/11 15:45:08 christos Exp $");
 #include "addr.h"
 #include "srclimit.h"
 #include "atomicio.h"
+#ifdef GSSAPI
+#include "ssh-gss.h"
+#endif
 #include "monitor_wrap.h"
 
 #ifdef LIBWRAP
@@ -402,6 +400,12 @@ child_reap(struct early_child *child)
 			penalty_type = SRCLIMIT_PENALTY_AUTHFAIL;
 			debug_f("preauth child %ld for %s exited "
 			    "after unsuccessful auth attempt%s",
+			    (long)child->pid, child->id, child_status);
+			break;
+		case EXIT_INVALID_USER:
+			penalty_type = SRCLIMIT_PENALTY_INVALIDUSER;
+			debug_f("preauth child %ld for %s exited "
+			    "after auth attempt by invalid user%s",
 			    (long)child->pid, child->id, child_status);
 			break;
 		case EXIT_CONFIG_REFUSED:
@@ -1442,10 +1446,6 @@ main(int ac, char **av)
 		if ((devnull = dup(devnull)) == -1)
 			fatal("dup %s: %s", _PATH_DEVNULL, strerror(errno));
 	}
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	/* If requested, redirect the logs to the specified logfile. */
 	if (logfile != NULL) {

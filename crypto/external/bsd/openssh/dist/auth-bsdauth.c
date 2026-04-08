@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-bsdauth.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth-bsdauth.c,v 1.15 2018/07/09 21:35:50 markus Exp $ */
+/*	$NetBSD: auth-bsdauth.c,v 1.10 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: auth-bsdauth.c,v 1.16 2026/02/06 01:24:36 djm Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth-bsdauth.c,v 1.9 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth-bsdauth.c,v 1.10 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -126,14 +126,6 @@ bsdauth_free_ctx(void *ctx)
 		authctxt->as = NULL;
 	}
 }
-
-KbdintDevice bsdauth_device = {
-	"bsdauth",
-	bsdauth_init_ctx,
-	bsdauth_query,
-	bsdauth_respond,
-	bsdauth_free_ctx
-};
 
 KbdintDevice mm_bsdauth_device = {
 	"bsdauth",

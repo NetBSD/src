@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-pubkey.c,v 1.37 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: auth2-pubkey.c,v 1.124 2025/08/14 09:44:39 dtucker Exp $ */
+/*	$NetBSD: auth2-pubkey.c,v 1.38 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: auth2-pubkey.c,v 1.126 2026/04/02 07:48:13 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-pubkey.c,v 1.37 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: auth2-pubkey.c,v 1.38 2026/04/08 18:58:40 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -156,9 +156,10 @@ userauth_pubkey(struct ssh *ssh, const char *method)
 		error_f("cannot decode key: %s", pkalg);
 		goto done;
 	}
-	if (key->type != pktype) {
-		error_f("type mismatch for decoded key "
-		    "(received %d, expected %d)", key->type, pktype);
+	if (key->type != pktype || (sshkey_type_plain(pktype) == KEY_ECDSA &&
+	    sshkey_ecdsa_nid_from_name(pkalg) != key->ecdsa_nid)) {
+		error_f("key type mismatch for decoded key "
+		    "(received %s, expected %s)", sshkey_ssh_name(key), pkalg);
 		goto done;
 	}
 	if (auth2_key_already_used(authctxt, key)) {
@@ -566,7 +567,7 @@ user_cert_trusted_ca(struct passwd *pw, struct sshkey *key,
 	}
 	if (use_authorized_principals && principals_opts == NULL)
 		fatal_f("internal error: missing principals_opts");
-	if (sshkey_cert_check_authority_now(key, 0, 1, 0,
+	if (sshkey_cert_check_authority_now(key, 0, 0,
 	    use_authorized_principals ? NULL : pw->pw_name, &reason) != 0)
 		goto fail_reason;
 

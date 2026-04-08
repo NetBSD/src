@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.24 2025/10/11 15:45:08 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.29 2025/07/30 04:27:42 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.25 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.31 2026/02/11 17:03:17 dtucker Exp $ */
 
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -17,10 +17,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.24 2025/10/11 15:45:08 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.25 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/param.h>
 
@@ -221,6 +220,8 @@ main(int argc, char **argv)
 	extern char *__progname;
 	struct pollfd pfd[2];
 
+	sanitise_stdfd();
+	closefrom(STDERR_FILENO + 1);
 	log_init(__progname, log_level, log_facility, log_stderr);
 
 	while ((ch = getopt(argc, argv, "v")) != -1) {

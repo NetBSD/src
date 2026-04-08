@@ -1,5 +1,6 @@
-/*	$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sshpty.c,v 1.34 2019/07/04 16:20:10 deraadt Exp $ */
+/*	$NetBSD: sshpty.c,v 1.9 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.35 2026/02/11 17:05:32 dtucker Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.9 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -24,7 +25,9 @@ __RCSID("$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $");
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>

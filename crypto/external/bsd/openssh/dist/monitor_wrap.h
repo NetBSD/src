@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_wrap.h,v 1.26 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: monitor_wrap.h,v 1.53 2025/07/04 07:47:35 djm Exp $ */
+/*	$NetBSD: monitor_wrap.h,v 1.27 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: monitor_wrap.h,v 1.54 2026/03/02 02:40:15 djm Exp $ */
 
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -47,6 +47,7 @@ int mm_is_monitor(void);
 #ifdef WITH_OPENSSL
 DH *mm_choose_dh(int, int, int);
 #endif
+void mm_sshkey_setcompat(struct ssh *);
 int mm_sshkey_sign(struct ssh *, struct sshkey *, u_char **, size_t *,
     const u_char *, size_t, const char *, const char *,
     const char *, u_int compat);

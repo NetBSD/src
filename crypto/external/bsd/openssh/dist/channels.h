@@ -1,5 +1,5 @@
-/*	$NetBSD: channels.h,v 1.30 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: channels.h,v 1.162 2025/10/07 08:02:32 djm Exp $ */
+/*	$NetBSD: channels.h,v 1.31 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: channels.h,v 1.164 2026/03/05 05:40:35 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -181,6 +181,7 @@ struct Channel {
 	u_int	local_maxpacket;
 	int	dynamic_window;
 	int     extended_usage;
+	int	agent_new;	/* For agent listeners, use RFC XXX reqests */
 	int	single_connection;
 	u_int 	tcpwinsz;	
 
@@ -328,18 +329,18 @@ void channel_clear_timeouts(struct ssh *);
 /* mux proxy support */
 
 int	 channel_proxy_downstream(struct ssh *, Channel *mc);
-int	 channel_proxy_upstream(Channel *, int, u_int32_t, struct ssh *);
+int	 channel_proxy_upstream(Channel *, int, uint32_t, struct ssh *);
 
 /* protocol handler */
 
-int	 channel_input_data(int, u_int32_t, struct ssh *);
-int	 channel_input_extended_data(int, u_int32_t, struct ssh *);
-int	 channel_input_ieof(int, u_int32_t, struct ssh *);
-int	 channel_input_oclose(int, u_int32_t, struct ssh *);
-int	 channel_input_open_confirmation(int, u_int32_t, struct ssh *);
-int	 channel_input_open_failure(int, u_int32_t, struct ssh *);
-int	 channel_input_window_adjust(int, u_int32_t, struct ssh *);
-int	 channel_input_status_confirm(int, u_int32_t, struct ssh *);
+int	 channel_input_data(int, uint32_t, struct ssh *);
+int	 channel_input_extended_data(int, uint32_t, struct ssh *);
+int	 channel_input_ieof(int, uint32_t, struct ssh *);
+int	 channel_input_oclose(int, uint32_t, struct ssh *);
+int	 channel_input_open_confirmation(int, uint32_t, struct ssh *);
+int	 channel_input_open_failure(int, uint32_t, struct ssh *);
+int	 channel_input_window_adjust(int, uint32_t, struct ssh *);
+int	 channel_input_status_confirm(int, uint32_t, struct ssh *);
 
 /* file descriptor handling (read/write) */
 struct pollfd;
@@ -402,6 +403,9 @@ int      x11_channel_used_recently(struct ssh *ssh);
 
 int	 chan_is_dead(struct ssh *, Channel *, int);
 void	 chan_mark_dead(struct ssh *, Channel *);
+
+/* agent forwarding */
+void	 client_channel_reqest_agent_forwarding(struct ssh *, int);
 
 /* channel events */
 

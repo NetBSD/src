@@ -1,5 +1,5 @@
-/*	$NetBSD: msg.c,v 1.12 2024/07/08 22:33:44 christos Exp $	*/
-/* $OpenBSD: msg.c,v 1.21 2024/05/17 00:30:24 djm Exp $ */
+/*	$NetBSD: msg.c,v 1.13 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: msg.c,v 1.22 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,19 +26,16 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: msg.c,v 1.12 2024/07/08 22:33:44 christos Exp $");
+__RCSID("$NetBSD: msg.c,v 1.13 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
-#include <sys/uio.h>
 
 #include <errno.h>
-#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <time.h>
 
 #include "sshbuf.h"
-#include "ssherr.h"
 #include "log.h"
 #include "atomicio.h"
 #include "msg.h"

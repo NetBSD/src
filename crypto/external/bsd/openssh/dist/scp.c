@@ -1,5 +1,5 @@
-/*	$NetBSD: scp.c,v 1.44 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: scp.c,v 1.268 2025/09/25 06:23:19 jsg Exp $ */
+/*	$NetBSD: scp.c,v 1.45 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: scp.c,v 1.273 2026/04/02 07:42:16 djm Exp $ */
 
 /*
  * scp - secure remote copy.  This is basically patched BSD rcp which
@@ -74,14 +74,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: scp.c,v 1.44 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: scp.c,v 1.45 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/param.h>	/* roundup MAX */
 #include <sys/types.h>
-#include <sys/poll.h>
-#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/wait.h>
 #include <sys/uio.h>
 
 #include <ctype.h>
@@ -92,6 +91,7 @@ __RCSID("$NetBSD: scp.c,v 1.44 2025/10/11 15:45:07 christos Exp $");
 #include <glob.h>
 #include <libgen.h>
 #include <locale.h>
+#include <poll.h>
 #include <pwd.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -217,7 +217,7 @@ suspchild(int signo)
 static int
 do_local_cmd(arglist *a)
 {
-	u_int i;
+	char *cp;
 	int status;
 	pid_t pid;
 
@@ -225,10 +225,9 @@ do_local_cmd(arglist *a)
 		fatal("do_local_cmd: no arguments");
 
 	if (verbose_mode) {
-		fprintf(stderr, "Executing:");
-		for (i = 0; i < a->num; i++)
-			fmprintf(stderr, " %s", a->list[i]);
-		fprintf(stderr, "\n");
+		cp = argv_assemble(a->num, a->list);
+		fmprintf(stderr, "Executing: %s\n", cp);
+		free(cp);
 	}
 	if ((pid = fork()) == -1)
 		fatal("do_local_cmd: fork: %s", strerror(errno));
@@ -940,7 +939,7 @@ brace_expand(const char *pattern, char ***patternsp, size_t *npatternsp)
 			continue;
 		}
 		/*
-		 * Pattern did not expand; append the finename component to
+		 * Pattern did not expand; append the filename component to
 		 * the completed list
 		 */
 		if ((cp2 = strrchr(cp, '/')) != NULL)
@@ -1298,7 +1297,8 @@ prepare_remote_path(struct sftp_conn *conn, const char *path)
 void
 source_sftp(int argc, char *src, char *targ, struct sftp_conn *conn)
 {
-	char *target = NULL, *filename = NULL, *abs_dst = NULL;
+	char *target = NULL, *abs_dst = NULL;
+	const char *filename = NULL;
 	int src_is_dir, target_is_dir;
 	Attrib a;
 	struct stat st;
@@ -1309,6 +1309,10 @@ source_sftp(int argc, char *src, char *targ, struct sftp_conn *conn)
 	src_is_dir = S_ISDIR(st.st_mode);
 	if ((filename = basename(src)) == NULL)
 		fatal("basename \"%s\": %s", src, strerror(errno));
+
+	/* Special handling for source of '..' */
+	if (strcmp(filename, "..") == 0)
+		filename = "."; /* Upload to dest, not dest/.. */
 
 	/*
 	 * No need to glob here - the local shell already took care of
@@ -1516,7 +1520,8 @@ sink_sftp(int argc, char *dst, const char *src, struct sftp_conn *conn)
 	char *abs_src = NULL;
 	char *abs_dst = NULL;
 	glob_t g;
-	char *filename, *tmp = NULL;
+	const char *filename;
+	char *tmp = NULL;
 	int i, r, err = 0, dst_is_dir;
 	struct stat st;
 
@@ -1584,6 +1589,10 @@ sink_sftp(int argc, char *dst, const char *src, struct sftp_conn *conn)
 			goto out;
 		}
 
+		/* Special handling for destination of '..' */
+		if (strcmp(filename, "..") == 0)
+			filename = "."; /* Download to dest, not dest/.. */
+
 		if (dst_is_dir)
 			abs_dst = sftp_path_append(dst, filename);
 		else
@@ -1647,8 +1656,10 @@ sink(int argc, char **argv, const char *src)
 
 	setimes = targisdir = 0;
 	mask = umask(0);
-	if (!pflag)
+	if (!pflag) {
+		mask |= 07000;
 		(void) umask(mask);
+	}
 	if (argc != 1) {
 		run_err("ambiguous target");
 		exit(1);

@@ -1,4 +1,4 @@
-/*	$NetBSD: gss-serv.c,v 1.17 2025/10/11 15:45:06 christos Exp $	*/
+/*	$NetBSD: gss-serv.c,v 1.18 2026/04/08 18:58:40 christos Exp $	*/
 /* $OpenBSD: gss-serv.c,v 1.33 2025/09/29 21:30:15 dtucker Exp $ */
 
 /*
@@ -26,19 +26,19 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: gss-serv.c,v 1.17 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: gss-serv.c,v 1.18 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/param.h>
 #ifdef GSSAPI
 
 #include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 
+#include <netdb.h>
+#include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <netdb.h>
-#include <limits.h>
-#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "sshkey.h"
@@ -110,7 +110,7 @@ ssh_gssapi_acquire_cred(Gssctxt *ctx)
 		gss_create_empty_oid_set(&status, &oidset);
 		gss_add_oid_set_member(&status, ctx->oid, &oidset);
 
-		if (gethostname(lname, MAXHOSTNAMELEN)) {
+		if (gethostname(lname, sizeof(lname))) {
 			gss_release_oid_set(&status, &oidset);
 			return (-1);
 		}
@@ -336,6 +336,11 @@ ssh_gssapi_cleanup_creds(void)
 void
 ssh_gssapi_storecreds(void)
 {
+	if (options.gss_deleg_creds == 0) {
+		debug_f("delegate credential is disabled, doing nothing");
+		return;
+	}
+
 	if (gssapi_client.mech && gssapi_client.mech->storecreds) {
 		(*gssapi_client.mech->storecreds)(&gssapi_client);
 	} else

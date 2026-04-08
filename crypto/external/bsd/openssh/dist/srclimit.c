@@ -1,4 +1,4 @@
-/*	$NetBSD: srclimit.c,v 1.7 2025/10/11 15:45:07 christos Exp $	*/
+/*	$NetBSD: srclimit.c,v 1.8 2026/04/08 18:58:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2020 Darren Tucker <dtucker@openbsd.org>
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: srclimit.c,v 1.7 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: srclimit.c,v 1.8 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -55,7 +55,7 @@ static struct child_info {
  */
 struct penalty {
 	struct xaddr addr;
-	time_t expiry;
+	double expiry;
 	int active;
 	const char *reason;
 	RB_ENTRY(penalty) by_addr;
@@ -214,7 +214,7 @@ penalty_expiry_cmp(struct penalty *a, struct penalty *b)
 }
 
 static void
-expire_penalties_from_tree(time_t now, const char *t,
+expire_penalties_from_tree(double now, const char *t,
     struct penalties_by_expiry *by_expiry,
     struct penalties_by_addr *by_addr, size_t *npenaltiesp)
 {
@@ -236,7 +236,7 @@ expire_penalties_from_tree(time_t now, const char *t,
 }
 
 static void
-expire_penalties(time_t now)
+expire_penalties(double now)
 {
 	expire_penalties_from_tree(now, "ipv4",
 	    &penalties_by_expiry4, &penalties_by_addr4, &npenalties4);
@@ -262,7 +262,7 @@ srclimit_penalty_check_allow(int sock, const char **reason)
 {
 	struct xaddr addr;
 	struct penalty find, *penalty;
-	time_t now;
+	double now;
 	int bits, max_sources, overflow_mode;
 	char addr_s[NI_MAXHOST];
 	struct penalties_by_addr *by_addr;
@@ -279,7 +279,7 @@ srclimit_penalty_check_allow(int sock, const char **reason)
 			return 1;
 		}
 	}
-	now = monotime();
+	now = monotime_double();
 	expire_penalties(now);
 	by_addr = addr.af == AF_INET ?
 	    &penalties_by_addr4 : &penalties_by_addr6;
@@ -349,8 +349,9 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 {
 	struct xaddr masked;
 	struct penalty *penalty = NULL, *existing = NULL;
-	time_t now;
-	int bits, penalty_secs, max_sources = 0, overflow_mode;
+	double now;
+	int bits, max_sources = 0, overflow_mode;
+	double penalty_secs;
 	char addrnetmask[NI_MAXHOST + 4];
 	const char *reason = NULL, *t;
 	size_t *npenaltiesp = NULL;
@@ -383,6 +384,10 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 		penalty_secs = penalty_cfg.penalty_noauth;
 		reason = "penalty: connections without attempting authentication";
 		break;
+	case SRCLIMIT_PENALTY_INVALIDUSER:
+		penalty_secs = penalty_cfg.penalty_invaliduser;
+		reason = "penalty: attempted authentication by invalid user";
+		break;
 	case SRCLIMIT_PENALTY_REFUSECONNECTION:
 		penalty_secs = penalty_cfg.penalty_refuseconnection;
 		reason = "penalty: connection prohibited by RefuseConnection";
@@ -394,12 +399,16 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 	default:
 		fatal_f("internal error: unknown penalty %d", penalty_type);
 	}
+
+	if (penalty_secs <= 0)
+		return;
+
 	bits = addr->af == AF_INET ? ipv4_masklen : ipv6_masklen;
 	if (srclimit_mask_addr(addr, bits, &masked) != 0)
 		return;
 	addr_masklen_ntop(addr, bits, addrnetmask, sizeof(addrnetmask));
 
-	now = monotime();
+	now = monotime_double();
 	expire_penalties(now);
 	by_expiry = addr->af == AF_INET ?
 	    &penalties_by_expiry4 : &penalties_by_expiry6;
@@ -431,7 +440,7 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 			fatal_f("internal error: %s penalty tables corrupt", t);
 		do_log2_f(penalty->active ?
 		    SYSLOG_LEVEL_INFO : SYSLOG_LEVEL_VERBOSE,
-		    "%s: new %s %s penalty of %d seconds for %s", t,
+		    "%s: new %s %s penalty of %.3f seconds for %s", t,
 		    addrnetmask, penalty->active ? "active" : "deferred",
 		    penalty_secs, reason);
 		if (++(*npenaltiesp) > (size_t)max_sources)
@@ -450,9 +459,8 @@ srclimit_penalise(struct xaddr *addr, int penalty_type)
 		existing->expiry = now + penalty_cfg.penalty_max;
 	if (existing->expiry - now > penalty_cfg.penalty_min &&
 	    !existing->active) {
-		logit_f("%s: activating %s penalty of %lld seconds for %s",
-		    addrnetmask, t, (long long)(existing->expiry - now),
-		    reason);
+		logit_f("%s: activating %s penalty of %.3f seconds for %s",
+		    addrnetmask, t, existing->expiry - now, reason);
 		existing->active = 1;
 	}
 	existing->reason = penalty->reason;
@@ -470,9 +478,9 @@ srclimit_penalty_info_for_tree(const char *t,
 	struct penalty *p = NULL;
 	int bits;
 	char s[NI_MAXHOST + 4];
-	time_t now;
+	double now;
 
-	now = monotime();
+	now = monotime_double();
 	logit("%zu active %s penalties", npenalties, t);
 	RB_FOREACH(p, penalties_by_expiry, by_expiry) {
 		bits = p->addr.af == AF_INET ? ipv4_masklen : ipv6_masklen;
@@ -480,8 +488,8 @@ srclimit_penalty_info_for_tree(const char *t,
 		if (p->expiry < now)
 			logit("client %s %s (expired)", s, p->reason);
 		else {
-			logit("client %s %s (%llu secs left)", s, p->reason,
-			   (long long)(p->expiry - now));
+			logit("client %s %s (%.3f secs left)", s, p->reason,
+			   p->expiry - now);
 		}
 	}
 }

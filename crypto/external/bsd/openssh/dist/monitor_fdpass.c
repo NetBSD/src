@@ -1,5 +1,5 @@
-/*	$NetBSD: monitor_fdpass.c,v 1.9 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: monitor_fdpass.c,v 1.22 2020/10/18 11:32:01 djm Exp $ */
+/*	$NetBSD: monitor_fdpass.c,v 1.10 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: monitor_fdpass.c,v 1.23 2026/02/08 19:54:31 dtucker Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -27,10 +27,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor_fdpass.c,v 1.9 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: monitor_fdpass.c,v 1.10 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/uio.h>
+#include <sys/un.h>
 
 #include <errno.h>
 #include <poll.h>

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.48 2025/10/11 15:45:08 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.49 2026/04/08 18:58:41 christos Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -34,8 +34,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.385 2025/10/04 21:41:35 naddy Exp $
-.Dd October 4 2025
+.\" $OpenBSD: sshd_config.5,v 1.397 2026/03/28 05:07:12 djm Exp $
+.Dd March 28 2026
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -114,9 +114,9 @@ If specified, login is allowed only for users whose primary
 group or supplementary group list matches one of the patterns.
 Only group names are valid; a numerical group ID is not recognized.
 By default, login is allowed for all groups.
-The allow/deny groups directives are processed in the following order:
-.Cm DenyGroups ,
-.Cm AllowGroups .
+.Cm AllowGroups
+is not consulted for groups matched by
+.Cm DenyGroups .
 .Pp
 See PATTERNS in
 .Xr ssh_config 5
@@ -174,9 +174,9 @@ are separately checked, restricting logins to particular
 users from particular hosts.
 HOST criteria may additionally contain addresses to match in CIDR
 address/masklen format.
-The allow/deny users directives are processed in the following order:
-.Cm DenyUsers ,
-.Cm AllowUsers .
+.Cm AllowUsers
+is not consulted for users matched by
+.Cm DenyUsers .
 .Pp
 See PATTERNS in
 .Xr ssh_config 5
@@ -206,10 +206,9 @@ keyboard-interactive authentication before public key.
 For keyboard interactive authentication it is also possible to
 restrict authentication to a specific device by appending a
 colon followed by the device identifier
-.Cm bsdauth ,
-.Cm pam ,
+.Cm bsdauth
 or
-.Cm skey ,
+.Cm pam .
 depending on the server configuration.
 For example,
 .Qq keyboard-interactive:bsdauth
@@ -262,6 +261,7 @@ files and will not be executed if a matching key is found there.
 By default, no
 .Cm AuthorizedKeysCommand
 is run.
+This command is only executed for valid users.
 .It Cm AuthorizedKeysCommandUser
 Specifies the user under whose account the
 .Cm AuthorizedKeysCommand
@@ -294,6 +294,7 @@ Alternately this option may be set to
 to skip checking for user keys in files.
 The default is
 .Qq .ssh/authorized_keys .ssh/authorized_keys2 .
+These files are only checked for valid users.
 .It Cm AuthorizedPrincipalsCommand
 Specifies a program to be used to generate the list of allowed
 certificate principals as per
@@ -320,6 +321,7 @@ must contain a principal that is listed.
 By default, no
 .Cm AuthorizedPrincipalsCommand
 is run.
+This command is only executed for valid users.
 .It Cm AuthorizedPrincipalsCommandUser
 Specifies the user under whose account the
 .Cm AuthorizedPrincipalsCommand
@@ -361,6 +363,7 @@ The default is
 i.e. not to use a principals file \(en in this case, the username
 of the user must appear in a certificate's principals list for it to be
 accepted.
+This file is only checked for valid users.
 .Pp
 Note that
 .Cm AuthorizedPrincipalsFile
@@ -638,9 +641,9 @@ Login is disallowed for users whose primary group or supplementary
 group list matches one of the patterns.
 Only group names are valid; a numerical group ID is not recognized.
 By default, login is allowed for all groups.
-The allow/deny groups directives are processed in the following order:
-.Cm DenyGroups ,
-.Cm AllowGroups .
+.Cm AllowGroups
+is not consulted for groups matched by
+.Cm DenyGroups .
 .Pp
 See PATTERNS in
 .Xr ssh_config 5
@@ -659,9 +662,9 @@ are separately checked, restricting logins to particular
 users from particular hosts.
 HOST criteria may additionally contain addresses to match in CIDR
 address/masklen format.
-The allow/deny users directives are processed in the following order:
-.Cm DenyUsers ,
-.Cm AllowUsers .
+.Cm AllowUsers
+is not consulted for users matched by
+.Cm DenyUsers .
 .Pp
 See PATTERNS in
 .Xr ssh_config 5
@@ -712,6 +715,14 @@ files when used with
 .Cm ChrootDirectory .
 The default is
 .Cm none .
+.Pp
+This directive does not limit other kinds of access that a
+client may request via their connection, such as TCP, agent, socket or
+X11 forwarding.
+If these are not desired, then they must be explicitly disabled, either
+individually via their respective options or all together using the
+.Cm DisableForwarding
+option.
 .It Cm GatewayPorts
 Specifies whether remote hosts are allowed to connect to ports
 forwarded for the client.
@@ -739,6 +750,10 @@ The default is
 .It Cm GSSAPICleanupCredentials
 Specifies whether to automatically destroy the user's credentials cache
 on logout.
+The default is
+.Cm yes .
+.It Cm GSSAPIDelegateCredentials
+Accept delegated credentials on the server side.
 The default is
 .Cm yes .
 .It Cm GSSAPIStrictAcceptorCheck
@@ -778,12 +793,14 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
@@ -862,12 +879,14 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
@@ -1370,11 +1389,11 @@ SSH daemon.
 Additional connections will be dropped until authentication succeeds or the
 .Cm LoginGraceTime
 expires for a connection.
-The default is 10:30:100.
 .Pp
 Alternatively, random early drop can be enabled by specifying
 the three colon separated values
 start:rate:full (e.g. "10:30:60").
+The default is 10:30:100.
 .Xr sshd 8
 will refuse connection attempts with a probability of rate/100 (30%)
 if there are currently start (10) unauthenticated connections.
@@ -1615,6 +1634,9 @@ Specifies how long to refuse clients that cause a crash of
 .It Cm authfail:duration
 Specifies how long to refuse clients that disconnect after making one or more
 unsuccessful authentication attempts (default: 5s).
+.It Cm invaliduser:duration
+Specifies how long to refuse clients that attempt to log in with an invalid
+user (default: 5s).
 .It Cm refuseconnection:duration
 Specifies how long to refuse clients that were administratively prohibited
 connection via the
@@ -1727,12 +1749,14 @@ ecdsa-sha2-nistp384-cert-v01@openssh.com,
 ecdsa-sha2-nistp521-cert-v01@openssh.com,
 sk-ssh-ed25519-cert-v01@openssh.com,
 sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256-cert-v01@openssh.com,
 rsa-sha2-512-cert-v01@openssh.com,
 rsa-sha2-256-cert-v01@openssh.com,
 ssh-ed25519,
 ecdsa-sha2-nistp256,ecdsa-sha2-nistp384,ecdsa-sha2-nistp521,
 sk-ssh-ed25519@openssh.com,
 sk-ecdsa-sha2-nistp256@openssh.com,
+webauthn-sk-ecdsa-sha2-nistp256@openssh.com,
 rsa-sha2-512,rsa-sha2-256
 .Ed
 .Pp
@@ -1834,6 +1858,11 @@ be refused for all users.
 Keys may be specified as a text file, listing one public key per line, or as
 an OpenSSH Key Revocation List (KRL) as generated by
 .Xr ssh-keygen 1 .
+This file may be consulted for each public key authentication attempt
+received by
+.Xr sshd 8
+and its contents must be consistent at all times, therefore it should only
+be atomically replaced and never modified in place while the server is running.
 For more information on KRLs, see the KEY REVOCATION LISTS section in
 .Xr ssh-keygen 1 .
 .It Cm RDomain
@@ -2228,7 +2257,14 @@ Time format examples:
 .El
 .Sh TOKENS
 Arguments to some keywords can make use of tokens,
-which are expanded at runtime:
+which are expanded at runtime.
+Tokens are expanded without quoting or escaping of shell characters.
+It is the administrator's responsibility to ensure they are safe in the
+context of their use.
+.Pp
+The supported tokens in
+.Nm
+are:
 .Pp
 .Bl -tag -width XXXX -offset indent -compact
 .It %%

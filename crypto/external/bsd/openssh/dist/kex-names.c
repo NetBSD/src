@@ -1,5 +1,5 @@
-/*	$NetBSD: kex-names.c,v 1.4 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: kex-names.c,v 1.6 2025/09/02 11:08:34 djm Exp $ */
+/*	$NetBSD: kex-names.c,v 1.5 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: kex-names.c,v 1.7 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,12 +26,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex-names.c,v 1.4 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: kex-names.c,v 1.5 2026/04/08 18:58:40 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 
 #ifdef WITH_OPENSSL
@@ -46,7 +45,6 @@ __RCSID("$NetBSD: kex-names.c,v 1.4 2025/10/11 15:45:06 christos Exp $");
 #include "misc.h"
 
 #include "ssherr.h"
-#include "xmalloc.h"
 
 struct kexalg {
 	const char *name;

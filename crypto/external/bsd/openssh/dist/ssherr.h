@@ -1,5 +1,5 @@
-/*	$NetBSD: ssherr.h,v 1.4 2020/02/27 00:24:40 christos Exp $	*/
-/*	$OpenBSD: ssherr.h,v 1.8 2020/01/25 23:13:09 djm Exp $	*/
+/*	$NetBSD: ssherr.h,v 1.5 2026/04/08 18:58:41 christos Exp $	*/
+/*	$OpenBSD: ssherr.h,v 1.9 2026/02/06 23:31:29 dtucker Exp $	*/
 
 /*
  * Copyright (c) 2011 Damien Miller
@@ -87,5 +87,7 @@
 
 /* Translate a numeric error code to a human-readable error string */
 const char *ssh_err(int n);
+/* Return most recent error from libcrypto. */
+const char *ssherr_libcrypto(void);
 
 #endif /* _SSHERR_H */

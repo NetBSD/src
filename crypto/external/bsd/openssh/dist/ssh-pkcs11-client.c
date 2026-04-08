@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-client.c,v 1.21 2025/10/11 15:45:08 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-client.c,v 1.24 2025/07/30 10:17:13 dtucker Exp $ */
+/*	$NetBSD: ssh-pkcs11-client.c,v 1.22 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-client.c,v 1.26 2026/02/09 22:11:39 dtucker Exp $ */
 
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
@@ -18,7 +18,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.21 2025/10/11 15:45:08 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.22 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/time.h>
@@ -30,9 +30,6 @@ __RCSID("$NetBSD: ssh-pkcs11-client.c,v 1.21 2025/10/11 15:45:08 christos Exp $"
 #include <unistd.h>
 #include <errno.h>
 #include <limits.h>
-
-#include <openssl/ecdsa.h>
-#include <openssl/rsa.h>
 
 #include "pathnames.h"
 #include "xmalloc.h"
@@ -360,6 +357,7 @@ pkcs11_start_helper(const char *path)
 		}
 		close(pair[0]);
 		close(pair[1]);
+		closefrom(STDERR_FILENO + 1);
 		prog = getenv("SSH_PKCS11_HELPER");
 		if (prog == NULL || strlen(prog) == 0)
 			prog = _PATH_SSH_PKCS11_HELPER;

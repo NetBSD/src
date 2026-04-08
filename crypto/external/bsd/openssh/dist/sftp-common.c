@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-common.c,v 1.14 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: sftp-common.c,v 1.34 2023/03/31 04:00:37 djm Exp $ */
+/*	$NetBSD: sftp-common.c,v 1.15 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sftp-common.c,v 1.36 2026/02/11 17:05:32 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-common.c,v 1.14 2023/10/25 20:19:57 christos Exp $");
+__RCSID("$NetBSD: sftp-common.c,v 1.15 2026/04/08 18:58:41 christos Exp $");
 
 #include <sys/param.h>	/* MAX */
 #include <sys/types.h>
@@ -37,10 +37,11 @@ __RCSID("$NetBSD: sftp-common.c,v 1.14 2023/10/25 20:19:57 christos Exp $");
 #include <pwd.h>
 #include <stdio.h>
 #include <string.h>
-#include <time.h>
 #include <stdarg.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <time.h>
+#include <unistd.h>
 #include <util.h>
 
 #include "xmalloc.h"

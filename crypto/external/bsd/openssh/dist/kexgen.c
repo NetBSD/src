@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgen.c,v 1.8 2024/09/24 21:32:18 christos Exp $	*/
-/* $OpenBSD: kexgen.c,v 1.10 2024/09/09 02:39:57 djm Exp $ */
+/*	$NetBSD: kexgen.c,v 1.9 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: kexgen.c,v 1.12 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
@@ -29,6 +29,7 @@ __RCSID("$NetBSD");
 
 #include <sys/types.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -42,8 +43,8 @@ __RCSID("$NetBSD");
 #include "digest.h"
 #include "ssherr.h"
 
-static int input_kex_gen_init(int, u_int32_t, struct ssh *);
-static int input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh);
+static int input_kex_gen_init(int, uint32_t, struct ssh *);
+static int input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh);
 
 static int
 kex_gen_hash(
@@ -140,7 +141,7 @@ kex_gen_client(struct ssh *ssh)
 }
 
 static int
-input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	struct sshkey *server_host_key = NULL;
@@ -273,7 +274,7 @@ kex_gen_server(struct ssh *ssh)
 }
 
 static int
-input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	struct sshkey *server_host_private, *server_host_public;

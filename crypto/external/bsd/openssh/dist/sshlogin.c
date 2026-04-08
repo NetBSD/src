@@ -1,5 +1,5 @@
-/*	$NetBSD: sshlogin.c,v 1.13 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: sshlogin.c,v 1.35 2020/10/18 11:32:02 djm Exp $ */
+/*	$NetBSD: sshlogin.c,v 1.14 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: sshlogin.c,v 1.37 2026/02/16 23:47:06 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -42,14 +42,16 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshlogin.c,v 1.13 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: sshlogin.c,v 1.14 2026/04/08 18:58:41 christos Exp $");
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 
 #include <errno.h>
 #include <fcntl.h>
+#include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -60,7 +62,6 @@ __RCSID("$NetBSD: sshlogin.c,v 1.13 2021/03/05 17:47:16 christos Exp $");
 #ifdef SUPPORT_UTMPX
 #include <utmpx.h>
 #endif
-#include <stdarg.h>
 #include <limits.h>
 
 #include "sshlogin.h"

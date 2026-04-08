@@ -1,5 +1,5 @@
-/*	$NetBSD: crypto_api.h,v 1.6 2024/09/24 21:32:18 christos Exp $	*/
-/* $OpenBSD: crypto_api.h,v 1.9 2024/09/02 12:13:56 djm Exp $ */
+/*	$NetBSD: crypto_api.h,v 1.7 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: crypto_api.h,v 1.10 2025/10/30 23:19:33 djm Exp $ */
 
 /*
  * Assembled from generated headers and source files by Markus Friedl.
@@ -26,8 +26,32 @@ typedef uint64_t crypto_uint64;
 
 #define crypto_hash_sha512_BYTES 64U
 
-int	crypto_hash_sha512(unsigned char *, const unsigned char *,
-    unsigned long long);
+#ifdef WITH_OPENSSL
+#include <openssl/evp.h>
+static inline int
+crypto_hash_sha512(unsigned char *out, const unsigned char *in,
+    unsigned long long inlen)
+{
+
+	if (!EVP_Digest(in, inlen, out, NULL, EVP_sha512(), NULL))
+		return -1;
+	return 0;
+}
+#else /* WITH_OPENSSL */
+# include <sha2.h>
+static inline int
+crypto_hash_sha512(unsigned char *out, const unsigned char *in,
+    unsigned long long inlen)
+{
+
+	SHA2_CTX ctx;
+
+	SHA512Init(&ctx);
+	SHA512Update(&ctx, in, inlen);
+	SHA512Final(out, &ctx);
+	return 0;
+}
+#endif /* WITH_OPENSSL */
 
 #define crypto_sign_ed25519_SECRETKEYBYTES 64U
 #define crypto_sign_ed25519_PUBLICKEYBYTES 32U

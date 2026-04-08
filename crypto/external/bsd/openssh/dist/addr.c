@@ -1,5 +1,5 @@
-/*	$NetBSD: addr.c,v 1.8 2025/04/09 15:49:31 christos Exp $	*/
-/* $OpenBSD: addr.c,v 1.9 2024/10/18 04:30:09 djm Exp $ */
+/*	$NetBSD: addr.c,v 1.9 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: addr.c,v 1.10 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2004-2008 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: addr.c,v 1.8 2025/04/09 15:49:31 christos Exp $");
+__RCSID("$NetBSD: addr.c,v 1.9 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -63,7 +63,7 @@ masklen_valid(int af, u_int masklen)
 
 static int
 addr_xaddr_to_sa(const struct xaddr *xa, struct sockaddr *sa, socklen_t *len,
-    u_int16_t port)
+    uint16_t port)
 {
 	struct sockaddr_in *in4 = (struct sockaddr_in *)sa;
 	struct sockaddr_in6 *in6 = (struct sockaddr_in6 *)sa;

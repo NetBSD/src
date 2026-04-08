@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.44 2025/10/11 15:45:07 christos Exp $	*/
-/* $OpenBSD: session.c,v 1.344 2025/09/25 02:15:39 jsg Exp $ */
+/*	$NetBSD: session.c,v 1.45 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: session.c,v 1.348 2026/03/05 05:40:36 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.44 2025/10/11 15:45:07 christos Exp $");
+__RCSID("$NetBSD: session.c,v 1.45 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -92,7 +92,7 @@ __RCSID("$NetBSD: session.c,v 1.44 2025/10/11 15:45:07 christos Exp $");
 #include "sftp.h"
 #include "atomicio.h"
 
-#ifdef KRB5
+#if defined(KRB5) && defined(USE_AFS)
 #include <krb5/kafs.h>
 #endif
 
@@ -169,7 +169,7 @@ auth_sock_cleanup_proc(struct passwd *pw)
 }
 
 static int
-auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
+auth_input_request_forwarding(struct ssh *ssh, struct passwd *pw, int agent_new)
 {
 	Channel *nc;
 	int sock = -1;
@@ -197,6 +197,7 @@ auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
 	    0, "auth socket", 1);
 	nc->path = xstrdup(auth_sock_name);
+	nc->agent_new = agent_new;
 	return 1;
 
  authsock_err:
@@ -300,7 +301,7 @@ do_authenticated(struct ssh *ssh, Authctxt *authctxt)
 
 	auth_log_authopts("active", auth_opts, 0);
 
-	/* setup the channel layer */
+	/* set up the channel layer */
 	/* XXX - streamlocal? */
 	set_fwdpermit_from_authopts(ssh, auth_opts);
 
@@ -872,6 +873,10 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 	if (getenv("TZ"))
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
+	if (getenv("XDG_RUNTIME_DIR")) {
+		child_set_env(&env, &envsize, "XDG_RUNTIME_DIR",
+		    getenv("XDG_RUNTIME_DIR"));
+	}
 	if (s->term)
 		child_set_env(&env, &envsize, "TERM", s->term);
 	if (s->display)
@@ -1377,7 +1382,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	 */
 	environ = env;
 
-#ifdef KRB5
+#if defined(KRB5) && defined(USE_AFS)
 	/*
 	 * At this point, we check to see if AFS is active and if we have
 	 * a valid Kerberos 5 TGT. If so, it seems like a good idea to see
@@ -1951,7 +1956,7 @@ session_signal_req(struct ssh *ssh, Session *s)
 }
 
 static int
-session_auth_agent_req(struct ssh *ssh, Session *s)
+session_auth_agent_req(struct ssh *ssh, Session *s, int agent_new)
 {
 	static int called = 0;
 	int r;
@@ -1964,12 +1969,11 @@ session_auth_agent_req(struct ssh *ssh, Session *s)
 		debug_f("agent forwarding disabled");
 		return 0;
 	}
-	if (called) {
+	if (called)
 		return 0;
-	} else {
-		called = 1;
-		return auth_input_request_forwarding(ssh, s->pw);
-	}
+
+	called = 1;
+	return auth_input_request_forwarding(ssh, s->pw, agent_new);
 }
 
 int
@@ -1998,7 +2002,9 @@ session_input_channel_req(struct ssh *ssh, Channel *c, const char *rtype)
 		} else if (strcmp(rtype, "x11-req") == 0) {
 			success = session_x11_req(ssh, s);
 		} else if (strcmp(rtype, "auth-agent-req@openssh.com") == 0) {
-			success = session_auth_agent_req(ssh, s);
+			success = session_auth_agent_req(ssh, s, 0);
+		} else if (strcmp(rtype, "agent-req") == 0) {
+			success = session_auth_agent_req(ssh, s, 1);
 		} else if (strcmp(rtype, "subsystem") == 0) {
 			success = session_subsystem_req(ssh, s);
 		} else if (strcmp(rtype, "env") == 0) {

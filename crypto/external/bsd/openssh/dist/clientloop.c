@@ -1,5 +1,5 @@
-/*	$NetBSD: clientloop.c,v 1.44 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: clientloop.c,v 1.415 2025/09/25 06:23:19 jsg Exp $ */
+/*	$NetBSD: clientloop.c,v 1.45 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: clientloop.c,v 1.422 2026/03/05 05:40:35 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -62,12 +62,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: clientloop.c,v 1.44 2025/10/11 15:45:06 christos Exp $");
+__RCSID("$NetBSD: clientloop.c,v 1.45 2026/04/08 18:58:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/queue.h>
 
@@ -80,8 +79,6 @@ __RCSID("$NetBSD: clientloop.c,v 1.44 2025/10/11 15:45:06 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <termios.h>
-#include <pwd.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -94,9 +91,7 @@ __RCSID("$NetBSD: clientloop.c,v 1.44 2025/10/11 15:45:06 christos Exp $");
 #include "channels.h"
 #include "dispatch.h"
 #include "sshkey.h"
-#include "cipher.h"
 #include "kex.h"
-#include "myproposal.h"
 #include "log.h"
 #include "misc.h"
 #include "readconf.h"
@@ -106,8 +101,6 @@ __RCSID("$NetBSD: clientloop.c,v 1.44 2025/10/11 15:45:06 christos Exp $");
 #include "atomicio.h"
 #include "sshpty.h"
 #include "match.h"
-#include "msg.h"
-#include "getpeereid.h"
 #include "ssherr.h"
 #include "hostfile.h"
 
@@ -440,7 +433,7 @@ client_x11_get_proto(struct ssh *ssh, const char *display,
 	 * for the local connection.
 	 */
 	if (!got_data) {
-		u_int8_t rnd[16];
+		uint8_t rnd[16];
 		u_int i;
 
 		logit("Warning: No xauth data; "
@@ -474,7 +467,7 @@ client_check_window_change(struct ssh *ssh)
 }
 
 static int
-client_global_request_reply(int type, u_int32_t seq, struct ssh *ssh)
+client_global_request_reply(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct global_confirm *gc;
 
@@ -807,7 +800,7 @@ client_process_net_input(struct ssh *ssh)
 	if ((r = ssh_packet_process_read(ssh, connection_in)) == 0)
 		return; /* success */
 	if (r == SSH_ERR_SYSTEM_ERROR) {
-		if (errno == EAGAIN || errno == EINTR)
+		if (errno == EAGAIN || errno == EINTR || errno == EWOULDBLOCK)
 			return;
 		if (errno == EPIPE) {
 			quit_message("Connection to %s closed by remote host.",
@@ -947,7 +940,7 @@ client_repledge(void)
 	/* Might be able to tighten pledge now that session is established */
 	if (options.control_master || options.control_path != NULL ||
 	    options.forward_x11 || options.fork_after_authentication ||
-	    can_update_hostkeys() ||
+	    options.pkcs11_provider != NULL || can_update_hostkeys() ||
 	    (session_ident != -1 && !session_setup_complete)) {
 		/* Can't tighten */
 		return;
@@ -1132,6 +1125,7 @@ static struct escape_help_text esc_txt[] = {
 	SUPPRESS_MUXCLIENT},
     {"B",  "send a BREAK to the remote system", SUPPRESS_NEVER},
     {"C",  "open a command line", SUPPRESS_MUXCLIENT|SUPPRESS_NOCMDLINE},
+    {"I",  "show connection information", SUPPRESS_NEVER},
     {"R",  "request rekey", SUPPRESS_NEVER},
     {"V/v",  "decrease/increase verbosity (LogLevel)", SUPPRESS_MUXCLIENT},
     {"^Z", "suspend ssh", SUPPRESS_MUXCLIENT},
@@ -1252,6 +1246,16 @@ process_escapes(struct ssh *ssh, Channel *c,
 				if ((r = sshpkt_put_u32(ssh, 1000)) != 0 ||
 				    (r = sshpkt_send(ssh)) != 0)
 					fatal_fr(r, "send packet");
+				continue;
+
+			case 'I':
+				if ((r = sshbuf_putf(berr, "%cI\r\n",
+				    efc->escape_char)) != 0)
+					fatal_fr(r, "sshbuf_putf");
+				s = connection_info_message(ssh);
+				if ((r = sshbuf_put(berr, s, strlen(s))) != 0)
+					fatal_fr(r, "sshbuf_put");
+				free(s);
 				continue;
 
 			case 'R':
@@ -1458,7 +1462,7 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	u_int npfd_alloc = 0, npfd_active = 0;
 	double start_time, total_time;
 	int interactive = -1, channel_did_enqueue = 0, r;
-	u_int64_t ibytes, obytes;
+	uint64_t ibytes, obytes;
 	int conn_in_ready, conn_out_ready;
 	sigset_t bsigset, osigset;
 
@@ -1466,7 +1470,9 @@ client_loop(struct ssh *ssh, int have_pty, int escape_char_arg,
 	session_ident = ssh2_chan_id;
 
 #ifdef __OpenBSD__
-	if (options.control_master &&
+	if (options.pkcs11_provider != NULL)
+		debug("pledge: disabled (PKCS11Provider active)");
+	else if (options.control_master &&
 	    !option_clear_or_none(options.control_path)) {
 		debug("pledge: id");
 		if (pledge("stdio rpath wpath cpath unix inet dns recvfd sendfd proc exec id tty",
@@ -1922,7 +1928,7 @@ client_request_tun_fwd(struct ssh *ssh, int tun_mode,
 
 /* XXXX move to generic input handler */
 static int
-client_input_channel_open(int type, u_int32_t seq, struct ssh *ssh)
+client_input_channel_open(int type, uint32_t seq, struct ssh *ssh)
 {
 	Channel *c = NULL;
 	char *ctype = NULL;
@@ -1947,7 +1953,8 @@ client_input_channel_open(int type, u_int32_t seq, struct ssh *ssh)
 		c = client_request_forwarded_streamlocal(ssh, ctype, rchan);
 	} else if (strcmp(ctype, "x11") == 0) {
 		c = client_request_x11(ssh, ctype, rchan);
-	} else if (strcmp(ctype, "auth-agent@openssh.com") == 0) {
+	} else if (strcmp(ctype, "auth-agent@openssh.com") == 0 ||
+	    strcmp(ctype, "agent-connect") == 0) {
 		c = client_request_agent(ssh, ctype, rchan);
 	}
 	if (c != NULL && c->type == SSH_CHANNEL_MUX_CLIENT) {
@@ -1984,7 +1991,7 @@ client_input_channel_open(int type, u_int32_t seq, struct ssh *ssh)
 }
 
 static int
-client_input_channel_req(int type, u_int32_t seq, struct ssh *ssh)
+client_input_channel_req(int type, uint32_t seq, struct ssh *ssh)
 {
 	Channel *c = NULL;
 	char *rtype = NULL;
@@ -2362,7 +2369,7 @@ update_known_hosts(struct hostkeys_update_ctx *ctx)
 
 static void
 client_global_hostkeys_prove_confirm(struct ssh *ssh, int type,
-    u_int32_t seq, void *_ctx)
+    uint32_t seq, void *_ctx)
 {
 	struct hostkeys_update_ctx *ctx = (struct hostkeys_update_ctx *)_ctx;
 	size_t i, ndone;
@@ -2672,7 +2679,7 @@ client_input_hostkeys(struct ssh *ssh)
 }
 
 static int
-client_input_global_request(int type, u_int32_t seq, struct ssh *ssh)
+client_input_global_request(int type, uint32_t seq, struct ssh *ssh)
 {
 	char *rtype;
 	u_char want_reply;
@@ -2689,7 +2696,7 @@ client_input_global_request(int type, u_int32_t seq, struct ssh *ssh)
 		if ((r = sshpkt_start(ssh, success ? SSH2_MSG_REQUEST_SUCCESS :
 		    SSH2_MSG_REQUEST_FAILURE)) != 0 ||
 		    (r = sshpkt_send(ssh)) != 0 ||
-		    (r = ssh_packet_write_wait(ssh)) != 0)
+		    (r = ssh_packet_write_wait(ssh)) < 0)
 			goto out;
 	}
 	r = 0;
@@ -2819,6 +2826,20 @@ client_session2_setup(struct ssh *ssh, int id, int want_tty, int want_subsystem,
 
 	session_setup_complete = 1;
 	client_repledge();
+}
+
+void
+client_channel_reqest_agent_forwarding(struct ssh *ssh, int id)
+{
+	const char *req = "auth-agent-req@openssh.com";
+	int r;
+
+	if (ssh->kex != NULL && (ssh->kex->flags & KEX_HAS_NEWAGENT) != 0)
+		req = "agent-req"; /* XXX RFC XXX */
+	debug("Requesting agent forwarding on channel %d via %s", id, req);
+	channel_request_start(ssh, id, req, 0);
+	if ((r = sshpkt_send(ssh)) != 0)
+		fatal_fr(r, "send");
 }
 
 static void

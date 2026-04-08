@@ -1,5 +1,5 @@
-/*	$NetBSD: ttymodes.c,v 1.12 2021/03/05 17:47:16 christos Exp $	*/
-/* $OpenBSD: ttymodes.c,v 1.36 2021/01/27 09:26:54 djm Exp $ */
+/*	$NetBSD: ttymodes.c,v 1.13 2026/04/08 18:58:41 christos Exp $	*/
+/* $OpenBSD: ttymodes.c,v 1.37 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -46,7 +46,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ttymodes.c,v 1.12 2021/03/05 17:47:16 christos Exp $");
+__RCSID("$NetBSD: ttymodes.c,v 1.13 2026/04/08 18:58:41 christos Exp $");
 #include <sys/types.h>
 
 #include <errno.h>
@@ -58,7 +58,6 @@ __RCSID("$NetBSD: ttymodes.c,v 1.12 2021/03/05 17:47:16 christos Exp $");
 #include "log.h"
 #include "compat.h"
 #include "sshbuf.h"
-#include "ssherr.h"
 
 #define TTY_OP_END		0
 /*

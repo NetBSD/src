@@ -1,5 +1,5 @@
-/*	$NetBSD: dispatch.h,v 1.8 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: dispatch.h,v 1.15 2019/01/19 21:45:31 djm Exp $ */
+/*	$NetBSD: dispatch.h,v 1.9 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: dispatch.h,v 1.16 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -37,10 +37,10 @@ enum {
 
 struct ssh;
 
-typedef int dispatch_fn(int, u_int32_t, struct ssh *);
+typedef int dispatch_fn(int, uint32_t, struct ssh *);
 
-int	dispatch_protocol_error(int, u_int32_t, struct ssh *);
-int	dispatch_protocol_ignore(int, u_int32_t, struct ssh *);
+int	dispatch_protocol_error(int, uint32_t, struct ssh *);
+int	dispatch_protocol_ignore(int, uint32_t, struct ssh *);
 void	ssh_dispatch_init(struct ssh *, dispatch_fn *);
 void	ssh_dispatch_set(struct ssh *, int, dispatch_fn *);
 void	ssh_dispatch_range(struct ssh *, u_int, u_int, dispatch_fn *);

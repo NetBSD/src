@@ -1,5 +1,5 @@
-/*	$NetBSD: gss-genr.c,v 1.15 2025/12/28 09:54:06 nia Exp $	*/
-/* $OpenBSD: gss-genr.c,v 1.30 2025/09/29 21:28:33 dtucker Exp $ */
+/*	$NetBSD: gss-genr.c,v 1.16 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: gss-genr.c,v 1.31 2026/02/08 19:54:31 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001-2007 Simon Wilkinson. All rights reserved.
@@ -29,9 +29,14 @@
 __RCSID("$NetBSD");
 #ifdef GSSAPI
 
+#include <sys/types.h>
+
 #include <limits.h>
 #include <stdarg.h>
 #include <string.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 
 #include "xmalloc.h"
 #include "ssherr.h"

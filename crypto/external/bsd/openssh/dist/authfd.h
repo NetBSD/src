@@ -1,5 +1,5 @@
-/*	$NetBSD: authfd.h,v 1.18 2025/10/11 15:45:06 christos Exp $	*/
-/* $OpenBSD: authfd.h,v 1.53 2025/08/29 03:50:38 djm Exp $ */
+/*	$NetBSD: authfd.h,v 1.19 2026/04/08 18:58:40 christos Exp $	*/
+/* $OpenBSD: authfd.h,v 1.55 2026/03/05 05:44:15 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -68,6 +68,8 @@ int	ssh_agent_bind_hostkey(int sock, const struct sshkey *key,
     const struct sshbuf *session_id, const struct sshbuf *signature,
     int forwarding);
 
+int	ssh_agent_query_extensions(int sock, char ***exts);
+
 /* Messages for the authentication agent connection. */
 #define SSH_AGENTC_REQUEST_RSA_IDENTITIES	1
 #define SSH_AGENT_RSA_IDENTITIES_ANSWER		2
@@ -103,6 +105,8 @@ int	ssh_agent_bind_hostkey(int sock, const struct sshkey *key,
 
 /* generic extension mechanism */
 #define SSH_AGENTC_EXTENSION			27
+#define SSH_AGENT_EXTENSION_FAILURE		28
+#define SSH_AGENT_EXTENSION_RESPONSE		29
 
 #define	SSH_AGENT_CONSTRAIN_LIFETIME		1
 #define	SSH_AGENT_CONSTRAIN_CONFIRM		2
