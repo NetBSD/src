@@ -1,4 +1,4 @@
-# $NetBSD: files.sbmips,v 1.5 2022/03/04 21:12:03 andvar Exp $
+# $NetBSD: files.sbmips,v 1.6 2026/04/08 21:36:20 andvar Exp $
 
 maxpartitions 8
 
@@ -51,7 +51,7 @@ file	arch/alpha/isa/isapnp_machdep.c	isapnp
 # PCI Bus support
 # include "dev/pci/files.pci" XXX SEE ABOVE
 #file	arch/evbmips/sbmips/pci_machdep.c	pci
-# XXXCGD macdep pci files
+# XXXCGD machdep pci files
 
 # XXXX pcic here because it needs to be late.  The catch: pcic needs
 # to be late, so devices which attach to it are attached late.  But it
