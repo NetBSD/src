@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1032 2026/03/18 23:53:57 christos Exp $
+# $NetBSD: shl.mi,v 1.1033 2026/04/08 00:16:57 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -310,7 +310,7 @@
 ./usr/lib/libdm.so.0.0				base-sys-shlib		compatfile
 ./usr/lib/libdns.so				base-bind-shlib		compatfile
 ./usr/lib/libdns.so.24				base-bind-shlib		compatfile
-./usr/lib/libdns.so.24.0			base-bind-shlib		compatfile
+./usr/lib/libdns.so.24.1			base-bind-shlib		compatfile
 ./usr/lib/libdns_sd.so				base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
