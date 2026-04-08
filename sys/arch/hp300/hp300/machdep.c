@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.264 2026/04/07 13:57:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.265 2026/04/08 03:47:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.264 2026/04/07 13:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.265 2026/04/08 03:47:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -1124,13 +1124,3 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 	    (uint8_t *)ptr < extiobase + (EIOMAPSIZE * PAGE_SIZE)))
 	    ? EFAULT : 0;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

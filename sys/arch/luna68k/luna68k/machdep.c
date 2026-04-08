@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.126 2026/04/07 13:57:36 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.127 2026/04/08 03:47:53 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.126 2026/04/07 13:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.127 2026/04/08 03:47:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -732,16 +732,6 @@ luna68k_abort(const char *cp)
 #endif /* PANICBUTTON */
 #endif /* DDB */
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 #ifdef notyet
 /*

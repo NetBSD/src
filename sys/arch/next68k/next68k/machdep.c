@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.139 2026/04/07 13:57:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.140 2026/04/08 03:47:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2026/04/07 13:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2026/04/08 03:47:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -709,13 +709,3 @@ mm_md_physacc(paddr_t pa, vm_prot_t prot)
 
 	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.268 2026/04/07 13:57:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.269 2026/04/08 03:47:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2026/04/07 13:57:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2026/04/08 03:47:53 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1094,14 +1094,6 @@ nmihand(struct frame frame)
 #endif
 
 #ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-
 int _spllkm6(void);
 int _spllkm7(void);
 

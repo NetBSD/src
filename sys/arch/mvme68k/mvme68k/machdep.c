@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.188 2026/04/07 13:57:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.189 2026/04/08 03:47:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.188 2026/04/07 13:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.189 2026/04/08 03:47:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -926,16 +926,6 @@ mvme68k_abort(const char *cp)
 #endif /* PANICBUTTON */
 #endif /* DDB */
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)

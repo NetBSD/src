@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2026/04/07 13:57:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.226 2026/04/08 03:47:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2026/04/07 13:57:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2026/04/08 03:47:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -898,16 +898,6 @@ nmihand(struct frame frame)
 	/* panic?? */
 	printf("unexpected level 7 interrupt ignored\n");
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 #ifdef EXTENDED_MEMORY
 

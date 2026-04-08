@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.203 2026/04/07 13:57:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.204 2026/04/08 03:47:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2026/04/07 13:57:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2026/04/08 03:47:53 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -716,16 +716,6 @@ candbtimer(void)
 {
 
 	crashandburn = 0;
-}
-#endif
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
 }
 #endif
 

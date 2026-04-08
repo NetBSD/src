@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.36 2026/04/07 13:57:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.37 2026/04/08 03:47:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.36 2026/04/07 13:57:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2026/04/08 03:47:54 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -780,16 +780,6 @@ nmihand(void *arg)
 
 	return 1;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_NONE]       = PSL_S | PSL_IPL0,
