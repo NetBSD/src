@@ -1,4 +1,4 @@
-/*	$NetBSD: resolv.h,v 1.42 2021/09/03 21:54:58 andvar Exp $	*/
+/*	$NetBSD: resolv.h,v 1.43 2026/04/08 14:12:06 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -359,6 +359,7 @@ extern const struct res_sym __p_rcode_syms[];
 #define fp_resstat		__fp_resstat
 #define loc_aton		__loc_aton
 #define loc_ntoa		__loc_ntoa
+#define loc_ntoa1		__loc_ntoa1
 #define p_cdname		__p_cdname
 #define p_cdnname		__p_cdnname
 #define p_class			__p_class
@@ -431,7 +432,8 @@ const char *	sym_ntop(const struct res_sym *, int, int *);
 int		b64_ntop(u_char const *, size_t, char *, size_t);
 int		b64_pton(char const *, u_char *, size_t);
 int		loc_aton(const char *, u_char *);
-const char *	loc_ntoa(const u_char *, char *);
+const char *	loc_ntoa(const u_char *, char *); /* deprecated do not use */
+const char *	loc_ntoa1(const u_char *, char *, size_t);
 int		dn_skipname(const u_char *, const u_char *);
 void		putlong(uint32_t, u_char *);
 void		putshort(uint16_t, u_char *);

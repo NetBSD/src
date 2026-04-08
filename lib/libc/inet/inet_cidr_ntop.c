@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_cidr_ntop.c,v 1.8 2012/03/13 21:13:38 christos Exp $	*/
+/*	$NetBSD: inet_cidr_ntop.c,v 1.9 2026/04/08 14:12:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #if 0
 static const char rcsid[] = "Id: inet_cidr_ntop.c,v 1.7 2006/10/11 02:18:18 marka Exp";
 #else
-__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.8 2012/03/13 21:13:38 christos Exp $");
+__RCSID("$NetBSD: inet_cidr_ntop.c,v 1.9 2026/04/08 14:12:06 christos Exp $");
 #endif
 #endif
 
@@ -45,12 +45,6 @@ __RCSID("$NetBSD: inet_cidr_ntop.c,v 1.8 2012/03/13 21:13:38 christos Exp $");
 
 #ifdef __weak_alias
 __weak_alias(inet_cidr_ntop,_inet_cidr_ntop)
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
 #endif
 
 static char *
@@ -87,23 +81,17 @@ inet_cidr_ntop(int af, const void *src, int bits, char *dst, size_t size) {
 
 static int
 decoct(const u_char *src, size_t bytes, char *dst, size_t size) {
-	char *odst = dst;
-	char *t;
 	size_t b;
+	int l, t = 0;
 
 	for (b = 1; b <= bytes; b++) {
-		if (size < sizeof "255.")
-			return (0);
-		t = dst;
-		dst += SPRINTF((dst, "%u", *src++));
-		if (b != bytes) {
-			*dst++ = '.';
-			*dst = '\0';
-		}
-		size -= (size_t)(dst - t);
+		ADDS(snprintf(dst + t, size - t, "%u", *src++));
+		if (b != bytes)
+			ADDC('.');
 	}
-	_DIAGASSERT(__type_fit(int, dst - odst));
-	return (int)(dst - odst);
+	return t;
+emsgsize:
+	return l < 0 ? l : l + t;
 }
 
 /*%
@@ -121,10 +109,8 @@ decoct(const u_char *src, size_t bytes, char *dst, size_t size) {
  */
 static char *
 inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size) {
-	char *odst = dst;
-	size_t len = 4;
-	size_t b;
-	size_t bytes;
+	size_t len = 4, b, bytes, t = 0;
+	int l;
 
 	if ((bits < -1) || (bits > 32)) {
 		errno = EINVAL;
@@ -143,20 +129,14 @@ inet_cidr_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size) {
 	bytes = (((bits <= 0) ? 1 : bits) + 7) / 8;
 	if (len > bytes)
 		bytes = len;
-	b = decoct(src, bytes, dst, size);
-	if (b == 0U)
-		goto emsgsize;
-	dst += b;
-	size -= b;
+	ADDS(decoct(src, bytes, dst + t, size - t));
 
 	if (bits != -1) {
 		/* Format CIDR /width. */
-		if (size < sizeof "/32")
-			goto emsgsize;
-		dst += SPRINTF((dst, "/%u", bits));
+		ADDS(snprintf(dst + t, size - t, "/%u", bits));
 	}
 
-	return (odst);
+	return (dst);
 
  emsgsize:
 	errno = EMSGSIZE;
@@ -172,11 +152,10 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 	 * Keep this in mind if you think this function should have been coded
 	 * to use pointer overlays.  All the world's not a VAX.
 	 */
-	char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255/128"];
-	char *tp;
 	struct { int base, len; } best, cur;
 	u_int words[NS_IN6ADDRSZ / NS_INT16SZ];
-	int i;
+	int i, l;
+	size_t t;
 
 	if ((bits < -1) || (bits > 128)) {
 		errno = EINVAL;
@@ -219,18 +198,18 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 	/*
 	 * Format the result.
 	 */
-	tp = tmp;
+	t = 0;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		/* Are we inside the best run of 0x00's? */
 		if (best.base != -1 && i >= best.base &&
 		    i < (best.base + best.len)) {
 			if (i == best.base)
-				*tp++ = ':';
+				ADDC(':');
 			continue;
 		}
 		/* Are we following an initial run of 0x00s or any real hex? */
 		if (i != 0)
-			*tp++ = ':';
+			ADDC(':');
 		/* Is this address an encapsulated IPv4? */
 		if (i == 6 && best.base == 0 && (best.len == 6 ||
 		    (best.len == 7 && words[7] != 0x0001) ||
@@ -243,35 +222,25 @@ inet_cidr_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size) {
 				n = 3;
 			else
 				n = 2;
-			n = decoct(src+12, n, tp, sizeof tmp - (tp - tmp));
-			if (n == 0) {
-				errno = EMSGSIZE;
-				return (NULL);
-			}
-			tp += strlen(tp);
+			ADDS(decoct(src+12, n, dst + t, size - t));
 			break;
 		}
-		tp += SPRINTF((tp, "%x", words[i]));
+		ADDS(snprintf(dst + t, size - t, "%x", words[i]));
 	}
 
 	/* Was it a trailing run of 0x00's? */
 	if (best.base != -1 && (best.base + best.len) == 
-	    (NS_IN6ADDRSZ / NS_INT16SZ))
-		*tp++ = ':';
-	*tp = '\0';
+	    (NS_IN6ADDRSZ / NS_INT16SZ)) {
+		ADDC(':');
+	}
 
 	if (bits != -1)
-		tp += SPRINTF((tp, "/%u", bits));
+		ADDS(snprintf(dst + t, size - t, "/%u", bits));
 
-	/*
-	 * Check for overflow, copy, and we're done.
-	 */
-	if ((size_t)(tp - tmp) > size) {
-		errno = EMSGSIZE;
-		return (NULL);
-	}
-	strcpy(dst, tmp);
-	return (dst);
+	return dst;
+emsgsize:
+	errno = EMSGSIZE;
+	return (NULL);
 }
 
 /*! \file */

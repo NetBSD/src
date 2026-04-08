@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_ttl.c,v 1.8 2012/03/13 21:13:39 christos Exp $	*/
+/*	$NetBSD: ns_ttl.c,v 1.9 2026/04/08 14:12:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_ttl.c,v 1.4 2005/07/28 06:51:49 marka Exp";
 #else
-__RCSID("$NetBSD: ns_ttl.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
+__RCSID("$NetBSD: ns_ttl.c,v 1.9 2026/04/08 14:12:06 christos Exp $");
 #endif
 #endif
 
@@ -39,12 +39,6 @@ __RCSID("$NetBSD: ns_ttl.c,v 1.8 2012/03/13 21:13:39 christos Exp $");
 #include <string.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) ((size_t)sprintf x)
-#endif
 
 /* Forward. */
 
@@ -159,10 +153,10 @@ ns_parse_ttl(const char *src, u_long *dst) {
 static int
 fmt1(int t, char s, char **buf, size_t *buflen) {
 	char tmp[50];
-	size_t len;
+	int len;
 
-	len = SPRINTF((tmp, "%d%c", t, s));
-	if (len + 1 > *buflen)
+	len = snprintf(tmp, sizeof(tmp), "%d%c", t, s);
+	if (len == -1 || (size_t)(len + 1) > *buflen)
 		return (-1);
 	strcpy(*buf, tmp);
 	*buf += len;

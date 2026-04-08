@@ -20,7 +20,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: inet_net_ntop.c,v 1.1.2.1 2002/08/02 02:17:21 marka Exp ";
 #else
-__RCSID("$NetBSD: inet_net_ntop.c,v 1.4 2017/05/09 02:56:44 maya Exp $");
+__RCSID("$NetBSD: inet_net_ntop.c,v 1.5 2026/04/08 14:12:06 christos Exp $");
 #endif
 #endif
 
@@ -41,12 +41,6 @@ __RCSID("$NetBSD: inet_net_ntop.c,v 1.4 2017/05/09 02:56:44 maya Exp $");
 
 #ifdef __weak_alias
 __weak_alias(inet_net_ntop,_inet_net_ntop)
-#endif
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) strlen(sprintf/**/x)
-#else
-# define SPRINTF(x) sprintf x
 #endif
 
 static char *	inet_net_ntop_ipv4(const u_char *src, int bits,
@@ -94,55 +88,40 @@ inet_net_ntop(int af, const void *src, int bits, char *dst, size_t size)
 static char *
 inet_net_ntop_ipv4(const u_char *src, int bits, char *dst, size_t size)
 {
-	char *odst = dst;
-	char *t;
+	size_t t;
 	u_int m;
-	int b;
+	int b, l;
 
 	if (bits < 0 || bits > 32) {
 		errno = EINVAL;
 		return (NULL);
 	}
 
-	if (bits == 0) {
-		if (size < sizeof "0")
-			goto emsgsize;
-		*dst++ = '0';
-		size--;
-		*dst = '\0';
-	}
+
+	t = 0;
+	if (bits == 0)
+		ADDC('0');
 
 	/* Format whole octets. */
+	t = 0;
 	for (b = bits / 8; b > 0; b--) {
-		if (size <= sizeof "255.")
-			goto emsgsize;
-		t = dst;
-		dst += SPRINTF((dst, "%u", *src++));
-		if (b > 1) {
-			*dst++ = '.';
-			*dst = '\0';
-		}
-		size -= (size_t)(dst - t);
+		ADDS(snprintf(dst + t, size - t, "%u", *src++));
+		if (b > 1)
+			ADDC('.');
 	}
 
 	/* Format partial octet. */
 	b = bits % 8;
 	if (b > 0) {
-		if (size <= sizeof ".255")
-			goto emsgsize;
-		t = dst;
-		if (dst != odst)
-			*dst++ = '.';
+		if (t)
+			ADDC('.');
 		m = ((1 << b) - 1) << (8 - b);
-		dst += SPRINTF((dst, "%u", *src & m));
-		size -= (size_t)(dst - t);
+		ADDS(snprintf(dst + t, size - t, "%u", *src & m));
 	}
 
 	/* Format CIDR /width. */
-	if (size <= sizeof "/32")
-		goto emsgsize;
-	dst += SPRINTF((dst, "/%u", bits));
-	return (odst);
+	ADDS(snprintf(dst + t, size - t, "/%u", bits));
+	return dst;
 
  emsgsize:
 	errno = EMSGSIZE;
@@ -170,14 +149,12 @@ static char *
 inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 {
 	u_int	m;
-	int	b;
+	int	b, t, l;
 	size_t	p;
 	size_t	zero_s, zero_l, tmp_zero_s, tmp_zero_l;
 	size_t	i;
 	int	is_ipv4 = 0;
 	unsigned char inbuf[16];
-	char outbuf[sizeof("xxxx:xxxx:xxxx:xxxx:xxxx:xxxx:255.255.255.255/128")];
-	char	*cp;
 	size_t	words;
 	u_char	*s;
 
@@ -186,12 +163,10 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 		return (NULL);
 	}
 
-	cp = outbuf;
-
+	t = 0;
 	if (bits == 0) {
-		*cp++ = ':';
-		*cp++ = ':';
-		*cp = '\0';
+		ADDC(':');
+		ADDC(':');
 	} else {
 		/* Copy src to private buffer.  Zero host part. */	
 		p = (bits + 7) / 8;
@@ -241,36 +216,33 @@ inet_net_ntop_ipv6(const u_char *src, int bits, char *dst, size_t size)
 			if (zero_l != 0 && p >= zero_s && p < zero_s + zero_l) {
 				/* Time to skip some zeros */
 				if (p == zero_s)
-					*cp++ = ':';
+					ADDC(':');
 				if (p == words - 1)
-					*cp++ = ':';
+					ADDC(':');
 				s++;
 				s++;
 				continue;
 			}
 
 			if (is_ipv4 && p > 5 ) {
-				*cp++ = (p == 6) ? ':' : '.';
-				cp += SPRINTF((cp, "%u", *s++));
+				ADDS(snprintf(dst + t, size - t, "%c%u",
+				    (p == 6) ? ':' : '.', *s++));
 				/* we can potentially drop the last octet */
 				if (p != 7 || bits > 120) {
-					*cp++ = '.';
-					cp += SPRINTF((cp, "%u", *s++));
+					ADDS(snprintf(dst + t, size - t, ".%u",
+					    *s++));
 				}
 			} else {
-				if (cp != outbuf)
-					*cp++ = ':';
-				cp += SPRINTF((cp, "%x", *s * 256 + s[1]));
+				if (t)
+					ADDC(':');
+				ADDS(snprintf(dst + t, size - t, "%x",
+				    *s * 256 + s[1]));
 				s += 2;
 			}
 		}
 	}
 	/* Format CIDR /width. */
-	(void)SPRINTF((cp, "/%u", bits));
-	if (strlen(outbuf) + 1 > size)
-		goto emsgsize;
-	strcpy(dst, outbuf);
-	
+	ADDS(snprintf(dst + t, size - t, "/%u", bits));
 	return (dst);
 
 emsgsize:

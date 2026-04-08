@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_name.c,v 1.15 2024/02/02 22:00:32 andvar Exp $	*/
+/*	$NetBSD: ns_name.c,v 1.16 2026/04/08 14:12:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_name.c,v 1.11 2009/01/23 19:59:16 each Exp";
 #else
-__RCSID("$NetBSD: ns_name.c,v 1.15 2024/02/02 22:00:32 andvar Exp $");
+__RCSID("$NetBSD: ns_name.c,v 1.16 2026/04/08 14:12:06 christos Exp $");
 #endif
 #endif
 
@@ -42,12 +42,6 @@ __RCSID("$NetBSD: ns_name.c,v 1.15 2024/02/02 22:00:32 andvar Exp $");
 #include <limits.h>
 
 #include "port_after.h"
-
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) ((int)strlen(sprintf/**/x))
-#else
-# define SPRINTF(x) (sprintf x)
-#endif
 
 #define NS_TYPE_ELT			0x40 /*%< EDNS0 extended label type */
 #define DNS_LABELTYPE_BITSTRING		0x41
@@ -999,49 +993,33 @@ static int
 decode_bitstring(const unsigned char **cpp, char *dn, const char *eom)
 {
 	const unsigned char *cp = *cpp;
-	char *beg = dn, tc;
-	int b, blen, plen, i;
+	char tc;
+	int b, blen, t, l;
+	size_t size = (size_t)(eom - dn);
 
 	if ((blen = (*cp & 0xff)) == 0)
 		blen = 256;
-	plen = (blen + 3) / 4;
-	plen += (int)sizeof("\\[x/]") + (blen > 99 ? 3 : (blen > 9) ? 2 : 1);
-	if (dn + plen >= eom)
-		return (-1);
-
 	cp++;
-	i = SPRINTF((dn, "\\[x"));
-	if (i < 0)
-		return (-1);
-	dn += i;
+	t = 0;
+	ADDS(snprintf(dn + t, size - t, "\\[x"));
 	for (b = blen; b > 7; b -= 8, cp++) {
-		i = SPRINTF((dn, "%02x", *cp & 0xff));
-		if (i < 0)
-			return (-1);
-		dn += i;
+		ADDS(snprintf(dn + t, size - t, "%02x", *cp & 0xff));
 	}
 	if (b > 4) {
 		tc = *cp++;
-		i = SPRINTF((dn, "%02x", tc & (0xff << (8 - b))));
-		if (i < 0)
-			return (-1);
-		dn += i;
+		ADDS(snprintf(dn + t, size - t, "%02x",
+		    tc & (0xff << (8 - b))));
 	} else if (b > 0) {
 		tc = *cp++;
-		i = SPRINTF((dn, "%1x",
-			       (((u_int32_t)tc >> 4) & 0x0f) & (0x0f << (4 - b)))); 
-		if (i < 0)
-			return (-1);
-		dn += i;
+		ADDS(snprintf(dn + t, size - t, "%1x",
+		    (((u_int32_t)tc >> 4) & 0x0f) & (0x0f << (4 - b))));
 	}
-	i = SPRINTF((dn, "/%d]", blen));
-	if (i < 0)
-		return (-1);
-	dn += i;
+	ADDS(snprintf(dn + t, size - t, "/%d]", blen));
 
 	*cpp = cp;
-	_DIAGASSERT(__type_fit(int, dn - beg));
-	return (int)(dn - beg);
+	return t;
+emsgsize:
+	return -1;
 }
 
 static int

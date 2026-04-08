@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.19 2026/01/19 15:23:10 joe Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.20 2026/04/08 14:12:06 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.19 2026/01/19 15:23:10 joe Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.20 2026/04/08 14:12:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -581,7 +581,6 @@ sym_ston(const struct res_sym *syms, const char *name, int *success) {
 
 const char *
 sym_ntos(const struct res_sym *syms, int number, int *success) {
-	char *unname = sym_ntos_unname;
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -591,15 +590,14 @@ sym_ntos(const struct res_sym *syms, int number, int *success) {
 		}
 	}
 
-	sprintf(unname, "%d", number);		/*%< XXX nonreentrant */
+	snprintf(sym_ntos_unname, sizeof(sym_ntos_unname), "%d", number);		/*%< XXX nonreentrant */
 	if (success)
 		*success = 0;
-	return (unname);
+	return sym_ntos_unname;
 }
 
 const char *
 sym_ntop(const struct res_sym *syms, int number, int *success) {
-	char *unname = sym_ntop_unname;
 
 	for (; syms->name != 0; syms++) {
 		if (number == syms->number) {
@@ -608,10 +606,10 @@ sym_ntop(const struct res_sym *syms, int number, int *success) {
 			return (syms->humanname);
 		}
 	}
-	sprintf(unname, "%d", number);		/*%< XXX nonreentrant */
+	snprintf(sym_ntop_unname, sizeof(sym_ntop_unname), "%d", number);		/*%< XXX nonreentrant */
 	if (success)
 		*success = 0;
-	return (unname);
+	return sym_ntop_unname;
 }
 
 /*%
@@ -628,7 +626,7 @@ p_type(int type) {
 		return (result);
 	if (type < 0 || type > 0xffff)
 		return ("BADTYPE");
-	sprintf(typebuf, "TYPE%d", type);
+	snprintf(typebuf, sizeof(typebuf), "TYPE%d", type);
 	return (typebuf);
 }
 
@@ -664,7 +662,7 @@ p_class(int class) {
 		return (result);
 	if (class < 0 || class > 0xffff)
 		return ("BADCLASS");
-	sprintf(classbuf, "CLASS%d", class);
+	snprintf(classbuf, sizeof(classbuf), "CLASS%d", class);
 	return (classbuf);
 }
 
@@ -673,7 +671,6 @@ p_class(int class) {
  */
 const char *
 p_option(u_long option) {
-	char *nbuf = p_option_nbuf;
 
 	switch (option) {
 	case RES_INIT:		return "init";
@@ -707,8 +704,8 @@ p_option(u_long option) {
 	case RES_NO_NIBBLE2:	return "no-nibble2";
 #endif
 				/* XXX nonreentrant */
-	default:		sprintf(nbuf, "?0x%lx?", (u_long)option);
-				return (nbuf);
+	default:		snprintf(p_option_nbuf, sizeof(p_option_nbuf), "?0x%lx?", (u_long)option);
+				return (p_option_nbuf);
 	}
 }
 
@@ -748,7 +745,7 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 		break;
 #endif
 	default:
-		sprintf(ret, "[af%d]", u.sin.sin_family);
+		snprintf(ret, sizeof(ret), "[af%d]", u.sin.sin_family);
 		break;
 	}
 	if (size > 0U) {
@@ -771,7 +768,6 @@ static unsigned int poweroften[10] = {1, 10, 100, 1000, 10000, 100000,
 static const char *
 precsize_ntoa(u_int32_t prec)
 {
-	char *retbuf = precsize_ntoa_retbuf;
 	unsigned long val;
 	int mantissa, exponent;
 
@@ -780,8 +776,8 @@ precsize_ntoa(u_int32_t prec)
 
 	val = mantissa * poweroften[exponent];
 
-	(void) sprintf(retbuf, "%lu.%.2lu", val/100, val%100);
-	return (retbuf);
+	(void) snprintf(precsize_ntoa_retbuf, sizeof(precsize_ntoa_retbuf), "%lu.%.2lu", val/100, val%100);
+	return precsize_ntoa_retbuf;
 }
 
 /*% converts ascii size/precision X * 10**Y(cm) to 0xXY.  moves pointer.  */
@@ -1029,9 +1025,15 @@ loc_aton(const char *ascii, u_char *binary)
 	return (16);		/*%< size of RR in octets */
 }
 
-/*% takes an on-the-wire LOC RR and formats it in a human readable format. */
 const char *
 loc_ntoa(const u_char *binary, char *ascii)
+{
+	return loc_ntoa1(binary, ascii, 255);	/* XXX: broken */
+}
+
+/*% takes an on-the-wire LOC RR and formats it in a human readable format. */
+const char *
+loc_ntoa1(const u_char *binary, char *ascii, size_t len)
 {
 	static const char *error = "?";
 	static char tmpbuf[sizeof
@@ -1054,11 +1056,13 @@ loc_ntoa(const u_char *binary, char *ascii)
 
 	versionval = *cp++;
 
-	if (ascii == NULL)
+	if (ascii == NULL) {
 		ascii = tmpbuf;
+		len = sizeof(tmpbuf);
+	}
 
 	if (versionval) {
-		(void) sprintf(ascii, "; error: unknown LOC RR version");
+		(void) snprintf(ascii, len, "; error: unknown LOC RR version");
 		return (ascii);
 	}
 
@@ -1117,7 +1121,7 @@ loc_ntoa(const u_char *binary, char *ascii)
 	hpstr = strdup(precsize_ntoa((u_int32_t)hpval));
 	vpstr = strdup(precsize_ntoa((u_int32_t)vpval));
 
-	sprintf(ascii,
+	snprintf(ascii, len,
 	    "%d %.2d %.2d.%.3d %c %d %.2d %.2d.%.3d %c %s%d.%.2dm %sm %sm %sm",
 		latdeg, latmin, latsec, latsecfrac, northsouth,
 		longdeg, longmin, longsec, longsecfrac, eastwest,
