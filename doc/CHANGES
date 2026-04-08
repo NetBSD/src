@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3245 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3246 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -221,3 +221,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	bind: Import version 9.20.22. [christos 20260407]
 	OpenSSL: Imported 3.5.6. [christos 20260408]
 	ssh(1), sshd(8): Import OpenSSH 10.3. [christos 20260408]
+	xz(1): Import of XZ 5.8.3. [christos 20260408]
