@@ -1,4 +1,4 @@
-/*	$NetBSD: res_debug.c,v 1.20 2026/04/08 14:12:06 christos Exp $	*/
+/*	$NetBSD: res_debug.c,v 1.21 2026/04/08 20:22:06 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -97,7 +97,7 @@
 static const char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static const char rcsid[] = "Id: res_debug.c,v 1.19 2009/02/26 11:20:20 tbox Exp";
 #else
-__RCSID("$NetBSD: res_debug.c,v 1.20 2026/04/08 14:12:06 christos Exp $");
+__RCSID("$NetBSD: res_debug.c,v 1.21 2026/04/08 20:22:06 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -737,14 +737,19 @@ p_sockun(union res_sockaddr_union u, char *buf, size_t size) {
 
 	switch (u.sin.sin_family) {
 	case AF_INET:
-		inet_ntop(AF_INET, &u.sin.sin_addr, ret, (socklen_t)sizeof ret);
+		if (inet_ntop(AF_INET, &u.sin.sin_addr, ret,
+		    (socklen_t)sizeof ret) == NULL)
+			goto out;
 		break;
 #ifdef HAS_INET6_STRUCTS
 	case AF_INET6:
-		inet_ntop(AF_INET6, &u.sin6.sin6_addr, ret, sizeof ret);
+		if (inet_ntop(AF_INET6, &u.sin6.sin6_addr, ret,
+		    (socklen_t)sizeof ret) == NULL)
+			goto out;
 		break;
 #endif
 	default:
+	out:
 		snprintf(ret, sizeof(ret), "[af%d]", u.sin.sin_family);
 		break;
 	}

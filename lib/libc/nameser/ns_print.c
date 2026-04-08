@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.13 2026/04/08 14:12:06 christos Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.14 2026/04/08 20:22:06 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.13 2026/04/08 14:12:06 christos Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.14 2026/04/08 20:22:06 christos Exp $");
 #endif
 #endif
 
@@ -67,6 +67,11 @@ static int	addtab(size_t len, size_t target, int spaced,
 #define	T(x) \
 	do { \
 		if ((x) < 0) \
+			return (-1); \
+	} while (0)
+#define	N(x) \
+	do { \
+		if ((x) == NULL) \
 			return (-1); \
 	} while (0)
 
@@ -158,7 +163,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_a:
 		if (rdlen != (size_t)NS_INADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -328,7 +333,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_aaaa:
 		if (rdlen != (size_t)NS_IN6ADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -420,7 +425,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			goto formerr;
 
 		/* Address. */
-		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		rdata += NS_INADDRSZ;
 
@@ -691,7 +696,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			if (rdata + pbyte >= edata) goto formerr;
 			memset(&a, 0, sizeof(a));
 			memcpy(&a.s6_addr[pbyte], rdata, sizeof(a) - pbyte);
-			(void) inet_ntop(AF_INET6, &a, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET6, &a, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += sizeof(a) - pbyte;
 		}
@@ -966,12 +971,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			T(addstr(".", 1, &buf, &buflen));
 			break;
 		case 1:
-			(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 4;
 			break;
 		case 2:
-			(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 16;
 			break;
