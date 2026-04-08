@@ -1,6 +1,6 @@
-.\"	$NetBSD: mk.conf.5,v 1.121 2025/12/28 18:43:25 thorpej Exp $
+.\"	$NetBSD: mk.conf.5,v 1.122 2026/04/08 05:19:05 lukem Exp $
 .\"
-.\"  Copyright (c) 1999-2025 The NetBSD Foundation, Inc.
+.\"  Copyright (c) 1999-2026 The NetBSD Foundation, Inc.
 .\"  All rights reserved.
 .\"
 .\"  This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd December 28, 2025
+.Dd April 8, 2026
 .Dt MK.CONF 5
 .Os
 .\" turn off hyphenation
@@ -184,7 +184,7 @@ documentation of
 .
 .It Sy CDEXTRA
 A space-separated list of files or directories that will be
-added to the CD-ROM image that may be create by the
+added to the CD-ROM image that may be created by the
 .Sy build.sh
 .Dq iso-image
 or
@@ -449,17 +449,6 @@ on
 .Dq yes
 on other platforms.
 .
-.It Sy MKAUTOFS
-.YorN
-Indicates whether support for the automounter file system
-will be built and installed.
-.DFLT
-.Dq no
-on
-.Sy m68000 ;
-.Dq yes
-on other platforms.
-.
 .It Sy MKAMDGPUFIRMWARE
 .YorN
 Indicates whether to install the
@@ -470,8 +459,6 @@ AMD RADEON GPU video driver.
 .DFLT
 .Dq yes
 on
-.Sy i386
-and
 .Sy x86_64 ;
 .Dq no
 on other platforms.
@@ -515,6 +502,17 @@ Indicates whether audio-related programs
 .Xr audiorecord 1 ,
 .Xr hdaudioctl 8
 .Pc
+will be built and installed.
+.DFLT
+.Dq no
+on
+.Sy m68000 ;
+.Dq yes
+on other platforms.
+.
+.It Sy MKAUTOFS
+.YorN
+Indicates whether support for the automounter file system
 will be built and installed.
 .DFLT
 .Dq no
@@ -758,9 +756,10 @@ This is disabled internally for standalone programs in
 .Dq yes
 on
 .Sy aarch64 ,
-.Sy amd64 ,
+.Sy earm* ,
+.Sy i386 ,
 and
-.Sy i386 ;
+.Sy x86_64 ;
 .Dq no
 on other platforms.
 .
@@ -864,8 +863,10 @@ Indicates whether the devicetree blobs will be built and installed.
 .Dq yes
 on
 .Sy aarch64 ,
-.Sy armv6 ,
-.Sy armv7 ,
+.Sy aarch64eb ,
+.Sy earmv5* ,
+.Sy earmv6* ,
+.Sy earmv7* ,
 .Sy riscv32 ,
 and
 .Sy riscv64 ;
@@ -891,9 +892,9 @@ support are to be built and installed.
 .Dq yes
 on
 .Sy aarch64 ,
-.Sy amd64 ,
+.Sy i386 ,
 and
-.Sy i386 ;
+.Sy x86_64 ;
 .Dq no
 on other platforms.
 .
@@ -1018,6 +1019,7 @@ on
 .Sy i386 ,
 .Sy mac68k ,
 .Sy macppc ,
+.Sy riscv ,
 .Sy sandpoint ,
 and
 .Sy sparc64 ;
@@ -1068,6 +1070,21 @@ and
 .Dq yes
 on other platforms.
 .
+.It Sy MKGDBSERVER
+.YorN
+Indicates whether
+.Xr gdbserver 1
+will be built and installed.
+.Pp
+Only used if
+.Sy MKGDB=yes .
+.DFLT
+.Dq yes
+on
+.Sy x86_64 ;
+.Dq no
+on other platforms.
+.
 .It Sy MKGROFF
 .YorN
 Indicates whether
@@ -1113,13 +1130,6 @@ on
 .Sy m68000 ;
 .Dq yes
 on other platforms.
-.
-.It Sy MKKERNFS
-.YorN
-Indicates whether support for the kernel data
-.Pq Pa /kern
-file system will be build and installed.
-.DFLTy
 .
 .It Sy MKHOSTOBJ
 .YorN
@@ -1234,6 +1244,13 @@ files or disabling PAM via
 Otherwise all logins will fail.
 .DFLTy
 .
+.It Sy MKKERNFS
+.YorN
+Indicates whether support for the kernel data
+.Pq Pa /kern
+file system will be build and installed.
+.DFLTy
+.
 .It Sy MKKMOD
 .YorN
 Indicates whether kernel modules will be built and installed.
@@ -1300,7 +1317,17 @@ Indicates if libc++ will be built and installed
 .DFLT
 .Dq yes
 if
-.Sy MKLLVM=yes ;
+.Sy MKLLVM=yes
+and on
+.Sy aarch64* ,
+.Sy earm* ,
+.Sy i386 ,
+.Sy powerpc ,
+.Sy powerpc64 ,
+.Sy sparc ,
+.Sy sparc64 ,
+or
+.Sy x86_64 ;
 otherwise
 .Dq no .
 .
@@ -1371,7 +1398,8 @@ is installed as a host tool and target compiler.
 If
 .Dq yes ,
 acts as
-.Sy MKLIBCXX=yes .
+.Sy MKLIBCXX=yes
+on various platforms.
 .Pp
 .Em Note :
 Use of
@@ -1490,14 +1518,6 @@ Indicates whether support for the NFS network file system
 will be built and installed.
 .DFLTy
 .
-.It Sy MKNLS
-.YorN
-Indicates whether Native Language System (NLS) locale zone files will be
-built and installed.
-.NODEF NONLS
-.NOVAR MKSHARE=no
-.DFLTy
-.
 .It Sy MKNILFS
 .YorN
 Indicates whether support for the NILFS log-structured file system
@@ -1508,6 +1528,14 @@ on
 .Sy m68000 ;
 .Dq yes
 on other platforms.
+.
+.It Sy MKNLS
+.YorN
+Indicates whether Native Language System (NLS) locale zone files will be
+built and installed.
+.NODEF NONLS
+.NOVAR MKSHARE=no
+.DFLTy
 .
 .It Sy MKNOUVEAUFIRMWARE
 .YorN
@@ -1528,7 +1556,9 @@ on other platforms.
 .
 .It Sy MKNPF
 .YorN
-Indicates whether the NPF packet filter is to be built and installed.
+Indicates whether the
+.Xr npf 7
+packet filter is to be built and installed.
 .DFLT
 .Dq no
 on
@@ -1715,6 +1745,7 @@ on
 .Sy arm ,
 .Sy i386 ,
 .Sy m68k ,
+.Sy macppc ,
 .Sy mips ,
 .Sy sh3 ,
 .Sy sparc64 ,
@@ -1765,10 +1796,7 @@ will be built and installed.
 .DFLT
 .Dq no
 on
-.Sy or1k ,
-.Sy riscv32 ,
-and
-.Sy riscv64
+.Sy or1k
 (due to toolchain problems with profiled code);
 .Dq yes
 on other platforms.
@@ -1809,7 +1837,7 @@ on
 .Sy aarch64 ,
 .Sy i386 ,
 and
-.Sy x86_64 ,
+.Sy x86_64 ;
 .Dq no
 on other platforms.
 .
@@ -1839,6 +1867,7 @@ Disable RELRO.
 on
 .Sy aarch64 ,
 .Sy i386 ,
+.Sy mips64 ,
 and
 .Sy x86_64 ;
 .Dq no
@@ -1937,6 +1966,7 @@ private library and tests.
 .DFLT
 .Dq yes
 on
+.Sy aarch64 ,
 .Sy i386 ,
 .Sy sparc ,
 and
@@ -1958,6 +1988,7 @@ without
 .Sq hf ,
 .Sy coldfire ,
 .Sy emips ,
+.Sy m68ksf ,
 .Sy or1k ,
 and
 .Sy sh3 .
@@ -2257,10 +2288,10 @@ on
 .Sy bebox ,
 .Sy cats ,
 .Sy dreamcast ,
-.Sy ews4800mips ,
 .Sy evbarm ,
 .Sy evbmips ,
 .Sy evbppc ,
+.Sy ews4800mips ,
 .Sy hp300 ,
 .Sy hpcarm ,
 .Sy hpcmips ,
@@ -2274,9 +2305,9 @@ on
 .Sy macppc ,
 .Sy netwinder ,
 .Sy newsmips ,
+.Sy ofppc ,
 .Sy pmax ,
 .Sy prep ,
-.Sy ofppc ,
 .Sy sgimips ,
 .Sy shark ,
 .Sy sparc ,
@@ -2305,6 +2336,7 @@ ZFS requires 64-bit atomic operations.
 on
 .Sy aarch64 ,
 .Sy amd64 ,
+.Sy riscv64 ,
 and
 .Sy sparc64 ;
 .Dq no
@@ -2537,7 +2569,7 @@ Supported (one or more, comma-separated) values:
 .It all
 All supported release versions.
 Equivalent to
-.Dq 50,60,70,80,90 .
+.Dq 50,60,70,80,90,100,110 .
 .It default
 Default value.
 Equivalent to
@@ -2569,6 +2601,16 @@ kernel option.
 .Nx
 9.x compatibility, via
 .Dv COMPAT_90
+kernel option.
+.It 100
+.Nx
+10.x compatibility, via
+.Dv COMPAT_100
+kernel option.
+.It 110
+.Nx
+11.x compatibility, via
+.Dv COMPAT_110
 kernel option.
 .El
 .DFLT
@@ -2834,6 +2876,7 @@ This imposes some performance penalty
 .Pp
 This is disabled internally for standalone programs in
 .Pa /usr/mdec .
+.NODEF NOFORT
 .NODEF NOSSP
 .NOVAR COVERITY_TOP_CONFIG No is defined
 .DFLT
@@ -2841,9 +2884,8 @@ This is disabled internally for standalone programs in
 on
 .Sy alpha ,
 .Sy hppa ,
-.Sy ia64 ,
 and
-.Sy mips ;
+.Sy ia64 ;
 .Dq yes
 on other platforms if
 .Sy USE_FORT=yes ;
@@ -2864,9 +2906,8 @@ or
 .Dq yes
 on
 .Sy aarch64 ,
-.Sy amd64 ,
 and
-.Sy sparc64 ,
+.Sy amd64 ;
 .Dq no
 on other platforms.
 .
@@ -3041,6 +3082,7 @@ Examples for settings regarding the pkgsrc collection.
 .Xr wpi 4 ,
 .Xr zyd 4 ,
 .Xr pam.conf 5 ,
+.Xr npf 7
 .Xr release 7 ,
 .Xr rumpkernel 7 ,
 .Xr security 7 ,
