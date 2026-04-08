@@ -1,4 +1,4 @@
-/*	$NetBSD: lightbar.c,v 1.4 2026/04/07 22:22:11 andvar Exp $	*/
+/*	$NetBSD: lightbar.c,v 1.5 2026/04/08 06:51:24 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 Michael Lorenz
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.4 2026/04/07 22:22:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lightbar.c,v 1.5 2026/04/08 06:51:24 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -164,7 +164,8 @@ lightbar_attach(device_t parent, device_t self, void *aux)
 	}
 	DPRINTF("timeout\n");
 done:
-	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT, 0x01fa0000);
+	bus_space_write_4(sc->sc_tag, sc->sc_bsh, I2S_FORMAT,
+	    CLKSRC_18MHz | MCLK_DIV4 | SCLK_DIV32 | SCLK_MASTER | SERIAL_32x);
 
 	x = obio_read_4(KEYLARGO_FCR1);
 	x |= I2S0CLKEN;
@@ -239,7 +240,7 @@ lightbar_update(struct lightbar_softc *sc, uint64_t *cp_time, uint64_t *prev,
 {
 	uint64_t total = 0;
 	int all, sys, idle, syst, i;
-	
+
 	for (i = 0; i < CPUSTATES; i++)
 		total += cp_time[i] - prev[i];
 	idle = (int)(cp_time[CP_IDLE] - prev[CP_IDLE]);
@@ -310,7 +311,7 @@ lightbar_thread(void *cookie)
 				sc->sc_dmabuf[i] = LEDMASK(latch);
 			}
 		}
-			
+
 		tsleep(cookie, PRI_NONE, "lights", hz / 5);
 	}
 	kthread_exit(0);

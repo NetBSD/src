@@ -1,4 +1,4 @@
-/*	$NetBSD: i2sreg.h,v 1.2 2025/09/08 08:06:19 macallan Exp $	*/
+/*	$NetBSD: i2sreg.h,v 1.3 2026/04/08 06:51:24 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2sreg.h,v 1.2 2025/09/08 08:06:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2sreg.h,v 1.3 2026/04/08 06:51:24 macallan Exp $");
 
 #ifndef I2SREG_H
 #define I2SREG_H
@@ -60,9 +60,13 @@ __KERNEL_RCSID(0, "$NetBSD: i2sreg.h,v 1.2 2025/09/08 08:06:19 macallan Exp $");
 #define  MCLK_DIV1	0x14000000	/*  MCLK = SRC */
 #define  MCLK_DIV3	0x13000000	/*  MCLK = SRC / 3 */
 #define  MCLK_DIV5	0x12000000	/*  MCLK = SRC / 5 */
+/* for others DIV = (reg + 1) * 2 */
+#define  MCLK_DIV4	0x01000000	/*  MCLK = SRC / 4 */
 #define SCLK_DIV	0x00f00000	/* SCLK = MCLK / DIV */
 #define  SCLK_DIV1	0x00800000
 #define  SCLK_DIV3	0x00900000
+/* for others DIV = (reg + 1) * 2 */
+#define  SCLK_DIV32	0x00f00000	/* used by lightbar */
 #define SCLK_MASTER	0x00080000	/* Master mode */
 #define SCLK_SLAVE	0x00000000	/* Slave mode */
 #define SERIAL_FORMAT	0x00070000
