@@ -373,8 +373,12 @@ typedef enum {
 	NPF_STAT_RACE_NAT,
 	/* Fragments. */
 	NPF_STAT_FRAGMENTS,
+	NPF_STAT_NOFRAGMENT,
 	NPF_STAT_REASSEMBLY,
 	NPF_STAT_REASSFAIL,
+	/* routing */
+	NPF_STAT_REROUTE,
+	NPF_STAT_NOREROUTE,
 	/* Other errors. */
 	NPF_STAT_ERROR,
 	/* nbuf non-contiguous cases. */

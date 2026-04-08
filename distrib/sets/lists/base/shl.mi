@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1033 2026/04/08 00:16:57 christos Exp $
+# $NetBSD: shl.mi,v 1.1034 2026/04/08 00:33:06 joe Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -134,6 +134,9 @@
 ./lib/npf/ext_rndblock.so			base-npf-shlib		compatfile,npf
 ./lib/npf/ext_rndblock.so.0			base-npf-shlib		compatfile,npf
 ./lib/npf/ext_rndblock.so.0.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_route.so				base-npf-shlib		compatfile,npf
+./lib/npf/ext_route.so.0			base-npf-shlib		compatfile,npf
+./lib/npf/ext_route.so.0.0			base-npf-shlib		compatfile,npf
 ./libexec/ld.elf_so				base-sys-shlib		dynamicroot
 ./usr/lib/i18n/libBIG5.so			base-i18n-shlib		compatfile
 ./usr/lib/i18n/libBIG5.so.5			base-i18n-shlib		compatfile

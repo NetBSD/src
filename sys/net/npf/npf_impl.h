@@ -457,6 +457,7 @@ void		npf_rprocset_destroy(npf_rprocset_t *);
 npf_rproc_t *	npf_rprocset_lookup(npf_rprocset_t *, const char *);
 void		npf_rprocset_insert(npf_rprocset_t *, npf_rproc_t *);
 int		npf_rprocset_export(const npf_rprocset_t *, nvlist_t *);
+int		is_rproc_route(npf_rproc_t *);
 
 npf_rproc_t *	npf_rproc_create(const nvlist_t *);
 void		npf_rproc_acquire(npf_rproc_t *);

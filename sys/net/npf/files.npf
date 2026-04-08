@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.24 2025/06/01 00:24:19 joe Exp $
+# $NetBSD: files.npf,v 1.25 2026/04/08 00:33:07 joe Exp $
 #
 # Public Domain.
 #
@@ -44,6 +44,7 @@ file	net/npf/lpm.c				npf
 file	net/npf/npf_ext_log.c			npf
 file	net/npf/npf_ext_normalize.c		npf
 file	net/npf/npf_ext_rndblock.c		npf
+file	net/npf/npf_ext_route.c			npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf
