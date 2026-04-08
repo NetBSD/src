@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.12 2026/01/07 14:48:48 nia Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.13 2026/04/08 16:51:28 htodd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -108,7 +108,7 @@
 			 (2*sizeof(u_int8_t)+sizeof(u_int16_t)+sizeof(u_word)))
 
 /*
- * This protocol defines some field sizes as "rest of ethernet packet".
+ * This protocol defines some field sizes as "rest of Ethernet packet".
  * There is no easy way to specify this in C, so we use a one character
  * field to denote it, and index past it to the end of the packet.
  */

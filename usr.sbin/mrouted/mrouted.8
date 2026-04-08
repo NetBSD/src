@@ -1,4 +1,4 @@
-.\"	$NetBSD: mrouted.8,v 1.18 2017/07/03 21:35:31 wiz Exp $
+.\"	$NetBSD: mrouted.8,v 1.19 2026/04/08 16:51:27 htodd Exp $
 .\"	$OpenBSD: mrouted.8,v 1.11 2003/03/03 15:14:28 deraadt Exp $
 .\" The mrouted program is covered by the license in the accompanying file
 .\" named "LICENSE".  Use of the mrouted program represents acceptance of
@@ -277,7 +277,7 @@ phyint atm0 disable
 #
 # This is an internal tunnel to another EE subnet.
 # Remove the default tunnel rate limit, since this
-# tunnel is over ethernets.
+# tunnel is over Ethernets.
 tunnel 192.168.5.4 192.168.55.101 metric 1 threshold 1
 	rate_limit 0
 #

@@ -1,4 +1,4 @@
-.\"	$NetBSD: rbootd.8,v 1.13 2014/02/24 07:23:44 skrll Exp $
+.\"	$NetBSD: rbootd.8,v 1.14 2026/04/08 16:51:28 htodd Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
 .\"	for Software Science (CSS).
@@ -96,14 +96,14 @@ list of boot file names.
 An Ethernet address is specified in hexadecimal with each of its six octets
 separated by a colon.
 The boot file names come from the boot file directory.
-The ethernet address and boot file(s) must be separated by white-space
+The Ethernet address and boot file(s) must be separated by white-space
 and/or comma characters.
 A pound sign causes the remainder of a line to be ignored.
 .Pp
 Here is a sample configuration file:
 .Bl -column 08:00:09:0:66:ad SYSHPBSD,SYSHPUX "# vandy (anything)"
 .It #
-.It # ethernet addr	boot file(s)	comments
+.It # Ethernet addr	boot file(s)	comments
 .It #
 .It 08:00:09:0:66:ad	SYSHPBSD	# snake (4.3BSD)
 .It 08:00:09:0:59:5b		# vandy (anything)

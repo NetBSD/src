@@ -1,4 +1,4 @@
-/*	$NetBSD: pf-linux2.c,v 1.2 2020/10/27 17:07:14 abs Exp $	*/
+/*	$NetBSD: pf-linux2.c,v 1.3 2026/04/08 16:51:27 htodd Exp $	*/
 
 /*
  * General Purpose AppleTalk Packet Filter Interface
@@ -23,7 +23,7 @@
  */
 
 #include "port.h"
-__RCSID("$NetBSD: pf-linux2.c,v 1.2 2020/10/27 17:07:14 abs Exp $");
+__RCSID("$NetBSD: pf-linux2.c,v 1.3 2026/04/08 16:51:27 htodd Exp $");
 
 /*
  * include header files
@@ -143,7 +143,7 @@ setup_pf(int s, int typ, u_short prot)
 }
 
 /*
- * get the interface ethernet address
+ * get the interface Ethernet address
  *
  */
 
@@ -230,7 +230,7 @@ pfDelMulti(int s, char *interface, u_char *addr)
 }
 
 /*
- * return 1 if ethernet interface capable of multiple opens
+ * return 1 if Ethernet interface capable of multiple opens
  *
  */
 

@@ -1,4 +1,4 @@
-/* $NetBSD: wakeonlan.c,v 1.2 2012/12/15 04:40:33 jakllsch Exp $ */
+/* $NetBSD: wakeonlan.c,v 1.3 2026/04/08 16:51:28 htodd Exp $ */
 
 /*
  * Copyright (C) 2006, 2007, 2008, 2009, 2010 Marc Balmer <marc@msys.ch>
@@ -200,7 +200,7 @@ main(int argc, char *argv[])
 	n = 2;
 	if (bind_if_to_bpf(argv[1], bpf) == -1) {
 		if (find_ether(ifname, sizeof(ifname)))
-			err(EXIT_FAILURE, "Failed to determine ethernet "
+			err(EXIT_FAILURE, "Failed to determine Ethernet "
 			    "interface");
 		if (bind_if_to_bpf(ifname, bpf) == -1)
 			err(EXIT_FAILURE, "Cannot bind to interface `%s'",

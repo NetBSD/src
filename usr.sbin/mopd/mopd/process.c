@@ -1,4 +1,4 @@
-/*	$NetBSD: process.c,v 1.21 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: process.c,v 1.22 2026/04/08 16:51:27 htodd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: process.c,v 1.21 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: process.c,v 1.22 2026/04/08 16:51:27 htodd Exp $");
 #endif
 
 #include "os.h"
@@ -490,7 +490,7 @@ mopProcessDL(FILE *fd, struct if_info *ii, const u_char *pkt, int *idx,
 			/* would cause a question to NML (DECnet) if this  */
 			/* node is known and if so what image to load. But */
 			/* we don't have DECnet so we don't have anybody   */
-			/* to ask. My solution is to use the ethernet addr */
+			/* to ask. My solution is to use the Ethernet addr */
 			/* as filename. Implementing a database would be   */
 			/* overkill.					   */
 			snprintf(pfile, sizeof(pfile),

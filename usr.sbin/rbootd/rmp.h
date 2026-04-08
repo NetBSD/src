@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp.h,v 1.6 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: rmp.h,v 1.7 2026/04/08 16:51:28 htodd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -43,7 +43,7 @@
  */
 
 /*
- *  Define MIN/MAX sizes of RMP (ethernet) packet.
+ *  Define MIN/MAX sizes of RMP (Ethernet) packet.
  *  For ease of computation, the 4 octet CRC field is not included.
  *
  *  MCLBYTES is for bpfwrite(); it is adamant about using a cluster.

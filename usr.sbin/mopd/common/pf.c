@@ -1,4 +1,4 @@
-/*	$NetBSD: pf.c,v 1.13 2016/06/08 01:11:49 christos Exp $	*/
+/*	$NetBSD: pf.c,v 1.14 2026/04/08 16:51:27 htodd Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: pf.c,v 1.13 2016/06/08 01:11:49 christos Exp $");
+__RCSID("$NetBSD: pf.c,v 1.14 2026/04/08 16:51:27 htodd Exp $");
 #endif
 
 #include "os.h"
@@ -120,7 +120,7 @@ pfInit(const char *interface, int mode, u_short protocol, int typ)
 		return(-1);
 	}
 	if (dlt != DLT_EN10MB) {
-      		mopLogWarnX("pfInit: %s is not ethernet", device);
+      		mopLogWarnX("pfInit: %s is not Ethernet", device);
 		return(-1);
 	}
 	if (promisc) {

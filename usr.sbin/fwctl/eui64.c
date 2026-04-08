@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64.c,v 1.3 2010/07/31 07:05:32 cegger Exp $	*/
+/*	$NetBSD: eui64.c,v 1.4 2026/04/08 16:51:27 htodd Exp $	*/
 /*
  * Copyright 2004 The Aerospace Corporation.  All rights reserved.
  *
@@ -160,7 +160,7 @@ eui64_aton(const char *a, struct eui64 *e)
 	    &o0, &o1, &o2, &o3, &o4, &o5, &o6, &o7);
 	if (i == EUI64_LEN)
 		goto good;
-	/* ethernet form */
+	/* Ethernet form */
 	i = sscanf(a, "%x:%x:%x:%x:%x:%x:%x:%x",
 	    &o0, &o1, &o2, &o3, &o4, &o5, &o6, &o7);
 	if (i == EUI64_LEN)

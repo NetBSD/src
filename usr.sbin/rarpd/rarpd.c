@@ -1,4 +1,4 @@
-/*	$NetBSD: rarpd.c,v 1.61 2023/03/26 19:10:34 andvar Exp $	*/
+/*	$NetBSD: rarpd.c,v 1.62 2026/04/08 16:51:28 htodd Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -25,7 +25,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990\
 #endif /* not lint */
 
 #ifndef lint
-__RCSID("$NetBSD: rarpd.c,v 1.61 2023/03/26 19:10:34 andvar Exp $");
+__RCSID("$NetBSD: rarpd.c,v 1.62 2026/04/08 16:51:28 htodd Exp $");
 #endif
 
 
@@ -330,7 +330,7 @@ rarp_open(char *device)
 	}
 	(void)strlcpy(ifr.ifr_name, device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t) & ifr) < 0) {
-		if (aflag) {	/* for -a skip non-ethernet interfaces */
+		if (aflag) {	/* for -a skip non-Ethernet interfaces */
 			close(fd);
 			return(-1);
 		}
@@ -344,11 +344,11 @@ rarp_open(char *device)
 		/* NOTREACHED */
 	}
 	if (dlt != DLT_EN10MB) {
-		if (aflag) {	/* for -a skip non-ethernet interfaces */
+		if (aflag) {	/* for -a skip non-Ethernet interfaces */
 			close(fd);
 			return(-1);
 		}
-		rarperr(FATAL, "%s is not an ethernet", device);
+		rarperr(FATAL, "%s is not an Ethernet", device);
 		/* NOTREACHED */
 	}
 	/* Set filter program. */
@@ -625,7 +625,7 @@ rarp_process(struct if_info *ii, u_char *pkt)
 #endif
 }
 /*
- * Lookup the ethernet address of the interface attached to the BPF
+ * Lookup the Ethernet address of the interface attached to the BPF
  * file descriptor 'fd'; return it in 'eaddr'.
  */
 static void
@@ -704,7 +704,7 @@ lookup_ipaddr(char *ifname, u_int32_t *addrp, u_int32_t *netmaskp)
 	(void)close(fd);
 }
 /*
- * Poke the kernel arp tables with the ethernet/ip address combination
+ * Poke the kernel arp tables with the Ethernet/ip address combination
  * given.  When processing a reply, we must do this so that the booting
  * host (i.e. the guy running rarpd), won't try to ARP for the hardware
  * address of the guy being booted (he cannot answer the ARP).
