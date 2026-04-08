@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.106 2026/04/08 00:54:59 kim Exp $ */
+/*	$NetBSD: df.c,v 1.107 2026/04/08 00:58:36 kim Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.106 2026/04/08 00:54:59 kim Exp $");
+__RCSID("$NetBSD: df.c,v 1.107 2026/04/08 00:58:36 kim Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,12 +397,12 @@ regetmntinfo(struct statvfs **mntbufp, size_t count)
 }
 
 static void
-prthumanval(bool bytes, int64_t nbytes, int width)
+prthumanval(bool bytes, int64_t value, int width)
 {
 	char buf[6];
 
-	(void)humanize_number(buf, sizeof(buf) - (nbytes < 0 ? 0 : 1),
-	    nbytes, "", HN_AUTOSCALE,
+	(void)humanize_number(buf, sizeof(buf) - (value < 0 ? 0 : 1),
+	    value, "", HN_AUTOSCALE,
 	    (bytes ? HN_B : HN_DIVISOR_1000) |
 	    HN_NOSPACE | HN_DECIMAL | fudgeunits);
 
