@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.393 2026/04/08 00:16:57 christos Exp $
+# $NetBSD: shl.mi,v 1.394 2026/04/08 09:33:30 joe Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -41,6 +41,7 @@
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_rndblock.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
+./usr/libdata/debug/lib/npf/ext_route.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/libexec/ld.elf_so.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/usr/lib					base-sys-usr	debug,compatdir
 ./usr/libdata/debug/usr/lib/i18n/libBIG5.so.5.0.debug		comp-i18n-debug	debug,compatfile
@@ -338,9 +339,11 @@
 ./usr/libdata/debug/usr/lib/npf/ext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/ext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/ext_route.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_log.so.0.0.debug		comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_normalise.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/npf/libext_rndblock.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
+./usr/libdata/debug/usr/lib/npf/libext_route.so.0.0.debug	comp-obsolete	debug,compatfile,npf,obsolete
 ./usr/libdata/debug/usr/lib/private/libssh.so.50.0.debug	comp-secsh-debug	ssh,debug,compatfile
 ./usr/libdata/debug/usr/lib/security/pam_afslog.so.4.debug	base-sys-debug	debug,compatfile,pam
 ./usr/libdata/debug/usr/lib/security/pam_chroot.so.4.debug	base-sys-debug	debug,compatfile,pam

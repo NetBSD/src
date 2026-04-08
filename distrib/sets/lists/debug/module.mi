@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.34 2026/02/12 04:04:36 kre Exp $
+# $NetBSD: module.mi,v 1.35 2026/04/08 09:33:30 joe Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
@@ -305,6 +305,8 @@
 ./usr/libdata/debug/@MODULEDIR@/npf_ext_normalize/npf_ext_normalize.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/npf_ext_rndblock			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/npf_ext_rndblock/npf_ext_rndblock.kmod.debug	modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/npf_ext_route			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/npf_ext_route/npf_ext_route.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ntfs				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ntfs/ntfs.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/null				modules-base-kernel	kmod,debug
