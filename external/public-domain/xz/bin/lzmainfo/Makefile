@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2016/01/28 19:40:29 christos Exp $
+# $NetBSD: Makefile,v 1.3 2026/04/08 21:00:50 christos Exp $
 
 PROG=	lzmainfo
 BINDIR=	/usr/bin
@@ -7,8 +7,8 @@ SRCS=	lzmainfo.c
 #args.c coder.c file_io.c hardware.c list.c main.c \
 #	message.c options.c signals.c suffix.c util.c
 SRCS+=	tuklib_exit.c tuklib_cpucores.c tuklib_open_stdxxx.c \
-	tuklib_mbstr_fw.c tuklib_mbstr_width.c \
-	tuklib_physmem.c tuklib_progname.c
+	tuklib_mbstr_fw.c tuklib_mbstr_width.c tuklib_mbstr_nonprint.c \
+	tuklib_mbstr_wrap.c tuklib_physmem.c tuklib_progname.c
 
 #USETBL=	yes
 

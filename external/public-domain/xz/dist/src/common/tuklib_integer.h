@@ -642,6 +642,9 @@ write64le(uint8_t *buf, uint64_t num)
 // compromise for now.
 //
 // __builtin_assume_aligned is support by GCC >= 4.7 and clang >= 3.6.
+#ifdef __lint__
+#	define tuklib_assume_aligned(ptr, align) (const void *)(ptr)
+#else
 #ifdef HAVE___BUILTIN_ASSUME_ALIGNED
 #	define tuklib_assume_aligned(ptr, align) \
 		__builtin_assume_aligned(ptr, align)
@@ -650,6 +653,7 @@ write64le(uint8_t *buf, uint64_t num)
 #	ifndef TUKLIB_FAST_UNALIGNED_ACCESS
 #		define TUKLIB_USE_UNSAFE_ALIGNED_READS 1
 #	endif
+#endif
 #endif
 
 

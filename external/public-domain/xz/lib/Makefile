@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2024/11/22 16:07:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.13 2026/04/08 21:00:52 christos Exp $
 
 .include <bsd.init.mk>
 
@@ -33,15 +33,15 @@ CPPFLAGS+=	-DTUKLIB_SYMBOL_PREFIX=lzma_
 CPPFLAGS+=	-DNETBSD_NATIVE_SHA256
 
 .PATH:	${XZSRCDIR}/src/common
-SRCS+=	tuklib_physmem.c tuklib_cpucores.c
+SRCS+=	tuklib_physmem.c tuklib_cpucores.c tuklib_mbstr_nonprint.c
+SRCS+=	tuklib_mbstr_width.c tuklib_mbstr_wrap.c lzip_decoder.c
+SRCS+=	file_info.c filter_decoder.c string_conversion.c
 
 .PATH:	${XZSRCDIR}/src/liblzma/check
-SRCS+=	check.c crc32_table.c crc64_table.c
+SRCS+=	check.c 
 SRCS+=	crc32_fast.c crc64_fast.c
 
-.if defined(HOSTLIB)
 SRCS+=	sha256.c
-.endif
 
 .PATH:	${XZSRCDIR}/src/liblzma/common
 SRCS+=	common.c block_util.c easy_preset.c filter_common.c \
@@ -60,7 +60,7 @@ SRCS+=	common.c block_util.c easy_preset.c filter_common.c \
 	stream_decoder.c stream_flags_decoder.c vli_decoder.c
 
 .if !defined(HOSTLIB)
-SRCS+=	 stream_encoder_mt.c
+SRCS+=	 stream_encoder_mt.c stream_decoder_mt.c
 .endif
 
 .PATH:	${XZSRCDIR}/src/liblzma/delta
@@ -80,7 +80,7 @@ SRCS+=	price_table.c
 
 .PATH:	${XZSRCDIR}/src/liblzma/simple
 SRCS+=	simple_coder.c simple_encoder.c simple_decoder.c \
-	arm.c armthumb.c ia64.c powerpc.c sparc.c x86.c
+	arm.c arm64.c armthumb.c ia64.c powerpc.c riscv.c sparc.c x86.c
 
 FILES+=			liblzma.pc
 FILESDIR_liblzma.pc=	/usr/lib/pkgconfig
