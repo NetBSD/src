@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       create_compress_files.c
@@ -8,19 +10,21 @@
 //
 //  Author:     Lasse Collin
 //
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
-//
 ///////////////////////////////////////////////////////////////////////////////
 
 #include "sysdefs.h"
 #include <stdio.h>
 
 
+// If a command-line argument was given, only create the file if its
+// name was specified on the command line. If no args were given then
+// all files are created.
+//
 // Avoid re-creating the test files every time the tests are run.
-#define create_test(name) \
+#define maybe_create_test(argc, argv, name) \
 do { \
-	if (!file_exists("compress_generated_" #name)) { \
+	if ((argc < 2 || strcmp(argv[1], "compress_generated_" #name) == 0) \
+			&& !file_exists("compress_generated_" #name)) { \
 		FILE *file = file_create("compress_generated_" #name); \
 		write_ ## name(file); \
 		file_finish(file, "compress_generated_" #name); \
@@ -53,7 +57,7 @@ file_create(const char *filename)
 
 	if (file == NULL) {
 		perror(filename);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 
 	return file;
@@ -68,7 +72,7 @@ file_finish(FILE *file, const char *filename)
 
 	if (ferror_fail || fclose_fail) {
 		perror(filename);
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 }
 
@@ -80,7 +84,7 @@ write_abc(FILE *file)
 {
 	for (size_t i = 0; i < 12345; ++i)
 		if (fwrite("abc\n", 4, 1, file) != 1)
-			exit(1);
+			exit(EXIT_FAILURE);
 }
 
 
@@ -94,10 +98,10 @@ write_random(FILE *file)
 	for (size_t i = 0; i < 123456; ++i) {
 		n = 101771 * n + 71777;
 
-		putc(n & 0xFF, file);
-		putc((n >> 8) & 0xFF, file);
-		putc((n >> 16) & 0xFF, file);
-		putc(n >> 24, file);
+		putc((uint8_t)(n), file);
+		putc((uint8_t)(n >> 8), file);
+		putc((uint8_t)(n >> 16), file);
+		putc((uint8_t)(n >> 24), file);
 	}
 }
 
@@ -149,10 +153,10 @@ write_text(FILE *file)
 
 
 int
-main(void)
+main(int argc, char **argv)
 {
-	create_test(abc);
-	create_test(random);
-	create_test(text);
-	return 0;
+	maybe_create_test(argc, argv, abc);
+	maybe_create_test(argc, argv, random);
+	maybe_create_test(argc, argv, text);
+	return EXIT_SUCCESS;
 }
