@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11.c,v 1.73 2025/10/08 21:02:16 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11.c,v 1.78 2026/03/03 09:57:25 dtucker Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  * Copyright (c) 2014 Pedro Martelletto. All rights reserved.
@@ -21,7 +21,6 @@
 #include <stdarg.h>
 #include <stdio.h>
 
-#include <ctype.h>
 #include <string.h>
 #include <dlfcn.h>
 
@@ -927,8 +926,8 @@ pkcs11_fetch_ecdsa_pubkey(struct pkcs11_provider *p, CK_ULONG slotidx,
 		ossl_error("d2i_ASN1_OCTET_STRING failed");
 		goto fail;
 	}
-	attrp = octet->data;
-	if (o2i_ECPublicKey(&ec, &attrp, octet->length) == NULL) {
+	attrp = ASN1_STRING_get0_data(octet);
+	if (o2i_ECPublicKey(&ec, &attrp, ASN1_STRING_length(octet)) == NULL) {
 		ossl_error("o2i_ECPublicKey failed");
 		goto fail;
 	}
@@ -1465,7 +1464,7 @@ pkcs11_fetch_certs(struct pkcs11_provider *p, CK_ULONG slotidx,
 		case CKC_X_509:
 			if (pkcs11_fetch_x509_pubkey(p, slotidx, &obj,
 			    &key, &label) != 0) {
-				error("failed to fetch key");
+				debug_f("failed to fetch key");
 				continue;
 			}
 			break;
@@ -1590,7 +1589,7 @@ pkcs11_fetch_keys(struct pkcs11_provider *p, CK_ULONG slotidx,
 		}
 
 		if (key == NULL) {
-			error("failed to fetch key");
+			debug_f("failed to fetch key");
 			continue;
 		}
 		note_key(p, slotidx, __func__, key);
@@ -1629,7 +1628,7 @@ fail:
 
 static struct sshkey *
 pkcs11_rsa_generate_private_key(struct pkcs11_provider *p, CK_ULONG slotidx,
-    char *label, CK_ULONG bits, CK_BYTE keyid, u_int32_t *err)
+    char *label, CK_ULONG bits, CK_BYTE keyid, uint32_t *err)
 {
 	struct pkcs11_slotinfo	*si;
 	char			*plabel = label ? label : "";
@@ -1747,7 +1746,7 @@ static struct ec_curve_info {
 
 static struct sshkey *
 pkcs11_ecdsa_generate_private_key(struct pkcs11_provider *p, CK_ULONG slotidx,
-    char *label, CK_ULONG bits, CK_BYTE keyid, u_int32_t *err)
+    char *label, CK_ULONG bits, CK_BYTE keyid, uint32_t *err)
 {
 	struct pkcs11_slotinfo	*si;
 	char			*plabel = label ? label : "";
@@ -1865,7 +1864,7 @@ pkcs11_register_provider(char *provider_id, char *pin,
 	p = xcalloc(1, sizeof(*p));
 	p->name = xstrdup(provider_id);
 	p->handle = handle;
-	/* setup the pkcs11 callbacks */
+	/* set up the pkcs11 callbacks */
 	if ((rv = (*getfunctionlist)(&f)) != CKR_OK) {
 		error("C_GetFunctionList for provider %s failed: %lu",
 		    provider_id, rv);
@@ -2077,7 +2076,7 @@ pkcs11_key_free(struct sshkey *key)
 #ifdef WITH_PKCS11_KEYGEN
 struct sshkey *
 pkcs11_gakp(char *provider_id, char *pin, unsigned int slotidx, char *label,
-    unsigned int type, unsigned int bits, unsigned char keyid, u_int32_t *err)
+    unsigned int type, unsigned int bits, unsigned char keyid, uint32_t *err)
 {
 	struct pkcs11_provider	*p = NULL;
 	struct pkcs11_slotinfo	*si;
@@ -2143,7 +2142,7 @@ out:
 
 struct sshkey *
 pkcs11_destroy_keypair(char *provider_id, char *pin, unsigned long slotidx,
-    unsigned char keyid, u_int32_t *err)
+    unsigned char keyid, uint32_t *err)
 {
 	struct pkcs11_provider	*p = NULL;
 	struct pkcs11_slotinfo	*si;

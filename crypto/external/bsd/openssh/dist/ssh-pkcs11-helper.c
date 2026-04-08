@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.29 2025/07/30 04:27:42 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.31 2026/02/11 17:03:17 dtucker Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,7 +16,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/queue.h>
 #include <sys/time.h>
 
 #include <stdlib.h>
@@ -216,6 +215,8 @@ main(int argc, char **argv)
 	extern char *__progname;
 	struct pollfd pfd[2];
 
+	sanitise_stdfd();
+	closefrom(STDERR_FILENO + 1);
 	log_init(__progname, log_level, log_facility, log_stderr);
 
 	while ((ch = getopt(argc, argv, "v")) != -1) {

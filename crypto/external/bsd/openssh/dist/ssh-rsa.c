@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-rsa.c,v 1.82 2025/10/03 00:08:02 djm Exp $ */
+/* $OpenBSD: ssh-rsa.c,v 1.84 2026/02/14 00:18:34 jsg Exp $ */
 /*
  * Copyright (c) 2000, 2003 Markus Friedl <markus@openbsd.org>
  *
@@ -19,8 +19,8 @@
 
 #include <openssl/bn.h>
 #include <openssl/evp.h>
-#include <openssl/err.h>
 
+#include <stdarg.h>
 #include <string.h>
 
 #include "sshbuf.h"
@@ -28,7 +28,6 @@
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
 #include "digest.h"
-#include "log.h"
 
 static u_int
 ssh_rsa_size(const struct sshkey *k)
