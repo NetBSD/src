@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.27 2026/04/08 00:16:16 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.28 2026/04/09 15:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,6 +65,8 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/update.h>
+
+#include "pfilter.h"
 
 /***
  *** Client
@@ -2703,6 +2705,7 @@ ns_client_checkacl(ns_client_t *client, isc_sockaddr_t *sockaddr,
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
 			      NS_LOGMODULE_CLIENT, log_level, "%s denied",
 			      opname);
+		pfilter_notify(result, client, opname);
 	}
 	return result;
 }

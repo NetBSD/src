@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.22 2026/04/08 00:15:44 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.23 2026/04/09 15:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,8 @@
 #include <dns/view.h>
 
 #include <dlz/dlz_dlopen_driver.h>
+
+#include "ns/pfilter.h"
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 #include <gperftools/profiler.h>
@@ -1553,6 +1555,9 @@ main(int argc, char *argv[]) {
 	named_os_init(program_name);
 
 	parse_command_line(argc, argv);
+
+	// Should we have a command line flag?
+	pfilter_enable();
 
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {

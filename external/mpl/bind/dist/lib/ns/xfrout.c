@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.16 2026/01/29 18:37:56 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.17 2026/04/09 15:54:52 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -47,6 +47,8 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/xfrout.h>
+
+#include "pfilter.h"
 
 /*! \file
  * \brief
@@ -826,6 +828,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					      ISC_LOG_ERROR,
 					      "zone transfer '%s/%s' denied",
 					      _buf1, _buf2);
+				pfilter_notify(result, client, "zonexfr");
 				goto cleanup;
 			}
 			if (result != ISC_R_SUCCESS) {
