@@ -1,4 +1,4 @@
-.\" $NetBSD: makedev.3,v 1.2 2011/04/01 06:03:06 jruoho Exp $
+.\" $NetBSD: makedev.3,v 1.3 2026/04/09 16:10:49 christos Exp $
 .\"
 .\" Copyright (c) 2008 Ed Schouten <ed@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/share/man/man3/makedev.3,v 1.2 2008/09/28 20:26:16 ed Exp $
 .\"
-.Dd April 1, 2011
+.Dd April 9, 2026
 .Dt MAKEDEV 3
 .Os
 .Sh NAME
@@ -64,13 +64,17 @@ while the minor number identifies an instance within the device class.
 .Sh RETURN VALUES
 The
 .Fn major
-macro returns a device major number that has a value between 0 and 255.
+macro returns a device major number that has a value between 0 and 4095 (0xfff).
 The
 .Fn minor
-macro returns a device minor number whose value can span the complete
-range of an
-.Vt int .
+macro returns a device minor number that has a value between 0 and 1048575
+(0xfffff).
 .Sh SEE ALSO
 .Xr mknod 2 ,
 .Xr devname 3 ,
 .Xr MAKEDEV 8
+.Sh HISTORY
+The major and minor numbers used to support values between 0 and 255
+(0xff) until
+.Nx 1.3
+when the macros were changed to support their current ranges.
