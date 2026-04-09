@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.19 2026/04/07 13:57:36 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.20 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.19 2026/04/07 13:57:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.20 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -238,6 +238,36 @@ machine_init_common(paddr_t nextpa)
 #endif
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 }
+
+int
+mm_md_physacc_regular(paddr_t pa, vm_prot_t prot)
+{
+	int i;
+
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
+			continue;
+		}
+		if (pa < phys_seg_list[i].ps_start) {
+			continue;
+		}
+		if (pa >= phys_seg_list[i].ps_end) {
+			continue;
+		}
+		return 0;
+	}
+	return EFAULT;
+}
+
+/*
+ * mm_md_physacc_common is the standard implementation for all
+ * m68k platforms, and covers regular physical memory.  If a
+ * platform wants to include other ranges, it can simply
+ * define its own mm_md_physacc(), call mm_md_physacc_common()
+ * first, and then check its own ranges if mm_md_physacc_common()
+ * does not return 0.
+ */
+__weak_alias(mm_md_physacc, mm_md_physacc_regular);
 
 /*
  * Set registers on exec.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.38 2026/04/09 12:49:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.39 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2026/04/09 12:49:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -516,23 +516,3 @@ const uint16_t ipl2psl_table[NIPL] = {
 	[IPL_SCHED]      = PSL_S | PSL_IPL6,
 	[IPL_HIGH]       = PSL_S | PSL_IPL7,
 };
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-	int i;
-
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
-			continue;
-		}
-		if (pa < phys_seg_list[i].ps_start) {
-			continue;
-		}
-		if (pa >= phys_seg_list[i].ps_end) {
-			continue;
-		}
-		return 0;
-	}
-	return EFAULT;
-}

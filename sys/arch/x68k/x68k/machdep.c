@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2026/04/09 13:34:51 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 2026/04/09 14:36:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2026/04/09 13:34:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2026/04/09 14:36:56 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -826,26 +826,15 @@ cpu_intr_p(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-	int i;
+	int rv = mm_md_physacc_regular(pa, prot);
 
-	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
-			continue;
+	if (rv != 0) {
+		/* I/O space */
+		if (INTIOBASE <= pa && pa < INTIOTOP) {
+			rv = kauth_authorize_machdep(kauth_cred_get(),
+			    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
 		}
-		if (pa < phys_seg_list[i].ps_start) {
-			continue;
-		}
-		if (pa >= phys_seg_list[i].ps_end) {
-			continue;
-		}
-		return 0;
 	}
 
-	/* I/O space */
-	if (INTIOBASE <= pa && pa < INTIOTOP) {
-		return kauth_authorize_machdep(kauth_cred_get(),
-		    KAUTH_MACHDEP_UNMANAGEDMEM, NULL, NULL, NULL, NULL);
-	}
-
-	return EFAULT;
+	return rv;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.266 2026/04/09 12:49:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.267 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.266 2026/04/09 12:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -901,12 +901,15 @@ parityerrorfind(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
+	int rv = mm_md_physacc_regular(pa, prot);
 
-	/*
-	 * On the hp300, physical RAM is always located at the end of
-	 * the physical address space, i.e. from 0xffffffff to lowram.
-	 */
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
+	if (rv != 0) {
+		/* phys_seg_list[] doesn't include the last page of RAM. */
+		if (pa >= MAXADDR) {
+			rv = 0;
+		}
+	}
+	return rv;
 }
 
 int

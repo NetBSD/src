@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.88 2026/04/08 03:47:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.89 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.88 2026/04/08 03:47:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -523,11 +523,4 @@ nmihand(struct frame frame)
 #endif
 
 	innmihand = 0;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

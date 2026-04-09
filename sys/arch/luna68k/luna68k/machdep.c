@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.128 2026/04/09 12:49:34 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.129 2026/04/09 14:36:55 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.128 2026/04/09 12:49:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -608,10 +608,3 @@ romcngetc(dev_t dev)
 	return c;
 }
 #endif
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
-}

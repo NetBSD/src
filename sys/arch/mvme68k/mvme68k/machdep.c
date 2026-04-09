@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.190 2026/04/09 12:49:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.190 2026/04/09 12:49:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -650,11 +650,4 @@ mvme68k_abort(const char *cp)
 	printf("%s ignored\n", cp);
 #endif /* PANICBUTTON */
 #endif /* DDB */
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }

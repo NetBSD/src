@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.33 2026/04/05 16:26:12 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.34 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,9 @@
  */
 
 #ifdef _KERNEL
+
+#include <uvm/uvm_prot.h>	/* for vm_prot_t */
+
 /*
  * All m68k ports must provide these globals.
  */
@@ -161,6 +164,7 @@ void	fpu_init(void);
 
 /* machdep.c */
 void	machine_init_common(paddr_t);
+int	mm_md_physacc_regular(paddr_t, vm_prot_t);
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);

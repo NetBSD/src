@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.141 2026/04/09 12:49:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.142 2026/04/09 14:36:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2026/04/09 12:49:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2026/04/09 14:36:55 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -481,11 +481,4 @@ nmihand(void *frame)
 	innmihand = 0;
 
 	return 0;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
 }
