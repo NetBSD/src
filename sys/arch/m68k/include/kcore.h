@@ -1,4 +1,4 @@
-/*	$NetBSD: kcore.h,v 1.9 2025/11/26 23:02:11 thorpej Exp $	*/
+/*	$NetBSD: kcore.h,v 1.10 2026/04/09 12:49:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -166,5 +166,9 @@ struct cpu_kcore_hdr {
 };
 
 typedef struct cpu_kcore_hdr cpu_kcore_hdr_t;
+
+#ifdef _KERNEL
+void	dumpsys(void);
+#endif
 
 #endif /* _M68K_KCORE_H_ */

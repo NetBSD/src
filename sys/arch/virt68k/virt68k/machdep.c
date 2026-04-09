@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.37 2026/04/08 03:47:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.38 2026/04/09 12:49:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2026/04/08 03:47:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.38 2026/04/09 12:49:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -106,18 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.37 2026/04/08 03:47:54 thorpej Exp $")
 
 /* prototypes for local functions */
 void	identifycpu(void);
-void	initcpu(void);
-void	dumpsys(void);
-
-int	cpu_dumpsize(void);
-int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
-void	cpu_init_kcore_hdr(void);
-u_long	cpu_dump_mempagecnt(void);
-
-/*
- * Machine-independent crash dump header info.
- */
-cpu_kcore_hdr_t cpu_kcore_hdr;
 
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
@@ -249,9 +237,6 @@ cpu_startup(void)
 	/* Initialize the FPU, if present. */
 	fpu_init();
 
-	/* Initialize the kernel crash dump header. */
-	cpu_init_kcore_hdr();
-
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
@@ -278,11 +263,6 @@ cpu_startup(void)
 		    bid->bootinfo_mem_segments_ignored_bytes,
 		    bid->bootinfo_mem_segments_ignored);
 	}
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
 }
 
 static const char *
@@ -508,261 +488,6 @@ cpu_reboot(int howto, char *bootstr)
 	for (;;) {
 		/* spin forever. */
 	}
-}
-
-/*
- * Initialize the kernel crash dump header.
- */
-void
-cpu_init_kcore_hdr(void)
-{
-	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
-	size_t size;
-	int i, j;
-
-	for (i = 0, j = 0; i < VM_PHYSSEG_MAX; i++) {
-		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
-		if (size == 0) {
-			continue;
-		}
-		ram_segs[j].start = phys_seg_list[i].ps_start;
-		ram_segs[j].size = size;
-		j++;
-	}
-}
-
-/*
- * Compute the size of the machine-dependent crash dump header.
- * Returns size in disk blocks.
- */
-
-#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
-#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
-
-int
-cpu_dumpsize(void)
-{
-
-	return btodb(MDHDRSIZE);
-}
-
-/*
- * Calculate size of RAM (in pages) to be dumped.
- */
-u_long
-cpu_dump_mempagecnt(void)
-{
-	u_long i, n;
-	size_t size;
-
-	for (n = 0, i = 0; i < VM_PHYSSEG_MAX; i++) {
-		size = phys_seg_list[i].ps_end - phys_seg_list[i].ps_start;
-		if (size == 0) {
-			continue;
-		}
-		n += atop(size);
-	}
-	return n;
-}
-
-/*
- * Called by dumpsys() to dump the machine-dependent header.
- */
-int
-cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
-{
-	int buf[MDHDRSIZE / sizeof(int)];
-	cpu_kcore_hdr_t *chdr;
-	kcore_seg_t *kseg;
-	int error;
-
-	kseg = (kcore_seg_t *)buf;
-	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
-	    sizeof(int)];
-
-	/* Create the segment header. */
-	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
-
-	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
-	*blknop += btodb(sizeof(buf));
-	return error;
-}
-
-/*
- * These variables are needed by /sbin/savecore
- */
-uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first PAGE_SIZE of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-void
-cpu_dumpconf(void)
-{
-	int nblks, dumpblks;	/* size of dump area */
-
-	if (dumpdev == NODEV)
-		goto bad;
-	nblks = bdev_size(dumpdev);
-	if (nblks <= ctod(1))
-		goto bad;
-
-	dumpblks = cpu_dumpsize();
-	if (dumpblks < 0)
-		goto bad;
-	dumpblks += ctod(cpu_dump_mempagecnt());
-
-	/* If dump won't fit (incl. room for possible label), punt. */
-	if (dumpblks > (nblks - ctod(1)))
-		goto bad;
-
-	/* Put dump at end of partition */
-	dumplo = nblks - dumpblks;
-
-	/* dumpsize is in page units, and doesn't include headers. */
-	dumpsize = cpu_dump_mempagecnt();
-	return;
-
- bad:
-	dumpsize = 0;
-}
-
-/*
- * Dump physical memory onto the dump device.  Called by cpu_reboot().
- */
-void
-dumpsys(void)
-{
-	const struct bdevsw *bdev;
-	u_long totalbytesleft, bytes, i, n, memcl;
-	u_long maddr;
-	int psize;
-	daddr_t blkno;
-	int (*dump)(dev_t, daddr_t, void *, size_t);
-	int error;
-
-	/* XXX Should save registers. */
-
-	if (dumpdev == NODEV)
-		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL || bdev->d_psize == NULL)
-		return;
-
-	/*
-	 * For dumps during autoconfiguration,
-	 * if dump device has already configured...
-	 */
-	if (dumpsize == 0)
-		cpu_dumpconf();
-	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n",
-		    major(dumpdev), minor(dumpdev));
-		return;
-	}
-	printf("\ndumping to dev %u,%u offset %ld\n",
-	    major(dumpdev), minor(dumpdev), dumplo);
-
-	psize = bdev_size(dumpdev);
-	printf("dump ");
-	if (psize == -1) {
-		printf("area unavailable\n");
-		return;
-	}
-
-	/* XXX should purge all outstanding keystrokes. */
-
-	dump = bdev->d_dump;
-	blkno = dumplo;
-
-	if ((error = cpu_dump(dump, &blkno)) != 0)
-		goto err;
-
-	totalbytesleft = ptoa(cpu_dump_mempagecnt());
-
-	for (memcl = 0; memcl < VM_PHYSSEG_MAX; memcl++) {
-		maddr = phys_seg_list[memcl].ps_start;
-		bytes = phys_seg_list[memcl].ps_end -
-		    phys_seg_list[memcl].ps_start;
-
-		if (bytes == 0) {
-			continue;
-		}
-
-		for (i = 0; i < bytes; i += n, totalbytesleft -= n) {
-
-			/* Print out how many MBs we have left to go. */
-			if ((totalbytesleft % (1024*1024)) == 0)
-				printf_nolog("%ld ",
-				    totalbytesleft / (1024 * 1024));
-
-			/* Limit size for next transfer. */
-			n = bytes - i;
-			if (n > PAGE_SIZE)
-				n = PAGE_SIZE;
-
-			pmap_kenter_pa((vaddr_t)vmmap, maddr, VM_PROT_READ, 0);
-			pmap_update(pmap_kernel());
-
-			error = (*dump)(dumpdev, blkno, vmmap, n);
-			if (error)
-				goto err;
-
-			pmap_kremove((vaddr_t)vmmap, PAGE_SIZE);
-			pmap_update(pmap_kernel());
-
-			maddr += n;
-			blkno += btodb(n);
-		}
-	}
-
- err:
-	switch (error) {
-
-	case ENXIO:
-		printf("device bad\n");
-		break;
-
-	case EFAULT:
-		printf("device not ready\n");
-		break;
-
-	case EINVAL:
-		printf("area improper\n");
-		break;
-
-	case EIO:
-		printf("i/o error\n");
-		break;
-
-	case EINTR:
-		printf("aborted from console\n");
-		break;
-
-	case 0:
-		printf("succeeded\n");
-		break;
-
-	default:
-		printf("error %d\n", error);
-		break;
-	}
-	printf("\n\n");
-	delay(5000);
-}
-
-void
-initcpu(void)
-{
-	/* No work to do. */
 }
 
 /*

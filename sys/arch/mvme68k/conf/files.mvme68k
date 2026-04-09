@@ -1,4 +1,4 @@
-#	$NetBSD: files.mvme68k,v 1.85 2026/04/03 14:58:00 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.86 2026/04/09 12:49:35 thorpej Exp $
 
 # config file for mvme68k
 
@@ -101,6 +101,7 @@ file arch/mvme68k/mvme68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file arch/m68k/m68k/bus_dma.c
 file arch/m68k/m68k/db_memrw.c			ddb | kgdb
 file arch/m68k/m68k/delay.s
+file arch/m68k/m68k/dumpsys.c
 file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
 file dev/cons.c

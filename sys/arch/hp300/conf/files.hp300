@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.115 2026/04/04 00:23:08 thorpej Exp $
+#	$NetBSD: files.hp300,v 1.116 2026/04/09 12:49:34 thorpej Exp $
 #
 # hp300-specific configuration info
 
@@ -235,6 +235,7 @@ file	arch/hp300/hp300/leds.c			useleds
 file	arch/hp300/hp300/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
 file	arch/m68k/m68k/delay.s
+file	arch/m68k/m68k/dumpsys.c
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
 
