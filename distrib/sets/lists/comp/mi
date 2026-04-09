@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2521 2026/03/20 15:31:36 wiz Exp $
+#	$NetBSD: mi,v 1.2522 2026/04/09 14:42:15 christos Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -4611,7 +4611,7 @@
 ./usr/libdata/lint/llib-lgssapi.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lheimbase.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lintl.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lipsec.ln		comp-c-lintlib		ipsec,lint
 ./usr/libdata/lint/llib-lirs.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lisc.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lisccc.ln		comp-bind-lintlib	lint
