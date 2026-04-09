@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42 2025/11/16 03:11:47 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.43 2026/04/09 13:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -112,6 +112,9 @@ extern vaddr_t kernel_virtual_max;
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_HIGHMEM	VM_FREELIST_DEFAULT
 #define	VM_FREELIST_MAINMEM	1
+
+#define	VM_PHYS_SEG_TO_FREELIST(s) \
+	((s) == 0 ? VM_FREELIST_MAINMEM : VM_FREELIST_DEFAULT)
 
 #ifndef __HAVE_NEW_PMAP_68K
 /* # of kernel PT pages (initial only, can grow dynamically) */

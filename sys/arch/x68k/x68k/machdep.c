@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.226 2026/04/08 03:47:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.227 2026/04/09 13:34:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2026/04/08 03:47:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2026/04/09 13:34:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -94,6 +94,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2026/04/08 03:47:54 thorpej Exp $"
 #include <machine/pte.h>
 #include <machine/kcore.h>
 
+#include <m68k/seglist.h>
+
 #include <dev/cons.h>
 #include <dev/mm.h>
 
@@ -117,13 +119,9 @@ int	maxmem;			/* max memory per process */
 /* prototypes for local functions */
 void	identifycpu(void);
 static int check_emulator(char *, int);
-int	cpu_dumpsize(void);
-int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
-void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
 void	machine_init(paddr_t);
-void	dumpsys(void);
 void	nmihand(struct frame);
 void	intrhand(int);
 
@@ -133,17 +131,7 @@ void	setmemrange(void);
 static bool mem_exists(paddr_t, paddr_t);
 #endif
 
-typedef struct {
-	paddr_t start;
-	paddr_t end;
-} phys_seg_t;
-
 static int basemem;
-static phys_seg_t phys_basemem_seg;
-#ifdef EXTENDED_MEMORY
-#define EXTMEM_SEGS	(VM_PHYSSEG_MAX - 1)
-static phys_seg_t phys_extmem_seg[EXTMEM_SEGS];
-#endif
 
 /*
  * Assume a standard X68030 with 25MHz CPU.  The delay_divisor will
@@ -169,19 +157,12 @@ const struct pmap_bootmap machine_bootmap[] = {
 };
 #endif
 
-/*
- * Machine-dependent crash dump header info.
- */
-cpu_kcore_hdr_t cpu_kcore_hdr;
-
 static callout_t candbtimer_ch;
 
 void
 machine_init(paddr_t nextpa)
 {
-	u_int i;
-	paddr_t msgbuf_pa;
-	paddr_t s, e;
+	extern paddr_t msgbufpa;
 
 #ifdef __HAVE_NEW_PMAP_68K
 	/* load the internal IO space region */
@@ -192,42 +173,19 @@ machine_init(paddr_t nextpa)
 	 * Most m68k ports allocate msgbuf at the end of available memory
 	 * (i.e. just after avail_end), but on x68k we allocate msgbuf
 	 * at the end of main memory for compatibility.
+	 *
+	 * (This means we have to fully initialize the first phys seg
+	 * entry.)
 	 */
-	msgbuf_pa = phys_basemem_seg.end - m68k_round_page(MSGBUFSIZE);
+	phys_seg_list[0].ps_start = phys_seg_list[0].ps_avail_start =
+	    m68k_round_page(phys_seg_list[0].ps_start);
+	phys_seg_list[0].ps_end = phys_seg_list[0].ps_avail_end =
+	    m68k_trunc_page(phys_seg_list[0].ps_end);
 
-	/*
-	 * Tell the VM system about available physical memory.
-	 */
-	/* load the main memory region */
-	avail_start = nextpa;
-	avail_end = m68k_ptob(maxmem);
+	phys_seg_list[0].ps_avail_end -= m68k_round_page(MSGBUFSIZE);
+	msgbufpa = phys_seg_list[0].ps_avail_end;
 
-	s = avail_start;
-	e = msgbuf_pa;
-	uvm_page_physload(atop(s), atop(e), atop(s), atop(e),
-	    VM_FREELIST_MAINMEM);
-
-#ifdef EXTENDED_MEMORY
-	/* load extended memory regions */
-	for (i = 0; i < EXTMEM_SEGS; i++) {
-		if (phys_extmem_seg[i].start == phys_extmem_seg[i].end)
-			continue;
-		uvm_page_physload(atop(phys_extmem_seg[i].start),
-		    atop(phys_extmem_seg[i].end),
-		    atop(phys_extmem_seg[i].start),
-		    atop(phys_extmem_seg[i].end),
-		    VM_FREELIST_HIGHMEM);
-	}
-#endif
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbuf_pa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	machine_init_common(nextpa);
 }
 
 /*
@@ -280,9 +238,6 @@ cpu_startup(void)
 
 	/* Initialize the FPU, if present. */
 	fpu_init();
-
-	/* Initialize the kernel crash dump header. */
-	cpu_init_kcore_hdr();
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
@@ -559,231 +514,6 @@ cpu_reboot(int howto, char *bootstr)
 	/* NOTREACHED */
 }
 
-/*
- * Initialize the kernel crash dump header.
- */
-void
-cpu_init_kcore_hdr(void)
-{
-	phys_ram_seg_t *ram_segs = pmap_init_kcore_hdr(&cpu_kcore_hdr);
-	psize_t size;
-#ifdef EXTENDED_MEMORY
-	int i, seg;
-#endif
-
-	/* X68k has multiple RAM segments on some models. */
-	size = phys_basemem_seg.end - phys_basemem_seg.start;
-	ram_segs[0].start = phys_basemem_seg.start;
-	ram_segs[0].size  = size;
-#ifdef EXTENDED_MEMORY
-	seg = 1;
-	for (i = 0; i < EXTMEM_SEGS; i++) {
-		size = phys_extmem_seg[i].end - phys_extmem_seg[i].start;
-		if (size == 0)
-			continue;
-		ram_segs[seg].start = phys_extmem_seg[i].start;
-		ram_segs[seg].size  = size;
-		seg++;
-	}
-#endif
-}
-
-/*
- * Compute the size of the machine-dependent crash dump header.
- * Returns size in disk blocks.
- */
-
-#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
-#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
-
-int
-cpu_dumpsize(void)
-{
-
-	return btodb(MDHDRSIZE);
-}
-
-/*
- * Called by dumpsys() to dump the machine-dependent header.
- */
-int
-cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
-{
-	int buf[MDHDRSIZE / sizeof(int)];
-	cpu_kcore_hdr_t *chdr;
-	kcore_seg_t *kseg;
-	int error;
-
-	kseg = (kcore_seg_t *)buf;
-	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
-	    sizeof(int)];
-
-	/* Create the segment header. */
-	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
-
-	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
-	*blknop += btodb(sizeof(buf));
-	return (error);
-}
-
-/*
- * These variables are needed by /sbin/savecore
- */
-uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first PAGE_SIZE of disk space in
- * case there might be a disk label stored there.  If there
- * is extra space, put dump at the end to reduce the chance
- * that swapping trashes it.
- */
-void
-cpu_dumpconf(void)
-{
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int chdrsize;	/* size of dump header */
-	int nblks;	/* size of dump area */
-	int i;
-
-	if (dumpdev == NODEV)
-		return;
-	nblks = bdev_size(dumpdev);
-	chdrsize = cpu_dumpsize();
-
-	dumpsize = 0;
-	for (i = 0; i < M68K_NPHYS_RAM_SEGS && m->ram_segs[i].size; i++)
-		dumpsize += btoc(m->ram_segs[i].size);
-	/*
-	 * Check to see if we will fit.  Note we always skip the
-	 * first PAGE_SIZE in case there is a disk label there.
-	 */
-	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
-		dumpsize = 0;
-		dumplo = -1;
-		return;
-	}
-
-	/*
-	 * Put dump at the end of the partition.
-	 */
-	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
-}
-
-void
-dumpsys(void)
-{
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-	const struct bdevsw *bdev;
-	daddr_t blkno;		/* current block to write */
-				/* dump routine */
-	int (*dump)(dev_t, daddr_t, void *, size_t);
-	int pg;			/* page being dumped */
-	paddr_t maddr;		/* PA being dumped */
-	int seg;		/* RAM segment being dumped */
-	int error;		/* error code from (*dump)() */
-
-	/* XXX initialized here because of gcc lossage */
-	seg = 0;
-	maddr = m->ram_segs[seg].start;
-	pg = 0;
-
-	/* Make sure dump device is valid. */
-	if (dumpdev == NODEV)
-		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	if (dumpsize == 0) {
-		cpu_dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
-	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u not possible\n",
-		    major(dumpdev), minor(dumpdev));
-		return;
-	}
-	dump = bdev->d_dump;
-	blkno = dumplo;
-
-	printf("\ndumping to dev %u,%u offset %ld\n",
-	    major(dumpdev), minor(dumpdev), dumplo);
-
-	printf("dump ");
-
-	/* Write the dump header. */
-	error = cpu_dump(dump, &blkno);
-	if (error)
-		goto bad;
-
-	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/PAGE_SIZE)
-		/* print out how many MBs we have dumped */
-		if (pg && (pg % NPGMB) == 0)
-			printf_nolog("%d ", pg / NPGMB);
-#undef NPGMB
-		if (maddr == 0) {
-			/* Skip first page */
-			maddr += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-			continue;
-		}
-		while (maddr >=
-		    (m->ram_segs[seg].start + m->ram_segs[seg].size)) {
-			if (++seg >= M68K_NPHYS_RAM_SEGS ||
-			    m->ram_segs[seg].size == 0) {
-				error = EINVAL;		/* XXX ?? */
-				goto bad;
-			}
-			maddr = m->ram_segs[seg].start;
-		}
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update(pmap_kernel());
-
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
- bad:
-		switch (error) {
-		case 0:
-			maddr += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-			break;
-
-		case ENXIO:
-			printf("device bad\n");
-			return;
-
-		case EFAULT:
-			printf("device not ready\n");
-			return;
-
-		case EINVAL:
-			printf("area improper\n");
-			return;
-
-		case EIO:
-			printf("i/o error\n");
-			return;
-
-		case EINTR:
-			printf("aborted from console\n");
-			return;
-
-		default:
-			printf("error %d\n", error);
-			return;
-		}
-	}
-	printf("succeeded\n");
-}
-
 int	*nofault;
 
 int
@@ -928,6 +658,8 @@ static const struct memlist {
 /* check each 4MB region */
 #define EXTMEM_RANGE	(4 * 1024 * 1024)
 
+__CTASSERT(__arraycount(memlist) + 1 <= VM_PHYSSEG_MAX);
+
 /*
  * check memory existency
  */
@@ -1048,8 +780,8 @@ setmemrange(void)
 	 * Probably we should also probe the main memory region
 	 * for machines which might have a wrong value in a dead SRAM.
 	 */
-	phys_basemem_seg.start = lowram;
-	phys_basemem_seg.end   = m68k_ptob(basemem) + lowram;
+	phys_seg_list[0].ps_start = lowram;
+	phys_seg_list[0].ps_end = lowram + m68k_ptob(basemem);
 
 #ifdef EXTENDED_MEMORY
 	/* discover extended memory */
@@ -1072,8 +804,8 @@ setmemrange(void)
 			exend = exstart + size;
 		}
 		if (exstart < exend) {
-			phys_extmem_seg[i].start = exstart;
-			phys_extmem_seg[i].end   = exend;
+			phys_seg_list[i + 1].ps_start = exstart;
+			phys_seg_list[i + 1].ps_end = exend;
 			physmem += m68k_btop(exend - exstart);
 			if (maxmem < m68k_btop(exend))
 				maxmem = m68k_btop(exend);
@@ -1094,24 +826,20 @@ cpu_intr_p(void)
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)
 {
-#ifdef EXTENDED_MEMORY
 	int i;
-#endif
 
-	/* Main memory */
-	if (phys_basemem_seg.start <= pa && pa < phys_basemem_seg.end)
-		return 0;
-
-#ifdef EXTENDED_MEMORY
-	for (i = 0; i < EXTMEM_SEGS; i++) {
-		if (phys_extmem_seg[i].start == phys_extmem_seg[i].end)
+	for (i = 0; i < VM_PHYSSEG_MAX; i++) {
+		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
 			continue;
-		if (phys_extmem_seg[i].start <= pa &&
-		    pa < phys_extmem_seg[i].end) {
-			return 0;
 		}
+		if (pa < phys_seg_list[i].ps_start) {
+			continue;
+		}
+		if (pa >= phys_seg_list[i].ps_end) {
+			continue;
+		}
+		return 0;
 	}
-#endif
 
 	/* I/O space */
 	if (INTIOBASE <= pa && pa < INTIOTOP) {

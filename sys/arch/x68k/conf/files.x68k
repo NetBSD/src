@@ -1,4 +1,4 @@
-#	$NetBSD: files.x68k,v 1.100 2026/04/02 03:56:44 thorpej Exp $
+#	$NetBSD: files.x68k,v 1.101 2026/04/09 13:34:51 thorpej Exp $
 #
 # new style config file for x68k architecture
 #
@@ -30,6 +30,7 @@ file	arch/x68k/x68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/x68k/x68k/bus.c
 file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/db_memrw.c	ddb
+file	arch/m68k/m68k/dumpsys.c
 
 file	dev/bus_dma/bus_dmamem_common.c
 
