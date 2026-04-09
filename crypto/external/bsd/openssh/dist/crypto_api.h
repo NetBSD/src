@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto_api.h,v 1.7 2026/04/08 18:58:40 christos Exp $	*/
+/*	$NetBSD: crypto_api.h,v 1.8 2026/04/09 06:36:39 christos Exp $	*/
 /* $OpenBSD: crypto_api.h,v 1.10 2025/10/30 23:19:33 djm Exp $ */
 
 /*
@@ -44,7 +44,7 @@ crypto_hash_sha512(unsigned char *out, const unsigned char *in,
     unsigned long long inlen)
 {
 
-	SHA2_CTX ctx;
+	SHA512_CTX ctx;
 
 	SHA512Init(&ctx);
 	SHA512Update(&ctx, in, inlen);

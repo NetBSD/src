@@ -16,7 +16,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: bcrypt_pbkdf.c,v 1.4 2017/04/18 18:41:46 christos Exp $");
+__RCSID("$NetBSD: bcrypt_pbkdf.c,v 1.5 2026/04/09 06:36:39 christos Exp $");
 
 #ifndef HAVE_BCRYPT_PBKDF
 
@@ -36,7 +36,9 @@ __RCSID("$NetBSD: bcrypt_pbkdf.c,v 1.4 2017/04/18 18:41:46 christos Exp $");
 #include <stdio.h>
 #include <time.h>
 #include "misc.h"
+#ifndef SHA512_DIGEST_LENGTH
 #define SHA512_DIGEST_LENGTH crypto_hash_sha512_BYTES
+#endif
 
 /*
  * pkcs #5 pbkdf2 implementation using the "bcrypt" hash
