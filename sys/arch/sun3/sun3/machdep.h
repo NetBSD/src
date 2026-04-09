@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.43 2026/04/06 14:45:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.44 2026/04/09 14:46:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -177,7 +177,6 @@ void	loadcrp(struct mmu_rootptr *);
 
 paddr_t	pmap_bootstrap(vaddr_t);
 void	pmap_kcore_hdr(struct sun3x_kcore_hdr *);
-int	pmap_pa_exists(paddr_t);
 
 #endif	/* SUN3X */
 

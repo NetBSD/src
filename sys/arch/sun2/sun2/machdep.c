@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.96 2026/04/08 03:47:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.97 2026/04/09 14:46:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2026/04/08 03:47:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2026/04/09 14:46:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -1102,16 +1102,6 @@ find_prom_map(paddr_t pa, bus_type_t iospace, int len, vaddr_t *vap)
 	}
 	restore_context(saved_ctx);
 	return ENOENT;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	/* Allow access only in "managed" RAM. */
-	if (pa < avail_start || pa >= avail_end)
-		return EFAULT;
-	return 0;
 }
 
 bool

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.223 2026/04/08 03:47:54 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.224 2026/04/09 14:46:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.223 2026/04/08 03:47:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2026/04/09 14:46:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -651,16 +651,6 @@ initcpu(void)
 
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	/* Allow access only in "managed" RAM. */
-	if (pa < avail_start || pa >= avail_end)
-		return EFAULT;
-	return 0;
-}
 
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.127 2026/04/06 14:45:32 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.128 2026/04/09 14:46:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.127 2026/04/06 14:45:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2026/04/09 14:46:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -3466,26 +3466,6 @@ pmap_bootstrap_aalign(int size)
 	if (off) {
 		(void)pmap_bootstrap_alloc(size - off);
 	}
-}
-
-/* pmap_pa_exists
- **
- * Used by the /dev/mem driver to see if a given PA is memory
- * that can be mapped.  (The PA is not in a hole.)
- */
-int
-pmap_pa_exists(paddr_t pa)
-{
-	int i;
-
-	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
-		if ((pa >= avail_mem[i].pmem_seg->ps_start) &&
-			(pa <  avail_mem[i].pmem_seg->ps_end))
-			return 1;
-		if (avail_mem[i].pmem_next == NULL)
-			break;
-	}
-	return 0;
 }
 
 /* Called only from locore.s and pmap.c */
