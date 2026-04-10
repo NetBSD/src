@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.86 2026/04/07 20:10:00 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.87 2026/04/10 07:50:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.86 2026/04/07 20:10:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2026/04/10 07:50:02 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1273,7 +1273,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
 		if (pg != NULL && pte_modified_p(pte)) {
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-			if (VM_PAGEMD_EXECPAGE_P(mdpg)) {
+			if (VM_PAGEMD_EXECPAGE_P(mdpg) || (prot & VM_PROT_EXECUTE)) {
 				KASSERT(!VM_PAGEMD_PVLIST_EMPTY_P(mdpg));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 				if (VM_PAGEMD_CACHED_P(mdpg)) {
@@ -1567,7 +1567,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		KASSERT(prot & VM_PROT_WRITE);
 		PMAP_COUNT(exec_mappings);
 		pmap_page_syncicache(pg);
-		pmap_page_clear_attributes(mdpg, VM_PAGEMD_EXECPAGE);
+		pmap_page_set_attributes(mdpg, VM_PAGEMD_EXECPAGE);
 		UVMHIST_LOG(*histp,
 		    "va=%#jx pg %#jx: immediate syncicache (writeable)",
 		    va, (uintptr_t)pg, 0, 0);
