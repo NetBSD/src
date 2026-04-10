@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.18 2024/05/11 14:39:53 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.19 2026/04/10 20:29:32 rillig Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ ATF_TC_BODY(snprintf_float, tc)
 
 	time(&now);
 	srand(now);
+	printf("seed %u\n", (unsigned)now);
 	for (size_t i = 0; i < 10000; i++) {
 		ul = rand();
 		uh = rand();
