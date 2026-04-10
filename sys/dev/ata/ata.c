@@ -1,4 +1,4 @@
-/*	$NetBSD: ata.c,v 1.171 2025/02/17 19:01:04 jakllsch Exp $	*/
+/*	$NetBSD: ata.c,v 1.172 2026/04/10 14:19:52 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.171 2025/02/17 19:01:04 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata.c,v 1.172 2026/04/10 14:19:52 jakllsch Exp $");
 
 #include "opt_ata.h"
 
@@ -2190,8 +2190,10 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		struct atabusioscan_args *a=
 		    (struct atabusioscan_args *)addr;
 #endif
-		if ((chp->ch_drive[0].drive_type == ATA_DRIVET_OLD) ||
-		    (chp->ch_drive[1].drive_type == ATA_DRIVET_OLD))
+		if ((chp->ch_ndrives > 0 &&
+		    (chp->ch_drive[0].drive_type == ATA_DRIVET_OLD)) ||
+		    (chp->ch_ndrives > 1 &&
+		    (chp->ch_drive[1].drive_type == ATA_DRIVET_OLD)))
 			return (EOPNOTSUPP);
 		return (EOPNOTSUPP);
 	}
@@ -2199,8 +2201,10 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	{
 		struct atabusiodetach_args *a=
 		    (struct atabusiodetach_args *)addr;
-		if ((chp->ch_drive[0].drive_type == ATA_DRIVET_OLD) ||
-		    (chp->ch_drive[1].drive_type == ATA_DRIVET_OLD))
+		if ((chp->ch_ndrives > 0 &&
+		    (chp->ch_drive[0].drive_type == ATA_DRIVET_OLD)) ||
+		    (chp->ch_ndrives > 1 &&
+		    (chp->ch_drive[1].drive_type == ATA_DRIVET_OLD)))
 			return (EOPNOTSUPP);
 		switch (a->at_dev) {
 		case -1:
@@ -2215,7 +2219,8 @@ atabusioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 			return (EINVAL);
 		}
 		for (drive = min_drive; drive <= max_drive; drive++) {
-			if (chp->ch_drive[drive].drv_softc != NULL) {
+			if ((drive < chp->ch_ndrives) &&
+			    chp->ch_drive[drive].drv_softc != NULL) {
 				error = config_detach(
 				    chp->ch_drive[drive].drv_softc, 0);
 				if (error)
