@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.9 2026/03/04 07:34:55 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.10 2026/04/10 08:06:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.9 2026/03/04 07:34:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.10 2026/04/10 08:06:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -625,7 +625,14 @@ pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
-	//XXXNH
+	/*
+	 * This handles the PIPT case where we can use the direct map
+	 * to sync the icache without worrying about aliasing.
+	 */
+	struct vm_page * const pg = VM_MD_TO_PAGE(mdpg);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	const vaddr_t kva = pmap_md_direct_map_paddr(pa);
+	cpu_icache_sync_range(kva, PAGE_SIZE);
 }
 
 
