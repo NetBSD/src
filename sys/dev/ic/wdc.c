@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.313 2026/03/30 16:43:45 tls Exp $ */
+/*	$NetBSD: wdc.c,v 1.314 2026/04/10 13:55:59 jakllsch Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.313 2026/03/30 16:43:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.314 2026/04/10 13:55:59 jakllsch Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1048,7 +1048,7 @@ wdcreset(struct ata_channel *chp, int poll)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	int drv_mask1, drv_mask2;
+	int drv_mask1 = 0, drv_mask2;
 
 	ata_channel_lock_owned(chp);
 
@@ -1057,8 +1057,9 @@ wdcreset(struct ata_channel *chp, int poll)
 #endif
 	wdc->reset(chp, poll);
 
-	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
-	    ? 0x01 : 0x00;
+	if (chp->ch_ndrives > 0)
+		drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
+		    ? 0x01 : 0x00;
 	if (chp->ch_ndrives > 1)
 		drv_mask1 |= (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE)
 		    ? 0x02 : 0x00;
