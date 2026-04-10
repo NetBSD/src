@@ -1,4 +1,4 @@
-/*	$NetBSD: t_long_double.c,v 1.7 2026/04/07 14:58:36 rillig Exp $	*/
+/*	$NetBSD: t_long_double.c,v 1.8 2026/04/10 20:54:59 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_long_double.c,v 1.7 2026/04/07 14:58:36 rillig Exp $");
+__RCSID("$NetBSD: t_long_double.c,v 1.8 2026/04/10 20:54:59 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -174,9 +174,10 @@ test_ldbl_to_uint64(void)
 		long double arg;
 		uint64_t want;
 	} testcases[] = {
-#if 1 /* Try some values outside the portable range. */
-		// C23 6.3.1.4p1 says the portable range goes from
-		// -1 + epsilon to (1<<64) - epsilon.
+// C23 6.3.1.4p1 says the portable range goes from -1 + epsilon to
+// (1<<64) - epsilon. Try some values outside the portable range, to show the
+// differences between platforms.
+#if 1
 #if __aarch64__ || __m68k__ || __riscv__
 		// Negative values saturate to 0.
 		{ -0xf.0p60L,	0 },
@@ -189,26 +190,27 @@ test_ldbl_to_uint64(void)
 		{ -0x8.0p60L,	0x8000000000000000 },
 		{ -0x4.0p60L,	0xc000000000000000 },
 		{ -1.0L,	0x00000000ffffffff },
-#elif __powerpc__ || __sparc__
-		// Negative values produce strange results.
-		{ -0xf.0p60L,	0x8000000080000000 },
-		{ -0x8.0p60L,	0x8000000080000000 },
-		{ -0x4.0p60L,	0xc000000080000000 },
-		{ -1.0L,	0x00000000ffffffff },
 #elif __sparc64__
 		// Negative values are taken modulo 2^64.
 		{ -0xf.0p60L,	0x1000000000000000 },
 		{ -0x8.0p60L,	0x8000000000000000 },
 		{ -0x4.0p60L,	0xc000000000000000 },
 		{ -1.0L,	0xffffffffffffffff },
-#else
+#elif __powerpc__ || __sparc__
+		// Negative values produce strange results.
+		{ -0xf.0p60L,	0x8000000080000000 },
+		{ -0x8.0p60L,	0x8000000080000000 },
+		{ -0x4.0p60L,	0xc000000080000000 },
+		{ -1.0L,	0x00000000ffffffff },
+#elif __x86_64__ || __i386__
 		// Negative values below INT64_MIN saturate.
 		{ -0xf.0p60L,	0x8000000000000000 },
 		{ -0x8.0p60L,	0x8000000000000000 },
 		{ -0x4.0p60L,	0xc000000000000000 },
 		{ -1.0L,	0xffffffffffffffff },
-		// The above results were taken on amd64,
-		// other platforms may differ.
+#else
+// Other platforms may fall into one of the above categories,
+// or they may differ even further.
 #endif
 #endif
 		{ -0.5L,	0 },
