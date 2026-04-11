@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 2026/04/08 03:47:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.270 2026/04/11 19:02:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2026/04/08 03:47:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2026/04/11 19:02:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -666,11 +666,6 @@ dumpsys(void)
 void
 initcpu(void)
 {
-#ifdef DRACO
-	extern char DraCoIntr[], DraCoLev1intr[], DraCoLev2intr[];
-	u_char dracorev;
-#endif
-
 #ifdef M68060
 	if (machineid & AMIGA_68060) {
 		if ((machineid & AMIGA_FPU40) != 0 &&
@@ -700,9 +695,6 @@ initcpu(void)
 	}
 #endif /* M68060 */
 
-	/* Initialize the vector table. */
-	vec_init();
-
 	/*
 	 * fpu_init() won't need to probe (and we assert this here), but
 	 * it does initialize the vector table for the configured FPU.
@@ -713,26 +705,6 @@ initcpu(void)
 #ifdef FPU_EMULATE
 	if (fputype == FPU_NONE) {
 		printf("FPU software emulation initialized.\n");
-	}
-#endif
-
-	/*
-	 * Vector initialization for special motherboards
-	 */
-#ifdef DRACO
-	dracorev = is_draco();
-	if (dracorev) {
-		if (dracorev >= 4) {
-			vectab[24+1] = DraCoLev1intr;
-			vectab[24+2] = DraCoIntr;
-		} else {
-			vectab[24+1] = DraCoIntr;
-			vectab[24+2] = DraCoLev2intr;
-		}
-		vectab[24+3] = DraCoIntr;
-		vectab[24+4] = DraCoIntr;
-		vectab[24+5] = DraCoIntr;
-		vectab[24+6] = DraCoIntr;
 	}
 #endif
 }

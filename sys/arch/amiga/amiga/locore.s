@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.187 2026/03/29 03:24:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.188 2026/04/11 19:02:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -590,9 +590,10 @@ Lenable030:
 Ltc:	.long	MMU51_TCR_BITS		| see pmap.h
 
 LMMUenable_end:
+	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
+	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 
 	/* start_c_finish() returns lwp0 SP in %a0 */
-	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
 	jbsr	_C_LABEL(start_c_finish)
 	movl	%a0,%sp			| now running on lwp0's stack
 	movl	#0,%a6			| terminate the stack back trace

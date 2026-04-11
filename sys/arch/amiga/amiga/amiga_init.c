@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.138 2026/03/28 22:19:31 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.139 2026/04/11 19:02:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.138 2026/03/28 22:19:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.139 2026/04/11 19:02:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.138 2026/03/28 22:19:31 thorpej Exp
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
+#include <machine/vectors.h>
 #include <amiga/amiga/cc.h>
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/custom.h>
@@ -814,6 +815,29 @@ start_c_finish(void)
 	} else
 #endif
 ((volatile struct Custom *)CUSTOMADDR)->color[0] = 0x0a0;	/* GREEN */
+#endif
+
+	/*
+	 * Vector initialization for special motherboards
+	 */
+#ifdef DRACO
+	extern char DraCoIntr[], DraCoLev1intr[], DraCoLev2intr[];
+	u_char dracorev;
+
+	dracorev = is_draco();
+	if (dracorev) {
+		if (dracorev >= 4) {
+			vectab[24+1] = DraCoLev1intr;
+			vectab[24+2] = DraCoIntr;
+		} else {
+			vectab[24+1] = DraCoIntr;
+			vectab[24+2] = DraCoLev2intr;
+		}
+		vectab[24+3] = DraCoIntr;
+		vectab[24+4] = DraCoIntr;
+		vectab[24+5] = DraCoIntr;
+		vectab[24+6] = DraCoIntr;
+	}
 #endif
 
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
