@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.188 2026/04/11 19:02:01 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.189 2026/04/11 19:49:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -609,6 +609,8 @@ LMMUenable_end:
 #ifdef M68060
 	cmpl	#CPU_68060,_C_LABEL(cputype)
 	jne	Lcacheon
+	movl	#PCR_ESS,%d0		| enable superscalar dispatch
+	.long	0x4e7b0808		| movc %d0,%pcr
 	movl	#CACHE60_ON,%d0
 #endif
 Lcacheon:

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.270 2026/04/11 19:02:01 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.271 2026/04/11 19:49:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2026/04/11 19:02:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2026/04/11 19:49:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -270,14 +270,6 @@ cpu_startup(void)
 #endif
 }
 
-/*
- * Info for CTL_HW
- */
-#if defined(M68060)
-int m68060_pcr_init = PCR_ESS;	/* make this patchable */
-#endif
-
-
 void
 identifycpu(void)
 {
@@ -319,9 +311,6 @@ identifycpu(void)
 		mmu = "/MMU";
 		if (pcr & 2) {
 			fpu = "/FPU disabled";
-			fputype = FPU_NONE;
-		} else if (m68060_pcr_init & PCR_DFP) {
-			fpu = "/FPU will be disabled";
 			fputype = FPU_NONE;
 		} else  if (machineid & AMIGA_FPU40) {
 			fpu = "/FPU";
@@ -666,35 +655,6 @@ dumpsys(void)
 void
 initcpu(void)
 {
-#ifdef M68060
-	if (machineid & AMIGA_68060) {
-		if ((machineid & AMIGA_FPU40) != 0 &&
-		    (m68060_pcr_init & PCR_DFP) != 0) {
-			/*
-			 * in this case, we're about to switch the FPU off;
-			 * do a FNOP to avoid stray FP traps later
-			 *
-			 * But we can't use fnop directly anymore as of
-			 * gcc-6 because it passes -mno-float to the assembler
-			 * because of -msoft-float and the assembler refuses
-			 * to assemble the instruction; adding -Wa,-mfloat
-			 * does not work either because the assembler then
-			 * complains about feature being turned off and on
-			 * so we just put in the opcode directly.
-			 */
-#if 0
-			__asm("fnop");
-#else
-			__asm(".word 0xf280,0x0000");
-#endif
-			/* ... and mark FPU as absent for identifyfpu() */
-			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
-		}
-		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
-			"d"(m68060_pcr_init):"d0" );
-	}
-#endif /* M68060 */
-
 	/*
 	 * fpu_init() won't need to probe (and we assert this here), but
 	 * it does initialize the vector table for the configured FPU.

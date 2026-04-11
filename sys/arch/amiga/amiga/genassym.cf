@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.40 2026/03/28 22:19:31 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.41 2026/04/11 19:49:26 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -45,6 +45,8 @@ include <machine/fcode.h>
 include <machine/psl.h>
 include <machine/pcb.h>
 include <machine/pte.h>
+
+include <m68k/pcr.h>
 
 include <amiga/amiga/cia.h>
 include <amiga/amiga/isr.h>
@@ -141,6 +143,7 @@ define	CACHE60_ON	CACHE60_ON
 define	CACHE60_OFF	CACHE60_OFF
 define	IC60_CUBC	IC60_CUBC
 define	IC60_CABC	IC60_CABC
+define	PCR_ESS		PCR_ESS
 
 define	DELAY_MAXVAL	DELAY_MAXVAL
 define	DELAY_MAGSHIFT	DELAY_MAGSHIFT
