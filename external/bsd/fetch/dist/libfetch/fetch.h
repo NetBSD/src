@@ -1,6 +1,6 @@
-/*	$NetBSD: fetch.h,v 1.1.1.7 2010/01/30 21:26:11 joerg Exp $	*/
+/*	$NetBSD: fetch.h,v 1.2 2026/04/11 10:42:32 wiz Exp $	*/
 /*-
- * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1998-2004 Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

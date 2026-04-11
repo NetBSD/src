@@ -1,6 +1,6 @@
-/*	$NetBSD: ftp.c,v 1.8 2024/02/02 22:19:05 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.9 2026/04/11 10:42:32 wiz Exp $	*/
 /*-
- * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1998-2004 Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
@@ -42,7 +42,7 @@
  *
  * Major Changelog:
  *
- * Dag-Erling Coïdan Smørgrav
+ * Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * 9 Jun 1998
  *
  * Incorporated into libfetch
