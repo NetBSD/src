@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.90 2024/09/14 01:37:42 pgoyette Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.91 2026/04/11 12:21:32 fox Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.90 2024/09/14 01:37:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.91 2026/04/11 12:21:32 fox Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -200,7 +200,7 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 		PGTOKB(uvmexp.npages),
 		PGTOKB(freepg),
 		0L,
-		PGTOKB(freepg),
+		PGTOKB(filepg),
 		PGTOKB(anonpg + filepg + execpg),
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
