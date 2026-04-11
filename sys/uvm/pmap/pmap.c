@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.87 2026/04/10 07:50:02 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.88 2026/04/11 18:23:31 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.87 2026/04/10 07:50:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2026/04/11 18:23:31 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -879,8 +879,20 @@ pmap_activate(struct lwp *l)
 
 	kpreempt_disable();
 	pmap_tlb_miss_lock_enter();
-	pmap_tlb_asid_acquire(pmap, l);
-	pmap_segtab_activate(pmap, l);
+
+	/*
+	 * While a vmspace is being recycled in uvmspace_exec and the pmap
+	 * is marked PMAP_DEFERRED_ACTIVATE amap_wipeout may voluntarily
+	 * preempt allowing other LWPs to be activate. When returning to
+	 * the recylcing process we can skip acquiring an ASID and activating it
+	 * as it'll happen in pmap_update.
+	 */
+	if (__predict_true((pmap->pm_flags & PMAP_DEFERRED_ACTIVATE) == 0)) {
+		/* this calls tlb_set_asid */
+		pmap_tlb_asid_acquire(pmap, l);
+		pmap_segtab_activate(pmap, l);
+	}
+
 	pmap_tlb_miss_lock_exit();
 	kpreempt_enable();
 
@@ -937,6 +949,8 @@ pmap_update(struct pmap *pmap)
 	 */
 	if (__predict_false(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
 		pmap->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
+
+		/* this calls tlb_set_asid */
 		pmap_tlb_asid_acquire(pmap, curlwp);
 		pmap_segtab_activate(pmap, curlwp);
 	}

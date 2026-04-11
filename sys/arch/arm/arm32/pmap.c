@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.446 2026/04/03 18:30:01 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.447 2026/04/11 18:23:31 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.446 2026/04/03 18:30:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.447 2026/04/11 18:23:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4935,6 +4935,7 @@ pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
 	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
 	isb();
 
+	/* this calls tlb_set_asid */
 	pmap_tlb_asid_acquire(pm, l);
 
 	cpu_setttb(pm->pm_l1_pa, pai->pai_asid);
@@ -5157,7 +5158,17 @@ pmap_activate(struct lwp *l)
 #endif
 
 #ifdef ARM_MMU_EXTENDED
-	pmap_md_pdetab_activate(npm, l);
+	/*
+	 * While a vmspace is being recycled in uvmspace_exec and the pmap
+	 * is marked pm_remove_all = true amap_wipeout may voluntarily
+	 * preempt allowing other LWPs to be activate. When returning to
+	 * the recylcing process we can skip acquiring an ASID and activating it
+	 * as it'll happen in pmap_update.
+	 */
+	if (__predict_true(!npm->pm_remove_all)) {
+		/* this calls pmap_tlb_asid_acquire which calls tlb_set_asid */
+		pmap_md_pdetab_activate(npm, l);
+	}
 #else
 	cpu_domains(ndacr);
 	if (npm == pmap_kernel() || npm == rpm) {
@@ -5312,6 +5323,7 @@ pmap_update(pmap_t pm)
 		pm->pm_remove_all = false;
 
 		KASSERT(pm != pmap_kernel());
+		/* this calls pmap_tlb_asid_acquire which calls tlb_set_asid */
 		pmap_md_pdetab_activate(pm, curlwp);
 	}
 
