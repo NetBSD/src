@@ -1,4 +1,4 @@
-/*	$NetBSD: pcr.h,v 1.1 2026/03/24 06:00:40 thorpej Exp $	*/
+/*	$NetBSD: pcr.h,v 1.2 2026/04/11 19:09:34 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -46,5 +46,10 @@
 
 #define	PCR_ID_MC68060   0x0430
 #define	PCR_ID_MC68xC060 0x0431	/* MC68LC060 / MC60EC060 */
+
+#ifdef _KERNEL
+u_int	get_pcr(void);
+void	set_pcr(u_int);
+#endif
 
 #endif /* _M68K_PCR_H_ */

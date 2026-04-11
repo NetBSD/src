@@ -1,4 +1,4 @@
-/*	$NetBSD: support.s,v 1.10 2024/01/16 15:38:59 thorpej Exp $	*/
+/*	$NetBSD: support.s,v 1.11 2026/04/11 19:09:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,6 +42,8 @@
  * Miscellaneous support routines common to all m68k ports.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <machine/asm.h>
 
 #include "assym.h"
@@ -65,3 +67,16 @@ ENTRY(longjmp)
 	movl	(%a0),(%sp)
 	moveq	#1,%d0
 	rts
+
+#ifdef M68060
+/* Get the 68060 PCR value. */
+ENTRY_NOPROFILE(get_pcr)
+	.long   0x4e7a0808	| movc %pcr,%d0
+	rts
+
+/* Set the 68060 PCR. */
+ENTRY_NOPROFILE(set_pcr)
+	movl	4(%sp),%d0
+	.long	0x4e7b0808	| movc %d0,%pcr
+	rts
+#endif
