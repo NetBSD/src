@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 2026/04/11 19:49:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272 2026/04/12 03:06:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2026/04/11 19:49:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2026/04/12 03:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,7 +123,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2026/04/11 19:49:26 thorpej Exp $"
 void identifycpu(void);
 vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
-void initcpu(void);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -201,18 +200,15 @@ void
 cpu_startup(void)
 {
 	u_int i;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-#endif
 	vaddr_t minaddr, maxaddr;
+
+	/* Initialize the FPU, if present. */
+	fpu_init();
 
 	/*
 	 * Initialize error message buffer (at end of core).
 	 */
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
+
 	/*
 	 * pmap_bootstrap has positioned this at the end of kernel
 	 * memory segment - map and initialize it now.
@@ -244,10 +240,6 @@ cpu_startup(void)
 	 */
 	identifycpu();
 
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-
 	/*
 	 * display memory configuration passed from loadbsd
 	 */
@@ -257,16 +249,10 @@ cpu_startup(void)
 			    memlist->m_seg[i].ms_start,
 			    memlist->m_seg[i].ms_size);
 
-#ifdef DEBUG_KERNEL_START
-	printf("calling initcpu...\n");
-#endif
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-
-#ifdef DEBUG_KERNEL_START
-	printf("survived initcpu...\n");
+#ifdef FPU_EMULATE
+	if (fputype == FPU_NONE) {
+		printf("FPU software emulation initialized.\n");
+	}
 #endif
 }
 
@@ -311,18 +297,17 @@ identifycpu(void)
 		mmu = "/MMU";
 		if (pcr & 2) {
 			fpu = "/FPU disabled";
-			fputype = FPU_NONE;
-		} else  if (machineid & AMIGA_FPU40) {
+		} else if (fputype == FPU_68060) {
 			fpu = "/FPU";
-			fputype = FPU_68040; /* XXX */
 		}
 	} else
 #endif
 	if (machineid & AMIGA_68040) {
 		cpu_type = "m68040";
 		mmu = "/MMU";
-		fpu = "/FPU";
-		fputype = FPU_68040; /* XXX */
+		if (fputype == FPU_68040) {
+			fpu = "/FPU";
+		}
 	} else if (machineid & AMIGA_68030) {
 		cpu_type = "m68030";	/* XXX */
 		mmu = "/MMU";
@@ -331,15 +316,14 @@ identifycpu(void)
 		mmu = " m68851 MMU";
 	}
 	if (fpu == NULL) {
-		if (machineid & AMIGA_68882) {
+		if (fputype == FPU_68882) {
 			fpu = " m68882 FPU";
-			fputype = FPU_68882;
-		} else if (machineid & AMIGA_68881) {
-			fpu = " m68881 FPU";
-			fputype = FPU_68881;
-		} else {
+		} else if (fputype == FPU_68881) {
+			fpu = " m68882 FPU";
+		} else if (fputype == FPU_NONE) {
 			fpu = " no FPU";
-			fputype = FPU_NONE;
+		} else {
+			fpu = "";
 		}
 	}
 	cpu_setmodel("%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
@@ -650,23 +634,6 @@ dumpsys(void)
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
-}
-
-void
-initcpu(void)
-{
-	/*
-	 * fpu_init() won't need to probe (and we assert this here), but
-	 * it does initialize the vector table for the configured FPU.
-	 */
-	KASSERT(fputype != FPU_UNKNOWN);
-	fpu_init();
-
-#ifdef FPU_EMULATE
-	if (fputype == FPU_NONE) {
-		printf("FPU software emulation initialized.\n");
-	}
-#endif
 }
 
 int	*nofault;
