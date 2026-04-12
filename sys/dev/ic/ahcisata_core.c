@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.109 2026/02/05 02:38:04 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.110 2026/04/12 19:03:01 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.109 2026/02/05 02:38:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.110 2026/04/12 19:03:01 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -479,7 +479,7 @@ ahci_attach(struct ahci_softc *sc)
 			    (uint64_t)achp->ahcic_bus_cmd_tbl[j]), DEBUG_PROBE);
 			/* The xfer DMA map */
 			error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-			    AHCI_NPRD, 0x400000 /* 4MB */, 0,
+			    AHCI_NPRD, AHCI_PRD_DBC_MASK + 1 /* 4MB */, 0,
 			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 			    &achp->ahcic_datad[j]);
 			if (error) {
