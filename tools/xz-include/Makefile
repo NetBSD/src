@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2021/09/18 01:47:11 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2026/04/12 18:58:47 jakllsch Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@
 #
 .include "Makefile.inc"
 
-CONFIGURE_ARGS+=	--enable-threads=no --disable-nls
+CONFIGURE_ARGS+=	--enable-threads=no --disable-nls --disable-sandbox
 .if ${MAKEVERBOSE} == 0
 CONFIGURE_ARGS+=	--silent
 .endif
