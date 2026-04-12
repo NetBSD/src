@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.139 2026/04/11 19:02:01 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.140 2026/04/12 03:41:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.139 2026/04/11 19:02:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.140 2026/04/12 03:41:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,6 +842,17 @@ start_c_finish(void)
 
 	pmap_bootstrap(start_c_pstart, start_c_fphystart);
 	void *ksp = pmap_bootstrap2();
+
+	/*
+	 * Initialize the kernel message buffer.
+	 */
+	extern paddr_t msgbufpa;
+	for (int i = 0; i < btoc(round_page(MSGBUFSIZE)); i++) {
+		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
+			       msgbufpa + i * PAGE_SIZE,
+			       VM_PROT_READ|VM_PROT_WRITE, 0);
+	}
+	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
 	 * to make life easier in locore.s, set these addresses explicitly

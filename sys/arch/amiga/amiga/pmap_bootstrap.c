@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.13 2026/03/29 20:42:50 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.14 2026/04/12 03:41:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.13 2026/03/29 20:42:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2026/04/12 03:41:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -195,7 +195,7 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 	SYSMAP(void *	,CADDR1	 ,1			)
 	SYSMAP(void *	,CADDR2	 ,1			)
 	SYSMAP(void *	,vmmap	 ,1			)
-	SYSMAP(void *	,msgbufaddr ,btoc(MSGBUFSIZE)	)
+	SYSMAP(void *	,msgbufaddr ,btoc(m68k_round_page(MSGBUFSIZE))	)
 
 	DCIS();
 

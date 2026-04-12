@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2026/04/12 03:06:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.273 2026/04/12 03:41:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2026/04/12 03:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2026/04/12 03:41:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -199,28 +199,20 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	u_int i;
 	vaddr_t minaddr, maxaddr;
+	char pbuf[9];
+	u_int i;
 
 	/* Initialize the FPU, if present. */
 	fpu_init();
 
 	/*
-	 * Initialize error message buffer (at end of core).
+	 * Good {morning,afternoon,evening,night}.
 	 */
-
-	/*
-	 * pmap_bootstrap has positioned this at the end of kernel
-	 * memory segment - map and initialize it now.
-	 */
-
-	extern paddr_t msgbufpa;
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
+	printf("%s%s", copyright, version);
+	identifycpu();
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
 
 	minaddr = 0;
 
@@ -230,15 +222,8 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, false, NULL);
 
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	banner();
-
-	/*
-	 * Get MMU/FPU type from bootstrap
-	 */
-	identifycpu();
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
+	printf("avail memory = %s\n", pbuf);
 
 	/*
 	 * display memory configuration passed from loadbsd
