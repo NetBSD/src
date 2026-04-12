@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.273 2026/04/12 03:41:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.274 2026/04/12 09:11:16 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2026/04/12 03:41:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2026/04/12 09:11:16 rillig Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ identifycpu(void)
 		if (fputype == FPU_68882) {
 			fpu = " m68882 FPU";
 		} else if (fputype == FPU_68881) {
-			fpu = " m68882 FPU";
+			fpu = " m68881 FPU";
 		} else if (fputype == FPU_NONE) {
 			fpu = " no FPU";
 		} else {
