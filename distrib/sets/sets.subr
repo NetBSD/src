@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.213 2026/01/18 08:29:48 mrg Exp $
+#	$NetBSD: sets.subr,v 1.214 2026/04/13 04:02:05 tls Exp $
 #
 
 #
@@ -258,7 +258,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.213 2026/01/18 08:29:48 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.214 2026/04/13 04:02:05 tls Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -385,7 +385,7 @@ list_set_files()
 				sub(/^mk/, "", kw)
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
-				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && nv != "HAVE_BINUTILS" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
 					wanted[kw] = 1
 				}
 			}
