@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.26 2026/03/18 06:41:41 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.27 2026/04/13 17:40:54 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 
 #define	KERNEL_PID	0
 
+#define	PMAP_GROWKERNEL
+#define	PMAP_STEAL_MEMORY
 #define	PMAP_HWPAGEWALKER		1
 #define	PMAP_TLB_MAX			1
 #define	PMAP_TLB_ALWAYS_ASIDS		false
@@ -104,6 +106,11 @@
 #endif
 #endif /* __BSD_PTENTRY_T__ */
 
+#define	__HAVE_PMAP_MD
+struct pmap_md {
+	paddr_t md_ppn;
+};
+
 #define	PMAP_NEED_PROCWR
 static inline void
 pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
@@ -111,20 +118,27 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 	__asm __volatile("fence\trw,rw; fence.i" ::: "memory");
 }
 
-#include <uvm/pmap/tlb.h>
+
+void	pmap_md_pdetab_init(struct pmap *);
+void	pmap_md_pdetab_fini(struct pmap *);
+
+struct vm_page *
+	pmap_md_alloc_poolpage(int);
+vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
+void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
+
+vaddr_t	pmap_md_direct_map_paddr(paddr_t);
+bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
+paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
+
+
+#include <uvm/pmap/pmap.h>
 #include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_tlb.h>
 #include <uvm/pmap/pmap_synci.h>
-
-#define	PMAP_GROWKERNEL
-#define	PMAP_STEAL_MEMORY
+#include <uvm/pmap/tlb.h>
 
 #ifdef _KERNEL
-
-#define	__HAVE_PMAP_MD
-struct pmap_md {
-	paddr_t md_ppn;
-};
 
 static inline void
 pmap_md_icache_sync_all(void)
@@ -136,19 +150,10 @@ pmap_md_icache_sync_range_index(vaddr_t va, vsize_t size)
 {
 }
 
-struct vm_page *
-	pmap_md_alloc_poolpage(int);
-vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
-void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
 
-bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
-paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
-vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 bool	pmap_md_io_vaddr_p(vaddr_t);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
-void	pmap_md_pdetab_init(struct pmap *);
-void	pmap_md_pdetab_fini(struct pmap *);
 void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
 void	pmap_md_xtab_deactivate(struct pmap *);
@@ -238,8 +243,6 @@ pmap_md_nptep(pt_entry_t *ptep)
 
 #endif /* __PMAP_PRIVATE */
 #endif /* _KERNEL */
-
-#include <uvm/pmap/pmap.h>
 
 #endif /* !_MODULE */
 
