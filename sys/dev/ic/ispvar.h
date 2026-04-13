@@ -1,4 +1,4 @@
-/* $NetBSD: ispvar.h,v 1.76 2023/09/21 09:31:50 msaitoh Exp $ */
+/* $NetBSD: ispvar.h,v 1.77 2026/04/13 18:12:03 andvar Exp $ */
 /*
  * Copyright (C) 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -1083,7 +1083,7 @@ void isp_async(ispsoftc_t *, ispasync_t, ...);
  *	XS_TAG_TYPE(xs)		which type of tag to use
  *	XS_SETERR(xs)		set error state
  *
- *		HBA_NOERROR	command has no erros
+ *		HBA_NOERROR	command has no errors
  *		HBA_BOTCH	hba botched something
  *		HBA_CMDTIMEOUT	command timed out
  *		HBA_SELTIMEOUT	selection timed out (also port logouts for FC)

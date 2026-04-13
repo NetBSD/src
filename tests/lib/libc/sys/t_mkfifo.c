@@ -1,4 +1,4 @@
-/* $NetBSD: t_mkfifo.c,v 1.3 2019/06/20 03:31:54 kamil Exp $ */
+/* $NetBSD: t_mkfifo.c,v 1.4 2026/04/13 18:12:04 andvar Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mkfifo.c,v 1.3 2019/06/20 03:31:54 kamil Exp $");
+__RCSID("$NetBSD: t_mkfifo.c,v 1.4 2026/04/13 18:12:04 andvar Exp $");
 
 #include <sys/stat.h>
 #include <sys/wait.h>
@@ -115,7 +115,7 @@ ATF_TC_CLEANUP(mkfifo_block, tc)
 ATF_TC_WITH_CLEANUP(mkfifo_err);
 ATF_TC_HEAD(mkfifo_err, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test erros from mkfifo(2)");
+	atf_tc_set_md_var(tc, "descr", "Test errors from mkfifo(2)");
 }
 
 ATF_TC_BODY(mkfifo_err, tc)
