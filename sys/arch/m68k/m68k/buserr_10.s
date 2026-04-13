@@ -1,4 +1,4 @@
-/*	$NetBSD: buserr_10.s,v 1.1 2026/03/14 21:03:40 thorpej Exp $	*/
+/*	$NetBSD: buserr_10.s,v 1.2 2026/04/13 19:36:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,7 +73,7 @@ GLOBAL(addrerr10)
 	movl	%sp@(FR_FMT8_ACCADDR),%d1 | fault address is as given in frame
 	movl	%d1,%sp@-		| push fault VA
 	movl	%d0,%sp@-		| and padded SSW
-	movw	%sp@(FR_FORVEC),%d0	| get frame format/vector offset
+	movw	%sp@(8+FR_FORVEC),%d0	| get frame format/vector offset
 	andw	#0x0FFF,%d0		| clear out frame format
 	cmpw	#12,%d0			| address error vector?
 	jeq	Lisaerr			| yes, go to it
