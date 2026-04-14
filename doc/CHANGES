@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3246 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3247 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -218,7 +218,18 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	m68k: Refactor FP exception handling to be less
 		machine-dependent. [thorpej 20260321]
 	zfs: Improve performance of removing files. [yamt 20260322]
+	m68k: Use a common delay(9) implementation, except for atari,
+		mac68k, and virt68k. [thorpej 20260328]
+	drum(4): Make the device MPSAFE. [yamt 20260330]
+	evbarm: Add FDT-based clkgate, power and sleep controller, and
+		interrupt controller drivers for am18xx.
+		[yurix 20260330]
+	audiocfg(1): Play a real phone dialing sequence when
+		the test command is used. [mlelstv 20260403]
 	bind: Import version 9.20.22. [christos 20260407]
 	OpenSSL: Imported 3.5.6. [christos 20260408]
 	ssh(1), sshd(8): Import OpenSSH 10.3. [christos 20260408]
 	xz(1): Import of XZ 5.8.3. [christos 20260408]
+	npf(7): Add policy-based routing by interface. [joe 20260408]
+	df(1): Print human-readable inode counts when -h is specified.
+		[kim 20260408]
