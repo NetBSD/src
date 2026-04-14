@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.31 2026/02/17 07:22:53 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.32 2026/04/14 14:33:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.31 2026/02/17 07:22:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.32 2026/04/14 14:33:29 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -1231,7 +1231,7 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct hyperfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg;
+	uint32_t bg, fg;
 	uint32_t latch = 0, bg8, fg8, pixel, mask;
 	int i, line, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
@@ -1254,9 +1254,12 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (c == 0x20) {
 		hyperfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			hyperfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
 
@@ -1325,7 +1328,7 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		}
 		/* if we have pixels left in latch write them out */
 		if ((i & 3) != 0) {
-			latch = latch << ((4 - (i & 3)) << 3);	
+			latch = latch << ((4 - (i & 3)) << 3);
 			/* make sure we write only the pixels in the latch */
 			hyperfb_write4(sc, NGLE_BINC_MASK, mask);
 			hyperfb_write4(sc, NGLE_BINC_DATA_R, latch);
@@ -1334,6 +1337,8 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
+	if (attr & WSATTR_UNDERLINE)
+		hyperfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 
 static void
