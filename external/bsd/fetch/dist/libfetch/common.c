@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.9 2026/04/16 08:39:42 wiz Exp $	*/
+/*	$NetBSD: common.c,v 1.10 2026/04/16 08:42:25 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -517,10 +517,11 @@ static int
 compute_timeout(const struct timeval *tv)
 {
 	struct timeval cur;
+	int timeout;
 
 	gettimeofday(&cur, NULL);
-	return (tv->tv_sec - cur.tv_sec) * 1000
-	    + (tv->tv_usec - cur.tv_usec) / 1000;
+	timeout = (tv->tv_sec - cur.tv_sec) * 1000 + (tv->tv_usec - cur.tv_usec) / 1000;
+	return timeout;
 }
 
 /*
