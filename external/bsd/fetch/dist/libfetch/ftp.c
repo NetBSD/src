@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.11 2026/04/16 08:43:51 wiz Exp $	*/
+/*	$NetBSD: ftp.c,v 1.12 2026/04/16 08:45:02 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -692,14 +692,13 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 	const char *filename;
 	size_t filenamelen;
 	int type;
-	int low, pasv, verbose;
+	int pasv, verbose;
 	int e, sd = -1;
 	socklen_t l;
 	char *s;
 	fetchIO *df;
 
 	/* check flags */
-	low = CHECK_FLAG('l');
 	pasv = !CHECK_FLAG('a');
 	verbose = CHECK_FLAG('v');
 
@@ -865,6 +864,7 @@ retry_mode:
 		uint16_t p;
 #if defined(IPV6_PORTRANGE) || defined(IP_PORTRANGE)
 		int arg;
+		int low = CHECK_FLAG('l');
 #endif
 		int d;
 		char hname[INET6_ADDRSTRLEN];
