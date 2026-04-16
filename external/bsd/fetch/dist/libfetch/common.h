@@ -1,4 +1,4 @@
-/*	$NetBSD: common.h,v 1.4 2026/04/11 10:42:32 wiz Exp $	*/
+/*	$NetBSD: common.h,v 1.5 2026/04/16 08:40:49 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * All rights reserved.
@@ -54,7 +54,8 @@
 
 #if !defined(__sun) && !defined(__hpux) && !defined(__INTERIX) && \
     !defined(__digital__) && !defined(__linux) && !defined(__MINT__) && \
-    !defined(__sgi) && !defined(__minix) && !defined(__CYGWIN__)
+    !defined(__sgi) && !defined(__minix) && !defined(__CYGWIN__) && \
+    !defined(_M_XENIX)
 #define HAVE_SA_LEN
 #endif
 

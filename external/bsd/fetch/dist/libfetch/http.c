@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.8 2026/04/16 08:37:52 wiz Exp $	*/
+/*	$NetBSD: http.c,v 1.9 2026/04/16 08:40:49 wiz Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -99,6 +99,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#if defined(__APPLE__)
+#include <xlocale.h>	/* for strptime_l */
+#endif
 #include <unistd.h>
 
 #include <netinet/in.h>
