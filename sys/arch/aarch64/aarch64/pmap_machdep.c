@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.10 2026/04/10 08:06:26 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.11 2026/04/16 14:10:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.10 2026/04/10 08:06:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11 2026/04/16 14:10:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -180,8 +180,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		/*
 		 * Enable write permissions for the page by setting the Access Flag.
 		 */
-		// XXXNH LX_BLKPAG_OS_0?
-		const pt_entry_t npte = opte | LX_BLKPAG_AF | LX_BLKPAG_OS_0;
+		const pt_entry_t npte = opte | LX_BLKPAG_AF;
 		atomic_swap_64(ptep, npte);
 		dsb(ishst);
 		fixed = true;
