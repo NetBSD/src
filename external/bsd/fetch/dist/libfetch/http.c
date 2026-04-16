@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.12 2026/04/16 10:08:50 wiz Exp $	*/
+/*	$NetBSD: http.c,v 1.13 2026/04/16 10:09:38 wiz Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -557,7 +557,6 @@ http_parse_mtime(const char *p, time_t *mtime)
 	locale = strdup(setlocale(LC_TIME, NULL));
 	if (locale == NULL)
 		return (-1);
-
 	setlocale(LC_TIME, "C");
 	r = strptime(p, "%a, %d %b %Y %H:%M:%S GMT", &tm);
 	/* XXX should add support for date-2 and date-3 */
@@ -820,6 +819,7 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int *cached)
 #else
 		errno = EPERM;
 #endif
+		fetch_syserr();
 		goto ouch;
 	}
 
