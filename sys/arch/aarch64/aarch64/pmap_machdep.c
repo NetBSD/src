@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.11 2026/04/16 14:10:51 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.12 2026/04/16 18:56:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.11 2026/04/16 14:10:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.12 2026/04/16 18:56:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,6 +68,9 @@ uint64_t pmap_attr_gp = 0;
  */
 vaddr_t virtual_avail;
 vaddr_t virtual_end;
+
+PMAP_COUNTER(fixup_referenced, "page reference emulations");
+PMAP_COUNTER(fixup_modified, "page modification emulations");
 
 paddr_t
 vtophys(vaddr_t va)
@@ -185,6 +188,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		dsb(ishst);
 		fixed = true;
 
+		PMAP_COUNT(fixup_modified);
+
 		UVMHIST_LOG(pmaphist, " <-- done (mod emul: changed pte "
 		    "from %#jx to %#jx)", opte, npte, 0, 0);
 	} else if ((ftype & VM_PROT_READ) && (opte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RO) {
@@ -202,6 +207,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		atomic_swap_64(ptep, npte);
 		dsb(ishst);
 		fixed = true;
+
+		PMAP_COUNT(fixup_referenced);
 
 		UVMHIST_LOG(pmaphist, " <-- done (ref emul: changed pte "
 		    "from %#jx to %#jx)", opte, npte, 0, 0);
