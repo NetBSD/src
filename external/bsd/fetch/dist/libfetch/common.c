@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.10 2026/04/16 08:42:25 wiz Exp $	*/
+/*	$NetBSD: common.c,v 1.11 2026/04/16 09:57:25 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -41,11 +41,14 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/uio.h>
-#if HAVE_POLL_H
+#if defined(HAVE_POLL_H) || defined(NETBSD)
 #include <poll.h>
+#define HAVE_POLL
 #elif HAVE_SYS_POLL_H
+#define HAVE_POLL
 #include <sys/poll.h>
 #endif
+
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
@@ -240,7 +243,9 @@ fetch_reopen(int sd)
 	conn->next_buf = NULL;
 	conn->next_len = 0;
 	conn->sd = sd;
+#ifdef HAVE_POLL
 	conn->buf_events = POLLIN;
+#endif
 	return (conn);
 }
 
@@ -513,6 +518,7 @@ fetch_ssl(conn_t *conn, const struct url *URL, int verbose)
 #endif
 }
 
+#ifdef HAVE_POLL
 static int
 compute_timeout(const struct timeval *tv)
 {
@@ -523,6 +529,7 @@ compute_timeout(const struct timeval *tv)
 	timeout = (tv->tv_sec - cur.tv_sec) * 1000 + (tv->tv_usec - cur.tv_usec) / 1000;
 	return timeout;
 }
+#endif
 
 /*
  * Read a character from a connection w/ timeout
@@ -531,7 +538,11 @@ ssize_t
 fetch_read(conn_t *conn, char *buf, size_t len)
 {
 	struct timeval timeout_end;
+#ifdef HAVE_POLL
 	struct pollfd pfd;
+#else
+	fd_set readfds;
+#endif
 	int timeout_cur;
 	ssize_t rlen;
 	int r;
@@ -549,12 +560,16 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 	}
 
 	if (fetchTimeout) {
+#ifndef HAVE_POLL
+		FD_ZERO(&readfds);
+#endif
 		gettimeofday(&timeout_end, NULL);
 		timeout_end.tv_sec += fetchTimeout;
 	}
 
-	pfd.fd = conn->sd;
 	for (;;) {
+#ifdef HAVE_POLL
+		pfd.fd = conn->sd;
 		pfd.events = conn->buf_events;
 		if (fetchTimeout && pfd.events) {
 			do {
@@ -573,6 +588,31 @@ fetch_read(conn_t *conn, char *buf, size_t len)
 					return (-1);
 				}
 			} while (pfd.revents == 0);
+#else
+		while (fetchTimeout && !FD_ISSET(conn->sd, &readfds)) {
+			struct timeval waittv, now;
+			FD_SET(conn->sd, &readfds);
+			gettimeofday(&now, NULL);
+			waittv.tv_sec = timeout_end.tv_sec - now.tv_sec;
+			waittv.tv_usec = timeout_end.tv_usec - now.tv_usec;
+			if (waittv.tv_usec < 0) {
+				waittv.tv_usec += 1000000;
+				waittv.tv_sec--;
+			}
+			if (waittv.tv_sec < 0) {
+				errno = ETIMEDOUT;
+				fetch_syserr();
+				return (-1);
+			}
+			errno = 0;
+			r = select(conn->sd + 1, &readfds, NULL, NULL, &waittv);
+			if (r == -1) {
+				if (errno == EINTR && fetchRestartCalls)
+					continue;
+				fetch_syserr();
+				return (-1);
+			}
+#endif
 		}
 #ifdef WITH_SSL
 		if (conn->ssl != NULL) {
