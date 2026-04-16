@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2025/07/14 10:25:51 kre Exp $
+# $NetBSD: Makefile,v 1.20 2026/04/16 10:27:26 wiz Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -11,8 +11,9 @@ CLEANFILES=	ftperr.h httperr.h
 .include <bsd.init.mk>
 
 CPPFLAGS+=	-I.
-CPPFLAGS+=	-DNETBSD 
+CPPFLAGS+=	-DNETBSD
 CPPFLAGS+=	-DFTP_COMBINE_CWDS
+CPPFLAGS+=	-DHAVE_POLL_H
 CPPFLAGS+=	-DINET6
 
 CPPFLAGS+=	-DWITH_SSL
