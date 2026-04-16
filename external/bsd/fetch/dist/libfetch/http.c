@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.13 2026/04/16 10:09:38 wiz Exp $	*/
+/*	$NetBSD: http.c,v 1.14 2026/04/16 10:13:29 wiz Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -563,8 +563,8 @@ http_parse_mtime(const char *p, time_t *mtime)
 	setlocale(LC_TIME, locale);
 	free(locale);
 #endif
- 	if (r == NULL)
- 		return (-1);
+	if (r == NULL)
+		return (-1);
 	*mtime = timegm(&tm);
 	return (0);
 }
