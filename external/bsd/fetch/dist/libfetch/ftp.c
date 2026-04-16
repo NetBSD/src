@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.10 2026/04/16 08:42:47 wiz Exp $	*/
+/*	$NetBSD: ftp.c,v 1.11 2026/04/16 08:43:51 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -98,6 +98,7 @@
 #include "common.h"
 #include "ftperr.h"
 
+static int ftp_cmd(conn_t *, const char *, ...) LIBFETCH_PRINTFLIKE(2, 3);
 #define FTP_ANONYMOUS_USER	"anonymous"
 
 #define FTP_CONNECTION_ALREADY_OPEN	125

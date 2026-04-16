@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.9 2026/04/16 08:40:49 wiz Exp $	*/
+/*	$NetBSD: http.c,v 1.10 2026/04/16 08:43:51 wiz Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -142,6 +142,7 @@
 
 #define HTTP_ERROR(xyz) ((xyz) > 400 && (xyz) < 599)
 
+static int http_cmd(conn_t *, const char *, ...) LIBFETCH_PRINTFLIKE(2, 3);
 
 /*****************************************************************************
  * I/O functions for decoding chunked streams
