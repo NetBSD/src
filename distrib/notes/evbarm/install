@@ -1,4 +1,4 @@
-.\"	$NetBSD: install,v 1.18 2021/12/05 19:43:30 nia Exp $
+.\"	$NetBSD: install,v 1.19 2026/04/16 13:21:38 nia Exp $
 .\"
 .\" Copyright (c) 2001-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,23 +27,7 @@
 .Ss2 Installation for Armv7 and AArch64 devices with U-Boot
 .Bl -bullet -offset indent -compact
 .It
-Download or build armv7.img.gz (32-bit) or arm64.img.gz (64-bit).
-.It
-Decompress the .gz image, using
-.Xr gunzip 1
-on Unix.
-.It
-Write the image to disk:
-.Bd -literal
-# dd if=armv7.img of=/dev/rld0 bs=1m conv=sync progress=1
-.Ed
-.It
-If you are using Microsoft Windows, you can use
-.Lk https://www.netbsd.org/~martin/rawrite32/ "rawrite32"
-to write SD card images, which can handle decompression too.
-.It
-To replace the vendor U-Boot bootloader with a "mainline" U-Boot,
-obtain a board-specific image.
+First obtain a board-specific U-Boot bootloader.
 Bootloaders are provided by the
 .Pa sysutils/u-boot-*
 packages in
@@ -56,17 +40,21 @@ file in the root directory of pkgsrc).
 .Pp
 You can also extract the U-Boot image from u-boot-*.tgz archive in an
 existing
-.Lk https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/aarch64/9.0/All/ "NetBSD binary package set".
-.Pp
-Install the board-specific U-Boot to the SD card,
-e.g. for Allwinner devices (PINE H64 in this case):
+.Lk https://cdn.netbsd.org/pub/pkgsrc/packages/NetBSD/aarch64/11.0/All/ "NetBSD binary package set".
+.It
+Download or build armv7.img.gz (32-bit) or arm64.img.gz (64-bit).
+.It
+Decompress the .gz image, using
+.Xr gunzip 1
+.It
+Install the board-specific U-Boot on the target image:
 .Bd -literal
-# dd if=/usr/pkg/share/u-boot/pine-h64/u-boot-sunxi-with-spl.bin of=/dev/rld0 bs=1k seek=8 conv=sync progress=1
+# installboot -m evbarm -o board=pine64,pinebook arm64.img /path/to/u-boot/package
 .Ed
-.Pp
-Or a Rockchip device (e.g. RockPro64):
+.It
+Write the image to disk:
 .Bd -literal
-# dd if=/usr/pkg/share/u-boot/rockpro64/rksd_loader.img of=/dev/rld0 seek=64 conv=sync progress=1
+# dd if=arm64.img of=/dev/rld0 bs=1m conv=sync progress=1
 .Ed
 .El
 .Ss2 Installing NetBSD/evbarm to a SATA hard disk
