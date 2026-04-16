@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.11 2026/04/16 09:57:25 wiz Exp $	*/
+/*	$NetBSD: common.c,v 1.12 2026/04/16 10:05:08 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -479,8 +479,7 @@ fetch_ssl(conn_t *conn, const struct url *URL, int verbose)
 	conn->buf_events = 0;
 	SSL_set_fd(conn->ssl, conn->sd);
 #if OPENSSL_VERSION_NUMBER >= 0x0090806fL && !defined(OPENSSL_NO_TLSEXT)
-	if (!SSL_set_tlsext_host_name(conn->ssl, (char *)(uintptr_t)URL->host))
-	{
+	if (!SSL_set_tlsext_host_name(conn->ssl, (char *)(uintptr_t)URL->host)) {
 		fprintf(stderr,
 		    "TLS server name indication extension failed for host %s\n",
 		    URL->host);

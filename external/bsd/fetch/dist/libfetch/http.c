@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.10 2026/04/16 08:43:51 wiz Exp $	*/
+/*	$NetBSD: http.c,v 1.11 2026/04/16 10:05:08 wiz Exp $	*/
 /*-
  * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
@@ -72,10 +72,8 @@
 #define _GNU_SOURCE
 #endif
 
-#ifndef _REENTRANT
 /* Needed for gmtime_r on Interix */
 #define _REENTRANT
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -852,7 +850,7 @@ set_if_modified_since(conn_t *conn, time_t last_modified)
 	gmtime_r(&last_modified, &tm);
 	snprintf(buf, sizeof(buf), "%.3s, %02d %.3s %4ld %02d:%02d:%02d GMT",
 	    weekdays + tm.tm_wday * 3, tm.tm_mday, months + tm.tm_mon * 3,
-	    (long)tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	    (long)(tm.tm_year + 1900), tm.tm_hour, tm.tm_min, tm.tm_sec);
 	http_cmd(conn, "If-Modified-Since: %s\r\n", buf);
 }
 

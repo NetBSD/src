@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.12 2026/04/16 08:45:02 wiz Exp $	*/
+/*	$NetBSD: ftp.c,v 1.13 2026/04/16 10:05:08 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -1114,9 +1114,9 @@ ftp_get_proxy(struct url * url, const char *flags)
 	char *p;
 
 	if (flags != NULL && strchr(flags, 'd') != NULL)
-		return NULL;
+		return (NULL);
 	if (fetch_no_proxy_match(url->host))
-		return NULL;
+		return (NULL);
 
 	if (((p = getenv("FTP_PROXY")) || (p = getenv("ftp_proxy")) ||
 		(p = getenv("HTTP_PROXY")) || (p = getenv("http_proxy"))) &&
@@ -1131,10 +1131,10 @@ ftp_get_proxy(struct url * url, const char *flags)
 			purl->port = fetch_default_proxy_port(purl->scheme);
 		if (strcasecmp(purl->scheme, SCHEME_FTP) == 0 ||
 		    strcasecmp(purl->scheme, SCHEME_HTTP) == 0)
-			return purl;
+			return (purl);
 		fetchFreeURL(purl);
 	}
-	return NULL;
+	return (NULL);
 }
 
 /*
