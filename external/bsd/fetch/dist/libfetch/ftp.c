@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.9 2026/04/11 10:42:32 wiz Exp $	*/
+/*	$NetBSD: ftp.c,v 1.10 2026/04/16 08:42:47 wiz Exp $	*/
 /*-
  * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -1110,22 +1110,18 @@ static struct url *
 ftp_get_proxy(struct url * url, const char *flags)
 {
 	struct url *purl;
-	char *p, *fp, *FP, *hp, *HP;
+	char *p;
 
 	if (flags != NULL && strchr(flags, 'd') != NULL)
 		return NULL;
 	if (fetch_no_proxy_match(url->host))
 		return NULL;
 
-	FP = getenv("FTP_PROXY");
-	fp = getenv("ftp_proxy");
-	HP = getenv("HTTP_PROXY");
-	hp = getenv("http_proxy");
-
-	if ((((p = FP) || (p = fp) || (p = HP) || (p = hp))) &&
+	if (((p = getenv("FTP_PROXY")) || (p = getenv("ftp_proxy")) ||
+		(p = getenv("HTTP_PROXY")) || (p = getenv("http_proxy"))) &&
 	    *p && (purl = fetchParseURL(p)) != NULL) {
 		if (!*purl->scheme) {
-			if (fp || FP)
+			if (getenv("FTP_PROXY") || getenv("ftp_proxy"))
 				strcpy(purl->scheme, SCHEME_FTP);
 			else
 				strcpy(purl->scheme, SCHEME_HTTP);
