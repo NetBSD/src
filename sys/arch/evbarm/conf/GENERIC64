@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.231 2026/03/02 14:05:49 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.232 2026/04/16 07:12:59 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -324,6 +324,7 @@ iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 mcommphy*	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
+micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ? 		# NS83843 PHYs
 pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
