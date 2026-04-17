@@ -1,4 +1,4 @@
-# $NetBSD: services,v 1.107 2025/12/30 15:10:41 christos Exp $
+# $NetBSD: services,v 1.108 2026/04/17 17:27:19 maya Exp $
 # See also: services(5), https://www.iana.org/assignments/service-names-port-numbers/
 #
 #                                              Service Name and Transport Protocol Port Number Registry
@@ -24894,6 +24894,7 @@ nfsd		2049/tcp		# Sun NFS
 eklogin		2105/tcp		# Kerberos encrypted `rlogin'
 zephyr-hm-srv   2105/udp		# Zephyr hm-serv connection
 ekshell2	2106/tcp		# Encrypted kshell - UColorado, Boulder
+iprop		2121/tcp		# Heimdal KDC database propagation
 iscsi		3260/tcp
 fud		4201/udp		# Cyrus IMAP finger-like service
 ttcp		5037/tcp 
