@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: ctwm_app_menu,v 1.7 2026/02/01 22:30:27 riastradh Exp $
+#	$NetBSD: ctwm_app_menu,v 1.8 2026/04/17 11:07:12 nia Exp $
 #
 # Copyright (c) 2020-2026 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,7 +33,7 @@ set -eu -o pipefail
 LOCALBASE=$(pkg_info -Q LOCALBASE pkg_install 2>/dev/null) ||
     LOCALBASE=/usr/pkg
 
-find "$LOCALBASE"/share/applications -name '*.desktop' -exec awk -F= '
+find "$LOCALBASE"/share/applications -name '*.desktop' -exec awk '
 	function resetentry() {
 		name = menu = exec = ""
 		terminal = nodisplay = 0
@@ -48,6 +48,7 @@ find "$LOCALBASE"/share/applications -name '*.desktop' -exec awk -F= '
 		printf "%02d\t%s\t%s\t%s\n", menuorder[menu], quote(menu),
 		    quote(" " name), "!" quote(exec " &")
 	}
+
 	function quote(s) {
 		gsub(/\\/, "\\\\", s)
 		gsub(/\"/, "\\\"", s)
@@ -55,8 +56,17 @@ find "$LOCALBASE"/share/applications -name '*.desktop' -exec awk -F= '
 		return "\"" s "\""
 	}
 
-	function iskey(k)	{ return $1 == k }	# Assumes FS="="
-	function value( v)	{ v = $0; sub(/^[^=]*=/, "", v); return v }
+	function iskey(k, loc1) {
+		loc1 = $0;
+		sub(/ *=.*$/, "", loc1);
+		return loc1 == k;
+	}
+
+	function value(v) {
+		v = $0;
+		sub(/^[^=]*= */, "", v);
+		return v;
+	}
 
 	BEGIN {
 		menuno = 0
@@ -108,9 +118,9 @@ find "$LOCALBASE"/share/applications -name '*.desktop' -exec awk -F= '
 	FNR == 1		{ resetentry() }
 
 	iskey("Name") && !name	{ name = value() }
-	/^Terminal=true$/	{ terminal = 1 }
+	/^Terminal *= *true$/	{ terminal = 1 }
 	iskey("OnlyShowIn")	{ nodisplay = 1 }
-	/^NoDisplay=true$/	{ nodisplay = 1 }
+	/^NoDisplay *= *true$/	{ nodisplay = 1 }
 	iskey("Exec") && !exec	{ exec = value()
 				  gsub(/ %.*/, "", exec)
 				  if (exec ~ /\"/)	# XXX
