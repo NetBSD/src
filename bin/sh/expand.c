@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.150 2026/04/18 09:37:51 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.151 2026/04/18 14:35:37 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.150 2026/04/18 09:37:51 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.151 2026/04/18 14:35:37 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -717,29 +717,10 @@ expbackq(union node *cmd, int quoted, int flag)
 				 * Before saving it, we need to insert
 				 * any \n's that we have just skipped.
 				 */
-
-				/* XXX
-				 * this hack is just because our
-				 * CHECKSTRSPACE() is lazy, and only
-				 * ever grows the stack once, even
-				 * if that does not allocate the space
-				 * we requested.  ie: safe for small
-				 * requests, but not large ones.
-				 * FIXME someday...
-				 */
-				if (nnl < 20) {
-					CHECKSTRSPACE(nnl + 2, dest);
-					while (nnl > 0) {
-						nnl--;
-						USTPUTC('\n', dest);
-					}
-				} else {
-					/* The slower, safer, way */
-					while (nnl > 0) {
-						nnl--;
-						STPUTC('\n', dest);
-					}
-					CHECKSTRSPACE(2, dest);
+				CHECKSTRSPACE(nnl + 2, dest);
+				while (nnl > 0) {
+					nnl--;
+					USTPUTC('\n', dest);
 				}
 				if ((quotes && quoted && NEEDESC(lastc)) ||
 				    ISCTL(lastc))
