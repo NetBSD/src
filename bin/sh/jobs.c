@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.124 2025/04/09 12:04:19 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.125 2026/04/18 09:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.124 2025/04/09 12:04:19 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.125 2026/04/18 09:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2063,14 +2063,7 @@ cmdputs(const char *s)
 			break;
 		case CTLVAR:
 			subtype = *p++;
-			if (subtype & VSLINENO) {	/* undo LINENO hack */
-				if ((subtype & VSTYPE) == VSLENGTH)
-					str = "${#LINENO";	/*}*/
-				else
-					str = "${LINENO";	/*}*/
-				while (is_digit(*p))
-					p++;
-			} else if ((subtype & VSTYPE) == VSLENGTH)
+			if ((subtype & VSTYPE) == VSLENGTH)
 				str = "${#"; /*}*/
 			else
 				str = "${"; /*}*/

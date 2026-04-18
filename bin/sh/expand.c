@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.149 2026/03/26 01:39:32 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.150 2026/04/18 09:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.149 2026/03/26 01:39:32 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.150 2026/04/18 09:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -952,16 +952,7 @@ evalvar(const char *p, int flag)
 	    (int)(p - var - 1), var, flag, quotes, varflags, subtype));
 
  again: /* jump here after setting a variable with ${var=text} */
-	if (varflags & VSLINENO) {
-		if (line_num.flags & VUNSET) {
-			set = 0;
-			val = NULL;
-		} else {
-			set = 1;
-			special = p - var;
-			val = NULL;
-		}
-	} else if (special) {
+	if (special) {
 		set = varisset(var, varflags & VSNUL);
 		val = NULL;
 		if (!set && *var == '@')
@@ -995,19 +986,7 @@ evalvar(const char *p, int flag)
 	if (set && subtype != VSPLUS) {
 		/* insert the value of the variable */
 		if (special) {
-			if (varflags & VSLINENO) {
-				/*
-				 * The LINENO hack (expansion part)
-				 */
-				while (--special > 0) {
-/*						not needed, it is a number...
-					if (quotes && NEEDESC(*var))
-						STPUTC(CTLESC, expdest);
-*/
-					STPUTC(*var++, expdest);
-				}
-			} else
-				varvalue(var, varflags&VSQUOTE, subtype, flag);
+			varvalue(var, varflags&VSQUOTE, subtype, flag);
 			if (subtype == VSLENGTH) {
 				varlen = expdest - stackblock() - startloc;
 				STADJUST(-varlen, expdest);

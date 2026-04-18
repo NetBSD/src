@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.186 2026/03/22 19:18:50 kre Exp $	*/
+/*	$NetBSD: parser.c,v 1.187 2026/04/18 09:37:51 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.186 2026/03/22 19:18:50 kre Exp $");
+__RCSID("$NetBSD: parser.c,v 1.187 2026/04/18 09:37:51 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -2288,28 +2288,6 @@ parsesub: {
 				c = pgetc_linecont();
 			} while (is_in_name(c));
 
-#if 0
-			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
-				int i;
-				int linno;
-				char buf[10];
-
-				/*
-				 * The "LINENO hack"
-				 *
-				 * Replace the variable name with the
-				 * current line number.
-				 */
-				linno = plinno;
-				if (funclinno != 0)
-					linno -= funclinno - 1;
-				snprintf(buf, sizeof(buf), "%d", linno);
-				STADJUST(-6, out);
-				for (i = 0; buf[i] != '\0'; i++)
-					STPUTC(buf[i], out);
-				flags |= VSLINENO;
-			}
-#endif
 		} else if (is_digit(c)) {
 			do {
 				VTRACE(DBG_LEXER, ("%c", c));
