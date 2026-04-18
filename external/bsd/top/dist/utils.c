@@ -58,7 +58,7 @@ alldigits(char *s)
 
     while ((ch = *s++) != '\0')
     {
-	if (!isdigit(ch))
+	if (!isdigit((unsigned char)ch))
 	{
 	    return 0;
 	}
@@ -217,7 +217,7 @@ printable(char *str)
     ptr = str;
     while (((ch = *ptr) & 0xFF) != '\0')
     {
-	if (!isprint(ch))
+	if (!isprint((unsigned char)ch))
 	{
 	    *ptr = '?';
 	}
@@ -258,9 +258,9 @@ char *homogenize(const char *str)
     to = fr = ans = estrdup(str);
     while ((ch = *fr++) != '\0')
     {
-	if (isalnum(ch))
+	if (isalnum((unsigned char)ch))
 	{
-	    *to++ = tolower(ch);
+	    *to++ = tolower((unsigned char)ch);
 	}
     }
 
@@ -521,15 +521,15 @@ format_percent(double v)
     if (v < 0 || v >= 100000.)
     {
 	/* we dont want to try extreme values */
-	strcpy(result, "  ???");
+	strlcpy(result, "  ???", sizeof(result));
     }
     else if (v > 99.99)
     {
-	sprintf(result, "%5.0f", v);
+	snprintf(result, sizeof(result), "%5.0f", v);
     }
     else
     {
-	sprintf(result, "%5.2f", v);
+	snprintf(result, sizeof(result), "%5.2f", v);
     }
 
     return result;
@@ -565,9 +565,10 @@ format_time(long seconds)
     else if (seconds >= (1000l * 60l))
     {
 	/* alternate (slow) method displaying hours and tenths */
-	sprintf(result, "%5.1fH", (double)seconds / (double)(60l * 60l));
+	snprintf(result, sizeof(result),
+	    "%5.1fH", (double)seconds / (double)(60l * 60l));
 
-	/* It is possible that the sprintf took more than 6 characters.
+	/* It is possible that the snprintf took more than 6 characters.
 	   If so, then the "H" appears as result[6].  If not, then there
 	   is a \0 in result[6].  Either way, it is safe to step on.
 	 */
@@ -577,7 +578,8 @@ format_time(long seconds)
     {
 	/* standard method produces MMM:SS */
 	/* we avoid printf as must as possible to make this quick */
-	sprintf(result, "%3ld:%02ld", seconds / 60l, seconds % 60l);
+	snprintf(result, sizeof(result), "%3ld:%02ld",
+	    seconds / 60l, seconds % 60l);
     }
     return(result);
 }
@@ -595,7 +597,7 @@ format_time(long seconds)
  * Compromise time.  We need to return a string, but we don't want the
  * caller to have to worry about freeing a dynamically allocated string.
  * Unfortunately, we can't just return a pointer to a static area as one
- * of the common uses of this function is in a large call to sprintf where
+ * of the common uses of this function is in a large call to snprintf where
  * it might get invoked several times.  Our compromise is to maintain an
  * array of strings and cycle thru them with each invocation.  We make the
  * array large enough to handle the above mentioned case.  The constant

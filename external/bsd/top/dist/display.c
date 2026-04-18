@@ -1930,8 +1930,8 @@ readline(char *buffer, int size, int numeric)
 	    }
 	}
 	/* check for character validity and buffer overflow */
-	else if (cnt == size || (numeric && !isdigit((int)ch)) ||
-		!isprint((int)ch))
+	else if (cnt == size || (numeric && !isdigit((unsigned char)ch)) ||
+		!isprint((unsigned char)ch))
 	{
 	    /* not legal */
 	    putchar('\7');

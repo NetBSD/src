@@ -1,4 +1,4 @@
-/*	$NetBSD: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $	*/
+/*	$NetBSD: m_netbsd.c,v 1.31 2026/04/18 21:37:04 christos Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -45,12 +45,12 @@
  *		Andrew Doran <ad@NetBSD.org>
  *
  *
- * $Id: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $
+ * $Id: m_netbsd.c,v 1.31 2026/04/18 21:37:04 christos Exp $
  */
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: m_netbsd.c,v 1.30 2024/02/04 05:43:05 mrg Exp $");
+__RCSID("$NetBSD: m_netbsd.c,v 1.31 2026/04/18 21:37:04 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -928,7 +928,7 @@ format_next_proc(caddr_t handle, char *(*get_userid)(int))
 	cpu = 100.0 * pct;
 
 	/* format this entry */
-	sprintf(fmt,
+	snprintf(fmt, sizeof(fmt),
 	    Proc_format,
 	    pp->p_pid,
 	    (*userprint)(pp->p_ruid),
@@ -1029,7 +1029,8 @@ format_next_lwp(caddr_t handle, char *(*get_userid)(int))
 	}
 
 	/* format this entry */
-	sprintf(fmt,
+	snprintf(fmt,
+	    sizeof(fmt),
 	    Thread_format,
 	    pl->l_pid,
 	    pl->l_lid,
