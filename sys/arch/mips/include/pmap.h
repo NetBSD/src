@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77 2022/10/26 07:35:19 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.78 2026/04/18 06:58:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -276,7 +276,7 @@ int sbmips_cca_for_pa(paddr_t);
 
 #ifdef __HAVE_PMAP_PV_TRACK
 struct pmap_page {
-        struct vm_page_md       pp_md;
+	struct vm_page_md	pp_md;
 };
 
 #define PMAP_PAGE_TO_MD(ppage)  (&((ppage)->pp_md))
