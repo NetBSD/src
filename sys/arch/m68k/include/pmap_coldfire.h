@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.6 2023/09/28 06:34:22 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.7 2026/04/18 06:20:44 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #ifndef _M68K_PMAP_COLDFIRE_H_
-#define M68K_PMAP_COLDFIRE_H_
+#define _M68K_PMAP_COLDFIRE_H_
 
 #ifdef _LOCORE
 #error use assym.h instead
