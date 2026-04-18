@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.c,v 1.41 2025/05/07 14:01:01 kre Exp $	*/
+/*	$NetBSD: memalloc.c,v 1.42 2026/04/18 14:35:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: memalloc.c,v 1.41 2025/05/07 14:01:01 kre Exp $");
+__RCSID("$NetBSD: memalloc.c,v 1.42 2026/04/18 14:35:16 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -273,20 +273,36 @@ grabstackblock(int len)
 
 /*
  * The following routines are somewhat easier to use than the above.
- * The user declares a variable of type STACKSTR, which may be declared
- * to be a register.  The macro STARTSTACKSTR initializes things.  Then
- * the user uses the macro STPUTC to add characters to the string.  In
- * effect, STPUTC(c, p) is the same as *p++ = c except that the stack is
- * grown as necessary.  When the user is done, she can just leave the
- * string there and refer to it using stackblock().  Or she can allocate
+ * The macro STARTSTACKSTR(ptr) initializes things.  "ptr" must be the
+ * name of a "char *" variable. Then the user uses the macro STPUTC to
+ * add characters to the string.  In effect, STPUTC(c, ptr) is the same
+ * as *ptr++ = c except that the stack is grown as necessary.  Note that
+ * the value of ptr is not exoected to increase linearly, its value
+ * after a call to STPUTC() is not comparable to any value it had before.
+ *
+ * When the user is done, she can just leave the string there and refer to
+ * it using stackblock().  In that case, the string will be overwritten by
+ * the next call to stalloc() or STARTSTACKSTR().  Or she can allocate
  * the space for it using grabstackstr().  If it is necessary to allow
  * someone else to use the stack temporarily and then continue to grow
- * the string, the user should use grabstack to allocate the space, and
- * then call ungrabstr(p) to return to the previous mode of operation.
+ * the string, the user should use grabstackstr() to allocate the space,
+ * and then call ungrabstackstr(p) to return to the previous mode of operation.
  *
  * USTPUTC is like STPUTC except that it doesn't check for overflow.
  * CHECKSTACKSPACE can be called before USTPUTC to ensure that there
- * is space for at least one character.
+ * is space for (at least) some known number of calls to USTPUTC()
+ * CHECKSTACKSPACE may make arbitrary changes to the ptr, USTPUTC does not.
+ *
+ * STUNPUTC() is the inverse of STPUTC() (and USTPUTC()) and undoes
+ * the most recent (not previously undone) call of either of those.
+ * The user must ensure that no more than what has been added to the
+ * current string is removed.
+ *
+ * Aside from when adjusted by the macros/functions here, the "ptr"
+ * variable MUST not be altered (it can be used to examine data).
+ * The ptr var always refers to one past the most recently added byte,
+ * *ptr is is always undefined as is ptr[1] (etc),  but ptr[-1] can
+ * be used after data has been added (STTOPC() is a cleaner way).
  */
 
 char *
@@ -300,15 +316,17 @@ growstackstr(void)
 }
 
 /*
- * Called from CHECKSTRSPACE.
+ * Called from CHECKSTRSPACE().   (nowhere else)
+ * Make sure there is space for "required" bytes
  */
-
 char *
-makestrspace(void)
+makestrspace(int required)
 {
 	int len = stackblocksize() - sstrnleft;
-	growstackblock();
-	sstrnleft = stackblocksize() - len;
+	do {
+		growstackblock();
+		sstrnleft = stackblocksize() - len;
+	} while (sstrnleft < required);
 	return stackblock() + len;
 }
 

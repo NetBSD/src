@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.21 2025/05/07 14:01:01 kre Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.22 2026/04/18 14:35:16 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,7 +58,7 @@ void rststackmark(struct stackmark *);
 void growstackblock(void);
 void grabstackblock(int);
 char *growstackstr(void);
-char *makestrspace(void);
+char *makestrspace(int);
 void ungrabstackstr(char *, char *);
 
 char *ststrcat(size_t *, ...);
@@ -70,7 +70,7 @@ char *ststrcat(size_t *, ...);
 #define stackblocksize() stacknleft
 #define STARTSTACKSTR(p)	p = stackblock(), sstrnleft = stackblocksize()
 #define STPUTC(c, p)	(--sstrnleft >= 0? (*p++ = (c)) : (p = growstackstr(), *p++ = (c)))
-#define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(); }
+#define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(n); }
 #define USTPUTC(c, p)	(--sstrnleft, *p++ = (c))
 #define STACKSTRNUL(p)	(sstrnleft == 0? (p = growstackstr(), sstrnleft++, *p = '\0') : (*p = '\0'))
 #define STUNPUTC(p)	(++sstrnleft, --p)
