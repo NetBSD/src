@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.39 2025/10/19 01:00:00 riastradh Exp $
+#	$NetBSD: Makefile,v 1.40 2026/04/18 22:06:15 rillig Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
 WARNS?=4
 USE_FORT?= yes	# network server
 
-LINTFLAGS+=-X 132,247,135,259,117,298
+LINTFLAGS+=	-X 117	# bit shift on signed integers
+LINTFLAGS+=	-X 132	# loss of accuracy
+LINTFLAGS+=	-X 135	# pointer cast increases alignment
+LINTFLAGS+=	-X 247	# pointer cast between unrelated types
+LINTFLAGS+=	-X 298	# loss of accuracy in function call
 
 PROG=	syslogd
 SRCS=	syslogd.c utmpentry.c tls.c sign.c
