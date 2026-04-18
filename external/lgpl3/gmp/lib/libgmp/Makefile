@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2025/04/06 23:03:05 rillig Exp $
+#	$NetBSD: Makefile,v 1.36 2026/04/18 21:19:15 rillig Exp $
 
 .include <bsd.init.mk>
 
@@ -266,9 +266,9 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-tautological-compare -Wno-parentheses
 M4FLAGS+=-DPIC
 .endif
 
-# gmp-impl.h(5187): warning: bitwise '>>' on signed value possibly nonportable [117]
+# many places in gmp-impl.h: warning: bitwise '>>' on signed value possibly nonportable [117]
 LINTFLAGS+=	-X 117
-# com.c(67): warning: conversion from 'long' to 'int' may lose accuracy [132]
+# many places: warning: conversion from 'long' to 'int' may lose accuracy [132]
 LINTFLAGS+=	-X 132
-# gcd.c(101): warning: argument #4 is converted from 'unsigned long' to 'unsigned int' due to prototype [259]
-LINTFLAGS+=	-X 259
+# many places: warning: conversion from 'unsigned long' to 'unsigned int' may lose accuracy, arg #1 [298]
+LINTFLAGS+=	-X 298
