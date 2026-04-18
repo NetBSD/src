@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_mmcreg.h,v 1.2 2026/02/02 06:23:37 skrll Exp $ */
+/* $NetBSD: imx23_mmcreg.h,v 1.3 2026/04/18 18:04:32 rillig Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,8 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_IMX_IMX23_SSPREG_H_
-#define _ARM_IMX_IMX23_SSSREG_H_
+#ifndef _ARM_IMX_IMX23_MMCREG_H_
+#define _ARM_IMX_IMX23_MMCREG_H_
 
 #include <sys/cdefs.h>
 
