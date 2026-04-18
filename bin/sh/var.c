@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.89 2025/11/09 08:16:00 andvar Exp $	*/
+/*	$NetBSD: var.c,v 1.90 2026/04/18 14:35:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.89 2025/11/09 08:16:00 andvar Exp $");
+__RCSID("$NetBSD: var.c,v 1.90 2026/04/18 14:35:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -805,7 +805,45 @@ sort_var(const void *v_v1, const void *v_v2)
 	const struct var * const *v2 = v_v2;
 	char *t1 = (*v1)->text, *t2 = (*v2)->text;
 
-	if (*t1 == *t2) {
+	/*
+	 * Note that we really just want return strcoll(t1, t2) here
+	 * but we can't do that, as the strings are '=' terminated,
+	 * not \0 terminated (there is a \0 later) - and we must not
+	 * alter them.   This causes problems if v1 is "x0" and v2 "x"
+	 * as those are actually "x0=" and "x=", and since '0' < '='
+	 * that causes x0 to sort ahead of x which is backwards.
+	 *
+	 * So we need to fix that - but it only matters when the
+	 * one string is a substring of the other (if they differ
+	 * before either ends, that difference will correctly order
+	 * the strings).   To avoid too much extra work, we use the
+	 * fact that we know the strings are variable names.  This
+	 * means that they must contain at least 1 character, and
+	 * the names can only be equal if the var structs are the
+	 * same thing.
+	 */
+
+	 if (__predict_false(*v1 == *v2))	/* same pointers */
+		return 0;			/* must be the same name */
+
+	/*
+	 * But only 1 name char is guaranteed, so we see if the two
+	 * names have the same first char, if not, then strcoll()
+	 * will work, and we just use it (makes sure the locale collating
+	 * sequence is used, rather than simply comparing the bytes.)
+	 * (nb: that strcoll() doesn't actually use locales on NetBSD
+	 * is irrelevant.)
+	 *
+	 * If the first char is the same, then we must make sure that the
+	 * shorter name is \0 terminated, so if the names happen to be
+	 * equal to that point (the shorter is a substring of the longer)
+	 * then then shorter will always compare less.
+	 *
+	 * We do that by copying the shorter to the stack, null terminating
+	 * it, and comparing that copy to the longer name
+	 */
+
+	if (__predict_false(*t1 == *t2)) {
 		char *p, *s;
 
 		STARTSTACKSTR(p);
@@ -813,21 +851,29 @@ sort_var(const void *v_v1, const void *v_v2)
 		/*
 		 * note: if lengths are equal, strings must be different
 		 * so we don't care which string we pick for the \0 in
-		 * that case.
+		 * that case (the comparison won't reach that far).
 		 */
-		if ((strchr(t1, '=') - t1) <= (strchr(t2, '=') - t2)) {
+		if ((*v1)->name_len <= (*v2)->name_len) {
+			CHECKSTRSPACE((*v1)->name_len + 1, p);
 			s = t1;
 			t1 = p;
 		} else {
+			CHECKSTRSPACE((*v2)->name_len + 1, p);
 			s = t2;
 			t2 = p;
 		}
 
+		/*
+		 * MUST use CHECKSTRSPACE() (above) and USTPUTC() here
+		 * as STPUTC() may reallocate the buffer (p) which we
+		 * already saved in t1 (or t2) above - leading to the
+		 * strcoll() below looking at garbage.  USTPUTC() is safe.
+		 */
 		while (*s && *s != '=') {
-			STPUTC(*s, p);
+			USTPUTC(*s, p);
 			s++;
 		}
-		STPUTC('\0', p);
+		USTPUTC('\0', p);
 	}
 
 	return strcoll(t1, t2);
