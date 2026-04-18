@@ -1,4 +1,4 @@
-/*	$NetBSD: opmreg.h,v 1.2 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: opmreg.h,v 1.3 2026/04/18 18:10:23 rillig Exp $	*/
 
 /*
  * Copyright (c) 1995 Masanobu Saitoh, Takuya Harakawa.
@@ -33,7 +33,7 @@
  */
 
 #ifndef _X68K_OPMREG_H_
-#define _X68K_OPRRER_H_
+#define _X68K_OPMREG_H_
 /*
  * OPM voice structure
  */
