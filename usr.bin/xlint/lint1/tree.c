@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.711 2026/04/07 20:05:35 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.712 2026/04/18 21:31:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.711 2026/04/07 20:05:35 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.712 2026/04/18 21:31:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -553,6 +553,47 @@ ic_call(const function_call *call)
 	    && is_uinteger(call->args[2]->tn_type->t_tspec)
 	    && call->args[2]->u.value.u.integer >= 0)
 		return ic_signed_range(-1, call->args[2]->u.value.u.integer);
+
+	// https://gcc.gnu.org/onlinedocs/gcc/Bit-Operation-Builtins.html
+	if (strcmp(name, "__builtin_clz") == 0
+	    || strcmp(name, "__builtin_ctz") == 0
+	    || strcmp(name, "__builtin_clrsb") == 0)
+		return ic_unsigned_range(0, INT_SIZE - 1);
+	if (strcmp(name, "__builtin_ffs") == 0
+	    || strcmp(name, "__builtin_popcount") == 0)
+		return ic_unsigned_range(0, INT_SIZE);
+	if (strcmp(name, "__builtin_clzl") == 0
+	    || strcmp(name, "__builtin_ctzl") == 0
+	    || strcmp(name, "__builtin_clrsbl") == 0)
+		return ic_unsigned_range(0, LONG_SIZE - 1);
+	if (strcmp(name, "__builtin_ffsl") == 0
+	    || strcmp(name, "__builtin_popcountl") == 0)
+		return ic_unsigned_range(0, LONG_SIZE);
+	if (strcmp(name, "__builtin_clzll") == 0
+	    || strcmp(name, "__builtin_ctzll") == 0
+	    || strcmp(name, "__builtin_clrsbll") == 0)
+		return ic_unsigned_range(0, LLONG_SIZE - 1);
+	if (strcmp(name, "__builtin_ffsll") == 0
+	    || strcmp(name, "__builtin_popcountll") == 0)
+		return ic_unsigned_range(0, LLONG_SIZE);
+	if ((strcmp(name, "__builtin_clzg") == 0
+	    || strcmp(name, "__builtin_ctzg") == 0
+	    || strcmp(name, "__builtin_clrsbg") == 0)
+	    && call->args_len == 1
+	    && is_integer(call->args[0]->tn_type->t_tspec))
+		return ic_unsigned_range(0,
+		    width_in_bits(call->args[0]->tn_type) - 1);
+	if ((strcmp(name, "__builtin_ffsg") == 0
+	    || strcmp(name, "__builtin_popcountg") == 0)
+	    && call->args_len == 1
+	    && is_integer(call->args[0]->tn_type->t_tspec))
+		return ic_unsigned_range(0,
+		    width_in_bits(call->args[0]->tn_type));
+	if (strcmp(name, "__builtin_parity") == 0
+	    || strcmp(name, "__builtin_parityl") == 0
+	    || strcmp(name, "__builtin_parityll") == 0
+	    || strcmp(name, "__builtin_parityg") == 0)
+		return ic_unsigned_range(0, 1);
 
 any:
 	return ic_any(call->func->tn_type->t_subt->t_subt);
