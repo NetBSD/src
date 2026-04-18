@@ -1,4 +1,4 @@
-/*	$NetBSD: ev_timers.c,v 1.11 2012/03/21 00:34:54 christos Exp $	*/
+/*	$NetBSD: ev_timers.c,v 1.12 2026/04/18 21:52:21 rillig Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -26,7 +26,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ev_timers.c,v 1.6 2005/04/27 04:56:36 sra Exp";
 #else
-__RCSID("$NetBSD: ev_timers.c,v 1.11 2012/03/21 00:34:54 christos Exp $");
+__RCSID("$NetBSD: ev_timers.c,v 1.12 2026/04/18 21:52:21 rillig Exp $");
 #endif
 #endif
 
@@ -108,7 +108,7 @@ evSubTime(struct timespec minuend, struct timespec subtrahend) {
 
 int
 evCmpTime(struct timespec a, struct timespec b) {
-#define SGN(x) ((x) < 0 ? (-1) : (x) > 0 ? (1) : (0));
+#define SGN(x) ((x) < 0 ? (-1) : (x) > 0 ? (1) : (0))
 	time_t s = a.tv_sec - b.tv_sec;
 	long n;
 
