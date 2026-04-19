@@ -20,12 +20,16 @@
 /* Defined if cold attribute is supported. */
 #define JEMALLOC_HAVE_ATTR_COLD 
 
+/* Defined if deprecated attribute is supported. */
+#define JEMALLOC_HAVE_ATTR_DEPRECATED 
+
 /*
  * Define overrides for non-standard allocator-related functions if they are
  * present on the system.
  */
 /* #undef JEMALLOC_OVERRIDE_MEMALIGN */
 #define JEMALLOC_OVERRIDE_VALLOC 
+/* #undef JEMALLOC_OVERRIDE_PVALLOC */
 
 /*
  * At least Linux omits the "const" in:
@@ -42,6 +46,12 @@
  * glibc defines.
  */
 /* #undef JEMALLOC_USE_CXX_THROW */
+
+/*
+ * If undefined, disables reading configuration from environment variable or file
+ */
+#define JEMALLOC_CONFIG_ENV 
+#define JEMALLOC_CONFIG_FILE 
 
 #ifdef _MSC_VER
 #  ifdef _WIN64

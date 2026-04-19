@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2026/04/18 20:17:33 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2026/04/19 22:41:10 christos Exp $
 
 JEMALLOC:=${.PARSEDIR}/..
 
@@ -14,6 +14,7 @@ buf_writer.c \
 cache_bin.c \
 ckh.c \
 ctl.c \
+conf.c \
 counter.c \
 decay.c \
 divide.c \
@@ -30,7 +31,9 @@ extent_mmap.c \
 fxp.c \
 hash.c \
 hpa.c \
+hpa_central.c \
 hpa_hooks.c \
+hpa_utils.c \
 hpdata.c \
 hook.c \
 inspect.c \
@@ -42,7 +45,6 @@ nstime.c \
 pa.c \
 pa_extra.c \
 pac.c \
-pai.c \
 pages.c \
 peak_event.c \
 prof.c \
@@ -60,8 +62,10 @@ sz.c \
 test_hooks.c \
 tcache.c \
 thread_event.c \
+thread_event_registry.c \
 ticker.c \
 tsd.c \
+util.c \
 witness.c
 
 .PATH: ${JEMALLOC}/dist/src ${JEMALLOC}/lib
@@ -81,8 +85,10 @@ LINTFLAGS.${i}+=	-X 231	# argument unused
 LINTFLAGS.${i}+=	-X 220	# fallthrough on case statement
 .endfor
 
+COPTS.arena.c+=-Wno-error=stack-protector
 COPTS.background_thread.c+=-Wno-error=stack-protector
 COPTS.ctl.c+=-Wno-error=stack-protector
+COPTS.hpa_utils.c+=-Wno-error=stack-protector
 COPTS.stats.c+=-Wno-error=stack-protector
 COPTS.tcache.c+=-Wno-error=stack-protector
 COPTS.tsd.c+=-Wno-error=missing-braces -Wno-missing-braces
@@ -115,3 +121,4 @@ LINTFLAGS.sc.c += -X 119
 LINTFLAGS.sec.c += -X 247
 LINTFLAGS.stats.c += -X 42,135,247
 LINTFLAGS.tcache.c += -X 309
+LINTFLAGS.thread_event.c += -X 348

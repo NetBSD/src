@@ -27,9 +27,9 @@
  * Define overrides for non-standard allocator-related functions if they are
  * present on the system.
  */
-#define JEMALLOC_OVERRIDE_MEMALIGN 
+/* #undef JEMALLOC_OVERRIDE_MEMALIGN */
 #define JEMALLOC_OVERRIDE_VALLOC 
-#define JEMALLOC_OVERRIDE_PVALLOC 
+/* #undef JEMALLOC_OVERRIDE_PVALLOC */
 
 /*
  * At least Linux omits the "const" in:
@@ -38,14 +38,14 @@
  *
  * Match the operating system's prototype.
  */
-#define JEMALLOC_USABLE_SIZE_CONST 
+#define JEMALLOC_USABLE_SIZE_CONST const
 
 /*
  * If defined, specify throw() for the public function prototypes when compiling
  * with C++.  The only justification for this is to match the prototypes that
  * glibc defines.
  */
-#define JEMALLOC_USE_CXX_THROW 
+/* #undef JEMALLOC_USE_CXX_THROW */
 
 /*
  * If undefined, disables reading configuration from environment variable or file
@@ -62,4 +62,8 @@
 #endif
 
 /* sizeof(void *) == 2^LG_SIZEOF_PTR. */
+#ifdef _LP64
 #define LG_SIZEOF_PTR 3
+#else
+#define LG_SIZEOF_PTR 2
+#endif

@@ -30,9 +30,9 @@
  * Define overrides for non-standard allocator-related functions if they are
  * present on the system.
  */
-#define JEMALLOC_OVERRIDE_MEMALIGN
+/* #undef JEMALLOC_OVERRIDE_MEMALIGN */
 #define JEMALLOC_OVERRIDE_VALLOC
-#define JEMALLOC_OVERRIDE_PVALLOC
+/* #undef JEMALLOC_OVERRIDE_PVALLOC */
 
 /*
  * At least Linux omits the "const" in:
@@ -41,14 +41,14 @@
  *
  * Match the operating system's prototype.
  */
-#define JEMALLOC_USABLE_SIZE_CONST
+#define JEMALLOC_USABLE_SIZE_CONST const
 
 /*
  * If defined, specify throw() for the public function prototypes when compiling
  * with C++.  The only justification for this is to match the prototypes that
  * glibc defines.
  */
-#define JEMALLOC_USE_CXX_THROW
+/* #undef JEMALLOC_USE_CXX_THROW */
 
 /*
  * If undefined, disables reading configuration from environment variable or file
@@ -65,7 +65,11 @@
 #endif
 
 /* sizeof(void *) == 2^LG_SIZEOF_PTR. */
+#ifdef _LP64
 #define LG_SIZEOF_PTR 3
+#else
+#define LG_SIZEOF_PTR 2
+#endif
 
 /*
  * Name mangling for public symbols is controlled by --with-mangling and
@@ -97,9 +101,7 @@
 #  define je_sallocx sallocx
 #  define je_sdallocx sdallocx
 #  define je_xallocx xallocx
-#  define je_memalign memalign
 #  define je_valloc valloc
-#  define je_pvalloc pvalloc
 #endif
 
 #include <stdlib.h>
@@ -272,6 +274,13 @@ extern JEMALLOC_EXPORT const char	*je_malloc_conf;
 extern JEMALLOC_EXPORT const char	*je_malloc_conf_2_conf_harder;
 extern JEMALLOC_EXPORT void		(*je_malloc_message)(void *cbopaque,
     const char *s);
+extern JEMALLOC_EXPORT const char	*je_malloc_conf_get(void);
+extern JEMALLOC_EXPORT void		je_malloc_conf_set(const char *);
+extern JEMALLOC_EXPORT void		(*je_malloc_message_get(void))
+    (void *cbopaque, const char *s);
+extern JEMALLOC_EXPORT void		je_malloc_message_set(
+    void (*)(void *cbopaque, const char *s));
+
 
 JEMALLOC_EXPORT JEMALLOC_ALLOCATOR JEMALLOC_RESTRICT_RETURN
     void JEMALLOC_SYS_NOTHROW	*je_malloc(size_t size)
@@ -470,9 +479,7 @@ struct extent_hooks_s {
 #  define sallocx je_sallocx
 #  define sdallocx je_sdallocx
 #  define xallocx je_xallocx
-#  define memalign je_memalign
 #  define valloc je_valloc
-#  define pvalloc je_pvalloc
 #endif
 
 /*
@@ -507,9 +514,7 @@ struct extent_hooks_s {
 #  undef je_sallocx
 #  undef je_sdallocx
 #  undef je_xallocx
-#  undef je_memalign
 #  undef je_valloc
-#  undef je_pvalloc
 #endif
 
 #endif /* JEMALLOC_H_ */

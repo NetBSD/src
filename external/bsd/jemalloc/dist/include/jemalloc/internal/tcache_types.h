@@ -12,9 +12,7 @@ typedef struct tcaches_s     tcaches_t;
 #define TCACHE_ZERO_INITIALIZER                                                \
 	{ 0 }
 #define TCACHE_SLOW_ZERO_INITIALIZER                                           \
-	{                                                                      \
 		{ 0 }                                                          \
-	}
 
 /* Used in TSD static initializer only. Will be initialized to opt_tcache. */
 #define TCACHE_ENABLED_ZERO_INITIALIZER false

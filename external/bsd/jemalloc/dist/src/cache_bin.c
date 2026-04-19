@@ -111,7 +111,7 @@ cache_bin_init_disabled(cache_bin_t *bin, cache_bin_sz_t ncached_max) {
 	size_t           fake_offset = 0;
 	cache_bin_info_t fake_info;
 	cache_bin_info_init(&fake_info, 0);
-	cache_bin_init(bin, &fake_info, (void *)fake_stack, &fake_offset);
+	cache_bin_init(bin, &fake_info, __UNCONST(fake_stack), &fake_offset);
 	cache_bin_info_init(&bin->bin_info, ncached_max);
 	assert(fake_offset == 0);
 }

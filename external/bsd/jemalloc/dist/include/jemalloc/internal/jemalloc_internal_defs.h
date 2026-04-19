@@ -13,15 +13,15 @@
  * Define overrides for non-standard allocator-related functions if they are
  * present on the system.
  */
-#define JEMALLOC_OVERRIDE___LIBC_CALLOC 
-#define JEMALLOC_OVERRIDE___LIBC_FREE 
+/* #undef JEMALLOC_OVERRIDE___LIBC_CALLOC */
+/* #undef JEMALLOC_OVERRIDE___LIBC_FREE */
 /* #undef JEMALLOC_OVERRIDE___LIBC_FREE_SIZED */
 /* #undef JEMALLOC_OVERRIDE___LIBC_FREE_ALIGNED_SIZED */
-#define JEMALLOC_OVERRIDE___LIBC_MALLOC 
-#define JEMALLOC_OVERRIDE___LIBC_MEMALIGN 
-#define JEMALLOC_OVERRIDE___LIBC_REALLOC 
-#define JEMALLOC_OVERRIDE___LIBC_VALLOC 
-#define JEMALLOC_OVERRIDE___LIBC_PVALLOC 
+/* #undef JEMALLOC_OVERRIDE___LIBC_MALLOC */
+/* #undef JEMALLOC_OVERRIDE___LIBC_MEMALIGN */
+/* #undef JEMALLOC_OVERRIDE___LIBC_REALLOC */
+/* #undef JEMALLOC_OVERRIDE___LIBC_VALLOC */
+/* #undef JEMALLOC_OVERRIDE___LIBC_PVALLOC */
 /* #undef JEMALLOC_OVERRIDE___POSIX_MEMALIGN */
 
 /*
@@ -36,16 +36,35 @@
  * Hyper-threaded CPUs may need a special instruction inside spin loops in
  * order to yield to another virtual CPU.
  */
+#if defined(__x86_64__) || defined(__i386__)
 #define CPU_SPINWAIT __asm__ volatile("pause")
+#elif defined(__aarch64__)
+#define CPU_SPINWAIT __asm__ volatile("isb")
 /* 1 if CPU_SPINWAIT is defined, 0 otherwise. */
 #define HAVE_CPU_SPINWAIT 1
+#endif
 
 /*
  * Number of significant bits in virtual addresses.  This may be less than the
  * total number of bits in a pointer, e.g. on x64, for which the uppermost 16
  * bits are the same as bit 47.
  */
-#define LG_VADDR 48
+#ifdef _LP64
+# ifdef __alpha__
+/*
+ * Bit 42 indicates kernel space. Bits 42--63 must be same. For user space,
+ * VA can be regarded to have 43 significant bits with sign-extension to
+ * 64 bits. ``Negative'' addresses are not used in this case. Alternatively,
+ * VA can also be regarded to have 42 significant bits with zero-extension.
+ * See rtree_leaf_elm_bits_extent_get() in rtree.h for more details.
+ */
+#  define LG_VADDR 43
+# else
+#  define LG_VADDR 48
+# endif
+#else
+# define LG_VADDR 32
+#endif
 
 /* Defined if C11 atomics are available. */
 #define JEMALLOC_C11_ATOMICS 
@@ -76,18 +95,18 @@
 /*
  * Defined if secure_getenv(3) is available.
  */
-#define JEMALLOC_HAVE_SECURE_GETENV 
+/* #undef JEMALLOC_HAVE_SECURE_GETENV */
 
 /*
  * Defined if issetugid(2) is available.
  */
-/* #undef JEMALLOC_HAVE_ISSETUGID */
+#define JEMALLOC_HAVE_ISSETUGID 
 
 /* Defined if pthread_atfork(3) is available. */
 #define JEMALLOC_HAVE_PTHREAD_ATFORK 
 
 /* Defined if pthread_setname_np(3) is available. */
-#define JEMALLOC_HAVE_PTHREAD_SETNAME_NP 
+/* #undef JEMALLOC_HAVE_PTHREAD_SETNAME_NP */
 
 /* Defined if pthread_getname_np(3) is available. */
 #define JEMALLOC_HAVE_PTHREAD_GETNAME_NP 
@@ -101,7 +120,7 @@
 /*
  * Defined if clock_gettime(CLOCK_MONOTONIC_COARSE, ...) is available.
  */
-#define JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE 
+/* #undef JEMALLOC_HAVE_CLOCK_MONOTONIC_COARSE */
 
 /*
  * Defined if clock_gettime(CLOCK_MONOTONIC, ...) is available.
@@ -130,14 +149,14 @@
  * _malloc_thread_cleanup() exists, use it as the basis for thread cleanup in
  * malloc_tsd.
  */
-/* #undef JEMALLOC_MALLOC_THREAD_CLEANUP */
+#define JEMALLOC_MALLOC_THREAD_CLEANUP 
 
 /*
  * Defined if threaded initialization is known to be safe on this platform.
  * Among other things, it must be possible to initialize a mutex without
  * triggering allocation in order for threaded allocation to be safe.
  */
-#define JEMALLOC_THREADED_INIT 
+/* #undef JEMALLOC_THREADED_INIT */
 
 /*
  * Defined if the pthreads implementation defines
@@ -180,7 +199,7 @@
 /* #undef JEMALLOC_PAGEID */
 
 /* JEMALLOC_HAVE_PRCTL checks prctl */
-#define JEMALLOC_HAVE_PRCTL 
+/* #undef JEMALLOC_HAVE_PRCTL */
 
 /*
  * JEMALLOC_DSS enables use of sbrk(2) to allocate extents from the data storage
@@ -210,7 +229,15 @@
 /* #undef LG_QUANTUM */
 
 /* One page is 2^LG_PAGE bytes. */
-#define LG_PAGE 12
+#include <machine/vmparam.h>
+#if defined(MAX_PAGE_SHIFT)
+#define LG_PAGE MAX_PAGE_SHIFT
+#elif defined(PAGE_SHIFT)
+#define LG_PAGE PAGE_SHIFT
+#else
+#error "PAGE_SHIFT is not defined"
+#endif
+
 
 /* Maximum number of regions in a slab. */
 /* #undef CONFIG_LG_SLAB_MAXREGS */
@@ -237,7 +264,7 @@
  * common sequences of mmap()/munmap() calls will cause virtual memory map
  * holes.
  */
-#define JEMALLOC_RETAIN 
+/* #undef JEMALLOC_RETAIN */
 
 /* TLS is used to map arenas and magazine caches to threads. */
 #define JEMALLOC_TLS 
@@ -298,7 +325,7 @@
  * JEMALLOC_SYSCTL_VM_OVERCOMMIT: FreeBSD's vm.overcommit sysctl.
  */
 /* #undef JEMALLOC_SYSCTL_VM_OVERCOMMIT */
-#define JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY 
+/* #undef JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY */
 
 /* Defined if madvise(2) is available. */
 #define JEMALLOC_HAVE_MADVISE 
@@ -307,7 +334,7 @@
  * Defined if transparent huge pages are supported via the MADV_[NO]HUGEPAGE
  * arguments to madvise(2).
  */
-#define JEMALLOC_HAVE_MADVISE_HUGE 
+/* #undef JEMALLOC_HAVE_MADVISE_HUGE */
 
 /*
  * Defined if best-effort synchronous collapse of the native
@@ -331,7 +358,7 @@
  */
 #define JEMALLOC_PURGE_MADVISE_FREE 
 #define JEMALLOC_PURGE_MADVISE_DONTNEED 
-#define JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS 
+/* #undef JEMALLOC_PURGE_MADVISE_DONTNEED_ZEROS */
 
 /* Defined if madvise(2) is available but MADV_FREE is not (x86 Linux only). */
 /* #undef JEMALLOC_DEFINE_MADVISE_FREE */
@@ -339,7 +366,7 @@
 /*
  * Defined if MADV_DO[NT]DUMP is supported as an argument to madvise.
  */
-#define JEMALLOC_MADVISE_DONTDUMP 
+/* #undef JEMALLOC_MADVISE_DONTDUMP */
 
 /*
  * Defined if MADV_[NO]CORE is supported as an argument to madvise.
@@ -391,19 +418,26 @@
 /* #undef JEMALLOC_HAVE_MALLOC_SIZE */
 
 /* Define if operating system has alloca.h header. */
-#define JEMALLOC_HAS_ALLOCA_H 
+/* #undef JEMALLOC_HAS_ALLOCA_H */
 
 /* C99 restrict keyword supported. */
 #define JEMALLOC_HAS_RESTRICT 
 
 /* For use by hash code. */
-/* #undef JEMALLOC_BIG_ENDIAN */
+#include <sys/endian.h>
+#if _BYTE_ORDER == _BIG_ENDIAN
+#define JEMALLOC_BIG_ENDIAN 
+#endif
 
 /* sizeof(int) == 2^LG_SIZEOF_INT. */
 #define LG_SIZEOF_INT 2
 
 /* sizeof(long) == 2^LG_SIZEOF_LONG. */
+#ifdef _LP64
 #define LG_SIZEOF_LONG 3
+#else
+#define LG_SIZEOF_LONG 2
+#endif
 
 /* sizeof(long long) == 2^LG_SIZEOF_LONG_LONG. */
 #define LG_SIZEOF_LONG_LONG 3
@@ -424,16 +458,16 @@
 #define JEMALLOC_HAVE_DLSYM 
 
 /* Adaptive mutex support in pthreads. */
-#define JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP 
+/* #undef JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
 
 /* gettid() support */
-#define JEMALLOC_HAVE_GETTID 
+/* #undef JEMALLOC_HAVE_GETTID */
 
 /* GNU specific sched_getcpu support */
-#define JEMALLOC_HAVE_SCHED_GETCPU 
+/* #undef JEMALLOC_HAVE_SCHED_GETCPU */
 
 /* GNU specific sched_setaffinity support */
-#define JEMALLOC_HAVE_SCHED_SETAFFINITY 
+/* #undef JEMALLOC_HAVE_SCHED_SETAFFINITY */
 
 /* pthread_setaffinity_np support */
 #define JEMALLOC_HAVE_PTHREAD_SETAFFINITY_NP 
@@ -458,7 +492,7 @@
 /*
  * Defined if strerror_r returns char * if _GNU_SOURCE is defined.
  */
-#define JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE 
+/* #undef JEMALLOC_STRERROR_R_RETURNS_CHAR_WITH_GNU_SOURCE */
 
 /* Performs additional safety checks when defined. */
 /* #undef JEMALLOC_OPT_SAFETY_CHECKS */
@@ -476,7 +510,7 @@
 /* #undef JEMALLOC_HAVE_VM_MAKE_TAG */
 
 /* If defined, realloc(ptr, 0) defaults to "free" instead of "alloc". */
-#define JEMALLOC_ZERO_REALLOC_DEFAULT_FREE 
+/* #undef JEMALLOC_ZERO_REALLOC_DEFAULT_FREE */
 
 /* If defined, use volatile asm during benchmarks. */
 #define JEMALLOC_HAVE_ASM_VOLATILE 
@@ -487,8 +521,12 @@
  */
 #define JEMALLOC_HAVE_RDTSCP 
 
+#ifndef __lint__
+#if __SIZEOF_INT128__
 /* If defined, use __int128 for optimization. */
 #define JEMALLOC_HAVE_INT128 
+#endif
+#endif
 
 #include "jemalloc/internal/jemalloc_internal_overrides.h"
 

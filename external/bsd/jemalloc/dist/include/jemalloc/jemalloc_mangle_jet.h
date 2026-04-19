@@ -33,9 +33,7 @@
 #  define sallocx jet_sallocx
 #  define sdallocx jet_sdallocx
 #  define xallocx jet_xallocx
-#  define memalign jet_memalign
 #  define valloc jet_valloc
-#  define pvalloc jet_pvalloc
 #endif
 
 /*
@@ -70,7 +68,5 @@
 #  undef jet_sallocx
 #  undef jet_sdallocx
 #  undef jet_xallocx
-#  undef jet_memalign
 #  undef jet_valloc
-#  undef jet_pvalloc
 #endif

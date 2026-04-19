@@ -22,6 +22,4 @@
 #undef je_sallocx
 #undef je_sdallocx
 #undef je_xallocx
-#undef je_memalign
 #undef je_valloc
-#undef je_pvalloc

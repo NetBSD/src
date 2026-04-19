@@ -253,6 +253,7 @@ conf_handle_bool(const char *v, size_t vlen, bool *result) {
 JEMALLOC_DIAGNOSTIC_PUSH
 JEMALLOC_DIAGNOSTIC_IGNORE("-Wunused-function")
 
+#ifndef __NetBSD__
 JET_EXTERN bool
 conf_handle_signed(const char *v, size_t vlen, intmax_t min, intmax_t max,
     bool check_min, bool check_max, bool clip, intmax_t *result) {
@@ -289,6 +290,7 @@ conf_handle_char_p(const char *v, size_t vlen, char *dest, size_t dest_sz) {
 	dest[cpylen] = '\0';
 	return false;
 }
+#endif
 
 JEMALLOC_DIAGNOSTIC_POP
 
