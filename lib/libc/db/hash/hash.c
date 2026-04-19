@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.39 2025/12/16 12:39:01 nia Exp $	*/
+/*	$NetBSD: hash.c,v 1.40 2026/04/19 19:31:50 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.39 2025/12/16 12:39:01 nia Exp $");
+__RCSID("$NetBSD: hash.c,v 1.40 2026/04/19 19:31:50 rillig Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -368,7 +368,6 @@ init_htab(HTAB *hashp, size_t nelem)
 
 	hashp->MAX_BUCKET = hashp->LOW_MASK = nbuckets - 1;
 	hashp->HIGH_MASK = (nbuckets << 1) - 1;
-	/* LINTED constant in conditional context */
 	hashp->HDRPAGES = ((MAX(sizeof(HASHHDR), MINHDRSIZE) - 1) >>
 	    hashp->BSHIFT) + 1;
 
