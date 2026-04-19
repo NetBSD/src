@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2019/08/18 04:10:22 kamil Exp $
+#	$NetBSD: Makefile,v 1.23 2026/04/19 20:08:24 rillig Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -12,6 +12,8 @@ SRCS=	sysctl.c
 .PATH:	${.CURDIR}/../../lib/libc/gen
 CPPFLAGS+= -DRUMP_ACTION
 RUMPSRCS+= sysctlbyname.c sysctlgetmibinfo.c
+
+LINTFLAGS.sysctl.c+=	-X 351	# missing 'extern' header declaration
 
 SANITIZER_RENAME_CLASSES+=	rump
 SANITIZER_RENAME_FILES.rump+=	${PROG}_rumpops.c ${RUMPSRCS}
