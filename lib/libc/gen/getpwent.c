@@ -1,4 +1,4 @@
-/*	$NetBSD: getpwent.c,v 1.84 2024/01/20 14:52:47 christos Exp $	*/
+/*	$NetBSD: getpwent.c,v 1.85 2026/04/19 19:37:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getpwent.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: getpwent.c,v 1.84 2024/01/20 14:52:47 christos Exp $");
+__RCSID("$NetBSD: getpwent.c,v 1.85 2026/04/19 19:37:01 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -358,7 +358,7 @@ _pw_copy(const struct passwd *frompw, struct passwd *pw,
 			return 0; \
 		memmove((to), (from), count); \
 		to[count] = '\0'; \
-	} while (0)	/* LINTED */
+	} while (0)
 
 #define	COPYFIELD(field)	COPYSTR(pw->field, frompw->field)
 

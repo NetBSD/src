@@ -1,4 +1,4 @@
-/*	$NetBSD: getgrent.c,v 1.67 2012/08/29 18:50:35 dholland Exp $	*/
+/*	$NetBSD: getgrent.c,v 1.68 2026/04/19 19:37:01 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1999-2000, 2004-2005 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
 #if 0
 static char sccsid[] = "@(#)getgrent.c	8.2 (Berkeley) 3/21/94";
 #else
-__RCSID("$NetBSD: getgrent.c,v 1.67 2012/08/29 18:50:35 dholland Exp $");
+__RCSID("$NetBSD: getgrent.c,v 1.68 2026/04/19 19:37:01 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -184,7 +184,7 @@ _gr_parse(const char *entry, struct group *grp, char *buf, size_t buflen)
 			return 0; \
 		memmove((to), entry, count); \
 		to[count] = '\0'; \
-	} while (0)	/* LINTED */
+	} while (0)
 
 #if 0
 	if (*entry == '+')			/* fail on compat `+' token */
@@ -264,7 +264,7 @@ _gr_copy(struct group *fromgrp, struct group *grp, char *buf, size_t buflen)
 			return 0; \
 		memmove((to), (from), count); \
 		to[count] = '\0'; \
-	} while (0)	/* LINTED */
+	} while (0)
 
 	COPYSTR(grp->gr_name, fromgrp->gr_name);
 	COPYSTR(grp->gr_passwd, fromgrp->gr_passwd);
