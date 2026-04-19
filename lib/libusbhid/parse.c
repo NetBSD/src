@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.11 2020/04/04 21:26:16 fox Exp $	*/
+/*	$NetBSD: parse.c,v 1.12 2026/04/19 19:59:44 rillig Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.11 2020/04/04 21:26:16 fox Exp $");
+__RCSID("$NetBSD: parse.c,v 1.12 2026/04/19 19:59:44 rillig Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -146,7 +146,7 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 			s->hassavedcoll = 0; \
 			return (1); \
 		} \
-	} while(/*LINTED*/ 0)
+	} while (0)
 
 static int
 hid_get_item_raw(hid_data_t s, hid_item_t *h)
