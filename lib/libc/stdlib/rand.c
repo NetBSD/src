@@ -1,4 +1,4 @@
-/*	$NetBSD: rand.c,v 1.12 2012/06/25 22:32:45 abs Exp $	*/
+/*	$NetBSD: rand.c,v 1.13 2026/04/19 19:46:32 rillig Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)rand.c	8.1 (Berkeley) 6/14/93";
 #else
-__RCSID("$NetBSD: rand.c,v 1.12 2012/06/25 22:32:45 abs Exp $");
+__RCSID("$NetBSD: rand.c,v 1.13 2026/04/19 19:46:32 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -46,7 +46,6 @@ static u_long next = 1;
 int
 rand(void)
 {
-	/* LINTED integer overflow */
 	return (int)((next = next * 1103515245 + 12345) % ((u_long)RAND_MAX + 1));
 }
 
