@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.178 2025/10/09 06:15:17 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.179 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -79,6 +79,8 @@
 #endif
 #include <arm/cpufunc.h>
 #include <arm/locore.h>
+
+#include <sys/cpu.h>
 
 #include <uvm/uvm_object.h>
 
@@ -271,6 +273,63 @@ extern pv_addr_t efirt_l1pt;
 
 #ifdef ARM_MMU_EXTENDED
 extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
+
+static inline void
+pmap_md_asid_activate(tlb_asid_t asid, pmap_t pm, struct lwp *l)
+{
+	KASSERT(kpreempt_disabled());
+
+	struct cpu_info * const ci = curcpu();
+
+	/*
+	 * Assume that TTBR1 has only global mappings and TTBR0 only
+	 * has non-global mappings.  To prevent speculation from doing
+	 * evil things translation table walks using TTBR0 are disabled
+	 * whilst there is no active userland pmap. Assert this here.
+	 *
+	 * In doing so the new CONTEXTIDR (ASID) and new TTBR0 value are
+	 * only enable once both are set.
+	 */
+	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+
+	if (pm == pmap_kernel())
+		return;
+
+	armreg_contextidr_write(asid);
+	armreg_ttbr_write(pm->pm_l1_pa |
+	    (ci->ci_mpidr ? TTBR_MPATTR : TTBR_UPATTR));
+	isb();
+
+	/*
+	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
+	 * have been updated.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
+	cpu_cpwait();
+
+	KASSERTMSG(ci->ci_pmap_asid_cur == asid, "%u vs %u",
+	    ci->ci_pmap_asid_cur, asid);
+	ci->ci_pmap_cur = pm;
+}
+
+void
+static inline
+pmap_md_asid_deactivate(pmap_t pm)
+{
+	KASSERT(kpreempt_disabled());
+
+	struct cpu_info * const ci = curcpu();
+	/*
+	 * Disable translation table walks from TTBR0 while no pmap has been
+	 * activated.
+	 */
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
+	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
+	isb();
+
+	ci->ci_pmap_cur = pmap_kernel();
+}
 #endif
 
 /*

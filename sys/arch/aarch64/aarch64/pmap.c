@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.153 2026/04/05 06:42:57 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.154 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.153 2026/04/05 06:42:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2026/04/19 15:09:49 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1398,15 +1398,12 @@ pmap_activate_efirt(void)
 	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(kpreempt_disabled());
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	ci->ci_pmap_asid_cur = pai->pai_asid;
 	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid, 0, 0, 0);
-	tlb_set_asid(pai->pai_asid, pm);
 
-	/* Re-enable translation table walks using TTBR0 */
-	uint64_t tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr & ~TCR_EPD0);
-	isb();
+	pmap_md_asid_activate(pai->pai_asid, pm, NULL);
 	pm->pm_activated = true;
 
 	PMAP_COUNT(activate);
@@ -1417,7 +1414,6 @@ void
 pmap_activate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, kernel=%u)", l,
@@ -1433,17 +1429,8 @@ pmap_activate(struct lwp *l)
 
 	KASSERT(pm->pm_l0table != NULL);
 
-	/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
-	pmap_tlb_asid_acquire(pm, l);
-
-	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
-	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
-
-	/* Re-enable translation table walks using TTBR0 */
-	tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr & ~TCR_EPD0);
-	isb();
-
+	const struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+	pmap_md_asid_activate(pai->pai_asid, pm, l);
 	pm->pm_activated = true;
 
 	PMAP_COUNT(activate);
@@ -1460,17 +1447,11 @@ pmap_deactivate_efirt(void)
 
 	KASSERT(kpreempt_disabled());
 
-	/* Disable translation table walks using TTBR0 */
-	uint64_t tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr | TCR_EPD0);
-	isb();
-
-	UVMHIST_LOG(pmaphist, "setting asid to %#jx", KERNEL_PID, 0, 0, 0);
-
 	ci->ci_pmap_asid_cur = KERNEL_PID;
-	tlb_set_asid(KERNEL_PID, pmap_kernel());
-
+	pmap_md_asid_deactivate(pm);
 	pm->pm_activated = false;
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	PMAP_COUNT(deactivate);
 }
@@ -1480,7 +1461,6 @@ void
 pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, (kernel=%u))", l,
@@ -1488,17 +1468,16 @@ pmap_deactivate(struct lwp *l)
 
 	KASSERT(kpreempt_disabled());
 
-	/* Disable translation table walks using TTBR0 */
-	tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr | TCR_EPD0);
-	isb();
+	struct cpu_info * const ci = curcpu();
 
 	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
 	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
 
+	ci->ci_pmap_asid_cur = KERNEL_PID;
 	pmap_tlb_asid_deactivate(pm);
-
 	pm->pm_activated = false;
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	PMAP_COUNT(deactivate);
 }

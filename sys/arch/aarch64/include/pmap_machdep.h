@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.11 2026/04/06 06:19:11 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.12 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -155,9 +155,6 @@ bool	pmap_md_vca_add(struct vm_page_md *, vaddr_t, pt_entry_t *);
 void	pmap_md_vca_clean(struct vm_page_md *, int);
 void	pmap_md_vca_remove(struct vm_page_md *, vaddr_t, bool, bool);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
-
-void	pmap_md_xtab_activate(pmap_t, struct lwp *);
-void	pmap_md_xtab_deactivate(pmap_t);
 
 
 #ifdef MULTIPROCESSOR

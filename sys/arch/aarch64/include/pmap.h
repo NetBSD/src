@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.59 2023/08/02 15:57:21 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.60 2026/04/19 15:09:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,10 @@
 
 #include <uvm/uvm_pglist.h>
 
+#include <arm/cpufunc.h>
+
 #include <aarch64/armreg.h>
+#include <aarch64/cpufunc.h>
 #include <aarch64/pte.h>
 
 #define	PMAP_TLB_MAX			1
@@ -396,6 +399,50 @@ void pmap_db_pmap_print(struct pmap *, void (*)(const char *, ...) __printflike(
 void pmap_db_mdpg_print(struct vm_page *, void (*)(const char *, ...) __printflike(1, 2));
 
 #endif	/* !PMAP_MI */
+
+static inline void
+pmap_md_asid_activate(tlb_asid_t asid, pmap_t pm, struct lwp *l)
+{
+
+	KASSERT(kpreempt_disabled());
+
+//	struct cpu_info * const ci = curcpu();
+
+	/*
+	 * Assume that TTBR1 has only global mappings and TTBR0 only
+	 * has non-global mappings.  To prevent speculation from doing
+	 * evil things we disable translation table walks using TTBR0
+	 * whilst there is no active userland pmap. Assert this here.
+	 */
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
+
+	if (pm == pmap_kernel())
+		return;
+
+	const uint64_t ttbr =
+	    __SHIFTIN(asid, TTBR_ASID) |
+	    __SHIFTIN(pmap_l0pa(pm), TTBR_BADDR);
+
+	cpu_set_ttbr0(ttbr);
+
+	const uint64_t tcr_el1 = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr_el1 & ~TCR_EPD0);
+	isb();
+}
+
+static inline void
+pmap_md_asid_deactivate(pmap_t pm)
+{
+	KASSERT(kpreempt_disabled());
+
+	/*
+	 * Disable translation table walks from TTBR0 while no userland
+	 * pmap is active.
+	 */
+	const uint64_t tcr_el1 = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr_el1 | TCR_EPD0);
+	isb();
+}
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.7 2026/04/18 06:20:44 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.8 2026/04/19 15:09:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -137,17 +137,17 @@ pmap_md_tlb_asid_max(void)
 }
 
 static inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 #endif
 

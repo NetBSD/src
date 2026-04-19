@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.27 2026/04/13 17:40:54 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.28 2026/04/19 15:09:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -155,8 +155,6 @@ void	pmap_md_init(void);
 bool	pmap_md_io_vaddr_p(vaddr_t);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
 void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
-void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
-void	pmap_md_xtab_deactivate(struct pmap *);
 
 void	pmap_pte_xmae(void);
 void	pmap_bootstrap(vaddr_t, vaddr_t);
@@ -239,6 +237,36 @@ static inline pt_entry_t *
 pmap_md_nptep(pt_entry_t *ptep)
 {
 	return ptep + 1;
+}
+
+static inline void
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pmap, struct lwp *l)
+{
+//	struct cpu_info * const ci = curcpu();
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
+
+	uint64_t satp =
+#ifdef _LP64
+	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
+#else
+	    __SHIFTIN(SATP_MODE_SV32, SATP_MODE) |
+#endif
+	    __SHIFTIN(asid, SATP_ASID) |
+	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
+
+	csr_satp_write(satp);
+
+	if (l && !tlbinfo_hasasids_p(ti)) {
+		tlb_invalidate_all();
+	}
+}
+
+static inline void
+pmap_md_asid_deactivate(struct pmap *pmap)
+{
+
+	/* switch to kernel pmap */
+	pmap_md_asid_activate(KERNEL_PID, pmap_kernel(), NULL);
 }
 
 #endif /* __PMAP_PRIVATE */

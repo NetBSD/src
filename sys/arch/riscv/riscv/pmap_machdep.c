@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.25 2026/03/31 21:10:51 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.26 2026/04/19 15:09:50 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.25 2026/03/31 21:10:51 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.26 2026/04/19 15:09:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -191,39 +191,6 @@ pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 }
 #endif
 
-
-void
-pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
-{
-//	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-//	struct cpu_info * const ci = curcpu();
-	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
-	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ti);
-
-	uint64_t satp =
-#ifdef _LP64
-	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
-#else
-	    __SHIFTIN(SATP_MODE_SV32, SATP_MODE) |
-#endif
-	    __SHIFTIN(pai->pai_asid, SATP_ASID) |
-	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
-
-	csr_satp_write(satp);
-
-	if (l && !tlbinfo_hasasids_p(ti)) {
-		tlb_invalidate_all();
-	}
-}
-
-void
-pmap_md_xtab_deactivate(struct pmap *pmap)
-{
-
-	/* switch to kernel pmap */
-	pmap_md_xtab_activate(pmap_kernel(), NULL);
-}
 
 void
 pmap_md_pdetab_init(struct pmap *pmap)

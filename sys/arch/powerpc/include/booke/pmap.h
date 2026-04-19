@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2023/09/28 06:24:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.26 2026/04/19 15:09:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -156,17 +156,17 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 }
 
 static __inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static __inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 
 #endif

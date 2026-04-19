@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.447 2026/04/11 18:23:31 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.448 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.447 2026/04/11 18:23:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.448 2026/04/19 15:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -468,11 +468,6 @@ EVCNT_ATTACH_STATIC(pmap_ev_activations);
 #define	PMAPCOUNT(x)	((void)(pmap_ev_##x.ev_count++))
 #else
 #define	PMAPCOUNT(x)	((void)0)
-#endif
-
-#ifdef ARM_MMU_EXTENDED
-void pmap_md_pdetab_activate(pmap_t, struct lwp *);
-void pmap_md_pdetab_deactivate(pmap_t pm);
 #endif
 
 /*
@@ -4913,76 +4908,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
-#ifdef ARM_MMU_EXTENDED
-void
-pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
-{
-	UVMHIST_FUNC(__func__);
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
-
-	UVMHIST_CALLARGS(maphist, "pm %#jx (pm->pm_l1_pa %08jx asid %ju)",
-	    (uintptr_t)pm, pm->pm_l1_pa, pai->pai_asid, 0);
-
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
-
-	/* this calls tlb_set_asid */
-	pmap_tlb_asid_acquire(pm, l);
-
-	cpu_setttb(pm->pm_l1_pa, pai->pai_asid);
-	/*
-	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
-	 * have been updated.
-	 */
-	isb();
-
-	if (pm != pmap_kernel()) {
-		armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
-	}
-	cpu_cpwait();
-
-	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
-	    ci->ci_pmap_asid_cur, pai->pai_asid);
-	ci->ci_pmap_cur = pm;
-}
-
-void
-pmap_md_pdetab_deactivate(pmap_t pm)
-{
-
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
-
-	kpreempt_disable();
-	struct cpu_info * const ci = curcpu();
-	/*
-	 * Disable translation table walks from TTBR0 while no pmap has been
-	 * activated.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
-	pmap_tlb_asid_deactivate(pm);
-	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
-	isb();
-
-	ci->ci_pmap_cur = pmap_kernel();
-	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
-	    ci->ci_pmap_asid_cur);
-	kpreempt_enable();
-}
-#endif
-
-
 #if defined(EFI_RUNTIME)
 void
 pmap_activate_efirt(void)
@@ -4999,16 +4924,7 @@ pmap_activate_efirt(void)
 
 	PMAPCOUNT(activations);
 
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
+	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
 
 	armreg_contextidr_write(pai->pai_asid);
 	armreg_ttbr_write(pm->pm_l1_pa |
@@ -5019,10 +4935,13 @@ pmap_activate_efirt(void)
 	 */
 	isb();
 
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
 	armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
 
 	ci->ci_pmap_asid_cur = pai->pai_asid;
 	ci->ci_pmap_cur = pm;
+
+	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) == 0);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5042,7 +4961,6 @@ pmap_blockuserspace(bool flag)
 	block_userspace_access = flag ? 1 : 0;
 #endif
 }
-
 
 void
 pmap_activate(struct lwp *l)
@@ -5166,8 +5084,8 @@ pmap_activate(struct lwp *l)
 	 * as it'll happen in pmap_update.
 	 */
 	if (__predict_true(!npm->pm_remove_all)) {
-		/* this calls pmap_tlb_asid_acquire which calls tlb_set_asid */
-		pmap_md_pdetab_activate(npm, l);
+		/* this calls pmap_md_asid_activate */
+		pmap_tlb_asid_acquire(npm, l);
 	}
 #else
 	cpu_domains(ndacr);
@@ -5228,7 +5146,9 @@ pmap_deactivate(struct lwp *l)
 
 #ifdef ARM_MMU_EXTENDED
 	KASSERT(kpreempt_disabled());
-	pmap_md_pdetab_deactivate(pm);
+	pmap_tlb_asid_deactivate(pm);
+
+	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
 #else
 	/*
 	 * If the process is exiting, make sure pmap_activate() does
@@ -5266,6 +5186,8 @@ pmap_deactivate_efirt(void)
 
 	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
 	    ci->ci_pmap_asid_cur);
+
+	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5322,9 +5244,11 @@ pmap_update(pmap_t pm)
 	if (__predict_false(pm->pm_remove_all)) {
 		pm->pm_remove_all = false;
 
+		KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+
 		KASSERT(pm != pmap_kernel());
-		/* this calls pmap_tlb_asid_acquire which calls tlb_set_asid */
-		pmap_md_pdetab_activate(pm, curlwp);
+		/* this calls pmap_md_asid_activate */
+		pmap_tlb_asid_acquire(pm, curlwp);
 	}
 
 	if (arm_has_mpext_p)
@@ -5370,6 +5294,7 @@ pmap_remove_all(pmap_t pm)
 #ifdef PMAP_CACHE_VIVT
 	pmap_cache_wbinv_all(pm, PVF_EXEC);
 #endif
+
 #ifdef ARM_MMU_EXTENDED
 #ifdef MULTIPROCESSOR
 	struct cpu_info * const ci = curcpu();

@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.15 2021/10/02 14:28:04 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_tlb.c,v 1.16 2026/04/19 15:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,9 +46,11 @@ bool arm_has_mpext_p;		// CPU supports MP extensions
 tlb_asid_t
 tlb_get_asid(void)
 {
-	return armreg_contextidr_read() & 0xff;
+	return (armreg_ttbcr_read() & TTBCR_S_PD0) != 0 ?
+	    KERNEL_PID : (armreg_contextidr_read() & 0xff);
 }
 
+#if 0
 void
 tlb_set_asid(tlb_asid_t asid, pmap_t pm)
 {
@@ -60,6 +62,7 @@ tlb_set_asid(tlb_asid_t asid, pmap_t pm)
 	armreg_contextidr_write(asid);
 	isb();
 }
+#endif
 
 void
 tlb_invalidate_all(void)

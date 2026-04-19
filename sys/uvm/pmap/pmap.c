@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.88 2026/04/11 18:23:31 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.89 2026/04/19 15:09:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.88 2026/04/11 18:23:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2026/04/19 15:09:50 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -184,6 +184,8 @@ PMAP_COUNTER(reference, "references");
 PMAP_COUNTER(dereference, "dereferences");
 PMAP_COUNTER(destroy, "destroyed");
 PMAP_COUNTER(activate, "activations");
+PMAP_COUNTER(activate_kernel, "activations (kernel)");
+PMAP_COUNTER(activate_notcurlwp, "activations (not curlwp)");
 PMAP_COUNTER(deactivate, "deactivations");
 PMAP_COUNTER(update, "updates");
 #ifdef MULTIPROCESSOR
@@ -877,6 +879,18 @@ pmap_activate(struct lwp *l)
 	    (uintptr_t)pmap, 0, 0);
 	PMAP_COUNT(activate);
 
+	if (pmap == pmap_kernel()) {
+		UVMHIST_LOG(pmaphist, " <-- done (kernel)", 0, 0, 0, 0);
+		PMAP_COUNT(activate_kernel);
+		return;
+	}
+	if (l != curlwp) {
+		UVMHIST_LOG(pmaphist, " <-- done (not curlwp %p vs %p)",
+		    l, curlwp, 0, 0);
+		PMAP_COUNT(activate_notcurlwp);
+		return;
+	}
+
 	kpreempt_disable();
 	pmap_tlb_miss_lock_enter();
 
@@ -888,7 +902,7 @@ pmap_activate(struct lwp *l)
 	 * as it'll happen in pmap_update.
 	 */
 	if (__predict_true((pmap->pm_flags & PMAP_DEFERRED_ACTIVATE) == 0)) {
-		/* this calls tlb_set_asid */
+		/* this calls pmap_md_asid_activate */
 		pmap_tlb_asid_acquire(pmap, l);
 		pmap_segtab_activate(pmap, l);
 	}
@@ -916,6 +930,7 @@ pmap_deactivate(struct lwp *l)
 	kpreempt_disable();
 	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
 	pmap_tlb_miss_lock_enter();
+	// calls pmap_md_asid_deactivate
 	pmap_tlb_asid_deactivate(pmap);
 	pmap_segtab_deactivate(pmap);
 	pmap_tlb_miss_lock_exit();
@@ -950,7 +965,7 @@ pmap_update(struct pmap *pmap)
 	if (__predict_false(pmap->pm_flags & PMAP_DEFERRED_ACTIVATE)) {
 		pmap->pm_flags ^= PMAP_DEFERRED_ACTIVATE;
 
-		/* this calls tlb_set_asid */
+		/* this calls pmap_md_asid_activate */
 		pmap_tlb_asid_acquire(pmap, curlwp);
 		pmap_segtab_activate(pmap, curlwp);
 	}

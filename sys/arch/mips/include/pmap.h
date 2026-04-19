@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.78 2026/04/18 06:58:57 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.79 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,17 +143,17 @@ pmap_md_cache_prefer_mask(void)
 }
 
 static inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 
 #endif /* __PMAP_PRIVATE */

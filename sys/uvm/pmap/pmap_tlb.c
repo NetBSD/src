@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.66 2026/03/31 21:10:51 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.67 2026/04/19 15:09:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.66 2026/03/31 21:10:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.67 2026/04/19 15:09:50 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -985,7 +985,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		ci->ci_pmap_asid_cur = pai->pai_asid;
 		UVMHIST_LOG(maphist, "setting asid to %#jx", pai->pai_asid,
 		    0, 0, 0);
-		tlb_set_asid(pai->pai_asid, pm);
+		pmap_md_asid_activate(pai->pai_asid, pm, l);
 		pmap_tlb_asid_check();
 	}
 	TLBINFO_UNLOCK(ti);
@@ -1021,7 +1021,7 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 	}
 #endif
 	curcpu()->ci_pmap_asid_cur = KERNEL_PID;
-	tlb_set_asid(KERNEL_PID, pmap_kernel());
+	pmap_md_asid_deactivate(pm);
 
 	pmap_tlb_pai_check(cpu_tlb_info(curcpu()), false);
 #if defined(DEBUG)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.12 2026/04/16 18:56:58 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.13 2026/04/19 15:09:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.12 2026/04/16 18:56:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.13 2026/04/19 15:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -523,86 +523,25 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 }
 
 
-void
-pmap_md_xtab_activate(pmap_t pm, struct lwp *l)
-{
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx l=%#jx)", (uintptr_t)pm, (uintptr_t)l, 0, 0);
-
-	KASSERT(kpreempt_disabled());
-
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-
-	const uint64_t old_tcrel1 = reg_tcr_el1_read();
-	reg_tcr_el1_write(old_tcrel1 | TCR_EPD0);
-	isb();
-
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
-
-	const uint64_t ttbr =
-	    __SHIFTIN(pai->pai_asid, TTBR_ASID) |
-	    __SHIFTIN(pm->pm_l0_pa, TTBR_BADDR);
-
-	cpu_set_ttbr0(ttbr);
-
-	if (pm != pmap_kernel()) {
-		reg_tcr_el1_write(old_tcrel1 & ~TCR_EPD0);
-		isb();
-	}
-
-	UVMHIST_LOG(maphist, " pm %#jx pm->pm_l0 %016jx pm->pm_l0_pa %016jx asid %ju... done",
-	    (uintptr_t)pm, (uintptr_t)pm->pm_pdetab, (uintptr_t)pm->pm_l0_pa,
-	    (uintptr_t)pai->pai_asid);
-
-	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
-	    ci->ci_pmap_asid_cur, pai->pai_asid);
-	ci->ci_pmap_cur = pm;
-}
-
-
-void
-pmap_md_xtab_deactivate(pmap_t pm)
-{
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	KASSERT(kpreempt_disabled());
-
-	struct cpu_info * const ci = curcpu();
-	/*
-	 * Disable translation table walks from TTBR0 while no pmap has been
-	 * activated.
-	 */
-	const uint64_t old_tcrel1 = reg_tcr_el1_read();
-	reg_tcr_el1_write(old_tcrel1 | TCR_EPD0);
-	isb();
-
-	cpu_set_ttbr0(0);
-
-	ci->ci_pmap_cur = pmap_kernel();
-	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
-	    ci->ci_pmap_asid_cur);
-}
-
-
 #if defined(EFI_RUNTIME)
 void
 pmap_md_activate_efirt(void)
 {
 	kpreempt_disable();
 
-	pmap_md_xtab_activate(pmap_efirt(), NULL);
+//	struct cpu_info * const ci = curcpu();
+	struct pmap * const pm = pmap_efirt();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	pmap_md_asid_activate(pai->pai_asid, pmap_efirt(), NULL);
 }
+
 void
 pmap_md_deactivate_efirt(void)
 {
-	pmap_md_xtab_deactivate(pmap_efirt());
+	pmap_md_asid_deactivate(pmap_efirt());
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	kpreempt_enable();
 }

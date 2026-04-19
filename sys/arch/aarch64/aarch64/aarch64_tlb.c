@@ -31,7 +31,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_tlb.c,v 1.2 2021/10/29 07:55:04 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_tlb.c,v 1.3 2026/04/19 15:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,9 +46,11 @@ tlb_asid_t
 tlb_get_asid(void)
 {
 
-	return __SHIFTOUT(reg_ttbr0_el1_read(), TTBR_ASID);
+	return (reg_tcr_el1_read() & TCR_EPD0) != 0 ?
+	    KERNEL_PID :__SHIFTOUT(reg_ttbr0_el1_read(), TTBR_ASID);
 }
 
+#if 0
 void
 tlb_set_asid(tlb_asid_t asid, pmap_t pm)
 {
@@ -58,6 +60,7 @@ tlb_set_asid(tlb_asid_t asid, pmap_t pm)
 
 	cpu_set_ttbr0(ttbr);
 }
+#endif
 
 void
 tlb_invalidate_all(void)
