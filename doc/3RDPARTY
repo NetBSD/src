@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2185 2026/04/15 16:10:35 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2186 2026/04/19 15:55:23 gutteridge Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1165,7 +1165,7 @@ markus is very cooperative about it):
 
 Package:	OpenSSL
 Version:	1.0.2o/1.1.1t/3.0.16/3.5.6
-Current Vers:	1.0.2zm/1.1.1zd/3.0.18/3.2.6/3.3.7/3.4.5/3.5.6,3.6.2/4.0.0
+Current Vers:	1.0.2zm/1.1.1zd/3.0.20/3.2.6/3.3.7/3.4.5/3.5.6/3.6.2/4.0.0
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
