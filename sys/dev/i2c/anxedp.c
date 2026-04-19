@@ -1,4 +1,4 @@
-/* $NetBSD: anxedp.c,v 1.9 2025/09/17 13:42:42 thorpej Exp $ */
+/* $NetBSD: anxedp.c,v 1.10 2026/04/19 10:54:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.9 2025/09/17 13:42:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.10 2026/04/19 10:54:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: anxedp.c,v 1.9 2025/09/17 13:42:42 thorpej Exp $");
 #include <dev/fdt/fdt_port.h>
 #include <dev/fdt/fdtvar.h>
 
+#include <drm/drm_atomic_state_helper.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
@@ -78,6 +79,7 @@ struct anxedp_softc;
 struct anxedp_connector {
 	struct drm_connector	base;
 	struct anxedp_softc	*sc;
+	struct drm_encoder	*encoder;
 };
 
 struct anxedp_softc {
@@ -112,22 +114,6 @@ anxedp_write(struct anxedp_softc *sc, u_int off, uint8_t reg, uint8_t val)
 	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr + off, reg, val, 0);
 }
 
-static int
-anxedp_connector_dpms(struct drm_connector *connector, int mode)
-{
-	int error;
-
-	if (mode != DRM_MODE_DPMS_ON)
-		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
-
-	error = drm_helper_connector_dpms(connector, mode);
-
-	if (mode == DRM_MODE_DPMS_ON)
-		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
-		
-	return error;
-}
-
 static enum drm_connector_status
 anxedp_connector_detect(struct drm_connector *connector, bool force)
 {
@@ -142,10 +128,12 @@ anxedp_connector_destroy(struct drm_connector *connector)
 }
 
 static const struct drm_connector_funcs anxedp_connector_funcs = {
-	.dpms = anxedp_connector_dpms,
 	.detect = anxedp_connector_detect,
 	.fill_modes = drm_helper_probe_single_connector_modes,
 	.destroy = anxedp_connector_destroy,
+	.atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
+	.reset = drm_atomic_helper_connector_reset,
 };
 
 static int
@@ -261,8 +249,17 @@ anxedp_connector_get_modes(struct drm_connector *connector)
 	return drm_add_edid_modes(connector, pedid);
 }
 
+static struct drm_encoder *
+anxedp_connector_best_encoder(struct drm_connector *connector)
+{
+	struct anxedp_connector *anxedp_connector = to_anxedp_connector(connector);
+
+	return anxedp_connector->encoder;
+}
+
 static const struct drm_connector_helper_funcs anxedp_connector_helper_funcs = {
 	.get_modes = anxedp_connector_get_modes,
+	.best_encoder = anxedp_connector_best_encoder,
 };
 
 static int
@@ -369,10 +366,10 @@ anxedp_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		return EINVAL;
 
 	sc->sc_connector.base.connector_type = DRM_MODE_CONNECTOR_eDP;
+	sc->sc_connector.encoder = encoder;
 
 	sc->sc_bridge.driver_private = sc;
 	sc->sc_bridge.funcs = &anxedp_bridge_funcs;
-	sc->sc_bridge.encoder = encoder;
 
 	error = drm_bridge_attach(encoder, &sc->sc_bridge, NULL);
 	if (error != 0)
