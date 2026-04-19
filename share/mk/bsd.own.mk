@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1475 2026/04/17 16:21:46 christos Exp $
+#      $NetBSD: bsd.own.mk,v 1.1476 2026/04/19 02:11:18 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -92,8 +92,7 @@ TOOLCHAIN_MISSING?=	no
 #
 .if \
     ${MACHINE} == "alpha" || \
-    ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "sh3"
+    ${MACHINE_CPU} == "m68k"
 HAVE_GCC?=	12
 .endif
 
