@@ -1,4 +1,4 @@
-/*	$NetBSD: c23.c,v 1.18 2025/09/18 18:22:18 rillig Exp $	*/
+/*	$NetBSD: c23.c,v 1.19 2026/04/19 16:34:11 rillig Exp $	*/
 # 3 "c23.c"
 
 // Tests for the option -Ac23, which allows features from C23 and all earlier
@@ -205,3 +205,11 @@ attribute_in_switch_statement(int n)
 
 // C23 6.7.7.4p13 says that "()" is equivalent to "(void)".
 void function_without_parameters();
+
+
+// C23 6.7.1p4 allows multiple definitions for the same typedef name.
+// It does not allow redefinition to a different type, but lint accepts it
+// anyway, relying on the compiler to reject this error.
+typedef int number;
+typedef int number;
+typedef double number;

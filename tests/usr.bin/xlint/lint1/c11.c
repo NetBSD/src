@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.14 2026/03/15 08:16:53 rillig Exp $	*/
+/*	$NetBSD: c11.c,v 1.15 2026/04/19 16:34:11 rillig Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -192,6 +192,14 @@ struct alignas_type {
 // and alignas_type is at offset 4 with alignment max(1, 4).
 /* expect+1: error: negative array dimension (-128) [20] */
 typedef int reveal_sizeof_uint_1024[-(int)sizeof(struct alignas_type)];
+
+
+// C11 6.7p3 allows multiple definitions for the same typedef name.
+// It does not allow redefinition to a different type, but lint accepts it
+// anyway, relying on the compiler to reject this error.
+typedef int number;
+typedef int number;
+typedef double number;
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.

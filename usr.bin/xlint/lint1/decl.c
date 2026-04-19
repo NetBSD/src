@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.426 2026/03/15 08:16:53 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.427 2026/04/19 16:34:11 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.426 2026/03/15 08:16:53 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.427 2026/04/19 16:34:11 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2131,9 +2131,11 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (rdsym->s_scl == TYPEDEF) {
-		/* typedef '%s' redeclared */
-		error(89, dsym->s_name);
-		print_previous_declaration(rdsym);
+		if (!allow_c11) {
+			/* typedef '%s' redeclared */
+			error(89, dsym->s_name);
+			print_previous_declaration(rdsym);
+		}
 		return true;
 	}
 	if (dsym->s_scl == TYPEDEF) {
