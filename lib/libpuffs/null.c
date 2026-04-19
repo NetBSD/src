@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.36 2021/09/11 20:28:03 andvar Exp $	*/
+/*	$NetBSD: null.c,v 1.37 2026/04/19 19:57:01 rillig Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.36 2021/09/11 20:28:03 andvar Exp $");
+__RCSID("$NetBSD: null.c,v 1.37 2026/04/19 19:57:01 rillig Exp $");
 #endif /* !lint */
 
 /*
@@ -228,7 +228,6 @@ fhcmp(struct puffs_usermount *pu, struct puffs_node *pn, void *arg)
 	if (kf1->fid_len != kf2->fid_len)
 		return NULL;
 
-	/*LINTED*/
 	if (memcmp(kf1, kf2, kf1->fid_len) == 0)
 		return pn;
 	return NULL;
