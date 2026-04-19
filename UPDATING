@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.389 2025/12/20 15:33:26 martin Exp $
+$NetBSD: UPDATING,v 1.390 2026/04/19 03:29:14 gutteridge Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -25,7 +25,7 @@ Recent changes:
 	removal of $DESTDIR/usr/lib/libssh* and $DESTDIR/usr/lib/*/libssh*.
 
 20251028:
-	libpthread had it's shared library version go back (from 1.7 to
+	libpthread had its shared library version go back (from 1.7 to
 	1.6). This may cause fallout during update builds, remove the
 	libpthread obj dir and all libpthread.so.1.7\* files in the
 	dest dir.
