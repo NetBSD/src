@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $	*/
+/*	$NetBSD: random.c,v 1.8 2026/04/19 19:17:54 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.7 2021/12/12 22:20:52 andvar Exp $");
+__RCSID("$NetBSD: random.c,v 1.8 2026/04/19 19:17:54 rillig Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -188,7 +188,6 @@ static const int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
  *	MAX_TYPES * (rptr - state) + TYPE_3 == TYPE_3.
  */
 
-/* LINTED */
 static uint32_t randtbl[DEG_3 + 1] = {
 	TYPE_3,
 #ifdef USE_BETTER_RANDOM
