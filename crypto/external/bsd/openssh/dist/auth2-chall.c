@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2-chall.c,v 1.21 2026/04/08 18:58:40 christos Exp $	*/
+/*	$NetBSD: auth2-chall.c,v 1.22 2026/04/19 03:59:52 gutteridge Exp $	*/
 /* $OpenBSD: auth2-chall.c,v 1.60 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-chall.c,v 1.21 2026/04/08 18:58:40 christos Exp $");
+__RCSID("$NetBSD: auth2-chall.c,v 1.22 2026/04/19 03:59:52 gutteridge Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -59,22 +59,22 @@ static int input_userauth_info_response(int, uint32_t, struct ssh *);
 extern KbdintDevice mm_bsdauth_device;
 #else
 #ifdef USE_PAM
-extern KbdintDevice sshpam_device;
+extern KbdintDevice mm_sshpam_device;
 #endif
 #ifdef SKEY
-extern KbdintDevice skey_device;
+extern KbdintDevice mm_skey_device;
 #endif
 #endif
 
 KbdintDevice *devices[] = {
 #ifdef BSD_AUTH
-	&bsdauth_device,
+	&mm_bsdauth_device,
 #else
 #ifdef USE_PAM
-	&sshpam_device,
+	&mm_sshpam_device,
 #endif
 #ifdef SKEY
-	&skey_device,
+	&mm_skey_device,
 #endif
 #endif
 	NULL
