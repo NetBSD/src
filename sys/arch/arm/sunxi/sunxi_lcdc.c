@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_lcdc.c,v 1.15 2022/06/28 05:19:03 skrll Exp $ */
+/* $NetBSD: sunxi_lcdc.c,v 1.16 2026/04/19 10:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.15 2022/06/28 05:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_lcdc.c,v 1.16 2026/04/19 10:55:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,8 +137,6 @@ struct sunxi_lcdc_softc {
 	struct drm_connector	sc_connector;
 
 	struct fdt_device_ports	sc_ports;
-
-	uint32_t		sc_vbl_counter;
 };
 
 #define	to_sunxi_lcdc_encoder(x)	container_of(x, struct sunxi_lcdc_encoder, base)
@@ -343,14 +341,6 @@ sunxi_lcdc_encoder_mode(struct fdt_endpoint *out_ep)
 	}
 }
 
-static uint32_t
-sunxi_lcdc_get_vblank_counter(void *priv)
-{
-	struct sunxi_lcdc_softc * const sc = priv;
-
-	return sc->sc_vbl_counter;
-}
-
 static void
 sunxi_lcdc_enable_vblank(void *priv)
 {
@@ -382,7 +372,6 @@ sunxi_lcdc_setup_vblank(struct sunxi_lcdc_softc *sc)
 
 	drm_sc = device_private(ddev->dev);
 	drm_sc->sc_vbl[crtc_index].priv = sc;
-	drm_sc->sc_vbl[crtc_index].get_vblank_counter = sunxi_lcdc_get_vblank_counter;
 	drm_sc->sc_vbl[crtc_index].enable_vblank = sunxi_lcdc_enable_vblank;
 	drm_sc->sc_vbl[crtc_index].disable_vblank = sunxi_lcdc_disable_vblank;
 }
@@ -446,6 +435,8 @@ static int
 sunxi_lcdc_intr(void *priv)
 {
 	struct sunxi_lcdc_softc * const sc = priv;
+	struct drm_device *ddev = sc->sc_encoder.base.dev;
+	struct sunxi_drm_softc *drm_sc = device_private(ddev->dev);
 	uint32_t val;
 	int rv = 0;
 
@@ -455,9 +446,24 @@ sunxi_lcdc_intr(void *priv)
 
 	val = TCON_READ(sc, TCON_GINT0_REG);
 	if ((val & status_mask) != 0) {
+		struct drm_crtc *crtc = drm_sc->sc_vbl[crtc_index].crtc;
+
 		TCON_WRITE(sc, TCON_GINT0_REG, val & ~status_mask);
-		atomic_inc_32(&sc->sc_vbl_counter);
-		drm_handle_vblank(sc->sc_encoder.base.dev, crtc_index);
+		if (crtc != NULL) {
+			drm_crtc_handle_vblank(crtc);
+			spin_lock(&ddev->event_lock);
+			if (drm_sc->sc_vbl[crtc_index].event != NULL) {
+				drm_crtc_send_vblank_event(crtc,
+				    drm_sc->sc_vbl[crtc_index].event);
+				drm_sc->sc_vbl[crtc_index].event = NULL;
+				drm_crtc_vblank_put(crtc);
+			}
+			spin_unlock(&ddev->event_lock);	
+		} else {
+			device_printf(sc->sc_dev,
+			    "vblank interrupt and no crtc for index %u\n",
+			    crtc_index);
+		}
 		rv = 1;
 	}
 

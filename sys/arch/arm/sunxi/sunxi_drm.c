@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.27 2025/10/13 14:12:13 thorpej Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.28 2026/04/19 10:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.27 2025/10/13 14:12:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.28 2026/04/19 10:55:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,8 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.27 2025/10/13 14:12:13 thorpej Exp $
 
 #include <arm/sunxi/sunxi_drm.h>
 
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_auth.h>
 #include <drm/drm_crtc_helper.h>
+#include <drm/drm_damage_helper.h>
 #include <drm/drm_drv.h>
 #include <drm/drm_fb_helper.h>
 #include <drm/drm_fourcc.h>
@@ -85,17 +87,13 @@ static void	sunxi_drm_attach(device_t, device_t, void *);
 static void	sunxi_drm_init(device_t);
 static vmem_t	*sunxi_drm_alloc_cma_pool(struct drm_device *, size_t);
 
-static uint32_t	sunxi_drm_get_vblank_counter(struct drm_device *, unsigned int);
-static int	sunxi_drm_enable_vblank(struct drm_device *, unsigned int);
-static void	sunxi_drm_disable_vblank(struct drm_device *, unsigned int);
-
 static int	sunxi_drm_load(struct drm_device *, unsigned long);
 static void	sunxi_drm_unload(struct drm_device *);
 
 static void	sunxi_drm_task_work(struct work *, void *);
 
 static struct drm_driver sunxi_drm_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM,
+	.driver_features = DRIVER_MODESET | DRIVER_ATOMIC | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = sunxi_drm_load,
 	.unload = sunxi_drm_unload,
@@ -106,10 +104,6 @@ static struct drm_driver sunxi_drm_driver = {
 
 	.dumb_create = drm_gem_cma_dumb_create,
 	.dumb_destroy = drm_gem_dumb_destroy,
-
-	.get_vblank_counter = sunxi_drm_get_vblank_counter,
-	.enable_vblank = sunxi_drm_enable_vblank,
-	.disable_vblank = sunxi_drm_disable_vblank,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
@@ -301,6 +295,12 @@ dealloc:
 
 static struct drm_mode_config_funcs sunxi_drm_mode_config_funcs = {
 	.fb_create = sunxi_drm_fb_create,
+	.atomic_check = drm_atomic_helper_check,
+	.atomic_commit = drm_atomic_helper_commit,
+};
+
+static struct drm_mode_config_helper_funcs sunxi_drm_mode_config_helper_funcs = {
+	.atomic_commit_tail = drm_atomic_helper_commit_tail_rpm,
 };
 
 static int
@@ -437,6 +437,7 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 	ddev->mode_config.max_width = SUNXI_DRM_MAX_WIDTH;
 	ddev->mode_config.max_height = SUNXI_DRM_MAX_HEIGHT;
 	ddev->mode_config.funcs = &sunxi_drm_mode_config_funcs;
+	ddev->mode_config.helper_private = &sunxi_drm_mode_config_helper_funcs;
 
 	num_crtc = 0;
 	data = fdtbus_get_prop(sc->sc_phandle, "allwinner,pipelines", &datalen);
@@ -465,6 +466,8 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 		goto drmerr;
 	}
 
+	drm_mode_config_reset(ddev);
+
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
 
 	drm_fb_helper_prepare(ddev, &fbdev->helper, &sunxi_drm_fb_helper_funcs);
@@ -476,8 +479,6 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 	fbdev->helper.fb = kmem_zalloc(sizeof(struct sunxi_drm_framebuffer), KM_SLEEP);
 
 	drm_fb_helper_single_add_all_connectors(&fbdev->helper);
-
-	drm_helper_disable_unused_functions(ddev);
 
 	drm_fb_helper_initial_config(&fbdev->helper, 32);
 
@@ -493,50 +494,6 @@ drmerr:
 	drm_mode_config_cleanup(ddev);
 
 	return error;
-}
-
-static uint32_t
-sunxi_drm_get_vblank_counter(struct drm_device *ddev, unsigned int crtc)
-{
-	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return 0;
-
-	if (sc->sc_vbl[crtc].get_vblank_counter == NULL)
-		return 0;
-
-	return sc->sc_vbl[crtc].get_vblank_counter(sc->sc_vbl[crtc].priv);
-}
-
-static int
-sunxi_drm_enable_vblank(struct drm_device *ddev, unsigned int crtc)
-{
-	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return 0;
-
-	if (sc->sc_vbl[crtc].enable_vblank == NULL)
-		return 0;
-
-	sc->sc_vbl[crtc].enable_vblank(sc->sc_vbl[crtc].priv);
-
-	return 0;
-}
-
-static void
-sunxi_drm_disable_vblank(struct drm_device *ddev, unsigned int crtc)
-{
-	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
-
-	if (crtc >= __arraycount(sc->sc_vbl))
-		return;
-
-	if (sc->sc_vbl[crtc].disable_vblank == NULL)
-		return;
-
-	sc->sc_vbl[crtc].disable_vblank(sc->sc_vbl[crtc].priv);
 }
 
 static void

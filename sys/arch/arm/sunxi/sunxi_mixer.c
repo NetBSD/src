@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.19 2022/06/28 05:19:03 skrll Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.20 2026/04/19 10:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.19 2022/06/28 05:19:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.20 2026/04/19 10:55:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.19 2022/06/28 05:19:03 skrll Exp $
 
 #include <arm/sunxi/sunxi_drm.h>
 
+#include <drm/drm_atomic.h>
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_drv.h>
@@ -234,7 +236,7 @@ struct sunxi_mixer_softc {
 	u_int			sc_ovl_ui_count;
 
 	struct sunxi_mixer_crtc	sc_crtc;
-	struct sunxi_mixer_plane sc_overlay;
+	struct sunxi_mixer_plane sc_plane;
 
 	struct fdt_device_ports	sc_ports;
 };
@@ -273,23 +275,56 @@ struct sunxi_mixer_softc {
 #define	to_sunxi_mixer_plane(x)	container_of(x, struct sunxi_mixer_plane, base)
 
 static int
-sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
-    int x, int y, int atomic)
+sunxi_mixer_plane_atomic_check(struct drm_plane *plane,
+    struct drm_plane_state *state)
 {
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-	struct sunxi_drm_framebuffer *sfb = atomic?
-	    to_sunxi_drm_framebuffer(fb) :
-	    to_sunxi_drm_framebuffer(crtc->primary->fb);
+	struct drm_crtc_state *crtc_state;
+
+	if (state->crtc == NULL) {
+		return 0;
+	}
+
+	crtc_state = drm_atomic_get_new_crtc_state(state->state, state->crtc);
+	if (IS_ERR(crtc_state)) {
+		return PTR_ERR(crtc_state);
+	}
+
+	return drm_atomic_helper_check_plane_state(state, crtc_state,
+	    DRM_PLANE_HELPER_NO_SCALING, DRM_PLANE_HELPER_NO_SCALING,
+	    false, true);
+}
+
+static void
+sunxi_mixer_plane_atomic_update(struct drm_plane *plane,
+    struct drm_plane_state *old_state)
+{
+	struct sunxi_mixer_plane *mixer_plane = to_sunxi_mixer_plane(plane);
+	struct sunxi_mixer_softc * const sc = mixer_plane->sc;
+	struct sunxi_drm_framebuffer *sfb =
+	    to_sunxi_drm_framebuffer(plane->state->fb);
+	uint32_t block_h, block_w, x, y, block_start_y, num_hblocks;
 	uint32_t val;
+
+	block_h = drm_format_info_block_height(sfb->base.format, 0);
+	block_w = drm_format_info_block_width(sfb->base.format, 0);
+	x = plane->state->src_x >> 16;
+	y = plane->state->src_y >> 16;
+	block_start_y = (y / block_h) * block_h;
+	num_hblocks = x / block_w;
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
-	paddr += y * sfb->base.pitches[0];
-	paddr += x * sfb->base.format->cpp[0];
+	paddr += block_start_y * sfb->base.pitches[0];
+	paddr += sfb->base.format->char_per_block[0] * num_hblocks;
 
 	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
 	uint32_t laddr = paddr & 0xffffffff;
+
+	/* Enable UI overlay */
+	val = OVL_UI_ATTR_CTL_LAY_EN |
+	      __SHIFTIN(OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888,
+			OVL_UI_ATTR_CTL_LAY_FBFMT);
+	OVL_UI_WRITE(sc, 0, OVL_UI_ATTR_CTL(0), val);
 
 	/* Set UI overlay line size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), sfb->base.pitches[0]);
@@ -301,200 +336,70 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	OVL_UI_WRITE(sc, 0, OVL_UI_TOP_HADD, val);
 	OVL_UI_WRITE(sc, 0, OVL_UI_TOP_LADD(0), laddr);
 
-	return 0;
+	/* Commit settings */
+	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
 }
 
 static void
-sunxi_mixer_destroy(struct drm_crtc *crtc)
+sunxi_mixer_plane_atomic_disable(struct drm_plane *plane,
+    struct drm_plane_state *state)
 {
-	drm_crtc_cleanup(crtc);
+	struct sunxi_mixer_plane *mixer_plane = to_sunxi_mixer_plane(plane);
+	struct sunxi_mixer_softc * const sc = mixer_plane->sc;
+
+	/* Disable UI overlay */
+	OVL_UI_WRITE(sc, 0, OVL_UI_ATTR_CTL(0), 0);
 }
 
-static int
-sunxi_mixer_page_flip(struct drm_crtc *crtc, struct drm_framebuffer *fb,
-    struct drm_pending_vblank_event *event, uint32_t flags,
-    struct drm_modeset_acquire_ctx *ctx)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-	unsigned long irqflags;
-
-	drm_crtc_wait_one_vblank(crtc);
-
-	sunxi_mixer_mode_do_set_base(crtc, fb, 0, 0, true);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-
-	if (event) {
-		spin_lock_irqsave(&crtc->dev->event_lock, irqflags);
-		drm_crtc_send_vblank_event(crtc, event);
-		spin_unlock_irqrestore(&crtc->dev->event_lock, irqflags);
-	}
-
-	return 0;
-}
-
-static int
-sunxi_mixer_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
-    uint32_t handle, uint32_t width, uint32_t height)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-	struct drm_gem_object *gem_obj = NULL;
-	struct drm_gem_cma_object *obj;
-	uint32_t val;
-	int error;
-
-	/* Only mixers with more than one UI layer can support hardware cursors */
-	if (sc->sc_ovl_ui_count <= 1)
-		return -EINVAL;
-
-	if (handle == 0) {
-		val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
-		val &= ~BLD_FILL_COLOR_CTL_P2_EN;
-		val |= BLD_FILL_COLOR_CTL_P2_FCEN;
-		BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
-
-		error = 0;
-		goto done;
-	}
-
-	/* Arbitrary limits, the hardware layer can do 8192x8192 */
-	if (width > MIXER_CURSOR_MAXWIDTH || height > MIXER_CURSOR_MAXHEIGHT) {
-		DRM_ERROR("Cursor dimension %ux%u not supported\n", width, height);
-		error = -EINVAL;
-		goto done;
-	}
-
-	gem_obj = drm_gem_object_lookup(file_priv, handle);
-	if (gem_obj == NULL) {
-		DRM_ERROR("Cannot find cursor object %#x for crtc %d\n",
-		    handle, drm_crtc_index(crtc));
-		error = -ENOENT;
-		goto done;
-	}
-	obj = to_drm_gem_cma_obj(gem_obj);
-
-	if (obj->base.size < width * height * 4) {
-		DRM_ERROR("Cursor buffer is too small\n");
-		error = -ENOMEM;
-		goto done;
-	}
-
-	uint64_t paddr = (uint64_t)obj->dmamap->dm_segs[0].ds_addr;
-	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
-	uint32_t laddr = paddr & 0xffffffff;
-
-	/* Framebuffer start address */
-	val = OVL_UI_READ(sc, 1, OVL_UI_TOP_HADD);
-	val &= ~OVL_UI_TOP_HADD_LAYER0;
-	val |= __SHIFTIN(haddr, OVL_UI_TOP_HADD_LAYER0);
-	OVL_UI_WRITE(sc, 1, OVL_UI_TOP_HADD, val);
-	OVL_UI_WRITE(sc, 1, OVL_UI_TOP_LADD(0), laddr);
-
-	const uint32_t size = ((height - 1) << 16) | (width - 1);
-	const uint32_t offset = (crtc->cursor_y << 16) | crtc->cursor_x;
-	const uint32_t crtc_size = ((crtc->primary->fb->height - 1) << 16) |
-	    (crtc->primary->fb->width - 1);
-
-	/* Enable cursor in ARGB8888 mode */
-	val = OVL_UI_ATTR_CTL_LAY_EN |
-	      __SHIFTIN(OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888, OVL_UI_ATTR_CTL_LAY_FBFMT);
-	OVL_UI_WRITE(sc, 1, OVL_UI_ATTR_CTL(0), val);
-	/* Set UI overlay layer size */
-	OVL_UI_WRITE(sc, 1, OVL_UI_MBSIZE(0), size);
-	/* Set UI overlay offset */
-	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
-	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), width * 4);
-	/* Set UI overlay window size */
-	OVL_UI_WRITE(sc, 1, OVL_UI_SIZE, crtc_size);
-
-	/* Set blender 2 input size */
-	BLD_WRITE(sc, BLD_CH_ISIZE(2), crtc_size);
-	/* Set blender 2 offset */
-	BLD_WRITE(sc, BLD_CH_OFFSET(2), 0);
-	/* Route channel 2 to pipe 2 */
-	val = BLD_READ(sc, BLD_CH_RTCTL);
-	val &= ~BLD_CH_RTCTL_P2;
-	val |= __SHIFTIN(2, BLD_CH_RTCTL_P2);
-	BLD_WRITE(sc, BLD_CH_RTCTL, val);
-
-	/* Enable pipe 2 */
-	val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
-	val |= BLD_FILL_COLOR_CTL_P2_EN;
-	val &= ~BLD_FILL_COLOR_CTL_P2_FCEN;
-	BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
-
-	error = 0;
-
-done:
-	if (error == 0) {
-		/* Commit settings */
-		GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-	}
-
-	if (gem_obj != NULL)
-		drm_gem_object_put_unlocked(gem_obj);
-
-	return error;
-}
-
-static int
-sunxi_mixer_cursor_move(struct drm_crtc *crtc, int x, int y)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-
-	crtc->cursor_x = x & 0xffff;
-	crtc->cursor_y = y & 0xffff;
-
-	const uint32_t offset = (crtc->cursor_y << 16) | crtc->cursor_x;
-
-	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-
-	return 0;
-}
-
-static const struct drm_crtc_funcs sunxi_mixer0_crtc_funcs = {
-	.set_config = drm_crtc_helper_set_config,
-	.destroy = sunxi_mixer_destroy,
-	.page_flip = sunxi_mixer_page_flip,
-	.cursor_set = sunxi_mixer_cursor_set,
-	.cursor_move = sunxi_mixer_cursor_move,
+static const struct drm_plane_helper_funcs sunxi_mixer_plane_helper_funcs = {
+	.atomic_check = sunxi_mixer_plane_atomic_check,
+	.atomic_update = sunxi_mixer_plane_atomic_update,
+	.atomic_disable = sunxi_mixer_plane_atomic_disable,
 };
-
-static const struct drm_crtc_funcs sunxi_mixer1_crtc_funcs = {
-	.set_config = drm_crtc_helper_set_config,
-	.destroy = sunxi_mixer_destroy,
-	.page_flip = sunxi_mixer_page_flip,
-};
-
-static void
-sunxi_mixer_dpms(struct drm_crtc *crtc, int mode)
-{
-}
 
 static bool
-sunxi_mixer_mode_fixup(struct drm_crtc *crtc,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+sunxi_mixer_format_mod_supported(struct drm_plane *plane, uint32_t format,
+    uint64_t modifier)
 {
-	return true;
+	return modifier == DRM_FORMAT_MOD_LINEAR;
+}
+
+static const struct drm_plane_funcs sunxi_mixer_plane_funcs = {
+	.update_plane = drm_atomic_helper_update_plane,
+	.disable_plane = drm_atomic_helper_disable_plane,
+	.destroy = drm_plane_cleanup,
+	.reset = drm_atomic_helper_plane_reset,
+	.atomic_duplicate_state = drm_atomic_helper_plane_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_plane_destroy_state,
+	.format_mod_supported = sunxi_mixer_format_mod_supported,
+};
+
+static void
+sunxi_mixer_crtc_dpms(struct drm_crtc *crtc, int mode)
+{
 }
 
 static int
-sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
-    struct drm_display_mode *adjusted_mode, int x, int y,
-    struct drm_framebuffer *old_fb)
+sunxi_mixer_crtc_atomic_check(struct drm_crtc *crtc,
+    struct drm_crtc_state *state)
+{
+	bool enabled = state->plane_mask & drm_plane_mask(crtc->primary);
+
+	if (enabled != state->enable) {
+		return -EINVAL;
+	}
+
+	return drm_atomic_add_affected_planes(state->state, crtc);
+}
+
+static void
+sunxi_mixer_crtc_atomic_enable(struct drm_crtc *crtc,
+    struct drm_crtc_state *state)
 {
 	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
 	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+	struct drm_display_mode *adjusted_mode = &crtc->state->adjusted_mode;
 	uint32_t val;
-	u_int fbfmt;
 
 	const uint32_t size = ((adjusted_mode->vdisplay - 1) << 16) |
 			      (adjusted_mode->hdisplay - 1);
@@ -519,13 +424,6 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set blender output size */
 	BLD_WRITE(sc, BLD_SIZE, size);
 
-	/* Enable UI overlay */
-	if (crtc->primary->fb->format->format == DRM_FORMAT_XRGB8888)
-		fbfmt = OVL_UI_ATTR_CTL_LAY_FBFMT_XRGB_8888;
-	else
-		fbfmt = OVL_UI_ATTR_CTL_LAY_FBFMT_ARGB_8888;
-	val = OVL_UI_ATTR_CTL_LAY_EN | __SHIFTIN(fbfmt, OVL_UI_ATTR_CTL_LAY_FBFMT);
-	OVL_UI_WRITE(sc, 0, OVL_UI_ATTR_CTL(0), val);
 	/* Set UI overlay layer size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_MBSIZE(0), size);
 	/* Set UI overlay offset */
@@ -533,680 +431,124 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_SIZE, size);
 
-	sunxi_mixer_mode_do_set_base(crtc, old_fb, x, y, 0);
+	/* Commit settings */
+	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
 
-	return 0;
+	drm_crtc_vblank_on(crtc);
+}
+
+static void
+sunxi_mixer_crtc_atomic_disable(struct drm_crtc *crtc,
+    struct drm_crtc_state *state)
+{
+	drm_crtc_vblank_off(crtc);
+
+	if (crtc->state->event && !crtc->state->active) {
+		spin_lock(&crtc->dev->event_lock);
+		drm_crtc_send_vblank_event(crtc, crtc->state->event);
+		spin_unlock(&crtc->dev->event_lock);
+
+		crtc->state->event = NULL;
+	}
+}
+
+static void
+sunxi_mixer_crtc_atomic_flush(struct drm_crtc *crtc,
+    struct drm_crtc_state *state)
+{
+	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
+	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+	int ret;
+
+	/* Commit settings */
+	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+
+	/*
+	 * If caller wants a vblank event, tell the vblank interrupt
+	 * handler to send it on the next interrupt.
+	 */
+	spin_lock(&crtc->dev->event_lock);
+	if (crtc->state->event) {
+		struct sunxi_drm_softc *drm_sc = device_private(crtc->dev->dev);
+		const int crtc_index = drm_crtc_index(crtc);
+		struct sunxi_drm_vblank *vbl = &drm_sc->sc_vbl[crtc_index];
+
+		if ((ret = drm_crtc_vblank_get_locked(crtc)) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			     "drm_crtc_vblank_get: %d\n", ret);
+		}
+		if (vbl->event) { /* XXX leaky; KASSERT? */
+			aprint_error_dev(sc->sc_dev, "unfinished vblank\n");
+		}
+		vbl->event = crtc->state->event;
+		crtc->state->event = NULL;
+	}
+	spin_unlock(&crtc->dev->event_lock);
 }
 
 static int
-sunxi_mixer_mode_set_base(struct drm_crtc *crtc, int x, int y,
-    struct drm_framebuffer *old_fb)
+sunxi_mixer_crtc_enable_vblank(struct drm_crtc *crtc)
 {
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
+	struct drm_device *ddev = crtc->dev;
+	struct sunxi_drm_softc *drm_sc = device_private(ddev->dev);
+	const int crtc_index = drm_crtc_index(crtc);
 
-	sunxi_mixer_mode_do_set_base(crtc, old_fb, x, y, 0);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-
-	return 0;
-}
-
-static int
-sunxi_mixer_mode_set_base_atomic(struct drm_crtc *crtc, struct drm_framebuffer *fb,
-    int x, int y, enum mode_set_atomic state)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-
-	sunxi_mixer_mode_do_set_base(crtc, fb, x, y, 1);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+	if (drm_sc->sc_vbl[crtc_index].enable_vblank != NULL) {
+		drm_sc->sc_vbl[crtc_index].enable_vblank(
+		    drm_sc->sc_vbl[crtc_index].priv);
+	}
 
 	return 0;
 }
 
 static void
-sunxi_mixer_disable(struct drm_crtc *crtc)
+sunxi_mixer_crtc_disable_vblank(struct drm_crtc *crtc)
 {
-}
+	struct drm_device *ddev = crtc->dev;
+	struct sunxi_drm_softc *drm_sc = device_private(ddev->dev);
+	const int crtc_index = drm_crtc_index(crtc);
 
-static void
-sunxi_mixer_prepare(struct drm_crtc *crtc)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-
-	/* RT enable */
-	GLB_WRITE(sc, GLB_CTL, GLB_CTL_EN);
-}
-
-static void
-sunxi_mixer_commit(struct drm_crtc *crtc)
-{
-	struct sunxi_mixer_crtc *mixer_crtc = to_sunxi_mixer_crtc(crtc);
-	struct sunxi_mixer_softc * const sc = mixer_crtc->sc;
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
+	if (drm_sc->sc_vbl[crtc_index].disable_vblank != NULL) {
+		drm_sc->sc_vbl[crtc_index].disable_vblank(
+		    drm_sc->sc_vbl[crtc_index].priv);
+	}
 }
 
 static const struct drm_crtc_helper_funcs sunxi_mixer_crtc_helper_funcs = {
-	.dpms = sunxi_mixer_dpms,
-	.mode_fixup = sunxi_mixer_mode_fixup,
-	.mode_set = sunxi_mixer_mode_set,
-	.mode_set_base = sunxi_mixer_mode_set_base,
-	.mode_set_base_atomic = sunxi_mixer_mode_set_base_atomic,
-	.disable = sunxi_mixer_disable,
-	.prepare = sunxi_mixer_prepare,
-	.commit = sunxi_mixer_commit,
+	.dpms = sunxi_mixer_crtc_dpms,
+	.atomic_check = sunxi_mixer_crtc_atomic_check,
+	.atomic_enable = sunxi_mixer_crtc_atomic_enable,
+	.atomic_disable = sunxi_mixer_crtc_atomic_disable,
+	.atomic_flush = sunxi_mixer_crtc_atomic_flush,
 };
 
-static void
-sunxi_mixer_overlay_destroy(struct drm_plane *plane)
-{
-}
-
-static bool
-sunxi_mixer_overlay_rgb(uint32_t drm_format)
-{
-	switch (drm_format) {
-	case DRM_FORMAT_ARGB8888:
-	case DRM_FORMAT_XRGB8888:
-		return true;
-	default:
-		return false;
-	}
-}
-
-static u_int
-sunxi_mixer_overlay_format(uint32_t drm_format)
-{
-	switch (drm_format) {
-	case DRM_FORMAT_ARGB8888:	return OVL_V_ATTCTL_LAY_FBFMT_ARGB_8888;
-	case DRM_FORMAT_XRGB8888:	return OVL_V_ATTCTL_LAY_FBFMT_XRGB_8888;
-	case DRM_FORMAT_VYUY:		return OVL_V_ATTCTL_LAY_FBFMT_VYUY;
-	case DRM_FORMAT_YVYU:		return OVL_V_ATTCTL_LAY_FBFMT_YVYU;
-	case DRM_FORMAT_UYVY:		return OVL_V_ATTCTL_LAY_FBFMT_UYVY;
-	case DRM_FORMAT_YUYV:		return OVL_V_ATTCTL_LAY_FBFMT_YUYV;
-	case DRM_FORMAT_YUV422:		return OVL_V_ATTCTL_LAY_FBFMT_YUV422;
-	case DRM_FORMAT_YUV420:		return OVL_V_ATTCTL_LAY_FBFMT_YUV420;
-	case DRM_FORMAT_YUV411:		return OVL_V_ATTCTL_LAY_FBFMT_YUV411;
-	default:			return 0;	/* shouldn't happen */
-	}
-}
-
-static const uint32_t lan3coefftab32_left[512] = {
-	0x40000000, 0x40fe0000, 0x3ffd0100, 0x3efc0100,
-	0x3efb0100, 0x3dfa0200, 0x3cf90200, 0x3bf80200,
-	0x39f70200, 0x37f70200, 0x35f70200, 0x33f70200,
-	0x31f70200, 0x2ef70200, 0x2cf70200, 0x2af70200,
-	0x27f70200, 0x24f80100, 0x22f80100, 0x1ef90100,
-	0x1cf90100, 0x19fa0100, 0x17fa0100, 0x14fb0100,
-	0x11fc0000, 0x0ffc0000, 0x0cfd0000, 0x0afd0000,
-	0x08fe0000, 0x05ff0000, 0x03ff0000, 0x02000000,
-
-	0x40000000, 0x40fe0000, 0x3ffd0100, 0x3efc0100,
-	0x3efb0100, 0x3dfa0200, 0x3cf90200, 0x3bf80200,
-	0x39f70200, 0x37f70200, 0x35f70200, 0x33f70200,
-	0x31f70200, 0x2ef70200, 0x2cf70200, 0x2af70200,
-	0x27f70200, 0x24f80100, 0x22f80100, 0x1ef90100,
-	0x1cf90100, 0x19fa0100, 0x17fa0100, 0x14fb0100,
-	0x11fc0000, 0x0ffc0000, 0x0cfd0000, 0x0afd0000,
-	0x08fe0000, 0x05ff0000, 0x03ff0000, 0x02000000,
-
-	0x3806fc02, 0x3805fc02, 0x3803fd01, 0x3801fe01,
-	0x3700fe01, 0x35ffff01, 0x35fdff01, 0x34fc0001,
-	0x34fb0000, 0x33fa0000, 0x31fa0100, 0x2ff90100,
-	0x2df80200, 0x2bf80200, 0x2af70200, 0x28f70200,
-	0x27f70200, 0x24f70300, 0x22f70300, 0x1ff70300,
-	0x1ef70300, 0x1cf70300, 0x1af70300, 0x18f70300,
-	0x16f80300, 0x13f80300, 0x11f90300, 0x0ef90300,
-	0x0efa0200, 0x0cfa0200, 0x0afb0200, 0x08fb0200,
-
-	0x320bfa02, 0x3309fa02, 0x3208fb02, 0x3206fb02,
-	0x3205fb02, 0x3104fc02, 0x3102fc01, 0x3001fd01,
-	0x3000fd01, 0x2ffffd01, 0x2efefe01, 0x2dfdfe01,
-	0x2bfcff01, 0x29fcff01, 0x28fbff01, 0x27fa0001,
-	0x26fa0000, 0x24f90000, 0x22f90100, 0x20f90100,
-	0x1ff80100, 0x1ef80100, 0x1cf80100, 0x1af80200,
-	0x18f80200, 0x17f80200, 0x15f80200, 0x12f80200,
-	0x11f90200, 0x0ff90200, 0x0df90200, 0x0cfa0200,
-
-	0x2e0efa01, 0x2f0dfa01, 0x2f0bfa01, 0x2e0afa01,
-	0x2e09fa01, 0x2e07fb01, 0x2d06fb01, 0x2d05fb01,
-	0x2c04fb01, 0x2b03fc01, 0x2a02fc01, 0x2a01fc01,
-	0x2800fd01, 0x28fffd01, 0x26fefd01, 0x25fefe01,
-	0x24fdfe01, 0x23fcfe01, 0x21fcff01, 0x20fbff01,
-	0x1efbff01, 0x1efbff00, 0x1cfa0000, 0x1bfa0000,
-	0x19fa0000, 0x18fa0000, 0x17f90000, 0x15f90100,
-	0x14f90100, 0x12f90100, 0x11f90100, 0x0ff90100,
-
-	0x2b10fa00, 0x2b0ffa00, 0x2b0efa00, 0x2b0cfa00,
-	0x2b0bfa00, 0x2a0afb01, 0x2a09fb01, 0x2908fb01,
-	0x2807fb01, 0x2806fb01, 0x2805fb01, 0x2604fc01,
-	0x2503fc01, 0x2502fc01, 0x2401fc01, 0x2301fc01,
-	0x2100fd01, 0x21fffd01, 0x21fffd01, 0x20fefd01,
-	0x1dfefe01, 0x1cfdfe01, 0x1cfdfe00, 0x1bfcfe00,
-	0x19fcff00, 0x19fbff00, 0x17fbff00, 0x16fbff00,
-	0x15fbff00, 0x14fb0000, 0x13fa0000, 0x11fa0000,
-
-	0x2811fcff, 0x2810fcff, 0x280ffbff, 0x280efbff,
-	0x270dfb00, 0x270cfb00, 0x270bfb00, 0x260afb00,
-	0x2609fb00, 0x2508fb00, 0x2507fb00, 0x2407fb00,
-	0x2406fc00, 0x2305fc00, 0x2204fc00, 0x2203fc00,
-	0x2103fc00, 0x2002fc00, 0x1f01fd00, 0x1e01fd00,
-	0x1d00fd00, 0x1dfffd00, 0x1cfffd00, 0x1bfefd00,
-	0x1afefe00, 0x19fefe00, 0x18fdfe00, 0x17fdfe00,
-	0x16fdfe00, 0x15fcff00, 0x13fcff00, 0x12fcff00,
-
-	0x2512fdfe, 0x2511fdff, 0x2410fdff, 0x240ffdff,
-	0x240efcff, 0x240dfcff, 0x240dfcff, 0x240cfcff,
-	0x230bfcff, 0x230afc00, 0x2209fc00, 0x2108fc00,
-	0x2108fc00, 0x2007fc00, 0x2006fc00, 0x2005fc00,
-	0x1f05fc00, 0x1e04fc00, 0x1e03fc00, 0x1c03fd00,
-	0x1c02fd00, 0x1b02fd00, 0x1b01fd00, 0x1a00fd00,
-	0x1900fd00, 0x1800fd00, 0x17fffe00, 0x16fffe00,
-	0x16fefe00, 0x14fefe00, 0x13fefe00, 0x13fdfe00,
-
-	0x2212fffe, 0x2211fefe, 0x2211fefe, 0x2110fefe,
-	0x210ffeff, 0x220efdff, 0x210dfdff, 0x210dfdff,
-	0x210cfdff, 0x210bfdff, 0x200afdff, 0x200afdff,
-	0x1f09fdff, 0x1f08fdff, 0x1d08fd00, 0x1c07fd00,
-	0x1d06fd00, 0x1b06fd00, 0x1b05fd00, 0x1c04fd00,
-	0x1b04fd00, 0x1a03fd00, 0x1a03fd00, 0x1902fd00,
-	0x1802fd00, 0x1801fd00, 0x1701fd00, 0x1600fd00,
-	0x1400fe00, 0x1400fe00, 0x14fffe00, 0x13fffe00,
-
-	0x201200fe, 0x201100fe, 0x1f11fffe, 0x2010fffe,
-	0x1f0ffffe, 0x1e0ffffe, 0x1f0efeff, 0x1f0dfeff,
-	0x1f0dfeff, 0x1e0cfeff, 0x1e0bfeff, 0x1d0bfeff,
-	0x1d0afeff, 0x1d09fdff, 0x1d09fdff, 0x1c08fdff,
-	0x1c07fdff, 0x1b07fd00, 0x1b06fd00, 0x1a06fd00,
-	0x1a05fd00, 0x1805fd00, 0x1904fd00, 0x1804fd00,
-	0x1703fd00, 0x1703fd00, 0x1602fe00, 0x1502fe00,
-	0x1501fe00, 0x1401fe00, 0x1301fe00, 0x1300fe00,
-
-	0x1c1202fe, 0x1c1102fe, 0x1b1102fe, 0x1c1001fe,
-	0x1b1001fe, 0x1b0f01ff, 0x1b0e00ff, 0x1b0e00ff,
-	0x1b0d00ff, 0x1a0d00ff, 0x1a0c00ff, 0x1a0cffff,
-	0x1a0bffff, 0x1a0bffff, 0x1a0affff, 0x180affff,
-	0x1909ffff, 0x1809ffff, 0x1808ffff, 0x1808feff,
-	0x1807feff, 0x1707fe00, 0x1606fe00, 0x1506fe00,
-	0x1605fe00, 0x1505fe00, 0x1504fe00, 0x1304fe00,
-	0x1304fe00, 0x1303fe00, 0x1203fe00, 0x1203fe00,
-
-	0x181104ff, 0x191103ff, 0x191003ff, 0x181003ff,
-	0x180f03ff, 0x190f02ff, 0x190e02ff, 0x180e02ff,
-	0x180d02ff, 0x180d01ff, 0x180d01ff, 0x180c01ff,
-	0x180c01ff, 0x180b00ff, 0x170b00ff, 0x170a00ff,
-	0x170a00ff, 0x170900ff, 0x160900ff, 0x160900ff,
-	0x1608ffff, 0x1508ffff, 0x1507ff00, 0x1507ff00,
-	0x1407ff00, 0x1306ff00, 0x1306ff00, 0x1305ff00,
-	0x1205ff00, 0x1105ff00, 0x1204ff00, 0x1104ff00,
-
-	0x171005ff, 0x171005ff, 0x171004ff, 0x170f04ff,
-	0x160f04ff, 0x170f03ff, 0x170e03ff, 0x160e03ff,
-	0x160d03ff, 0x160d02ff, 0x160d02ff, 0x160c02ff,
-	0x160c02ff, 0x160c02ff, 0x160b01ff, 0x150b01ff,
-	0x150a01ff, 0x150a01ff, 0x150a01ff, 0x140901ff,
-	0x14090000, 0x14090000, 0x14080000, 0x13080000,
-	0x13070000, 0x12070000, 0x12070000, 0x12060000,
-	0x11060000, 0x11060000, 0x11050000, 0x1105ff00,
-
-	0x14100600, 0x15100500, 0x150f0500, 0x150f0500,
-	0x140f0500, 0x150e0400, 0x140e0400, 0x130e0400,
-	0x140d0400, 0x150d0300, 0x130d0300, 0x140c0300,
-	0x140c0300, 0x140c0200, 0x140b0200, 0x130b0200,
-	0x120b0200, 0x130a0200, 0x130a0200, 0x130a0100,
-	0x13090100, 0x12090100, 0x11090100, 0x12080100,
-	0x11080100, 0x10080100, 0x11070100, 0x11070000,
-	0x10070000, 0x11060000, 0x10060000, 0x10060000,
-
-	0x140f0600, 0x140f0600, 0x130f0600, 0x140f0500,
-	0x140e0500, 0x130e0500, 0x130e0500, 0x140d0400,
-	0x140d0400, 0x130d0400, 0x120d0400, 0x130c0400,
-	0x130c0300, 0x130c0300, 0x130b0300, 0x130b0300,
-	0x110b0300, 0x130a0200, 0x120a0200, 0x120a0200,
-	0x120a0200, 0x12090200, 0x10090200, 0x11090100,
-	0x11080100, 0x11080100, 0x10080100, 0x10080100,
-	0x10070100, 0x10070100, 0x0f070100, 0x10060100,
-
-	0x120f0701, 0x130f0601, 0x130e0601, 0x130e0601,
-	0x120e0601, 0x130e0501, 0x130e0500, 0x130d0500,
-	0x120d0500, 0x120d0500, 0x130c0400, 0x130c0400,
-	0x120c0400, 0x110c0400, 0x120b0400, 0x120b0300,
-	0x120b0300, 0x120b0300, 0x120a0300, 0x110a0300,
-	0x110a0200, 0x11090200, 0x11090200, 0x10090200,
-	0x10090200, 0x10080200, 0x10080200, 0x10080100,
-	0x0f080100, 0x10070100, 0x0f070100, 0x0f070100
+static const struct drm_crtc_funcs sunxi_mixer_crtc_funcs = {
+	.set_config = drm_atomic_helper_set_config,
+	.destroy = drm_crtc_cleanup,
+	.page_flip = drm_atomic_helper_page_flip,
+	.reset = drm_atomic_helper_crtc_reset,
+	.atomic_duplicate_state = drm_atomic_helper_crtc_duplicate_state,
+	.atomic_destroy_state = drm_atomic_helper_crtc_destroy_state,
+	.enable_vblank = sunxi_mixer_crtc_enable_vblank,
+	.disable_vblank = sunxi_mixer_crtc_disable_vblank,
 };
 
-static const uint32_t lan3coefftab32_right[512] = {
-	0x00000000, 0x00000002, 0x0000ff04, 0x0000ff06,
-	0x0000fe08, 0x0000fd0a, 0x0000fd0c, 0x0000fc0f,
-	0x0000fc12, 0x0001fb14, 0x0001fa17, 0x0001fa19,
-	0x0001f91c, 0x0001f91f, 0x0001f822, 0x0001f824,
-	0x0002f727, 0x0002f72a, 0x0002f72c, 0x0002f72f,
-	0x0002f731, 0x0002f733, 0x0002f735, 0x0002f737,
-	0x0002f73a, 0x0002f83b, 0x0002f93c, 0x0002fa3d,
-	0x0001fb3e, 0x0001fc3f, 0x0001fd40, 0x0000fe40,
-
-	0x00000000, 0x00000002, 0x0000ff04, 0x0000ff06,
-	0x0000fe08, 0x0000fd0a, 0x0000fd0c, 0x0000fc0f,
-	0x0000fc12, 0x0001fb14, 0x0001fa17, 0x0001fa19,
-	0x0001f91c, 0x0001f91f, 0x0001f822, 0x0001f824,
-	0x0002f727, 0x0002f72a, 0x0002f72c, 0x0002f72f,
-	0x0002f731, 0x0002f733, 0x0002f735, 0x0002f737,
-	0x0002f73a, 0x0002f83b, 0x0002f93c, 0x0002fa3d,
-	0x0001fb3e, 0x0001fc3f, 0x0001fd40, 0x0000fe40,
-
-	0x0002fc06, 0x0002fb08, 0x0002fb0a, 0x0002fa0c,
-	0x0002fa0e, 0x0003f910, 0x0003f912, 0x0003f814,
-	0x0003f816, 0x0003f719, 0x0003f71a, 0x0003f71d,
-	0x0003f71f, 0x0003f721, 0x0003f723, 0x0003f725,
-	0x0002f727, 0x0002f729, 0x0002f72b, 0x0002f82d,
-	0x0002f82e, 0x0001f930, 0x0001fa31, 0x0000fa34,
-	0x0000fb34, 0x0100fc35, 0x01fffd36, 0x01ffff37,
-	0x01fe0037, 0x01fe0138, 0x01fd0338, 0x02fc0538,
-
-	0x0002fa0b, 0x0002fa0c, 0x0002f90e, 0x0002f910,
-	0x0002f911, 0x0002f813, 0x0002f816, 0x0002f817,
-	0x0002f818, 0x0002f81a, 0x0001f81c, 0x0001f81e,
-	0x0001f820, 0x0001f921, 0x0001f923, 0x0000f925,
-	0x0000fa26, 0x0100fa28, 0x01fffb29, 0x01fffc2a,
-	0x01fffc2c, 0x01fefd2d, 0x01fefe2e, 0x01fdff2f,
-	0x01fd0030, 0x01fd0130, 0x01fc0232, 0x02fc0432,
-	0x02fb0532, 0x02fb0633, 0x02fb0833, 0x02fa0933,
-
-	0x0001fa0e, 0x0001f90f, 0x0001f911, 0x0001f913,
-	0x0001f914, 0x0001f915, 0x0000f918, 0x0000fa18,
-	0x0000fa1a, 0x0000fa1b, 0x0000fa1d, 0x00fffb1e,
-	0x01fffb1f, 0x01fffb20, 0x01fffc22, 0x01fefc23,
-	0x01fefd24, 0x01fefe25, 0x01fdfe27, 0x01fdff28,
-	0x01fd0029, 0x01fc012a, 0x01fc022b, 0x01fc032b,
-	0x01fb042d, 0x01fb052d, 0x01fb062e, 0x01fb072e,
-	0x01fa092e, 0x01fa0a2f, 0x01fa0b2f, 0x01fa0d2f,
-
-	0x0000fa11, 0x0000fa12, 0x0000fa13, 0x0000fb14,
-	0x00fffb16, 0x00fffb16, 0x00fffb17, 0x00fffb19,
-	0x00fffc1a, 0x00fefc1c, 0x00fefd1c, 0x01fefd1d,
-	0x01fefe1e, 0x01fdfe20, 0x01fdff21, 0x01fdff22,
-	0x01fd0023, 0x01fc0124, 0x01fc0124, 0x01fc0225,
-	0x01fc0326, 0x01fc0427, 0x01fb0528, 0x01fb0629,
-	0x01fb0729, 0x01fb0829, 0x01fb092a, 0x01fb0a2a,
-	0x00fa0b2c, 0x00fa0c2b, 0x00fa0e2b, 0x00fa0f2c,
-
-	0x00fffc11, 0x00fffc12, 0x00fffc14, 0x00fffc15,
-	0x00fefd16, 0x00fefd17, 0x00fefd18, 0x00fefe19,
-	0x00fefe1a, 0x00fdfe1d, 0x00fdff1d, 0x00fdff1e,
-	0x00fd001d, 0x00fd011e, 0x00fd0120, 0x00fc0221,
-	0x00fc0321, 0x00fc0323, 0x00fc0423, 0x00fc0523,
-	0x00fc0624, 0x00fb0725, 0x00fb0726, 0x00fb0827,
-	0x00fb0926, 0x00fb0a26, 0x00fb0b27, 0x00fb0c27,
-	0x00fb0d27, 0xfffb0e28, 0xfffb0f29, 0xfffc1028,
-
-	0x00fefd13, 0x00fefd13, 0x00fefe14, 0x00fefe15,
-	0x00fefe17, 0x00feff17, 0x00feff17, 0x00fd0018,
-	0x00fd001a, 0x00fd001a, 0x00fd011b, 0x00fd021c,
-	0x00fd021c, 0x00fd031d, 0x00fc031f, 0x00fc041f,
-	0x00fc051f, 0x00fc0521, 0x00fc0621, 0x00fc0721,
-	0x00fc0821, 0x00fc0822, 0x00fc0922, 0x00fc0a23,
-	0xfffc0b24, 0xfffc0c24, 0xfffc0d24, 0xfffc0d25,
-	0xfffc0e25, 0xfffd0f25, 0xfffd1025, 0xfffd1125,
-
-	0x00feff12, 0x00feff14, 0x00feff14, 0x00fe0015,
-	0x00fe0015, 0x00fd0017, 0x00fd0118, 0x00fd0118,
-	0x00fd0218, 0x00fd0219, 0x00fd031a, 0x00fd031a,
-	0x00fd041b, 0x00fd041c, 0x00fd051c, 0x00fd061d,
-	0x00fd061d, 0x00fd071e, 0x00fd081e, 0xfffd081f,
-	0xfffd091f, 0xfffd0a20, 0xfffd0a20, 0xfffd0b21,
-	0xfffd0c21, 0xfffd0d21, 0xfffd0d22, 0xfffd0e23,
-	0xfffe0f22, 0xfefe1022, 0xfefe1122, 0xfefe1123,
-
-	0x00fe0012, 0x00fe0013, 0x00fe0114, 0x00fe0114,
-	0x00fe0116, 0x00fe0216, 0x00fe0216, 0x00fd0317,
-	0x00fd0317, 0x00fd0418, 0x00fd0419, 0x00fd0519,
-	0x00fd051a, 0x00fd061b, 0x00fd061b, 0x00fd071c,
-	0xfffd071e, 0xfffd081d, 0xfffd091d, 0xfffd091e,
-	0xfffe0a1d, 0xfffe0b1e, 0xfffe0b1e, 0xfffe0c1e,
-	0xfffe0d1f, 0xfffe0d1f, 0xfffe0e1f, 0xfeff0f1f,
-	0xfeff0f20, 0xfeff1020, 0xfeff1120, 0xfe001120,
-
-	0x00fe0212, 0x00fe0312, 0x00fe0313, 0x00fe0314,
-	0x00fe0414, 0x00fe0414, 0x00fe0416, 0x00fe0515,
-	0x00fe0516, 0x00fe0616, 0x00fe0617, 0x00fe0717,
-	0xfffe0719, 0xfffe0818, 0xffff0818, 0xffff0919,
-	0xffff0919, 0xffff0a19, 0xffff0a1a, 0xffff0b1a,
-	0xffff0b1b, 0xffff0c1a, 0xff000c1b, 0xff000d1b,
-	0xff000d1b, 0xff000e1b, 0xff000e1c, 0xff010f1c,
-	0xfe01101c, 0xfe01101d, 0xfe02111c, 0xfe02111c,
-
-	0x00ff0411, 0x00ff0411, 0x00ff0412, 0x00ff0512,
-	0x00ff0513, 0x00ff0513, 0x00ff0613, 0x00ff0614,
-	0x00ff0714, 0x00ff0715, 0x00ff0715, 0xffff0816,
-	0xffff0816, 0xff000916, 0xff000917, 0xff000918,
-	0xff000a17, 0xff000a18, 0xff000b18, 0xff000b18,
-	0xff010c18, 0xff010c19, 0xff010d18, 0xff010d18,
-	0xff020d18, 0xff020e19, 0xff020e19, 0xff020f19,
-	0xff030f19, 0xff031019, 0xff031019, 0xff031119,
-
-	0x00ff0511, 0x00ff0511, 0x00000511, 0x00000611,
-	0x00000612, 0x00000612, 0x00000712, 0x00000713,
-	0x00000714, 0x00000814, 0x00000814, 0x00000914,
-	0x00000914, 0xff010914, 0xff010a15, 0xff010a16,
-	0xff010a17, 0xff010b16, 0xff010b16, 0xff020c16,
-	0xff020c16, 0xff020c16, 0xff020d16, 0xff020d17,
-	0xff030d17, 0xff030e17, 0xff030e17, 0xff030f17,
-	0xff040f17, 0xff040f17, 0xff041017, 0xff051017,
-
-	0x00000610, 0x00000610, 0x00000611, 0x00000611,
-	0x00000711, 0x00000712, 0x00010712, 0x00010812,
-	0x00010812, 0x00010812, 0x00010913, 0x00010913,
-	0x00010913, 0x00010a13, 0x00020a13, 0x00020a14,
-	0x00020b14, 0x00020b14, 0x00020b14, 0x00020c14,
-	0x00030c14, 0x00030c15, 0x00030d15, 0x00030d15,
-	0x00040d15, 0x00040e15, 0x00040e15, 0x00040e16,
-	0x00050f15, 0x00050f15, 0x00050f16, 0x00051015,
-
-	0x00000611, 0x00010610, 0x00010710, 0x00010710,
-	0x00010711, 0x00010811, 0x00010811, 0x00010812,
-	0x00010812, 0x00010912, 0x00020912, 0x00020912,
-	0x00020a12, 0x00020a12, 0x00020a13, 0x00020a13,
-	0x00030b13, 0x00030b13, 0x00030b14, 0x00030c13,
-	0x00030c13, 0x00040c13, 0x00040d14, 0x00040d14,
-	0x00040d15, 0x00040d15, 0x00050e14, 0x00050e14,
-	0x00050e15, 0x00050f14, 0x00060f14, 0x00060f14,
-
-	0x0001070f, 0x0001070f, 0x00010710, 0x00010710,
-	0x00010810, 0x00010810, 0x00020810, 0x00020811,
-	0x00020911, 0x00020911, 0x00020912, 0x00020912,
-	0x00020a12, 0x00030a12, 0x00030a12, 0x00030b12,
-	0x00030b12, 0x00030b12, 0x00040b12, 0x00040c12,
-	0x00040c13, 0x00040c14, 0x00040c14, 0x00050d13,
-	0x00050d13, 0x00050d14, 0x00050e13, 0x01050e13,
-	0x01060e13, 0x01060e13, 0x01060e14, 0x01060f13
-};
-
-static const uint32_t lan2coefftab32[512] = {
-	0x00004000, 0x000140ff, 0x00033ffe, 0x00043ffd, 0x00063efc, 0xff083dfc, 0x000a3bfb, 0xff0d39fb,
-	0xff0f37fb, 0xff1136fa, 0xfe1433fb, 0xfe1631fb, 0xfd192ffb, 0xfd1c2cfb, 0xfd1f29fb, 0xfc2127fc,
-	0xfc2424fc, 0xfc2721fc, 0xfb291ffd, 0xfb2c1cfd, 0xfb2f19fd, 0xfb3116fe, 0xfb3314fe, 0xfa3611ff,
-	0xfb370fff, 0xfb390dff, 0xfb3b0a00, 0xfc3d08ff, 0xfc3e0600, 0xfd3f0400, 0xfe3f0300, 0xff400100,
-
-	0x00004000, 0x000140ff, 0x00033ffe, 0x00043ffd, 0x00063efc, 0xff083dfc, 0x000a3bfb, 0xff0d39fb,
-	0xff0f37fb, 0xff1136fa, 0xfe1433fb, 0xfe1631fb, 0xfd192ffb, 0xfd1c2cfb, 0xfd1f29fb, 0xfc2127fc,
-	0xfc2424fc, 0xfc2721fc, 0xfb291ffd, 0xfb2c1cfd, 0xfb2f19fd, 0xfb3116fe, 0xfb3314fe, 0xfa3611ff,
-	0xfb370fff, 0xfb390dff, 0xfb3b0a00, 0xfc3d08ff, 0xfc3e0600, 0xfd3f0400, 0xfe3f0300, 0xff400100,
-
-	0xff053804, 0xff063803, 0xff083801, 0xff093701, 0xff0a3700, 0xff0c3500, 0xff0e34ff, 0xff1033fe,
-	0xff1232fd, 0xfe1431fd, 0xfe162ffd, 0xfe182dfd, 0xfd1b2cfc, 0xfd1d2afc, 0xfd1f28fc, 0xfd2126fc,
-	0xfd2323fd, 0xfc2621fd, 0xfc281ffd, 0xfc2a1dfd, 0xfc2c1bfd, 0xfd2d18fe, 0xfd2f16fe, 0xfd3114fe,
-	0xfd3212ff, 0xfe3310ff, 0xff340eff, 0x00350cff, 0x00360a00, 0x01360900, 0x02370700, 0x03370600,
-
-	0xff083207, 0xff093206, 0xff0a3205, 0xff0c3203, 0xff0d3103, 0xff0e3102, 0xfe113001, 0xfe132f00,
-	0xfe142e00, 0xfe162dff, 0xfe182bff, 0xfe192aff, 0xfe1b29fe, 0xfe1d27fe, 0xfe1f25fe, 0xfd2124fe,
-	0xfe2222fe, 0xfe2421fd, 0xfe251ffe, 0xfe271dfe, 0xfe291bfe, 0xff2a19fe, 0xff2b18fe, 0xff2d16fe,
-	0x002e14fe, 0x002f12ff, 0x013010ff, 0x02300fff, 0x03310dff, 0x04310cff, 0x05310a00, 0x06310900,
-
-	0xff0a2e09, 0xff0b2e08, 0xff0c2e07, 0xff0e2d06, 0xff0f2d05, 0xff102d04, 0xff122c03, 0xfe142c02,
-	0xfe152b02, 0xfe172a01, 0xfe182901, 0xfe1a2800, 0xfe1b2700, 0xfe1d2500, 0xff1e24ff, 0xfe2023ff,
-	0xff2121ff, 0xff2320fe, 0xff241eff, 0x00251dfe, 0x00261bff, 0x00281afe, 0x012818ff, 0x012a16ff,
-	0x022a15ff, 0x032b13ff, 0x032c12ff, 0x052c10ff, 0x052d0fff, 0x062d0d00, 0x072d0c00, 0x082d0b00,
-
-	0xff0c2a0b, 0xff0d2a0a, 0xff0e2a09, 0xff0f2a08, 0xff102a07, 0xff112a06, 0xff132905, 0xff142904,
-	0xff162803, 0xff172703, 0xff182702, 0xff1a2601, 0xff1b2501, 0xff1c2401, 0xff1e2300, 0xff1f2200,
-	0x00202000, 0x00211f00, 0x01221d00, 0x01231c00, 0x01251bff, 0x02251aff, 0x032618ff, 0x032717ff,
-	0x042815ff, 0x052814ff, 0x052913ff, 0x06291100, 0x072a10ff, 0x082a0e00, 0x092a0d00, 0x0a2a0c00,
-
-	0xff0d280c, 0xff0e280b, 0xff0f280a, 0xff102809, 0xff112808, 0xff122708, 0xff142706, 0xff152705,
-	0xff162605, 0xff172604, 0xff192503, 0xff1a2403, 0x001b2302, 0x001c2202, 0x001d2201, 0x001e2101,
-	0x011f1f01, 0x01211e00, 0x01221d00, 0x02221c00, 0x02231b00, 0x03241900, 0x04241800, 0x04251700,
-	0x052616ff, 0x06261400, 0x072713ff, 0x08271100, 0x08271100, 0x09271000, 0x0a280e00, 0x0b280d00,
-
-	0xff0e260d, 0xff0f260c, 0xff10260b, 0xff11260a, 0xff122609, 0xff132608, 0xff142508, 0xff152507,
-	0x00152506, 0x00172405, 0x00182305, 0x00192304, 0x001b2203, 0x001c2103, 0x011d2002, 0x011d2002,
-	0x011f1f01, 0x021f1e01, 0x02201d01, 0x03211c00, 0x03221b00, 0x04221a00, 0x04231801, 0x05241700,
-	0x06241600, 0x07241500, 0x08251300, 0x09251200, 0x09261100, 0x0a261000, 0x0b260f00, 0x0c260e00,
-
-	0xff0e250e, 0xff0f250d, 0xff10250c, 0xff11250b, 0x0011250a, 0x00132409, 0x00142408, 0x00152407,
-	0x00162307, 0x00172306, 0x00182206, 0x00192205, 0x011a2104, 0x011b2004, 0x011c2003, 0x021c1f03,
-	0x021e1e02, 0x031e1d02, 0x03201c01, 0x04201b01, 0x04211a01, 0x05221900, 0x05221801, 0x06231700,
-	0x07231600, 0x07241500, 0x08241400, 0x09241300, 0x0a241200, 0x0b241100, 0x0c241000, 0x0d240f00,
-
-	0x000e240e, 0x000f240d, 0x0010240c, 0x0011240b, 0x0013230a, 0x0013230a, 0x00142309, 0x00152308,
-	0x00162208, 0x00172207, 0x01182106, 0x01192105, 0x011a2005, 0x021b1f04, 0x021b1f04, 0x021d1e03,
-	0x031d1d03, 0x031e1d02, 0x041e1c02, 0x041f1b02, 0x05201a01, 0x05211901, 0x06211801, 0x07221700,
-	0x07221601, 0x08231500, 0x09231400, 0x0a231300, 0x0a231300, 0x0b231200, 0x0c231100, 0x0d231000,
-
-	0x000f220f, 0x0010220e, 0x0011220d, 0x0012220c, 0x0013220b, 0x0013220b, 0x0015210a, 0x0015210a,
-	0x01162108, 0x01172008, 0x01182007, 0x02191f06, 0x02191f06, 0x021a1e06, 0x031a1e05, 0x031c1d04,
-	0x041c1c04, 0x041d1c03, 0x051d1b03, 0x051e1a03, 0x061f1902, 0x061f1902, 0x07201801, 0x08201701,
-	0x08211601, 0x09211501, 0x0a211500, 0x0b211400, 0x0b221300, 0x0c221200, 0x0d221100, 0x0e221000,
-
-	0x0010210f, 0x0011210e, 0x0011210e, 0x0012210d, 0x0013210c, 0x0014200c, 0x0114200b, 0x0115200a,
-	0x01161f0a, 0x01171f09, 0x02171f08, 0x02181e08, 0x03181e07, 0x031a1d06, 0x031a1d06, 0x041b1c05,
-	0x041c1c04, 0x051c1b04, 0x051d1a04, 0x061d1a03, 0x071d1903, 0x071e1803, 0x081e1802, 0x081f1702,
-	0x091f1602, 0x0a201501, 0x0b1f1501, 0x0b201401, 0x0c211300, 0x0d211200, 0x0e201200, 0x0e211100,
-
-	0x00102010, 0x0011200f, 0x0012200e, 0x0013200d, 0x0013200d, 0x01141f0c, 0x01151f0b, 0x01151f0b,
-	0x01161f0a, 0x02171e09, 0x02171e09, 0x03181d08, 0x03191d07, 0x03191d07, 0x041a1c06, 0x041b1c05,
-	0x051b1b05, 0x051c1b04, 0x061c1a04, 0x071d1903, 0x071d1903, 0x081d1803, 0x081e1703, 0x091e1702,
-	0x0a1f1601, 0x0a1f1502, 0x0b1f1501, 0x0c1f1401, 0x0d201300, 0x0d201300, 0x0e201200, 0x0f201100,
-
-	0x00102010, 0x0011200f, 0x00121f0f, 0x00131f0e, 0x00141f0d, 0x01141f0c, 0x01141f0c, 0x01151e0c,
-	0x02161e0a, 0x02171e09, 0x03171d09, 0x03181d08, 0x03181d08, 0x04191c07, 0x041a1c06, 0x051a1b06,
-	0x051b1b05, 0x061b1a05, 0x061c1a04, 0x071c1904, 0x081c1903, 0x081d1803, 0x091d1703, 0x091e1702,
-	0x0a1e1602, 0x0b1e1502, 0x0c1e1501, 0x0c1f1401, 0x0d1f1400, 0x0e1f1300, 0x0e1f1201, 0x0f1f1200,
-
-	0x00111e11, 0x00121e10, 0x00131e0f, 0x00131e0f, 0x01131e0e, 0x01141d0e, 0x02151d0c, 0x02151d0c,
-	0x02161d0b, 0x03161c0b, 0x03171c0a, 0x04171c09, 0x04181b09, 0x05181b08, 0x05191b07, 0x06191a07,
-	0x061a1a06, 0x071a1906, 0x071b1905, 0x081b1805, 0x091b1804, 0x091c1704, 0x0a1c1703, 0x0a1c1604,
-	0x0b1d1602, 0x0c1d1502, 0x0c1d1502, 0x0d1d1402, 0x0e1d1401, 0x0e1e1301, 0x0f1e1300, 0x101e1200,
-
-	0x00111e11, 0x00121e10, 0x00131d10, 0x01131d0f, 0x01141d0e, 0x01141d0e, 0x02151c0d, 0x02151c0d,
-	0x03161c0b, 0x03161c0b, 0x04171b0a, 0x04171b0a, 0x05171b09, 0x05181a09, 0x06181a08, 0x06191a07,
-	0x07191907, 0x071a1906, 0x081a1806, 0x081a1806, 0x091a1805, 0x0a1b1704, 0x0a1b1704, 0x0b1c1603,
-	0x0b1c1603, 0x0c1c1503, 0x0d1c1502, 0x0d1d1402, 0x0e1d1401, 0x0f1d1301, 0x0f1d1301, 0x101e1200,
-};
-
-static void
-sunxi_mixer_vsu_init(struct sunxi_mixer_softc *sc, u_int src_w, u_int src_h,
-    u_int crtc_w, u_int crtc_h, const struct drm_format_info *format)
-{
-	const u_int hstep = (src_w << 16) / crtc_w;
-	const u_int vstep = (src_h << 16) / crtc_h;
-
-	const int hsub = format->hsub;
-	const int vsub = format->vsub;
-
-	const u_int src_cw = src_w / hsub;
-	const u_int src_ch = src_h / vsub;
-
-	VSU_WRITE(sc, VS_OUT_SIZE_REG, ((crtc_h - 1) << 16) | (crtc_w - 1));
-	VSU_WRITE(sc, VS_Y_SIZE_REG, ((src_h - 1) << 16) | (src_w - 1));
-	VSU_WRITE(sc, VS_Y_HSTEP_REG, hstep << 4);
-	VSU_WRITE(sc, VS_Y_VSTEP_REG, vstep << 4);
-	VSU_WRITE(sc, VS_Y_HPHASE_REG, 0);
-	VSU_WRITE(sc, VS_Y_VPHASE0_REG, 0);
-	VSU_WRITE(sc, VS_Y_VPHASE1_REG, 0);
-	VSU_WRITE(sc, VS_C_SIZE_REG, ((src_ch - 1) << 16) | (src_cw - 1));
-	VSU_WRITE(sc, VS_C_HSTEP_REG, (hstep / hsub) << 4);
-	VSU_WRITE(sc, VS_C_VSTEP_REG, (vstep / vsub) << 4);
-	VSU_WRITE(sc, VS_C_HPHASE_REG, 0);
-	VSU_WRITE(sc, VS_C_VPHASE0_REG, 0);
-	VSU_WRITE(sc, VS_C_VPHASE1_REG, 0);
-
-	/* XXX */
-	const u_int coef_base = 0;
-
-	for (int i = 0; i < 32; i++) {
-		VSU_WRITE(sc, VS_Y_HCOEF0_REG(i), lan3coefftab32_left[coef_base + i]);
-		VSU_WRITE(sc, VS_Y_HCOEF1_REG(i), lan3coefftab32_right[coef_base + i]);
-		VSU_WRITE(sc, VS_Y_VCOEF_REG(i), lan2coefftab32[coef_base + i]);
-		VSU_WRITE(sc, VS_C_HCOEF0_REG(i), lan3coefftab32_left[coef_base + i]);
-		VSU_WRITE(sc, VS_C_HCOEF1_REG(i), lan3coefftab32_right[coef_base + i]);
-		VSU_WRITE(sc, VS_C_VCOEF_REG(i), lan2coefftab32[coef_base + i]);
-	}
-
-	/* Commit settings and enable scaler */
-	VSU_WRITE(sc, VS_CTRL_REG, VS_CTRL_COEF_SWITCH_EN | VS_CTRL_EN);
-}
-
-static const u32 yuv2rgb[] = {
-	0x000004A8, 0x00000000, 0x00000662, 0xFFFC865A,
-	0x000004A8, 0xFFFFFE6F, 0xFFFFFCBF, 0x00021FF4,
-	0x000004A8, 0x00000813, 0x00000000, 0xFFFBAE4A,
-};
-
-static void
-sunxi_mixer_csc_init(struct sunxi_mixer_softc *sc, uint32_t pixel_format)
-{
-	const u_int crtc_index = drm_crtc_index(&sc->sc_crtc.base);
-
-	for (int i = 0; i < __arraycount(yuv2rgb); i++)
-		CSC_WRITE(sc, crtc_index, CSC_COEFF0_REG(0) + i * 4, yuv2rgb[i]);
-
-	CSC_WRITE(sc, crtc_index, CSC_BYPASS_REG, CSC_BYPASS_DISABLE);
-}
-
-static void
-sunxi_mixer_csc_disable(struct sunxi_mixer_softc *sc)
-{
-	const u_int crtc_index = drm_crtc_index(&sc->sc_crtc.base);
-
-	CSC_WRITE(sc, crtc_index, CSC_BYPASS_REG, 0);
-}
-
-static int
-sunxi_mixer_overlay_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
-    struct drm_framebuffer *fb, int crtc_x, int crtc_y, u_int crtc_w, u_int crtc_h,
-    uint32_t src_x, uint32_t src_y, uint32_t src_w, uint32_t src_h,
-    struct drm_modeset_acquire_ctx *ctx)
-{
-	struct sunxi_mixer_plane *overlay = to_sunxi_mixer_plane(plane);
-	struct sunxi_mixer_softc * const sc = overlay->sc;
-	struct sunxi_drm_framebuffer *sfb = to_sunxi_drm_framebuffer(fb);
-	uint32_t val;
-
-	const u_int fbfmt = sunxi_mixer_overlay_format(fb->format->format);
-	const uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
-
-	const uint32_t input_size = (((src_h >> 16) - 1) << 16) | ((src_w >> 16) - 1);
-	const uint32_t input_pos = ((src_y >> 16) << 16) | (src_x >> 16);
-
-	OVL_V_WRITE(sc, OVL_V_MBSIZE(0), input_size);
-	OVL_V_WRITE(sc, OVL_V_COOR(0), input_pos);
-
-	/* Note: DRM and hardware's ideas of pitch 1 and 2 are swapped */
-
-	OVL_V_WRITE(sc, OVL_V_PITCH0(0), fb->pitches[0]);
-	OVL_V_WRITE(sc, OVL_V_PITCH1(0), fb->pitches[2]);
-	OVL_V_WRITE(sc, OVL_V_PITCH2(0), fb->pitches[1]);
-
-	const uint64_t paddr0 = paddr + fb->offsets[0] +
-	    (src_x >> 16) * fb->format->cpp[0] +
-	    (src_y >> 16) * fb->pitches[0];
-	const uint64_t paddr1 = paddr + fb->offsets[2] +
-	    (src_x >> 16) * fb->format->cpp[2] +
-	    (src_y >> 16) * fb->pitches[2];
-	const uint64_t paddr2 = paddr + fb->offsets[1] +
-	    (src_x >> 16) * fb->format->cpp[1] +
-	    (src_y >> 16) * fb->pitches[1];
-
-	OVL_V_WRITE(sc, OVL_V_TOP_HADD0, (paddr0 >> 32) & OVL_V_TOP_HADD_LAYER0);
-	OVL_V_WRITE(sc, OVL_V_TOP_HADD1, (paddr1 >> 32) & OVL_V_TOP_HADD_LAYER0);
-	OVL_V_WRITE(sc, OVL_V_TOP_HADD2, (paddr2 >> 32) & OVL_V_TOP_HADD_LAYER0);
-
-	OVL_V_WRITE(sc, OVL_V_TOP_LADD0(0), paddr0 & 0xffffffff);
-	OVL_V_WRITE(sc, OVL_V_TOP_LADD1(0), paddr1 & 0xffffffff);
-	OVL_V_WRITE(sc, OVL_V_TOP_LADD2(0), paddr2 & 0xffffffff);
-
-	OVL_V_WRITE(sc, OVL_V_SIZE, input_size);
-
-	val = OVL_V_ATTCTL_LAY0_EN;
-	val |= __SHIFTIN(fbfmt, OVL_V_ATTCTL_LAY_FBFMT);
-	if (sunxi_mixer_overlay_rgb(fb->format->format) == true)
-		val |= OVL_V_ATTCTL_VIDEO_UI_SEL;
-	OVL_V_WRITE(sc, OVL_V_ATTCTL(0), val);
-
-	/* Enable video scaler */
-	sunxi_mixer_vsu_init(sc, src_w >> 16, src_h >> 16, crtc_w, crtc_h, fb->format);
-
-	/* Enable colour space conversion for non-RGB formats */
-	if (sunxi_mixer_overlay_rgb(fb->format->format) == false)
-		sunxi_mixer_csc_init(sc, fb->format->format);
-	else
-		sunxi_mixer_csc_disable(sc);
-
-	/* Set blender 1 input size */
-	BLD_WRITE(sc, BLD_CH_ISIZE(1), ((crtc_h - 1) << 16) | (crtc_w - 1));
-	/* Set blender 1 offset */
-	BLD_WRITE(sc, BLD_CH_OFFSET(1), (crtc_y << 16) | crtc_x);
-	/* Route channel 0 to pipe 1 */
-	val = BLD_READ(sc, BLD_CH_RTCTL);
-	val &= ~BLD_CH_RTCTL_P1;
-	val |= __SHIFTIN(0, BLD_CH_RTCTL_P1);
-	BLD_WRITE(sc, BLD_CH_RTCTL, val);
-
-        /* Enable pipe 1 */
-	val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
-	val |= BLD_FILL_COLOR_CTL_P1_EN;
-	BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-
-	return 0;
-}
-
-static int
-sunxi_mixer_overlay_disable_plane(struct drm_plane *plane,
-    struct drm_modeset_acquire_ctx *ctx)
-{
-	struct sunxi_mixer_plane *overlay = to_sunxi_mixer_plane(plane);
-	struct sunxi_mixer_softc * const sc = overlay->sc;
-	uint32_t val;
-
-	sunxi_mixer_csc_disable(sc);
-
-	val = BLD_READ(sc, BLD_FILL_COLOR_CTL);
-	val &= ~BLD_FILL_COLOR_CTL_P1_EN;
-	BLD_WRITE(sc, BLD_FILL_COLOR_CTL, val);
-
-	/* Commit settings */
-	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
-
-	return 0;
-}
-
-static const struct drm_plane_funcs sunxi_mixer_overlay_funcs = {
-	.update_plane = sunxi_mixer_overlay_update_plane,
-	.disable_plane = sunxi_mixer_overlay_disable_plane,
-	.destroy = sunxi_mixer_overlay_destroy,
-};
-
-static uint32_t sunxi_mixer_overlay_formats[] = {
-	DRM_FORMAT_ARGB8888,
+static uint32_t sunxi_mixer_plane_formats[] = {
 	DRM_FORMAT_XRGB8888,
-#if notyet
-	DRM_FORMAT_VYUY,
-	DRM_FORMAT_YVYU,
-	DRM_FORMAT_UYVY,
-	DRM_FORMAT_YUYV,
-#endif
-	DRM_FORMAT_YUV422,
-	DRM_FORMAT_YUV420,
-	DRM_FORMAT_YUV411,
+};
+
+static const uint64_t sunxi_mixer_plane_modifiers[] = {
+	DRM_FORMAT_MOD_LINEAR,
+	DRM_FORMAT_MOD_INVALID,
 };
 
 static int
 sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
 	struct sunxi_mixer_softc * const sc = device_private(dev);
+	struct drm_plane *plane, *cursor;
 	struct drm_device *ddev;
+	struct sunxi_drm_softc *drm_sc;
 	bus_size_t reg;
 
 	if (!activate)
@@ -1217,9 +559,10 @@ sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		DRM_ERROR("couldn't find DRM device\n");
 		return ENXIO;
 	}
+	drm_sc = device_private(ddev->dev);
 
 	sc->sc_crtc.sc = sc;
-	sc->sc_overlay.sc = sc;
+	sc->sc_plane.sc = sc;
 
 	/* Initialize registers */
 	for (reg = 0; reg < 0xc000; reg += 4)
@@ -1229,16 +572,26 @@ sunxi_mixer_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	BLD_WRITE(sc, BLD_CTL(2), 0x03010301);
 	BLD_WRITE(sc, BLD_CTL(3), 0x03010301);
 
-	if (sc->sc_ovl_ui_count > 1)
-		drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer0_crtc_funcs);
-	else
-		drm_crtc_init(ddev, &sc->sc_crtc.base, &sunxi_mixer1_crtc_funcs);
+	/* RT enable */
+	GLB_WRITE(sc, GLB_CTL, GLB_CTL_EN);
+
+	drm_universal_plane_init(ddev, &sc->sc_plane.base,
+	    0, &sunxi_mixer_plane_funcs,
+	    sunxi_mixer_plane_formats, __arraycount(sunxi_mixer_plane_formats),
+	    sunxi_mixer_plane_modifiers, DRM_PLANE_TYPE_PRIMARY, NULL);
+	drm_plane_helper_add(&sc->sc_plane.base, &sunxi_mixer_plane_helper_funcs);
+	plane = &sc->sc_plane.base;
+
+	/* TODO: hardware cursor support */
+	cursor = NULL;
+
+	drm_crtc_init_with_planes(ddev, &sc->sc_crtc.base, plane, cursor,
+	    &sunxi_mixer_crtc_funcs, NULL);
 	drm_crtc_helper_add(&sc->sc_crtc.base, &sunxi_mixer_crtc_helper_funcs);
 
-	drm_universal_plane_init(ddev, &sc->sc_overlay.base,
-	    1 << drm_crtc_index(&sc->sc_crtc.base), &sunxi_mixer_overlay_funcs,
-	    sunxi_mixer_overlay_formats, __arraycount(sunxi_mixer_overlay_formats),
-	    NULL, DRM_PLANE_TYPE_OVERLAY, NULL);
+	sc->sc_plane.base.possible_crtcs = 1 << drm_crtc_index(&sc->sc_crtc.base);
+
+	drm_sc->sc_vbl[drm_crtc_index(&sc->sc_crtc.base)].crtc = &sc->sc_crtc.base;
 
 	return fdt_endpoint_activate(ep, activate);
 }

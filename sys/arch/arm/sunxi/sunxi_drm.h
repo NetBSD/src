@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.h,v 1.3 2021/12/19 12:28:20 riastradh Exp $ */
+/* $NetBSD: sunxi_drm.h,v 1.4 2026/04/19 10:55:21 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -53,7 +53,8 @@ struct sunxi_drm_vblank {
 	void			*priv;
 	void			(*enable_vblank)(void *);
 	void			(*disable_vblank)(void *);
-	uint32_t		(*get_vblank_counter)(void *);
+	struct drm_pending_vblank_event *event;
+	struct drm_crtc		*crtc;
 };
 
 struct sunxi_drm_softc {
