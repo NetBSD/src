@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.105 2023/08/18 13:18:17 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.106 2026/04/19 08:17:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993\
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.105 2023/08/18 13:18:17 martin Exp $");
+__RCSID("$NetBSD: main.c,v 1.106 2026/04/19 08:17:56 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -797,14 +797,14 @@ kread(u_long addr, char *buf, int size)
 }
 
 const char *
-plural(int n)
+plural(unsigned long long n)
 {
 
 	return (n != 1 ? "s" : "");
 }
 
 const char *
-plurales(int n)
+plurales(unsigned long long n)
 {
 
 	return (n != 1 ? "es" : "");

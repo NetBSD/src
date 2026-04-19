@@ -1,4 +1,4 @@
-/*	$NetBSD: netstat.h,v 1.54 2023/08/18 13:18:17 martin Exp $	*/
+/*	$NetBSD: netstat.h,v 1.55 2026/04/19 08:17:56 rillig Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -68,8 +68,8 @@ extern int	force_sysctl; /* force use of sysctl (or exit) - for testing */
 
 
 int	kread(u_long addr, char *buf, int size);
-const char *plural(int);
-const char *plurales(int);
+const char *plural(unsigned long long);
+const char *plurales(unsigned long long);
 int	get_hardticks(void);
 
 void	protopr(u_long, const char *);
