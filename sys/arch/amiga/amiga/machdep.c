@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.274 2026/04/12 09:11:16 rillig Exp $	*/
+/*	$NetBSD: machdep.c,v 1.275 2026/04/19 07:11:36 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.274 2026/04/12 09:11:16 rillig Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2026/04/19 07:11:36 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,8 +187,8 @@ consinit(void)
 	}
 #endif
 #ifdef DDB
-        if (boothowto & RB_KDB)
-                Debugger();
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
@@ -244,7 +244,7 @@ cpu_startup(void)
 void
 identifycpu(void)
 {
-        /* there's alot of XXX in here... */
+	/* there's alot of XXX in here... */
 	const char *mach, *cpu_type, *mmu, *fpu;
 
 #ifdef M68060
