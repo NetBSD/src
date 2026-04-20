@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_309.c,v 1.9 2025/07/08 17:43:54 rillig Exp $	*/
+/*	$NetBSD: msg_309.c,v 1.10 2026/04/20 22:39:07 rillig Exp $	*/
 # 3 "msg_309.c"
 
 // Test for message: '%s' converts '%s' with its most significant bit being set to '%s' [309]
@@ -84,4 +84,11 @@ test(void)
 	u16 = u16 & (u16_t)~0x0600;
 	/* expect+1: warning: '&' converts 'unsigned short' with its most significant bit being set to 'int' [309] */
 	u16 = (u16_t)(u16 & (u16_t)~0x0600);
+
+	/* expect+1: warning: '&' converts 'unsigned int' with its most significant bit being set to 'long long' [309] */
+	u64 = 0x1234567812345678LL & 0x80000000;
+	/* expect+1: warning: '&' converts 'unsigned short' with its most significant bit being set to 'int' [309] */
+	u64 = 0x12345678 & (u16_t)0x8000;
+	/* expect+1: warning: '&' converts 'unsigned char' with its most significant bit being set to 'int' [309] */
+	u64 = 0x1234 & (u8_t)0x80;
 }
