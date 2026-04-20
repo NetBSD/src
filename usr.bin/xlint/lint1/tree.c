@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.712 2026/04/18 21:31:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.713 2026/04/20 22:26:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.712 2026/04/18 21:31:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.713 2026/04/20 22:26:43 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -740,12 +740,12 @@ block_derive_type(type_t *tp, tspec_t t)
  * Derive 'pointer to tp' or 'function returning tp'.
  * The memory is freed at the end of the current expression.
  */
-type_t *
-expr_derive_type(type_t *tp, tspec_t t)
+static type_t *
+expr_derive_ptr_type(type_t *tp)
 {
 
 	type_t *tp2 = expr_zero_alloc(sizeof(*tp2), "type");
-	tp2->t_tspec = t;
+	tp2->t_tspec = PTR;
 	tp2->t_subt = tp;
 	return tp2;
 }
@@ -1203,7 +1203,7 @@ build_address(bool sys, tnode_t *tn)
 		return tn->u.ops.left;
 	}
 
-	return build_op(ADDR, sys, expr_derive_type(tn->tn_type, PTR),
+	return build_op(ADDR, sys, expr_derive_ptr_type(tn->tn_type),
 	    tn, NULL);
 }
 
@@ -1454,13 +1454,13 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(!allow_c90);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
-		ln = convert(NOOP, 0, expr_derive_type(gettyp(VOID), PTR), ln);
+		ln = convert(NOOP, 0, expr_derive_ptr_type(gettyp(VOID)), ln);
 	}
 
 	tnode_t *ctn = build_integer_constant(PTRDIFF_TSPEC,
 	    rn->u.sym->u.s_member.sm_offset_in_bits / CHAR_SIZE);
 
-	type_t *ptr_tp = expr_derive_type(rn->tn_type, PTR);
+	type_t *ptr_tp = expr_derive_ptr_type(rn->tn_type);
 	tnode_t *ntn = build_op(PLUS, sys, ptr_tp, ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold_constant_integer(ntn);
@@ -2531,7 +2531,7 @@ cconv(tnode_t *tn)
 			gnuism(114, "", op_name(ADDR));
 		}
 		tn = build_op(ADDR, tn->tn_sys,
-		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
+		    expr_derive_ptr_type(tn->tn_type->t_subt), tn, NULL);
 	}
 
 	if (tn->tn_type->t_tspec == FUNC)

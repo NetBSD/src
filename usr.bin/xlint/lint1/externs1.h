@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.245 2026/03/18 06:17:55 rillig Exp $	*/
+/*	$NetBSD: externs1.h,v 1.246 2026/04/20 22:26:43 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -281,7 +281,6 @@ int to_int_constant(tnode_t *, bool);
  */
 const tnode_t *before_conversion(const tnode_t *);
 type_t *block_derive_type(type_t *, tspec_t);
-type_t *expr_derive_type(type_t *, tspec_t);
 bool is_compiler_builtin(const char *);
 tnode_t *build_constant(type_t *, val_t *);
 tnode_t *build_name(sym_t *, bool);
