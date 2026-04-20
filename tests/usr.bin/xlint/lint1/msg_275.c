@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_275.c,v 1.6 2023/07/07 19:45:22 rillig Exp $	*/
+/*	$NetBSD: msg_275.c,v 1.7 2026/04/20 21:52:07 rillig Exp $	*/
 # 3 "msg_275.c"
 
 // Test for message: cast discards 'const' from type '%s' [275]
@@ -16,4 +16,13 @@ const char *
 const_string(char *s)
 {
 	return (const char *)s;
+}
+
+char *
+discard_volatile(const volatile char *s)
+{
+	// Discarding volatile is not mentioned, as it happens only rarely.
+	// Same for the other type qualifiers.
+	/* expect+1: warning: cast discards 'const' from type 'pointer to const volatile char' [275] */
+	return (char *)s;
 }
