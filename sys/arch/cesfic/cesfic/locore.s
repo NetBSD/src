@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.71 2026/04/05 13:59:32 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.72 2026/04/20 08:04:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -397,9 +397,9 @@ ENTRY_NOPROFILE(doboot)
 
 	.data
 GLOBAL(mmutype)
-	.long	MMU_HP		| default to HP MMU
+	.long	MMU_68040	| default to 68040
 GLOBAL(cputype)
-	.long	CPU_68020	| default to 68020 CPU
+	.long	CPU_68040	| default to 68040
 GLOBAL(prototc)
 	.long	0		| prototype translation control
 
