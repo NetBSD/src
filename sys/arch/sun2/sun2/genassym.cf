@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.19 2026/03/28 22:19:35 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.20 2026/04/20 09:47:47 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -66,22 +66,8 @@
 #	from: @(#)genassym.c	8.3 (Berkeley) 1/4/94
 #
 
-include <sys/param.h>
-include <sys/cdefs.h>
-include <sys/errno.h>
-include <sys/proc.h>
-include <sys/syscall.h>
-
-include <uvm/uvm_extern.h>
-
 include <machine/cpu.h>
-include <machine/dvma.h>
-include <machine/fcode.h>
 include <machine/mon.h>
-include <machine/pcb.h>
-include <machine/pmap.h>
-include <machine/psl.h>
-include <machine/pte.h>
 include <machine/vmparam.h>
 
 include <sun2/sun2/buserr.h>
@@ -90,28 +76,12 @@ include <sun2/sun2/enable.h>
 
 include <dev/ic/am9513reg.h>
 
-# XXX: for copy.s
-define	M68010			1
-
-# for m68k_intr.c / m68k_intr_stubs.s
-define	__HAVE_M68K_INTR_VECTORED	1
-
 # bus error stuff
 define	BUSERR_REG			BUSERR_REG
 define	BUSERR_PROTERR			BUSERR_PROTERR
 
 # 68k isms
-define	PSL_LOWIPL			PSL_LOWIPL
-define	PSL_HIGHIPL			PSL_HIGHIPL
-define	PSL_USER			PSL_USER
-define	PSL_S				PSL_S
-define	PSL_TS				PSL_T | PSL_S
 define	FC_CONTROL			FC_CONTROL
-define	FC_SUPERD			FC_SUPERD
-define	FC_USERD			FC_USERD
-
-define	DELAY_MAXVAL		DELAY_MAXVAL
-define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 
 # sun2 control space isms
 define	SCONTEXT_REG			SCONTEXT_REG
@@ -122,7 +92,6 @@ define	ENA_INTS			ENA_INTS
 define	SEGMAP_BASE			SEGMAP_BASE
 
 # sun2 memory map
-define	USRSTACK			USRSTACK
 define	SUN2_MONSTART			SUN2_MONSTART
 define	SUN2_PROM_BASE			SUN2_PROM_BASE
 define	SUN2_MONEND			SUN2_MONEND
@@ -135,62 +104,5 @@ define	SUN2_CLK_TIMER_CLEAR_OUTPUT	AM9513_CMD_CLEAR_OUTPUT(AM9513_TIMER2)
 ifndef _MODULE
 define	KERNBASE			KERNBASE
 endif
-define	USPACE				USPACE
-define	PAGE_SIZE			PAGE_SIZE
 define	NBPG				NBPG
 define	NBSG				NBSG
-
-# system calls
-define	SYS_exit			SYS_exit
-define	SYS_compat_16___sigreturn14	SYS_compat_16___sigreturn14
-define	SYS_compat_13_sigreturn13	SYS_compat_13_sigreturn13
-
-# errno-isms
-define	EFAULT				EFAULT
-define	ENAMETOOLONG			ENAMETOOLONG
-
-# trap types: locore.s includes trap.h
-
-#
-# unix structure-isms
-#
-
-# lwp & proc fields and values
-define	L_PCB			offsetof(struct lwp, l_addr)
-define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
-define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define	P_FLAG			offsetof(struct proc, p_flag)
-define	P_RASLIST		offsetof(struct proc, p_raslist)
-define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-
-# XXX: HP-UX trace bit?
-
-# VM/pmap structure fields
-define	VM_PMAP			offsetof(struct vmspace, vm_map.pmap)
-define	PM_CTXNUM		offsetof(struct pmap, pm_ctxnum)
-
-# pcb offsets
-define	PCB_FLAGS		offsetof(struct pcb, pcb_flags)
-define	PCB_PS			offsetof(struct pcb, pcb_ps)
-define	PCB_USP			offsetof(struct pcb, pcb_usp)
-define	PCB_REGS		offsetof(struct pcb, pcb_regs[0])
-define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
-define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
-define	SIZEOF_PCB		sizeof(struct pcb)
-
-# frame offsets
-define	TF_PC			offsetof(struct frame, f_pc)
-
-# exception frame offset/sizes
-define	FR_SP			offsetof(struct frame, f_regs[15])
-define	FR_ADJ			offsetof(struct frame, f_stackadj)
-define	FR_HW			offsetof(struct frame, f_sr)
-define	FR_FORVEC		offsetof(struct frame, f_forvec)
-define	FR_FMT8_SSW		offsetof(struct frame, f_fmt8.f_ssw)
-define	FR_FMT8_ACCADDR		offsetof(struct frame, f_fmt8.f_accaddr)
-define	FR_SIZE			sizeof(struct trapframe)
-
-# FP frame offsets
-define	FPF_REGS		offsetof(struct fpframe, fpf_regs[0])
-define	FPF_FPCR		offsetof(struct fpframe, fpf_fpcr)

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mvme68k,v 1.70 2026/03/21 20:14:56 thorpej Exp $
+#	$NetBSD: Makefile.mvme68k,v 1.71 2026/04/20 09:47:46 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 MVME68K=	$S/arch/mvme68k
-GENASSYM_CONF=	${MVME68K}/mvme68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${MVME68K}/mvme68k/genassym.cf
 
 ##
 ## (2) compile settings

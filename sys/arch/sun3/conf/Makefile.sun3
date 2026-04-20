@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.112 2026/03/21 20:14:57 thorpej Exp $
+# $NetBSD: Makefile.sun3,v 1.113 2026/04/20 09:47:47 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SUN3=		$S/arch/sun3
-GENASSYM_CONF=	${SUN3}/${MACHTYPE}/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${SUN3}/${MACHTYPE}/genassym.cf
 
 ##
 ## (2) compile settings

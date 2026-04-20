@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.next68k,v 1.33 2026/03/21 20:14:57 thorpej Exp $
+# $NetBSD: Makefile.next68k,v 1.34 2026/04/20 09:47:46 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 NEXT68K=	$S/arch/next68k
-GENASSYM_CONF=	${NEXT68K}/next68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${NEXT68K}/next68k/genassym.cf
 
 ##
 ## (2) compile settings

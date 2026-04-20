@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.25 2026/03/21 20:14:57 thorpej Exp $
+#	$NetBSD: Makefile.news68k,v 1.26 2026/04/20 09:47:46 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -29,7 +29,8 @@ NEED_OWN_INSTALL_TARGET?=no
 S=		../../../..
 .endif
 NEWS68K=	$S/arch/news68k
-GENASSYM_CONF=	${NEWS68K}/news68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${NEWS68K}/news68k/genassym.cf
 
 ##
 ## (2) compile settings

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.atari,v 1.78 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.atari,v 1.79 2026/04/20 09:47:44 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -21,7 +21,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 ATARI=		$S/arch/atari
-GENASSYM_CONF=	${ATARI}/atari/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${ATARI}/atari/genassym.cf
 
 ##
 ## (2) compile settings

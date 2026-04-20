@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.31 2026/03/21 20:14:55 thorpej Exp $
+#	$NetBSD: Makefile.luna68k,v 1.32 2026/04/20 09:47:45 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -25,7 +25,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 LUNA68K=	$S/arch/luna68k
-GENASSYM_CONF=	${LUNA68K}/luna68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${LUNA68K}/luna68k/genassym.cf
 
 ##
 ## (2) compile settings

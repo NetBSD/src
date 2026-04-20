@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.virt68k,v 1.2 2026/03/21 20:14:58 thorpej Exp $
+#	$NetBSD: Makefile.virt68k,v 1.3 2026/04/20 09:47:47 thorpej Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 VIRT68K=	$S/arch/virt68k
-GENASSYM_CONF=	${VIRT68K}/virt68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${VIRT68K}/virt68k/genassym.cf
 
 ##
 ## (2) compile settings
