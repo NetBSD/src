@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc_attribute.c,v 1.13 2023/03/28 14:44:34 rillig Exp $	*/
+/*	$NetBSD: gcc_attribute.c,v 1.14 2026/04/20 22:03:39 rillig Exp $	*/
 # 3 "gcc_attribute.c"
 
 /*
@@ -121,6 +121,7 @@ __attribute__((deprecated("d5")))
     __attribute__((deprecated("d7")))
     )
     __attribute__((deprecated("d8")))
+/* expect+1: warning: returning the type qualifier 'const' has no effect [228] */
 ;
 
 /*

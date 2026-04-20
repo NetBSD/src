@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.427 2026/04/19 16:34:11 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.428 2026/04/20 22:03:38 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.427 2026/04/19 16:34:11 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.428 2026/04/20 22:03:38 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -922,13 +922,10 @@ check_type(sym_t *sym)
 				    t == FUNC ? *tpp : (*tpp)->t_subt, PTR);
 				return;
 			}
-			if (tp->t_const || tp->t_volatile) {
-				/* TODO: Make this a warning in C99 mode as well. */
-				if (!allow_trad && !allow_c99) {	/* XXX or better allow_c90? */
-					/* function cannot return const... */
-					warning(228);
-				}
-			}
+			if (tp->t_const || tp->t_volatile)
+				/* returning the type qualifier '%s' has ... */
+				warning(228,
+				    tp->t_const ? "const" : "volatile");
 		} else if (to == ARRAY) {
 			if (t == FUNC) {
 				/* array of function is invalid */

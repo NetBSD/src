@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.282 2026/04/07 20:05:35 rillig Exp $	*/
+/*	$NetBSD: err.c,v 1.283 2026/04/20 22:03:38 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.282 2026/04/07 20:05:35 rillig Exp $");
+__RCSID("$NetBSD: err.c,v 1.283 2026/04/20 22:03:38 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -283,7 +283,7 @@ static const char *const msgs[] = {
 	"static function '%s' called but not defined",			// 225
 	"static variable '%s' unused",					// 226
 	"const object '%s' should have initializer",			// 227
-	"function cannot return const or volatile object",		// 228
+	"returning the type qualifier '%s' has no effect",		// 228
 	"converting '%s' to '%s' is questionable",			// 229
 	"nonportable character comparison '%s'",			// 230
 	"parameter '%s' unused in function '%s'",			// 231

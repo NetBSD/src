@@ -1,4 +1,4 @@
-/*	$NetBSD: decl_arg.c,v 1.17 2025/01/03 03:14:47 rillig Exp $	*/
+/*	$NetBSD: decl_arg.c,v 1.18 2026/04/20 22:03:39 rillig Exp $	*/
 # 3 "decl_arg.c"
 
 /*
@@ -76,6 +76,7 @@ const array_size[1+1+1];
 /* expect+2: error: null dimension [17] */
 /* expect+1: error: declared parameter 'multi_array' is missing [53] */
 const multi_array[][][][][][];
+/* expect+2: warning: returning the type qualifier 'const' has no effect [228] */
 /* expect+1: error: declared parameter 'function' is missing [53] */
 const function(void);
 /* expect+1: error: declared parameter 'prefix_attribute' is missing [53] */

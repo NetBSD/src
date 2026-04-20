@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_010.c,v 1.7 2023/07/13 19:59:08 rillig Exp $	*/
+/*	$NetBSD: msg_010.c,v 1.8 2026/04/20 22:03:39 rillig Exp $	*/
 # 3 "msg_010.c"
 
 // Test for message: duplicate '%s' [10]
@@ -12,14 +12,14 @@ double_inline(void)
 }
 
 /* expect+1: warning: duplicate 'const' [10] */
-const const int
+const const int *
 double_const(void)
 {
 	return 0;
 }
 
 /* expect+1: warning: duplicate 'volatile' [10] */
-volatile volatile int
+volatile volatile int *
 double_volatile(void)
 {
 	return 0;
