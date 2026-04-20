@@ -1,7 +1,7 @@
-/*	$NetBSD: msg_386.c,v 1.3 2026/03/15 18:21:44 rillig Exp $	*/
+/*	$NetBSD: msg_386.c,v 1.4 2026/04/20 22:17:08 rillig Exp $	*/
 # 3 "msg_386.c"
 
-// Test for message: conversion '%.*s' does not mix with '%c' [386]
+// Test for message: conversion '%.*s' from '%.*s' does not mix with '%c' [386]
 
 /*
  * In the snprintb format string, the conversions 'f' and '=' mix well, and so
@@ -29,8 +29,8 @@ test_snprintb(void)
 	    "F\020\020" "field\0"
 	    "" "=\000" "no-mix\0"
 	    "" ":\000" "mix\0",
-	    /* expect+2: warning: conversion ':' does not mix with 'f' [386] */
-	    /* expect+1: warning: conversion '=' does not mix with 'F' [386] */
+	    /* expect+2: warning: conversion ':' from ':\001""no-mix\0' does not mix with 'f' [386] */
+	    /* expect+1: warning: conversion '=' from '=\000""no-mix\0' does not mix with 'F' [386] */
 	    0xffffffff);
 
 	// When the value description starts with a punctuation character,

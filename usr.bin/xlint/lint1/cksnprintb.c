@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.17 2026/03/14 15:10:25 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.18 2026/04/20 22:17:08 rillig Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.17 2026/03/14 15:10:25 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.18 2026/04/20 22:17:08 rillig Exp $");
 #endif
 
 #include <stdbool.h>
@@ -235,8 +235,9 @@ check_conversion(checker *ck)
 	    && ((dir.value == '=' && ck->field_kind != 'f')
 		|| (dir.value == ':' && ck->field_kind != 'F'
 		    && !(ck->field_kind == 'f' && !descr_ident))))
-		/* conversion '%.*s' does not mix with '%c' */
-		warning(386, len(dir), start(dir, fmt), ck->field_kind);
+		/* conversion '%.*s' from '%.*s' does not mix with '%c' */
+		warning(386, len(dir), start(dir, fmt),
+		    range(dir, *it), start(dir, fmt), ck->field_kind);
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);
