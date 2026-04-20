@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1476 2026/04/19 02:11:18 mrg Exp $
+#      $NetBSD: bsd.own.mk,v 1.1477 2026/04/20 11:09:23 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -284,6 +284,10 @@ USE_SSP?=	yes
     ${MACHINE} == "sun2" || \
     ${MACHINE_ARCH} == "vax"
 HAVE_JEMALLOC?=		100
+.elif \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386"
+HAVE_JEMALLOC?=		531
 .else
 HAVE_JEMALLOC?=		530
 .endif
