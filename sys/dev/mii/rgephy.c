@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.59 2020/03/15 23:04:50 thorpej Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.60 2026/04/20 03:03:51 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.59 2020/03/15 23:04:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.60 2026/04/20 03:03:51 gutteridge Exp $");
 
 
 /*
@@ -151,10 +151,6 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	/* RTL8169S does not report auto-sense; add manually.  */
 	sc->mii_capabilities |= BMSR_ANEG;
 
-	/*
-	 * FreeBSD does not check EXSTAT, but instead adds gigabit
-	 * media explicitly. Why?
-	 */
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
