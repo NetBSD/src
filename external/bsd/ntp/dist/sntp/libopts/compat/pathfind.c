@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.9 2024/08/18 20:47:25 christos Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.10 2026/04/20 07:24:37 kre Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -154,9 +154,11 @@ canonicalize_pathname( char *path )
 {
     int i, start;
     char stub_char, *result;
+    size_t len;
 
     /* The result cannot be larger than the input PATH. */
     result = strdup( path );
+    len = strlen(result) + 1;	/* include the \0 */
 
     stub_char = (*path == '/') ? '/' : '.';
 
@@ -184,7 +186,7 @@ canonicalize_pathname( char *path )
         if ((start + 1) != i && (start != 0 || i != 2))
 #endif /* apollo */
         {
-            strcpy( result + start + 1, result + i );
+            memmove(result + start + 1, result + i, len - i);
             i = start + 1;
         }
 
@@ -203,7 +205,7 @@ canonicalize_pathname( char *path )
         if (result[i] == '.') {
             /* Handle `./'. */
             if (result[i + 1] == '/') {
-                strcpy( result + i, result + i + 1 );
+                memmove(result + i, result + i + 1, len - i - 1);
                 i = (start < 0) ? 0 : start;
                 continue;
             }
@@ -213,7 +215,7 @@ canonicalize_pathname( char *path )
                 (result[i + 2] == '/' || !result[i + 2])) {
                 while (--start > -1 && result[start] != '/')
                     ;
-                strcpy( result + start + 1, result + i + 2 );
+                memmove(result + start + 1, result + i + 2, len - i - 2);
                 i = (start < 0) ? 0 : start;
                 continue;
             }
