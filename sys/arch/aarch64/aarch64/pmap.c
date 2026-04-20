@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.154 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.155 2026/04/20 07:21:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.154 2026/04/19 15:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.155 2026/04/20 07:21:05 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -1429,8 +1429,8 @@ pmap_activate(struct lwp *l)
 
 	KASSERT(pm->pm_l0table != NULL);
 
-	const struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
-	pmap_md_asid_activate(pai->pai_asid, pm, l);
+	/* this calls pmap_md_asid_activate */
+	pmap_tlb_asid_acquire(pm, l);
 	pm->pm_activated = true;
 
 	PMAP_COUNT(activate);
