@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.16 2026/04/21 15:57:51 nia Exp $	*/
+/*	$NetBSD: micphy.c,v 1.17 2026/04/21 19:10:32 nia Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.16 2026/04/21 15:57:51 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.17 2026/04/21 19:10:32 nia Exp $");
 
 #include "opt_mii.h"
 
@@ -208,11 +208,14 @@ micphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = model;
+	sc->mii_mpd_rev = rev;
 	sc->mii_funcs = &micphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
 
-	if (model == MII_MODEL_MICREL_KSZ9031) {
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ9031) {
 		/*
 		 * KSZ9031MNX errata, Module 1:
 		 *
