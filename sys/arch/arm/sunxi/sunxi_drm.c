@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.28 2026/04/19 10:55:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.29 2026/04/21 10:41:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.28 2026/04/19 10:55:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.29 2026/04/21 10:41:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -448,7 +448,7 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 			if (sep->phandle == crtc_phandle && sep->ddev == NULL) {
 				sep->ddev = ddev;
 				error = fdt_endpoint_activate_direct(sep->ep, true);
-				if (error != 0) {
+				if (error != 0 && error != ENODEV) {
 					aprint_error_dev(sc->sc_dev, "failed to activate endpoint: %d\n",
 					    error);
 				}
