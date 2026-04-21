@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.assym,v 1.6 2018/01/24 09:04:45 skrll Exp $
+#	$NetBSD: Makefile.assym,v 1.7 2026/04/21 04:55:48 thorpej Exp $
 
 DPSRCS+=	assym.h
 CLEANFILES+=	assym.h
@@ -13,6 +13,10 @@ CPPFLAGS+=	-DPPC_OEA
 
 .if (!empty(MACHINE_ARCH:Mearm*) || !empty(MACHINE_ARCH:Marm*))
 GENASSYM_DIR= $S/arch/arm/arm32
+.endif
+
+.if ${MACHINE_CPU} == "m68k"
+GENASSYM_DIR= $S/arch/${MACHINE_CPU}/${MACHINE_CPU}
 .endif
 
 .if exists($S/arch/${MACHINE}/${MACHINE}/genassym.cf)
