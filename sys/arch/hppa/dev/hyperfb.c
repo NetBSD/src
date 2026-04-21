@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.32 2026/04/14 14:33:29 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.33 2026/04/21 08:25:06 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.32 2026/04/14 14:33:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.33 2026/04/21 08:25:06 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -526,7 +526,7 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_height = 1024;
 #endif
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB |
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_FULLCLEAR |
 		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	ri->ri_bits = (void *)sc->sc_fb;
@@ -1231,7 +1231,7 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct hyperfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg, fg;
+	uint32_t bg;
 	uint32_t latch = 0, bg8, fg8, pixel, mask;
 	int i, line, r, g, b, aval;
 	int r1, g1, b1, r0, g0, b0, fgo, bgo;
@@ -1254,12 +1254,11 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
-	fg = ri->ri_devcmap[(attr >> 24) & 0xf];
 
 	if (c == 0x20) {
 		hyperfb_rectfill(sc, x, y, wi, he, bg);
 		if (attr & WSATTR_UNDERLINE)
-			hyperfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+			glyphcache_underline(&sc->sc_gc, x, y, attr);
 		return;
 	}
 
@@ -1338,7 +1337,7 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	if (attr & WSATTR_UNDERLINE)
-		hyperfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+		glyphcache_underline(&sc->sc_gc, x, y, attr);
 }
 
 static void
@@ -1426,10 +1425,17 @@ hyperfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		hyperfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
