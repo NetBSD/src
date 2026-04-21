@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.39 2026/03/13 21:13:46 andvar Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.40 2026/04/21 07:40:26 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -686,7 +686,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB |
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_FULLCLEAR |
 		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
@@ -1133,6 +1133,8 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
+	if (attr & WSATTR_UNDERLINE)
+		glyphcache_underline(&sc->sc_gc, x, y, attr);
 }
 
 static void
@@ -1217,10 +1219,17 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
