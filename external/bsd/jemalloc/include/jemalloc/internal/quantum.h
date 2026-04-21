@@ -15,8 +15,7 @@
 #	ifdef __alpha__
 #		define LG_QUANTUM 4
 #	endif
-#	if (defined(__sparc64__) || defined(__sparcv9)                        \
-	    || defined(__sparc_v9__))
+#	if __sparc__
 #		define LG_QUANTUM 4
 #	endif
 #	if (defined(__amd64__) || defined(__x86_64__) || defined(_M_X64))
@@ -60,6 +59,9 @@
 #	ifdef __s390__
 #		define LG_QUANTUM 4
 #	endif
+#	ifdef __sh3__
+#		define LG_QUANTUM 3
+#	endif
 #	if (defined(__SH3E__) || defined(__SH4_SINGLE__) || defined(__SH4__)  \
 	    || defined(__SH4_SINGLE_ONLY__))
 #		define LG_QUANTUM 4
@@ -72,6 +74,9 @@
 #	endif
 #	ifdef __arc__
 #		define LG_QUANTUM 3
+#	endif
+#	ifdef __vax__
+#		define LG_QUANTUM 4
 #	endif
 #	ifndef LG_QUANTUM
 #		error                                                          \
