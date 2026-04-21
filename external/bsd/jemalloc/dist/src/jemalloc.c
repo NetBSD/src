@@ -1225,7 +1225,7 @@ malloc_init_hard(void) {
 	 * than LARGE_MINCLASS.  It could only happen if some constants
 	 * are configured miserably wrong.
 	 */
-	assert(SC_LG_TINY_MAXCLASS <= (size_t)1ULL << (LG_PAGE + SC_LG_NGROUP));
+	assert((size_t)SC_LG_TINY_MAXCLASS <= (size_t)1ULL << (LG_PAGE + SC_LG_NGROUP));
 
 #if defined(_WIN32) && _WIN32_WINNT < 0x0600
 	_init_init_lock();
