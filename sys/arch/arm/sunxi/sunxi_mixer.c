@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.20 2026/04/19 10:55:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.21 2026/04/21 10:32:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.20 2026/04/19 10:55:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.21 2026/04/21 10:32:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -374,11 +374,6 @@ static const struct drm_plane_funcs sunxi_mixer_plane_funcs = {
 	.format_mod_supported = sunxi_mixer_format_mod_supported,
 };
 
-static void
-sunxi_mixer_crtc_dpms(struct drm_crtc *crtc, int mode)
-{
-}
-
 static int
 sunxi_mixer_crtc_atomic_check(struct drm_crtc *crtc,
     struct drm_crtc_state *state)
@@ -435,6 +430,10 @@ sunxi_mixer_crtc_atomic_enable(struct drm_crtc *crtc,
 	GLB_WRITE(sc, GLB_DBUFFER, GLB_DBUFFER_DOUBLE_BUFFER_RDY);
 
 	drm_crtc_vblank_on(crtc);
+
+	if (drm_crtc_index(crtc) == 0) {
+		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+	}
 }
 
 static void
@@ -449,6 +448,10 @@ sunxi_mixer_crtc_atomic_disable(struct drm_crtc *crtc,
 		spin_unlock(&crtc->dev->event_lock);
 
 		crtc->state->event = NULL;
+	}
+
+	if (drm_crtc_index(crtc) == 0) {
+		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
 	}
 }
 
@@ -515,7 +518,6 @@ sunxi_mixer_crtc_disable_vblank(struct drm_crtc *crtc)
 }
 
 static const struct drm_crtc_helper_funcs sunxi_mixer_crtc_helper_funcs = {
-	.dpms = sunxi_mixer_crtc_dpms,
 	.atomic_check = sunxi_mixer_crtc_atomic_check,
 	.atomic_enable = sunxi_mixer_crtc_atomic_enable,
 	.atomic_disable = sunxi_mixer_crtc_atomic_disable,
