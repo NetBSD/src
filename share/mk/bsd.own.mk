@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1479 2026/04/20 22:11:56 christos Exp $
+#      $NetBSD: bsd.own.mk,v 1.1480 2026/04/21 23:51:28 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -285,7 +285,7 @@ USE_SSP?=	yes
     ${MACHINE_ARCH} == "vax"
 HAVE_JEMALLOC?=		100
 .else
-HAVE_JEMALLOC?=		530
+HAVE_JEMALLOC?=		531
 .endif
 
 .if ${HAVE_JEMALLOC} == 531 || ${HAVE_JEMALLOC} == 100
