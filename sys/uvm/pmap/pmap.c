@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.89 2026/04/19 15:09:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.90 2026/04/22 08:27:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.89 2026/04/19 15:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2026/04/22 08:27:18 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1823,6 +1823,10 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	paddr_t pa;
 
 	if (pmap == pmap_kernel()) {
+		if (pmap_md_kernel_vaddr_p(va)) {
+			pa = pmap_md_kernel_vaddr_to_paddr(va);
+			goto done;
+		}
 		if (pmap_md_direct_mapped_vaddr_p(va)) {
 			pa = pmap_md_direct_mapped_vaddr_to_paddr(va);
 			goto done;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.26 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27 2026/04/22 08:27:18 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -140,6 +140,20 @@ pmap_md_vca_remove(struct vm_page_md *mdpg, vaddr_t va, bool dirty)
 static __inline void
 pmap_md_vca_clean(struct vm_page_md *mdpg, vaddr_t va, int op)
 {
+}
+
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
 }
 
 static __inline size_t

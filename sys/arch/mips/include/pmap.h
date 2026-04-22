@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.79 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.80 2026/04/22 08:27:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -162,6 +162,20 @@ pmap_md_asid_deactivate(struct pmap *pm)
 bool	pmap_md_direct_mapped_vaddr_p(register_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(register_t);
 bool	pmap_md_io_vaddr_p(vaddr_t);
+
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
+}
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.

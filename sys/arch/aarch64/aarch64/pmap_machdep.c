@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.13 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.14 2026/04/22 08:27:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.13 2026/04/19 15:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.14 2026/04/22 08:27:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -330,9 +330,39 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 
 
 bool
-pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	extern char __kernel_text[];
+	extern char _end[];
+	extern long kernend_extra;
+
+	const vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	const vaddr_t kernend = round_page((vaddr_t)_end);
+
+	const vaddr_t fva = L2_TRUNC_BLOCK(kernstart);
+	const vaddr_t lva = L2_ROUND_BLOCK(kernend + kernend_extra);
+
+	if (va >= fva && va < lva) {
+		return true;
+	}
+
+	return false;
+}
+
+paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t va)
 {
 
+	if (pmap_md_kernel_vaddr_p(va)) {
+		return KERN_VTOPHYS(va);
+	}
+	panic("%s: va %#" PRIxVADDR " not direct mapped!", __func__, va);
+}
+
+
+bool
+pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+{
 	if (!AARCH64_KVA_P(va))
 		return false;
 

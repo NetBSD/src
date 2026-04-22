@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.12 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.13 2026/04/22 08:27:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ paddr_t	pmap_md_unmap_poolpage(vaddr_t, size_t);
 struct vm_page *
 	pmap_md_alloc_poolpage(int);
 
+bool	pmap_md_kernel_vaddr_p(vaddr_t);
+paddr_t	pmap_md_kernel_vaddr_to_paddr(vaddr_t);
 bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);

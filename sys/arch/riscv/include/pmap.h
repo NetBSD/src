@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.28 2026/04/19 15:09:50 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.29 2026/04/22 08:27:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -185,6 +185,20 @@ extern vaddr_t pmap_direct_end;
 #define	DEVMAP_FLAGS		PMAP_DEV
 
 #ifdef __PMAP_PRIVATE
+
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
+}
 
 static inline bool
 pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
