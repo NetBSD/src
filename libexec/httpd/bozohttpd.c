@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.149 2025/06/27 21:36:22 andvar Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.150 2026/04/22 10:48:18 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1341,9 +1341,9 @@ check_virtual(bozo_httpreq_t *request)
 		if ((s = strchr(request->hr_host, '/')) != NULL)
 			*s = '\0';
 		s = strchr(file, '/');
+		request->hr_file = bozostrdup(httpd, request, s ? s : "/");
 		free(request->hr_file_free);
-		request->hr_file_free = request->hr_file =
-		    bozostrdup(httpd, request, s ? s : "/");
+		request->hr_file_free = request->hr_file;
 		debug((httpd, DEBUG_OBESE, "got host '%s' file is now '%s'",
 		    request->hr_host, request->hr_file));
 	} else if (!request->hr_host)
