@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.15 2017/05/28 22:37:36 alnsn Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.16 2026/04/22 10:59:14 shm Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -447,7 +447,6 @@ bozo_process_lua(bozo_httpreq_t *request)
 	}
 out:
 	free(prefix);
-	free(uri);
 	free(info);
 	free(query);
 	free(file);
