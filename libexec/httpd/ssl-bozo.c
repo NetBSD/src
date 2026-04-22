@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.34 2023/12/18 03:48:57 riastradh Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.35 2026/04/22 07:51:38 shm Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -93,7 +93,7 @@ bozo_ssl_proto(const char *name)
 	unsigned i;
 
 	if (name)
-		for (i = 0; protos[0].proto != 0; i++)
+		for (i = 0; protos[i].proto != 0; i++)
 			if (strcasecmp(name, protos[i].name) == 0)
 				return protos[i].proto;
 	return protos[0].proto;
@@ -104,7 +104,7 @@ bozo_ssl_name(unsigned version)
 {
 	unsigned i;
 
-	for (i = 0; protos[0].proto != 0; i++)
+	for (i = 0; protos[i].proto != 0; i++)
 		if (version == protos[i].proto)
 			return protos[i].name;
 	return protos[0].name;
