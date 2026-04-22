@@ -24,7 +24,7 @@ static user_hook_object_t uevents_storage[TE_MAX_USER_EVENTS] = {
 };
 
 static atomic_p_t uevent_obj_p[TE_MAX_USER_EVENTS] = {
-    NULL,
+    {NULL},
 };
 
 static inline bool
