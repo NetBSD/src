@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.28 2023/09/19 07:51:43 shm Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.29 2026/04/23 13:02:27 shm Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -246,7 +246,7 @@ base64_decode(const unsigned char *in, size_t ilen, unsigned char *out,
 		if (cp + 3 > out + olen)
 			return (-1);
 #define IN_CHECK(x) \
-		if ((x) > sizeof(decodetable) || decodetable[(x)] == 255) \
+		if ((x) >= sizeof(decodetable) || decodetable[(x)] == 255) \
 			    return(-1)
 
 		IN_CHECK(in[i + 0]);
