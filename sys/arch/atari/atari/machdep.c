@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.204 2026/04/08 03:47:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.205 2026/04/23 02:54:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2026/04/08 03:47:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.205 2026/04/23 02:54:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.204 2026/04/08 03:47:53 thorpej Exp $"
 
 static void bootsync(void);
 static void call_sicallbacks(void);
-static void identifycpu(void);
 void	straymfpint(int, u_short);
 
 #ifdef _MILANHW_
@@ -155,60 +154,10 @@ consinit(void)
 
 vsize_t		mem_size;
 
-/*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
- */
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-#endif
-	vaddr_t minaddr, maxaddr;
-
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-
-	format_bytes(pbuf, sizeof(pbuf), mem_size);
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-}
-
-/*
- * Info for CTL_HW
- */
-static void
-identifycpu(void)
-{
-	const char *mach, *mmu, *fpu, *cpu;
-	uint32_t pcr;
-	char cputxt[30];
+	const char *mach;
 
 	switch (machineid & ATARI_ANYMACH) {
 	case ATARI_TT:
@@ -228,33 +177,7 @@ identifycpu(void)
 		break;
 	}
 
-	cpu     = "m68k";
-	fpu     = fpu_describe(fputype);
-
-	switch (cputype) {
-	case CPU_68060:
-		__asm(".word 0x4e7a,0x0808;"
-		    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-		snprintf(cputxt, sizeof(cputxt), "MC68%s060 rev.%d",
-		    __SHIFTOUT(pcr, PCR_IDMASK) & 1 ? "LC/EC" : "",
-		    (int)__SHIFTOUT(pcr, PCR_REVMASK));
-		cpu = cputxt;
-		mmu = "/MMU";
-		break;
-	case CPU_68040:
-		cpu = "MC68040";
-		mmu = "/MMU";
-		break;
-	case CPU_68030:
-		cpu = "MC68030";
-		mmu = "/MMU";
-		break;
-	default: /* XXX */
-		cpu = "MC68020";
-		mmu = " MC68851 MMU";
-	}
-	cpu_setmodel("%s (%s CPU%s%sFPU)", mach, cpu, mmu, fpu);
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("%s", mach);
 }
 
 /*

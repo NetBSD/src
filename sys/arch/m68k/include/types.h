@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.34 2021/03/24 05:00:24 simonb Exp $	*/
+/*	$NetBSD: types.h,v 1.35 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -77,6 +77,7 @@ typedef int		__register_t;
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
 #define	__HAVE_TLS_VARIANT_I
+#define	__HAVE_CPU_STARTUP_PRINT_MACHINE_MODEL
 
 #if defined(_KERNEL)
 #define	__HAVE_RAS

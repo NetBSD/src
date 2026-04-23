@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.20 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -65,13 +65,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.20 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_execfmt.h"
+#include "opt_m68k_arch.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/exec.h>
 #include <sys/lwp.h>
 #include <sys/proc.h>
@@ -87,6 +89,9 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.20 2026/04/09 14:36:55 thorpej Ex
 #include <m68k/frame.h>
 #include <m68k/pcb.h>
 #include <m68k/reg.h>
+#ifdef M68060
+#include <m68k/pcr.h>
+#endif
 
 #include <m68k/seglist.h>
 
@@ -96,6 +101,19 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 /* Our exported CPU info; we can have only one. */
 struct cpu_info cpu_info_store;
+
+/* cpu speed in kHz */
+int	cpuspeed_khz;
+
+#if defined(M68020) || defined(M68030)
+/* fpu speed in kHz */
+int	fpuspeed_khz;
+#endif
+
+#ifdef M68K_EC
+/* external cache size in bytes */
+int	ecsize;
+#endif
 
 /*
  * Physical memory segments.  These segments are included in kernel
@@ -206,7 +224,7 @@ machine_init_common(paddr_t nextpa)
 #endif
 
 #ifndef VM_PHYS_SEG_TO_FREELIST
-#define	VM_PHYS_SEG_TO_FREELIST(s)	VM_FREELIST_DEFAULT
+#define	VM_PHYS_SEG_TO_FREELIST(s) VM_FREELIST_DEFAULT
 #endif
 
 	/*
@@ -237,6 +255,262 @@ machine_init_common(paddr_t nextpa)
 	pmap_update(pmap_kernel());
 #endif
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
+}
+
+/*
+ * Common tasks for cpu_startup().
+ */
+void
+cpu_startup_common(void)
+{
+	vaddr_t minaddr, maxaddr;
+	char pbuf[9];
+
+	/* Initialize the FPU, if present. */
+	fpu_init();
+
+	/* Set the model info. */
+	machine_set_model();
+
+	/*
+	 * Good {morning,afternoon,evening,night}.
+	 * XXX Should augment banner() and then switch to using it.
+	 */
+	printf("%s%s", copyright, version);
+#ifdef __HAVE_CPU_STARTUP_PRINT_MACHINE_MODEL
+	cpu_startup_print_machine_model(printf);
+#endif
+#ifdef __HAVE_CPU_STARTUP_PRINT_TOTAL_MEMORY
+	cpu_startup_print_total_memory(printf);
+#else
+	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
+	printf("total memory = %s\n", pbuf);
+#endif
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
+	printf("avail memory = %s\n", pbuf);
+
+	/*
+	 * Allocate a submap for physio
+	 */
+	minaddr = 0;
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    VM_PHYS_SIZE, 0, false, NULL);
+}
+__weak_alias(cpu_startup, cpu_startup_common);
+
+static const char *
+mhz_string_from_khz(int speed_khz, char *buf, size_t bufsize)
+{
+	int whole_mhz = speed_khz / 1000;
+	int frac_mhz = (speed_khz % 1000) / 10;
+	if ((frac_mhz % 10) == 0) {
+		frac_mhz /= 10;
+	}
+	if (frac_mhz == 0) {
+		snprintf(buf, bufsize, " @ %dMHz", whole_mhz);
+	} else {
+		snprintf(buf, bufsize, " @ %d.%dMHz", whole_mhz, frac_mhz);
+	}
+	return buf;
+}
+
+void
+cpu_startup_print_machine_model(void (*pr)(const char *, ...)
+				__printflike(1, 2))
+{
+	char speed_str[sizeof("@ xxx.xxxMHz")] = { 0 };
+#ifdef M68060
+	u_int pcr = get_pcr();
+#endif
+
+	/*
+	 * Caller should have set the system model already.  We
+	 * will print the CPU information after, like so:
+	 *
+	 * MODEL
+	 * CPU MMU FPU CACHE
+	 *
+	 * Examples:
+
+  Qemu 10.1.2 Virt platform
+  MC68040+MMU+FPU, 4k+4k on-chip I/D caches
+
+  Motorola MVME-147
+  MC68030 CPU+MMU @ 25MHz, MC68882 FPU
+
+  HP 9000/433s
+  MC68040 CPU+MMU+FPU @ 33MHz, 4K+4K on-chip I/D caches
+
+  HP 9000/320
+  MC68020 CPU @ 16.67MHz, HP MMU, MC68881 FPU
+  External 16K virtual-address cache
+
+  HP 9000/350
+  MC68020 CPU @ 25MHz, HP MMU, MC68881 FPU @ 20MHz
+  External 32K virtual-address cache
+
+	 * ^^^ Yes, there's at least one HP system where the FPU
+	 * has a different clock than the CPU.
+	 *
+	 * There is a hook that allows machine-specific code to print
+	 * a more informative model banner, such as:
+
+  Model: sun3x 80
+  MC68030 CPU+MMU @ 20MHz, MC68882 FPU
+
+  Model: sun3 160
+  MC68020 CPU @ 16.67MHz, Sun MMU, MC68881 FPU
+
+  Model: sun2 {120,170}
+  MC68010 CPU @ 10MHz, Sun MMU
+
+  SONY NET WORK STATION, Model NWS-1710, Machine ID #123456
+  MC68030 CPU+MMU @ 25MHz, MC68882 FPU
+
+	 * (In this last example, cpu_model() returns "NWS-1710".)
+	 * In the Sun examples, for historical reasons, the model
+	 * string is formatted a certain way for use by the installer
+	 * miniroot.
+	 *
+	 * This is a departure from how it has been on some NetBSD
+	 * systems historically, but this is intended to bring some
+	 * consistency to the platforms while maintaining a reasonable
+	 * aesthetic.
+	 */
+#ifdef __HAVE_M68K_MACHINE_PRINT_MODEL
+	machine_print_model(pr);
+#else
+	(*pr)("%s\n", cpu_getmodel());
+#endif
+
+	switch (cputype) {
+#ifdef M68010
+	case CPU_68010:
+		(*pr)("MC68010 CPU");
+		break;
+#endif
+#ifdef M68020
+	case CPU_68020:
+		(*pr)("MC68020 CPU");
+		break;
+#endif
+#ifdef M68030
+	case CPU_68030:
+		(*pr)("MC68030 CPU+MMU");
+		break;
+#endif
+#ifdef M68040
+	case CPU_68040:
+		(*pr)("MC68040 CPU+MMU");
+		break;
+#endif
+#ifdef M68060
+	case CPU_68060:
+		(*pr)("MC68%s060 rev.%d CPU+MMU",
+		    (PCR_ID(pcr) & 1) ? "LC" : "",
+		    (int)PCR_REVISION(pcr));
+		if (pcr & PCR_DFP) {
+			(*pr)("+FPU(disabled)");
+		}
+		break;
+#endif
+	default:
+		(*pr)("unknown CPU type\n");
+		panic("startup");
+	}
+
+#if defined(M68040) || defined(M68060)
+	switch (fputype) {
+	case FPU_68040:
+	case FPU_68060:
+		(*pr)("+FPU");
+		break;
+	default:
+		break;
+	}
+#endif
+
+	if (cpuspeed_khz) {
+		(*pr)("%s",
+		    mhz_string_from_khz(cpuspeed_khz,
+					speed_str, sizeof(speed_str)));
+	}
+
+	switch (mmutype) {
+#ifdef M68K_MMU_68851
+	case MMU_68851:
+		(*pr)(", MC68851 MMU");
+		break;
+#endif
+#ifdef M68K_MMU_HP
+	case MMU_HP:
+		(*pr)(", HP MMU");
+		break;
+#endif
+#ifdef M68K_MMU_SUN
+	case MMU_SUN:
+		(*pr)(", Sun MMU");
+		break;
+#endif
+#ifdef M68K_MMU_CUSTOM
+	case MMU_CUSTOM:
+		(*pr)(", custom MMU");
+		break;
+#endif
+	default:
+		break;
+	}
+
+	switch (fputype) {
+#ifdef FPU_EMULATE
+	case FPU_NONE:
+		(*pr)(", emulated FPU");
+		break;
+#endif
+#if defined(M68020) || defined(M68030)
+	case FPU_68881:
+		(*pr)(", MC68881 FPU");
+		break;
+
+	case FPU_68882:
+		(*pr)(", MC68882 FPU");
+		break;
+#endif
+	default:
+		break;
+	}
+
+#if defined(M68020) || defined(M68030)
+	if (fpuspeed_khz != 0 && fpuspeed_khz != cpuspeed_khz) {
+		(*pr)("%s",
+		    mhz_string_from_khz(fpuspeed_khz,
+					speed_str, sizeof(speed_str)));
+	}
+#endif
+
+	switch (cputype) {
+#if defined(M68040) || defined(M68060)
+	case CPU_68040:
+	case CPU_68060:
+		(*pr)(", %dK+%dK on-chip I/D caches",
+		    cputype == CPU_68040 ? 4 : 8,
+		    cputype == CPU_68040 ? 4 : 8);
+		break;
+#endif
+	default:
+#ifdef M68K_EC
+		if (ectype != EC_NONE) {
+			(*pr)("\nExternal ");
+			if (ecsize >= 1024) {
+				(*pr)("%dK ", ecsize / 1024);
+			}
+			(*pr)("%s-address cache",
+			    ectype == EC_PHYS ? "physical" : "virtual");
+		}
+#endif
+		break;
+	}
+	(*pr)("\n");
 }
 
 int

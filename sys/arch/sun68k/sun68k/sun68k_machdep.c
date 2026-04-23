@@ -1,9 +1,9 @@
-/*	$NetBSD: cpu.h,v 1.59 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: sun68k_machdep.c,v 1.1 2026/04/23 02:54:41 thorpej Exp $	*/
 
 /*
+ * Copyright (c) 1994, 1995 Gordon W. Ross
+ * Copyright (c) 1993 Adam Glass
  * Copyright (c) 1988 University of Utah.
- * Copyright (c) 1982, 1990, 1993
- *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
  * the Systems Programming Group of the University of Utah Computer
@@ -17,7 +17,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by the University of
+ *      California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -33,64 +37,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr: cpu.h 1.16 91/03/25$
- *
- *	@(#)cpu.h	8.4 (Berkeley) 1/5/94
+ *      from: Utah Hdr: machdep.c 1.74 92/12/20
+ *      from: @(#)machdep.c     8.10 (Berkeley) 4/20/94
  */
 
-#ifndef _MACHINE_CPU_H_
-#define _MACHINE_CPU_H_
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: sun68k_machdep.c,v 1.1 2026/04/23 02:54:41 thorpej Exp $");
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/kernel.h>
+#include <sys/cpu.h>
 
-/*
- * Get common m68k CPU definitions.
- */
-#include <m68k/cpu.h>
+void
+sun68k_set_model(void)
+{
+	cpu_setmodel("%s %s", kernel_arch, cpu_string);
+}
+__weak_alias(machine_set_model, sun68k_set_model);
 
-#if defined(_KERNEL)
-
-#define	MVME68K		1	/* XXX */
-
-#endif /* _KERNEL */
-
-/*
- * Values for machineid; these match the Bug's values.
- */
-#define	MVME_147	0x147
-#define	MVME_162	0x162
-#define	MVME_166	0x166
-#define	MVME_167	0x167
-#define	MVME_172	0x172
-#define	MVME_177	0x177
-
-#ifdef _KERNEL
-extern	int machineid;
-extern	char *intiobase;
-extern	u_int intiobase_phys;
-extern	u_int intiosize;
-extern	u_long ether_data_buff_size;
-extern	u_char mvme_ea[6];
-
-void	doboot(int) 
-	__attribute__((__noreturn__));
-int	nmihand(void *);
-void	mvme68k_abort(const char *);
-void	*iomap(u_long, size_t);
-void	iounmap(void *, size_t);
-
-/* physical memory addresses where mvme147's onboard devices live */
-#define	INTIOBASE147	(0xfffe0000u)
-#define	INTIOTOP147	(0xfffe5000u)
-#define	INTIOSIZE147	(INTIOTOP147 - INTIOBASE147)
-
-/* ditto for mvme1[67][27] */
-#define	INTIOBASE1xx	(0xfff40000u)
-#define	INTIOTOP1xx	(0xfffd0000u)
-#define	INTIOSIZE1xx	(INTIOTOP1xx - INTIOBASE1xx)
-
-#endif /* _KERNEL */
-
-#endif /* _MACHINE_CPU_H_ */
+void
+machine_print_model(void (*pr)(const char *, ...)
+		    __printflike(1, 2))
+{
+	(*pr)("Model: %s\n", cpu_getmodel());
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.108 2026/04/06 13:31:09 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.109 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.108 2026/04/06 13:31:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.109 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -88,7 +88,7 @@ int mmutype = MMU_SUN;
  */
 
 u_char cpu_machine_id = 0;
-const char *cpu_string = NULL;
+const char *cpu_string;
 int cpu_has_vme = 0;
 
 int delay_divisor = delay_divisor_est(25); /* assume the fastest (3/260) */
@@ -250,18 +250,21 @@ _verify_hardware(void)
 	case ID_SUN3_50 :
 		cpu_match++;
 		cpu_string = "50";
+		cpuspeed_khz = 16000;
 		delay_divisor = delay_divisor_est(16);
 		break;
 
 	case ID_SUN3_60 :
 		cpu_match++;
 		cpu_string = "60";
+		cpuspeed_khz = 20000;
 		delay_divisor = delay_divisor_est(20);
 		break;
 
 	case ID_SUN3_110:
 		cpu_match++;
 		cpu_string = "110";
+		cpuspeed_khz = 16670;
 		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
@@ -269,6 +272,7 @@ _verify_hardware(void)
 	case ID_SUN3_160:
 		cpu_match++;
 		cpu_string = "160";
+		cpuspeed_khz = 16670;
 		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
@@ -276,6 +280,7 @@ _verify_hardware(void)
 	case ID_SUN3_260:
 		cpu_match++;
 		cpu_string = "260";
+		cpuspeed_khz = 25000;
 		delay_divisor = delay_divisor_est(25);
 		cpu_has_vme = true;
 #ifdef	HAVECACHE
@@ -286,6 +291,7 @@ _verify_hardware(void)
 	case ID_SUN3_E  :
 		cpu_match++;
 		cpu_string = "E";
+		cpuspeed_khz = 20000;
 		delay_divisor = delay_divisor_est(20); /* XXX 20MHz correct? */
 		cpu_has_vme = true;
 		break;

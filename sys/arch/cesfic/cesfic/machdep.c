@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.89 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.90 2026/04/23 02:54:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.89 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2026/04/23 02:54:38 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -103,7 +103,6 @@ extern	u_int lowram;
 void machine_init(paddr_t);
 
 /* prototypes for local functions */
-void    identifycpu(void);
 char	*hexstr(int, int);
 
 /* functions called from locore.s */
@@ -198,49 +197,15 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
+	cpu_startup_common();
 
-	pmapdebug = 0;
-#endif
-
-	cpu_setmodel("FIC8234");
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	printf("avail mem = %ld\n", ptoa(uvm_availmem(false)));
+	printf("delay constant: %d\n", delay_divisor);
 }
 
-/*
- * Info for CTL_HW
- */
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
-	printf("%s\n", cpu_getmodel());
-	printf("delay constant: %d\n", delay_divisor);
+	cpu_setmodel("FIC8234");
 }
 
 /*

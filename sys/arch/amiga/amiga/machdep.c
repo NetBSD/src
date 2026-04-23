@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.275 2026/04/19 07:11:36 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.276 2026/04/23 02:54:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2026/04/19 07:11:36 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2026/04/23 02:54:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,7 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.275 2026/04/19 07:11:36 isaki Exp $");
 #include "ksyms.h"
 
 /* prototypes */
-void identifycpu(void);
 vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
 void intrhand(int);
@@ -199,58 +198,24 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-	u_int i;
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * display memory configuration passed from loadbsd
 	 */
-	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
-		for (i = 0; i < memlist->m_nseg; i++)
+	if (memlist->m_nseg > 0 && memlist->m_nseg < 16) {
+		for (u_int i = 0; i < memlist->m_nseg; i++) {
 			printf("memory segment %d at %08x size %08x\n", i,
 			    memlist->m_seg[i].ms_start,
 			    memlist->m_seg[i].ms_size);
-
-#ifdef FPU_EMULATE
-	if (fputype == FPU_NONE) {
-		printf("FPU software emulation initialized.\n");
+		}
 	}
-#endif
 }
 
 void
-identifycpu(void)
+machine_set_model(void)
 {
-	/* there's alot of XXX in here... */
-	const char *mach, *cpu_type, *mmu, *fpu;
-
-#ifdef M68060
-	char cpubuf[16];
-	u_int32_t pcr;
-#endif
+	const char *mach;
 
 #ifdef DRACO
 	char machbuf[16];
@@ -271,48 +236,7 @@ identifycpu(void)
 	else
 		mach = "Amiga 500/2000";
 
-	fpu = NULL;
-#ifdef M68060
-	if (machineid & AMIGA_68060) {
-		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
-		snprintf(cpubuf, sizeof(cpubuf), "68%s060 rev.%d",
-		    __SHIFTOUT(pcr, PCR_IDMASK) & 1 ? "LC/EC" : "",
-		    (int)__SHIFTOUT(pcr, PCR_REVMASK));
-		cpu_type = cpubuf;
-		mmu = "/MMU";
-		if (pcr & 2) {
-			fpu = "/FPU disabled";
-		} else if (fputype == FPU_68060) {
-			fpu = "/FPU";
-		}
-	} else
-#endif
-	if (machineid & AMIGA_68040) {
-		cpu_type = "m68040";
-		mmu = "/MMU";
-		if (fputype == FPU_68040) {
-			fpu = "/FPU";
-		}
-	} else if (machineid & AMIGA_68030) {
-		cpu_type = "m68030";	/* XXX */
-		mmu = "/MMU";
-	} else {
-		cpu_type = "m68020";
-		mmu = " m68851 MMU";
-	}
-	if (fpu == NULL) {
-		if (fputype == FPU_68882) {
-			fpu = " m68882 FPU";
-		} else if (fputype == FPU_68881) {
-			fpu = " m68881 FPU";
-		} else if (fputype == FPU_NONE) {
-			fpu = " no FPU";
-		} else {
-			fpu = "";
-		}
-	}
-	cpu_setmodel("%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("%s", mach);
 }
 
 /*

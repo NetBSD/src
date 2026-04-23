@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.28 2024/01/20 00:15:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.29 2026/04/23 02:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -115,6 +115,11 @@ void	fb_unblank(void);
 #ifndef _SUN3X_
 #define M68K_VAC
 #endif
+
+void	sun68k_set_model(void);
+
+extern const char *cpu_string;
+extern char kernel_arch[];
 
 #endif	/* _KERNEL */
 

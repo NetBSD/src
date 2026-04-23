@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.267 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.268 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.267 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2026/04/23 02:54:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
 #include "opt_modular.h"
+#include "opt_m68k_arch.h"
 #include "opt_panicbutton.h"
 
 #include <sys/param.h>
@@ -126,14 +127,11 @@ extern	u_int lowram;
 static void	parityenable(void);
 static int	parityerror(struct frame *);
 static int	parityerrorfind(void);
-static void	identifycpu(void);
-static void	initcpu(void);
 
 /* functions called from locore.s */
 void	machine_init(paddr_t);
 void	nmihand(struct frame);
 
-int	cpuspeed;		/* relative CPU speed */
 int	delay_divisor;		/* delay constant */
 
 #ifdef __HAVE_NEW_PMAP_68K
@@ -307,199 +305,14 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
 	hp300_cninit_deferred();
 
-	/* Initialize the FPU, if present. */
-	fpu_init();
+	cpu_startup_common();
 
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-}
-
-struct hp300_model {
-	int id;
-	int mmuid;
-	const char *name;
-	const char *speed;
-};
-
-static const struct hp300_model hp300_models[] = {
-	{ HP_320,	-1,		"320",		"16.67"	},
-	{ HP_330,	-1,		"318/319/330",	"16.67"	},
-	{ HP_340,	-1,		"340",		"16.67"	},
-	{ HP_345,	-1,		"345",		"50"	},
-	{ HP_350,	-1,		"350",		"25"	},
-	{ HP_360,	-1,		"360",		"25"	},
-	{ HP_362,	-1,		"362",		"25"	},
-	{ HP_370,	-1,		"370",		"33.33"	},
-	{ HP_375,	-1,		"375",		"50"	},
-	{ HP_380,	-1,		"380",		"25"	},
-	{ HP_382,	-1,		"382",		"25"	},
-	{ HP_385,	-1,		"385",		"33"	},
-	{ HP_400,	-1,		"400",		"50"	},
-	{ HP_425,	MMUID_425_T,	"425t",		"25"	},
-	{ HP_425,	MMUID_425_S,	"425s",		"25"	},
-	{ HP_425,	MMUID_425_E,	"425e",		"25"	},
-	{ HP_425,	-1,		"425",		"25"	},
-	{ HP_433,	MMUID_433_T,	"433t",		"33"	},
-	{ HP_433,	MMUID_433_S,	"433s",		"33"	},
-	{ HP_433,	-1,		"433",		"33"	},
-	{ 0,		-1,		NULL,		NULL	},
-};
-
-static void
-identifycpu(void)
-{
-	const char *t, *cpu, *s, *mmu;
-	int i;
-	char fpu[64], cache[64];
-
-	/*
-	 * Find the model number.
-	 */
-	for (t = s = NULL, i = 0; hp300_models[i].name != NULL; i++) {
-		if (hp300_models[i].id == machineid) {
-			if (hp300_models[i].mmuid != -1 &&
-			    hp300_models[i].mmuid != mmuid)
-				continue;
-			t = hp300_models[i].name;
-			s = hp300_models[i].speed;
-			break;
-		}
-	}
-	if (t == NULL) {
-		printf("\nunknown machineid %d\n", machineid);
-		goto lose;
-	}
-
-	/*
-	 * ...and the CPU type.
-	 */
-	switch (cputype) {
-	case CPU_68040:
-		cpu = "MC68040";
-		break;
-	case CPU_68030:
-		cpu = "MC68030";
-		break;
-	case CPU_68020:
-		cpu = "MC68020";
-		break;
-	default:
-		printf("\nunknown cputype %d\n", cputype);
-		goto lose;
-	}
-
-
-	/*
-	 * ...and the MMU type.
-	 */
-	switch (mmutype) {
-	case MMU_68040:
-	case MMU_68030:
-		mmu = "+MMU";
-		break;
-	case MMU_68851:
-		mmu = ", MC68851 MMU";
-		break;
-	case MMU_HP:
-		mmu = ", HP MMU";
-		break;
-	default:
-		printf("%s\nunknown MMU type %d\n", cpu, mmutype);
-		panic("startup");
-	}
-
-	/*
-	 * ...and the FPU type.
-	 */
-	fpu[0] = '\0';
-	switch (fputype) {
-	case FPU_68040:
-		strlcpy(fpu, "+FPU", sizeof(fpu));
-		break;
-	case FPU_68882:
-		snprintf(fpu, sizeof(fpu), ", %sMHz MC68882 FPU", s);
-		break;
-	case FPU_68881:
-		snprintf(fpu, sizeof(fpu), ", %sMHz MC68881 FPU",
-		    machineid == HP_350 ? "20" : "16.67");
-		break;
-	case FPU_NONE:
-#ifdef FPU_EMULATE
-		strlcpy(fpu, ", emulated FPU", sizeof(fpu));
-#else
-		strlcpy(fpu, ", no FPU", sizeof(fpu));
-#endif
-		break;
-	default:
-		strlcpy(fpu, ", unknown FPU", sizeof(fpu));
-	}
-
-	/*
-	 * ...and finally, the cache type.
-	 */
-	cache[0] = '\0';
-	if (cputype == CPU_68040)
-		snprintf(cache, sizeof(cache),
-		    ", 4k on-chip physical I/D caches");
-	else {
-		switch (ectype) {
-		case EC_VIRT:
-			snprintf(cache, sizeof(cache),
-			    ", %dK virtual-address cache",
-			    machineid == HP_320 ? 16 : 32);
-			break;
-		case EC_PHYS:
-			snprintf(cache, sizeof(cache),
-			    ", %dK physical-address cache",
-			    machineid == HP_370 ? 64 : 32);
-			break;
-		}
-	}
-
-	cpu_setmodel("HP 9000/%s (%sMHz %s CPU%s%s%s)", t, s, cpu,
-	    mmu, fpu, cache);
-	printf("%s\n", cpu_getmodel());
-#ifdef DIAGNOSTIC
 	printf("cpu: delay divisor %d", delay_divisor);
 	if (mmuid)
 		printf(", mmuid %d", mmuid);
 	printf("\n");
-#endif
 
 	/*
 	 * Now that we have told the user what they have,
@@ -557,9 +370,82 @@ identifycpu(void)
 		break;
 	}
 
-	return;
- lose:
-	panic("startup");
+	parityenable();
+#ifdef USELEDS
+	ledinit();
+#endif
+}
+
+struct hp300_model {
+	int id;
+	int mmuid;
+	const char *name;
+	int speed_khz;
+};
+
+static const struct hp300_model hp300_models[] = {
+	{ HP_320,	-1,		"320",		16670	},
+	{ HP_330,	-1,		"318/319/330",	16670	},
+	{ HP_340,	-1,		"340",		16670	},
+	{ HP_345,	-1,		"345",		50000	},
+	{ HP_350,	-1,		"350",		25000	},
+	{ HP_360,	-1,		"360",		25000	},
+	{ HP_362,	-1,		"362",		25000	},
+	{ HP_370,	-1,		"370",		33330	},
+	{ HP_375,	-1,		"375",		50000	},
+	{ HP_380,	-1,		"380",		25000	},
+	{ HP_382,	-1,		"382",		25000	},
+	{ HP_385,	-1,		"385",		33000	},
+	{ HP_400,	-1,		"400",		50000	},
+	{ HP_425,	MMUID_425_T,	"425t",		25000	},
+	{ HP_425,	MMUID_425_S,	"425s",		25000	},
+	{ HP_425,	MMUID_425_E,	"425e",		25000	},
+	{ HP_425,	-1,		"425",		25000	},
+	{ HP_433,	MMUID_433_T,	"433t",		33000	},
+	{ HP_433,	MMUID_433_S,	"433s",		33000	},
+	{ HP_433,	-1,		"433",		33000	},
+	{ 0,		-1,		NULL,		0	},
+};
+
+void
+machine_set_model(void)
+{
+	int i;
+
+	for (i = 0; hp300_models[i].name != NULL; i++) {
+		if (hp300_models[i].id == machineid) {
+			if (hp300_models[i].mmuid != -1 &&
+			    hp300_models[i].mmuid != mmuid)
+				continue;
+			break;
+		}
+	}
+	if (hp300_models[i].name == NULL) {
+		printf("\nunknown machineid %d\n", machineid);
+		panic("startup");
+	}
+	cpu_setmodel("HP 9000/%s", hp300_models[i].name);
+	cpuspeed_khz = hp300_models[i].speed_khz;
+
+	if (fputype == FPU_68881) {
+		fpuspeed_khz = machineid == HP_350 ? 20000 : 16670;
+	}
+
+#ifdef M68K_EC
+	if (ectype != EC_NONE) {
+		switch (machineid) {
+		case HP_320:
+			ecsize = 16*1024;
+			break;
+		case HP_370:
+			ecsize = 64*1024;
+			break;
+		default:
+			ecsize = 32*1024;
+			break;
+		}
+	}
+#endif /* M68K_EC */
 }
 
 /*
@@ -653,16 +539,6 @@ cpu_reboot(int howto, char *bootstr)
 #endif
 	doboot();
 	/* NOTREACHED */
-}
-
-static void
-initcpu(void)
-{
-
-	parityenable();
-#ifdef USELEDS
-	ledinit();
-#endif
 }
 
 /* XXX should change the interface, and make one badaddr() function */

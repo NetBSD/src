@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.34 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.35 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,8 +61,6 @@
  * All m68k ports must provide these globals.
  */
 extern	int cputype;		/* CPU on this host */
-extern	int ectype;		/* external cache on this host */
-extern	int fputype;		/* FPU on this host */
 extern	int mmutype;		/* MMU on this host */
 #endif	/* _KERNEL */
 
@@ -160,10 +158,29 @@ void	w16zero(void *, u_int);
 void	w16copy(const void *, void *, u_int);
 
 /* fpu.c */
+extern	int fputype;		/* FPU on this host */
 void	fpu_init(void);
 
-/* machdep.c */
+/* m68k_machdep.c */
+extern	int ectype;
+extern	int ecsize;
+extern	int cpuspeed_khz;
+extern	int fpuspeed_khz;
 void	machine_init_common(paddr_t);
+void	machine_set_model(void);
+#ifdef __HAVE_M68K_MACHINE_PRINT_MODEL
+void	machine_print_model(void (*)(const char *, ...)
+			    __printflike(1, 2));
+#endif
+void	cpu_startup_common(void);
+#ifdef __HAVE_CPU_STARTUP_PRINT_MACHINE_MODEL
+void	cpu_startup_print_machine_model(void (*)(const char *, ...)
+					__printflike(1, 2));
+#endif
+#ifdef __HAVE_CPU_STARTUP_PRINT_TOTAL_MEMORY
+void	cpu_startup_print_total_memory(void (*)(const char *, ...)
+				       __printflike(1, 2));
+#endif
 int	mm_md_physacc_regular(paddr_t, vm_prot_t);
 
 /* regdump.c */

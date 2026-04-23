@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.18 2026/03/23 16:49:33 thorpej Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.19 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 extern	int machineid;		/* CPU model */
-extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	int mmuid;		/* MMU id */
 #endif /* _KERNEL && ! _LOCORE */
 

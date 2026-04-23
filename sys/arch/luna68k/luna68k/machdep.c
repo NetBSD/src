@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.129 2026/04/09 14:36:55 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.130 2026/04/23 02:54:39 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.129 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/04/23 02:54:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -101,7 +101,6 @@ int	maxmem;			/* max memory per process */
 extern	u_int lowram;
 
 void machine_init(paddr_t);
-void identifycpu(void);
 
 void nmihand(struct frame);
 
@@ -120,7 +119,6 @@ extern void ws_cnattach(void);
 /*
  * Default the delay_divisor to 25MHz 68040.
  */
-int	cpuspeed = 25;		/* only used for printing later */
 int	delay_divisor = delay_divisor_est40(25);
 
 #ifdef __HAVE_NEW_PMAP_68K
@@ -287,78 +285,26 @@ symtab_size(vaddr_t hdr)
 }
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
-/*
- * cpu_startup: allocate memory for variable-sized tables.
- */
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-}
-
-void
-identifycpu(void)
-{
-	extern int cputype;
-	const char *model, *fpu;
-
 	switch (cputype) {
+#ifdef M68030
 	case CPU_68030:
-		model ="LUNA-I";
-		switch (fputype) {
-		case FPU_68881:
-			fpu = "MC68881";
-			break;
-		case FPU_68882:
-			fpu = "MC68882";
-			break;
-		case FPU_NONE:
-			fpu = "no";
-			break;
-		default:
-			fpu = "unknown";
-			break;
-		}
-		cpu_setmodel("%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
+		cpu_setmodel("LUNA-I");
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
-		cpuspeed = 20;
+		cpuspeed_khz = 20*1000;
 		delay_divisor = delay_divisor_est(20);
 		hz = 60;
 		break;
-#if defined(M68040)
+#endif
+#ifdef M68040
 	case CPU_68040:
-		model ="LUNA-II";
-		cpu_setmodel(
-		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
-		    model);
+		cpu_setmodel("LUNA-II");
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
-		cpuspeed = 25;
+		cpuspeed_khz = 25*1000;
 		delay_divisor = delay_divisor_est40(25);
 		/* hz = 100 on LUNA-II */
 		break;
@@ -366,7 +312,6 @@ identifycpu(void)
 	default:
 		panic("unknown CPU type");
 	}
-	printf("%s\n", cpu_getmodel());
 }
 
 /*

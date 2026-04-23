@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.47 2026/03/01 20:46:00 andvar Exp $	*/
+/*	$NetBSD: hpib.c,v 1.48 2026/04/23 02:54:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.47 2026/03/01 20:46:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.48 2026/04/23 02:54:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ hpibid(int unit, int slave)
 	 * take forever on slow CPUs.
 	 */
 	ohpibtimeout = hpibtimeout;
-	hpibtimeout = hpibidtimeout * (cpuspeed / 8);
+	hpibtimeout = hpibidtimeout * (cpuspeed_khz / 8000);
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;

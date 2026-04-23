@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.224 2026/04/09 14:46:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.225 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.224 2026/04/09 14:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -156,7 +156,8 @@ vaddr_t vmmap;
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
 
-static void identifycpu(void);
+char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
+
 static void initcpu(void);
 
 /*
@@ -211,18 +212,8 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	initfpu();	/* also prints FPU type */
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	/* Set the FPU bit in the "system enable register" */
+	enable_fpu(1);
 
 	/*
 	 * Get scratch page for dumpsys().
@@ -231,17 +222,7 @@ cpu_startup(void)
 	if (dumppage == 0)
 		panic("startup: alloc dumppage");
 
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -260,27 +241,11 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-}
 
-char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
-
-/*
- * Determine which Sun3 model we are running on.
- * We have to do this very early on the Sun3 because
- * pmap_bootstrap() needs to know if it should avoid
- * the video memory on the Sun3/50.  Therefore, this
- * function just prints out what we already know.
- */
-void
-identifycpu(void)
-{
-	extern char *cpu_string;	/* XXX */
-
-	/* Other stuff? (VAC, mc6888x version, etc.) */
-	/* Note: miniroot cares about the kernel_arch part. */
-	cpu_setmodel("%s %s", kernel_arch, cpu_string);
-
-	printf("Model: %s\n", cpu_getmodel());
+	if (fputype == FPU_NONE) {
+		/* Might as well turn the enable bit back off. */
+		enable_fpu(0);
+	}
 }
 
 /*

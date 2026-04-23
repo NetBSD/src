@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2026/03/24 15:56:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,7 +78,6 @@ extern int systype;
 #define NEWS1700	0
 #define NEWS1200	1
 
-extern int cpuspeed;
 extern uint8_t *intiobase, *intiotop;
 
 extern void *romcallvec;

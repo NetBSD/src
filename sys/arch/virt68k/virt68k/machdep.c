@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.39 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.40 2026/04/23 02:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2026/04/23 02:54:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -103,9 +103,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.39 2026/04/09 14:36:55 thorpej Exp $")
 #if NGFTTY > 0
 #include <dev/goldfish/gfttyvar.h>
 #endif  
-
-/* prototypes for local functions */
-void	identifycpu(void);
 
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
@@ -225,38 +222,8 @@ void
 cpu_startup(void)
 {
 	struct bootinfo_data *bid = bootinfo_data();
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
 
-	pmapdebug = 0;
-#endif
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	if (bid->bootinfo_mem_segments_ignored) {
 		printf("WARNING: ignored %zd bytes of memory in %d segments.\n",
@@ -265,114 +232,20 @@ cpu_startup(void)
 	}
 }
 
-static const char *
-mmu_string(void)
-{
-	switch (mmutype) {
-	case MMU_68851:
-		return ", MC68851 MMU";
-		break;
-
-	case MMU_68030:
-	case MMU_68040:
-	case MMU_68060:
-		return "+MMU";
-
-	default:
-		return "";
-	}
-}
-
-static const char *
-fpu_string(void)
-{
-	switch (fputype) {
-	case FPU_68881:
-		return ", MC68881 FPU";
-
-	case FPU_68882:
-		return ", MC68882 FPU";
-
-	case FPU_68040:
-	case FPU_68060:
-		return "+FPU";
-
-	default:
-		return "";
-	}
-}
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
-	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
-	struct bi_record *bi;
-	uint32_t qvers;
-
-	/* Fill in the CPU string. */
-	switch (cputype) {
-#ifdef M68020
-	case CPU_68020:
-		cpu_str = "MC68020";
-		break;
-#endif
-
-#ifdef M68030
-	case CPU_68030:
-		cpu_str = "MC68030";
-		break;
-#endif
-
-#ifdef M68040
-	case CPU_68040:
-		cpu_str = "MC68040";
-		break;
-#endif
-
-#ifdef M68060
-	case CPU_68060:
-		cpu_str = "MC68060";
-		break;
-#endif
-
-	default:
-		printf("unknown CPU type");
-		panic("startup");
-	}
-
-	mmu_str = mmu_string();
-	fpu_str = fpu_string();
-
-	switch (cputype) {
-#if defined(M68040)
-	case CPU_68040:
-		cache_str = ", 4k+4k on-chip physical I/D caches";
-		break;
-#endif
-#if defined(M68060)
-	case CPU_68060:
-		cache_str = ", 8k+8k on-chip physical I/D caches";
-		break;
-#endif
-	default:
-		cache_str = "";
-		break;
-	}
-
-	bi = bootinfo_find(BI_VIRT_QEMU_VERSION);
+	struct bi_record *bi = bootinfo_find(BI_VIRT_QEMU_VERSION);
 	if (bi != NULL) {
-		qvers = bootinfo_get_u32(bi);
+		uint32_t qvers = bootinfo_get_u32(bi);
+		cpu_setmodel("Qemu %d.%d.%d Virt platform",
+		    (qvers >> 24) & 0xff,
+		    (qvers >> 16) & 0xff,
+		    (qvers >> 8)  & 0xff);
 	} else {
-		qvers = 0;
+		/* XXX Assume Nono. */
+		cpu_setmodel("Nono Virt platform");
 	}
-
-	cpu_setmodel("Qemu %d.%d.%d: %s%s%s%s",
-	    (qvers >> 24) & 0xff,
-	    (qvers >> 16) & 0xff,
-	    (qvers >> 8)  & 0xff,
-	    cpu_str, mmu_str, fpu_str, cache_str);
-
-	printf("%s\n", cpu_getmodel());
 }
 
 /*

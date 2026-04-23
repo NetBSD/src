@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.191 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.192 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -125,13 +125,9 @@ uint8_t	mvme_ea[6];
 
 extern	u_int lowram;
 
-/* prototypes for local functions */
-void	identifycpu(void);
-
 /*
  * Default delay_divisor to the "worst case" 60MHz 68060.
  */
-int	cpuspeed;		/* only used for printing later */
 int	delay_divisor = delay_divisor_est60(60);
 
 /* Machine-dependent initialization routines. */
@@ -261,8 +257,7 @@ mvme147_init(void)
 	bus_space_unmap(bt, bh, PCCREG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = delay_divisor_est(delay_divisor);
-	cpuspeed *= 100;
+	cpuspeed_khz = delay_divisor_est(delay_divisor) * 1000;
 }
 #endif /* MVME147 */
 
@@ -313,21 +308,21 @@ mvme1xx_init(void)
 	bus_space_unmap(bt, bh, PCC2REG_SIZE);
 
 	/* calculate cpuspeed */
-	cpuspeed = get_cpuspeed();
-	if (cpuspeed < 1250 || cpuspeed > 6000) {
+	cpuspeed_khz = get_cpuspeed();
+	if (cpuspeed_khz < 12500 || cpuspeed_khz > 60000) {
 		printf("%s: Warning! Firmware has " \
 		    "bogus CPU speed: `%s'\n", __func__, boardid.speed);
-		cpuspeed = (cputype == CPU_68060)
+		cpuspeed_khz = ((cputype == CPU_68060)
 		    ? delay_divisor_est60(delay_divisor)
-		    : delay_divisor_est40(delay_divisor);
-		cpuspeed *= 100;
+		    : delay_divisor_est40(delay_divisor)) * 1000;
 		printf("%s: Approximating speed using delay_divisor\n",
 		    __func__);
 	}
 }
 
 /*
- * Parse the `speed' field of Bug's boardid structure.
+ * Parse the `speed' field of Bug's boardid structure.  Returns
+ * value in kHz.
  */
 int
 get_cpuspeed(void)
@@ -340,7 +335,7 @@ get_cpuspeed(void)
 		rv = (rv * 10) + (boardid.speed[i] - '0');
 	}
 
-	return rv;
+	return rv * 10;
 }
 #endif
 
@@ -374,33 +369,18 @@ consinit(void)
 }
 
 /*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
+ * We want to print additional detail about on-board vs. VME memory.
  */
 void
-cpu_startup(void)
+cpu_startup_print_total_memory(void (*pr)(const char *, ...)
+			       __printflike(1, 2))
 {
 	u_quad_t vmememsize;
-	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
 	u_int i;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
 
-	pmapdebug = 0;
-#endif
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
 	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s", pbuf);
+	(*pr)("total memory = %s", pbuf);
 
 	for (vmememsize = 0, i = 1; i < VM_PHYSSEG_MAX; i++) {
 		vmememsize +=
@@ -409,128 +389,28 @@ cpu_startup(void)
 	if (vmememsize != 0) {
 		format_bytes(pbuf, sizeof(pbuf),
 		    phys_seg_list[0].ps_end - phys_seg_list[0].ps_start);
-		printf(" (%s on-board", pbuf);
+		(*pr)(" (%s on-board", pbuf);
 		format_bytes(pbuf, sizeof(pbuf), vmememsize);
-		printf(", %s VMEbus)", pbuf);
+		(*pr)(", %s VMEbus)", pbuf);
 	}
 
-	printf("\n");
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	(*pr)("\n");
 }
 
 void
-identifycpu(void)
+machine_set_model(void)
 {
 	char board_str[16];
-	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
+	char *suffix = (char *)&boardid.suffix;
+	int len = snprintf(board_str, sizeof(board_str), "%x", machineid);
 
-	/* Fill in the CPU string. */
-	switch (cputype) {
-#ifdef M68020
-	case CPU_68020:
-		cpu_str = "MC68020 CPU";
-		fpu_str = ", MC68881 FPU";	/* XXX */
-		break;
-#endif
-
-#ifdef M68030
-	case CPU_68030:
-		cpu_str = "MC68030 CPU+MMU";
-		fpu_str = ", MC68882 FPU";	/* XXX */
-		break;
-#endif
-
-#ifdef M68040
-	case CPU_68040:
-		cpu_str = "MC68040 CPU+MMU+FPU";
-		fpu_str = "";
-		break;
-#endif
-
-#ifdef M68060
-	case CPU_68060:
-		cpu_str = "MC68060 CPU+MMU+FPU";
-		fpu_str = "";
-		break;
-#endif
-
-	default:
-		printf("unknown CPU type");
-		panic("startup");
+	if (suffix[0] != '\0' && len > 0 && len + 3 < sizeof(board_str)) {
+		board_str[len++] = suffix[0];
+		if (suffix[1] != '\0')
+			board_str[len++] = suffix[1];
+		board_str[len] = '\0';
 	}
-
-	/* Fill in the MMU string; only need to handle one case. */
-	switch (mmutype) {
-	case MMU_68851:
-		mmu_str = ", MC68851 MMU";
-		break;
-	default:
-		mmu_str = "";
-		break;
-	}
-
-	/* Fill in board model string. */
-	switch (machineid) {
-#if defined(MVME_147) || defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
-	case MVME_147:
-	case MVME_162:
-	case MVME_167:
-	case MVME_172:
-	case MVME_177:
-	    {
-		char *suffix = (char *)&boardid.suffix;
-		int len = snprintf(board_str, sizeof(board_str), "%x",
-		    machineid);
-		if (suffix[0] != '\0' && len > 0 &&
-		    len + 3 < sizeof(board_str)) {
-			board_str[len++] = suffix[0];
-			if (suffix[1] != '\0')
-				board_str[len++] = suffix[1];
-			board_str[len] = '\0';
-		}
-		break;
-	    }
-#endif
-	default:
-		printf("unknown machine type: 0x%x\n", machineid);
-		panic("startup");
-	}
-
-	switch (cputype) {
-#if defined(M68040)
-	case CPU_68040:
-		cache_str = ", 4k+4k on-chip physical I/D caches";
-		break;
-#endif
-#if defined(M68060)
-	case CPU_68060:
-		cache_str = ", 8k+8k on-chip physical I/D caches";
-		break;
-#endif
-	default:
-		cache_str = "";
-		break;
-	}
-
-	cpu_setmodel("Motorola MVME-%s: %d.%dMHz %s%s%s%s",
-	    board_str, cpuspeed / 100, (cpuspeed % 100) / 10, cpu_str,
-	    mmu_str, fpu_str, cache_str);
-
-	cpuspeed /= 100;
-
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("Motorola MVME-%s", board_str);
 }
 
 /*

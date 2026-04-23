@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.42 2026/03/28 22:19:33 thorpej Exp $	*/
+/*	$NetBSD: clock.c,v 1.43 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.42 2026/03/28 22:19:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.43 2026/04/23 02:54:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,11 +180,6 @@ hp300_calibrate_delay(void)
 		    ? delay_divisor_est40(33)
 		    : delay_divisor_est(50);
 	}
-
-	/* Calculate CPU speed. */
-	cpuspeed = (cputype == CPU_68040)
-	    ? delay_divisor_est40(delay_divisor)
-	    : delay_divisor_est(delay_divisor);
 }
 
 /*

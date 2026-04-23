@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.228 2026/04/09 14:36:56 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.229 2026/04/23 02:54:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2026/04/09 14:36:56 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2026/04/23 02:54:41 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -117,7 +117,6 @@ extern int end, *esym;
 int	maxmem;			/* max memory per process */
 
 /* prototypes for local functions */
-void	identifycpu(void);
 static int check_emulator(char *, int);
 
 /* functions called from locore.s */
@@ -138,7 +137,6 @@ static int basemem;
  * be calibrated later.
  */
 int	delay_divisor = delay_divisor_est(25);
-static int cpuspeed;		/* MPU clock (in MHz) */
 
 
 #ifdef __HAVE_NEW_PMAP_68K
@@ -227,65 +225,17 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	callout_init(&candbtimer_ch, 0);
 }
 
-static const char *fpu_descr[] = {
-#ifdef	FPU_EMULATE
-	[FPU_NONE]    = ", emulator FPU",
-#else
-	[FPU_NONE]    = ", no math support",
-#endif
-	[FPU_68881]   = ", m68881 FPU",
-	[FPU_68882]   = ", m68882 FPU",
-	[FPU_68040]   = "/FPU",
-	[FPU_68060]   = "/FPU",
-	[FPU_UNKNOWN] = ", unknown FPU",
-};
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
 	/* there's alot of XXX in here... */
-	const char *cpu_type, *mach, *mmu, *fpu;
-	char clock[20];
+	const char *mach;
 	char emubuf[20];
-	char cpubuf[16];
-	uint32_t pcr;
 
 	/*
 	 * check machine type constant
@@ -317,56 +267,32 @@ identifycpu(void)
 		break;
 	}
 
-	clock[0] = '\0';
 	emubuf[0] = '\0';
 	check_emulator(emubuf, sizeof(emubuf));
 
 	switch (cputype) {
 	case CPU_68060:
-		/* from amiga */
-		__asm(".word 0x4e7a,0x0808; movl %%d0,%0"
-		    : "=d"(pcr) : : "d0");
-		snprintf(cpubuf, sizeof(cpubuf), "m68%s060 rev.%d",
-		    (pcr & 0x10000) ? "LC/EC" : "", (pcr >> 8) & 0xff);
-		cpu_type = cpubuf;
-		mmu = "/MMU";
 		/*
 		 * This delay_divisor method cannot get accurate cpuspeed
 		 * for 68060.
 		 */
-		clock[0] = '\0';
+		/* XXX really? */
 		break;
 	case CPU_68040:
-		cpu_type = "m68040";
-		mmu = "/MMU";
-		cpuspeed = delay_divisor_est40(delay_divisor);
-		snprintf(clock, sizeof(clock), ", %d/%dMHz clock",
-		    cpuspeed*2, cpuspeed);
+		cpuspeed_khz = delay_divisor_est40(delay_divisor) * 1000;
 		break;
 	case CPU_68030:
-		cpu_type = "m68030";
-		mmu = "/MMU";
-		cpuspeed = delay_divisor_est(delay_divisor);
-		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
+		cpuspeed_khz = delay_divisor_est(delay_divisor) * 1000;
 		break;
 	case CPU_68020:
-		cpu_type = "m68020";
-		mmu = ", m68851 MMU";
-		cpuspeed = delay_divisor_est(delay_divisor);
-		snprintf(clock, sizeof(clock), ", %dMHz clock", cpuspeed);
+		cpuspeed_khz = delay_divisor_est(delay_divisor) * 1000;
 		break;
 	default:
-		cpu_type = "unknown";
-		mmu = ", unknown MMU";
-		break;
+		panic("impossible cpu");
 	}
-	KASSERT(fputype >= 0 && fputype < __arraycount(fpu_descr));
-	fpu = fpu_descr[fputype];
 
-	cpu_setmodel("X68%s (%s CPU%s%s%s)%s%s",
-	    mach, cpu_type, mmu, fpu, clock,
-		emubuf[0] ? " on " : "", emubuf);
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("X68%s %s%s",
+	    mach, emubuf[0] ? " on " : "", emubuf);
 }
 
 /*

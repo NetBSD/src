@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.97 2026/04/09 14:46:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.98 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.97 2026/04/09 14:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -250,8 +250,7 @@ vmem_t *dvma_arena;
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
 
-static void identifycpu(void);
-static void initcpu(void);
+char	kernel_arch[16] = "sun2";	/* XXX needs a sysctl node */
 
 /*
  * cpu_startup: allocate memory for variable-sized tables,
@@ -264,9 +263,6 @@ static void initcpu(void);
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	{
 		extern int nsym;
@@ -275,20 +271,6 @@ cpu_startup(void)
 		ksyms_addsyms_elf(nsym, ssym, esym);
 	}
 #endif /* DDB */
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-#ifdef  FPU_EMULATE
-	printf("fpu: emulator\n");
-#else
-	printf("fpu: no math support\n");
-#endif
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
 
 	/*
 	 * XXX fredette - we force a small number of buffers
@@ -305,17 +287,7 @@ cpu_startup(void)
 	    == 0)
 		panic("startup: alloc dumppage");
 
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -338,28 +310,6 @@ cpu_startup(void)
 				 IPL_VM);
 	if (dvma_arena == NULL)
 		panic("unable to allocate DVMA map");
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-}
-
-char	kernel_arch[16] = "sun2";	/* XXX needs a sysctl node */
-
-/*
- * Determine which Sun2 model we are running on.
- */
-void
-identifycpu(void)
-{
-	extern char *cpu_string;	/* XXX */
-
-	/* Other stuff? (VAC, mc6888x version, etc.) */
-	/* Note: miniroot cares about the kernel_arch part. */
-	cpu_setmodel("%s %s", kernel_arch, cpu_string);
-
-	printf("Model: %s\n", cpu_getmodel());
 }
 
 /*
@@ -710,14 +660,6 @@ dumpsys(void)
 	return;
 fail:
 	printf(" dump error=%d\n", error);
-}
-
-static void
-initcpu(void)
-{
-	/* XXX: Enable RAM parity/ECC checking? */
-	/* XXX: parityenable(); */
-
 }
 
 /* straptrap() in trap.c */

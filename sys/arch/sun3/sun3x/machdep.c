@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.152 2026/04/09 14:46:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.153 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.152 2026/04/09 14:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.153 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -118,7 +118,9 @@ int has_iocache = 0;
 
 vaddr_t dumppage;
 
-static void identifycpu(void);
+int	delay_divisor = delay_divisor_est(33); /* assume fastest 33Hz */
+char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
+
 static void initcpu(void);
 
 /*
@@ -173,18 +175,8 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	initfpu();	/* also prints FPU type */
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	/* Set the FPU bit in the "system enable register" */
+	enable_fpu(1);
 
 	/*
 	 * Get scratch page for dumpsys().
@@ -193,16 +185,7 @@ cpu_startup(void)
 	if (dumppage == 0)
 		panic("startup: alloc dumppage");
 
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -221,18 +204,17 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
+
+	if (fputype == FPU_NONE) {
+		/* Might as well turn the enable bit back off. */
+		enable_fpu(0);
+	}
 }
 
-char	kernel_arch[16] = "sun3x";	/* XXX needs a sysctl node */
-
-int delay_divisor = delay_divisor_est(33); /* assume fastest 33Hz */
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
-	u_char machtype;
-
-	machtype = identity_prom.idp_machtype;
+	u_char machtype = identity_prom.idp_machtype;
 	if ((machtype & IDM_ARCH_MASK) != IDM_ARCH_SUN3X) {
 		printf("Bad IDPROM arch!\n");
 		sunmon_abort();
@@ -243,12 +225,14 @@ identifycpu(void)
 
 	case ID_SUN3X_80:
 		cpu_string = "80";  	/* Hydra */
+		cpuspeed_khz = 20000;
 		delay_divisor = delay_divisor_est(20);
 		cpu_has_vme = false;
 		break;
 
 	case ID_SUN3X_470:
 		cpu_string = "470"; 	/* Pegasus */
+		cpuspeed_khz = 33000;
 		delay_divisor = delay_divisor_est(33);
 		cpu_has_vme = true;
 		break;
@@ -258,11 +242,7 @@ identifycpu(void)
 		sunmon_abort();
 	}
 
-	/* Other stuff? (VAC, mc6888x version, etc.) */
-	/* Note: miniroot cares about the kernel_arch part. */
-	cpu_setmodel("%s %s", kernel_arch, cpu_string);
-
-	printf("Model: %s\n", cpu_getmodel());
+	sun68k_set_model();
 }
 
 /*

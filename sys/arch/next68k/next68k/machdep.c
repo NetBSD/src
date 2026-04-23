@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.142 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.143 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.142 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -122,16 +122,12 @@ extern char *esym;
 
 extern	u_int lowram;
 
-/* prototypes for local functions */
-void	identifycpu(void);
-
 /* functions called from locore.s */
 void machine_init(paddr_t);
 
 /*
  * Default to 33MHz 68040.
  */
-int	cpuspeed = 33;
 int	delay_divisor = delay_divisor_est40(33);
 
 /****************************************************************/
@@ -202,122 +198,45 @@ consinit(void)
 	}
 }
 
-/*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
- */
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-}
-
-void
-identifycpu(void)
-{
-	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
 	extern int turbo;
+	const char *shape_str = "cube";
+	const char *color_str = iscolor ? " Color" : "";
+	const char *turbo_str = turbo ? " Turbo" : "";
 
-	/*
-	 * ...and the CPU type.
-	 */
+	switch (rom_machine_type) {
+	case NeXT_WARP9:	/* 68040 25MHz NeXTstation */
+	case NeXT_WARP9C:	/* 68040 25MHz NeXTstation Color */
+	case NeXT_TURBO_MONO:	/* 68040 33MHz NeXTstation */
+	case NeXT_TURBO_COLOR:	/* 68040 33MHz NeXTstation Color */
+		shape_str = "station";
+		/* FALLTHROUGH */
+	case NeXT_CUBE:		/* 68030 25MHz NeXTcube */
+	case NeXT_X15:		/* 68040 25MHz NeXTcubr */
+	case NeXT_CUBE_TURBO:	/* 68040 33MHz NeXTcube */
+		cpu_setmodel("NeXT%s%s%s", shape_str, color_str, turbo_str);
+		break;
+
+	default:
+		cpu_setmodel("NeXT machine type %d", rom_machine_type);
+		break;
+	}
+
 	switch (cputype) {
 	case CPU_68040:
-		cpu_str = "MC68040";
-		cpuspeed = turbo ? 33 : 25;
-		delay_divisor = delay_divisor_est40(cpuspeed);
+		cpuspeed_khz = (turbo ? 33 : 25) * 1000;
+		delay_divisor = delay_divisor_est40(cpuspeed_khz / 1000);
 		break;
 	case CPU_68030:
-		cpu_str = "MC68030";
-		cpuspeed = 25;
-		delay_divisor = delay_divisor_est(cpuspeed);
+		cpuspeed_khz = 25*1000;
+		delay_divisor = delay_divisor_est(cpuspeed_khz / 1000);
 		break;
-#if 0
-	case CPU_68020:
-		cpu_str = "MC68020";
-		break;
-#endif
 	default:
 		printf("\nunknown cputype %d\n", cputype);
 		panic("startup");
 	}
-
-	/*
-	 * ...and the MMU type.
-	 */
-	switch (mmutype) {
-	case MMU_68040:
-	case MMU_68030:
-		mmu_str = "+MMU";
-		break;
-#if 0
-	case MMU_68851:
-		mmu_str = ", MC68851 MMU";
-		break;
-#endif
-	default:
-		printf("%s: unknown MMU type %d\n", cpu_str, mmutype);
-		panic("startup");
-	}
-
-	/*
-	 * ...and the FPU type.
-	 */
-	switch (fputype) {
-	case FPU_68040:
-		fpu_str = "+FPU";
-		break;
-	case FPU_68882:
-		fpu_str = ", MC68882 FPU";
-		break;
-	case FPU_68881:
-		fpu_str = ", MC68881 FPU";
-		break;
-	default:
-		fpu_str = ", unknown FPU";
-	}
-
-	/*
-	 * ...and finally, the cache type.
-	 */
-	if (cputype == CPU_68040)
-		cache_str = ", 4k on-chip physical I/D caches";
-	else
-		cache_str = "";
-
-	cpu_setmodel("NeXT/%s CPU%s%s%s", cpu_str, mmu_str, fpu_str, cache_str);
-	printf("%s\n", cpu_getmodel());
 }
 
 /*

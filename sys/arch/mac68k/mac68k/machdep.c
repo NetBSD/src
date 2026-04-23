@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.384 2026/04/08 03:47:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.385 2026/04/23 02:54:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.384 2026/04/08 03:47:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.385 2026/04/23 02:54:39 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -212,7 +212,6 @@ static long iomem_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof(long)];
 struct extent *iomem_ex;
 int iomem_malloc_safe;
 
-static void	identifycpu(void);
 static u_long	get_physical(u_int, u_long *);
 
 void	initcpu(void);
@@ -388,20 +387,14 @@ void
 cpu_startup(void)
 {
 	int vers;
-	vaddr_t minaddr, maxaddr;
 	int xdelay;
-	char pbuf[9];
 
 	/*
 	 * Initialize the kernel crash dump header.
 	 */
 	cpu_init_kcore_hdr();
 
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
+	cpu_startup_common();
 
 	vers = mac68k_machine.booter_version;
 	if (vers < CURRENTBOOTERVER) {
@@ -416,18 +409,9 @@ cpu_startup(void)
 		printf("this kernel.\n\n");
 		for (xdelay = 0; xdelay < 1000000; xdelay++);
 	}
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
 
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	extern u_int delay_factor;
+	printf("cpu: delay factor %d\n", delay_factor);
 
 	/*
 	 * Set up CPU-specific registers, cache, etc.
@@ -1822,33 +1806,12 @@ mach_cputype(void)
 	return (mac68k_machine.mach_processor);
 }
 
-static void
-identifycpu(void)
+void
+machine_set_model(void)
 {
-	extern u_int delay_factor;
-	const char *mpu;
-
-	switch (cputype) {
-	case CPU_68020:
-		mpu = ("(68020)");
-		break;
-	case CPU_68030:
-		mpu = ("(68030)");
-		break;
-	case CPU_68040:
-		mpu = ("(68040)");
-		break;
-	default:
-		mpu = ("(unknown processor)");
-		break;
-	}
-	cpu_setmodel("Apple Macintosh %s%s %s",
+	cpu_setmodel("Apple Macintosh %s%s",
 	    cpu_models[mac68k_machine.cpu_model_index].model_major,
-	    cpu_models[mac68k_machine.cpu_model_index].model_minor,
-	    mpu);
-	printf("%s\n", cpu_getmodel());
-	printf("cpu: delay factor %d\n", delay_factor);
-	initfpu();
+	    cpu_models[mac68k_machine.cpu_model_index].model_minor);
 }
 
 static void	get_machine_info(void);

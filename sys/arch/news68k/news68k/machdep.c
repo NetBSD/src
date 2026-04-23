@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.138 2026/04/09 14:36:55 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.139 2026/04/23 02:54:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.138 2026/04/09 14:36:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.139 2026/04/23 02:54:40 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -111,9 +111,6 @@ extern paddr_t avail_start, avail_end;
 extern int end, *esym;
 extern u_int lowram;
 
-/* prototypes for local functions */
-static void identifycpu(void);
-
 #ifdef news1700
 static void news1700_init(void);
 static void parityenable(void);
@@ -126,7 +123,6 @@ static void news1200_init(void);
 /* functions called from locore.s */
 void machine_init(paddr_t);
 
-int	cpuspeed = 25;		/* relative CPU speed */
 int	delay_divisor = delay_divisor_est(25);
 
 #ifdef __HAVE_NEW_PMAP_68K
@@ -186,15 +182,6 @@ machine_init(paddr_t nextpa)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
 	/* Initialize the interrupt handlers. */
 	isrinit();
 
@@ -202,40 +189,23 @@ cpu_startup(void)
 	parityenable();
 #endif
 
-	/* Initialize the FPU, if present. */
-	fpu_init();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#if defined(DEBUG) && !defined(__HAVE_NEW_PMAP_68K)
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 int news_machine_id;
 
-static void
-identifycpu(void)
+void
+machine_set_model(void)
 {
+	/* This has already been done in newsXXXX_init() */
+}
 
-	printf("SONY NET WORK STATION, Model %s, ", cpu_getmodel());
-	printf("Machine ID #%d\n", news_machine_id);
+void
+machine_print_model(void (*pr)(const char *, ...)
+		    __printflike(1, 2))
+{
+	(*pr)("SONY NET WORK STATION, Model %s, Machine ID #%d\n",
+	    cpu_getmodel(), news_machine_id);
 }
 
 /*
@@ -483,7 +453,7 @@ news1700_init(void)
 	ctrl_parity_clr	= (uint8_t *)(0xe1a00000);
 	parity_vector	= (uint8_t *)(0xe1c00200);
 
-	cpuspeed = 25;
+	cpuspeed_khz = 25*1000;
 	delay_divisor = delay_divisor_est(25);
 }
 
@@ -563,7 +533,7 @@ news1200_init(void)
 	cpu_setmodel("%s", idrom.id_model);
 	news_machine_id = idrom.id_serial;
 
-	cpuspeed = 25;
+	cpuspeed_khz = 25*1000;
 	delay_divisor = delay_divisor_est(25);
 }
 #endif /* news1200 */

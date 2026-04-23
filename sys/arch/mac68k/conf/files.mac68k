@@ -1,4 +1,4 @@
-#	$NetBSD: files.mac68k,v 1.149 2026/04/02 03:56:42 thorpej Exp $
+#	$NetBSD: files.mac68k,v 1.150 2026/04/23 02:54:39 thorpej Exp $
 
 # mac68k-specific configuration info
 
@@ -162,7 +162,6 @@ file	arch/mac68k/mac68k/bus_space.c
 file	arch/mac68k/mac68k/clock.c
 file	arch/mac68k/mac68k/conf.c
 file	arch/mac68k/mac68k/disksubr.c		disk
-file	arch/mac68k/mac68k/fpu_machdep.c
 file	arch/mac68k/mac68k/intr.c
 file	arch/mac68k/mac68k/iop.c
 file	arch/mac68k/mac68k/machdep.c
