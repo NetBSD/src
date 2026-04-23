@@ -376,6 +376,10 @@ pckbc_attach(struct pckbc_softc *sc)
 		t->t_haveaux = 0;
 	}
 
+	/* fix resume */
+	if (!pmf_device_register(sc->sc_dv, NULL, pckbc_resume))
+		aprint_error("pckbc+: register resume hendler error\n");
+
 nomouse:
 	/* enable needed interrupts */
 	t->t_cmdbyte |= cmdbits;
