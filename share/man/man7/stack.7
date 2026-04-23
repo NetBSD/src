@@ -1,4 +1,4 @@
-.\"	$NetBSD: stack.7,v 1.6 2023/12/07 17:24:22 riastradh Exp $
+.\"	$NetBSD: stack.7,v 1.7 2026/04/23 15:54:55 wiz Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 23, 2023
+.Dd April 23, 2026
 .Dt STACK 7
 .Os
 .Sh NAME
@@ -191,7 +191,7 @@ thread's stack region by default, and their stacks cannot be resized
 after creation.
 On architectures where the stack grows down, the layout is:
 .Bd -literal
-+--------------------+ stack base = stackaddr + stacksize + guardsize
++--------------------+ stack base = stackaddr + stacksize
 | stack              |
 | .                  |
 | .                  | <-- stack pointer (varies during execution)
