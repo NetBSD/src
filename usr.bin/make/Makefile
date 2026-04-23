@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.128 2025/01/19 10:57:10 rillig Exp $
+#	$NetBSD: Makefile,v 1.129 2026/04/23 19:34:07 rillig Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -85,7 +85,7 @@ SUBDIR.roff+=	PSD.doc
 SUBDIR+=	unit-tests
 .endif
 
-LINTFLAGS+=	-T	# strict bool mode, available since 2021-01-11
+LINTFLAGS+=	${ACTIVE_CC:Mgcc:%=-T}	# strict bool mode
 LINTFLAGS+=	-w	# treat warnings as errors
 CLEANFILES+=	*.o	# for filemon objects
 
