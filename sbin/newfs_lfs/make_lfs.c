@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.60 2025/11/04 00:50:36 perseant Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.61 2026/04/23 16:21:08 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.60 2025/11/04 00:50:36 perseant Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.61 2026/04/23 16:21:08 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -475,13 +475,6 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		if (dkw->dkw_size <= SMALL_FSSIZE)
 			ssize = SMALL_LFSSEG;
 	}
-	if (version > 1) {
-		if (ibsize == 0)
-			ibsize = fsize;
-		if (ibsize <= 0 || ibsize % fsize)
-			fatal("illegal inode block size: %d\n", ibsize);
-	} else if (ibsize && ibsize != bsize)
-		fatal("cannot specify inode block size when version == 1\n");
 
 	/* Sanity check: fsize<=bsize<ssize */
 	if (fsize > bsize) {
@@ -504,6 +497,18 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		if (start)
 			warnx("filesystem offset ignored for version 1 filesystem");
 		start = LFS_LABELPAD / secsize;
+	}
+
+	/* Set inode block size according to final fsize/bsize */
+	if (version > 1) {
+		if (ibsize == 0)
+			ibsize = fsize;
+		if (ibsize <= 0 || ibsize % fsize || ibsize > bsize)
+			fatal("illegal inode block size: %d\n", ibsize);
+	} else {
+		if (ibsize && ibsize != bsize)
+			fatal("cannot specify inode block size when version == 1\n");
+		ibsize = bsize;
 	}
 
     tryagain:
