@@ -1,4 +1,4 @@
-#	$NetBSD: files.evbarm,v 1.33 2019/10/01 10:08:05 jmcneill Exp $
+#	$NetBSD: files.evbarm,v 1.34 2026/04/23 08:54:25 skrll Exp $
 #
 # First try for arm-specific configuration info
 #
@@ -16,11 +16,6 @@ file	dev/md_root.c				md & memory_disk_hooks
 file	arch/evbarm/evbarm/autoconf.c
 
 file	kern/subr_disk_mbr.c			disk
-
-# ARM FPE
-file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 #
 # Machine-independent drivers
