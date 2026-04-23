@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.71 2025/12/18 00:47:52 perseant Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.72 2026/04/23 16:13:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.71 2025/12/18 00:47:52 perseant Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.72 2026/04/23 16:13:14 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -862,7 +862,7 @@ dump_super(struct lfs *lfsp)
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
  		     "fsize    ", lfs_sb_getfsize(lfsp),
  		     "frag     ", lfs_sb_getfrag(lfsp),
- 		     "minfree  ", lfs_sb_getminfree(lfsp));
+	             "ibsize   ", lfs_sb_getibsize(lfsp));
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
  		     "inopb    ", lfs_sb_getinopb(lfsp),
  		     "ifpb     ", lfs_sb_getifpb(lfsp),
@@ -883,7 +883,7 @@ dump_super(struct lfs *lfsp)
  		     "ffshift  ", lfs_sb_getffshift(lfsp),
  		     "fbmask   ", (uintmax_t)lfs_sb_getfbmask(lfsp),
  		     "fbshift  ", lfs_sb_getfbshift(lfsp));
- 	
+
  	(void)printf("    %s%-10d  %s%-10d  %s0x%-8x\n",
  		     "sushift  ", lfs_sb_getsushift(lfsp),
  		     "fsbtodb  ", lfs_sb_getfsbtodb(lfsp),
@@ -896,7 +896,8 @@ dump_super(struct lfs *lfsp)
  		     "roll_id  ", lfs_sb_getident(lfsp),
  		     "interleave ", lfs_sb_getinterleave(lfsp),
  		     "sumsize  ", lfs_sb_getsumsize(lfsp));
- 	(void)printf("    %s%-10jd  %s0x%-8jx\n",
+ 	(void)printf("    %s%-10d  %s%-10jd  %s0x%-8jx\n",
+		     "minfree  ", lfs_sb_getminfree(lfsp),
 		     "seg0addr ", (intmax_t)lfs_sb_gets0addr(lfsp),
  		     "maxfilesize  ", (uintmax_t)lfs_sb_getmaxfilesize(lfsp));
  	
