@@ -1,4 +1,4 @@
-.\"	$NetBSD: stack.7,v 1.7 2026/04/23 15:54:55 wiz Exp $
+.\"	$NetBSD: stack.7,v 1.8 2026/04/23 20:09:46 uwe Exp $
 .\"
 .\" Copyright (c) 2023 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,15 +78,17 @@ For single-threaded programs, and for the main thread of multi-threaded
 programs,
 .Nx
 reserves virtual addresses as follows on architectures where the stack
-grows down:
-.Bd -literal
+grows
+.Em down :
+.Bd -literal -offset indent
 +--------------------+ USRSTACK
-| stack gap          |
+| ASLR stack gap     |
 +--------------------+ stack base
 | accessible pages   |
 | .                  |
-| .                  | <-- stack pointer (varies during execution)
-| .                  |
+| .                  | <-- stack pointer
+| .                  |      (varies during execution)
+| V                  |
 +--------------------+ (stack base) - (soft stack rlimit)
 | inaccessible pages |
 +--------------------+ (stack base) - (hard stack rlimit)
@@ -94,19 +96,22 @@ grows down:
 +--------------------+ USRSTACK - MAXSSIZ
 .Ed
 .Pp
-On architectures where the stack grows up, the layout is:
-.Bd -literal
+On architectures where the stack grows
+.Em up ,
+the layout is:
+.Bd -literal -offset indent
 +--------------------+ USRSTACK + MAXSSIZ
 | guard/redzone      |
 +--------------------+ (stack base) + (hard stack rlimit)
 | inaccessible pages |
 +--------------------+ (stack base) + (soft stack rlimit)
-| .                  |
-| .                  | <-- stack pointer (varies during execution)
+| \(ha                  |
+| .                  | <-- stack pointer
+| .                  |       (varies during execution)
 | .                  |
 | accessible pages   |
 +--------------------+ stack base
-| stack gap          |
+| ASLR stack gap     |
 +--------------------+ USRSTACK
 .Ed
 .Bl -bullet
@@ -189,25 +194,31 @@ Threads created with
 have stacks allocated at dynamically chosen addresses outside the main
 thread's stack region by default, and their stacks cannot be resized
 after creation.
-On architectures where the stack grows down, the layout is:
-.Bd -literal
+On architectures where the stack grows
+.Em down ,
+the layout is:
+.Bd -literal -offset indent
 +--------------------+ stack base = stackaddr + stacksize
 | stack              |
 | .                  |
-| .                  | <-- stack pointer (varies during execution)
-| .                  |
+| .                  | <-- stack pointer
+| .                  |       (varies during execution)
+| V                  |
 +--------------------+ stackaddr
 | guard/redzone      |
 +--------------------+ stackaddr - guardsize
 .Ed
 .Pp
-On architectures where the stack grows up, the layout is:
-.Bd -literal
+On architectures where the stack grows
+.Em up ,
+the layout is:
+.Bd -literal -offset indent
 +--------------------+ stackaddr + stacksize + guardsize
 | guard/redzone      |
 +--------------------+ stackaddr + stacksize
-| .                  |
-| .                  | <-- stack pointer (varies during execution)
+| \(ha                  |
+| .                  | <-- stack pointer
+| .                  |       (varies during execution)
 | .                  |
 | stack              |
 +--------------------+ stack base = stackaddr
