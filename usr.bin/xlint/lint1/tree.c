@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.713 2026/04/20 22:26:43 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.714 2026/04/23 04:45:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.713 2026/04/20 22:26:43 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.714 2026/04/23 04:45:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -870,6 +870,26 @@ is_compiler_builtin(const char *name)
 
 	/* https://software.intel.com/sites/landingpage/IntrinsicsGuide/ */
 	if (strncmp(name, "_mm_", 4) == 0)
+		return true;
+
+	// https://clang.llvm.org/docs/LanguageExtensions.html#c11-atomic-builtins
+	if (strcmp(name, "__c11_atomic_init") == 0 ||
+	    strcmp(name, "__c11_atomic_thread_fence") == 0 ||
+	    strcmp(name, "__c11_atomic_signal_fence") == 0 ||
+	    strcmp(name, "__c11_atomic_is_lock_free ") == 0 ||
+	    strcmp(name, "__c11_atomic_store") == 0 ||
+	    strcmp(name, "__c11_atomic_load") == 0 ||
+	    strcmp(name, "__c11_atomic_exchange") == 0 ||
+	    strcmp(name, "__c11_atomic_compare_exchange_strong") == 0 ||
+	    strcmp(name, "__c11_atomic_compare_exchange_weak") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_add") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_sub") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_and") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_or") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_xor") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_nand ") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_max") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_min") == 0)
 		return true;
 
 	return false;
