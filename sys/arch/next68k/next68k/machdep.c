@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.143 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.144 2026/04/24 13:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.143 2026/04/23 02:54:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2026/04/24 13:40:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -132,8 +132,7 @@ int	delay_divisor = delay_divisor_est40(33);
 
 /****************************************************************/
 
-#ifdef __HAVE_NEW_PMAP_68K
-const struct pmap_bootmap machine_bootmap[] = {
+struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr_ptr = &intiobase,
 	  .pmbm_paddr     = INTIOBASE,
 	  .pmbm_size      = INTIOSIZE,
@@ -141,7 +140,6 @@ const struct pmap_bootmap machine_bootmap[] = {
 
 	{ .pmbm_vaddr = -1 },
 };
-#endif
 
 /*
  * Early initialization, before main() is called.

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.40 2026/04/23 02:54:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.41 2026/04/24 13:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2026/04/23 02:54:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2026/04/24 13:40:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -107,19 +107,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.40 2026/04/23 02:54:41 thorpej Exp $")
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
 
-#ifdef __HAVE_NEW_PMAP_68K
 /*
  * Clamp the kernel virtual address space to keep it out of the
  * TT ranges we use for devices.
  */
-const struct pmap_bootmap machine_bootmap[] = {
+struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr = VIRT68K_IO_BASE,
 	  .pmbm_size  = VIRT68K_IO_SIZE,
 	  .pmbm_flags = PMBM_F_KEEPOUT },
 
 	{ .pmbm_vaddr = -1 },
 };
-#endif
 
 static void
 machine_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),

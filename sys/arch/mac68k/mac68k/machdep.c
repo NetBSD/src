@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.385 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.386 2026/04/24 13:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.385 2026/04/23 02:54:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.386 2026/04/24 13:40:47 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -2605,7 +2605,6 @@ pmap_machine_check_bootstrap_allocations(paddr_t nextpa, paddr_t firstpa)
 	}
 }
 
-#ifdef __HAVE_NEW_PMAP_68K
 #define	PMBM_IOBase	0
 #define	PMBM_ROMBase	1
 #define	PMBM_VIDBase	2
@@ -2627,7 +2626,6 @@ struct pmap_bootmap machine_bootmap[] = {
 
 	{ .pmbm_vaddr = -1 },
 };
-#endif /* __HAVE_NEW_PMAP_68K */
 
 paddr_t bootstrap_mac68k(int);
 

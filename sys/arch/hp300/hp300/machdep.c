@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.268 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.269 2026/04/24 13:40:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.268 2026/04/23 02:54:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2026/04/24 13:40:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -134,7 +134,6 @@ void	nmihand(struct frame);
 
 int	delay_divisor;		/* delay constant */
 
-#ifdef __HAVE_NEW_PMAP_68K
 /*
  * machine_bootmap[] is checked in pmap_bootstrap1() of the new m68k pmap
  * and it allocates kernel address space for intio devices.
@@ -143,7 +142,7 @@ int	delay_divisor;		/* delay constant */
 #define PMBM_EXTIO	1
 #define PMBM_BOOTINFO	2
 #define PMBM_MAXADDR	3
-const struct pmap_bootmap machine_bootmap[] = {
+struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr_ptr = (vaddr_t *)&intiobase,
 	  .pmbm_paddr = INTIOBASE,
 	  .pmbm_size  = INTIOSIZE,
@@ -168,6 +167,7 @@ const struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr = -1 },
 };
 
+#ifdef __HAVE_NEW_PMAP_68K
 /*
  * The new 68k pmap utilizes the MAXADDR page as the NULL segment table
  * to save a page, so we have to preserve PROM workarea for the next reboot.

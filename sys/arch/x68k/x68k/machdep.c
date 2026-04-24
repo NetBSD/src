@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.229 2026/04/23 02:54:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.230 2026/04/24 13:40:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.229 2026/04/23 02:54:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2026/04/24 13:40:47 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -139,21 +139,19 @@ static int basemem;
 int	delay_divisor = delay_divisor_est(25);
 
 
-#ifdef __HAVE_NEW_PMAP_68K
 /*
  * machine_bootmap[] is checked in pmap_bootstrap1() of the new m68k pmap
  * and it allocates kernel address space for intio devices.
  */
 static vaddr_t intiova;
 #define PMBM_INTIO	0
-const struct pmap_bootmap machine_bootmap[] = {
+struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr_ptr = &intiova,
 	  .pmbm_paddr = INTIOBASE,
 	  .pmbm_size  = INTIOSIZE,
 	  .pmbm_flags = PMBM_F_CI },
 	{ .pmbm_vaddr = -1 },
 };
-#endif
 
 static callout_t candbtimer_ch;
 

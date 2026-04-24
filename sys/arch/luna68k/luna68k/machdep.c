@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.130 2026/04/23 02:54:39 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.131 2026/04/24 13:40:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.130 2026/04/23 02:54:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2026/04/24 13:40:46 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -121,12 +121,11 @@ extern void ws_cnattach(void);
  */
 int	delay_divisor = delay_divisor_est40(25);
 
-#ifdef __HAVE_NEW_PMAP_68K
 /*
  * Clamp the kernel virtual address space to keep it out of the
  * TT ranges we use for devices.
  */
-const struct pmap_bootmap machine_bootmap[] = {
+struct pmap_bootmap machine_bootmap[] = {
 	{ .pmbm_vaddr = LUNA68K_IO0_TT_BASE,
 	  .pmbm_size  = LUNA68K_IO0_TT_SIZE,
 	  .pmbm_flags = PMBM_F_KEEPOUT },
@@ -137,7 +136,6 @@ const struct pmap_bootmap machine_bootmap[] = {
 
 	{ .pmbm_vaddr = -1 },
 };
-#endif
 
 /*
  * Early initialization, before main() is called.
