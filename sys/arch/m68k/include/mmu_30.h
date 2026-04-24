@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_30.h,v 1.4 2025/11/26 16:26:45 thorpej Exp $	*/
+/*	$NetBSD: mmu_30.h,v 1.5 2026/04/24 11:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _M68K_MMU_30_H_
 #define	_M68K_MMU_30_H_
+
+#include <m68k/mmu.h>
 
 /*
  * The built-in MMU in the 68030 is a subset of the 68851.  Section 9.6

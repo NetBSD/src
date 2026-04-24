@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.5 2025/11/07 14:37:03 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.6 2026/04/24 11:24:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _M68K_MMU_40_H_
 #define	_M68K_MMU_40_H_
+
+#include <m68k/mmu.h>
 
 /*
  * Translation table structures for the 68040 MMU.
@@ -222,7 +224,7 @@ extern uint32_t mmu_tt40[];
 #define	MMU_TTREG_ITT1	1
 #define	MMU_TTREG_DTT0	2
 #define	MMU_TTREG_DTT1	3
-#define	MMU_NTTREGS40
+#define	MMU_NTTREGS40	4
 
 void	mmu_load_urp40(paddr_t);
 void	mmu_load_urp60(paddr_t);
