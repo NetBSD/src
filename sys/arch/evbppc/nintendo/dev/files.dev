@@ -37,6 +37,10 @@ file	arch/evbppc/nintendo/dev/si.c			si
 attach	uhid at si with uhid_si
 file	arch/evbppc/nintendo/dev/uhid_si.c		uhid_si
 
+device	gba
+attach	gba at si with gba_si
+file	arch/evbppc/nintendo/dev/gba_si.c		gba_si
+
 define	ahb { [addr=-1], [irq=-1] }
 device	ahb: ahb
 attach	ahb at mainbus
