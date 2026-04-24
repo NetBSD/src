@@ -47,10 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #include "mainbus.h"
 #include "si.h"
 #include "gcpad_rdesc.h"
+#include "joybus.h"
 
 #define SI_NUM_CHAN		4
 
 #define SICOUTBUF(n)		((n) * 0xc + 0x00)
+#define   SIIDENTIFY		0x00000000
+#define   SIINIT		0x00400300
 #define SICINBUFH(n)		((n) * 0xc + 0x04)
 #define SICINBUFL(n)		((n) * 0xc + 0x08)
 #define SIPOLL			0x30
@@ -60,10 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #define SICOMCSR		0x34
 #define  SICOMCSR_TCINT		__BIT(31)
 #define  SICOMCSR_TCINTMSK	__BIT(30)
+#define  SICOMCSR_COMERR	__BIT(29)
 #define  SICOMCSR_RDSTINT	__BIT(28)
 #define  SICOMCSR_RDSTINTMSK	__BIT(27)
+#define  SICOMCSR_CH_EN    	__BIT(24)
 #define  SICOMCSR_OUTLNGTH	__BITS(22, 16)
 #define  SICOMCSR_INLNGTH	__BITS(14, 8)
+#define  SICOMCSR_CMD_EN   	__BIT(7)
+#define  SICOMCSR_CHANNEL	__BITS(2, 1)
 #define  SICOMCSR_TSTART	__BIT(0)
 #define SISR			0x38
 #define  SISR_OFF(n)		((3 - (n)) * 8)
@@ -105,6 +112,8 @@ struct si_channel {
 	kmutex_t		ch_lock;
 	kcondvar_t		ch_cv;
 	uint8_t			ch_state;
+	uint16_t		ch_id;
+	uint16_t		ch_id_extra;
 #define SI_STATE_OPEN		__BIT(0)
 #define SI_STATE_STOPPED	__BIT(1)
 	void			(*ch_intr)(void *, void *, u_int);
@@ -128,6 +137,12 @@ struct si_softc {
 #define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+#define AWAIT_SISR(sc, chan)	 					\
+	do { while (RD4(sc, SISR) & SISR_WRST(chan)); } while (0)
+#define AWAIT_SICOMCSR(sc)	 					\
+	do { while (RD4(sc, SICOMCSR) & SICOMCSR_TSTART); } while (0)
+
+
 static int	si_match(device_t, cfdata_t, void *);
 static void	si_attach(device_t, device_t, void *);
 
@@ -136,6 +151,7 @@ static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
+static int	si_identify(device_t, unsigned);
 
 static void	si_get_report_desc(void *, void **, int *);                   
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
@@ -190,6 +206,8 @@ si_attach(device_t parent, device_t self, void *aux)
 		    si_softintr, ch);
 		KASSERT(ch->ch_si != NULL);
 
+		si_identify(self, chan);
+
 		t = &ch->ch_hidev;
 		t->_cookie = &sc->sc_chan[chan];
 		t->_get_report_desc = si_get_report_desc;
@@ -223,7 +241,7 @@ si_rescan(device_t self, const char *ifattr, const int *locs)
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
 		struct si_channel *ch = &sc->sc_chan[chan];
 
-		if (ch->ch_dev == NULL) {
+		if (ch->ch_dev == NULL && (IS_GCPAD(ch->ch_id))) {
 			saa.saa_hidev = &ch->ch_hidev;
 			saa.saa_index = ch->ch_index;
 
@@ -252,6 +270,56 @@ si_print(void *aux, const char *pnp)
 	aprint_normal(" socket %d", saa->saa_index + 1);
 
 	return UNCONF;
+}
+
+
+/*
+ * Identify the device on the specified channel
+ *
+ * Disables Polling and uses the SI I/O Buffer directly to communicate with the
+ * device. The Identify Response is always a 2-byte identifier and 1-byte of
+ * extra data.
+ *
+ * TODO decide if i need mutex in here. kinda seems like you want to lock
+ * down the whole siiobuf whenever you are operating on it. i think it might
+ * need a mutex different than the channel level ones
+ *
+ * I think i will probably make an internal method that handles the communiction
+ * on the iobuffer and that can maintain the lock
+ */
+static int
+si_identify(device_t self, unsigned chan)
+{
+	uint32_t comcsr, siio;
+	struct si_softc * const sc = device_private(self);
+	struct si_channel *ch;
+
+	ch = &sc->sc_chan[chan];
+
+	WR4(sc, SIPOLL, RD4(sc, SIPOLL) & ~SIPOLL_EN(chan));
+	WR4(sc, SIIOBUF, SIIDENTIFY);
+	WR4(sc, SISR, SISR_WR(chan));
+	AWAIT_SISR(sc, chan);
+
+	WR4(sc, SICOMCSR,
+	    SICOMCSR_CH_EN |
+	    SICOMCSR_CMD_EN |
+	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
+	    __SHIFTIN(1, SICOMCSR_OUTLNGTH) |
+	    __SHIFTIN(3, SICOMCSR_INLNGTH) |
+	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
+	    SICOMCSR_TSTART
+	);
+	AWAIT_SICOMCSR(sc);
+	comcsr = RD4(sc, SICOMCSR);
+	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
+
+	siio = RD4(sc, SIIOBUF);
+	ch->ch_id = siio >> 16;
+	ch->ch_id_extra = siio & 0x0000FFFF;
+	aprint_normal("si_identify: Identified chan%d as 0x%08X / 0x%08X\n", chan, ch->ch_id, ch->ch_id_extra);
+
+	return 0;
 }
 
 static void
@@ -369,7 +437,7 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	(void)RD4(sc, SICINBUFL(ch->ch_index));
 
 	/* Init controller */
-	WR4(sc, SICOUTBUF(ch->ch_index), 0x00400300);
+	WR4(sc, SICOUTBUF(ch->ch_index), SIINIT);
 
 	/* Enable polling */
 	WR4(sc, SIPOLL, RD4(sc, SIPOLL) | SIPOLL_EN(ch->ch_index));
@@ -377,6 +445,7 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	WR4(sc, SISR, SISR_WR(ch->ch_index));
 	WR4(sc, SICOMCSR, RD4(sc, SICOMCSR) | SICOMCSR_TSTART);
 
+	// TODO - AWAIT_SICOMCSR and figure out error
 	error = 0;
 
 unlock:
