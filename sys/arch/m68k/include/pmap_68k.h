@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.12 2026/04/02 03:56:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.13 2026/04/24 14:47:36 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -436,6 +436,15 @@ void *	pmap_bootstrap2(void);
  * the mapping.  Used by bus_dma(9).
  */
 bool	pmap_extract_info(pmap_t, vaddr_t, paddr_t *, int *);
+
+/*
+ * Functions to determine if a VA/PA range is a static mapping created
+ * by pmap_bootstrap1(), for the benefit of bus_space(9).
+ */
+extern struct pmap_bootmap machine_bootmap[];
+bool	pmap_pa_has_static_mapping(paddr_t, size_t, vm_prot_t,
+	    vaddr_t *, int *);
+bool	pmap_va_is_static_mapping(vaddr_t, size_t);
 
 /*
  * Functions exported for compatibility with the Hibler pmap, where

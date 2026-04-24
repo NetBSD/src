@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.103 2026/03/24 03:31:55 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.104 2026/04/24 14:47:36 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.103 2026/03/24 03:31:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.104 2026/04/24 14:47:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,6 +137,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.103 2026/03/24 03:31:55 thorpej 
 #include <uvm/uvm_physseg.h>
 
 #include <m68k/cacheops.h>
+#include <m68k/mmu.h>
 
 #if !defined(M68K_MMU_MOTOROLA) && !defined(M68K_MMU_HP)
 #error Hit the road, Jack...
@@ -3068,4 +3069,105 @@ int
 kvtop(void *addr)
 {
 	return (int)vtophys((vaddr_t)addr);
+}
+
+/*
+ * pmap_pa_has_static_mapping:
+ *
+ *	Returns true if the specified PA (and length) has a static
+ *	mapping, and what that mapping is and its properties.
+ */
+bool
+pmap_pa_has_static_mapping(paddr_t pa, size_t len, vm_prot_t prot,
+    vaddr_t *vap, int *flagsp)
+{
+#if defined(M68030) || defined(M68040) || defined(M68060)
+	/* First, check for Transparent Translation. */
+	if (cputype >= CPU_68030 &&
+	    mmu_range_is_tt(pa, len, prot, flagsp)) {
+		*vap = pa;
+		return true;
+	}
+#endif
+
+	const struct pmap_bootmap *pmbm = machine_bootmap;
+	paddr_t lastpg = m68k_btop(pa + (len - 1));
+	paddr_t firstpg = m68k_btop(pa);
+	paddr_t tfirst, tlast;
+	vaddr_t tblva;
+	bool need_write = !!(prot & UVM_PROT_WRITE);
+
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & (PMBM_F_VAONLY|PMBM_F_KEEPOUT)) {
+			continue;
+		}
+		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
+			tblva = pmbm->pmbm_vaddr;
+		} else {
+			tblva = *pmbm->pmbm_vaddr_ptr;
+		}
+		tfirst = m68k_btop(pmbm->pmbm_paddr);
+		tlast = m68k_btop(pmbm->pmbm_paddr + (pmbm->pmbm_size - 1));
+
+		if (firstpg >= tfirst && lastpg <= tlast) {
+			if (need_write &&
+			    (pmbm->pmbm_flags & PMBM_F_RO) != 0) {
+				return false;
+			}
+			*vap = tblva + (pa & PGOFSET);
+			if (pmbm->pmbm_flags & PMBM_F_CI) {
+				*flagsp = PMAP_NOCACHE;
+			} else {
+				*flagsp = 0;
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * pmap_va_is_static_mapping:
+ *
+ *	Returns true if the specified VA (and length) is a static
+ *	mapping.
+ */
+bool
+pmap_va_is_static_mapping(vaddr_t va, size_t len)
+{
+#if defined(M68030) || defined(M68040) || defined(M68060)
+	int map_flags;
+
+	/* First, check for Transparent Translation. */
+	if (cputype >= CPU_68030 &&
+	    (mmu_range_is_tt(va, len, UVM_PROT_READ, &map_flags) ||
+	     mmu_range_is_tt(va, len, UVM_PROT_WRITE, &map_flags) ||
+	     mmu_range_is_tt(va, len, UVM_PROT_EXEC, &map_flags))) {
+		return true;
+	}
+#endif
+
+	const struct pmap_bootmap *pmbm = machine_bootmap;
+	vaddr_t lastpg = m68k_btop(va + (len - 1));
+	vaddr_t firstpg = m68k_btop(va);
+	vaddr_t tblva, tfirst, tlast;
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & (PMBM_F_VAONLY|PMBM_F_KEEPOUT)) {
+			continue;
+		}
+		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
+			tblva = pmbm->pmbm_vaddr;
+		} else {
+			tblva = *pmbm->pmbm_vaddr_ptr;
+		}
+		tfirst = m68k_btop(tblva);
+		tlast = m68k_btop(tblva + (pmbm->pmbm_size - 1));
+
+		if (firstpg >= tfirst && lastpg <= tlast) {
+			return true;
+		}
+	}
+
+	return false;
 }
