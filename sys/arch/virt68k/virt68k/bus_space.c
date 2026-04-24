@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.2 2026/04/24 14:49:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.1 2024/01/02 07:41:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2 2026/04/24 14:49:04 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
 #define _VIRT68K_BUS_SPACE_PRIVATE
@@ -63,22 +63,30 @@ int
 _bus_space_map(void *cookie, bus_addr_t addr, bus_size_t size, int flags,
     bus_space_handle_t *bushp)
 {
-	/*
-	 * All devices on virt68k are direct-mapped by TT registers.
-	 */
-	if (addr < VIRT68K_IO_BASE) {
-		return EINVAL;
+	vaddr_t va;
+	int map_flags;
+
+	if (pmap_pa_has_static_mapping(addr, size,
+				       UVM_PROT_READ|UVM_PROT_WRITE,
+				       &va, &map_flags)) {
+		*bushp = (bus_space_handle_t)va;
+		return 0;
 	}
 
-	*bushp = (bus_space_handle_t)addr;
-	return 0;
+	/* XXX dynamically allocate space for new mapping */
+
+	return EINVAL;
 }
 
 /* ARGSUSED */
 void
 _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 {
-	KASSERT((bus_addr_t)bush >= VIRT68K_IO_BASE);
+	if (pmap_va_is_static_mapping((vaddr_t)bush, size)) {
+		return;
+	}
+
+	/* XXX */
 }
 
 /* ARGSUSED */
