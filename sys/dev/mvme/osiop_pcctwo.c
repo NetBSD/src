@@ -1,4 +1,4 @@
-/*	$NetBSD: osiop_pcctwo.c,v 1.15 2026/04/24 12:09:13 martin Exp $	*/
+/*	$NetBSD: osiop_pcctwo.c,v 1.16 2026/04/24 12:33:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.15 2026/04/24 12:09:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osiop_pcctwo.c,v 1.16 2026/04/24 12:33:41 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,10 +120,10 @@ osiop_pcctwo_attach(device_t parent, device_t self, void *aux)
 	 */
 #ifdef MVME68K
 	if (machineid == MVME_172 || machineid == MVME_177) {
-		clk = cpuspeed_khz / 10;
+		clk = cpuspeed_khz / 1000;
 		ctest7 = 0;
 	} else {
-		clk = cpuspeed_khz * 5;
+		clk = (cpuspeed_khz / 1000) * 2;
 		ctest7 = OSIOP_CTEST7_SC0;
 	}
 #else
