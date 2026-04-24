@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.276 2026/04/23 02:54:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.277 2026/04/24 13:42:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.276 2026/04/23 02:54:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2026/04/24 13:42:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,6 +151,11 @@ volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
 volatile u_int8_t *draco_misc;
 volatile struct drioct *draco_ioct;
 #endif
+
+struct pmap_bootmap machine_bootmap[] = {
+	/* XXX */
+	{ .pmbm_vaddr = -1 },
+};
 
  /*
  * Console initialization: called early on from main,

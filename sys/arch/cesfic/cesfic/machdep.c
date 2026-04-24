@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.90 2026/04/23 02:54:38 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.91 2026/04/24 13:42:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.90 2026/04/23 02:54:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.91 2026/04/24 13:42:36 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -112,6 +112,11 @@ void	nmihand(struct frame);
 int	delay_divisor;		/* delay constant */
 
 extern void sicinit(void*);
+
+struct pmap_bootmap machine_bootmap[] = {
+	/* XXX */
+	{ .pmbm_vaddr = -1 },
+};
 
 void
 machine_init(paddr_t nextpa)
