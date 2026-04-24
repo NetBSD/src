@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.53 2026/04/02 03:56:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.54 2026/04/24 12:19:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -263,9 +263,21 @@ phys_ram_seg_t *pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 paddr_t	vtophys(vaddr_t va);
 
 /* Copy definitions from new pmap_68k.h to ease transition. */
+struct pmap_bootmap {
+	union {
+		vaddr_t		pmbm_vaddr;
+		vaddr_t *	pmbm_vaddr_ptr;
+	};
+	paddr_t			pmbm_paddr;
+	size_t			pmbm_size;
+	int			pmbm_flags;
+};
+
 #define	PMBM_F_VAONLY	__BIT(0)
-#define	PMBM_F_KEEPOUT	__BIT(1)
-#define	PMBM_F_CI	__BIT(2)	/* cache-inhibited mapping */
+#define	PMBM_F_FIXEDVA	__BIT(1)
+#define	PMBM_F_KEEPOUT	__BIT(2)
+#define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
+#define	PMBM_F_RO	__BIT(4)	/* read-only mapping */
 
 /*
  * pmap_bootstrap1() may need to relocate global references, and perform
