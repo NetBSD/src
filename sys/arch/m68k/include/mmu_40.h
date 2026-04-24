@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.6 2026/04/24 11:24:32 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.7 2026/04/24 12:22:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -31,8 +31,6 @@
 
 #ifndef _M68K_MMU_40_H_
 #define	_M68K_MMU_40_H_
-
-#include <m68k/mmu.h>
 
 /*
  * Translation table structures for the 68040 MMU.
@@ -214,6 +212,8 @@
 #define	MMUSR40_R	PTE40_RESIDENT
 
 #ifdef _KERNEL
+#include <m68k/mmu.h>
+
 /*
  * TT register value indices in the mmu_ttregs[] array.  Note that asm
  * code makes assumptions about these indices, to change them at your
