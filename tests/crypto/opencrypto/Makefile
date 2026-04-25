@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2019/12/03 04:20:45 hikaru Exp $
+# $NetBSD: Makefile,v 1.6 2026/04/25 00:37:29 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -27,8 +27,13 @@ PROGS+=		h_sha1hmac
 PROGS+=		h_sha2hmac
 PROGS+=		h_xcbcmac
 PROGS+=		h_ioctl
+PROGS+=		h_thread
 
 LDADD.h_comp_zlib+=	-lz
+DPADD.h_comp_zlib+=	${LIBZ}
 LDADD.h_comp_zlib_rnd+=	-lz
+DPADD.h_comp_zlib_rnd+=	${LIBZ}
+LDADD.h_thread+=	-lpthread
+DPADD.h_thread+=	${LIBPTHREAD}
 
 .include <bsd.test.mk>

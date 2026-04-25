@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.11 2025/04/18 23:35:31 riastradh Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.12 2026/04/25 00:37:29 christos Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -295,6 +295,19 @@ xcbcmac_cleanup() {
 	common_cleanup
 }
 
+atf_test_case thread cleanup
+thread_head() {
+	common_head "Test threaded crypto"
+}
+
+thread_body() {
+	common_body h_thread
+}
+
+thread_cleanup() {
+	common_cleanup
+}
+
 atf_test_case ioctl cleanup
 ioctl_head() {
 	common_head "Test ioctl for /dev/crypto"
@@ -333,5 +346,6 @@ atf_init_test_cases() {
 	atf_add_test_case sha1_hmac
 	atf_add_test_case sha2_hmac
 	atf_add_test_case xcbcmac
+	atf_add_test_case thread
 	atf_add_test_case ioctl
 }
