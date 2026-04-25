@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.53 2026/04/24 14:47:36 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.54 2026/04/25 11:56:13 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -218,7 +218,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.53 2026/04/24 14:47:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.54 2026/04/25 11:56:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3910,17 +3910,20 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 */
 	pt_entry_t proto_ro_pte;	/* read-only */
 	pt_entry_t proto_rw_pte;	/* read-write */
+	pt_entry_t proto_rw_cwt_pte;	/* read-write, cache-write-through */
 	pt_entry_t proto_rw_ci_pte;	/* read-write, cache-inhibited */
 	pt_entry_t proto_ste;
 
 	if (is_68040_class) {
-		proto_ro_pte    = PTE_VALID|PTE_WIRED|PTE_WP|PTE40_CM_WT;
-		proto_rw_pte    = PTE_VALID|PTE_WIRED       |PTE40_CM_CB;
-		proto_rw_ci_pte = PTE_VALID|PTE_WIRED       |PTE40_CM_NC_SER;
+		proto_ro_pte     = PTE_VALID|PTE_WIRED|PTE_WP|PTE40_CM_WT;
+		proto_rw_pte     = PTE_VALID|PTE_WIRED       |PTE40_CM_CB;
+		proto_rw_cwt_pte = PTE_VALID|PTE_WIRED       |PTE40_CM_WT;
+		proto_rw_ci_pte  = PTE_VALID|PTE_WIRED       |PTE40_CM_NC_SER;
 	} else {
-		proto_ro_pte    = PTE_VALID|PTE_WIRED|PTE_WP;
-		proto_rw_pte    = PTE_VALID|PTE_WIRED;
-		proto_rw_ci_pte = PTE_VALID|PTE_WIRED       |PTE51_CI;
+		proto_ro_pte     = PTE_VALID|PTE_WIRED|PTE_WP;
+		proto_rw_pte     = PTE_VALID|PTE_WIRED;
+		proto_rw_cwt_pte = PTE_VALID|PTE_WIRED;
+		proto_rw_ci_pte  = PTE_VALID|PTE_WIRED       |PTE51_CI;
 	}
 	proto_ste = DTE51_U | DT51_SHORT;
 
@@ -4232,9 +4235,12 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 		}
 		pa = pmbm->pmbm_paddr;
 		pte = VA_PTE_BASE(va, var);
-		switch (pmbm->pmbm_flags & (PMBM_F_CI|PMBM_F_RO)) {
+		switch (pmbm->pmbm_flags & (PMBM_F_CI|PMBM_F_CWT|PMBM_F_RO)) {
 		case PMBM_F_CI|PMBM_F_RO:
 			proto = proto_rw_ci_pte | PTE_WP;
+			break;
+		case PMBM_F_CWT:
+			proto = proto_rw_cwt_pte;
 			break;
 		case PMBM_F_CI:
 			proto = proto_rw_ci_pte;
