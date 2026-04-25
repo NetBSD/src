@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.112 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.113 2026/04/25 01:07:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -453,14 +453,11 @@ GLOBAL(intiobase)
 GLOBAL(fbbase)
 	.long	0		| KVA of base of framebuffer
 
-GLOBAL(fblimit)
-	.long	0		| KVA of end of framebuffer
+GLOBAL(fbmapsize)
+	.long	0		| size of framebuffer (page-rounded)
 
 GLOBAL(fbbasepa)
 	.long	MONOBASE	| PA of base of framebuffer
-
-GLOBAL(fblimitpa)
-	.long	MONOTOP		| PA of end of framebuffer
 
 GLOBAL(monbootflag)
 	.long 0

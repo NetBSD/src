@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2025/11/24 16:58:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2026/04/25 01:07:09 thorpej Exp $	*/
 
 #ifndef _NEXT68K_PMAP_H_
 #define	_NEXT68K_PMAP_H_
@@ -8,6 +8,9 @@
 #else
 #include <m68k/pmap_motorola.h>
 #endif /* __HAVE_NEW_PMAP_68K */
+
+#define	PMBM_I_INTIO		0
+#define	PMBM_I_FB		1
 
 #include <m68k/mmu_40.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.33 2026/04/04 12:24:41 thorpej Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.34 2026/04/25 01:07:09 thorpej Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.33 2026/04/04 12:24:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.34 2026/04/25 01:07:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
@@ -33,6 +33,8 @@ __KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.33 2026/04/04 12:24:41 thorpej Exp $")
 #include <sys/param.h>
 #include <sys/types.h>
 #include <machine/cpu.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <m68k/seglist.h>
 #include <next68k/next68k/nextrom.h>
@@ -233,7 +235,8 @@ next68k_bootargs(unsigned char **args)
 		int j = 0;
 		char mach;
 		int turbo_l, iscolor_l;
-		paddr_t fbbasepa_l, fblimitpa_l;
+		paddr_t fbbasepa_l;
+		size_t fbmapsize_l;
 
 		if (MONRELOC(char, MG_machine_type) == NeXT_X15) {
 			msize16 = 0x1000000;
@@ -290,20 +293,31 @@ next68k_bootargs(unsigned char **args)
 			iscolor_l = 0;
 		if (turbo_l == 1) {
 			fbbasepa_l  = TURBOFBBASE;
-			fblimitpa_l = (iscolor_l == 1) ?
-			    TURBOCOLORTOP : TURBOMONOTOP;
+			if (iscolor_l) {
+				fbmapsize_l = m68k_round_page(TURBOCOLORTOP);
+			} else {
+				fbmapsize_l = m68k_round_page(TURBOMONOTOP);
+			}
+			fbmapsize_l -= TURBOFBBASE;
 		} else {
 			if (iscolor_l == 1) {
 				fbbasepa_l  = COLORBASE;
-				fblimitpa_l = COLORTOP;
+				fbmapsize_l = m68k_round_page(COLORTOP) -
+				    COLORBASE;
 			} else {
 				fbbasepa_l  = MONOBASE;
-				fblimitpa_l = MONOTOP;
+				fbmapsize_l = m68k_round_page(MONOTOP) -
+				    MONOBASE;
 			}
 		}
 		RELOC(iscolor, int) = iscolor_l;
+		/* XXX clean-up the redundancy at some point. */
 		RELOC(fbbasepa, paddr_t) = fbbasepa_l;
-		RELOC(fblimitpa, paddr_t) = fblimitpa_l;
+		RELOC(fbmapsize, size_t) = fbmapsize_l;
+		RELOC(machine_bootmap[PMBM_I_FB].pmbm_paddr, paddr_t)
+		    = fbbasepa_l;
+		RELOC(machine_bootmap[PMBM_I_FB].pmbm_size, size_t)
+		    = fbmapsize_l;
 
 		for (ix = 0; ix < N_SIMM; ix++) {
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.59 2026/04/05 14:35:49 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.60 2026/04/25 01:07:09 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/mvme68k/pmap_bootstrap.c
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.59 2026/04/05 14:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.60 2026/04/25 01:07:09 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -101,7 +101,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 #if defined(M68040) || defined(M68060)
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
 #endif
-	u_int fbmapsize;
+	u_int fbnpages;
 
 	nextpa = m68k_round_page(nextpa);
 
@@ -140,10 +140,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	kptmpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	fbmapsize = btoc(RELOC(fblimitpa, paddr_t) - RELOC(fbbasepa, paddr_t));
+	fbnpages = btoc(RELOC(fbmapsize, size_t));
 	nptpages = RELOC(Sysptsize, int) +
 	    howmany(RELOC(physmem, psize_t), NPTEPG) +
-	    (IIOMAPSIZE + fbmapsize + NPTEPG - 1) / NPTEPG;
+	    (IIOMAPSIZE + fbnpages + NPTEPG - 1) / NPTEPG;
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -390,9 +390,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 
 	protopte = RELOC(fbbasepa, paddr_t) |
 	    PG_RW | PG_CWT | PG_U | PG_M | PG_V;
-	epte = &pte[fbmapsize];
+	epte = &pte[fbnpages];
 	RELOC(fbbase, vaddr_t) = PTE2VA(pte);
-	RELOC(fblimit, vaddr_t) = PTE2VA(epte);
 	while (pte < epte) {
 		*pte++ = protopte;
 		protopte += PAGE_SIZE;

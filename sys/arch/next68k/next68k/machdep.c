@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.144 2026/04/24 13:40:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.145 2026/04/25 01:07:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.144 2026/04/24 13:40:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2026/04/25 01:07:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -133,12 +133,17 @@ int	delay_divisor = delay_divisor_est40(33);
 /****************************************************************/
 
 struct pmap_bootmap machine_bootmap[] = {
-	{ .pmbm_vaddr_ptr = &intiobase,
-	  .pmbm_paddr     = INTIOBASE,
-	  .pmbm_size      = INTIOSIZE,
-	  .pmbm_flags     = PMBM_F_CI },
+[PMBM_I_INTIO]	=	{ .pmbm_vaddr_ptr = &intiobase,
+			  .pmbm_paddr     = INTIOBASE,
+			  .pmbm_size      = INTIOSIZE,
+			  .pmbm_flags     = PMBM_F_CI },
 
-	{ .pmbm_vaddr = -1 },
+[PMBM_I_FB]	=	{ .pmbm_vaddr_ptr = &fbbase,
+			  .pmbm_paddr     = 0,	/* filled in by... */
+			  .pmbm_size      = 0,	/* ...next68k_bootargs() */
+			  .pmbm_flags     = PMBM_F_CWT },
+
+			{ .pmbm_vaddr = -1 },
 };
 
 /*
