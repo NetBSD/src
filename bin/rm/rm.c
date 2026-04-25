@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.55 2025/05/12 06:34:19 kim Exp $ */
+/* $NetBSD: rm.c,v 1.56 2026/04/25 20:23:01 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.55 2025/05/12 06:34:19 kim Exp $");
+__RCSID("$NetBSD: rm.c,v 1.56 2026/04/25 20:23:01 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static int dflag, eval, fflag, iflag, Pflag, stdin_ok, vflag, Wflag;
 static int xflag;
 static sig_atomic_t pinfo;
 
-static int	check(char *, char *, struct stat *);
+static int	check(char *, char *, struct stat *, const char *);
 static void	checkdot(char **);
 static void	progress(int);
 static void	rm_file(char **);
@@ -214,7 +214,7 @@ rm_tree(char **argv)
 		case FTS_D:
 			/* Pre-order: give user chance to skip. */
 			if (!fflag && !check(p->fts_path, p->fts_accpath,
-			    p->fts_statp)) {
+			    p->fts_statp, "examine files in")) {
 				(void)fts_set(fts, p, FTS_SKIP);
 				p->fts_number = SKIPPED;
 			}
@@ -223,10 +223,12 @@ rm_tree(char **argv)
 			/* Post-order: see if user skipped. */
 			if (p->fts_number == SKIPPED)
 				continue;
+			else if (fflag && check(p->fts_path, p->fts_accpath, p->fts_statp, "remove"))
+				break;
 			break;
 		default:
 			if (!fflag &&
-			    !check(p->fts_path, p->fts_accpath, p->fts_statp))
+			    !check(p->fts_path, p->fts_accpath, p->fts_statp, "remove"))
 				continue;
 		}
 
@@ -239,6 +241,9 @@ rm_tree(char **argv)
 		switch (p->fts_info) {
 		case FTS_DP:
 		case FTS_DNR:
+			if (!check(p->fts_path, p->fts_accpath, p->fts_statp,   
+						"remove"))
+				continue;
 			rval = rmdir(p->fts_accpath);
 			if (rval != 0 && fflag && errno == ENOENT)
 				continue;
@@ -307,7 +312,7 @@ rm_file(char **argv)
 			eval = 1;
 			continue;
 		}
-		if (!fflag && !S_ISWHT(sb.st_mode) && !check(f, f, &sb))
+		if (!fflag && !S_ISWHT(sb.st_mode) && !check(f, f, &sb, "remove"))
 			continue;
 		if (S_ISWHT(sb.st_mode))
 			rval = undelete(f);
@@ -515,14 +520,14 @@ err:	eval = 1;
 }
 
 static int
-check(char *path, char *name, struct stat *sp)
+check(char *path, char *name, struct stat *sp, const char *dowhat)
 {
 	int ch, first;
 	char modep[15];
 
 	/* Check -i first. */
 	if (iflag)
-		(void)fprintf(stderr, "remove '%s'? ", path);
+		(void)fprintf(stderr, "%s '%s'? ", dowhat, path);
 	else {
 		/*
 		 * If it's not a symbolic link and it's unwritable and we're
