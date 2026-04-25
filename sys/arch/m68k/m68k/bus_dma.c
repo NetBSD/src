@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.42 2026/04/03 14:58:00 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.43 2026/04/25 11:50:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.42 2026/04/03 14:58:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2026/04/25 11:50:16 thorpej Exp $");
 
 #define _M68K_BUS_DMA_PRIVATE
 
@@ -148,7 +148,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 #if defined(__HAVE_NEW_PMAP_68K)
 		rv = pmap_extract_info(pmap, vaddr, &curaddr, &cacheable);
 		KASSERT(rv);
-		cacheable &= PMAP_NOCACHE;
+		cacheable = !(cacheable & PMAP_NOCACHE);
 #else
 		rv = pmap_extract(pmap, vaddr, (paddr_t *) &curaddr);
 		KASSERT(rv);
