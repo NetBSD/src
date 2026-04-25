@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.39 2026/04/20 09:47:46 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.40 2026/04/25 13:49:08 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -36,6 +36,8 @@ define NEXT_RAMBASE             NEXT_RAMBASE
 # For mmu_subr.s
 # These values are used only during initial bootstrap; the TT registers
 # are subsequently disabled.
+define	MACHINE_TT0		NEXT68K_TT30_KERN
+define	MACHINE_TT1		NEXT68K_TT30_IO
 define	MACHINE_ITT0		NEXT68K_TT40_KERN
 define	MACHINE_DTT0		NEXT68K_TT40_KERN
 define	MACHINE_DTT1		NEXT68K_TT40_IO
