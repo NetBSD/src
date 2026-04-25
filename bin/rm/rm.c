@@ -1,4 +1,4 @@
-/* $NetBSD: rm.c,v 1.56 2026/04/25 20:23:01 jschauma Exp $ */
+/* $NetBSD: rm.c,v 1.57 2026/04/25 20:28:46 jschauma Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993, 1994, 2003
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)rm.c	8.8 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: rm.c,v 1.56 2026/04/25 20:23:01 jschauma Exp $");
+__RCSID("$NetBSD: rm.c,v 1.57 2026/04/25 20:28:46 jschauma Exp $");
 #endif
 #endif /* not lint */
 
@@ -223,8 +223,6 @@ rm_tree(char **argv)
 			/* Post-order: see if user skipped. */
 			if (p->fts_number == SKIPPED)
 				continue;
-			else if (fflag && check(p->fts_path, p->fts_accpath, p->fts_statp, "remove"))
-				break;
 			break;
 		default:
 			if (!fflag &&
