@@ -519,7 +519,9 @@
  * If defined, support the use of rdtscp to get the time stamp counter
  * and the processor ID.
  */
+#if defined(__x86_64__) || defined(__i386__)
 #define JEMALLOC_HAVE_RDTSCP 
+#endif
 
 #ifndef __lint__
 #if __SIZEOF_INT128__
