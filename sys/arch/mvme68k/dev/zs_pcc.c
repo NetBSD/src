@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.21 2008/04/28 20:23:29 martin Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.22 2026/04/26 18:02:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.21 2008/04/28 20:23:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.22 2026/04/26 18:02:57 thorpej Exp $");
+
+#define	_M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,7 +189,7 @@ zsc_pcccninit(struct consdev *cp)
 	bus_space_handle_t bush;
 	struct zsdevice zs;
 
-	bus_space_map(&_mainbus_space_tag,
+	bus_space_map(&m68k_simple_bus_space,
 	    intiobase_phys + MAINBUS_PCC_OFFSET + PCC_ZS0_OFF, 4, 0, &bush);
 
 	/* XXX: This is a gross hack. I need to bus-space zs.c ... */

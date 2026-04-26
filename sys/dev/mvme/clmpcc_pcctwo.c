@@ -1,4 +1,4 @@
-/*	$NetBSD: clmpcc_pcctwo.c,v 1.20 2014/03/25 15:52:16 christos Exp $	*/
+/*	$NetBSD: clmpcc_pcctwo.c,v 1.21 2026/04/26 18:02:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.20 2014/03/25 15:52:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.21 2026/04/26 18:02:57 thorpej Exp $");
+
+/* XXX see below */
+#ifdef __m68k__
+#define	_M68K_BUS_SPACE_PRIVATE
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +67,10 @@ __KERNEL_RCSID(0, "$NetBSD: clmpcc_pcctwo.c,v 1.20 2014/03/25 15:52:16 christos 
 /* XXXXSCW: Fixme */
 #ifdef MVME68K
 #include <mvme68k/dev/mainbus.h>
+#define	cons_space_tag		m68k_simple_bus_space
 #else
 #error Need consiack hook
 #endif
-
 
 /* Definition of the driver for autoconfig. */
 int clmpcc_pcctwo_match(device_t, cfdata_t, void *);
@@ -210,7 +215,7 @@ clmpcc_pcctwo_consiackhook(struct clmpcc_softc *sc, int which)
 	bush = (bus_space_handle_t) & (intiobase[MAINBUS_PCCTWO_OFFSET +
 		PCCTWO_REG_OFF]);
 
-	foo = bus_space_read_1(&_mainbus_space_tag, bush, offset);
+	foo = bus_space_read_1(&cons_space_tag, bush, offset);
 	__USE(foo);
 #else
 #error Need consiack hook
@@ -255,8 +260,8 @@ clmpcccninit(struct consdev *cp)
 {
 	static struct clmpcc_softc cons_sc;
 
-	cons_sc.sc_iot = &_mainbus_space_tag;
-	bus_space_map(&_mainbus_space_tag,
+	cons_sc.sc_iot = &cons_space_tag;
+	bus_space_map(&cons_space_tag,
 	    intiobase_phys + MAINBUS_PCCTWO_OFFSET + PCCTWO_SCC_OFF,
 	    PCC2REG_SIZE, 0, &cons_sc.sc_ioh);
 	cons_sc.sc_clk = 20000000;

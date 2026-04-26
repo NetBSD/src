@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.27 2026/04/26 18:02:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.27 2026/04/26 18:02:57 thorpej Exp $");
 
 #include "opt_mvmeconf.h"
 #include "vmetwo.h"
@@ -46,10 +46,10 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.26 2026/04/04 16:48:21 thorpej Exp $")
 #include <sys/kcore.h>
 
 #define _M68K_BUS_DMA_PRIVATE
-#define _MVME68K_BUS_SPACE_PRIVATE
+#define _M68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 #undef _M68K_BUS_DMA_PRIVATE
-#undef _MVME68K_BUS_SPACE_PRIVATE
+#undef _M68K_BUS_SPACE_PRIVATE
 #include <machine/cpu.h>
 
 #include <m68k/seglist.h>
@@ -129,19 +129,6 @@ struct m68k_bus_dma_tag _mainbus_dma_tag = {
 	_bus_dmamem_mmap
 };
 
-struct mvme68k_bus_space_tag _mainbus_space_tag = {
-	NULL,
-	_bus_space_map,
-	_bus_space_unmap,
-	_bus_space_peek_1,
-	_bus_space_peek_2,
-	_bus_space_peek_4,
-	_bus_space_poke_1,
-	_bus_space_poke_2,
-	_bus_space_poke_4
-};
-
-
 /* ARGSUSED */
 int
 mainbus_match(device_t parent, cfdata_t cf, void *args)
@@ -201,7 +188,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 		    && machineid != MVME_147
 #endif
 		    ) {
-			(void)vmetwo_probe(&_mainbus_space_tag,
+			(void)vmetwo_probe(&m68k_simple_bus_space,
 			    intiobase_phys + MAINBUS_VMETWO_OFFSET);
 			continue;
 		}
@@ -209,7 +196,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 #endif
 		ma.ma_name = devices[i].md_name;
 		ma.ma_dmat = &_mainbus_dma_tag;
-		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_bust = &m68k_simple_bus_space;
 		ma.ma_offset = devices[i].md_offset + intiobase_phys;
 
 		(void)config_found(self, &ma, mainbus_print, CFARGS_NONE);
@@ -230,7 +217,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	{
 		ma.ma_name = "memc";
 		ma.ma_dmat = &_mainbus_dma_tag;
-		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_bust = &m68k_simple_bus_space;
 		ma.ma_offset = MAINBUS_MEMC1_OFFSET + intiobase_phys;
 		(void)config_found(self, &ma, mainbus_print, CFARGS_NONE);
 		ma.ma_offset = MAINBUS_MEMC2_OFFSET + intiobase_phys;
@@ -248,7 +235,7 @@ mainbus_attach(device_t parent, device_t self, void *args)
 	{
 		ma.ma_name = "ipack";
 		ma.ma_dmat = &_mainbus_dma_tag;
-		ma.ma_bust = &_mainbus_space_tag;
+		ma.ma_bust = &m68k_simple_bus_space;
 		ma.ma_offset = MAINBUS_IPACK_OFFSET + intiobase_phys;
 		(void)config_found(self, &ma, mainbus_print, CFARGS_NONE);
 	}

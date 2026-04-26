@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.h,v 1.8 2026/04/03 14:58:00 thorpej Exp $	*/
+/*	$NetBSD: mainbus.h,v 1.9 2026/04/26 18:02:57 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -55,7 +55,6 @@ struct mainbus_attach_args {
 #define	MAINBUS_IPACK_OFFSET	0x18000u	/* mvme162/mvme172 only */
 #define	MAINBUS_TIMEKEEPER_OFFSET 0x80000u
 
-extern struct mvme68k_bus_space_tag _mainbus_space_tag;
 extern struct m68k_bus_dma_tag   _mainbus_dma_tag;
 
 #endif /* _MVME68K_MAINBUS_H */
