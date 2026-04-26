@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.277 2026/04/24 13:42:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.278 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.277 2026/04/24 13:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.278 2026/04/26 10:52:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -550,16 +550,14 @@ dumpsys(void)
 	delay(5000000);		/* 5 seconds */
 }
 
-int	*nofault;
-
 int
 badaddr(register void *addr)
 {
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 1;
 	}
@@ -575,8 +573,8 @@ badbaddr(register void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 1;
 	}

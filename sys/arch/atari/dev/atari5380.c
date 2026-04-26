@@ -1,4 +1,4 @@
-/*	$NetBSD: atari5380.c,v 1.66 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: atari5380.c,v 1.67 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.66 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari5380.c,v 1.67 2026/04/26 10:52:14 thorpej Exp $");
 
 #include "opt_atariscsi.h"
 
@@ -494,7 +494,6 @@ static uint8_t *dma_ptr;
 void
 ncr5380_drq_intr(int poll)
 {
-	extern int *nofault;
 	label_t faultbuf;
 	int write;
 	u_long count;
@@ -511,13 +510,13 @@ ncr5380_drq_intr(int poll)
 	 * switching out of DATA-IN/OUT before we're done with the
 	 * current transfer.
 	 */
-	nofault = (int *)&faultbuf;
+	nofault = &faultbuf;
 
-	if (setjmp((label_t *) nofault)) {
+	if (setjmp(nofault)) {
 		u_long cnt, tmp;
 
 		PID("drq berr");
-		nofault = (int *)0;
+		nofault = NULL;
 
 		/*
 		 * Determine number of bytes transferred
@@ -547,21 +546,21 @@ ncr5380_drq_intr(int poll)
 			 */
 			SCSI_DMA->s_hdma_ctrl |= SDH_EOP;
 		} else {
-			nofault = (int *)&faultbuf;
+			nofault = &faultbuf;
 
 			/*
 			 * Try to figure out if the byte-count was
 			 * zero because there was no (more) data or
 			 * because the dma_ptr is bogus.
 			 */
-			if (setjmp((label_t *) nofault)) {
+			if (setjmp(nofault)) {
 				/*
 				 * Set the bus-error bit
 				 */
 				SCSI_DMA->s_hdma_ctrl |= SDH_BUSERR;
 			}
 			__asm volatile ("tstb	%0@(0)": : "a" (dma_ptr));
-			nofault = (int *)0;
+			nofault = NULL;
 		}
 
 		/*
@@ -613,7 +612,7 @@ ncr5380_drq_intr(int poll)
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (int *)0;
+	nofault = NULL;
 
 	/*
 	 * Schedule an interrupt

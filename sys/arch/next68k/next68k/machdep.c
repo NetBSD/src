@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.145 2026/04/25 01:07:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.146 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.145 2026/04/25 01:07:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.146 2026/04/26 10:52:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -325,48 +325,6 @@ cpu_reboot(int howto, char *bootstr)
 	doboot();
 	/*NOTREACHED*/
 }
-
-/* XXX should change the interface, and make one badaddr() function */
-
-int	*nofault;
-
-#if 0
-int
-badaddr(void *addr, int nbytes)
-{
-	int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr; if (i) return (0);
-#endif
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
-	}
-
-	switch (nbytes) {
-	case 1:
-		i = *(volatile char *)addr;
-		break;
-
-	case 2:
-		i = *(volatile short *)addr;
-		break;
-
-	case 4:
-		i = *(volatile int *)addr;
-		break;
-
-	default:
-		panic("badaddr: bad request");
-	}
-	nofault = NULL;
-	return (0);
-}
-#endif
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.

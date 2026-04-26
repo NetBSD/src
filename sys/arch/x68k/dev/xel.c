@@ -1,4 +1,4 @@
-/*	$NetBSD: xel.c,v 1.18 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: xel.c,v 1.19 2026/04/26 10:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.18 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xel.c,v 1.19 2026/04/26 10:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,8 +106,6 @@ xel_addr(device_t parent, cfdata_t match, struct intio_attach_args *ia)
 	return 0;
 }
 
-extern int *nofault;
-
 static int
 xel_probe(paddr_t addr)
 {
@@ -119,7 +117,7 @@ xel_probe(paddr_t addr)
 	if (badaddr(start))
 		return 0;
 
-	nofault = (int *) &faultbuf;
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf)) {
 		nofault = NULL;
 		return 0;
@@ -133,7 +131,7 @@ xel_probe(paddr_t addr)
 #if 0
 	/* the contents should be deferent. */
 	if (b1 == sram[0] && b2 == sram[1]) {
-		nofault = (int *) 0;
+		nofault = NULL;
 		return 0;
 	}
 #else
@@ -143,7 +141,7 @@ xel_probe(paddr_t addr)
 	if (sram[0] != 0x55555555 || sram[1] != 0xaaaaaaaa) {
 		sram[0] = b1;
 		sram[1] = b2;
-		nofault = (int *) 0;
+		nofault = NULL;
 		return 0;
 	}
 	sram[0] = 0xaaaaaaaa;
@@ -151,7 +149,7 @@ xel_probe(paddr_t addr)
 	if (sram[0] != 0xaaaaaaaa || sram[1] != 0x55555555) {
 		sram[0] = b1;
 		sram[1] = b2;
-		nofault = (int *) 0;
+		nofault = NULL;
 		return 0;
 	}
 	sram[0] = b1;

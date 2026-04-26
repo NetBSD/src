@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.5 2026/03/21 20:38:08 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.6 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2026 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2026/03/21 20:38:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.6 2026/04/26 10:52:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,8 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.5 2026/03/21 20:38:08 thorpej Exp $");
 #include <machine/cpu.h>
 #include <machine/frame.h>
 #include <machine/vectors.h>
-
-extern int *nofault;
 
 /*
  * This is the default, but may be overridden as we determine
@@ -85,9 +83,9 @@ fpu_init(void)
 		goto done;
 	}
 
-	nofault = (int *)&faultbuf;
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf)) {
-		nofault = (int *)0;
+		nofault = NULL;
 		fputype = FPU_NONE;
 		return;
 	}

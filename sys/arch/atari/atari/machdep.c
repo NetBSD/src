@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.206 2026/04/24 13:42:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.207 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.206 2026/04/24 13:42:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2026/04/26 10:52:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -438,17 +438,15 @@ straymfpint(int pc, u_short evec)
 	       evec & 0xFFF, pc);
 }
 
-int	*nofault;
-
 int
 badbaddr(void *addr, int size)
 {
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return 1;
 	}
 	switch (size) {
@@ -465,7 +463,7 @@ badbaddr(void *addr, int size)
 		panic("badbaddr: unknown size");
 	}
 	__USE(i);
-	nofault = (int *)0;
+	nofault = NULL;
 	return 0;
 }
 

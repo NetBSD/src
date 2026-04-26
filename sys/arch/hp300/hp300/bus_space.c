@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.24 2025/11/29 19:32:52 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.25 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2025/11/29 19:32:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.25 2026/04/26 10:52:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.24 2025/11/29 19:32:52 thorpej Exp $
 #include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>
-
-extern int *nofault;
 
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
@@ -169,8 +167,8 @@ hp300_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 	label_t faultbuf;
 	int i;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 0;
 	}

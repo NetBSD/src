@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.33 2013/09/06 17:43:19 tsutsui Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.34 2026/04/26 10:52:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.33 2013/09/06 17:43:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.34 2026/04/26 10:52:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.33 2013/09/06 17:43:19 tsutsui Exp $"
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3x/vme.h>
-
-label_t *nofault;
 
 /* These are defined in pmap.c */
 extern vaddr_t tmp_vpages[];

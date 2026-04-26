@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.35 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.36 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -182,6 +182,9 @@ void	cpu_startup_print_total_memory(void (*)(const char *, ...)
 				       __printflike(1, 2));
 #endif
 int	mm_md_physacc_regular(paddr_t, vm_prot_t);
+
+/* m68k_trap.c */
+extern label_t *nofault;
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);

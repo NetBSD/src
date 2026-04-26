@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.269 2026/04/24 13:40:46 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.270 2026/04/26 10:52:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.269 2026/04/24 13:40:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.270 2026/04/26 10:52:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -543,22 +543,20 @@ cpu_reboot(int howto, char *bootstr)
 
 /* XXX should change the interface, and make one badaddr() function */
 
-int	*nofault;
-
 int
 badaddr(void *addr)
 {
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return 1;
 	}
 	i = *(volatile short *)addr;
 	__USE(i);
-	nofault = (int *)0;
+	nofault = NULL;
 	return 0;
 }
 
@@ -568,14 +566,14 @@ badbaddr(void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return 1;
 	}
 	i = *(volatile char *)addr;
 	__USE(i);
-	nofault = (int *) 0;
+	nofault = NULL;
 	return 0;
 }
 
@@ -666,14 +664,14 @@ parityenable(void)
 {
 	label_t	faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		printf("Parity detection disabled\n");
 		return;
 	}
 	*PARREG = 1;
-	nofault = (int *)0;
+	nofault = NULL;
 	gotparmem = 1;
 }
 

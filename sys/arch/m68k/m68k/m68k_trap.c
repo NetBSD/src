@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.9 2026/04/03 14:59:55 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.10 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.9 2026/04/03 14:59:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.10 2026/04/26 10:52:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -654,6 +654,8 @@ userret(struct lwp *l, struct frame *f, u_quad_t t)
 	USERRET(l, f, t, 0, 0);
 }
 
+label_t	*nofault;
+
 /*
  * trap() is called by way of the trap stubs (fault[] and faultstkadj[])
  * to handle most types of processor traps, including events such as
@@ -806,9 +808,6 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 	case T_ILLINST:	/* fnop generates this, apparently. */
 	case T_FPEMULI:
 	case T_FPEMULD:
-	    {
-		extern label_t *nofault;
-
 		/* Check to see if we're probing for the FPU. */
 		if (nofault) {
 			longjmp(nofault);
@@ -819,7 +818,6 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 			printf("Kernel FPU trap.\n");
 		}
 		goto dopanic;
-	    }
 
 	case T_FPEMULI|T_USER:	/* unimplemented FP instruction */
 	case T_FPEMULD|T_USER:	/* unimplemented FP data type */

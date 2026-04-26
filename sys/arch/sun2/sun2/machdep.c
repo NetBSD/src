@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.98 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.99 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2026/04/23 02:54:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.99 2026/04/26 10:52:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -236,11 +236,6 @@ vaddr_t vmmap;
 
 /* Soft copy of the enable register. */
 volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
-
-/*
- * Our no-fault fault handler.
- */
-label_t *nofault;
 
 /*
  * dvmamap is used to manage DVMA memory.

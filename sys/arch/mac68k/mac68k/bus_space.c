@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.33 2025/12/02 02:23:21 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.34 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.33 2025/12/02 02:23:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2026/04/26 10:52:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,7 +51,6 @@ int	bus_mem_add_mapping(bus_addr_t, bus_size_t, int, bus_space_handle_t *);
 
 extern struct extent *iomem_ex;
 extern int iomem_malloc_safe;
-label_t *nofault;
 
 int
 bus_mem_add_mapping(bus_addr_t bpa, bus_size_t size, int flags,
@@ -272,7 +271,7 @@ mac68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t h,
 
 	nofault = &faultbuf;
 	if (setjmp(nofault)) {
-		nofault = (label_t *)0;
+		nofault = NULL;
 		return (0);
 	}
 
@@ -292,7 +291,7 @@ mac68k_bus_space_probe(bus_space_tag_t t, bus_space_handle_t h,
 		/* NOTREACHED */
 	}
 
-	nofault = (label_t *)0;
+	nofault = NULL;
 	return (1);
 }
 

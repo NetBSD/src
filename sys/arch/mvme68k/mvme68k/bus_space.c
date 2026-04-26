@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.13 2026/04/03 14:58:01 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.14 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.13 2026/04/03 14:58:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.14 2026/04/26 10:52:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,12 +56,6 @@ static	void	poke2(void *, u_int);
 static	void	poke4(void *, u_int);
 static	int	do_peek(void (*)(void *, void *), void *, void *);
 static	int	do_poke(void (*)(void *, u_int), void *, u_int);
-
-/*
- * Used in locore.s/trap.c to determine if faults are being trapped.
- */
-label_t *nofault;
-
 
 /* ARGSUSED */
 int

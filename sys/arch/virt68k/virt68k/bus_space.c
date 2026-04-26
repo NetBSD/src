@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.2 2026/04/24 14:49:04 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.3 2026/04/26 10:52:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.2 2026/04/24 14:49:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2026/04/26 10:52:16 thorpej Exp $");
 
 #define _VIRT68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
 #define _VIRT68K_BUS_SPACE_PRIVATE
@@ -52,11 +52,6 @@ static	void	poke2(void *, u_int);
 static	void	poke4(void *, u_int);
 static	int	do_peek(void (*)(void *, void *), void *, void *);
 static	int	do_poke(void (*)(void *, u_int), void *, u_int);
-
-/*
- * Used in locore.s/trap.c to determine if faults are being trapped.
- */
-label_t *nofault;
 
 /* ARGSUSED */
 int

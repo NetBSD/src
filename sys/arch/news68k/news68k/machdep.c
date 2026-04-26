@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.140 2026/04/24 13:40:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.141 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.140 2026/04/24 13:40:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.141 2026/04/26 10:52:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -292,8 +292,6 @@ cpu_reboot(int howto, char *bootstr)
 
 /* XXX should change the interface, and make one badaddr() function */
 
-int	*nofault;
-
 int
 badaddr(void *addr, int nbytes)
 {
@@ -304,9 +302,9 @@ badaddr(void *addr, int nbytes)
 	i = *addr; if (i) return 0;
 #endif
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return 1;
 	}
 	switch (nbytes) {
@@ -326,7 +324,7 @@ badaddr(void *addr, int nbytes)
 		panic("badaddr: bad request");
 	}
 	__USE(i);
-	nofault = (int *) 0;
+	nofault = NULL;
 	return 0;
 }
 
@@ -336,14 +334,14 @@ badbaddr(void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return 1;
 	}
 	i = *(volatile char *)addr;
 	__USE(i);
-	nofault = (int *) 0;
+	nofault = NULL;
 	return 0;
 }
 

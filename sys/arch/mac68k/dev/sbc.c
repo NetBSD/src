@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.72 2026/03/04 01:28:46 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.73 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.72 2026/03/04 01:28:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.73 2026/04/26 10:52:15 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,7 +92,6 @@ int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
-extern label_t	*nofault;
 extern void *	m68k_fault_addr;
 
 static	int	sbc_wait_busy(struct ncr5380_softc *);
@@ -472,7 +471,7 @@ sbc_drq_intr(void *p)
 
 	m68k_fault_addr = 0;
 	if (setjmp(nofault)) {
-		nofault = (label_t *)0;
+		nofault = NULL;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)m68k_fault_addr
 				  - (u_long)sc->sc_drq_addr));
@@ -620,7 +619,7 @@ sbc_drq_intr(void *p)
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (label_t *)0;
+	nofault = NULL;
 
 	splx(s);
 

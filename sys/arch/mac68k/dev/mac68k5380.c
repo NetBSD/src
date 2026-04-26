@@ -1,4 +1,4 @@
-/*	$NetBSD: mac68k5380.c,v 1.50 2018/09/03 16:29:25 riastradh Exp $	*/
+/*	$NetBSD: mac68k5380.c,v 1.51 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.50 2018/09/03 16:29:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mac68k5380.c,v 1.51 2026/04/26 10:52:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -351,7 +351,7 @@ static void
 do_ncr5380_drq_intr(void *p)
 {
 #if USE_PDMA
-extern	int			*nofault, m68k_fault_addr;
+extern	int			m68k_fault_addr;
 	label_t			faultbuf;
 	register int		count;
 	volatile u_int32_t	*long_drq;
@@ -372,11 +372,11 @@ extern	int			*nofault, m68k_fault_addr;
 	 * switching out of DATA-IN/OUT before we're done with the
 	 * current transfer.
 	 */
-	nofault = (int *) &faultbuf;
+	nofault = &faultbuf;
 
-	if (setjmp((label_t *) nofault)) {
+	if (setjmp(nofault)) {
 		PID("drq berr");
-		nofault = (int *) 0;
+		nofault = NULL;
 		count = (  (u_long) m68k_fault_addr
 			 - (u_long) ncr_5380_with_drq);
 		if ((count < 0) || (count > pending_5380_count)) {
@@ -507,7 +507,7 @@ extern	int			*nofault, m68k_fault_addr;
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (int *) 0;
+	nofault = NULL;
 
 	PID("end drq");
 	return;

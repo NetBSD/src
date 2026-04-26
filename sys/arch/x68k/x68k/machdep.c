@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.230 2026/04/24 13:40:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.231 2026/04/26 10:52:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.230 2026/04/24 13:40:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2026/04/26 10:52:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -438,16 +438,14 @@ cpu_reboot(int howto, char *bootstr)
 	/* NOTREACHED */
 }
 
-int	*nofault;
-
 int
 badaddr(volatile void* addr)
 {
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 1;
 	}
@@ -463,8 +461,8 @@ badbaddr(volatile void *addr)
 	int i;
 	label_t	faultbuf;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 1;
 	}
@@ -624,9 +622,9 @@ mem_exists(paddr_t mem, paddr_t basemax)
 		b -= off;
 	}
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
 		return false;
 	}
 
@@ -673,7 +671,7 @@ out:
 
 __asm("end_check_mem:");
 
-	nofault = (int *)0;
+	nofault = NULL;
 
 	return exists;
 }

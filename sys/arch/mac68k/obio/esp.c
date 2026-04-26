@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.65 2026/01/02 23:33:58 nia Exp $	*/
+/*	$NetBSD: esp.c,v 1.66 2026/04/26 10:52:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.65 2026/01/02 23:33:58 nia Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.66 2026/04/26 10:52:15 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,7 +731,6 @@ esp_quick_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	extern long mac68k_a2_fromfault;
-	extern int *nofault;
 	label_t faultbuf;
 	uint16_t volatile *pdma;
 	uint16_t *addr;
@@ -753,8 +752,8 @@ restart_dmago:
 		    (long) addr, (long) len, esc->sc_datain);
 	}
 #endif
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		int	i = 0;
 
 		nofault = NULL;

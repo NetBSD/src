@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.131 2026/04/24 13:40:46 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.132 2026/04/26 10:52:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.131 2026/04/24 13:40:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/04/26 10:52:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -394,17 +394,15 @@ haltsys:
 		;
 }
 
-int	*nofault;
-
 int
 badaddr(register void *addr, int nbytes)
 {
 	int i;
 	label_t faultbuf;
 
-	nofault = (int *)&faultbuf;
+	nofault = &faultbuf;
 	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
+		nofault = NULL;
 		return 1;
 	}
 
@@ -425,7 +423,7 @@ badaddr(register void *addr, int nbytes)
 		panic("badaddr: bad request");
 	}
 	__USE(i);
-	nofault = (int *)0;
+	nofault = NULL;
 	return 0;
 }
 
