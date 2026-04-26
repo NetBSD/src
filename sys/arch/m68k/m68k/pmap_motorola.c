@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.104 2026/04/24 14:47:36 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.105 2026/04/26 15:05:07 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.104 2026/04/24 14:47:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.105 2026/04/26 15:05:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3114,7 +3114,7 @@ pmap_pa_has_static_mapping(paddr_t pa, size_t len, vm_prot_t prot,
 			    (pmbm->pmbm_flags & PMBM_F_RO) != 0) {
 				return false;
 			}
-			*vap = tblva + (pa & PGOFSET);
+			*vap = tblva + (pa - pmbm->pmbm_paddr);
 			if (pmbm->pmbm_flags & PMBM_F_CI) {
 				*flagsp = PMAP_NOCACHE;
 			} else {
