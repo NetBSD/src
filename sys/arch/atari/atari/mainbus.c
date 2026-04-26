@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.14 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.15 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.14 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.15 2026/04/26 12:49:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -243,28 +243,28 @@ static int
 mb_bus_space_peek_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_1)), 1);
+	return !badaddr_sz((void *)(calc_addr(h, o, t->stride, t->wo_1)), 1);
 }
 
 static int
 mb_bus_space_peek_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_2)), 2);
+	return !badaddr_sz((void *)(calc_addr(h, o, t->stride, t->wo_2)), 2);
 }
 
 static int
 mb_bus_space_peek_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_4)), 4);
+	return !badaddr_sz((void *)(calc_addr(h, o, t->stride, t->wo_4)), 4);
 }
 
 static int
 mb_bus_space_peek_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(calc_addr(h, o, t->stride, t->wo_8)), 8);
+	return !badaddr_sz((void *)(calc_addr(h, o, t->stride, t->wo_8)), 8);
 }
 
 static uint8_t

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.132 2026/04/26 10:52:14 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.133 2026/04/26 12:49:38 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.132 2026/04/26 10:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/26 12:49:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -392,39 +392,6 @@ haltsys:
 	/*NOTREACHED*/
 	for (;;)
 		;
-}
-
-int
-badaddr(register void *addr, int nbytes)
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-
-	switch (nbytes) {
-	case 1:
-		i = *(volatile int8_t *)addr;
-		break;
-
-	case 2:
-		i = *(volatile int16_t *)addr;
-		break;
-
-	case 4:
-		i = *(volatile int32_t *)addr;
-		break;
-
-	default:
-		panic("badaddr: bad request");
-	}
-	__USE(i);
-	nofault = NULL;
-	return 0;
 }
 
 void luna68k_abort(const char *);

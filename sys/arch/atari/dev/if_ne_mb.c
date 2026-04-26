@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_mb.c,v 1.3 2021/08/17 22:00:27 andvar Exp $	*/
+/*	$NetBSD: if_ne_mb.c,v 1.4 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2010 Izumi Tsutsui.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.3 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_mb.c,v 1.4 2026/04/26 12:49:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,7 @@ ethernec_bus_space_peek_1(bus_space_tag_t bt, bus_space_handle_t bh,
 
 	va = (uint8_t *)(bh + (reg << ETHERNEC_PORT_STRIDE));
 
-	return !badbaddr(va, sizeof(uint8_t));
+	return !badaddr_sz(va, sizeof(uint8_t));
 }
 
 static uint8_t

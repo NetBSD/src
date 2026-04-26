@@ -1,4 +1,4 @@
-/* $NetBSD: lcd.c,v 1.13 2023/01/15 05:08:33 tsutsui Exp $ */
+/* $NetBSD: lcd.c,v 1.14 2026/04/26 12:49:37 thorpej Exp $ */
 /* $OpenBSD: lcd.c,v 1.7 2015/02/10 22:42:35 miod Exp $ */
 
 /*-
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>		/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.13 2023/01/15 05:08:33 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lcd.c,v 1.14 2026/04/26 12:49:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,7 +130,7 @@ lcd_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(ma->ma_name, lcd_cd.cd_name))
 		return 0;
-	if (badaddr((void *)ma->ma_addr, 4))
+	if (badaddr_sz((void *)ma->ma_addr, 4))
 		return 0;
 	return 1;
 }

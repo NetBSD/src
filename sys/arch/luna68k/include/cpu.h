@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.42 2024/01/20 00:15:31 thorpej Exp $ */
+/* $NetBSD: cpu.h,v 1.43 2026/04/26 12:49:37 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,9 +63,6 @@ extern	u_int intiobase_phys, intiotop_phys;	/* XXX */
 
 /* machdep.c functions */
 void	dumpsys(void);
-
-/* machdep.c functions */
-int	badaddr(void *, int);
 
 #endif
 

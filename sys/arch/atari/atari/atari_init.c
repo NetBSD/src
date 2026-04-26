@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.118 2026/03/24 06:23:09 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.119 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.118 2026/03/24 06:23:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.119 2026/04/26 12:49:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -719,7 +719,7 @@ milan_probe_bank_1(paddr_t start_paddr)
 	base[MB_END(16)] = MAGIC_16M;
 
 	/* check bus error at the end of 32MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(32)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(32))) {
 		/* bus error; assume no memory there */
 		goto out16;
 	}
@@ -735,7 +735,7 @@ milan_probe_bank_1(paddr_t start_paddr)
 	mb = 32;
 
 	/* check bus error at the end of 64MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(64)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(64))) {
 		/* bus error; assume no memory there */
 		goto out32;
 	}
@@ -775,7 +775,7 @@ milan_probe_bank(paddr_t start_paddr)
 	base = (uint8_t *)start_paddr;
 
 	/* check bus error at the end of 4MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(4)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(4))) {
 		/* bus error; assume no memory there */
 		goto out;
 	}
@@ -796,7 +796,7 @@ milan_probe_bank(paddr_t start_paddr)
 	mb = 4;
 
 	/* check bus error at the end of 8MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(8)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(8))) {
 		/* bus error; assume no memory there */
 		goto out4;
 	}
@@ -812,7 +812,7 @@ milan_probe_bank(paddr_t start_paddr)
 	mb = 8;
 
 	/* check bus error at the end of 16MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(16)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(16))) {
 		/* bus error; assume no memory there */
 		goto out8;
 	}
@@ -851,18 +851,17 @@ set_machtype(void)
 
 #else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if (badbaddr((void *)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
+	if (badbaddr(&MFP2->mf_gpip)) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if (!badbaddr((void *)__UNVOLATILE(&MFP->mf_gpip),
-		    sizeof(char))) {
+		if (!badbaddr(&MFP->mf_gpip)) {
 			machineid |= ATARI_FALCON;
 			return;
 		}
 	}
-	if (!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
+	if (!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
 		machineid |= ATARI_HADES;
 	else
 		machineid |= ATARI_TT;

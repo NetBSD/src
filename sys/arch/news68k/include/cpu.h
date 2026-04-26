@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.60 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.61 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,10 +89,6 @@ void doboot(int)
 void nmihand(struct frame *);
 void ecacheon(void);
 void ecacheoff(void);
-
-/* machdep.c functions */
-int badaddr(void *, int);
-int badbaddr(void *);
 
 #endif
 

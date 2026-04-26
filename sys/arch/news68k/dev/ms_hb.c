@@ -1,4 +1,4 @@
-/*	$NetBSD: ms_hb.c,v 1.16 2021/08/07 16:19:00 thorpej Exp $	*/
+/*	$NetBSD: ms_hb.c,v 1.17 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.16 2021/08/07 16:19:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ms_hb.c,v 1.17 2026/04/26 12:49:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -105,7 +105,7 @@ ms_hb_match(device_t parent, cfdata_t cf, void *aux)
 
 	addr = ha->ha_address; /* XXX */
 
-	if (badaddr((void *)addr, 1))
+	if (badbaddr((void *)addr))
 		return 0;
 
 	return 1;

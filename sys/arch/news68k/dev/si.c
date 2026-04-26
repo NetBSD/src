@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.27 2025/11/12 18:59:50 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.28 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.27 2025/11/12 18:59:50 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.28 2026/04/26 12:49:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ si_match(device_t parent, cfdata_t cf, void *aux)
 
 	addr = (ha->ha_address);
 
-	if (badaddr((void *)addr, 1))
+	if (badbaddr((void *)addr))
 		return 0;
 
 	if (si_test(addr) == 0)

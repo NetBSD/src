@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.92 2026/04/26 10:52:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.93 2026/04/26 12:49:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.92 2026/04/26 10:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.93 2026/04/26 12:49:37 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -414,42 +414,6 @@ dumpsys(void)
 		}
 	}
 	printf("succeeded\n");
-}
-
-/* XXX should change the interface, and make one badaddr() function */
-
-int
-badaddr(void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return (1);
-	}
-	i = *(volatile short *)addr;
-	__USE(i);
-	nofault = NULL;
-	return (0);
-}
-
-int
-badbaddr(void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return (1);
-	}
-	i = *(volatile char *)addr;
-	__USE(i);
-	nofault = NULL;
-	return (0);
 }
 
 #ifdef PANICBUTTON

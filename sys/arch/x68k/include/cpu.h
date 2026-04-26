@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.68 2025/11/19 18:37:18 tsutsui Exp $	*/
+/*	$NetBSD: cpu.h,v 1.69 2026/04/26 12:49:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,11 +60,6 @@ extern uint8_t *intiobase;
 
 /* machdep.c functions */
 void	dumpsys(void);
-
-/* machdep.c functions */
-int	badaddr(volatile void*);
-int	badbaddr(volatile void*);
-
 #endif /* _KERNEL */
 
 /* physical memory sections */

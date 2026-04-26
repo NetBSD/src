@@ -1,4 +1,4 @@
-/*	$NetBSD: if_we_vme.c,v 1.4 2014/10/18 08:33:25 snj Exp $	*/
+/*	$NetBSD: if_we_vme.c,v 1.5 2026/04/26 12:49:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2010 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.4 2014/10/18 08:33:25 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_we_vme.c,v 1.5 2026/04/26 12:49:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,5 +448,5 @@ smctt_bus_space_peek_1(bus_space_tag_t bt, bus_space_handle_t bh,
 		va = (uint8_t *)(bh + reg);
 	}
 
-	return !badbaddr(va, sizeof(uint8_t));
+	return !badaddr_sz(va, sizeof(uint8_t));
 }

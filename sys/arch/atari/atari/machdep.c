@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.207 2026/04/26 10:52:14 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.208 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.207 2026/04/26 10:52:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2026/04/26 12:49:36 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -436,35 +436,6 @@ straymfpint(int pc, u_short evec)
 
 	printf("unexpected mfp-interrupt (vector offset 0x%x) from 0x%x\n",
 	       evec & 0xFFF, pc);
-}
-
-int
-badbaddr(void *addr, int size)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-	switch (size) {
-	case 1:
-		i = *(volatile uint8_t *)addr;
-		break;
-	case 2:
-		i = *(volatile uint16_t *)addr;
-		break;
-	case 4:
-		i = *(volatile uint32_t *)addr;
-		break;
-	default:
-		panic("badbaddr: unknown size");
-	}
-	__USE(i);
-	nofault = NULL;
-	return 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: sio.c,v 1.16 2021/09/25 15:18:38 tsutsui Exp $ */
+/* $NetBSD: sio.c,v 1.17 2026/04/26 12:49:37 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.16 2021/09/25 15:18:38 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sio.c,v 1.17 2026/04/26 12:49:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ sio_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (strcmp(ma->ma_name, sio_cd.cd_name))
 		return 0;
-	if (badaddr((void *)ma->ma_addr, 4))
+	if (badaddr_sz((void *)ma->ma_addr, 4))
 		return 0;
 	return 1;
 }

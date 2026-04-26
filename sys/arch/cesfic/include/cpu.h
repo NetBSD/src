@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.37 2024/01/20 00:15:31 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.38 2026/04/26 12:49:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,10 +54,6 @@
 /* locore.s functions */
 void	doboot(void)
 	__attribute__((__noreturn__));
-
-/* machdep.c functions */
-int	badaddr(void *);
-int	badbaddr(void *);
 
 void kgdb_panic(void);
 

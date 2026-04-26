@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.19 2011/11/20 15:38:00 tsutsui Exp $	*/
+/*	$NetBSD: if_le.c,v 1.20 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.19 2011/11/20 15:38:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le.c,v 1.20 2026/04/26 12:49:38 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -139,7 +139,7 @@ le_match(device_t parent, cfdata_t cf, void *aux)
 
 	addr = (ha->ha_address);
 
-	if (badaddr((void *)addr, 1))
+	if (badbaddr((void *)addr))
 		return 0;
 
 	return 1;

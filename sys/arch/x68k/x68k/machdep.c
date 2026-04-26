@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.231 2026/04/26 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.232 2026/04/26 12:49:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.231 2026/04/26 10:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2026/04/26 12:49:39 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -436,40 +436,6 @@ cpu_reboot(int howto, char *bootstr)
 	DELAY(1000000);
 	doboot();
 	/* NOTREACHED */
-}
-
-int
-badaddr(volatile void* addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-	i = *(volatile short *)addr;
-	__USE(i);
-	nofault = NULL;
-	return 0;
-}
-
-int
-badbaddr(volatile void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-	i = *(volatile char *)addr;
-	__USE(i);
-	nofault = NULL;
-	return 0;
 }
 
 void

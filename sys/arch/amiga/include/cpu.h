@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.88 2024/01/20 00:15:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.89 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -106,8 +106,6 @@ u_int	probeva(u_int, u_int);
 /*
  * Prototypes from machdep.c
  */
-int	badaddr(void *);
-int	badbaddr(void *);
 void	bootsync(void);
 
 /*

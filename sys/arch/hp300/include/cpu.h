@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.80 2026/03/23 16:49:33 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.81 2026/04/26 12:49:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,10 +71,6 @@ void	ecacheoff(void);
 
 /* clock.c functions */
 void	hp300_calibrate_delay(void);
-
-/* machdep.c functions */
-int	badaddr(void *);
-int	badbaddr(void *);
 
 /* what is this supposed to do? i.e. how is it different than startrtclock? */
 #define	enablertclock()

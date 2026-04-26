@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.10 2026/04/26 10:52:15 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.11 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.10 2026/04/26 10:52:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.11 2026/04/26 12:49:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1112,3 +1112,78 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
  done:
  	/* XXX Detect trap recursion? */;
 }
+
+#define	DO_PEEK(a, r, t)	*(t *)(r) = *(volatile t *)(a)
+
+bool
+badaddr_read(volatile void *addr, size_t size, void *result)
+{
+	label_t faultbuf;
+	uint64_t junk;
+
+	if (result == NULL) {
+		result = &junk;
+	}
+
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
+		return true;
+	}
+	switch (size) {
+	case 1:
+		DO_PEEK(addr, result, uint8_t);
+		break;
+	case 2:
+		DO_PEEK(addr, result, uint16_t);
+		break;
+	case 4:
+		DO_PEEK(addr, result, uint32_t);
+		break;
+	case 8:
+		DO_PEEK(addr, result, uint64_t);
+		break;
+	default:
+		panic("%s", __func__);
+	}
+	nofault = NULL;
+
+	return false;
+}
+
+#undef DO_PEEK
+
+#define	DO_POKE(a, v, t)	*(volatile t *)(a) = (t)(v)
+
+bool
+badaddr_write(volatile void *addr, size_t size, uintmax_t val)
+{
+	label_t faultbuf;
+
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
+		nofault = NULL;
+		return true;
+	}
+	switch (size) {
+	case 1:
+		DO_POKE(addr, val, uint8_t);
+		break;
+	case 2:
+		DO_POKE(addr, val, uint16_t);
+		break;
+	case 4:
+		DO_POKE(addr, val, uint32_t);
+		break;
+	case 8:
+		DO_POKE(addr, val, uint64_t);
+		break;
+	default:
+		panic("%s", __func__);
+	}
+	nofault = NULL;
+
+	return false;
+}
+
+#undef DO_POKE

@@ -1,4 +1,4 @@
-/*	$NetBSD: be_bus.c,v 1.18 2023/01/06 10:28:27 tsutsui Exp $	*/
+/*	$NetBSD: be_bus.c,v 1.19 2026/04/26 12:49:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.18 2023/01/06 10:28:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be_bus.c,v 1.19 2026/04/26 12:49:36 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -266,28 +266,28 @@ static int
 beb_bus_space_peek_1(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(h + o), 1);
+	return !badaddr_sz((void *)(h + o), 1);
 }
 
 static int
 beb_bus_space_peek_2(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(h + o), 2);
+	return !badaddr_sz((void *)(h + o), 2);
 }
 
 static int
 beb_bus_space_peek_4(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(h + o), 4);
+	return !badaddr_sz((void *)(h + o), 4);
 }
 
 static int
 beb_bus_space_peek_8(bus_space_tag_t t, bus_space_handle_t h, bus_size_t o)
 {
 
-	return !badbaddr((void *)(h + o), 8);
+	return !badaddr_sz((void *)(h + o), 8);
 }
 
 /*

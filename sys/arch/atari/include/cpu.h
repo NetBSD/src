@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.77 2024/01/20 00:15:30 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.78 2026/04/26 12:49:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -111,7 +111,6 @@ u_int	probeva(u_int, u_int);
 /*
  * Prototypes from machdep.c:
  */
-int	badbaddr(void *, int);
 void	consinit(void);
 typedef void (*si_farg)(void *, void *);	/* XXX */
 void	init_sicallback(void);			/* XXX */

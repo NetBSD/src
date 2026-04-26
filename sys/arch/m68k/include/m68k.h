@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.36 2026/04/26 10:52:14 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.37 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -185,6 +185,12 @@ int	mm_md_physacc_regular(paddr_t, vm_prot_t);
 
 /* m68k_trap.c */
 extern label_t *nofault;
+bool	badaddr_read(volatile void *, size_t, void *);
+bool	badaddr_write(volatile void *, size_t, uintmax_t);
+
+#define	badaddr(a)		badaddr_read((a), 2, NULL)
+#define	badbaddr(a)		badaddr_read((a), 1, NULL)
+#define	badaddr_sz(a, s)	badaddr_read((a), (s), NULL)
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);

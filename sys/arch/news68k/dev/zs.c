@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.34 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.35 2026/04/26 12:49:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.34 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.35 2026/04/26 12:49:38 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -168,7 +168,7 @@ zs_match(device_t parent, cfdata_t cf, void *aux)
 
 	addr = (ha->ha_address);
 	/* This returns -1 on a fault (bus error). */
-	if (badaddr((void *)addr, 1))
+	if (badbaddr((void *)addr))
 		return 0;
 
 	return 1;
