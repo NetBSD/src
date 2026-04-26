@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_simple.h,v 1.2 2026/04/26 13:34:26 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.h,v 1.3 2026/04/26 15:12:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -83,6 +83,7 @@ struct m68k_simple_bus_space_tag {
 	int		(*bs_map)(void *, bus_addr_t, bus_size_t,
 				  int, bus_space_handle_t *);
 	void		(*bs_unmap)(void *, bus_space_handle_t, bus_size_t);
+	paddr_t		(*bs_mmap)(void *, bus_addr_t addr, off_t, int, int);
 	int		(*bs_peek_1)(void *, bus_space_handle_t,
 				     bus_size_t, uint8_t *);
 	int		(*bs_peek_2)(void *, bus_space_handle_t,
@@ -130,6 +131,16 @@ struct m68k_simple_bus_space_tag {
  */
 #define bus_space_unmap(tag, handle, size)				\
     (*((tag)->bs_unmap))((tag)->bs_cookie, (handle), (size))
+
+/*
+ *	paddr_t bus_space_mmap(bus_space_tag_t t,
+ *			       bus_addr_t addr, off_t offset,
+ *			       int prot, int flags);
+ *
+ * Mmap a region of bus space.
+ */
+#define	bus_space_mmap(tag, addr, offset, prot, flags)			\
+    (*((tag)->bs_mmap))((tag)->bs_cookie, (addr), (offset), (prot), (flags))
 
 /*
  *	int bus_space_subregion(bus_space_tag_t t, bus_space_handle_t h
@@ -614,6 +625,7 @@ extern struct m68k_simple_bus_space_tag m68k_simple_bus_space;
 extern int _bus_space_map(void *, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
 extern void _bus_space_unmap(void *, bus_space_handle_t, bus_size_t);
+extern paddr_t _bus_space_mmap(void *, bus_addr_t, off_t, int, int);
 extern int _bus_space_peek_1(void *, bus_space_handle_t,
     bus_size_t, uint8_t *);
 extern int _bus_space_peek_2(void *, bus_space_handle_t,

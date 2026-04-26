@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_simple.c,v 1.2 2026/04/26 13:34:26 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.c,v 1.3 2026/04/26 15:12:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.2 2026/04/26 13:34:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.3 2026/04/26 15:12:09 thorpej Exp $");
 
 #define _M68K_BUS_SPACE_PRIVATE
 
@@ -42,10 +42,13 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.2 2026/04/26 13:34:26 thorpej
 #include <machine/cpu.h>
 #include <machine/bus.h>
 
+paddr_t	_bus_space_mmap_default(void *, bus_addr_t, off_t, int, int);
+
 struct m68k_simple_bus_space_tag m68k_simple_bus_space = {
 	NULL,
 	_bus_space_map,
 	_bus_space_unmap,
+	_bus_space_mmap,
 	_bus_space_peek_1,
 	_bus_space_peek_2,
 	_bus_space_peek_4,
@@ -84,6 +87,19 @@ _bus_space_unmap(void *cookie, bus_space_handle_t bush, bus_size_t size)
 
 	/* XXX */
 }
+
+paddr_t
+_bus_space_mmap_default(void *cookie, bus_addr_t addr, off_t offset,
+    int prot, int flags)
+{
+	/*
+	 * The default is to fail this operation.  If a platform wants
+	 * specific behavior, they simply need to provide a _bus_space_mmap()
+	 * function.
+	 */
+	return (paddr_t)-1;
+}
+__weak_alias(_bus_space_mmap,_bus_space_mmap_default);
 
 /* ARGSUSED */
 int
