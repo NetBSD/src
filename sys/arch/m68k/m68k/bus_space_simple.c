@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.3 2026/04/26 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.c,v 1.1 2026/04/26 13:21:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2026/04/26 10:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.1 2026/04/26 13:21:40 thorpej Exp $");
 
-#define _VIRT68K_BUS_DMA_PRIVATE    /* For _bus_dmamem_map/_bus_dmamem_unmap */
-#define _VIRT68K_BUS_SPACE_PRIVATE
+#define _M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,17 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.3 2026/04/26 10:52:16 thorpej Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
-#include <machine/pte.h>
 #include <machine/bus.h>
-
-static	void	peek1(void *, void *);
-static	void	peek2(void *, void *);
-static	void	peek4(void *, void *);
-static	void	poke1(void *, u_int);
-static	void	poke2(void *, u_int);
-static	void	poke4(void *, u_int);
-static	int	do_peek(void (*)(void *, void *), void *, void *);
-static	int	do_poke(void (*)(void *, u_int), void *, u_int);
 
 /* ARGSUSED */
 int
@@ -89,12 +78,7 @@ int
 _bus_space_peek_1(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint8_t *valuep)
 {
-	uint8_t v;
-
-	if (valuep == NULL)
-		valuep = &v;
-
-	return do_peek(&peek1, (void *)(bush + offset), (void *)valuep);
+	return badaddr_read((void *)(bush + offset), 1, valuep);
 }
 
 /* ARGSUSED */
@@ -102,12 +86,7 @@ int
 _bus_space_peek_2(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint16_t *valuep)
 {
-	uint16_t v;
-
-	if (valuep == NULL)
-		valuep = &v;
-
-	return do_peek(&peek2, (void *)(bush + offset), (void *)valuep);
+	return badaddr_read((void *)(bush + offset), 2, valuep);
 }
 
 /* ARGSUSED */
@@ -115,12 +94,7 @@ int
 _bus_space_peek_4(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint32_t *valuep)
 {
-	uint32_t v;
-
-	if (valuep == NULL)
-		valuep = &v;
-
-	return do_peek(&peek4, (void *)(bush + offset), (void *)valuep);
+	return badaddr_read((void *)(bush + offset), 4, valuep);
 }
 
 /* ARGSUSED */
@@ -128,8 +102,7 @@ int
 _bus_space_poke_1(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint8_t value)
 {
-
-	return do_poke(&poke1, (void *)(bush + offset), (u_int)value);
+	return badaddr_write((void *)(bush + offset), 1, value);
 }
 
 /* ARGSUSED */
@@ -137,8 +110,7 @@ int
 _bus_space_poke_2(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint16_t value)
 {
-
-	return do_poke(&poke2, (void *)(bush + offset), (u_int)value);
+	return badaddr_write((void *)(bush + offset), 2, value);
 }
 
 /* ARGSUSED */
@@ -146,82 +118,5 @@ int
 _bus_space_poke_4(void *cookie, bus_space_handle_t bush, bus_size_t offset,
     uint32_t value)
 {
-
-	return do_poke(&poke4, (void *)(bush + offset), (u_int)value);
-}
-
-static void
-peek1(void *addr, void *vp)
-{
-
-	*((uint8_t *)vp) =  *((uint8_t *)addr);
-}
-
-static void
-peek2(void *addr, void *vp)
-{
-
-	*((uint16_t *)vp) = *((uint16_t *)addr);
-}
-
-static void
-peek4(void *addr, void *vp)
-{
-
-	*((uint32_t *)vp) = *((uint32_t *)addr);
-}
-
-static void
-poke1(void *addr, u_int value)
-{
-
-	*((uint8_t *)addr) = value;
-}
-
-static void
-poke2(void *addr, u_int value)
-{
-
-	*((uint16_t *)addr) = value;
-}
-
-static void
-poke4(void *addr, u_int value)
-{
-
-	*((uint32_t *)addr) = value;
-}
-
-static int
-do_peek(void (*peekfn)(void *, void *), void *addr, void *valuep)
-{
-	label_t faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return 1;
-	}
-
-	(*peekfn)(addr, valuep);
-
-	nofault = NULL;
-	return 0;
-}
-
-static int
-do_poke(void (*pokefn)(void *, u_int), void *addr, u_int value)
-{
-	label_t faultbuf;
-
-	nofault = &faultbuf;
-	if (setjmp(&faultbuf)) {
-		nofault = NULL;
-		return 1;
-	}
-
-	(*pokefn)(addr, value);
-
-	nofault = NULL;
-	return 0;
+	return badaddr_write((void *)(bush + offset), 4, value);
 }
