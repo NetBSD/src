@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.54 2026/01/08 00:51:20 christos Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.55 2026/04/26 12:49:51 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.54 2026/01/08 00:51:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.55 2026/04/26 12:49:51 tsutsui Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -872,7 +872,26 @@ cpu_enable_bcm2836(int phandle)
 
 	return 0;
 }
+
+static int
+cpu_enable_bcm2711(int phandle)
+{
+	bus_space_tag_t iot = &bcm2711_bs_tag;
+	bus_space_handle_t ioh = BCM2711_ARM_LOCAL_VBASE;
+	uint64_t mpidr;
+
+	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
+
+	const u_int cpuno = __SHIFTOUT(mpidr, MPIDR_AFF0);
+
+	bus_space_write_4(iot, ioh, BCM2836_LOCAL_MAILBOX3_SETN(cpuno),
+	    KERN_VTOPHYS((vaddr_t)cpu_mpstart));
+
+	return 0;
+}
 ARM_CPU_METHOD(bcm2836, "brcm,bcm2836-smp", cpu_enable_bcm2836);
+/* patched in src/sys/arch/arm/dts/bcm2711-cpus.dtsi */
+ARM_CPU_METHOD(bcm2711, "brcm,bcm2711-smp", cpu_enable_bcm2711);
 #endif
 
 #endif	/* SOC_BCM2836 */

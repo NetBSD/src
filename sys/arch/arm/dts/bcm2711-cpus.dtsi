@@ -1,0 +1,10 @@
+/* $NetBSD: bcm2711-cpus.dtsi,v 1.1 2026/04/26 12:49:51 tsutsui Exp $ */
+
+/*
+ * return "bcm2711-smp" instead of upstream default "bcm2836-smp"
+ * in bcm2711.dtsi to handle bcm2711 specific device addresses
+ */
+
+&cpus {
+	enable-method = "brcm,bcm2711-smp";
+};
