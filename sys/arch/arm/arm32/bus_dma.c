@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.154 2026/02/17 06:50:29 skrll Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.155 2026/04/26 12:51:01 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2020 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.154 2026/02/17 06:50:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.155 2026/04/26 12:51:01 tsutsui Exp $");
 
 #include <sys/param.h>
 
@@ -184,7 +184,7 @@ _bus_dma_busaddr_to_paddr(bus_dma_tag_t t, bus_addr_t curaddr)
 		    && curaddr < dr->dr_busbase + dr->dr_len)
 			return curaddr - dr->dr_busbase + dr->dr_sysbase;
 	}
-	panic("%s: curaddr %#" PRIxBUSADDR "not in range", __func__, curaddr);
+	panic("%s: curaddr %#" PRIxBUSADDR " not in range", __func__, curaddr);
 }
 
 /*
