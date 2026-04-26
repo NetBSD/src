@@ -1,4 +1,4 @@
-/* $NetBSD: arm_simplefb.c,v 1.13 2022/10/14 22:10:15 jmcneill Exp $ */
+/* $NetBSD: arm_simplefb.c,v 1.14 2026/04/26 13:14:07 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_vcons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.13 2022/10/14 22:10:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_simplefb.c,v 1.14 2026/04/26 13:14:07 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -213,7 +213,8 @@ arm_simplefb_preattach(void)
 		return;
 
 	if (strcmp(format, "a8b8g8r8") == 0 ||
-	    strcmp(format, "x8r8g8b8") == 0) {
+	    strcmp(format, "x8r8g8b8") == 0 ||
+	    strcmp(format, "a8r8g8b8") == 0) {
 		depth = 32;
 	} else if (strcmp(format, "r8g8b8a8") == 0 ||
 		   strcmp(format, "b8g8r8x8") == 0) {
