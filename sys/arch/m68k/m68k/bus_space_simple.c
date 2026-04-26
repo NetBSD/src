@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_simple.c,v 1.1 2026/04/26 13:21:40 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.c,v 1.2 2026/04/26 13:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.1 2026/04/26 13:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.2 2026/04/26 13:34:26 thorpej Exp $");
 
 #define _M68K_BUS_SPACE_PRIVATE
 
@@ -41,6 +41,18 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space_simple.c,v 1.1 2026/04/26 13:21:40 thorpej
 
 #include <machine/cpu.h>
 #include <machine/bus.h>
+
+struct m68k_simple_bus_space_tag m68k_simple_bus_space = {
+	NULL,
+	_bus_space_map,
+	_bus_space_unmap,
+	_bus_space_peek_1,
+	_bus_space_peek_2,
+	_bus_space_peek_4,
+	_bus_space_poke_1,
+	_bus_space_poke_2,
+	_bus_space_poke_4,
+};
 
 /* ARGSUSED */
 int

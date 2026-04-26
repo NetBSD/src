@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.41 2026/04/24 13:40:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.42 2026/04/26 13:34:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,11 +39,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.41 2026/04/24 13:40:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2026/04/26 13:34:26 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
 #include "opt_m68k_arch.h"
+
+#define	_M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -123,9 +125,8 @@ static void
 machine_cnattach(void (*func)(bus_space_tag_t, bus_space_handle_t),
     paddr_t addr, paddr_t size)
 {
-	extern struct virt68k_bus_space_tag _mainbus_space_tag;
 	extern paddr_t consdev_addr;
-	bus_space_tag_t bst = &_mainbus_space_tag;
+	bus_space_tag_t bst = &m68k_simple_bus_space;
 	bus_space_handle_t bsh;
 
 	if (bus_space_map(bst, addr, size, 0, &bsh) == 0) {

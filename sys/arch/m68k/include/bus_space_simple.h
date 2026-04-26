@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_simple.h,v 1.1 2026/04/26 13:21:40 thorpej Exp $	*/
+/*	$NetBSD: bus_space_simple.h,v 1.2 2026/04/26 13:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -609,6 +609,8 @@ __M68K_SIMPLE_copy_region_N(4)
 
 
 #ifdef _M68K_BUS_SPACE_PRIVATE
+extern struct m68k_simple_bus_space_tag m68k_simple_bus_space;
+
 extern int _bus_space_map(void *, bus_addr_t, bus_size_t,
     int, bus_space_handle_t *);
 extern void _bus_space_unmap(void *, bus_space_handle_t, bus_size_t);

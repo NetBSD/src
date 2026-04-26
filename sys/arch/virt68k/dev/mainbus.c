@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.5 2026/04/26 13:21:40 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.6 2026/04/26 13:34:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.5 2026/04/26 13:21:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.6 2026/04/26 13:34:26 thorpej Exp $");
 
 #define _M68K_BUS_DMA_PRIVATE
 #define _M68K_BUS_SPACE_PRIVATE
@@ -65,18 +65,6 @@ struct m68k_bus_dma_tag _mainbus_dma_tag = {
 	_bus_dmamem_mmap
 };
 
-struct m68k_simple_bus_space_tag _mainbus_space_tag = {
-	NULL,
-	_bus_space_map,
-	_bus_space_unmap,
-	_bus_space_peek_1,
-	_bus_space_peek_2,
-	_bus_space_peek_4,
-	_bus_space_poke_1,
-	_bus_space_poke_2,
-	_bus_space_poke_4
-};
-
 static int
 mainbus_print(void *aux, const char *cp)
 {
@@ -107,7 +95,7 @@ static bool
 mainbus_attach_gfpic(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
@@ -131,7 +119,7 @@ static bool
 mainbus_attach_gfother(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
@@ -199,7 +187,7 @@ static bool
 mainbus_attach_other(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
