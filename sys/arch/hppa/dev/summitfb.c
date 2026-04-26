@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.40 2026/04/21 08:26:49 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.41 2026/04/26 09:17:19 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.40 2026/04/21 08:26:49 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.41 2026/04/26 09:17:19 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -987,7 +987,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct summitfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he;
+	int i, x, y, wi, he, ul;
 	uint32_t bg, fg, mask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1006,6 +1006,8 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 
+	ul = he - ((he < 16) ? 1 : 2);
+
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
 	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
@@ -1013,7 +1015,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	if (c == 0x20) {
 		summitfb_rectfill(sc, x, y, wi, he, bg);
 		if (attr & WSATTR_UNDERLINE)
-			summitfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+			summitfb_rectfill(sc, x, y + ul, wi, 1, fg);
 		return;
 	}
 
@@ -1067,6 +1069,13 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				data16++;
 			}
 		}
+	}
+	if (attr & WSATTR_UNDERLINE) {
+		summitfb_wait_fifo(sc, 2);
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DEST,
+		    ((y + ul) << 16) | x);
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+		    0xffffffff << (32 - wi));
 	}
 }
 
