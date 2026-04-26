@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.51 2026/01/05 20:31:54 nia Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.52 2026/04/26 13:31:47 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1510,3 +1510,33 @@ message network_ok
 {Your network seems to work fine. 
 Should we skip the configuration 
 and just use the network as-is?}
+
+message todr_old
+{The clock seems to be off!}
+
+message setdatetime
+{Set date and time}
+
+message time_ok
+{Save date and time as selected}
+
+/* Called with:				Example
+ *  $0 = header message			The clock is off!
+ *  $1 = current date/time string	Sun, 12 Apr 2026 21:04:50
+ */
+message date_and_time_hdr
+{$0
+
+Please enter the date and time.
+
+Current selection: $1
+
+
+}
+
+message year {Year}
+message month {Month (1-12)}
+message day {Day (1-31)}
+message hour {Hour (0-23)}
+message minute {Minute (0-59)}
+

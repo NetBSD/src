@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.94 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.95 2026/04/26 13:31:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1027,6 +1027,7 @@ void	save_kb_encoding(void);
 /* from configmenu.c */
 void	do_configmenu(struct install_partition_desc*);
 void	root_pw_setup(void);
+void	do_time_and_date_setup(const char *);
 
 /* from checkrc.c */
 int	check_rcvar(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.54 2026/01/05 20:31:54 nia Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.55 2026/04/26 13:31:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1593,3 +1593,33 @@ message network_ok
 {Ihr Netzwerk scheint bereits zu funktionieren. 
 Möchten Sie die Konfiguration überspringen 
 und die bisherigen Einstellungen verwenden?}
+
+message todr_old
+{Die Uhr scheint falsch zu gehen!}
+
+message setdatetime
+{Datum und Uhrzeit einstellen}
+
+message time_ok
+{Datum und Uhrzeit wie eingestellt übernehmen}
+
+
+/* Called with:				Example
+ *  $0 = header message			The clock is off!
+ *  $1 = current date/time string	Sun, 12 Apr 2026 21:04:50
+ */
+message date_and_time_hdr
+{$0
+
+Bitte geben sie das aktuelle Datum und Uhrzeit ein.
+
+Eingestellte Zeit: $1
+
+
+}
+
+message year {Jahr}
+message month {Monat (1-12)}
+message day {Tag (1-31)}
+message hour {Stunde (0-23)}
+message minute {Minute (0-59)}

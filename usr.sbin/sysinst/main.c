@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.35 2026/03/11 21:54:22 andvar Exp $	*/
+/*	$NetBSD: main.c,v 1.36 2026/04/26 13:31:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -98,6 +98,9 @@ static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);
 static bool no_openssl_trust_anchors_available(void);
+#ifdef BUILD_TIMESTAMP
+static void check_todr_sanity(void);
+#endif
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 FILE *logfp;			/* log file */
@@ -309,6 +312,10 @@ main(int argc, char **argv)
 	select_language(msg_cat_dir);
 	get_kb_encoding();
 	init_lang();
+
+#ifdef BUILD_TIMESTAMP
+	check_todr_sanity();
+#endif
 
 	/* remove some invalid menu entries */
 	if (!has_colors())
@@ -689,3 +696,17 @@ no_openssl_trust_anchors_available(void)
 
 	return cnt < 2;
 }
+
+#ifdef BUILD_TIMESTAMP
+static void
+check_todr_sanity(void)
+{
+	time_t now = time(NULL);
+
+	if (now >= BUILD_TIMESTAMP - 2*86400)
+		return;
+
+	do_time_and_date_setup(MSG_todr_old);
+}
+#endif
+

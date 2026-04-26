@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51 2025/09/19 05:18:22 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2026/04/26 13:31:47 martin Exp $
 #
 # Makefile for sysinst
 
@@ -31,6 +31,14 @@ LANGUAGES?=	de en es fr pl
 
 MENUS_MI=	menus.mi
 MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
+
+# Provide a timestamp when this binary was build for TODR sanity checking
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+CPPFLAGS+=	-DBUILD_TIMESTAMP=${MKREPRO_TIMESTAMP}
+.else
+BUILD_TS!=	${TOOL_DATE} -u '+%s'
+CPPFLAGS+=	-DBUILD_TIMESTAMP=${BUILD_TS}
+.endif
 
 .if ${NO_GPT:Uno} != "yes"
 CPPFLAGS+=	-DHAVE_GPT
