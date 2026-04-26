@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.25 2026/03/28 22:19:33 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.26 2026/04/26 15:16:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -71,7 +71,7 @@
 #define	USPACE		(UPAGES * NBPG)
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	8192		/* default message buffer size */
 #endif
 
 /*
