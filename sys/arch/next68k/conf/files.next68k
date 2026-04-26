@@ -1,4 +1,4 @@
-# $NetBSD: files.next68k,v 1.59 2026/04/09 12:49:35 thorpej Exp $
+# $NetBSD: files.next68k,v 1.60 2026/04/26 15:12:59 thorpej Exp $
 
 # next68k-specific configuration info
 
@@ -48,8 +48,8 @@ file	arch/next68k/next68k/nextrom.c
 file	arch/next68k/next68k/rtc.c
 file	arch/next68k/next68k/disksubr.c
 
-#file	arch/next68k/dev/dbj_debug.c
 file 	arch/m68k/m68k/bus_dma.c
+file 	arch/m68k/m68k/bus_space_simple.c
 
 define	nextdma
 device	nextdma

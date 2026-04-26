@@ -1,4 +1,4 @@
-/*	$NetBSD: intio.c,v 1.19 2023/02/11 02:31:34 tsutsui Exp $	*/
+/*	$NetBSD: intio.c,v 1.20 2026/04/26 15:12:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.19 2023/02/11 02:31:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intio.c,v 1.20 2026/04/26 15:12:59 thorpej Exp $");
+
+#define	_M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +100,7 @@ intiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 
 	do {
 		ia.ia_addr = NULL;
-		ia.ia_bst = NEXT68K_INTIO_BUS_SPACE;
+		ia.ia_bst = &m68k_simple_bus_space;
 		ia.ia_dmat = mba->mba_dmat;
 
 		if (!config_probe(parent, cf, &ia))
@@ -107,28 +109,4 @@ intiosearch(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	} while (cf->cf_fstate == FSTATE_STAR);
 
 	return 0;
-}
-
-int
-bus_space_map(bus_space_tag_t bst, bus_addr_t addr, bus_size_t size,
-    int flags, bus_space_handle_t *bsh)
-{
-
-	if (addr >= INTIOBASE && (addr + size) < INTIOTOP) {
-		*bsh = IIOV(addr);
-		return 0;
-	}
-
-	return EINVAL;
-}
-
-paddr_t
-bus_space_mmap(bus_space_tag_t bst, bus_addr_t addr, off_t offset, int prot,
-    int flags)
-{
-
-	if (addr >= INTIOBASE && (addr + offset) < INTIOTOP)
-		return m68k_btop(addr + offset);
-
-	return -1;
 }

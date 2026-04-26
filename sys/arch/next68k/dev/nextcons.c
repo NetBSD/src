@@ -1,4 +1,4 @@
-/*	$NetBSD: nextcons.c,v 1.15 2023/12/20 00:40:44 thorpej Exp $	*/
+/*	$NetBSD: nextcons.c,v 1.16 2026/04/26 15:12:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1999 Darrin B. Jewell
@@ -26,7 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.15 2023/12/20 00:40:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextcons.c,v 1.16 2026/04/26 15:12:59 thorpej Exp $");
+
+#define	_M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +81,7 @@ void
 nextcninit(struct consdev *cp)
 {
 
-	nextkbd_cnattach(NEXT68K_INTIO_BUS_SPACE);
+	nextkbd_cnattach(&m68k_simple_bus_space);
 	nextdisplay_cnattach();
 }
 
