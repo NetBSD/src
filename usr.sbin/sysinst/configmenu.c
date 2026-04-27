@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.22 2026/04/26 13:31:47 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.23 2026/04/27 18:20:02 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -673,7 +673,7 @@ time_and_date_update(struct menudesc *menu, void *arg)
 }
 
 static void
-time_and_date_hdr(struct menudesc *, void *arg)
+time_and_date_hdr(struct menudesc *menuitem, void *arg)
 {
 	const struct date_and_time_menu_arg *ma = arg;
 
