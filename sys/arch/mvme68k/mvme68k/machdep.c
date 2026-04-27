@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.192 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.193 2026/04/27 11:17:57 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2026/04/23 02:54:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2026/04/27 11:17:57 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -83,8 +83,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.192 2026/04/23 02:54:40 thorpej Exp $"
 
 #include <machine/cpu.h>
 #define _M68K_BUS_DMA_PRIVATE
+#define _M68K_BUS_SPACE_PRIVATE
 #include <machine/bus.h>
 #undef _M68K_BUS_DMA_PRIVATE
+#undef _M68K_BUS_SPACE_PRIVATE
 #include <machine/pcb.h>
 #include <machine/prom.h>
 #include <machine/psl.h>
@@ -215,7 +217,7 @@ machine_init(paddr_t nextpa)
 void
 mvme147_init(void)
 {
-	bus_space_tag_t bt = &_mainbus_space_tag;
+	bus_space_tag_t bt = &m68k_simple_bus_space;
 	bus_space_handle_t bh;
 
 	/*
@@ -270,7 +272,7 @@ int	get_cpuspeed(void);
 void
 mvme1xx_init(void)
 {
-	bus_space_tag_t bt = &_mainbus_space_tag;
+	bus_space_tag_t bt = &m68k_simple_bus_space;
 	bus_space_handle_t bh;
 
 	/*
