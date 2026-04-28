@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2522 2026/04/09 14:42:15 christos Exp $
+#	$NetBSD: mi,v 1.2523 2026/04/28 20:41:59 christos Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -6104,10 +6104,13 @@
 ./usr/share/man/cat3/SPLAY_RIGHT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SPLAY_ROOT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_ACCESS_EXISTS.0	comp-c-catman		.cat
+./usr/share/man/cat3/SQLITE_CARRAY_INT32.0	comp-c-catman	.cat
+./usr/share/man/cat3/SQLITE_CHANGEGROUP_CONFIG_PATCHSET.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SQLITE_CHANGESETAPPLY_NOSAVEPOINT.0   comp-c-catman           .cat
 ./usr/share/man/cat3/SQLITE_CHANGESETSTART_INVERT.0   comp-c-catman           .cat
 ./usr/share/man/cat3/SQLITE_CHANGESET_DATA.0	comp-3-catman	.cat
 ./usr/share/man/cat3/SQLITE_CHANGESET_OMIT.0	comp-3-catman	.cat
+./usr/share/man/cat3/SQLITE_CHECKPOINT_NOOP.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SQLITE_CHECKPOINT_PASSIVE.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_CONFIG_SINGLETHREAD.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_CREATE_INDEX.0	comp-c-catman		.cat
@@ -6136,6 +6139,7 @@
 ./usr/share/man/cat3/SQLITE_SERIALIZE_NOCOPY.0   comp-c-catman           .cat
 ./usr/share/man/cat3/SQLITE_SESSION_CONFIG_STRMSIZE.0   comp-c-catman           .cat
 ./usr/share/man/cat3/SQLITE_SESSION_OBJCONFIG_SIZE.0	comp-c-catman		.cat
+./usr/share/man/cat3/SQLITE_SETLK_BLOCK_ON_CONNECT.0	comp-c-catman	.cat
 ./usr/share/man/cat3/SQLITE_SHM_NLOCK.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_SHM_UNLOCK.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_STATUS_MEMORY_USED.0	comp-c-catman		.cat
@@ -11078,6 +11082,7 @@
 ./usr/share/man/cat3/sqlite3_busy_handler.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sqlite3_busy_timeout.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sqlite3_cancel_auto_extension.0	comp-c-catman		.cat
+./usr/share/man/cat3/sqlite3_carray_bind_v2.0	comp-c-catman	.cat
 ./usr/share/man/cat3/sqlite3_changegroup.0 comp-c-catman .cat
 ./usr/share/man/cat3/sqlite3_changes.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sqlite3_changeset_iter.0	comp-3-catman	.cat
@@ -11166,7 +11171,9 @@
 ./usr/share/man/cat3/sqlite3_serialize.0   comp-c-catman           .cat
 ./usr/share/man/cat3/sqlite3_session.0		comp-3-catman	.cat
 ./usr/share/man/cat3/sqlite3_set_authorizer.0	comp-c-catman		.cat
+./usr/share/man/cat3/sqlite3_set_errmsg.0	comp-c-catman	.cat
 ./usr/share/man/cat3/sqlite3_set_last_insert_rowid.0   comp-c-catman           .cat
+./usr/share/man/cat3/sqlite3_setlk_timeout.0	comp-c-catman	.cat
 ./usr/share/man/cat3/sqlite3_sleep.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sqlite3_snapshot.0		comp-3-catman	.cat
 ./usr/share/man/cat3/sqlite3_snapshot_cmp.0	comp-3-catman	.cat
@@ -11232,6 +11239,15 @@
 ./usr/share/man/cat3/sqlite3_wal_hook.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sqlite3_win32_set_directory.0   comp-c-catman           .cat
 ./usr/share/man/cat3/sqlite3changegroup_add.0 comp-c-catman .cat
+./usr/share/man/cat3/sqlite3changegroup_add_change.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_begin.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_blob.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_double.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_finish.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_int64.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_null.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_change_text.0	comp-c-catman	.cat
+./usr/share/man/cat3/sqlite3changegroup_config.0	comp-c-catman	.cat
 ./usr/share/man/cat3/sqlite3changegroup_delete.0 comp-c-catman .cat
 ./usr/share/man/cat3/sqlite3changegroup_new.0	comp-3-catman	.cat
 ./usr/share/man/cat3/sqlite3changegroup_output.0 comp-c-catman .cat
@@ -15120,10 +15136,13 @@
 ./usr/share/man/html3/SPLAY_RIGHT.html		comp-c-htmlman		html
 ./usr/share/man/html3/SPLAY_ROOT.html		comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_ACCESS_EXISTS.html	comp-c-htmlman		html
+./usr/share/man/html3/SQLITE_CARRAY_INT32.html	comp-c-htmlman	html
+./usr/share/man/html3/SQLITE_CHANGEGROUP_CONFIG_PATCHSET.html	comp-c-htmlman	html
 ./usr/share/man/html3/SQLITE_CHANGESETAPPLY_NOSAVEPOINT.html       comp-c-htmlman          html
 ./usr/share/man/html3/SQLITE_CHANGESETSTART_INVERT.html       comp-c-htmlman          html
 ./usr/share/man/html3/SQLITE_CHANGESET_DATA.html	comp-c-htmlman	html
 ./usr/share/man/html3/SQLITE_CHANGESET_OMIT.html	comp-c-htmlman	html
+./usr/share/man/html3/SQLITE_CHECKPOINT_NOOP.html	comp-c-htmlman	html
 ./usr/share/man/html3/SQLITE_CHECKPOINT_PASSIVE.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_CONFIG_SINGLETHREAD.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_CREATE_INDEX.html	comp-c-htmlman		html
@@ -15152,6 +15171,7 @@
 ./usr/share/man/html3/SQLITE_SERIALIZE_NOCOPY.html       comp-c-htmlman          html
 ./usr/share/man/html3/SQLITE_SESSION_CONFIG_STRMSIZE.html       comp-c-htmlman          html
 ./usr/share/man/html3/SQLITE_SESSION_OBJCONFIG_SIZE.html	comp-c-htmlman		html
+./usr/share/man/html3/SQLITE_SETLK_BLOCK_ON_CONNECT.html	comp-c-htmlman	html
 ./usr/share/man/html3/SQLITE_SHM_NLOCK.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_SHM_UNLOCK.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_STATUS_MEMORY_USED.html	comp-c-htmlman		html
@@ -20017,6 +20037,7 @@
 ./usr/share/man/html3/sqlite3_busy_handler.html	comp-c-htmlman		html
 ./usr/share/man/html3/sqlite3_busy_timeout.html	comp-c-htmlman		html
 ./usr/share/man/html3/sqlite3_cancel_auto_extension.html	comp-c-htmlman		html
+./usr/share/man/html3/sqlite3_carray_bind_v2.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3_changegroup.html comp-c-htmlman html
 ./usr/share/man/html3/sqlite3_changes.html	comp-c-htmlman		html
 ./usr/share/man/html3/sqlite3_changeset_iter.html	comp-c-htmlman	html
@@ -20105,7 +20126,9 @@
 ./usr/share/man/html3/sqlite3_serialize.html       comp-c-htmlman          html
 ./usr/share/man/html3/sqlite3_session.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3_set_authorizer.html	comp-c-htmlman		html
+./usr/share/man/html3/sqlite3_set_errmsg.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3_set_last_insert_rowid.html       comp-c-htmlman          html
+./usr/share/man/html3/sqlite3_setlk_timeout.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3_sleep.html	comp-c-htmlman		html
 ./usr/share/man/html3/sqlite3_snapshot.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3_snapshot_cmp.html	comp-c-htmlman	html
@@ -20171,6 +20194,15 @@
 ./usr/share/man/html3/sqlite3_wal_hook.html	comp-c-htmlman		html
 ./usr/share/man/html3/sqlite3_win32_set_directory.html       comp-c-htmlman          html
 ./usr/share/man/html3/sqlite3changegroup_add.html comp-c-htmlman html
+./usr/share/man/html3/sqlite3changegroup_add_change.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_begin.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_blob.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_double.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_finish.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_int64.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_null.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_change_text.html	comp-c-htmlman	html
+./usr/share/man/html3/sqlite3changegroup_config.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3changegroup_delete.html comp-c-htmlman html
 ./usr/share/man/html3/sqlite3changegroup_new.html	comp-c-htmlman	html
 ./usr/share/man/html3/sqlite3changegroup_output.html comp-c-htmlman html
@@ -23981,10 +24013,13 @@
 ./usr/share/man/man3/SPLAY_RIGHT.3		comp-c-man		.man
 ./usr/share/man/man3/SPLAY_ROOT.3		comp-c-man		.man
 ./usr/share/man/man3/SQLITE_ACCESS_EXISTS.3	comp-c-man		.man
+./usr/share/man/man3/SQLITE_CARRAY_INT32.3	comp-c-man	.man
+./usr/share/man/man3/SQLITE_CHANGEGROUP_CONFIG_PATCHSET.3	comp-c-man	.man
 ./usr/share/man/man3/SQLITE_CHANGESETAPPLY_NOSAVEPOINT.3   comp-c-man              .man
 ./usr/share/man/man3/SQLITE_CHANGESETSTART_INVERT.3   comp-c-man              .man
 ./usr/share/man/man3/SQLITE_CHANGESET_DATA.3	comp-c-man	.man
 ./usr/share/man/man3/SQLITE_CHANGESET_OMIT.3	comp-c-man	.man
+./usr/share/man/man3/SQLITE_CHECKPOINT_NOOP.3	comp-c-man	.man
 ./usr/share/man/man3/SQLITE_CHECKPOINT_PASSIVE.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_CONFIG_SINGLETHREAD.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_CREATE_INDEX.3	comp-c-man		.man
@@ -24013,6 +24048,7 @@
 ./usr/share/man/man3/SQLITE_SERIALIZE_NOCOPY.3   comp-c-man              .man
 ./usr/share/man/man3/SQLITE_SESSION_CONFIG_STRMSIZE.3   comp-c-man              .man
 ./usr/share/man/man3/SQLITE_SESSION_OBJCONFIG_SIZE.3		comp-c-man		.man
+./usr/share/man/man3/SQLITE_SETLK_BLOCK_ON_CONNECT.3	comp-c-man	.man
 ./usr/share/man/man3/SQLITE_SHM_NLOCK.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_SHM_UNLOCK.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_STATUS_MEMORY_USED.3	comp-c-man		.man
@@ -28992,6 +29028,7 @@
 ./usr/share/man/man3/sqlite3_busy_handler.3	comp-c-man		.man
 ./usr/share/man/man3/sqlite3_busy_timeout.3	comp-c-man		.man
 ./usr/share/man/man3/sqlite3_cancel_auto_extension.3	comp-c-man		.man
+./usr/share/man/man3/sqlite3_carray_bind_v2.3	comp-c-man	.man
 ./usr/share/man/man3/sqlite3_changegroup.3 comp-c-man .man
 ./usr/share/man/man3/sqlite3_changes.3		comp-c-man		.man
 ./usr/share/man/man3/sqlite3_changeset_iter.3	comp-c-man	.man
@@ -29080,7 +29117,9 @@
 ./usr/share/man/man3/sqlite3_serialize.3   comp-c-man              .man
 ./usr/share/man/man3/sqlite3_session.3		comp-c-man	.man
 ./usr/share/man/man3/sqlite3_set_authorizer.3	comp-c-man		.man
+./usr/share/man/man3/sqlite3_set_errmsg.3	comp-c-man	.man
 ./usr/share/man/man3/sqlite3_set_last_insert_rowid.3   comp-c-man              .man
+./usr/share/man/man3/sqlite3_setlk_timeout.3	comp-c-man	.man
 ./usr/share/man/man3/sqlite3_sleep.3		comp-c-man		.man
 ./usr/share/man/man3/sqlite3_snapshot.3		comp-c-man	.man
 ./usr/share/man/man3/sqlite3_snapshot_cmp.3	comp-c-man	.man
@@ -29146,6 +29185,15 @@
 ./usr/share/man/man3/sqlite3_wal_hook.3		comp-c-man		.man
 ./usr/share/man/man3/sqlite3_win32_set_directory.3   comp-c-man              .man
 ./usr/share/man/man3/sqlite3changegroup_add.3 comp-c-man .man
+./usr/share/man/man3/sqlite3changegroup_add_change.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_begin.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_blob.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_double.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_finish.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_int64.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_null.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_change_text.3	comp-c-man	.man
+./usr/share/man/man3/sqlite3changegroup_config.3	comp-c-man	.man
 ./usr/share/man/man3/sqlite3changegroup_delete.3 comp-c-man .man
 ./usr/share/man/man3/sqlite3changegroup_new.3	comp-c-man	.man
 ./usr/share/man/man3/sqlite3changegroup_output.3 comp-c-man .man
