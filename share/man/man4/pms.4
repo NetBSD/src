@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.42 2024/09/07 19:13:27 rillig Exp $
+.\" $NetBSD: pms.4,v 1.43 2026/04/28 17:00:22 christos Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd October 21, 2021
+.Dd April 28, 2026
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -155,6 +155,14 @@ If set to 0 (default), two-finger events are ignored.
 If set to 1, two-finger events generate a right button click.
 .It
 If set to 2, two-finger events generate a middle button click.
+.El
+.It Dv hw.synaptics.tap_to_click
+Enable or disable tap-to-click.
+.Bl -bullet
+.It
+If set to 0, tap to click is enabled.
+.It
+If set to 1 (default), tap to click is enabled.
 .El
 .It Dv hw.synaptics.scale_x
 .It Dv hw.synaptics.scale_y

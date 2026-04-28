@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.84 2024/07/19 04:48:13 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.85 2026/04/28 17:00:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.84 2024/07/19 04:48:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.85 2026/04/28 17:00:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,6 +118,7 @@ static int synaptics_button_pct = 0;
 static int synaptics_button_boundary = SYNAPTICS_EDGE_BOTTOM;
 static int synaptics_button2;
 static int synaptics_button3;
+static int synaptics_tap_to_click = 1;
 static int synaptics_two_fingers_emul = 0;
 static int synaptics_scale_x = 8;
 static int synaptics_scale_y = 8;
@@ -155,6 +156,7 @@ static int synaptics_edge_bottom_nodenum;
 static int synaptics_edge_motion_delta_nodenum;
 static int synaptics_finger_high_nodenum;
 static int synaptics_finger_low_nodenum;
+static int synaptics_tap_to_click_nodenum;
 static int synaptics_two_fingers_emul_nodenum;
 static int synaptics_scale_x_nodenum;
 static int synaptics_scale_y_nodenum;
@@ -865,6 +867,18 @@ pms_sysctl_synaptics(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tap_to_click",
+	    SYSCTL_DESCR("Enable tap to click"),
+	    pms_sysctl_synaptics_verify, 0,
+	    &synaptics_tap_to_click,
+	    0, CTL_HW, root_num, CTL_CREATE,
+	    CTL_EOL)) != 0)
+		goto err;
+
+	synaptics_tap_to_click_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "two_fingers_emulation",
 	    SYSCTL_DESCR("Map two fingers to middle button"),
 	    pms_sysctl_synaptics_verify, 0,
@@ -1099,6 +1113,10 @@ pms_sysctl_synaptics_verify(SYSCTLFN_ARGS)
 	/* Sanity check the params. */
 	if (node.sysctl_num == synaptics_up_down_emul_nodenum) {
 		if (t < 0 || t > 3)
+			return (EINVAL);
+	} else
+	if (node.sysctl_num == synaptics_tap_to_click_nodenum) {
+		if (t < 0 || t > 1)
 			return (EINVAL);
 	} else
 	if (node.sysctl_num == synaptics_two_fingers_emul_nodenum) {
@@ -2295,7 +2313,7 @@ pms_synaptics_process_packet(struct pms_softc *psc, struct synaptics_packet *sp)
 	/*
 	 * Do gesture processing only if we didn't detect a palm.
 	 */
-	if (palm == 0)
+	if (palm == 0 && synaptics_tap_to_click)
 		synaptics_gesture_detect(sc, sp, fingers);
 	else
 		sc->gesture_type = sc->gesture_buttons = 0;
