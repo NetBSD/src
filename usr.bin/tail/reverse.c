@@ -79,7 +79,7 @@ reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (style != REVERSE && off == 0)
 		return;
 
-	if (S_ISREG(sbp->st_mode))
+	if (S_ISREG(sbp->st_mode) && st_size > 0)
 		r_reg(fp, style, off, sbp);
 	else
 		switch(style) {
