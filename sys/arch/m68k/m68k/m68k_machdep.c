@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.22 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.23 2026/04/28 14:58:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.22 2026/04/28 03:29:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.23 2026/04/28 14:58:31 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -326,9 +326,6 @@ cpu_startup_print_machine_model(void (*pr)(const char *, ...)
 				__printflike(1, 2))
 {
 	char speed_str[sizeof("@ xxx.xxxMHz")] = { 0 };
-#ifdef M68060
-	u_int pcr = get_pcr();
-#endif
 
 	/*
 	 * Caller should have set the system model already.  We
@@ -412,7 +409,8 @@ cpu_startup_print_machine_model(void (*pr)(const char *, ...)
 		break;
 #endif
 #ifdef M68060
-	case CPU_68060:
+	case CPU_68060: {
+		u_int pcr = get_pcr();
 		(*pr)("MC68%s060 rev.%d CPU+MMU",
 		    (PCR_ID(pcr) & 1) ? "LC" : "",
 		    (int)PCR_REVISION(pcr));
@@ -420,6 +418,7 @@ cpu_startup_print_machine_model(void (*pr)(const char *, ...)
 			(*pr)("+FPU(disabled)");
 		}
 		break;
+	    }
 #endif
 	default:
 		(*pr)("unknown CPU type\n");
