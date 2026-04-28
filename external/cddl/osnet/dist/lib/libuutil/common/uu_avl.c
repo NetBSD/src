@@ -568,3 +568,15 @@ uu_avl_release(void)
 		(void) pthread_mutex_unlock(&pp->uap_lock);
 	(void) pthread_mutex_unlock(&uu_apool_list_lock);
 }
+
+__dso_hidden
+void
+uu_avl_release_child(void)
+{
+	uu_avl_pool_t *pp;
+
+	for (pp = uu_null_apool.uap_next; pp != &uu_null_apool;
+	    pp = pp->uap_next)
+		(void) pthread_mutex_init(&pp->uap_lock, NULL);
+	(void) pthread_mutex_init(&uu_apool_list_lock, NULL);
+}
