@@ -68,6 +68,8 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
+kmutex_t sicomcsr_lock;
+
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
 
@@ -99,6 +101,7 @@ si_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't map registers\n");
 		return;
 	}
+	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
 
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
 		struct si_channel *ch;
@@ -197,34 +200,29 @@ si_print(void *aux, const char *pnp)
 static int
 si_identify(device_t self, unsigned chan)
 {
-	uint32_t comcsr, siio;
+	uint32_t comcsr;
 	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
+	struct siio_send data;
+	uint8_t in[0];
+	uint8_t out[3];
+
+	data.cmd = SIIDENTIFY;
+	data.chan = chan;
+	data.send_size = 0;
+	data.recv_size = 3;
+	data.inbuf = in;
+	data.outbuf = out;
 
 	ch = &sc->sc_chan[chan];
 
 	WR4(sc, SIPOLL, RD4(sc, SIPOLL) & ~SIPOLL_EN(chan));
-	WR4(sc, SIIOBUF, SIIDENTIFY);
-	WR4(sc, SISR, SISR_WR(chan));
-	AWAIT_SISR(sc, chan);
-
-	WR4(sc, SICOMCSR,
-	    SICOMCSR_CH_EN |
-	    SICOMCSR_CMD_EN |
-	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
-	    __SHIFTIN(1, SICOMCSR_OUTLNGTH) |
-	    __SHIFTIN(3, SICOMCSR_INLNGTH) |
-	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
-	    SICOMCSR_TSTART
-	);
-	AWAIT_SICOMCSR(sc);
+	__si_send(sc, &data);
 	comcsr = RD4(sc, SICOMCSR);
 	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
 
-	siio = RD4(sc, SIIOBUF);
-	ch->ch_id = siio >> 16;
-	ch->ch_id_extra = siio & 0x0000FFFF;
-	aprint_normal("si_identify: Identified chan%d as 0x%08X / 0x%08X\n", chan, ch->ch_id, ch->ch_id_extra);
+	ch->ch_id = (uint16_t)out[0] << 8;
+	aprint_normal("si_identify: Identified chan%d as 0x%08X\n", chan, ch->ch_id);
 
 	return 0;
 }
@@ -352,7 +350,6 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	WR4(sc, SISR, SISR_WR(ch->ch_index));
 	WR4(sc, SICOMCSR, RD4(sc, SICOMCSR) | SICOMCSR_TSTART);
 
-	// TODO - AWAIT_SICOMCSR and figure out error
 	error = 0;
 
 unlock:

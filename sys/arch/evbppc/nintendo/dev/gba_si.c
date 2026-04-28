@@ -30,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/mutex.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -50,7 +51,7 @@ dev_type_ioctl(gba_ioctl);
 const struct cdevsw gba_cdevsw = {
 	.d_open = gba_open,
 	.d_close = gba_close,
-	.d_ioctl = noioctl,
+	.d_ioctl = gba_ioctl,
 	.d_read = noread,
 	.d_write = nowrite,
 	.d_stop = nostop,
@@ -61,6 +62,8 @@ const struct cdevsw gba_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
+
+extern struct cfdriver gba_cd;
 
 struct gba_softc {
 	device_t		sc_dev;
@@ -106,21 +109,66 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-gba_open(dev_t dev, int flag, int mode, struct lwp *l)
+gba_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	return 0;
+	struct gba_softc * const sc = device_lookup_private(&gba_cd, minor(dev));
+	struct si_channel *ch = sc->ch;
+	int error;
+
+	mutex_enter(&ch->ch_lock);
+
+	if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
+		error = EBUSY;
+		goto unlock;
+	}
+
+	ch->ch_state |= SI_STATE_OPEN;
+unlock:
+	mutex_exit(&ch->ch_lock);
+	return error;
 }
 
 int
-gba_close(dev_t dev, int flag, int mode, struct lwp *l)
+gba_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
+	struct gba_softc * const sc = device_lookup_private(&gba_cd, minor(dev));
+	struct si_channel *ch = sc->ch;
+
+	mutex_enter(&ch->ch_lock);
+	ch->ch_state &= ~(SI_STATE_OPEN | SI_STATE_STOPPED);
+
+	/* cv_init is called in parent's si_attach */
+	cv_broadcast(&ch->ch_cv);
+
+	mutex_exit(&ch->ch_lock);
 	return 0;
 }
 
-/*
+/**
+ * TODO:
+ *
+ * i dont really want to touch the other guys code at all if i dont have to.
+ * i dont think that i do. according to the docs you should never set
+ * TSTART if you are in the middle of a transaction. i can add the AWAIT to
+ * one or two of his lines np.
+ *
+ * then it says you should never change OUTLENGTH / INLENGTH / CHANNEL in the
+ * middle of a transaction. these are only things used for the siiobuf, which
+ * no one is using but me. so i can define my own mutex for that purpose.
+ */
 int
-gba_read(dev_t dev, struct uio *uio, int flags)
+gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	return 0;
+	//struct gba_softc * const sc = device_lookup_private(&gba_cd, minor(dev));
+	int err;
+
+	switch(cmd) {
+//	case SI_SEND:
+//		break;
+	default:
+		err = EINVAL;
+		break;
+	}
+
+	return err;
 }
-*/

@@ -69,6 +69,7 @@
 				 SISR_ERROR_MASK(2) | SISR_ERROR_MASK(3))
 #define SIEXILK			0x3c
 #define SIIOBUF			0x80
+#define SIIOBUF_SIZE		128
 
 #define GCPAD_REPORT_SIZE	9
 #define GCPAD_START(_buf)	ISSET((_buf)[0], 0x10)
@@ -95,6 +96,7 @@
 	do { while (RD4(sc, SICOMCSR) & SICOMCSR_TSTART); } while (0)
 
 struct si_softc;
+extern kmutex_t sicomcsr_lock;
 
 struct si_channel {
 	struct si_softc		*ch_sc;
@@ -128,5 +130,56 @@ struct si_attach_args {
 	struct hidev_tag	*saa_hidev;
 	int			saa_index;
 };
+
+struct siio_send {
+	uint8_t		cmd;
+	unsigned	chan;
+	uint8_t		send_size;
+	uint8_t		recv_size;
+	uint8_t		*inbuf;
+	uint8_t		*outbuf;
+};
+
+static inline int
+__si_send(struct si_softc *sc, struct siio_send *data)
+{
+	uint32_t comcsr, sisr;
+	unsigned chan;
+
+	chan = data->chan;
+
+	bus_space_set_region_1(sc->sc_bst, sc->sc_bsh, SIIOBUF, 0, SIIOBUF_SIZE);
+	WR4(sc, SISR, SISR_ERROR_MASK(chan));
+
+	WR4(sc, SIIOBUF, data->cmd);
+	bus_space_write_region_1(sc->sc_bst, sc->sc_bsh, SIIOBUF+1,
+	    data->inbuf, data->send_size);
+
+	AWAIT_SICOMCSR(sc);
+	WR4(sc, SICOMCSR,
+	    SICOMCSR_CH_EN |
+	    SICOMCSR_CMD_EN |
+	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
+	    __SHIFTIN(data->send_size + 1, SICOMCSR_OUTLNGTH) |
+	    __SHIFTIN(data->recv_size, SICOMCSR_INLNGTH) |
+	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
+	    SICOMCSR_TSTART
+	);
+	AWAIT_SICOMCSR(sc);
+
+	bus_space_read_region_1(sc->sc_bst, sc->sc_bsh, SIIOBUF,
+	    data->outbuf, data->recv_size);
+
+	comcsr = RD4(sc, SICOMCSR);
+	if (ISSET(comcsr, SICOMCSR_COMERR)) {
+		sisr = RD4(sc, SISR);
+		// TODO figure out the bit shifting here
+		//(sisr & SISR_ERROR_MASK(chan)) >> (NUM_CHANS - chan);
+		return sisr & SISR_ERROR_MASK(chan);
+	}
+
+	return 0;
+}
+
 
 #endif /* _WII_DEV_SI_H_ */
