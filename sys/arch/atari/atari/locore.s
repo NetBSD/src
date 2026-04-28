@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.143 2026/03/29 03:24:56 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.144 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,14 +77,6 @@
 
 	.text
 	.even
-/*
- * Do a dump.
- * Called by auto-restart.
- */
-ENTRY_NOPROFILE(doadump)
-	jbsr	_C_LABEL(dumpsys)
-	jbsr	_C_LABEL(doboot)
-	/*NOTREACHED*/
 
 	/*
 	 * This is where the default vectors end-up!
@@ -570,7 +562,7 @@ ENTRY(probeva)
  * Handle the nitty-gritty of rebooting the machine.
  *
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movl	#CACHE_OFF,%d0
 	cmpl	#MMU_68040,_C_LABEL(mmutype) |  is it 68040?
 	jne	Ldoboot0

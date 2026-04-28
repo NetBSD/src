@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2025/11/18 23:18:00 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #if defined(_KERNEL)
 /* locore.s functions */
-void	doboot(void) __attribute__((__noreturn__));
 int	nmihand(void *);
 
 extern int iscolor;

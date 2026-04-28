@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2026/04/20 09:47:45 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.2 2026/04/28 03:29:09 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -35,6 +35,7 @@ include <sys/param.h>
 include <sys/evcnt.h>
 include <sys/proc.h>
 include <sys/syscall.h>
+include <sys/reboot.h>
 
 include <uvm/uvm_extern.h>
 
@@ -231,3 +232,6 @@ define	SYS_compat_13_sigreturn13 SYS_compat_13_sigreturn13
 # errno
 define	EFAULT			EFAULT
 define	ENAMETOOLONG		ENAMETOOLONG
+
+# boothowto bits
+define	RB_HALT			RB_HALT

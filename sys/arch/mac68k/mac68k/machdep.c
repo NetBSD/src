@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.386 2026/04/24 13:40:47 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.387 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.386 2026/04/24 13:40:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.387 2026/04/28 03:29:10 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -431,88 +431,38 @@ initcpu(void)
 
 void doboot(void) __attribute__((__noreturn__));
 
-int	waittime = -1;
 struct pcb dumppcb;
 
 void
-cpu_reboot(int howto, char *bootstr)
+machine_powerdown(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	extern u_long last_page;
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is cold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-# ifdef DIAGNOSTIC
-		printf("NetBSD/mac68k does not trust itself to update the "
-		    "RTC on shutdown.\n");
-# endif
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		/* First try to power down under VIA control. */
-		via_powerdown();
+	/* First try to power down under VIA control. */
+	via_powerdown();
 
 #ifndef MRG_ADB
-		/*
-		 * Shut down machines whose power functions are accessed
-		 * via modified ADB calls.  adb_poweroff() is available
-		 * only when the MRG ADB is not being used.
-		 */
-		adb_poweroff();
+	/*
+	 * Shut down machines whose power functions are accessed
+	 * via modified ADB calls.  adb_poweroff() is available
+	 * only when the MRG ADB is not being used.
+	 */
+	adb_poweroff();
 #endif
-		/*
-		 * Try to shutdown via the power manager (PowerBooks mainly).
-		 */
-		pm_poweroff();
+	/*
+	 * Try to shutdown via the power manager (PowerBooks mainly).
+	 */
+	pm_poweroff();
+}
 
-		/*
-		 * RB_POWERDOWN implies RB_HALT... fall into it...
-		 */
-	}
-
-	if (howto & RB_HALT) {
-		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-	}
+void
+machine_reboot(int howto, char *bootstr)
+{
+	extern u_long last_page;
 
 	/* Map the last physical page VA = PA for doboot() */
 	pmap_enter(pmap_kernel(), (vaddr_t)last_page, (vaddr_t)last_page,
 	    VM_PROT_ALL, VM_PROT_ALL|PMAP_WIRED);
 	pmap_update(pmap_kernel());
-
-	printf("rebooting...\n");
-	DELAY(1000000);
 	doboot();
-	/* NOTREACHED */
 }
 
 /*

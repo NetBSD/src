@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.279 2026/04/26 12:49:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.280 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.279 2026/04/26 12:49:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2026/04/28 03:29:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -263,65 +263,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-static int waittime = -1;
-
 void
-bootsync(void)
+machine_powerdown(void)
 {
-	if (waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-}
-
-
-void
-cpu_reboot(register int howto, char *bootstr)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
 #if NEMPM > 0
-	device_t empmdev;
-#endif /* NEMPM > 0 */
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
-		bootsync();
-
-	/* Disable interrupts. */
-	spl7();
-
-	/* If rebooting and a dump is requested do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-#if NEMPM > 0
-	if (howto & RB_POWERDOWN) {
-		empmdev = device_find_by_xname("empm0");
-		if (empmdev != NULL) {
-			empm_power_off(device_private(empmdev));
-		}
+	device_t empmdev = device_find_by_xname("empm0");
+	if (empmdev != NULL) {
+		empm_power_off(device_private(empmdev));
 	}
 #endif /* NEMPM > 0 */
-
-	if (howto & RB_HALT) {
-		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cnpollc(true);
-		cngetc();
-		cnpollc(false);
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-	doboot();
-	/*NOTREACHED*/
 }
-
 
 u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */

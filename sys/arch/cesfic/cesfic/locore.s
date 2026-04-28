@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.72 2026/04/20 08:04:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.73 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -389,7 +389,7 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	addql	#8,%sp			| pop SP and stack adjust
 	jra	_ASM_LABEL(rei)		| all done
 
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movl #0x5c00c060, %d0		| want phys addressing
 	.long	0x4e7b0006		| movc d0,dtt0
 	movl	#1, 0x5c00b800		| reset

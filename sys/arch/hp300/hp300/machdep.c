@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.271 2026/04/26 12:49:37 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.272 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.271 2026/04/26 12:49:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2026/04/28 03:29:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -476,69 +476,14 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTL_MACHDEP, CPU_BROKEN_RMC, CTL_EOL);
 }
 
-int	waittime = -1;
-
 void
-cpu_reboot(int howto, char *bootstr)
+machine_reboot(int howto, char *bootstr)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is cold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-		printf("\n");
-	}
-#endif
-
-	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		printf("System halted.  Hit any key to reboot.\n\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-
 #ifdef __HAVE_NEW_PMAP_68K
 	/* Restore the PROM work area first. */
 	memcpy((void *)BOOTWORKSTART, bootwork_savearea, BOOTWORKSIZE);
 #endif
 	doboot();
-	/* NOTREACHED */
 }
 
 /*

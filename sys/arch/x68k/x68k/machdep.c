@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.232 2026/04/26 12:49:39 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.233 2026/04/28 03:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.232 2026/04/26 12:49:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2026/04/28 03:29:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -359,83 +359,19 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-int	waittime = -1;
-
 void
-cpu_reboot(int howto, char *bootstr)
+machine_powerdown(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
+	printf("powering off...\n");
+	delay(1000000);
 
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
+	/* Turn off the alarm signal of RTC */
+	IODEVbase->io_rtc.bank0.reset = 0x0c;
 
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 */
-		/*resettodr();*/
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	if (howto & RB_DUMP)
-		dumpsys();
-
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-		printf("\n");
-	}
-#endif
-
-	/* Finally, halt/reboot the system. */
-	/* a) RB_POWERDOWN
-	 *  a1: the power switch is still on
-	 *	Power cannot be removed; simply halt the system (b)
-	 *  a2: the power switch is off
-	 *	Remove the power
-	 * b) RB_HALT
-	 *	call cngetc
-	 * c) otherwise
-	 *	Reboot
-	 */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		printf("powering off...\n");
-		delay(1000000);
-
-		/* Turn off the alarm signal of RTC */
-		IODEVbase->io_rtc.bank0.reset = 0x0c;
-
-		intio_set_sysport_powoff(0x00);
-		intio_set_sysport_powoff(0x0f);
-		intio_set_sysport_powoff(0x0f);
-		delay(1000000);
-	}
-	if ((howto & RB_HALT) != 0) {
-		printf("System halted.  Hit any key to reboot.\n\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-	doboot();
-	/* NOTREACHED */
+	intio_set_sysport_powoff(0x00);
+	intio_set_sysport_powoff(0x0f);
+	intio_set_sysport_powoff(0x0f);
+	delay(1000000);
 }
 
 void

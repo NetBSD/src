@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.193 2026/04/27 11:17:57 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.194 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.193 2026/04/27 11:17:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2026/04/28 03:29:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -434,68 +434,12 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-/* See: sig_machdep.c */
-
-int	waittime = -1;
-
 void
 cpu_reboot(int howto, char *bootstr)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
 	/* Save the RB_SBOOT flag. */
 	howto |= (boothowto & RB_SBOOT);
-
-	/* If system is hold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-		printf("\n");
-	}
-#endif
-
-	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-		doboot(RB_HALT);
-		/* NOTREACHED */
-	}
-
-	printf("rebooting...\n");
-	delay(1000000);
-	doboot(RB_AUTOBOOT);
-	/*NOTREACHED*/
+	cpu_reboot_common(howto, bootstr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.208 2026/04/26 12:49:36 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2026/04/26 12:49:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.208 2026/04/26 12:49:36 thorpej Exp $"
 
 #define	DEV_NVRAM	11	/* Nvram minor-number */
 
-static void bootsync(void);
 static void call_sicallbacks(void);
 void	straymfpint(int, u_short);
 
@@ -202,53 +201,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-}
-
-static int waittime = -1;
-
-static void
-bootsync(void)
-{
-	if (waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-}
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
-		bootsync();
-
-	/*
-	 * Call shutdown hooks. Do this _before_ anything might be
-	 * asked to the user in case nobody is there....
-	 */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	splhigh();			/* extreme priority */
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-		__asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-
-		doboot();
-		/*NOTREACHED*/
-	}
-	panic("Boot() should never come here");
-	/*NOTREACHED*/
 }
 
 static vaddr_t	dumpspace;	/* Virt. space to map dumppages	*/

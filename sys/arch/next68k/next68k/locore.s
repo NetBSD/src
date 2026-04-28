@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.113 2026/04/25 01:07:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.114 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -383,7 +383,7 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
  * is turned off.  We have conveniently mapped the last page of physical
  * memory this way.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 
 	movl	#CACHE_OFF,%d0
@@ -423,11 +423,11 @@ Ldoboot1:
 	.long	0x4e7b0007		| movc %d0,%dtt1
 
 	RELOC(monbootflag, %a0)
-	movel %a0,%d0			| "-h" halts instead of reboot.
-	trap #13
+	movl	%a0,%d0
+	trap	#13
+1:
+	bra	1b			| This shouldn't be reached.
 
-hloop:
-	bra hloop			| This shouldn't be reached.
 /*
  * Misc. global variables.
  */
@@ -460,15 +460,7 @@ GLOBAL(fbbasepa)
 	.long	MONOBASE	| PA of base of framebuffer
 
 GLOBAL(monbootflag)
-	.long 0
-
-#ifdef USELEDS
-ASLOCAL(heartbeat)
-	.long	0		| clock ticks since last pulse of heartbeat
-
-ASLOCAL(beatstatus)
-	.long	0		| for determining a fast or slow throb
-#endif
+	.long	0
 
 #ifdef DEBUG
 ASGLOBAL(fulltflush)

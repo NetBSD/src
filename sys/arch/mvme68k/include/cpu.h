@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.59 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.60 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,8 +74,6 @@ extern	u_int intiosize;
 extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
-void	doboot(int) 
-	__attribute__((__noreturn__));
 int	nmihand(void *);
 void	mvme68k_abort(const char *);
 void	*iomap(u_long, size_t);

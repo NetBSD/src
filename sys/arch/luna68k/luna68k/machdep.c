@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.133 2026/04/26 12:49:38 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.134 2026/04/28 03:29:09 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.133 2026/04/26 12:49:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2026/04/28 03:29:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -331,67 +331,17 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-int	waittime = -1;
-
 void
-cpu_reboot(int howto, char *bootstr)
+machine_powerdown(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	extern void doboot(void);
+	volatile uint8_t *pio = (void *)OBIO_PIO1_BASE;
 
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is hold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	/* Finally, halt/reboot the system. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		volatile uint8_t *pio = (void *)OBIO_PIO1_BASE;
-
-		printf("power is going down.\n");
-		DELAY(100000);
-		pio[3] = 0x94;
-		pio[2] = 0 << 4;
-		for (;;)
-			/* NOP */;
-	}
-	if (howto & RB_HALT) {
-		printf("System halted.	Hit any key to reboot.\n\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-	}
-
-	printf("rebooting...\n");
+	printf("power is going down.\n");
 	DELAY(100000);
-	doboot();
-	/*NOTREACHED*/
+	pio[3] = 0x94;
+	pio[2] = 0 << 4;
 	for (;;)
-		;
+		/* NOP */;
 }
 
 void luna68k_abort(const char *);

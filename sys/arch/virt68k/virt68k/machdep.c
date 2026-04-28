@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2026/04/26 13:34:26 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2026/04/28 03:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2026/04/26 13:34:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2026/04/28 03:29:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -277,89 +277,37 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_BROKEN_RMC, CTL_EOL);
 }
 
-/* See: sig_machdep.c */
+static void
+default_reset_func(void *arg, int howto)
+{
+	printf("WARNING: No reset handler, holding here.\n\n");
+	for (;;) {
+		/* spin forever. */
+	}
+}
 
-int	waittime = -1;
-
-static void (*cpu_reset_func)(void *, int);
+static void (*cpu_reset_func)(void *, int) = default_reset_func;
 static void *cpu_reset_func_arg;
 
 void
 cpu_set_reset_func(void (*func)(void *, int), void *arg)
 {
-	if (cpu_reset_func == NULL) {
+	if (cpu_reset_func == default_reset_func && func != NULL) {
 		cpu_reset_func = func;
 		cpu_reset_func_arg = arg;
 	}
 }
 
 void
-cpu_reboot(int howto, char *bootstr)
+machine_halt(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
+	(*cpu_reset_func)(cpu_reset_func_arg, RB_HALT);
+}
 
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is hold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(true);
-		(void)cngetc();
-		cnpollc(false);
-		printf("\n");
-	}
-#endif
-
-	if (cpu_reset_func == NULL) {
-		printf("WARNING: No reset handler, holding here.\n\n");
-		for (;;) {
-			/* spin forever. */
-		}
-	}
-
-	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-		(*cpu_reset_func)(cpu_reset_func_arg, RB_HALT);
-		/* NOTREACHED */
-	} else {
-		printf("rebooting...\n");
-		delay(1000000);
-		(*cpu_reset_func)(cpu_reset_func_arg, RB_AUTOBOOT);
-		/* NOTREACHED */
-	}
-	/* ...but just in case it is... */
-	printf("WARNING: System reset handler failed, holding here.\n\n");
-	for (;;) {
-		/* spin forever. */
-	}
+void
+machine_reboot(int howto, char *bootstr)
+{
+	(*cpu_reset_func)(cpu_reset_func_arg, RB_AUTOBOOT);
 }
 
 /*

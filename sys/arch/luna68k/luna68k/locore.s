@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.114 2026/03/29 03:24:57 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.115 2026/04/28 03:29:09 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -291,23 +291,13 @@ ENTRY_NOPROFILE(lev5intr)
 #endif
 
 /*
- * Do a dump.
- * Called by auto-restart.
- */
-GLOBAL(doadump)
-	jbsr	_C_LABEL(dumpsys)
-	jbsr	_C_LABEL(doboot)
-	/*NOTREACHED*/
-
-/*
  * Handle the nitty-gritty of rebooting the machine.
  * Basically we just turn off the MMU, restore the initial %vbr
  * and return to monitor.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	movl	_C_LABEL(boothowto),%d7	| load howto
-	movl	%sp@(4),%d2		| arg
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
 	jeq	Lnocache5		| yes, skip

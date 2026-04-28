@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.225 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.226 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.225 2026/04/23 02:54:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.226 2026/04/28 03:29:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -301,88 +301,29 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 }
 
-/* See: sig_machdep.c */
-
-/*
- * Do a sync in preparation for a reboot.
- * XXX - This could probably be common code.
- * XXX - And now, most of it is in vfs_shutdown()
- * XXX - Put waittime checks in there too?
- */
-int waittime = -1;	/* XXX - Who else looks at this? -gwr */
-static void
-reboot_sync(void)
+void
+machine_halt(void)
 {
-
-	/* Check waittime here to localize its use to this function. */
-	if (waittime >= 0)
-		return;
-	waittime = 0;
-	vfs_shutdown();
+	sunmon_halt();
 }
 
-/*
- * Common part of the BSD and SunOS reboot system calls.
- */
-__dead void
-cpu_reboot(int howto, char *user_boot_string)
+void
+machine_reboot(int howto, char *bootstr)
 {
-	char *bs, *p;
+	char *p;
 	char default_boot_string[8];
 
-	/* If system is cold, just halt. (early panic?) */
-	if (cold)
-		goto haltsys;
-
-	/* Un-blank the screen if appropriate. */
-	cnpollc(true);
-
-	if ((howto & RB_NOSYNC) == 0) {
-		reboot_sync();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 *
-		 * XXX - However, if the kernel has been sitting in ddb,
-		 * the time will be way off, so don't set the HW clock!
-		 * XXX - Should do sanity check against HW clock. -gwr
-		 */
-		/* resettodr(); */
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* Write out a crash dump if asked. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-	/* run any shutdown hooks */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if (howto & RB_HALT) {
-	haltsys:
-		printf("halted.\n");
-		sunmon_halt();
-	}
-
-	/*
-	 * Automatic reboot.
-	 */
-	bs = user_boot_string;
-	if (bs == NULL) {
+	if (bootstr == NULL) {
 		/*
 		 * Build our own boot string with an empty
 		 * boot device/file and (maybe) some flags.
 		 * The PROM will supply the device/file name.
 		 */
-		bs = default_boot_string;
-		*bs = '\0';
+		p = default_boot_string;
+		*p = '\0';
+
 		if (howto & (RB_KDB|RB_ASKNAME|RB_SINGLE)) {
 			/* Append the boot flags. */
-			p = bs;
 			*p++ = ' ';
 			*p++ = '-';
 			if (howto & RB_KDB)
@@ -393,11 +334,9 @@ cpu_reboot(int howto, char *user_boot_string)
 				*p++ = 's';
 			*p = '\0';
 		}
+		bootstr = default_boot_string;
 	}
-	printf("rebooting...\n");
-	sunmon_reboot(bs);
-	for (;;) ;
-	/*NOTREACHED*/
+	sunmon_reboot(bootstr);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.162 2026/04/05 20:19:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.163 2026/04/28 03:29:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -413,7 +413,7 @@ ENTRY_NOPROFILE(fdeject)
  * is turned off.  We have conveniently mapped the last page of physical
  * memory this way.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movw	#PSL_HIGHIPL,%sr	| cut off any interrupts
 	subal	%a1,%a1			| a1 = 0
 

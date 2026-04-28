@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.189 2026/04/11 19:49:26 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.190 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -90,15 +90,6 @@ L_base:
 Ljmp0panic:
 	.asciz	"kernel jump to zero"
 	.even
-
-/*
- * Do a dump.
- * Called by auto-restart.
- */
-ENTRY_NOPROFILE(doadump)
-	jbsr	_C_LABEL(dumpsys)
-	jbsr	_C_LABEL(doboot)
-	/*NOTREACHED*/
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -666,7 +657,7 @@ GLOBAL(p5ppc)
 	.text
 #endif
 
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movl	#CACHE_OFF,%d0
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| is it 68040
 	jne	Ldoboot0

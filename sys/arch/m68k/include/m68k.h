@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.37 2026/04/26 12:49:38 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.38 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -181,6 +181,14 @@ void	cpu_startup_print_machine_model(void (*)(const char *, ...)
 void	cpu_startup_print_total_memory(void (*)(const char *, ...)
 				       __printflike(1, 2));
 #endif
+int	cpu_reboot_poll_console(bool);
+void	cpu_reboot_common(int, char *) __dead;
+void	machine_powerdown_default(void);
+void	machine_powerdown(void);
+void	machine_halt_default(void);
+void	machine_halt(void);
+void	machine_reboot(int, char *);
+void	bootsync(void);
 int	mm_md_physacc_regular(paddr_t, vm_prot_t);
 
 /* m68k_trap.c */

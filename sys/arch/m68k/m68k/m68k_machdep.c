@@ -1,7 +1,7 @@
-/*	$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.22 2026/04/28 03:29:09 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.22 2026/04/28 03:29:09 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -78,6 +78,13 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Ex
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/msgbuf.h>
+#include <sys/reboot.h>
+#include <sys/device.h>
+#include <sys/vnode.h>
+#include <sys/kernel.h>
+#include <sys/kcore.h>
+
+#include <dev/cons.h>
 
 #ifdef EXEC_AOUT
 #include <sys/exec_aout.h>	/* for cpu_exec_aout_makecmds() prototype */
@@ -86,13 +93,13 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.21 2026/04/23 02:54:39 thorpej Ex
 #include <uvm/uvm_extern.h>
 
 #include <m68k/m68k.h>
+#include <m68k/kcore.h>
 #include <m68k/frame.h>
 #include <m68k/pcb.h>
 #include <m68k/reg.h>
 #ifdef M68060
 #include <m68k/pcr.h>
 #endif
-
 #include <m68k/seglist.h>
 
 /* the following is used externally (sysctl_hw) */
@@ -532,6 +539,113 @@ mm_md_physacc_regular(paddr_t pa, vm_prot_t prot)
 	}
 	return EFAULT;
 }
+
+int
+cpu_reboot_poll_console(bool wait)
+{
+	int rv;
+
+	cnpollc(true);
+	/* If there is no console input device, cngetc() returns 0. */
+	while ((rv = cngetc()) == 0 && wait) {
+		delay(100000);
+	}
+	cnpollc(false);
+
+	return rv;
+}
+
+void
+machine_powerdown_default(void)
+{
+	/* zip, nada, nothing */
+}
+__weak_alias(machine_powerdown,machine_powerdown_default);
+
+void
+machine_halt_default(void)
+{
+	printf("Please press any key to reboot.\n");
+
+	cpu_reboot_poll_console(true);
+}
+__weak_alias(machine_halt,machine_halt_default);
+
+int	waittime = -1;
+
+void
+bootsync(void)
+{
+	if (waittime < 0) {
+		waittime = 0;
+		vfs_shutdown();
+	}
+}
+
+void
+cpu_reboot_common(int howto, char *bootstr)
+{
+	struct pcb *pcb = lwp_getpcb(curlwp);
+
+	/* take a snap shot before clobbering any registers */
+	if (pcb != NULL) {
+		savectx(pcb);
+	}
+
+	/* If system is hold, just halt. */
+	if (cold) {
+		howto |= RB_HALT;
+		goto haltsys;
+	}
+
+	/* Un-blank the screen if appropriate. */
+	cnpollc(true);
+
+	boothowto = howto;
+	if ((howto & RB_NOSYNC) == 0) {
+		bootsync();
+	}
+
+	/* Disable interrupts. */
+	splhigh();
+
+	/* If rebooting and a dump is requested, do it. */
+	if (howto & RB_DUMP) {
+		dumpsys();
+	}
+
+ haltsys:
+	/* Run any shutdown hooks. */
+	doshutdownhooks();
+
+	pmf_system_shutdown(boothowto);
+
+#if defined(PANICWAIT) && !defined(DDB)
+	if ((howto & RB_HALT) == 0 && panicstr) {
+		printf("hit any key to reboot...\n");
+		cpu_reboot_poll_console(false);
+		printf("\n");
+	}
+#endif
+
+	/* Finally, halt/reboot the system. */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		machine_powerdown();
+	}
+	if (howto & RB_HALT) {
+		printf("The operating system has halted.\n");
+		machine_halt();
+	}
+
+	printf("rebooting...\n");
+	delay(1000000);
+	machine_reboot(howto, bootstr);
+	printf("WARNING: system reboot failed, holding here.\n\n");
+	for (;;) {
+		/* spin forever. */
+	}
+}
+__weak_alias(cpu_reboot,cpu_reboot_common);
 
 /*
  * mm_md_physacc_common is the standard implementation for all

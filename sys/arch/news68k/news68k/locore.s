@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -451,7 +451,7 @@ ENTRY(ecacheoff)
  * and jump through the PROM halt vector with argument via %d7
  * depending on how the system was halted.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
 	jeq	Lnocache5		| yes, skip
@@ -462,24 +462,20 @@ Lnocache5:
 	movl	_C_LABEL(boothowto),%d7	| load howto
 	movl	_C_LABEL(bootdev),%d6	| load bootdev
 	movl	%sp@(4),%d2		| arg
-	movl	_C_LABEL(ctrl_power),%a0| CTRL_POWER port
+	andl	#RB_HALT,%d2		| %d2 == 0 -> autoboot, else halt
 	movl	_C_LABEL(saved_vbr),%d3	| Fetch original VBR value
 	lea	_ASM_LABEL(tmpstk),%sp	| physical SP in case of NMI
 	movl	#0,%a7@-		| value for pmove to TC (turn off MMU)
 	pmove	%a7@,%tc		| disable MMU
 	movc	%d3,%vbr		| Restore monitor's VBR
-	movl	%d2,%d0			|
-	andl	#0x800,%d0		| mask off
-	tstl	%d0			| power down?
-	beq	1f			|
-	clrb	%a0@			| clear CTRL_POWER port
-1:
 	tstl	%d2			| autoboot?
 	beq	2f			| yes!
 	movl	%d2,%d7			|
 2:
 	trap	#15
 	/* NOTREACHED */
+
+STRONG_ALIAS(machine_halt,machine_reboot)
 
 /*
  * debug_led():

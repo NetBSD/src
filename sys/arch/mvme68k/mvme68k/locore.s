@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.167 2026/03/29 03:24:57 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.168 2026/04/28 03:29:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -622,10 +622,11 @@ Lmemc040berr:
  * and either return to Bug or jump through the ROM reset vector
  * depending on how the system was halted.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movw	#PSL_HIGHIPL,%sr
 	movl	_C_LABEL(boothowto),%d1	| load howto
 	movl	%sp@(4),%d2		| arg
+	andl	#RB_HALT,%d2		| %d2 == 0 -> autoboot, else halt
 	movl	_C_LABEL(saved_vbr),%d3	| Fetch Bug's original VBR value
 	movl	_C_LABEL(machineid),%d4	| What type of board is this?
 	movl	#CACHE_OFF,%d0
@@ -678,6 +679,7 @@ Lsboot: /* sboot */
 	jmp 	0x4000			| back to sboot
 1:	jmp	0x400a			| tell sboot to reboot us
 
+STRONG_ALIAS(machine_halt,machine_reboot)
 
 /*
  * Misc. global variables.
