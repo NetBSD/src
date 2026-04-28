@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.12 2026/01/20 19:22:10 joe Exp $	*/
+/*	$NetBSD: malloc.c,v 1.13 2026/04/28 13:02:10 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.12 2026/01/20 19:22:10 joe Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.13 2026/04/28 13:02:10 riastradh Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -599,5 +599,5 @@ void
 _malloc_postfork_child(void)
 {
 
-	mutex_unlock(&malloc_mutex);
+	mutex_init(&malloc_mutex, NULL);
 }
