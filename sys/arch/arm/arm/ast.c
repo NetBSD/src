@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.33 2026/04/15 05:00:02 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.34 2026/04/28 05:51:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.33 2026/04/15 05:00:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.34 2026/04/28 05:51:14 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -73,7 +73,10 @@ userret(struct lwp *l)
 	    "%p vs %p", curcpu()->ci_pmap_cur,
 	    l->l_proc->p_vmspace->vm_map.pmap);
 
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) == 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) == 0
+	);
 #endif
 
 	/* Invoke MI userret code */

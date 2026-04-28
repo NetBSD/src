@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.448 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.449 2026/04/28 05:51:14 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.448 2026/04/19 15:09:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.449 2026/04/28 05:51:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4924,7 +4924,10 @@ pmap_activate_efirt(void)
 
 	PMAPCOUNT(activations);
 
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 
 	armreg_contextidr_write(pai->pai_asid);
 	armreg_ttbr_write(pm->pm_l1_pa |
@@ -4941,7 +4944,10 @@ pmap_activate_efirt(void)
 	ci->ci_pmap_asid_cur = pai->pai_asid;
 	ci->ci_pmap_cur = pm;
 
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) == 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) == 0
+	);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5148,7 +5154,10 @@ pmap_deactivate(struct lwp *l)
 	KASSERT(kpreempt_disabled());
 	pmap_tlb_asid_deactivate(pm);
 
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 #else
 	/*
 	 * If the process is exiting, make sure pmap_activate() does
@@ -5187,7 +5196,10 @@ pmap_deactivate_efirt(void)
 	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
 	    ci->ci_pmap_asid_cur);
 
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5244,7 +5256,10 @@ pmap_update(pmap_t pm)
 	if (__predict_false(pm->pm_remove_all)) {
 		pm->pm_remove_all = false;
 
-		KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+		KASSERT(
+		    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+		    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+		);
 
 		KASSERT(pm != pmap_kernel());
 		/* this calls pmap_md_asid_activate */

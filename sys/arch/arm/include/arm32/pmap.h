@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.179 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.180 2026/04/28 05:51:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -290,7 +290,10 @@ pmap_md_asid_activate(tlb_asid_t asid, pmap_t pm, struct lwp *l)
 	 * In doing so the new CONTEXTIDR (ASID) and new TTBR0 value are
 	 * only enable once both are set.
 	 */
-	KASSERT((armreg_ttbcr_read() & TTBCR_S_PD0) != 0);
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 
 	if (pm == pmap_kernel())
 		return;
