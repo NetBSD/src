@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.464 2026/02/13 03:16:15 lukem Exp $
+#	$NetBSD: bsd.README,v 1.465 2026/04/28 15:06:40 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1130,7 +1130,7 @@ PROGDPLIBS	A list of the tuples:
 		as a build-time optimization.
 
 LIBDPSUBDIRS/
-PROGDPSUBDIRS/	A list of subdirectory paths _subdir_ for which the
+PROGDPSUBDIRS	A list of subdirectory paths _subdir_ for which the
 		ldflags
 
 			-L${SHLIBDIR}/${_subdir_}
