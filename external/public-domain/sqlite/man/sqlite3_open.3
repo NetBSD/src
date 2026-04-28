@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_OPEN 3
 .Os
 .Sh NAME
@@ -101,7 +101,7 @@ database connection at the same time.
 (Mutexes will block any actual concurrency, but in this mode there
 is no harm in trying.)
 .It SQLITE_OPEN_SHAREDCACHE
-The database is opened shared cache enabled, overriding
+The database is opened with shared cache enabled, overriding
 the default shared cache setting provided by
 .Fn sqlite3_enable_shared_cache .
 The use of shared cache mode is discouraged
@@ -109,13 +109,13 @@ and hence shared cache capabilities may be omitted from many builds
 of SQLite.
 In such cases, this option is a no-op.
 .It SQLITE_OPEN_PRIVATECACHE
-The database is opened shared cache disabled, overriding
+The database is opened with shared cache disabled, overriding
 the default shared cache setting provided by
 .Fn sqlite3_enable_shared_cache .
 .It SQLITE_OPEN_EXRESCODE
 The database connection comes up in "extended result code mode".
-In other words, the database behaves has if sqlite3_extended_result_codes(db,1)
-where called on the database connection as soon as the connection is
+In other words, the database behaves as if sqlite3_extended_result_codes(db,1)
+were called on the database connection as soon as the connection is
 created.
 In addition to setting the extended result code mode, this flag also
 causes
@@ -303,7 +303,7 @@ may fail.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 3462.
+interface documentation at line 3713.
 .Bd -literal
 SQLITE_API int sqlite3_open(
   const char *filename,   /* Database filename (UTF-8) */

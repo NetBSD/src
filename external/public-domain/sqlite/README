@@ -1,7 +1,7 @@
-# $NetBSD: README,v 1.2 2024/03/01 15:47:58 christos Exp $
+# $NetBSD: README,v 1.3 2026/04/28 20:40:39 christos Exp $
 - Run cleantags to remove RCSID's
 - To regenerate the man pages, build and run:
-  cd sqlite2man && make &
+  cd sqlite2mdoc && make &
   cd man
   ../sqlite2mdoc/sqlite2mdoc < ../dist/sqlite3.h
   sed -i -e 's/\$Mdocdate\$/Month DD, YYYY/g' *.3

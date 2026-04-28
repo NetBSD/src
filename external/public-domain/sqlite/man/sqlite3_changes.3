@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_CHANGES 3
 .Os
 .Sh NAME
@@ -21,10 +21,14 @@ by the most recently completed INSERT, UPDATE or DELETE statement on
 the database connection specified by the only parameter.
 The two functions are identical except for the type of the return value
 and that if the number of rows modified by the most recent INSERT,
-UPDATE or DELETE is greater than the maximum value supported by type
+UPDATE, or DELETE is greater than the maximum value supported by type
 "int", then the return value of sqlite3_changes() is undefined.
 Executing any other type of SQL statement does not modify the value
 returned by these functions.
+For the purposes of this interface, a CREATE TABLE AS SELECT statement
+does not count as an INSERT, UPDATE or DELETE statement and hence the
+rows added to the new table by the CREATE TABLE AS SELECT statement
+are not counted.
 .Pp
 Only changes made directly by the INSERT, UPDATE or DELETE statement
 are considered - auxiliary changes caused by triggers, foreign key actions
@@ -68,7 +72,7 @@ is running then the value returned is unpredictable and not meaningful.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 2599.
+interface documentation at line 2808.
 .Bd -literal
 SQLITE_API int sqlite3_changes(sqlite3*);
 SQLITE_API sqlite3_int64 sqlite3_changes64(sqlite3*);

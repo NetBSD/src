@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_VTAB_DISTINCT 3
 .Os
 .Sh NAME
@@ -45,31 +45,48 @@ This mode is used when the query planner is doing a GROUP BY.
 .Pp
 If the sqlite3_vtab_distinct() interface returns 2, that means that
 the query planner does not need the rows returned in any particular
-order, as long as rows with the same values in all "aOrderBy" columns
-are adjacent.
-Furthermore, only a single row for each particular combination of values
-in the columns identified by the "aOrderBy" field needs to be returned.
-It is always ok for two or more rows with the same values in all "aOrderBy"
-columns to be returned, as long as all such rows are adjacent.
-The virtual table may, if it chooses, omit extra rows that have the
-same value for all columns identified by "aOrderBy".
-However omitting the extra rows is optional.
+order, as long as rows with the same values in all columns identified
+by "aOrderBy" are adjacent.
+Furthermore, when two or more rows contain the same values for all
+columns identified by "colUsed", all but one such row may optionally
+be omitted from the result.
+The virtual table is not required to omit rows that are duplicates
+over the "colUsed" columns, but if the virtual table can do that without
+too much extra effort, it could potentially help the query to run faster.
 This mode is used for a DISTINCT query.
 .It
 .Pp
-If the sqlite3_vtab_distinct() interface returns 3, that means that
-the query planner needs only distinct rows but it does need the rows
-to be sorted.
-The virtual table implementation is free to omit rows that are identical
-in all aOrderBy columns, if it wants to, but it is not required to
-omit any rows.
+If the sqlite3_vtab_distinct() interface returns 3, that means the
+virtual table must return rows in the order defined by "aOrderBy" as
+if the sqlite3_vtab_distinct() interface had returned 0.
+However if two or more rows in the result have the same values for
+all columns identified by "colUsed", then all but one such row may
+optionally be omitted.
+Like when the return value is 2, the virtual table is not required
+to omit rows that are duplicates over the "colUsed" columns, but if
+the virtual table can do that without too much extra effort, it could
+potentially help the query to run faster.
 This mode is used for queries that have both DISTINCT and ORDER BY
 clauses.
 .El
 .Pp
+.Pp
+The following table summarizes the conditions under which the virtual
+table is allowed to set the "orderByConsumed" flag based on the value
+returned by sqlite3_vtab_distinct().
+This table is a restatement of the previous four paragraphs:
+.Pp
+  sqlite3_vtab_distinct() return value  Rows are returned in aOrderBy
+order  Rows with the same value in all aOrderBy columns are adjacent
+ Duplicates over all colUsed columns may be omitted
+  0 yes yes no
+  1 no yes no
+  2 no yes yes
+  3 yes yes yes
+.Pp
 For the purposes of comparing virtual table output values to see if
-the values are same value for sorting purposes, two NULL values are
-considered to be the same.
+the values are the same value for sorting purposes, two NULL values
+are considered to be the same.
 In other words, the comparison operator is "IS" (or "IS NOT DISTINCT
 FROM") and not "==".
 .Pp
@@ -80,9 +97,9 @@ may result.
 .Pp
 A virtual table implementation is always free to return rows in any
 order it wants, as long as the "orderByConsumed" flag is not set.
-When the the "orderByConsumed" flag is unset, the query planner will
-add extra bytecode to ensure that the final results returned
-by the SQL query are ordered correctly.
+When the "orderByConsumed" flag is unset, the query planner will add
+extra bytecode to ensure that the final results returned by
+the SQL query are ordered correctly.
 The use of the "orderByConsumed" flag and the sqlite3_vtab_distinct()
 interface is merely an optimization.
 Careful use of the sqlite3_vtab_distinct() interface and the "orderByConsumed"
@@ -92,7 +109,7 @@ it is not valid to do so, on the other hand, might cause SQLite to
 return incorrect results.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9889.
+interface documentation at line 10352.
 .Bd -literal
 SQLITE_API int sqlite3_vtab_distinct(sqlite3_index_info*);
 .Ed

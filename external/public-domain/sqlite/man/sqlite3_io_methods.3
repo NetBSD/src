@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_IO_METHODS 3
 .Os
 .Sh NAME
@@ -50,7 +50,7 @@ SQLITE_LOCK_EXCLUSIVE.
 xLock() upgrades the database file lock.
 In other words, xLock() moves the database file lock in the direction
 NONE toward EXCLUSIVE.
-The argument to xLock() is always on of SHARED, RESERVED, PENDING,
+The argument to xLock() is always one of SHARED, RESERVED, PENDING,
 or EXCLUSIVE, never SQLITE_LOCK_NONE.
 If the database file lock is already at or above the requested lock,
 then the call to xLock() is a no-op.
@@ -60,7 +60,8 @@ call to xUnlock() is a no-op.
 The xCheckReservedLock() method checks whether any database connection,
 either in this process or in some other process, is holding a RESERVED,
 PENDING, or EXCLUSIVE lock on the file.
-It returns true if such a lock exists and false otherwise.
+It returns, via its output pointer parameter, true if such a lock exists
+and false otherwise.
 .Pp
 The xFileControl() method is a generic interface that allows custom
 VFS implementations to directly control an open file using the
@@ -117,6 +118,8 @@ SQLITE_IOCAP_POWERSAFE_OVERWRITE
 SQLITE_IOCAP_IMMUTABLE
 .It
 SQLITE_IOCAP_BATCH_ATOMIC
+.It
+SQLITE_IOCAP_SUBPAGE_READ
 .El
 .Pp
 The SQLITE_IOCAP_ATOMIC property means that all writes of any size
@@ -137,7 +140,7 @@ However, failure to zero-fill short reads will eventually lead to database
 corruption.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 734.
+interface documentation at line 752.
 .Bd -literal
 typedef struct sqlite3_io_methods sqlite3_io_methods;
 struct sqlite3_io_methods {

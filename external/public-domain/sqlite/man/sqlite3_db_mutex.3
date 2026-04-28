@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_DB_MUTEX 3
 .Os
 .Sh NAME
@@ -11,14 +11,14 @@
 .Fa "sqlite3*"
 .Fc
 .Sh DESCRIPTION
-This interface returns a pointer the sqlite3_mutex object
-that serializes access to the database connection
+This interface returns a pointer to the sqlite3_mutex
+object that serializes access to the database connection
 given in the argument when the threading mode is Serialized.
 If the threading mode is Single-thread or Multi-thread
 then this routine returns a NULL pointer.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8209.
+interface documentation at line 8602.
 .Bd -literal
 SQLITE_API sqlite3_mutex *sqlite3_db_mutex(sqlite3*);
 .Ed

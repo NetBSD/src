@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3SESSION_CHANGESET 3
 .Os
 .Sh NAME
@@ -128,13 +128,13 @@ For example, if a row is inserted while a session object is enabled,
 then later deleted while the same session object is disabled, no INSERT
 record will appear in the changeset, even though the delete took place
 while the session was disabled.
-Or, if one field of a row is updated while a session is disabled, and
-another field of the same row is updated while the session is enabled,
-the resulting changeset will contain an UPDATE change that updates
-both fields.
+Or, if one field of a row is updated while a session is enabled, and
+then another field of the same row is updated while the session is
+disabled, the resulting changeset will contain an UPDATE change that
+updates both fields.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 11183.
+interface documentation at line 11748.
 .Bd -literal
 SQLITE_API int sqlite3session_changeset(
   sqlite3_session *pSession,      /* Session object */

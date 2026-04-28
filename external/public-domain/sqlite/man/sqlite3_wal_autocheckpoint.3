@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_WAL_AUTOCHECKPOINT 3
 .Os
 .Sh NAME
@@ -19,7 +19,7 @@ that causes any database on database connection
 D to automatically checkpoint after committing a transaction
 if there are N or more frames in the write-ahead log
 file.
-Passing zero or a negative value as the nFrame parameter disables automatic
+Passing zero or a negative value as the N parameter disables automatic
 checkpoints entirely.
 .Pp
 The callback registered by this function replaces any existing callback
@@ -37,11 +37,12 @@ Checkpoints initiated by this mechanism are PASSIVE.
 Every new database connection defaults to having
 the auto-checkpoint enabled with a threshold of 1000 or SQLITE_DEFAULT_WAL_AUTOCHECKPOINT
 pages.
+.Pp
 The use of this interface is only necessary if the default setting
 is found to be suboptimal for a particular application.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9553.
+interface documentation at line 10009.
 .Bd -literal
 SQLITE_API int sqlite3_wal_autocheckpoint(sqlite3 *db, int N);
 .Ed

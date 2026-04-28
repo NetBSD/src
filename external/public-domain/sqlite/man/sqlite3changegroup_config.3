@@ -1,0 +1,25 @@
+.Dd $Mdocdate$
+.Dt SQLITE3CHANGEGROUP_CONFIG 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_config
+.Nd configure a changegroup object
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_config
+.Fa "sqlite3_changegroup*"
+.Fa "int"
+.Fa "void *pArg"
+.Fc
+.Sh DESCRIPTION
+Configure the changegroup object passed as the first argument.
+At present the only valid value for the second parameter is SQLITE_CHANGEGROUP_CONFIG_PATCHSET.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 13344.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_config(sqlite3_changegroup*, int, void *pArg);
+.Ed
+.Sh SEE ALSO
+.Xr SQLITE_CHANGEGROUP_CONFIG_PATCHSET 3

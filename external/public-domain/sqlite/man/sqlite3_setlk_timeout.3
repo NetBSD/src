@@ -1,0 +1,50 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_SETLK_TIMEOUT 3
+.Os
+.Sh NAME
+.Nm sqlite3_setlk_timeout
+.Nd set the setlk timeout
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3_setlk_timeout
+.Fa "sqlite3*"
+.Fa "int ms"
+.Fa "int flags"
+.Fc
+.Sh DESCRIPTION
+This routine is only useful in SQLITE_ENABLE_SETLK_TIMEOUT builds.
+If the VFS supports blocking locks, it sets the timeout in ms used
+by eligible locks taken on wal mode databases by the specified database
+handle.
+In non-SQLITE_ENABLE_SETLK_TIMEOUT builds, or if the VFS does not support
+blocking locks, this function is a no-op.
+.Pp
+Passing 0 to this function disables blocking locks altogether.
+Passing -1 to this function requests that the VFS blocks for a long
+time - indefinitely if possible.
+The results of passing any other negative value are undefined.
+.Pp
+Internally, each SQLite database handle stores two timeout values -
+the busy-timeout (used for rollback mode databases, or if the VFS does
+not support blocking locks) and the setlk-timeout (used for blocking
+locks on wal-mode databases).
+The sqlite3_busy_timeout() method sets both values, this function sets
+only the setlk-timeout value.
+Therefore, to configure separate busy-timeout and setlk-timeout values
+for a single database handle, call sqlite3_busy_timeout() followed
+by this function.
+.Pp
+Whenever the number of connections to a wal mode database falls from
+1 to 0, the last connection takes an exclusive lock on the database,
+then checkpoints and deletes the wal file.
+While it is doing this, any new connection that tries to read from
+the database fails with an SQLITE_BUSY error.
+Or, if the SQLITE_SETLK_BLOCK_ON_CONNECT flag is passed to this API,
+the new connection blocks until the exclusive lock has been released.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 3078.
+.Bd -literal
+SQLITE_API int sqlite3_setlk_timeout(sqlite3*, int ms, int flags);
+.Ed

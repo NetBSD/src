@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_FCNTL_LOCKSTATE 3
 .Os
 .Sh NAME
@@ -42,7 +42,10 @@
 .Nm SQLITE_FCNTL_CKPT_START ,
 .Nm SQLITE_FCNTL_EXTERNAL_READER ,
 .Nm SQLITE_FCNTL_CKSM_FILE ,
-.Nm SQLITE_FCNTL_RESET_CACHE
+.Nm SQLITE_FCNTL_RESET_CACHE ,
+.Nm SQLITE_FCNTL_NULL_IO ,
+.Nm SQLITE_FCNTL_BLOCK_ON_CONNECT ,
+.Nm SQLITE_FCNTL_FILESTAT
 .Nd standard file control opcodes
 .Sh SYNOPSIS
 .In sqlite3.h
@@ -87,6 +90,9 @@
 .Fd #define SQLITE_FCNTL_EXTERNAL_READER
 .Fd #define SQLITE_FCNTL_CKSM_FILE
 .Fd #define SQLITE_FCNTL_RESET_CACHE
+.Fd #define SQLITE_FCNTL_NULL_IO
+.Fd #define SQLITE_FCNTL_BLOCK_ON_CONNECT
+.Fd #define SQLITE_FCNTL_FILESTAT
 .Sh DESCRIPTION
 These integer constants are opcodes for the xFileControl method of
 the sqlite3_io_methods object and for the
@@ -144,7 +150,7 @@ associated with the journal file (either the rollback journal
 or the write-ahead log) for a particular database connection.
 See also SQLITE_FCNTL_FILE_POINTER.
 .It
-No longer in use.
+The SQLITE_FCNTL_SYNC_OMITTED file-control is no longer used.
 .It
 The SQLITE_FCNTL_SYNC opcode is generated internally
 by SQLite and sent to the VFS immediately before the xSync method is
@@ -230,7 +236,7 @@ This is used by VACUUM operations.
 .It
 The SQLITE_FCNTL_VFSNAME opcode can be used to
 obtain the names of all VFSes in the VFS stack.
-The names are of all VFS shims and the final bottom-level VFS are written
+The names of all VFS shims and the final bottom-level VFS are written
 into memory obtained from
 .Fn sqlite3_malloc
 and the result is stored in the char* variable that the fourth parameter
@@ -248,7 +254,7 @@ The SQLITE_FCNTL_VFS_POINTER opcode finds a
 pointer to the top-level VFSes currently in use.
 The argument X in sqlite3_file_control(db,SQLITE_FCNTL_VFS_POINTER,X)
 must be of type "sqlite3_vfs **".
-This opcodes will set *X to a pointer to the top-level VFS.
+This opcode will set *X to a pointer to the top-level VFS.
 When there are multiple VFS shims in the stack, this opcode finds the
 upper-most shim only.
 .It
@@ -342,6 +348,10 @@ with the one pointed to by the pArg argument.
 This capability is used during testing and only needs to be supported
 when SQLITE_TEST is defined.
 .It
+The SQLITE_FCNTL_NULL_IO opcode sets the low-level
+file descriptor or file handle for the sqlite3_file object
+such that it will no longer read or write to the database file.
+.It
 The SQLITE_FCNTL_WAL_BLOCK is a signal to the
 VFS layer that it might be advantageous to block on the next WAL lock
 if the lock is not immediately available.
@@ -400,6 +410,11 @@ the value that M is to be set to.
 Before returning, the 32-bit signed integer is overwritten with the
 previous value of M.
 .It
+The SQLITE_FCNTL_BLOCK_ON_CONNECT opcode
+is used to configure the VFS to block when taking a SHARED lock to
+connect to a wal mode database.
+This is used to implement the functionality associated with SQLITE_SETLK_BLOCK_ON_CONNECT.
+.It
 The SQLITE_FCNTL_DATA_VERSION opcode is used
 to detect changes to a database file.
 The argument is a pointer to a 32-bit unsigned integer.
@@ -438,8 +453,9 @@ The EXPERIMENTAL SQLITE_FCNTL_EXTERNAL_READER
 opcode is used to detect whether or not there is a database client
 in another process with a wal-mode transaction open on the database
 or not.
-It is only available on unix.The (void*) argument passed with this
-file-control should be a pointer to a value of type (int).
+It is only available on unix.
+The (void*) argument passed with this file-control should be a pointer
+to a value of type (int).
 The integer value is set to 1 if the database is a wal mode database
 and there exists at least one client in another process that currently
 has an SQL transaction open on the database.
@@ -456,11 +472,22 @@ database is not a temp db, then the SQLITE_FCNTL_RESET_CACHE
 file-control purges the contents of the in-memory page cache.
 If there is an open transaction, or if the db is a temp-db, this opcode
 is a no-op, not an error.
+.It
+The SQLITE_FCNTL_FILESTAT opcode returns low-level
+diagnostic information about the sqlite3_file objects used
+access the database and journal files for the given schema.
+The fourth parameter to
+.Fn sqlite3_file_control
+should be an initialized sqlite3_str pointer.
+JSON text describing various aspects of the sqlite3_file object is
+appended to the sqlite3_str.
+The SQLITE_FCNTL_FILESTAT opcode is usually a no-op, unless compile-time
+options are used to enable it.
 .El
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 862.
+interface documentation at line 881.
 .Bd -literal
 #define SQLITE_FCNTL_LOCKSTATE               1
 #define SQLITE_FCNTL_GET_LOCKPROXYFILE       2
@@ -503,6 +530,9 @@ interface documentation at line 862.
 #define SQLITE_FCNTL_EXTERNAL_READER        40
 #define SQLITE_FCNTL_CKSM_FILE              41
 #define SQLITE_FCNTL_RESET_CACHE            42
+#define SQLITE_FCNTL_NULL_IO                43
+#define SQLITE_FCNTL_BLOCK_ON_CONNECT       44
+#define SQLITE_FCNTL_FILESTAT               45
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_deserialize 3 ,
@@ -511,6 +541,7 @@ interface documentation at line 862.
 .Xr sqlite3_io_methods 3 ,
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_mprintf 3 ,
+.Xr sqlite3_str 3 ,
 .Xr sqlite3_total_changes 3 ,
 .Xr sqlite3_vfs 3 ,
 .Xr sqlite_int64 3 ,

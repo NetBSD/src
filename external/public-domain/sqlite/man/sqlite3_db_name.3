@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_DB_NAME 3
 .Os
 .Sh NAME
@@ -14,7 +14,7 @@
 .Sh DESCRIPTION
 The sqlite3_db_name(D,N) interface returns a pointer to the schema
 name for the N-th database on database connection D, or a NULL pointer
-of N is out of range.
+if N is out of range.
 An N value of 0 means the main database file.
 An N of 1 is the "temp" schema.
 Larger values of N correspond to various ATTACH-ed databases.
@@ -34,7 +34,7 @@ on multiple threads should mutex-protect calls to this API and should
 make their own private copy of the result prior to releasing the mutex.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6591.
+interface documentation at line 6979.
 .Bd -literal
 SQLITE_API const char *sqlite3_db_name(sqlite3 *db, int N);
 .Ed

@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3SESSION_DIFF 3
 .Os
 .Sh NAME
@@ -63,7 +63,8 @@ using
 then after applying that changeset to database zFrom the contents of
 the two compatible tables would be identical.
 .Pp
-It an error if database zFrom does not exist or does not contain the
+Unless the call to this function is a no-op as described above, it
+is an error if database zFrom does not exist or does not contain the
 required compatible table.
 .Pp
 If the operation is successful, SQLITE_OK is returned.
@@ -73,7 +74,7 @@ to point to a buffer containing an English language error message.
 It is the responsibility of the caller to free this buffer using sqlite3_free().
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 11310.
+interface documentation at line 11876.
 .Bd -literal
 SQLITE_API int sqlite3session_diff(
   sqlite3_session *pSession,

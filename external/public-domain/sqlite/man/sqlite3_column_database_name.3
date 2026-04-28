@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_COLUMN_DATABASE_NAME 3
 .Os
 .Sh NAME
@@ -43,8 +43,8 @@
 .Fc
 .Sh DESCRIPTION
 These routines provide a means to determine the database, table, and
-table column that is the origin of a particular result column in SELECT
-statement.
+table column that is the origin of a particular result column in a
+SELECT statement.
 The name of the database or table or column can be returned as either
 a UTF-8 or UTF-16 string.
 The _database_ routines return the database name, the _table_ routines
@@ -85,7 +85,7 @@ for the same prepared statement and result column
 at the same time then the results are undefined.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4822.
+interface documentation at line 5147.
 .Bd -literal
 SQLITE_API const char *sqlite3_column_database_name(sqlite3_stmt*,int);
 SQLITE_API const void *sqlite3_column_database_name16(sqlite3_stmt*,int);

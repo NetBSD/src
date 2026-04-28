@@ -1,0 +1,30 @@
+.Dd $Mdocdate$
+.Dt SQLITE3CHANGEGROUP_CHANGE_BLOB 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_change_blob
+.Nd add a blob to a changegroup
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_change_blob
+.Fa "sqlite3_changegroup*"
+.Fa "int"
+.Fa "int"
+.Fa "const void *pVal"
+.Fa "int nVal"
+.Fc
+.Sh DESCRIPTION
+This function is similar to sqlite3changegroup_change_int64().
+It configures the currently accumulated change with a blob value instead
+of a 64-bit integer.
+Parameter pVal points to a buffer containing the blob.
+Parameter nVal is the size of the blob in bytes.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 13503.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_change_blob(
+    sqlite3_changegroup*, int, int, const void *pVal, int nVal
+);
+.Ed

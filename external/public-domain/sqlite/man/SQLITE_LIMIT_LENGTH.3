@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_LIMIT_LENGTH 3
 .Os
 .Sh NAME
@@ -13,7 +13,8 @@
 .Nm SQLITE_LIMIT_LIKE_PATTERN_LENGTH ,
 .Nm SQLITE_LIMIT_VARIABLE_NUMBER ,
 .Nm SQLITE_LIMIT_TRIGGER_DEPTH ,
-.Nm SQLITE_LIMIT_WORKER_THREADS
+.Nm SQLITE_LIMIT_WORKER_THREADS ,
+.Nm SQLITE_LIMIT_PARSER_DEPTH
 .Nd run-Time limit categories
 .Sh SYNOPSIS
 .In sqlite3.h
@@ -29,12 +30,13 @@
 .Fd #define SQLITE_LIMIT_VARIABLE_NUMBER
 .Fd #define SQLITE_LIMIT_TRIGGER_DEPTH
 .Fd #define SQLITE_LIMIT_WORKER_THREADS
+.Fd #define SQLITE_LIMIT_PARSER_DEPTH
 .Sh DESCRIPTION
 These constants define various performance limits that can be lowered
 at run-time using
 .Fn sqlite3_limit .
-The synopsis of the meanings of the various limits is shown below.
-Additional information is available at Limits in SQLite.
+A concise description of these limits follows, and additional information
+is available at Limits in SQLite.
 .Bl -tag -width Ds
 .It SQLITE_LIMIT_LENGTH
 The maximum size of any string or BLOB or table row, in bytes.
@@ -46,6 +48,9 @@ set of a SELECT or the maximum number of columns in an index
 or in an ORDER BY or GROUP BY clause.
 .It SQLITE_LIMIT_EXPR_DEPTH
 The maximum depth of the parse tree on any expression.
+.It SQLITE_LIMIT_PARSER_DEPTH
+The maximum depth of the LALR(1) parser stack used to analyze input
+SQL statements.
 .It SQLITE_LIMIT_COMPOUND_SELECT
 The maximum number of terms in a compound SELECT statement.
 .It SQLITE_LIMIT_VDBE_OP
@@ -73,7 +78,7 @@ may start.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4068.
+interface documentation at line 4348.
 .Bd -literal
 #define SQLITE_LIMIT_LENGTH                    0
 #define SQLITE_LIMIT_SQL_LENGTH                1
@@ -87,6 +92,7 @@ interface documentation at line 4068.
 #define SQLITE_LIMIT_VARIABLE_NUMBER           9
 #define SQLITE_LIMIT_TRIGGER_DEPTH            10
 #define SQLITE_LIMIT_WORKER_THREADS           11
+#define SQLITE_LIMIT_PARSER_DEPTH             12
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_limit 3 ,

@@ -1,0 +1,37 @@
+.Dd $Mdocdate$
+.Dt SQLITE_CHANGEGROUP_CONFIG_PATCHSET 3
+.Os
+.Sh NAME
+.Nm SQLITE_CHANGEGROUP_CONFIG_PATCHSET
+.Nd options for sqlite3changegroup_config()
+.Sh SYNOPSIS
+.In sqlite3.h
+.Fd #define SQLITE_CHANGEGROUP_CONFIG_PATCHSET
+.Sh DESCRIPTION
+The following values may be passed as the 2nd parameter to sqlite3changegroup_config().
+.It SQLITE_CHANGEGROUP_CONFIG_PATCHSET
+A changegroup object generates either a changeset or patchset.
+Usually, this is determined by whether the first call to sqlite3changegroup_add()
+is passed a changeset or a patchset.
+Or, if the first changes are added to the changegroup object using
+the sqlite3changegroup_change_xxx() APIs, then this option may be used
+to configure whether the changegroup object generates a changeset or
+patchset.
+.Pp
+When this option is invoked, parameter pArg must point to a value of
+type int.
+If the changegroup currently contains zero changes, and the value of
+the int variable is zero or greater than zero, then the changegroup
+is configured to generate a changeset or patchset, respectively.
+It is a no-op, not an error, if the changegroup is not configured because
+it has already started accumulating changes.
+.Pp
+Before returning, the int variable is set to 0 if the changegroup is
+configured to generate a changeset, or 1 if it is configured to generate
+a patchset.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 13353.
+.Bd -literal
+#define SQLITE_CHANGEGROUP_CONFIG_PATCHSET 1
+.Ed

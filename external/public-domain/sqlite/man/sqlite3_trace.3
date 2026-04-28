@@ -1,10 +1,10 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_TRACE 3
 .Os
 .Sh NAME
 .Nm sqlite3_trace ,
 .Nm sqlite3_profile
-.Nd tracing and profiling functions
+.Nd deprecated tracing and profiling functions
 .Sh SYNOPSIS
 .In sqlite3.h
 .Ft void *
@@ -58,7 +58,7 @@ or
 will cancel the profile callback.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 3289.
+interface documentation at line 3540.
 .Bd -literal
 SQLITE_API SQLITE_DEPRECATED void *sqlite3_trace(sqlite3*,
    void(*xTrace)(void*,const char*), void*);

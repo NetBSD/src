@@ -1,10 +1,13 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_ERROR_MISSING_COLLSEQ 3
 .Os
 .Sh NAME
 .Nm SQLITE_ERROR_MISSING_COLLSEQ ,
 .Nm SQLITE_ERROR_RETRY ,
 .Nm SQLITE_ERROR_SNAPSHOT ,
+.Nm SQLITE_ERROR_RESERVESIZE ,
+.Nm SQLITE_ERROR_KEY ,
+.Nm SQLITE_ERROR_UNABLE ,
 .Nm SQLITE_IOERR_READ ,
 .Nm SQLITE_IOERR_SHORT_READ ,
 .Nm SQLITE_IOERR_WRITE ,
@@ -39,6 +42,8 @@
 .Nm SQLITE_IOERR_DATA ,
 .Nm SQLITE_IOERR_CORRUPTFS ,
 .Nm SQLITE_IOERR_IN_PAGE ,
+.Nm SQLITE_IOERR_BADKEY ,
+.Nm SQLITE_IOERR_CODEC ,
 .Nm SQLITE_LOCKED_SHAREDCACHE ,
 .Nm SQLITE_LOCKED_VTAB ,
 .Nm SQLITE_BUSY_RECOVERY ,
@@ -85,6 +90,9 @@
 .Fd #define SQLITE_ERROR_MISSING_COLLSEQ
 .Fd #define SQLITE_ERROR_RETRY
 .Fd #define SQLITE_ERROR_SNAPSHOT
+.Fd #define SQLITE_ERROR_RESERVESIZE
+.Fd #define SQLITE_ERROR_KEY
+.Fd #define SQLITE_ERROR_UNABLE
 .Fd #define SQLITE_IOERR_READ
 .Fd #define SQLITE_IOERR_SHORT_READ
 .Fd #define SQLITE_IOERR_WRITE
@@ -119,6 +127,8 @@
 .Fd #define SQLITE_IOERR_DATA
 .Fd #define SQLITE_IOERR_CORRUPTFS
 .Fd #define SQLITE_IOERR_IN_PAGE
+.Fd #define SQLITE_IOERR_BADKEY
+.Fd #define SQLITE_IOERR_CODEC
 .Fd #define SQLITE_LOCKED_SHAREDCACHE
 .Fd #define SQLITE_LOCKED_VTAB
 .Fd #define SQLITE_BUSY_RECOVERY
@@ -177,11 +187,14 @@ Or, the extended code for the most recent error can be obtained using
 .Fn sqlite3_extended_errcode .
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 479.
+interface documentation at line 484.
 .Bd -literal
 #define SQLITE_ERROR_MISSING_COLLSEQ   (SQLITE_ERROR | (1<<8))
 #define SQLITE_ERROR_RETRY             (SQLITE_ERROR | (2<<8))
 #define SQLITE_ERROR_SNAPSHOT          (SQLITE_ERROR | (3<<8))
+#define SQLITE_ERROR_RESERVESIZE       (SQLITE_ERROR | (4<<8))
+#define SQLITE_ERROR_KEY               (SQLITE_ERROR | (5<<8))
+#define SQLITE_ERROR_UNABLE            (SQLITE_ERROR | (6<<8))
 #define SQLITE_IOERR_READ              (SQLITE_IOERR | (1<<8))
 #define SQLITE_IOERR_SHORT_READ        (SQLITE_IOERR | (2<<8))
 #define SQLITE_IOERR_WRITE             (SQLITE_IOERR | (3<<8))
@@ -216,6 +229,8 @@ interface documentation at line 479.
 #define SQLITE_IOERR_DATA              (SQLITE_IOERR | (32<<8))
 #define SQLITE_IOERR_CORRUPTFS         (SQLITE_IOERR | (33<<8))
 #define SQLITE_IOERR_IN_PAGE           (SQLITE_IOERR | (34<<8))
+#define SQLITE_IOERR_BADKEY            (SQLITE_IOERR | (35<<8))
+#define SQLITE_IOERR_CODEC             (SQLITE_IOERR | (36<<8))
 #define SQLITE_LOCKED_SHAREDCACHE      (SQLITE_LOCKED |  (1<<8))
 #define SQLITE_LOCKED_VTAB             (SQLITE_LOCKED |  (2<<8))
 #define SQLITE_BUSY_RECOVERY           (SQLITE_BUSY   |  (1<<8))
@@ -255,7 +270,7 @@ interface documentation at line 479.
 #define SQLITE_WARNING_AUTOINDEX       (SQLITE_WARNING | (1<<8))
 #define SQLITE_AUTH_USER               (SQLITE_AUTH | (1<<8))
 #define SQLITE_OK_LOAD_PERMANENTLY     (SQLITE_OK | (1<<8))
-#define SQLITE_OK_SYMLINK              (SQLITE_OK | (2<<8)) /* internal use only */
+#define SQLITE_OK_SYMLINK              (SQLITE_OK | (2<<8)) /* internal only */
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_errcode 3 ,

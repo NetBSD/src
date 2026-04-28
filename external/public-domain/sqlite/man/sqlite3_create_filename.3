@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_CREATE_FILENAME 3
 .Os
 .Sh NAME
@@ -25,7 +25,7 @@ and are not useful outside of that context.
 .Pp
 The sqlite3_create_filename(D,J,W,N,P) allocates memory to hold a version
 of database filename D with corresponding journal file J and WAL file
-W and with N URI parameters key/values pairs in the array P.
+W and an array P of N URI Key/Value pairs.
 The result from sqlite3_create_filename(D,J,W,N,P) is a pointer to
 a database filename that is safe to pass to routines like:
 .Bl -bullet
@@ -77,7 +77,7 @@ method of a VFS has been called using Y, then the correspondingsqlite3_module.xC
 method should also be invoked prior to calling sqlite3_free_filename(Y).
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 3876.
+interface documentation at line 4127.
 .Bd -literal
 SQLITE_API sqlite3_filename sqlite3_create_filename(
   const char *zDatabase,

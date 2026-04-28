@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_UTF8 3
 .Os
 .Sh NAME
@@ -7,7 +7,8 @@
 .Nm SQLITE_UTF16BE ,
 .Nm SQLITE_UTF16 ,
 .Nm SQLITE_ANY ,
-.Nm SQLITE_UTF16_ALIGNED
+.Nm SQLITE_UTF16_ALIGNED ,
+.Nm SQLITE_UTF8_ZT
 .Nd text encodings
 .Sh SYNOPSIS
 .In sqlite3.h
@@ -17,12 +18,67 @@
 .Fd #define SQLITE_UTF16
 .Fd #define SQLITE_ANY
 .Fd #define SQLITE_UTF16_ALIGNED
+.Fd #define SQLITE_UTF8_ZT
 .Sh DESCRIPTION
-These constant define integer codes that represent the various text
+These constants define integer codes that represent the various text
 encodings supported by SQLite.
+.Bl -tag -width Ds
+.It SQLITE_UTF8
+Text is encoding as UTF-8
+.It SQLITE_UTF16LE
+Text is encoding as UTF-16 with each code point being expressed "little
+endian" - the least significant byte first.
+This is the usual encoding, for example on Windows.
+.It SQLITE_UTF16BE
+Text is encoding as UTF-16 with each code point being expressed "big
+endian" - the most significant byte first.
+This encoding is less common, but is still sometimes seen, specially
+on older systems.
+.It SQLITE_UTF16
+Text is encoding as UTF-16 with each code point being expressed either
+little endian or as big endian, according to the native endianness
+of the host computer.
+.It SQLITE_ANY
+This encoding value may only be used to declare the preferred text
+for application-defined SQL functions
+created using
+.Fn sqlite3_create_function
+and similar.
+If the preferred encoding (the 4th parameter to sqlite3_create_function()
+- the eTextRep parameter) is SQLITE_ANY, that indicates that the function
+does not have a preference regarding the text encoding of its parameters
+and can take any text encoding that the SQLite core find convenient
+to supply.
+This option is deprecated.
+Please do not use it in new applications.
+.It SQLITE_UTF16_ALIGNED
+This encoding value may be used as the 3rd parameter (the eTextRep
+parameter) to
+.Fn sqlite3_create_collation
+and similar.
+This encoding value means that the application-defined collating sequence
+created expects its input strings to be in UTF16 in native byte order,
+and that the start of the strings must be aligned to a 2-byte boundary.
+.It SQLITE_UTF8_ZT
+This option can only be used to specify the text encoding to strings
+input to
+.Fn sqlite3_result_text64
+and
+.Fn sqlite3_bind_text64 .
+The SQLITE_UTF8_ZT encoding means that the input string (call it "z")
+is UTF-8 encoded and that it is zero-terminated.
+If the length parameter (call it "n") is non-negative, this encoding
+option means that the caller guarantees that z array contains at least
+n+1 bytes and that the z[n&#93; byte has a value of zero.
+This option gives the same output as SQLITE_UTF8, but can be more efficient
+by avoiding the need to make a copy of the input string, in some cases.
+However, if z is allocated to hold fewer than n+1 bytes or if the z[n&#93;
+byte is not zero, undefined behavior may result.
+.El
+.Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5500.
+interface documentation at line 5825.
 .Bd -literal
 #define SQLITE_UTF8           1    /* IMP: R-37514-35566 */
 #define SQLITE_UTF16LE        2    /* IMP: R-03371-37637 */
@@ -30,4 +86,10 @@ interface documentation at line 5500.
 #define SQLITE_UTF16          4    /* Use native byte order */
 #define SQLITE_ANY            5    /* Deprecated */
 #define SQLITE_UTF16_ALIGNED  8    /* sqlite3_create_collation only */
+#define SQLITE_UTF8_ZT       16    /* Zero-terminated UTF8 */
 .Ed
+.Sh SEE ALSO
+.Xr sqlite3_bind_blob 3 ,
+.Xr sqlite3_create_collation 3 ,
+.Xr sqlite3_create_function 3 ,
+.Xr sqlite3_result_blob 3

@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_CONFIG_SINGLETHREAD 3
 .Os
 .Sh NAME
@@ -29,7 +29,8 @@
 .Nm SQLITE_CONFIG_STMTJRNL_SPILL ,
 .Nm SQLITE_CONFIG_SMALL_MALLOC ,
 .Nm SQLITE_CONFIG_SORTERREF_SIZE ,
-.Nm SQLITE_CONFIG_MEMDB_MAXSIZE
+.Nm SQLITE_CONFIG_MEMDB_MAXSIZE ,
+.Nm SQLITE_CONFIG_ROWID_IN_VIEW
 .Nd configuration options
 .Sh SYNOPSIS
 .In sqlite3.h
@@ -61,6 +62,7 @@
 .Fd #define SQLITE_CONFIG_SMALL_MALLOC
 .Fd #define SQLITE_CONFIG_SORTERREF_SIZE
 .Fd #define SQLITE_CONFIG_MEMDB_MAXSIZE
+.Fd #define SQLITE_CONFIG_ROWID_IN_VIEW
 .Sh DESCRIPTION
 These constants are the available integer configuration options that
 can be passed as the first argument to the
@@ -165,20 +167,20 @@ structure.
 The sqlite3_mem_methods structure is filled with
 the currently defined memory allocation routines.
 This option can be used to overload the default memory allocation routines
-with a wrapper that simulations memory allocation failure or tracks
-memory usage, for example.
+with a wrapper that simulates memory allocation failure or tracks memory
+usage, for example.
 .It SQLITE_CONFIG_SMALL_MALLOC
-The SQLITE_CONFIG_SMALL_MALLOC option takes single argument of type
+The SQLITE_CONFIG_SMALL_MALLOC option takes a single argument of type
 int, interpreted as a boolean, which if true provides a hint to SQLite
 that it should avoid large memory allocations if possible.
 SQLite will run faster if it is free to make large memory allocations,
-but some application might prefer to run slower in exchange for guarantees
+but some applications might prefer to run slower in exchange for guarantees
 about memory fragmentation that are possible if large allocations are
 avoided.
 This hint is normally off.
 .It SQLITE_CONFIG_MEMSTATUS
-The SQLITE_CONFIG_MEMSTATUS option takes single argument of type int,
-interpreted as a boolean, which enables or disables the collection
+The SQLITE_CONFIG_MEMSTATUS option takes a single argument of type
+int, interpreted as a boolean, which enables or disables the collection
 of memory allocation statistics.
 When memory allocation statistics are disabled, the following SQLite
 interfaces become non-operational:
@@ -227,7 +229,7 @@ If pMem is NULL and N is non-zero, then each database connection does
 an initial bulk allocation for page cache memory from
 .Fn sqlite3_malloc
 sufficient for N cache lines if N is positive or of -1024*N bytes if
-N is negative, .
+N is negative.
 If additional page cache memory is needed beyond what is provided by
 the initial allocation, then SQLite goes to
 .Fn sqlite3_malloc
@@ -256,7 +258,7 @@ Reasonable values for the minimum allocation size are 2**5 through
 The SQLITE_CONFIG_MUTEX option takes a single argument which is a pointer
 to an instance of the sqlite3_mutex_methods structure.
 The argument specifies alternative low-level mutex routines to be used
-in place the mutex routines built into SQLite.
+in place of the mutex routines built into SQLite.
 SQLite makes a copy of the content of the sqlite3_mutex_methods
 structure before the call to
 .Fn sqlite3_config
@@ -283,12 +285,15 @@ with the SQLITE_CONFIG_GETMUTEX configuration option will return SQLITE_ERROR.
 .It SQLITE_CONFIG_LOOKASIDE
 The SQLITE_CONFIG_LOOKASIDE option takes two arguments that determine
 the default size of lookaside memory on each database connection.
-The first argument is the size of each lookaside buffer slot and the
-second is the number of slots allocated to each database connection.
+The first argument is the size of each lookaside buffer slot ("sz")
+and the second is the number of slots allocated to each database connection
+("cnt").
 SQLITE_CONFIG_LOOKASIDE sets the \fIdefault\fP lookaside size.
 The SQLITE_DBCONFIG_LOOKASIDE option to
 .Fn sqlite3_db_config
 can be used to change the lookaside configuration on individual connections.
+The -DSQLITE_DEFAULT_LOOKASIDE option can
+be used to change the default lookaside configuration at compile-time.
 .It SQLITE_CONFIG_PCACHE2
 The SQLITE_CONFIG_PCACHE2 option takes a single argument which is a
 pointer to an sqlite3_pcache_methods2 object.
@@ -298,7 +303,7 @@ object.
 .It SQLITE_CONFIG_GETPCACHE2
 The SQLITE_CONFIG_GETPCACHE2 option takes a single argument which is
 a pointer to an sqlite3_pcache_methods2 object.
-SQLite copies of the current page cache implementation into that object.
+SQLite copies off the current page cache implementation into that object.
 .It SQLITE_CONFIG_LOG
 The SQLITE_CONFIG_LOG option is used to configure the SQLite global
 error log.
@@ -318,7 +323,7 @@ The second parameter to the logger function is a copy of the first
 parameter to the corresponding
 .Fn sqlite3_log
 call and is intended to be a result code or an extended result code.
-The third parameter passed to the logger is log message after formatting
+The third parameter passed to the logger is a log message after formatting
 via
 .Fn sqlite3_snprintf .
 The SQLite logging interface is not reentrant; the logger function
@@ -452,11 +457,28 @@ is determined by the SQLITE_MEMDB_DEFAULT_MAXSIZE
 compile-time option.
 If that compile-time option is not set, then the default maximum is
 1073741824.
+.It SQLITE_CONFIG_ROWID_IN_VIEW
+The SQLITE_CONFIG_ROWID_IN_VIEW option enables or disables the ability
+for VIEWs to have a ROWID.
+The capability can only be enabled if SQLite is compiled with -DSQLITE_ALLOW_ROWID_IN_VIEW,
+in which case the capability defaults to on.
+This configuration option queries the current setting or changes the
+setting to off or on.
+The argument is a pointer to an integer.
+If that integer initially holds a value of 1, then the ability for
+VIEWs to have ROWIDs is activated.
+If the integer initially holds zero, then the ability is deactivated.
+Any other initial value for the integer leaves the setting unchanged.
+After changes, if any, the integer is written with a 1 or 0, if the
+ability for VIEWs to have ROWIDs is on or off.
+If SQLite is compiled without -DSQLITE_ALLOW_ROWID_IN_VIEW (which is
+the usual and recommended case) then the integer is always filled with
+zero, regardless if its initial value.
 .El
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 1777.
+interface documentation at line 1826.
 .Bd -literal
 #define SQLITE_CONFIG_SINGLETHREAD         1  /* nil */
 #define SQLITE_CONFIG_MULTITHREAD          2  /* nil */
@@ -487,6 +509,7 @@ interface documentation at line 1777.
 #define SQLITE_CONFIG_SMALL_MALLOC        27  /* boolean */
 #define SQLITE_CONFIG_SORTERREF_SIZE      28  /* int nByte */
 #define SQLITE_CONFIG_MEMDB_MAXSIZE       29  /* sqlite3_int64 */
+#define SQLITE_CONFIG_ROWID_IN_VIEW       30  /* int* */
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3 3 ,

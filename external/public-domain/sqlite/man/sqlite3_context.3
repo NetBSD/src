@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_CONTEXT 3
 .Os
 .Sh NAME
@@ -10,8 +10,8 @@
 .Sh DESCRIPTION
 The context in which an SQL function executes is stored in an sqlite3_context
 object.
-A pointer to an sqlite3_context object is always first parameter to
-application-defined SQL functions.
+A pointer to an sqlite3_context object is always the first parameter
+to application-defined SQL functions.
 The application-defined SQL function implementation will pass this
 pointer through into calls to sqlite3_result(),
 .Fn sqlite3_aggregate_context ,
@@ -22,7 +22,7 @@ and/or
 .Fn sqlite3_set_auxdata .
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4529.
+interface documentation at line 4847.
 .Bd -literal
 typedef struct sqlite3_context sqlite3_context;
 .Ed

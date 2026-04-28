@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_GET_CLIENTDATA 3
 .Os
 .Sh NAME
@@ -28,6 +28,7 @@ Subsequent calls to sqlite3_get_clientdata(D,N) will return a copy
 of pointer P or a NULL pointer if there were no prior calls to sqlite3_set_clientdata()
 with the same values of D and N.
 Names are compared using strcmp() and are thus case sensitive.
+It returns 0 on success and SQLITE_NOMEM on allocation failure.
 .Pp
 If P and X are both non-NULL, then the destructor X is invoked with
 argument P on the first of the following occurrences:
@@ -54,10 +55,16 @@ connection.
 There is no limit (other than available memory) on the number of different
 client data pointers (with different names) that can be attached to
 a single database connection.
-However, the implementation is optimized for the case of having only
-one or two different client data names.
-Applications and wrapper libraries are discouraged from using more
-than one client data name each.
+However, the current implementation stores the content on a linked
+list.
+Insert and retrieval performance will be proportional to the number
+of entries.
+The design use case, and the use case for which the implementation
+is optimized, is that an application will store only small number of
+client data names, typically just one or two.
+This interface is not intended to be a generalized key/value store
+for thousands or millions of keys.
+It will work for that, but performance might be disappointing.
 .Pp
 There is no way to enumerate the client data pointers associated with
 a database connection.
@@ -66,7 +73,7 @@ that knows the secret key is able to access the associated data.
 .Pp
 Security Warning:  These interfaces should not be exposed in scripting
 languages or in other circumstances where it might be possible for
-an an attacker to invoke them.
+an attacker to invoke them.
 Any agent that can invoke these interfaces can probably also take control
 of the process.
 .Pp
@@ -75,7 +82,7 @@ Database connection client data is only available for SQLite version
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5973.
+interface documentation at line 6352.
 .Bd -literal
 SQLITE_API void *sqlite3_get_clientdata(sqlite3*,const char*);
 SQLITE_API int sqlite3_set_clientdata(sqlite3*, const char*, void*, void(*)(void*));

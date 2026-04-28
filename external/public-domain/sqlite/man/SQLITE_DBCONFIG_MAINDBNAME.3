@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_DBCONFIG_MAINDBNAME 3
 .Os
 .Sh NAME
@@ -22,6 +22,10 @@
 .Nm SQLITE_DBCONFIG_TRUSTED_SCHEMA ,
 .Nm SQLITE_DBCONFIG_STMT_SCANSTATUS ,
 .Nm SQLITE_DBCONFIG_REVERSE_SCANORDER ,
+.Nm SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE ,
+.Nm SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE ,
+.Nm SQLITE_DBCONFIG_ENABLE_COMMENTS ,
+.Nm SQLITE_DBCONFIG_FP_DIGITS ,
 .Nm SQLITE_DBCONFIG_MAX
 .Nd database connection configuration options
 .Sh SYNOPSIS
@@ -46,12 +50,26 @@
 .Fd #define SQLITE_DBCONFIG_TRUSTED_SCHEMA
 .Fd #define SQLITE_DBCONFIG_STMT_SCANSTATUS
 .Fd #define SQLITE_DBCONFIG_REVERSE_SCANORDER
+.Fd #define SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE
+.Fd #define SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE
+.Fd #define SQLITE_DBCONFIG_ENABLE_COMMENTS
+.Fd #define SQLITE_DBCONFIG_FP_DIGITS
 .Fd #define SQLITE_DBCONFIG_MAX
 .Sh DESCRIPTION
 These constants are the available integer configuration options that
-can be passed as the second argument to the
+can be passed as the second parameter to the
 .Fn sqlite3_db_config
 interface.
+.Pp
+The
+.Fn sqlite3_db_config
+interface is a var-args function.
+It takes a variable number of parameters, though always at least two.
+The number of parameters passed into sqlite3_db_config() depends on
+which of these constants is given as the second parameter.
+This documentation page refers to parameters beyond the second as "arguments".
+Thus, when this page says "the N-th argument" it means "the N-th parameter
+past the configuration option" or "the (N+2)-th parameter to sqlite3_db_config()".
 .Pp
 New configuration options may be added in future releases of SQLite.
 Existing configuration options might be discontinued.
@@ -64,32 +82,63 @@ interface will return a non-zero error code if a discontinued
 or unsupported configuration option is invoked.
 .Bl -tag -width Ds
 .It SQLITE_DBCONFIG_LOOKASIDE
-This option takes three additional arguments that determine the lookaside memory allocator
-configuration for the database connection.
-The first argument (the third parameter to
+The SQLITE_DBCONFIG_LOOKASIDE option is used to adjust the configuration
+of the lookaside memory allocator within
+a database connection.
+The arguments to the SQLITE_DBCONFIG_LOOKASIDE option are \fInot\fP in the
+usual format.
+The SQLITE_DBCONFIG_LOOKASIDE option takes three arguments, not two,
+so that a call to
 .Fn sqlite3_db_config
-is a pointer to a memory buffer to use for lookaside memory.
-The first argument after the SQLITE_DBCONFIG_LOOKASIDE verb may be
-NULL in which case SQLite will allocate the lookaside buffer itself
-using
+that uses SQLITE_DBCONFIG_LOOKASIDE should have a total of five parameters.
+.Bl -enum
+.It
+.Pp
+The first argument ("buf") is a pointer to a memory buffer to use for
+lookaside memory.
+The first argument may be NULL in which case SQLite will allocate the
+lookaside buffer itself using
 .Fn sqlite3_malloc .
-The second argument is the size of each lookaside buffer slot.
-The third argument is the number of slots.
-The size of the buffer in the first argument must be greater than or
-equal to the product of the second and third arguments.
+.It
+<P>The second argument ("sz") is the size of each lookaside buffer
+slot.
+Lookaside is disabled if "sz" is less than 8.
+The "sz" argument should be a multiple of 8 less than 65536.
+If "sz" does not meet this constraint, it is reduced in size until
+it does.
+.It
+.Pp
+The third argument ("cnt") is the number of slots.
+Lookaside is disabled if "cnt"is less than 1.
+The "cnt" value will be reduced, if necessary, so that the product
+of "sz" and "cnt" does not exceed 2,147,418,112.
+The "cnt" parameter is usually chosen so that the product of "sz" and
+"cnt" is less than 1,000,000.
+.El
+.Pp
+.Pp
+If the "buf" argument is not NULL, then it must point to a memory buffer
+with a size that is greater than or equal to the product of "sz" and
+"cnt".
 The buffer must be aligned to an 8-byte boundary.
-If the second argument to SQLITE_DBCONFIG_LOOKASIDE is not a multiple
-of 8, it is internally rounded down to the next smaller multiple of
-8.
 The lookaside memory configuration for a database connection can only
 be changed when that connection is not currently using lookaside memory,
-or in other words when the "current value" returned by sqlite3_db_status(D,SQLITE_DBSTATUS_LOOKASIDE_USED,...)
+or in other words when the value returned by SQLITE_DBSTATUS_LOOKASIDE_USED
 is zero.
 Any attempt to change the lookaside memory configuration when lookaside
 memory is in use leaves the configuration unchanged and returns SQLITE_BUSY.
+If the "buf" argument is NULL and an attempt to allocate memory based
+on "sz" and "cnt" fails, then lookaside is silently disabled.
+.Pp
+The SQLITE_CONFIG_LOOKASIDE configuration option
+can be used to set the default lookaside configuration at initialization.
+The -DSQLITE_DEFAULT_LOOKASIDE option can
+be used to set the default lookaside configuration at compile-time.
+Typical values for lookaside are 1200 for "sz" and 40 to 100 for "cnt".
 .It SQLITE_DBCONFIG_ENABLE_FKEY
 This option is used to enable or disable the enforcement of foreign key constraints.
-There should be two additional arguments.
+This is the same setting that is enabled or disabled by the PRAGMA foreign_keys
+statement.
 The first argument is an integer which is 0 to disable FK enforcement,
 positive to enable FK enforcement or negative to leave FK enforcement
 unchanged.
@@ -116,7 +165,7 @@ So, in other words, this option now only disables triggers in the main
 database schema or in the schemas of ATTACH-ed databases.
 .It SQLITE_DBCONFIG_ENABLE_VIEW
 This option is used to enable or disable views.
-There should be two additional arguments.
+There must be two additional arguments.
 The first argument is an integer which is 0 to disable views, positive
 to enable views or negative to leave the setting unchanged.
 The second parameter is a pointer to an integer into which is written
@@ -131,18 +180,25 @@ even if this option is off.
 So, in other words, this option now only disables views in the main
 database schema or in the schemas of ATTACH-ed databases.
 .It SQLITE_DBCONFIG_ENABLE_FTS3_TOKENIZER
-This option is used to enable or disable the
+This option is used to enable or disable using the
 .Fn fts3_tokenizer
-function which is part of the FTS3 full-text search engine extension.
-There should be two additional arguments.
-The first argument is an integer which is 0 to disable fts3_tokenizer()
-or positive to enable fts3_tokenizer() or negative to leave the setting
-unchanged.
+function - part of the FTS3 full-text search engine extension -
+without using bound parameters as the parameters.
+Doing so is disabled by default.
+There must be two additional arguments.
+The first argument is an integer.
+If it is passed 0, then using fts3_tokenizer() without bound parameters
+is disabled.
+If it is passed a positive value, then calling fts3_tokenizer without
+bound parameters is enabled.
+If it is passed a negative value, this setting is not modified - this
+can be used to query for the current setting.
 The second parameter is a pointer to an integer into which is written
-0 or 1 to indicate whether fts3_tokenizer is disabled or enabled following
-this call.
-The second parameter may be a NULL pointer, in which case the new setting
-is not reported back.
+0 or 1 to indicate the current value of this setting (after it is modified,
+if applicable).
+The second parameter may be a NULL pointer, in which case the value
+of the setting is not reported back.
+Refer to FTS3 documentation for further details.
 .It SQLITE_DBCONFIG_ENABLE_LOAD_EXTENSION
 This option is used to enable or disable the
 .Fn sqlite3_load_extension
@@ -155,13 +211,13 @@ API enables or disables both the C-API
 .Fn sqlite3_load_extension
 and the SQL function
 .Fn load_extension .
-There should be two additional arguments.
+There must be two additional arguments.
 When the first argument to this interface is 1, then only the C-API
 is enabled and the SQL function remains disabled.
 If the first argument to this interface is 0, then both the C-API and
 the SQL function are disabled.
-If the first argument is -1, then no changes are made to state of either
-the C-API or the SQL function.
+If the first argument is -1, then no changes are made to the state
+of either the C-API or the SQL function.
 The second parameter is a pointer to an integer into which is written
 0 or 1 to indicate whether
 .Fn sqlite3_load_extension
@@ -170,23 +226,32 @@ The second parameter may be a NULL pointer, in which case the new setting
 is not reported back.
 .It SQLITE_DBCONFIG_MAINDBNAME
 This option is used to change the name of the "main" database schema.
-The sole argument is a pointer to a constant UTF8 string which will
-become the new schema name in place of "main".
+This option does not follow the usual SQLITE_DBCONFIG argument format.
+This option takes exactly one additional argument so that the
+.Fn sqlite3_db_config
+call has a total of three parameters.
+The extra argument must be a pointer to a constant UTF8 string which
+will become the new schema name in place of "main".
 SQLite does not make a copy of the new main schema name string, so
-the application must ensure that the argument passed into this DBCONFIG
-option is unchanged until after the database connection closes.
+the application must ensure that the argument passed into SQLITE_DBCONFIG
+MAINDBNAME is unchanged until after the database connection closes.
 .It SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE
-Usually, when a database in wal mode is closed or detached from a database
-handle, SQLite checks if this will mean that there are now no connections
-at all to the database.
-If so, it performs a checkpoint operation before closing the connection.
-This option may be used to override this behavior.
-The first parameter passed to this operation is an integer - positive
-to disable checkpoints-on-close, or zero (the default) to enable them,
-and negative to leave the setting unchanged.
-The second parameter is a pointer to an integer into which is written
-0 or 1 to indicate whether checkpoints-on-close have been disabled
-- 0 if they are not disabled, 1 if they are.
+Usually, when a database in WAL mode is closed or detached
+from a database handle, SQLite checks if if there are other connections
+to the same database, and if there are no other database connection
+(if the connection being closed is the last open connection to the
+database), then SQLite performs a checkpoint before closing
+the connection and deletes the WAL file.
+The SQLITE_DBCONFIG_NO_CKPT_ON_CLOSE option can be used to override
+that behavior.
+The first argument passed to this operation (the third parameter to
+.Fn sqlite3_db_config )
+is an integer which is positive to disable checkpoints-on-close, or
+zero (the default) to enable them, and negative to leave the setting
+unchanged.
+The second argument (the fourth parameter) is a pointer to an integer
+into which is written 0 or 1 to indicate whether checkpoints-on-close
+have been disabled - 0 if they are not disabled, 1 if they are.
 .It SQLITE_DBCONFIG_ENABLE_QPSG
 The SQLITE_DBCONFIG_ENABLE_QPSG option activates or deactivates the
 query planner stability guarantee
@@ -277,7 +342,8 @@ following this call.
 .It SQLITE_DBCONFIG_LEGACY_ALTER_TABLE
 The SQLITE_DBCONFIG_LEGACY_ALTER_TABLE option activates or deactivates
 the legacy behavior of the ALTER TABLE RENAME command
-such it behaves as it did prior to version 3.24.0 (2018-06-04).
+such that it behaves as it did prior to version 3.24.0
+(2018-06-04).
 See the "Compatibility Notice" on the ALTER TABLE RENAME documentation
 for additional information.
 This feature can also be turned on and off using the PRAGMA legacy_alter_table
@@ -318,7 +384,7 @@ statement.
 .It SQLITE_DBCONFIG_LEGACY_FILE_FORMAT
 The SQLITE_DBCONFIG_LEGACY_FILE_FORMAT option activates or deactivates
 the legacy file format flag.
-When activated, this flag causes all newly created database file to
+When activated, this flag causes all newly created database files to
 have a schema format version number (the 4-byte integer found at offset
 44 into the database header) of 1.
 This in turn means that the resulting database file will be readable
@@ -339,12 +405,16 @@ do not support either generated columns or descending indexes.
 .It SQLITE_DBCONFIG_STMT_SCANSTATUS
 The SQLITE_DBCONFIG_STMT_SCANSTATUS option is only useful in SQLITE_ENABLE_STMT_SCANSTATUS
 builds.
-In this case, it sets or clears a flag that enables collection of the
-sqlite3_stmt_scanstatus_v2() statistics.
+In this case, it sets or clears a flag that enables collection of run-time
+performance statistics used by
+.Fn sqlite3_stmt_scanstatus_v2
+and the nexec and ncycle columns of the bytecode virtual table.
 For statistics to be collected, the flag must be set on the database
-handle both when the SQL statement is prepared and when it is stepped.
+handle both when the SQL statement is prepared and when it
+is stepped.
 The flag is set (collection of statistics is enabled) by default.
-This option takes two arguments: an integer and a pointer to an integer..
+.Pp
+This option takes two arguments: an integer and a pointer to an integer.
 The first argument is 1, 0, or -1 to enable, disable, or leave unchanged
 the statement scanstatus option.
 If the second argument is not NULL, then the value of the statement
@@ -356,6 +426,7 @@ in which tables and indexes are scanned so that the scans start at
 the end and work toward the beginning rather than starting at the beginning
 and working toward the end.
 Setting SQLITE_DBCONFIG_REVERSE_SCANORDER is the same as setting PRAGMA reverse_unordered_selects.
+.Pp
 This option takes two arguments which are an integer and a pointer
 to an integer.
 The first argument is 1, 0, or -1 to enable, disable, or leave unchanged
@@ -363,11 +434,102 @@ the reverse scan order flag, respectively.
 If the second argument is not NULL, then 0 or 1 is written into the
 integer that the second argument points to depending on if the reverse
 scan order flag is set after processing the first argument.
+.It SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE
+The SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE option enables or disables
+the ability of the ATTACH DATABASE SQL command to create
+a new database file if the database filed named in the ATTACH command
+does not already exist.
+This ability of ATTACH to create a new database is enabled by default.
+Applications can disable or reenable the ability for ATTACH to create
+new database files using this DBCONFIG option.
+.Pp
+This option takes two arguments which are an integer and a pointer
+to an integer.
+The first argument is 1, 0, or -1 to enable, disable, or leave unchanged
+the attach-create flag, respectively.
+If the second argument is not NULL, then 0 or 1 is written into the
+integer that the second argument points to depending on if the attach-create
+flag is set after processing the first argument.
+.It SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE
+The SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE option enables or disables
+the ability of the ATTACH DATABASE SQL command to open
+a database for writing.
+This capability is enabled by default.
+Applications can disable or reenable this capability using the current
+DBCONFIG option.
+If this capability is disabled, the ATTACH command will still
+work, but the database will be opened read-only.
+If this option is disabled, then the ability to create a new database
+using ATTACH is also disabled, regardless of the value of the
+SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE
+option.
+.Pp
+This option takes two arguments which are an integer and a pointer
+to an integer.
+The first argument is 1, 0, or -1 to enable, disable, or leave unchanged
+the ability to ATTACH another database for writing, respectively.
+If the second argument is not NULL, then 0 or 1 is written into the
+integer to which the second argument points, depending on whether the
+ability to ATTACH a read/write database is enabled or disabled after
+processing the first argument.
+.It SQLITE_DBCONFIG_ENABLE_COMMENTS
+The SQLITE_DBCONFIG_ENABLE_COMMENTS option enables or disables the
+ability to include comments in SQL text.
+Comments are enabled by default.
+An application can disable or reenable comments in SQL text using this
+DBCONFIG option.
+.Pp
+This option takes two arguments which are an integer and a pointer
+to an integer.
+The first argument is 1, 0, or -1 to enable, disable, or leave unchanged
+the ability to use comments in SQL text, respectively.
+If the second argument is not NULL, then 0 or 1 is written into the
+integer that the second argument points to depending on if comments
+are allowed in SQL text after processing the first argument.
+.It SQLITE_DBCONFIG_FP_DIGITS
+The SQLITE_DBCONFIG_FP_DIGITS setting is a small integer that determines
+the number of significant digits that SQLite will attempt to preserve
+when converting floating point numbers (IEEE 754 "doubles") into text.
+The default value 17, as of SQLite version 3.52.0.
+The value was 15 in all prior versions.
+.Pp
+This option takes two arguments which are an integer and a pointer
+to an integer.
+The first argument is a small integer, between 3 and 23, or zero.
+The FP_DIGITS setting is changed to that small integer, or left unaltered
+if the first argument is zero or out of range.
+The second argument is a pointer to an integer.
+If the pointer is not NULL, then the value of the FP_DIGITS setting,
+after possibly being modified by the first arguments, is written into
+the integer to which the second argument points.
 .El
 .Pp
+.Ss Arguments To SQLITE_DBCONFIG Options
+.Pp
+Most of the SQLITE_DBCONFIG options take two arguments, so that the
+overall call to
+.Fn sqlite3_db_config
+has a total of four parameters.
+The first argument (the third parameter to sqlite3_db_config()) is
+an integer.
+The second argument is a pointer to an integer.
+If the first argument is 1, then the option becomes enabled.
+If the first integer argument is 0, then the option is disabled.
+If the first argument is -1, then the option setting is unchanged.
+The second argument, the pointer to an integer, may be NULL.
+If the second argument is not NULL, then a value of 0 or 1 is written
+into the integer to which the second argument points, depending on
+whether the setting is disabled or enabled after applying any changes
+specified by the first argument.
+.Pp
+While most SQLITE_DBCONFIG options use the argument format described
+in the previous paragraph, the SQLITE_DBCONFIG_MAINDBNAME,
+SQLITE_DBCONFIG_LOOKASIDE, and SQLITE_DBCONFIG_FP_DIGITS
+options are different.
+See the documentation of those exceptional options for details.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 2177.
+interface documentation at line 2246.
 .Bd -literal
 #define SQLITE_DBCONFIG_MAINDBNAME            1000 /* const char* */
 #define SQLITE_DBCONFIG_LOOKASIDE             1001 /* void* int int */
@@ -389,16 +551,22 @@ interface documentation at line 2177.
 #define SQLITE_DBCONFIG_TRUSTED_SCHEMA        1017 /* int int* */
 #define SQLITE_DBCONFIG_STMT_SCANSTATUS       1018 /* int int* */
 #define SQLITE_DBCONFIG_REVERSE_SCANORDER     1019 /* int int* */
-#define SQLITE_DBCONFIG_MAX                   1019 /* Largest DBCONFIG */
+#define SQLITE_DBCONFIG_ENABLE_ATTACH_CREATE  1020 /* int int* */
+#define SQLITE_DBCONFIG_ENABLE_ATTACH_WRITE   1021 /* int int* */
+#define SQLITE_DBCONFIG_ENABLE_COMMENTS       1022 /* int int* */
+#define SQLITE_DBCONFIG_FP_DIGITS             1023 /* int int* */
+#define SQLITE_DBCONFIG_MAX                   1023 /* Largest DBCONFIG */
 .Ed
 .Sh SEE ALSO
-.Xr sqlite3 3 ,
 .Xr sqlite3_db_config 3 ,
-.Xr sqlite3_db_status 3 ,
 .Xr sqlite3_enable_load_extension 3 ,
 .Xr sqlite3_exec 3 ,
 .Xr sqlite3_load_extension 3 ,
 .Xr sqlite3_malloc 3 ,
+.Xr sqlite3_prepare 3 ,
+.Xr sqlite3_step 3 ,
+.Xr sqlite3_stmt_scanstatus 3 ,
+.Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
 .Xr SQLITE_DBSTATUS_LOOKASIDE_USED 3 ,
 .Xr SQLITE_DETERMINISTIC 3 ,
 .Xr SQLITE_OK 3 ,

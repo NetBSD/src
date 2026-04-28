@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_SERIALIZE 3
 .Os
 .Sh NAME
@@ -17,6 +17,7 @@
 The sqlite3_serialize(D,S,P,F) interface returns a pointer to memory
 that is a serialization of the S database on database connection
 D.
+If S is a NULL pointer, the main database is used.
 If P is not a NULL pointer, then the size of the database in bytes
 is written into *P.
 .Pp
@@ -24,7 +25,7 @@ For an ordinary on-disk database file, the serialization is just a
 copy of the disk file.
 For an in-memory database or a "TEMP" database, the serialization is
 the same sequence of bytes which would be written to disk if that database
-where backed up to disk.
+were backed up to disk.
 .Pp
 The usual case is that sqlite3_serialize() copies the serialization
 of the database into memory obtained from
@@ -36,7 +37,7 @@ However, if the F argument contains the SQLITE_SERIALIZE_NOCOPY bit,
 then no memory allocations are made, and the sqlite3_serialize() function
 will return a pointer to the contiguous memory representation of the
 database that SQLite is currently using for that database, or NULL
-if the no such contiguous memory representation of the database exists.
+if no such contiguous memory representation of the database exists.
 A contiguous memory representation of the database will usually only
 exist if there has been a prior call to sqlite3_deserialize(D,S,...)
 with the same values of D and S.
@@ -58,7 +59,7 @@ This interface is omitted if SQLite is compiled with the SQLITE_OMIT_DESERIALIZE
 option.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10636.
+interface documentation at line 11130.
 .Bd -literal
 SQLITE_API unsigned char *sqlite3_serialize(
   sqlite3 *db,           /* The database connection */

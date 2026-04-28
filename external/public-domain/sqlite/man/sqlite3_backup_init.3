@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_BACKUP_INIT 3
 .Os
 .Sh NAME
@@ -158,7 +158,7 @@ If the source database is modified by an external process or via a
 database connection other than the one being used by the backup operation,
 then the backup will be automatically restarted by the next call to
 sqlite3_backup_step().
-If the source database is modified by the using the same database connection
+If the source database is modified by using the same database connection
 as is used by the backup operation, then the backup database is automatically
 updated at the same time.
 .Pp
@@ -176,7 +176,7 @@ The sqlite3_backup object is invalid and may not be used
 following a call to sqlite3_backup_finish().
 .Pp
 The value returned by sqlite3_backup_finish is SQLITE_OK if
-no sqlite3_backup_step() errors occurred, regardless or whether or
+no sqlite3_backup_step() errors occurred, regardless of whether or
 not sqlite3_backup_step() completed.
 If an out-of-memory condition or IO error occurred during any prior
 sqlite3_backup_step() call on the same sqlite3_backup
@@ -229,9 +229,21 @@ However, the sqlite3_backup_remaining() and sqlite3_backup_pagecount()
 APIs are not strictly speaking threadsafe.
 If they are invoked at the same time as another thread is invoking
 sqlite3_backup_step() it is possible that they return invalid values.
+.Pp
+\fBAlternatives To Using The Backup API\fP
+.Pp
+Other techniques for safely creating a consistent backup of an SQLite
+database include:
+.Bl -bullet
+.It
+The VACUUM INTO command.
+.It
+The sqlite3_rsync utility program.
+.El
+.Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9119.
+interface documentation at line 9552.
 .Bd -literal
 SQLITE_API sqlite3_backup *sqlite3_backup_init(
   sqlite3 *pDest,                        /* Destination database handle */

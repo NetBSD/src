@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_SOFT_HEAP_LIMIT64 3
 .Os
 .Sh NAME
@@ -17,7 +17,7 @@
 .Fc
 .Sh DESCRIPTION
 These interfaces impose limits on the amount of heap memory that will
-be by all database connections within a single process.
+be used by all database connections within a single process.
 .Pp
 The sqlite3_soft_heap_limit64() interface sets and/or queries the soft
 limit on the amount of heap memory that may be allocated by SQLite.
@@ -75,10 +75,10 @@ rather than from the heap.
 .El
 .Pp
 The circumstances under which SQLite will enforce the heap limits may
-changes in future releases of SQLite.
+change in future releases of SQLite.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6969.
+interface documentation at line 7365.
 .Bd -literal
 SQLITE_API sqlite3_int64 sqlite3_soft_heap_limit64(sqlite3_int64 N);
 SQLITE_API sqlite3_int64 sqlite3_hard_heap_limit64(sqlite3_int64 N);

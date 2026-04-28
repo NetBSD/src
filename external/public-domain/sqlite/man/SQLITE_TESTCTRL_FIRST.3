@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_TESTCTRL_FIRST 3
 .Os
 .Sh NAME
@@ -17,6 +17,7 @@
 .Nm SQLITE_TESTCTRL_JSON_SELFCHECK ,
 .Nm SQLITE_TESTCTRL_OPTIMIZATIONS ,
 .Nm SQLITE_TESTCTRL_ISKEYWORD ,
+.Nm SQLITE_TESTCTRL_GETOPT ,
 .Nm SQLITE_TESTCTRL_SCRATCHMALLOC ,
 .Nm SQLITE_TESTCTRL_INTERNAL_FUNCTIONS ,
 .Nm SQLITE_TESTCTRL_LOCALTIME_FAULT ,
@@ -37,6 +38,7 @@
 .Nm SQLITE_TESTCTRL_TUNE ,
 .Nm SQLITE_TESTCTRL_LOGEST ,
 .Nm SQLITE_TESTCTRL_USELONGDOUBLE ,
+.Nm SQLITE_TESTCTRL_ATOF ,
 .Nm SQLITE_TESTCTRL_LAST
 .Nd testing interface operation codes
 .Sh SYNOPSIS
@@ -56,6 +58,7 @@
 .Fd #define SQLITE_TESTCTRL_JSON_SELFCHECK
 .Fd #define SQLITE_TESTCTRL_OPTIMIZATIONS
 .Fd #define SQLITE_TESTCTRL_ISKEYWORD
+.Fd #define SQLITE_TESTCTRL_GETOPT
 .Fd #define SQLITE_TESTCTRL_SCRATCHMALLOC
 .Fd #define SQLITE_TESTCTRL_INTERNAL_FUNCTIONS
 .Fd #define SQLITE_TESTCTRL_LOCALTIME_FAULT
@@ -76,6 +79,7 @@
 .Fd #define SQLITE_TESTCTRL_TUNE
 .Fd #define SQLITE_TESTCTRL_LOGEST
 .Fd #define SQLITE_TESTCTRL_USELONGDOUBLE
+.Fd #define SQLITE_TESTCTRL_ATOF
 .Fd #define SQLITE_TESTCTRL_LAST
 .Sh DESCRIPTION
 These constants are the valid operation code parameters used as the
@@ -88,7 +92,7 @@ Applications should not use any of these parameters or the
 interface.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8283.
+interface documentation at line 8676.
 .Bd -literal
 #define SQLITE_TESTCTRL_FIRST                    5
 #define SQLITE_TESTCTRL_PRNG_SAVE                5
@@ -105,6 +109,7 @@ interface documentation at line 8283.
 #define SQLITE_TESTCTRL_JSON_SELFCHECK          14
 #define SQLITE_TESTCTRL_OPTIMIZATIONS           15
 #define SQLITE_TESTCTRL_ISKEYWORD               16  /* NOT USED */
+#define SQLITE_TESTCTRL_GETOPT                  16
 #define SQLITE_TESTCTRL_SCRATCHMALLOC           17  /* NOT USED */
 #define SQLITE_TESTCTRL_INTERNAL_FUNCTIONS      17
 #define SQLITE_TESTCTRL_LOCALTIME_FAULT         18
@@ -124,7 +129,8 @@ interface documentation at line 8283.
 #define SQLITE_TESTCTRL_TRACEFLAGS              31
 #define SQLITE_TESTCTRL_TUNE                    32
 #define SQLITE_TESTCTRL_LOGEST                  33
-#define SQLITE_TESTCTRL_USELONGDOUBLE           34
+#define SQLITE_TESTCTRL_USELONGDOUBLE           34  /* NOT USED */
+#define SQLITE_TESTCTRL_ATOF                    34
 #define SQLITE_TESTCTRL_LAST                    34  /* Largest TESTCTRL */
 .Ed
 .Sh SEE ALSO

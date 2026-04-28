@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_LOCK_NONE 3
 .Os
 .Sh NAME
@@ -19,13 +19,13 @@
 SQLite uses one of these integer values as the second argument to calls
 it makes to the xLock() and xUnlock() methods of an sqlite3_io_methods
 object.
-These values are ordered from lest restrictive to most restrictive.
+These values are ordered from least restrictive to most restrictive.
 .Pp
 The argument to xLock() is always SHARED or higher.
 The argument to xUnlock is either SHARED or NONE.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 671.
+interface documentation at line 689.
 .Bd -literal
 #define SQLITE_LOCK_NONE          0       /* xUnlock() only */
 #define SQLITE_LOCK_SHARED        1       /* xLock() or xUnlock() */

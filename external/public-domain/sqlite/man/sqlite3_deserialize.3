@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_DESERIALIZE 3
 .Os
 .Sh NAME
@@ -19,6 +19,7 @@
 The sqlite3_deserialize(D,S,P,N,M,F) interface causes the database connection
 D to disconnect from database S and then reopen S as an in-memory database
 based on the serialization contained in P.
+If S is a NULL pointer, the main database is used.
 The serialized database P is N bytes in size.
 M is the size of the buffer P, which might be larger than N.
 If M is larger than N, and the SQLITE_DESERIALIZE_READONLY bit is not
@@ -39,7 +40,7 @@ The sqlite3_deserialize() interface will fail with SQLITE_BUSY if the
 database is currently in a read transaction or is involved in a backup
 operation.
 .Pp
-It is not possible to deserialized into the TEMP database.
+It is not possible to deserialize into the TEMP database.
 If the S argument to sqlite3_deserialize(D,S,P,N,M,F) is "temp" then
 the function returns SQLITE_ERROR.
 .Pp
@@ -60,13 +61,13 @@ This interface is omitted if SQLite is compiled with the SQLITE_OMIT_DESERIALIZE
 option.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10702.
+interface documentation at line 11197.
 .Bd -literal
 SQLITE_API int sqlite3_deserialize(
   sqlite3 *db,            /* The database connection */
   const char *zSchema,    /* Which DB to reopen with the deserialization */
   unsigned char *pData,   /* The serialized database content */
-  sqlite3_int64 szDb,     /* Number bytes in the deserialization */
+  sqlite3_int64 szDb,     /* Number of bytes in the deserialization */
   sqlite3_int64 szBuf,    /* Total size of buffer pData[] */
   unsigned mFlags         /* Zero or more SQLITE_DESERIALIZE_* flags */
 );

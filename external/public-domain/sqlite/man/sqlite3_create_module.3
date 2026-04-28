@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_CREATE_MODULE 3
 .Os
 .Sh NAME
@@ -35,8 +35,7 @@ The name of the module is given by the second parameter.
 The third parameter is a pointer to the implementation of the virtual table module.
 The fourth parameter is an arbitrary client data pointer that is passed
 through into the xCreate and xConnect methods of the
-virtual table module when a new virtual table is be being created or
-reinitialized.
+virtual table module when a new virtual table is being created or reinitialized.
 .Pp
 The sqlite3_create_module_v2() interface has a fifth parameter which
 is a pointer to a destructor for the pClientData.
@@ -53,7 +52,7 @@ same name are dropped.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7530.
+interface documentation at line 7930.
 .Bd -literal
 SQLITE_API int sqlite3_create_module(
   sqlite3 *db,               /* SQLite connection to register module with */

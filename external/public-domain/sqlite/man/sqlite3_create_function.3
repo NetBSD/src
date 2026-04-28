@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_CREATE_FUNCTION 3
 .Os
 .Sh NAME
@@ -122,9 +122,9 @@ index expressions, or the WHERE clause of partial indexes.
 .Pp
 For best security, the SQLITE_DIRECTONLY flag is recommended
 for all application-defined SQL functions that do not need to be used
-inside of triggers, view, CHECK constraints, or other elements of the
-database schema.
-This flags is especially recommended for SQL functions that have side
+inside of triggers, views, CHECK constraints, or other elements of
+the database schema.
+This flag is especially recommended for SQL functions that have side
 effects or reveal internal application state.
 Without this flag, an attacker might be able to modify the schema of
 a database file to include invocations of the function with parameters
@@ -157,7 +157,7 @@ More details regarding the implementation of aggregate window functions
 are available here.
 .Pp
 If the final parameter to sqlite3_create_function_v2() or sqlite3_create_window_function()
-is not NULL, then it is destructor for the application data pointer.
+is not NULL, then it is the destructor for the application data pointer.
 The destructor is invoked when the function is deleted, either by being
 overloaded or when the database connection closes.
 The destructor is also invoked if the call to sqlite3_create_function_v2()
@@ -186,7 +186,7 @@ However, such calls must not close the database connection nor finalize
 or reset the prepared statement in which the function is running.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5333.
+interface documentation at line 5658.
 .Bd -literal
 SQLITE_API int sqlite3_create_function(
   sqlite3 *db,

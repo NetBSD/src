@@ -1,0 +1,25 @@
+.Dd $Mdocdate$
+.Dt SQLITE3CHANGEGROUP_CHANGE_DOUBLE 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_change_double
+.Nd add an double to a changegroup
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_change_double
+.Fa "sqlite3_changegroup*"
+.Fa "int"
+.Fa "int"
+.Fa "double"
+.Fc
+.Sh DESCRIPTION
+This function is similar to sqlite3changegroup_change_int64().
+Except that it configures the change currently being constructed with
+a real value instead of a 64-bit integer.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 13480.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_change_double(sqlite3_changegroup*, int, int, double);
+.Ed

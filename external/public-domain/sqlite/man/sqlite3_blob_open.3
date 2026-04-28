@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_BLOB_OPEN 3
 .Os
 .Sh NAME
@@ -42,7 +42,7 @@ code is SQLITE_MISUSE, *ppBlob is set to NULL.
 This means that, provided the API is not misused, it is always safe
 to call
 .Fn sqlite3_blob_close
-on *ppBlob after this function it returns.
+on *ppBlob after this function returns.
 .Pp
 This function fails with SQLITE_ERROR if any of the following are true:
 .Bl -bullet
@@ -120,7 +120,7 @@ eventually be released by a call to
 .Fn sqlite3_blob_close .
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7683.
+interface documentation at line 8083.
 .Bd -literal
 SQLITE_API int sqlite3_blob_open(
   sqlite3*,

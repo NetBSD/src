@@ -1,0 +1,39 @@
+.Dd $Mdocdate$
+.Dt SQLITE3CHANGEGROUP_ADD_CHANGE 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_add_change
+.Nd add a single change to a changegroup
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_add_change
+.Fa "sqlite3_changegroup*"
+.Fa "sqlite3_changeset_iter*"
+.Fc
+.Sh DESCRIPTION
+This function adds the single change currently indicated by the iterator
+passed as the second argument to the changegroup object.
+The rules for adding the change are just as described for
+.Fn sqlite3changegroup_add .
+If the change is successfully added to the changegroup, SQLITE_OK is
+returned.
+Otherwise, an SQLite error code is returned.
+.Pp
+The iterator must point to a valid entry when this function is called.
+If it does not, SQLITE_ERROR is returned and no change is added to
+the changegroup.
+Additionally, the iterator must not have been opened with the SQLITE_CHANGESETAPPLY_INVERT
+flag.
+In this case SQLITE_ERROR is also returned.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 12537.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_add_change(
+  sqlite3_changegroup*,
+  sqlite3_changeset_iter*
+);
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3changegroup_add 3

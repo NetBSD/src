@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_ROLLBACK 3
 .Os
 .Sh NAME
@@ -14,8 +14,8 @@
 .Sh DESCRIPTION
 These constants are returned by
 .Fn sqlite3_vtab_on_conflict
-to inform a virtual table implementation what the ON CONFLICT
-mode is for the SQL statement being evaluated.
+to inform a virtual table implementation of the ON CONFLICT
+mode for the SQL statement being evaluated.
 .Pp
 Note that the SQLITE_IGNORE constant is also used as a
 potential return value from the
@@ -23,7 +23,7 @@ potential return value from the
 callback and that SQLITE_ABORT is also a result code.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10125.
+interface documentation at line 10610.
 .Bd -literal
 #define SQLITE_ROLLBACK 1
 /* #define SQLITE_IGNORE 2 // Also used by sqlite3_authorizer() callback */

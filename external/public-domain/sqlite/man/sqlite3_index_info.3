@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_INDEX_INFO 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ by the byte code.
 The aConstraintUsage[].omit flag is an optimization hint.
 When the omit flag is left in its default setting of false, the constraint
 will always be checked separately in byte code.
-If the omit flag is change to true, then the constraint may or may
+If the omit flag is changed to true, then the constraint may or may
 not be checked in byte code.
 In other words, when the omit flag is true there is no guarantee that
 the constraint will not be checked again using byte code.
@@ -83,9 +83,11 @@ be returned by the strategy.
 .Pp
 The xBestIndex method may optionally populate the idxFlags field with
 a mask of SQLITE_INDEX_SCAN_* flags.
-Currently there is only one such flag - SQLITE_INDEX_SCAN_UNIQUE.
-If the xBestIndex method sets this flag, SQLite assumes that the strategy
-may visit at most one row.
+One such flag is SQLITE_INDEX_SCAN_HEX, which
+if set causes the EXPLAIN QUERY PLAN output to show
+the idxNum as hex instead of as decimal.
+Another flag is SQLITE_INDEX_SCAN_UNIQUE, which if set indicates that
+the query plan will return at most one row.
 .Pp
 Additionally, if xBestIndex sets the SQLITE_INDEX_SCAN_UNIQUE flag,
 then SQLite also assumes that if a call to the xUpdate() method is
@@ -112,7 +114,7 @@ It may therefore only be used if sqlite3_libversion_number() returns
 a value greater than or equal to 3009000.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7331.
+interface documentation at line 7727.
 .Bd -literal
 struct sqlite3_index_info {
   /* Inputs */
@@ -150,4 +152,5 @@ struct sqlite3_index_info {
 .Xr sqlite3_malloc 3 ,
 .Xr sqlite3_module 3 ,
 .Xr sqlite3_version 3 ,
-.Xr SQLITE_INDEX_CONSTRAINT_EQ 3
+.Xr SQLITE_INDEX_CONSTRAINT_EQ 3 ,
+.Xr SQLITE_INDEX_SCAN_UNIQUE 3

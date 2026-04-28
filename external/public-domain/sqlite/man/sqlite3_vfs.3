@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_VFS 3
 .Os
 .Sh NAME
@@ -194,7 +194,7 @@ and time if that method is available (if iVersion is 2 or greater and
 the function pointer is not NULL) and will fall back to xCurrentTime()
 if xCurrentTimeInt64() is unavailable.
 .Pp
-The xSetSystemCall(), xGetSystemCall(), and xNestSystemCall() interfaces
+The xSetSystemCall(), xGetSystemCall(), and xNextSystemCall() interfaces
 are not used by the SQLite core.
 These optional interfaces are provided by some VFSes to facilitate
 testing of the VFS code.
@@ -210,7 +210,7 @@ Applications must not attempt to access any of these methods if the
 iVersion of the VFS is less than 3.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 1295.
+interface documentation at line 1343.
 .Bd -literal
 typedef struct sqlite3_vfs sqlite3_vfs;
 typedef void (*sqlite3_syscall_ptr)(void);

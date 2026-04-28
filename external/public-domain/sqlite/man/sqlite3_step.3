@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_STEP 3
 .Os
 .Sh NAME
@@ -91,7 +91,7 @@ before any subsequent invocation of sqlite3_step().
 Failure to reset the prepared statement using
 .Fn sqlite3_reset
 would result in an SQLITE_MISUSE return from sqlite3_step().
-But after version 3.6.23.1 (dateof:3.6.23.1,
+But after version 3.6.23.1 (dateof:3.6.23.1),
 sqlite3_step() began calling
 .Fn sqlite3_reset
 automatically in this circumstance rather than returning SQLITE_MISUSE.
@@ -128,7 +128,7 @@ directly by sqlite3_step().
 The use of the "vX" interfaces is recommended.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4904.
+interface documentation at line 5229.
 .Bd -literal
 SQLITE_API int sqlite3_step(sqlite3_stmt*);
 .Ed

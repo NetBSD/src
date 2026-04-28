@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_WAL_HOOK 3
 .Os
 .Sh NAME
@@ -43,10 +43,13 @@ A single database handle may have at most a single write-ahead log
 callback registered at one time.
 Calling
 .Fn sqlite3_wal_hook
-replaces any previously registered write-ahead log callback.
+replaces the default behavior or previously registered write-ahead
+log callback.
+.Pp
 The return value is a copy of the third parameter from the previous
 call, if any, or 0.
-Note that the
+.Pp
+The
 .Fn sqlite3_wal_autocheckpoint
 interface and the wal_autocheckpoint pragma
 both invoke
@@ -54,9 +57,19 @@ both invoke
 and will overwrite any prior
 .Fn sqlite3_wal_hook
 settings.
+.Pp
+If a write-ahead log callback is set using this function then
+.Fn sqlite3_wal_checkpoint_v2
+or PRAGMA wal_checkpoint should be invoked periodically
+to keep the write-ahead log file from growing without bound.
+.Pp
+Passing a NULL pointer for the callback disables automatic checkpointing
+entirely.
+To re-enable the default behavior, call sqlite3_wal_autocheckpoint(db,1000)
+or use PRAGMA wal_checkpoint.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9512.
+interface documentation at line 9955.
 .Bd -literal
 SQLITE_API void *sqlite3_wal_hook(
   sqlite3*,
@@ -66,4 +79,5 @@ SQLITE_API void *sqlite3_wal_hook(
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_wal_autocheckpoint 3 ,
+.Xr sqlite3_wal_checkpoint_v2 3 ,
 .Xr SQLITE_OK 3

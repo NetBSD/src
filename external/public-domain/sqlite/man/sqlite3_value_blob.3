@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_VALUE_BLOB 3
 .Os
 .Sh NAME
@@ -160,10 +160,9 @@ The datatype after conversion is returned.
 Within the xUpdate method of a virtual table, the
 sqlite3_value_nochange(X) interface returns true if and only if the
 column corresponding to X is unchanged by the UPDATE operation that
-the xUpdate method call was invoked to implement and if and the prior
-xColumn method call that was invoked to extracted the value
-for that column returned without setting a result (probably because
-it queried
+the xUpdate method call was invoked to implement and if the prior xColumn
+method call that was invoked to extract the value for that column returned
+without setting a result (probably because it queried
 .Fn sqlite3_vtab_nochange
 and found that the column was unchanging).
 Within an xUpdate method, any value for which sqlite3_value_nochange(X)
@@ -193,36 +192,26 @@ These routines must be called from the same thread as the SQL function
 that supplied the sqlite3_value* parameters.
 .Pp
 As long as the input parameter is correct, these routines can only
-fail if an out-of-memory error occurs during a format conversion.
-Only the following subset of interfaces are subject to out-of-memory
-errors:
-.Bl -bullet
-.It
-sqlite3_value_blob()
-.It
-sqlite3_value_text()
-.It
-sqlite3_value_text16()
-.It
-sqlite3_value_text16le()
-.It
-sqlite3_value_text16be()
-.It
-sqlite3_value_bytes()
-.It
-sqlite3_value_bytes16()
-.El
-.Pp
+fail if an out-of-memory error occurs while trying to do a UTF8\(->UTF16
+or UTF16\(->UTF8 conversion.
 If an out-of-memory error occurs, then the return value from these
 routines is the same as if the column had contained an SQL NULL value.
-Valid SQL NULL returns can be distinguished from out-of-memory errors
-by invoking the
+If the input sqlite3_value was not obtained from
+.Fn sqlite3_value_dup ,
+then valid SQL NULL returns can also be distinguished from out-of-memory
+errors after extracting the value by invoking the
 .Fn sqlite3_errcode
-immediately after the suspect return value is obtained and before any
-other SQLite interface is called on the same database connection.
+immediately after the suspicious return value is obtained and before
+any other SQLite interface is called on the same database connection.
+If the input sqlite3_value was obtained from sqlite3_value_dup() then
+it is disconnected from the database connection and so sqlite3_errcode()
+will not work.
+In that case, the only way to distinguish an out-of-memory condition
+from a true SQL NULL is to invoke sqlite3_value_type() on the input
+to see if it is NULL prior to trying to extract the value.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5629.
+interface documentation at line 6011.
 .Bd -literal
 SQLITE_API const void *sqlite3_value_blob(sqlite3_value*);
 SQLITE_API double sqlite3_value_double(sqlite3_value*);
@@ -246,5 +235,6 @@ SQLITE_API int sqlite3_value_frombind(sqlite3_value*);
 .Xr sqlite3_column_blob 3 ,
 .Xr sqlite3_errcode 3 ,
 .Xr sqlite3_value 3 ,
+.Xr sqlite3_value_dup 3 ,
 .Xr sqlite3_vtab_nochange 3 ,
 .Xr SQLITE_INTEGER 3

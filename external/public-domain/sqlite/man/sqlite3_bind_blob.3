@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_BIND_BLOB 3
 .Os
 .Sh NAME
@@ -112,7 +112,7 @@
 In the SQL statement text input to
 .Fn sqlite3_prepare_v2
 and its variants, literals may be replaced by a parameter
-that matches one of following templates:
+that matches one of the following templates:
 .Bl -bullet
 .It
 ?
@@ -160,12 +160,13 @@ If the third parameter to sqlite3_bind_text16() is not NULL, then it
 should be a pointer to well-formed UTF16 text.
 If the third parameter to sqlite3_bind_text64() is not NULL, then it
 should be a pointer to a well-formed unicode string that is either
-UTF8 if the sixth parameter is SQLITE_UTF8, or UTF16 otherwise.
+UTF8 if the sixth parameter is SQLITE_UTF8 or SQLITE_UTF8_ZT, or UTF16
+otherwise.
 .Pp
 The byte-order of UTF16 input text is determined by the byte-order
-mark (BOM, U+FEFF) found in first character, which is removed, or in
-the absence of a BOM the byte order is the native byte order of the
-host machine for sqlite3_bind_text16() or the byte order specified
+mark (BOM, U+FEFF) found in the first character, which is removed,
+or in the absence of a BOM the byte order is the native byte order
+of the host machine for sqlite3_bind_text16() or the byte order specified
 in the 6th parameter for sqlite3_bind_text64().
 If UTF16 input text contains invalid unicode characters, then SQLite
 might change those invalid characters into the unicode replacement
@@ -184,7 +185,7 @@ If a non-negative fourth parameter is provided to sqlite3_bind_text()
 or sqlite3_bind_text16() or sqlite3_bind_text64() then that parameter
 must be the byte offset where the NUL terminator would occur assuming
 the string were NUL terminated.
-If any NUL characters occurs at byte offsets less than the value of
+If any NUL characters occur at byte offsets less than the value of
 the fourth parameter then the resulting string value will contain embedded
 NULs.
 The result of expressions involving strings with embedded NULs is undefined.
@@ -207,12 +208,18 @@ indicate that the object is to be copied prior to the return from sqlite3_bind_*
 The object and pointer to it must remain valid until then.
 SQLite will then manage the lifetime of its private copy.
 .Pp
-The sixth argument to sqlite3_bind_text64() must be one of SQLITE_UTF8,
+The sixth argument (the E argument) to sqlite3_bind_text64(S,K,Z,N,D,E)
+must be one of SQLITE_UTF8, SQLITE_UTF8_ZT,
 SQLITE_UTF16, SQLITE_UTF16BE, or SQLITE_UTF16LE
-to specify the encoding of the text in the third parameter.
-If the sixth argument to sqlite3_bind_text64() is not one of the allowed
-values shown above, or if the text encoding is different from the encoding
-specified by the sixth parameter, then the behavior is undefined.
+to specify the encoding of the text in the third parameter, Z.
+The special value SQLITE_UTF8_ZT means that the string
+argument is both UTF-8 encoded and is zero-terminated.
+In other words, SQLITE_UTF8_ZT means that the Z array is allocated
+to hold at least N+1 bytes and that the Z[N&#93; byte is zero.
+If the E argument to sqlite3_bind_text64(S,K,Z,N,D,E) is not one of
+the allowed values shown above, or if the text encoding is different
+from the encoding specified by the sixth parameter, then the behavior
+is undefined.
 .Pp
 The sqlite3_bind_zeroblob() routine binds a BLOB of length N that is
 filled with zeroes.
@@ -228,7 +235,9 @@ but to also be associated with the pointer P of type T.
 D is either a NULL pointer or a pointer to a destructor function for
 P.
 SQLite will invoke the destructor D with a single argument of P when
-it is finished using P.
+it is finished using P, even if the call to sqlite3_bind_pointer()
+fails.
+Due to a historical design quirk, results are undefined if D is SQLITE_TRANSIENT.
 The T parameter should be a static string, preferably a string literal.
 The sqlite3_bind_pointer() routine is part of the pointer passing interface
 added for SQLite 3.20.0.
@@ -259,7 +268,7 @@ SQLITE_NOMEM is returned if malloc() fails.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4543.
+interface documentation at line 4861.
 .Bd -literal
 SQLITE_API int sqlite3_bind_blob(sqlite3_stmt*, int, const void*, int n, void(*)(void*));
 SQLITE_API int sqlite3_bind_blob64(sqlite3_stmt*, int, const void*, sqlite3_uint64,

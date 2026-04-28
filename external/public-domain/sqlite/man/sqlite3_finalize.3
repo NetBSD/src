@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_FINALIZE 3
 .Os
 .Sh NAME
@@ -13,7 +13,7 @@
 .Sh DESCRIPTION
 The sqlite3_finalize() function is called to delete a prepared statement.
 If the most recent evaluation of the statement encountered no errors
-or if the statement is never been evaluated, then sqlite3_finalize()
+or if the statement has never been evaluated, then sqlite3_finalize()
 returns SQLITE_OK.
 If the most recent evaluation of statement S failed, then sqlite3_finalize(S)
 returns the appropriate error code or extended error code.
@@ -36,7 +36,7 @@ Any use of a prepared statement after it has been finalized can result
 in undefined and undesirable behavior such as segfaults and heap corruption.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5265.
+interface documentation at line 5590.
 .Bd -literal
 SQLITE_API int sqlite3_finalize(sqlite3_stmt *pStmt);
 .Ed

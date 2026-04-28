@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_RESULT_BLOB 3
 .Os
 .Sh NAME
@@ -93,8 +93,8 @@
 .Ft void
 .Fo sqlite3_result_text64
 .Fa "sqlite3_context*"
-.Fa "const char*"
-.Fa "sqlite3_uint64"
+.Fa "const char *z"
+.Fa "sqlite3_uint64 n"
 .Fa "void(*)(void*)"
 .Fa "unsigned char encoding"
 .Fc
@@ -212,10 +212,15 @@ and sqlite3_result_text16be() interfaces set the return value of the
 application-defined function to be a text string which is represented
 as UTF-8, UTF-16 native byte order, UTF-16 little endian, or UTF-16
 big endian, respectively.
-The sqlite3_result_text64() interface sets the return value of an application-defined
-function to be a text string in an encoding specified by the fifth
-(and last) parameter, which must be one of SQLITE_UTF8,
-SQLITE_UTF16, SQLITE_UTF16BE, or SQLITE_UTF16LE.
+The sqlite3_result_text64(C,Z,N,D,E) interface sets the return value
+of an application-defined function to be a text string in an encoding
+specified the E parameter, which must be one of SQLITE_UTF8,
+SQLITE_UTF8_ZT, SQLITE_UTF16, SQLITE_UTF16BE,
+or SQLITE_UTF16LE.
+The special value SQLITE_UTF8_ZT means that the result
+text is both UTF-8 and zero-terminated.
+In other words, SQLITE_UTF8_ZT means that the Z array holds at least
+N+1 bytes and that the Z[N&#93; is zero.
 SQLite takes the text result from the application from the 2nd parameter
 of the sqlite3_result_text* interfaces.
 If the 3rd parameter to any of the sqlite3_result_text* interfaces
@@ -227,7 +232,7 @@ then as many bytes (not characters) of the text pointed to by the 2nd
 parameter are taken as the application-defined function result.
 If the 3rd parameter is non-negative, then it must be the byte offset
 into the string where the NUL terminator would appear if the string
-where NUL terminated.
+were NUL terminated.
 If any NUL characters occur in the string at a byte offset that is
 less than the value of the 3rd parameter, then the resulting string
 will contain embedded NULs and the result of expressions operating
@@ -290,12 +295,12 @@ The T parameter should be a static string and preferably a string literal.
 The sqlite3_result_pointer() routine is part of the pointer passing interface
 added for SQLite 3.20.0.
 .Pp
-If these routines are called from within the different thread than
-the one containing the application-defined function that received the
-sqlite3_context pointer, the results are undefined.
+If these routines are called from within a different thread than the
+one containing the application-defined function that received the sqlite3_context
+pointer, the results are undefined.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 6047.
+interface documentation at line 6431.
 .Bd -literal
 SQLITE_API void sqlite3_result_blob(sqlite3_context*, const void*, int, void(*)(void*));
 SQLITE_API void sqlite3_result_blob64(sqlite3_context*,const void*,
@@ -310,7 +315,7 @@ SQLITE_API void sqlite3_result_int(sqlite3_context*, int);
 SQLITE_API void sqlite3_result_int64(sqlite3_context*, sqlite3_int64);
 SQLITE_API void sqlite3_result_null(sqlite3_context*);
 SQLITE_API void sqlite3_result_text(sqlite3_context*, const char*, int, void(*)(void*));
-SQLITE_API void sqlite3_result_text64(sqlite3_context*, const char*,sqlite3_uint64,
+SQLITE_API void sqlite3_result_text64(sqlite3_context*, const char *z, sqlite3_uint64 n,
                            void(*)(void*), unsigned char encoding);
 SQLITE_API void sqlite3_result_text16(sqlite3_context*, const void*, int, void(*)(void*));
 SQLITE_API void sqlite3_result_text16le(sqlite3_context*, const void*, int,void(*)(void*));

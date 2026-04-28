@@ -1,0 +1,33 @@
+.Dd $Mdocdate$
+.Dt SQLITE3CHANGEGROUP_CHANGE_TEXT 3
+.Os
+.Sh NAME
+.Nm sqlite3changegroup_change_text
+.Nd add a text value to a changegroup
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3changegroup_change_text
+.Fa "sqlite3_changegroup*"
+.Fa "int"
+.Fa "int"
+.Fa "const char *pVal"
+.Fa "int nVal"
+.Fc
+.Sh DESCRIPTION
+This function is similar to sqlite3changegroup_change_int64().
+It configures the currently accumulated change with a text value instead
+of a 64-bit integer.
+Parameter pVal points to a buffer containing the text encoded using
+utf-8.
+Parameter nVal may either be the size of the text value in bytes, or
+else a negative value, in which case the buffer pVal points to is assumed
+to be nul-terminated.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 13489.
+.Bd -literal
+SQLITE_API int sqlite3changegroup_change_text(
+  sqlite3_changegroup*, int, int, const char *pVal, int nVal
+);
+.Ed

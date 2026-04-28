@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_PREPARE 3
 .Os
 .Sh NAME
@@ -73,7 +73,8 @@ The
 .Fn sqlite3_prepare
 interface is legacy and should be avoided.
 .Fn sqlite3_prepare_v3
-has an extra "prepFlags" option that is used for special purposes.
+has an extra "prepFlags" option that is sometimes
+needed for special purpose or to pass along security restrictions.
 .Pp
 The use of the UTF-8 interfaces is preferred, as SQLite currently does
 all parsing using UTF-8.
@@ -97,11 +98,16 @@ and sqlite3_prepare16_v3() use UTF-16.
 .Pp
 If the nByte argument is negative, then zSql is read up to the first
 zero terminator.
-If nByte is positive, then it is the number of bytes read from zSql.
+If nByte is positive, then it is the maximum number of bytes read from
+zSql.
+When nByte is positive, zSql is read up to the first zero terminator
+or until the nByte bytes have been read, whichever comes first.
 If nByte is zero, then no prepared statement is generated.
 If the caller knows that the supplied string is nul-terminated, then
 there is a small performance advantage to passing an nByte parameter
 that is the number of bytes in the input string \fIincluding\fP the nul-terminator.
+Note that nByte measures the length of the input in bytes, not characters,
+even for the UTF-16 interfaces.
 .Pp
 If pzTail is not NULL then *pzTail is made to point to the first byte
 past the end of the first SQL statement in zSql.
@@ -175,7 +181,7 @@ The sqlite3_prepare_v2() interface works exactly the same as sqlite3_prepare_v3(
 with a zero prepFlags parameter.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4176.
+interface documentation at line 4489.
 .Bd -literal
 SQLITE_API int sqlite3_prepare(
   sqlite3 *db,            /* Database handle */

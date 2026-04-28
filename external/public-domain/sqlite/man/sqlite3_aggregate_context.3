@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_AGGREGATE_CONTEXT 3
 .Os
 .Sh NAME
@@ -34,7 +34,7 @@ first called if N is less than or equal to zero or if a memory allocation
 error occurs.
 .Pp
 The amount of space allocated by sqlite3_aggregate_context(C,N) is
-determined by the N parameter on first successful call.
+determined by the N parameter on the first successful call.
 Changing the value of N in any subsequent call to sqlite3_aggregate_context()
 within the same aggregate function instance will not resize the memory
 allocation.
@@ -53,7 +53,7 @@ This routine must be called from the same thread in which the aggregate
 SQL function is running.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 5831.
+interface documentation at line 6210.
 .Bd -literal
 SQLITE_API void *sqlite3_aggregate_context(sqlite3_context*, int nBytes);
 .Ed

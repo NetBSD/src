@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_GET_TABLE 3
 .Os
 .Sh NAME
@@ -24,7 +24,7 @@
 This is a legacy interface that is preserved for backwards compatibility.
 Use of this interface is not recommended.
 .Pp
-Definition: A \fBresult table\fP is memory data structure created by the
+Definition: A \fBresult table\fP is a memory data structure created by the
 .Fn sqlite3_get_table
 interface.
 A result table records the complete query results from one or more
@@ -103,7 +103,7 @@ or
 .Fn sqlite3_errmsg .
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 2865.
+interface documentation at line 3116.
 .Bd -literal
 SQLITE_API int sqlite3_get_table(
   sqlite3 *db,          /* An open database */

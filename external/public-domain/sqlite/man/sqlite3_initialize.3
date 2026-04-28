@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_INITIALIZE 3
 .Os
 .Sh NAME
@@ -69,7 +69,7 @@ For example,
 calls sqlite3_initialize() so the SQLite library will be automatically
 initialized when
 .Fn sqlite3_open
-is called if it has not be initialized already.
+is called if it has not been initialized already.
 However, if SQLite is compiled with the SQLITE_OMIT_AUTOINIT
 compile-time option, then the automatic calls to sqlite3_initialize()
 are omitted and the application must call sqlite3_initialize() directly
@@ -105,7 +105,7 @@ must return SQLITE_OK on success and some other error code
 upon failure.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 1567.
+interface documentation at line 1615.
 .Bd -literal
 SQLITE_API int sqlite3_initialize(void);
 SQLITE_API int sqlite3_shutdown(void);

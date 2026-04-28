@@ -1,18 +1,22 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_PREPARE_PERSISTENT 3
 .Os
 .Sh NAME
 .Nm SQLITE_PREPARE_PERSISTENT ,
 .Nm SQLITE_PREPARE_NORMALIZE ,
-.Nm SQLITE_PREPARE_NO_VTAB
+.Nm SQLITE_PREPARE_NO_VTAB ,
+.Nm SQLITE_PREPARE_DONT_LOG ,
+.Nm SQLITE_PREPARE_FROM_DDL
 .Nd prepare flags
 .Sh SYNOPSIS
 .In sqlite3.h
 .Fd #define SQLITE_PREPARE_PERSISTENT
 .Fd #define SQLITE_PREPARE_NORMALIZE
 .Fd #define SQLITE_PREPARE_NO_VTAB
+.Fd #define SQLITE_PREPARE_DONT_LOG
+.Fd #define SQLITE_PREPARE_FROM_DDL
 .Sh DESCRIPTION
-These constants define various flags that can be passed into "prepFlags"
+These constants define various flags that can be passed into the "prepFlags"
 parameter of the
 .Fn sqlite3_prepare_v3
 and
@@ -50,17 +54,53 @@ whether or not they use this flag.
 .It SQLITE_PREPARE_NO_VTAB
 The SQLITE_PREPARE_NO_VTAB flag causes the SQL compiler to return an
 error (error code SQLITE_ERROR) if the statement uses any virtual tables.
+.It SQLITE_PREPARE_DONT_LOG
+The SQLITE_PREPARE_DONT_LOG flag prevents SQL compiler errors from
+being sent to the error log defined by SQLITE_CONFIG_LOG.
+This can be used, for example, to do test compiles to see if some SQL
+syntax is well-formed, without generating messages on the global error
+log when it is not.
+If the test compile fails, the sqlite3_prepare_v3() call returns the
+same error indications with or without this flag; it just omits the
+call to
+.Fn sqlite3_log
+that logs the error.
+.It SQLITE_PREPARE_FROM_DDL
+The SQLITE_PREPARE_FROM_DDL flag causes the SQL compiler to enforce
+security constraints that would otherwise only be enforced when parsing
+the database schema.
+In other words, the SQLITE_PREPARE_FROM_DDL flag causes the SQL compiler
+to treat the SQL statement being prepared as if it had come from an
+attacker.
+When SQLITE_PREPARE_FROM_DDL is used and SQLITE_DBCONFIG_TRUSTED_SCHEMA
+is off, SQL functions may only be called if they are tagged with SQLITE_INNOCUOUS
+and virtual tables may only be used if they are tagged with SQLITE_VTAB_INNOCUOUS.
+Best practice is to use the SQLITE_PREPARE_FROM_DDL option when preparing
+any SQL that is derived from parts of the database schema.
+In particular, virtual table implementations that run SQL statements
+that are derived from arguments to their CREATE VIRTUAL TABLE statement
+should always use
+.Fn sqlite3_prepare_v3
+and set the SQLITE_PREPARE_FROM_DDL flag to prevent bypass of the SQLITE_DBCONFIG_TRUSTED_SCHEMA
+security checks.
 .El
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 4137.
+interface documentation at line 4422.
 .Bd -literal
 #define SQLITE_PREPARE_PERSISTENT              0x01
 #define SQLITE_PREPARE_NORMALIZE               0x02
 #define SQLITE_PREPARE_NO_VTAB                 0x04
+#define SQLITE_PREPARE_DONT_LOG                0x10
+#define SQLITE_PREPARE_FROM_DDL                0x20
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_finalize 3 ,
+.Xr sqlite3_log 3 ,
 .Xr sqlite3_prepare 3 ,
-.Xr sqlite3_sql 3
+.Xr sqlite3_sql 3 ,
+.Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
+.Xr SQLITE_DBCONFIG_MAINDBNAME 3 ,
+.Xr SQLITE_DETERMINISTIC 3 ,
+.Xr SQLITE_VTAB_CONSTRAINT_SUPPORT 3

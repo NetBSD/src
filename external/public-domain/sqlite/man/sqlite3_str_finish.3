@@ -1,13 +1,18 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_STR_FINISH 3
 .Os
 .Sh NAME
-.Nm sqlite3_str_finish
+.Nm sqlite3_str_finish ,
+.Nm sqlite3_str_free
 .Nd finalize a dynamic string
 .Sh SYNOPSIS
 .In sqlite3.h
 .Ft char *
 .Fo sqlite3_str_finish
+.Fa "sqlite3_str*"
+.Fc
+.Ft void
+.Fo sqlite3_str_free
 .Fa "sqlite3_str*"
 .Fc
 .Sh DESCRIPTION
@@ -22,14 +27,19 @@ to avoid a memory leak.
 The sqlite3_str_finish(X) interface may return
 a NULL pointer if any errors were encountered during construction of
 the string.
-The sqlite3_str_finish(X) interface will also
+The sqlite3_str_finish(X) interface might also
 return a NULL pointer if the string in sqlite3_str object
 X is zero bytes long.
+.Pp
+The sqlite3_str_free(X) interface destroys both
+the sqlite3_str object X and the string content it contains.
+Calling sqlite3_str_free(X) is the equivalent of calling sqlite3_free(sqlite3_str_finish(X)).
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8427.
+interface documentation at line 8822.
 .Bd -literal
 SQLITE_API char *sqlite3_str_finish(sqlite3_str*);
+SQLITE_API void sqlite3_str_free(sqlite3_str*);
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_malloc 3 ,

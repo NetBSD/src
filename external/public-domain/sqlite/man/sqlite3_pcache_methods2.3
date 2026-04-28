@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_PCACHE_METHODS2 3
 .Os
 .Sh NAME
@@ -62,10 +62,10 @@ SQLite will typically create one cache instance for each open database
 file, though this is not guaranteed.
 The first parameter, szPage, is the size in bytes of the pages that
 must be allocated by the cache.
-szPage will always a power of two.
+szPage will always be a power of two.
 The second parameter szExtra is a number of bytes of extra storage
 associated with each page cache entry.
-The szExtra parameter will a number less than 250.
+The szExtra parameter will be a number less than 250.
 SQLite will use the extra szExtra bytes on each page to store metadata
 about the underlying database page on disk.
 The value passed into szExtra depends on the SQLite version, the target
@@ -74,16 +74,16 @@ The third argument to xCreate(), bPurgeable, is true if the cache being
 created will be used to cache database pages of a file stored on disk,
 or false if it is used for an in-memory database.
 The cache implementation does not have to do anything special based
-with the value of bPurgeable; it is purely advisory.
+upon the value of bPurgeable; it is purely advisory.
 On a cache where bPurgeable is false, SQLite will never invoke xUnpin()
 except to deliberately delete a page.
 In other words, calls to xUnpin() on a cache with bPurgeable set to
 false will always have the "discard" flag set to true.
-Hence, a cache created with bPurgeable false will never contain any
-unpinned pages.
+Hence, a cache created with bPurgeable set to false will never contain
+any unpinned pages.
 .Pp
 The xCachesize() method may be called at any time by SQLite to set
-the suggested maximum cache-size (number of pages stored by) the cache
+the suggested maximum cache-size (number of pages stored) for the cache
 instance passed as the first argument.
 This is the value configured using the SQLite "PRAGMA cache_size"
 command.
@@ -112,13 +112,13 @@ If the requested page is already in the page cache, then the page cache
 implementation must return a pointer to the page buffer with its content
 intact.
 If the requested page is not already in the cache, then the cache implementation
-should use the value of the createFlag parameter to help it determined
+should use the value of the createFlag parameter to help it determine
 what action to take:
 .Pp
    createFlag   Behavior when page is not already in cache
    0   Do not allocate a new page.
 Return NULL.
-   1   Allocate a new page if it easy and convenient to do so.
+   1   Allocate a new page if it is easy and convenient to do so.
 Otherwise return NULL.
    2   Make every effort to allocate a new page.
 Only return NULL if allocating a new page is effectively impossible.
@@ -135,7 +135,7 @@ as its second argument.
 If the third parameter, discard, is non-zero, then the page must be
 evicted from the cache.
 If the discard parameter is zero, then the page may be discarded or
-retained at the discretion of page cache implementation.
+retained at the discretion of the page cache implementation.
 The page cache implementation may choose to evict unpinned pages at
 any time.
 .Pp
@@ -153,8 +153,8 @@ pinned.
 When SQLite calls the xTruncate() method, the cache must discard all
 existing cache entries with page numbers (keys) greater than or equal
 to the value of the iLimit parameter passed to xTruncate().
-If any of these pages are pinned, they are implicitly unpinned, meaning
-that they can be safely discarded.
+If any of these pages are pinned, they become implicitly unpinned,
+meaning that they can be safely discarded.
 .Pp
 The xDestroy() method is used to delete a cache allocated by xCreate().
 All resources associated with the specified cache should be freed.
@@ -168,7 +168,7 @@ The page cache implementation is not obligated to free any memory,
 but well-behaved implementations should do their best.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8909.
+interface documentation at line 9342.
 .Bd -literal
 typedef struct sqlite3_pcache_methods2 sqlite3_pcache_methods2;
 struct sqlite3_pcache_methods2 {

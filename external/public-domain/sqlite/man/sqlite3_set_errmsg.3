@@ -1,0 +1,48 @@
+.Dd $Mdocdate$
+.Dt SQLITE3_SET_ERRMSG 3
+.Os
+.Sh NAME
+.Nm sqlite3_set_errmsg
+.Nd set error code and message
+.Sh SYNOPSIS
+.In sqlite3.h
+.Ft int
+.Fo sqlite3_set_errmsg
+.Fa "sqlite3 *db"
+.Fa "int errcode"
+.Fa "const char *zErrMsg"
+.Fc
+.Sh DESCRIPTION
+Set the error code of the database handle passed as the first argument
+to errcode, and the error message to a copy of nul-terminated string
+zErrMsg.
+If zErrMsg is passed NULL, then the error message is set to the default
+message associated with the supplied error code.
+Subsequent calls to
+.Fn sqlite3_errcode
+and
+.Fn sqlite3_errmsg
+and similar will return the values set by this routine in place of
+what was previously set by SQLite itself.
+.Pp
+This function returns SQLITE_OK if the error code and error message
+are successfully set, SQLITE_NOMEM if an OOM occurs, and SQLITE_MISUSE
+if the database handle is NULL or invalid.
+.Pp
+The error code and message set by this routine remains in effect until
+they are changed, either by another call to this routine or until they
+are changed to by SQLite itself to reflect the result of some subsquent
+API call.
+.Pp
+This function is intended for use by SQLite extensions or wrappers.
+The idea is that an extension or wrapper can use this routine to set
+error messages and error codes and thus behave more like a core SQLite
+feature from the point of view of an application.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 4252.
+.Bd -literal
+SQLITE_API int sqlite3_set_errmsg(sqlite3 *db, int errcode, const char *zErrMsg);
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3_errcode 3

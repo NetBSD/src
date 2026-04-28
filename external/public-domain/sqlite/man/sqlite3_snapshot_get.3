@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_SNAPSHOT_GET 3
 .Os
 .Sh NAME
@@ -21,6 +21,15 @@ interface writes a pointer to the newly created sqlite3_snapshot
 object into *P and returns SQLITE_OK.
 If there is not already a read-transaction open on schema S when this
 function is called, one is opened automatically.
+.Pp
+If a read-transaction is opened by this function, then it is guaranteed
+that the returned snapshot object may not be invalidated by a database
+writer or checkpointer until after the read-transaction is closed.
+This is not guaranteed if a read-transaction is already open when this
+function is called.
+In that case, any subsequent write or checkpoint operation on the database
+may invalidate the returned snapshot handle, even while the read-transaction
+remains open.
 .Pp
 The following must be true for this function to succeed.
 If any of the following statements are false when sqlite3_snapshot_get()
@@ -61,9 +70,9 @@ interface is only available when the SQLITE_ENABLE_SNAPSHOT
 compile-time option is used.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10470.
+interface documentation at line 10956.
 .Bd -literal
-SQLITE_API SQLITE_EXPERIMENTAL int sqlite3_snapshot_get(
+SQLITE_API int sqlite3_snapshot_get(
   sqlite3 *db,
   const char *zSchema,
   sqlite3_snapshot **ppSnapshot

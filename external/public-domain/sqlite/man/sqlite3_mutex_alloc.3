@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_MUTEX_ALLOC 3
 .Os
 .Sh NAME
@@ -53,19 +53,12 @@ no real locking and is appropriate for use in a single-threaded application.
 The SQLITE_MUTEX_PTHREADS and SQLITE_MUTEX_W32 implementations are
 appropriate for use on Unix and Windows.
 .Pp
-If SQLite is compiled with the SQLITE_MUTEX_APPDEF preprocessor macro
-defined (with "-DSQLITE_MUTEX_APPDEF=1"), then no mutex implementation
-is included with the library.
-In this case the application must supply a custom mutex implementation
-using the SQLITE_CONFIG_MUTEX option of the sqlite3_config()
-function before calling sqlite3_initialize() or any other public sqlite3_
-function that calls sqlite3_initialize().
-.Pp
 The sqlite3_mutex_alloc() routine allocates a new mutex and returns
 a pointer to it.
 The sqlite3_mutex_alloc() routine returns NULL if it is unable to allocate
 the requested mutex.
-The argument to sqlite3_mutex_alloc() must one of these integer constants:
+The argument to sqlite3_mutex_alloc() must be one of these integer
+constants:
 .Bl -bullet
 .It
 SQLITE_MUTEX_FAST
@@ -161,7 +154,7 @@ behaves as a no-op.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7944.
+interface documentation at line 8344.
 .Bd -literal
 SQLITE_API sqlite3_mutex *sqlite3_mutex_alloc(int);
 SQLITE_API void sqlite3_mutex_free(sqlite3_mutex*);
@@ -171,5 +164,4 @@ SQLITE_API void sqlite3_mutex_leave(sqlite3_mutex*);
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_mutex_held 3 ,
-.Xr SQLITE_CONFIG_SINGLETHREAD 3 ,
 .Xr SQLITE_OK 3

@@ -1,0 +1,34 @@
+.Dd $Mdocdate$
+.Dt SQLITE_CARRAY_INT32 3
+.Os
+.Sh NAME
+.Nm SQLITE_CARRAY_INT32 ,
+.Nm SQLITE_CARRAY_INT64 ,
+.Nm SQLITE_CARRAY_DOUBLE ,
+.Nm SQLITE_CARRAY_TEXT ,
+.Nm SQLITE_CARRAY_BLOB
+.Nd datatypes for the CARRAY table-valued function
+.Sh SYNOPSIS
+.In sqlite3.h
+.Fd #define SQLITE_CARRAY_INT32
+.Fd #define SQLITE_CARRAY_INT64
+.Fd #define SQLITE_CARRAY_DOUBLE
+.Fd #define SQLITE_CARRAY_TEXT
+.Fd #define SQLITE_CARRAY_BLOB
+.Sh DESCRIPTION
+The fifth argument to the
+.Fn sqlite3_carray_bind
+interface musts be one of the following constants, to specify the datatype
+of the array that is being bound into the carray table-valued function.
+.Sh IMPLEMENTATION NOTES
+These declarations were extracted from the
+interface documentation at line 11323.
+.Bd -literal
+#define SQLITE_CARRAY_INT32     0    /* Data is 32-bit signed integers */
+#define SQLITE_CARRAY_INT64     1    /* Data is 64-bit signed integers */
+#define SQLITE_CARRAY_DOUBLE    2    /* Data is doubles */
+#define SQLITE_CARRAY_TEXT      3    /* Data is char* */
+#define SQLITE_CARRAY_BLOB      4    /* Data is struct iovec */
+.Ed
+.Sh SEE ALSO
+.Xr sqlite3_carray_bind_v2 3

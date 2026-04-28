@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_ERRCODE 3
 .Os
 .Sh NAME
@@ -60,6 +60,8 @@ sqlite3_errmsg()
 sqlite3_errmsg16()
 .It
 sqlite3_error_offset()
+.It
+sqlite3_db_handle()
 .El
 .Pp
 The sqlite3_errmsg() and sqlite3_errmsg16() return English-language
@@ -73,7 +75,7 @@ calls to other SQLite interface functions.
 .Pp
 The sqlite3_errstr(E) interface returns the English-language text that
 describes the result code E, as UTF-8, or NULL if E is not
-an result code for which a text error message is available.
+a result code for which a text error message is available.
 Memory to hold the error message string is managed internally and must
 not be freed by the application.
 .Pp
@@ -81,7 +83,7 @@ If the most recent error references a specific token in the input SQL,
 the sqlite3_error_offset() interface returns the byte offset of the
 start of that token.
 The byte offset returned by sqlite3_error_offset() assumes that the
-input SQL is UTF8.
+input SQL is UTF-8.
 If the most recent error does not reference a specific token in the
 input SQL, then the sqlite3_error_offset() function returns -1.
 .Pp
@@ -100,7 +102,7 @@ was invoked incorrectly by the application.
 In that case, the error code and message may or may not be set.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 3930.
+interface documentation at line 4181.
 .Bd -literal
 SQLITE_API int sqlite3_errcode(sqlite3 *db);
 SQLITE_API int sqlite3_extended_errcode(sqlite3 *db);

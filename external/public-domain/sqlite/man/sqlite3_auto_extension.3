@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_AUTO_EXTENSION 3
 .Os
 .Sh NAME
@@ -20,11 +20,11 @@ loaded into all new database connections.
 Even though the function prototype shows that xEntryPoint() takes no
 arguments and returns void, SQLite invokes xEntryPoint() with three
 arguments and expects an integer result as if the signature of the
-entry point where as follows:
+entry point were as follows:
 .Bd -ragged
 .Bd -literal
-   int xEntryPoint(      sqlite3 *db,      const char **pzErrMsg,  
-const struct sqlite3_api_routines *pThunk    );
+   int xEntryPoint(      sqlite3 *db,      char **pzErrMsg,      const
+struct sqlite3_api_routines *pThunk    );
 .Ed
 .Pp
 .Ed
@@ -51,7 +51,7 @@ that is opened.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7207.
+interface documentation at line 7603.
 .Bd -literal
 SQLITE_API int sqlite3_auto_extension(void(*xEntryPoint)(void));
 .Ed

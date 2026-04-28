@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_SCANSTAT_NLOOP 3
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@ of the X-th loop.
 The "double" variable pointed to by the V parameter will be set to
 the query planner's estimate for the average number of rows output
 from each iteration of the X-th loop.
-If the query planner's estimates was accurate, then this value will
+If the query planner's estimate was accurate, then this value will
 approximate the quotient NVISIT/NLOOP and the product of this value
 for all prior loops with the same SELECTID will be the NLOOP value
 for the current loop.
@@ -66,8 +66,8 @@ The select-id is the same value as is output in the first column of
 an EXPLAIN QUERY PLAN query.
 .It SQLITE_SCANSTAT_PARENTID
 The "int" variable pointed to by the V parameter will be set to the
-the id of the parent of the current query element, if applicable, or
-to zero if the query element has no parent.
+id of the parent of the current query element, if applicable, or to
+zero if the query element has no parent.
 This is the same value as returned in the second column of an EXPLAIN QUERY PLAN
 query.
 .It SQLITE_SCANSTAT_NCYCLE
@@ -80,7 +80,7 @@ the output variable is set to -1.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10143.
+interface documentation at line 10628.
 .Bd -literal
 #define SQLITE_SCANSTAT_NLOOP    0
 #define SQLITE_SCANSTAT_NVISIT   1

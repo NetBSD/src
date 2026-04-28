@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_COMPLETE 3
 .Os
 .Sh NAME
@@ -33,7 +33,7 @@ Whitespace and comments that follow the final semicolon are ignored.
 These routines return 0 if the statement is incomplete.
 If a memory allocation fails, then SQLITE_NOMEM is returned.
 .Pp
-These routines do not parse the SQL statements thus will not detect
+These routines do not parse the SQL statements and thus will not detect
 syntactically incorrect SQL.
 .Pp
 If SQLite has not been initialized using
@@ -52,7 +52,7 @@ The input to
 must be a zero-terminated UTF-16 string in native byte order.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 2745.
+interface documentation at line 2958.
 .Bd -literal
 SQLITE_API int sqlite3_complete(const char *sql);
 SQLITE_API int sqlite3_complete16(const void *sql);

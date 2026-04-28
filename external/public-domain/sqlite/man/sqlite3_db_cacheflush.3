@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_DB_CACHEFLUSH 3
 .Os
 .Sh NAME
@@ -13,7 +13,7 @@
 .Sh DESCRIPTION
 If a write-transaction is open on database connection
 D when the sqlite3_db_cacheflush(D) interface
-invoked, any dirty pages in the pager-cache that are not currently
+is invoked, any dirty pages in the pager-cache that are not currently
 in use are written out to disk.
 A dirty page may be in use if a database cursor created by an active
 SQL statement is reading from it, or if it is page 1 of a database
@@ -47,7 +47,7 @@ and
 functions.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10283.
+interface documentation at line 10769.
 .Bd -literal
 SQLITE_API int sqlite3_db_cacheflush(sqlite3*);
 .Ed

@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_VERSION 3
 .Os
 .Sh NAME
@@ -40,9 +40,9 @@ strncmp(sqlite3_sourceid(),SQLITE_SOURCE_ID,80)==0 ); assert( strcmp(sqlite3_lib
 .Pp
 .Ed
 .Pp
-The sqlite3_version[] string constant contains the text of SQLITE_VERSION
+The sqlite3_version[] string constant contains the text of the SQLITE_VERSION
 macro.
-The sqlite3_libversion() function returns a pointer to the to the sqlite3_version[]
+The sqlite3_libversion() function returns a pointer to the sqlite3_version[]
 string constant.
 The sqlite3_libversion() function is provided for use in DLLs since
 DLL users usually do not have direct access to string constants within
@@ -57,7 +57,7 @@ then the last four characters of the hash might be different from SQLITE_SOURCE_
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 154.
+interface documentation at line 157.
 .Bd -literal
 SQLITE_API SQLITE_EXTERN const char sqlite3_version[];
 SQLITE_API const char *sqlite3_libversion(void);

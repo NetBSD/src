@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_STATUS_MEMORY_USED 3
 .Os
 .Sh NAME
@@ -65,7 +65,7 @@ which could not be satisfied by the SQLITE_CONFIG_PAGECACHE
 buffer and where forced to overflow to
 .Fn sqlite3_malloc .
 The returned value includes allocations that overflowed because they
-where too large (they were larger than the "sz" parameter to SQLITE_CONFIG_PAGECACHE)
+were too large (they were larger than the "sz" parameter to SQLITE_CONFIG_PAGECACHE)
 and allocations that overflowed because no space was left in the page
 cache.
 .It SQLITE_STATUS_PAGECACHE_SIZE
@@ -91,7 +91,7 @@ YYTRACKMAXSTACKDEPTH.
 New status parameters may be added from time to time.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8549.
+interface documentation at line 8954.
 .Bd -literal
 #define SQLITE_STATUS_MEMORY_USED          0
 #define SQLITE_STATUS_PAGECACHE_USED       1

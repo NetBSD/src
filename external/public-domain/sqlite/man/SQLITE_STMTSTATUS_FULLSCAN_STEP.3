@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_STMTSTATUS_FULLSCAN_STEP 3
 .Os
 .Sh NAME
@@ -37,12 +37,12 @@ Large numbers for this counter may indicate opportunities for performance
 improvement through careful use of indices.
 .It SQLITE_STMTSTATUS_SORT
 This is the number of sort operations that have occurred.
-A non-zero value in this counter may indicate an opportunity to improvement
+A non-zero value in this counter may indicate an opportunity to improve
 performance through careful use of indices.
 .It SQLITE_STMTSTATUS_AUTOINDEX
 This is the number of rows inserted into transient indices that were
 created automatically in order to help joins run faster.
-A non-zero value in this counter may indicate an opportunity to improvement
+A non-zero value in this counter may indicate an opportunity to improve
 performance by adding permanent indices that do not need to be reinitialized
 each time the statement is run.
 .It SQLITE_STMTSTATUS_VM_STEP
@@ -81,7 +81,7 @@ to sqlite3_stmt_status() is ignored when the opcode is SQLITE_STMTSTATUS_MEMUSED
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8805.
+interface documentation at line 9238.
 .Bd -literal
 #define SQLITE_STMTSTATUS_FULLSCAN_STEP     1
 #define SQLITE_STMTSTATUS_SORT              2

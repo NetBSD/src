@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_PREUPDATE_HOOK 3
 .Os
 .Sh NAME
@@ -145,8 +145,7 @@ triggers called by top-level triggers; and so forth.
 When the
 .Fn sqlite3_blob_write
 API is used to update a blob column, the pre-update hook is invoked
-with SQLITE_DELETE.
-This is because the in this case the new values are not available.
+with SQLITE_DELETE, because the new values are not yet available.
 In this case, when a callback made with op==SQLITE_DELETE is actually
 a write using the sqlite3_blob_write() API, the
 .Fn sqlite3_preupdate_blobwrite
@@ -157,7 +156,7 @@ returns -1.
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 10316.
+interface documentation at line 10802.
 .Bd -literal
 #if defined(SQLITE_ENABLE_PREUPDATE_HOOK)
 SQLITE_API void *sqlite3_preupdate_hook(

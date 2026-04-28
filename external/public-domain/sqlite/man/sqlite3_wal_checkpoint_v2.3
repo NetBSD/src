@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_WAL_CHECKPOINT_V2 3
 .Os
 .Sh NAME
@@ -50,6 +50,11 @@ while it is pending, but does not impede readers.
 This mode works the same way as SQLITE_CHECKPOINT_RESTART with the
 addition that it also truncates the log file to zero bytes just prior
 to a successful return.
+.It SQLITE_CHECKPOINT_NOOP
+This mode always checkpoints zero frames.
+The only reason to invoke a NOOP checkpoint is to access the values
+returned by sqlite3_wal_checkpoint_v2() via output parameters *pnLog
+and *pnCkpt.
 .El
 .Pp
 If pnLog is not NULL, then *pnLog is set to the total number of frames
@@ -111,7 +116,7 @@ The PRAGMA wal_checkpoint command can be used
 to invoke this interface from SQL.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 9606.
+interface documentation at line 10063.
 .Bd -literal
 SQLITE_API int sqlite3_wal_checkpoint_v2(
   sqlite3 *db,                    /* Database handle */
@@ -125,4 +130,4 @@ SQLITE_API int sqlite3_wal_checkpoint_v2(
 .Xr sqlite3 3 ,
 .Xr sqlite3_busy_handler 3 ,
 .Xr sqlite3_errcode 3 ,
-.Xr SQLITE_CHECKPOINT_PASSIVE 3
+.Xr SQLITE_CHECKPOINT_NOOP 3

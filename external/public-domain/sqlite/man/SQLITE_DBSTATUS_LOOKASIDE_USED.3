@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE_DBSTATUS_LOOKASIDE_USED 3
 .Os
 .Sh NAME
@@ -15,6 +15,7 @@
 .Nm SQLITE_DBSTATUS_DEFERRED_FKS ,
 .Nm SQLITE_DBSTATUS_CACHE_USED_SHARED ,
 .Nm SQLITE_DBSTATUS_CACHE_SPILL ,
+.Nm SQLITE_DBSTATUS_TEMPBUF_SPILL ,
 .Nm SQLITE_DBSTATUS_MAX
 .Nd status parameters for database connections
 .Sh SYNOPSIS
@@ -32,6 +33,7 @@
 .Fd #define SQLITE_DBSTATUS_DEFERRED_FKS
 .Fd #define SQLITE_DBSTATUS_CACHE_USED_SHARED
 .Fd #define SQLITE_DBSTATUS_CACHE_SPILL
+.Fd #define SQLITE_DBSTATUS_TEMPBUF_SPILL
 .Fd #define SQLITE_DBSTATUS_MAX
 .Sh DESCRIPTION
 These constants are the available integer "verbs" that can be passed
@@ -58,15 +60,15 @@ using lookaside memory.
 Only the high-water value is meaningful; the current value is always
 zero.
 .It SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE
-This parameter returns the number malloc attempts that might have been
-satisfied using lookaside memory but failed due to the amount of memory
-requested being larger than the lookaside slot size.
+This parameter returns the number of malloc attempts that might have
+been satisfied using lookaside memory but failed due to the amount
+of memory requested being larger than the lookaside slot size.
 Only the high-water value is meaningful; the current value is always
 zero.
 .It SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL
-This parameter returns the number malloc attempts that might have been
-satisfied using lookaside memory but failed due to all lookaside memory
-already being in use.
+This parameter returns the number of malloc attempts that might have
+been satisfied using lookaside memory but failed due to all lookaside
+memory already being in use.
 Only the high-water value is meaningful; the current value is always
 zero.
 .It SQLITE_DBSTATUS_CACHE_USED
@@ -81,7 +83,7 @@ heap memory used by that pager cache is divided evenly between the
 attached connections.
 In other words, if none of the pager caches associated with the database
 connection are shared, this request returns the same value as DBSTATUS_CACHE_USED.
-Or, if one or more or the pager caches are shared, the value returned
+Or, if one or more of the pager caches are shared, the value returned
 by this call will be smaller than that returned by DBSTATUS_CACHE_USED.
 The highwater mark associated with SQLITE_DBSTATUS_CACHE_USED_SHARED
 is always 0.
@@ -120,6 +122,10 @@ If an IO or other error occurs while writing a page to disk, the effect
 on subsequent SQLITE_DBSTATUS_CACHE_WRITE requests is undefined.
 The highwater mark associated with SQLITE_DBSTATUS_CACHE_WRITE is always
 0.
+.Pp
+There is overlap between the quantities measured by this parameter
+(SQLITE_DBSTATUS_CACHE_WRITE) and SQLITE_DBSTATUS_TEMPBUF_SPILL.
+Resetting one will reduce the other.
 .It SQLITE_DBSTATUS_CACHE_SPILL
 This parameter returns the number of dirty cache entries that have
 been written to disk in the middle of a transaction due to the page
@@ -127,17 +133,31 @@ cache overflowing.
 Transactions are more efficient if they are written to disk all at
 once.
 When pages spill mid-transaction, that introduces additional overhead.
-This parameter can be used help identify inefficiencies that can be
-resolved by increasing the cache size.
+This parameter can be used to help identify inefficiencies that can
+be resolved by increasing the cache size.
 .It SQLITE_DBSTATUS_DEFERRED_FKS
 This parameter returns zero for the current value if and only if all
 foreign key constraints (deferred or immediate) have been resolved.
 The highwater mark is always 0.
+.Pp
+[SQLITE_DBSTATUS_TEMPBUF_SPILL
+.It SQLITE_DBSTATUS_TEMPBUF_SPILL
+This parameter returns the number of bytes written to temporary files
+on disk that could have been kept in memory had sufficient memory been
+available.
+This value includes writes to intermediate tables that are part of
+complex queries, external sorts that spill to disk, and writes to TEMP
+tables.
+The highwater mark is always 0.
+.Pp
+There is overlap between the quantities measured by this parameter
+(SQLITE_DBSTATUS_TEMPBUF_SPILL) and SQLITE_DBSTATUS_CACHE_WRITE.
+Resetting one will reduce the other.
 .El
 .Pp
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 8652.
+interface documentation at line 9066.
 .Bd -literal
 #define SQLITE_DBSTATUS_LOOKASIDE_USED       0
 #define SQLITE_DBSTATUS_CACHE_USED           1
@@ -152,7 +172,8 @@ interface documentation at line 8652.
 #define SQLITE_DBSTATUS_DEFERRED_FKS        10
 #define SQLITE_DBSTATUS_CACHE_USED_SHARED   11
 #define SQLITE_DBSTATUS_CACHE_SPILL         12
-#define SQLITE_DBSTATUS_MAX                 12   /* Largest defined DBSTATUS */
+#define SQLITE_DBSTATUS_TEMPBUF_SPILL       13
+#define SQLITE_DBSTATUS_MAX                 13   /* Largest defined DBSTATUS */
 .Ed
 .Sh SEE ALSO
 .Xr sqlite3_db_status 3

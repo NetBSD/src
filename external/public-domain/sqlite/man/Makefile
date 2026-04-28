@@ -1,13 +1,16 @@
-#	$NetBSD: Makefile,v 1.7 2024/03/01 15:47:59 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2026/04/28 20:40:42 christos Exp $
 
 .include <bsd.init.mk>
 
 MAN += \
 SQLITE_ACCESS_EXISTS.3 \
+SQLITE_CARRAY_INT32.3 \
+SQLITE_CHANGEGROUP_CONFIG_PATCHSET.3 \
 SQLITE_CHANGESETAPPLY_NOSAVEPOINT.3 \
 SQLITE_CHANGESETSTART_INVERT.3 \
 SQLITE_CHANGESET_DATA.3 \
 SQLITE_CHANGESET_OMIT.3 \
+SQLITE_CHECKPOINT_NOOP.3 \
 SQLITE_CHECKPOINT_PASSIVE.3 \
 SQLITE_CONFIG_SINGLETHREAD.3 \
 SQLITE_CREATE_INDEX.3 \
@@ -36,6 +39,7 @@ SQLITE_SCANSTAT_NLOOP.3 \
 SQLITE_SERIALIZE_NOCOPY.3 \
 SQLITE_SESSION_CONFIG_STRMSIZE.3 \
 SQLITE_SESSION_OBJCONFIG_SIZE.3 \
+SQLITE_SETLK_BLOCK_ON_CONNECT.3 \
 SQLITE_SHM_NLOCK.3 \
 SQLITE_SHM_UNLOCK.3 \
 SQLITE_STATUS_MEMORY_USED.3 \
@@ -70,6 +74,7 @@ sqlite3_blob_write.3 \
 sqlite3_busy_handler.3 \
 sqlite3_busy_timeout.3 \
 sqlite3_cancel_auto_extension.3 \
+sqlite3_carray_bind_v2.3 \
 sqlite3_changegroup.3 \
 sqlite3_changes.3 \
 sqlite3_changeset_iter.3 \
@@ -158,7 +163,9 @@ sqlite3_result_subtype.3 \
 sqlite3_serialize.3 \
 sqlite3_session.3 \
 sqlite3_set_authorizer.3 \
+sqlite3_set_errmsg.3 \
 sqlite3_set_last_insert_rowid.3 \
+sqlite3_setlk_timeout.3 \
 sqlite3_sleep.3 \
 sqlite3_snapshot.3 \
 sqlite3_snapshot_cmp.3 \
@@ -224,6 +231,15 @@ sqlite3_wal_checkpoint_v2.3 \
 sqlite3_wal_hook.3 \
 sqlite3_win32_set_directory.3 \
 sqlite3changegroup_add.3 \
+sqlite3changegroup_add_change.3 \
+sqlite3changegroup_change_begin.3 \
+sqlite3changegroup_change_blob.3 \
+sqlite3changegroup_change_double.3 \
+sqlite3changegroup_change_finish.3 \
+sqlite3changegroup_change_int64.3 \
+sqlite3changegroup_change_null.3 \
+sqlite3changegroup_change_text.3 \
+sqlite3changegroup_config.3 \
 sqlite3changegroup_delete.3 \
 sqlite3changegroup_new.3 \
 sqlite3changegroup_output.3 \

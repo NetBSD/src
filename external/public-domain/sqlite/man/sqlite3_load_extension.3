@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_LOAD_EXTENSION 3
 .Os
 .Sh NAME
@@ -19,7 +19,7 @@ This interface loads an SQLite extension library from the named file.
 The sqlite3_load_extension() interface attempts to load an SQLite extension
 library contained in the file zFile.
 If the file cannot be loaded directly, attempts are made to load with
-various operating-system specific extensions added.
+various operating-system specific filename extensions added.
 So for example, if "samplelib" cannot be loaded, then names like "samplelib.so"
 or "samplelib.dylib" or "samplelib.dll" might be tried also.
 .Pp
@@ -27,10 +27,10 @@ The entry point is zProc.
 zProc may be 0, in which case SQLite will try to come up with an entry
 point name on its own.
 It first tries "sqlite3_extension_init".
-If that does not work, it constructs a name "sqlite3_X_init" where
-the X is consists of the lower-case equivalent of all ASCII alphabetic
-characters in the filename from the last "/" to the first following
-"." and omitting any initial "lib".
+If that does not work, it tries names of the form "sqlite3_X_init"
+where X consists of the lower-case equivalent of all ASCII alphabetic
+characters or all ASCII alphanumeric characters in the filename from
+the last "/" to the first following "." and omitting any initial "lib".
 The sqlite3_load_extension() interface returns SQLITE_OK on
 success and SQLITE_ERROR if something goes wrong.
 If an error occurs and pzErrMsg is not 0, then the
@@ -58,7 +58,7 @@ extension loading capabilities.
 See also the load_extension() SQL function.
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 7129.
+interface documentation at line 7525.
 .Bd -literal
 SQLITE_API int sqlite3_load_extension(
   sqlite3 *db,          /* Load the extension into this database connection */

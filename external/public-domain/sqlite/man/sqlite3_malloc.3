@@ -1,4 +1,4 @@
-.Dd January 24, 2024
+.Dd $Mdocdate$
 .Dt SQLITE3_MALLOC 3
 .Os
 .Sh NAME
@@ -56,7 +56,7 @@ that N is an unsigned 64-bit integer instead of a signed 32-bit integer.
 .Pp
 Calling sqlite3_free() with a pointer previously returned by sqlite3_malloc()
 or sqlite3_realloc() releases that memory so that it might be reused.
-The sqlite3_free() routine is a no-op if is called with a NULL pointer.
+The sqlite3_free() routine is a no-op if it is called with a NULL pointer.
 Passing a NULL pointer to sqlite3_free() is harmless.
 After being freed, memory should neither be read nor written.
 Even reading previously freed memory might result in a segmentation
@@ -74,12 +74,12 @@ the behavior is exactly the same as calling sqlite3_free(X).
 sqlite3_realloc(X,N) returns a pointer to a memory allocation of at
 least N bytes in size or NULL if insufficient memory is available.
 If M is the size of the prior allocation, then min(N,M) bytes of the
-prior allocation are copied into the beginning of buffer returned by
-sqlite3_realloc(X,N) and the prior allocation is freed.
+prior allocation are copied into the beginning of the buffer returned
+by sqlite3_realloc(X,N) and the prior allocation is freed.
 If sqlite3_realloc(X,N) returns NULL and N is positive, then the prior
 allocation is not freed.
 .Pp
-The sqlite3_realloc64(X,N) interfaces works the same as sqlite3_realloc(X,N)
+The sqlite3_realloc64(X,N) interface works the same as sqlite3_realloc(X,N)
 except that N is a 64-bit unsigned integer instead of a 32-bit signed
 integer.
 .Pp
@@ -117,7 +117,7 @@ or
 .Fn sqlite3_realloc .
 .Sh IMPLEMENTATION NOTES
 These declarations were extracted from the
-interface documentation at line 2993.
+interface documentation at line 3244.
 .Bd -literal
 SQLITE_API void *sqlite3_malloc(int);
 SQLITE_API void *sqlite3_malloc64(sqlite3_uint64);
