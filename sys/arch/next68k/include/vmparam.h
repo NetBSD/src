@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.33 2026/04/29 04:45:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.34 2026/04/29 05:04:08 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -100,15 +100,6 @@ extern vaddr_t kernel_virtual_max;
 #ifndef __HAVE_NEW_PMAP_68K
 /* # of kernel PT pages (initial only, can grow dynamically) */
 #define VM_KERNEL_PT_PAGES	((vsize_t)2)
-
-#define	__HAVE_PMAP_PHYSSEG
-
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
 #endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _NEXT68K_VMPARAM_H_ */

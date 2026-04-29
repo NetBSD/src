@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.57 2026/04/29 01:32:29 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.58 2026/04/29 05:04:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -101,6 +101,14 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	int			pm_ptpages;	/* more stats: PT pages */
 };
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_header *pvheader;	/* pv table for this seg */
+};
+#define	__HAVE_PMAP_PHYSSEG
 
 /*
  * Root Pointer attributes for Supervisor and User modes.

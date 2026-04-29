@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.36 2026/04/29 04:45:46 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.37 2026/04/29 05:04:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -89,16 +89,6 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_TTRAM	VM_FREELIST_DEFAULT
 #define	VM_FREELIST_STRAM	1
-
-#define	__HAVE_PMAP_PHYSSEG
-
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
-
 
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
