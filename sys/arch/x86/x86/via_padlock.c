@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.37 2025/11/23 09:21:31 kre Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.38 2026/04/29 16:29:59 kre Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.37 2025/11/23 09:21:31 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.38 2026/04/29 16:29:59 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,7 +133,8 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	struct via_padlock_session *ses = NULL;
 	const struct swcr_auth_hash *axf;
 	struct swcr_data *swd;
-	int sesn, i, cw0;
+	int sesn, cw0;
+	unsigned int i;
 
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = malloc(sizeof(*ses), M_DEVBUF,
