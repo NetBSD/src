@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft_xform.c,v 1.30 2020/06/30 04:14:55 riastradh Exp $ */
+/*	$NetBSD: cryptosoft_xform.c,v 1.31 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/xform.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: xform.c,v 1.19 2002/08/16 22:47:25 dhartmei Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.30 2020/06/30 04:14:55 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cryptosoft_xform.c,v 1.31 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/cprng.h>
 #include <sys/kmem.h>
@@ -85,70 +85,70 @@ struct swcr_comp_algo {
 	uint32_t (*decompress)(uint8_t *, uint32_t, uint8_t **, int);
 };
 
-static void null_encrypt(void *, u_int8_t *);
-static void null_decrypt(void *, u_int8_t *);
-static int null_setkey(u_int8_t **, const u_int8_t *, int);
-static void null_zerokey(u_int8_t **);
+static void null_encrypt(void *, uint8_t *);
+static void null_decrypt(void *, uint8_t *);
+static int null_setkey(uint8_t **, const uint8_t *, int);
+static void null_zerokey(uint8_t **);
 
-static	int des1_setkey(u_int8_t **, const u_int8_t *, int);
-static	int des3_setkey(u_int8_t **, const u_int8_t *, int);
-static	int blf_setkey(u_int8_t **, const u_int8_t *, int);
-static	int cast5_setkey(u_int8_t **, const u_int8_t *, int);
-static  int skipjack_setkey(u_int8_t **, const u_int8_t *, int);
-static  int aes_setkey(u_int8_t **, const u_int8_t *, int);
-static  int cml_setkey(u_int8_t **, const u_int8_t *, int);
-static  int aes_ctr_setkey(u_int8_t **, const u_int8_t *, int);
-static	int aes_gmac_setkey(u_int8_t **, const u_int8_t *, int);
-static	void des1_encrypt(void *, u_int8_t *);
-static	void des3_encrypt(void *, u_int8_t *);
-static	void blf_encrypt(void *, u_int8_t *);
-static	void cast5_encrypt(void *, u_int8_t *);
-static	void skipjack_encrypt(void *, u_int8_t *);
-static	void aes_encrypt(void *, u_int8_t *);
-static  void cml_encrypt(void *, u_int8_t *);
-static	void des1_decrypt(void *, u_int8_t *);
-static	void des3_decrypt(void *, u_int8_t *);
-static	void blf_decrypt(void *, u_int8_t *);
-static	void cast5_decrypt(void *, u_int8_t *);
-static	void skipjack_decrypt(void *, u_int8_t *);
-static	void aes_decrypt(void *, u_int8_t *);
-static  void cml_decrypt(void *, u_int8_t *);
-static  void aes_ctr_crypt(void *, u_int8_t *);
-static	void des1_zerokey(u_int8_t **);
-static	void des3_zerokey(u_int8_t **);
-static	void blf_zerokey(u_int8_t **);
-static	void cast5_zerokey(u_int8_t **);
-static	void skipjack_zerokey(u_int8_t **);
-static	void aes_zerokey(u_int8_t **);
-static  void cml_zerokey(u_int8_t **);
-static  void aes_ctr_zerokey(u_int8_t **);
-static	void aes_gmac_zerokey(u_int8_t **);
-static  void aes_ctr_reinit(void *, const u_int8_t *, u_int8_t *);
-static  void aes_gcm_reinit(void *, const u_int8_t *, u_int8_t *);
-static	void aes_gmac_reinit(void *, const u_int8_t *, u_int8_t *);
+static	int des1_setkey(uint8_t **, const uint8_t *, int);
+static	int des3_setkey(uint8_t **, const uint8_t *, int);
+static	int blf_setkey(uint8_t **, const uint8_t *, int);
+static	int cast5_setkey(uint8_t **, const uint8_t *, int);
+static  int skipjack_setkey(uint8_t **, const uint8_t *, int);
+static  int aes_setkey(uint8_t **, const uint8_t *, int);
+static  int cml_setkey(uint8_t **, const uint8_t *, int);
+static  int aes_ctr_setkey(uint8_t **, const uint8_t *, int);
+static	int aes_gmac_setkey(uint8_t **, const uint8_t *, int);
+static	void des1_encrypt(void *, uint8_t *);
+static	void des3_encrypt(void *, uint8_t *);
+static	void blf_encrypt(void *, uint8_t *);
+static	void cast5_encrypt(void *, uint8_t *);
+static	void skipjack_encrypt(void *, uint8_t *);
+static	void aes_encrypt(void *, uint8_t *);
+static  void cml_encrypt(void *, uint8_t *);
+static	void des1_decrypt(void *, uint8_t *);
+static	void des3_decrypt(void *, uint8_t *);
+static	void blf_decrypt(void *, uint8_t *);
+static	void cast5_decrypt(void *, uint8_t *);
+static	void skipjack_decrypt(void *, uint8_t *);
+static	void aes_decrypt(void *, uint8_t *);
+static  void cml_decrypt(void *, uint8_t *);
+static  void aes_ctr_crypt(void *, uint8_t *);
+static	void des1_zerokey(uint8_t **);
+static	void des3_zerokey(uint8_t **);
+static	void blf_zerokey(uint8_t **);
+static	void cast5_zerokey(uint8_t **);
+static	void skipjack_zerokey(uint8_t **);
+static	void aes_zerokey(uint8_t **);
+static  void cml_zerokey(uint8_t **);
+static  void aes_ctr_zerokey(uint8_t **);
+static	void aes_gmac_zerokey(uint8_t **);
+static  void aes_ctr_reinit(void *, const uint8_t *, uint8_t *);
+static  void aes_gcm_reinit(void *, const uint8_t *, uint8_t *);
+static	void aes_gmac_reinit(void *, const uint8_t *, uint8_t *);
 
 static	void null_init(void *);
-static	int null_update(void *, const u_int8_t *, u_int16_t);
-static	void null_final(u_int8_t *, void *);
+static	int null_update(void *, const uint8_t *, uint16_t);
+static	void null_final(uint8_t *, void *);
 
-static int	MD5Update_int(void *, const u_int8_t *, u_int16_t);
+static int	MD5Update_int(void *, const uint8_t *, uint16_t);
 static void	SHA1Init_int(void *);
-static	int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
-static	void SHA1Final_int(u_int8_t *, void *);
+static	int SHA1Update_int(void *, const uint8_t *, uint16_t);
+static	void SHA1Final_int(uint8_t *, void *);
 
 
-static int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
-static	int SHA1Update_int(void *, const u_int8_t *, u_int16_t);
-static	void SHA1Final_int(u_int8_t *, void *);
-static	int RMD160Update_int(void *, const u_int8_t *, u_int16_t);
-static	int SHA256Update_int(void *, const u_int8_t *, u_int16_t);
-static	int SHA384Update_int(void *, const u_int8_t *, u_int16_t);
-static	int SHA512Update_int(void *, const u_int8_t *, u_int16_t);
+static int RMD160Update_int(void *, const uint8_t *, uint16_t);
+static	int SHA1Update_int(void *, const uint8_t *, uint16_t);
+static	void SHA1Final_int(uint8_t *, void *);
+static	int RMD160Update_int(void *, const uint8_t *, uint16_t);
+static	int SHA256Update_int(void *, const uint8_t *, uint16_t);
+static	int SHA384Update_int(void *, const uint8_t *, uint16_t);
+static	int SHA512Update_int(void *, const uint8_t *, uint16_t);
 
-static u_int32_t deflate_compress(u_int8_t *, u_int32_t, u_int8_t **);
-static u_int32_t deflate_decompress(u_int8_t *, u_int32_t, u_int8_t **, int);
-static u_int32_t gzip_compress(u_int8_t *, u_int32_t, u_int8_t **);
-static u_int32_t gzip_decompress(u_int8_t *, u_int32_t, u_int8_t **, int);
+static uint32_t deflate_compress(uint8_t *, uint32_t, uint8_t **);
+static uint32_t deflate_decompress(uint8_t *, uint32_t, uint8_t **, int);
+static uint32_t gzip_compress(uint8_t *, uint32_t, uint8_t **);
+static uint32_t gzip_decompress(uint8_t *, uint32_t, uint8_t **, int);
 
 /* Encryption instances */
 static const struct swcr_enc_xform swcr_enc_xform_null = {
@@ -259,7 +259,7 @@ static const struct swcr_auth_hash swcr_auth_hash_null = {
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5 = {
 	&auth_hash_hmac_md5, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
-	(void (*) (u_int8_t *, void *)) MD5Final
+	(void (*) (uint8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
@@ -270,12 +270,12 @@ static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1 = {
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160 = {
 	&auth_hash_hmac_ripemd_160, sizeof(RMD160_CTX),
 	(void (*)(void *)) RMD160Init, NULL, NULL, RMD160Update_int,
-	(void (*)(u_int8_t *, void *)) RMD160Final
+	(void (*)(uint8_t *, void *)) RMD160Final
 };
 static const struct swcr_auth_hash swcr_auth_hash_hmac_md5_96 = {
 	&auth_hash_hmac_md5_96, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
-	(void (*) (u_int8_t *, void *)) MD5Final
+	(void (*) (uint8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1_96 = {
@@ -286,13 +286,13 @@ static const struct swcr_auth_hash swcr_auth_hash_hmac_sha1_96 = {
 static const struct swcr_auth_hash swcr_auth_hash_hmac_ripemd_160_96 = {
 	&auth_hash_hmac_ripemd_160_96, sizeof(RMD160_CTX),
 	(void (*)(void *)) RMD160Init, NULL, NULL, RMD160Update_int,
-	(void (*)(u_int8_t *, void *)) RMD160Final
+	(void (*)(uint8_t *, void *)) RMD160Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_md5 = {
 	&auth_hash_key_md5, sizeof(MD5_CTX),
 	(void (*)(void *)) MD5Init, NULL, NULL, MD5Update_int,
-	(void (*)(u_int8_t *, void *)) MD5Final
+	(void (*)(uint8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_key_sha1 = {
@@ -303,65 +303,65 @@ static const struct swcr_auth_hash swcr_auth_hash_key_sha1 = {
 static const struct swcr_auth_hash swcr_auth_hash_md5 = {
 	&auth_hash_md5, sizeof(MD5_CTX),
 	(void (*) (void *)) MD5Init, NULL, NULL, MD5Update_int,
-	(void (*) (u_int8_t *, void *)) MD5Final
+	(void (*) (uint8_t *, void *)) MD5Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_sha1 = {
 	&auth_hash_sha1, sizeof(SHA1_CTX),
 	(void (*)(void *)) SHA1Init, NULL, NULL, SHA1Update_int,
-	(void (*)(u_int8_t *, void *)) SHA1Final
+	(void (*)(uint8_t *, void *)) SHA1Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_256 = {
 	&auth_hash_hmac_sha2_256, sizeof(SHA256_CTX),
 	(void (*)(void *))(void *)SHA256_Init, NULL, NULL, SHA256Update_int,
-	(void (*)(u_int8_t *, void *))(void *)SHA256_Final
+	(void (*)(uint8_t *, void *))(void *)SHA256_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_384 = {
 	&auth_hash_hmac_sha2_384, sizeof(SHA384_CTX),
 	(void (*)(void *))(void *)SHA384_Init, NULL, NULL, SHA384Update_int,
-	(void (*)(u_int8_t *, void *))(void *)SHA384_Final
+	(void (*)(uint8_t *, void *))(void *)SHA384_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_hmac_sha2_512 = {
 	&auth_hash_hmac_sha2_512, sizeof(SHA512_CTX),
 	(void (*)(void *))(void *)SHA512_Init, NULL, NULL, SHA512Update_int,
-	(void (*)(u_int8_t *, void *))(void *)SHA512_Final
+	(void (*)(uint8_t *, void *))(void *)SHA512_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_aes_xcbc_mac = {
 	&auth_hash_aes_xcbc_mac_96, sizeof(aesxcbc_ctx),
 	null_init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))(void *)aes_xcbc_mac_init,
+	(void (*)(void *, const uint8_t *, uint16_t))(void *)aes_xcbc_mac_init,
 	NULL, aes_xcbc_mac_loop, aes_xcbc_mac_result
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_128 = {
 	&auth_hash_gmac_aes_128, sizeof(AES_GMAC_CTX),
 	(void (*)(void *))AES_GMAC_Init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
-	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
-	(void (*)(u_int8_t *, void *))AES_GMAC_Final
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Update,
+	(void (*)(uint8_t *, void *))AES_GMAC_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_192 = {
 	&auth_hash_gmac_aes_192, sizeof(AES_GMAC_CTX),
 	(void (*)(void *))AES_GMAC_Init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
-	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
-	(void (*)(u_int8_t *, void *))AES_GMAC_Final
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Update,
+	(void (*)(uint8_t *, void *))AES_GMAC_Final
 };
 
 static const struct swcr_auth_hash swcr_auth_hash_gmac_aes_256 = {
 	&auth_hash_gmac_aes_256, sizeof(AES_GMAC_CTX),
 	(void (*)(void *))AES_GMAC_Init,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Setkey,
-	(void (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Reinit,
-	(int (*)(void *, const u_int8_t *, u_int16_t))AES_GMAC_Update,
-	(void (*)(u_int8_t *, void *))AES_GMAC_Final
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Setkey,
+	(void (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Reinit,
+	(int (*)(void *, const uint8_t *, uint16_t))AES_GMAC_Update,
+	(void (*)(uint8_t *, void *))AES_GMAC_Final
 };
 
 /* Compression instance */
@@ -387,27 +387,27 @@ static const struct swcr_comp_algo swcr_comp_algo_gzip = {
  * Encryption wrapper routines.
  */
 static void
-null_encrypt(void *key, u_int8_t *blk)
+null_encrypt(void *key, uint8_t *blk)
 {
 }
 static void
-null_decrypt(void *key, u_int8_t *blk)
+null_decrypt(void *key, uint8_t *blk)
 {
 }
 static int
-null_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+null_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	*sched = NULL;
 	return 0;
 }
 static void
-null_zerokey(u_int8_t **sched)
+null_zerokey(uint8_t **sched)
 {
 	*sched = NULL;
 }
 
 static void
-des1_encrypt(void *key, u_int8_t *blk)
+des1_encrypt(void *key, uint8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -416,7 +416,7 @@ des1_encrypt(void *key, u_int8_t *blk)
 }
 
 static void
-des1_decrypt(void *key, u_int8_t *blk)
+des1_decrypt(void *key, uint8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -425,13 +425,13 @@ des1_decrypt(void *key, u_int8_t *blk)
 }
 
 static int
-des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+des1_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	des_key_schedule *p;
 
 	p = malloc(sizeof (des_key_schedule),
 	    M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
-	*sched = (u_int8_t *) p;
+	*sched = (uint8_t *) p;
 	if (p == NULL)
 		return ENOMEM;
 	des_set_key((des_cblock *)__UNCONST(key), p[0]);
@@ -439,7 +439,7 @@ des1_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-des1_zerokey(u_int8_t **sched)
+des1_zerokey(uint8_t **sched)
 {
 	memset(*sched, 0, sizeof (des_key_schedule));
 	free(*sched, M_CRYPTO_DATA);
@@ -447,7 +447,7 @@ des1_zerokey(u_int8_t **sched)
 }
 
 static void
-des3_encrypt(void *key, u_int8_t *blk)
+des3_encrypt(void *key, uint8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -456,7 +456,7 @@ des3_encrypt(void *key, u_int8_t *blk)
 }
 
 static void
-des3_decrypt(void *key, u_int8_t *blk)
+des3_decrypt(void *key, uint8_t *blk)
 {
 	des_cblock *cb = (des_cblock *) blk;
 	des_key_schedule *p = (des_key_schedule *) key;
@@ -465,13 +465,13 @@ des3_decrypt(void *key, u_int8_t *blk)
 }
 
 static int
-des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+des3_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	des_key_schedule *p;
 
 	p = malloc(3*sizeof (des_key_schedule),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
-	*sched = (u_int8_t *) p;
+	*sched = (uint8_t *) p;
 	if (p == NULL)
 		return ENOMEM;
 	des_set_key((des_cblock *)__UNCONST(key +  0), p[0]);
@@ -481,7 +481,7 @@ des3_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-des3_zerokey(u_int8_t **sched)
+des3_zerokey(uint8_t **sched)
 {
 	memset(*sched, 0, 3*sizeof (des_key_schedule));
 	free(*sched, M_CRYPTO_DATA);
@@ -489,21 +489,21 @@ des3_zerokey(u_int8_t **sched)
 }
 
 static void
-blf_encrypt(void *key, u_int8_t *blk)
+blf_encrypt(void *key, uint8_t *blk)
 {
 
 	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 1);
 }
 
 static void
-blf_decrypt(void *key, u_int8_t *blk)
+blf_decrypt(void *key, uint8_t *blk)
 {
 
 	BF_ecb_encrypt(blk, blk, (BF_KEY *)key, 0);
 }
 
 static int
-blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+blf_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 
 	*sched = malloc(sizeof(BF_KEY),
@@ -515,7 +515,7 @@ blf_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-blf_zerokey(u_int8_t **sched)
+blf_zerokey(uint8_t **sched)
 {
 	memset(*sched, 0, sizeof(BF_KEY));
 	free(*sched, M_CRYPTO_DATA);
@@ -523,19 +523,19 @@ blf_zerokey(u_int8_t **sched)
 }
 
 static void
-cast5_encrypt(void *key, u_int8_t *blk)
+cast5_encrypt(void *key, uint8_t *blk)
 {
 	cast128_encrypt((cast128_key *) key, blk, blk);
 }
 
 static void
-cast5_decrypt(void *key, u_int8_t *blk)
+cast5_decrypt(void *key, uint8_t *blk)
 {
 	cast128_decrypt((cast128_key *) key, blk, blk);
 }
 
 static int
-cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+cast5_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 
 	*sched = malloc(sizeof(cast128_key), M_CRYPTO_DATA,
@@ -547,7 +547,7 @@ cast5_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-cast5_zerokey(u_int8_t **sched)
+cast5_zerokey(uint8_t **sched)
 {
 	memset(*sched, 0, sizeof(cast128_key));
 	free(*sched, M_CRYPTO_DATA);
@@ -555,47 +555,47 @@ cast5_zerokey(u_int8_t **sched)
 }
 
 static void
-skipjack_encrypt(void *key, u_int8_t *blk)
+skipjack_encrypt(void *key, uint8_t *blk)
 {
-	skipjack_forwards(blk, blk, (u_int8_t **) key);
+	skipjack_forwards(blk, blk, (uint8_t **) key);
 }
 
 static void
-skipjack_decrypt(void *key, u_int8_t *blk)
+skipjack_decrypt(void *key, uint8_t *blk)
 {
-	skipjack_backwards(blk, blk, (u_int8_t **) key);
+	skipjack_backwards(blk, blk, (uint8_t **) key);
 }
 
 static int
-skipjack_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+skipjack_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 
 	/* NB: allocate all the memory that's needed at once */
 	/* XXX assumes bytes are aligned on sizeof(u_char) == 1 boundaries.
 	 * Will this break a pdp-10, Cray-1, or GE-645 port?
 	 */
-	*sched = malloc(10 * (sizeof(u_int8_t *) + 0x100),
+	*sched = malloc(10 * (sizeof(uint8_t *) + 0x100),
 		M_CRYPTO_DATA, M_NOWAIT|M_ZERO);
 
 	if (*sched == NULL)
 		return ENOMEM;
 
-	u_int8_t** key_tables = (u_int8_t**) *sched;
-	u_int8_t* table = (u_int8_t*) &key_tables[10];
+	uint8_t** key_tables = (uint8_t**) *sched;
+	uint8_t* table = (uint8_t*) &key_tables[10];
 	int k;
 
 	for (k = 0; k < 10; k++) {
 		key_tables[k] = table;
 		table += 0x100;
 	}
-	subkey_table_gen(key, (u_int8_t **) *sched);
+	subkey_table_gen(key, (uint8_t **) *sched);
 	return 0;
 }
 
 static void
-skipjack_zerokey(u_int8_t **sched)
+skipjack_zerokey(uint8_t **sched)
 {
-	memset(*sched, 0, 10 * (sizeof(u_int8_t *) + 0x100));
+	memset(*sched, 0, 10 * (sizeof(uint8_t *) + 0x100));
 	free(*sched, M_CRYPTO_DATA);
 	*sched = NULL;
 }
@@ -607,7 +607,7 @@ struct aes_ctx {
 };
 
 static void
-aes_encrypt(void *key, u_int8_t *blk)
+aes_encrypt(void *key, uint8_t *blk)
 {
 	struct aes_ctx *ctx = key;
 
@@ -615,7 +615,7 @@ aes_encrypt(void *key, u_int8_t *blk)
 }
 
 static void
-aes_decrypt(void *key, u_int8_t *blk)
+aes_decrypt(void *key, uint8_t *blk)
 {
 	struct aes_ctx *ctx = key;
 
@@ -623,7 +623,7 @@ aes_decrypt(void *key, u_int8_t *blk)
 }
 
 static int
-aes_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+aes_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	struct aes_ctx *ctx;
 
@@ -656,7 +656,7 @@ aes_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-aes_zerokey(u_int8_t **sched)
+aes_zerokey(uint8_t **sched)
 {
 	struct aes_ctx *ctx = (void *)*sched;
 
@@ -666,21 +666,21 @@ aes_zerokey(u_int8_t **sched)
 }
 
 static void
-cml_encrypt(void *key, u_int8_t *blk)
+cml_encrypt(void *key, uint8_t *blk)
 {
 
 	camellia_encrypt(key, blk, blk);
 }
 
 static void
-cml_decrypt(void *key, u_int8_t *blk)
+cml_decrypt(void *key, uint8_t *blk)
 {
 
 	camellia_decrypt(key, blk, blk);
 }
 
 static int
-cml_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+cml_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 
 	if (len != 16 && len != 24 && len != 32)
@@ -695,7 +695,7 @@ cml_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 static void
-cml_zerokey(u_int8_t **sched)
+cml_zerokey(uint8_t **sched)
 {
 
 	memset(*sched, 0, sizeof(camellia_ctx));
@@ -710,18 +710,18 @@ cml_zerokey(u_int8_t **sched)
 struct aes_ctr_ctx {
 	/* need only encryption half */
 	struct aesenc ac_ek;
-	u_int8_t ac_block[AESCTR_BLOCKSIZE];
+	uint8_t ac_block[AESCTR_BLOCKSIZE];
 	int ac_nr;
 	struct {
-		u_int64_t lastiv;
+		uint64_t lastiv;
 	} ivgenctx;
 };
 
 static void
-aes_ctr_crypt(void *key, u_int8_t *blk)
+aes_ctr_crypt(void *key, uint8_t *blk)
 {
 	struct aes_ctr_ctx *ctx;
-	u_int8_t keystream[AESCTR_BLOCKSIZE];
+	uint8_t keystream[AESCTR_BLOCKSIZE];
 	int i;
 
 	ctx = key;
@@ -737,7 +737,7 @@ aes_ctr_crypt(void *key, u_int8_t *blk)
 }
 
 int
-aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+aes_ctr_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	struct aes_ctr_ctx *ctx;
 
@@ -758,7 +758,7 @@ aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 		ctx->ac_nr = aes_setenckey256(&ctx->ac_ek, key);
 		break;
 	default:
-		aes_ctr_zerokey((u_int8_t **)&ctx);
+		aes_ctr_zerokey((uint8_t **)&ctx);
 		return EINVAL;
 	}
 	memcpy(ctx->ac_block, key + len - AESCTR_NONCESIZE, AESCTR_NONCESIZE);
@@ -769,7 +769,7 @@ aes_ctr_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 void
-aes_ctr_zerokey(u_int8_t **sched)
+aes_ctr_zerokey(uint8_t **sched)
 {
 	struct aes_ctr_ctx *ctx = (void *)*sched;
 
@@ -779,13 +779,13 @@ aes_ctr_zerokey(u_int8_t **sched)
 }
 
 void
-aes_ctr_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+aes_ctr_reinit(void *key, const uint8_t *iv, uint8_t *ivout)
 {
 	struct aes_ctr_ctx *ctx = key;
 
 	if (!iv) {
 		ctx->ivgenctx.lastiv++;
-		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+		iv = (const uint8_t *)&ctx->ivgenctx.lastiv;
 	}
 	if (ivout)
 		memcpy(ivout, iv, AESCTR_IVSIZE);
@@ -795,13 +795,13 @@ aes_ctr_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
 }
 
 void
-aes_gcm_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+aes_gcm_reinit(void *key, const uint8_t *iv, uint8_t *ivout)
 {
 	struct aes_ctr_ctx *ctx = key;
 
 	if (!iv) {
 		ctx->ivgenctx.lastiv++;
-		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+		iv = (const uint8_t *)&ctx->ivgenctx.lastiv;
 	}
 	if (ivout)
 		memcpy(ivout, iv, AESCTR_IVSIZE);
@@ -813,12 +813,12 @@ aes_gcm_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
 
 struct aes_gmac_ctx {
 	struct {
-		u_int64_t lastiv;
+		uint64_t lastiv;
 	} ivgenctx;
 };
 
 int
-aes_gmac_setkey(u_int8_t **sched, const u_int8_t *key, int len)
+aes_gmac_setkey(uint8_t **sched, const uint8_t *key, int len)
 {
 	struct aes_gmac_ctx *ctx;
 
@@ -833,7 +833,7 @@ aes_gmac_setkey(u_int8_t **sched, const u_int8_t *key, int len)
 }
 
 void
-aes_gmac_zerokey(u_int8_t **sched)
+aes_gmac_zerokey(uint8_t **sched)
 {
 	struct aes_gmac_ctx *ctx = (void *)*sched;
 
@@ -842,13 +842,13 @@ aes_gmac_zerokey(u_int8_t **sched)
 }
 
 void
-aes_gmac_reinit(void *key, const u_int8_t *iv, u_int8_t *ivout)
+aes_gmac_reinit(void *key, const uint8_t *iv, uint8_t *ivout)
 {
 	struct aes_gmac_ctx *ctx = key;
 
 	if (!iv) {
 		ctx->ivgenctx.lastiv++;
-		iv = (const u_int8_t *)&ctx->ivgenctx.lastiv;
+		iv = (const uint8_t *)&ctx->ivgenctx.lastiv;
 	}
 	if (ivout)
 		memcpy(ivout, iv, AESCTR_IVSIZE);
@@ -864,28 +864,28 @@ null_init(void *ctx)
 }
 
 static int
-null_update(void *ctx, const u_int8_t *buf,
-    u_int16_t len)
+null_update(void *ctx, const uint8_t *buf,
+    uint16_t len)
 {
 	return 0;
 }
 
 static void
-null_final(u_int8_t *buf, void *ctx)
+null_final(uint8_t *buf, void *ctx)
 {
-	if (buf != (u_int8_t *) 0)
+	if (buf != (uint8_t *) 0)
 		memset(buf, 0, 12);
 }
 
 static int
-RMD160Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+RMD160Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	RMD160Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-MD5Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+MD5Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	MD5Update(ctx, buf, len);
 	return 0;
@@ -898,34 +898,34 @@ SHA1Init_int(void *ctx)
 }
 
 static int
-SHA1Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA1Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	SHA1Update(ctx, buf, len);
 	return 0;
 }
 
 static void
-SHA1Final_int(u_int8_t *blk, void *ctx)
+SHA1Final_int(uint8_t *blk, void *ctx)
 {
 	SHA1Final(blk, ctx);
 }
 
 static int
-SHA256Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA256Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	SHA256_Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-SHA384Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA384Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	SHA384_Update(ctx, buf, len);
 	return 0;
 }
 
 static int
-SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
+SHA512Update_int(void *ctx, const uint8_t *buf, uint16_t len)
 {
 	SHA512_Update(ctx, buf, len);
 	return 0;
@@ -935,27 +935,27 @@ SHA512Update_int(void *ctx, const u_int8_t *buf, u_int16_t len)
  * And compression
  */
 
-static u_int32_t
-deflate_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
+static uint32_t
+deflate_compress(uint8_t *data, uint32_t size, uint8_t **out)
 {
 	return deflate_global(data, size, 0, out, 0);
 }
 
-static u_int32_t
-deflate_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out,
+static uint32_t
+deflate_decompress(uint8_t *data, uint32_t size, uint8_t **out,
 		   int size_hint)
 {
 	return deflate_global(data, size, 1, out, size_hint);
 }
 
-static u_int32_t
-gzip_compress(u_int8_t *data, u_int32_t size, u_int8_t **out)
+static uint32_t
+gzip_compress(uint8_t *data, uint32_t size, uint8_t **out)
 {
 	return gzip_global(data, size, 0, out, 0);
 }
 
-static u_int32_t
-gzip_decompress(u_int8_t *data, u_int32_t size, u_int8_t **out,
+static uint32_t
+gzip_decompress(uint8_t *data, uint32_t size, uint8_t **out,
 		int size_hint)
 {
 	return gzip_global(data, size, 1, out, size_hint);

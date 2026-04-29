@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.65 2025/07/26 22:42:19 perseant Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.66 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.65 2025/07/26 22:42:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.66 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ union authctx {
 };
 
 struct swcr_data **swcr_sessions = NULL;
-u_int32_t swcr_sesnum = 0;
+uint32_t swcr_sesnum = 0;
 int32_t swcr_id = -1;
 
 #define COPYBACK(x, a, b, c, d) \
@@ -74,8 +74,8 @@ static	int swcr_encdec(struct cryptodesc *, const struct swcr_data *, void *, in
 static	int swcr_compdec(struct cryptodesc *, const struct swcr_data *, void *, int, int *);
 static	int swcr_combined(struct cryptop *, int);
 static	int swcr_process(void *, struct cryptop *, int);
-static	int swcr_newsession(void *, u_int32_t *, struct cryptoini *);
-static void swcr_freesession(void *, u_int64_t);
+static	int swcr_newsession(void *, uint32_t *, struct cryptoini *);
+static void swcr_freesession(void *, uint64_t);
 static void swcr_freesession_internal(struct swcr_data *);
 
 static	int swcryptoattach_internal(void);
@@ -700,10 +700,10 @@ static int
 swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
     void *buf, int outtype, int *res_size)
 {
-	u_int8_t *data, *out;
+	uint8_t *data, *out;
 	const struct swcr_comp_algo *cxf;
 	int adj;
-	u_int32_t result;
+	uint32_t result;
 
 	cxf = sw->sw_cxf;
 
@@ -756,14 +756,14 @@ swcr_compdec(struct cryptodesc *crd, const struct swcr_data *sw,
  * Generate a new software session.
  */
 static int
-swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
+swcr_newsession(void *arg, uint32_t *sid, struct cryptoini *cri)
 {
 	struct swcr_data **swd;
 	struct swcr_data *first, *tmp;
 	const struct swcr_auth_hash *axf;
 	const struct swcr_enc_xform *txf;
 	const struct swcr_comp_algo *cxf;
-	u_int32_t i;
+	uint32_t i;
 	int k, error;
 
 	if (swcr_sessions) {
@@ -774,7 +774,7 @@ swcr_newsession(void *arg, u_int32_t *sid, struct cryptoini *cri)
 		i = 1;		/* NB: to silence compiler warning */
 
 	if (swcr_sessions == NULL || i == swcr_sesnum) {
-		u_int32_t newnum;
+		uint32_t newnum;
 		struct swcr_data **newsessions;
 
 		if (swcr_sessions == NULL) {
@@ -1120,10 +1120,10 @@ swcr_freesession_internal(struct swcr_data *arg)
  * Free a session.
  */
 static void
-swcr_freesession(void *arg, u_int64_t tid)
+swcr_freesession(void *arg, uint64_t tid)
 {
 	struct swcr_data *swd;
-	u_int32_t sid = ((u_int32_t) tid) & 0xffffffff;
+	uint32_t sid = ((uint32_t) tid) & 0xffffffff;
 
 	KASSERTMSG(sid < swcr_sesnum, "sid=%"PRIu32" swcr_sesnum=%"PRIu32,
 	    sid, swcr_sesnum);
@@ -1142,7 +1142,7 @@ swcr_process(void *arg, struct cryptop *crp, int hint)
 {
 	struct cryptodesc *crd;
 	struct swcr_data *sw;
-	u_int32_t lid;
+	uint32_t lid;
 	int type;
 
 	/* Sanity check */

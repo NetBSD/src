@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.132 2026/04/29 14:49:51 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.133 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.132 2026/04/29 14:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.133 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -180,7 +180,7 @@ struct crypto_crp_ret_qs **crypto_crp_ret_qs_list;
 static inline struct crypto_crp_ret_qs *
 crypto_get_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int32_t cpuid;
+	uint32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
@@ -194,7 +194,7 @@ crypto_get_crp_ret_qs(struct cpu_info *ci)
 static inline void
 crypto_put_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int32_t cpuid;
+	uint32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
@@ -505,9 +505,9 @@ static	int crypto_destroy(bool);
 static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 
-static struct cryptocap *crypto_checkdriver_lock(u_int32_t);
-static struct cryptocap *crypto_checkdriver_uninit(u_int32_t);
-static struct cryptocap *crypto_checkdriver(u_int32_t);
+static struct cryptocap *crypto_checkdriver_lock(uint32_t);
+static struct cryptocap *crypto_checkdriver_uninit(uint32_t);
+static struct cryptocap *crypto_checkdriver(uint32_t);
 static void crypto_driver_lock(struct cryptocap *);
 static void crypto_driver_unlock(struct cryptocap *);
 static void crypto_driver_clear(struct cryptocap *);
@@ -710,7 +710,7 @@ crypto_driver_suitable(struct cryptocap *cap, struct cryptoini *cri)
 static struct cryptocap *
 crypto_select_driver_lock(struct cryptoini *cri, int hard)
 {
-	u_int32_t hid;
+	uint32_t hid;
 	int accept;
 	struct cryptocap *cap, *best;
 	int error = 0;
@@ -795,7 +795,7 @@ again:
  * Create a new session.
  */
 int
-crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+crypto_newsession(uint64_t *sid, struct cryptoini *cri, int hard)
 {
 	struct cryptocap *cap;
 	int err = EINVAL;
@@ -814,7 +814,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	cap = crypto_select_driver_lock(cri, hard);
 	if (cap != NULL) {
-		u_int32_t hid, lid;
+		uint32_t hid, lid;
 
 		hid = cap - crypto_drivers;
 		KASSERT(hid < 0xffffff);
@@ -853,7 +853,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
  * driver).
  */
 void
-crypto_freesession(u_int64_t sid)
+crypto_freesession(uint64_t sid)
 {
 	struct cryptocap *cap;
 
@@ -903,7 +903,7 @@ crypto_checkdriver_initialized(const struct cryptocap *cap)
  * support for the algorithms they handle.
  */
 int32_t
-crypto_get_driverid(u_int32_t flags)
+crypto_get_driverid(uint32_t flags)
 {
 	struct cryptocap *newdrv;
 	struct cryptocap *cap = NULL;
@@ -956,7 +956,7 @@ crypto_get_driverid(u_int32_t flags)
 }
 
 static struct cryptocap *
-crypto_checkdriver_lock(u_int32_t hid)
+crypto_checkdriver_lock(uint32_t hid)
 {
 	struct cryptocap *cap;
 
@@ -977,7 +977,7 @@ crypto_checkdriver_lock(u_int32_t hid)
  *     - crypto_drivers[hid] may not be initialized
  */
 static struct cryptocap *
-crypto_checkdriver_uninit(u_int32_t hid)
+crypto_checkdriver_uninit(uint32_t hid)
 {
 
 	KASSERT(mutex_owned(&crypto_drv_mtx));
@@ -995,7 +995,7 @@ crypto_checkdriver_uninit(u_int32_t hid)
  *     - crypto_drivers[hid] may not be initialized
  */
 static struct cryptocap *
-crypto_checkdriver(u_int32_t hid)
+crypto_checkdriver(uint32_t hid)
 {
 
 	KASSERT(mutex_owned(&crypto_drv_mtx));
@@ -1054,7 +1054,7 @@ crypto_driver_clear(struct cryptocap *cap)
  * is called once for each algorithm supported a driver.
  */
 int
-crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
+crypto_kregister(uint32_t driverid, int kalg, uint32_t flags,
     int (*kprocess)(void *, struct cryptkop *, int),
     void *karg)
 {
@@ -1099,10 +1099,10 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
  * is called once for each such algorithm supported by a driver.
  */
 int
-crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
-    u_int32_t flags,
-    int (*newses)(void *, u_int32_t*, struct cryptoini*),
-    void (*freeses)(void *, u_int64_t),
+crypto_register(uint32_t driverid, int alg, uint16_t maxoplen,
+    uint32_t flags,
+    int (*newses)(void *, uint32_t*, struct cryptoini*),
+    void (*freeses)(void *, uint64_t),
     int (*process)(void *, struct cryptop *, int),
     void *arg)
 {
@@ -1153,7 +1153,7 @@ static int
 crypto_unregister_locked(struct cryptocap *cap, int alg, bool all)
 {
 	int i;
-	u_int32_t ses;
+	uint32_t ses;
 	bool lastalg = true;
 
 	KASSERT(cap != NULL);
@@ -1201,7 +1201,7 @@ crypto_unregister_locked(struct cryptocap *cap, int alg, bool all)
  * reroute requests.
  */
 int
-crypto_unregister(u_int32_t driverid, int alg)
+crypto_unregister(uint32_t driverid, int alg)
 {
 	int err;
 	struct cryptocap *cap;
@@ -1221,7 +1221,7 @@ crypto_unregister(u_int32_t driverid, int alg)
  * requests.
  */
 int
-crypto_unregister_all(u_int32_t driverid)
+crypto_unregister_all(uint32_t driverid)
 {
 	int err, i;
 	struct cryptocap *cap;
@@ -1242,7 +1242,7 @@ crypto_unregister_all(u_int32_t driverid)
  * the driver is now ready for cryptop's and/or cryptokop's.
  */
 int
-crypto_unblock(u_int32_t driverid, int what)
+crypto_unblock(uint32_t driverid, int what)
 {
 	struct cryptocap *cap;
 	int needwakeup = 0;
@@ -1440,7 +1440,7 @@ static int
 crypto_kinvoke(struct cryptkop *krp, int hint)
 {
 	struct cryptocap *cap = NULL;
-	u_int32_t hid;
+	uint32_t hid;
 	int error;
 
 	KASSERT(krp != NULL);
@@ -1817,7 +1817,7 @@ cryptointr(void *arg __unused)
 		submit = NULL;
 		hint = 0;
 		TAILQ_FOREACH_SAFE(crp, crp_q, crp_next, cnext) {
-			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
+			uint32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 			cap = crypto_checkdriver_lock(hid);
 			if (cap == NULL || cap->cc_process == NULL) {
 				if (cap != NULL)

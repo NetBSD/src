@@ -1,4 +1,4 @@
-/*	$NetBSD: deflate.c,v 1.24 2026/04/29 14:49:51 christos Exp $ */
+/*	$NetBSD: deflate.c,v 1.25 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/deflate.c,v 1.1.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /* $OpenBSD: deflate.c,v 1.3 2001/08/20 02:45:22 hugh Exp $ */
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.24 2026/04/29 14:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.25 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -49,8 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: deflate.c,v 1.24 2026/04/29 14:49:51 christos Exp $"
 #define ZBUF 10
 
 struct deflate_buf {
-	u_int8_t *out;
-	u_int32_t size;
+	uint8_t *out;
+	uint32_t size;
 };
 
 int window_inflate = -1 * MAX_WBITS;
@@ -62,7 +62,7 @@ int window_deflate = -12;
  */
 
 static void *
-ocf_zalloc(void *nil, u_int32_t type, u_int32_t size)
+ocf_zalloc(void *nil, uint32_t type, uint32_t size)
 {
 	void *ptr;
 
@@ -76,15 +76,15 @@ ocf_zfree(void *nil, void *ptr)
 	free(ptr, M_CRYPTO_DATA);
 }
 
-u_int32_t
-deflate_global(u_int8_t *data, u_int32_t size, int decomp, u_int8_t **out,
+uint32_t
+deflate_global(uint8_t *data, uint32_t size, int decomp, uint8_t **out,
 	       int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 
 	z_stream zbuf;
-	u_int8_t *output;
-	u_int32_t count, result, tocopy;
+	uint8_t *output;
+	uint32_t count, result, tocopy;
 	int error, i, j;
 	struct deflate_buf buf[ZBUF];
 
@@ -223,18 +223,18 @@ static const char gzip_header[10] = {
 /* Followed by uint32_t CRC32 and uint32_t ISIZE */
 #define GZIP_TAIL_SIZE	8
 
-u_int32_t
-gzip_global(u_int8_t *data, u_int32_t size,
-	int decomp, u_int8_t **out, int size_hint)
+uint32_t
+gzip_global(uint8_t *data, uint32_t size,
+	int decomp, uint8_t **out, int size_hint)
 {
 	/* decomp indicates whether we compress (0) or decompress (1) */
 	z_stream zbuf;
-	u_int8_t *output;
-	u_int32_t count, result;
+	uint8_t *output;
+	uint32_t count, result;
 	int error, i, j;
 	struct deflate_buf buf[ZBUF];
-	u_int32_t crc;
-	u_int32_t isize = 0, icrc = 0;
+	uint32_t crc;
+	uint32_t isize = 0, icrc = 0;
 
 	DPRINTF("decomp %d, size %u\n", decomp, size);
 

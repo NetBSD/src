@@ -1,4 +1,4 @@
-/* $NetBSD: aesxcbcmac.c,v 1.3 2020/06/29 23:34:48 riastradh Exp $ */
+/* $NetBSD: aesxcbcmac.c,v 1.4 2026/04/29 14:51:58 christos Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, 1998 and 2003 WIDE Project.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aesxcbcmac.c,v 1.3 2020/06/29 23:34:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aesxcbcmac.c,v 1.4 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: aesxcbcmac.c,v 1.3 2020/06/29 23:34:48 riastradh Exp
 #include <opencrypto/aesxcbcmac.h>
 
 int
-aes_xcbc_mac_init(void *vctx, const uint8_t *key, u_int16_t keylen)
+aes_xcbc_mac_init(void *vctx, const uint8_t *key, uint16_t keylen)
 {
 	static const uint8_t k1seed[AES_BLOCKSIZE] =
 	    { 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1 };
@@ -78,7 +78,7 @@ aes_xcbc_mac_init(void *vctx, const uint8_t *key, u_int16_t keylen)
 }
 
 int
-aes_xcbc_mac_loop(void *vctx, const uint8_t *addr, u_int16_t len)
+aes_xcbc_mac_loop(void *vctx, const uint8_t *addr, uint16_t len)
 {
 	uint8_t buf[AES_BLOCKSIZE];
 	aesxcbc_ctx *ctx;

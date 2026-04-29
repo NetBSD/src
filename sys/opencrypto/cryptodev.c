@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.127 2026/04/29 14:49:51 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.128 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.127 2026/04/29 14:49:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.128 2026/04/29 14:51:58 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,15 +106,15 @@ kmutex_t cryptodev_mtx;
 struct csession {
 	TAILQ_ENTRY(csession) next;
 	kmutex_t	lock;
-	u_int64_t	sid;
-	u_int32_t	ses;
-	volatile u_int32_t	refcnt;
+	uint64_t	sid;
+	uint32_t	ses;
+	volatile uint32_t	refcnt;
 
-	u_int32_t	cipher;		/* note: shares name space in crd_alg */
+	uint32_t	cipher;		/* note: shares name space in crd_alg */
 	const struct enc_xform *txform;
-	u_int32_t	mac;		/* note: shares name space in crd_alg */
+	uint32_t	mac;		/* note: shares name space in crd_alg */
 	const struct auth_hash *thash;
-	u_int32_t	comp_alg;	/* note: shares name space in crd_alg */
+	uint32_t	comp_alg;	/* note: shares name space in crd_alg */
 	const struct comp_algo *tcomp;
 
 	void *		key;
@@ -128,9 +128,9 @@ struct fcrypt {
 	TAILQ_HEAD(csessionlist, csession) csessions;
 	TAILQ_HEAD(crprethead, cryptop) crp_ret_mq;
 	TAILQ_HEAD(krprethead, cryptkop) crp_ret_mkq;
-	u_int32_t	sesn;
+	uint32_t	sesn;
 	struct selinfo	sinfo;
-	u_int32_t	requestid;
+	uint32_t	requestid;
 	struct timespec atime;
 	struct timespec mtime;
 	struct timespec btime;
@@ -172,18 +172,18 @@ static const struct fileops cryptofops = {
 	.fo_restart = fnullop_restart,
 };
 
-static struct	csession *cse_find(struct fcrypt *, u_int32_t);
-static int	cse_delete(struct fcrypt *, u_int32_t);
+static struct	csession *cse_find(struct fcrypt *, uint32_t);
+static int	cse_delete(struct fcrypt *, uint32_t);
 static struct	csession *cse_add(struct fcrypt *, struct csession *);
-static struct	csession *cse_create(struct fcrypt *, u_int64_t, void *,
-    u_int64_t, void *, u_int64_t, u_int32_t, u_int32_t, u_int32_t,
+static struct	csession *cse_create(struct fcrypt *, uint64_t, void *,
+    uint64_t, void *, uint64_t, uint32_t, uint32_t, uint32_t,
     const struct enc_xform *, const struct auth_hash *,
     const struct comp_algo *);
 static void	cse_free(struct csession *);
 
 static int	cryptodev_key(struct crypt_kop *);
 static int	cryptodev_mkey(struct fcrypt *, struct crypt_n_kop *, size_t);
-static void	cryptodev_msessionfin(struct fcrypt *, size_t, u_int32_t *);
+static void	cryptodev_msessionfin(struct fcrypt *, size_t, uint32_t *);
 
 static void	cryptodev_cb(struct cryptop *);
 static void	cryptodevkey_cb(struct cryptkop *);
@@ -324,8 +324,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	struct crypt_sfop *sfop;
 	struct cryptret *crypt_ret;
 	struct crypt_result *crypt_res;
-	u_int32_t ses;
-	u_int32_t *sesid;
+	uint32_t ses;
+	uint32_t *sesid;
 	int error = 0;
 	size_t count, len;
 
@@ -345,7 +345,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		criofcr = fcrypt_ctor();
 		(void)fd_clone(criofp, criofd, (FREAD|FWRITE),
 		    &cryptofops, criofcr);
-		*(u_int32_t *)data = criofd;
+		*(uint32_t *)data = criofd;
 		return error;
 		break;
 	case CIOCGSESSION:
@@ -374,7 +374,7 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCFSESSION:
 		fcrypt_settime(fcr);
-		ses = *(u_int32_t *)data;
+		ses = *(uint32_t *)data;
 		mutex_enter(&fcr->lock);
 		error = cse_delete(fcr, ses);
 		mutex_exit(&fcr->lock);
@@ -683,7 +683,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 	mutex_enter(&cse->lock);
 	while (!(crp->crp_devflags & CRYPTODEV_F_RET)) {
 		DPRINTF("cse->sid[%u]: sleeping on cv %p for crp %p\n",
-			(u_int32_t)cse->sid, &crp->crp_cv, crp);
+			(uint32_t)cse->sid, &crp->crp_cv, crp);
 		cv_wait(&crp->crp_cv, &cse->lock);	/* XXX cv_wait_sig? */
 	}
 	mutex_exit(&cse->lock);
@@ -924,7 +924,7 @@ cryptof_close(struct file *fp)
 
 /* needed for compatibility module */
 struct	csession *
-cryptodev_cse_find(struct fcrypt *fcr, u_int32_t ses)
+cryptodev_cse_find(struct fcrypt *fcr, uint32_t ses)
 {
 	return cse_find(fcr, ses);
 }
@@ -937,7 +937,7 @@ cryptodev_cse_free(struct csession *cse)
 }
 
 static struct csession *
-cse_find(struct fcrypt *fcr, u_int32_t ses)
+cse_find(struct fcrypt *fcr, uint32_t ses)
 {
 	struct csession *cse, *cnext;
 
@@ -954,7 +954,7 @@ cse_find(struct fcrypt *fcr, u_int32_t ses)
 }
 
 static int
-cse_delete(struct fcrypt *fcr, u_int32_t ses)
+cse_delete(struct fcrypt *fcr, uint32_t ses)
 {
 	struct csession *cse, *cnext;
 
@@ -986,9 +986,9 @@ cse_add(struct fcrypt *fcr, struct csession *cse)
 }
 
 static struct csession *
-cse_create(struct fcrypt *fcr, u_int64_t sid, void *key, u_int64_t keylen,
-    void *mackey, u_int64_t mackeylen, u_int32_t cipher, u_int32_t mac,
-    u_int32_t comp_alg, const struct enc_xform *txform,
+cse_create(struct fcrypt *fcr, uint64_t sid, void *key, uint64_t keylen,
+    void *mackey, uint64_t mackeylen, uint32_t cipher, uint32_t mac,
+    uint32_t comp_alg, const struct enc_xform *txform,
     const struct auth_hash *thash, const struct comp_algo *tcomp)
 {
 	struct csession *cse;
@@ -1204,7 +1204,7 @@ cryptodev_mop(struct fcrypt *fcr,
 			crdc->crd_klen = 0;
 			DPRINTF("cse->sid[%d]: crdc setup for comp_alg %d"
 				 " len %d.\n",
-				(u_int32_t)cse->sid, crdc->crd_alg,
+				(uint32_t)cse->sid, crdc->crd_alg,
 				crdc->crd_len);
 		}
 	
@@ -1466,7 +1466,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 	const struct auth_hash *thash = NULL;
 	const struct comp_algo *tcomp = NULL;
 	struct csession *cse;
-	u_int64_t sid;
+	uint64_t sid;
 	int error = 0;
 
 	DPRINTF("cipher=%d, mac=%d\n", sop->cipher, sop->mac);
@@ -1659,7 +1659,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 
 	error = crypto_newsession(&sid, crihead, crypto_devallowsoft);
 	if (!error) {
-		DPRINTF("got session %d\n", (u_int32_t)sid);
+		DPRINTF("got session %d\n", (uint32_t)sid);
 		cse = cse_create(fcr, sid, crie.cri_key, crie.cri_klen,
 		    cria.cri_key, cria.cri_klen, (txform ? sop->cipher : 0), sop->mac,
 		    (tcomp ? sop->comp_alg : 0), txform, thash, tcomp);
@@ -1715,7 +1715,7 @@ cryptodev_msession(struct fcrypt *fcr, struct session_n_op *sn_ops,
 }
 
 static void
-cryptodev_msessionfin(struct fcrypt *fcr, size_t count, u_int32_t *sesid)
+cryptodev_msessionfin(struct fcrypt *fcr, size_t count, uint32_t *sesid)
 {
 	mutex_enter(&fcr->lock);
 	for (size_t req = 0; req < count; req++) {

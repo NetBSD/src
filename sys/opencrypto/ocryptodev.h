@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.5 2026/04/29 14:49:51 christos Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.6 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -88,34 +88,34 @@
 #include <sys/ioccom.h>
 
 struct osession_op {	/* backwards compatible */
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
 	int		mackeylen;	/* mac key */
 	void *		mackey;
 
-  	u_int32_t	ses;		/* returns: session # */
+  	uint32_t	ses;		/* returns: session # */
 };
 
 struct osession_n_op {
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
 
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
 	int		mackeylen;	/* mac key */
 	void *		mackey;
 
-	u_int32_t	ses;		/* returns: session # */
+	uint32_t	ses;		/* returns: session # */
 	int		status;
 };
 
 struct ocrypt_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
-	u_int16_t	flags;
-	u_int32_t	len;
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
+	uint16_t	flags;
+	uint32_t	len;
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
@@ -137,17 +137,17 @@ struct ocrypt_op {
  */
 
 struct ocrypt_n_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
-	u_int16_t	flags;
-	u_int32_t	len;		/* src & dst len */
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
+	uint16_t	flags;
+	uint32_t	len;		/* src & dst len */
 
-	u_int32_t	reqid;		/* request id */
+	uint32_t	reqid;		/* request id */
 	int		status;		/* status of request -accepted or not */	
 	void		*opaque;	/* opaque pointer returned to user */
-	u_int32_t	keylen;		/* cipher key - optional */
+	uint32_t	keylen;		/* cipher key - optional */
 	void *		key;
-	u_int32_t	mackeylen;	/* also optional */
+	uint32_t	mackeylen;	/* also optional */
 	void *		mackey;
 
 	void *		src, *dst;	/* become iov[] inside kernel */

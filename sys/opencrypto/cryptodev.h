@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.h,v 1.52 2026/04/29 14:49:51 christos Exp $ */
+/*	$NetBSD: cryptodev.h,v 1.53 2026/04/29 14:51:58 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -159,48 +159,48 @@
 #define	CRYPTO_ALG_FLAG_DSA_SHA		0x04 /* Can do SHA on msg */
 
 struct session_op {
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
-	u_int32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
 
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
-	u_int32_t	mackeylen;	/* mac key */
+	uint32_t	mackeylen;	/* mac key */
 	void *		mackey;
 
-  	u_int32_t	ses;		/* returns: session # */
+  	uint32_t	ses;		/* returns: session # */
 };
 
 /* to support multiple session creation */
 
 struct session_n_op {
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
-	u_int32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	comp_alg;	/* ie. CRYPTO_GZIP_COMP */
 
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
-	u_int32_t	mackeylen;	/* mac key */
+	uint32_t	mackeylen;	/* mac key */
 	void *		mackey;
 
-	u_int32_t	ses;		/* returns: session # */
+	uint32_t	ses;		/* returns: session # */
 	int		status;
 };
 
 struct crypt_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
 #define COP_ENCRYPT	1
 #define COP_DECRYPT	2
 #define COP_COMP	3
 #define COP_DECOMP	4
-	u_int16_t	flags;
+	uint16_t	flags;
 #define	COP_F_BATCH 	0x0008		/* Dispatch as quickly as possible */
-	u_int32_t	len;		/* src len */
+	uint32_t	len;		/* src len */
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
-	u_int32_t	dst_len;	/* dst len if not 0 */
+	uint32_t	dst_len;	/* dst len if not 0 */
 };
 
 /* to support multiple session creation */
@@ -219,27 +219,27 @@ struct crypt_op {
  */
 
 struct crypt_n_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
 #define COP_ENCRYPT	1
 #define COP_DECRYPT	2
-	u_int16_t	flags;
+	uint16_t	flags;
 #define COP_F_BATCH	0x0008		/* Dispatch as quickly as possible */
 #define COP_F_MORE	0x0010		/* more data to follow */
-	u_int32_t	len;		/* src len */
+	uint32_t	len;		/* src len */
 
-	u_int32_t	reqid;		/* request id */
+	uint32_t	reqid;		/* request id */
 	int		status;		/* status of request -accepted or not */	
 	void		*opaque;	/* opaque pointer returned to user */
-	u_int32_t	keylen;		/* cipher key - optional */
+	uint32_t	keylen;		/* cipher key - optional */
 	void *		key;
-	u_int32_t	mackeylen;	/* also optional */
+	uint32_t	mackeylen;	/* also optional */
 	void *		mackey;
 
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
-	u_int32_t	dst_len;	/* dst len if not 0 */
+	uint32_t	dst_len;	/* dst len if not 0 */
 };
 
 /* CIOCNCRYPTM ioctl argument, supporting one or more asynchronous
@@ -255,7 +255,7 @@ struct crypt_mop {
 
 struct crypt_sfop {
 	size_t		count;
-	u_int32_t	*sesid;
+	uint32_t	*sesid;
 };
 
 struct crypt_sgop {
@@ -268,17 +268,17 @@ struct crypt_sgop {
 /* bignum parameter, in packed bytes, ... */
 struct crparam {
 	void *		crp_p;
-	u_int32_t	crp_nbits;
+	uint32_t	crp_nbits;
 };
 
 #define CRK_MAXPARAM	8
 
 struct crypt_kop {
-	u_int32_t	crk_op;		/* ie. CRK_MOD_EXP or other */
-	u_int32_t	crk_status;	/* return status */
-	u_int16_t	crk_iparams;	/* # of input parameters */
-	u_int16_t	crk_oparams;	/* # of output parameters */
-	u_int32_t	crk_pad1;
+	uint32_t	crk_op;		/* ie. CRK_MOD_EXP or other */
+	uint32_t	crk_status;	/* return status */
+	uint16_t	crk_iparams;	/* # of input parameters */
+	uint16_t	crk_oparams;	/* # of output parameters */
+	uint32_t	crk_pad1;
 	struct crparam	crk_param[CRK_MAXPARAM];
 };
 
@@ -295,11 +295,11 @@ struct crypt_kop {
  * user application.
  */
 struct crypt_n_kop {
-	u_int32_t	crk_op;		/* ie. CRK_MOD_EXP or other */
-	u_int32_t	crk_status;	/* return status */
-	u_int16_t	crk_iparams;	/* # of input parameters */
-	u_int16_t	crk_oparams;	/* # of output parameters */
-        u_int32_t	crk_reqid;	/* request id */
+	uint32_t	crk_op;		/* ie. CRK_MOD_EXP or other */
+	uint32_t	crk_status;	/* return status */
+	uint16_t	crk_iparams;	/* # of input parameters */
+	uint16_t	crk_oparams;	/* # of output parameters */
+        uint32_t	crk_reqid;	/* request id */
 	struct crparam	crk_param[CRK_MAXPARAM];
 	void		*crk_opaque;	/* opaque pointer returned to user */
 };
@@ -314,8 +314,8 @@ struct crypt_mkop {
  * not in the original crypt_kop structure (crk_status).
  */
 struct crypt_result {
-	u_int32_t	reqid;		/* request id */
-	u_int32_t	status;		/* status of request: 0 if successful */
+	uint32_t	reqid;		/* request id */
+	uint32_t	status;		/* status of request: 0 if successful */
 	void *		opaque;		/* Opaque pointer from the user, passed along */
 };
 
@@ -364,10 +364,10 @@ struct cryptret {
  * Please use F_SETFD against the cloned descriptor.  But this ioctl
  * is obsolete (the device now clones): please, just don't use it.
  */
-#define	CRIOGET		_IOWR('c', 100, u_int32_t)
+#define	CRIOGET		_IOWR('c', 100, uint32_t)
 
 /* the following are done against the cloned descriptor */
-#define	CIOCFSESSION	_IOW('c', 102, u_int32_t)
+#define	CIOCFSESSION	_IOW('c', 102, uint32_t)
 #define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
 #define CIOCNFKEYM	_IOWR('c', 108, struct crypt_mkop)
 #define CIOCNFSESSION	_IOW('c', 109, struct crypt_sfop)
@@ -379,24 +379,24 @@ struct cryptret {
 #define CIOCCRYPT	_IOWR('c', 114, struct crypt_op)
 #define CIOCNCRYPTM	_IOWR('c', 115, struct crypt_mop)
 
-#define CIOCASYMFEAT	_IOR('c', 105, u_int32_t)
+#define CIOCASYMFEAT	_IOR('c', 105, uint32_t)
 
 struct cryptotstat {
 	struct timespec	acc;		/* total accumulated time */
 	struct timespec	min;		/* max time */
 	struct timespec	max;		/* max time */
-	u_int32_t	count;		/* number of observations */
+	uint32_t	count;		/* number of observations */
 };
 
 struct cryptostats {
-	u_int32_t	cs_ops;		/* symmetric crypto ops submitted */
-	u_int32_t	cs_errs;	/* symmetric crypto ops that failed */
-	u_int32_t	cs_kops;	/* asymmetric/key ops submitted */
-	u_int32_t	cs_kerrs;	/* asymmetric/key ops that failed */
-	u_int32_t	cs_intrs;	/* crypto swi thread activations */
-	u_int32_t	cs_rets;	/* crypto return thread activations */
-	u_int32_t	cs_blocks;	/* symmetric op driver block */
-	u_int32_t	cs_kblocks;	/* symmetric op driver block */
+	uint32_t	cs_ops;		/* symmetric crypto ops submitted */
+	uint32_t	cs_errs;	/* symmetric crypto ops that failed */
+	uint32_t	cs_kops;	/* asymmetric/key ops submitted */
+	uint32_t	cs_kerrs;	/* asymmetric/key ops that failed */
+	uint32_t	cs_intrs;	/* crypto swi thread activations */
+	uint32_t	cs_rets;	/* crypto return thread activations */
+	uint32_t	cs_blocks;	/* symmetric op driver block */
+	uint32_t	cs_kblocks;	/* symmetric op driver block */
 	/*
 	 * When CRYPTO_TIMING is defined at compile time and the
 	 * sysctl debug.crypto is set to 1, the crypto system will
@@ -423,18 +423,18 @@ struct uio;
 /* Standard initialization structure beginning */
 struct cryptoini {
 	int		cri_alg;	/* Algorithm to use */
-	u_int32_t	cri_klen;	/* Key length, in bits */
-	u_int32_t	cri_rnd;	/* Algorithm rounds, where relevant */
+	uint32_t	cri_klen;	/* Key length, in bits */
+	uint32_t	cri_rnd;	/* Algorithm rounds, where relevant */
 	char	       *cri_key;	/* key to use */
-	u_int8_t	cri_iv[EALG_MAX_BLOCK_LEN];	/* IV to use */
+	uint8_t	cri_iv[EALG_MAX_BLOCK_LEN];	/* IV to use */
 	struct cryptoini *cri_next;
 };
 
 /* Describe boundaries of a single crypto operation */
 struct cryptodesc {
-	u_int32_t	crd_skip;	/* How many bytes to ignore from start */
-	u_int32_t	crd_len;	/* How many bytes to process */
-	u_int32_t	crd_inject;	/* Where to inject results, if applicable */
+	uint32_t	crd_skip;	/* How many bytes to ignore from start */
+	uint32_t	crd_len;	/* How many bytes to process */
+	uint32_t	crd_inject;	/* Where to inject results, if applicable */
 	int		crd_flags;
 
 #define	CRD_F_ENCRYPT		0x01	/* Set when doing encryption */
@@ -464,10 +464,10 @@ struct cryptop_data {
 /* Structure describing complete operation */
 struct cryptop {
 	TAILQ_ENTRY(cryptop) crp_next;
-	u_int64_t	crp_sid;	/* Session ID */
+	uint64_t	crp_sid;	/* Session ID */
 
-	u_int32_t	crp_ilen;	/* Input data total length */
-	u_int32_t	crp_olen;	/* Result total length */
+	uint32_t	crp_ilen;	/* Input data total length */
+	uint32_t	crp_olen;	/* Result total length */
 
 	int		crp_etype;	/*
 					 * Error type (zero means no error).
@@ -512,19 +512,19 @@ struct cryptop {
 	/*
 	 * everything below is private to crypto(4)
 	 */
-	u_int32_t	crp_reqid;	/* request id */
+	uint32_t	crp_reqid;	/* request id */
 	void *		crp_usropaque;	/* Opaque pointer from user, passed along */
 	struct timespec	crp_tstamp;	/* performance time stamp */
 	kcondvar_t	crp_cv;
 	struct fcrypt 	*fcrp;
 	void * 		dst;
 	void *		mac;
-	u_int32_t	len;
+	uint32_t	len;
 	u_char		tmp_iv[EALG_MAX_BLOCK_LEN];
 	u_char		tmp_mac[CRYPTO_MAX_MAC_LEN];
 	
 	struct cryptop_data cod;
-	u_int32_t	magic;
+	uint32_t	magic;
 	struct cpu_info	*reqcpu;	/*
 					 * save requested CPU to do cryptoret
 					 * softint in the same CPU.
@@ -546,14 +546,14 @@ struct cryptop {
 struct cryptkop {
 	TAILQ_ENTRY(cryptkop) krp_next;
 
-	u_int32_t	krp_reqid;	/* request id */
+	uint32_t	krp_reqid;	/* request id */
 	void *		krp_usropaque;	/* Opaque pointer from user, passed along */
 
-	u_int32_t	krp_op;		/* ie. CRK_MOD_EXP or other */
-	u_int32_t	krp_status;	/* return status */
-	u_int16_t	krp_iparams;	/* # of input parameters */
-	u_int16_t	krp_oparams;	/* # of output parameters */
-	u_int32_t	krp_hid;
+	uint32_t	krp_op;		/* ie. CRK_MOD_EXP or other */
+	uint32_t	krp_status;	/* return status */
+	uint16_t	krp_iparams;	/* # of input parameters */
+	uint16_t	krp_oparams;	/* # of output parameters */
+	uint32_t	krp_hid;
 	kmutex_t	krp_lock;
 	struct crparam	krp_param[CRK_MAXPARAM];	/* kvm */
 	void		(*krp_callback)(struct cryptkop *);  /*
@@ -571,29 +571,29 @@ struct cryptkop {
 
 /* Crypto capabilities structure */
 struct cryptocap {
-	u_int32_t	cc_sessions;
+	uint32_t	cc_sessions;
 
 	/*
 	 * Largest possible operator length (in bits) for each type of
 	 * encryption algorithm.
 	 */
-	u_int16_t	cc_max_op_len[CRYPTO_ALGORITHM_MAX + 1];
+	uint16_t	cc_max_op_len[CRYPTO_ALGORITHM_MAX + 1];
 
-	u_int8_t	cc_alg[CRYPTO_ALGORITHM_MAX + 1];
+	uint8_t	cc_alg[CRYPTO_ALGORITHM_MAX + 1];
 
-	u_int8_t	cc_kalg[CRK_ALGORITHM_MAX + 1];
+	uint8_t	cc_kalg[CRK_ALGORITHM_MAX + 1];
 
-	u_int8_t	cc_flags;
-	u_int8_t	cc_qblocked;		/* symmetric q blocked */
-	u_int8_t	cc_kqblocked;		/* asymmetric q blocked */
+	uint8_t	cc_flags;
+	uint8_t	cc_qblocked;		/* symmetric q blocked */
+	uint8_t	cc_kqblocked;		/* asymmetric q blocked */
 #define CRYPTOCAP_F_CLEANUP	0x01		/* needs resource cleanup */
 #define CRYPTOCAP_F_SOFTWARE	0x02		/* software implementation */
 #define CRYPTOCAP_F_SYNC	0x04		/* operates synchronously */
 
 	void		*cc_arg;		/* callback argument */
-	int		(*cc_newsession)(void*, u_int32_t*, struct cryptoini*);
+	int		(*cc_newsession)(void*, uint32_t*, struct cryptoini*);
 	int		(*cc_process) (void*, struct cryptop *, int);
-	void		(*cc_freesession) (void *, u_int64_t);
+	void		(*cc_freesession) (void *, uint64_t);
 	void		*cc_karg;		/* callback argument */
 	int		(*cc_kprocess) (void*, struct cryptkop *, int);
 
@@ -609,29 +609,29 @@ struct cryptocap {
  */
 #define	CRYPTO_SESID2HID(_sid)	((((_sid) >> 32) & 0xffffff) - 1)
 #define	CRYPTO_SESID2CAPS(_sid)	(((_sid) >> 56) & 0xff)
-#define	CRYPTO_SESID2LID(_sid)	(((u_int32_t) (_sid)) & 0xffffffff)
+#define	CRYPTO_SESID2LID(_sid)	(((uint32_t) (_sid)) & 0xffffffff)
 
 MALLOC_DECLARE(M_CRYPTO_DATA);
 
-extern	int crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard);
-extern	void crypto_freesession(u_int64_t sid);
-extern	int32_t crypto_get_driverid(u_int32_t flags);
-extern	int crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
-	    u_int32_t flags,
-	    int (*newses)(void*, u_int32_t*, struct cryptoini*),
-	    void (*freeses)(void *, u_int64_t),
+extern	int crypto_newsession(uint64_t *sid, struct cryptoini *cri, int hard);
+extern	void crypto_freesession(uint64_t sid);
+extern	int32_t crypto_get_driverid(uint32_t flags);
+extern	int crypto_register(uint32_t driverid, int alg, uint16_t maxoplen,
+	    uint32_t flags,
+	    int (*newses)(void*, uint32_t*, struct cryptoini*),
+	    void (*freeses)(void *, uint64_t),
 	    int (*process)(void*, struct cryptop *, int),
 	    void *arg);
-extern	int crypto_kregister(u_int32_t, int, u_int32_t,
+extern	int crypto_kregister(uint32_t, int, uint32_t,
 	    int (*)(void*, struct cryptkop *, int),
 	    void *arg);
-extern	int crypto_unregister(u_int32_t driverid, int alg);
-extern	int crypto_unregister_all(u_int32_t driverid);
+extern	int crypto_unregister(uint32_t driverid, int alg);
+extern	int crypto_unregister_all(uint32_t driverid);
 extern	void crypto_dispatch(struct cryptop *crp);
 extern	void crypto_kdispatch(struct cryptkop *);
 #define	CRYPTO_SYMQ	0x1
 #define	CRYPTO_ASYMQ	0x2
-extern	int crypto_unblock(u_int32_t, int);
+extern	int crypto_unblock(uint32_t, int);
 extern	void crypto_done(struct cryptop *crp);
 extern	void crypto_kdone(struct cryptkop *);
 extern	int crypto_getfeat(int *);
