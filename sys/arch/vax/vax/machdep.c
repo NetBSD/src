@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.202 2025/11/30 01:31:35 thorpej Exp $	 */
+/* $NetBSD: machdep.c,v 1.203 2026/04/29 12:28:37 thorpej Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.202 2025/11/30 01:31:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.203 2026/04/29 12:28:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -324,8 +324,8 @@ consinit(void)
 	KASSERT(iomap_arena != NULL);
 
 	vmem_add_bts(iomap_arena, iomap_btag_store, IOMAP_BTAG_COUNT);
-	int error = vmem_add(iomap_arena, iospace, IOSPSZ * VAX_NBPG,
-	    VM_NOSLEEP);
+	int error = vmem_add(iomap_arena, iospace + VAX_NBPG,
+	    (IOSPSZ - 1) * VAX_NBPG, VM_NOSLEEP);
 	KASSERT(error == 0);
 #ifdef DEBUG
 	iospace_inited = 1;
