@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.24 2026/04/29 12:33:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.25 2026/04/29 12:48:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,7 +59,6 @@
  * and we must be compatible...
  */
 #define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
-#define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define HIGHPAGES	(0x100000/PAGE_SIZE)
 
 /*
