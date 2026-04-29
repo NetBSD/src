@@ -183,46 +183,31 @@ si_print(void *aux, const char *pnp)
 }
 
 
-/*
- * Identify the device on the specified channel
- *
- * Disables Polling and uses the SI I/O Buffer directly to communicate with the
- * device. The Identify Response is always a 2-byte identifier and 1-byte of
- * extra data.
- *
- * TODO decide if i need mutex in here. kinda seems like you want to lock
- * down the whole siiobuf whenever you are operating on it. i think it might
- * need a mutex different than the channel level ones
- *
- * I think i will probably make an internal method that handles the communiction
- * on the iobuffer and that can maintain the lock
- */
 static int
 si_identify(device_t self, unsigned chan)
 {
-	uint32_t comcsr;
 	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
 	struct siio_send data;
-	uint8_t in[0];
-	uint8_t out[3];
+	uint8_t out[1];
+	uint8_t in[3];
+	int res;
 
-	data.cmd = SIIDENTIFY;
+	/* identify always expects 3 bytes back although id is only 2 bytes */
+	out[0] = SIIDENTIFY;
 	data.chan = chan;
-	data.send_size = 0;
-	data.recv_size = 3;
-	data.inbuf = in;
-	data.outbuf = out;
+	data.out = out;
+	data.outsize = 1;
+	data.in = in;
+	data.insize = 3;
+
+	if ((res = __si_send(sc, &data)) != 0) {
+		aprint_normal("si_identify: chan%d sisr - 0x%08X\n", chan, res);
+	}
 
 	ch = &sc->sc_chan[chan];
-
-	WR4(sc, SIPOLL, RD4(sc, SIPOLL) & ~SIPOLL_EN(chan));
-	__si_send(sc, &data);
-	comcsr = RD4(sc, SICOMCSR);
-	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
-
-	ch->ch_id = (uint16_t)out[0] << 8;
-	aprint_normal("si_identify: Identified chan%d as 0x%08X\n", chan, ch->ch_id);
+	ch->ch_id = (uint16_t)in[0] << 8;
+	aprint_normal("si_identify: chan%d id - 0x%08X\n", chan, ch->ch_id);
 
 	return 0;
 }
