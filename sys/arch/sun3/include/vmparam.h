@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2020/02/01 19:41:50 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39 2026/04/29 04:45:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,15 +31,6 @@
 
 #define __USE_TOPDOWN_VM
 
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-#define	USRSTACK	kernbase	/* for modules */
-#define	USRSTACK3	KERNBASE3	/* for asm not in modules */
-#define	USRSTACK3X	KERNBASE3X
-
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
 #endif	/* SUN3 */
@@ -51,6 +42,15 @@
 #if !defined(_SUN3_) && !defined(_SUN3X_)
 #include <machine/vmparam3.h>
 #endif
+
+/*
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
+ */
+#include <m68k/vmparam.h>
+
+#define	USRSTACK	kernbase	/* for modules */
+#define	USRSTACK3	KERNBASE3	/* for asm not in modules */
+#define	USRSTACK3X	KERNBASE3X
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.

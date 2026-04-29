@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2025/12/01 03:53:24 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44 2026/04/29 04:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,25 +61,6 @@
 #define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
 #define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
 #define HIGHPAGES	(0x100000/PAGE_SIZE)
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(256*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.

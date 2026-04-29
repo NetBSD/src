@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.48 2020/02/01 19:41:48 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.49 2026/04/29 04:45:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,22 +46,10 @@
  */
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-
-#ifndef USRSTACK
-#define	USRSTACK	0x1E000000
-#endif
-
-/*
  * Virtual memory related constants, all in bytes
+ * XXX Dunno why we would do these any differently from the other
+ * XXX 68k platforms, but then again we have that odd-ball USRSTACK.
  */
-
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
@@ -76,6 +64,19 @@
 #endif
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
+#endif
+
+/*
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
+ */
+#include <m68k/vmparam.h>
+
+/*
+ * USRSTACK is the top (end) of the user stack.
+ */
+
+#ifndef USRSTACK
+#define	USRSTACK	0x1E000000
 #endif
 
 /*

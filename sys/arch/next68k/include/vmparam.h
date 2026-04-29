@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2025/11/18 23:18:00 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33 2026/04/29 04:45:47 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -61,25 +61,6 @@
  * USRSTACK is the top (end) of the user stack.
  */
 #define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.

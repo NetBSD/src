@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2026/04/06 15:36:30 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2026/04/29 04:45:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -26,8 +26,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define __USE_TOPDOWN_VM
-
 /*
  * Machine dependent constants for Sun2
  *
@@ -40,12 +38,12 @@
  * and those things should be chosen to conserve KV space.
  */
 
+#define __USE_TOPDOWN_VM
+
 /*
- * The Sun2 has 2K pages.  Override PAGE_* to be compile-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	11
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 /*
  * We definitely need a small pager map.
@@ -56,27 +54,6 @@
  * USRSTACK is the top (end) of the user stack.
  */
 #define	USRSTACK	0x1000000	/* High end of user stack */
-
-/*
- * Virtual memory related constants, all in bytes.
- * The Sun2 has only 16 MB of user-virtual space,
- * so we need to be conservative with these limits.
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(5*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(4*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(6*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(512*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(4*1024*1024)		/* max stack size */
-#endif
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.

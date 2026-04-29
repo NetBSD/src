@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam3x.h,v 1.23 2017/02/02 21:53:55 rin Exp $	*/
+/*	$NetBSD: vmparam3x.h,v 1.24 2026/04/29 04:45:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -43,20 +43,5 @@
  */
 
 /*
- * Virtual memory related constants, all in bytes
+ * Just use the common m68k defaults.
  */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(128*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
-#endif

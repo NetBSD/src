@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.1 2020/02/01 19:41:48 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.2 2026/04/29 04:45:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
  * hp300 pmap derived m68k ports can use 4K or 8K pages.
  * (except HPMMU machines, that support only 4K page)
  * sun3 and sun3x use 8K pages.
+ * sun2 has 2K pages.
  * The page size is specified by PGSHIFT in <machine/param.h>.
  * Override the PAGE_* definitions to be compile-time constants.
  */
@@ -65,10 +66,54 @@
  * for m68k ports only on !_KERNEL (currently just for jemalloc) builds.
  */
 #if !defined(_KERNEL)
+#if defined(__mc68010__)
+/*
+ * As of now, there is only a single PAGE_SHIFT value here (11),
+ * so don't define anything differently.
+ */
+#else
 #define	MIN_PAGE_SHIFT	12
 #define	MAX_PAGE_SHIFT	13
 #define	MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
 #define	MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
+#endif /* __mc68010__ */
 #endif /* !_KERNEL */
+
+/*
+ * Virtual memory related constants, all in bytes
+ *
+ * Note: the 68010 has only 16MB of user virtual address space,
+ * so we need to be extremely conservative about those limits
+ * on those systems.
+ */
+#if defined(__mc68010__)
+#define	__M68K_DFLT_MAXTSIZ	(5*1024*1024)
+#define	__M68K_DFLT_DFLDSIZ	(4*1024*1024)
+#define	__M68K_DFLT_MAXDSIZ	(6*1024*1024)
+#define	__M68K_DFLT_DFLSSIZ	(512*1024)
+#define	__M68K_DFLT_MAXSSIZ	(4*1024*1024)
+#else
+#define	__M68K_DFLT_MAXTSIZ	(32*1024*1024)
+#define	__M68K_DFLT_DFLDSIZ	(32*1024*1024)
+#define	__M68K_DFLT_MAXDSIZ	(256*1024*1024)
+#define	__M68K_DFLT_DFLSSIZ	(2*1024*1024)
+#define	__M68K_DFLT_MAXSSIZ	(64*1024*1024)
+#endif
+
+#ifndef MAXTSIZ
+#define	MAXTSIZ		__M68K_DFLT_MAXTSIZ	/* max text size */
+#endif
+#ifndef	DFLDSIZ
+#define	DFLDSIZ		__M68K_DFLT_DFLDSIZ	/* initial data size limit */
+#endif
+#ifndef	MAXDSIZ
+#define	MAXDSIZ		__M68K_DFLT_MAXDSIZ	/* max data size */
+#endif
+#ifndef	DFLSSIZ
+#define	DFLSSIZ		__M68K_DFLT_DFLSSIZ	/* initial stack size limit */
+#endif
+#ifndef	MAXSSIZ
+#define	MAXSSIZ		__M68K_DFLT_MAXSSIZ	/* max stack size */
+#endif
 
 #endif /* _M68K_VMPARAM_H_ */
