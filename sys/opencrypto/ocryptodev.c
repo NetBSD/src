@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.17 2022/03/12 17:15:04 riastradh Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.18 2026/04/29 14:49:51 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.17 2022/03/12 17:15:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.18 2026/04/29 14:49:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -154,15 +154,15 @@ mbail:
 		kmem_free(osnop, osgop->count * sizeof(struct osession_n_op));
 		break;
 	case OCIOCCRYPT:
-		mutex_enter(&cryptodev_mtx);
 		ocop = (struct ocrypt_op *)data;
-		cse = cryptodev_csefind(fcr, ocop->ses);
+		cse = cryptodev_cse_find(fcr, ocop->ses);
 		mutex_exit(&cryptodev_mtx);
 		if (cse == NULL) {
 			DPRINTF("csefind failed\n");
 			return EINVAL;
 		}
 		error = ocryptodev_op(cse, ocop, curlwp);
+		cryptodev_cse_free(cse);
 		DPRINTF("ocryptodev_op error = %d\n", error);
 		break;
 	case OCIOCNCRYPTM:

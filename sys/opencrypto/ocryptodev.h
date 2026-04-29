@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.4 2019/01/27 02:08:48 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.5 2026/04/29 14:49:51 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -115,7 +115,7 @@ struct ocrypt_op {
 	u_int32_t	ses;
 	u_int16_t	op;		/* i.e. COP_ENCRYPT */
 	u_int16_t	flags;
-	u_int		len;
+	u_int32_t	len;
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
@@ -140,7 +140,7 @@ struct ocrypt_n_op {
 	u_int32_t	ses;
 	u_int16_t	op;		/* i.e. COP_ENCRYPT */
 	u_int16_t	flags;
-	u_int		len;		/* src & dst len */
+	u_int32_t	len;		/* src & dst len */
 
 	u_int32_t	reqid;		/* request id */
 	int		status;		/* status of request -accepted or not */	

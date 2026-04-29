@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.132 2026/04/29 14:49:51 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.132 2026/04/29 14:49:51 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -180,7 +180,7 @@ struct crypto_crp_ret_qs **crypto_crp_ret_qs_list;
 static inline struct crypto_crp_ret_qs *
 crypto_get_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int cpuid;
+	u_int32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
@@ -194,7 +194,7 @@ crypto_get_crp_ret_qs(struct cpu_info *ci)
 static inline void
 crypto_put_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int cpuid;
+	u_int32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
