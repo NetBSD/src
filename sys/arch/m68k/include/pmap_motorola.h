@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.56 2026/04/25 11:56:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.57 2026/04/29 01:32:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -85,6 +85,8 @@
 
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
+#define	NPTEPG		(NBPG / (sizeof(pt_entry_t)))
 
 /*
  * Pmap stuff

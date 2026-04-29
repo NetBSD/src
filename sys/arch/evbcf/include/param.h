@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.3 2026/04/29 01:32:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,8 +60,6 @@
 #define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized

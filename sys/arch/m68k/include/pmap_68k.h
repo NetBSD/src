@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.14 2026/04/25 11:56:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.15 2026/04/29 01:32:29 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -78,6 +78,8 @@
 #include <m68k/kcore.h>
 
 typedef unsigned int	pt_entry_t;
+
+#define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
 
 TAILQ_HEAD(pmap_ptpage_list, pmap_ptpage);
 LIST_HEAD(pmap_pv_list, pv_entry);
