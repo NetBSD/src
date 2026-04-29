@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2193 2026/04/29 11:13:37 kre Exp $
+#	$NetBSD: 3RDPARTY,v 1.2194 2026/04/29 13:32:36 kre Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1513,8 +1513,8 @@ Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
 register removal) to apply. The diffs have been submitted upstream but there
 is too much inertia to apply them. Check for .gitignore files.
-For the data files, do use external/public-domain/tz/tzdata2netbsd (usually,
-for now, late 2021, do it manually).
+For the data files, do use external/public-domain/tz/tzdata2netbsd
+Usage is: "cd .../src/external/public-domain/tz && sh tzdata2netbsd ="
 
 Package:	wpa_supplicant/hostapd
 Version:	2.11
