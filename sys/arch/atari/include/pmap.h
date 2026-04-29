@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.43 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.44 2026/04/29 12:33:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -75,6 +75,8 @@
 
 #ifndef	_MACHINE_PMAP_H_
 #define	_MACHINE_PMAP_H_
+
+#define	VM_KERNEL_PT_PAGES	((vsize_t)4)
 
 #include <m68k/pmap_motorola.h>
 

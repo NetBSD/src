@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.105 2026/04/26 15:05:07 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.106 2026/04/29 12:33:03 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.105 2026/04/26 15:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.106 2026/04/29 12:33:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -245,6 +245,11 @@ paddr_t		Sysseg_pa;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
+
+/* # of kernel PT pages (initial only, can grow dynamically) */
+#ifndef VM_KERNEL_PT_PAGES
+#define	VM_KERNEL_PT_PAGES	((vsize_t)2)
+#endif
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 static struct pmap kernel_pmap_store;

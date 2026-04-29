@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2026/04/29 05:04:07 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51 2026/04/29 12:33:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,8 +120,4 @@
 #define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_ZORROII	1
 
-/*
- * number of kernel PT pages (initial only, can grow dynamically)
- */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)10)
 #endif /* !_MACHINE_VMPARAM_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.45 2026/04/29 05:04:07 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46 2026/04/29 12:33:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -108,10 +108,5 @@ extern vaddr_t kernel_virtual_max;
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#ifndef __HAVE_NEW_PMAP_68K
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
-#endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _HP300_VMPARAM_H_ */

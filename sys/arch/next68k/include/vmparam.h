@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.34 2026/04/29 05:04:08 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35 2026/04/29 12:33:04 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -96,10 +96,5 @@ extern vaddr_t kernel_virtual_max;
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#ifndef __HAVE_NEW_PMAP_68K
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
-#endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _NEXT68K_VMPARAM_H_ */
