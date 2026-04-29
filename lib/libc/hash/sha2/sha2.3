@@ -1,4 +1,4 @@
-.\" $NetBSD: sha2.3,v 1.9 2018/10/09 11:36:35 kamil Exp $
+.\" $NetBSD: sha2.3,v 1.10 2026/04/29 23:54:45 gutteridge Exp $
 .\"	$OpenBSD: sha2.3,v 1.11 2004/06/22 01:57:29 jfb Exp $
 .\"
 .\" Copyright (c) 2003, 2004 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -287,10 +287,12 @@ printf("0x%s\en", SHA256_Data(buf, strlen(buf), output));
 .%O FIPS PUB 180-2
 .Re
 .Sh HISTORY
-The SHA2 functions appeared in
+Most SHA2 functions appeared in
 .Ox 3.4
 and
 .Nx 3.0 .
+The SHA-224 functions appeared in
+.Nx 6.0 .
 .Sh AUTHORS
 .An -nosplit
 This implementation of the SHA functions was written by
