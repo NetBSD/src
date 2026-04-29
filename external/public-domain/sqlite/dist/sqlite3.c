@@ -36826,8 +36826,7 @@ SQLITE_PRIVATE u8 sqlite3StrIHash(const char *z){
 ** 64 bits.
 */
 static u64 sqlite3Multiply128(u64 a, u64 b, u64 *pLo){
-#if (defined(__GNUC__) || defined(__clang__)) \
-        && (defined(__x86_64__) || defined(__aarch64__) /* || defined(__riscv) */ ) \
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__LP64__) \
         && !defined(SQLITE_DISABLE_INTRINSIC)
   __uint128_t r = (__uint128_t)a * b;
   *pLo = (u64)r;
@@ -36862,8 +36861,7 @@ static u64 sqlite3Multiply128(u64 a, u64 b, u64 *pLo){
 ** The lower 64 bits of A*B are discarded.
 */
 static u64 sqlite3Multiply160(u64 a, u32 aLo, u64 b, u32 *pLo){
-#if (defined(__GNUC__) || defined(__clang__)) \
-        && (defined(__x86_64__) || defined(__aarch64__) /* || defined(__riscv) */ ) \
+#if (defined(__GNUC__) || defined(__clang__)) && defined(__LP64__) \
         && !defined(SQLITE_DISABLE_INTRINSIC)
   __uint128_t r = (__uint128_t)a * b;
   r += ((__uint128_t)aLo * b) >> 32;
