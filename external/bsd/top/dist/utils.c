@@ -215,7 +215,7 @@ printable(char *str)
     register int ch;
 
     ptr = str;
-    while (((ch = *ptr) & 0xFF) != '\0')
+    while ((ch = *ptr) != '\0')
     {
 	if (!isprint((unsigned char)ch))
 	{
