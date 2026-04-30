@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.28 2026/04/30 05:47:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.29 2026/04/30 05:48:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,16 +51,6 @@
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
 #include <m68k/vmparam.h>
-
-/*
- * Default sizes of swap allocation chunks (see dmap.h).
- * The actual values may be changed in vminit() based on MAXDSIZ.
- * With MAXDSIZ of 16Mb and NDMAP of 38, dmmax will be 1024.
- * DMMIN should be at least ctod(1) so that vtod() works.
- * vminit() insures this.
- */
-#define	DMMIN	32			/* smallest swap allocation */
-#define	DMMAX	4096			/* largest potential swap allocation */
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
