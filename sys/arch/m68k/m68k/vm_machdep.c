@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.45 2026/04/04 19:55:19 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.46 2026/04/30 14:10:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.45 2026/04/04 19:55:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.46 2026/04/30 14:10:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,6 +140,12 @@ cpu_lwp_free2(struct lwp *l)
 
 	/* Nothing to do */
 }
+
+/*
+ * Ensure phys_map is large enough for at least 2 concurrent
+ * MAXPHYS transfers.
+ */
+__CTASSERT((MAXPHYS * 2) <= VM_PHYS_SIZE);
 
 /*
  * Map a user I/O request into kernel virtual address space.

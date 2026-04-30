@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41 2026/04/30 05:46:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42 2026/04/30 14:10:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,8 +29,6 @@
 #ifndef _SUN3_VMPARAM_H_
 #define _SUN3_VMPARAM_H_ 1
 
-#define __USE_TOPDOWN_VM
-
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
 #endif	/* SUN3 */
@@ -51,25 +49,22 @@
 #define VM_MAX_KERNEL_ADDRESS	kern_end
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
+ * Size of phys_map, used for mapping user I/O buffer into kernel
+ * space for physio.
+ *
  * The actual limitation for physio requests will be the DVMA space,
  * and that is fixed by hardware design at 1MB.  We could make the
  * physio map larger than that, but it would not buy us much.
  */
-#ifndef USRIOSIZE
-#define USRIOSIZE	128		/* 1 MB */
-#endif
+#define	VM_PHYS_SIZE		(1 * 1024 * 1024)
+
+/*
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
+ */
+#include <m68k/vmparam.h>
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 

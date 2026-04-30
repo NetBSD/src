@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.49 2026/04/30 05:46:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.50 2026/04/30 14:10:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,14 +51,6 @@
 #include <m68k/vmparam.h>
 
 /*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
  * External IO space map size.
  * By default we make it large enough to map up to 3 DIO-II devices and
  * the complete DIO space.  For a 320-only configuration (which has no
@@ -67,9 +59,6 @@
 #ifndef EIOMAPSIZE
 #define EIOMAPSIZE	3584		/* 14mb */
 #endif
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.

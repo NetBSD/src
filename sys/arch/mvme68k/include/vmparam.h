@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.48 2026/04/30 05:46:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.49 2026/04/30 14:10:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,17 +49,6 @@
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
 #include <m68k/vmparam.h>
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.

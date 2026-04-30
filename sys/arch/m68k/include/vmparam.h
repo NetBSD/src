@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2026/04/30 06:31:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2026/04/30 14:10:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -170,6 +170,28 @@
 #ifndef VM_MAX_KERNEL_ADDRESS
 extern vaddr_t kernel_virtual_max;
 #define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
+#endif
+
+/*
+ * Size of phys_map.  phys_map is used by vmapbuf() to map user I/O
+ * buffers into kernel space for physio.  No single mapping request
+ * will ever be larger than MAXPHYS.  On a typical system, the most
+ * pressure that phys_map will ever experience is during a multi-disk
+ * parallel fsck, if needed at boot time.
+ *
+ * On 68010 (which is severely address-space constrained), the
+ * default is sufficient for 4 concurrent MAXPHYS operations.
+ * For everyone else, the default is sufficient for 16.
+ *
+ * Other platforms (e.g. Sun2/Sun3) may have different constraints,
+ * and define them before including this file.
+ */
+#ifndef VM_PHYS_SIZE
+#if defined(__mc68010__)
+#define	VM_PHYS_SIZE		(256 * 1024)
+#else
+#define	VM_PHYS_SIZE		(1 * 1024 * 1024)
+#endif
 #endif
 
 #endif /* _M68K_VMPARAM_H_ */

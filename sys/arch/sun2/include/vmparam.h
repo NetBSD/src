@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.20 2026/04/30 05:46:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.21 2026/04/30 14:10:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,8 +38,6 @@
  * and those things should be chosen to conserve KV space.
  */
 
-#define __USE_TOPDOWN_VM
-
 #ifdef	_MODULE
 #undef	KERNBASE
 extern	char KERNBASE[];
@@ -47,6 +45,16 @@ extern	char KERNBASE[];
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
+
+/*
+ * Size of phys_map, used for mapping user I/O buffer into kernel
+ * space for physio.
+ *
+ * The actual limitation for physio requests will be the DVMA space,
+ * and that is fixed by hardware design at 256K.  We could make the
+ * physio map larger than that, but it would not buy us much.
+ */
+#define	VM_PHYS_SIZE		(256 * 1024)
 
 /*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
@@ -57,19 +65,6 @@ extern	char KERNBASE[];
  * We definitely need a small pager map.
  */
 #define	PAGER_MAP_DEFAULT_SIZE (1 * 1024 * 1024)
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * The actual limitation for physio requests will be the DVMA space,
- * and that is fixed by hardware design at 256K.  We could make the
- * physio map larger than that, but it would not buy us much.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	128		/* 256K */
-#endif
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
