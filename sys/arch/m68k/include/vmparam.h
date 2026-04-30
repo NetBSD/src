@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.4 2026/04/30 05:46:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.5 2026/04/30 06:31:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,8 @@
 /*
  * Common constants for m68k ports
  */
+
+#define	__USE_TOPDOWN_VM
 
 /*
  * hp300 pmap derived m68k ports can use 4K or 8K pages.
