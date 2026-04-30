@@ -1,4 +1,4 @@
-/*	$NetBSD: gzip.c,v 1.129 2026/01/08 02:20:24 mrg Exp $	*/
+/*	$NetBSD: gzip.c,v 1.130 2026/04/30 13:35:32 simonb Exp $	*/
 
 /*
  * Copyright (c) 1997-2026 Matthew R. Green
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1997-2026 Matthew R. Green. "
 	    "All rights reserved.");
-__RCSID("$NetBSD: gzip.c,v 1.129 2026/01/08 02:20:24 mrg Exp $");
+__RCSID("$NetBSD: gzip.c,v 1.130 2026/04/30 13:35:32 simonb Exp $");
 #endif /* not lint */
 
 /*
@@ -89,6 +89,9 @@ enum filetype {
 #ifndef NO_XZ_SUPPORT
 	FT_XZ,
 #endif
+#ifndef NO_ZSTD_SUPPORT
+	FT_ZSTD,
+#endif
 #ifndef NO_LZ_SUPPORT
 	FT_LZ,
 #endif
@@ -116,6 +119,12 @@ enum filetype {
 #include <lzma.h>
 #define XZ_SUFFIX	".xz"
 #define XZ_MAGIC	"\3757zXZ"
+#endif
+
+#ifndef NO_ZSTD_SUPPORT
+#include <zstd.h>
+#define ZSTD_SUFFIX	".zst"
+#define ZSTD_MAGIC	"\050\265\057\375"
 #endif
 
 #ifndef NO_LZ_SUPPORT
@@ -166,6 +175,9 @@ static suffixes_t suffixes[] = {
 #ifndef NO_XZ_SUPPORT
 	SUFFIX(XZ_SUFFIX,	""),
 #endif
+#ifndef NO_ZSTD_SUPPORT
+	SUFFIX(ZSTD_SUFFIX,	""),
+#endif
 #ifndef NO_LZ_SUPPORT
 	SUFFIX(LZ_SUFFIX,	""),
 #endif
@@ -206,7 +218,7 @@ static	const char *infile;		/* name of file coming in */
 
 static	void	maybe_err(const char *fmt, ...) __printflike(1, 2) __dead;
 #if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
-    !defined(NO_XZ_SUPPORT)
+    !defined(NO_XZ_SUPPORT) || !defined(NO_ZSTD_SUPPORT)
 static	void	maybe_errx(const char *fmt, ...) __printflike(1, 2) __dead;
 #endif
 static	void	maybe_warn(const char *fmt, ...) __printflike(1, 2);
@@ -280,6 +292,10 @@ static	off_t	unpack(int, int, char *, size_t, off_t *);
 #ifndef NO_XZ_SUPPORT
 static	off_t	unxz(int, int, char *, size_t, off_t *);
 static	off_t	unxz_len(int);
+#endif
+
+#ifndef NO_ZSTD_SUPPORT
+static	off_t	unzstd(int, int, char *, size_t, off_t *);
 #endif
 
 #ifndef NO_LZ_SUPPORT
@@ -489,7 +505,7 @@ maybe_err(const char *fmt, ...)
 }
 
 #if !defined(NO_BZIP2_SUPPORT) || !defined(NO_PACK_SUPPORT) ||	\
-    !defined(NO_XZ_SUPPORT)
+    !defined(NO_XZ_SUPPORT) || !defined(NO_ZSTD_SUPPORT)
 /* ... without an errno. */
 void
 maybe_errx(const char *fmt, ...)
@@ -1171,6 +1187,11 @@ file_gettype(u_char *buf)
 		return FT_XZ;
 	else
 #endif
+#ifndef NO_ZSTD_SUPPORT
+	if (memcmp(buf, ZSTD_MAGIC, 4) == 0)
+		return FT_ZSTD;
+	else
+#endif
 #ifndef NO_LZ_SUPPORT
 	if (memcmp(buf, LZ_MAGIC, 4) == 0)
 		return FT_LZ;
@@ -1631,6 +1652,16 @@ file_uncompress(char *file, char *outfile, size_t outsize)
 		break;
 #endif
 
+#ifndef NO_ZSTD_SUPPORT
+	case FT_ZSTD:
+		if (lflag) {
+			maybe_warnx("no -l with zstd files");
+			goto lose;
+		}
+		size = unzstd(fd, zfd, NULL, 0, NULL);
+		break;
+#endif
+
 #ifndef NO_LZ_SUPPORT
 	case FT_LZ:
 		if (lflag) {
@@ -1899,6 +1930,12 @@ handle_fd_decomp(int fd)
 #ifndef NO_XZ_SUPPORT
 	case FT_XZ:
 		usize = unxz(fd, STDOUT_FILENO,
+			     (char *)prebuf, bytes_read, &gsize);
+		break;
+#endif
+#ifndef NO_ZSTD_SUPPORT
+	case FT_ZSTD:
+		usize = unzstd(fd, STDOUT_FILENO,
 			     (char *)prebuf, bytes_read, &gsize);
 		break;
 #endif
@@ -2339,6 +2376,9 @@ display_version(void)
 #endif
 #ifndef NO_XZ_SUPPORT
 #include "unxz.c"
+#endif
+#ifndef NO_ZSTD_SUPPORT
+#include "unzstd.c"
 #endif
 #ifndef NO_LZ_SUPPORT
 #include "unlz.c"
