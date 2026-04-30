@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.156 2024/05/23 06:14:12 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.157 2026/04/30 03:12:39 adrian Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.156 2024/05/23 06:14:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2026/04/30 03:12:39 adrian Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -376,6 +376,22 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	}
 	if (mach_type <= 0)
 		panic("invalid architecture");
+
+	/*
+	 * Initialise the IP22 Indy/Indigo2 subtype early.
+	 *
+	 * This is needed for various subsystems that require mach_subtype
+	 * to properly initialise.  It's also setup in ioc/ioc.c but
+	 * that's far too late for some peripherals (notably Indigo2 INT2
+	 * timer programming/calibration.)
+	 */
+	if (mach_type == MACH_SGI_IP22) {
+		i = *(volatile u_int32_t *)MIPS_PHYS_TO_KSEG1(0x1fbd9858);
+		if (i & 0x01)
+			mach_subtype = MACH_SGI_IP22_FULLHOUSE; /* Indigo2 */
+		else
+			mach_subtype = MACH_SGI_IP22_GUINNESS; /* Indy */
+	}
 
 	/*
 	 * Get boot device information.

@@ -1,4 +1,4 @@
-/* $NetBSD: ioc.c,v 1.14 2023/12/20 15:29:07 thorpej Exp $	 */
+/* $NetBSD: ioc.c,v 1.15 2026/04/30 03:12:39 adrian Exp $	 */
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.14 2023/12/20 15:29:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ioc.c,v 1.15 2026/04/30 03:12:39 adrian Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,11 @@ ioc_attach(device_t parent, device_t self, void *aux)
 
 	sysid = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IOC_SYSID) & 0x01;
 
+	/*
+	 * NOTE: this has to happen before mach_subtype is used -
+	 * including for dev/int.c.  So it's initialised earlier
+	 * in sgimips/machdep.c for early boot.
+	 */
 	if (sysid)
 		mach_subtype = MACH_SGI_IP22_FULLHOUSE;
 	else
