@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.45 2015/09/30 19:46:27 macallan Exp $	*/
+/*	$NetBSD: console.c,v 1.46 2026/04/30 02:56:26 adrian Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.45 2015/09/30 19:46:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.46 2026/04/30 02:56:26 adrian Exp $");
 
 #include "opt_kgdb.h"
 
@@ -112,15 +112,6 @@ consinit(void)
 			return;
 #if (NCRMFB > 0)
 		if (crmfb_probe()) {
-#if notyet
-#if (NPCKBC > 0)
-			/* XXX Hardcoded iotag, MACE address XXX */
-			mace_init_bus();
-			pckbc_cnattach(mace_isa_memt,
-			    MACE_BASE + 0x320000, 8,
-			    PCKBC_KBD_SLOT, 0);
-#endif
-#endif
 			return;
 		}
 #else
