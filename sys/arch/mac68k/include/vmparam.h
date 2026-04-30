@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.53 2026/04/30 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.54 2026/04/30 05:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,10 +77,6 @@
 #define	_MAC68K_VMPARAM_H_
 
 /*
- * Machine dependent constants for mac68k -- mostly derived from hp300.
- */
-
-/*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
 #include <m68k/vmparam.h>
@@ -91,19 +87,6 @@
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Mach derived constants
- */
-
-/* kernel map constants */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#ifdef __HAVE_NEW_PMAP_68K
-extern vaddr_t kernel_virtual_max;
-#define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
-#else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

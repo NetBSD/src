@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.13 2026/04/30 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14 2026/04/30 05:46:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -58,25 +58,6 @@
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
 #endif
 
-/*
- * Mach derived constants
- */
-
-/*
- * kernel map constants
- *
- * TT registers are used to map the I/O space (at 0xFF00.0000), so
- * the kernel virtual address space needs to end before that (with
- * room for the Sysmap, because that's where the Hibler pmap puts it).
- */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#ifdef __HAVE_NEW_PMAP_68K
-extern vaddr_t kernel_virtual_max;
-#define VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
-#else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0xFF000000-PAGE_SIZE*NPTEPG))
-#endif
-
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
@@ -94,6 +75,5 @@ extern vaddr_t kernel_virtual_max;
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
 
 #endif /* _VIRT68K_VMPARAM_H_ */

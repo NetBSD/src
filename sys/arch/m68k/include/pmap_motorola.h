@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.58 2026/04/29 05:04:08 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.59 2026/04/30 05:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -231,10 +231,14 @@ pmap_remove_all(struct pmap *pmap)
 	return false;
 }
 
+/* This is at the end of the kernel virtual address space. */
+#ifndef SYSMAP_VA
+#define	SYSMAP_VA	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
+#endif
+
 extern paddr_t		Sysseg_pa;
 extern st_entry_t	*Sysseg;
 extern pt_entry_t	*Sysmap, *Sysptmap;
-#define	SYSMAP_VA	VM_MAX_KERNEL_ADDRESS
 extern vsize_t		Sysptsize;
 extern vaddr_t		virtual_avail, virtual_end;
 #if defined(M68040) || defined(M68060)

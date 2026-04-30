@@ -1,13 +1,7 @@
-/*	$NetBSD: pmap.h,v 1.18 2025/11/24 16:58:01 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2026/04/30 05:46:13 thorpej Exp $	*/
 
 #ifndef _NEWS68K_PMAP_H_
 #define	_NEWS68K_PMAP_H_
-
-#ifdef __HAVE_NEW_PMAP_68K
-#include <m68k/pmap_68k.h>
-#else
-#include <m68k/pmap_motorola.h>
-#endif /* __HAVE_NEW_PMAP_68K */
 
 #include <m68k/mmu_30.h>
 
@@ -38,5 +32,12 @@
 				 TT30_E | TT30_RWM |			\
 				 __SHIFTIN(4,TT30_FCBASE) |		\
 				 __SHIFTIN(3,TT30_FCMASK))
+
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
+#define	SYSMAP_VA	((vaddr_t)(NEWS68K_PROM_TT_BASE-PAGE_SIZE*NPTEPG))
+#include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _NEWS68K_PMAP_H_ */

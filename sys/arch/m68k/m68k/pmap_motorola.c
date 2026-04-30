@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.106 2026/04/29 12:33:03 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.107 2026/04/30 05:46:13 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.106 2026/04/29 12:33:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.107 2026/04/30 05:46:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -268,6 +268,9 @@ int		page_cnt;	/* number of pages managed by VM system */
 bool		pmap_initialized = false;	/* Has pmap_init completed? */
 
 vaddr_t		m68k_uptbase = M68K_PTBASE;
+
+/* Sysmap begins where the managed kernel virtual space ends. */
+vaddr_t		kernel_virtual_max = SYSMAP_VA;
 
 struct pv_header {
 	struct pv_entry		pvh_first;	/* first PV entry */

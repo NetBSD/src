@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.47 2026/04/30 03:44:46 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.48 2026/04/30 05:46:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,19 +56,6 @@
  */
 #ifndef USRIOSIZE
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Mach derived constants
- */
-
-/* kernel map constants */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#ifdef __HAVE_NEW_PMAP_68K
-extern vaddr_t kernel_virtual_max;
-#define VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
-#else
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
 #endif
 
 /* virtual sizes (bytes) for various kernel submaps */

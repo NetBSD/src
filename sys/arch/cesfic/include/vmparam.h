@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.26 2026/04/30 03:44:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.27 2026/04/30 05:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,6 +45,8 @@
  * Machine dependent constants for cesfic
  */
 
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x00002000)	/* XXX */
+
 /*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
@@ -67,14 +69,6 @@
 #ifndef USRIOSIZE
 #define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
 #endif
-
-/*
- * Mach derived constants
- */
-
-/* kernel map constants */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x00002000)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG*2))
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)

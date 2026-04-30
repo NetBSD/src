@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.3 2026/04/30 03:44:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.4 2026/04/30 05:46:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -151,5 +151,23 @@
  * We simply put the user stack at the very top of the user address space.
  */
 #define	USRSTACK		VM_MAX_ADDRESS
+
+/*
+ * Kernel map constraints.
+ *
+ * Comment above about 68851/68030/etc. applies here, as well.  The
+ * limit of the kernel address space is dictated by any static mappings
+ * that might be placed near the top of the address space.
+ *
+ * Other platforms (e.g. Sun2/Sun3) have different constraints, and
+ * define them before including this file.
+ */
+#ifndef VM_MIN_KERNEL_ADDRESS
+#define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
+#endif
+#ifndef VM_MAX_KERNEL_ADDRESS
+extern vaddr_t kernel_virtual_max;
+#define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
+#endif
 
 #endif /* _M68K_VMPARAM_H_ */

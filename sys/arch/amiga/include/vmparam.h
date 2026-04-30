@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2026/04/30 03:44:44 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.53 2026/04/30 05:46:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -81,12 +81,6 @@
 #ifndef USRIOSIZE
 #define USRIOSIZE	(1 * NPTEPG)	/* 16mb */
 #endif
-
-/*
- * user/kernel map constants
- */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-(NPTEPG * PAGE_SIZE))
 
 /*
  * virtual sizes (bytes) for various kernel submaps

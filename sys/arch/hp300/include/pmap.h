@@ -1,7 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2025/11/24 16:58:00 thorpej Exp $	*/
-
-#ifdef __HAVE_NEW_PMAP_68K
-#include <m68k/pmap_68k.h>
+/*	$NetBSD: pmap.h,v 1.42 2026/04/30 05:46:13 thorpej Exp $	*/
 
 /*
  * The Hibler/Utah pmap put the virtual kernel PTE array near the top of
@@ -14,6 +11,9 @@
  * for the virtual kernel PTE array because MAXADDR is otherwise occupied.)
  */
 #define	SYSMAP_VA	(0U - PAGE_SIZE*NPTEPG*2)
+
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
 
 /*
  * Because we're reserving the last page of RAM for the MMU trampoline,

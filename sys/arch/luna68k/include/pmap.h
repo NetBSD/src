@@ -1,12 +1,6 @@
-/*	$NetBSD: pmap.h,v 1.14 2025/11/24 16:58:00 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.15 2026/04/30 05:46:13 thorpej Exp $	*/
 
 #ifndef _LUNA68K_PMAP_H_
-
-#ifdef __HAVE_NEW_PMAP_68K
-#include <m68k/pmap_68k.h>
-#else
-#include <m68k/pmap_motorola.h>
-#endif /* __HAVE_NEW_PMAP_68K */
 
 #include <m68k/mmu_30.h>
 #include <m68k/mmu_40.h>
@@ -46,5 +40,12 @@
 				 __SHIFTIN(0x7f,TTR40_LAM) |		\
 				 TTR40_E | TTR40_SUPER |		\
 				 PTE40_CM_NC_SER)
+
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
+#define	SYSMAP_VA	((vaddr_t)(LUNA68K_IO0_TT_BASE-PAGE_SIZE*NPTEPG))
+#include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
 
 #endif /* _LUNA68K_PMAP_H_ */

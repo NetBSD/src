@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.19 2026/04/30 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.20 2026/04/30 05:46:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -40,6 +40,14 @@
 
 #define __USE_TOPDOWN_VM
 
+#ifdef	_MODULE
+#undef	KERNBASE
+extern	char KERNBASE[];
+#endif	/* _MODULE */
+
+#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
+#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
+
 /*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
@@ -60,14 +68,6 @@
 #define USRIOSIZE	128		/* 256K */
 #endif
 
-/*
- * Mach-derived constants:
- */
-
-/* kernel map constants */
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
-
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
 
@@ -75,11 +75,6 @@
 
 #define	VM_NFREELIST		1
 #define	VM_FREELIST_DEFAULT	0
-
-#ifdef	_MODULE
-#undef	KERNBASE
-extern	char KERNBASE[];
-#endif	/* _MODULE */
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		1

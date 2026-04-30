@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40 2026/04/30 03:44:45 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.41 2026/04/30 05:46:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -47,6 +47,8 @@
  * Kernel and user-space share the same virtual space on Sun3
  */
 #define VM_MAX_ADDRESS		kernbase
+#define VM_MIN_KERNEL_ADDRESS	kernbase
+#define VM_MAX_KERNEL_ADDRESS	kern_end
 
 /*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
@@ -65,14 +67,6 @@
 
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
-
-/*
- * Mach-derived constants:
- */
-
-/* kernel map constants */
-#define VM_MIN_KERNEL_ADDRESS	kernbase
-#define VM_MAX_KERNEL_ADDRESS	kern_end
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
