@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.24 2026/04/30 15:52:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.24 2026/04/30 15:52:40 christos Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (style != REVERSE && off == 0)
 		return;
 
-	if (S_ISREG(sbp->st_mode))
+	if (S_ISREG(sbp->st_mode) && sbp->st_size > 0)
 		r_reg(fp, style, off, sbp);
 	else
 		switch(style) {
