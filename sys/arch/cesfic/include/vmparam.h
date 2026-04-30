@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.27 2026/04/30 05:46:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.28 2026/04/30 05:47:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,9 +72,6 @@
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-/* Use new VM page bootstrap interface. */
-#define	MACHINE_NEW_NONCONTIG
 
 /*
  * Constants which control the way the VM system deals with memory segments.
