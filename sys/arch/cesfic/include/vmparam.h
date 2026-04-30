@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30 2026/04/30 14:10:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.31 2026/04/30 15:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,19 +47,6 @@
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x00002000)	/* XXX */
 
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
 #include <m68k/vmparam.h>
-
-/*
- * Constants which control the way the VM system deals with memory segments.
- * The cesfic only has one usable physical memory segment.
- */
-#define	VM_PHYSSEG_MAX		1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
 #endif /* _MACHINE_VMPARAM_H_ */

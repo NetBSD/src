@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.6 2026/04/30 14:10:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.7 2026/04/30 15:10:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -192,6 +192,26 @@ extern vaddr_t kernel_virtual_max;
 #else
 #define	VM_PHYS_SIZE		(1 * 1024 * 1024)
 #endif
+#endif
+
+/*
+ * Default to a single physical memory segment.
+ */
+#ifndef VM_PHYSSEG_MAX
+#define	VM_PHYSSEG_MAX		1
+#endif
+#ifndef VM_PHYSSEG_STRAT
+#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#endif
+
+/*
+ * Default to a single physical memory free list.
+ */
+#ifndef VM_NFREELIST
+#define	VM_NFREELIST		1
+#endif
+#ifndef VM_FREELIST_DEFAULT
+#define	VM_FREELIST_DEFAULT	0
 #endif
 
 #endif /* _M68K_VMPARAM_H_ */

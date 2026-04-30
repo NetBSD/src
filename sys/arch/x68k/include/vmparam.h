@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.49 2026/04/30 14:10:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.50 2026/04/30 15:10:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,6 @@
  */
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * Constants which control the way the VM system deals with memory segments.
  */
 #define	VM_PHYSSEG_MAX		3
@@ -64,5 +59,7 @@
 
 #define	VM_PHYS_SEG_TO_FREELIST(s) \
 	((s) == 0 ? VM_FREELIST_MAINMEM : VM_FREELIST_DEFAULT)
+
+#include <m68k/vmparam.h>
 
 #endif /* _X68K_VMPARAM_H_ */

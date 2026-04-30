@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2026/04/30 14:10:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39 2026/04/30 15:10:13 thorpej Exp $	*/
 
 /*
  * This file was taken from mvme68k/include/vmparam.h and
@@ -53,16 +53,11 @@
  */
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * Constants which control the way the VM system deals with memory segments.
  */
 #define	VM_PHYSSEG_MAX		5	/* @@@ should really come from N_SIMM */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
+
+#include <m68k/vmparam.h>
 
 #endif /* _NEXT68K_VMPARAM_H_ */

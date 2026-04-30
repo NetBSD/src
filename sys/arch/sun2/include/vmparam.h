@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.21 2026/04/30 14:10:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.22 2026/04/30 15:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -57,19 +57,8 @@ extern	char KERNBASE[];
 #define	VM_PHYS_SIZE		(256 * 1024)
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * We definitely need a small pager map.
  */
 #define	PAGER_MAP_DEFAULT_SIZE (1 * 1024 * 1024)
 
-#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
-
-/* This is needed by some LKMs. */
-#define VM_PHYSSEG_MAX		1
+#include <m68k/vmparam.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.41 2026/04/30 14:10:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42 2026/04/30 15:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,6 @@
  */
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * Our bootloader currently passes up to 2 segments (ST and TT ram).
  * On the other hand, Milan has four SIMM slots with 2 banks
  * so it could have upto 8 segments.
@@ -62,5 +57,7 @@
 #define	VM_FREELIST_DEFAULT	0
 #define	VM_FREELIST_TTRAM	VM_FREELIST_DEFAULT
 #define	VM_FREELIST_STRAM	1
+
+#include <m68k/vmparam.h>
 
 #endif /* !_MACHINE_VMPARAM_H_ */

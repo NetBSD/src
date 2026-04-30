@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.54 2026/04/30 14:10:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.55 2026/04/30 15:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,11 +70,6 @@
 #define	VM_MAX_ADDRESS	0x1E000000
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * Our bootloader currently passes up to 16 segments (but this is variable)
  * Normally, the biggest of them is used for the kernel, and the kernel
  * segment is given to VM first.
@@ -92,5 +87,7 @@
 #define VM_NFREELIST		2
 #define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_ZORROII	1
+
+#include <m68k/vmparam.h>
 
 #endif /* !_MACHINE_VMPARAM_H_ */

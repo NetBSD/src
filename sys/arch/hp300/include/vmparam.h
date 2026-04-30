@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2026/04/30 14:10:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51 2026/04/30 15:10:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,11 +46,6 @@
  */
 
 /*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
  * External IO space map size.
  * By default we make it large enough to map up to 3 DIO-II devices and
  * the complete DIO space.  For a 320-only configuration (which has no
@@ -60,14 +55,6 @@
 #define EIOMAPSIZE	3584		/* 14mb */
 #endif
 
-/*
- * Constants which control the way the VM system deals with memory segments.
- * The hp300 only has one physical memory segment.
- */
-#define	VM_PHYSSEG_MAX		1
-#define	VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
-
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
+#include <m68k/vmparam.h>
 
 #endif /* _HP300_VMPARAM_H_ */

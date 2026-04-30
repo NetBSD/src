@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42 2026/04/30 14:10:04 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.43 2026/04/30 15:10:13 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -58,17 +58,10 @@
  */
 #define	VM_PHYS_SIZE		(1 * 1024 * 1024)
 
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
-
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
+#include <m68k/vmparam.h>
 
 #endif	/* _SUN3_VMPARAM_H_ */
