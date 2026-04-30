@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.38 2026/04/29 12:33:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.39 2026/04/30 03:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,11 +51,6 @@
 #include <m68k/vmparam.h>
 
 /*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * One page is enough to handle 16Mb of simultaneous raw IO operations.
  */
@@ -63,12 +58,7 @@
 #define USRIOSIZE	(1 * NPTEPG)	/* 16mb */
 #endif
 
-/*
- * user/kernel map constants
- */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
+/* kernel map constants */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-(NPTEPG * PAGE_SIZE))
 

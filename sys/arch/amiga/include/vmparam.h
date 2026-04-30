@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51 2026/04/29 12:33:02 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52 2026/04/30 03:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,8 +47,9 @@
 
 /*
  * Virtual memory related constants, all in bytes
- * XXX Dunno why we would do these any differently from the other
- * XXX 68k platforms, but then again we have that odd-ball USRSTACK.
+ * XXX Dunno why we would do these any differently from the
+ * XXX other 68k platforms, but then again we have an odd-ball
+ * XXX VM_MAX_ADDRESS / USRSTACK.  WHY?
  */
 #ifndef MAXTSIZ
 #define	MAXTSIZ		(32*1024*1024)		/* max text size */
@@ -66,18 +67,12 @@
 #define	MAXSSIZ		(32*1024*1024)		/* max stack size */
 #endif
 
+#define	VM_MAX_ADDRESS	0x1E000000
+
 /*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
 #include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-
-#ifndef USRSTACK
-#define	USRSTACK	0x1E000000
-#endif
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
@@ -90,9 +85,6 @@
 /*
  * user/kernel map constants
  */
-#define VM_MIN_ADDRESS		((vaddr_t)0)		/* user min */
-#define VM_MAX_ADDRESS		((vaddr_t)(USRSTACK))	/* user max */
-#define VM_MAXUSER_ADDRESS	((vaddr_t)(VM_MAX_ADDRESS))	/* same */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-(NPTEPG * PAGE_SIZE))
 

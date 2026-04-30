@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2026/04/29 12:33:03 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2026/04/30 03:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,11 +47,6 @@
 #include <m68k/vmparam.h>
 
 /*
- * USRSTACK is the top (end) of the user stack.
- */
-#define USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
@@ -64,15 +59,12 @@
  */
 
 /*
- * user/kernel map constants
+ * kernel map constants
  *
  * TT registers are used to map the I/O space (starting at 0x4000.0000), so
  * the kernel virtual address space needs to end before that (with room for
  * the Sysmap, because that's where the Hibler pmap puts it).
  */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #ifdef __HAVE_NEW_PMAP_68K
 extern vaddr_t kernel_virtual_max;

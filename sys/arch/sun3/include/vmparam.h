@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.39 2026/04/29 04:45:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40 2026/04/30 03:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,13 +44,14 @@
 #endif
 
 /*
+ * Kernel and user-space share the same virtual space on Sun3
+ */
+#define VM_MAX_ADDRESS		kernbase
+
+/*
  * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
 #include <m68k/vmparam.h>
-
-#define	USRSTACK	kernbase	/* for modules */
-#define	USRSTACK3	KERNBASE3	/* for asm not in modules */
-#define	USRSTACK3X	KERNBASE3X
 
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
@@ -69,10 +70,7 @@
  * Mach-derived constants:
  */
 
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		kernbase
-#define VM_MAXUSER_ADDRESS	kernbase
+/* kernel map constants */
 #define VM_MIN_KERNEL_ADDRESS	kernbase
 #define VM_MAX_KERNEL_ADDRESS	kern_end
 

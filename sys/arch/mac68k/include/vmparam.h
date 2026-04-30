@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2026/04/29 12:48:20 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.53 2026/04/30 03:44:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -86,15 +86,6 @@
 #include <m68k/vmparam.h>
 
 /*
- * USRSTACK is the top (end) of the user stack.
- *
- * NOTE: HP300 uses HIGHPAGES == (0x100000/PAGE_SIZE) for HP/UX compatibility.
- * Do we care?  Obviously not at the moment.
- */
-#define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
-#define HIGHPAGES	3			/* UPAGES */
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * One page is enough to handle 4Mb of simultaneous raw IO operations.
  */
@@ -106,10 +97,7 @@
  * Mach derived constants
  */
 
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
-#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*PAGE_SIZE)))
+/* kernel map constants */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #ifdef __HAVE_NEW_PMAP_68K
 extern vaddr_t kernel_virtual_max;

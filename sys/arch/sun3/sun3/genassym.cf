@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.25 2026/04/20 09:47:47 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.26 2026/04/30 03:44:45 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -90,7 +90,6 @@ define	ENA_FPP				ENA_FPP
 define	SEGMAP_BASE			SEGMAP_BASE
 
 # sun3 memory map
-define	USRSTACK3			USRSTACK3
 define	SUN3_MONSTART			SUN3_MONSTART
 define	SUN3_PROM_BASE			SUN3_PROM_BASE
 define	SUN3_MONEND			SUN3_MONEND

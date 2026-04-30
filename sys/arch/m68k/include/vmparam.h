@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.2 2026/04/29 04:45:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 2026/04/30 03:44:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -115,5 +115,41 @@
 #ifndef	MAXSSIZ
 #define	MAXSSIZ		__M68K_DFLT_MAXSSIZ	/* max stack size */
 #endif
+
+/*
+ * User VM map constraints.
+ *
+ * N.B. For the 68851 and 68030+, user-space and kernel-space are
+ * completely separated by separate root pointers and they have
+ * completely separate page tables.  So, for those systems, the
+ * entire 4GB virtual address space is available for user-space,
+ * although we skip the very last page to avoid overflow confusion.
+ *
+ * On the 68010, the basic constraint is the 24-bit address space.
+ * Note that there's no integer overflow concern in this case, so
+ * we don't skip the last virtual page since the address space is
+ * at such a premium.
+ *
+ * Platforms with other constrains: define these values before including
+ * this file.
+ */
+#define	VM_MIN_ADDRESS		((vaddr_t)0)
+#ifndef VM_MAX_ADDRESS
+#if defined(__mc68010__)
+#define	VM_MAX_ADDRESS		((vaddr_t)0x01000000)
+#else
+#define	VM_MAX_ADDRESS		((vaddr_t)0-PAGE_SIZE)
+#endif
+#endif
+#define	VM_MAXUSER_ADDRESS	VM_MAX_ADDRESS
+
+/*
+ * USRSTACK is the top (end) of the user stack.  The m68k stack
+ * is pre-decrement, so the first address touched in a stack access
+ * is USRSTACK-1.
+ *
+ * We simply put the user stack at the very top of the user address space.
+ */
+#define	USRSTACK		VM_MAX_ADDRESS
 
 #endif /* _M68K_VMPARAM_H_ */

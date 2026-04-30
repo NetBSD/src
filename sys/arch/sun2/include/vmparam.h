@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2026/04/29 04:45:47 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.19 2026/04/30 03:44:45 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -51,11 +51,6 @@
 #define	PAGER_MAP_DEFAULT_SIZE (1 * 1024 * 1024)
 
 /*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	0x1000000	/* High end of user stack */
-
-/*
  * PTEs for mapping user space into the kernel for phyio operations.
  * The actual limitation for physio requests will be the DVMA space,
  * and that is fixed by hardware design at 256K.  We could make the
@@ -69,10 +64,7 @@
  * Mach-derived constants:
  */
 
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)USRSTACK)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)USRSTACK)
+/* kernel map constants */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)KERNBASE)
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)KERN_END)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.23 2026/04/20 09:47:47 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.24 2026/04/30 03:44:45 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -75,7 +75,6 @@ include <machine/vmparam.h>
 define	FC_CONTROL			FC_CONTROL
 
 # sun3 memory map
-define	USRSTACK3X			USRSTACK3X
 define	SUN3X_MONSTART			SUN3X_MONSTART
 define	SUN3X_PROM_BASE			SUN3X_PROM_BASE
 define	SUN3X_MONEND			SUN3X_MONEND
