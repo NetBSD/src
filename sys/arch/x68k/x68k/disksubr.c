@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.38 2026/04/30 05:20:54 isaki Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2026/04/30 05:20:54 isaki Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -88,6 +88,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
+
+	lp->d_bbsize = 8192;
+	lp->d_sbsize = 2048;
 
 	/* get a buffer and initialize it */
 	bsdlabelsz =
@@ -163,8 +166,6 @@ dodospart:
 	/* if BSD disklabel does not exist, fall back to Human68k partition */
 	if (msg != NULL) {
 		msg = NULL;
-		lp->d_bbsize = 8192;
-		lp->d_sbsize = 2048;
 		for (i = 0; i < NDOSPART; i++, dp++)
 			/* is this ours? */
 			if (dp->dp_size) {
