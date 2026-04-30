@@ -1,4 +1,4 @@
-/*	$NetBSD: t_sha512trunc.c,v 1.2 2024/03/15 18:10:37 riastradh Exp $	*/
+/*	$NetBSD: t_sha512trunc.c,v 1.3 2026/04/30 23:06:07 gutteridge Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_sha512trunc.c,v 1.2 2024/03/15 18:10:37 riastradh Exp $");
+__RCSID("$NetBSD: t_sha512trunc.c,v 1.3 2026/04/30 23:06:07 gutteridge Exp $");
 
 #include <stddef.h>
 
@@ -71,19 +71,21 @@ check(const struct testcase *C, size_t n, size_t digestlen, const EVP_MD *md)
 #define	REQUIRE(x)	ATF_REQUIRE_MSG((x), "i=%zu", i)
 		REQUIRE(ctx = EVP_MD_CTX_new());
 		REQUIRE(EVP_DigestInit_ex(ctx, md, NULL));
-		REQUIRE(EVP_DigestUpdate(ctx, C->in, C->inlen));
+		REQUIRE(EVP_DigestUpdate(ctx, C[i].in, C[i].inlen));
 		REQUIRE(EVP_DigestFinal_ex(ctx, digest, &digestlen1));
 #undef	REQUIRE
 		ATF_CHECK_MSG(digestlen == digestlen1,
 		    "i=%zu: expected %zu got %u", i, digestlen, digestlen1);
 		EVP_MD_CTX_free(ctx);
 
-		ATF_CHECK_MSG(memcmp(digest, C->out, digestlen) == 0,
+		ATF_CHECK_MSG(memcmp(digest, C[i].out, digestlen) == 0,
 		    "i=%zu", i);
 
 		ATF_CHECK_EQ_MSG(*p0, C0, "expected 0x%x got 0x%hhx", C0, *p0);
 		ATF_CHECK_EQ_MSG(*p1, C1, "expected 0x%x got 0x%hhx", C1, *p1);
 	}
+
+	free(buf);
 }
 
 /*
