@@ -1,5 +1,6 @@
-#	$NetBSD: Makefile,v 1.20 2026/04/30 13:35:32 simonb Exp $
+#	$NetBSD: Makefile,v 1.21 2026/04/30 20:49:55 christos Exp $
 
+.include <bsd.init.mk>
 .include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
 
 USE_FORT?= yes	# data-driven bugs?
@@ -9,11 +10,16 @@ SRCS+=		gzip.c
 MAN=		gzip.1 gzexe.1 zdiff.1 zforce.1 zgrep.1 zmore.1 znew.1
 
 .if !defined(HOSTPROG)
-CPPFLAGS+=	${ZSTDCPPFLAGS}
 
 DPADD=		${LIBZ} ${LIBBZ2} ${LIBLZMA}
 LDADD=		-lz -lbz2 -llzma
+
+.if ${CRUNCHEDPROG:U0} == 1
+CPPFLAGS+=-DNO_ZSTD_SUPPORT
+.else
+CPPFLAGS+=	${ZSTDCPPFLAGS}
 PROGDPLIBS+=	${ZSTDDPLIBS}
+.endif
 
 SCRIPTS=	gzexe zdiff zforce zgrep zmore znew
 
