@@ -1,15 +1,14 @@
-# $NetBSD: Makefile,v 1.8 2024/11/11 11:44:51 martin Exp $
+# $NetBSD: Makefile,v 1.9 2026/04/30 13:31:47 simonb Exp $
 
 .include <bsd.own.mk>
-
-.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
 
 PROG=	unzip
 
 DPADD+=		${LIBARCHIVE} ${LIBZ} ${LIBBZ2} ${LIBLZMA} ${LIBCRYPTO} ${LIBPTHREAD}
 LDADD+=		-larchive -lz -lbz2 -llzma -lcrypto -lpthread
-PROGDPLIBS+=	${ZSTDDPLIBS}
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+PROGDPLIBS+=	${ZSTDDPLIBS}	# XXX needed by libarchive
 
-COPTS.unzip.c += -Wno-format-y2k
+COPTS.unzip.c+=	-Wno-format-y2k
 
 .include <bsd.prog.mk>

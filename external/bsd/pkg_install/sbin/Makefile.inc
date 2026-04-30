@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.5 2017/04/21 12:43:22 joerg Exp $
+# $NetBSD: Makefile.inc,v 1.6 2026/04/30 13:31:47 simonb Exp $
 
 .include <bsd.own.mk>
 
@@ -17,6 +17,8 @@ LDADD+=		-lnetpgpverify -lfetch -lssl -lcrypto
 
 DPADD+=		${LIBARCHIVE}
 LDADD+=		-larchive
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+PROGDPLIBS+=	${ZSTDDPLIBS}	# XXX needed by libarchive
 
 DPADD+=		${LIBZ} ${LIBBZ2}
 LDADD+=		-lz -lbz2
