@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_self.3,v 1.5 2017/10/23 01:03:23 wiz Exp $
+.\" $NetBSD: pthread_self.3,v 1.6 2026/05/01 12:32:05 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\"
 .\" $FreeBSD: src/lib/libpthread/man/pthread_self.3,v 1.10 2002/09/16 19:29:29 mini Exp $
 .\"
-.Dd July 9, 2010
+.Dd May 1, 2026
 .Dt PTHREAD_SELF 3
 .Os
 .Sh NAME
@@ -77,7 +77,8 @@ The return value is the thread ID.
 None.
 .Sh SEE ALSO
 .Xr pthread_create 3 ,
-.Xr pthread_equal 3
+.Xr pthread_equal 3 ,
+.Xr pthread_main_np 3
 .Sh STANDARDS
 The function conforms to
 .St -p1003.1-2001 .
