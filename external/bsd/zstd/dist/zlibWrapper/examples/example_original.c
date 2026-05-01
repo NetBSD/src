@@ -20,7 +20,7 @@ freely, subject to the following restrictions:
 3. This notice may not be removed or altered from any source distribution.
 */
 
-/* @(#) $Id: example_original.c,v 1.1.1.1 2024/10/27 22:44:15 christos Exp $ */
+/* @(#) Id */
 
 #include "zlib.h"
 #include <stdio.h>
