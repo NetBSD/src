@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.39 2025/09/27 21:00:41 christos Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.40 2026/05/01 07:19:45 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.39 2025/09/27 21:00:41 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.40 2026/05/01 07:19:45 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.39 2025/09/27 21:00:41 christos Exp $");
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include "extern.h"
 
@@ -232,9 +233,9 @@ user_sysctl(const int *name, unsigned int namelen,
 		_INT("stream_max", USER_STREAM_MAX, FOPEN_MAX,
 		     "The minimum maximum number of streams that a process "
 		     "may have open at any one time"),
-		_INT("tzname_max", USER_TZNAME_MAX, NAME_MAX,
-		     "The minimum maximum number of types supported for the "
-		     "name of a timezone"),
+		_INT("tzname_max", USER_TZNAME_MAX, _TZNAME_MAXIMUM,
+		     "The minimum maximum number of bytes supported for the "
+		     "name of a timezone abbreviation"),
 		_INT("atexit_max", USER_ATEXIT_MAX, -1,
 		     "The maximum number of functions that may be registered "
 		     "with atexit(3)"),
