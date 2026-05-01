@@ -16,7 +16,7 @@
  * or in pipe mode.
  */
 
-/* @(#) $Id: minigzip.c,v 1.1.1.1 2024/10/27 22:44:15 christos Exp $ */
+/* @(#) Id */
 
 #define _POSIX_SOURCE /* fileno */
 
@@ -234,7 +234,7 @@ int gzwrite _Z_OF((gzFile, const void *, unsigned));
 
 int gzwrite(gzFile gz, const void *buf, unsigned len) {
     z_stream *strm;
-    unsigned char out[BUFLEN];
+    unsigned char out[BUFLEN] = { 0 };
 
     if (gz == NULL || !gz->write)
         return 0;
@@ -287,7 +287,7 @@ int gzclose _Z_OF((gzFile));
 
 int gzclose(gzFile gz) {
     z_stream *strm;
-    unsigned char out[BUFLEN];
+    unsigned char out[BUFLEN] = { 0 };
 
     if (gz == NULL)
         return Z_STREAM_ERROR;
