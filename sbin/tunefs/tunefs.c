@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.58 2023/01/07 19:41:30 chs Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.59 2026/05/01 20:39:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.58 2023/01/07 19:41:30 chs Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.59 2026/05/01 20:39:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,8 @@ __RCSID("$NetBSD: tunefs.c,v 1.58 2023/01/07 19:41:30 chs Exp $");
 #include <unistd.h>
 #include <util.h>
 
+#include "partutil.h"
+
 /* the optimization warning string template */
 #define	OPTWARN	"should optimize for %s with minfree %s %d%%"
 
@@ -96,7 +98,6 @@ static	void	bwrite(daddr_t, char *, int, const char *);
 static	void	bread(daddr_t, char *, int, const char *);
 static	void	change_log_info(long long);
 static	void	getsb(struct fs *, const char *);
-static	int	openpartition(const char *, int, char *, size_t);
 static	int	isactive(int, struct statvfs *);
 static	void	show_log_info(void);
 __dead static	void	usage(void);
@@ -234,7 +235,7 @@ main(int argc, char *argv[])
 	if (Fflag)
 		fi = open(special, openflags);
 	else {
-		fi = openpartition(special, openflags, device, sizeof(device));
+		fi = openspecial(special, openflags, device, sizeof(device), NULL);
 		special = device;
 	}
 	if (fi == -1)
@@ -721,32 +722,4 @@ bread(daddr_t blk, char *buffer, int cnt, const char *file)
 		err(4, "%s: seeking to %lld", file, (long long)offset);
 	if ((i = read(fi, buffer, cnt)) != cnt)
 		errx(5, "%s: short read", file);
-}
-
-static int
-openpartition(const char *name, int flags, char *device, size_t devicelen)
-{
-	char		specname[MAXPATHLEN];
-	char		rawname[MAXPATHLEN];
-	const char	*special, *raw;
-	struct fstab	*fs;
-	int		fd, oerrno;
-
-	fs = getfsfile(name);
-	special = fs ? fs->fs_spec : name;
-
-	raw = getfsspecname(specname, sizeof(specname), special);
-	if (raw == NULL)
-		err(1, "%s: %s", name, specname);
-	special = getdiskrawname(rawname, sizeof(rawname), raw); 
-	if (special == NULL)
-		special = raw;
-
-	fd = opendisk(special, flags, device, devicelen, 0);
-	if (fd == -1 && errno == ENOENT) {
-		oerrno = errno;
-		strlcpy(device, special, devicelen);
-		errno = oerrno;
-	}
-	return (fd);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.1 2017/02/08 16:11:40 rin Exp $
+#	$NetBSD: Makefile.common,v 1.2 2026/05/01 20:39:26 christos Exp $
 #	@(#)Makefile	8.2 (Berkeley) 3/27/94
 
 # shared stuff with src/distrib/utils/x_newfs for install media.
@@ -6,6 +6,7 @@
 
 PROG=	newfs
 SRCS+=	dkcksum.c newfs.c mkfs.c partutil.c pathadj.c quota2_subr.c
+SRCS+=	openspecial.c
 
 DISKLABEL=${NETBSDSRCDIR}/sbin/disklabel
 FSCK=${NETBSDSRCDIR}/sbin/fsck

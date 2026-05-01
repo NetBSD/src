@@ -1,7 +1,7 @@
-/*	$NetBSD: partutil.h,v 1.4 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: openspecial.c,v 1.1 2026/05/01 20:39:26 christos Exp $	*/
 
 /*-
- * Copyright (c) 2006 The NetBSD Foundation, Inc.
+ * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -28,17 +28,58 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifndef _PARTUTIL_H_
-#define _PARTUTIL_H_
 
-__BEGIN_DECLS
-struct dkwedge_info;
-struct disk_geom;
-struct stat;
-int getdiskinfo(const char *, int, const char *,
-    struct disk_geom *, struct dkwedge_info *);
-int getdisksize(const char *, u_int *, off_t *);
-int openspecial(const char *, int, char *, size_t, struct stat *);
-__END_DECLS
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: openspecial.c,v 1.1 2026/05/01 20:39:26 christos Exp $");
 
-#endif /* _PARTUTIL_H_ */
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
+
+#include <err.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <util.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <fstab.h>
+#include <string.h>
+
+#include "partutil.h"
+
+
+int
+openspecial(const char *special, int flags, char *device, size_t devsize,
+    struct stat *sb)
+{
+	char specname[MAXPATHLEN], rawname[MAXPATHLEN];
+	const char *raw;
+	struct stat st;
+	struct fstab *fs;
+	int fd;
+
+	fs = getfsfile(special);
+	if (fs)
+		special = fs->fs_spec;
+
+	raw = getfsspecname(specname, sizeof(specname), special);
+	if (raw == NULL)
+		err(EXIT_FAILURE, "%s: %s", special, specname);
+
+	special = getdiskrawname(rawname, sizeof(rawname), raw);
+	if (special == NULL)
+		special = raw;
+
+	fd = opendisk(special, flags, device, devsize, 0);
+	if (sb == NULL)
+		sb = &st;
+
+	if (fd == -1 || fstat(fd, sb) == -1)
+		err(EXIT_FAILURE, "Can't open `%s'", special);
+
+	if (S_ISBLK(sb->st_mode))
+		errx(EXIT_FAILURE, "`%s' is a block device. use raw device",
+		    special);
+
+	return fd;
+}

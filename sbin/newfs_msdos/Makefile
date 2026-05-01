@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.6 2013/01/21 20:28:38 christos Exp $
+# $NetBSD: Makefile,v 1.7 2026/05/01 20:39:26 christos Exp $
 # From: $FreeBSD: src/sbin/newfs_msdos/Makefile,v 1.5 2001/03/26 14:33:18 ru Exp $
 
 .include <bsd.own.mk>
 
 PROG=	newfs_msdos
 MAN=	newfs_msdos.8
-SRCS=	newfs_msdos.c partutil.c mkfs_msdos.c
+SRCS=	newfs_msdos.c partutil.c mkfs_msdos.c openspecial.c
 
 LDADD+= -lutil
 DPADD+= ${LIBUTIL}

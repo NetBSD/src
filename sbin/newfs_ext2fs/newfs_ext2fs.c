@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.11 2022/04/16 18:15:21 andvar Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.12 2026/05/01 20:39:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.11 2022/04/16 18:15:21 andvar Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.12 2026/05/01 20:39:26 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,11 +249,8 @@ main(int argc, char *argv[])
 		if (!Nflag)
 			fso = fsi;
 	} else {	/* !Fflag */
-		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
+		fsi = openspecial(special, O_RDONLY, device, sizeof(device), &sb);
 		special = device;
-		if (fsi < 0 || fstat(fsi, &sb) == -1)
-			err(EXIT_FAILURE, "%s: open for read", special);
-
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);
 			if (fso < 0)
