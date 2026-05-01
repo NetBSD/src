@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.103 2025/11/23 22:11:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.104 2026/05/01 11:00:21 wiz Exp $
 #
 
 NOSANITIZER=	# defined
@@ -164,7 +164,7 @@ MAN+=	affinity.3 pthread.3 \
 	pthread_getname_np.3 \
 	pthread_getspecific.3 pthread_join.3 \
 	pthread_key_create.3 pthread_kill.3 \
-	pthread_mutex.3 pthread_mutexattr.3 \
+	pthread_main_np.3 pthread_mutex.3 pthread_mutexattr.3 \
 	pthread_once.3 pthread_rwlock.3 pthread_rwlockattr.3 \
 	pthread_schedparam.3 pthread_self.3 \
 	pthread_sigmask.3 pthread_spin.3 \

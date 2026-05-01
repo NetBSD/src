@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.24 2025/11/29 14:39:36 riastradh Exp $
+#	$NetBSD: shlib_version,v 1.25 2026/05/01 11:00:21 wiz Exp $
 #
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
@@ -25,4 +25,4 @@
 # 20251122 LDADD+= -Wl,-z,nodelete
 #
 major=1
-minor=6
+minor=7

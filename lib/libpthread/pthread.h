@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.h,v 1.45 2025/10/27 16:29:15 christos Exp $	*/
+/*	$NetBSD: pthread.h,v 1.46 2026/05/01 11:00:21 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -164,6 +164,8 @@ int	pthread_suspend_np(pthread_t);
 int	pthread_resume_np(pthread_t);
 
 unsigned int	pthread_curcpu_np(void);
+
+int	pthread_main_np(void);
 
 int	pthread_getcpuclockid(pthread_t, clockid_t *);
 

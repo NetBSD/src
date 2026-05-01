@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2523 2026/04/28 20:41:59 christos Exp $
+#	$NetBSD: mi,v 1.2524 2026/05/01 11:00:20 wiz Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -10470,6 +10470,7 @@
 ./usr/share/man/cat3/pthread_key_create.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_key_delete.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_kill.0		comp-c-catman		.cat
+./usr/share/man/cat3/pthread_main_np.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_destroy.0	comp-c-catman		.cat
 ./usr/share/man/cat3/pthread_mutex_getprioceiling.0	comp-c-catman	.cat
@@ -19447,6 +19448,7 @@
 ./usr/share/man/html3/pthread_key_create.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_key_delete.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_kill.html		comp-c-htmlman		html
+./usr/share/man/html3/pthread_main_np.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex.html	comp-c-htmlman		html
 ./usr/share/man/html3/pthread_mutex_destroy.html	comp-c-htmlman	html
 ./usr/share/man/html3/pthread_mutex_getprioceiling.html	comp-c-htmlman	html
@@ -28420,6 +28422,7 @@
 ./usr/share/man/man3/pthread_key_create.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_key_delete.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_kill.3		comp-c-man		.man
+./usr/share/man/man3/pthread_main_np.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex.3		comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_destroy.3	comp-c-man		.man
 ./usr/share/man/man3/pthread_mutex_getprioceiling.3	comp-c-man	.man
