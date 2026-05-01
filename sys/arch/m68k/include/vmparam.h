@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.7 2026/04/30 15:10:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.8 2026/05/01 12:27:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -168,7 +168,9 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #endif
 #ifndef VM_MAX_KERNEL_ADDRESS
+#if defined(_KMEMUSER) || defined(_KERNEL)
 extern vaddr_t kernel_virtual_max;
+#endif
 #define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
 #endif
 
