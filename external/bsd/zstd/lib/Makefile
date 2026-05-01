@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2025/04/06 23:03:05 rillig Exp $
+# $NetBSD: Makefile,v 1.10 2026/05/01 14:32:50 christos Exp $
 
 LIBISPRIVATE=pic
 NOLINT=yes	# XXX
@@ -43,6 +43,7 @@ zstd_double_fast.c \
 zstd_fast.c \
 zstd_lazy.c \
 zstd_ldm.c \
+zstd_preSplit.c \
 zstd_opt.c \
 zstdmt_compress.c
 
