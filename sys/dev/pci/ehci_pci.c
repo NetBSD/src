@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.79 2026/01/06 15:21:37 tsutsui Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.80 2026/05/02 07:23:00 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.79 2026/01/06 15:21:37 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.80 2026/05/02 07:23:00 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,6 +181,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	switch (quirk) {
 	case EHCI_PCI_QUIRK_AMD_SB600:
 		ehci_apply_amd_quirks(sc);
+		sc->sc.sc_flags |= EHCIF_SB600_ASYNCLIST_RELOAD;
 		break;
 	case EHCI_PCI_QUIRK_AMD_SB700:
 		if (pci_find_device(NULL, ehci_sb700_match))

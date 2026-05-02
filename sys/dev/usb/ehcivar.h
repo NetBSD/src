@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.54 2026/03/03 13:48:07 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.55 2026/05/02 07:23:00 tsutsui Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@ typedef struct ehci_softc {
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
 #define EHCIF_ETTF			0x02 /* Emb. Transaction Translater func. */
 #define EHCIF_32BIT_ACCESS		0x04 /* 32-bit MMIO access req'd */
+#define EHCIF_SB600_ASYNCLIST_RELOAD	0x08 /* SB600 quirk (PR/57359) */
 
 	uint32_t sc_cmd;		/* shadow of cmd reg during suspend */
 
