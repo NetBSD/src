@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.89 2025/04/20 22:33:13 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.90 2026/05/02 19:49:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -98,7 +98,6 @@
 #endif
 
 #define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
-#define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

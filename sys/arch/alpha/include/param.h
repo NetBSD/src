@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.51 2026/03/27 12:54:33 skrll Exp $ */
+/* $NetBSD: param.h,v 1.52 2026/05/02 19:49:23 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,6 @@
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
 
 #define	KERNBASE	0xfffffc0000a00000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */

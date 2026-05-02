@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.42 2025/04/27 01:32:09 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.43 2026/05/02 19:49:23 thorpej Exp $	*/
 
 #ifdef __x86_64__
 
@@ -58,7 +58,6 @@
  */
 #define	KERNBASE	0xffffffff80000000 /* start of kernel virtual space */
 #define	KERNTEXTOFF	0xffffffff80200000 /* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define KERNTEXTOFF_HI	0xffffffff
 #define KERNTEXTOFF_LO	0x80200000
