@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2026/03/25 21:55:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2026/05/02 21:44:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -14,7 +14,7 @@ INCSDIR=${X11INCDIR}/X11/Xcursor
 
 PKGDIR?=	/usr/pkg
 ICONDIR=	${X11LIBDIR}/icons
-XCURSORPATH=	~/.local/share/icons:~/.icons:${PKGDIR}/share/icons:${X11LIBDIR}/icons:${PKGDIR}/share/pixmaps:${X11LIBDIR}/pixmaps:${ICONDIR}
+XCURSORPATH=	~/.local/share/icons:~/.icons:${PKGDIR}/share/icons:${PKGDIR}/share/pixmaps:${X11LIBDIR}/pixmaps:${ICONDIR}
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB}
 CPPFLAGS+=	-DICONDIR=\"${ICONDIR}\"
