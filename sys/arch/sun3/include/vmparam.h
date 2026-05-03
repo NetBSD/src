@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.43 2026/04/30 15:10:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.44 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
 
 #ifndef _SUN3_VMPARAM_H_
 #define _SUN3_VMPARAM_H_ 1
+
+#if defined(_KERNEL) && !defined(_MODULE)
 
 #ifdef	_SUN3_
 #include <machine/vmparam3.h>
@@ -61,6 +63,8 @@
 /* This is needed by some LKMs. */
 #define VM_PHYSSEG_MAX		4
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

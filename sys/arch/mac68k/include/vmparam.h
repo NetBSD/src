@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.56 2026/04/30 15:10:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.57 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,6 +76,8 @@
 #ifndef _MAC68K_VMPARAM_H_
 #define	_MAC68K_VMPARAM_H_
 
+#if defined(_KERNEL) && !defined(_MODULE)
+
 /*
  * Constants which control the way the VM system deals with memory segments.
  * Most mac68k systems have only 1 physical memory segment, but some have 2.
@@ -90,6 +92,8 @@
  */
 #define	VM_PHYSSEG_MAX		2
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

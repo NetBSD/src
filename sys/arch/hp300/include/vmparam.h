@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51 2026/04/30 15:10:12 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,7 @@
 #ifndef _HP300_VMPARAM_H_
 #define	_HP300_VMPARAM_H_
 
-/*
- * Machine dependent constants for HP300
- */
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * External IO space map size.
@@ -54,6 +52,8 @@
 #ifndef EIOMAPSIZE
 #define EIOMAPSIZE	3584		/* 14mb */
 #endif
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

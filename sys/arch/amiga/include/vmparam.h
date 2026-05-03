@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.55 2026/04/30 15:10:12 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.56 2026/05/03 19:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,7 @@
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
 
-/*
- * Machine dependent constants for amiga
- */
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -87,6 +85,8 @@
 #define VM_NFREELIST		2
 #define VM_FREELIST_DEFAULT	0
 #define VM_FREELIST_ZORROII	1
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

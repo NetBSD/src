@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.31 2026/04/30 15:10:12 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.32 2026/05/03 19:10:40 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,11 +41,11 @@
 #ifndef _MACHINE_VMPARAM_H_
 #define	_MACHINE_VMPARAM_H_
 
-/*
- * Machine dependent constants for cesfic
- */
+#if defined(_KERNEL) && !defined(_MODULE)
 
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x00002000)	/* XXX */
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

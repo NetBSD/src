@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.23 2026/04/28 14:58:31 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.24 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.23 2026/04/28 14:58:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.24 2026/05/03 19:10:41 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -142,6 +142,8 @@ phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
 paddr_t	msgbufpa = (paddr_t)-1;		/* PA of message buffer */
 #endif
 void	*msgbufaddr;
+
+vaddr_t m68k_usrstack;
 
 /*
  * Common tasks for machine_init().
@@ -272,6 +274,13 @@ cpu_startup_common(void)
 {
 	vaddr_t minaddr, maxaddr;
 	char pbuf[9];
+
+	/*
+	 * For the benefit of modules that need USRSTACK (such
+	 * as compat exec modules).  Initialized here because
+	 * USRSTACK may not be a compile-time constant.
+	 */
+	m68k_usrstack = USRSTACK;
 
 	/* Initialize the FPU, if present. */
 	fpu_init();

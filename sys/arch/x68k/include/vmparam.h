@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.50 2026/04/30 15:10:14 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51 2026/05/03 19:10:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,9 +41,7 @@
 #ifndef _X68K_VMPARAM_H_
 #define	_X68K_VMPARAM_H_
 
-/*
- * Machine dependent constants for X68K
- */
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
@@ -59,6 +57,8 @@
 
 #define	VM_PHYS_SEG_TO_FREELIST(s) \
 	((s) == 0 ? VM_FREELIST_MAINMEM : VM_FREELIST_DEFAULT)
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2026/04/30 15:10:13 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,6 +41,8 @@
 #ifndef _VIRT68K_VMPARAM_H_
 #define _VIRT68K_VMPARAM_H_
 
+#if defined(_KERNEL) && !defined(_MODULE)
+
 /*
  * Constants which control the way the VM system deals with memory segments.
  *
@@ -52,6 +54,8 @@
  */
 #define	VM_PHYSSEG_MAX		4
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
+
+#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 

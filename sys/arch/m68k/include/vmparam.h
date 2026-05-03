@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.8 2026/05/01 12:27:37 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.9 2026/05/03 19:10:41 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,27 +47,7 @@
 
 #define	__USE_TOPDOWN_VM
 
-/*
- * hp300 pmap derived m68k ports can use 4K or 8K pages.
- * (except HPMMU machines, that support only 4K page)
- * sun3 and sun3x use 8K pages.
- * sun2 has 2K pages.
- * The page size is specified by PGSHIFT in <machine/param.h>.
- * Override the PAGE_* definitions to be compile-time constants.
- */
-#define	PAGE_SHIFT	PGSHIFT
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
-
 /* Some implemantations like jemalloc(3) require physical page size details. */
-/*
- * XXX:
- * <uvm/uvm_param.h> assumes PAGE_SIZE is not a constant macro
- * but a variable (*uvmexp_pagesize) on MODULE builds in case of
- * (MIN_PAGE_SIZE != MAX_PAGE_SIZE).  For now we define these macros
- * for m68k ports only on !_KERNEL (currently just for jemalloc) builds.
- */
-#if !defined(_KERNEL)
 #if defined(__mc68010__)
 /*
  * As of now, there is only a single PAGE_SHIFT value here (11),
@@ -79,7 +59,27 @@
 #define	MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
 #define	MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
 #endif /* __mc68010__ */
-#endif /* !_KERNEL */
+
+#if defined(_KERNEL)
+
+#if defined(_MODULE)
+
+extern vaddr_t m68k_usrstack;
+#define	USRSTACK	m68k_usrstack
+
+#else
+
+/*
+ * hp300 pmap derived m68k ports can use 4K or 8K pages.
+ * (except HPMMU machines, that support only 4K page)
+ * sun3 and sun3x use 8K pages.
+ * sun2 has 2K pages.
+ * The page size is specified by PGSHIFT in <machine/param.h>.
+ * Override the PAGE_* definitions to be compile-time constants.
+ */
+#define	PAGE_SHIFT	PGSHIFT
+#define	PAGE_SIZE	(1 << PAGE_SHIFT)
+#define	PAGE_MASK	(PAGE_SIZE - 1)
 
 /*
  * Virtual memory related constants, all in bytes
@@ -168,9 +168,7 @@
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
 #endif
 #ifndef VM_MAX_KERNEL_ADDRESS
-#if defined(_KMEMUSER) || defined(_KERNEL)
 extern vaddr_t kernel_virtual_max;
-#endif
 #define	VM_MAX_KERNEL_ADDRESS	(kernel_virtual_max)
 #endif
 
@@ -215,5 +213,9 @@ extern vaddr_t kernel_virtual_max;
 #ifndef VM_FREELIST_DEFAULT
 #define	VM_FREELIST_DEFAULT	0
 #endif
+
+#endif /* _MODULE */
+
+#endif /* _KERNEL */
 
 #endif /* _M68K_VMPARAM_H_ */
