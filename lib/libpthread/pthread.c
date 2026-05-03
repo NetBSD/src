@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.191 2026/05/01 11:00:21 wiz Exp $	*/
+/*	$NetBSD: pthread.c,v 1.192 2026/05/03 12:39:34 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.191 2026/05/01 11:00:21 wiz Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.192 2026/05/03 12:39:34 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -137,7 +137,6 @@ size_t	pthread__guardsize;
 size_t	pthread__pagesize;
 static struct __pthread_st *pthread__main;
 static size_t __pthread_st_size;
-static pthread_t __pthread_main_thread;
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
@@ -273,8 +272,6 @@ pthread__init(void)
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl) != 0) {
 		err(EXIT_FAILURE, "_lwp_ctl");
 	}
-
-	__pthread_main_thread = first;
 
 	/* Start subsystems */
 	PTHREAD_MD_INIT
@@ -1452,7 +1449,7 @@ pthread_main_np(void)
 {
 	if (__predict_false(__uselibcstub))
 		return -1;
-	if (pthread_self() == __pthread_main_thread)
+	if (pthread_self() == pthread__main)
 		return 1;
 	return 0;
 }
