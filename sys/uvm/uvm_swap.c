@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.231 2026/03/31 14:28:55 yamt Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.232 2026/05/03 16:02:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.231 2026/03/31 14:28:55 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.232 2026/05/03 16:02:37 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -2079,9 +2079,9 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 * allocate a buf for the i/o.
 	 */
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp || write);
-	KASSERT(curlwp != uvm.pagedaemon_lwp || async);
-	bp = getiobuf(swapdev_vp, curlwp != uvm.pagedaemon_lwp);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || write);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || async);
+	bp = getiobuf(swapdev_vp, !uvm_lwp_is_pagedaemon(curlwp));
 	if (bp == NULL) {
 		uvm_aio_aiodone_pages(pps, npages, true, ENOMEM);
 		return ENOMEM;
@@ -2142,7 +2142,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	if (async) {
 		bp->b_iodone = uvm_aio_aiodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
-		if (curlwp == uvm.pagedaemon_lwp)
+		if (uvm_lwp_is_pagedaemon(curlwp))
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
 		else
 			BIO_SETPRIO(bp, BPRIO_TIMELIMITED);

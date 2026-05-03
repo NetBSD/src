@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_node.c,v 1.38 2018/02/08 09:05:20 dholland Exp $	*/
+/*	$NetBSD: puffs_node.c,v 1.39 2026/05/03 16:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.38 2018/02/08 09:05:20 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_node.c,v 1.39 2026/05/03 16:02:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/hash.h>
@@ -163,7 +163,7 @@ puffs_newnode(struct mount *mp, struct vnode *dvp, struct vnode **vpp,
 		return EPROTO;
 	}
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 
 	error = puffs_getvnode1(dvp->v_mount, ck, type, 0, rdev, false, vpp);
 	if (error) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.126 2021/04/01 19:00:33 christos Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.127 2026/05/03 16:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.126 2021/04/01 19:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.127 2026/05/03 16:02:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -223,7 +223,7 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	statvfs_to_puffs_statvfs(&mp->mnt_stat, &args->pa_svfsb);
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 	pmp = kmem_zalloc(sizeof(struct puffs_mount), KM_SLEEP);
 
 	mp->mnt_fs_bshift = DEV_BSHIFT;
@@ -411,7 +411,7 @@ puffs_vfsop_unmount(struct mount *mp, int mntflags)
 		 * Release kernel thread now that there is nothing
 		 * it would be wanting to lock.
 		 */
-		KASSERT(curlwp != uvm.pagedaemon_lwp);
+		KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_sopreq = PUFFS_SOPREQSYS_EXIT;
 		mutex_enter(&pmp->pmp_sopmtx);

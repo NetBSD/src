@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.155 2023/05/11 23:11:25 chs Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.156 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.155 2023/05/11 23:11:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.156 2026/05/03 16:02:36 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1991,7 +1991,7 @@ retry:
 		if (blkno != 0)
 			continue;
 
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 			error = ENOMEM;
 			break;
 		}
@@ -2154,7 +2154,7 @@ snapblkaddr(struct vnode *vp, daddr_t lbn, daddr_t *res)
 	}
 	if ((error = ufs_getlbns(vp, lbn, indirs, &num)) != 0)
 		return error;
-	if (curlwp == uvm.pagedaemon_lwp) {
+	if (uvm_lwp_is_pagedaemon(curlwp)) {
 		mutex_enter(&bufcache_lock);
 		bp = incore(vp, indirs[num-1].in_lbn);
 		if (bp && (bp->b_oflags & (BO_DONE | BO_DELWRI))) {

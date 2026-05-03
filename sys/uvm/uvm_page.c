@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.256 2024/03/05 14:33:50 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.257 2026/05/03 16:02:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.256 2024/03/05 14:33:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.257 2026/05/03 16:02:37 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1024,7 +1024,7 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 	if (__predict_false(pgb->pgb_nfree <= uvmexp.reserve_kernel)) {
 		if ((flags & UVM_PGA_USERESERVE) == 0 ||
 		    (pgb->pgb_nfree <= uvmexp.reserve_pagedaemon &&
-		     curlwp != uvm.pagedaemon_lwp)) {
+		     !uvm_lwp_is_pagedaemon(curlwp))) {
 			mutex_spin_exit(lock);
 		     	return NULL;
 		}

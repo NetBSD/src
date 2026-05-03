@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.105 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.105 2026/05/03 16:02:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,7 +878,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct uvm_page_array a;
 	bool wasclean, needs_clean;
 	bool async = (origflags & PGO_SYNCIO) == 0;
-	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
+	bool pagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 	struct mount *trans_mp;
 	int flags;
 	bool modified;		/* if we write out any pages */
@@ -1492,7 +1492,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		mbp->b_flags = brw;
 		mbp->b_iodone = NULL;
 	}
-	if (curlwp == uvm.pagedaemon_lwp)
+	if (uvm_lwp_is_pagedaemon(curlwp))
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async || lazy)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);

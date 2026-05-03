@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_msgif.c,v 1.108 2025/02/01 22:53:00 andvar Exp $	*/
+/*	$NetBSD: puffs_msgif.c,v 1.109 2026/05/03 16:02:35 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.108 2025/02/01 22:53:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_msgif.c,v 1.109 2026/05/03 16:02:35 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,7 +135,7 @@ puffs_msgpark_alloc(int waitok)
 {
 	struct puffs_msgpark *park;
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp || !waitok);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || !waitok);
 
 	park = pool_cache_get(parkpc, waitok ? PR_WAITOK : PR_NOWAIT);
 	if (park == NULL)
@@ -237,7 +237,7 @@ puffs_msgmem_alloc(size_t len, struct puffs_msgpark **ppark, void **mem,
 	struct puffs_msgpark *park;
 	void *m;
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp || !cansleep);
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || !cansleep);
 	m = kmem_zalloc(len, cansleep ? KM_SLEEP : KM_NOSLEEP);
 	if (m == NULL) {
 		KASSERT(cansleep == 0);
@@ -986,7 +986,7 @@ puffs_msgif_dispatch(void *ctx, struct putter_hdr *pth)
 		}
 		pf = (struct puffs_flush *)preq;
 
-		KASSERT(curlwp != uvm.pagedaemon_lwp);
+		KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		memcpy(&psopr->psopr_pf, pf, sizeof(*pf));
 		psopr->psopr_sopreq = PUFFS_SOPREQ_FLUSH;
@@ -1010,7 +1010,7 @@ puffs_msgif_dispatch(void *ctx, struct putter_hdr *pth)
 
 		DPRINTF(("dispatch: unmount 0x%x\n", preq->preq_optype));
 
-		KASSERT(curlwp != uvm.pagedaemon_lwp);
+		KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 		psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 		psopr->psopr_preq = *preq;
 		psopr->psopr_sopreq = PUFFS_SOPREQ_UNMOUNT;

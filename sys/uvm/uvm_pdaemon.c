@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.138 2026/03/23 12:44:50 yamt Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.139 2026/05/03 16:02:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.138 2026/03/23 12:44:50 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.139 2026/05/03 16:02:37 thorpej Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -138,7 +138,7 @@ uvm_wait(const char *wmsg)
 {
 	int timo = 0;
 
-	if (uvm.pagedaemon_lwp == NULL)
+	if (uvm_lwp_is_pagedaemon(curlwp))
 		panic("out of memory before the pagedaemon thread exists");
 
 	mutex_spin_enter(&uvmpd_lock);
@@ -147,7 +147,7 @@ uvm_wait(const char *wmsg)
 	 * check for page daemon going to sleep (waiting for itself)
 	 */
 
-	if (curlwp == uvm.pagedaemon_lwp && uvmexp.paging == 0) {
+	if (uvm_lwp_is_pagedaemon(curlwp) && uvmexp.paging == 0) {
 		/*
 		 * now we have a problem: the pagedaemon wants to go to
 		 * sleep until it frees more memory.   but how can it
@@ -196,6 +196,17 @@ uvm_kick_pdaemon(void)
 		wakeup(&uvm.pagedaemon);
 	     	mutex_spin_exit(&uvmpd_lock);
 	}
+}
+
+/*
+ * _uvm_lwp_is_pagedaemon: returns true of the specified lwp is
+ * a pagedaemon lwp.
+ */
+
+bool
+_uvm_lwp_is_pagedaemon(struct lwp *l)
+{
+	return _uvm_lwp_is_pagedaemon_test(l);
 }
 
 /*

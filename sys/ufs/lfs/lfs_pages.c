@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.28 2026/01/05 05:02:47 perseant Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.29 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.28 2026/01/05 05:02:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.29 2026/05/03 16:02:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -251,7 +251,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	int dirty;	/* number of dirty pages in a block */
 	int tdirty;
 	int pages_per_block = lfs_sb_getbsize(fs) >> PAGE_SHIFT;
-	int pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+	int pagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 
 	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));
 	ASSERT_MAYBE_SEGLOCK(fs);
@@ -441,7 +441,7 @@ lfs_putpages(void *v)
 	fs = ip->i_lfs;
 	sync = (ap->a_flags & PGO_SYNCIO) != 0;
 	reclaim = (ap->a_flags & PGO_RECLAIM) != 0;
-	pagedaemon = (curlwp == uvm.pagedaemon_lwp);
+	pagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 	trans_mp = NULL;
 
 	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));

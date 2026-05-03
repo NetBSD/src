@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.307 2025/12/11 07:25:12 andvar Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.308 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.307 2025/12/11 07:25:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.308 2026/05/03 16:02:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -660,7 +660,7 @@ buf_alloc(size_t size)
 			continue;
 		}
 
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 			mutex_exit(&bufcache_lock);
 			return NULL;
 		}
@@ -695,7 +695,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 	 * getblk() may return NULL if we are the pagedaemon.
 	 */
 	if (bp == NULL) {
-		KASSERT(curlwp == uvm.pagedaemon_lwp);
+		KASSERT(uvm_lwp_is_pagedaemon(curlwp));
 		return NULL;
 	}
 
@@ -1444,7 +1444,7 @@ start:
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
-		if (!from_bufq || curlwp != uvm.pagedaemon_lwp) {
+		if (!from_bufq || !uvm_lwp_is_pagedaemon(curlwp)) {
 			/* wait for a free buffer of any kind */
 			if ((slpflag & PCATCH) != 0)
 				(void)cv_timedwait_sig(&needbuffer_cv,
@@ -2192,7 +2192,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 	SDT_PROBE4(io, kernel, , bbusy__start,  bp, intr, timo, interlock);
 
 	if ((bp->b_cflags & BC_BUSY) != 0) {
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 			error = SET_ERROR(EDEADLK);
 			goto out;
 		}

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.157 2026/02/20 03:19:30 yamt Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.158 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.157 2026/02/20 03:19:30 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.158 2026/05/03 16:02:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -928,7 +928,7 @@ retry:
 	 * it explicitly, is the pagedaemon or the lock failed.
 	 */
 	defer = false;
-	if ((curlwp == uvm.pagedaemon_lwp) || async) {
+	if (uvm_lwp_is_pagedaemon(curlwp) || async) {
 		defer = true;
 	} else if (lktype == LK_SHARED) {
 		/* Excellent chance of getting, if the last ref. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.78 2023/07/17 12:55:37 riastradh Exp $	*/
+/*	$NetBSD: uvm.h,v 1.79 2026/05/03 16:02:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -72,6 +72,7 @@
 struct workqueue;
 struct pgflcache;
 
+#if defined(_RUMPKERNEL) || !defined(_MODULE)
 /*
  * per-cpu data
  */
@@ -108,6 +109,7 @@ struct uvm {
 	int pagedaemon;			/* daemon sleeps on this */
 	struct lwp *pagedaemon_lwp;	/* daemon's lid */
 };
+#endif /* _RUMPKERNEL || ! _MODULE */
 
 /*
  * kernel object: to support anonymous pageable kernel memory
@@ -170,6 +172,15 @@ do {									\
 } while (/*CONSTCOND*/ 0)
 
 void uvm_kick_pdaemon(void);
+bool _uvm_lwp_is_pagedaemon(struct lwp *);
+
+#define	_uvm_lwp_is_pagedaemon_test(l) ((l) == uvm.pagedaemon_lwp)
+
+#ifdef _MODULE
+#define	uvm_lwp_is_pagedaemon(l) _uvm_lwp_is_pagedaemon(l)
+#else
+#define	uvm_lwp_is_pagedaemon(l) _uvm_lwp_is_pagedaemon_test(l)
+#endif
 
 /*
  * UVM_PAGE_OWN: track page ownership (only if UVM_PAGE_TRKOWN)

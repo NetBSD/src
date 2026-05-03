@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.226 2024/02/09 22:08:37 andvar Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.227 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.226 2024/02/09 22:08:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.227 2026/05/03 16:02:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1333,7 +1333,7 @@ puffs_vnop_inactive(void *v)
 			struct puffs_sopreq *psopr;
 			int at = MAX(pnode->pn_cn_grace, pnode->pn_cn_timeout);
 
-			KASSERT(curlwp != uvm.pagedaemon_lwp);
+			KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 			psopr = kmem_alloc(sizeof(*psopr), KM_SLEEP);
 			psopr->psopr_ck = VPTOPNC(pnode->pn_vp);
 			psopr->psopr_sopreq = PUFFS_SOPREQ_EXPIRE;
@@ -1559,7 +1559,7 @@ puffs_vnop_readdir(void *v)
 
 	/* provide cookies to caller if so desired */
 	if (ap->a_cookies) {
-		KASSERT(curlwp != uvm.pagedaemon_lwp);
+		KASSERT(!uvm_lwp_is_pagedaemon(curlwp));
 		*ap->a_cookies = malloc(readdir_msg->pvnr_ncookies*CSIZE,
 		    M_TEMP, M_WAITOK);
 		*ap->a_ncookies = readdir_msg->pvnr_ncookies;
@@ -2776,9 +2776,9 @@ puffs_vnop_strategy(void *v)
 		mutex_exit(vp->v_interlock);
 	}
 
-	cansleep = (curlwp == uvm.pagedaemon_lwp || dofaf) ? 0 : 1;
+	cansleep = (uvm_lwp_is_pagedaemon(curlwp) || dofaf) ? 0 : 1;
 
-	KASSERT(curlwp != uvm.pagedaemon_lwp || dofaf || BIOASYNC(bp));
+	KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || dofaf || BIOASYNC(bp));
 
 	/* allocate transport structure */
 	tomove = PUFFS_TOMOVE(bp->b_bcount, pmp);
@@ -3037,7 +3037,7 @@ puffs_vnop_getpages(void *v)
 #ifdef notnowjohn
 		/* allocate worst-case memory */
 		runsizes = ((npages / 2) + 1) * sizeof(struct puffs_cacherun);
-		KASSERT(curlwp != uvm.pagedaemon_lwp || locked);
+		KASSERT(!uvm_lwp_is_pagedaemon(curlwp) || locked);
 		pcinfo = kmem_zalloc(sizeof(struct puffs_cacheinfo) + runsize,
 		    locked ? KM_NOSLEEP : KM_SLEEP);
 

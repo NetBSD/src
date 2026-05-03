@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.202 2024/02/13 21:40:02 andvar Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.203 2026/05/03 16:02:36 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.202 2024/02/13 21:40:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.203 2026/05/03 16:02:36 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -798,7 +798,7 @@ again:
 		/*
 		 * Ensure that the queue never grows too large.
 		 */
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 	  		/* Enqueue for later, to avoid free-page deadlock */
 		} else while (nmp->nm_bufqlen >= 2 * nmp->nm_bufqiods) {
 			if (catch_p) {
