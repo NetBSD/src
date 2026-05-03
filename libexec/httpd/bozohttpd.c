@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.150 2026/04/22 10:48:18 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.151 2026/05/03 21:40:37 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -2514,6 +2514,9 @@ bozo_init_httpd(bozohttpd_t *httpd)
 
 	/* mmap region size */
 	httpd->mmapsz = BOZO_MMAPSZ;
+
+	/* default bind port */
+	httpd->defbindport = BOZO_HTTP_PORT;
 
 	/* error buffer for bozo_http_error() */
 	if ((httpd->errorbuf = malloc(BOZO_MINBUFSIZE)) == NULL) {

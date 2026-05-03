@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.22 2020/10/15 04:21:53 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.23 2026/05/03 21:40:37 mrg Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -135,7 +135,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 	if (!httpd->background)
 		httpd->background = 1;
 
-	portnum = (httpd->bindport) ? httpd->bindport : "http";
+	portnum = httpd->bindport ? httpd->bindport : httpd->defbindport;
 	
 	memset(&h, 0, sizeof(h));
 	h.ai_family = PF_UNSPEC;

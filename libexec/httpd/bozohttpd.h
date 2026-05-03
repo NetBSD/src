@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.73 2022/09/12 10:30:39 martin Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.74 2026/05/03 21:40:37 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -109,6 +109,7 @@ typedef struct bozohttpd_t {
 	char		*pidfile;	/* path to the pid file, if any */
 	size_t		 page_size;	/* page size */
 	char		*slashdir;	/* www slash directory */
+	const char	*defbindport;	/* default "http"; ssl sets to "https" */
 	char		*bindport;	/* bind port; default "http" */
 	char		*bindaddress;	/* address for binding - INADDR_ANY */
 	int		 debug;		/* debugging level */

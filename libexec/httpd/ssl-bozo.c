@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.35 2026/04/22 07:51:38 shm Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.36 2026/05/03 21:40:37 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -367,8 +367,7 @@ bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
 	    sslinfo->certificate_file,
 	    sslinfo->privatekey_file));
-	if (!httpd->bindport)
-		httpd->bindport = bozostrdup(httpd, NULL, BOZO_HTTPS_PORT);
+	httpd->defbindport = BOZO_HTTPS_PORT;
 }
 
 void
