@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.36 2026/05/03 21:40:37 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.37 2026/05/03 21:49:10 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2023 Matthew R. Green
+ * Copyright (c) 1997-2026 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -96,7 +96,7 @@ bozo_ssl_proto(const char *name)
 		for (i = 0; protos[i].proto != 0; i++)
 			if (strcasecmp(name, protos[i].name) == 0)
 				return protos[i].proto;
-	return protos[0].proto;
+	return TLS1_1_VERSION;
 }
 
 static const char *
