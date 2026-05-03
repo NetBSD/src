@@ -1,7 +1,7 @@
-/*	$NetBSD: zutil.c,v 1.5 2024/09/22 19:12:28 christos Exp $	*/
+/*	$NetBSD: zutil.c,v 1.6 2026/05/03 16:36:10 christos Exp $	*/
 
 /* zutil.c -- target dependent utility functions for the compression library
- * Copyright (C) 1995-2017 Jean-loup Gailly
+ * Copyright (C) 1995-2026 Jean-loup Gailly
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -13,16 +13,16 @@
 #endif
 
 z_const char * const z_errmsg[10] = {
-    __UNCONST("need dictionary"),     /* Z_NEED_DICT       2  */
-    __UNCONST("stream end"),          /* Z_STREAM_END      1  */
-    __UNCONST(""),                    /* Z_OK              0  */
-    __UNCONST("file error"),          /* Z_ERRNO         (-1) */
-    __UNCONST("stream error"),        /* Z_STREAM_ERROR  (-2) */
-    __UNCONST("data error"),          /* Z_DATA_ERROR    (-3) */
-    __UNCONST("insufficient memory"), /* Z_MEM_ERROR     (-4) */
-    __UNCONST("buffer error"),        /* Z_BUF_ERROR     (-5) */
-    __UNCONST("incompatible version"),/* Z_VERSION_ERROR (-6) */
-    __UNCONST(""),
+    (z_const char *)"need dictionary",     /* Z_NEED_DICT       2  */
+    (z_const char *)"stream end",          /* Z_STREAM_END      1  */
+    (z_const char *)"",                    /* Z_OK              0  */
+    (z_const char *)"file error",          /* Z_ERRNO         (-1) */
+    (z_const char *)"stream error",        /* Z_STREAM_ERROR  (-2) */
+    (z_const char *)"data error",          /* Z_DATA_ERROR    (-3) */
+    (z_const char *)"insufficient memory", /* Z_MEM_ERROR     (-4) */
+    (z_const char *)"buffer error",        /* Z_BUF_ERROR     (-5) */
+    (z_const char *)"incompatible version",/* Z_VERSION_ERROR (-6) */
+    (z_const char *)""
 };
 
 
@@ -88,28 +88,36 @@ uLong ZEXPORT zlibCompileFlags(void) {
     flags += 1L << 21;
 #endif
 #if defined(STDC) || defined(Z_HAVE_STDARG_H)
-#  ifdef NO_vsnprintf
-    flags += 1L << 25;
-#    ifdef HAS_vsprintf_void
-    flags += 1L << 26;
-#    endif
-#  else
-#    ifdef HAS_vsnprintf_void
-    flags += 1L << 26;
-#    endif
-#  endif
+#   ifdef NO_vsnprintf
+#       ifdef ZLIB_INSECURE
+            flags += 1L << 25;
+#       else
+            flags += 1L << 27;
+#       endif
+#       ifdef HAS_vsprintf_void
+            flags += 1L << 26;
+#       endif
+#   else
+#       ifdef HAS_vsnprintf_void
+            flags += 1L << 26;
+#       endif
+#   endif
 #else
     flags += 1L << 24;
-#  ifdef NO_snprintf
-    flags += 1L << 25;
-#    ifdef HAS_sprintf_void
-    flags += 1L << 26;
-#    endif
-#  else
-#    ifdef HAS_snprintf_void
-    flags += 1L << 26;
-#    endif
-#  endif
+#   ifdef NO_snprintf
+#       ifdef ZLIB_INSECURE
+            flags += 1L << 25;
+#       else
+            flags += 1L << 27;
+#       endif
+#       ifdef HAS_sprintf_void
+            flags += 1L << 26;
+#       endif
+#   else
+#       ifdef HAS_snprintf_void
+            flags += 1L << 26;
+#       endif
+#   endif
 #endif
     return flags;
 }
@@ -144,28 +152,34 @@ const char * ZEXPORT zError(int err) {
 
 #ifndef HAVE_MEMCPY
 
-void ZLIB_INTERNAL zmemcpy(Bytef* dest, const Bytef* source, uInt len) {
-    if (len == 0) return;
-    do {
-        *dest++ = *source++; /* ??? to be unrolled */
-    } while (--len != 0);
+void ZLIB_INTERNAL zmemcpy(void FAR *dst, const void FAR *src, z_size_t n) {
+    uchf *p = dst;
+    const uchf *q = src;
+    while (n) {
+        *p++ = *q++;
+        n--;
+    }
 }
 
-int ZLIB_INTERNAL zmemcmp(const Bytef* s1, const Bytef* s2, uInt len) {
-    uInt j;
-
-    for (j = 0; j < len; j++) {
-        if (s1[j] != s2[j]) return 2*(s1[j] > s2[j])-1;
+int ZLIB_INTERNAL zmemcmp(const void FAR *s1, const void FAR *s2, z_size_t n) {
+    const uchf *p = s1, *q = s2;
+    while (n) {
+        if (*p++ != *q++)
+            return (int)p[-1] - (int)q[-1];
+        n--;
     }
     return 0;
 }
 
-void ZLIB_INTERNAL zmemzero(Bytef* dest, uInt len) {
+void ZLIB_INTERNAL zmemzero(void FAR *b, z_size_t len) {
+    uchf *p = b;
     if (len == 0) return;
-    do {
-        *dest++ = 0;  /* ??? to be unrolled */
-    } while (--len != 0);
+    while (len) {
+        *p++ = 0;
+        len--;
+    }
 }
+
 #endif
 
 #ifndef Z_SOLO
