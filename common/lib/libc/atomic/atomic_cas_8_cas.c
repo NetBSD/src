@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_8_cas.c,v 1.4 2026/05/03 11:48:02 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_8_cas.c,v 1.5 2026/05/03 22:18:33 jklos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <stdbool.h>
 #endif
 #include <sys/atomic.h>
-#include <stdarg.h>
+#include <sys/stdarg.h>
 
 bool bool_compare_and_swap_1(volatile int8_t *, int8_t, int8_t, ...)
     asm("__sync_bool_compare_and_swap_1");
