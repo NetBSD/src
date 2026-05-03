@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2196 2026/05/01 14:34:49 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2197 2026/05/03 14:41:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -49,7 +49,7 @@ Current Vers:	20251212
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2026-001-17
+Date:		2026-01-17
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho,christos
@@ -644,12 +644,12 @@ are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
 sync with ipsec-tools-0_7-branch)
 
 Package:	jemalloc
-Version:	5.3.0
+Version:	5.3.1
 Current Vers:	5.3.1
 Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
-Date:		2026-04-14
+Date:		2026-05-03
 Mailing List:
 Responsible:	christos
 License:	BSD
@@ -747,12 +747,12 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	3.8.5
+Version:	3.8.7
 Current Vers:	3.8.7
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2026-04-15
+Date:		2026-05-03
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
