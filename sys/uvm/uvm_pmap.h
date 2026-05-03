@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.43 2022/08/20 23:08:53 riastradh Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.44 2026/05/03 23:14:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -141,10 +141,60 @@ extern struct pmap	*const kernel_pmap_ptr;
 #define PMAP_PROT_MASK	0x0000000f	/* [BOTH] VM_PROT_* bit mask */
 
 #ifndef PMAP_EXCLUDE_DECLS	/* Used in Sparc port to virtualize pmap mod */
-#ifdef _KERNEL
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
+/*
+ * Modules have no business interacting with these pmap interfaces.
+ */
+struct pmap	*pmap_create(void);
+#if !defined(pmap_reference)
+void		pmap_reference(pmap_t);
+#endif
+void		pmap_destroy(pmap_t);
+bool		pmap_remove_all(struct pmap *);
+
+#if defined(PMAP_FORK)
+void		pmap_fork(pmap_t, pmap_t);
+#endif
+
+#if defined(PMAP_DIRECT)
+int		pmap_direct_process(paddr_t, voff_t, size_t,
+		    int (*)(void *, size_t, void *),
+		    void *);
+#endif
+
+void		pmap_init(void);
+void		pmap_virtual_space(vaddr_t *, vaddr_t *);
+#if defined(PMAP_STEAL_MEMORY)
+vaddr_t		pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
+#endif
+#if defined(PMAP_GROWKERNEL)
+vaddr_t		pmap_growkernel(vaddr_t);
+#endif
+
 void		pmap_activate(struct lwp *);
 void		pmap_deactivate(struct lwp *);
 void		pmap_unwire(pmap_t, vaddr_t);
+
+#if !defined(pmap_copy)
+void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
+#endif
+
+#if !defined(pmap_copy_page)
+void		pmap_copy_page(paddr_t, paddr_t);
+#endif
+#if !defined(pmap_zero_page)
+void		pmap_zero_page(paddr_t);
+#endif
+
+#if !defined(pmap_resident_count)
+long		pmap_resident_count(pmap_t);
+#endif
+#if !defined(pmap_wired_count)
+long		pmap_wired_count(pmap_t);
+#endif
+#endif /* ! _MODULE */
 
 #if !defined(pmap_clear_modify)
 bool		pmap_clear_modify(struct vm_page *);
@@ -153,26 +203,17 @@ bool		pmap_clear_modify(struct vm_page *);
 bool		pmap_clear_reference(struct vm_page *);
 #endif
 
-#if !defined(pmap_copy)
-void		pmap_copy(pmap_t, pmap_t, vaddr_t, vsize_t, vaddr_t);
-#endif
-#if !defined(pmap_copy_page)
-void		pmap_copy_page(paddr_t, paddr_t);
-#endif
-struct pmap	*pmap_create(void);
-void		pmap_destroy(pmap_t);
 int		pmap_enter(pmap_t, vaddr_t, paddr_t, vm_prot_t, u_int);
+void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
 bool		pmap_extract(pmap_t, vaddr_t, paddr_t *);
-#if defined(PMAP_GROWKERNEL)
-vaddr_t		pmap_growkernel(vaddr_t);
+#if !defined(pmap_remove)
+void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
 #endif
-
-void		pmap_init(void);
-
 #if !defined(pmap_kenter_pa)
 void		pmap_kenter_pa(vaddr_t, paddr_t, vm_prot_t, u_int);
 #endif
 void		pmap_kremove(vaddr_t, vsize_t);
+
 #if !defined(pmap_is_modified)
 bool		pmap_is_modified(struct vm_page *);
 #endif
@@ -189,43 +230,11 @@ paddr_t		pmap_phys_address(paddr_t);
 #if !defined(pmap_mmap_flags)
 #define		pmap_mmap_flags(x)	0
 #endif
-void		pmap_protect(pmap_t, vaddr_t, vaddr_t, vm_prot_t);
-#if !defined(pmap_reference)
-void		pmap_reference(pmap_t);
-#endif
-#if !defined(pmap_remove)
-void		pmap_remove(pmap_t, vaddr_t, vaddr_t);
-#endif
-bool		pmap_remove_all(struct pmap *);
 #if !defined(pmap_update)
 void		pmap_update(pmap_t);
 #endif
-#if !defined(pmap_resident_count)
-long		pmap_resident_count(pmap_t);
-#endif
-#if !defined(pmap_wired_count)
-long		pmap_wired_count(pmap_t);
-#endif
-#if !defined(pmap_zero_page)
-void		pmap_zero_page(paddr_t);
-#endif
 
-void		pmap_virtual_space(vaddr_t *, vaddr_t *);
-#if defined(PMAP_STEAL_MEMORY)
-vaddr_t		pmap_steal_memory(vsize_t, vaddr_t *, vaddr_t *);
-#endif
-
-#if defined(PMAP_FORK)
-void		pmap_fork(pmap_t, pmap_t);
-#endif
-
-#if defined(PMAP_DIRECT)
-int		pmap_direct_process(paddr_t, voff_t, size_t,
-		    int (*)(void *, size_t, void *),
-		    void *);
-#endif
-
-#endif	/* kernel*/
+#endif	/* _KERNEL */
 #endif  /* PMAP_EXCLUDE_DECLS */
 
 #endif /* _PMAP_VM_ */
