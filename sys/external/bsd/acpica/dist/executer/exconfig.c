@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -138,6 +138,8 @@ AcpiExLoadTableOp (
     ACPI_OPERAND_OBJECT     *ReturnObj;
     ACPI_OPERAND_OBJECT     *DdbHandle;
     UINT32                  TableIndex;
+    char                    OemId[ACPI_OEM_ID_SIZE + 1];
+    char                    OemTableId[ACPI_OEM_TABLE_ID_SIZE + 1];
 
 
     ACPI_FUNCTION_TRACE (ExLoadTableOp);
@@ -153,13 +155,34 @@ AcpiExLoadTableOp (
 
     *ReturnDesc = ReturnObj;
 
+    /*
+     * Validate OEM ID and OEM Table ID string lengths.
+     * AcpiTbFindTable expects strings that can safely read
+     * ACPI_OEM_ID_SIZE and ACPI_OEM_TABLE_ID_SIZE bytes.
+     */
+    if ((Operand[1]->String.Length > ACPI_OEM_ID_SIZE) ||
+        (Operand[2]->String.Length > ACPI_OEM_TABLE_ID_SIZE))
+    {
+        return_ACPI_STATUS (AE_AML_STRING_LIMIT);
+    }
+
+    /*
+     * Copy OEM strings to local buffers with guaranteed null-termination.
+     * This prevents heap-buffer-overflow when AcpiTbFindTable reads
+     * ACPI_OEM_ID_SIZE/ACPI_OEM_TABLE_ID_SIZE bytes.
+     */
+    memcpy (OemId, Operand[1]->String.Pointer, Operand[1]->String.Length);
+    OemId[Operand[1]->String.Length] = 0;
+    memcpy (OemTableId, Operand[2]->String.Pointer, Operand[2]->String.Length);
+    OemTableId[Operand[2]->String.Length] = 0;
+
     /* Find the ACPI table in the RSDT/XSDT */
 
     AcpiExExitInterpreter ();
     Status = AcpiTbFindTable (
         Operand[0]->String.Pointer,
-        Operand[1]->String.Pointer,
-        Operand[2]->String.Pointer, &TableIndex);
+        OemId,
+        OemTableId, &TableIndex);
     AcpiExEnterInterpreter ();
     if (ACPI_FAILURE (Status))
     {

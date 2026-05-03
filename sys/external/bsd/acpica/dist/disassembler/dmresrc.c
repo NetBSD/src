@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -428,8 +428,29 @@ AcpiDmIsResourceTemplate (
         return (AE_TYPE);
     }
 
+    /*
+     * Check if this op was allocated from the extended parse object cache.
+     * Only extended ops (NAMED_OBJECT, DEFERRED, BYTELIST) have the
+     * Named.Data and Named.Length fields. Generic ops would overflow.
+     */
+    if (NextOp->Common.Flags == ACPI_PARSEOP_GENERIC)
+    {
+        return (AE_TYPE);
+    }
+
     Aml = NextOp->Named.Data;
     BufferLength = NextOp->Common.Value.Size;
+
+    /*
+     * Validate BufferLength against Named.Length to prevent reading
+     * beyond the actual data. Named.Length is computed during parsing
+     * and represents the actual byte count, while Value.Size comes
+     * from the AML and can be manipulated by malformed AML.
+     */
+    if (BufferLength > NextOp->Named.Length)
+    {
+        return (AE_TYPE);
+    }
 
     /*
      * Any buffer smaller than one byte cannot possibly be a resource

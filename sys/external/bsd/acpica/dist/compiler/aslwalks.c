@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -89,6 +89,7 @@ AnMethodTypingWalkEnd (
     void                    *Context)
 {
     UINT32                  ThisOpBtype;
+    ACPI_PARSE_OBJECT       *TargetMethodOp;
 
 
     switch (Op->Asl.ParseOpcode)
@@ -119,11 +120,23 @@ AnMethodTypingWalkEnd (
                 if (Op->Asl.Child->Asl.Node &&
                     (Op->Asl.ParentMethod != Op->Asl.Child->Asl.Node->Op))
                 {
+                    TargetMethodOp = Op->Asl.Child->Asl.Node->Op;
+
+                    /* Break mutual-recursion loops during typing */
+                    if (TargetMethodOp->Asl.CompileFlags & OP_VISITED)
+                    {
+                        break;
+                    }
+
+                    TargetMethodOp->Asl.CompileFlags |= OP_VISITED;
+
                     /* We must type the method here */
 
-                    TrWalkParseTree (Op->Asl.Child->Asl.Node->Op,
+                    TrWalkParseTree (TargetMethodOp,
                         ASL_WALK_VISIT_UPWARD, NULL,
                         AnMethodTypingWalkEnd, NULL);
+
+                    TargetMethodOp->Asl.CompileFlags &= ~OP_VISITED;
 
                     ThisOpBtype = AnGetBtype (Op->Asl.Child);
                 }

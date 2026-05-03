@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -754,6 +754,14 @@ OpcGenerateAmlOpcode (
 
 
     Index = (UINT16) (Op->Asl.ParseOpcode - ASL_PARSE_OPCODE_BASE);
+
+    if ((Op->Asl.ParseOpcode < ASL_PARSE_OPCODE_BASE) ||
+        (Index >= AslKeywordMappingCount))
+    {
+        AslError (ASL_ERROR, ASL_MSG_COMPILER_INTERNAL, Op,
+            "Invalid parse opcode in OpcGenerateAmlOpcode");
+        return;
+    }
 
     Op->Asl.AmlOpcode     = AslKeywordMapping[Index].AmlOpcode;
     Op->Asl.AcpiBtype     = AslKeywordMapping[Index].AcpiBtype;
