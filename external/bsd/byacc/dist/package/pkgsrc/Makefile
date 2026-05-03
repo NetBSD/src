@@ -1,7 +1,7 @@
 # NetBSD: Makefile,v 1.35 2024/07/05 20:55:55 cheusov Exp 
 #
 
-DISTNAME=	byacc-20241231
+DISTNAME=	byacc-20260126
 CATEGORIES=	devel
 MASTER_SITES=	https://invisible-mirror.net/archives/byacc/
 EXTRACT_SUFX=	.tgz

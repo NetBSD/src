@@ -1,11 +1,11 @@
-/*	$NetBSD: calc_code_provides.tab.h,v 1.1.1.1 2021/02/20 20:30:08 christos Exp $	*/
+/*	$NetBSD: calc_code_provides.tab.h,v 1.1.1.2 2026/05/03 15:24:34 christos Exp $	*/
 
 #define DIGIT 257
 #define LETTER 258
 #define UMINUS 259
 /* %code "provides" block start */
 #line 1 "calc_code_provides.y"
-/* CODE-PROVIDES */ 
+/* CODE-PROVIDES */
 #line 2 "calc_code_provides.y"
-/* CODE-PROVIDES2 */ 
+/* CODE-PROVIDES2 */
 /* %code "provides" block end */

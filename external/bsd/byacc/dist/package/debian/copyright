@@ -4,7 +4,7 @@ Upstream-Contact: <dickey@invisible-island.net> (Thomas E. Dickey)
 Source: https://invisible-island.net/byacc/
 
 Files: *
-Copyright:  2001-2023,2024 by Thomas E. Dickey
+Copyright:  2001-2025,2026 by Thomas E. Dickey
 License: public-domain
     Berkeley Yacc is in the public domain; changes made to it by the current
     maintainer are likewise unrestricted.  That applies to most of the files.
@@ -41,7 +41,7 @@ License: public-domain
     -------------------------------------------------------------------------------
 
 Files: aclocal.m4
-Copyright:  2004-2023,2024 by Thomas E. Dickey
+Copyright:  2004-2024,2025 by Thomas E. Dickey
 License: other-BSD
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the
