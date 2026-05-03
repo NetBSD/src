@@ -1,4 +1,10 @@
-/*	$NetBSD: pte_motorola.h,v 1.10 2024/01/01 22:47:58 thorpej Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.11 2026/05/03 19:18:30 thorpej Exp $	*/
+
+/*
+ * THIS HEADER FILE EXISTS ONLY TO SUPPORT THE UTAH-DERIVED PMAP MODULE
+ * (m68k/pmap_motorola.c).  ONCE THAT FILE IS RETIRED, THIS ONE SHOULD
+ * BE, TOO.
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
