@@ -1,4 +1,4 @@
-/*	$NetBSD: zutil.h,v 1.9 2026/05/03 16:36:10 christos Exp $	*/
+/*	$NetBSD: zutil.h,v 1.10 2026/05/03 23:21:20 kre Exp $	*/
 
 /* zutil.h -- internal interface and configuration of the compression library
  * Copyright (C) 1995-2026 Jean-loup Gailly, Mark Adler
@@ -23,7 +23,8 @@
 
 #include "zlib.h"
 
-#if defined(STDC) && !defined(Z_SOLO)
+#if defined(STDC) && !defined(Z_SOLO) && \
+	!defined(_KERNEL) && !defined(_STANDALONE)
 #  if !(defined(_WIN32_WCE) && defined(_MSC_VER))
 #    include <stddef.h>
 #  endif
@@ -48,7 +49,8 @@ typedef unsigned short ush;
 typedef ush FAR ushf;
 typedef unsigned long  ulg;
 
-#if !defined(Z_U8) && !defined(Z_SOLO) && defined(STDC)
+#if !defined(Z_U8) && !defined(Z_SOLO) && defined(STDC) && \
+	!defined(_KERNEL) && !defined(_STANDALONE)
 #  include <limits.h>
 #  if (ULONG_MAX == 0xffffffffffffffff)
 #    define Z_U8 unsigned long
