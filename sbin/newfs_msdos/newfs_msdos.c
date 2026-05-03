@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.46 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.47 2026/05/03 17:49:58 kre Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.46 2026/05/01 20:39:26 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.47 2026/05/03 17:49:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,7 +94,7 @@ main(int argc, char *argv[])
 {
     static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:T:u:";
     struct msdos_options o;
-    char *fname, *dtype;
+    const char *fname, *dtype;
     char device[MAXPATHLEN];
     int ch;
 
@@ -185,10 +185,15 @@ main(int argc, char *argv[])
     argv += optind;
     if (argc < 1 || argc > 2)
 	usage();
-    fname = *argv++;
-    dtype = *argv;
-    close(openspecial(fname, O_RDONLY, device, sizeof(device), NULL));
-    fname = device;
+    fname = findspecial(*argv, 0);
+    if (fname == NULL)
+	fname = *argv;
+    if (strchr(fname, '/') == NULL && o.create_size == 0) {
+	snprintf(device, sizeof(device), "%sr%s", _PATH_DEV, fname);
+	if ((fname = strdup(device)) == NULL)
+	    err(1, NULL);
+    }
+    dtype = *++argv;
     return mkfs_msdos(fname, dtype, &o);
 }
 

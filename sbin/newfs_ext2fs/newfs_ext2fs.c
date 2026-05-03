@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_ext2fs.c,v 1.12 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: newfs_ext2fs.c,v 1.13 2026/05/03 17:49:58 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs_ext2fs.c,v 1.12 2026/05/01 20:39:26 christos Exp $");
+__RCSID("$NetBSD: newfs_ext2fs.c,v 1.13 2026/05/03 17:49:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -126,7 +126,8 @@ main(int argc, char *argv[])
 	struct statvfs *mp;
 	struct stat sb;
 	int ch, fsi, fso, len, n, Fflag, Iflag, Zflag;
-	char *s1, *s2, *special;
+	const char *s1, *special;
+	char *s2;
 	const char *opstring;
 	int byte_sized;
 	uint blocks;			/* number of blocks */
@@ -139,8 +140,8 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, opstring)) != -1)
 		switch (ch) {
 		case 'D':
-			inodesize = (uint16_t)strtol(optarg, &s1, 0);
-			if (*s1 || (inodesize != 128 && inodesize != 256))
+			inodesize = (uint16_t)strtol(optarg, &s2, 0);
+			if (*s2 || (inodesize != 128 && inodesize != 256))
 				errx(1, "Bad inode size %d "
 				    "(only 128 and 256 supported)", inodesize);
 			break;
@@ -249,8 +250,12 @@ main(int argc, char *argv[])
 		if (!Nflag)
 			fso = fsi;
 	} else {	/* !Fflag */
-		fsi = openspecial(special, O_RDONLY, device, sizeof(device), &sb);
+		special = findspecial(special, 1);
+		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
 		special = device;
+		if (fsi < 0 || fstat(fsi, &sb) == -1)
+			err(EXIT_FAILURE, "%s: open for read", special);
+
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);
 			if (fso < 0)

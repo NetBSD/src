@@ -1,4 +1,4 @@
-/*	$NetBSD: openspecial.c,v 1.1 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: openspecial.c,v 1.2 2026/05/03 17:49:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: openspecial.c,v 1.1 2026/05/01 20:39:26 christos Exp $");
+__RCSID("$NetBSD: openspecial.c,v 1.2 2026/05/03 17:49:58 kre Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,38 +48,29 @@ __RCSID("$NetBSD: openspecial.c,v 1.1 2026/05/01 20:39:26 christos Exp $");
 #include "partutil.h"
 
 
-int
-openspecial(const char *special, int flags, char *device, size_t devsize,
-    struct stat *sb)
+const char *
+findspecial(const char *special, int flags)
 {
-	char specname[MAXPATHLEN], rawname[MAXPATHLEN];
+	static char specname[MAXPATHLEN];
+	static char rawname[MAXPATHLEN];
 	const char *raw;
-	struct stat st;
 	struct fstab *fs;
-	int fd;
 
 	fs = getfsfile(special);
 	if (fs)
 		special = fs->fs_spec;
 
 	raw = getfsspecname(specname, sizeof(specname), special);
-	if (raw == NULL)
-		err(EXIT_FAILURE, "%s: %s", special, specname);
+	if (raw == NULL) {
+		if (flags & 1)
+			err(EXIT_FAILURE, "%s: %s", special, specname);
+		else
+			return NULL;
+	}
 
 	special = getdiskrawname(rawname, sizeof(rawname), raw);
 	if (special == NULL)
 		special = raw;
 
-	fd = opendisk(special, flags, device, devsize, 0);
-	if (sb == NULL)
-		sb = &st;
-
-	if (fd == -1 || fstat(fd, sb) == -1)
-		err(EXIT_FAILURE, "Can't open `%s'", special);
-
-	if (S_ISBLK(sb->st_mode))
-		errx(EXIT_FAILURE, "`%s' is a block device. use raw device",
-		    special);
-
-	return fd;
+	return special;
 }

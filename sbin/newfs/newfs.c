@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.121 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: newfs.c,v 1.122 2026/05/03 17:49:58 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993, 1994
@@ -78,7 +78,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.13 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.121 2026/05/01 20:39:26 christos Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.122 2026/05/03 17:49:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -504,9 +504,15 @@ main(int argc, char *argv[])
 				fso = fsi;
 		}
 	} else {	/* !Fflag && !mfs */
-		fsi = openspecial(special, O_RDONLY, device, sizeof(device),
-		    &sb);
+		special = findspecial(special, 1);
+		fsi = opendisk(special, O_RDONLY, device, sizeof(device), 0);
 		special = device;
+		if (fsi < 0 || fstat(fsi, &sb) == -1)
+			err(1, "%s: open for read", special);
+		if (S_ISBLK(sb.st_mode)) {
+			errx(1, "%s is a block device. use raw device",
+			    special);
+		}
 
 		if (!Nflag) {
 			fso = open(special, O_WRONLY, 0);

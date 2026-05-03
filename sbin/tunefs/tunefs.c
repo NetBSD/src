@@ -1,4 +1,4 @@
-/*	$NetBSD: tunefs.c,v 1.59 2026/05/01 20:39:26 christos Exp $	*/
+/*	$NetBSD: tunefs.c,v 1.60 2026/05/03 17:49:58 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.3 (Berkeley) 5/3/95";
 #else
-__RCSID("$NetBSD: tunefs.c,v 1.59 2026/05/01 20:39:26 christos Exp $");
+__RCSID("$NetBSD: tunefs.c,v 1.60 2026/05/03 17:49:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -235,8 +235,10 @@ main(int argc, char *argv[])
 	if (Fflag)
 		fi = open(special, openflags);
 	else {
-		fi = openspecial(special, openflags, device, sizeof(device), NULL);
-		special = device;
+		special = findspecial(special, 1);
+		fi = opendisk(special, openflags, device, sizeof(device), 0);
+		if (fi >= 0 || errno != ENOENT)
+			special = device;
 	}
 	if (fi == -1)
 		err(1, "%s", special);
