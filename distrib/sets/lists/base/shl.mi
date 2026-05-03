@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.1038 2026/05/01 11:00:20 wiz Exp $
+# $NetBSD: shl.mi,v 1.1039 2026/05/03 16:37:31 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -115,7 +115,7 @@
 ./lib/libuutil.so.0.0				base-zfs-shlib		dynamicroot,zfs
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
-./lib/libz.so.1.0				base-sys-shlib		dynamicroot
+./lib/libz.so.1.1				base-sys-shlib		dynamicroot
 ./lib/libzfs.so					base-zfs-shlib		dynamicroot,zfs
 ./lib/libzfs.so.0				base-zfs-shlib		dynamicroot,zfs
 ./lib/libzfs.so.0.0				base-zfs-shlib		dynamicroot,zfs
@@ -972,7 +972,7 @@
 ./usr/lib/libwrap.so.1.0			base-net-shlib		compatfile
 ./usr/lib/libz.so				base-sys-shlib		compatfile
 ./usr/lib/libz.so.1				base-sys-shlib		compatfile
-./usr/lib/libz.so.1.0				base-sys-shlib		compatfile
+./usr/lib/libz.so.1.1				base-sys-shlib		compatfile
 ./usr/lib/libzfs.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzfs.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libzfs.so.0.0				base-zfs-shlib		compatfile,zfs

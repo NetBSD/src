@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.398 2026/05/01 11:00:21 wiz Exp $
+# $NetBSD: shl.mi,v 1.399 2026/05/03 16:37:31 christos Exp $
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -34,7 +34,7 @@
 ./usr/libdata/debug/lib/libumem.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libutil.so.7.25.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libuutil.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
-./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libz.so.1.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libzpool.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -331,7 +331,7 @@
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libz.so.1.0.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libz.so.1.1.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libzfs.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzfs_core.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libzpool.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
