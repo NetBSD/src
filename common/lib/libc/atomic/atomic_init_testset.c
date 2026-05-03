@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.21 2026/01/09 08:44:57 skrll Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.22 2026/05/03 11:48:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.21 2026/01/09 08:44:57 skrll Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.22 2026/05/03 11:48:02 skrll Exp $");
 
 #include "extern.h"
 #include "atomic_op_namespace.h"
@@ -345,8 +345,43 @@ __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
 atomic_op_alias(atomic_cas_64,_atomic_cas_64)
 atomic_op_alias(atomic_cas_64_ni,_atomic_cas_64)
 __strong_alias(_atomic_cas_64_ni,_atomic_cas_64)
-crt_alias(__sync_val_compare_and_swap_8,_atomic_cas_64)
+
+int64_t sync_val_compare_and_swap_8(volatile int64_t *addr, int64_t old, int64_t new)
+    asm("__sync_val_compare_and_swap_8");
+
+int64_t
+sync_val_compare_and_swap_8(volatile int64_t *addr, int64_t old, int64_t new)
+{
+	const uint64_t oldv = (uint64_t)old;
+	const uint64_t newv = (uint64_t)new;
+
+	return _atomic_cas_64((volatile uint64_t *)addr, oldv, newv);
+}
+
 #endif
 crt_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
-crt_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
-crt_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
+
+
+int16_t sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+    asm("__sync_val_compare_and_swap_2");
+
+int16_t
+sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+{
+	const uint16_t oldv = (uint16_t)old;
+	const uint16_t newv = (uint16_t)new;
+
+	return _atomic_cas_16((volatile uint16_t *)addr, oldv, newv);
+}
+
+int8_t sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
+    asm("__sync_val_compare_and_swap_1");
+
+int8_t
+sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
+{
+	const uint8_t oldv = (uint8_t)old;
+	const uint8_t newv = (uint8_t)new;
+
+	return _atomic_cas_8((volatile uint8_t *)addr, oldv, newv);
+}

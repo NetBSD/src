@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_32_cas.c,v 1.2 2026/01/08 08:55:25 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_32_cas.c,v 1.3 2026/05/03 11:48:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,12 +37,15 @@
 
 #include <sys/atomic.h>
 
-bool bool_compare_and_swap_4(volatile uint32_t *, uint32_t, uint32_t, ...)
+bool bool_compare_and_swap_4(volatile int32_t *, int32_t, int32_t, ...)
     asm("__sync_bool_compare_and_swap_4");
 
 bool
-bool_compare_and_swap_4(volatile uint32_t *addr, uint32_t oldval,
-	uint32_t newval, ...)
+bool_compare_and_swap_4(volatile int32_t *addr, int32_t oldval,
+	int32_t newval, ...)
 {
-	return atomic_cas_32(addr, oldval, newval) == oldval;
+	const uint32_t oldv = (uint32_t)oldval;
+	const uint32_t newv = (uint32_t)newval;
+
+	return atomic_cas_32((volatile uint32_t *)addr, oldv, newv) == oldv;
 }
