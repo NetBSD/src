@@ -1,4 +1,4 @@
-#      $NetBSD: bsd.own.mk,v 1.1480 2026/04/21 23:51:28 christos Exp $
+#      $NetBSD: bsd.own.mk,v 1.1481 2026/05/03 16:42:39 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1166,7 +1166,6 @@ MK${var:S/^NO//}:=	no
 #
 .if \
     (${MACHINE_ARCH} == "aarch64" && ${HAVE_GCC:U0} == 0) || \
-    ${MACHINE_ARCH:Mearm*} || \
     ${MACHINE_MIPS64} || \
     ${MACHINE_ARCH} == "powerpc64" || \
     ${MACHINE_ARCH} == "riscv64" || \
