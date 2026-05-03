@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.24 2023/10/07 12:15:54 rin Exp $
+#	$NetBSD: Makefile,v 1.25 2026/05/03 16:32:30 christos Exp $
 
 LIB=	z
 LIBISPRIVATE=	yes
 
 ZDISTDIR:=${.PARSEDIR}/../../../common/dist/zlib
 
-CPPFLAGS+=	-I${ZDISTDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS}
+CPPFLAGS+=	-I${ZDISTDIR} ${ZCPPFLAGS} ${ZMISCCPPFLAGS} -DZLIB_CONST
 
 .PATH.c: ${ZDISTDIR} ${.PARSEDIR}
 
