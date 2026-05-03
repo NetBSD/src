@@ -1,10 +1,10 @@
-/*	$NetBSD: graph.c,v 1.9 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: graph.c,v 1.10 2026/05/03 15:29:19 christos Exp $	*/
 
 #include "defs.h"
-/* Id: graph.c,v 1.9 2020/09/10 17:22:51 tom Exp  */
+/* Id: graph.c,v 1.10 2025/10/08 00:22:08 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: graph.c,v 1.9 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: graph.c,v 1.10 2026/05/03 15:29:19 christos Exp $");
 
 static void graph_state(int stateno);
 static void graph_LA(int ruleno);
@@ -63,7 +63,7 @@ graph_state(int stateno)
 
     for (isp = itemset; isp < itemsetend; isp++)
     {
-	Value_t *sp1;
+	const Value_t *sp1;
 	int rule;
 
 	sp1 = sp = ritem + *isp;
@@ -102,7 +102,7 @@ graph_LA(int ruleno)
     if (ruleno == LAruleno[larno])
     {
 	int i;
-	unsigned *rowp = LA + larno * tokensetsize;
+	const unsigned *rowp = LA + larno * tokensetsize;
 
 	fprintf(graph_file, " { ");
 	for (i = ntokens - 1; i >= 0; i--)

@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_top.tab.c,v 1.3 2026/01/18 16:41:30 christos Exp $	*/
+/*	$NetBSD: calc_code_top.tab.c,v 1.4 2026/05/03 15:29:20 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -18,9 +18,9 @@
 
 /* %code "top" block start */
 #line 1 "calc_code_top.y"
-/* CODE-TOP */ 
+/* CODE-TOP */
 #line 2 "calc_code_top.y"
-/* CODE-TOP2 */ 
+/* CODE-TOP2 */
 /* %code "top" block end */
 #line 24 "calc_code_top.tab.c"
 

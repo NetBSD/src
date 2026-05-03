@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_requires.tab.h,v 1.1.1.2 2026/05/03 15:24:36 christos Exp $	*/
+/*	$NetBSD: calc_code_requires.tab.h,v 1.2 2026/05/03 15:29:20 christos Exp $	*/
 
 #ifndef _calc_code_requires__defines_h_
 #define _calc_code_requires__defines_h_

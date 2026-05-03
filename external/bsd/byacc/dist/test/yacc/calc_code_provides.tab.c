@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_provides.tab.c,v 1.3 2026/01/18 16:41:30 christos Exp $	*/
+/*	$NetBSD: calc_code_provides.tab.c,v 1.4 2026/05/03 15:29:20 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -328,9 +328,9 @@ static YYSTACKDATA yystack;
 
 /* %code "provides" block start */
 #line 1 "calc_code_provides.y"
-/* CODE-PROVIDES */ 
+/* CODE-PROVIDES */
 #line 2 "calc_code_provides.y"
-/* CODE-PROVIDES2 */ 
+/* CODE-PROVIDES2 */
 /* %code "provides" block end */
 #line 334 "calc_code_provides.tab.c"
 #line 69 "calc_code_provides.y"

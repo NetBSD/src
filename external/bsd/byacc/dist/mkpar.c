@@ -1,11 +1,11 @@
-/*	$NetBSD: mkpar.c,v 1.15 2026/01/18 16:41:29 christos Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.16 2026/05/03 15:29:19 christos Exp $	*/
 
-/* Id: mkpar.c,v 1.19 2024/12/14 14:36:50 tom Exp  */
+/* Id: mkpar.c,v 1.20 2025/10/08 00:22:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkpar.c,v 1.15 2026/01/18 16:41:29 christos Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.16 2026/05/03 15:29:19 christos Exp $");
 
 #define NotSuppressed(p)	((p)->suppressed == 0)
 
@@ -79,8 +79,8 @@ static action *
 get_shifts(int stateno)
 {
     action *actions, *temp;
-    shifts *sp;
-    Value_t *to_state2;
+    const shifts *sp;
+    const Value_t *to_state2;
 
     actions = NULL;
     sp = shift_table[stateno];
@@ -122,7 +122,7 @@ add_reductions(int stateno, action *actions)
     for (i = m; i < n; i++)
     {
 	int ruleno = LAruleno[i];
-	unsigned *rowp = LA + i * tokensetsize;
+	const unsigned *rowp = LA + i * tokensetsize;
 
 	for (j = ntokens - 1; j >= 0; j--)
 	{
@@ -176,8 +176,8 @@ add_reduce(action *actions,
 static void
 find_final_state(void)
 {
-    Value_t *to_state2;
-    shifts *p;
+    const Value_t *to_state2;
+    const shifts *p;
 
     if ((p = shift_table[0]) != NULL)
     {

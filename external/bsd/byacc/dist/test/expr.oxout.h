@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.oxout.h,v 1.2 2024/09/14 21:29:03 christos Exp $	*/
+/*	$NetBSD: expr.oxout.h,v 1.3 2026/05/03 15:29:20 christos Exp $	*/
 
 /* testing only */
 
@@ -44,7 +44,7 @@ typedef struct yyyStackItem {
 
 yyyRSitem *yyyRSTop;
 yyyRSitem *yyyAfterRS;
-yyyRSitem *yyyRS; 
+yyyRSitem *yyyRS;
 
 #undef yyparse
 #undef yylex

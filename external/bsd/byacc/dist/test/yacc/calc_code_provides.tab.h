@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_provides.tab.h,v 1.1.1.2 2026/05/03 15:24:34 christos Exp $	*/
+/*	$NetBSD: calc_code_provides.tab.h,v 1.2 2026/05/03 15:29:20 christos Exp $	*/
 
 #define DIGIT 257
 #define LETTER 258

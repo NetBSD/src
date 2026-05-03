@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.c,v 1.7 2026/01/18 16:41:31 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.c,v 1.8 2026/05/03 15:29:20 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -119,7 +119,7 @@ static void YYERROR_DECL();
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
 #line 43 "ok_syntax1.y"
-union CalcData 
+union CalcData
 {
     char *	cval;
     int		ival;

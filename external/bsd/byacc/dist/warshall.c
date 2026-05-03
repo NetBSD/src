@@ -1,11 +1,11 @@
-/*	$NetBSD: warshall.c,v 1.11 2021/02/20 22:57:56 christos Exp $	*/
+/*	$NetBSD: warshall.c,v 1.12 2026/05/03 15:29:20 christos Exp $	*/
 
-/* Id: warshall.c,v 1.9 2020/09/22 20:17:00 tom Exp  */
+/* Id: warshall.c,v 1.10 2025/10/08 00:22:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: warshall.c,v 1.11 2021/02/20 22:57:56 christos Exp $");
+__RCSID("$NetBSD: warshall.c,v 1.12 2026/05/03 15:29:20 christos Exp $");
 
 static void
 transitive_closure(unsigned *R, int n)
@@ -13,9 +13,9 @@ transitive_closure(unsigned *R, int n)
     int rowsize;
     unsigned i;
     unsigned *rowj;
-    unsigned *rp;
-    unsigned *rend;
-    unsigned *relend;
+    const unsigned *rp;
+    const unsigned *rend;
+    const unsigned *relend;
     unsigned *cword;
     unsigned *rowi;
 
@@ -64,7 +64,7 @@ reflexive_transitive_closure(unsigned *R, int n)
     int rowsize;
     unsigned i;
     unsigned *rp;
-    unsigned *relend;
+    const unsigned *relend;
 
     transitive_closure(R, n);
 

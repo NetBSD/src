@@ -1,11 +1,11 @@
-/*	$NetBSD: verbose.c,v 1.14 2024/09/14 21:29:02 christos Exp $	*/
+/*	$NetBSD: verbose.c,v 1.15 2026/05/03 15:29:20 christos Exp $	*/
 
-/* Id: verbose.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
+/* Id: verbose.c,v 1.15 2025/10/08 00:22:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: verbose.c,v 1.14 2024/09/14 21:29:02 christos Exp $");
+__RCSID("$NetBSD: verbose.c,v 1.15 2026/05/03 15:29:20 christos Exp $");
 
 static void log_conflicts(void);
 static void log_unused(void);
@@ -185,7 +185,7 @@ print_core(int state)
     {
 	int rule;
 	Value_t *sp = ritem + statep->items[i];
-	Value_t *sp1 = sp;
+	const Value_t *sp1 = sp;
 
 	while (*sp >= 0)
 	    ++sp;
@@ -222,7 +222,9 @@ print_nulls(int state)
 	    if (rrhs[i] + 1 == rrhs[i + 1])
 	    {
 		for (j = 0; j < nnulls && i > null_rules[j]; ++j)
-		    continue;
+		{
+		    ;
+		}
 
 		if (j == nnulls)
 		{
@@ -350,8 +352,8 @@ static void
 print_gotos(int stateno)
 {
     int i;
-    Value_t *to_state2;
-    shifts *sp;
+    const Value_t *to_state2;
+    const shifts *sp;
 
     putc('\n', verbose_file);
     sp = shift_table[stateno];

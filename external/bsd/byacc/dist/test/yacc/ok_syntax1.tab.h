@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.h,v 1.2 2024/09/14 21:29:05 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.h,v 1.3 2026/05/03 15:29:20 christos Exp $	*/
 
 #define DIGIT 257
 #define LETTER 258
@@ -22,7 +22,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-union CalcData 
+union CalcData
 {
     char *	cval;
     int		ival;

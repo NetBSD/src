@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_all.tab.h,v 1.1.1.2 2026/05/03 15:24:34 christos Exp $	*/
+/*	$NetBSD: calc_code_all.tab.h,v 1.2 2026/05/03 15:29:20 christos Exp $	*/
 
 /* %code "requires" block start */
 #line 3 "calc_code_all.y"

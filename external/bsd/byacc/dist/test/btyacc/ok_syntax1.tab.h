@@ -1,4 +1,4 @@
-/*	$NetBSD: ok_syntax1.tab.h,v 1.2 2024/09/14 21:29:04 christos Exp $	*/
+/*	$NetBSD: ok_syntax1.tab.h,v 1.3 2026/05/03 15:29:20 christos Exp $	*/
 
 #ifndef _ok_syntax1__defines_h_
 #define _ok_syntax1__defines_h_
@@ -25,7 +25,7 @@
 #endif
 #ifndef YYSTYPE_IS_DECLARED
 #define YYSTYPE_IS_DECLARED 1
-union CalcData 
+union CalcData
 {
     char *	cval;
     int		ival;

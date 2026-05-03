@@ -1,6 +1,6 @@
-/*	$NetBSD: defs.h,v 1.21 2026/01/18 16:41:29 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.22 2026/05/03 15:29:19 christos Exp $	*/
 
-/* Id: defs.h,v 1.75 2024/12/14 14:34:38 tom Exp  */
+/* Id: defs.h,v 1.76 2026/01/24 13:46:31 tom Exp  */
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -569,6 +569,7 @@ extern unsigned int strnshash(const char *);
 			 : (*(m)->ptr++ = (char) (ch)))
 
 /* output.c */
+extern void puts_trim(const char *, FILE *);
 extern void output(void);
 
 /* reader.c */

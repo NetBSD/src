@@ -1,4 +1,4 @@
-/*	$NetBSD: calc_code_default.tab.c,v 1.3 2026/01/18 16:41:29 christos Exp $	*/
+/*	$NetBSD: calc_code_default.tab.c,v 1.4 2026/05/03 15:29:20 christos Exp $	*/
 
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
@@ -482,9 +482,9 @@ static YYINT  *yylexemes = NULL;
 
 /* %code "" block start */
 #line 1 "calc_code_default.y"
-/* CODE-DEFAULT */ 
+/* CODE-DEFAULT */
 #line 2 "calc_code_default.y"
-/* CODE-DEFAULT2 */ 
+/* CODE-DEFAULT2 */
 /* %code "" block end */
 #line 488 "calc_code_default.tab.c"
 #line 69 "calc_code_default.y"
