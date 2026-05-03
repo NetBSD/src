@@ -1,6 +1,6 @@
-/*	$NetBSD: closure.c,v 1.1.1.10 2024/09/14 21:25:36 christos Exp $	*/
+/*	$NetBSD: closure.c,v 1.1.1.11 2026/05/03 15:24:33 christos Exp $	*/
 
-/* Id: closure.c,v 1.14 2022/01/09 16:22:58 tom Exp  */
+/* Id: closure.c,v 1.15 2025/10/08 00:22:08 tom Exp  */
 
 #include "defs.h"
 
@@ -32,7 +32,7 @@ set_EFF(void)
     row = EFF;
     for (i = start_symbol; i < nsyms; i++)
     {
-	Value_t *sp = derives[i];
+	const Value_t *sp = derives[i];
 	for (rule = *sp; rule > 0; rule = *++sp)
 	{
 	    symbol = ritem[rrhs[rule]];
@@ -58,7 +58,7 @@ set_first_derives(void)
     unsigned *rrow;
     int j;
     unsigned cword = 0;
-    Value_t *rp;
+    const Value_t *rp;
 
     int rule;
     int i;
@@ -74,7 +74,7 @@ set_first_derives(void)
     rrow = first_derives;
     for (i = start_symbol; i < nsyms; i++)
     {
-	unsigned *vrow = EFF + ((i - ntokens) * varsetsize);
+	const unsigned *vrow = EFF + ((i - ntokens) * varsetsize);
 	unsigned k = BITS_PER_WORD;
 
 	for (j = start_symbol; j < nsyms; k++, j++)
@@ -111,12 +111,12 @@ closure(Value_t *nucleus, int n)
     unsigned ruleno;
     unsigned i;
     Value_t *csp;
-    unsigned *dsp;
+    const unsigned *dsp;
     unsigned *rsp;
     int rulesetsize;
 
-    Value_t *csend;
-    unsigned *rsend;
+    const Value_t *csend;
+    const unsigned *rsend;
     Value_t itemno;
 
     rulesetsize = WORDSIZE(nrules);

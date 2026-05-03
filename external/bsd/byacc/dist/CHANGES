@@ -1,3 +1,81 @@
+2026-01-24  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/expr.oxout.h, test/btyacc/calc_code_all.tab.c,
+	  test/btyacc/calc_code_all.tab.h, test/btyacc/calc_code_default.tab.c,
+	  test/btyacc/calc_code_provides.tab.c,
+	  test/btyacc/calc_code_provides.tab.h,
+	  test/btyacc/calc_code_requires.tab.c,
+	  test/btyacc/calc_code_requires.tab.h, test/btyacc/calc_code_top.tab.c,
+	  test/btyacc/ok_syntax1.tab.c, test/btyacc/ok_syntax1.tab.h,
+	  test/yacc/calc_code_all.tab.c, test/yacc/calc_code_all.tab.h,
+	  test/yacc/calc_code_default.tab.c, test/yacc/calc_code_provides.tab.c,
+	  test/yacc/calc_code_provides.tab.h,
+	  test/yacc/calc_code_requires.tab.c, test/yacc/calc_code_requires.tab.h,
+	  test/yacc/calc_code_top.tab.c, test/yacc/ok_syntax1.tab.c,
+	  test/yacc/ok_syntax1.tab.h:
+	trim
+
+	* output.c, defs.h, reader.c:
+	add/use puts_trim() to trim trailing blanks from output files
+
+	* package/debian/copyright: bump
+
+	* configure: regen
+
+	* VERSION, package/byacc.spec, package/debian/changelog,
+	  package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2025-12-25  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* aclocal.m4: resync with my-autoconf
+
+2025-12-14  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* VERSION, package/byacc.spec, package/debian/changelog,
+	  package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* configure: regen
+
+	* aclocal.m4:
+	resync with my-autoconf: reduces warnings if "modern" autoconf is used
+
+	* configure.in: adjusted with autoupdate
+
+2025-11-11  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+	fixes for portability vs "t64" variants of glibc
+
+2025-10-07  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* main.c, closure.c, graph.c, lalr.c, lr0.c, mkpar.c, output.c,
+	  reader.c, verbose.c, warshall.c:
+	cppcheck
+
+	* package/debian/copyright, VERSION, package/byacc.spec,
+	  package/debian/changelog, package/mingw-byacc.spec,
+	  package/pkgsrc/Makefile:
+	bump
+
+	* configure: regen
+
+	* aclocal.m4: resync with my-autoconf
+	use CF_PROG_INSTALL
+
+	* configure.in: use CF_PROG_INSTALL
+
+2025-07-09  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess, config.sub: update to 2025-07-10
+
+2025-06-08  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* install-sh: fix license
+
 2024-12-31  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* package/pkgsrc/distinfo: regen
