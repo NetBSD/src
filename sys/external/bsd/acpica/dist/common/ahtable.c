@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,6 +108,7 @@ const AH_TABLE      AcpiGbl_SupportedTables[] =
     {ACPI_SIG_DBGP, "Debug Port Table"},
     {ACPI_SIG_DMAR, "DMA Remapping Table"},
     {ACPI_SIG_DRTM, "Dynamic Root of Trust for Measurement Table"},
+    {ACPI_SIG_DTPR, "DMA TXT Protection Ranges Table"},
     {ACPI_SIG_DSDT, "Differentiated System Description Table (AML table)"},
     {ACPI_SIG_ECDT, "Embedded Controller Boot Resources Table"},
     {ACPI_SIG_EINJ, "Error Injection Table"},

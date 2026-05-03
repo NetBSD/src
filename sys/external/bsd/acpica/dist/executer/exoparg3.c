@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -116,11 +116,18 @@ AcpiExOpcode_3A_0T_0R (
 
         AcpiOsSignal (ACPI_SIGNAL_FATAL, &Fatal);
 
+#ifndef ACPI_CONTINUE_ON_FATAL
         /*
          * Might return while OS is shutting down, so abort the AML execution
          * by returning an error.
          */
         return_ACPI_STATUS (AE_ERROR);
+#else
+	/*
+	 * The alstests require that the Fatal() opcode does not return an error.
+	 */
+	return_ACPI_STATUS (AE_OK);
+#endif
 
     case AML_EXTERNAL_OP:
         /*
@@ -204,7 +211,8 @@ AcpiExOpcode_3A_1T_1R (
 
         /* Truncate request if larger than the actual String/Buffer */
 
-        else if ((Index + Length) > Operand[0]->String.Length)
+        else if ((Index + Length) > Operand[0]->String.Length ||
+                 (Index + Length) < Index) /* Check for overflow */
         {
             Length =
                 (ACPI_SIZE) Operand[0]->String.Length - (ACPI_SIZE) Index;

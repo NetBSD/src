@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -339,7 +339,7 @@ ACPI_RSCONVERT_INFO     AcpiRsConvertCsi2SerialBus[14] =
  *
  ******************************************************************************/
 
-ACPI_RSCONVERT_INFO     AcpiRsConvertI2cSerialBus[17] =
+ACPI_RSCONVERT_INFO     AcpiRsConvertI2cSerialBus[18] =
 {
     {ACPI_RSC_INITGET,  ACPI_RESOURCE_TYPE_SERIAL_BUS,
                         ACPI_RS_SIZE (ACPI_RESOURCE_I2C_SERIALBUS),
@@ -406,6 +406,11 @@ ACPI_RSCONVERT_INFO     AcpiRsConvertI2cSerialBus[17] =
     {ACPI_RSC_1BITFLAG, ACPI_RS_OFFSET (Data.I2cSerialBus.AccessMode),
                         AML_OFFSET (I2cSerialBus.TypeSpecificFlags),
                         0},
+
+    /* Read LVR from Type Specific Flags, bits[15:8] */
+    {ACPI_RSC_MOVE8,    ACPI_RS_OFFSET (Data.I2cSerialBus.Lvr),
+                        AML_OFFSET (I2cSerialBus.TypeSpecificFlags) + 1,
+                        1},
 
     {ACPI_RSC_MOVE32,   ACPI_RS_OFFSET (Data.I2cSerialBus.ConnectionSpeed),
                         AML_OFFSET (I2cSerialBus.ConnectionSpeed),

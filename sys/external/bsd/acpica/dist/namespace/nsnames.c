@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -288,6 +288,13 @@ AcpiNsBuildNormalizedPath (
     }
 
     if (!Node)
+    {
+        goto BuildTrailingNull;
+    }
+
+    /* Validate the Node to avoid use-after-free vulnerabilities */
+
+    if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
     {
         goto BuildTrailingNull;
     }

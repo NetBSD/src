@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -144,6 +144,7 @@ extern FILE                         *AslCompilerin;
 extern int                          DtParserdebug;
 extern int                          PrParserdebug;
 extern const ASL_MAPPING_ENTRY      AslKeywordMapping[];
+extern const UINT32                 AslKeywordMappingCount;
 extern char                         *AslCompilertext;
 extern char                         *DtCompilerParsertext;
 

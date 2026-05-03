@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -810,7 +810,16 @@ AcpiUtCopySimpleObject (
             break;
         }
 
-        AcpiUtAddReference (SourceDesc->Reference.Object);
+        /*
+         * Local/Arg/Debug references do not have a valid Object pointer
+         * that can be referenced
+         */
+        if ((SourceDesc->Reference.Class != ACPI_REFCLASS_LOCAL) &&
+            (SourceDesc->Reference.Class != ACPI_REFCLASS_ARG) &&
+            (SourceDesc->Reference.Class != ACPI_REFCLASS_DEBUG))
+        {
+            AcpiUtAddReference (SourceDesc->Reference.Object);
+        }
         break;
 
     case ACPI_TYPE_REGION:

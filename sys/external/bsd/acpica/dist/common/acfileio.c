@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -342,6 +342,15 @@ AcGetOneTableFromFile (
     else
     {
         TableLength = TableHeader.Length;
+    }
+
+    /* Table length must be at least large enough to hold the header */
+
+    if (TableLength < HeaderLength)
+    {
+        fprintf (stderr, "Table length too small for header: 0x%.2X\n",
+            TableLength);
+        return (AE_BAD_HEADER);
     }
 
     /* Allocate a buffer for the entire table */

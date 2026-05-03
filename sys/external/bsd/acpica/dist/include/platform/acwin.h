@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@
 
 #pragma warning( disable: 4201)
 #pragma warning( disable: 4068)
+#pragma warning( disable: 4214)
 #pragma warning( push)
 
 #define ACPI_MACHINE_WIDTH      32

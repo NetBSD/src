@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -533,6 +533,7 @@ typedef struct acpi_resource_i2c_serialbus
     UINT8                           AccessMode;
     UINT16                          SlaveAddress;
     UINT32                          ConnectionSpeed;
+    UINT8                           Lvr;
 
 } ACPI_RESOURCE_I2C_SERIALBUS;
 
