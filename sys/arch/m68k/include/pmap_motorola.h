@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.59 2026/04/30 05:46:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.60 2026/05/03 19:05:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -183,6 +183,7 @@ struct pmap_physseg {
 #define	m68k_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	m68k_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
 
+#ifndef _MODULE
 /*
  * On the 040, we keep track of which level 2 blocks are already in use
  * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
@@ -204,6 +205,7 @@ struct pmap_physseg {
 #endif
 #define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
+#endif /* ! _MODULE */
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
