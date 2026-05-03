@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Graham Percival
+ * Copyright (c) 2003-2025 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,22 +24,44 @@
  */
 #include "test.h"
 
-DEFINE_TEST(test_warn_missing_hardlink_target)
+#include <locale.h>
+
+DEFINE_TEST(test_v7tar_filename_encoding_fail_UTF16_win)
 {
+#if !defined(_WIN32) || defined(__CYGWIN__)
+	skipping("This test is meant to verify unicode string handling"
+		" on Windows with UTF-16 names");
+	return;
+#else
 	struct archive *a;
-	struct archive_entry *ae;
+	struct archive_entry *entry;
+	char buff[4096];
+	size_t used;
 
-	assert(NULL != (a = archive_write_disk_new()));
-	assert(NULL != (ae = archive_entry_new()));
+	/* Test the C locale by not calling setlocale.  */
 
-	archive_entry_set_pathname(ae, "hardlink-name");
-	archive_entry_set_hardlink(ae, "hardlink-target");
+	a = archive_write_new();
+	assertEqualInt(ARCHIVE_OK, archive_write_set_format_v7tar(a));
+	if (archive_write_set_options(a, "hdrcharset=CP437") != ARCHIVE_OK) {
+		skipping("This system cannot convert character-set"
+		    " from UTF-16 to CP437.");
+		archive_write_free(a);
+		return;
+	}
+	assertEqualInt(ARCHIVE_OK,
+	    archive_write_open_memory(a, buff, sizeof(buff), &used));
 
-	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, ae));
-	assertEqualInt(ENOENT, archive_errno(a));
-	assertEqualString("Hard-link target 'hardlink-target' does not exist",
+	entry = archive_entry_new2(a);
+	/* Set the filename using a UTF-16 string */
+	archive_entry_copy_pathname_w(entry, L"\u8868.txt");
+	archive_entry_set_filetype(entry, AE_IFREG);
+	archive_entry_set_size(entry, 0);
+	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, entry));
+	/* The pathname cannot even be represented in the current locale
+	   for inclusion in the error message.  */
+	assertEqualString("Can't translate pathname to CP437",
 	    archive_error_string(a));
-
-	archive_entry_free(ae);
-	archive_free(a);
+	archive_entry_free(entry);
+	assertEqualInt(ARCHIVE_OK, archive_write_free(a));
+#endif
 }

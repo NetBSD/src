@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2015 Graham Percival
+ * Copyright (c) 2026 Tim Kientzle
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,22 +24,27 @@
  */
 #include "test.h"
 
-DEFINE_TEST(test_warn_missing_hardlink_target)
+DEFINE_TEST(test_read_format_lha_oversize_header)
 {
-	struct archive *a;
+	const char *refname = "test_read_format_lha_oversize_header.lzh";
+	extract_reference_file(refname);
 	struct archive_entry *ae;
+	struct archive *a;
 
-	assert(NULL != (a = archive_write_disk_new()));
-	assert(NULL != (ae = archive_entry_new()));
+	assert((a = archive_read_new()) != NULL);
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_format_all(a));
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_support_filter_all(a));
 
-	archive_entry_set_pathname(ae, "hardlink-name");
-	archive_entry_set_hardlink(ae, "hardlink-target");
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_open_filename(a, refname, 10240));
 
-	assertEqualInt(ARCHIVE_FAILED, archive_write_header(a, ae));
-	assertEqualInt(ENOENT, archive_errno(a));
-	assertEqualString("Hard-link target 'hardlink-target' does not exist",
-	    archive_error_string(a));
+	/* First 18 entries in the test file are well-formed */
+	for (int i = 0; i < 18; i++) {
+	  assertEqualIntA(a, ARCHIVE_OK, archive_read_next_header(a, &ae));
+	}
 
-	archive_entry_free(ae);
-	archive_free(a);
+	/* 19th has an oversized header */
+	assertEqualInt(ARCHIVE_FATAL, archive_read_next_header(a, &ae));
+
+	assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
+	assertEqualInt(ARCHIVE_OK, archive_read_free(a));
 }
