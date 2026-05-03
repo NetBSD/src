@@ -6207,7 +6207,7 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 	 * hopefully it can find other pages to free.
 	 */
 
-	if (curlwp == uvm.pagedaemon_lwp) {
+	if (uvm_lwp_is_pagedaemon(curlwp)) {
 		err = SET_ERROR(ENOMEM);
 		goto out;
 	}
@@ -6341,7 +6341,7 @@ zfs_netbsd_putpages(void *v)
 	bool cleaning = (flags & PGO_CLEANIT) != 0;
 
 	if (cleaning) {
-		bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
+		bool pagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 
 		ASSERT((offlo & PAGE_MASK) == 0 && (offhi & PAGE_MASK) == 0);
 		ASSERT(offlo < offhi || offhi == 0);
