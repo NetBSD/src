@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -502,6 +502,10 @@ DtCompileDrtm (
     void                    **PFieldList);
 
 ACPI_STATUS
+DtCompileDtpr (
+    void                    **PFieldList);
+
+ACPI_STATUS
 DtCompileEinj (
     void                    **PFieldList);
 
@@ -711,6 +715,7 @@ extern const unsigned char  TemplateDbg2[];
 extern const unsigned char  TemplateDbgp[];
 extern const unsigned char  TemplateDmar[];
 extern const unsigned char  TemplateDrtm[];
+extern const unsigned char  TemplateDtpr[];
 extern const unsigned char  TemplateEcdt[];
 extern const unsigned char  TemplateEinj[];
 extern const unsigned char  TemplateErdt[];

@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -95,6 +95,11 @@ const AH_UUID  Gbl_AcpiUuids[] =
     {"[Processor Properties]",      NULL},
     {"Cache Properties",            UUID_CACHE_PROPERTIES},
     {"Physical Package Property",   UUID_PHYSICAL_PROPERTY},
+
+    {"[Modern Standby]",            NULL},
+    {"Modern Standby Microsoft",    UUID_LPS0_MICROSOFT},
+    {"Modern Standby Intel",        UUID_LPS0_INTEL},
+    {"Modern Standby AMD",          UUID_LPS0_AMD},
 
     {"[Miscellaneous]",             NULL},
     {"Platform-wide Capabilities",  UUID_PLATFORM_CAPABILITIES},

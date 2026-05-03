@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -304,7 +304,8 @@ const char                      *AslTableCompilerMsgs [] =
 /*    ASL_MSG_UNKNOWN_FORMAT */             "Unknown format value",
 /*    ASL_MSG_RESERVED_VALUE */             "Value for field is reserved or unknown",
 /*    ASL_MSG_TWO_ZERO_VALUES */            "32-bit DSDT Address and 64-bit X_DSDT Address cannot both be zero",
-/*    ASL_MSG_BAD_PARSE_TREE */             "Parse tree appears to be ill-defined"
+/*    ASL_MSG_BAD_PARSE_TREE */             "Parse tree appears to be ill-defined",
+/*    ASL_MSG_MALFORMED_HEADER */           "Malformed ACPI table header detected"
 };
 
 /* Preprocessor */

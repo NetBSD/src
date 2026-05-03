@@ -6,7 +6,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -227,6 +227,13 @@ AcpiNsDetachObject (
 
 
     ObjDesc = Node->Object;
+
+    /* Alias nodes point directly to other namespace nodes; skip teardown */
+    if (Node->Flags & ANOBJ_IS_ALIAS)
+    {
+        Node->Object = NULL;
+        return_VOID;
+    }
 
     if (!ObjDesc ||
         (ObjDesc->Common.Type == ACPI_TYPE_LOCAL_DATA))

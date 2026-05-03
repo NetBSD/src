@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -478,14 +478,16 @@ CgWriteTableHeader (
     /* OEMID */
 
     Child = Child->Asl.Next;
-    memcpy (AslGbl_TableHeader.OemId, Child->Asl.Value.String,
-        strlen (Child->Asl.Value.String));
+    /* Bound copy to header field size to avoid overflow on malformed input */
+    strncpy (AslGbl_TableHeader.OemId, Child->Asl.Value.String,
+        ACPI_OEM_ID_SIZE);
 
     /* OEM TableID */
 
     Child = Child->Asl.Next;
-    memcpy (AslGbl_TableHeader.OemTableId, Child->Asl.Value.String,
-        strlen (Child->Asl.Value.String));
+    /* Bound copy to header field size to avoid overflow on malformed input */
+    strncpy (AslGbl_TableHeader.OemTableId, Child->Asl.Value.String,
+        ACPI_OEM_TABLE_ID_SIZE);
 
     /* OEM Revision */
 

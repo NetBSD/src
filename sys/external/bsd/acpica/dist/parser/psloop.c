@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -458,7 +458,8 @@ AcpiPsParseLoop (
                     WalkState->Aml = ParserState->Aml;
 
                     ACPI_ERROR ((AE_INFO, "Skipping While/If block"));
-                    if (*WalkState->Aml == AML_ELSE_OP)
+                    if ((WalkState->Aml < ParserState->AmlEnd) &&
+                        (*WalkState->Aml == AML_ELSE_OP))
                     {
                         ACPI_ERROR ((AE_INFO, "Skipping Else block"));
                         WalkState->ParserState.Aml = WalkState->Aml + 1;

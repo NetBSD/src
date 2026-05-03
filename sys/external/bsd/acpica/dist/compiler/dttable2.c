@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2025, Intel Corp.
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -329,6 +329,21 @@ DtCompileMadt (
         case ACPI_MADT_TYPE_PLIC:
 
             InfoTable = AcpiDmTableInfoMadt27;
+            break;
+
+		case ACPI_MADT_TYPE_GICV5_IRS:
+
+            InfoTable = AcpiDmTableInfoMadt28;
+            break;
+
+		case ACPI_MADT_TYPE_GICV5_ITS:
+
+            InfoTable = AcpiDmTableInfoMadt29;
+            break;
+
+		case ACPI_MADT_TYPE_GICV5_ITS_TRANSLATE:
+
+            InfoTable = AcpiDmTableInfoMadt30;
             break;
 
         default:
