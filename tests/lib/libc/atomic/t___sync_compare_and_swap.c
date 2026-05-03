@@ -1,4 +1,4 @@
-/*	$NetBSD: t___sync_compare_and_swap.c,v 1.4 2025/12/24 20:37:03 andvar Exp $	*/
+/*	$NetBSD: t___sync_compare_and_swap.c,v 1.5 2026/05/03 13:46:08 skrll Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,20 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.4 2025/12/24 20:37:03 andvar Exp $");
+__RCSID("$NetBSD: t___sync_compare_and_swap.c,v 1.5 2026/05/03 13:46:08 skrll Exp $");
 
 #include <atf-c.h>
 #include <inttypes.h>
 #include <machine/types.h>	// for __HAVE_ATOMIC64_OPS
-
-#if defined __arm__ && __ARM_ARCH <= 5
-#define	pr56839_xfail							      \
-	atf_tc_expect_fail("PR port-arm/56839:"				      \
-	    "GCC emits wrong codes for compare_and_swap_1 builtins"	      \
-	    " on armv5 (el & eb)")
-#else
-#define	pr56839_xfail	__nothing
-#endif
 
 /*
  * These tests don't examine the atomicity.
@@ -95,7 +86,7 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects %d but %d", expres, res); \
 }
 
-atf_sync_bool(__sync_bool_compare_and_swap_1, uint8_t,  PRIx8, pr56839_xfail);
+atf_sync_bool(__sync_bool_compare_and_swap_1, uint8_t,  PRIx8, __nothing);
 atf_sync_bool(__sync_bool_compare_and_swap_2, uint16_t, PRIx16, __nothing);
 atf_sync_bool(__sync_bool_compare_and_swap_4, uint32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
@@ -150,9 +141,9 @@ ATF_TC_BODY(NAME##_subword, tc) \
 }
 
 atf_sync_bool_subword(__sync_bool_compare_and_swap_1, 8, uint8_t, uint16_t,
-    PRIx8, PRIx16, pr56839_xfail);
+    PRIx8, PRIx16, __nothing);
 atf_sync_bool_subword(__sync_bool_compare_and_swap_2, 16, uint16_t, uint32_t,
-    PRIx16, PRIx32, pr56839_xfail);
+    PRIx16, PRIx32, __nothing);
 atf_sync_bool_subword(__sync_bool_compare_and_swap_4, 32, uint32_t, uint64_t,
     PRIx32, PRIx64, __nothing);
 
@@ -195,7 +186,7 @@ ATF_TC_BODY(NAME, tc) \
 	    "failure case: res expects 0x%" FMT " but 0x%" FMT, expres, res); \
 }
 
-atf_sync_val(__sync_val_compare_and_swap_1, uint8_t,  PRIx8, pr56839_xfail);
+atf_sync_val(__sync_val_compare_and_swap_1, uint8_t,  PRIx8, __nothing);
 atf_sync_val(__sync_val_compare_and_swap_2, uint16_t, PRIx16, __nothing);
 atf_sync_val(__sync_val_compare_and_swap_4, uint32_t, PRIx32, __nothing);
 #ifdef __HAVE_ATOMIC64_OPS
@@ -247,9 +238,9 @@ ATF_TC_BODY(NAME##_subword, tc) \
 }
 
 atf_sync_val_subword(__sync_val_compare_and_swap_1, 8, uint8_t, uint16_t,
-    PRIx8, PRIx16, pr56839_xfail);
+    PRIx8, PRIx16, __nothing);
 atf_sync_val_subword(__sync_val_compare_and_swap_2, 16, uint16_t, uint32_t,
-    PRIx16, PRIx32, pr56839_xfail);
+    PRIx16, PRIx32, __nothing);
 atf_sync_val_subword(__sync_val_compare_and_swap_4, 32, uint32_t, uint64_t,
     PRIx32, PRIx64, __nothing);
 
