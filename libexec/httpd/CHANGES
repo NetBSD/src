@@ -1,4 +1,13 @@
-$NetBSD: CHANGES,v 1.56 2024/04/28 17:12:30 maya Exp $
+$NetBSD: CHANGES,v 1.57 2026/05/03 21:52:14 mrg Exp $
+
+changes in bozohttpd 20260503:
+	o  fix the default minimum TLS version to 1.1 from 1.3.  the
+	   manual already said 1.1 was the default.  fixes PR#58878.
+	o  log the correct port with TLS connections.  fixes PR#59644.
+	o  fix use-after-free, double-free, and bounds checking problems.
+	   from shm.
+	o  better lint support.
+	o  several updates for the manual.  from lukem.
 
 changes in bozohttpd 20240428:
 	o  make directory listings mobile friendly. from D. Bohdan.
