@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2199 2026/05/03 15:30:19 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2200 2026/05/03 16:07:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -780,7 +780,7 @@ Current Vers:	2.1.12-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Date:		2021-04-06
+Date:		2026-05-03
 Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
@@ -1001,18 +1001,19 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2024-08-17
-Current Vers:	2024-08-17
+Version:	2026-04-26
+Current Vers:	2026-04-26
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
-Date:		2024-08-17
+Date:		2026-05-03
 Mailing List:
 Responsible:	jdolecek
 License:	BSD-like
 Location:	external/historical/nawk/dist
 Notes:
 Build maketab from nawk sources and generate proctab.c.
+We use the bsd-features branch to import, not master.
 
 Package:	ndbootd
 Version:	0.5
