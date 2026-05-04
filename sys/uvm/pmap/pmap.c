@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.90 2026/04/22 08:27:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.91 2026/05/04 06:52:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.90 2026/04/22 08:27:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2026/05/04 06:52:13 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1492,7 +1492,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		PMAP_COUNT(managed_mappings);
 	} else if (mdpp) {
 #ifdef __HAVE_PMAP_PV_TRACK
-		pmap_page_set_attributes(mdpg, VM_PAGEMD_REFERENCED);
+		pmap_page_set_attributes(mdpp, VM_PAGEMD_REFERENCED);
 
 		PMAP_COUNT(pvtracked_mappings);
 #endif
