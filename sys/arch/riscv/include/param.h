@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.9 2026/03/27 16:40:59 skrll Exp $ */
+/* $NetBSD: param.h,v 1.10 2026/05/04 18:23:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #endif
 
 /*
- * Machine dependent constants for all OpenRISC processors
+ * Machine dependent constants for all RISC-V processors
  */
 
 /*
@@ -46,7 +46,7 @@
  *	uname returns the correct thing, etc.
  *
  * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "or1k/or1k".
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "riscv".
  */
 
 #ifdef _LP64
