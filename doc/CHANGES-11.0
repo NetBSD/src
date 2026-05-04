@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.83 2026/04/04 06:08:56 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.84 2026/05/04 14:16:15 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -3096,4 +3096,15 @@ doc/CHANGES-11.0
 
 	Tags for 11.0_RC3 moved.
 	[martin]
+
+usr.bin/cksum/cksum.c				1.53
+
+	cksum(1): PR 60154: do not print arbitrary control characters when
+	printing file names while checking hashes with the -c option.
+	[martin, ticket #274]
+
+share/mk/bsd.own.mk				1.1481 via patch
+
+	PR 58762: disable MKCOMPAT for earm*.
+	[martin, ticket #275]
 
