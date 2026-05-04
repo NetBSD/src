@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.47 2026/05/04 03:55:33 mrg Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.48 2026/05/04 04:13:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -188,6 +188,9 @@ void		pmap_copy_page(paddr_t, paddr_t);
 void		pmap_zero_page(paddr_t);
 #endif
 
+#if !defined(pmap_resident_count)
+long		pmap_resident_count(pmap_t);
+#endif
 #if !defined(pmap_wired_count)
 long		pmap_wired_count(pmap_t);
 #endif
@@ -229,9 +232,6 @@ paddr_t		pmap_phys_address(paddr_t);
 #endif
 #if !defined(pmap_update)
 void		pmap_update(pmap_t);
-#endif
-#if !defined(pmap_resident_count)
-long		pmap_resident_count(pmap_t);
 #endif
 
 #endif	/* _KERNEL */
