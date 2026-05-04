@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.182 2023/10/04 20:34:19 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.183 2026/05/04 04:11:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.182 2023/10/04 20:34:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.183 2026/05/04 04:11:34 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -175,6 +175,17 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 	uvm_fault_unwire(&vs->vm_map, trunc_page((vaddr_t)addr),
 		round_page((vaddr_t)addr + len));
+}
+
+/*
+ * uvm_resident_count: return the resident page count for the
+ * spcified vmspace.
+ */
+
+long
+uvm_resident_count(struct vmspace *vm)
+{
+	return pmap_resident_count(vm->vm_map.pmap);
 }
 
 /*

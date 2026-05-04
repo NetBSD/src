@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.198 2026/05/03 16:02:36 thorpej Exp $	*/
+/*	$NetBSD: vm.c,v 1.199 2026/05/04 04:11:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.198 2026/05/03 16:02:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.199 2026/05/04 04:11:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -956,6 +956,12 @@ void
 uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 {
 
+}
+
+long
+uvm_resident_count(struct vmspace *vm)
+{
+	return pmap_resident_count(vm->vm_map.pmap);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.237 2026/03/22 11:25:12 yamt Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.238 2026/05/04 04:11:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -637,8 +637,7 @@ struct uvm_voaddr {
  * macros
  */
 
-#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
-
+#define vm_resident_count(vm) uvm_resident_count(vm)
 
 /* vm_machdep.c */
 int		vmapbuf(struct buf *, vsize_t);
@@ -688,6 +687,7 @@ vaddr_t			uvm_lwp_getuarea(lwp_t *);
 void			uvm_lwp_setuarea(lwp_t *, vaddr_t);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
+long			uvm_resident_count(struct vmspace *);
 void			uvm_cpu_attach(struct cpu_info *);
 
 
