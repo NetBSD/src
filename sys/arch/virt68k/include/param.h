@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.3 2026/04/29 01:32:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.4 2026/05/04 13:03:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,8 +66,13 @@
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
+ *
+ * virt68k is unique among m68k platforms in that it needs to boot with
+ * a fairly large (by m68k standards) minium memory config (because virtio
+ * burns a lot of pages on DMA rings), and it can also be booted with an
+ * absolutely gigantic (again, by m68k standards) max memory config (3.5GB).
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_UNLIMITED
 
 #endif	/* !_MACHINE_PARAM_H_ */
