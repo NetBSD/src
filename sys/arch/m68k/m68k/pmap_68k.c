@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.56 2026/04/26 15:05:07 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.57 2026/05/04 15:30:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.56 2026/04/26 15:05:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.57 2026/05/04 15:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -547,6 +547,8 @@ pmap_pa_to_pg(paddr_t pa)
 {
 	return pmap_initialized_p ? PHYS_TO_VM_PAGE(pa) : NULL;
 }
+
+static bool pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
 
 /*************************** RESOURCE MANAGEMENT *****************************/
 
@@ -3221,41 +3223,11 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 }
 
 /*
- * pmap_clear_modify:		[ INTERFACE ]
- *
- *	Clear the modify bits on the specified physical page.
- */
-/* See <machine/pmap.h> */
-
-/*
- * pmap_clear_reference:	[ INTERFACE ]
- *
- *	Clear the reference bit on the specified physical page.
- */
-/* See <machine/pmap.h> */
-
-/*
- * pmap_is_referenced:		[ INTERFACE ]
- *
- *	Return whether or not the specified physical page has been referenced
- *	by any physical maps.
- */
-/* See <machine/pmap.h> */
-
-/*
- * pmap_is_modified:		[ INTERFACE ]
- *
- *	Return whether or not the specified physical page has been modified
- *	by any physical maps.
- */
-/* See <machine/pmap.h> */
-
-/*
  * pmap_testbit:
  *
  *	Test the modified / referenced bits of a physical page.
  */
-bool
+static bool
 pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 {
 	struct pv_entry *pv;
@@ -3284,11 +3256,35 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 }
 
 /*
+ * pmap_is_referenced:		[ INTERFACE ]
+ *
+ *	Return whether or not the specified physical page has been referenced
+ *	by any physical maps.
+ */
+bool
+pmap_is_referenced(struct vm_page *pg)
+{
+	return !!(VM_MDPAGE_UM(pg) & PTE_U) || pmap_testbit(pg, PTE_U);
+}
+
+/*
+ * pmap_is_modified:		[ INTERFACE ]
+ *
+ *	Return whether or not the specified physical page has been modified
+ *	by any physical maps.
+ */
+bool
+pmap_is_modified(struct vm_page *pg)
+{
+	return !!(VM_MDPAGE_UM(pg) & PTE_M) || pmap_testbit(pg, PTE_M);
+}
+
+/*
  * pmap_changebit:
  *
  *	Test-and-change various bits (including mod/ref bits).
  */
-bool
+static bool
 pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 {
 	struct pv_entry *pv;
@@ -3355,6 +3351,28 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	PMAP_CRIT_EXIT();
 
 	return rv;
+}
+
+/*
+ * pmap_clear_modify:		[ INTERFACE ]
+ *
+ *	Clear the modify bits on the specified physical page.
+ */
+bool
+pmap_clear_modify(struct vm_page *pg)
+{
+	return pmap_changebit(pg, 0, (pt_entry_t)~PTE_M);
+}
+
+/*
+ * pmap_clear_reference:	[ INTERFACE ]
+ *
+ *	Clear the reference bit on the specified physical page.
+ */
+bool
+pmap_clear_reference(struct vm_page *pg)
+{
+	return pmap_changebit(pg, 0, (pt_entry_t)~PTE_U);
 }
 
 /*

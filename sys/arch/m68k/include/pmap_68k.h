@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.15 2026/04/29 01:32:29 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.16 2026/05/04 15:30:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -67,6 +67,10 @@
 
 #ifndef _M68K_PMAP_68K_H_
 #define	_M68K_PMAP_68K_H_
+
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
 
 #include <sys/rbtree.h>
 #include <sys/queue.h>
@@ -404,19 +408,6 @@ do {								\
 #define	VM_MDPAGE_CI_P(pg)					\
 	((pg)->mdpage.pvh_listx & PVH_CI)
 
-bool	pmap_testbit(struct vm_page *, pt_entry_t);
-#define	pmap_is_referenced(pg)					\
-	((VM_MDPAGE_UM(pg) & PTE_U) || pmap_testbit((pg), PTE_U))
-#define	pmap_is_modified(pg)					\
-	((VM_MDPAGE_UM(pg) & PTE_M) || pmap_testbit((pg), PTE_M))
-
-bool	pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
-#define	pmap_clear_reference(pg)				\
-	pmap_changebit((pg), 0, (pt_entry_t)~PTE_U)
-#define	pmap_clear_modify(pg)					\
-	pmap_changebit((pg), 0, (pt_entry_t)~PTE_M)
-
-#define	pmap_update(pmap)		__nothing
 #define	pmap_copy(dp, sp, da, l, sa)	__nothing
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
@@ -523,5 +514,15 @@ phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 #define	PMAP_BOOTSTRAP_PA_TO_VA(pa)					\
 	(VM_MIN_KERNEL_ADDRESS + (((paddr_t)(pa)) - reloff))
 #endif
+
+#endif /* ! _MODULE */
+
+/*
+ * Some pmap(9) API macros should be defined here for module(7).
+ * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
+ */
+#define	pmap_update(pmap)		__nothing
+
+#endif /* _KERNEL */
 
 #endif /* _M68K_PMAP_68K_H_ */

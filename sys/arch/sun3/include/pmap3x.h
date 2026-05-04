@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3x.h,v 1.33 2026/04/02 03:56:44 thorpej Exp $	*/
+/*	$NetBSD: pmap3x.h,v 1.34 2026/05/04 15:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -29,7 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
+
 /*
  * Physical map structures exported to the VM code.
  */
@@ -49,9 +52,6 @@ segsz_t pmap_count(pmap_t, int);
 
 /* This needs to be a macro for vm_mmap.c */
 #define	pmap_wired_count(pmap)  	(pmap_count((pmap), 1))
-
-/* We use the PA plus some low bits for device mmap. */
-#define pmap_phys_address(addr) 	(addr)
 
 /* Map a given physical region to a virtual region */
 vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
@@ -81,8 +81,6 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x40	/* tells pmap_enter to set PTE_CI */
 #define	PMAP_SPEC	0xFF	/* mask to get all above. */
 
-#endif	/* _KERNEL */
-
 /* MMU specific segment size */
 #define	SEGSHIFT	19	        /* LOG2(NBSG) */
 #define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -91,3 +89,7 @@ pmap_remove_all(struct pmap *pmap)
 #define	sun3x_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	sun3x_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	sun3x_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
+
+#endif /* ! _MODULE */
+
+#endif /* _KERNEL */

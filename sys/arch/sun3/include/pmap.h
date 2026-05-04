@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.34 2020/02/01 06:17:12 tsutsui Exp $	*/
+/*	$NetBSD: pmap.h,v 1.35 2026/05/04 15:30:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -37,13 +37,17 @@
 #endif	/* SUN3X */
 
 #ifdef _KERNEL
-/*
- * Some pmap(9) API macros should be defined here for module(7)
- * because they are common between sun3 and sun3x. (see PR/54869)
- */
-#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
+#if !defined(_MODULE)
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 #endif
+
+/*
+ * Some pmap(9) API macros should be defined here for module(7).
+ * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
+ */
+#define	pmap_update(pmap)	__nothing	/* nothing (yet) */
+
+#endif /* _KERNEL */
 
 #endif	/* _MACHINE_PMAP_H */

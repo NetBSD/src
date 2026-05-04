@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.60 2026/05/03 19:05:34 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.61 2026/05/04 15:30:20 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -75,6 +75,10 @@
 
 #ifndef	_M68K_PMAP_MOTOROLA_H_
 #define	_M68K_PMAP_MOTOROLA_H_
+
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
 
 #ifdef _KERNEL_OPT
 #include "opt_m68k_arch.h"
@@ -183,7 +187,6 @@ struct pmap_physseg {
 #define	m68k_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	m68k_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
 
-#ifndef _MODULE
 /*
  * On the 040, we keep track of which level 2 blocks are already in use
  * with the pm_stfree mask.  Bits are arranged from LSB (block 0) to MSB
@@ -205,7 +208,6 @@ struct pmap_physseg {
 #endif
 #define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
-#endif /* ! _MODULE */
 
 /*
  * For each struct vm_page, there is a list of all currently valid virtual
@@ -223,8 +225,6 @@ extern struct pv_header	*pv_table;	/* array of entries, one per page */
 
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
-
-#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
 static __inline bool
 pmap_remove_all(struct pmap *pmap)
@@ -347,5 +347,15 @@ bool	pmap_va_is_static_mapping(vaddr_t va, size_t);
 #define	PMAP_BOOTSTRAP_PA_TO_VA(pa)					\
 	(VM_MIN_KERNEL_ADDRESS + (((paddr_t)(pa)) - reloff))
 #endif
+
+#endif /* ! _MODULE */
+
+/*
+ * Some pmap(9) API macros should be defined here for module(7).
+ * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
+ */
+#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
+
+#endif /* _KERNEL */
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */

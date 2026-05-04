@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.29 2026/04/02 03:56:43 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.30 2026/05/04 15:30:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -29,7 +29,10 @@
 #ifndef	_MACHINE_PMAP_H
 #define	_MACHINE_PMAP_H
 
-#ifdef _KERNEL
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
+
 /*
  * Physical map structures exported to the VM code.
  */
@@ -60,11 +63,6 @@ extern segsz_t pmap_resident_pages(pmap_t);
 /* This needs to be a macro for vm_mmap.c */
 extern segsz_t pmap_wired_pages(pmap_t);
 #define	pmap_wired_count(pmap)	(pmap_wired_pages(pmap))
-
-/* We use the PA plus some low bits for device mmap. */
-#define pmap_phys_address(addr) 	(addr)
-
-#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
 extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
@@ -99,8 +97,6 @@ pmap_remove_all(struct pmap *pmap)
 
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
-#endif	/* _KERNEL */
-
 /* MMU specific segment value */
 #define	SEGSHIFT	15	        /* LOG2(NBSG) */
 #define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -109,5 +105,15 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	sun2_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	sun2_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	sun2_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
+
+#endif /* _MODULE */
+
+/*
+ * Some pmap(9) API macros should be defined here for module(7).
+ * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
+ */
+#define	pmap_update(pmap)	__nothing	/* nothing (yet) */
+
+#endif	/* _KERNEL */
 
 #endif	/* _MACHINE_PMAP_H */

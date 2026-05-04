@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.128 2026/04/09 14:46:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.129 2026/05/04 15:30:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.128 2026/04/09 14:46:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2026/05/04 15:30:21 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -2944,6 +2944,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	if (pap != NULL)
 		*pap = MMU_PTE_PA(*c_pte);
 	return true;
+}
+
+/* pmap_phys_address
+ **
+ * Return the physical address corresponding to the specified
+ * cookie.  Used by the device pager to decode a device driver's
+ * mmap entry point return value.
+ */
+paddr_t
+pmap_phys_address(paddr_t addr)
+{
+	return addr;
 }
 
 /* pmap_remove_kernel		INTERNAL
