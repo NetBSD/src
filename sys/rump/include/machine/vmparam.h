@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.5 2026/05/03 17:17:22 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.6 2026/05/04 19:31:46 thorpej Exp $	*/
 
 /*
  * Dummy <machine/vmparam.h> for rump.
@@ -12,8 +12,22 @@
 
 /*
  * We have VM page sizes ranging from 2K to 16K.
+ *
+ * Note that mbufs use MIN_PAGE_SHIFT to calculate the number of
+ * external pages that can be associated with an M_EXT mbuf.  On
+ * LP64 platforms we can easily get into trouble and overflow the
+ * required space (within MSIZE) because pointers are 8 bytes.
+ * If a platform has a 256-byte MSIZE, then MIN_PAGE_SIZE must be
+ * at least 8K.  And we know this is true because the compile-time
+ * asserts pass when building the kernel on those platforms.  If
+ * the platform's MSIZE is 512 (as it is on amd64, for example),
+ * then a 4K page size is OK.
  */
+#ifdef _LP64
+#define	MIN_PAGE_SHIFT		(12 + (MSIZE == 256))
+#else
 #define	MIN_PAGE_SHIFT		11
+#endif
 #define	MAX_PAGE_SHIFT		14
 #define	MIN_PAGE_SIZE		(1 << MIN_PAGE_SHIFT)
 #define	MAX_PAGE_SIZE		(1 << MAX_PAGE_SHIFT)
