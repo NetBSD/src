@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.16 2021/05/31 14:38:57 simonb Exp $ */
+/* $NetBSD: param.h,v 1.17 2026/05/04 18:29:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 /*
- * Machine dependent constants for all ARM processors
+ * Machine dependent constants for all Arm v8 processors
  */
 
 /*
@@ -48,11 +48,8 @@
  *	MACHINE must be defined by the individual port.  This is so that
  *	uname returns the correct thing, etc.
  *
- *	MACHINE_ARCH may be defined by individual ports as a temporary
- *	measure while we're finishing the conversion to ELF.
- *
  * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "arm/armeb".
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "aarch64{,eb}".
  */
 
 #if defined(_KERNEL)
