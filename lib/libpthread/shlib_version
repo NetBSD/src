@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.25 2026/05/01 11:00:21 wiz Exp $
+#	$NetBSD: shlib_version,v 1.26 2026/05/05 10:17:55 yamt Exp $
 #
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
@@ -19,7 +19,7 @@
 #	use reserved identifiers for things that shouldn't be visible,
 #	e.g. rename pthread__pagesize to __pthread_pagesize,
 #
-#	remove remnants of libpthread_dbg: pthread__dbg
+#	remove remnants of libpthread_dbg: pthread__dbg, pthread__allqueue
 #
 # Touching this file for:
 # 20251122 LDADD+= -Wl,-z,nodelete

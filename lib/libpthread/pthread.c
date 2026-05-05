@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.193 2026/05/05 09:49:10 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.194 2026/05/05 10:17:55 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.193 2026/05/05 09:49:10 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.194 2026/05/05 10:17:55 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -107,7 +107,7 @@ int pthread__started;
 int __uselibcstub = 1;
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
-pthread_queue_t pthread__allqueue;
+pthread_queue_t pthread__allqueue; /* only for ancient libpthread_dbg */
 
 static pthread_attr_t pthread_default_attr;
 static lwpctl_t pthread__dummy_lwpctl = { .lc_curcpu = LWPCTL_CPU_NONE };
