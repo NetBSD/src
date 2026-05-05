@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.57 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.58 2026/05/05 03:41:00 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.57 2026/05/04 15:30:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.58 2026/05/05 03:41:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3878,25 +3878,27 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	paddr_t pa, kernimg_endpa, kern_lev1pa;
 	vaddr_t va, nextva, kern_lev1va;
 	pt_entry_t *pte, *epte;
+	const struct pmap_bootmap *pmbm;
 	int entry_count = 0;
 
 #ifdef SYSMAP_VA
 #define	VA_RANGE_DEFAULT	0
 #define	VA_RANGE_KPTES		1
-#define	NRANGES			2
+#define	INIT_NRANGES		2
 #else
 #define	VA_RANGE_DEFAULT	0
 #define	VA_RANGE_KPTES		0
-#define	NRANGES			1
+#define	INIT_NRANGES		1
 #endif
+#define	MAX_RANGES		8
 
 	struct va_range {
 		vaddr_t start_va;
 		vaddr_t end_va;
 		paddr_t start_ptp;
 		paddr_t end_ptp;
-	} va_ranges[NRANGES], *var;
-	int r;
+	} va_ranges[MAX_RANGES], *var;
+	int nranges = INIT_NRANGES, r;
 
 #define	VA_IN_RANGE(va, var)				\
 	((va) >= (var)->start_va &&			\
@@ -4062,9 +4064,11 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 #endif /* SYSMAP_VA */
 
 	/*
-	 * Allocate machine-specific VAs.
+	 * Look through the machine_bootmap looking for any non-fixed
+	 * VAs we need to allocate.  These will go into the default
+	 * VA range.
 	 */
-	const struct pmap_bootmap *pmbm = (const struct pmap_bootmap *)
+	pmbm = (const struct pmap_bootmap *)
 	    PMAP_BOOTSTRAP_RELOC_GLOB(machine_bootmap);
 	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
 		if (pmbm->pmbm_size == 0) {
@@ -4119,11 +4123,53 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	RELOC(kernel_virtual_end, vaddr_t) = nextva;
 
 	/*
+	 * Now that we know the end of the default range, look through
+	 * the machine_bootmap to see if there are any fixed VA ranges
+	 * we need to allocate static PTs for.
+	 */
+	pmbm = (const struct pmap_bootmap *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(machine_bootmap);
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_size == 0) {
+			continue;
+		}
+		if ((pmbm->pmbm_flags & (PMBM_F_FIXEDVA | PMBM_F_KEEPOUT)) !=
+		    PMBM_F_FIXEDVA) {
+			continue;
+		}
+		/*
+		 * Found one; see if there's a range already allocated
+		 * for it.
+		 */
+		for (r = 0; r < nranges; r++) {
+			var = &va_ranges[r];
+			if (VA_IN_RANGE(pmbm->pmbm_vaddr, var)) {
+				break;
+			}
+		}
+		if (r < nranges) {
+			/* Range of PTs already exists. */
+			continue;
+		}
+		/*
+		 * We need to allocate a range.  If we're already at
+		 * the max, I guess we lose.
+		 */
+		if (r == MAX_RANGES) {
+			break;
+		}
+		r = nranges++;
+		va_ranges[r].start_va = pmbm->pmbm_vaddr;
+		va_ranges[r].end_va =
+		    pmbm->pmbm_vaddr + m68k_round_page(pmbm->pmbm_size);
+	}
+
+	/*
 	 * Now, compute the number of PT pages required to map the
 	 * required VA ranges and allocate them.
 	 */
 	size_t nptpages, total_ptpages = 0;
-	for (r = 0; r < NRANGES; r++) {
+	for (r = 0; r < nranges; r++) {
 		var = &va_ranges[r];
 		nptpages = (var->end_va - var->start_va) / PTPAGEVASZ;
 		var->start_ptp = nextpa;
@@ -4218,7 +4264,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	pt_entry_t *kptes = (pt_entry_t *)va;
 	struct va_range *kpte_var = &va_ranges[VA_RANGE_KPTES];
 
-	for (r = 0; r < NRANGES; r++) {
+	for (r = 0; r < nranges; r++) {
 		var = &va_ranges[r];
 		va = (vaddr_t)(&kptes[m68k_btop(var->start_va)]);
 		pte = VA_PTE_BASE(va, kpte_var);
@@ -4247,7 +4293,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			va = *(vaddr_t *)
 			    PMAP_BOOTSTRAP_RELOC_GLOB(pmbm->pmbm_vaddr_ptr);
 		}
-		for (r = 0; r < NRANGES; r++) {
+		for (r = 0; r < nranges; r++) {
 			var = &va_ranges[r];
 			if (VA_IN_RANGE(va, var)) {
 				break;
@@ -4288,7 +4334,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * For the 2-level case, this is trivial.  For the 3-level
 	 * case, we will have to allocate inner segment tables.
 	 */
-	for (r = 0; r < NRANGES; r++) {
+	for (r = 0; r < nranges; r++) {
 		var = &va_ranges[r];
 		if (use_3l) {
 			pt_entry_t *stes, *stes1 = (pt_entry_t *)
