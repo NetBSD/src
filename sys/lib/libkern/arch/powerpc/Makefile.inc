@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.34 2022/05/30 14:18:10 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.35 2026/05/05 14:26:10 christos Exp $
 
 SRCS+=	bswap16.c bswap32.c
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c
-SRCS+=	syncicache.c
+SRCS+=	syncicache.c moddi3.c
 
 SRCS+=	ffs.S memset.S strlen.S
 SRCS+=	gprsavrest.S
