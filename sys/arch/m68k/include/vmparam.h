@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.9 2026/05/03 19:10:41 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.10 2026/05/05 00:48:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,13 +62,7 @@
 
 #if defined(_KERNEL)
 
-#if defined(_MODULE)
-
-extern vaddr_t m68k_usrstack;
-#define	USRSTACK	m68k_usrstack
-
-#else
-
+#if !defined(_MODULE) || !defined(MIN_PAGE_SHIFT)
 /*
  * hp300 pmap derived m68k ports can use 4K or 8K pages.
  * (except HPMMU machines, that support only 4K page)
@@ -80,7 +74,14 @@ extern vaddr_t m68k_usrstack;
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+#endif
 
+#if defined(_MODULE)
+
+extern vaddr_t m68k_usrstack;
+#define	USRSTACK	m68k_usrstack
+
+#else
 /*
  * Virtual memory related constants, all in bytes
  *
