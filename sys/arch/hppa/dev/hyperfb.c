@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.33 2026/04/21 08:25:06 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.34 2026/05/05 06:42:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.33 2026/04/21 08:25:06 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.34 2026/05/05 06:42:40 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -548,7 +548,7 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = hyperfb_putchar_aa;
 	} else
-	ri->ri_ops.putchar = hyperfb_putchar;
+		ri->ri_ops.putchar = hyperfb_putchar;
 }
 
 static int
@@ -817,7 +817,14 @@ hyperfb_setup(struct hyperfb_softc *sc)
 	hyperfb_wait(sc);
 	hyperfb_write4(sc, NGLE_HCRX_PLANE_ENABLE, 0xffffffff);
 
-	/* hyperbowl */
+	/*
+	 * When in terminal mode we set hyperbowl to 2x 8bit image buffers
+	 * with no transparencies so we can abuse one of them as glyph cache.
+	 * In FB mode we switch to 8bit overlay / 24bit image buffer(s), with
+	 * colour 255 transparent so we can easily turn the overlay invisible
+	 * by blitting it all white. There may or may not be another register
+	 * to control this, but we don't know anything about it.
+	 */
 	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
 	    HYPERBOWL_MODE_FOR_8_OVER_88_LUT0_NO_TRANSPARENCIES);
 	hyperfb_write4(sc, NGLE_HCRX_HB_MODE,
@@ -1495,7 +1502,7 @@ hyperfb_do_cursor(struct hyperfb_softc *sc, struct wsdisplay_cursor *cur)
 		  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
 		hyperfb_dba(sc,
 		  BA(FractDcd, Otc01, Ots08, Addr24, 0, BINcmap, 0)); // 0xbbe0f000
-		hyperfb_wait_fifo(sc, 2);		
+		hyperfb_wait_fifo(sc, 2);
 		hyperfb_write4(sc, NGLE_IBO,
 		  IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0)); // 0x03000300
 		hyperfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
