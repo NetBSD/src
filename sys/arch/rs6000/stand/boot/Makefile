@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2017/04/08 19:53:22 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2026/05/05 10:41:10 mrg Exp $
 
 NOMAN= # defined
 
@@ -48,7 +48,7 @@ LIBCRTEND=
 RELOC= 0x800000
 #RELOC= 0x0
 
-LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LIBS= ${L}/sa/libsa.a ${L}/z/libz.a ${L}/kern/libkern.a
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}

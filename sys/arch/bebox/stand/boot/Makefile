@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2023/06/03 08:52:56 lukem Exp $
+#	$NetBSD: Makefile,v 1.38 2026/05/05 10:41:09 mrg Exp $
 
 NOMAN= # defined
 
@@ -59,7 +59,7 @@ RELOC= 0x700000
 
 CLEANFILES+= ${PROG}.elf
 
-LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LIBS= ${L}/sa/libsa.a ${L}/z/libz.a ${L}/kern/libkern.a
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}

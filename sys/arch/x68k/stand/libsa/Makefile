@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2016/01/17 04:47:59 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.32 2026/05/05 10:41:10 mrg Exp $
 
 S=		${.CURDIR}/../../../..
 
@@ -40,7 +40,7 @@ SAMISCMAKEFLAGS= SA_USE_CREAD=yes SA_USE_LOADFILE=yes SA_ENABLE_LS_OP=yes SA_EXT
 .include "${S}/lib/libsa/Makefile.inc"
 LIBSA= ${SALIB}
 
-LIBS= ${LIBKERN} ${LIBZ} ${LIBSA}
+LIBS= ${LIBSA} ${LIBZ} ${LIBKERN}
 
 all realall: ${LIBS}
 

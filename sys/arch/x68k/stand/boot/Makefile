@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/08/10 07:00:49 rin Exp $
+#	$NetBSD: Makefile,v 1.35 2026/05/05 10:41:10 mrg Exp $
 
 NOMAN=		# defined
 
@@ -47,7 +47,7 @@ ELF2AOUT_OPTS=	-O
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
 L=		${LIBSA}/lib
-LDLIBS= 	${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LDLIBS= 	${L}/sa/libsa.a ${L}/z/libz.a ${L}/kern/libkern.a
 LDLIBS+=	${LIBIOCS}/libiocs.a
 
 .include "../Makefile.booters"
