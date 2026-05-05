@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.309 2025/11/25 02:45:41 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.310 2026/05/05 10:23:34 roy Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -420,7 +420,12 @@ typedef struct ifnet {
 			*if_percpuq;	/* :: we should remove it in the future */
 	struct work	if_link_work;	/* q: linkage on link state work queue */
 	uint16_t	if_link_queue;	/* q: masked link state change queue */
-					/* q: is link state work scheduled? */
+#define	LINK_QUEUE_LOCKED	(1 << 0)
+#define	LINK_QUEUE_SCHEDULED	(1 << 1)
+#define	LINK_QUEUE_DOWN		(1 << 2)
+#define	LINK_QUEUE_UNKNOWN	(1 << 3)
+#define	LINK_QUEUE_UP		(1 << 4)
+					/* if_link_scheduled is unused */
 	bool		if_link_scheduled;
 	struct pslist_entry
 			if_pslist_entry;/* i: */
