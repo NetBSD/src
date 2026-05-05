@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.194 2026/05/05 10:17:55 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.195 2026/05/05 12:26:19 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.194 2026/05/05 10:17:55 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.195 2026/05/05 12:26:19 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -125,13 +125,6 @@ int pthread__nspins;
 size_t pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__dbg;	/* set by libpthread_dbg if active */
 
-/*
- * We have to initialize the pthread_stack* variables here because
- * mutexes are used before pthread_init() and thus pthread__initmain()
- * are called.  Since mutexes only save the stack pointer and not a
- * pointer to the thread data, it is safe to change the mapping from
- * stack pointer to thread data afterwards.
- */
 size_t	pthread__stacksize;
 size_t	pthread__guardsize;
 size_t	pthread__pagesize;
