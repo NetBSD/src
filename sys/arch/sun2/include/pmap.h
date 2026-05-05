@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2026/05/05 13:07:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -26,8 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef	_MACHINE_PMAP_H
-#define	_MACHINE_PMAP_H
+#ifndef	_SUN2_PMAP_H_
+#define	_SUN2_PMAP_H_
 
 #if defined(_KERNEL)
 
@@ -97,15 +97,6 @@ pmap_remove_all(struct pmap *pmap)
 
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 
-/* MMU specific segment value */
-#define	SEGSHIFT	15	        /* LOG2(NBSG) */
-#define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
-#define	SEGOFSET	(NBSG - 1)	/* byte offset into segment */
-
-#define	sun2_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
-#define	sun2_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
-#define	sun2_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
-
 #endif /* _MODULE */
 
 /*
@@ -116,4 +107,16 @@ void pmap_procwr(struct proc *, vaddr_t, size_t);
 
 #endif	/* _KERNEL */
 
-#endif	/* _MACHINE_PMAP_H */
+#if (defined(_KERNEL) && !defined(_MODULE)) || defined(_STANDALONE)
+/* MMU specific segment value */
+#define	SEGSHIFT	15	        /* LOG2(NBSG) */
+#define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
+#define	SEGOFSET	(NBSG - 1)	/* byte offset into segment */
+
+#define	sun2_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
+#define	sun2_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define	sun2_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
+
+#endif /* (_KERNEL && !_MODULE) || _STANDALONE */
+
+#endif	/* _SUN2_PMAP_H_ */

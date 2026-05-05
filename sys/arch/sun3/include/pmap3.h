@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.53 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.54 2026/05/05 13:07:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _SUN3_PMAP3_H_
+#define _SUN3_PMAP3_H_ 
 
 #if defined(_KERNEL)
 
@@ -90,6 +93,11 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x10	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
+#endif /* _MODULE */
+
+#endif	/* _KERNEL */
+
+#if (defined(_KERNEL) && !defined(_MODULE)) || defined(_STANDALONE)
 /* MMU specific segment size */
 #define	SEGSHIFT	17	        /* LOG2(NBSG) */
 #define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -98,7 +106,6 @@ pmap_remove_all(struct pmap *pmap)
 #define	sun3_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	sun3_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	sun3_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
+#endif /* (_KERNEL && !_MODULE) || _STANDALONE */
 
-#endif /* _MODULE */
-
-#endif	/* _KERNEL */
+#endif /* _SUN3_PMAP3_H_ */
