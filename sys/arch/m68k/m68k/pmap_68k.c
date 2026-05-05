@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.58 2026/05/05 03:41:00 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.59 2026/05/05 04:26:51 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.58 2026/05/05 03:41:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.59 2026/05/05 04:26:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1034,6 +1034,7 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
 #define	PTPAGEVAOFS	(PTPAGEVASZ - 1)
 
 #define	pmap_round_ptpage(va)	(((va) + PTPAGEVAOFS) & ~PTPAGEVAOFS)
+#define	pmap_trunc_ptpage(va)	((va) & ~PTPAGEVAOFS)
 
 /*
  * kernel_virtual_start marks the first kernel virtual address that
@@ -4118,8 +4119,10 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * until such time as pmap_growkernel() is called to expand
 	 * it.
 	 */
-	va_ranges[VA_RANGE_DEFAULT].start_va = VM_MIN_KERNEL_ADDRESS;
-	va_ranges[VA_RANGE_DEFAULT].end_va = nextva;
+	va_ranges[VA_RANGE_DEFAULT].start_va =
+	    pmap_trunc_ptpage(VM_MIN_KERNEL_ADDRESS);
+	va_ranges[VA_RANGE_DEFAULT].end_va =
+	    pmap_round_ptpage(nextva);
 	RELOC(kernel_virtual_end, vaddr_t) = nextva;
 
 	/*
@@ -4159,9 +4162,9 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			break;
 		}
 		r = nranges++;
-		va_ranges[r].start_va = pmbm->pmbm_vaddr;
+		va_ranges[r].start_va = pmap_trunc_ptpage(pmbm->pmbm_vaddr);
 		va_ranges[r].end_va =
-		    pmbm->pmbm_vaddr + m68k_round_page(pmbm->pmbm_size);
+		    pmap_round_ptpage(pmbm->pmbm_vaddr + pmbm->pmbm_size);
 	}
 
 	/*
