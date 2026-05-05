@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.4 2026/05/04 13:03:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.5 2026/05/05 12:39:38 simonb Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,7 +68,7 @@
  * logical pages.
  *
  * virt68k is unique among m68k platforms in that it needs to boot with
- * a fairly large (by m68k standards) minium memory config (because virtio
+ * a fairly large (by m68k standards) minimum memory config (because virtio
  * burns a lot of pages on DMA rings), and it can also be booted with an
  * absolutely gigantic (again, by m68k standards) max memory config (3.5GB).
  */
