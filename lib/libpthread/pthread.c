@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.195 2026/05/05 12:26:19 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.196 2026/05/05 12:27:25 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.195 2026/05/05 12:26:19 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.196 2026/05/05 12:27:25 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -364,8 +364,6 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 		newthread->pt_guardsize = 0;
 		newthread->pt_stack_allocated = false;
 	}
-
-	newthread->pt_stack_allocated = false;
 
 	if (stackbase == NULL) {
 		stacksize = ((stacksize - 1) | (pthread__pagesize - 1)) + 1;
