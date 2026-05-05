@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.114 2025/04/02 14:23:34 riastradh Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.115 2026/05/05 09:49:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -100,6 +100,7 @@ struct	__pthread_st {
 	int		pt_errno;	/* Thread-specific errno. */
 	stack_t		pt_stack;	/* Our stack */
 	bool		pt_stack_allocated;
+	bool		pt_is_main;	/* is the main thread? */
 	size_t		pt_guardsize;
 	void		*pt_exitval;	/* Read by pthread_join() */
 	char		*pt_name;	/* Thread's name, set by the app. */

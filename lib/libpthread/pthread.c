@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.192 2026/05/03 12:39:34 yamt Exp $	*/
+/*	$NetBSD: pthread.c,v 1.193 2026/05/05 09:49:10 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.192 2026/05/03 12:39:34 yamt Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.193 2026/05/05 09:49:10 yamt Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -482,12 +482,15 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (newthread)
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
 		pthread_mutex_unlock(&pthread__deadqueue_lock);
+		if (newthread) {
+			newthread->pt_is_main = false;
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-		if (newthread && newthread->pt_tls) {
-			_rtld_tls_free(newthread->pt_tls);
-			newthread->pt_tls = NULL;
-		}
+			if (newthread->pt_tls) {
+				_rtld_tls_free(newthread->pt_tls);
+				newthread->pt_tls = NULL;
+			}
 #endif
+		}
 	}
 
 	/*
@@ -1375,6 +1378,7 @@ pthread__initmain(pthread_t *newt)
 		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
 		    4 * pthread__pagesize / 1024);
 
+	pthread__main->pt_is_main = true;
 	*newt = pthread__main;
 #if defined(_PTHREAD_GETTCB_EXT)
 	pthread__main->pt_tls = _PTHREAD_GETTCB_EXT();
@@ -1449,7 +1453,5 @@ pthread_main_np(void)
 {
 	if (__predict_false(__uselibcstub))
 		return -1;
-	if (pthread_self() == pthread__main)
-		return 1;
-	return 0;
+	return pthread_self()->pt_is_main;
 }
