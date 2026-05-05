@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.63 2024/06/08 06:39:57 mlelstv Exp $
+#	$NetBSD: Makefile,v 1.64 2026/05/05 08:37:58 mrg Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>		# for HOST_SH
@@ -112,7 +112,7 @@ boot.amiga: x.out
 	${_MKTARGET_CREATE}
 	${RELOC2BB} -d -S x.out $@ || (${NM} -u x.out && false)
 
-x.out: xxstart.o libboot.a ${LIBZ}
+x.out: xxstart.o moddi3.o libboot.a ${LIBZ}
 	${_MKTARGET_LINK}
 	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
 	${SIZE} $@
