@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_rrip.c,v 1.18 2015/03/28 19:24:05 maxv Exp $	*/
+/*	$NetBSD: cd9660_rrip.c,v 1.19 2026/05/05 08:39:45 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.18 2015/03/28 19:24:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_rrip.c,v 1.19 2026/05/05 08:39:45 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,12 @@ cd9660_rrip_altname(void *v, ISO_RRIP_ANALYZE *ana)
 		/* fall thru */
 	case 0:
 		/* Inserting component */
+		if (isonum_711(p->h.length) < sizeof(*p)) {
+			/* Entry is too small; corrupted. */
+			ana->fields &= ~ISO_SUSP_ALTNAME;
+			*ana->outlen = 0;
+			return ISO_SUSP_STOP;
+		}
 		wlen = isonum_711(p->h.length) - 5;
 		inbuf = (char *)p + 5;
 		break;
