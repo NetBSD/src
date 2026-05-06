@@ -1,4 +1,4 @@
-/*	$NetBSD: macrom.c,v 1.76 2025/11/16 08:05:54 nat Exp $	*/
+/*	$NetBSD: macrom.c,v 1.77 2026/05/06 12:46:24 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.76 2025/11/16 08:05:54 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: macrom.c,v 1.77 2026/05/06 12:46:24 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_ddb.h"
@@ -1015,6 +1015,11 @@ mrg_init(void)
 	printf("mrg: end init\n");
 #endif
 
+#ifndef __HAVE_NEW_PMAP_68K
+	/*
+	 * We don't need to do this in the new pmap case, because
+	 * we use machine_bootmap[] to map IOBase VA==PA.
+	 */
 	if (1) {
 		/*
 		 * For the bloody Mac II ROMs, we have to map this space
@@ -1038,6 +1043,7 @@ mrg_init(void)
 		}
 		pmap_update(pmap_kernel());
 	}
+#endif /* ! __HAVE_NEW_PMAP_68K */
 }
 
 #ifdef MRG_ADB

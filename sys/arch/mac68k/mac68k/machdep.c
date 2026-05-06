@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.387 2026/04/28 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.388 2026/05/06 12:46:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.387 2026/04/28 03:29:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.388 2026/05/06 12:46:24 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -2559,10 +2559,14 @@ pmap_machine_check_bootstrap_allocations(paddr_t nextpa, paddr_t firstpa)
 #define	PMBM_ROMBase	1
 #define	PMBM_VIDBase	2
 struct pmap_bootmap machine_bootmap[] = {
-	{ .pmbm_vaddr_ptr = (vaddr_t *)&IOBase,
+	/*
+	 * Map the I/O region VA==PA; some of the ROM routines
+	 * have hard-coded addresses for e.g. VIA1.
+	 */
+	{ .pmbm_vaddr = 0,		/* initialized below */
 	  .pmbm_paddr = 0,		/* initialized below */
 	  .pmbm_size  = m68k_ptob(IIOMAPSIZE),
-	  .pmbm_flags = PMBM_F_CI },
+	  .pmbm_flags = PMBM_F_FIXEDVA | PMBM_F_CI },
 
 	{ .pmbm_vaddr_ptr = (vaddr_t *)&ROMBase,
 	  .pmbm_paddr = 0,		/* initialized below */
@@ -2639,6 +2643,7 @@ bootstrap_mac68k(int tc)
 
 #ifdef __HAVE_NEW_PMAP_68K
 	/* Initialize machine_bootmap[] for pmap_bootstrap1(). */
+	machine_bootmap[PMBM_IOBase].pmbm_vaddr = (vaddr_t)IOBase;
 	machine_bootmap[PMBM_IOBase].pmbm_paddr = (paddr_t)IOBase;
 	machine_bootmap[PMBM_ROMBase].pmbm_paddr = (paddr_t)ROMBase;
 	machine_bootmap[PMBM_VIDBase].pmbm_paddr =
