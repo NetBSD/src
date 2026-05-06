@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.61 2026/05/06 12:50:13 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.62 2026/05/06 13:12:59 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.61 2026/05/06 12:50:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.62 2026/05/06 13:12:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1004,6 +1004,12 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
 	prot &= UVM_PROT_ALL;
 	KASSERT(prot != 0);
 
+	/*
+	 * N.B. We seed the U and M bits in the PTE based on the access
+	 * that was used to produce the page fault becuse the MMU will
+	 * skip the write-back of a PTE upon access if the copy in the
+	 * ATC already has the bit set.
+	 */
 	pt_entry_t npte = pa | pte_proto[prot] |
 	    pmap_pte_proto_um[flags & UVM_PROT_ALL];
 
