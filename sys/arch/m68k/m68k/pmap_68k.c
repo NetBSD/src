@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.60 2026/05/06 04:45:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.61 2026/05/06 12:50:13 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -195,19 +195,21 @@
  *
  * - Multi-user mode on 68040 (NeXTstation, 20MB RAM)
  *
- * - Ports that have been adapted: hp300, luna68k, mvme68k (not tested),
+ * - Ports that have been adapted: hp300, luna68k, mac68k, mvme68k (not tested),
  *   news68k (see below), next68k (default), virt68k (default), x68k.
  *
  * XXX TODO XXX
  *
- * - Adapt amiga (hard), atari (hard), cesfic (easy), mac68k (moderate).
+ * - Adapt amiga (hard), atari (hard), cesfic (easy).
  * - Test on 68020.
  * - Test on 68060.
  * - More rigorous 68040 testing.
  * - More rigorous 68030 testing.
  * - Test on machines above listed as "not tested".
- * - More rigorous testing in various emulators (Nono, UAE?)
- * - Fix problems observed on news68k (external cache related?)
+ * - More rigorous testing in various emulators (Nono, UAE?).
+ * - Fix problems observed on mac68k (system is unstable when running
+ *   tinyx, works fine with old pmap).
+ * - Fix problems observed on news68k (external cache related?).
  * - Finish HP MMU support and test on real HP MMU.
  * - Convert '851 / '030 to 3-level.
  * - Optimize ATC / cache manipulation.
@@ -220,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.60 2026/05/06 04:45:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.61 2026/05/06 12:50:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
