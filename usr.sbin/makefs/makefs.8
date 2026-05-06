@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.75 2026/03/10 20:17:01 andvar Exp $
+.\"	$NetBSD: makefs.8,v 1.76 2026/05/06 03:56:38 lukem Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 10, 2026
+.Dd May 6, 2026
 .Dt MAKEFS 8
 .Os
 .Sh NAME
@@ -110,59 +110,59 @@ The mask can also be set by specifying a comma separated list of debugging
 options.
 These are:
 .Bl -tag -width X -offset indent -compact
-.It Ar debug_time
+.It Sy debug_time
 Print the time it takes to perform each step.
-.It Ar debug_walk_dir
+.It Sy debug_walk_dir
 Print each directory as it gets processed.
-.It Ar debug_walk_dir_node
+.It Sy debug_walk_dir_node
 Print each file as it gets processed.
-.It Ar debug_walk_dir_linkcheck
+.It Sy debug_walk_dir_linkcheck
 Print file information for files that have a link count > 1.
-.It Ar debug_dump_fsnodes
+.It Sy debug_dump_fsnodes
 Dump information about the filesystem nodes.
-.It Ar debug_dump_fsnodes_verbose
+.It Sy debug_dump_fsnodes_verbose
 Enable more detail if
 .Dv debug_dump_fsnodes
 is enabled.
-.It Ar debug_fs_parse_opts
+.It Sy debug_fs_parse_opts
 Print debugging information about specific filesystem option parsing.
-.It Ar debug_fs_makefs
+.It Sy debug_fs_makefs
 Print nodes as they are created and enable buffer consistency checks.
-.It Ar debug_fs_validate
+.It Sy debug_fs_validate
 Enable file-system specific validation (ffs only).
-.It Ar debug_fs_create_image
+.It Sy debug_fs_create_image
 Print image file creation stats (ffs only).
-.It Ar debug_fs_size_dir
+.It Sy debug_fs_size_dir
 Print directory size information (ffs only).
-.It Ar debug_fs_size_dir_node
+.It Sy debug_fs_size_dir_node
 Print directory size information per node (ffs only).
-.It Ar debug_fs_size_dir_add_dirent
+.It Sy debug_fs_size_dir_add_dirent
 Print directory size information as entries are added (ffs only).
-.It Ar debug_fs_populate
+.It Sy debug_fs_populate
 Print information at each directory population pass (ffs only).
-.It Ar debug_fs_populate_dirbuf
+.It Sy debug_fs_populate_dirbuf
 Dump the directory buffer (ffs only).
-.It Ar debug_fs_populate_node
+.It Sy debug_fs_populate_node
 Print information about each file during directory population (ffs only).
-.It Ar debug_fs_write_file
+.It Sy debug_fs_write_file
 Print buffer information when writing files (ffs only).
-.It Ar debug_fs_write_file_block
+.It Sy debug_fs_write_file_block
 Print block information when writing files (ffs only).
-.It Ar debug_fs_make_dirbuf
+.It Sy debug_fs_make_dirbuf
 Print directory buffer information (ffs only).
-.It Ar debug_fs_write_inode
+.It Sy debug_fs_write_inode
 Print inode information (ffs only).
-.It Ar debug_buf_bread
+.It Sy debug_buf_bread
 Print block buffer information (ffs only).
-.It Ar debug_buf_bwrite
+.It Sy debug_buf_bwrite
 Print block write information (ffs only).
-.It Ar debug_buf_getblk
+.It Sy debug_buf_getblk
 Print block allocation information (ffs only).
-.It Ar debug_apply_specfile
+.It Sy debug_apply_specfile
 Print information about each directory in the specfile.
-.It Ar debug_apply_specentry
+.It Sy debug_apply_specentry
 Print information about each entry in the specfile.
-.It Ar debug_apply_speconly
+.It Sy debug_apply_speconly
 Debug the
 .Fl x
 special file exclusion.
@@ -336,22 +336,21 @@ Two or more numbers may be separated by an
 to indicate a product.
 Each number may have one of the following optional suffixes:
 .Bl -tag -width 3n -offset indent -compact
-.It b
+.It Sy b
 Block; multiply by 512
-.It k
+.It Sy k
 Kibi; multiply by 1024 (1 KiB)
-.It m
+.It Sy m
 Mebi; multiply by 1048576 (1 MiB)
-.It g
+.It Sy g
 Gibi; multiply by 1073741824 (1 GiB)
-.It t
+.It Sy t
 Tebi; multiply by 1099511627776 (1 TiB)
-.It w
+.It Sy w
 Word; multiply by the number of bytes in an integer
 .El
 .\"
-.\"
-.Ss FFS-specific options
+.Ss FFS-specific fs-options
 .Sy ffs
 images have ffs-specific optional parameters that may be provided.
 Each of the options consists of a keyword, an equal sign
@@ -359,44 +358,59 @@ Each of the options consists of a keyword, an equal sign
 and a value.
 The following keywords are supported:
 .Pp
-.Bl -tag -width optimization -offset indent -compact
-.It Sy avgfilesize
+.Bl -tag -width X -offset indent -compact
+.It Cm avgfilesize= Ns Ar num , Cm a= Ns Ar num
 Expected average file size.
-.It Sy avgfpdir
+Range: 1..2147483647.
+.It Cm avgfpdir= Ns Ar num , Cm n= Ns Ar num
 Expected number of files per directory.
-.It Sy bsize
+Range: 1..2147483647.
+.It Cm bsize= Ns Ar num , Cm b= Ns Ar num
 Block size.
-.It Sy density
+Range: 1..2147483647.
+.It Cm density= Ns Ar num , Cm d= Ns Ar num
 Bytes per inode.
-.It Sy extattr
+Range: 1..2147483647.
+.It Cm extattr= Ns Ar num , Cm e= Ns Ar num
 UFS2 with extended attributes.
-.It Sy extent
+One of:
+0 to disable, or
+1 to enable.
+.It Cm extent= Ns Ar num , Cm x= Ns Ar num
 Maximum extent size.
-.It Sy fsize
+Range: 1..2147483647.
+.It Cm fsize= Ns Ar num , Cm f= Ns Ar num
 Fragment size.
-.It Sy label
+Range: 1..2147483647.
+.It Cm label= Ns Ar str , Cm l= Ns Ar str
 Label name of the image.
-.It Sy maxbpcg
+Range: 1..32 characters.
+.It Cm maxbpcg= Ns Ar num , Cm g= Ns Ar num
 Maximum total number of blocks in a cylinder group.
-.It Sy maxbpg
+Range: 1..2147483647.
+.It Cm maxbpg= Ns Ar num , Cm M= Ns Ar num
 Maximum blocks per file in a cylinder group.
-.It Sy minfree
+Range: 1..2147483647.
+.It Cm minfree= Ns Ar num , Cm m= Ns Ar num
 Minimum % free.
-.It Sy optimization
+Range: 0..99.
+.It Cm optimization= Ns Ar str , Cm o= Ns Ar str
 Optimization preference; one of
 .Ql space
 or
 .Ql time .
-.It Sy version
+.It Cm version= Ns Ar num , Cm v= Ns Ar num
 File system format version, compatible with the
 .Fl O
 option of
 .Xr newfs 8 .
-0 for FFSv1 with the old level 1 format.
-1 for FFSv1 (default, level 4), and
+One of:
+0 for FFSv1 with the old level 1 format,
+1 for FFSv1 (default, level 4), or
 2 for FFSv2 (UFS2).
 .El
-.Ss CD9660-specific options
+.\"
+.Ss CD9660-specific fs-options
 .Sy cd9660
 images have ISO9660-specific optional parameters that may be
 provided.
@@ -405,30 +419,30 @@ The arguments consist of a keyword and, optionally, an equal sign
 and a value.
 The following keywords are supported:
 .Pp
-.Bl -tag -width omit-trailing-period -offset indent -compact
-.It Sy allow-deep-trees
+.Bl -tag -width X -offset indent -compact
+.It Cm allow-deep-trees , Cm D
 Allow the directory structure to exceed the maximum specified in
 the spec.
-.\" .It Sy allow-illegal-chars
-.\" Unknown
-.\" .It Sy allow-lowercase
-.\" Unknown
-.It Sy allow-max-name
+.It Cm allow-illegal-chars , Cm i
+Allow illegal characters in filenames.
+.It Cm allow-lowercase
+Allow lowercase characters in filenames.
+.It Cm allow-max-name , Cm a
 Allow 37 instead of 33 characters for filenames by omitting the
 version ID.
-.It Sy allow-multidot
+.It Cm allow-multidot , Cm m
 Allow multiple dots in a filename.
-.It Sy applicationid
+.It Cm applicationid= Ns Ar str , Cm A= Ns Ar str
 Application ID of the image.
-.It Sy archimedes
+.It Cm archimedes
 Use the
 .Ql ARCHIMEDES
 extension to encode
 .Tn RISC OS
 metadata.
-.It Sy boot-load-segment
+.It Cm boot-load-segment= Ns str
 Set load segment for the boot image.
-.It Sy bootimage
+.It Cm bootimage= Ns str , Cm B= Ns str
 Filename of a boot image in the format
 .Dq sysid;filename ,
 where
@@ -440,40 +454,53 @@ is one of
 .Ql macppc ,
 or
 .Ql powerpc .
-.It Sy chrp-boot
+.It Cm bootimagedir= Ns str
+Boot image directory.
+.It Cm chrp-boot , Cm C
 Write an MBR partition table to the image to allow older CHRP hardware to
 boot.
-.It Sy generic-bootimage
+.It Cm follow-symlinks , Cm S
+Resolve symlinks in pathnames.
+.It Cm generic-bootimage= Ns Ar str , Cm G= Ns Ar str
 Load a generic boot image into the first 32K of the cd9660 image.
-.It Sy hard-disk-boot
+.It Cm hard-disk-boot
 Boot image is a hard disk image.
-.It Sy keep-bad-images
+.It Cm help , Cm h
+Show help message.
+.It Cm isolevel= Ns Ar num , Cm l= Ns Ar num
+ISO9660 level.
+Range: 1..3.
+.It Cm keep-bad-images , Cm K
 Don't throw away images whose write was aborted due to an error.
 For debugging purposes.
-.It Sy label
+.It Cm label= Ns Ar str , Cm L= Ns Ar str
 Label name of the image.
-.It Sy no-boot
+.It Cm no-boot
 Boot image is not bootable.
-.It Sy no-emul-boot
+.It Cm no-emul-boot
 Boot image is a
 .Dq no emulation
 ElTorito image.
-.It Sy no-trailing-padding
+.It Cm no-trailing-padding
 Do not pad the image (apparently Linux needs the padding).
-.\" .It Sy omit-trailing-period
-.\" Unknown
-.It Sy platformid
+.It Cm omit-trailing-period
+Omit trailing periods in filenames.
+.It Cm platformid= Ns Ar str
 Set platform ID of section header entry of the boot image.
-.It Sy preparer
+.It Cm preparer= Ns Ar str , Cm p= Ns Ar str
 Preparer ID of the image.
-.It Sy publisher
+.It Cm publisher= Ns Ar str , Cm P= Ns Ar str
 Publisher ID of the image.
-.It Sy rockridge
+.It Cm rockridge , Cm R
 Use RockRidge extensions (for longer filenames, etc.).
-.It Sy volumeid
+.It Cm verbose= Ns Ar num , Cm v= Ns Ar num
+Verbose level.
+Range: 0..2.
+.It Cm volumeid= Ns Ar str , Cm V= Ns Ar str
 Volume set identifier of the image.
 .El
-.Ss CHFS-specific options
+.\"
+.Ss CHFS-specific fs-options
 .Sy chfs
 images have chfs-specific optional parameters that may be provided.
 Each of the options consists of a keyword, an equal sign
@@ -481,16 +508,21 @@ Each of the options consists of a keyword, an equal sign
 and a value.
 The following keywords are supported:
 .Pp
-.Bl -tag -width optimization -offset indent -compact
-.It Sy pagesize
-Pagesize.
-.It Sy erasesize
+.Bl -tag -width X -offset indent -compact
+.It Cm erasesize= Ns Ar num , Cm e= Ns Ar num
 Erase block size of the media.
-.It Sy mediatype
+Range: 1..2147483647.
+.It Cm mediatype= Ns Ar num , Cm m= Ns Ar num
 Type of the media.
-NOR: 0 or NAND: 1.
+One of:
+0 for NOR, or
+1 for NAND.
+.It Cm pagesize= Ns Ar num , Cm p= Ns Ar num
+Pagesize.
+Range: 1..2147483647.
 .El
-.Ss msdos-specific options
+.\"
+.Ss msdos-specific fs-options
 .Sy msdos
 images have MS-DOS-specific optional parameters that may be
 provided.
@@ -501,64 +533,89 @@ The following keywords are supported (see
 .Xr newfs_msdos 8
 for more details):
 .Pp
-.Bl -tag -width omit-trailing-period -offset indent -compact
-.It Cm backup_sector
+.Bl -tag -width X -offset indent -compact
+.It Cm backup_sector= Ns Ar num , Cm k= Ns Ar num
 Location of the backup boot sector.
-.It Cm block_size
+Range: 1..65535.
+.It Cm block_size= Ns Ar num , Cm b= Ns Ar num
 Block size.
-.It Cm bootstrap
+Range: 1..4294967295.
+.It Cm bootstrap= Ns Ar str , Cm B= Ns Ar str
 Bootstrap file.
-.It Cm bytes_per_sector
+.It Cm bytes_per_sector= Ns Ar num , Cm S= Ns Ar num
 Bytes per sector.
-.It Cm create_size
+Range: 1..65535.
+.It Cm create_size= Ns Ar num , Cm C= Ns Ar num
 Create file size.
-.It Cm directory_entries
+Range: 0..18446744073709551615.
+.It Cm directory_entries= Ns Ar num , Cm e= Ns Ar num
 Directory entries.
-.It Cm drive_heads
+Range: 1..65535.
+.It Cm drive_heads= Ns Ar num , Cm h= Ns Ar num
 Drive heads.
-.It Cm fat_type
-FAT type (12, 16, or 32).
-.It Cm floppy
-Preset drive parameters for standard format floppy disks
-(160, 180, 320, 360, 640, 720, 1200, 1232, 1440, or 2880).
-.It Cm hidden_sectors
+Range: 1..65535.
+.It Cm fat_type= Ns Ar num , Cm F= Ns Ar num
+FAT type.
+One of: 12, 16, or 32.
+.It Cm floppy= Ns Ar str , Cm f= Ns Ar str
+Preset drive parameters for standard format floppy disks.
+One of:
+160, 180, 320, 360, 640, 720, 1200, 1232, 1440, or 2880.
+.It Cm hidden_sectors= Ns Ar num , Cm o= Ns Ar num
 Hidden sectors.
-.It Cm info_sector
+Range: 0..4294967295.
+.It Cm info_sector= Ns Ar num , Cm i= Ns Ar num
 Location of the info sector.
-.It Cm media_descriptor
+Range: 1..65535.
+.It Cm media_descriptor= Ns Ar num , Cm m= Ns Ar num
 Media descriptor.
-.It Cm num_FAT
+Range: 0..255.
+.It Cm no_create , Cm N
+Don't create file system, print params only.
+.It Cm num_FAT= Ns Ar num , Cm n= Ns Ar num
 Number of FATs.
-.It Cm OEM_string
+Range: 1..255.
+.It Cm OEM_string= Ns Ar str , Cm O= Ns Ar str
 OEM string.
-.It Cm offset
+.It Cm offset= Ns Ar num , Cm @= Ns Ar num
 Offset in device.
-.It Cm reserved_sectors
+Range: 0..18446744073709551615.
+.It Cm reserved_sectors= Ns Ar num , Cm r= Ns Ar num
 Reserved sectors.
-.It Cm sectors_per_cluster
+Range: 1..65535.
+.It Cm sectors_per_cluster= Ns Ar num , Cm c= Ns Ar num
 Sectors per cluster.
-.It Cm sectors_per_fat
+Range: 1..255.
+.It Cm sectors_per_fat= Ns Ar num , Cm a= Ns Ar num
 Sectors per FAT.
-.It Cm sectors_per_track
+Range: 1..4294967295.
+.It Cm sectors_per_track= Ns Ar num , Cm u= Ns Ar num
 Sectors per track.
-.It Cm size
+Range: 1..65535.
+.It Cm size= Ns Ar num , Cm s= Ns Ar num
 File System size.
-.It Cm volume_id
+Range: 1..4294967295.
+.It Cm utf8
+Use UTF8 names.
+.It Cm volume_id= Ns Ar num , Cm I= Ns Ar num
 Volume ID.
-.It Cm volume_label
+Range: 1..4294967295.
+.It Cm volume_label= Ns Ar str , Cm L= Ns Ar str
 Volume Label.
 .El
-.Ss V7FS-specific options
+.\"
+.Ss V7FS-specific fs-options
 The following keywords are supported:
 .Pp
-.Bl -tag -width optimization -offset indent -compact
-.It Sy pdp
+.Bl -tag -width X -offset indent -compact
+.It Cm pdp , Cm p
 PDP endian.
-.It Sy progress
+.It Cm progress , Cm P
 Display a progress meter for the file system construction and file
 population.
 .El
-.Ss UDF-specific options
+.\"
+.Ss UDF-specific fs-options
 .Nm
 supports besides writing to image files also direct formatting of disc
 partitions and optical media.
@@ -569,8 +626,18 @@ Each of the options consists of a keyword, an equal sign
 and a value.
 The following keywords are supported:
 .Pp
-.Bl -tag -width optimization -offset indent -compact
-.It Sy disctype
+.Bl -tag -width X -offset indent -compact
+.It Cm checksurface , Cm c
+Check the surface of non error-free rewritable media for remapping.
+Note this is a destructive test and can take quite a while!
+.It Cm discid= Ns Ar str , Cm P= Ns Ar str
+Set the physical volume label of the disc to the specified argument.
+Prepend the physical volume label with a volumeset label separated
+with a ':' if wanted.
+For strict conformance and interchange, don't set the volumeset label
+manually unless it has an unique hex number in the first 8 character
+positions.
+.It Cm disctype= Ns Ar str , Cm T= Ns Ar str
 This can have the following values:
 .Bl -tag -width cdromXdvdromXbdromXXX -compact
 .It Sy cdrom , Sy dvdrom , Sy bdrom
@@ -588,35 +655,29 @@ For CD-ROM, DVD-ROM and BD-ROM images, the disc
 size is the minimum size needed.
 Note that the size estimator can
 under-estimate in some cases; specify extra free blocks if encountering this.
-.It Sy loglabel
+.It Cm forceformat , Cm F
+Force formatting on non-empty recordable media.
+.It Cm loglabel= Ns Ar str , Cm L= Ns Ar str
 Set the logical volume label of the disc to the specified argument.
-.It Sy discid
-Set the physical volume label of the disc to the specified argument.
-Prepend the physical volume label with a volumeset label separated
-with a ':' if wanted.
-For strict conformance and interchange, don't set the volumeset label
-manually unless it has an unique hex number in the first 8 character
-positions.
-.It Sy minver
-Set the minimum UDF version to be used.
-Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201, and 0x250.
-Version 0x260 is currently not supported
-in
-.Nm .
-.It Sy maxver
+.It Cm maxver= Ns Ar str , Cm V= Ns Ar str
 Set the maximum UDF version to be used.
 Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201, and 0x250.
 Version 0x260 is currently not supported
 in
 .Nm .
-.It Sy metaperc
+.It Cm metaperc= Ns Ar num , Cm p= Ns Ar num
 Set the minimum amount of free metadata space.
 This is only applicable on UDF 0x250 on rewritable media.
-.It Sy checksurface
-Check the surface of non error-free rewritable media for remapping.
-Note this is a destructive test and can take quite a while!
-.It Sy forceformat
-Force formatting on non-empty recordable media.
+Range: 1..99.
+.It Cm minver= Ns Ar str , Cm v= Ns Ar str
+Set the minimum UDF version to be used.
+Choose UDF version numbers from 0x102, 0x150, 0x200, 0x201, and 0x250.
+Version 0x260 is currently not supported
+in
+.Nm .
+.It Cm tz= Ns Ar num , Cm t= Ns Ar num
+Timezone, in hours.
+Range: -24..24.
 .El
 .Sh SEE ALSO
 .Xr strsuftoll 3 ,
@@ -630,7 +691,6 @@ utility appeared in
 .Nx 1.6 .
 .Sh AUTHORS
 .An Luke Mewburn
-.Aq lukem@NetBSD.org
 (original program),
 .An Daniel Watt ,
 .An Walter Deignan ,

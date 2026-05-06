@@ -1,4 +1,4 @@
-$NetBSD: TODO,v 1.7 2007/12/10 23:54:35 dyoung Exp $
+$NetBSD: TODO,v 1.8 2026/05/06 03:56:38 lukem Exp $
 
 todo
 ----
@@ -9,11 +9,7 @@ todo
 
 - display block numbers for a given file (e.g, /boot)
 
-- finish makefs.8
-
 - testing
-
-- even more testing
 
 - add support for converting a tar file (instead of a directory tree);
   suggested by kpneal@pobox.com
