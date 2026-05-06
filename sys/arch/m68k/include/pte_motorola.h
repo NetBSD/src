@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.11 2026/05/03 19:18:30 thorpej Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.12 2026/05/06 04:45:03 thorpej Exp $	*/
 
 /*
  * THIS HEADER FILE EXISTS ONLY TO SUPPORT THE UTAH-DERIVED PMAP MODULE
@@ -60,7 +60,7 @@ typedef u_int	pt_entry_t;	/* page table entry */
 #define	PT_ENTRY_NULL	NULL
 #define	ST_ENTRY_NULL	NULL
 
-#define PG_SHIFT	PGSHIFT
+#define PG_SHIFT	PAGE_SHIFT
 
 /*
  * "Segment" Table Entry bits, defined in terms of the 68851 bits
@@ -128,10 +128,10 @@ typedef u_int	pt_entry_t;	/* page table entry */
 
 #ifdef cesfic
 #define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va)) >> PGSHIFT])
+	(&Sysmap[((unsigned)(va)) >> PAGE_SHIFT])
 #else
 #define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PGSHIFT])
+	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT])
 #endif
 
 #endif /* !_MACHINE_PTE_H_ */

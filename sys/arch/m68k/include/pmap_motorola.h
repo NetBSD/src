@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.61 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.62 2026/05/06 04:45:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -90,7 +90,7 @@
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-#define	NPTEPG		(NBPG / (sizeof(pt_entry_t)))
+#define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
 
 /*
  * Pmap stuff
@@ -154,19 +154,19 @@ struct pmap_physseg {
  * so they have different values between 020/030 and 040/060.
  */
 							/*  8KB /  4KB	*/
-#define TIB_SHIFT	(PGSHIFT - 2)			/*   11 /   10	*/
+#define TIB_SHIFT	(PAGE_SHIFT - 2)		/*   11 /   10	*/
 #define TIB_SIZE	(1U << TIB_SHIFT)		/* 2048 / 1024	*/
-#define TIA_SHIFT	(32 - TIB_SHIFT - PGSHIFT)	/*    8 /   10	*/
+#define TIA_SHIFT	(32 - TIB_SHIFT - PAGE_SHIFT)	/*    8 /   10	*/
 #define TIA_SIZE	(1U << TIA_SHIFT)		/*  256 / 1024	*/
 
 #define	MMU51_TCR_BITS	(TCR51_E | TCR51_SRE |				\
-			 __SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			 __SHIFTIN(PAGE_SHIFT, TCR51_PS) |		\
 			 __SHIFTIN(TIA_SHIFT, TCR51_TIA) |		\
 			 __SHIFTIN(TIB_SHIFT, TCR51_TIB))
 #define	MMU40_TCR_BITS	(TCR40_E |					\
-			 __SHIFTIN(PGSHIFT - 12, TCR40_P))
+			 __SHIFTIN(PAGE_SHIFT - 12, TCR40_P))
 
-#define SEGSHIFT	(TIB_SHIFT + PGSHIFT)		/*   24 /   22	*/
+#define SEGSHIFT	(TIB_SHIFT + PAGE_SHIFT)	/*   24 /   22	*/
 
 #define NBSEG30		(1U << SEGSHIFT)
 #define NBSEG40		(1U << SG4_SHIFT2)
@@ -201,11 +201,7 @@ struct pmap_physseg {
  * physically contiguous pages for the ST in pmap_motorola.c!
  */
 #define MAXKL2SIZE	32
-#if PAGE_SIZE == 8192	/* NBPG / (SG4_LEV1SIZE * sizeof(st_entry_t)) */
-#define MAXUL2SIZE	16
-#else
-#define MAXUL2SIZE	8
-#endif
+#define MAXUL2SIZE	(8 * (PAGE_SIZE / 0x1000))
 #define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
 

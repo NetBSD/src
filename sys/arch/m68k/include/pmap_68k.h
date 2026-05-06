@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.16 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.17 2026/05/06 04:45:03 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -279,13 +279,13 @@ struct pmap_bootmap {
  * to use the 3-level layout, it is specifically configured to be compatible
  * with the 68040.
  */
-							/*  8KB /  4KB  */
-#define	LA2L_L2_NBITS	(PGSHIFT - 2)			/*   11 /   10  */
-#define	LA2L_L2_COUNT	__BIT(LA2L_L2_NBITS)		/* 2048 / 1024  */
-#define	LA2L_L2_SHIFT	PGSHIFT				/*   13 /   12  */
-#define	LA2L_L1_NBITS	(32 - LA2L_L2_NBITS - PGSHIFT)	/*    8 /   10  */
-#define	LA2L_L1_COUNT	__BIT(LA2L_L1_NBITS)		/*  256 / 1024  */
-#define	LA2L_L1_SHIFT	(LA2L_L2_NBITS + PGSHIFT)	/*   24 /   22  */
+							 /*  8KB /  4KB  */
+#define	LA2L_L2_NBITS	(PAGE_SHIFT - 2)		 /*   11 /   10  */
+#define	LA2L_L2_COUNT	__BIT(LA2L_L2_NBITS)		 /* 2048 / 1024  */
+#define	LA2L_L2_SHIFT	PAGE_SHIFT			 /*   13 /   12  */
+#define	LA2L_L1_NBITS	(32 - LA2L_L2_NBITS - PAGE_SHIFT)/*    8 /   10  */
+#define	LA2L_L1_COUNT	__BIT(LA2L_L1_NBITS)		 /*  256 / 1024  */
+#define	LA2L_L1_SHIFT	(LA2L_L2_NBITS + PAGE_SHIFT)	 /*   24 /   22  */
 
 #define	LA2L_L1_MASK	(__BITS(0,(LA2L_L1_NBITS - 1)) << LA2L_L1_SHIFT)
 #define	LA2L_L2_MASK	(__BITS(0,(LA2L_L2_NBITS - 1)) << LA2L_L2_SHIFT)
@@ -294,18 +294,18 @@ struct pmap_bootmap {
 #define	LA2L_PGI(va)	__SHIFTOUT((va), LA2L_L2_MASK)	/* page index */
 
 #define	MMU51_TCR_BITS	(TCR51_E | TCR51_SRE |				\
-			 __SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			 __SHIFTIN(PAGE_SHIFT, TCR51_PS) |		\
 			 __SHIFTIN(LA2L_L1_NBITS, TCR51_TIA) |		\
 			 __SHIFTIN(LA2L_L2_NBITS, TCR51_TIB))
 
 #define	MMU51_3L_TCR_BITS (TCR51_E | TCR51_SRE |			\
-			__SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			__SHIFTIN(PAGE_SHIFT, TCR51_PS) |		\
 			__SHIFTIN(LA40_L1_NBITS, TCR51_TIA) |		\
 			__SHIFTIN(LA40_L2_NBITS, TCR51_TIB) |		\
 			__SHIFTIN(LA40_L3_NBITS, TCR51_TIC))
 
 #define	MMU40_TCR_BITS	(TCR40_E |					\
-			 __SHIFTIN(PGSHIFT - 12, TCR40_P))
+			 __SHIFTIN(PAGE_SHIFT - 12, TCR40_P))
 
 /* SEG1SHIFT3L is for the "upper" segment on the 3-level configuration */
 #define	SEGSHIFT2L	(LA2L_L1_SHIFT)			/*   24 /   22  */

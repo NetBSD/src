@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.59 2026/05/05 04:26:51 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.60 2026/05/06 04:45:04 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.59 2026/05/05 04:26:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.60 2026/05/06 04:45:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1103,7 +1103,7 @@ pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
 static inline unsigned int
 pmap_pagenum(vaddr_t va)
 {
-	return ((va) >> PGSHIFT);
+	return ((va) >> PAGE_SHIFT);
 }
 
 static inline unsigned int
@@ -3040,7 +3040,7 @@ pmap_extract_info(pmap_t pmap, vaddr_t va, paddr_t *pap, int *flagsp)
 		pte = pte_load(ptep);
 		if (__predict_true(pte_valid_p(pte))) {
 			if (__predict_true(pap != NULL)) {
-				*pap = pte_pa(pte) | (va & PGOFSET);
+				*pap = pte_pa(pte) | (va & PAGE_MASK);
 			}
 			if (__predict_false(flagsp != NULL)) {
 				*flagsp =
@@ -3795,11 +3795,11 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
  *
  * To avoid doing 64-bit math, we calculate it like so:
  *
- *	((0xffffffff >> PGSHIFT) + 1) * sizeof(pt_entry_t)
+ *	((0xffffffff >> PAGE_SHIFT) + 1) * sizeof(pt_entry_t)
  *
  * The traditional name for this virtual array is "Sysmap".
  */
-#define	SYSMAP_VA_SIZE	(((0xffffffffU >> PGSHIFT) + 1) * sizeof(pt_entry_t))
+#define	SYSMAP_VA_SIZE	(((0xffffffffU >> PAGE_SHIFT) + 1) * sizeof(pt_entry_t))
 
 /*
  * In the Hibler/Utah pmap, the kernel PTE array was placed right near
@@ -4106,7 +4106,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * XXX TODO: Provide a way for cpu_startup() on mac68k to assert
 	 * XXX this (export kernel_virtual_end?).
 	 */
-	nextva += RELOC(physmem, psize_t) << PGSHIFT;
+	nextva += RELOC(physmem, psize_t) << PAGE_SHIFT;
 	nextva = pmap_round_ptpage(nextva);
 	if (nextva > RELOC(kernel_virtual_max, vaddr_t) ||
 	    nextva < RELOC(kernel_virtual_start, vaddr_t)) {
@@ -4423,6 +4423,12 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 }
 
 /*
+ * PAGE_SIZE should always evaluate to a compile-time constant in this
+ * context.
+ */
+__CTASSERT(PAGE_SIZE != 0);
+
+/*
  * pmap_bootstrap2:
  *
  *	Phase 2 of bootstrapping virtual memory.  This is called after
@@ -4438,7 +4444,7 @@ pmap_bootstrap2(void)
 	pmap_mmuclass_init();
 
 	/* Early low-level UVM initialization. */
-	uvmexp.pagesize = NBPG;				/* XXX ick, NBPG */
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
 
 	/* Initialize prototype PTEs; needed before anything else is mapped. */

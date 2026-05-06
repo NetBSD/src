@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.8 2026/04/19 15:09:49 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.9 2026/05/06 04:45:03 thorpej Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -57,11 +57,11 @@
 
 #include <m68k/pte_coldfire.h>
 
-#define	NBSEG		(NBPG*NPTEPG)
-#define	SEGSHIFT	(PGSHIFT + PGSHIFT - 2)
+#define	NBSEG		(PAGE_SIZE*NPTEPG)
+#define	SEGSHIFT	(PAGE_SHIFT + PAGE_SHIFT - 2)
 #define	SEGOFSET	((1 << SEGSHIFT) - 1)
 #define	PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
-#define	NPTEPG		(NBPG >> 2)
+#define	NPTEPG		(PAGE_SIZE >> 2)
 
 #define	KERNEL_PID	0
 

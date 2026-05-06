@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_bootinfo.c,v 1.6 2026/04/04 16:45:31 thorpej Exp $	*/
+/*	$NetBSD: linux_bootinfo.c,v 1.7 2026/05/06 04:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.6 2026/04/04 16:45:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.7 2026/05/06 04:45:03 thorpej Exp $");
 
 #include "opt_md.h"
 
@@ -120,12 +120,12 @@ bootinfo_add_mem(struct bootinfo_data *bid, struct bi_record *bi)
 	/*
 	 * Make sure the start / size are properly aligned.
 	 */
-	if (m->mem_addr & PGOFSET) {
-		m->mem_size -= m->mem_addr & PGOFSET;
+	if (m->mem_addr & PAGE_MASK) {
+		m->mem_size -= m->mem_addr & PAGE_MASK;
 		m->mem_addr = m68k_round_page(m->mem_addr);
 	}
 	m->mem_size = m68k_trunc_page(m->mem_size);
-	bid->bootinfo_total_mem_pages += m->mem_size >> PGSHIFT;
+	bid->bootinfo_total_mem_pages += m68k_btop(m->mem_size);
 
 	int i = bid->bootinfo_mem_nsegments++;
 

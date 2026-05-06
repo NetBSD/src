@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.18 2026/03/29 15:15:49 thorpej Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.19 2026/05/06 04:45:04 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.18 2026/03/29 15:15:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.19 2026/05/06 04:45:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -94,7 +94,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 				addr = addr & ~0xf;
 				inc = 16;
 			} else {
-				addr = addr & ~PGOFSET;
+				addr = m68k_trunc_page(addr);
 				inc = PAGE_SIZE;
 			}
 		}
@@ -212,14 +212,14 @@ dma_cachectl(void *addr, int len)
 		addr = (void *)((vaddr_t)addr & ~0xf);
 		inc = 16;
 	} else {
-		addr = (void *)((vaddr_t)addr & ~PGOFSET);
+		addr = (void *)m68k_trunc_page(addr);
 		inc = PAGE_SIZE;
 	}
 	do {
 		/*
 		 * Convert to physical address.
 		 */
-		if (pa == 0 || ((vaddr_t)addr & PGOFSET) == 0) {
+		if (pa == 0 || ((vaddr_t)addr & PAGE_MASK) == 0) {
 			pa = kvtop(addr);
 		}
 		if (inc == 16) {

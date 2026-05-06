@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.43 2026/04/25 11:50:16 thorpej Exp $ */
+/* $NetBSD: bus_dma.c,v 1.44 2026/05/06 04:45:03 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.43 2026/04/25 11:50:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.44 2026/05/06 04:45:03 thorpej Exp $");
 
 #define _M68K_BUS_DMA_PRIVATE
 
@@ -161,7 +161,7 @@ _bus_dmamap_load_buffer_direct_common(bus_dma_tag_t t, bus_dmamap_t map,
 		/*
 		 * Compute the segment size, and adjust counts.
 		 */
-		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
+		sgsize = PAGE_SIZE - ((u_long)vaddr & PAGE_MASK);
 		if (buflen < sgsize)
 			sgsize = buflen;
 
@@ -902,7 +902,7 @@ _bus_dmamem_unmap(bus_dma_tag_t t, void *kva, size_t size)
 {
 	vaddr_t va;
 
-	KASSERT(((vaddr_t)kva & PGOFSET) == 0);
+	KASSERT(((vaddr_t)kva & PAGE_MASK) == 0);
 
 	size = round_page(size);
 
@@ -936,9 +936,9 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 	int i;
 
 	for (i = 0; i < nsegs; i++) {
-		KASSERT((off & PGOFSET) == 0);
-		KASSERT((segs[i].ds_addr & PGOFSET) == 0);
-		KASSERT((segs[i].ds_len & PGOFSET) == 0);
+		KASSERT((off & PAGE_MASK) == 0);
+		KASSERT((segs[i].ds_addr & PAGE_MASK) == 0);
+		KASSERT((segs[i].ds_len & PAGE_MASK) == 0);
 
 		if (off >= segs[i].ds_len) {
 			off -= segs[i].ds_len;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.7 2026/04/24 12:22:33 thorpej Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.8 2026/05/06 04:45:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@
 #define	LA40_L1_SHIFT	25
 #define	LA40_L2_NBITS	7U
 #define	LA40_L2_SHIFT	18
-#define	LA40_L3_NBITS	(32U - LA40_L1_NBITS - LA40_L2_NBITS - PGSHIFT)
-#define	LA40_L3_SHIFT	PGSHIFT
+#define	LA40_L3_NBITS	(32U - LA40_L1_NBITS - LA40_L2_NBITS - PAGE_SHIFT)
+#define	LA40_L3_SHIFT	PAGE_SHIFT
 
 #define	LA40_L1_COUNT	__BIT(LA40_L1_NBITS)
 #define	LA40_L2_COUNT	__BIT(LA40_L2_NBITS)
@@ -100,7 +100,7 @@
  */
 #define	UTE40_PTA	__BITS(9,31)	/* Pointer Table Address (L1 PTE) */
 					/* Page Table Address (L2 PTE) */
-#define	UTE40_PGTA	__BITS(8 - (13 - PGSHIFT),31)
+#define	UTE40_PGTA	__BITS(8 - (13 - PAGE_SHIFT),31)
 #define	UTE40_U		__BIT(3)	/* Used (referenced) */
 #define	UTE40_W		__BIT(2)	/* Write Protected */
 #define	UTE40_UDT	__BITS(0,1)	/* Upper Descriptor Type */
@@ -127,7 +127,7 @@
  *   CPU signals if an external bus transfer results from the access,
  *   meaning that they may have system-specific side-effects.
  */
-#define	PTE40_PGA	__BITS(PGSHIFT,31) /* Page Physical Address */
+#define	PTE40_PGA	__BITS(PAGE_SHIFT,31) /* Page Physical Address */
 #define	PTE40_UR_x	__BIT(12)	/* User Reserved (extra avail if 8K) */
 #define	PTE40_UR	__BIT(11)	/* User Reserved */
 #define	PTE40_G		__BIT(10)	/* Global */

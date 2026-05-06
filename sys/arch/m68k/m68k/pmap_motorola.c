@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.107 2026/04/30 05:46:13 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.108 2026/05/06 04:45:04 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.107 2026/04/30 05:46:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.108 2026/05/06 04:45:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -374,6 +374,12 @@ pmap_init_vac(size_t vacsize)
 #endif /* M68K_EC_VAC */
 
 /*
+ * PAGE_SIZE should always evaluate to a compile-time constant in this
+ * context.
+ */
+__CTASSERT(PAGE_SIZE != 0);
+
+/*
  * pmap_bootstrap2:		[ INTERFACE ]
  *
  *	Phase 2 of pmap bootstrap.  (Phase 1 is system-specific.)
@@ -387,7 +393,7 @@ void *
 pmap_bootstrap2(void)
 {
 
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
 
 	/*
