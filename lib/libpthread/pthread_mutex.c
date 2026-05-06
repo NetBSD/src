@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.83 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.84 2026/05/06 09:03:08 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.83 2022/04/10 10:38:33 riastradh Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.84 2026/05/06 09:03:08 yamt Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -94,11 +94,6 @@ __RCSID("$NetBSD: pthread_mutex.c,v 1.83 2022/04/10 10:38:33 riastradh Exp $");
 #else
 #define	NOINLINE		/* nothing */
 #endif
-
-struct waiter {
-	struct waiter	*volatile next;
-	lwpid_t		volatile lid;
-};
 
 static void	pthread__mutex_wakeup(pthread_t, struct pthread__waiter *);
 static int	pthread__mutex_lock_slow(pthread_mutex_t *,
@@ -275,7 +270,7 @@ NOINLINE static int
 pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 {
 	void *newval, *owner, *next;
-	struct waiter waiter;
+	struct pthread__waiter waiter;
 	pthread_t self;
 	int serrno;
 	int error;
