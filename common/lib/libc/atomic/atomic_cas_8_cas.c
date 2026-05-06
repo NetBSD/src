@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_8_cas.c,v 1.5 2026/05/03 22:18:33 jklos Exp $	*/
+/*	$NetBSD: atomic_cas_8_cas.c,v 1.6 2026/05/06 09:55:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,4 +48,16 @@ bool_compare_and_swap_1(volatile int8_t *addr, int8_t oldval,
 	uint8_t newv = (uint8_t)newval;
 
 	return atomic_cas_8((volatile uint8_t *)addr, oldv, newv) == oldv;
+}
+
+int8_t sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
+    asm("__sync_val_compare_and_swap_1");
+
+int8_t
+sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
+{
+	const uint8_t oldv = (uint8_t)old;
+	const uint8_t newv = (uint8_t)new;
+
+	return _atomic_cas_8((volatile uint8_t *)addr, oldv, newv);
 }

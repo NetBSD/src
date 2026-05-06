@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_16_cas.c,v 1.4 2026/05/03 11:48:02 skrll Exp $	*/
+/*	$NetBSD: atomic_cas_16_cas.c,v 1.5 2026/05/06 09:55:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,4 +47,16 @@ bool_compare_and_swap_2(volatile int16_t *addr, int16_t oldval,
 	const uint16_t newv = (uint16_t)newval;
 
 	return atomic_cas_16((volatile uint16_t *)addr, oldv, newv) == oldv;
+}
+
+int16_t sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+    asm("__sync_val_compare_and_swap_2");
+
+int16_t
+sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+{
+	const uint16_t oldv = (uint16_t)old;
+	const uint16_t newv = (uint16_t)new;
+
+	return _atomic_cas_16((volatile uint16_t *)addr, oldv, newv);
 }

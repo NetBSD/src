@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.22 2026/05/03 11:48:02 skrll Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.23 2026/05/06 09:55:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.22 2026/05/03 11:48:02 skrll Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.23 2026/05/06 09:55:59 skrll Exp $");
 
 #include "extern.h"
 #include "atomic_op_namespace.h"
@@ -361,27 +361,3 @@ sync_val_compare_and_swap_8(volatile int64_t *addr, int64_t old, int64_t new)
 #endif
 crt_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
 
-
-int16_t sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
-    asm("__sync_val_compare_and_swap_2");
-
-int16_t
-sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
-{
-	const uint16_t oldv = (uint16_t)old;
-	const uint16_t newv = (uint16_t)new;
-
-	return _atomic_cas_16((volatile uint16_t *)addr, oldv, newv);
-}
-
-int8_t sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
-    asm("__sync_val_compare_and_swap_1");
-
-int8_t
-sync_val_compare_and_swap_1(volatile int8_t *addr, int8_t old, int8_t new)
-{
-	const uint8_t oldv = (uint8_t)old;
-	const uint8_t newv = (uint8_t)new;
-
-	return _atomic_cas_8((volatile uint8_t *)addr, oldv, newv);
-}
