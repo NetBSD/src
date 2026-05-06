@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_m68k.c,v 1.2 2025/12/20 16:25:09 thorpej Exp $	*/
+/*	$NetBSD: atomic_init_m68k.c,v 1.3 2026/05/06 17:31:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2025 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_m68k.c,v 1.2 2025/12/20 16:25:09 thorpej Exp $");
+__RCSID("$NetBSD: atomic_init_m68k.c,v 1.3 2026/05/06 17:31:36 skrll Exp $");
 
 #include "extern.h"
 #include "../../../atomic/atomic_op_namespace.h"
@@ -148,7 +148,6 @@ _atomic_cas_16(volatile uint16_t *ptr, uint16_t old, uint16_t new)
 
 #undef atomic_cas_16
 atomic_op_alias(atomic_cas_16,_atomic_cas_16)
-crt_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
 
 uint8_t
 _atomic_cas_8(volatile uint8_t *ptr, uint8_t old, uint8_t new)
@@ -158,7 +157,6 @@ _atomic_cas_8(volatile uint8_t *ptr, uint8_t old, uint8_t new)
 
 #undef atomic_cas_8
 atomic_op_alias(atomic_cas_8,_atomic_cas_8)
-crt_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
 
 void __section(".text.startup") __attribute__ ((__visibility__("hidden")))
 __libc_atomic_init(void)
