@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_types.h,v 1.27 2022/04/10 10:38:33 riastradh Exp $	*/
+/*	$NetBSD: pthread_types.h,v 1.28 2026/05/06 09:04:33 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2008, 2020 The NetBSD Foundation, Inc.
@@ -170,10 +170,9 @@ struct	__pthread_mutexattr_st {
 struct	__pthread_cond_st {
 	unsigned int	ptc_magic;
 
-	/* Protects the queue of waiters */
-	__pthread_spin_t ptc_lock;
+	__pthread_spin_t ptc_lock;	/* unused */
 	void *__pthread_volatile ptc_waiters;
-	void *ptc_spare;
+	void *ptc_spare;		/* unused */
 
 	pthread_mutex_t	*ptc_mutex;	/* Current mutex */
 	void	*ptc_private;
@@ -224,14 +223,13 @@ struct	__pthread_spinlock_st {
 struct	__pthread_rwlock_st {
 	unsigned int	ptr_magic;
 
-	/* Protects data below */
-	__pthread_spin_t ptr_interlock;
+	__pthread_spin_t ptr_interlock;	/* unused */
 
 	pthread_queue_t	ptr_rblocked;
 	pthread_queue_t	ptr_wblocked;
 	unsigned int	ptr_nreaders;
 	__pthread_volatile pthread_t ptr_owner;
-	void	*ptr_private;
+	void	*ptr_private;		/* unused */
 };
 
 #define	_PT_RWLOCK_MAGIC	0x99990009
@@ -257,15 +255,14 @@ struct	__pthread_rwlockattr_st {
 struct	__pthread_barrier_st {
 	unsigned int	ptb_magic;
 
-	/* Protects data below */
-	pthread_spin_t	ptb_lock;
+	pthread_spin_t	ptb_lock;	/* unused */
 
 	pthread_queue_t	ptb_waiters;
 	unsigned int	ptb_initcount;
 	unsigned int	ptb_curcount;
 	unsigned int	ptb_generation;
 
-	void		*ptb_private;
+	void		*ptb_private;	/* unused */
 };
 
 #define	_PT_BARRIER_MAGIC	0x88880008
