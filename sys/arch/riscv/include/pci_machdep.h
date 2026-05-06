@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.1 2025/01/01 17:53:08 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.2 2026/05/06 06:55:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -106,7 +106,7 @@ typedef enum {
 struct pci_attach_args;
 
 /*
- * riscv-specific PCI structure and type definitions.
+ * RISC-V specific PCI structure and type definitions.
  * NOT TO BE USED DIRECTLY BY MACHINE INDEPENDENT CODE.
  */
 struct riscv_pci_chipset {

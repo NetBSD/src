@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.29 2026/04/22 08:27:18 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.30 2026/05/06 06:55:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -214,7 +214,7 @@ pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 }
 
 /*
- * Virtual Cache Alias helper routines.  Not a problem for RISCV CPUs.
+ * Virtual Cache Alias helper routines.  Not a problem for RISC-V CPUs.
  */
 static inline bool
 pmap_md_vca_add(struct vm_page_md *mdpg, vaddr_t va, pt_entry_t *nptep)

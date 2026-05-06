@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.15 2026/05/06 06:55:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #endif
 
 /*
- * Machine dependent VM constants for RISCV.
+ * Machine dependent VM constants for RISC-V.
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.7 2026/05/04 23:36:42 thorpej Exp $	*/
+/*	$NetBSD: proc.h,v 1.8 2026/05/06 06:55:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 struct lwp;
 
 /*
- * Machine-dependent part of the lwp structure for RISCV
+ * Machine-dependent part of the lwp structure for RISC-V
  */
 struct trapframe;
 

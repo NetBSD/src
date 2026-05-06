@@ -1,4 +1,4 @@
-/* $NetBSD: lwp_private.h,v 1.1 2024/11/30 01:04:13 christos Exp $ */
+/* $NetBSD: lwp_private.h,v 1.2 2026/05/06 06:55:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/tls.h>
 
 /*
- * On RISCV, since displacements are signed 12-bit values, the TCB Pointer
+ * On RISC-V, since displacements are signed 12-bit values, the TCB Pointer
  * is biased by sizeof(tcb) so that first thread datum can be addressed by
  * -sizeof(tcb).
  */
