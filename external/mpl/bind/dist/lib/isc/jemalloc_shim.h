@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc_shim.h,v 1.4 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: jemalloc_shim.h,v 1.4.2.1 2026/05/06 16:51:09 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,8 @@ const char *malloc_conf = NULL;
 
 typedef union {
 	size_t size;
-	max_align_t __alignment;
+	// libuv uses the least significant 3 bits for internal purposes
+	max_align_t __alignment __attribute__((__aligned__(16)));
 } size_info;
 
 static inline void *
