@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.78 2025/03/31 14:07:10 riastradh Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.79 2026/05/06 09:03:49 yamt Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.78 2025/03/31 14:07:10 riastradh Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.79 2026/05/06 09:03:49 yamt Exp $");
 
 /* Need to use libc-private names for atomic operations. */
 #include "../../common/lib/libc/atomic/atomic_op_namespace.h"
@@ -66,7 +66,7 @@ __strong_alias(__libc_cond_destroy,pthread_cond_destroy)
  * progress and nobody else should try to modify the waiter list until
  * it completes.
  */
-static struct pthread__waiter pthread__cond_dummy;
+#define pthread__cond_dummy_ptr ((struct pthread__waiter *)1)
 
 static clockid_t
 pthread_cond_getclock(const pthread_cond_t *cond)
@@ -153,7 +153,7 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 	cond->ptc_mutex = mutex;
 	for (head = cond->ptc_waiters;; head = next) {
 		/* Wait while pthread_cond_signal() in progress. */
-		if (__predict_false(head == &pthread__cond_dummy)) {
+		if (__predict_false(head == pthread__cond_dummy_ptr)) {
 			sched_yield();
 			next = cond->ptc_waiters;
 			continue;
@@ -251,7 +251,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 	mutex = cond->ptc_mutex;
 	for (head = cond->ptc_waiters;; head = next) {
 		/* Wait while pthread_cond_signal() in progress. */
-		if (__predict_false(head == &pthread__cond_dummy)) {
+		if (__predict_false(head == pthread__cond_dummy_ptr)) {
 			sched_yield();
 			next = cond->ptc_waiters;
 			continue;
@@ -261,7 +261,7 @@ pthread_cond_signal(pthread_cond_t *cond)
 		}
 		/* Block concurrent access to the waiter list. */
 		next = atomic_cas_ptr(&cond->ptc_waiters, head,
-		    &pthread__cond_dummy);
+		    pthread__cond_dummy_ptr);
 		if (__predict_true(next == head)) {
 			break;
 		}
@@ -299,7 +299,7 @@ pthread_cond_broadcast(pthread_cond_t *cond)
 	mutex = cond->ptc_mutex;
 	for (head = cond->ptc_waiters;; head = next) {
 		/* Wait while pthread_cond_signal() in progress. */
-		if (__predict_false(head == &pthread__cond_dummy)) {
+		if (__predict_false(head == pthread__cond_dummy_ptr)) {
 			sched_yield();
 			next = cond->ptc_waiters;
 			continue;
