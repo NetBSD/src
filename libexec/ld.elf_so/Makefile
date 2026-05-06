@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.151.2.1 2026/01/22 20:31:07 martin Exp $
+#	$NetBSD: Makefile,v 1.151.2.2 2026/05/06 17:18:04 martin Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -119,6 +119,9 @@ CPPFLAGS+=	-DRTLD_LOADER -D_LIBC_INTERNAL
 CPPFLAGS+=	-DGNU_RELRO
 CPPFLAGS+=	-D_RTLD_SOURCE
 CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
+.if ${LDELFSO_MACHINE_ARCH} == "powerpc"
+CPPFLAGS+=	-DRTLD_MAP_OBJECT_FIXUP
+.endif
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC

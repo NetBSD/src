@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.17 2023/04/09 17:24:48 chs Exp $
+#	$NetBSD: Makefile.inc,v 1.17.4.1 2026/05/06 17:18:04 martin Exp $
 
-SRCS+=		ppc_reloc.c
+SRCS+=		ppc_reloc.c fixup.c
 LDFLAGS+=	-Wl,-e,_rtld_start
 
 CPPFLAGS+=	-fPIC
