@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.16 2018/11/22 08:54:08 mrg Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.17 2026/05/06 11:38:58 shm Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -119,8 +119,8 @@ bozo_user_transform(bozo_httpreq_t *request)
 		strcat(file, s);
 	}
 
-	free(request->hr_file);
-	request->hr_file = file;
+	free(request->hr_file_free);
+	request->hr_file_free = request->hr_file = file;
 
 	debug((httpd, DEBUG_FAT, "transform_user returning %s under %s", file,
 	    pw->pw_dir));
