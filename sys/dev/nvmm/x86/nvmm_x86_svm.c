@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.89.2.1 2026/05/07 15:27:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.89 2025/04/21 22:55:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.89.2.1 2026/05/07 15:27:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1006,7 +1006,7 @@ svm_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		break;
 	case 0x40000010: /* VMware-style TSC and LAPIC freq */
 		cpudata->gprs[NVMM_X64_GPR_RAX] = curcpu()->ci_data.cpu_cc_freq / 1000;
-		if (has_lapic())
+		if (/*PR 59424*/0 && has_lapic())
 			cpudata->gprs[NVMM_X64_GPR_RBX] = lapic_per_second / 1000;
 		else
 			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
