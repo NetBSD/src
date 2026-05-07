@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.64 2026/05/07 04:29:08 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.65 2026/05/07 07:14:48 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.64 2026/05/07 04:29:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.65 2026/05/07 07:14:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2739,7 +2739,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				pmap_stat_update(pmap, wired_count,
 				    pte_wired_p(npte) ? 1 : -1);
 			}
-			if (diff & PTE_CRIT_BITS) {
+			if (diff) {
 #if MMU_CONFIG_68040_CLASS
 				/*
 				 * Protection or caching status is changing;
@@ -3391,7 +3391,15 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 			/* Lost race, try again. */
 		}
 		combined_pte |= opte;
-		if ((diff & PTE_CRIT_BITS) != 0 && active_pmap(pv->pv_pmap)) {
+		/*
+		 * We must flush the ATC even if it's not a "critical" bit,
+		 * because the MMU will only write-back a PTE when the
+		 * U or M bits transition from 0 to 1.  If we clear them
+		 * in our tracking structure and in the tables in memory
+		 * but not the ATC, then a sticky ATC entry might cause
+		 * a future U or M event to be missed.
+		 */
+		if (active_pmap(pv->pv_pmap)) {
 			TBIS(PV_VA(pv));
 		}
 		pmap_unbusy(pv->pv_pmap);
