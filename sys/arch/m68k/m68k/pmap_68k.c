@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.62 2026/05/06 13:12:59 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.63 2026/05/07 04:06:38 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.62 2026/05/06 13:12:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.63 2026/05/07 04:06:38 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,9 +253,23 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.62 2026/05/06 13:12:59 thorpej Exp $"
  * XXX if we're in a critical section).
  */
 
-#define	PMAP_CRIT_ENTER()	__nothing
-#define	PMAP_CRIT_EXIT()	__nothing
+#define	PMAP_CRIT_ENTER(code)	code
+#define	PMAP_CRIT_EXIT(code)	code
 #define	PMAP_CRIT_ASSERT()	__nothing
+
+static inline void
+pmap_busy(pmap_t pmap)
+{
+	pmap->pm_busy++;
+	KDASSERT(pmap->pm_busy != 0);
+}
+
+static inline void
+pmap_unbusy(pmap_t pmap)
+{
+	KDASSERT(pmap->pm_busy != 0);
+	pmap->pm_busy--;
+}
 
 /**************************** MMU CONFIGURATION ******************************/
 
@@ -2297,7 +2311,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 	 */
 	prm_flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	if (pmap == pmap_kernel()) {
-		PMAP_CRIT_ENTER();
+		PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 		for (ptep = pmap_kernel_pte(sva); sva < eva;
 		     ptep++, sva += PAGE_SIZE) {
@@ -2325,7 +2339,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 			DCIS();
 		}
 #endif
-		PMAP_CRIT_EXIT();
+		PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
 		/* kernel PT pages are never freed. */
 		KASSERT(TAILQ_EMPTY(&pc->pc_ptpages));
@@ -2336,7 +2350,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		return;
 	}
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	while (sva < eva) {
 		nextseg = pmap_next_seg(sva);
@@ -2386,7 +2400,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		}
 	}
 #endif
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
 	pmap_completion_fini(pc);
 }
@@ -2434,7 +2448,7 @@ pmap_remove_all(pmap_t pmap)
 
 	pmap_completion_init(&pc);
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	/* Step 1. */
 	pmap_set_lev1map(pmap, NULL, null_segtab_pa);
@@ -2461,7 +2475,7 @@ pmap_remove_all(pmap_t pmap)
 	pmap_stat_set(pmap, wired_count, 0);
 	pmap_stat_set(pmap, resident_count, 0);
 
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
 	pmap_completion_fini(&pc);
 
@@ -2497,8 +2511,10 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	PMAP_CRIT_ENTER();
 
 	while ((pv = VM_MDPAGE_PVS(pg)) != NULL) {
+		pmap_busy(pv->pv_pmap);
 		pmap_remove_mapping(pv->pv_pmap, PV_VA(pv), pmap_pv_pte(pv),
 		    pv->pv_pt, PRM_TFLUSH|PRM_CFLUSH, &pc);
+		pmap_unbusy(pv->pv_pmap);
 	}
 
 	PMAP_CRIT_EXIT();
@@ -2531,7 +2547,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		return;
 	}
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 #if MMU_CONFIG_68040_CLASS
 	removing_write = (prot & UVM_PROT_WRITE) == 0;
@@ -2590,7 +2606,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pmap_table_release(pmap, pt, NULL);
 	}
 
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 }
 
 /*
@@ -2628,7 +2644,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		flags |= PMAP_NOCACHE;
 	}
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	if (nowait) {
 		pmap_evcnt(enter_nowait);
@@ -2845,7 +2861,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
  out_release:
 	pmap_table_release(pmap, pt, &pc);
  out_crit_exit:
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
  out:
 	pmap_completion_fini(&pc);
 	return error;
@@ -2988,7 +3004,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	struct pmap_table *pt;
 	pt_entry_t opte, npte, *ptep;
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	ptep = pmap_pte_lookup(pmap, va, &pt);
 	KASSERT(ptep != NULL);
@@ -3015,7 +3031,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 
 	pmap_table_release(pmap, pt, NULL);
 
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 }
 
 /*
@@ -3041,7 +3057,7 @@ pmap_extract_info(pmap_t pmap, vaddr_t va, paddr_t *pap, int *flagsp)
 		return false;
 	}
 
-	PMAP_CRIT_ENTER();
+	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	ptep = pmap_pte_lookup(pmap, va, &pt);
 	if (__predict_true(ptep != NULL)) {
@@ -3060,7 +3076,7 @@ pmap_extract_info(pmap_t pmap, vaddr_t va, paddr_t *pap, int *flagsp)
 		pmap_table_release(pmap, pt, NULL);
 	}
 
-	PMAP_CRIT_EXIT();
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
 	return rv;
 }
@@ -3137,7 +3153,7 @@ pmap_activate(struct lwp *l)
 	 * need to activate the kernel pmap.
 	 */
 	if (pmap != pmap_kernel()) {
-		PMAP_CRIT_ENTER();
+		PMAP_CRIT_ENTER(pmap_busy(pmap));
 		pmap_load_urp(pmap->pm_lev1pa);
 		PMAP_CRIT_EXIT();
 	}
@@ -3152,7 +3168,13 @@ pmap_activate(struct lwp *l)
 void
 pmap_deactivate(struct lwp *l)
 {
-	/* No action necessary in this pmap implementation. */
+	pmap_t pmap = l->l_proc->p_vmspace->vm_map.pmap;
+
+	if (pmap != pmap_kernel()) {
+		PMAP_CRIT_ENTER();
+		KASSERT(pmap->pm_busy != 0);
+		PMAP_CRIT_EXIT(pmap_unbusy(pmap));
+	}
 }
 
 static vaddr_t pmap_tmpmap_srcva;
@@ -3251,7 +3273,9 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 	}
 
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
+		pmap_busy(pv->pv_pmap);
 		pte |= pte_load(pmap_pv_pte(pv));
+		pmap_unbusy(pv->pv_pmap);
 		if (pte & bit) {
 			rv = true;
 			break;
@@ -3324,6 +3348,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	 * not clearing.
 	 */
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
+		pmap_busy(pv->pv_pmap);
 		for (;;) {
 			ptep = pmap_pv_pte(pv);
 			opte = pte_load(ptep);
@@ -3349,6 +3374,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 		if ((diff & PTE_CRIT_BITS) != 0 && active_pmap(pv->pv_pmap)) {
 			TBIS(PV_VA(pv));
 		}
+		pmap_unbusy(pv->pv_pmap);
 	}
 
 	/*

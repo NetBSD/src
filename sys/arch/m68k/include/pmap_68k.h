@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.17 2026/05/06 04:45:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.18 2026/05/07 04:06:38 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -91,7 +91,10 @@ LIST_HEAD(pmap_pv_list, pv_entry);
 struct pmap {
 	struct pmap_table *pm_lev1map;	/* level 1 table */
 	paddr_t            pm_lev1pa;	/* PA of level 1 table */
-	unsigned int       pm_refcnt;	/* reference count */
+	uint16_t           pm_refcnt;	/* reference count */
+	uint16_t           pm_busy;	/* "busy" (currently loaded in
+					   to MMU, or involved in
+					   some pmap operation) count */
 
 	struct pmap_table *pm_pt_cache;	/* most recently used leaf table */
 
