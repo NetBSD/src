@@ -1,0 +1,104 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "migrate" {
+	dnskey-ttl 7200;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
+	};
+};
+
+dnssec-policy "timing-metadata" {
+	dnskey-ttl 300;
+
+	signatures-refresh P1W;
+	signatures-validity P2W;
+	signatures-validity-dnskey P2W;
+
+	keys {
+		ksk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
+		zsk key-directory lifetime P60D algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	// Together 12h
+	zone-propagation-delay 3600;
+	max-zone-ttl 11h;
+
+	// Together 3h
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};
+
+/*
+ * This policy tests migration from existing keys with 1024 bits RSASHA1 keys
+ * to ECDSAP256SHA256 keys.
+ */
+dnssec-policy "migrate-nomatch-algnum" {
+	dnskey-ttl 300;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm ecdsa256;
+		zsk key-directory lifetime P60D algorithm ecdsa256;
+	};
+
+	// Together 12h
+	zone-propagation-delay 3600;
+	max-zone-ttl 11h;
+
+	// Together 3h
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};
+
+/*
+ * This policy tests migration from existing keys with 2048 bits RSASHA256 keys
+ * to 3072 bits RSASHA256 keys.
+ */
+dnssec-policy "migrate-nomatch-alglen" {
+	dnskey-ttl 300;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm rsasha256 3072;
+		zsk key-directory lifetime P60D algorithm rsasha256 3072;
+	};
+
+	// Together 12h
+	zone-propagation-delay 3600;
+	max-zone-ttl 11h;
+
+	// Together 3h
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};
+
+/*
+ * This policy tests migration from existing KSK and ZSK to CSK.
+ * The keys clause matches the default policy.
+ */
+dnssec-policy "migrate-nomatch-kzc" {
+	dnskey-ttl 300;
+
+	keys {
+		csk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+	};
+
+	// Together 12h
+	zone-propagation-delay 3600;
+	max-zone-ttl 11h;
+
+	// Together 3h
+	parent-propagation-delay pt1h;
+	parent-ds-ttl 7200;
+};

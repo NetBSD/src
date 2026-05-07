@@ -1,0 +1,63 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% if FEATURE_FIPS_DH == "1" %}
+include "named-tls.conf";
+{% endif %}
+
+options {
+	query-source address 10.53.0.4;
+	notify-source 10.53.0.4;
+	transfer-source 10.53.0.4;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.4; };
+	listen-on-v6 { none; };
+	recursion yes;
+	dnssec-validation no;
+	minimal-responses yes;
+
+{% if FEATURE_FIPS_DH == "1" %}
+	tls-port @TLSPORT@;
+{% endif %}
+
+};
+
+statistics-channels { inet 10.53.0.4 port @EXTRAPORT1@ allow { localhost; }; };
+
+zone "." {
+	type hint;
+	file "root.db";
+};
+
+zone "example5." {
+	type forward;
+	forward only;
+	forwarders { 10.53.0.2; };
+};
+
+zone "grafted" {
+	type forward;
+	forward only;
+	forwarders { 10.53.0.2; };
+};
+
+zone "malicious." {
+	type primary;
+	file "malicious.db";
+};
+
+zone "sibling.tld" {
+	type primary;
+	file "sibling.tld.db";
+};

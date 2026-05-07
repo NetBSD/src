@@ -26,30 +26,28 @@ setup() {
 for zn in nsec-to-nsec3 nsec3 nsec3-other nsec3-change nsec3-to-nsec \
   nsec3-to-optout nsec3-from-optout nsec3-dynamic \
   nsec3-dynamic-change nsec3-dynamic-to-inline \
-  nsec3-inline-to-dynamic nsec3-dynamic-update-inline \
-  nsec3-ent; do
+  nsec3-inline-to-dynamic nsec3-dynamic-update-inline; do
   setup "${zn}.kasp"
 done
 
 if [ $RSASHA1_SUPPORTED = 1 ]; then
-  for zn in rsasha1-to-nsec3 rsasha1-to-nsec3-wait nsec3-to-rsasha1 \
-    nsec3-to-rsasha1-ds; do
-    setup "${zn}.kasp"
-  done
-
   longago="now-1y"
-  keytimes="-P ${longago} -A ${longago}"
+  keytimes="-P ${longago} -A ${longago} -P sync ${longago}"
   O="omnipresent"
 
-  zone="rsasha1-to-nsec3-wait.kasp"
-  CSK=$($KEYGEN -k "rsasha1" -l named.conf $keytimes $zone 2>keygen.out.$zone)
-  echo_i "Created key file $CSK"
-  $SETTIME -s -g $O -k $O $longago -r $O $longago -z $O $longago -d $O $longago "$CSK" >settime.out.$zone 2>&1
+  for zn in nsec3-to-rsasha1 nsec3-to-rsasha1-ds; do
+    setup "${zn}.kasp"
+    CSK=$($KEYGEN -a $DEFAULT_ALGORITHM -L 3600 -f KSK $keytimes $zone 2>keygen.out.$zone)
+    $SETTIME -s -g $O -k $O $longago -r $O $longago -z $O $longago -d $O $longago "$CSK" >settime.out.$zone 2>&1
+    cat $CSK.key >>$zonefile
+  done
 
-  zone="nsec3-to-rsasha1-ds.kasp"
-  CSK=$($KEYGEN -k "default" -l named.conf $keytimes $zone 2>keygen.out.$zone)
-  echo_i "Created key file $CSK"
-  $SETTIME -s -g $O -k $O $longago -r $O $longago -z $O $longago -d $O $longago "$CSK" >settime.out.$zone 2>&1
+  for zn in rsasha1-to-nsec3 rsasha1-to-nsec3-wait; do
+    setup "${zn}.kasp"
+    CSK=$($KEYGEN -k "rsasha1" -l named.conf $keytimes $zone 2>keygen.out.$zone)
+    $SETTIME -s -g $O -k $O $longago -r $O $longago -z $O $longago -d $O $longago "$CSK" >settime.out.$zone 2>&1
+    cat $CSK.key >>$zonefile
+  done
 else
   echo_i "skip: skip rsasha1 zones - signing with RSASHA1 not supported"
 fi

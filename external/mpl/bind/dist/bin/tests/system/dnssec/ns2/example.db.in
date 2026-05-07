@@ -180,4 +180,8 @@ ns.rsasha1		A	10.53.0.3
 rsasha1-1024		NS	ns.rsasha1-1024
 ns.rsasha1-1024		A	10.53.0.3
 
+; A secure subdomain with extra bad key
+extrabadkey		NS	ns3.extrabadkey
+ns3.extrabadkey		A	10.53.0.3
+
 dname-at-apex-nsec3	NS	ns3

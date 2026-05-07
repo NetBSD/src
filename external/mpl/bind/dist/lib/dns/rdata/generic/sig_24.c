@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.c,v 1.11 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.11.2.1 2026/05/07 16:18:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ fromtext_sig(ARGS_FROMTEXT) {
 	 */
 	used = isc_buffer_usedlength(target);
 
-	RETERR(isc_base64_tobuffer(lexer, target, -2));
+	RETERR(isc_base64_tobuffer(lexer, target, isc_one_or_more));
 
 	if (alg == DNS_KEYALG_PRIVATEDNS || alg == DNS_KEYALG_PRIVATEOID) {
 		isc_buffer_t b;
@@ -466,9 +466,7 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
-	sig->common.rdclass = rdata->rdclass;
-	sig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sig->common, link);
+	DNS_RDATACOMMON_INIT(sig, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

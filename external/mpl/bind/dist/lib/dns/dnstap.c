@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap.c,v 1.14 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dnstap.c,v 1.14.2.1 2026/05/07 16:18:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -102,7 +102,7 @@ struct dns_dthandle {
 
 struct dns_dtenv {
 	unsigned int magic;
-	isc_refcount_t refcount;
+	isc_refcount_t references;
 
 	isc_mem_t *mctx;
 	isc_loop_t *loop;
@@ -123,21 +123,23 @@ struct dns_dtenv {
 	isc_stats_t *stats;
 };
 
-#define CHECK(x)                             \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
-
 typedef struct ioq {
 	unsigned int generation;
 	struct fstrm_iothr_queue *ioq;
 } dt__ioq_t;
 
+static void
+destroy(dns_dtenv_t *env);
+
 static thread_local dt__ioq_t dt_ioq = { 0 };
 
 static atomic_uint_fast32_t global_generation;
+
+#if DNS_DTENV_TRACE
+ISC_REFCOUNT_TRACE_IMPL(dns_dtenv, destroy);
+#else
+ISC_REFCOUNT_IMPL(dns_dtenv, destroy);
+#endif /* DNS_DTENV_TRACE */
 
 isc_result_t
 dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
@@ -169,7 +171,7 @@ dns_dt_create(isc_mem_t *mctx, dns_dtmode_t mode, const char *path,
 	isc_mem_attach(mctx, &env->mctx);
 	isc_mutex_init(&env->reopen_lock);
 	env->path = isc_mem_strdup(env->mctx, path);
-	isc_refcount_init(&env->refcount, 1);
+	isc_refcount_init(&env->references, 1);
 	isc_stats_create(env->mctx, &env->stats, dns_dnstapcounter_max);
 
 	fwopt = fstrm_writer_options_init();
@@ -453,15 +455,6 @@ dt_queue(dns_dtenv_t *env) {
 	return dt_ioq.ioq;
 }
 
-void
-dns_dt_attach(dns_dtenv_t *source, dns_dtenv_t **destp) {
-	REQUIRE(VALID_DTENV(source));
-	REQUIRE(destp != NULL && *destp == NULL);
-
-	isc_refcount_increment(&source->refcount);
-	*destp = source;
-}
-
 isc_result_t
 dns_dt_getstats(dns_dtenv_t *env, isc_stats_t **statsp) {
 	REQUIRE(VALID_DTENV(env));
@@ -505,18 +498,6 @@ destroy(dns_dtenv_t *env) {
 	}
 
 	isc_mem_putanddetach(&env->mctx, env, sizeof(*env));
-}
-
-void
-dns_dt_detach(dns_dtenv_t **envp) {
-	REQUIRE(envp != NULL && VALID_DTENV(*envp));
-	dns_dtenv_t *env = *envp;
-	*envp = NULL;
-
-	if (isc_refcount_decrement(&env->refcount) == 1) {
-		isc_refcount_destroy(&env->refcount);
-		destroy(env);
-	}
 }
 
 static isc_result_t
@@ -706,6 +687,8 @@ perform_reopen(void *arg) {
 	LOCK(&env->reopen_lock);
 	env->reopen_queued = false;
 	UNLOCK(&env->reopen_lock);
+
+	dns_dtenv_detach(&env);
 }
 
 /*%
@@ -737,6 +720,7 @@ check_file_size_and_maybe_reopen(dns_dtenv_t *env) {
 	 * Send an event to roll the output file, then disallow output file
 	 * rolling until the roll we queue is completed.
 	 */
+	dns_dtenv_ref(env);
 	isc_async_run(env->loop, perform_reopen, env);
 	env->reopen_queued = true;
 
@@ -790,15 +774,6 @@ dns_dt_send(dns_view_t *view, dns_dtmsgtype_t msgtype, isc_sockaddr_t *qaddr,
 		dm.m.has_response_time_sec = 1;
 		dm.m.response_time_nsec = isc_time_nanoseconds(t);
 		dm.m.has_response_time_nsec = 1;
-
-		/*
-		 * Types RR and FR can fall through and get the query
-		 * time set as well. Any other response type, break.
-		 */
-		if (msgtype != DNS_DTTYPE_RR && msgtype != DNS_DTTYPE_FR) {
-			break;
-		}
-
 		FALLTHROUGH;
 	case DNS_DTTYPE_AQ:
 	case DNS_DTTYPE_CQ:

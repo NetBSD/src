@@ -30,7 +30,12 @@ g			A	10.0.0.7
 z			A	10.0.0.26
 a.a.a.a.a.a.a.a.a.a.e	A	10.0.0.27
 x			CNAME	a
-badalg			A	10.53.0.4
+
+badalg			NS	ns3.badalg
+ns3.badalg		A	10.53.0.3
+
+zonecut.ent		NS	ns3.zonecut.ent
+ns3.zonecut.ent		A	10.53.0.3
 
 private			NS	ns.private
 ns.private		A	10.53.0.2

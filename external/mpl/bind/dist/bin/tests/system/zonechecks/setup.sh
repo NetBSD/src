@@ -13,9 +13,6 @@
 
 . ../conf.sh
 
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns2/named.conf.in ns2/named.conf
-
 $SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 1 >ns1/primary.db
 $SHELL ${TOP_SRCDIR}/bin/tests/system/genzone.sh 1 >ns1/duplicate.db
 cp bigserial.db ns1/

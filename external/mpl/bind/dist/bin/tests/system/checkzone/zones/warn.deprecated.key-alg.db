@@ -1,0 +1,53 @@
+; File written on Wed Jul  2 16:48:02 2025
+; dnssec-signzone version 9.21.3-dev
+example.		3600	IN SOA	. . (
+					0          ; serial
+					0          ; refresh (0 seconds)
+					0          ; retry (0 seconds)
+					0          ; expire (0 seconds)
+					3600       ; minimum (1 hour)
+					)
+			3600	RRSIG	SOA 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					iC+sFesZi+uurPGRfP7faPfmQcHlQcz4oGKP
+					4Fqq6/ePy9s+FYpL6LILjnB9iPxc0w3BBvsd
+					PArExFsuaKcWgQ== )
+			3600	NS	.
+			3600	RRSIG	NS 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					q2qPtVYQsku7j5xqLyIleldPLnhJjvbjMkcb
+					XtnV2djkM1swGkZp67u4l7GHr9/b9lcM848w
+					t+AfDiT2Mak9Lg== )
+			3600	KEY	512 3 5 (
+					AwEAAZwLHbB7cjvlEt0evebAMsJtuNYXgiyt
+					qe3lu0RO/ChFdddyHv+O9M1zLrCnWMBSLHad
+					YHSXfG3BMyMAnBh7om+1pgrHCShlmMaxZ5cC
+					sug5buS3E8eVRVAf7Qje63owxm2iF3G9kKWY
+					FgfE+Ml5Uv7etHkmxqAmFb3jYuXzYWfMz1qY
+					rICsJnw7qcKzNphl71tDvJUYD5pDA7izhzs3
+					8tdDH8qMQgK/yNU3Q/RAOg2VRvYuwYOteCAx
+					6RB/z+rtNTKNbphrPrzSsekOurLo1B+AvDct
+					o/orbilbQ8qdq0cknKlqdMKuYcqQ1BbBMrdV
+					w1fBTLDwiFwiRBjYazPqPiE=
+					); alg = RSASHA1 ; key id = 13684
+			3600	RRSIG	KEY 13 1 3600 (
+					20901231235959 20250702054802 46204 example.
+					GvfNtx1F8crebI/QrPb2meHplhSpAsIDqJ48
+					iMg6aT22mGBagR698GS+9ehg0ExMumfIDPSO
+					k/1wtwRKYqrKow== )
+			3600	NSEC	example. NS SOA KEY RRSIG NSEC DNSKEY
+			3600	RRSIG	NSEC 13 1 3600 (
+					20901231235959 20250702054802 46204 example.
+					Nah5tUuwQiiDKWpdgtqPp7LppMOoDUJkyTZB
+					pAzmbT8UA7kNJN2K5kfkLJgPqWAt4h2P0Ys1
+					9lkLcXqYUH0x5g== )
+			3600	DNSKEY	256 3 13 (
+					Il3F88buwuAwswJl70b4xh8werV/2a2cDo6x
+					joU5+1H2dRXE/XRt4CEipBdt8Ss4fr8s6jBE
+					5CT4INCzzeTuZQ==
+					) ; ZSK; alg = ECDSAP256SHA256 ; key id = 46204
+			3600	RRSIG	DNSKEY 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					KQWGucJalgX/cANLv0/g0LNweGdeE7gs8rrx
+					9yOiZqciu7wCfyRgk5ED1pNXOXsTqtIA0OGa
+					OmTOsXrBWly7ng== )

@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsstream.c,v 1.5 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: tlsstream.c,v 1.5.2.1 2026/05/07 16:18:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -937,6 +937,7 @@ tlslisten_acceptcb(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	if (tlssock->tlsstream.tls == NULL) {
 		tlssock->closed = true;
 		isc_tlsctx_free(&tlssock->tlsstream.ctx);
+		isc__nmsocket_detach(&tlssock->server);
 		isc__nmsocket_detach(&tlssock);
 		return ISC_R_TLSERROR;
 	}

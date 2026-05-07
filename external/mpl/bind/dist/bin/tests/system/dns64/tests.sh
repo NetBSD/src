@@ -1407,7 +1407,7 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-copy_setports ns1/named.conf2.in ns1/named.conf
+cp ns1/named2.conf ns1/named.conf
 rndc_reload ns1 10.53.0.1
 
 echo_i "checking 'dig +dns64prefix' with multiple prefixes ($n)"
@@ -1419,7 +1419,7 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-copy_setports ns1/named.conf3.in ns1/named.conf
+cp ns1/named3.conf ns1/named.conf
 rndc_reload ns1 10.53.0.1
 
 echo_i "checking 'dig +dns64prefix' with no prefixes ($n)"

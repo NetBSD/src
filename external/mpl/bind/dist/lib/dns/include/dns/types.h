@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.10.2.1 2026/05/07 16:18:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -82,6 +82,7 @@ typedef ISC_LIST(dns_dns64_t) dns_dns64list_t;
 typedef struct dns_dnsseckey dns_dnsseckey_t;
 typedef ISC_LIST(dns_dnsseckey_t) dns_dnsseckeylist_t;
 typedef uint8_t			   dns_dsdigest_t;
+typedef uint8_t			   dns_dsyncscheme_t;
 typedef struct dns_dtdata	   dns_dtdata_t;
 typedef struct dns_dtenv	   dns_dtenv_t;
 typedef struct dns_dtmsg	   dns_dtmsg_t;
@@ -182,6 +183,14 @@ typedef struct dns_ipkeylist dns_ipkeylist_t;
 typedef struct dst_gssapi_signverifyctx dst_gssapi_signverifyctx_t;
 
 typedef enum { dns_hash_sha1 = 1 } dns_hash_t;
+
+typedef enum {
+	DNS_DIFFOP_ADD = 0,	  /*%< Add an RR. */
+	DNS_DIFFOP_DEL = 1,	  /*%< Delete an RR. */
+	DNS_DIFFOP_EXISTS = 2,	  /*%< Assert RR existence. */
+	DNS_DIFFOP_ADDRESIGN = 4, /*%< ADD + RESIGN. */
+	DNS_DIFFOP_DELRESIGN = 5  /*%< DEL + RESIGN. */
+} dns_diffop_t;
 
 typedef enum {
 	dns_fwdpolicy_none = 0,
@@ -386,6 +395,7 @@ enum {
 	((x) == dns_trust_additional || (x) == dns_trust_pending_additional)
 #define DNS_TRUST_GLUE(x)   ((x) == dns_trust_glue)
 #define DNS_TRUST_ANSWER(x) ((x) == dns_trust_answer)
+#define DNS_TRUST_SECURE(x) ((x) >= dns_trust_secure)
 
 /*%
  * Name checking severities.
@@ -434,8 +444,8 @@ typedef void (*dns_loaddonefunc_t)(void *, isc_result_t);
 typedef void (*dns_rawdatafunc_t)(dns_zone_t *, dns_masterrawheader_t *);
 
 typedef isc_result_t (*dns_addrdatasetfunc_t)(void *arg, const dns_name_t *name,
-					      dns_rdataset_t *rdataset
-						      DNS__DB_FLARG);
+					      dns_rdataset_t *rdataset,
+					      dns_diffop_t op DNS__DB_FLARG);
 typedef void (*dns_transactionfunc_t)(void *arg);
 
 typedef isc_result_t (*dns_additionaldatafunc_t)(

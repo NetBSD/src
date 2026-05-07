@@ -9,20 +9,19 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import logging
 from pathlib import Path
-import textwrap
-from typing import Dict, Optional
 
+import logging
+import textwrap
 
 LOG_FORMAT = "%(asctime)s %(levelname)7s:%(name)s  %(message)s"
 LOG_INDENT = 4
 
-LOGGERS = {
+LOGGERS: dict[str, logging.Logger | None] = {
     "conftest": None,
     "module": None,
     "test": None,
-}  # type: Dict[str, Optional[logging.Logger]]
+}
 
 
 def init_conftest_logger():

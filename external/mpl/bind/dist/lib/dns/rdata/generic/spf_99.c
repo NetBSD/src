@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.c,v 1.10 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.10.2.1 2026/05/07 16:18:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,9 +78,7 @@ tostruct_spf(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_spf);
 
-	spf->common.rdclass = rdata->rdclass;
-	spf->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&spf->common, link);
+	DNS_RDATACOMMON_INIT(spf, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2025  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2026  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,6 +87,9 @@
 #include "rdata/generic/zonemd_63.c"
 #include "rdata/in_1/svcb_64.c"
 #include "rdata/in_1/https_65.c"
+#include "rdata/generic/dsync_66.c"
+#include "rdata/generic/hhit_67.c"
+#include "rdata/generic/brid_68.c"
 #include "rdata/generic/spf_99.c"
 #include "rdata/generic/nid_104.c"
 #include "rdata/generic/l32_105.c"
@@ -241,6 +244,9 @@
 		default: result = DNS_R_UNKNOWN; break; \
 		} \
 		break; \
+	case 66: result = fromtext_dsync(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 67: result = fromtext_hhit(rdclass, type, lexer, origin, options, target, callbacks); break; \
+	case 68: result = fromtext_brid(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 99: result = fromtext_spf(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 104: result = fromtext_nid(rdclass, type, lexer, origin, options, target, callbacks); break; \
 	case 105: result = fromtext_l32(rdclass, type, lexer, origin, options, target, callbacks); break; \
@@ -399,6 +405,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = totext_dsync(rdata, tctx, target); break; \
+	case 67: result = totext_hhit(rdata, tctx, target); break; \
+	case 68: result = totext_brid(rdata, tctx, target); break; \
 	case 99: result = totext_spf(rdata, tctx, target); break; \
 	case 104: result = totext_nid(rdata, tctx, target); break; \
 	case 105: result = totext_l32(rdata, tctx, target); break; \
@@ -557,6 +566,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = fromwire_dsync(rdclass, type, source, dctx, target); break; \
+	case 67: result = fromwire_hhit(rdclass, type, source, dctx, target); break; \
+	case 68: result = fromwire_brid(rdclass, type, source, dctx, target); break; \
 	case 99: result = fromwire_spf(rdclass, type, source, dctx, target); break; \
 	case 104: result = fromwire_nid(rdclass, type, source, dctx, target); break; \
 	case 105: result = fromwire_l32(rdclass, type, source, dctx, target); break; \
@@ -715,6 +727,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = towire_dsync(rdata, cctx, target); break; \
+	case 67: result = towire_hhit(rdata, cctx, target); break; \
+	case 68: result = towire_brid(rdata, cctx, target); break; \
 	case 99: result = towire_spf(rdata, cctx, target); break; \
 	case 104: result = towire_nid(rdata, cctx, target); break; \
 	case 105: result = towire_l32(rdata, cctx, target); break; \
@@ -873,6 +888,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = compare_dsync(rdata1, rdata2); break; \
+	case 67: result = compare_hhit(rdata1, rdata2); break; \
+	case 68: result = compare_brid(rdata1, rdata2); break; \
 	case 99: result = compare_spf(rdata1, rdata2); break; \
 	case 104: result = compare_nid(rdata1, rdata2); break; \
 	case 105: result = compare_l32(rdata1, rdata2); break; \
@@ -1031,6 +1049,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = casecompare_dsync(rdata1, rdata2); break; \
+	case 67: result = casecompare_hhit(rdata1, rdata2); break; \
+	case 68: result = casecompare_brid(rdata1, rdata2); break; \
 	case 99: result = casecompare_spf(rdata1, rdata2); break; \
 	case 104: result = casecompare_nid(rdata1, rdata2); break; \
 	case 105: result = casecompare_l32(rdata1, rdata2); break; \
@@ -1189,6 +1210,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = fromstruct_dsync(rdclass, type, source, target); break; \
+	case 67: result = fromstruct_hhit(rdclass, type, source, target); break; \
+	case 68: result = fromstruct_brid(rdclass, type, source, target); break; \
 	case 99: result = fromstruct_spf(rdclass, type, source, target); break; \
 	case 104: result = fromstruct_nid(rdclass, type, source, target); break; \
 	case 105: result = fromstruct_l32(rdclass, type, source, target); break; \
@@ -1347,6 +1371,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = tostruct_dsync(rdata, target, mctx); break; \
+	case 67: result = tostruct_hhit(rdata, target, mctx); break; \
+	case 68: result = tostruct_brid(rdata, target, mctx); break; \
 	case 99: result = tostruct_spf(rdata, target, mctx); break; \
 	case 104: result = tostruct_nid(rdata, target, mctx); break; \
 	case 105: result = tostruct_l32(rdata, target, mctx); break; \
@@ -1505,6 +1532,9 @@
 		default: break; \
 		} \
 		break; \
+	case 66: freestruct_dsync(source); break; \
+	case 67: freestruct_hhit(source); break; \
+	case 68: freestruct_brid(source); break; \
 	case 99: freestruct_spf(source); break; \
 	case 104: freestruct_nid(source); break; \
 	case 105: freestruct_l32(source); break; \
@@ -1663,6 +1693,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = additionaldata_dsync(rdata, owner, add, arg); break; \
+	case 67: result = additionaldata_hhit(rdata, owner, add, arg); break; \
+	case 68: result = additionaldata_brid(rdata, owner, add, arg); break; \
 	case 99: result = additionaldata_spf(rdata, owner, add, arg); break; \
 	case 104: result = additionaldata_nid(rdata, owner, add, arg); break; \
 	case 105: result = additionaldata_l32(rdata, owner, add, arg); break; \
@@ -1821,6 +1854,9 @@
 		default: use_default = true; break; \
 		} \
 		break; \
+	case 66: result = digest_dsync(rdata, digest, arg); break; \
+	case 67: result = digest_hhit(rdata, digest, arg); break; \
+	case 68: result = digest_brid(rdata, digest, arg); break; \
 	case 99: result = digest_spf(rdata, digest, arg); break; \
 	case 104: result = digest_nid(rdata, digest, arg); break; \
 	case 105: result = digest_l32(rdata, digest, arg); break; \
@@ -1979,6 +2015,9 @@
 		default: result = true; break; \
 		} \
 		break; \
+	case 66: result = checkowner_dsync(name, rdclass, type, wildcard); break; \
+	case 67: result = checkowner_hhit(name, rdclass, type, wildcard); break; \
+	case 68: result = checkowner_brid(name, rdclass, type, wildcard); break; \
 	case 99: result = checkowner_spf(name, rdclass, type, wildcard); break; \
 	case 104: result = checkowner_nid(name, rdclass, type, wildcard); break; \
 	case 105: result = checkowner_l32(name, rdclass, type, wildcard); break; \
@@ -2137,6 +2176,9 @@
 		default: result = true; break; \
 		} \
 		break; \
+	case 66: result = checknames_dsync(rdata, owner, bad); break; \
+	case 67: result = checknames_hhit(rdata, owner, bad); break; \
+	case 68: result = checknames_brid(rdata, owner, bad); break; \
 	case 99: result = checknames_spf(rdata, owner, bad); break; \
 	case 104: result = checknames_nid(rdata, owner, bad); break; \
 	case 105: result = checknames_l32(rdata, owner, bad); break; \
@@ -2358,6 +2400,15 @@
 		case 247: \
 			RDATATYPE_COMPARE("https", 65, _typename,  _length, _typep); \
 			break; \
+		case 155: \
+			RDATATYPE_COMPARE("dsync", 66, _typename,  _length, _typep); \
+			break; \
+		case 240: \
+			RDATATYPE_COMPARE("hhit", 67, _typename,  _length, _typep); \
+			break; \
+		case 216: \
+			RDATATYPE_COMPARE("brid", 68, _typename,  _length, _typep); \
+			break; \
 		case 230: \
 			RDATATYPE_COMPARE("uinfo", 100, _typename,  _length, _typep); \
 			break; \
@@ -2478,6 +2529,9 @@
 	case 63: return (RRTYPE_ZONEMD_ATTRIBUTES); \
 	case 64: return (RRTYPE_SVCB_ATTRIBUTES); \
 	case 65: return (RRTYPE_HTTPS_ATTRIBUTES); \
+	case 66: return (RRTYPE_DSYNC_ATTRIBUTES); \
+	case 67: return (RRTYPE_HHIT_ATTRIBUTES); \
+	case 68: return (RRTYPE_BRID_ATTRIBUTES); \
 	case 99: return (RRTYPE_SPF_ATTRIBUTES); \
 	case 100: return (0); \
 	case 101: return (0); \
@@ -2573,6 +2627,9 @@
 	case 63: return (str_totext("ZONEMD", target)); \
 	case 64: return (str_totext("SVCB", target)); \
 	case 65: return (str_totext("HTTPS", target)); \
+	case 66: return (str_totext("DSYNC", target)); \
+	case 67: return (str_totext("HHIT", target)); \
+	case 68: return (str_totext("BRID", target)); \
 	case 99: return (str_totext("SPF", target)); \
 	case 100: return (str_totext("UINFO", target)); \
 	case 101: return (str_totext("UID", target)); \

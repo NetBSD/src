@@ -12,23 +12,19 @@
 # information regarding copyright ownership.
 
 
-from typing import NamedTuple, Tuple
+from typing import NamedTuple
 
 import os
 import sys
 import time
 
-import isctest
-import pytest
-
-pytest.importorskip("dns", minversion="2.0.0")
-import dns.exception
-import dns.message
 import dns.name
 import dns.rcode
 import dns.rdataclass
 import dns.rdatatype
+import pytest
 
+import isctest
 
 pytestmark = [
     pytest.mark.skipif(
@@ -81,7 +77,7 @@ def has_signed_apex_nsec(zone, response):
 
 
 def do_query(server, qname, qtype, tcp=False):
-    msg = dns.message.make_query(qname, qtype, use_edns=True, want_dnssec=True)
+    msg = isctest.query.create(qname, qtype)
     query_func = isctest.query.tcp if tcp else isctest.query.udp
     response = query_func(msg, server.ip, expected_rcode=dns.rcode.NOERROR)
     return response
@@ -102,10 +98,10 @@ def verify_zone(zone, transfer):
 
     verifier = isctest.run.cmd(verify_cmd)
 
-    if verifier.returncode != 0:
+    if verifier.rc != 0:
         isctest.log.error(f"dnssec-verify {zone} failed")
 
-    return verifier.returncode == 0
+    return verifier.rc == 0
 
 
 def read_statefile(server, zone):
@@ -189,36 +185,9 @@ def keystate_check(server, zone, key):
         assert val != 0
 
 
-def rekey(zone):
-    rndc = os.getenv("RNDC")
-    assert rndc is not None
-
-    port = os.getenv("CONTROLPORT")
-    assert port is not None
-
-    # rndc loadkeys.
-    rndc_cmd = [
-        rndc,
-        "-c",
-        "../_common/rndc.conf",
-        "-p",
-        port,
-        "-s",
-        "10.53.0.9",
-        "loadkeys",
-        zone,
-    ]
-    controller = isctest.run.cmd(rndc_cmd)
-
-    if controller.returncode != 0:
-        isctest.log.error(f"rndc loadkeys {zone} failed")
-
-    assert controller.returncode == 0
-
-
 class CheckDSTest(NamedTuple):
     zone: str
-    logs_to_wait_for: Tuple[str]
+    logs_to_wait_for: tuple[str]
     expected_parent_state: str
 
 
@@ -462,21 +431,21 @@ checkds_tests = (
 
 
 @pytest.mark.parametrize("params", checkds_tests, ids=lambda t: t.zone)
-def test_checkds(servers, params):
+def test_checkds(ns2, ns9, params):
     # Wait until the provided zone is signed and then verify its DNSSEC data.
-    zone_check(servers["ns9"], params.zone)
+    zone_check(ns9, params.zone)
 
     # Wait up to 10 seconds until all the expected log lines are found in the
     # log file for the provided server.  Rekey every second if necessary.
     time_remaining = 10
     for log_string in params.logs_to_wait_for:
         line = f"zone {params.zone}/IN (signed): checkds: {log_string}"
-        while line not in servers["ns9"].log:
-            rekey(params.zone)
+        while line not in ns9.log:
+            ns9.rndc(f"loadkeys {params.zone}")
             time_remaining -= 1
             assert time_remaining, f'Timed out waiting for "{log_string}" to be logged'
             time.sleep(1)
 
     # Check whether key states on the parent server provided match
     # expectations.
-    keystate_check(servers["ns2"], params.zone, params.expected_parent_state)
+    keystate_check(ns2, params.zone, params.expected_parent_state)

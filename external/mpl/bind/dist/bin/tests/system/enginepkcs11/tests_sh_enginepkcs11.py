@@ -9,9 +9,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import pytest
+import os
 
-import isctest.mark
+import pytest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -53,6 +53,12 @@ pytestmark = pytest.mark.extra_artifacts(
 )
 
 
-@isctest.mark.flaky(max_runs=3)  # GL#4605
+def bootstrap():
+    return {
+        "ENGINE_ARG": os.getenv("ENGINE_ARG", ""),
+    }
+
+
+@pytest.mark.flaky(max_runs=5)  # GL#4605
 def test_enginepkcs11(run_tests_sh):
     run_tests_sh()

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2025/07/17 19:01:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.20.2.1 2026/05/07 16:15:11 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,8 @@
 #include <dns/view.h>
 
 #include <dlz/dlz_dlopen_driver.h>
+
+#include "ns/pfilter.h"
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 #include <gperftools/profiler.h>
@@ -122,6 +124,9 @@ extern unsigned int dns_zone_mkey_hour;
 extern unsigned int dns_zone_mkey_day;
 extern unsigned int dns_zone_mkey_month;
 
+extern unsigned int dns_adb_entrywindow;
+extern unsigned int dns_adb_cachemin;
+
 static bool want_stats = false;
 static char program_name[NAME_MAX] = "named";
 static char absolute_conffile[PATH_MAX];
@@ -144,6 +149,7 @@ static bool noedns = false;
 static bool nonearest = false;
 static bool nosoa = false;
 static bool notcp = false;
+static bool rpzslow = false;
 static bool sigvalinsecs = false;
 static bool transferinsecs = false;
 static bool transferslowly = false;
@@ -791,6 +797,8 @@ parse_T_opt(char *option) {
 		if (dns_zone_mkey_month < dns_zone_mkey_day) {
 			named_main_earlyfatal("bad mkeytimer");
 		}
+	} else if (!strcmp(option, "rpzslow")) {
+		rpzslow = true;
 	} else if (!strcmp(option, "sigvalinsecs")) {
 		sigvalinsecs = true;
 	} else if (!strcmp(option, "transferinsecs")) {
@@ -801,6 +809,10 @@ parse_T_opt(char *option) {
 		transferstuck = true;
 	} else if (!strncmp(option, "tat=", 4)) {
 		named_g_tat_interval = atoi(option + 4);
+	} else if (!strncmp(option, "adbentrywindow=", 15)) {
+		dns_adb_entrywindow = atoi(option + 15);
+	} else if (!strncmp(option, "adbcachemin=", 12)) {
+		dns_adb_cachemin = atoi(option + 12);
 	} else {
 		fprintf(stderr, "unknown -T flag '%s'\n", option);
 	}
@@ -1370,6 +1382,9 @@ setup(void) {
 	if (notcp) {
 		ns_server_setoption(sctx, NS_SERVER_NOTCP, true);
 	}
+	if (rpzslow) {
+		ns_server_setoption(sctx, NS_SERVER_RPZSLOW, true);
+	}
 	if (sigvalinsecs) {
 		ns_server_setoption(sctx, NS_SERVER_SIGVALINSECS, true);
 	}
@@ -1540,6 +1555,9 @@ main(int argc, char *argv[]) {
 	named_os_init(program_name);
 
 	parse_command_line(argc, argv);
+
+	// Should we have a command line flag?
+	pfilter_enable();
 
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {

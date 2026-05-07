@@ -1,0 +1,40 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+. 			IN SOA	gson.nominum.com. a.root.servers.nil. (
+				2000042100   	; serial
+				600         	; refresh
+				600         	; retry
+				1200    	; expire
+				600       	; minimum
+				)
+.			NS	a.root-servers.nil.
+a.root-servers.nil.	A	10.53.0.1
+
+example.		NS	ns2.1st.
+example.		NS	ns3.1st.
+example.		NS	ns4.1st.
+example.		NS	ns5.xxx.
+
+1st.			NS	ns2.2nd.
+1st.			NS	ns3.2nd.
+1st.			NS	ns5.xxx.
+
+2nd.			NS	ns2.3rd.
+2nd.			NS	ns5.xxx.
+
+3rd.			NS	ns2.1st.
+3rd.			NS	ns5.xxx.
+
+xxx.			NS	ns2.1st.
+xxx.			NS	ns2.xxx.
+ns2.xxx.		A	10.53.0.2

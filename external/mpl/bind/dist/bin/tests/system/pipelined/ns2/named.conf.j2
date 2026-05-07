@@ -20,11 +20,10 @@ options {
 	listen-on { 10.53.0.2; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	notify yes;
 };
 
-trust-anchors { };
 
 key rndc_key {
 	secret "1234abcd8765";

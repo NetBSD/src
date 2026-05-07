@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.19 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: view.c,v 1.19.2.1 2026/05/07 16:18:39 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,13 +66,6 @@
 #include <dns/view.h>
 #include <dns/zone.h>
 #include <dns/zt.h>
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 #define DNS_VIEW_DELONLYHASH 111
 
@@ -386,7 +379,7 @@ destroy(dns_view_t *view) {
 	}
 #ifdef HAVE_DNSTAP
 	if (view->dtenv != NULL) {
-		dns_dt_detach(&view->dtenv);
+		dns_dtenv_detach(&view->dtenv);
 	}
 #endif /* HAVE_DNSTAP */
 	dns_view_setnewzones(view, false, NULL, NULL, 0ULL);

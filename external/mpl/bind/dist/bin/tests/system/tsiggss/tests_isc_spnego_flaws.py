@@ -20,17 +20,14 @@ import argparse
 import struct
 import time
 
-import pytest
-
-import isctest
-
-pytest.importorskip("dns")
-import dns.message
 import dns.name
 import dns.rdata
 import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
+import pytest
+
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -56,7 +53,7 @@ class CraftedTKEYQuery:
         rrset = dns.rrset.from_rdata(dns.name.root, dns.rdatatype.TKEY, rdata)
 
         # Prepare complete TKEY query to send
-        self.msg = dns.message.make_query(
+        self.msg = isctest.query.create(
             dns.name.root, dns.rdatatype.TKEY, dns.rdataclass.ANY
         )
         self.msg.additional.append(rrset)

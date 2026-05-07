@@ -1,0 +1,77 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	listen-on port @PORT@ { 10.53.0.1; };
+	transfer-source 10.53.0.1;
+	pid-file "named.pid";
+	recursion no;
+	/*
+	 * Notifications are sent from 10.53.1.1. This, the `notify
+	 * explicit` and `also-notify` below, enables us to use specific TSIG
+	 * keys for notifications for each secondary server instead of using
+	 * the xfer TSIG key.
+	 */
+	notify-source 10.53.1.1;
+	/*
+	 * The test. zone doesn't specify other NS, however this makes it clear
+	 * this NS must only notify from also-notify list.
+	 */
+	notify explicit;
+};
+
+key xfrkey {
+	algorithm @DEFAULT_HMAC@;
+	secret "9999abcd8765";
+};
+
+key notifykey2 {
+	algorithm @DEFAULT_HMAC@;
+	secret "2222abcd8765";
+};
+
+key notifykey3 {
+	algorithm @DEFAULT_HMAC@;
+	secret "3333abcd8765";
+};
+
+key notifykey4 {
+	algorithm @DEFAULT_HMAC@;
+	secret "4444abcd8765";
+};
+
+remote-servers secondariesbis {
+	10.53.0.4 port @PORT@; /* gets notifykey4 */
+};
+
+remote-servers secondaries {
+	10.53.0.3 port @PORT@ key notifykey3;
+	secondariesbis key notifykey4;
+	10.53.0.2 port @PORT@; /* gets notifykey2 */
+};
+
+zone "test" {
+	type primary;
+	allow-transfer { key xfrkey; };
+	also-notify { secondaries key notifykey2; };
+	file "test.db";
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};

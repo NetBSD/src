@@ -19,12 +19,11 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.1; };
 	recursion no;
-	dnssec-validation yes;
+	dnssec-validation no;
 	notify yes;
 	minimal-responses no;
 };
 
-trust-anchors { };
 
 plugin query "../driver/.libs/test-async.so";
 

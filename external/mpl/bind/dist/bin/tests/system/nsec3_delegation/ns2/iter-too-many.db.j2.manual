@@ -1,0 +1,31 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+{% raw %}
+$TTL 300
+@			IN SOA	ns2.iter-too-many. hostmaster.iter-too-many. (
+				2026020300	; serial
+				20		; refresh (20 seconds)
+				20		; retry (20 seconds)
+				1814400		; expire (3 weeks)
+				3600		; minimum (1 hour)
+)
+
+@	IN	NS	ns2.iter-too-many.
+ns2	IN	A	10.53.0.2
+
+sub	IN	NS	ns2.sub.iter-too-many.
+ns2.sub	IN	A	10.53.0.2
+{% endraw %}
+
+{% for dnskey in dnskeys %}
+@dnskey@
+{% endfor %}

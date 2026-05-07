@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.10 2025/01/26 16:25:37 christos Exp $	*/
+/*	$NetBSD: httpd.c,v 1.10.2.1 2026/05/07 16:18:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,14 +38,6 @@
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif /* ifdef HAVE_ZLIB */
-
-#define CHECK(m)                               \
-	do {                                   \
-		result = (m);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	} while (0)
 
 /*
  * Size the recv buffer to hold at maximum two full buffers from isc_nm_read(),
@@ -293,7 +285,7 @@ destroy_httpdmgr(isc_httpdmgr_t *httpdmgr) {
 	 * memory.
 	 */
 	isc_httpdurl_t *url, *next;
-	ISC_LIST_FOREACH_SAFE (httpdmgr->urls, url, link, next) {
+	ISC_LIST_FOREACH_SAFE(httpdmgr->urls, url, link, next) {
 		isc_mem_free(httpdmgr->mctx, url->url);
 		ISC_LIST_UNLINK(httpdmgr->urls, url, link);
 		isc_mem_put(httpdmgr->mctx, url, sizeof(isc_httpdurl_t));
@@ -435,9 +427,8 @@ process_request(isc_httpd_t *httpd, size_t last_len) {
 
 		if (name_match(header, "Content-Length")) {
 			char *endptr;
-			long val = strtol(header->value, &endptr, 10);
-
 			errno = 0;
+			long val = strtol(header->value, &endptr, 10);
 
 			/* ensure we consumed all digits */
 			if ((header->value + header->value_len) != endptr) {
@@ -783,7 +774,7 @@ prepare_response(void *arg) {
 	}
 
 	LOCK(&mgr->lock);
-	ISC_LIST_FOREACH (mgr->urls, url, link) {
+	ISC_LIST_FOREACH(mgr->urls, url, link) {
 		if (strncmp(path, url->url, path_len) == 0) {
 			break;
 		}
@@ -982,7 +973,7 @@ isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdmgrp) {
 	LOCK(&httpdmgr->lock);
 
 	isc_httpd_t *httpd = NULL, *next = NULL;
-	ISC_LIST_FOREACH_SAFE (httpdmgr->running, httpd, link, next) {
+	ISC_LIST_FOREACH_SAFE(httpdmgr->running, httpd, link, next) {
 		if (httpd->handle != NULL) {
 			httpd_request(httpd->handle, ISC_R_SUCCESS, NULL,
 				      httpd);

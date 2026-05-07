@@ -38,7 +38,7 @@ options {
 	listen-on { 10.53.0.1; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	deny-answer-addresses { 192.0.2.0/24; 2001:db8:beef::/48; }
 		 except-from { "example.org"; };
 	deny-answer-aliases { "example.org"; }
@@ -49,7 +49,6 @@ options {
 	nocookie-udp-size 512;
 };
 
-trust-anchors { };
 
 zone "." {
 	type hint;

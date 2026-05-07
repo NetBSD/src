@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.17 2025/05/21 14:48:02 christos Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.17.2.1 2026/05/07 16:18:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -52,19 +52,6 @@
 
 #define DNS_DCTX_MAGIC	  ISC_MAGIC('D', 'c', 't', 'x')
 #define DNS_DCTX_VALID(d) ISC_MAGIC_VALID(d, DNS_DCTX_MAGIC)
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
-
-#define CHECK(x)                          \
-	do {                              \
-		if ((x) != ISC_R_SUCCESS) \
-			goto cleanup;     \
-	} while (0)
 
 struct dns_master_style {
 	dns_masterstyle_flags_t flags; /* DNS_STYLEFLAG_* */
@@ -1402,29 +1389,8 @@ dumpctx_destroy(dns_dumpctx_t *dctx) {
 	isc_mem_putanddetach(&dctx->mctx, dctx, sizeof(*dctx));
 }
 
-void
-dns_dumpctx_attach(dns_dumpctx_t *source, dns_dumpctx_t **target) {
-	REQUIRE(DNS_DCTX_VALID(source));
-	REQUIRE(target != NULL && *target == NULL);
-
-	isc_refcount_increment(&source->references);
-
-	*target = source;
-}
-
-void
-dns_dumpctx_detach(dns_dumpctx_t **dctxp) {
-	dns_dumpctx_t *dctx;
-
-	REQUIRE(dctxp != NULL);
-	dctx = *dctxp;
-	*dctxp = NULL;
-	REQUIRE(DNS_DCTX_VALID(dctx));
-
-	if (isc_refcount_decrement(&dctx->references) == 1) {
-		dumpctx_destroy(dctx);
-	}
-}
+ISC_REFCOUNT_DECL(dns_dumpctx);
+ISC_REFCOUNT_IMPL(dns_dumpctx, dumpctx_destroy);
 
 dns_dbversion_t *
 dns_dumpctx_version(dns_dumpctx_t *dctx) {
@@ -1792,6 +1758,21 @@ cleanup:
 	return result;
 }
 
+static void
+master_dump_enqueue(void *dctx) {
+	isc_work_enqueue(isc_loop(), master_dump_cb, master_dump_done_cb, dctx);
+}
+
+static void
+dns_dumpctx_enqueue(isc_loop_t *loop, dns_dumpctx_t *dctx) {
+	dns_dumpctx_ref(dctx);
+	if (loop == isc_loop()) {
+		master_dump_enqueue(dctx);
+	} else {
+		isc_async_run(loop, master_dump_enqueue, dctx);
+	}
+}
+
 isc_result_t
 dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 			     dns_dbversion_t *version,
@@ -1813,8 +1794,8 @@ dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 	dctx->done = done;
 	dctx->done_arg = done_arg;
 
-	dns_dumpctx_attach(dctx, dctxp);
-	isc_work_enqueue(loop, master_dump_cb, master_dump_done_cb, dctx);
+	dns_dumpctx_enqueue(loop, dctx);
+	*dctxp = dctx;
 
 	return ISC_R_SUCCESS;
 }
@@ -1908,8 +1889,8 @@ dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	dctx->file = file;
 	dctx->tmpfile = tempname;
 
-	dns_dumpctx_attach(dctx, dctxp);
-	isc_work_enqueue(loop, master_dump_cb, master_dump_done_cb, dctx);
+	dns_dumpctx_enqueue(loop, dctx);
+	*dctxp = dctx;
 
 	return ISC_R_SUCCESS;
 

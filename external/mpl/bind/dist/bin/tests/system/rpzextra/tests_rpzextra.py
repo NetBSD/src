@@ -12,13 +12,12 @@
 # information regarding copyright ownership.
 
 import os
+
+import dns.rcode
+import dns.rrset
 import pytest
 
-pytest.importorskip("dns", minversion="2.0.0")
 import isctest
-from isctest.compat import dns_rcode
-
-import dns.message
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -70,21 +69,21 @@ pytestmark = pytest.mark.extra_artifacts(
 )
 def test_rpz_multiple_views(qname, source, rcode):
     # Wait for the rpz-external.local zone transfer
-    msg = dns.message.make_query("rpz-external.local", "SOA")
+    msg = isctest.query.create("rpz-external.local", "SOA")
     isctest.query.tcp(
         msg,
         ip="10.53.0.3",
         source="10.53.0.2",
-        expected_rcode=dns_rcode.NOERROR,
+        expected_rcode=dns.rcode.NOERROR,
     )
     isctest.query.tcp(
         msg,
         ip="10.53.0.3",
         source="10.53.0.5",
-        expected_rcode=dns_rcode.NOERROR,
+        expected_rcode=dns.rcode.NOERROR,
     )
 
-    msg = dns.message.make_query(qname, "A")
+    msg = isctest.query.create(qname, "A")
     res = isctest.query.udp(msg, "10.53.0.3", source=source, expected_rcode=rcode)
     if rcode == dns.rcode.NOERROR:
         assert res.answer == [dns.rrset.from_text(qname, 300, "IN", "A", "10.53.0.2")]
@@ -94,7 +93,7 @@ def test_rpz_passthru_logging():
     resolver_ip = "10.53.0.3"
 
     # Should generate a log entry into rpz_passthru.txt
-    msg_allowed = dns.message.make_query("allowed.", "A")
+    msg_allowed = isctest.query.create("allowed.", "A")
     res_allowed = isctest.query.udp(
         msg_allowed, resolver_ip, source="10.53.0.1", expected_rcode=dns.rcode.NOERROR
     )
@@ -103,7 +102,7 @@ def test_rpz_passthru_logging():
     ]
 
     # Should also generate a log entry into rpz_passthru.txt
-    msg_allowed_any = dns.message.make_query("allowed.", "ANY")
+    msg_allowed_any = isctest.query.create("allowed.", "ANY")
     res_allowed_any = isctest.query.udp(
         msg_allowed_any,
         resolver_ip,
@@ -121,7 +120,7 @@ def test_rpz_passthru_logging():
 
     # baddomain.com isn't allowed (CNAME .), should return NXDOMAIN
     # Should generate a log entry into rpz.txt
-    msg_not_allowed = dns.message.make_query("baddomain.", "A")
+    msg_not_allowed = isctest.query.create("baddomain.", "A")
     res_not_allowed = isctest.query.udp(
         msg_not_allowed,
         resolver_ip,

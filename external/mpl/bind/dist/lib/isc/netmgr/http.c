@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.5 2025/05/21 14:48:05 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.5.2.1 2026/05/07 16:18:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -646,13 +646,11 @@ on_server_data_chunk_recv_callback(int32_t stream_id, const uint8_t *data,
 					&h2->rbuf,
 					isc_mem_allocate(mctx,
 							 h2->content_length),
-					MAX_DNS_MESSAGE_SIZE);
+					h2->content_length);
 			}
 			size_t new_bufsize = isc_buffer_usedlength(&h2->rbuf) +
 					     len;
-			if (new_bufsize <= MAX_DNS_MESSAGE_SIZE &&
-			    new_bufsize <= h2->content_length)
-			{
+			if (new_bufsize <= h2->content_length) {
 				session->processed_useful_data += len;
 				isc_buffer_putmem(&h2->rbuf, data, len);
 				break;
@@ -3584,9 +3582,7 @@ isc__nm_base64url_to_base64(isc_mem_t *mem, const char *base64url,
 
 	INSIST(i == len);
 
-	if (res_len != NULL) {
-		*res_len = len;
-	}
+	SET_IF_NOT_NULL(res_len, len);
 
 	res[len] = '\0';
 
@@ -3637,9 +3633,7 @@ isc__nm_base64_to_base64url(isc_mem_t *mem, const char *base64,
 		}
 	}
 end:
-	if (res_len) {
-		*res_len = i;
-	}
+	SET_IF_NOT_NULL(res_len, i);
 
 	res[i] = '\0';
 

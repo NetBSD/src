@@ -13,8 +13,7 @@ import sys
 
 try:
     import yaml
-# pylint: disable=bare-except
-except:
+except ImportError:
     print("No python yaml module, skipping")
     sys.exit(1)
 

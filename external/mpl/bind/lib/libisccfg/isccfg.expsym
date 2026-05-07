@@ -19,6 +19,7 @@ cfg_doc_tuple
 cfg_doc_void
 cfg_gettoken
 cfg_is_enum
+cfg_kasp_builtinconfig
 cfg_kasp_fromconfig
 cfg_keystore_fromconfig
 cfg_list_first

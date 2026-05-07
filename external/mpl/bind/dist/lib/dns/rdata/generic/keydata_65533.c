@@ -1,4 +1,4 @@
-/*	$NetBSD: keydata_65533.c,v 1.11 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: keydata_65533.c,v 1.11.2.1 2026/05/07 16:18:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,7 +85,7 @@ fromtext_keydata(ARGS_FROMTEXT) {
 		return ISC_R_SUCCESS;
 	}
 
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -332,9 +332,7 @@ tostruct_keydata(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_keydata);
 	REQUIRE(keydata != NULL);
 
-	keydata->common.rdclass = rdata->rdclass;
-	keydata->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&keydata->common, link);
+	DNS_RDATACOMMON_INIT(keydata, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

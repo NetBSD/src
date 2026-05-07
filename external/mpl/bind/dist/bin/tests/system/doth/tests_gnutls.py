@@ -16,14 +16,14 @@ import struct
 import subprocess
 import time
 
-import pytest
-
-pytest.importorskip("dns")
 import dns.exception
 import dns.message
 import dns.name
 import dns.rdataclass
 import dns.rdatatype
+import pytest
+
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -35,7 +35,7 @@ pytestmark = pytest.mark.extra_artifacts(
 
 def test_gnutls_cli_query(gnutls_cli_executable, named_tlsport):
     # Prepare the example/SOA query which will be sent over TLS.
-    query = dns.message.make_query("example.", dns.rdatatype.SOA)
+    query = isctest.query.create("example.", dns.rdatatype.SOA)
     query_wire = query.to_wire()
     query_with_length = struct.pack(">H", len(query_wire)) + query_wire
 
@@ -47,7 +47,7 @@ def test_gnutls_cli_query(gnutls_cli_executable, named_tlsport):
         "--no-ocsp",
         "--alpn=dot",
         "--logfile=gnutls-cli.log",
-        "--port=%d" % named_tlsport,
+        f"--port={named_tlsport}",
         "10.53.0.1",
     ]
     with open("gnutls-cli.err", "wb") as gnutls_cli_stderr, subprocess.Popen(

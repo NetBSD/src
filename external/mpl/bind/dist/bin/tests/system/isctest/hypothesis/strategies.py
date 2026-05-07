@@ -11,8 +11,9 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import List
 from warnings import warn
+
+import collections.abc
 
 from hypothesis.strategies import (
     binary,
@@ -22,10 +23,10 @@ from hypothesis.strategies import (
     just,
     nothing,
     permutations,
+    sampled_from,
 )
 
 import dns.name
-import dns.message
 import dns.rdataclass
 import dns.rdatatype
 
@@ -37,7 +38,7 @@ def dns_names(
     draw,
     *,
     prefix: dns.name.Name = dns.name.empty,
-    suffix: dns.name.Name = dns.name.root,
+    suffix: dns.name.Name | collections.abc.Iterable[dns.name.Name] = dns.name.root,
     min_labels: int = 1,
     max_labels: int = 128,
 ) -> dns.name.Name:
@@ -71,6 +72,14 @@ def dns_names(
     """
 
     prefix = prefix.relativize(dns.name.root)
+    # Python str is iterable, but that's most probably not what user actually wanted
+    if isinstance(suffix, str):
+        raise NotImplementedError(
+            "ambiguous API use, convert suffix to Name or list to express intent"
+        )
+    if isinstance(suffix, collections.abc.Iterable):
+        suffix = draw(sampled_from(sorted(suffix)))
+    assert isinstance(suffix, dns.name.Name)
     suffix = suffix.derelativize(dns.name.root)
 
     try:
@@ -131,13 +140,8 @@ def dns_names(
 
 
 RDATACLASS_MAX = RDATATYPE_MAX = 65535
-try:
-    dns_rdataclasses = builds(dns.rdataclass.RdataClass, integers(0, RDATACLASS_MAX))
-    dns_rdatatypes = builds(dns.rdatatype.RdataType, integers(0, RDATATYPE_MAX))
-except AttributeError:
-    # In old dnspython versions, RDataTypes and RDataClasses are int and not enums.
-    dns_rdataclasses = integers(0, RDATACLASS_MAX)  # type: ignore
-    dns_rdatatypes = integers(0, RDATATYPE_MAX)  # type: ignore
+dns_rdataclasses = builds(dns.rdataclass.RdataClass, integers(0, RDATACLASS_MAX))
+dns_rdatatypes = builds(dns.rdatatype.RdataType, integers(0, RDATATYPE_MAX))
 dns_rdataclasses_without_meta = dns_rdataclasses.filter(dns.rdataclass.is_metaclass)
 
 # NOTE: This should really be `dns_rdatatypes_without_meta = dns_rdatatypes_without_meta.filter(dns.rdatatype.is_metatype()`,
@@ -148,7 +152,7 @@ dns_rdatatypes_without_meta = integers(0, dns.rdatatype.OPT - 1) | integers(dns.
 @composite
 def _partition_bytes_to_labels(
     draw, remaining_bytes: int, number_of_labels: int
-) -> List[int]:
+) -> list[int]:
     two_bytes_reserved_for_label = 2
 
     # Reserve two bytes for each label

@@ -11,8 +11,6 @@
 
 import pytest
 
-import isctest.mark
-
 pytestmark = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
@@ -25,6 +23,6 @@ pytestmark = pytest.mark.extra_artifacts(
 
 
 # The qmin test is inherently unstable, see GL #904 for details.
-@isctest.mark.flaky(max_runs=3)
+@pytest.mark.flaky(max_runs=3)
 def test_qmin(run_tests_sh):
     run_tests_sh()

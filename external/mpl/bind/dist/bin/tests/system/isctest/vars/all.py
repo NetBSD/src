@@ -11,13 +11,11 @@
 
 from collections import ChainMap
 
-# pylint: disable=import-error
-from .autoconf import AC_VARS  # type: ignore
-
-# pylint: enable=import-error
 from .algorithms import ALG_VARS, CRYPTO_SUPPORTED_VARS
+from .autoconf import AC_VARS  # type: ignore
 from .basic import BASIC_VARS
 from .dirs import DIR_VARS
+from .features import FEATURE_VARS
 from .openssl import OPENSSL_VARS
 from .ports import PORT_VARS
 
@@ -56,6 +54,7 @@ class VarLookup(ChainMap):
 ALL = VarLookup(
     AC_VARS,
     BASIC_VARS,
+    FEATURE_VARS,
     OPENSSL_VARS,
     PORT_VARS,
     DIR_VARS,

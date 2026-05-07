@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.16 2025/07/17 19:01:46 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.16.2.1 2026/05/07 16:18:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,7 @@
  */
 #define DNS_EDNSOPTIONS 7 + DNS_EDE_MAX_ERRORS
 
-#define DNS_MESSAGE_REPLYPRESERVE	 (DNS_MESSAGEFLAG_RD | DNS_MESSAGEFLAG_CD)
+#define DNS_MESSAGE_REPLYPRESERVE (DNS_MESSAGEFLAG_RD | DNS_MESSAGEFLAG_CD)
 #define DNS_MESSAGEEXTFLAG_REPLYPRESERVE (DNS_MESSAGEEXTFLAG_DO)
 
 #define DNS_MESSAGE_HEADERLEN 12 /*%< 6 uint16_t's */
@@ -264,6 +264,7 @@ struct dns_message {
 	unsigned int	     rdclass_set      : 1; /* 14 */
 	unsigned int	     fuzzing	      : 1; /* 15 */
 	unsigned int	     free_pools	      : 1; /* 16 */
+	unsigned int	     has_dname	      : 1; /* 17 */
 	unsigned int			      : 0;
 
 	unsigned int opt_reserved;
@@ -1483,5 +1484,12 @@ dns_message_createpools(isc_mem_t *mctx, isc_mempool_t **namepoolp,
 			isc_mempool_t **rdspoolp);
 void
 dns_message_destroypools(isc_mempool_t **namepoolp, isc_mempool_t **rdspoolp);
+
+bool
+dns_message_hasdname(dns_message_t *msg);
+/*%<
+ * Return whether a DNAME was detected in the ANSWER section of a QUERY
+ * message when it was parsed.
+ */
 
 ISC_LANG_ENDDECLS

@@ -1,4 +1,4 @@
-/*	$NetBSD: isc.h,v 1.4 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: isc.h,v 1.4.2.1 2026/05/07 16:18:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,6 +68,16 @@ teardown_managers(void **state);
 #define TESTS_DIR "./"
 #endif
 
+/* cmocka<2.0.0 compatibility */
+#ifndef assert_int_in_range
+#define assert_int_in_range(value, min, max) \
+	assert_in_range((value), (min), (max))
+#endif
+#ifndef assert_uint_in_range
+#define assert_uint_in_range(value, min, max) \
+	assert_in_range((value), (min), (max))
+#endif
+
 /* clang-format off */
 /* Copied from cmocka */
 #define ISC_TEST_ENTRY(name)				\
@@ -86,7 +96,7 @@ teardown_managers(void **state);
 	int setup_test_##name(void **state ISC_ATTR_UNUSED);
 
 #define ISC_RUN_TEST_DECLARE(name) \
-	void run_test_##name(void **state ISC_ATTR_UNUSED);
+	static void run_test_##name(void **state ISC_ATTR_UNUSED);
 
 #define ISC_TEARDOWN_TEST_DECLARE(name) \
 	int teardown_test_##name(void **state ISC_ATTR_UNUSED)
@@ -115,9 +125,9 @@ teardown_managers(void **state);
 	int setup_test_##name(void **state ISC_ATTR_UNUSED); \
 	int setup_test_##name(void **state ISC_ATTR_UNUSED)
 
-#define ISC_RUN_TEST_IMPL(name)                             \
-	void run_test_##name(void **state ISC_ATTR_UNUSED); \
-	void run_test_##name(void **state ISC_ATTR_UNUSED)
+#define ISC_RUN_TEST_IMPL(name)                                    \
+	static void run_test_##name(void **state ISC_ATTR_UNUSED); \
+	static void run_test_##name(void **state ISC_ATTR_UNUSED)
 
 #define ISC_TEARDOWN_TEST_IMPL(name)                            \
 	int teardown_test_##name(void **state ISC_ATTR_UNUSED); \
@@ -129,9 +139,9 @@ teardown_managers(void **state);
 	;
 
 #define ISC_LOOP_TEST_CUSTOM_IMPL(name, setup, teardown)                   \
-	void run_test_##name(void **state ISC_ATTR_UNUSED);                \
-	void loop_test_##name(void *arg ISC_ATTR_UNUSED);                  \
-	void run_test_##name(void **state ISC_ATTR_UNUSED) {               \
+	static void run_test_##name(void **state ISC_ATTR_UNUSED);         \
+	static void loop_test_##name(void *arg ISC_ATTR_UNUSED);           \
+	static void run_test_##name(void **state ISC_ATTR_UNUSED) {        \
 		isc_job_cb setup_loop = setup;                             \
 		isc_job_cb teardown_loop = teardown;                       \
 		if (setup_loop != NULL) {                                  \
@@ -143,7 +153,7 @@ teardown_managers(void **state);
 		isc_loop_setup(mainloop, loop_test_##name, state);         \
 		isc_loopmgr_run(loopmgr);                                  \
 	}                                                                  \
-	void loop_test_##name(void *arg ISC_ATTR_UNUSED)
+	static void loop_test_##name(void *arg ISC_ATTR_UNUSED)
 
 #define ISC_LOOP_TEST_IMPL(name) ISC_LOOP_TEST_CUSTOM_IMPL(name, NULL, NULL)
 
@@ -186,8 +196,8 @@ teardown_managers(void **state);
 		setup_mctx(NULL);                                                       \
 		setup_workers(NULL);                                                    \
                                                                                         \
-		while ((c = isc_commandline_parse(argc, argv, "dlt:")) != -1)           \
-		{                                                                       \
+		while ((c = isc_commandline_parse(argc, argv, "dlt:")) !=               \
+		       -1) {                                                            \
 			switch (c) {                                                    \
 			case 'd':                                                       \
 				debug = true;                                           \

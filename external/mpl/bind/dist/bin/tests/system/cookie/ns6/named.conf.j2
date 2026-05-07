@@ -29,13 +29,12 @@ options {
 	listen-on { 10.53.0.6; };
 	listen-on-v6 { none; };
 	recursion yes;
-	dnssec-validation yes;
+	dnssec-validation no;
 	cookie-algorithm siphash24;
 	cookie-secret "6b300e27a0db46d4b046e4189790fa7d";
 	require-server-cookie yes;
 };
 
-trust-anchors { };
 
 zone "." {
 	type hint;

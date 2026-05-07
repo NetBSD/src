@@ -12,16 +12,15 @@
 # information regarding copyright ownership.
 
 from datetime import datetime
+
 import xml.etree.ElementTree as ET
 
 import pytest
+import requests
 
 import isctest.mark
 
-pytest.register_assert_rewrite("generic")
-import generic
-
-requests = pytest.importorskip("requests")
+from . import generic
 
 pytestmark = [
     isctest.mark.with_libxml2,
@@ -31,8 +30,11 @@ pytestmark = [
             "ns2/*.jnl",
             "ns2/*.signed",
             "ns2/dsset-*",
+            "ns2/dnssec.db",
             "ns2/dnssec.*.id",
+            "ns2/manykeys.db",
             "ns2/manykeys.*.id",
+            "ns2/settime.out.*",
             "ns2/signzone.out.*",
             "ns3/_default.nzd",
             "ns3/example-tcp.db",
@@ -45,9 +47,7 @@ pytestmark = [
 
 # XML helper functions
 def fetch_zones_xml(statsip, statsport):
-    r = requests.get(
-        "http://{}:{}/xml/v3/zones".format(statsip, statsport), timeout=600
-    )
+    r = requests.get(f"http://{statsip}:{statsport}/xml/v3/zones", timeout=600)
     assert r.status_code == 200
 
     root = ET.fromstring(r.text)
@@ -70,9 +70,7 @@ def fetch_traffic_xml(statsip, statsport):
 
         return out
 
-    r = requests.get(
-        "http://{}:{}/xml/v3/traffic".format(statsip, statsport), timeout=600
-    )
+    r = requests.get(f"http://{statsip}:{statsport}/xml/v3/traffic", timeout=600)
     assert r.status_code == 200
 
     root = ET.fromstring(r.text)
@@ -83,9 +81,9 @@ def fetch_traffic_xml(statsip, statsport):
             proto_root = root.find("traffic").find(ip).find(proto)
             for counters in proto_root.findall("counters"):
                 if counters.attrib["type"] == "request-size":
-                    key = "dns-{}-requests-sizes-received-{}".format(proto, ip)
+                    key = f"dns-{proto}-requests-sizes-received-{ip}"
                 else:
-                    key = "dns-{}-responses-sizes-sent-{}".format(proto, ip)
+                    key = f"dns-{proto}-responses-sizes-sent-{ip}"
 
                 values = load_counters(counters)
                 traffic[key] = values
@@ -98,7 +96,7 @@ def load_timers_xml(zone, primary=True):
 
     loaded_el = zone.find("loaded")
     assert loaded_el is not None
-    loaded = datetime.strptime(loaded_el.text, generic.fmt)
+    loaded = datetime.strptime(loaded_el.text, generic.FMT)
 
     expires_el = zone.find("expires")
     refresh_el = zone.find("refresh")
@@ -110,8 +108,8 @@ def load_timers_xml(zone, primary=True):
     else:
         assert expires_el is not None
         assert refresh_el is not None
-        expires = datetime.strptime(expires_el.text, generic.fmt)
-        refresh = datetime.strptime(refresh_el.text, generic.fmt)
+        expires = datetime.strptime(expires_el.text, generic.FMT)
+        refresh = datetime.strptime(refresh_el.text, generic.FMT)
 
     return (name, loaded, expires, refresh)
 
@@ -148,6 +146,6 @@ def test_zone_with_many_keys_xml(statsport):
     )
 
 
-@isctest.mark.flaky(max_runs=2, rerun_filter=isctest.mark.with_tsan)
+@pytest.mark.flaky(max_runs=2)
 def test_traffic_xml(statsport):
     generic.test_traffic(fetch_traffic_xml, statsip="10.53.0.2", statsport=statsport)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipseckey_45.c,v 1.11 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: ipseckey_45.c,v 1.11.2.1 2026/05/07 16:18:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -120,7 +120,7 @@ fromtext_ipseckey(ARGS_FROMTEXT) {
 	/*
 	 * Public key.
 	 */
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -355,9 +355,7 @@ tostruct_ipseckey(ARGS_TOSTRUCT) {
 	REQUIRE(ipseckey != NULL);
 	REQUIRE(rdata->length >= 3);
 
-	ipseckey->common.rdclass = rdata->rdclass;
-	ipseckey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ipseckey->common, link);
+	DNS_RDATACOMMON_INIT(ipseckey, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

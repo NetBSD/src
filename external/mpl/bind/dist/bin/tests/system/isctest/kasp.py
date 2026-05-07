@@ -9,23 +9,35 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from datetime import datetime, timedelta, timezone
 from functools import total_ordering
+from pathlib import Path
+from re import compile as Re
+
 import glob
 import os
-from pathlib import Path
 import re
-import subprocess
 import time
-from typing import Dict, List, Optional, Tuple, Union
 
-from datetime import datetime, timedelta, timezone
-
-import dns
+import dns.dnssec
+import dns.exception
+import dns.message
+import dns.name
+import dns.rcode
+import dns.rdataclass
+import dns.rdatatype
+import dns.rrset
 import dns.tsig
+import dns.zone
+import dns.zonefile
+
+from isctest.instance import NamedInstance
+from isctest.template import TrustAnchor
+from isctest.vars.algorithms import ALL_ALGORITHMS_BY_NUM, Algorithm
+
 import isctest.log
 import isctest.query
 import isctest.util
-from isctest.vars.algorithms import Algorithm, ALL_ALGORITHMS_BY_NUM
 
 DEFAULT_TTL = 300
 
@@ -33,7 +45,7 @@ NEXT_KEY_EVENT_THRESHOLD = 100
 
 
 def _query(server, qname, qtype, tsig=None):
-    query = dns.message.make_query(qname, qtype, use_edns=True, want_dnssec=True)
+    query = isctest.query.create(qname, qtype)
 
     if tsig is not None:
         tsigkey = tsig.split(":")
@@ -47,6 +59,56 @@ def _query(server, qname, qtype, tsig=None):
         return None
 
     return response
+
+
+def Ipub(config):
+    return (
+        config["dnskey-ttl"]
+        + config["zone-propagation-delay"]
+        + config["publish-safety"]
+    )
+
+
+def IpubC(config, rollover=True):
+    ttl1 = config["dnskey-ttl"] + config["publish-safety"]
+    ttl2 = timedelta(0)
+
+    if not rollover:
+        # If this is the first key, we also need to wait until the zone
+        # signatures are omnipresent. Use max-zone-ttl instead of
+        # dnskey-ttl, and no publish-safety (because we are looking at
+        # signatures here, not the public key).
+        ttl2 = config["max-zone-ttl"]
+
+    return config["zone-propagation-delay"] + max(ttl1, ttl2)
+
+
+def Iret(config, zsk=True, ksk=False, rollover=True, smooth=True):
+    sign_delay = timedelta(0)
+    safety_interval = timedelta(0)
+    if rollover:
+        if smooth:
+            sign_delay = config["signatures-validity"] - config["signatures-refresh"]
+        safety_interval = config["retire-safety"]
+
+    iret_ksk = timedelta(0)
+    if ksk:
+        # KSK: Double-KSK Method: Iret = DprpP + TTLds
+        iret_ksk = (
+            config["parent-propagation-delay"] + config["ds-ttl"] + safety_interval
+        )
+
+    iret_zsk = timedelta(0)
+    if zsk:
+        # ZSK: Pre-Publication Method: Iret = Dsgn + Dprp + TTLsig
+        iret_zsk = (
+            sign_delay
+            + config["zone-propagation-delay"]
+            + config["max-zone-ttl"]
+            + safety_interval
+        )
+
+    return max(iret_ksk, iret_zsk)
 
 
 @total_ordering
@@ -75,26 +137,26 @@ class KeyTimingMetadata:
     def __str__(self) -> str:
         return self.value.strftime(self.FORMAT)
 
-    def __add__(self, other: Union[timedelta, int]):
+    def __add__(self, other: timedelta | int):
         if isinstance(other, int):
             other = timedelta(seconds=other)
         result = KeyTimingMetadata.__new__(KeyTimingMetadata)
         result.value = self.value + other
         return result
 
-    def __sub__(self, other: Union[timedelta, int]):
+    def __sub__(self, other: timedelta | int):
         if isinstance(other, int):
             other = timedelta(seconds=other)
         result = KeyTimingMetadata.__new__(KeyTimingMetadata)
         result.value = self.value - other
         return result
 
-    def __iadd__(self, other: Union[timedelta, int]):
+    def __iadd__(self, other: timedelta | int):
         if isinstance(other, int):
             other = timedelta(seconds=other)
         self.value += other
 
-    def __isub__(self, other: Union[timedelta, int]):
+    def __isub__(self, other: timedelta | int):
         if isinstance(other, int):
             other = timedelta(seconds=other)
         self.value -= other
@@ -120,15 +182,30 @@ class KeyProperties:
     def __init__(
         self,
         name: str,
-        properties: dict,
         metadata: dict,
-        timing: Dict[str, KeyTimingMetadata],
+        timing: dict[str, KeyTimingMetadata],
+        private: bool = True,
+        legacy: bool = False,
+        role: str = "csk",
+        ttl: int = 3600,
+        flags: int = 257,
+        keytag_min: int = 0,
+        keytag_max: int = 65535,
+        offset: timedelta | int = 0,
     ):
         self.name = name
         self.key = None
-        self.properties = properties
         self.metadata = metadata
         self.timing = timing
+        # Properties
+        self.private = private
+        self.legacy = legacy
+        self.role = role
+        self.ttl = ttl
+        self.flags = flags
+        self.keytag_min = keytag_min
+        self.keytag_max = keytag_max
+        self.offset = offset
 
     def __repr__(self):
         return self.name
@@ -138,15 +215,6 @@ class KeyProperties:
 
     @staticmethod
     def default(with_state=True) -> "KeyProperties":
-        properties = {
-            "expect": True,
-            "private": True,
-            "legacy": False,
-            "role": "csk",
-            "role_full": "key-signing",
-            "dnskey_ttl": 3600,
-            "flags": 257,
-        }
         metadata = {
             "Algorithm": isctest.vars.algorithms.ECDSAP256SHA256.number,
             "Length": 256,
@@ -154,11 +222,9 @@ class KeyProperties:
             "KSK": "yes",
             "ZSK": "yes",
         }
-        timing: Dict[str, KeyTimingMetadata] = {}
+        timing: dict[str, KeyTimingMetadata] = {}
 
-        result = KeyProperties(
-            name="DEFAULT", properties=properties, metadata=metadata, timing=timing
-        )
+        result = KeyProperties(name="DEFAULT", metadata=metadata, timing=timing)
         result.name = "DEFAULT"
         result.key = None
         if with_state:
@@ -170,16 +236,16 @@ class KeyProperties:
 
         return result
 
+    def role_full(self) -> str:
+        if self.flags == 256:
+            return "zone-signing"
+        return "key-signing"
+
     def Ipub(self, config):
         ipub = timedelta(0)
 
         if self.key.get_metadata("Predecessor", must_exist=False) != "undefined":
-            # Ipub = Dprp + TTLkey
-            ipub = (
-                config["dnskey-ttl"]
-                + config["zone-propagation-delay"]
-                + config["publish-safety"]
-            )
+            ipub = Ipub(config)
 
         self.timing["Active"] = self.timing["Published"] + ipub
 
@@ -187,74 +253,56 @@ class KeyProperties:
         if not self.key.is_ksk():
             return
 
-        ttl1 = config["dnskey-ttl"] + config["publish-safety"]
-        ttl2 = timedelta(0)
-
-        if self.key.get_metadata("Predecessor", must_exist=False) == "undefined":
-            # If this is the first key, we also need to wait until the zone
-            # signatures are omnipresent. Use max-zone-ttl instead of
-            # dnskey-ttl, and no publish-safety (because we are looking at
-            # signatures here, not the public key).
-            ttl2 = config["max-zone-ttl"]
-
-        # IpubC = DprpC + TTLkey
-        ipubc = config["zone-propagation-delay"] + max(ttl1, ttl2)
+        rollover = self.key.get_metadata("Predecessor", must_exist=False) != "undefined"
+        ipubc = IpubC(config, rollover)
 
         self.timing["PublishCDS"] = self.timing["Published"] + ipubc
 
-        if self.metadata["Lifetime"] != 0:
+        if "Lifetime" in self.metadata and self.metadata["Lifetime"] != 0:
             self.timing["DeleteCDS"] = (
                 self.timing["PublishCDS"] + self.metadata["Lifetime"]
             )
 
     def Iret(self, config):
-        if self.metadata["Lifetime"] == 0:
+        if "Lifetime" not in self.metadata or self.metadata["Lifetime"] == 0:
             return
 
-        sign_delay = config["signatures-validity"] - config["signatures-refresh"]
-        safety_interval = config["retire-safety"]
+        sigdel = self.key.get_timing("SigRemoved", must_exist=False)
+        smooth = sigdel is None
+        iret = Iret(config, zsk=self.key.is_zsk(), ksk=self.key.is_ksk(), smooth=smooth)
+        self.timing["Removed"] = self.timing["Retired"] + iret
 
-        iretKSK = timedelta(0)
-        iretZSK = timedelta(0)
-        if self.key.is_ksk():
-            # Iret = DprpP + TTLds
-            iretKSK = (
-                config["parent-propagation-delay"] + config["ds-ttl"] + safety_interval
-            )
-        if self.key.is_zsk():
-            # Iret = Dsgn + Dprp + TTLsig
-            iretZSK = (
-                sign_delay
-                + config["zone-propagation-delay"]
-                + config["max-zone-ttl"]
-                + safety_interval
-            )
-
-        self.timing["Removed"] = self.timing["Retired"] + max(iretKSK, iretZSK)
-
-    def set_expected_keytimes(self, config, offset=None, pregenerated=False):
+    def set_expected_keytimes(
+        self, config, offset=None, pregenerated=False, migrate=False
+    ):
         if self.key is None:
             raise ValueError("KeyProperties must be attached to a Key")
 
-        if self.properties["legacy"]:
+        if self.legacy:
             return
 
         if offset is None:
-            offset = self.properties["offset"]
+            offset = self.offset
 
         self.timing["Generated"] = self.key.get_timing("Created")
-
-        self.timing["Published"] = self.timing["Generated"]
+        self.timing["Published"] = self.key.get_timing("Created")
         if pregenerated:
             self.timing["Published"] = self.key.get_timing("Publish")
-        self.timing["Published"] = self.timing["Published"] + offset
-        self.Ipub(config)
+
+        if migrate:
+            self.timing["Published"] = self.key.get_timing("Publish")
+            if self.key.is_ksk():
+                self.timing["PublishCDS"] = self.key.get_timing("SyncPublish")
+            self.timing["Active"] = self.key.get_timing("Activate")
+        else:
+            self.timing["Published"] = self.timing["Published"] + offset
+            self.Ipub(config)
+            self.IpubC(config)
 
         # Set Retired timing metadata if key has lifetime.
-        if self.metadata["Lifetime"] != 0:
+        if "Lifetime" in self.metadata and self.metadata["Lifetime"] != 0:
             self.timing["Retired"] = self.timing["Active"] + self.metadata["Lifetime"]
 
-        self.IpubC(config)
         self.Iret(config)
 
         # Key state change times must exist, but since we cannot reliably tell
@@ -281,7 +329,7 @@ class Key:
     operations for KASP tests.
     """
 
-    def __init__(self, name: str, keydir: Optional[Union[str, Path]] = None):
+    def __init__(self, name: str, keydir: str | Path | None = None):
         self.name = name
         if keydir is None:
             self.keydir = Path()
@@ -296,7 +344,7 @@ class Key:
 
     def get_timing(
         self, metadata: str, must_exist: bool = True
-    ) -> Optional[KeyTimingMetadata]:
+    ) -> KeyTimingMetadata | None:
         regex = rf";\s+{metadata}:\s+(\d+).*"
         with open(self.keyfile, "r", encoding="utf-8") as file:
             for line in file:
@@ -336,7 +384,7 @@ class Key:
 
     def get_signing_state(
         self, offline_ksk=False, zsk_missing=False, smooth=False
-    ) -> Tuple[bool, bool]:
+    ) -> tuple[bool, bool]:
         """
         This returns the signing state derived from the key states, KRRSIGState
         and ZRRSIGState.
@@ -398,12 +446,34 @@ class Key:
                 return int(line.split()[1])
         return 0
 
-    def dnskey(self):
+    @property
+    def dnskey(self) -> dns.rrset.RRset:
         with open(self.keyfile, "r", encoding="utf-8") as file:
-            for line in file:
-                if "DNSKEY" in line:
-                    return line.strip()
-        return "undefined"
+            rrsets = dns.zonefile.read_rrsets(
+                file.read(),
+                rdclass=None,  # read rdclass from the file
+                default_ttl=DEFAULT_TTL,  # use this TTL if not present
+            )
+        assert len(rrsets) == 1, f"{self.keyfile} has multiple RRsets"
+        dnskey_rr = rrsets[0]
+        assert len(dnskey_rr) == 1, f"{self.keyfile} has multiple RRs"
+        assert (
+            dnskey_rr.rdtype == dns.rdatatype.DNSKEY
+        ), f"DNSKEY not found in {self.keyfile}"
+        return dnskey_rr
+
+    def into_ta(self, ta_type: str, dsdigest=dns.dnssec.DSDigest.SHA256) -> TrustAnchor:
+        dnskey = self.dnskey
+        if ta_type in ["static-ds", "initial-ds"]:
+            ds = dns.dnssec.make_ds(dnskey.name, dnskey[0], dsdigest)
+            parts = str(ds).split()
+            contents = " ".join(parts[:3]) + f' "{parts[3]}"'
+        elif ta_type in ["static-key", "initial-key"]:
+            parts = str(dnskey).split()
+            contents = " ".join(parts[4:7]) + f' "{"".join(parts[7:])}"'
+        else:
+            raise ValueError(f"invalid trust anchor type: {ta_type}")
+        return TrustAnchor(str(dnskey.name), ta_type, contents)
 
     def is_ksk(self) -> bool:
         return self.get_metadata("KSK") == "yes"
@@ -451,8 +521,8 @@ class Key:
             str(self.keyfile),
         ]
 
-        out = isctest.run.cmd(dsfromkey_command)
-        dsfromkey = out.stdout.decode("utf-8").split()
+        cmd = isctest.run.cmd(dsfromkey_command)
+        dsfromkey = cmd.out.split()
 
         rdata_fromfile = " ".join(dsfromkey[:7])
         rdata_fromwire = " ".join(cds[:7])
@@ -512,57 +582,64 @@ class Key:
             isctest.log.debug(f"{self.name} {key} TIMING UNEXPECTED: {value}")
         return value == "undefined"
 
-    def match_properties(self, zone, properties):
+    def _check_public_key_file(self, zone, properties):
         """
-        Check the key with given properties.
+        Check the public key file.
         """
-        if not properties.properties["expect"]:
-            return False
-
-        # Check file existence.
-        # Noop. If file is missing then the get_metadata calls will fail.
-
-        # Check the public key file.
-        role = properties.properties["role_full"]
+        role = properties.role_full()
         comment = f"This is a {role} key, keyid {self.tag}, for {zone}."
         if not isctest.util.file_contents_contain(self.keyfile, comment):
             isctest.log.debug(f"{self.name} COMMENT MISMATCH: expected '{comment}'")
             return False
 
-        ttl = properties.properties["dnskey_ttl"]
-        flags = properties.properties["flags"]
+        ttl = properties.ttl
+        flags = properties.flags
         alg = properties.metadata["Algorithm"]
         dnskey = f"{zone}. {ttl} IN DNSKEY {flags} 3 {alg}"
         if not isctest.util.file_contents_contain(self.keyfile, dnskey):
             isctest.log.debug(f"{self.name} DNSKEY MISMATCH: expected '{dnskey}'")
             return False
 
-        # Now check the private key file.
-        if properties.properties["private"]:
-            # Retrieve creation date.
-            created = self.get_metadata("Generated")
+        return True
 
-            pval = self.get_metadata("Created", file=self.privatefile)
-            if pval != created:
-                isctest.log.debug(
-                    f"{self.name} Created METADATA MISMATCH: {pval} - {created}"
-                )
-                return False
-            pval = self.get_metadata("Private-key-format", file=self.privatefile)
-            if pval != "v1.3":
-                isctest.log.debug(
-                    f"{self.name} Private-key-format METADATA MISMATCH: {pval} - v1.3"
-                )
-                return False
-            pval = self.get_metadata("Algorithm", file=self.privatefile)
-            if pval != f"{alg}":
-                isctest.log.debug(
-                    f"{self.name} Algorithm METADATA MISMATCH: {pval} - {alg}"
-                )
-                return False
+    def _check_private_key_file(self, properties):
+        """
+        Check the private key file.
+        """
+        if not properties.private:
+            return True
 
-        # Now check the key state file.
-        if properties.properties["legacy"]:
+        alg = properties.metadata["Algorithm"]
+
+        # Retrieve creation date.
+        created = self.get_metadata("Generated")
+
+        pval = self.get_metadata("Created", file=self.privatefile)
+        if pval != created:
+            isctest.log.debug(
+                f"{self.name} Created METADATA MISMATCH: {pval} - {created}"
+            )
+            return False
+        pval = self.get_metadata("Private-key-format", file=self.privatefile)
+        if pval != "v1.3":
+            isctest.log.debug(
+                f"{self.name} Private-key-format METADATA MISMATCH: {pval} - v1.3"
+            )
+            return False
+        pval = self.get_metadata("Algorithm", file=self.privatefile)
+        if pval != f"{alg}":
+            isctest.log.debug(
+                f"{self.name} Algorithm METADATA MISMATCH: {pval} - {alg}"
+            )
+            return False
+
+        return True
+
+    def _check_key_state_file(self, zone, properties):
+        """
+        Check the key state file.
+        """
+        if properties.legacy:
             return True
 
         comment = f"This is the state of key {self.tag}, for {zone}."
@@ -587,14 +664,29 @@ class Key:
                 return False
 
         # Check tag range.
-        if "keytag-min" in properties.properties:
-            if self.tag < properties.properties["keytag-min"]:
-                return False
-        if "keytag-max" in properties.properties:
-            if self.tag > properties.properties["keytag-max"]:
-                return False
+        if self.tag < properties.keytag_min:
+            return False
+        if self.tag > properties.keytag_max:
+            return False
 
-        # A match is found.
+        return True
+
+    def match_properties(self, zone, properties):
+        """
+        Check the key with given properties.
+        """
+        # Check file existence.
+        # Noop. If file is missing then the get_metadata calls will fail.
+
+        if not self._check_public_key_file(zone, properties):
+            return False
+
+        if not self._check_private_key_file(properties):
+            return False
+
+        if not self._check_key_state_file(zone, properties):
+            return False
+
         return True
 
     def match_timingmetadata(self, timings, file=None, comment=False):
@@ -660,7 +752,7 @@ def check_keys(zone, keys, expected):
                 if expected[i].key is None:
                     found = key.match_properties(zone, expected[i])
                     if found:
-                        key.external = expected[i].properties["legacy"]
+                        key.external = expected[i].legacy
                         expected[i].key = key
                 i += 1
             if not found:
@@ -682,7 +774,7 @@ def check_keytimes(keys, expected):
 
     for key in keys:
         for expect in expected:
-            if expect.properties["legacy"]:
+            if expect.legacy:
                 continue
 
             if not key is expect.key:
@@ -707,9 +799,9 @@ def check_keytimes(keys, expected):
                 synonyms["Delete"] = expect.timing["Removed"]
 
             assert key.match_timingmetadata(synonyms, file=key.keyfile, comment=True)
-            if expect.properties["private"]:
+            if expect.private:
                 assert key.match_timingmetadata(synonyms, file=key.privatefile)
-            if not expect.properties["legacy"]:
+            if not expect.legacy:
                 assert key.match_timingmetadata(expect.timing)
 
                 state_changes = [
@@ -730,7 +822,7 @@ def check_keyrelationships(keys, expected):
     """
     for key in keys:
         for expect in expected:
-            if expect.properties["legacy"]:
+            if expect.legacy:
                 continue
 
             if not key is expect.key:
@@ -760,18 +852,14 @@ def check_dnssec_verify(server, zone, tsig=None):
                     file.write(rr.to_text())
                     file.write("\n")
 
-            try:
-                verify_command = [os.environ.get("VERIFY"), "-z", "-o", zone, zonefile]
-                verified = isctest.run.cmd(verify_command)
-            except subprocess.CalledProcessError:
-                pass
-
-        if verified:
-            break
+            verify_command = [os.environ.get("VERIFY"), "-z", "-o", zone, zonefile]
+            verified = isctest.run.cmd(verify_command, raise_on_exception=False)
+            if verified.rc == 0:
+                return
 
         time.sleep(1)
 
-    assert verified
+    assert False, "zone not verified"
 
 
 def check_dnssecstatus(server, zone, keys, policy=None, view=None):
@@ -780,23 +868,29 @@ def check_dnssecstatus(server, zone, keys, policy=None, view=None):
     # policy name is returned, and if all expected keys are listed.
     response = ""
     if view is None:
-        response = server.rndc(f"dnssec -status {zone}", log=False)
+        response = server.rndc(f"dnssec -status {zone}")
     else:
-        response = server.rndc(f"dnssec -status {zone} in {view}", log=False)
+        response = server.rndc(f"dnssec -status {zone} in {view}")
 
     if policy is None:
-        assert "Zone does not have dnssec-policy" in response
+        assert "Zone does not have dnssec-policy" in response.out
         return
 
-    assert f"dnssec-policy: {policy}" in response
+    assert f"dnssec-policy: {policy}" in response.out
 
     for key in keys:
         if not key.external:
-            assert f"key: {key.tag}" in response
+            assert f"key: {key.tag}" in response.out
 
 
 def _check_signatures(
-    signatures, covers, fqdn, keys, offline_ksk=False, zsk_missing=False, smooth=False
+    signatures,
+    covers,
+    fqdn,
+    keys,
+    offline_ksk=False,
+    zsk_missing=False,
+    smooth=False,
 ):
     numsigs = 0
     zrrsig = True
@@ -884,7 +978,7 @@ def check_signatures(
     assert numsigs == len(signatures)
 
 
-def _check_dnskeys(dnskeys, keys, cdnskey=False):
+def _check_dnskeys(dnskeys, keys, cdnskey=False, manual_mode=False):
     now = KeyTimingMetadata.now()
     numkeys = 0
 
@@ -895,10 +989,21 @@ def _check_dnskeys(dnskeys, keys, cdnskey=False):
         delete_md = f"Sync{delete_md}"
 
     for key in keys:
-        publish = key.get_timing(publish_md, must_exist=False)
-        delete = key.get_timing(delete_md, must_exist=False)
-        published = publish is not None and now >= publish
-        removed = delete is not None and delete <= now
+        if manual_mode:
+            # State transitions may be blocked, preset key timings may not
+            # be accurate. Use the state values to determine whether the
+            # CDS must be published or not.
+            if cdnskey:
+                md = key.get_metadata("DSState")
+            else:
+                md = key.get_metadata("DNSKEYState")
+            published = md in ["omnipresent", "rumoured"]
+            removed = not published
+        else:
+            publish = key.get_timing(publish_md, must_exist=False)
+            delete = key.get_timing(delete_md, must_exist=False)
+            published = publish is not None and now >= publish
+            removed = delete is not None and delete <= now
 
         if not published or removed:
             for dnskey in dnskeys:
@@ -921,7 +1026,7 @@ def _check_dnskeys(dnskeys, keys, cdnskey=False):
     return numkeys
 
 
-def check_dnskeys(rrset, ksks, zsks, cdnskey=False):
+def check_dnskeys(rrset, ksks, zsks, cdnskey=False, manual_mode=False):
     # Check if the correct DNSKEY records are published. If the current time
     # is between the timing metadata 'publish' and 'delete', the key must have
     # a DNSKEY record published. If 'cdnskey' is True, check against CDNSKEY
@@ -936,14 +1041,14 @@ def check_dnskeys(rrset, ksks, zsks, cdnskey=False):
             dnskey = f"{rr.name} {rr.ttl} {rdclass} {rdtype} {rdata}"
             dnskeys.append(dnskey)
 
-    numkeys += _check_dnskeys(dnskeys, ksks, cdnskey=cdnskey)
+    numkeys += _check_dnskeys(dnskeys, ksks, cdnskey=cdnskey, manual_mode=manual_mode)
     if not cdnskey:
-        numkeys += _check_dnskeys(dnskeys, zsks)
+        numkeys += _check_dnskeys(dnskeys, zsks, manual_mode=manual_mode)
 
     assert numkeys == len(dnskeys)
 
 
-def check_cds(cdss, keys, alg):
+def check_cds(cdss, keys, alg, manual_mode=False):
     # Check if the correct CDS records are published. If the current time
     # is between the timing metadata 'publish' and 'delete', the key must have
     # a CDS record published.
@@ -953,10 +1058,19 @@ def check_cds(cdss, keys, alg):
     for key in keys:
         assert key.is_ksk()
 
-        publish = key.get_timing("SyncPublish")
-        delete = key.get_timing("SyncDelete", must_exist=False)
-        published = now >= publish
-        removed = delete is not None and delete <= now
+        if manual_mode:
+            # State transitions may be blocked, preset key timings may not
+            # be accurate. Use the state values to determine whether the
+            # CDS must be published or not.
+            md = key.get_metadata("DSState")
+            published = md in ["omnipresent", "rumoured"]
+            removed = not published
+        else:
+            publish = key.get_timing("SyncPublish")
+            delete = key.get_timing("SyncDelete", must_exist=False)
+            published = now >= publish
+            removed = delete is not None and delete <= now
+
         if not published or removed:
             for cds in cdss:
                 assert not key.cds_equals(cds, alg)
@@ -994,9 +1108,8 @@ def check_cdslog(server, zone, key, substr):
 
 
 def check_cdslog_prohibit(server, zone, key, substr):
-    server.log.prohibit(
-        f"{substr} for key {zone}/{key.algorithm.name}/{key.tag} is now published"
-    )
+    msg = f"{substr} for key {zone}/{key.algorithm.name}/{key.tag} is now published"
+    assert msg not in server.log
 
 
 def check_cdsdelete(rrset, expected):
@@ -1036,6 +1149,7 @@ def check_apex(
     zsks,
     cdss=None,
     cds_delete=False,
+    manual_mode=False,
     offline_ksk=False,
     zsk_missing=False,
     tsig=None,
@@ -1049,7 +1163,7 @@ def check_apex(
 
     # test dnskey query
     dnskeys, rrsigs = _query_rrset(server, fqdn, dns.rdatatype.DNSKEY, tsig=tsig)
-    check_dnskeys(dnskeys, ksks, zsks)
+    check_dnskeys(dnskeys, ksks, zsks, manual_mode=manual_mode)
     check_signatures(
         rrsigs, dns.rdatatype.DNSKEY, fqdn, ksks, zsks, offline_ksk=offline_ksk
     )
@@ -1075,7 +1189,7 @@ def check_apex(
         check_cdsdelete(cdnskeys, "0 3 0 AA==")
     else:
         if "CDNSKEY" in cdss:
-            check_dnskeys(cdnskeys, ksks, zsks, cdnskey=True)
+            check_dnskeys(cdnskeys, ksks, zsks, cdnskey=True, manual_mode=manual_mode)
         else:
             assert len(cdnskeys) == 0
 
@@ -1103,7 +1217,7 @@ def check_apex(
 
         for alg in ["SHA-256", "SHA-384"]:
             if f"CDS ({alg})" in cdss:
-                numcds += check_cds(cdsrrs, ksks, alg)
+                numcds += check_cds(cdsrrs, ksks, alg, manual_mode=manual_mode)
             else:
                 check_cds_prohibit(cdsrrs, ksks, alg)
 
@@ -1139,6 +1253,100 @@ def check_subdomain(
     check_signatures(
         rrsigs, qtype, fqdn, ksks, zsks, offline_ksk=offline_ksk, smooth=smooth
     )
+
+
+def check_rollover_step(server, config, policy, step):
+    zone = step["zone"]
+    keyprops = step["keyprops"]
+    nextev = step.get("nextev", None)
+    cdss = step.get("cdss", None)
+    keyrelationships = step.get("keyrelationships", None)
+    smooth = step.get("smooth", False)
+    ds_swap = step.get("ds-swap", True)
+    cds_delete = step.get("cds-delete", False)
+    check_keytimes_flag = step.get("check-keytimes", True)
+    zone_signed = step.get("zone-signed", True)
+    manual_mode = step.get("manual-mode", False)
+
+    isctest.log.info(f"check rollover step {zone}")
+
+    if zone_signed:
+        check_dnssec_verify(server, zone)
+
+    ttl = int(config["dnskey-ttl"].total_seconds())
+    expected = policy_to_properties(ttl, keyprops)
+    keys = keydir_to_keylist(zone, server.identifier)
+    ksks = [k for k in keys if k.is_ksk()]
+    zsks = [k for k in keys if not k.is_ksk()]
+    check_keys(zone, keys, expected)
+
+    for kp in expected:
+        key = kp.key
+
+        # Set expected key timing metadata.
+        kp.set_expected_keytimes(config)
+
+        # Set rollover relationships.
+        if keyrelationships is not None:
+            prd = keyrelationships[0]
+            suc = keyrelationships[1]
+            expected[prd].metadata["Successor"] = expected[suc].key.tag
+            expected[suc].metadata["Predecessor"] = expected[prd].key.tag
+            check_keyrelationships(keys, expected)
+
+        # Policy changes may retire keys, set expected timing metadata.
+        if kp.metadata["GoalState"] == "hidden" and "Retired" not in kp.timing:
+            retired = kp.key.get_timing("Inactive")
+            kp.timing["Retired"] = retired
+            kp.timing["Removed"] = retired + Iret(
+                config, zsk=key.is_zsk(), ksk=key.is_ksk()
+            )
+
+        # Check that CDS publication/withdrawal is logged.
+        if "KSK" not in kp.metadata:
+            continue
+        if kp.metadata["KSK"] == "no":
+            continue
+
+        if ds_swap and kp.metadata["DSState"] == "rumoured":
+            assert cdss is not None
+            for algstr in ["CDNSKEY", "CDS (SHA-256)", "CDS (SHA-384)"]:
+                if algstr in cdss:
+                    check_cdslog(server, zone, key, algstr)
+                else:
+                    check_cdslog_prohibit(server, zone, key, algstr)
+
+            # The DS can be introduced. We ignore any parent registration delay,
+            # so set the DS publish time to now.
+            server.rndc(f"dnssec -checkds -key {key.tag} published {zone}")
+
+        if ds_swap and kp.metadata["DSState"] == "unretentive":
+            # The DS can be withdrawn. We ignore any parent registration
+            # delay, so set the DS withdraw time to now.
+            server.rndc(f"dnssec -checkds -key {key.tag} withdrawn {zone}")
+
+    if check_keytimes_flag:
+        check_keytimes(keys, expected)
+
+    check_dnssecstatus(server, zone, keys, policy=policy)
+    check_apex(
+        server,
+        zone,
+        ksks,
+        zsks,
+        cdss=cdss,
+        cds_delete=cds_delete,
+        manual_mode=manual_mode,
+    )
+    check_subdomain(server, zone, ksks, zsks, smooth=smooth)
+
+    def check_next_key_event():
+        return next_key_event_equals(server, zone, nextev)
+
+    if nextev is not None:
+        isctest.run.retry_with_timeout(check_next_key_event, timeout=5)
+
+    return expected
 
 
 def verify_update_is_signed(server, fqdn, qname, qtype, rdata, ksks, zsks, tsig=None):
@@ -1275,7 +1483,7 @@ def next_key_event_equals(server, zone, next_event):
         waitfor = rf".*zone {zone}.*: next key event in (?!3600$)(.*) seconds"
 
     with server.watch_log_from_start() as watcher:
-        watcher.wait_for_line(re.compile(waitfor))
+        watcher.wait_for_line(Re(waitfor))
 
     # WMM: The with code below is extracting the line the watcher was
     # waiting for. If WatchLog.wait_for_line()` returned the matched string,
@@ -1300,8 +1508,8 @@ def next_key_event_equals(server, zone, next_event):
 
 
 def keydir_to_keylist(
-    zone: Optional[str], keydir: Optional[str] = None, in_use: bool = False
-) -> List[Key]:
+    zone: str | None, keydir: str | None = None, in_use: bool = False
+) -> list[Key]:
     """
     Retrieve all keys from the key files in a directory. If 'zone' is None,
     retrieve all keys in the directory, otherwise only those matching the
@@ -1341,11 +1549,11 @@ def keydir_to_keylist(
     return [k for k in all_keys if used(k)]
 
 
-def keystr_to_keylist(keystr: str, keydir: Optional[str] = None) -> List[Key]:
+def keystr_to_keylist(keystr: str, keydir: str | None = None) -> list[Key]:
     return [Key(name, keydir) for name in keystr.split()]
 
 
-def policy_to_properties(ttl, keys: List[str]) -> List[KeyProperties]:
+def policy_to_properties(ttl, keys: list[str]) -> list[KeyProperties]:
     """
     Get the policies from a list of specially formatted strings.
     The splitted line should result in the following items:
@@ -1365,59 +1573,98 @@ def policy_to_properties(ttl, keys: List[str]) -> List[KeyProperties]:
     for key in keys:
         count += 1
         line = key.split()
-        keyprop = KeyProperties(f"KEY{count}", {}, {}, {})
-        keyprop.properties["expect"] = True
-        keyprop.properties["private"] = True
-        keyprop.properties["legacy"] = False
-        keyprop.properties["offset"] = timedelta(0)
-        keyprop.properties["role"] = line[0]
-        if line[0] == "zsk":
-            keyprop.properties["role_full"] = "zone-signing"
-            keyprop.properties["flags"] = 256
-            keyprop.metadata["ZSK"] = "yes"
-            keyprop.metadata["KSK"] = "no"
-        else:
-            keyprop.properties["role_full"] = "key-signing"
-            keyprop.properties["flags"] = 257
-            keyprop.metadata["ZSK"] = "yes" if line[0] == "csk" else "no"
-            keyprop.metadata["KSK"] = "yes"
 
-        keyprop.properties["dnskey_ttl"] = ttl
-        keyprop.metadata["Algorithm"] = line[2]
-        keyprop.metadata["Length"] = line[3]
-        keyprop.metadata["Lifetime"] = 0
-        if line[1] != "unlimited":
-            keyprop.metadata["Lifetime"] = int(line[1])
+        # defaults
+        metadata: dict[str, str | int] = {}
+        timing: dict[str, KeyTimingMetadata] = {}
+        private = True
+        legacy = False
+        keytag_min = 0
+        keytag_max = 65535
+        offset = timedelta(0)
+
+        role = line[0]
+        if role == "zsk":
+            flags = 256
+            metadata["ZSK"] = "yes"
+            metadata["KSK"] = "no"
+        else:
+            flags = 257
+            metadata["ZSK"] = "yes" if role == "csk" else "no"
+            metadata["KSK"] = "yes"
+
+        metadata["Algorithm"] = line[2]
+        metadata["Length"] = line[3]
+        if line[1] == "unlimited":
+            metadata["Lifetime"] = 0
+        elif line[1] != "-":
+            metadata["Lifetime"] = int(line[1])
 
         for i in range(4, len(line)):
             if line[i].startswith("goal:"):
                 keyval = line[i].split(":")
-                keyprop.metadata["GoalState"] = keyval[1]
+                metadata["GoalState"] = keyval[1]
             elif line[i].startswith("dnskey:"):
                 keyval = line[i].split(":")
-                keyprop.metadata["DNSKEYState"] = keyval[1]
+                metadata["DNSKEYState"] = keyval[1]
             elif line[i].startswith("krrsig:"):
                 keyval = line[i].split(":")
-                keyprop.metadata["KRRSIGState"] = keyval[1]
+                metadata["KRRSIGState"] = keyval[1]
             elif line[i].startswith("zrrsig:"):
                 keyval = line[i].split(":")
-                keyprop.metadata["ZRRSIGState"] = keyval[1]
+                metadata["ZRRSIGState"] = keyval[1]
             elif line[i].startswith("ds:"):
                 keyval = line[i].split(":")
-                keyprop.metadata["DSState"] = keyval[1]
+                metadata["DSState"] = keyval[1]
             elif line[i].startswith("offset:"):
                 keyval = line[i].split(":")
-                keyprop.properties["offset"] = timedelta(seconds=int(keyval[1]))
+                offset = timedelta(seconds=int(keyval[1]))
             elif line[i].startswith("tag-range:"):
                 keyval = line[i].split(":")
                 tagrange = keyval[1].split("-")
-                keyprop.properties["keytag-min"] = int(tagrange[0])
-                keyprop.properties["keytag-max"] = int(tagrange[1])
+                keytag_min = int(tagrange[0])
+                keytag_max = int(tagrange[1])
             elif line[i] == "missing":
-                keyprop.properties["private"] = False
+                private = False
             else:
                 assert False, f"undefined optional data {line[i]}"
 
+        keyprop = KeyProperties(
+            name=f"KEY{count}",
+            metadata=metadata,
+            timing=timing,
+            private=private,
+            legacy=legacy,
+            role=role,
+            ttl=ttl,
+            flags=flags,
+            keytag_min=keytag_min,
+            keytag_max=keytag_max,
+            offset=offset,
+        )
         proplist.append(keyprop)
 
     return proplist
+
+
+def wait_keymgr_done(server: NamedInstance, zone: str, reconfig: bool = False) -> None:
+    """
+    Block and wait until the keymgr is done processing zone.
+    """
+    messages = []
+    if reconfig:
+        messages.append("received control channel command 'reconfig'")
+    messages.append(f"keymgr: {zone} done")
+    with server.watch_log_from_start(timeout=60) as watcher:
+        watcher.wait_for_sequence(messages)
+
+
+def private_type_record(zone: str, key: Key, rrtype: int = 65534) -> str:
+    """
+    Write a private type record recording the state of the signing process for
+    a given zone and key, print the private type record with given RRtype,
+    indicating that the signing process for this key is completed.
+    """
+    keyid = key.tag
+    secalg = int(key.get_metadata("Algorithm"))
+    return f"{zone}. 0 IN TYPE{rrtype} \\# 5 {secalg:02x}{keyid:04x}0000"

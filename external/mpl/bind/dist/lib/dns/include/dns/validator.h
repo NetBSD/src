@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.h,v 1.12 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: validator.h,v 1.12.2.1 2026/05/07 16:18:41 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -153,12 +153,14 @@ struct dns_validator {
 	bool	       digest_sha1;
 	uint8_t	       unsupported_algorithm;
 	uint8_t	       unsupported_digest;
+	uint8_t	       validation_attempts;
 	dns_rdata_t    rdata;
 	bool	       resume;
 	isc_counter_t *nvalidations;
 	isc_counter_t *nfails;
 	isc_counter_t *qc;
 	isc_counter_t *gqc;
+	fetchctx_t    *parent_fetch;
 
 	dns_edectx_t edectx;
 
@@ -181,7 +183,7 @@ dns_validator_create(dns_view_t *view, dns_name_t *name, dns_rdatatype_t type,
 		     dns_message_t *message, unsigned int options,
 		     isc_loop_t *loop, isc_job_cb cb, void *arg,
 		     isc_counter_t *nvalidations, isc_counter_t *nfails,
-		     isc_counter_t *qc, isc_counter_t *gqc,
+		     isc_counter_t *qc, isc_counter_t *gqc, fetchctx_t *parent,
 		     dns_edectx_t *edectx, dns_validator_t **validatorp);
 /*%<
  * Start a DNSSEC validation.

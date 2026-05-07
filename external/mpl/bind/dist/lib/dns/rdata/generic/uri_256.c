@@ -1,4 +1,4 @@
-/*	$NetBSD: uri_256.c,v 1.9 2025/01/26 16:25:34 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.9.2.1 2026/05/07 16:18:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -212,9 +212,7 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	REQUIRE(uri != NULL);
 	REQUIRE(rdata->length >= 4);
 
-	uri->common.rdclass = rdata->rdclass;
-	uri->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&uri->common, link);
+	DNS_RDATACOMMON_INIT(uri, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

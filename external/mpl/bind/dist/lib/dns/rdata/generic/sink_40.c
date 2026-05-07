@@ -1,4 +1,4 @@
-/*	$NetBSD: sink_40.c,v 1.9 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: sink_40.c,v 1.9.2.1 2026/05/07 16:18:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@ fromtext_sink(ARGS_FROMTEXT) {
 	}
 	RETERR(uint8_tobuffer(token.value.as_ulong, target));
 
-	return isc_base64_tobuffer(lexer, target, -1);
+	return isc_base64_tobuffer(lexer, target, isc_zero_or_more);
 }
 
 static isc_result_t
@@ -185,9 +185,7 @@ tostruct_sink(ARGS_TOSTRUCT) {
 	REQUIRE(sink != NULL);
 	REQUIRE(rdata->length >= 3);
 
-	sink->common.rdclass = rdata->rdclass;
-	sink->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sink->common, link);
+	DNS_RDATACOMMON_INIT(sink, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

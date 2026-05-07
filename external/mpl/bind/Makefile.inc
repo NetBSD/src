@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17.2.1 2025/08/25 16:17:25 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.17.2.2 2026/05/07 16:15:05 martin Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -24,6 +24,10 @@ CPPFLAGS+=	-I${LIBUVDIR}/dist/include
 CPPFLAGS+=	-I${LIBURCUDIR}/dist/include -I${LIBURCUDIR}/include
 CFLAGS+=	-std=gnu18
 LINTFLAGS+=	-Ac11
+
+LINTFLAGS+=	-X 220	# fallthrough on case statement
+LINTFLAGS+=	-X 226	# static variable 'X' unused (used for constexpr)
+LINTFLAGS+=	-X 247	# pointer cast from 'X' to unrelated 'Y' (isc__magic_t)
 
 BIND_SRCDIR:=	${.PARSEDIR}
 IDIST=		${BIND_SRCDIR}/dist

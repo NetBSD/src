@@ -39,7 +39,6 @@ check_PROGRAMS =	\
 	proxyudp_test	\
 	quota_test	\
 	radix_test	\
-	random_test	\
 	ratelimiter_test\
 	regex_test	\
 	result_test	\
@@ -145,10 +144,6 @@ proxyudp_test_SOURCES =	\
 	netmgr_common.h \
 	netmgr_common.c \
 	uv_wrap.h
-
-random_test_LDADD =	\
-	$(LDADD)	\
-	-lm
 
 tcp_test_CPPFLAGS =	\
 	$(AM_CPPFLAGS)	\

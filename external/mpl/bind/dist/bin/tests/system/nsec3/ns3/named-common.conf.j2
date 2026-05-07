@@ -1,0 +1,52 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+dnssec-policy "nsec" {
+	// no need to change configuration: if no 'nsec3param' is set,
+	// NSEC will be used;
+};
+
+dnssec-policy "nsec3" {
+	nsec3param;
+};
+
+dnssec-policy "optout" {
+	nsec3param optout yes;
+};
+
+dnssec-policy "nsec3-other" {
+	nsec3param iterations 0 optout yes salt-length 8;
+};
+

@@ -23,7 +23,6 @@ status=0
 n=0
 
 ns3_reset() {
-  copy_setports $1 ns3/named.conf
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} reconfig 2>&1 | sed 's/^/I:ns3 /'
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} flush | sed 's/^/I:ns3 /'
 }
@@ -87,7 +86,7 @@ echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "12" >ans2/ans.limit
 echo "12" >ans4/ans.limit
-ns3_reset ns3/named1.conf.in
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.4 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect2.example.org >dig.out.1.test$n || ret=1
@@ -104,7 +103,8 @@ n=$((n + 1))
 echo_i "attempt excessive-depth lookup ($n)"
 ret=0
 echo "12" >ans2/ans.limit
-ns3_reset ns3/named2.conf.in
+cp ns3/named2.conf ns3/named.conf
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.4 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect3.example.org >dig.out.1.test$n || ret=1
@@ -120,7 +120,7 @@ echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "5" >ans2/ans.limit
 echo "5" >ans4/ans.limit
-ns3_reset ns3/named2.conf.in
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.4 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect4.example.org >dig.out.1.test$n || ret=1
@@ -138,7 +138,8 @@ echo_i "attempt excessive-queries lookup ($n)"
 ret=0
 echo "13" >ans2/ans.limit
 echo "13" >ans4/ans.limit
-ns3_reset ns3/named3.conf.in
+cp ns3/named3.conf ns3/named.conf
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.4 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect5.example.org >dig.out.1.test$n || ret=1
@@ -159,7 +160,7 @@ n=$((n + 1))
 echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "12" >ans2/ans.limit
-ns3_reset ns3/named3.conf.in
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect6.example.org >dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n >/dev/null || ret=1
@@ -178,7 +179,8 @@ n=$((n + 1))
 echo_i "attempt excessive-queries lookup ($n)"
 ret=0
 echo "11" >ans2/ans.limit
-ns3_reset ns3/named4.conf.in
+cp ns3/named4.conf ns3/named.conf
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect7.example.org >dig.out.1.test$n || ret=1
 if ns3_sends_aaaa_queries; then
@@ -197,7 +199,7 @@ n=$((n + 1))
 echo_i "attempt permissible lookup ($n)"
 ret=0
 echo "9" >ans2/ans.limit
-ns3_reset ns3/named4.conf.in
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts @10.53.0.3 indirect8.example.org >dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n >/dev/null || ret=1
@@ -213,7 +215,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "attempting NS explosion ($n)"
 ret=0
-ns3_reset ns3/named4.conf.in
+ns3_reset
 dig_with_opts @10.53.0.2 reset >/dev/null || ret=1
 dig_with_opts +short @10.53.0.3 ns1.1.example.net >dig.out.1.test$n || ret=1
 dig_with_opts +short @10.53.0.2 count txt >dig.out.2.test$n || ret=1
@@ -239,7 +241,8 @@ wait_for_log 10 "$msg" ns3/named.run || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-ns3_reset ns3/named5.conf.in
+cp ns3/named5.conf ns3/named.conf
+ns3_reset
 dig_with_opts @10.53.0.3 biganswer.big >dig.out.2.test$n || ret=1
 grep 'status: NOERROR' dig.out.2.test$n >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
@@ -472,7 +475,8 @@ ret=0
 echo_i "checking that lifting the limit will allow everything to get cached ($n)"
 
 # Lift the limit
-ns3_reset ns3/named6.conf.in
+cp ns3/named6.conf ns3/named.conf
+ns3_reset
 
 for ntype in $(seq 65280 65534); do
   check_manytypes 1 manytypes.big "TYPE${ntype}" NOERROR manytypes.big "TYPE${ntype}" 120 || ret=1

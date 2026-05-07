@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.25 2025/07/17 19:01:47 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.25.2.1 2026/05/07 16:18:52 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,6 +65,8 @@
 #include <ns/server.h>
 #include <ns/stats.h>
 #include <ns/update.h>
+
+#include "pfilter.h"
 
 /***
  *** Client
@@ -922,10 +924,10 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 				     sizeof(log_buf));
 		if (rrl_result != DNS_RRL_RESULT_OK) {
 			/*
-			 * Log dropped errors in the query category
+			 * Log dropped errors in the query-errors category
 			 * so that they are not lost in silence.
 			 * Starts of rate-limited bursts are logged in
-			 * NS_LOGCATEGORY_RRL.
+			 * DNS_LOGCATEGORY_RRL.
 			 */
 			if (wouldlog) {
 				ns_client_log(client,
@@ -1114,8 +1116,7 @@ no_nsid:
 	}
 	if (((client->attributes & NS_CLIENTATTR_HAVEECS) != 0) &&
 	    (client->ecs.addr.family == AF_INET ||
-	     client->ecs.addr.family == AF_INET6 ||
-	     client->ecs.addr.family == AF_UNSPEC))
+	     client->ecs.addr.family == AF_INET6))
 	{
 		isc_buffer_t buf;
 		uint8_t addr[16];
@@ -1130,10 +1131,6 @@ no_nsid:
 		addrl = (plen + 7) / 8;
 
 		switch (client->ecs.addr.family) {
-		case AF_UNSPEC:
-			INSIST(plen == 0);
-			family = 0;
-			break;
 		case AF_INET:
 			INSIST(plen <= 32);
 			family = 1;
@@ -1424,23 +1421,6 @@ process_ecs(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 
 	memset(&caddr, 0, sizeof(caddr));
 	switch (family) {
-	case 0:
-		/*
-		 * XXXMUKS: In queries, if FAMILY is set to 0, SOURCE
-		 * PREFIX-LENGTH must be 0 and ADDRESS should not be
-		 * present as the address and prefix lengths don't make
-		 * sense because the family is unknown.
-		 */
-		if (addrlen != 0U) {
-			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-				      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(2),
-				      "EDNS client-subnet option: invalid "
-				      "address length (%u) for FAMILY=0",
-				      addrlen);
-			return DNS_R_OPTERR;
-		}
-		caddr.family = AF_UNSPEC;
-		break;
 	case 1:
 		if (addrlen > 32U) {
 			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
@@ -2725,6 +2705,7 @@ ns_client_checkacl(ns_client_t *client, isc_sockaddr_t *sockaddr,
 		ns_client_log(client, DNS_LOGCATEGORY_SECURITY,
 			      NS_LOGMODULE_CLIENT, log_level, "%s denied",
 			      opname);
+		pfilter_notify(result, client, opname);
 	}
 	return result;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.9 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.9.2.1 2026/05/07 16:18:40 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,6 +198,10 @@ struct dns_adbfind {
  *	Only look for glue record for static stub.
  */
 #define DNS_ADBFIND_STATICSTUB 0x00001000
+/*%
+ *      This specific find created a fetch
+ */
+#define DNS_ADBFIND_STARTEDFETCH 0x00010000
 
 /*%
  * The answers to queries come back as a list of these.
@@ -284,7 +288,7 @@ dns_adb_createfind(dns_adb_t *adb, isc_loop_t *loop, isc_job_cb cb, void *cbarg,
 		   dns_rdatatype_t qtype, unsigned int options,
 		   isc_stdtime_t now, dns_name_t *target, in_port_t port,
 		   unsigned int depth, isc_counter_t *qc, isc_counter_t *gqc,
-		   dns_adbfind_t **find);
+		   fetchctx_t *parent, dns_adbfind_t **find);
 /*%<
  * Main interface for clients. The adb will look up the name given in
  * "name" and will build up a list of found addresses, and perhaps start

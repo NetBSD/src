@@ -1,0 +1,28 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+tld. 			IN SOA	marka.isc.org. ns.tld. (
+				2010   	; serial
+				600         	; refresh
+				600         	; retry
+				1200    	; expire
+				600       	; minimum
+				)
+tld.			NS	ns.tld.
+ns.tld. 		A 	10.53.0.2
+
+example.tld.		NS	ns.dnshoster.tld.
+missing.tld.		NS	ns.missing.tld.
+dnshoster.tld.		NS	ns.dnshoster.tld.
+
+; Delegation's glue has a TTL of 300 on parent-side
+ns.dnshoster.tld.	A	10.53.0.3

@@ -1,4 +1,4 @@
-/*	$NetBSD: histo_test.c,v 1.2 2025/01/26 16:25:49 christos Exp $	*/
+/*	$NetBSD: histo_test.c,v 1.2.2.1 2026/05/07 16:18:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -215,9 +215,9 @@ ISC_RUN_TEST_IMPL(quantiles) {
 			uint i = (quantum + base - key) * 2;
 
 			/* check fenceposts */
-			assert_in_range(value[i - 0], lomin, himin);
-			assert_in_range(value[i - 1], lomid, himid);
-			assert_in_range(value[i - 2], lomax, himax);
+			assert_uint_in_range(value[i - 0], lomin, himin);
+			assert_uint_in_range(value[i - 1], lomid, himid);
+			assert_uint_in_range(value[i - 2], lomax, himax);
 
 			/* these tests can be slow */
 			if (isc_time_monotonic() > start + TIME_LIMIT) {

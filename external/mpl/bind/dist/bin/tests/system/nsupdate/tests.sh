@@ -2179,7 +2179,7 @@ EOF
     status=1
   }
 
-  copy_setports ns7/named2.conf.in ns7/named.conf
+  cp ns7/named2.conf ns7/named.conf
   rndc_reload ns7 10.53.0.7
 
   n=$((n + 1))

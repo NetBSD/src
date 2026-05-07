@@ -67,9 +67,10 @@ libdns_la_HEADERS =			\
 	include/dns/dns64.h		\
 	include/dns/dnsrps.h		\
 	include/dns/dnssec.h		\
+	include/dns/dnstap.h		\
 	include/dns/ds.h		\
 	include/dns/dsdigest.h		\
-	include/dns/dnstap.h		\
+	include/dns/dsync.h		\
 	include/dns/dyndb.h		\
 	include/dns/ecs.h		\
 	include/dns/ede.h		\

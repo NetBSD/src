@@ -1,0 +1,54 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS3
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	recursion yes;
+	notify no;
+	dnssec-validation yes;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+{% if FEATURE_LIBXML2 == "1" or FEATURE_JSON_C == "1" %}
+statistics-channels {
+	inet 10.53.0.3 port @EXTRAPORT1@ allow { any; };
+};
+{% endif %}
+
+zone "." {
+	type hint;
+	file "root.hints";
+};
+
+zone "." {
+	type redirect;
+	file "redirect.db";
+};
+
+include "../ns1/trusted.conf";

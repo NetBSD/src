@@ -75,7 +75,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -113,7 +113,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named3.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -151,7 +151,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named4.conf.in ns2/named.conf
+cp ns2/named4.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -191,7 +191,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named5.conf.in ns2/named.conf
+cp ns2/named5.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -232,7 +232,7 @@ fi
 
 n=$((n + 1))
 echo_i "reloading server"
-copy_setports ns2/named6.conf.in ns2/named.conf
+cp ns2/named6.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -270,7 +270,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named7.conf.in ns2/named.conf
+cp ns2/named7.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -308,7 +308,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named8.conf.in ns2/named.conf
+cp ns2/named8.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -346,7 +346,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named9.conf.in ns2/named.conf
+cp ns2/named9.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -384,7 +384,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named10.conf.in ns2/named.conf
+cp ns2/named10.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -422,7 +422,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named11.conf.in ns2/named.conf
+cp ns2/named11.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -460,7 +460,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named12.conf.in ns2/named.conf
+cp ns2/named12.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3

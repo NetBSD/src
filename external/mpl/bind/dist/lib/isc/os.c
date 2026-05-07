@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.4 2025/01/26 16:25:38 christos Exp $	*/
+/*	$NetBSD: os.c,v 1.4.2.1 2026/05/07 16:18:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,10 +13,13 @@
  * information regarding copyright ownership.
  */
 
+#include <ctype.h>
 #include <inttypes.h>
 #include <sys/stat.h>
+#include <sys/utsname.h>
 
 #include <isc/os.h>
+#include <isc/string.h>
 #include <isc/types.h>
 #include <isc/util.h>
 
@@ -25,6 +28,8 @@
 static unsigned int isc__os_ncpus = 0;
 static unsigned long isc__os_cacheline = ISC_OS_CACHELINE_SIZE;
 static mode_t isc__os_umask = 0;
+static int kernel_major = -1, kernel_minor = -1, kernel_patch = -1;
+static char kernel_name[64];
 
 #ifdef HAVE_SYSCONF
 
@@ -89,8 +94,9 @@ sched_affinity_ncpus(void) {
 		int i, n = 0;
 
 		for (i = 0; i < CPU_SETSIZE; ++i) {
-			if (CPU_ISSET(i, &cpus))
+			if (CPU_ISSET(i, &cpus)) {
 				++n;
+			}
 		}
 		return n;
 #endif
@@ -117,8 +123,9 @@ cpuset_affinity_ncpus(void) {
 	if (result != -1) {
 		int i, n = 0;
 		for (i = 0; i < CPU_SETSIZE; ++i) {
-			if (CPU_ISSET(i, &cpus))
+			if (CPU_ISSET(i, &cpus)) {
 				++n;
+			}
 		}
 		return n;
 	}
@@ -159,6 +166,19 @@ umask_initialize(void) {
 	(void)umask(isc__os_umask);
 }
 
+static void
+kernel_initialize(void) {
+	struct utsname buffer;
+
+	if (uname(&buffer) == -1) {
+		return;
+	}
+
+	(void)sscanf(buffer.release, "%d.%d.%d", &kernel_major, &kernel_minor,
+		     &kernel_patch);
+	(void)strlcpy(kernel_name, buffer.sysname, sizeof(kernel_name));
+}
+
 unsigned int
 isc_os_ncpus(void) {
 	return isc__os_ncpus;
@@ -175,9 +195,18 @@ isc_os_umask(void) {
 }
 
 void
+isc_os_kernel(char **name, int *major, int *minor, int *patch) {
+	SET_IF_NOT_NULL(name, kernel_name)
+	SET_IF_NOT_NULL(major, kernel_major);
+	SET_IF_NOT_NULL(minor, kernel_minor);
+	SET_IF_NOT_NULL(patch, kernel_patch);
+}
+
+void
 isc__os_initialize(void) {
 	umask_initialize();
 	ncpus_initialize();
+	kernel_initialize();
 #if defined(HAVE_SYSCONF) && defined(_SC_LEVEL1_DCACHE_LINESIZE)
 	long s = sysconf(_SC_LEVEL1_DCACHE_LINESIZE);
 	if (s > 0 && (unsigned long)s > isc__os_cacheline) {

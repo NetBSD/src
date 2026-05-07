@@ -11,20 +11,20 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from typing import List, NamedTuple, Optional
-
-import logging
-import os
 from pathlib import Path
+from typing import NamedTuple
+
+import os
 import re
 
-import dns.message
+import dns.exception
 import dns.rcode
+import dns.update
 
-from .log import debug, info, LogFile, WatchLogFromStart, WatchLogFromHere
-from .rndc import RNDCBinaryExecutor, RNDCException, RNDCExecutor
-from .run import perl
+from .log import WatchLogFromHere, WatchLogFromStart, debug
 from .query import udp
+from .run import CmdResult, EnvCmd, perl
+from .text import TextFile
 
 
 class NamedPorts(NamedTuple):
@@ -54,10 +54,8 @@ class NamedInstance:
     def __init__(
         self,
         identifier: str,
-        num: Optional[int] = None,
-        ports: Optional[NamedPorts] = None,
-        rndc_logger: Optional[logging.Logger] = None,
-        rndc_executor: Optional[RNDCExecutor] = None,
+        num: int | None = None,
+        ports: NamedPorts | None = None,
     ) -> None:
         """
         `identifier` is the name of the instance's directory
@@ -70,12 +68,6 @@ class NamedInstance:
         this `named` instance is listening for various types of traffic (both
         DNS traffic and RNDC commands). Defaults to ports set by the test
         framework.
-
-        `rndc_logger` is the `logging.Logger` to use for logging RNDC
-        commands sent to this `named` instance.
-
-        `rndc_executor` is an object implementing the `RNDCExecutor` interface
-        that is used for executing RNDC commands on this `named` instance.
         """
         self.directory = Path(identifier).absolute()
         if not self.directory.is_dir():
@@ -87,9 +79,15 @@ class NamedInstance:
         if ports is None:
             ports = NamedPorts.from_env()
         self.ports = ports
-        self.log = LogFile(os.path.join(identifier, "named.run"))
-        self._rndc_executor = rndc_executor or RNDCBinaryExecutor()
-        self._rndc_logger = rndc_logger
+        self.log = TextFile(os.path.join(identifier, "named.run"))
+
+        self._rndc_conf = Path("../_common/rndc.conf").absolute()
+        self._rndc = EnvCmd("RNDC", self.rndc_args)
+
+    @property
+    def rndc_args(self) -> str:
+        """Base arguments for calling RNDC to control the instance."""
+        return f"-c {self._rndc_conf} -s {self.ip} -p {self.ports.rndc}"
 
     @property
     def ip(self) -> str:
@@ -97,7 +95,7 @@ class NamedInstance:
         return f"10.53.0.{self.num}"
 
     @staticmethod
-    def _identifier_to_num(identifier: str, num: Optional[int] = None) -> int:
+    def _identifier_to_num(identifier: str, num: int | None = None) -> int:
         regex_match = re.match(r"^ns(?P<index>[0-9]{1,2})$", identifier)
         if not regex_match:
             if num is None:
@@ -107,67 +105,23 @@ class NamedInstance:
         assert num is None or num == parsed_num, "mismatched num and identifier"
         return parsed_num
 
-    def rndc(self, command: str, ignore_errors: bool = False, log: bool = True) -> str:
+    def rndc(self, command: str, timeout=10, **kwargs) -> CmdResult:
         """
         Send `command` to this named instance using RNDC.  Return the server's
         response.
 
-        If the RNDC command fails, an `RNDCException` is raised unless
-        `ignore_errors` is set to `True`.
-
-        The RNDC command will be logged to `rndc.log` (along with the server's
-        response) unless `log` is set to `False`.
-
-        >>> # Instances of the `NamedInstance` class are expected to be passed
-        >>> # to pytest tests as fixtures; here, some instances are created
-        >>> # directly (with a fake RNDC executor) so that doctest can work.
-        >>> import unittest.mock
-        >>> mock_rndc_executor = unittest.mock.Mock()
-        >>> ns1 = NamedInstance("ns1", rndc_executor=mock_rndc_executor)
-        >>> ns2 = NamedInstance("ns2", rndc_executor=mock_rndc_executor)
-        >>> ns3 = NamedInstance("ns3", rndc_executor=mock_rndc_executor)
-        >>> ns4 = NamedInstance("ns4", rndc_executor=mock_rndc_executor)
-
-        >>> # Send the "status" command to ns1.  An `RNDCException` will be
-        >>> # raised if the RNDC command fails.  This command will be logged.
-        >>> response = ns1.rndc("status")
-
-        >>> # Send the "thaw foo" command to ns2.  No exception will be raised
-        >>> # in case the RNDC command fails.  This command will be logged
-        >>> # (even if it fails).
-        >>> response = ns2.rndc("thaw foo", ignore_errors=True)
-
-        >>> # Send the "stop" command to ns3.  An `RNDCException` will be
-        >>> # raised if the RNDC command fails, but this command will not be
-        >>> # logged (the server's response will still be returned to the
-        >>> # caller, though).
-        >>> response = ns3.rndc("stop", log=False)
-
-        >>> # Send the "halt" command to ns4 in "fire & forget mode": no
-        >>> # exceptions will be raised and no logging will take place (the
-        >>> # server's response will still be returned to the caller, though).
-        >>> response = ns4.rndc("stop", ignore_errors=True, log=False)
+        To suppress exceptions, redirect outputs, control logging change
+        timeout etc. use keyword arguments which are passed to
+        isctest.cmd.run().
         """
-        try:
-            response = self._rndc_executor.call(self.ip, self.ports.rndc, command)
-            if log:
-                self._rndc_log(command, response)
-        except RNDCException as exc:
-            response = str(exc)
-            if log:
-                self._rndc_log(command, response)
-            if not ignore_errors:
-                raise
+        return self._rndc(command, timeout=timeout, **kwargs)
 
-        return response
-
-    def nsupdate(self, update_msg: dns.message.Message):
+    def nsupdate(
+        self, update_msg: dns.update.UpdateMessage, expected_rcode=dns.rcode.NOERROR
+    ):
         """
         Issue a dynamic update to a server's zone.
         """
-        # FUTURE update_msg is actually dns.update.UpdateMessage, but it not
-        # typed properly here in order to support use of this module with
-        # dnspython<2.0.0
         zone = str(update_msg.zone[0].name)  # type: ignore[attr-defined]
         try:
             response = udp(
@@ -175,55 +129,54 @@ class NamedInstance:
                 self.ip,
                 self.ports.dns,
                 timeout=3,
-                expected_rcode=dns.rcode.NOERROR,
+                expected_rcode=expected_rcode,
             )
         except dns.exception.Timeout as exc:
             msg = f"update timeout for {zone}"
             raise dns.exception.Timeout(msg) from exc
-        debug(f"update of zone {zone} to server {self.ip} successful")
+        debug(
+            f"update of zone {zone} to server {self.ip} finished with {expected_rcode}"
+        )
         return response
 
-    def watch_log_from_start(self) -> WatchLogFromStart:
+    def watch_log_from_start(
+        self, timeout: float = WatchLogFromStart.DEFAULT_TIMEOUT
+    ) -> WatchLogFromStart:
         """
         Return an instance of the `WatchLogFromStart` context manager for this
         `named` instance's log file.
         """
-        return WatchLogFromStart(self.log.path)
+        return WatchLogFromStart(self.log.path, timeout)
 
-    def watch_log_from_here(self) -> WatchLogFromHere:
+    def watch_log_from_here(
+        self, timeout: float = WatchLogFromHere.DEFAULT_TIMEOUT
+    ) -> WatchLogFromHere:
         """
         Return an instance of the `WatchLogFromHere` context manager for this
         `named` instance's log file.
         """
-        return WatchLogFromHere(self.log.path)
+        return WatchLogFromHere(self.log.path, timeout)
 
-    def reconfigure(self) -> None:
+    def reconfigure(self, **kwargs) -> CmdResult:
         """
         Reconfigure this named `instance` and wait until reconfiguration is
-        finished.  Raise an `RNDCException` if reconfiguration fails.
+        finished.
         """
         with self.watch_log_from_here() as watcher:
-            self.rndc("reconfig")
+            cmd = self.rndc("reconfig", **kwargs)
             watcher.wait_for_line("any newly configured zones are now loaded")
+        return cmd
 
-    def _rndc_log(self, command: str, response: str) -> None:
+    def reload(self, **kwargs) -> CmdResult:
         """
-        Log an `rndc` invocation (and its output) to the `rndc.log` file in the
-        current working directory.
+        Reload this named `instance` and wait until reload is finished.
         """
-        fmt = '%(ip)s: "%(command)s"\n%(separator)s\n%(response)s%(separator)s'
-        args = {
-            "ip": self.ip,
-            "command": command,
-            "separator": "-" * 80,
-            "response": response,
-        }
-        if self._rndc_logger is None:
-            info(fmt, args)
-        else:
-            self._rndc_logger.info(fmt, args)
+        with self.watch_log_from_here() as watcher:
+            cmd = self.rndc("reload", **kwargs)
+            watcher.wait_for_line("all zones loaded")
+        return cmd
 
-    def stop(self, args: Optional[List[str]] = None) -> None:
+    def stop(self, args: list[str] | None = None) -> None:
         """Stop the instance."""
         args = args or []
         perl(
@@ -231,10 +184,13 @@ class NamedInstance:
             [self.system_test_name, self.identifier] + args,
         )
 
-    def start(self, args: Optional[List[str]] = None) -> None:
+    def start(self, args: list[str] | None = None) -> None:
         """Start the instance."""
         args = args or []
         perl(
             f"{os.environ['srcdir']}/start.pl",
             [self.system_test_name, self.identifier] + args,
         )
+
+    def __repr__(self):
+        return self.identifier

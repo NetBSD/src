@@ -13,9 +13,6 @@
 
 . ../conf.sh
 
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns3/named1.conf.in ns3/named.conf
-
 sed -e s/big[.]/signed./g <ns1/big.db >ns1/signed.db
 $KEYGEN -K ns1 -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK signed >/dev/null 2>&1
 $KEYGEN -K ns1 -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" signed >/dev/null 2>&1

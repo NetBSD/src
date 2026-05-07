@@ -46,16 +46,11 @@ nameserver and is listed in the hints file of the others.
 
 To run system tests, make sure you have the following dependencies installed:
 
-- python3
-- pytest
+- python3 (3.10 and newer)
 - perl
-- dnspython
-- pytest-xdist (for parallel execution)
-- python-jinja2
 
-Individual system tests might also require additional dependencies. If those
-are missing, the affected tests will be skipped and should produce a message
-specifying what additional prerequisites they expect.
+List of required python packages and their versions can be found in
+requirements.txt (can be installed with `pip3 install -r requirements.txt`).
 
 ### Network Setup
 
@@ -128,10 +123,10 @@ Each test module is executed inside a unique temporary directory which contains
 all the artifacts from the test run. If the tests succeed, they are deleted by
 default. To override this behaviour, pass `--noclean` to pytest.
 
-The directory name starts with the system test name, followed by `_tmp_XXXXXX`,
-i.e. `dns64_tmp_r07vei9s` for `dns64` test run. Since this name changes each
+The directory name starts with the system test name, followed by `-tmp-XXXXXX`,
+i.e. `dns64-tmp-r07vei9s` for `dns64` test run. Since this name changes each
 run, a convenience symlink that has a stable name is also created. It points to
-the latest test artifacts directory and has a form of `dns64_sh_dns64`
+the latest test artifacts directory and has a form of `dns64-sh_dns64`
 (depending on the particular test module).
 
 To clean up the temporary directories and symlinks, run `make clean-local` in
@@ -241,41 +236,6 @@ However, if a new system test directory is created, it also needs to be added to
 This script is responsible for setting up the configuration files used in the
 test. It is used by both the python and shell tests. It is interpreted just
 before the servers are started up for each test module.
-
-To cope with the varying port number, ports are not hard-coded into
-configuration files (or, for that matter, scripts that emulate nameservers).
-Instead, setup.sh is responsible for editing the configuration files to set the
-port numbers.
-
-To do this, configuration files should be supplied in the form of templates
-containing tokens identifying ports.  The tokens have the same name as the
-environment variables listed above, but are prefixed and suffixed by the "@"
-symbol.  For example, a fragment of a configuration file template might look
-like:
-
-    controls {
-        inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-    };
-
-    options {
-        query-source address 10.53.0.1;
-        notify-source 10.53.0.1;
-        transfer-source 10.53.0.1;
-        port @PORT@;
-        allow-new-zones yes;
-    };
-
-setup.sh should copy the template to the desired filename using the
-"copy_setports" shell function defined in "conf.sh", i.e.
-
-    copy_setports ns1/named.conf.in ns1/named.conf
-
-This replaces tokens like @PORT@ with the contents of the environment variables
-listed above. setup.sh should do this for all configuration files required when
-the test starts.
-
-("setup.sh" should also use this method for replacing the tokens in any Perl or
-Python name servers used in the test.)
 
 ### tests_*.py
 

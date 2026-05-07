@@ -16,17 +16,6 @@
 
 set -e
 
-for d in ns1 ns2 ns3 ns4 ns5 ns6; do
-  conf=named.conf
-  copy_setports "${d}/${conf}.in" "${d}/${conf}"
-  conf=statistics-channels.conf
-  if $FEATURETEST --have-libxml2 || $FEATURETEST --have-json-c; then
-    copy_setports "${d}/${conf}.in" "${d}/${conf}"
-  else
-    echo "" >"${d}/${conf}"
-  fi
-done
-
 (
   cd ns1
   $SHELL sign.sh

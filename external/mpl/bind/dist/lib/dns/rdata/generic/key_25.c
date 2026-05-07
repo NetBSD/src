@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.14 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.14.2.1 2026/05/07 16:18:44 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	 */
 	used = isc_buffer_usedlength(target);
 
-	RETERR(isc_base64_tobuffer(lexer, target, -2));
+	RETERR(isc_base64_tobuffer(lexer, target, isc_one_or_more));
 
 	if (alg == DNS_KEYALG_PRIVATEDNS || alg == DNS_KEYALG_PRIVATEOID) {
 		isc_buffer_t b;
@@ -417,9 +417,7 @@ tostruct_key(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_key);
 
-	key->common.rdclass = rdata->rdclass;
-	key->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&key->common, link);
+	DNS_RDATACOMMON_INIT(key, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

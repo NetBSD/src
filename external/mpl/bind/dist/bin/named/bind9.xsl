@@ -35,64 +35,61 @@
           });
         </script>
 
-        <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-          <!-- Non Mozilla specific markup -->
-          <script type="text/javascript" src="https://www.google.com/jsapi"/>
-          <script type="text/javascript">
+        <script type="text/javascript" src="https://www.google.com/jsapi"/>
+        <script type="text/javascript">
+          google.load("visualization", "1", {packages:["corechart"]});
+          google.setOnLoadCallback(loadGraphs);
 
-	    google.load("visualization", "1", {packages:["corechart"]});
-	    google.setOnLoadCallback(loadGraphs);
+          var graphs=[];
 
-	    var graphs=[];
+          function drawChart(chart_title,target,style,data) {
+            var data = google.visualization.arrayToDataTable(data);
 
-	    function drawChart(chart_title,target,style,data) {
-	      var data = google.visualization.arrayToDataTable(data);
+            var options = {
+              title: chart_title
+            };
 
-	      var options = {
-		title: chart_title
-	      };
+            var chart;
+            if (style == "barchart") {
+              chart = new google.visualization.BarChart(document.getElementById(target));
+              chart.draw(data, options);
+            } else if (style == "piechart") {
+              chart = new google.visualization.PieChart(document.getElementById(target));
+              chart.draw(data, options);
+            }
+          }
 
-	      var chart;
-	      if (style == "barchart") {
-		chart = new google.visualization.BarChart(document.getElementById(target));
-		chart.draw(data, options);
-	      } else if (style == "piechart") {
-		chart = new google.visualization.PieChart(document.getElementById(target));
-		chart.draw(data, options);
-	      }
-	    }
+          function loadGraphs(){
+            var g;
 
-	    function loadGraphs(){
-	      var g;
+            while (g = graphs.shift()) {
+              if (g.data.length > 1) {
+                drawChart(g.title,g.target,g.style,g.data);
+              }
+            }
+          }
 
-	      while(g = graphs.shift()){
-		// alert("going for: " + g.target);
-		if(g.data.length > 1){
-		  drawChart(g.title,g.target,g.style,g.data);
-		}
-	      }
-	    }
+          <xsl:if test="server/counters[@type=&quot;qtype&quot;]/counter[. &gt; 0]">
+            // Server Incoming Query Types
+            graphs.push({
+              'title' : "Server Incoming Query Types",
+              'target': 'chart_incoming_qtypes',
+              'style': 'barchart',
+              'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;qtype&quot;]/counter">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+            });
+          </xsl:if>
 
-	    <xsl:if test="server/counters[@type=&quot;qtype&quot;]/counter">
-	      // Server Incoming Query Types
-	      graphs.push({
-			   'title' : "Server Incoming Query Types",
-			   'target': 'chart_incoming_qtypes',
-			   'style': 'barchart',
-			   'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;qtype&quot;]/counter">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-			   });
-	    </xsl:if>
+          <xsl:if test="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0]">
+            // Server Incoming Requests by opcode
+            graphs.push({
+              'title' : "Server Incoming Requests by DNS Opcode",
+              'target': 'chart_incoming_opcodes',
+              'style': 'barchart',
+              'data': [['Opcode','Counter'],<xsl:for-each select="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0 or substring(@name,1,3) != 'RES']">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+            });
+          </xsl:if>
+        </script>
 
-	    <xsl:if test="server/counters[@type=&quot;opcode&quot;]/counter">
-	      // Server Incoming Requests by opcode
-	      graphs.push({
-			   'title' : "Server Incoming Requests by DNS Opcode",
-			   'target': 'chart_incoming_opcodes',
-			   'style': 'barchart',
-			   'data': [['Opcode','Counter'],<xsl:for-each select="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0 or substring(@name,1,3) != 'RES']">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]});
-	    </xsl:if>
-	  </script>
-        </xsl:if>
         <style type="text/css">
      body {
       font-family: sans-serif;
@@ -337,13 +334,10 @@
         </table>
         <br/>
         <xsl:if test="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0]">
-          <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-            <h2>Incoming Requests by DNS Opcode</h2>
-            <!-- Non Mozilla specific markup -->
-            <div class="pie" id="chart_incoming_opcodes">
-	      [cannot display chart]
-	    </div>
-          </xsl:if>
+          <h2>Incoming Requests by DNS Opcode</h2>
+          <div class="pie" id="chart_incoming_opcodes">
+	    [cannot display chart]
+	  </div>
           <table class="counters">
             <xsl:for-each select="server/counters[@type=&quot;opcode&quot;]/counter[. &gt; 0 or substring(@name,1,3) != 'RES']">
               <xsl:sort select="." data-type="number" order="descending"/>
@@ -371,14 +365,11 @@
           </table>
           <br/>
         </xsl:if>
-        <xsl:if test="server/counters[@type=&quot;qtype&quot;]/counter">
-          <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-            <!-- Non Mozilla specific markup -->
-            <h3>Incoming Queries by Query Type</h3>
-            <div class="pie" id="chart_incoming_qtypes">
-	      [cannot display chart]
-	    </div>
-          </xsl:if>
+        <xsl:if test="server/counters[@type=&quot;qtype&quot;]/counter[. &gt; 0]">
+          <h3>Incoming Queries by Query Type</h3>
+          <div class="pie" id="chart_incoming_qtypes">
+	    [cannot display chart]
+	  </div>
           <table class="counters">
             <xsl:for-each select="server/counters[@type=&quot;qtype&quot;]/counter">
               <xsl:sort select="." data-type="number" order="descending"/>
@@ -410,21 +401,18 @@
           <h2>Outgoing Queries per view</h2>
           <xsl:for-each select="views/view[count(counters[@type=&quot;resqtype&quot;]/counter) &gt; 0]">
             <h3>View <xsl:value-of select="@name"/></h3>
-            <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-              <!-- Non Mozilla specific markup -->
-              <script type="text/javascript">
-		  graphs.push({
-				'title': "Outgoing Queries for view: <xsl:value-of select="@name"/>",
-				'target': 'chart_outgoing_queries_view_<xsl:value-of select="@name"/>',
-				'style': 'barchart',
-				'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;resqtype&quot;]/counter">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-				});
-	      </script>
-              <xsl:variable name="target">
-                <xsl:value-of select="@name"/>
-              </xsl:variable>
-              <div class="pie" id="chart_outgoing_queries_view_{$target}">[no data to display]</div>
-            </xsl:if>
+            <script type="text/javascript">
+	      graphs.push({
+                'title': "Outgoing Queries for view: <xsl:value-of select="@name"/>",
+                'target': 'chart_outgoing_queries_view_<xsl:value-of select="@name"/>',
+                'style': 'barchart',
+                'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;resqtype&quot;]/counter">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+	      });
+            </script>
+            <xsl:variable name="target">
+              <xsl:value-of select="@name"/>
+            </xsl:variable>
+            <div class="pie" id="chart_outgoing_queries_view_{$target}">[no data to display]</div>
             <table class="counters">
               <xsl:for-each select="counters[@type=&quot;resqtype&quot;]/counter">
                 <xsl:sort select="." data-type="number" order="descending"/>
@@ -449,18 +437,15 @@
         </xsl:if>
         <xsl:if test="server/counters[@type=&quot;nsstat&quot;]/counter[.&gt;0]">
           <h2>Server Statistics</h2>
-          <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-            <!-- Non Mozilla specific markup -->
             <script type="text/javascript">
-		  graphs.push({
-				'title' : "Server Counters",
-				'target': 'chart_server_nsstat_restype',
-				'style': 'barchart',
-				'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;nsstat&quot;]/counter[.&gt;0]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-				});
-	      </script>
-            <div class="pie" id="chart_server_nsstat_restype">[no data to display]</div>
-          </xsl:if>
+              graphs.push({
+                'title' : "Server Counters",
+                'target': 'chart_server_nsstat_restype',
+                'style': 'barchart',
+                'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;nsstat&quot;]/counter[.&gt;0]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+              });
+            </script>
+          <div class="pie" id="chart_server_nsstat_restype">[no data to display]</div>
           <table class="counters">
             <xsl:for-each select="server/counters[@type=&quot;nsstat&quot;]/counter[.&gt;0]">
               <xsl:sort select="." data-type="number" order="descending"/>
@@ -483,19 +468,16 @@
           <br/>
         </xsl:if>
         <xsl:if test="server/counters[@type=&quot;zonestat&quot;]/counter[.&gt;0]">
-          <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-            <h2>Zone Maintenance Statistics</h2>
-            <script type="text/javascript">
-		  graphs.push({
-				'title' : "Zone Maintenance Stats",
-				'target': 'chart_server_zone_maint',
-				'style': 'barchart',
-				'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;zonestat&quot;]/counter[.&gt;0]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-				});
-	    </script>
-            <!-- Non Mozilla specific markup -->
-            <div class="pie" id="chart_server_zone_maint">[no data to display]</div>
-          </xsl:if>
+          <h2>Zone Maintenance Statistics</h2>
+          <script type="text/javascript">
+            graphs.push({
+              'title' : "Zone Maintenance Stats",
+              'target': 'chart_server_zone_maint',
+              'style': 'barchart',
+              'data': [['Type','Counter'],<xsl:for-each select="server/counters[@type=&quot;zonestat&quot;]/counter[.&gt;0]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+            });
+          </script>
+          <div class="pie" id="chart_server_zone_maint">[no data to display]</div>
           <table class="counters">
             <xsl:for-each select="server/counters[@type=&quot;zonestat&quot;]/counter">
               <xsl:sort select="." data-type="number" order="descending"/>
@@ -787,22 +769,18 @@
             <xsl:for-each select="zones/zone">
               <xsl:if test="counters[@type=&quot;qtype&quot;]/counter[count(.) &gt; 0]">
                 <h4>Zone <xsl:value-of select="@name"/></h4>
-                <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-                  <!-- Non Mozilla specific markup -->
-                  <script type="text/javascript">
-			graphs.push({
-				      'title': "Query types for zone <xsl:value-of select="@name"/>",
-				      'target': 'chart_qtype_<xsl:value-of select="../../@name"/>_<xsl:value-of select="@name"/>',
-				      'style': 'barchart',
-				      'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;qtype&quot;]/counter[.&gt;0 and @name != &quot;QryAuthAns&quot;]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-				      });
-
-		    </script>
-                  <xsl:variable name="target">
-                    <xsl:value-of select="@name"/>
-                  </xsl:variable>
-                  <div class="pie" id="chart_qtype_{$thisview}_{$target}">[no data to display]</div>
-                </xsl:if>
+                <script type="text/javascript">
+                  graphs.push({
+                    'title': "Query types for zone <xsl:value-of select="@name"/>",
+                    'target': 'chart_qtype_<xsl:value-of select="../../@name"/>_<xsl:value-of select="@name"/>',
+                    'style': 'barchart',
+                    'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;qtype&quot;]/counter[.&gt;0 and @name != &quot;QryAuthAns&quot;]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+                  });
+                </script>
+                <xsl:variable name="target">
+                  <xsl:value-of select="@name"/>
+                </xsl:variable>
+                <div class="pie" id="chart_qtype_{$thisview}_{$target}">[no data to display]</div>
                 <table class="counters">
                   <xsl:for-each select="counters[@type=&quot;qtype&quot;]/counter">
                     <xsl:sort select="."/>
@@ -836,22 +814,18 @@
             <xsl:for-each select="zones/zone">
               <xsl:if test="counters[@type=&quot;rcode&quot;]/counter[. &gt; 0]">
                 <h4>Zone <xsl:value-of select="@name"/></h4>
-                <xsl:if test="system-property('xsl:vendor')!='Transformiix'">
-                  <!-- Non Mozilla specific markup -->
-                  <script type="text/javascript">
-			graphs.push({
-				      'title': "Response codes for zone <xsl:value-of select="@name"/>",
-				      'target': 'chart_rescode_<xsl:value-of select="../../@name"/>_<xsl:value-of select="@name"/>',
-				      'style': 'barchart',
-				      'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;rcode&quot;]/counter[.&gt;0 and @name != &quot;QryAuthAns&quot;]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
-				      });
-
-		</script>
-                  <xsl:variable name="target">
-                    <xsl:value-of select="@name"/>
-                  </xsl:variable>
-                  <div class="pie" id="chart_rescode_{$thisview2}_{$target}">[no data to display]</div>
-                </xsl:if>
+                <script type="text/javascript">
+                  graphs.push({
+                    'title': "Response codes for zone <xsl:value-of select="@name"/>",
+                    'target': 'chart_rescode_<xsl:value-of select="../../@name"/>_<xsl:value-of select="@name"/>',
+                    'style': 'barchart',
+                    'data': [['Type','Counter'],<xsl:for-each select="counters[@type=&quot;rcode&quot;]/counter[.&gt;0 and @name != &quot;QryAuthAns&quot;]">['<xsl:value-of select="@name"/>',<xsl:value-of select="."/>],</xsl:for-each>]
+                  });
+                </script>
+                <xsl:variable name="target">
+                  <xsl:value-of select="@name"/>
+                </xsl:variable>
+                <div class="pie" id="chart_rescode_{$thisview2}_{$target}">[no data to display]</div>
                 <table class="counters">
                   <xsl:for-each select="counters[@type=&quot;rcode&quot;]/counter[.&gt;0 and @name != &quot;QryAuthAns&quot;]">
                     <xsl:sort select="."/>

@@ -1,4 +1,4 @@
-/*	$NetBSD: qpdb_test.c,v 1.2 2025/01/26 16:25:47 christos Exp $	*/
+/*	$NetBSD: qpdb_test.c,v 1.2.2.1 2026/05/07 16:18:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,11 +37,9 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wshadow"
-#undef CHECK
 #include "qpcache.c"
 #pragma GCC diagnostic pop
 
-#undef CHECK
 #include <tests/dns.h>
 
 /* Set to true (or use -v option) for verbose output */

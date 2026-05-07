@@ -20,7 +20,6 @@ pytestmark = pytest.mark.extra_artifacts(
         "nsupdate.out.*",
         "yamlget.out.*",
         "ans*/ans.run",
-        "ans*/query.log",
         "ns*/anchor.*",
         "ns*/dsset-*",
         "ns*/keydata",

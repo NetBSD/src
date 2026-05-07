@@ -9,12 +9,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from re import compile as Re
+
 import os
-import re
-from typing import Optional
 
 from .. import log
-
 
 OPENSSL_VARS = {
     "OPENSSL_CONF": os.getenv("OPENSSL_CONF", None),
@@ -24,7 +23,7 @@ OPENSSL_VARS = {
 }
 
 
-def parse_openssl_config(path: Optional[str]):
+def parse_openssl_config(path: str | None):
     if path is None or not os.path.exists(path):
         OPENSSL_VARS["ENGINE_ARG"] = None
         OPENSSL_VARS["SOFTHSM2_MODULE"] = None
@@ -33,7 +32,7 @@ def parse_openssl_config(path: Optional[str]):
         return
     assert os.path.isfile(path), f"{path} exists, but it's not a file"
 
-    regex = re.compile(r"([^=]+)=(.*)")
+    regex = Re(r"([^=]+)=(.*)")
     log.debug(f"parsing openssl config: {path}")
     with open(path, "r", encoding="utf-8") as conf:
         for line in conf:

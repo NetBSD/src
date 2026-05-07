@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssectool.h,v 1.8 2025/01/26 16:24:33 christos Exp $	*/
+/*	$NetBSD: dnssectool.h,v 1.8.2.1 2026/05/07 16:15:10 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -110,11 +110,11 @@ void
 set_keyversion(dst_key_t *key);
 
 bool
-key_collision(dst_key_t *key, dns_name_t *name, const char *dir,
+key_collision(dst_key_t *dstkey, dns_name_t *name, const char *dir,
 	      isc_mem_t *mctx, uint16_t min, uint16_t max, bool *exact);
 
 bool
-isoptarg(const char *arg, char **argv, void (*usage)(void));
+isoptarg(const char *arg, char **argv, void (*usage)(int ret));
 
 void
 loadjournal(isc_mem_t *mctx, dns_db_t *db, const char *journal);

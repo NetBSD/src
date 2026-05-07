@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.10 2025/01/26 16:25:21 christos Exp $	*/
+/*	$NetBSD: acl.c,v 1.10.2.1 2026/05/07 16:18:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -464,8 +464,7 @@ static void
 dns__acl_destroy_port_transports(dns_acl_t *acl) {
 	dns_acl_port_transports_t *port_proto = NULL;
 	dns_acl_port_transports_t *next = NULL;
-	ISC_LIST_FOREACH_SAFE (acl->ports_and_transports, port_proto, link,
-			       next)
+	ISC_LIST_FOREACH_SAFE(acl->ports_and_transports, port_proto, link, next)
 	{
 		ISC_LIST_DEQUEUE(acl->ports_and_transports, port_proto, link);
 		isc_mem_put(acl->mctx, port_proto, sizeof(*port_proto));

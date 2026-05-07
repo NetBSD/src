@@ -495,44 +495,4 @@ get_named_xfer_stats() {
     | sed -n "s/.* '${ZONE}\/.* \([0-9][0-9]*\) bytes.*/bytes=\1/p" | tail -1
 }
 
-# copy_setports - Copy Configuration File and Replace Ports
-#
-# Convenience function to copy a configuration file, replacing the tokens
-# QUERYPORT, CONTROLPORT and EXTRAPORT[1-8] with the values of the equivalent
-# environment variables. (These values are set by test runner, which calls the
-# scripts invoking this function.)
-#
-# Usage:
-#   copy_setports infile outfile
-#
-copy_setports() {
-  dir=$(echo "$TMPDIR" | sed 's/\//\\\//g')
-
-  sed -e "s/@TMPDIR@/${dir}/g" \
-    -e "s/@PORT@/${PORT}/g" \
-    -e "s/@TLSPORT@/${TLSPORT}/g" \
-    -e "s/@HTTPPORT@/${HTTPPORT}/g" \
-    -e "s/@HTTPSPORT@/${HTTPSPORT}/g" \
-    -e "s/@EXTRAPORT1@/${EXTRAPORT1}/g" \
-    -e "s/@EXTRAPORT2@/${EXTRAPORT2}/g" \
-    -e "s/@EXTRAPORT3@/${EXTRAPORT3}/g" \
-    -e "s/@EXTRAPORT4@/${EXTRAPORT4}/g" \
-    -e "s/@EXTRAPORT5@/${EXTRAPORT5}/g" \
-    -e "s/@EXTRAPORT6@/${EXTRAPORT6}/g" \
-    -e "s/@EXTRAPORT7@/${EXTRAPORT7}/g" \
-    -e "s/@EXTRAPORT8@/${EXTRAPORT8}/g" \
-    -e "s/@CONTROLPORT@/${CONTROLPORT}/g" \
-    -e "s/@DEFAULT_ALGORITHM@/${DEFAULT_ALGORITHM}/g" \
-    -e "s/@DEFAULT_ALGORITHM_NUMBER@/${DEFAULT_ALGORITHM_NUMBER}/g" \
-    -e "s/@DEFAULT_BITS@/${DEFAULT_BITS}/g" \
-    -e "s/@ALTERNATIVE_ALGORITHM@/${ALTERNATIVE_ALGORITHM}/g" \
-    -e "s/@ALTERNATIVE_ALGORITHM_NUMBER@/${ALTERNATIVE_ALGORITHM_NUMBER}/g" \
-    -e "s/@ALTERNATIVE_BITS@/${ALTERNATIVE_BITS}/g" \
-    -e "s/@DEFAULT_HMAC@/${DEFAULT_HMAC}/g" \
-    -e "s/@DISABLED_ALGORITHM@/${DISABLED_ALGORITHM}/g" \
-    -e "s/@DISABLED_ALGORITHM_NUMBER@/${DISABLED_ALGORITHM_NUMBER}/g" \
-    -e "s/@DISABLED_BITS@/${DISABLED_BITS}/g" \
-    $1 >$2
-}
-
 grep_v() { grep -v "$@" || test $? = 1; }

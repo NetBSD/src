@@ -15,7 +15,7 @@ import dns.rcode
 
 from isctest.asyncserver import AsyncDnsServer
 
-from qmin_ans import DelayedResponseHandler, EntRcodeChanger, QueryLogHandler
+from ..qmin_ans import DelayedResponseHandler, EntRcodeChanger, QueryLogHandler
 
 
 class QueryLogger(QueryLogHandler):
@@ -39,10 +39,12 @@ class ZoopBoingSlowHandler(DelayedResponseHandler):
 
 def main() -> None:
     server = AsyncDnsServer()
-    server.install_response_handler(QueryLogger())
-    server.install_response_handler(ZoopBoingBadHandler())
-    server.install_response_handler(ZoopBoingUglyHandler())
-    server.install_response_handler(ZoopBoingSlowHandler())
+    server.install_response_handlers(
+        QueryLogger(),
+        ZoopBoingBadHandler(),
+        ZoopBoingUglyHandler(),
+        ZoopBoingSlowHandler(),
+    )
     server.run()
 
 

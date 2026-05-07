@@ -22,9 +22,7 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
-import isctest.mark
 
-
-@isctest.mark.flaky(max_runs=2)
+@pytest.mark.flaky(max_runs=3)
 def test_fetchlimit(run_tests_sh):
     run_tests_sh()

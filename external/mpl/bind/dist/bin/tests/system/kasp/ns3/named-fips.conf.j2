@@ -1,0 +1,290 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/* Zones that are getting initially signed */
+
+/* The default case: No keys created, using default policy. */
+zone "default.kasp" {
+	type primary;
+	file "default.kasp.db";
+	dnssec-policy "default";
+};
+
+/* A zone with special characters. */
+zone {% raw %}"i-am.\":\;?&[]\@!\$*+,|=\.\(\)special.kasp."{% endraw %} {
+        type primary;
+        file "i-am.special.kasp.db";
+        check-names ignore;
+        dnssec-policy "default";
+};
+
+/* checkds: Zone with one KSK. */
+zone "checkds-ksk.kasp" {
+	type primary;
+	file "checkds-ksk.kasp.db";
+	dnssec-policy "checkds-ksk";
+};
+
+/* checkds: Zone with two KSKs. */
+zone "checkds-doubleksk.kasp" {
+	type primary;
+	file "checkds-doubleksk.kasp.db";
+	dnssec-policy "checkds-doubleksk";
+};
+
+/* checkds: Zone with one CSK. */
+zone "checkds-csk.kasp" {
+	type primary;
+	file "checkds-csk.kasp.db";
+	dnssec-policy "checkds-csk";
+};
+
+/* Key lifetime unlimited. */
+zone "unlimited.kasp" {
+	type primary;
+	file "unlimited.kasp.db";
+	dnssec-policy "unlimited";
+};
+
+/* A zone that inherits dnssec-policy. */
+zone "inherit.kasp" {
+	type primary;
+	file "inherit.kasp.db";
+};
+
+/* A zone that overrides dnssec-policy. */
+zone "unsigned.kasp" {
+	type primary;
+	file "unsigned.kasp.db";
+	dnssec-policy "none";
+};
+
+/* A zone that is initially set to insecure. */
+zone "insecure.kasp" {
+	type primary;
+	file "insecure.kasp.db";
+	dnssec-policy "insecure";
+};
+
+/* A primary zone with dnssec-policy but keys already created. */
+zone "dnssec-keygen.kasp" {
+	type primary;
+	file "dnssec-keygen.kasp.db";
+	dnssec-policy "rsasha256";
+};
+
+/* A secondary zone with dnssec-policy. */
+zone "secondary.kasp" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "secondary.kasp.db";
+	dnssec-policy "rsasha256";
+};
+
+/* A dynamic zone with dnssec-policy. */
+zone "dynamic.kasp" {
+	type primary;
+	file "dynamic.kasp.db";
+	dnssec-policy "default-dynamic";
+	allow-update { any; };
+};
+
+/* A dynamic inline-signed zone with dnssec-policy. */
+zone "dynamic-inline-signing.kasp" {
+	type primary;
+	file "dynamic-inline-signing.kasp.db";
+	dnssec-policy "default";
+	allow-update { any; };
+};
+
+/*
+ * A dynamic inline-signed zone with dnssec-policy with DNSSEC records in the
+ * raw version of the zone.
+ */
+zone "dynamic-signed-inline-signing.kasp" {
+	type primary;
+	file "dynamic-signed-inline-signing.kasp.db.signed";
+	key-directory "keys";
+	dnssec-policy "default";
+	allow-update { any; };
+};
+
+/* An inline-signed zone with dnssec-policy. */
+zone "inline-signing.kasp" {
+	type primary;
+	file "inline-signing.kasp.db";
+	dnssec-policy "default";
+};
+
+/* A zone that uses dnssec-policy with key stores. */
+zone "keystore.kasp" {
+	type primary;
+	file "keystore.kasp.db";
+	inline-signing yes;
+	dnssec-policy "keystore";
+};
+
+/*
+ * A configured dnssec-policy but some keys already created.
+ */
+zone "some-keys.kasp" {
+	type primary;
+	file "some-keys.kasp.db";
+	dnssec-policy "rsasha256";
+};
+
+/*
+ * A configured dnssec-policy but some keys already in use.
+ */
+zone "legacy-keys.kasp" {
+	type primary;
+	file "legacy-keys.kasp.db";
+	dnssec-policy "migrate-to-dnssec-policy";
+};
+
+/*
+ * A configured dnssec-policy with (too) many keys pregenerated.
+ */
+zone "pregenerated.kasp" {
+	type primary;
+	file "pregenerated.kasp.db";
+	dnssec-policy "rsasha256";
+};
+
+/*
+ * A configured dnssec-policy with one rumoured key.
+ * Bugfix case for GL #1593.
+ */
+zone "rumoured.kasp" {
+	type primary;
+	file "rumoured.kasp.db";
+	dnssec-policy "rsasha256";
+};
+
+/*
+ * Different algorithms.
+ */
+zone "rsasha256.kasp" {
+	type primary;
+	file "rsasha256.kasp.db";
+	dnssec-policy "rsasha256";
+};
+zone "rsasha512.kasp" {
+	type primary;
+	file "rsasha512.kasp.db";
+	dnssec-policy "rsasha512";
+};
+zone "ecdsa256.kasp" {
+	type primary;
+	file "ecdsa256.kasp.db";
+	dnssec-policy "ecdsa256";
+};
+zone "ecdsa384.kasp" {
+	type primary;
+	file "ecdsa384.kasp.db";
+	dnssec-policy "ecdsa384";
+};
+
+/*
+ * Zone with too high TTL.
+ */
+zone "max-zone-ttl.kasp" {
+	type primary;
+	file "max-zone-ttl.kasp.db";
+	dnssec-policy "ttl";
+};
+
+/*
+ * Zones in different signing states.
+ */
+
+/*
+ * Zone that has expired signatures.
+ */
+zone "expired-sigs.autosign" {
+	type primary;
+	file "expired-sigs.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has DNSKEY TTL mismatch with the dnssec-policy.
+ */
+zone "dnskey-ttl-mismatch.autosign" {
+	type primary;
+	file "dnskey-ttl-mismatch.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has valid, fresh signatures.
+ */
+zone "fresh-sigs.autosign" {
+	type primary;
+	file "fresh-sigs.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has unfresh signatures.
+ */
+zone "unfresh-sigs.autosign" {
+	type primary;
+	file "unfresh-sigs.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has missing key files.
+ */
+zone "keyfiles-missing.autosign" {
+	type primary;
+	file "keyfiles-missing.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has missing key files, manual-mode.
+ */
+zone "keyfiles-missing.manual" {
+	type primary;
+	file "keyfiles-missing.manual.db";
+	dnssec-policy "manual";
+};
+
+/*
+ * Zone that has missing private KSK.
+ */
+zone "ksk-missing.autosign" {
+	type primary;
+	file "ksk-missing.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has missing private ZSK.
+ */
+zone "zsk-missing.autosign" {
+	type primary;
+	file "zsk-missing.autosign.db";
+	dnssec-policy "autosign";
+};
+
+/*
+ * Zone that has inactive ZSK.
+ */
+zone "zsk-retired.autosign" {
+	type primary;
+	file "zsk-retired.autosign.db";
+	dnssec-policy "autosign";
+};

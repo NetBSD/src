@@ -1,1 +1,0 @@
-@ENGINE_ARGS@ -D enginepkcs11-ns1 -m record -c named.conf -d 99 -T maxcachesize=2097152

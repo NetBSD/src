@@ -1,4 +1,4 @@
-/*	$NetBSD: talink_58.c,v 1.9 2025/01/26 16:25:33 christos Exp $	*/
+/*	$NetBSD: talink_58.c,v 1.9.2.1 2026/05/07 16:18:46 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,9 +173,7 @@ tostruct_talink(ARGS_TOSTRUCT) {
 	REQUIRE(talink != NULL);
 	REQUIRE(rdata->length != 0);
 
-	talink->common.rdclass = rdata->rdclass;
-	talink->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&talink->common, link);
+	DNS_RDATACOMMON_INIT(talink, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

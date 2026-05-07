@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.17 2025/01/26 16:25:43 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.17.2.1 2026/05/07 16:18:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,6 +43,13 @@
  *** General Macros.
  ***/
 
+#define MOVE_OWNERSHIP(source)                             \
+	({                                                 \
+		__typeof__(source) __ownership = (source); \
+		(source) = NULL;                           \
+		__ownership;                               \
+	})
+
 /*%
  * Legacy way how to hide unused function arguments, don't use in
  * the new code, rather use the ISC_ATTR_UNUSED macro that expands
@@ -80,6 +87,8 @@
 #define ISC_MIN(a, b) ((a) < (b) ? (a) : (b))
 
 #define ISC_CLAMP(v, x, y) ((v) < (x) ? (x) : ((v) > (y) ? (y) : (v)))
+
+#define ISC_MAX3(a, b, c) ISC_MAX(ISC_MAX((a), (b)), (c))
 
 /*%
  * The UNCONST() macro can be used to omit warnings produced by certain
@@ -387,6 +396,29 @@ mock_assert(const int result, const char *const expression,
 	((cond) ? (void)0 : FATAL_ERROR("RUNTIME_CHECK(%s) failed", #cond))
 
 #endif /* UNIT_TESTING */
+
+/*
+ * Check for ISC_R_SUCCESS. On any other result, jump to a cleanup
+ * label. (This macro requires the function to define `result`
+ * and `cleanup:`.)
+ */
+#define CHECK(r)                             \
+	do {                                 \
+		result = (r);                \
+		if (result != ISC_R_SUCCESS) \
+			goto cleanup;        \
+	} while (0)
+
+/*
+ * Check for ISC_R_SUCCESS and continue if found. For any other
+ * result, return the result.
+ */
+#define RETERR(x)                        \
+	do {                             \
+		isc_result_t _r = (x);   \
+		if (_r != ISC_R_SUCCESS) \
+			return ((_r));   \
+	} while (0)
 
 /*%
  * Runtime check which logs the error value returned by a POSIX Threads

@@ -10,10 +10,9 @@
 # information regarding copyright ownership.
 
 from pathlib import Path
-from typing import Dict
 
 
-def load_ac_vars_from_files() -> Dict[str, str]:
+def load_ac_vars_from_files() -> dict[str, str]:
     ac_vars = {}
     ac_vars_dir = Path(__file__).resolve().parent / ".ac_vars"
     var_paths = [

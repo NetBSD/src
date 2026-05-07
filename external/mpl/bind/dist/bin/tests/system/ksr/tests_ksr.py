@@ -10,14 +10,18 @@
 # information regarding copyright ownership.
 
 from datetime import timedelta
+
 import os
+import re
 import shutil
 import time
 
 import pytest
 
-import isctest
 from isctest.kasp import KeyTimingMetadata
+from isctest.vars.algorithms import Algorithm
+
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -30,6 +34,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "past.test.*",
         "two-tone.test.*",
         "unlimited.test.*",
+        "invalid-skr.test.*",
         "ns1/K*",
         "ns1/_default.nzd",
         "ns1/_default.nzf",
@@ -73,6 +78,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/unlimited.test.db.signed",
         "ns1/unlimited.test.db.signed.jnl",
         "ns1/unlimited.test.unlimited.skr.1",
+        "ns1/invalid-skr.test.db",
+        "ns1/invalid-skr.test.db.jbk",
+        "ns1/invalid-skr.test.db.signed",
+        "ns1/invalid-skr.test.db.signed.jnl",
+        "ns1/invalid-skr.test.skr.1",
     ]
 )
 
@@ -84,7 +94,7 @@ def between(value, start, end):
     return start < value < end
 
 
-def ksr(zone, policy, action, options="", raise_on_exception=True):
+def ksr(zone, policy, action, options="", raise_on_exception=True, to_file=""):
     ksr_command = [
         os.environ.get("KSR"),
         "-l",
@@ -96,19 +106,30 @@ def ksr(zone, policy, action, options="", raise_on_exception=True):
         zone,
     ]
 
-    out = isctest.run.cmd(ksr_command, raise_on_exception=raise_on_exception)
-    return out.stdout.decode("utf-8"), out.stderr.decode("utf-8")
+    if to_file:
+        with open(to_file, "wb") as f:
+            cmd = isctest.run.cmd(
+                ksr_command, raise_on_exception=raise_on_exception, stdout=f
+            )
+    else:
+        cmd = isctest.run.cmd(ksr_command, raise_on_exception=raise_on_exception)
+    return cmd
 
 
 def check_keys(
     keys,
     lifetime,
-    alg=os.environ["DEFAULT_ALGORITHM_NUMBER"],
-    size=os.environ["DEFAULT_BITS"],
+    alg=None,
+    size=None,
     offset=0,
     with_state=False,
 ):
     # Check keys that were created.
+    if alg is None:
+        alg = Algorithm.default().number
+    if size is None:
+        size = Algorithm.default().bits
+
     num = 0
 
     now = KeyTimingMetadata.now()
@@ -258,8 +279,9 @@ def check_rrsig_bundle(bundle_keys, bundle_lines, zone, rrtype, sigend, sigstart
     assert count == len(bundle_lines)
 
 
-def check_keysigningrequest(out, zsks, start, end):
-    lines = out.split("\n")
+def check_keysigningrequest(path, zsks, start, end):
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
     line_no = 0
 
     inception = start
@@ -301,14 +323,14 @@ def check_keysigningrequest(out, zsks, start, end):
 
     # trailing empty lines
     while line_no < len(lines):
-        assert lines[line_no] == ""
+        assert lines[line_no].rstrip() == ""
         line_no += 1
 
     assert line_no == len(lines)
 
 
 def check_signedkeyresponse(
-    out,
+    path,
     zone,
     ksks,
     zsks,
@@ -318,7 +340,8 @@ def check_signedkeyresponse(
     cdnskey=True,
     cds="SHA-256",
 ):
-    lines = out.split("\n")
+    with open(path, "r", encoding="utf-8") as f:
+        lines = f.readlines()
     line_no = 0
     next_bundle = end + 1
 
@@ -340,7 +363,7 @@ def check_signedkeyresponse(
 
         # ignore empty lines
         while line_no < len(lines):
-            if lines[line_no] == "":
+            if lines[line_no].rstrip() == "":
                 line_no += 1
             else:
                 break
@@ -492,7 +515,6 @@ def check_signedkeyresponse(
                 # collect keys that should be in this bundle
                 # collect lines that should be in this bundle
                 bundle_keys.append(key)
-                # pylint: disable=unused-variable
                 for _arg in expected_cds:
                     bundle_lines.append(lines[line_no])
                     line_no += 1
@@ -536,35 +558,35 @@ def check_signedkeyresponse(
 
 def test_ksr_errors():
     # check that 'dnssec-ksr' errors on unknown action
-    _, err = ksr("common.test", "common", "foobar", raise_on_exception=False)
-    assert "dnssec-ksr: fatal: unknown command 'foobar'" in err
+    cmd = ksr("common.test", "common", "foobar", raise_on_exception=False)
+    assert "dnssec-ksr: fatal: unknown command 'foobar'" in cmd.err
 
     # check that 'dnssec-ksr keygen' errors on missing end date
-    _, err = ksr("common.test", "common", "keygen", raise_on_exception=False)
-    assert "dnssec-ksr: fatal: keygen requires an end date" in err
+    cmd = ksr("common.test", "common", "keygen", raise_on_exception=False)
+    assert "dnssec-ksr: fatal: keygen requires an end date" in cmd.err
 
     # check that 'dnssec-ksr keygen' errors on zone with csk
-    _, err = ksr(
+    cmd = ksr(
         "csk.test", "csk", "keygen", options="-K ns1 -e +2y", raise_on_exception=False
     )
-    assert "dnssec-ksr: fatal: no keys created for policy 'csk'" in err
+    assert "dnssec-ksr: fatal: no keys created for policy 'csk'" in cmd.err
 
     # check that 'dnssec-ksr request' errors on missing end date
-    _, err = ksr("common.test", "common", "request", raise_on_exception=False)
-    assert "dnssec-ksr: fatal: request requires an end date" in err
+    cmd = ksr("common.test", "common", "request", raise_on_exception=False)
+    assert "dnssec-ksr: fatal: request requires an end date" in cmd.err
 
     # check that 'dnssec-ksr sign' errors on missing ksr file
-    _, err = ksr(
+    cmd = ksr(
         "common.test",
         "common",
         "sign",
         options="-K ns1/offline -i now -e +1y",
         raise_on_exception=False,
     )
-    assert "dnssec-ksr: fatal: 'sign' requires a KSR file" in err
+    assert "dnssec-ksr: fatal: 'sign' requires a KSR file" in cmd.err
 
 
-def test_ksr_common(servers):
+def test_ksr_common(ns1):
     # common test cases (1)
     zone = "common.test"
     policy = "common"
@@ -572,15 +594,15 @@ def test_ksr_common(servers):
 
     # create ksk
     kskdir = "ns1/offline"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None)
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
-    out, _ = ksr(zone, policy, "keygen", options="-i now -e +1y")
-    zsks = isctest.kasp.keystr_to_keylist(out)
+    cmd = ksr(zone, policy, "keygen", options="-i now -e +1y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -589,8 +611,8 @@ def test_ksr_common(servers):
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     # in the given key directory
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -607,33 +629,35 @@ def test_ksr_common(servers):
     # check that 'dnssec-ksr request' creates correct ksr
     now = zsks[0].get_timing("Created")
     until = now + timedelta(days=365)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {now} -e +1y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {now} -e +1y",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, now, until)
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +1y"
-    )
-
-    fname = f"{zone}.skr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
-    check_signedkeyresponse(out, zone, ksks, zsks, now, until, refresh)
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +1y",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, now, until, refresh)
 
     # common test cases (2)
     n = 2
 
     # check that 'dnssec-ksr keygen' selects pregenerated keys for
     # the same time bundle
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +1y")
-    selected_zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +1y")
+    selected_zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(selected_zsks) == 2
     for index, key in enumerate(selected_zsks):
         assert zsks[index] == key
@@ -647,21 +671,14 @@ def test_ksr_common(servers):
 
     # check that 'dnssec-ksr keygen' generates only necessary keys for
     # overlapping time bundle
-    out, err = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y -v 1")
-    overlapping_zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y -v 1")
+    overlapping_zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(overlapping_zsks) == 4
 
-    verbose = err.split()
-    selected = 0
-    generated = 0
-    for output in verbose:
-        if "Selecting" in output:
-            selected += 1
-        if "Generating" in output:
-            generated += 1
-        # Subtract if there was a key collision.
-        if "collide" in output:
-            generated -= 1
+    selected = len(re.findall("Selecting key pair", cmd.err))
+    generated = len(re.findall("Generating key pair", cmd.err)) - len(
+        re.findall("collide", cmd.err)
+    )
 
     assert selected == 2
     assert generated == 2
@@ -679,8 +696,8 @@ def test_ksr_common(servers):
             )
 
     # run 'dnssec-ksr keygen' again with verbosity 0
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y")
-    overlapping_zsks2 = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {now} -e +2y")
+    overlapping_zsks2 = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(overlapping_zsks2) == 4
     check_keys(overlapping_zsks2, lifetime)
     for index, key in enumerate(overlapping_zsks2):
@@ -688,47 +705,41 @@ def test_ksr_common(servers):
 
     # check that 'dnssec-ksr request' creates correct ksr if the
     # interval is shorter
-    out, _ = ksr(zone, policy, "request", options=f"-K ns1 -i {now} -e +1y")
-
-    fname = f"{zone}.ksr.{n}.shorter"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}.shorter"
+    ksr(zone, policy, "request", options=f"-K ns1 -i {now} -e +1y", to_file=ksr_fname)
+    check_keysigningrequest(ksr_fname, zsks, now, until)
 
     # check that 'dnssec-ksr request' creates correct ksr with new interval
-    out, _ = ksr(zone, policy, "request", options=f"-K ns1 -i {now} -e +2y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
     until = now + timedelta(days=365 * 2)
-    check_keysigningrequest(out, overlapping_zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(zone, policy, "request", options=f"-K ns1 -i {now} -e +2y", to_file=ksr_fname)
+    check_keysigningrequest(ksr_fname, overlapping_zsks, now, until)
 
     # check that 'dnssec-ksr request' errors if there are not enough keys
-    _, err = ksr(
+    cmd = ksr(
         zone,
         policy,
         "request",
         options=f"-K ns1 -i {now} -e +3y",
         raise_on_exception=False,
     )
-    error = f"no {zone}/ECDSAP256SHA256 zsk key pair found for bundle"
-    assert f"dnssec-ksr: fatal: {error}" in err
+    errmsg = (
+        f"dnssec-ksr: fatal: no {zone}/ECDSAP256SHA256 zsk key pair found for bundle"
+    )
+    assert errmsg in cmd.err
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K ns1/offline -f {fname} -i {now} -e +2y"
-    )
-
-    fname = f"{zone}.skr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K ns1/offline -f {ksr_fname} -i {now} -e +2y",
+        to_file=skr_fname,
+    )
     check_signedkeyresponse(
-        out,
+        skr_fname,
         zone,
         ksks,
         overlapping_zsks,
@@ -738,18 +749,16 @@ def test_ksr_common(servers):
     )
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
-        + "};",
-        log=False,
+        + "};"
     )
 
     # import skr
-    shutil.copyfile(fname, f"ns1/{fname}")
-    ns1.rndc(f"skr -import {fname} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -764,7 +773,7 @@ def test_ksr_common(servers):
     isctest.kasp.check_subdomain(ns1, zone, ksks, overlapping_zsks, offline_ksk=True)
 
 
-def test_ksr_lastbundle(servers):
+def test_ksr_lastbundle(ns1):
     zone = "last-bundle.test"
     policy = "common"
     n = 1
@@ -772,16 +781,16 @@ def test_ksr_lastbundle(servers):
     # create ksk
     kskdir = "ns1/offline"
     offset = -timedelta(days=365)
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1d -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1d -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None, offset=offset)
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1d")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1d")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -790,39 +799,39 @@ def test_ksr_lastbundle(servers):
     # check that 'dnssec-ksr request' creates correct ksr
     then = zsks[0].get_timing("Created") + offset
     until = then + timedelta(days=366)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {then} -e +1d")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, then, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {then} -e +1d",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, then, until)
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {then} -e +1d"
-    )
-
-    fname = f"{zone}.skr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
-    check_signedkeyresponse(out, zone, ksks, zsks, then, until, refresh)
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {then} -e +1d",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, then, until, refresh)
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(fname, f"ns1/{fname}")
-    ns1.rndc(f"skr -import {fname} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -841,7 +850,7 @@ def test_ksr_lastbundle(servers):
     assert f"zone {zone}/IN (signed): zone_rekey: {warning}" in ns1.log
 
 
-def test_ksr_inthemiddle(servers):
+def test_ksr_inthemiddle(ns1):
     zone = "in-the-middle.test"
     policy = "common"
     n = 1
@@ -849,16 +858,16 @@ def test_ksr_inthemiddle(servers):
     # create ksk
     kskdir = "ns1/offline"
     offset = -timedelta(days=365)
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1y -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i -1y -e +1y -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None, offset=offset)
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1y")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i -1y -e +1y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 4
 
     lifetime = timedelta(days=31 * 6)
@@ -868,39 +877,39 @@ def test_ksr_inthemiddle(servers):
     then = zsks[0].get_timing("Created")
     then = then + offset
     until = then + timedelta(days=365 * 2)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {then} -e +1y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, then, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {then} -e +1y",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, then, until)
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {then} -e +1y"
-    )
-
-    fname = f"{zone}.skr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
-    check_signedkeyresponse(out, zone, ksks, zsks, then, until, refresh)
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {then} -e +1y",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, then, until, refresh)
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(fname, f"ns1/{fname}")
-    ns1.rndc(f"skr -import {fname} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -927,34 +936,38 @@ def check_ksr_rekey_logs_error(server, zone, policy, offset, end):
     now = KeyTimingMetadata.now()
     then = now + offset
     until = now + end
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i {then} -e {until} -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i {then} -e {until} -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 1
 
     # key generation
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {then} -e {until}")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i {then} -e {until}")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 2
 
     # create request
     now = zsks[0].get_timing("Created")
     then = now + offset
     until = now + end
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {then} -e {until}")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    # sign request
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {then} -e {until}"
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {then} -e {until}",
+        to_file=ksr_fname,
     )
 
-    fname = f"{zone}.skr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
+    # sign request
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {then} -e {until}",
+        to_file=skr_fname,
+    )
 
     # add zone
     server.rndc(
@@ -962,12 +975,11 @@ def check_ksr_rekey_logs_error(server, zone, policy, offset, end):
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(fname, f"ns1/{fname}")
-    server.rndc(f"skr -import {fname} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    server.rndc(f"skr -import {skr_fname} {zone}")
 
     # test that rekey logs error
     time_remaining = 10
@@ -982,34 +994,30 @@ def check_ksr_rekey_logs_error(server, zone, policy, offset, end):
     assert line in server.log
 
 
-def test_ksr_rekey_logs_error(servers):
+def test_ksr_rekey_logs_error(ns1):
     # check that an SKR that is too old logs error
-    check_ksr_rekey_logs_error(
-        servers["ns1"], "past.test", "common", -63072000, -31536000
-    )
+    check_ksr_rekey_logs_error(ns1, "past.test", "common", -63072000, -31536000)
     # check that an SKR that is too new logs error
-    check_ksr_rekey_logs_error(
-        servers["ns1"], "future.test", "common", 2592000, 31536000
-    )
+    check_ksr_rekey_logs_error(ns1, "future.test", "common", 2592000, 31536000)
 
 
-def test_ksr_unlimited(servers):
+def test_ksr_unlimited(ns1):
     zone = "unlimited.test"
     policy = "unlimited"
     n = 1
 
     # create ksk
     kskdir = "ns1/offline"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +2y -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +2y -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 1
 
     check_keys(ksks, None)
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +2y")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +2y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 1
 
     lifetime = None
@@ -1018,26 +1026,28 @@ def test_ksr_unlimited(servers):
     # check that 'dnssec-ksr request' creates correct ksr
     now = zsks[0].get_timing("Created")
     until = now + timedelta(days=365 * 4)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {now} -e +4y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {now} -e +4y",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, now, until)
 
     # check that 'dnssec-ksr sign' creates correct skr without cdnskey
-    out, _ = ksr(
-        zone, "no-cdnskey", "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +4y"
-    )
-
-    skrfile = f"{zone}.no-cdnskey.skr.{n}"
-    with open(skrfile, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
+    skr_fname = f"{zone}.no-cdnskey.skr.{n}"
+    ksr(
+        zone,
+        "no-cdnskey",
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +4y",
+        to_file=skr_fname,
+    )
     check_signedkeyresponse(
-        out,
+        skr_fname,
         zone,
         ksks,
         zsks,
@@ -1049,17 +1059,17 @@ def test_ksr_unlimited(servers):
     )
 
     # check that 'dnssec-ksr sign' creates correct skr without cds
-    out, _ = ksr(
-        zone, "no-cds", "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +4y"
-    )
-
-    skrfile = f"{zone}.no-cds.skr.{n}"
-    with open(skrfile, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
+    skr_fname = f"{zone}.no-cds.skr.{n}"
+    ksr(
+        zone,
+        "no-cds",
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +4y",
+        to_file=skr_fname,
+    )
     check_signedkeyresponse(
-        out,
+        skr_fname,
         zone,
         ksks,
         zsks,
@@ -1070,30 +1080,28 @@ def test_ksr_unlimited(servers):
     )
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +4y"
-    )
-
-    skrfile = f"{zone}.{policy}.skr.{n}"
-    with open(skrfile, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
-    check_signedkeyresponse(out, zone, ksks, zsks, now, until, refresh)
+    skr_fname = f"{zone}.{policy}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +4y",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, now, until, refresh)
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(skrfile, f"ns1/{skrfile}")
-    ns1.rndc(f"skr -import {skrfile} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -1108,15 +1116,15 @@ def test_ksr_unlimited(servers):
     isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
 
-def test_ksr_twotone(servers):
+def test_ksr_twotone(ns1):
     zone = "two-tone.test"
     policy = "two-tone"
     n = 1
 
     # create ksk
     kskdir = "ns1/offline"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 2
 
     ksks_defalg = []
@@ -1139,8 +1147,8 @@ def test_ksr_twotone(servers):
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     # First algorithm keys have a lifetime of 3 months, so there should
     # be 4 created keys. Second algorithm keys have a lifetime of 5
     # months, so there should be 3 created keys.  While only two time
@@ -1171,39 +1179,39 @@ def test_ksr_twotone(servers):
     # check that 'dnssec-ksr request' creates correct ksr
     now = zsks[0].get_timing("Created")
     until = now + timedelta(days=365)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {now} -e +1y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {now} -e +1y",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, now, until)
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +1y"
-    )
-
-    skrfile = f"{zone}.skr.{n}"
-    with open(skrfile, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -timedelta(days=5)
-    check_signedkeyresponse(out, zone, ksks, zsks, now, until, refresh)
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +1y",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, now, until, refresh)
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(skrfile, f"ns1/{skrfile}")
-    ns1.rndc(f"skr -import {skrfile} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -1224,15 +1232,15 @@ def test_ksr_twotone(servers):
     isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
 
 
-def test_ksr_kskroll(servers):
+def test_ksr_kskroll(ns1):
     zone = "ksk-roll.test"
     policy = "ksk-roll"
     n = 1
 
     # create ksk
     kskdir = "ns1/offline"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
-    ksks = isctest.kasp.keystr_to_keylist(out, kskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {kskdir} -i now -e +1y -o")
+    ksks = isctest.kasp.keystr_to_keylist(cmd.out, kskdir)
     assert len(ksks) == 2
 
     lifetime = timedelta(days=31 * 6)
@@ -1240,8 +1248,8 @@ def test_ksr_kskroll(servers):
 
     # check that 'dnssec-ksr keygen' pregenerates right amount of keys
     zskdir = "ns1"
-    out, _ = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
-    zsks = isctest.kasp.keystr_to_keylist(out, zskdir)
+    cmd = ksr(zone, policy, "keygen", options=f"-K {zskdir} -i now -e +1y")
+    zsks = isctest.kasp.keystr_to_keylist(cmd.out, zskdir)
     assert len(zsks) == 1
 
     check_keys(zsks, None)
@@ -1249,39 +1257,39 @@ def test_ksr_kskroll(servers):
     # check that 'dnssec-ksr request' creates correct ksr
     now = zsks[0].get_timing("Created")
     until = now + timedelta(days=365)
-    out, _ = ksr(zone, policy, "request", options=f"-K {zskdir} -i {now} -e +1y")
-
-    fname = f"{zone}.ksr.{n}"
-    with open(fname, "w", encoding="utf-8") as file:
-        file.write(out)
-
-    check_keysigningrequest(out, zsks, now, until)
+    ksr_fname = f"{zone}.ksr.{n}"
+    ksr(
+        zone,
+        policy,
+        "request",
+        options=f"-K {zskdir} -i {now} -e +1y",
+        to_file=ksr_fname,
+    )
+    check_keysigningrequest(ksr_fname, zsks, now, until)
 
     # check that 'dnssec-ksr sign' creates correct skr
-    out, _ = ksr(
-        zone, policy, "sign", options=f"-K {kskdir} -f {fname} -i {now} -e +1y"
-    )
-
-    skrfile = f"{zone}.skr.{n}"
-    with open(skrfile, "w", encoding="utf-8") as file:
-        file.write(out)
-
     refresh = -432000  # 5 days
-    check_signedkeyresponse(out, zone, ksks, zsks, now, until, refresh)
+    skr_fname = f"{zone}.skr.{n}"
+    ksr(
+        zone,
+        policy,
+        "sign",
+        options=f"-K {kskdir} -f {ksr_fname} -i {now} -e +1y",
+        to_file=skr_fname,
+    )
+    check_signedkeyresponse(skr_fname, zone, ksks, zsks, now, until, refresh)
 
     # add zone
-    ns1 = servers["ns1"]
     ns1.rndc(
         f"addzone {zone} "
         + "{ type primary; file "
         + f'"{zone}.db"; dnssec-policy {policy}; '
         + "};",
-        log=False,
     )
 
     # import skr
-    shutil.copyfile(skrfile, f"ns1/{skrfile}")
-    ns1.rndc(f"skr -import {skrfile} {zone}", log=False)
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
 
     # test zone is correctly signed
     # - check rndc dnssec -status output
@@ -1294,3 +1302,21 @@ def test_ksr_kskroll(servers):
     isctest.kasp.check_apex(ns1, zone, ksks, zsks, offline_ksk=True)
     # - check subdomain
     isctest.kasp.check_subdomain(ns1, zone, ksks, zsks, offline_ksk=True)
+
+
+def test_ksr_oversize(ns1):
+    zone = "invalid-skr.test"
+    n = 1
+
+    skr_fname = f"{zone}.skr.{n}"
+    token_len = 5000
+    with open(skr_fname, "w", encoding="utf-8") as skr:
+        huge_token = "A" * token_len
+        skr.write(f";; SignedKeyResponse 1.0 {huge_token}\n")
+
+    # - try importing invalid SKR file
+    shutil.copyfile(skr_fname, f"ns1/{skr_fname}")
+    ns1.rndc(f"skr -import {skr_fname} {zone}")
+
+    # - check if named is still running
+    ns1.rndc("status")

@@ -1,4 +1,4 @@
-/*	$NetBSD: isc_lex_getmastertoken.c,v 1.3 2025/01/26 16:25:20 christos Exp $	*/
+/*	$NetBSD: isc_lex_getmastertoken.c,v 1.3.2.1 2026/05/07 16:18:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -73,5 +73,6 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 		result = isc_lex_getmastertoken(lex, &token, expect, eol);
 	} while (result == ISC_R_SUCCESS && token.type != isc_tokentype_eof);
 
+cleanup:
 	return 0;
 }

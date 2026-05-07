@@ -21,7 +21,6 @@ libisc_la_HEADERS =			\
 	include/isc/dir.h		\
 	include/isc/dnsstream.h		\
 	include/isc/endian.h		\
-	include/isc/entropy.h		\
 	include/isc/errno.h		\
 	include/isc/error.h		\
 	include/isc/file.h		\
@@ -127,7 +126,6 @@ libisc_la_SOURCES =		\
 	counter.c		\
 	crc64.c			\
 	dir.c			\
-	entropy.c		\
 	errno.c			\
 	errno2result.c		\
 	errno2result.h		\
@@ -165,7 +163,6 @@ libisc_la_SOURCES =		\
 	net.c			\
 	netaddr.c		\
 	netscope.c		\
-	nonce.c			\
 	openssl_shim.c		\
 	openssl_shim.h		\
 	os.c			\

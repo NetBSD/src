@@ -1,4 +1,4 @@
-/*	$NetBSD: kx_36.c,v 1.9 2025/01/26 16:25:35 christos Exp $	*/
+/*	$NetBSD: kx_36.c,v 1.9.2.1 2026/05/07 16:18:47 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -191,9 +191,7 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 	REQUIRE(kx != NULL);
 	REQUIRE(rdata->length != 0);
 
-	kx->common.rdclass = rdata->rdclass;
-	kx->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&kx->common, link);
+	DNS_RDATACOMMON_INIT(kx, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

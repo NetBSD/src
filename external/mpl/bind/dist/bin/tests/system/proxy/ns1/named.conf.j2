@@ -1,0 +1,118 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+include "../../_common/rndc.key";
+
+controls {
+	inet 10.53.0.1 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+tls self-signed {
+	cert-file "../self-signed-cert.pem";
+	key-file "../self-signed-key.pem";
+};
+
+options {
+	pid-file "named.pid";
+	##
+	# generic test
+	listen-on port @PORT@ { 10.53.0.1; };
+
+	listen-on port @EXTRAPORT1@ proxy plain { 10.53.0.1; };
+	listen-on port @EXTRAPORT1@ proxy plain { 10.53.0.2; };
+	listen-on port @TLSPORT@ proxy encrypted tls self-signed { 10.53.0.1; };
+	listen-on port @EXTRAPORT2@ proxy plain tls self-signed { 10.53.0.1; };
+	listen-on port @HTTPSPORT@ proxy encrypted tls self-signed http default { 10.53.0.1; };
+	listen-on port @EXTRAPORT3@ proxy plain tls self-signed http default { 10.53.0.1; };
+	listen-on port @HTTPPORT@ proxy plain tls none http default { 10.53.0.1; };
+
+	listen-on-v6 port @EXTRAPORT1@ proxy plain { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 port @EXTRAPORT1@ proxy plain { fd92:7065:b8e:ffff::2; };
+	listen-on-v6 port @TLSPORT@ proxy encrypted tls self-signed { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 port @EXTRAPORT2@ proxy plain tls self-signed { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 port @HTTPSPORT@ proxy encrypted tls self-signed http default { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 port @EXTRAPORT3@ proxy plain tls self-signed http default { fd92:7065:b8e:ffff::1; };
+	listen-on-v6 port @HTTPPORT@ proxy plain tls none http default { fd92:7065:b8e:ffff::1; };
+
+	allow-proxy { 10.53.0.10; fd92:7065:b8e:ffff::10; };
+	allow-proxy-on { 10.53.0.1; fd92:7065:b8e:ffff::1; };
+
+	recursion no;
+	notify explicit;
+	statistics-file "named.stats";
+	dnssec-validation no;
+	tcp-initial-timeout 1200;
+};
+
+
+zone "example0" {
+	type primary;
+	file "example.db";
+	allow-query { any; };
+};
+
+zone "example1" {
+	type primary;
+	file "example.db";
+	allow-query { 1.2.3.4; fd0f:99d3:98a7::1234; };
+	allow-query-on { 4.3.2.1; fd0f:99d3:98a7::4321; }; # note, we are *not* listening on the interface
+};
+
+zone "example2" {
+	type primary;
+	file "example.db";
+	# allow the real addresses only so that we can test LOCAL requests
+	allow-query { 10.53.0.10; fd92:7065:b8e:ffff::10; };
+	allow-query-on { 10.53.0.1; fd92:7065:b8e:ffff::1; };
+};
+
+# Let's define some zones that will help us verify that ports
+# information from PROXY headers is used. Please note that we are NOT
+# listening on the ports used.
+zone "example-proxy-do53" {
+	type primary;
+	file "example.db";
+	allow-transfer port 53 transport tcp { 1.2.3.4; fd0f:99d3:98a7::1234; };
+};
+
+zone "example-proxy-encrypted-dot" {
+	type primary;
+	file "example.db";
+	allow-transfer port 853 transport tls { 1.2.3.4; fd0f:99d3:98a7::1234; };
+};
+
+zone "example-proxy-plain-dot" {
+	type primary;
+	file "example.db";
+	allow-transfer port 853 transport tls { 1.2.3.4; fd0f:99d3:98a7::1234; };
+};
+
+# Now let's make something similar, but for LOCAL PROXY requests (when
+# real ports and addresses are used)
+zone "example-proxy-local-do53" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT1@ transport tcp { 10.53.0.10; fd92:7065:b8e:ffff::10; };
+};
+
+zone "example-proxy-local-encrypted-dot" {
+	type primary;
+	file "example.db";
+	allow-transfer port @TLSPORT@ transport tls { 10.53.0.10; fd92:7065:b8e:ffff::10; };
+};
+
+zone "example-proxy-local-plain-dot" {
+	type primary;
+	file "example.db";
+	allow-transfer port @EXTRAPORT2@ transport tls { 10.53.0.10; fd92:7065:b8e:ffff::10; };
+};

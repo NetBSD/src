@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2024/02/21 22:50:56 christos Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2026/05/07 16:15:05 martin Exp $
 
 LDADD+=-lns
 DPADD+=${LIBNS}
@@ -47,5 +47,7 @@ CLEANFILES+= xsl.c
 
 main.o: ${VERSIONFILE}
 
+LDADD+=-lblocklist
+DPADD+=${LIBBLOCKLIST}
 
 .include <bsd.prog.mk>

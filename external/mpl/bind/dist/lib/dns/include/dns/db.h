@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.13 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: db.h,v 1.13.2.1 2026/05/07 16:18:40 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,6 +85,12 @@ typedef struct dns_dbmethods {
 	isc_result_t (*beginload)(dns_db_t	       *db,
 				  dns_rdatacallbacks_t *callbacks);
 	isc_result_t (*endload)(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
+	isc_result_t (*beginupdate)(dns_db_t *db, dns_dbversion_t *ver,
+				    dns_rdatacallbacks_t *callbacks);
+	isc_result_t (*commitupdate)(dns_db_t		  *db,
+				     dns_rdatacallbacks_t *callbacks);
+	isc_result_t (*abortupdate)(dns_db_t		 *db,
+				    dns_rdatacallbacks_t *callbacks);
 	void (*currentversion)(dns_db_t *db, dns_dbversion_t **versionp);
 	isc_result_t (*newversion)(dns_db_t *db, dns_dbversion_t **versionp);
 	void (*attachversion)(dns_db_t *db, dns_dbversion_t *source,
@@ -304,6 +310,7 @@ enum {
 #define DNS_DBADD_EXACT	   0x04
 #define DNS_DBADD_EXACTTTL 0x08
 #define DNS_DBADD_PREFETCH 0x10
+#define DNS_DBADD_EQUALOK  0x20
 /*@}*/
 
 /*%
@@ -536,6 +543,91 @@ dns_db_endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used, syntax errors in the master file, etc.
+ */
+
+isc_result_t
+dns_db_beginupdate(dns_db_t *db, dns_dbversion_t *ver,
+		   dns_rdatacallbacks_t *callbacks);
+/*%<
+ * Begin updating 'db'.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database.
+ *
+ * \li  'callbacks' is a pointer to an initialized dns_rdatacallbacks_t
+ *       structure.
+ *
+ * Ensures:
+ *
+ * \li	On success, callbacks->add will be a valid dns_addrdatasetfunc_t
+ *      suitable for updating records in 'db' from IXFR operations.
+ *      callbacks->add_private will be a valid DB update context
+ *      which should be used as 'arg' when callbacks->add is called.
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS
+ *
+ * \li	Other results are possible, depending upon the database
+ *	implementation used.
+ */
+
+isc_result_t
+dns_db_commitupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
+/*%<
+ * Commit the update to 'db'. Must be safe to double-call or call after
+ * dns_db_abortupdate.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database that is being updated.
+ *
+ * \li	'callbacks' is a valid dns_rdatacallbacks_t structure.
+ *
+ * \li	callbacks->add_private is not NULL and is a valid database update
+ * context.
+ *
+ * Ensures:
+ *
+ * \li	'callbacks' is returned to its state prior to calling
+ * dns_db_beginupdate()
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS
+ *
+ * \li	Other results are possible, depending upon the database
+ *	implementation used.
+ */
+
+isc_result_t
+dns_db_abortupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks);
+/*%<
+ * Abort the update to 'db'. Must be safe to double-call or call after
+ * dns_db_commitupdate. Must also be safe to call without having called
+ * dns_db_beginupdate first.
+ *
+ * Requires:
+ *
+ * \li	'db' is a valid database that is being updated.
+ *
+ * \li	'callbacks' is a valid dns_rdatacallbacks_t structure.
+ *
+ * \li	callbacks->add_private is not NULL and is a valid database update
+ * context.
+ *
+ * Ensures:
+ *
+ * \li	'callbacks' is returned to its state prior to calling
+ * dns_db_beginupdate()
+ *
+ * Returns:
+ *
+ * \li	#ISC_R_SUCCESS
+ *
+ * \li	Other results are possible, depending upon the database
+ *	implementation used.
  */
 
 isc_result_t
@@ -1250,6 +1342,10 @@ dns__db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
  *	the old and new rdata sets.  If #DNS_DBADD_EXACTTTL is set then both
  *	the old and new rdata sets must have the same ttl.
  *
+ * \li	If the #DNS_DBADD_EQUALOK option is set, and the database is not
+ *	changed, compare the old and new rdatasets; if they are equal,
+ *	return #ISC_R_SUCCESS instead of #DNS_R_UNCHANGED.
+ *
  * \li	The 'now' field is ignored if 'db' is a zone database.  If 'db' is
  *	a cache database, then the added rdataset will expire no later than
  *	now + rdataset->ttl.
@@ -1279,8 +1375,12 @@ dns__db_addrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
  * Returns:
  *
  * \li	#ISC_R_SUCCESS
- * \li	#DNS_R_UNCHANGED			The operation did not change
- * anything. \li	#ISC_R_NOMEMORY \li	#DNS_R_NOTEXACT
+ * \li	#DNS_R_UNCHANGED	The operation did not change anything.
+ * \li	#ISC_R_NOMEMORY
+ * \li	#DNS_R_NOTEXACT		The TTL didn't match and #DNS_DBADD_EXACTTTL
+ *				was set, or there was a partial overlap
+ *				between the old and new rdatasets and
+ *				DNS_DBADD_EXACT was set.
  *
  * \li	Other results are possible, depending upon the database
  *	implementation used.

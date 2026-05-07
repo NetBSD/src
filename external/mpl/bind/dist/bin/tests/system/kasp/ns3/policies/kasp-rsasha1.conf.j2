@@ -1,0 +1,32 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+dnssec-policy "rsasha1" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 5;
+		zsk key-directory lifetime P5Y  algorithm 5;
+		zsk key-directory lifetime P1Y  algorithm 5 2000;
+	};
+};
+
+dnssec-policy "rsasha1-nsec3" {
+	dnskey-ttl 1234;
+
+	keys {
+		ksk key-directory lifetime P10Y algorithm 7;
+		zsk key-directory lifetime P5Y  algorithm 7;
+		zsk key-directory lifetime P1Y  algorithm 7 2000;
+	};
+};

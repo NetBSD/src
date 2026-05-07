@@ -1,0 +1,111 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS3
+
+include "kasp.conf";
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
+
+/* These are zones that migrate to dnssec-policy. */
+zone "migrate.kasp" {
+	type primary;
+	file "migrate.kasp.db";
+	dnssec-policy "migrate";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "csk.kasp" {
+	type primary;
+	file "csk.kasp.db";
+	dnssec-policy "default";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "csk-nosep.kasp" {
+	type primary;
+	file "csk-nosep.kasp.db";
+	dnssec-policy "default";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "rumoured.kasp" {
+	type primary;
+	file "rumoured.kasp.db";
+	dnssec-policy "timing-metadata";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "omnipresent.kasp" {
+	type primary;
+	file "omnipresent.kasp.db";
+	dnssec-policy "timing-metadata";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "no-syncpublish.kasp" {
+	type primary;
+	file "no-syncpublish.kasp.db";
+	dnssec-policy "timing-metadata";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "migrate-nomatch-algnum.kasp" {
+	type primary;
+	file "migrate-nomatch-algnum.kasp.db";
+	dnssec-policy "migrate-nomatch-algnum";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "migrate-nomatch-alglen.kasp" {
+	type primary;
+	file "migrate-nomatch-alglen.kasp.db";
+	dnssec-policy "migrate-nomatch-alglen";
+	inline-signing no;
+	allow-update { any; };
+};
+
+zone "migrate-nomatch-kzc.kasp" {
+	type primary;
+	file "migrate-nomatch-kzc.kasp.db";
+	dnssec-policy "migrate-nomatch-kzc";
+	inline-signing no;
+	allow-update { any; };
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc_shim.h,v 1.4.2.1 2026/05/06 16:51:09 martin Exp $	*/
+/*	$NetBSD: jemalloc_shim.h,v 1.4.2.2 2026/05/07 16:18:49 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,7 +42,9 @@ mallocx(size_t size, int flags) {
 
 	size_t bytes = ISC_CHECKED_ADD(size, sizeof(size_info));
 	size_info *si = malloc(bytes);
-	INSIST(si != NULL);
+	if (si == NULL) {
+		return NULL;
+	}
 
 	si->size = size;
 	ptr = &si[1];
@@ -70,8 +72,11 @@ sallocx(void *ptr, int flags ISC_ATTR_UNUSED) {
 
 static inline void *
 rallocx(void *ptr, size_t size, int flags) {
-	size_info *si = realloc(&(((size_info *)ptr)[-1]), size + sizeof(*si));
-	INSIST(si != NULL);
+	size_t bytes = ISC_CHECKED_ADD(size, sizeof(size_info));
+	size_info *si = realloc(&(((size_info *)ptr)[-1]), bytes);
+	if (si == NULL) {
+		return NULL;
+	}
 
 	if ((flags & MALLOCX_ZERO) != 0 && size > si->size) {
 		memset((uint8_t *)si + sizeof(*si) + si->size, 0,

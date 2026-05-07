@@ -1,0 +1,27 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+trust-anchors {
+	example. static-key 257 3 14 "@ksk_public_key@";
+
+	/*
+	 *  The key tag in the trust anchor must match that of the revoked
+	 *  truncated self-signed key in the truncated.selfsigned. zone.
+	 *
+	 *  The DNSKEY contents are intentionally different here, because the
+	 *  key doesn't have the revoked bit here and that flag is part of the
+	 *  key tag. The following decodes to key tag 33167, which is the same
+	 *  as the revoked truncated key in the zone file.
+	 */
+	truncated.selfsigned. static-key 257 3 14 "fYA=";
+};

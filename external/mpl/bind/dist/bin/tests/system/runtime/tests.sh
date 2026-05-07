@@ -80,7 +80,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to reconfigure if working directory is not writable ($n)"
 ret=0
-copy_setports ns2/named-alt1.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig >rndc.out.$n 2>&1 && ret=1
 grep "failed: permission denied" rndc.out.$n >/dev/null 2>&1 || ret=1
 sleep 1
@@ -91,7 +91,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to reconfigure if managed-keys-directory is not writable ($n)"
 ret=0
-copy_setports ns2/named-alt2.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig >rndc.out.$n 2>&1 && ret=1
 grep "failed: permission denied" rndc.out.$n >/dev/null 2>&1 || ret=1
 sleep 1
@@ -102,7 +102,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to reconfigure if new-zones-directory is not writable ($n)"
 ret=0
-copy_setports ns2/named-alt3.conf.in ns2/named.conf
+cp ns2/named4.conf ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig >rndc.out.$n 2>&1 && ret=1
 grep "failed: permission denied" rndc.out.$n >/dev/null 2>&1 || ret=1
 sleep 1
@@ -113,7 +113,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named recovers when configuration file is valid again ($n)"
 ret=0
-copy_setports ns2/named1.conf.in ns2/named.conf
+cp ns2/named1.conf ns2/named.conf
 $RNDCCMD 10.53.0.2 reconfig >rndc.out.$n 2>&1 || ret=1
 [ -s ns2/named.pid ] || ret=1
 kill_named ns2/named.pid || ret=1
@@ -123,7 +123,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to start if working directory is not writable ($n)"
 ret=0
-testpid=$(run_named ns2 named$n.run -c named-alt1.conf -D runtime-ns2-extra-4)
+testpid=$(run_named ns2 named$n.run -c named2.conf -D runtime-ns2-extra-4)
 test -n "$testpid" || ret=1
 retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
 grep "[^-]directory './nope' is not writable" ns2/named$n.run >/dev/null 2>&1 || ret=1
@@ -135,7 +135,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to start if managed-keys-directory is not writable ($n)"
 ret=0
-testpid=$(run_named ns2 named$n.run -c named-alt2.conf -D runtime-ns2-extra-5)
+testpid=$(run_named ns2 named$n.run -c named3.conf -D runtime-ns2-extra-5)
 test -n "$testpid" || ret=1
 retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
 grep "managed-keys-directory './nope' is not writable" ns2/named$n.run >/dev/null 2>&1 || ret=1
@@ -147,7 +147,7 @@ status=$((status + ret))
 n=$((n + 1))
 echo_i "checking that named refuses to start if new-zones-directory is not writable ($n)"
 ret=0
-testpid=$(run_named ns2 named$n.run -c named-alt3.conf -D runtime-ns2-extra-6)
+testpid=$(run_named ns2 named$n.run -c named4.conf -D runtime-ns2-extra-6)
 test -n "$testpid" || ret=1
 retry_quiet 10 check_named_log "exiting (due to fatal error)" ns2/named$n.run || ret=1
 grep "new-zones-directory './nope' is not writable" ns2/named$n.run >/dev/null 2>&1 || ret=1
@@ -160,7 +160,7 @@ n=$((n + 1))
 echo_i "checking that named logs control characters in octal notation ($n)"
 ret=0
 INSTANCE_NAME="runtime-ns2-extra-7-$(cat ctrl-chars)"
-testpid=$(run_named ns2 named$n.run -c named-alt4.conf -D "${INSTANCE_NAME}")
+testpid=$(run_named ns2 named$n.run -c named5.conf -D "${INSTANCE_NAME}")
 test -n "$testpid" || ret=1
 retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
 grep 'running as.*\\177\\033' ns2/named$n.run >/dev/null || ret=1
@@ -173,7 +173,7 @@ n=$((n + 1))
 echo_i "checking that named escapes special characters in the logs ($n)"
 ret=0
 INSTANCE_NAME="runtime-ns2-extra-8-$;"
-testpid=$(run_named ns2 named$n.run -c named-alt4.conf -D "${INSTANCE_NAME}")
+testpid=$(run_named ns2 named$n.run -c named5.conf -D "${INSTANCE_NAME}")
 test -n "$testpid" || ret=1
 retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
 grep 'running as.*\\$\\;' ns2/named$n.run >/dev/null || ret=1
@@ -187,7 +187,7 @@ echo_i "checking that named logs an ellipsis when the command line is larger tha
 ret=0
 LONG_CMD_LINE=$(cat long-cmd-line)
 # shellcheck disable=SC2086
-testpid=$(run_named ns2 named$n.run $LONG_CMD_LINE -c "named-alt4.conf")
+testpid=$(run_named ns2 named$n.run $LONG_CMD_LINE -c "named5.conf")
 test -n "$testpid" || ret=1
 retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
 grep "running as.*\.\.\.$" ns2/named$n.run >/dev/null || ret=1
@@ -200,7 +200,7 @@ n=$((n + 1))
 echo_i "checking that named log missing IPv4 primaries in -4 mode ($n)"
 ret=0
 INSTANCE_NAME="missing-primaries-ipv4-only-mode"
-testpid=$(run_named ns2 named$n.run -c named-alt5.conf -D "${INSTANCE_NAME}" -4)
+testpid=$(run_named ns2 named$n.run -c named6.conf -D "${INSTANCE_NAME}" -4)
 test -n "$testpid" || ret=1
 retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
 grep "IPv6 disabled and no IPv4 primaries" ns2/named$n.run >/dev/null || ret=1
@@ -213,7 +213,7 @@ n=$((n + 1))
 echo_i "checking that named log missing IPv6 primaries in -6 mode ($n)"
 ret=0
 INSTANCE_NAME="missing-primaries-ipv4-only-mode"
-testpid=$(run_named ns2 named$n.run -c named-alt5.conf -D "${INSTANCE_NAME}" -6)
+testpid=$(run_named ns2 named$n.run -c named6.conf -D "${INSTANCE_NAME}" -6)
 test -n "$testpid" || ret=1
 retry_quiet 60 check_named_log "running$" ns2/named$n.run || ret=1
 grep "IPv4 disabled and no IPv6 primaries" ns2/named$n.run >/dev/null || ret=1
@@ -231,15 +231,15 @@ if [ "$(id -u)" -eq 0 ]; then
     rc=$?
   } || true
   if [ "$rc" -eq 0 ]; then
-    copy_setports ns2/named-alt9.conf.in "${TEMP_NAMED_DIR}/named-alt9.conf"
+    cp ns2/named7.conf "${TEMP_NAMED_DIR}/named7.conf"
     chown -R nobody: "${TEMP_NAMED_DIR}"
     chmod 0700 "${TEMP_NAMED_DIR}"
-    testpid=$(run_named "${TEMP_NAMED_DIR}" "${TEMP_NAMED_DIR}/named$n.run" -u nobody -c named-alt9.conf)
+    testpid=$(run_named "${TEMP_NAMED_DIR}" "${TEMP_NAMED_DIR}/named$n.run" -u nobody -c named7.conf)
     test -n "$testpid" || ret=1
     retry_quiet 60 check_named_log "running$" "${TEMP_NAMED_DIR}/named$n.run" || ret=1
-    [ -s "${TEMP_NAMED_DIR}/named9.pid" ] || ret=1
+    [ -s "${TEMP_NAMED_DIR}/named7.pid" ] || ret=1
     grep "loading configuration: permission denied" "${TEMP_NAMED_DIR}/named$n.run" >/dev/null && ret=1
-    kill_named "${TEMP_NAMED_DIR}/named9.pid" || ret=1
+    kill_named "${TEMP_NAMED_DIR}/named7.pid" || ret=1
     test -n "$testpid" || ret=1
     test -n "$testpid" && retry_quiet 10 check_pid $testpid || ret=1
   else

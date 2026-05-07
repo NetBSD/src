@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.12 2025/01/26 16:25:42 christos Exp $	*/
+/*	$NetBSD: result.h,v 1.12.2.1 2026/05/07 16:18:51 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -98,6 +98,7 @@ typedef enum isc_result {
 	ISC_R_HTTP2ALPNERROR, /*%< ALPN for HTTP/2 failed */
 	ISC_R_DOTALPNERROR,   /*%< ALPN for DoT failed */
 	ISC_R_INVALIDPROTO,   /*%< invalid protocol */
+	ISC_R_DEADLOCK,	      /*%< deadlock found */
 
 	DNS_R_LABELTOOLONG,
 	DNS_R_BADESCAPE,
@@ -230,6 +231,7 @@ typedef enum isc_result {
 	DNS_R_NODOHPATH,
 	DNS_R_NOSKRFILE,
 	DNS_R_NOSKRBUNDLE,
+	DNS_R_LOOPDETECTED,
 
 	DST_R_UNSUPPORTEDALG,
 	DST_R_CRYPTOFAILURE,

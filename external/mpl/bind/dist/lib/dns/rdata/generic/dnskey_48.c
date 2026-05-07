@@ -1,4 +1,4 @@
-/*	$NetBSD: dnskey_48.c,v 1.9 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: dnskey_48.c,v 1.9.2.1 2026/05/07 16:18:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,9 +91,7 @@ tostruct_dnskey(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_dnskey);
 
-	dnskey->common.rdclass = rdata->rdclass;
-	dnskey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dnskey->common, link);
+	DNS_RDATACOMMON_INIT(dnskey, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

@@ -1,0 +1,13 @@
+### Test requirements
+
+dnspython>=2.7.0
+
+cryptography
+hypothesis>=4.41.2
+jinja2
+pytest>=7.0.0
+requests
+
+### Utility packages for executing the tests
+flaky
+pytest-xdist

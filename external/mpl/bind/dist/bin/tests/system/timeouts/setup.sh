@@ -13,8 +13,6 @@
 
 . ../conf.sh
 
-copy_setports ns1/named.conf.in ns1/named.conf
-
 #
 # Generate a large enough zone, so the transfer takes longer than
 # tcp-initial-timeout interval

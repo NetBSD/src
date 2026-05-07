@@ -16,13 +16,18 @@
 
 set -e
 
+longago="now-1y"
+keytimes="-P ${longago} -A ${longago}"
+O="omnipresent"
+
 zone=dnssec.
 infile=dnssec.db.in
-zonefile=dnssec.db.signed
+zonefile=dnssec.db
+cp $infile $zonefile
 ksk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -L 3600 -b "$DEFAULT_BITS" -f KSK "$zone")
 zsk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -L 3600 -b "$DEFAULT_BITS" "$zone")
 # Sign deliberately with a very short expiration date.
-"$SIGNER" -P -S -x -O full -e "now"+1s -o "$zone" -f "$zonefile" "$infile" >"signzone.out.$zone" 2>&1
+"$SIGNER" -P -S -x -O full -e "now"+1s -o "$zone" "$zonefile" >"signzone.out.$zone" 2>&1
 id=$(keyfile_to_key_id "$ksk")
 echo "$DEFAULT_ALGORITHM_NUMBER+$id" >dnssec.ksk.id
 id=$(keyfile_to_key_id "$zsk")
@@ -30,16 +35,22 @@ echo "$DEFAULT_ALGORITHM_NUMBER+$id" >dnssec.zsk.id
 
 zone=manykeys.
 infile=manykeys.db.in
-zonefile=manykeys.db.signed
-ksk8=$("$KEYGEN" -q -a RSASHA256 -L 3600 -b 2048 -f KSK "$zone")
-zsk8=$("$KEYGEN" -q -a RSASHA256 -L 3600 -b 2048 "$zone")
+zonefile=manykeys.db
+cp $infile $zonefile
+ksk8=$("$KEYGEN" -q -a RSASHA256 -L 3600 -b 2048 -f KSK $keytimes -P sync $longago "$zone")
+zsk8=$("$KEYGEN" -q -a RSASHA256 -L 3600 -b 2048 $keytimes "$zone")
+$SETTIME -s -g $O -k $O $longago -r $O $longago -z $O $longago -d $O $longago "$ksk8" >settime.out.$zone 2>&1
+$SETTIME -s -g $O -k $O $longago -z $O $longago "$zsk8" >settime.out.$zone 2>&1
+cat $ksk8.key $zsk8.key >>$zonefile
 ksk13=$("$KEYGEN" -q -a ECDSAP256SHA256 -L 3600 -b 256 -f KSK "$zone")
 zsk13=$("$KEYGEN" -q -a ECDSAP256SHA256 -L 3600 -b 256 "$zone")
+cat $ksk13.key $zsk13.key >>$zonefile
 ksk14=$("$KEYGEN" -q -a ECDSAP384SHA384 -L 3600 -b 384 -f KSK "$zone")
 zsk14=$("$KEYGEN" -q -a ECDSAP384SHA384 -L 3600 -b 384 "$zone")
+cat $ksk14.key $zsk14.key >>$zonefile
 # Sign deliberately with a very short expiration date.
 # Disable zone verification (-P) as records may expire before signing is complete
-"$SIGNER" -P -S -x -O full -e "now"+1s -o "$zone" -f "$zonefile" "$infile" >"signzone.out.$zone" 2>&1
+"$SIGNER" -P -S -x -O full -e "now"+1s -o "$zone" "$zonefile" >"signzone.out.$zone" 2>&1
 id=$(keyfile_to_key_id "$ksk8")
 echo "8+$id" >manykeys.ksk8.id
 id=$(keyfile_to_key_id "$zsk8")

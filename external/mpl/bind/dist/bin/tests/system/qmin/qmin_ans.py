@@ -11,12 +11,11 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import abc
 
 import dns.rcode
-import dns.rdataclass
 import dns.rdatatype
 
 from isctest.asyncserver import (
@@ -25,8 +24,6 @@ from isctest.asyncserver import (
     QueryContext,
     ResponseAction,
 )
-
-from isctest.compat import dns_rcode
 
 
 def log_query(qctx: QueryContext) -> None:
@@ -67,7 +64,7 @@ class EntRcodeChanger(DomainHandler):
 
     @property
     @abc.abstractmethod
-    def rcode(self) -> dns_rcode:
+    def rcode(self) -> dns.rcode.Rcode:
         raise NotImplementedError
 
     async def get_responses(

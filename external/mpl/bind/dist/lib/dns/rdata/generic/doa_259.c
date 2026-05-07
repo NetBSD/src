@@ -1,4 +1,4 @@
-/*	$NetBSD: doa_259.c,v 1.9 2025/01/26 16:25:31 christos Exp $	*/
+/*	$NetBSD: doa_259.c,v 1.9.2.1 2026/05/07 16:18:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,7 +69,7 @@ fromtext_doa(ARGS_FROMTEXT) {
 		return ISC_R_SUCCESS;
 	} else {
 		isc_lex_ungettoken(lexer, &token);
-		return isc_base64_tobuffer(lexer, target, -1);
+		return isc_base64_tobuffer(lexer, target, isc_zero_or_more);
 	}
 }
 
@@ -216,9 +216,7 @@ tostruct_doa(ARGS_TOSTRUCT) {
 	REQUIRE(doa != NULL);
 	REQUIRE(rdata->length >= 10);
 
-	doa->common.rdclass = rdata->rdclass;
-	doa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&doa->common, link);
+	DNS_RDATACOMMON_INIT(doa, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

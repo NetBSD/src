@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.17 2025/01/26 16:25:24 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.17.2.1 2026/05/07 16:18:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -42,13 +42,6 @@
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/rbt.h>
-
-#define CHECK(x)                             \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 #define RBT_MAGIC      ISC_MAGIC('R', 'B', 'T', '+')
 #define VALID_RBT(rbt) ISC_MAGIC_VALID(rbt, RBT_MAGIC)

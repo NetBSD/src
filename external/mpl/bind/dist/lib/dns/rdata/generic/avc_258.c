@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.c,v 1.10 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: avc_258.c,v 1.10.2.1 2026/05/07 16:18:42 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,9 +77,7 @@ tostruct_avc(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_avc);
 	REQUIRE(avc != NULL);
 
-	avc->common.rdclass = rdata->rdclass;
-	avc->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&avc->common, link);
+	DNS_RDATACOMMON_INIT(avc, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_txt(CALL_TOSTRUCT);
 }

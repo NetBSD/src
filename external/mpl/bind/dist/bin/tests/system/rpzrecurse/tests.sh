@@ -479,7 +479,7 @@ if [ "$MODE" = "native" ]; then
   echo_i "elapsed time $p1 seconds"
 
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} flush
-  copy_setports ns3/named2.conf.in ns3/named.conf
+  cp ns3/named2.conf ns3/named.conf
   nextpart ns3/named.run >/dev/null
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} reload >/dev/null
   wait_for_log 20 "rpz: policy: reload done" ns3/named.run || ret=1
@@ -498,7 +498,7 @@ if [ "$MODE" = "native" ]; then
 
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} flush
   # restore original named.conf
-  copy_setports ns3/named1.conf.in ns3/named.conf
+  cp ns3/named1.conf ns3/named.conf
   nextpart ns3/named.run >/dev/null
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} reload >/dev/null
   wait_for_log 20 "rpz: policy: reload done" ns3/named.run || ret=1
@@ -515,7 +515,7 @@ if [ "$MODE" = "native" ]; then
   echo_i "elapsed time $p1 seconds"
 
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} flush
-  copy_setports ns3/named3.conf.in ns3/named.conf
+  cp ns3/named3.conf ns3/named.conf
   nextpart ns3/named.run >/dev/null
   $RNDC -c ../_common/rndc.conf -s 10.53.0.3 -p ${CONTROLPORT} reload >/dev/null
   wait_for_log 20 "rpz: policy: reload done" ns3/named.run || ret=1

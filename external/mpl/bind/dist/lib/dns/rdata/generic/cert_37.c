@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.10 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.10.2.1 2026/05/07 16:18:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,7 +60,7 @@ fromtext_cert(ARGS_FROMTEXT) {
 	RETTOK(dns_secalg_fromtext(&secalg, &token.value.as_textregion));
 	RETERR(mem_tobuffer(target, &secalg, 1));
 
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -193,9 +193,7 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	REQUIRE(cert != NULL);
 	REQUIRE(rdata->length != 0);
 
-	cert->common.rdclass = rdata->rdclass;
-	cert->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&cert->common, link);
+	DNS_RDATACOMMON_INIT(cert, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

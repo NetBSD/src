@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtdb.c,v 1.22 2025/05/21 14:48:03 christos Exp $	*/
+/*	$NetBSD: rbtdb.c,v 1.22.2.1 2026/05/07 16:18:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,13 +65,6 @@
 
 #include "db_p.h"
 #include "rbtdb_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define EXISTS(header)                                 \
 	((atomic_load_acquire(&(header)->attributes) & \
@@ -208,6 +201,9 @@ static isc_result_t
 dbiterator_seek(dns_dbiterator_t *iterator,
 		const dns_name_t *name DNS__DB_FLARG);
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG);
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG);
 static isc_result_t
 dbiterator_next(dns_dbiterator_t *iterator DNS__DB_FLARG);
@@ -220,9 +216,10 @@ static isc_result_t
 dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name);
 
 static dns_dbiteratormethods_t dbiterator_methods = {
-	dbiterator_destroy, dbiterator_first, dbiterator_last,
-	dbiterator_seek,    dbiterator_prev,  dbiterator_next,
-	dbiterator_current, dbiterator_pause, dbiterator_origin
+	dbiterator_destroy, dbiterator_first,	dbiterator_last,
+	dbiterator_seek,    dbiterator_seek3,	dbiterator_prev,
+	dbiterator_next,    dbiterator_current, dbiterator_pause,
+	dbiterator_origin
 };
 
 /*
@@ -2731,14 +2728,24 @@ find_header:
 		if (rbtversion == NULL && trust < header->trust &&
 		    (ACTIVE(header, now) || header_nx))
 		{
-			dns_slabheader_destroy(&newheader);
-			if (addedrdataset != NULL) {
-				dns__rbtdb_bindrdataset(
-					rbtdb, rbtnode, header, now,
-					isc_rwlocktype_write,
-					addedrdataset DNS__DB_FLARG_PASS);
+			result = DNS_R_UNCHANGED;
+			dns__rbtdb_bindrdataset(
+				rbtdb, rbtnode, header, now,
+				isc_rwlocktype_write,
+				addedrdataset DNS__DB_FLARG_PASS);
+			if (ACTIVE(header, now) &&
+			    (options & DNS_DBADD_EQUALOK) != 0 &&
+			    dns_rdataslab_equalx(
+				    (unsigned char *)header,
+				    (unsigned char *)newheader,
+				    (unsigned int)(sizeof(*newheader)),
+				    rbtdb->common.rdclass,
+				    (dns_rdatatype_t)header->type))
+			{
+				result = ISC_R_SUCCESS;
 			}
-			return DNS_R_UNCHANGED;
+			dns_slabheader_destroy(&newheader);
+			return result;
 		}
 
 		/*
@@ -2817,29 +2824,23 @@ find_header:
 			}
 		}
 		/*
-		 * Don't replace existing NS, A and AAAA RRsets in the
-		 * cache if they are already exist. This prevents named
-		 * being locked to old servers. Don't lower trust of
-		 * existing record if the update is forced. Nothing
-		 * special to be done w.r.t stale data; it gets replaced
-		 * normally further down.
+		 * Don't replace existing NS in the cache if they already exist
+		 * and replacing the existing one would increase the TTL. This
+		 * prevents named being locked to old servers. Don't lower trust
+		 * of existing record if the update is forced. Nothing special
+		 * to be done w.r.t stale data; it gets replaced normally
+		 * further down.
 		 */
 		if (IS_CACHE(rbtdb) && ACTIVE(header, now) &&
 		    header->type == dns_rdatatype_ns && !header_nx &&
 		    !newheader_nx && header->trust >= newheader->trust &&
+		    header->ttl < newheader->ttl &&
 		    dns_rdataslab_equalx((unsigned char *)header,
 					 (unsigned char *)newheader,
 					 (unsigned int)(sizeof(*newheader)),
 					 rbtdb->common.rdclass,
 					 (dns_rdatatype_t)header->type))
 		{
-			/*
-			 * Honour the new ttl if it is less than the
-			 * older one.
-			 */
-			if (header->ttl > newheader->ttl) {
-				dns__rbtdb_setttl(header, newheader->ttl);
-			}
 			if (header->last_used != now) {
 				ISC_LIST_UNLINK(
 					rbtdb->lru[RBTDB_HEADERNODE(header)
@@ -2874,7 +2875,7 @@ find_header:
 		}
 
 		/*
-		 * If we have will be replacing a NS RRset force its TTL
+		 * If we will be replacing a NS RRset force its TTL
 		 * to be no more than the current NS RRset's TTL.  This
 		 * ensures the delegations that are withdrawn are honoured.
 		 */
@@ -2883,6 +2884,11 @@ find_header:
 		    !newheader_nx && header->trust <= newheader->trust)
 		{
 			if (newheader->ttl > header->ttl) {
+				if (ZEROTTL(header)) {
+					DNS_SLABHEADER_SETATTR(
+						newheader,
+						DNS_SLABHEADERATTR_ZEROTTL);
+				}
 				newheader->ttl = header->ttl;
 			}
 		}
@@ -2894,17 +2900,11 @@ find_header:
 		     header->type == DNS_SIGTYPE(dns_rdatatype_ds)) &&
 		    !header_nx && !newheader_nx &&
 		    header->trust >= newheader->trust &&
+		    header->ttl < newheader->ttl &&
 		    dns_rdataslab_equal((unsigned char *)header,
 					(unsigned char *)newheader,
 					(unsigned int)(sizeof(*newheader))))
 		{
-			/*
-			 * Honour the new ttl if it is less than the
-			 * older one.
-			 */
-			if (header->ttl > newheader->ttl) {
-				dns__rbtdb_setttl(header, newheader->ttl);
-			}
 			if (header->last_used != now) {
 				ISC_LIST_UNLINK(
 					rbtdb->lru[RBTDB_HEADERNODE(header)
@@ -3182,7 +3182,7 @@ addnoqname(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
 	dns_slabheader_proof_t *noqname = NULL;
 	dns_name_t name = DNS_NAME_INITEMPTY;
 	dns_rdataset_t neg = DNS_RDATASET_INIT, negsig = DNS_RDATASET_INIT;
-	isc_region_t r1, r2;
+	isc_region_t r1 = { .base = NULL }, r2 = { .base = NULL };
 
 	result = dns_rdataset_getnoqname(rdataset, &name, &neg, &negsig);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
@@ -3208,6 +3208,14 @@ addnoqname(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
 	newheader->noqname = noqname;
 
 cleanup:
+	if (result != ISC_R_SUCCESS) {
+		if (r1.base != NULL) {
+			isc_mem_put(mctx, r1.base, r1.length);
+		}
+		if (r2.base != NULL) {
+			isc_mem_put(mctx, r2.base, r2.length);
+		}
+	}
 	dns_rdataset_disassociate(&neg);
 	dns_rdataset_disassociate(&negsig);
 
@@ -3221,7 +3229,7 @@ addclosest(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
 	dns_slabheader_proof_t *closest = NULL;
 	dns_name_t name = DNS_NAME_INITEMPTY;
 	dns_rdataset_t neg = DNS_RDATASET_INIT, negsig = DNS_RDATASET_INIT;
-	isc_region_t r1, r2;
+	isc_region_t r1 = { .base = NULL }, r2 = { .base = NULL };
 
 	result = dns_rdataset_getclosest(rdataset, &name, &neg, &negsig);
 	RUNTIME_CHECK(result == ISC_R_SUCCESS);
@@ -3247,6 +3255,14 @@ addclosest(isc_mem_t *mctx, dns_slabheader_t *newheader, uint32_t maxrrperset,
 	newheader->closest = closest;
 
 cleanup:
+	if (result != ISC_R_SUCCESS) {
+		if (r1.base != NULL) {
+			isc_mem_put(mctx, r1.base, r1.length);
+		}
+		if (r2.base != NULL) {
+			isc_mem_put(mctx, r2.base, r2.length);
+		}
+	}
 	dns_rdataset_disassociate(&neg);
 	dns_rdataset_disassociate(&negsig);
 	return result;
@@ -4665,6 +4681,90 @@ dbiterator_seek(dns_dbiterator_t *iterator,
 }
 
 static isc_result_t
+dbiterator_seek3(dns_dbiterator_t *iterator,
+		 const dns_name_t *name DNS__DB_FLARG) {
+	isc_result_t result, tresult;
+	rbtdb_dbiterator_t *rbtdbiter = (rbtdb_dbiterator_t *)iterator;
+	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)iterator->db;
+	dns_name_t *iname = NULL, *origin = NULL;
+
+	if (rbtdbiter->result != ISC_R_SUCCESS &&
+	    rbtdbiter->result != ISC_R_NOTFOUND &&
+	    rbtdbiter->result != DNS_R_PARTIALMATCH &&
+	    rbtdbiter->result != ISC_R_NOMORE)
+	{
+		return rbtdbiter->result;
+	}
+
+	if (rbtdbiter->nsec3mode != nsec3only) {
+		return ISC_R_NOTIMPLEMENTED;
+	}
+
+	if (rbtdbiter->paused) {
+		resume_iteration(rbtdbiter);
+	}
+
+	dereference_iter_node(rbtdbiter DNS__DB_FLARG_PASS);
+
+	iname = dns_fixedname_name(&rbtdbiter->name);
+	origin = dns_fixedname_name(&rbtdbiter->origin);
+	dns_rbtnodechain_reset(&rbtdbiter->chain);
+	dns_rbtnodechain_reset(&rbtdbiter->nsec3chain);
+
+	rbtdbiter->current = &rbtdbiter->nsec3chain;
+	result = dns_rbt_findnode(rbtdb->nsec3, name, NULL, &rbtdbiter->node,
+				  rbtdbiter->current, DNS_RBTFIND_EMPTYDATA,
+				  NULL, NULL);
+
+	if (result == ISC_R_SUCCESS) {
+		tresult = dns_rbtnodechain_current(rbtdbiter->current, iname,
+						   origin, NULL);
+
+		reference_iter_node(rbtdbiter DNS__DB_FLARG_PASS);
+
+		if (tresult == ISC_R_SUCCESS) {
+			rbtdbiter->new_origin = true;
+		} else {
+			result = tresult;
+			rbtdbiter->node = NULL;
+		}
+	} else if (result == DNS_R_PARTIALMATCH) {
+		tresult = dns_rbtnodechain_current(rbtdbiter->current, iname,
+						   origin, NULL);
+
+		/* dbiterator_next() will dereference the node */
+		reference_iter_node(rbtdbiter DNS__DB_FLARG_PASS);
+
+		if (tresult == ISC_R_SUCCESS) {
+			rbtdbiter->new_origin = true;
+
+			result = dbiterator_next(iterator);
+			if (result == ISC_R_NOMORE) {
+				result = dbiterator_first(iterator);
+			}
+
+			tresult = dns_rbtnodechain_current(rbtdbiter->current,
+							   iname, origin, NULL);
+			if (tresult == ISC_R_SUCCESS) {
+				rbtdbiter->new_origin = true;
+			} else {
+				result = tresult;
+				rbtdbiter->node = NULL;
+			}
+		} else {
+			result = tresult;
+			rbtdbiter->node = NULL;
+		}
+	} else {
+		rbtdbiter->node = NULL;
+	}
+
+	rbtdbiter->result = result;
+
+	return result;
+}
+
+static isc_result_t
 dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 	isc_result_t result;
 	rbtdb_dbiterator_t *rbtdbiter = (rbtdb_dbiterator_t *)iterator;
@@ -4681,11 +4781,12 @@ dbiterator_prev(dns_dbiterator_t *iterator DNS__DB_FLARG) {
 		resume_iteration(rbtdbiter);
 	}
 
-	dereference_iter_node(rbtdbiter DNS__DB_FLARG_PASS);
-
 	name = dns_fixedname_name(&rbtdbiter->name);
 	origin = dns_fixedname_name(&rbtdbiter->origin);
 	result = dns_rbtnodechain_prev(rbtdbiter->current, name, origin);
+
+	dereference_iter_node(rbtdbiter DNS__DB_FLARG_PASS);
+
 	if (rbtdbiter->current == &rbtdbiter->nsec3chain &&
 	    (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN))
 	{

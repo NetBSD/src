@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.17 2025/07/17 19:01:42 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.17.2.1 2026/05/07 16:15:08 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,13 +80,6 @@
 #include <ns/server.h>
 
 #include <irs/resconf.h>
-
-#define CHECK(r)                             \
-	do {                                 \
-		result = (r);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 #define MAXNAME (DNS_NAME_MAXTEXT + 1)
 
@@ -173,8 +166,11 @@ get_reverse(char *reverse, size_t len, char *value, bool strict);
 static isc_result_t
 parse_uint(uint32_t *uip, const char *value, uint32_t max, const char *desc);
 
+noreturn static void
+usage(int ret);
+
 static void
-usage(void) {
+usage(int ret) {
 	fprintf(stderr,
 		"Usage:  delv [@server] {q-opt} {d-opt} [domain] [q-type] "
 		"[q-class]\n"
@@ -258,7 +254,7 @@ usage(void) {
 		"process)\n"
 		"                 +[no]yaml           (Present the results as "
 		"YAML)\n");
-	exit(EXIT_FAILURE);
+	exit(ret);
 }
 
 noreturn static void
@@ -1440,7 +1436,7 @@ plus_option(char *option) {
 	invalid_option:
 	need_value:
 		fprintf(stderr, "Invalid option: +%s\n", option);
-		usage();
+		usage(EXIT_FAILURE);
 	}
 	return;
 }
@@ -1493,8 +1489,8 @@ dash_option(char *option, char *next, bool *open_type_class) {
 			}
 			break;
 		case 'h':
-			usage();
-			exit(EXIT_SUCCESS);
+			usage(EXIT_SUCCESS);
+
 		case 'i':
 			no_sigs = true;
 			root_validation = false;
@@ -1647,7 +1643,7 @@ dash_option(char *option, char *next, bool *open_type_class) {
 	invalid_option:
 	default:
 		fprintf(stderr, "Invalid option: -%s\n", option);
-		usage();
+		usage(EXIT_FAILURE);
 	}
 	UNREACHABLE();
 	return false;
@@ -1826,7 +1822,7 @@ append_str(const char *text, int len, char **p, char *end) {
 
 static isc_result_t
 reverse_octets(const char *in, char **p, char *end) {
-	char *dot = strchr(in, '.');
+	const char *dot = strchr(in, '.');
 	int len;
 	if (dot != NULL) {
 		isc_result_t result;

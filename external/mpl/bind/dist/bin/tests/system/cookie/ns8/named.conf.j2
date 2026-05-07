@@ -28,12 +28,11 @@ options {
 	pid-file "named.pid";
 	listen-on { 10.53.0.8; };
 	listen-on-v6 { none; };
-	dnssec-validation yes;
+	dnssec-validation no;
 	rate-limit {};
 	require-server-cookie yes;
 };
 
-trust-anchors { };
 
 server 10.53.0.7 { require-cookie yes; };
 

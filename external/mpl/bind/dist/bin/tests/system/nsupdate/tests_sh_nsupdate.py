@@ -13,8 +13,6 @@ import platform
 
 import pytest
 
-import isctest.mark
-
 pytestmark = pytest.mark.extra_artifacts(
     [
         "Kxxx*",
@@ -80,6 +78,6 @@ pytestmark = pytest.mark.extra_artifacts(
 MAX_RUNS = 2 if platform.system() == "FreeBSD" else 1  # GL#3846
 
 
-@isctest.mark.flaky(max_runs=MAX_RUNS)
+@pytest.mark.flaky(max_runs=MAX_RUNS)
 def test_nsupdate(run_tests_sh):
     run_tests_sh()

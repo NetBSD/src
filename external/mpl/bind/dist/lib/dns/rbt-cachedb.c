@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-cachedb.c,v 1.4 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: rbt-cachedb.c,v 1.4.2.1 2026/05/07 16:18:38 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,13 +65,6 @@
 
 #include "db_p.h"
 #include "rbtdb_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 /*%
  * Whether to rate-limit updating the LRU to avoid possible thread contention.

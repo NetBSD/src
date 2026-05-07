@@ -22,11 +22,9 @@ msg_peer_verification_failed=";; TLS peer certificate verification"
 
 ca_file="./CA/CA.pem"
 
-if [ -x "$PYTHON" ]; then
-  OPENSSL_VERSION=$("$PYTHON" "$TOP_SRCDIR/bin/tests/system/doth/get_openssl_version.py")
-  OPENSSL_VERSION_MAJOR=$(echo "$OPENSSL_VERSION" | cut -d ' ' -f 1)
-  OPENSSL_VERSION_MINOR=$(echo "$OPENSSL_VERSION" | cut -d ' ' -f 2)
-fi
+OPENSSL_VERSION=$("$PYTHON" "$TOP_SRCDIR/bin/tests/system/doth/get_openssl_version.py")
+OPENSSL_VERSION_MAJOR=$(echo "$OPENSSL_VERSION" | cut -d ' ' -f 1)
+OPENSSL_VERSION_MINOR=$(echo "$OPENSSL_VERSION" | cut -d ' ' -f 2)
 
 # According to the RFC 8310, Section 8.1, Subject field MUST
 # NOT be inspected when verifying a hostname when using
@@ -43,12 +41,10 @@ fi
 # On the platforms with too old TLS versions, e.g. RedHat 7, we should
 # ignore the tests checking the correct handling of absence of
 # SubjectAltName.
-if [ -n "$OPENSSL_VERSION" ]; then
-  if [ $OPENSSL_VERSION_MAJOR -gt 1 ]; then
-    run_san_tests=1
-  elif [ $OPENSSL_VERSION_MAJOR -eq 1 ] && [ $OPENSSL_VERSION_MINOR -ge 1 ]; then
-    run_san_tests=1
-  fi
+if [ $OPENSSL_VERSION_MAJOR -gt 1 ]; then
+  run_san_tests=1
+elif [ $OPENSSL_VERSION_MAJOR -eq 1 ] && [ $OPENSSL_VERSION_MINOR -ge 1 ]; then
+  run_san_tests=1
 fi
 
 dig_with_tls_opts() {
@@ -843,11 +839,7 @@ test_opcodes FORMERR 4 5
 n=$((n + 1))
 echo_i "checking server quotas for both encrypted and unencrypted HTTP ($n)"
 ret=0
-if [ -x "$PYTHON" ]; then
-  BINDHOST="10.53.0.1" "$PYTHON" "$TOP_SRCDIR/bin/tests/system/doth/stress_http_quota.py" || ret=$?
-else
-  echo_i "Python is not available. Skipping the test..."
-fi
+BINDHOST="10.53.0.1" "$PYTHON" "$TOP_SRCDIR/bin/tests/system/doth/stress_http_quota.py" || ret=$?
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

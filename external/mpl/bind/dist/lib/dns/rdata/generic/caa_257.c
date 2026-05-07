@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.c,v 1.10 2025/01/26 16:25:30 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.10.2.1 2026/05/07 16:18:43 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -500,9 +500,7 @@ tostruct_caa(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->length >= 3U);
 	REQUIRE(rdata->data != NULL);
 
-	caa->common.rdclass = rdata->rdclass;
-	caa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&caa->common, link);
+	DNS_RDATACOMMON_INIT(caa, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 
