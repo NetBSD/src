@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_64_cas.c,v 1.2 2014/02/18 12:23:07 martin Exp $	*/
+/*	$NetBSD: atomic_cas_64_cas.c,v 1.2.52.1 2026/05/07 18:21:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,14 +36,17 @@
 
 #ifdef __HAVE_ATOMIC64_OPS
 
-bool bool_compare_and_swap_8(volatile uint64_t *, uint64_t, uint64_t, ...)
+bool bool_compare_and_swap_8(volatile int64_t *, int64_t, int64_t, ...)
     asm("__sync_bool_compare_and_swap_8");
 
 bool
-bool_compare_and_swap_8(volatile uint64_t *addr, uint64_t oldval,
-	uint64_t newval, ...)
+bool_compare_and_swap_8(volatile int64_t *addr, int64_t oldval,
+	int64_t newval, ...)
 {
-	return atomic_cas_64(addr, oldval, newval) == oldval;
+	const uint64_t oldv = (uint64_t)oldval;
+	const uint64_t newv = (uint64_t)newval;
+
+	return atomic_cas_64((volatile uint64_t *)addr, oldv, newv) == oldv;
 }
 
 #endif

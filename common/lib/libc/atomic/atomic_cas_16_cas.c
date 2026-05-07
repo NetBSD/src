@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_cas_16_cas.c,v 1.3 2014/02/21 16:06:48 martin Exp $	*/
+/*	$NetBSD: atomic_cas_16_cas.c,v 1.3.50.1 2026/05/07 18:21:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,12 +36,27 @@
 #endif
 #include <sys/atomic.h>
 
-bool bool_compare_and_swap_2(volatile uint16_t *, uint16_t, uint16_t, ...)
+bool bool_compare_and_swap_2(volatile int16_t *, int16_t, int16_t, ...)
     asm("__sync_bool_compare_and_swap_2");
 
 bool
-bool_compare_and_swap_2(volatile uint16_t *addr, uint16_t oldval,
-	uint16_t newval, ...)
+bool_compare_and_swap_2(volatile int16_t *addr, int16_t oldval,
+	int16_t newval, ...)
 {
-	return atomic_cas_16(addr, oldval, newval) == oldval;
+	const uint16_t oldv = (uint16_t)oldval;
+	const uint16_t newv = (uint16_t)newval;
+
+	return atomic_cas_16((volatile uint16_t *)addr, oldv, newv) == oldv;
+}
+
+int16_t sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+    asm("__sync_val_compare_and_swap_2");
+
+int16_t
+sync_val_compare_and_swap_2(volatile int16_t *addr, int16_t old, int16_t new)
+{
+	const uint16_t oldv = (uint16_t)old;
+	const uint16_t newv = (uint16_t)new;
+
+	return _atomic_cas_16((volatile uint16_t *)addr, oldv, newv);
 }

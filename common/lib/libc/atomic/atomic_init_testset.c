@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_init_testset.c,v 1.19 2024/01/21 03:42:08 thorpej Exp $	*/
+/*	$NetBSD: atomic_init_testset.c,v 1.19.4.1 2026/05/07 18:21:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: atomic_init_testset.c,v 1.19 2024/01/21 03:42:08 thorpej Exp $");
+__RCSID("$NetBSD: atomic_init_testset.c,v 1.19.4.1 2026/05/07 18:21:15 martin Exp $");
 
 #include "extern.h"
 #include "atomic_op_namespace.h"
@@ -353,8 +353,19 @@ __strong_alias(_atomic_cas_ptr_ni,_atomic_cas_32)
 #ifdef	__HAVE_ATOMIC_CAS_64_UP
 atomic_op_alias(atomic_cas_64_ni,_atomic_cas_64)
 __strong_alias(_atomic_cas_64_ni,_atomic_cas_64)
-crt_alias(__sync_val_compare_and_swap_8,_atomic_cas_64)
+
+int64_t sync_val_compare_and_swap_8(volatile int64_t *addr, int64_t old, int64_t new)
+    asm("__sync_val_compare_and_swap_8");
+
+int64_t
+sync_val_compare_and_swap_8(volatile int64_t *addr, int64_t old, int64_t new)
+{
+	const uint64_t oldv = (uint64_t)old;
+	const uint64_t newv = (uint64_t)new;
+
+	return _atomic_cas_64((volatile uint64_t *)addr, oldv, newv);
+}
+
 #endif
 crt_alias(__sync_val_compare_and_swap_4,_atomic_cas_32)
-crt_alias(__sync_val_compare_and_swap_2,_atomic_cas_16)
-crt_alias(__sync_val_compare_and_swap_1,_atomic_cas_8)
+
