@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.63 2026/05/07 04:06:38 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.64 2026/05/07 04:29:08 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.63 2026/05/07 04:06:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.64 2026/05/07 04:29:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -379,6 +379,13 @@ static struct evcnt pmap_nkstpages_current_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nkstpages", "current");
 EVCNT_ATTACH_STATIC(pmap_nkstpages_initial_ev);
 EVCNT_ATTACH_STATIC(pmap_nkstpages_current_ev);
+
+static struct evcnt pmap_nptpages_current_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nptpages", "current");
+static struct evcnt pmap_nptpages_hiwat_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap nptpages", "hiwat");
+EVCNT_ATTACH_STATIC(pmap_nptpages_current_ev);
+EVCNT_ATTACH_STATIC(pmap_nptpages_hiwat_ev);
 
 static struct evcnt pmap_maxkva_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap", "maxkva");
@@ -693,6 +700,15 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 		LIST_INSERT_HEAD(&ptp->ptp_freelist, pt, pt_freelist);
 	}
 
+#ifdef PMAP_EVENT_COUNTERS
+	pmap_nptpages_current_ev.ev_count32++;
+	if (pmap_nptpages_current_ev.ev_count32 >
+	    pmap_nptpages_hiwat_ev.ev_count32) {
+		pmap_nptpages_hiwat_ev.ev_count32 =
+		    pmap_nptpages_current_ev.ev_count32;
+	}
+#endif
+
 	return ptp;
 }
 
@@ -706,6 +722,10 @@ pmap_ptpage_free(struct pmap_ptpage *ptp)
 	uvm_km_free(kernel_map, m68k_ptob(ptp->ptp_vpagenum), PAGE_SIZE,
 		    UVM_KMF_WIRED);
 	kmem_free(ptp, size);
+
+#ifdef PMAP_EVENT_COUNTERS
+	pmap_nptpages_current_ev.ev_count32--;
+#endif
 }
 
 static struct pool pmap_pool;
