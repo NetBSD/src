@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2126.2.3 2026/04/02 16:33:42 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.2126.2.4 2026/05/07 14:19:51 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1459,8 +1459,8 @@ Location:	external/bsd/tradcpp
 Notes:
 
 Package:	tz
-Version:	tzcode2025b / tzdata2026agtz
-Current Vers:	tzcode2026a / tzdata2026a
+Version:	tzcode2025b / tzdata2026bgtz
+Current Vers:	tzcode2026b / tzdata2026b
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
