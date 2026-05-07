@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2126.2.7 2026/05/07 17:51:12 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.2126.2.8 2026/05/07 18:06:42 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1131,12 +1131,12 @@ markus is very cooperative about it):
 - LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
-Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.1
+Version:	1.0.2o/1.1.1t/3.0.16/3.5.6
+Current Vers:	1.0.2zm/1.1.1zd/3.0.20/3.2.6/3.3.7/3.4.5/3.5.6/3.6.2/4.0.0
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-07-16
+Date:		2026-04-14
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
