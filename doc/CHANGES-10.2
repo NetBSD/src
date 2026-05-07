@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.94 2026/04/04 06:02:47 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.95 2026/05/07 17:32:57 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -2127,4 +2127,210 @@ sys/stand/efiboot/version			1.34 (patch)
 
 	arm: PR 60069: fix EFI boot for some firmware.
 	[skrll, ticket #1252]
+
+external/mit/ctwm/libexec/ctwm_app_menu		1.7
+
+	ctwm_app_menu: PR 59958: rewrite largely in awk for ~20-100x speedup.
+	[nia, ticket #1253]
+
+sys/arch/arm/sunxi/sunxi_drm.c			1.28
+sys/arch/arm/sunxi/sunxi_drm.c			1.29
+sys/arch/arm/sunxi/sunxi_drm.h			1.4
+sys/arch/arm/sunxi/sunxi_lcdc.c			1.16
+sys/arch/arm/sunxi/sunxi_mixer.c		1.20
+sys/arch/arm/sunxi/sunxi_mixer.c		1.21
+sys/dev/i2c/anxedp.c				1.10
+
+	evbarm: impelemnt the drm atomic interface for Allwinner DE2
+	(basically, the 64-bit SoCs).
+	[jmcneill, ticket #1254]
+
+xsrc/external/mit/xorg-server/dist/SECURITY.md       up to 1.1.1.1
+xsrc/external/mit/xorg-server/dist/COPYING           up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.32
+xsrc/external/mit/xorg-server/dist/Makefile.am       up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/Makefile.in       up to 1.1.1.20
+xsrc/external/mit/xorg-server/dist/aclocal.m4        up to 1.1.1.25
+xsrc/external/mit/xorg-server/dist/config.guess      up to 1.1.1.19
+xsrc/external/mit/xorg-server/dist/config.sub        up to 1.1.1.19
+xsrc/external/mit/xorg-server/dist/configure         up to 1.25
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.27
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.22
+xsrc/external/mit/xorg-server/dist/Xext/xf86bigfont.c up to 1.3
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c    up to 1.8
+xsrc/external/mit/xorg-server/dist/dix/events.c      up to 1.10
+xsrc/external/mit/xorg-server/dist/dix/gc.c          up to 1.1.1.9
+xsrc/external/mit/xorg-server/dist/glamor/glamor.c   up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/glamor/glamor_core.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/glamor/glamor_dash.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/glamor/glamor_egl.c up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/glamor/glamor_largepixmap.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/glamor/glamor_render.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/hw/xfree86/loader/loadmod.c up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/hw/xfree86/modes/xf86Crtc.h up to 1.3
+xsrc/external/mit/xorg-server/dist/hw/xfree86/os-support/linux/lnx_video.c up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/hw/xquartz/bundle/Info.plist.cpp up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/include/do-not-use-config.h.in up to 1.1.1.18
+xsrc/external/mit/xorg-server/dist/miext/rootless/rootlessCommon.h up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/miext/rootless/rootlessScreen.c up to 1.1.1.10
+xsrc/external/mit/xorg-server/dist/miext/sync/misync.c up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/os/connection.c   up to 1.10
+xsrc/external/mit/xorg-server/dist/os/ospoll.c       up to 1.1.1.3
+xsrc/external/mit/xorg-server/dist/os/utils.c        up to 1.15
+xsrc/external/mit/xorg-server/dist/os/xsha1.c        up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/randr/rroutput.c  up to 1.1.1.7
+xsrc/external/mit/xorg-server/dist/render/picture.c  up to 1.1.1.11
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c         up to 1.13
+xsrc/external/mit/xorg-server/dist/xkb/xkbActions.c  up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/xkb/xkbUtils.c    up to 1.1.1.10
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.58
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.28
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.38
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.38
+share/mk/bsd.x11.mk					(apply patch)
+
+	Import xorg-server 21.1.22 to fix these CVE/ZDI-CANs:
+	CVE-2026-33999, ZDI-CAN-28593
+	CVE-2026-34000, ZDI-CAN-28679
+	CVE-2026-34001, ZDI-CAN-28706 
+	CVE-2026-34002, ZDI-CAN-28737
+	CVE-2026-34003, ZDI-CAN-28736
+	[mrg, ticket #1255]
+
+xsrc/external/mit/libXpm/dist/doc/README.AMIGA       delete
+xsrc/external/mit/libXpm/dist/doc/README.MSW         delete
+xsrc/external/mit/libXpm/dist/src/amigax.c           delete
+xsrc/external/mit/libXpm/dist/src/amigax.h           delete
+xsrc/external/mit/libXpm/dist/src/rgbtab.h           delete
+xsrc/external/mit/libXpm/dist/src/simx.c             delete
+xsrc/external/mit/libXpm/dist/src/simx.h             delete
+xsrc/external/mit/libXpm/dist/ChangeLog              up to 1.1.1.12
+xsrc/external/mit/libXpm/dist/Makefile.in            up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/aclocal.m4             up to 1.1.1.12
+xsrc/external/mit/libXpm/dist/compile                up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/config.guess           up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/config.h.in            up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/config.sub             up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/configure              up to 1.1.1.12
+xsrc/external/mit/libXpm/dist/configure.ac           up to 1.1.1.12
+xsrc/external/mit/libXpm/dist/depcomp                up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/install-sh             up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/ltmain.sh              up to 1.1.1.12
+xsrc/external/mit/libXpm/dist/missing                up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/tap-driver.sh          up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/test-driver            up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/cxpm/Makefile.in       up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/doc/Makefile.am        up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/doc/Makefile.in        up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/include/Makefile.in    up to 1.1.1.9
+xsrc/external/mit/libXpm/dist/include/X11/xpm.h      up to 1.1.1.5
+xsrc/external/mit/libXpm/dist/m4/libtool.m4          up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/m4/ltoptions.m4        up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/m4/ltsugar.m4          up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/m4/ltversion.m4        up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/m4/lt~obsolete.m4      up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/man/Makefile.in        up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/man/XpmCreateBuffer.man up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmCreateData.man  up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmCreateImage.man up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmCreatePixmap.man up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmCreateXpmImage.man up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmMisc.man        up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmRead.man        up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/XpmWrite.man       up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/cxpm.man           up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/man/sxpm.man           up to 1.1.1.2
+xsrc/external/mit/libXpm/dist/src/CrBufFrI.c         up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/src/CrDatFrI.c         up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/Makefile.am        up to 1.1.1.4
+xsrc/external/mit/libXpm/dist/src/Makefile.in        up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/src/RdFToBuf.c         up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/src/RdFToI.c           up to 1.1.1.8
+xsrc/external/mit/libXpm/dist/src/WrFFrI.c           up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/src/XpmI.h             up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/create.c           up to 1.8
+xsrc/external/mit/libXpm/dist/src/data.c             up to 1.1.1.7
+xsrc/external/mit/libXpm/dist/src/misc.c             up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/src/parse.c            up to 1.1.1.10
+xsrc/external/mit/libXpm/dist/src/rgb.c              up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/src/scan.c             up to 1.1.1.6
+xsrc/external/mit/libXpm/dist/sxpm/Makefile.in       up to 1.1.1.11
+xsrc/external/mit/libXpm/dist/test/Makefile.in       up to 1.1.1.3
+xsrc/external/mit/libXpm/dist/test/XpmWrite.c        up to 1.1.1.4
+xsrc/external/mit/libXpm/dist/test/pixmaps/good/chromesphere.xpm up to 1.1.1.2
+
+	libXpm: apply upstream fixes for CVE-2026-4367.
+	[mrg, ticket #1256]
+
+sys/arch/evbarm/conf/GENERIC64			1.232
+sys/dev/mii/micphy.c				1.16,1.17
+
+	arm: PR 60193: fix olimex a64 ethernet.
+	[nia, ticket #1257]
+
+sys/arch/vax/vsa/dz_vsbus.c			1.49
+
+	vax: dz(4): restore dz_print() to print line number of children.
+	[hans, ticket #1258]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_KbdMap.c 1.15
+
+	xf86-input-keyboard: fix DEC LK201 layout.
+	[hans, ticket #1259]
+
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_KbdMap.c 1.16
+xsrc/external/mit/xf86-input-keyboard/dist/src/bsd_kbd.c 1.23
+
+	xf86-input-keyboard: add DEC LK401 keyboard map and WSKBD_TYPE_LK401.
+	[hans, ticket #1260]
+
+sys/dev/dec/dzkbd.c				1.34
+
+	vax: dzkbd: set the keyboard type according to what was auto-detected.
+	[hans, ticket #1261]
+
+sys/opencrypto/aesxcbcmac.c			1.4
+sys/opencrypto/aesxcbcmac.h			1.3
+sys/opencrypto/crypto.c				1.132,1.133
+sys/opencrypto/cryptodev.c			1.127,1.128
+sys/opencrypto/cryptodev.h			1.52,1.53
+sys/opencrypto/cryptodev_internal.h		1.4
+sys/opencrypto/cryptosoft.c			1.66
+sys/opencrypto/cryptosoft.h			1.8
+sys/opencrypto/cryptosoft_xform.c		1.31
+sys/opencrypto/deflate.c			1.24,1.25
+sys/opencrypto/deflate.h			1.10
+sys/opencrypto/ocryptodev.c			1.18
+sys/opencrypto/ocryptodev.h			1.5,1.6
+sys/opencrypto/xform.c				1.32
+sys/opencrypto/xform.h				1.22
+
+	opencrypto(9): fix an integer wraparound bug, data sharing and
+	locking issues.
+	[christos, ticket #1262]
+
+sys/dev/pci/ahcisata_pci.c			1.73
+
+	ahcisata(4): disable NCQ for VIA VT8251 integrated SATA controller.
+	[andvar, ticket #1263]
+
+sys/arch/x68k/x68k/disksubr.c			1.38
+usr.sbin/sysinst/arch/x68k/md.c			1.14
+
+	sysinst(8): PR 59600: fix x68k default disk label detection.
+	x68k: initialize d_bbsize and d_sbsize on the disklabel always.
+	[isaki, ticket #1264]
+
+libexec/httpd/CHANGES				1.57
+libexec/httpd/auth-bozo.c			1.29
+libexec/httpd/bozohttpd.8			1.101
+libexec/httpd/bozohttpd.c			1.150-1.152
+libexec/httpd/bozohttpd.h			1.74
+libexec/httpd/daemon-bozo.c			1.23
+libexec/httpd/lua-bozo.c			1.16
+libexec/httpd/ssl-bozo.c			1.35-1.37
+
+	bozohttpd(8): PR 59644, PR 58878: various fixes.
+	Call this bozohttpd 20260503.
+	[mrg, ticket #1265]
 
