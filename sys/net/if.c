@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.535 2025/06/12 10:23:43 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.535.2.1 2026/05/07 18:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.535 2025/06/12 10:23:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.535.2.1 2026/05/07 18:17:32 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -734,8 +734,7 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_broadcastaddr = 0; /* reliably crash if used uninitialized */
 
 	ifp->if_link_state = LINK_STATE_UNKNOWN;
-	ifp->if_link_queue = -1; /* all bits set, see link_state_change() */
-	ifp->if_link_scheduled = false;
+	ifp->if_link_queue = 0;
 
 	ifp->if_capenable = 0;
 	ifp->if_csum_flags_tx = 0;
@@ -1339,15 +1338,13 @@ if_detach(struct ifnet *ifp)
 	IFNET_LOCK(ifp);
 
 	/*
-	 * Unset all queued link states and pretend a
-	 * link state change is scheduled.
+	 * Lock the link queue.
 	 * This stops any more link state changes occurring for this
 	 * interface while it's being detached so it's safe
 	 * to drain the workqueue.
 	 */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
-	ifp->if_link_queue = -1; /* all bits set, see link_state_change() */
-	ifp->if_link_scheduled = true;
+	ifp->if_link_queue = LINK_QUEUE_LOCKED;
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 	workqueue_wait(ifnet_link_state_wq, &ifp->if_link_work);
 
@@ -2209,117 +2206,58 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 }
 
 /*
- * bitmask macros to manage a densely packed link_state change queue.
- * Because we need to store LINK_STATE_UNKNOWN(0), LINK_STATE_DOWN(1) and
- * LINK_STATE_UP(2) we need 2 bits for each state change.
- * As a state change to store is 0, treat all bits set as an unset item.
- */
-#define LQ_ITEM_BITS		2
-#define LQ_ITEM_MASK		((1 << LQ_ITEM_BITS) - 1)
-#define LQ_MASK(i)		(LQ_ITEM_MASK << (i) * LQ_ITEM_BITS)
-#define LINK_STATE_UNSET	LQ_ITEM_MASK
-#define LQ_ITEM(q, i)		(((q) & LQ_MASK((i))) >> (i) * LQ_ITEM_BITS)
-#define LQ_STORE(q, i, v)						      \
-	do {								      \
-		(q) &= ~LQ_MASK((i));					      \
-		(q) |= (v) << (i) * LQ_ITEM_BITS;			      \
-	} while (0 /* CONSTCOND */)
-#define LQ_MAX(q)		((sizeof((q)) * NBBY) / LQ_ITEM_BITS)
-#define LQ_POP(q, v)							      \
-	do {								      \
-		(v) = LQ_ITEM((q), 0);					      \
-		(q) >>= LQ_ITEM_BITS;					      \
-		(q) |= LINK_STATE_UNSET << (LQ_MAX((q)) - 1) * LQ_ITEM_BITS;  \
-	} while (0 /* CONSTCOND */)
-#define LQ_PUSH(q, v)							      \
-	do {								      \
-		(q) >>= LQ_ITEM_BITS;					      \
-		(q) |= (v) << (LQ_MAX((q)) - 1) * LQ_ITEM_BITS;		      \
-	} while (0 /* CONSTCOND */)
-#define LQ_FIND_UNSET(q, i)						      \
-	for ((i) = 0; i < LQ_MAX((q)); (i)++) {				      \
-		if (LQ_ITEM((q), (i)) == LINK_STATE_UNSET)		      \
-			break;						      \
-	}
-
-/*
  * Handle a change in the interface link state and
  * queue notifications.
  */
 void
 if_link_state_change(struct ifnet *ifp, int link_state)
 {
-	int idx;
+	uint16_t queue;
 
-	/* Ensure change is to a valid state */
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
+
+	if (ifp->if_link_queue & LINK_QUEUE_LOCKED)
+		goto out;
+
+	/*
+	 * The logic is simple.
+	 * DOWN will remove any existing states and will be processed first.
+	 * UNKNOWN will remove the UP state and will be processed after DOWN.
+	 * UP will be processed last.
+	 * So if an interface link state flaps fast, userland will be kept in
+	 * sane state with minimal notifications.
+	 */
+	queue = ifp->if_link_queue;
 	switch (link_state) {
-	case LINK_STATE_UNKNOWN:	/* FALLTHROUGH */
-	case LINK_STATE_DOWN:		/* FALLTHROUGH */
+	case LINK_STATE_UNKNOWN:
+		/* cannot be UP */
+		queue &= ~LINK_QUEUE_UP;
+		queue |= LINK_QUEUE_UNKNOWN;
+		break;
+	case LINK_STATE_DOWN:
+		/* cannot be UNKNOWN or UP */
+		queue &= ~(LINK_QUEUE_UNKNOWN | LINK_QUEUE_UP);
+		queue |= LINK_QUEUE_DOWN;
+		break;
 	case LINK_STATE_UP:
+		queue |= LINK_QUEUE_UP;
 		break;
 	default:
 #ifdef DEBUG
 		printf("%s: invalid link state %d\n",
 		    ifp->if_xname, link_state);
 #endif
-		return;
+		goto out;
 	}
 
-	IF_LINK_STATE_CHANGE_LOCK(ifp);
-
-	/* Find the last unset event in the queue. */
-	LQ_FIND_UNSET(ifp->if_link_queue, idx);
-
-	if (idx == 0) {
-		/*
-		 * There is no queue of link state changes.
-		 * As we have the lock we can safely compare against the
-		 * current link state and return if the same.
-		 * Otherwise, if scheduled is true then the interface is being
-		 * detached and the queue is being drained so we need
-		 * to avoid queuing more work.
-		 */
-		 if (ifp->if_link_state == link_state ||
-		     ifp->if_link_scheduled)
-			goto out;
-	} else {
-		/* Ensure link_state doesn't match the last queued state. */
-		if (LQ_ITEM(ifp->if_link_queue, idx - 1)
-		    == (uint8_t)link_state)
-			goto out;
-	}
-
-	/* Handle queue overflow. */
-	if (idx == LQ_MAX(ifp->if_link_queue)) {
-		uint8_t lost;
-
-		/*
-		 * The DOWN state must be protected from being pushed off
-		 * the queue to ensure that userland will always be
-		 * in a sane state.
-		 * Because DOWN is protected, there is no need to protect
-		 * UNKNOWN.
-		 * It should be invalid to change from any other state to
-		 * UNKNOWN anyway ...
-		 */
-		lost = LQ_ITEM(ifp->if_link_queue, 0);
-		LQ_PUSH(ifp->if_link_queue, (uint8_t)link_state);
-		if (lost == LINK_STATE_DOWN) {
-			lost = LQ_ITEM(ifp->if_link_queue, 0);
-			LQ_STORE(ifp->if_link_queue, 0, LINK_STATE_DOWN);
-		}
-		printf("%s: lost link state change %s\n",
-		    ifp->if_xname,
-		    lost == LINK_STATE_UP ? "UP" :
-		    lost == LINK_STATE_DOWN ? "DOWN" :
-		    "UNKNOWN");
-	} else
-		LQ_STORE(ifp->if_link_queue, idx, (uint8_t)link_state);
-
-	if (ifp->if_link_scheduled)
+	if (ifp->if_link_queue == queue)
 		goto out;
 
-	ifp->if_link_scheduled = true;
+	ifp->if_link_queue = queue;
+	if (ifp->if_link_queue & LINK_QUEUE_SCHEDULED)
+		goto out;
+
+	ifp->if_link_queue |= LINK_QUEUE_SCHEDULED;
 	workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work, NULL);
 
 out:
@@ -2407,16 +2345,31 @@ if_link_state_change_work(struct work *work, void *arg)
 	const int s = splnet();
 
 	/*
-	 * Pop a link state change from the queue and process it.
-	 * If there is nothing to process then if_detach() has been called.
-	 * We keep if_link_scheduled = true so the queue can safely drain
-	 * without more work being queued.
+	 * Process a single link state in order of precedence:
+	 *     DOWN, UNKNOWN and finally UP.
+	 * If locked, abort.
 	 */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
-	LQ_POP(ifp->if_link_queue, state);
-	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
-	if (state == LINK_STATE_UNSET)
+	ifp->if_link_queue &= ~LINK_QUEUE_SCHEDULED;
+	if (ifp->if_link_queue & LINK_QUEUE_LOCKED)
 		goto out;
+	else if (ifp->if_link_queue & LINK_QUEUE_DOWN) {
+		ifp->if_link_queue &= ~LINK_QUEUE_DOWN;
+		state = LINK_STATE_DOWN;
+	} else if (ifp->if_link_queue & LINK_QUEUE_UNKNOWN) {
+		ifp->if_link_queue &= ~LINK_QUEUE_UNKNOWN;
+		state = LINK_STATE_UNKNOWN;
+	} else if (ifp->if_link_queue & LINK_QUEUE_UP) {
+		ifp->if_link_queue &= ~LINK_QUEUE_UP;
+		state = LINK_STATE_UP;
+	} else {
+#ifdef DEBUG
+		printf("%s: unknown link queue %u\n",
+		    ifp->if_xname, ifp->if_link_queue);
+#endif
+		goto out;
+	}
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 
 	IFNET_LOCK(ifp);
 	if_link_state_change_process(ifp, state);
@@ -2424,15 +2377,15 @@ if_link_state_change_work(struct work *work, void *arg)
 
 	/* If there is a link state change to come, schedule it. */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
-	if (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET) {
-		ifp->if_link_scheduled = true;
-		workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work,
-		    NULL);
-	} else
-		ifp->if_link_scheduled = false;
-	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+	if (ifp->if_link_queue == 0 ||
+	    (ifp->if_link_queue & (LINK_QUEUE_LOCKED | LINK_QUEUE_SCHEDULED)))
+		goto out;
+
+	ifp->if_link_queue |= LINK_QUEUE_SCHEDULED;
+	workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work, NULL);
 
 out:
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 	splx(s);
 	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
