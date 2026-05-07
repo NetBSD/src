@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.147 2025/01/31 22:08:18 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.147.2.1 2026/05/07 15:43:05 martin Exp $	*/
 
 /* Convert timestamp from time_t to struct tm.  */
 
@@ -12,7 +12,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.147 2025/01/31 22:08:18 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.147.2.1 2026/05/07 15:43:05 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -206,7 +206,17 @@ typedef int_fast64_t __time_t;
    longer than 254 bytes.  There is little reason to do that, though,
    as strings that long are hardly "abbreviations".  */
 #ifndef TZNAME_MAXIMUM
-# define TZNAME_MAXIMUM 254
+# ifdef	_TZNAME_MAXIMUM
+#  if _TZNAME_MAXIMUM < 254
+#    define TZNAME_MAXIMUM 254		/* No reason to ever make this < 254 */
+#  else
+#    define TZNAME_MAXIMUM _TZNAME_MAXIMUM
+#  endif
+# else
+#  define TZNAME_MAXIMUM 254
+# endif
+#elif defined(_TZNAME_MAXIMUM) && TZNAME_MAXIMUM < _TZNAME_MAXIMUM
+# error TZNAME_MAXIMUM too small (see _TZNAME_MAXIMUM in <time.h>)
 #endif
 
 #if TZNAME_MAXIMUM < UCHAR_MAX

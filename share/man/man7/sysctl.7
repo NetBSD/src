@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.167.4.1 2026/04/02 16:05:56 martin Exp $
+.\"	$NetBSD: sysctl.7,v 1.167.4.2 2026/05/07 15:43:05 martin Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -2552,8 +2552,8 @@ permitted when using interval notation.
 The minimum maximum number of streams that a process may have open
 at any one time.
 .It Li user.tzname_max ( Dv USER_TZNAME_MAX )
-The minimum maximum number of types supported for the name of a
-timezone.
+The minimum maximum number of bytes supported for the name of a
+timezone (that is, a timezone abbreviation).
 .El
 .Ss The vm.* subtree ( Dv CTL_VM )
 The string and integer information available for the
