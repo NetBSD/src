@@ -1,9 +1,9 @@
-/*	$NetBSD: bozohttpd.c,v 1.149 2025/06/27 21:36:22 andvar Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.149.2.1 2026/05/07 15:51:07 martin Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2024 Matthew R. Green
+ * Copyright (c) 1997-2026 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -108,7 +108,7 @@
 #define INDEX_HTML		"index.html"
 #endif
 #ifndef SERVER_SOFTWARE
-#define SERVER_SOFTWARE		"bozohttpd/20240428"
+#define SERVER_SOFTWARE		"bozohttpd/20260503"
 #endif
 #ifndef PUBLIC_HTML
 #define PUBLIC_HTML		"public_html"
@@ -1341,9 +1341,9 @@ check_virtual(bozo_httpreq_t *request)
 		if ((s = strchr(request->hr_host, '/')) != NULL)
 			*s = '\0';
 		s = strchr(file, '/');
+		request->hr_file = bozostrdup(httpd, request, s ? s : "/");
 		free(request->hr_file_free);
-		request->hr_file_free = request->hr_file =
-		    bozostrdup(httpd, request, s ? s : "/");
+		request->hr_file_free = request->hr_file;
 		debug((httpd, DEBUG_OBESE, "got host '%s' file is now '%s'",
 		    request->hr_host, request->hr_file));
 	} else if (!request->hr_host)
@@ -2514,6 +2514,9 @@ bozo_init_httpd(bozohttpd_t *httpd)
 
 	/* mmap region size */
 	httpd->mmapsz = BOZO_MMAPSZ;
+
+	/* default bind port */
+	httpd->defbindport = BOZO_HTTP_PORT;
 
 	/* error buffer for bozo_http_error() */
 	if ((httpd->errorbuf = malloc(BOZO_MINBUFSIZE)) == NULL) {

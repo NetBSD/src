@@ -1,9 +1,9 @@
-/*	$NetBSD: ssl-bozo.c,v 1.34 2023/12/18 03:48:57 riastradh Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.34.4.1 2026/05/07 15:51:07 martin Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
 /*
- * Copyright (c) 1997-2023 Matthew R. Green
+ * Copyright (c) 1997-2026 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -93,10 +93,10 @@ bozo_ssl_proto(const char *name)
 	unsigned i;
 
 	if (name)
-		for (i = 0; protos[0].proto != 0; i++)
+		for (i = 0; protos[i].proto != 0; i++)
 			if (strcasecmp(name, protos[i].name) == 0)
 				return protos[i].proto;
-	return protos[0].proto;
+	return TLS1_1_VERSION;
 }
 
 static const char *
@@ -104,7 +104,7 @@ bozo_ssl_name(unsigned version)
 {
 	unsigned i;
 
-	for (i = 0; protos[0].proto != 0; i++)
+	for (i = 0; protos[i].proto != 0; i++)
 		if (version == protos[i].proto)
 			return protos[i].name;
 	return protos[0].name;
@@ -367,8 +367,7 @@ bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
 	    sslinfo->certificate_file,
 	    sslinfo->privatekey_file));
-	if (!httpd->bindport)
-		httpd->bindport = bozostrdup(httpd, NULL, BOZO_HTTPS_PORT);
+	httpd->defbindport = BOZO_HTTPS_PORT;
 }
 
 void
