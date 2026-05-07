@@ -297,11 +297,11 @@ scanint(char *str, int *intp)
 
     while ((ch = *str++) != '\0')
     {
-	if (isdigit(ch))
+	if (isdigit((unsigned char)ch))
 	{
 	    val = val * 10 + (ch - '0');
 	}
-	else if (isspace(ch))
+	else if (isspace((unsigned char)ch))
 	{
 	    break;
 	}
@@ -372,7 +372,7 @@ kill_procs(char *str)
     uid = getuid();
 
     /* skip over leading white space */
-    while (isspace((int)*str)) str++;
+    while (isspace((unsigned char)*str)) str++;
 
     if (str[0] == '-')
     {
@@ -384,7 +384,7 @@ kill_procs(char *str)
 	}
 
 	str++;
-	if (isdigit((int)str[0]))
+	if (isdigit((unsigned char)str[0]))
 	{
 	    (void) scanint(str, &signum);
 	    if (signum <= 0 || signum >= NSIG)
