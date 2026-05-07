@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.332.2.1 2025/10/01 17:21:19 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.332.2.2 2026/05/07 18:13:20 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.332.2.1 2025/10/01 17:21:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.332.2.2 2026/05/07 18:13:20 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3836,6 +3836,20 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
+
+	/*
+	 * Workaround SB600 first address-0 control transfer failure after
+	 * cold boot.  Reload ASYNCLISTADDR after linking the qTD chan so
+	 * the controller resumes walking the asyn list properly.
+	 * See PR/57359 for details.
+	 */
+	if ((sc->sc_flags & EHCIF_SB600_ASYNCLIST_RELOAD) != 0 &&
+	    epipe->pipe.up_dev->ud_addr == 0) {
+		sc->sc_flags &= ~EHCIF_SB600_ASYNCLIST_RELOAD;
+		EOWRITE4(sc, EHCI_ASYNCLISTADDR,
+		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
+	}
+
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	usbd_xfer_schedule_timeout(xfer);
