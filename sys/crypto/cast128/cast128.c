@@ -1,4 +1,4 @@
-/*	$NetBSD: cast128.c,v 1.10 2014/01/01 15:18:57 pgoyette Exp $	*/
+/*	$NetBSD: cast128.c,v 1.11 2026/05/07 22:16:04 gutteridge Exp $	*/
 /*      $OpenBSD: cast.c,v 1.2 2000/06/06 06:49:47 deraadt Exp $       */
 
 /*
@@ -9,7 +9,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.10 2014/01/01 15:18:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cast128.c,v 1.11 2026/05/07 22:16:04 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <sys/errno.h>
@@ -134,7 +134,7 @@ u_int32_t t, l, r;
 }
 
 
-/***** Key Schedual *****/
+/***** Key Schedule *****/
 
 void cast128_setkey(cast128_key* key, const u_int8_t* rawkey, int keybytes)
 {
