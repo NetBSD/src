@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.152 2026/05/03 21:52:14 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.153 2026/05/07 13:38:54 shm Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1326,6 +1326,7 @@ check_virtual(bozo_httpreq_t *request)
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *file = request->hr_file, *s;
 	size_t len;
+	int allocated = 0, rc;
 
 	/*
 	 * convert http://virtual.host/ to request->hr_host
@@ -1413,6 +1414,7 @@ check_virtual(bozo_httpreq_t *request)
 					bozoasprintf(httpd, &s, "%s/%s",
 					    httpd->virtbase,
 					    request->hr_virthostname);
+					allocated = 1;
 					break;
 				}
 			}
@@ -1435,7 +1437,12 @@ use_slashdir:
 	/*
 	 * ok, nailed the correct slashdir, chdir to it
 	 */
-	if (chdir(s) < 0)
+	rc = chdir(s);
+
+	if (allocated != 0)
+		free(s);
+
+	if (rc < 0)
 		return bozo_http_error(httpd, 404, request,
 					"can't chdir to slashdir");
 
