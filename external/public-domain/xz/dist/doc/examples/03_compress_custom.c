@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       03_compress_custom.c
@@ -8,9 +10,6 @@
 /// Example:    ./03_compress_custom < foo > foo.xz
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -46,7 +45,7 @@ init_encoder(lzma_stream *strm)
 	}
 
 	// Now we could customize the LZMA2 options if we wanted. For example,
-	// we could set the the dictionary size (opt_lzma2.dict_size) to
+	// we could set the dictionary size (opt_lzma2.dict_size) to
 	// something else than the default (8 MiB) of the default preset.
 	// See lzma/lzma12.h for details of all LZMA2 options.
 	//

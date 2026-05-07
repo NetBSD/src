@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       xzdec.c
 /// \brief      Simple single-threaded tool to uncompress .xz or .lzma files
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -15,16 +14,38 @@
 
 #include <stdarg.h>
 #include <errno.h>
+#include <locale.h>
 #include <stdio.h>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#	include <unistd.h>
+#endif
+
+#ifdef HAVE_CAP_RIGHTS_LIMIT
+#	include <sys/capsicum.h>
+#endif
+
+#ifdef HAVE_LINUX_LANDLOCK
+#	include "my_landlock.h"
+#endif
+
+#if defined(HAVE_CAP_RIGHTS_LIMIT) || defined(HAVE_PLEDGE) \
+		|| defined(HAVE_LINUX_LANDLOCK)
+#	define ENABLE_SANDBOX 1
+#endif
 
 #include "getopt.h"
 #include "tuklib_progname.h"
+#include "tuklib_mbstr_nonprint.h"
 #include "tuklib_exit.h"
 
 #ifdef TUKLIB_DOSLIKE
 #	include <fcntl.h>
 #	include <io.h>
+#	ifdef _MSC_VER
+#		define fileno _fileno
+#		define setmode _setmode
+#	endif
 #endif
 
 
@@ -37,10 +58,11 @@
 
 /// Error messages are suppressed if this is zero, which is the case when
 /// --quiet has been given at least twice.
-static unsigned int display_errors = 2;
+static int display_errors = 2;
 
 
-static void lzma_attribute((__format__(__printf__, 1, 2)))
+lzma_attribute((__format__(__printf__, 1, 2)))
+static void
 my_errorf(const char *fmt, ...)
 {
 	va_list ap;
@@ -57,7 +79,8 @@ my_errorf(const char *fmt, ...)
 }
 
 
-static void lzma_attribute((__noreturn__))
+tuklib_attr_noreturn
+static void
 help(void)
 {
 	printf(
@@ -81,7 +104,8 @@ PACKAGE_NAME " home page: <" PACKAGE_URL ">\n", progname);
 }
 
 
-static void lzma_attribute((__noreturn__))
+tuklib_attr_noreturn
+static void
 version(void)
 {
 	printf(TOOL_FORMAT "dec (" PACKAGE_NAME ") " LZMA_VERSION_STRING "\n"
@@ -95,7 +119,7 @@ version(void)
 static void
 parse_options(int argc, char **argv)
 {
-	static const char short_opts[] = "cdkM:hqQV";
+	static const char short_opts[] = "cdkhqQV";
 	static const struct option long_opts[] = {
 		{ "stdout",       no_argument,         NULL, 'c' },
 		{ "to-stdout",    no_argument,         NULL, 'c' },
@@ -180,7 +204,8 @@ uncompress(lzma_stream *strm, FILE *file, const char *filename)
 				// an error occurred. ferror() doesn't
 				// touch errno.
 				my_errorf("%s: Error reading input file: %s",
-						filename, strerror(errno));
+					tuklib_mask_nonprint(filename),
+					strerror(errno));
 				exit(EXIT_FAILURE);
 			}
 
@@ -205,8 +230,17 @@ uncompress(lzma_stream *strm, FILE *file, const char *filename)
 				// Wouldn't be a surprise if writing to stderr
 				// would fail too but at least try to show an
 				// error message.
-				my_errorf("Cannot write to standard output: "
+#if defined(_WIN32) && !defined(__CYGWIN__)
+				// On native Windows, broken pipe is reported
+				// as EINVAL. Don't show an error message
+				// in this case.
+				if (errno != EINVAL)
+#endif
+				{
+					my_errorf("Cannot write to "
+						"standard output: "
 						"%s", strerror(errno));
+				}
 				exit(EXIT_FAILURE);
 			}
 
@@ -263,18 +297,130 @@ uncompress(lzma_stream *strm, FILE *file, const char *filename)
 				break;
 			}
 
-			my_errorf("%s: %s", filename, msg);
+			my_errorf("%s: %s", tuklib_mask_nonprint(filename),
+					msg);
 			exit(EXIT_FAILURE);
 		}
 	}
 }
 
 
+#ifdef ENABLE_SANDBOX
+static void
+sandbox_enter(int src_fd)
+{
+#if defined(HAVE_CAP_RIGHTS_LIMIT)
+	// Capsicum needs FreeBSD 10.2 or later.
+	cap_rights_t rights;
+
+	if (cap_enter())
+		goto error;
+
+	if (cap_rights_limit(src_fd, cap_rights_init(&rights, CAP_READ)))
+		goto error;
+
+	// If not reading from stdin, remove all capabilities from it.
+	if (src_fd != STDIN_FILENO && cap_rights_limit(
+			STDIN_FILENO, cap_rights_init(&rights)))
+		goto error;
+
+	if (cap_rights_limit(STDOUT_FILENO, cap_rights_init(&rights,
+			CAP_WRITE)))
+		goto error;
+
+	if (cap_rights_limit(STDERR_FILENO, cap_rights_init(&rights,
+			CAP_WRITE)))
+		goto error;
+
+#elif defined(HAVE_PLEDGE)
+	// pledge() was introduced in OpenBSD 5.9.
+	if (pledge("stdio", ""))
+		goto error;
+
+	(void)src_fd;
+
+#elif defined(HAVE_LINUX_LANDLOCK)
+	struct landlock_ruleset_attr attr;
+	if (my_landlock_ruleset_attr_forbid_all(&attr) > 0) {
+		const int ruleset_fd = my_landlock_create_ruleset(
+				&attr, sizeof(attr), 0);
+		if (ruleset_fd < 0)
+			goto error;
+
+		// All files we need should have already been opened. Thus,
+		// we don't need to add any rules using landlock_add_rule(2)
+		// before activating the sandbox.
+		if (my_landlock_restrict_self(ruleset_fd, 0) != 0)
+			goto error;
+
+		(void)close(ruleset_fd);
+	}
+
+	(void)src_fd;
+
+#else
+#	error ENABLE_SANDBOX is defined but no sandboxing method was found.
+#endif
+
+	return;
+
+error:
+#ifdef HAVE_CAP_RIGHTS_LIMIT
+	// If a kernel is configured without capability mode support or
+	// used in an emulator that does not implement the capability
+	// system calls, then the Capsicum system calls will fail and set
+	// errno to ENOSYS. In that case xzdec will silently run without
+	// the sandbox.
+	if (errno == ENOSYS)
+		return;
+#endif
+
+	my_errorf("Failed to enable the sandbox");
+	exit(EXIT_FAILURE);
+}
+#endif
+
+
 int
 main(int argc, char **argv)
 {
-	// Initialize progname which we will be used in error messages.
+	// Initialize progname which will be used in error messages.
 	tuklib_progname_init(argv);
+
+#ifdef HAVE_PLEDGE
+	// OpenBSD's pledge(2) sandbox.
+	// Initially enable the sandbox slightly more relaxed so that
+	// the process can still open files. This allows the sandbox to
+	// be enabled when parsing command line arguments and decompressing
+	// all files (the more strict sandbox only restricts the last file
+	// that is decompressed).
+	if (pledge("stdio rpath", "")) {
+		my_errorf("Failed to enable the sandbox");
+		exit(EXIT_FAILURE);
+	}
+#endif
+
+#ifdef HAVE_LINUX_LANDLOCK
+	// Prevent the process from gaining new privileges. This must be done
+	// before landlock_restrict_self(2) but since we will never need new
+	// privileges, this call can be done here already.
+	//
+	// This is supported since Linux 3.5. Ignore the return value to
+	// keep compatibility with old kernels. landlock_restrict_self(2)
+	// will fail if the no_new_privs attribute isn't set, thus if prctl()
+	// fails here the error will still be detected when it matters.
+	(void)prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+#endif
+
+	// We need to set the locale even though we don't have any
+	// translated messages:
+	//
+	//   - tuklib_mask_nonprint() has locale-specific behavior (LC_CTYPE).
+	//
+	//   - This is needed on Windows to make non-ASCII filenames display
+	//     properly when the active code page has been set to UTF-8
+	//     in the application manifest.
+	setlocale(LC_ALL, "");
 
 	// Parse the command line options.
 	parse_options(argc, argv);
@@ -292,24 +438,44 @@ main(int argc, char **argv)
 
 	if (optind == argc) {
 		// No filenames given, decode from stdin.
+#ifdef ENABLE_SANDBOX
+		sandbox_enter(STDIN_FILENO);
+#endif
 		uncompress(&strm, stdin, "(stdin)");
 	} else {
 		// Loop through the filenames given on the command line.
 		do {
+			FILE *src_file;
+			const char *src_name;
+
 			// "-" indicates stdin.
 			if (strcmp(argv[optind], "-") == 0) {
-				uncompress(&strm, stdin, "(stdin)");
+				src_file = stdin;
+				src_name = "(stdin)";
 			} else {
-				FILE *file = fopen(argv[optind], "rb");
-				if (file == NULL) {
-					my_errorf("%s: %s", argv[optind],
-							strerror(errno));
+				src_name = argv[optind];
+				src_file = fopen(src_name, "rb");
+				if (src_file == NULL) {
+					my_errorf("%s: %s",
+						tuklib_mask_nonprint(
+							src_name),
+						strerror(errno));
 					exit(EXIT_FAILURE);
 				}
-
-				uncompress(&strm, file, argv[optind]);
-				fclose(file);
 			}
+#ifdef ENABLE_SANDBOX
+			// Enable the strict sandbox for the last file.
+			// Then the process can no longer open additional
+			// files. The typical xzdec use case is to decompress
+			// a single file so this way the strictest sandboxing
+			// is used in most cases.
+			if (optind == argc - 1)
+				sandbox_enter(fileno(src_file));
+#endif
+			uncompress(&strm, src_file, src_name);
+
+			if (src_file != stdin)
+				(void)fclose(src_file);
 		} while (++optind < argc);
 	}
 

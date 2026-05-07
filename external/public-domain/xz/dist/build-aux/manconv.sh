@@ -1,5 +1,6 @@
 #!/bin/sh
-#
+# SPDX-License-Identifier: 0BSD
+
 ###############################################################################
 #
 # Wrapper for GNU groff to convert man pages to a few formats
@@ -16,9 +17,6 @@
 ###############################################################################
 #
 # Author: Lasse Collin
-#
-# This file has been put into the public domain.
-# You can do whatever you want with this file.
 #
 ###############################################################################
 
@@ -38,18 +36,18 @@ s/^\\.PD\$/.PD $PD/"
 
 case $FORMAT in
 	ascii)
-		groff -t -mandoc -Tascii | col -bx
+		groff -t -mandoc -Tascii -P-c | col -bx
 		;;
 	utf8)
-		groff -t -mandoc -Tutf8 | col -bx
+		groff -t -mandoc -Tutf8 -P-c | col -bx
 		;;
 	ps)
-		sed "$SED_PD" | groff -dpaper=$PAPER -t -mandoc \
-				-rC1 -rS$FONT -Tps -P-p$PAPER
+		sed "$SED_PD" | groff -dpaper="$PAPER" -t -mandoc \
+				-rC1 -rS"$FONT" -Tps -P-p"$PAPER"
 		;;
 	pdf)
-		sed "$SED_PD" | groff -dpaper=$PAPER -t -mandoc \
-				-rC1 -rS$FONT -Tps -P-p$PAPER | ps2pdf - -
+		sed "$SED_PD" | groff -dpaper="$PAPER" -t -mandoc \
+				-rC1 -rS"$FONT" -Tps -P-p"$PAPER" | ps2pdf - -
 		;;
 	*)
 		echo 'Invalid arguments' >&2

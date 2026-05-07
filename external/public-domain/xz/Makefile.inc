@@ -1,9 +1,9 @@
-# $NetBSD: Makefile.inc,v 1.6 2019/01/27 04:34:35 dholland Exp $
+# $NetBSD: Makefile.inc,v 1.6.14.1 2026/05/07 17:41:21 martin Exp $
 
 .include <bsd.own.mk>
 
 XZHOMEPAGE=	http://tukaani.org/xz/
-XZVERSION=	5.2.4
+XZVERSION=	5.8.3
 
 XZSRCDIR:=	${.PARSEDIR}/dist
 .if defined(HOSTLIB) || defined(HOSTPROG)
