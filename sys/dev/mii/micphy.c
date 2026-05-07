@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.15 2022/10/31 22:45:13 jmcneill Exp $	*/
+/*	$NetBSD: micphy.c,v 1.15.2.1 2026/05/07 13:55:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.15 2022/10/31 22:45:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.15.2.1 2026/05/07 13:55:44 martin Exp $");
 
 #include "opt_mii.h"
 
@@ -208,9 +208,24 @@ micphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = model;
+	sc->mii_mpd_rev = rev;
 	sc->mii_funcs = &micphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
+
+	if (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ9031) {
+		/*
+		 * KSZ9031MNX errata, Module 1:
+		 *
+		 * "Do not enable the Asymmetric Pause capability bit.
+		 * If this bit is enabled, a second link-up attempt is
+		 * required to establish link."
+		 * https://ww1.microchip.com/downloads/aemDocuments/documents/OTH/ProductDocuments/Errata/80000691D.pdf
+		 */
+		sc->mii_flags = ma->mii_flags & ~MIIF_DOPAUSE;
+	}
 
 	if ((sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8041)
 	    || (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8041RNLI)
