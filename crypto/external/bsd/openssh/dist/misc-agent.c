@@ -1,5 +1,5 @@
-/*	$NetBSD: misc-agent.c,v 1.2.2.2 2026/02/02 18:08:00 martin Exp $	*/
-/* $OpenBSD: misc-agent.c,v 1.6 2025/06/17 01:19:27 djm Exp $ */
+/*	$NetBSD: misc-agent.c,v 1.2.2.3 2026/05/07 17:49:24 martin Exp $	*/
+/* $OpenBSD: misc-agent.c,v 1.7 2026/02/11 17:05:32 dtucker Exp $ */
 
 /*
  * Copyright (c) 2025 Damien Miller <djm@mindrot.org>
@@ -18,7 +18,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc-agent.c,v 1.2.2.2 2026/02/02 18:08:00 martin Exp $");
+__RCSID("$NetBSD: misc-agent.c,v 1.2.2.3 2026/05/07 17:49:24 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: misc-agent.c,v 1.2.2.2 2026/02/02 18:08:00 martin Exp $");
 #include <netdb.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "digest.h"

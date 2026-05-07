@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.32.2.1 2026/02/02 18:07:59 martin Exp $	*/
-/* $OpenBSD: log.c,v 1.65 2025/09/02 09:34:48 djm Exp $ */
+/*	$NetBSD: log.c,v 1.32.2.2 2026/05/07 17:49:24 martin Exp $	*/
+/* $OpenBSD: log.c,v 1.67 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.32.2.1 2026/02/02 18:07:59 martin Exp $");
+__RCSID("$NetBSD: log.c,v 1.32.2.2 2026/05/07 17:49:24 martin Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: log.c,v 1.32.2.1 2026/02/02 18:07:59 martin Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 
@@ -380,7 +379,8 @@ do_log(LogLevel level, int force, const char *suffix, const char *fmt,
 		/* Avoid recursion */
 		tmp_handler = log_handler;
 		log_handler = NULL;
-		tmp_handler(level, force, visbuf, log_handler_ctx);
+		/* Note: this sends the raw (i.e. no strnvis) log message */
+		tmp_handler(level, force, msgbuf, log_handler_ctx);
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
 		snprintf(msgbuf, sizeof msgbuf, "%s%s%.*s\r\n",

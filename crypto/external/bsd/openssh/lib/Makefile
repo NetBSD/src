@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.42.2.2 2026/02/02 18:08:03 martin Exp $
+#	$NetBSD: Makefile,v 1.42.2.3 2026/05/07 17:49:29 martin Exp $
 
 # libssh is not meant for applications to link against -- it's a
 # private library of the ssh/sshd/&c. executables we ship.  So don't
-# install compat versions (we don't ship ssh/sshd/&c. as compat
-# executables, only as native ones) or expose the .so symlink or .a
-# static library for applications to link against.
+# expose the .so symlink or .a static library for applications to link
+# against.
+#
+# (We do, however, build compat libssh intentionally for other ABIs --
+# not because other-ABI applications might be linked against it, but
+# because other-ABI applications might _load_ other-ABI pam_ssh.so
+# which is legitimately linked against the private libssh.)
 #
 # Note that while NOLINKLIB suppresses _installing_ the .so symlink,
 # the .so symlink is still created in the objdir so bin/ssh can still
@@ -39,7 +43,6 @@ dns.c \
 ed25519.c \
 fatal.c \
 freezero.c \
-hash.c \
 hmac.c \
 hostfile.c \
 kex.c \
@@ -72,6 +75,7 @@ sshbuf-misc.c \
 sshbuf-io.c \
 sshbuf.c \
 ssherr.c \
+ssherr-libcrypto.c \
 sshkey.c \
 ttymodes.c \
 uidswap.c \
@@ -136,6 +140,7 @@ COPTS.sshbuf-getput-crypto.c+=	-Wno-error=deprecated-declarations
 COPTS.sshkey.c+=	-Wno-error=deprecated-declarations
 COPTS.umac.c+=		-Wno-error=deprecated-declarations
 COPTS.umac128.c+=	-Wno-error=deprecated-declarations
+COPTS.ssherr-libcrypto.c+=	-Wno-error=deprecated-declarations
 COPTS.kexmlkem768x25519.c+=${${ACTIVE_CC} == "clang":? -Wno-error=missing-noreturn:}
 
 

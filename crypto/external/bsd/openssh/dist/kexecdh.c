@@ -1,5 +1,5 @@
-/*	$NetBSD: kexecdh.c,v 1.8.14.1 2026/02/02 18:07:59 martin Exp $	*/
-/* $OpenBSD: kexecdh.c,v 1.11 2025/10/03 00:08:02 djm Exp $ */
+/*	$NetBSD: kexecdh.c,v 1.8.14.2 2026/05/07 17:49:23 martin Exp $	*/
+/* $OpenBSD: kexecdh.c,v 1.12 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2010 Damien Miller.  All rights reserved.
@@ -27,11 +27,10 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexecdh.c,v 1.8.14.1 2026/02/02 18:07:59 martin Exp $");
+__RCSID("$NetBSD: kexecdh.c,v 1.8.14.2 2026/05/07 17:49:23 martin Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
-#include <string.h>
 #include <signal.h>
 
 #include <openssl/bn.h>
@@ -40,7 +39,6 @@ __RCSID("$NetBSD: kexecdh.c,v 1.8.14.1 2026/02/02 18:07:59 martin Exp $");
 #include "sshkey.h"
 #include "kex.h"
 #include "sshbuf.h"
-#include "digest.h"
 #include "ssherr.h"
 
 static int

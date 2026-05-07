@@ -147,7 +147,8 @@ cleanhostname
 compat_banner
 compat_kex_proposal
 compression_alg_list
-crypto_hash_sha512
+connection_info_message
+convtime_double
 crypto_int16_optblocker
 crypto_int32_optblocker
 crypto_int64_optblocker
@@ -339,6 +340,7 @@ ssh_addr_match_cidr_list
 ssh_addr_match_list
 ssh_agent_bind_hostkey
 ssh_agent_has_key
+ssh_agent_query_extensions
 ssh_agent_sign
 ssh_alloc_session_state
 ssh_asmprintf
@@ -547,6 +549,7 @@ sshbuf_check_reserve
 sshbuf_cmp
 sshbuf_consume
 sshbuf_consume_end
+sshbuf_consume_upto_child
 sshbuf_dtob16
 sshbuf_dtob64
 sshbuf_dtob64_string
@@ -566,6 +569,7 @@ sshbuf_get_bignum2_bytes_direct
 sshbuf_get_cstring
 sshbuf_get_ec
 sshbuf_get_eckey
+sshbuf_get_nulterminated_string
 sshbuf_get_string
 sshbuf_get_string_direct
 sshbuf_get_stringb
@@ -614,6 +618,7 @@ sshbuf_reset
 sshbuf_set_max_size
 sshbuf_set_parent
 sshbuf_write_file
+ssherr_libcrypto
 sshfatal
 sshkey_advance_past_options
 sshkey_alg_list
@@ -653,6 +658,7 @@ sshkey_ecdsa_nistp521_impl
 sshkey_ecdsa_pkey_to_nid
 sshkey_ecdsa_sk_cert_impl
 sshkey_ecdsa_sk_impl
+sshkey_ecdsa_sk_webauthn_cert_impl
 sshkey_ecdsa_sk_webauthn_impl
 sshkey_ed25519_cert_impl
 sshkey_ed25519_funcs
@@ -774,6 +780,8 @@ sshsk_sign
 start_progress_meter
 stop_progress_meter
 strdelimw
+stringlist_append
+stringlist_free
 strprefix
 subprocess
 temporarily_use_uid

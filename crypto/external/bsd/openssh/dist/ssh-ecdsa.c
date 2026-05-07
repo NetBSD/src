@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-ecdsa.c,v 1.16.2.1 2026/02/02 18:08:01 martin Exp $	*/
-/* $OpenBSD: ssh-ecdsa.c,v 1.28 2025/07/24 05:44:55 djm Exp $ */
+/*	$NetBSD: ssh-ecdsa.c,v 1.16.2.2 2026/05/07 17:49:25 martin Exp $	*/
+/* $OpenBSD: ssh-ecdsa.c,v 1.29 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-ecdsa.c,v 1.16.2.1 2026/02/02 18:08:01 martin Exp $");
+__RCSID("$NetBSD: ssh-ecdsa.c,v 1.16.2.2 2026/05/07 17:49:25 martin Exp $");
 #include <sys/types.h>
 
 #include <openssl/bn.h>
@@ -39,7 +39,6 @@ __RCSID("$NetBSD: ssh-ecdsa.c,v 1.16.2.1 2026/02/02 18:08:01 martin Exp $");
 
 #include "sshbuf.h"
 #include "ssherr.h"
-#include "digest.h"
 #define SSHKEY_INTERNAL
 #include "sshkey.h"
 

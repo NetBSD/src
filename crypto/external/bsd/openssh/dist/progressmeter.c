@@ -1,5 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.16.2.1 2026/02/02 18:08:00 martin Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.56 2025/06/11 13:27:11 dtucker Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.16.2.2 2026/05/07 17:49:25 martin Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.57 2026/03/29 01:08:13 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.16.2.1 2026/02/02 18:08:00 martin Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.16.2.2 2026/05/07 17:49:25 martin Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -71,7 +71,7 @@ static off_t last_pos;
 static off_t max_delta_pos = 0;
 static volatile off_t *counter;	/* progress counter */
 static long stalled;		/* how long we have been stalled */
-static int bytes_per_second;	/* current speed in bytes per second */
+static long long bytes_per_second; /* current speed in bytes per second */
 static int win_size;		/* terminal window size */
 static volatile sig_atomic_t win_resized; /* for window resizing */
 static volatile sig_atomic_t alarm_fired;
@@ -132,7 +132,7 @@ refresh_progress_meter(int force_update)
 	double elapsed, now;
 	int percent;
 	off_t bytes_left;
-	int cur_speed;
+	long long cur_speed;
 	int hours, minutes, seconds;
 	int file_len, cols;
 	off_t delta_pos;

@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.c,v 1.24.2.1 2026/02/02 18:07:59 martin Exp $	*/
-/* $OpenBSD: cipher.c,v 1.125 2025/09/02 11:08:34 djm Exp $ */
+/*	$NetBSD: cipher.c,v 1.24.2.2 2026/05/07 17:49:23 martin Exp $	*/
+/* $OpenBSD: cipher.c,v 1.126 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: cipher.c,v 1.24.2.1 2026/02/02 18:07:59 martin Exp $");
+__RCSID("$NetBSD: cipher.c,v 1.24.2.2 2026/05/07 17:49:23 martin Exp $");
 #include <sys/types.h>
 
 #include <string.h>
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: cipher.c,v 1.24.2.1 2026/02/02 18:07:59 martin Exp $");
 #include "misc.h"
 #include "sshbuf.h"
 #include "ssherr.h"
-#include "digest.h"
 
 #ifndef WITH_OPENSSL
 #define EVP_CIPHER_CTX void

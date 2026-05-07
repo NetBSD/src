@@ -1,5 +1,5 @@
-/*	$NetBSD: rijndael.c,v 1.2 2018/04/06 18:59:00 christos Exp $	*/
-/*	$OpenBSD: rijndael.c,v 1.20 2015/03/16 11:09:52 djm Exp $ */
+/*	$NetBSD: rijndael.c,v 1.2.16.1 2026/05/07 17:49:25 martin Exp $	*/
+/*	$OpenBSD: rijndael.c,v 1.21 2026/02/11 17:05:32 dtucker Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -28,8 +28,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: rijndael.c,v 1.2 2018/04/06 18:59:00 christos Exp $");
+__RCSID("$NetBSD: rijndael.c,v 1.2.16.1 2026/05/07 17:49:25 martin Exp $");
 #include <sys/types.h>
+
+#include <stdlib.h>
+#include <string.h>
 
 #include "rijndael.h"
 

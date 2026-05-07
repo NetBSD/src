@@ -1,5 +1,5 @@
-/*	$NetBSD: authfile.c,v 1.29.2.1 2026/02/02 18:07:59 martin Exp $	*/
-/* $OpenBSD: authfile.c,v 1.147 2025/08/29 03:50:38 djm Exp $ */
+/*	$NetBSD: authfile.c,v 1.29.2.2 2026/05/07 17:49:22 martin Exp $	*/
+/* $OpenBSD: authfile.c,v 1.149 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
@@ -26,25 +26,20 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.29.2.1 2026/02/02 18:07:59 martin Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.29.2.2 2026/05/07 17:49:22 martin Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
-#include "cipher.h"
-#include "ssh.h"
 #include "log.h"
 #include "authfile.h"
-#include "misc.h"
-#include "atomicio.h"
 #include "sshkey.h"
 #include "sshbuf.h"
 #include "ssherr.h"

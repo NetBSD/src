@@ -1,5 +1,5 @@
-/*	$NetBSD: mac.c,v 1.16.12.1 2026/02/02 18:07:59 martin Exp $	*/
-/* $OpenBSD: mac.c,v 1.37 2025/09/05 10:01:35 dtucker Exp $ */
+/*	$NetBSD: mac.c,v 1.16.12.2 2026/05/07 17:49:24 martin Exp $	*/
+/* $OpenBSD: mac.c,v 1.38 2026/03/03 09:57:25 dtucker Exp $ */
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: mac.c,v 1.16.12.1 2026/02/02 18:07:59 martin Exp $");
+__RCSID("$NetBSD: mac.c,v 1.16.12.2 2026/05/07 17:49:24 martin Exp $");
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -152,13 +152,13 @@ mac_init(struct sshmac *mac)
 }
 
 int
-mac_compute(struct sshmac *mac, u_int32_t seqno,
+mac_compute(struct sshmac *mac, uint32_t seqno,
     const u_char *data, int datalen,
     u_char *digest, size_t dlen)
 {
 	static union {
 		u_char m[SSH_DIGEST_MAX_LENGTH];
-		u_int64_t for_align;
+		uint64_t for_align;
 	} u;
 	u_char b[4];
 	u_char nonce[8];
@@ -198,7 +198,7 @@ mac_compute(struct sshmac *mac, u_int32_t seqno,
 }
 
 int
-mac_check(struct sshmac *mac, u_int32_t seqno,
+mac_check(struct sshmac *mac, uint32_t seqno,
     const u_char *data, size_t dlen,
     const u_char *theirmac, size_t mlen)
 {
