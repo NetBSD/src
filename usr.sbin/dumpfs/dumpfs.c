@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpfs.c,v 1.70 2026/01/03 08:05:48 mlelstv Exp $	*/
+/*	$NetBSD: dumpfs.c,v 1.71 2026/05/07 20:32:11 kre Exp $	*/
 
 /*
  * Copyright (c) 1983, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)dumpfs.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: dumpfs.c,v 1.70 2026/01/03 08:05:48 mlelstv Exp $");
+__RCSID("$NetBSD: dumpfs.c,v 1.71 2026/05/07 20:32:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -66,6 +66,8 @@ __RCSID("$NetBSD: dumpfs.c,v 1.70 2026/01/03 08:05:48 mlelstv Exp $");
 #include <stddef.h>
 #include <unistd.h>
 #include <util.h>
+
+#include "partutil.h"
 
 static union fsun {
 	struct fs fs;
@@ -953,25 +955,9 @@ usage(void)
 static int
 openpartition(const char *name, int flags, char *device, size_t devicelen)
 {
-	char		rawspec[MAXPATHLEN], xbuf[MAXPATHLEN], *p;
-	struct fstab	*fs;
 	int		fd, oerrno;
 
-	fs = getfsfile(name);
-	if (fs) {
-		const char *fsspec;
-		fsspec = getfsspecname(xbuf, sizeof(xbuf), fs->fs_spec);
-		if (fsspec == NULL) {
-			warn("%s", xbuf);
-			return -1;
-		}
-		if ((p = strrchr(fsspec, '/')) != NULL) {
-			snprintf(rawspec, sizeof(rawspec), "%.*s/r%s",
-			    (int)(p - fsspec), fsspec, p + 1);
-			name = rawspec;
-		} else
-			name = fsspec;
-	}
+	name = findspecial(name, 1);
 	fd = opendisk(name, flags, device, devicelen, 0);
 	if (fd == -1 && errno == ENOENT) {
 		oerrno = errno;
