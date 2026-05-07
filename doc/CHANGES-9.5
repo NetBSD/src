@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.100 2026/04/02 18:04:31 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.101 2026/05/07 17:31:41 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1312,4 +1312,26 @@ sys/dev/pci/esm.c				1.67
 
 	esm(4): PR 59621: fix fallout from the device_t split.
 	[mlelstv, ticket #2007]
+
+xsrc/external/mit/xorg-server/dist/miext/sync/misync.c	(apply patch)
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c		(apply patch)
+
+	xorg-server: apply upstream security fixes for these CVE/ZDI-CANs:
+	CVE-2026-33999, ZDI-CAN-28593
+	CVE-2026-34000, ZDI-CAN-28679
+	CVE-2026-34001, ZDI-CAN-28706
+	CVE-2026-34002, ZDI-CAN-28737
+	CVE-2026-34003, ZDI-CAN-28736
+	[mrg, ticket #2008]
+
+xsrc/external/mit/libXpm/dist/src/data.c		(apply patch)
+xsrc/external/mit/libXpm/dist/src/parse.c		(apply patch)
+
+	libXpm: apply upstream security fix.
+	[mrg, ticket #2009]
+
+sys/dev/pci/ahcisata_pci.c			1.73
+
+	ahcisata(4): disable NCQ for VIA VT8251 integrated SATA controller.
+	[andvar, ticket #2011]
 
