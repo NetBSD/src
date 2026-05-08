@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.85 2026/05/07 18:23:40 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.86 2026/05/08 07:36:37 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -6325,7 +6325,6 @@ crypto/external/bsd/openssh/dist/moduli-gen/moduli.8192 up to 1.24
 crypto/external/bsd/openssh/lib/Makefile        up to 1.49
 crypto/external/bsd/openssh/lib/shlib_version   up to 1.42
 crypto/external/bsd/openssh/lib/ssh.expsym      up to 1.5
-crypto/external/bsd/openssh/libexec/Makefile    up to 1.4
 doc/3RDPARTY					(manually edited)
 
 	Update OpenSSH to 10.3.
@@ -9635,3 +9634,9 @@ tests/lib/libc/atomic/t___sync_compare_and_swap.c 1.4,1.5
 	bultins on armv5 (el & eb).
 	[skrll, ticket #279]
 
+distrib/sets/lists/base/shl.mi			(apply patch)
+distrib/sets/lists/comp/mi			(apply patch)
+distrib/sets/lists/debug/shl.mi			(apply patch)
+
+	Fix set lists after pullups for bind, xz, OpenSSH and OpenSSL.
+	[mrg, ticket #280]
