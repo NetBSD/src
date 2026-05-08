@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.496.2.1 2026/05/08 15:38:01 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.496 2022/10/26 23:39:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.496.2.1 2026/05/08 15:38:01 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1396,11 +1396,11 @@ VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
 	 * XXX Maybe the MPSAFE bit should be set in struct vfsops and
 	 * not in struct mount.
 	 */
-	if (mpsafe) {
+	if (!mpsafe) {
 		KERNEL_LOCK(1, NULL);
 	}
 	error = (*(mp->mnt_op->vfs_mount))(mp, a, b, c);
-	if (mpsafe) {
+	if (!mpsafe) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}
 
