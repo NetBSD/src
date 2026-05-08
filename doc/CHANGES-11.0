@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.87 2026/05/08 07:49:00 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.88 2026/05/08 19:49:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -9641,3 +9641,19 @@ distrib/sets/lists/debug/shl.mi			(apply patch)
 
 	Fix set lists after pullups for bind, xz, OpenSSH and OpenSSL.
 	[mrg, ticket #280]
+
+sys/kern/vfs_subr.c				1.503
+
+	PR 60240: fix sense of conditional for when to take the kernel
+	lock while mounting file systems: we need to take it for those
+	that are _not_ marked MP-safe.
+	[riastradh, ticket #281]
+
+libexec/httpd/CHANGES				1.58
+libexec/httpd/bozohttpd.8			1.102
+libexec/httpd/bozohttpd.c			1.153,1.154
+libexec/httpd/tilde-luzah-bozo.c		1.17
+
+	bozohttpd(8): two memory handling fixes and bump version.
+	[mrg, ticket #282]
+
