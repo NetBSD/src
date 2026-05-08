@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2497.2.5 2026/04/02 18:31:10 martin Exp $
+#	$NetBSD: mi,v 1.2497.2.6 2026/05/08 07:31:40 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5202,6 +5202,7 @@
 ./usr/share/man/cat3/BIO_s_socket.0		comp-c-catman		.cat
 ./usr/share/man/cat3/BIO_sendmmsg.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/BIO_set_callback.0		comp-c-catman		.cat
+./usr/share/man/cat3/BIO_set_flags.0		comp-c-catman		.cat
 ./usr/share/man/cat3/BIO_should_retry.0		comp-c-catman		.cat
 ./usr/share/man/cat3/BIO_socket_wait.0		comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/BIO_socket_wait.0	comp-c-catman	.cat,openssl=35
@@ -5255,6 +5256,7 @@
 ./usr/share/man/cat3/CMS_EncryptedData_decrypt.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/CMS_EncryptedData_encrypt.0	comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/CMS_EncryptedData_encrypt.0	comp-c-catman	.cat,openssl=35
+./usr/share/man/cat3/CMS_EncryptedData_set1_key.0	comp-c-catman		.cat
 ./usr/share/man/cat3/CMS_EnvelopedData_create.0		comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/CMS_EnvelopedData_create.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/CMS_add0_cert.0		comp-c-catman		.cat
@@ -5344,6 +5346,7 @@
 ./usr/share/man/cat3/EVP_ASYM_CIPHER_free.0	comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/EVP_ASYM_CIPHER_free.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/EVP_BytesToKey.0		comp-c-catman		.cat
+./usr/share/man/cat3/EVP_CIPHER_CTX_get_app_data.0	comp-c-catman	.cat
 ./usr/share/man/cat3/EVP_CIPHER_CTX_get_cipher_data.0	comp-c-catman	.cat
 ./usr/share/man/cat3/EVP_CIPHER_CTX_get_original_iv.0	comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/EVP_CIPHER_CTX_get_original_iv.0	comp-c-catman	.cat,openssl=35
@@ -5607,6 +5610,7 @@
 ./usr/share/man/cat3/OPENSSL_load_builtin_modules.0	comp-c-man		.cat
 ./usr/share/man/cat3/OPENSSL_load_u16_le.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/OPENSSL_malloc.0	comp-c-catman	.cat
+./usr/share/man/cat3/OPENSSL_ppccap.0	comp-c-catman	.cat
 ./usr/share/man/cat3/OPENSSL_riscvcap.0	comp-c-catman	.cat,openssl=35
 ./usr/share/man/cat3/OPENSSL_s390xcap.0		comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/OPENSSL_s390xcap.0	comp-c-catman	.cat,openssl=35
@@ -9717,6 +9721,9 @@
 ./usr/share/man/cat3/openpam_ttyconv.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/openpgpsdk.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/openpty.0			comp-c-catman		.cat
+./usr/share/man/cat3/openssl-DES_random_key.0	comp-c-catman		.cat
+./usr/share/man/cat3/openssl-HMAC.0		comp-c-catman		.cat
+./usr/share/man/cat3/openssl-MD5.0		comp-c-catman		.cat
 ./usr/share/man/cat3/openssl_HMAC.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/openssl_HMAC.0		comp-c-catman		.cat,openssl=30
 ./usr/share/man/cat3/openssl_MD2.0		comp-c-catman		.cat,openssl=11
@@ -14201,6 +14208,7 @@
 ./usr/share/man/html3/BIO_s_socket.html		comp-c-htmlman		html
 ./usr/share/man/html3/BIO_sendmmsg.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/BIO_set_callback.html	comp-c-htmlman		html
+./usr/share/man/html3/BIO_set_flags.html	comp-c-htmlman		html
 ./usr/share/man/html3/BIO_should_retry.html	comp-c-htmlman		html
 ./usr/share/man/html3/BIO_socket_wait.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/BIO_socket_wait.html	comp-c-htmlman	html,openssl=35
@@ -14254,6 +14262,7 @@
 ./usr/share/man/html3/CMS_EncryptedData_decrypt.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/CMS_EncryptedData_encrypt.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/CMS_EncryptedData_encrypt.html	comp-c-htmlman	html,openssl=35
+./usr/share/man/html3/CMS_EncryptedData_set1_key.html	comp-c-htmlman		html
 ./usr/share/man/html3/CMS_EnvelopedData_create.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/CMS_EnvelopedData_create.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/CMS_add0_cert.html	comp-c-htmlman	html
@@ -14346,6 +14355,7 @@
 ./usr/share/man/html3/EVP_ASYM_CIPHER_free.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/EVP_ASYM_CIPHER_free.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/EVP_BytesToKey.html	comp-c-htmlman	html
+./usr/share/man/html3/EVP_CIPHER_CTX_get_app_data.html	comp-c-htmlman		html
 ./usr/share/man/html3/EVP_CIPHER_CTX_get_cipher_data.html	comp-c-htmlman	html
 ./usr/share/man/html3/EVP_CIPHER_CTX_get_original_iv.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/EVP_CIPHER_CTX_get_original_iv.html	comp-c-htmlman	html,openssl=35
@@ -14609,6 +14619,7 @@
 ./usr/share/man/html3/OPENSSL_load_builtin_modules.html comp-c-htmlman		html
 ./usr/share/man/html3/OPENSSL_load_u16_le.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/OPENSSL_malloc.html	comp-c-htmlman		html
+./usr/share/man/html3/OPENSSL_ppccap.html	comp-c-htmlman		html
 ./usr/share/man/html3/OPENSSL_riscvcap.html	comp-c-htmlman	html,openssl=35
 ./usr/share/man/html3/OPENSSL_s390xcap.html	comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/OPENSSL_s390xcap.html	comp-c-htmlman	html,openssl=35
@@ -18644,6 +18655,9 @@
 ./usr/share/man/html3/openpam_ttyconv.html	comp-c-htmlman		html,pam
 ./usr/share/man/html3/openpgpsdk.html		comp-obsolete		obsolete
 ./usr/share/man/html3/openpty.html		comp-c-htmlman		html
+./usr/share/man/html3/openssl-DES_random_key.html	comp-c-htmlman		html
+./usr/share/man/html3/openssl-HMAC.html		comp-c-htmlman		html
+./usr/share/man/html3/openssl-MD5.html		comp-c-htmlman		html
 ./usr/share/man/html3/openssl_HMAC.html		comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/openssl_HMAC.html		comp-c-htmlman		html,openssl=30
 ./usr/share/man/html3/openssl_MD2.html		comp-c-htmlman		html,openssl=11
@@ -23047,6 +23061,7 @@
 ./usr/share/man/man3/BIO_s_socket.3		comp-c-man		.man
 ./usr/share/man/man3/BIO_sendmmsg.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/BIO_set_callback.3		comp-c-man		.man
+./usr/share/man/man3/BIO_set_flags.3		comp-c-man		.man
 ./usr/share/man/man3/BIO_should_retry.3		comp-c-man		.man
 ./usr/share/man/man3/BIO_socket_wait.3		comp-c-man		.man,openssl=30
 ./usr/share/man/man3/BIO_socket_wait.3	comp-c-man	.man,openssl=35
@@ -23100,6 +23115,7 @@
 ./usr/share/man/man3/CMS_EncryptedData_decrypt.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/CMS_EncryptedData_encrypt.3	comp-c-man		.man,openssl=30
 ./usr/share/man/man3/CMS_EncryptedData_encrypt.3	comp-c-man	.man,openssl=35
+./usr/share/man/man3/CMS_EncryptedData_set1_key.3		comp-c-man		.man
 ./usr/share/man/man3/CMS_EnvelopedData_create.3	comp-c-man		.man,openssl=30
 ./usr/share/man/man3/CMS_EnvelopedData_create.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/CMS_add0_cert.3			comp-c-man	.man
@@ -23192,6 +23208,7 @@
 ./usr/share/man/man3/EVP_ASYM_CIPHER_free.3	comp-c-man		.man,openssl=30
 ./usr/share/man/man3/EVP_ASYM_CIPHER_free.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/EVP_BytesToKey.3		comp-c-man		.man
+./usr/share/man/man3/EVP_CIPHER_CTX_get_app_data.3	comp-c-man	.man
 ./usr/share/man/man3/EVP_CIPHER_CTX_get_cipher_data.3	comp-c-man	.man
 ./usr/share/man/man3/EVP_CIPHER_CTX_get_original_iv.3	comp-c-man		.man,openssl=30
 ./usr/share/man/man3/EVP_CIPHER_CTX_get_original_iv.3	comp-c-man	.man,openssl=35
@@ -23456,6 +23473,7 @@
 ./usr/share/man/man3/OPENSSL_load_builtin_modules.3	comp-c-man		.man
 ./usr/share/man/man3/OPENSSL_load_u16_le.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/OPENSSL_malloc.3	comp-c-man	.man
+./usr/share/man/man3/OPENSSL_ppccap.3	comp-c-man	.man
 ./usr/share/man/man3/OPENSSL_riscvcap.3	comp-c-man	.man,openssl=35
 ./usr/share/man/man3/OPENSSL_s390xcap.3		comp-c-man		.man,openssl=30
 ./usr/share/man/man3/OPENSSL_s390xcap.3	comp-c-man	.man,openssl=35
@@ -27586,6 +27604,9 @@
 ./usr/share/man/man3/openpam_ttyconv.3		comp-c-man		.man,pam
 ./usr/share/man/man3/openpgpsdk.3		comp-obsolete		obsolete
 ./usr/share/man/man3/openpty.3			comp-c-man		.man
+./usr/share/man/man3/openssl-DES_random_key.3	comp-c-man		.man
+./usr/share/man/man3/openssl-HMAC.3		comp-c-man		.man
+./usr/share/man/man3/openssl-MD5.3		comp-c-man		.man
 ./usr/share/man/man3/openssl_HMAC.3		comp-c-man		.man,openssl=11
 ./usr/share/man/man3/openssl_HMAC.3		comp-c-man		.man,openssl=30
 ./usr/share/man/man3/openssl_MD2.3		comp-c-man		.man,openssl=11
