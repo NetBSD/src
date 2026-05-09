@@ -1,4 +1,4 @@
-/*	$NetBSD: abounce.c,v 1.1.1.6 2025/02/25 19:11:42 christos Exp $	*/
+/*	$NetBSD: abounce.c,v 1.1.1.7 2026/05/09 18:39:17 christos Exp $	*/
 
 /*++
 /* NAME
@@ -262,7 +262,7 @@ static void abounce_done(ABOUNCE_STATE *ap, int status)
 	msg_info("%s: status=deferred (%s failed)", ap->id,
 		 ap->command == BOUNCE_CMD_FLUSH ? "bounce" :
 		 ap->command == BOUNCE_CMD_WARN ? "delay warning" :
-		 ap->command == BOUNCE_CMD_VERP ? "verp" :
+		 ap->command == BOUNCE_CMD_VERP ? "verp-bounce" :
 		 ap->command == BOUNCE_CMD_TRACE ? "trace" :
 		 "whatever");
     ap->callback(status, ap->context);

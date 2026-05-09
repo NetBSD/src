@@ -1,0 +1,239 @@
+#!/bin/sh
+#	$NetBSD: postfix-non-bdb-script,v 1.1.1.1 2026/05/09 18:39:09 christos Exp $
+#
+
+#++
+# NAME
+#	postfix-non-bdb 1
+# SUMMARY
+#	Postfix non-Berkeley-DB migration
+# SYNOPSIS
+#	\fBpostfix non-bdb\fR \fIsubcommand\fR
+# DESCRIPTION
+#	The "\fBpostfix non-bdb \fIsubcommand\fR" feature edits main.cf
+#	and master.cf, to manage the migration of an existing Postfix
+#	configuration that uses Berkeley DB type "hash:" or "btree:"
+#	tables (which are no longer supported on some OS distributions),
+#	to supported types such as "cdb:" or "lmdb:".
+#
+#	The following subcommands are available:
+# .IP \fBstatus\fR
+#	Reports the non-Berkeley-DB migration status, without making
+#	any changes.
+# .IP \fBdisable\fR
+#	Edits main.cf and master.cf, to turn off the \fBenable-redirect\fR
+#	and \fBenable-reindex\fR features.
+# .sp
+#	This will break integration with other software such as
+#	mailman versions from before May 2025 when they want to
+#	use "postmap hash:/path/to/file", for example, to update a
+#	mailman-maintained table.
+# .IP "\fBenable-redirect\fR (aliasing)"
+#	Edits main.cf and master.cf, to enable redirection (aliasing)
+#	from Berkeley DB types "hash" and "btree" to the non-Berkeley-DB
+#	types specified with $default_database_type and
+#	$default_cache_db_type. Custom redirection may be configured
+#	with non_bdb_custom_mapping.
+# .sp
+#	This configuration will not automatically create non-Berkeley-DB
+#	indexed database files. Instead, Postfix programs will log an
+#	error as they fail to open an indexed database file, and will
+#	leave it to the system administrator to run postmap(1) or
+#	postalias(1) to create that file.
+# .sp
+#	This will fix integration with other software such as mailman
+#	versions from before May 2025 when they want to use "postmap
+#	hash:/path/to/file", for example, to update a mailman-maintained
+#	table.
+# .sp
+#	This subcommand will not make any changes when
+#	default_database_type or default_cache_db_type specify a hash:
+#	or btree: type.
+# .IP \fBenable-reindex\fR
+#	Edits main.cf and master.cf, to implement \fBenable-redirect\fR,
+#	and to automatically create a non-Berkeley-DB indexed database
+#	file when a daemon program wants to access a file that does not
+#	yet exist. This uses the nbdb_reindexd(8) daemon to run postmap(1)
+#	or postalias(1) as described in "SECURITY" below.
+# .sp
+#	This subcommand immediately generates non-Berkeley-DB indexed
+#	files for unprivileged command-line programs that cannot send
+#	requests to the nbdb_reindexd(8) daemon server. This involves
+#	"hash:" and "btree:" tables that are used by postqueue(1) and
+#	sendmail(1) as specified in authorized_flush_users and
+#	authorized_mailq_users, and by sendmail(1) and postdrop(1)
+#	as specified in authorized_submit_users and
+#	local_login_sender_maps.
+# .sp
+#	This subcommand will not make any changes when
+#	default_database_type or default_cache_db_type specify a hash:
+#	or btree: type.
+# .sp
+#	\fINOTE: \fBenable-reindex\fI should be used only temporarily
+#	to generate most of the non-Berkeley-DB indexed files that Postfix
+#	needs. Leaving this enabled may expose the system to
+#	privilege-escalation attacks. There are no security
+#	concerns for using \fBenable-redirect\fR.
+# SECURITY
+# .ad
+# .fi
+#	The nbdb_reindexd(8) daemon automatically generates a
+#	non-Berkeley-DB indexed file only if the database pathname matches
+#	the directory prefixes specified with
+#	non_bdb_migration_allow_root_prefixes (for files that must be
+#	owned by root), or with non_bdb_migration_allow_user_prefixes
+#	(for files that must be owned by a non-root user). Additional
+#	restrictions on file and directory ownership and permissions
+#	are documented in nbdb_reindexd(8).
+# CONFIGURATION PARAMETERS
+# .ad 
+# .fi
+#	The "\fBpostfix non-bdb \fIsubcommand\fR" feature
+#	updates the following configuration parameter:
+# .IP "\fBnon_bdb_migration_level (disable)\fR"
+#	The non-Berkeley-DB migration service level.
+# .PP
+#	Other relevant parameters:
+# .IP "\fBnon_bdb_custom_mapping (empty)\fR"
+#	When non-Berkeley-DB migration is enabled, an optional mapping
+#	from a hash: or btree: type to a non-Berkeley-DB type.
+# .IP "\fBnon_bdb_migration_allow_root_prefixes (see 'postconf -d non_bdb_migration_allow_root_prefixes' output)\fR"
+#	A list of trusted pathname prefixes that must be matched when
+#	the non-Berkeley-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+#	run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with "root" privilege.
+# .IP "\fBnon_bdb_migration_allow_user_prefixes (see 'postconf -d non_bdb_migration_allow_user_prefixes' output)\fR"
+#	A list of trusted pathname prefixes that must be matched when
+#	the non-Berkeley-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+#	run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with non-root privilege.
+# SEE ALSO
+#	nbdb_reindexd(8) reindexing service
+# README FILES
+# .ad
+# .fi
+#	Use "\fBpostconf readme_directory\fR" or
+#	"\fBpostconf html_directory\fR" to locate this information.
+# .na
+# .nf
+#	NON_BERKELEYDB_README, migration guide
+# LICENSE
+# .ad
+# .fi
+#	The Secure Mailer license must be distributed with this software.
+# HISTORY
+#	The "\fBpostfix non-bdb\fR" command was introduced with Postfix
+#	version 3.11.
+# AUTHOR(S)
+#	Wietse Venema
+#	porcupine.org
+#--
+
+umask 022
+SHELL=/bin/sh
+
+case $command_directory in
+"") echo This script must be run by the postfix command. 1>&2
+    echo Do not run directly. 1>&2 exit 1;; esac
+
+cd $command_directory || {
+    # Let's hope there's a "postlog" somewhere on the PATH
+    FATAL="postlog -p fatal -t $MAIL_LOGTAG/postfix-tls-script"
+    msg="no Postfix command directory '${command_directory}'"
+    $FATAL "$msg" || { echo "$msg" >&2; sleep 1; }
+    exit 1
+}
+
+postconf=$command_directory/postconf
+LOGGER="$command_directory/postlog -t $MAIL_LOGTAG/postfix-non-bdb-script"
+INFO="$LOGGER -p info"
+WARN="$LOGGER -p warn"
+ERROR="$LOGGER -p error"
+FATAL="$LOGGER -p fatal"
+
+REINDEX_SVC=nbdb_reindex
+REINDEX_BIN=nbdb_reindexd
+
+# Helper functions.
+
+reindex_for_non_daemons() {
+    # The following tables are needed by unprivileged command-line
+    # tools that cannot send requests to the reindexing service unless
+    # they are run by root.
+    for type_name in `$postconf -h authorized_flush_users \
+        authorized_mailq_users authorized_submit_users \
+        local_login_sender_maps`; \
+    do
+        case $type_name in
+            hash:*|btree:*)
+                $INFO Proactively reindexing $type_name
+                postmap $type_name || exit 1;;
+        esac
+    done
+}
+
+validate_redirect_targets() {
+    # By default, the Berkeley DB type 'hash' will redirect to
+    # $default_database_type, and type 'btree' will redirect to
+    # $default_cache_db_type. Require that the targets are not
+    # Berkeley DB types.
+    for param in default_database_type default_cache_db_type
+    do
+	eval type="`$postconf -h $param`"
+	case $type in
+	hash|btree)
+	    $FATAL "parameter $param specifies a Berkeley DB type: '$type'"
+	    exit 1;;
+	esac
+    done
+}
+
+# Subcommand implementations.
+
+status() {
+    $postconf -h non_bdb_migration_level
+}
+
+disable_all() {
+    $postconf -X non_bdb_migration_level
+    $postconf -MX ${REINDEX_SVC}/unix
+}
+
+enable_redirect() {
+    validate_redirect_targets
+    $postconf -MX ${REINDEX_SVC}/unix
+    $postconf non_bdb_migration_level=enable-redirect || exit 1
+}
+
+enable_reindex() {
+    validate_redirect_targets
+    reindex_for_non_daemons
+    $postconf -M \
+	${REINDEX_SVC}/unix="${REINDEX_SVC} unix y n n - 1 ${REINDEX_BIN}" || exit 1
+    $postconf non_bdb_migration_level=enable-reindex || exit 1
+}
+
+usage() {
+    $FATAL "usage: postfix non-bdb status (or enable-redirect, or enable-reindex, or disable)"
+    exit 1
+}
+
+#
+# Parse JCL
+#
+case $# in
+  1) ;;
+  *) usage;;
+esac
+
+case "$1" in
+enable-redirect)
+   enable_redirect;;
+enable-reindex)
+    enable_reindex;;
+disable)
+    disable_all;;
+status)
+    status;;
+*) usage
+esac
+
+exit 0

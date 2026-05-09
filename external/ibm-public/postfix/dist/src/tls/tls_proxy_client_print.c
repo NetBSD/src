@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_print.c,v 1.1.1.4 2025/02/25 19:11:44 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_print.c,v 1.1.1.5 2026/05/09 18:39:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -125,8 +125,6 @@ int     tls_proxy_client_param_print(ATTR_PRINT_COMMON_FN print_fn, VSTREAM *fp,
 				 params->tls_daemon_rand_bytes),
 		   SEND_ATTR_INT(VAR_TLS_APPEND_DEF_CA,
 				 params->tls_append_def_CA),
-		   SEND_ATTR_INT(VAR_TLS_BC_PKEY_FPRINT,
-				 params->tls_bc_pkey_fprint),
 		   SEND_ATTR_INT(VAR_TLS_PREEMPT_CLIST,
 				 params->tls_preempt_clist),
 		   SEND_ATTR_INT(VAR_TLS_MULTI_WILDCARD,

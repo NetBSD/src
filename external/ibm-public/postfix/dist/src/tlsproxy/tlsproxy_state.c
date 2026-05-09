@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy_state.c,v 1.1.1.4 2020/03/18 18:59:37 christos Exp $	*/
+/*	$NetBSD: tlsproxy_state.c,v 1.1.1.5 2026/05/09 18:39:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -107,7 +107,7 @@ TLSP_STATE *tlsp_state_create(const char *service,
 {
     TLSP_STATE *state = (TLSP_STATE *) mymalloc(sizeof(*state));
 
-    state->flags = TLSP_FLAG_DO_HANDSHAKE;
+    state->flags = 0;
     state->service = mystrdup(service);
     state->plaintext_stream = plaintext_stream;
     state->plaintext_buf = 0;

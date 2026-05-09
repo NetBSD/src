@@ -1,0 +1,21 @@
+${VALGRIND} ./postmap -d yy -d xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -d yy -i whatever:whatever && exit 1
+${VALGRIND} ./postmap -d yy -q xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -d yy -s whatever:whatever && exit 1
+
+${VALGRIND} ./postmap -i -d xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -i -i whatever:whatever && exit 1
+${VALGRIND} ./postmap -i -q xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -i -s whatever:whatever && exit 1
+
+${VALGRIND} ./postmap -q yy -d xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -q yy -i whatever:whatever && exit 1
+${VALGRIND} ./postmap -q yy -q xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -q yy -s whatever:whatever && exit 1
+
+${VALGRIND} ./postmap -s -d xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -s -i whatever:whatever && exit 1
+${VALGRIND} ./postmap -s -q xx whatever:whatever && exit 1
+${VALGRIND} ./postmap -s -s whatever:whatever && exit 1
+
+exit 0

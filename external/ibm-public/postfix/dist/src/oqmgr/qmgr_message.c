@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_message.c,v 1.1.1.9 2025/02/25 19:11:44 christos Exp $	*/
+/*	$NetBSD: qmgr_message.c,v 1.1.1.10 2026/05/09 18:39:19 christos Exp $	*/
 
 /*++
 /* NAME
@@ -1135,7 +1135,7 @@ static void qmgr_message_resolve(QMGR_MESSAGE *message)
 		&& !var_double_bounce_sender[len]) {
 		status = sent(message->tflags, message->queue_id,
 			      QMGR_MSG_STATS(&stats, message), recipient,
-			      "none", DSN_SIMPLE(&dsn, "2.0.0",
+			      "none", NO_TLS_STATS, DSN_SIMPLE(&dsn, "2.0.0",
 			"undeliverable postmaster notification discarded"));
 		if (status == 0) {
 		    deliver_completed(message->fp, recipient->offset);

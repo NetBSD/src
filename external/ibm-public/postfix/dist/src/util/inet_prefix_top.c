@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_prefix_top.c,v 1.1.1.2 2025/02/25 19:11:47 christos Exp $	*/
+/*	$NetBSD: inet_prefix_top.c,v 1.1.1.3 2026/05/09 18:39:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -108,6 +108,7 @@ char   *inet_prefix_top(int af, const void *src, int prefix_len)
 #include <stdlib.h>
 #include <msg_vstream.h>
 #include <name_code.h>
+#include <mymalloc.h>
 
  /*
   * TODO: add test cases for fatal and panic errors, intercept msg_fatal()

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.1.1.17 2025/02/25 19:11:47 christos Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.1.1.18 2026/05/09 18:39:24 christos Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -33,14 +33,15 @@
     || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
     || defined(FREEBSD8) || defined(FREEBSD9) || defined(FREEBSD10) \
     || defined(FREEBSD11) || defined(FREEBSD12) || defined(FREEBSD13) \
-    || defined(FREEBSD14) \
+    || defined(FREEBSD14) || defined(FREEBSD15) || defined(FREEBSD16) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(OPENBSD5) || defined(OPENBSD6) || defined(OPENBSD7) \
+    || defined(OPENBSD8) \
     || defined(NETBSD1) || defined(NETBSD2) || defined(NETBSD3) \
     || defined(NETBSD4) || defined(NETBSD5) || defined(NETBSD6) \
     || defined(NETBSD7) | defined(NETBSD8) || defined(NETBSD9) \
-    || defined(NETBSD10) \
+    || defined(NETBSD10) || defined(NETBSD11) || defined(NETBSD12) \
     || defined(EKKOBSD1) || defined(DRAGONFLY)
 #define SUPPORTED
 #include <sys/param.h>
@@ -57,13 +58,13 @@
 #define HAS_SA_LEN
 #define NATIVE_DB_TYPE	"hash"
 #if (defined(__NetBSD_Version__) && __NetBSD_Version__ >= 104250000)
-#define ALIAS_DB_MAP   DEF_DB_TYPE ":/etc/mail/aliases"	/* sendmail 8.10 */
+#define ALIAS_DB_MAP   "$default_database_type:/etc/mail/aliases"	/* sendmail 8.10 */
 #endif
 #if (defined(OpenBSD) && OpenBSD >= 200006)
-#define ALIAS_DB_MAP   DEF_DB_TYPE ":/etc/mail/aliases"	/* OpenBSD 2.7 */
+#define ALIAS_DB_MAP   "$default_database_type:/etc/mail/aliases"	/* OpenBSD 2.7 */
 #endif
 #ifndef ALIAS_DB_MAP
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #endif
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
@@ -237,7 +238,7 @@
 #define HAS_DB
 #define HAS_SA_LEN
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #define GETTIMEOFDAY(t) gettimeofday(t,(struct timezone *) 0)
 #define ROOT_PATH	"/bin:/usr/bin:/sbin:/usr/sbin"
 #define USE_STATFS
@@ -294,11 +295,11 @@
 /* might be set by makedef */
 #ifdef HAS_DB
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #else
 #define HAS_DBM
 #define	NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #endif
 extern int optind;
 extern char *optarg;
@@ -342,7 +343,7 @@ extern int h_errno;
 #define HAVE_BASENAME
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/var/adm/sendmail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/var/adm/sendmail/aliases"
 extern int optind;			/* XXX use <getopt.h> */
 extern char *optarg;			/* XXX use <getopt.h> */
 extern int opterr;			/* XXX use <getopt.h> */
@@ -388,7 +389,7 @@ extern int opterr;			/* XXX use <getopt.h> */
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 extern int optind;
 extern char *optarg;
 extern int opterr;
@@ -432,7 +433,7 @@ extern int opterr;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/mail/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #ifndef NO_NISPLUS
@@ -512,7 +513,7 @@ extern int opterr;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/mail/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -542,7 +543,7 @@ extern int opterr;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE     "dbm"
-#define ALIAS_DB_MAP    DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP    "$default_database_type:/etc/mail/aliases"
 #ifndef NO_NIS
 #define HAS_NIS */
 #endif
@@ -584,7 +585,7 @@ extern int opterr;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -637,7 +638,7 @@ extern int opterr;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -682,7 +683,7 @@ extern int initgroups(const char *, int);
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -723,7 +724,7 @@ extern int initgroups(const char *, int);
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -765,7 +766,7 @@ extern int initgroups(const char *, int);
   * LINUX.
   */
 #if defined(LINUX2) || defined(LINUX3) || defined(LINUX4) || defined(LINUX5) \
-	|| defined(LINUX6)
+	|| defined(LINUX6) || defined(LINUX7)
 #define SUPPORTED
 #define UINT32_TYPE	unsigned int
 #define UINT16_TYPE	unsigned short
@@ -778,7 +779,7 @@ extern int initgroups(const char *, int);
 #define HAS_FSYNC
 #define HAS_DB
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -854,7 +855,7 @@ extern int initgroups(const char *, int);
 #define HAS_FSYNC
 #define HAS_DB
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -887,7 +888,7 @@ extern int initgroups(const char *, int);
 #define HAS_FSYNC
 #define HAS_DB
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 #ifndef NO_NIS
 #define HAS_NIS
 #endif
@@ -952,7 +953,7 @@ extern int initgroups(const char *, int);
 #define DEF_MAILBOX_LOCK "fcntl, dotlock"
 #define HAS_FSYNC
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/mail/aliases"
 #define ROOT_PATH	"/usr/bin:/sbin:/usr/sbin"
 #define MISSING_SETENV
 #ifndef NO_NIS
@@ -991,7 +992,7 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #define DEF_MAILBOX_LOCK "fcntl, dotlock"
 #define HAS_FSYNC
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/mail/aliases"
 #define ROOT_PATH	"/usr/bin:/sbin:/usr/sbin"
 #define MISSING_SETENV
 #ifndef NO_NIS
@@ -1036,7 +1037,7 @@ extern int h_errno;			/* <netdb.h> imports too much stuff */
 #define MISSING_RLIMIT_FSIZE
 #define GETTIMEOFDAY(t)	gettimeofday(t,(struct timezone *) 0)
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/usr/lib/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/usr/lib/aliases"
 #define ROOT_PATH	"/bin:/usr/bin:/etc"
 #define _PATH_BSHELL	"/bin/sh"
 #define _PATH_MAILDIR	"/usr/mail"
@@ -1183,7 +1184,7 @@ typedef unsigned short mode_t;
 #define USE_SYS_SOCKIO_H
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/var/adm/sendmail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/var/adm/sendmail/aliases"
 extern int optind;			/* XXX use <getopt.h> */
 extern char *optarg;			/* XXX use <getopt.h> */
 extern int opterr;			/* XXX use <getopt.h> */
@@ -1212,7 +1213,7 @@ extern int opterr;			/* XXX use <getopt.h> */
 #define DEF_MAILBOX_LOCK "fcntl, dotlock"
 #define HAS_FSYNC
 #define NATIVE_DB_TYPE	"hash"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/aliases"
 /* Uncomment the following line if you have NIS package installed */
 /* #define HAS_NIS */
 #define USE_SYS_SOCKIO_H
@@ -1244,7 +1245,7 @@ extern int h_errno;
 #define HAS_FSYNC
 #define HAS_DBM
 #define NATIVE_DB_TYPE	"dbm"
-#define ALIAS_DB_MAP	DEF_DB_TYPE ":/etc/mail/aliases"
+#define ALIAS_DB_MAP	"$default_database_type:/etc/mail/aliases"
 #define DBM_NO_TRAILING_NULL
 #ifndef NO_NIS
 #define HAS_NIS
@@ -1306,6 +1307,14 @@ extern int h_errno;
 
 #ifndef DEF_DB_TYPE
 #define DEF_DB_TYPE	NATIVE_DB_TYPE
+#endif
+
+#ifndef NATIVE_CACHE_DB_TYPE
+#define NATIVE_CACHE_DB_TYPE	"btree"	/* Postfix < 3.11 default */
+#endif
+
+#ifndef DEF_CACHE_DB_TYPE
+#define DEF_CACHE_DB_TYPE	NATIVE_CACHE_DB_TYPE
 #endif
 
 #define CAST_ANY_PTR_TO_INT(cptr)	((int) (long) (cptr))
@@ -1794,6 +1803,16 @@ typedef const char *CONST_CHAR_STAR;
   * development.
   */
 extern int REMOVE(const char *);
+
+ /*
+  * Which bool?
+  */
+#ifndef NO_STDBOOL
+#include <stdbool.h>
+#else
+typedef int bool;
+
+#endif
 
 /* LICENSE
 /* .ad

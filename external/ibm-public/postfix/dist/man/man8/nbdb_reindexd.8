@@ -1,0 +1,169 @@
+.\"	$NetBSD: nbdb_reindexd.8,v 1.1.1.1 2026/05/09 18:39:15 christos Exp $
+.\"
+.TH NBDB_REINDEXD 8 
+.ad
+.fi
+.SH NAME
+nbdb_reindexd
+\-
+Postfix non\-Berkeley\-DB migration
+.SH "SYNOPSIS"
+.na
+.nf
+\fBnbdb_reindexd\fR [generic Postfix daemon options]
+.SH DESCRIPTION
+.ad
+.fi
+\fINOTE: This service should be enabled only temporarily to
+generate most of the non\-Berkeley\-DB indexed files that Postfix
+needs. Leaving this service enabled may expose the system to
+privilege\-escalation attacks.\fR
+
+The nbdb_reindexd(8) server handles requests to generate
+a non\-Berkeley\-DB indexed database file for an existing Berkeley
+DB database (example: "hash:/path/to/file" or
+"btree:/path/to/file"). It implements the service by running
+the postmap(1) or postalias(1) command with appropriate
+privileges.
+
+The service reports a success status when the non\-Berkeley\-DB
+indexed file already exists. This can happen when multiple clients
+make the same request. When one request is completed successfully,
+the service also reports success for the other requests.
+
+This service enforces the following safety policy:
+.IP \(bu
+The legacy Berkeley DB indexed file must exist (file name ends in
+".db"). The nbdb_reindexd(8) service will use the owner"s (uid,
+gid) of this file, when it runs postmap(1) or postalias(1). It
+also uses the (uid,gid) for a number of safety checks as
+described next.
+.IP \(bu
+The non\-indexed source file must exist (file name without
+".db"  suffix). This file is needed as input for postmap(1)
+or postalias(1). The file must be owned by "root" or by the
+above uid, and must not allow "group" or "other" write access.
+.IP \(bu
+The parent directory must be owned by "root" or by the above uid,
+and it must not allow "group" or "other" write access.
+.IP \(bu
+Additionally, the "non_bdb_migration_allow_root_prefixes"
+parameter limits the source file directory prefixes that are
+allowed when this service needs to run postmap(1) or postalias(1)
+with "root" privileges.
+.IP \(bu
+A similar parameter, "non_bdb_migration_allow_user_prefixes",
+limits the source file directory prefixes that are allowed when
+this service needs to run postmap(1) or postalias(1) as an
+unprivileged user.
+.SH "SECURITY"
+.na
+.nf
+.ad
+.fi
+The nbdb_reindexd(8) server is security sensitive.  It accepts
+requests only from processes that can access sockets under
+$queue_directory/private (i.e., processes that run with "root"
+or "mail_owner" (usually, postfix) privileges).
+
+The threat is therefore a corrupted Postfix daemon process that
+wants to elevate privileges, by sending requests with crafted
+pathnames, and racing against the service by quickly swapping
+files or directories, hoping that Postfix will be tricked to
+overwrite a sensitive file with attacker\-controlled data.
+
+When the service runs postmap(1) or postalias(1) as
+"root", such racing attacks should not be possible if
+non_bdb_migration_allow_root_prefixes specifies only prefixes
+that are already trusted.
+
+This service could block all requests with crafted pathnames,
+if given complete information about all lookup tables that are
+referenced through Postfix configuration files. Unfortunately
+that information was not available at the time that this program
+was needed.
+.SH DIAGNOSTICS
+.ad
+.fi
+Problems and transactions are logged to syslogd(8) or
+postlogd(8). If an attempt to create an index file fails, this
+service will attempt to delete the incomplete file.
+.SH "CONFIGURATION PARAMETERS"
+.na
+.nf
+.ad
+.fi
+Changes to main.cf are not picked up automatically, as
+nbdb_reindexd(8) processes are long\-lived. Use the command
+"postfix reload" after a configuration change.
+
+The text below provides only a parameter summary. See
+postconf(5) for more details including examples.
+.SH "SERVICE-SPECIFIC CONTROLS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBnon_bdb_migration_level (disable)\fR"
+The non\-Berkeley\-DB migration service level.
+.IP "\fBnon_bdb_migration_allow_root_prefixes (see 'postconf -d non_bdb_migration_allow_root_prefixes' output)\fR"
+A list of trusted pathname prefixes that must be matched when
+the non\-Berkeley\-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with "root" privilege.
+.IP "\fBnon_bdb_migration_allow_user_prefixes (see 'postconf -d non_bdb_migration_allow_user_prefixes' output)\fR"
+A list of trusted pathname prefixes that must be matched when
+the non\-Berkeley\-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with non\-root privilege.
+.SH "MISCELLANEOUS CONTROLS"
+.na
+.nf
+.ad
+.fi
+.IP "\fBconfig_directory (see 'postconf -d' output)\fR"
+The default location of the Postfix main.cf and master.cf
+configuration files.
+.IP "\fBprocess_id (read\-only)\fR"
+The process ID of a Postfix command or daemon process.
+.IP "\fBprocess_name (read\-only)\fR"
+The process name of a Postfix command or daemon process.
+.IP "\fBsyslog_facility (mail)\fR"
+The syslog facility of Postfix logging.
+.IP "\fBsyslog_name (see 'postconf -d' output)\fR"
+A prefix that is prepended to the process name in syslog
+records, so that, for example, "smtpd" becomes "prefix/smtpd".
+.IP "\fBservice_name (read\-only)\fR"
+The master.cf service name of a Postfix daemon process.
+.SH "SEE ALSO"
+.na
+.nf
+postfix\-non\-bdb(1), migration management
+postconf(5), configuration parameters
+postlogd(8), Postfix logging
+syslogd(8), system logging
+.SH "README FILES"
+.na
+.nf
+.ad
+.fi
+Use "\fBpostconf readme_directory\fR" or
+"\fBpostconf html_directory\fR" to locate this information.
+.na
+.nf
+NON_BERKELEYDB_README, Non\-Berkeley\-DB migration guide
+.SH "LICENSE"
+.na
+.nf
+.ad
+.fi
+The Secure Mailer license must be distributed with this software.
+.SH HISTORY
+.ad
+.fi
+.ad
+.fi
+This service was introduced with Postfix version 3.11.
+.SH "AUTHOR(S)"
+.na
+.nf
+Wietse Venema
+porcupine.org

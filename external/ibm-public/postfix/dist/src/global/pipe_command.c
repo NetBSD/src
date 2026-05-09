@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe_command.c,v 1.1.1.4 2017/02/14 01:13:41 christos Exp $	*/
+/*	$NetBSD: pipe_command.c,v 1.1.1.5 2026/05/09 18:39:19 christos Exp $	*/
 
 /*++
 /* NAME
@@ -462,6 +462,11 @@ int     pipe_command(VSTREAM *src, DSN_BUF *why,...)
 	msg_warn("fork: %m");
 	dsb_unix(why, "4.3.0", sys_exits_detail(EX_OSERR)->text,
 		 "Delivery failed: %m");
+	/* 202604 Claude: close pipes for the child and parent paths. */
+	close(cmd_in_pipe[0]);
+	close(cmd_in_pipe[1]);
+	close(cmd_out_pipe[0]);
+	close(cmd_out_pipe[1]);
 	return (PIPE_STAT_DEFER);
 
 	/*

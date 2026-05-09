@@ -1,4 +1,4 @@
-/*	$NetBSD: config_known_tcp_ports.c,v 1.1.1.1 2022/10/08 16:09:07 christos Exp $	*/
+/*	$NetBSD: config_known_tcp_ports.c,v 1.1.1.2 2026/05/09 18:39:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -16,10 +16,10 @@
 /*	in the settings argument, and reports any warnings to the standard
 /*	error stream. The source argument is used to provide warning
 /*	context. It typically is a configuration parameter name.
-/* .SH EXPECTED SYNTAX (ABNF)
+/* EXPECTED SYNTAX (ABNF)
 /*	configuration = empty | name-to-port *("," name-to-port)
 /*	name-to-port = 1*(name "=") port
-/* SH EXAMPLES
+/* EXAMPLES
 /*	In the example below, the whitespace is optional.
 /*	smtp = 25, smtps = submissions = 465, submission = 587
 /* LICENSE

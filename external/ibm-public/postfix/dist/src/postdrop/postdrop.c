@@ -1,4 +1,4 @@
-/*	$NetBSD: postdrop.c,v 1.1.1.8 2025/02/25 19:11:44 christos Exp $	*/
+/*	$NetBSD: postdrop.c,v 1.1.1.9 2026/05/09 18:39:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -41,12 +41,13 @@
 /* .fi
 /* .IP MAIL_CONFIG
 /*	Directory with the \fBmain.cf\fR file. In order to avoid exploitation
-/*	of set-group ID privileges, a non-standard directory is allowed only
+/*	of set-group ID privileges, a non-default directory is allowed only
 /*	if:
 /* .RS
 /* .IP \(bu
-/*	The name is listed in the standard \fBmain.cf\fR file with the
-/*	\fBalternate_config_directories\fR configuration parameter.
+/*	The name is listed in the default \fBmain.cf\fR file with the
+/*	\fBalternate_config_directories\fR or
+/*	\fBmulti_instance_directories\fR configuration parameter.
 /* .IP \(bu
 /*	The command is invoked by the super-user.
 /* .RE

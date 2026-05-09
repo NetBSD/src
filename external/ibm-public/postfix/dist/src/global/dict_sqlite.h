@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sqlite.h,v 1.1.1.1 2011/03/02 19:32:14 tron Exp $	*/
+/*	$NetBSD: dict_sqlite.h,v 1.1.1.2 2026/05/09 18:39:18 christos Exp $	*/
 
 #ifndef _DICT_SQLITE_H_INCLUDED_
 #define _DICT_SQLITE_H_INCLUDED_
@@ -24,7 +24,6 @@
 #define DICT_TYPE_SQLITE "sqlite"
 
 extern DICT *dict_sqlite_open(const char *, int, int);
-
 
 /* AUTHOR(S)
 /*	Axel Steiner

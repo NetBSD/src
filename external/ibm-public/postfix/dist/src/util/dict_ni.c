@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ni.c,v 1.1.1.3 2014/07/06 19:27:58 tron Exp $	*/
+/*	$NetBSD: dict_ni.c,v 1.1.1.4 2026/05/09 18:39:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -190,7 +190,7 @@ DICT   *dict_ni_open(const char *path, int unused_flags, int dict_flags)
 	d->dict.fold_buf = vstring_alloc(10);
     d->dict.owner.status = DICT_OWNER_TRUSTED;
 
-    return (DICT_DEBUG (&d->dict));
+    return (&d->dict);
 }
 
 #endif

@@ -13,7 +13,7 @@ HDRS	= smtpd_token.h smtpd_check.h smtpd_chat.h smtpd_sasl_proto.h \
 TESTSRC	= smtpd_token_test.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG= smtpd_token smtpd_check
+TESTPROG= smtpd_token smtpd_check smtpd_peer_test
 PROG	= smtpd
 INC_DIR	= ../../include
 LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
@@ -53,18 +53,24 @@ smtpd_check: smtpd_check.o smtpd_check.c $(SMTPD_CHECK_OBJ) $(LIBS)
 		$(LIBS) $(SYSLIBS)
 	mv junk $@.o
 
+SMTPD_PEER_OBJ = smtpd_state.o smtpd_peer.o smtpd_haproxy.o
+
+smtpd_peer_test: smtpd_peer_test.c $(SMTPD_PEER_OBJ) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(SMTPD_PEER_OBJ) \
+		$(LIBS) $(SYSLIBS)
+
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk *.db *.out *.tmp
 
 tidy:	clean
 
-broken-tests: smtpd_check_test smtpd_check_test2 
+broken-tests: smtpd_check_test smtpd_check_test2
 
 tests:	smtpd_acl_test smtpd_addr_valid_test smtpd_exp_test \
 	smtpd_token_test smtpd_check_test4 smtpd_check_dsn_test \
 	smtpd_check_backup_test smtpd_dnswl_test smtpd_error_test \
 	smtpd_server_test smtpd_nullmx_test smtpd_dns_filter_test \
-	smtpd_deprecated_test
+	smtpd_deprecated_test test_smtpd_peer
 
 root_tests:
 
@@ -164,6 +170,9 @@ smtpd_deprecated_test: smtpd_check smtpd_deprecated.in smtpd_deprecated.ref
 	$(SHLIB_ENV) $(VALGRIND) ./smtpd_check <smtpd_deprecated.in >smtpd_check.tmp 2>&1
 	diff smtpd_deprecated.ref smtpd_check.tmp
 	rm -f smtpd_check.tmp
+
+test_smtpd_peer: smtpd_peer_test
+	$(SHLIB_ENV) $(VALGRIND) ./smtpd_peer_test
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -503,14 +512,46 @@ smtpd_peer.o: ../../include/vstream.h
 smtpd_peer.o: ../../include/vstring.h
 smtpd_peer.o: smtpd.h
 smtpd_peer.o: smtpd_peer.c
+smtpd_peer_test.o: ../../include/argv.h
+smtpd_peer_test.o: ../../include/attr.h
+smtpd_peer_test.o: ../../include/check_arg.h
+smtpd_peer_test.o: ../../include/dns.h
+smtpd_peer_test.o: ../../include/haproxy_srvr.h
+smtpd_peer_test.o: ../../include/htable.h
+smtpd_peer_test.o: ../../include/inet_proto.h
+smtpd_peer_test.o: ../../include/iostuff.h
+smtpd_peer_test.o: ../../include/mail_params.h
+smtpd_peer_test.o: ../../include/mail_proto.h
+smtpd_peer_test.o: ../../include/mail_stream.h
+smtpd_peer_test.o: ../../include/milter.h
+smtpd_peer_test.o: ../../include/msg.h
+smtpd_peer_test.o: ../../include/msg_vstream.h
+smtpd_peer_test.o: ../../include/myaddrinfo.h
+smtpd_peer_test.o: ../../include/mymalloc.h
+smtpd_peer_test.o: ../../include/name_code.h
+smtpd_peer_test.o: ../../include/name_mask.h
+smtpd_peer_test.o: ../../include/nvtable.h
+smtpd_peer_test.o: ../../include/sock_addr.h
+smtpd_peer_test.o: ../../include/stringops.h
+smtpd_peer_test.o: ../../include/sys_defs.h
+smtpd_peer_test.o: ../../include/tls.h
+smtpd_peer_test.o: ../../include/vbuf.h
+smtpd_peer_test.o: ../../include/vstream.h
+smtpd_peer_test.o: ../../include/vstring.h
+smtpd_peer_test.o: smtpd.h
+smtpd_peer_test.o: smtpd_chat.h
+smtpd_peer_test.o: smtpd_peer_test.c
+smtpd_peer_test.o: smtpd_sasl_glue.h
 smtpd_proxy.o: ../../include/argv.h
 smtpd_proxy.o: ../../include/attr.h
 smtpd_proxy.o: ../../include/check_arg.h
 smtpd_proxy.o: ../../include/cleanup_user.h
 smtpd_proxy.o: ../../include/connect.h
 smtpd_proxy.o: ../../include/dns.h
+smtpd_proxy.o: ../../include/header_opts.h
 smtpd_proxy.o: ../../include/htable.h
 smtpd_proxy.o: ../../include/iostuff.h
+smtpd_proxy.o: ../../include/is_header.h
 smtpd_proxy.o: ../../include/mail_error.h
 smtpd_proxy.o: ../../include/mail_params.h
 smtpd_proxy.o: ../../include/mail_proto.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_conf.h,v 1.1.1.4 2020/03/18 18:59:33 christos Exp $	*/
+/*	$NetBSD: mail_conf.h,v 1.1.1.5 2026/05/09 18:39:18 christos Exp $	*/
 
 #ifndef _MAIL_CONF_H_INCLUDED_
 #define _MAIL_CONF_H_INCLUDED_
@@ -133,8 +133,8 @@ typedef struct {
 
 typedef struct {
     const char *name;			/* config variable name */
-    int     defval;			/* default value */
-    int    *target;			/* pointer to global variable */
+    bool    defval;			/* default value */
+    bool   *target;			/* pointer to global variable */
 } CONFIG_BOOL_TABLE;
 
 typedef struct {
@@ -156,7 +156,7 @@ typedef struct {
 typedef struct {
     const char *name;			/* config variable name */
     const char *defval;			/* default value */
-    int    *target;			/* pointer to global variable */
+    bool   *target;			/* pointer to global variable */
 } CONFIG_NBOOL_TABLE;
 
 extern void get_mail_conf_str_table(const CONFIG_STR_TABLE *);

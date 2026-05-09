@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_rcpt.c,v 1.1.1.4 2020/03/18 18:59:36 christos Exp $	*/
+/*	$NetBSD: smtp_rcpt.c,v 1.1.1.5 2026/05/09 18:39:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -181,7 +181,8 @@ void    smtp_rcpt_done(SMTP_STATE *state, SMTP_RESP *resp, RECIPIENT *rcpt)
 
     status = sent(DEL_REQ_TRACE_FLAGS(request->flags),
 		  request->queue_id, &request->msg_stats, rcpt,
-		  session->namaddrport, DSN_FROM_DSN_BUF(why));
+		  session->namaddrport, state->tls_stats,
+		  DSN_FROM_DSN_BUF(why));
     if (status == 0)
 	if (request->flags & DEL_REQ_FLAG_SUCCESS)
 	    deliver_completed(state->src, rcpt->offset);

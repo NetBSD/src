@@ -16,8 +16,8 @@ REGEXP_TABLE(5)                                                REGEXP_TABLE(5)
        <b>postmap -q - <a href="regexp_table.5.html">regexp</a>:/etc/postfix/</b><i>filename</i> &lt;<i>inputfile</i>
 
 <b><a name="description">DESCRIPTION</a></b>
-       The  Postfix  mail  system  uses optional tables for address rewriting,
-       mail routing, or access control. These tables are usually in <b>dbm</b> or  <b>db</b>
+       The  Postfix  mail system uses optional tables for address rewriting or
+       mail routing. These tables are usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>,  or  <b><a href="DATABASE_README.html#types">dbm</a>:</b>
        format.
 
        Alternatively,  lookup tables can be specified in POSIX regular expres-

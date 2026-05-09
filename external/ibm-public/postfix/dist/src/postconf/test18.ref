@@ -1,3 +1,6 @@
 config_directory = .
 smtpd_client_connection_limit_exceptions = yyy
 virtual_maps = xxx
+./postconf: warning: ./main.cf: support for parameter "smtpd_client_connection_limit_exceptions" will be removed; instead, specify "smtpd_client_event_limit_exceptions"
+./postconf: warning: ./main.cf: support for parameter "virtual_maps" will be removed; instead, specify "virtual_alias_maps"
+./postconf: warning: See https://www.postfix.org/DEPRECATION_README.html for details

@@ -1,0 +1,21 @@
+${VALGRIND} ./postalias -d yy -d xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -d yy -i whatever:whatever && exit 1
+${VALGRIND} ./postalias -d yy -q xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -d yy -s whatever:whatever && exit 1
+
+${VALGRIND} ./postalias -i -d xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -i -i whatever:whatever && exit 1
+${VALGRIND} ./postalias -i -q xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -i -s whatever:whatever && exit 1
+
+${VALGRIND} ./postalias -q yy -d xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -q yy -i whatever:whatever && exit 1
+${VALGRIND} ./postalias -q yy -q xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -q yy -s whatever:whatever && exit 1
+
+${VALGRIND} ./postalias -s -d xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -s -i whatever:whatever && exit 1
+${VALGRIND} ./postalias -s -q xx whatever:whatever && exit 1
+${VALGRIND} ./postalias -s -s whatever:whatever && exit 1
+
+exit 0

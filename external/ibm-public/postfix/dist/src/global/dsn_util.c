@@ -1,4 +1,4 @@
-/*	$NetBSD: dsn_util.c,v 1.1.1.1 2009/06/23 10:08:45 tron Exp $	*/
+/*	$NetBSD: dsn_util.c,v 1.1.1.2 2026/05/09 18:39:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -156,7 +156,7 @@ DSN_SPLIT *dsn_split(DSN_SPLIT *dp, const char *def_dsn, const char *text)
     if ((len = dsn_valid(cp)) > 0) {
 	strncpy(dp->dsn.data, cp, len);
 	dp->dsn.data[len] = 0;
-	cp += len + 1;
+	cp += len;
     } else if ((len = dsn_valid(def_dsn)) > 0) {
 	strncpy(dp->dsn.data, def_dsn, len);
 	dp->dsn.data[len] = 0;
