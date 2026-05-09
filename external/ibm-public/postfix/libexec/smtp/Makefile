@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/03/18 19:05:23 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2026/05/09 18:49:24 christos Exp $
 
 NOMAN=	# defined
 
@@ -18,6 +18,7 @@ smtp_key.c \
 smtp_map11.c \
 smtp_misc.c \
 smtp_proto.c \
+smtp_reqtls_policy.c \
 smtp_rcpt.c \
 smtp_reuse.c \
 smtp_sasl_auth_cache.c \

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_test_helper.c,v 1.1.1.1 2026/05/09 18:39:22 christos Exp $	*/
+/*	$NetBSD: dict_test_helper.c,v 1.2 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME

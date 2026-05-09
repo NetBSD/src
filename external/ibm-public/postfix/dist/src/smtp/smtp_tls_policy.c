@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_tls_policy.c,v 1.5 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: smtp_tls_policy.c,v 1.6 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -19,6 +19,10 @@
 /*	SMTP_TLS_POLICY *tls;
 /*
 /*	void	smtp_tls_policy_cache_flush()
+/*
+/*	int	smtp_tls_authorize_mx_hostname(tls, qname)
+/*	SMTP_TLS_POLICY *tls;
+/*	const char *qname;
 /* DESCRIPTION
 /*	smtp_tls_list_init() initializes lookup tables used by the TLS
 /*	policy engine.
@@ -33,12 +37,22 @@
 /*	When any required table or DNS lookups fail, the TLS level
 /*	is set to TLS_LEV_INVALID, the "why" argument is updated
 /*	with the error reason and the result value is zero (false).
+/*	When var_smtp_tls_enf_sts_mx_pat is not null, and a policy plugin
+/*	specifies a policy_type "sts" plus one or more mx_host_pattern
+/*	instances, transform the policy as follows: allow only MX hosts
+/*	that match an mx_host_pattern instance, and match a server
+/*	certificate against the server hostname.
 /*
 /*	smtp_tls_policy_dummy() initializes a trivial, non-cached,
 /*	policy with TLS disabled.
 /*
 /*	smtp_tls_policy_cache_flush() destroys the TLS policy cache
 /*	and contents.
+/*
+/*	smtp_tls_authorize_mx_hostname() authorizes an MX host if the
+/*	name used for host lookup satisfies a TLS policy MX name
+/*	constraint (for example, an STS policy MX pattern), or if the
+/*	TLS policy has no name constraint.
 /*
 /*	Arguments:
 /* .IP why
@@ -109,6 +123,7 @@
 #include <valid_hostname.h>
 #include <valid_utf8_hostname.h>
 #include <ctable.h>
+#include <midna_domain.h>
 
 /* Global library. */
 
@@ -137,6 +152,58 @@ static void dane_init(SMTP_TLS_POLICY *, SMTP_ITERATOR *);
 
 static MAPS *tls_policy;		/* lookup table(s) */
 static MAPS *tls_per_site;		/* lookup table(s) */
+
+/* match_sts_mx_host_pattern -  match hostname against STS policy MX pattern */
+
+static int match_sts_mx_host_pattern(const char *pattern, const char *qname)
+{
+    const char *first_dot_in_qname;
+
+    /* Caller guarantees that inputs are in ASCII form. */
+    return (strcasecmp(qname, pattern) == 0
+	    || (pattern[0] == '*' && pattern[1] == '.' && pattern[2] != 0
+		&& (first_dot_in_qname = strchr(qname, '.')) != 0
+		&& first_dot_in_qname > qname
+		&& strcasecmp(first_dot_in_qname + 1, pattern + 2) == 0));
+}
+
+/* smtp_tls_authorize_mx_hostname - enforce applicable MX hostname policy */
+
+int     smtp_tls_authorize_mx_hostname(SMTP_TLS_POLICY *tls, const char *name)
+{
+
+#define SAFE_FOR_SMTP_TLS_ENF_STS_MX_PAT(tls) (var_smtp_tls_enf_sts_mx_pat \
+	    && (tls)->ext_policy_type != 0 \
+	    && strcasecmp((tls)->ext_policy_type, "sts") == 0 \
+	    && (tls)->matchargv != 0 && (tls)->ext_mx_host_patterns != 0)
+
+    /* Enforce STS policy MX patterns. */
+    if (SAFE_FOR_SMTP_TLS_ENF_STS_MX_PAT(tls)) {
+	const char *aname;
+	char  **pattp;
+
+#ifndef NO_EAI
+	if (!allascii(name) && (aname = midna_domain_to_ascii(name)) != 0) {
+	    if (msg_verbose)
+		msg_info("%s asciified to %s", name, aname);
+	} else
+#endif
+	    aname = name;
+	for (pattp = tls->ext_mx_host_patterns->argv; *pattp; pattp++) {
+	    if (match_sts_mx_host_pattern(*pattp, aname)) {
+		if (msg_verbose)
+		    msg_info("MX name '%s' matches STS MX pattern for '%s'",
+			     aname, tls->ext_policy_domain ? tls->ext_policy_domain : "");
+		return (1);
+	    }
+	}
+	msg_warn("MX name '%s' does not match STS MX pattern for '%s'",
+	       aname, tls->ext_policy_domain ? tls->ext_policy_domain : "");
+	return (0);
+    }
+    /* No applicable policy name patterns. */
+    return (1);
+}
 
 /* smtp_tls_list_init - initialize per-site policy lists */
 
@@ -519,6 +586,10 @@ static void tls_policy_lookup_one(SMTP_TLS_POLICY *tls, int *site_level,
 	    INVALID_RETURN(tls->why, site_level);
 	}
     }
+    if (SAFE_FOR_SMTP_TLS_ENF_STS_MX_PAT(tls)) {
+	argv_truncate(tls->matchargv, 0);
+	argv_add(tls->matchargv, "hostname", (char *) 0);
+    }
     FREE_RETURN;
 }
 
@@ -649,11 +720,28 @@ static void *policy_create(const char *unused_key, void *context)
      * Compute the per-site TLS enforcement level. For compatibility with the
      * original TLS patch, this algorithm is gives equal precedence to host
      * and next-hop policies.
+     * 
+     * When "TLS-Required: no" is in effect, skip TLS policy lookup and limit
+     * the security level to "may". Do not reset the security level after
+     * policy lookup, as that would result in errors. For example, when TLSA
+     * records are looked up for security level "dane", and then the security
+     * level is reset to "may", the activation of those TLSA records will
+     * fail.
      */
     tls->level = global_tls_level();
     site_level = TLS_LEV_NOTFOUND;
 
-    if (tls_policy) {
+    if (STATE_TLS_NOT_REQUIRED(iter->parent)) {
+	if (msg_verbose)
+	    msg_info("%s: no tls policy lookup", __func__);
+	if (var_smtp_tls_wrappermode) {
+	    if (tls->level > TLS_LEV_ENCRYPT)
+		tls->level = TLS_LEV_ENCRYPT;
+	} else {
+	    if (tls->level > TLS_LEV_MAY)
+		tls->level = TLS_LEV_MAY;
+	}
+    } else if (tls_policy) {
 	tls_policy_lookup(tls, &site_level, dest, "next-hop destination");
     } else if (tls_per_site) {
 	tls_site_lookup(tls, &site_level, dest, "next-hop destination");

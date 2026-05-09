@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-non-bdb-script,v 1.1.1.1 2026/05/09 18:39:09 christos Exp $
+#	$NetBSD: postfix-non-bdb-script,v 1.2 2026/05/09 18:49:13 christos Exp $
 #
 
 #++

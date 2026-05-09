@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_prng_file.c,v 1.2 2017/02/14 01:16:48 christos Exp $	*/
+/*	$NetBSD: tls_prng_file.c,v 1.3 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -134,7 +134,8 @@ ssize_t tls_prng_file_read(TLS_PRNG_SRC *fh, size_t len)
 	RAND_seed(buffer, count);
     }
     if (msg_verbose)
-	msg_info("read %ld bytes from entropy file %s: %m",
+	/* 202604 Claude: remove '%m' from non-error logging. */
+	msg_info("read %ld bytes from entropy file %s",
 		 (long) (len - to_read), fh->name);
     return (len - to_read);
 }

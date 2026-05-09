@@ -1,4 +1,4 @@
-.\"	$NetBSD: transport.5,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: transport.5,v 1.5 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH TRANSPORT 5 
 .ad
@@ -31,34 +31,52 @@ selection that is built into Postfix:
 This is the default for final delivery to domains listed
 with \fBmydestination\fR, and for [\fIipaddress\fR]
 destinations that match \fB$inet_interfaces\fR or
-\fB$proxy_interfaces\fR. The default \fInexthop\fR destination
-is the MTA hostname.
+\fB$proxy_interfaces\fR.
+
+In order of decreasing precedence, the \fInexthop\fR destination
+is taken from \fBtransport_maps\fR, \fBlocal_transport\fR,
+or from the recipient domain.
 .IP "\fBvirtual_transport (default: virtual:)\fR"
-This is the default for final delivery to domains listed
-with \fBvirtual_mailbox_domains\fR. The default \fInexthop\fR
-destination is the recipient domain.
+This is the default for final delivery to domains listed with
+\fBvirtual_mailbox_domains\fR.
+
+In order of decreasing precedence, the \fInexthop\fR destination
+is taken from \fBtransport_maps\fR, \fBvirtual_transport\fR,
+or from the recipient domain.
 .IP "\fBrelay_transport (default: relay:)\fR"
 This is the default for remote delivery to domains listed
-with \fBrelay_domains\fR. In order of decreasing precedence,
-the \fInexthop\fR destination is taken from \fBrelay_transport\fR,
-\fBsender_dependent_relayhost_maps\fR, \fBrelayhost\fR, or from the
-recipient domain.
+with \fBrelay_domains\fR.
+
+In order of decreasing precedence, the \fInexthop\fR destination
+is taken from \fBtransport_maps\fR, \fBrelay_transport\fR,
+\fBsender_dependent_relayhost_maps\fR, \fBrelayhost\fR, or from
+the recipient domain.
 .IP "\fBdefault_transport (default: smtp:)\fR"
 This is the default for remote delivery to other destinations.
+
 In order of decreasing precedence, the \fInexthop\fR
-destination is taken from \fBsender_dependent_default_transport_maps,
+destination is taken from \fBtransport_maps\fR,
+\fBsender_dependent_default_transport_maps,
 \fBdefault_transport\fR, \fBsender_dependent_relayhost_maps\fR,
 \fBrelayhost\fR, or from the recipient domain.
 .PP
 Normally, the \fBtransport\fR(5) table is specified as a text file
-that serves as input to the \fBpostmap\fR(1) command.
-The result, an indexed file in \fBdbm\fR or \fBdb\fR format, is used
-for fast searching by the mail system. Execute the command
-"\fBpostmap /etc/postfix/transport\fR" to rebuild an indexed
-file after changing the corresponding transport table.
+that serves as input to the \fBpostmap\fR(1) command to create
+an indexed file for fast lookup.
+
+Execute the command "\fBpostmap /etc/postfix/transport\fR" to
+rebuild a default\-type indexed file after changing the text file,
+or execute "\fBpostmap \fItype\fB:/etc/postfix/transport\fR" to
+specify an explicit type.
+
+The default indexed file type is configured with the
+default_database_type parameter. Depending on the platform this
+may be one of lmdb:, cdb:, hash:, or dbm: (without the trailing
+\&':').
 
 When the table is provided via other means such as NIS, LDAP
 or SQL, the same lookups are done as for ordinary indexed files.
+Managing such databases is outside the scope of Postfix.
 
 Alternatively, the table can be provided as a regular\-expression
 map where patterns are given as regular expressions, or lookups
@@ -191,19 +209,26 @@ via the \fBuucp\fR transport to the UUCP host named \fBexample\fR:
      \fB\&.example.com     uucp:example\fR
 .fi
 
-When no nexthop host name is specified, the destination domain
-name is used instead. For example, the following directs mail for
-\fIuser\fR@\fBexample.com\fR via the \fBslow\fR transport to a mail
-exchanger for \fBexample.com\fR.  The \fBslow\fR transport could be
-configured to run at most one delivery process at a time:
+When no nexthop destination is specified, Postfix uses (from low
+to high precedence): the recipient domain, the nexthop specified
+with relayhost, with sender_dependent_relayhost_maps (for remote
+deliveries only), with the transport for the address domain class
+(see DESCRIPTION above), or with
+sender_dependent_default_transport_maps (for remote deliveries
+only). For example, the following directs mail for
+\fIuser\fR@\fBexample.com\fR via the \fBslow\fR transport to a
+mail exchanger for \fBexample.com\fR. The \fBslow\fR transport
+could be configured to run at most one delivery process at a time:
 
 .nf
      \fBexample.com      slow:\fR
 .fi
 
 When no transport is specified, Postfix uses the transport that
-matches the address domain class (see DESCRIPTION
-above).  The following sends all mail for \fBexample.com\fR and its
+matches the address domain class (see DESCRIPTION above), or
+the transport specified with
+sender_dependent_default_transport_maps (for remote deliveries
+only). The following sends all mail for \fBexample.com\fR and its
 subdomains to host \fBgateway.example.com\fR:
 
 .nf

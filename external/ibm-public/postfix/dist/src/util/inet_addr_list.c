@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_addr_list.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: inet_addr_list.c,v 1.3 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -169,9 +169,8 @@ static void inet_addr_list_print(INET_ADDR_LIST *list)
 int     main(int argc, char **argv)
 {
     INET_ADDR_LIST list;
-    INET_PROTO_INFO *proto_info;
 
-    proto_info = inet_proto_init(argv[0], INET_PROTO_NAME_ALL);
+    inet_proto_init(argv[0], INET_PROTO_NAME_ALL);
     inet_addr_list_init(&list);
     while (--argc && *++argv)
 	if (inet_addr_host(&list, *argv) == 0)

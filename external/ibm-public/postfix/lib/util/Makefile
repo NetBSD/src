@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2025/02/25 19:15:53 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2026/05/09 18:49:24 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -125,6 +125,7 @@ logwriter.c \
 lowercase.c \
 lstat_as.c \
 mac_expand.c \
+mac_midna.c \
 mac_parse.c \
 make_dirs.c \
 mask_addr.c \
@@ -158,10 +159,12 @@ netstring.c \
 neuter.c \
 non_blocking.c \
 normalize_ws.c \
+normalize_v4mapped_addr.c \
 nvtable.c \
 open_as.c \
 open_limit.c \
 open_lock.c \
+ossl_digest.c \
 pass_accept.c \
 pass_trigger.c \
 peekfd.c \

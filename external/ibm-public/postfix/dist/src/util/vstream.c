@@ -1,4 +1,4 @@
-/*	$NetBSD: vstream.c,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: vstream.c,v 1.6 2026/05/09 18:49:23 christos Exp $	*/
 
 /*++
 /* NAME
@@ -168,6 +168,9 @@
 /*	int	vstream_fstat(stream, flags)
 /*	VSTREAM	*stream;
 /*	int	flags;
+/*
+/*	void	vstream_no_debug(stream)
+/*	VSTREAM	*stream;
 /* DESCRIPTION
 /*	The \fIvstream\fR module implements light-weight buffered I/O
 /*	similar to the standard I/O routines.
@@ -496,6 +499,10 @@
 /* .IP VSTREAM_FLAG_OWN_VSTRING
 /*	The stream 'owns' the VSTRING buffer, and is responsible
 /*	for cleaning up when the stream is closed.
+/*
+/*	vstream_no_debug() disables 'spontaneous' logging of output
+/*	activity on the last specified VSTREAM, to prevent recursive
+/*	logging.
 /* DIAGNOSTICS
 /*	Panics: interface violations. Fatal errors: out of memory.
 /* SEE ALSO
@@ -676,6 +683,8 @@ VSTREAM vstream_fstd[] = {
 	} \
     } while (0)
 
+static VSTREAM *vstream_log_veto;
+
 /* vstream_buf_init - initialize buffer */
 
 static void vstream_buf_init(VBUF *bp, int flags)
@@ -773,7 +782,7 @@ static int vstream_fflush_some(VSTREAM *stream, ssize_t to_flush)
     used = bp->len - bp->cnt;
     left_over = used - to_flush;
 
-    if (msg_verbose > 2 && stream != VSTREAM_ERR)
+    if (msg_verbose > 2 && stream != vstream_log_veto)
 	msg_info("%s: fd %d flush %ld", myname, stream->fd, (long) to_flush);
     if (to_flush < 0 || left_over < 0)
 	msg_panic("%s: bad to_flush %ld", myname, (long) to_flush);
@@ -836,7 +845,7 @@ static int vstream_fflush_some(VSTREAM *stream, ssize_t to_flush)
 		}
 	    }
 	}
-	if (msg_verbose > 2 && stream != VSTREAM_ERR && n != to_flush)
+	if (msg_verbose > 2 && stream != vstream_log_veto && n != to_flush)
 	    msg_info("%s: %d flushed %ld/%ld", myname, stream->fd,
 		     (long) n, (long) to_flush);
     }
@@ -1890,6 +1899,13 @@ VSTREAM *vstream_memreopen(VSTREAM *stream, VSTRING *string, int flags)
 		  "O_RDONLY, O_WRONLY, or O_APPEND");
     }
     return (stream);
+}
+
+/* vstream_no_debug - debug logging lockout */
+
+void    vstream_no_debug(VSTREAM *stream)
+{
+    vstream_log_veto = stream;
 }
 
 #ifdef TEST

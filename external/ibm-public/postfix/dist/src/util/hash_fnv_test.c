@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_fnv_test.c,v 1.1.1.1 2026/05/09 18:39:23 christos Exp $	*/
+/*	$NetBSD: hash_fnv_test.c,v 1.2 2026/05/09 18:49:22 christos Exp $	*/
 
  /*
   * System library.

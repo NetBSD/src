@@ -1,4 +1,4 @@
-/*	$NetBSD: mock_spawn_command.h,v 1.1.1.1 2026/05/09 18:39:22 christos Exp $	*/
+/*	$NetBSD: mock_spawn_command.h,v 1.2 2026/05/09 18:49:21 christos Exp $	*/
 
 #ifndef _MOCK_SPAWN_COMMAND_H_INCLUDED_
 #define _MOCK_SPAWN_COMMAND_H_INCLUDED_

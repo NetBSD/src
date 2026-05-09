@@ -1,4 +1,4 @@
-/*	$NetBSD: postlog.c,v 1.6 2025/02/25 19:15:48 christos Exp $	*/
+/*	$NetBSD: postlog.c,v 1.7 2026/05/09 18:49:19 christos Exp $	*/
 
 /*++
 /* NAME
@@ -26,8 +26,9 @@
 /*
 /*	The following options are implemented:
 /* .IP "\fB-c \fIconfig_dir\fR"
-/*	Read the \fBmain.cf\fR configuration file in the named directory
-/*	instead of the default configuration directory.
+/*	The \fBmain.cf\fR configuration file is in the named directory
+/*	instead of the default configuration directory. See also the
+/*	MAIL_CONFIG environment setting below.
 /* .IP "\fB-i\fR (obsolete)"
 /*	Include the process ID in the logging tag. This flag is ignored as
 /*	of Postfix 3.4, where the PID is always included.
@@ -56,7 +57,17 @@
 /* .ad
 /* .fi
 /* .IP MAIL_CONFIG
-/*	Directory with the \fBmain.cf\fR file.
+/*	Directory with the \fBmain.cf\fR file. In order to avoid exploitation
+/*	of set-group ID privileges, a non-default directory is allowed only
+/*	if:
+/* .RS
+/* .IP \(bu
+/*	The name is listed in the default \fBmain.cf\fR file with the
+/*	\fBalternate_config_directories\fR or
+/*	\fBmulti_instance_directories\fR configuration parameter.
+/* .IP \(bu
+/*	The command is invoked by the super-user.
+/* .RE
 /* CONFIGURATION PARAMETERS
 /* .ad
 /* .fi

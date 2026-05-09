@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.c,v 1.5 2025/02/25 19:15:43 christos Exp $	*/
+/*	$NetBSD: bounce.c,v 1.6 2026/05/09 18:49:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -141,6 +141,14 @@
 /* .IP "\fBtls_required_enable (yes)\fR"
 /*	Enable support for the "TLS-Required: no" message header, defined
 /*	in RFC 8689.
+/* .PP
+/*	Available in Postfix 3.11 and later:
+/* .IP "\fBrequiretls_redact_dsn (yes)\fR"
+/*	When sending a delivery status notification for an original
+/*	message received with the REQUIRETLS option, do not send the original
+/*	message body (as if that message was received with "RET=HDRS") and
+/*	do not enforce REQUIRETLS (as if that message was received without
+/*	REQUIRETLS).
 /* FILES
 /*	/var/spool/postfix/bounce/* non-delivery records
 /*	/var/spool/postfix/defer/* non-delivery records
@@ -198,6 +206,8 @@
 #include <rcpt_buf.h>
 #include <dsb_scan.h>
 #include <hfrom_format.h>
+#include <sendopts.h>
+#include <dsn_mask.h>
 
 /* Single-threaded server skeleton. */
 
@@ -220,6 +230,7 @@ char   *var_delay_rcpt;
 char   *var_bounce_tmpl;
 bool    var_threaded_bounce;
 char   *var_hfrom_format;		/* header_from_format */
+bool    var_reqtls_redact_dsn;
 
  /*
   * We're single threaded, so we can avoid some memory allocation overhead.
@@ -314,6 +325,27 @@ static int bounce_append_proto(char *service_name, VSTREAM *client)
 				  &rcpt_buf->rcpt, &dsn_buf->dsn));
 }
 
+/* edit_notification_properties - bounce message filter */
+
+static void edit_notification_properties(int *sendopts, int *dsn_ret)
+{
+
+    /*
+     * If REQUIRETLS is requested, do not propagate "TLS-Required: no". See
+     * also down-stream code in bounce_header().
+     */
+    if (*sendopts & SOPT_REQUIRETLS_ESMTP)
+	*sendopts &= ~SOPT_REQUIRETLS_HEADER;
+
+    /*
+     * Redact delivery status notification for REQUIRETLS message.
+     */
+    if (var_reqtls_redact_dsn && (*sendopts & SOPT_REQUIRETLS_ESMTP)) {
+	*sendopts &= ~SOPT_REQUIRETLS_ESMTP;
+	*dsn_ret = DSN_RET_HDRS;
+    }
+}
+
 /* bounce_notify_proto - bounce_notify server protocol */
 
 static int bounce_notify_proto(char *service_name, VSTREAM *client,
@@ -369,6 +401,12 @@ static int bounce_notify_proto(char *service_name, VSTREAM *client,
      */
     if (flags & BOUNCE_FLAG_CLEAN)
 	bounce_cleanup_register(service_name, STR(queue_id));
+
+    /*
+     * Handle REQUIRETLS etc. matters.
+     */
+    if (var_reqtls_enable && (sendopts & SOPT_REQUIRETLS_ALL))
+	edit_notification_properties(&sendopts, &dsn_ret);
 
     /*
      * Execute the request.
@@ -437,6 +475,12 @@ static int bounce_verp_proto(char *service_name, VSTREAM *client)
      */
     if (flags & BOUNCE_FLAG_CLEAN)
 	bounce_cleanup_register(service_name, STR(queue_id));
+
+    /*
+     * Handle REQUIRETLS etc. matters.
+     */
+    if (var_reqtls_enable && (sendopts & SOPT_REQUIRETLS_ALL))
+	edit_notification_properties(&sendopts, &dsn_ret);
 
     /*
      * Execute the request. Fall back to traditional notification if a bounce
@@ -529,6 +573,12 @@ static int bounce_one_proto(char *service_name, VSTREAM *client)
 		 rcpt_buf->offset, STR(rcpt_buf->dsn_orcpt),
 		 rcpt_buf->dsn_notify, STR(dsn_buf->status),
 		 STR(dsn_buf->action), STR(dsn_buf->reason));
+
+    /*
+     * Handle REQUIRETLS etc. matters.
+     */
+    if (var_reqtls_enable && (sendopts & SOPT_REQUIRETLS_ALL))
+	edit_notification_properties(&sendopts, &dsn_ret);
 
     /*
      * Execute the request.
@@ -700,6 +750,7 @@ int     main(int argc, char **argv)
     };
     static const CONFIG_NBOOL_TABLE nbool_table[] = {
 	VAR_THREADED_BOUNCE, DEF_THREADED_BOUNCE, &var_threaded_bounce,
+	VAR_REQTLS_REDACT_DSN, DEF_REQTLS_REDACT_DSN, &var_reqtls_redact_dsn,
 	0,
     };
 

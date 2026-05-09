@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.c,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict.c,v 1.5 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -71,6 +71,19 @@
 /*
 /*	int	dict_flags_mask(names)
 /*	const char *names;
+/*
+/*	char	*dict_make_registered_name(
+/*	VSTRING	*out,
+/*	const char *type_name,
+/*	int	open_flags,
+/*	int	dict_flags)
+/*
+/*	char	*dict_make_registered_name4(
+/*	VSTRING	*out,
+/*	const char *type,
+/*	const char *name,
+/*	int	open_flags,
+/*	int	dict_flags)
 /* DESCRIPTION
 /*	This module maintains a collection of name-value dictionaries.
 /*	Each dictionary has its own name and has its own methods to read
@@ -149,8 +162,8 @@
 /* .IP "char *context"
 /*	Application context from the caller.
 /* .PP
-/*	dict_changed_name() returns non-zero when any dictionary needs to
-/*	be re-opened because it has changed or because it was unlinked.
+/*	dict_changed_name() returns non-zero when any dictionary is
+/*	opened read-only and has changed, or because it was unlinked.
 /*	A non-zero result is the name of a changed dictionary.
 /*
 /*	dict_load_file_xt() reads name-value entries from the named file.
@@ -168,6 +181,12 @@
 /*
 /*	dict_flags_mask() returns the bitmask for the specified
 /*	comma/space-separated dictionary flag names.
+/*
+/*	dict_make_registered_name*() format a dictionary type, name,
+/*	and (initial) flag values for use in dict_register() calls.
+/*	This encourages consistent sharing of dictionary instances that
+/*	have the exact same type:name and (initial) flags. The result
+/*	value is the string value of the \fIout\fR VSTRING buffer.
 /* TRUST AND PROVENANCE
 /* .ad
 /* .fi
@@ -314,12 +333,28 @@ typedef struct {
 
 #define STR(x)	vstring_str(x)
 
+/* dict_register_close - trigger dictionary cleanup */
+
+static void dict_register_close(DICT *dict)
+{
+    /* This will eventually call dict->saved_lose(). */
+    dict_unregister(dict->reg_name);
+}
+
 /* dict_register - make association with dictionary */
 
 void    dict_register(const char *dict_name, DICT *dict_info)
 {
     const char *myname = "dict_register";
     DICT_NODE *node;
+
+    /*
+     * Enforce referential integrity.
+     */
+    if (dict_info->reg_name && strcmp(dict_name, dict_info->reg_name) != 0)
+	msg_panic("%s: '%s:%s' is already registered under '%s' and cannot "
+		  "also be registered under '%s'", myname, dict_info->type,
+		  dict_info->name, dict_info->reg_name, dict_name);
 
     if (dict_table == 0)
 	dict_table = htable_create(0);
@@ -328,6 +363,9 @@ void    dict_register(const char *dict_name, DICT *dict_info)
 	node->dict = dict_info;
 	node->refcount = 0;
 	htable_enter(dict_table, dict_name, (void *) node);
+	dict_info->reg_name = mystrdup(dict_name);
+	dict_info->saved_close = dict_info->close;
+	dict_info->close = dict_register_close;
     } else if (dict_info != node->dict)
 	msg_fatal("%s: dictionary name exists: %s", myname, dict_name);
     node->refcount++;
@@ -351,7 +389,9 @@ static void dict_node_free(void *ptr)
     DICT_NODE *node = (DICT_NODE *) ptr;
     DICT   *dict = node->dict;
 
-    if (dict->close)
+    if (dict->saved_close)			/* managed by dict_register() */
+	dict->saved_close(dict);
+    else
 	dict->close(dict);
     myfree((void *) node);
 }
@@ -603,11 +643,12 @@ const char *dict_changed_name(void)
 	dict = ((DICT_NODE *) h->value)->dict;
 	if (dict->stat_fd < 0)			/* not file-based */
 	    continue;
-	if (dict->mtime == 0)			/* not bloody likely */
-	    msg_warn("%s: table %s: null time stamp", myname, h->key);
+	if (dict->mtime < 0)			/* not bloody likely */
+	    msg_warn("%s: table %s: negative time stamp", myname, h->key);
 	if (fstat(dict->stat_fd, &st) < 0)
 	    msg_fatal("%s: fstat: %m", myname);
 	if (((dict->flags & DICT_FLAG_MULTI_WRITER) == 0
+	     && dict->mtime > 0
 	     && st.st_mtime != dict->mtime)
 	    || st.st_nlink == 0)
 	    status = h->key;
@@ -634,9 +675,9 @@ static const NAME_MASK dict_mask[] = {
     "fixed", DICT_FLAG_FIXED,		/* fixed key map */
     "pattern", DICT_FLAG_PATTERN,	/* keys are patterns */
     "lock", DICT_FLAG_LOCK,		/* lock before access */
-    "replace", DICT_FLAG_DUP_REPLACE,	/* if file, replace dups */
+    "dup_replace", DICT_FLAG_DUP_REPLACE,	/* if file, replace dups */
     "sync_update", DICT_FLAG_SYNC_UPDATE,	/* if file, sync updates */
-    "debug", DICT_FLAG_DEBUG,		/* log access */
+    /* "debug", DICT_FLAG_DEBUG,		/* log access */
     "no_regsub", DICT_FLAG_NO_REGSUB,	/* disallow regexp substitution */
     "no_proxy", DICT_FLAG_NO_PROXY,	/* disallow proxy mapping */
     "no_unauth", DICT_FLAG_NO_UNAUTH,	/* disallow unauthenticated data */
@@ -669,4 +710,25 @@ const char *dict_flags_str(int dict_flags)
 int     dict_flags_mask(const char *names)
 {
     return (name_mask("dictionary flags", dict_mask, names));
+}
+
+/* dict_make_registered_name - format registry name for consistent sharing */
+
+char   *dict_make_registered_name(VSTRING *out, const char *type_name,
+				          int open_flags, int dict_flags)
+{
+    return (STR(vstring_sprintf(out, "%s(%o,%s)",
+				type_name, open_flags,
+				dict_flags_str(dict_flags))));
+}
+
+/* dict_make_registered_name4 - format registry name for consistent sharing */
+
+char   *dict_make_registered_name4(VSTRING *out, const char *type,
+				           const char *name,
+				           int open_flags, int dict_flags)
+{
+    return (STR(vstring_sprintf(out, "%s:%s(%o,%s)",
+				type, name, open_flags,
+				dict_flags_str(dict_flags))));
 }

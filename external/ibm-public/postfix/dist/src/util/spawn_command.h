@@ -1,4 +1,4 @@
-/*	$NetBSD: spawn_command.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: spawn_command.h,v 1.3 2026/05/09 18:49:23 christos Exp $	*/
 
 #ifndef _SPAWN_COMMAND_H_INCLUDED_
 #define _SPAWN_COMMAND_H_INCLUDED_
@@ -12,6 +12,11 @@
 /*	#include <spawn_command.h>
 /* DESCRIPTION
 /* .nf
+
+ /*
+  * System library.
+  */
+#include <stdarg.h>
 
  /*
   * Utility library.
@@ -53,6 +58,25 @@ CHECK_PPTR_HELPER_DCL(CA_SPAWN_CMD, char);
 CHECK_CPTR_HELPER_DCL(CA_SPAWN_CMD, char);
 
 extern WAIT_STATUS_T spawn_command(int,...);
+
+ /*
+  * Internal API, needed by fake_spawn_command().
+  */
+struct spawn_args {
+    char  **argv;			/* argument vector */
+    char   *command;			/* or a plain string */
+    int     stdin_fd;			/* read stdin here */
+    int     stdout_fd;			/* write stdout here */
+    int     stderr_fd;			/* write stderr here */
+    uid_t   uid;			/* privileges */
+    gid_t   gid;			/* privileges */
+    char  **env;			/* extra environment */
+    char  **export;			/* exportable environment */
+    char   *shell;			/* command shell */
+    int     time_limit;			/* command time limit */
+};
+
+extern void get_spawn_args(struct spawn_args *, int, va_list);
 
 /* LICENSE
 /* .ad

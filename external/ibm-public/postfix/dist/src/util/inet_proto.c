@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_proto.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: inet_proto.c,v 1.5 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -17,7 +17,9 @@
 /* .in -4
 /*	} INET_PROTO_INFO;
 /*
-/*	const INET_PROTO_INFO *inet_proto_init(context, protocols)
+/*	const INET_PROTO_INFO *inet_proto_init(
+/*	const char *context,
+/*	const char *protocols)
 /*
 /*	const INET_PROTO_INFO *inet_proto_info()
 /* DESCRIPTION

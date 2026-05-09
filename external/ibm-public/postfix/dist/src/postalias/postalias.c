@@ -1,4 +1,4 @@
-/*	$NetBSD: postalias.c,v 1.6 2025/02/25 19:15:47 christos Exp $	*/
+/*	$NetBSD: postalias.c,v 1.7 2026/05/09 18:49:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -7,7 +7,7 @@
 /*	Postfix alias database maintenance
 /* SYNOPSIS
 /* .fi
-/*	\fBpostalias\fR [\fB-Nfinoprsuvw\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostalias\fR [\fB-Nfijnoprsuvw\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fB-d \fIkey\fR] [\fB-q \fIkey\fR]
 /*		[\fIfile_type\fR:]\fIfile_name\fR ...
 /* DESCRIPTION
@@ -58,6 +58,11 @@
 /*	Incremental mode. Read entries from standard input and do not
 /*	truncate an existing database. By default, \fBpostalias\fR(1) creates
 /*	a new database from the entries in \fIfile_name\fR.
+/* .IP \fB-j\fR
+/*	JSON output. Format the output from \fB-q\fR and \fB-s\fR
+/*	as one \fB{"\fIkey\fB": "\fIvalue\fB"}\fR object per line.
+/* .sp
+/*	This feature is available in Postfix version 3.11 and later.
 /* .IP \fB-N\fR
 /*	Include the terminating null character that terminates lookup keys
 /*	and values. By default, \fBpostalias\fR(1) does whatever
@@ -115,6 +120,11 @@
 /*	The database type. To find out what types are supported, use
 /*	the "\fBpostconf -m\fR" command.
 /*
+/*	When no \fIfile_type\fR is specified, the software uses the database
+/*	type specified via the \fBdefault_database_type\fR configuration
+/*	parameter.
+/*	The default value for this parameter depends on the host environment.
+/*
 /*	The \fBpostalias\fR(1) command can query any supported file type,
 /*	but it can create only the following file types:
 /* .RS
@@ -144,11 +154,6 @@
 /*	The output consists of two files, named \fIfile_name\fB.pag\fR and
 /*	\fIfile_name\fB.dir\fR.
 /*	This is available on systems with support for \fBsdbm\fR databases.
-/* .PP
-/*	When no \fIfile_type\fR is specified, the software uses the database
-/*	type specified via the \fBdefault_database_type\fR configuration
-/*	parameter.
-/*	The default value for this parameter depends on the host environment.
 /* .RE
 /* .IP \fIfile_name\fR
 /*	The name of the alias database source file when creating a database.
@@ -251,6 +256,7 @@
 #include <fcntl.h>
 #include <ctype.h>
 #include <string.h>
+#include <inttypes.h>
 
 /* Utility library. */
 
@@ -288,6 +294,13 @@
 #define POSTALIAS_FLAG_AS_OWNER	(1<<0)	/* open dest as owner of source */
 #define POSTALIAS_FLAG_SAVE_PERM	(1<<1)	/* copy access permission
 						 * from source */
+
+ /*
+  * Global state.
+  */
+int     json_output;
+VSTRING *json_key_buf;
+VSTRING *json_val_buf;
 
 /* postalias - create or update alias database */
 
@@ -489,10 +502,10 @@ static void postalias(char *map_type, char *path_name, int postalias_flags,
      * this information MUST be written without a trailing null appended to
      * key or value.
      */
+#if (defined(HAS_NIS) || defined(HAS_NISPLUS))
     mkmap->dict->flags &= ~DICT_FLAG_TRY1NULL;
     mkmap->dict->flags |= DICT_FLAG_TRY0NULL;
-    vstring_sprintf(value_buffer, "%010ld", (long) time((time_t *) 0));
-#if (defined(HAS_NIS) || defined(HAS_NISPLUS))
+    vstring_sprintf(value_buffer, "%010" PRId64, (int64_t) time((time_t *) 0));
     mkmap->dict->flags &= ~DICT_FLAG_FOLD_FIX;
     mkmap_append(mkmap, "YP_LAST_MODIFIED", STR(value_buffer));
     mkmap_append(mkmap, "YP_MASTER_NAME", var_myhostname);
@@ -555,7 +568,12 @@ static int postalias_queries(VSTREAM *in, char **maps, const int map_count,
 		    msg_warn("table %s:%s should return NO RESULT in case of NOT FOUND",
 			     dicts[n]->type, dicts[n]->name);
 		}
-		vstream_printf("%s:	%s\n", STR(keybuf), value);
+		if (json_output == 0)
+		    vstream_printf("%s:	%s\n", STR(keybuf), value);
+		else
+		    vstream_printf("{\"%s\": \"%s\"}\n",
+			      quote_for_json(json_key_buf, STR(keybuf), -1),
+				   quote_for_json(json_val_buf, value, -1));
 		found = 1;
 		break;
 	    }
@@ -595,7 +613,12 @@ static int postalias_query(const char *map_type, const char *map_name,
 	    msg_warn("table %s:%s should return NO RESULT in case of NOT FOUND",
 		     map_type, map_name);
 	}
-	vstream_printf("%s\n", value);
+	if (json_output == 0)
+	    vstream_printf("%s\n", value);
+	else
+	    vstream_printf("{\"%s\": \"%s\"}\n",
+			   quote_for_json(json_key_buf, key, -1),
+			   quote_for_json(json_val_buf, value, -1));
     }
     if (dict->error)
 	msg_fatal("table %s:%s: query error: %m", dict->type, dict->name);
@@ -692,8 +715,6 @@ static void postalias_seq(const char *map_type, const char *map_name,
     const char *value;
     int     func;
 
-    if (strcmp(map_type, DICT_TYPE_PROXY) == 0)
-	msg_fatal("can't sequence maps via the proxy service");
     dict = dict_open3(map_type, map_name, O_RDONLY, dict_flags);
     for (func = DICT_SEQ_FUN_FIRST; /* void */ ; func = DICT_SEQ_FUN_NEXT) {
 	if (dict_seq(dict, func, &key, &value) != 0)
@@ -707,7 +728,12 @@ static void postalias_seq(const char *map_type, const char *map_name,
 	    msg_warn("table %s:%s should return NO RESULT in case of NOT FOUND",
 		     map_type, map_name);
 	}
-	vstream_printf("%s:	%s\n", key, value);
+	if (json_output == 0)
+	    vstream_printf("%s:	%s\n", key, value);
+	else
+	    vstream_printf("{\"%s\": \"%s\"}\n",
+			   quote_for_json(json_key_buf, key, -1),
+			   quote_for_json(json_val_buf, value, -1));
     }
     if (dict->error)
 	msg_fatal("table %s:%s: sequence error: %m", dict->type, dict->name);
@@ -736,6 +762,7 @@ int     main(int argc, char **argv)
     int     open_flags = O_RDWR | O_CREAT | O_TRUNC;
     int     dict_flags = (DICT_FLAG_DUP_WARN | DICT_FLAG_FOLD_FIX
 			  | DICT_FLAG_UTF8_REQUEST);
+    int     update = 0;
     char   *query = 0;
     char   *delkey = 0;
     int     sequence = 0;
@@ -786,7 +813,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "Nc:d:finopq:rsuvw")) > 0) {
+    while ((ch = GETOPT(argc, argv, "Nc:d:fijnopq:rsuvw")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -800,15 +827,25 @@ int     main(int argc, char **argv)
 		msg_fatal("out of memory");
 	    break;
 	case 'd':
-	    if (sequence || query || delkey)
-		msg_fatal("specify only one of -s -q or -d");
+	    if (update || sequence || query || delkey)
+		msg_fatal("specify only one of -d -i -q or -s");
 	    delkey = optarg;
 	    break;
 	case 'f':
 	    dict_flags &= ~DICT_FLAG_FOLD_FIX;
 	    break;
 	case 'i':
+	    if (update || sequence || query || delkey)
+		msg_fatal("specify only one of -d -i -q or -s");
+	    update = 1;
 	    open_flags &= ~O_TRUNC;
+	    break;
+	case 'j':
+	    if (json_output == 0) {
+		json_output = 1;
+		json_key_buf = vstring_alloc(100);
+		json_val_buf = vstring_alloc(100);
+	    }
 	    break;
 	case 'n':
 	    dict_flags |= DICT_FLAG_TRY0NULL;
@@ -821,8 +858,8 @@ int     main(int argc, char **argv)
 	    postalias_flags &= ~POSTALIAS_FLAG_SAVE_PERM;
 	    break;
 	case 'q':
-	    if (sequence || query || delkey)
-		msg_fatal("specify only one of -s -q or -d");
+	    if (update || sequence || query || delkey)
+		msg_fatal("specify only one of -d -i -q or -s");
 	    query = optarg;
 	    break;
 	case 'r':
@@ -830,8 +867,8 @@ int     main(int argc, char **argv)
 	    dict_flags |= DICT_FLAG_DUP_REPLACE;
 	    break;
 	case 's':
-	    if (query || delkey)
-		msg_fatal("specify only one of -s or -q or -d");
+	    if (update || sequence || query || delkey)
+		msg_fatal("specify only one of -d -i -q or -s");
 	    sequence = 1;
 	    break;
 	case 'u':
@@ -846,6 +883,8 @@ int     main(int argc, char **argv)
 	    break;
 	}
     }
+    if (json_output && !(sequence || query))
+	msg_fatal("option -j requires -q or -s");
     mail_conf_read();
     /* Enforce consistent operation of different Postfix parts. */
     import_env = mail_parm_split(VAR_IMPORT_ENVIRON, var_import_environ);

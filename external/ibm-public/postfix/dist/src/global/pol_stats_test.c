@@ -1,4 +1,4 @@
-/*	$NetBSD: pol_stats_test.c,v 1.1.1.1 2026/05/09 18:39:19 christos Exp $	*/
+/*	$NetBSD: pol_stats_test.c,v 1.2 2026/05/09 18:49:16 christos Exp $	*/
 
 /*++
 /* NAME

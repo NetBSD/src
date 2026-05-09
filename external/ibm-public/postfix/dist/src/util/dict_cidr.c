@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cidr.c,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict_cidr.c,v 1.6 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -239,11 +239,14 @@ static DICT_CIDR_ENTRY *dict_cidr_parse_rule(DICT *dict, char *p, int lineno,
     rule->lineno = lineno;
 
     if (msg_verbose) {
-	if (inet_ntop(cidr_info.addr_family, cidr_info.net_bytes,
-		      hostaddr.buf, sizeof(hostaddr.buf)) == 0)
-	    msg_fatal("inet_ntop: %m");
-	msg_info("dict_cidr_open: add %s/%d %s",
-		 hostaddr.buf, cidr_info.mask_shift, rule->value);
+	/* 202604 Claude: ENDIF has no address pattern. */
+	if (cidr_info.op != CIDR_MATCH_OP_ENDIF) {
+	    if (inet_ntop(cidr_info.addr_family, cidr_info.net_bytes,
+			  hostaddr.buf, sizeof(hostaddr.buf)) == 0)
+		msg_fatal("inet_ntop: %m");
+	    msg_info("dict_cidr_open: add %s/%d %s",
+		     hostaddr.buf, cidr_info.mask_shift, rule->value);
+	}
     }
     return (rule);
 }
@@ -360,5 +363,5 @@ DICT   *dict_cidr_open(const char *mapname, int open_flags, int dict_flags)
 	(void) mvect_free(&mvect);
 
     dict_file_purge_buffers(&dict_cidr->dict);
-    DICT_CIDR_OPEN_RETURN(DICT_DEBUG (&dict_cidr->dict));
+    DICT_CIDR_OPEN_RETURN(&dict_cidr->dict);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cdb.c,v 1.4 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: dict_cdb.c,v 1.5 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -299,7 +299,7 @@ static DICT *dict_cdbq_open(const char *path, int dict_flags)
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_cdbq->dict.fold_buf = vstring_alloc(10);
 
-    DICT_CDBQ_OPEN_RETURN(DICT_DEBUG (&dict_cdbq->dict));
+    DICT_CDBQ_OPEN_RETURN(&dict_cdbq->dict);
 }
 
 /* dict_cdbm_update - add database entry, create mode */
@@ -458,7 +458,8 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     }
 
 #ifndef NO_FTRUNCATE
-    if (st0.st_size)
+    /* 202604 Claude: use the post-myflock() fstat result. */
+    if (st1.st_size)
 	ftruncate(fd, 0);
 #endif
 
@@ -488,7 +489,7 @@ static DICT *dict_cdbm_open(const char *path, int dict_flags)
     if (dict_flags & DICT_FLAG_FOLD_FIX)
 	dict_cdbm->dict.fold_buf = vstring_alloc(10);
 
-    DICT_CDBM_OPEN_RETURN(DICT_DEBUG (&dict_cdbm->dict));
+    DICT_CDBM_OPEN_RETURN(&dict_cdbm->dict);
 }
 
 /* dict_cdb_open - open data base for query mode or create mode */
@@ -501,7 +502,13 @@ DICT   *dict_cdb_open(const char *path, int open_flags, int dict_flags)
     case O_WRONLY | O_CREAT | O_TRUNC:		/* create mode */
     case O_RDWR | O_CREAT | O_TRUNC:		/* sloppiness */
 	return dict_cdbm_open(path, dict_flags);
+    case O_RDWR | O_CREAT:
+    case O_RDWR:
+	/* User error. */
+	return (dict_surrogate(DICT_TYPE_CDB, path, open_flags, dict_flags,
+			       "unsupported non-bulk change request"));
     default:
+	/* Programmer error. */
 	msg_fatal("dict_cdb_open: inappropriate open flags for cdb database"
 		  " - specify O_RDONLY or O_WRONLY|O_CREAT|O_TRUNC");
     }

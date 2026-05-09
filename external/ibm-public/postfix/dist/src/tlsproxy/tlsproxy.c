@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsproxy.c,v 1.7 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: tlsproxy.c,v 1.8 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -548,6 +548,7 @@ static bool tlsp_pre_jail_done;
 static int ask_client_cert;
 static char *tlsp_pre_jail_client_param_key;	/* pre-jail global params */
 static char *tlsp_pre_jail_client_init_key;	/* pre-jail init props */
+static const char *server_role_disabled;
 
  /*
   * TLS per-client status.
@@ -1269,6 +1270,12 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
     init_buf = vstring_alloc(100);
     init_key = tls_proxy_client_init_serialize(attr_print_plain, init_buf,
 					       init_props);
+#define TLSP_CLIENT_INIT_RETURN(retval) do { \
+	vstring_free(init_buf); \
+	vstring_free(param_buf); \
+	return (retval); \
+    } while (0)
+
     if (tlsp_pre_jail_done == 0) {
 	if (tlsp_pre_jail_client_param_key == 0
 	    || tlsp_pre_jail_client_init_key == 0) {
@@ -1286,9 +1293,12 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
      * TLS_APPL_STATE instance; this makes a mismatch of TLS_CLIENT_PARAMS
      * settings problematic.
      */
-    if (tlsp_pre_jail_done
-	&& !been_here_fixed(tlsp_params_mismatch_filter, param_key)
-	&& strcmp(tlsp_pre_jail_client_param_key, param_key) != 0) {
+    else if (tlsp_pre_jail_client_param_key == 0
+	     || tlsp_pre_jail_client_init_key == 0) {
+	msg_warn("TLS client role is disabled by configuration");
+	TLSP_CLIENT_INIT_RETURN(0);
+    } else if (!been_here_fixed(tlsp_params_mismatch_filter, param_key)
+	       && strcmp(tlsp_pre_jail_client_param_key, param_key) != 0) {
 	msg_warn("request from tlsproxy client with unexpected settings");
 	tlsp_log_config_diff(tlsp_pre_jail_client_param_key, param_key);
 	log_hints = 1;
@@ -1363,9 +1373,7 @@ static TLS_APPL_STATE *tlsp_client_init(TLS_CLIENT_PARAMS *tls_params,
 			 SSL_MODE_ENABLE_PARTIAL_WRITE
 			 | SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
     }
-    vstring_free(init_buf);
-    vstring_free(param_buf);
-    return (appl_state);
+    TLSP_CLIENT_INIT_RETURN(appl_state);
 }
 
 /* tlsp_close_event - pre-handshake plaintext-client close event */
@@ -1476,6 +1484,8 @@ static void tlsp_get_request_event(int event, void *context)
     case TLS_PROXY_FLAG_ROLE_SERVER:
 	state->is_server_role = 1;
 	ready = (tlsp_server_ctx != 0);
+	if (server_role_disabled)
+	    msg_warn("%s", server_role_disabled);
 	break;
     default:
 	state->is_server_role = 0;
@@ -1499,6 +1509,7 @@ static void tlsp_get_request_event(int event, void *context)
 				TLSP_INIT_TIMEOUT, (void *) state);
 	return;
     } else {
+	state->flags |= TLSP_FLAG_DO_HANDSHAKE;
 	tlsp_request_read_event(plaintext_fd, tlsp_get_fd_event,
 				TLSP_INIT_TIMEOUT, (void *) state);
 	return;
@@ -1587,8 +1598,7 @@ static void pre_jail_init_server(void)
     }
     var_tlsp_use_tls = var_tlsp_use_tls || var_tlsp_enforce_tls;
     if (!var_tlsp_use_tls) {
-	msg_warn("TLS server role is disabled with %s or %s",
-		 VAR_TLSP_TLS_LEVEL, VAR_TLSP_USE_TLS);
+	server_role_disabled = "TLS server role is disabled by configuration";
 	return;
     }
 
@@ -1691,6 +1701,12 @@ static void pre_jail_init_client(void)
      * configurations.
      */
     tlsp_client_app_cache = htable_create(10);
+
+    /* Postfix <= 3.10 backwards compatibility. */
+    if (warn_compat_break_tlsp_clnt_level
+	&& warn_compat_break_smtp_tls_level)
+	msg_info("using backwards-compatible default setting "
+		 VAR_TLSP_CLNT_LEVEL "=(empty)");
 
     /*
      * Most sites don't use TLS client certs/keys. In that case, enabling

@@ -1,4 +1,4 @@
-/*	$NetBSD: mock_open_as.h,v 1.1.1.1 2026/05/09 18:39:22 christos Exp $	*/
+/*	$NetBSD: mock_open_as.h,v 1.2 2026/05/09 18:49:21 christos Exp $	*/
 
 #ifndef _MOCK_OPEN_AS_H_INCLUDED_
 #define _MOCK_OPEN_AS_H_INCLUDED_

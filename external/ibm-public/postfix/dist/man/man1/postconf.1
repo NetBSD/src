@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.1,v 1.5 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: postconf.1,v 1.6 2026/05/09 18:49:13 christos Exp $
 .\"
 .TH POSTCONF 1 
 .ad
@@ -14,7 +14,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging main.cf:\fR
 
-\fBpostconf\fR [\fB\-dfhHnopqvx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR [\fB\-dfhHjnopqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fB\-C \fIclass,...\fR] [\fIparameter ...\fR]
 
 \fBpostconf\fR [\fB\-epv\fR] [\fB\-c \fIconfig_dir\fR]
@@ -29,7 +29,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service entries:\fR
 
-\fBpostconf\fR \fB\-M\fR [\fB\-foqvx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-M\fR [\fB\-joqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR]\fI ...\fR]
 
 \fBpostconf\fR \fB\-M\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -44,7 +44,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service fields:\fR
 
-\fBpostconf\fR \fB\-F\fR [\fB\-fhHoqvx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-F\fR [\fB\-fhHjoqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR[\fB/\fIfield\fR]]\fI ...\fR]
 
 \fBpostconf\fR \fB\-F\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -53,7 +53,7 @@ Postfix configuration utility
 .ti -4
 \fBManaging master.cf service parameters:\fR
 
-\fBpostconf\fR \fB\-P\fR [\fB\-fhHoqvx\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostconf\fR \fB\-P\fR [\fB\-fhHjoqvx\fR] [\fB\-c \fIconfig_dir\fR]
 [\fIservice\fR[\fB/\fItype\fR[\fB/\fIparameter\fR]]\fI ...\fR]
 
 \fBpostconf\fR \fB\-P\fR [\fB\-ev\fR] [\fB\-c \fIconfig_dir\fR]
@@ -218,6 +218,11 @@ Show parameter or attribute names without the " = \fIvalue\fR"
 that normally follows the name.
 
 This feature is available with Postfix 3.1 and later.
+.IP \fB\-j\fR
+JSON output. Format main.cf or master.cf settings as one
+\fB{"\fIkey\fB": "\fIvalue\fB"}\fR object per line.
+
+This feature is available with Postfix 3.11 and later.
 .IP \fB\-l\fR
 List the names of all supported mailbox locking methods.
 Postfix supports the following methods:
@@ -260,6 +265,16 @@ This feature is available with Postfix 2.2 and later.
 .IP \fBdbm\fR
 An indexed file type based on hashing.  Available on systems
 with support for DBM databases.
+.IP \fBdebug\fR
+An adapter for another table that causes all accesses to be
+logged.  The table name syntax is \fItype\fB:\fIname\fR.
+Example usage: \fBdebug:hash:/etc/postfix/example\fR.  The
+formats of the log messages are unspecified and subject to
+change.  Warning: If a query or the underlying table contains
+sensitive information (such as a password), that information
+might be logged.
+
+This feature is available with Postfix 3.11 and later.
 .IP \fBenviron\fR
 The UNIX process environment array. The lookup key is the
 environment variable name; the table name is ignored.  Originally
@@ -457,6 +472,11 @@ Show \fBmaster.cf\fR service parameter settings (by default
 all services and all parameters), formatted as
 "\fIservice/type/parameter=value\fR", one per line.  Specify
 \fB\-Pf\fR to fold long lines.
+
+Specify multiple \fB\-P\fR options to also list service parameters
+that are not set in master.cf. This is useful with \fB\-x\fR to
+evaluate the impact of master.cf overrides on other parameter
+settings.
 
 Specify one or more "\fIservice/type/parameter\fR" instances
 on the \fBpostconf\fR(1) command line to limit the output

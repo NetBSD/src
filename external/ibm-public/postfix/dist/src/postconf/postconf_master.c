@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_master.c,v 1.8 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postconf_master.c,v 1.9 2026/05/09 18:49:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -29,9 +29,10 @@
 /*	int	field;
 /*	const char *new_value;
 /*
-/*	void	pcf_show_master_params(fp, mode, argc, **param_filters)
+/*	void	pcf_show_master_params(fp, mode, param_class, argc, **param_filters)
 /*	VSTREAM	*fp;
 /*	int	mode;
+/*	int	param_class;
 /*	int	argc;
 /*	char	**param_filters;
 /*
@@ -65,7 +66,9 @@
 /*	or multi-column attribute.
 /*
 /*	pcf_show_master_params() writes name/type/parameter=value
-/*	records to the specified stream.
+/*	records to the specified stream. Like show_parameters(),
+/*	this may list either selected parameters, or all parameters that
+/*	match the param_class argument.
 /*
 /*	pcf_edit_master_param() updates, removes or adds the named
 /*	parameter in a master.cf entry (the remove request ignores
@@ -200,6 +203,7 @@ static const char *pcf_valid_master_types[] = {
 static const char pcf_valid_bool_types[] = "yn-";
 
 static VSTRING *pcf_exp_buf;
+static VSTRING *pcf_json_buf;
 
 #define STR(x) vstring_str(x)
 
@@ -466,6 +470,97 @@ void    pcf_read_master(int fail_on_open_error)
     pcf_master_table[entry_count].argv = 0;
 }
 
+/* pcf_print_master_entry_as_json - JSON formatter */
+
+static void pcf_print_master_entry_as_json(VSTREAM *fp, int mode,
+					           PCF_MASTER_ENT *masterp)
+{
+    char  **argv = masterp->argv->argv;
+    const char *arg;
+    const char *aval;
+    int     field;
+    int     in_daemon_options;
+    int     need_parens;
+
+    if (pcf_exp_buf == 0 && (mode & PCF_SHOW_EVAL))
+	pcf_exp_buf = vstring_alloc(100);
+    if (pcf_json_buf == 0 && (mode & PCF_SHOW_JSON))
+	pcf_json_buf = vstring_alloc(100);
+
+    /*
+     * Output the namespace part first, so that we can reuse a buffer.
+     */
+    vstream_fprintf(fp, "{\"%s\": ",
+		    quote_for_json(pcf_json_buf, masterp->name_space, -1));
+
+    /*
+     * Show the standard fields with one-space column separation.
+     */
+#define APPEND_JSON_STR(s, l) quote_for_json_append(pcf_json_buf, (s), (l))
+#define APPEND_JSON_STR0(s) APPEND_JSON_STR((s), -1)
+#define APPEND_JSON_CHAR(s) APPEND_JSON_STR((s),  1)
+
+    VSTRING_RESET(pcf_json_buf);
+    for (field = 0; field < PCF_MASTER_MIN_FIELDS; field++) {
+	arg = argv[field];
+	if (field > 0)
+	    APPEND_JSON_CHAR(" ");
+	APPEND_JSON_STR0(arg);
+    }
+
+    /*
+     * Format the daemon command-line options and non-option arguments.
+     */
+    in_daemon_options = 1;
+    for ( /* void */ ; (arg = argv[field]) != 0; field++) {
+	aval = 0;
+	need_parens = 0;
+	if (in_daemon_options) {
+	    if (arg[0] != '-' || strcmp(arg, "--") == 0) {
+		in_daemon_options = 0;
+	    }
+
+	    /*
+	     * Special processing for options that require a value.
+	     */
+	    else if (strchr(pcf_daemon_options_expecting_value, arg[1]) != 0
+		     && (aval = argv[field + 1]) != 0) {
+
+		/*
+		 * Optionally, expand $name in parameter value.
+		 */
+		if (strcmp(arg, "-o") == 0
+		    && (mode & PCF_SHOW_EVAL) != 0)
+		    aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
+						      aval, masterp);
+		need_parens = aval[strcspn(aval, PCF_MASTER_BLANKS)];
+	    }
+	} else {
+	    need_parens = arg[strcspn(arg, PCF_MASTER_BLANKS)];
+	}
+	APPEND_JSON_CHAR(" ");
+	if (in_daemon_options == 0 && need_parens)
+	    APPEND_JSON_CHAR("{");
+	APPEND_JSON_STR0(arg);
+	if (in_daemon_options == 0 && need_parens)
+	    APPEND_JSON_CHAR("}");
+	if (aval) {
+	    APPEND_JSON_CHAR(" ");
+	    if (need_parens)
+		APPEND_JSON_CHAR("{");
+	    APPEND_JSON_STR0(aval);
+	    if (need_parens)
+		APPEND_JSON_CHAR("}");
+	    field += 1;
+	}
+    }
+    VSTRING_TERMINATE(pcf_json_buf);
+    vstream_fprintf(fp, "\"%s\"}\n", STR(pcf_json_buf));
+
+    if (msg_verbose)
+	vstream_fflush(fp);
+}
+
 /* pcf_print_master_entry - print one master line */
 
 void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
@@ -489,6 +584,10 @@ void    pcf_print_master_entry(VSTREAM *fp, int mode, PCF_MASTER_ENT *masterp)
 	57,				/* command */
     };
 
+    if (mode & PCF_SHOW_JSON) {
+	pcf_print_master_entry_as_json(fp, mode, masterp);
+	return;
+    }
 #define ADD_TEXT(text, len) do { \
         vstream_fputs(text, fp); line_len += len; } \
     while (0)
@@ -656,6 +755,91 @@ void    pcf_show_master_entries(VSTREAM *fp, int mode, int argc, char **argv)
     }
 }
 
+/* pcf_print_master_field_as_json - scaffolding for JSON */
+
+static void pcf_print_master_field_as_json(VSTREAM *fp, int mode,
+					           PCF_MASTER_ENT *masterp,
+					           int field)
+{
+    char  **argv = masterp->argv->argv;
+    const char *arg;
+    const char *aval;
+    int     in_daemon_options;
+    int     need_parens;
+
+    if (pcf_exp_buf == 0 && (mode & PCF_SHOW_EVAL) != 0)
+	pcf_exp_buf = vstring_alloc(100);
+    if (pcf_json_buf == 0 && (mode & PCF_SHOW_JSON) != 0)
+	pcf_json_buf = vstring_alloc(100);
+
+    /*
+     * Output the name part first, so that we can reuse a buffer.
+     */
+    vstream_fprintf(fp, "{\"%s\": ",
+		    quote_for_json_var(pcf_json_buf, masterp->name_space,
+				       PCF_NAMESP_SEP_STR,
+				       pcf_str_field_pattern(field),
+				       (const char *) 0));
+
+    /*
+     * Show the field value, or the first value in the case of a multi-column
+     * field.
+     */
+    VSTRING_RESET(pcf_json_buf);
+    APPEND_JSON_STR0(argv[field]);
+
+    /*
+     * Format the daemon command-line options and non-option arguments. Here,
+     * we have no data-dependent preference for column positions, but we do
+     * have argument grouping preferences.
+     */
+    if (field == PCF_MASTER_FLD_CMD) {
+	in_daemon_options = 1;
+	for (field += 1; (arg = argv[field]) != 0; field++) {
+	    aval = 0;
+	    need_parens = 0;
+	    if (in_daemon_options) {
+		if (arg[0] != '-' || strcmp(arg, "--") == 0) {
+		    in_daemon_options = 0;
+		} else if (strchr(pcf_daemon_options_expecting_value, arg[1]) != 0
+			   && (aval = argv[field + 1]) != 0) {
+
+		    /*
+		     * Optionally, expand $name in parameter value.
+		     */
+		    if (strcmp(arg, "-o") == 0
+			&& (mode & PCF_SHOW_EVAL) != 0)
+			aval = pcf_expand_parameter_value(pcf_exp_buf, mode,
+							  aval, masterp);
+		    need_parens = aval[strcspn(aval, PCF_MASTER_BLANKS)];
+		}
+	    } else {
+		need_parens = arg[strcspn(arg, PCF_MASTER_BLANKS)];
+	    }
+	    APPEND_JSON_CHAR(" ");
+	    if (in_daemon_options == 0 && need_parens)
+		APPEND_JSON_CHAR("{");
+	    APPEND_JSON_STR0(arg);
+	    if (in_daemon_options == 0 && need_parens)
+		APPEND_JSON_CHAR("}");
+	    if (aval) {
+		APPEND_JSON_CHAR(" ");
+		if (need_parens)
+		    APPEND_JSON_CHAR("{");
+		APPEND_JSON_STR0(aval);
+		if (need_parens)
+		    APPEND_JSON_CHAR("}");
+		field += 1;
+	    }
+	}
+    }
+    VSTRING_TERMINATE(pcf_json_buf);
+    vstream_fprintf(fp, "\"%s\"}\n", STR(pcf_json_buf));
+
+    if (msg_verbose)
+	vstream_fflush(fp);
+}
+
 /* pcf_print_master_field - scaffolding */
 
 static void pcf_print_master_field(VSTREAM *fp, int mode,
@@ -670,6 +854,10 @@ static void pcf_print_master_field(VSTREAM *fp, int mode,
     int     in_daemon_options;
     int     need_parens;
 
+    if (mode & PCF_SHOW_JSON) {
+	pcf_print_master_field_as_json(fp, mode, masterp, field);
+	return;
+    }
     if (pcf_exp_buf == 0)
 	pcf_exp_buf = vstring_alloc(100);
 
@@ -884,8 +1072,10 @@ static void pcf_print_master_param(VSTREAM *fp, int mode,
 				           const char *param_name,
 				           const char *param_value)
 {
-    if (pcf_exp_buf == 0)
+    if (pcf_exp_buf == 0 && (mode & PCF_SHOW_EVAL))
 	pcf_exp_buf = vstring_alloc(100);
+    if (pcf_json_buf == 0 && (mode & PCF_SHOW_JSON))
+	pcf_json_buf = vstring_alloc(100);
 
     if (mode & PCF_HIDE_VALUE) {
 	pcf_print_line(fp, mode, "%s%c%s\n",
@@ -895,7 +1085,14 @@ static void pcf_print_master_param(VSTREAM *fp, int mode,
 	if ((mode & PCF_SHOW_EVAL) != 0)
 	    param_value = pcf_expand_parameter_value(pcf_exp_buf, mode,
 						     param_value, masterp);
-	if ((mode & PCF_HIDE_NAME) == 0) {
+	if (mode & PCF_SHOW_JSON) {
+	    vstream_fprintf(fp, "{\"%s\": ",
+		       quote_for_json_var(pcf_json_buf, masterp->name_space,
+					  PCF_NAMESP_SEP_STR, param_name,
+					  (const char *) 0));
+	    vstream_fprintf(fp, "\"%s\"}\n",
+			    quote_for_json(pcf_json_buf, param_value, -1));
+	} else if ((mode & PCF_HIDE_NAME) == 0) {
 	    pcf_print_line(fp, mode, "%s%c%s = %s\n",
 			   masterp->name_space, PCF_NAMESP_SEP_CH,
 			   param_name, param_value);
@@ -914,14 +1111,69 @@ static int pcf_sort_argv_cb(const void *a, const void *b)
     return (strcmp(*(char **) a, *(char **) b));
 }
 
+/* merge_main_master_parameters - all parameters as sen by this service */
+
+static DICT *merge_main_master_parameters(int mode, PCF_MASTER_ENT *masterp,
+					          int param_class)
+{
+    DICT   *dict;
+    PCF_PARAM_INFO **main_list;
+    PCF_PARAM_INFO **main_ht;
+    const char *dict_spec = "merged_dict";
+    const char *param_name;
+    const char *param_value;
+    int     how;
+
+    /*
+     * With -PP, use the merged main/master.cf settings instead of
+     * masterp->allparams (the master.cf settings for this service).
+     */
+    dict = dict_ht_open(dict_spec, O_CREAT | O_RDWR, 0);
+    dict_register(dict_spec, dict);
+
+    /*
+     * For each parameter in the main.cf namespace, look up its effective
+     * value (from master.cf or main.cf, or use the default).
+     */
+    main_list = PCF_PARAM_TABLE_LIST(pcf_param_table);
+    for (main_ht = main_list; *main_ht; main_ht++) {
+	param_name = PCF_PARAM_INFO_NAME(*main_ht);
+	if (param_class && !(PCF_PARAM_INFO_NODE(*main_ht)->flags & param_class))
+	    continue;
+	if ((param_value =
+	     pcf_lookup_parameter_value(mode, param_name, masterp,
+					PCF_PARAM_INFO_NODE(*main_ht))) == 0)
+	    msg_panic("%s: parameter name not found: %s", __func__, param_name);
+	dict->update(dict, param_name, param_value);
+    }
+    myfree((void *) main_list);
+
+    /*
+     * Add master.cf settings with service-specific custom names. Skip
+     * settings that were already copied in the above loop.
+     */
+    if (masterp->all_params) {
+	DICT   *all_params = masterp->all_params;
+
+	for (how = DICT_SEQ_FUN_FIRST;
+	     all_params->sequence(all_params, how, &param_name,
+				  &param_value) == 0;
+	     how = DICT_SEQ_FUN_NEXT) {
+	    if (dict->lookup(dict, param_name) == 0)
+		dict->update(dict, param_name, param_value);
+	}
+    }
+    return (dict);
+}
+
 /* pcf_show_master_any_param - show any parameter in master.cf service entry */
 
 static void pcf_show_master_any_param(VSTREAM *fp, int mode,
-				              PCF_MASTER_ENT *masterp)
+				              PCF_MASTER_ENT *masterp,
+				              DICT *dict)
 {
     const char *myname = "pcf_show_master_any_param";
     ARGV   *argv = argv_alloc(10);
-    DICT   *dict = masterp->all_params;
     const char *param_name;
     const char *param_value;
     int     param_count = 0;
@@ -960,7 +1212,8 @@ static void pcf_show_master_any_param(VSTREAM *fp, int mode,
 
 /* pcf_show_master_params - show master.cf params */
 
-void    pcf_show_master_params(VSTREAM *fp, int mode, int argc, char **argv)
+void    pcf_show_master_params(VSTREAM *fp, int mode, int param_class,
+			               int argc, char **argv)
 {
     PCF_MASTER_ENT *masterp;
     PCF_MASTER_FLD_REQ *field_reqs;
@@ -989,14 +1242,20 @@ void    pcf_show_master_params(VSTREAM *fp, int mode, int argc, char **argv)
      * Iterate over the master table.
      */
     for (masterp = pcf_master_table; masterp->argv != 0; masterp++) {
-	if ((dict = masterp->all_params) != 0) {
+	if (mode & PCF_MASTER_PP) {
+	    dict = merge_main_master_parameters(mode, masterp,
+						argc > 0 ? 0 : param_class);
+	} else {
+	    dict = masterp->all_params;
+	}
+	if (dict != 0) {
 	    if (argc > 0) {
 		for (req = field_reqs; req < field_reqs + argc; req++) {
 		    if (PCF_MATCH_SERVICE_PATTERN(req->service_pattern,
 						  masterp->argv->argv[0],
 						  masterp->argv->argv[1])) {
 			if (PCF_IS_MAGIC_PARAM_PATTERN(req->param_pattern)) {
-			    pcf_show_master_any_param(fp, mode, masterp);
+			    pcf_show_master_any_param(fp, mode, masterp, dict);
 			    req->match_count += 1;
 			} else if ((param_value = dict_get(dict,
 						req->param_pattern)) != 0) {
@@ -1008,9 +1267,11 @@ void    pcf_show_master_params(VSTREAM *fp, int mode, int argc, char **argv)
 		    }
 		}
 	    } else {
-		pcf_show_master_any_param(fp, mode, masterp);
+		pcf_show_master_any_param(fp, mode, masterp, dict);
 	    }
 	}
+	if (mode & PCF_MASTER_PP)
+	    dict_close(dict);
     }
 
     /*

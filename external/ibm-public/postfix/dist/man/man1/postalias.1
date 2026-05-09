@@ -1,4 +1,4 @@
-.\"	$NetBSD: postalias.1,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: postalias.1,v 1.5 2026/05/09 18:49:13 christos Exp $
 .\"
 .TH POSTALIAS 1 
 .ad
@@ -11,7 +11,7 @@ Postfix alias database maintenance
 .na
 .nf
 .fi
-\fBpostalias\fR [\fB\-Nfinoprsuvw\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostalias\fR [\fB\-Nfijnoprsuvw\fR] [\fB\-c \fIconfig_dir\fR]
 [\fB\-d \fIkey\fR] [\fB\-q \fIkey\fR]
         [\fIfile_type\fR:]\fIfile_name\fR ...
 .SH DESCRIPTION
@@ -64,6 +64,11 @@ is controlled by appending a flag to a pattern.
 Incremental mode. Read entries from standard input and do not
 truncate an existing database. By default, \fBpostalias\fR(1) creates
 a new database from the entries in \fIfile_name\fR.
+.IP \fB\-j\fR
+JSON output. Format the output from \fB\-q\fR and \fB\-s\fR
+as one \fB{"\fIkey\fB": "\fIvalue\fB"}\fR object per line.
+.sp
+This feature is available in Postfix version 3.11 and later.
 .IP \fB\-N\fR
 Include the terminating null character that terminates lookup keys
 and values. By default, \fBpostalias\fR(1) does whatever
@@ -121,6 +126,11 @@ Arguments:
 The database type. To find out what types are supported, use
 the "\fBpostconf \-m\fR" command.
 
+When no \fIfile_type\fR is specified, the software uses the database
+type specified via the \fBdefault_database_type\fR configuration
+parameter.
+The default value for this parameter depends on the host environment.
+
 The \fBpostalias\fR(1) command can query any supported file type,
 but it can create only the following file types:
 .RS
@@ -150,11 +160,6 @@ This is available on systems with support for \fBlmdb\fR databases.
 The output consists of two files, named \fIfile_name\fB.pag\fR and
 \fIfile_name\fB.dir\fR.
 This is available on systems with support for \fBsdbm\fR databases.
-.PP
-When no \fIfile_type\fR is specified, the software uses the database
-type specified via the \fBdefault_database_type\fR configuration
-parameter.
-The default value for this parameter depends on the host environment.
 .RE
 .IP \fIfile_name\fR
 The name of the alias database source file when creating a database.

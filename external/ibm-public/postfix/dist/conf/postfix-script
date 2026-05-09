@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-script,v 1.5 2025/02/25 19:15:41 christos Exp $
+#	$NetBSD: postfix-script,v 1.6 2026/05/09 18:49:13 christos Exp $
 #
 
 #++
@@ -144,6 +144,7 @@ start|start-fg)
 		}
 		# Foreground this so it can be stopped. All inodes are cached.
 		$daemon_directory/postfix-script check-warn
+		$daemon_directory/postfix-script check-alias-maps-migration
 	fi
 	$INFO starting the Postfix mail system || exit 1
 	case $1 in
@@ -247,6 +248,7 @@ flush)
 check)
 
 	$daemon_directory/postfix-script check-fatal || exit 1
+	$daemon_directory/postfix-script check-alias-maps-migration
 	$daemon_directory/postfix-script check-warn
 	exit 0
 	;;
@@ -298,6 +300,35 @@ check-fatal)
 
 	$command_directory/postsuper || exit 1
 	exit 0
+	;;
+
+check-alias-maps-migration)
+	# This command is NOT part of the public interface.
+
+	# As of Postfix 3.11, the default alias_maps value
+	# contains $default_database_type:/path/to/aliases. When
+	# default_database_type is changed to lmdb or cdb, Postfix
+	# will not generate hash:/path/to/aliases requests that can
+	# be resolved dynamically with enable-redirect or enable-reindex.
+	# 
+	# To avoid this, craft a one-time stand-alone re-indexing request.
+	test -f $config_directory/check-alias-maps-migration-done && exit 0
+	test "x`$command_directory/postconf -h non_bdb_migration_level`" = xenable-reindex || exit 0
+	BACKUP_IFS="$IFS"
+	for map	in `$command_directory/postconf -hx alias_maps`
+	do
+	    echo "$map" | (
+		IFS=: read type path; IFS="$BACKUP_IFS"
+		case "$type" in
+		cdb|lmdb)
+		    test ! -f "$path.$type" -a -f "$path" -a -f "$path.db" && {
+			$daemon_directory/nbdb_reindexd -S "hash:$path" ||
+			    $WARN "See https://www.postfix.org/NON_BERKELEYDB_README.html for suggestions"
+		    }
+		esac
+	    )
+	done
+	touch $config_directory/check-alias-maps-migration-done
 	;;
 
 check-warn)
@@ -410,9 +441,9 @@ post-install)
 	$daemon_directory/post-install "$@"
 	;;
 
-tls)
-	shift
-	$daemon_directory/postfix-tls-script "$@"
+tls|non-bdb)
+	cmd=$1; shift
+	$daemon_directory/postfix-$cmd-script "$@"
 	;;
 
 /*)
@@ -454,7 +485,7 @@ logrotate)
 	;;
 
 *)
-	$FATAL "unknown command: '$1'. Usage: postfix start (or stop, reload, abort, flush, check, status, set-permissions, upgrade-configuration, logrotate)"
+	$FATAL "unknown command: '$1'. Usage: postfix start (or stop, reload, abort, flush, check, status, set-permissions, upgrade-configuration, logrotate, tls, non-bdb)"
 	exit 1
 	;;
 

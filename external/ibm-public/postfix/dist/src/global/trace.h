@@ -1,4 +1,4 @@
-/*	$NetBSD: trace.h,v 1.1.1.2 2026/05/09 18:39:19 christos Exp $	*/
+/*	$NetBSD: trace.h,v 1.2 2026/05/09 18:49:17 christos Exp $	*/
 
 #ifndef _TRACE_H_INCLUDED_
 #define _TRACE_H_INCLUDED_

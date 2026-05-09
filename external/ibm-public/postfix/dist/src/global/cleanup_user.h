@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_user.h,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: cleanup_user.h,v 1.5 2026/05/09 18:49:15 christos Exp $	*/
 
 #ifndef _CLEANUP_USER_H_INCLUDED_
 #define _CLEANUP_USER_H_INCLUDED_
@@ -27,6 +27,7 @@
 #define CLEANUP_FLAG_SMTP_REPLY	(1<<7)	/* Enable SMTP reply */
 #define CLEANUP_FLAG_SMTPUTF8	(1<<8)	/* SMTPUTF8 requested */
 #define CLEANUP_FLAG_AUTOUTF8	(1<<9)	/* Autodetect SMTPUTF8 */
+#define CLEANUP_FLAG_REQTLS	(1<<10)	/* REQUIRETLS requested */
 
 #define CLEANUP_FLAG_FILTER_ALL	(CLEANUP_FLAG_FILTER | CLEANUP_FLAG_MILTER)
 

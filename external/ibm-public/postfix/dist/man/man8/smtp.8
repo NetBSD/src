@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtp.8,v 1.6 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: smtp.8,v 1.7 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH SMTP 8 
 .ad
@@ -192,7 +192,7 @@ RFC 5321 (SMTP protocol)
 RFC 6531 (Internationalized SMTP)
 RFC 6533 (Internationalized Delivery Status Notifications)
 RFC 7672 (SMTP security via opportunistic DANE TLS)
-RFC 8689 (TLS\-Required message header)
+RFC 8689 (SMTP REQUIRETLS extension, TLS\-Required header)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -487,14 +487,14 @@ Available in Postfix version 3.9 and later:
 .IP "\fBsmtp_sasl_password_result_delimiter (:)\fR"
 The delimiter between username and password in sasl_passwd_maps lookup
 results.
-.SH "STARTTLS SUPPORT CONTROLS"
+.SH "TLS SUPPORT CONTROLS"
 .na
 .nf
 .ad
 .fi
 Detailed information about STARTTLS configuration may be found
 in the TLS_README document.
-.IP "\fBsmtp_tls_security_level (empty)\fR"
+.IP "\fBsmtp_tls_security_level (Postfix >= 3.11: may; Postfix < 3.11: empty)\fR"
 The default SMTP TLS security level for the Postfix SMTP client.
 .IP "\fBsmtp_sasl_tls_security_options ($smtp_sasl_security_options)\fR"
 The SASL authentication security options that the Postfix SMTP
@@ -683,14 +683,30 @@ Enable support for RFC 8460 TLSRPT notifications.
 .IP "\fBsmtp_tlsrpt_socket_name (empty)\fR"
 The pathname of a UNIX\-domain datagram socket that is managed
 by a local TLSRPT reporting service.
-.IP "\fBsmtp_tlsrpt_skip_reused_handshakes (yes)\fR"
-Do not report the TLSRPT status for TLS protocol handshakes
-that reuse a previously\-negotiated TLS session (there is no new
-information to report).
+.IP "\fBsmtp_tlsrpt_skip_reused_handshakes (Postfix >= 3.11: no, Postfix 3.10: yes)\fR"
+When set to "yes", report the TLSRPT status only for "new" TLS
+sessions.
 .IP "\fBtls_required_enable (yes)\fR"
 Enable support for the "TLS\-Required: no" message header, defined
 in RFC 8689.
-.SH "OBSOLETE STARTTLS CONTROLS"
+.PP
+Available in Postfix version 3.10.5 and later:
+.IP "\fBsmtp_tls_enforce_sts_mx_patterns (yes)\fR"
+Transform the TLS policy from an STS policy plugin: connect to
+an MX host only if its name matches any STS policy MX host pattern,
+and match the server certificate against the MX hostname.
+.PP
+Available in Postfix version 3.11 and later:
+.IP "\fBrequiretls_enable (yes)\fR"
+Enable support for the ESMTP verb "REQUIRETLS" in the "MAIL
+FROM" command.
+.IP "\fBsmtp_requiretls_policy (see 'postconf -d smtp_requiretls_policy' output)\fR"
+How the Postfix SMTP and LMTP client will enforce REQUIRETLS
+for messages received with the REQUIRETLS option.
+.IP "\fBsmtp_log_tls_feature_status (yes)\fR"
+Enable logging of TLS feature information in delivery status
+logging.
+.SH "OBSOLETE TLS CONTROLS"
 .na
 .nf
 .ad

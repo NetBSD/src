@@ -1,4 +1,4 @@
-.\"	$NetBSD: memcache_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: memcache_table.5,v 1.3 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH MEMCACHE_TABLE 5 
 .ad
@@ -18,10 +18,10 @@ Postfix memcache client configuration
 .fi
 The Postfix mail system uses optional tables for address
 rewriting or mail routing. These tables are usually in
-\fBdbm\fR or \fBdb\fR format.
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 
 Alternatively, lookup tables can be specified as memcache
-instances.  To use memcache lookups, define a memcache
+instances. To use memcache lookups, define a memcache
 source as a lookup table in main.cf, for example:
 
 .nf
@@ -114,6 +114,17 @@ time. Smaller values are relative to the time of the update.
 .nf
 .ad
 .fi
+.IP "\fBkey_digest (default: empty)\fB"
+After processing the \fBkey_format\fR setting, and before sending
+a request to the memcache server, run the key through the named
+message digest algorithm and convert the result to lowercase
+hexadecimal characters. This prevents a database access error
+when keys may exceed the memcache server's key length limit
+(usually, 250 bytes). Specify the name of a message digest
+algorithm that is supported by OpenSSL, for example, \fBsha256\fR.
+
+This feature is available in Postfix 3.11 and later, and requires
+that Postfix is built with TLS support.
 .IP "\fBkey_format (default: %s)\fB"
 Format of the lookup and update keys that the Postfix
 memcache client sends to the memcache server.
@@ -209,7 +220,7 @@ tables such as \fBalias_maps\fR (these may contain
 "\fI|command\fR and "\fI/file/name\fR" destinations), or
 \fBvirtual_uid_maps\fR, \fBvirtual_gid_maps\fR and
 \fBvirtual_mailbox_maps\fR (these specify UNIX process
-privileges or "\fI/file/name\fR" destinations).  In a typical
+privileges for "\fI/file/name\fR" destinations).  In a typical
 deployment a memcache database is writable by any process
 that can talk to the memcache server; in contrast,
 security\-sensitive tables must never be writable by the

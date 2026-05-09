@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.h,v 1.1.1.2 2026/05/09 18:39:25 christos Exp $	*/
+/*	$NetBSD: virtual.h,v 1.2 2026/05/09 18:49:23 christos Exp $	*/
 
 /*++
 /* NAME

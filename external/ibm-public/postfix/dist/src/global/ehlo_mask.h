@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.h,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: ehlo_mask.h,v 1.4 2026/05/09 18:49:16 christos Exp $	*/
 
 #ifndef _EHLO_MASK_H_INCLUDED_
 #define _EHLO_MASK_H_INCLUDED_
@@ -14,7 +14,7 @@
 /* .nf
 
  /*
-  * External interface.
+  * Bit flags.
   */
 #define EHLO_MASK_8BITMIME	(1<<0)	/* start of first byte */
 #define EHLO_MASK_PIPELINING	(1<<1)
@@ -31,8 +31,32 @@
 #define EHLO_MASK_DSN		(1<<11)
 #define EHLO_MASK_SMTPUTF8	(1<<12)
 #define EHLO_MASK_CHUNKING	(1<<13)
-#define EHLO_MASK_SILENT	(1<<15)
+#define EHLO_MASK_REQTLS	(1<<14)
+#define EHLO_MASK_SILENT	(1<<15)	/* in-band signaling */
 
+ /*
+  * ESMTP verbs.
+  */
+#define EHLO_VERB_8BITMIME 	"8BITMIME"
+#define EHLO_VERB_PIPELINING 	"PIPELINING"
+#define EHLO_VERB_SIZE 		"SIZE"
+#define EHLO_VERB_VRFY 		"VRFY"
+#define EHLO_VERB_ETRN 		"ETRN"
+#define EHLO_VERB_AUTH 		"AUTH"
+#define EHLO_VERB_VERP 		"VERP"
+#define EHLO_VERB_STARTTLS 	"STARTTLS"
+#define EHLO_VERB_XCLIENT 	"XCLIENT"
+#define EHLO_VERB_XFORWARD 	"XFORWARD"
+#define EHLO_VERB_ENHANCEDSTATUSCODES 	"ENHANCEDSTATUSCODES"
+#define EHLO_VERB_DSN 		"DSN"
+#define EHLO_VERB_SMTPUTF8 	"SMTPUTF8"
+#define EHLO_VERB_CHUNKING 	"CHUNKING"
+#define EHLO_VERB_REQTLS 	"REQUIRETLS"
+#define EHLO_VERB_SILENT 	"SILENT-DISCARD"	/* in-band signaling */
+
+ /*
+  * Functions.
+  */
 extern int ehlo_mask(const char *);
 extern const char *str_ehlo_mask(int);
 

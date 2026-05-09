@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_lmdb.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_lmdb.c,v 1.5 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -655,7 +655,8 @@ DICT   *dict_lmdb_open(const char *path, int open_flags, int dict_flags)
 	msg_fatal("dict_lmdb_open: fstat: %m");
     dict_lmdb->dict.lock_fd = dict_lmdb->dict.stat_fd = db_fd;
     dict_lmdb->dict.lock_type = MYFLOCK_STYLE_FCNTL;
-    dict_lmdb->dict.mtime = st.st_mtime;
+    if (open_flags == O_RDONLY)
+	dict_lmdb->dict.mtime = st.st_mtime;
     dict_lmdb->dict.owner.uid = st.st_uid;
     dict_lmdb->dict.owner.status = (st.st_uid != 0);
 
@@ -667,6 +668,7 @@ DICT   *dict_lmdb_open(const char *path, int open_flags, int dict_flags)
      * the source file changed only seconds ago.
      */
     if ((dict_flags & DICT_FLAG_LOCK) != 0
+	&& open_flags == O_RDONLY
 	&& stat(path, &st) == 0
 	&& st.st_mtime > dict_lmdb->dict.mtime
 	&& st.st_mtime < time((time_t *) 0) - 100)
@@ -702,7 +704,7 @@ DICT   *dict_lmdb_open(const char *path, int open_flags, int dict_flags)
 	dict_lmdb_notify((void *) dict_lmdb, MDB_SUCCESS,
 			 slmdb_curr_limit(&dict_lmdb->slmdb));
 
-    DICT_LMDB_OPEN_RETURN(DICT_DEBUG (&dict_lmdb->dict));
+    DICT_LMDB_OPEN_RETURN(&dict_lmdb->dict);
 }
 
 #endif

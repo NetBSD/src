@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_api.c,v 1.5 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: cleanup_api.c,v 1.6 2026/05/09 18:49:15 christos Exp $	*/
 
 /*++
 /* NAME
@@ -82,6 +82,8 @@
 /* .IP CLEANUP_FLAG_AUTOUTF8
 /*	Autodetection: request SMTPUTF8 support if the message
 /*	contains an UTF8 message header, sender, or recipient.
+/* .IP CLEANUP_FLAG_REQTLS
+/*	The sender requested REQUIRETLS (RFC 8689) enforcement.
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8)
 /*	or \fBpostlogd\fR(8).
@@ -210,9 +212,15 @@ void    cleanup_control(CLEANUP_STATE *state, int flags)
     } else {
 	state->err_mask = ~0;
     }
+
+    /*
+     * Propagate requests that are specified at the envelope level. This may
+     * be augmented later with information derived from message content.
+     */
     if (state->flags & CLEANUP_FLAG_SMTPUTF8)
 	state->sendopts |= SMTPUTF8_FLAG_REQUESTED;
-    /* TODO(wietse) REQUIRETLS. */
+    if (state->flags & CLEANUP_FLAG_REQTLS)
+	state->sendopts |= SOPT_REQUIRETLS_ESMTP;
     if (msg_verbose)
 	msg_info("server flags = %s", cleanup_strflags(state->flags));
 }

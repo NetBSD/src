@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_main.c,v 1.4 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postconf_main.c,v 1.5 2026/05/09 18:49:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -140,10 +140,13 @@ static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
 				        PCF_PARAM_NODE *node)
 {
     static VSTRING *exp_buf = 0;
+    static VSTRING *json_buf = 0;
     const char *value;
 
-    if (exp_buf == 0)
+    if (exp_buf == 0 && (mode & PCF_SHOW_EVAL))
 	exp_buf = vstring_alloc(100);
+    if (json_buf == 0 && (mode & PCF_SHOW_JSON))
+	json_buf = vstring_alloc(100);
 
     /*
      * Use the default or actual value.
@@ -161,7 +164,12 @@ static void pcf_print_parameter(VSTREAM *fp, int mode, const char *name,
 	    if ((mode & PCF_SHOW_EVAL) != 0 && PCF_RAW_PARAMETER(node) == 0)
 		value = pcf_expand_parameter_value(exp_buf, mode, value,
 						   (PCF_MASTER_ENT *) 0);
-	    if ((mode & PCF_HIDE_NAME) == 0) {
+	    if (mode & PCF_SHOW_JSON) {
+		vstream_fprintf(fp, "{\"%s\": ",
+				quote_for_json(json_buf, name, -1));
+		vstream_fprintf(fp, "\"%s\"}\n",
+				quote_for_json(json_buf, value, -1));
+	    } else if ((mode & PCF_HIDE_NAME) == 0) {
 		pcf_print_line(fp, mode, "%s = %s\n", name, value);
 	    } else {
 		pcf_print_line(fp, mode, "%s\n", value);

@@ -1,4 +1,4 @@
-.\"	$NetBSD: nisplus_table.5,v 1.2 2017/02/14 01:16:44 christos Exp $
+.\"	$NetBSD: nisplus_table.5,v 1.3 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH NISPLUS_TABLE 5 
 .ad
@@ -17,10 +17,11 @@ Postfix NIS+ client
 .ad
 .fi
 The Postfix mail system uses optional lookup tables.
-These tables are usually in \fBdbm\fR or \fBdb\fR format.
+rewriting or mail routing. These tables are usually in
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
+
 Alternatively, lookup tables can be specified as NIS+
 databases.
-
 To find out what types of lookup tables your Postfix system
 supports use the "\fBpostconf \-m\fR" command.
 

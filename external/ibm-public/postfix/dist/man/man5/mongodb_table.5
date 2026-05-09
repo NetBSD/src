@@ -1,4 +1,4 @@
-.\"	$NetBSD: mongodb_table.5,v 1.2 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: mongodb_table.5,v 1.3 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH MONGODB_TABLE 5 
 .ad
@@ -18,10 +18,14 @@ Postfix MongoDB client configuration
 .fi
 The Postfix mail system uses optional tables for address
 rewriting or mail routing. These tables are usually in
-\fBdbm\fR or \fBdb\fR format.
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 
 Alternatively, lookup tables can be specified as MongoDB
-databases.  In order to use MongoDB lookups, define a MongoDB
+databases.
+To find out what types of lookup tables your Postfix system
+supports use the "\fBpostconf \-m\fR" command.
+
+In order to use MongoDB lookups, define a MongoDB
 source as a lookup table in main.cf, for example:
 .nf
     alias_maps = mongodb:/etc/postfix/mongodb\-aliases.cf

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sqlite.h,v 1.1.1.2 2026/05/09 18:39:18 christos Exp $	*/
+/*	$NetBSD: dict_sqlite.h,v 1.2 2026/05/09 18:49:16 christos Exp $	*/
 
 #ifndef _DICT_SQLITE_H_INCLUDED_
 #define _DICT_SQLITE_H_INCLUDED_

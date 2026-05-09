@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.h,v 1.6 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: smtpd.h,v 1.7 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -211,8 +211,12 @@ typedef struct {
 #define SMTPD_FLAG_AUTH_USED	   (1<<2)	/* don't reuse SASL state */
 #define SMTPD_FLAG_SMTPUTF8	   (1<<3)	/* RFC 6531/2 transaction */
 #define SMTPD_FLAG_NEED_MILTER_ABORT (1<<4)	/* undo milter_mail_event() */
+#define SMTPD_FLAG_REQTLS	   (1<<5)	/* RFC 8689 */
 
 #define SMTPD_NOTE_BARE_LF	   (1<<0)	/* saw at least one bare LF */
+
+/* Flags that apply to only one MAIL transaction. */
+#define SMTPD_FLAGS_PER_MESSAGE	(SMTPD_FLAG_SMTPUTF8 | SMTPD_FLAG_REQTLS)
 
  /* Security: don't reset SMTPD_FLAG_AUTH_USED. */
 #define SMTPD_MASK_MAIL_KEEP \

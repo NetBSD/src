@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cache.h,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_cache.h,v 1.3 2026/05/09 18:49:22 christos Exp $	*/
 
 #ifndef _DICT_CACHE_H_INCLUDED_
 #define _DICT_CACHE_H_INCLUDED_
@@ -33,6 +33,7 @@ extern int dict_cache_delete(DICT_CACHE *, const char *);
 extern int dict_cache_sequence(DICT_CACHE *, int, const char **, const char **);
 extern void dict_cache_control(DICT_CACHE *,...);
 extern const char *dict_cache_name(DICT_CACHE *);
+extern int dict_cache_error(DICT_CACHE *);
 
 #define DICT_CACHE_FLAG_VERBOSE		(1<<0)	/* verbose operation */
 #define DICT_CACHE_FLAG_STATISTICS	(1<<1)	/* log cache statistics */

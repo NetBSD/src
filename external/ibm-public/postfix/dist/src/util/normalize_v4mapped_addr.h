@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize_v4mapped_addr.h,v 1.1.1.1 2026/05/09 18:39:24 christos Exp $	*/
+/*	$NetBSD: normalize_v4mapped_addr.h,v 1.2 2026/05/09 18:49:23 christos Exp $	*/
 
 #ifndef _NORMALIZE_V4MAPPED_ADDR_H_INCLUDED_
 #define _NORMALIZE_V4MAPPED_ADDR_H_INCLUDED_

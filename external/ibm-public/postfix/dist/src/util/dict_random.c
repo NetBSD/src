@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_random.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_random.c,v 1.5 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -177,5 +177,5 @@ DICT   *dict_random_open(const char *name, int open_flags, int dict_flags)
 					  "%s", err));
     }
     dict_file_purge_buffers(&dict_random->dict);
-    DICT_RANDOM_RETURN(DICT_DEBUG (&dict_random->dict));
+    DICT_RANDOM_RETURN(&dict_random->dict);
 }

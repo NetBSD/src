@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_test.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_test.c,v 1.3 2026/05/09 18:49:22 christos Exp $	*/
 
  /*
   * Proof-of-concept test program. Create, update or read a database. Type
@@ -88,7 +88,6 @@ void    dict_test(int argc, char **argv)
     dict_allow_surrogate = 1;
     util_utf8_enable = 1;
     dict = dict_open(dict_name, open_flags, dict_flags);
-    dict_register(dict_name, dict);
     vstream_printf("owner=%s (uid=%ld)\n",
 		   dict->owner.status == DICT_OWNER_TRUSTED ? "trusted" :
 		   dict->owner.status == DICT_OWNER_UNTRUSTED ? "untrusted" :
@@ -149,14 +148,8 @@ void    dict_test(int argc, char **argv)
 	    vstream_printf("dict flags %s\n",
 			   dict_flags_str(dict->flags));
 	} else if (strcmp(cmd, "masks") == 0 && !key && !value) {
-	    vstream_printf("DICT_FLAG_IMPL_MASK %s\n",
-			   dict_flags_str(DICT_FLAG_IMPL_MASK));
 	    vstream_printf("DICT_FLAG_PARANOID %s\n",
 			   dict_flags_str(DICT_FLAG_PARANOID));
-	    vstream_printf("DICT_FLAG_RQST_MASK %s\n",
-			   dict_flags_str(DICT_FLAG_RQST_MASK));
-	    vstream_printf("DICT_FLAG_INST_MASK %s\n",
-			   dict_flags_str(DICT_FLAG_INST_MASK));
 	} else {
 	    vstream_printf("usage: %s\n", USAGE);
 	}

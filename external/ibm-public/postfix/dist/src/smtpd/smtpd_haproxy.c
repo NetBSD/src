@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_haproxy.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtpd_haproxy.c,v 1.4 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -16,11 +16,16 @@
 /*
 /*	The following summarizes what the Postfix SMTP server expects
 /*	from an up-stream proxy adapter.
+/*
+/* .IP
+/*	Return -1 in case of error, zero otherwise. In case of error,
+/*	the caller will clean up any incomplete endpoint info.
 /* .IP \(bu
 /*	Call smtpd_peer_from_default() if the up-stream proxy
 /*	indicates that the connection is not proxied. In that case,
-/*	a proxy adapter MUST NOT update any STATE fields: the
-/*	smtpd_peer_from_default() function will do that instead.
+/*	a proxy adapter MUST NOT update dynamically-allocated STATE
+/*	text fields: the smtpd_peer_from_default() function will do
+/*	that instead.
 /* .IP \(bu
 /*	Validate protocol, address and port syntax. Permit only
 /*	protocols that are configured with the main.cf:inet_protocols
@@ -29,13 +34,17 @@
 /*	Convert IPv4-in-IPv6 address syntax to IPv4 syntax when
 /*	both IPv6 and IPv4 support are enabled with main.cf:inet_protocols.
 /* .IP \(bu
-/*	Update the following session context fields: addr, port,
-/*	rfc_addr, addr_family, dest_addr, dest_port. The addr_family
-/*	field applies to the client address.
+/*	Update the following STATE fields: addr, port, rfc_addr,
+/*	addr_family, dest_addr, dest_port. The addr_family field applies
+/*	to the client address.
+/* .IP \(bu
+/*	Either update the STATE binary fields sockaddr and dest_sockaddr,
+/*	or call smtpd_peer_hostaddr_to_sockaddr() after updating the
+/*	STATE text fields addr, port, dest_addr, and dest_port.
 /* .IP \(bu
 /*	Dynamically allocate storage for string information with
 /*	mystrdup(). In case of error, leave unassigned string fields
-/*	at their initial zero value.
+/*	at their initial zero value. The caller will clean up.
 /* .IP \(bu
 /*	Log a clear warning message that explains why a request
 /*	fails.
@@ -64,6 +73,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -109,9 +121,15 @@ int     smtpd_peer_from_haproxy(SMTPD_STATE *state)
 	msg_warn("haproxy read: timeout error");
 	return (-1);
     }
-    if (haproxy_srvr_receive(vstream_fileno(state->client), &non_proxy,
-			     &smtp_client_addr, &smtp_client_port,
-			     &smtp_server_addr, &smtp_server_port) < 0) {
+    state->sockaddr_len = sizeof(state->sockaddr);
+    state->dest_sockaddr_len = sizeof(state->dest_sockaddr);
+    if (haproxy_srvr_receive_sa(vstream_fileno(state->client), &non_proxy,
+				&smtp_client_addr, &smtp_client_port,
+				&smtp_server_addr, &smtp_server_port,
+				(struct sockaddr *) &state->sockaddr,
+				&state->sockaddr_len,
+				(struct sockaddr *) &state->dest_sockaddr,
+				&state->dest_sockaddr_len) <0) {
 	return (-1);
     }
     if (non_proxy) {

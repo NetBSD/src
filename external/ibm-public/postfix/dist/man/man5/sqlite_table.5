@@ -1,4 +1,4 @@
-.\"	$NetBSD: sqlite_table.5,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: sqlite_table.5,v 1.5 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH SQLITE_TABLE 5 
 .ad
@@ -18,9 +18,12 @@ Postfix SQLite configuration
 .fi
 The Postfix mail system uses optional tables for address
 rewriting or mail routing. These tables are usually in
-\fBdbm\fR or \fBdb\fR format.
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 
 Alternatively, lookup tables can be specified as SQLite databases.
+To find out what types of lookup tables your Postfix system
+supports use the "\fBpostconf \-m\fR" command.
+
 In order to use SQLite lookups, define an SQLite source as a lookup
 table in main.cf, for example:
 .nf

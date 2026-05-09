@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_one_service.c,v 1.3 2025/02/25 19:15:43 christos Exp $	*/
+/*	$NetBSD: bounce_one_service.c,v 1.4 2026/05/09 18:49:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -159,6 +159,8 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 		 * reason for the bounce, and the headers of the original
 		 * message. Don't bother sending the boiler-plate text.
 		 */
+		msg_info("%s: postmaster non-delivery notification: %s",
+			 queue_id, STR(new_id));
 		if (!bounce_header(bounce, bounce_info, var_2bounce_rcpt,
 				   POSTMASTER_COPY)
 		    && bounce_recipient_log(bounce, bounce_info) == 0
@@ -166,9 +168,11 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 		    && bounce_recipient_dsn(bounce, bounce_info) == 0)
 		    bounce_original(bounce, bounce_info, DSN_RET_FULL);
 		bounce_status = post_mail_fclose(bounce);
-		if (bounce_status == 0)
-		    msg_info("%s: postmaster non-delivery notification: %s",
-			     queue_id, STR(new_id));
+		if (bounce_status)
+		    msg_warn("%s: postmaster notification failed: %s",
+			     queue_id, cleanup_strerror(bounce_status));
+	    } else {
+		msg_warn("%s: postmaster notification failed", queue_id);
 	    }
 	}
     }
@@ -195,6 +199,8 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 		 * pretends that we are a polite mail system, the text with
 		 * reason for the bounce, and a copy of the original message.
 		 */
+		msg_info("%s: sender non-delivery notification: %s",
+			 queue_id, STR(new_id));
 		if (bounce_header(bounce, bounce_info, orig_sender,
 				  NO_POSTMASTER_COPY) == 0
 		    && bounce_boilerplate(bounce, bounce_info) == 0
@@ -204,9 +210,13 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 		    bounce_original(bounce, bounce_info, dsn_ret ?
 				    dsn_ret : DSN_RET_FULL);
 		bounce_status = post_mail_fclose(bounce);
-		if (bounce_status == 0)
-		    msg_info("%s: sender non-delivery notification: %s",
-			     queue_id, STR(new_id));
+		if (bounce_status)
+		    msg_warn("%s: sender notification failed to %s: %s",
+			     queue_id, orig_sender,
+			     cleanup_strerror(bounce_status));
+	    } else {
+		msg_warn("%s: sender notification failed to %s",
+			 queue_id, orig_sender);
 	    }
 	}
 
@@ -235,6 +245,8 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 						 NULL_TRACE_FLAGS,
 						 sendopts,
 						 new_id)) != 0) {
+		msg_info("%s: postmaster non-delivery notification: %s",
+			 queue_id, STR(new_id));
 		if (bounce_header(bounce, bounce_info, var_bounce_rcpt,
 				  POSTMASTER_COPY) == 0
 		    && bounce_recipient_log(bounce, bounce_info) == 0
@@ -242,9 +254,6 @@ int     bounce_one_service(int flags, char *queue_name, char *queue_id,
 		    && bounce_recipient_dsn(bounce, bounce_info) == 0)
 		    bounce_original(bounce, bounce_info, DSN_RET_HDRS);
 		postmaster_status = post_mail_fclose(bounce);
-		if (postmaster_status == 0)
-		    msg_info("%s: postmaster non-delivery notification: %s",
-			     queue_id, STR(new_id));
 	    }
 	    if (postmaster_status)
 		msg_warn("%s: postmaster notice failed while bouncing to %s",

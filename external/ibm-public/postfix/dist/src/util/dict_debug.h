@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_debug.h,v 1.1.1.1 2026/05/09 18:39:23 christos Exp $	*/
+/*	$NetBSD: dict_debug.h,v 1.2 2026/05/09 18:49:22 christos Exp $	*/
 
 #ifndef _DICT_DEBUG_H_INCLUDED_
 #define _DICT_DEBUG_H_INCLUDED_

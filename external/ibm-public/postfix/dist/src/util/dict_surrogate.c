@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_surrogate.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_surrogate.c,v 1.3 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME
@@ -6,7 +6,7 @@
 /* SUMMARY
 /*	surrogate table for graceful "open" failure
 /* SYNOPSIS
-/*	#include <dict_surrogate.h>
+/*	#include <dict.h>
 /*
 /*	DICT	*dict_surrogate(dict_type, dict_name,
 /*				open_flags, dict_flags,
@@ -171,12 +171,12 @@ DICT   *dict_surrogate(const char *dict_type, const char *dict_name,
     }
     dp->dict.sequence = dict_surrogate_sequence;
     dp->dict.close = dict_surrogate_close;
-    dp->dict.flags = dict_flags | DICT_FLAG_PATTERN;
+    dp->dict.flags = dict_flags | DICT_FLAG_PATTERN | DICT_FLAG_SURROGATE;
     dp->dict.owner.status = DICT_OWNER_TRUSTED;
     buf = vstring_alloc(10);
     errno = saved_errno;
     vstring_vsprintf(buf, fmt, ap2);
     va_end(ap2);
     dp->reason = vstring_export(buf);
-    return (DICT_DEBUG (&dp->dict));
+    return (&dp->dict);
 }

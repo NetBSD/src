@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr.c,v 1.3 2020/03/18 19:05:17 christos Exp $	*/
+/*	$NetBSD: qmgr.c,v 1.4 2026/05/09 18:49:18 christos Exp $	*/
 
 /*++
 /* NAME
@@ -311,7 +311,7 @@
 /*	unless someone issues "\fBsendmail -q\fR" or equivalent.
 /* .IP "\fBdelay_logging_resolution_limit (2)\fR"
 /*	The maximal number of digits after the decimal point when logging
-/*	sub-second delay values.
+/*	delay values.
 /* .IP "\fBhelpful_warnings (yes)\fR"
 /*	Log warnings about problematic configuration settings, and provide
 /*	helpful suggestions.
@@ -436,13 +436,13 @@ int     var_qmgr_clog_warn_time;
 char   *var_conc_pos_feedback;
 char   *var_conc_neg_feedback;
 int     var_conc_cohort_limit;
-int     var_conc_feedback_debug;
+bool    var_conc_feedback_debug;
 int     var_xport_rate_delay;
 int     var_dest_rate_delay;
 char   *var_def_filter_nexthop;
 int     var_qmgr_daemon_timeout;
 int     var_qmgr_ipc_timeout;
-int     var_dsn_delay_cleared;
+bool    var_dsn_delay_cleared;
 int     var_vrfy_pend_limit;
 
 static QMGR_SCAN *qmgr_scans[2];

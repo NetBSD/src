@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_proxy.c,v 1.3 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtpd_proxy.c,v 1.4 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -116,11 +116,18 @@
 /*
 /*	Arguments:
 /* .IP flags
-/*	Zero, or SMTPD_PROXY_FLAG_SPEED_ADJUST to buffer up the entire
-/*	message before contacting a before-queue content filter.
+/*	Zero or more of the following:
+/* .RS
+/* .IP SMTPD_PROXY_FLAG_SPEED_ADJUST
+/*	Buffer up the entire message before contacting a before-queue
+/*	content filter.
 /*	Note: when this feature is requested, the before-queue
 /*	filter MUST use the same 2xx, 4xx or 5xx reply code for all
 /*	recipients of a multi-recipient message.
+/* .IP SMTPD_PROXY_FLAG_REQTLS_HDR
+/*	Add a "Require-TLS-ESMTP: yes" header if one is not already
+/*	present.
+/* .RE
 /* .IP server
 /*	The SMTP proxy server host:port. The host or host: part is optional.
 /*	This argument is not duplicated.
@@ -207,6 +214,8 @@
 #include <xtext.h>
 #include <record.h>
 #include <mail_queue.h>
+#include <is_header.h>
+#include <header_opts.h>
 
 /* Application-specific. */
 
@@ -851,6 +860,31 @@ static int smtpd_proxy_save_rec_put(VSTREAM *stream, int rec_type,
     return (rec_type);
 }
 
+/* smtpd_proxy_handle_reqtls - propagate or add REQUIRETLS header */
+
+static void smtpd_proxy_handle_reqtls(SMTPD_PROXY *proxy, VSTREAM *stream,
+				              const char *data, ssize_t len)
+{
+    const HEADER_OPTS *hdr_opts;
+    const char *cp;
+
+    if (is_header_buf(data, len)) {
+	if ((hdr_opts = header_opts_find(data)) != 0
+	    && hdr_opts->type == HDR_REQTLS_ESMTP) {
+	    cp = data + strlen(hdr_opts->name) + 1;
+	    while (cp < data + len && ISSPACE(*cp))
+		cp++;
+	    if (data + len == cp + 3 && strncasecmp(cp, "YES", 3) == 0)
+		proxy->reqtls_esmtp_hdr_seen += 1;
+	}
+    } else if (len == 0 || !ISSPACE(data[0])) {
+	if (proxy->reqtls_esmtp_hdr_seen == 0)
+	    smtp_fputs("Require-TLS-ESMTP: yes",
+		       sizeof("Require-TLS-ESMTP: yes") - 1, stream);
+	proxy->flags &= ~SMTPD_PROXY_FLAG_REQTLS_HDR;
+    }
+}
+
 /* smtpd_proxy_rec_put - send message content, rec_put() clone */
 
 static int smtpd_proxy_rec_put(VSTREAM *stream, int rec_type,
@@ -871,9 +905,13 @@ static int smtpd_proxy_rec_put(VSTREAM *stream, int rec_type,
     /*
      * Send one content record. Errors and results must be as with rec_put().
      */
-    if (rec_type == REC_TYPE_NORM)
+    if (rec_type == REC_TYPE_NORM) {
+	SMTPD_PROXY *proxy = VSTREAM_TO_SMTPD_STATE(stream)->proxy;
+
+	if (proxy->flags & SMTPD_PROXY_FLAG_REQTLS_HDR)
+	    smtpd_proxy_handle_reqtls(proxy, stream, data, len);
 	smtp_fputs(data, len, stream);
-    else if (rec_type == REC_TYPE_CONT)
+    } else if (rec_type == REC_TYPE_CONT)
 	smtp_fwrite(data, len, stream);
     else
 	msg_panic("%s: need REC_TYPE_NORM or REC_TYPE_CONT", myname);
@@ -1016,10 +1054,11 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
      * When an operation has many arguments it is safer to use named
      * parameters, and have the compiler enforce the argument count.
      */
-#define SMTPD_PROXY_ALLOC(p, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, a12) \
+#define SMTPD_PROXY_ALLOC(p, a1, a2, a3, a4, a5, a6, a7, a8, a9, a10, a11, \
+	a12, a13) \
 	((p) = (SMTPD_PROXY *) mymalloc(sizeof(*(p))), (p)->a1, (p)->a2, \
 	 (p)->a3, (p)->a4, (p)->a5, (p)->a6, (p)->a7, (p)->a8, (p)->a9, \
-	 (p)->a10, (p)->a11, (p)->a12, (p))
+	 (p)->a10, (p)->a11, (p)->a12, (p)->a13, (p))
 
     /*
      * Sanity check.
@@ -1039,7 +1078,8 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
 			      rec_put = smtpd_proxy_rec_put,
 			      flags = flags, service_stream = 0,
 			      service_name = service, timeout = timeout,
-			      ehlo_name = ehlo_name, mail_from = mail_from);
+			      ehlo_name = ehlo_name, mail_from = mail_from,
+			      reqtls_esmtp_hdr_seen = 0);
 	if (smtpd_proxy_connect(state) < 0) {
 	    /* NOT: smtpd_proxy_free(state); we still need proxy->reply. */
 	    return (-1);
@@ -1069,7 +1109,8 @@ int     smtpd_proxy_create(SMTPD_STATE *state, int flags, const char *service,
 			      rec_put = smtpd_proxy_save_rec_put,
 			      flags = flags, service_stream = 0,
 			      service_name = service, timeout = timeout,
-			      ehlo_name = ehlo_name, mail_from = mail_from);
+			      ehlo_name = ehlo_name, mail_from = mail_from,
+			      reqtls_esmtp_hdr_seen = 0);
 	return (0);
 #endif
     }

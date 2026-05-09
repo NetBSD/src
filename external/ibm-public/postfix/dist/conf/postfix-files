@@ -1,4 +1,4 @@
-#	$NetBSD: postfix-files,v 1.10 2025/02/25 19:15:41 christos Exp $
+#	$NetBSD: postfix-files,v 1.11 2026/05/09 18:49:13 christos Exp $
 #
 # Commented out entries mean files not installed under NetBSD.
 #
@@ -102,6 +102,7 @@ $daemon_directory/local:f:root:-:755
 $daemon_directory/main.cf:f:root:-:644:o
 $daemon_directory/master.cf:f:root:-:644:o
 $daemon_directory/master:f:root:-:755
+$daemon_directory/nbdb_reindexd:f:root:-:755
 $daemon_directory/oqmgr:f:root:-:755
 $daemon_directory/pickup:f:root:-:755
 $daemon_directory/pipe:f:root:-:755
@@ -110,6 +111,7 @@ $daemon_directory/post-install:f:root:-:755
 #$daemon_directory/postfix-files:f:root:-:644:o
 #$daemon_directory/postfix-files.d:d:root:-:755:o
 $daemon_directory/postfix-script:f:root:-:755
+$daemon_directory/postfix-non-bdb-script:f:root:-:755
 $daemon_directory/postfix-tls-script:f:root:-:755
 $daemon_directory/postfix-wrapper:f:root:-:755
 $daemon_directory/postmulti-script:f:root:-:755
@@ -175,6 +177,7 @@ $manpage_directory/man1/postalias.1:f:root:-:644
 $manpage_directory/man1/postcat.1:f:root:-:644
 $manpage_directory/man1/postconf.1:f:root:-:644
 $manpage_directory/man1/postdrop.1:f:root:-:644
+$manpage_directory/man1/postfix-non-bdb.1:f:root:-:644
 $manpage_directory/man1/postfix-tls.1:f:root:-:644
 $manpage_directory/man1/postfix.1:f:root:-:644
 $manpage_directory/man1/postkick.1:f:root:-:644
@@ -223,6 +226,7 @@ $manpage_directory/man8/flush.8:f:root:-:644
 $manpage_directory/man8/lmtp.8:f:root:-:644
 $manpage_directory/man8/local.8:f:root:-:644
 $manpage_directory/man8/master.8:f:root:-:644
+$manpage_directory/man8/nbdb_reindexd.8:f:root:-:644
 $manpage_directory/man8/nqmgr.8:f:root:-:644:o
 $manpage_directory/man8/oqmgr.8:f:root:-:644:
 $manpage_directory/man8/pickup.8:f:root:-:644
@@ -313,6 +317,7 @@ $readme_directory/MYSQL_README:f:root:-:644
 $readme_directory/SMTPUTF8_README:f:root:-:644
 $readme_directory/SQLITE_README:f:root:-:644
 $readme_directory/NFS_README:f:root:-:644
+$readme_directory/NON_BERKELEYDB_README:f:root:-:644
 $readme_directory/OVERVIEW:f:root:-:644
 #$readme_directory/PACKAGE_README:f:root:-:644
 $readme_directory/PCRE_README:f:root:-:644
@@ -323,6 +328,7 @@ $readme_directory/QMQP_README:f:root:-:644:o
 $readme_directory/QSHAPE_README:f:root:-:644
 $readme_directory/RELEASE_NOTES:f:root:-:644
 $readme_directory/RESTRICTION_CLASS_README:f:root:-:644
+$readme_directory/REQUIRETLS_README:f:root:-:644
 $readme_directory/SASL_README:f:root:-:644
 $readme_directory/SCHEDULER_README:f:root:-:644
 $readme_directory/SMTPD_ACCESS_README:f:root:-:644
@@ -377,6 +383,7 @@ $html_directory/MYSQL_README.html:f:root:-:644
 $html_directory/SMTPUTF8_README.html:f:root:-:644
 $html_directory/SQLITE_README.html:f:root:-:644
 $html_directory/NFS_README.html:f:root:-:644
+$html_directory/NON_BERKELEYDB_README.html:f:root:-:644
 $html_directory/OVERVIEW.html:f:root:-:644
 $html_directory/PACKAGE_README.html:f:root:-:644
 $html_directory/PCRE_README.html:f:root:-:644
@@ -386,6 +393,7 @@ $html_directory/POSTSCREEN_README.html:f:root:-:644
 $html_directory/QMQP_README.html:f:root:-:644:o
 $html_directory/QSHAPE_README.html:f:root:-:644
 $html_directory/RESTRICTION_CLASS_README.html:f:root:-:644
+$html_directory/REQUIRETLS_README.html:f:root:-:644
 $html_directory/SASL_README.html:f:root:-:644
 $html_directory/SCHEDULER_README.html:f:root:-:644
 $html_directory/SMTPD_ACCESS_README.html:f:root:-:644
@@ -434,6 +442,7 @@ $html_directory/memcache_table.5.html:f:root:-:644
 $html_directory/sqlite_table.5.html:f:root:-:644
 $html_directory/nisplus_table.5.html:f:root:-:644
 $html_directory/newaliases.1.html:h:$html_directory/mailq.1.html:-:644
+$html_directory/nbdb_reindexd.8.html:f:root:-:644
 $html_directory/oqmgr.8.html:f:root:-:644
 $html_directory/pcre_table.5.html:f:root:-:644
 $html_directory/pgsql_table.5.html:f:root:-:644
@@ -446,6 +455,7 @@ $html_directory/postconf.5.html:f:root:-:644
 $html_directory/postdrop.1.html:f:root:-:644
 $html_directory/postfix-logo.jpg:f:root:-:644
 $html_directory/postfix-manuals.html:f:root:-:644
+$html_directory/postfix-non-bdb.1.html:f:root:-:644
 $html_directory/postfix-tls.1.html:f:root:-:644
 $html_directory/postfix-wrapper.5.html:f:root:-:644
 $html_directory/postfix.1.html:f:root:-:644

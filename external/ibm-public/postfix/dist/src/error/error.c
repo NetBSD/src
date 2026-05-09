@@ -1,4 +1,4 @@
-/*	$NetBSD: error.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: error.c,v 1.4 2026/05/09 18:49:15 christos Exp $	*/
 
 /*++
 /* NAME
@@ -63,7 +63,7 @@
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBdelay_logging_resolution_limit (2)\fR"
 /*	The maximal number of digits after the decimal point when logging
-/*	sub-second delay values.
+/*	delay values.
 /* .IP "\fBdouble_bounce_sender (double-bounce)\fR"
 /*	The sender address of postmaster notifications that are generated
 /*	by the mail system.
@@ -150,7 +150,7 @@
 
 static int deliver_message(DELIVER_REQUEST *request, const char *def_dsn,
 	         int (*append) (int, const char *, MSG_STATS *, RECIPIENT *,
-				        const char *, DSN *))
+			            const char *, const POL_STATS *, DSN *))
 {
     const char *myname = "deliver_message";
     VSTREAM *src;
@@ -196,7 +196,8 @@ static int deliver_message(DELIVER_REQUEST *request, const char *def_dsn,
     for (nrcpt = 0; nrcpt < request->rcpt_list.len; nrcpt++) {
 	rcpt = request->rcpt_list.info + nrcpt;
 	status = append(BOUNCE_FLAGS(request), request->queue_id,
-			&request->msg_stats, rcpt, "none", &dsn);
+			&request->msg_stats, rcpt, "none", NO_TLS_STATS,
+			&dsn);
 	if (status == 0)
 	    deliver_completed(src, rcpt->offset);
 	result |= status;

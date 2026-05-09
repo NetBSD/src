@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dane.c,v 1.6 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls_dane.c,v 1.7 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -1294,9 +1294,6 @@ static SSL_CTX *ctx_init(const char *CAfile)
     tls_param_init();
     tls_check_version();
 
-    if (!tls_validate_digest(LN_sha1))
-	msg_fatal("%s digest algorithm not available", LN_sha1);
-
     if (TLScontext_index < 0)
 	if ((TLScontext_index = SSL_get_ex_new_index(0, 0, 0, 0, 0)) < 0)
 	    msg_fatal("Cannot allocate SSL application data index");
@@ -1341,7 +1338,7 @@ int     main(int argc, char *argv[])
 
     tctx = tls_alloc_sess_context(TLS_LOG_NONE, argv[7]);
     tctx->namaddr = argv[7];
-    tctx->mdalg = LN_sha256;
+    tctx->mdalg = atoi(argv[3]) == 2 ? LN_sha512 : LN_sha256;
     tctx->dane = tls_dane_alloc();
 
     if ((fpt_alg = tls_validate_digest(tctx->mdalg)) == 0)
@@ -1378,9 +1375,10 @@ int     main(int argc, char *argv[])
 	    peername = argv[7];
 	msg_info("Verified %s", peername);
     } else {
-	i = SSL_get_verify_result(tctx->con);
+	int     r = SSL_get_verify_result(tctx->con);
+
 	msg_info("certificate verification failed for %s:%s: num=%d:%s",
-		 argv[6], argv[7], i, X509_verify_cert_error_string(i));
+		 argv[6], argv[7], r, X509_verify_cert_error_string(r));
     }
 
     return (i <= 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ossl_digest_test.c,v 1.1.1.1 2026/05/09 18:39:24 christos Exp $	*/
+/*	$NetBSD: ossl_digest_test.c,v 1.2 2026/05/09 18:49:23 christos Exp $	*/
 
 /*++
 /* NAME

@@ -1,4 +1,4 @@
-/*	$NetBSD: ascii_header_text.c,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: ascii_header_text.c,v 1.3 2026/05/09 18:49:15 christos Exp $	*/
 
 /*++
 /* NAME
@@ -195,7 +195,7 @@ char   *make_ascii_header_text(VSTRING *result, int flags, const char *str)
 typedef struct TEST_CASE {
     const char *label;
     int     (*action) (const struct TEST_CASE *);
-    int	flags;
+    int     flags;
     const char *input;
     const char *exp_output;
 } TEST_CASE;
@@ -211,19 +211,19 @@ static int test_make_ascii_header_text(const TEST_CASE *tp)
     const char *got;
 
     if (result == 0)
-        result = vstring_alloc(100);
+	result = vstring_alloc(100);
 
     got = make_ascii_header_text(result, tp->flags, tp->input);
 
     if (!got != !tp->exp_output) {
-        msg_warn("got result ``%s'', want ``%s''",
-                 got ? got : "null",
-                 tp->exp_output ? tp->exp_output : "null");
-        return (FAIL);
+	msg_warn("got result ``%s'', want ``%s''",
+		 got ? got : "null",
+		 tp->exp_output ? tp->exp_output : "null");
+	return (FAIL);
     }
     if (got && strcmp(got, tp->exp_output) != 0) {
-        msg_warn("got result ``%s'', want ``%s''", got, tp->exp_output);
-        return (FAIL);
+	msg_warn("got result ``%s'', want ``%s''", got, tp->exp_output);
+	return (FAIL);
     }
     return (PASS);
 }
@@ -293,17 +293,17 @@ int     main(int argc, char **argv)
     msg_vstream_init(sane_basename((VSTRING *) 0, argv[0]), VSTREAM_ERR);
 
     for (tp = test_cases; tp->label != 0; tp++) {
-        int     test_failed;
+	int     test_failed;
 
-        msg_info("RUN  %s", tp->label);
-        test_failed = tp->action(tp);
-        if (test_failed) {
-            msg_info("FAIL %s", tp->label);
-            fail++;
-        } else {
-            msg_info("PASS %s", tp->label);
-            pass++;
-        }
+	msg_info("RUN  %s", tp->label);
+	test_failed = tp->action(tp);
+	if (test_failed) {
+	    msg_info("FAIL %s", tp->label);
+	    fail++;
+	} else {
+	    msg_info("PASS %s", tp->label);
+	    pass++;
+	}
     }
     msg_info("PASS=%d FAIL=%d", pass, fail);
     exit(fail != 0);

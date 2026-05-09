@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_test_helper.h,v 1.1.1.1 2026/05/09 18:39:22 christos Exp $	*/
+/*	$NetBSD: dict_test_helper.h,v 1.2 2026/05/09 18:49:21 christos Exp $	*/
 
 #ifndef _DICT_TEST_HELPER_H_INCLUDED_
 #define _DICT_TEST_HELPER_H_INCLUDED_

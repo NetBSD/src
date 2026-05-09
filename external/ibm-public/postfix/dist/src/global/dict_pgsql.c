@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pgsql.c,v 1.5 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: dict_pgsql.c,v 1.6 2026/05/09 18:49:16 christos Exp $	*/
 
 /*++
 /* NAME
@@ -576,8 +576,10 @@ static void plpgsql_connect_single(DICT_PGSQL *dict_pgsql, HOST *host)
 				dict_pgsql->password);
     }
     if (host->db == NULL || PQstatus(host->db) != CONNECTION_OK) {
+	/* 202604 Claude: don't call PQerrorMessage(NULL). */
 	msg_warn("connect to pgsql server %s: %s",
-		 host->hostname, PQerrorMessage(host->db));
+		 host->hostname, host->db ? PQerrorMessage(host->db) :
+		 "PQconnectdb or PQsetdbLogin failed");
 	plpgsql_down_host(host, dict_pgsql->retry_interval);
 	return;
     }
@@ -746,7 +748,7 @@ DICT   *dict_pgsql_open(const char *name, int open_flags, int dict_flags)
 	return (ret);
     }
     dict_pgsql->dict.owner = cfg_get_owner(dict_pgsql->parser);
-    return (DICT_DEBUG (&dict_pgsql->dict));
+    return (&dict_pgsql->dict);
 }
 
 /* plpgsql_init - initialize a PGSQL database */

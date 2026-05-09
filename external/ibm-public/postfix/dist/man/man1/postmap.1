@@ -1,4 +1,4 @@
-.\"	$NetBSD: postmap.1,v 1.4 2022/10/08 16:12:44 christos Exp $
+.\"	$NetBSD: postmap.1,v 1.5 2026/05/09 18:49:13 christos Exp $
 .\"
 .TH POSTMAP 1 
 .ad
@@ -11,7 +11,7 @@ Postfix lookup table management
 .na
 .nf
 .fi
-\fBpostmap\fR [\fB\-bfFhimnNoprsuUvw\fR] [\fB\-c \fIconfig_dir\fR]
+\fBpostmap\fR [\fB\-bfFhijmnNoprsuUvw\fR] [\fB\-c \fIconfig_dir\fR]
 [\fB\-d \fIkey\fR] [\fB\-q \fIkey\fR]
         [\fIfile_type\fR:]\fIfile_name\fR ...
 .SH DESCRIPTION
@@ -138,7 +138,7 @@ parsing with \fB\-m\fR. With this, the \fB\-h\fR option also
 generates header\-style lookup keys for attachment MIME
 headers and for attached message/* headers.
 .sp
-NOTE: with "smtputf8_enable = yes", the \fB\-b\fR option
+NOTE: with "smtputf8_enable = yes", the \fB\-h\fR option
 option disables UTF\-8 syntax checks on query keys and
 lookup results. Specify the \fB\-U\fR option to force UTF\-8
 syntax checks anyway.
@@ -148,6 +148,11 @@ This feature is available in Postfix version 2.6 and later.
 Incremental mode. Read entries from standard input and do not
 truncate an existing database. By default, \fBpostmap\fR(1) creates
 a new database from the entries in \fBfile_name\fR.
+.IP \fB\-j\fR
+JSON output. Format the output from \fB\-q\fR and \fB\-s\fR
+as one \fB{"\fIkey\fB": "\fIvalue\fB"}\fR object per line.
+.sp
+This feature is available in Postfix version 3.11 and later.
 .IP \fB\-m\fR
 Enable MIME parsing with "\fB\-b\fR" and "\fB\-h\fR".
 .sp
@@ -214,6 +219,11 @@ Arguments:
 The database type. To find out what types are supported, use
 the "\fBpostconf \-m\fR" command.
 
+When no \fIfile_type\fR is specified, the software uses the database
+type specified via the \fBdefault_database_type\fR configuration
+parameter.
+The default value for this parameter depends on the host environment.
+
 The \fBpostmap\fR(1) command can query any supported file type,
 but it can create only the following file types:
 .RS
@@ -243,10 +253,6 @@ This is available on systems with support for \fBlmdb\fR databases.
 The output consists of two files, named \fIfile_name\fB.pag\fR and
 \fIfile_name\fB.dir\fR.
 This is available on systems with support for \fBsdbm\fR databases.
-.PP
-When no \fIfile_type\fR is specified, the software uses the database
-type specified via the \fBdefault_database_type\fR configuration
-parameter.
 .RE
 .IP \fIfile_name\fR
 The name of the lookup table source file when rebuilding a database.

@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce.h,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: bounce.h,v 1.3 2026/05/09 18:49:15 christos Exp $	*/
 
 #ifndef _BOUNCE_H_INCLUDED_
 #define _BOUNCE_H_INCLUDED_
@@ -23,12 +23,13 @@
   */
 #include <deliver_request.h>
 #include <dsn_buf.h>
+#include <pol_stats.h>
 
  /*
   * Client interface.
   */
 extern int bounce_append(int, const char *, MSG_STATS *, RECIPIENT *,
-			         const char *, DSN *);
+			         const char *, const POL_STATS *, DSN *);
 extern int bounce_flush(int, const char *, const char *, const char *, int,
 			        const char *, const char *, int);
 extern int bounce_flush_verp(int, const char *, const char *, const char *, int,
@@ -36,7 +37,7 @@ extern int bounce_flush_verp(int, const char *, const char *, const char *, int,
 extern int bounce_one(int, const char *, const char *, const char *, int,
 		              const char *, const char *,
 		              int, MSG_STATS *, RECIPIENT *,
-		              const char *, DSN *);
+		              const char *, const POL_STATS *, DSN *);
 extern void bounce_client_init(const char *, const char *);
 
  /*
@@ -79,11 +80,11 @@ extern void bounce_client_init(const char *, const char *);
 extern DSN_FILTER *delivery_status_filter;
 
 extern int bounce_append_intern(int, const char *, MSG_STATS *, RECIPIENT *,
-				        const char *, DSN *);
+			            const char *, const POL_STATS *, DSN *);
 extern int bounce_one_intern(int, const char *, const char *, const char *,
 			             int, const char *, const char *,
 			             int, MSG_STATS *, RECIPIENT *,
-			             const char *, DSN *);
+			             const char *, const POL_STATS *, DSN *);
 
 #endif
 
@@ -96,6 +97,9 @@ extern int bounce_one_intern(int, const char *, const char *, const char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

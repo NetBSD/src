@@ -1,4 +1,4 @@
-/*	$NetBSD: defer.c,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: defer.c,v 1.5 2026/05/09 18:49:15 christos Exp $	*/
 
 /*++
 /* NAME
@@ -8,12 +8,13 @@
 /* SYNOPSIS
 /*	#include <defer.h>
 /*
-/*	int	defer_append(flags, id, stats, rcpt, relay, dsn)
+/*	int	defer_append(flags, id, stats, rcpt, relay, tstats, dsn)
 /*	int	flags;
 /*	const char *id;
 /*	MSG_STATS *stats;
 /*	RECIPIENT *rcpt;
 /*	const char *relay;
+/*	const POL_STATS *tstats;
 /*	DSN	*dsn;
 /*
 /*	int	defer_flush(flags, queue, id, encoding, sendopts, sender,
@@ -39,7 +40,8 @@
 /*	int	dsn_ret;
 /*
 /*	int	defer_one(flags, queue, id, encoding, sendopts, sender,
-/*				dsn_envid, ret, stats, recipient, relay, dsn)
+/*				dsn_envid, ret, stats, recipient, relay,
+/*				tstats, dsn)
 /*	int	flags;
 /*	const char *queue;
 /*	const char *id;
@@ -51,14 +53,17 @@
 /*	MSG_STATS *stats;
 /*	RECIPIENT *rcpt;
 /*	const char *relay;
+/*	const POL_STATS *tstats;
 /*	DSN	*dsn;
 /* INTERNAL API
-/*	int	defer_append_intern(flags, id, stats, rcpt, relay, dsn)
+/*	int	defer_append_intern(flags, id, stats, rcpt, relay, tstats, dsn)
 /*	int	flags;
 /*	const char *id;
 /*	MSG_STATS *stats;
 /*	RECIPIENT *rcpt;
 /*	const char *relay;
+/*	const POL_STATS *tstats;
+/*	DSN	*dsn;
 /* DESCRIPTION
 /*	This module implements a client interface to the defer service,
 /*	which maintains a per-message logfile with status records for
@@ -126,6 +131,8 @@
 /*	Recipient information. See recipient_list(3).
 /* .IP relay
 /*	Host we could not talk to.
+/* .IP tstats
+/*	TLS per-feature status.
 /* .IP dsn
 /*	Delivery status. See dsn(3). The specified action is ignored.
 /* .IP encoding
@@ -196,7 +203,7 @@
 
 int     defer_append(int flags, const char *id, MSG_STATS *stats,
 		             RECIPIENT *rcpt, const char *relay,
-		             DSN *dsn)
+		             const POL_STATS *tstats, DSN *dsn)
 {
     DSN     my_dsn = *dsn;
     DSN    *dsn_res;
@@ -215,17 +222,19 @@ int     defer_append(int flags, const char *id, MSG_STATS *stats,
     if (delivery_status_filter != 0
     && (dsn_res = dsn_filter_lookup(delivery_status_filter, &my_dsn)) != 0) {
 	if (dsn_res->status[0] == '5')
-	    return (bounce_append_intern(flags, id, stats, rcpt, relay, dsn_res));
+	    return (bounce_append_intern(flags, id, stats, rcpt, relay, tstats,
+					 dsn_res));
 	my_dsn = *dsn_res;
     }
-    return (defer_append_intern(flags, id, stats, rcpt, relay, &my_dsn));
+    return (defer_append_intern(flags, id, stats, rcpt, relay, tstats,
+				&my_dsn));
 }
 
 /* defer_append_intern - defer message delivery */
 
 int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
 			            RECIPIENT *rcpt, const char *relay,
-			            DSN *dsn)
+			            const POL_STATS *tstats, DSN *dsn)
 {
     const char *rcpt_domain;
     DSN     my_dsn = *dsn;
@@ -237,7 +246,7 @@ int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
      */
     if (flags & DEL_REQ_FLAG_MTA_VRFY) {
 	my_dsn.action = "undeliverable";
-	status = verify_append(id, stats, rcpt, relay, &my_dsn,
+	status = verify_append(id, stats, rcpt, relay, tstats, &my_dsn,
 			       DEL_RCPT_STAT_DEFER);
 	return (status);
     }
@@ -248,7 +257,7 @@ int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
      */
     if (flags & DEL_REQ_FLAG_USR_VRFY) {
 	my_dsn.action = "undeliverable";
-	status = trace_append(flags, id, stats, rcpt, relay, &my_dsn);
+	status = trace_append(flags, id, stats, rcpt, relay, tstats, &my_dsn);
 	return (status);
     }
 
@@ -275,13 +284,14 @@ int     defer_append_intern(int flags, const char *id, MSG_STATS *stats,
 			  SEND_ATTR_FUNC(dsn_print, (const void *) &my_dsn),
 				ATTR_TYPE_END) != 0)
 	    msg_warn("%s: %s service failure", id, var_defer_service);
-	log_adhoc(id, stats, rcpt, relay, &my_dsn, "deferred");
+	log_adhoc(id, stats, rcpt, relay, tstats, &my_dsn, "deferred");
 
 	/*
 	 * Traced delivery.
 	 */
 	if (flags & DEL_REQ_FLAG_RECORD)
-	    if (trace_append(flags, id, stats, rcpt, relay, &my_dsn) != 0)
+	    if (trace_append(flags, id, stats, rcpt, relay, tstats,
+			     &my_dsn) != 0)
 		msg_warn("%s: %s service failure", id, var_trace_service);
 
 	/*
@@ -360,7 +370,7 @@ int     defer_one(int flags, const char *queue, const char *id,
 		          const char *encoding, int sendopts,
 		          const char *sender, const char *dsn_envid,
 		          int dsn_ret, MSG_STATS *stats, RECIPIENT *rcpt,
-		          const char *relay, DSN *dsn)
+	               const char *relay, const POL_STATS *tstats, DSN *dsn)
 {
     DSN     my_dsn = *dsn;
     DSN    *dsn_res;
@@ -381,8 +391,9 @@ int     defer_one(int flags, const char *queue, const char *id,
 	if (dsn_res->status[0] == '5')
 	    return (bounce_one_intern(flags, queue, id, encoding, sendopts,
 				      sender, dsn_envid, dsn_ret, stats,
-				      rcpt, relay, dsn_res));
+				      rcpt, relay, tstats, dsn_res));
 	my_dsn = *dsn_res;
     }
-    return (defer_append_intern(flags, id, stats, rcpt, relay, &my_dsn));
+    return (defer_append_intern(flags, id, stats, rcpt, relay, tstats,
+				&my_dsn));
 }

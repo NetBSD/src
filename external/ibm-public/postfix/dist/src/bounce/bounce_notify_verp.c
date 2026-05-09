@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_verp.c,v 1.3 2025/02/25 19:15:43 christos Exp $	*/
+/*	$NetBSD: bounce_notify_verp.c,v 1.4 2026/05/09 18:49:14 christos Exp $	*/
 
 /*++
 /* NAME
@@ -176,6 +176,8 @@ int     bounce_notify_verp(int flags, char *service, char *queue_name,
 		 * pretends that we are a polite mail system, the text with
 		 * reason for the bounce, and a copy of the original message.
 		 */
+		msg_info("%s: sender non-delivery notification: %s",
+			 queue_id, STR(new_id));
 		if (bounce_header(bounce, bounce_info, STR(verp_buf),
 				  NO_POSTMASTER_COPY) == 0
 		    && bounce_boilerplate(bounce, bounce_info) == 0
@@ -185,11 +187,15 @@ int     bounce_notify_verp(int flags, char *service, char *queue_name,
 		    bounce_original(bounce, bounce_info, dsn_ret ?
 				    dsn_ret : DSN_RET_FULL);
 		bounce_status = post_mail_fclose(bounce);
-		if (bounce_status == 0)
-		    msg_info("%s: sender non-delivery notification: %s",
-			     queue_id, STR(new_id));
-	    } else
+		if (bounce_status)
+		    msg_warn("%s: sender notification failed to %s: %s",
+			     queue_id, STR(verp_buf),
+			     cleanup_strerror(bounce_status));
+	    } else {
+		msg_warn("%s: sender notification failed to %s",
+			 queue_id, STR(verp_buf));
 		bounce_status = 1;
+	    }
 
 	    /*
 	     * Stop at the first sign of trouble, instead of making the
@@ -230,6 +236,8 @@ int     bounce_notify_verp(int flags, char *service, char *queue_name,
 						 NULL_TRACE_FLAGS,
 						 sendopts,
 						 new_id)) != 0) {
+		msg_info("%s: postmaster non-delivery notification: %s",
+			 queue_id, STR(new_id));
 		if (bounce_header(bounce, bounce_info, postmaster,
 				  POSTMASTER_COPY) == 0
 		    && bounce_recipient_log(bounce, bounce_info) == 0
@@ -237,9 +245,6 @@ int     bounce_notify_verp(int flags, char *service, char *queue_name,
 		    && bounce_recipient_dsn(bounce, bounce_info) == 0)
 		    bounce_original(bounce, bounce_info, DSN_RET_HDRS);
 		postmaster_status = post_mail_fclose(bounce);
-		if (postmaster_status == 0)
-		    msg_info("%s: postmaster non-delivery notification: %s",
-			     queue_id, STR(new_id));
 	    } else
 		postmaster_status = 1;
 

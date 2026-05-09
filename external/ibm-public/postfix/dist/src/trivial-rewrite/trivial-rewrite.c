@@ -1,4 +1,4 @@
-/*	$NetBSD: trivial-rewrite.c,v 1.5 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: trivial-rewrite.c,v 1.6 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -348,22 +348,23 @@ bool    var_percent_hack;
 char   *var_local_transport;
 char   *var_virt_transport;
 char   *var_relay_transport;
-int     var_resolve_dequoted;
+bool    var_resolve_dequoted;
 char   *var_virt_alias_maps;		/* XXX virtual_alias_domains */
 char   *var_virt_mailbox_maps;		/* XXX virtual_mailbox_domains */
 char   *var_virt_alias_doms;
 char   *var_virt_mailbox_doms;
 char   *var_relocated_maps;
+bool    var_enb_relocated_pfx;
 char   *var_def_transport;
 char   *var_snd_def_xport_maps;
 char   *var_empty_addr;
-int     var_show_unk_rcpt_table;
-int     var_resolve_nulldom;
+bool    var_show_unk_rcpt_table;
+bool    var_resolve_nulldom;
 char   *var_remote_rwr_domain;
 char   *var_snd_relay_maps;
 char   *var_null_relay_maps_key;
 char   *var_null_def_xport_maps_key;
-int     var_resolve_num_dom;
+bool    var_resolve_num_dom;
 bool    var_allow_min_user;
 
  /*
@@ -650,6 +651,7 @@ int     main(int argc, char **argv)
     };
     static const CONFIG_NBOOL_TABLE nbool_table[] = {
 	VAR_APP_DOT_MYDOMAIN, DEF_APP_DOT_MYDOMAIN, &var_append_dot_mydomain,
+	VAR_ENB_RELOCATED_PFX, DEF_ENB_RELOCATED_PFX, &var_enb_relocated_pfx,
 	0,
     };
 

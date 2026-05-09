@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_proxy_client_misc.c,v 1.4 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: tls_proxy_client_misc.c,v 1.5 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -84,7 +84,6 @@ TLS_CLIENT_PARAMS *tls_proxy_client_param_from_config(TLS_CLIENT_PARAMS *params)
 		     tls_tkt_cipher = var_tls_tkt_cipher,
 		     tls_daemon_rand_bytes = var_tls_daemon_rand_bytes,
 		     tls_append_def_CA = var_tls_append_def_CA,
-		     tls_bc_pkey_fprint = var_tls_bc_pkey_fprint,
 		     tls_preempt_clist = var_tls_preempt_clist,
 		     tls_multi_wildcard = var_tls_multi_wildcard);
     return (params);

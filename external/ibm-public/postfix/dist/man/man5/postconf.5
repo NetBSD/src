@@ -1,4 +1,4 @@
-.\"	$NetBSD: postconf.5,v 1.20 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: postconf.5,v 1.21 2026/05/09 18:49:14 christos Exp $
 .\"
 .TH POSTCONF 5 
 .SH NAME
@@ -31,7 +31,7 @@ whose first non-whitespace character is a `#'.
 A logical line starts with non-whitespace text. A line that starts
 with whitespace continues a logical line.
 .IP \(bu
-A parameter value may refer to other parameters.
+A parameter value may refer to functions or other parameters.
 .RS
 .IP \(bu 
 The expressions "$name" and "${name}" are recursively replaced with
@@ -61,6 +61,11 @@ Postfix supports "!=" (inequality), "<", "<=", ">=", and ">". The
 comparison is numerical when both operands are all digits, otherwise
 the comparison is lexicographical. These forms are supported with
 Postfix versions >= 3.0.
+.IP \(bu
+The expression "${name{value}}" is replaced with the result from
+calling the function \fIname\fR with the argument \fIvalue\fR
+after stripping whitespace between the "{", the value, and the "}".
+An example is the domain_to_ascii{} function.
 .IP \(bu
 Each "value" is subject to recursive named parameter and relational
 expression evaluation, except where noted.
@@ -131,7 +136,7 @@ Overrides the local_transport parameter setting for address
 verification probes.
 .PP
 This feature is available in Postfix 2.1 and later.
-.SH address_verify_map (default: see "postconf \-d" output)
+.SH address_verify_map (default: Postfix >= 3.11: $default_cache_db_type:$data_directory/verify_cache; Postfix < 3.11: btree:$data_directory/verify_cache)
 Lookup table for persistent address verification status
 storage.  The table is maintained by the \fBverify\fR(8) service, and
 is opened before the process releases privileges.
@@ -157,8 +162,9 @@ Examples:
 .nf
 .na
 .ft C
-address_verify_map = hash:/var/db/postfix/verify
-address_verify_map = btree:/var/db/postfix/verify
+address_verify_map = $default_cache_db_type:$data_directory/verify_cache
+address_verify_map = lmdb:/var/db/postfix/verify_cache
+address_verify_map = btree:/var/db/postfix/verify_cache
 .fi
 .ad
 .PP
@@ -348,10 +354,13 @@ Examples:
 .PP
 .nf
 .na
-alias_database = hash:/etc/aliases
-alias_database = hash:/etc/mail/aliases
+alias_database = $default_database_type:/etc/aliases
+alias_database = lmdb:/etc/aliases
+alias_database = lmdb:/etc/mail/aliases
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 .SH alias_maps (default: see "postconf \-d" output)
 Optional lookup tables that are searched only with an email address
 localpart (no domain) and that apply only to \fBlocal\fR(8) recipients;
@@ -371,10 +380,6 @@ The default list is system dependent.  On systems with NIS, the
 default is to search the local alias database, then the NIS alias
 database.
 .PP
-If you change the alias database, run "\fBpostalias /etc/aliases\fR"
-(or wherever your system stores the mail alias file), or simply
-run "\fBnewaliases\fR" to build the necessary DBM or DB file.
-.PP
 The \fBlocal\fR(8) delivery agent disallows regular expression substitution
 of $1 etc. in alias_maps, because that would open a security hole.
 .PP
@@ -387,10 +392,26 @@ Examples:
 .PP
 .nf
 .na
-alias_maps = hash:/etc/aliases, nis:mail.aliases
-alias_maps = hash:/etc/aliases
+alias_maps = $default_database_type:/etc/aliases, nis:mail.aliases
+alias_maps = $default_database_type:/etc/aliases
+alias_maps = lmdb:/etc/mail/aliases
+alias_maps = lmdb:/etc/aliases
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postalias \fI/path/to/aliases\fR" after you
+change the aliases file, to (re)build a default\-type indexed file.
+Execute "postalias \fItype:/path/to/aliases\fR" to specify an explicit
+type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH allow_mail_to_commands (default: alias, forward)
 Restrict \fBlocal\fR(8) mail delivery to external commands.  The default
 is to disallow delivery to "|command" in :include:  files (see
@@ -844,11 +865,6 @@ whitespace or comma. Tables will be searched in the specified order
 until a match is found.
 Note: these lookups are recursive.
 .PP
-If you use this feature, run "\fBpostmap /etc/postfix/canonical\fR" to
-build the necessary DBM or DB file after every change. The changes
-will become visible after a minute or so.  Use "\fBpostfix reload\fR"
-to eliminate the delay.
-.PP
 Note: with Postfix version 2.2, message header address mapping
 happens only when message header address rewriting is enabled:
 .IP \(bu
@@ -868,10 +884,23 @@ Examples:
 .PP
 .nf
 .na
-canonical_maps = dbm:/etc/postfix/canonical
-canonical_maps = hash:/etc/postfix/canonical
+canonical_maps = lmdb:/etc/postfix/canonical
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/canonical" after you
+change the canonical file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/canonical" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH cleanup_replace_stray_cr_lf (default: yes)
 Replace each stray <CR> or <LF> character in message
 content with a space character, to prevent outbound SMTP smuggling,
@@ -1189,7 +1218,8 @@ Per\-nexthop debug logging is available in Postfix 3.6 and later.
 .PP
 Specify domain names, network/netmask patterns, "/file/name"
 patterns or "type:table" lookup tables. The right\-hand side result
-from "type:table" lookups is ignored.
+from "type:table" lookups is ignored. An IPv6 address must be enclosed
+in [].
 .PP
 Pattern matching of domain names is controlled by the presence
 or absence of "debug_peer_list" in the parent_domain_matches_subdomains
@@ -1224,18 +1254,24 @@ debugger_command =
     ddd $daemon_directory/$process_name $process_id & sleep 5
 .fi
 .ad
+.SH default_cache_db_type (default: see 'postconf \-d default_cache_db_type' output)
+The default database type for address_verify_map and
+postscreen_cache_map. Before Postfix 3.11 those caches used btree
+by default.
+.PP
+This feature is available in Postfix >= 3.11.
 .SH default_database_type (default: see "postconf \-d" output)
 The default database type for use in \fBnewaliases\fR(1), \fBpostalias\fR(1)
 and \fBpostmap\fR(1) commands. On many UNIX systems the default type is
-either \fBdbm\fR or \fBhash\fR. The default setting is frozen
+either \fBlmdb\fR or \fBhash\fR. The default setting is frozen
 when the Postfix system is built.
 .PP
 Examples:
 .PP
 .nf
 .na
+default_database_type = lmdb
 default_database_type = hash
-default_database_type = dbm
 .fi
 .ad
 .SH default_delivery_slot_cost (default: 5)
@@ -2038,6 +2074,57 @@ value to disable the feature.
 .PP
 This feature is available in Postfix 3.6 and later. It was backported
 to Postfix versions 3.5.9, 3.4.19, 3.3.16. 3.2.21.
+.SH domain_to_ascii (default: no default)
+A function that returns the ASCII representation of its domain
+name argument. If the argument contains only (7\-bit) ASCII characters
+(A\-label form), then domain_to_ascii{} will return the same value.
+If the argument contains a valid non\-ASCII domain name (U\-label
+form), then domain_to_ascii{} will return the corresponding Punycode
+(A\-label form). Other argument values may result in a program
+start\-up error.
+.PP
+Examples:
+.IP \(bu
+The examples below assume that smtp_requiretls_policy
+contains the default setting:
+.sp
+.nf
+.na
+smtp_requiretls_policy = inline:{
+    { ${domain_to_ascii{$mydomain}} = opportunistic },
+    { .${domain_to_ascii{$mydomain}} = opportunistic },
+     ...
+.fi
+.ad
+.IP \(bu
+Example 1: when mydomain contains only ASCII characters,
+domain_to_ascii{} returns the same value.
+.sp
+.nf
+.na
+# postconf \-o 'mydomain=foo.example' \-x smtp_requiretls_policy
+smtp_requiretls_policy = inline:{
+    { foo.example = opportunistic },
+    { .foo.example = opportunistic },
+     ...
+.fi
+.ad
+.IP \(bu
+Example 2: when mydomain contains non\-ASCII characters,
+domain_to_ascii{} returns the Punycode representation.
+.sp
+.nf
+.na
+# postconf \-o 'mydomain=π.example' \-x smtp_requiretls_policy
+smtp_requiretls_policy = inline:{
+    { xn\-\-1xa.example = opportunistic },
+    { .xn\-\-1xa.example = opportunistic },
+     ...
+.fi
+.ad
+.br
+.PP
+This feature is available in Postfix >= 3.11.
 .SH dont_remove (default: 0)
 Don't remove queue files and save them to the "saved" mail queue.
 This is a debugging aid.  To inspect the envelope information and
@@ -2082,7 +2169,7 @@ Enable 'transitional' compatibility between IDNA2003 and IDNA2008,
 when converting UTF\-8 domain names to/from the ASCII form that is
 used for DNS lookups. Specify "yes" for compatibility with Postfix
 <= 3.1 (not recommended). This affects the conversion of domain
-names that contain for example the German sz and the Greek zeta.
+names that contain for example the German sz and the Greek sigma.
 See https://unicode.org/cldr/utility/idna.jsp for more examples.
 .PP
 This feature is available in Postfix 3.2 and later.
@@ -2636,13 +2723,16 @@ Needed for debugging Postfix daemons with an X\-windows debugger.
 .IP "\fBMAIL_CONFIG\fR"
 Needed to make "\fBpostfix \-c\fR" work.
 .br
+.IP "\fBPOSTLOG_HOSTNAME\fR"
+Needed to make "\fBmaillog_file\fR" work during daemon
+process initialization.
+.br
 .IP "\fBPOSTLOG_SERVICE\fR"
 Needed to make "\fBmaillog_file\fR" work during daemon
 process initialization.
 .br
-.IP "\fBPOSTLOG_HOSTNAME\fR"
-Needed to make "\fBmaillog_file\fR" work during daemon
-process initialization.
+.IP "\fBXDG_RUNTIME_DIR\fR"
+Needed for debugging Postfix daemons with an XDG\-style debugger.
 .br
 .br
 .PP
@@ -3208,6 +3298,11 @@ The LMTP\-specific version of the smtp_line_length_limit
 configuration parameter.  See there for details.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH lmtp_log_tls_feature_status (default: yes)
+The LMTP\-specific version of the smtp_log_tls_feature_status
+configuration parameter. See there for details.
+.PP
+This feature is available in Postfix >= 3.11.
 .SH lmtp_mail_timeout (default: 300s)
 The Postfix LMTP client time limit for sending the MAIL FROM command,
 and for receiving the remote LMTP server response.
@@ -3302,6 +3397,11 @@ The LMTP\-specific version of the smtp_reply_filter
 configuration parameter.  See there for details.
 .PP
 This feature is available in Postfix 2.7 and later.
+.SH lmtp_requiretls_policy (default: opportunistic)
+The LMTP\-specific version of the smtp_requiretls_policy
+configuration parameter. See there for details.
+.PP
+This feature is available in Postfix >= 3.11.
 .SH lmtp_rset_timeout (default: 20s)
 The Postfix LMTP client time limit for sending the RSET command,
 and for receiving the remote LMTP server response. The LMTP client
@@ -3499,6 +3599,10 @@ The LMTP\-specific version of the smtp_tls_enforce_peername
 configuration parameter.  See there for details.
 .PP
 This feature is available in Postfix 2.3 and later.
+.SH lmtp_tls_enforce_sts_mx_patterns (default: yes)
+See smtp_tls_enforce_sts_mx_patterns.
+.PP
+This feature is available in Postfix >= 3.10.5.
 .SH lmtp_tls_exclude_ciphers (default: empty)
 The LMTP\-specific version of the smtp_tls_exclude_ciphers
 configuration parameter.  See there for details.
@@ -3782,10 +3886,12 @@ system.
 .na
 local_header_rewrite_clients = permit_mynetworks,
     permit_sasl_authenticated permit_tls_clientcerts
-    check_address_map hash:/etc/postfix/pop\-before\-smtp
+    check_address_map lmdb:/etc/postfix/pop\-before\-smtp
 .fi
 .ad
 .in -4
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 .SH local_login_sender_maps (default: static:*)
 A list of lookup tables that are searched by the UNIX login name,
 and that return a list of allowed envelope sender patterns separated
@@ -4499,7 +4605,7 @@ filter) applications after the SMTP DATA command. See MILTER_README
 for a list of available macro names and their meanings.
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH milter_default_action (default: tempfail)
+.SH milter_default_action (default: Postfix >= 3.11: shutdown; Postfix < 3.11: tempfail)
 The default action when a Milter (mail filter) response is
 unavailable (for example, bad Postfix configuration or Milter
 failure). Specify one of the following:
@@ -4514,11 +4620,23 @@ with a permanent status code.
 Reject all further commands in this session
 with a temporary status code.
 .br
+.IP "shutdown"
+With smtpd_milters, close the SMTP connection
+after sending a 421 SMTP reply; with non_smtpd_milters, report a
+queue file write error. Available in Postfix 3.11 and later.
+.br
 .IP "quarantine"
 Like "accept", but freeze the message in
 the "hold" queue. Available with Postfix 2.6 and later.
 .br
 .br
+.PP
+The default action was "tempfail" with Postfix 3.10 and earlier.
+.PP
+The default action is "shutdown" with Postfix 3.11 and later,
+i.e. disconnect the SMTP client. With the old default, Postfix could
+tempfail all messages that the client sends over a long\-lived
+connection, even if a Milter failure is only temporary.
 .PP
 This feature is available in Postfix 2.3 and later.
 .SH milter_end_of_data_macros (default: see "postconf \-d" output)
@@ -4861,10 +4979,15 @@ mynetworks = 127.0.0.0/8 168.100.189.0/28
 mynetworks = !192.168.0.1, 192.168.0.0/28
 mynetworks = 127.0.0.0/8 168.100.189.0/28 [::1]/128 [2001:240:587::]/64
 mynetworks = $config_directory/mynetworks
-mynetworks = hash:/etc/postfix/network_table
+mynetworks = lmdb:/etc/postfix/network_table
 mynetworks = cidr:/etc/postfix/network_table.cidr
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH mynetworks_style (default: Postfix >= 3.0: host, Postfix < 3.0: subnet)
 The method to generate the default value for the mynetworks parameter.
 This is the list of trusted networks for relay access control etc.
@@ -4909,6 +5032,116 @@ This feature is available in Postfix 2.0 and later.
 Sendmail compatibility feature that specifies the location of the
 \fBnewaliases\fR(1) command. This command can be used to rebuild the
 \fBlocal\fR(8) \fBaliases\fR(5) database.
+.SH non_bdb_custom_mapping (default: empty)
+When non\-Berkeley\-DB migration is enabled, an optional mapping
+from a hash: or btree: type to a non\-Berkeley\-DB type. This mapping
+takes precedence over the default mapping from hash: to
+$default_database_type, and from btree: to $default_cache_db_type.
+.IP \(bu
+Specify a lookup table with a search keys that are a
+Berkeley DB \fItype\fR (without ':') or \fItype:name\fR.
+.IP \(bu
+A search key with the form \fItype:name\fR takes precedence
+over \fItype\fR (without ':').
+.IP \(bu
+The lookup result must always be a non\-Berkeley\-DB \fItype\fR
+(without ':') and must not contain a \fI:name\fR.
+.IP \(bu
+The mapping table type must not be \fBhash\fR or \fBbtree\fR.
+.br
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_bdb_migration_allow_root_prefixes (default: see 'postconf \-d non_bdb_migration_allow_root_prefixes' output)
+A list of trusted pathname prefixes that must be matched when
+the non\-Berkeley\-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with "root" privilege.
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_bdb_migration_allow_user_prefixes (default: see 'postconf \-d non_bdb_migration_allow_user_prefixes' output)
+A list of trusted pathname prefixes that must be matched when
+the non\-Berkeley\-DB migration service (\fBnbdb_reindexd\fR(8)) needs to
+run \fBpostmap\fR(1) or \fBpostalias\fR(1) commands with non\-root privilege.
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_bdb_migration_level (default: disable)
+The non\-Berkeley\-DB migration service level. You are expected to use
+the command "\fBpostfix non\-bdb \fIname\-of\-level\fR\fR" to correctly
+configure the migration service level (see postfix\-non\-\fBbdb\fR(1).
+.IP "\fBdisable\fR"
+Disable all non\-Berkeley\-DB migration features. See
+NON_BERKELEYDB_README#disable for possible negative implications
+for integration with other software such as mailman.
+.br
+.IP "\fBenable\-redirect\fR (aliasing)"
+Enable redirection (aliasing) from Berkeley DB hash to
+$default_database_type, and from Berkeley DB btree to
+$default_cache_db_type, but do not automatically create the new cdb
+or lmdb indexed database files that Postfix programs need. See
+NON_BERKELEYDB_README#enable\-redirect for details and limitations.
+.br
+.IP "\fBenable\-reindex\fR"
+In addition to enable\-redirect, also create a non\-Berkeley\-DB
+indexed database file when a daemon program wants to access a file
+that does not yet exist. This feature uses the \fBnbdb_reindexd\fR(8)
+daemon to run \fBpostmap\fR(1) or \fBpostalias\fR(1).   See
+NON_BERKELEYDB_README#enable\-reindex for details and limitations.
+.PP
+\fI NOTE: \fBenable\-reindex\fR should be used only temporarily to
+generate most of the non\-Berkeley\-DB indexed database files that Postfix
+programs need. Leaving this level enabled may expose the system to
+privilege\-escalation attacks. There are no security concerns for using
+\fBenable\-redirect\fR. \fR
+.br
+.br
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_bdb_migration_log_redirect (default: yes)
+Log actions that redirect from a legacy Berkeley\-DB database
+type to a non\-Berkeley\-DB type.
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_bdb_migration_service_name (default: nbdb_reindex)
+The name of a master.cf service that implements the non\-Berkeley\-DB
+migration service protocol.
+.PP
+This feature is available in Postfix >= 3.11.
+.SH non_empty_end_of_header_action (default: fix_quietly)
+How the \fBcleanup\fR(8) daemon will process a message when the primary
+message header is terminated with a non\-empty line.
+.IP "\fB fix_quietly \fR"
+Default behavior: insert
+an empty line before the erroneous text. This behavior is backwards
+compatible with Postfix <= 3.10.
+.br
+.IP "\fB add_header \fR"
+Insert a MIME\-Error:
+header and an empty line before the erroneous text.
+.sp
+Example:
+.sp
+.nf
+.na
+MIME\-Error: message header was not terminated by empty line
+.fi
+.ad
+.br
+.IP "\fB reject \fR"
+Log the erroneous text and
+reject the message content.
+.sp
+Example:
+.sp
+.nf
+.na
+\fIqueueid\fR reject: mime\-error message header was terminated
+with non\-empty line: \fIerroneous text\fR; from=<\fIsender\fR>
+to=<\fIrecipient\fR>
+.fi
+.ad
+.br
+.br
+.PP
+This feature is available in Postfix >= 3.11.
 .SH non_fqdn_reject_code (default: 504)
 The numerical Postfix SMTP server reply code when a client request
 is rejected by the reject_non_fqdn_helo_hostname, reject_non_fqdn_sender
@@ -5303,11 +5536,12 @@ one\-letter suffix that specifies the time unit).  Time units: s
 The default time unit is h (hours).
 .PP
 This feature is available in Postfix 2.8.
-.SH postscreen_cache_map (default: btree:$data_directory/postscreen_cache)
+.SH postscreen_cache_map (default: Postfix >= 3.11: $default_cache_db_type:$data_directory/postscreen_cache; Postfix < 3.11: btree:$data_directory/postscreen_cache)
 Persistent storage for the \fBpostscreen\fR(8) server decisions.
 .PP
 To share a \fBpostscreen\fR(8) cache between multiple \fBpostscreen\fR(8)
-instances, use "postscreen_cache_map = proxy:btree:/path/to/file".
+instances, use "postscreen_cache_map = proxy:lmdb:/path/to/file"
+or "proxy:btree:/path/to/file".
 This requires Postfix version 2.9 or later; earlier \fBproxymap\fR(8)
 implementations don't support cache cleanup. For an alternative
 approach see the \fBmemcache_table\fR(5) manpage.
@@ -5507,6 +5741,10 @@ query these domains with the reversed IP addresses of remote SMTP
 clients,
 and \fBpostscreen\fR(8) will update an SMTP client's DNSBL score with
 each non\-error reply as described below.
+.PP
+NOTE: Always respect the usage policies of reputation services.
+Avoid public or ISP resolvers, unless the queries use your unique
+API key.
 .PP
 Caution: when postscreen rejects mail, its SMTP response contains
 the DNSBL
@@ -5996,7 +6234,8 @@ name, a domain name, an internet address, or a network/mask pattern,
 where the mask specifies the number of bits in the network part.
 When a pattern specifies a file name, its contents are substituted
 for the file name; when a pattern is a "type:table" table specification,
-table lookup is used instead.
+table lookup is used instead. An IPv6 address must be enclosed in
+[].
 .PP
 Patterns are separated by whitespace and/or commas. In order to
 reverse the result, precede a pattern with an
@@ -6093,7 +6332,7 @@ Example:
 .nf
 .na
 /etc/postfix/main.cf:
-    rbl_reply_maps = hash:/etc/postfix/rbl_reply
+    rbl_reply_maps = lmdb:/etc/postfix/rbl_reply
     smtpd_recipient_restrictions =
         permit_mynetworks,
         reject_rbl_client \fIsecret\fR.zen.dq.spamhaus.net=127.0.0.[2..11],
@@ -6118,10 +6357,24 @@ Example:
 .fi
 .ad
 .PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
 NOTE: This feature differs from postscreen_dnsbl_reply_map where
 the table search key is only a domain name (no "\fI=address\-filter\fR",
 no "\fI*weight\fR" factor) and where the lookup result
 should be only a domain name (no free text, no \fI$name\fR variables).
+.PP
+Execute the command "postmap /etc/postfix/rbl_reply" after you
+change the rbl_reply file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/rbl_reply" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.0 and later.
 The "=address\-filter" feature is available in Postfix 2.8 and later.
@@ -6222,11 +6475,23 @@ Example:
 .PP
 .nf
 .na
-recipient_bcc_maps = hash:/etc/postfix/recipient_bcc
+recipient_bcc_maps = lmdb:/etc/postfix/recipient_bcc
 .fi
 .ad
 .PP
-After a change, run "\fBpostmap /etc/postfix/recipient_bcc\fR".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/recipient_bcc" after
+you change the recipient_bcc file, to (re)build a default\-type indexed
+file.  Execute "postmap \fItype\fR:/etc/postfix/recipient_bcc" to
+specify an explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.1 and later.
 .SH recipient_canonical_classes (default: envelope_recipient, header_recipient)
@@ -6249,9 +6514,24 @@ Example:
 .PP
 .nf
 .na
-recipient_canonical_maps = hash:/etc/postfix/recipient_canonical
+recipient_canonical_maps = lmdb:/etc/postfix/recipient_canonical
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/recipient_canonical"
+after you change the recipient_canonical file, to (re)build a
+default\-type indexed file.  Execute "postmap
+\fItype\fR:/etc/postfix/recipient_canonical" to specify an explicit
+type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH recipient_delimiter (default: empty)
 The set of characters that can separate an email address
 localpart, user name, or a .forward file name from its extension.
@@ -6353,13 +6633,27 @@ Example:
 .PP
 .nf
 .na
-relay_clientcerts = hash:/etc/postfix/relay_clientcerts
+relay_clientcerts = lmdb:/etc/postfix/relay_clientcerts
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 .PP
 For more fine\-grained control, use check_ccert_access to select
 an appropriate \fBaccess\fR(5) policy for each client.
 See RESTRICTION_CLASS_README.
+.PP
+Execute the command "postmap /etc/postfix/relay_clientcerts"
+after you change the relay_clientcerts file, to (re)build a default\-type
+indexed file.  Execute "postmap \fItype\fR:/etc/postfix/relay_clientcerts"
+to specify an explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available with Postfix version 2.2.
 .SH relay_destination_concurrency_limit (default: $default_destination_concurrency_limit)
@@ -6439,9 +6733,23 @@ Example:
 .PP
 .nf
 .na
-relay_recipient_maps = hash:/etc/postfix/relay_recipients
+relay_recipient_maps = lmdb:/etc/postfix/relay_recipients
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/relay_recipients"
+after you change the relay_recipients file, to (re)build a default\-type
+indexed file.  Execute "postmap \fItype\fR:/etc/postfix/relay_recipients"
+to specify an explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.0 and later.
 .SH relay_transport (default: relay)
@@ -6530,18 +6838,61 @@ Specify zero or more "type:name" lookup tables, separated by
 whitespace or comma. Tables will be searched in the specified order
 until a match is found.
 .PP
-If you use this feature, run "\fBpostmap /etc/postfix/relocated\fR" to
-build the necessary DBM or DB file after change, then "\fBpostfix
-reload\fR" to make the changes visible.
-.PP
 Examples:
 .PP
 .nf
 .na
-relocated_maps = dbm:/etc/postfix/relocated
-relocated_maps = hash:/etc/postfix/relocated
+relocated_maps = lmdb:/etc/postfix/relocated
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/relocated" after you
+change the relocated file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/relocated" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
+.SH relocated_prefix_enable (default: yes)
+Prepend the prefix "\fB5.1.6 User has moved to \fR" to all
+relocated_maps lookup results. With "relocated_prefix_enable =
+no", all lookup results must contain a valid RFC 3463 compliant
+enhanced status code and text (format: "[45].number.number text...").
+.PP
+Example:
+.PP
+.nf
+.na
+/etc/postfix/main.cf:
+    relocated_maps = lmdb:/etc/postfix/relocated
+    relocated_prefix_enable = no
+.br
+/etc/postfix/relocated:
+    user@example.com 5.2.1 User account is disabled
+.fi
+.ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/relocated" after you
+change the relocated file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/relocated" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
+.PP
+This feature is available in Postfix 3.11 and later.
 .SH remote_header_rewrite_domain (default: empty)
 Rewrite or add message headers in mail from remote clients if
 the remote_header_rewrite_domain parameter value is non\-empty,
@@ -6581,6 +6932,68 @@ Require that a \fBlocal\fR(8) recipient's home directory exists
 before mail delivery is attempted. By default this test is disabled.
 It can be useful for environments that import home directories to
 the mail server (IMPORTING HOME DIRECTORIES IS NOT RECOMMENDED).
+.SH requiretls_enable (default: yes)
+Enable support for the ESMTP verb "REQUIRETLS" in the "MAIL
+FROM" command. As defined in RFC 8689, when a message specifies
+REQUIRETLS:
+.IP \(bu
+deliveries with SMTP or LMTP must use a TLS connection,
+.IP \(bu
+to a securely looked up MX server (e.g., DNSSEC or MTA\-STS),
+.IP \(bu
+with a matched server certificate (Postfix SMTP or LMTP
+client TLS security levels "secure", "verify", "fingerprint",
+dane\-only, or opportunistic "dane"),
+.IP \(bu
+and the server must announce "REQUIRETLS" support after
+the STARTTLS handshake.
+.br
+.PP
+When delivering a message that specifies REQUIRETLS, the Postfix
+SMTP client will try one or more servers, limited by the
+smtp_mx_address_limit and smtp_mx_session_limit parameters, until
+it finds an MX server that satisfies the above requirements. If
+such a server is not found, the Postfix SMTP or LMTP client returns
+the message as undeliverable.
+.PP
+Notes:
+.IP \(bu
+With the Postfix SMTP or LMTP clients, REQUIRETLS enforcement
+is controlled with smtp_requiretls_policy or lmtp_requiretls_policy. It
+is initially not enforced for deliveries to local servers, including
+LMTP message stores and local content filters.
+.IP \(bu
+The ESMTP REQUIRETLS option overrides the "TLS\-Required:
+no" message header.
+.br
+.PP
+This feature is available in Postfix >= 3.11.
+.SH requiretls_esmtp_header (default: yes)
+Record the ESMTP REQUIRETLS request in a "Require\-TLS\-ESMTP:
+yes" message header. This is needed to propagate the REQUIRETLS
+request through an external content filter that is configured with
+smtpd_proxy_filter, with content_filter, or with a FILTER action in
+an SMTPD \fBaccess\fR(5) table, \fBheader_checks\fR(5) or \fBbody_checks\fR(5). The
+header is not needed with Milter\-based content filters.
+.PP
+This header will be visible to remote and local recipients.  It
+can safely be disabled if a configuration does not use any of the
+above content filters that need the header.
+.PP
+This feature is available in Postfix 3.11 and later.
+.SH requiretls_redact_dsn (default: yes)
+When sending a delivery status notification for an original
+message received with the REQUIRETLS option, do not send the original
+message body (as if that message was received with "RET=HDRS") and
+do not enforce REQUIRETLS (as if that message was received without
+REQUIRETLS). For a detailed discussion see RFC 8689 section 5.
+.PP
+Note: the 'reverse' path for sending a delivery status notification
+may differ from the 'forward' path for receiving the original message.
+Not every hop in the reverse path may support REQUIRETLS, even
+though every hop in the forward path supported it. The setting
+"requiretls_redact_dsn = no" may therefore result in the loss of a
+delivery status notification.
 .SH reset_owner_alias (default: no)
 Reset the \fBlocal\fR(8) delivery agent's idea of the owner\-alias
 attribute, when delivering mail to a child alias that does not have
@@ -6739,11 +7152,23 @@ Example:
 .PP
 .nf
 .na
-sender_bcc_maps = hash:/etc/postfix/sender_bcc
+sender_bcc_maps = lmdb:/etc/postfix/sender_bcc
 .fi
 .ad
 .PP
-After a change, run "\fBpostmap /etc/postfix/sender_bcc\fR".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/sender_bcc" after you
+change the sender_bcc file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/sender_bcc" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.1 and later.
 .SH sender_canonical_classes (default: envelope_sender, header_sender)
@@ -6769,9 +7194,23 @@ Example:
 .PP
 .nf
 .na
-sender_canonical_maps = hash:/etc/postfix/sender_canonical
+sender_canonical_maps = lmdb:/etc/postfix/sender_canonical
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/sender_canonical"
+after you change the sender_canonical file, to (re)build a default\-type
+indexed file.  Execute "postmap \fItype\fR:/etc/postfix/sender_canonical"
+to specify an explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH sender_dependent_default_transport_maps (default: empty)
 A sender\-dependent override for the global default_transport
 parameter setting. The tables are searched by the envelope sender
@@ -7009,7 +7448,7 @@ transport_maps to apply this feature selectively:
 .nf
 .na
 /etc/postfix/main.cf:
-    transport_maps = hash:/etc/postfix/transport
+    transport_maps = lmdb:/etc/postfix/transport
 .fi
 .ad
 .in -4
@@ -7036,9 +7475,23 @@ transport_maps to apply this feature selectively:
 .ad
 .in -4
 .PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
 Unselective use of the "data" target does no harm, but will
 result in unnecessary "lost connection after DATA" events at remote
 SMTP/LMTP servers.
+.PP
+Execute the command "postmap /etc/postfix/transport" after you
+change the transport file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/transport" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 3.0 and later.
 .SH smtp_always_send_ehlo (default: yes)
@@ -7139,11 +7592,8 @@ false hostname information in DNS CNAME records, and makes SASL
 password file lookups more predictable. This is the default setting
 as of Postfix 2.3.
 .PP
-When DNS CNAME records are validated with secure DNS lookups
-(smtp_dns_support_level = dnssec), they are always allowed to
-override the above servername (Postfix 2.11 and later).
-.PP
-This feature is available in Postfix 2.2.9 and later.
+This feature is available in Postfix 2.2.9 and later, deprecated
+as of Postfix 3.11.
 .SH smtp_connect_timeout (default: 30s)
 The Postfix SMTP client time limit for completing a TCP connection, or
 zero (use the operating system built\-in time limit).
@@ -7641,6 +8091,127 @@ The Postfix limit of 998 characters not including <CR><LF>
 is consistent with the SMTP limit of 1000 characters including
 <CR><LF>.  The Postfix limit was 990 with Postfix 2.8
 and earlier.
+.SH smtp_log_tls_feature_status (default: yes)
+Enable logging of TLS feature information in delivery status
+logging. This summarizes how features such as TLS and REQUIRETLS
+were used. A list of examples is at the end of this text.
+.IP \(bu
+The logging is inserted between the "delays=a/b/c/d"
+and the "dsn=x.y.z, status=..." information.
+.IP \(bu
+The general format is "tls=feature/feature/...".
+See below for examples.
+.IP \(bu
+The first feature name is the TLS security level:
+\&'none', 'may', 'encrypt', etc.  Other
+features are shown only if activated. The REQUIRETLS extension's
+feature name is 'requiretls'.
+.IP \(bu
+When a ':\fIdowngrade\-level\fR' is appended to
+a feature name, the feature was downgraded to the indicated level.
+A downgrade\-level \fInone\fR indicates that the feature
+was unavailable. The result of a downgrade may violate a strict
+policy, but may still be compliant with a permissive policy.
+.IP \(bu
+When "!" is prepended to a feature, the policy
+for that feature was violated and the connection was not used.
+.IP \(bu
+When "?" is appended to a feature, the policy for that
+feature was undecided. This is typically the result of a lost
+connection or an incorrect configuration.
+.br
+.PP
+Examples for TLS security levels:
+.IP "tls=none"
+A connection with TLS disabled.
+.br
+.IP "tls=may"
+Opportunistic TLS. The connection was used
+after a successful TLS handshake.
+.br
+.IP "tls=may?"
+Opportunistic TLS. The status was undecided
+because no connection was made, or no server could be reached.
+.br
+.IP "tls=may:none"
+Opportunistic TLS. The client was
+willing to use TLS, but the remote server did not support STARTTLS,
+and the connection was used in plaintext as permitted by the
+opportunistic TLS policy.
+.br
+.IP "tls=dane"
+DANE policy compliant, no downgrade.
+.br
+.IP "tls=dane:halfdane"
+Opportunistic DANE. The connection
+security was downgraded to 'halfdane' to indicate that
+mail server records were not DNSSEC\-signed.
+.br
+.IP "tls=dane:encrypt"
+Opportunistic DANE. The connection
+security was downgraded to 'encrypt' because none of the TLSA
+records were usable.
+.br
+.IP "tls=dane?"
+DANE policy status was undecided, because the
+connection failed before or in the TLS handshake.
+.br
+.br
+.PP
+Examples for REQUIRETLS policies (set with smtp_requiretls_policy),
+where "\fIxxx\fR" is a TLS security level:
+.IP "tls=xxx/requiretls"
+\&'Enforce' policy compliant.
+After a successful TLS handshake that required a certificate match,
+the remote server announced REQUIRETLS support, and the client sent
+REQUIRETLS.
+.IP "tls=xxx/!requiretls:nocertmatch"
+\&'Enforce' policy
+violation. The connection was not used because the remote server
+certificate did not match as required by the TLS security policy,
+or no connection was made because the TLS security policy disabled
+server certificate matching.
+.br
+.IP "tls=xxx/requiretls:nocertmatch"
+\&'Opportunistic+starttls'
+or 'opportunistic' policy compliant. After a successful TLS handshake
+that did not require a server certificate match, the remote server
+announced REQUIRETLS support, and the client sent REQUIRETLS.
+.br
+.IP "tls=xxx/!requiretls:nostarttls"
+\&'Enforce' or
+\&'opportunistic+starttls' policy violation. The connection was not
+used because the remote server did not support STARTTLS.
+.br
+.IP "tls=xxx/!requiretls:noencryption"
+\&'Enforce' or
+\&'opportunistic+starttls' policy violation. No connection was made
+because the TLS security policy disabled encryption.
+.br
+.IP "tls=xxx/!requiretls:none"
+\&'Enforce' policy violation.
+After a successful TLS handshake, the connection was not used because
+the remote server did not support REQUIRETLS.
+.br
+.IP "tls=xxx/requiretls:none"
+\&'Opportunistic+starttls'
+policy compliant. After a successful TLS handshake, the remote
+server did not announce REQUIRETLS support, and the connection was
+used without sending REQUIRETLS.
+.br
+.IP "tls=xxx/requiretls:none"
+\&'Opportunistic' policy
+compliant. The remote server did not announce support for STARTTLS
+or REQUIRETLS, and the connection was used without sending REQUIRETLS.
+.br
+.IP "tls=xxx/requiretls?"
+Policy status was undecided,
+because the connection failed before or in the TLS handshake, or
+no connection was made due to a policy configuration error.
+.br
+.br
+.PP
+This feature is available in Postfix 3.11 and later.
 .SH smtp_mail_timeout (default: 300s)
 The Postfix SMTP client time limit for sending the MAIL FROM command,
 and for receiving the remote SMTP server response.
@@ -7873,6 +8444,14 @@ Examples:
 .nf
 .na
 /etc/postfix/reply_filter:
+    # Some Microsoft servers violate RFC 2554 section 4, causing Postfix
+    # to complain with "non\-empty initial GSSAPI challenge from server"
+    /^334\es+GSSAPI\es+supported/ 334
+.fi
+.ad
+.PP
+.nf
+.na
     # Transform garbage into "250\-filler..." so that it looks like
     # one line from a multi\-line reply. It does not matter what we
     # substitute here as long it has the right syntax.  The Postfix
@@ -7883,6 +8462,274 @@ Examples:
 .ad
 .PP
 This feature is available in Postfix 2.7.
+.SH smtp_requiretls_policy (default: see 'postconf \-d smtp_requiretls_policy' output)
+How the Postfix SMTP and LMTP client will enforce REQUIRETLS
+for messages received with the REQUIRETLS option. Policy examples
+for SMTP and LMTP are at the end.
+.IP \(bu
+Specify a list of items, separated with whitespace or
+comma; continue a long line by starting the next line with whitespace.
+.IP \(bu
+Each item must be an action (see below), or a type:table
+lookup table that must return an action (it must not return a
+type:table).
+.IP \(bu
+In the text that follows, the TLS next\-hop destination for
+TCP connections is the recipient domain by default, but this can
+be overruled with destinations specified with transport_maps,
+relayhost, content_filter, or other routing features. The next\-hop
+destination for LMTP over UNIX\-domain connections is always the
+value of myhostname.
+.IP \(bu
+A type:table lookup table is searched with the TLS next\-hop
+destination (without any [ ], \fI:service\fR, or \fI:port\fR).
+A non\-ASCII next\-hop destination is converted into ASCII form
+(Punycode) before making a policy query; lookup tables must answer
+ASCII\-form queries.
+.IP \(bu
+A fixed\-string table (such as lmdb:, cdb:, or hash:) is
+also searched with the next\-hop ".parent" domains (in a table key,
+prepend a '.' to a parent domain name). These ".parent" domain
+queries are not made with pattern\-based lookup tables such as regexp:
+or pcre: or with socketmap: or tcp: tables.
+.br
+.PP
+Supported actions, assuming that TLS feature status logging is
+enabled with "smtp_log_tls_feature_status = yes" (the default):
+.IP "\fB enforce \fR"
+Skip servers that do not support
+STARTTLS, skip connections without a server certificate match, and
+skip servers that don't support REQUIRETLS after STARTTLS.
+.sp
+If a suitable server is found, request REQUIRETLS, deliver the
+message, and log "tls=\fIlevel\fR/requiretls" in delivery
+status logging, where \fIlevel\fR shows the current SMTP
+client TLS security level.
+.sp
+If no suitable server is found,
+return the message as undeliverable and log a policy violation
+"tls=\fIlevel\fR/!requiretls:nocertmatch",
+"tls=\fIlevel\fR/!requiretls:noencryption", or
+"tls=\fIlevel\fR/!requiretls:nostarttls", as described
+under smtp_log_tls_feature_status.
+.sp
+NOTE: this is also used
+implicitly when no REQUIRETLS policy match is found.
+.br
+.IP "\fB opportunistic+starttls \fR"
+Skip servers
+that don't announce STARTTLS support, but do not require a server
+certificate match or remote REQUIRETLS support.
+.sp
+If a
+suitable server is found, send REQUIRETLS if that server supports
+REQUIRETLS and log "tls=\fIlevel\fR/requiretls" or
+"tls=\fIlevel\fR/requiretls:nomatch" in delivery status
+logging, or simply deliver the message as if the sender did not
+request REQUIRETLS and log "tls=\fIlevel\fR/requiretls:none,
+where \fIlevel\fR shows the current SMTP client TLS
+security level.
+.sp
+If no suitable server is found, return the
+message as undeliverable and log a policy violation
+"tls=\fIlevel\fR/!requiretls:noencryption" or
+"tls=\fIlevel\fR/!requiretls:nostarttls" as described
+under smtp_log_tls_feature_status.
+.sp
+This relaxed policy can
+be appropriate for an outbound perimeter MTA, when forwarding
+messages from internal systems to the Internet, at a time that many
+domains support TLS but have no DANE or MTA\-STS policies.
+.br
+.IP "\fB opportunistic \fR"
+Do not require STARTTLS,
+a server certificate match, or remote REQUIRETLS support.
+.sp
+Request REQUIRETLS if the server supports both STARTTLS and REQUIRETLS
+and log "tls=\fIlevel\fR/requiretls" or
+"tls=\fIlevel\fR/requiretls:nomatch" in delivery status
+logging, otherwise simply deliver the message as if the sender did
+not request REQUIRETLS and log "tls=\fIlevel\fR/requiretls:none,
+where \fIlevel\fR shows the current SMTP client TLS
+security level.
+.sp
+This REQUIRETLS policy is non\-intrusive,
+because there can be no REQUIRETLS policy violation.
+.sp
+This
+weak policy can be appropriate for an inbound perimeter MTA, when
+forwarding messages from the Internet to internal servers or content
+filters that may not support STARTTLS or REQUIRETLS, using internal
+connections instead of the public Internet. This setting may also
+be useful for an outbound MTA to discover what destinations support
+some form of REQUIRETLS without risking mail delivery problems.
+.br
+.IP "\fB disable \fR"
+Disable REQUIRETLS support.
+Deliver all messages as if the sender did not request REQUIRETLS.
+This may be used as a last\-resort workaround when a server announces
+REQUIRETLS support, but the support is inoperable.
+.br
+.br
+.PP
+Notes:
+.IP \(bu
+To match any name below the domain "example.com" specify
+a table entry with the storage key ".example.com" in type:table
+lookup tables that need an exact match. This is appropriate, for
+example, with lmdb:, cdb: or hash:.
+.IP \(bu
+Do not specify a match pattern for ".domain" with regexp:,
+pcre:, socketmap:, or tcp:, as smtp_requiretls_policy will
+not query those tables with that form.
+.br
+.PP
+SMTP client examples. See REQUIRETLS_README for discussion.
+.IP \(bu
+The simplest policy: when a sender requests REQUIRETLS,
+request REQUIRETLS when an external or internal server supports
+both STARTTLS and REQUIRETLS (lines 4, 5), and enforce a TLS
+certificate match only if the destination publishes a DANE or STS
+policy (line 3). When the sender requests REQUIRETLS, and an external
+or internal server does not support both STARTTLS and REQUIRETLS,
+simply deliver the message as if the sender did not request REQUIRETLS
+(lines 4, 5).
+.sp
+.nf
+.na
+1 /etc/postfix/main.cf:
+2     smtp_tls_security_level = may
+3     smtp_tls_policy_maps = ...dane/sts plugin...
+4     smtp_requiretls_policy = opportunistic
+5     lmtp_requiretls_policy = opportunistic
+.fi
+.ad
+.IP \(bu
+The default SMTP client REQUIRETLS policy (lines 4\-12):
+when a sender requests REQUIRETLS, require that an external server
+supports STARTTLS and REQUIRETLS, and require that its server
+certificate matches a DANE or STS policy (lines 3, 12); make
+REQUIRETLS support optional for delivery to internal destinations
+or content filters specified as a symbolic name (lines 5\-8) or as
+a numeric address (lines 9\-11). An internationalized domain name
+must be specified in ASCII form (lines 6\-7); the default policy
+below uses ${domain_to_ascii{$mydomain}} which returns $mydomain
+when the domain name contains only ASCII characters, and which
+returns Punycode (xn\-\-mumble) when $mydomain contains
+non\-ASCII. Note: if you specify a domain list outside main.cf, then
+the automatic $\fIname\fR expansions and Punycode conversions will
+not happen, and you will need to enter explicit ASCII domain
+names.
+.sp
+.nf
+.na
+ 1 /etc/postfix/main.cf:
+ 2     smtp_tls_security_level = may
+ 3     smtp_tls_policy_maps = ...dane/sts plugin...
+ 4     smtp_requiretls_policy =
+ 5         inline:{
+ 6             { ${domain_to_ascii{$mydomain}} = opportunistic }
+ 7             { .${domain_to_ascii{$mydomain}} = opportunistic }
+ 8             { localhost = opportunistic } }
+ 9         cidr:{
+10             { 0.0.0.0/0 opportunistic },
+11             { ::/0 opportunistic } },
+12         enforce
+.fi
+.ad
+.IP \(bu
+An SMTP client REQUIRETLS policy that is relaxed for
+external destinations (line 12): when a sender requests REQUIRETLS,
+require that an external server supports STARTTLS but enforce a TLS
+certificate match only if the receiver publishes a DANE or STS
+policy (line 3), and do not require that an external server supports
+REQUIRETLS. Copy the above policy for internal destinations or
+content filters (lines 5\-11). Again, an internationalized domain
+name must be specified in ASCII form (lines 6\-7); the policy uses
+${domain_to_ascii{$mydomain}} which returns $mydomain when the
+domain name contains only ASCII characters, and which returns
+Punycode (xn\-\-mumble) when $mydomain contains non\-ASCII.
+Note: if you specify a domain list outside main.cf, then the automatic
+$\fIname\fR expansions and Punycode conversions will not happen,
+and you will need to enter explicit ASCII domain names.
+.sp
+.nf
+.na
+ 1 /etc/postfix/main.cf:
+ 2     smtp_tls_security_level = may
+ 3     smtp_tls_policy_maps = ...dane/sts plugin...
+ 4     smtp_requiretls_policy =
+ 5         inline:{
+ 6             { ${domain_to_ascii{$mydomain}} = opportunistic }
+ 7             { .${domain_to_ascii{$mydomain}} = opportunistic }
+ 8             { localhost = opportunistic } }
+ 9         cidr:{
+10             { 0.0.0.0/0 opportunistic },
+11             { ::/0 opportunistic } },
+12         opportunistic+starttls
+.fi
+.ad
+.IP \(bu
+As above, with external destinations listed in a separate
+file for easier maintenance.
+.sp
+.nf
+.na
+/etc/postfix/main.cf:
+    smtp_tls_security_level = may
+    smtp_tls_policy_maps = ...dane/sts plugin...
+    smtp_requiretls_policy =
+        inline:{
+            { ${domain_to_ascii{$mydomain}} = opportunistic }
+            { .${domain_to_ascii{$mydomain}} = opportunistic }
+            { localhost = opportunistic } }
+        cidr:{
+            { 0.0.0.0/0 opportunistic },
+            { ::/0 opportunistic } },
+        lmdb:/etc/postfix/requiretls\-per\-site
+        opportunistic+starttls
+.sp
+/etc/postfix/requiretls\-per\-site:
+    one.example         enforce
+    two.example         enforce
+    three.example       opportunistic
+    ...
+.fi
+.ad
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/requiretls\-per\-site"
+after you change the requiretls\-per\-site file, to (re)build a
+default\-type indexed file.  Execute "postmap
+\fItype\fR:/etc/postfix/requiretls\-per\-site" to specify an explicit
+type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
+.br
+.PP
+LMTP client examples. See REQUIRETLS_README for discussion.
+.IP \(bu
+The default LMTP client REQUIRETLS policy: when a sender
+requests REQUIRETLS, request REQUIRETLS if the server supports
+REQUIRETLS, otherwise deliver the message as if the sender did not
+request REQUIRETLS. Note: with deliveries over a UNIX\-domain socket,
+the next\-hop destination for lmtp_requiretls_policy lookups will
+be the myhostname parameter value.
+.sp
+.nf
+.na
+/etc/postfix/main.cf:
+    lmtp_requiretls_policy = opportunistic
+.fi
+.ad
+.br
+.PP
+This feature is available in Postfix >= 3.11.
 .SH smtp_rset_timeout (default: 20s)
 The Postfix SMTP client time limit for sending the RSET command,
 and for receiving the remote SMTP server response. The SMTP client
@@ -7922,11 +8769,12 @@ the directory specified with the data_directory parameter.
 This feature uses cryptographic hashing to protect plain\-text
 passwords, and requires that Postfix is compiled with TLS support.
 .PP
-Example:
+Examples:
 .PP
 .nf
 .na
 .ft C
+smtp_sasl_auth_cache_name = proxy:lmdb:/var/db/postfix/sasl_auth_cache
 smtp_sasl_auth_cache_name = proxy:btree:/var/db/postfix/sasl_auth_cache
 .fi
 .ad
@@ -8668,6 +9516,21 @@ CommonName of this attacker will be logged).
 .PP
 This feature is available in Postfix 2.2 and later. With
 Postfix 2.3 and later use smtp_tls_security_level instead.
+.SH smtp_tls_enforce_sts_mx_patterns (default: yes)
+Transform the TLS policy from an STS policy plugin: connect to
+an MX host only if its name matches any STS policy MX host pattern,
+and match the server certificate against the MX hostname. This
+setting takes effect only when an STS policy plugin has TLSRPT
+support enabled, so that it forwards STS policy attributes to
+Postfix. This works even if Postfix TLSRPT support is disabled at
+build time or at runtime.
+.PP
+Without the above configuration settings for Postfix and STS
+plugins, the old behavior stays in effect: connect to any MX host
+listed in DNS, and match a server certificate against any STS policy
+MX host pattern.
+.PP
+This feature is available in Postfix >= 3.10.5.
 .SH smtp_tls_exclude_ciphers (default: empty)
 List of ciphers or cipher types to exclude from the Postfix
 SMTP client cipher
@@ -8746,7 +9609,7 @@ As in the example above, we show two matching fingerprints:
 .nf
 .na
 /etc/postfix/main.cf:
-    smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
+    smtp_tls_policy_maps = lmdb:/etc/postfix/tls_policy
     smtp_tls_fingerprint_digest = sha256
 .fi
 .ad
@@ -8762,6 +9625,20 @@ As in the example above, we show two matching fingerprints:
 .fi
 .ad
 .in -4
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/tls_policy" after you
+change the tls_policy file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/tls_policy" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.5 and later.
 .SH smtp_tls_fingerprint_digest (default: see "postconf \-d" output)
@@ -9068,6 +9945,7 @@ See the documentation of the smtp_tls_policy_maps parameter and
 TLS_README for more information about security levels.
 .PP
 Example:
+.sp
 .nf
 .na
 # Preferred syntax with Postfix >= 3.6:
@@ -9351,7 +10229,7 @@ Example:
 .nf
 .na
 /etc/postfix/main.cf:
-    smtp_tls_policy_maps = hash:/etc/postfix/tls_policy
+    smtp_tls_policy_maps = lmdb:/etc/postfix/tls_policy
     # Postfix 2.5 and later.
     #
     # The default digest is sha256 with Postfix >= 3.6 and
@@ -9378,11 +10256,25 @@ Example:
 .fi
 .ad
 .PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
 \fBNote:\fR The "hostname" strategy if listed in a non\-default
 setting of smtp_tls_secure_cert_match or in the "match" attribute
 in the policy table can render the "secure" level vulnerable to
 DNS forgery. Do not use the "hostname" strategy for secure\-channel
 configurations in environments where DNS security is not assured.
+.PP
+Execute the command "postmap /etc/postfix/tls_policy" after you
+change the tls_policy file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/tls_policy" to specify
+an explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.3 and later.
 .SH smtp_tls_protocols (default: see 'postconf \-d' output)
@@ -9460,6 +10352,7 @@ this protocol via "!TLSv1.3" is supported since Postfix 3.4 (or patch
 releases >= 3.0.14, 3.1.10, 3.2.7 and 3.3.2).
 .PP
 Example:
+.sp
 .nf
 .na
 # Preferred syntax with Postfix >= 3.6:
@@ -9523,13 +10416,14 @@ example.net     secure match=example.com:.example.com
 .in -4
 .PP
 This feature is available in Postfix 2.3 and later.
-.SH smtp_tls_security_level (default: empty)
+.SH smtp_tls_security_level (default: Postfix >= 3.11: may; Postfix < 3.11: empty)
 The default SMTP TLS security level for the Postfix SMTP client.
 When a non\-empty value is specified, this overrides the obsolete
 parameters smtp_use_tls, smtp_enforce_tls, and smtp_tls_enforce_peername;
-when no value is specified for smtp_tls_enforce_peername or the obsolete
-parameters, the default SMTP TLS security level is
-none.
+when no value is specified for those obsolete parameters, the default
+SMTP TLS security level is may
+(compatibility_level >= 3.11) or none
+(compatibility_level < 3.11).
 .PP
 Specify one of the following security levels:
 .IP "\fBnone\fR"
@@ -9721,7 +10615,7 @@ This feature is available in Postfix 3.4 and later.
 .SH smtp_tls_session_cache_database (default: empty)
 Name of the file containing the optional Postfix SMTP client
 TLS session cache. Specify a database type that supports enumeration,
-such as \fBbtree\fR or \fBsdbm\fR; there is no need to support
+such as \fBlmdb\fR or \fBbtree\fR; there is no need to support
 concurrent access.  The file is created if it does not exist. The \fBsmtp\fR(8)
 daemon does not use this parameter directly, rather the cache is
 implemented indirectly in the \fBtlsmgr\fR(8) daemon. This means that
@@ -9746,6 +10640,7 @@ Example:
 .nf
 .na
 .ft C
+smtp_tls_session_cache_database = lmdb:/var/db/postfix/smtp_scache
 smtp_tls_session_cache_database = btree:/var/db/postfix/smtp_scache
 .fi
 .ad
@@ -9922,12 +10817,10 @@ See TLSRPT_README for configuration examples and additional
 requirements for MTA\-STS smtp_tls_policy_maps plugins.
 .PP
 This feature is available in Postfix >= 3.10.
-.SH smtp_tlsrpt_skip_reused_handshakes (default: yes)
-Do not report the TLSRPT status for TLS protocol handshakes
-that reuse a previously\-negotiated TLS session (there is no new
-information to report). Report the TLSRPT status only for "new" TLS
-sessions. Set this to "no" to log the TLSRPT status of all TLS
-handshakes, for example to troubleshoot Postfix TLSRPT support.
+.SH smtp_tlsrpt_skip_reused_handshakes (default: Postfix >= 3.11: no, Postfix 3.10: yes)
+When set to "yes", report the TLSRPT status only for "new" TLS
+sessions. When set to "no", also report the TLSRPT status for TLS
+protocol handshakes that reuse a previously\-negotiated TLS session.
 .PP
 Note: if an SMTP over TLS connection is reused, there is no
 second etc. TLS handshake to report.
@@ -10086,6 +10979,8 @@ WARNING: The purpose of this feature is to limit abuse. It must
 not be used to regulate legitimate mail traffic.
 .PP
 This feature is available in Postfix 2.2 and later.
+.SH smtpd_client_connection_limit_exceptions (default: $mynetworks)
+Renamed to smtpd_client_event_limit_exceptions in Postfix 2.2.
 .SH smtpd_client_connection_rate_limit (default: 0)
 The maximal number of connection attempts any client is allowed to
 make to this service per time unit.  The time unit is specified
@@ -10386,6 +11281,12 @@ The maps_rbl_reject_code parameter specifies the response code for
 rejected requests (default:  554), the default_rbl_reply  parameter
 specifies the default server reply, and the rbl_reply_maps  parameter
 specifies tables with server replies indexed by \fIrbl_domain\fR.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking the key in SMTP server
+responses).
+.br
 This feature is available in Postfix 2.0 and later.
 .br
 .IP "\fBpermit_dnswl_client \fIdnswl_domain=d.d.d.d\fR\fR"
@@ -10399,8 +11300,14 @@ reversed client network address is listed with any A record under
 .br
 For safety, permit_dnswl_client is silently
 ignored when it would override reject_unauth_destination.  The
-result is DEFER_IF_REJECT when allowlist lookup fails.  This feature
-is available in Postfix 2.8 and later.
+result is DEFER_IF_REJECT when allowlist lookup fails.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
+This feature is available in Postfix 2.8 and later.
 .br
 .IP "\fBreject_rhsbl_client \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the client hostname is listed with the
@@ -10412,6 +11319,12 @@ number..number ranges (Postfix version 2.8 and later).  If no
 hostname is listed with
 any A record under \fIrbl_domain\fR. See the reject_rbl_client
 description above for additional RBL related configuration parameters.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
 This feature is available in Postfix 2.0 and later; with Postfix
 version 2.8 and later, reject_rhsbl_reverse_client will usually
 produce better results.
@@ -10431,8 +11344,14 @@ DNS\-based blocklists, and not for making access rule exceptions.
 .br
 For safety, permit_rhswl_client is silently ignored when it
 would override reject_unauth_destination.  The result is DEFER_IF_REJECT
-when allowlist lookup fails.  This feature is available in Postfix
-2.8 and later.
+when allowlist lookup fails.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
+This feature is available in Postfix 2.8 and later.
 .br
 .IP "\fBreject_rhsbl_reverse_client \fIrbl_domain=d.d.d.d\fR\fR"
 Reject the request when the unverified reverse client hostname
@@ -10442,8 +11361,14 @@ one or more ";"\-separated numbers or number..number ranges.
 If no "\fI=d.d.d.d\fR" is specified, reject the request when the
 unverified reverse client hostname is listed with any A record under
 \fIrbl_domain\fR. See the reject_rbl_client description above for
-additional RBL related configuration parameters.  This feature is
-available in Postfix 2.8 and later.
+additional RBL related configuration parameters.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
+This feature is available in Postfix 2.8 and later.
 .br
 .IP "\fBreject_unknown_client_hostname\fR (with Postfix < 2.3: reject_unknown_client)"
 Reject the request when 1) the client IP address\->name mapping
@@ -11160,8 +12085,14 @@ reject_rbl_client description for additional RBL related configuration
 parameters.  Note: specify "smtpd_helo_required = yes" to fully
 enforce this restriction (without "smtpd_helo_required = yes", a
 client can simply skip reject_rhsbl_helo by not sending HELO or
-EHLO). This feature is available in Postfix 2.0
-and later.
+EHLO).
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
+This feature is available in Postfix 2.0 and later.
 .br
 .IP "\fBreject_unknown_helo_hostname\fR (with Postfix < 2.3: reject_unknown_hostname)"
 Reject the request when the HELO or EHLO hostname has no DNS A
@@ -11209,7 +12140,7 @@ SMTP server's Received: message header.
 .IP \(bu
 The default setting, "smtpd_hide_client_session = no",
 must be used for the port 25 MTA service. It provides information
-that is required by RFC 5321.
+that is required by RFC 5321 section 4.4.
 .IP \(bu
 The setting "smtpd_hide_client_session = yes" may be used
 for the port 587 and 465 MUA services. This hides the SMTP client
@@ -11226,15 +12157,16 @@ header has one of the following forms:
 Received: by mail.example.com (Postfix) id postfix\-queue\-id
         for <user@example.com>; Day, dd Mon yyyy hh:mm:ss tz\-offset (zone)
 .br
-Received: by mail.example.com (Postfix) id postfix\-queue\-id
+Received: by mail.example.com (Postfix) id postfix\-queue\-id;
         Day, dd Mon yyyy hh:mm:ss tz\-offset (zone)
 .fi
 .ad
 .in -4
 .PP
 The redacted form hides that a message was received with SMTP,
-and therefore it does not need to provide the information required by
-RFC 5321. The form does still meet RFC 5322 requirements.
+and therefore it does not need to provide the FROM clause according
+to RFC 5321 section 4.4. The redacted form still meets RFC 5322
+requirements.
 .PP
 This feature is available in Postfix >= 3.10.
 .SH smtpd_history_flush_threshold (default: 100)
@@ -11658,8 +12590,14 @@ The maps_rbl_reject_code
 parameter specifies the response code for rejected requests (default:
 554); the default_rbl_reply parameter specifies the default server
 reply; and the rbl_reply_maps parameter specifies tables with server
-replies indexed by \fIrbl_domain\fR.  This feature is available
-in Postfix version 2.0 and later.
+replies indexed by \fIrbl_domain\fR.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
+This feature is available in Postfix version 2.0 and later.
 .br
 .IP "\fBreject_unauth_destination\fR"
 Reject the request unless one of the following is true:
@@ -11746,6 +12684,60 @@ Example:
 smtpd_recipient_restrictions = permit_mynetworks, reject_unauth_destination
 .fi
 .ad
+.SH smtpd_reject_filter_maps (default: empty)
+An optional filter that can replace a reject response from the
+Postfix SMTP server itself, or from a program that replies through
+the Postfix SMTP server. The filter is applied before the optional
+reject footers are appended. Typically, the filter will be a regexp:
+or pcre: table, where the left\-hand side specifies a pattern, and
+the right\-hand side specifies replacement text.
+.PP
+The input is a server response that starts with a 4XX or 5XX
+reply code (see RFC 5321), usually followed by an enhanced status
+code (see RFC 3463) and text. The filter returns replacement text
+or indicates that there was no match. This feature cannot be used
+to change a reject reply into a non\-reject one or vice versa.
+.PP
+LIMITATION: smtpd_reject_filter_maps will not replace text that
+was already logged before the Postfix SMTP server replies to the
+remote SMTP client. To help with logfile analysis, the Postfix SMTP
+server logs both the unmodified reply (logged below as "reject
+filter in") and the replacement reply (logged below as "reject
+filter out").
+.PP
+Example:
+.PP
+.nf
+.na
+/etc/postfix/main.cf:
+    smtpd_reject_filter_maps = regexp:/etc/postfix/smtpd_reject_filter
+.fi
+.ad
+.PP
+.nf
+.na
+/etc/postfix/smtpd_reject_filter:
+    # Replace soft reject with hard reject.
+    /^451 4(\e.6\e.0 Alias expansion error)/ 550 5${1}
+.fi
+.ad
+.PP
+.nf
+.na
+    # Silly rule for demo purposes.
+    /^(4.+[^.])\e.*$/ $1. See you later.
+.fi
+.ad
+.PP
+.nf
+.na
+/var/log/maillog:
+    NOQUEUE: reject filter in: 451 4.6.0 Alias expansion error
+    NOQUEUE: reject filter out: 550 5.6.0 Alias expansion error
+.fi
+.ad
+.PP
+This feature is available in Postfix >= 3.11.
 .SH smtpd_reject_footer (default: empty)
 Optional information that is appended after each Postfix SMTP
 server
@@ -12303,6 +13295,12 @@ maps_rbl_reject_code parameter specifies the response code for
 rejected requests (default:  554); the default_rbl_reply parameter
 specifies the default server reply; and the rbl_reply_maps parameter
 specifies tables with server replies indexed by \fIrbl_domain\fR.
+.br
+NOTE: Always respect the usage policies of reputation services. Avoid
+public or ISP resolvers, unless the queries use your unique API key
+(see rbl_reply_maps for how to avoid leaking an API key in SMTP
+server responses).
+.br
 This feature is available in Postfix 2.0 and later.
 .br
 .IP "\fBreject_sender_login_mismatch\fR"
@@ -12392,9 +13390,23 @@ Examples:
 .na
 smtpd_sender_restrictions = reject_unknown_sender_domain
 smtpd_sender_restrictions = reject_unknown_sender_domain,
-    check_sender_access hash:/etc/postfix/access
+    check_sender_access lmdb:/etc/postfix/access
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/access" after you
+change the access file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/access" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH smtpd_service_name (default: smtpd)
 The internal service that \fBpostscreen\fR(8) hands off allowed
 connections to. In a future version there may be different
@@ -13170,12 +14182,9 @@ Example: client\-certificate access table, with sha256 fingerprints:
 /etc/postfix/main.cf:
     smtpd_tls_fingerprint_digest = sha256
     smtpd_client_restrictions =
-        check_ccert_access hash:/etc/postfix/access,
+        check_ccert_access lmdb:/etc/postfix/access,
         reject
-.fi
-.ad
-.nf
-.na
+.sp
 /etc/postfix/access:
     # Action folded to next line...
     AF:88:7C:AD:51:95:6F:36:96:...:01:FB:2E:48:CD:AB:49:25:A2:3B
@@ -13185,6 +14194,20 @@ Example: client\-certificate access table, with sha256 fingerprints:
 .fi
 .ad
 .in -4
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/access" after you
+change the access file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/access" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .PP
 This feature is available in Postfix 2.5 and later.
 .SH smtpd_tls_key_file (default: $smtpd_tls_cert_file)
@@ -13439,6 +14462,7 @@ this protocol via "!TLSv1.3" is supported since Postfix 3.4 (or patch
 releases >= 3.0.14, 3.1.10, 3.2.7 and 3.3.2).
 .PP
 Example:
+.sp
 .nf
 .na
 # Preferred syntax with Postfix >= 3.6:
@@ -13536,11 +14560,12 @@ generally be left empty.  TLS session tickets require an OpenSSL
 library (at least version 0.9.8h) that provides full support for
 this TLS extension.  See also smtpd_tls_session_cache_timeout.
 .PP
-Example:
+Examples:
 .PP
 .nf
 .na
 .ft C
+smtpd_tls_session_cache_database = lmdb:/var/db/postfix/smtpd_scache
 smtpd_tls_session_cache_database = btree:/var/db/postfix/smtpd_scache
 .fi
 .ad
@@ -13958,6 +14983,11 @@ Example: Custom OpenSSL group settings.
 main.cf:
     tls_config_file = ${config_directory}/openssl.cnf
     tls_config_name = postfix
+    # Clear Postfix curve/group settings to let custom OpenSSL
+    # configuration settings take effect.  For most users, the
+    # default Postfix settings are strongly recommended.
+    tls_eecdh_auto_curves =
+    tls_ffdhe_auto_groups =
 .fi
 .ad
 .PP
@@ -13990,15 +15020,15 @@ openssl.cnf:
     #
     # Groups = X25519:X448:prime256v1:secp384r1:secp521r1:ffdhe2048:ffdhe3072
     #
-    Groups = *X25519MLKEM768 / *X25519:X448 / P\-256:P\-384
+    Groups = ?X25519MLKEM768 / ?*X25519:?secp256r1 / ?X448:?secp384r1:?secp521r1 / ?ffdhe2048:?ffdhe3072
 .fi
 .ad
 .PP
-Caution: It is typically best to just use the default OpenSSL
-group settings, by setting "tls_config_file = none". Overly strict
-system\-wide TLS settings will conflict with Postfix's opportunistic
-TLS, where being less restrictive is better than downgrading to
-cleartext SMTP.
+Caution: It is typically best to just use the compiled\-in default
+OpenSSL group settings, by setting "tls_config_file = none". Overly
+strict system\-wide TLS settings will conflict with Postfix's
+opportunistic TLS, where being less restrictive is better than
+downgrading to cleartext SMTP.
 .PP
 This feature is available in Postfix >= 3.9, 3.8.1, 3.7.6,
 3.6.10, and 3.5.20.
@@ -14185,11 +15215,20 @@ customizing the list of FFDHE groups enabled with TLS 1.3.  That setting
 is introduced with Postfix 3.8, when built against OpenSSL 3.0 or later.
 .PP
 Post\-quantum cryptography support: OpenSSL 3.5 introduces new
-configuration syntax that Postfix will not attempt to imitate.
-Instead, with Postfix 3.6.17, 3.7.13, 3.8.8, 3.9.2, and later, set
-both tls_eecdh_auto_curves and if available tls_ffdhe_auto_groups
-to the empty value, to enable algorithm selection through OpenSSL
-configuration. See tls_config_file for a configuration example.
+configuration syntax that Postfix will not attempt to emulate.  That
+said, when compiled against OpenSSL 3.5 or later, the Postfix default
+setting is a minor adjustment of the OpenSSL compiled\-in default
+setting, it just delays generation of the hybrid post\-quantum
+\fBX25519MLKEM768\fR key\-share until it is explicitly requested by the
+server.  This avoids interoperability issues with some SMTP servers that
+are unable to handle the resulting large TLS Client Hello.
+.PP
+If, despite the strongly recommended defaults, you need fine\-grained
+control over the supported groups, with Postfix 3.6.17, 3.7.13, 3.8.8,
+3.9.2, and later, set both tls_eecdh_auto_curves and if available
+tls_ffdhe_auto_groups to the empty value, to enable algorithm selection
+through OpenSSL configuration.  See tls_config_file for a configuration
+example.
 .PP
 This feature is available in Postfix 3.2 and later, when it is
 compiled and linked with OpenSSL 1.0.2 or later on platforms where
@@ -14296,25 +15335,23 @@ are largely a backup, in case some peer does not support EC key
 exchange, or EC key exchange needs to be disabled for some pressing
 reason.
 .PP
-Setting this parameter empty disables FFDHE support in TLS 1.3.
+Setting this parameter empty disables FFDHE support in TLS 1.3,
+unless FFDHE groups are included in the "tls_eecdh_auto_curves" setting,
+perhaps indirectly, as with the "DEFAULT" keyword available with OpenSSL
+3.5 or later.  In that case, prefixing each group name with a "\-" has
+the effect of removing it from the list.
 Whether FFDHE key agreement is enabled in TLS 1.2 and earlier depends
 on whether any of the "kDHE" ciphers are included in the cipherlist.
 .PP
 Conversely, setting "tls_eecdh_auto_curves" empty disables TLS 1.3
 EC key agreement in OpenSSL 3.0 and later. If both are set empty,
-Postfix will fall back to OpenSSL preferences as described next.
+Postfix will fall back to OpenSSL preferences as described in the
+documentation of "tls_eecdh_auto_curves".
 .PP
-Post\-quantum cryptography support: OpenSSL 3.5 introduces new
-configuration syntax that Postfix will not attempt to imitate.
-Instead, with Postfix 3.6.17, 3.7.13, 3.8.8, 3.9.2, and later, set
-both tls_eecdh_auto_curves and tls_ffdhe_auto_groups to the empty
-value, to enable algorithm selection through OpenSSL configuration.
-See tls_config_file for a configuration example.
-.PP
-All the default groups and EC curves should be sufficiently strong to make
-"pruning" the defaults unwise.  At a minimum, "x25519" and "prime256v1" (the
-OpenSSL name for "secp256r1", a.k.a. "P\-256") should be among the enabled EC
-curves, while "dhe2048" and "dhe3072" should be among the FFDHE groups.
+The default list includes "ffdhe2048" and "ffdhe3072".  While
+it should not be necessary in most cases, you can add "ffdhe4096"
+to the list if you run into an exotic server that does not support
+ECDHE and insists on much stronger than sensible DHE parameters.
 .PP
 This feature is available in Postfix 3.8 and later, when it is
 compiled and linked with OpenSSL 3.0 or later.
@@ -14338,7 +15375,9 @@ pending a migration from configuration files with incorrect Postfix
 fingerprints used by Postfix 2.9.6 and later.  To compute the correct
 certificate public\-key fingerprints, see TLS_README.
 .PP
-This feature is available in Postfix 2.9.6 and later.
+This feature is available in Postfix 2.9.6 through 3.10.
+This parameter has had no effect since Postfix 3.9.0, and has been
+removed as of postfix 3.11.0.
 .SH tls_low_cipherlist (default: see "postconf \-d" output)
 The OpenSSL cipherlist for "low" or higher grade ciphers.
 Ignored as of Postfix 3.8.  In earlier Postfix releases this
@@ -14452,12 +15491,16 @@ This feature is available in Postfix 2.2 and later.
 .SH tls_required_enable (default: yes)
 Enable support for the "TLS\-Required: no" message header, defined
 in RFC 8689. By adding this header to a message, a sender requests
-no enforcement of TLS policy. This limits the Postfix SMTP client
+no enforcement of TLS policy. This disables TLS policy lookup, and
+limits the Postfix SMTP client
 TLS security level to "may", that is, do not verify remote SMTP
 server certificates, and fall back to plaintext if TLS is unavailable.
 If a message contains a "TLS\-Required: no" header, then Postfix
 will add that header to a delivery status notification for that
 message.
+.PP
+Note: the ESMTP REQUIRETLS option overrides the "TLS\-Required:
+no" message header.
 .PP
 This feature is available in Postfix >= 3.10.
 .SH tls_server_sni_maps (default: empty)
@@ -15200,9 +16243,7 @@ $sender_dependent_default_transport_maps, or the recipient domain.
 .PP
 Specify zero or more "type:table" lookup tables, separated by
 whitespace or comma. Tables will be searched in the specified order
-until a match is found.  If you use this
-feature with local files, run "\fBpostmap /etc/postfix/transport\fR"
-after making a change.
+until a match is found.
 .PP
 Pattern matching of domain names is controlled by the presence
 or absence of "transport_maps" in the parent_domain_matches_subdomains
@@ -15215,10 +16256,23 @@ Examples:
 .PP
 .nf
 .na
-transport_maps = dbm:/etc/postfix/transport
-transport_maps = hash:/etc/postfix/transport
+transport_maps = lmdb:/etc/postfix/transport
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/transport" after you
+change the transport file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/transport" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH transport_minimum_delivery_slots (default: $default_minimum_delivery_slots)
 A transport\-specific override for the default_minimum_delivery_slots
 parameter value, where \fItransport\fR is the master.cf name of
@@ -15660,17 +16714,27 @@ whitespace or comma. Tables will be searched in the specified order
 until a match is found.
 Note: these lookups are recursive.
 .PP
-If you use this feature with indexed files, run "\fBpostmap
-/etc/postfix/virtual\fR" after changing the file.
-.PP
 Examples:
 .PP
 .nf
 .na
-virtual_alias_maps = dbm:/etc/postfix/virtual
-virtual_alias_maps = hash:/etc/postfix/virtual
+virtual_alias_maps = lmdb:/etc/postfix/virtual
 .fi
 .ad
+.PP
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+.PP
+Execute the command "postmap /etc/postfix/virtual" after you
+change the virtual file, to (re)build a default\-type indexed file.
+Execute "postmap \fItype\fR:/etc/postfix/virtual" to specify an
+explicit type.
+.PP
+The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types,
+execute the command "postconf \-m".
+.PP
+Configuration changes will become visible after a minute or so.
+Use "postfix reload" to eliminate the delay.
 .SH virtual_alias_recursion_limit (default: 1000)
 The maximal nesting depth of virtual alias expansion.  Currently
 the recursion limit is applied only to the left branch of the

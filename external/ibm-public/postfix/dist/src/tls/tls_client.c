@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_client.c,v 1.14 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls_client.c,v 1.15 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -270,16 +270,22 @@ static int new_client_session_cb(SSL *ssl, SSL_SESSION *session)
 	msg_panic("%s: null session cache type in new session callback",
 		  myname);
 
-    if (TLScontext->log_mask & TLS_LOG_CACHE)
-	/* serverid contains transport:addr:port information */
-	msg_info("save session %s to %s cache",
-		 TLScontext->serverid, TLScontext->cache_type);
-
-    /*
+    /*-
+     * Store only the first ticket for a given connection.
+     * - Even if the server offers multiple tickets, we have no mechanism to
+     *   store or use multiple concurrent tickets for the same nexthop.
+     *
      * Passivate and save the session object. Errors are non-fatal, since
      * caching is only an optimization.
      */
-    if ((session_data = tls_session_passivate(session)) != 0) {
+    if (TLScontext->ticketed == 0 &&
+	(session_data = tls_session_passivate(session)) != 0) {
+	TLScontext->ticketed = 1;
+	if (TLScontext->log_mask & TLS_LOG_CACHE)
+	    /* serverid contains transport:addr:port information */
+	    msg_info("save session %s to %s cache",
+		     TLScontext->serverid, TLScontext->cache_type);
+
 	tls_mgr_update(TLScontext->cache_type, TLScontext->serverid,
 		       STR(session_data), LEN(session_data));
 	vstring_free(session_data);
@@ -315,6 +321,7 @@ static void uncache_session(SSL_CTX *ctx, TLS_SESS_STATE *TLScontext)
 static void verify_x509(TLS_SESS_STATE *TLScontext, X509 *peercert,
 			        const TLS_CLIENT_START_PROPS *props)
 {
+    int     x509_err = SSL_get_verify_result(TLScontext->con);
 
     /*
      * On exit both peer_CN and issuer_CN should be set.
@@ -326,7 +333,7 @@ static void verify_x509(TLS_SESS_STATE *TLScontext, X509 *peercert,
      * Is the certificate trust chain trusted and matched?  Any required name
      * checks are now performed internally in OpenSSL.
      */
-    if (SSL_get_verify_result(TLScontext->con) == X509_V_OK) {
+    if (x509_err == X509_V_OK) {
 	TLScontext->peer_status |= TLS_CERT_FLAG_TRUSTED;
 	if (TLScontext->must_fail) {
 	    msg_panic("%s: cert valid despite trust init failure",
@@ -358,6 +365,14 @@ static void verify_x509(TLS_SESS_STATE *TLScontext, X509 *peercert,
 		tls_dane_log(TLScontext);
 	    }
 	}
+    } else if (TLS_MUST_MATCH(TLScontext->level) &&
+	       x509_err == X509_V_ERR_HOSTNAME_MISMATCH) {
+
+	/*
+	 * If the only error is a hostname mismatch, the certificate must
+	 * have been trusted.
+	 */
+	TLScontext->peer_status |= TLS_CERT_FLAG_TRUSTED;
     }
 
     /*
@@ -504,7 +519,7 @@ static void add_namechecks(TLS_SESS_STATE *TLScontext,
 #endif
 
 	if (!match_subdomain) {
-	    if (SSL_add1_host(ssl, name))
+	    if (TLS_ADD1_HOST(ssl, name))
 		++namechecks_count;
 	    else
 		msg_warn("%s: error loading match name: \"%s\"",
@@ -512,7 +527,7 @@ static void add_namechecks(TLS_SESS_STATE *TLScontext,
 	} else {
 	    char   *dot_name = concatenate(".", name, (char *) 0);
 
-	    if (SSL_add1_host(ssl, dot_name))
+	    if (TLS_ADD1_HOST(ssl, dot_name))
 		++namechecks_count;
 	    else
 		msg_warn("%s: error loading match name: \"%s\"",

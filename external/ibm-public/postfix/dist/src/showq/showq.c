@@ -1,4 +1,4 @@
-/*	$NetBSD: showq.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: showq.c,v 1.6 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -154,8 +154,8 @@
 int     var_dup_filter_limit;
 char   *var_empty_addr;
 
-static void showq_reasons(VSTREAM *, BOUNCE_LOG *, RCPT_BUF *, DSN_BUF *,
-			          HTABLE *);
+static void showq_reasons(VSTREAM *, const char *, BOUNCE_LOG *, RCPT_BUF *,
+			          DSN_BUF *, HTABLE *);
 
 #define STR(x)	vstring_str(x)
 
@@ -173,10 +173,12 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
     long    msg_size = size;
     BOUNCE_LOG *logfile;
     HTABLE *dup_filter = 0;
+    VSTRING *orcpt_buf = vstring_alloc(100);
     RCPT_BUF *rcpt_buf = 0;
     DSN_BUF *dsn_buf = 0;
     int     sender_seen = 0;
     int     msg_size_ok = 0;
+    const char *have_orcpt = 0;
 
     /*
      * Let the optimizer worry about eliminating duplicate code.
@@ -186,6 +188,7 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	    attr_print(client, ATTR_FLAG_NONE, ATTR_TYPE_END); \
 	vstring_free(buf); \
 	vstring_free(printable_quoted_addr); \
+	vstring_free(orcpt_buf); \
 	if (rcpt_buf) \
 	    rcpb_free(rcpt_buf); \
 	if (dsn_buf) \
@@ -215,7 +218,8 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 		arrival_time = atol(start);
 	    break;
 	case REC_TYPE_SIZE:
-	    if (msg_size_ok == 0) {
+	    /* Maildrop files may have a preliminary SIZE record. */
+	    if (msg_size_ok == 0 && strcmp(queue, MAIL_QUEUE_MAILDROP) != 0) {
 		msg_size_ok = (start[strspn(start, "0123456789 ")] == 0
 			       && (msg_size = atol(start)) >= 0);
 		if (msg_size_ok == 0) {
@@ -250,6 +254,17 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 				     STR(printable_quoted_addr)),
 		       ATTR_TYPE_END);
 	    break;
+	case REC_TYPE_ORCP:
+	    if (sender_seen == 0) {
+		msg_warn("%s: missing sender address: %s "
+			 "-- skipping remainder of this file",
+			 id, STR(printable_quoted_addr));
+		SHOWQ_CLEANUP_AND_RETURN;
+	    }
+	    quote_822_local(orcpt_buf, start);
+	    /* For consistency with REC_TYPE_RCPT below. */
+	    have_orcpt = printable(STR(orcpt_buf), '?');
+	    break;
 	case REC_TYPE_RCPT:
 	    if (sender_seen == 0) {
 		msg_warn("%s: missing sender address: %s "
@@ -257,18 +272,25 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 			 id, STR(printable_quoted_addr));
 		SHOWQ_CLEANUP_AND_RETURN;
 	    }
-	    if (*start == 0)			/* can't happen? */
+	    if (*start == 0)			/* non-smtpd case */
 		start = var_empty_addr;
 	    quote_822_local(printable_quoted_addr, start);
 	    /* For consistency with recipients in bounce logfile. */
 	    printable(STR(printable_quoted_addr), '?');
+	    /* For consistency with cleanup server and maildrop messages. */
+	    if (have_orcpt == 0)
+		have_orcpt = STR(vstring_strcpy(orcpt_buf,
+						STR(printable_quoted_addr)));
 	    if (dup_filter == 0
 	      || htable_locate(dup_filter, STR(printable_quoted_addr)) == 0)
 		attr_print(client, ATTR_FLAG_MORE,
+			   SEND_ATTR_STR(MAIL_ATTR_ORCPT, have_orcpt),
 			   SEND_ATTR_STR(MAIL_ATTR_RECIP,
 					 STR(printable_quoted_addr)),
+			   SEND_ATTR_STR(MAIL_ATTR_LOG_CLASS, ""),
 			   SEND_ATTR_STR(MAIL_ATTR_WHY, ""),
 			   ATTR_TYPE_END);
+	    have_orcpt = 0;
 	    break;
 	case REC_TYPE_MESG:
 	    if (msg_size_ok && vstream_fseek(qfile, msg_size, SEEK_CUR) < 0)
@@ -287,31 +309,44 @@ static void showq_report(VSTREAM *client, char *queue, char *id,
 	 * interrupted (postfix stop or reload) before all recipients have
 	 * been tried.
 	 * 
-	 * Therefore we keep a record of recipients found in the defer logfile,
-	 * and try to avoid listing those recipients again when processing
-	 * recipients from the queue file.
+	 * With Postfix 3.11 also list recipients in a bounce logfile. Such
+	 * recipients were already deleted from the message file, but they
+	 * haven't yet been persisted to a non-delivery status notification
+	 * message.
+	 * 
+	 * We remember recipients found in a defer or bounce logfile, and try to
+	 * avoid listing those recipients again when processing recipients
+	 * from the queue file.
 	 */
-	if (rec_type == REC_TYPE_FROM
-	    && (logfile = bounce_log_open(MAIL_QUEUE_DEFER, id, O_RDONLY, 0)) != 0) {
+	if (rec_type == REC_TYPE_FROM) {
+	    const char *log_names[] = {MAIL_QUEUE_DEFER, MAIL_QUEUE_BOUNCE, 0};
+	    const char **cpp;
+
 	    if (dup_filter != 0)
 		msg_panic("showq_report: attempt to reuse duplicate filter");
-	    dup_filter = htable_create(var_dup_filter_limit);
 	    if (rcpt_buf == 0)
 		rcpt_buf = rcpb_create();
 	    if (dsn_buf == 0)
 		dsn_buf = dsb_create();
-	    showq_reasons(client, logfile, rcpt_buf, dsn_buf, dup_filter);
-	    if (bounce_log_close(logfile))
-		msg_warn("close %s %s: %m", MAIL_QUEUE_DEFER, id);
+	    dup_filter = htable_create(var_dup_filter_limit);
+	    for (cpp = log_names; *cpp; cpp++) {
+		if ((logfile = bounce_log_open(*cpp, id, O_RDONLY, 0)) != 0) {
+		    showq_reasons(client, *cpp, logfile, rcpt_buf, dsn_buf,
+				  dup_filter);
+		    if (bounce_log_close(logfile))
+			msg_warn("close %s %s: %m", *cpp, id);
+		}
+	    }
 	}
     }
     SHOWQ_CLEANUP_AND_RETURN;
 }
 
-/* showq_reasons - show deferral reasons */
+/* showq_reasons - show defer or bounce reasons */
 
-static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf,
-			          DSN_BUF *dsn_buf, HTABLE *dup_filter)
+static void showq_reasons(VSTREAM *client, const char *log_class, BOUNCE_LOG *bp,
+			          RCPT_BUF *rcpt_buf, DSN_BUF *dsn_buf,
+			          HTABLE *dup_filter)
 {
     RECIPIENT *rcpt = &rcpt_buf->rcpt;
     DSN    *dsn = &dsn_buf->dsn;
@@ -327,7 +362,9 @@ static void showq_reasons(VSTREAM *client, BOUNCE_LOG *bp, RCPT_BUF *rcpt_buf,
 		htable_enter(dup_filter, rcpt->address, (void *) 0);
 
 	attr_print(client, ATTR_FLAG_MORE,
+		   SEND_ATTR_STR(MAIL_ATTR_ORCPT, rcpt->orig_addr),
 		   SEND_ATTR_STR(MAIL_ATTR_RECIP, rcpt->address),
+		   SEND_ATTR_STR(MAIL_ATTR_LOG_CLASS, log_class),
 		   SEND_ATTR_STR(MAIL_ATTR_WHY, dsn->reason),
 		   ATTR_TYPE_END);
     }

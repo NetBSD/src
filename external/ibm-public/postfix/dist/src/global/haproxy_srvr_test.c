@@ -1,4 +1,4 @@
-/*	$NetBSD: haproxy_srvr_test.c,v 1.1.1.1 2026/05/09 18:39:18 christos Exp $	*/
+/*	$NetBSD: haproxy_srvr_test.c,v 1.2 2026/05/09 18:49:16 christos Exp $	*/
 
  /*
   * System library.

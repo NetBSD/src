@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_misc.c,v 1.6 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls_misc.c,v 1.7 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -6,9 +6,7 @@
 /* SUMMARY
 /*	miscellaneous TLS support routines
 /* SYNOPSIS
-/* .SH Public functions
-/* .nf
-/* .na
+/* Public functions
 /*	#include <tls.h>
 /*
 /*	void tls_log_summary(role, usage, TLScontext)
@@ -25,9 +23,7 @@
 /*	void	tls_pre_jail_init(TLS_ROLE)
 /*	TLS_ROLE role;
 /*
-/* .SH Internal functions
-/* .nf
-/* .na
+/* Internal functions
 /*	#define TLS_INTERNAL
 /*	#include <tls.h>
 /*
@@ -44,7 +40,6 @@
 /*	int	var_tls_daemon_rand_bytes;
 /*	bool	var_tls_append_def_CA;
 /*	bool	var_tls_preempt_clist;
-/*	bool	var_tls_bc_pkey_fprint;
 /*	bool	var_tls_multi_wildcard;
 /*	char	*var_tls_mgr_service;
 /*	char	*var_tls_tkt_cipher;
@@ -313,7 +308,6 @@ char   *var_tls_dane_digests;
 bool    var_tls_append_def_CA;
 char   *var_tls_bug_tweaks;
 char   *var_tls_ssl_options;
-bool    var_tls_bc_pkey_fprint;
 bool    var_tls_multi_wildcard;
 char   *var_tls_mgr_service;
 char   *var_tls_tkt_cipher;
@@ -697,7 +691,6 @@ void    tls_param_init(void)
     /* If this changes, update TLS_CLIENT_PARAMS in tls_proxy.h. */
     static const CONFIG_BOOL_TABLE bool_table[] = {
 	VAR_TLS_APPEND_DEF_CA, DEF_TLS_APPEND_DEF_CA, &var_tls_append_def_CA,
-	VAR_TLS_BC_PKEY_FPRINT, DEF_TLS_BC_PKEY_FPRINT, &var_tls_bc_pkey_fprint,
 	VAR_TLS_PREEMPT_CLIST, DEF_TLS_PREEMPT_CLIST, &var_tls_preempt_clist,
 	VAR_TLS_MULTI_WILDCARD, DEF_TLS_MULTI_WILDCARD, &var_tls_multi_wildcard,
 	VAR_TLS_FAST_SHUTDOWN, DEF_TLS_FAST_SHUTDOWN, &var_tls_fast_shutdown,
@@ -1433,7 +1426,7 @@ void    tls_free_context(TLS_SESS_STATE *TLScontext)
     if (TLScontext->srvr_sig_dgst)
 	myfree((void *) TLScontext->srvr_sig_dgst);
     if (TLScontext->errorcert)
-	X509_free(TLScontext->errorcert);
+	X509_free((X509 *) TLScontext->errorcert);
     if (TLScontext->ffail_type)
 	myfree(TLScontext->ffail_type);
 

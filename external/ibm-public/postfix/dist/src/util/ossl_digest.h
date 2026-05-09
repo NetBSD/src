@@ -1,4 +1,4 @@
-/*	$NetBSD: ossl_digest.h,v 1.1.1.1 2026/05/09 18:39:24 christos Exp $	*/
+/*	$NetBSD: ossl_digest.h,v 1.2 2026/05/09 18:49:23 christos Exp $	*/
 
 #ifndef _OSSL_DIGEST_H_INCLUDED_
 #define _OSSL_DIGEST_H_INCLUDED_

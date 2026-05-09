@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_verify.c,v 1.5 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls_verify.c,v 1.6 2026/05/09 18:49:21 christos Exp $	*/
 
 /*++
 /* NAME
@@ -122,12 +122,26 @@
 
 /* update_error_state - safely stash away error state */
 
-static void update_error_state(TLS_SESS_STATE *TLScontext, int depth,
-			               X509 *errorcert, int errorcode)
+static void update_error_state(X509_STORE_CTX *ctx, TLS_SESS_STATE *TLScontext,
+			          int depth, const X509 *errorcert, int errorcode)
 {
-    /* No news is good news */
-    if (TLScontext->errordepth >= 0 && TLScontext->errordepth <= depth)
-	return;
+
+    /*
+     * Report the error that is closest to the leaf certificate, any errors
+     * higher up the chain are immaterial until the "inner" errors are fixed.
+     * 
+     * We special-case "X509_V_ERR_HOSTNAME_MISMATCH" (at depth 0) in order to
+     * distinguish between untrusted certificates and trusted certificates
+     * with a hostname mismatch.  Any other error has a higher priority.
+     */
+    if (TLScontext->errordepth >= 0) {
+	if ((TLScontext->errordepth <= depth &&
+	     TLScontext->errorcode != X509_V_ERR_HOSTNAME_MISMATCH) ||
+	    errorcode == X509_V_ERR_HOSTNAME_MISMATCH) {
+	    X509_STORE_CTX_set_error(ctx, TLScontext->errorcode);
+	    return;
+	}
+    }
 
     /*
      * The certificate pointer is stable during the verification callback,
@@ -136,9 +150,9 @@ static void update_error_state(TLS_SESS_STATE *TLScontext, int depth,
      * being there until later.
      */
     if (TLScontext->errorcert != 0)
-	X509_free(TLScontext->errorcert);
+	X509_free((X509 *) TLScontext->errorcert);
     if (errorcert != 0)
-	X509_up_ref(errorcert);
+        X509_up_ref((X509 *) errorcert);
     TLScontext->errorcert = errorcert;
     TLScontext->errorcode = errorcode;
     TLScontext->errordepth = depth;
@@ -149,7 +163,7 @@ static void update_error_state(TLS_SESS_STATE *TLScontext, int depth,
 int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
 {
     char    buf[CCERT_BUFSIZ];
-    X509   *cert;
+    const X509 *cert;
     int     err;
     int     depth;
     SSL    *con;
@@ -181,12 +195,12 @@ int     tls_verify_certificate_callback(int ok, X509_STORE_CTX *ctx)
     if (TLScontext->must_fail) {
 	if (depth == 0) {
 	    X509_STORE_CTX_set_error(ctx, err = X509_V_ERR_UNSPECIFIED);
-	    update_error_state(TLScontext, depth, cert, err);
+	    update_error_state(ctx, TLScontext, depth, cert, err);
 	}
 	return (1);
     }
     if (ok == 0)
-	update_error_state(TLScontext, depth, cert, err);
+	update_error_state(ctx, TLScontext, depth, cert, err);
 
     if (TLScontext->log_mask & TLS_LOG_VERBOSE) {
 	if (cert) {
@@ -209,7 +223,7 @@ void    tls_log_verify_error(TLS_SESS_STATE *TLScontext,
 {
     char    buf[CCERT_BUFSIZ];
     int     err = TLScontext->errorcode;
-    X509   *cert = TLScontext->errorcert;
+    const X509 *cert = TLScontext->errorcert;
     int     depth = TLScontext->errordepth;
 
 #ifdef USE_TLSRPT
@@ -359,20 +373,20 @@ void    tls_log_verify_error(TLS_SESS_STATE *TLScontext,
 
 /* tls_text_name - extract certificate property value by name */
 
-static char *tls_text_name(X509_NAME *name, int nid, const char *label,
+static char *tls_text_name(const X509_NAME *name, int nid, const char *label,
 			        const TLS_SESS_STATE *TLScontext, int gripe)
 {
     const char *myname = "tls_text_name";
     int     pos;
-    X509_NAME_ENTRY *entry;
-    ASN1_STRING *entry_str;
+    const X509_NAME_ENTRY *entry;
+    const ASN1_STRING *entry_str;
     int     asn1_type;
     int     utf8_length;
     unsigned char *utf8_value;
     int     ch;
     unsigned char *cp;
 
-    if (name == 0 || (pos = X509_NAME_get_index_by_NID(name, nid, -1)) < 0) {
+    if (name == 0 || (pos = X509_NAME_get_index_by_NID((X509_NAME *) name, nid, -1)) < 0) {
 	if (gripe != DONT_GRIPE) {
 	    msg_warn("%s: %s: peer certificate has no %s",
 		     myname, TLScontext->namaddr, label);
@@ -501,7 +515,7 @@ char   *tls_peer_CN(X509 *peercert, const TLS_SESS_STATE *TLScontext)
 
 char   *tls_issuer_CN(X509 *peer, const TLS_SESS_STATE *TLScontext)
 {
-    X509_NAME *name;
+    const X509_NAME *name;
     char   *cn;
 
     name = X509_get_issuer_name(peer);

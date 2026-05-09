@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sdbm.c,v 1.1.1.3 2026/05/09 18:39:23 christos Exp $	*/
+/*	$NetBSD: dict_sdbm.c,v 1.2 2026/05/09 18:49:22 christos Exp $	*/
 
 /*++
 /* NAME

@@ -1,4 +1,4 @@
-/*	$NetBSD: fake_strcmp.c,v 1.1.1.1 2026/05/09 18:39:20 christos Exp $	*/
+/*	$NetBSD: fake_strcmp.c,v 1.2 2026/05/09 18:49:19 christos Exp $	*/
 
 /* System library. */
 #include <sys_defs.h>

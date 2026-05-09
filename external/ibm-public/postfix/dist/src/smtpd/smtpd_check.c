@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_check.c,v 1.7 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: smtpd_check.c,v 1.8 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -5823,8 +5823,6 @@ int     var_map_defer_code;
 int     var_reject_code;
 int     var_defer_code;
 int     var_non_fqdn_code;
-int     var_smtpd_delay_reject;
-int     var_allow_untrust_route;
 int     var_mul_rcpt_code;
 int     var_unv_from_rcode;
 int     var_unv_from_dcode;
@@ -5834,7 +5832,6 @@ int     var_local_rcpt_code;
 int     var_relay_rcpt_code;
 int     var_virt_mailbox_code;
 int     var_virt_alias_code;
-int     var_show_unk_rcpt_table;
 int     var_verify_poll_count;
 int     var_verify_poll_delay;
 int     var_smtpd_policy_tmout;
@@ -5843,16 +5840,10 @@ int     var_smtpd_policy_ttl;
 int     var_smtpd_policy_req_limit;
 int     var_smtpd_policy_try_limit;
 int     var_smtpd_policy_try_delay;
-int     var_smtpd_rej_unl_from;
-int     var_smtpd_rej_unl_rcpt;
 int     var_plaintext_code;
-bool    var_smtpd_peername_lookup;
-bool    var_smtpd_client_port_log;
 char   *var_smtpd_dns_re_filter;
-bool    var_smtpd_tls_ask_ccert;
 int     var_smtpd_cipv4_prefix;
 int     var_smtpd_cipv6_prefix;
-bool    var_smtpd_tls_enable_rpk;
 
 #define int_table test_int_table
 
@@ -5869,8 +5860,6 @@ static const INT_TABLE int_table[] = {
     VAR_REJECT_CODE, DEF_REJECT_CODE, &var_reject_code,
     VAR_DEFER_CODE, DEF_DEFER_CODE, &var_defer_code,
     VAR_NON_FQDN_CODE, DEF_NON_FQDN_CODE, &var_non_fqdn_code,
-    VAR_SMTPD_DELAY_REJECT, DEF_SMTPD_DELAY_REJECT, &var_smtpd_delay_reject,
-    VAR_ALLOW_UNTRUST_ROUTE, DEF_ALLOW_UNTRUST_ROUTE, &var_allow_untrust_route,
     VAR_MUL_RCPT_CODE, DEF_MUL_RCPT_CODE, &var_mul_rcpt_code,
     VAR_UNV_FROM_RCODE, DEF_UNV_FROM_RCODE, &var_unv_from_rcode,
     VAR_UNV_FROM_DCODE, DEF_UNV_FROM_DCODE, &var_unv_from_dcode,
@@ -5880,17 +5869,10 @@ static const INT_TABLE int_table[] = {
     VAR_RELAY_RCPT_CODE, DEF_RELAY_RCPT_CODE, &var_relay_rcpt_code,
     VAR_VIRT_ALIAS_CODE, DEF_VIRT_ALIAS_CODE, &var_virt_alias_code,
     VAR_VIRT_MAILBOX_CODE, DEF_VIRT_MAILBOX_CODE, &var_virt_mailbox_code,
-    VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
     VAR_VERIFY_POLL_COUNT, 3, &var_verify_poll_count,
-    VAR_SMTPD_REJ_UNL_FROM, DEF_SMTPD_REJ_UNL_FROM, &var_smtpd_rej_unl_from,
-    VAR_SMTPD_REJ_UNL_RCPT, DEF_SMTPD_REJ_UNL_RCPT, &var_smtpd_rej_unl_rcpt,
     VAR_PLAINTEXT_CODE, DEF_PLAINTEXT_CODE, &var_plaintext_code,
-    VAR_SMTPD_PEERNAME_LOOKUP, DEF_SMTPD_PEERNAME_LOOKUP, &var_smtpd_peername_lookup,
-    VAR_SMTPD_CLIENT_PORT_LOG, DEF_SMTPD_CLIENT_PORT_LOG, &var_smtpd_client_port_log,
-    VAR_SMTPD_TLS_ACERT, DEF_SMTPD_TLS_ACERT, &var_smtpd_tls_ask_ccert,
     VAR_SMTPD_CIPV4_PREFIX, DEF_SMTPD_CIPV4_PREFIX, &var_smtpd_cipv4_prefix,
     VAR_SMTPD_CIPV6_PREFIX, DEF_SMTPD_CIPV6_PREFIX, &var_smtpd_cipv6_prefix,
-    VAR_SMTPD_TLS_ENABLE_RPK, DEF_SMTPD_TLS_ENABLE_RPK, &var_smtpd_tls_enable_rpk,
     0,
 };
 
@@ -5924,7 +5906,64 @@ static int int_update(char **argv)
  /*
   * Boolean parameters.
   */
+typedef struct {
+    char   *name;
+    int     defval;
+    bool   *target;
+}       BOOL_TABLE;
+
 bool    var_relay_before_rcpt_checks;
+bool    var_smtpd_delay_reject;
+bool    var_allow_untrust_route;
+bool    var_show_unk_rcpt_table;
+bool    var_smtpd_rej_unl_from;
+bool    var_smtpd_rej_unl_rcpt;
+bool    var_smtpd_peername_lookup;
+bool    var_smtpd_client_port_log;
+bool    var_smtpd_tls_ask_ccert;
+bool    var_smtpd_tls_enable_rpk;
+
+#define bool_table test_bool_table
+
+static const BOOL_TABLE bool_table[] = {
+    VAR_SMTPD_DELAY_REJECT, DEF_SMTPD_DELAY_REJECT, &var_smtpd_delay_reject,
+    VAR_ALLOW_UNTRUST_ROUTE, DEF_ALLOW_UNTRUST_ROUTE, &var_allow_untrust_route,
+    VAR_SHOW_UNK_RCPT_TABLE, DEF_SHOW_UNK_RCPT_TABLE, &var_show_unk_rcpt_table,
+    VAR_SMTPD_REJ_UNL_FROM, DEF_SMTPD_REJ_UNL_FROM, &var_smtpd_rej_unl_from,
+    VAR_SMTPD_REJ_UNL_RCPT, DEF_SMTPD_REJ_UNL_RCPT, &var_smtpd_rej_unl_rcpt,
+    VAR_SMTPD_PEERNAME_LOOKUP, DEF_SMTPD_PEERNAME_LOOKUP, &var_smtpd_peername_lookup,
+    VAR_SMTPD_CLIENT_PORT_LOG, DEF_SMTPD_CLIENT_PORT_LOG, &var_smtpd_client_port_log,
+    VAR_SMTPD_TLS_ACERT, DEF_SMTPD_TLS_ACERT, &var_smtpd_tls_ask_ccert,
+    VAR_SMTPD_TLS_ENABLE_RPK, DEF_SMTPD_TLS_ENABLE_RPK, &var_smtpd_tls_enable_rpk,
+    0,
+};
+
+/* bool_init - initialize bool parameters */
+
+static void bool_init(void)
+{
+    const BOOL_TABLE *sp;
+
+    for (sp = bool_table; sp->name; sp++)
+	sp->target[0] = sp->defval;
+}
+
+/* bool_update - update bool parameter */
+
+static bool bool_update(char **argv)
+{
+    const BOOL_TABLE *ip;
+
+    for (ip = bool_table; ip->name; ip++) {
+	if (strcasecmp(argv[0], ip->name) == 0) {
+	    if (!ISDIGIT(*argv[1]))
+		msg_fatal("bad number: %s %s", ip->name, argv[1]);
+	    ip->target[0] = atoi(argv[1]);
+	    return (1);
+	}
+    }
+    return (0);
+}
 
  /*
   * Restrictions.
@@ -6132,6 +6171,7 @@ int     main(int argc, char **argv)
 	usage(argv[0]);
     string_init();
     int_init();
+    bool_init();
     smtpd_check_init();
     smtpd_expand_init();
     (void) inet_proto_init(argv[0], INET_PROTO_NAME_IPV4);
@@ -6387,6 +6427,7 @@ int     main(int argc, char **argv)
 						     var_local_rwr_clients);
 	    }
 	    if (int_update(args->argv)
+		|| bool_update(args->argv)
 		|| string_update(args->argv)
 		|| rest_update(args->argv)) {
 		resp = 0;

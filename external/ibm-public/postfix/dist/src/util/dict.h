@@ -1,4 +1,4 @@
-/*	$NetBSD: dict.h,v 1.6 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: dict.h,v 1.7 2026/05/09 18:49:22 christos Exp $	*/
 
 #ifndef _DICT_H_INCLUDED_
 #define _DICT_H_INCLUDED_
@@ -99,14 +99,12 @@ typedef struct DICT {
     struct DICT_UTF8_BACKUP *utf8_backup;	/* see below */
     struct VSTRING *file_buf;		/* dict_file_to_buf() */
     struct VSTRING *file_b64;		/* dict_file_to_b64() */
+    char   *reg_name;			/* managed by dict_register() */
+    void    (*saved_close) (struct DICT *);	/* managed by dict_register() */
 } DICT;
 
 extern DICT *dict_alloc(const char *, const char *, ssize_t);
 extern void dict_free(DICT *);
-
-extern DICT *dict_debug(DICT *);
-
-#define DICT_DEBUG(d) ((d)->flags & DICT_FLAG_DEBUG ? dict_debug(d) : (d))
 
  /*
   * See dict_open.c embedded manpage for flag definitions.
@@ -121,7 +119,7 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_LOCK		(1<<6)	/* use temp lock before access */
 #define DICT_FLAG_DUP_REPLACE	(1<<7)	/* replace dups if supported */
 #define DICT_FLAG_SYNC_UPDATE	(1<<8)	/* sync updates if supported */
-#define DICT_FLAG_DEBUG		(1<<9)	/* log access */
+/*#define DICT_FLAG_DEBUG	(1<<9)	/* log access */
 /*#define DICT_FLAG_FOLD_KEY	(1<<10)	/* lowercase the lookup key */
 #define DICT_FLAG_NO_REGSUB	(1<<11)	/* disallow regexp substitution */
 #define DICT_FLAG_NO_PROXY	(1<<12)	/* disallow proxy mapping */
@@ -136,6 +134,7 @@ extern DICT *dict_debug(DICT *);
 #define DICT_FLAG_UTF8_ACTIVE	(1<<20)	/* UTF-8 proxy layer is present */
 #define DICT_FLAG_SRC_RHS_IS_FILE \
 				(1<<21)	/* Map source RHS is a file */
+#define DICT_FLAG_SURROGATE	(1<22)	/* This is a surrogate dictionary */
 
 #define DICT_FLAG_UTF8_MASK	(DICT_FLAG_UTF8_REQUEST)
 
@@ -145,32 +144,12 @@ extern DICT *dict_debug(DICT *);
   * The subsets of flags that control how a map is used. These are relevant
   * mainly for proxymap support. Note: some categories overlap.
   * 
-  * DICT_FLAG_IMPL_MASK - flags that are set by the map implementation itself.
-  * 
   * DICT_FLAG_PARANOID - requestor flags that forbid the use of insecure map
   * types for security-sensitive operations. These flags are checked by the
   * map implementation itself upon open, lookup etc. requests.
-  * 
-  * DICT_FLAG_RQST_MASK - all requestor flags, including paranoid flags, that
-  * the requestor may change between open, lookup etc. requests. These
-  * specify requestor properties, not map properties.
-  * 
-  * DICT_FLAG_INST_MASK - none of the above flags. The requestor may not change
-  * these flags between open, lookup, etc. requests (although a map may make
-  * changes to its copy of some of these flags). The proxymap server opens
-  * only one map instance for all client requests with the same values of
-  * these flags, and the proxymap client uses its own saved copy of these
-  * flags. DICT_FLAG_SRC_RHS_IS_FILE is an example of such a flag.
   */
 #define DICT_FLAG_PARANOID \
 	(DICT_FLAG_NO_REGSUB | DICT_FLAG_NO_PROXY | DICT_FLAG_NO_UNAUTH)
-#define DICT_FLAG_IMPL_MASK	(DICT_FLAG_FIXED | DICT_FLAG_PATTERN | \
-				DICT_FLAG_MULTI_WRITER)
-#define DICT_FLAG_RQST_MASK	(DICT_FLAG_FOLD_ANY | DICT_FLAG_LOCK | \
-				DICT_FLAG_DUP_REPLACE | DICT_FLAG_DUP_WARN | \
-				DICT_FLAG_DUP_IGNORE | DICT_FLAG_SYNC_UPDATE | \
-				DICT_FLAG_PARANOID | DICT_FLAG_UTF8_MASK)
-#define DICT_FLAG_INST_MASK	~(DICT_FLAG_IMPL_MASK | DICT_FLAG_RQST_MASK)
 
  /*
   * Feature tests.
@@ -243,6 +222,7 @@ typedef const DICT_OPEN_INFO *(*DICT_OPEN_EXTEND_FN) (const char *);
 extern DICT *dict_open(const char *, int, int);
 extern DICT *dict_open3(const char *, const char *, int, int);
 extern void dict_open_register(const DICT_OPEN_INFO *);
+extern void dict_open_unregister(const char *);
 extern const DICT_OPEN_INFO *dict_open_lookup(const char *);
 extern DICT_OPEN_EXTEND_FN dict_open_extend(DICT_OPEN_EXTEND_FN);
 
@@ -281,6 +261,14 @@ void    dict_test(int, char **);
   */
 extern int dict_allow_surrogate;
 extern DICT *PRINTFLIKE(5, 6) dict_surrogate(const char *, const char *, int, int, const char *,...);
+
+ /*
+  * Support for consistent sharing and collision avoidance when tables are
+  * registered with dict_register(). Only share instances that have the same
+  * type, name, open_flags, and (initial) dict_flags.
+  */
+extern char *dict_make_registered_name(VSTRING *, const char *, int, int);
+extern char *dict_make_registered_name4(VSTRING *, const char *, const char *, int, int);
 
  /*
   * This name is reserved for matchlist error handling.

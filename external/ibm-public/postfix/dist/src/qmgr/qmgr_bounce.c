@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_bounce.c,v 1.1.1.2 2026/05/09 18:39:20 christos Exp $	*/
+/*	$NetBSD: qmgr_bounce.c,v 1.2 2026/05/09 18:49:20 christos Exp $	*/
 
 /*++
 /* NAME

@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.h,v 1.1.1.3 2026/05/09 18:39:24 christos Exp $	*/
+/*	$NetBSD: name_mask.h,v 1.2 2026/05/09 18:49:23 christos Exp $	*/
 
 #ifndef _NAME_MASK_H_INCLUDED_
 #define _NAME_MASK_H_INCLUDED_
