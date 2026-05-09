@@ -22,7 +22,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $NetBSD: amidisplaycc.4,v 1.17 2024/04/11 13:06:29 jandberg Exp $
+.\" $NetBSD: amidisplaycc.4,v 1.18 2026/05/09 12:05:54 jandberg Exp $
 .Dd November 12, 2003
 .Dt AMIDISPLAYCC 4 amiga
 .Os
@@ -71,6 +71,18 @@ The supported screen types are listed below.
 .It
 80x24 - display size 640x192 with 8 colors, font size 8x8
 .It
+640x400x1 - display size 640x400 with 2 colors, font size 8x8
+.It
+640x400x2 - display size 640x400 with 4 colors, font size 8x8
+.It
+640x400x3 - display size 640x400 with 8 colors, font size 8x8
+.It
+640x200x1 - display size 640x200 with 2 colors, font size 8x8
+.It
+640x200x2 - display size 640x200 with 4 colors, font size 8x8
+.It
+640x200x3 - display size 640x200 with 8 colors, font size 8x8
+.It
 default - same as either 80x64 or 80x50, depending on the presence
 of GRF_NTSC and GRF_PAL in the kernel configuration.
 .El
@@ -89,6 +101,9 @@ The X11 server works using the
 .Xr wsfb 4
 driver.
 The driver supports 256 and 16 color modes.
+The 256-color mode is used when AGA chipset is enabled.
+The screen resolution is the same as the default terminal screen mode.
+Currently there is no way to configure a different screen mode for X11.
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsdisplay 4 ,
