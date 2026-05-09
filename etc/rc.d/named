@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: named,v 1.29 2024/07/10 07:27:10 christos Exp $
+# $NetBSD: named,v 1.30 2026/05/09 20:07:10 christos Exp $
 #
 
 # PROVIDE: named
@@ -78,12 +78,13 @@ named_precmd()
 		/usr/sbin/rndc-confgen -a
 	fi
 
+	if ! [ -d "/etc/namedb/keys" ]; then
+		mkdir -m 775 "/etc/namedb/keys"
+		chown named:named "/etc/namedb/keys"
+	fi
+
 	if [ -z "$named_chrootdir" ]; then
-		if ! [ -d "/etc/namedb/keys" ]; then
-			mkdir -m 775 "/etc/namedb/keys"
-			chown named:named "/etc/namedb/keys"
-		fi
-		return 0;
+	    return 0;
 	fi
 
 	# If running in a chroot cage, ensure that the appropriate files
