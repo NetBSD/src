@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3257 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3258 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -233,9 +233,24 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	npf(7): Add policy-based routing by interface. [joe 20260408]
 	df(1): Print human-readable inode counts when -h is specified.
 		[kim 20260408]
+	lfs_cleanerd(8): Use the new FCNTL mechanism to move blocks
+		to clean segments. Individual block and file handling
+		code moved to the kernel. [perseant 20260423]
+	rm(1): Adapt behaviour of -i for directories to more closely
+		match user expectations and other operating systems,
+		patch from RVP. [jschauma 20260425]
+	evbarm: Allow booting 32-bit kernel on Raspberry Pi 4B.
+		[tsutsui 20260426]
 	tzcode: Updated to 2026b [christos 20260426]
+	sysinst(8): Add a date/time setup menu for systems without
+		a working RTC, show it if the time seems off.
+		[martin 20260426]
+	pms(4): Add synaptics tap-to-click sysctl so that it can be
+		disabled, from atomicules. [christos 20260428]
 	sqlite3(1): Import 3.53.0. [christos 20260428]
 	tzdata: Updated to 2026b (using 2026bgtz) [kre 20260429]
+	gunzip(1), zcat(1): Add support for decompressing zstd files,
+		from FreeBSD. [simonb 20260430]
 	pthread(3): add pthread_main_np(3) [wiz 20260501]
 	zstd(1): import 1.5.7 [christos 20260501]
 	libarchive: Import libarchive-3.8.7. [christos 20260503]
@@ -243,3 +258,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	byacc: Update to 20260126. [christos 20260503]
 	awk(1): Import 20260426 [christos 20260503]
 	zlib: Import 1.3.2 [christos 20260503]
+	dumpfs(8): Allow NAME=wedge-label on the command line.
+		[kre 20260507]
