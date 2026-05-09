@@ -200,6 +200,15 @@ To find out what database types your Postfix system supports, use the "ppooss
         databases are maintained by Postfix daemons. The lookup table name as
         used in "dbm:table" is the database file name without the ".dir" or
         ".pag" suffix.
+    ddeebbuugg
+        An adapter for another table that causes all accesses to be logged.
+        Example usage: "debug:hash:/etc/postfix/example". The formats of the
+        log messages are unspecified and subject to change. Warning: If a query
+        or the underlying table contains sensitive information (such as a
+        password), that information might be logged.
+
+        This feature is available with Postfix 3.11 and later.
+
     eennvviirroonn
         The UNIX process environment array. The lookup key is the variable
         name. The lookup table name in "environ:table" is ignored.

@@ -1,0 +1,151 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "https://www.w3.org/TR/html4/loose.dtd">
+<html> <head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+<title> Postfix manual - nbdb_reindexd(8) </title>
+</head> <body> <pre>
+NBDB_REINDEXD(8)                                              NBDB_REINDEXD(8)
+
+<b><a name="name">NAME</a></b>
+       nbdb_reindexd - Postfix non-Berkeley-DB migration
+
+<b><a name="synopsis">SYNOPSIS</a></b>
+       <b>nbdb_reindexd</b> [generic Postfix daemon options]
+
+<b><a name="description">DESCRIPTION</a></b>
+       <i>NOTE:  This service should be enabled only temporarily to generate most</i>
+       <i>of the non-Berkeley-DB indexed files that Postfix needs.  Leaving  this</i>
+       <i>service  enabled may expose the system to privilege-escalation attacks.</i>
+
+       The <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> server handles requests to generate  a  non-Berke-
+       ley-DB  indexed  database  file  for  an  existing Berkeley DB database
+       (example: "<a href="DATABASE_README.html#types">hash</a>:/path/to/file" or "<a href="DATABASE_README.html#types">btree</a>:/path/to/file"). It implements
+       the  service  by  running  the  <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command with
+       appropriate privileges.
+
+       The service reports a success status when the  non-Berkeley-DB  indexed
+       file  already  exists.  This  can happen when multiple clients make the
+       same request. When one request is completed successfully,  the  service
+       also reports success for the other requests.
+
+       This service enforces the following safety policy:
+
+       <b>o</b>      The  legacy  Berkeley DB indexed file must exist (file name ends
+              in ".db"). The <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> service  will  use  the  owner"s
+              (uid,  gid)  of  this  file,  when it runs <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postal-</a>
+              <a href="postalias.1.html">ias(1)</a>. It also uses the (uid,gid) for a number of safety checks
+              as described next.
+
+       <b>o</b>      The  non-indexed source file must exist (file name without ".db"
+              suffix). This file is needed as input for <a href="postmap.1.html">postmap(1)</a> or  <a href="postalias.1.html">postal-</a>
+              <a href="postalias.1.html">ias(1)</a>.  The  file  must be owned by "root" or by the above uid,
+              and must not allow "group" or "other" write access.
+
+       <b>o</b>      The parent directory must be owned by "root"  or  by  the  above
+              uid, and it must not allow "group" or "other" write access.
+
+       <b>o</b>      Additionally, the "<a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migration_allow_root_prefixes</a>" param-
+              eter limits the source file directory prefixes that are  allowed
+              when  this  service needs to run <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> with
+              "root" privileges.
+
+       <b>o</b>      A  similar  parameter,  "<a href="postconf.5.html#non_bdb_migration_allow_user_prefixes">non_bdb_migration_allow_user_prefixes</a>",
+              limits  the source file directory prefixes that are allowed when
+              this service needs to  run  <a href="postmap.1.html">postmap(1)</a>  or  <a href="postalias.1.html">postalias(1)</a>  as  an
+              unprivileged user.
+
+<b><a name="security">SECURITY</a></b>
+       The <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> server is security sensitive.  It accepts requests
+       only from processes that can access sockets under $<a href="postconf.5.html#queue_directory">queue_directory</a>/pri-
+       vate  (i.e.,  processes  that run with "root" or "<a href="postconf.5.html#mail_owner">mail_owner</a>" (usually,
+       postfix) privileges).
+
+       The threat is therefore a corrupted Postfix daemon process  that  wants
+       to  elevate privileges, by sending requests with crafted pathnames, and
+       racing against the service by quickly swapping  files  or  directories,
+       hoping  that Postfix will be tricked to overwrite a sensitive file with
+       attacker-controlled data.
+
+       When the service runs <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> as "root", such racing
+       attacks should not be possible if <a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migration_allow_root_prefixes</a>
+       specifies only prefixes that are already trusted.
+
+       This service could block all requests with crafted pathnames, if  given
+       complete  information  about  all  lookup  tables  that  are referenced
+       through Postfix configuration files. Unfortunately that information was
+       not available at the time that this program was needed.
+
+<b><a name="diagnostics">DIAGNOSTICS</a></b>
+       Problems  and  transactions are logged to syslogd(8) or <a href="postlogd.8.html">postlogd(8)</a>. If
+       an attempt to create an index file fails, this service will attempt  to
+       delete the incomplete file.
+
+<b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
+       Changes to <a href="postconf.5.html">main.cf</a> are not picked up automatically, as <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a>
+       processes are long-lived. Use the command "postfix reload" after a con-
+       figuration change.
+
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html">postconf(5)</a> for
+       more details including examples.
+
+<b><a name="service-specific_controls">SERVICE-SPECIFIC CONTROLS</a></b>
+       <b><a href="postconf.5.html#non_bdb_migration_level">non_bdb_migration_level</a> (disable)</b>
+              The non-Berkeley-DB migration service level.
+
+       <b><a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migration_allow_root_prefixes</a> (see 'postconf -d  <a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migra</a>-</b>
+       <b><a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">tion_allow_root_prefixes</a>' output)</b>
+              A list of trusted pathname prefixes that must  be  matched  when
+              the  non-Berkeley-DB  migration service (<a href="nbdb_reindexd.8.html"><b>nbdb_reindexd</b>(8)</a>) needs
+              to run <a href="postmap.1.html"><b>postmap</b>(1)</a> or <a href="postalias.1.html"><b>postalias</b>(1)</a> commands  with  "root"  privi-
+              lege.
+
+       <b><a href="postconf.5.html#non_bdb_migration_allow_user_prefixes">non_bdb_migration_allow_user_prefixes</a>  (see 'postconf -d <a href="postconf.5.html#non_bdb_migration_allow_user_prefixes">non_bdb_migra</a>-</b>
+       <b><a href="postconf.5.html#non_bdb_migration_allow_user_prefixes">tion_allow_user_prefixes</a>' output)</b>
+              A  list  of  trusted pathname prefixes that must be matched when
+              the non-Berkeley-DB migration service  (<a href="nbdb_reindexd.8.html"><b>nbdb_reindexd</b>(8)</a>)  needs
+              to  run <a href="postmap.1.html"><b>postmap</b>(1)</a> or <a href="postalias.1.html"><b>postalias</b>(1)</a> commands with non-root privi-
+              lege.
+
+<b><a name="miscellaneous_controls">MISCELLANEOUS CONTROLS</a></b>
+       <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
+              figuration files.
+
+       <b><a href="postconf.5.html#process_id">process_id</a> (read-only)</b>
+              The process ID of a Postfix command or daemon process.
+
+       <b><a href="postconf.5.html#process_name">process_name</a> (read-only)</b>
+              The process name of a Postfix command or daemon process.
+
+       <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
+              The syslog facility of Postfix logging.
+
+       <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
+              A  prefix  that  is  prepended  to  the  process  name in syslog
+              records, so that, for example, "smtpd" becomes "prefix/smtpd".
+
+       <b><a href="postconf.5.html#service_name">service_name</a> (read-only)</b>
+              The <a href="master.5.html">master.cf</a> service name of a Postfix daemon process.
+
+<b><a name="see_also">SEE ALSO</a></b>
+       <a href="postfix-non-bdb.1.html">postfix-non-bdb(1)</a>, migration management
+       <a href="postconf.5.html">postconf(5)</a>, configuration parameters
+       <a href="postlogd.8.html">postlogd(8)</a>, Postfix logging
+       syslogd(8), system logging
+
+<b><a name="readme_files">README FILES</a></b>
+       <a href="NON_BERKELEYDB_README.html">NON_BERKELEYDB_README</a>, Non-Berkeley-DB migration guide
+
+<b><a name="license">LICENSE</a></b>
+       The Secure Mailer license must be distributed with this software.
+
+<b><a name="history">HISTORY</a></b>
+       This service was introduced with Postfix version 3.11.
+
+<b>AUTHOR(S)</b>
+       Wietse Venema
+       porcupine.org
+
+                                                              NBDB_REINDEXD(8)
+</pre> </body> </html>

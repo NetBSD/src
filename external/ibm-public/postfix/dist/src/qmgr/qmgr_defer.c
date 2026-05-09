@@ -1,4 +1,4 @@
-/*	$NetBSD: qmgr_defer.c,v 1.1.1.1 2009/06/23 10:08:52 tron Exp $	*/
+/*	$NetBSD: qmgr_defer.c,v 1.1.1.2 2026/05/09 18:39:20 christos Exp $	*/
 
 /*++
 /* NAME
@@ -161,5 +161,5 @@ void    qmgr_defer_recipient(QMGR_MESSAGE *message, RECIPIENT *recipient,
      */
     message->flags |= defer_append(message->tflags, message->queue_id,
 				 QMGR_MSG_STATS(&stats, message), recipient,
-				   "none", dsn);
+				   "none", NO_TLS_STATS, dsn);
 }

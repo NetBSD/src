@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.h,v 1.1.1.1 2009/06/23 10:09:02 tron Exp $	*/
+/*	$NetBSD: virtual.h,v 1.1.1.2 2026/05/09 18:39:25 christos Exp $	*/
 
 /*++
 /* NAME
@@ -104,10 +104,10 @@ typedef struct LOCAL_STATE {
 
 #define BOUNCE_ATTR(attr) \
 	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
-	DSN_FROM_DSN_BUF(attr.why)
+	NO_TLS_STATS, DSN_FROM_DSN_BUF(attr.why)
 #define SENT_ATTR(attr) \
 	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
-	DSN_FROM_DSN_BUF(attr.why)
+	NO_TLS_STATS, DSN_FROM_DSN_BUF(attr.why)
 #define COPY_ATTR(attr) \
 	attr.sender, attr.rcpt.orig_addr, attr.delivered, attr.fp
 

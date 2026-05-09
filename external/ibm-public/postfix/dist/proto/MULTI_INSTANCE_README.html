@@ -40,7 +40,7 @@ management framework, and on how to deploy a custom instance manager.
 
 <li><a href="#parts"> Components of a Postfix system </a> 
 
-<li><a href="#default"> The default Postfix instance </a> 
+<li><a href="#default"> The primary Postfix instance </a> 
 
 <li><a href="#group"> Instance groups </a>
 
@@ -102,7 +102,7 @@ use than ever before. </p>
 <h2><a name="split"> Null-client instances versus service instances </a></h2>
 
 <p> In the multi-instance approach to configuring Postfix, the first
-simplification is with the default local-submission Postfix instance.
+simplification is with the primary local-submission Postfix instance.
 </p>
 
 <p> Most UNIX systems require support for email submission with the
@@ -152,7 +152,7 @@ limited to mail from cron jobs and other system services. In this
 regard the border MTA is not different from other Unix hosts in
 your environment. For this reason, it will submit locally-generated
 email to the internal mail hub. We start the construction of the
-border mail server with the <a href="#default_instance">default</a>
+border mail server with the <a href="#default">primary</a>
 instance, which will be a local-submission <a
 href="STANDARD_CONFIGURATION_README.html#null_client">null client</a>:
 </p>
@@ -283,7 +283,7 @@ must start before the input instance. We will put the output and
 input instances into a single instance group named "mta".  </p>
 
 <p> Just once, when adding the first secondary instance, enable
-multi-instance support in the default (null-client) instance: </p>
+multi-instance support in the primary (null-client) instance: </p>
 
 <blockquote>
 <pre>
@@ -301,7 +301,7 @@ multi-instance support in the default (null-client) instance: </p>
 
 <p> The instance configuration directory defaults to /etc/postfix-out,
 more precisely, the "postfix-out" subdirectory of the parent directory
-of the default-instance configuration directory. The new instance will
+of the primary-instance configuration directory. The new instance will
 be created in a "disabled" state: </p>
 
 <blockquote>
@@ -323,7 +323,7 @@ be created in a "disabled" state: </p>
 <p> This instance has a "stock" master.cf file, and its queue and
 data directories, also named "postfix-out", will be located in the
 same parent directories as the corresponding directories of the
-default instance (e.g., /var/spool/postfix-out and /var/lib/postfix-out).
+primary instance (e.g., /var/spool/postfix-out and /var/lib/postfix-out).
 </p>
 
 <p> While this instance is immediately safe to start, it is not yet
@@ -472,7 +472,7 @@ also part of the "mta" instance group: </p>
 
 <p> The new instance configuration directory defaults to /etc/postfix-in,
 more precisely, the "postfix-in" subdirectory of the parent directory
-of the default-instance configuration directory. The new instance will
+of the primary-instance configuration directory. The new instance will
 be created in a "disabled" state: </p>
 
 <blockquote>
@@ -658,7 +658,7 @@ main.cf file itself. </p>
 
 <p> Though config_directory cannot be set in main.cf, postfix(1) and
 most of the other command-line Postfix utilities allow you to specify a
-non-default configuration directory via a command line option (typically
+secondary configuration directory via a command line option (typically
 <b>-c</b>) or via the MAIL_CONFIG environment variable. In this way,
 it is possible to have multiple configuration directories on the same
 machine, and to have multiple running master(8) daemons each with its
@@ -672,28 +672,28 @@ directories, queue directories or data directories. </p>
 directory and data directory (specified in the corresponding main.cf file)
 make up a Postfix <b>instance</b>. </p>
 
-<h2><a name="default"> The default Postfix instance </a></h2>
+<h2><a name="default"> The primary Postfix instance </a></h2>
 
 <p> One Postfix instance is special: this is the instance whose
 configuration directory is the default one compiled into the Postfix
 utilities. The location of the default configuration directory is
 typically /etc/postfix, and can be queried via the "postconf -d
 config_directory" command.  We call the instance with this configuration
-directory the "default instance". </p>
+directory the "primary instance". </p>
 
-<p> The default instance is responsible for local mail submission. The
+<p> The primary instance is responsible for local mail submission. The
 setgid postdrop(1) utility is used by the sendmail(1) local submission
 program to spool messages into the <b>maildrop</b> sub-directory of the
-queue directory of the default instance. </p>
+queue directory of the primary instance. </p>
 
 <p> Even in the rare case when "sendmail -C" is used to submit local mail
-into a non-default Postfix instance, for security reasons, postdrop(1)
-will consult the default main.cf file to check the validity of the
+into a secondary Postfix instance, for security reasons, postdrop(1)
+will consult the primary main.cf file to check the validity of the
 requested non-default configuration directory. </p>
 
 <p> So, while in most other respects, all instances are equal, the
-default instance is "more equal than others". You may choose to create
-additional instances, but you must have at least the default instance,
+primary instance is "more equal than others". You may choose to create
+secondary instances, but you must have at least the primary instance,
 with its configuration directory in the default compiled-in location. </p>
 
 <h2><a name="group"> Instance groups </a></h2>
@@ -715,9 +715,9 @@ of a single instance group (however, the content filter usually has
 its own start/stop procedure that is separate from any Postfix
 instance).  </p>
 
-<p> The default instance main.cf file's $multi_instance_directories
+<p> The primary instance main.cf file's $multi_instance_directories
 configuration parameter lists the configuration directories of all
-secondary (non-default) instances. Together with the default instance,
+secondary (non-default) instances. Together with the primary instance,
 these secondary instances are managed by the multi-instance manager.
 Instances are started in the order listed, and stopped in the
 opposite order. For instances that are members of a service "group",
@@ -731,7 +731,7 @@ stages are started. </p>
 
 <dt> multi_instance_wrapper </dt> 
 
-<dd> <p> This default-instance configuration parameter must be set
+<dd> <p> This primary-instance configuration parameter must be set
 to a suitable multi-instance manager's "wrapper" program that
 controls the starting, stopping, etc. of a multi-instance Postfix
 system. To use the postmulti(1) manager described in this document,
@@ -740,10 +740,10 @@ this parameter should be set with the "<a href="#init">postmulti
 
 <dt> multi_instance_directories </dt>
 
-<dd> <p> This default-instance configuration parameter specifies
+<dd> <p> This primary-instance configuration parameter specifies
 an optional list of the secondary instances controlled via the
 multi-instance manager. Instances are listed in their "start" order,
-with the default instance always started first (if enabled). If
+with the primary instance always started first (if enabled). If
 $multi_instance_directories is left empty, the postfix(1) command
 runs with multi-instance support turned off, and none of the
 multi_instance_ configuration parameters will have any effect. </p>
@@ -842,7 +842,7 @@ automatically. See below. </p>
 
 <p> Before postmulti(1) is used for the first time, you must install
 it as the multi_instance_wrapper for your Postfix system and enable
-multi-instance operation of the default Postfix instance. You can then
+multi-instance operation of the primary Postfix instance. You can then
 proceed to add <a href="#create">new</a> or <a href="#import">existing</a>
 instances to the multi-instance configuration. This initial installation
 is accomplished as follows: </p>
@@ -853,7 +853,7 @@ is accomplished as follows: </p>
 </pre>
 </blockquote>
 
-<p> This updates the default instance main.cf file as follows: </p>
+<p> This updates the primary instance main.cf file as follows: </p>
 
 <blockquote>
 <pre>
@@ -861,28 +861,28 @@ is accomplished as follows: </p>
     #
     multi_instance_wrapper = ${command_directory}/postmulti -p --
 
-    # Configure the default instance to start when in multi-instance mode
+    # Configure the primary instance to start when in multi-instance mode
     #
     multi_instance_enable = yes
 </pre>
 </blockquote>
 
-<p> If you prefer, you can make these changes by editing the default
+<p> If you prefer, you can make these changes by editing the primary
 main.cf directly, or by using "postconf -e". </p>
 
 <h3><a name="list"> Listing managed instances </a></h3>
 
-<p> The list of managed instances consists of the default instance and
-the additional instances whose configuration directories are listed
+<p> The list of managed instances consists of the primary instance and
+the secondary instances whose configuration directories are listed
 (in start order) under the multi_instance_directories parameter of the
-default main.cf configuration file.  </p>
+primary main.cf configuration file.  </p>
 
 <p> You can list selected instances, groups of instances or all
 instances by specifying only the instance matching options with the
 "-l" option.  The "-a" option is assumed if no other instance
 selection options are specified (this behavior changes with the
 "-e" option).  As a special case, even if it has an explicit name,
-the default instance can always be selected via "-i -". </p>
+the primary instance can always be selected via "-i -". </p>
 
 <blockquote>
 <pre>
@@ -926,7 +926,7 @@ set, it is shown as a "-". </p>
 <p> When selecting an existing instance via the "-i" option, you
 can always use the full pathname of its configuration directory
 instead of the instance (short) name. This is the only way to select
-a non-default nameless instance. The default instance can be selected
+a secondary nameless instance. The primary instance can be selected
 via "-i -", whether it has a name or not. </p>
 
 <p> To list instances in reverse start order, include the "-R"
@@ -1052,7 +1052,7 @@ $ postmulti -x sh -c 'echo "-- $MAIL_CONFIG"; postconf -n'
 
 <h3><a name="create"> Creating a new Postfix instance </a></h3>
 
-<p> The postmulti(1) command can be used to create additional Postfix
+<p> The postmulti(1) command can be used to create secondary Postfix
 instances. New instances are created with local submission and all "inet"
 services disabled via the following non-default parameter settings in
 the main.cf file: </p>
@@ -1072,7 +1072,7 @@ the above safety measures. </p>
 
 <p> The postmulti(1) command encourages a preferred way of organizing
 the configuration directories, queue directories and data directories
-of non-default instances. If the default instance settings are: </p>
+of secondary instances. If the primary instance settings are: </p>
 
 <blockquote>
 <pre>
@@ -1140,7 +1140,7 @@ the configuration directories of newly managed instances are appended
 to the instance list. You can use the "-i" or "-g" or "-a" options to
 insert the new instance before the specified instance or group, or at
 the beginning of the instance list (multi_instance_directories parameter
-of the default instance). </p>
+of the primary instance). </p>
 
 <p> If you do specify a name (use "-I" with a name that is not "-")
 for the new instance, you may omit any of the 3 instance installation

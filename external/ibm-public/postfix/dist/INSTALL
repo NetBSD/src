@@ -67,18 +67,18 @@ path.
     $ export MANPATH; MANPATH="`pwd`/man:$MANPATH"
     $ setenv MANPATH "`pwd`/man:$MANPATH"
 
-Of particular interest is the postconf(5) manual page that lists all the 500+
-configuration parameters. The HTML version of this text makes it easy to
-navigate around.
+Of particular interest is the postconf(5) manual page that lists all the 900+
+configuration parameters. The hyperlinks in the HTML version (html/
+postconf.5.html) make the text easy to navigate.
 
 All Postfix source files have their own built-in manual page. Tools to extract
 those embedded manual pages are available in the mantools directory.
 
 4 - Building on a supported system
 
-Postfix development happens on FreeBSD and MacOS X, with regular tests on Linux
-(Fedora, Ubuntu) and Solaris. Support for other systems relies on feedback from
-their users, and may not always be up-to-date.
+Postfix development happens on FreeBSD and Linux, with occasional tests on
+Solaris. Support for other systems relies on feedback from their users, and may
+not always be up-to-date.
 
 OpenBSD is partially supported. The libc resolver does not implement the
 documented "internal resolver options which are [...] set by changing fields in
@@ -381,6 +381,8 @@ support for optional features:
     |__________________________________|______________|____________|
     |Berkeley DB database	       |DB_README     |Postfix 1.0 |
     |__________________________________|______________|____________|
+    |CDB database		       |CDB_README    |Postfix 2.2 |
+    |__________________________________|______________|____________|
     |LMDB database		       |LMDB_README   |Postfix 2.11|
     |__________________________________|______________|____________|
     |LDAP database		       |LDAP_README   |Postfix 1.0 |
@@ -432,7 +434,9 @@ postconf.5 | less").
     |_____________________|____________________|
     |config_directory	  |/etc/postfix        |
     |_____________________|____________________|
-    |default_database_type|hash 	       |
+    |default_database_type|lmdb, cdb, or hash  |
+    |_____________________|____________________|
+    |default_cache_db_type|lmdb or btree       |
     |_____________________|____________________|
     |daemon_directory	  |/usr/libexec/postfix|
     |_____________________|____________________|
@@ -484,7 +488,9 @@ postconf.5 | less").
     |_________________|_____________________|____________________|
     |DEF_CONFIG_DIR   |config_directory     |/etc/postfix	 |
     |_________________|_____________________|____________________|
-    |DEF_DB_TYPE      |default_database_type|hash		 |
+    |DEF_DB_TYPE      |default_database_type|lmdb, cdb, or hash  |
+    |_________________|_____________________|____________________|
+    |DEF_CACHE_DB_TYPE|default_cache_db_type|lmdb or btree	 |
     |_________________|_____________________|____________________|
     |DEF_DAEMON_DIR   |daemon_directory     |/usr/libexec/postfix|
     |_________________|_____________________|____________________|
@@ -504,9 +510,12 @@ postconf.5 | less").
     |_________________|_____________________|____________________|
     |DEF_SENDMAIL_PATH|sendmail_path	    |/usr/sbin/sendmail  |
     |_________________|_____________________|____________________|
+    |DEF_SHLIB_DIR    |shlib_directory	    |/usr/lib/postfix	 |
+    |_________________|_____________________|____________________|
 
 Note: the data_directory parameter (for caches and pseudo-random numbers) was
-introduced with Postfix version 2.5.
+introduced with Postfix version 2.5; shlib_directory (for shared-library
+objects and database plugins) with Postfix version 3.0.
 
 4.7 - Overriding other compile-time features
 
@@ -538,9 +547,10 @@ The following is an extensive list of names and values.
 |_______________________________|_____________________________________________|
 ||				|Do not build with Berkeley DB support. By    |
 ||				|default, Berkeley DB support is compiled in  |
-||-DNO_DB			|on platforms that are known to support this  |
-||				|feature. If you override this, then you      |
-||				|probably should also override DEF_DB_TYPE as |
+||				|on platforms that have historically supported|
+||-DNO_DB			|this feature. If you override this, then you |
+||				|probably should also override		      |
+||				|default_database_type or DEF_DB_TYPE as      |
 ||				|described in section 4.6.		      |
 ||______________________________|_____________________________________________|
 ||-DNO_DNSSEC			|Do not build with DNSSEC support, even if the|
@@ -1075,7 +1085,7 @@ alias_maps" will tell you the exact location of the text file.
 
 First, be sure to update the text file with aliases for root, postmaster and
 "postfix" that forward mail to a real person. Postfix has a sample aliases file
-/etc/postfix/aliases that you can adapt to local conditions.
+/etc/postfix/aliases that you can copy and adapt to local conditions. /p>
 
     /etc/aliases:
 	root: you
@@ -1091,6 +1101,13 @@ Finally, build the indexed aliases file with one of the following commands:
     # newaliases
     # sendmail -bi
     # postalias /etc/aliases (pathname is system dependent!)
+
+The form "postalias /etc/aliases" builds a default-type indexed file. Use
+"postalias type:/etc/aliases" to specify an explicit type (it should match the
+type in the output from "postconf -x alias_maps").
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "postconf -m".
 
 11 - To chroot or not to chroot
 

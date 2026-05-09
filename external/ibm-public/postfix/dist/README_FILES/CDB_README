@@ -20,15 +20,17 @@ document has general information about Postfix databases.
 You can use "cdb:" tables wherever you can use read-only "hash", "btree" or
 "lmdb" tables with the following limitations:
 
-  * CDB databases cannot be larger than 4GB on LP64 and ILP32 systems, because
-    the CDB library API uses unsigned integers for file offsets.
+  * Historically, CDB databases could not be larger than 4GB on LP64 and ILP32
+    systems, because the CDB library API used unsigned integers for file
+    offsets. Recently, the CDB format was updated to take better advantage of
+    64-bit processors.
 
-  * The "ppoossttmmaapp --ii" (incremental record insertion) and "ppoossttmmaapp --dd"
-    (incremental record deletion) command-line options are not available. For
-    the same reason the "cdb:" map type cannot be used to for persistent
-    caches, such as the address verification cache for the verify(8) service,
-    the TLS session cache for the tlsmgr(8) service, or the dynamic allowlist
-    for postscreen(8).
+  * The "ppoossttmmaapp --ii" (individual record insertion) and "ppoossttmmaapp --dd" (individual
+    record deletion) command-line options are not available. For the same
+    reason the "cdb:" map type cannot be used to for persistent caches, such as
+    the address verification cache for the verify(8) service, the TLS session
+    cache for the tlsmgr(8) service, or the dynamic allowlist for postscreen
+    (8).
 
   * The "sequence" operation ("ppoossttmmaapp --ss" or "ppoossttaalliiaass --ss") is available only
     wen Postfix is built with tinycdb by Michael Tokarev, not with the original
@@ -43,7 +45,7 @@ These instructions assume that you build Postfix from source code as described
 in the INSTALL document. Some modification may be required if you build Postfix
 from a vendor-specific source package.
 
-Postfix is compatible with two CDB implementations:
+Historically, Postfix has been compatible with two CDB implementations:
 
   * The original cdb library from Daniel Bernstein, available from https://
     cr.yp.to/cdb.html, and
@@ -51,25 +53,32 @@ Postfix is compatible with two CDB implementations:
   * tinycdb (version 0.5 and later) from Michael Tokarev, available from https:
     //www.corpit.ru/mjt/tinycdb.html.
 
-Tinycdb is preferred, since it is a bit faster, has additional useful
-functionality and is much simpler to use.
-
-To build Postfix after you have installed tinycdb, use something like:
+To build Postfix with tinycdb, install tinycdb so that the files "cdb.h" and
+"libcdb.*" are in the appropriate locations for your OS distribution. Then, use
+something like:
 
     % make tidy
-    % CDB=../../../tinycdb-0.5
-    % make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
-        "AUXLIBS_CDB=$CDB/libcdb.a"
+    % make -f Makefile.init makefiles \
+        "CCARGS=-DHAS_CDB -I/usr/local/include ..." \
+        "AUXLIBS_CDB=L/usr/local/lib -lcdb" ...
     % make
 
-Alternatively, for the D.J.B. version of CDB:
+The exact pathnames depend on where "cdb.h" and "libcdb.*" are installed. The
+"..." may contain build information for other optional features such as
+databases, TLS support, and so on.
+
+Alternatively, for the D.J.B. version of CDB:, build but do not install CDB,
+then in the Postfix top-level directory:
 
     % make tidy
-    % CDB=../../../cdb-0.75
-    % make -f Makefile.init makefiles "CCARGS=-DHAS_CDB -I$CDB" \
+    % CDB=/some/where/cdb-version
+    % make -f Makefile.init makefiles \
+        "CCARGS=-DHAS_CDB -I$CDB ..." \
         "AUXLIBS_CDB=$CDB/cdb.a $CDB/alloc.a $CDB/buffer.a $CDB/unix.a $CDB/
-    byte.a"
+    byte.a" ...
     % make
+
+(With cdb-20251021 and later, use 'cdb64.a' instead of 'alloc.a'.)
 
 Postfix versions before 3.0 use AUXLIBS instead of AUXLIBS_CDB. With Postfix
 3.0 and later, the old AUXLIBS variable still supports building a statically-

@@ -9,10 +9,11 @@
 #	\fBpostmap -q - "nisplus:[\fIname\fB=%s];\fIname.name.\fB" <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional lookup tables.
-#	These tables are usually in \fBdbm\fR or \fBdb\fR format.
+#	rewriting or mail routing. These tables are usually in
+#	\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
+#
 #	Alternatively, lookup tables can be specified as NIS+
 #	databases.
-#
 #	To find out what types of lookup tables your Postfix system
 #	supports use the "\fBpostconf -m\fR" command.
 #

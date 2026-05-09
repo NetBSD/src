@@ -1,4 +1,4 @@
-/*	$NetBSD: mime_state.h,v 1.1.1.1 2009/06/23 10:08:47 tron Exp $	*/
+/*	$NetBSD: mime_state.h,v 1.1.1.2 2026/05/09 18:39:18 christos Exp $	*/
 
 #ifndef _MIME_STATE_H_INCLUDED_
 #define _MIME_STATE_H_INCLUDED_
@@ -34,6 +34,7 @@ typedef void (*MIME_STATE_ERR_PRINT) (void *, int, const char *, ssize_t);
 
 extern MIME_STATE *mime_state_alloc(int, MIME_STATE_HEAD_OUT, MIME_STATE_ANY_END, MIME_STATE_BODY_OUT, MIME_STATE_ANY_END, MIME_STATE_ERR_PRINT, void *);
 extern int mime_state_update(MIME_STATE *, int, const char *, ssize_t);
+extern int mime_state_status(MIME_STATE *);
 extern MIME_STATE *mime_state_free(MIME_STATE *);
 
  /*
@@ -48,6 +49,7 @@ extern MIME_STATE *mime_state_free(MIME_STATE *);
 #define MIME_OPT_REPORT_TRUNC_HEADER		(1<<5)
 #define MIME_OPT_DISABLE_MIME			(1<<6)
 #define MIME_OPT_REPORT_NESTING			(1<<7)
+#define MIME_OPT_REPORT_NON_EMPTY_EOH		(1<<8)
 
  /*
   * Body encoding domains.
@@ -70,6 +72,7 @@ typedef struct {
 #define MIME_ERR_8BIT_IN_HEADER		(1<<2)
 #define MIME_ERR_8BIT_IN_7BIT_BODY	(1<<3)
 #define MIME_ERR_ENCODING_DOMAIN	(1<<4)
+#define MIME_ERR_NON_EMPTY_EOH		(1<<5)
 
 extern const MIME_STATE_DETAIL *mime_state_detail(int);
 extern const char *mime_state_error(int);

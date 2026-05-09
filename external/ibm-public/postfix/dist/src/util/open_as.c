@@ -1,4 +1,4 @@
-/*	$NetBSD: open_as.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: open_as.c,v 1.1.1.2 2026/05/09 18:39:24 christos Exp $	*/
 
 /*++
 /* NAME
@@ -13,11 +13,20 @@
 /*	const char *path;
 /*	int	mode;
 /*	uid_t	euid;
+/*
+/*	int	vstream_fopen_as(path, flags, mode, euid, egid)
+/*	const char *path;
+/*	int	flags;
+/*	mode_t	mode;
+/*	uid_t	euid;
 /*	gid_t	egid;
 /* DESCRIPTION
 /*	open_as() opens the named \fIpath\fR with the named \fIflags\fR
 /*	and \fImode\fR, and with the effective rights specified by \fIeuid\fR
 /*	and \fIegid\fR.  A -1 result means the open failed.
+/*
+/*	vstream_fopen_as() implements a VSTREAM wrapper with the same
+/*	functionality.
 /* DIAGNOSTICS
 /*	Fatal error: no permission to change privilege level.
 /* SEE ALSO
@@ -31,6 +40,9 @@
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -44,6 +56,7 @@
 #include "msg.h"
 #include "set_eugid.h"
 #include "open_as.h"
+#include "vstream.h"
 
 /* open_as - open file as user */
 
@@ -69,4 +82,16 @@ int     open_as(const char *path, int flags, int mode, uid_t euid, gid_t egid)
     set_eugid(saved_euid, saved_egid);
 
     return (fd);
+}
+
+/* vstream_fopen_as - VSTREAM wrapper */
+
+VSTREAM *vstream_fopen_as(const char *path, int flags, mode_t mode,
+			          uid_t euid, gid_t egid)
+{
+    int     fd;
+
+    if ((fd = open(path, flags, mode)) < 0)
+	return (0);
+    return (vstream_fdopen(fd, flags));
 }

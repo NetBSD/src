@@ -97,7 +97,14 @@ POSTFIX(1)                                                          POSTFIX(1)
               command specified with $<a href="postconf.5.html#maillog_file_compressor">maillog_file_compressor</a>.  This will  not
               rotate /dev/* files.
 
-              This feature is available in Postfix 3.4 and later.
+       <b>non-bdb</b> <i>subcommand</i>
+              Migrate  a  Postfix configuration that uses Berkeley DB <a href="DATABASE_README.html#types">hash</a>: or
+              <a href="DATABASE_README.html#types">btree</a>: tables, to a configuration that uses <a href="lmdb_table.5.html">lmdb</a>: or a  combina-
+              tion of <a href="CDB_README.html">cdb</a>: and <a href="lmdb_table.5.html">lmdb</a>:. This is needed because some (Linux) dis-
+              tributions  have  removed  Berkeley  DB  support.    See   post-
+              fix-nbdb(1) for documentation.
+
+              This feature is available in Postfix 3.11 and later.
 
        <b>tls</b> <i>subcommand</i>
               Enable  opportunistic  TLS in the Postfix SMTP client or server,
@@ -326,6 +333,7 @@ POSTFIX(1)                                                          POSTFIX(1)
        <a href="postconf.1.html">postconf(1)</a>, Postfix configuration utility
        <a href="postdrop.1.html">postdrop(1)</a>, Postfix mail posting utility
        <a href="postfix.1.html">postfix(1)</a>, Postfix control program
+       <a href="postfix-non-bdb.1.html">postfix-non-bdb(1)</a>, Postfix Non-Berkeley-DB migration
        <a href="postfix-tls.1.html">postfix-tls(1)</a>, Postfix TLS management
        <a href="postkick.1.html">postkick(1)</a>, trigger Postfix daemon
        <a href="postlock.1.html">postlock(1)</a>, Postfix-compatible locking

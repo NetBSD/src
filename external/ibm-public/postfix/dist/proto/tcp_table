@@ -10,12 +10,9 @@
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
-#	\fBdbm\fR or \fBdb\fR format. Alternatively, table lookups
-#	can be directed to a TCP server.
+#	\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 #
-#	To find out what types of lookup tables your Postfix system
-#	supports use the "\fBpostconf -m\fR" command.
-#
+#	Alternatively, table lookups can be directed to a TCP server.
 #	To test lookup tables, use the "\fBpostmap -q\fR" command as
 #	described in the SYNOPSIS above.
 # PROTOCOL DESCRIPTION

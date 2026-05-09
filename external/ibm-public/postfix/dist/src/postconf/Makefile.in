@@ -28,7 +28,7 @@ LIBS	= ../../lib/libxsasl.a \
 	../../lib/lib$(LIB_PREFIX)dns$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
-HTABLE_FIX = NORANDOMIZE=1
+HTABLE_FIX = NORANDOMIZE=1 LD_PRELOAD=../../lib/nosleep.so
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
@@ -56,7 +56,10 @@ tests: test1 test2 test3 test4 test5 test6 test7 test8 test9 test10 test11 \
 	test42 test43 test44 test45 test46 test47 test48 test49 test50 test51 \
 	test52 test53 test54 test55 test56 test57 test58 test59 test60 test61 \
 	test62 test63 test64 test65 test66 test67 test68 test69 test70 test71 \
-	test72 test73 test74 test75 test76
+	test72 test73 test74 test75 test76 test78 test79 json_tests80-90 \
+	test91 test92
+
+json_tests80-90: test80 test81 test82 test83 test84 test85 test86 test87
 
 root_tests:
 
@@ -1065,9 +1068,231 @@ test76:	$(PROG) test76.ref
 	diff /dev/null test76.tmp
 	rm -f main.cf master.cf test76.tmp
 
+test77: $(PROG) test77-main.cf test77.ref
+	rm -f main.cf master.cf
+	cp test77-main.cf main.cf
+	touch master.cf
+	touch -t 197701010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc . >test77.tmp 2>&1
+	diff test77.ref test77.tmp
+	rm -f main.cf master.cf test77.tmp
+
+# Warn about unused, deprecated, or deleted parameters.
+test78:	$(PROG) test78.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. \
+	    config_directory=. \
+	    smtp_tls_enforce_peername=yes \
+	    lmtp_tls_enforce_peername=yes \
+	    >test78.tmp 2>&1
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o lmtp_tls_enforce_peername=no' >> master.cf
+	echo ' -o smtp_tls_enforce_peername=no' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. >>test78.tmp 2>&1
+	diff test78.ref test78.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -qnc. >/dev/null 2>test78.tmp
+	diff /dev/null test78.tmp
+	rm -f main.cf master.cf test78.tmp
+
+# Warn about unused, deprecated, or deleted parameters.
+test79:	$(PROG) test79.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. \
+	    config_directory=. \
+	    authorized_verp_clients=x \
+	    fallback_relay=x \
+	    lmtp_per_record_deadline=x \
+	    postscreen_blacklist_action=x \
+	    postscreen_dnsbl_ttl=x \
+	    postscreen_dnsbl_whitelist_threshold=x \
+	    postscreen_whitelist_interfaces=x \
+	    smtpd_client_connection_limit_exceptions=x \
+	    smtpd_per_record_deadline=x \
+	    smtp_per_record_deadline=x \
+	    tlsproxy_client_level=x \
+	    tlsproxy_client_policy=x \
+	    virtual_maps=x \
+	    lmtp_cname_overrides_servername=x \
+	    smtp_cname_overrides_servername=x \
+	    >test79.tmp 2>&1
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o lmtp_tls_enforce_peername=no' >> master.cf
+	echo ' -o smtp_tls_enforce_peername=no' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. >>test79.tmp 2>&1
+	diff test79.ref test79.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -qnc. >/dev/null 2>test79.tmp
+	diff /dev/null test79.tmp
+	rm -f main.cf master.cf test79.tmp
+
+# JSON for main.cf parameters - no $name expansion
+test80: $(PROG) test80.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. -j >test80.tmp 2>&1
+	diff test80.ref test80.tmp
+	rm -f main.cf master.cf test80.tmp
+
+# JSON for main.cf parameters - with $name expansion
+test81: $(PROG) test81.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -nc. -jx >test81.tmp 2>&1
+	diff test81.ref test81.tmp
+	rm -f main.cf master.cf test81.tmp
+
+# JSON for master.cf entries - no $name expansion
+test82: $(PROG) test82.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	echo 12345 inet n n n - - spawn >> master.cf
+	echo ' -o { command_time_limit = 2 3 }' >> master.cf
+	echo ' user=nobody argv=/bin/sh -c { sleep 1 }' >> master.cf 
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Mj >test82.tmp 2>&1
+	diff test82.ref test82.tmp
+	rm -f main.cf master.cf test82.tmp
+
+# JSON for master.cf entries - with $name expansion
+test83: $(PROG)	test83.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Mjx >test83.tmp 2>&1
+	diff test83.ref test83.tmp
+	rm -f main.cf master.cf test83.tmp
+
 clean:
 	rm -f *.o *core $(PROG) $(TESTPROG) junk $(MAKES) $(AUTOS) $(DUMMIES) \
 	$(TEST_TMP) $(DB_MAKES)
+
+# JSON for master.cf fields - no $name expansion
+test84: $(PROG) test84.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	echo 12345 inet n n n - - spawn >> master.cf
+	echo ' -o { command_time_limit = 2 3 }' >> master.cf
+	echo ' user=nobody argv=/bin/sh -c { sleep 1 }' >> master.cf 
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Fj >test84.tmp 2>&1
+	diff test84.ref test84.tmp
+	rm -f main.cf master.cf test84.tmp
+
+# JSON for master.cf fields - with $name expansion
+test85: $(PROG) test85.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Fjx >test85.tmp 2>&1
+	diff test85.ref test85.tmp
+	rm -f main.cf master.cf test85.tmp
+
+# JSON for master.cf parameters - no $name expansion
+test86: $(PROG) test86.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	echo 12345 inet n n n - - spawn >> master.cf
+	echo ' -o { command_time_limit = 2 3 }' >> master.cf
+	echo ' user=nobody argv=/bin/sh -c { sleep 1 }' >> master.cf 
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Pj >test86.tmp 2>&1
+	diff test86.ref test86.tmp
+	rm -f main.cf master.cf test86.tmp
+
+# JSON for master.cf parameters - with $name expansion
+test87: $(PROG) test87.ref
+	rm -f main.cf master.cf
+	touch main.cf master.cf
+	echo 'mydestination=$$whatever' >> main.cf
+	echo whatever=example.com >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 other >> master.cf
+	echo ' -o mydestination=$$whatever' >> master.cf
+	echo ' -o whatever=example.net' >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. -Pjx >test87.tmp 2>&1
+	diff test87.ref test87.tmp
+	rm -f main.cf master.cf test87.tmp
+
+# postconf -PP will list parameters not set in master.cf.
+test91: $(PROG) test91.ref
+	rm -f main.cf master.cf test91.tmp
+	touch main.cf master.cf test91.tmp
+	#echo 'foo/unix/proxymap = foo_map' >> test91.tmp
+	#echo 'bar/unix/proxymap = bar_map' >> test91.tmp
+	#echo 'baz/unix/proxymap = baz_map' >> test91.tmp
+	echo 'foo_proxy_write_maps=foo_map' >> main.cf
+	echo 'bar_proxy_write_maps=bar_map' >> main.cf
+	echo 'proxy_write_maps=baz_map' >> main.cf
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 foo >> master.cf
+	echo ' -o proxy_write_maps=$$foo_proxy_write_maps' >> master.cf
+	echo bar unix - n n - 0 bar >> master.cf
+	echo ' -o proxy_write_maps=$$bar_proxy_write_maps' >> master.cf
+	echo baz unix - n n - 0 baz >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -xPPc. \
+	    '*/*/proxy_write_maps' >test91.tmp 2>&1
+	diff test91.ref test91.tmp
+	rm -f main.cf master.cf test91.tmp
+
+# postconf -PP will list the same parameters as "postconf", but it does
+# that once for every master.cf service, and will show the settings that
+# are in effect for that service.
+test92: $(PROG)
+	rm -f main.cf master.cf test92.tmp
+	touch main.cf master.cf test92.tmp
+	touch -t 197601010000 main.cf
+	echo foo unix - n n - 0 foo >> master.cf
+	touch -t 197601010000 master.cf
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c. | \
+	    grep -E -v '^(process_id|process_name|service_name) =' >test92.tmp
+	$(HTABLE_FIX) $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -PPc. | \
+	    sed 's;foo/unix/;;' | \
+	    grep -E -v '^(process_id|process_name|service_name) =' | \
+	    diff test92.tmp -
+	rm -f main.cf master.cf test92.tmp
 
 tidy:	clean
 
@@ -1086,6 +1311,7 @@ postconf.o: ../../include/check_arg.h
 postconf.o: ../../include/compat_level.h
 postconf.o: ../../include/dict.h
 postconf.o: ../../include/htable.h
+postconf.o: ../../include/mac_midna.h
 postconf.o: ../../include/mail_conf.h
 postconf.o: ../../include/mail_dict.h
 postconf.o: ../../include/mail_params.h
@@ -1118,6 +1344,7 @@ postconf_builtin.o: ../../include/mail_conf.h
 postconf_builtin.o: ../../include/mail_params.h
 postconf_builtin.o: ../../include/mail_proto.h
 postconf_builtin.o: ../../include/mail_version.h
+postconf_builtin.o: ../../include/midna_domain.h
 postconf_builtin.o: ../../include/msg.h
 postconf_builtin.o: ../../include/myflock.h
 postconf_builtin.o: ../../include/mymalloc.h
@@ -1155,6 +1382,7 @@ postconf_builtin.o: time_vars.h
 postconf_dbms.o: ../../include/argv.h
 postconf_dbms.o: ../../include/check_arg.h
 postconf_dbms.o: ../../include/dict.h
+postconf_dbms.o: ../../include/dict_debug.h
 postconf_dbms.o: ../../include/dict_ht.h
 postconf_dbms.o: ../../include/dict_ldap.h
 postconf_dbms.o: ../../include/dict_memcache.h
@@ -1370,6 +1598,7 @@ postconf_unused.o: ../../include/mail_conf.h
 postconf_unused.o: ../../include/mail_params.h
 postconf_unused.o: ../../include/msg.h
 postconf_unused.o: ../../include/myflock.h
+postconf_unused.o: ../../include/mymalloc.h
 postconf_unused.o: ../../include/name_code.h
 postconf_unused.o: ../../include/sys_defs.h
 postconf_unused.o: ../../include/vbuf.h

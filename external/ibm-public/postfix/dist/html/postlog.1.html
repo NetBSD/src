@@ -28,63 +28,72 @@ POSTLOG(1)                                                          POSTLOG(1)
        The following options are implemented:
 
        <b>-c</b> <i>config</i><b>_</b><i>dir</i>
-              Read the <a href="postconf.5.html"><b>main.cf</b></a>  configuration  file  in  the  named  directory
-              instead of the default configuration directory.
+              The <a href="postconf.5.html"><b>main.cf</b></a> configuration file is in the named directory instead
+              of the default configuration directory. See also the MAIL_CONFIG
+              environment setting below.
 
        <b>-i</b> (obsolete)
-              Include  the process ID in the logging tag. This flag is ignored
+              Include the process ID in the logging tag. This flag is  ignored
               as of Postfix 3.4, where the PID is always included.
 
        <b>-p</b> <i>priority</i> (default: <b>info</b>)
-              Specifies the logging severity: <b>info</b>,  <b>warn</b>,  <b>error</b>,  <b>fatal</b>,  or
-              <b>panic</b>.  With Postfix 3.1 and later, the program will pause for 1
-              second after reporting a <b>fatal</b> or  <b>panic</b>  condition,  just  like
+              Specifies  the  logging  severity:  <b>info</b>, <b>warn</b>, <b>error</b>, <b>fatal</b>, or
+              <b>panic</b>. With Postfix 3.1 and later, the program will pause for  1
+              second  after  reporting  a  <b>fatal</b> or <b>panic</b> condition, just like
               other Postfix programs.
 
-       <b>-t</b> <i>tag</i> Specifies  the  logging  tag, that is, the identifying name that
-              appears at the beginning of each logging record. A  default  tag
+       <b>-t</b> <i>tag</i> Specifies the logging tag, that is, the  identifying  name  that
+              appears  at  the beginning of each logging record. A default tag
               is used when none is specified.
 
-       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
+       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
               options make the software increasingly verbose.
 
 <b><a name="security">SECURITY</a></b>
-       The <a href="postlog.1.html"><b>postlog</b>(1)</a> command is designed to run with set-groupid  privileges,
-       so  that  it can connect to the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> daemon process (Postfix 3.7
-       and later; earlier  implementations  of  this  command  must  not  have
+       The  <a href="postlog.1.html"><b>postlog</b>(1)</a> command is designed to run with set-groupid privileges,
+       so that it can connect to the <a href="postlogd.8.html"><b>postlogd</b>(8)</a> daemon process  (Postfix  3.7
+       and  later;  earlier  implementations  of  this  command  must not have
        set-groupid or set-userid permissions).
 
 <b><a name="environment">ENVIRONMENT</a></b>
        MAIL_CONFIG
-              Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file.
+              Directory with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid  exploitation
+              of  set-group  ID privileges, a non-default directory is allowed
+              only if:
+
+              <b>o</b>      The name is listed in the default <a href="postconf.5.html"><b>main.cf</b></a> file  with  the
+                     <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>  or  <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directo</a>-</b>
+                     <b><a href="postconf.5.html#multi_instance_directories">ries</a></b> configuration parameter.
+
+              <b>o</b>      The command is invoked by the super-user.
 
 <b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
        gram.
 
-       The text below provides only a parameter summary. See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for
+       The  text  below provides only a parameter summary. See <a href="postconf.5.html"><b>postconf</b>(5)</a> for
        more details including examples.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment  variables  that  a  privileged  Postfix
-              process  will  import  from  a  non-Postfix  parent  process, or
+              The  list  of  environment  variables  that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
               name=value environment overrides.
 
        <b><a href="postconf.5.html#syslog_facility">syslog_facility</a> (mail)</b>
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
+              A  prefix  that  is  prepended  to  the  process  name in syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        Available in Postfix 3.4 and later:
 
        <b><a href="postconf.5.html#maillog_file">maillog_file</a> (empty)</b>
-              The  name  of an optional logfile that is written by the Postfix
+              The name of an optional logfile that is written by  the  Postfix
               <a href="postlogd.8.html"><b>postlogd</b>(8)</a> service.
 
        <b><a href="postconf.5.html#postlog_service_name">postlog_service_name</a> (postlog)</b>
@@ -93,7 +102,7 @@ POSTLOG(1)                                                          POSTLOG(1)
        Available in Postfix 3.9 and later:
 
        <b><a href="postconf.5.html#maillog_file_permissions">maillog_file_permissions</a> (0600)</b>
-              The file access permissions that  will  be  set  when  the  file
+              The  file  access  permissions  that  will  be set when the file
               $<a href="postconf.5.html#maillog_file">maillog_file</a> is created for the first time, or when the file is
               created after an existing file is rotated.
 

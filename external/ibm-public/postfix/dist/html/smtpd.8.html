@@ -62,6 +62,7 @@ SMTPD(8)                                                              SMTPD(8)
        <a href="https://tools.ietf.org/html/rfc6531">RFC 6531</a> (Internationalized SMTP)
        <a href="https://tools.ietf.org/html/rfc6533">RFC 6533</a> (Internationalized Delivery Status Notifications)
        <a href="https://tools.ietf.org/html/rfc7505">RFC 7505</a> ("Null MX" No Service Resource Record)
+       <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a> (SMTP REQUIRETLS extension)
 
 <b><a name="diagnostics">DIAGNOSTICS</a></b>
        Problems and transactions are logged to <b>syslogd</b>(8) or <a href="postlogd.8.html"><b>postlogd</b>(8)</a>.
@@ -264,7 +265,8 @@ SMTPD(8)                                                              SMTPD(8)
               sions for communication with  a  Milter  application;  prior  to
               Postfix 2.6 the default protocol is 2.
 
-       <b><a href="postconf.5.html#milter_default_action">milter_default_action</a> (tempfail)</b>
+       <b><a href="postconf.5.html#milter_default_action">milter_default_action</a> (Postfix</b> &gt;<b>= 3.11: shutdown; Postfix</b> &lt; <b>3.11: temp-</b>
+       <b>fail)</b>
               The  default  action  when  a  Milter  (mail filter) response is
               unavailable (for example, bad Postfix  configuration  or  Milter
               failure).
@@ -430,7 +432,7 @@ SMTPD(8)                                                              SMTPD(8)
               If  non-empty,  a  filter  for the SASL mechanism names that the
               Postfix SMTP server will announce in the EHLO response.
 
-<b><a name="starttls_support_controls">STARTTLS SUPPORT CONTROLS</a></b>
+<b><a name="tls_support_controls">TLS SUPPORT CONTROLS</a></b>
        Detailed information about STARTTLS configuration may be found  in  the
        <a href="TLS_README.html">TLS_README</a> document.
 
@@ -655,7 +657,17 @@ SMTPD(8)                                                              SMTPD(8)
               instead of an X.509 certificate, when asking  for  or  requiring
               client authentication.
 
-<b><a name="obsolete_starttls_controls">OBSOLETE STARTTLS CONTROLS</a></b>
+       Available in Postfix version 3.11 and later:
+
+       <b><a href="postconf.5.html#requiretls_enable">requiretls_enable</a> (yes)</b>
+              Enable  support  for  the  ESMTP  verb "REQUIRETLS" in the "MAIL
+              FROM" command.
+
+       <b><a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> (yes)</b>
+              Record the ESMTP REQUIRETLS  request  in  a  "Require-TLS-ESMTP:
+              yes" message header.
+
+<b><a name="obsolete_tls_controls">OBSOLETE TLS CONTROLS</a></b>
        The  following  configuration  parameters  exist for compatibility with
        Postfix versions before 2.3. Support for these will  be  removed  in  a
        future release.
@@ -1436,6 +1448,13 @@ SMTPD(8)                                                              SMTPD(8)
        <b><a href="postconf.5.html#smtpd_hide_client_session">smtpd_hide_client_session</a> (no)</b>
               Do  not  include  SMTP client session information in the Postfix
               SMTP server's Received: message header.
+
+       Available in Postfix version 3.11 and later:
+
+       <b><a href="postconf.5.html#smtpd_reject_filter_maps">smtpd_reject_filter_maps</a> (empty)</b>
+              An optional filter that can replace a reject response  from  the
+              Postfix  SMTP  server  itself,  or  from  a program that replies
+              through the Postfix SMTP server.
 
 <b><a name="see_also">SEE ALSO</a></b>
        <a href="anvil.8.html">anvil(8)</a>, connection/rate limiting

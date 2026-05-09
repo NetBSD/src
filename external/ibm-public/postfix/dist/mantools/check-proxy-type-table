@@ -1,0 +1,52 @@
+#!/usr/bin/perl
+
+# List the names of parameters that are documented to support "type:table",
+# but that still need to be listed in proxy_read_maps. Some parameters
+# may never use proxymapped tables, but we want to maximize coverage of
+# the proxy_read_maps parameter name list for non-proxymap purposes.
+
+use strict;
+
+my $proto_doc = "proto/postconf.proto";
+my $proxy_read = "bin/postconf -dh proxy_read_maps";
+my %from_proto = ();
+my %from_proxy = ();
+my %proto_stops = ( 
+    "authorized_verp_clients" => 1,	# Obsolete
+    "master_service_disable" => 1,	# False positive
+);
+my $param = "";
+my $debug = 0;
+
+# Get the names of parameters that mention "type:table" in their
+# documentation. This will not find smtpd_mumble_restrictions but those
+# are already covered elsewhere.
+
+open PROTO, $proto_doc || die "Open $proto_doc: $!\n";
+while (<PROTO>) {
+    if (/^%PARAM\s+(\S+)/) { $param = $1; print "got: $param\n" if $debug; }
+    if ($param && /\btype:table\b/ && !/\bnot\b/ && !$proto_stops{$param}) { 
+	print $_ if ($debug);
+	$from_proto{$param} = 1; 
+    }
+}
+close PROTO || die "Read $proto_doc: $!\n";
+
+# Get the names of parameters that appear in proxy_read_maps. We use
+# these as a stop list for the above documentation-based approach.
+
+open PROXY, "$proxy_read|" || die "Run $proxy_read: $!\n";
+for $param (split(/\s+/, <PROXY>)) {
+    $param = substr($param, 1);	# left-hand-side chop()
+    $from_proxy{$param} = 1;
+}
+close PROXY || die "Run $proxy_read: $!\n";
+
+if ($debug) {
+    for $param (sort keys %from_proxy) { print "from proxy: $param\n"; }
+    for $param (sort keys %from_proto) { print "from proto: $param\n"; }
+}
+
+# List parameters with "type:table" that are not listed in proxy_read_maps.
+
+for $param (sort keys %from_proto) { print "$param\n" unless $from_proxy{$param}; }

@@ -60,7 +60,7 @@
 /^(static| )*(const +)?CONFIG_BOOL_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	if (!owned_by_library)
-	    bool_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	    bool_vars["bool " substr($3,2,length($3)-2) ";"] = 1
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    bool_table[$0] = 1
 	}
@@ -87,7 +87,7 @@
 /^(static| )*(const +)?CONFIG_NBOOL_TABLE .*\{/,/\};/ { 
     if ($1 ~ /^VAR/) {
 	if (!owned_by_library)
-	    nbool_vars["int " substr($3,2,length($3)-2) ";"] = 1
+	    nbool_vars["bool " substr($3,2,length($3)-2) ";"] = 1
 	if (++btab[$1 $2 $4 $5 $6 $7 $8 $9] == 1) {
 	    nbool_table[$0] = 1
 	}

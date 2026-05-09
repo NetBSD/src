@@ -17,9 +17,13 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
 
 <b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
-       mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
+       mail routing. These tables are usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>,  or  <b><a href="DATABASE_README.html#types">dbm</a>:</b>
+       format.
 
-       Alternatively, lookup tables can be specified as PostgreSQL  databases.
+       Alternatively,  lookup tables can be specified as PostgreSQL databases.
+       To find out what types of lookup tables your  Postfix  system  supports
+       use the "<b>postconf -m</b>" command.
+
        In  order  to  use  PostgreSQL lookups, define a PostgreSQL source as a
        lookup table in <a href="postconf.5.html">main.cf</a>, for example:
            <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="pgsql_table.5.html">pgsql</a>:/etc/postfix/pgsql-aliases.cf
@@ -65,16 +69,15 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               URI, the Postfix PostgreSQL client will ignore the <b>dbname</b>, <b>user</b>,
               and <b>password</b> settings for that connection.
 
-              NOTE: if the <b>hosts</b> setting specifies  one  server,  this  client
-              assumes  that  the  target is a load balancer and will reconnect
-              immediately after a  single  failure,  instead  of  failing  all
-              requests  temporarily. With older versions of this client, spec-
-              ify the same server twice.
+              NOTE: if the <b>hosts</b>  setting  specifies  only  one  server,  this
+              client  assumes  that  the  target  is  a load balancer and will
+              reconnect immediately after a single failure. With Postfix  ver-
+              sions 3.9 and earlier, specify the same server twice.
 
        <b>user</b>
 
        <b>password</b>
-              The user name and password to log into the pgsql server.   Exam-
+              The  user name and password to log into the pgsql server.  Exam-
               ple:
                   user = someone
                   password = some_password
@@ -85,25 +88,25 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
        <b>dbname</b> The database name on the servers. Example:
                   dbname = customer_database
 
-              The <b>dbname</b> setting is ignored for  <b>hosts</b>  connections  that  are
+              The  <b>dbname</b>  setting  is  ignored for <b>hosts</b> connections that are
               specified as an URI.
 
               The <b>dbname</b> setting is required with Postfix 3.10 and later, when
-              <b>hosts</b> specifies any non-URI connection; it  is  always  required
+              <b>hosts</b>  specifies  any  non-URI connection; it is always required
               with earlier Postfix versions.
 
        <b>encoding</b>
-              The  encoding  used  by the database client. The default setting
+              The encoding used by the database client.  The  default  setting
               is:
                   encoding = UTF8
 
-              Historically, the database client was hard coded to  use  LATIN1
+              Historically,  the  database client was hard coded to use LATIN1
               in an attempt to disable multibyte character support.
 
               This feature is available in Postfix 3.8 and later.
 
        <b>idle_interval (default: 60)</b>
-              The  number  of  seconds after which an idle database connection
+              The number of seconds after which an  idle  database  connection
               will be closed.
 
               This feature is available in Postfix 3.9 and later.
@@ -112,11 +115,10 @@ PGSQL_TABLE(5)                                                  PGSQL_TABLE(5)
               The number of seconds that a database connection will be skipped
               after an error.
 
-              NOTE:  if  the  <b>hosts</b>  setting specifies one server, this client
-              assumes that the target is a load balancer  and  will  reconnect
-              immediately  after  a  single  failure,  instead  of failing all
-              requests temporarily. With older versions of this client,  spec-
-              ify the same server twice.
+              NOTE: if the <b>hosts</b>  setting  specifies  only  one  server,  this
+              client  assumes  that  the  target  is  a load balancer and will
+              reconnect immediately after a single failure. With Postfix  ver-
+              sions 3.9 and earlier, specify the same server twice.
 
               This feature is available in Postfix 3.9 and later.
 

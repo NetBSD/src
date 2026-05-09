@@ -103,3 +103,9 @@ ${{aaa} < {bb}}
 ${{aaa} <length {bb}}
 ${{aaa} <= {bb}}
 ${{aaa} <=length {bb}}
+
+name1 = whatever
+
+${ test_named_fn { ABCBA } }
+${test_named_fn{AB%BA}}
+$bogus{AB%BA}

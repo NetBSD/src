@@ -1,0 +1,33 @@
++ ./postalias -d yy -d xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -d yy -i whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -d yy -q xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -d yy -s whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -i -d xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -i -i whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -i -q xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -i -s whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -q yy -d xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -q yy -i whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -q yy -q xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -q yy -s whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -s -d xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -s -i whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -s -q xx whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ ./postalias -s -s whatever:whatever
+postalias: fatal: specify only one of -d -i -q or -s
++ exit 0
