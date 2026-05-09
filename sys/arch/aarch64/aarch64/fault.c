@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.26 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: fault.c,v 1.27 2026/05/09 13:23:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.26 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.27 2026/05/09 13:23:51 skrll Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_cpuoptions.h"
@@ -164,7 +164,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	/* eliminate address tag if ECR_EL1.TBI[01] is enabled */
 	va = aarch64_untag_address(va);
 
-	if ((VM_MIN_KERNEL_ADDRESS <= va) && (va < VM_MAX_KERNEL_ADDRESS)) {
+	if (VM_MIN_KERNEL_ADDRESS <= va && va < VM_MAX_KERNEL_ADDRESS) {
 		map = kernel_map;
 		UVMHIST_LOG(pmaphist, "use kernel_map %p", map, 0, 0, 0);
 	} else if (VM_MIN_ADDRESS <= va && va <= VM_MAX_ADDRESS) {
@@ -174,7 +174,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	} else
 		goto do_fault;
 
-	if ((eclass == ESR_EC_INSN_ABT_EL0) || (eclass == ESR_EC_INSN_ABT_EL1))
+	if (eclass == ESR_EC_INSN_ABT_EL0 || eclass == ESR_EC_INSN_ABT_EL1)
 		ftype = VM_PROT_EXECUTE;
 	else if (__SHIFTOUT(esr, ESR_ISS_DATAABORT_CM))
 		ftype = VM_PROT_READ;
@@ -189,7 +189,7 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		    "write=%jd", tf->tf_far, va, user, rw);
 	}
 
-	if (__predict_false(!user && (map != kernel_map) &&
+	if (__predict_false(!user && map != kernel_map &&
 	    (tf->tf_spsr & SPSR_PAN))) {
 		/*
 		 * We were in kernel mode, faulted on a user address,
@@ -322,16 +322,16 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 	len = snprintf(panicinfo, sizeof(panicinfo), "Trap: %s:",
 	    eclass_trapname(eclass));
 
-	if ((fsc >= __arraycount(fault_status_code)) ||
-	    ((faultstr = fault_status_code[fsc]) == NULL))
+	if (fsc >= __arraycount(fault_status_code) ||
+	    (faultstr = fault_status_code[fsc]) == NULL)
 		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
 		    " unknown fault status 0x%x ", fsc);
 	else
 		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
 		    " %s", faultstr);
 
-	if ((__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL1) ||
-	    (__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL0))
+	if (__SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL1 ||
+	    __SHIFTOUT(esr, ESR_EC) == ESR_EC_DATA_ABT_EL0)
 		len += snprintf(panicinfo + len, sizeof(panicinfo) - len,
 		    " with %s access", (rw == 0) ? "read" : "write");
 
