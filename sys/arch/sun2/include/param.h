@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.21 2026/05/10 19:58:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.22 2026/05/10 20:02:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,8 +49,7 @@
  */
 #define	_MACHINE	sun2
 #define	MACHINE		"sun2"
-#define	_MACHINE_ARCH	m68000
-#define	MACHINE_ARCH	"m68000"
+
 #define	MID_MACHINE	MID_M680002K
 
 #define PGSHIFT		11		/* LOG2(NBPG) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 2026/05/10 19:58:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.32 2026/05/10 20:02:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,13 +48,18 @@
 /*
  * Machine independent constants for m68k
  */
-#ifndef	MACHINE_ARCH
+#if defined(__mc68010__)
+#define	_MACHINE_ARCH	m68000
+#define	MACHINE_ARCH	"m68000"
+#else
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
-#endif
+#endif /* __mc68010__ */
+
 #ifndef	MID_MACHINE
 #define	MID_MACHINE	MID_M68K
 #endif
+
 #ifndef _KERNEL
 #undef MACHINE
 #define MACHINE "m68k"
