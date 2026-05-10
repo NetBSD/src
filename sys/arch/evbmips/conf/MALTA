@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.106 2024/01/29 18:27:11 christos Exp $
+#	$NetBSD: MALTA,v 1.107 2026/05/10 14:56:39 tls Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.106 $"
+#ident 		"MALTA-$Revision: 1.107 $"
 
 maxusers	32
 
@@ -99,11 +99,17 @@ options 	INET		# Internet protocols
 
 # These options enable verbose messages for several subsystems.
 # Warning, these may compile large string tables into the kernel!
-#options 	PCI_NETBSD_CONFIGURE	# NetBSD configures the PCI bus
 options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	SCSIVERBOSE	# human readable SCSI error messages
 options 	MIIVERBOSE	# verbose PHY autoconfig messages
+
+# It is not known whether these options are required for actual Malta
+# hardware, but they are required for the QEMU "malta" system emulation,
+# which appears to be the only NetBSD-compatible "Malta" still available
+# to any NetBSD developer or user as of 2026.
+options		YAMON_IRQ_MAP_BAD	# Use compiled-in IRQ mapping table
+options		PCI_NETBSD_CONFIGURE	# NetBSD configures the PCI bus
 
 # Bitmask for enabling the PCI IDE channels in the southbridge.
 # Set bit 0 (0x01) for channel 0, bit 1 (0x02) for channel 1.
