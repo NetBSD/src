@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.19 2026/05/10 19:33:33 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.20 2026/05/10 19:51:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,12 +73,6 @@
  * this on my low-memory machine.  These should go away at some point.
  */
 #define MCLSHIFT	10
-
-/*
- * XXX fredette - we must define this, otw UBC consumes 8MB of kernel VM.
- * For now, we make it absurdly small, perhaps it can grow later.
- */
-#define	UBC_NWINS	32
 
 #define	MAXEXEC		1
 

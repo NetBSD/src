@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.29 2026/05/10 19:33:32 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.30 2026/05/10 19:51:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -85,6 +85,18 @@
 #endif	/* MCLSHIFT */
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
+
+#if defined(__mc68010__)
+/*
+ * Clamp UBC parameters; the default consume way to much kernel VA space,
+ * and it's in short supply on 68010.  (Actually, the defaults exceed the
+ * total available on the 68010.)
+ *
+ * XXX Perhaps these can be tuned upwards eventually?
+ */
+#define	UBC_WINSHIFT	13		/* 8KB */
+#define	UBC_NWINS	32		/* -> 256KB */
+#endif /* __mc68010__ */
 
 /*
  * Mach-derived conversion macros
