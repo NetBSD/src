@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.532 2026/05/10 21:38:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.531 2025/07/16 19:14:13 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.532 2026/05/10 21:38:42 thorpej Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -582,7 +582,7 @@ bad1:
 }
 
 #ifdef __MACHINE_STACK_GROWS_UP
-#define STACK_PTHREADSPACE NBPG
+#define STACK_PTHREADSPACE PAGE_SIZE
 #else
 #define STACK_PTHREADSPACE 0
 #endif
