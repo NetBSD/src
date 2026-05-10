@@ -1,20 +1,20 @@
-# $NetBSD: md.evbppc,v 1.5 2026/02/12 04:26:11 kre Exp $
+# $NetBSD: md.evbppc,v 1.6 2026/05/10 14:19:10 tls Exp $
 #
 ./usr/lib/libc_aligned_g.a			comp-c-debuglib		debuglib,!machine_arch=powerpc64
 ./usr/lib/libpowerpc_espresso_g.a		comp-c-debuglib 	debuglib,!machine_arch=powerpc64
 ./usr/libdata/debug/lib/libc_aligned.so.0.0.debug	comp-sys-debug	debug,pic,!machine_arch=powerpc64
 ./usr/libdata/debug/lib/libpowerpc_espresso.so.0.0.debug	comp-sys-debug	debug,pic,!machine_arch=powerpc64
-./usr/libdata/debug/netbsd-esata-P2020DS.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-ld0a-INSTALL_TWRP1025.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-ld0a-TWRP1025.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-sd0a-P2020DS.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-sd0a-P2020RDB.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/netbsd-sd0a-TWRP1025.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-MPC8536DS.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-MPC8548CDS.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-P2020DS.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-P2020RDB.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-RB800.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-TWRP1025.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-esata-P2020DS.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/netbsd-ld0a-INSTALL_TWRP1025.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/netbsd-ld0a-TWRP1025.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/netbsd-sd0a-P2020DS.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/netbsd-sd0a-P2020RDB.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/netbsd-sd0a-TWRP1025.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-MPC8536DS.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-MPC8548CDS.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-P2020DS.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-P2020RDB.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-RB800.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-TWRP1025.debug	comp-sysutil-debug	debugkernel
 ./usr/libdata/debug/usr/lib/libc_aligned.so.0.0.debug	comp-sys-debug	debug,pic,!machine_arch=powerpc64
 ./usr/libdata/debug/usr/lib/libpowerpc_espresso.so.0.0.debug	comp-sys-debug	debug,pic,!machine_arch=powerpc64

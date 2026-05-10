@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.475 2025/04/25 19:34:39 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.476 2026/05/10 14:19:10 tls Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -687,8 +687,10 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 #	kernels. This mess is needed because checkflist runs before the
 #	kernels are built. It should really run before the sets are build.
 install-debugkernels:
-.if ${MKDEBUG:Uno} == "yes"
-	@for i in $$(${NETBSDSRCDIR}/distrib/sets/makeflist debug | \
+.if ${MKDEBUGKERNEL:Uno} == "yes"
+	@for i in $$(MKDEBUGKERNEL=${MKDEBUGKERNEL:Uno} \
+	    MAKE=${MAKE:Q} \
+	    ${NETBSDSRCDIR}/distrib/sets/makeflist debug | \
 	    ${TOOL_GREP} -E '^./usr/libdata/debug/(nfs)?netbsd-'); do \
 		echo touch ${DESTDIR}/$$i; \
 		touch ${DESTDIR}/$$i; \

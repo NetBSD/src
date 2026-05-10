@@ -1,4 +1,4 @@
-# $NetBSD: md.pmax,v 1.4 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: md.pmax,v 1.5 2026/05/10 14:19:10 tls Exp $
 #
-./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debugkernel

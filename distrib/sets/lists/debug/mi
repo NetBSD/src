@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.512 2026/04/25 00:38:47 christos Exp $
+# $NetBSD: mi,v 1.513 2026/05/10 14:19:10 tls Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -328,7 +328,7 @@
 ./usr/libdata/debug/bin/test.debug		comp-util-debug		debug
 ./usr/libdata/debug/libexec/lfs_cleanerd.debug	comp-sysutil-debug	lfs,debug
 ./usr/libdata/debug/netbsd			comp-sysutil-debug	debug,kernel_dir
-./usr/libdata/debug/netbsd-@CONFIG@.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/netbsd-@CONFIG@.debug	comp-sysutil-debug	debugkernel
 ./usr/libdata/debug/sbin/amrctl.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/apmlabel.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/sbin/atactl.debug		comp-sysutil-debug	debug

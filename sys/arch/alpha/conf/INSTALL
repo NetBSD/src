@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.120 2024/03/06 13:37:35 thorpej Exp $
+# $NetBSD: INSTALL,v 1.121 2026/05/10 14:19:11 tls Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -332,3 +332,10 @@ pseudo-device	pty			# pseudo-terminals
 pseudo-device	sl		
 
 #pseudo-device	fss			# file system snapshot device
+
+# Virtio devices
+virtio* at pci? dev ? function ?        # Virtio PCI device
+
+include "dev/virtio/virtio.config"
+no vio9p*       at virtio?      # PAGE_SIZE != VIRTIO_PAGE_SIZE
+no viomb*       at virtio?      # PAGE_SIZE != VIRTIO_PAGE_SIZE
