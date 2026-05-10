@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.5 2026/05/05 12:39:38 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.6 2026/05/10 19:33:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,8 +56,6 @@
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define	UPAGES		2		/* pages of u-area */
 
 #define	MSGBUFSIZE	0x2000		/* 8KB of space before kernel text */
 

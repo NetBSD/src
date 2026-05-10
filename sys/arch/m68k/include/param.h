@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 2026/05/10 16:07:56 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2026/05/10 19:33:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,7 +63,8 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
-#define	USPACE		(UPAGES * NBPG)
+#define	USPACE		8192
+#define	UPAGES		(USPACE >> PGSHIFT)
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	8192		/* default message buffer size */
