@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.43 2026/05/02 19:49:23 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.44 2026/05/10 16:07:56 thorpej Exp $	*/
 
 #ifdef __x86_64__
 
@@ -64,9 +64,6 @@
 
 #define KERNBASE_HI	0xffffffff
 #define KERNBASE_LO	0x80000000
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #if defined(KASAN) || defined(KMSAN)
 #define UPAGES_KxSAN	3

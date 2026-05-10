@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 2026/05/02 19:49:23 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.28 2026/05/10 16:07:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -62,9 +62,6 @@
 
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #define	USPACE		(UPAGES * NBPG)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.56 2025/05/03 02:00:57 riastradh Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.57 2026/05/10 16:07:56 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -95,9 +95,6 @@
  * On mips, UPAGES is fixed by sys/arch/mips/mips/locore code
  * to be the number of per-process-wired kernel-stack pages/PTES.
  */
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #if (ENABLE_MIPS_16KB_PAGE + ENABLE_MIPS_8KB_PAGE + ENABLE_MIPS_4KB_PAGE) > 1
 #error only one of ENABLE_MIPS_{4,8,16}KB_PAGE can be defined.

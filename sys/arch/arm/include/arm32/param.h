@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.34 2021/05/30 07:20:00 rin Exp $	*/
+/*	$NetBSD: param.h,v 1.35 2026/05/10 16:07:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -54,8 +54,6 @@
 #define	PGOFSET		(NBPG - 1)	/* byte offset into page */
 #define	NPTEPG		(NBPG / sizeof(pt_entry_t))	/* PTEs per Page */
 
-#define SSIZE		1		/* initial stack size/NBPG */
-#define SINCR		1		/* increment of stack/NBPG */
 #ifdef KASAN
 #define UPAGES		4
 #else

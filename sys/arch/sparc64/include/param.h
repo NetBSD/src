@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.63 2025/04/24 11:01:27 martin Exp $ */
+/*	$NetBSD: param.h,v 1.64 2026/05/10 16:07:56 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -110,12 +110,7 @@ extern int nbpg, pgofset, pgshift;
 #endif
 
 /* We get stack overflows w/8K stacks in 64-bit mode */
-#define	SSIZE		2		/* initial stack size in pages */
-#else
-#define	SSIZE		2
-#endif
-#define	USPACE		(SSIZE*8192)
-
+#define	USPACE		(2*8192)
 
 /*
  * Here are all the magic kernel virtual addresses and how they're allocated.
