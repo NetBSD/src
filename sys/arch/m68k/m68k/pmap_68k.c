@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.66 2026/05/07 15:33:41 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.67 2026/05/10 02:13:48 nat Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.66 2026/05/07 15:33:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.67 2026/05/10 02:13:48 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -906,7 +906,7 @@ pte_change_prot(pt_entry_t opte, vm_prot_t prot)
 }
 
 static inline pt_entry_t
-pte_load(pt_entry_t *ptep)
+pte_load(volatile pt_entry_t *ptep)
 {
 	return atomic_load_relaxed(ptep);
 }
@@ -926,7 +926,7 @@ pte_store(pt_entry_t *ptep, pt_entry_t npte)
  * to the same constraints.
  */
 static inline bool
-pte_update(pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
+pte_update(volatile pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 {
 	/*
 	 * Use compare-and-swap to update the PTE.  This ensures there's
@@ -3282,7 +3282,7 @@ static bool
 pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 {
 	struct pv_entry *pv;
-	pt_entry_t pte = 0;
+	volatile pt_entry_t pte = 0;
 	bool rv = false;
 
 	PMAP_CRIT_ENTER();
@@ -3341,7 +3341,7 @@ static bool
 pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 {
 	struct pv_entry *pv;
-	pt_entry_t *ptep, combined_pte, diff, opte, npte;
+	volatile pt_entry_t *ptep, combined_pte, diff, opte, npte;
 
 #if MMU_CONFIG_68040_CLASS
 	/*
