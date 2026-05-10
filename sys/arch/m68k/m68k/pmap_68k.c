@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.68 2026/05/10 13:57:15 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.69 2026/05/10 14:06:55 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -189,6 +189,10 @@
  * - Very stable multi-user on virt68k (qemu 68040; does not accurately
  *   model cache or ATC, but suitable for exercising large memory configs).
  *
+ * - Very stable muti-user running memory pressure stress tests on
+ *    small-memory configs in virt68k (qemu 68040 **with fixed MMU
+ *    emulation**) and mac68k (10MB 68040).
+ *
  * - Single-user mode on 68030 w/ no external cache (luna68k).
  *
  * - Single-user mode on 68040 (hp425t).
@@ -207,8 +211,6 @@
  * - More rigorous 68030 testing.
  * - Test on machines above listed as "not tested".
  * - More rigorous testing in various emulators (Nono, UAE?).
- * - Fix problems observed on mac68k (system is unstable when running
- *   tinyx, works fine with old pmap).
  * - Fix problems observed on news68k (external cache related?).
  * - Finish HP MMU support and test on real HP MMU.
  * - Convert '851 / '030 to 3-level.
@@ -222,7 +224,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.68 2026/05/10 13:57:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.69 2026/05/10 14:06:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
