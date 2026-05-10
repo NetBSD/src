@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.67 2026/05/10 02:13:48 nat Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.68 2026/05/10 13:57:15 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -222,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.67 2026/05/10 02:13:48 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.68 2026/05/10 13:57:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -474,6 +474,16 @@ static struct evcnt pmap_enter_pv_recycle_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pv recycle");
 EVCNT_ATTACH_STATIC(pmap_enter_pv_recycle_ev);
 
+static struct evcnt pmap_prm_got_pg_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap prm", "got pg");
+static struct evcnt pmap_prm_lookup_pg_hit_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap prm", "lookup pg hit");
+static struct evcnt pmap_prm_lookup_pg_miss_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap prm", "lookup pg miss");
+EVCNT_ATTACH_STATIC(pmap_prm_got_pg_ev);
+EVCNT_ATTACH_STATIC(pmap_prm_lookup_pg_hit_ev);
+EVCNT_ATTACH_STATIC(pmap_prm_lookup_pg_miss_ev);
+
 #define	pmap_evcnt(e)		pmap_ ## e ## _ev.ev_count++
 #else
 #define	pmap_evcnt(e)		__nothing
@@ -571,7 +581,7 @@ pmap_pa_to_pg(paddr_t pa)
 	return pmap_initialized_p ? PHYS_TO_VM_PAGE(pa) : NULL;
 }
 
-static bool pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
+static pt_entry_t pmap_changebit(struct vm_page *, pt_entry_t, pt_entry_t);
 
 /*************************** RESOURCE MANAGEMENT *****************************/
 
@@ -908,13 +918,13 @@ pte_change_prot(pt_entry_t opte, vm_prot_t prot)
 static inline pt_entry_t
 pte_load(volatile pt_entry_t *ptep)
 {
-	return atomic_load_relaxed(ptep);
+	return *ptep;
 }
 
 static inline void
-pte_store(pt_entry_t *ptep, pt_entry_t npte)
+pte_store(volatile pt_entry_t *ptep, pt_entry_t npte)
 {
-	atomic_store_relaxed(ptep, npte);
+	*ptep = npte;
 }
 
 /*
@@ -946,13 +956,13 @@ pte_update(volatile pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
  * truly atomic operations anyway.
  */
 static inline void
-pte_set(pt_entry_t *ptep, pt_entry_t bits)
+pte_set(volatile pt_entry_t *ptep, pt_entry_t bits)
 {
 	*ptep |= bits;
 }
 
 static inline void
-pte_mask(pt_entry_t *ptep, pt_entry_t mask)
+pte_mask(volatile pt_entry_t *ptep, pt_entry_t mask)
 {
 	*ptep &= mask;
 }
@@ -1744,6 +1754,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 	newpv->pv_next = VM_MDPAGE_PVS(pg);
 	VM_MDPAGE_SETPVP(VM_MDPAGE_HEAD_PVP(pg), newpv);
 	LIST_INSERT_HEAD(&pmap->pm_pvlist, newpv, pv_pmlist);
+	VM_MDPAGE_ADD_UM(pg, npte);
 
 	/*
 	 * If this is an EXEC mapping, then we have to ensure that
@@ -2116,7 +2127,7 @@ pmap_pinit(pmap_t pmap, paddr_t lev1pa)
 	TAILQ_INIT(&pmap->pm_ptpages[1]);
 	LIST_INIT(&pmap->pm_pvlist);
 
-	atomic_store_relaxed(&pmap->pm_refcnt, 1);
+	pmap->pm_refcnt = 1;
 }
 
 /*
@@ -2236,16 +2247,15 @@ pmap_reference(pmap_t pmap)
 #define	PRM_CFLUSH	__BIT(1)
 static void
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
-    struct pmap_table *pt, int flags, struct pmap_completion *pc)
+    struct pmap_table *pt, struct vm_page *pg,
+    int flags, struct pmap_completion *pc)
 {
+	KASSERT(pt != NULL || pmap == pmap_kernel());
 	KASSERT(ptep != NULL);
-
 	const paddr_t opte = pte_load(ptep);
-	if (! pte_valid_p(opte)) {
-		return;
-	}
-
+	KASSERT(pte_valid_p(opte));
 	const paddr_t pa = pte_pa(opte);
+	KASSERT(pg == NULL || pa == VM_PAGE_TO_PHYS(pg));
 
 	/* Update statistics. */
 	if (pte_wired_p(opte)) {
@@ -2271,6 +2281,25 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 #endif
 	}
 
+	if (__predict_false(pg == NULL)) {
+		pg = pmap_pa_to_pg(pa);
+		if (pg != NULL) {
+			pmap_evcnt(prm_lookup_pg_hit);
+		} else {
+			pmap_evcnt(prm_lookup_pg_miss);
+		}
+	} else {
+		pmap_evcnt(prm_got_pg);
+	}
+	if (__predict_true(pg != NULL)) {
+		KASSERT(pte_managed_p(opte));
+		/* Update cached U/M bits from mapping that's going away. */
+		VM_MDPAGE_ADD_UM(pg, opte);
+		pmap_pv_remove(pmap, pg, va, pc);
+	} else {
+		KASSERT(! pte_managed_p(opte));
+	}
+
 	/*
 	 * Zap the PTE and drop the retain count that the mapping
 	 * had on the table.
@@ -2284,16 +2313,6 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	 */
 	if (__predict_true((flags & PRM_TFLUSH) != 0 && active_pmap(pmap))) {
 		TBIS(va);
-	}
-
-	struct vm_page * const pg = pmap_pa_to_pg(pa);
-	if (__predict_true(pg != NULL)) {
-		KASSERT(pte_managed_p(opte));
-		/* Update cached U/M bits from mapping that's going away. */
-		VM_MDPAGE_ADD_UM(pg, opte);
-		pmap_pv_remove(pmap, pg, va, pc);
-	} else {
-		KASSERT(! pte_managed_p(opte));
 	}
 }
 
@@ -2347,7 +2366,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 				all_ci &= opte;
 #endif
 				pmap_remove_mapping(pmap, sva, ptep, NULL,
-				    prm_flags, pc);
+				    NULL, prm_flags, pc);
 			}
 		}
 #if MMU_CONFIG_HP_CLASS
@@ -2403,7 +2422,8 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 			 */
 			all_ci &= opte;
 #endif
-			pmap_remove_mapping(pmap, sva, ptep, pt, prm_flags, pc);
+			pmap_remove_mapping(pmap, sva, ptep, pt, NULL,
+			    prm_flags, pc);
 		}
 		pmap_table_release(pmap, pt, pc);
 	}
@@ -2533,7 +2553,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	while ((pv = VM_MDPAGE_PVS(pg)) != NULL) {
 		pmap_busy(pv->pv_pmap);
 		pmap_remove_mapping(pv->pv_pmap, PV_VA(pv), pmap_pv_pte(pv),
-		    pv->pv_pt, PRM_TFLUSH|PRM_CFLUSH, &pc);
+		    pv->pv_pt, pg, PRM_TFLUSH|PRM_CFLUSH, &pc);
 		pmap_unbusy(pv->pv_pmap);
 	}
 
@@ -2783,7 +2803,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * XXX hit the ATC after setting the new PTE anyway.
 		 */
 		pmap_evcnt(enter_pa_change);
-		pmap_remove_mapping(pmap, va, ptep, pt,
+		pmap_remove_mapping(pmap, va, ptep, pt, pg,
 		    PRM_TFLUSH|PRM_CFLUSH, &pc);
 	}
 
@@ -3192,7 +3212,6 @@ pmap_deactivate(struct lwp *l)
 
 	if (pmap != pmap_kernel()) {
 		PMAP_CRIT_ENTER();
-		KASSERT(pmap->pm_busy != 0);
 		PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 	}
 }
@@ -3282,30 +3301,25 @@ static bool
 pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 {
 	struct pv_entry *pv;
-	volatile pt_entry_t pte = 0;
-	bool rv = false;
+	pt_entry_t combined_pte = 0;
 
 	PMAP_CRIT_ENTER();
 
-	if (VM_MDPAGE_UM(pg) & bit) {
-		rv = true;
-		goto out;
+	combined_pte = VM_MDPAGE_UM(pg);
+
+	for (pv = VM_MDPAGE_PVS(pg);
+	     (combined_pte & bit) == 0 && pv != NULL;
+	     pv = pv->pv_next) {
+		pmap_busy(pv->pv_pmap);
+		combined_pte |= pte_load(pmap_pv_pte(pv));
+		pmap_unbusy(pv->pv_pmap);
 	}
 
-	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
-		pmap_busy(pv->pv_pmap);
-		pte |= pte_load(pmap_pv_pte(pv));
-		pmap_unbusy(pv->pv_pmap);
-		if (pte & bit) {
-			rv = true;
-			break;
-		}
-	}
-	VM_MDPAGE_ADD_UM(pg, pte);
- out:
+	VM_MDPAGE_ADD_UM(pg, combined_pte);
+
 	PMAP_CRIT_EXIT();
 
-	return rv;
+	return (combined_pte & bit) != 0;
 }
 
 /*
@@ -3317,7 +3331,7 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
-	return !!(VM_MDPAGE_UM(pg) & PTE_U) || pmap_testbit(pg, PTE_U);
+	return pmap_testbit(pg, PTE_U);
 }
 
 /*
@@ -3329,19 +3343,20 @@ pmap_is_referenced(struct vm_page *pg)
 bool
 pmap_is_modified(struct vm_page *pg)
 {
-	return !!(VM_MDPAGE_UM(pg) & PTE_M) || pmap_testbit(pg, PTE_M);
+	return pmap_testbit(pg, PTE_M);
 }
 
 /*
  * pmap_changebit:
  *
  *	Test-and-change various bits (including mod/ref bits).
+ *	Returns the accumulated previously-set PTE bits.
  */
-static bool
+static pt_entry_t
 pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 {
 	struct pv_entry *pv;
-	volatile pt_entry_t *ptep, combined_pte, diff, opte, npte;
+	pt_entry_t *ptep, combined_pte, opte, npte;
 
 #if MMU_CONFIG_68040_CLASS
 	/*
@@ -3380,7 +3395,9 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 			ptep = pmap_pv_pte(pv);
 			opte = pte_load(ptep);
 			npte = (opte | set) & mask;
-			if ((diff = (opte ^ npte)) == 0) {
+			combined_pte |= opte;
+
+			if (opte == npte) {
 				break;
 			}
 #if MMU_CONFIG_68040_CLASS
@@ -3396,7 +3413,6 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 			}
 			/* Lost race, try again. */
 		}
-		combined_pte |= opte;
 		/*
 		 * We must flush the ATC even if it's not a "critical" bit,
 		 * because the MMU will only write-back a PTE when the
@@ -3414,13 +3430,11 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	/*
 	 * Update any attributes we looked at, clear the ones we're clearing.
 	 */
-	VM_MDPAGE_SET_UM(pg,
-	    (VM_MDPAGE_UM(pg) | combined_pte | set) & mask);
+	VM_MDPAGE_SET_UM(pg, (combined_pte | set) & mask);
 
 	PMAP_CRIT_EXIT();
 
-	/* Return true if the bit(s) we're clearing were set. */
-	return !!(combined_pte & ~mask);
+	return combined_pte;
 }
 
 /*
@@ -3431,7 +3445,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
-	return pmap_changebit(pg, 0, (pt_entry_t)~PTE_M);
+	return (pmap_changebit(pg, 0, (pt_entry_t)~PTE_M) & PTE_M) != 0;
 }
 
 /*
@@ -3442,7 +3456,7 @@ pmap_clear_modify(struct vm_page *pg)
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	return pmap_changebit(pg, 0, (pt_entry_t)~PTE_U);
+	return (pmap_changebit(pg, 0, (pt_entry_t)~PTE_U) & PTE_U) != 0;
 }
 
 /*
@@ -4637,7 +4651,7 @@ pmap_test_mod_ref(void)
 	ref = pmap_clear_reference(pg);
 	exp_mod = true;
 	exp_ref = true;
-	printf("%s: mod 2: mod=%d(%d) ref=%d(%d) (%s)\n",
+	printf("%s: page_protect(READ) mod 2: mod=%d(%d) ref=%d(%d) (%s)\n",
 	    __func__,
 	    mod, exp_mod, ref, exp_ref,
 	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
@@ -4671,7 +4685,126 @@ pmap_test_mod_ref(void)
 	ref = pmap_clear_reference(pg);
 	exp_mod = true;
 	exp_ref = true;
-	printf("%s: mod 4: mod=%d(%d) ref=%d(%d) (%s)\n",
+	printf("%s: page_protect(NONE) mod 4: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* modify page again */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	*loc = 0xaa;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 5: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* read-protect VA */
+	pmap_protect(pmap_kernel(), va, va+PAGE_SIZE, UVM_PROT_READ);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: va prot(READ) mod 6: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* none-protect VA */
+	pmap_protect(pmap_kernel(), va, va+PAGE_SIZE, UVM_PROT_NONE);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: va prot(NONE) mod 7: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* Reset the page. */
+	pmap_clear_modify(pg);
+	pmap_clear_reference(pg);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: validating pristine page: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	printf("%s: verifying mapping does not exist: (%s)\n",
+	    __func__,
+	    pmap_extract(pmap_kernel(), va, NULL) ? "FAIL" : "OK");
+
+	/* Enter R-seeded R/W mapping. */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_READ|UVM_PROT_WRITE,
+	    UVM_PROT_READ);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = true;
+	printf("%s: enter(R|W, R): mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* Enter W-seeded R/W mapping. */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_READ|UVM_PROT_WRITE,
+	    UVM_PROT_WRITE);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: enter(R|W, W): mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	pmap_clear_modify(pg);
+	pmap_clear_reference(pg);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: validating pristine page: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/*
+	 * Now we're going to reference the page before modifying it
+	 * without any intervening clear.  The MMU should update the
+	 * PTE once for the ref, and a second time for the mod, *even
+	 * if the ATC entry is still valid*.
+	 *
+	 * We are going to fetch the PTEs directly to validate the
+	 * MMU's behavior.
+	 */
+	pt_entry_t *ptep = pmap_kernel_pte(va);
+	pt_entry_t ref_pte, mod_pte;
+	int s = splhigh();
+	val = *loc;
+	ref_pte = pte_load(ptep);
+	*loc = 0;
+	mod_pte = pte_load(ptep);
+	splx(s);
+
+	mod = (mod_pte & PTE_M) != 0;
+	ref = (ref_pte & PTE_U) != 0;
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: validating MMU behavior: mod=%d(%d) ref=%d(%d) (%s)\n",
 	    __func__,
 	    mod, exp_mod, ref, exp_ref,
 	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
