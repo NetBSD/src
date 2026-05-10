@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2026/05/10 19:33:33 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.17 2026/05/10 20:27:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,6 @@
 #define	MACHINE		"next68k"
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #include <m68k/param.h>
 

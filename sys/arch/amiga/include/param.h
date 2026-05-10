@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.53 2026/05/10 19:33:31 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.54 2026/05/10 20:27:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,7 +48,6 @@
 #define	MACHINE		"amiga"
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #include <m68k/param.h>
 

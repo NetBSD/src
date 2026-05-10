@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 2026/05/10 20:02:44 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.33 2026/05/10 20:27:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,6 +63,10 @@
 #ifndef _KERNEL
 #undef MACHINE
 #define MACHINE "m68k"
+#endif
+
+#ifndef KERNBASE
+#define	KERNBASE	0x00000000	/* start of kernel virtual */
 #endif
 
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */

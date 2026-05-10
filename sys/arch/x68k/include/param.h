@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.34 2026/05/10 19:33:33 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.35 2026/05/10 20:27:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 #define	MACHINE		"x68k"
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	(2 * NBPG)	/* default message buffer size */
