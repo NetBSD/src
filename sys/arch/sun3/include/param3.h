@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.57 2018/03/03 03:19:36 mrg Exp $	*/
+/*	$NetBSD: param3.h,v 1.58 2026/05/10 19:54:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,11 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* Use smaller UBC_NWINS to avoid KVA space shortage. */
-#define	UBC_NWINS	128
+/*
+ * Clamp UBC parameters; the default consume way to much kernel VA space,
+ * and it's in short supply on Sun3.
+ */
+#define	UBC_WINSHIFT	13		/* 8KB */
+#define	UBC_NWINS	128		/* -> 1024KB */
+
 #define	MAXEXEC		1
