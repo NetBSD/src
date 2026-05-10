@@ -1,4 +1,4 @@
-/* $NetBSD: syscall.c,v 1.45 2023/10/05 19:41:03 ad Exp $ */
+/* $NetBSD: syscall.c,v 1.46 2026/05/10 23:51:37 tls Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -89,7 +89,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2023/10/05 19:41:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.46 2026/05/10 23:51:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -191,6 +191,16 @@ syscall(struct lwp *l, uint64_t code, struct trapframe *tf)
 	error = sy_invoke(callp, l, args, rval, code);
 
 	if (__predict_true(error == 0)) {
+		/*
+		 * Sign-extend 32-bit syscall return values to 64 bits,
+		 * as required by ABI.  Avoids corruption if the returned
+		 * value is spilled to and reloaded from the stack in
+		 * userspace.
+		 */
+		if (!SYCALL_RET_WIDE_P(callp)) {
+			rval[0] = (int32_t)(int64_t)rval[0];
+			rval[1] = (int32_t)(int64_t)rval[1];
+		}
 		tf->tf_regs[FRAME_V0] = rval[0];
 		tf->tf_regs[FRAME_A4] = rval[1];
 		tf->tf_regs[FRAME_A3] = 0;

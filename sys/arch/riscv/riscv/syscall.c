@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.6 2024/11/22 20:01:04 skrll Exp $	*/
+/*	$NetBSD: syscall.c,v 1.7 2026/05/10 23:51:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.6 2024/11/22 20:01:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.7 2026/05/10 23:51:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -224,6 +224,16 @@ EMULNAME(syscall)(struct trapframe *tf)
 			tf->tf_reg[_X_A0 + _QUAD_HIGHWORD] = tmp >> 32;
 		}
 #endif
+		if (!SYCALL_RET_WIDE_P(callp)) {
+			/*
+			 * Sign-extend 32-bit syscall return values to 64
+			 * bits, as required by ABI.  Avoids corruption if
+			 * the returned value is spilled to and reloaded
+			 * from the stack in userspace.
+			 */
+			retval[0] = (int32_t)(int64_t)retval[0];
+			retval[1] = (int32_t)(int64_t)retval[1];
+		}
 #endif
 
 		tf->tf_a0 = retval[0];

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.51 2023/10/05 19:41:04 ad Exp $	*/
+/*	$NetBSD: syscall.c,v 1.52 2026/05/10 23:51:37 tls Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.51 2023/10/05 19:41:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.52 2026/05/10 23:51:37 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -325,6 +325,18 @@ EMULNAME(syscall)(struct lwp *l, u_int status, u_int cause, vaddr_t pc)
 			mips_reg_t tmp = reg->r_regs[_R_V0];
 			reg->r_regs[_R_V0 + _QUAD_LOWWORD] = (int32_t) tmp;
 			reg->r_regs[_R_V0 + _QUAD_HIGHWORD] = tmp >> 32;
+		}
+		if (abi != _MIPS_BSD_API_O32 && !SYCALL_RET_WIDE_P(callp)) {
+			/*
+			 * Sign-extend 32-bit syscall return values to 64
+			 * bits, as required by ABI.  Avoids corruption if
+			 * the returned value is spilled to and reloaded
+			 * from the stack in userspace.
+			 */
+			reg->r_regs[_R_V0] =
+			    (int32_t)(int64_t)reg->r_regs[_R_V0];
+			reg->r_regs[_R_V1] =
+			    (int32_t)(int64_t)reg->r_regs[_R_V1];
 		}
 #endif
 #ifdef MIPS_SYSCALL_DEBUG

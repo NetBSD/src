@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.188 2026/01/10 10:07:36 nia Exp $
+#	$NetBSD: makesyscalls.sh,v 1.189 2026/05/10 23:51:37 tls Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -493,6 +493,28 @@ function isarg64(type) {
 	return type == "quad_t" || type == "off_t" \
 	    || type == "dev_t" ||  type == "time_t";
 }
+function isretwide(type) {
+	# Some 64-bit ABIs require us to take great care with sign extension
+	# of 32-bit syscall return values.
+	#
+	# We mark syscalls returning 64-bit types as SYCALL_RET_WIDE.
+	# types not listed here are assumed to be 32-bit.
+	#
+	# This is necessary on ports where GCCs PROMOTE_MODE has
+	# UNSIGNEDP = 0 for SImode: MIPS N64, RISC-V, Alpha.
+	#
+	# It is used in syscall() on those ports to avoid storing the
+	# 32-bit results directly into registers via C assignment, which
+	# would zero-extend instead of sign-extending.
+	#
+	# Unfortunately, the necessary set of types here does not quite match
+	# !SYCALL_RET_64 - there are return types which are 64 bit on LP64 but
+	# not on ILP32, so a new flag is needed.
+	gsub("netbsd32_", "", type);
+	return type == "void *" || type == "long" \
+	    || type == "size_t" || type == "ssize_t" \
+	    || isarg64(type);
+}
 function parserr(was, wanted) {
 	printf "%s: line %d: unexpected %s (expected <%s>)\n", \
 	    infile, NR, was, wanted
@@ -601,6 +623,12 @@ function parseline() {
 			sycall_flags = "SYCALL_RET_64";
 		else
 			sycall_flags = "SYCALL_RET_64 | " sycall_flags;
+	}
+	if (isretwide(returntype)) {
+		if (sycall_flags == "0")
+			sycall_flags = "SYCALL_RET_WIDE";
+		else
+			sycall_flags = "SYCALL_RET_WIDE | " sycall_flags;
 	}
 
 	if (funcalias == "") {
