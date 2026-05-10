@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.20 2026/05/10 19:51:26 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.21 2026/05/10 19:58:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -73,8 +73,6 @@
  * this on my low-memory machine.  These should go away at some point.
  */
 #define MCLSHIFT	10
-
-#define	MAXEXEC		1
 
 #endif	/* _KERNEL */
 
