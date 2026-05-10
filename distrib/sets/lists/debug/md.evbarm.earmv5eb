@@ -1,6 +1,6 @@
-# $NetBSD: md.evbarm.earmv5eb,v 1.2 2026/05/10 14:19:10 tls Exp $
+# $NetBSD: md.evbarm.earmv5eb,v 1.3 2026/05/10 22:36:06 kre Exp $
 #
-./usr/libdata/debug/netbsd-ADI_BRH.debug		comp-sysutil-debug	debug		
+./usr/libdata/debug/netbsd-ADI_BRH.debug		comp-sysutil-debug	debugkernel
 ./usr/libdata/debug/netbsd-ADI_BRH_INSTALL.debug	comp-sysutil-debug	debugkernel
 ./usr/libdata/debug/netbsd-KUROBOX_PRO.debug		comp-sysutil-debug	debugkernel
 ./usr/libdata/debug/netbsd-KUROBOX_PRO_INSTALL.debug	comp-sysutil-debug	debugkernel
