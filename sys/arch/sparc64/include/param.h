@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.64 2026/05/10 16:07:56 thorpej Exp $ */
+/*	$NetBSD: param.h,v 1.65 2026/05/10 23:50:36 kre Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,6 +107,7 @@ extern int nbpg, pgofset, pgshift;
 
 #ifdef SUN4V
 #define	MAXCPUS		256
+#endif
 #endif
 
 /* We get stack overflows w/8K stacks in 64-bit mode */
