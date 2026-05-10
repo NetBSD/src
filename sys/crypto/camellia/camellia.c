@@ -1,4 +1,4 @@
-/* $NetBSD: camellia.c,v 1.3 2021/09/04 00:33:09 gutteridge Exp $ */
+/* $NetBSD: camellia.c,v 1.4 2026/05/10 15:54:43 gutteridge Exp $ */
 
 /* camellia.h ver 1.1.0
  *
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: camellia.c,v 1.3 2021/09/04 00:33:09 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: camellia.c,v 1.4 2026/05/10 15:54:43 gutteridge Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -443,14 +443,14 @@ camellia_setup128(const unsigned char *key, uint32_t *subkey)
     uint32_t subR[26];
 
     /*
-     *  k == kll || klr || krl || krr (|| is concatination)
+     *  k == kll || klr || krl || krr (|| is concatenation)
      */
     kll = GETU32(key     );
     klr = GETU32(key +  4);
     krl = GETU32(key +  8);
     krr = GETU32(key + 12);
     /*
-     * generate KL dependent subkeys
+     * generate KL-dependent subkeys
      */
     subl(0) = kll; subr(0) = klr;
     subl(1) = krl; subr(1) = krr;
@@ -487,7 +487,7 @@ camellia_setup128(const unsigned char *key, uint32_t *subkey)
 	       w0, w1, il, ir, t0, t1);
     kll ^= w0; klr ^= w1;
 
-    /* generate KA dependent subkeys */
+    /* generate KA-dependent subkeys */
     subl(2) = kll; subr(2) = klr;
     subl(3) = krl; subr(3) = krr;
     CAMELLIA_ROLDQ(kll, klr, krl, krr, w0, w1, 15);
@@ -651,7 +651,7 @@ camellia_setup256(const unsigned char *key, uint32_t *subkey)
 
     /*
      *  key = (kll || klr || krl || krr || krll || krlr || krrl || krrr)
-     *  (|| is concatination)
+     *  (|| is concatenation)
      */
 
     kll  = GETU32(key     );
@@ -679,7 +679,7 @@ camellia_setup256(const unsigned char *key, uint32_t *subkey)
     subl(30) = kll; subr(30) = klr;
     subl(31) = krl; subr(31) = krr;
 
-    /* generate KR dependent subkeys */
+    /* generate KR-dependent subkeys */
     CAMELLIA_ROLDQ(krll, krlr, krrl, krrr, w0, w1, 15);
     subl(4) = krll; subr(4) = krlr;
     subl(5) = krrl; subr(5) = krrr;
@@ -720,7 +720,7 @@ camellia_setup256(const unsigned char *key, uint32_t *subkey)
 	       w0, w1, il, ir, t0, t1);
     krll ^= w0; krlr ^= w1;
 
-    /* generate KA dependent subkeys */
+    /* generate KA-dependent subkeys */
     CAMELLIA_ROLDQ(kll, klr, krl, krr, w0, w1, 15);
     subl(6) = kll; subr(6) = klr;
     subl(7) = krl; subr(7) = krr;
@@ -733,7 +733,7 @@ camellia_setup256(const unsigned char *key, uint32_t *subkey)
     subl(28) = kll; subr(28) = klr;
     subl(29) = krl; subr(29) = krr;
 
-    /* generate KB dependent subkeys */
+    /* generate KB-dependent subkeys */
     subl(2) = krll; subr(2) = krlr;
     subl(3) = krrl; subr(3) = krrr;
     CAMELLIA_ROLDQ(krll, krlr, krrl, krrr, w0, w1, 30);
