@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.142 2024/03/02 08:59:47 mlelstv Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.143 2026/05/11 02:06:04 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.142 2024/03/02 08:59:47 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.143 2026/05/11 02:06:04 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -184,7 +184,7 @@ shm_free_segment(int segnum)
 	SHMPRINTF(("shm freeing key 0x%lx seq 0x%x\n",
 	    shmseg->shm_perm._key, shmseg->shm_perm._seq));
 
-	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+	size = (shmseg->shm_segsz + PAGE_MASK) & ~PAGE_MASK;
 	wanted = (shmseg->shm_perm.mode & SHMSEG_WANTED);
 
 	shmseg->_shm_internal = NULL;
@@ -352,7 +352,7 @@ sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 	/* Delete the entry from shm map */
 	uobj = shm_delete_mapping(shmmap_s, shmmap_se);
 	shmseg = &shmsegs[IPCID_TO_IX(shmmap_se->shmid)];
-	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+	size = (shmseg->shm_segsz + PAGE_MASK) & ~PAGE_MASK;
 	mutex_exit(&shm_lock);
 
 	uvm_deallocate(&p->p_vmspace->vm_map, shmmap_se->va, size);
@@ -413,7 +413,7 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 		goto err;
 	}
 
-	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+	size = (shmseg->shm_segsz + PAGE_MASK) & ~PAGE_MASK;
 	prot = VM_PROT_READ;
 	if ((SCARG(uap, shmflg) & SHM_RDONLY) == 0)
 		prot |= VM_PROT_WRITE;
@@ -835,7 +835,7 @@ shmexit(struct vmspace *vm)
 		KASSERT(shmmap_se != NULL);
 
 		shmseg = &shmsegs[IPCID_TO_IX(shmmap_se->shmid)];
-		sz = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
+		sz = (shmseg->shm_segsz + PAGE_MASK) & ~PAGE_MASK;
 		/* shm_delete_mapping() removes from the list. */
 		uobj = shm_delete_mapping(shmmap_s, shmmap_se);
 		mutex_exit(&shm_lock);

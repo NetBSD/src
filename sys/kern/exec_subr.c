@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.91 2024/12/06 16:48:13 riastradh Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.92 2026/05/11 02:05:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.91 2024/12/06 16:48:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.92 2026/05/11 02:05:31 thorpej Exp $");
 
 #include "opt_pax.h"
 
@@ -396,7 +396,7 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	vsize_t noaccess_size;
 
 #ifndef	USRSTACK32
-#define USRSTACK32	(0x00000000ffffffffL&~PGOFSET)
+#define USRSTACK32	(0x00000000ffffffffL&~PAGE_MASK)
 #endif
 #ifndef MAXSSIZ32
 #define MAXSSIZ32	(MAXSSIZ >> 2)
