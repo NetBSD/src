@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lwp.c,v 1.7 2011/04/12 08:42:12 mrg Exp $	*/
+/*	$NetBSD: db_lwp.c,v 1.8 2026/05/11 13:44:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lwp.c,v 1.7 2011/04/12 08:42:12 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lwp.c,v 1.8 2026/05/11 13:44:35 thorpej Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -44,6 +44,40 @@ __KERNEL_RCSID(0, "$NetBSD: db_lwp.c,v 1.7 2011/04/12 08:42:12 mrg Exp $");
 #include <machine/pcb.h>
 
 #include <ddb/ddb.h>
+
+#if !defined(_KERNEL) && !defined(USPACE)
+#include <sys/sysctl.h>
+#include <unistd.h>
+
+/*
+ * USPACE is needed by KSTACK_SIZE.
+ *
+ * XXX Rather than getting it from the running system, we should exctract
+ * it from the kernel crash dump.
+ */
+static int
+getuspace(void)
+{
+	static int uspace;
+
+	int mib[2];
+	size_t size;
+
+	if (uspace) {
+		return uspace;
+	}
+
+	mib[0] = CTL_VM;
+	mib[1] = VM_USPACE;
+	size = sizeof(uspace);
+	if (sysctl(mib, 2, &uspace, &size, NULL, 0)) {
+		uspace = getpagesize();
+	}
+
+	return uspace;
+}
+#define	USPACE		(getuspace())
+#endif /* ! _KERNEL && ! USPACE */
 
 lwp_t *
 db_lwp_first(void)
