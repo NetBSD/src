@@ -1,4 +1,4 @@
-/* $NetBSD: bus_dma.c,v 1.74 2022/07/26 20:08:54 andvar Exp $ */
+/* $NetBSD: bus_dma.c,v 1.75 2026/05/11 15:23:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.74 2022/07/26 20:08:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.75 2026/05/11 15:23:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ static int	_bus_dmamap_load_buffer_direct(bus_dma_tag_t,
 		    bus_dmamap_t, void *, bus_size_t, struct vmspace *, int,
 		    paddr_t *, int *, int);
 
-extern paddr_t avail_start, avail_end;	/* from pmap.c */
+extern paddr_t avail_end;	/* from pmap.c */
 
 #define	DMA_COUNT_DECL(cnt)	_DMA_COUNT_DECL(dma_direct, cnt)
 #define	DMA_COUNT(cnt)		_DMA_COUNT(dma_direct, cnt)
