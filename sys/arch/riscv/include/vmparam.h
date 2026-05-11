@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.17 2026/05/11 19:31:15 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18 2026/05/11 19:34:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -144,12 +144,6 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffffd000000000)
 
 #else		/* Sv32 */
-/*
- * kernel virtual space layout:
- *   0x8000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
- *  (0x4000_0000      +1GiB) KERNEL VM start of KVA
- *  (0x0000_0000      64GiB) reserved
- */
 
 /*
  * kernel virtual space layout without direct map (common case)
