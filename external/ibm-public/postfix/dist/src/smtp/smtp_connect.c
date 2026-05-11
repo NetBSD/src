@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_connect.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: smtp_connect.c,v 1.6.2.1 2026/05/11 17:13:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -510,35 +510,79 @@ static int smtp_get_effective_tls_level(DSN_BUF *why, SMTP_STATE *state)
     SMTP_TLS_POLICY *tls = state->tls;
 
     /*
+     * Prepare TLS feature status logging.
+     */
+    if (state->tls_stats) {
+	pol_stats_revert(state->tls_stats);
+	if (state->reqtls_level > SMTP_REQTLS_POLICY_ACT_DISABLE)
+	    smtp_tls_stat_activate_reqtls(state->tls_stats,
+					  SMTP_TLS_STAT_NAME_REQTLS);
+    }
+
+    /*
      * Determine the TLS level for this destination.
      */
     if (!smtp_tls_policy_cache_query(why, tls, iter)) {
+	if (state->tls_stats)
+	    smtp_tls_stat_activate_sec_unknown(state->tls_stats);
 	return (0);
     }
+    if (state->tls_stats)
+	smtp_tls_stat_activate_sec_level(state->tls_stats,
+					 state->tls->level);
 
     /*
-     * If the sender requires verified TLS, the TLS level must enforce a
-     * server certificate match.
+     * Skip this destination if its TLS policy cannot satisfy the REQUIRETLS
+     * policy for this destination (REQUIRETLS Failure).
+     * 
+     * Otherwise, log what would fail if REQUIRETLS was fully enforced
+     * (REQUIRETLS Debug).
+     * 
+     * Finally, skip this destination if its REQUIRETLS policy is bad.
      */
-#if 0
-    else if ((state->request->sendopts & SOPT_REQUIRETLS_ESMTP)) {
+    switch (state->reqtls_level) {
+    case SMTP_REQTLS_POLICY_ACT_ENFORCE:
 	if (TLS_MUST_MATCH(tls->level) == 0) {
-	    dsb_simple(why, "5.7.10", "Sender requires verified TLS, "
-		       " but my configured TLS security level is '%s %s'",
-		       var_mail_name, str_tls_level(tls->level));
+	    if (state->tls_stats)
+		smtp_tls_stat_decide_reqtls(state->tls_stats,
+					    SMTP_TLS_STAT_NAME_NOCMATCH,
+					    POL_STAT_VIOLATION);
+	    dsb_simple(why, "5.7.10", "Sender requested REQUIRETLS, "
+		       "but my configured TLS security level '%s' "
+		       "disables certificate matching. The last "
+		       "attempted server was %s", str_tls_level(tls->level),
+		       STR(iter->host));
 	    return (0);
 	}
-    }
-#endif
-
-    /*
-     * Otherwise, if the TLS level is not TLS_LEV_NONE or some non-level, and
-     * the message contains a "TLS-Required: no" header, limit the level to
-     * TLS_LEV_MAY.
-     */
-    else if (var_tls_required_enable && tls->level > TLS_LEV_NONE
-	     && (state->request->sendopts & SOPT_REQUIRETLS_HEADER)) {
-	tls->level = TLS_LEV_MAY;
+ 	break;
+    case SMTP_REQTLS_POLICY_ACT_OPP_TLS:
+	if (tls->level == TLS_LEV_NONE) {
+	    if (state->tls_stats)
+		smtp_tls_stat_decide_reqtls(state->tls_stats,
+					    SMTP_TLS_STAT_NAME_NOTLS,
+					    POL_STAT_VIOLATION);
+	    dsb_simple(why, "5.7.10", "Sender requested REQUIRETLS, "
+		       "but my configured TLS security level '%s' "
+		       "disables encryption. The last attempted "
+		       "server was %s", str_tls_level(tls->level),
+		       STR(iter->host));
+	    return (0);
+	} else if (TLS_MUST_MATCH(tls->level) == 0) {
+	    msg_info("%s: Sender requested REQUIRETLS, but my "
+		     "configured TLS security level '%s' disables "
+		     "certificate matching. The last attempted server "
+		     "was %s", state->request->queue_id,
+		     str_tls_level(tls->level), STR(iter->host));
+	}
+	break;
+    case SMTP_REQTLS_POLICY_ACT_OPPORTUNISTIC:
+    case SMTP_REQTLS_POLICY_ACT_DISABLE:
+	break;
+    default:
+	dsb_simple(why, "4.7.10", "REQUIRETLS policy configuration "
+		   "error. The last attempted server was %s",
+		   STR(iter->host));
+	return (0);
     }
 
     /*
@@ -577,6 +621,19 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
 	SET_SCACHE_REQUEST_NEXTHOP(state, path);
 
     /*
+     * REQUIRETLS policy selection is based on the same TLS net-hop name as
+     * with certificate matching. When var_reqtls_enable != 0,
+     * smtp_reqtls_policy must also be != 0.
+     */
+#ifdef USE_TLS
+    if (STATE_REQTLS_IS_REQUESTED(var_reqtls_enable, state))
+	state->reqtls_level =
+	    smtp_reqtls_policy_eval(smtp_reqtls_policy, var_myhostname);
+    else
+	state->reqtls_level = SMTP_REQTLS_POLICY_ACT_DISABLE;
+#endif
+
+    /*
      * Here we ensure that the iter->addr member refers to a copy of the
      * UNIX-domain pathname, so that smtp_save_session() will cache the
      * connection using the pathname as the physical endpoint name.
@@ -594,9 +651,9 @@ static void smtp_connect_local(SMTP_STATE *state, const char *path)
      * willing to retry after TLS handshake failures here, we downgrade "may"
      * no "none". Nothing is lost, and much waste is avoided.
      * 
-     * We don't know who is authenticating whom, so if a client cert is
-     * available, "encrypt" may be a sensible policy. Otherwise, we also
-     * downgrade "encrypt" to "none", this time just to avoid waste.
+     * If a client cert is available, "encrypt" may be a sensible policy.
+     * Without client cert, "encrypt" and "may" over UNIX-domain sockets are
+     * not useful.
      * 
      * We use smtp_reuse_nexthop() instead of smtp_reuse_addr(), so that we can
      * reuse a SASL-authenticated connection (however unlikely this scenario
@@ -970,15 +1027,34 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 	 * level of "may" to "encrypt"? This would disable falling back to
 	 * plaintext, and could break interoperability with receivers that
 	 * crank up security up to 11.
+	 * 
+	 * With "TLS-Required: no" in effect, the SMTP client ignores the
+	 * recipient-side policy mechanism TLSRPT, in addition to the already
+	 * ignored DANE and MTA-STS mechanisms. This prevents TLSRPT
+	 * notifications for all SMTP deliveries that do not require TLS.
 	 */
 #ifdef USE_TLSRPT
 	if (smtp_mode && var_smtp_tlsrpt_enable
+	    && STATE_TLS_NOT_REQUIRED(state) == 0
 	    && tls_level_lookup(var_smtp_tls_level) > TLS_LEV_NONE
 	    && !valid_hostaddr(domain, DONT_GRIPE))
 	    smtp_tlsrpt_create_wrapper(state, domain);
 	else
 	    state->tlsrpt = 0;
 #endif						/* USE_TLSRPT */
+
+	/*
+	 * REQUIRETLS policy selection is based on the same TLS net-hop name
+	 * as with certificate matching. When var_reqtls_enable != 0,
+	 * smtp_reqtls_policy must also be != 0.
+	 */
+#ifdef USE_TLS
+	if (STATE_REQTLS_IS_REQUESTED(var_reqtls_enable, state))
+	    state->reqtls_level =
+		smtp_reqtls_policy_eval(smtp_reqtls_policy, domain);
+	else
+	    state->reqtls_level = SMTP_REQTLS_POLICY_ACT_DISABLE;
+#endif
 
 	/*
 	 * Resolve an SMTP or LMTP server. Skip MX or SRV lookups when a
@@ -1130,7 +1206,21 @@ static void smtp_connect_inet(SMTP_STATE *state, const char *nexthop,
 		continue;
 		/* XXX Assume there is no code at the end of this loop. */
 	    }
-	    /* Disable TLS when retrying after a handshake failure */
+	    /* Skip MX hosts that lack authorization. */
+	    if (!smtp_tls_authorize_mx_hostname(state->tls, SMTP_HNAME(addr))) {
+		continue;
+		/* XXX Assume there is no code at the end of this loop. */
+	    }
+
+	    /*
+	     * Disable TLS when retrying after a handshake failure. This must
+	     * never happen when TLS is required. See PLAINTEXT_FALLBACK_OK
+	     * macros.
+	     * 
+	     * By dropping the TLS level after smtp_get_effective_tls_level()
+	     * and smtp_tls_stat_activate_*(), we will properly record the
+	     * fallback for the TLS level etc. in TLS status logging.
+	     */
 	    if (retry_plain) {
 		state->tls->level = TLS_LEV_NONE;
 		retry_plain = 0;

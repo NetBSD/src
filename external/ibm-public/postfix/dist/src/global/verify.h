@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.h,v 1.1.1.1 2009/06/23 10:08:48 tron Exp $	*/
+/*	$NetBSD: verify.h,v 1.1.1.1.64.1 2026/05/11 17:13:50 martin Exp $	*/
 
 #ifndef _VERIFY_H_INCLUDED_
 #define _VERIFY_H_INCLUDED_
@@ -22,12 +22,14 @@
   * Global library.
   */
 #include <deliver_request.h>
+#include <pol_stats.h>
 
  /*
   * External interface.
   */
 extern int verify_append(const char *, MSG_STATS *, RECIPIENT *,
-			         const char *, DSN *, int);
+			         const char *, const POL_STATS *,
+			         DSN *, int);
 
 /* LICENSE
 /* .ad
@@ -38,6 +40,9 @@ extern int verify_append(const char *, MSG_STATS *, RECIPIENT *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

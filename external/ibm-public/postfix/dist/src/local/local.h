@@ -1,4 +1,4 @@
-/*	$NetBSD: local.h,v 1.3 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: local.h,v 1.3.2.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -135,15 +135,15 @@ typedef struct LOCAL_STATE {
 
 #define BOUNCE_ATTR(attr) \
 	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
-	DSN_FROM_DSN_BUF(attr.why)
+	NO_TLS_STATS, DSN_FROM_DSN_BUF(attr.why)
 #define BOUNCE_ONE_ATTR(attr) \
 	attr.queue_name, attr.queue_id, attr.encoding, attr.sendopts, \
 	attr.sender, attr.dsn_envid, attr.dsn_ret, \
 	&attr.msg_stats, &attr.rcpt, attr.relay, \
-	DSN_FROM_DSN_BUF(attr.why)
+	NO_TLS_STATS, DSN_FROM_DSN_BUF(attr.why)
 #define SENT_ATTR(attr) \
 	attr.queue_id, &attr.msg_stats, &attr.rcpt, attr.relay, \
-	DSN_FROM_DSN_BUF(attr.why)
+	NO_TLS_STATS, DSN_FROM_DSN_BUF(attr.why)
 #define OPENED_ATTR(attr) \
 	attr.queue_id, attr.sender
 #define COPY_ATTR(attr) \

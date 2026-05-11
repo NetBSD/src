@@ -16,37 +16,38 @@ NISPLUS_TABLE(5)                                              NISPLUS_TABLE(5)
        <b>postmap -q - "<a href="nisplus_table.5.html">nisplus</a>:[</b><i>name</i><b>=%s];</b><i>name.name.</i><b>"</b> &lt;<i>inputfile</i>
 
 <b><a name="description">DESCRIPTION</a></b>
-       The  Postfix mail system uses optional lookup tables.  These tables are
-       usually in <b>dbm</b> or <b>db</b> format.  Alternatively, lookup tables can be spec-
-       ified as NIS+ databases.
+       The Postfix mail system uses optional lookup tables.  rewriting or mail
+       routing. These tables are usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>, or  <b><a href="DATABASE_README.html#types">dbm</a>:</b>  for-
+       mat.
 
-       To  find  out  what types of lookup tables your Postfix system supports
-       use the "<b>postconf -m</b>" command.
+       Alternatively,  lookup  tables  can be specified as NIS+ databases.  To
+       find out what types of lookup tables your Postfix system  supports  use
+       the "<b>postconf -m</b>" command.
 
-       To test Postfix NIS+ lookup tables, use the  "<b>postmap  -q</b>"  command  as
+       To  test  Postfix  NIS+  lookup tables, use the "<b>postmap -q</b>" command as
        described in the SYNOPSIS above.
 
 <b><a name="query_syntax">QUERY SYNTAX</a></b>
-       Most  of the NIS+ query is specified via the NIS+ map name. The general
+       Most of the NIS+ query is specified via the NIS+ map name. The  general
        format of a Postfix NIS+ map name is as follows:
 
            <b><a href="nisplus_table.5.html">nisplus</a>:[</b><i>name</i><b>=%s];</b><i>name.name.name</i><b>.:</b><i>column</i>
 
-       Postfix NIS+ map names differ from what one  normally  would  use  with
+       Postfix  NIS+  map  names  differ from what one normally would use with
        commands such as <b>niscat</b>:
 
-       <b>o</b>      With  each  NIS+  table lookup, "<b>%s</b>" is replaced by a version of
-              the lookup string.  There can be only one  "<b>%s</b>"  instance  in  a
+       <b>o</b>      With each NIS+ table lookup, "<b>%s</b>" is replaced by  a  version  of
+              the  lookup  string.   There  can be only one "<b>%s</b>" instance in a
               Postfix NIS+ map name.
 
-       <b>o</b>      Postfix  NIS+ map names use "<b>;</b>" instead of "<b>,</b>", because the lat-
-              ter character is special in the Postfix <a href="postconf.5.html">main.cf</a>  file.   Postfix
-              replaces  "<b>;</b>"  characters  in  the map name by "<b>,</b>" before making
+       <b>o</b>      Postfix NIS+ map names use "<b>;</b>" instead of "<b>,</b>", because the  lat-
+              ter  character  is special in the Postfix <a href="postconf.5.html">main.cf</a> file.  Postfix
+              replaces "<b>;</b>" characters in the map name  by  "<b>,</b>"  before  making
               NIS+ queries.
 
-       <b>o</b>      The ":<i>column</i>" part in the NIS+ map  name  is  not  part  of  the
+       <b>o</b>      The  ":<i>column</i>"  part  in  the  NIS+  map name is not part of the
               actual NIS+ query. Instead, it specifies the number of the table
-              column that provides the lookup result.  When  no  ":<i>column</i>"  is
+              column  that  provides  the  lookup result. When no ":<i>column</i>" is
               specified the first column (1) is used.
 
 <b><a name="example">EXAMPLE</a></b>

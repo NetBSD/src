@@ -293,6 +293,19 @@ databases are maintained by Postfix daemons. The lookup table name
 as used in "dbm:table" is the database file name without the ".dir"
 or ".pag" suffix.  </dd>
 
+<dt> <b>debug</b> </dt>
+
+<dd>
+<p> An adapter for another table that causes all accesses to be
+logged.  Example usage: "debug:hash:/etc/postfix/example".  The
+formats of the log messages are unspecified and subject to change.
+Warning: If a query or the underlying table contains sensitive
+information (such as a password), that information might be
+logged. </p>
+
+<p> This feature is available with Postfix 3.11 and later. </p>
+</dd>
+
 <dt> <b>environ</b> </dt>
 
 <dd> The UNIX process environment array. The lookup key is the

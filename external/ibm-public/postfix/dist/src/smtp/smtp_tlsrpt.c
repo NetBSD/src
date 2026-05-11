@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_tlsrpt.c,v 1.2 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: smtp_tlsrpt.c,v 1.2.2.1 2026/05/11 17:13:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -252,6 +252,12 @@ void    smtp_tlsrpt_create_wrapper(SMTP_STATE *state, const char *domain)
 	if (msg_verbose)
 	    msg_info("%s: domain %s has policy %.100s",
 		     smtp_tlsrpt_support, domain, rr->data);
+	if (warn_compat_break_smtp_tlsrpt_skip_reused_hs) {
+	    msg_info("using using backwards-compatible default setting "
+		     VAR_SMTP_TLSRPT_SKIP_REUSED_HS "=yes");
+	    var_smtp_tlsrpt_skip_reused_hs = 1;
+	    warn_compat_break_smtp_tlsrpt_skip_reused_hs = 0;
+	}
 	state->tlsrpt = trw_create(
 			    /* rpt_socket_name= */ var_smtp_tlsrpt_sockname,
 				    /* rpt_policy_domain= */ adomain,
@@ -308,13 +314,15 @@ static void smtp_tlsrpt_set_ext_policy(SMTP_STATE *state)
     if (tls->ext_policy_type == 0)
 	msg_panic("smtp_tlsrpt_set_ext_policy: no policy type");
 
+#define ARGV_OR_NULL(ap) ((ap) ? (ap)->argv : 0)
+
     switch (policy_type_val =
 	    convert_tlsrpt_policy_type(tls->ext_policy_type)) {
     case TLSRPT_POLICY_STS:
 	trw_set_tls_policy(state->tlsrpt, policy_type_val,
-			(const char *const *) tls->ext_policy_strings->argv,
+		(const char *const *) ARGV_OR_NULL(tls->ext_policy_strings),
 			   tls->ext_policy_domain,
-		     (const char *const *) tls->ext_mx_host_patterns->argv);
+	     (const char *const *) ARGV_OR_NULL(tls->ext_mx_host_patterns));
 	break;
     case TLSRPT_NO_POLICY_FOUND:
 	smtp_tlsrpt_set_no_policy(state);
@@ -374,7 +382,7 @@ void    smtp_tlsrpt_set_tcp_connection(SMTP_STATE *state)
 	client_addr.buf[0] = 0;
     } else if ((aierr = sane_sockaddr_to_hostaddr(
 					  (struct sockaddr *) &addr_storage,
-					     addr_storage_len, &client_addr,
+					    &addr_storage_len, &client_addr,
 						  (MAI_SERVPORT_STR *) 0,
 						  SOCK_STREAM)) != 0) {
 	msg_warn("%s: cannot convert IP address to string (%s)"

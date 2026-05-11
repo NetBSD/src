@@ -1,4 +1,4 @@
-/*	$NetBSD: lmtp_params.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: lmtp_params.c,v 1.6.2.1 2026/05/11 17:13:57 martin Exp $	*/
 
     static const CONFIG_STR_TABLE lmtp_str_table[] = {
 	VAR_NOTIFY_CLASSES, DEF_NOTIFY_CLASSES, &var_notify_classes, 0, 0,
@@ -70,6 +70,7 @@
 	VAR_HFROM_FORMAT, DEF_HFROM_FORMAT, &var_hfrom_format, 1, 0,
 	VAR_USE_SRV_LOOKUP, DEF_USE_SRV_LOOKUP, &var_use_srv_lookup, 0, 0,
 	VAR_LMTP_TLSRPT_SOCKNAME, DEF_LMTP_TLSRPT_SOCKNAME, &var_smtp_tlsrpt_sockname, 0, 0,
+	VAR_LMTP_REQTLS_POLICY, DEF_LMTP_REQTLS_POLICY, &var_smtp_reqtls_policy, 0, 0,
 	0,
     };
     static const CONFIG_TIME_TABLE lmtp_time_table[] = {
@@ -142,5 +143,9 @@
 	VAR_LMTP_REQ_DEADLINE, DEF_LMTP_REQ_DEADLINE, &var_smtp_req_deadline,
 	VAR_LMTP_TLSRPT_ENABLE, DEF_LMTP_TLSRPT_ENABLE, &var_smtp_tlsrpt_enable,
 	VAR_LMTP_TLSRPT_SKIP_REUSED_HS, DEF_LMTP_TLSRPT_SKIP_REUSED_HS, &var_smtp_tlsrpt_skip_reused_hs,
+#ifdef USE_TLS
+	VAR_LMTP_TLS_ENF_STS_MX_PAT, DEF_LMTP_TLS_ENF_STS_MX_PAT, &var_smtp_tls_enf_sts_mx_pat,
+	VAR_LMTP_LOG_TLS_FEATURE_STATUS, DEF_LMTP_LOG_TLS_FEATURE_STATUS, &var_log_tls_feature_status,
+#endif
 	0,
     };

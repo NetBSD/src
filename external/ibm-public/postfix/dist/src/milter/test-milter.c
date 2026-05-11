@@ -1,4 +1,4 @@
-/*	$NetBSD: test-milter.c,v 1.4 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: test-milter.c,v 1.4.2.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -89,6 +89,7 @@
 #include <unistd.h>
 #include <string.h>
 
+#define SM_CONF_STDBOOL_H	1
 #include "libmilter/mfapi.h"
 #include "libmilter/mfdef.h"
 
@@ -304,7 +305,7 @@ static sfsistat test_rcpt(SMFICTX *ctx, char **argv)
 }
 
 
-sfsistat test_header(SMFICTX *ctx, char *name, char *value)
+static sfsistat test_header(SMFICTX *ctx, char *name, char *value)
 {
     printf("test_header \"%s\" \"%s\"\n", name, value);
     return (test_reply(ctx, test_header_reply));
@@ -343,7 +344,7 @@ static sfsistat test_eom(SMFICTX *ctx)
 		len = strcspn(buf, "\n");
 		buf[len + 0] = '\r';
 		buf[len + 1] = '\n';
-		if (smfi_replacebody(ctx, buf, len + 2) == MI_FAILURE) {
+		if (smfi_replacebody(ctx, (unsigned char *) buf, len + 2) == MI_FAILURE) {
 		    fprintf(stderr, "body replace failure\n");
 		    exit(1);
 		}
@@ -492,7 +493,7 @@ static const char *macro_states[] = {
 static int set_macro_state;
 static char *set_macro_list;
 
-typedef sfsistat (*FILTER_ACTION) ();
+typedef sfsistat (*FILTER_ACTION) (SMFICTX *, unsigned char *, size_t);
 
 struct noproto_map {
     const char *name;
@@ -503,15 +504,15 @@ struct noproto_map {
 };
 
 static const struct noproto_map noproto_map[] = {
-    "connect", SMFIP_NOCONNECT, SMFIP_NR_CONN, &test_connect_reply, &smfilter.xxfi_connect,
-    "helo", SMFIP_NOHELO, SMFIP_NR_HELO, &test_helo_reply, &smfilter.xxfi_helo,
-    "mail", SMFIP_NOMAIL, SMFIP_NR_MAIL, &test_mail_reply, &smfilter.xxfi_envfrom,
-    "rcpt", SMFIP_NORCPT, SMFIP_NR_RCPT, &test_rcpt_reply, &smfilter.xxfi_envrcpt,
-    "data", SMFIP_NODATA, SMFIP_NR_DATA, &test_data_reply, &smfilter.xxfi_data,
-    "header", SMFIP_NOHDRS, SMFIP_NR_HDR, &test_header_reply, &smfilter.xxfi_header,
-    "eoh", SMFIP_NOEOH, SMFIP_NR_EOH, &test_eoh_reply, &smfilter.xxfi_eoh,
-    "body", SMFIP_NOBODY, SMFIP_NR_BODY, &test_body_reply, &smfilter.xxfi_body,
-    "unknown", SMFIP_NOUNKNOWN, SMFIP_NR_UNKN, &test_unknown_reply, &smfilter.xxfi_unknown,
+    "connect", SMFIP_NOCONNECT, SMFIP_NR_CONN, &test_connect_reply, (FILTER_ACTION *) & smfilter.xxfi_connect,
+    "helo", SMFIP_NOHELO, SMFIP_NR_HELO, &test_helo_reply, (FILTER_ACTION *) & smfilter.xxfi_helo,
+    "mail", SMFIP_NOMAIL, SMFIP_NR_MAIL, &test_mail_reply, (FILTER_ACTION *) & smfilter.xxfi_envfrom,
+    "rcpt", SMFIP_NORCPT, SMFIP_NR_RCPT, &test_rcpt_reply, (FILTER_ACTION *) & smfilter.xxfi_envrcpt,
+    "data", SMFIP_NODATA, SMFIP_NR_DATA, &test_data_reply, (FILTER_ACTION *) & smfilter.xxfi_data,
+    "header", SMFIP_NOHDRS, SMFIP_NR_HDR, &test_header_reply, (FILTER_ACTION *) & smfilter.xxfi_header,
+    "eoh", SMFIP_NOEOH, SMFIP_NR_EOH, &test_eoh_reply, (FILTER_ACTION *) & smfilter.xxfi_eoh,
+    "body", SMFIP_NOBODY, SMFIP_NR_BODY, &test_body_reply, (FILTER_ACTION *) & smfilter.xxfi_body,
+    "unknown", SMFIP_NOUNKNOWN, SMFIP_NR_UNKN, &test_unknown_reply, (FILTER_ACTION *) & smfilter.xxfi_unknown,
     0,
 };
 

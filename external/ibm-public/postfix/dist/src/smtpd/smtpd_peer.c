@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd_peer.c,v 1.5 2023/12/23 20:30:45 christos Exp $	*/
+/*	$NetBSD: smtpd_peer.c,v 1.5.4.1 2026/05/11 17:13:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -23,12 +23,16 @@
 /*	are set to "unknown".
 /*
 /*	Alternatively, the peer address and port may be obtained
-/*	from a proxy server.
+/*	from a proxy server or from attributes that postscreen(8)
+/*	passes to smtpd(8) over local IPC.
 /*
 /*	This module uses the local name service via getaddrinfo()
 /*	and getnameinfo(). It does not query the DNS directly.
 /*
 /*	smtpd_peer_init() updates the following fields:
+/* .IP flags.SMTPD_FLAG_HANGUP
+/*	This flag is raised when the program should hang up
+/*	without reading client input.
 /* .IP name
 /*	The verified client hostname. This name is represented by
 /*	the string "unknown" when 1) the address->name lookup failed,
@@ -38,16 +42,12 @@
 /*	The unverified client hostname as found with address->name
 /*	lookup; it is not verified for consistency with the client
 /*	IP address result from name->address lookup.
-/* .IP forward_name
-/*	The unverified client hostname as found with address->name
-/*	lookup followed by name->address lookup; it is not verified
-/*	for consistency with the result from address->name lookup.
-/*	For example, when the address->name lookup produces as
-/*	hostname an alias, the name->address lookup will produce
-/*	as hostname the expansion of that alias, so that the two
-/*	lookups produce different names.
 /* .IP addr
 /*	Printable representation of the client address.
+/* .IP addr_family
+/*	AF_INET or AF_INET6 in case of an open TCP connection.
+/*	AF_UNSPEC in all other cases, including an open non-socket
+/*	connection, or a closed connection.
 /* .IP namaddr
 /*	String of the form: "name[addr]:port".
 /* .IP rfc_addr
@@ -60,6 +60,10 @@
 /* .IP dest_port
 /*	Server port, available as Milter {daemon_port} macro, and
 /*	as server_port policy delegation attribute.
+/* .IP sockaddr_len
+/* .IP dest_sockaddr_len
+/*	These are initialized to zero, to indicate that the corresponding
+/*	sockaddr_storage members are not set.
 /* .IP name_status
 /*	The name_status result field specifies how the name
 /*	information should be interpreted:
@@ -86,19 +90,6 @@
 /* .IP 5
 /*	The address->name lookup failed with an unrecoverable error.
 /* .RE
-/* .IP forward_name_status
-/*	The forward_name_status result field specifies how the
-/*	forward_name information should be interpreted:
-/* .RS
-/* .IP 2
-/*	The address->name and name->address lookup succeeded.
-/* .IP 4
-/*	The address->name lookup or name->address failed with a
-/*	recoverable error.
-/* .IP 5
-/*	The address->name lookup or name->address failed with an
-/*	unrecoverable error.
-/* .RE
 /* .PP
 /*	smtpd_peer_reset() releases memory allocated by smtpd_peer_init().
 /*
@@ -119,6 +110,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -154,8 +148,6 @@
 
 #include "smtpd.h"
 
-static const INET_PROTO_INFO *proto_info;
-
  /*
   * XXX If we make local port information available via logging, then we must
   * also support these attributes with the XFORWARD command.
@@ -172,7 +164,7 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 {
     const char *myname = "smtpd_peer_sockaddr_to_hostaddr";
     struct sockaddr *sa = (struct sockaddr *) &(state->sockaddr);
-    SOCKADDR_SIZE sa_length = state->sockaddr_len;
+    SOCKADDR_SIZE *sa_length = &state->sockaddr_len;
 
     /*
      * XXX If we're given an IPv6 (or IPv4) connection from, e.g., inetd,
@@ -190,12 +182,11 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	MAI_HOSTADDR_STR server_addr;
 	MAI_SERVPORT_STR server_port;
 	int     aierr;
-	char   *colonp;
 
 	/*
 	 * Sanity check: we can't use sockets that we're not configured for.
 	 */
-	if (strchr((char *) proto_info->sa_family_list, sa->sa_family) == 0)
+	if (strchr((char *) inet_proto_info()->sa_family_list, sa->sa_family) == 0)
 	    msg_fatal("cannot handle socket type %s with \"%s = %s\"",
 #ifdef AF_INET6
 		      sa->sa_family == AF_INET6 ? "AF_INET6" :
@@ -217,10 +208,15 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	/*
 	 * Convert the client address to printable form.
 	 */
-	if ((aierr = sockaddr_to_hostaddr(sa, sa_length, &client_addr,
-					  &client_port, 0)) != 0)
-	    msg_fatal("%s: cannot convert client address/port to string: %s",
-		      myname, MAI_STRERROR(aierr));
+	if ((aierr = sane_sockaddr_to_hostaddr(sa, sa_length, &client_addr,
+					       &client_port, 0)) != 0)
+	    msg_fatal("%s: cannot convert client sockaddr type %s length %ld "
+		      "to string: %s", myname,
+#ifdef AF_INET6
+		      sa->sa_family == AF_INET6 ? "AF_INET6" :
+#endif
+		      sa->sa_family == AF_INET ? "AF_INET" : "other",
+		      (long) *sa_length, MAI_STRERROR(aierr));
 	state->port = mystrdup(client_port.buf);
 
 	/*
@@ -231,55 +227,20 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	if (strchr(client_addr.buf, '%') != 0)
 	    msg_panic("%s: address %s has datalink suffix",
 		      myname, client_addr.buf);
-#endif
 
 	/*
-	 * We convert IPv4-in-IPv6 address to 'true' IPv4 address early on,
-	 * but only if IPv4 support is enabled (why would anyone want to turn
-	 * it off)? With IPv4 support enabled we have no need for the IPv6
-	 * form in logging, hostname verification and access checks.
+	 * Following RFC 2821 section 4.1.3, an IPv6 address literal gets a
+	 * prefix of 'IPv6:'. We do this consistently for all IPv6 addresses
+	 * that appear in headers or envelopes. The fact that
+	 * valid_mailhost_addr() enforces the form helps of course. We use
+	 * the form without IPV6: prefix when doing access control, or when
+	 * accessing the connection cache.
 	 */
-#ifdef HAS_IPV6
 	if (sa->sa_family == AF_INET6) {
-	    if (strchr((char *) proto_info->sa_family_list, AF_INET) != 0
-		&& IN6_IS_ADDR_V4MAPPED(&SOCK_ADDR_IN6_ADDR(sa))
-		&& (colonp = strrchr(client_addr.buf, ':')) != 0) {
-		struct addrinfo *res0;
-
-		if (msg_verbose > 1)
-		    msg_info("%s: rewriting V4-mapped address \"%s\" to \"%s\"",
-			     myname, client_addr.buf, colonp + 1);
-
-		state->addr = mystrdup(colonp + 1);
-		state->rfc_addr = mystrdup(colonp + 1);
-		state->addr_family = AF_INET;
-		aierr =
-		    hostaddr_to_sockaddr(state->addr, state->port, 0, &res0);
-		if (aierr)
-		    msg_fatal("%s: cannot convert [%s]:%s to binary: %s",
-			      myname, state->addr, state->port,
-			      MAI_STRERROR(aierr));
-		sa_length = res0->ai_addrlen;
-		if (sa_length > sizeof(state->sockaddr))
-		    sa_length = sizeof(state->sockaddr);
-		memcpy((void *) sa, res0->ai_addr, sa_length);
-		freeaddrinfo(res0);		/* 200412 */
-	    }
-
-	    /*
-	     * Following RFC 2821 section 4.1.3, an IPv6 address literal gets
-	     * a prefix of 'IPv6:'. We do this consistently for all IPv6
-	     * addresses that appear in headers or envelopes. The fact that
-	     * valid_mailhost_addr() enforces the form helps of course. We
-	     * use the form without IPV6: prefix when doing access control,
-	     * or when accessing the connection cache.
-	     */
-	    else {
-		state->addr = mystrdup(client_addr.buf);
-		state->rfc_addr =
-		    concatenate(IPV6_COL, client_addr.buf, (char *) 0);
-		state->addr_family = sa->sa_family;
-	    }
+	    state->addr = mystrdup(client_addr.buf);
+	    state->rfc_addr =
+		concatenate(IPV6_COL, client_addr.buf, (char *) 0);
+	    state->addr_family = sa->sa_family;
 	}
 
 	/*
@@ -296,14 +257,19 @@ static int smtpd_peer_sockaddr_to_hostaddr(SMTPD_STATE *state)
 	/*
 	 * Convert the server address/port to printable form.
 	 */
-	if ((aierr = sockaddr_to_hostaddr((struct sockaddr *)
-					  &state->dest_sockaddr,
-					  state->dest_sockaddr_len,
-					  &server_addr,
-					  &server_port, 0)) != 0)
-	    msg_fatal("%s: cannot convert server address/port to string: %s",
-		      myname, MAI_STRERROR(aierr));
-	/* TODO: convert IPv4-in-IPv6 to IPv4 form. */
+	if ((aierr = sane_sockaddr_to_hostaddr((struct sockaddr *)
+					       &state->dest_sockaddr,
+					       &state->dest_sockaddr_len,
+					       &server_addr,
+					       &server_port, 0)) != 0)
+	    msg_fatal("%s: cannot convert server sockaddr type %s length %ld "
+		      "to string: %s", myname,
+#ifdef AF_INET6
+		   state->dest_sockaddr.ss_family == AF_INET6 ? "AF_INET6" :
+#endif
+		      state->dest_sockaddr.ss_family == AF_INET ? "AF_INET" :
+		      "other", (long) state->dest_sockaddr_len,
+		      MAI_STRERROR(aierr));
 	state->dest_addr = mystrdup(server_addr.buf);
 	state->dest_port = mystrdup(server_port.buf);
 
@@ -388,7 +354,7 @@ static void smtpd_peer_sockaddr_to_hostname(SMTPD_STATE *state)
 		    REJECT_PEER_NAME(state, SMTPD_PEER_CODE_FORGED);
 		    break;
 		}
-		if (strchr((char *) proto_info->sa_family_list, res->ai_family) == 0) {
+		if (strchr((char *) inet_proto_info()->sa_family_list, res->ai_family) == 0) {
 		    msg_info("skipping address family %d for host %s",
 			     res->ai_family, state->name);
 		    continue;
@@ -409,20 +375,40 @@ static void smtpd_peer_hostaddr_to_sockaddr(SMTPD_STATE *state)
     struct addrinfo *res;
     int     aierr;
 
+    /*
+     * The client binary address value is provided by non-error peer lookup
+     * methods. It is used to compute the anvil aggregation prefix for client
+     * IP addresses.
+     */
     if ((aierr = hostaddr_to_sockaddr(state->addr, state->port,
 				      SOCK_STREAM, &res)) != 0)
-	msg_fatal("%s: cannot convert client address/port to string: %s",
-		  myname, MAI_STRERROR(aierr));
+	msg_fatal("%s: cannot convert client address '%s' port '%s' to binary: %s",
+		  myname, state->addr, state->port, MAI_STRERROR(aierr));
     if (res->ai_addrlen > sizeof(state->sockaddr))
 	msg_panic("%s: address length > struct sockaddr_storage", myname);
     memcpy((void *) &(state->sockaddr), res->ai_addr, res->ai_addrlen);
     state->sockaddr_len = res->ai_addrlen;
     freeaddrinfo(res);
+
+    /*
+     * The server binary address is provided by non-error peer lookup
+     * methods. It is currently unused, but it is the result of a hermetic
+     * conversion, therefore low-risk.
+     */
+    if ((aierr = hostaddr_to_sockaddr(state->dest_addr, state->dest_port,
+				      SOCK_STREAM, &res)) != 0)
+	msg_fatal("%s: cannot convert server address '%s' port '%s' to binary: %s",
+	   myname, state->dest_addr, state->dest_port, MAI_STRERROR(aierr));
+    if (res->ai_addrlen > sizeof(state->dest_sockaddr))
+	msg_panic("%s: address length > struct sockaddr_storage", myname);
+    memcpy((void *) &(state->dest_sockaddr), res->ai_addr, res->ai_addrlen);
+    state->dest_sockaddr_len = res->ai_addrlen;
+    freeaddrinfo(res);
 }
 
-/* smtpd_peer_not_inet - non-socket or non-Internet endpoint */
+/* smtpd_peer_assume_local_client - non-Internet endpoint */
 
-static void smtpd_peer_not_inet(SMTPD_STATE *state)
+static void smtpd_peer_assume_local_client(SMTPD_STATE *state)
 {
 
     /*
@@ -432,7 +418,7 @@ static void smtpd_peer_not_inet(SMTPD_STATE *state)
     state->name = mystrdup("localhost");
     state->reverse_name = mystrdup("localhost");
 #ifdef AF_INET6
-    if (proto_info->sa_family_list[0] == PF_INET6) {
+    if (inet_proto_info()->sa_family_list[0] == PF_INET6) {
 	state->addr = mystrdup("::1");		/* XXX bogus. */
 	state->rfc_addr = mystrdup(IPV6_COL "::1");	/* XXX bogus. */
     } else
@@ -448,13 +434,15 @@ static void smtpd_peer_not_inet(SMTPD_STATE *state)
 
     state->dest_addr = mystrdup(state->addr);	/* XXX bogus. */
     state->dest_port = mystrdup(state->port);	/* XXX bogus. */
+
+    state->sockaddr_len = 0;
+    state->dest_sockaddr_len = 0;
 }
 
-/* smtpd_peer_no_client - peer went away, or peer info unavailable */
+/* smtpd_peer_assume_unknown_client - peer went away, or peer info unavailable */
 
-static void smtpd_peer_no_client(SMTPD_STATE *state)
+static void smtpd_peer_assume_unknown_client(SMTPD_STATE *state)
 {
-    smtpd_peer_reset(state);
     state->name = mystrdup(CLIENT_NAME_UNKNOWN);
     state->reverse_name = mystrdup(CLIENT_NAME_UNKNOWN);
     state->addr = mystrdup(CLIENT_ADDR_UNKNOWN);
@@ -466,58 +454,67 @@ static void smtpd_peer_no_client(SMTPD_STATE *state)
 
     state->dest_addr = mystrdup(SERVER_ADDR_UNKNOWN);
     state->dest_port = mystrdup(SERVER_PORT_UNKNOWN);
+
+    state->sockaddr_len = 0;
+    state->dest_sockaddr_len = 0;
 }
 
 /* smtpd_peer_from_pass_attr - initialize from attribute hash */
 
-static void smtpd_peer_from_pass_attr(SMTPD_STATE *state)
+static int smtpd_peer_from_pass_attr(SMTPD_STATE *state)
 {
     HTABLE *attr = (HTABLE *) vstream_context(state->client);
     const char *cp;
+
+#define BAD_PASS_ATTR(...) do { \
+	msg_warn(__VA_ARGS__); \
+	return (-1); \
+    } while (0)
 
     /*
      * Extract the client endpoint information from the attribute hash.
      */
     if ((cp = htable_find(attr, MAIL_ATTR_ACT_CLIENT_ADDR)) == 0)
-	msg_fatal("missing client address from proxy");
+	BAD_PASS_ATTR("missing client address from proxy");
     if (strrchr(cp, ':') != 0) {
 	if (valid_ipv6_hostaddr(cp, DO_GRIPE) == 0)
-	    msg_fatal("bad IPv6 client address syntax from proxy: %s", cp);
+	    BAD_PASS_ATTR("bad IPv6 client address syntax from proxy: %s", cp);
 	state->addr = mystrdup(cp);
 	state->rfc_addr = concatenate(IPV6_COL, cp, (char *) 0);
 	state->addr_family = AF_INET6;
     } else {
 	if (valid_ipv4_hostaddr(cp, DO_GRIPE) == 0)
-	    msg_fatal("bad IPv4 client address syntax from proxy: %s", cp);
+	    BAD_PASS_ATTR("bad IPv4 client address syntax from proxy: %s", cp);
 	state->addr = mystrdup(cp);
 	state->rfc_addr = mystrdup(cp);
 	state->addr_family = AF_INET;
     }
     if ((cp = htable_find(attr, MAIL_ATTR_ACT_CLIENT_PORT)) == 0)
-	msg_fatal("missing client port from proxy");
+	BAD_PASS_ATTR("missing client port from proxy");
     if (valid_hostport(cp, DO_GRIPE) == 0)
-	msg_fatal("bad TCP client port number syntax from proxy: %s", cp);
+	BAD_PASS_ATTR("bad TCP client port number syntax from proxy: %s", cp);
     state->port = mystrdup(cp);
 
     /*
      * The Dovecot authentication server needs the server IP address.
      */
     if ((cp = htable_find(attr, MAIL_ATTR_ACT_SERVER_ADDR)) == 0)
-	msg_fatal("missing server address from proxy");
+	BAD_PASS_ATTR("missing server address from proxy");
     if (valid_hostaddr(cp, DO_GRIPE) == 0)
-	msg_fatal("bad IPv6 server address syntax from proxy: %s", cp);
+	BAD_PASS_ATTR("bad IPv6 server address syntax from proxy: %s", cp);
     state->dest_addr = mystrdup(cp);
 
     if ((cp = htable_find(attr, MAIL_ATTR_ACT_SERVER_PORT)) == 0)
-	msg_fatal("missing server port from proxy");
+	BAD_PASS_ATTR("missing server port from proxy");
     if (valid_hostport(cp, DO_GRIPE) == 0)
-	msg_fatal("bad TCP server port number syntax from proxy: %s", cp);
+	BAD_PASS_ATTR("bad TCP server port number syntax from proxy: %s", cp);
     state->dest_port = mystrdup(cp);
 
     /*
      * Convert the client address from string to binary form.
      */
     smtpd_peer_hostaddr_to_sockaddr(state);
+    return (0);
 }
 
 /* smtpd_peer_from_default - try to initialize peer information from socket */
@@ -528,8 +525,8 @@ void    smtpd_peer_from_default(SMTPD_STATE *state)
     /*
      * The "no client" routine provides surrogate information so that the
      * application can produce sensible logging when a client disconnects
-     * before the server wakes up. The "not inet" routine provides surrogate
-     * state for (presumably) local IPC channels.
+     * before the server wakes up. The "assume local" routine provides
+     * surrogate state for open, presumably, local, IPC channels.
      */
     state->sockaddr_len = sizeof(state->sockaddr);
     state->dest_sockaddr_len = sizeof(state->dest_sockaddr);
@@ -540,18 +537,34 @@ void    smtpd_peer_from_default(SMTPD_STATE *state)
 		       (struct sockaddr *) &state->dest_sockaddr,
 		       &state->dest_sockaddr_len) < 0) {
 	if (errno == ENOTSOCK)
-	    smtpd_peer_not_inet(state);
+	    smtpd_peer_assume_local_client(state);
 	else
-	    smtpd_peer_no_client(state);
+	    smtpd_peer_assume_unknown_client(state);
     } else {
 	if (smtpd_peer_sockaddr_to_hostaddr(state) < 0)
-	    smtpd_peer_not_inet(state);
+	    smtpd_peer_assume_local_client(state);
     }
+}
+
+/* smtpd_peer_fall_back_and_hangup - recover after incomplete peer info */
+
+static void smtpd_peer_fall_back_and_hangup(SMTPD_STATE *state)
+{
+
+    /*
+     * Clear incomplete endpoint info. Populate the SMTPD_STATE with default
+     * endpoint info, so that the caller won't trip over a null pointer. Hang
+     * up before accepting input: we don't know what we're talking to and
+     * what rights they might have.
+     */
+    smtpd_peer_reset(state);
+    smtpd_peer_assume_unknown_client(state);
+    state->flags |= SMTPD_FLAG_HANGUP;
 }
 
 /* smtpd_peer_from_proxy - get endpoint info from proxy agent */
 
-static void smtpd_peer_from_proxy(SMTPD_STATE *state)
+static int smtpd_peer_from_proxy(SMTPD_STATE *state)
 {
     typedef struct {
 	const char *name;
@@ -559,6 +572,11 @@ static void smtpd_peer_from_proxy(SMTPD_STATE *state)
     } SMTPD_ENDPT_LOOKUP_INFO;
     static const SMTPD_ENDPT_LOOKUP_INFO smtpd_endpt_lookup_info[] = {
 	HAPROXY_PROTO_NAME, smtpd_peer_from_haproxy,
+
+	/*
+	 * See smtpd_haproxy.c for the a summary of the information that a
+	 * proxy endpoint lookup function is expected to provide.
+	 */
 	0,
     };
     const SMTPD_ENDPT_LOOKUP_INFO *pp;
@@ -572,13 +590,7 @@ static void smtpd_peer_from_proxy(SMTPD_STATE *state)
 	    msg_fatal("unsupported %s value: %s",
 		      VAR_SMTPD_UPROXY_PROTO, var_smtpd_uproxy_proto);
 	if (strcmp(var_smtpd_uproxy_proto, pp->name) == 0)
-	    break;
-    }
-    if (pp->endpt_lookup(state) < 0) {
-	smtpd_peer_from_default(state);
-	state->flags |= SMTPD_FLAG_HANGUP;
-    } else {
-	smtpd_peer_hostaddr_to_sockaddr(state);
+	    return (pp->endpt_lookup(state));
     }
 }
 
@@ -586,13 +598,6 @@ static void smtpd_peer_from_proxy(SMTPD_STATE *state)
 
 void    smtpd_peer_init(SMTPD_STATE *state)
 {
-    int     af;
-
-    /*
-     * Initialize.
-     */
-    if (proto_info == 0)
-	proto_info = inet_proto_info();
 
     /*
      * Prepare for partial initialization after error.
@@ -608,23 +613,30 @@ void    smtpd_peer_init(SMTPD_STATE *state)
     state->anvil_range = 0;
     state->dest_addr = 0;
     state->dest_port = 0;
+    state->dest_sockaddr_len = 0;
 
     /*
      * Determine the remote SMTP client address and port.
+     * 
+     * If we can't process the connection hand-off info from postscreen or
+     * proxy, fall back to some default endpoint info for logging and force a
+     * hangup. We can't determine what rights the peer should have.
      * 
      * XXX In stand-alone mode, don't assume that the peer will be a local
      * process. That could introduce a gaping hole when the SMTP daemon is
      * hooked up to the network via inetd or some other super-server.
      */
     if (vstream_context(state->client) != 0) {
-	smtpd_peer_from_pass_attr(state);
+	if (smtpd_peer_from_pass_attr(state) < 0)
+	    smtpd_peer_fall_back_and_hangup(state);
 	if (*var_smtpd_uproxy_proto != 0)
 	    msg_warn("ignoring non-empty %s setting behind postscreen",
 		     VAR_SMTPD_UPROXY_PROTO);
     } else if (SMTPD_STAND_ALONE(state) || *var_smtpd_uproxy_proto == 0) {
 	smtpd_peer_from_default(state);
     } else {
-	smtpd_peer_from_proxy(state);
+	if (smtpd_peer_from_proxy(state) < 0)
+	    smtpd_peer_fall_back_and_hangup(state);
     }
 
     /*
@@ -642,14 +654,14 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 					     state->port);
 
     /*
-     * Generate 'address' or 'net/mask' index for anvil event aggregation.
-     * Don't do this for non-socket input. See smtpd_peer_not_inet().
+     * Generate the 'address' or 'net/mask' index for anvil event
+     * aggregation.
      */
+
     if (state->addr_family != AF_UNSPEC) {
-	af = SOCK_ADDR_FAMILY(&(state->sockaddr));
-	state->anvil_range = inet_prefix_top(af,
+	state->anvil_range = inet_prefix_top(state->addr_family,
 					SOCK_ADDR_ADDRP(&(state->sockaddr)),
-					     af == AF_INET ?
+					     state->addr_family == AF_INET ?
 					     var_smtpd_cipv4_prefix :
 					     var_smtpd_cipv6_prefix);
     }
@@ -659,22 +671,24 @@ void    smtpd_peer_init(SMTPD_STATE *state)
 
 void    smtpd_peer_reset(SMTPD_STATE *state)
 {
+#define MYFREE_AND_ZERO(e) do { myfree(e); (e) = 0; } while (0);
+
     if (state->name)
-	myfree(state->name);
+	MYFREE_AND_ZERO(state->name);
     if (state->reverse_name)
-	myfree(state->reverse_name);
+	MYFREE_AND_ZERO(state->reverse_name);
     if (state->addr)
-	myfree(state->addr);
+	MYFREE_AND_ZERO(state->addr);
     if (state->namaddr)
-	myfree(state->namaddr);
+	MYFREE_AND_ZERO(state->namaddr);
     if (state->rfc_addr)
-	myfree(state->rfc_addr);
+	MYFREE_AND_ZERO(state->rfc_addr);
     if (state->port)
-	myfree(state->port);
+	MYFREE_AND_ZERO(state->port);
     if (state->dest_addr)
-	myfree(state->dest_addr);
+	MYFREE_AND_ZERO(state->dest_addr);
     if (state->dest_port)
-	myfree(state->dest_port);
+	MYFREE_AND_ZERO(state->dest_port);
     if (state->anvil_range)
-	myfree(state->anvil_range);
+	MYFREE_AND_ZERO(state->anvil_range);
 }

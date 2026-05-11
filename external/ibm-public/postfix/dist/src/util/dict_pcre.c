@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pcre.c,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict_pcre.c,v 1.5.4.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -730,6 +730,9 @@ static int dict_pcre_compile(const char *mapname, int lineno,
     }
     engine->match_data = pcre2_match_data_create_from_pattern(
 					       engine->pattern, (void *) 0);
+    /* 202604 Claude: handle error result. */
+    if (engine->match_data == 0)
+	msg_fatal("out of memory in pcre2_match_data_create_from_pattern()");
 #endif
     return (1);
 }
@@ -1117,7 +1120,7 @@ DICT   *dict_pcre_open(const char *mapname, int open_flags, int dict_flags)
 	(void) mvect_free(&mvect);
 
     dict_file_purge_buffers(&dict_pcre->dict);
-    DICT_PCRE_OPEN_RETURN(DICT_DEBUG (&dict_pcre->dict));
+    DICT_PCRE_OPEN_RETURN(&dict_pcre->dict);
 }
 
 #endif					/* HAS_PCRE */

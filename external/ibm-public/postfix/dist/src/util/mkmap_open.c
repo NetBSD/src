@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmap_open.c,v 1.2 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: mkmap_open.c,v 1.2.8.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -31,24 +31,33 @@
 /*	void	mkmap_close(mkmap)
 /*	MKMAP	*mkmap;
 /* DESCRIPTION
-/*	This module implements support for creating Postfix databases.
-/*	It is a dict(3) wrapper that adds global locking to dict-level
-/*	routines where appropriate.
+/*	This module adds support for creating Postfix databases from
+/*	scratch. See dict(3) for a description of the \fBopen_flags\fR
+/*	and \fBdict_flags\fR arguments.
 /*
-/*	mkmap_open() creates or truncates the named database, after
-/*	appending the appropriate suffixes to the specified filename.
-/*	Before the database is updated, it is locked for exclusive
-/*	access, and signal delivery is suspended.
-/*	See dict(3) for a description of \fBopen_flags\fR and
-/*	\fBdict_flags\fR.  All errors are fatal.
+/*	To create a database from scratch (open_flags contains O_TRUNC),
+/*	the plugin code for the database type must provide a
+/*	mkmap_<type>_open() function that maintains a global lock for
+/*	exclusive access until the database is closed.
+/*
+/*	To access a database type that has no global locking support
+/*	(no mkmap_<type>_open() function), mkmap_open() opens the database
+/*	requesting its dict(3) built-in per-update locking.
+/*
+/*	mkmap_open() suspends signal delivery before opening a database
+/*	and resumes signal delivery when it is safe: before the first
+/*	update if the database implements transaction safety, otherwise
+/*	after the database is closed.
+/*
+/*	All mkmap_open() errors are fatal.
 /*
 /*	mkmap_append() appends the named (key, value) pair to the
 /*	database. Update errors are fatal; duplicate keys are ignored
-/*	(but a warning is issued).
-/*	\fBlineno\fR is used for diagnostics.
+/*	(but a warning is issued). The \fBlineno\fR argument is used
+/*	for diagnostic messages.
 /*
-/*	mkmap_close() closes the database, releases any locks,
-/*	and resumes signal delivery. All errors are fatal.
+/*	mkmap_close() closes the database, releases any locks, and
+/*	resumes signal delivery. All errors are fatal.
 /* SEE ALSO
 /*	sigdelay(3) suspend/resume signal delivery
 /* LICENSE
@@ -65,6 +74,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -127,7 +139,7 @@ MKMAP  *mkmap_open(const char *type, const char *path,
      */
     if ((dp = dict_open_lookup(type)) == 0)
 	msg_fatal("unsupported map type: %s", type);
-    if (dp->mkmap_fn == 0)
+    if (dp->mkmap_fn == 0 && (open_flags & O_TRUNC) != 0)
 	msg_fatal("no 'map create' support for this type: %s", type);
     if (msg_verbose)
 	msg_info("open %s %s", type, path);
@@ -138,7 +150,8 @@ MKMAP  *mkmap_open(const char *type, const char *path,
      * dict modules implement locking only for individual record operations,
      * because most Postfix applications don't need global exclusive locks.
      */
-    mkmap = dp->mkmap_fn(path);
+    if (dp->mkmap_fn != 0)
+	mkmap = dp->mkmap_fn(path);
 
     /*
      * Delay signal delivery, so that we won't leave the database in an
@@ -147,16 +160,28 @@ MKMAP  *mkmap_open(const char *type, const char *path,
     sigdelay();
 
     /*
-     * Truncate the database upon open, and update it. Read-write mode is
-     * needed because the underlying routines read as well as write. We
-     * explicitly clobber lock_fd to trigger a fatal error when a map wants
-     * to unlock the database after individual transactions: that would
-     * result in race condition problems. We clobbber stat_fd as well,
-     * because that, too, is used only for individual-transaction clients.
+     * Create or open a database that supports global locking. We explicitly
+     * clobber the per-table lock_fd to trigger a fatal error when a table
+     * wants to release its lock after an individual transaction. We clobber
+     * stat_fd as well, because that, too, is used only for non-bulk
+     * applications.
      */
-    mkmap->dict = mkmap->open(path, open_flags, dict_flags);
-    mkmap->dict->lock_fd = -1;			/* XXX just in case */
-    mkmap->dict->stat_fd = -1;			/* XXX just in case */
+    if (dp->mkmap_fn != 0) {			/* Global lock */
+	mkmap->dict = mkmap->open(path, open_flags, dict_flags);
+	mkmap->dict->lock_fd = -1;		/* XXX just in case */
+	mkmap->dict->stat_fd = -1;		/* XXX just in case */
+    }
+
+    /*
+     * Otherwise, craft a surrogate MKMAP structure and request per-update
+     * locks.
+     */
+    else {					/* Per-update lock */
+	mkmap = (MKMAP *) mymalloc(sizeof(*mkmap));
+	mkmap->dict = dp->dict_fn(path, open_flags, dict_flags | DICT_FLAG_LOCK);
+	mkmap->after_open = 0;			/* No global lock */
+	mkmap->after_close = 0;			/* No global unlock */
+    }
     mkmap->dict->flags |= DICT_FLAG_DUP_WARN;
     mkmap->multi_writer = (mkmap->dict->flags & DICT_FLAG_MULTI_WRITER);
 

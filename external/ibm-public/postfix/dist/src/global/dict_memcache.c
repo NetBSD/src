@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_memcache.c,v 1.3 2023/12/23 20:30:43 christos Exp $	*/
+/*	$NetBSD: dict_memcache.c,v 1.3.4.1 2026/05/11 17:13:47 martin Exp $	*/
 
 /*++
 /* NAME
@@ -52,9 +52,11 @@
 
 /* Utility library. */
 
+#include <hex_code.h>
 #include <msg.h>
 #include <mymalloc.h>
 #include <dict.h>
+#include <ossl_digest.h>
 #include <vstring.h>
 #include <stringops.h>
 #include <auto_clnt.h>
@@ -77,6 +79,11 @@ typedef struct {
     DICT    dict;			/* parent class */
     CFG_PARSER *parser;			/* common parameter parser */
     void   *dbc_ctxt;			/* db_common context */
+    char   *key_digest;			/* digest the query key */
+#ifdef USE_TLS
+    OSSL_DGST *key_dgst_eng;		/* digest engine */
+    VSTRING *key_dgst_out;		/* digest result */
+#endif
     char   *key_format;			/* query key translation */
     int     timeout;			/* client timeout */
     int     mc_ttl;			/* memcache update expiration */
@@ -101,6 +108,7 @@ typedef struct {
 #define DICT_MC_DEF_PORT	"11211"
 #define DICT_MC_DEF_MEMCACHE	"inet:" DICT_MC_DEF_HOST ":" DICT_MC_DEF_PORT
 #define DICT_MC_DEF_KEY_FMT	"%s"
+#define DICT_MC_DEF_KEY_DGST	""
 #define DICT_MC_DEF_MC_TTL	3600
 #define DICT_MC_DEF_MC_TIMEOUT	2
 #define DICT_MC_DEF_MC_FLAGS	0
@@ -111,6 +119,7 @@ typedef struct {
 
 #define DICT_MC_NAME_MEMCACHE	"memcache"
 #define DICT_MC_NAME_BACKUP	"backup"
+#define DICT_MC_NAME_KEY_DGST	"key_digest"
 #define DICT_MC_NAME_KEY_FMT	"key_format"
 #define DICT_MC_NAME_MC_TTL	"ttl"
 #define DICT_MC_NAME_MC_TIMEOUT	"timeout"
@@ -165,7 +174,7 @@ static int dict_memcache_set(DICT_MC *dict_mc, const char *value, int ttl)
 			 DICT_TYPE_MEMCACHE, dict_mc->dict.name);
 	} else if (strcmp(STR(dict_mc->clnt_buf), "STORED") != 0) {
 	    if (count > 0)
-		msg_warn("database %s:%s: update failed: %.30s",
+		msg_warn("database %s:%s: update failed: %.100s",
 			 DICT_TYPE_MEMCACHE, dict_mc->dict.name,
 			 STR(dict_mc->clnt_buf));
 	} else {
@@ -287,6 +296,20 @@ static ssize_t dict_memcache_prepare_key(DICT_MC *dict_mc, const char *name)
     } else {
 	vstring_strcpy(dict_mc->key_buf, name);
     }
+#ifdef USE_TLS
+    if (dict_mc->key_dgst_eng) {
+	if (ossl_digest_data(dict_mc->key_dgst_eng, STR(dict_mc->key_buf),
+			LEN(dict_mc->key_buf), dict_mc->key_dgst_out) < 0) {
+	    ossl_digest_log_errors(msg_warn);
+	    msg_warn("%s:%s: %s message digest failed",
+		     DICT_TYPE_MEMCACHE, dict_mc->dict.name,
+		     dict_mc->key_digest);
+	    return (-1);
+	}
+	hex_encode_opt(dict_mc->key_buf, STR(dict_mc->key_dgst_out),
+		     LEN(dict_mc->key_dgst_out), HEX_ENCODE_FLAG_LOWERCASE);
+    }
+#endif
 
     /*
      * The length indicates whether the expansion is empty or not.
@@ -317,8 +340,10 @@ static int dict_memcache_valid_key(DICT_MC *dict_mc,
 	DICT_MC_SKIP("domain mismatch");
     if (rc < 0)
 	DICT_ERR_VAL_RETURN(dict_mc, rc, 0);
-    if (dict_memcache_prepare_key(dict_mc, name) == 0)
+    if ((rc = dict_memcache_prepare_key(dict_mc, name)) == 0)
 	DICT_MC_SKIP("empty lookup key expansion");
+    if (rc < 0)
+	DICT_ERR_VAL_RETURN(dict_mc, rc, 0);
     for (cp = (unsigned char *) STR(dict_mc->key_buf); *cp; cp++)
 	if (isascii(*cp) && isspace(*cp))
 	    DICT_MC_SKIP("name contains space");
@@ -482,6 +507,14 @@ static void dict_memcache_close(DICT *dict)
 
     cfg_parser_free(dict_mc->parser);
     db_common_free_ctx(dict_mc->dbc_ctxt);
+    if (dict_mc->key_digest)
+	myfree(dict_mc->key_digest);
+#ifdef USE_TLS
+    if (dict_mc->key_dgst_eng)
+	ossl_digest_free(dict_mc->key_dgst_eng);
+    if (dict_mc->key_dgst_out)
+	vstring_free(dict_mc->key_dgst_out);
+#endif
     if (dict_mc->key_format)
 	myfree(dict_mc->key_format);
     myfree(dict_mc->memcache);
@@ -544,6 +577,19 @@ DICT   *dict_memcache_open(const char *name, int open_flags, int dict_flags)
      * Parse the configuration file.
      */
     dict_mc->parser = parser;
+    dict_mc->key_digest = cfg_get_str(dict_mc->parser, DICT_MC_NAME_KEY_DGST,
+				      DICT_MC_DEF_KEY_DGST, 0, 0);
+#ifdef USE_TLS
+    if (*dict_mc->key_digest) {
+	if ((dict_mc->key_dgst_eng = ossl_digest_new(dict_mc->key_digest)) == 0)
+	    /* See below for dict_surrogate() error propagation. */
+	    ossl_digest_log_errors(msg_warn);
+	dict_mc->key_dgst_out = vstring_alloc(1);
+    } else {
+	dict_mc->key_dgst_eng = 0;
+	dict_mc->key_dgst_out = 0;
+    }
+#endif
     dict_mc->key_format = cfg_get_str(dict_mc->parser, DICT_MC_NAME_KEY_FMT,
 				      DICT_MC_DEF_KEY_FMT, 0, 0);
     dict_mc->timeout = cfg_get_int(dict_mc->parser, DICT_MC_NAME_MC_TIMEOUT,
@@ -596,5 +642,27 @@ DICT   *dict_memcache_open(const char *name, int open_flags, int dict_flags)
 
     dict_mc->dict.flags |= DICT_FLAG_MULTI_WRITER;
 
+#ifdef USE_TLS
+    if (*dict_mc->key_digest && dict_mc->key_dgst_eng == 0) {
+	/* See above for ossl_digest_new() error detection. */
+	DICT   *d = dict_surrogate(DICT_TYPE_MEMCACHE, name,
+				   open_flags, dict_flags,
+				   "open %s: key digest %s is not available",
+				   name, dict_mc->key_digest);
+
+	dict_memcache_close(&dict_mc->dict);
+	return (d);
+    }
+#else
+    if (*dict_mc->key_digest) {
+	DICT   *d = dict_surrogate(DICT_TYPE_MEMCACHE, name,
+				   open_flags, dict_flags, "%s support "
+				   "requires build with -DUSE_TLS",
+				   DICT_MC_NAME_KEY_DGST);
+
+	dict_memcache_close(&dict_mc->dict);
+	return (d);
+    }
+#endif
     return (&dict_mc->dict);
 }

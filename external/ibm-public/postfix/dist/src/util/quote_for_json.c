@@ -1,4 +1,4 @@
-/*	$NetBSD: quote_for_json.c,v 1.2 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: quote_for_json.c,v 1.2.2.1 2026/05/11 17:14:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -17,6 +17,10 @@
 /*	VSTRING	*result,
 /*	const char *in,
 /*	ssize_t	len)
+/*
+/*	char	*quote_for_json_var(
+/*	VSTRING	*result,
+/*	const char *in)
 /* DESCRIPTION
 /*	quote_for_json() takes well-formed UTF-8 encoded text,
 /*	quotes that text compliant with RFC 4627, and returns a
@@ -34,6 +38,9 @@
 /*
 /*	quote_for_json_append() appends the output to the result buffer.
 /*
+/*	quote_for_json_var() takes a null-terminated sequence of
+/*	null-terminated arguments and formats them with quote_for_json().
+*
 /*	Arguments:
 /* .IP result
 /*	Storage for the result, resized automatically.
@@ -63,6 +70,7 @@
   */
 #include <sys_defs.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include <string.h>
 
  /*
@@ -137,6 +145,21 @@ char   *quote_for_json(VSTRING *result, const char *text, ssize_t len)
     return (quote_for_json_append(result, text, len));
 }
 
+
+/* quote_for_json_var - quote null-terminated list of null-terminated strings */
+
+char   *quote_for_json_var(VSTRING *result,...)
+{
+    const char *in;
+    va_list ap;
+
+    VSTRING_RESET(result);
+    va_start(ap, result);
+    while ((in = va_arg(ap, const char *)) != 0)
+	quote_for_json_append(result, in, -1);
+    return (STR(result));
+}
+
 #ifdef TEST
 
  /*
@@ -147,38 +170,90 @@ char   *quote_for_json(VSTRING *result, const char *text, ssize_t len)
  /*
   * Utility library.
   */
+#include <argv.h>
 #include <msg.h>
 #include <msg_vstream.h>
 
 typedef struct TEST_CASE {
     const char *label;			/* identifies test case */
-    char   *(*fn) (VSTRING *, const char *, ssize_t);
-    const char *input;			/* input string */
-    ssize_t input_len;			/* -1 or input length */
+    int     (*action) (const struct TEST_CASE *);
+    union {
+	struct {
+	    char   *(*fn) (VSTRING *, const char *, ssize_t);
+	    const char *input;		/* input string */
+	    ssize_t input_len;		/* -1 or input length */
+	}       fixed;
+	struct {
+	    char   *(*fn) (VSTRING *,...);
+	    const char *input;
+	}       variadic;
+    }       u;
     const char *exp_res;		/* expected result */
 } TEST_CASE;
 
 #define PASS	(0)
 #define FAIL	(1)
 
+static VSTRING *res_buf;
+
+static int run_fixed_test(const TEST_CASE *tp)
+{
+    int     test_fail = 0;
+    char   *res;
+
+    res = tp->u.fixed.fn(res_buf, tp->u.fixed.input, tp->u.fixed.input_len);
+    if (strcmp(res, tp->exp_res) != 0) {
+	msg_warn("test case '%s': got '%s', want '%s'",
+		 tp->label, res, tp->exp_res);
+	test_fail = 1;
+    }
+    return (test_fail);
+}
+
+static int run_variadic_test(const TEST_CASE *tp)
+{
+    int     test_fail = 0;
+    char   *res;
+    ARGV   *argv = argv_split(tp->u.variadic.input, CHARS_SPACE);
+
+    res = tp->u.variadic.fn(res_buf, argv->argv[0], argv->argv[1],
+			    argv->argv[2], argv->argv[3]);
+    if (strcmp(res, tp->exp_res) != 0) {
+	msg_warn("test case '%s': got '%s', want '%s'",
+		 tp->label, res, tp->exp_res);
+	test_fail = 1;
+    }
+    argv_free(argv);
+    return (test_fail);
+}
+
  /*
   * The test cases.
   */
 static const TEST_CASE test_cases[] = {
-    {"ordinary ASCII text", quote_for_json,
-	" abcABC012.,[]{}/", -1, " abcABC012.,[]{}/",
+    {"ordinary ASCII text", run_fixed_test,
+	.u.fixed = {quote_for_json,
+	" abcABC012.,[]{}/", -1}, " abcABC012.,[]{}/",
     },
-    {"quote_for_json_append", quote_for_json_append,
-	"foo", -1, " abcABC012.,[]{}/foo",
+    {"quote_for_json_append", run_fixed_test,
+	.u.fixed = {quote_for_json_append,
+	"foo", -1}, " abcABC012.,[]{}/foo",
     },
-    {"common control characters", quote_for_json,
-	"\b\f\r\n\t", -1, "\\b\\f\\r\\n\\t",
+    {"common control characters", run_fixed_test,
+	.u.fixed = {quote_for_json,
+	"\b\f\r\n\t", -1}, "\\b\\f\\r\\n\\t",
     },
-    {"uncommon control characters and DEL", quote_for_json,
-	"\0\01\037\040\176\177", 6, "\\u0000\\u0001\\u001F ~\\u007F",
+    {"uncommon control characters and DEL", run_fixed_test,
+	.u.fixed = {quote_for_json,
+	"\0\01\037\040\176\177", 6}, "\\u0000\\u0001\\u001F ~\\u007F",
     },
-    {"malformed UTF-8", quote_for_json,
-	"\\*\\uasd\\u007F\x80", -1, "\\\\*\\\\uasd\\\\u007F\x80",
+    {"malformed UTF-8", run_fixed_test,
+	.u.fixed = {quote_for_json,
+	"\\*\\uasd\\u007F\x80", -1}, "\\\\*\\\\uasd\\\\u007F\x80",
+    },
+    {"multiple input strings", run_variadic_test,
+	.u.variadic = {quote_for_json_var, "one - two"},
+	"one-two",
     },
     0,
 };
@@ -188,32 +263,24 @@ int     main(int argc, char **argv)
     const TEST_CASE *tp;
     int     pass = 0;
     int     fail = 0;
-    VSTRING *res_buf = vstring_alloc(100);
 
     msg_vstream_init(sane_basename((VSTRING *) 0, argv[0]), VSTREAM_ERR);
+    res_buf = vstring_alloc(100);
 
     for (tp = test_cases; tp->label != 0; tp++) {
 	int     test_fail = 0;
-	char   *res;
 
 	msg_info("RUN  %s", tp->label);
-	res = tp->fn(res_buf, tp->input, tp->input_len);
-	if (strcmp(res, tp->exp_res) != 0) {
-	    msg_warn("test case '%s': got '%s', want '%s'",
-		     tp->label, res, tp->exp_res);
-	    test_fail = 1;
-	}
+	test_fail = tp->action(tp);
 	if (test_fail) {
 	    fail++;
 	    msg_info("FAIL %s", tp->label);
-	    test_fail = 1;
 	} else {
 	    msg_info("PASS %s", tp->label);
 	    pass++;
 	}
     }
     msg_info("PASS=%d FAIL=%d", pass, fail);
-    vstring_free(res_buf);
     exit(fail != 0);
 }
 

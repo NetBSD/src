@@ -1,4 +1,4 @@
-/*	$NetBSD: rec_type.h,v 1.4 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: rec_type.h,v 1.4.2.1 2026/05/11 17:13:49 martin Exp $	*/
 
 #ifndef _REC_TYPE_H_INCLUDED_
 #define _REC_TYPE_H_INCLUDED_
@@ -112,7 +112,7 @@
  /*
   * The subset of inputs that the postdrop command allows.
   */
-#define REC_TYPE_POST_ENVELOPE	"MFSRVAin"
+#define REC_TYPE_POST_ENVELOPE	"MCFSRVAin"
 #define REC_TYPE_POST_CONTENT	"XLN"
 #define REC_TYPE_POST_EXTRACT	"EAR"
 

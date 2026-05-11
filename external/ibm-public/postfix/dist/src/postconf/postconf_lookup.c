@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_lookup.c,v 1.4 2022/10/08 16:12:47 christos Exp $	*/
+/*	$NetBSD: postconf_lookup.c,v 1.4.6.1 2026/05/11 17:13:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -154,6 +154,17 @@ static const char *pcf_lookup_parameter_value_wrapper(const char *key,
 				       (PCF_PARAM_NODE *) 0));
 }
 
+/* pcf_dont_parse_parameter_value - disable recursion for raw parameters */
+
+static bool pcf_dont_parse_parameter_value(const char *key, void *unused_context)
+{
+    PCF_PARAM_NODE *node;
+
+    /* Only built-in parameters can be 'raw'. No need to inspect local_scope. */
+    return ((node = PCF_PARAM_TABLE_FIND(pcf_param_table, key)) != 0
+	    && PCF_RAW_PARAMETER(node));
+}
+
 /* pcf_expand_parameter_value - expand $name in parameter value */
 
 char   *pcf_expand_parameter_value(VSTRING *buf, int mode, const char *value,
@@ -182,8 +193,9 @@ char   *pcf_expand_parameter_value(VSTRING *buf, int mode, const char *value,
 
     eval_ctx.mode = (mode & ~PCF_SHOW_NONDEF);
     eval_ctx.local_scope = local_scope;
-    status = mac_expand(buf, value, MAC_EXP_FLAG_RECURSE, DONT_FILTER,
-		    pcf_lookup_parameter_value_wrapper, (void *) &eval_ctx);
+    status = mac_expand7(buf, value, MAC_EXP_FLAG_RECURSE, DONT_FILTER,
+			 pcf_lookup_parameter_value_wrapper,
+			 pcf_dont_parse_parameter_value, (void *) &eval_ctx);
     if (status & MAC_PARSE_ERROR)
 	msg_fatal("macro processing error");
     if (msg_verbose > 1) {

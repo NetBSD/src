@@ -1,4 +1,4 @@
-/*	$NetBSD: server_acl.c,v 1.4 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: server_acl.c,v 1.4.2.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -143,10 +146,9 @@ SERVER_ACL *server_acl_parse(const char *extern_acl, const char *origin)
 		argv_add(intern_acl, SERVER_ACL_NAME_DUNNO, (char *) 0);
 		break;
 	    } else {
-		if (dict_handle(acl) == 0)
-		    dict_register(acl, dict_open(acl, O_RDONLY, DICT_FLAG_LOCK
-						 | DICT_FLAG_FOLD_FIX
-						 | DICT_FLAG_UTF8_REQUEST));
+		acl = dict_open(acl, O_RDONLY, DICT_FLAG_LOCK
+				| DICT_FLAG_FOLD_FIX
+				| DICT_FLAG_UTF8_REQUEST)->reg_name;
 	    }
 	}
 	argv_add(intern_acl, acl, (char *) 0);
@@ -214,8 +216,9 @@ int     server_acl_eval(const char *client_addr, SERVER_ACL * intern_acl,
 		if (ret != SERVER_ACL_ACT_DUNNO)
 		    return (ret);
 	    } else if (dict->error != 0) {
-		msg_warn("%s: %s: table lookup error -- ignoring the remainder "
-			 "of this access list", origin, acl);
+		msg_warn("%s: %s:%s: table lookup error -- ignoring the "
+			 "remainder of this access list", origin, dict->type,
+			 dict->name);
 		return (SERVER_ACL_ACT_ERROR);
 	    }
 	} else if (STREQ(acl, SERVER_ACL_NAME_DUNNO)) {

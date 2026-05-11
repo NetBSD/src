@@ -1,4 +1,4 @@
-/*	$NetBSD: name_mask.h,v 1.1.1.2 2011/03/02 19:32:44 tron Exp $	*/
+/*	$NetBSD: name_mask.h,v 1.1.1.2.58.1 2026/05/11 17:14:03 martin Exp $	*/
 
 #ifndef _NAME_MASK_H_INCLUDED_
 #define _NAME_MASK_H_INCLUDED_
@@ -51,9 +51,10 @@ typedef struct {
 #define name_mask(tag, table, str) \
 	name_mask_opt((tag), (table), (str), NAME_MASK_DEFAULT)
 #define str_name_mask(tag, table, mask) \
-	str_name_mask_opt(((VSTRING *) 0), (tag), (table), (mask), NAME_MASK_DEFAULT)
+	str_name_mask_delim_opt(((VSTRING *) 0), (tag), (table), (mask), ", ", NAME_MASK_DEFAULT)
 
 extern int name_mask_delim_opt(const char *, const NAME_MASK *, const char *, const char *, int);
+extern const char *str_name_mask_delim_opt(VSTRING *, const char *, const NAME_MASK *, int, const char *, int);
 extern const char *str_name_mask_opt(VSTRING *, const char *, const NAME_MASK *, int, int);
 
  /*

@@ -100,8 +100,8 @@ Note 3: Postfix implementations prior to version 2.3 do not xtext encode
 attribute values. Servers that wish to interoperate with these older
 implementations should be prepared to receive unencoded information.
 
-Note 4: Some Postfix implementations do not implement the PORT or LOGIN
-attributes.
+Note 4: The PORT attribute is implemented in Postfix 2.5 and later; the LOGIN
+attribute in Postfix 2.9 and later.
 
 XXCCLLIIEENNTT SSeerrvveerr rreessppoonnssee
 

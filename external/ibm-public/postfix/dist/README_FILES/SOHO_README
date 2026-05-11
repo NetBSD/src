@@ -77,7 +77,7 @@ this with basic configuration information as discussed in the first half of
 this document.
 
     1 /etc/postfix/main.cf:
-    2     smtp_generic_maps = hash:/etc/postfix/generic
+    2     smtp_generic_maps = lmdb:/etc/postfix/generic
     3
     4 /etc/postfix/generic:
     5     his@localdomain.local             hisaccount@hisisp.example
@@ -94,11 +94,14 @@ When mail is sent to a remote host via SMTP:
     extension of +local (this example assumes that the ISP supports "+" style
     address extensions).
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ggeenneerriicc" whenever you change the
-generic table.
+generic file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://
+eettcc//ppoossttffiixx//ggeenneerriicc" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 SSoolluuttiioonn 22:: PPoossttffiixx vveerrssiioonn 22..11 aanndd eeaarrlliieerr
 
@@ -116,9 +119,9 @@ this document.
      2     myhostname = hostname.localdomain
      3     mydomain = localdomain
      4
-     5     canonical_maps = hash:/etc/postfix/canonical
+     5     canonical_maps = lmdb:/etc/postfix/canonical
      6
-     7     virtual_alias_maps = hash:/etc/postfix/virtual
+     7     virtual_alias_maps = lmdb:/etc/postfix/virtual
      8
      9 /etc/postfix/canonical:
     10     your-login-name    your-account@your-isp.com
@@ -140,14 +143,18 @@ Translation:
     instead of sending it to the ISP. This part is not required but is
     convenient.
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ccaannoonniiccaall" whenever you change the
-canonical table.
+canonical file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp
+ttyyppee:://eettcc//ppoossttffiixx//ccaannoonniiccaall" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" whenever you change the
-virtual table.
+virtual file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://
+eettcc//ppoossttffiixx//vviirrttuuaall" to specify an explicit type.
 
 EEnnaabblliinngg SSAASSLL aauutthheennttiiccaattiioonn iinn tthhee PPoossttffiixx SSMMTTPP//LLMMTTPP cclliieenntt
 
@@ -174,7 +181,7 @@ username/password information.
         relayhost = [mail.isp.example]
         # Alternative form:
         # relayhost = [mail.isp.example]:submission
-        smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+        smtp_sasl_password_maps = lmdb:/etc/postfix/sasl_passwd
 
   * The smtp_sasl_auth_enable setting enables client-side authentication. We
     will configure the client's username and password information in the second
@@ -225,8 +232,15 @@ username/password information.
     SASL client passwords. It opens the file as user root before it drops
     privileges, and before entering an optional chroot jail.
 
-  * Use the postmap command whenever you change the /etc/postfix/sasl_passwd
-    file.
+    Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" after changing the
+    sasl_passwd file, to (re)build a default-type indexed file. Execute
+    "ppoossttmmaapp ttyyppee:://eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" to specify an explicit type.
+
+    The default indexed file type is configured with the default_database_type
+    parameter. To list available explicit types, execute the command "ppoossttccoonnff
+    --mm".
 
   * If you specify the "[" and "]" in the relayhost destination, then you must
     use the same form in the smtp_sasl_password_maps file.
@@ -251,9 +265,10 @@ final resort.
 
     /etc/postfix/main.cf:
         smtp_sender_dependent_authentication = yes
-        sender_dependent_relayhost_maps = hash:/etc/postfix/sender_relay
+        sender_dependent_relayhost_maps =
+            lmdb:/etc/postfix/sender_relay
         smtp_sasl_auth_enable = yes
-        smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+        smtp_sasl_password_maps = lmdb:/etc/postfix/sasl_passwd
         relayhost = [mail.isp.example]
         # Alternative form:
         # relayhost = [mail.isp.example]:submission
@@ -272,17 +287,21 @@ final resort.
         user1@example.com               [mail.example.com]:submission
         user2@example.net               [mail.example.net]
 
+    Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+
   * If you are creative, then you can try to combine the two tables into one
     single MySQL database, and configure different Postfix queries to extract
     the appropriate information.
 
-  * Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb
-    files. To find out what lookup tables Postfix supports, use the command
-    "ppoossttccoonnff --mm".
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" after you change the
+    sasl_passwd file, to (re)build a default-type indexed file. Execute
+    "ppoossttmmaapp ttyyppee:://eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" to specify an explicit type.
 
-  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ssaassll__ppaasssswwdd" whenever you change
-    the sasl_passwd table.
+    The default indexed file type is configured with the default_database_type
+    parameter. To list available explicit types, execute the command "ppoossttccoonnff
+    --mm".
 
-  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//sseennddeerr__rreellaayy" whenever you change
-    the sender_relay table.
+  * Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//sseennddeerr__rreellaayy" after you change
+    the sender_relay file, to (re)build a default-type indexed file. Execute
+    "ppoossttmmaapp ttyyppee:://eettcc//ppoossttffiixx//sseennddeerr__rreellaayy" to specify an explicit type.
 

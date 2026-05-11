@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_vstream.c,v 1.1.1.1 2009/06/23 10:09:00 tron Exp $	*/
+/*	$NetBSD: msg_vstream.c,v 1.1.1.1.64.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -82,6 +82,7 @@ void    msg_vstream_init(const char *name, VSTREAM *vp)
 
     msg_tag = name;
     msg_stream = vp;
+    vstream_no_debug(vp);
     if (first_call) {
 	first_call = 0;
 	msg_output(msg_vstream_print);

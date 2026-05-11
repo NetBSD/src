@@ -1,0 +1,572 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+  "https://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix REQUIRETLS Support</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix REQUIRETLS Support</h1>
+
+<hr>
+
+<h2> Table of Contents </h2>
+<ul>
+
+<li> <a href="#purpose"> Purpose of this document </a> </li>
+<li> <a href="#intro"> Introduction </a> </li>
+<li> <a href="#perimeter"> REQUIRETLS for a perimeter MTA </a>
+<ul>
+<li> <a href="#inbound"> Receiving inbound messages with REQUIRETLS requests </a>
+<li> <a href="#lmtp-smtp"> LMTP and SMTP-based message stores and content filters content filters </a>
+<li> <a href="#non-smtp"> Non-SMTP and non-LMTP content filters </a>
+<li> <a href="#external"> Communication with external servers </a>
+<li> <a href="#relax"> Relaxing REQUIRETLS for external deliveries </a>
+</ul>
+<li> <a href="#census"> An experiment: testing REQUIRETLS support </a>
+<li> <a href="#requesting"> Requesting REQUIRETLS without SMTP </a>
+<li> <a href="#ndrs"> Non-delivery notifications </a> </li>
+<li> <a href="#summary"> REQUIRETLS quick summary </a> </li>
+<li> <a href="#credits"> Credits </a> </li>
+
+</ul>
+
+<h2> <a name="purpose"> Purpose of this document </a> </h2>
+
+<p> This document covers Postfix configuration for the REQUIRETLS
+extension. The purpose of these settings is to make REQUIRETLS
+support usable in an existing environment where REQUIRETLS support
+is still uncommon, with a path towards a future with REQUIRETLS.
+</p>
+
+<h2> <a name="intro"> Introduction </a> </h2>
+
+<p> The REQUIRETLS extension in ESMTP is defined in <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a>. When
+a sender requests REQUIRETLS. the message must be sent only over
+strongly-authenticated SMTP or LMTP connections. </p>
+
+<p> Specifically: </p>
+
+<ul>
+
+<li> <p> Every server in the forward path to the final destination must
+announce REQUIRETLS support. </p>
+
+<blockquote> Challenge: as of 2025, only a few servers implement
+REQUIRETLS. </blockquote>
+
+<li> <p> Every server in the forward path must be looked up securely
+(for example, with DNSSEC or HTTPS). </p>
+
+<li> <p> Every server certificate in the forward path must be verified. In
+practice, this involves DANE (+DNSSEC) or MTA-STS; custom configuration
+would not scale. </p>
+
+<blockquote> Challenge: as of 2025, many domains do not publish a
+DANE or MTA-STS policy. </blockquote>
+
+<li> <p> A message with REQUIRETLS must be returned to the sender if
+any of the above requirements is not satisfied (no STARTTLS support,
+no secure server lookup, no trusted or no matching server certificate,
+or no server that announces REQUIRETLS support). </p>
+
+</ul>
+
+<p> For more background information, see the <a href="#summary">
+REQUIRETLS quick summary</a> below. </p>
+
+<h2> <a name="perimeter"> REQUIRETLS for a perimeter MTA </a> </h2>
+
+<p> In this text, a perimeter MTA is a mail system that operates
+on the boundary of an administrative domain. It receives email
+messages for the domain, and/or sends email messages on behalf
+of the domain. </p>
+
+<h3> <a name="inbound"> Receiving inbound messages with REQUIRETLS requests </a> </h3>
+
+<p> Postfix has one global parameter setting that controls REQUIRETLS
+support in all Postfix processes. The default setting is:
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#requiretls_enable">requiretls_enable</a> = yes
+</pre>
+</blockquote>
+
+<p> With this, the Postfix SMTP server will announce REQUIRETLS
+support, and more importantly, will receive messages from senders
+that for some reason request REQUIRETLS support -- messages that
+you would otherwise not receive, assuming that the domain already
+publishes a valid DANE and/or STS policy. </p>
+
+<p> If all you need is to receive messages with REQUIRETLS, and
+you do not insist on enforcing REQUIRETLS when sending or forwarding
+messages, then you can stop reading this document after adding the
+additional settings below. </p>
+
+<blockquote> <p> NOTE: The configuration below may be suitable for
+a personal domain, where the owner can decide what happens with all
+messages. For domains that receive messages for other people, a
+less radical approach may be better, as described in the sections
+that follow.  </p> </blockquote>
+
+<blockquote>
+<pre>
+1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+2     # Don't enforce REQUIRETLS when delivering mail with SMTP or LMTP.
+3     <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> = opportunistic
+4     <a href="postconf.5.html#lmtp_requiretls_policy">lmtp_requiretls_policy</a> = opportunistic
+5     
+6     # Don't detect or add a "Require-TLS-ESMTP: yes" header.
+7     <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = no
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> Lines 3-4: These relax REQUIRETLS enforcement when delivering
+a email to a message store, content filter, or other destination
+that may not support REQUIRETLS. If a server does not support
+STARTTLS or REQUIRETLS, then Postfix will simply deliver the message
+as if the sender did not request REQUIRETLS.
+
+<li> <p> Line 7: The <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> feature enables support
+for a message header "Require-TLS-ESMTP: yes" that allows Postfix
+to propagate the sender's REQUIRETLS request through a content
+filter based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or <a href="FILTER_README.html">FILTER_README</a>. This feature
+can safely be disabled if the domain does not need to enforce
+REQUIRETLS while delivering or forwarding messages. </p>
+
+</ul>
+
+<h3> <a name="lmtp-smtp"> LMTP and SMTP-based message stores and content filters </a> </h3>
+
+<p> REQUIRETLS is historically not supported by message stores such
+as Dovecot, and by content filters based on <a href="FILTER_README.html">FILTER_README</a> or
+<a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a>. The settings below allow for that reality, while
+also preparing for future REQUIRETLS support. <p>
+
+<p> The Postfix SMTP (LMTP) client supports a permissive REQUIRETLS
+policy that is suitable for communication with internal message stores
+and content filters based on <a href="FILTER_README.html">FILTER_README</a> or <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a>. </p>
+
+<ul> 
+
+<li> <p> <b>opportunistic</b>: STARTTLS and REQUIRETLS support are
+optional. When the sender requests REQUIRETLS, and an SMTP or LMTP
+server supports STARTTLS and REQUIRETLS, then send REQUIRETLS,
+otherwise simply deliver the message as if the sender did not request
+REQUIRETLS. </p>
+
+</ul>
+
+<p> For a more complete definition of this enforcement level, see
+the <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> parameter documentation. </p>
+
+<p> For REQUIRETLS, the relevant Postfix 3.11 configuration default
+settings are: </p>
+
+<blockquote>
+<pre>
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 2     <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
+ 3     <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = yes
+ 4     <a href="postconf.5.html#lmtp_requiretls_policy">lmtp_requiretls_policy</a> = opportunistic
+ 5     <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> =
+ 6         <a href="DATABASE_README.html#types">inline</a>:{
+ 7             { ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 8             { .${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 9             { localhost = opportunistic } }
+10         <a href="cidr_table.5.html">cidr</a>:{
+11             { 0.0.0.0/0 opportunistic }
+12             { ::/0 opportunistic } }
+13       ...to be completed in section "<a href="#external">Communication with external servers</a>"...
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> Line 3: The <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> setting enables support
+for a message header "Require-TLS-ESMTP: yes" that allows Postfix
+to propagate the sender's REQUIRETLS request through a content
+filter. This feature can safely be disabled if there is no need for
+content inspection based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or <a href="FILTER_README.html">FILTER_README</a>.
+</p>
+
+<li> <p> Lines 5-12: These make REQUIRETLS support optional for
+internal destinations and content filters that are specified as a
+symbolic name (lines 6-9) or as a numerical IP address (lines 10-12).
+</p>
+
+<li> <p> Lines 7 and 8 use ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} instead
+of $<a href="postconf.5.html#mydomain">mydomain</a>. The function <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns $<a href="postconf.5.html#mydomain">mydomain</a> if
+that contains only (7-bit) ASCII. If the <a href="postconf.5.html#mydomain">mydomain</a> value contains
+non-ASCII characters, then <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns the
+<tt>xn--mumble-mumble</tt> Punycode (A-label) form that Postfix
+needs. This works around a limitation that may be eliminated in a
+future Postfix version. </p>
+
+<li> <p>  Note: if you specify a domain list outside <a href="postconf.5.html">main.cf</a>, then
+the automatic $<i>name</i> expansions and Punycode conversions will
+not happen; you will need to enter real domain names and will need
+to convert non-ASCII domains to Punycode. </p>
+
+</ul>
+
+<h3> <a name="non-smtp"> Non-SMTP and non-LMTP content filters </a> </h3>
+
+<p> Postfix <a href="FILTER_README.html">FILTER_README</a> describes content inspection based on a
+pipe-to-command approach. For REQUIRETLS, the relevant Postfix 3.11
+default setting is: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = yes
+</pre>
+</blockquote>
+
+<p> The <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> feature enables support for a message
+header "Require-TLS-ESMTP: yes" that allows Postfix to propagate the
+sender's REQUIRETLS request through a content filter. This feature can
+safely be disabled if there is no need for content inspection based on
+<a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or <a href="FILTER_README.html">FILTER_README</a>. </p>
+
+<h3> <a name="external"> Communication with external servers </a> </h3>
+
+<p> For communication with external servers, the Postfix SMTP client
+supports multiple enforcement levels: </p>
+
+<ul>
+
+<li> <p> <b>enforce</b>: When the sender requests REQUIRETLS, require
+secure lookup of MX hosts (for example, using DNSSEC or HTTPS),
+require a server certificate match (for example, based on a published
+DANE or STS policy), and require that the remote server supports
+REQUIRETLS. Otherwise return the message as undeliverable. </p> <p>
+NOTE: this is also used implicitly when no REQUIRETLS policy match
+is found. </p>
+
+<li> <p> <b>opportunistic+starttls</b>: When the sender requests
+REQUIRETLS, require that the server supports STARTTLS. Send REQUIRETLS
+if the server supports REQUIRETLS, otherwise simply deliver the
+message as if the sender did not request REQUIRETLS. </p>
+
+<li> <p> <b>opportunistic</b>: STARTTLS and REQUIRETLS support are
+optional. When the sender requests REQUIRETLS, and an SMTP or LMTP
+server supports STARTTLS and REQUIRETLS, then send REQUIRETLS,
+otherwise simply deliver the message as if the sender did not request
+REQUIRETLS. </p>
+
+</ul>
+
+<p> For a more complete definition of these enforcement levels,
+see the <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> parameter documentation. </p>
+
+<p> For sending mail with REQUIRETLS, the relevant Postfix 3.11
+default settings are shown below, with one suggested setting in a
+comment (line 2).
+
+<p> The default settings below complete the earlier configuration
+for <a href="#lmtp-smtp">message stores and content filters</a>,
+with an 'enforce' policy for external deliveries (line 13). You can
+disable the <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> feature (line 4) if a configuration
+does not use content inspection based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or
+<a href="FILTER_README.html">FILTER_README</a>. </p>
+
+<blockquote>
+<pre>
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 2     # <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = ...dane/sts plugin...
+ 3     <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
+ 4     <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = yes
+ 5     <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> =
+ 6         <a href="DATABASE_README.html#types">inline</a>:{
+ 7             { ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 8             { .${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 9             { localhost = opportunistic } }
+10         <a href="cidr_table.5.html">cidr</a>:{
+11             { 0.0.0.0/0 opportunistic }
+12             { ::/0 opportunistic } }
+13         enforce
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> New at line 13: The 'enforce' policy for external
+destinations is technically correct, but is likely to suffer from
+delivery failures because many domains do not publish a DANE or STS
+policy, and many MTAs support STARTTLS but not REQUIRETLS. A perhaps
+more practical policy may be found in the section <a href="#relax">
+Relaxing REQUIRETLS for external deliveries</a>. </p>
+
+<li> <p> (Same as before) Line 3: The <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> setting
+enables support for a message header "Require-TLS-ESMTP: yes" that
+allows Postfix to propagate the sender's REQUIRETLS request through
+a content filter. This feature can safely be disabled if there is
+no need for content inspection based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or
+<a href="FILTER_README.html">FILTER_README</a>.  </p>
+
+<li> <p> (Same as before) Lines 5-12: These make REQUIRETLS support
+optional for internal destinations and content filters that are
+specified as a symbolic name (lines 6-9) or as a numerical IP address
+(lines 10-12).
+
+<li> <p> (Same as before) Lines 7 and 8 use ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}}
+instead of $<a href="postconf.5.html#mydomain">mydomain</a>. The function <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns $<a href="postconf.5.html#mydomain">mydomain</a>
+if that contains only (7-bit) ASCII. If the <a href="postconf.5.html#mydomain">mydomain</a> value contains
+non-ASCII characters, then <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns the
+<tt>xn--mumble-mumble</tt> Punycode (A-label) form that Postfix
+needs. This works around a limitation that may be eliminated in a
+future Postfix version. </p>
+
+<li> <p> (Same as before) Note: if you specify a domain list outside
+<a href="postconf.5.html">main.cf</a>, then the automatic $<i>name</i> expansions and Punycode
+conversions will not happen; you will need to enter real domain
+names and will need to convert non-ASCII domains to Punycode.) </p>
+
+</ul>
+
+<h3> <a name="relax"> Relaxing REQUIRETLS for external deliveries </a> </h3>
+
+<p> It may be desirable to make REQUIRETLS work with today's
+infrastructure, by keeping the requirement for TLS, but relaxing
+the requirements that a remote server supports REQUIRETLS and that
+its server certificate matches a DANE or STS policy. The configuration
+below makes that change by replacing the default 'enforce' with
+'opportunistic+starttls' (line 13). </p>
+
+<blockquote>
+<pre>
+ 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
+ 2     <a href="postconf.5.html#smtp_tls_security_level">smtp_tls_security_level</a> = may
+ 3     # <a href="postconf.5.html#smtp_tls_policy_maps">smtp_tls_policy_maps</a> = ...dane/sts plugin...
+ 4     <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = yes
+ 5     <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a> =
+ 6         <a href="DATABASE_README.html#types">inline</a>:{
+ 7             { ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 8             { .${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}} = opportunistic }
+ 9             { localhost = opportunistic } }
+10         <a href="cidr_table.5.html">cidr</a>:{
+11             { 0.0.0.0/0 opportunistic }
+12             { ::/0 opportunistic } }
+13         opportunistic+starttls
+</pre>
+</blockquote>
+
+<ul>
+
+<li> <p> New at line 13: the 'opportunistic+starttls' policy relaxes
+the requirement that every MTA in the forward path of a message
+supports REQUIRETLS, but in practice only one network hop needs to
+be secured: from a sender's perimeter MTA to a receiver's perimeter
+MTA. The network connections between user agents and their respective
+perimeters are assumed to be already secure. </p>
+
+<li> <p> (Same as before) Line 3: The <a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> setting
+enables support for a message header "Require-TLS-ESMTP: yes" that
+allows Postfix to propagate the sender's REQUIRETLS request through
+a content filter. This feature can safely be disabled if there is
+no need for content inspection based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or
+<a href="FILTER_README.html">FILTER_README</a>.  </p>
+
+<li> <p> (Same as before) Lines 5-12: These make REQUIRETLS support
+optional for internal destinations and content filters that are
+specified as a symbolic name (lines 6-9) or as a numerical IP address
+(lines 10-12).
+
+<li> <p> (Same as before) Lines 7 and 8 use ${<a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{$<a href="postconf.5.html#mydomain">mydomain</a>}}
+instead of $<a href="postconf.5.html#mydomain">mydomain</a>. The function <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns $<a href="postconf.5.html#mydomain">mydomain</a>
+if that contains only (7-bit) ASCII. If the <a href="postconf.5.html#mydomain">mydomain</a> value contains
+non-ASCII characters, then <a href="postconf.5.html#domain_to_ascii">domain_to_ascii</a>{} returns the
+<tt>xn--mumble-mumble</tt> Punycode (A-label) form that Postfix
+needs. This works around a limitation that may be eliminated in a
+future Postfix version. </p>
+
+<li> <p> (Same as before) Note: if you specify a domain list outside
+<a href="postconf.5.html">main.cf</a>, then the automatic $<i>name</i> expansions and Punycode
+conversions will not happen; you will need to enter real domain
+names and will need to convert non-ASCII domains to Punycode.) </p>
+
+</ul>
+
+<h2> <a name="census"> An experiment: testing REQUIRETLS support </a> </h2>
+
+<p> The 'opportunistic' enforcement level may be useful to discover
+REQUIRETLS support globally. The idea is to turn on REQUIRETLS for
+all outbound mail, and watch in Postfix TLS status logging how often
+delivery is logged as "requiretls" (all requirements satisfied),
+"requiretls:nocertmatch" (no DANE or STS policy, or certificate not
+trusted or not matched), "requiretls:none" (no REQUIRETLS support),
+or "requiretls:nostarttls". For more details on this logging format,
+see <a href="postconf.5.html#smtp_log_tls_feature_status">smtp_log_tls_feature_status</a>.</p>
+
+<h2> <a name="requesting"> Requesting REQUIRETLS without SMTP </a> </h2>
+
+<p> There are two options: </p>
+
+<ul>
+
+<li> <p> Specify the Postfix-specific "<b>sendmail -Orequiretls=yes</b>"
+command-line option. This option is always available, but may not
+be convenient to use. <p>
+
+<li> <p> Add a Postfix-specific "<b>Require-TLS-ESMTP: yes</b>"
+message header. This is easier to use, but requires the setting
+"<a href="postconf.5.html#requiretls_esmtp_header">requiretls_esmtp_header</a> = yes" which is not recommended for systems
+without content filters based on <a href="SMTPD_PROXY_README.html">SMTPD_PROXY_README</a> or <a href="FILTER_README.html">FILTER_README</a>.
+</p>
+
+</ul>
+
+<blockquote> <b>Question</b>: perhaps there needs to be a parameter
+setting to request REQUIRETLS for specific email sources or contexts?
+</blockquote>
+
+<h2> <a name="ndrs"> Non-delivery notifications </a> </h2>
+
+<p> By default, Postfix redacts an undeliverable REQUIRETLS message as
+described in <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a>,  before returning it to the sender: </p>
+
+<ul>
+
+<li> <p> Remove the label "this message needs REQUIRETLS". The
+purpose is to avoid loss of notifications when a reverse path does
+not support REQUIRETLS, even though the forward path supported it.
+</p>
+
+<li> <p> Return only the message header, as if the message was
+received with the <a href="https://tools.ietf.org/html/rfc3461">RFC 3461</a> DSN option "<tt>RET=HDRS</tt>". The
+purpose is to limit the amount of information that may be exposed
+in plaintext. </p>
+
+</ul>
+
+<p> The relevant default setting is: </p>
+
+<blockquote>
+<pre>
+/etc/postfix/<a href="postconf.5.html">main.cf</a>:
+    <a href="postconf.5.html#requiretls_redact_dsn">requiretls_redact_dsn</a> = yes
+</pre>
+</blockquote>
+
+<p> When a message was received with a "<tt>TLS-Required: no</tt>"
+header, and REQUIRETLS was not requested, the "T<tt>LS-Required:
+no</tt>" header is copied to the delivery status notification. </p>
+
+<h2> <a name="summary"> REQUIRETLS quick summary </a> </h2>
+
+<p> The REQUIRETLS extension in ESMTP allows a sender to request
+that a message will be sent over connections that are protected
+with TLS. <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a> defines two SMTP features: </p>
+
+<ul>
+
+<li> <p> A message header "TLS-Required: no" that disables TLS
+enforcement: do not require a server certificate match, and allow
+falling back to plaintext if TLS is unavailable. This may be useful
+to report a TLS problem, as described in <a href="TLSRPT_README.html">TLSRPT_README</a>. This feature
+has lower precedence than REQUIRETLS, and is not discussed further
+in this document. </p>
+
+<li> <p> An ESMTP protocol extension named "REQUIRETLS" that an SMTP
+server may list in its EHLO response, and that an SMTP client may request
+in a MAIL FROM command. This extension can be used only in an encrypted
+session, as illustrated with the fragment below, where <tt>C</tt>=client
+and <tt>S</tt>=server. </p>
+
+<pre>
+. . .
+C: STARTTLS
+S: 220 Ready to start TLS
+C: EHLO client.example.org
+S: 250-mail.example.com 
+   . . .
+   250 REQUIRETLS
+C: MAIL FROM:&lt;sender@example.org&gt; REQUIRETLS
+S: 250 OK
+. . .
+</pre>
+
+<li> <p> <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a> applies equally to message relay [<a href="https://tools.ietf.org/html/rfc5321">RFC 5321</a>], submission
+[<a href="https://tools.ietf.org/html/rfc6409">RFC 6409</a>], and the LMTP Local Mail Transfer Protocol [<a href="https://tools.ietf.org/html/rfc2033">RFC 2033</a>]. </p>
+
+<li> <p> REQUIRETLS is an <i>end-to-end</i> feature, unlike SMTP
+which is <i>hop-by-hop</i>. When a sender requests REQUIRETLS, each
+server in the forward path must support REQUIRETLS. </p>
+
+<li> <p> Each connection in the forward path must be made to a server
+that has been looked up securely (for example, with DNSSEC
+or HTTPS).
+
+<li> <p> Each server certificate must be verified. To match a server
+certificate, the Postfix SMTP client needs to use an appropriate policy
+type: </p>
+
+<ul>
+
+<li> <p> A TLS policy type 'secure' or 'verify', with certificate name
+matching info. For example, a policy returned by an MTA-STS plugin that
+looks up certificate matching info using HTTPS;
+
+<li> <p> A TLS policy type 'dane-only', which looks up certificate or
+public-key matching info using DNSSEC. For example, a policy that is
+returned by a DANE+STS plugin; </p>
+
+<li> <p> A TLS policy type 'dane', provided that both the nexthop
+domain and its MX hosts are in DNSSEC-signed zones, and usable
+DNSSEC-signed TLSA records are discovered.  In other words, the
+effective TLS policy remains DANE and is not downgraded because the
+destination lacks DNSSEC and/or usable TLSA records; </p>
+
+<li> <p> A TLS policy type 'fingerprint', with digital fingerprints.
+This is a non-scalable solution for special deployments, mentioned
+here only for completeness. </p>
+
+</ul>
+
+<li> <p> A message that requires REQUIRETLS must be returned to the
+sender if any of the above requirements is not satisfied (no STARTTLS
+support, no secure lookup of MX servers, no trusted or no matching
+server certificate, or no server that announces REQUIRETLS support).
+</p>
+
+<li> <p> Returning an undeliverable message that requires REQUIRETLS
+comes with its own challenges: the return path may differ from the
+forward path, and the return path may not support REQUIRETLS all
+the way back to the sender, even if the forward path supported
+REQUIRETLS. By default, Postfix follows <a href="https://tools.ietf.org/html/rfc8689">RFC 8689</a> and redacts
+bounce messages so that they can be sent without REQUIRETLS. </p>
+
+</ul>
+
+<h2> <a name="credits"> Credits </a> </h2>
+
+<ul>
+
+<li> In Postfix 3.10, Wietse Venema refactored SMTPUTF8 support and
+extended it to propagate REQUIRETLS and "TLS-Required: no" information.
+
+<li> In Postfix 3.11, Wietse added REQUIRETLS support to the Postfix
+SMTP client; added a "<tt>tls=<i>status</i>/requiretls=<i>status</i></tt>"
+field to the Postfix delivery status logging; added <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a>
+support; added support for the "Require-TLS-ESMTP: yes" header to
+propagate REQUIRETLS through non-Postfix programs, specifically
+content filters. </li>
+
+</ul>
+
+</body>
+
+</html>

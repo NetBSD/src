@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf.c,v 1.5 2025/02/25 19:15:47 christos Exp $	*/
+/*	$NetBSD: postconf.c,v 1.5.2.1 2026/05/11 17:13:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -10,7 +10,7 @@
 /* .ti -4
 /*	\fBManaging main.cf:\fR
 /*
-/*	\fBpostconf\fR [\fB-dfhHnopqvx\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR [\fB-dfhHjnopqvx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fB-C \fIclass,...\fR] [\fIparameter ...\fR]
 /*
 /*	\fBpostconf\fR [\fB-epv\fR] [\fB-c \fIconfig_dir\fR]
@@ -25,7 +25,7 @@
 /* .ti -4
 /*	\fBManaging master.cf service entries:\fR
 /*
-/*	\fBpostconf\fR \fB-M\fR [\fB-foqvx\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR \fB-M\fR [\fB-joqvx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIservice\fR[\fB/\fItype\fR]\fI ...\fR]
 /*
 /*	\fBpostconf\fR \fB-M\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
@@ -40,7 +40,7 @@
 /* .ti -4
 /*	\fBManaging master.cf service fields:\fR
 /*
-/*	\fBpostconf\fR \fB-F\fR [\fB-fhHoqvx\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR \fB-F\fR [\fB-fhHjoqvx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIservice\fR[\fB/\fItype\fR[\fB/\fIfield\fR]]\fI ...\fR]
 /*
 /*	\fBpostconf\fR \fB-F\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
@@ -49,7 +49,7 @@
 /* .ti -4
 /*	\fBManaging master.cf service parameters:\fR
 /*
-/*	\fBpostconf\fR \fB-P\fR [\fB-fhHoqvx\fR] [\fB-c \fIconfig_dir\fR]
+/*	\fBpostconf\fR \fB-P\fR [\fB-fhHjoqvx\fR] [\fB-c \fIconfig_dir\fR]
 /*	[\fIservice\fR[\fB/\fItype\fR[\fB/\fIparameter\fR]]\fI ...\fR]
 /*
 /*	\fBpostconf\fR \fB-P\fR [\fB-ev\fR] [\fB-c \fIconfig_dir\fR]
@@ -212,6 +212,11 @@
 /*	that normally follows the name.
 /*
 /*	This feature is available with Postfix 3.1 and later.
+/* .IP \fB-j\fR
+/*      JSON output. Format main.cf or master.cf settings as one
+/*      \fB{"\fIkey\fB": "\fIvalue\fB"}\fR object per line.
+/*
+/*	This feature is available with Postfix 3.11 and later.
 /* .IP \fB-l\fR
 /*	List the names of all supported mailbox locking methods.
 /*	Postfix supports the following methods:
@@ -254,6 +259,16 @@
 /* .IP \fBdbm\fR
 /*	An indexed file type based on hashing.  Available on systems
 /*	with support for DBM databases.
+/* .IP \fBdebug\fR
+/*	An adapter for another table that causes all accesses to be
+/*	logged.  The table name syntax is \fItype\fB:\fIname\fR.
+/*	Example usage: \fBdebug:hash:/etc/postfix/example\fR.  The
+/*	formats of the log messages are unspecified and subject to
+/*	change.  Warning: If a query or the underlying table contains
+/*	sensitive information (such as a password), that information
+/*	might be logged.
+/*
+/*	This feature is available with Postfix 3.11 and later.
 /* .IP \fBenviron\fR
 /*	The UNIX process environment array. The lookup key is the
 /*	environment variable name; the table name is ignored.  Originally
@@ -452,6 +467,11 @@
 /*	"\fIservice/type/parameter=value\fR", one per line.  Specify
 /*	\fB-Pf\fR to fold long lines.
 /*
+/*	Specify multiple \fB-P\fR options to also list service parameters
+/*	that are not set in master.cf. This is useful with \fB-x\fR to
+/*	evaluate the impact of master.cf overrides on other parameter
+/*	settings.
+/*
 /*	Specify one or more "\fIservice/type/parameter\fR" instances
 /*	on the \fBpostconf\fR(1) command line to limit the output
 /*	to parameters of interest.  Trailing parameter name or
@@ -607,6 +627,7 @@
 
 /* Utility library. */
 
+#include <mac_midna.h>
 #include <msg.h>
 #include <msg_vstream.h>
 #include <dict.h>
@@ -659,6 +680,7 @@ static const int pcf_incompat_options[] = {
     |PCF_SHOW_LOCKS | PCF_SHOW_MAPS | PCF_DUMP_DSN_TEMPL | PCF_MAIN_PARAM \
     |PCF_MASTER_ENTRY | PCF_MASTER_FLD | PCF_MASTER_PARAM | PCF_SHOW_TLS,
     /* Modifiers. */
+    PCF_MASTER_PP | PCF_EDIT_CONF | PCF_COMMENT_OUT | PCF_EDIT_EXCL,
     PCF_SHOW_DEFS | PCF_EDIT_CONF | PCF_SHOW_NONDEF | PCF_COMMENT_OUT \
     |PCF_EDIT_EXCL,
     PCF_FOLD_LINE | PCF_EDIT_CONF | PCF_COMMENT_OUT | PCF_EDIT_EXCL,
@@ -687,14 +709,22 @@ static const int pcf_compat_options[][2] = {
     {PCF_MAIN_PARAM, (PCF_EDIT_CONF | PCF_EDIT_EXCL | PCF_COMMENT_OUT \
 		      |PCF_FOLD_LINE | PCF_HIDE_NAME | PCF_PARAM_CLASS \
 		      |PCF_SHOW_EVAL | PCF_SHOW_DEFS | PCF_SHOW_NONDEF \
-		      |PCF_MAIN_OVER | PCF_HIDE_VALUE)},
+		      |PCF_MAIN_OVER | PCF_HIDE_VALUE | PCF_SHOW_JSON)},
     {PCF_MASTER_ENTRY, (PCF_EDIT_CONF | PCF_EDIT_EXCL | PCF_COMMENT_OUT \
-			|PCF_FOLD_LINE | PCF_MAIN_OVER | PCF_SHOW_EVAL)},
+			|PCF_FOLD_LINE | PCF_MAIN_OVER | PCF_SHOW_EVAL \
+			|PCF_SHOW_JSON)},
     {PCF_MASTER_FLD, (PCF_EDIT_CONF | PCF_FOLD_LINE | PCF_HIDE_NAME \
-		      |PCF_MAIN_OVER | PCF_SHOW_EVAL | PCF_HIDE_VALUE)},
+		      |PCF_MAIN_OVER | PCF_SHOW_EVAL | PCF_HIDE_VALUE \
+		      |PCF_SHOW_JSON)},
     {PCF_MASTER_PARAM, (PCF_EDIT_CONF | PCF_EDIT_EXCL | PCF_FOLD_LINE \
 			|PCF_HIDE_NAME | PCF_MAIN_OVER | PCF_SHOW_EVAL \
-			|PCF_HIDE_VALUE)},
+			|PCF_HIDE_VALUE | PCF_SHOW_JSON | PCF_MASTER_PP)},
+    {PCF_MASTER_PP, (PCF_FOLD_LINE \
+		     |PCF_HIDE_NAME | PCF_MAIN_OVER | PCF_SHOW_EVAL \
+		     |PCF_HIDE_VALUE | PCF_SHOW_JSON | PCF_MASTER_PARAM)},
+    {PCF_SHOW_JSON, (PCF_MAIN_PARAM | PCF_MASTER_ENTRY | PCF_MASTER_FLD \
+		     |PCF_MASTER_PARAM | PCF_MAIN_OVER | PCF_SHOW_EVAL \
+		     |PCF_SHOW_NONDEF | PCF_SHOW_DEFS)},
     /* Modifiers. */
     {PCF_PARAM_CLASS, (PCF_MAIN_PARAM | PCF_SHOW_DEFS | PCF_SHOW_NONDEF)},
     0,
@@ -714,6 +744,7 @@ static const NAME_MASK pcf_compat_names[] = {
     "-F", PCF_MASTER_FLD,
     "-h", PCF_HIDE_NAME,
     "-H", PCF_HIDE_VALUE,
+    "-j", PCF_SHOW_JSON,
     "-l", PCF_SHOW_LOCKS,
     "-m", PCF_SHOW_MAPS,
     "-M", PCF_MASTER_ENTRY,
@@ -726,6 +757,7 @@ static const NAME_MASK pcf_compat_names[] = {
     "-x", PCF_SHOW_EVAL,
     "-X", PCF_EDIT_EXCL,
     "-#", PCF_COMMENT_OUT,
+    "-PP", PCF_MASTER_PP,
     0,
 };
 
@@ -745,6 +777,7 @@ static void usage(const char *progname)
 	      " [-F (master.cf fields)]"
 	      " [-h (no names)]"
 	      " [-H (no values)]"
+	      " [-j (streaming JSON) ]"
 	      " [-l (lock types)]"
 	      " [-m (map types)]"
 	      " [-M (master.cf)]"
@@ -857,7 +890,7 @@ int     main(int argc, char **argv)
     /*
      * Parse JCL.
      */
-    while ((ch = GETOPT(argc, argv, "aAbc:C:deEfFhHlmMno:pPqtT:vxX#")) > 0) {
+    while ((ch = GETOPT(argc, argv, "aAbc:C:deEfFhHjlmMno:pPqtT:vxX#")) > 0) {
 	switch (ch) {
 	case 'a':
 	    pcf_cmd_mode |= PCF_SHOW_SASL_SERV;
@@ -901,6 +934,9 @@ int     main(int argc, char **argv)
 	case 'H':
 	    pcf_cmd_mode |= PCF_HIDE_VALUE;
 	    break;
+	case 'j':
+	    pcf_cmd_mode |= PCF_SHOW_JSON;
+	    break;
 	case 'l':
 	    pcf_cmd_mode |= PCF_SHOW_LOCKS;
 	    break;
@@ -923,7 +959,10 @@ int     main(int argc, char **argv)
 	    pcf_cmd_mode |= PCF_MAIN_PARAM;
 	    break;
 	case 'P':
-	    pcf_cmd_mode |= PCF_MASTER_PARAM;
+	    if (pcf_cmd_mode & PCF_MASTER_PARAM)
+		pcf_cmd_mode |= PCF_MASTER_PP;
+	    else
+		pcf_cmd_mode |= PCF_MASTER_PARAM;
 	    break;
 	case 'q':
 	    pcf_cmd_mode &= ~(PCF_WARN_UNUSED_DEPRECATED);
@@ -960,6 +999,7 @@ int     main(int argc, char **argv)
      * For consistency with mail_params_init().
      */
     compat_level_relop_register();
+    mac_midna_register();
 
     /*
      * We don't enforce import_environment consistency in this program.
@@ -1049,8 +1089,8 @@ int     main(int argc, char **argv)
 	    pcf_show_master_fields(VSTREAM_OUT, pcf_cmd_mode, argc - optind,
 				   argv + optind);
 	else if (pcf_cmd_mode & PCF_MASTER_PARAM)
-	    pcf_show_master_params(VSTREAM_OUT, pcf_cmd_mode, argc - optind,
-				   argv + optind);
+	    pcf_show_master_params(VSTREAM_OUT, pcf_cmd_mode, param_class,
+				   argc - optind, argv + optind);
 	else
 	    pcf_show_master_entries(VSTREAM_OUT, pcf_cmd_mode, argc - optind,
 				    argv + optind);
@@ -1127,5 +1167,9 @@ int     main(int argc, char **argv)
 	}
     }
     vstream_fflush(VSTREAM_OUT);
+
+    if ((pcf_cmd_mode & PCF_WARN_UNUSED_DEPRECATED) && pcf_found_deprecated)
+	msg_warn("See https://www.postfix.org/DEPRECATION_README.html "
+		 "for details");
     exit(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_cache.c,v 1.4 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict_cache.c,v 1.4.4.1 2026/05/11 17:14:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -34,6 +34,9 @@
 /*	int	first_next;
 /*	const char **cache_key;
 /*	const char **cache_val;
+/*
+/*	int	dict_cache_error(cache)
+/*	DICT_CACHE *cache;
 /* AUXILIARY FUNCTIONS
 /*	void	dict_cache_control(cache, name, value, ...)
 /*	DICT_CACHE *cache;
@@ -123,6 +126,9 @@
 /* .RE
 /* .PP
 /*	dict_cache_name() returns the name of the specified cache.
+/*
+/*	dict_cache_error() returns the error status for the underlying
+/*	dictionary.
 /*
 /*	Arguments:
 /* .IP "dbname, open_flags, dict_flags"
@@ -683,12 +689,19 @@ const char *dict_cache_name(DICT_CACHE *cp)
 {
 
     /*
-     * This is used for verbose logging or warning messages, so the cost of
-     * call is only made where needed (well sort off - code that does not
+     * This is used for verbose logging or warning messages, so the cost of a
+     * call is only made where needed (well sort of - code that does not
      * execute still presents overhead for the processor pipeline, processor
      * cache, etc).
      */
     return (cp->name);
+}
+
+/* dict_cache_error - get the dictionary error status */
+
+int     dict_cache_error(DICT_CACHE *cp)
+{
+    return (cp->error);
 }
 
  /*

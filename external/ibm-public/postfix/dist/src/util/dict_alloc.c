@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_alloc.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_alloc.c,v 1.3.10.1 2026/05/11 17:14:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -143,9 +143,13 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
 {
     DICT   *dict = (DICT *) mymalloc(size);
 
+    if (msg_verbose > 2)
+	msg_info("dict_alloc(\"%s\", \"%s\", %ld)",
+		 dict_type, dict_name, (long) size);
+
     dict->type = mystrdup(dict_type);
     dict->name = mystrdup(dict_name);
-    dict->flags = DICT_FLAG_FIXED;
+    dict->flags = 0;
     dict->lookup = dict_default_lookup;
     dict->update = dict_default_update;
     dict->delete = dict_default_delete;
@@ -164,6 +168,8 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
     dict->utf8_backup = 0;
     dict->file_buf = 0;
     dict->file_b64 = 0;
+    dict->reg_name = 0;
+    dict->saved_close = 0;
     return dict;
 }
 
@@ -171,6 +177,11 @@ DICT   *dict_alloc(const char *dict_type, const char *dict_name, ssize_t size)
 
 void    dict_free(DICT *dict)
 {
+    if (msg_verbose > 2)
+	msg_info("dict_free type=\"%s\" name=\"%s\" reg_name=\"%s\")",
+		 dict->type, dict->name, dict->reg_name ?
+		 dict->reg_name : "(null)");
+
     myfree(dict->type);
     myfree(dict->name);
     if (dict->jbuf)
@@ -181,6 +192,8 @@ void    dict_free(DICT *dict)
 	vstring_free(dict->file_buf);
     if (dict->file_b64)
 	vstring_free(dict->file_b64);
+    if (dict->reg_name)
+	myfree(dict->reg_name);
     myfree((void *) dict);
 }
 

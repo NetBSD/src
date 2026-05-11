@@ -1,4 +1,4 @@
-.\"	$NetBSD: posttls-finger.1,v 1.6 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: posttls-finger.1,v 1.6.2.1 2026/05/11 17:13:41 martin Exp $
 .\"
 .TH POSTTLS-FINGER 1 
 .ad
@@ -182,7 +182,8 @@ For experts only.
 These synonymous values combine ssl\-expert with ssl\-session\-packet\-dump.
 For experts only, and in most cases, use wireshark instead.
 .IP "\fBssl\-debug\fR"
-Turn on OpenSSL logging of the progress of the SSL handshake.
+Turn on OpenSSL logging of the progress of the SSL handshake.  This
+includes detailed output of decoded handshake messages.
 .IP "\fBssl\-handshake\-packet\-dump\fR"
 Log hexadecimal packet dumps of the SSL handshake; for experts only.
 .IP "\fBssl\-session\-packet\-dump\fR"

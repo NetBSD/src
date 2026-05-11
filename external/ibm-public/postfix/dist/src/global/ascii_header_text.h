@@ -1,4 +1,4 @@
-/*	$NetBSD: ascii_header_text.h,v 1.2 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: ascii_header_text.h,v 1.2.2.1 2026/05/11 17:13:47 martin Exp $	*/
 
 #ifndef _ASCII_HEADER_TEXT_H_INCLUDED_
 #define _ASCII_HEADER_TEXT_H_INCLUDED_
@@ -55,4 +55,3 @@ extern char *make_ascii_header_text(VSTRING *result, int flags, const char *in);
 /*--*/
 
 #endif
-

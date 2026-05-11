@@ -1,4 +1,4 @@
-.\"	$NetBSD: regexp_table.5,v 1.5 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: regexp_table.5,v 1.5.2.1 2026/05/11 17:13:42 martin Exp $
 .\"
 .TH REGEXP_TABLE 5 
 .ad
@@ -17,8 +17,8 @@ format of Postfix regular expression tables
 .ad
 .fi
 The Postfix mail system uses optional tables for address
-rewriting, mail routing, or access control. These tables
-are usually in \fBdbm\fR or \fBdb\fR format.
+rewriting or mail routing. These tables are usually in
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 
 Alternatively, lookup tables can be specified in POSIX regular
 expression form. In this case, each input is compared against a

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: postfix-tls-script,v 1.5 2023/12/23 20:30:42 christos Exp $
+#	$NetBSD: postfix-tls-script,v 1.5.4.1 2026/05/11 17:13:37 martin Exp $
 #
 
 #++
@@ -179,7 +179,7 @@
 #	The location of the OpenSSL command line program \fBopenssl\fR(1).
 # .IP "\fBsmtp_tls_loglevel (0)\fR"
 #	Enable additional Postfix SMTP client logging of TLS activity.
-# .IP "\fBsmtp_tls_security_level (empty)\fR"
+# .IP "\fBsmtp_tls_security_level (Postfix >= 3.11: may; Postfix < 3.11: empty)\fR"
 #	The default SMTP TLS security level for the Postfix SMTP client.
 # .IP "\fBsmtp_tls_session_cache_database (empty)\fR"
 #	Name of the file containing the optional Postfix SMTP client

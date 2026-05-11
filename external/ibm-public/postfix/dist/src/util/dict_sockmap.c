@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_sockmap.c,v 1.6 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: dict_sockmap.c,v 1.6.2.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -256,7 +256,8 @@ static const char *dict_sockmap_lookup(DICT *dict, const char *key)
     reply_payload = split_at(STR(dp->rdwr_buf), ' ');
     if (strcmp(STR(dp->rdwr_buf), DICT_SOCKMAP_PROT_OK) == 0) {
 	dict->error = 0;
-	return (reply_payload);
+	/* 202604 Claude: don't return NULL with dict->error==0. */
+	return (reply_payload ? reply_payload : "");
     } else if (strcmp(STR(dp->rdwr_buf), DICT_SOCKMAP_PROT_NOTFOUND) == 0) {
 	dict->error = 0;
 	return (0);
@@ -382,5 +383,5 @@ DICT   *dict_sockmap_open(const char *mapname, int open_flags, int dict_flags)
     /* Don't look up parent domains or network superblocks. */
     dp->dict.flags = dict_flags | DICT_FLAG_PATTERN;
 
-    DICT_SOCKMAP_OPEN_RETURN(DICT_DEBUG (&dp->dict));
+    DICT_SOCKMAP_OPEN_RETURN(&dp->dict);
 }

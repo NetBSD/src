@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.c,v 1.3 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: header_opts.c,v 1.3.2.1 2026/05/11 17:13:48 martin Exp $	*/
 
 /*++
 /* NAME
@@ -93,6 +93,7 @@ static HEADER_OPTS header_opts[] = {
     "Sender", HDR_SENDER, HDR_OPT_SENDER,
     "To", HDR_TO, HDR_OPT_XRECIP,
     "TLS-Required", HDR_TLS_REQUIRED, 0,
+    "Require-TLS-ESMTP", HDR_REQTLS_ESMTP, 0,
 };
 
 #define HEADER_OPTS_SIZE (sizeof(header_opts) / sizeof(header_opts[0]))

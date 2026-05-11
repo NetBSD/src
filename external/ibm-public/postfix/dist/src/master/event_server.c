@@ -1,4 +1,4 @@
-/*	$NetBSD: event_server.c,v 1.4 2022/10/08 16:12:46 christos Exp $	*/
+/*	$NetBSD: event_server.c,v 1.4.6.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -275,6 +275,7 @@ static unsigned event_server_generation;
 static void (*event_server_pre_disconn) (VSTREAM *, char *, char **);
 static void (*event_server_slow_exit) (char *, char **);
 static int event_server_watchdog = 1000;
+static int event_server_drain_was_called = 0;
 
 /* event_server_exit - normal termination */
 
@@ -329,6 +330,9 @@ int     event_server_drain(void)
     const char *myname = "event_server_drain";
     int     fd;
 
+    if (event_server_drain_was_called)
+	return (0);
+
     switch (fork()) {
 	/* Try again later. */
     case -1:
@@ -345,6 +349,7 @@ int     event_server_drain(void)
 		msg_warn("%s: dup2(%d, %d): %m", myname, STDIN_FILENO, fd);
 	}
 	var_use_limit = 1;
+	event_server_drain_was_called = 1;
 	return (0);
 	/* Let the master start a new process. */
     default:
@@ -447,6 +452,9 @@ static void event_server_accept_local(int unused_event, void *context)
     int     time_left = -1;
     int     fd;
 
+    if (event_server_drain_was_called)
+	return;
+
     /*
      * Be prepared for accept() to fail because some other process already
      * got the connection (the number of processes competing for clients is
@@ -459,6 +467,8 @@ static void event_server_accept_local(int unused_event, void *context)
 
     if (event_server_pre_accept)
 	event_server_pre_accept(event_server_name, event_server_argv);
+    if (event_server_drain_was_called)
+	return;
     fd = LOCAL_ACCEPT(listen_fd);
     if (event_server_lock != 0
 	&& myflock(vstream_fileno(event_server_lock), INTERNAL_LOCK,
@@ -485,6 +495,9 @@ static void event_server_accept_pass(int unused_event, void *context)
     int     fd;
     HTABLE *attr = 0;
 
+    if (event_server_drain_was_called)
+	return;
+
     /*
      * Be prepared for accept() to fail because some other process already
      * got the connection (the number of processes competing for clients is
@@ -497,6 +510,8 @@ static void event_server_accept_pass(int unused_event, void *context)
 
     if (event_server_pre_accept)
 	event_server_pre_accept(event_server_name, event_server_argv);
+    if (event_server_drain_was_called)
+	return;
     fd = pass_accept_attr(listen_fd, &attr);
     if (event_server_lock != 0
 	&& myflock(vstream_fileno(event_server_lock), INTERNAL_LOCK,
@@ -522,6 +537,9 @@ static void event_server_accept_inet(int unused_event, void *context)
     int     time_left = -1;
     int     fd;
 
+    if (event_server_drain_was_called)
+	return;
+
     /*
      * Be prepared for accept() to fail because some other process already
      * got the connection (the number of processes competing for clients is
@@ -534,6 +552,8 @@ static void event_server_accept_inet(int unused_event, void *context)
 
     if (event_server_pre_accept)
 	event_server_pre_accept(event_server_name, event_server_argv);
+    if (event_server_drain_was_called)
+	return;
     fd = inet_accept(listen_fd);
     if (event_server_lock != 0
 	&& myflock(vstream_fileno(event_server_lock), INTERNAL_LOCK,

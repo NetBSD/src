@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.c,v 1.3 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: myaddrinfo.c,v 1.3.6.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -835,8 +835,11 @@ int     main(int argc, char **argv)
     struct addrinfo **resv;
     MAI_HOSTNAME_STR host;
     MAI_HOSTADDR_STR addr;
+    MAI_SERVNAME_STR serv;
+    MAI_SERVPORT_STR port;
     size_t  len, n;
     int     err;
+    char   *aport;
 
     msg_vstream_init(argv[0], VSTREAM_ERR);
 
@@ -847,9 +850,13 @@ int     main(int argc, char **argv)
 
     msg_info("=== hostname %s ===", argv[2]);
 
-    if ((err = hostname_to_sockaddr(argv[2], (char *) 0, 0, &info)) != 0) {
-	msg_info("hostname_to_sockaddr(%s): %s",
-	  argv[2], err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
+#define STR_OR_NULL(s) ((s) ? (s) : "(null)")
+
+    aport = split_at(argv[2], ':');
+    if ((err = hostname_to_sockaddr(argv[2], aport, 0, &info)) != 0) {
+	msg_warn("hostname_to_sockaddr(%s:%s): %s",
+		 argv[2], STR_OR_NULL(aport), err == EAI_SYSTEM ?
+		 strerror(errno) : gai_strerror(err));
     } else {
 	for (len = 0, ip = info; ip != 0; ip = ip->ai_next)
 	    len += 1;
@@ -860,20 +867,21 @@ int     main(int argc, char **argv)
 	for (n = 0; n < len; n++) {
 	    ip = resv[n];
 	    if ((err = sockaddr_to_hostaddr(ip->ai_addr, ip->ai_addrlen, &addr,
-					 (MAI_SERVPORT_STR *) 0, 0)) != 0) {
-		msg_info("sockaddr_to_hostaddr: %s",
+					    &port, 0)) != 0) {
+		msg_warn("sockaddr_to_hostaddr: %s",
 		   err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		continue;
 	    }
-	    msg_info("%s -> family=%d sock=%d proto=%d %s", argv[2],
-		 ip->ai_family, ip->ai_socktype, ip->ai_protocol, addr.buf);
+	    msg_info("%s:%s -> family=%d sock=%d proto=%d %s:%s",
+		     argv[2], STR_OR_NULL(aport), ip->ai_family,
+		     ip->ai_socktype, ip->ai_protocol, addr.buf, port.buf);
 	    if ((err = sockaddr_to_hostname(ip->ai_addr, ip->ai_addrlen, &host,
-					 (MAI_SERVNAME_STR *) 0, 0)) != 0) {
-		msg_info("sockaddr_to_hostname: %s",
+					    &serv, 0)) != 0) {
+		msg_warn("sockaddr_to_hostname: %s",
 		   err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 		continue;
 	    }
-	    msg_info("%s -> %s", addr.buf, host.buf);
+	    msg_info("%s:%s -> %s:%s", addr.buf, port.buf, host.buf, serv.buf);
 	}
 	freeaddrinfo(info);
 	myfree((void *) resv);
@@ -881,23 +889,25 @@ int     main(int argc, char **argv)
 
     msg_info("=== host address %s ===", argv[3]);
 
-    if ((err = hostaddr_to_sockaddr(argv[3], (char *) 0, 0, &ip)) != 0) {
-	msg_info("hostaddr_to_sockaddr(%s): %s",
-	  argv[3], err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
+    aport = split_at(argv[3], ':');
+    if ((err = hostaddr_to_sockaddr(argv[3], aport, 0, &ip)) != 0) {
+	msg_warn("hostaddr_to_sockaddr(%s:%s): %s",
+		 argv[3], STR_OR_NULL(aport), err == EAI_SYSTEM ?
+		 strerror(errno) : gai_strerror(err));
     } else {
 	if ((err = sockaddr_to_hostaddr(ip->ai_addr, ip->ai_addrlen, &addr,
-					(MAI_SERVPORT_STR *) 0, 0)) != 0) {
-	    msg_info("sockaddr_to_hostaddr: %s",
+					&port, 0)) != 0) {
+	    msg_warn("sockaddr_to_hostaddr: %s",
 		   err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 	} else {
-	    msg_info("%s -> family=%d sock=%d proto=%d %s", argv[3],
-		 ip->ai_family, ip->ai_socktype, ip->ai_protocol, addr.buf);
+	    msg_info("%s:%s -> family=%d sock=%d proto=%d %s:%s", argv[3], STR_OR_NULL(aport),
+		     ip->ai_family, ip->ai_socktype, ip->ai_protocol, addr.buf, port.buf);
 	    if ((err = sockaddr_to_hostname(ip->ai_addr, ip->ai_addrlen, &host,
-					 (MAI_SERVNAME_STR *) 0, 0)) != 0) {
-		msg_info("sockaddr_to_hostname: %s",
+					    &serv, 0)) != 0) {
+		msg_warn("sockaddr_to_hostname: %s",
 		   err == EAI_SYSTEM ? strerror(errno) : gai_strerror(err));
 	    } else
-		msg_info("%s -> %s", addr.buf, host.buf);
+		msg_info("%s:%s -> %s:%s", addr.buf, port.buf, host.buf, serv.buf);
 	    freeaddrinfo(ip);
 	}
     }

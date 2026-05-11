@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_out_recipient.c,v 1.5 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: cleanup_out_recipient.c,v 1.5.2.1 2026/05/11 17:13:46 martin Exp $	*/
 
 /*++
 /* NAME
@@ -106,7 +106,7 @@ static void cleanup_trace_append(CLEANUP_STATE *state, RECIPIENT *rcpt,
     }
     if (trace_append(BOUNCE_FLAG_CLEAN, state->queue_id,
 		     CLEANUP_MSG_STATS(&stats, state),
-		     rcpt, "none", dsn) != 0) {
+		     rcpt, "none", NO_TLS_STATS, dsn) != 0) {
 	msg_warn("%s: trace logfile update error", state->queue_id);
 	state->errs |= CLEANUP_STAT_WRITE;
     }
@@ -120,7 +120,7 @@ static void cleanup_verify_append(CLEANUP_STATE *state, RECIPIENT *rcpt,
     MSG_STATS stats;
 
     if (verify_append(state->queue_id, CLEANUP_MSG_STATS(&stats, state),
-		      rcpt, "none", dsn, verify_status) != 0) {
+		      rcpt, "none", NO_TLS_STATS, dsn, verify_status) != 0) {
 	msg_warn("%s: verify service update error", state->queue_id);
 	state->errs |= CLEANUP_STAT_WRITE;
     }

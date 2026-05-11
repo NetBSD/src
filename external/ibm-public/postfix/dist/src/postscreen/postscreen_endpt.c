@@ -1,4 +1,4 @@
-/*	$NetBSD: postscreen_endpt.c,v 1.5 2025/02/25 19:15:48 christos Exp $	*/
+/*	$NetBSD: postscreen_endpt.c,v 1.5.2.1 2026/05/11 17:13:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -118,7 +118,7 @@ void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
 			               PSC_ENDPT_LOOKUP_FN lookup_done)
 {
     struct sockaddr_storage addr_storage;
-    SOCKADDR_SIZE addr_storage_len = sizeof(addr_storage);
+    SOCKADDR_SIZE addr_storage_len;
     int     status;
     MAI_HOSTADDR_STR smtp_client_addr;
     MAI_SERVPORT_STR smtp_client_port;
@@ -126,10 +126,13 @@ void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
     MAI_SERVPORT_STR smtp_server_port;
     int     aierr;
 
+#define RESET_ADDR_STORAGE_LEN() (addr_storage_len = sizeof(addr_storage))
+
     /*
      * Look up the remote SMTP client address and port.
      */
-    if (getpeername(vstream_fileno(smtp_client_stream), (struct sockaddr *)
+    if (RESET_ADDR_STORAGE_LEN(),
+	getpeername(vstream_fileno(smtp_client_stream), (struct sockaddr *)
 		    &addr_storage, &addr_storage_len) < 0) {
 	msg_warn("getpeername: %m -- dropping this connection");
 	status = -1;
@@ -137,11 +140,12 @@ void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
 
     /*
      * Convert the remote SMTP client address and port to printable form for
-     * logging and access control.
+     * logging and access control. Note: this may change addr_storage and
+     * addr_storage_len.
      */
     else if ((aierr = sane_sockaddr_to_hostaddr(
 					  (struct sockaddr *) &addr_storage,
-					addr_storage_len, &smtp_client_addr,
+				       &addr_storage_len, &smtp_client_addr,
 				    &smtp_client_port, SOCK_STREAM)) != 0) {
 	msg_warn("cannot convert client address/port to string: %s"
 		 " -- dropping this connection",
@@ -150,9 +154,11 @@ void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
     }
 
     /*
-     * Look up the local SMTP server address and port.
+     * Look up the local SMTP server address and port. Be sure to reset the
+     * addr_storage_len value.
      */
-    else if (getsockname(vstream_fileno(smtp_client_stream),
+    else if (RESET_ADDR_STORAGE_LEN(),
+	     getsockname(vstream_fileno(smtp_client_stream),
 			 (struct sockaddr *) &addr_storage,
 			 &addr_storage_len) < 0) {
 	msg_warn("getsockname: %m -- dropping this connection");
@@ -161,11 +167,12 @@ void    psc_endpt_local_lookup(VSTREAM *smtp_client_stream,
 
     /*
      * Convert the local SMTP server address and port to printable form for
-     * logging.
+     * logging. This may also change addr_storage and addr_storage_len, but
+     * those variables are dead.
      */
     else if ((aierr = sane_sockaddr_to_hostaddr(
 					  (struct sockaddr *) &addr_storage,
-					addr_storage_len, &smtp_server_addr,
+				       &addr_storage_len, &smtp_server_addr,
 				    &smtp_server_port, SOCK_STREAM)) != 0) {
 	msg_warn("cannot convert server address/port to string: %s"
 		 " -- dropping this connection",

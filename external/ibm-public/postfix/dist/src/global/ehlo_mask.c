@@ -1,4 +1,4 @@
-/*	$NetBSD: ehlo_mask.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: ehlo_mask.c,v 1.3.10.1 2026/05/11 17:13:47 martin Exp $	*/
 
 /*++
 /* NAME
@@ -22,6 +22,7 @@
 /*	#define EHLO_MASK_DSN		(1<<11)
 /*	#define EHLO_MASK_SMTPUTF8	(1<<12)
 /*	#define EHLO_MASK_CHUNKING	(1<<13)
+/*	#define EHLO_MASK_REQTLS	(1<<14)
 /*	#define EHLO_MASK_SILENT	(1<<15)
 /*
 /*	int	ehlo_mask(keyword_list)
@@ -72,22 +73,22 @@
   * The lookup table.
   */
 static const NAME_MASK ehlo_mask_table[] = {
-    "8BITMIME", EHLO_MASK_8BITMIME,
-    "AUTH", EHLO_MASK_AUTH,
-    "ETRN", EHLO_MASK_ETRN,
-    "PIPELINING", EHLO_MASK_PIPELINING,
-    "SIZE", EHLO_MASK_SIZE,
-    "VERP", EHLO_MASK_VERP,
-    "VRFY", EHLO_MASK_VRFY,
-    "XCLIENT", EHLO_MASK_XCLIENT,
-    "XFORWARD", EHLO_MASK_XFORWARD,
-    "STARTTLS", EHLO_MASK_STARTTLS,
-    "ENHANCEDSTATUSCODES", EHLO_MASK_ENHANCEDSTATUSCODES,
-    "DSN", EHLO_MASK_DSN,
-    "EHLO_MASK_SMTPUTF8", EHLO_MASK_SMTPUTF8,
-    "SMTPUTF8", EHLO_MASK_SMTPUTF8,
-    "CHUNKING", EHLO_MASK_CHUNKING,
-    "SILENT-DISCARD", EHLO_MASK_SILENT,	/* XXX In-band signaling */
+    EHLO_VERB_8BITMIME, EHLO_MASK_8BITMIME,
+    EHLO_VERB_AUTH, EHLO_MASK_AUTH,
+    EHLO_VERB_ETRN, EHLO_MASK_ETRN,
+    EHLO_VERB_PIPELINING, EHLO_MASK_PIPELINING,
+    EHLO_VERB_SIZE, EHLO_MASK_SIZE,
+    EHLO_VERB_VERP, EHLO_MASK_VERP,
+    EHLO_VERB_VRFY, EHLO_MASK_VRFY,
+    EHLO_VERB_XCLIENT, EHLO_MASK_XCLIENT,
+    EHLO_VERB_XFORWARD, EHLO_MASK_XFORWARD,
+    EHLO_VERB_STARTTLS, EHLO_MASK_STARTTLS,
+    EHLO_VERB_ENHANCEDSTATUSCODES, EHLO_MASK_ENHANCEDSTATUSCODES,
+    EHLO_VERB_DSN, EHLO_MASK_DSN,
+    EHLO_VERB_SMTPUTF8, EHLO_MASK_SMTPUTF8,
+    EHLO_VERB_CHUNKING, EHLO_MASK_CHUNKING,
+    EHLO_VERB_REQTLS, EHLO_MASK_REQTLS,
+    EHLO_VERB_SILENT, EHLO_MASK_SILENT,
     0,
 };
 
@@ -116,32 +117,3 @@ const char *str_ehlo_mask(int mask_bits)
      */
     return (str_name_mask("ehlo bitmask", ehlo_mask_table, mask_bits));
 }
-
-#ifdef TEST
-
- /*
-  * Stand-alone test program.
-  */
-#include <stdlib.h>
-#include <vstream.h>
-#include <vstring.h>
-#include <vstring_vstream.h>
-
-int     main(int unused_argc, char **unused_argv)
-{
-    int     mask_bits;
-    VSTRING *buf = vstring_alloc(1);
-    const char *mask_string;
-
-    while (vstring_get_nonl(buf, VSTREAM_IN) != VSTREAM_EOF) {
-	mask_bits = ehlo_mask(vstring_str(buf));
-	mask_string = str_ehlo_mask(mask_bits);
-	vstream_printf("%s -> 0x%x -> %s\n", vstring_str(buf), mask_bits,
-		       mask_string);
-	vstream_fflush(VSTREAM_OUT);
-    }
-    vstring_free(buf);
-    exit(0);
-}
-
-#endif

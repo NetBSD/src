@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc2047_code.c,v 1.2 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: rfc2047_code.c,v 1.2.2.1 2026/05/11 17:13:49 martin Exp $	*/
 
 /*++
 /* NAME
@@ -276,6 +276,12 @@ char   *rfc2047_encode(VSTRING *result, int header_context,
 	msg_warn("%s: encoder called with empty charset name", myname);
 	return (0);
     }
+    /* 202604 Claude: avoid 'space_left' underflow. */
+    if (strlen(charset) > ENC_WORD_MAX_LEN / 2) {
+	msg_warn("%s: unreasonable charset name: '%.100s'",
+		 myname, charset);
+	return (0);
+    }
     for (cp = (const unsigned char *) charset; (ch = *cp) != 0; cp++) {
 	if (!RFC2047_ALLOWED_TOKEN_CHAR(ch)) {
 	    msg_warn("%s: invalid character: 0x%x in charset name: '%s'",
@@ -320,10 +326,10 @@ char   *rfc2047_encode(VSTRING *result, int header_context,
     }
 
     /*
-     * Choose between quoted-printable or base64 encoding. 
-     *
-     * Header strings are short, so making multiple passes over the input is
-     * not a disaster. How many bytes would the encoder produce using
+     * Choose between quoted-printable or base64 encoding.
+     * 
+     * Header strings are short, so making multiple passes over the input is not
+     * a disaster. How many bytes would the encoder produce using
      * quoted-printable? We don't optimize for the shortest encoding but for
      * compromised readability. If the input is not short, and more than 1/2
      * of the input bytes need to be encoded, then the content is mostly not

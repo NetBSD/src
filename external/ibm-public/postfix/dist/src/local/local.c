@@ -1,4 +1,4 @@
-/*	$NetBSD: local.c,v 1.5 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: local.c,v 1.5.2.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -686,7 +686,7 @@ char   *var_mailbox_cmd_maps;
 char   *var_rcpt_fdelim;
 char   *var_local_cmd_shell;
 char   *var_luser_relay;
-int     var_biff;
+bool    var_biff;
 char   *var_mail_spool_dir;
 char   *var_mailbox_transport;
 char   *var_mbox_transp_maps;
@@ -698,10 +698,10 @@ char   *var_forward_path;
 char   *var_cmd_exp_filter;
 char   *var_fwd_exp_filter;
 char   *var_prop_extension;
-int     var_exp_own_alias;
+bool    var_exp_own_alias;
 char   *var_deliver_hdr;
-int     var_stat_home_dir;
-int     var_mailtool_compat;
+bool    var_stat_home_dir;
+bool    var_mailtool_compat;
 char   *var_mailbox_lock;
 long    var_mailbox_limit;
 bool    var_frozen_delivered;

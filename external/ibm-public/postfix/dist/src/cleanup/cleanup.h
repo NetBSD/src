@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.h,v 1.11 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: cleanup.h,v 1.11.2.1 2026/05/11 17:13:45 martin Exp $	*/
 
 /*++
 /* NAME
@@ -135,6 +135,7 @@ typedef struct CLEANUP_STATE {
      * Internationalization, RequireTLS, etc.
      */
     int     sendopts;			/* what support is desired */
+    int     reqtls_esmtp_hdr_seen;	/* valid Require-TLS-ESMTP header */
 } CLEANUP_STATE;
 
  /*
@@ -228,6 +229,7 @@ extern void cleanup_pre_jail(char *, char **);
 extern void cleanup_post_jail(char *, char **);
 extern const CONFIG_INT_TABLE cleanup_int_table[];
 extern const CONFIG_BOOL_TABLE cleanup_bool_table[];
+extern const CONFIG_NBOOL_TABLE cleanup_nbool_table[];
 extern const CONFIG_STR_TABLE cleanup_str_table[];
 extern const CONFIG_TIME_TABLE cleanup_time_table[];
 
@@ -362,6 +364,16 @@ extern void cleanup_body_edit_free(CLEANUP_STATE *);
   * From: header formatting.
   */
 extern int cleanup_hfrom_format;
+
+ /*
+  * How to handle garbage at end of the primary message header.
+  */
+#define NON_EMPTY_EOH_CODE_ERROR	-1	/* sentinel */
+#define NON_EMPTY_EOH_CODE_FIX_QUIETLY	0
+#define NON_EMPTY_EOH_CODE_ADD_HDR	1
+#define NON_EMPTY_EOH_CODE_REJECT	2
+
+extern int cleanup_non_empty_eoh_action;
 
 /* LICENSE
 /* .ad

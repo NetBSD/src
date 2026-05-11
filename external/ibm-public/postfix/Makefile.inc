@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2021/12/25 13:30:42 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.31.6.1 2026/05/11 17:13:35 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist
 # Many issues need to be resolved.
 COPTS+=	-fcommon
 
-CPPFLAGS+= -DNETBSD7 -DUSE_SASL_AUTH -DNO_EAI \
+CPPFLAGS+= -DNETBSD11 -DUSE_SASL_AUTH -DNO_EAI \
 	-I${DIST} \
 	-I${PFIX_DISTDIR}/src/dns -I${PFIX_DISTDIR}/src/global \
 	-I${PFIX_DISTDIR}/src/master -I${PFIX_DISTDIR}/src/util \

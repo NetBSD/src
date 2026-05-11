@@ -2,7 +2,8 @@
 
 # Spellchecks text in the HISTORY file, starting with 2022.
 
-LANG=C; export LANG
+#LANG=C; export LANG
+LANG=en_US.UTF-8; export LANG
 
 sed '1,/^2022/d' HISTORY | spell | grep -F -vxf proto/stop | \
 	grep -F -vxf proto/stop.spell-cc | \

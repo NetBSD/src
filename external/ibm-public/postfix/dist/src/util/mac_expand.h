@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.h,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: mac_expand.h,v 1.5.2.1 2026/05/11 17:14:03 martin Exp $	*/
 
 #ifndef _MAC_EXPAND_H_INCLUDED_
 #define _MAC_EXPAND_H_INCLUDED_
@@ -59,10 +59,17 @@ extern MAC_EXP_OP_RES mac_exp_op_res_bool[2];
 #define MAC_EXP_MODE_USE	(1)
 
 typedef const char *(*MAC_EXP_LOOKUP_FN) (const char *, int, void *);
+typedef bool(*MAC_EXP_DONT_PARSE_FN) (const char *, void *);
 typedef MAC_EXP_OP_RES(*MAC_EXPAND_RELOP_FN) (const char *, int, const char *);
+typedef int (*MAC_EXPAND_NAMED_FN) (VSTRING *, const char *);
 
-extern int mac_expand(VSTRING *, const char *, int, const char *, MAC_EXP_LOOKUP_FN, void *);
-void    mac_expand_add_relop(int *, const char *, MAC_EXPAND_RELOP_FN);
+extern int mac_expand7(VSTRING *, const char *, int, const char *, MAC_EXP_LOOKUP_FN, MAC_EXP_DONT_PARSE_FN, void *);
+extern void mac_expand_add_relop(int *, const char *, MAC_EXPAND_RELOP_FN);
+extern void mac_expand_add_named_fn(const char *, MAC_EXPAND_NAMED_FN);
+
+#define mac_expand(res, pat, flags, filter, lookup, ctx) \
+    mac_expand7((res), (pat), (flags), (filter), (lookup), \
+	(MAC_EXP_DONT_PARSE_FN) 0, (ctx))
 
 /* LICENSE
 /* .ad
@@ -78,6 +85,9 @@ void    mac_expand_add_relop(int *, const char *, MAC_EXPAND_RELOP_FN);
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

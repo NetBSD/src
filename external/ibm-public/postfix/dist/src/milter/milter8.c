@@ -1,4 +1,4 @@
-/*	$NetBSD: milter8.c,v 1.6 2025/02/25 19:15:46 christos Exp $	*/
+/*	$NetBSD: milter8.c,v 1.6.2.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -525,6 +525,8 @@ static int milter8_conf_error(MILTER8 *milter)
     }
     if (strcasecmp(milter->def_action, "accept") == 0) {
 	reply = 0;
+    } else if (strcasecmp(milter->def_action, "shutdown") == 0) {
+	reply = "421 4.3.5 Server configuration problem - try again later";
     } else if (strcasecmp(milter->def_action, "quarantine") == 0) {
 	reply = "Hdefault_action";
     } else {
@@ -559,6 +561,8 @@ static int milter8_comm_error(MILTER8 *milter)
 	reply = "550 5.5.0 Service unavailable";
     } else if (strcasecmp(milter->def_action, "tempfail") == 0) {
 	reply = "451 4.7.1 Service unavailable - try again later";
+    } else if (strcasecmp(milter->def_action, "shutdown") == 0) {
+	reply = "421 4.7.1 Service unavailable - try again later";
     } else if (strcasecmp(milter->def_action, "quarantine") == 0) {
 	reply = "Hdefault_action";
     } else {
@@ -1345,7 +1349,7 @@ static const char *milter8_event(MILTER8 *milter, int event,
 		/* XXX This should be reported with a call-back. */
 		reply = vstring_alloc(100);
 		if (saved_size > 100)
-		    saved_size=100;
+		    saved_size = 100;
 		vstring_sprintf(reply, "H%.*s", (int) saved_size,
 				STR(milter->buf));
 		milter8_def_reply(milter, STR(reply));

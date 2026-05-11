@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_notify_util.c,v 1.5 2025/02/25 19:15:43 christos Exp $	*/
+/*	$NetBSD: bounce_notify_util.c,v 1.5.2.1 2026/05/11 17:13:45 martin Exp $	*/
 
 /*++
 /* NAME
@@ -536,7 +536,8 @@ int     bounce_header(VSTREAM *bounce, BOUNCE_INFO *bounce_info,
     }
 
     /*
-     * Trade confidentiality against availability.
+     * Trade confidentiality against availability. See also up-stream code in
+     * edit_notification_properties().
      */
     if (var_tls_required_enable
 	&& (bounce_info->sendopts & SOPT_REQUIRETLS_HEADER) != 0)

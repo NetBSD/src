@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_nisplus.c,v 1.1.1.2 2013/01/02 18:59:12 tron Exp $	*/
+/*	$NetBSD: dict_nisplus.c,v 1.1.1.2.44.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -300,7 +300,7 @@ DICT   *dict_nisplus_open(const char *map, int open_flags, int dict_flags)
     if (msg_verbose)
 	msg_info("%s: opened NIS+ table %s for column %d",
 		 myname, dict_nisplus->template, dict_nisplus->column);
-    return (DICT_DEBUG (&dict_nisplus->dict));
+    return (&dict_nisplus->dict);
 }
 
 #endif

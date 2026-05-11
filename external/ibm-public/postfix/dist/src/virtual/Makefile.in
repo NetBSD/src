@@ -93,6 +93,7 @@ mailbox.o: ../../include/msg_stats.h
 mailbox.o: ../../include/myflock.h
 mailbox.o: ../../include/mymalloc.h
 mailbox.o: ../../include/nvtable.h
+mailbox.o: ../../include/pol_stats.h
 mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/safe_open.h
 mailbox.o: ../../include/sent.h
@@ -127,6 +128,7 @@ maildir.o: ../../include/msg_stats.h
 maildir.o: ../../include/myflock.h
 maildir.o: ../../include/mymalloc.h
 maildir.o: ../../include/nvtable.h
+maildir.o: ../../include/pol_stats.h
 maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/safe_open.h
 maildir.o: ../../include/sane_fsops.h
@@ -156,6 +158,7 @@ recipient.o: ../../include/msg_stats.h
 recipient.o: ../../include/myflock.h
 recipient.o: ../../include/mymalloc.h
 recipient.o: ../../include/nvtable.h
+recipient.o: ../../include/pol_stats.h
 recipient.o: ../../include/recipient_list.h
 recipient.o: ../../include/stringops.h
 recipient.o: ../../include/sys_defs.h
@@ -180,6 +183,7 @@ unknown.o: ../../include/msg_stats.h
 unknown.o: ../../include/myflock.h
 unknown.o: ../../include/mymalloc.h
 unknown.o: ../../include/nvtable.h
+unknown.o: ../../include/pol_stats.h
 unknown.o: ../../include/recipient_list.h
 unknown.o: ../../include/sys_defs.h
 unknown.o: ../../include/vbuf.h

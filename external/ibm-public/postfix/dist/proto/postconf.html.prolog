@@ -12,7 +12,7 @@
 
 <script type="text/javascript">
 
-// Kludge for https://support.google.com/chrome/thread/11993079
+// See support.google.com/chrome/thread/11993079
 const isChrome = /Chrome/.test(navigator.userAgent)
     && /Google Inc/.test(navigator.vendor);
 const hash = window.location.hash;
@@ -20,7 +20,7 @@ if (hash && isChrome) {
     setTimeout(function() {
         window.location.hash = "";
         window.location.hash = hash;
-    }, 1000);
+    }, 1500);
 }
 
 </script>
@@ -54,7 +54,7 @@ lines whose first non-whitespace character is a `#'. </p>
 <li> <p> A logical line starts with non-whitespace text. A line
 that starts with whitespace continues a logical line. </p>
 
-<li> <p> A parameter value may refer to other parameters. </p>
+<li> <p> A parameter value may refer to functions or other parameters. </p>
 
 <ul>
 
@@ -88,6 +88,11 @@ operator Postfix supports "!=" (inequality), "&lt;", "&le;", "&ge;",
 and "&gt;". The comparison is numerical when both operands are all
 digits, otherwise the comparison is lexicographical. These forms
 are supported with Postfix versions &ge; 3.0. </p>
+
+<li> <p> The expression "${name{value}}" is replaced with the result
+from calling the function <i>name</i> with the argument <i>value</i>
+after stripping whitespace between the "{", the value, and the "}".
+An example is the domain_to_ascii{} function. </p>
 
 <li> <p> Each "value" is subject to recursive named parameter and
 relational expression evaluation, except where noted.  </p>

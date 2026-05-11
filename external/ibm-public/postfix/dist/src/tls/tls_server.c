@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_server.c,v 1.13 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls_server.c,v 1.13.2.1 2026/05/11 17:14:00 martin Exp $	*/
 
 /*++
 /* NAME
@@ -342,8 +342,8 @@ static int ticket_cb(SSL *con, unsigned char name[], unsigned char iv[],
 	if (TLScontext->log_mask & TLS_LOG_CACHE)
 	    msg_info("%s: Decrypting session ticket, key expiration: %ld",
 		     TLScontext->namaddr, (long) key->tout);
+	TLScontext->ticketed = 1;
     }
-    TLScontext->ticketed = 1;
     return (TLS_TKT_ACCEPT);
 }
 
@@ -377,8 +377,8 @@ static int ticket_cb(SSL *con, unsigned char name[], unsigned char iv[],
 	if (TLScontext->log_mask & TLS_LOG_CACHE)
 	    msg_info("%s: Decrypting session ticket, key expiration: %ld",
 		     TLScontext->namaddr, (long) key->tout);
+	TLScontext->ticketed = 1;
     }
-    TLScontext->ticketed = 1;
     return (TLS_TKT_ACCEPT);
 }
 

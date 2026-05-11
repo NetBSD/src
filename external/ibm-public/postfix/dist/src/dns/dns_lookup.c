@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_lookup.c,v 1.9 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: dns_lookup.c,v 1.9.2.1 2026/05/11 17:13:46 martin Exp $	*/
 
 /*++
 /* NAME
@@ -836,14 +836,15 @@ static int dns_get_rr(DNS_RR **list, const char *orig_name, DNS_REPLY *reply,
 	for (src = pos, dst = (unsigned char *) ltemp;
 	     src < pos + fixed->length; /* */ ) {
 	    frag_len = *src++;
-	    if (msg_verbose)
-		msg_info("frag_len=%d text=\"%.*s\"",
-			 (int) frag_len, (int) frag_len, (char *) src);
+	    /* 202604 Claude: move debug logging after the frag_len check. */
 	    if (frag_len > reply->end - src
 	    || frag_len >= ((unsigned char *) ltemp + sizeof(ltemp)) - dst) {
 		msg_warn("extract_answer: bad TXT string length: %d", frag_len);
 		return (DNS_RETRY);
 	    }
+	    if (msg_verbose)
+		msg_info("frag_len=%d text=\"%.*s\"",
+			 (int) frag_len, (int) frag_len, (char *) src);
 	    while (frag_len-- > 0) {
 		ch = *src++;
 		*dst++ = (ISPRINT(ch) ? ch : ' ');

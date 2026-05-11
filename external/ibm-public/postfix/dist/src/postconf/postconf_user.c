@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_user.c,v 1.5 2025/02/25 19:15:47 christos Exp $	*/
+/*	$NetBSD: postconf_user.c,v 1.5.2.1 2026/05/11 17:13:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -110,6 +110,7 @@ static HTABLE *pcf_rest_class_table;
     PCF_PARAM_CTX _ctx; \
     _ctx.local_scope = (scope); \
     _ctx.param_class = (class); \
+    /* No MAC_EXP_FLAG_RECURSE, therefore no need for DONT_PARSE feature. */ \
     (void) mac_expand(NO_SCAN_RESULT, (value), MAC_EXP_FLAG_SCAN, \
 	    NO_SCAN_FILTER, pcf_flag_user_parameter_wrapper, (void *) &_ctx); \
 } while (0)

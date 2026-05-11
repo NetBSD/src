@@ -1,4 +1,4 @@
-/*	$NetBSD: sendmail.c,v 1.5 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: sendmail.c,v 1.5.2.1 2026/05/11 17:13:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -160,13 +160,30 @@
 /*	This feature is available in Postfix 2.3 and later.
 /* .IP "\fB-n\fR (ignored)"
 /*	Backwards compatibility.
-/* .IP "\fB-oA\fIalias_database\fR"
-/*	Non-default alias database. Specify \fIpathname\fR or
-/*	\fItype\fR:\fIpathname\fR. See \fBpostalias\fR(1) for
-/*	details.
+/* .IP "\fB-O requiretls=yes\fR"
+/* .IP "\fB-O requiretls=no\fR"
+/*	When delivering a message to an SMTP or LMTP server, the
+/*	connection must use TLS with a verified server certificate,
+/*	and that server must support REQUIRETLS. The "requiretls" name
+/*	and option value are case-insensitive. REQUIRETLS enforcement
+/*	is controlled with the configuration parameters requiretls_enable,
+/*	smtp_requiretls_policy, and lmtp_requiretls_policy.
+/*
+/*	This feature is available in Postfix 3.11 and later.
+/* .IP "\fB-O smtputf8=yes\fR"
+/* .IP "\fB-O smtputf8=no\fR"
+/*	When delivering a message to an SMTP or LMTP server, and an
+/*	envelope address or message header contains UTF8 text, that server
+/*	must support SMTPUTF8. The "smtputf8" option name and value
+/*	are case-insensitive.
+/*
+/*	This feature is available in Postfix 3.11 and later.
 /* .IP "\fB-O \fIoption=value\fR (ignored)"
 /*	Set the named \fIoption\fR to \fIvalue\fR. Use the equivalent
 /*	configuration parameter in \fBmain.cf\fR instead.
+/* .IP "\fB-oA\fIalias_database\fR"
+/*	Non-default alias database. Specify \fIpathname\fR or
+/*	\fItype\fR:\fIpathname\fR. See \fBpostalias\fR(1) for details.
 /* .IP "\fB-o7\fR (ignored)"
 /* .IP "\fB-o8\fR (ignored)"
 /*	To send 8-bit or binary content, use an appropriate MIME encapsulation
@@ -436,6 +453,11 @@
 /*	the Postfix executable files and documentation with the default
 /*	Postfix instance, and that are started, stopped, etc., together
 /*	with the default Postfix instance.
+/* .PP
+/*	Postfix 3.11 and later:
+/* .IP "\fBrequiretls_enable (yes)\fR"
+/*	Enable support for the ESMTP verb "REQUIRETLS" in the "MAIL
+/*	FROM" command.
 /* FILES
 /*	/var/spool/postfix, mail queue
 /*	/etc/postfix, configuration files
@@ -539,6 +561,7 @@
 #include <user_acl.h>
 #include <dsn_mask.h>
 #include <mail_parm_split.h>
+#include <sendopts.h>
 
 /* Application-specific. */
 
@@ -590,6 +613,11 @@ static const CONFIG_STR_TABLE str_table[] = {
     VAR_SM_FIX_EOL, DEF_SM_FIX_EOL, &var_sm_fix_eol, 1, 0,
     0,
 };
+
+ /*
+  * Sender options.
+  */
+static int sm_sendopts;
 
  /*
   * Silly little macros (SLMs).
@@ -790,6 +818,14 @@ static void enqueue(const int flags, const char *encoding,
      * With "sendmail -N", instead of a per-message NOTIFY record we store one
      * per recipient so that we can simplify the implementation somewhat.
      */
+    if (sm_sendopts)
+	rec_fprintf(dst, REC_TYPE_SIZE, REC_TYPE_SIZE_FORMAT,
+		    (REC_TYPE_SIZE_CAST1) ~ 0,	/* message segment size */
+		    (REC_TYPE_SIZE_CAST2) ~ 0,	/* content offset */
+		    (REC_TYPE_SIZE_CAST3) ~ 0,	/* recipient count */
+		    (REC_TYPE_SIZE_CAST4) ~ 0,	/* qmgr options */
+		    (REC_TYPE_SIZE_CAST5) ~ 0,	/* content length */
+		    (REC_TYPE_SIZE_CAST6) sm_sendopts);
     if (dsn_envid)
 	rec_fprintf(dst, REC_TYPE_ATTR, "%s=%s",
 		    MAIL_ATTR_DSN_ENVID, dsn_envid);
@@ -1056,6 +1092,7 @@ int     main(int argc, char **argv)
     int     saved_optind;
     ARGV   *import_env;
     char   *alias_map_from_args = 0;
+    const char *oval;
 
     /*
      * Fingerprint executables and core dumps.
@@ -1253,7 +1290,40 @@ int     main(int argc, char **argv)
 	    break;
 	case 'N':
 	    if ((dsn_notify = dsn_notify_mask(optarg)) == 0)
-		msg_warn("bad -N option value -- ignored");
+		msg_warn("bad -N option value: '%s' -- ignored", optarg);
+	    break;
+	case 'O':
+	    if ((oval = optarg + strcspn(optarg, "="))[0] != 0)
+		oval += 1;
+	    if (strncasecmp(optarg, "REQUIRETLS=", oval - optarg) == 0) {
+		if (var_reqtls_enable == 0) {
+		    msg_warn("Ignoring option '-O %s, because the "
+			     "configuration is '%s = %s'", optarg,
+			     VAR_REQTLS_ENABLE, CONFIG_BOOL_NO);
+		    continue;
+		} else if (strcasecmp(oval, CONFIG_BOOL_YES) == 0) {
+		    sm_sendopts |= SOPT_REQUIRETLS_ESMTP;
+		    continue;
+		} else if (strcasecmp(oval, CONFIG_BOOL_NO) == 0) {
+		    sm_sendopts &= ~SOPT_REQUIRETLS_ESMTP;
+		    continue;
+		}
+		msg_warn("bad -O option: '%s' -- ignored", optarg);
+	    } else if (strncasecmp(optarg, "SMTPUTF8=", oval - optarg) == 0) {
+		if (var_smtputf8_enable == 0) {
+		    msg_warn("'-O %s' was requested, but the "
+			     "configuration is '%s = %s'", optarg,
+			     VAR_SMTPUTF8_ENABLE, CONFIG_BOOL_NO);
+		    continue;
+		} else if (strcasecmp(oval, CONFIG_BOOL_YES) == 0) {
+		    sm_sendopts |= SOPT_SMTPUTF8_REQUESTED;
+		    continue;
+		} else if (strcasecmp(oval, CONFIG_BOOL_NO) == 0) {
+		    sm_sendopts &= ~SOPT_SMTPUTF8_REQUESTED;
+		    continue;
+		}
+		msg_warn("bad -O option: '%s' -- ignored", optarg);
+	    }
 	    break;
 	case 'R':
 	    if ((dsn_ret = dsn_ret_code(optarg)) == 0)

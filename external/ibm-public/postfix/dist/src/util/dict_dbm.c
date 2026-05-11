@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_dbm.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_dbm.c,v 1.2.26.1 2026/05/11 17:14:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -474,7 +474,8 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
 	msg_fatal("open database %s: cannot support GDBM", path);
     if (fstat(dict_dbm->dict.stat_fd, &st) < 0)
 	msg_fatal("dict_dbm_open: fstat: %m");
-    dict_dbm->dict.mtime = st.st_mtime;
+    if (open_flags == O_RDONLY)
+	dict_dbm->dict.mtime = st.st_mtime;
     dict_dbm->dict.owner.uid = st.st_uid;
     dict_dbm->dict.owner.status = (st.st_uid != 0);
 
@@ -483,6 +484,7 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
      * the source file changed only seconds ago.
      */
     if ((dict_flags & DICT_FLAG_LOCK) != 0
+	&& open_flags == O_RDONLY
 	&& stat(path, &st) == 0
 	&& st.st_mtime > dict_dbm->dict.mtime
 	&& st.st_mtime < time((time_t *) 0) - 100)
@@ -499,7 +501,7 @@ DICT   *dict_dbm_open(const char *path, int open_flags, int dict_flags)
     dict_dbm->key_buf = 0;
     dict_dbm->val_buf = 0;
 
-    DICT_DBM_OPEN_RETURN(DICT_DEBUG (&dict_dbm->dict));
+    DICT_DBM_OPEN_RETURN(&dict_dbm->dict);
 }
 
 #endif

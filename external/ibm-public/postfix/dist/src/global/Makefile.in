@@ -37,7 +37,9 @@ SRCS	= abounce.c anvil_clnt.c been_here.c bounce.c bounce_log.c \
 	normalize_mailhost_addr.c map_search.c reject_deliver_request.c \
 	info_log_addr_form.c sasl_mech_filter.c login_sender_match.c \
 	test_main.c compat_level.c config_known_tcp_ports.c \
-	hfrom_format.c rfc2047_code.c ascii_header_text.c sendopts.c
+	hfrom_format.c rfc2047_code.c ascii_header_text.c sendopts.c \
+	pol_stats.c nbdb_clnt.c nbdb_util.c allowed_prefix.c \
+	nbdb_redirect.c nbdb_surrogate.c
 OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	canon_addr.o cfg_parser.o cleanup_strerror.o cleanup_strflags.o \
 	clnt_stream.o conv_time.o db_common.o debug_peer.o debug_process.o \
@@ -76,7 +78,9 @@ OBJS	= abounce.o anvil_clnt.o been_here.o bounce.o bounce_log.o \
 	normalize_mailhost_addr.o map_search.o reject_deliver_request.o \
 	info_log_addr_form.o sasl_mech_filter.o login_sender_match.o \
 	test_main.o compat_level.o config_known_tcp_ports.o \
-	hfrom_format.o rfc2047_code.o ascii_header_text.o sendopts.o
+	hfrom_format.o rfc2047_code.o ascii_header_text.o sendopts.o \
+	pol_stats.o nbdb_clnt.o nbdb_util.o allowed_prefix.o \
+	nbdb_redirect.o nbdb_surrogate.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these maps, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -113,8 +117,13 @@ HDRS	= abounce.h anvil_clnt.h been_here.h bounce.h bounce_log.h \
 	maillog_client.h normalize_mailhost_addr.h map_search.h \
 	info_log_addr_form.h sasl_mech_filter.h login_sender_match.h \
 	test_main.h compat_level.h config_known_tcp_ports.h \
-	hfrom_format.h rfc2047_code.h ascii_header_text.h sendopts.h
-TESTSRC	= rec2stream.c stream2rec.c recdump.c
+	hfrom_format.h rfc2047_code.h ascii_header_text.h sendopts.h \
+	pol_stats.h nbdb_clnt.h nbdb_util.h allowed_prefix.h \
+	nbdb_redirect.h nbdb_surrogate.h
+TESTSRC	= rec2stream.c stream2rec.c recdump.c dict_sqlite_test.c \
+	ehlo_mask_test.c haproxy_srvr_test.c sendopts_test.c pol_stats_test.c \
+	allowed_prefix_test.c nbdb_util_test.c nbdb_redirect_test.c \
+	nbdb_surrogate_test.c
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
 INCL	=
@@ -124,14 +133,17 @@ TESTPROG= domain_list dot_lockfile mail_addr_crunch mail_addr_find \
 	off_cvt quote_822_local rec2stream recdump resolve_clnt \
 	resolve_local rewrite_clnt stream2rec string_list tok822_parse \
 	quote_821_local mail_conf_time mime_state strip_addr \
-	verify_clnt xtext anvil_clnt scache ehlo_mask \
+	verify_clnt xtext anvil_clnt scache ehlo_mask_test \
 	valid_mailhost_addr own_inet_addr header_body_checks \
 	data_redirect addr_match_list safe_ultostr verify_sender_addr \
 	mail_version mail_dict server_acl uxtext mail_parm_split \
 	fold_addr smtp_reply_footer mail_addr_map normalize_mailhost_addr \
-	haproxy_srvr map_search delivered_hdr login_sender_match \
+	haproxy_srvr_test map_search delivered_hdr login_sender_match_test \
 	compat_level config_known_tcp_ports hfrom_format rfc2047_code \
-	ascii_header_text sendopts_test
+	ascii_header_text sendopts_test dict_sqlite_test pol_stats_test \
+	allowed_prefix_test nbdb_util_test nbdb_redirect_test \
+	nbdb_surrogate_test
+TESTLIB	= $(LIB_DIR)/libtesting.a
 
 LIBS	= ../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
 LIB_DIR	= ../../lib
@@ -336,7 +348,7 @@ anvil_clnt: $(LIB) $(LIBS)
 scache: scache.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
-ehlo_mask: ehlo_mask.c $(LIB) $(LIBS)
+ehlo_mask_test: ehlo_mask_test.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 valid_mailhost_addr: valid_mailhost_addr.c $(LIB) $(LIBS)
@@ -381,7 +393,7 @@ smtp_reply_footer: smtp_reply_footer.c $(LIB) $(LIBS)
 normalize_mailhost_addr: normalize_mailhost_addr.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
-haproxy_srvr: haproxy_srvr.c $(LIB) $(LIBS)
+haproxy_srvr_test: haproxy_srvr_test.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 map_search: map_search.c $(LIB) $(LIBS)
@@ -390,7 +402,7 @@ map_search: map_search.c $(LIB) $(LIBS)
 delivered_hdr: delivered_hdr.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
-login_sender_match: login_sender_match.c $(LIB) $(LIBS)
+login_sender_match_test: login_sender_match_test.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 compat_level: compat_level.c $(LIB) $(LIBS)
@@ -408,20 +420,43 @@ ascii_header_text: ascii_header_text.c $(LIB) $(LIBS)
 sendopts_test: sendopts_test.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
+dict_sqlite_test: dict_sqlite_test.c dict_sqlite.o $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c dict_sqlite.o $(LIB) $(LIBS) \
+	    $(SYSLIBS) $(AUXLIBS_SQLITE)
+
+pol_stats_test: pol_stats_test.c pol_stats.o $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c pol_stats.o $(LIB) $(LIBS) \
+	    $(SYSLIBS)
+
+allowed_prefix_test: allowed_prefix_test.o $(TESTLIB) $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $@.o $(TESTLIB) $(LIB) $(LIBS) $(SYSLIBS)
+
+nbdb_util_test: nbdb_util_test.o $(TESTLIB) $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $@.o $(TESTLIB) $(LIB) $(LIBS) $(SYSLIBS)
+
+nbdb_redirect_test: nbdb_redirect_test.o $(TESTLIB) $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $@.o $(TESTLIB) $(LIB) $(LIBS) $(SYSLIBS)
+
+nbdb_surrogate_test: nbdb_surrogate_test.o $(TESTLIB) $(LIB) $(LIBS)
+	$(CC) $(CFLAGS) -o $@ $@.o $(TESTLIB) $(LIB) $(LIBS) $(SYSLIBS)
+
 config_known_tcp_ports: config_known_tcp_ports.c $(LIB) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(LIBS) $(SYSLIBS)
 
 tests: tok822_test mime_tests strip_addr_test tok822_limit_test \
-	xtext_test scache_multi_test ehlo_mask_test \
+	xtext_test scache_multi_test test_ehlo_mask \
 	namadr_list_test mail_conf_time_test header_body_checks_tests \
 	mail_version_test server_acl_test resolve_local_test maps_test \
 	safe_ultostr_test mail_parm_split_test fold_addr_test \
 	smtp_reply_footer_test off_cvt_test mail_addr_crunch_test \
 	mail_addr_find_test mail_addr_map_test quote_822_local_test \
-	normalize_mailhost_addr_test haproxy_srvr_test map_search_test \
-	delivered_hdr_test login_sender_match_test compat_level_test \
+	normalize_mailhost_addr_test test_haproxy_srvr map_search_test \
+	delivered_hdr_test test_login_sender_match compat_level_test \
 	config_known_tcp_ports_test hfrom_format_test rfc2047_code_test \
-	ascii_header_text_test test_sendopts
+	ascii_header_text_test test_sendopts test_dict_sqlite test_pol_stats \
+	test_allowed_prefix nbdb_tests
+
+nbdb_tests: test_nbdb_util test_nbdb_redirect test_nbdb_surrogate
 
 mime_tests: mime_test mime_nest mime_8bit mime_dom mime_trunc mime_cvt \
 	mime_cvt2 mime_cvt3 mime_garb1 mime_garb2 mime_garb3 mime_garb4
@@ -612,10 +647,8 @@ scache_multi_test: scache scache_multi.in scache_multi.ref
 	diff scache_multi.ref scache_multi.tmp
 	rm -f scache_multi.tmp
 
-ehlo_mask_test: ehlo_mask ehlo_mask.in ehlo_mask.ref
-	$(SHLIB_ENV) $(VALGRIND) ./ehlo_mask <ehlo_mask.in >ehlo_mask.tmp
-	diff ehlo_mask.ref ehlo_mask.tmp
-	rm -f ehlo_mask.tmp
+test_ehlo_mask: ehlo_mask_test
+	$(SHLIB_ENV) $(VALGRIND) ./ehlo_mask_test
 
 namadr_list_test: namadr_list namadr_list.in namadr_list.ref
 	-$(SHLIB_ENV) sh namadr_list.in >namadr_list.tmp 2>&1
@@ -739,10 +772,8 @@ normalize_mailhost_addr_test: update normalize_mailhost_addr
 	diff /dev/null normalize_mailhost_addr.tmp
 	rm -f normalize_mailhost_addr.tmp
 
-haproxy_srvr_test: update haproxy_srvr
-	-$(SHLIB_ENV) $(VALGRIND) ./haproxy_srvr >haproxy_srvr.tmp 2>&1
-	diff /dev/null haproxy_srvr.tmp
-	rm -f haproxy_srvr.tmp
+test_haproxy_srvr: update haproxy_srvr_test
+	$(SHLIB_ENV) $(VALGRIND) ./haproxy_srvr_test
 
 map_search_test: update map_search map_search.ref
 	-$(SHLIB_ENV) $(VALGRIND) ./map_search >map_search.tmp 2>&1
@@ -754,10 +785,8 @@ delivered_hdr_test: update delivered_hdr delivered_hdr.ref
 	diff delivered_hdr.ref delivered_hdr.tmp
 	rm -f delivered_hdr.tmp
 
-login_sender_match_test: update login_sender_match login_sender_match.ref
-	-$(SHLIB_ENV) $(VALGRIND) ./login_sender_match >login_sender_match.tmp 2>&1
-	diff login_sender_match.ref login_sender_match.tmp
-	rm -f login_sender_match.tmp
+test_login_sender_match: update login_sender_match_test 
+	$(SHLIB_ENV) $(VALGRIND) ./login_sender_match_test
 
 compat_level_test: compat_level_expand_test compat_level_convert_test
 
@@ -794,7 +823,25 @@ ascii_header_text_test: update ascii_header_text
 	$(SHLIB_ENV) $(VALGRIND) ./ascii_header_text
 
 test_sendopts: update sendopts_test
-	-$(SHLIB_ENV) $(VALGRIND) ./sendopts_test
+	$(SHLIB_ENV) $(VALGRIND) ./sendopts_test
+
+test_dict_sqlite: update dict_sqlite_test
+	$(SHLIB_ENV) $(VALGRIND) ./dict_sqlite_test
+
+test_pol_stats: update pol_stats_test
+	$(SHLIB_ENV) $(VALGRIND) ./pol_stats_test
+
+test_allowed_prefix: update allowed_prefix_test
+	$(SHLIB_ENV) $(VALGRIND) ./allowed_prefix_test
+
+test_nbdb_util: update nbdb_util_test
+	$(SHLIB_ENV) $(VALGRIND) ./nbdb_util_test
+
+test_nbdb_redirect: update nbdb_redirect_test
+	$(SHLIB_ENV) $(VALGRIND) ./nbdb_redirect_test
+
+test_nbdb_surrogate: update nbdb_surrogate_test
+	$(SHLIB_ENV) $(VALGRIND) ./nbdb_surrogate_test
 
 clean:
 	rm -f *.o $(LIB) *core $(TESTPROG) junk $(MAPS)
@@ -803,7 +850,7 @@ tidy:	clean
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
-	set -e; for i in [a-z][a-z0-9]*.c; do \
+	set -e; for i in [a-z][a-z0-9_]*.c; do \
 	    $(CC) -E $(DEFS) $(INCL) $$i | grep -v '[<>]' | sed -n -e '/^# *1 *"\([^"]*\)".*/{' \
 	    -e 's//'`echo $$i|sed 's/c$$/o/'`': \1/' \
 	    -e 's/o: \.\//o: /' -e p -e '}' ; \
@@ -832,6 +879,7 @@ abounce.o: dsn_buf.h
 abounce.o: mail_params.h
 abounce.o: mail_proto.h
 abounce.o: msg_stats.h
+abounce.o: pol_stats.h
 abounce.o: recipient_list.h
 addr_match_list.o: ../../include/argv.h
 addr_match_list.o: ../../include/check_arg.h
@@ -841,6 +889,30 @@ addr_match_list.o: ../../include/vbuf.h
 addr_match_list.o: ../../include/vstring.h
 addr_match_list.o: addr_match_list.c
 addr_match_list.o: addr_match_list.h
+allowed_prefix.o: ../../include/argv.h
+allowed_prefix.o: ../../include/check_arg.h
+allowed_prefix.o: ../../include/htable.h
+allowed_prefix.o: ../../include/msg.h
+allowed_prefix.o: ../../include/mymalloc.h
+allowed_prefix.o: ../../include/split_at.h
+allowed_prefix.o: ../../include/stringops.h
+allowed_prefix.o: ../../include/sys_defs.h
+allowed_prefix.o: ../../include/vbuf.h
+allowed_prefix.o: ../../include/vstring.h
+allowed_prefix.o: allowed_prefix.c
+allowed_prefix.o: allowed_prefix.h
+allowed_prefix_test.o: ../../include/argv.h
+allowed_prefix_test.o: ../../include/check_arg.h
+allowed_prefix_test.o: ../../include/msg.h
+allowed_prefix_test.o: ../../include/msg_capture.h
+allowed_prefix_test.o: ../../include/msg_vstream.h
+allowed_prefix_test.o: ../../include/stringops.h
+allowed_prefix_test.o: ../../include/sys_defs.h
+allowed_prefix_test.o: ../../include/vbuf.h
+allowed_prefix_test.o: ../../include/vstream.h
+allowed_prefix_test.o: ../../include/vstring.h
+allowed_prefix_test.o: allowed_prefix.h
+allowed_prefix_test.o: allowed_prefix_test.c
 anvil_clnt.o: ../../include/attr.h
 anvil_clnt.o: ../../include/attr_clnt.h
 anvil_clnt.o: ../../include/check_arg.h
@@ -914,6 +986,7 @@ bounce.o: log_adhoc.h
 bounce.o: mail_params.h
 bounce.o: mail_proto.h
 bounce.o: msg_stats.h
+bounce.o: pol_stats.h
 bounce.o: rcpt_print.h
 bounce.o: recipient_list.h
 bounce.o: trace.h
@@ -1104,6 +1177,7 @@ defer.o: mail_params.h
 defer.o: mail_proto.h
 defer.o: mail_queue.h
 defer.o: msg_stats.h
+defer.o: pol_stats.h
 defer.o: rcpt_print.h
 defer.o: recipient_list.h
 defer.o: trace.h
@@ -1151,6 +1225,7 @@ deliver_pass.o: info_log_addr_form.h
 deliver_pass.o: mail_params.h
 deliver_pass.o: mail_proto.h
 deliver_pass.o: msg_stats.h
+deliver_pass.o: pol_stats.h
 deliver_pass.o: rcpt_print.h
 deliver_pass.o: recipient_list.h
 deliver_request.o: ../../include/attr.h
@@ -1218,10 +1293,12 @@ dict_memcache.o: ../../include/argv.h
 dict_memcache.o: ../../include/auto_clnt.h
 dict_memcache.o: ../../include/check_arg.h
 dict_memcache.o: ../../include/dict.h
+dict_memcache.o: ../../include/hex_code.h
 dict_memcache.o: ../../include/match_list.h
 dict_memcache.o: ../../include/msg.h
 dict_memcache.o: ../../include/myflock.h
 dict_memcache.o: ../../include/mymalloc.h
+dict_memcache.o: ../../include/ossl_digest.h
 dict_memcache.o: ../../include/stringops.h
 dict_memcache.o: ../../include/sys_defs.h
 dict_memcache.o: ../../include/vbuf.h
@@ -1331,6 +1408,19 @@ dict_sqlite.o: db_common.h
 dict_sqlite.o: dict_sqlite.c
 dict_sqlite.o: dict_sqlite.h
 dict_sqlite.o: string_list.h
+dict_sqlite_test.o: ../../include/argv.h
+dict_sqlite_test.o: ../../include/check_arg.h
+dict_sqlite_test.o: ../../include/dict.h
+dict_sqlite_test.o: ../../include/msg.h
+dict_sqlite_test.o: ../../include/msg_vstream.h
+dict_sqlite_test.o: ../../include/myflock.h
+dict_sqlite_test.o: ../../include/stringops.h
+dict_sqlite_test.o: ../../include/sys_defs.h
+dict_sqlite_test.o: ../../include/vbuf.h
+dict_sqlite_test.o: ../../include/vstream.h
+dict_sqlite_test.o: ../../include/vstring.h
+dict_sqlite_test.o: dict_sqlite.h
+dict_sqlite_test.o: dict_sqlite_test.c
 domain_list.o: ../../include/argv.h
 domain_list.o: ../../include/check_arg.h
 domain_list.o: ../../include/match_list.h
@@ -1461,6 +1551,16 @@ ehlo_mask.o: ../../include/vbuf.h
 ehlo_mask.o: ../../include/vstring.h
 ehlo_mask.o: ehlo_mask.c
 ehlo_mask.o: ehlo_mask.h
+ehlo_mask_test.o: ../../include/check_arg.h
+ehlo_mask_test.o: ../../include/msg.h
+ehlo_mask_test.o: ../../include/msg_vstream.h
+ehlo_mask_test.o: ../../include/stringops.h
+ehlo_mask_test.o: ../../include/sys_defs.h
+ehlo_mask_test.o: ../../include/vbuf.h
+ehlo_mask_test.o: ../../include/vstream.h
+ehlo_mask_test.o: ../../include/vstring.h
+ehlo_mask_test.o: ehlo_mask.h
+ehlo_mask_test.o: ehlo_mask_test.c
 ext_prop.o: ../../include/check_arg.h
 ext_prop.o: ../../include/name_mask.h
 ext_prop.o: ../../include/sys_defs.h
@@ -1512,6 +1612,7 @@ haproxy_srvr.o: ../../include/inet_proto.h
 haproxy_srvr.o: ../../include/msg.h
 haproxy_srvr.o: ../../include/myaddrinfo.h
 haproxy_srvr.o: ../../include/mymalloc.h
+haproxy_srvr.o: ../../include/normalize_v4mapped_addr.h
 haproxy_srvr.o: ../../include/sock_addr.h
 haproxy_srvr.o: ../../include/split_at.h
 haproxy_srvr.o: ../../include/stringops.h
@@ -1521,6 +1622,18 @@ haproxy_srvr.o: ../../include/vbuf.h
 haproxy_srvr.o: ../../include/vstring.h
 haproxy_srvr.o: haproxy_srvr.c
 haproxy_srvr.o: haproxy_srvr.h
+haproxy_srvr_test.o: ../../include/check_arg.h
+haproxy_srvr_test.o: ../../include/msg.h
+haproxy_srvr_test.o: ../../include/msg_vstream.h
+haproxy_srvr_test.o: ../../include/myaddrinfo.h
+haproxy_srvr_test.o: ../../include/sock_addr.h
+haproxy_srvr_test.o: ../../include/stringops.h
+haproxy_srvr_test.o: ../../include/sys_defs.h
+haproxy_srvr_test.o: ../../include/vbuf.h
+haproxy_srvr_test.o: ../../include/vstream.h
+haproxy_srvr_test.o: ../../include/vstring.h
+haproxy_srvr_test.o: haproxy_srvr.h
+haproxy_srvr_test.o: haproxy_srvr_test.c
 header_body_checks.o: ../../include/argv.h
 header_body_checks.o: ../../include/check_arg.h
 header_body_checks.o: ../../include/dict.h
@@ -1626,6 +1739,7 @@ log_adhoc.o: log_adhoc.c
 log_adhoc.o: log_adhoc.h
 log_adhoc.o: mail_params.h
 log_adhoc.o: msg_stats.h
+log_adhoc.o: pol_stats.h
 log_adhoc.o: recipient_list.h
 login_sender_match.o: ../../include/argv.h
 login_sender_match.o: ../../include/check_arg.h
@@ -1645,6 +1759,20 @@ login_sender_match.o: maps.h
 login_sender_match.o: quote_822_local.h
 login_sender_match.o: quote_flags.h
 login_sender_match.o: strip_addr.h
+login_sender_match_test.o: ../../include/argv.h
+login_sender_match_test.o: ../../include/check_arg.h
+login_sender_match_test.o: ../../include/dict.h
+login_sender_match_test.o: ../../include/msg.h
+login_sender_match_test.o: ../../include/msg_vstream.h
+login_sender_match_test.o: ../../include/myflock.h
+login_sender_match_test.o: ../../include/stringops.h
+login_sender_match_test.o: ../../include/sys_defs.h
+login_sender_match_test.o: ../../include/vbuf.h
+login_sender_match_test.o: ../../include/vstream.h
+login_sender_match_test.o: ../../include/vstring.h
+login_sender_match_test.o: login_sender_match.h
+login_sender_match_test.o: login_sender_match_test.c
+login_sender_match_test.o: mail_params.h
 mail_addr.o: ../../include/check_arg.h
 mail_addr.o: ../../include/stringops.h
 mail_addr.o: ../../include/sys_defs.h
@@ -1956,6 +2084,7 @@ mail_params.o: ../../include/inet_addr_list.h
 mail_params.o: ../../include/inet_proto.h
 mail_params.o: ../../include/iostuff.h
 mail_params.o: ../../include/logwriter.h
+mail_params.o: ../../include/mac_midna.h
 mail_params.o: ../../include/midna_domain.h
 mail_params.o: ../../include/mkmap.h
 mail_params.o: ../../include/msg.h
@@ -1981,6 +2110,7 @@ mail_params.o: mail_params.h
 mail_params.o: mail_proto.h
 mail_params.o: mail_version.h
 mail_params.o: mynetworks.h
+mail_params.o: nbdb_util.h
 mail_params.o: own_inet_addr.h
 mail_params.o: recipient_list.h
 mail_params.o: verp_sender.h
@@ -2316,6 +2446,141 @@ namadr_list.o: ../../include/vbuf.h
 namadr_list.o: ../../include/vstring.h
 namadr_list.o: namadr_list.c
 namadr_list.o: namadr_list.h
+nbdb_clnt.o: ../../include/argv.h
+nbdb_clnt.o: ../../include/attr.h
+nbdb_clnt.o: ../../include/check_arg.h
+nbdb_clnt.o: ../../include/connect.h
+nbdb_clnt.o: ../../include/dict.h
+nbdb_clnt.o: ../../include/htable.h
+nbdb_clnt.o: ../../include/iostuff.h
+nbdb_clnt.o: ../../include/msg.h
+nbdb_clnt.o: ../../include/myflock.h
+nbdb_clnt.o: ../../include/mymalloc.h
+nbdb_clnt.o: ../../include/nvtable.h
+nbdb_clnt.o: ../../include/sys_defs.h
+nbdb_clnt.o: ../../include/vbuf.h
+nbdb_clnt.o: ../../include/vstream.h
+nbdb_clnt.o: ../../include/vstring.h
+nbdb_clnt.o: mail_params.h
+nbdb_clnt.o: mail_proto.h
+nbdb_clnt.o: nbdb_clnt.c
+nbdb_clnt.o: nbdb_clnt.h
+nbdb_clnt.o: nbdb_util.h
+nbdb_redirect.o: ../../include/argv.h
+nbdb_redirect.o: ../../include/check_arg.h
+nbdb_redirect.o: ../../include/dict.h
+nbdb_redirect.o: ../../include/dict_cdb.h
+nbdb_redirect.o: ../../include/dict_db.h
+nbdb_redirect.o: ../../include/dict_lmdb.h
+nbdb_redirect.o: ../../include/mkmap.h
+nbdb_redirect.o: ../../include/msg.h
+nbdb_redirect.o: ../../include/myflock.h
+nbdb_redirect.o: ../../include/mymalloc.h
+nbdb_redirect.o: ../../include/name_code.h
+nbdb_redirect.o: ../../include/stringops.h
+nbdb_redirect.o: ../../include/sys_defs.h
+nbdb_redirect.o: ../../include/vbuf.h
+nbdb_redirect.o: ../../include/vstream.h
+nbdb_redirect.o: ../../include/vstring.h
+nbdb_redirect.o: mail_params.h
+nbdb_redirect.o: nbdb_clnt.h
+nbdb_redirect.o: nbdb_redirect.c
+nbdb_redirect.o: nbdb_redirect.h
+nbdb_redirect.o: nbdb_util.h
+nbdb_redirect_test.o: ../../include/argv.h
+nbdb_redirect_test.o: ../../include/check_arg.h
+nbdb_redirect_test.o: ../../include/dict.h
+nbdb_redirect_test.o: ../../include/dict_cdb.h
+nbdb_redirect_test.o: ../../include/dict_db.h
+nbdb_redirect_test.o: ../../include/dict_inline.h
+nbdb_redirect_test.o: ../../include/dict_lmdb.h
+nbdb_redirect_test.o: ../../include/mkmap.h
+nbdb_redirect_test.o: ../../include/mock_dict.h
+nbdb_redirect_test.o: ../../include/msg.h
+nbdb_redirect_test.o: ../../include/msg_capture.h
+nbdb_redirect_test.o: ../../include/msg_vstream.h
+nbdb_redirect_test.o: ../../include/myflock.h
+nbdb_redirect_test.o: ../../include/mymalloc.h
+nbdb_redirect_test.o: ../../include/stringops.h
+nbdb_redirect_test.o: ../../include/sys_defs.h
+nbdb_redirect_test.o: ../../include/vbuf.h
+nbdb_redirect_test.o: ../../include/vstream.h
+nbdb_redirect_test.o: ../../include/vstring.h
+nbdb_redirect_test.o: mail_params.h
+nbdb_redirect_test.o: nbdb_redirect.h
+nbdb_redirect_test.o: nbdb_redirect_test.c
+nbdb_redirect_test.o: nbdb_util.h
+nbdb_surrogate.o: ../../include/argv.h
+nbdb_surrogate.o: ../../include/check_arg.h
+nbdb_surrogate.o: ../../include/dict.h
+nbdb_surrogate.o: ../../include/dict_db.h
+nbdb_surrogate.o: ../../include/mkmap.h
+nbdb_surrogate.o: ../../include/msg.h
+nbdb_surrogate.o: ../../include/myflock.h
+nbdb_surrogate.o: ../../include/sys_defs.h
+nbdb_surrogate.o: ../../include/vbuf.h
+nbdb_surrogate.o: ../../include/vstream.h
+nbdb_surrogate.o: ../../include/vstring.h
+nbdb_surrogate.o: nbdb_surrogate.c
+nbdb_surrogate.o: nbdb_surrogate.h
+nbdb_surrogate_test.o: ../../include/argv.h
+nbdb_surrogate_test.o: ../../include/check_arg.h
+nbdb_surrogate_test.o: ../../include/dict.h
+nbdb_surrogate_test.o: ../../include/dict_db.h
+nbdb_surrogate_test.o: ../../include/mkmap.h
+nbdb_surrogate_test.o: ../../include/msg.h
+nbdb_surrogate_test.o: ../../include/msg_capture.h
+nbdb_surrogate_test.o: ../../include/msg_vstream.h
+nbdb_surrogate_test.o: ../../include/myflock.h
+nbdb_surrogate_test.o: ../../include/mymalloc.h
+nbdb_surrogate_test.o: ../../include/stringops.h
+nbdb_surrogate_test.o: ../../include/sys_defs.h
+nbdb_surrogate_test.o: ../../include/vbuf.h
+nbdb_surrogate_test.o: ../../include/vstream.h
+nbdb_surrogate_test.o: ../../include/vstring.h
+nbdb_surrogate_test.o: mail_params.h
+nbdb_surrogate_test.o: nbdb_surrogate.h
+nbdb_surrogate_test.o: nbdb_surrogate_test.c
+nbdb_surrogate_test.o: nbdb_util.h
+nbdb_util.o: ../../include/argv.h
+nbdb_util.o: ../../include/check_arg.h
+nbdb_util.o: ../../include/dict.h
+nbdb_util.o: ../../include/dict_cdb.h
+nbdb_util.o: ../../include/dict_db.h
+nbdb_util.o: ../../include/dict_lmdb.h
+nbdb_util.o: ../../include/mkmap.h
+nbdb_util.o: ../../include/msg.h
+nbdb_util.o: ../../include/myflock.h
+nbdb_util.o: ../../include/mymalloc.h
+nbdb_util.o: ../../include/name_code.h
+nbdb_util.o: ../../include/split_at.h
+nbdb_util.o: ../../include/stringops.h
+nbdb_util.o: ../../include/sys_defs.h
+nbdb_util.o: ../../include/vbuf.h
+nbdb_util.o: ../../include/vstream.h
+nbdb_util.o: ../../include/vstring.h
+nbdb_util.o: mail_params.h
+nbdb_util.o: nbdb_redirect.h
+nbdb_util.o: nbdb_surrogate.h
+nbdb_util.o: nbdb_util.c
+nbdb_util.o: nbdb_util.h
+nbdb_util_test.o: ../../include/argv.h
+nbdb_util_test.o: ../../include/check_arg.h
+nbdb_util_test.o: ../../include/dict.h
+nbdb_util_test.o: ../../include/mock_dict.h
+nbdb_util_test.o: ../../include/msg.h
+nbdb_util_test.o: ../../include/msg_capture.h
+nbdb_util_test.o: ../../include/msg_vstream.h
+nbdb_util_test.o: ../../include/myflock.h
+nbdb_util_test.o: ../../include/stringops.h
+nbdb_util_test.o: ../../include/sys_defs.h
+nbdb_util_test.o: ../../include/vbuf.h
+nbdb_util_test.o: ../../include/vstream.h
+nbdb_util_test.o: ../../include/vstring.h
+nbdb_util_test.o: mail_params.h
+nbdb_util_test.o: nbdb_redirect.h
+nbdb_util_test.o: nbdb_util.h
+nbdb_util_test.o: nbdb_util_test.c
 normalize_mailhost_addr.o: ../../include/check_arg.h
 normalize_mailhost_addr.o: ../../include/inet_proto.h
 normalize_mailhost_addr.o: ../../include/msg.h
@@ -2384,6 +2649,24 @@ pipe_command.o: mail_params.h
 pipe_command.o: pipe_command.c
 pipe_command.o: pipe_command.h
 pipe_command.o: sys_exits.h
+pol_stats.o: ../../include/check_arg.h
+pol_stats.o: ../../include/msg.h
+pol_stats.o: ../../include/mymalloc.h
+pol_stats.o: ../../include/sys_defs.h
+pol_stats.o: ../../include/vbuf.h
+pol_stats.o: ../../include/vstring.h
+pol_stats.o: pol_stats.c
+pol_stats.o: pol_stats.h
+pol_stats_test.o: ../../include/check_arg.h
+pol_stats_test.o: ../../include/msg.h
+pol_stats_test.o: ../../include/msg_vstream.h
+pol_stats_test.o: ../../include/stringops.h
+pol_stats_test.o: ../../include/sys_defs.h
+pol_stats_test.o: ../../include/vbuf.h
+pol_stats_test.o: ../../include/vstream.h
+pol_stats_test.o: ../../include/vstring.h
+pol_stats_test.o: pol_stats.h
+pol_stats_test.o: pol_stats_test.c
 post_mail.o: ../../include/attr.h
 post_mail.o: ../../include/check_arg.h
 post_mail.o: ../../include/events.h
@@ -2534,6 +2817,7 @@ reject_deliver_request.o: deliver_request.h
 reject_deliver_request.o: dsn.h
 reject_deliver_request.o: dsn_buf.h
 reject_deliver_request.o: msg_stats.h
+reject_deliver_request.o: pol_stats.h
 reject_deliver_request.o: recipient_list.h
 reject_deliver_request.o: reject_deliver_request.c
 remove.o: ../../include/check_arg.h
@@ -2718,6 +3002,7 @@ sent.o: dsn_util.h
 sent.o: log_adhoc.h
 sent.o: mail_params.h
 sent.o: msg_stats.h
+sent.o: pol_stats.h
 sent.o: recipient_list.h
 sent.o: sent.c
 sent.o: sent.h
@@ -2925,6 +3210,7 @@ trace.o: log_adhoc.h
 trace.o: mail_params.h
 trace.o: mail_proto.h
 trace.o: msg_stats.h
+trace.o: pol_stats.h
 trace.o: rcpt_print.h
 trace.o: recipient_list.h
 trace.o: trace.c
@@ -2974,6 +3260,7 @@ verify.o: log_adhoc.h
 verify.o: mail_params.h
 verify.o: mail_proto.h
 verify.o: msg_stats.h
+verify.o: pol_stats.h
 verify.o: recipient_list.h
 verify.o: verify.c
 verify.o: verify.h

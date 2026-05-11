@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_unused.c,v 1.2 2025/02/25 19:15:47 christos Exp $	*/
+/*	$NetBSD: postconf_unused.c,v 1.2.2.1 2026/05/11 17:13:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -7,6 +7,8 @@
 /*	report unused or deprecated parameters
 /* SYNOPSIS
 /*	#include <postconf.h>
+/*
+/*	int	pcf_found_deprecated;
 /*
 /*	void    pcf_flag_unused_main_parameters()
 /*
@@ -22,6 +24,9 @@
 /*
 /*	pcf_flag_unused_master_parameters() reports unused or
 /*	deprecated "-o name=value" entries in master.cf.
+/*
+/*	pcf_found_deprecated is non-zero if deprecated parameters were
+/*	reported.
 /* DIAGNOSTICS
 /*	Problems are reported to the standard error stream.
 /* LICENSE
@@ -42,10 +47,13 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <stdlib.h>
+#include <string.h>
 
 /* Utility library. */
 
 #include <msg.h>
+#include <mymalloc.h>
 #include <dict.h>
 #include <vstream.h>
 
@@ -96,9 +104,42 @@ static const PCF_DEPR_PARAM_INFO pcf_depr_param_info[] = {
     "smtpd_tls_dh1024_param_file", "do not specify (leave at default)",
     "smtpd_tls_eecdh_grade", "do not specify (leave at default)",
     "deleted-test-only", "do not specify",	/* For testing */
+
+    /*
+     * Deprecated as of Postfix 3.11.
+     */
+    "authorized_verp_clients", "specify \"smtpd_authorized_verp_clients\"",
+    "fallback_relay", "specify \"smtp_fallback_relay\"",
+    "lmtp_per_record_deadline", "specify \"lmtp_per_request_deadline\"",
+    "lmtp_tls_enforce_peername", "specify \"lmtp_tls_security_level\"",
+    "postscreen_blacklist_action", "specify \"postscreen_denylist_action\"",
+    "postscreen_dnsbl_ttl", "specify \"postscreen_dnsbl_max_ttl\"",
+    "postscreen_dnsbl_whitelist_threshold", "specify \"postscreen_dnsbl_allowlist_threshold\"",
+    "postscreen_whitelist_interfaces", "specify \"postscreen_allowlist_interfaces\"",
+    "smtpd_client_connection_limit_exceptions", "specify \"smtpd_client_event_limit_exceptions\"",
+    "smtpd_per_record_deadline", "specify \"smtpd_per_request_deadline\"",
+    "smtp_per_record_deadline", "specify \"smtp_per_request_deadline\"",
+    "smtp_tls_enforce_peername", "specify \"smtp_tls_security_level\"",
+    "tlsproxy_client_level", "specify \"tlsproxy_client_security_level\"",
+    "tlsproxy_client_policy", "specify \"tlsproxy_client_policy_maps\"",
+    "virtual_maps", "specify \"virtual_alias_maps\"",
+#if 0 && OPENSSL_VERSION_PREREQ(3,5)
+    "tls_eecdh_auto_curves", "do not specify with OpenSSL 3.5 or later",
+    "tls_ffdhe_auto_groups", "do not specify with OpenSSL 3.5 or later",
+#endif
+    "lmtp_cname_overrides_servername", "do not specify",
+    "smtp_cname_overrides_servername", "do not specify",
+
+    /*
+     * Terminator.
+     */
     0,
 };
+
 static HTABLE *pcf_depr_param_table;
+int     pcf_found_deprecated;
+
+#define STR(x)	vstring_str(x)
 
 /* pcf_init_depr_params - initialize lookup table */
 
@@ -111,6 +152,16 @@ static void pcf_init_depr_params(void)
 	(void) htable_enter(pcf_depr_param_table, dp->name, (void *) dp);
 }
 
+/* pcf_cmp_ht_key - qsort helper for ht_info pointer array */
+
+static int pcf_cmp_ht_key(const void *a, const void *b)
+{
+    HTABLE_INFO **ap = (HTABLE_INFO **) a;
+    HTABLE_INFO **bp = (HTABLE_INFO **) b;
+
+    return (strcmp(ap[0]->key, bp[0]->key));
+}
+
 /* pcf_flag_unused_parameters - warn about unused parameters */
 
 static void pcf_flag_unused_parameters(DICT *dict, const char *conf_name,
@@ -121,6 +172,8 @@ static void pcf_flag_unused_parameters(DICT *dict, const char *conf_name,
     const char *param_name;
     const char *param_value;
     int     how;
+    HTABLE *flagged;
+    VSTRING *buf;
 
     /*
      * Sanity checks.
@@ -142,6 +195,8 @@ static void pcf_flag_unused_parameters(DICT *dict, const char *conf_name,
      * anywhere, or that are deprecated. Show the warning message(s) after
      * the end of the stdout output.
      */
+    flagged = htable_create(1);
+    buf = vstring_alloc(100);
     for (how = DICT_SEQ_FUN_FIRST;
 	 dict->sequence(dict, how, &param_name, &param_value) == 0;
 	 how = DICT_SEQ_FUN_NEXT) {
@@ -153,16 +208,18 @@ static void pcf_flag_unused_parameters(DICT *dict, const char *conf_name,
 	if (PCF_PARAM_TABLE_LOCATE(pcf_param_table, param_name) == 0
 	    && (local_scope == 0
 		|| PCF_PARAM_TABLE_LOCATE(local_scope->valid_names, param_name) == 0)) {
-	    vstream_fflush(VSTREAM_OUT);
 	    if ((dp = (const PCF_DEPR_PARAM_INFO *)
 		 htable_find(pcf_depr_param_table, param_name)) != 0) {
-		msg_warn("%s/%s: support for parameter %s has been removed;"
-			 " instead, %s", var_config_dir, conf_name,
-			 param_name, dp->alternative);
+		vstring_sprintf(buf, "%s/%s: support for parameter %s"
+				" has been removed; instead, %s",
+				var_config_dir, conf_name,
+				param_name, dp->alternative);
+		pcf_found_deprecated = 1;
 	    } else {
-		msg_warn("%s/%s: unused parameter: %s=%s",
-			 var_config_dir, conf_name, param_name, param_value);
+		vstring_sprintf(buf, "%s/%s: unused parameter: %s=%s",
+			var_config_dir, conf_name, param_name, param_value);
 	    }
+	    (void) htable_enter(flagged, param_name, mystrdup(STR(buf)));
 	}
 
 	/*
@@ -172,12 +229,32 @@ static void pcf_flag_unused_parameters(DICT *dict, const char *conf_name,
 	 */
 	else if ((dp = (const PCF_DEPR_PARAM_INFO *)
 		  htable_find(pcf_depr_param_table, param_name)) != 0) {
-	    vstream_fflush(VSTREAM_OUT);
-	    msg_warn("%s/%s: support for parameter \"%s\" will be removed;"
-		     " instead, %s", var_config_dir, conf_name,
-		     param_name, dp->alternative);
+	    vstring_sprintf(buf, "%s/%s: support for parameter \"%s\""
+			    " will be removed; instead, %s",
+			    var_config_dir, conf_name,
+			    param_name, dp->alternative);
+	    pcf_found_deprecated = 1;
+	    (void) htable_enter(flagged, param_name, mystrdup(STR(buf)));
 	}
     }
+
+    /*
+     * Log flagged parameters in sorted order, for predictable results.
+     */
+    if (flagged->used > 0) {
+	HTABLE_INFO **ht_info;
+	HTABLE_INFO **ht;
+
+	vstream_fflush(VSTREAM_OUT);
+	ht_info = htable_list(flagged);
+	qsort((void *) ht_info, flagged->used, sizeof(*ht_info),
+	      pcf_cmp_ht_key);
+	for (ht = ht_info; *ht; ht++)
+	    msg_warn("%s", (char *) ht[0]->value);
+	myfree(ht_info);
+    }
+    htable_free(flagged, myfree);
+    vstring_free(buf);
 }
 
 /* pcf_flag_unused_main_parameters - warn about unused parameters */

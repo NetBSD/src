@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_trouble.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_trouble.c,v 1.3.10.1 2026/05/11 17:13:58 martin Exp $	*/
 
 /*++
 /* NAME
@@ -35,9 +35,9 @@
 /*	int	exception;
 /*	const char *description;
 /* AUXILIARY FUNCTIONS
-/*	int	smtp_misc_fail(state, throttle, mta_name, resp, format, ...)
+/*	int	smtp_misc_fail(state, flags, mta_name, resp, format, ...)
 /*	SMTP_STATE *state;
-/*	int	throttle;
+/*	int	flags;
 /*	const char *mta_name;
 /*	SMTP_RESP *resp;
 /*	const char *format;
@@ -93,10 +93,7 @@
 /*
 /*	smtp_misc_fail() provides a more detailed interface than
 /*	smtp_site_fail() and smtp_mesg_fail(), which are convenience
-/*	wrappers around smtp_misc_fail(). The throttle argument
-/*	is either SMTP_THROTTLE or SMTP_NOTHROTTLE; it is used only
-/*	in the "soft error, final server" policy, and determines
-/*	whether a destination will be marked as problematic.
+/*	wrappers around smtp_misc_fail(). See the flags argument below.
 /*
 /*	smtp_rcpt_fail() handles the case where a recipient is not
 /*	accepted by the server for reasons other than that the server
@@ -124,6 +121,17 @@
 /*	Arguments:
 /* .IP state
 /*	SMTP client state per delivery request.
+/* .IP flags
+/*	Either SMTP_MISC_FAIL_NONE or the bitwise OR of
+/* .RS
+/* .IP SMTP_MISC_FAIL_THROTTLE
+/*	Mark the destination as problematic.
+/* .IP SMTP_MISC_FAIL_SOFT_NON_FINAL
+/*	If the server was not the last one to try, treat a hard error
+/*	as a soft error.
+/* .IP SMTP_MISC_FAIL_DONT_CACHE
+/*	Do not save the connection to the cache. This flag is ignored
+/*	when SMTP_MISC_FAIL_THROTTLE is in effect.
 /* .IP resp
 /*	Server response including reply code and text.
 /* .IP recipient
@@ -212,7 +220,7 @@ static void smtp_check_code(SMTP_SESSION *session, int code)
 
 /* smtp_bulk_fail - skip, defer or bounce recipients, maybe throttle queue */
 
-static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
+static int smtp_bulk_fail(SMTP_STATE *state, int flags)
 {
     DELIVER_REQUEST *request = state->request;
     SMTP_SESSION *session = state->session;
@@ -222,7 +230,21 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
     int     aggregate_status;
     int     soft_error = (STR(why->status)[0] == '4');
     int     soft_bounce_error = (STR(why->status)[0] == '5' && var_soft_bounce);
+    int     throttle_queue = (flags & SMTP_MISC_FAIL_THROTTLE);
+    int     dont_cache = (flags & SMTP_MISC_FAIL_DONT_CACHE);
     int     nrcpt;
+
+    /*
+     * Sanity check.
+     */
+    if ((flags & SMTP_MISC_FAIL_SOFT_NON_FINAL) != 0) {
+	if (soft_error) {
+	    msg_warn("smtp_bulk_fail: ignoring SMTP_MISC_FAIL_SOFT_NON_FINAL "
+		     "for a soft error");
+	} else {
+	    soft_error = (state->misc_flags & SMTP_MISC_FLAG_FINAL_SERVER) == 0;
+	}
+    }
 
     /*
      * Don't defer the recipients just yet when this error qualifies them for
@@ -272,7 +294,8 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
 	    status = (soft_error ? defer_append : bounce_append)
 		(DEL_REQ_TRACE_FLAGS(request->flags), request->queue_id,
 		 &request->msg_stats, rcpt,
-		 session ? session->namaddrport : "none", &why->dsn);
+		 session ? session->namaddrport : "none", state->tls_stats,
+		 &why->dsn);
 	    if (status == 0)
 		deliver_completed(state->src, rcpt->offset);
 	    SMTP_RCPT_DROP(state, rcpt);
@@ -290,6 +313,8 @@ static int smtp_bulk_fail(SMTP_STATE *state, int throttle_queue)
      */
     if (throttle_queue && session)
 	DONT_CACHE_THROTTLED_SESSION;
+    else if (dont_cache && session)
+	DONT_CACHE_THIS_SESSION;
 
     return (-1);
 }
@@ -304,7 +329,7 @@ int     smtp_sess_fail(SMTP_STATE *state)
      * because this error information is collected by a routine that
      * terminates BEFORE the error is reported.
      */
-    return (smtp_bulk_fail(state, SMTP_THROTTLE));
+    return (smtp_bulk_fail(state, SMTP_MISC_FAIL_THROTTLE));
 }
 
 /* vsmtp_fill_dsn - fill in temporary DSN structure */
@@ -344,7 +369,7 @@ static void vsmtp_fill_dsn(SMTP_STATE *state, const char *mta_name,
 
 /* smtp_misc_fail - maybe throttle queue; skip/defer/bounce all recipients */
 
-int     smtp_misc_fail(SMTP_STATE *state, int throttle, const char *mta_name,
+int     smtp_misc_fail(SMTP_STATE *state, int flags, const char *mta_name,
 		               SMTP_RESP *resp, const char *format,...)
 {
     va_list ap;
@@ -362,7 +387,7 @@ int     smtp_misc_fail(SMTP_STATE *state, int throttle, const char *mta_name,
     /*
      * Skip, defer or bounce recipients, and throttle this queue.
      */
-    return (smtp_bulk_fail(state, throttle));
+    return (smtp_bulk_fail(state, flags));
 }
 
 /* smtp_rcpt_fail - skip, defer, or bounce recipient */
@@ -420,7 +445,8 @@ void    smtp_rcpt_fail(SMTP_STATE *state, RECIPIENT *rcpt, const char *mta_name,
 	status = (soft_error ? defer_append : bounce_append)
 	    (DEL_REQ_TRACE_FLAGS(request->flags), request->queue_id,
 	     &request->msg_stats, rcpt,
-	     session ? session->namaddrport : "none", &why->dsn);
+	     session ? session->namaddrport : "none", state->tls_stats,
+	     &why->dsn);
 	if (status == 0)
 	    deliver_completed(state->src, rcpt->offset);
 	SMTP_RCPT_DROP(state, rcpt);
@@ -474,5 +500,5 @@ int     smtp_stream_except(SMTP_STATE *state, int code, const char *description)
      * falling back to plaintext, because RETRY_AS_PLAINTEXT clears the
      * FINAL_SERVER flag.
      */
-    return (smtp_bulk_fail(state, SMTP_THROTTLE));
+    return (smtp_bulk_fail(state, SMTP_MISC_FAIL_THROTTLE));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: virtual.c,v 1.4 2022/10/08 16:12:51 christos Exp $	*/
+/*	$NetBSD: virtual.c,v 1.4.6.1 2026/05/11 17:14:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -229,7 +229,7 @@
 /*	request before it is terminated by a built-in watchdog timer.
 /* .IP "\fBdelay_logging_resolution_limit (2)\fR"
 /*	The maximal number of digits after the decimal point when logging
-/*	sub-second delay values.
+/*	delay values.
 /* .IP "\fBipc_timeout (3600s)\fR"
 /*	The time limit for sending or receiving information over an internal
 /*	communication channel.

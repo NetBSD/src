@@ -63,15 +63,25 @@ sender_based_routing
 smtp_per_record_deadline
 smtp_skip_4xx_greeting
 smtp_tls_cipherlist
+smtpd_client_connection_limit_exceptions
 smtpd_per_record_deadline
 smtpd_sasl_application_name
 smtpd_tls_cipherlist
 tls_dane_digest_agility
 tls_dane_trust_anchor_digest_enable
+tls_legacy_public_key_fingerprints
 tlsproxy_client_level
 tlsproxy_client_policy
 tlsproxy_tls_session_cache_timeout
 virtual_maps
+EOF
+
+# Eliminate config functions. The are documented in the postconf(5)
+# manpage, but have no parameter name.
+
+cat >>stoplist.tmp <<'EOF'
+domain_to_ascii
+domain_to_utf8
 EOF
 
 # Extract parameters from the postconf(5) manpage.

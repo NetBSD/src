@@ -1,4 +1,4 @@
-/*	$NetBSD: postqueue.c,v 1.5 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postqueue.c,v 1.5.4.1 2026/05/11 17:13:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -64,8 +64,12 @@
 /*	Each queue entry shows the queue file ID, message
 /*	size, arrival time, sender, and the recipients that still need to
 /*	be delivered.  If mail could not be delivered upon the last attempt,
-/*	the reason for failure is shown. The queue ID string
-/*	is followed by an optional status character:
+/*	the reason for failure is shown. With Postfix >= 3.11, the output
+/*	may also show bounced recipients that are pending the creation
+/*	of a non-delivery status notification message that will be
+/*	returned to the sender.
+/*
+/*	The queue ID string is followed by an optional status character:
 /* .RS
 /* .IP \fB*\fR
 /*	The message is in the \fBactive\fR queue, i.e. the message is
@@ -121,11 +125,9 @@
 /*	number does not include message envelope information. It
 /*	is approximately equal to the number of bytes that would
 /*	be transmitted via SMTP including the <CR><LF> line endings.
-/* .IP \fBforced_expire\fR
+/* .IP "\fBforced_expire\fR (Postfix >= 3.5)
 /*	The message is forced to expire (\fBtrue\fR or \fBfalse\fR).
 /*	See the \fBpostsuper\fR(1) options \fB-e\fR or \fB-f\fR.
-/* .sp
-/*	This feature is available in Postfix 3.5 and later.
 /* .IP \fBsender\fR
 /*	The envelope sender address.
 /* .IP \fBrecipients\fR
@@ -133,11 +135,17 @@
 /* .RS
 /* .IP \fBaddress\fR
 /*	One recipient address.
+/* .IP "\fBorig_address\fR (Postfix >= 3.11)"
+/*	One original recipient address.
 /* .IP \fBdelay_reason\fR
 /*	If present, the reason for delayed delivery.  Delayed
 /*	recipients may have no delay reason, for example, while
 /*	delivery is in progress, or after the system was stopped
 /*	before it could record the reason.
+/* .IP "\fBbounce_reason\fR (Postfix >= 3.11)"
+/*	If present, the reason why this recipient was bounced. The
+/*	recipient is still pending the creation of a non-delivery status
+/*	notification message that will be returned to the sender.
 /* .RE
 /* SECURITY
 /* .ad
@@ -154,12 +162,13 @@
 /* .fi
 /* .IP MAIL_CONFIG
 /*	Directory with the \fBmain.cf\fR file. In order to avoid exploitation
-/*	of set-group ID privileges, a non-standard directory is allowed only
+/*	of set-group ID privileges, a non-default directory is allowed only
 /*	if:
 /* .RS
 /* .IP \(bu
-/*	The name is listed in the standard \fBmain.cf\fR file with the
-/*	\fBalternate_config_directories\fR configuration parameter.
+/*	The name is listed in the default \fBmain.cf\fR file with the
+/*	\fBalternate_config_directories\fR or
+/*	\fBmulti_instance_directories\fR configuration parameter.
 /* .IP \(bu
 /*	The command is invoked by the super-user.
 /* .RE

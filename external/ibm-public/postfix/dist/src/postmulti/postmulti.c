@@ -1,4 +1,4 @@
-/*	$NetBSD: postmulti.c,v 1.4 2022/10/08 16:12:48 christos Exp $	*/
+/*	$NetBSD: postmulti.c,v 1.4.6.1 2026/05/11 17:13:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -15,7 +15,7 @@
 /* .ti -4
 /*	\fBIterator mode:\fR
 /*
-/*	\fBpostmulti\fR \fB-l\fR [\fB-aRv\fR] [\fB-g \fIgroup\fR]
+/*	\fBpostmulti\fR \fB-l\fR [\fB-ajRv\fR] [\fB-g \fIgroup\fR]
 /*	[\fB-i \fIname\fR]
 /*
 /*	\fBpostmulti\fR \fB-p\fR [\fB-av\fR] [\fB-g \fIgroup\fR]
@@ -86,7 +86,9 @@
 /*	command is performed just for the primary instance.
 /* .PP
 /*	Iterator mode implements the following command options:
-/* .SH "Instance selection"
+/* Instance selection
+/* .ad
+/* .fi
 /* .IP \fB-a\fR
 /*	Perform the operation on all instances. This is the default.
 /* .IP "\fB-g \fIgroup\fR"
@@ -102,11 +104,19 @@
 /*	are started before "source" instances.
 /* .sp
 /*	This option cannot be used with \fB-p\fR.
-/* .SH "List mode"
+/* List mode
+/* .ad
+/* .fi
+/* .IP \fB-j\fR
+/*	Produce JSON output. See JSON OBJECT FORMAT below.
+/*
+/*	This feature is available in Postfix version 3.11 and later.
 /* .IP \fB-l\fR
 /*	List Postfix instances with their instance name, instance
 /*	group name, enable/disable status and configuration directory.
-/* .SH "Postfix-wrapper mode"
+/* Postfix-wrapper mode
+/* .ad
+/* .fi
 /* .IP "\fB-p \fIpostfix-command\fR"
 /*	Invoke \fBpostfix(1)\fR to execute \fIpostfix-command\fR.
 /*	This option implements the \fBpostfix-wrapper\fR(5) interface.
@@ -137,7 +147,9 @@
 /* .IP
 /*	# postmulti -g msa -p start
 /* .RE
-/* .SH "Command mode"
+/* Command mode
+/* .ad
+/* .fi
 /* .IP "\fB-x \fIunix-command\fR"
 /*	Execute the specified \fIunix-command\fR for all Postfix instances.
 /*	The command runs with appropriate environment settings for
@@ -145,7 +157,9 @@
 /*	config_directory, queue_directory, data_directory,
 /*	multi_instance_name, multi_instance_group and
 /*	multi_instance_enable.
-/* .SH "Other options"
+/* Other options
+/* .ad
+/* .fi
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple
 /*	\fB-v\fR options make the software increasingly verbose.
@@ -157,7 +171,9 @@
 /*	multi-instance status of an existing instance.
 /* .PP
 /*	The following options are implemented:
-/* .SH "Existing instance selection"
+/* Existing instance selection
+/* .ad
+/* .fi
 /* .IP \fB-a\fR
 /*	When creating or importing an instance, place the new
 /*	instance at the front of the secondary instance list.
@@ -172,7 +188,9 @@
 /*	With other life-cycle operations, apply the operation to
 /*	the named existing instance.  Specify "-" to select the
 /*	primary Postfix instance.
-/* .SH "New or existing instance name assignment"
+/* New or existing instance name assignment
+/* .ad
+/* .fi
 /* .IP "\fB-I \fIname\fR"
 /*	Assign the specified instance \fIname\fR to an existing
 /*	instance, newly-created instance, or imported instance.
@@ -183,7 +201,9 @@
 /* .IP "\fB-G \fIgroup\fR"
 /*	Assign the specified \fIgroup\fR name to an existing instance
 /*	or to a newly created or imported instance.
-/* .SH "Instance creation/deletion/status change"
+/* Instance creation/deletion/status change
+/* .ad
+/* .fi
 /* .IP "\fB-e \fIaction\fR"
 /*	"Edit" managed instances. The following actions are supported:
 /* .RS
@@ -304,11 +324,38 @@
 /*	the instance will not be started etc. with "postfix start",
 /*	"postmulti -p start" and so on. The instance can still be
 /*	started etc. with "postfix -c config-directory start".
-/* .SH "Other options"
+/* Other options
+/* .ad
+/* .fi
 /* .IP \fB-v\fR
 /*	Enable verbose logging for debugging purposes. Multiple
 /*	\fB-v\fR options make the software increasingly verbose.
 /* .RE
+/* JSON OBJECT FORMAT
+/* .ad
+/* .fi
+/*	The output consists of a sequence of lines. Each line contains
+/*	one JSON object that represents settings in a corresponding
+/*	instance's main.cf file.
+/*
+/*	Object members have string values unless indicated otherwise.
+/*	Programs should ignore members that are not listed here, as
+/*	members may be added over time.
+/* .IP \fBname\fR
+/*	The value of the corresponding \fBmulti_instance_name\fR
+/*	parameter, or "\fB-\fR" if no name is specified.
+/* .IP \fBgroup\fR
+/*	The value of the corresponding \fBmulti_instance_group\fR
+/*	parameter, or "\fB-\fR" if no group is specified.
+/* .IP \fBenabled\fR
+/*	Either "\fBy\fR" or "\fBn\fR", depending on whether the
+/*	corresponding \fBmulti_instance_enable\fR parameter value is
+/*	"\fByes\fR" or "\fBno\fR".
+/* .sp
+/*	Note: this reports "\fBy\fR" for a primary instance, when
+/*	multi-instance support is not enabled.
+/* .IP \fBconfig_directory\fR
+/*	The value of the corresponding \fBconfig_directory\fR parameter.
 /* ENVIRONMENT
 /* .ad
 /* .fi
@@ -640,6 +687,12 @@ static int match_instance_selection(INSTANCE *, INST_SELECTION *);
   */
 #define INSTANCE_NAME(i) ((i)->name ? (i)->name : (i)->config_dir)
 #define STR(buf)	vstring_str(buf)
+
+ /*
+  * JSON support.
+  */
+static int json_output;
+static VSTRING *json_buf;
 
 /* register_claim - register claim or bust */
 
@@ -1545,12 +1598,28 @@ static void list_instances(int iter_flags, INST_SELECTION *selection)
      */
     FOREACH_ITERATOR_INSTANCE(iter_flags, entry) {
 	ip = RING_TO_INSTANCE(entry);
-	if (match_instance_selection(ip, selection))
-	    vstream_printf("%-15s %-15s %-9s %s\n",
-			   ip->name ? ip->name : "-",
-			   ip->gname ? ip->gname : "-",
-			   ip->enabled ? "y" : "n",
-			   ip->config_dir);
+	if (match_instance_selection(ip, selection)) {
+	    if (json_output == 0) {
+		vstream_printf("%-15s %-15s %-9s %s\n",
+			       ip->name ? ip->name : "-",
+			       ip->gname ? ip->gname : "-",
+			       ip->enabled ? "y" : "n",
+			       ip->config_dir);
+	    } else {
+		vstream_printf("{\"name\": \"%s\",",
+			       quote_for_json(json_buf,
+					    ip->name ? ip->name : "-", -1));
+		vstream_printf("\"group\": \"%s\",",
+			       quote_for_json(json_buf,
+					   ip->gname ? ip->gname : "-", 1));
+		vstream_printf("\"enabled\": \"%s\",",
+			       quote_for_json(json_buf,
+					      ip->enabled ? "y" : "n", 1));
+		vstream_printf("\"config_directory\": \"%s\"}\n",
+			       quote_for_json(json_buf,
+					      ip->config_dir, -1));
+	    }
+	}
     }
     if (vstream_fflush(VSTREAM_OUT))
 	msg_fatal("error writing output: %m");
@@ -1691,8 +1760,7 @@ int     main(int argc, char **argv)
      */
     if ((slash = strrchr(argv[0], '/')) != 0 && slash[1])
 	argv[0] = slash + 1;
-    if (isatty(STDERR_FILENO))
-	msg_vstream_init(argv[0], VSTREAM_ERR);
+    msg_vstream_init(argv[0], VSTREAM_ERR);
     maillog_client_init(argv[0], MAILLOG_CLIENT_FLAG_LOGWRITER_FALLBACK);
 
     /*
@@ -1718,7 +1786,7 @@ int     main(int argc, char **argv)
      * Parse switches. Move the above mail_conf_read() block after this loop,
      * if any command-line option can affect parameter processing.
      */
-    while ((ch = GETOPT(argc, argv, "ae:g:i:G:I:lpRvx")) > 0) {
+    while ((ch = GETOPT(argc, argv, "ae:g:i:jG:I:lpRvx")) > 0) {
 	switch (ch) {
 	default:
 	    usage(argv[0]);
@@ -1754,6 +1822,12 @@ int     main(int argc, char **argv)
 	    instance_select_count++;
 	    selection.type = INST_SEL_NAME;
 	    selection.name = optarg;
+	    break;
+	case 'j':
+	    if (json_output == 0) {
+		json_output = 1;
+		json_buf = vstring_alloc(100);
+	    }
 	    break;
 	case 'G':
 	    if (assignment.gname != 0)
@@ -1829,6 +1903,8 @@ int     main(int argc, char **argv)
 	    msg_fatal("Parameter overrides not valid with '-e %s'",
 		      EDIT_CMD_STR(cmd_mode));
     }
+    if (json_output && (cmd_mode & ITER_CMD_LIST) == 0)
+	msg_fatal("JSON output available only with '-l'");
 
     /*
      * Sanity checks.

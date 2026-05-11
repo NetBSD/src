@@ -1,4 +1,4 @@
-.\"	$NetBSD: cidr_table.5,v 1.6 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: cidr_table.5,v 1.6.2.1 2026/05/11 17:13:41 martin Exp $
 .\"
 .TH CIDR_TABLE 5 
 .ad
@@ -17,7 +17,9 @@ format of Postfix CIDR tables
 .ad
 .fi
 The Postfix mail system uses optional lookup tables.
-These tables are usually in \fBdbm\fR or \fBdb\fR format.
+These tables are usually in \fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR,
+or \fBdbm:\fR format.
+
 Alternatively, lookup tables can be specified in CIDR
 (Classless Inter\-Domain Routing) form. In this case, each
 input is compared against a list of patterns. When a match

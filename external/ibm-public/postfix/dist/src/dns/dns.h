@@ -1,4 +1,4 @@
-/*	$NetBSD: dns.h,v 1.7 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: dns.h,v 1.7.2.1 2026/05/11 17:13:46 martin Exp $	*/
 
 #ifndef _DNS_H_INCLUDED_
 #define _DNS_H_INCLUDED_
@@ -336,7 +336,7 @@ extern int dns_get_h_errno(void);
  /*
   * How long can a DNS name or single text value be?
   */
-#define DNS_NAME_LEN	1024
+#define DNS_NAME_LEN	MAXDNAME	/* From <arpa/nameser.h */
 
  /*
   * dns_rr_filter.c.

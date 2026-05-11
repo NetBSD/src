@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.c,v 1.3 2020/03/18 19:05:16 christos Exp $	*/
+/*	$NetBSD: sent.c,v 1.3.10.1 2026/05/11 17:13:50 martin Exp $	*/
 
 /*++
 /* NAME
@@ -8,12 +8,13 @@
 /* SYNOPSIS
 /*	#include <sent.h>
 /*
-/*	int	sent(flags, queue_id, stats, recipient, relay, dsn)
+/*	int	sent(flags, queue_id, stats, recipient, relay, tstats, dsn)
 /*	int	flags;
 /*	const char *queue_id;
 /*	MSG_STATS *stats;
 /*	RECIPIENT *recipient;
 /*	const char *relay;
+/*	const POL_STATS *tstats;
 /*	DSN *dsn;
 /* DESCRIPTION
 /*	sent() logs that a message was successfully delivered,
@@ -46,6 +47,8 @@
 /*	Recipient information. See recipient_list(3).
 /* .IP relay
 /*	Name of the host we're talking to.
+/* .IP tstats
+/*	TLS per-feature status.
 /* .IP dsn
 /*	Delivery status. See dsn(3). The action is ignored in case
 /*	of a probe message. Otherwise, "delivered" is assumed when
@@ -71,6 +74,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -101,7 +107,7 @@
 
 int     sent(int flags, const char *id, MSG_STATS *stats,
 	             RECIPIENT *recipient, const char *relay,
-	             DSN *dsn)
+	             const POL_STATS *tstats, DSN *dsn)
 {
     DSN     my_dsn = *dsn;
     DSN    *dsn_res;
@@ -128,7 +134,7 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
      */
     if (flags & DEL_REQ_FLAG_MTA_VRFY) {
 	my_dsn.action = "deliverable";
-	status = verify_append(id, stats, recipient, relay, &my_dsn,
+	status = verify_append(id, stats, recipient, relay, tstats, &my_dsn,
 			       DEL_RCPT_STAT_OK);
 	return (status);
     }
@@ -139,7 +145,8 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
      */
     if (flags & DEL_REQ_FLAG_USR_VRFY) {
 	my_dsn.action = "deliverable";
-	status = trace_append(flags, id, stats, recipient, relay, &my_dsn);
+	status = trace_append(flags, id, stats, recipient, relay, tstats,
+			      &my_dsn);
 	return (status);
     }
 
@@ -158,10 +165,10 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
 	    my_dsn.action = "delivered";
 
 	if (((REC_ALL_SENT(flags) == 0 && REC_DLY_SENT(flags, recipient) == 0)
-	  || trace_append(flags, id, stats, recipient, relay, &my_dsn) == 0)
+	     || trace_append(flags, id, stats, recipient, relay, tstats, &my_dsn) == 0)
 	    && ((recipient->dsn_notify & DSN_NOTIFY_SUCCESS) == 0
-	|| trace_append(flags, id, stats, recipient, relay, &my_dsn) == 0)) {
-	    log_adhoc(id, stats, recipient, relay, &my_dsn, "sent");
+		|| trace_append(flags, id, stats, recipient, relay, tstats, &my_dsn) == 0)) {
+	    log_adhoc(id, stats, recipient, relay, tstats, &my_dsn, "sent");
 	    status = 0;
 	} else {
 	    VSTRING *junk = vstring_alloc(100);
@@ -170,7 +177,8 @@ int     sent(int flags, const char *id, MSG_STATS *stats,
 			    id, var_trace_service);
 	    my_dsn.reason = vstring_str(junk);
 	    my_dsn.status = "4.3.0";
-	    status = defer_append(flags, id, stats, recipient, relay, &my_dsn);
+	    status = defer_append(flags, id, stats, recipient, relay, tstats,
+				  &my_dsn);
 	    vstring_free(junk);
 	}
 	return (status);

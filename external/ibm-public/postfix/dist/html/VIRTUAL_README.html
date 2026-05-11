@@ -54,9 +54,7 @@ domains, non-UNIX accounts</a>
 
 <li> <a href="#forwarding">Mail forwarding domains</a>
 
-<li> <a href="#mailing_lists">Mailing lists</a>
-
-<li> <a href="#autoreplies">Autoreplies</a>
+<li> <a href="#mailing_lists">Hosted mailing list domains</a>
 
 </ul>
 
@@ -96,19 +94,31 @@ address class, as defined in the <a href="ADDRESS_CLASS_README.html">ADDRESS_CLA
 <h2><a name="local_vs_database">Local files versus network databases</a></h2>
 
 <p> The examples in this text use table lookups from local files
-such as DBM or Berkeley DB.  These are easy to debug with the
+such as <a href="lmdb_table.5.html">lmdb</a>:, <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. These are easy to debug with the
 <b>postmap</b> command: </p>
 
 <blockquote>
-Example: <tt>postmap -q info@example.com <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual</tt>
+Example: <tt>postmap -q info@example.com /etc/postfix/virtual</tt>
 </blockquote>
 
-<p> See the documentation in <a href="LDAP_README.html">LDAP_README</a>, <a href="MYSQL_README.html">MYSQL_README</a> and <a href="PGSQL_README.html">PGSQL_README</a>
-for how to replace local files by databases. The reader is strongly
-advised to make the system work with local files before migrating
-to network databases, and to use the <b>postmap</b> command to verify
-that network database lookups produce the exact same results as
-local file lookup. </p>
+<p> The above example assumes that the database is configured in
+<a href="postconf.5.html">main.cf</a> as $<a href="postconf.5.html#default_database_type">default_database_type</a>:/etc/postfix/virtual. Otherwise,
+use the command instead: </p>
+
+<blockquote>
+Example: <tt>postmap -q info@example.com
+<i>type</i>:/etc/postfix/virtual</tt>
+</blockquote>
+
+<p> and specify the explicit type that this table uses in <a href="postconf.5.html">main.cf</a>. </p>
+
+<p> You can replace local file lookups with networked (LDAP, SQL
+etc.) lookups. See the documentation in <a href="LDAP_README.html">LDAP_README</a>, <a href="MYSQL_README.html">MYSQL_README</a>,
+<a href="PGSQL_README.html">PGSQL_README</a>, etc., for examples.  The reader is strongly advised
+to make Postfix work with local files before migrating to network
+databases, and to use the <b>postmap</b> command to verify that
+network database lookups produce the exact same results as local
+file lookup. </p>
 
 <blockquote>
 Example: <tt>postmap -q info@example.com <a href="ldap_table.5.html">ldap</a>:/etc/postfix/virtual.cf</tt>
@@ -166,7 +176,7 @@ below shows how to use this mechanism for the example.com domain.
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
- 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  4 
  5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
@@ -209,8 +219,18 @@ for spam messages that were sent in the name of anything@example.com.
 
 </ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <p>Execute the command "<b>postmap /etc/postfix/virtual</b>" after
-changing the virtual file, and execute the command "<b>postfix
+changing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types,
+execute the command "<b>postconf -m</b>".</p>
+
+<p>Execute the command "<b>postfix
 reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> Note: virtual aliases can resolve to a local address or to a
@@ -259,11 +279,11 @@ section at the top of this document.</p>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
  3     <a href="postconf.5.html#virtual_mailbox_base">virtual_mailbox_base</a> = /var/mail/vhosts
- 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/vmailbox
+ 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/vmailbox
  5     <a href="postconf.5.html#virtual_minimum_uid">virtual_minimum_uid</a> = 100
  6     <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
  7     <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a> = <a href="DATABASE_README.html#types">static</a>:5000
- 8     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 8     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  9 
 10 /etc/postfix/vmailbox:
 11     info@example.com    example.com/info
@@ -338,10 +358,24 @@ the wrong domain. </p>
 
 </ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
-changing the virtual file, execute "<b>postmap /etc/postfix/vmailbox</b>"
-after changing the vmailbox file, and execute the command "<b>postfix
-reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
+changing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types,
+execute the command "<b>postconf -m</b>".</p>
+
+<p> Execute "<b>postmap /etc/postfix/vmailbox</b>" after changing
+the vmailbox file, to (re)build a default-type indexed file. Execute
+"<b>postmap <i>type</i>:/etc/postfix/vmailbox</b>" to specify an
+explicit type. </p>
+
+<p> Execute the command "<b>postfix reload</b>" after changing the
+<a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> Note: mail delivery happens with the recipient's UID/GID
 privileges specified with <a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a> and <a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a>.
@@ -383,8 +417,8 @@ to a non-Postfix delivery agent: </p>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_transport">virtual_transport</a> = ...see below...
  3     <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com ...more domains...
- 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/vmailbox
- 5     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 4     <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/vmailbox
+ 5     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  6 
  7 /etc/postfix/vmailbox:
  8     info@example.com    whatever
@@ -473,10 +507,24 @@ the wrong domain. </p>
 
 </ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
-changing the virtual file, execute "<b>postmap /etc/postfix/vmailbox</b>"
-after changing the vmailbox file, and execute the command "<b>postfix
-reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
+changing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types,
+execute the command "<b>postconf -m</b>".</p>
+
+<p> Execute the command "<b>postmap /etc/postfix/vmailbox</b>" after
+changing the vmailbox file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/vmailbox</b>" to
+specify an explicit type.</p>
+
+<p> Execute the command "<b>postfix reload</b>" after changing the
+<a href="postconf.5.html">main.cf</a> file. </p>
 
 <h2><a name="forwarding">Mail forwarding domains</a></h2>
 
@@ -489,7 +537,7 @@ as a mail forwarding domain: </p>
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
  2     <a href="postconf.5.html#virtual_alias_domains">virtual_alias_domains</a> = example.com ...other <a href="VIRTUAL_README.html#canonical">hosted domains</a>...
- 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 3     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  4 
  5 /etc/postfix/virtual:
  6     postmaster@example.com postmaster
@@ -533,17 +581,34 @@ for spam messages that were sent in the name of anything@example.com.
 
 </ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
-changing the virtual file, and execute the command "<b>postfix
-reload</b>" after changing the <a href="postconf.5.html">main.cf</a> file. </p>
+changing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types,
+execute the command "<b>postconf -m</b>".</p>
+
+<p> Execute the command "<b>postfix reload</b>" after changing the
+<a href="postconf.5.html">main.cf</a> file. </p>
 
 <p> More details about the virtual alias file are given in the
 <a href="virtual.5.html">virtual(5)</a> manual page, including multiple addresses on the right-hand
 side. </p>
 
-<h2><a name="mailing_lists">Mailing lists</a></h2>
+<h2><a name="mailing_lists">Hosted mailing list domains</a></h2>
 
-<p> The examples that were given above already show how to direct
+<p> <i> Note: this section presents a historical approach to run a
+mailing list based on local <a href="aliases.5.html">aliases(5)</a>. This approach may still be
+useful for small mailing lists that are managed by hand or with the
+software like Majordomo. For a more contemporary and more scalable
+approach, see <a href="https://lists.org"> GNU Mailman</a>. </i>
+</p>
+
+<p>The examples that were given above already show how to direct
 mail for virtual postmaster addresses to a local postmaster. You
 can use the same method to direct mail for any address to a local
 or remote address. </p>
@@ -556,12 +621,14 @@ virtual addresses to the local delivery agent: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
+    <a href="postconf.5.html#virtual_mailbox_domains">virtual_mailbox_domains</a> = example.com
 
 /etc/postfix/virtual:
     listname-request@example.com listname-request
     listname@example.com         listname
     owner-listname@example.com   owner-listname
+    postmaster@example.com       postmaster
 
 /etc/aliases:
     listname: "|/some/where/majordomo/wrapper ..."
@@ -569,6 +636,17 @@ virtual addresses to the local delivery agent: </p>
     listname-request: ...
 </pre>
 </blockquote>
+
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<p>Execute the command "<b>postmap /etc/postfix/virtual</b>" after
+changing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types,
+execute the command "<b>postconf -m</b>".</p>
 
 <p> This example assumes that in <a href="postconf.5.html">main.cf</a>, $<a href="postconf.5.html#myorigin">myorigin</a> is listed under
 the <a href="postconf.5.html#mydestination">mydestination</a> parameter setting.  If that is not the case,
@@ -587,62 +665,14 @@ bunch of virtual alias or virtual mailbox table entries. </p>
 
 <ul>
 
-<li> In case of a <a href="ADDRESS_CLASS_README.html#virtual_alias_class">virtual alias domain</a>, there would need to be one
-identity mapping from each mailing list address to itself.
+<li> In the case of a virtual alias DOMAIN, there would need to be
+an identity mapping from each mailing list address to an address in a
+different domain.
 
-<li> In case of a <a href="ADDRESS_CLASS_README.html#virtual_mailbox_class">virtual mailbox domain</a>, there would need to be
-a dummy mailbox for each mailing list address.
+<li> In the case of a virtual mailbox DOMAIN, there would need to
+be a dummy <a href="postconf.5.html#virtual_mailbox_maps">virtual_mailbox_maps</a> for each mailing list address.
 
 </ul>
-
-<h2><a name="autoreplies">Autoreplies</a></h2>
-
-<p> In order to set up an autoreply for virtual recipients while
-still delivering mail as normal, set up a rule in a virtual alias
-table: </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
-
-/etc/postfix/virtual:
-    user@domain.tld user@domain.tld, user@domain.tld@autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld
-</pre>
-</blockquote>
-
-<p> This delivers mail to the recipient, and sends a copy of the
-mail to the address that produces automatic replies. The address
-can be serviced on a different machine, or it can be serviced
-locally by setting up a transport map entry that pipes all mail
-for autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld into some script that sends an automatic
-reply back to the sender. </p>
-
-<p> DO NOT list autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld in <a href="postconf.5.html#mydestination">mydestination</a>! </p>
-
-<blockquote>
-<pre>
-/etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
-
-/etc/postfix/transport:
-    autoreply.<a href="postconf.5.html#mydomain">mydomain</a>.tld  autoreply:
-
-/etc/postfix/<a href="master.5.html">master.cf</a>:
-    # =============================================================
-    # service type  private unpriv  chroot  wakeup  maxproc command
-    #               (yes)   (yes)   (yes)   (never) (100)
-    # =============================================================
-    autoreply unix  -       n       n       -       -       pipe
-        flags= user=nobody argv=/path/to/autoreply $sender $mailbox
-</pre>
-</blockquote>
-
-<p> This invokes /path/to/autoreply with the sender address and
-the user@domain.tld recipient address on the command line. </p>
-
-<p> For more information, see the <a href="pipe.8.html">pipe(8)</a> manual page, and the
-comments in the Postfix <a href="master.5.html">master.cf</a> file. </p>
 
 </body>
 

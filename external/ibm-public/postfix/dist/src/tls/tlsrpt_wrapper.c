@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsrpt_wrapper.c,v 1.2 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tlsrpt_wrapper.c,v 1.2.2.1 2026/05/11 17:14:00 martin Exp $	*/
 
 /*++
 /* NAME
@@ -163,7 +163,8 @@
 /*	policies[].policy.policy-string[]. Ignored if the tls_policy_type
 /*	value is TLSRPT_NO_POLICY_FOUND.
 /* .IP tls_policy_domain (may be null)
-/*	policies[].policy.policy-domain.
+/*	policies[].policy.policy-domain. If null, this defaults to the
+/*	TLSRPT policy domain.
 /* .IP mx_host_patterns (may be null)
 /*	policies[].policy.mx-host[]. Ignored if the tls_policy_type
 /*	value is TLSRPT_NO_POLICY_FOUND.
@@ -405,10 +406,12 @@ void    trw_set_tls_policy(TLSRPT_WRAPPER *trw,
 		 PSTR_OR_NULL(mx_host_patterns));
 
     trw->tls_policy_type = tls_policy_type;
+    if (tls_policy_domain == 0)
+	tls_policy_domain = trw->rpt_policy_domain;
     MYFREE_IF_SET_AND_COPY(trw->tls_policy_domain, tls_policy_domain);
     if (tls_policy_type == TLSRPT_NO_POLICY_FOUND) {
 	ARGV_FREE_IF_SET_AND_CLEAR(trw->tls_policy_strings);
-	ARGV_FREE_IF_SET_AND_CLEAR(trw->tls_policy_strings);
+	ARGV_FREE_IF_SET_AND_CLEAR(trw->mx_host_patterns);
     } else {
 	ARGV_FREE_IF_SET_AND_COPY(trw->tls_policy_strings, tls_policy_strings);
 	ARGV_FREE_IF_SET_AND_COPY(trw->mx_host_patterns, mx_host_patterns);

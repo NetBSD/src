@@ -1,4 +1,4 @@
-/*	$NetBSD: posttls-finger.c,v 1.6 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: posttls-finger.c,v 1.6.2.1 2026/05/11 17:13:56 martin Exp $	*/
 
 /*++
 /* NAME
@@ -176,7 +176,8 @@
 /*	These synonymous values combine ssl-expert with ssl-session-packet-dump.
 /*	For experts only, and in most cases, use wireshark instead.
 /* .IP "\fBssl-debug\fR"
-/*	Turn on OpenSSL logging of the progress of the SSL handshake.
+/*	Turn on OpenSSL logging of the progress of the SSL handshake.  This
+/*	includes detailed output of decoded handshake messages.
 /* .IP "\fBssl-handshake-packet-dump\fR"
 /*	Log hexadecimal packet dumps of the SSL handshake; for experts only.
 /* .IP "\fBssl-session-packet-dump\fR"
@@ -416,7 +417,6 @@
 
 #ifdef USE_TLS
 #include <tls_proxy.h>
-#include <openssl/engine.h>
 #endif
 
  /*
@@ -695,7 +695,7 @@ static void print_stack(STATE *state, x509_stack_t *sk, int trustout)
     for (i = 0; i < sk_X509_num(sk); i++) {
 	X509   *cert = sk_X509_value(sk, i);
 	char    buf[CCERT_BUFSIZ];
-	X509_NAME *xn;
+	const X509_NAME *xn;
 	char   *digest;
 
 	if ((xn = X509_get_subject_name(cert)) != 0) {
@@ -787,7 +787,7 @@ static int starttls(STATE *state)
 
     cipher_exclusions = vstring_alloc(10);
     ADD_EXCLUDE(cipher_exclusions, DEF_SMTP_TLS_EXCL_CIPH);
-    if (TLS_REQUIRED(state->level))
+    if (TLS_REQUIRED_BY_SECURITY_LEVEL(state->level))
 	ADD_EXCLUDE(cipher_exclusions, DEF_SMTP_TLS_MAND_EXCL);
 
     /*
@@ -1654,7 +1654,7 @@ static void connect_remote(STATE *state, char *dest)
 	if (level == TLS_LEV_INVALID
 	    || (state->stream = connect_addr(state, addr)) == 0) {
 	    msg_info("Failed to establish session to %s via %s:%u: %s",
-		     dest, HNAME(addr), addr->port,
+		     dest, HNAME(addr), ntohs(state->port),
 		     vstring_str(state->why->reason));
 	    continue;
 	}
@@ -1871,6 +1871,22 @@ static void usage(void)
     exit(1);
 }
 
+#ifdef USE_TLS
+#ifndef OPENSSL_NO_SSL_TRACE
+static void ssl_trace(int write_p, int version, int content_type,
+		        const void *buf, size_t msglen, SSL *ssl, void *arg)
+{
+    BIO    *out = (BIO *) arg;
+
+    /* Avoid mixing BIO and vstream/stdio buffers */
+    vstream_fflush(VSTREAM_OUT);
+    SSL_trace(write_p, version, content_type, buf, msglen, ssl, out);
+    (void) BIO_flush(out);
+}
+
+#endif
+#endif
+
 /* tls_init - initialize application TLS library context */
 
 static void tls_init(STATE *state)
@@ -1898,6 +1914,13 @@ static void tls_init(STATE *state)
 			CAfile = state->CAfile,
 			CApath = state->CApath,
 			mdalg = state->mdalg);
+#ifndef OPENSSL_NO_SSL_TRACE
+    if (state->tls_ctx != 0
+	&& (state->log_mask & TLS_LOG_DEBUG)) {
+	SSL_CTX_set_msg_callback(state->tls_ctx->ssl_ctx, ssl_trace);
+	SSL_CTX_set_msg_callback_arg(state->tls_ctx->ssl_ctx, state->tls_bio);
+    }
+#endif
 #endif
 }
 
@@ -2251,6 +2274,7 @@ int     main(int argc, char *argv[])
 	warn_compat_break_smtp_tls_fpt_dgst = 0;
     else
 	state.mdalg = mystrdup(var_smtp_tls_fpt_dgst);
+    state.tls_bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 
     /*
      * We first call tls_init(), which ultimately calls SSL_library_init(),
@@ -2262,9 +2286,6 @@ int     main(int argc, char *argv[])
 	msg_warn("DANE TLS support is not available, resorting to \"secure\"");
 	state.level = TLS_LEV_SECURE;
     }
-    state.tls_bio = 0;
-    if (state.print_trust)
-	state.tls_bio = BIO_new_fp(stdout, BIO_NOCLOSE);
 #endif
 
     /* Enforce consistent operation of different Postfix parts. */

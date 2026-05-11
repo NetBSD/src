@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2025/02/25 19:15:53 christos Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2026/05/11 17:14:05 martin Exp $
 
 LIBISPRIVATE=	yes
 
@@ -119,6 +119,9 @@ msg_stats_scan.c \
 mynetworks.c \
 mypwd.c \
 namadr_list.c \
+nbdb_clnt.c \
+nbdb_redirect.c \
+nbdb_util.c \
 normalize_mailhost_addr.c \
 off_cvt.c \
 opened.c \
@@ -143,6 +146,7 @@ resolve_clnt.c \
 resolve_local.c \
 rewrite_clnt.c \
 rfc2047_code.c \
+pol_stats.c \
 safe_ultostr.c \
 sasl_mech_filter.c \
 scache.c \

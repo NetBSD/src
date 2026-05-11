@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.11 2025/02/25 19:15:41 christos Exp $
+#	$NetBSD: main.cf,v 1.11.2.1 2026/05/11 17:13:36 martin Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -33,7 +33,7 @@
 #
 # The level below is what should be used with new (not upgrade) installs.
 #
-compatibility_level = 3.10
+compatibility_level = 3.11
 
 # On NetBSD we are built without EAI support, so we must disable utf8
 smtputf8_enable=no
@@ -695,4 +695,13 @@ sample_directory = /usr/share/examples/postfix
 # readme_directory: The location of the Postfix README files.
 #
 readme_directory = /usr/share/examples/postfix
-#inet_protocols = ipv4
+
+# shlib_directory: The location of the Postfix *.so library files and
+# database plugins.
+shlib_directory = /usr/lib/postfix
+
+# meta_directory: The location of non-executable files that are shared
+# between multiple Postfix instances.
+meta_directory = /etc/postfix
+
+inet_protocols = ipv4

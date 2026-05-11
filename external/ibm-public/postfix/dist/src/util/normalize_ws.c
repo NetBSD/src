@@ -1,4 +1,4 @@
-/*	$NetBSD: normalize_ws.c,v 1.2 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: normalize_ws.c,v 1.2.2.1 2026/05/11 17:14:04 martin Exp $	*/
 
 /*++
 /* NAME
@@ -46,7 +46,7 @@
 
 char   *normalize_ws(char *str)
 {
-    char *cp;
+    char   *cp;
 
     for (cp = str; *(cp += strcspn(cp, "\t\n\v\f\r")); *cp = ' ')
 	 /* void */ ;

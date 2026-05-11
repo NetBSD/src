@@ -128,6 +128,9 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
                      Use  sprintf() instead of snprintf(). By default, Postfix
                      uses snprintf() except on ancient systems.
 
+              <b>-DNO_STDBOOL</b>
+                     Don't use &lt;stdbool.h&gt;. This is usually auto-detected.
+
        <b>DEBUG=</b><i>debug</i><b>_</b><i>level</i>
               Specifies a non-default debugging  level.  The  default  is  <b>-g</b>.
               Specify <b>DEBUG=</b> to turn off debugging.
@@ -191,10 +194,10 @@ MAKEDEFS(1)                                                        MAKEDEFS(1)
               this context:
 
               <a href="postconf.5.html#command_directory">command_directory</a>  <a href="postconf.5.html#config_directory">config_directory</a> <a href="postconf.5.html#daemon_directory">daemon_directory</a> <a href="postconf.5.html#data_directory">data_direc</a>-
-              <a href="postconf.5.html#data_directory">tory</a> <a href="postconf.5.html#default_database_type">default_database_type</a>  <a href="postconf.5.html#html_directory">html_directory</a>  <a href="postconf.5.html#mail_spool_directory">mail_spool_directory</a>
-              <a href="postconf.5.html#mailq_path">mailq_path</a>   <a href="postconf.5.html#manpage_directory">manpage_directory</a>   <a href="postconf.5.html#meta_directory">meta_directory</a>  <a href="postconf.5.html#newaliases_path">newaliases_path</a>
-              <a href="postconf.5.html#queue_directory">queue_directory</a> <a href="postconf.5.html#readme_directory">readme_directory</a>  <a href="postconf.5.html#sendmail_path">sendmail_path</a>  <a href="postconf.5.html#shlib_directory">shlib_directory</a>
-              <a href="postconf.5.html#openssl_path">openssl_path</a>
+              <a href="postconf.5.html#data_directory">tory</a> <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> <a href="postconf.5.html#default_database_type">default_database_type</a>  <a href="postconf.5.html#html_directory">html_directory</a>
+              <a href="postconf.5.html#mail_spool_directory">mail_spool_directory</a> <a href="postconf.5.html#mailq_path">mailq_path</a> <a href="postconf.5.html#manpage_directory">manpage_directory</a> <a href="postconf.5.html#meta_directory">meta_directory</a>
+              <a href="postconf.5.html#newaliases_path">newaliases_path</a> <a href="postconf.5.html#queue_directory">queue_directory</a>  <a href="postconf.5.html#readme_directory">readme_directory</a>  <a href="postconf.5.html#sendmail_path">sendmail_path</a>
+              <a href="postconf.5.html#shlib_directory">shlib_directory</a> <a href="postconf.5.html#openssl_path">openssl_path</a>
 
               See  the  <a href="postconf.5.html">postconf(5)</a> manpage for a description of these parame-
               ters.

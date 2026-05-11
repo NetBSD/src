@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_tcp.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_tcp.c,v 1.2.26.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -313,5 +313,5 @@ DICT   *dict_tcp_open(const char *map, int open_flags, int dict_flags)
     if (dict_flags & DICT_FLAG_FOLD_MUL)
 	dict_tcp->dict.fold_buf = vstring_alloc(10);
 
-    return (DICT_DEBUG (&dict_tcp->dict));
+    return (&dict_tcp->dict);
 }

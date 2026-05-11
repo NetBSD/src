@@ -1,4 +1,4 @@
-/*	$NetBSD: data_redirect.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: data_redirect.c,v 1.2.26.1 2026/05/11 17:13:47 martin Exp $	*/
 
 /*++
 /* NAME
@@ -229,7 +229,7 @@ int     main(int argc, char **argv)
 	    vstream_fflush(VSTREAM_OUT);
 	    continue;
 	}
-	target = mystrtokq(&bufp, " \t");
+	target = mystrtokq(&bufp, " \t", CHARS_BRACE);
 	junk = mystrtok(&bufp, " \t");
 	if (strcmp(cmd, "file") == 0 && target && !junk) {
 	    data_redirect_file(result, target);

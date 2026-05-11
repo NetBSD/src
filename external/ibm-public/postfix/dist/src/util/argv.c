@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.c,v 1.5 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: argv.c,v 1.5.2.1 2026/05/11 17:14:01 martin Exp $	*/
 
 /*++
 /* NAME
@@ -66,6 +66,10 @@
 /*
 /*	void	ARGV_FAKE_BEGIN(argv, arg)
 /*	const char *arg;
+/*
+/*	void	ARGV_FAKE2_BEGIN(argv, arg1, arg2)
+/*	const char *arg1;
+/*	const char *arg2;
 /*
 /*	void	ARGV_FAKE_END
 /* DESCRIPTION
@@ -136,6 +140,9 @@
 /*	implementation allocates no heap memory and creates no copy
 /*	of the second argument.  ARGV_FAKE_END closes the statement
 /*	block and thereby releases storage.
+/*
+/*	ARGV_FAKE2_BEGIN/END provide the same functionality for a pair
+/*	of strings.
 /* SEE ALSO
 /*	msg(3) diagnostics interface
 /* DIAGNOSTICS
@@ -205,6 +212,9 @@ ARGV   *argv_alloc(ssize_t len)
     argvp = (ARGV *) mymalloc(sizeof(*argvp));
     argvp->len = 0;
     sane_len = (len < 2 ? 2 : len);
+    /* 202604 Claude: avoid overflowing sane_len + 1 */
+    if (sane_len > SSIZE_MAX - 1)
+	msg_panic("argv_alloc: array length overflow");
     argvp->argv = (char **) mymalloc((sane_len + 1) * sizeof(char *));
     argvp->len = sane_len;
     argvp->argc = 0;
@@ -263,6 +273,9 @@ static void argv_extend(ARGV *argvp)
 {
     ssize_t new_len;
 
+    /* 202604 Claude: avoid overflowing (new_len + 1) * sizeof(char *).  */
+    if (argvp->len > SSIZE_MAX / (2 * sizeof(char *)) - 1)
+	msg_panic("argv_extend: array length overflow");
     new_len = argvp->len * 2;
     argvp->argv = (char **)
 	myrealloc((void *) argvp->argv, (new_len + 1) * sizeof(char *));
@@ -406,9 +419,10 @@ void    argv_delete(ARGV *argvp, ssize_t first, ssize_t how_many)
     ssize_t pos;
 
     /*
-     * Sanity check.
+     * Sanity check. 202604 Claude: avoid expression 'first + how_many'.
      */
-    if (first < 0 || how_many < 0 || first + how_many > argvp->argc)
+    if (first < 0 || how_many < 0 || first > argvp->argc 
+	|| how_many > argvp->argc - first)
 	msg_panic("argv_delete bad range: (start=%ld count=%ld)",
 		  (long) first, (long) how_many);
 

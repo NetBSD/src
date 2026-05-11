@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_warn_service.c,v 1.3 2025/02/25 19:15:43 christos Exp $	*/
+/*	$NetBSD: bounce_warn_service.c,v 1.3.2.1 2026/05/11 17:13:45 martin Exp $	*/
 
 /*++
 /* NAME
@@ -179,6 +179,8 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 		 * reason for the bounce, and the headers of the original
 		 * message. Don't bother sending the boiler-plate text.
 		 */
+		msg_info("%s: postmaster delay notification: %s",
+			 queue_id, STR(new_id));
 		count = -1;
 		if (!bounce_header(bounce, bounce_info, postmaster,
 				   POSTMASTER_COPY)
@@ -189,14 +191,16 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 					     DSN_NOTIFY_OVERRIDE) > 0) {
 		    bounce_original(bounce, bounce_info, DSN_RET_FULL);
 		    bounce_status = post_mail_fclose(bounce);
-		    if (bounce_status == 0)
-			msg_info("%s: postmaster delay notification: %s",
-				 queue_id, STR(new_id));
+		    if (bounce_status)
+			msg_warn("%s: postmaster notification failed: %s",
+				 queue_id, cleanup_strerror(bounce_status));
 		} else {
 		    (void) vstream_fclose(bounce);
 		    if (count == 0)
 			bounce_status = 0;
 		}
+	    } else {
+		msg_warn("%s: postmaster notification failed", queue_id);
 	    }
 	}
     }
@@ -217,6 +221,8 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 	     * pretends that we are a polite mail system, the text with
 	     * reason for the bounce, and a copy of the original message.
 	     */
+	    msg_info("%s: sender delay notification: %s",
+		     queue_id, STR(new_id));
 	    count = -1;
 	    if (bounce_header(bounce, bounce_info, recipient,
 			      NO_POSTMASTER_COPY) == 0
@@ -228,14 +234,18 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 					 DSN_NOTIFY_DELAY) > 0) {
 		bounce_original(bounce, bounce_info, DSN_RET_HDRS);
 		bounce_status = post_mail_fclose(bounce);
-		if (bounce_status == 0)
-		    msg_info("%s: sender delay notification: %s",
-			     queue_id, STR(new_id));
+		if (bounce_status)
+		    msg_warn("%s: sender notification failed to %s: %s",
+			     queue_id, recipient,
+			     cleanup_strerror(bounce_status));
 	    } else {
 		(void) vstream_fclose(bounce);
 		if (count == 0)
 		    bounce_status = 0;
 	    }
+	} else {
+	    msg_warn("%s: sender notification failed to %s",
+		     queue_id, recipient);
 	}
 
 	/*
@@ -262,6 +272,8 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 						 NULL_TRACE_FLAGS,
 						 sendopts,
 						 new_id)) != 0) {
+		msg_info("%s: postmaster delay notification: %s",
+			 queue_id, STR(new_id));
 		count = -1;
 		if (bounce_header(bounce, bounce_info, postmaster,
 				  POSTMASTER_COPY) == 0
@@ -272,9 +284,6 @@ int     bounce_warn_service(int unused_flags, char *service, char *queue_name,
 					     DSN_NOTIFY_OVERRIDE) > 0) {
 		    bounce_original(bounce, bounce_info, DSN_RET_HDRS);
 		    postmaster_status = post_mail_fclose(bounce);
-		    if (postmaster_status == 0)
-			msg_info("%s: postmaster delay notification: %s",
-				 queue_id, STR(new_id));
 		} else {
 		    (void) vstream_fclose(bounce);
 		    if (count == 0)

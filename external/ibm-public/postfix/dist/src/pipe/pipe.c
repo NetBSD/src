@@ -1,4 +1,4 @@
-/*	$NetBSD: pipe.c,v 1.5 2025/02/25 19:15:47 christos Exp $	*/
+/*	$NetBSD: pipe.c,v 1.5.2.1 2026/05/11 17:13:52 martin Exp $	*/
 
 /*++
 /* NAME
@@ -1081,7 +1081,7 @@ static int eval_command_status(int command_status, char *service,
 	    rcpt = request->rcpt_list.info + n;
 	    status = sent(DEL_REQ_TRACE_FLAGS(request->flags),
 			  request->queue_id, &request->msg_stats, rcpt,
-			  service, &why->dsn);
+			  service, NO_TLS_STATS, &why->dsn);
 	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
 		deliver_completed(request->fp, rcpt->offset);
 	    result |= status;
@@ -1098,7 +1098,7 @@ static int eval_command_status(int command_status, char *service,
 		(DEL_REQ_TRACE_FLAGS(request->flags),
 		 request->queue_id,
 		 &request->msg_stats, rcpt,
-		 service, &why->dsn);
+		 service, NO_TLS_STATS, &why->dsn);
 	    if (status == 0)
 		deliver_completed(request->fp, rcpt->offset);
 	    result |= status;
@@ -1210,7 +1210,7 @@ static int deliver_message(DELIVER_REQUEST *request, char *service, char **argv)
 	    rcpt = request->rcpt_list.info + n;
 	    status = sent(DEL_REQ_TRACE_FLAGS(request->flags),
 			  request->queue_id, &request->msg_stats,
-			  rcpt, service, &why->dsn);
+			  rcpt, service, NO_TLS_STATS, &why->dsn);
 	    if (status == 0 && (request->flags & DEL_REQ_FLAG_SUCCESS))
 		deliver_completed(request->fp, rcpt->offset);
 	    deliver_status |= status;

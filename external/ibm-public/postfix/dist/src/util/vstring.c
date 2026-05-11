@@ -1,4 +1,4 @@
-/*	$NetBSD: vstring.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: vstring.c,v 1.4.6.1 2026/05/11 17:14:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -129,6 +129,8 @@
 /*	The functions and macros in this module implement arbitrary-length
 /*	strings and common operations on those strings. The strings do not
 /*	need to be null terminated and may contain arbitrary binary data.
+/*	Operations that expect a null-terminated string as input will
+/*	process only the input that precedes the first null byte.
 /*	The strings manage their own memory and grow automatically when full.
 /*	The optional string null terminator does not add to the string length.
 /*

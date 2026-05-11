@@ -1,0 +1,16 @@
+{"foo/unix/service": "foo"}
+{"foo/unix/type": "unix"}
+{"foo/unix/private": "-"}
+{"foo/unix/unprivileged": "n"}
+{"foo/unix/chroot": "n"}
+{"foo/unix/wakeup": "-"}
+{"foo/unix/process_limit": "0"}
+{"foo/unix/command": "other -o mydestination=$whatever -o whatever=example.net"}
+{"12345/inet/service": "12345"}
+{"12345/inet/type": "inet"}
+{"12345/inet/private": "n"}
+{"12345/inet/unprivileged": "n"}
+{"12345/inet/chroot": "n"}
+{"12345/inet/wakeup": "-"}
+{"12345/inet/process_limit": "-"}
+{"12345/inet/command": "spawn -o {command_time_limit=2 3} user=nobody argv=/bin/sh -c {sleep 1}"}

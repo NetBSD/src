@@ -1,4 +1,4 @@
-/*	$NetBSD: verify.c,v 1.5 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: verify.c,v 1.5.2.1 2026/05/11 17:14:05 martin Exp $	*/
 
 /*++
 /* NAME
@@ -483,14 +483,20 @@ static void verify_query_service(VSTREAM *client_stream)
 
 	/* FIX 200501 IPv6 patch did not neuter ":" in address literals. */
 	translit(STR(addr), ":", "_");
-	if ((raw_data = dict_cache_lookup(verify_map, STR(addr))) == 0	/* not found */
-	    || ((get_buf = vstring_alloc(10)),
-		vstring_strcpy(get_buf, raw_data),	/* malformed */
-		verify_parse_entry(STR(get_buf), &addr_status, &probed,
-				   &updated, &text) < 0)
-	    || (now - probed > PROBE_TTL	/* safe to probe */
-		&& (POSITIVE_ENTRY_EXPIRED(addr_status, updated)
-		    || NEGATIVE_ENTRY_EXPIRED(addr_status, updated)))) {
+	raw_data = dict_cache_lookup(verify_map, STR(addr));
+	if (dict_cache_error(verify_map) != 0) {
+	    addr_status = DEL_RCPT_STAT_DEFER;
+	    probed = 0;
+	    updated = 0;
+	    text = "Address verification status unavailable";
+	} else if (raw_data == 0		/* not found */
+		   || ((get_buf = vstring_alloc(10)),
+		       vstring_strcpy(get_buf, raw_data),	/* malformed */
+		     verify_parse_entry(STR(get_buf), &addr_status, &probed,
+					&updated, &text) < 0)
+		   || (now - probed > PROBE_TTL	/* safe to probe */
+		       && (POSITIVE_ENTRY_EXPIRED(addr_status, updated)
+			|| NEGATIVE_ENTRY_EXPIRED(addr_status, updated)))) {
 	    addr_status = DEL_RCPT_STAT_TODO;
 	    probed = 0;
 	    updated = 0;
@@ -527,7 +533,7 @@ static void verify_query_service(VSTREAM *client_stream)
 #define NEGATIVE_REFRESH_NEEDED(addr_status, updated) \
     (addr_status != DEL_RCPT_STAT_OK && updated + var_verify_neg_try < now)
 
-	if (now - probed > PROBE_TTL
+	if (dict_cache_error(verify_map) == 0 && now - probed > PROBE_TTL
 	    && (POSITIVE_REFRESH_NEEDED(addr_status, updated)
 		|| NEGATIVE_REFRESH_NEEDED(addr_status, updated))) {
 	    if (msg_verbose)
@@ -536,7 +542,7 @@ static void verify_query_service(VSTREAM *client_stream)
 	    post_mail_fopen_async(make_verify_sender_addr(), STR(addr),
 				  MAIL_SRC_MASK_VERIFY,
 				  DEL_REQ_FLAG_MTA_VRFY,
-				  /* TODO(wietse) disable REQUIRETLS? */
+	    /* TODO(wietse) disable REQUIRETLS? */
 				  SMTPUTF8_FLAG_NONE,
 				  (VSTRING *) 0,
 				  verify_post_mail_action,

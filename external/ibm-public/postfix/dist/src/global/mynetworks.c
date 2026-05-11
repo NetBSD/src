@@ -1,4 +1,4 @@
-/*	$NetBSD: mynetworks.c,v 1.2 2017/02/14 01:16:45 christos Exp $	*/
+/*	$NetBSD: mynetworks.c,v 1.2.26.1 2026/05/11 17:13:48 martin Exp $	*/
 
 /*++
 /* NAME
@@ -317,12 +317,9 @@ const char *mynetworks_host(void)
 #ifdef TEST
 #include <inet_proto.h>
 
-char   *var_inet_interfaces;
-char   *var_mynetworks_style;
-
 int     main(int argc, char **argv)
 {
-    INET_PROTO_INFO *proto_info;
+    const INET_PROTO_INFO *proto_info;
 
     if (argc != 4)
 	msg_fatal("usage: %s protocols mask_style interface_list (e.g. \"all subnet all\")",

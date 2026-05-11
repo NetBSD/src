@@ -1,4 +1,4 @@
-/*	$NetBSD: post_mail.c,v 1.5 2025/02/25 19:15:45 christos Exp $	*/
+/*	$NetBSD: post_mail.c,v 1.5.2.1 2026/05/11 17:13:49 martin Exp $	*/
 
 /*++
 /* NAME
@@ -119,8 +119,9 @@
 /* .IP trace_flags
 /*	Message tracing flags as specified in \fB<deliver_request.h>\fR.
 /* .IP sendopts
-/*	Flags defined in <sendopts.h>. This ignores flags based on
-/*	message header content, or envelope email addresses.
+/*	Flags defined in <sendopts.h>. This ignores SMTPUTF8 flags for
+/*	UTF8 detected in message headers or envelope email addresses,
+/*	and the flag for detected "TLS-Required: no".
 /* .IP queue_id
 /*	Null pointer, or pointer to buffer that receives the queue
 /*	ID of the new message.
@@ -227,8 +228,8 @@ static void post_mail_init(VSTREAM *stream, const char *sender,
     int     cleanup_flags =
     int_filt_flags(source_class) | CLEANUP_FLAG_MASK_INTERNAL
     | smtputf8_autodetect(source_class)
+    | ((sendopts & SOPT_REQUIRETLS_ESMTP) ? CLEANUP_FLAG_REQTLS : 0)
     | ((sendopts & SMTPUTF8_FLAG_REQUESTED) ? CLEANUP_FLAG_SMTPUTF8 : 0);
-    /* TODO(wietse) REQUIRETLS. */
 
     GETTIMEOFDAY(&now);
     date = mail_date(now.tv_sec);

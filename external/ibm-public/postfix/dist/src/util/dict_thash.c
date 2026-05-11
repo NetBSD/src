@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_thash.c,v 1.5 2025/02/25 19:15:51 christos Exp $	*/
+/*	$NetBSD: dict_thash.c,v 1.5.2.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -112,7 +112,7 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
 	/*
 	 * Reuse the "internal" dictionary type.
 	 */
-	dict = dict_open3(DICT_TYPE_HT, path, open_flags, dict_flags);
+	dict = dict_ht_open(path, open_flags, dict_flags);
 	dict_type_override(dict, DICT_TYPE_THASH);
 
 	/*
@@ -253,5 +253,5 @@ DICT   *dict_thash_open(const char *path, int open_flags, int dict_flags)
     dict->owner.uid = st.st_uid;
     dict->owner.status = (st.st_uid != 0);
 
-    DICT_THASH_OPEN_RETURN(DICT_DEBUG (dict));
+    DICT_THASH_OPEN_RETURN(dict);
 }

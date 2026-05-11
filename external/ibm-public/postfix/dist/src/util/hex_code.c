@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.c,v 1.4 2025/02/25 19:15:52 christos Exp $	*/
+/*	$NetBSD: hex_code.c,v 1.4.2.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -48,6 +48,8 @@
 /*	Inserts one ":" between bytes.
 /* .IP HEX_ENCODE_FLAG_APPEND
 /*	Append output to the buffer.
+/* .IP HEX_ENCODE_FLAG_LOWERCASE
+/*	Output lowercase characters.
 /* .PP
 /*	hex_decode_opt() enables extended functionality as controlled
 /*	with \fIflags\fR.
@@ -93,7 +95,8 @@
 
 /* Application-specific. */
 
-static const unsigned char hex_chars[] = "0123456789ABCDEF";
+static const unsigned char lower_hex_chars[] = "0123456789abcdef";
+static const unsigned char upper_hex_chars[] = "0123456789ABCDEF";
 
 #define UCHAR_PTR(x) ((const unsigned char *)(x))
 
@@ -110,12 +113,17 @@ VSTRING *hex_encode(VSTRING *result, const char *in, ssize_t len)
 
 VSTRING *hex_encode_opt(VSTRING *result, const char *in, ssize_t len, int flags)
 {
+    const unsigned char *hex_chars;
     const unsigned char *cp;
     int     ch;
     ssize_t count;
 
     if ((flags & HEX_ENCODE_FLAG_APPEND) == 0)
 	VSTRING_RESET(result);
+    if ((flags & HEX_ENCODE_FLAG_LOWERCASE) != 0)
+	hex_chars = lower_hex_chars;
+    else
+	hex_chars = upper_hex_chars;
     for (cp = UCHAR_PTR(in), count = len; count > 0; count--, cp++) {
 	ch = *cp;
 	VSTRING_ADDCH(result, hex_chars[(ch >> 4) & 0xf]);
@@ -257,6 +265,34 @@ static const TEST_CASE test_cases[] = {
 	HEX_DECODE_FLAG_ALLOW_COLON,
 	0,
 	0,
+    },
+    {"hex_encode_to_lowercase", hex_encode_opt,
+	"\377\376\375\374\373\372",
+	sizeof("\377\376\375\374\373\372") - 1,
+	HEX_ENCODE_FLAG_LOWERCASE,
+	"fffefdfcfbfa",
+	sizeof("fffefdfcfbfa") - 1,
+    },
+    {"hex_decode_from_lowercase", hex_decode_opt,
+	"fffefdfcfbfa",
+	sizeof("fffefdfcfbfa") - 1,
+	0,
+	"\377\376\375\374\373\372",
+	sizeof("\377\376\375\374\373\372") - 1,
+    },
+    {"hex_encode_to_uppercase", hex_encode_opt,
+	"\377\376\375\374\373\372",
+	sizeof("\377\376\375\374\373\372") - 1,
+	0,
+	"FFFEFDFCFBFA",
+	sizeof("FFFEFDFCFBFA") - 1,
+    },
+    {"hex_decode_from_uppercase", hex_decode_opt,
+	"FFFEFDFCFBFA",
+	sizeof("FFFEFDFCFBFA") - 1,
+	0,
+	"\377\376\375\374\373\372",
+	sizeof("\377\376\375\374\373\372") - 1,
     },
     {0},
 };

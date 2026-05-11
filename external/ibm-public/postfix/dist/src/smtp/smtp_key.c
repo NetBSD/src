@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp_key.c,v 1.3 2020/03/18 19:05:20 christos Exp $	*/
+/*	$NetBSD: smtp_key.c,v 1.3.10.1 2026/05/11 17:13:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -67,6 +67,12 @@
 /*	The current iterator's remote address.
 /* .IP SMTP_KEY_FLAG_PORT
 /*	The current iterator's remote port.
+/* .IP SMTP_KEY_FLAG_TLS_LEVEL
+/*	The requested TLS security level.
+/* .IP SMTP_KEY_FLAG_REQ_SMTPUTF8
+/*	Whether SMTPUTF8 support is required.
+/* .IP SMTP_KEY_FLAG_REQTLS_LEVEL
+/*	The REQUIRETLS enforcement level.
 /* .RE
 /* DIAGNOSTICS
 /*	Panic: undefined flag or zero flags. Fatal: out of memory.
@@ -105,6 +111,7 @@
   * Global library.
   */
 #include <mail_params.h>
+#include <smtputf8.h>
 
  /*
   * Application-specific.
@@ -210,6 +217,32 @@ char   *smtp_key_prefix(VSTRING *buffer, const char *delim_na,
 #else
 	smtp_key_append_na(buffer, delim_na);
 #endif
+
+    /*
+     * REQUIRETLS enforcement level, if applicable. TODO(tlsproxy) should the
+     * lookup engine also try the requested TLS level and 'stronger', in case
+     * a server hosts multiple domains with different TLS requirements?
+     */
+    if (flags & SMTP_KEY_FLAG_REQTLS_LEVEL)
+#ifdef USE_TLS
+	smtp_key_append_uint(buffer, state->reqtls_level, delim_na);
+#else
+	smtp_key_append_na(buffer, delim_na);
+#endif
+
+    /*
+     * Require SMTPUTF8 support, if applicable. TODO(wietse) if a delivery
+     * request does not need SMTPUTF8, should we also search the connection
+     * cache for a connection that is known to support it? No, because the
+     * connection would be saved back under a key that does not require
+     * SMTPUTF8 support.
+     */
+    if (flags & SMTP_KEY_FLAG_REQ_SMTPUTF8)
+	smtp_key_append_uint(buffer,
+			     DELIVERY_REQUIRES_SMTPUTF8(state->request),
+			     delim_na);
+    else
+	smtp_key_append_na(buffer, delim_na);
 
     VSTRING_TERMINATE(buffer);
 

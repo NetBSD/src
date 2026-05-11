@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_pipe.c,v 1.2 2017/02/14 01:16:49 christos Exp $	*/
+/*	$NetBSD: dict_pipe.c,v 1.2.30.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -74,13 +74,13 @@ static const char *dict_pipe_lookup(DICT *dict, const char *query)
     DICT_PIPE *dict_pipe = (DICT_PIPE *) dict;
     DICT   *map;
     char  **cpp;
-    char   *dict_type_name;
+    char   *reg_name;
     const char *result = 0;
 
     vstring_strcpy(dict_pipe->qr_buf, query);
-    for (cpp = dict_pipe->map_pipe->argv; (dict_type_name = *cpp) != 0; cpp++) {
-	if ((map = dict_handle(dict_type_name)) == 0)
-	    msg_panic("%s: dictionary \"%s\" not found", myname, dict_type_name);
+    for (cpp = dict_pipe->map_pipe->argv; (reg_name = *cpp) != 0; cpp++) {
+	if ((map = dict_handle(reg_name)) == 0)
+	    msg_panic("%s: dictionary \"%s\" not found", myname, reg_name);
 	if ((result = dict_get(map, STR(dict_pipe->qr_buf))) == 0)
 	    DICT_ERR_VAL_RETURN(dict, map->error, result);
 	vstring_strcpy(dict_pipe->qr_buf, result);
@@ -92,12 +92,17 @@ static const char *dict_pipe_lookup(DICT *dict, const char *query)
 
 static void dict_pipe_close(DICT *dict)
 {
+    static const char myname[] = "dict_pipe_close";
     DICT_PIPE *dict_pipe = (DICT_PIPE *) dict;
+    DICT   *map;
     char  **cpp;
-    char   *dict_type_name;
+    char   *reg_name;
 
-    for (cpp = dict_pipe->map_pipe->argv; (dict_type_name = *cpp) != 0; cpp++)
-	dict_unregister(dict_type_name);
+    for (cpp = dict_pipe->map_pipe->argv; (reg_name = *cpp) != 0; cpp++) {
+	if ((map = dict_handle(reg_name)) == 0)
+	    msg_panic("%s: dictionary \"%s\" not found", myname, reg_name);
+	dict_close(map);
+    }
     argv_free(dict_pipe->map_pipe);
     vstring_free(dict_pipe->qr_buf);
     dict_free(dict);
@@ -153,13 +158,10 @@ DICT   *dict_pipe_open(const char *name, int open_flags, int dict_flags)
 					DICT_TYPE_PIPE));
 
     /*
-     * The least-trusted table in the pipeline determines the over-all trust
-     * level. The first table determines the pattern-matching flags.
+     * Check all underlying table specs before registering any of them to
+     * avoid leaking refcounts if one of them is bad.
      */
-    DICT_OWNER_AGGREGATE_INIT(aggr_owner);
     for (cpp = argv->argv; (dict_type_name = *cpp) != 0; cpp++) {
-	if (msg_verbose)
-	    msg_info("%s: %s", myname, dict_type_name);
 	if (strchr(dict_type_name, ':') == 0)
 	    DICT_PIPE_RETURN(dict_surrogate(DICT_TYPE_PIPE, name,
 					    open_flags, dict_flags,
@@ -167,9 +169,18 @@ DICT   *dict_pipe_open(const char *name, int open_flags, int dict_flags)
 					    "need \"%s:{type:name...}\"",
 					    DICT_TYPE_PIPE, name,
 					    DICT_TYPE_PIPE));
-	if ((dict = dict_handle(dict_type_name)) == 0)
-	    dict = dict_open(dict_type_name, open_flags, dict_flags);
-	dict_register(dict_type_name, dict);
+    }
+
+    /*
+     * The least-trusted table in the pipeline determines the over-all trust
+     * level. The first table determines the pattern-matching flags.
+     */
+    DICT_OWNER_AGGREGATE_INIT(aggr_owner);
+    for (cpp = argv->argv; (dict_type_name = *cpp) != 0; cpp++) {
+	if (msg_verbose)
+	    msg_info("%s: %s", myname, dict_type_name);
+	dict = dict_open(dict_type_name, open_flags, dict_flags);
+	argv_replace_one(argv, cpp - argv->argv, dict->reg_name);
 	DICT_OWNER_AGGREGATE_UPDATE(aggr_owner, dict->owner);
 	if (cpp == argv->argv)
 	    match_flags = dict->flags & (DICT_FLAG_FIXED | DICT_FLAG_PATTERN);
@@ -187,5 +198,5 @@ DICT   *dict_pipe_open(const char *name, int open_flags, int dict_flags)
     dict_pipe->qr_buf = vstring_alloc(100);
     dict_pipe->map_pipe = argv;
     argv = 0;
-    DICT_PIPE_RETURN(DICT_DEBUG (&dict_pipe->dict));
+    DICT_PIPE_RETURN(&dict_pipe->dict);
 }

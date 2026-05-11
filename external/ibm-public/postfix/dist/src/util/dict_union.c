@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_union.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: dict_union.c,v 1.3.10.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -78,16 +78,16 @@ static const char *dict_union_lookup(DICT *dict, const char *query)
     DICT_UNION *dict_union = (DICT_UNION *) dict;
     DICT   *map;
     char  **cpp;
-    char   *dict_type_name;
+    char   *reg_name;
     const char *result = 0;
 
     /*
      * After Roel van Meer, postfix-users mailing list, Sept 2014.
      */
     VSTRING_RESET(dict_union->re_buf);
-    for (cpp = dict_union->map_union->argv; (dict_type_name = *cpp) != 0; cpp++) {
-	if ((map = dict_handle(dict_type_name)) == 0)
-	    msg_panic("%s: dictionary \"%s\" not found", myname, dict_type_name);
+    for (cpp = dict_union->map_union->argv; (reg_name = *cpp) != 0; cpp++) {
+	if ((map = dict_handle(reg_name)) == 0)
+	    msg_panic("%s: dictionary \"%s\" not found", myname, reg_name);
 	if ((result = dict_get(map, query)) != 0) {
 	    if (VSTRING_LEN(dict_union->re_buf) > 0)
 		VSTRING_ADDCH(dict_union->re_buf, ',');
@@ -105,12 +105,17 @@ static const char *dict_union_lookup(DICT *dict, const char *query)
 
 static void dict_union_close(DICT *dict)
 {
+    static const char myname[] = "dict_union_close";
     DICT_UNION *dict_union = (DICT_UNION *) dict;
+    DICT   *map;
     char  **cpp;
-    char   *dict_type_name;
+    char   *reg_name;
 
-    for (cpp = dict_union->map_union->argv; (dict_type_name = *cpp) != 0; cpp++)
-	dict_unregister(dict_type_name);
+    for (cpp = dict_union->map_union->argv; (reg_name = *cpp) != 0; cpp++) {
+	if ((map = dict_handle(reg_name)) == 0)
+	    msg_panic("%s: dictionary \"%s\" not found", myname, reg_name);
+	dict_close(map);
+    }
     argv_free(dict_union->map_union);
     vstring_free(dict_union->re_buf);
     dict_free(dict);
@@ -136,9 +141,9 @@ DICT   *dict_union_open(const char *name, int open_flags, int dict_flags)
      */
 #define DICT_UNION_RETURN(x) do { \
 	      if (saved_name != 0) \
-	          myfree(saved_name); \
+		  myfree(saved_name); \
 	      if (argv != 0) \
-	          argv_free(argv); \
+		  argv_free(argv); \
 	      return (x); \
 	  } while (0)
 
@@ -166,13 +171,10 @@ DICT   *dict_union_open(const char *name, int open_flags, int dict_flags)
 					 DICT_TYPE_UNION));
 
     /*
-     * The least-trusted table in the set determines the over-all trust
-     * level. The first table determines the pattern-matching flags.
+     * Check all underlying table specs before registering any of them to
+     * avoid leaking refcounts if one of them is bad.
      */
-    DICT_OWNER_AGGREGATE_INIT(aggr_owner);
     for (cpp = argv->argv; (dict_type_name = *cpp) != 0; cpp++) {
-	if (msg_verbose)
-	    msg_info("%s: %s", myname, dict_type_name);
 	if (strchr(dict_type_name, ':') == 0)
 	    DICT_UNION_RETURN(dict_surrogate(DICT_TYPE_UNION, name,
 					     open_flags, dict_flags,
@@ -180,9 +182,18 @@ DICT   *dict_union_open(const char *name, int open_flags, int dict_flags)
 					     "need \"%s:{type:name...}\"",
 					     DICT_TYPE_UNION, name,
 					     DICT_TYPE_UNION));
-	if ((dict = dict_handle(dict_type_name)) == 0)
-	    dict = dict_open(dict_type_name, open_flags, dict_flags);
-	dict_register(dict_type_name, dict);
+    }
+
+    /*
+     * The least-trusted table in the set determines the over-all trust
+     * level. The first table determines the pattern-matching flags.
+     */
+    DICT_OWNER_AGGREGATE_INIT(aggr_owner);
+    for (cpp = argv->argv; (dict_type_name = *cpp) != 0; cpp++) {
+	if (msg_verbose)
+	    msg_info("%s: %s", myname, dict_type_name);
+	dict = dict_open(dict_type_name, open_flags, dict_flags);
+	argv_replace_one(argv, cpp - argv->argv, dict->reg_name);
 	DICT_OWNER_AGGREGATE_UPDATE(aggr_owner, dict->owner);
 	if (cpp == argv->argv)
 	    match_flags = dict->flags & (DICT_FLAG_FIXED | DICT_FLAG_PATTERN);
@@ -200,5 +211,5 @@ DICT   *dict_union_open(const char *name, int open_flags, int dict_flags)
     dict_union->re_buf = vstring_alloc(100);
     dict_union->map_union = argv;
     argv = 0;
-    DICT_UNION_RETURN(DICT_DEBUG (&dict_union->dict));
+    DICT_UNION_RETURN(&dict_union->dict);
 }

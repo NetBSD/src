@@ -1,4 +1,4 @@
-/*	$NetBSD: postconf_edit.c,v 1.3 2023/12/23 20:30:44 christos Exp $	*/
+/*	$NetBSD: postconf_edit.c,v 1.3.4.1 2026/05/11 17:13:53 martin Exp $	*/
 
 /*++
 /* NAME
@@ -68,6 +68,7 @@
 /* System library. */
 
 #include <sys_defs.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -115,8 +116,13 @@ static char *pcf_find_cf_info(VSTRING *buf, VSTREAM *dst)
 static char *pcf_next_cf_line(VSTRING *buf, VSTREAM *src, VSTREAM *dst, int *lineno)
 {
     char   *cp;
+    int     last_char;
 
-    while (vstring_get(buf, src) != VSTREAM_EOF) {
+    while ((last_char = vstring_get(buf, src)) != VSTREAM_EOF) {
+	if (last_char != '\n') {
+	    VSTRING_ADDCH(buf, '\n');
+	    VSTRING_TERMINATE(buf);
+	}
 	if (lineno)
 	    *lineno += 1;
 	if ((cp = pcf_find_cf_info(buf, dst)) != 0)
@@ -143,6 +149,16 @@ static void pcf_gobble_cf_line(VSTRING *full_entry_buf, VSTRING *line_buf,
 	if (pcf_find_cf_info(line_buf, dst))
 	    vstring_strcat(full_entry_buf, STR(line_buf));
     }
+}
+
+/* pcf_cmp_ht_key - qsort helper for ht_info pointer array */
+
+static int pcf_cmp_ht_key(const void *a, const void *b)
+{
+    HTABLE_INFO **ap = (HTABLE_INFO **) a;
+    HTABLE_INFO **bp = (HTABLE_INFO **) b;
+
+    return (strcmp(ap[0]->key, bp[0]->key));
 }
 
 /* pcf_edit_main - edit main.cf file */
@@ -195,8 +211,10 @@ void    pcf_edit_main(int mode, int argc, char **argv)
 	    msg_panic("pcf_edit_main: unknown mode %d", mode);
 	}
 	if ((cvalue = htable_find(table, pattern)) != 0) {
-	    msg_warn("ignoring earlier request: '%s = %s'",
-		     pattern, cvalue->value);
+	    if (edit_value && cvalue->value
+		&& strcmp(edit_value, cvalue->value) != 0)
+		msg_warn("ignoring earlier request: '%s = %s'",
+			 pattern, cvalue->value);
 	    htable_delete(table, pattern, myfree);
 	}
 	cvalue = (struct cvalue *) mymalloc(sizeof(*cvalue));
@@ -259,7 +277,9 @@ void    pcf_edit_main(int mode, int argc, char **argv)
      * Generate new entries for parameters that were not found.
      */
     if (mode & PCF_EDIT_CONF) {
-	for (ht_info = ht = htable_list(table); *ht; ht++) {
+	ht_info = htable_list(table);
+	qsort((void *) ht_info, table->used, sizeof(*ht_info), pcf_cmp_ht_key);
+	for (ht = ht_info; *ht; ht++) {
 	    cvalue = (struct cvalue *) ht[0]->value;
 	    if (cvalue->found == 0)
 		vstream_fprintf(dst, "%s = %s\n", ht[0]->key, cvalue->value);

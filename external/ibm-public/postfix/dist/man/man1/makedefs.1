@@ -1,4 +1,4 @@
-.\"	$NetBSD: makedefs.1,v 1.4 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: makedefs.1,v 1.4.2.1 2026/05/11 17:13:41 martin Exp $
 .\"
 .TH MAKEDEFS 1 
 .ad
@@ -112,6 +112,8 @@ appear to work.
 .IP \fB\-DNO_SNPRINTF\fR
 Use sprintf() instead of snprintf(). By default, Postfix
 uses snprintf() except on ancient systems.
+.IP \fB\-DNO_STDBOOL\fR
+Don't use <stdbool.h>. This is usually auto\-detected.
 .RE
 .IP \fBDEBUG=\fIdebug_level\fR
 Specifies a non\-default debugging level. The default is \fB\-g\fR.
@@ -165,10 +167,10 @@ installation parameter(s). The following parameters are
 supported in this context:
 
 command_directory config_directory daemon_directory
-data_directory default_database_type html_directory
-mail_spool_directory mailq_path manpage_directory meta_directory
-newaliases_path queue_directory readme_directory sendmail_path
-shlib_directory openssl_path
+data_directory default_cache_db_type default_database_type
+html_directory mail_spool_directory mailq_path manpage_directory
+meta_directory newaliases_path queue_directory readme_directory
+sendmail_path shlib_directory openssl_path
 
 See the postconf(5) manpage for a description of these
 parameters.

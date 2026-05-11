@@ -1,4 +1,4 @@
-.\"	$NetBSD: smtpd.8,v 1.6 2025/02/25 19:15:42 christos Exp $
+.\"	$NetBSD: smtpd.8,v 1.6.2.1 2026/05/11 17:13:42 martin Exp $
 .\"
 .TH SMTPD 8 
 .ad
@@ -69,6 +69,7 @@ RFC 5321 (SMTP protocol)
 RFC 6531 (Internationalized SMTP)
 RFC 6533 (Internationalized Delivery Status Notifications)
 RFC 7505 ("Null MX" No Service Resource Record)
+RFC 8689 (SMTP REQUIRETLS extension)
 .SH DIAGNOSTICS
 .ad
 .fi
@@ -261,7 +262,7 @@ arrives via the Postfix \fBsmtpd\fR(8) server.
 The mail filter protocol version and optional protocol extensions
 for communication with a Milter application; prior to Postfix 2.6
 the default protocol is 2.
-.IP "\fBmilter_default_action (tempfail)\fR"
+.IP "\fBmilter_default_action (Postfix >= 3.11: shutdown; Postfix < 3.11: tempfail)\fR"
 The default action when a Milter (mail filter) response is
 unavailable (for example, bad Postfix configuration or Milter
 failure).
@@ -404,7 +405,7 @@ Available in Postfix 3.6 and later:
 .IP "\fBsmtpd_sasl_mechanism_filter (!external, static:rest)\fR"
 If non\-empty, a filter for the SASL mechanism names that the
 Postfix SMTP server will announce in the EHLO response.
-.SH "STARTTLS SUPPORT CONTROLS"
+.SH "TLS SUPPORT CONTROLS"
 .na
 .nf
 .ad
@@ -580,7 +581,15 @@ Available in Postfix version 3.9 and later:
 Request that remote SMTP clients send an RFC7250 raw public key
 instead of an X.509 certificate, when asking for or requiring client
 authentication.
-.SH "OBSOLETE STARTTLS CONTROLS"
+.PP
+Available in Postfix version 3.11 and later:
+.IP "\fBrequiretls_enable (yes)\fR"
+Enable support for the ESMTP verb "REQUIRETLS" in the "MAIL
+FROM" command.
+.IP "\fBrequiretls_esmtp_header (yes)\fR"
+Record the ESMTP REQUIRETLS request in a "Require\-TLS\-ESMTP:
+yes" message header.
+.SH "OBSOLETE TLS CONTROLS"
 .na
 .nf
 .ad
@@ -1239,6 +1248,12 @@ Available in Postfix 3.10 and later:
 .IP "\fBsmtpd_hide_client_session (no)\fR"
 Do not include SMTP client session information in the Postfix
 SMTP server's Received: message header.
+.PP
+Available in Postfix version 3.11 and later:
+.IP "\fBsmtpd_reject_filter_maps (empty)\fR"
+An optional filter that can replace a reject response from the
+Postfix SMTP server itself, or from a program that replies through
+the Postfix SMTP server.
 .SH "SEE ALSO"
 .na
 .nf

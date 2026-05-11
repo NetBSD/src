@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup.c,v 1.9 2025/02/25 19:15:44 christos Exp $	*/
+/*	$NetBSD: cleanup.c,v 1.9.2.1 2026/05/11 17:13:45 martin Exp $	*/
 
 /*++
 /* NAME
@@ -130,6 +130,9 @@
 /*	The character set name (also called "charset") that Postfix
 /*	will output when it automatically generates an RFC 2047 encoded
 /*	full name.
+/* .IP "\fBnon_empty_end_of_header_action (fix_quietly)\fR"
+/*	How the \fBcleanup\fR(8) daemon will process a message when the primary
+/*	message header is terminated with a non-empty line.
 /* BUILT-IN CONTENT FILTERING CONTROLS
 /* .ad
 /* .fi
@@ -184,7 +187,7 @@
 /*	The mail filter protocol version and optional protocol extensions
 /*	for communication with a Milter application; prior to Postfix 2.6
 /*	the default protocol is 2.
-/* .IP "\fBmilter_default_action (tempfail)\fR"
+/* .IP "\fBmilter_default_action (Postfix >= 3.11: shutdown; Postfix < 3.11: tempfail)\fR"
 /*	The default action when a Milter (mail filter) response is
 /*	unavailable (for example, bad Postfix configuration or Milter
 /*	failure).
@@ -400,6 +403,9 @@
 /* .IP "\fBtls_required_enable (yes)\fR"
 /*	Enable support for the "TLS-Required: no" message header, defined
 /*	in RFC 8689.
+/* .IP "\fBrequiretls_esmtp_header (yes)\fR"
+/*	Record the ESMTP REQUIRETLS request in a "Require-TLS-ESMTP:
+/*	yes" message header.
 /* MISCELLANEOUS CONTROLS
 /* .ad
 /* .fi
@@ -679,6 +685,7 @@ int     main(int argc, char **argv)
     single_server_main(argc, argv, cleanup_service,
 		       CA_MAIL_SERVER_INT_TABLE(cleanup_int_table),
 		       CA_MAIL_SERVER_BOOL_TABLE(cleanup_bool_table),
+		       CA_MAIL_SERVER_NBOOL_TABLE(cleanup_nbool_table),
 		       CA_MAIL_SERVER_STR_TABLE(cleanup_str_table),
 		       CA_MAIL_SERVER_TIME_TABLE(cleanup_time_table),
 		       CA_MAIL_SERVER_PRE_INIT(cleanup_pre_jail),

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.6 2025/02/25 19:15:50 christos Exp $	*/
+/*	$NetBSD: tls.h,v 1.6.2.1 2026/05/11 17:14:00 martin Exp $	*/
 
 #ifndef _TLS_H_INCLUDED_
 #define _TLS_H_INCLUDED_
@@ -52,7 +52,8 @@
 #define TLS_LEV_VERIFY		7	/* certificate verified */
 #define TLS_LEV_SECURE		8	/* "secure" verification */
 
-#define TLS_REQUIRED(l)		((l) > TLS_LEV_MAY)
+#define TLS_REQUIRED_BY_SECURITY_LEVEL(l) \
+				((l) > TLS_LEV_MAY)
 #define TLS_MUST_MATCH(l)	((l) > TLS_LEV_ENCRYPT)
 #define TLS_MUST_PKIX(l)	((l) >= TLS_LEV_VERIFY)
 #define TLS_OPPORTUNISTIC(l)	((l) == TLS_LEV_MAY || (l) == TLS_LEV_DANE)
@@ -134,6 +135,14 @@ extern const char *str_tls_level(int);
     SSL_group_to_name((ssl), SSL_get_negotiated_group(ssl))
 #else
 #define TLS_GROUP_NAME(ssl) ((const char *)0)
+#endif
+
+#if OPENSSL_VERSION_PREREQ(4,0)
+#define TLS_ADD1_HOST   SSL_add1_dnsname
+#define TLS_SET1_HOST   SSL_set1_dnsname
+#else
+#define TLS_ADD1_HOST   SSL_add1_host
+#define TLS_SET1_HOST   SSL_set1_host
 #endif
 
  /*
@@ -254,10 +263,11 @@ typedef struct {
     const char *srvr_sig_curve;		/* server's ECDSA curve name */
     int     srvr_sig_bits;		/* server's RSA signature key bits */
     const char *srvr_sig_dgst;		/* server's signature digest */
+    int     rpt_reported;		/* Failure was reported with TLSRPT */
     /* Private. */
     SSL    *con;
     char   *cache_type;			/* tlsmgr(8) cache type if enabled */
-    int     ticketed;			/* Session ticket issued */
+    int     ticketed;			/* Issued (server) or cached (client) */
     char   *serverid;			/* unique server identifier */
     char   *namaddr;			/* nam[addr] for logging */
     int     log_mask;			/* What to log */
@@ -268,12 +278,12 @@ typedef struct {
     VSTREAM *stream;			/* Blocking-mode SMTP session */
     /* DANE TLSA trust input and verification state */
     const TLS_DANE *dane;		/* DANE TLSA digests */
-    X509   *errorcert;			/* Error certificate closest to leaf */
+    const X509 *errorcert;		/* Error certificate closest to leaf */
     int     errordepth;			/* Chain depth of error cert */
     int     errorcode;			/* First error at error depth */
     int     must_fail;			/* Failed to load trust settings */
-    int     rpt_reported;		/* Failure was reported with TLSRPT */
     char   *ffail_type;			/* Forced verification failure */
+    /* End of Private members. */
 } TLS_SESS_STATE;
 
  /*

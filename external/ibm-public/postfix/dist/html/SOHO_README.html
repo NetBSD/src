@@ -123,7 +123,7 @@ discussed in the first half of this document. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
+2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/generic
 3 
 4 /etc/postfix/generic:
 5     his@localdomain.local             hisaccount@hisisp.example
@@ -148,12 +148,16 @@ that the ISP supports "+" style address extensions). </p>
 
 </ul>
 
-<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
 
 <p> Execute the command "<b>postmap /etc/postfix/generic</b>"
-whenever you change the generic table. </p>
+whenever you change the generic file, to (re)build a default-type
+indexed file. Execute  "<b>postmap <i>type</i>:/etc/postfix/generic</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <h3>Solution 2: Postfix version 2.1 and earlier </h3>
 
@@ -174,9 +178,9 @@ discussed in the first half of this document. </p>
  2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
  3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
  4 
- 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
+ 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/canonical
  6 
- 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  8 
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
@@ -205,15 +209,21 @@ but is convenient.
 
 </ul>
 
-<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
 
 <p> Execute the command "<b>postmap /etc/postfix/canonical</b>"
-whenever you change the canonical table. </p>
+whenever you change the canonical file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/canonical</b>"
+to specify an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
-whenever you change the virtual table. </p>
+whenever you change the virtual file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>"
+to specify an explicit type. </p>
 
 <h2><a name="client_sasl_enable">Enabling SASL authentication in the
 Postfix SMTP/LMTP client</a></h2>
@@ -254,7 +264,7 @@ second part sets up the username/password information.  </p>
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sasl_passwd
 </pre>
 </blockquote>
 
@@ -328,8 +338,16 @@ and before entering an optional chroot jail. </p>
 
 <ul>
 
-<li> <p> Use the <code>postmap</code> command whenever you
-change the <code>/etc/postfix/sasl_passwd</code> file. </p> </li>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+after changing the sasl_passwd file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sasl_passwd</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p> </li>
 
 <li> <p> If you specify the "<code>[</code>" and "<code>]</code>"
 in the <code><a href="postconf.5.html#relayhost">relayhost</a></code> destination, then you must use the
@@ -364,9 +382,10 @@ resort.  </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> = yes
-    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_relay
+    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = 
+        <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sender_relay
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sasl_passwd
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
@@ -397,19 +416,25 @@ resort.  </p>
 
 <ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <li> <p> If you are creative, then you can try to combine the two
 tables into one single MySQL database, and configure different
 Postfix queries to extract the appropriate information. </p>
 
-<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>". </p>
-
 <li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
-whenever you change the sasl_passwd table. </p>
+after you change the sasl_passwd file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sasl_passwd</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
-whenever you change the sender_relay table. </p>
+after you change the sender_relay file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sender_relay</b>"
+to specify an explicit type.</p>
 
 </ul>
 

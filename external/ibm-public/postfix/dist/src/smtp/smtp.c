@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.14 2025/02/25 19:15:49 christos Exp $	*/
+/*	$NetBSD: smtp.c,v 1.14.2.1 2026/05/11 17:13:57 martin Exp $	*/
 
 /*++
 /* NAME
@@ -174,7 +174,7 @@
 /*	RFC 6531 (Internationalized SMTP)
 /*	RFC 6533 (Internationalized Delivery Status Notifications)
 /*	RFC 7672 (SMTP security via opportunistic DANE TLS)
-/*	RFC 8689 (TLS-Required message header)
+/*	RFC 8689 (SMTP REQUIRETLS extension, TLS-Required header)
 /* DIAGNOSTICS
 /*	Problems and transactions are logged to \fBsyslogd\fR(8)
 /*	or \fBpostlogd\fR(8).
@@ -455,12 +455,12 @@
 /* .IP "\fBsmtp_sasl_password_result_delimiter (:)\fR"
 /*	The delimiter between username and password in sasl_passwd_maps lookup
 /*	results.
-/* STARTTLS SUPPORT CONTROLS
+/* TLS SUPPORT CONTROLS
 /* .ad
 /* .fi
 /*	Detailed information about STARTTLS configuration may be found
 /*	in the TLS_README document.
-/* .IP "\fBsmtp_tls_security_level (empty)\fR"
+/* .IP "\fBsmtp_tls_security_level (Postfix >= 3.11: may; Postfix < 3.11: empty)\fR"
 /*	The default SMTP TLS security level for the Postfix SMTP client.
 /* .IP "\fBsmtp_sasl_tls_security_options ($smtp_sasl_security_options)\fR"
 /*	The SASL authentication security options that the Postfix SMTP
@@ -649,14 +649,30 @@
 /* .IP "\fBsmtp_tlsrpt_socket_name (empty)\fR"
 /*	The pathname of a UNIX-domain datagram socket that is managed
 /*	by a local TLSRPT reporting service.
-/* .IP "\fBsmtp_tlsrpt_skip_reused_handshakes (yes)\fR"
-/*	Do not report the TLSRPT status for TLS protocol handshakes
-/*	that reuse a previously-negotiated TLS session (there is no new
-/*	information to report).
+/* .IP "\fBsmtp_tlsrpt_skip_reused_handshakes (Postfix >= 3.11: no, Postfix 3.10: yes)\fR"
+/*	When set to "yes", report the TLSRPT status only for "new" TLS
+/*	sessions.
 /* .IP "\fBtls_required_enable (yes)\fR"
 /*	Enable support for the "TLS-Required: no" message header, defined
 /*	in RFC 8689.
-/* OBSOLETE STARTTLS CONTROLS
+/* .PP
+/*	Available in Postfix version 3.10.5 and later:
+/* .IP "\fBsmtp_tls_enforce_sts_mx_patterns (yes)\fR"
+/*	Transform the TLS policy from an STS policy plugin: connect to
+/*	an MX host only if its name matches any STS policy MX host pattern,
+/*	and match the server certificate against the MX hostname.
+/* .PP
+/*	Available in Postfix version 3.11 and later:
+/* .IP "\fBrequiretls_enable (yes)\fR"
+/*	Enable support for the ESMTP verb "REQUIRETLS" in the "MAIL
+/*	FROM" command.
+/* .IP "\fBsmtp_requiretls_policy (see 'postconf -d smtp_requiretls_policy' output)\fR"
+/*	How the Postfix SMTP and LMTP client will enforce REQUIRETLS
+/*	for messages received with the REQUIRETLS option.
+/* .IP "\fBsmtp_log_tls_feature_status (yes)\fR"
+/*	Enable logging of TLS feature information in delivery status
+/*	logging.
+/* OBSOLETE TLS CONTROLS
 /* .ad
 /* .fi
 /*	The following configuration parameters exist for compatibility
@@ -1052,14 +1068,14 @@ int     var_smtp_data2_tmout;
 int     var_smtp_rset_tmout;
 int     var_smtp_quit_tmout;
 char   *var_notify_classes;
-int     var_smtp_skip_5xx_greeting;
-int     var_ign_mx_lookup_err;
-int     var_skip_quit_resp;
+bool    var_smtp_skip_5xx_greeting;
+bool    var_ign_mx_lookup_err;
+bool    var_skip_quit_resp;
 char   *var_fallback_relay;
 char   *var_bestmx_transp;
 char   *var_error_rcpt;
-int     var_smtp_always_ehlo;
-int     var_smtp_never_ehlo;
+bool    var_smtp_always_ehlo;
+bool    var_smtp_never_ehlo;
 char   *var_smtp_sasl_opts;
 char   *var_smtp_sasl_path;
 char   *var_smtp_sasl_passwd;
@@ -1135,6 +1151,7 @@ bool    var_smtp_tls_blk_early_mail_reply;
 bool    var_smtp_tls_force_tlsa;
 char   *var_smtp_tls_insecure_mx_policy;
 bool    var_smtp_tls_enable_rpk;
+bool    var_smtp_tls_enf_sts_mx_pat;
 
 #endif
 
@@ -1167,6 +1184,8 @@ bool    var_allow_srv_fallback;
 bool    var_smtp_tlsrpt_enable;
 char   *var_smtp_tlsrpt_sockname;
 bool    var_smtp_tlsrpt_skip_reused_hs;
+char   *var_smtp_reqtls_policy;
+bool    var_log_tls_feature_status;
 
  /* Special handling of 535 AUTH errors. */
 char   *var_smtp_sasl_auth_cache_name;
@@ -1194,6 +1213,7 @@ HBC_CHECKS *smtp_body_checks;		/* limited body checks */
 SMTP_CLI_ATTR smtp_cli_attr;		/* parsed command-line */
 int     smtp_hfrom_format;		/* postmaster notifications */
 STRING_LIST *smtp_use_srv_lookup;
+SMTP_REQTLS_POLICY *smtp_reqtls_policy;
 
 #ifdef USE_TLS
 
@@ -1551,6 +1571,12 @@ static void pre_init(char *unused_name, char **unused_argv)
 		 VAR_LMTP_SMTP(SASL_ENABLE));
 #endif
 
+#ifdef USE_TLS
+    /* Postfix <= 3.10 backwards compatibility. */
+    if (smtp_mode && warn_compat_break_smtp_tls_level)
+	msg_info("using backwards-compatible default setting %s=(empty)",
+		 VAR_SMTP_TLS_LEVEL);
+#endif
     if (*var_smtp_tls_level != 0)
 #ifdef USE_TLS
 	switch (tls_level_lookup(var_smtp_tls_level)) {
@@ -1697,6 +1723,16 @@ static void pre_init(char *unused_name, char **unused_argv)
     if (*var_smtp_dns_re_filter)
 	dns_rr_filter_compile(VAR_LMTP_SMTP(DNS_RE_FILTER),
 			      var_smtp_dns_re_filter);
+
+    /*
+     * REQUIRETLS enforcement policy. The parser appends a default action: DO
+     * NOT skip the code below if the policy string is empty. When
+     * var_reqtls_enable != 0, smtp_reqtls_policy must also be != 0.
+     */
+    if (var_reqtls_enable)
+	smtp_reqtls_policy =
+	    smtp_reqtls_policy_parse(VAR_LMTP_SMTP(REQTLS_POLICY),
+				     var_smtp_reqtls_policy);
 }
 
 /* pre_accept - see if tables have changed */

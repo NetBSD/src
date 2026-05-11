@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_fail.c,v 1.2 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_fail.c,v 1.2.6.1 2026/05/11 17:14:02 martin Exp $	*/
 
 /*++
 /* NAME
@@ -113,5 +113,5 @@ DICT   *dict_fail_open(const char *name, int open_flags, int dict_flags)
     dp->dict.flags = dict_flags | DICT_FLAG_PATTERN;
     dp->dict_errno = DICT_ERR_RETRY;
     dp->dict.owner.status = DICT_OWNER_TRUSTED;
-    return (DICT_DEBUG (&dp->dict));
+    return (&dp->dict);
 }

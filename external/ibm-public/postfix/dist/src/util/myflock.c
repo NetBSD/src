@@ -1,4 +1,4 @@
-/*	$NetBSD: myflock.c,v 1.3 2020/03/18 19:05:21 christos Exp $	*/
+/*	$NetBSD: myflock.c,v 1.3.10.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -83,12 +83,39 @@
 
 #include "msg.h"
 #include "myflock.h"
+#include "name_mask.h"
+#include "vstring.h"
 
 /* myflock - lock/unlock entire open file */
 
 int     myflock(int fd, int lock_style, int operation)
 {
     int     status;
+    const static NAME_MASK lock_masks[] = {
+	"MYFLOCK_STYLE_FLOCK", MYFLOCK_STYLE_FLOCK,
+	"MYFLOCK_STYLE_FCNTL", MYFLOCK_STYLE_FCNTL,
+	0,
+    };
+    const static NAME_MASK op_masks[] = {
+	"MYFLOCK_OP_SHARED", MYFLOCK_OP_SHARED,
+	"MYFLOCK_OP_EXCLUSIVE", MYFLOCK_OP_EXCLUSIVE,
+	"MYFLOCK_OP_NOWAIT", MYFLOCK_OP_NOWAIT,
+	0,
+    };
+
+    if (msg_verbose) {
+	VSTRING *style_buf = vstring_alloc(100);
+	VSTRING *op_buf = vstring_alloc(100);
+
+	msg_info("myflock(%d, %s, %s)", fd,
+		 str_name_mask_opt(style_buf, "lock_style", lock_masks,
+			     lock_style, NAME_MASK_PIPE | NAME_MASK_NUMBER),
+		 operation == MYFLOCK_OP_NONE ? "MYFLOCK_OP_NONE" :
+		 str_name_mask_opt(op_buf, "operation", op_masks,
+			     operation, NAME_MASK_PIPE | NAME_MASK_NUMBER));
+	vstring_free(style_buf);
+	vstring_free(op_buf);
+    }
 
     /*
      * Sanity check.
@@ -141,13 +168,15 @@ int     myflock(int fd, int lock_style, int operation)
     default:
 	msg_panic("myflock: unsupported lock style: 0x%x", lock_style);
     }
+    if (msg_verbose)
+	msg_info("myflock() returns %d", status);
 
     /*
      * Return a consistent result. Some systems return EACCES when a lock is
      * taken by someone else, and that would complicate error processing.
      */
     if (status < 0 && (operation & MYFLOCK_OP_NOWAIT) != 0)
-	if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EACCES)
+	if (errno == EWOULDBLOCK || errno == EACCES)
 	    errno = EAGAIN;
 
     return (status);

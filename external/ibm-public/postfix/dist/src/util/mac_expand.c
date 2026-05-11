@@ -1,4 +1,4 @@
-/*	$NetBSD: mac_expand.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: mac_expand.c,v 1.4.6.1 2026/05/11 17:14:03 martin Exp $	*/
 
 /*++
 /* NAME
@@ -8,6 +8,16 @@
 /* SYNOPSIS
 /*	#include <mac_expand.h>
 /*
+/*	int	mac_expand7(result, pattern, flags, filter, lookup,
+/*				dont_expand, context)
+/*	VSTRING *result;
+/*	const char *pattern;
+/*	int	flags;
+/*	const char *filter;
+/*	const char *lookup(const char *key, int mode, void *context)
+/*	const bool dont_parse(const char *key, void *context)
+/*	void *context;
+/* AUXILIARY FUNCTIONS
 /*	int	mac_expand(result, pattern, flags, filter, lookup, context)
 /*	VSTRING *result;
 /*	const char *pattern;
@@ -15,7 +25,7 @@
 /*	const char *filter;
 /*	const char *lookup(const char *key, int mode, void *context)
 /*	void *context;
-/* AUXILIARY FUNCTIONS
+/*
 /*	typedef	MAC_EXP_OP_RES (*MAC_EXPAND_RELOP_FN) (
 /*	const char *left,
 /*	int	tok_val,
@@ -27,6 +37,14 @@
 /*	MAC_EXPAND_RELOP_FN relop_eval)
 /*
 /*	MAC_EXP_OP_RES mac_exp_op_res_bool[2];
+/
+/*	typedef int (*MAC_EXPAND_NAMED_FN) (
+/*	VSTRING *out,
+/*	const char *arg)
+/*
+/*	void	mac_expand_add_named_fn(
+/*	const char *name,
+/*	MAC_EXPAND_NAMED_FN action)
 /* DESCRIPTION
 /*	This module implements parameter-less named attribute
 /*	expansions, both conditional and unconditional. As of Postfix
@@ -53,6 +71,11 @@
 /*	named attribute expansion and relational expression evaluation.
 /*	Otherwise, the result is empty.  Whitespace before or after
 /*	{text} is ignored.
+/* .IP "${name{text}}"
+/*	Apply the registered function \fIname\fR to the specified text
+/*	after named attribute expansion and expression evaluation,
+/*	and replace this input with the function result. Functions are
+/*	registered with mac_expand_add_named_fn().
 /* .IP "${name:text}, ${name:{text}}"
 /*	Conditional attribute-based substitution. If the attribute
 /*	value is empty or undefined, the expansion is the given
@@ -110,8 +133,14 @@
 /*	or MAC_EXP_MODE_USE to use the value of the named attribute,
 /*	and the caller context that was given to mac_expand(). A null
 /*	result value means that the requested attribute was not defined.
+/* .IP don_parse
+/*	An optional function that disables the MAC_EXP_FLAG_RECURSE
+/*	feature with lookup() results for a specific attribute. Arguments
+/*	are: the attribute name, and the caller context that was given
+/*	to mac_expand(). Specify null to disable this feature.
 /* .IP context
-/*	Caller context that is passed on to the attribute lookup routine.
+/*	Caller context that is passed on to the attribute lookup and
+/*	don_parse routines.
 /* .PP
 /*	mac_expand_add_relop() registers a function that implements
 /*	support for custom relational operators. Custom operator names
@@ -135,11 +164,18 @@
 /*	mac_exp_op_res_bool provides an array that converts a boolean
 /*	value (0 or 1) to the corresponding MAX_EXP_OP_RES_TRUE or
 /*	MAX_EXP_OP_RES_FALSE value.
+/*
+/*	mac_expand_add_named_fn() registers a C function that may be
+/*	called as ${name{text}}. The function input is the text after
+/*	attribute expansion and expression evaluation. The function
+/*	should append its output to the specified buffer, and it
+/*	should return either MAC_PARSE_OK or MAC_PARSE_ERROR.
 /* DIAGNOSTICS
 /*	Fatal errors: out of memory.  Warnings: syntax errors, unreasonable
 /*	recursion depth.
 /*
-/*	The result value is the binary OR of zero or more of the following:
+/*	The mac_expand() result value is the binary OR of zero or more
+/*	of the following:
 /* .IP MAC_PARSE_ERROR
 /*	A syntax error was found in \fBpattern\fR, or some attribute had
 /*	an unreasonable nesting depth.
@@ -161,6 +197,9 @@
 /*	Google, Inc.
 /*	111 8th Avenue
 /*	New York, NY 10011, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 /* System library. */
@@ -199,6 +238,7 @@ typedef struct {
     int     flags;			/* features */
     const char *filter;			/* character filter */
     MAC_EXP_LOOKUP_FN lookup;		/* lookup routine */
+    MAC_EXP_DONT_PARSE_FN dont_parse;	/* veto routine */
     void   *context;			/* caller context */
     int     status;			/* findings */
     int     level;			/* nesting level */
@@ -264,6 +304,14 @@ static const NAME_CODE mac_exp_op_table[] =
   */
 static HTABLE *mac_exp_ext_table;
 static VSTRING *mac_exp_ext_key;
+
+ /*
+  * Support for named functions.
+  */
+static HTABLE *mac_exp_named_fn_table;
+struct mac_exp_named_fn_entry {
+    MAC_EXPAND_NAMED_FN action;
+};
 
  /*
   * SLMs.
@@ -362,18 +410,27 @@ static int PRINTFLIKE(2, 3) mac_exp_parse_error(MAC_EXP_CONTEXT *mc,
 
 /* mac_exp_extract_curly_payload - balance {}, skip whitespace, return payload */
 
-static char *mac_exp_extract_curly_payload(MAC_EXP_CONTEXT *mc, char **bp)
+static char *mac_exp_extract_curly_payload(MAC_EXP_CONTEXT *mc, char **bp,
+					           int strip_space)
 {
     char   *payload;
     char   *cp;
     int     level;
     int     ch;
 
+#define DO_STRIP_SPACE	1
+#define NO_STRIP_SPACE	0
+
     /*
      * Extract the payload and balance the {}. The caller is expected to skip
      * leading whitespace before the {. See MAC_EXP_FIND_LEFT_CURLY().
+     * TODO(wietse) this code pre-dates extpar() and mainly differs in how an
+     * error is reported.
      */
-    for (level = 1, cp = *bp, payload = ++cp; /* see below */ ; cp++) {
+    payload = *bp + 1;
+    if (strip_space)
+	payload += strspn(payload, MAC_EXP_WHITESPACE);
+    for (level = 1, cp = payload; /* see below */ ; cp++) {
 	if ((ch = *cp) == 0) {
 	    mac_exp_parse_error(mc, "unbalanced {} in attribute expression: "
 				"\"%s\"",
@@ -386,6 +443,8 @@ static char *mac_exp_extract_curly_payload(MAC_EXP_CONTEXT *mc, char **bp)
 		break;
 	}
     }
+    if (strip_space)
+	trimblanks(payload, cp - payload)[0] = 0;
     *cp++ = 0;
 
     /*
@@ -419,7 +478,8 @@ static int mac_exp_parse_relational(MAC_EXP_CONTEXT *mc, const char **lookup,
      * Left operand. The caller is expected to skip leading whitespace before
      * the {. See MAC_EXP_FIND_LEFT_CURLY().
      */
-    if ((left_op_strval = mac_exp_extract_curly_payload(mc, &cp)) == 0)
+    if ((left_op_strval = mac_exp_extract_curly_payload(mc, &cp,
+						      NO_STRIP_SPACE)) == 0)
 	return (mc->status);
 
     /*
@@ -460,7 +520,8 @@ static int mac_exp_parse_relational(MAC_EXP_CONTEXT *mc, const char **lookup,
 	MAC_EXP_ERR_RETURN(mc, "\"{expression}\" expected at: "
 			   "\"...{%s} %.*s>>>%.20s\"",
 			   left_op_strval, (int) op_len, op_pos, cp);
-    if ((rite_op_strval = mac_exp_extract_curly_payload(mc, &cp)) == 0)
+    if ((rite_op_strval = mac_exp_extract_curly_payload(mc, &cp,
+						      NO_STRIP_SPACE)) == 0)
 	return (mc->status);
 
     /*
@@ -537,6 +598,70 @@ void    mac_expand_add_relop(int *tok_list, const char *suffix,
     }
 }
 
+/* mac_expand_add_named_fn - register named-function callback */
+
+void    mac_expand_add_named_fn(const char *name, MAC_EXPAND_NAMED_FN action)
+{
+    struct mac_exp_named_fn_entry *xp;
+
+    /*
+     * Sanity checks.
+     */
+    if (!allalnumus(name))
+	msg_panic("%s: bad function name: \"%s\"", __func__, name);
+
+    /*
+     * One-time initialization.
+     */
+    if (mac_exp_named_fn_table == 0)
+	mac_exp_named_fn_table = htable_create(10);
+
+    /*
+     * The C language spec allows sizeof(void *) < sizeof(function pointer).
+     */
+    if (htable_locate(mac_exp_named_fn_table, name) != 0)
+	msg_panic("%s: duplicate key: %s", __func__, name);
+    xp = (struct mac_exp_named_fn_entry *) mymalloc(sizeof(*xp));
+    xp->action = action;
+    (void) htable_enter(mac_exp_named_fn_table, name, (void *) xp);
+}
+
+/* mac_exp_parse_function - interpolate result from caller-defined function */
+
+static int mac_exp_parse_function(char *name_start, char *name_end,
+				          char *cp, MAC_EXP_CONTEXT *mc)
+{
+    char   *fn_arg;
+    struct mac_exp_named_fn_entry *xp;
+    VSTRING *buf = 0;
+
+    /* cp is positioned at the '{', zero or more spaces after name_end. */
+    if ((fn_arg = mac_exp_extract_curly_payload(mc, &cp, DO_STRIP_SPACE)) == 0)
+	return (mc->status);
+    if (*cp != 0)				/* garbage */
+	MAC_EXP_ERR_RETURN(mc, "unexpected input at: "
+			   "\"...%s}>>>%.20s\"", fn_arg, cp);
+    *name_end = 0;
+    /* Look up the function and evaluate. */
+    xp = (struct mac_exp_named_fn_entry *)
+	htable_find(mac_exp_named_fn_table, name_start);
+    if (xp == 0)
+	MAC_EXP_ERR_RETURN(mc, "unknown function \"%s\" at"
+			"\"...>>>%s{%s}\"", name_start, name_start, fn_arg);
+    if ((mc->flags & MAC_EXP_FLAG_SCAN) == 0)
+	buf = vstring_alloc(100);
+    mc->status |=
+	mac_expand(buf, fn_arg, mc->flags, mc->filter, mc->lookup,
+		   mc->context);
+    if ((mc->flags & MAC_EXP_FLAG_SCAN) == 0) {
+	if ((mc->status & MAC_PARSE_ERROR) == 0
+	    && xp->action(mc->result, vstring_str(buf)) == MAC_PARSE_ERROR)
+	    mc->status |= MAC_PARSE_ERROR;
+	vstring_free(buf);
+    }
+    return (mc->status);
+}
+
 /* mac_expand_callback - callback for mac_parse */
 
 static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
@@ -551,6 +676,7 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
     ssize_t tmp_len;
     const char *res_iftrue;
     const char *res_iffalse;
+    int     dont_parse = false;
 
     /*
      * Sanity check.
@@ -562,8 +688,9 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	return (mc->status);
 
     /*
-     * Named parameter or relational expression. In case of a syntax error,
-     * return without doing damage, and issue a warning instead.
+     * Named parameter, function call, or relational expression. In case of a
+     * syntax error, return without doing damage, and issue a warning
+     * instead.
      */
     if (type == MAC_PARSE_EXPR) {
 
@@ -589,14 +716,16 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	}
 
 	/*
-	 * Named parameter.
+	 * Named parameter or function call.
 	 */
 	else {
 	    char   *start;
 
 	    /*
-	     * Look for the ? or : operator. In case of a syntax error,
-	     * return without doing damage, and issue a warning instead.
+	     * Collect the name of the parameter or function. Look for the ?
+	     * or : operator, or the '{' to indicate a function call. In case
+	     * of a syntax error, return without doing damage, and issue a
+	     * warning instead.
 	     */
 	    start = (cp += strspn(cp, MAC_EXP_WHITESPACE));
 	    for ( /* void */ ; /* void */ ; cp++) {
@@ -611,6 +740,8 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 		    lookup_mode = MAC_EXP_MODE_TEST;
 		    break;
 		}
+		if (ch == '{')
+		    return (mac_exp_parse_function(start, cp, cp + tmp_len, mc));
 		ch = *cp;
 		if (!ISALNUM(ch) && ch != '_') {
 		    MAC_EXP_ERR_RETURN(mc, "attribute name syntax error at: "
@@ -624,6 +755,8 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	     * Look up the named parameter. Todo: allow the lookup function
 	     * to specify if the result is safe for $name expansion.
 	     */
+	    if (mc->dont_parse)
+		dont_parse = mc->dont_parse(start, mc->context);
 	    lookup = mc->lookup(start, lookup_mode, mc->context);
 	}
 
@@ -640,7 +773,8 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	switch (ch) {
 	case '?':
 	    if (MAC_EXP_FIND_LEFT_CURLY(tmp_len, cp)) {
-		if ((res_iftrue = mac_exp_extract_curly_payload(mc, &cp)) == 0)
+		if ((res_iftrue = mac_exp_extract_curly_payload(mc, &cp,
+						      NO_STRIP_SPACE)) == 0)
 		    return (mc->status);
 	    } else {
 		res_iftrue = cp;
@@ -658,7 +792,8 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 	    /* FALLTHROUGH: do not remove, see comment above. */
 	case ':':
 	    if (MAC_EXP_FIND_LEFT_CURLY(tmp_len, cp)) {
-		if ((res_iffalse = mac_exp_extract_curly_payload(mc, &cp)) == 0)
+		if ((res_iffalse = mac_exp_extract_curly_payload(mc, &cp,
+						      NO_STRIP_SPACE)) == 0)
 		    return (mc->status);
 	    } else {
 		res_iffalse = cp;
@@ -676,7 +811,7 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
 		mc->status |= MAC_PARSE_UNDEF;
 	    } else if (*lookup == 0 || (mc->flags & MAC_EXP_FLAG_SCAN)) {
 		 /* void */ ;
-	    } else if (mc->flags & MAC_EXP_FLAG_RECURSE) {
+	    } else if ((mc->flags & MAC_EXP_FLAG_RECURSE) && !dont_parse) {
 		vstring_strcpy(buf, lookup);
 		mc->status |= mac_parse(vstring_str(buf), mac_expand_callback,
 					(void *) mc);
@@ -708,12 +843,29 @@ static int mac_expand_callback(int type, VSTRING *buf, void *ptr)
     return (mc->status);
 }
 
+ /*
+  * ABI compatibility wrapper.
+  */
+#undef mac_expand
+int     mac_expand(VSTRING *, const char *, int, const char *,
+		           MAC_EXP_LOOKUP_FN, void *);
+
 /* mac_expand - expand $name instances */
 
 int     mac_expand(VSTRING *result, const char *pattern, int flags,
 		           const char *filter,
 		           MAC_EXP_LOOKUP_FN lookup, void *context)
 {
+    return (mac_expand7(result, pattern, flags, filter, lookup,
+			(MAC_EXP_DONT_PARSE_FN) 0, context));
+}
+
+int     mac_expand7(VSTRING *result, const char *pattern, int flags,
+		            const char *filter,
+		            MAC_EXP_LOOKUP_FN lookup,
+		            MAC_EXP_DONT_PARSE_FN dont_parse, void *context)
+{
+
     MAC_EXP_CONTEXT mc;
     int     status;
 
@@ -724,6 +876,7 @@ int     mac_expand(VSTRING *result, const char *pattern, int flags,
     mc.flags = flags;
     mc.filter = filter;
     mc.lookup = lookup;
+    mc.dont_parse = dont_parse;
     mc.context = context;
     mc.status = 0;
     mc.level = 0;
@@ -778,6 +931,12 @@ static MAC_EXP_OP_RES length_relop_eval(const char *left, int relop,
     }
 }
 
+static int named_fn_eval(VSTRING *out, const char *in)
+{
+    vstring_sprintf_append(out, "-=oO%sOo=-", in);
+    return (0);
+}
+
 int     main(int unused_argc, char **argv)
 {
     VSTRING *buf = vstring_alloc(100);
@@ -798,6 +957,11 @@ int     main(int unused_argc, char **argv)
      * Add relops that compare string lengths instead of content.
      */
     mac_expand_add_relop(length_relops, "length", length_relop_eval);
+
+    /*
+     * Add a silly named function that decorates its argument.
+     */
+    mac_expand_add_named_fn("test_named_fn", named_fn_eval);
 
     /*
      * Loop over the inputs.
