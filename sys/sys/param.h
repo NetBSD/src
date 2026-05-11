@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.744 2026/05/03 16:02:37 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.745 2026/05/11 02:07:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -201,12 +201,12 @@
 #endif
 
 /* pages ("clicks") to disk blocks */
-#define	ctod(x)		((x) << (PGSHIFT - DEV_BSHIFT))
-#define	dtoc(x)		((x) >> (PGSHIFT - DEV_BSHIFT))
+#define	ctod(x)		((x) << (PAGE_SHIFT - DEV_BSHIFT))
+#define	dtoc(x)		((x) >> (PAGE_SHIFT - DEV_BSHIFT))
 
 /* bytes to pages */
-#define	ctob(x)		((x) << PGSHIFT)
-#define	btoc(x)		(((x) + PGOFSET) >> PGSHIFT)
+#define	ctob(x)		((x) << PAGE_SHIFT)
+#define	btoc(x)		(((x) + PAGE_MASK) >> PAGE_SHIFT)
 
 /* bytes to disk blocks */
 #define	dbtob(x)	((x) << DEV_BSHIFT)
@@ -465,7 +465,7 @@
  * always allocate and free physical memory; requests for these
  * size allocations should be done infrequently as they will be slow.
  *
- * Constraints: NBPG <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
+ * Constraints: PAGE_SIZE <= MAXALLOCSAVE <= 2 ** (MINBUCKET + 14), and
  * MAXALLOCSAVE must be a power of two.
  */
 #ifdef _LP64
@@ -473,7 +473,7 @@
 #else
 #define	MINBUCKET	4		/* 4 => min allocation of 16 bytes */
 #endif
-#define	MAXALLOCSAVE	(2 * NBPG)
+#define	MAXALLOCSAVE	(2 * PAGE_SIZE)
 
 /*
  * Scale factor for scaled integers used to count %cpu time and load avgs.
