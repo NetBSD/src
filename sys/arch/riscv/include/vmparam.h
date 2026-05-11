@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.15 2026/05/06 06:55:15 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.16 2026/05/11 07:59:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -49,6 +49,25 @@
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+#ifdef _LP64
+/*
+ * Default pager_map of 16MB is awfully small.  There is plenty
+ * of VA so use it.
+ */
+#define	PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
+#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.
