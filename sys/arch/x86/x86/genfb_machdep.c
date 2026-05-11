@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.23 2023/10/19 14:59:46 bouyer Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.24 2026/05/11 07:57:21 is Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.23 2023/10/19 14:59:46 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.24 2026/05/11 07:57:21 is Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -153,7 +153,7 @@ x86_genfb_init(void)
 	ri->ri_rpos = fbinfo->rpos;
 	ri->ri_gpos = fbinfo->gpos;
 	ri->ri_bpos = fbinfo->bpos;
-	if (x86_genfb_use_shadowfb && lookup_bootinfo(BTINFO_EFI) != NULL) {
+	if (x86_genfb_use_shadowfb) {
 		/* XXX The allocated memory is never released... */
 		ri->ri_bits = kmem_alloc(ri->ri_stride * ri->ri_height,
 		    KM_SLEEP);
