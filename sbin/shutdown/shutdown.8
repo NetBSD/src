@@ -1,4 +1,4 @@
-.\"	$NetBSD: shutdown.8,v 1.38 2023/02/15 13:05:21 uwe Exp $
+.\"	$NetBSD: shutdown.8,v 1.39 2026/05/11 23:21:07 kre Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -88,12 +88,13 @@ The system is halted at the specified
 using
 .Xr halt 8 .
 .It Fl k
-Kick everybody off.
+Just kidding.
 The
 .Fl k
 option
-does not actually halt the system, but leaves the
-system multi-user with logins disabled (for all but super-user).
+does not actually halt the system,
+but goes through the motions as if it were going to halt,
+then when the time arrives, writes a message and just exits.
 .It Fl n
 Prevent the normal
 .Xr sync 2
@@ -105,6 +106,10 @@ using
 .Xr poweroff 8 .
 If the powerdown fails, or the system does not support software powerdown,
 the system will simply halt instead.
+The
+.Fl p
+flag implies
+.Fl h .
 .It Fl r
 The system is rebooted at the specified
 .Ar time ,
@@ -178,6 +183,11 @@ If
 .Fl
 is supplied as the only argument after the time, the warning message is read
 from the standard input.
+The message continues until EOF is reached on standard input,
+or until more than a reasonably sized message has been read, and
+.Nm
+simply decides
+.Dq Enough!
 .El
 .Sh BEHAVIOR
 At intervals, becoming more frequent as apocalypse approaches

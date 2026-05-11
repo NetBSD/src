@@ -1,4 +1,4 @@
-/*	$NetBSD: shutdown.c,v 1.59 2024/12/07 14:08:54 martin Exp $	*/
+/*	$NetBSD: shutdown.c,v 1.60 2026/05/11 23:21:07 kre Exp $	*/
 
 /*
  * Copyright (c) 1988, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: shutdown.c,v 1.59 2024/12/07 14:08:54 martin Exp $");
+__RCSID("$NetBSD: shutdown.c,v 1.60 2026/05/11 23:21:07 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ static const struct interval {
 #undef S
 
 static time_t offset, shuttime;
-static int dofast, dohalt, doreboot, killflg, nofork, nosync, dodump;
+static int dofast, dohalt, doreboot, kidding, nofork, nosync, dodump;
 static size_t mbuflen;
 static int dopowerdown;
 static int dodebug, dosilent, doverbose;
@@ -142,7 +142,7 @@ main(int argc, char *argv[])
 			dohalt = 1;
 			break;
 		case 'k':
-			killflg = 1;
+			kidding = 1;
 			break;
 		case 'n':
 			nosync = 1;
@@ -294,6 +294,8 @@ loop(void)
 
 static jmp_buf alarmbuf;
 
+#define	plural(n)	((n) == 1 ? "" : "s")
+
 static void
 timewarn(time_t timeleft)
 {
@@ -324,9 +326,9 @@ timewarn(time_t timeleft)
 		    ctime(&shuttime) + 11);
 	else if (timeleft > 59)
 		(void)fprintf(pf, "System going down in %ld minute%s\n\n",
-		    (long)timeleft / 60, (timeleft > 60) ? "s" : "");
+		    (long)timeleft / 60, plural((long)timeleft / 60));
 	else if (timeleft)
-		(void)fprintf(pf, "System going down in 30 seconds\n\n");
+		(void)fprintf(pf, "System going down in ~30 seconds\n\n");
 	else
 		(void)fprintf(pf, "System going down IMMEDIATELY\n\n");
 
@@ -372,7 +374,7 @@ die_you_gravy_sucking_pig_dog(void)
 	(void)sleep(2);
 
 	(void)printf("\r\nSystem shutdown time has arrived\007\007\r\n");
-	if (killflg) {
+	if (kidding) {
 		(void)printf("\rbut you'll have to do it yourself\r\n");
 		finish(0);
 	}
@@ -494,16 +496,25 @@ getoffset(char *timearg)
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
+		if (lt->tm_mon < 1 || lt->tm_mon > 12)
+			badtime();
 		--lt->tm_mon;
 		/* FALLTHROUGH */
 	case 6:
 		lt->tm_mday = ATOI2(timearg);
+		if (lt->tm_mday < 1 || lt->tm_mday > 31)
+			badtime();
 		/* FALLTHROUGH */
 	case 4:
 		lt->tm_hour = ATOI2(timearg);
+		if (lt->tm_hour < 0 || lt->tm_hour > 23)
+			badtime();
 		/* FALLTHROUGH */
 	case 2:
 		lt->tm_min = ATOI2(timearg);
+		/* ignore possibility of a leap second */
+		if (lt->tm_min < 0 || lt->tm_min > 59)
+			badtime();
 		break;
 	default:
 		badtime();
@@ -558,6 +569,9 @@ nolog(void)
 	int logfd;
 	char *ct;
 
+	if (kidding)
+		return;
+
 	(void)unlink(_PATH_NOLOGIN);	/* in case linked to another file */
 	(void)signal(SIGINT, finish);
 	(void)signal(SIGHUP, finish);
@@ -579,7 +593,7 @@ static void
 finish(int signo)
 {
 
-	if (!killflg)
+	if (!kidding)
 		(void)unlink(_PATH_NOLOGIN);
 	exit(0);
 }
