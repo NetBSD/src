@@ -1,4 +1,4 @@
-/* $NetBSD: imx23_timrot.c,v 1.12 2026/03/30 08:10:16 yurix Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.13 2026/05/11 19:37:14 yurix Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -62,10 +62,7 @@ static void	imx23_timrot_attach(device_t, device_t, void *);
 static void	imx23_timrot_reset(struct imx23_timrot_softc *);
 int 		imx23_timrot_systimer_irq(void *frame);
 int 		imx23_timrot_stattimer_irq(void *);
-
-
-void	cpu_initclocks(void);
-void 	setstatclockrate(int);
+static void	imx23_timrot_setstatclockrate(int);
 
 CFATTACH_DECL_NEW(imx23timrot, sizeof(struct imx23_timrot_softc),
 		  imx23_timrot_match, imx23_timrot_attach, NULL, NULL);
@@ -162,6 +159,7 @@ imx23_timrot_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": stattimer on %s\n", intrstr);
 
 	arm_fdt_timer_register(imx23_timrot_cpu_initclocks);
+	arm_fdt_timer_register_setstatclockrate(imx23_timrot_setstatclockrate);
 }
 
 /*
@@ -190,16 +188,14 @@ imx23_timrot_cpu_initclocks(void)
 /*
  * Change statclock rate when profiling takes place.
  */
-void
-setstatclockrate(int newhz)
+static void
+imx23_timrot_setstatclockrate(int newhz)
 {
 	struct imx23_timrot_softc *sc = timer_sc;
 
-	if(sc != NULL) {
-		TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
-			      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
-					HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
-	}
+	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
+		      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
+				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
 }
 
 /*
