@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.16 2026/05/11 07:59:52 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.17 2026/05/11 19:31:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -173,13 +173,12 @@
  *
  */
 
-
-
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x10000000)	/* 0xffff_ffff_f000_0000 */
 
 #endif
+
 #define VM_KERNEL_BASE		VM_MIN_KERNEL_ADDRESS
 #define VM_KERNEL_SIZE		0x2000000	/* 32 MiB (8 / 16 megapages) */
 #define VM_KERNEL_DTB_BASE	(VM_KERNEL_BASE + VM_KERNEL_SIZE)
