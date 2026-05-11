@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.50 2025/01/09 06:55:25 rin Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.51 2026/05/11 19:38:21 yurix Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.50 2025/01/09 06:55:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.51 2026/05/11 19:38:21 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -411,10 +411,13 @@ gtmr_intr(void *arg)
 	return 1;
 }
 
+#ifndef __HAVE_GENERIC_SETSTATCLOCKRATE
 void
 setstatclockrate(int newhz)
 {
+	/* use hardclock */
 }
+#endif
 
 static u_int
 gtmr_get_timecount(struct timecounter *tc)

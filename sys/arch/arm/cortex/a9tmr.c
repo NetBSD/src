@@ -1,4 +1,4 @@
-/*	$NetBSD: a9tmr.c,v 1.22 2022/03/03 06:26:28 riastradh Exp $	*/
+/*	$NetBSD: a9tmr.c,v 1.23 2026/05/11 19:38:21 yurix Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.22 2022/03/03 06:26:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: a9tmr.c,v 1.23 2026/05/11 19:38:21 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -362,14 +362,12 @@ a9tmr_intr(void *arg)
 	return 1;
 }
 
-/* XXX This conflicts with gtmr, hence the temporary weak alias kludge */
-#if 1
-void a9tmr_setstatclockrate(int);
+#ifndef __HAVE_GENERIC_SETSTATCLOCKRATE
 void
-a9tmr_setstatclockrate(int newhz)
+setstatclockrate(int newhz)
 {
+	/* use hardclock */
 }
-__weak_alias(setstatclockrate, a9tmr_setstatclockrate);
 #endif
 
 static u_int
