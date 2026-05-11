@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2026/05/10 20:27:29 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.34 2026/05/11 05:22:20 kre Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -103,14 +103,21 @@
  *
  * XXX Perhaps these can be tuned upwards eventually?
  */
+#ifndef UBC_WINSHIFT
 #define	UBC_WINSHIFT	13		/* 8KB */
+#endif
+#ifndef UBC_NWINS
 #define	UBC_NWINS	32		/* -> 256KB */
+#endif
 
 /*
  * Limit the number of concurrent exec(2) calls on 68010, as they
  * consume kernel VA space.
  */
+#ifndef MAXEXEC
 #define	MAXEXEC		1
+#endif
+
 #endif /* __mc68010__ */
 
 /*
