@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.55 2026/05/11 10:31:50 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.56 2026/05/11 10:35:03 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.55 2026/05/11 10:31:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.56 2026/05/11 10:35:03 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.55 2026/05/11 10:31:50 macallan Exp $");
 #include <sys/device.h>
 #include <sys/sysctl.h>
 #include <sys/kthread.h>
+#include <sys/callout.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -73,6 +74,8 @@ struct obio_softc {
 	bus_space_tag_t sc_tag;
 	bus_space_handle_t sc_bh;
 	int sc_node;
+	void *sc_ih;
+	callout_t sc_button;
 	int sc_voltage;
 	int sc_busspeed;
 	int sc_spd_hi, sc_spd_lo;
@@ -113,6 +116,9 @@ static int obio_get_pwm(int);
 static void obio_set_pwm(int, int);
 
 static void obio_adjust(void *);
+
+static int obio_intr(void *);
+static void obio_button(void *);
 
 static const char *keylargo[] = {"Keylargo",
 				 "AAPL,Keylargo",
@@ -346,6 +352,13 @@ obio_attach(device_t parent, device_t self, void *aux)
 
 		kthread_create(PRI_NONE, 0, curcpu(), obio_adjust, sc,
 		    &sc->sc_thread, "fan control");
+	}
+	if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_OHARE) {
+		DPRINTF("PB: %08x\n", obio_read_4(OBIO_PUSHBUTTON));
+		callout_init(&sc->sc_button, 0);
+		callout_setfunc(&sc->sc_button, obio_button, sc);
+		sc->sc_ih = intr_establish_xname(OBIO_IRQ_BUTTON, IST_EDGE, IPL_TTY, obio_intr, sc,
+		    device_xname(self));
 	}
 }
 
@@ -660,7 +673,7 @@ obio_set_cpu_speed(struct obio_softc *sc, int fast)
 static int
 obio_get_cpu_speed(struct obio_softc *sc)
 {
-
+	
 	if (sc->sc_voltage < 0)
 		return 0;
 
@@ -815,7 +828,7 @@ sysctl_pwm(SYSCTLFN_ARGS)
 	pwm = obio_get_pwm(which);
 
 	if (newp) {
-		/* we're asked to write */
+		/* we're asked to write */	
 		node.sysctl_data = &pwm;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 
@@ -994,4 +1007,40 @@ obio_adjust(void *cookie)
 		kpause("fanctrl", true, mstohz(sc->sc_pwm ? 1000 : 2000), NULL);
 	}
 	kthread_exit(0);
+}
+
+/* ohare button support */
+static int
+obio_intr(void *cookie)
+{
+	struct obio_softc *sc = cookie;
+	uint32_t reg;
+
+	reg = obio_read_4(OBIO_PUSHBUTTON);
+	DPRINTF("PB %08x\n", reg);
+	/*
+	 * XXX
+	 * This matches my Performa 6360. Button assignments on different
+	 * machines may be different.
+	 */
+	if (reg & OBIO_BUTTON_1) {
+		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_UP);
+	} else if (reg & OBIO_BUTTON_0)
+		pmf_event_inject(NULL, PMFE_AUDIO_VOLUME_DOWN);
+	/* clear interrupt */
+	callout_schedule(&sc->sc_button, hz / 4);
+	return 1;
+}
+
+static void
+obio_button(void *cookie)
+{
+	struct obio_softc *sc = cookie;
+	uint32_t reg;
+
+	reg = obio_read_4(OBIO_PUSHBUTTON);
+	/* clear interrupt */
+	obio_write_4(OBIO_PUSHBUTTON, reg | 0xf);
+	if ((reg & 0xf) != 0)
+		callout_schedule(&sc->sc_button, hz / 4);
 }

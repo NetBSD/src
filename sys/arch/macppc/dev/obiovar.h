@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.7 2025/09/08 07:28:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obiovar.h,v 1.8 2026/05/11 10:35:03 macallan Exp $");
 
 #ifndef OBIOVAR_H
 #define OBIOVAR_H
@@ -44,7 +44,16 @@ uint8_t obio_read_1(int);
 int obio_space_map(bus_addr_t, bus_size_t, bus_space_handle_t *);
 
 /* some common offsets */
+#define OBIO_PUSHBUTTON	0x30
+#define OBIO_BUTTON_SET	0x80
+#define OBIO_BUTTON_0	0x01
+#define OBIO_BUTTON_1	0x02
+#define OBIO_BUTTON_2	0x04
+#define OBIO_BUTTON_3	0x08
+
+#define OBIO_MEDIABAY	0x34
 #define HEATHROW_FCR	0x38
+#define OBIO_FCR0	0x38
 
 #define GPIO_OUTSEL	0xf0	/* Output select */
 		/*	0x00	GPIO bit0 is output
@@ -70,5 +79,13 @@ int obio_space_map(bus_addr_t, bus_size_t, bus_space_handle_t *);
 #define  I2S1CLKEN      0x080000
 #define  I2S1EN         0x100000
 #define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
+
+#define OBIO_FCR1	0x3c
+#define OBIO_FCR2	0x40
+#define OBIO_FCR3	0x44
+#define OBIO_FCR4	0x48
+
+/* likely ohare specific */
+#define OBIO_IRQ_BUTTON	11
 
 #endif /* OBIOVAR_H */
