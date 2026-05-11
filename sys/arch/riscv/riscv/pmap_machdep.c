@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.26 2026/04/19 15:09:50 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.27 2026/05/11 19:30:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.26 2026/04/19 15:09:50 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.27 2026/05/11 19:30:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -284,7 +284,7 @@ pmap_md_grow(pmap_pdetab_t *ptb, vaddr_t va, vsize_t vshift,
 		if (*remaining == 0)
 			return;
 	}
-    #endif
+#endif
 }
 
 void
