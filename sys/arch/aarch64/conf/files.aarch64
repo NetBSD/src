@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.45 2024/05/09 12:09:58 pho Exp $
+#	$NetBSD: files.aarch64,v 1.46 2026/05/11 19:36:06 yurix Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -21,6 +21,7 @@ defparam opt_arm_debug.h	EARLYCONS
 
 # Timer options
 defflag opt_arm_timer.h		__HAVE_GENERIC_CPU_INITCLOCKS
+defflag opt_arm_timer.h		__HAVE_GENERIC_SETSTATCLOCKRATE
 
 # Board-specific bus_space(9)/bus_dma(9) definitions
 defflag  opt_arm_bus_space.h	__BUS_SPACE_HAS_STREAM_METHODS

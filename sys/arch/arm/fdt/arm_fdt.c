@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.24 2025/09/07 15:01:59 thorpej Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.25 2026/05/11 19:36:06 yurix Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.24 2025/09/07 15:01:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.25 2026/05/11 19:36:06 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,7 @@ static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
 static void (*_arm_fdt_irq_handler)(void *) = arm_fdt_irq_default_handler;
 static void (*_arm_fdt_fiq_handler)(void *) = arm_fdt_fiq_default_handler;
 static void (*_arm_fdt_timer_init)(void) = NULL;
+static void (*_arm_fdt_timer_setstatclockrate)(int) = NULL;
 
 int
 arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -197,6 +198,29 @@ cpu_initclocks(void)
 		panic("cpu_initclocks: no timer registered");
 	_arm_fdt_timer_init();
 	ENABLE_INTERRUPT();
+}
+#endif
+
+void
+arm_fdt_timer_register_setstatclockrate(void (*ratefn)(int))
+{
+	if (_arm_fdt_timer_setstatclockrate != NULL) {
+#ifdef DIAGNOSTIC
+		aprint_verbose("%s: setstatclockrate already registered\n",
+		    __func__);
+#endif
+		return;
+	}
+	_arm_fdt_timer_setstatclockrate = ratefn;
+}
+
+#ifdef __HAVE_GENERIC_SETSTATCLOCKRATE
+void
+setstatclockrate(int newhz)
+{
+	if (_arm_fdt_timer_setstatclockrate != NULL) {
+		_arm_fdt_timer_setstatclockrate(newhz);
+	}
 }
 #endif
 

@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.20 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.21 2026/05/11 19:36:06 yurix Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,6 +54,7 @@ void    arm_fdt_cpu_hatch_register(void *, void (*)(void *, struct cpu_info *));
 void    arm_fdt_cpu_hatch(struct cpu_info *);
 
 void	arm_fdt_timer_register(void (*)(void));
+void	arm_fdt_timer_register_setstatclockrate(void (*)(int));
 
 void	arm_fdt_irq_set_handler(void (*)(void *));
 void	arm_fdt_irq_handler(void *);
