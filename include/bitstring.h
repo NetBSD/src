@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.15 2024/05/12 10:41:23 rillig Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.16 2026/05/11 21:16:39 kre Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,6 +36,8 @@
 
 #ifndef _BITSTRING_H_
 #define	_BITSTRING_H_
+
+#include <stdlib.h>	/* macros use calloc() */
 
 /* modified for SV/AT and bitstring bugfix by M.R.Murphy, 11oct91
  * bitstr_size changed gratuitously, but shorter
@@ -117,7 +119,7 @@ typedef	unsigned char bitstr_t;
 	int _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (!bit_test(_name, _bit)) { \
-			_value = _bit; \
+			_value = (int)_bit; \
 			break; \
 		} \
 	*(value) = _value; \
@@ -130,7 +132,7 @@ typedef	unsigned char bitstr_t;
 	int _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (bit_test(_name, _bit)) { \
-			_value = _bit; \
+			_value = (int)_bit; \
 			break; \
 		} \
 	*(value) = _value; \
