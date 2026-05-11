@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.54 2025/08/20 07:53:33 macallan Exp $	*/
+/*	$NetBSD: obio.c,v 1.55 2026/05/11 10:31:50 macallan Exp $	*/
 
 /*-
  * Copyright (C) 1998	Internet Research Institute, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.54 2025/08/20 07:53:33 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.55 2026/05/11 10:31:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,7 +173,7 @@ obio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dying = 0;
 	root = OF_finddevice("/");
 	is_xserve = of_compatible(root, xserve);
-	
+
 	switch (PCI_PRODUCT(pa->pa_id)) {
 
 	case PCI_PRODUCT_APPLE_GC:
@@ -320,13 +320,13 @@ obio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_zones[0].get_rpm = obio_get_rpm;
 		sc->sc_zones[0].set_rpm = obio_set_rpm;
 		sc->sc_zones[0].Tmin = 30;
-		sc->sc_zones[0].Tmax = 60;
+		sc->sc_zones[0].Tmax = 50;
 		sc->sc_zones[0].nfans = 1;
 		sc->sc_zones[0].fans[0].name = "CPU fan";
-		sc->sc_zones[0].fans[0].num = 0;
-		sc->sc_zones[0].fans[0].min_rpm = 800;
+		sc->sc_zones[0].fans[0].num = 1;
+		sc->sc_zones[0].fans[0].min_rpm = 200;
 		sc->sc_zones[0].fans[0].max_rpm = 6000;
-		sc->sc_duty[0] = obio_get_pwm(0);
+		sc->sc_duty[0] = obio_get_pwm(1);
 		fancontrol_init_zone(&sc->sc_zones[0], me);
 
 		sc->sc_zones[1].name = "Case";
@@ -338,10 +338,10 @@ obio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_zones[1].Tmax = 50;
 		sc->sc_zones[1].nfans = 1;
 		sc->sc_zones[1].fans[0].name = "Case fan";
-		sc->sc_zones[1].fans[0].num = 1;
-		sc->sc_zones[1].fans[0].min_rpm = 800;
+		sc->sc_zones[1].fans[0].num = 0;
+		sc->sc_zones[1].fans[0].min_rpm = 200;
 		sc->sc_zones[1].fans[0].max_rpm = 6000;
-		sc->sc_duty[1] = obio_get_pwm(1);
+		sc->sc_duty[1] = obio_get_pwm(0);
 		fancontrol_init_zone(&sc->sc_zones[1], me);
 
 		kthread_create(PRI_NONE, 0, curcpu(), obio_adjust, sc,
@@ -362,7 +362,6 @@ static const char * const skiplist[] = {
 	"escc",
 	"battery",
 	"backlight"
-	
 };
 
 #define N_LIST (sizeof(skiplist) / sizeof(skiplist[0]))
@@ -540,7 +539,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 			    gpio->sysctl_num, CTL_CREATE, CTL_EOL) != 0) {
 			    	printf("failed to create %s node\n", name);
 			}
-		}	
+		}
 	}
 
 	if ((sc->sc_voltage < 0) || (sc->sc_busspeed < 0 && !use_dfs))
@@ -565,7 +564,7 @@ obio_setup_gpios(struct obio_softc *sc, int node)
 	    CTLFLAG_READWRITE, CTLTYPE_NODE, "cpu", NULL, NULL,
 	    0, NULL, 0, CTL_MACHDEP, CTL_CREATE, CTL_EOL) != 0)
 		printf("couldn't create 'cpu' node\n");
-	
+
 	if (sysctl_createv(NULL, 0, NULL, 
 	    &freq, 
 	    CTLFLAG_READWRITE, CTLTYPE_NODE, "frequency", NULL, NULL,
@@ -661,7 +660,7 @@ obio_set_cpu_speed(struct obio_softc *sc, int fast)
 static int
 obio_get_cpu_speed(struct obio_softc *sc)
 {
-	
+
 	if (sc->sc_voltage < 0)
 		return 0;
 
@@ -816,7 +815,7 @@ sysctl_pwm(SYSCTLFN_ARGS)
 	pwm = obio_get_pwm(which);
 
 	if (newp) {
-		/* we're asked to write */	
+		/* we're asked to write */
 		node.sysctl_data = &pwm;
 		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
 
@@ -863,7 +862,7 @@ gpio_set(void *cookie, int val)
 	if (val)  {
 		gpio |= GPIO_DATA;
 	} else
-		gpio &= ~GPIO_DATA;	
+		gpio &= ~GPIO_DATA;
 	obio_write_1(reg, gpio);
 }
 
@@ -873,8 +872,7 @@ is_cpu(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if ((strstr(edata->desc, "CPU") != NULL) ||
-	    (strstr(edata->desc, "ternal") != NULL))
+	if (strstr(edata->desc, "CPU") != NULL)
 		return TRUE;
 	return false;
 }
@@ -884,7 +882,7 @@ is_case(const envsys_data_t *edata)
 {
 	if (edata->units != ENVSYS_STEMP)
 		return false;
-	if ((strstr(edata->desc, "CASE") != NULL) ||
+	if ((strstr(edata->desc, "ternal") != NULL) ||
 	    (strstr(edata->desc, "monitor") != NULL))
 		return TRUE;
 	return false;

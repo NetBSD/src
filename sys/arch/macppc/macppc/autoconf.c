@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.64 2025/10/03 14:03:10 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.65 2026/05/11 10:31:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.64 2025/10/03 14:03:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.65 2026/05/11 10:31:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ macppc_assign_sensor_names_old(device_t dev, device_t gparent, int phandle)
 				return;
 			}
 			if (strcmp(buf, "RackMac1,2") == 0) {
-				device_setprop_string(dev, "s00", "CASE");
+				device_setprop_string(dev, "s00", "CPU");
 				return;
 			}
 		}
