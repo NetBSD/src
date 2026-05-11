@@ -1,4 +1,4 @@
-/*	$NetBSD: ioccom.h,v 1.13 2019/05/26 10:21:33 hannken Exp $	*/
+/*	$NetBSD: ioccom.h,v 1.14 2026/05/11 02:06:41 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993, 1994
@@ -51,7 +51,7 @@
 #define	IOCBASECMD(x)	((x) & ~(IOCPARM_MASK << IOCPARM_SHIFT))
 #define	IOCGROUP(x)	(((x) >> IOCGROUP_SHIFT) & 0xff)
 
-#define	IOCPARM_MAX	NBPG	/* max size of ioctl args, mult. of NBPG */
+#define	IOCPARM_MAX	PAGE_SIZE /* max size of ioctl args, mult. of NBPG */
 				/* no parameters */
 #define	IOC_VOID	(unsigned long)0x20000000
 				/* copy parameters out */
