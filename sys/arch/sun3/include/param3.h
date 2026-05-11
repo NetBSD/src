@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.58 2026/05/10 19:54:52 thorpej Exp $	*/
+/*	$NetBSD: param3.h,v 1.59 2026/05/11 12:23:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,6 +52,7 @@
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 
+#if !defined(__mc68010__)	/* sun68k libsa always builds for 68010 */
 /*
  * Clamp UBC parameters; the default consume way to much kernel VA space,
  * and it's in short supply on Sun3.
@@ -60,3 +61,4 @@
 #define	UBC_NWINS	128		/* -> 1024KB */
 
 #define	MAXEXEC		1
+#endif
