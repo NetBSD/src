@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.35 2026/05/11 12:24:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.36 2026/05/12 02:16:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -65,6 +65,13 @@
 #define MACHINE "m68k"
 #endif
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+	/* XXX this is still needed by the coredump module */
+#define	USPACE		8192		/* sizeof kernel stack + pcb */
+
+#if !defined(_MODULE)
+
 #ifndef KERNBASE
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
 #endif
@@ -72,28 +79,11 @@
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
-#define	USPACE		8192
 #define	UPAGES		(USPACE >> PGSHIFT)
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	8192		/* default message buffer size */
 #endif
-
-/*
- * Constants related to network buffer management.
- * MCLBYTES must be no larger than NBPG (the software page size), and,
- * on machines that exchange pages of input or output buffers with mbuf
- * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
- * of the hardware page size.
- */
-#define	MSIZE		256		/* size of an mbuf */
-
-#ifndef MCLSHIFT
-#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
-					/* 2K cluster can hold Ether frame */
-#endif	/* MCLSHIFT */
-
-#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #if defined(__mc68010__)
 /*
@@ -121,6 +111,26 @@
 #define	m68k_page_offset(x)	((vaddr_t)(x) & PGOFSET)
 #define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
 #define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
+
+#endif /* _MODULE */
+
+#endif /* _KERNEL || _STANDALONE */
+
+/*
+ * Constants related to network buffer management.
+ * MCLBYTES must be no larger than NBPG (the software page size), and,
+ * on machines that exchange pages of input or output buffers with mbuf
+ * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
+ * of the hardware page size.
+ */
+#define	MSIZE		256		/* size of an mbuf */
+
+#ifndef MCLSHIFT
+#define	MCLSHIFT	11		/* convert bytes to m_buf clusters */
+					/* 2K cluster can hold Ether frame */
+#endif	/* MCLSHIFT */
+
+#define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #if defined(_KERNEL)
 void	delay(unsigned int);
