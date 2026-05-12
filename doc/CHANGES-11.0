@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.88 2026/05/08 19:49:16 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.89 2026/05/12 04:22:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -9656,4 +9656,598 @@ libexec/httpd/tilde-luzah-bozo.c		1.17
 
 	bozohttpd(8): two memory handling fixes and bump version.
 	[mrg, ticket #282]
+
+external/ibm-public/postfix//dist/README_FILES/NON_BERKELEYDB_README up to 
+external/ibm-public/postfix//dist/README_FILES/REQUIRETLS_README up to 
+external/ibm-public/postfix//dist/conf/postfix-non-bdb-script up to 
+external/ibm-public/postfix//dist/html/NON_BERKELEYDB_README.html up to 
+external/ibm-public/postfix//dist/html/REQUIRETLS_README.html up to 
+external/ibm-public/postfix//dist/html/nbdb_reindexd.8.html up to 
+external/ibm-public/postfix//dist/html/postfix-non-bdb.1.html up to 
+external/ibm-public/postfix//dist/man/man1/postfix-non-bdb.1 up to 
+external/ibm-public/postfix//dist/man/man8/nbdb_reindexd.8 up to 
+external/ibm-public/postfix//dist/mantools/check-proxy-type-table up to 
+external/ibm-public/postfix//dist/proto/NON_BERKELEYDB_README.html up to 
+external/ibm-public/postfix//dist/proto/REQUIRETLS_README.html up to 
+external/ibm-public/postfix//dist/src/cleanup/cleanup_message_test.c up to 
+external/ibm-public/postfix//dist/src/global/ehlo_mask_test.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_clnt.c up to 
+external/ibm-public/postfix//dist/src/global/allowed_prefix.c up to 
+external/ibm-public/postfix//dist/src/global/allowed_prefix.h up to 
+external/ibm-public/postfix//dist/src/global/allowed_prefix_test.c up to 
+external/ibm-public/postfix//dist/src/global/dict_sqlite_test.c up to 
+external/ibm-public/postfix//dist/src/global/haproxy_srvr_test.c up to 
+external/ibm-public/postfix//dist/src/global/login_sender_match_test.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_clnt.h up to 
+external/ibm-public/postfix//dist/src/global/nbdb_redirect.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_redirect.h up to 
+external/ibm-public/postfix//dist/src/global/nbdb_redirect_test.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_surrogate.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_surrogate.h up to 
+external/ibm-public/postfix//dist/src/global/nbdb_surrogate_test.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_util.c up to 
+external/ibm-public/postfix//dist/src/global/nbdb_util.h up to 
+external/ibm-public/postfix//dist/src/global/nbdb_util_test.c up to 
+external/ibm-public/postfix//dist/src/global/pol_stats.c up to 
+external/ibm-public/postfix//dist/src/global/pol_stats.h up to 
+external/ibm-public/postfix//dist/src/global/pol_stats_test.c up to 
+external/ibm-public/postfix//dist/src/postalias/mode_conflict_test.in up to 
+external/ibm-public/postfix//dist/src/postalias/mode_conflict_test.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test77-main.cf up to 
+external/ibm-public/postfix//dist/src/postconf/test77.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test78.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test79.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test80.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test81.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test82.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test83.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test84.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test85.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test86.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test87.ref up to 
+external/ibm-public/postfix//dist/src/postconf/test91.ref up to 
+external/ibm-public/postfix//dist/src/postmap/mode_conflict_test.in up to 
+external/ibm-public/postfix//dist/src/postmap/mode_conflict_test.ref up to 
+external/ibm-public/postfix//dist/src/postmulti/fake_strcmp.c up to 
+external/ibm-public/postfix//dist/src/smtp/smtp_reqtls_policy.c up to 
+external/ibm-public/postfix//dist/src/smtp/smtp_reqtls_policy.h up to 
+external/ibm-public/postfix//dist/src/smtp/smtp_reqtls_policy_test.c up to 
+external/ibm-public/postfix//dist/src/smtp/smtp_tls_policy_test.c up to 
+external/ibm-public/postfix//dist/src/smtpd/smtpd_peer_test.c up to 
+external/ibm-public/postfix//dist/src/util/dict_union_test.c up to 
+external/ibm-public/postfix//dist/src/util/hash_fnv_test.c up to 
+external/ibm-public/postfix//dist/src/util/mac_midna.h up to 
+external/ibm-public/postfix//dist/src/util/normalize_v4mapped_addr.c up to 
+external/ibm-public/postfix//dist/src/util/dict_debug.h up to 
+external/ibm-public/postfix//dist/src/util/dict_debug_test.ref up to 
+external/ibm-public/postfix//dist/src/util/dict_debug_test.sh up to 
+external/ibm-public/postfix//dist/src/util/dict_pipe_test.c up to 
+external/ibm-public/postfix//dist/src/util/mac_midna.c up to 
+external/ibm-public/postfix//dist/src/util/normalize_v4mapped_addr.h up to 
+external/ibm-public/postfix//dist/src/util/normalize_v4mapped_addr_test.c up to 
+external/ibm-public/postfix//dist/src/util/ossl_digest.c up to 
+external/ibm-public/postfix//dist/src/util/ossl_digest.h up to 
+external/ibm-public/postfix//dist/src/util/ossl_digest_test.c up to 
+external/ibm-public/postfix//dist/src/util/wrap_stat.c up to 
+external/ibm-public/postfix//dist/src/util/wrap_stat.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/Makefile.in up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_index_as.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_index_as.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_index_as_test.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_process.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_process.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_process_test.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_reindexd.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_reindexd.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_safe.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_safe.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_safe_test.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_sniffer.c up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_sniffer.h up to 
+external/ibm-public/postfix//dist/src/nbdb_reindexd/nbdb_sniffer_test.c up to 
+external/ibm-public/postfix//dist/src/testing/Makefile.in up to 
+external/ibm-public/postfix//dist/src/testing/dict_test_helper.c up to 
+external/ibm-public/postfix//dist/src/testing/dict_test_helper.h up to 
+external/ibm-public/postfix//dist/src/testing/mock_dict.c up to 
+external/ibm-public/postfix//dist/src/testing/mock_dict.h up to 
+external/ibm-public/postfix//dist/src/testing/mock_open_as.c up to 
+external/ibm-public/postfix//dist/src/testing/mock_open_as.h up to 
+external/ibm-public/postfix//dist/src/testing/mock_spawn_command.c up to 
+external/ibm-public/postfix//dist/src/testing/mock_spawn_command.h up to 
+external/ibm-public/postfix//dist/src/testing/mock_stat.c up to 
+external/ibm-public/postfix//dist/src/testing/mock_stat.h up to 
+external/ibm-public/postfix//dist/src/testing/msg_capture.c up to 
+external/ibm-public/postfix//dist/src/testing/msg_capture.h up to 
+external/ibm-public/postfix//dist/src/testing/nosleep.c up to 
+external/ibm-public/postfix//dist/TESTING       up to 
+external/ibm-public/postfix//dist/RELEASE_NOTES-3.10 up to 
+external/ibm-public/postfix//dist/src/global/ehlo_mask.in delete
+external/ibm-public/postfix//dist/src/global/ehlo_mask.ref delete
+external/ibm-public/postfix//dist/src/util/dict_pipe_test.in delete
+external/ibm-public/postfix//dist/src/util/dict_pipe_test.ref delete
+external/ibm-public/postfix//dist/src/util/dict_union_test.in delete
+external/ibm-public/postfix//dist/src/util/dict_union_test.ref delete
+external/ibm-public/postfix/Makefile.inc        up to 1.32
+external/ibm-public/postfix/dist/HISTORY        up to 1.1.1.31
+external/ibm-public/postfix/dist/INSTALL        up to 1.1.1.11
+external/ibm-public/postfix/dist/Makefile.in    up to 1.1.1.12
+external/ibm-public/postfix/dist/RELEASE_NOTES  up to 1.1.1.19
+external/ibm-public/postfix/dist/makedefs       up to 1.18
+external/ibm-public/postfix/dist/README_FILES/AAAREADME up to 1.1.1.8
+external/ibm-public/postfix/dist/README_FILES/CDB_README up to 1.1.1.4
+external/ibm-public/postfix/dist/README_FILES/COMPATIBILITY_README up to 1.1.1.5
+external/ibm-public/postfix/dist/README_FILES/DATABASE_README up to 1.1.1.11
+external/ibm-public/postfix/dist/README_FILES/DEPRECATION_README up to 1.1.1.2
+external/ibm-public/postfix/dist/README_FILES/INSTALL up to 1.12
+external/ibm-public/postfix/dist/README_FILES/MULTI_INSTANCE_README up to 1.1.1.8
+external/ibm-public/postfix/dist/README_FILES/MYSQL_README up to 1.1.1.7
+external/ibm-public/postfix/dist/README_FILES/OVERVIEW up to 1.1.1.7
+external/ibm-public/postfix/dist/README_FILES/RELEASE_NOTES up to 1.1.1.19
+external/ibm-public/postfix/dist/README_FILES/SASL_README up to 1.1.1.13
+external/ibm-public/postfix/dist/README_FILES/SMTPUTF8_README up to 1.1.1.5
+external/ibm-public/postfix/dist/README_FILES/SOHO_README up to 1.1.1.6
+external/ibm-public/postfix/dist/README_FILES/STANDARD_CONFIGURATION_README up to 1.1.1.8
+external/ibm-public/postfix/dist/README_FILES/TLSRPT_README up to 1.1.1.2
+external/ibm-public/postfix/dist/README_FILES/UUCP_README up to 1.1.1.3
+external/ibm-public/postfix/dist/README_FILES/VIRTUAL_README up to 1.1.1.4
+external/ibm-public/postfix/dist/README_FILES/XCLIENT_README up to 1.1.1.5
+external/ibm-public/postfix/dist/conf/access    up to 1.1.1.10
+external/ibm-public/postfix/dist/conf/aliases   up to 1.1.1.7
+external/ibm-public/postfix/dist/conf/canonical up to 1.1.1.7
+external/ibm-public/postfix/dist/conf/generic   up to 1.1.1.6
+external/ibm-public/postfix/dist/conf/main.cf   up to 1.12
+external/ibm-public/postfix/dist/conf/postfix-files up to 1.11
+external/ibm-public/postfix/dist/conf/postfix-script up to 1.6
+external/ibm-public/postfix/dist/conf/postfix-tls-script up to 1.6
+external/ibm-public/postfix/dist/conf/relocated up to 1.1.1.5
+external/ibm-public/postfix/dist/conf/transport up to 1.1.1.6
+external/ibm-public/postfix/dist/conf/virtual   up to 1.1.1.8
+external/ibm-public/postfix/dist/html/CDB_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/html/COMPATIBILITY_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/html/DATABASE_README.html up to 1.1.1.12
+external/ibm-public/postfix/dist/html/DEPRECATION_README.html up to 1.1.1.2
+external/ibm-public/postfix/dist/html/INSTALL.html up to 1.12
+external/ibm-public/postfix/dist/html/MULTI_INSTANCE_README.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/MYSQL_README.html up to 1.1.1.7
+external/ibm-public/postfix/dist/html/Makefile.in up to 1.1.1.9
+external/ibm-public/postfix/dist/html/OVERVIEW.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/SASL_README.html up to 1.1.1.13
+external/ibm-public/postfix/dist/html/SMTPUTF8_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/html/SOHO_README.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/STANDARD_CONFIGURATION_README.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/TLSRPT_README.html up to 1.1.1.2
+external/ibm-public/postfix/dist/html/UUCP_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/html/VIRTUAL_README.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/XCLIENT_README.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/access.5.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/aliases.5.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/bounce.8.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/canonical.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/cidr_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/cleanup.8.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/defer.8.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/discard.8.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/error.8.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/generic.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/index.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/ldap_table.5.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/lmdb_table.5.html up to 1.1.1.6
+external/ibm-public/postfix/dist/html/lmtp.8.html up to 1.1.1.14
+external/ibm-public/postfix/dist/html/mailq.1.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/makedefs.1.html up to 1.1.1.5
+external/ibm-public/postfix/dist/html/memcache_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/mongodb_table.5.html up to 1.1.1.2
+external/ibm-public/postfix/dist/html/mysql_table.5.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/newaliases.1.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/nisplus_table.5.html up to 1.1.1.7
+external/ibm-public/postfix/dist/html/oqmgr.8.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/pcre_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/pgsql_table.5.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/postalias.1.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/postconf.1.html up to 1.1.1.13
+external/ibm-public/postfix/dist/html/postconf.5.html up to 1.22
+external/ibm-public/postfix/dist/html/postdrop.1.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/postfix-manuals.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/postfix-tls.1.html up to 1.1.1.5
+external/ibm-public/postfix/dist/html/postfix.1.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/postlog.1.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/postmap.1.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/postmulti.1.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/postqueue.1.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/postscreen.8.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/posttls-finger.1.html up to 1.1.1.7
+external/ibm-public/postfix/dist/html/proxymap.8.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/qmgr.8.html up to 1.1.1.11
+external/ibm-public/postfix/dist/html/regexp_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/relocated.5.html up to 1.1.1.7
+external/ibm-public/postfix/dist/html/sendmail.1.html up to 1.1.1.10
+external/ibm-public/postfix/dist/html/smtp.8.html up to 1.1.1.14
+external/ibm-public/postfix/dist/html/smtpd.8.html up to 1.1.1.15
+external/ibm-public/postfix/dist/html/socketmap_table.5.html up to 1.1.1.7
+external/ibm-public/postfix/dist/html/sqlite_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/tcp_table.5.html up to 1.1.1.8
+external/ibm-public/postfix/dist/html/trace.8.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/transport.5.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/virtual.5.html up to 1.1.1.9
+external/ibm-public/postfix/dist/html/virtual.8.html up to 1.1.1.9
+external/ibm-public/postfix/dist/man/Makefile.in up to 1.1.1.9
+external/ibm-public/postfix/dist/man/man1/makedefs.1 up to 1.5
+external/ibm-public/postfix/dist/man/man1/postalias.1 up to 1.5
+external/ibm-public/postfix/dist/man/man1/postconf.1 up to 1.6
+external/ibm-public/postfix/dist/man/man1/postdrop.1 up to 1.6
+external/ibm-public/postfix/dist/man/man1/postfix-tls.1 up to 1.4
+external/ibm-public/postfix/dist/man/man1/postfix.1 up to 1.8
+external/ibm-public/postfix/dist/man/man1/postlog.1 up to 1.7
+external/ibm-public/postfix/dist/man/man1/postmap.1 up to 1.5
+external/ibm-public/postfix/dist/man/man1/postmulti.1 up to 1.5
+external/ibm-public/postfix/dist/man/man1/postqueue.1 up to 1.6
+external/ibm-public/postfix/dist/man/man1/posttls-finger.1 up to 1.7
+external/ibm-public/postfix/dist/man/man1/sendmail.1 up to 1.6
+external/ibm-public/postfix/dist/man/man5/access.5 up to 1.6
+external/ibm-public/postfix/dist/man/man5/aliases.5 up to 1.7
+external/ibm-public/postfix/dist/man/man5/canonical.5 up to 1.6
+external/ibm-public/postfix/dist/man/man5/cidr_table.5 up to 1.7
+external/ibm-public/postfix/dist/man/man5/generic.5 up to 1.6
+external/ibm-public/postfix/dist/man/man5/ldap_table.5 up to 1.7
+external/ibm-public/postfix/dist/man/man5/lmdb_table.5 up to 1.4
+external/ibm-public/postfix/dist/man/man5/memcache_table.5 up to 1.3
+external/ibm-public/postfix/dist/man/man5/mongodb_table.5 up to 1.3
+external/ibm-public/postfix/dist/man/man5/mysql_table.5 up to 1.7
+external/ibm-public/postfix/dist/man/man5/nisplus_table.5 up to 1.3
+external/ibm-public/postfix/dist/man/man5/pcre_table.5 up to 1.6
+external/ibm-public/postfix/dist/man/man5/pgsql_table.5 up to 1.7
+external/ibm-public/postfix/dist/man/man5/postconf.5 up to 1.21
+external/ibm-public/postfix/dist/man/man5/regexp_table.5 up to 1.6
+external/ibm-public/postfix/dist/man/man5/relocated.5 up to 1.5
+external/ibm-public/postfix/dist/man/man5/socketmap_table.5 up to 1.5
+external/ibm-public/postfix/dist/man/man5/sqlite_table.5 up to 1.5
+external/ibm-public/postfix/dist/man/man5/tcp_table.5 up to 1.4
+external/ibm-public/postfix/dist/man/man5/transport.5 up to 1.5
+external/ibm-public/postfix/dist/man/man5/virtual.5 up to 1.7
+external/ibm-public/postfix/dist/man/man8/bounce.8 up to 1.6
+external/ibm-public/postfix/dist/man/man8/cleanup.8 up to 1.6
+external/ibm-public/postfix/dist/man/man8/discard.8 up to 1.4
+external/ibm-public/postfix/dist/man/man8/error.8 up to 1.4
+external/ibm-public/postfix/dist/man/man8/oqmgr.8 up to 1.4
+external/ibm-public/postfix/dist/man/man8/postscreen.8 up to 1.7
+external/ibm-public/postfix/dist/man/man8/proxymap.8 up to 1.5
+external/ibm-public/postfix/dist/man/man8/qmgr.8 up to 1.5
+external/ibm-public/postfix/dist/man/man8/smtp.8 up to 1.7
+external/ibm-public/postfix/dist/man/man8/smtpd.8 up to 1.7
+external/ibm-public/postfix/dist/man/man8/virtual.8 up to 1.5
+external/ibm-public/postfix/dist/mantools/check-postconf-unimplemented up to 1.1.1.2
+external/ibm-public/postfix/dist/mantools/check-spell-history up to 1.1.1.2
+external/ibm-public/postfix/dist/mantools/check-spell-proto-html up to 1.1.1.3
+external/ibm-public/postfix/dist/mantools/dehtml up to 1.1.1.3
+external/ibm-public/postfix/dist/mantools/postconf2man up to 1.1.1.7
+external/ibm-public/postfix/dist/mantools/postlink up to 1.1.1.15
+external/ibm-public/postfix/dist/mantools/srctoman up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/CDB_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/COMPATIBILITY_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/DATABASE_README.html up to 1.1.1.12
+external/ibm-public/postfix/dist/proto/DEPRECATION_README.html up to 1.1.1.2
+external/ibm-public/postfix/dist/proto/INSTALL.html up to 1.12
+external/ibm-public/postfix/dist/proto/MULTI_INSTANCE_README.html up to 1.1.1.10
+external/ibm-public/postfix/dist/proto/MYSQL_README.html up to 1.1.1.7
+external/ibm-public/postfix/dist/proto/Makefile.in up to 1.1.1.9
+external/ibm-public/postfix/dist/proto/OVERVIEW.html up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/SASL_README.html up to 1.1.1.13
+external/ibm-public/postfix/dist/proto/SMTPUTF8_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/STANDARD_CONFIGURATION_README.html up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/TLSRPT_README.html up to 1.1.1.2
+external/ibm-public/postfix/dist/proto/UUCP_README.html up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/VIRTUAL_README.html up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/XCLIENT_README.html up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/access   up to 1.1.1.10
+external/ibm-public/postfix/dist/proto/aliases  up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/canonical up to 1.1.1.7
+external/ibm-public/postfix/dist/proto/cidr_table up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/generic  up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/index.html up to 1.1.1.2
+external/ibm-public/postfix/dist/proto/ldap_table up to 1.1.1.9
+external/ibm-public/postfix/dist/proto/lmdb_table up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/memcache_table up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/mongodb_table up to 1.1.1.2
+external/ibm-public/postfix/dist/proto/mysql_table up to 1.1.1.10
+external/ibm-public/postfix/dist/proto/nisplus_table up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/pcre_table up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/pgsql_table up to 1.1.1.10
+external/ibm-public/postfix/dist/proto/postconf.html.prolog up to 1.1.1.7
+external/ibm-public/postfix/dist/proto/postconf.man.prolog up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/postconf.proto up to 1.21
+external/ibm-public/postfix/dist/proto/regexp_table up to 1.1.1.8
+external/ibm-public/postfix/dist/proto/relocated up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/socketmap_table up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/sqlite_table up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/stop     up to 1.1.1.9
+external/ibm-public/postfix/dist/proto/stop.double-cc up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/stop.double-history up to 1.1.1.3
+external/ibm-public/postfix/dist/proto/stop.double-install-proto-text up to 1.1.1.3
+external/ibm-public/postfix/dist/proto/stop.double-proto-html up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/stop.spell-cc up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/stop.spell-history up to 1.1.1.3
+external/ibm-public/postfix/dist/proto/stop.spell-proto-html up to 1.1.1.4
+external/ibm-public/postfix/dist/proto/tcp_table up to 1.1.1.5
+external/ibm-public/postfix/dist/proto/transport up to 1.1.1.6
+external/ibm-public/postfix/dist/proto/virtual  up to 1.1.1.8
+external/ibm-public/postfix/dist/src/bounce/Makefile.in up to 1.1.1.7
+external/ibm-public/postfix/dist/src/bounce/bounce.c up to 1.6
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_service.c up to 1.4
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_util.c up to 1.6
+external/ibm-public/postfix/dist/src/bounce/bounce_notify_verp.c up to 1.4
+external/ibm-public/postfix/dist/src/bounce/bounce_one_service.c up to 1.4
+external/ibm-public/postfix/dist/src/bounce/bounce_trace_service.c up to 1.4
+external/ibm-public/postfix/dist/src/bounce/bounce_warn_service.c up to 1.4
+external/ibm-public/postfix/dist/src/cleanup/Makefile.in up to 1.1.1.11
+external/ibm-public/postfix/dist/src/cleanup/cleanup.c up to 1.10
+external/ibm-public/postfix/dist/src/cleanup/cleanup.h up to 1.12
+external/ibm-public/postfix/dist/src/cleanup/cleanup_api.c up to 1.6
+external/ibm-public/postfix/dist/src/cleanup/cleanup_bounce.c up to 1.4
+external/ibm-public/postfix/dist/src/cleanup/cleanup_init.c up to 1.9
+external/ibm-public/postfix/dist/src/cleanup/cleanup_message.c up to 1.6
+external/ibm-public/postfix/dist/src/cleanup/cleanup_milter.c up to 1.7
+external/ibm-public/postfix/dist/src/cleanup/cleanup_out_recipient.c up to 1.6
+external/ibm-public/postfix/dist/src/cleanup/cleanup_state.c up to 1.6
+external/ibm-public/postfix/dist/src/discard/Makefile.in up to 1.1.1.5
+external/ibm-public/postfix/dist/src/discard/discard.c up to 1.4
+external/ibm-public/postfix/dist/src/dns/dns.h  up to 1.8
+external/ibm-public/postfix/dist/src/dns/dns_lookup.c up to 1.10
+external/ibm-public/postfix/dist/src/error/Makefile.in up to 1.1.1.5
+external/ibm-public/postfix/dist/src/error/error.c up to 1.4
+external/ibm-public/postfix/dist/src/global/Makefile.in up to 1.1.1.12
+external/ibm-public/postfix/dist/src/global/abounce.c up to 1.5
+external/ibm-public/postfix/dist/src/global/ascii_header_text.c up to 1.3
+external/ibm-public/postfix/dist/src/global/ascii_header_text.h up to 1.3
+external/ibm-public/postfix/dist/src/global/bounce.c up to 1.5
+external/ibm-public/postfix/dist/src/global/bounce.h up to 1.3
+external/ibm-public/postfix/dist/src/global/cleanup_strflags.c up to 1.3
+external/ibm-public/postfix/dist/src/global/cleanup_user.h up to 1.5
+external/ibm-public/postfix/dist/src/global/config_known_tcp_ports.c up to 1.3
+external/ibm-public/postfix/dist/src/global/data_redirect.c up to 1.3
+external/ibm-public/postfix/dist/src/global/defer.c up to 1.5
+external/ibm-public/postfix/dist/src/global/defer.h up to 1.3
+external/ibm-public/postfix/dist/src/global/deliver_pass.c up to 1.5
+external/ibm-public/postfix/dist/src/global/dict_ldap.c up to 1.7
+external/ibm-public/postfix/dist/src/global/dict_memcache.c up to 1.4
+external/ibm-public/postfix/dist/src/global/dict_mongodb.c up to 1.3
+external/ibm-public/postfix/dist/src/global/dict_mysql.c up to 1.6
+external/ibm-public/postfix/dist/src/global/dict_pgsql.c up to 1.6
+external/ibm-public/postfix/dist/src/global/dict_proxy.c up to 1.4
+external/ibm-public/postfix/dist/src/global/dict_sqlite.c up to 1.6
+external/ibm-public/postfix/dist/src/global/dict_sqlite.h up to 1.2
+external/ibm-public/postfix/dist/src/global/dsn_util.c up to 1.2
+external/ibm-public/postfix/dist/src/global/ehlo_mask.c up to 1.4
+external/ibm-public/postfix/dist/src/global/ehlo_mask.h up to 1.4
+external/ibm-public/postfix/dist/src/global/haproxy_srvr.c up to 1.5
+external/ibm-public/postfix/dist/src/global/haproxy_srvr.h up to 1.3
+external/ibm-public/postfix/dist/src/global/header_opts.c up to 1.4
+external/ibm-public/postfix/dist/src/global/header_opts.h up to 1.4
+external/ibm-public/postfix/dist/src/global/log_adhoc.c up to 1.4
+external/ibm-public/postfix/dist/src/global/log_adhoc.h up to 1.2
+external/ibm-public/postfix/dist/src/global/login_sender_match.c up to 1.3
+external/ibm-public/postfix/dist/src/global/mail_conf.c up to 1.5
+external/ibm-public/postfix/dist/src/global/mail_conf.h up to 1.4
+external/ibm-public/postfix/dist/src/global/mail_params.c up to 1.7
+external/ibm-public/postfix/dist/src/global/mail_params.h up to 1.21
+external/ibm-public/postfix/dist/src/global/mail_proto.h up to 1.7
+external/ibm-public/postfix/dist/src/global/mail_version.h up to 1.8
+external/ibm-public/postfix/dist/src/global/maps.c up to 1.6
+external/ibm-public/postfix/dist/src/global/mime_garb3.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/global/mime_state.c up to 1.4
+external/ibm-public/postfix/dist/src/global/mime_state.h up to 1.2
+external/ibm-public/postfix/dist/src/global/mynetworks.c up to 1.3
+external/ibm-public/postfix/dist/src/global/namadr_list.in up to 1.1.1.5
+external/ibm-public/postfix/dist/src/global/namadr_list.ref up to 1.1.1.6
+external/ibm-public/postfix/dist/src/global/own_inet_addr.c up to 1.3
+external/ibm-public/postfix/dist/src/global/pipe_command.c up to 1.3
+external/ibm-public/postfix/dist/src/global/post_mail.c up to 1.6
+external/ibm-public/postfix/dist/src/global/rec_type.h up to 1.5
+external/ibm-public/postfix/dist/src/global/reject_deliver_request.c up to 1.3
+external/ibm-public/postfix/dist/src/global/rfc2047_code.c up to 1.3
+external/ibm-public/postfix/dist/src/global/rfc2047_code.h up to 1.3
+external/ibm-public/postfix/dist/src/global/sendopts.c up to 1.3
+external/ibm-public/postfix/dist/src/global/sent.c up to 1.4
+external/ibm-public/postfix/dist/src/global/sent.h up to 1.3
+external/ibm-public/postfix/dist/src/global/server_acl.c up to 1.5
+external/ibm-public/postfix/dist/src/global/trace.c up to 1.4
+external/ibm-public/postfix/dist/src/global/trace.h up to 1.2
+external/ibm-public/postfix/dist/src/global/verify.c up to 1.5
+external/ibm-public/postfix/dist/src/global/verify.h up to 1.2
+external/ibm-public/postfix/dist/src/local/Makefile.in up to 1.1.1.10
+external/ibm-public/postfix/dist/src/local/forward.c up to 1.6
+external/ibm-public/postfix/dist/src/local/local.c up to 1.6
+external/ibm-public/postfix/dist/src/local/local.h up to 1.4
+external/ibm-public/postfix/dist/src/master/Makefile.in up to 1.1.1.9
+external/ibm-public/postfix/dist/src/master/event_server.c up to 1.5
+external/ibm-public/postfix/dist/src/master/multi_server.c up to 1.5
+external/ibm-public/postfix/dist/src/milter/milter8.c up to 1.7
+external/ibm-public/postfix/dist/src/milter/test-milter.c up to 1.5
+external/ibm-public/postfix/dist/src/oqmgr/Makefile.in up to 1.1.1.7
+external/ibm-public/postfix/dist/src/oqmgr/qmgr.c up to 1.4
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_bounce.c up to 1.2
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_defer.c up to 1.2
+external/ibm-public/postfix/dist/src/oqmgr/qmgr_message.c up to 1.6
+external/ibm-public/postfix/dist/src/pipe/Makefile.in up to 1.1.1.6
+external/ibm-public/postfix/dist/src/pipe/pipe.c up to 1.6
+external/ibm-public/postfix/dist/src/postalias/Makefile.in up to 1.1.1.8
+external/ibm-public/postfix/dist/src/postalias/postalias.c up to 1.7
+external/ibm-public/postfix/dist/src/postcat/postcat.c up to 1.6
+external/ibm-public/postfix/dist/src/postconf/Makefile.in up to 1.1.1.13
+external/ibm-public/postfix/dist/src/postconf/extract.awk up to 1.1.1.7
+external/ibm-public/postfix/dist/src/postconf/postconf.c up to 1.6
+external/ibm-public/postfix/dist/src/postconf/postconf.h up to 1.6
+external/ibm-public/postfix/dist/src/postconf/postconf_builtin.c up to 1.5
+external/ibm-public/postfix/dist/src/postconf/postconf_dbms.c up to 1.7
+external/ibm-public/postfix/dist/src/postconf/postconf_edit.c up to 1.4
+external/ibm-public/postfix/dist/src/postconf/postconf_lookup.c up to 1.5
+external/ibm-public/postfix/dist/src/postconf/postconf_main.c up to 1.5
+external/ibm-public/postfix/dist/src/postconf/postconf_master.c up to 1.9
+external/ibm-public/postfix/dist/src/postconf/postconf_unused.c up to 1.3
+external/ibm-public/postfix/dist/src/postconf/postconf_user.c up to 1.6
+external/ibm-public/postfix/dist/src/postconf/test18.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/postconf/test2.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/postconf/test28.ref up to 1.1.1.4
+external/ibm-public/postfix/dist/src/postconf/test29.ref up to 1.1.1.5
+external/ibm-public/postfix/dist/src/postconf/test57.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/postconf/test59.ref up to 1.1.1.4
+external/ibm-public/postfix/dist/src/postconf/test67.ref up to 1.1.1.3
+external/ibm-public/postfix/dist/src/postconf/test76.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/postdrop/postdrop.c up to 1.6
+external/ibm-public/postfix/dist/src/postfix/postfix.c up to 1.8
+external/ibm-public/postfix/dist/src/postlog/postlog.c up to 1.7
+external/ibm-public/postfix/dist/src/postmap/Makefile.in up to 1.1.1.9
+external/ibm-public/postfix/dist/src/postmap/postmap.c up to 1.7
+external/ibm-public/postfix/dist/src/postmulti/Makefile.in up to 1.1.1.6
+external/ibm-public/postfix/dist/src/postmulti/postmulti.c up to 1.5
+external/ibm-public/postfix/dist/src/postqueue/postqueue.c up to 1.6
+external/ibm-public/postfix/dist/src/postqueue/showq_compat.c up to 1.5
+external/ibm-public/postfix/dist/src/postqueue/showq_json.c up to 1.6
+external/ibm-public/postfix/dist/src/postscreen/postscreen.c up to 1.7
+external/ibm-public/postfix/dist/src/postscreen/postscreen_endpt.c up to 1.6
+external/ibm-public/postfix/dist/src/posttls-finger/posttls-finger.c up to 1.7
+external/ibm-public/postfix/dist/src/proxymap/Makefile.in up to 1.1.1.8
+external/ibm-public/postfix/dist/src/proxymap/proxymap.c up to 1.6
+external/ibm-public/postfix/dist/src/qmgr/Makefile.in up to 1.1.1.7
+external/ibm-public/postfix/dist/src/qmgr/qmgr.c up to 1.5
+external/ibm-public/postfix/dist/src/qmgr/qmgr_bounce.c up to 1.2
+external/ibm-public/postfix/dist/src/qmgr/qmgr_defer.c up to 1.2
+external/ibm-public/postfix/dist/src/qmgr/qmgr_message.c up to 1.6
+external/ibm-public/postfix/dist/src/sendmail/Makefile.in up to 1.1.1.6
+external/ibm-public/postfix/dist/src/sendmail/sendmail.c up to 1.6
+external/ibm-public/postfix/dist/src/showq/showq.c up to 1.6
+external/ibm-public/postfix/dist/src/smtp/Makefile.in up to 1.1.1.12
+external/ibm-public/postfix/dist/src/smtp/lmtp_params.c up to 1.7
+external/ibm-public/postfix/dist/src/smtp/smtp.c up to 1.15
+external/ibm-public/postfix/dist/src/smtp/smtp.h up to 1.7
+external/ibm-public/postfix/dist/src/smtp/smtp_connect.c up to 1.7
+external/ibm-public/postfix/dist/src/smtp/smtp_key.c up to 1.4
+external/ibm-public/postfix/dist/src/smtp/smtp_params.c up to 1.7
+external/ibm-public/postfix/dist/src/smtp/smtp_proto.c up to 1.7
+external/ibm-public/postfix/dist/src/smtp/smtp_rcpt.c up to 1.4
+external/ibm-public/postfix/dist/src/smtp/smtp_state.c up to 1.5
+external/ibm-public/postfix/dist/src/smtp/smtp_tls_policy.c up to 1.6
+external/ibm-public/postfix/dist/src/smtp/smtp_tlsrpt.c up to 1.3
+external/ibm-public/postfix/dist/src/smtp/smtp_trouble.c up to 1.4
+external/ibm-public/postfix/dist/src/smtpd/Makefile.in up to 1.1.1.13
+external/ibm-public/postfix/dist/src/smtpd/smtpd.c up to 1.22
+external/ibm-public/postfix/dist/src/smtpd/smtpd.h up to 1.7
+external/ibm-public/postfix/dist/src/smtpd/smtpd_chat.c up to 1.5
+external/ibm-public/postfix/dist/src/smtpd/smtpd_check.c up to 1.8
+external/ibm-public/postfix/dist/src/smtpd/smtpd_haproxy.c up to 1.4
+external/ibm-public/postfix/dist/src/smtpd/smtpd_peer.c up to 1.6
+external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.c up to 1.4
+external/ibm-public/postfix/dist/src/smtpd/smtpd_proxy.h up to 1.2
+external/ibm-public/postfix/dist/src/tls/Makefile.in up to 1.1.1.12
+external/ibm-public/postfix/dist/src/tls/tls.h  up to 1.7
+external/ibm-public/postfix/dist/src/tls/tls_client.c up to 1.15
+external/ibm-public/postfix/dist/src/tls/tls_dane.c up to 1.7
+external/ibm-public/postfix/dist/src/tls/tls_dane.sh up to 1.1.1.2
+external/ibm-public/postfix/dist/src/tls/tls_dh.c up to 1.7
+external/ibm-public/postfix/dist/src/tls/tls_misc.c up to 1.7
+external/ibm-public/postfix/dist/src/tls/tls_prng_file.c up to 1.3
+external/ibm-public/postfix/dist/src/tls/tls_proxy.h up to 1.6
+external/ibm-public/postfix/dist/src/tls/tls_proxy_client_misc.c up to 1.5
+external/ibm-public/postfix/dist/src/tls/tls_proxy_client_print.c up to 1.6
+external/ibm-public/postfix/dist/src/tls/tls_proxy_client_scan.c up to 1.6
+external/ibm-public/postfix/dist/src/tls/tls_server.c up to 1.14
+external/ibm-public/postfix/dist/src/tls/tls_verify.c up to 1.6
+external/ibm-public/postfix/dist/src/tls/tlsrpt_wrapper.c up to 1.3
+external/ibm-public/postfix/dist/src/tlsproxy/tlsproxy.c up to 1.8
+external/ibm-public/postfix/dist/src/tlsproxy/tlsproxy_state.c up to 1.4
+external/ibm-public/postfix/dist/src/trivial-rewrite/Makefile.in up to 1.1.1.7
+external/ibm-public/postfix/dist/src/trivial-rewrite/resolve.c up to 1.6
+external/ibm-public/postfix/dist/src/trivial-rewrite/trivial-rewrite.c up to 1.6
+external/ibm-public/postfix/dist/src/util/Makefile.in up to 1.1.1.13
+external/ibm-public/postfix/dist/src/util/alldig.c up to 1.4
+external/ibm-public/postfix/dist/src/util/argv.c up to 1.6
+external/ibm-public/postfix/dist/src/util/argv.h up to 1.6
+external/ibm-public/postfix/dist/src/util/dict.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict.h up to 1.7
+external/ibm-public/postfix/dist/src/util/dict_alloc.c up to 1.4
+external/ibm-public/postfix/dist/src/util/dict_cache.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_cache.h up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_cdb.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_cidr.c up to 1.6
+external/ibm-public/postfix/dist/src/util/dict_db.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_dbm.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_debug.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_env.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_fail.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_inline.c up to 1.6
+external/ibm-public/postfix/dist/src/util/dict_lmdb.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_ni.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_nis.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_nisplus.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_open.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_pcre.c up to 1.6
+external/ibm-public/postfix/dist/src/util/dict_pipe.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_random.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_regexp.c up to 1.6
+external/ibm-public/postfix/dist/src/util/dict_sdbm.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_seq.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/dict_sockmap.c up to 1.7
+external/ibm-public/postfix/dist/src/util/dict_static.c up to 1.5
+external/ibm-public/postfix/dist/src/util/dict_surrogate.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_tcp.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_test.c up to 1.3
+external/ibm-public/postfix/dist/src/util/dict_thash.c up to 1.6
+external/ibm-public/postfix/dist/src/util/dict_union.c up to 1.4
+external/ibm-public/postfix/dist/src/util/dict_unix.c up to 1.2
+external/ibm-public/postfix/dist/src/util/dict_utf8_test.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/hash_fnv.c up to 1.5
+external/ibm-public/postfix/dist/src/util/hex_code.c up to 1.5
+external/ibm-public/postfix/dist/src/util/hex_code.h up to 1.6
+external/ibm-public/postfix/dist/src/util/htable.c up to 1.5
+external/ibm-public/postfix/dist/src/util/inet_addr_list.c up to 1.3
+external/ibm-public/postfix/dist/src/util/inet_prefix_top.c up to 1.4
+external/ibm-public/postfix/dist/src/util/inet_proto.c up to 1.5
+external/ibm-public/postfix/dist/src/util/mac_expand.c up to 1.5
+external/ibm-public/postfix/dist/src/util/mac_expand.h up to 1.6
+external/ibm-public/postfix/dist/src/util/mac_expand.in up to 1.1.1.5
+external/ibm-public/postfix/dist/src/util/mac_expand.ref up to 1.1.1.5
+external/ibm-public/postfix/dist/src/util/match_list.c up to 1.4
+external/ibm-public/postfix/dist/src/util/midna_domain.c up to 1.6
+external/ibm-public/postfix/dist/src/util/mkmap_open.c up to 1.3
+external/ibm-public/postfix/dist/src/util/msg_vstream.c up to 1.2
+external/ibm-public/postfix/dist/src/util/myaddrinfo.c up to 1.4
+external/ibm-public/postfix/dist/src/util/myaddrinfo.h up to 1.5
+external/ibm-public/postfix/dist/src/util/myaddrinfo.ref up to 1.1.1.6
+external/ibm-public/postfix/dist/src/util/myaddrinfo.ref2 up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/myaddrinfo4.ref up to 1.1.1.3
+external/ibm-public/postfix/dist/src/util/myaddrinfo4.ref2 up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/myflock.c up to 1.4
+external/ibm-public/postfix/dist/src/util/name_mask.c up to 1.5
+external/ibm-public/postfix/dist/src/util/name_mask.h up to 1.2
+external/ibm-public/postfix/dist/src/util/name_mask.ref5 up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/name_mask.ref6 up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/netstring.c up to 1.5
+external/ibm-public/postfix/dist/src/util/normalize_ws.c up to 1.3
+external/ibm-public/postfix/dist/src/util/open_as.c up to 1.2
+external/ibm-public/postfix/dist/src/util/open_as.h up to 1.2
+external/ibm-public/postfix/dist/src/util/quote_for_json.c up to 1.3
+external/ibm-public/postfix/dist/src/util/sane_sockaddr_to_hostaddr.c up to 1.3
+external/ibm-public/postfix/dist/src/util/spawn_command.c up to 1.4
+external/ibm-public/postfix/dist/src/util/spawn_command.h up to 1.3
+external/ibm-public/postfix/dist/src/util/stringops.h up to 1.7
+external/ibm-public/postfix/dist/src/util/sys_defs.h up to 1.16
+external/ibm-public/postfix/dist/src/util/unescape.ref up to 1.1.1.3
+external/ibm-public/postfix/dist/src/util/vbuf_print.c up to 1.6
+external/ibm-public/postfix/dist/src/util/vbuf_print_test.in up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/vbuf_print_test.ref up to 1.1.1.2
+external/ibm-public/postfix/dist/src/util/vstream.c up to 1.6
+external/ibm-public/postfix/dist/src/util/vstream.h up to 1.5
+external/ibm-public/postfix/dist/src/util/vstring.c up to 1.5
+external/ibm-public/postfix/dist/src/util/vstring_vstream.c up to 1.3
+external/ibm-public/postfix/dist/src/verify/verify.c up to 1.6
+external/ibm-public/postfix/dist/src/virtual/Makefile.in up to 1.1.1.7
+external/ibm-public/postfix/dist/src/virtual/virtual.c up to 1.5
+external/ibm-public/postfix/dist/src/virtual/virtual.h up to 1.2
+external/ibm-public/postfix/dist/src/xsasl/xsasl_dovecot_server.c up to 1.6
+external/ibm-public/postfix/lib/global/Makefile up to 1.12
+external/ibm-public/postfix/lib/util/Makefile   up to 1.13
+external/ibm-public/postfix/libexec/smtp/Makefile up to 1.5
+doc/3RDPARTY						(manually edited)
+
+	Import Postfix 3.11.2.
+	[christos, ticket #283]
 
