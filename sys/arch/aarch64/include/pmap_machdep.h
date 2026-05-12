@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.13 2026/04/22 08:27:18 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.14 2026/05/12 13:07:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -135,9 +135,10 @@ struct pmap_page {
 #define	PVLIST_EMPTY_P(pg)	VM_PAGEMD_PVLIST_EMPTY_P(VM_PAGE_TO_MD(pg))
 
 #define	LX_BLKPAG_OS_MODIFIED	LX_BLKPAG_OS_0
+#define	LX_BLKPAG_OS_MODEMUL	LX_BLKPAG_OS_1
 
 #define	PMAP_PTE_OS0	"modified"
-#define	PMAP_PTE_OS1	"(unk)"
+#define	PMAP_PTE_OS1	"modemul"
 
 static inline paddr_t
 pmap_l0pa(struct pmap *pm)
@@ -295,7 +296,17 @@ static inline pt_entry_t
 pte_prot_nowrite(pt_entry_t pte)
 {
 
-	return pte & ~LX_BLKPAG_AF;
+	/*
+	 * See the table in pte_make_enter.
+	 *
+	 * Set the page RO and MODEMUL, and clear MODIFIED.
+	 *
+	 * Don't touch _AF as ref emulation might have completed.
+	 */
+	CTASSERT(LX_BLKPAG_OS_MODIFIED == __BIT(55));
+	return (pte & ~(LX_BLKPAG_AP | LX_BLKPAG_OS_MODIFIED)) |
+	    LX_BLKPAG_AP_RO |
+	    LX_BLKPAG_OS_MODEMUL;
 }
 
 static inline pt_entry_t
@@ -462,13 +473,31 @@ pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 }
 #endif
 
-
 static inline pt_entry_t
 pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
     u_int flags, bool is_kernel_pmap_p)
 {
 	KASSERTMSG((pa & ~L3_PAG_OA) == 0, "pa %" PRIxPADDR, pa);
 
+	/*
+	 * pmap_enter should have checked flags and updated
+	 * VM_PAGEMD_{REFERENCED,MODIFIED}_P, so there is no
+	 * need here.
+	 */
+        KASSERT(((flags & VM_PROT_ALL) == 0) || VM_PAGEMD_REFERENCED_P(mdpg));
+        KASSERT(((flags & VM_PROT_WRITE) == 0) || VM_PAGEMD_MODIFIED_P(mdpg));
+
+        /*
+         *  ref |  mod |  AF |      AP |  OS_MODEMUL
+         * emul | emul |     |         |
+         * -----+------+-----+---------+------------
+         *   no |  no  | set |   RO/RW |  not set
+         *  yes |  no  | clr |   RO/RW |  not set
+         *   no | yes  | set |      RO |  set *
+         *  yes | yes  | clr |      RO |  set *
+         *
+         * [*] a write fault should be fixed up, and allowed.
+         */
 	pt_entry_t npte = pa
 	    | LX_VALID
 #ifdef MULTIPROCESSOR
@@ -476,26 +505,40 @@ pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
 #endif
 	    | L3_TYPE_PAG
 	    | LX_BLKPAG_UXN | LX_BLKPAG_PXN
-	    | (((prot) & (VM_PROT_READ | VM_PROT_WRITE)) == VM_PROT_READ ? LX_BLKPAG_AP_RO : LX_BLKPAG_AP_RW);
+	;
 
-	if ((prot & VM_PROT_WRITE) != 0 &&
-	    ((flags & VM_PROT_WRITE) != 0 || VM_PAGEMD_MODIFIED_P(mdpg))) {
-		/*
-		 * This is a writable mapping, and the page's mod state
-		 * indicates it has already been modified.  No need for
-		 * modified emulation.
-		 */
-		npte |= LX_BLKPAG_AF;
-	} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
-		/*
-		 * - The access type indicates that we don't need to do
-		 *   referenced emulation.
-		 * OR
-		 * - The physical page has already been referenced so no need
-		 *   to re-do referenced emulation here.
-		 */
-		npte |= LX_BLKPAG_AF;
-	}
+	/*
+	 * Need to do modified emulation if
+	 * - the page is writeable; and
+	 * - the physical page hasn't already been modified.
+	 */
+	bool mod_emul_p =
+	    (prot & VM_PROT_WRITE) != 0 && !VM_PAGEMD_MODIFIED_P(mdpg);
+
+	/*
+	 * Need to do referenced emulation if
+	 * - the page has any kind of access; and
+	 * - the physical page hasn't already been referenced
+	 */
+	bool ref_emul_p =
+	    (prot & VM_PROT_ALL) != 0 && !VM_PAGEMD_REFERENCED_P(mdpg);
+
+	/*
+	 * When doing modified emulation mark page as RO and
+	 * LX_BLKPAG_OS_MODEMUL. A write fault will use MODEMUL to
+	 * fixup the pte and mark the page as modified.
+	 *
+	 * When not doing modified emulation mark the page as RO or RW.
+	 */
+	npte |= mod_emul_p ?
+	    (LX_BLKPAG_AP_RO | LX_BLKPAG_OS_MODEMUL) :
+	    (((prot) & (VM_PROT_READ | VM_PROT_WRITE)) == VM_PROT_READ ? LX_BLKPAG_AP_RO : LX_BLKPAG_AP_RW);
+
+	/*
+	 * Don't mark the PTE as AF when doing reference emulation to ensure
+	 * we see a fault when it is referenced.
+	 */
+	npte |= ref_emul_p ? 0 : LX_BLKPAG_AF;
 
 	if (prot & VM_PROT_EXECUTE)
 		npte &= (is_kernel_pmap_p ? ~LX_BLKPAG_PXN : ~LX_BLKPAG_UXN);

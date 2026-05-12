@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.14 2026/04/22 08:27:17 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.15 2026/05/12 13:07:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.14 2026/04/22 08:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.15 2026/05/12 13:07:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -173,17 +173,23 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 	UVMHIST_LOG(pmaphist, " pg=%#jx, opte=%#jx, ptep=%#jx", (uintptr_t)pg,
 	    opte, (uintptr_t)ptep, 0);
 
-	if ((ftype & VM_PROT_WRITE) && (opte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW) {
+	if ((ftype & VM_PROT_WRITE) && (opte & LX_BLKPAG_OS_MODEMUL) != 0) {
 		/*
-		 * This looks like a good candidate for "page modified"
-		 * emulation...
+		 * This is "page modified" emulation...
 		 */
 		pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED | VM_PAGEMD_REFERENCED);
 
-		/*
-		 * Enable write permissions for the page by setting the Access Flag.
+                /*
+		 * Enable write permissions for the page by setting the Access Flag,
+		 * marking the page as writeable, and modified (using an OS bit).
+		 *
+		 * The MODEMUL bit is also removed as its no longer required.
 		 */
-		const pt_entry_t npte = opte | LX_BLKPAG_AF;
+		const pt_entry_t npte =
+		    (opte & ~(LX_BLKPAG_AP | LX_BLKPAG_OS_MODEMUL)) |
+		    LX_BLKPAG_AF |
+		    LX_BLKPAG_AP_RW |
+		    LX_BLKPAG_OS_MODIFIED;
 		atomic_swap_64(ptep, npte);
 		dsb(ishst);
 		fixed = true;
@@ -197,6 +203,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		 * This looks like a good candidate for "page referenced"
 		 * emulation.
 		 */
+
+		KASSERT((opte & LX_BLKPAG_AF) == 0);
 
 		pmap_page_set_attributes(mdpg, VM_PAGEMD_REFERENCED);
 
