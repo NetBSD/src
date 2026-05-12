@@ -96,16 +96,48 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 static void
 gba_si_attach(device_t parent, device_t self, void *aux)
 {
+	uint32_t siiobuf;
 	struct si_softc * const psc = device_private(parent);
 	struct si_attach_args * const saa = aux;
 	struct gba_softc * const sc = device_private(self);
 	struct si_channel *ch = &psc->sc_chan[saa->saa_index];
+	struct siio_send data;
+	int res;
+	uint8_t out[3];
+	uint16_t in[1];
 
 	aprint_normal("gba: inside attach\n");
 	sc->sc_dev = self;
 	sc->ch = ch;
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
+
+	for(;;) {
+		for (int i = 0; i < 15; i++) {
+			aprint_normal("trying to send handshake\n");
+			// this is wong
+			out[0] = 0x15;
+			out[1] = 0x62;
+			out[2] = 0x02;
+			//out[0] = 0x6202;
+			data.chan = saa->saa_index;
+			data.out = out;
+			data.in = in;
+			data.outsize = 3;
+			data.insize = 2;
+			siiobuf = RD4(psc, SIIOBUF);
+			aprint_normal("handshake: before - siiobuf - 0x%08X\n", siiobuf);
+			if ((res = __si_send(psc, &data)) != 0) {
+				aprint_normal("handshake: sisr - 0x%08X\n", res);
+			}
+
+			siiobuf = RD4(psc, SIIOBUF);
+			aprint_normal("handshake: after - siiobuf - 0x%08X\n", siiobuf);
+			if (in[0] != 0) break;
+		}
+		if (in[0] != 0) break;
+		delay(62500); /* 1/16 of a second */
+	}
 }
 
 int

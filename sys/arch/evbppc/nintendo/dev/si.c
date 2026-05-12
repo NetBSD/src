@@ -189,16 +189,16 @@ si_identify(device_t self, unsigned chan)
 	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
 	struct siio_send data;
-	uint8_t out[1];
-	uint8_t in[3];
+	uint32_t out[1];
+	uint32_t in[1];
 	int res;
 
 	/* identify always expects 3 bytes back although id is only 2 bytes */
 	out[0] = SIIDENTIFY;
 	data.chan = chan;
 	data.out = out;
-	data.outsize = 1;
 	data.in = in;
+	data.outsize = 1;
 	data.insize = 3;
 
 	if ((res = __si_send(sc, &data)) != 0) {
@@ -206,7 +206,7 @@ si_identify(device_t self, unsigned chan)
 	}
 
 	ch = &sc->sc_chan[chan];
-	ch->ch_id = (uint16_t)in[0] << 8;
+	ch->ch_id = (uint16_t)(in[0] >> 16);
 	aprint_normal("si_identify: chan%d id - 0x%08X\n", chan, ch->ch_id);
 
 	return 0;

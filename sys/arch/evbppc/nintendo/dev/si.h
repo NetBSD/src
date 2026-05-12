@@ -92,10 +92,10 @@
 #define SIIOBUF_CLEAR(sc)						\
 	bus_space_set_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, 0,	\
 	    SIIOBUF_SIZE)
-#define SIIOBUF_WR(sc, buf, sz)						\
-	bus_space_write_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, sz)
-#define SIIOBUF_RD(sc, buf, sz)						\
-	bus_space_read_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, sz)
+#define SIIOBUF_WR(sc, buf, cnt)					\
+	bus_space_write_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
+#define SIIOBUF_RD(sc, buf, cnt)					\
+	bus_space_read_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
 
 #define AWAIT_SISR(sc, chan)	 					\
 	do { while (RD4(sc, SISR) & SISR_WRST(chan)); } while (0)
@@ -140,22 +140,39 @@ struct si_attach_args {
 
 struct siio_send {
 	unsigned	chan;		/* which controller port */
-	uint8_t		insize;		/* size of in buffer - max 128 */
-	uint8_t		outsize;	/* size of out buffer - max 128 */
-	uint8_t		*in;		/* buffer to store response */
-	uint8_t		*out;		/* buffer to send out to ext device */
+	uint32_t	insize;		/* number of bytes for in buffer */
+	uint32_t	outsize;	/* number of bytes for out buffer */
+	void		*in;		/* buffer to store response */
+	void		*out;		/* buffer to send out to ext device */
 };
 
 static inline int
 __si_send(struct si_softc *sc, struct siio_send *data)
 {
-	uint32_t comcsr, sisr, shift_amt;
+	uint32_t comcsr, sisr, shift_amt, cnt; //, i, val;
 	unsigned chan;
 
 	chan = data->chan;
 
+	aprint_normal("\n");
+	aprint_normal("__si_send: chan %d siiobuf before clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	SIIOBUF_CLEAR(sc);
-	SIIOBUF_WR(sc, data->out, data->outsize);
+	aprint_normal("__si_send: chan %d siiobuf after clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+
+	/* siiobuf must to be written in increments of 4 bytes */
+	cnt = ((data->outsize+3)/4);
+	aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d):", chan, data->outsize, cnt);
+	SIIOBUF_WR(sc, data->out, cnt);
+	/*
+	for (i = 0; i < cnt; i++) {
+		val = 0;
+		size_t sz = MIN(4, data->outsize - (i * 4));
+		memcpy(&val, ((uint8_t *)data->out) + (i * 4), sz);
+		WR4(sc, SIIOBUF + i, val);
+	}
+	*/
+
+	aprint_normal("__si_send: chan %d siiobuf after write is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
 
 	AWAIT_SICOMCSR(sc);
@@ -173,6 +190,7 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	comcsr = RD4(sc, SICOMCSR);
 	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
 
+	aprint_normal("__si_send: chan %d siiobuf after command is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	SIIOBUF_RD(sc, data->in, data->insize);
 
 	comcsr = RD4(sc, SICOMCSR);
