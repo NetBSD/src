@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.18 2026/03/16 11:51:35 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.19 2026/05/13 17:46:00 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -213,15 +213,15 @@ argparse()
 		;;
 	( 1:= | 2:= )
 		GLOBAL=true;;
-	( 1:=?* | 2:=?* )	
+	( 1:=?* | 2:=?* )
 		valid_vers fetch "${1#=}" && FETCHVER="${1#=}" || usage
 		;;
-	( 1:*=?* | 2:*=?* )	
+	( 1:*=?* | 2:*=?* )
 		set -- "{$1%=*}" "${1#*=}"
 		valid_vers fetch "$2" && FETCHVER="$2" || usage
 		valid_vers new "$1" && NEWVER="$1" || usage
 		;;
-	( 1:?* | 2:?* )	
+	( 1:?* | 2:?* )
 		valid_vers new "$1" && NEWVER="$1" || usage
 		;;
 	( * )	usage
@@ -1274,17 +1274,17 @@ setlistupdate()
 				exit 0
 			fi
 
-			MSG=$( 
+			MSG=$(
 				printf 'tzdata update to %s\n' "$NEWVER"
 				if [ -s "${WORKDIR}"/addedzones ]
 				then
-					printf 'Added zoneinfo files:\n'
+					printf '\nAdded zoneinfo files:\n'
 					sed 's/^/	/'	\
 						< "${WORKDIR}"/addedzones
 				fi
 				if [ -s "${WORKDIR}"/removedzones ]
 				then
-					printf  'Removed zoneinfo files:\n'
+					printf  '\nRemoved zoneinfo files:\n'
 					sed 's/^/	/'	\
 						< "${WORKDIR}"/removedzones
 				fi
@@ -1422,7 +1422,7 @@ docupdate()
 
 		read -p $'\nAre those OK? [y/n] ' reply
 
-		
+		MSG="Note tzdata${NEWVER} update"
 		if "${GLOBAL}"
 		then
 			MSG="${MSG} (via ${NEWVER}gtz)"
