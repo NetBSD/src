@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.70 2026/05/13 14:17:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.71 2026/05/13 14:21:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -190,8 +190,8 @@
  *   model cache or ATC, but suitable for exercising large memory configs).
  *
  * - Very stable muti-user running memory pressure stress tests on
- *    small-memory configs in virt68k (qemu 68040 **with fixed MMU
- *    emulation**) and mac68k (10MB 68040, 68030).
+ *   small-memory configs in virt68k (qemu 68040 **with fixed MMU
+ *   emulation**) and mac68k (10MB 68040, 68030).
  *
  * - Single-user mode on 68030 w/ no external cache (luna68k).
  *
@@ -199,8 +199,9 @@
  *
  * - Multi-user mode on 68040 (NeXTstation, 20MB RAM)
  *
- * - Ports that have been adapted: hp300, luna68k, mac68k, mvme68k (not tested),
- *   news68k (see below), next68k (default), virt68k (default), x68k.
+ * - Ports that have been adapted: hp300, luna68k, mac68k (default),
+ *   mvme68k (not tested), news68k (see below), next68k (default),
+ *   virt68k (default), x68k.
  *
  * XXX TODO XXX
  *
@@ -222,7 +223,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.70 2026/05/13 14:17:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.71 2026/05/13 14:21:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
