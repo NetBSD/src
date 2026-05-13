@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.423 2026/03/26 00:47:33 jschauma Exp $
+$NetBSD: acronyms.comp,v 1.424 2026/05/13 15:00:46 jschauma Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -362,6 +362,7 @@ CV	control voltage
 CVE	common vulnerabilities and exposures
 CVS	Concurrent Versions System
 CVSS	Common Vulnerability Scoring System
+CWE	Common Weakness Enumeration
 DA	destination address
 DAA	distributed application architecture
 DAAP	digital audio access protocol
