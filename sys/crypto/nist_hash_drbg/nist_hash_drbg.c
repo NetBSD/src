@@ -1,4 +1,4 @@
-/*	$NetBSD: nist_hash_drbg.c,v 1.3 2019/09/19 18:29:55 riastradh Exp $	*/
+/*	$NetBSD: nist_hash_drbg.c,v 1.4 2026/05/13 04:26:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,8 @@
  *
  *	Elaine Barker and John Kelsey, `Recommendation for Random
  *	Number Generation Using Deterministic Random Bit Generators',
- *	NIST SP800-90A, June 2015.
+ *	NIST SP800-90A Rev. 1, June 2015.
+ *	https://csrc.nist.gov/pubs/sp/800/90/a/r1/final
  *
  * This code is meant to work in userland or in kernel.  For a test
  * program, compile with -DNIST_HASH_DRBG_MAIN to define a `main'
@@ -45,11 +46,15 @@
  * -DNIST_HASH_DRBG_DEBUG, mainly useful if you need to change
  * something and have to diagnose what's wrong with the known-answer
  * tests.
+ *
+ * Test vectors in Hash_DRBG.pdf published by NIST at:
+ * https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/Hash_DRBG.pdf
+ * https://web.archive.org/web/20250313025236/https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Standards-and-Guidelines/documents/examples/Hash_DRBG.pdf
  */
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nist_hash_drbg.c,v 1.3 2019/09/19 18:29:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nist_hash_drbg.c,v 1.4 2026/05/13 04:26:24 riastradh Exp $");
 #endif
 
 #include <sys/param.h>
