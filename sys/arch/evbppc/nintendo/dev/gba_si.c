@@ -30,6 +30,7 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/ioccom.h>
 #include <sys/mutex.h>
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 
 #include "si.h"
 #include "joybus.h"
+
+#define SI_SEND     _IOWR(0, 1, struct siio_send)
 
 static int gba_si_match(device_t, cfdata_t, void *);
 static void gba_si_attach(device_t, device_t, void *);
@@ -191,12 +194,14 @@ gba_close(dev_t dev, int flags, int mode, struct lwp *l)
 int
 gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	//struct gba_softc * const sc = device_lookup_private(&gba_cd, minor(dev));
+    struct gba_softc * const gbasc = device_lookup_private(&gba_cd, minor(dev));
+	struct si_softc * const sc = gbasc->ch->ch_sc;
 	int err;
 
 	switch(cmd) {
-//	case SI_SEND:
-//		break;
+	case SI_SEND:
+        err = __si_send(sc, (struct siio_send *) data);
+        break;
 	default:
 		err = EINVAL;
 		break;
