@@ -1,4 +1,4 @@
-.\"     $NetBSD: nc.1,v 1.6 2026/03/03 03:14:47 kre Exp $
+.\"     $NetBSD: nc.1,v 1.7 2026/05/13 12:45:49 kre Exp $
 .\"     $OpenBSD: nc.1,v 1.81 2017/01/26 22:59:55 jmc Exp $
 .\"
 .\" Copyright (c) 1996 David Sacerdote
@@ -548,11 +548,13 @@ Open a TCP connection to port 42 of host.example.com, using port 31337 as
 the source port, with a timeout of 5 seconds:
 .Pp
 .Dl $ nc -p 31337 -w 5 host.example.com 42
+.if \nC \{
 .Pp
 Open a TCP connection to port 443 of www.google.ca, and negotiate TLS.
 Check for a different name in the certificate for validation.
 .Pp
 .Dl $ nc -v -c -e adsf.au.doubleclick.net www.google.ca 443
+.\}
 .Pp
 Open a UDP connection to port 53 of host.example.com:
 .Pp
