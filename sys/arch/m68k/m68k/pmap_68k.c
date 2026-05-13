@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.69 2026/05/10 14:06:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.70 2026/05/13 14:17:21 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -191,7 +191,7 @@
  *
  * - Very stable muti-user running memory pressure stress tests on
  *    small-memory configs in virt68k (qemu 68040 **with fixed MMU
- *    emulation**) and mac68k (10MB 68040).
+ *    emulation**) and mac68k (10MB 68040, 68030).
  *
  * - Single-user mode on 68030 w/ no external cache (luna68k).
  *
@@ -207,8 +207,6 @@
  * - Adapt amiga (hard), atari (hard), cesfic (easy).
  * - Test on 68020.
  * - Test on 68060.
- * - More rigorous 68040 testing.
- * - More rigorous 68030 testing.
  * - Test on machines above listed as "not tested".
  * - More rigorous testing in various emulators (Nono, UAE?).
  * - Fix problems observed on news68k (external cache related?).
@@ -224,7 +222,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.69 2026/05/10 14:06:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.70 2026/05/13 14:17:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
