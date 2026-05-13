@@ -139,7 +139,7 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 			if (in[0] != 0) break;
 		}
 		if (in[0] != 0) break;
-		delay(62500); /* 1/16 of a second */
+		delay(62500); // 1/16 of a second
 	}
 }
 
@@ -158,6 +158,7 @@ gba_open(dev_t dev, int flags, int mode, struct lwp *l)
 	}
 
 	ch->ch_state |= SI_STATE_OPEN;
+	error = 0;
 unlock:
 	mutex_exit(&ch->ch_lock);
 	return error;
