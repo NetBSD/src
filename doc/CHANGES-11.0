@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.90 2026/05/12 04:23:51 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.91 2026/05/13 13:42:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10256,3 +10256,14 @@ sys/sys/param.h					(manually edited)
 
 	Welcome to 11.0_RC4!
 	[martin]
+
+sys/arch/riscv/include/vmparam.h		1.16
+
+	risc-v: bump some VM parameter values on riscv64.
+	[skrll, ticket #284]
+
+external/ibm-public/postfix/dist/conf/main.cf	1.13
+
+	postfix: fix default config so that it works out of the box.
+	[christos, ticket #285]
+
