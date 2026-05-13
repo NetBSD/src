@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.60 2026/04/19 15:09:49 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.61 2026/05/13 05:43:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -397,6 +397,10 @@ vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
 /* for ddb */
 void pmap_db_pmap_print(struct pmap *, void (*)(const char *, ...) __printflike(1, 2));
 void pmap_db_mdpg_print(struct vm_page *, void (*)(const char *, ...) __printflike(1, 2));
+
+#if defined(PMAP_DEBUG)
+extern vaddr_t pmap_debugva;
+#endif
 
 #endif	/* !PMAP_MI */
 

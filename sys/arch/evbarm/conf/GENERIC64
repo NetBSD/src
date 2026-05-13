@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.232 2026/04/16 07:12:59 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.233 2026/05/13 05:43:04 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -35,6 +35,7 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PMAP_DEBUG
 
 # Heartbeat checks
 options 	HEARTBEAT
