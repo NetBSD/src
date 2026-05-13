@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.11.2.1 2026/05/11 17:13:36 martin Exp $
+#	$NetBSD: main.cf,v 1.11.2.2 2026/05/13 13:41:33 martin Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -702,6 +702,6 @@ shlib_directory = /usr/lib/postfix
 
 # meta_directory: The location of non-executable files that are shared
 # between multiple Postfix instances.
-meta_directory = /etc/postfix
+meta_directory = /usr/libexec/postfix
 
-inet_protocols = ipv4
+#inet_protocols = ipv4
