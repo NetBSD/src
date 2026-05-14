@@ -22,6 +22,8 @@ usage() {
   echo "  -h            Display this help text."
   echo "  -m MODULE     A subdirectory of the elftoolchain tree to be"
   echo "                imported, e.g. 'libelf', 'common', 'libdwarf', etc."
+  echo "  -r REV        Import SVN revision 'REV'."
+  echo "                Defaults to SVN 'HEAD' if not specified."
   echo "  -s SRCDIR     The 'trunk' directory of an elftoolchain checkout."
   echo "                Defaults to a fresh checkout from upstream."
   echo "  -v            Be verbose."
@@ -37,12 +39,13 @@ err() {
 ## Parse options.
 diff_only=NO
 verbose=NO
-options=":d:hs:m:vD"
+options=":d:hr:s:m:vD"
 while getopts "$options" var; do
   case $var in
   d) dstdir="$OPTARG";;
   h) usage; exit 0;;
   m) modules="$OPTARG $modules";;
+  r) svnrev="$OPTARG";;
   s) srcdir="$OPTARG";;
   v) verbose=YES;;
   D) diff_only=YES;;
@@ -63,9 +66,11 @@ fi
 if [ -z "${srcdir}" ]; then
   # Attempt to retrieve the source afresh.
   svncheckout=$(mktemp -d -p ${TMPDIR:-/tmp} -t import-et.XXXXXX)
-  [ "$verbose" = YES ] && echo SVN checkout into \"${svncheckout}\".
-  (cd ${svncheckout} && svn -q checkout ${elftoolchain_svn} trunk) || \
-    err "SVN checkout failed."
+  [ "$verbose" = YES ] && \
+      echo Checkout ${svnrev+"revision @${svnrev}"} into \"${svncheckout}\".
+  (cd ${svncheckout} && \
+       svn -q checkout ${elftoolchain_svn}${svnrev+"@${svnrev}"} trunk) || \
+      err "SVN checkout failed."
   srcdir=${svncheckout}/trunk
 fi
 
