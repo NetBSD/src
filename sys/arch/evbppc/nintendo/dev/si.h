@@ -140,6 +140,7 @@ struct si_attach_args {
 
 struct siio_send {
 	unsigned	chan;		/* which controller port */
+	uint32_t	status;		/* the sisr result for this channel */
 	uint32_t	insize;		/* number of bytes for in buffer */
 	uint32_t	outsize;	/* number of bytes for out buffer */
 	void		*in;		/* buffer to store response */
@@ -161,16 +162,15 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 
 	/* siiobuf must to be written in increments of 4 bytes */
 	cnt = ((data->outsize+3)/4);
-	aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d):", chan, data->outsize, cnt);
-	SIIOBUF_WR(sc, data->out, cnt);
-	/*
-	for (i = 0; i < cnt; i++) {
-		val = 0;
+	aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d)\n", chan, data->outsize, cnt);
+	//SIIOBUF_WR(sc, data->out, cnt);
+	for (uint32_t i = 0; i < cnt; i++) {
+		uint32_t val = 0;
 		size_t sz = MIN(4, data->outsize - (i * 4));
 		memcpy(&val, ((uint8_t *)data->out) + (i * 4), sz);
+		aprint_normal("__si_send: chan %d is copying %d bytes: 0x%X\n", chan,sz, val);
 		WR4(sc, SIIOBUF + i, val);
 	}
-	*/
 
 	aprint_normal("__si_send: chan %d siiobuf after write is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
@@ -197,7 +197,7 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	if (ISSET(comcsr, SICOMCSR_COMERR)) {
 		sisr = RD4(sc, SISR);
 		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
-		return ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
+		data->status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
 	}
 
 	return 0;

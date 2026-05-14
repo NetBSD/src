@@ -31,10 +31,12 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/ioccom.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
+#include <sys/types.h>
 
 #include <dev/usb/usb.h>
 #include <dev/hid/uhid.h>
@@ -42,7 +44,15 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 #include "si.h"
 #include "joybus.h"
 
-#define SI_SEND     _IOWR(0, 1, struct siio_send)
+struct gba_send {
+	uint32_t	status;
+	uint32_t 	insize;
+	uint32_t 	outsize;
+	void		*in;
+	void		*out;
+};
+
+#define SI_SEND     _IOWR(0, 1, struct gba_send)
 
 static int gba_si_match(device_t, cfdata_t, void *);
 static void gba_si_attach(device_t, device_t, void *);
@@ -86,7 +96,7 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 	struct si_channel *ch;
 
 	ch = &sc->sc_chan[saa->saa_index];
-	aprint_normal("gba: checking 0x%08X...", ch->ch_id);
+	aprint_normal("gba: checking 0x%08X...\n", ch->ch_id);
 	if (IS_GBA(ch->ch_id)) {
 		aprint_normal(" is is a gba!\n");
 		return 1;
@@ -114,6 +124,7 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 	sc->ch = ch;
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
+	aprint_normal("gba: channel is set to %d\n", sc->ch->ch_index);
 
 	for(;;) {
 		for (int i = 0; i < 15; i++) {
@@ -195,14 +206,46 @@ gba_close(dev_t dev, int flags, int mode, struct lwp *l)
 int
 gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-    struct gba_softc * const gbasc = device_lookup_private(&gba_cd, minor(dev));
-	struct si_softc * const sc = gbasc->ch->ch_sc;
+    	struct gba_softc * const gbasc = device_lookup_private(&gba_cd, minor(dev));
+	struct si_channel *ch = gbasc->ch;
+	struct si_softc * const sc = ch->ch_sc;
+	struct siio_send sd;
 	int err;
 
 	switch(cmd) {
 	case SI_SEND:
-        err = __si_send(sc, (struct siio_send *) data);
-        break;
+		err = 0;
+		struct gba_send *gbs = (struct gba_send *)data;
+		if (gbs->outsize > SIIOBUF_SIZE || gbs->insize > SIIOBUF_SIZE) {
+			return EINVAL;
+		}
+
+		sd.chan = ch->ch_index;
+		sd.outsize = gbs->outsize;
+		sd.insize = gbs->insize;
+		sd.out = kmem_alloc(gbs->outsize, KM_SLEEP);
+		sd.in = kmem_alloc(gbs->insize, KM_SLEEP);
+
+		aprint_normal("gba_ioctl: gbs--outsize%d insize%d\n", gbs->outsize, gbs->insize);
+		aprint_normal("gba_ioctl: sd--chan:%d\t outsize%d insize%d\n", sd.chan, sd.outsize, sd.insize);
+
+		if ((err = copyin(gbs->out, sd.out, sd.outsize)) != 0) {
+			goto si_send_cleanup;
+		}
+
+		if ((err = __si_send(sc, &sd)) != 0) {
+			goto si_send_cleanup;
+		}
+
+		if ((err = copyout(sd.in, gbs->in, sd.insize)) != 0) {
+			goto si_send_cleanup;
+		}
+
+		gbs->status = sd.status;
+si_send_cleanup:
+		kmem_free(sd.out, sd.outsize);
+		kmem_free(sd.in, sd.insize);
+		break;
 	default:
 		err = EINVAL;
 		break;
