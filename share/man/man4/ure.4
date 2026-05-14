@@ -1,4 +1,4 @@
-.\" $NetBSD: ure.4,v 1.6 2020/11/04 15:24:56 kim Exp $
+.\" $NetBSD: ure.4,v 1.7 2026/05/14 01:42:43 gutteridge Exp $
 .\" $OpenBSD: ure.4,v 1.5 2017/04/16 20:26:34 jmc Exp $
 .\"
 .\" Copyright (c) 2015 Kevin Lo <kevlo@FreeBSD.org>
@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD: head/share/man/man4/ure.4 291557 2015-12-01 05:12:13Z kevlo $
 .\"
-.Dd August 24, 2019
+.Dd May 14, 2026
 .Dt URE 4
 .Os
 .Sh NAME
@@ -57,6 +57,14 @@ The RTL8152 contains an integrated Fast Ethernet MAC, which supports
 both 10 and 100Mbps speeds in either full or half duplex.
 The RTL8153 has a Gigabit Ethernet MAC and additionally supports
 1000Mbps speeds.
+.Pp
+It presently provides IPv4/TCPv4/UDPv4/TCPv6/UDPv6 checksumming in
+hardware.
+(The earliest 8152 variant only supports this checksumming on
+transmission; all other variants offer it on both transmission and
+reception.)
+It also supports VLAN-sized frames.
+TSOv4 and v6 offload are not presently supported.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
