@@ -1,4 +1,4 @@
-$NetBSD: licensing,v 1.3 2026/01/31 12:35:12 nia Exp $
+$NetBSD: licensing,v 1.4 2026/05/14 12:24:57 nia Exp $
 
 NetBSD Licensing
 ================
@@ -31,7 +31,7 @@ so redistributors have an option to remove or replace them.
 For example, some NetBSD ports can be built using Clang as the
 toolchain instead of GCC (see mk.conf(5), HAVE_LLVM).
 
-GPL codes lives under the following directories to ensure clean
+GPL code lives under the following directories to ensure clean
 separation:
 
 * src/external/gpl2
