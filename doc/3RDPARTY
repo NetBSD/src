@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2204 2026/05/11 17:34:27 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2205 2026/05/14 14:43:51 jkoshy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1719,14 +1719,14 @@ Notes:
 Package:	elftoolchain (libelf/libdwarf)
 Version:	r4037
 Current Vers:	0.7.1
-Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
+Maintainer:	Joseph Koshy <jkoshy@NetBSD.org>
 Archive Site:	none
 Home Page:	http://elftoolchain.sourceforge.net
 Date:		2025-09-06
 Mailing List:	none
-Responsible:	christos
+Responsible:	christos, jkoshy
 License:	BSD-like (2-clause)
-Location:	sys/external/bsd/elftoolchain/dist
+Location:	external/bsd/elftoolchain/dist
 Vendor tag:	FreeBSD
 Release tag:	elftoolchain-rNNNNN
 Notes:
