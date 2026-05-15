@@ -1,7 +1,7 @@
-/* $NetBSD: psci.c,v 1.8 2024/12/30 19:09:49 jmcneill Exp $ */
+/* $NetBSD: psci.c,v 1.9 2026/05/15 22:44:58 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,27 +27,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.8 2024/12/30 19:09:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci.c,v 1.9 2026/05/15 22:44:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/xcall.h>
 
 #include <arm/arm/psci.h>
 
 /* PSCI methods */
 #define	PSCI_VERSION		0x84000000
+#define	PSCI_CPU_OFF		0x84000002
 #define	PSCI_SYSTEM_OFF		0x84000008
 #define	PSCI_SYSTEM_RESET	0x84000009
+#define	PSCI_FEATURES		0x8400000a
+
 #if defined(__aarch64__)
 #define	PSCI_CPU_SUSPEND	0xc4000001
 #define	PSCI_CPU_ON		0xc4000003
+#define	PSCI_AFFINITY_INFO	0xc4000004
 #else
 #define	PSCI_CPU_SUSPEND	0x84000001
 #define	PSCI_CPU_ON		0x84000003
+#define	PSCI_AFFINITY_INFO	0x84000004
 #endif
-#define	PSCI_FEATURES		0x8400000a
 
 static psci_fn psci_call_fn;
 
@@ -57,6 +62,8 @@ static uint32_t psci_functions[PSCI_FUNC_MAX] = {
 	[PSCI_FUNC_SYSTEM_RESET] = PSCI_SYSTEM_RESET,
 	[PSCI_FUNC_CPU_SUSPEND] = PSCI_CPU_SUSPEND,
 	[PSCI_FUNC_CPU_ON] = PSCI_CPU_ON,
+	[PSCI_FUNC_CPU_OFF] = PSCI_CPU_OFF,
+	[PSCI_FUNC_AFFINITY_INFO] = PSCI_AFFINITY_INFO,
 	[PSCI_FUNC_FEATURES] = PSCI_FEATURES,
 };
 
@@ -104,11 +111,25 @@ psci_cpu_on(register_t target_cpu, register_t entry_point_address,
 }
 
 int
+psci_cpu_off(void)
+{
+	return psci_call(psci_functions[PSCI_FUNC_CPU_OFF], 0, 0, 0);
+}
+
+int
 psci_cpu_suspend(uint32_t power_state)
 {
 	return psci_call(psci_functions[PSCI_FUNC_CPU_SUSPEND], power_state,
 	    0, 0);
 }
+
+int
+psci_affinity_info(uint64_t target_affinity, uint32_t lowest_affinity_level)
+{
+	return psci_call(psci_functions[PSCI_FUNC_AFFINITY_INFO],
+	    target_affinity, lowest_affinity_level, 0);
+}
+
 
 void
 psci_system_off(void)
@@ -154,4 +175,47 @@ void
 psci_setfunc(enum psci_function func, uint32_t fid)
 {
 	psci_functions[func] = fid;
+}
+
+static void
+psci_cpu_off_xcall(void *arg1, void *arg2)
+{
+	if (curcpu() != arg1) {
+		aprint_debug("%s: power down\n", cpu_name(curcpu()));
+		psci_cpu_off();
+		printf("WARNING: %s power down failed\n", cpu_name(curcpu()));
+	}
+}
+
+void
+psci_poweroff(void)
+{
+	if (ncpuonline > 1) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		int ret;
+
+		/* Call PSCI_CPU_OFF on all CPUs except for ourselves. */
+		xc_broadcast(0, psci_cpu_off_xcall, curcpu(), NULL);
+
+		/* Wait for all CPUs to enter OFF state. */
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci == curcpu()) {
+				continue;
+			}
+			for (;;) {
+				ret = psci_affinity_info(ci->ci_cpuid, 0);
+				if (ret < 0) {
+					printf("WARNING: %s state %d\n",
+					    cpu_name(ci), ret);
+				}
+				if (ret != PSCI_AFFINITY_INFO_ON) {
+					break;
+				}
+			}
+		}
+	}
+
+	/* Power off the system. */
+	psci_system_off();
 }

@@ -1,7 +1,7 @@
-/* $NetBSD: psci_fdt.c,v 1.21 2021/08/06 19:38:53 jmcneill Exp $ */
+/* $NetBSD: psci_fdt.c,v 1.22 2026/05/15 22:44:58 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.21 2021/08/06 19:38:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psci_fdt.c,v 1.22 2026/05/15 22:44:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -69,7 +69,7 @@ static void
 psci_fdt_power_poweroff(device_t dev)
 {
 	delay(500000);
-	psci_system_off();
+	psci_poweroff();
 }
 
 static const struct fdtbus_power_controller_func psci_power_funcs = {

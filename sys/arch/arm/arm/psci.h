@@ -1,7 +1,7 @@
-/* $NetBSD: psci.h,v 1.5 2024/12/30 19:09:49 jmcneill Exp $ */
+/* $NetBSD: psci.h,v 1.6 2026/05/15 22:44:58 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2017-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,8 @@ enum psci_function {
 	PSCI_FUNC_VERSION,
 	PSCI_FUNC_CPU_SUSPEND,
 	PSCI_FUNC_CPU_ON,
+	PSCI_FUNC_CPU_OFF,
+	PSCI_FUNC_AFFINITY_INFO,
 	PSCI_FUNC_SYSTEM_OFF,
 	PSCI_FUNC_SYSTEM_RESET,
 	PSCI_FUNC_FEATURES,
@@ -115,6 +117,19 @@ uint32_t	psci_version(void);
 int	psci_cpu_on(register_t, register_t, register_t);
 
 /*
+ * Power down the calling core. Only returns on failure.
+ */
+int	psci_cpu_off(void);
+
+/*
+ * Request status of an affinity instance.
+ */
+int	psci_affinity_info(uint64_t, uint32_t);
+#define PSCI_AFFINITY_INFO_ON		0
+#define PSCI_AFFINITY_INFO_OFF		1
+#define PSCI_AFFINITY_INFO_ON_PENDING	2
+
+/*
  * Suspend a core. Args: power_state
  */
 int	psci_cpu_suspend(uint32_t);
@@ -138,4 +153,10 @@ int	psci_features(uint32_t);
  * Generic PSCI call.
  */
 int	psci_call(register_t, register_t, register_t, register_t);
+
+/*
+ * Stop all other CPUs and then shut down the system.
+ */
+void	psci_poweroff(void);
+
 #endif /* _ARM_PSCI_H */
