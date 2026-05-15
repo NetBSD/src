@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.7 2017/02/08 13:31:36 riastradh Exp $
+	$NetBSD: README,v 1.8 2026/05/15 14:07:17 riastradh Exp $
 
 libc: The C library.
 
@@ -29,7 +29,9 @@ in the appropriate header file.
 	free		global
 
    In the implementation of libc, malloc and free are defined normally
-   in src/lib/libc/stdlib/jemalloc.c:
+   in src/lib/libc/stdlib/jemalloc.c (on some ports, though it is
+   buried in the guts of src/external/bsd/jemalloc/dist/src/* on newer
+   ports):
 
 	void *
 	malloc(size_t size)
