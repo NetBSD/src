@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.91 2026/05/13 13:42:26 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.92 2026/05/15 09:30:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10266,4 +10266,14 @@ external/ibm-public/postfix/dist/conf/main.cf	1.13
 
 	postfix: fix default config so that it works out of the box.
 	[christos, ticket #285]
+
+sys/net/if.c					1.538
+
+	if: restore a minor optimization in link state handling.
+	[roy, ticket #286]
+
+tools/xz-include/Makefile			1.5,1.6
+
+	tools/xz: PR 60264: fix tools build errors various plattforms.
+	[hgutch, ticket #287]
 
