@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.535.2.1 2026/05/07 18:17:32 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.535.2.2 2026/05/15 09:26:56 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.535.2.1 2026/05/07 18:17:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.535.2.2 2026/05/15 09:26:56 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2217,6 +2217,10 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
 
 	if (ifp->if_link_queue & LINK_QUEUE_LOCKED)
+		goto out;
+
+	/* If nothing is queued and we are already at the state, do nothing. */
+	if (ifp->if_link_queue == 0 && ifp->if_link_state == link_state)
 		goto out;
 
 	/*
