@@ -1832,7 +1832,7 @@
 }")
 
 (define_insn_and_split "*extzv_aligned"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))]
@@ -1858,7 +1858,7 @@
   "")
 
 (define_insn "*extzv_aligned_2<ccn><ccnz><ccz>"
-  [(set (match_operand:SI 0 "nonimmediate_operand" "=&g")
+  [(set (match_operand:SI 0 "nonimmediate_operand" "=g")
 	(zero_extract:SI (match_operand:SI 1 "nonimmediate_operand" "ro")
 			 (match_operand:QI 2 "const_int_operand" "n")
 			 (match_operand:SI 3 "const_int_operand" "n")))
