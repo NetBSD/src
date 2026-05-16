@@ -1,4 +1,4 @@
-.\"	$NetBSD: ddb.4,v 1.206 2026/03/21 16:44:03 uwe Exp $
+.\"	$NetBSD: ddb.4,v 1.207 2026/05/16 19:48:24 riastradh Exp $
 .\"
 .\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -696,7 +696,11 @@ show process information in a
 .Xr ps 1
 style format.
 Information printed includes: process ID, parent process ID,
-process group, UID, process status, process flags, number of LWPs,
+process group, UID, process status
+.Pq Li p_stat No of Dt "struc proc ", Dv "S*" ,
+process flags
+.Pq Li p_flag No of Dt "struct proc" , Dv "PK_*" ,
+number of LWPs,
 command name, and process wait channel message.
 .It Cm /a
 show each process ID, command name, kernel virtual addresses of
@@ -710,8 +714,12 @@ show each LWP ID, process ID, command name, system call emulation,
 priority, wait channel message and wait channel address.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 .It Cm /l
-show each LWP ID, process ID, process status, CPU ID the LWP runs on,
-process flags, kernel virtual address of LWP structure,
+show each LWP ID, process ID, process status
+.Pq Li l_stat No of Dt "struct lwp " , Dv "LS*" ,
+CPU ID the LWP runs on,
+process flags
+.Pq Li l_flag No of Dt "struct lwp " , Dv "LW_*" ,
+kernel virtual address of LWP structure,
 LWP name and wait channel message.
 LWPs currently running on a CPU are marked with the '\&>' sign.
 This is the default.
