@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-session.c,v 1.12 2026/04/08 18:58:41 christos Exp $	*/
+/*	$NetBSD: sshd-session.c,v 1.13 2026/05/16 15:08:30 christos Exp $	*/
 /* $OpenBSD: sshd-session.c,v 1.23 2026/03/11 09:10:59 dtucker Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-session.c,v 1.12 2026/04/08 18:58:41 christos Exp $");
+__RCSID("$NetBSD: sshd-session.c,v 1.13 2026/05/16 15:08:30 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1342,8 +1342,10 @@ cleanup_exit(int i)
 		}
 	}
 	/* Override default fatal exit value when auth was attempted */
-	if (i == 255 && monitor_auth_attempted())
+	if (i == 255 && monitor_auth_attempted()) {
+		pfilter_notify(1);
 		_exit(EXIT_AUTH_ATTEMPTED);
+	}
 	if (i == 255 && monitor_invalid_user())
 		_exit(EXIT_INVALID_USER);
 	_exit(i);
