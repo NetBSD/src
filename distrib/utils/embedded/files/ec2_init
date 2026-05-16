@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ec2_init,v 1.7 2026/02/01 22:57:34 jschauma Exp $
+# $NetBSD: ec2_init,v 1.8 2026/05/16 20:59:59 jschauma Exp $
 #
 # PROVIDE: ec2_init
 # REQUIRE: NETWORKING
@@ -13,38 +13,93 @@ rcvar=${name}
 start_cmd="ec2_init"
 stop_cmd=":"
 
+HOSTNAME_URL="hostname"
+
 IMDS_IP="169.254.169.254"
-if ! route get default >/dev/null 2>&1; then
-	IMDS_IP="[fd00:ec2::254]"
-fi
+IMDS_IPv6="fd00:ec2::254"
 
-METADATA_URL="http://${IMDS_IP}/latest/meta-data/"
-CLOUD_TYPE=EC2	# default
-
+CLOUD_TYPE=EC2
 case "$(/sbin/sysctl -n machdep.dmi.chassis-asset-tag 2>/dev/null)" in
 OracleCloud*)
 	CLOUD_TYPE=OCI
 	;;
 esac
 
+EC2_USER="ec2-user"
 case ${CLOUD_TYPE} in
 EC2)
 	EC2_USER="ec2-user"
-	METADATA_URL="http://${IMDS_IP}/latest/meta-data/"
+	METADATA_URL_PATH="latest/meta-data/"
 	SSH_KEY_URL="public-keys/0/openssh-key"
 	;;
 OCI)
 	EC2_USER="opc"
-	METADATA_URL="http://${IMDS_IP}/opc/v1/instance/"
+	METADATA_URL_PATH="opc/v1/instance/"
 	SSH_KEY_URL="metadata/ssh_authorized_keys"
 	;;
 esac
 
-HOSTNAME_URL="hostname"
 
-SSH_KEY_FILE="/home/${EC2_USER}/.ssh/authorized_keys"
+ec2_hostname()
+{
+	# hostname may already be set via /etc/rc.d/network
+	if [ -n "$hostname" ] || [ -f /etc/myname ]; then
+		return
+	fi
 
-OS_METADATA_URL="http://${IMDS_IP}/openstack/latest/meta_data.json"
+	(
+	umask 022
+	HOSTNAME=$(ftp -o - -q 2 "${METADATA_URL}${HOSTNAME_URL}")
+	if [ -n "$HOSTNAME" ]; then
+		echo "Setting ${CLOUD_TYPE} hostname: ${HOSTNAME}"
+		echo "$HOSTNAME" > /etc/myname
+		hostname "$HOSTNAME"
+		break
+	fi
+	)
+}
+
+ec2_init()
+{
+	ec2_metadata
+	ec2_hostname
+	ec2_user
+	ec2_random_seed
+}
+
+
+ec2_metadata()
+{
+	local imds="${IMDS_IP}"
+
+	# It may be 5-10 seconds for the metadata service
+	# to become reachable.  Try IPv4 first (AWS does not
+	# enable the IPv6 metadata endpoint by default), then
+	# IPv6 and use whichever works.
+	try=0
+	while [ $((try++)) -lt 20 ]
+	do
+		ftp -o /dev/null -q 2 http://${IMDS_IP}/${METADATA_URL_PATH}/${HOSTNAME_URL} >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			break
+		fi
+
+		ftp -o /dev/null -q 2 http://[${IMDS_IPv6}]/${METADATA_URL_PATH}/${HOSTNAME_URL} >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			imds="[${IMDS_IPv6}]"
+			break
+		fi
+
+		echo "Metadata service not available yet (try $try / 20)..."
+		sleep 1
+	done
+
+	METADATA_URL="http://${imds}/${METADATA_URL_PATH}"
+
+	SSH_KEY_FILE="/home/${EC2_USER}/.ssh/authorized_keys"
+
+	OS_METADATA_URL="http://${imds}/openstack/latest/meta_data.json"
+}
 
 ec2_newuser()
 {
@@ -52,32 +107,18 @@ ec2_newuser()
 	useradd -g users -G wheel,operator -m "${EC2_USER}"
 }
 
-extract_random_seed()
+ec2_random_seed()
 {
-	sed -n -e '/random_seed/s/.*"random_seed": *"\([A-Za-z0-9+/=]*\)".*/\1/p'
+	# May contain a "random_seed".
+	OS_METADATA="$(ftp -o - -q 2 ${OS_METADATA_URL} 2>/dev/null)"
+	if echo "$OS_METADATA" | grep -q random_seed; then
+		echo "$OS_METADATA" | extract_random_seed |
+		    base64 -di >> /dev/urandom
+	fi
 }
 
-ec2_init()
+ec2_user()
 {
-	(
-	umask 022
-
-	# set hostname; it may be 5-10 seconds for the metadata service
-	# to become reachable.
-	try=0
-	while [ $((try++)) -lt 20 ]
-	do
-		HOSTNAME=$(ftp -o - -q 2 "${METADATA_URL}${HOSTNAME_URL}")
-		if [ -n "$HOSTNAME" ]; then
-			echo "Setting ${CLOUD_TYPE} hostname: ${HOSTNAME}"
-			echo "$HOSTNAME" > /etc/myname
-			hostname "$HOSTNAME"
-			break
-		fi
-		echo "${CLOUD_TYPE} hostname not available yet (try $try)"
-		sleep 1
-	done
-
 	# create cloud user
 	id "${EC2_USER}" >/dev/null 2>&1 || ec2_newuser
 
@@ -99,14 +140,11 @@ ec2_init()
 			echo "$EC2_SSH_KEY" >> "$SSH_KEY_FILE"
 		fi
 	fi
+}
 
-	# May contain a "random_seed".
-	OS_METADATA="$(ftp -o - -q 2 ${OS_METADATA_URL} 2>/dev/null)"
-	if echo "$OS_METADATA" | grep -q random_seed; then
-		echo "$OS_METADATA" | extract_random_seed |
-		    base64 -di >> /dev/urandom
-	fi
-	)
+extract_random_seed()
+{
+	sed -n -e '/random_seed/s/.*"random_seed": *"\([A-Za-z0-9+/=]*\)".*/\1/p'
 }
 
 load_rc_config $name
