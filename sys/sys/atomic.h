@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.27 2025/04/22 01:34:38 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.28 2026/05/16 15:10:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -406,6 +406,16 @@ __END_DECLS
 #define	__ATOMIC_SIZE_MAX		4
 #endif
 
+#if __GNUC_PREREQ__(14, 0) && !defined(__clang__)
+/*
+ * Can enable this for clang too once we update past clang>=19 and get:
+ * https://github.com/llvm/llvm-project/pull/87392
+ */
+#define	__atomic_typeof_unqual		__typeof_unqual__
+#else
+#define	__atomic_typeof_unqual		__typeof__
+#endif
+
 /*
  * We assume that access to an aligned pointer to a volatile object of
  * at most __ATOMIC_SIZE_MAX bytes is guaranteed to be atomic.  This is
@@ -422,7 +432,7 @@ __END_DECLS
 void kcsan_atomic_load(const volatile void *, void *, int);
 void kcsan_atomic_store(volatile void *, const void *, int);
 #define __BEGIN_ATOMIC_LOAD(p, v) \
-	union { __typeof__(*(p)) __al_val; char __al_buf[1]; } v; \
+	union { __atomic_typeof_unqual(*(p)) __al_val; char __al_buf[1]; } v; \
 	kcsan_atomic_load(p, v.__al_buf, sizeof(v.__al_val))
 #define __END_ATOMIC_LOAD(v) \
 	(v).__al_val
@@ -430,7 +440,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 	kcsan_atomic_store(p, __UNVOLATILE(&v), sizeof(v))
 #else
 #define __BEGIN_ATOMIC_LOAD(p, v) \
-	__typeof__(*(p)) v = *(p)
+	const __atomic_typeof_unqual(*(p)) v = *(p)
 #define __END_ATOMIC_LOAD(v) \
 	v
 #ifdef __HAVE_HASHLOCKED_ATOMICS
@@ -471,7 +481,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_store_relaxed(p,v)					      \
 ({									      \
 	volatile __typeof__(*(p)) *__as_ptr = (p);			      \
-	__typeof__(*(p)) __as_val = (v);				      \
+	const __atomic_typeof_unqual(*(p)) __as_val = (v);		      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
 	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
 })
@@ -479,7 +489,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_store_release(p,v)					      \
 ({									      \
 	volatile __typeof__(*(p)) *__as_ptr = (p);			      \
-	__typeof__(*(p)) __as_val = (v);				      \
+	const __atomic_typeof_unqual(*(p)) __as_val = (v);		      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
 	membar_release();						      \
 	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
@@ -549,7 +559,7 @@ __do_atomic_store(volatile void *p, const void *q, size_t size)
 #else
 #define	atomic_load_consume(p)						      \
 ({									      \
-	const __typeof__(*(p)) __al_val = atomic_load_relaxed(p);	      \
+	const __atomic_typeof_unqual(*(p)) __al_val = atomic_load_relaxed(p); \
 	membar_datadep_consumer();					      \
 	__al_val;							      \
 })
