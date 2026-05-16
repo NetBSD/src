@@ -3,4 +3,4 @@ $ svn checkout https://svn.code.sf.net/p/elftoolchain/code/trunk elftoolchain-co
 $ mkdir dist.new
 $ dist/tools/netbsd-base-system-import.sh -m common -m libdwarf -m libelf -s elftoolchain-code -d dist.new
 $ cd dist.new
-cvs -d cvs.netbsd.org import src/external/bsd/elftoolchain FreeBSD rXXXX
+$ cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/elftoolchain/dist FreeBSD elftoolchain-NNNN
