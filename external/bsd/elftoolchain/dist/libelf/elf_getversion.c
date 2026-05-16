@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_getversion.c,v 1.1.1.1 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_getversion.c,v 1.1.1.2 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2021 Joseph Koshy
@@ -34,7 +34,7 @@
 
 ELFTC_VCSID("Id: elf_getversion.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: elf_getversion.c,v 1.1.1.1 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_getversion.c,v 1.1.1.2 2026/05/16 20:17:17 jkoshy Exp $");
 
 unsigned int
 elf_getversion(Elf *e)
