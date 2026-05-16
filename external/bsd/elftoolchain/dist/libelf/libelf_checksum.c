@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_checksum.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_checksum.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -32,9 +32,9 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_checksum.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_checksum.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_checksum.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_checksum.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 static unsigned long
 _libelf_sum(unsigned long c, const unsigned char *s, size_t size)
@@ -49,7 +49,7 @@ _libelf_sum(unsigned long c, const unsigned char *s, size_t size)
 }
 
 long
-_libelf_checksum(Elf *e, int elfclass)
+_libelf_checksum(Elf *e, unsigned int elfclass)
 {
 	size_t shn;
 	Elf_Scn *scn;

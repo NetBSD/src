@@ -1,6 +1,6 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.1.1.1 2024/03/03 14:41:48 christos Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.1.1.2 2026/05/16 20:17:17 jkoshy Exp $
 /*-
- * Copyright (c) 2010,2021 Joseph Koshy
+ * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -26,12 +26,44 @@ dnl 	$NetBSD: elfdefinitions.m4,v 1.1.1.1 2024/03/03 14:41:48 christos Exp $
  */
 divert(-1)
 define(`VCSID_ELFDEFINITIONS_M4',
-	`Id: elfdefinitions.m4 3984 2022-05-06 11:22:42Z jkoshy')
+	`Id: elfdefinitions.m4 4318 2025-12-18 21:02:33Z jkoshy')
 include(`elfconstants.m4')dnl
 
-define(`_',`ifelse(eval(len($1) <= 7),1,
-    `#define	$1		$2',
-    `#define	$1	$2')')
+# Compute the whitespace between a symbol and its definition.
+#
+# - If the symbol is 7 characters or shorter in width, use two tabs.
+# - Otherwise, if the symbol is 15 characters or less in width, use one tab.
+# - Otherwise, use a single space.
+#
+# This makes the generated definitions easier to read.
+define(`_WHITESPACE',
+  `ifelse(eval(len($1) <= 7),1,`		',
+          eval(len($1) <= 15),1,`	',
+          ` ')')
+
+# Format symbol descriptions as C-style comment.
+define(`_DESCRIPTION',
+  `ifelse(eval(len(`$*') > 0),1,` /* $* */',
+          `')')
+
+# Expand the `_' macro to a C preprocessor definition that is suitably
+# vertically aligned.  If a symbol description is present, add it as a
+# C-style comment.
+define(`_',``#'define $1`'_WHITESPACE($1)`'$2`'_DESCRIPTION(`$3')')
+
+# Expand the `__' macro to a C-style comment.
+#
+# - An empty invocation __()) is ignored.
+# - An invocation with a single argument __(COMMENT) is expanded as an inline
+#   C-style comment.
+# - An invocation with two or more arguments __(PREFIX, COMMENT) expands to
+#   `PREFIX/* COMMENT */'.  This form would be used to visually indent the
+#   comment in the generated output.
+undefine(`__')
+define(`__',
+  `ifelse($#, 0, `',
+          $#, 1, `/* $1 */',
+          `$1/* shift($*) */')')
 divert(0)dnl
 
 /*
@@ -42,18 +74,31 @@ divert(0)dnl
  */
 
 /*
- * These definitions are based on:
- * - The public specification of the ELF format as defined in the
- *   October 2009 draft of System V ABI.
- *   See: http://www.sco.com/developers/gabi/latest/ch4.intro.html
- * - The May 1998 (version 1.5) draft of "The ELF-64 object format".
- * - Processor-specific ELF ABI definitions for sparc, i386, amd64, mips,
- *   ia64, powerpc, and RISC-V processors.
- * - The "Linkers and Libraries Guide", from Sun Microsystems.
+ * Compile-time knobs controlling the inclusion of this file's
+ * contents.
  */
+#define _USE_SYS_ELFDEFINITIONS_H_	1
+#if defined(__NetBSD__) && defined(_SYS_EXEC_ELF_H_)
+/*
+ * Ignore the definitions provided by this file if <sys/exec_elf.h> has
+ * already been included.
+ *
+ * Doing so allows NetBSD code to use either (or both) <sys/exec_elf.h>
+ * or this file without breaking the build.
+ */
+#undef _USE_SYS_ELFDEFINITIONS_H_
+#endif /* defined(__NetBSD__) && defined(_SYS_EXEC_ELF_H_) */
+
+/*
+patsubst(defn(`COMPATIBILITY_NOTICE'), `^#', ` * ')
+ */
+ 
+#if defined(_USE_SYS_ELFDEFINITIONS_H_)
 
 #ifndef _SYS_ELFDEFINITIONS_H_
 #define _SYS_ELFDEFINITIONS_H_
+
+#include <stdint.h>
 
 /*
  * Types of capabilities.
@@ -64,6 +109,11 @@ DEFINE_CAPABILITIES()
  * Flags used with dynamic linking entries.
  */
 DEFINE_DYN_FLAGS()
+
+/*
+ * Aliases for the DF_* symbols.
+ */
+DEFINE_DYN_FLAG_ALIASES()
 
 /*
  * Dynamic linking entry types.
@@ -77,6 +127,11 @@ DEFINE_DYN_TYPE_ALIASES()
  * Flags used in the executable header (field: e_flags).
  */
 DEFINE_EHDR_FLAGS()
+
+/*
+ * Alternate spellings for executable header flags.
+ */
+DEFINE_EHDR_FLAG_SYNONYMS()
 
 /*
  * Offsets in the `ei_ident[]' field of an ELF executable header.
@@ -93,12 +148,20 @@ DEFINE_ELF_CLASSES()
  */
 DEFINE_ELF_DATA_ENDIANNESSES()
 
+changequote([,])dnl
 /*
  * The magic numbers used in the initial four bytes of an ELF object.
  *
- * These numbers are: 0x7F, 'E', 'L' and 'F'.
+ * These numbers are 0x7F, and the characters 'E', 'L' and 'F' encoded
+ * in ASCII.
  */
+pushdef([_],[[#]define $1	$2[]ifelse(eval(len($3) > 0),1,
+					   [ ]/* translit($3,@,') */,
+					   [])])dnl
 DEFINE_ELF_MAGIC_VALUES()
+popdef([_])dnl
+changequote([`],['])dnl
+
 /* Additional magic-related constants. */
 DEFINE_ELF_MAGIC_ADDITIONAL_CONSTANTS()
 
@@ -148,6 +211,11 @@ DEFINE_PHDR_TYPES()
 DEFINE_PHDR_TYPE_SYNONYMS()
 
 /*
+ * Platform-specific flags.
+ */
+DEFINE_PLATFORM_SPECIFIC_FLAGS()
+
+/*
  * Section flags.
  */
 DEFINE_SECTION_FLAGS()
@@ -167,6 +235,11 @@ DEFINE_SECTION_TYPE_ALIASES()
 #define	PN_XNUM			0xFFFFU /* Use extended section numbering. */
 
 /*
+ * Special indices into symbol tables.
+ */
+DEFINE_SYMBOL_TABLE_INDICES()
+
+/*
  * Symbol binding information.
  */
 DEFINE_SYMBOL_BINDINGS()
@@ -179,19 +252,25 @@ DEFINE_SYMBOL_TYPES()
 DEFINE_SYMBOL_TYPES_ADDITIONAL_CONSTANTS()
 
 /*
- * Symbol binding.
- */
-DEFINE_SYMBOL_BINDING_KINDS()
-
-/*
  * Symbol visibility.
  */
 DEFINE_SYMBOL_VISIBILITIES()
 
 /*
- * Symbol flags.
+ * Syminfo flags.
  */
-DEFINE_SYMBOL_FLAGS()
+DEFINE_SYMINFO_FLAGS()
+DEFINE_SYMINFO_FLAG_SYNONYMS()
+
+/*
+ * Syminfo bindigs.
+ */
+DEFINE_SYMINFO_BINDINGS()
+
+/*
+ * Syminfo section versions.
+ */
+DEFINE_SYMINFO_VERSIONS()
 
 /*
  * Versioning dependencies.
@@ -216,7 +295,17 @@ DEFINE_VERSIONING_NUMBERS()
 /**
  ** Relocation types.
  **/
-DEFINE_RELOCATIONS()
+DEFINE_RELOCATION_TYPES()
+
+/*
+ * Obsolete relocation types.
+ */
+DEFINE_OBSOLETE_RELOCATION_TYPES()
+
+/*
+ * Alternate spellings for relocation type symbols.
+ */
+DEFINE_RELOCATION_TYPE_SYNONYMS()
 
 /*
  * MIPS ABI related.
@@ -247,6 +336,7 @@ typedef uint64_t	Elf64_Lword;	/* Unsigned long integer. */
 typedef uint64_t	Elf64_Xword;	/* Unsigned long integer. */
 typedef int64_t		Elf64_Sxword;	/* Signed long integer. */
 
+typedef uint8_t		Elf_Byte;	/* Synonym used in NetBSD. */
 
 /*
  * Capability descriptors.
@@ -313,7 +403,7 @@ typedef struct {
 
 /* 32 bit EHDR. */
 typedef struct {
-	unsigned char   e_ident[EI_NIDENT]; /* ELF identification. */
+	Elf32_Byte      e_ident[EI_NIDENT]; /* ELF identification. */
 	Elf32_Half      e_type;	     /* Object file type (ET_*). */
 	Elf32_Half      e_machine;   /* Machine type (EM_*). */
 	Elf32_Word      e_version;   /* File format version (EV_*). */
@@ -332,7 +422,7 @@ typedef struct {
 
 /* 64 bit EHDR. */
 typedef struct {
-	unsigned char   e_ident[EI_NIDENT]; /* ELF identification. */
+	Elf64_Byte      e_ident[EI_NIDENT]; /* ELF identification. */
 	Elf64_Half      e_type;	     /* Object file type (ET_*). */
 	Elf64_Half      e_machine;   /* Machine type (EM_*). */
 	Elf64_Word      e_version;   /* File format version (EV_*). */
@@ -374,11 +464,11 @@ typedef struct {
 DEFINE_LL_FLAGS()
 
 /*
- * Note tags
+ * ELF Note types.
  */
-DEFINE_NOTE_ENTRY_TYPES()
+DEFINE_NOTE_TYPES()
 /* Aliases for the ABI tag. */
-DEFINE_NOTE_ENTRY_ALIASES()
+DEFINE_NOTE_TYPE_ALIASES()
 
 /*
  * Note descriptors.
@@ -501,13 +591,17 @@ typedef struct {
 	Elf64_Half	m_stride;    /* Number of units to skip. */
 } Elf64_Move;
 
-#define ELF32_M_SYM(I)		((I) >> 8)
-#define ELF32_M_SIZE(I)		((unsigned char) (I))
-#define ELF32_M_INFO(M, S)	(((M) << 8) + (unsigned char) (S))
+#define ELF_M_SYM(I)		((I) >> 8)
+#define ELF_M_SIZE(I)		((I) & 0xFFU)
+#define ELF_M_INFO(M, S)	(((M) << 8) + ((S) & 0xFFU))
 
-#define ELF64_M_SYM(I)		((I) >> 8)
-#define ELF64_M_SIZE(I)		((unsigned char) (I))
-#define ELF64_M_INFO(M, S)	(((M) << 8) + (unsigned char) (S))
+#define ELF32_M_SYM(I)		ELF_M_SYM(I)
+#define ELF32_M_SIZE(I)		ELF_M_SIZE(I)
+#define ELF32_M_INFO(M, S)	ELF_M_INFO(M, S)
+
+#define ELF64_M_SYM(I)		ELF_M_SYM(I)
+#define ELF64_M_SIZE(I)		ELF_M_SIZE(I)
+#define ELF64_M_INFO(M, S)	ELF_M_INFO(M, S)
 
 /*
  * Section Header Table (SHDR) entries.
@@ -550,30 +644,36 @@ typedef struct {
 	Elf32_Word	st_name;     /* index of symbol's name */
 	Elf32_Addr	st_value;    /* value for the symbol */
 	Elf32_Word	st_size;     /* size of associated data */
-	unsigned char	st_info;     /* type and binding attributes */
-	unsigned char	st_other;    /* visibility */
+	Elf32_Byte	st_info;     /* type and binding attributes */
+	Elf32_Byte	st_other;    /* visibility */
 	Elf32_Half	st_shndx;    /* index of related section */
 } Elf32_Sym;
 
 typedef struct {
 	Elf64_Word	st_name;     /* index of symbol's name */
-	unsigned char	st_info;     /* type and binding attributes */
-	unsigned char	st_other;    /* visibility */
+	Elf64_Byte	st_info;     /* type and binding attributes */
+	Elf64_Byte	st_other;    /* visibility */
 	Elf64_Half	st_shndx;    /* index of related section */
 	Elf64_Addr	st_value;    /* value for the symbol */
 	Elf64_Xword	st_size;     /* size of associated data */
 } Elf64_Sym;
 
-#define ELF32_ST_BIND(I)	((I) >> 4)
-#define ELF32_ST_TYPE(I)	((I) & 0xFU)
-#define ELF32_ST_INFO(B,T)	(((B) << 4) + ((T) & 0xF))
+#define ELF_ST_BIND(I)		((I) >> 4)
+#define ELF_ST_TYPE(I)		((I) & 0xFU)
+#define ELF_ST_INFO(B, T)	(((B) << 4) + ((T) & 0xFU))
 
-#define ELF64_ST_BIND(I)	((I) >> 4)
-#define ELF64_ST_TYPE(I)	((I) & 0xFU)
-#define ELF64_ST_INFO(B,T)	(((B) << 4) + ((T) & 0xF))
+#define ELF32_ST_BIND(I)	ELF_ST_BIND(I)
+#define ELF32_ST_TYPE(I)	ELF_ST_TYPE(I)
+#define ELF32_ST_INFO(B,T)	ELF_ST_INFO(B,T)
 
-#define ELF32_ST_VISIBILITY(O)	((O) & 0x3)
-#define ELF64_ST_VISIBILITY(O)	((O) & 0x3)
+#define ELF64_ST_BIND(I)	ELF_ST_BIND(I)
+#define ELF64_ST_TYPE(I)	ELF_ST_TYPE(I)
+#define ELF64_ST_INFO(B,T)	ELF_ST_INFO(B,T)
+
+#define ELF_ST_VISIBILITY(O)	((O) & 0x3U)
+
+#define ELF32_ST_VISIBILITY(O)	ELF_ST_VISIBILITY(O)
+#define ELF64_ST_VISIBILITY(O)	ELF_ST_VISIBILITY(O)
 
 /*
  * Syminfo descriptors, containing additional symbol information.
@@ -617,10 +717,15 @@ typedef struct {
 	Elf64_Sxword	r_addend;    /* constant addend */
 } Elf64_Rela;
 
+/*
+ * Relative relocations.
+ */
+typedef Elf32_Word	Elf32_Relr;
+typedef Elf64_Xword	Elf64_Relr;
 
 #define ELF32_R_SYM(I)		((I) >> 8)
-#define ELF32_R_TYPE(I)		((unsigned char) (I))
-#define ELF32_R_INFO(S,T)	(((S) << 8) + (unsigned char) (T))
+#define ELF32_R_TYPE(I)		((I) & 0xFFU)
+#define ELF32_R_INFO(S,T)	(((S) << 8) + ((T) & 0xFFU))
 
 #define ELF64_R_SYM(I)		((I) >> 32)
 #define ELF64_R_TYPE(I)		((I) & 0xFFFFFFFFUL)
@@ -630,6 +735,8 @@ typedef struct {
 /*
  * Symbol versioning structures.
  */
+
+#define ELF_VER_CHR	'@'	/* Used in versioned names. */
 
 /* 32-bit structures. */
 typedef struct
@@ -642,7 +749,7 @@ typedef struct
 {
 	Elf32_Word	vna_hash;    /* Hash value of dependency name. */
 	Elf32_Half	vna_flags;   /* Flags. */
-	Elf32_Half	vna_other;   /* Unused. */
+	Elf32_Half	vna_other;   /* Version index, if non-zero. */
 	Elf32_Word	vna_name;    /* Offset to dependency name. */
 	Elf32_Word	vna_next;    /* Offset to next vernaux entry. */
 } Elf32_Vernaux;
@@ -679,7 +786,7 @@ typedef struct {
 typedef struct {
 	Elf64_Word	vna_hash;    /* Hash value of dependency name. */
 	Elf64_Half	vna_flags;   /* Flags. */
-	Elf64_Half	vna_other;   /* Unused. */
+	Elf64_Half	vna_other;   /* Version index, if non-zero. */
 	Elf64_Word	vna_name;    /* Offset to dependency name. */
 	Elf64_Word	vna_next;    /* Offset to next vernaux entry. */
 } Elf64_Vernaux;
@@ -704,6 +811,13 @@ typedef struct {
 
 typedef Elf64_Half	Elf64_Versym;
 
+#define VER_NDX_HIDDEN	0x8000U	    /* Ignore symbol presence. */
+#define VER_NDX(X)	((X) & ~VER_NDX_HIDDEN)
+
+#define VER_NEED_HIDDEN	VER_NDX_HIDDEN
+#define VER_NEED_IDX(X)	VER_NDX(X)
+
+#define VER_DEF_IDX(X)	VER_NDX(X)
 
 /*
  * The header for GNU-style hash sections.
@@ -713,7 +827,10 @@ typedef struct {
 	uint32_t	gh_nbuckets;	/* Number of hash buckets. */
 	uint32_t	gh_symndx;	/* First visible symbol in .dynsym. */
 	uint32_t	gh_maskwords;	/* #maskwords used in bloom filter. */
-	uint32_t	gh_shift2;	/* Bloom filter shift count. */
+	uint32_t	gh_shift2;	/* Bloom filter `shift' count. */
 } Elf_GNU_Hash_Header;
 
 #endif	/* _SYS_ELFDEFINITIONS_H_ */
+
+#undef _USE_SYS_ELFDEFINITIONS_H_
+#endif  /* defined(_USE_SYS_ELFDEFINITIONS_H_) */

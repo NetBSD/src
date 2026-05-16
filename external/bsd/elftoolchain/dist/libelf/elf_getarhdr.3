@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_getarhdr.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
+.\"	$NetBSD: elf_getarhdr.3,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $
 .\"
 .\" Copyright (c) 2006,2008 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,9 +23,9 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_getarhdr.3 3955 2022-03-12 12:24:36Z jkoshy
+.\" Id: elf_getarhdr.3 4254 2025-10-20 17:44:18Z jkoshy
 .\"
-.Dd August 15, 2006
+.Dd October 20, 2025
 .Dt ELF_GETARHDR 3
 .Os
 .Sh NAME
@@ -83,6 +83,10 @@ Function
 .Fn elf_getarhdr
 may fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"
+.It Bq Er ELF_E_ARCHIVE
+The archive member header for argument
+.Fa elf
+was invalid.
 .It Bq Er ELF_E_ARGUMENT
 Argument
 .Fa elf

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_getarhdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_getarhdr.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
@@ -34,7 +34,7 @@
 
 ELFTC_VCSID("Id: elf_getarhdr.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: elf_getarhdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_getarhdr.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 Elf_Arhdr *
 elf_getarhdr(Elf *e)

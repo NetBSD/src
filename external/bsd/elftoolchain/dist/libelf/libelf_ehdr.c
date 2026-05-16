@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ehdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_ehdr.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -35,16 +35,16 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_ehdr.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_ehdr.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_ehdr.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_ehdr.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 /*
  * Retrieve counts for sections, phdrs and the section string table index
  * from section header #0 of the ELF object.
  */
 static int
-_libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
+_libelf_load_extended(Elf *e, unsigned int ec, uint64_t shoff, uint16_t phnum,
     uint16_t strndx)
 {
 	size_t fsz;
@@ -109,7 +109,7 @@ _libelf_load_extended(Elf *e, int ec, uint64_t shoff, uint16_t phnum,
 	} while (/* CONSTCOND */ 0)
 
 void *
-_libelf_ehdr(Elf *e, int ec, int allocate)
+_libelf_ehdr(Elf *e, unsigned int ec, int allocate)
 {
 	void *ehdr;
 	size_t fsz, msz;

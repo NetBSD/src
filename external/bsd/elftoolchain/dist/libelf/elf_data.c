@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_data.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_data.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
@@ -36,16 +36,16 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: elf_data.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: elf_data.c 4231 2025-10-13 15:24:01Z jkoshy");
 
-__RCSID("$NetBSD: elf_data.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_data.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 Elf_Data *
 elf_getdata(Elf_Scn *s, Elf_Data *ed)
 {
 	Elf *e;
-	unsigned int sh_type;
-	int elfclass, elftype;
+	unsigned int elfclass, sh_type;
+	int elftype;
 	size_t count, fsz, msz;
 	struct _Libelf_Data *d;
 	uint64_t sh_align, sh_offset, sh_size, raw_size;
@@ -134,7 +134,6 @@ elf_getdata(Elf_Scn *s, Elf_Data *ed)
 
 	assert(msz > 0);
 	assert(count <= SIZE_MAX);
-	assert(msz * count <= SIZE_MAX);
 
 	if ((d = _libelf_allocate_data(s)) == NULL)
 		return (NULL);
@@ -221,8 +220,8 @@ Elf_Data *
 elf_rawdata(Elf_Scn *s, Elf_Data *ed)
 {
 	Elf *e;
-	int elf_class;
 	uint32_t sh_type;
+	unsigned int elf_class;
 	struct _Libelf_Data *d;
 	uint64_t sh_align, sh_offset, sh_size, raw_size;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -25,24 +25,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: _libelf_config.h 3975 2022-04-30 20:10:58Z jkoshy
+ * Id: _libelf_config.h 4079 2025-01-09 10:43:22Z jkoshy
  */
-
-#if defined(__NetBSD__)
-
-#include <machine/elf_machdep.h>
-
-#if	!defined(ARCH_ELFSIZE)
-#error	ARCH_ELFSIZE is not defined.
-#endif
-
-#if	ARCH_ELFSIZE == 32
-#define	Elf_Note		Elf32_Nhdr
-#else
-#define	Elf_Note		Elf64_Nhdr
-#endif
-
-#endif
 
 /*
  * Downstream projects can replace the following placeholder with a custom

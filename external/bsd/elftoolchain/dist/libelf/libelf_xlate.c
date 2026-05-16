@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_xlate.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_xlate.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -33,9 +33,9 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_xlate.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_xlate.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 /*
  * Translate to/from the file representation of ELF objects.
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: libelf_xlate.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
 
 Elf_Data *
 _libelf_xlate(Elf_Data *dst, const Elf_Data *src, unsigned int encoding,
-    int elfclass, int elfmachine, int direction)
+    unsigned int elfclass, int elfmachine, int direction)
 {
 	int byteswap;
 	size_t cnt, dsz, fsz, msz;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: elf_open.3,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
+.\"	$NetBSD: elf_open.3,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $
 .\"
 .\" Copyright (c) 2012 Joseph Koshy.  All rights reserved.
 .\"
@@ -23,13 +23,14 @@
 .\" out of the use of this software, even if advised of the possibility of
 .\" such damage.
 .\"
-.\" Id: elf_open.3 3957 2022-03-12 14:11:52Z jkoshy
+.\" Id: elf_open.3 4320 2025-12-22 20:47:09Z jkoshy
 .\"
-.Dd June 12, 2019
+.Dd December 22, 2025
 .Dt ELF_OPEN 3
 .Os
 .Sh NAME
-.Nm elf_open
+.Nm elf_open ,
+.Nm elf_openmemory
 .Nd open ELF objects and ar(1) archives
 .Sh LIBRARY
 .Lb libelf
@@ -40,17 +41,6 @@
 .Ft "Elf *"
 .Fn elf_openmemory "char *image" "size_t sz"
 .Sh DESCRIPTION
-.Em Important :
-The functions
-.Fn elf_open
-and
-.Fn elf_openmemory
-are extensions to the
-.Xr elf 3
-API, for the internal use of the
-Elftoolchain project.
-Portable applications should not use these functions.
-.Pp
 The function
 .Fn elf_open
 returns an Elf descriptor opened with mode
@@ -71,14 +61,6 @@ archive contained in the memory area pointed to by the argument
 The argument
 .Fa sz
 specifies the size of the memory area in bytes.
-.Sh RETURN VALUES
-The function returns a pointer to a ELF descriptor if successful, or
-.Dv NULL
-if an error occurred.
-.Sh COMPATIBILITY
-These functions are non-standard extensions to the
-.Xr elf 3
-API set.
 .Pp
 The behavior of these functions differs from their counterparts
 .Xr elf_begin 3
@@ -89,6 +71,14 @@ and
 .Xr ar 1
 archives, returning an Elf descriptor of type
 .Dv ELF_K_NONE .
+.Sh RETURN VALUES
+The function returns a pointer to a ELF descriptor if successful, or
+.Dv NULL
+if an error occurred.
+.Sh COMPATIBILITY
+These functions are non-standard extensions to the
+.Xr ELF 3
+API set.
 .Sh ERRORS
 These functions can fail with the following errors:
 .Bl -tag -width "[ELF_E_RESOURCE]"

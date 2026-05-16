@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_extended.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_extended.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -33,9 +33,9 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_extended.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_extended.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_extended.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_extended.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 /*
  * Retrieve section #0, allocating a new section if needed.
@@ -52,7 +52,7 @@ _libelf_getscn0(Elf *e)
 }
 
 int
-_libelf_setshnum(Elf *e, void *eh, int ec, size_t shnum)
+_libelf_setshnum(Elf *e, void *eh, unsigned int ec, size_t shnum)
 {
 	Elf_Scn *scn;
 
@@ -82,7 +82,7 @@ _libelf_setshnum(Elf *e, void *eh, int ec, size_t shnum)
 }
 
 int
-_libelf_setshstrndx(Elf *e, void *eh, int ec, size_t shstrndx)
+_libelf_setshstrndx(Elf *e, void *eh, unsigned int ec, size_t shstrndx)
 {
 	Elf_Scn *scn;
 
@@ -111,7 +111,7 @@ _libelf_setshstrndx(Elf *e, void *eh, int ec, size_t shstrndx)
 }
 
 int
-_libelf_setphnum(Elf *e, void *eh, int ec, size_t phnum)
+_libelf_setphnum(Elf *e, void *eh, unsigned int ec, size_t phnum)
 {
 	Elf_Scn *scn;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_flag.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_flag.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2009,2011 Joseph Koshy
@@ -32,9 +32,9 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: elf_flag.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: elf_flag.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: elf_flag.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_flag.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 unsigned int
 elf_flagarhdr(Elf_Arhdr *a, Elf_Cmd c, unsigned int flags)
@@ -86,8 +86,8 @@ elf_flagdata(Elf_Data *d, Elf_Cmd c, unsigned int flags)
 unsigned int
 elf_flagehdr(Elf *e, Elf_Cmd c, unsigned int flags)
 {
-	int ec;
 	void *ehdr;
+	unsigned int ec;
 
 	if (e == NULL)
 		return (0);
@@ -148,8 +148,8 @@ elf_flagelf(Elf *e, Elf_Cmd c, unsigned int flags)
 unsigned int
 elf_flagphdr(Elf *e, Elf_Cmd c, unsigned int flags)
 {
-	int ec;
 	void *phdr;
+	unsigned int ec;
 
 	if (e == NULL)
 		return (0);

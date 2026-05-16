@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_scn.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_scn.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -39,9 +39,9 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: elf_scn.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: elf_scn.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: elf_scn.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_scn.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 /*
  * Load an ELF section table and create a list of Elf_Scn structures.
@@ -50,10 +50,11 @@ int
 _libelf_load_section_headers(Elf *e, void *ehdr)
 {
 	Elf_Scn *scn;
+	int swapbytes;
 	uint64_t shoff;
+	unsigned int ec;
 	Elf32_Ehdr *eh32;
 	Elf64_Ehdr *eh64;
-	int ec, swapbytes;
 	unsigned char *src;
 	size_t fsz, i, shnum;
 	_libelf_translator_function *xlator;
@@ -136,9 +137,9 @@ _libelf_load_section_headers(Elf *e, void *ehdr)
 Elf_Scn *
 elf_getscn(Elf *e, size_t index)
 {
-	int ec;
 	void *ehdr;
 	Elf_Scn *s;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64)) {
@@ -175,9 +176,9 @@ elf_ndxscn(Elf_Scn *s)
 Elf_Scn *
 elf_newscn(Elf *e)
 {
-	int ec;
 	void *ehdr;
 	Elf_Scn *scn;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF) {
 		LIBELF_SET_ERROR(ARGUMENT, 0);

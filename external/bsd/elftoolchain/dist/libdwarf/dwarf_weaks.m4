@@ -1,4 +1,4 @@
-dnl 	$NetBSD: dwarf_weaks.m4,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
+dnl 	$NetBSD: dwarf_weaks.m4,v 1.1.1.4 2026/05/16 20:17:16 jkoshy Exp $
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -27,11 +27,11 @@ dnl 	$NetBSD: dwarf_weaks.m4,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: dwarf_weaks.m4 2075 2011-10-27 03:47:28Z jkoshy");
+ELFTC_VCSID("Id: dwarf_weaks.m4 4198 2025-08-09 20:54:12Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */
 
 divert(-1)
-include(SRCDIR`/dwarf_nametbl.m4')
+include(`dwarf_nametbl.m4')
 divert(0)
 MAKE_NAMETBL_API(weak,Weak,weak,weaknames)

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_ar.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
@@ -37,9 +37,9 @@
 #include "_libelf.h"
 #include "_libelf_ar.h"
 
-ELFTC_VCSID("Id: libelf_ar.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_ar.c 4252 2025-10-18 19:34:13Z jkoshy");
 
-__RCSID("$NetBSD: libelf_ar.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_ar.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 #define	LIBELF_NALLOC_SIZE	16
 
@@ -169,6 +169,11 @@ _libelf_ar_gethdr(Elf *e)
 		goto error;
 	eh->ar_mode = (mode_t) n;
 
+	if (_libelf_ar_get_number(arh->ar_date, sizeof(arh->ar_date), 10,
+	    &n) == 0)
+		goto error;
+	eh->ar_date = (time_t) n;
+
 	if (_libelf_ar_get_number(arh->ar_size, sizeof(arh->ar_size), 10,
 	    &n) == 0)
 		goto error;
@@ -205,6 +210,8 @@ _libelf_ar_gethdr(Elf *e)
 
 	e->e_flags &= ~LIBELF_F_AR_HEADER;
 	e->e_hdr.e_rawhdr = (unsigned char *) arh;
+
+	LIBELF_SET_ERROR(ARCHIVE, 0);
 
 	return (NULL);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_open.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libelf_open.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -42,9 +42,9 @@
 #include <sys/mman.h>
 #endif
 
-ELFTC_VCSID("Id: libelf_open.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_open.c 4242 2025-10-14 11:59:32Z jkoshy");
 
-__RCSID("$NetBSD: libelf_open.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_open.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 #define	_LIBELF_INITSIZE	(64*1024)
 
@@ -71,6 +71,13 @@ _libelf_read_special_file(int fd, size_t *fsz)
 	do {
 		/* Check if we need to expand the data buffer. */
 		if (datasz == bufsz) {
+			/*
+			 * Be canonically correct and avoid a possible
+			 * underflow on doubling 'bufsz'.
+			 */
+			if (bufsz > SIZE_MAX/2)
+				goto resourceerror;
+
 			bufsz *= 2;
 			if ((t = realloc(buf, bufsz)) == NULL)
 				goto resourceerror;
@@ -136,6 +143,11 @@ _libelf_open_object(int fd, Elf_Cmd c, int reporterror)
 	unsigned int flags;
 
 	assert(c == ELF_C_READ || c == ELF_C_RDWR || c == ELF_C_WRITE);
+
+	if (fd < 0) {
+		LIBELF_SET_ERROR(ARGUMENT, 0);
+	        return (NULL);
+	}
 
 	if (fstat(fd, &sb) < 0) {
 		LIBELF_SET_ERROR(IO, errno);

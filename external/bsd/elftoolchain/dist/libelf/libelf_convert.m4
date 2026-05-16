@@ -1,4 +1,4 @@
-dnl 	$NetBSD: libelf_convert.m4,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
+dnl 	$NetBSD: libelf_convert.m4,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
  * All rights reserved.
@@ -33,9 +33,9 @@ dnl 	$NetBSD: libelf_convert.m4,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: libelf_convert.m4 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: libelf_convert.m4 4197 2025-08-09 10:35:45Z jkoshy");
 
-__RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: libelf_convert.m4,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 
@@ -46,7 +46,7 @@ divert(-1)
 #
 # These conversions use the type information defined in `elf_types.m4'.
 
-include(SRCDIR`/elf_types.m4')
+include(`elf_types.m4')
 
 # For the purposes of generating conversion code, ELF types may be
 # classified according to the following characteristics:
@@ -1082,7 +1082,8 @@ CONVERTER_NAMES(ELF_TYPE_LIST)
  * direction, ELF class and ELF machine.
  */
 _libelf_translator_function *
-_libelf_get_translator(Elf_Type t, int direction, int elfclass, int elfmachine)
+_libelf_get_translator(Elf_Type t, int direction, unsigned int elfclass,
+    int elfmachine)
 {
 	assert(elfclass == ELFCLASS32 || elfclass == ELFCLASS64);
 	assert(direction == ELF_TOFILE || direction == ELF_TOMEMORY);

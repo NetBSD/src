@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_info.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: libdwarf_info.c,v 1.1.1.4 2026/05/16 20:17:16 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,7 +29,7 @@
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: libdwarf_info.c 4013 2023-10-14 22:40:50Z kaiwang27");
+ELFTC_VCSID("Id: libdwarf_info.c 4038 2024-03-06 10:17:40Z jkoshy");
 
 int
 _dwarf_info_first_cu(Dwarf_Debug dbg, Dwarf_Error *error)
@@ -209,6 +209,7 @@ _dwarf_info_load(Dwarf_Debug dbg, Dwarf_Bool load_all, Dwarf_Bool is_info,
 
 		/* Verify the DWARF version is supported. */
 		if (cu->cu_version < 2 || cu->cu_version > 5) {
+			free(cu);
 			DWARF_SET_ERROR(dbg, error, DW_DLE_VERSION_STAMP_ERROR);
 			ret = DW_DLE_VERSION_STAMP_ERROR;
 			break;

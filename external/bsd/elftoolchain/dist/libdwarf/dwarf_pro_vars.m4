@@ -1,4 +1,4 @@
-dnl 	$NetBSD: dwarf_pro_vars.m4,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
+dnl 	$NetBSD: dwarf_pro_vars.m4,v 1.1.1.4 2026/05/16 20:17:16 jkoshy Exp $
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.
@@ -27,11 +27,11 @@ dnl 	$NetBSD: dwarf_pro_vars.m4,v 1.1.1.3 2024/03/03 14:41:48 christos Exp $
 
 #include "_libdwarf.h"
 
-ELFTC_VCSID("Id: dwarf_pro_vars.m4 2074 2011-10-27 03:34:33Z jkoshy");
+ELFTC_VCSID("Id: dwarf_pro_vars.m4 4198 2025-08-09 20:54:12Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */
 
 divert(-1)
-include(SRCDIR`/dwarf_pro_nametbl.m4')
+include(`dwarf_pro_nametbl.m4')
 divert(0)
 MAKE_NAMETBL_PRO_API(var)

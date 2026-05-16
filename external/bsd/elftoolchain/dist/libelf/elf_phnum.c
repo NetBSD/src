@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_phnum.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $	*/
+/*	$NetBSD: elf_phnum.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -33,15 +33,15 @@
 
 #include "_libelf.h"
 
-ELFTC_VCSID("Id: elf_phnum.c 3977 2022-05-01 06:45:34Z jkoshy");
+ELFTC_VCSID("Id: elf_phnum.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: elf_phnum.c,v 1.1.1.3 2024/03/03 14:41:47 christos Exp $");
+__RCSID("$NetBSD: elf_phnum.c,v 1.1.1.4 2026/05/16 20:17:17 jkoshy Exp $");
 
 static int
 _libelf_getphdrnum(Elf *e, size_t *phnum)
 {
 	void *eh;
-	int ec;
+	unsigned int ec;
 
 	if (e == NULL || e->e_kind != ELF_K_ELF ||
 	    ((ec = e->e_class) != ELFCLASS32 && ec != ELFCLASS64)) {
