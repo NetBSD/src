@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.27 2026/05/11 19:30:15 skrll Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.28 2026/05/17 06:15:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.27 2026/05/11 19:30:15 skrll Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.28 2026/05/17 06:15:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -369,7 +369,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/* Calculate VA address space and roundup to NBSEG tables */
 	kvmsize = roundup(kvmsize, NBSEG);
 
-
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
 	 * the fact that BSEARCH sorts the vm_physmem[] array
@@ -398,7 +397,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the pools.
 	 */
-
 	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
 
