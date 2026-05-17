@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.92 2026/05/17 06:31:39 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.93 2026/05/17 15:55:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2026/05/17 06:31:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2026/05/17 15:55:55 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1055,9 +1055,12 @@ pmap_page_remove(struct vm_page_md *mdpg)
 		const pmap_t pmap = pv->pv_pmap;
 		vaddr_t va = trunc_page(pv->pv_va);
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
+
 		KASSERTMSG(ptep != NULL, "%#"PRIxVADDR " %#"PRIxVADDR, va,
 		    pmap_limits.virtual_end);
-		pt_entry_t pte = *ptep;
+
+		pt_entry_t pte = atomic_load_relaxed(ptep);
+
 		UVMHIST_LOG(pmaphist, " pv %#jx pmap %#jx va %#jx"
 		    " pte %#jx", (uintptr_t)pv, (uintptr_t)pmap, va,
 		    pte_value(pte));
@@ -1151,7 +1154,7 @@ pmap_pte_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	KASSERT(kpreempt_disabled());
 
 	for (; sva < eva; sva += NBPG, ptep++) {
-		const pt_entry_t pte = *ptep;
+		const pt_entry_t pte = atomic_load_relaxed(ptep);
 		if (!pte_valid_p(pte))
 			continue;
 		if (is_kernel_pmap_p) {
@@ -1296,7 +1299,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	 * Change protection on every valid mapping within this segment.
 	 */
 	for (; sva < eva; sva += NBPG, ptep++) {
-		pt_entry_t pte = *ptep;
+		pt_entry_t pte = atomic_load_relaxed(ptep);
 		if (!pte_valid_p(pte))
 			continue;
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
@@ -1320,7 +1323,7 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 			}
 		}
 		pte = pte_prot_downgrade(pte, prot);
-		if (*ptep != pte) {
+		if (atomic_load_relaxed(ptep) != pte) {
 			pmap_tlb_miss_lock_enter();
 			pte_set(ptep, pte);
 			/*
@@ -1403,7 +1406,7 @@ pmap_page_cache(struct vm_page_md *mdpg, bool cached)
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 		if (ptep == NULL)
 			continue;
-		pt_entry_t pte = *ptep;
+		pt_entry_t pte = atomic_load_relaxed(ptep);
 		if (pte_valid_p(pte)) {
 			pte = pte_cached_change(pte, cached);
 			pmap_tlb_miss_lock_enter();
@@ -1525,7 +1528,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		UVMHIST_LOG(*histp, " <-- ENOMEM", 0, 0, 0, 0);
 		return ENOMEM;
 	}
-	const pt_entry_t opte = *ptep;
+	const pt_entry_t opte = atomic_load_relaxed(ptep);
 	const bool resident = pte_valid_p(opte);
 	bool remap = false;
 	if (resident) {
@@ -1633,7 +1636,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 	KASSERTMSG(ptep != NULL, "%#"PRIxVADDR " %#"PRIxVADDR, va,
 	    pmap_limits.virtual_end);
-	KASSERT(!pte_valid_p(*ptep));
+	KASSERT(!pte_valid_p(atomic_load_relaxed(ptep)));
 
 	/*
 	 * No need to track non-managed pages or PMAP_KMPAGEs pages for aliases
@@ -1687,7 +1690,7 @@ pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	KASSERT(kpreempt_disabled());
 
 	for (; sva < eva; sva += NBPG, ptep++) {
-		pt_entry_t pte = *ptep;
+		pt_entry_t pte = atomic_load_relaxed(ptep);
 		if (!pte_valid_p(pte))
 			continue;
 
@@ -1789,7 +1792,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 	KASSERTMSG(ptep != NULL, "pmap %p va %#"PRIxVADDR" invalid STE",
 	    pmap, va);
-	pt_entry_t pte = *ptep;
+	pt_entry_t pte = atomic_load_relaxed(ptep);
 	KASSERTMSG(pte_valid_p(pte),
 	    "pmap %p va %#" PRIxVADDR " invalid PTE %#" PRIxPTE " @ %p",
 	    pmap, va, pte_value(pte), ptep);
@@ -1840,11 +1843,16 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	}
 	kpreempt_disable();
 	const pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
-	if (ptep == NULL || !pte_valid_p(*ptep)) {
+	if (ptep == NULL) {
 		kpreempt_enable();
 		return false;
 	}
-	pa = pte_to_paddr(*ptep) | (va & PGOFSET);
+	pt_entry_t pte = atomic_load_relaxed(ptep);
+	if (!pte_valid_p(pte)) {
+		kpreempt_enable();
+		return false;
+	}
+	pa = pte_to_paddr(pte) | (va & PGOFSET);
 	kpreempt_enable();
 done:
 	if (pap != NULL) {
@@ -1962,14 +1970,15 @@ pmap_clear_modify(struct vm_page *pg)
 #endif
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 		KASSERT(ptep);
-		pt_entry_t pte = pte_clear_modify(*ptep);
-		if (*ptep == pte) {
+		pt_entry_t opte = atomic_load_relaxed(ptep);
+		pt_entry_t npte = pte_clear_modify(opte);
+		if (npte == opte) {
 			continue;
 		}
-		KASSERT(pte_valid_p(pte));
+		KASSERT(pte_valid_p(npte));
 		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_tlb_miss_lock_enter();
-		pte_set(ptep, pte);
+		pte_set(ptep, npte);
 		pmap_tlb_invalidate_addr(pmap, va);
 		pmap_tlb_miss_lock_exit();
 		pmap_update(pmap);
@@ -2065,7 +2074,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, paddr_t pa, struct vm_page_md *mdpg,
 	UVMHIST_CALLARGS(pmaphist, "(pmap=%#jx va=%#jx pg=%#jx (%#jx)",
 	    (uintptr_t)pmap, va, (uintptr_t)pg, pa);
 	UVMHIST_LOG(pmaphist, "nptep=%#jx (%#jx))",
-	    (uintptr_t)nptep, pte_value(*nptep), 0, 0);
+	    (uintptr_t)nptep, pte_value(atomic_load_relaxed(nptep)), 0, 0);
 
 	KASSERT(kpreempt_disabled());
 	KASSERT(pmap != pmap_kernel() || !pmap_md_direct_mapped_vaddr_p(va));
@@ -2117,7 +2126,8 @@ again:
 			    && va == trunc_page(npv->pv_va)) {
 #ifdef PARANOIADIAG
 				pt_entry_t *ptep = pmap_pte_lookup(pmap, va);
-				pt_entry_t pte = (ptep != NULL) ? *ptep : 0;
+				pt_entry_t pte = (ptep != NULL) ?
+				     atomic_load_relaxed(ptep) : 0;
 				if (!pte_valid_p(pte) || pte_to_paddr(pte) != pa)
 					printf("%s: found va %#"PRIxVADDR
 					    " pa %#"PRIxPADDR

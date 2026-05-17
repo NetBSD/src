@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.35 2026/04/19 15:09:50 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.36 2026/05/17 15:55:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.35 2026/04/19 15:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.36 2026/05/17 15:55:55 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1039,7 +1039,7 @@ pmap_segtab_reserve(struct pmap *pmap, vaddr_t va)
 	    segshift -= PGSHIFT - 3, segtab_mask = NSEGPG - 1) {
 		pd_entry_t * const pde_p =
 		    &ptb->pde_pde[(va >> segshift) & segtab_mask];
-		pd_entry_t opde = *pde_p;
+		pd_entry_t opde = atomic_load_relaxed(pde_p);
 
 		UVMHIST_LOG(pmapxtabhist,
 		    "ptb %#jx segshift %jd pde_p %#jx opde %#jx",
@@ -1144,7 +1144,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 
 #if defined(PMAP_HWPAGEWALKER) && defined(PMAP_MAP_PDETABPAGE)
 	pd_entry_t * const pde_p = pmap_pdetab_reserve(pmap, va);
-	ppg = pmap_pde_to_ptpage(*pde_p);
+	ppg = pmap_pde_to_ptpage(atomic_load_relaxed(pde_p));
 #elif defined(PMAP_HWPAGEWALKER)
 	pd_entry_t *pde_p;
 	pmap_ptpage_t ** const ppg_p = pmap_segtab_reserve(pmap, va, &pde_p);
