@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.27 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.28 2026/05/17 06:31:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -340,7 +340,7 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 	return pte & ~MIPS_MMU(PG_D);
 }

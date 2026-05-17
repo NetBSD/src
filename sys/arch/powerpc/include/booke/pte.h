@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.12 2026/04/05 06:33:17 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.13 2026/05/17 06:31:39 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -181,7 +181,7 @@ pte_unwire_entry(pt_entry_t pt_entry)
 }
 
 static __inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pt_entry)
+pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~(PTE_xW|PTE_UNMODIFIED);
 }

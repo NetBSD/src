@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.14 2026/05/12 13:07:53 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.15 2026/05/17 06:31:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -293,7 +293,7 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 
 	/*

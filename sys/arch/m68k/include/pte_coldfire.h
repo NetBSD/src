@@ -1,4 +1,4 @@
-/* $NetBSD: pte_coldfire.h,v 1.3 2026/04/05 06:33:17 skrll Exp $ */
+/* $NetBSD: pte_coldfire.h,v 1.4 2026/05/17 06:31:39 skrll Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -163,7 +163,7 @@ pte_unwire_entry(pt_entry_t pt_entry)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pt_entry)
+pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~MMUDR_W;
 }

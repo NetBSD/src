@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.18 2026/05/17 06:26:28 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.19 2026/05/17 06:31:39 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -177,7 +177,7 @@ pte_nv_entry(bool kernel_p)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 	return pte & ~PTE_W;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.91 2026/05/04 06:52:13 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.92 2026/05/17 06:31:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.91 2026/05/04 06:52:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.92 2026/05/17 06:31:39 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1962,7 +1962,7 @@ pmap_clear_modify(struct vm_page *pg)
 #endif
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 		KASSERT(ptep);
-		pt_entry_t pte = pte_prot_nowrite(*ptep);
+		pt_entry_t pte = pte_clear_modify(*ptep);
 		if (*ptep == pte) {
 			continue;
 		}
