@@ -1,4 +1,4 @@
-#	$NetBSD: t_accept_max.sh,v 1.1 2026/05/17 00:39:45 riastradh Exp $
+#	$NetBSD: t_accept_max.sh,v 1.2 2026/05/17 01:31:55 riastradh Exp $
 #
 # Copyright (c) 2026 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -151,7 +151,7 @@ EOF
 	#
 	timeout 10s sh -c 'echo 2 | nc -U sock' & client2=$!
 	echo client 2 running as $client2
-	timeout 10s sh -c ': <2A' || return $/
+	timeout 10s sh -c ': <2A' || return $?
 	case $(cat ntasks):$(cat output) in
 	2:2)
 		;;
@@ -188,9 +188,9 @@ EOF
 	: >output
 
 	# Now let the connection 1 finish by writing to 1B, and wait
-	# for the server inetd acknowledge client 3 by reading from 3A
-	# -- it should now print world, promptly, and the first
-	# connection should finish promptly too:
+	# for the server to acknowledge client 3, by reading from 3A --
+	# it should now print 3, promptly, and the first connection
+	# should finish promptly too:
 	#
 	timeout 10s sh -c ': >1B; : <3A' || return $?
 	case $(cat ntasks):$(cat output) in
