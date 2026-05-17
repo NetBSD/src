@@ -52,8 +52,9 @@ while getopts "$options" var; do
   '?') err "Unknown option: '-$OPTARG'.";;
   ':') err "Option '-$OPTARG' expects an argument.";;
   esac
-  shift $((OPTIND - 1))
 done
+
+shift $((OPTIND - 1))
 
 [ -n "${modules}" ] || err "Option -m must be specified at least once."
 
