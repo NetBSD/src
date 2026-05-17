@@ -41,7 +41,7 @@
 #define SIPOLL			0x30
 #define  SIPOLL_X		__BITS(25, 16)
 #define  SIPOLL_Y		__BITS(15, 8)
-#define  SIPOLL_EN(n)		(__BIT(7 - n))
+#define  SIPOLL_EN(n)		(__BIT(4 + (n)))
 #define SICOMCSR		0x34
 #define  SICOMCSR_TCINT		__BIT(31)
 #define  SICOMCSR_TCINTMSK	__BIT(30)
@@ -155,15 +155,17 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 
 	chan = data->chan;
 
-	aprint_normal("\n");
-	aprint_normal("__si_send: chan %d siiobuf before clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	//aprint_normal("\n");
+	//aprint_normal("__si_send: chan %d siiobuf before clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	//aprint_normal("SIPOLL state: 0x%08X\n", RD4(sc, SIPOLL));
 	SIIOBUF_CLEAR(sc);
-	aprint_normal("__si_send: chan %d siiobuf after clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	//aprint_normal("__si_send: chan %d siiobuf after clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 
 	/* siiobuf must to be written in increments of 4 bytes */
 	cnt = ((data->outsize+3)/4);
-	aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d)\n", chan, data->outsize, cnt);
-	//SIIOBUF_WR(sc, data->out, cnt);
+	//aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d)\n", chan, data->outsize, cnt);
+	SIIOBUF_WR(sc, data->out, cnt);
+	/*
 	for (uint32_t i = 0; i < cnt; i++) {
 		uint32_t val = 0;
 		size_t sz = MIN(4, data->outsize - (i * 4));
@@ -171,9 +173,14 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 		aprint_normal("__si_send: chan %d is copying %d bytes: 0x%X\n", chan,sz, val);
 		WR4(sc, SIIOBUF + i, val);
 	}
+	*/
 
-	aprint_normal("__si_send: chan %d siiobuf after write is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	//aprint_normal("__si_send: chan %d siiobuf after write is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
+	sisr = RD4(sc, SISR);
+	if ((sisr & SISR_ERROR_MASK(chan)) != 0) {
+		//aprint_normal("tried to clear sisr but it is currently %08x\n", sisr);
+	}
 
 	AWAIT_SICOMCSR(sc);
 	WR4(sc, SICOMCSR,
@@ -182,23 +189,32 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
 	    __SHIFTIN(data->outsize, SICOMCSR_OUTLNGTH) |
 	    __SHIFTIN(data->insize, SICOMCSR_INLNGTH) |
-	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
-	    SICOMCSR_TSTART
+	    __SHIFTIN(chan, SICOMCSR_CHANNEL)
 	);
+	comcsr = RD4(sc, SICOMCSR);
+	//aprint_normal("__side_send: chan %d sicomcsr is 0x%08X\n", chan, comcsr);
+	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TSTART);
 	AWAIT_SICOMCSR(sc);
 
 	comcsr = RD4(sc, SICOMCSR);
 	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
 
-	aprint_normal("__si_send: chan %d siiobuf after command is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	//aprint_normal("__si_send: chan %d siiobuf after command is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	SIIOBUF_RD(sc, data->in, data->insize);
 
 	comcsr = RD4(sc, SICOMCSR);
 	if (ISSET(comcsr, SICOMCSR_COMERR)) {
 		sisr = RD4(sc, SISR);
+		//aprint_normal("__si_send: chan %d sisr is set to 0x%08X\n", chan, sisr);
 		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
 		data->status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
+		if (data->status == 0xC) {
+			aprint_normal("!!!!!!!!!!!!!\n");
+		}
 	}
+
+	//aprint_normal("Running delay(36450)\n");
+	//delay(36450);
 
 	return 0;
 }

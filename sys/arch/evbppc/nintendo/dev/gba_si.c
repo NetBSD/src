@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/04/24 15:07:30 gummybuns Exp $")
 
 #include "si.h"
 #include "joybus.h"
+#include "gba_multiboot.h"
 
 struct gba_send {
 	uint32_t	status;
@@ -52,7 +53,9 @@ struct gba_send {
 	void		*out;
 };
 
-#define SI_SEND     _IOWR(0, 1, struct gba_send)
+
+#define SI_SEND     	_IOWR(0, 1, struct gba_send)
+#define MULTIBOOT	_IOWR(0, 2, struct gba_multiboot)
 
 static int gba_si_match(device_t, cfdata_t, void *);
 static void gba_si_attach(device_t, device_t, void *);
@@ -109,15 +112,10 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 static void
 gba_si_attach(device_t parent, device_t self, void *aux)
 {
-	uint32_t siiobuf;
 	struct si_softc * const psc = device_private(parent);
 	struct si_attach_args * const saa = aux;
 	struct gba_softc * const sc = device_private(self);
 	struct si_channel *ch = &psc->sc_chan[saa->saa_index];
-	struct siio_send data;
-	int res;
-	uint8_t out[3];
-	uint16_t in[1];
 
 	aprint_normal("gba: inside attach\n");
 	sc->sc_dev = self;
@@ -125,33 +123,10 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
 	aprint_normal("gba: channel is set to %d\n", sc->ch->ch_index);
-
-	for(;;) {
-		for (int i = 0; i < 15; i++) {
-			aprint_normal("trying to send handshake\n");
-			// this is wong
-			out[0] = 0x15;
-			out[1] = 0x62;
-			out[2] = 0x02;
-			//out[0] = 0x6202;
-			data.chan = saa->saa_index;
-			data.out = out;
-			data.in = in;
-			data.outsize = 3;
-			data.insize = 2;
-			siiobuf = RD4(psc, SIIOBUF);
-			aprint_normal("handshake: before - siiobuf - 0x%08X\n", siiobuf);
-			if ((res = __si_send(psc, &data)) != 0) {
-				aprint_normal("handshake: sisr - 0x%08X\n", res);
-			}
-
-			siiobuf = RD4(psc, SIIOBUF);
-			aprint_normal("handshake: after - siiobuf - 0x%08X\n", siiobuf);
-			if (in[0] != 0) break;
-		}
-		if (in[0] != 0) break;
-		delay(62500); // 1/16 of a second
-	}
+	aprint_normal("gba: ch%d - disabling SIPOLL\n", saa->saa_index);
+	//WR4(psc, SIPOLL, RD4(psc, SIPOLL) & ~SIPOLL_EN(saa->saa_index));
+	WR4(psc, SIPOLL, 0);
+	aprint_normal("gba: SIPOLL is now 0x%08X\n", RD4(psc, SIPOLL));
 }
 
 int
@@ -213,6 +188,18 @@ gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int err;
 
 	switch(cmd) {
+	case MULTIBOOT:
+		err = 0;
+		struct gba_multiboot *gbm = (struct gba_multiboot *)data;
+		void *rom = kmem_alloc(gbm->size, KM_SLEEP);
+		if ((err = copyin(gbm->rom, rom, gbm->size)) != 0) {
+			goto multiboot_cleanup;
+		}
+
+		err = __gba_multiboot(sc, ch->ch_index, (unsigned char *)rom, gbm->size);
+multiboot_cleanup:
+		kmem_free(rom, gbm->size);
+		break;
 	case SI_SEND:
 		err = 0;
 		struct gba_send *gbs = (struct gba_send *)data;
@@ -226,8 +213,8 @@ gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		sd.out = kmem_alloc(gbs->outsize, KM_SLEEP);
 		sd.in = kmem_alloc(gbs->insize, KM_SLEEP);
 
-		aprint_normal("gba_ioctl: gbs--outsize%d insize%d\n", gbs->outsize, gbs->insize);
-		aprint_normal("gba_ioctl: sd--chan:%d\t outsize%d insize%d\n", sd.chan, sd.outsize, sd.insize);
+		//aprint_normal("gba_ioctl: gbs--outsize%d insize%d\n", gbs->outsize, gbs->insize);
+		//aprint_normal("gba_ioctl: sd--chan:%d\t outsize%d insize%d\n", sd.chan, sd.outsize, sd.insize);
 
 		if ((err = copyin(gbs->out, sd.out, sd.outsize)) != 0) {
 			goto si_send_cleanup;
