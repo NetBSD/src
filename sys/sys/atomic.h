@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.28 2026/05/16 15:10:55 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.29 2026/05/17 01:36:21 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -481,7 +481,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_store_relaxed(p,v)					      \
 ({									      \
 	volatile __typeof__(*(p)) *__as_ptr = (p);			      \
-	const __atomic_typeof_unqual(*(p)) __as_val = (v);		      \
+	__atomic_typeof_unqual(*(p)) __as_val = (v);			      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
 	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
 })
@@ -489,7 +489,7 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_store_release(p,v)					      \
 ({									      \
 	volatile __typeof__(*(p)) *__as_ptr = (p);			      \
-	const __atomic_typeof_unqual(*(p)) __as_val = (v);		      \
+	__atomic_typeof_unqual(*(p)) __as_val = (v);			      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
 	membar_release();						      \
 	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
