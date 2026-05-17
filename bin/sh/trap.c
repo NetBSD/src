@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.59 2026/05/17 16:44:04 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.59 2026/05/17 16:44:04 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -498,9 +498,11 @@ have_traps(void)
 void
 setsignal(int signo, int vforked)
 {
-	int action;
+	int action, pending;
 	sig_t sigact = SIG_DFL, sig;
 	char *t, tsig;
+
+	pending = gotsig[signo];	/* we have received this signal */
 
 	if (traps_invalid || (t = trap[signo]) == NULL)
 		action = S_DFL;
@@ -509,8 +511,8 @@ setsignal(int signo, int vforked)
 	else
 		action = S_IGN;
 
-	VTRACE(DBG_TRAP, ("setsignal(%d%s) -> %d", signo,
-	    vforked ? ", VF" : "", action));
+	VTRACE(DBG_TRAP, ("setsignal(%d%s) -> %d%s", signo,
+	    vforked ? ", VF" : "", action, pending ? " *" : "" ));
 	if (rootshell && !vforked && action == S_DFL) {
 		switch (signo) {
 		case SIGINT:
@@ -545,7 +547,7 @@ setsignal(int signo, int vforked)
 	if (signo == SIGCHLD)
 		action = S_DFL;
 
-	VTRACE(DBG_TRAP, (" -> %d", action));
+	VTRACE(DBG_TRAP, (" -> %d%s", action, pending ? " *" : ""));
 
 	t = &sigmode[signo];
 	tsig = *t;
@@ -617,6 +619,18 @@ setsignal(int signo, int vforked)
 		(void)sigaddset(&ss, signo);
 		(void)sigprocmask(SIG_UNBLOCK, &ss, NULL);
 	}
+
+	/*
+	 * If we have a pending signal (unprocessed) and are now setting
+	 * the action to SIG_DFL, then send the signal to ourselves so the
+	 * kernel can take whatever is the appropriate default action.
+	 */
+	if (pending && sigact == SIG_DFL) {
+		VTRACE(DBG_TRAP, ("setsignal(%d) - pending, suicide\n", signo));
+		gotsig[signo] = 0;	/* and don't consider it again */
+		kill(getpid(), signo);
+	}
+
 	return;
 }
 
