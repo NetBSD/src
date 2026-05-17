@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_ar_util.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: libelf_ar_util.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2009,2010 Joseph Koshy
@@ -42,7 +42,7 @@
 
 ELFTC_VCSID("Id: libelf_ar_util.c 4250 2025-10-18 18:28:04Z jkoshy");
 
-__RCSID("$NetBSD: libelf_ar_util.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_ar_util.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 /*
  * Convert a string bounded by `start' and `start+sz' (exclusive) to a

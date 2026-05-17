@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_xlate.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: gelf_xlate.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2018 Joseph Koshy
@@ -36,7 +36,7 @@
 
 ELFTC_VCSID("Id: gelf_xlate.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: gelf_xlate.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: gelf_xlate.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 Elf_Data *
 elf32_xlatetof(Elf_Data *dst, const Elf_Data *src, unsigned int encoding)

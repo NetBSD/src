@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elf_types.m4,v 1.4 2024/03/03 17:37:33 christos Exp $
+dnl 	$NetBSD: elf_types.m4,v 1.5 2026/05/17 21:40:50 jkoshy Exp $
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
  * All rights reserved.

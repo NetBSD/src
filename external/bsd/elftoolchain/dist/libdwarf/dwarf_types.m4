@@ -1,4 +1,4 @@
-dnl 	$NetBSD: dwarf_types.m4,v 1.5 2024/03/03 17:37:32 christos Exp $
+dnl 	$NetBSD: dwarf_types.m4,v 1.6 2026/05/17 21:40:49 jkoshy Exp $
 /*-
  * Copyright (c) 2009 Kai Wang
  * All rights reserved.
@@ -27,12 +27,12 @@ dnl 	$NetBSD: dwarf_types.m4,v 1.5 2024/03/03 17:37:32 christos Exp $
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_types.m4,v 1.5 2024/03/03 17:37:32 christos Exp $");
-ELFTC_VCSID("Id: dwarf_types.m4 2697 2012-11-24 17:12:36Z kaiwang27");
+__RCSID("$NetBSD: dwarf_types.m4,v 1.6 2026/05/17 21:40:49 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_types.m4 4198 2025-08-09 20:54:12Z jkoshy");
 
 /* WARNING: GENERATED FROM __file__. */
 
 divert(-1)
-include(SRCDIR`/dwarf_nametbl.m4')
+include(`dwarf_nametbl.m4')
 divert(0)
 MAKE_NAMETBL_API(type,Type,type,typenames)

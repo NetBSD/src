@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf.h,v 1.5 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: _libelf.h,v 1.6 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy

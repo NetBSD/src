@@ -1,4 +1,4 @@
-/*	$NetBSD: gelf_cap.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: gelf_cap.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -41,7 +41,7 @@
 
 ELFTC_VCSID("Id: gelf_cap.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: gelf_cap.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: gelf_cap.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $");
 
 GElf_Cap *
 gelf_getcap(Elf_Data *ed, int ndx, GElf_Cap *dst)

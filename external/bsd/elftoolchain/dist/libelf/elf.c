@@ -1,4 +1,4 @@
-/*	$NetBSD: elf.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf.c,v 1.7 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
@@ -34,7 +34,7 @@
 
 ELFTC_VCSID("Id: elf.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: elf.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf.c,v 1.7 2026/05/17 21:40:49 jkoshy Exp $");
 
 struct _libelf_globals _libelf = {
 	.libelf_byteorder	= LIBELF_BYTEORDER,

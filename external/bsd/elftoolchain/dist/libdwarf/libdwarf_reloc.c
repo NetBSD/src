@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_reloc.c,v 1.7 2024/03/31 03:20:38 christos Exp $	*/
+/*	$NetBSD: libdwarf_reloc.c,v 1.8 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2010 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_reloc.c,v 1.7 2024/03/31 03:20:38 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_reloc.c 3741 2019-06-07 06:32:01Z jkoshy");
+__RCSID("$NetBSD: libdwarf_reloc.c,v 1.8 2026/05/17 21:40:49 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_reloc.c 4104 2025-01-25 18:05:14Z jkoshy");
 
 Dwarf_Unsigned
 _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
@@ -40,22 +40,24 @@ _dwarf_get_reloc_type(Dwarf_P_Debug dbg, int is64)
 	switch (dbg->dbgp_isa) {
 	case DW_ISA_AARCH64:
 		return (is64 ? R_AARCH64_ABS64 : R_AARCH64_ABS32);
+	case DW_ISA_ARM:
+		return (R_ARM_ABS32);
+	case DW_ISA_IA64:
+		return (is64 ? R_IA_64_DIR64LSB : R_IA_64_DIR32LSB);
+	case DW_ISA_LOONGARCH:
+		return (is64 ? R_LARCH_64 : R_LARCH_32);
+	case DW_ISA_MIPS:
+		return (is64 ? R_MIPS_64 : R_MIPS_32);
+	case DW_ISA_PPC:
+		return (is64 ? R_PPC64_ADDR64 : R_PPC_ADDR32);
+	case DW_ISA_RISCV:
+		return (is64 ? R_RISCV_64 : R_RISCV_32);
+	case DW_ISA_SPARC:
+		return (is64 ? R_SPARC_UA64 : R_SPARC_UA32);
 	case DW_ISA_X86:
 		return (R_386_32);
 	case DW_ISA_X86_64:
 		return (is64 ? R_X86_64_64 : R_X86_64_32);
-	case DW_ISA_SPARC:
-		return (is64 ? R_SPARC_UA64 : R_SPARC_UA32);
-	case DW_ISA_PPC:
-		return (is64 ? R_PPC64_ADDR64 : R_PPC_ADDR32);
-	case DW_ISA_ARM:
-		return (R_ARM_ABS32);
-	case DW_ISA_MIPS:
-		return (is64 ? R_MIPS_64 : R_MIPS_32);
-	case DW_ISA_RISCV:
-		return (is64 ? R_RISCV_64 : R_RISCV_32);
-	case DW_ISA_IA64:
-		return (is64 ? R_IA_64_DIR64LSB : R_IA_64_DIR32LSB);
 	default:
 		break;
 	}
@@ -84,16 +86,22 @@ _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 		if (rel_type == R_386_32)
 			return (4);
 		break;
-	case EM_X86_64:
-		if (rel_type == R_X86_64_32)
+	case EM_IA_64:
+		if (rel_type == R_IA_64_SECREL32LSB)
 			return (4);
-		else if (rel_type == R_X86_64_64)
+		else if (rel_type == R_IA_64_DIR64LSB)
 			return (8);
 		break;
-	case EM_SPARC:
-		if (rel_type == R_SPARC_UA32)
+	case EM_LOONGARCH:
+		if (rel_type == R_LARCH_32)
 			return (4);
-		else if (rel_type == R_SPARC_UA64)
+		else if (rel_type == R_LARCH_64)
+			return (8);
+		break;
+	case EM_MIPS:
+		if (rel_type == R_MIPS_32)
+			return (4);
+		else if (rel_type == R_MIPS_64)
 			return (8);
 		break;
 	case EM_PPC:
@@ -106,22 +114,22 @@ _dwarf_get_reloc_size(Dwarf_Debug dbg, Dwarf_Unsigned rel_type)
 		else if (rel_type == R_PPC64_ADDR64)
 			return (8);
 		break;
-	case EM_MIPS:
-		if (rel_type == R_MIPS_32)
-			return (4);
-		else if (rel_type == R_MIPS_64)
-			return (8);
-		break;
 	case EM_RISCV:
 		if (rel_type == R_RISCV_32)
 			return (4);
 		else if (rel_type == R_RISCV_64)
 			return (8);
 		break;
-	case EM_IA_64:
-		if (rel_type == R_IA_64_SECREL32LSB)
+	case EM_SPARC:
+		if (rel_type == R_SPARC_UA32)
 			return (4);
-		else if (rel_type == R_IA_64_DIR64LSB)
+		else if (rel_type == R_SPARC_UA64)
+			return (8);
+		break;
+	case EM_X86_64:
+		if (rel_type == R_X86_64_32)
+			return (4);
+		else if (rel_type == R_X86_64_64)
 			return (8);
 		break;
 	default:

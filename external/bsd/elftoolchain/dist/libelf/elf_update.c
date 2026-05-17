@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_update.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_update.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006-2011 Joseph Koshy
@@ -50,7 +50,7 @@
 
 ELFTC_VCSID("Id: elf_update.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: elf_update.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf_update.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $");
 
 /*
  * Layout strategy:

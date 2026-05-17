@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_strptr.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_strptr.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -40,7 +40,7 @@
 
 ELFTC_VCSID("Id: elf_strptr.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: elf_strptr.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf_strptr.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $");
 
 /*
  * Convert an ELF section#,offset pair to a string pointer.

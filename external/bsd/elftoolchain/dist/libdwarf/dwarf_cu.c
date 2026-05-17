@@ -1,4 +1,4 @@
-/*	$NetBSD: dwarf_cu.c,v 1.5 2024/03/03 17:37:30 christos Exp $	*/
+/*	$NetBSD: dwarf_cu.c,v 1.6 2026/05/17 21:40:47 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: dwarf_cu.c,v 1.5 2024/03/03 17:37:30 christos Exp $");
-ELFTC_VCSID("Id: dwarf_cu.c 4013 2023-10-14 22:40:50Z kaiwang27");
+__RCSID("$NetBSD: dwarf_cu.c,v 1.6 2026/05/17 21:40:47 jkoshy Exp $");
+ELFTC_VCSID("Id: dwarf_cu.c 4040 2024-03-19 14:01:45Z jkoshy");
 
 int
 dwarf_next_cu_header_d(Dwarf_Debug dbg, Dwarf_Bool is_info,
@@ -125,10 +125,10 @@ dwarf_next_cu_header_c(Dwarf_Debug dbg, Dwarf_Bool is_info,
     Dwarf_Sig8 *type_signature, Dwarf_Unsigned *type_offset,
     Dwarf_Unsigned *cu_next_offset, Dwarf_Error *error)
 {
-
-	return (dwarf_next_cu_header_d(dbg, 1, cu_length, cu_version,
+	return (dwarf_next_cu_header_d(dbg, is_info, cu_length, cu_version,
 	    cu_abbrev_offset, cu_pointer_size, cu_offset_size,
-	    cu_extension_size, NULL, NULL, cu_next_offset, NULL, error));
+	    cu_extension_size, type_signature, type_offset, cu_next_offset,
+	    NULL, error));
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_data.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_data.c,v 1.7 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2011 Joseph Koshy
@@ -42,7 +42,7 @@
 
 ELFTC_VCSID("Id: elf_data.c 4231 2025-10-13 15:24:01Z jkoshy");
 
-__RCSID("$NetBSD: elf_data.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf_data.c,v 1.7 2026/05/17 21:40:49 jkoshy Exp $");
 
 Elf_Data *
 elf_getdata(Elf_Scn *s, Elf_Data *ed)

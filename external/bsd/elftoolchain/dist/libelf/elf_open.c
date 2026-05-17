@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_open.c,v 1.5 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_open.c,v 1.6 2026/05/17 21:40:50 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2011 Joseph Koshy
@@ -34,7 +34,7 @@
 
 ELFTC_VCSID("Id: elf_open.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: elf_open.c,v 1.5 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf_open.c,v 1.6 2026/05/17 21:40:50 jkoshy Exp $");
 
 /*
  * Extension API: open a file for reading, ignoring parse errors.

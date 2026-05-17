@@ -1,4 +1,4 @@
-dnl 	$NetBSD: libelf_msize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $
+dnl 	$NetBSD: libelf_msize.m4,v 1.7 2026/05/17 21:40:51 jkoshy Exp $
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
  * All rights reserved.
@@ -39,7 +39,7 @@ dnl 	$NetBSD: libelf_msize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $
 
 ELFTC_VCSID("Id: libelf_msize.m4 4197 2025-08-09 10:35:45Z jkoshy");
 
-__RCSID("$NetBSD: libelf_msize.m4,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_msize.m4,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 /* WARNING: GENERATED FROM __file__. */
 

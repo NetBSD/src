@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf.h,v 1.4 2024/03/03 17:37:32 christos Exp $	*/
+/*	$NetBSD: libdwarf.h,v 1.5 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -26,7 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * Id: libdwarf.h 4019 2023-10-22 03:06:17Z kaiwang27
+ * Id: libdwarf.h 4104 2025-01-25 18:05:14Z jkoshy
  */
 
 #ifndef	_LIBDWARF_H_
@@ -450,6 +450,7 @@ enum Dwarf_ISA {
 	DW_ISA_X86_64,
 	DW_ISA_AARCH64,
 	DW_ISA_RISCV,
+	DW_ISA_LOONGARCH,
 	DW_ISA_MAX
 };
 

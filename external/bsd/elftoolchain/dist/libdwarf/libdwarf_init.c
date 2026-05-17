@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_init.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
+/*	$NetBSD: libdwarf_init.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009,2011 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_init.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_init.c 3136 2014-12-24 16:04:38Z kaiwang27");
+__RCSID("$NetBSD: libdwarf_init.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_init.c 4048 2024-07-20 07:15:26Z jkoshy");
 
 static int
 _dwarf_consumer_init(Dwarf_Debug dbg, Dwarf_Error *error)
@@ -278,6 +278,7 @@ _dwarf_consumer_deinit(Dwarf_Debug dbg)
 	_dwarf_arange_cleanup(dbg);
 	_dwarf_macinfo_cleanup(dbg);
 	_dwarf_strtab_cleanup(dbg);
+	_dwarf_str_offsets_cleanup(dbg);
 	_dwarf_nametbl_cleanup(&dbg->dbg_globals);
 	_dwarf_nametbl_cleanup(&dbg->dbg_pubtypes);
 	_dwarf_nametbl_cleanup(&dbg->dbg_weaks);
@@ -305,7 +306,7 @@ _dwarf_alloc(Dwarf_Debug *ret_dbg, int mode, Dwarf_Error *error)
 {
 	Dwarf_Debug dbg;
 
-	if ((dbg = calloc(sizeof(struct _Dwarf_Debug), 1)) == NULL) {
+	if ((dbg = calloc(1, sizeof(struct _Dwarf_Debug))) == NULL) {
 		DWARF_SET_ERROR(dbg, error, DW_DLE_MEMORY);
 		return (DW_DLE_MEMORY);
 	}

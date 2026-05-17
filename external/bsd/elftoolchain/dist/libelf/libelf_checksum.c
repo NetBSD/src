@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_checksum.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: libelf_checksum.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -34,7 +34,7 @@
 
 ELFTC_VCSID("Id: libelf_checksum.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_checksum.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_checksum.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 static unsigned long
 _libelf_sum(unsigned long c, const unsigned char *s, size_t size)

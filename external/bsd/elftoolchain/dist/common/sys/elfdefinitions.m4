@@ -1,4 +1,4 @@
-dnl 	$NetBSD: elfdefinitions.m4,v 1.18 2025/12/19 15:27:25 jkoshy Exp $
+dnl 	$NetBSD: elfdefinitions.m4,v 1.19 2026/05/17 21:40:47 jkoshy Exp $
 /*-
  * Copyright (c) 2010,2021,2024 Joseph Koshy
  * All rights reserved.

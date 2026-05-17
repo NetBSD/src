@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_align.c,v 1.8 2025/12/26 07:07:35 mrg Exp $	*/
+/*	$NetBSD: libelf_align.c,v 1.9 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -40,7 +40,7 @@
 
 ELFTC_VCSID("Id: libelf_align.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: libelf_align.c,v 1.8 2025/12/26 07:07:35 mrg Exp $");
+__RCSID("$NetBSD: libelf_align.c,v 1.9 2026/05/17 21:40:51 jkoshy Exp $");
 
 struct align {
 	unsigned int a32;

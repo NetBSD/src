@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_allocate.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: libelf_allocate.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008,2010 Joseph Koshy
@@ -46,7 +46,7 @@
 
 ELFTC_VCSID("Id: libelf_allocate.c 3977 2022-05-01 06:45:34Z jkoshy");
 
-__RCSID("$NetBSD: libelf_allocate.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_allocate.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 Elf *
 _libelf_allocate_elf(void)

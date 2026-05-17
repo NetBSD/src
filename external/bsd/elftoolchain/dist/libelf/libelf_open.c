@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf_open.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $	*/
+/*	$NetBSD: libelf_open.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2011 Joseph Koshy
@@ -48,7 +48,7 @@
 
 ELFTC_VCSID("Id: libelf_open.c 4242 2025-10-14 11:59:32Z jkoshy");
 
-__RCSID("$NetBSD: libelf_open.c,v 1.6 2025/12/25 18:58:13 jkoshy Exp $");
+__RCSID("$NetBSD: libelf_open.c,v 1.7 2026/05/17 21:40:51 jkoshy Exp $");
 
 #define	_LIBELF_INITSIZE	(64*1024)
 

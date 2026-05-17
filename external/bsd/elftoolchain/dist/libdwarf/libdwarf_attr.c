@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_attr.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
+/*	$NetBSD: libdwarf_attr.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2007 John Birrell (jb@freebsd.org)
@@ -29,8 +29,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_attr.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_attr.c 4019 2023-10-22 03:06:17Z kaiwang27");
+__RCSID("$NetBSD: libdwarf_attr.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_attr.c 4039 2024-03-15 04:07:32Z kaiwang27");
 
 int
 _dwarf_attr_alloc(Dwarf_Die die, Dwarf_Attribute *atp, Dwarf_Error *error)
@@ -202,7 +202,6 @@ _dwarf_attr_init(Dwarf_Debug dbg, Dwarf_Section *ds, uint64_t *offsetp,
 		break;
 	case DW_FORM_strx:
 		atref.u[0].u64 = _dwarf_read_uleb128(ds->ds_data, offsetp);
-		/* TODO: .debug_str_offsets */
 		break;
 	case DW_FORM_addrx:
 		atref.u[0].u64 = _dwarf_read_uleb128(ds->ds_data, offsetp);
@@ -229,19 +228,15 @@ _dwarf_attr_init(Dwarf_Debug dbg, Dwarf_Section *ds, uint64_t *offsetp,
 		break;
 	case DW_FORM_strx1:
 		atref.u[0].u64 = dbg->read(ds->ds_data, offsetp, 1);
-		/* TODO: .debug_str_offsets */
 		break;
 	case DW_FORM_strx2:
 		atref.u[0].u64 = dbg->read(ds->ds_data, offsetp, 1);
-		/* TODO: .debug_str_offsets */
 		break;
 	case DW_FORM_strx3:
 		atref.u[0].u64 = dbg->read(ds->ds_data, offsetp, 3);
-		/* TODO: .debug_str_offsets */
 		break;
 	case DW_FORM_strx4:
 		atref.u[0].u64 = dbg->read(ds->ds_data, offsetp, 4);
-		/* TODO: .debug_str_offsets */
 		break;
 	case DW_FORM_addrx1:
 		atref.u[0].u64 = dbg->read(ds->ds_data, offsetp, 1);

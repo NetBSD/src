@@ -1,4 +1,4 @@
-/*	$NetBSD: elf_shnum.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $	*/
+/*	$NetBSD: elf_shnum.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008 Joseph Koshy
@@ -35,7 +35,7 @@
 
 ELFTC_VCSID("Id: elf_shnum.c 4074 2025-01-07 15:34:21Z jkoshy");
 
-__RCSID("$NetBSD: elf_shnum.c,v 1.6 2025/12/25 18:58:12 jkoshy Exp $");
+__RCSID("$NetBSD: elf_shnum.c,v 1.7 2026/05/17 21:40:50 jkoshy Exp $");
 
 static int
 _libelf_getshdrnum(Elf *e, size_t *shnum)

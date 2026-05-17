@@ -1,4 +1,4 @@
-/*	$NetBSD: libdwarf_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $	*/
+/*	$NetBSD: libdwarf_lineno.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $	*/
 
 /*-
  * Copyright (c) 2009,2010,2023 Kai Wang
@@ -28,8 +28,8 @@
 
 #include "_libdwarf.h"
 
-__RCSID("$NetBSD: libdwarf_lineno.c,v 1.5 2024/03/03 17:37:32 christos Exp $");
-ELFTC_VCSID("Id: libdwarf_lineno.c 4019 2023-10-22 03:06:17Z kaiwang27");
+__RCSID("$NetBSD: libdwarf_lineno.c,v 1.6 2026/05/17 21:40:49 jkoshy Exp $");
+ELFTC_VCSID("Id: libdwarf_lineno.c 4067 2025-01-03 10:33:44Z jkoshy");
 
 static int
 _dwarf_lineno_make_fullpath(Dwarf_Debug dbg, Dwarf_LineInfo li,
@@ -443,10 +443,11 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 	Dwarf_LineInfo li;
 	Dwarf_LineFile lf, tlf;
 	struct lnct *lnct;
-	const char *compdir;
+	char *compdir;
 	uint64_t length, hdroff, endoff;
 	uint8_t *p;
-	int dwarf_size, fmt, i, j, ret;
+	int dwarf_size, fmt, j, ret;
+	unsigned int i;
 
 	cu = die->die_cu;
 	assert(cu != NULL);
@@ -473,6 +474,14 @@ _dwarf_lineno_init(Dwarf_Die die, uint64_t offset, Dwarf_Error *error)
 		case DW_FORM_string:
 			compdir = at->u[0].s;
 			break;
+		case DW_FORM_strx:
+		case DW_FORM_strx1:
+		case DW_FORM_strx2:
+		case DW_FORM_strx3:
+		case DW_FORM_strx4:
+			if ((ret = _dwarf_read_indexed_str(dbg, cu,
+			    at->u[0].u64, &compdir, error)) != DW_DLE_NONE)
+				return (ret);
 		default:
 			break;
 		}
