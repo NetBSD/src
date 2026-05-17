@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.156 2026/05/13 05:43:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.157 2026/05/17 06:09:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.156 2026/05/13 05:43:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2026/05/17 06:09:25 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -300,14 +300,13 @@ phys_to_pp(paddr_t pa)
 #define IN_MODULE_VA(va)	false
 #endif
 
-#ifdef DIAGNOSTIC
-
 #if defined(PMAP_DEBUG)
 #define PMAP_DEBUGVA_P(va)	((va) == pmap_debugva)
 #else
 #define PMAP_DEBUGVA_P(va)	(false)
 #endif
 
+#ifdef DIAGNOSTIC
 
 #define KERNEL_ADDR_P(va)						\
     (IN_RANGE((va), VM_MIN_KERNEL_ADDRESS,  VM_MAX_KERNEL_ADDRESS) ||	\
