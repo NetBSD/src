@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.17 2025/10/13 07:43:43 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.18 2026/05/17 06:26:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -242,19 +242,19 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 		if ((prot & VM_PROT_WRITE) != 0 &&
 		    ((flags & VM_PROT_WRITE) != 0 || VM_PAGEMD_MODIFIED_P(mdpg))) {
 			/*
-			* This is a writable mapping, and the page's mod state
-			* indicates it has already been modified.  No need for
-			* modified emulation.
-			*/
+			 * This is a writable mapping, and the page's mod state
+			 * indicates it has already been modified.  No need for
+			 * modified emulation.
+			 */
 			pte |= PTE_A | PTE_D;
 		} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
 			/*
-			* - The access type indicates that we don't need to do
-			*   referenced emulation.
-			* OR
-			* - The physical page has already been referenced so no need
-			*   to re-do referenced emulation here.
-			*/
+			 * - The access type indicates that we don't need to do
+			 *   referenced emulation.
+			 * OR
+			 * - The physical page has already been referenced so no need
+			 *   to re-do referenced emulation here.
+			 */
 			pte |= PTE_A;
 		}
 	} else {
