@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1417 2026/04/25 00:38:47 christos Exp $
+# $NetBSD: mi,v 1.1418 2026/05/17 00:39:45 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -8066,6 +8066,7 @@
 ./usr/tests/usr.sbin/inetd/Atffile			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/inetd/Kyuafile			tests-usr.sbin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.sbin/inetd/inetd_ratelimit.conf		tests-usr.sbin-tests	compattestfile,atf
+./usr/tests/usr.sbin/inetd/t_accept_max			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/inetd/t_inetd			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/inetd/test_server			tests-usr.sbin-tests	compattestfile,atf
 ./usr/tests/usr.sbin/makefs				tests-usr.sbin-tests	compattestfile,atf
