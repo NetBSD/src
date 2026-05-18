@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2206 2026/05/17 15:02:35 taca Exp $
+#	$NetBSD: 3RDPARTY,v 1.2207 2026/05/18 12:34:21 jkoshy Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1717,7 +1717,7 @@ Notes:
 		Need to feed back local changes
 
 Package:	elftoolchain (libelf/libdwarf)
-Version:	r4037
+Version:	r4324
 Current Vers:	0.7.1
 Maintainer:	Joseph Koshy <jkoshy@NetBSD.org>
 Archive Site:	none
