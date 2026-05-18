@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.97 2026/05/08 15:48:23 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.98 2026/05/18 17:05:14 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -2341,4 +2341,14 @@ sys/kern/vfs_subr.c				1.503
 	lock while mounting file systems: we need to take it for those
 	that are _not_ marked MP-safe.
 	[riastradh, ticket #1266]
+
+sys/fs/cd9660/cd9660_rrip.c			1.19
+
+	cd9660: make sure that NM records are at least 5 bytes long.
+	[mrg, ticket #1267]
+
+etc/etc.luna68k/MAKEDEV.conf			1.12
+
+	luna68k: add missing audio devices to MAKEDEV.
+	[isaki, ticket #1268]
 
