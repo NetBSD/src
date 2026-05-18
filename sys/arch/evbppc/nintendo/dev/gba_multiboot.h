@@ -3,15 +3,15 @@
 
 #include "si.h"
 
-#define GBA_READ 	0x14
-#define GBA_WRITE 	0x15
-#define SI_TRANS_DELAY	1236 //36450 // 50us * 24.375
+#define SI_TRANS_DELAY	1236
 
 static uint32_t status;
 
-struct gba_multiboot {
-	long	size;
-	void	*rom;
+struct gba_multiboot_p {
+	long		size;
+	unsigned	chan;
+	unsigned char	*rom;
+	struct si_softc	*sc;
 };
 
 static inline uint32_t
@@ -20,7 +20,7 @@ gba_reset(struct si_softc *sc, unsigned chan)
 	struct siio_send data;
 	uint32_t out[1];
 	uint32_t in[1];
-	out[0] = 0xFF000000;
+	out[0] = SI_RESET;
 	data.chan = chan;
 	data.outsize = 1;
 	data.insize = 3;
@@ -38,7 +38,7 @@ gba_identify(struct si_softc *sc, unsigned chan)
 	struct siio_send data;
 	uint32_t out[1];
 	uint32_t in[1];
-	out[0] = 0x00000000;
+	out[0] = SI_IDENTIFY;
 	data.chan = chan;
 	data.outsize = 1;
 	data.insize = 3;
@@ -57,7 +57,7 @@ gba_read32(struct si_softc *sc, unsigned chan)
 	uint8_t out[1];
 	uint8_t in[5];
 
-	out[0] = GBA_READ;
+	out[0] = SI_GBARD;
 	data.chan = chan;
 	data.outsize = 1;
 	data.insize = 5;
@@ -78,7 +78,7 @@ gba_send32(struct si_softc *sc, unsigned chan, uint32_t msg)
 	uint8_t out[5];
 	uint8_t in[1];
 
-	out[0] = GBA_WRITE;
+	out[0] = SI_GBAWR;
 	out[1] = (msg>>0)&0xFF;
 	out[2] = (msg>>8)&0xFF;
 	out[3] = (msg>>16)&0xFF;
@@ -128,7 +128,6 @@ calckey(unsigned int size)
 	return ret;
 }
 
-/* no idea what this is doing. all i guess is some sort of signing */
 static unsigned int
 docrc(uint32_t crc, uint32_t val)
 {
@@ -148,10 +147,14 @@ docrc(uint32_t crc, uint32_t val)
 }
 
 static unsigned int
-__gba_multiboot(struct si_softc *sc, unsigned chan, unsigned char *rom, long size)
+__gba_multiboot(struct gba_multiboot_p *gbm)
 {
 	uint32_t res;
 	int count, i;
+	unsigned chan = gbm->chan;
+	unsigned char *rom = gbm->rom;
+	long size = gbm->size;
+	struct si_softc *sc = gbm->sc;
 
 	count = 0;
 	for (;;) {

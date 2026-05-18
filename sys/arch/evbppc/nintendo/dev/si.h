@@ -34,8 +34,11 @@
 #define SI_NUM_CHAN		4
 
 #define SICOUTBUF(n)		((n) * 0xc + 0x00)
-#define   SIIDENTIFY		0x00000000
-#define   SIINIT		0x00400300
+#define   SI_INIT		0x00400300
+#define   SI_IDENTIFY		0x00000000
+#define	  SI_RESET		0xFF000000
+#define	  SI_GBARD		0x14
+#define	  SI_GBAWR		0x15
 #define SICINBUFH(n)		((n) * 0xc + 0x04)
 #define SICINBUFL(n)		((n) * 0xc + 0x08)
 #define SIPOLL			0x30

@@ -193,8 +193,7 @@ si_identify(device_t self, unsigned chan)
 	uint32_t in[1];
 	int res;
 
-	/* identify always expects 3 bytes back although id is only 2 bytes */
-	out[0] = SIIDENTIFY;
+	out[0] = SI_IDENTIFY;
 	data.chan = chan;
 	data.out = out;
 	data.in = in;
@@ -207,8 +206,6 @@ si_identify(device_t self, unsigned chan)
 
 	ch = &sc->sc_chan[chan];
 	ch->ch_id = (uint16_t)(in[0] >> 16);
-	aprint_normal("si_identify: chan%d id - 0x%08X\n", chan, ch->ch_id);
-
 	return 0;
 }
 
@@ -327,7 +324,7 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	(void)RD4(sc, SICINBUFL(ch->ch_index));
 
 	/* Init controller */
-	WR4(sc, SICOUTBUF(ch->ch_index), SIINIT);
+	WR4(sc, SICOUTBUF(ch->ch_index), SI_INIT);
 
 	/* Enable polling */
 	WR4(sc, SIPOLL, RD4(sc, SIPOLL) | SIPOLL_EN(ch->ch_index));

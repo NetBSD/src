@@ -1,5 +1,7 @@
+/* $NetBSD: joybus.h,v 1.0 2026/05/18 22:54:30 gummybuns Exp $ */
+
 /*-
- * Copyright (c) 2025 Zac Brown <gummybuns@protonmail.com>
+ * Copyright (c) 2026 Zac Brown <gummybuns@protonmail.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,6 +25,9 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: joybus.h,v 1.0 2026/05/18 22:54:30 gummybuns Exp $");
 
 #include <sys/param.h>
 
@@ -49,8 +54,7 @@
 #define SI_WAVEBRD_RECV	0xe960
 #define SI_WAVEBRD	JB_WIRELESS & JB_RUMBLE & JB_CONTROLLER
 #define SI_GCKB		0x0802
-#define SI_GCSTEER	0x0800 // TODO - steering wheel and gba bios are the
-			       // same. risk of misidentification
+#define SI_GCSTEER	0x0800 /* risk: steering wheel + gbabios identical. */
 
 #define IS_DOLPHIN(n)	ISSET(n, JB_CONTROLLER)
 #define IS_N64(n)	!ISSET(n, JB_CONTROLLER)
