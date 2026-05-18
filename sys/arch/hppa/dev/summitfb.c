@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.41 2026/04/26 09:17:19 macallan Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.42 2026/05/18 22:06:25 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.41 2026/04/26 09:17:19 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.42 2026/05/18 22:06:25 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -135,6 +135,7 @@ static void	summitfb_bitblt(void *, int, int, int, int, int,
 static void	summitfb_cursor(void *, int, int, int);
 static void	summitfb_putchar(void *, int, int, u_int, long);
 static void	summitfb_putchar_aa(void *, int, int, u_int, long);
+static int	summitfb_allocattr(void *, int, int, int, long *);
 static void	summitfb_copycols(void *, int, int, int, int);
 static void	summitfb_erasecols(void *, int, int, int, long);
 static void	summitfb_copyrows(void *, int, int, int);
@@ -759,6 +760,7 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
 	ri->ri_ops.cursor = summitfb_cursor;
+	ri->ri_ops.allocattr = summitfb_allocattr;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = summitfb_putchar_aa;
 	} else
@@ -1164,6 +1166,28 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (attr & WSATTR_UNDERLINE)
 		glyphcache_underline(&sc->sc_gc, x, y, attr);
 
+}
+
+static int
+summitfb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static void
