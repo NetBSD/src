@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.h,v 1.27 2024/06/15 05:18:48 kre Exp $	*/
+/*	$NetBSD: jobs.h,v 1.28 2026/05/18 16:40:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -94,7 +94,7 @@ void setjobctl(int);
 void showjobs(struct output *, int);
 struct job *makejob(union node *, int);
 int forkshell(struct job *, union node *, int);
-void forkchild(struct job *, union node *, int, int);
+void forkchild(struct job *, union node *, int, int, sigset_t *);
 int forkparent(struct job *, union node *, int, pid_t);
 int waitforjob(struct job *);
 int stoppedjobs(void);

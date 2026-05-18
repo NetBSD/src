@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.197 2024/11/11 22:57:42 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.198 2026/05/18 16:40:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.197 2024/11/11 22:57:42 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.198 2026/05/18 16:40:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1123,14 +1123,20 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		    (!cmd->ncmd.backgnd || cmd->ncmd.redirect == NULL)) {
 			pid_t	pid;
 			int serrno;
+			sigset_t block_all, olds;
 
+			(void)sigfillset(&block_all);
 			savelocalvars = localvars;
 			localvars = NULL;
 			vforked = 1;
+
+			/* see jobs.c:forkshell() for explanation */
+			(void)sigprocmask(SIG_BLOCK, &block_all, &olds);
 	VFORK_BLOCK
 			switch (pid = vfork()) {
 			case -1:
 				serrno = errno;
+				(void)sigprocmask(SIG_SETMASK, &olds, NULL);
 				VTRACE(DBG_EVAL, ("vfork() failed, errno=%d\n",
 				    serrno));
 				INTON;
@@ -1166,11 +1172,12 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				handler = &jmploc;
 				listmklocal(varlist.list,
 				    VDOEXPORT | VEXPORT | VNOFUNC);
-				forkchild(jp, cmd, mode, vforked);
+				forkchild(jp, cmd, mode, vforked, &olds);
 				break;
 			default:
 				VFORK_UNDO();
 						/* restore from vfork(2) */
+				(void)sigprocmask(SIG_SETMASK, &olds, NULL);
 				CTRACE(DBG_PROCS|DBG_CMDS,
 				    ("parent after vfork - vforked=%d\n",
 				      vforked));

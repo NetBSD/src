@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.59 2026/05/17 16:44:04 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.60 2026/05/18 16:40:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.59 2026/05/17 16:44:04 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.60 2026/05/18 16:40:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -628,7 +628,7 @@ setsignal(int signo, int vforked)
 	if (pending && sigact == SIG_DFL) {
 		VTRACE(DBG_TRAP, ("setsignal(%d) - pending, suicide\n", signo));
 		gotsig[signo] = 0;	/* and don't consider it again */
-		kill(getpid(), signo);
+		(void)raise(signo);
 	}
 
 	return;
@@ -733,6 +733,10 @@ onsig(int signo)
 
 	/*
 	 * if the signal will do nothing, no point reporting it
+	 *
+	 * SIGCHLD is excluded from everything here, the user/application
+	 * isn't permitted to affect that one at all, and we don't ever
+	 * want to receive it, but if we do, simply ignore it.
 	 */
 	if (!traps_invalid && trap[signo] != NULL && trap[signo][0] != '\0' &&
 	    signo != SIGCHLD) {
@@ -752,6 +756,16 @@ onsig(int signo)
 		VTRACE(DBG_SIG, ("onsig: gotsig[%d]->%d pendingsigs->%d%s\n",
 		    signo, gotsig[signo], pendingsigs,
 		    intpending ? " (SIGINT pending)":""));
+	} else if (signo != SIGCHLD) {
+		/*
+		 * But don't simply abandon it, instead return the
+		 * signal to default state (we will do this again later,
+		 * around the time traps_invalid is cleared but that's
+		 * harmless) and then send it to ourselves again, to allow
+		 * the kernel to do whatever it needs to do.
+		 */
+		(void)signal(signo, SIG_DFL);	
+		(void)raise(signo);
 	}
 	errno = sav_err;
 }
@@ -933,7 +947,7 @@ exitshell_savedstatus(void)
 		VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
 		    ("exitshell_savedstatus(): pid %d Death by signal %d\n",
 			getpid(), s));
-		kill(getpid(), s);
+		(void)raise(s);
 	}
 	VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
 	    ("exitshell_savedstatus(): pid %d exiting(%d)\n",

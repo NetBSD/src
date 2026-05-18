@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.125 2026/04/18 09:37:51 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.126 2026/05/18 16:40:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.125 2026/04/18 09:37:51 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.126 2026/05/18 16:40:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1321,21 +1321,36 @@ forkshell(struct job *jp, union node *n, int mode)
 {
 	pid_t pid;
 	int serrno;
+	sigset_t block_all, oldstate;
 
 	CTRACE(DBG_JOBS, ("forkshell(%%%d, %p, %d) called\n",
 	    JNUM(jp), n, mode));
 
+	/*
+	 * Immediately after the fork(), until the child process
+	 * has had a chance to reset its idea of how signals should
+	 * be processed, it is vulnerable to receiving signals which
+	 * were trapped in the parent, but cannot be in the child,
+	 * without having any good way to recognise that.
+	 * So block all signals, temporarily, in the parent, just
+	 * over the fork() sys call, in the child, until it is ready.
+	 */
+	(void)sigfillset(&block_all);
+	(void)sigprocmask(SIG_BLOCK, &block_all, &oldstate);
 	switch ((pid = fork())) {
 	case -1:
 		serrno = errno;
+		(void)sigprocmask(SIG_SETMASK, &oldstate, NULL);
 		VTRACE(DBG_JOBS, ("Fork failed, errno=%d\n", serrno));
 		error("Cannot fork (%s)", strerror(serrno));
+		/* NOTREACHED */
 		break;
 	case 0:
 		SHELL_FORKED();
-		forkchild(jp, n, mode, 0);
+		forkchild(jp, n, mode, 0, &oldstate);
 		return 0;
 	default:
+		(void)sigprocmask(SIG_SETMASK, &oldstate, NULL);
 		return forkparent(jp, n, mode, pid);
 	}
 }
@@ -1375,7 +1390,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 }
 
 void
-forkchild(struct job *jp, union node *n, int mode, int vforked)
+forkchild(struct job *jp, union node *n, int mode, int vforked, sigset_t *sigs)
 {
 	int wasroot;
 	int pgrp;
@@ -1393,6 +1408,11 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 
 	closescript(vforked);
 	clear_traps(vforked);
+	/*
+	 * Now we have the trap state as we want it, signals can
+	 * be allowed to arrive again
+	 */
+	(void)sigprocmask(SIG_SETMASK, sigs, NULL);
 #if JOBS
 	if (!vforked)
 		jobctl = 0;		/* do job control only in root shell */
@@ -1408,9 +1428,13 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 				error("Cannot set tty process group (%s) at %d",
 				    strerror(errno), __LINE__);
 		}
+		VTRACE(DBG_SIG, ("Child, resetting TSTP TTOU (mode=%d)\n",
+		    mode));
 		setsignal(SIGTSTP, vforked);
 		setsignal(SIGTTOU, vforked);
 	} else if (mode == FORK_BG) {
+		VTRACE(DBG_SIG, ("BG Child, ignoring INT QUIT "
+		    "(wasroot=%d mode=%d mflag=%d)\n", wasroot, mode, mflag));
 		ignoresig(SIGINT, vforked);
 		ignoresig(SIGQUIT, vforked);
 		if ((jp == NULL || jp->nprocs == 0) &&
