@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.24 2026/03/18 06:42:35 skrll Exp $
+# $NetBSD: GENERIC64,v 1.25 2026/05/18 05:55:24 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -31,11 +31,11 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KERNHIST
-#options 	KERNHIST_PRINT
+#options 	KERNHIST_PRINT,KERNHIST_DELAY=0
 #options 	UVMHIST
-#options 	UVMHIST_PRINT
+#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	PMAPHIST
-#options 	PMAPHIST_PRINT
+#options 	PMAPHIST_PRINT,KERNHIST_DELAY=0
 #options 	SYSCTL_DEBUG
 #options 	SYSCTL_DEBUG_SETUP
 #options 	SYSCTL_DEBUG_CREATE
