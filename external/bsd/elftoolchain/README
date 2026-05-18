@@ -1,6 +1,21 @@
-#!/bin/sh
-$ svn checkout https://svn.code.sf.net/p/elftoolchain/code/trunk elftoolchain-code
-$ mkdir dist.new
-$ dist/tools/netbsd-base-system-import.sh -m common -m libdwarf -m libelf -s elftoolchain-code -d dist.new
-$ cd dist.new
-$ cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/elftoolchain/dist FreeBSD elftoolchain-NNNN
+To update in-tree Elftoolchain sources:
+
+1.  Import upstream SVN revision 'NNNN' using:
+
+    $ mkdir dist.new
+    $ dist/tools/netbsd-base-system-import.sh -r NNNN -d dist.new \
+          -m common -m libdwarf -m libelf
+
+2.  "cvs import" the new directory using a vendor tag of 'FreeBSD'
+    and a release-tag of 'elftoolchain-NNNN':
+
+    $ cd dist.new
+    $ cvs -d cvs.netbsd.org:/cvsroot import src/external/bsd/elftoolchain/dist \
+          FreeBSD elftoolchain-NNNN
+
+3.  Use the release tag used for the prior vendor import ('elftoolchain-PPPP'
+    in the example below) to bring in the newly imported vendor branch changes
+    into HEAD:
+
+    $ cd ..
+    $ cvs checkout -j elftoolchain-PPPP -j elftoolchain-NNNN dist
