@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.101 2026/05/07 17:31:41 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.102 2026/05/18 16:38:12 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1334,4 +1334,9 @@ sys/dev/pci/ahcisata_pci.c			1.73
 
 	ahcisata(4): disable NCQ for VIA VT8251 integrated SATA controller.
 	[andvar, ticket #2011]
+
+sys/fs/cd9660/cd9660_rrip.c			1.19
+
+	cd9660: make sure that NM records are at least 5 bytes long.
+	[mrg, ticket #2012]
 
