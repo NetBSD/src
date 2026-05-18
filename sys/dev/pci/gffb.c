@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.34 2026/03/01 12:35:54 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.35 2026/05/18 09:17:50 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.34 2026/03/01 12:35:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.35 2026/05/18 09:17:50 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,6 +143,7 @@ static void	gffb_copycols(void *, int, int, int, int);
 static void	gffb_erasecols(void *, int, int, int, long);
 static void	gffb_copyrows(void *, int, int, int);
 static void	gffb_eraserows(void *, int, int, long);
+static int	gffb_allocattr(void *, int, int, int, long *);
 
 #define GFFB_READ_4(o) bus_space_read_stream_4(sc->sc_memt, sc->sc_regh, (o))
 #define GFFB_READ_1(o) bus_space_read_1(sc->sc_memt, sc->sc_regh, (o))
@@ -526,7 +527,7 @@ gffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 					memset(sc->sc_fbaddr + sc->sc_fboffset,
 					       ms->scr_ri.ri_devcmap[
 					         (ms->scr_defattr >> 16) & 0xf],
-					       sc->sc_stride * sc->sc_height);				
+					       sc->sc_stride * sc->sc_height);
 				}
 				vcons_redraw_screen(ms);
 			}
@@ -678,11 +679,13 @@ gffb_init_screen(void *cookie, struct vcons_screen *scr,
 		ri->ri_ops.eraserows = gffb_eraserows;
 		ri->ri_ops.erasecols = gffb_erasecols;
 		ri->ri_ops.cursor = gffb_cursor;
+		ri->ri_ops.allocattr = gffb_allocattr;
 		if (FONT_IS_ALPHA(ri->ri_font)) {
 			sc->sc_putchar = ri->ri_ops.putchar;
 			ri->ri_ops.putchar = gffb_putchar;
-		} else
+		} else {
 			ri->ri_ops.putchar = gffb_putchar_mono;
+		}
 	} else {
 		scr->scr_flags |= VCONS_DONT_READ;
 	}
@@ -1512,6 +1515,28 @@ gffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 
 }
 
+static int
+gffb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
+}
+
 static void
 gffb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 {
@@ -1576,7 +1601,7 @@ gffb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		if ((row == 0) && (nrows == ri->ri_emuheight)) {
+		if ((row == 0) && (nrows == ri->ri_rows)) {
 			/* fullclear */
 			x = 0;
 			y = 0;
