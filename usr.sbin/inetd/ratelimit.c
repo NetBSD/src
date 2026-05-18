@@ -1,4 +1,4 @@
-/*	$NetBSD: ratelimit.c,v 1.2 2021/10/12 22:51:28 rillig Exp $	*/
+/*	$NetBSD: ratelimit.c,v 1.2.6.1 2026/05/18 16:43:22 martin Exp $	*/
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -29,8 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ratelimit.c,v 1.2 2021/10/12 22:51:28 rillig Exp $");
+__RCSID("$NetBSD: ratelimit.c,v 1.2.6.1 2026/05/18 16:43:22 martin Exp $");
 
+#include <sys/param.h>
 #include <sys/queue.h>
 
 #include <arpa/inet.h>
@@ -262,6 +263,8 @@ rl_add(struct servtab *sep, union addr *addr)
 		node_size = offsetof(struct rl_ip_node, other_addr) + bufsize;
 		break;
 	}
+
+	node_size = MAX(node_size, sizeof *node);
 
 	node = malloc(node_size);
 	if (node == NULL) {
