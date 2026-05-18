@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-auth.c,v 1.3.2.2 2026/05/07 17:49:27 martin Exp $	*/
+/*	$NetBSD: sshd-auth.c,v 1.3.2.3 2026/05/18 16:41:04 martin Exp $	*/
 /* $OpenBSD: sshd-auth.c,v 1.14 2026/03/11 09:10:59 dtucker Exp $ */
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-auth.c,v 1.3.2.2 2026/05/07 17:49:27 martin Exp $");
+__RCSID("$NetBSD: sshd-auth.c,v 1.3.2.3 2026/05/18 16:41:04 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -99,6 +99,8 @@ __RCSID("$NetBSD: sshd-auth.c,v 1.3.2.2 2026/05/07 17:49:27 martin Exp $");
 #include "sk-api.h"
 #include "srclimit.h"
 #include "dh.h"
+
+#include "pfilter.h"
 
 /* Privsep fds */
 #define PRIVSEP_MONITOR_FD		(STDERR_FILENO + 1)
@@ -787,8 +789,10 @@ do_ssh2_kex(struct ssh *ssh)
 	free(hkalgs);
 
 	if ((r = kex_exchange_identification(ssh, -1,
-	    options.version_addendum)) != 0)
+	    options.version_addendum)) != 0) {
+		pfilter_notify(1);
 		sshpkt_fatal(ssh, r, "banner exchange");
+	}
 	mm_sshkey_setcompat(ssh); /* tell monitor */
 
 	if ((ssh->compat & SSH_BUG_NOREKEY))
