@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.h,v 1.6 2022/08/10 08:37:53 christos Exp $	*/
+/*	$NetBSD: inetd.h,v 1.6.6.1 2026/05/18 16:58:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -188,8 +188,12 @@ struct	servtab {
 	size_t	se_service_max;		/* max # of instances of this service per minute */
 	size_t	se_count;		/* number of instances of this service started since se_time */
 	size_t	se_ip_max;  		/* max # of instances of this service per ip per minute */
-	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limting */
+	SLIST_HEAD(iplist, rl_ip_node) se_rl_ip_list; /* per-address (IP) rate limiting */
 	time_t se_time;	/* start of se_count and ip_max counts, in seconds from arbitrary point */
+	size_t	se_accept_max;		/* max # of connections to accept */
+	size_t	se_accept_count;	/* number of accepted connections */
+	pid_t	*se_accept_children;	/* identify child */
+	size_t	se_accept_mark;		/* mark when to enable messages */
 	
 	/* TODO convert to using SLIST */
 	struct	servtab *se_next;
@@ -255,6 +259,7 @@ int 	parse_wait(struct servtab *, int);
 int 	parse_server(struct servtab *, const char *);
 void 	parse_socktype(char *, struct servtab *);
 void 	parse_accept_filter(char *, struct servtab *);
+void 	parse_accept_max(char *, struct servtab *);
 char 	*nextline(FILE *);
 char 	*newstr(const char *);
 

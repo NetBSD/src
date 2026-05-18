@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2021/09/01 06:12:50 christos Exp $
+# $NetBSD: Makefile,v 1.2.6.1 2026/05/18 16:58:49 martin Exp $
 
 WARNS=6
 .include <bsd.own.mk>
@@ -6,6 +6,7 @@ WARNS=6
 TESTSDIR=${TESTSBASE}/usr.sbin/inetd
 
 TESTS_C += t_inetd
+TESTS_SH += t_accept_max
 
 #inetd service, supports dgram and stream via args
 MKMAN = no
