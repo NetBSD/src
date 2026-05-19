@@ -108,7 +108,7 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 	chan = saa->saa_index;
 	ch = &sc->sc_chan[chan];
 	aprint_normal("gba: checking 0x%08X...\n", ch->ch_id);
-	if (IS_GBA(ch->ch_id)) {
+	if (ch->ch_id == JB_GBA) {
 		aprint_normal("gba: identified ch%d as a gba device\n", chan);
 		return 1;
 	}

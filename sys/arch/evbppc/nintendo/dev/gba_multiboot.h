@@ -1,9 +1,36 @@
+/* $NetBSD: gba_multiboot.h,v 1.0 2026/05/18 22:54:30 gummybuns Exp $ */
+
+/*-
+ * Copyright (c) 2026 ZacBrown <gummybuns@protonmail.com>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
 #ifndef _GBA_MULTIBOOT_H_
 #define _GBA_MULTIBOOT_H_
 
 #include "si.h"
-
-#define SI_TRANS_DELAY	1236
+#include "joybus.h"
 
 static uint32_t status;
 
@@ -15,56 +42,20 @@ struct gba_multiboot_p {
 };
 
 static inline uint32_t
-gba_reset(struct si_softc *sc, unsigned chan)
-{
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	out[0] = SI_RESET;
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
-
-	delay(SI_TRANS_DELAY);
-	__si_send(sc, &data);
-	return in[0];
-}
-
-static inline uint32_t
-gba_identify(struct si_softc *sc, unsigned chan)
-{
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	out[0] = SI_IDENTIFY;
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
-
-	delay(SI_TRANS_DELAY);
-	__si_send(sc, &data);
-	return in[0];
-}
-
-static inline uint32_t
 gba_read32(struct si_softc *sc, unsigned chan)
 {
 	struct siio_send data;
 	uint8_t out[1];
 	uint8_t in[5];
 
-	out[0] = SI_GBARD;
+	out[0] = JB_GBA_READ;
 	data.chan = chan;
 	data.outsize = 1;
 	data.insize = 5;
 	data.in = in;
 	data.out = out;
 
-	delay(SI_TRANS_DELAY);
+	delay(JB_DELAY);
 	__si_send(sc, &data);
 	status = data.status;
 	/* first four bytes are the data. 5th is status */
@@ -78,7 +69,7 @@ gba_send32(struct si_softc *sc, unsigned chan, uint32_t msg)
 	uint8_t out[5];
 	uint8_t in[1];
 
-	out[0] = SI_GBAWR;
+	out[0] = JB_GBA_WRITE;
 	out[1] = (msg>>0)&0xFF;
 	out[2] = (msg>>8)&0xFF;
 	out[3] = (msg>>16)&0xFF;
@@ -90,7 +81,7 @@ gba_send32(struct si_softc *sc, unsigned chan, uint32_t msg)
 	data.in = in;
 	data.out = out;
 
-	delay(SI_TRANS_DELAY);
+	delay(JB_DELAY);
 	__si_send(sc, &data);
 	status = data.status;
 	return (uint32_t)in[0];
@@ -149,8 +140,9 @@ docrc(uint32_t crc, uint32_t val)
 static unsigned int
 __gba_multiboot(struct gba_multiboot_p *gbm)
 {
-	uint32_t res;
+	uint32_t enc, sessionkeyraw, sessionkey, res;
 	int count, i;
+	unsigned int fcrc, ourkey, sendsize;
 	unsigned chan = gbm->chan;
 	unsigned char *rom = gbm->rom;
 	long size = gbm->size;
@@ -158,37 +150,36 @@ __gba_multiboot(struct gba_multiboot_p *gbm)
 
 	count = 0;
 	for (;;) {
-		if (count == 500) {
-			aprint_normal("GIVING UP\n");	
-			return -1; // TODO better return val
+		if (count >= 1000) {
+			aprint_normal("multiboot: ch %d initialize failure\n",
+			    chan);
+			return EAGAIN;
 		}
 
-		gba_reset(sc, chan);
-		res = gba_identify(sc, chan);
-		aprint_normal("res is 0x%08X\n", res);
+		jb_reset(sc, chan, JB_DELAY);
+		res = jb_identify(sc, chan, JB_DELAY);
 		if (res & 0x00001000) {
-			aprint_normal("WE FOUND OUR MATCH!\n");
 			break;
 		}
 		count++;
 	}
 
-	unsigned int sendsize = ((size+7)&~7);
-	unsigned int ourkey = calckey(sendsize);
+	sendsize = ((size+7)&~7);
+	ourkey = calckey(sendsize);
 
-	uint32_t sessionkeyraw = gba_read32(sc, chan);
-	uint32_t sessionkey = bswap32(sessionkeyraw^0x7365646F); // No idea this magic number
+	sessionkeyraw = gba_read32(sc, chan);
+	sessionkey = bswap32(sessionkeyraw^0x7365646F);
 	gba_send32(sc, chan, bswap32(ourkey));
-	unsigned int fcrc = 0x15A0; // i have no idea this one either..
-	aprint_normal("SENDING HEADER\n");
-	/* send header */
+	fcrc = 0x15A0;
+
+	aprint_normal("multiboot: ch %d sending header\n", chan);
 	for (i = 0; i < 0xC0; i += 4) {
 		gba_send32(sc, chan, bswap32(*(uint32_t*)(rom+i)));
 	}
 
-	aprint_normal("SENDING ROM\n");
+	aprint_normal("multiboot: ch %d sending rom\n", chan);
 	for (i = 0xC0; i < sendsize; i += 4) {
-		uint32_t enc = ((rom[i+3]<<24)|(rom[i+2]<<16)|(rom[i+1]<<8)|(rom[i]));
+		enc = ((rom[i+3]<<24)|(rom[i+2]<<16)|(rom[i+1]<<8)|(rom[i]));
 		fcrc = docrc(fcrc, enc);
 		sessionkey = (sessionkey*0x6177614B)+1;
 		enc^=sessionkey;

@@ -26,10 +26,11 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: joybus.h,v 1.0 2026/05/18 22:54:30 gummybuns Exp $");
+#ifndef _JOYBUS_H_
+#define _JOYBUS_H_
 
 #include <sys/param.h>
+#include "si.h"
 
 #define	JB_WIRELESS		__BIT(15)
 #define	JB_WIRELESS_RECV	__BIT(14)
@@ -43,20 +44,69 @@ __KERNEL_RCSID(0, "$NetBSD: joybus.h,v 1.0 2026/05/18 22:54:30 gummybuns Exp $")
 #define JB_WIRELESS_NONCTRL	__BIT(3)
 #define JB_WIRELESS_LITE	__BIT(2)
 
-#define SI_NONE		0x0000
-#define	SI_N64		0x0500
-#define	SI_N64MIC	0x0001
-#define SI_N64KB	0x0002
-#define	SI_N64MS	0x0200
-#define	SI_GBA		0x0004
-#define SI_GBABIOS	0x0800
-#define SI_GC		0x0900
-#define SI_WAVEBRD_RECV	0xe960
-#define SI_WAVEBRD	JB_WIRELESS & JB_RUMBLE & JB_CONTROLLER
-#define SI_GCKB		0x0802
-#define SI_GCSTEER	0x0800 /* risk: steering wheel + gbabios identical. */
+#define	JB_IDENTIFY	0x00000000
+#define	JB_RESET	0xFF000000
+#define	JB_GBA_READ	0x14
+#define	JB_GBA_WRITE	0x15
+
+#define JB_NONE		0x0000
+#define	JB_N64		0x0500
+#define	JB_N64MIC	0x0001
+#define	JB_N64KB	0x0002
+#define	JB_N64MS	0x0200
+#define	JB_GBA		0x0004
+#define JB_GC		0x0900
+#define JB_WAVEBRD_RECV	0xe960
+#define JB_WAVEBRD	JB_WIRELESS & JB_RUMBLE & JB_CONTROLLER
+#define JB_GCKB		0x0802
+#define JB_GCSTEER	0x0800
+#define JB_GBABIOS	0x08	/* GBA BIOS actually sends a 1byte response and
+				 * sets SISR to NOREP. The second byte will be
+				 * whatever was in SIIOBUF before send */
 
 #define IS_DOLPHIN(n)	ISSET(n, JB_CONTROLLER)
 #define IS_N64(n)	!ISSET(n, JB_CONTROLLER)
-#define IS_GCPAD(n)	(((n) & (JB_CONTROLLER | JB_DOLPHIN)) == SI_GC) || ISSET(n, JB_WIRELESS)
-#define IS_GBA(n)	(n == SI_GBA || n == SI_GBABIOS)
+#define IS_GCPAD(n)	(((n) & (JB_CONTROLLER | JB_DOLPHIN)) == JB_GC) || \
+				ISSET(n, JB_WIRELESS)
+
+#define JB_DELAY	50	/* lowest delay with results for multiboot */
+
+static inline uint32_t
+jb_reset(struct si_softc *sc, unsigned chan, long us)
+{
+	struct siio_send data;
+	uint32_t out[1];
+	uint32_t in[1];
+	out[0] = JB_RESET;
+
+	data.chan = chan;
+	data.outsize = 1;
+	data.insize = 3;
+	data.in = in;
+	data.out = out;
+
+	delay(us);
+	__si_send(sc, &data);
+	return in[0];
+}
+
+static inline uint32_t
+jb_identify(struct si_softc *sc, unsigned chan, long us)
+{
+	struct siio_send data;
+	uint32_t out[1];
+	uint32_t in[1];
+	out[0] = JB_IDENTIFY;
+
+	data.chan = chan;
+	data.outsize = 1;
+	data.insize = 3;
+	data.in = in;
+	data.out = out;
+
+	delay(us);
+	__si_send(sc, &data);
+	return in[0];
+}
+
+#endif

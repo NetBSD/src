@@ -34,11 +34,6 @@
 #define SI_NUM_CHAN		4
 
 #define SICOUTBUF(n)		((n) * 0xc + 0x00)
-#define   SI_INIT		0x00400300
-#define   SI_IDENTIFY		0x00000000
-#define	  SI_RESET		0xFF000000
-#define	  SI_GBARD		0x14
-#define	  SI_GBAWR		0x15
 #define SICINBUFH(n)		((n) * 0xc + 0x04)
 #define SICINBUFL(n)		((n) * 0xc + 0x08)
 #define SIPOLL			0x30
@@ -153,37 +148,20 @@ struct siio_send {
 static inline int
 __si_send(struct si_softc *sc, struct siio_send *data)
 {
-	uint32_t comcsr, sisr, shift_amt, cnt; //, i, val;
+	uint32_t cnt, comcsr, sisr, shift_amt, status;
 	unsigned chan;
 
 	chan = data->chan;
 
-	//aprint_normal("\n");
-	//aprint_normal("__si_send: chan %d siiobuf before clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
-	//aprint_normal("SIPOLL state: 0x%08X\n", RD4(sc, SIPOLL));
 	SIIOBUF_CLEAR(sc);
-	//aprint_normal("__si_send: chan %d siiobuf after clear is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
+	data->status = 0;
 
 	/* siiobuf must to be written in increments of 4 bytes */
 	cnt = ((data->outsize+3)/4);
-	//aprint_normal("__si_send: chan %d out buf (outsize %d / cnt %d)\n", chan, data->outsize, cnt);
 	SIIOBUF_WR(sc, data->out, cnt);
-	/*
-	for (uint32_t i = 0; i < cnt; i++) {
-		uint32_t val = 0;
-		size_t sz = MIN(4, data->outsize - (i * 4));
-		memcpy(&val, ((uint8_t *)data->out) + (i * 4), sz);
-		aprint_normal("__si_send: chan %d is copying %d bytes: 0x%X\n", chan,sz, val);
-		WR4(sc, SIIOBUF + i, val);
-	}
-	*/
 
-	//aprint_normal("__si_send: chan %d siiobuf after write is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
 	sisr = RD4(sc, SISR);
-	if ((sisr & SISR_ERROR_MASK(chan)) != 0) {
-		//aprint_normal("tried to clear sisr but it is currently %08x\n", sisr);
-	}
 
 	AWAIT_SICOMCSR(sc);
 	WR4(sc, SICOMCSR,
@@ -192,35 +170,22 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
 	    __SHIFTIN(data->outsize, SICOMCSR_OUTLNGTH) |
 	    __SHIFTIN(data->insize, SICOMCSR_INLNGTH) |
-	    __SHIFTIN(chan, SICOMCSR_CHANNEL)
+	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
+	    SICOMCSR_TSTART
 	);
-	comcsr = RD4(sc, SICOMCSR);
-	//aprint_normal("__side_send: chan %d sicomcsr is 0x%08X\n", chan, comcsr);
-	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TSTART);
 	AWAIT_SICOMCSR(sc);
 
 	comcsr = RD4(sc, SICOMCSR);
 	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
-
-	//aprint_normal("__si_send: chan %d siiobuf after command is set to 0x%08X\n", chan, RD4(sc, SIIOBUF));
-	SIIOBUF_RD(sc, data->in, data->insize);
-
-	comcsr = RD4(sc, SICOMCSR);
 	if (ISSET(comcsr, SICOMCSR_COMERR)) {
 		sisr = RD4(sc, SISR);
-		//aprint_normal("__si_send: chan %d sisr is set to 0x%08X\n", chan, sisr);
 		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
-		data->status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
-		if (data->status == 0xC) {
-			aprint_normal("!!!!!!!!!!!!!\n");
-		}
+		status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
+		data->status = status;
 	}
 
-	//aprint_normal("Running delay(36450)\n");
-	//delay(36450);
-
+	SIIOBUF_RD(sc, data->in, data->insize);
 	return 0;
 }
-
 
 #endif /* _WII_DEV_SI_H_ */

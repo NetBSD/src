@@ -188,24 +188,28 @@ si_identify(device_t self, unsigned chan)
 {
 	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	int res;
-
-	out[0] = SI_IDENTIFY;
-	data.chan = chan;
-	data.out = out;
-	data.in = in;
-	data.outsize = 1;
-	data.insize = 3;
-
-	if ((res = __si_send(sc, &data)) != 0) {
-		aprint_normal("si_identify: chan%d sisr - 0x%08X\n", chan, res);
-	}
+	uint32_t id;
+	uint32_t sisr;
+	uint8_t msb;
+	int cnt;
 
 	ch = &sc->sc_chan[chan];
-	ch->ch_id = (uint16_t)(in[0] >> 16);
+	cnt = 0;
+
+	/*
+	 * Identify call is normaly 2bytes, GBA BIOS however sends a 1byte resp
+	 * and sets SISR as NOREP. We need to try to reset the device and see
+	 * if it can be put into the proper state
+	 */
+	do {
+		jb_reset(sc, chan, 1000);
+		id = jb_identify(sc, chan, 1000);
+		msb = (uint8_t)(id >> 24);
+		ch->ch_id = (uint16_t)(id >> 16);
+		sisr = RD4(sc, SISR);
+		cnt++;
+	} while (cnt < 1000 && msb == JB_GBABIOS && (sisr & SISR_NOREP(chan)));
+
 	return 0;
 }
 
@@ -324,7 +328,7 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	(void)RD4(sc, SICINBUFL(ch->ch_index));
 
 	/* Init controller */
-	WR4(sc, SICOUTBUF(ch->ch_index), SI_INIT);
+	WR4(sc, SICOUTBUF(ch->ch_index), 0x00400300);
 
 	/* Enable polling */
 	WR4(sc, SIPOLL, RD4(sc, SIPOLL) | SIPOLL_EN(ch->ch_index));
