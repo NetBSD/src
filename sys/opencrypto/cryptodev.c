@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.129 2026/05/19 15:58:12 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.130 2026/05/19 15:58:24 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.129 2026/05/19 15:58:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.130 2026/05/19 15:58:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,8 +1027,10 @@ cse_free(struct csession *cse)
 {
 
 	DPRINTF("destroying %p %d\n", cse, atomic_load_relaxed(&cse->refcnt));
+	membar_release();
 	if (atomic_dec_uint_nv(&cse->refcnt) > 0)
 		return;
+	membar_acquire();
 	mutex_destroy(&cse->lock);
 	crypto_freesession(cse->sid);
 	if (cse->key)
