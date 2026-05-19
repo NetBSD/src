@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.71 2026/05/13 14:21:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.72 2026/05/19 21:39:08 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -189,7 +189,7 @@
  * - Very stable multi-user on virt68k (qemu 68040; does not accurately
  *   model cache or ATC, but suitable for exercising large memory configs).
  *
- * - Very stable muti-user running memory pressure stress tests on
+ * - Very stable multi-user running memory pressure stress tests on
  *   small-memory configs in virt68k (qemu 68040 **with fixed MMU
  *   emulation**) and mac68k (10MB 68040, 68030).
  *
@@ -223,7 +223,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.71 2026/05/13 14:21:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.72 2026/05/19 21:39:08 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1051,7 +1051,7 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
 
 	/*
 	 * N.B. We seed the U and M bits in the PTE based on the access
-	 * that was used to produce the page fault becuse the MMU will
+	 * that was used to produce the page fault because the MMU will
 	 * skip the write-back of a PTE upon access if the copy in the
 	 * ATC already has the bit set.
 	 */
@@ -4037,7 +4037,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	/*
 	 * Allocate some important fixed virtual (and physical) addresses.
 	 * We use the sum total of this initial mapped kernel space to
-	 * determine how many inital kernel PT pages to allocate.  The
+	 * determine how many initial kernel PT pages to allocate.  The
 	 * things that consume physical space will come first, and the
 	 * virtual-space-{only,mostly} things come at the end.
 	 *
@@ -4302,7 +4302,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	 * ...that is, unless, a platform as some quirky requirement
 	 * (hello mac68k!).  This hook lets a platform specify an
 	 * alternate proto PTE for the kernel text (in the mac68k case,
-	 * it will be read/write write-though-cacheable).  Once the
+	 * it will be read/write write-through-cacheable).  Once the
 	 * kernel is up and running on its own mappings, machine-specific
 	 * code can perform any fixups as necessary.
 	 */
@@ -4414,7 +4414,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/*
-	 * Now that all of the invidual VAs are mapped in the leaf
+	 * Now that all of the individual VAs are mapped in the leaf
 	 * tables, it's time to link those tables into the segment
 	 * table.
 	 *
