@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.131 2026/05/19 15:58:37 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.132 2026/05/19 15:59:01 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.131 2026/05/19 15:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.132 2026/05/19 15:59:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,14 +298,12 @@ fcrypt_dtor(struct fcrypt *fcr)
 {
 	struct csession *cse;
 
-	mutex_enter(&fcr->lock);
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
 		KASSERT(atomic_load_relaxed(&cse->refcnt) == 1);
 		cse_free(cse);
 	}
 	seldestroy(&fcr->sinfo);
-	mutex_exit(&fcr->lock);
 	mutex_destroy(&fcr->lock);
 
 	pool_put(&fcrpl, fcr);
