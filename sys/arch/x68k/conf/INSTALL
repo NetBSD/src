@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.122 2024/01/07 07:58:33 isaki Exp $
+#	$NetBSD: INSTALL,v 1.123 2026/05/19 21:18:10 andvar Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.122 $"
+#ident 		"INSTALL-$Revision: 1.123 $"
 
 makeoptions	COPTS="-Os -fno-unwind-tables" # Optimise for space. Implies -O2
 
@@ -203,7 +203,7 @@ fd*	at fdc0 unit ?			# builtin floppy drives
 ## SCSI devices
 scsirom0 at intio0				# SCSI BIOS
 scsirom1 at intio0				# SCSI BIOS
-spc*	at scsirom?				# genuin SCSI
+spc*	at scsirom?				# genuine SCSI
 scsibus* at spc?
 mha0	at scsirom?				# Mankai MK-HA1 (Mach-2)
 scsibus* at mha0

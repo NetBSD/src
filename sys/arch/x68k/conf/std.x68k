@@ -1,4 +1,4 @@
-#	$NetBSD: std.x68k,v 1.14 2025/11/16 03:11:47 tsutsui Exp $
+#	$NetBSD: std.x68k,v 1.15 2026/05/19 21:18:10 andvar Exp $
 
 #
 # Mandatory NetBSD/x68k kernel options.
@@ -14,7 +14,7 @@ options 	EXEC_AOUT	# execve(2) support for a.out binaries
 ## Fundamental devices
 mainbus0 at root			# MANDATORY
 intio0	at mainbus0			# MANDATORY: internal I/O space
-mfp0	at intio0 addr 0xe88000 intr 64	# MANDATORY: Multi Function Periferal
+mfp0	at intio0 addr 0xe88000 intr 64	# MANDATORY: Multi-Function Peripheral
 clock0	at mfp0				# MANDATORY: system tick
 rtc0	at intio0 addr 0xe8a000		# MANDATORY: Realtime Clock
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.210 2024/10/05 03:56:54 isaki Exp $
+# $NetBSD: GENERIC,v 1.211 2026/05/19 21:18:10 andvar Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.210 $"
+#ident 		"GENERIC-$Revision: 1.211 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -238,8 +238,8 @@ fd*	at fdc0 unit ?			# builtin floppy drives
 ## SCSI devices
 scsirom0 at intio0 addr 0xfc0000		# Built-in SCSI BIOS
 scsirom1 at intio0 addr 0xea0020		# External SCSI BIOS
-spc0	at scsirom0				# genuin SCSI
-spc1	at scsirom1				# genuin SCSI
+spc0	at scsirom0				# genuine SCSI
+spc1	at scsirom1				# genuine SCSI
 scsibus* at spc?
 mha0	at scsirom1				# Mankai MK-HA1 (Mach-2)
 scsibus* at mha0

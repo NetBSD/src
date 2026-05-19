@@ -1,4 +1,4 @@
-/*	$NetBSD: iodevice.h,v 1.19 2024/01/07 07:58:35 isaki Exp $	*/
+/*	$NetBSD: iodevice.h,v 1.20 2026/05/19 21:18:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Masaru Oki
@@ -77,7 +77,7 @@ struct dmac {
 };
 
 /*
- * MC68901 Multi Function Periferal
+ * MC68901 Multi-Function Peripheral
  */
 struct mfp {
 	char pad00; unsigned char gpip;

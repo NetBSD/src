@@ -1,4 +1,4 @@
-/*	$NetBSD: mfp.c,v 1.33 2026/03/28 22:19:36 thorpej Exp $	*/
+/*	$NetBSD: mfp.c,v 1.34 2026/05/19 21:18:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1998 NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 /*
- * MC68901 MFP (multi function periferal) driver for NetBSD/x68k
+ * MC68901 MFP (multi-function peripheral) driver for NetBSD/x68k
  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.33 2026/03/28 22:19:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfp.c,v 1.34 2026/05/19 21:18:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
