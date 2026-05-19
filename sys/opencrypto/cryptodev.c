@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.132 2026/05/19 15:59:01 riastradh Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.133 2026/05/19 19:00:00 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.132 2026/05/19 15:59:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.133 2026/05/19 19:00:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,8 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.132 2026/05/19 15:59:01 riastradh Ex
 
 #include "ioconf.h"
 
-kmutex_t cryptodev_mtx;
-#define CRYPTODEV_OPS_MAX 1000000
+static kmutex_t cryptodev_mtx;
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -383,8 +382,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		sgop = (struct crypt_sgop *)data;
-		if (sgop->count <= 0 || sgop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*snop) <= sgop->count) {
+		if (sgop->count <= 0 || sgop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*snop))) {
 			error = EINVAL;
 			break;
 		}
@@ -411,8 +410,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNFSESSION:
 		fcrypt_settime(fcr);
 		sfop = (struct crypt_sfop *)data;
-		if (sfop->count <= 0 || sfop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*sesid) <= sfop->count) {
+		if (sfop->count <= 0 || sfop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*sesid))) {
 			error = EINVAL;
 			break;
 		}
@@ -439,8 +438,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNCRYPTM:
 		fcrypt_settime(fcr);
 		mop = (struct crypt_mop *)data;
-		if (mop->count <= 0 || mop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*cnop) <= mop->count) {
+		if (mop->count <= 0 || mop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*cnop))) {
 			error = EINVAL;
 			break;
 		}
@@ -462,8 +461,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNFKEYM:
 		fcrypt_settime(fcr);
 		mkop = (struct crypt_mkop *)data;
-		if (mkop->count <= 0 || mkop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*knop) <= mkop->count) {
+		if (mkop->count <= 0 || mkop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*knop))) {
 			error = EINVAL;
 			break;
 		}
@@ -483,8 +482,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNCRYPTRETM:
 		fcrypt_settime(fcr);
 		crypt_ret = (struct cryptret *)data;
-		if (crypt_ret->count <= 0
-		    || SIZE_MAX / sizeof(*crypt_res) <= crypt_ret->count) {
+		if (crypt_ret->count <= 0 || crypt_ret->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*crypt_res))) {
 			error = EINVAL;
 			break;
 		}
