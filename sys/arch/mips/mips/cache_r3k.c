@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k.c,v 1.7 2016/07/11 16:15:36 matt Exp $	*/
+/*	$NetBSD: cache_r3k.c,v 1.8 2026/05/19 21:41:21 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.7 2016/07/11 16:15:36 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.8 2026/05/19 21:41:21 andvar Exp $");
 
 #include <sys/param.h>
 
@@ -109,7 +109,7 @@ void
 r3k_pdcache_wb_range(register_t va, vsize_t size)
 {
 
-	/* Cache is write-though. */
+	/* Cache is write-through. */
 }
 
 #undef round_line

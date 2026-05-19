@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.5 2021/12/05 03:07:16 msaitoh Exp $	*/
+/*	$NetBSD: bus.c,v 1.6 2026/05/19 21:41:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.5 2021/12/05 03:07:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.6 2026/05/19 21:41:21 andvar Exp $");
 
 #include "opt_cputype.h"
 
@@ -126,7 +126,7 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 #endif
 
 	/*
-	 * The R3000 cache is write-though.  Therefore, we only need
+	 * The R3000 cache is write-through.  Therefore, we only need
 	 * to drain the write buffer on PREWRITE.  The cache is not
 	 * coherent, however, so we need to invalidate the data cache
 	 * on PREREAD (should we do it POSTREAD instead?).
@@ -159,7 +159,7 @@ _bus_dmamap_sync_r3k(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 * than the entire data cache, just nail the whole thing.
 	 *
 	 * NOTE: Even though this is `wbinv_all', since the cache is
-	 * write-though, it just invalidates it.
+	 * write-through, it just invalidates it.
 	 */
 	if (len >= mips_cache_info.mci_pdcache_size) {
 		mips_dcache_wbinv_all();

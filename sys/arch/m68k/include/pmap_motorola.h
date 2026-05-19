@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.62 2026/05/06 04:45:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.63 2026/05/19 21:41:21 andvar Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -289,7 +289,7 @@ struct pmap_bootmap {
 #define	PMBM_F_FIXEDVA	__BIT(1)
 #define	PMBM_F_KEEPOUT	__BIT(2)
 #define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
-#define	PMBM_F_CWT	__BIT(4)	/* write-though cacheable mapping */
+#define	PMBM_F_CWT	__BIT(4)	/* write-through cacheable mapping */
 #define	PMBM_F_RO	__BIT(5)	/* read-only mapping */
 
 extern struct pmap_bootmap machine_bootmap[];

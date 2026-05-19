@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.41 2025/12/01 17:50:17 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.42 2026/05/19 21:41:21 andvar Exp $	*/
 
 #ifndef _MAC68K_PMAP_H_
 #define	_MAC68K_PMAP_H_
@@ -25,7 +25,7 @@
 
 /*
  * We need to map the region between the start of kernel text and
- * start() read/write-write-though-cacheable, as this region contains
+ * start() read/write-write-through-cacheable, as this region contains
  * the vector table and the MacOS "low ram" with a bunch of variables
  * used by the ROMs.  We override the default kernel text protection
  * mode for pmap_bootstrap1() here, and then fix up the region between

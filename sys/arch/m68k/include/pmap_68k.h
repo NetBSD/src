@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.18 2026/05/07 04:06:38 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.19 2026/05/19 21:41:21 andvar Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@ struct pmap_bootmap {
 #define	PMBM_F_FIXEDVA	__BIT(1)
 #define	PMBM_F_KEEPOUT	__BIT(2)
 #define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
-#define	PMBM_F_CWT	__BIT(4)	/* write-though cacheable mapping */
+#define	PMBM_F_CWT	__BIT(4)	/* write-through cacheable mapping */
 #define	PMBM_F_RO	__BIT(5)	/* read-only mapping */
 
 /*
