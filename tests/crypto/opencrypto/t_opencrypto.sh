@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.12 2026/04/25 00:37:29 christos Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.13 2026/05/19 15:57:51 riastradh Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,6 +305,14 @@ thread_body() {
 }
 
 thread_cleanup() {
+	if [ -f h_thread.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    "$(atf_get_srcdir)/h_thread" h_thread.core
+	fi
+	if [ -f rump_server.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    /usr/bin/rump_server rump_server.core
+	fi
 	common_cleanup
 }
 
