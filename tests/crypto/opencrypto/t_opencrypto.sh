@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.13 2026/05/19 15:57:51 riastradh Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.14 2026/05/19 15:58:37 riastradh Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -305,6 +305,11 @@ thread_body() {
 }
 
 thread_cleanup() {
+	if ! [ -f rump_server.core ]; then
+		LD_PRELOAD="/usr/lib/librumphijack.so" \
+		RUMPHIJACK=sysctl=yes \
+		dmesg >&2
+	fi
 	if [ -f h_thread.core ]; then
 		gdb -batch -ex bt -ex 'info registers' \
 		    "$(atf_get_srcdir)/h_thread" h_thread.core

@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.6 2020/01/27 17:10:23 pgoyette Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.7 2026/05/19 15:58:37 riastradh Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.6 2020/01/27 17:10:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.7 2026/05/19 15:58:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -40,44 +40,15 @@ __KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.6 2020/01/27 17:10:23 pgo
 
 #include "ioconf.h"
 
-void crypto_init(void);
-
-RUMP_COMPONENT(RUMP_COMPONENT_DEV)
+RUMP_COMPONENT(RUMP_COMPONENT_POSTINIT)
 {
-	extern const struct cdevsw crypto_cdevsw;
-	devmajor_t bmaj, cmaj;
+	devmajor_t cmaj;
 	int error;
 
-	/* go, mydevfs */
-	bmaj = cmaj = -1;
-
-	if ((error = devsw_attach("crypto", NULL, &bmaj,
-	    &crypto_cdevsw, &cmaj)) != 0)
-		panic("cannot attach crypto: %d", error);
-
-	if ((error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/crypto",
-	    cmaj, 0)) != 0)
-		panic("cannot create /dev/crypto: %d", error);
-
-	/*
-	 * Initialize OpenCrypto and its pseudo-devices here
-	 */
-	crypto_init();
-	rump_pdev_add(cryptoattach, 1);
-#if 0
-	/*
-	 * rump defines "_MODULE" in spite of using built-in module
-	 * initialization(module_init_class()). So, swcryptoattach_internal()
-	 * is called by two functions, one is swcryptoattach() and the other is
-	 * swcrypto_modcmd().
-	 * That causes "builtin module `swcrypto' failed to init" WARNING message.
-	 * To suppress this warning, we let rump use swcrypto_modcmd() call-path
-	 * only.
-	 *
-	 * TODO:
-	 * There is still "crypto: unable to register devsw, error 17" message.
-	 * it should be suppressed.
-	 */
-	rump_pdev_add(swcryptoattach, 0);
-#endif
+	cmaj = devsw_name2chr("crypto", NULL, 0);
+	if (cmaj == -1)
+               panic("failed to find crypto devsw");
+	error = rump_vfs_makeonedevnode(S_IFCHR, "/dev/crypto", cmaj, 0);
+	if (error)
+               panic("cannot create /dev/crypto: %d", error);
 }
