@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.40 2026/04/21 07:40:26 macallan Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.41 2026/05/19 09:24:10 macallan Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -131,6 +131,7 @@ static void	gftfb_bitblt(void *, int, int, int, int, int,
 static void	gftfb_cursor(void *, int, int, int);
 static void	gftfb_putchar(void *, int, int, u_int, long);
 static void	gftfb_putchar_aa(void *, int, int, u_int, long);
+static int	gftfb_allocattr(void *, int, int, int, long *);
 static void	gftfb_copycols(void *, int, int, int, int);
 static void	gftfb_erasecols(void *, int, int, int, long);
 static void	gftfb_copyrows(void *, int, int, int);
@@ -705,6 +706,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = gftfb_eraserows;
 	ri->ri_ops.erasecols = gftfb_erasecols;
 	ri->ri_ops.cursor = gftfb_cursor;
+	ri->ri_ops.allocattr = gftfb_allocattr;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = gftfb_putchar_aa;
 	} else
@@ -1135,6 +1137,28 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	if (attr & WSATTR_UNDERLINE)
 		glyphcache_underline(&sc->sc_gc, x, y, attr);
+}
+
+static int
+gftfb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static void

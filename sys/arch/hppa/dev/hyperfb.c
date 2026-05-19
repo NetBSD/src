@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperfb.c,v 1.34 2026/05/05 06:42:40 macallan Exp $	*/
+/*	$NetBSD: hyperfb.c,v 1.35 2026/05/19 09:24:10 macallan Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.34 2026/05/05 06:42:40 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperfb.c,v 1.35 2026/05/19 09:24:10 macallan Exp $");
 
 #include "opt_cputype.h"
 #include "opt_hyperfb.h"
@@ -137,6 +137,7 @@ static void	hyperfb_bitblt(void *, int, int, int, int, int,
 static void	hyperfb_cursor(void *, int, int, int);
 static void	hyperfb_putchar(void *, int, int, u_int, long);
 static void	hyperfb_putchar_aa(void *, int, int, u_int, long);
+static int	hyperfb_allocattr(void *, int, int, int, long *);
 static void	hyperfb_copycols(void *, int, int, int, int);
 static void	hyperfb_erasecols(void *, int, int, int, long);
 static void	hyperfb_copyrows(void *, int, int, int);
@@ -545,6 +546,7 @@ hyperfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = hyperfb_eraserows;
 	ri->ri_ops.erasecols = hyperfb_erasecols;
 	ri->ri_ops.cursor = hyperfb_cursor;
+	ri->ri_ops.allocattr = hyperfb_allocattr;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = hyperfb_putchar_aa;
 	} else
@@ -1345,6 +1347,28 @@ hyperfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	if (attr & WSATTR_UNDERLINE)
 		glyphcache_underline(&sc->sc_gc, x, y, attr);
+}
+
+static int
+hyperfb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static void
