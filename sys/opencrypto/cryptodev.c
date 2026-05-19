@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.128 2026/04/29 14:51:58 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.129 2026/05/19 15:58:12 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.128 2026/04/29 14:51:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.129 2026/05/19 15:58:12 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -944,8 +944,11 @@ cse_find(struct fcrypt *fcr, uint32_t ses)
 	mutex_enter(&fcr->lock);
 	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext)
 		if (cse->ses == ses) {
+			if (atomic_inc_uint_nv(&cse->refcnt) == UINT_MAX) {
+				atomic_dec_uint(&cse->refcnt);
+				cse = NULL;
+			}
 			mutex_exit(&fcr->lock);
-			atomic_inc_uint(&cse->refcnt);
 			return cse;
 		}
 	mutex_exit(&fcr->lock);
