@@ -49,3 +49,10 @@ zone "2.0.0.2.ip6.arpa" {
 	file "2.0.0.2.ip6.addr.db";
 	update-policy {	grant * 6to4-self . NS(10) DS(4); };
 };
+
+zone "sigaxfr.nil" {
+	type secondary;
+	primaries { 10.53.0.11; };
+	file "sigaxfr.bk";
+	request-ixfr no; # ans11 serves AXFR only
+};

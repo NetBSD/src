@@ -1,0 +1,3 @@
+{% set adblimit = adblimit | default("") %}
+
+-D selfpointedglue-ns4 -m record -c named.conf -d 99 -g -T maxcachesize=2097152 -4 @adblimit@

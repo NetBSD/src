@@ -35,6 +35,7 @@ update.nil              IN SOA  ns1.example.nil. hostmaster.example.nil. (
                                 3600       ; minimum (1 hour)
                                 )
 update.nil.             NS      ns1.update.nil.
+update.nil.             KX      0 .
 ns1.update.nil.         A       10.53.0.2
 ns2.update.nil.		AAAA	::1
 EOF

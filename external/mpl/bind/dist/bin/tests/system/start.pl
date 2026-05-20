@@ -329,7 +329,7 @@ sub construct_ans_command {
 	} elsif (-e "$testdir/$server/ans.pl") {
 		$command = "$PERL ans.pl";
 	} else {
-		$command = "$PERL $srcdir/ans.pl 10.53.0.$n";
+		die "unable to find ans.pl or ans.py in \"$testdir/$server\"\n";
 	}
 
 	if ($options) {

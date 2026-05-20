@@ -11,7 +11,7 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
-from collections.abc import AsyncGenerator, Callable, Coroutine, Sequence
+from collections.abc import AsyncGenerator, Callable, Collection, Coroutine, Sequence
 from dataclasses import dataclass, field
 from typing import Any, cast
 
@@ -26,7 +26,6 @@ import os
 import pathlib
 import re
 import signal
-import struct
 import sys
 
 import dns.exception
@@ -875,6 +874,63 @@ class ForwarderHandler(ResponseHandler):
             yield BytesResponseSend(response.result())
 
 
+class AxfrHandler(ResponseHandler):
+    """
+    Base class for AXFR response handlers.
+
+    Subclasses must define the `initial_soa`, `zone_contents`, and `final_soa`
+    properties to specify the content of the AXFR responses.
+
+    The responses are constructed without any regard to zone data.
+    """
+
+    @property
+    @abc.abstractmethod
+    def initial_soa(self) -> dns.rrset.RRset:
+        """
+        Initial SOA record of response packets sent in response to
+        AXFR queries.
+        """
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def zone_contents(self) -> Collection[dns.rrset.RRset]:
+        """
+        Answer section of the second response packet sent in response to
+        AXFR queries.
+        """
+        raise NotImplementedError
+
+    @property
+    @abc.abstractmethod
+    def final_soa(self) -> dns.rrset.RRset:
+        """
+        Final SOA record of response packets sent in response to
+        AXFR queries.
+        """
+        raise NotImplementedError
+
+    def match(self, qctx: QueryContext) -> bool:
+        return qctx.qtype == dns.rdatatype.AXFR
+
+    async def get_responses(
+        self, qctx: QueryContext
+    ) -> AsyncGenerator[DnsResponseSend, None]:
+        qctx.prepare_new_response(with_zone_data=False)
+        qctx.response.answer.append(self.initial_soa)
+        yield DnsResponseSend(qctx.response)
+
+        qctx.prepare_new_response(with_zone_data=False)
+        for rrset_ in self.zone_contents:
+            qctx.response.answer.append(rrset_)
+        yield DnsResponseSend(qctx.response)
+
+        qctx.prepare_new_response(with_zone_data=False)
+        qctx.response.answer.append(self.final_soa)
+        yield DnsResponseSend(qctx.response)
+
+
 @dataclass
 class _ZoneTreeNode:
     """
@@ -1216,9 +1272,7 @@ class AsyncDnsServer(AsyncServer):
         if not wire_length_bytes:
             return None
 
-        (wire_length,) = struct.unpack("!H", wire_length_bytes)
-
-        return wire_length
+        return int.from_bytes(wire_length_bytes, byteorder="big")
 
     async def _read_tcp_query_wire(
         self, reader: asyncio.StreamReader, peer: Peer, wire_length: int
@@ -1336,6 +1390,24 @@ class AsyncDnsServer(AsyncServer):
         )
         logging.debug("[OUT] %s", response.hex())
 
+    def _prepare_response_wire(
+        self, qctx: QueryContext, response: dns.message.Message | bytes | None
+    ) -> bytes | None:
+        def prepend_length_unless_udp(payload: bytes) -> bytes:
+            if qctx.protocol == DnsProtocol.UDP:
+                return payload
+            return len(payload).to_bytes(2, byteorder="big") + payload
+
+        match response:
+            case dns.message.Message(wire=bytes() as payload) | (bytes() as payload):
+                # Calling to_wire() on a Message again may result in a different TSIG
+                # signature being generated, which would be incorrect.
+                return prepend_length_unless_udp(payload)
+            case dns.message.Message(wire=None):
+                return prepend_length_unless_udp(response.to_wire(max_size=65535))
+            case _:
+                return None
+
     async def _handle_query(
         self, wire: bytes, socket: Peer, peer: Peer, protocol: DnsProtocol
     ) -> AsyncGenerator[bytes, None]:
@@ -1352,15 +1424,12 @@ class AsyncDnsServer(AsyncServer):
         self._log_query(qctx)
         responses = self._prepare_responses(qctx)
         async for response in responses:
+            # Call _prepare_response_wire before logging the response, so that TSIG
+            # records are properly included in the logged response.
+            response_wire = self._prepare_response_wire(qctx, response)
             self._log_response(qctx, response)
-            if response:
-                if isinstance(response, dns.message.Message):
-                    response = response.to_wire(max_size=65535)
-                if protocol == DnsProtocol.UDP:
-                    yield response
-                else:
-                    response_length = struct.pack("!H", len(response))
-                    yield response_length + response
+            if response_wire is not None:
+                yield response_wire
 
     def _parse_message(self, wire: bytes) -> dns.message.Message:
         try:

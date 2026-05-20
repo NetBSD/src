@@ -14,14 +14,17 @@
 trust-anchors {
 	example. static-key 257 3 14 "@ksk_public_key@";
 
+	truncated-active.selfsigned. static-key 257 3 14 "fYA=";
+
 	/*
 	 *  The key tag in the trust anchor must match that of the revoked
-	 *  truncated self-signed key in the truncated.selfsigned. zone.
+	 *  truncated self-signed key in the truncated-revoked.selfsigned.
+         *  zone.
 	 *
 	 *  The DNSKEY contents are intentionally different here, because the
 	 *  key doesn't have the revoked bit here and that flag is part of the
 	 *  key tag. The following decodes to key tag 33167, which is the same
 	 *  as the revoked truncated key in the zone file.
 	 */
-	truncated.selfsigned. static-key 257 3 14 "fYA=";
+	truncated-revoked.selfsigned. static-key 257 3 14 "fYA=";
 };

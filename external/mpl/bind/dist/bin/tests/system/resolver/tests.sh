@@ -782,10 +782,12 @@ if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
-echo_i "checking NXDOMAIN is returned when querying non existing domain in CH class ($n)"
+echo_i "checking REFUSED is returned when querying non existing domain in CH class ($n)"
 ret=0
-dig_with_opts @10.53.0.1 id.hostname txt ch >dig.ns1.out.${n} || ret=1
-grep "status: NXDOMAIN" dig.ns1.out.${n} >/dev/null || ret=1
+dig_with_opts @10.53.0.1 hostname.chaostest txt ch >dig.ns1.out.1.${n} || ret=1
+grep "status: NOERROR" dig.ns1.out.1.${n} >/dev/null || ret=1
+dig_with_opts @10.53.0.1 id.hostname txt ch >dig.ns1.out.2.${n} || ret=1
+grep "status: REFUSED" dig.ns1.out.2.${n} >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

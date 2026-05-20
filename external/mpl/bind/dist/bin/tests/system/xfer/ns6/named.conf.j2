@@ -111,3 +111,10 @@ zone "xfr-and-reconfig" {
 	file "xfr-and-reconfig.bk";
 	request-ixfr no; # ans9 supports only axfr
 };
+
+# GL#5767
+zone "ixfr-race" {
+	type secondary;
+	primaries { 10.53.0.11; };
+	file "ixfr-race.bk";
+};

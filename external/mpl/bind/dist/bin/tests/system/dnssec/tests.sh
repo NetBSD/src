@@ -2137,6 +2137,42 @@ n=$((n + 1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status + ret))
 
+echo_i "checking dnssec-signzone without -o and zone is in directory (incorrect basename) ($n)"
+ret=0
+cp signer/general/test13.zone signer/bad.db
+$SIGNER -O full -S signer/bad.db 2>signer.err.$n && ret=1
+grep "example.com: not at top of zone" signer.err.$n >/dev/null || ret=1
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+echo_i "checking dnssec-signzone without -o and zone is in directory ($n)"
+ret=0
+cp signer/general/test13.zone signer/example.com
+$SIGNER -S -K signer/general -O full signer/example.com >signer.out.$n || ret=1
+test -f signer/example.com.signed
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+echo_i "checking dnssec-verify without -o and zone is in directory (incorrect basename) ($n)"
+ret=0
+$VERIFY signer/example.com.signed 2>verify.err.$n && ret=1
+grep "example.com: not at top of zone" verify.err.$n >/dev/null || ret=1
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+echo_i "checking dnssec-verify without -o and zone is in directory ($n)"
+ret=0
+cp signer/example.com.signed signer/example.com
+$VERIFY signer/example.com >verify.out.$n || ret=1
+grep "Loading zone 'example.com' from file 'signer/example.com'" verify.out.$n >/dev/null || ret=1
+grep "Zone fully signed" verify.out.$n >/dev/null || ret=1
+n=$((n + 1))
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
 echo_i "checking validated data are not cached longer than originalttl ($n)"
 ret=0
 dig_with_opts +ttl +noauth a.ttlpatch.example. @10.53.0.3 a >dig.out.ns3.test$n || ret=1
@@ -3454,6 +3490,35 @@ dig_with_opts split-rrsig AXFR @10.53.0.7 >dig.out.test$n || ret=1
 grep -q "not-at-zone-apex.*RRSIG.*SOA" dig.out.test$n && ret=1
 n=$((n + 1))
 test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+echo_i "checking maximal sized compresses bit map works ($n)"
+ret=0
+(
+  cd signer || exit 0
+  key1=$(${KEYGEN} -a "${DEFAULT_ALGORITHM}" -f KSK maxcbm.example)
+  key2=$(${KEYGEN} -a "${DEFAULT_ALGORITHM}" maxcbm.example)
+  cat >>maxcbm.example.db <<EOF
+\$TTL 3600
+@ SOA . . 0 0 0 0 3600
+@ NS .
+\$INCLUDE "${key1}.key"
+\$INCLUDE "${key2}.key"
+; the last data type in the first window
+data TYPE127 \# 0
+EOF
+  # add a record at the end of each cbm window less 1
+  type=$((256 + 254))
+  while test $type -lt 65536; do
+    echo "data TYPE$type \\# 0" >>maxcbm.example.db
+    type=$((type + 256))
+  done
+  "${SIGNER}" -3 - -o maxcbm.example maxcbm.example.db >signer.out.$n
+  "${CHECKZONE}" -q -D maxcbm.example maxcbm.example.db.signed \
+    | grep '^M7L6E3AJUD7LRVUMMQS595OGHBMT4DFT.*NSEC3.*TYPE65534$' >/dev/null || ret=1
+) || ret=1
+n=$((n + 1))
+if [ "$ret" -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 echo_i "check that 'dnssec-keygen -S' works for all supported algorithms ($n)"

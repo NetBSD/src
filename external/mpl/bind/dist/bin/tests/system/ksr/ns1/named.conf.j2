@@ -94,6 +94,25 @@ dnssec-policy "ksk-roll" {
 	};
 };
 
+dnssec-policy "fast" {
+	offline-ksk yes;
+	keys {
+		ksk lifetime unlimited algorithm @DEFAULT_ALGORITHM@;
+		zsk lifetime 8792 algorithm @DEFAULT_ALGORITHM@;
+	};
+        dnskey-ttl 439;
+        max-zone-ttl 4396;
+        zone-propagation-delay 439;
+        signatures-validity 6;
+        signatures-validity-dnskey 6;
+        signatures-refresh 2;
+        signatures-jitter 0;
+        publish-safety 1;
+        retire-safety 1;
+        parent-ds-ttl 5;
+        parent-propagation-delay 5;
+};
+
 dnssec-policy "invalid-skr" {
 	offline-ksk yes;
 	keys {

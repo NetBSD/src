@@ -703,7 +703,7 @@ $DIG -p ${PORT} @10.53.1.2 d.normal.example a >dig.out.ns3.4.$n || ret=1
 grep 'recursion requested but not available' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'status: REFUSED' dig.out.ns3.4.$n >/dev/null || ret=1
 grep 'EDE: 18 (Prohibited)' dig.out.ns3.4.$n >/dev/null || ret=1
-nextpart ns3/named.run | grep 'allow-recursion-on did not match' >/dev/null || ret=1
+nextpart ns3/named.run | grep 'allow-query-cache-on did not match' >/dev/null || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

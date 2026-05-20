@@ -23,3 +23,8 @@ dual		A	1.0.0.6
 dual 		AAAA	2001:db8::6
 mx		A	1.0.0.3
 mx 		AAAA	2001:db8::3
+
+; one of these AAAA addresses is excluded in named.conf
+excludeone	A	1.0.0.6
+excludeone	AAAA	::1
+excludeone	AAAA	2001:db8::6
