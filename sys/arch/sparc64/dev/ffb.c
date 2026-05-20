@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.68 2023/12/20 05:33:58 thorpej Exp $	*/
+/*	$NetBSD: ffb.c,v 1.69 2026/05/20 07:09:52 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.68 2023/12/20 05:33:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.69 2026/05/20 07:09:52 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -679,11 +679,11 @@ ffb_ras_eraserows(void *cookie, int row, int n, long attr)
 		n = ri->ri_rows - row;
 	if (n <= 0)
 		return;
-	
+
 	ffb_ras_fill(sc);
 	ffb_ras_setfg(sc, ri->ri_devcmap[(attr >> 16) & 0xf]);
 	ffb_ras_fifo_wait(sc, 4);
-	if ((n == ri->ri_rows) && (ri->ri_flg & RI_FULLCLEAR)) {
+	if (row == 0 && n == ri->ri_rows) {
 		FBC_WRITE(sc, FFB_FBC_BY, 0);
 		FBC_WRITE(sc, FFB_FBC_BX, 0);
 		FBC_WRITE(sc, FFB_FBC_BH, ri->ri_height);
@@ -987,16 +987,14 @@ ffb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr;
 	struct ffb_softc *sc;
 	int x, y, wi, he;
-	
+
 	if (cookie != NULL) {
 		scr = ri->ri_hw;
 		sc = scr->scr_cookie;
-	
 		wi = ri->ri_font->fontwidth;
 		he = ri->ri_font->fontheight;
 
 		if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-	
 			if (ri->ri_flg & RI_CURSOR) {
 
 				/* remove cursor */
@@ -1048,7 +1046,7 @@ ffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	uint32_t fg, bg;
 	int i;
 	int x, y, wi, he;
-	
+
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
@@ -1080,7 +1078,7 @@ ffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 		case 1: {
 			uint8_t *data8 = data;
 			uint32_t reg;
-			if (attr & WSATTR_UNDERLINE) {				
+			if (attr & WSATTR_UNDERLINE) {
 				for (i = 0; i < he - 2; i++) {
 					reg = *data8;
 					FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
@@ -1102,7 +1100,7 @@ ffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 		case 2: {
 			uint16_t *data16 = data;
 			uint32_t reg;
-			if (attr & WSATTR_UNDERLINE) {				
+			if (attr & WSATTR_UNDERLINE) {
 				for (i = 0; i < he - 2; i++) {
 					reg = *data16;
 					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
@@ -1139,7 +1137,7 @@ ffb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	int x, y, wi, he;
 	uint32_t alpha = 0x80;
 	int j;
-	
+
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
@@ -1243,7 +1241,8 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = sc->sc_linebytes;
-	ri->ri_flg = RI_CENTER | RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | 
+		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	/*
 	 * we can't accelerate copycols() so instead of falling back to
