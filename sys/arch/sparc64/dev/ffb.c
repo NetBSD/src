@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.69 2026/05/20 07:09:52 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.70 2026/05/20 07:43:24 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.69 2026/05/20 07:09:52 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.70 2026/05/20 07:43:24 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -100,7 +100,7 @@ struct wsscreen_descr ffb_stdscreen = {
 	0,
 	0, 0,
 	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE |
-	    WSSCREEN_RESIZE,
+	    WSSCREEN_HILIT | WSSCREEN_RESIZE,
 	NULL	/* modecookie */
 };
 
@@ -204,7 +204,7 @@ ffb_attach(device_t self)
 	prop_data_t data;
 
 	printf(":");
-		
+
 	if (sc->sc_type == FFB_CREATOR) {
 		btype = prom_getpropint(sc->sc_node, "board_type", 0);
 		if ((btype & 7) == 3)
@@ -225,10 +225,10 @@ ffb_attach(device_t self)
 	/* We might alter these during EDID mode setting */
 	sc->sc_height = prom_getpropint(sc->sc_node, "height", 0);
 	sc->sc_width = prom_getpropint(sc->sc_node, "width", 0);
-	
+
 	sc->sc_locked = 0;
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
-	
+
 	maxrow = (prom_getoption("screen-#rows", buf, sizeof buf) != 0)
 		? strtoul(buf, NULL, 10)
 		: 34;
@@ -319,14 +319,14 @@ ffb_attach(device_t self)
 	} else {
 		DPRINTF(("%s: No EDID data.\n", device_xname(sc->sc_dev)));
 	}
-		
+
 	ffb_ras_init(sc);
 
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &blank);
 
 	sc->sc_accel = ((device_cfdata(sc->sc_dev)->cf_flags &
 	    FFB_CFFLAG_NOACCEL) == 0);
-		
+
 	wsfont_init();
 
 	vcons_init(&sc->vd, sc, &ffb_stdscreen, &ffb_accessops);
@@ -354,7 +354,7 @@ ffb_attach(device_t self)
 	ffb_stdscreen.nrows = ri->ri_rows;
 	ffb_stdscreen.ncols = ri->ri_cols;
 	ffb_stdscreen.textops = &ri->ri_ops;
-	
+
 	sc->sc_fb.fb_driver = &ffb_fbdriver;
 	sc->sc_fb.fb_type.fb_cmsize = 0;
 	sc->sc_fb.fb_type.fb_size = maxrow * sc->sc_linebytes;
@@ -371,7 +371,7 @@ ffb_attach(device_t self)
 		wsdisplay_cnattach(&ffb_stdscreen, ri, 0, 0, defattr);
 		vcons_replay_msgbuf(&ffb_console_screen);
 	}
-	
+
 	waa.console = sc->sc_console;
 	waa.scrdata = &ffb_screenlist;
 	waa.accessops = &ffb_accessops;
@@ -465,7 +465,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 					ffb_ras_wait(sc);
 				}
 			}
-		}		
+		}
 		break;
 	case WSDISPLAYIO_GINFO:
 		wdf = (void *)data;
@@ -489,7 +489,7 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_GVIDEO:
 		return(ffb_blank(sc, cmd, (u_int *)data));
 		break;
-	
+
 	case WSDISPLAYIO_GCURPOS:
 	case WSDISPLAYIO_SCURPOS:
 	case WSDISPLAYIO_GCURMAX:
@@ -497,17 +497,17 @@ ffb_ioctl(void *v, void *vs, u_long cmd, void *data, int flags, struct lwp *l)
 	case WSDISPLAYIO_SCURSOR:
 		return EIO; /* not supported yet */
 		break;
-	
+
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
 	}
-	
+
 	case WSDISPLAYIO_GET_FBINFO: {
 		struct wsdisplayio_fbinfo *fbi = data;
 		return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
 	}
-	
+
 	default:
 		return EPASSTHROUGH;
 	}
@@ -521,7 +521,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 {
 	struct vcons_screen *ms = sc->vd.active;
 	u_int val;
-	
+
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	val = DAC_READ(sc, FFB_DAC_VALUE);
 
@@ -544,7 +544,7 @@ ffb_blank(struct ffb_softc *sc, u_long cmd, u_int *data)
 
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	DAC_WRITE(sc, FFB_DAC_VALUE, val);
-	
+
 	if ((val & 1) && sc->sc_needredraw) {
 		if (ms != NULL) {
 			if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) && 
@@ -642,7 +642,7 @@ ffb_ras_init(struct ffb_softc *sc)
 	    FBC_PPC_VCE_DIS | FBC_PPC_TBE_OPAQUE | FBC_PPC_ACE_DIS | 
 	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
 	    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
-	    
+
 	fbc |= FFB_FBC_WB_A | FFB_FBC_RB_A | FFB_FBC_SB_BOTH |
 	       FFB_FBC_RGBE_MASK;
         DPRINTF(("%s: fbc is %08x\n", __func__, fbc));
@@ -830,13 +830,13 @@ ffbfb_unblank(device_t dev)
 	struct vcons_screen *ms = sc->vd.active;
 	u_int on = 1;
 	int redraw = 0;
-	
+
 	ffb_ras_init(sc);
 	if (sc->sc_locked) {
 		sc->sc_locked = 0;
 		redraw = 1;
 	}
-	
+
 	ffb_blank(sc, WSDISPLAYIO_SVIDEO, &on);
 #if 0
 	if ((sc->vd.active != &ffb_console_screen) &&
@@ -846,14 +846,13 @@ ffbfb_unblank(device_t dev)
 		 * Caveat: the higher layer will think we're still on the
 		 * other screen
 		 */
-		
 		SCREEN_INVISIBLE(sc->vd.active);
 		sc->vd.active = &ffb_console_screen;
 		SCREEN_VISIBLE(sc->vd.active);
 		ms = sc->vd.active;
 		redraw = 1;
 	}
-#endif	
+#endif
 	if (redraw) {
 		vcons_redraw_screen(ms);
 	}
@@ -867,7 +866,7 @@ ffbfb_open(dev_t dev, int flags, int mode, struct lwp *l)
 	sc = device_lookup_private(&ffb_cd, minor(dev));
 	if (sc == NULL)
 		return ENXIO;
-		
+
 	sc->sc_locked = 1;
 	return 0;
 }
@@ -877,7 +876,7 @@ ffbfb_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	struct ffb_softc *sc = device_lookup_private(&ffb_cd, minor(dev));
 	struct vcons_screen *ms = sc->vd.active;
-	
+
 	sc->sc_locked = 0;
 	if (ms != NULL) {
 		if ((sc->sc_mode == WSDISPLAYIO_MODE_EMUL) &&
@@ -935,7 +934,7 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 	if (off == 0x0bc18000)
 		return bus_space_mmap(sc->sc_bt, sc->sc_addrs[FFB_REG_PROM],
 		    0x00200000, prot, BUS_SPACE_MAP_LINEAR);
-		    
+
 	/* 
 	 * FFB_VOFF_FBC_KREGS - used by afbinit to upload firmware. We should 
 	 * probably mmap them only on afb boards 
@@ -944,7 +943,7 @@ ffbfb_mmap(dev_t dev, off_t off, int prot)
 		return bus_space_mmap(sc->sc_bt, sc->sc_addrs[FFB_REG_PROM], 
 		    0x00610000 + (off - 0x0bc04000), prot, 
 		    BUS_SPACE_MAP_LINEAR);
-		    
+
 #define NELEMS(arr) (sizeof(arr)/sizeof((arr)[0]))
 
 	/* the map is ordered by voff */
@@ -1074,51 +1073,60 @@ ffb_putchar_mono(void *cookie, int row, int col, u_int c, long attr)
 	    FBC_PPC_APE_DIS | FBC_PPC_DCE_DIS | FBC_PPC_CS_CONST | 
 	    FBC_PPC_ABE_DIS | FBC_PPC_XS_WID);
 
-	switch (font->stride) {
-		case 1: {
-			uint8_t *data8 = data;
-			uint32_t reg;
-			if (attr & WSATTR_UNDERLINE) {
-				for (i = 0; i < he - 2; i++) {
+	if (attr & WSATTR_HILIT) {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
 					reg = *data8;
+					reg |= reg >> 1;
 					FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
 					data8++;
 				}
-				FBC_WRITE(sc, FFB_FBC_FONT, 0xff000000);
-				data8++;
-				reg = *data8;
-				FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
-			} else {
+				break;
+			}
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
+				for (i = 0; i < he; i++) {
+					reg = *data16;
+					reg |= reg >> 1;
+					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
+					data16++;
+				}
+				break;
+			}
+		}
+	} else {
+		switch (font->stride) {
+			case 1: {
+				uint8_t *data8 = data;
+				uint32_t reg;
 				for (i = 0; i < he; i++) {
 					reg = *data8;
 					FBC_WRITE(sc, FFB_FBC_FONT, reg << 24);
 					data8++;
 				}
+				break;
 			}
-			break;
-		}
-		case 2: {
-			uint16_t *data16 = data;
-			uint32_t reg;
-			if (attr & WSATTR_UNDERLINE) {
-				for (i = 0; i < he - 2; i++) {
-					reg = *data16;
-					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
-					data16++;
-				}
-				FBC_WRITE(sc, FFB_FBC_FONT, 0xffff0000);
-				data16++;
-				reg = *data16;
-				FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
-			} else {
+			case 2: {
+				uint16_t *data16 = data;
+				uint32_t reg;
 				for (i = 0; i < he; i++) {
 					reg = *data16;
 					FBC_WRITE(sc, FFB_FBC_FONT, reg << 16);
 					data16++;
 				}
+				break;
 			}
-			break;
 		}
+	}
+	if (attr & WSATTR_UNDERLINE) {
+		int ul = he - ((he < 16) ? 1 : 2);
+		ffb_ras_fifo_wait(sc, 2);
+		FBC_WRITE(sc, FFB_FBC_FONTXY, ((y + ul) << 16) | x);
+		FBC_WRITE(sc, FFB_FBC_FONT, 0xffff0000);
 	}
 }
 
@@ -1214,19 +1222,24 @@ out:
 }
 
 int
-ffb_allocattr(void *cookie, int fg, int bg, int flags, long *attrp)
+ffb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attrp)
 {
-	if ((fg == 0) && (bg == 0))
-	{
-		fg = WS_DEFAULT_FG;
-		bg = WS_DEFAULT_BG;
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
 	}
-	if (flags & WSATTR_REVERSE) {
-		*attrp = (bg & 0xff) << 24 | (fg & 0xff) << 16;
-	} else
-		*attrp = (fg & 0xff) << 24 | (bg & 0xff) << 16;
-	if (flags & WSATTR_UNDERLINE)
-		*attrp |= WSATTR_UNDERLINE;
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attrp = (bg << 16) | (fg << 24) | flg;
 	return 0;
 }
 
@@ -1266,7 +1279,7 @@ ffb_init_screen(void *cookie, struct vcons_screen *scr,
 	rasops_init(ri, 0, 0);
 	rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
 		    sc->sc_width / ri->ri_font->fontwidth);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | 
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
 	              WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 
 	/* enable acceleration */
@@ -1493,7 +1506,7 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	ffb_get_pclk(mode->dot_clock * 1000, &pll, &diff);
 	if (diff > 250000)
 		return 0;
-	
+
 	/* Pixel Format Control, User Control and FBC Configuration. */
 	if (mode->hdisplay > 1280) {
 		pfc = FFB_DAC_PIX_FMT_821;
@@ -1538,12 +1551,12 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	fp = mode->vsync_start - mode->vdisplay;
 	sp = mode->vsync_end - mode->vsync_start;
 	bp = mode->vtotal - mode->vsync_end;
-	
+
 	vbe = sp - 1 + bp;
 	vbs = sp - 1 + bp + mode->vdisplay;
 	vse = sp - 1;
 	vss = sp  - 1 + bp + mode->vdisplay + fp;
-	
+
 	/* Horizontal timing */
 	fp = mode->hsync_start - mode->hdisplay;
 	sp = mode->hsync_end - mode->hsync_start;
@@ -1611,7 +1624,7 @@ ffb_set_vmode(struct ffb_softc *sc, struct videomode *mode, int btype,
 	DAC_WRITE(sc, FFB_DAC_TYPE, FFB_DAC_TGC);
 	DAC_WRITE(sc, FFB_DAC_VALUE, tgc);
 	DPRINTF(("new tgc: %08x\n", tgc));
-    
+
 	*hres = mode->hdisplay;
 	*vres = mode->vdisplay;
 
