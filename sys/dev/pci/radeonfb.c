@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.120 2026/05/19 09:22:03 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.121 2026/05/20 04:40:34 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.120 2026/05/19 09:22:03 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.121 2026/05/20 04:40:34 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2653,7 +2653,7 @@ radeonfb_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_width = dp->rd_virtx;
 	ri->ri_height = dp->rd_virty;
 	ri->ri_stride = dp->rd_stride;
-	ri->ri_flg = RI_CENTER;
+	ri->ri_flg = RI_CENTER | RI_FULLCLEAR;
 	switch (ri->ri_depth) {
 		case 8:
 			ri->ri_flg |= RI_ENABLE_ALPHA | RI_8BIT_IS_RGB | RI_PREFER_ALPHA;
@@ -3490,10 +3490,16 @@ radeonfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 
 	/* XXX: check for full emulation mode? */
 	if (dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		w = ri->ri_emuwidth;
-		h = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = y = 0;
+			w = dp->rd_virtx;
+			h = dp->rd_virty;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			w = ri->ri_emuwidth;
+			h = ri->ri_font->fontheight * nrows;
+		}
 
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 		radeonfb_rectfill(dp, x, y, w, h, ri->ri_devcmap[bg & 0xf]);
@@ -3565,10 +3571,10 @@ radeonfb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct radeonfb_display	*dp = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (dp->rd_wsmode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
