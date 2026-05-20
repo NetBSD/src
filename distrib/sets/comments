@@ -218,7 +218,7 @@ comp-fortran-catman formatted manual pages for the FORTRAN programming language
 comp-fortran-lib static libraries and shared library links for the FORTRAN programming language
 comp-fortran-man manual pages source for the FORTRAN programming language
 comp-fortran-piclib PIC libraries for the FORTRAN language shared library generation
-comp-fortran-proflib profiling libraries for the FOTRAN programming language
+comp-fortran-proflib profiling libraries for the FORTRAN programming language
 comp-fortran-shlib shared libraries for the FORTRAN programming language
 comp-i18n-lib static libraries and shared library links for compiling applications with internationalisation support
 comp-ipf-include header files for the IPfilter C API
