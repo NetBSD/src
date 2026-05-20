@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3259 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3260 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -261,3 +261,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	dumpfs(8): Allow NAME=wedge-label on the command line.
 		[kre 20260507]
 	postfix(1): Import version 3.11.2. [christos 20260508]
+	bind: Import version 9.20.23. [christos 20260520]
