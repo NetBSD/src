@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.299 2026/04/03 07:37:59 mlelstv Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.300 2026/05/20 21:12:36 kbowling Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.299 2026/04/03 07:37:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.300 2026/05/20 21:12:36 kbowling Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -209,7 +209,7 @@ int	tcp_msl_enable = 1;		/* enable TIME_WAIT truncation	*/
 int	tcp_msl_loop   = PR_SLOWHZ;	/* MSL for loopback		*/
 int	tcp_msl_local  = 5 * PR_SLOWHZ;	/* MSL for 'local'		*/
 int	tcp_msl_remote = TCPTV_MSL;	/* MSL otherwise		*/
-int	tcp_msl_remote_threshold = TCPTV_SRTTDFLT;	/* RTT threshold */
+int	tcp_msl_remote_threshold = 3*PR_SLOWHZ;		/* RTT threshold */
 int	tcp_rttlocal = 0;		/* Use RTT to decide who's 'local' */
 
 int	tcp4_vtw_enable = 0;		/* 1 to enable */
@@ -917,10 +917,10 @@ tcp_tcpcb_template(void)
 
 	/*
 	 * Init srtt to TCPTV_SRTTBASE (0), so we can tell that we have no
-	 * rtt estimate.  Set rttvar so that srtt + 2 * rttvar gives
-	 * reasonable initial retransmit time.
+	 * rtt estimate.  Seed rttvar so the initial RTO computed by
+	 * TCP_REXMTVAL() equals TCPTV_SRTTDFLT (RFC 6298 section 2.1).
 	 */
-	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << (TCP_RTTVAR_SHIFT + 2 - 1);
+	tp->t_rttvar = tcp_rttdflt * PR_SLOWHZ << TCP_RTTVAR_SHIFT;
 	TCPT_RANGESET(tp->t_rxtcur, TCP_REXMTVAL(tp),
 	    TCPTV_MIN, TCPTV_REXMTMAX);
 
