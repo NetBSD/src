@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.28 2026/04/09 15:54:52 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.29 2026/05/20 16:53:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -44,6 +44,7 @@
 #include <dns/dispatch.h>
 #include <dns/dnstap.h>
 #include <dns/edns.h>
+#include <dns/enumclass.h>
 #include <dns/message.h>
 #include <dns/peer.h>
 #include <dns/rcode.h>
@@ -2049,7 +2050,9 @@ ns_client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 		}
 	}
 
-	if (client->message->rdclass == 0) {
+	char classbuf[DNS_RDATACLASS_FORMATSIZE];
+	switch (client->message->rdclass) {
+	case dns_rdataclass_reserved0:
 		if ((client->attributes & NS_CLIENTATTR_WANTCOOKIE) != 0 &&
 		    client->message->opcode == dns_opcode_query &&
 		    client->message->counts[DNS_SECTION_QUESTION] == 0U)
@@ -2068,12 +2071,46 @@ ns_client_request(isc_nmhandle_t *handle, isc_result_t eresult,
 			return;
 		}
 
+		ns_client_dumpmessage(client,
+				      "message class could not be determined");
+		ns_client_error(client, notimp ? DNS_R_NOTIMP : DNS_R_FORMERR);
+		return;
+	case dns_rdataclass_in:
+		break;
+	case dns_rdataclass_chaos:
+		break;
+	case dns_rdataclass_hs:
+		break;
+	case dns_rdataclass_none:
+		if (client->message->opcode != dns_opcode_update) {
+			ns_client_dumpmessage(client,
+					      "message class NONE can be only "
+					      "used in DNS updates");
+			ns_client_error(client, DNS_R_FORMERR);
+			return;
+		}
+		break;
+	case dns_rdataclass_any:
+		/*
+		 * Required for TKEY negotiation.
+		 */
+		if (client->message->tkey == 0) {
+			ns_client_dumpmessage(client,
+					      "message class ANY can be only "
+					      "used for TKEY negotiation");
+			ns_client_error(client, DNS_R_FORMERR);
+			return;
+		}
+		break;
+	default:
+		dns_rdataclass_format(client->message->rdclass, classbuf,
+				      sizeof(classbuf));
+		ns_client_dumpmessage(client, "");
 		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
 			      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
-			      "message class could not be determined");
-		ns_client_dumpmessage(client, "message class could not be "
-					      "determined");
-		ns_client_error(client, notimp ? DNS_R_NOTIMP : DNS_R_FORMERR);
+			      "invalid message class: %s", classbuf);
+
+		ns_client_error(client, DNS_R_NOTIMP);
 		return;
 	}
 
@@ -2157,9 +2194,6 @@ ns_client_request_continue(void *arg) {
 				      "SIG(0) checks quota reached");
 
 			if (can_log_sigchecks_quota()) {
-				ns_client_log(client, NS_LOGCATEGORY_CLIENT,
-					      NS_LOGMODULE_CLIENT, ISC_LOG_INFO,
-					      "SIG(0) checks quota reached");
 				ns_client_dumpmessage(
 					client, "SIG(0) checks quota reached");
 			}
@@ -2169,12 +2203,11 @@ ns_client_request_continue(void *arg) {
 			dns_rdataclass_format(client->message->rdclass,
 					      classname, sizeof(classname));
 
+			ns_client_dumpmessage(client, "");
 			ns_client_log(client, NS_LOGCATEGORY_CLIENT,
 				      NS_LOGMODULE_CLIENT, ISC_LOG_DEBUG(1),
 				      "no matching view in class '%s'",
 				      classname);
-			ns_client_dumpmessage(client,
-					      "no matching view in class");
 		}
 
 		dns_ede_add(&client->edectx, DNS_EDE_PROHIBITED, NULL);
@@ -2421,6 +2454,10 @@ ns_client_request_continue(void *arg) {
 		break;
 	case dns_opcode_update:
 		CTRACE("update");
+		if (client->view->rdclass != dns_rdataclass_in) {
+			ns_client_error(client, DNS_R_NOTIMP);
+			break;
+		}
 #ifdef HAVE_DNSTAP
 		dns_dt_send(client->view, DNS_DTTYPE_UQ, &client->peeraddr,
 			    &client->destsockaddr, transport_type, NULL,
@@ -2431,6 +2468,10 @@ ns_client_request_continue(void *arg) {
 		break;
 	case dns_opcode_notify:
 		CTRACE("notify");
+		if (client->view->rdclass != dns_rdataclass_in) {
+			ns_client_error(client, DNS_R_NOTIMP);
+			break;
+		}
 		ns_client_settimeout(client, 60);
 		ns_notify_start(client, client->handle);
 		break;
@@ -2805,7 +2846,7 @@ ns_client_dumpmessage(ns_client_t *client, const char *reason) {
 	int len = 1024;
 	isc_result_t result;
 
-	if (!isc_log_wouldlog(ns_lctx, ISC_LOG_DEBUG(1))) {
+	if (!isc_log_wouldlog(ns_lctx, ISC_LOG_DEBUG(1)) || reason == NULL) {
 		return;
 	}
 

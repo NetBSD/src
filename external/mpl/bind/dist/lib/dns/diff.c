@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.12 2026/04/08 00:16:13 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.13 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,13 @@
 
 static dns_rdatatype_t
 rdata_covers(dns_rdata_t *rdata) {
-	return rdata->type == dns_rdatatype_rrsig ? dns_rdata_covers(rdata) : 0;
+	if (rdata->type == dns_rdatatype_rrsig ||
+	    rdata->type == dns_rdatatype_sig)
+	{
+		return dns_rdata_covers(rdata);
+	}
+
+	return 0;
 }
 
 isc_result_t

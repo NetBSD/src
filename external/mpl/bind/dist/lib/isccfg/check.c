@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.5 2026/04/08 00:16:16 christos Exp $	*/
+/*	$NetBSD: check.c,v 1.6 2026/05/20 16:53:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3043,12 +3043,16 @@ check_mirror_zone_notify(const cfg_obj_t *zoptions, const char *znamestr,
  */
 static bool
 check_recursion(const cfg_obj_t *config, const cfg_obj_t *voptions,
-		const cfg_obj_t *goptions, isc_log_t *logctx,
-		cfg_aclconfctx_t *actx, isc_mem_t *mctx) {
+		dns_rdataclass_t vclass, const cfg_obj_t *goptions,
+		isc_log_t *logctx, cfg_aclconfctx_t *actx, isc_mem_t *mctx) {
 	dns_acl_t *acl = NULL;
 	const cfg_obj_t *obj;
 	isc_result_t result;
 	bool retval = true;
+
+	if (vclass != dns_rdataclass_in) {
+		return false;
+	}
 
 	/*
 	 * Check the "recursion" option first.
@@ -3907,7 +3911,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 * contradicts the purpose of the former.
 	 */
 	if (ztype == CFG_ZONE_MIRROR &&
-	    !check_recursion(config, voptions, goptions, logctx, actx, mctx))
+	    !check_recursion(config, voptions, zclass, goptions, logctx, actx,
+			     mctx))
 	{
 		cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
 			    "zone '%s': mirror zones cannot be used if "
@@ -5720,6 +5725,17 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	}
 
 	cfg_aclconfctx_create(mctx, &actx);
+
+	if (vclass != dns_rdataclass_in) {
+		if (check_recursion(config, voptions, dns_rdataclass_in,
+				    options, logctx, actx, mctx))
+		{
+			cfg_obj_log(opts, logctx, ISC_LOG_WARNING,
+				    "recursion will be disabled for "
+				    "non-IN view '%s'",
+				    viewname);
+		}
+	}
 
 	if (voptions != NULL) {
 		(void)cfg_map_get(voptions, "zone", &zones);

@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.22 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.23 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1074,6 +1074,17 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 		}
 		rdtype = isc_buffer_getuint16(source);
 		rdclass = isc_buffer_getuint16(source);
+
+		/*
+		 * Notify and update messages need to specify the data class.
+		 */
+		if ((msg->opcode == dns_opcode_update ||
+		     msg->opcode == dns_opcode_notify) &&
+		    (rdclass == dns_rdataclass_none ||
+		     rdclass == dns_rdataclass_any))
+		{
+			DO_ERROR(DNS_R_FORMERR);
+		}
 
 		/*
 		 * If this class is different than the one we already read,

@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.21 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.22 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -162,7 +162,7 @@ struct dns_xfrin {
 
 	_Atomic xfrin_state_t state;
 	uint32_t expireopt;
-	bool edns, expireoptset;
+	bool edns, expireoptset, retry_axfr;
 	atomic_bool is_ixfr;
 
 	/*
@@ -299,6 +299,10 @@ static void
 xfrin_idledout(void *);
 static void
 xfrin_minratecheck(void *);
+static void
+xfrin_reset(dns_xfrin_t *xfr);
+static void
+xfrin_ixfrcleanup(dns_xfrin_t *xfr);
 static void
 xfrin_fail(dns_xfrin_t *xfr, isc_result_t result, const char *msg);
 static isc_result_t
@@ -653,7 +657,9 @@ ixfr_apply_done(void *arg) {
 	CHECK(result);
 
 	/* Reschedule */
-	if (!cds_wfcq_empty(&xfr->diff_head, &xfr->diff_tail)) {
+	if (!xfr->retry_axfr &&
+	    !cds_wfcq_empty(&xfr->diff_head, &xfr->diff_tail))
+	{
 		isc_work_enqueue(xfr->loop, ixfr_apply, ixfr_apply_done, work);
 		return;
 	}
@@ -663,7 +669,18 @@ cleanup:
 
 	isc_mem_put(xfr->mctx, work, sizeof(*work));
 
-	if (result == ISC_R_SUCCESS) {
+	/*
+	 * Don't retry with AXFR (even if it was requested) because there was
+	 * an error or the transfer is shutting down. In case if it _was_ an
+	 * error, xfrin_fail() will return a special result code which will
+	 * still result in AXFR retry from the initiator of the transfer after
+	 * the failure has been is logged.
+	 */
+	if (result != ISC_R_SUCCESS) {
+		xfr->retry_axfr = false;
+	}
+
+	if (!xfr->retry_axfr && result == ISC_R_SUCCESS) {
 		dns_db_closeversion(xfr->db, &xfr->ver, true);
 		dns_zone_markdirty(xfr->zone);
 
@@ -673,7 +690,21 @@ cleanup:
 	} else {
 		dns_db_closeversion(xfr->db, &xfr->ver, false);
 
-		xfrin_fail(xfr, result, "failed while processing responses");
+		if (result != ISC_R_SUCCESS) {
+			xfrin_fail(xfr, result,
+				   "failed while processing responses");
+		}
+	}
+
+	if (xfr->retry_axfr) {
+		xfr->reqtype = dns_rdatatype_soa;
+		atomic_store(&xfr->state, XFRST_SOAQUERY);
+
+		xfrin_reset(xfr);
+		result = xfrin_start(xfr);
+		if (result != ISC_R_SUCCESS) {
+			xfrin_fail(xfr, result, "failed setting up socket");
+		}
 	}
 
 	dns_xfrin_detach(&xfr);
@@ -1201,12 +1232,17 @@ xfrin_cancelio(dns_xfrin_t *xfr) {
 static void
 xfrin_reset(dns_xfrin_t *xfr) {
 	REQUIRE(VALID_XFRIN(xfr));
+	REQUIRE(!xfr->diff_running);
 
 	xfrin_log(xfr, ISC_LOG_INFO, "resetting");
+
+	xfr->retry_axfr = false;
 
 	if (xfr->lasttsig != NULL) {
 		isc_buffer_free(&xfr->lasttsig);
 	}
+
+	xfrin_ixfrcleanup(xfr);
 
 	dns_diff_clear(&xfr->diff);
 
@@ -1346,7 +1382,7 @@ xfrin_start(dns_xfrin_t *xfr) {
 	} else {
 		result = dns_dispatch_createtcp(
 			dispmgr, &xfr->sourceaddr, &xfr->primaryaddr,
-			xfr->transport, DNS_DISPATCHOPT_UNSHARED, &xfr->disp);
+			xfr->transport, DNS_DISPATCHTYPE_XFRIN, 0, &xfr->disp);
 		dns_dispatchmgr_detach(&dispmgr);
 		CHECK(result);
 	}
@@ -1874,6 +1910,11 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		{
 			xfr->edns = false;
 			dns_message_detach(&msg);
+			/*
+			 * With these states (see the conditions above) the diff
+			 * process can't be currently in the running state, so
+			 * it is safe to reset the 'xfr' and retry right away.
+			 */
 			xfrin_reset(xfr);
 			goto try_again;
 		} else if (result == ISC_R_SUCCESS &&
@@ -1903,6 +1944,12 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	try_axfr:
 		LIBDNS_XFRIN_RECV_TRY_AXFR(xfr, xfr->info, result);
 		dns_message_detach(&msg);
+		/* If there is a running worker thread then delay the retry. */
+		if (xfr->diff_running) {
+			xfr->retry_axfr = true;
+			dns_xfrin_detach(&xfr);
+			return;
+		}
 		xfrin_reset(xfr);
 		xfr->reqtype = dns_rdatatype_soa;
 		atomic_store(&xfr->state, XFRST_SOAQUERY);
@@ -2112,6 +2159,19 @@ cleanup:
 }
 
 static void
+xfrin_ixfrcleanup(dns_xfrin_t *xfr) {
+	struct cds_wfcq_node *node, *next;
+	__cds_wfcq_for_each_blocking_safe(&xfr->diff_head, &xfr->diff_tail,
+					  node, next) {
+		ixfr_apply_data_t *data =
+			caa_container_of(node, ixfr_apply_data_t, wfcq_node);
+		/* We need to clear and free all data chunks */
+		dns_diff_clear(&data->diff);
+		isc_mem_put(xfr->mctx, data, sizeof(*data));
+	}
+}
+
+static void
 xfrin_destroy(dns_xfrin_t *xfr) {
 	uint64_t msecs, persec;
 	isc_time_t now = isc_time_now();
@@ -2161,15 +2221,7 @@ xfrin_destroy(dns_xfrin_t *xfr) {
 		  sep, expireopt);
 
 	/* Cleanup unprocessed IXFR data */
-	struct cds_wfcq_node *node, *next;
-	__cds_wfcq_for_each_blocking_safe(&xfr->diff_head, &xfr->diff_tail,
-					  node, next) {
-		ixfr_apply_data_t *data =
-			caa_container_of(node, ixfr_apply_data_t, wfcq_node);
-		/* We need to clear and free all data chunks */
-		dns_diff_clear(&data->diff);
-		isc_mem_put(xfr->mctx, data, sizeof(*data));
-	}
+	xfrin_ixfrcleanup(xfr);
 
 	/* Cleanup unprocessed AXFR data */
 	dns_diff_clear(&xfr->diff);

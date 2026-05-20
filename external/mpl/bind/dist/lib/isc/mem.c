@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.19 2026/01/29 18:37:54 christos Exp $	*/
+/*	$NetBSD: mem.c,v 1.20 2026/05/20 16:53:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,7 @@
 #include <isc/once.h>
 #include <isc/os.h>
 #include <isc/overflow.h>
+#include <isc/random.h>
 #include <isc/refcount.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
@@ -133,7 +134,6 @@ struct isc_mem {
 	char name[16];
 	atomic_size_t inuse;
 	atomic_bool hi_called;
-	atomic_bool is_overmem;
 	atomic_size_t hi_water;
 	atomic_size_t lo_water;
 	ISC_LIST(isc_mempool_t) pools;
@@ -572,7 +572,6 @@ mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
 	atomic_init(&ctx->hi_water, 0);
 	atomic_init(&ctx->lo_water, 0);
 	atomic_init(&ctx->hi_called, false);
-	atomic_init(&ctx->is_overmem, false);
 
 	ISC_LIST_INIT(ctx->pools);
 
@@ -1019,48 +1018,30 @@ bool
 isc_mem_isovermem(isc_mem_t *ctx) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	bool is_overmem = atomic_load_relaxed(&ctx->is_overmem);
-
-	if (!is_overmem) {
-		/* We are not overmem, check whether we should be? */
-		size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
-		if (hiwater == 0) {
-			return false;
-		}
-
-		size_t inuse = atomic_load_relaxed(&ctx->inuse);
-		if (inuse <= hiwater) {
-			return false;
-		}
-
-		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
-			fprintf(stderr,
-				"overmem mctx %p inuse %zu hi_water %zu\n", ctx,
-				inuse, hiwater);
-		}
-
-		atomic_store_relaxed(&ctx->is_overmem, true);
-		return true;
-	} else {
-		/* We are overmem, check whether we should not be? */
-		size_t lowater = atomic_load_relaxed(&ctx->lo_water);
-		if (lowater == 0) {
-			return false;
-		}
-
-		size_t inuse = atomic_load_relaxed(&ctx->inuse);
-		if (inuse >= lowater) {
-			return true;
-		}
-
-		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
-			fprintf(stderr,
-				"overmem mctx %p inuse %zu lo_water %zu\n", ctx,
-				inuse, lowater);
-		}
-		atomic_store_relaxed(&ctx->is_overmem, false);
+	size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
+	if (hiwater == 0) {
 		return false;
 	}
+
+	size_t inuse = atomic_load_relaxed(&ctx->inuse);
+	if (inuse >= hiwater) {
+		return true;
+	}
+
+	size_t lowater = atomic_load_relaxed(&ctx->lo_water);
+	if (inuse <= lowater) {
+		return false;
+	}
+
+	/*
+	 * Between lo_water and hi_water, return true with a probability
+	 * that ramps linearly from 0 at lo_water to 1 at hi_water.  This
+	 * spreads cache cleaning across many inserts instead of triggering
+	 * a thundering herd once the hi_water mark is crossed.
+	 */
+	uint32_t prob = (uint32_t)(((uint64_t)(inuse - lowater) * 256) /
+				   (hiwater - lowater));
+	return isc_random8() < prob;
 }
 
 void

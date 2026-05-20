@@ -1,4 +1,4 @@
-/*	$NetBSD: test-data.c,v 1.3 2025/07/17 19:01:44 christos Exp $	*/
+/*	$NetBSD: test-data.c,v 1.4 2026/05/20 16:53:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -867,8 +867,8 @@ apply_update(const char *updstr, trpz_result_t **presults, size_t *pnresults,
 		}
 
 	} else if (!strcasecmp(rrbuf, "TXT")) {
-		char *ftext = NULL;
-
+		const char *ftext = NULL;
+		size_t len;
 		ftext = strstr(updstr, databuf);
 		if (ftext == NULL) {
 			fprintf(stderr, "Error parsing TXT record: \"%s\"\n",
@@ -877,15 +877,19 @@ apply_update(const char *updstr, trpz_result_t **presults, size_t *pnresults,
 		}
 
 		if (*ftext == '"') {
-			*ftext++ = 0;
+			ftext++;
 
-			if (ftext[strlen(ftext) - 1] == '"') {
-				ftext[strlen(ftext) - 1] = 0;
+			len = strlen(ftext);
+			if (len > 0 && ftext[len - 1] == '"') {
+				len--;
 			}
+		} else {
+			len = strlen(ftext);
 		}
 
-		strncpy(databuf, ftext, sizeof(databuf));
-		databuf[sizeof(databuf) - 1] = 0;
+		strncpy(databuf, ftext,
+			len < sizeof(databuf) ? len : sizeof(databuf));
+		databuf[len < sizeof(databuf) ? len : sizeof(databuf) - 1] = 0;
 		policy = LIBRPZ_POLICY_RECORD;
 	} else if (!strcasecmp(rrbuf, "DNAME")) {
 		policy = LIBRPZ_POLICY_RECORD;

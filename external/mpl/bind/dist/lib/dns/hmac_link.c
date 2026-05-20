@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.10 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.11 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -285,7 +285,7 @@ hmac_generate(const isc_md_type_t *type, dst_key_t *key) {
 	isc_buffer_t b;
 	isc_result_t ret;
 	unsigned int bytes, len;
-	unsigned char data[ISC_MAX_MD_SIZE] = { 0 };
+	unsigned char data[ISC_MAX_BLOCK_SIZE] = { 0 };
 
 	len = isc_md_type_get_block_size(type);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: keyvalues.h,v 1.10 2025/05/21 14:48:04 christos Exp $	*/
+/*	$NetBSD: keyvalues.h,v 1.11 2026/05/20 16:53:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -28,14 +28,9 @@ enum {
 	DNS_KEYTYPE_NOCONF = 1 << 14, /* cannot be used for confidentiality. */
 
 	DNS_KEYFLAG_RESERVED2 = 1 << 13, /* reserved: must be zero. */
-
-	DNS_KEYFLAG_EXTENDED = 1 << 12, /* key has extended flags: if this is
-					 * set, the first two octets of the
-					 * key data are an additional flags
-					 * field, at least one bit of which
-					 * must be nonzero. (valid for KEY
-					 * only.) */
-
+	DNS_KEYFLAG_DONOTUSE3 = 1 << 12, /* unused: must be zero.
+					    formerly DNS_KEYFLAG_EXTENDED,
+					    which was removed by RFC 3445 */
 	DNS_KEYFLAG_RESERVED4 = 1 << 11, /* reserved: must be zero. */
 	DNS_KEYFLAG_RESERVED5 = 1 << 10, /* reserved: must be zero. */
 

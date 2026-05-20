@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.16 2026/04/08 00:15:44 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.17 2026/05/20 16:53:43 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2577,7 +2577,8 @@ nsec3ify(unsigned int hashalg, dns_iterations_t iterations,
  * Load the zone file from disk
  */
 static void
-loadzone(char *file, char *origin, dns_rdataclass_t rdclass, dns_db_t **db) {
+loadzone(char *file, const char *origin, dns_rdataclass_t rdclass,
+	 dns_db_t **db) {
 	isc_buffer_t b;
 	int len;
 	dns_fixedname_t fname;
@@ -2585,7 +2586,7 @@ loadzone(char *file, char *origin, dns_rdataclass_t rdclass, dns_db_t **db) {
 	isc_result_t result;
 
 	len = strlen(origin);
-	isc_buffer_init(&b, origin, len);
+	isc_buffer_constinit(&b, origin, len);
 	isc_buffer_add(&b, len);
 
 	name = dns_fixedname_initname(&fname);
@@ -3379,7 +3380,8 @@ main(int argc, char *argv[]) {
 	int ch;
 	char *startstr = NULL, *endstr = NULL, *classname = NULL;
 	char *dnskey_endstr = NULL;
-	char *origin = NULL, *file = NULL, *output = NULL;
+	const char *origin = NULL;
+	char *file = NULL, *output = NULL;
 	char *inputformatstr = NULL, *outputformatstr = NULL;
 	char *serialformatstr = NULL;
 	char *dskeyfile[MAXDSKEYS];
@@ -3808,7 +3810,7 @@ main(int argc, char *argv[]) {
 	argv += 1;
 
 	if (origin == NULL) {
-		origin = file;
+		origin = isc_file_basename(file);
 	}
 
 	if (output == NULL) {

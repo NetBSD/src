@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.18 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.19 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -725,14 +725,6 @@ dst_key_todns(const dst_key_t *key, isc_buffer_t *target) {
 	isc_buffer_putuint8(target, (uint8_t)key->key_proto);
 	isc_buffer_putuint8(target, (uint8_t)key->key_alg);
 
-	if ((key->key_flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		if (isc_buffer_availablelength(target) < 2) {
-			return ISC_R_NOSPACE;
-		}
-		isc_buffer_putuint16(
-			target, (uint16_t)((key->key_flags >> 16) & 0xffff));
-	}
-
 	if (key->keydata.generic == NULL) { /*%< NULL KEY */
 		return ISC_R_SUCCESS;
 	}
@@ -751,7 +743,7 @@ dst_key_fromdns_ex(const dns_name_t *name, dns_rdataclass_t rdclass,
 		   isc_buffer_t *source, isc_mem_t *mctx, bool no_rdata,
 		   dst_key_t **keyp) {
 	uint8_t alg, proto;
-	uint32_t flags, extflags;
+	uint32_t flags;
 	dst_key_t *key = NULL;
 	dns_keytag_t id, rid;
 	isc_region_t r;
@@ -770,14 +762,6 @@ dst_key_fromdns_ex(const dns_name_t *name, dns_rdataclass_t rdclass,
 
 	id = dst_region_computeid(&r);
 	rid = dst_region_computerid(&r);
-
-	if ((flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		if (isc_buffer_remaininglength(source) < 2) {
-			return DST_R_INVALIDPUBLICKEY;
-		}
-		extflags = isc_buffer_getuint16(source);
-		flags |= (extflags << 16);
-	}
 
 	result = frombuffer(name, alg, flags, proto, rdclass, source, mctx,
 			    no_rdata, &key);
@@ -1311,9 +1295,6 @@ pub_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	}
 	/* Zero out flags. */
 	buf1[0] = buf1[1] = 0;
-	if ((key1->key_flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		isc_buffer_subtract(&b1, 2);
-	}
 
 	isc_buffer_init(&b2, buf2, sizeof(buf2));
 	result = dst_key_todns(key2, &b2);
@@ -1322,23 +1303,9 @@ pub_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	}
 	/* Zero out flags. */
 	buf2[0] = buf2[1] = 0;
-	if ((key2->key_flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		isc_buffer_subtract(&b2, 2);
-	}
 
 	isc_buffer_usedregion(&b1, &r1);
-	/* Remove extended flags. */
-	if ((key1->key_flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		memmove(&buf1[4], &buf1[6], r1.length - 6);
-		r1.length -= 2;
-	}
-
 	isc_buffer_usedregion(&b2, &r2);
-	/* Remove extended flags. */
-	if ((key2->key_flags & DNS_KEYFLAG_EXTENDED) != 0) {
-		memmove(&buf2[4], &buf2[6], r2.length - 6);
-		r2.length -= 2;
-	}
 	return isc_region_compare(&r1, &r2) == 0;
 }
 

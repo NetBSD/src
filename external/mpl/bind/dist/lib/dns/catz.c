@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.16 2026/04/08 00:16:13 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.17 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1469,7 +1469,6 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 			result = dns_name_fromstring(keyname, keycbuf,
 						     dns_rootname, 0, mctx);
 			if (result != ISC_R_SUCCESS) {
-				dns_name_free(keyname, mctx);
 				isc_mem_put(mctx, keyname, sizeof(*keyname));
 				return result;
 			}
@@ -1493,6 +1492,14 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 
 		if (i < ipkl->count) { /* we have this record already */
 			if (value->type == dns_rdatatype_txt) {
+				if (ipkl->keys[i] != NULL) {
+					if (dns_name_dynamic(ipkl->keys[i])) {
+						dns_name_free(ipkl->keys[i],
+							      mctx);
+					}
+					isc_mem_put(mctx, ipkl->keys[i],
+						    sizeof(*ipkl->keys[i]));
+				}
 				ipkl->keys[i] = keyname;
 			} else { /* A/AAAA */
 				memmove(&ipkl->addrs[i], &sockaddr,
@@ -1564,6 +1571,17 @@ catz_process_primaries(dns_catz_zone_t *catz, dns_ipkeylist_t *ipkl,
 static isc_result_t
 catz_process_apl(dns_catz_zone_t *catz, isc_buffer_t **aclbp,
 		 dns_rdataset_t *value) {
+	REQUIRE(DNS_RDATASET_VALID(value));
+	REQUIRE(dns_rdataset_isassociated(value));
+
+	if (value->type != dns_rdatatype_apl) {
+		return ISC_R_FAILURE;
+	}
+
+	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
+	REQUIRE(aclbp != NULL);
+	REQUIRE(*aclbp == NULL);
+
 	isc_result_t result = ISC_R_SUCCESS;
 	dns_rdata_t rdata;
 	dns_rdata_in_apl_t rdata_apl;
@@ -1571,16 +1589,6 @@ catz_process_apl(dns_catz_zone_t *catz, isc_buffer_t **aclbp,
 	isc_netaddr_t addr;
 	isc_buffer_t *aclb = NULL;
 	unsigned char buf[256]; /* larger than INET6_ADDRSTRLEN */
-
-	REQUIRE(DNS_CATZ_ZONE_VALID(catz));
-	REQUIRE(aclbp != NULL);
-	REQUIRE(*aclbp == NULL);
-	REQUIRE(DNS_RDATASET_VALID(value));
-	REQUIRE(dns_rdataset_isassociated(value));
-
-	if (value->type != dns_rdatatype_apl) {
-		return ISC_R_FAILURE;
-	}
 
 	if (dns_rdataset_count(value) > 1) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_GENERAL,

@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.25 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.26 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -376,7 +376,16 @@ struct fetchctx {
 	dns_message_t *qmessage;
 	ISC_LIST(resquery_t) queries;
 	dns_adbfindlist_t finds;
-	dns_adbfind_t *find;
+	/*
+	 * This is a state to keep track of the latest upstream server which is
+	 * being queried. See `nextaddress()`.
+	 *
+	 * `addrinfo` is basically a copy of `foundaddrinfo` but came from the
+	 * response of the query, so fields like the SRTT/timing might have been
+	 * altered. So it might be possible (?) to wrap those two in an union
+	 * for clarity (and memory saving).
+	 */
+	dns_adbaddrinfo_t *foundaddrinfo;
 	/*
 	 * altfinds are names and/or addresses of dual stack servers that
 	 * should be used when iterative resolution to a server is not
@@ -1316,7 +1325,7 @@ fctx_cleanup(fetchctx_t *fctx) {
 		dns_adb_destroyfind(&find);
 		fetchctx_unref(fctx);
 	}
-	fctx->find = NULL;
+	fctx->foundaddrinfo = NULL;
 
 	for (find = ISC_LIST_HEAD(fctx->altfinds); find != NULL;
 	     find = next_find)
@@ -2100,7 +2109,7 @@ fctx_query(fetchctx_t *fctx, dns_adbaddrinfo_t *addrinfo,
 
 		result = dns_dispatch_createtcp(fctx->dispatchmgr, &addr,
 						&sockaddr, addrinfo->transport,
-						DNS_DISPATCHOPT_UNSHARED,
+						DNS_DISPATCHTYPE_RESOLVER, 0,
 						&query->dispatch);
 		if (result != ISC_R_SUCCESS) {
 			goto cleanup_query;
@@ -3167,89 +3176,6 @@ add_bad(fetchctx_t *fctx, dns_message_t *rmessage, dns_adbaddrinfo_t *addrinfo,
 }
 
 /*
- * Sort addrinfo list by RTT.
- */
-static void
-sort_adbfind(dns_adbfind_t *find, unsigned int bias) {
-	dns_adbaddrinfo_t *best, *curr;
-	dns_adbaddrinfolist_t sorted;
-
-	/* Lame N^2 bubble sort. */
-	ISC_LIST_INIT(sorted);
-	while (!ISC_LIST_EMPTY(find->list)) {
-		unsigned int best_srtt;
-		best = ISC_LIST_HEAD(find->list);
-		best_srtt = best->srtt;
-		if (isc_sockaddr_pf(&best->sockaddr) != AF_INET6) {
-			best_srtt += bias;
-		}
-		curr = ISC_LIST_NEXT(best, publink);
-		while (curr != NULL) {
-			unsigned int curr_srtt = curr->srtt;
-			if (isc_sockaddr_pf(&curr->sockaddr) != AF_INET6) {
-				curr_srtt += bias;
-			}
-			if (curr_srtt < best_srtt) {
-				best = curr;
-				best_srtt = curr_srtt;
-			}
-			curr = ISC_LIST_NEXT(curr, publink);
-		}
-		ISC_LIST_UNLINK(find->list, best, publink);
-		ISC_LIST_APPEND(sorted, best, publink);
-	}
-	find->list = sorted;
-}
-
-/*
- * Sort a list of finds by server RTT.
- */
-static void
-sort_finds(dns_adbfindlist_t *findlist, unsigned int bias) {
-	dns_adbfind_t *best, *curr;
-	dns_adbfindlist_t sorted;
-	dns_adbaddrinfo_t *addrinfo, *bestaddrinfo;
-
-	/* Sort each find's addrinfo list by SRTT. */
-	for (curr = ISC_LIST_HEAD(*findlist); curr != NULL;
-	     curr = ISC_LIST_NEXT(curr, publink))
-	{
-		sort_adbfind(curr, bias);
-	}
-
-	/* Lame N^2 bubble sort. */
-	ISC_LIST_INIT(sorted);
-	while (!ISC_LIST_EMPTY(*findlist)) {
-		unsigned int best_srtt;
-		best = ISC_LIST_HEAD(*findlist);
-		bestaddrinfo = ISC_LIST_HEAD(best->list);
-		INSIST(bestaddrinfo != NULL);
-		best_srtt = bestaddrinfo->srtt;
-		if (isc_sockaddr_pf(&bestaddrinfo->sockaddr) != AF_INET6) {
-			best_srtt += bias;
-		}
-		curr = ISC_LIST_NEXT(best, publink);
-		while (curr != NULL) {
-			unsigned int curr_srtt;
-			addrinfo = ISC_LIST_HEAD(curr->list);
-			INSIST(addrinfo != NULL);
-			curr_srtt = addrinfo->srtt;
-			if (isc_sockaddr_pf(&addrinfo->sockaddr) != AF_INET6) {
-				curr_srtt += bias;
-			}
-			if (curr_srtt < best_srtt) {
-				best = curr;
-				best_srtt = curr_srtt;
-			}
-			curr = ISC_LIST_NEXT(curr, publink);
-		}
-		ISC_LIST_UNLINK(*findlist, best, publink);
-		ISC_LIST_APPEND(sorted, best, publink);
-	}
-	*findlist = sorted;
-}
-
-/*
  * Return true iff the ADB find has an already pending fetch for 'type'.  This
  * is used to find out whether we're in a loop, where a fetch is waiting for a
  * find which is waiting for that same fetch. So if the current find actually
@@ -3369,6 +3295,7 @@ findname(fetchctx_t *fctx, const dns_name_t *name, in_port_t port,
 				}
 			}
 		}
+
 		if ((flags & FCTX_ADDRINFO_DUALSTACK) != 0) {
 			ISC_LIST_APPEND(fctx->altfinds, find, publink);
 		} else {
@@ -3843,8 +3770,6 @@ out:
 		 * We've found some addresses.  We might still be
 		 * looking for more addresses.
 		 */
-		sort_finds(&fctx->finds, res->view->v6bias);
-		sort_finds(&fctx->altfinds, 0);
 		result = ISC_R_SUCCESS;
 	}
 
@@ -3917,6 +3842,80 @@ possibly_mark(fetchctx_t *fctx, dns_adbaddrinfo_t *addr) {
 }
 
 static dns_adbaddrinfo_t *
+nextaddress(fetchctx_t *fctx) {
+	dns_adbaddrinfo_t *prevai = fctx->foundaddrinfo, *lowestsrttai = NULL;
+	unsigned int v6bias = fctx->res->view->v6bias, lowestsrtt = 0;
+
+	/*
+	 * Let's walk through the list of dns_adbaddrinfo_t to find the best
+	 * next server address to query. This is linear on the number of
+	 * dns_adbaddrinfo_t which are grouped in find list (for each ADB find).
+	 */
+	for (dns_adbfind_t *find = ISC_LIST_HEAD(fctx->finds); find != NULL;
+	     find = ISC_LIST_NEXT(find, publink))
+	{
+		for (dns_adbaddrinfo_t *ai = ISC_LIST_HEAD(find->list);
+		     ai != NULL; ai = ISC_LIST_NEXT(ai, publink))
+		{
+			/*
+			 * This address has been marked already, skip it.
+			 */
+			if (!UNMARKED(ai)) {
+				continue;
+			}
+
+			/*
+			 * This address is the same as the previously used
+			 * address, it's a duplicate, mark it and skip it!
+			 */
+			if (prevai != NULL) {
+				if (prevai->entry == ai->entry) {
+					ai->flags |= FCTX_ADDRINFO_MARK;
+					continue;
+				}
+			}
+
+			/*
+			 * Mark and skip this address if incompatible (i.e. IPv6
+			 * address on a v4 only server, or for ACL reason, etc.)
+			 */
+			possibly_mark(fctx, ai);
+			if (!UNMARKED(ai)) {
+				continue;
+			}
+
+			/*
+			 * This address hasn't been tried yet and is a
+			 * good candidate. Let's keep track of it if it
+			 * has the lowest SRTT so far (or if there is no
+			 * address with lowest SRTT found yet).
+			 */
+			unsigned int aisrtt = ai->srtt;
+
+			if (isc_sockaddr_pf(&ai->sockaddr) != AF_INET6) {
+				aisrtt += v6bias;
+			}
+
+			if (lowestsrttai == NULL || aisrtt < lowestsrtt) {
+				lowestsrttai = ai;
+				lowestsrtt = aisrtt;
+				continue;
+			}
+		}
+	}
+
+	/*
+	 * This is the next address to query. If this is NULL, we're done.
+	 */
+	if (lowestsrttai != NULL) {
+		lowestsrttai->flags |= FCTX_ADDRINFO_MARK;
+	}
+	fctx->foundaddrinfo = lowestsrttai;
+
+	return lowestsrttai;
+}
+
+static dns_adbaddrinfo_t *
 fctx_nextaddress(fetchctx_t *fctx) {
 	dns_adbfind_t *find, *start;
 	dns_adbaddrinfo_t *addrinfo;
@@ -3938,7 +3937,6 @@ fctx_nextaddress(fetchctx_t *fctx) {
 		possibly_mark(fctx, addrinfo);
 		if (UNMARKED(addrinfo)) {
 			addrinfo->flags |= FCTX_ADDRINFO_MARK;
-			fctx->find = NULL;
 			fctx->forwarding = true;
 
 			/*
@@ -3959,49 +3957,9 @@ fctx_nextaddress(fetchctx_t *fctx) {
 	fctx->forwarding = false;
 	FCTX_ATTR_SET(fctx, FCTX_ATTR_TRIEDFIND);
 
-	find = fctx->find;
-	if (find == NULL) {
-		find = ISC_LIST_HEAD(fctx->finds);
-	} else {
-		find = ISC_LIST_NEXT(find, publink);
-		if (find == NULL) {
-			find = ISC_LIST_HEAD(fctx->finds);
-		}
-	}
-
-	/*
-	 * Find the first unmarked addrinfo.
-	 */
-	addrinfo = NULL;
-	if (find != NULL) {
-		start = find;
-		do {
-			for (addrinfo = ISC_LIST_HEAD(find->list);
-			     addrinfo != NULL;
-			     addrinfo = ISC_LIST_NEXT(addrinfo, publink))
-			{
-				if (!UNMARKED(addrinfo)) {
-					continue;
-				}
-				possibly_mark(fctx, addrinfo);
-				if (UNMARKED(addrinfo)) {
-					addrinfo->flags |= FCTX_ADDRINFO_MARK;
-					break;
-				}
-			}
-			if (addrinfo != NULL) {
-				break;
-			}
-			find = ISC_LIST_NEXT(find, publink);
-			if (find == NULL) {
-				find = ISC_LIST_HEAD(fctx->finds);
-			}
-		} while (find != start);
-	}
-
-	fctx->find = find;
-	if (addrinfo != NULL) {
-		return addrinfo;
+	faddrinfo = nextaddress(fctx);
+	if (faddrinfo != NULL) {
+		return faddrinfo;
 	}
 
 	/*
@@ -4080,6 +4038,39 @@ fctx_nextaddress(fetchctx_t *fctx) {
 	}
 
 	return addrinfo;
+}
+
+static isc_result_t
+incr_query_counters(fetchctx_t *fctx) {
+	isc_result_t result;
+
+	result = isc_counter_increment(fctx->qc);
+#if WANT_QUERYTRACE
+	FCTXTRACE5("query", "max-recursion-queries, querycount=",
+		   isc_counter_used(fctx->qc));
+#endif
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+			      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(3),
+			      "exceeded max queries resolving '%s' "
+			      "(max-recursion-queries, querycount=%u)",
+			      fctx->info, isc_counter_used(fctx->qc));
+	} else if (fctx->gqc != NULL) {
+		result = isc_counter_increment(fctx->gqc);
+#if WANT_QUERYTRACE
+		FCTXTRACE5("query", "max-query-count, querycount=",
+			   isc_counter_used(fctx->gqc));
+#endif
+		if (result != ISC_R_SUCCESS) {
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+				      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(3),
+				      "exceeded global max queries resolving "
+				      "'%s' (max-query-count, querycount=%u)",
+				      fctx->info, isc_counter_used(fctx->gqc));
+		}
+	}
+
+	return result;
 }
 
 static void
@@ -4222,34 +4213,9 @@ fctx_try(fetchctx_t *fctx, bool retrying) {
 		return;
 	}
 
-	result = isc_counter_increment(fctx->qc);
-#if WANT_QUERYTRACE
-	FCTXTRACE5("query", "max-recursion-queries, querycount=",
-		   isc_counter_used(fctx->qc));
-#endif
+	result = incr_query_counters(fctx);
 	if (result != ISC_R_SUCCESS) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
-			      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(3),
-			      "exceeded max queries resolving '%s' "
-			      "(max-recursion-queries, querycount=%u)",
-			      fctx->info, isc_counter_used(fctx->qc));
 		goto done;
-	}
-
-	if (fctx->gqc != NULL) {
-		result = isc_counter_increment(fctx->gqc);
-#if WANT_QUERYTRACE
-		FCTXTRACE5("query", "max-query-count, querycount=",
-			   isc_counter_used(fctx->gqc));
-#endif
-		if (result != ISC_R_SUCCESS) {
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
-				      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(3),
-				      "exceeded global max queries resolving "
-				      "'%s' (max-query-count, querycount=%u)",
-				      fctx->info, isc_counter_used(fctx->gqc));
-			goto done;
-		}
 	}
 
 	result = fctx_query(fctx, addrinfo, fctx->options);
@@ -7004,6 +6970,13 @@ is_answeraddress_allowed(dns_view_t *view, dns_name_t *name,
 	}
 
 	/*
+	 * deny-answer-address doesn't apply to non-IN classes.
+	 */
+	if (rdataset->rdclass != dns_rdataclass_in) {
+		return true;
+	}
+
+	/*
 	 * Otherwise, search the filter list for a match for each
 	 * address record.  If a match is found, the address should be
 	 * filtered, so should the entire answer.
@@ -7668,6 +7641,7 @@ resquery_response(isc_result_t eresult, isc_region_t *region, void *arg) {
 	return;
 
 cleanup:
+	resquery_detach(&rctx->query);
 	isc_mem_putanddetach(&rctx->mctx, rctx, sizeof(*rctx));
 }
 
@@ -8017,6 +7991,7 @@ resquery_response_continue(void *arg, isc_result_t result) {
 	rctx_done(rctx, result);
 
 cleanup:
+	resquery_detach(&rctx->query);
 	isc_mem_putanddetach(&rctx->mctx, rctx, sizeof(*rctx));
 }
 
@@ -8030,7 +8005,7 @@ static void
 rctx_respinit(resquery_t *query, fetchctx_t *fctx, isc_result_t result,
 	      isc_region_t *region, respctx_t *rctx) {
 	*rctx = (respctx_t){ .result = result,
-			     .query = query,
+			     .query = resquery_ref(query),
 			     .fctx = fctx,
 			     .broken_type = badns_response,
 			     .retryopts = query->options };
@@ -9734,9 +9709,9 @@ rctx_nextserver(respctx_t *rctx, dns_message_t *message,
  * rctx_resend():
  *
  * Resend the query, probably with the options changed. Calls
- * fctx_query(), passing rctx->retryopts (which is based on
- * query->options, but may have been updated since the last time
- * fctx_query() was called).
+ * fctx_query(), unless query counter limits are hit, passing
+ * rctx->retryopts (which is based on query->options, but may have
+ * been updated since the last time fctx_query() was called).
  */
 static void
 rctx_resend(respctx_t *rctx, dns_adbaddrinfo_t *addrinfo) {
@@ -9744,8 +9719,15 @@ rctx_resend(respctx_t *rctx, dns_adbaddrinfo_t *addrinfo) {
 	isc_result_t result;
 
 	FCTXTRACE("resend");
-	inc_stats(fctx->res, dns_resstatscounter_retry);
+
+	CHECK(incr_query_counters(fctx));
+
 	result = fctx_query(fctx, addrinfo, rctx->retryopts);
+	if (result == ISC_R_SUCCESS) {
+		inc_stats(fctx->res, dns_resstatscounter_retry);
+	}
+
+cleanup:
 	if (result != ISC_R_SUCCESS) {
 		fctx_done_detach(&rctx->fctx, result);
 	}

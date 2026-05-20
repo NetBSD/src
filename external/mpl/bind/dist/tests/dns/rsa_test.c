@@ -1,4 +1,4 @@
-/*	$NetBSD: rsa_test.c,v 1.3 2025/01/26 16:25:48 christos Exp $	*/
+/*	$NetBSD: rsa_test.c,v 1.4 2026/05/20 16:53:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -227,8 +227,55 @@ ISC_RUN_TEST_IMPL(isc_rsa_verify) {
 	dst_key_free(&key);
 }
 
+/* dst_key_fromdns rejects oversized RSA public exponents */
+ISC_RUN_TEST_IMPL(isc_rsa_fromdns_oversized_exponent) {
+	isc_result_t result;
+	dns_fixedname_t fname;
+	dns_name_t *name;
+	dst_key_t *key = NULL;
+	isc_buffer_t buf;
+	unsigned char rdata[300] = { 0 };
+	size_t i = 0;
+
+	UNUSED(state);
+
+	name = dns_fixedname_initname(&fname);
+	isc_buffer_constinit(&buf, "rsa.", 4);
+	isc_buffer_add(&buf, 4);
+	result = dns_name_fromtext(name, &buf, NULL, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	/* DNSKEY rdata: flags(2) + proto(1) + alg(1) + key */
+	rdata[i++] = 0x01; /* flags hi (KSK) */
+	rdata[i++] = 0x00; /* flags lo */
+	rdata[i++] = 0x03; /* protocol */
+	rdata[i++] = DST_ALG_RSASHA256;
+	/* RSA wire key: e_bytes + e + n.  Use a 6-byte (48-bit) e
+	 * with a non-zero leading byte so it exceeds the 35-bit cap. */
+	rdata[i++] = 6;
+	rdata[i++] = 0x01;
+	rdata[i++] = 0x02;
+	rdata[i++] = 0x03;
+	rdata[i++] = 0x04;
+	rdata[i++] = 0x05;
+	rdata[i++] = 0x06;
+	/* 256 bytes of arbitrary modulus (2048-bit). */
+	for (size_t j = 0; j < 256; j++) {
+		rdata[i++] = 0xAB;
+	}
+
+	isc_buffer_init(&buf, rdata, i);
+	isc_buffer_add(&buf, i);
+
+	result = dst_key_fromdns(name, dns_rdataclass_in, &buf, mctx, &key);
+	assert_int_equal(result, ISC_R_RANGE);
+	assert_null(key);
+}
+
 ISC_TEST_LIST_START
 ISC_TEST_ENTRY_CUSTOM(isc_rsa_verify, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(isc_rsa_fromdns_oversized_exponent, setup_test,
+		      teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

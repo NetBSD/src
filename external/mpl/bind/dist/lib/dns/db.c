@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.14 2026/04/08 00:16:13 christos Exp $	*/
+/*	$NetBSD: db.c,v 1.15 2026/05/20 16:53:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -705,7 +705,8 @@ dns__db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	REQUIRE(node != NULL);
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
-	REQUIRE(covers == 0 || type == dns_rdatatype_rrsig);
+	REQUIRE(covers == dns_rdatatype_none || type == dns_rdatatype_rrsig ||
+		type == dns_rdatatype_sig);
 	REQUIRE(type != dns_rdatatype_any);
 	REQUIRE(sigrdataset == NULL ||
 		(DNS_RDATASET_VALID(sigrdataset) &&

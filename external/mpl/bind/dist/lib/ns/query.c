@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.27 2026/04/08 00:16:17 christos Exp $	*/
+/*	$NetBSD: query.c,v 1.28 2026/05/20 16:53:47 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -5382,7 +5382,7 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 			return ISC_R_NOTFOUND;
 		}
 	} else {
-		dns_name_copy(redirectname, client->view->redirectzone);
+		dns_name_copy(client->view->redirectzone, redirectname);
 	}
 
 	result = query_getdb(client, redirectname, qtype,
@@ -8252,6 +8252,10 @@ query_addanswer(query_ctx_t *qctx) {
 	} else if (qctx->client->query.dns64_aaaaok != NULL) {
 		query_filter64(qctx);
 		ns_client_putrdataset(qctx->client, &qctx->rdataset);
+		isc_mem_cput(qctx->client->manager->mctx,
+			     qctx->client->query.dns64_aaaaok,
+			     qctx->client->query.dns64_aaaaoklen, sizeof(bool));
+		qctx->client->query.dns64_aaaaoklen = 0;
 	} else {
 		if (!qctx->is_zone && RECURSIONOK(qctx->client)) {
 			query_prefetch(qctx->client, qctx->fname,

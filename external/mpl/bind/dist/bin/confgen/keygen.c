@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.8 2025/01/26 16:24:32 christos Exp $	*/
+/*	$NetBSD: keygen.c,v 1.9 2026/05/20 16:53:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,6 +22,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/file.h>
+#include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
@@ -98,7 +99,7 @@ generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_buffer_t key_rawbuffer;
 	isc_region_t key_rawregion;
-	char key_rawsecret[64];
+	char key_rawsecret[ISC_MAX_BLOCK_SIZE];
 	dst_key_t *key = NULL;
 
 	switch (alg) {

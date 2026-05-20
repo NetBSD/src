@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.h,v 1.8 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: nsec.h,v 1.9 2026/05/20 16:53:46 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,12 @@
 #include <dns/name.h>
 #include <dns/types.h>
 
-#define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + 8192 + 512)
+/*
+ * max compressed bitmap size:
+ * 256 windows * (window number + window length + bitmap (max 256 bits))
+ */
+#define DNS_NSEC_MAXCBMSIZE (256 * ((256 / 8) + 2))
+#define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + DNS_NSEC_MAXCBMSIZE)
 
 ISC_LANG_BEGINDECLS
 
