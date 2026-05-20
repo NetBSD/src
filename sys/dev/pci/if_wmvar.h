@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.51 2023/10/11 15:05:26 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.52 2026/05/20 22:56:58 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -91,7 +91,7 @@
 #define WM_F_HAS_AMT		0x00080000
 #define WM_F_HAS_MANAGE		0x00100000
 #define WM_F_WOL		0x00200000
-#define WM_F_EEE		0x00400000 /* Energy Efficiency Ethernet */
+#define WM_F_EEE		0x00400000 /* Energy-Efficient Ethernet */
 #define WM_F_ATTACHED		0x00800000 /* attach() finished successfully */
 #define WM_F_80003_MDIC_WA	0x01000000 /* 80003 MDIC workaround */
 #define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */

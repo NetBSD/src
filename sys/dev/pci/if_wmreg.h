@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.131 2024/01/29 05:02:06 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.132 2026/05/20 22:56:58 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -984,7 +984,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PHPM_NOND0A_GBE_DIS	__BIT(3)	/* Disable 1G in non-D0a */
 #define	PHPM_GO_LINK_D		__BIT(5)	/* Go Link Disconnect */
 
-#define	WMREG_EEER	0x0e30	/* Energy Efficiency Ethernet "EEE" */
+#define	WMREG_EEER	0x0e30	/* Energy-Efficient Ethernet "EEE" */
 #define	EEER_TX_LPI_EN		0x00010000 /* EEER Tx LPI Enable */
 #define	EEER_RX_LPI_EN		0x00020000 /* EEER Rx LPI Enable */
 #define	EEER_LPI_FC		0x00040000 /* EEER Ena on Flow Cntrl */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.801 2024/11/10 11:46:24 mlelstv Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.802 2026/05/20 22:56:58 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -75,14 +75,14 @@
  *	- Check XXX'ed comments
  *	- TX Multi queue improvement (refine queue selection logic)
  *	- Split header buffer for newer descriptors
- *	- EEE (Energy Efficiency Ethernet) for I354
+ *	- EEE (Energy-Efficient Ethernet) for I354
  *	- Virtual Function
  *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.801 2024/11/10 11:46:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.802 2026/05/20 22:56:58 gutteridge Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_wm.h"
