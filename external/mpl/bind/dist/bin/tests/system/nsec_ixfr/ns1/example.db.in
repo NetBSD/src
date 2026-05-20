@@ -1,0 +1,11 @@
+$TTL 300
+@	IN SOA	ns1.example. hostmaster.example. (
+			1	; serial
+			3600	; refresh
+			900	; retry
+			1209600	; expire
+			300	; minimum
+			)
+@		IN NS	ns1.example.
+ns1		IN A	10.53.0.1
+*.wildcard	IN A	10.0.0.1

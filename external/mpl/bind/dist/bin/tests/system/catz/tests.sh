@@ -134,6 +134,12 @@ grep -F "catz: dns_catz_zone_add catalog-bad5.example" ns2/named.run && ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+echo_i "checking that catalog-bad6.example (invalid TSIG key name) is handled ($n)"
+ret=0
+wait_for_message ns2/named.run "catz: invalid record in catalog zone - mykey.primaries.ext.deadbeef.zones.catalog-bad6.example IN TXT (label too long) - ignoring" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 nextpart ns2/named.run >/dev/null
 
 ##########################################################################
@@ -2776,6 +2782,56 @@ if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 ##########################################################################
+# GL #5941
+
+nextpart ns4/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "Add a normal and a spurious allow-transfer RRs to catalog-misc zone using nsupdate ($n)"
+ret=0
+# It is important to include an RRtype with a numeric representation that is
+# less than APL. E.g., AFSDB is 18 which is less than APL's 42. Also including
+# the AMTRELAY RRtype (260) which is bigger than APL, just for completeness.
+$NSUPDATE -d <<END >>nsupdate.out.test$n 2>&1 || ret=1
+    server 10.53.0.1 ${PORT}
+    update add allow-transfer.ext.catalog-misc.example. 3600 IN AFSDB 0 hostname
+    update add allow-transfer.ext.catalog-misc.example. 3600 IN APL 1:10.53.0.0/24
+    update add allow-transfer.ext.catalog-misc.example. 3600 IN AMTRELAY 0 0 0 .
+    send
+END
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "waiting for secondary to sync up ($n)"
+ret=0
+wait_for_message ns4/named.run "catz: catalog-misc.example: reload done: success" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+nextpart ns4/named.run >/dev/null
+
+n=$((n + 1))
+echo_i "Deleting the allow-query RRs from catalog-misc zone ($n)"
+ret=0
+$NSUPDATE -d <<END >>nsupdate.out.test$n 2>&1 || ret=1
+    server 10.53.0.1 ${PORT}
+    update delete allow-transfer.ext.catalog-misc.example. 3600 IN AFSDB 0 hostname
+    update delete allow-transfer.ext.catalog-misc.example. 3600 IN APL 1:10.53.0.0/24
+    update delete allow-transfer.ext.catalog-misc.example. 3600 IN AMTRELAY 0 0 0 .
+    send
+END
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "waiting for secondary to sync up ($n)"
+ret=0
+wait_for_message ns4/named.run "catz: catalog-misc.example: reload done: success" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+##########################################################################
 # GL #5658
 
 n=$((n + 1))
@@ -2984,6 +3040,52 @@ n=$((n + 1))
 echo_i "checking that dom21.example. is served by secondary ($n)"
 ret=0
 wait_for_soa @10.53.0.2 dom21.example. dig.out.test$n || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+##########################################################################
+
+nextpart ns2/named.run >/dev/null
+
+echo_i "Testing primaries and masters suboptions together"
+
+n=$((n + 1))
+echo_i "adding domain dom22.example. to primary via RNDC ($n)"
+ret=0
+echo "@ 3600 IN SOA . . 1 3600 3600 3600 3600" >ns1/dom22.example.db
+echo "@ IN NS invalid." >>ns1/dom22.example.db
+echo "@ IN A 192.0.2.1" >>ns1/dom22.example.db
+rndccmd 10.53.0.1 addzone dom22.example. in default '{type primary; file "dom22.example.db"; allow-transfer { key tsig_key; };};' || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "adding dom22.example. with both primaries and masters suboptions ($n)"
+ret=0
+$NSUPDATE -d <<END >>nsupdate.out.test$n 2>&1 || ret=1
+    server 10.53.0.1 ${PORT}
+    update add double.zones.catalog1.example. 3600 IN PTR dom22.example.
+    update add samelabel.primaries.ext.double.zones.catalog1.example. 3600 IN A 10.53.0.1
+    update add samelabel.primaries.ext.double.zones.catalog1.example. 3600 IN TXT "tsig_key"
+    update add samelabel.masters.ext.double.zones.catalog1.example. 3600 IN A 10.53.0.1
+    update add samelabel.masters.ext.double.zones.catalog1.example. 3600 IN TXT "tsig_key"
+    send
+END
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "waiting for secondary to sync up ($n)"
+ret=0
+wait_for_message ns2/named.run "catz: adding zone 'dom22.example' from catalog 'catalog1.example'" \
+  && wait_for_message ns2/named.run "transfer of 'dom22.example/IN/default' from 10.53.0.1#${PORT}: Transfer status: success" || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "checking that dom22.example. is served by secondary ($n)"
+ret=0
+wait_for_soa @10.53.0.2 dom22.example. dig.out.test$n || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

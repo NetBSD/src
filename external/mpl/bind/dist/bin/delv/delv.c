@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.1.1.17 2026/04/07 23:58:18 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.1.1.18 2026/05/20 16:43:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1984,7 +1984,9 @@ cleanup:
 	isc_mem_put(mctx, namelist, sizeof(*namelist));
 	isc_loopmgr_shutdown(loopmgr);
 
-	dns_client_detach(&client);
+	if (client != NULL) {
+		dns_client_detach(&client);
+	}
 }
 
 static void

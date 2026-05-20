@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.1.1.6 2026/04/07 23:58:26 christos Exp $	*/
+/*	$NetBSD: http.c,v 1.1.1.7 2026/05/20 16:43:08 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2755,6 +2755,8 @@ server_httpsend(isc_nmhandle_t *handle, isc_nmsocket_t *sock,
 	} else {
 		cb(handle, result, cbarg);
 	}
+
+	isc_buffer_initnull(&sock->h2->wbuf);
 	isc__nm_uvreq_put(&req);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-ksr.c,v 1.1.1.4 2026/04/07 23:58:09 christos Exp $	*/
+/*	$NetBSD: dnssec-ksr.c,v 1.1.1.5 2026/05/20 16:42:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -707,7 +707,7 @@ sign_rrset(ksr_ctx_t *ksr, isc_stdtime_t inception, isc_stdtime_t expiration,
 		if (act > inception) {
 			continue;
 		}
-		if (inact != 0 && inception >= inact) {
+		if (inact != 0 && inception > inact) {
 			continue;
 		}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.13 2026/01/29 18:19:49 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.14 2026/05/20 16:43:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -746,6 +746,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	bool is_poll = false;
 	bool is_dlz = false;
 	bool is_ixfr = false;
+	bool is_quota_applied = false;
 	bool useviewacl = false;
 	uint32_t begin_serial = 0, current_serial;
 
@@ -762,16 +763,6 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 	ns_client_log(client, DNS_LOGCATEGORY_XFER_OUT, NS_LOGMODULE_XFER_OUT,
 		      ISC_LOG_DEBUG(6), "%s request", mnemonic);
-	/*
-	 * Apply quota.
-	 */
-	result = isc_quota_acquire(&client->manager->sctx->xfroutquota);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(XFROUT_COMMON_LOGARGS, ISC_LOG_WARNING,
-			      "%s request denied: %s", mnemonic,
-			      isc_result_totext(result));
-		goto max_quota;
-	}
 
 	/*
 	 * Interpret the question section.
@@ -943,6 +934,19 @@ got_soa:
 	}
 
 	/*
+	 * Apply quota after ACL is checked, so that unauthorized clients
+	 * can not starve the authorized clients.
+	 */
+	result = isc_quota_acquire(&client->manager->sctx->xfroutquota);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(XFROUT_COMMON_LOGARGS, ISC_LOG_WARNING,
+			      "%s request denied: %s", mnemonic,
+			      isc_result_totext(result));
+		goto cleanup;
+	}
+	is_quota_applied = true;
+
+	/*
 	 * Look up the requesting server in the peer table.
 	 */
 	isc_netaddr_fromsockaddr(&na, &client->peeraddr);
@@ -1080,7 +1084,7 @@ have_stream:
 	CHECK(dns_message_getquerytsig(request, mctx, &tsigbuf));
 	/*
 	 * Create the xfrout context object.  This transfers the ownership
-	 * of "stream", "db", "ver", and "quota" to the xfrout context object.
+	 * of "stream", "db" and "ver" to the xfrout context object.
 	 */
 
 	if (is_dlz) {
@@ -1195,10 +1199,13 @@ cleanup:
 	}
 
 	if (xfr != NULL) {
+		/* The quota will be released in xfrout_ctx_destroy(). */
+		INSIST(is_quota_applied);
 		xfrout_fail(xfr, result, "setting up zone transfer");
 	} else if (result != ISC_R_SUCCESS) {
-		isc_quota_release(&client->manager->sctx->xfroutquota);
-	max_quota:
+		if (is_quota_applied) {
+			isc_quota_release(&client->manager->sctx->xfroutquota);
+		}
 		ns_client_log(client, DNS_LOGCATEGORY_XFER_OUT,
 			      NS_LOGMODULE_XFER_OUT, ISC_LOG_DEBUG(3),
 			      "zone transfer setup failed");

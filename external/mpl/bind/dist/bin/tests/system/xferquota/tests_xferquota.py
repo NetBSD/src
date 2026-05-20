@@ -12,12 +12,15 @@
 from re import compile as Re
 
 import glob
+import multiprocessing
 import os
 import re
 import shutil
 import signal
 import time
 
+import dns.message
+import dns.query
 import dns.zone
 import pytest
 
@@ -60,6 +63,9 @@ def test_xferquota(named_port, ns1, ns2):
                     matching_line_count += 1
         return matching_line_count == 300
 
+    # The primary has 'transfers-out 3;', while the secondary has
+    # 'transfers-in 5; transfer-per-ns 5;'. This will allow all the zones
+    # to be eventually transferred, hitting the quotas now and then.
     isctest.run.retry_with_timeout(check_line_count, timeout=360)
 
     axfr_msg = isctest.query.create("zone000099.example.", "AXFR")
@@ -80,3 +86,39 @@ def test_xferquota(named_port, ns1, ns2):
     with ns2.watch_log_from_start(timeout=30) as watcher:
         watcher.wait_for_line(pattern)
     query_and_compare(a_msg)
+
+
+def _flood_unauthorized_axfrs(port, duration):
+    """Child process: send unauthorized AXFR requests for `duration` seconds."""
+    deadline = time.monotonic() + duration
+    while time.monotonic() < deadline:
+        try:
+            msg = dns.message.make_query("quota.", "AXFR")
+            dns.query.tcp(msg, "10.53.0.3", port=port, timeout=2, source="10.53.0.1")
+        except Exception:  # pylint: disable=broad-exception-caught
+            pass
+
+
+def test_xfrquota_unauthorized_no_starve(named_port):
+    """Unauthorized AXFR clients must not consume XFR-out quota (GL #3859).
+
+    ns3 is configured with transfers-out 1 and allow-transfer { 10.53.0.2; }.
+    We flood AXFR requests from unauthorized source processes (10.53.0.1) and
+    verify that an authorized client (10.53.0.2) can still transfer.
+    """
+    with multiprocessing.Pool(10) as pool:
+        pool.starmap_async(_flood_unauthorized_axfrs, [(named_port, 5)] * 10)
+
+        # Give the flood a moment to saturate
+        time.sleep(1)
+
+        # Try an authorized AXFR from 10.53.0.2 multiple times to increase
+        # the chance of hitting the race window where quota is consumed.
+        zone = dns.zone.Zone("quota.")
+        dns.query.inbound_xfr(
+            "10.53.0.3",
+            zone,
+            port=named_port,
+            timeout=10,
+            source="10.53.0.2",
+        )

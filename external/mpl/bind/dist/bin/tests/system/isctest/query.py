@@ -18,11 +18,14 @@ import time
 import dns.exception
 import dns.flags
 import dns.message
+import dns.name
 import dns.query
 import dns.rcode
 import dns.rdataclass
+import dns.rdatatype
 
 import isctest.log
+import isctest.run
 
 QUERY_TIMEOUT = 10
 
@@ -133,6 +136,7 @@ def create(
     qtype,
     qclass=dns.rdataclass.IN,
     dnssec: bool = True,
+    rd: bool = True,
     cd: bool = False,
     ad: bool = True,
 ) -> dns.message.Message:
@@ -140,9 +144,41 @@ def create(
     msg = dns.message.make_query(
         qname, qtype, qclass, use_edns=True, want_dnssec=dnssec
     )
-    msg.flags = dns.flags.RD
+    msg.flags = 0
+    if rd:
+        msg.flags = dns.flags.RD
     if ad:
         msg.flags |= dns.flags.AD
     if cd:
         msg.flags |= dns.flags.CD
     return msg
+
+
+def wait_for_serial(server_ip, zone, expected_serial, timeout=30):
+    """Wait until the server has the expected SOA serial for the zone.
+
+    Queries the server repeatedly until the SOA serial matches or the
+    timeout expires.
+
+    'server_ip' is the IP address to query (string).
+    'zone' is the zone name (string, with or without trailing dot).
+    'expected_serial' is the expected SOA serial number (int).
+    'timeout' is the maximum time to wait in seconds (default 30).
+    """
+    query = create(zone, "SOA", dnssec=False)
+
+    def check():
+        res = tcp(query, server_ip)
+        soa = res.get_rrset(
+            res.answer,
+            dns.name.from_text(zone),
+            dns.rdataclass.IN,
+            dns.rdatatype.SOA,
+        )
+        return soa is not None and len(soa) == 1 and soa[0].serial == expected_serial
+
+    isctest.run.retry_with_timeout(
+        check,
+        timeout=timeout,
+        msg=f"timed out waiting for serial {expected_serial} at {server_ip} for {zone}",
+    )

@@ -1,0 +1,44 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on {
+		10.53.0.3;
+		10.53.0.5;
+		10.53.0.6;
+		10.53.0.7;
+		10.53.0.8;
+		10.53.0.9;
+		10.53.0.10;
+		10.53.1.1;
+		10.53.1.2;
+		10.53.2.1;
+	};
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "example.tld." {
+	type primary;
+	file "example.tld.db";
+};
+
+zone "example2.tld." {
+	type primary;
+	file "example2.tld.db";
+};

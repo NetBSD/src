@@ -1,0 +1,11 @@
+$ORIGIN 1.0.0.127.in-addr.arpa.
+$TTL 300
+@ IN SOA ns hostmaster 1 3600 900 604800 300
+@ IN NS ns
+ns IN A 127.0.0.1
+
+@ IN KX 10 target.example.
+@ IN PX 10 map822.example. mapx400.example.
+@ IN NSAP 0x47000580ffff0000000001e133ffffff00016200
+@ IN NSAP-PTR target.example.
+@ in EID \# 01 aa

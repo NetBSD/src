@@ -1,0 +1,6 @@
+$TTL 300
+@ CH SOA ns.example. hostmaster.example. 1 3600 1200 604800 300
+@ CH NS ns.example.
+ns CH TXT "ns"
+a CH A target.example. 1
+target CH TXT "target"

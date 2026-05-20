@@ -23,9 +23,9 @@ options {
 	dnssec-validation no;
 	notify yes;
 	dns64 64:ff9b::/96 {
-			    clients { any; };
-			    exclude { any; };
-			    mapped { any; };
+		clients { any; };
+		exclude { ::1/128; };
+		mapped { any; };
 	};
 	minimal-responses no;
 };

@@ -25,6 +25,11 @@ dig_cmd() {
   "$DIG" $DIGOPTS "$@" | grep -v '^;'
 }
 
+dig_full() {
+  # shellcheck disable=SC2086
+  "$DIG" $DIGOPTS "$@"
+}
+
 n=$((n + 1))
 echo_i "querying for various representations of an IN A record ($n)"
 for i in 1 2 3 4 5 6 7 8 9 10 11 12; do
@@ -81,8 +86,8 @@ n=$((n + 1))
 echo_i "querying for various representations of a CLASS10 TYPE1 record ($n)"
 for i in 1 2; do
   ret=0
-  dig_cmd +short @10.53.0.1 a$i.example a class10 >dig.out.$i.test$n
-  echo '\# 4 0A000001' | diff - dig.out.$i.test$n || ret=1
+  dig_full @10.53.0.1 a$i.example a class10 >dig.out.$i.test$n
+  grep -q "NOTIMP" dig.out.$i.test$n || ret=1
   if [ $ret != 0 ]; then
     echo_i "#$i failed"
   fi
@@ -93,8 +98,8 @@ n=$((n + 1))
 echo_i "querying for various representations of a CLASS10 TXT record ($n)"
 for i in 1 2 3 4; do
   ret=0
-  dig_cmd +short @10.53.0.1 txt$i.example txt class10 >dig.out.$i.test$n
-  echo '"hello"' | diff - dig.out.$i.test$n || ret=1
+  dig_full @10.53.0.1 txt$i.example txt class10 >dig.out.$i.test$n
+  grep -q "NOTIMP" dig.out.$i.test$n || ret=1
   if [ $ret != 0 ]; then
     echo_i "#$i failed"
   fi
@@ -105,8 +110,8 @@ n=$((n + 1))
 echo_i "querying for various representations of a CLASS10 TYPE123 record ($n)"
 for i in 1 2; do
   ret=0
-  dig_cmd +short @10.53.0.1 unk$i.example type123 class10 >dig.out.$i.test$n
-  echo '\# 1 00' | diff - dig.out.$i.test$n || ret=1
+  dig_full @10.53.0.1 unk$i.example type123 class10 >dig.out.$i.test$n
+  grep -q "NOTIMP" dig.out.$i.test$n || ret=1
   if [ $ret != 0 ]; then
     echo_i "#$i failed"
   fi

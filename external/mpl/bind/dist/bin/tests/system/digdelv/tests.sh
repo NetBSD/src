@@ -1429,6 +1429,18 @@ if [ -x "$DELV" ]; then
   status=$((status + ret))
 
   n=$((n + 1))
+  echo_i "checking delv exits cleanly on malformed query name ($n)"
+  ret=0
+  longlabel="$(printf 'a%.0s' $(seq 1 64))"
+  delv_with_opts @10.53.0.3 -t a "$longlabel.example.com" >delv.out.test$n 2>&1
+  rc=$?
+  # Pre-fix: SIGABRT (exit 134) from dns_client_detach(NULL) in run_resolve cleanup.
+  [ $rc -eq 134 ] && ret=1
+  grep "label too long" delv.out.test$n >/dev/null || ret=1
+  if [ $ret -ne 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  n=$((n + 1))
   echo_i "checking delv with IPv6 on IPv4 does not work ($n)"
   if testsock6 fd92:7065:b8e:ffff::3 2>/dev/null; then
     ret=0
