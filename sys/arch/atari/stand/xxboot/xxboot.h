@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.6 2025/11/19 09:43:28 nia Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.7 2026/05/20 21:05:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -85,7 +85,7 @@
 #define	LBLST		(BXXST-LBLSZ)
 
 /*
- * Miminum/maximum value for the top/bottom  of the memory area
+ * Minimum/maximum value for the top/bottom  of the memory area
  * provided by the BIOS. The 1MB minimum memory limit is enough
  * to load a NetBSD kernel, not to run it. ;-) However, memory
  * reserved by the BIOS is not available to the boot loaders,

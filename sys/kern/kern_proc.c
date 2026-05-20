@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.282 2026/04/02 11:36:24 kre Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.283 2026/05/20 21:05:12 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.282 2026/04/02 11:36:24 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.283 2026/05/20 21:05:12 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2163,7 +2163,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		}
 
 		/*
-		 * Hande all the operations in one switch on the cost of
+		 * Handle all the operations in one switch on the cost of
 		 * algorithm complexity is on purpose. The win splitting this
 		 * function into several similar copies makes maintenance
 		 * burden, code grow and boost is negligible in practical

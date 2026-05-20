@@ -1,4 +1,4 @@
-/*	$NetBSD: catrig.c,v 1.3 2022/04/19 20:32:16 rillig Exp $	*/
+/*	$NetBSD: catrig.c,v 1.4 2026/05/20 21:05:11 andvar Exp $	*/
 /*-
  * Copyright (c) 2012 Stephen Montgomery-Smith <stephen@FreeBSD.ORG>
  * All rights reserved.
@@ -29,7 +29,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/lib/msun/src/catrig.c 275819 2014-12-16 09:21:56Z ed $");
 #endif
-__RCSID("$NetBSD: catrig.c,v 1.3 2022/04/19 20:32:16 rillig Exp $");
+__RCSID("$NetBSD: catrig.c,v 1.4 2026/05/20 21:05:11 andvar Exp $");
 
 #include "namespace.h"
 #ifdef __weak_alias
@@ -495,7 +495,7 @@ clog_for_large_values(double complex z)
 	 * Divide x and y by E, and then add 1 to the logarithm.  This depends
 	 * on E being larger than sqrt(2).
 	 * Dividing by E causes an insignificant loss of accuracy; however
-	 * this method is still poor since it is uneccessarily slow.
+	 * this method is still poor since it is unnecessarily slow.
 	 */
 	if (ax > DBL_MAX / 2)
 		return (CMPLX(log(hypot(x / m_e, y / m_e)) + 1, atan2(y, x)));
