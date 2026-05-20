@@ -1,4 +1,4 @@
-/*	$NetBSD: ffb.c,v 1.70 2026/05/20 07:43:24 macallan Exp $	*/
+/*	$NetBSD: ffb.c,v 1.71 2026/05/20 08:24:54 macallan Exp $	*/
 /*	$OpenBSD: creator.c,v 1.20 2002/07/30 19:48:15 jason Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.70 2026/05/20 07:43:24 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffb.c,v 1.71 2026/05/20 08:24:54 macallan Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1143,7 +1143,7 @@ ffb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	uint32_t fg, bg;
 	int i;
 	int x, y, wi, he;
-	uint32_t alpha = 0x80;
+	uint32_t alpha = 0x80, old = 0;
 	int j;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1190,25 +1190,39 @@ ffb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	ffb_ras_wait(sc);
 
 	/* ... and draw the character */
+	/*
+	 * We set the colour source to constant above so we only
+	 * have to write the alpha channel here and the colour
+	 * comes from the FG register. It would be nice if we
+	 * could just use the SFB8X aperture and memcpy() the
+	 * alpha map line by line but for some strange reason
+	 * that will take colour info from the framebuffer even
+	 * if we set the FBC_PPC_CS_CONST bit above.
+	 */
 	dest = sc->sc_sfb32 + (y << 11) + x;
 	for (i = 0; i < he; i++) {
 		ddest = dest;
-		for (j = 0; j < wi; j++) {
-			alpha = *data8;
-			/*
-			 * We set the colour source to constant above so we only
-			 * have to write the alpha channel here and the colour
-			 * comes from the FG register. It would be nice if we
-			 * could just use the SFB8X aperture and memcpy() the
-			 * alpha map line by line but for some strange reason
-			 * that will take colour info from the framebuffer even
-			 * if we set the FBC_PPC_CS_CONST bit above.
-			 */
-			*ddest = alpha << 24;
-			data8++;
-			ddest++;
+		old = 0;
+		if (attr & WSATTR_HILIT) {
+			for (j = 0; j < wi; j++) {
+				int new = *data8;
+				alpha = new + old;
+				if (alpha > 255) alpha = 255;
+				old = new;
+				*ddest = alpha << 24;
+				data8++;
+				ddest++;
+			}
+			dest += 2048;
+		} else {
+			for (j = 0; j < wi; j++) {
+				alpha = *data8;
+				*ddest = alpha << 24;
+				data8++;
+				ddest++;
+			}
+			dest += 2048;
 		}
-		dest += 2048;
 	}
 out:
 	/* check if we need to draw an underline */
@@ -1224,7 +1238,6 @@ out:
 int
 ffb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attrp)
 {
-	struct rasops_info *ri = cookie;
 	int fg = fg0, bg = bg0;
 
 	if ((flg & WSATTR_BLINK) != 0)
@@ -1233,10 +1246,6 @@ ffb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attrp)
 	if ((flg & WSATTR_REVERSE) != 0) {
 		fg = bg0;
 		bg = fg0;
-	}
-
-	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
-		fg = fg0 < 8 ? fg0 + 8 : fg0;
 	}
 
 	*attrp = (bg << 16) | (fg << 24) | flg;
