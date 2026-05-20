@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.60 2026/05/18 16:40:00 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.61 2026/05/20 00:50:00 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.60 2026/05/18 16:40:00 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.61 2026/05/20 00:50:00 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,7 @@ free_traps(void)
 			*tp = NULL;
 		}
 	traps_invalid = 0;
+	vforking = 0;	/* no longer relevant, any later signals are normal */
 	INTON;
 }
 
@@ -712,8 +713,22 @@ void
 onsig(int signo)
 {
 	int sav_err = errno;
+	int invalid = 0;
 
-	CTRACE(DBG_SIG, ("onsig(%d), had: pendingsigs %d%s, gotsig[%d]=%d\n",
+	/*
+	 * vforking can only ever be set if signals are blocked (in which
+	 * case we cannot be here), or in a child process that is currently
+	 * in vfork child state (not permitted to alter parent vars)
+	 * and thus for which all traps are invalid, but traps_invalid
+	 * cannot yet be set, nor can trap[] have been cleared, so in
+	 * that case, along with when a child process has marked traps_invalid
+	 * any signal arriving must be treated as if it were not trapped.
+	 */
+	if (traps_invalid || vforking)
+		invalid = 1;
+
+	CTRACE(DBG_SIG, ("%sonsig(%d), had: pendingsigs %d%s, gotsig[%d]=%d\n",
+	    (invalid ? "invalid " : ""),
 	    signo, pendingsigs, intpending ? " (SIGINT-pending)" : "",
 	    signo, gotsig[signo]));
 
@@ -721,7 +736,14 @@ onsig(int signo)
 	signal(signo, onsig);
 	*/
 
-	if (signo == SIGINT && (traps_invalid || trap[SIGINT] == NULL)) {
+	/*
+	 * We should never receive a SIGCHLD, if we do, ignore it
+	 */
+	if (signo == SIGCHLD)
+		return;
+
+	/* invalid here cannot be because of vfork(), just traps_invalid */
+	if (!vforking && signo == SIGINT && (invalid || trap[SIGINT] == NULL)) {
 		VTRACE(DBG_SIG, ("onsig(SIGINT), doing it now\n"));
 		if (suppressint && !in_dotrap)
 			intpending = 1;
@@ -738,8 +760,7 @@ onsig(int signo)
 	 * isn't permitted to affect that one at all, and we don't ever
 	 * want to receive it, but if we do, simply ignore it.
 	 */
-	if (!traps_invalid && trap[signo] != NULL && trap[signo][0] != '\0' &&
-	    signo != SIGCHLD) {
+	if (!invalid && trap[signo] != NULL && trap[signo][0] != '\0') {
 		gotsig[signo] = 1;
 		pendingsigs++;
 		if (iflag && signo == SIGINT) {
@@ -756,10 +777,12 @@ onsig(int signo)
 		VTRACE(DBG_SIG, ("onsig: gotsig[%d]->%d pendingsigs->%d%s\n",
 		    signo, gotsig[signo], pendingsigs,
 		    intpending ? " (SIGINT pending)":""));
-	} else if (signo != SIGCHLD) {
+	} else {
 		/*
+		 * The signal should not have ever arrived.
+		 *
 		 * But don't simply abandon it, instead return the
-		 * signal to default state (we will do this again later,
+		 * signal to default state (this will occur again later,
 		 * around the time traps_invalid is cleared but that's
 		 * harmless) and then send it to ourselves again, to allow
 		 * the kernel to do whatever it needs to do.
