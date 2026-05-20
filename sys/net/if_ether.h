@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.92 2025/10/04 04:44:19 thorpej Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.93 2026/05/20 22:58:29 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -212,8 +212,8 @@ struct ethercom {
 #define	ETHERCAP_VLAN_MTU	0x00000001 /* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002 /* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004 /* 9000 byte MTU supported */
-#define	ETHERCAP_VLAN_HWFILTER	0x00000008 /* iface hw can filter vlan tag */
-#define	ETHERCAP_EEE		0x00000010 /* Energy Efficiency Ethernet */
+#define	ETHERCAP_VLAN_HWFILTER	0x00000008 /* iface hw can filter VLAN tag */
+#define	ETHERCAP_EEE		0x00000010 /* Energy-Efficient Ethernet */
 #define	ETHERCAP_MASK		0x0000001f
 
 #define	ECCAPBITS		\
