@@ -1,4 +1,4 @@
-.\"	$NetBSD: axen.4,v 1.9 2019/08/30 09:22:17 wiz Exp $
+.\"	$NetBSD: axen.4,v 1.10 2026/05/20 02:04:30 gutteridge Exp $
 .\"	$OpenBSD: axen.4,v 1.2 2013/10/07 07:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
@@ -15,20 +15,21 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd August 24, 2019
+.Dd May 20, 2026
 .Dt AXEN 4
 .Os
 .Sh NAME
 .Nm axen
-.Nd ASIX Electronics AX88178a/AX88179 10/100/Gigabit USB Ethernet device
+.Nd ASIX Electronics AX88178A/AX88179/AX88179A 10/100/Gigabit USB Ethernet device
 .Sh SYNOPSIS
 .Cd "axen*   at uhub? port ?"
 .Cd "rgephy* at mii?"
+.Cd "ukphy* at mii?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the ASIX
-Electronics AX88178a USB 2.0 and AX88179 USB 3.0 chipsets
+Electronics AX88178A USB 2.0 and AX88179/AX88179A USB 3.0 chipsets
 including the following:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
@@ -61,6 +62,10 @@ Set 1000Mbps (Gigabit Ethernet) operation.
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
+.Pp
+It provides IPv4/TCPv4/UDPv4/TCPv6/UDPv6 checksumming and TSOv4 offload
+on capable hardware.
+It also supports VLAN-sized frames.
 .Sh DIAGNOSTICS
 See
 .Xr usbnet 4
@@ -70,6 +75,7 @@ for diagnostics.
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr rgephy 4 ,
+.Xr ukphy 4 ,
 .Xr usb 4 ,
 .Xr usbnet 4 ,
 .Xr ifconfig.if 5 ,
@@ -81,6 +87,8 @@ device driver first appeared in
 .Ox 5.4
 and in
 .Nx 7.0 .
+AX88179A support first appeared in
+.Nx 10.2 .
 .Sh AUTHORS
 .An -nosplit
 The
