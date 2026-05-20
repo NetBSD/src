@@ -1,4 +1,4 @@
-.\"	$NetBSD: axen.4,v 1.11 2026/05/20 21:35:38 gutteridge Exp $
+.\"	$NetBSD: axen.4,v 1.12 2026/05/20 22:21:27 gutteridge Exp $
 .\"	$OpenBSD: axen.4,v 1.2 2013/10/07 07:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
@@ -68,6 +68,8 @@ For more information on configuring this device, see
 It provides IPv4/TCPv4/UDPv4/TCPv6/UDPv6 checksumming and TSOv4 offload
 on capable hardware.
 It also supports VLAN-sized frames.
+It does not presently support other advertised features of the AX88179A,
+such as jumbo frames and Energy-Efficient Ethernet.
 .Sh DIAGNOSTICS
 See
 .Xr usbnet 4
