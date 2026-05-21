@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.182 2026/01/30 23:51:06 gutteridge Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.183 2026/05/21 10:19:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.182 2026/01/30 23:51:06 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.183 2026/05/21 10:19:28 skrll Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1231,7 +1231,7 @@ re_tx_list_init(struct rtk_softc *sc)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	sc->re_ldata.re_txq_prodidx = 0;
 	sc->re_ldata.re_txq_considx = 0;
-	sc->re_ldata.re_txq_free = RE_TX_QLEN(sc);;
+	sc->re_ldata.re_txq_free = RE_TX_QLEN(sc);
 	sc->re_ldata.re_tx_free = RE_TX_DESC_CNT(sc);
 	sc->re_ldata.re_tx_nextfree = 0;
 
