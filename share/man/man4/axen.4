@@ -1,4 +1,4 @@
-.\"	$NetBSD: axen.4,v 1.12 2026/05/20 22:21:27 gutteridge Exp $
+.\"	$NetBSD: axen.4,v 1.13 2026/05/21 08:29:51 uwe Exp $
 .\"	$OpenBSD: axen.4,v 1.2 2013/10/07 07:18:36 jmc Exp $
 .\"
 .\" Copyright (c) 2013 Yojiro UO <yuo@nui.org>
@@ -20,53 +20,63 @@
 .Os
 .Sh NAME
 .Nm axen
-.Nd ASIX Electronics AX88178A/AX88179/AX88179A 10/100/Gigabit USB Ethernet device
+.Nd ASIX Electronics AX88178A, AX88179, AX88179A 10\^/\^100\^/\^Gigabit USB Ethernet device
 .Sh SYNOPSIS
 .Cd "axen*   at uhub? port ?"
 .Cd "rgephy* at mii?"
-.Cd "ukphy* at mii?"
+.Cd "ukphy*  at mii?"
 .Sh DESCRIPTION
 The
 .Nm
 driver provides support for USB Ethernet adapters based on the ASIX
-Electronics AX88178A USB 2.0 and AX88179/AX88179A USB 3.0 chipsets
+Electronics AX88178A USB 2.0, and AX88179\|/\^AX88179A USB 3.0 chipsets
 including the following:
 .Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Buffalo LUA4-U3-AGT
-.It D-Link DUB-1312
-.It Kuroutoshikou GbE-USB3.0
-.It Kuroutoshikou GbE-USB3.0S2
-.It Logitec LAN-GTJU3
-.It Logitec LAN-GTJU3H3
-.It Shanghai Donya DN-84327
-.It TP-Link UE300
-.It TP-Link UE306
+.Bl -item -offset indent -compact
+.It
+Buffalo LUA4-U3-AGT
+.It
+D-Link DUB-1312
+.It
+Kuroutoshikou GbE-USB3.0
+.It
+Kuroutoshikou GbE-USB3.0S2
+.It
+Logitec LAN-GTJU3
+.It
+Logitec LAN-GTJU3H3
+.It
+Shanghai Donya DN-84327
+.It
+TP-Link UE300
+.It
+TP-Link UE306
 .El
 .Pp
 The
 .Nm
 driver supports the following media types:
-.Bl -tag -width "autoselect"
-.It autoselect
-Enable autoselection of the media type and options (this is the default).
+.Bl -tag -width Cm -offset indent
+.It Cm autoselect
+Enable autoselection of the media type and options.
+This is the default.
 The user can manually override the autoselected mode by adding media
 options to the appropriate
 .Xr ifconfig.if 5
 file.
-.It 10baseT
+.It Cm 10baseT
 Set 10Mbps operation.
-.It 100baseTX
+.It Cm 100baseTX
 Set 100Mbps (Fast Ethernet) operation.
-.It 1000baseT
+.It Cm 1000baseT
 Set 1000Mbps (Gigabit Ethernet) operation.
 .El
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
 .Pp
-It provides IPv4/TCPv4/UDPv4/TCPv6/UDPv6 checksumming and TSOv4 offload
-on capable hardware.
+It provides IPv4, TCPv4, UDPv4, TCPv6, UDPv6 checksumming, and TSOv4
+segmentation offloading on capable hardware.
 It also supports VLAN-sized frames.
 It does not presently support other advertised features of the AX88179A,
 such as jumbo frames and Energy-Efficient Ethernet.
