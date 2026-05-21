@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.19 2026/05/17 06:31:39 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.20 2026/05/21 11:37:16 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -179,7 +179,7 @@ pte_nv_entry(bool kernel_p)
 static inline pt_entry_t
 pte_clear_modify(pt_entry_t pte)
 {
-	return pte & ~PTE_W;
+	return pte & ~PTE_D;
 }
 
 static inline pt_entry_t
@@ -237,28 +237,29 @@ pte_make_enter(paddr_t pa, struct vm_page_md *mdpg, vm_prot_t prot,
 	pte |= pte_prot_bits(mdpg, prot, kernel_p);
 	pte |= pte_enter_flags_to_pbmt(flags);
 
-	if (mdpg != NULL) {
+	/*
+	 * pmap_enter should have checked flags and updated
+	 * VM_PAGEMD_{REFERENCED,MODIFIED}_P, so there is no
+	 * need here.
+	 */
+	KASSERT(((flags & VM_PROT_ALL) == 0) || VM_PAGEMD_REFERENCED_P(mdpg));
+	KASSERT(((flags & VM_PROT_WRITE) == 0) || VM_PAGEMD_MODIFIED_P(mdpg));
 
-		if ((prot & VM_PROT_WRITE) != 0 &&
-		    ((flags & VM_PROT_WRITE) != 0 || VM_PAGEMD_MODIFIED_P(mdpg))) {
+	if (mdpg != NULL) {
+		if ((prot & VM_PROT_WRITE) != 0 && VM_PAGEMD_MODIFIED_P(mdpg)) {
 			/*
 			 * This is a writable mapping, and the page's mod state
 			 * indicates it has already been modified.  No need for
-			 * modified emulation.
+			 * reference or modified emulation.
 			 */
 			pte |= PTE_A | PTE_D;
-		} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
+		} else if (VM_PAGEMD_REFERENCED_P(mdpg)) {
 			/*
-			 * - The access type indicates that we don't need to do
-			 *   referenced emulation.
-			 * OR
-			 * - The physical page has already been referenced so no need
-			 *   to re-do referenced emulation here.
+			 * The physical page has already been referenced so no need
+			 * to re-do referenced emulation here.
 			 */
 			pte |= PTE_A;
 		}
-	} else {
-		pte |= PTE_A | PTE_D;
 	}
 
 	return pte;
