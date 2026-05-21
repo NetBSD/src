@@ -1,4 +1,4 @@
-/*	$NetBSD: membar_ops.S,v 1.13 2022/04/21 12:06:31 riastradh Exp $	*/
+/*	$NetBSD: membar_ops.S,v 1.14 2026/05/21 08:07:39 kbowling Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -61,17 +61,29 @@ ATOMIC_OP_ALIAS(membar_enter,_membar_sync)
  *		the first (DLD) operation, regardless of the presence
  *		or absence of SYNC* instructions.
  *
- * Note: I'm not sure if this applies to earlier cnMIPS -- can't find
- * it in the Cavium Networks OCTEON Plus CN50XX Hardware Reference
- * Manual CN50XX-HM-0.99E, July 2008.  Experimentally, on an erlite3
- * (Cavium Octeon CN5020-500), I can easily detect reordering of
- * store-before-store and store-before-load, but I haven't been able to
- * detect any reordering of load-before-load or load-before-store.
+ * The CN50XX HRM (CN50XX-HM-0.99E, July 2008) does not document this
+ * guarantee explicitly, but Section 4.8 (p. 161) only describes
+ * stores as reorderable, the cores are in-order with write-through L1,
+ * and the Cavium SDK provides no read/acquire barrier either.
+ * Experimentally, on an erlite3 (CN5020-500), store-before-store and
+ * store-before-load reordering are easily detected, but no
+ * load-before-load or load-before-store reordering has been observed.
  *
- * Note: On early cnMIPS (CN3xxx), there is an erratum which sometimes
- * requires issuing two syncw's in a row.  I don't know the details --
- * don't have documentation -- and in Linux it is only used for I/O
- * purposes.
+ * On CN3xxx/CN5xxx (Octeon I/Plus), errata Core-401 can cause a
+ * single syncw to fail to enforce store ordering under rare
+ * conditions.  Two syncw instructions in a row are needed as a
+ * workaround.  This erratum was fixed in Octeon II (CN6xxx), so a
+ * single syncw suffices there.
+ *
+ * Note: on all cnMIPS, the write buffer aggressively merges stores
+ * and a releasing store (e.g. lock release) can linger for hundreds
+ * of thousands of cycles before becoming visible to other cores.
+ * A separate syncw "plunger" is needed _after_ the releasing store
+ * to drain the write buffer promptly (CN50XX-HRM p. 943, CN78XX-HRM
+ * p. 2168).  That concern is handled by SYNC_PLUNGER in asm.h at
+ * the lock release sites, not here.  membar_release runs _before_
+ * the releasing store, so it cannot drain a store that hasn't
+ * happened yet.
  *
  * Currently we don't build kernels that work on both Octeon and
  * non-Octeon MIPS CPUs, so none of this is done with binary patching.
@@ -90,8 +102,15 @@ STRONG_ALIAS(_membar_consumer,_membar_acquire)
 ATOMIC_OP_ALIAS(membar_consumer,_membar_acquire)
 
 LEAF(_membar_release)
+#if defined(_MIPS_ARCH_OCTEON2)
 	j	ra
 	 syncw
+#else
+	/* Two syncw for errata Core-401 (CN3xxx/CN5xxx) + write buffer drain */
+	syncw
+	j	ra
+	 syncw
+#endif
 END(_membar_release)
 ATOMIC_OP_ALIAS(membar_release,_membar_release)
 
