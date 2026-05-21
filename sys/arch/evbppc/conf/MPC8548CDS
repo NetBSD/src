@@ -1,4 +1,4 @@
-#	$NetBSD: MPC8548CDS,v 1.29 2024/01/29 18:27:12 christos Exp $
+#	$NetBSD: MPC8548CDS,v 1.30 2026/05/21 11:35:40 skrll Exp $
 #
 #	MPC8548CDS -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.mpc85xx"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"MPC8548CDS-$Revision: 1.29 $"
+ident 		"MPC8548CDS-$Revision: 1.30 $"
 
 maxusers	32
 
@@ -44,6 +44,7 @@ options 	BUFQ_PRIOCSCAN
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
 #options 	SYSCALL_DEBUG	# syscall debugging
+#options 	PMAP_DEBUG
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT

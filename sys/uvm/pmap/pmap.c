@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.93 2026/05/17 15:55:55 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.94 2026/05/21 11:35:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.93 2026/05/17 15:55:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2026/05/21 11:35:41 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2552,3 +2552,176 @@ pmap_db_pmap_print(struct pmap *pm,
 	pmap_db_tlb_print(pm, pr);
 }
 #endif /* DDB */
+
+
+/***************************** PMAP DEBUGGING ********************************/
+
+#ifdef PMAP_DEBUG
+
+void	pmap_test_mod_ref(void);
+
+void
+pmap_test_mod_ref(void)
+{
+	int val;
+	bool mod, ref;
+	bool exp_mod, exp_ref;
+
+	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
+	if (va == 0) {
+		printf("%s: couldn't allocate a VA to use\n",
+		    __func__);
+		return;
+	}
+
+	struct lwp *l = curlwp;
+	pmap_deactivate(l);
+
+	struct vm_page * const pg = pmap_md_alloc_poolpage(0);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	volatile int * const loc = (volatile int *)va;
+
+	/* Initialize page and mod/ref state to pristine. */
+	pmap_zero_page(pa);
+	pmap_clear_modify(pg);
+	pmap_clear_reference(pg);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: validating pristine page: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* Enter non-seeded R/W mapping. */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: enter(ALL, 0): mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* reference page */
+	val = *loc;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = true;
+	printf("%s: ref 1: val=%d: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    val,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* validate clear behavior. */
+	exp_mod = mod;
+	exp_ref = ref;
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	printf("%s: checking clear 1: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: checking clear 2: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* reference page again */
+	val = *loc;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = true;
+	printf("%s: ref 2: val=%d: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    val,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* modify page */
+	*loc = 0xff;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 1: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* write-protect page */
+	pmap_page_protect(pg, UVM_PROT_READ);
+
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 2: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: checking clear 3: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* modify page again */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	*loc = 0xaa;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 3: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* remove all mappings of page */
+	pmap_page_protect(pg, UVM_PROT_NONE);
+
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 4: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* all done. */
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	printf("%s: done\n", __func__);
+
+	pmap_activate(l);
+
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+}
+
+#endif /* PMAP_DEBUG */

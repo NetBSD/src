@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.25 2026/05/18 05:55:24 skrll Exp $
+# $NetBSD: GENERIC64,v 1.26 2026/05/21 11:35:40 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -42,6 +42,7 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	PMAP_FAULTINFO
 #options 	RISCV_SYSCALL_DEBUG
 #options 	SYSCALL_DEBUG
+#options 	PMAP_DEBUG
 
 #options 	COMPAT_NETBSD32
 #options 	EXEC_ELF32
