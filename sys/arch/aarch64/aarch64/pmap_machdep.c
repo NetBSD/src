@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.15 2026/05/12 13:07:52 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.16 2026/05/21 11:38:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.15 2026/05/12 13:07:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.16 2026/05/21 11:38:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -131,7 +131,6 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 	return true;
 }
 
-
 bool
 pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 {
@@ -141,12 +140,14 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 
 	kpreempt_disable();
 
+//	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
 	UVMHIST_LOG(pmaphist, " pm=%#jx, va=%#jx, ftype=%#jx, user=%jd",
 	    (uintptr_t)pm, va, ftype, user);
 	UVMHIST_LOG(pmaphist, " ti=%#jx pai=%#jx asid=%#jx",
 	    (uintptr_t)cpu_tlb_info(curcpu()),
-	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu())),
-	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
+	    (uintptr_t)pai, (uintptr_t)pai->pai_asid, 0);
 
 	bool fixed = false;
 	pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
@@ -155,7 +156,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		goto done;
 	}
 
-	const pt_entry_t opte = *ptep;
+	const pt_entry_t opte = atomic_load_relaxed(ptep);
 	if (!l3pte_valid(opte)) {
 		UVMHIST_LOG(pmaphist, "invalid pte: %016llx: va=%016lx",
 		    opte, va, 0, 0);
@@ -180,8 +181,9 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED | VM_PAGEMD_REFERENCED);
 
                 /*
-		 * Enable write permissions for the page by setting the Access Flag,
-		 * marking the page as writeable, and modified (using an OS bit).
+		 * Enable write permissions for the page by setting the Access
+		 * Flag, marking the page as writeable, and modified (using an
+		 * OS bit).
 		 *
 		 * The MODEMUL bit is also removed as its no longer required.
 		 */
@@ -191,7 +193,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		    LX_BLKPAG_AP_RW |
 		    LX_BLKPAG_OS_MODIFIED;
 		atomic_swap_64(ptep, npte);
-		dsb(ishst);
+		// tlb_invalidate_addr does dsb(ishst)
+		tlb_invalidate_addr(va, pai->pai_asid);
 		fixed = true;
 
 		PMAP_COUNT(fixup_modified);
@@ -213,7 +216,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		 */
 		const pt_entry_t npte = opte | LX_BLKPAG_AF;
 		atomic_swap_64(ptep, npte);
-		dsb(ishst);
+		// tlb_invalidate_addr does dsb(ishst)
+		tlb_invalidate_addr(va, pai->pai_asid);
 		fixed = true;
 
 		PMAP_COUNT(fixup_referenced);
