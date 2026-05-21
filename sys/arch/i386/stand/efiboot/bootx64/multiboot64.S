@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot64.S,v 1.1 2019/09/13 02:19:46 manu Exp $ */
+/*	$NetBSD: multiboot64.S,v 1.2 2026/05/21 16:59:03 riastradh Exp $ */
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 
@@ -6,10 +6,6 @@
 #define DATA_SEGMENT    0x10
 
 	.align	16
-	.globl _C_LABEL(multiboot64)
-_C_LABEL(multiboot64):
-	.quad 0
-
 	.globl _C_LABEL(multiboot64_size)
 _C_LABEL(multiboot64_size):
 	.long multiboot64_end - _C_LABEL(multiboot64_start)

@@ -1,13 +1,9 @@
-/*	$NetBSD: multiboot32.S,v 1.2 2019/09/24 00:47:46 manu Exp $ */
+/*	$NetBSD: multiboot32.S,v 1.3 2026/05/21 16:59:03 riastradh Exp $ */
 
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 
 	.align	16
-	.globl _C_LABEL(multiboot32)
-_C_LABEL(multiboot32):
-	.quad 0
-
 	.globl _C_LABEL(multiboot32_size)
 _C_LABEL(multiboot32_size):
 	.long multiboot32_end - _C_LABEL(multiboot32_start)
