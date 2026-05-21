@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.157 2026/05/17 06:09:25 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.158 2026/05/21 10:07:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.157 2026/05/17 06:09:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.158 2026/05/21 10:07:02 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -300,18 +300,11 @@ phys_to_pp(paddr_t pa)
 #define IN_MODULE_VA(va)	false
 #endif
 
-#if defined(PMAP_DEBUG)
-#define PMAP_DEBUGVA_P(va)	((va) == pmap_debugva)
-#else
-#define PMAP_DEBUGVA_P(va)	(false)
-#endif
-
 #ifdef DIAGNOSTIC
 
 #define KERNEL_ADDR_P(va)						\
     (IN_RANGE((va), VM_MIN_KERNEL_ADDRESS,  VM_MAX_KERNEL_ADDRESS) ||	\
-     PMAP_EFIVA_P(va) ||						\
-     PMAP_DEBUGVA_P(va))
+     PMAP_EFIVA_P(va))
 
 #define KASSERT_PM_ADDR(pm, va)						\
     do {								\
@@ -404,11 +397,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	CTASSERT(sizeof(kpm->pm_stats.wired_count) == sizeof(long));
 	CTASSERT(sizeof(kpm->pm_stats.resident_count) == sizeof(long));
-
-#if defined(PMAP_DEBUG)
-        pmap_debugva = VM_MIN_KERNEL_ADDRESS - PAGE_SIZE;
-        KASSERT((pmap_debugva  & PAGE_MASK) == 0);
-#endif
 
 #if defined(EFI_RUNTIME)
 	memset(&efirt_pmap, 0, sizeof(efirt_pmap));
@@ -2393,8 +2381,7 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	KASSERT_PM_ADDR(pm, va);
 #else
 	if ((pm == pmap_kernel() &&
-	    !(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS) ||
-	      PMAP_DEBUGVA_P(va))) ||
+	    !(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS))) ||
 	    (pm != pmap_kernel() &&
 	    !(IN_RANGE(va, VM_MIN_ADDRESS, VM_MAX_ADDRESS)))) {
 
@@ -2767,24 +2754,25 @@ pmap_db_pmap_print(struct pmap *pm,
 	pr(" pm_activated  = %d\n\n", pm->pm_activated);
 }
 #endif /* DDB */
+
 /***************************** PMAP DEBUGGING ********************************/
 
 #ifdef PMAP_DEBUG
-
-vaddr_t pmap_debugva;
 
 void	pmap_test_mod_ref(void);
 
 void
 pmap_test_mod_ref(void)
 {
-	vaddr_t va = pmap_debugva;
 	int val;
 	bool mod, ref;
 	bool exp_mod, exp_ref;
 
+	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
 	if (va == 0) {
-		printf("%s: platform didn't define a VA to use\n",
+		printf("%s: couldn't allocate a VA to use\n",
 		    __func__);
 		return;
 	}
@@ -2794,8 +2782,11 @@ pmap_test_mod_ref(void)
 		printf("%s: couldn't allocate page\n", __func__);
 		return;
 	}
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
-	pg->flags &= ~PG_BUSY;	/* never busy */
+	pg->flags &= ~(PG_BUSY|PG_FAKE);	/* never busy */
+
+	struct lwp *l = curlwp;
+	pmap_deactivate(l);
+
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
 	volatile int * const loc = (volatile int *)va;
 
@@ -2815,6 +2806,7 @@ pmap_test_mod_ref(void)
 
 	/* Enter non-seeded R/W mapping. */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -2929,9 +2921,14 @@ pmap_test_mod_ref(void)
 	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
 
 	/* all done. */
-	pmap_remove(pmap_kernel(), va, va+PAGE_SIZE);
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_update(pmap_kernel());
 
 	printf("%s: done\n", __func__);
+
+	pmap_activate(l);
+
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
 }
 
 #endif /* PMAP_DEBUG */

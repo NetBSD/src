@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.28 2026/05/13 05:43:04 skrll Exp $	*/
+/*	$NetBSD: fault.c,v 1.29 2026/05/21 10:07:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.28 2026/05/13 05:43:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.29 2026/05/21 10:07:02 skrll Exp $");
 
 #include "opt_compat_netbsd32.h"
 #include "opt_cpuoptions.h"
@@ -174,11 +174,6 @@ data_abort_handler(struct trapframe *tf, uint32_t eclass)
 		map = &p->p_vmspace->vm_map;
 		UVMHIST_LOG(pmaphist, "use user vm_map %p (kernel_map=%p)",
 		   map, kernel_map, 0, 0);
-#if defined(PMAP_DEBUG)
-	} else if (va == pmap_debugva) {
-		map = kernel_map;
-		UVMHIST_LOG(pmaphist, "use kernel_map %p", map, 0, 0, 0);
-#endif
 	} else
 		goto do_fault;
 
