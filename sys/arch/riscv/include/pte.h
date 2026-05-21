@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.20 2026/05/21 11:37:16 skrll Exp $ */
+/* $NetBSD: pte.h,v 1.21 2026/05/21 12:10:29 skrll Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -140,6 +140,12 @@ pte_modified_p(pt_entry_t pte)
 }
 
 static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+	return (pte & PTE_A) != 0;
+}
+
+static inline bool
 pte_cached_p(pt_entry_t pte)
 {
 	/* TODO: This seems wrong... */
@@ -180,6 +186,12 @@ static inline pt_entry_t
 pte_clear_modify(pt_entry_t pte)
 {
 	return pte & ~PTE_D;
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+	return pte & ~PTE_A;
 }
 
 static inline pt_entry_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.94 2026/05/21 11:35:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.95 2026/05/21 12:10:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.94 2026/05/21 11:35:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2026/05/21 12:10:29 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -194,6 +194,7 @@ PMAP_COUNTER(shootdown_ipis, "shootdown IPIs");
 PMAP_COUNTER(unwire, "unwires");
 PMAP_COUNTER(copy, "copies");
 PMAP_COUNTER(clear_modify, "clear_modifies");
+PMAP_COUNTER(clear_reference, "clear_references");
 PMAP_COUNTER(protect, "protects");
 PMAP_COUNTER(page_protect, "page_protects");
 
@@ -1879,6 +1880,90 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 	PMAP_COUNT(copy);
 }
 
+struct pmap_clear_attribute_ops {
+	u_long pcao_attribute;
+	pt_entry_t (*pcao_clear)(pt_entry_t);
+};
+
+static const struct pmap_clear_attribute_ops pmap_clear_reference_ops = {
+	.pcao_attribute = VM_PAGEMD_REFERENCED,
+	.pcao_clear = pte_clear_reference,
+};
+
+static const struct pmap_clear_attribute_ops pmap_clear_modify_ops = {
+	.pcao_attribute = VM_PAGEMD_MODIFIED,
+	.pcao_clear = pte_clear_modify,
+};
+
+static bool
+pmap_clear_attribute(struct vm_page *pg,
+    const struct pmap_clear_attribute_ops *ops)
+{
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx), ref=%jd mod=%jd)",
+	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg),
+	    ops->pcao_attribute == VM_PAGEMD_REFERENCED,
+	    ops->pcao_attribute == VM_PAGEMD_MODIFIED);
+
+	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+
+	pv_entry_t pv = &mdpg->mdpg_first;
+	pv_entry_t pv_next;
+
+	bool rv = pmap_page_clear_attributes(mdpg, ops->pcao_attribute);
+	if (pv->pv_pmap == NULL) {
+		UVMHIST_LOG(pmaphist, " <-- %d (%jx)", rv,ops->pcao_attribute, 0, 0);
+		return rv;
+	}
+
+	bool changed = false;
+	kpreempt_disable();
+	VM_PAGEMD_PVLIST_READLOCK(mdpg);
+	pmap_pvlist_check(mdpg);
+	for (; pv != NULL; pv = pv_next) {
+		pmap_t pmap = pv->pv_pmap;
+		vaddr_t va = trunc_page(pv->pv_va);
+
+		pv_next = pv->pv_next;
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+		if (PV_ISKENTER_P(pv))
+			continue;
+#endif
+		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
+		KASSERT(ptep);
+		pt_entry_t opte = atomic_load_relaxed(ptep);
+		pt_entry_t npte = ops->pcao_clear(opte);
+		UVMHIST_LOG(pmaphist, " pmap %p va %#jx opte %#jx npte %#jx",
+		    (uintptr_t)pmap, va, opte, npte);
+		if (npte == opte) {
+			continue;
+		}
+		changed = true;
+		KASSERT(pte_valid_p(npte));
+		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
+		pmap_tlb_miss_lock_enter();
+		pte_set(ptep, npte);
+		pmap_tlb_invalidate_addr(pmap, va);
+		pmap_tlb_miss_lock_exit();
+		pmap_update(pmap);
+		if (__predict_false(gen != VM_PAGEMD_PVLIST_READLOCK(mdpg))) {
+			/*
+			 * The list changed!  So restart from the beginning.
+			 */
+			pv_next = &mdpg->mdpg_first;
+			pmap_pvlist_check(mdpg);
+		}
+	}
+	pmap_pvlist_check(mdpg);
+	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
+	kpreempt_enable();
+
+	UVMHIST_LOG(pmaphist, " <-- %jx (and mappings changed)",
+	    ops->pcao_attribute, changed, 0, 0);
+
+	return changed;
+}
+
 /*
  *	pmap_clear_reference:
  *
@@ -1887,17 +1972,96 @@ pmap_copy(pmap_t dst_pmap, pmap_t src_pmap, vaddr_t dst_addr, vsize_t len,
 bool
 pmap_clear_reference(struct vm_page *pg)
 {
-	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
-
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx))",
 	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), 0,0);
 
-	bool rv = pmap_page_clear_attributes(mdpg, VM_PAGEMD_REFERENCED);
+	PMAP_COUNT(clear_reference);
+	return pmap_clear_attribute(pg, &pmap_clear_reference_ops);
+}
 
-	UVMHIST_LOG(pmaphist, " <-- wasref %ju", rv, 0, 0, 0);
+struct pmap_is_attribute_ops {
+	u_long piao_attribute;
+	bool (*piao_pte_isattribute)(pt_entry_t);
+};
 
-	return rv;
+static const struct pmap_is_attribute_ops pmap_is_reference_ops = {
+	.piao_attribute = VM_PAGEMD_REFERENCED,
+	.piao_pte_isattribute = pte_referenced_p,
+};
+
+static const struct pmap_is_attribute_ops pmap_is_modify_ops = {
+	.piao_attribute = VM_PAGEMD_MODIFIED,
+	.piao_pte_isattribute = pte_modified_p,
+};
+
+static bool
+pmap_is_attribute(struct vm_page *pg,
+    const struct pmap_is_attribute_ops *ops)
+{
+	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx), ref=%jd mod=%jd)",
+	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg),
+	    ops->piao_attribute == VM_PAGEMD_REFERENCED,
+	    ops->piao_attribute == VM_PAGEMD_MODIFIED);
+
+	if (mdpg->mdpg_attrs & ops->piao_attribute) {
+		UVMHIST_LOG(pmaphist, "(mdpg=%#jx attrs=%#jx vs %#jx) <--- true", (uintptr_t)mdpg, mdpg->mdpg_attrs, ops->piao_attribute, 0);
+		return true;
+	}
+
+	pv_entry_t pv = &mdpg->mdpg_first;
+	if (pv->pv_pmap == NULL) {
+		UVMHIST_LOG(pmaphist, " no mappings <--- false", 0, 0, 0, 0);
+		return false;        // no mappings
+	}
+
+	pv_entry_t pv_next;
+	bool result = false;
+	kpreempt_disable();            // XXXNH needed?
+	VM_PAGEMD_PVLIST_READLOCK(mdpg);
+	pmap_pvlist_check(mdpg);
+	for (; pv != NULL; pv = pv_next) {
+		pmap_t pmap = pv->pv_pmap;
+		vaddr_t va = trunc_page(pv->pv_va);
+
+		pv_next = pv->pv_next;
+#ifdef PMAP_VIRTUAL_CACHE_ALIASES
+		if (PV_ISKENTER_P(pv))
+			continue;
+#endif
+		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
+		KASSERT(ptep);
+		pt_entry_t pte = atomic_load_relaxed(ptep);
+		KASSERT(pte_valid_p(pte));
+		if (ops->piao_pte_isattribute(pte)) {
+			result = true;
+			break;
+		}
+
+		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
+		if (__predict_false(gen != VM_PAGEMD_PVLIST_READLOCK(mdpg))) {
+			/*
+			 * The list changed!  So restart from the beginning.
+			 */
+			pv_next = &mdpg->mdpg_first;
+			pmap_pvlist_check(mdpg);
+		}
+	}
+	pmap_pvlist_check(mdpg);
+	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
+	kpreempt_enable();        // XXXNH?
+
+	if (result)
+		pmap_page_set_attributes(mdpg, ops->piao_attribute);
+
+	if (result)
+		UVMHIST_LOG(pmaphist, " mappings <--- true", 0, 0, 0, 0);
+	else
+		UVMHIST_LOG(pmaphist, " mappings <--- false", 0, 0, 0, 0);
+	return result;
 }
 
 /*
@@ -1909,18 +2073,14 @@ pmap_clear_reference(struct vm_page *pg)
 bool
 pmap_is_referenced(struct vm_page *pg)
 {
-	return VM_PAGEMD_REFERENCED_P(VM_PAGE_TO_MD(pg));
-}
 
-/*
- *	Clear the modify bits on the specified physical page.
- */
+	return pmap_is_attribute(pg, &pmap_is_reference_ops);
+}
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
 	struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 	pv_entry_t pv = &mdpg->mdpg_first;
-	pv_entry_t pv_next;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (%#jx))",
@@ -1942,60 +2102,8 @@ pmap_clear_modify(struct vm_page *pg)
 			PMAP_COUNT(exec_synced_clear_modify);
 		}
 	}
-	if (!pmap_page_clear_attributes(mdpg, VM_PAGEMD_MODIFIED)) {
-		UVMHIST_LOG(pmaphist, " <-- false", 0, 0, 0, 0);
-		return false;
-	}
-	if (pv->pv_pmap == NULL) {
-		UVMHIST_LOG(pmaphist, " <-- true (no mappings)", 0, 0, 0, 0);
-		return true;
-	}
 
-	/*
-	 * remove write access from any pages that are dirty
-	 * so we can tell if they are written to again later.
-	 * flush the VAC first if there is one.
-	 */
-	kpreempt_disable();
-	VM_PAGEMD_PVLIST_READLOCK(mdpg);
-	pmap_pvlist_check(mdpg);
-	for (; pv != NULL; pv = pv_next) {
-		pmap_t pmap = pv->pv_pmap;
-		vaddr_t va = trunc_page(pv->pv_va);
-
-		pv_next = pv->pv_next;
-#ifdef PMAP_VIRTUAL_CACHE_ALIASES
-		if (PV_ISKENTER_P(pv))
-			continue;
-#endif
-		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
-		KASSERT(ptep);
-		pt_entry_t opte = atomic_load_relaxed(ptep);
-		pt_entry_t npte = pte_clear_modify(opte);
-		if (npte == opte) {
-			continue;
-		}
-		KASSERT(pte_valid_p(npte));
-		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-		pmap_tlb_miss_lock_enter();
-		pte_set(ptep, npte);
-		pmap_tlb_invalidate_addr(pmap, va);
-		pmap_tlb_miss_lock_exit();
-		pmap_update(pmap);
-		if (__predict_false(gen != VM_PAGEMD_PVLIST_READLOCK(mdpg))) {
-			/*
-			 * The list changed!  So restart from the beginning.
-			 */
-			pv_next = &mdpg->mdpg_first;
-			pmap_pvlist_check(mdpg);
-		}
-	}
-	pmap_pvlist_check(mdpg);
-	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-	kpreempt_enable();
-
-	UVMHIST_LOG(pmaphist, " <-- true (mappings changed)", 0, 0, 0, 0);
-	return true;
+	return pmap_clear_attribute(pg, &pmap_clear_modify_ops);
 }
 
 /*
@@ -2007,7 +2115,8 @@ pmap_clear_modify(struct vm_page *pg)
 bool
 pmap_is_modified(struct vm_page *pg)
 {
-	return VM_PAGEMD_MODIFIED_P(VM_PAGE_TO_MD(pg));
+
+	return pmap_is_attribute(pg, &pmap_is_modify_ops);
 }
 
 /*

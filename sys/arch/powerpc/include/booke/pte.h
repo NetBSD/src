@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.13 2026/05/17 06:31:39 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.14 2026/05/21 12:10:28 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -96,6 +96,12 @@ pte_modified_p(pt_entry_t pt_entry)
 }
 
 static __inline bool
+pte_referenced_p(pt_entry_t pt_entry)
+{
+	return false;
+}
+
+static __inline bool
 pte_valid_p(pt_entry_t pt_entry)
 {
 	return pt_entry != 0;
@@ -184,6 +190,12 @@ static __inline pt_entry_t
 pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~(PTE_xW|PTE_UNMODIFIED);
+}
+
+static __inline pt_entry_t
+pte_clear_reference(pt_entry_t pt_entry)
+{
+	return pt_entry;
 }
 
 static __inline pt_entry_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.15 2026/05/17 06:31:39 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.16 2026/05/21 12:10:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -230,6 +230,13 @@ pte_modified_p(pt_entry_t pte)
 	return (pte & LX_BLKPAG_OS_MODIFIED) != 0;
 }
 
+static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+
+	return (pte & LX_BLKPAG_AF) != 0;
+}
+
 
 static inline bool
 pte_wired_p(pt_entry_t pte)
@@ -307,6 +314,12 @@ pte_clear_modify(pt_entry_t pte)
 	return (pte & ~(LX_BLKPAG_AP | LX_BLKPAG_OS_MODIFIED)) |
 	    LX_BLKPAG_AP_RO |
 	    LX_BLKPAG_OS_MODEMUL;
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+        return pte & ~LX_BLKPAG_AF;
 }
 
 static inline pt_entry_t
