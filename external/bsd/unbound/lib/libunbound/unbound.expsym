@@ -156,6 +156,7 @@ cfg_parse_local_zone
 cfg_parse_memsize
 cfg_parse_nsid
 cfg_parser
+cfg_ports_list_contains
 cfg_ptr_reverse
 cfg_region_strlist_insert
 cfg_scan_ports
@@ -167,6 +168,8 @@ cfg_strlist_append_ex
 cfg_strlist_find
 cfg_strlist_insert
 cfg_stub_find
+cfg_tls_protocols_allowed
+cfg_tls_protocols_is_valid
 cfg_uid
 check_auth_name_for_ssl
 codeline_cmp
@@ -308,6 +311,7 @@ delegpt_rrset_add_ns
 delegpt_set_name
 delegpt_set_name_mlc
 delegpt_usable_list_remove_addr
+derive_cname_from_dname
 dname_buffer_write
 dname_canon_lab_cmp
 dname_canonical_compare
@@ -419,6 +423,7 @@ fast_reload_service_cb
 fatal_exit
 fd_set_block
 fd_set_nonblock
+file_get_mtime
 find_tag_id
 fname_after_chroot
 forwards_add_stub_hole
@@ -656,6 +661,8 @@ local_zones_add_zone
 local_zones_answer
 local_zones_apply_cfg
 local_zones_create
+local_zones_default_reverse
+local_zones_default_special
 local_zones_del_data
 local_zones_del_zone
 local_zones_delete
@@ -927,6 +934,7 @@ reply_find_final_cname_target
 reply_find_rrset
 reply_find_rrset_section_an
 reply_find_rrset_section_ns
+reply_info_absolute_ttls
 reply_info_alloc_rrset_keys
 reply_info_answer_encode
 reply_info_can_answer_expired
