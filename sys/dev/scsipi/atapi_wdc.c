@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.141 2021/10/05 08:01:05 rin Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.142 2026/05/21 04:21:06 andvar Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.141 2021/10/05 08:01:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.142 2026/05/21 04:21:06 andvar Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -79,7 +79,7 @@ int wdcdebug_atapi_mask = ATADEBUG_ATAPI_MASK;
 #endif
 
 #define ATAPI_DELAY 10	/* 10 ms, this is used only before sending a cmd */
-#define ATAPI_MODE_DELAY 1000	/* 1s, timeout for SET_FEATYRE cmds */
+#define ATAPI_MODE_DELAY 1000	/* 1s, timeout for SET_FEATURES cmds */
 
 static int	wdc_atapi_get_params(struct scsipi_channel *, int,
 				     struct ataparams *);
