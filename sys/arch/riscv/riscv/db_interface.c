@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.6 2024/11/25 22:04:14 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.7 2026/05/22 06:15:01 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.6 2024/11/25 22:04:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.7 2026/05/22 06:15:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_multiprocessor.h"
@@ -77,6 +77,7 @@ static void db_mach_cpu_cmd(db_expr_t, bool, db_expr_t, const char *);
 #endif
 static void db_mach_reset_cmd(db_expr_t, bool, db_expr_t, const char *);
 
+void db_cpuinfo_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_tlbdump_cmd(db_expr_t, bool, db_expr_t, const char *);
 void db_kvtophys_cmd(db_expr_t, bool, db_expr_t, const char *);
 
@@ -88,8 +89,12 @@ const struct db_command db_machine_command_table[] = {
 #ifdef _KERNEL
 #ifdef MULTIPROCESSOR
 	{ DDB_ADD_CMD("cpu",	db_mach_cpu_cmd,	0,
-	  "switch to another cpu", "cpu#", NULL) },
+		"switch to another cpu", "cpu#", NULL) },
 #endif
+	{ DDB_ADD_CMD("cpuinfo", db_cpuinfo_cmd,	0,
+		"Displays the cpuinfo",
+		NULL, NULL)
+	},
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
 		"address",
@@ -187,6 +192,69 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 	if (!have_addr)
 		return;
+}
+
+
+static void
+show_cpuinfo(struct cpu_info *kci)
+{
+	struct cpu_info cpuinfobuf;
+	cpuid_t cpuid;
+	int i;
+
+	db_read_bytes((db_addr_t)kci, sizeof(cpuinfobuf), (char *)&cpuinfobuf);
+
+	struct cpu_info *ci = &cpuinfobuf;
+	cpuid = ci->ci_cpuid;
+	db_printf("cpu_info=%p, cpu_name=%s\n", kci, ci->ci_cpuname);
+	db_printf("%p cpu[%lu].ci_cpuid              = %lu\n",
+	    &ci->ci_cpuid, cpuid, ci->ci_cpuid);
+	db_printf("%p cpu[%lu].ci_curlwp             = %p\n",
+	    &ci->ci_curlwp, cpuid, ci->ci_curlwp);
+	for (i = 0; i < SOFTINT_COUNT; i++) {
+		db_printf("%p cpu[%lu].ci_softlwps[%d]        = %p\n",
+		    &ci->ci_softlwps[i], cpuid, i, ci->ci_softlwps[i]);
+	}
+	db_printf("%p cpu[%lu].ci_want_resched       = %d\n",
+	    &ci->ci_want_resched, cpuid, ci->ci_want_resched);
+	db_printf("%p cpu[%lu].ci_cpl                = %d\n",
+	    &ci->ci_cpl, cpuid, ci->ci_cpl);
+	db_printf("%p cpu[%lu].ci_softints           = 0x%08x\n",
+	    &ci->ci_softints, cpuid, ci->ci_softints);
+	db_printf("%p cpu[%lu].ci_intr_depth         = %u\n",
+	    &ci->ci_intr_depth, cpuid, ci->ci_intr_depth);
+	db_printf("%p cpu[%lu].ci_lastintr           = %" PRIu64 "\n",
+	    &ci->ci_lastintr, cpuid, ci->ci_lastintr);
+	db_printf("%p cpu[%lu].ci_lastintr_scheduled = %" PRIu64 "\n",
+	    &ci->ci_lastintr_scheduled, cpuid, ci->ci_lastintr_scheduled);
+}
+
+void
+db_cpuinfo_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
+    const char *modif)
+{
+#ifdef MULTIPROCESSOR
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	bool showall = false;
+
+	if (modif != NULL) {
+		for (; *modif != '\0'; modif++) {
+			switch (*modif) {
+			case 'a':
+				showall = true;
+				break;
+			}
+		}
+	}
+
+	if (showall) {
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			show_cpuinfo(ci);
+		}
+	} else
+#endif /* MULTIPROCESSOR */
+		show_cpuinfo(curcpu());
 }
 
 
