@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.96 2026/05/22 06:03:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.97 2026/05/22 14:31:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2026/05/22 06:03:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2026/05/22 14:31:53 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -887,7 +887,7 @@ pmap_activate(struct lwp *l)
 	}
 	if (l != curlwp) {
 		UVMHIST_LOG(pmaphist, " <-- done (not curlwp %p vs %p)",
-		    l, curlwp, 0, 0);
+		    (uintptr_t)l, (uintptr_t)curlwp, 0, 0);
 		PMAP_COUNT(activate_notcurlwp);
 		return;
 	}
