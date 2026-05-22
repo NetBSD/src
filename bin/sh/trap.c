@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.61 2026/05/20 00:50:00 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.62 2026/05/22 01:01:55 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.61 2026/05/20 00:50:00 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.62 2026/05/22 01:01:55 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -503,7 +503,7 @@ setsignal(int signo, int vforked)
 	sig_t sigact = SIG_DFL, sig;
 	char *t, tsig;
 
-	pending = gotsig[signo];	/* we have received this signal */
+	pending = !vforked && gotsig[signo];	/* this signal has been rcvd */
 
 	if (traps_invalid || (t = trap[signo]) == NULL)
 		action = S_DFL;
