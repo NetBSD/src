@@ -67,8 +67,11 @@
 /* Whether the C compiler accepts the "format" attribute */
 #define HAVE_ATTR_FORMAT 1
 
+/* NetBSD's clang doesn't support nonstring. */
+#ifndef __clang__
 /* Whether the C compiler accepts the "nonstring" attribute */
 #define HAVE_ATTR_NONSTRING 1
+#endif
 
 /* Whether the C compiler accepts the "noreturn" attribute */
 #define HAVE_ATTR_NORETURN 1
