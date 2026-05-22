@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.96 2026/05/20 21:05:12 andvar Exp $
+# $NetBSD: mkimage,v 1.97 2026/05/22 14:44:16 riastradh Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -201,10 +201,18 @@ EOF
 }
 
 # First pass for options to get the host and src directories
-OPTS="B:D:K:S:bc:dh:mr:s:x"
+OPTS="B:C:D:K:S:bc:dh:mr:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
+	C)	conf="$OPTARG"
+		# Take -C relative to working directory; don't search
+		# in PATH.
+		case $conf in
+		/*)	;;
+		*)	conf=./"$conf";;
+		esac
+		;;
 	h)	h="$OPTARG";;
 	S)	src="$OPTARG";;
 	*)	;;
@@ -216,9 +224,10 @@ then
 	usage
 fi
 
-if [ ! -f "${DIR}/conf/${h}.conf" ]
+: ${conf:=${DIR}/conf/${h}.conf}
+if [ ! -f "$conf" ]
 then
-	echo $PROG: ${DIR}/conf/${h}.conf is not present 1>&2
+	echo $PROG: $conf is not present 1>&2
 	exit 1
 fi
 
@@ -229,7 +238,7 @@ fsize=8192
 bsize=65536
 ffsversion=1
 
-. "${DIR}/conf/${h}.conf"
+. "$conf"
 release="/usr/obj/${MACHINE}/release"
 
 selected_sets="$sets"
@@ -244,6 +253,7 @@ while getopts "$OPTS" f
 do
 	case $f in
 	B)	endian="-B $OPTARG";;
+	C)	;;
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
