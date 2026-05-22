@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.95 2026/05/21 12:10:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.96 2026/05/22 06:03:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.95 2026/05/21 12:10:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.96 2026/05/22 06:03:47 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1422,16 +1422,12 @@ pmap_page_cache(struct vm_page_md *mdpg, bool cached)
 #endif	/* PMAP_VIRTUAL_CACHE_ALIASES && !PMAP_NO_PV_UNCACHED */
 
 /*
- *	Insert the given physical page (p) at
- *	the specified virtual address (v) in the
- *	target physical map with the protection requested.
+ *	Insert the given physical page (p) at the specified virtual
+ *	address (v) in the target physical map with the protection
+ *	requested.
  *
- *	If specified, the page will be wired down, meaning
- *	that the related pte can not be reclaimed.
- *
- *	NB:  This is the only routine which MAY NOT lazy-evaluate
- *	or lose information.  That is, this routine must actually
- *	insert this page into the given map NOW.
+ *	If specified, the page will be wired down, meaning that the
+ *	related pte can not be reclaimed.
  */
 int
 pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
@@ -1610,6 +1606,16 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	return 0;
 }
 
+/*
+ *	Insert the given physical page (p) at the specified virtual
+ *	address (v) in the kernel physical map with the protection
+ *	requested.
+ *
+ *	The page will be wired down, meaning that the related pte
+ *	can not be reclaimed.
+ *
+ *	NB:  This is the only routine which MAY NOT lose information.
+ */
 void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
@@ -1786,7 +1792,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	PMAP_COUNT(unwire);
 
 	/*
-	 * Don't need to flush the TLB since PG_WIRED is only in software.
+	 * Don't need to flush the TLB since pte_wired_p relies on a bit only
+	 * used in software.
 	 */
 	kpreempt_disable();
 	pmap_addr_range_check(pmap, va, va, __func__);
