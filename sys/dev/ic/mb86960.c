@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.99 2025/11/29 22:08:06 andvar Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.100 2026/05/23 06:08:21 andvar Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.99 2025/11/29 22:08:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.100 2026/05/23 06:08:21 andvar Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -964,7 +964,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 	 * or, worse, by a broken MB86960 chip.
 	 */
 	for (i = 0; i < FE_MAX_RECV_COUNT; i++) {
-		/* Stop the iterration if 86960 indicates no packets. */
+		/* Stop the iteration if 86960 indicates no packets. */
 		if (bus_space_read_1(bst, bsh, FE_DLCR5) & FE_D5_BUFEMP)
 			break;
 
@@ -1620,7 +1620,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 		 *
 		 * Promiscuous mode is used solely by BPF, and BPF only
 		 * listens to valid (no error) packets.  So, we ignore
-		 * errornous ones even in this mode.
+		 * erroneous ones even in this mode.
 		 */
 		bus_space_write_1(bst, bsh, FE_DLCR5,
 		    sc->proto_dlcr5 | FE_D5_AFM0 | FE_D5_AFM1);
