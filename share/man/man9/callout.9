@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.29 2020/01/12 20:49:21 sevan Exp $
+.\"	$NetBSD: callout.9,v 1.30 2026/05/23 22:14:50 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -123,15 +123,25 @@ Note that
 shouldn't be used for this purpose.
 .Pp
 The
-.Fn callout_reset
+.Fn callout_setfunc
+function sets the function and argument of the callout handle
+.Fa c
+to
+.Fa func
+and
+.Fa arg
+respectively for when the timer expires.
+The callout handle must already be initialized.
+.Pp
+The
+.Fn callout_schedule
 function resets and starts the timer associated with the callout handle
 .Fa c .
 When the timer expires after
 .Fa ticks Ns No /hz
-seconds, the function specified by
-.Fa func
-will be called with the argument
-.Fa arg .
+seconds, the function previously specified by
+.Fn callout_setfunc
+will be called.
 If the timer associated with the callout handle is already running,
 the callout will simply be rescheduled to execute at the newly specified
 time.
@@ -147,15 +157,14 @@ and the
 status is cleared.
 .Pp
 The
-.Fn callout_setfunc
-function sets the function and argument of the callout handle
-.Fa c
-to
-.Fa func
+.Fn callout_reset ch ticks func arg
+function does both
+.Fn callout_setfunc ch func arg
 and
-.Fa arg
-respectively.
+.Fn callout_schedule ch ticks
+together.
 The callout handle must already be initialized.
+.Pp
 If a callout will always be used with the same function and argument,
 then
 .Fn callout_setfunc
