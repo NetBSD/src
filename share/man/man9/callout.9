@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.31 2026/05/23 22:19:53 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.32 2026/05/23 22:24:23 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -128,7 +128,9 @@ to
 and
 .Fa arg
 respectively, so that when the timer expires, it will call
-.Fn Fa func arg .
+.Fo func
+.Fa arg
+.Fc .
 The callout handle must already be initialized.
 .It Fn callout_schedule c ticks
 Starts the timer associated with the callout handle
