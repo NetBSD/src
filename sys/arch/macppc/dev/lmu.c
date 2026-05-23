@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.11 2025/09/17 14:15:16 thorpej Exp $ */
+/* $NetBSD: lmu.c,v 1.12 2026/05/23 06:04:46 andvar Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.11 2025/09/17 14:15:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.12 2026/05/23 06:04:46 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -193,7 +193,7 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = lmu_sensors_refresh;
 	sc->sc_sme->sme_class = 0;
-	sc->sc_sme->sme_flags = SME_INIT_REFRESH;;
+	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
 
 
 	s = &sc->sc_sensors[0];

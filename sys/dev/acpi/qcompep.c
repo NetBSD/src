@@ -1,4 +1,4 @@
-/* $NetBSD: qcompep.c,v 1.2 2025/01/08 22:58:05 jmcneill Exp $ */
+/* $NetBSD: qcompep.c,v 1.3 2026/05/23 06:04:46 andvar Exp $ */
 /*	$OpenBSD: qcaoss.c,v 1.1 2023/05/23 14:10:27 patrick Exp $	*/
 /*      $OpenBSD: qccpucp.c,v 1.1 2024/11/16 21:17:54 tobhe Exp $       */
 /*
@@ -146,7 +146,7 @@ qcpep_attach(device_t parent, device_t self, void *aux)
 	struct acpi_resources res;
 	uint8_t *scmi_shmem;
 	ACPI_STATUS rv;
-	int i, last_pkg;;
+	int i, last_pkg;
 
         rv = acpi_resource_parse(self, aa->aa_node->ad_handle,
 	    "_CRS", &res, &acpi_resource_parse_ops_default);
