@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.29 2026/04/05 22:11:24 nat Exp $	*/
+/*	$NetBSD: akbd.c,v 1.30 2026/05/23 20:52:49 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.29 2026/04/05 22:11:24 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.30 2026/05/23 20:52:49 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -468,8 +468,8 @@ akbd_set_leds(void *v, int on)
 int
 akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
-#ifdef notyet
-	struct akbd_softc *ksc = v;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct akbd_softc *ksc = (struct akbd_softc *) v;
 #endif
 
 	switch (cmd) {
@@ -497,6 +497,11 @@ akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 		/* comes in as msec, goes out as ticks; volume ignored */
 #undef d
 		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		ksc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return (0);
+#endif
 	}
 	/* kbdioctl(...); */
 
@@ -526,6 +531,26 @@ kbd_intr(adb_event_t *event, struct akbd_softc *sc)
 
 	if (adb_polling)
 		polledkey = key;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	else if (sc->sc_rawkbd) {
+		char cbuf[2];
+		int s;
+		int j = 0;
+		int c = keyboard[ADBK_KEYVAL(key)][3];
+
+		if (c == 0)			/* XXX */
+			return (0);
+
+		if (c & 0x80)
+			cbuf[j++] = 0xe0;
+
+		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(key)? 0 : 0x80);
+
+		s = spltty();
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
+	}
+#endif
 	else
 		wskbd_input(sc->sc_wskbddev, type, val);
 

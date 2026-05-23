@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdvar.h,v 1.10 2012/10/27 17:17:59 chs Exp $	*/
+/*	$NetBSD: akbdvar.h,v 1.11 2026/05/23 20:52:49 nat Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -46,6 +46,10 @@ struct akbd_softc {
 
 	u_int8_t	sc_leds;	/* current LED state */
 	device_t	sc_wskbddev;
+
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	int sc_rawkbd;
+#endif
 };
 
 /* LED register bits, inverse of actual register value */
