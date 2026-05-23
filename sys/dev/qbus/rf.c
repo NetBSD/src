@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.37 2021/08/12 19:53:18 andvar Exp $	*/
+/*	$NetBSD: rf.c,v 1.38 2026/05/23 06:17:20 andvar Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.37 2021/08/12 19:53:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.38 2026/05/23 06:17:20 andvar Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -714,7 +714,7 @@ rfc_intr(void *intarg)
 			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh,
 			    RX2CS) & RX2CS_ERR) != 0) {
 				/* should do more verbose error reporting */
-				printf("rfc_intr: Error reading secotr: %x\n",
+				printf("rfc_intr: Error reading sector: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
 				rfc_sc->sc_curbuf->b_error = EIO;
@@ -729,7 +729,7 @@ rfc_intr(void *intarg)
 			if ((bus_space_read_2(rfc_sc->sc_iot, rfc_sc->sc_ioh,
 			    RX2CS) & RX2CS_ERR) != 0) {
 				/* should do more verbose error reporting */
-				printf("rfc_intr: Error writing secotr: %x\n",
+				printf("rfc_intr: Error writing sector: %x\n",
 				    bus_space_read_2(rfc_sc->sc_iot,
 				    rfc_sc->sc_ioh, RX2ES) );
 				rfc_sc->sc_curbuf->b_error = EIO;
