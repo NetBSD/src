@@ -1,4 +1,4 @@
-.\"	$NetBSD: akbd.4,v 1.5 2026/04/06 22:12:14 andvar Exp $
+.\"	$NetBSD: akbd.4,v 1.6 2026/05/23 21:04:50 nat Exp $
 .\"
 .\" Copyright (c) 2003 Alex Zepeda <zipzippy@sonic.net>
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 20, 2025
+.Dd May 17, 2026
 .Dt AKBD 4
 .Os
 .
@@ -42,6 +42,7 @@
 .Pp
 .Cd "options ALTXBUTTONS"
 .Cd "options CAPS_IS_CONTROL"
+.Cd "options EMULFKEYS
 .Cd "options FORCE_FUNCTION_KEYS"
 .
 .Sh DESCRIPTION
@@ -75,6 +76,41 @@ keyboard as a control key.
 This requires special remapping because of
 .Tn ADB Ap s
 strange emulation of a mechanically-locked key.
+.
+.It Cd "options EMULFKEYS"
+.
+On mac68k especially PowerBooks that do not have function keys or on a
+standard keyboard this emulates function keys 1-8.
+To map
+.Sm off
+.Ao Option Ac \&+ Aq 1 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 2 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 3 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 4 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 5 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 6 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 7 ,
+.Sm on
+.Sm off
+.Ao Option Ac \&+ Aq 8 ,
+.Sm on
+to function keys 1 through to 8
+respectively.
+.Pp
+This cannot be used in conjunction with
+.Cd "options ALTXBUTTONS"
 .
 .It Cd options FORCE_FUNCTION_KEYS
 .
