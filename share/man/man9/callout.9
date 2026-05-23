@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.32 2026/05/23 22:24:23 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.33 2026/05/23 22:26:13 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -162,11 +162,11 @@ together.
 The callout handle must already be initialized.
 .Pp
 If a callout will always be used with the same function and argument,
-then
+you should use
 .Fn callout_setfunc
-used in conjunction with
-.Fn callout_schedule
-is slightly more efficient than using
+in conjunction with
+.Fn callout_schedule ;
+it is clearer, and is slightly more efficient than using
 .Fn callout_reset .
 .It Fn callout_stop c
 Requests that the timer associated with the callout handle
