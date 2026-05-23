@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.239 2025/04/03 01:54:46 nat Exp $
+# $NetBSD: GENERIC,v 1.240 2026/05/23 21:01:54 nat Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.239 $"
+#ident 		"GENERIC-$Revision: 1.240 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -169,6 +169,7 @@ options 	RCONS_4BPP		# Support for 4-bit display
 options 	RCONS_16BPP		# Support for 16-bit display
 
 # Mac-specific options
+#options 	EMULFKEYS	# Map Opt-{1-8} to F1-F8.
 #options 	ALTXBUTTONS	# Map Opt-{1,2,3} to mouse buttons
 #options 	DISABLE_EXT_CACHE # If really paranoid, disable IIci ext. cache
 options 	GRF_COMPAT	# Include grf compatibility code
