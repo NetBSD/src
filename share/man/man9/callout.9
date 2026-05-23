@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.30 2026/05/23 22:14:50 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.31 2026/05/23 22:19:53 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,9 +34,9 @@
 .Nm callout_init ,
 .Nm callout_destroy ,
 .Nm callout_halt ,
-.Nm callout_reset ,
-.Nm callout_schedule ,
 .Nm callout_setfunc ,
+.Nm callout_schedule ,
+.Nm callout_reset ,
 .Nm callout_stop ,
 .Nm callout_pending ,
 .Nm callout_expired ,
@@ -50,12 +50,12 @@
 .Ft void
 .Fn "callout_destroy" "callout_t *c"
 .Ft void
-.Fn "callout_reset" "callout_t *c" "int ticks" \
-    "void (*func)(void *)" "void *arg"
+.Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
 .Ft void
 .Fn "callout_schedule" "callout_t *c" "int ticks"
 .Ft void
-.Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
+.Fn "callout_reset" "callout_t *c" "int ticks" \
+    "void (*func)(void *)" "void *arg"
 .Ft bool
 .Fn "callout_stop" "callout_t *c"
 .Ft bool
@@ -93,9 +93,9 @@ functions
 and
 .Fn untimeout .
 .Sh FUNCTIONS
-The
-.Fn callout_init
-function initializes the callout handle
+.Bl -tag -width Fn
+.It Fn callout_init c flags
+Initializes the callout handle
 .Fa c
 for use.
 No operations can be performed on the callout before it is initialized.
@@ -106,9 +106,8 @@ argument is
 the handler will be called without getting the global kernel lock.
 In this case it should only use functions that are multiprocessor
 safe.
-.Pp
-.Fn callout_destroy
-destroys the callout, preventing further use.
+.It Fn callout_destroy c
+Destroys the callout, preventing further use.
 It is provided as a diagnostic facility intended to catch bugs.
 To ensure future compatibility,
 .Fn callout_destroy
@@ -121,21 +120,18 @@ is called by calling
 Note that
 .Fn callout_stop
 shouldn't be used for this purpose.
-.Pp
-The
-.Fn callout_setfunc
-function sets the function and argument of the callout handle
+.It Fn callout_setfunc c func arg
+Sets the function and argument of the callout handle
 .Fa c
 to
 .Fa func
 and
 .Fa arg
-respectively for when the timer expires.
+respectively, so that when the timer expires, it will call
+.Fn Fa func arg .
 The callout handle must already be initialized.
-.Pp
-The
-.Fn callout_schedule
-function resets and starts the timer associated with the callout handle
+.It Fn callout_schedule c ticks
+Starts the timer associated with the callout handle
 .Fa c .
 When the timer expires after
 .Fa ticks Ns No /hz
@@ -155,10 +151,8 @@ and
 and the
 .Em PENDING
 status is cleared.
-.Pp
-The
-.Fn callout_reset ch ticks func arg
-function does both
+.It Fn callout_reset ch ticks func arg
+Atomically does
 .Fn callout_setfunc ch func arg
 and
 .Fn callout_schedule ch ticks
@@ -172,10 +166,8 @@ used in conjunction with
 .Fn callout_schedule
 is slightly more efficient than using
 .Fn callout_reset .
-.Pp
-The
-.Fn callout_stop
-function requests that the timer associated with the callout handle
+.It Fn callout_stop c
+Requests that the timer associated with the callout handle
 .Fa c
 be stopped.
 The
@@ -197,9 +189,8 @@ It can only be said to prevent the callout from firing in the future,
 unless explicitly re-scheduled.
 To stop a callout and wait for completion, use
 .Fn callout_halt .
-.Pp
-.Fn callout_halt
-acts much like
+.It Fn callout_halt c interlock
+Acts much like
 .Fn callout_stop ,
 but waits for the callout to complete if it is currently in-flight.
 .Fn callout_halt
@@ -226,10 +217,8 @@ will not be released.
 However, to avoid race conditions the caller should always assume that
 .Fa interlock
 has been released and reacquired, and act accordingly.
-.Pp
-The
-.Fn callout_pending
-function tests the
+.It Fn callout_pending c
+Tests the
 .Em PENDING
 status of the callout handle
 .Fa c .
@@ -243,15 +232,11 @@ to let softclock interrupts through.
 Note that it is only safe to test
 .Em PENDING
 status when at softclock interrupt level or higher.
-.Pp
-The
-.Fn callout_expired
-function tests to see if the callout's timer has expired and its
+.It Fn callout_expired c
+Tests to see if the callout's timer has expired and its
 function called.
-.Pp
-The
-.Fn callout_active
-function returns true if a timer has been started but not explicitly stopped,
+.It Fn callout_active c
+Returns true if a timer has been started but not explicitly stopped,
 even if it has already fired.
 .Fn callout_active foo
 is logically the same as
@@ -263,10 +248,8 @@ it is implemented as a separate function for compatibility with
 and for the special case of
 .Fn TCP_TIMER_ISARMED .
 Its use is not recommended.
-.Pp
-The
-.Fn callout_invoking
-function tests the
+.It Fn callout_invoking c
+Tests the
 .Em INVOKING
 status of the callout handle
 .Fa c .
@@ -288,16 +271,15 @@ For this handshake protocol to work, the callout function will
 have to use the
 .Fn callout_ack
 function to clear this flag.
-.Pp
-The
-.Fn callout_ack
-function clears the
+.It Fn callout_ack c
+Clears the
 .Em INVOKING
 state in the callout handle
 .Fa c .
 This is used in situations where it is necessary to protect against
 the race condition described under
 .Fn callout_invoking .
+.El
 .Sh CONCURRENCY
 The callout facility performs locking internally in order to guarantee the
 atomicity of individual operations performed on callouts.
