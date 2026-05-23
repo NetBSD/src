@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.33 2026/05/23 22:26:13 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.34 2026/05/23 22:57:16 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -183,7 +183,8 @@ on a callout handle that is not pending, so long as it is initialized.
 .Fn callout_stop
 will return a non-zero value if the callout was
 .Em EXPIRED .
-Note that
+.Pp
+.Sy WARNING :
 .Fn callout_stop
 can return while the callout is running on a different CPU or at a
 different interrupt priority level on the current CPU.
@@ -198,12 +199,20 @@ but waits for the callout to complete if it is currently in-flight.
 .Fn callout_halt
 may not be called from a hard interrupt handler as it will sleep if the
 callout is currently executing.
-If the callout can take locks (such as mutexes or RW locks), the caller of
+.Pp
+If the callout can take locks (such as
+.Xr mutex 9
+or
+.Xr rwlock 9 ) ,
+the caller of
 .Fn callout_halt
-must not hold any of those locks, otherwise the two could deadlock.
+.Em must not
+hold any of those locks; otherwise, the two could deadlock.
 To facilitate this,
 .Fn callout_halt
-can optionally release a single mutex specified by the
+can optionally release a single
+.Xr mutex 9
+specified by the
 .Fa interlock
 parameter.
 If
@@ -235,8 +244,13 @@ Note that it is only safe to test
 .Em PENDING
 status when at softclock interrupt level or higher.
 .It Fn callout_expired c
-Tests to see if the callout's timer has expired and its
-function called.
+Tests to see if the callout's timer has expired.
+If this returns true, then either the callout's function has already
+been called or is guaranteed to be called, even if
+.Fn callout_stop
+or
+.Fn callout_halt
+are later used.
 .It Fn callout_active c
 Returns true if a timer has been started but not explicitly stopped,
 even if it has already fired.
@@ -256,13 +270,26 @@ Tests the
 status of the callout handle
 .Fa c .
 This flag is set just before a callout's function is being called.
-Since the priority level is lowered prior to invocation of the
-callout function, other pending higher-priority code may run before
-the callout function is allowed to run.
-This may create a race condition if this higher-priority code
-deallocates storage containing one or more callout structures whose
-callout functions are about to be run.
-In such cases, one technique to prevent references to deallocated
+.Pp
+This is useful in scenarios when concurrent or higher-priority code
+which can't sleep stops a callout with
+.Fn callout_stop
+potentially just before it has expired, and seeks to deallocate storage
+which the callout might use.
+Since the code can't sleep, it can't use
+.Fn callout_halt
+to wait for the callout to finish.
+Instead, it needs to distinguish three cases:
+.Bl -enum -compact
+.It
+the callout has not yet expired,
+.It
+the callout has expired but has not yet begun to use the storage,
+.It
+the callout has expired and is already using the storage.
+.El
+.Pp
+In such scenarios, one technique to prevent references to deallocated
 storage would be to test whether any callout functions are in the
 .Em INVOKING
 state using
@@ -272,7 +299,33 @@ deallocation until the callout function is allowed to run.
 For this handshake protocol to work, the callout function will
 have to use the
 .Fn callout_ack
-function to clear this flag.
+function to clear this flag, typically after taking a lock.
+.Bd -literal
+mutex_enter(&sc->sc_lock);
+if (!callout_stop(ch)) {
+	/* 1. callout has not yet expired */
+} else if (callout_invoking(ch)) {
+	/* 2. callout has expired but not acked */
+} else {
+	/* 3. callout expired and acked */
+}
+mutex_exit(&sc->sc_lock);
+
+/* callout function */
+static void
+driver_intr(void *arg)
+{
+	struct driver_softc *sc = arg;
+
+	/* 2. callout has expired but not acked */
+
+	mutex_enter(&sc->sc_lock);
+	callout_ack(&sc->sc_timeout);
+	/* 3. callout expired and acked */
+	...
+	mutex_exit(&sc->sc_lock);
+}
+.Ed
 .It Fn callout_ack c
 Clears the
 .Em INVOKING
@@ -299,6 +352,7 @@ callout will never have multiple concurrent invocations.
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr hz 9 ,
+.Xr mutex 9 ,
 .Xr softint 9 ,
 .Xr workqueue 9
 .Sh HISTORY
