@@ -1,4 +1,4 @@
-/*	$NetBSD: akbdmap.h,v 1.10 2008/04/28 20:23:27 martin Exp $	*/
+/*	$NetBSD: akbdmap.h,v 1.11 2026/05/23 20:59:24 nat Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -90,7 +90,11 @@ static const keysym_t akbd_keydesc_us[] = {
     KC(52),			KS_KP_Enter,    /* Pretend this is alt-R ? */
     KC(53),			KS_Escape,
     KC(54),			KS_Control_L,
+#ifdef EMULFKEYS
+    KC(55),  KS_Cmd,		KS_Mode_switch,		/* Command */
+#else
     KC(55),  KS_Cmd,				/* Command */
+#endif
     KC(56),			KS_Shift_L,
     KC(57),			KS_Caps_Lock,
     KC(58),  KS_Cmd1,				/* Option */
