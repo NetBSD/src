@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.h,v 1.7 2026/05/23 20:52:50 nat Exp $	*/
+/*	$NetBSD: keyboard.h,v 1.8 2026/05/23 20:56:32 nat Exp $	*/
 
 /*-
  * Copyright (C) 1993	Allen K. Briggs, Chris P. Caputo,
@@ -61,6 +61,15 @@
 #define ADBK_8		0x1C
 #define ADBK_9		0x19
 #define ADBK_0		0x1D
+
+#define ADBK_F1		0x7A
+#define ADBK_F2		0x78
+#define ADBK_F3		0x63
+#define ADBK_F4		0x76
+#define ADBK_F5		0x60
+#define ADBK_F6		0x61
+#define ADBK_F7		0x62
+#define ADBK_F8		0x64
 
 #define ADBK_KEYVAL(key)	((key) & 0x7f)
 #define ADBK_PRESS(key)		(((key) & 0x80) == 0)

@@ -1,7 +1,7 @@
-/*	$NetBSD: aed.c,v 1.43 2025/04/03 01:54:46 nat Exp $	*/
+/*	$NetBSD: aed.c,v 1.44 2026/05/23 20:56:32 nat Exp $	*/
 
 /*
- * Copyright (c) 2024 Nathanial Sloss <nathanialsloss@yahoo.com.au>
+ * Copyright (c) 2024, 2026  Nathanial Sloss <nathanialsloss@yahoo.com.au>
  * All rights reserved.
  *
  * Copyright (C) 1994	Bradley A. Grantham
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.43 2025/04/03 01:54:46 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.44 2026/05/23 20:56:32 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -56,6 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: aed.c,v 1.43 2025/04/03 01:54:46 nat Exp $");
 #define BRIGHTNESS_MAX	31
 #define BRIGHTNESS_MIN	0
 #define BRIGHTNESS_STEP	4
+
+#if defined(ALTXBUTTONS) && defined(EMULFKEYS)
+#error "options ALTXBUTTONS" and "options EMULFKEYS" cannot be used together.
+#endif
 
 /*
  * Function declarations.
@@ -187,6 +191,11 @@ aed_input(adb_event_t *event)
 	case ADBADDR_KBD:
 		if (aed_sc->sc_options & AED_MSEMUL) {
 			rv = aed_emulate_mouse(&new_event);
+			/* Pass up function key emultion to keyboard driver */
+			if (rv == 2) {
+				memcpy(event, &new_event, sizeof(new_event));
+				rv = 0;
+			}
 		} else
 			aed_dokeyupdown(&new_event);
 		break;
@@ -233,6 +242,9 @@ aed_emulate_mouse(adb_event_t *event)
 			aed_handoff(&new_event);
 		}
 	} else if (emulmodkey_down) {
+#if defined(EMULFKEYS)
+		int fkey = 0;
+#endif
 		switch(event->u.k.key) {
 #ifdef ALTXBUTTONS
 		case ADBK_KEYDOWN(ADBK_1):
@@ -325,6 +337,80 @@ aed_emulate_mouse(adb_event_t *event)
 			/* ctrl, shift, cmd */
 			aed_dokeyupdown(event);
 			break;
+#if defined(EMULFKEYS)
+		case ADBK_KEYDOWN(ADBK_1):
+			if (!fkey)
+				fkey = ADBK_F1;
+		case ADBK_KEYDOWN(ADBK_2):
+			if (!fkey)
+				fkey = ADBK_F2;
+		case ADBK_KEYDOWN(ADBK_3):
+			if (!fkey)
+				fkey = ADBK_F3;
+		case ADBK_KEYDOWN(ADBK_4):
+			if (!fkey)
+				fkey = ADBK_F4;
+		case ADBK_KEYDOWN(ADBK_5):
+			if (!fkey)
+				fkey = ADBK_F5;
+		case ADBK_KEYDOWN(ADBK_6):
+			if (!fkey)
+				fkey = ADBK_F6;
+		case ADBK_KEYDOWN(ADBK_7):
+			if (!fkey)
+				fkey = ADBK_F7;
+		case ADBK_KEYDOWN(ADBK_8):
+			if (!fkey)
+				fkey = ADBK_F8;
+
+			result = 2;
+			/* key down */
+			new_event = *event;
+
+			/* send FKEY-down */
+			new_event.u.k.key = ADBK_KEYDOWN(fkey);
+			new_event.bytes[0] = new_event.u.k.key;
+			microtime(&new_event.timestamp);
+			aed_dokeyupdown(&new_event);
+			memcpy(event, &new_event, sizeof(new_event));
+			break;
+		case ADBK_KEYUP(ADBK_1):
+			if (!fkey)
+				fkey = ADBK_F1;
+		case ADBK_KEYUP(ADBK_2):
+			if (!fkey)
+				fkey = ADBK_F2;
+		case ADBK_KEYUP(ADBK_3):
+			if (!fkey)
+				fkey = ADBK_F3;
+		case ADBK_KEYUP(ADBK_4):
+			if (!fkey)
+				fkey = ADBK_F4;
+		case ADBK_KEYUP(ADBK_5):
+			if (!fkey)
+				fkey = ADBK_F5;
+		case ADBK_KEYUP(ADBK_6):
+			if (!fkey)
+				fkey = ADBK_F6;
+		case ADBK_KEYUP(ADBK_7):
+			if (!fkey)
+				fkey = ADBK_F7;
+		case ADBK_KEYUP(ADBK_8):
+			if (!fkey)
+				fkey = ADBK_F8;
+
+			result = 2;
+			/* key up */
+			new_event = *event;
+
+			/* send FKEY-up */
+			new_event.u.k.key = ADBK_KEYUP(fkey);
+			new_event.bytes[0] = new_event.u.k.key;
+			microtime(&new_event.timestamp);
+			aed_dokeyupdown(&new_event);
+			memcpy(event, &new_event, sizeof(new_event));
+			break;
+#endif
 		default:
 			if (event->u.k.key & 0x80)
 				/* ignore keyup */
