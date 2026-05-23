@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.34 2026/05/23 22:57:16 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.35 2026/05/23 22:59:15 riastradh Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -166,7 +166,7 @@ you should use
 .Fn callout_setfunc
 in conjunction with
 .Fn callout_schedule ;
-it is clearer, and is slightly more efficient than using
+it is clearer, and slightly more efficient, than using
 .Fn callout_reset .
 .It Fn callout_stop c
 Requests that the timer associated with the callout handle
