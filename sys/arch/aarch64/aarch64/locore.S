@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.103 2026/04/03 07:15:03 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.104 2026/05/23 14:02:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.103 2026/04/03 07:15:03 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.104 2026/05/23 14:02:38 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -243,8 +243,6 @@ ASEND(aarch64_start)
 
 
 init_sysregs:
-	stp	x0, lr, [sp, #-16]!
-
 	/* init debug registers */
 	msr	mdscr_el1, xzr
 	msr	oslar_el1, xzr
@@ -260,10 +258,6 @@ init_sysregs:
 	mov	x0, #CNTKCTL_EL0VCTEN
 	msr	cntkctl_el1, x0
 
-	/* any exception not masked */
-	msr	daif, xzr
-
-	ldp	x0, lr, [sp], #16
 	ret
 
 
