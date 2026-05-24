@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.h,v 1.10 2025/01/28 21:48:03 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.h,v 1.11 2026/05/24 22:00:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,10 +38,24 @@
 #include <arm/cortex/gic_reg.h>
 #include <arm/cortex/gicv3.h>
 
+/* 
+ * Maximum number of event IDs supported for each device ID. This is
+ * sized to allow for max two vectors per CPU, which is probably
+ * overkill.
+ */
+#ifndef ITS_MAX_EVENTS
+#define ITS_MAX_EVENTS		(MAXCPUS * 2)
+#endif
+#define ITS_INVALID_EVENTID	UINT32_MAX
+
+/* The event ID needs to fit into the bits reserved inside pci_intr_handle_t */
+CTASSERT(__SHIFTOUT(ARM_PCI_INTR_MSI_VEC, ARM_PCI_INTR_MSI_VEC) >= ITS_MAX_EVENTS - 1);
+
 struct gicv3_its_device {
 	uint32_t		dev_id;
 	u_int			dev_size;
 	struct gicv3_dma	dev_itt;
+	uint32_t		dev_eventid[ITS_MAX_EVENTS / 32];
 
 	LIST_ENTRY(gicv3_its_device) dev_list;
 };
@@ -81,8 +95,10 @@ struct gicv3_its {
 	struct pci_attach_args	**its_pa;
 	struct cpu_info		**its_targets;
 	uint32_t		*its_devid;
+	uint32_t		*its_eventid;
 
 	LIST_HEAD(, gicv3_its_device) its_devices;
+	struct gicv3_its_device	**its_lpitodev;
 
 	struct gicv3_dma	its_cmd;		/* Command queue */
 	struct gicv3_dma	its_tab[8];		/* ITS tables */

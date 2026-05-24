@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.41 2025/01/28 21:20:45 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.42 2026/05/24 22:00:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.41 2025/01/28 21:20:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.42 2026/05/24 22:00:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -191,7 +191,7 @@ gits_command_mapd(struct gicv3_its *its, uint32_t deviceid, uint64_t itt_addr, u
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.dw[0] = GITS_CMD_MAPD | ((uint64_t)deviceid << 32);
 	if (v) {
-		cmd.dw[1] = uimax(1, size) - 1;
+		cmd.dw[1] = size;
 		cmd.dw[2] = itt_addr | __BIT(63);
 	}
 
@@ -385,6 +385,67 @@ gicv3_its_msi_free_lpi(struct gicv3_its *its, int lpi)
 }
 
 static uint32_t
+gicv3_its_alloc_eventid(struct gicv3_its_device *dev, unsigned count)
+{
+	uint32_t eventid = ITS_INVALID_EVENTID;
+	unsigned index, bit, n;
+	unsigned nalloc = 0;
+
+	KASSERT(count > 0);
+
+	for (index = 0; index < __arraycount(dev->dev_eventid); index++) {
+		for (bit = 0; bit < 32; bit++) {
+			if ((dev->dev_eventid[index] & __BIT(bit)) == 0) {
+				if (nalloc++ == 0) {
+					eventid = index * 32 + bit;
+				}
+				if (nalloc == count) {
+					break;	
+				}
+			} else if (nalloc != 0) {
+				nalloc = 0;
+				eventid = ITS_INVALID_EVENTID;
+			}
+		}
+		if (nalloc == count) {
+			break;
+		}
+	}
+	if (nalloc != count) {
+		eventid = ITS_INVALID_EVENTID;
+	} else {
+		for (n = 0; n < count; n++) {
+			index = (eventid + n) / 32;
+			bit = (eventid + n) % 32;
+
+			KASSERT((dev->dev_eventid[index] & __BIT(bit)) == 0);
+			dev->dev_eventid[index] |= __BIT(bit);
+		}
+	}
+
+	if (__predict_false(eventid == ITS_INVALID_EVENTID)) {
+		panic("failed to allocate %u event ID(s) for device ID 0x%x; "
+		      "increase ITS_MAX_EVENTS", count, dev->dev_id);
+	}
+
+	return eventid;
+}
+
+static void
+gicv3_its_free_eventid(struct gicv3_its_device *dev, uint32_t eventid)
+{
+	unsigned index, bit;
+
+	KASSERT(eventid < ITS_MAX_EVENTS);
+
+	index = eventid / 32;
+	bit = eventid % 32;
+
+	KASSERT((dev->dev_eventid[index] & __BIT(bit)) != 0);
+	dev->dev_eventid[index] &= ~__BIT(bit);
+}
+
+static uint32_t
 gicv3_its_devid(pci_chipset_tag_t pc, pcitag_t tag)
 {
 	uint32_t devid;
@@ -397,7 +458,7 @@ gicv3_its_devid(pci_chipset_tag_t pc, pcitag_t tag)
 	return pci_get_devid(pc, devid);
 }
 
-static int
+static struct gicv3_its_device *
 gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 {
 	struct gicv3_its_device *dev;
@@ -411,11 +472,20 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 
 	const uint64_t typer = gits_read_8(its, GITS_TYPER);
 	const u_int itt_entry_size = __SHIFTOUT(typer, GITS_TYPER_ITT_entry_size) + 1;
-	const u_int itt_size = roundup(uimax(vectors, 2) * itt_entry_size, GITS_ITT_ALIGN);
+
+	/*
+	 * Compute the size of the ITT. To simplify things, allocate enough
+	 * space for ITS_MAX_EVENTS even if it's more than supported by
+	 * hardware. Then use the smaller of the two to determin the
+	 * effective supported ID bits for this device.
+	 */
+	const u_int itt_size = roundup(ITS_MAX_EVENTS * itt_entry_size, GITS_ITT_ALIGN);
+	const u_int id_bits = uimin(31 - __builtin_clz(ITS_MAX_EVENTS) - 1,
+				    __SHIFTOUT(typer, GITS_TYPER_ID_bits));
 
 	LIST_FOREACH(dev, &its->its_devices, dev_list)
 		if (dev->dev_id == devid) {
-			return itt_size <= dev->dev_size ? 0 : EEXIST;
+			return itt_size <= dev->dev_size ? dev : NULL;
 		}
 
 	if (itstab->tab_indirect) {
@@ -450,6 +520,7 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	dev = kmem_alloc(sizeof(*dev), KM_SLEEP);
 	dev->dev_id = devid;
 	dev->dev_size = itt_size;
+	memset(dev->dev_eventid, 0, sizeof(dev->dev_eventid));
 	gicv3_dma_alloc(its->its_gic, &dev->dev_itt, itt_size, GITS_ITT_ALIGN);
 	LIST_INSERT_HEAD(&its->its_devices, dev, dev_list);
 
@@ -461,19 +532,18 @@ gicv3_its_device_map(struct gicv3_its *its, uint32_t devid, u_int count)
 	/*
 	 * Map the device to the ITT
 	 */
-	const u_int size = __SHIFTOUT(typer, GITS_TYPER_ID_bits) + 1;
 	mutex_enter(its->its_lock);
-	error = gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, size, true);
+	error = gits_command_mapd(its, devid, dev->dev_itt.segs[0].ds_addr, id_bits, true);
 	if (error == 0) {
 		error = gits_wait(its);
 	}
 	mutex_exit(its->its_lock);
 
-	return error;
+	return error == 0 ? dev : NULL;
 }
 
 static void
-gicv3_its_msi_enable(struct gicv3_its *its, int lpi, int count)
+gicv3_its_msi_enable(struct gicv3_its *its, int lpi, uint32_t data, int count)
 {
 	const struct pci_attach_args *pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -496,14 +566,12 @@ gicv3_its_msi_enable(struct gicv3_its *its, int lpi, int count)
 		    addr & 0xffffffff);
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_HI,
 		    (addr >> 32) & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64,
-		    lpi - its->its_pic->pic_irqbase);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64, data);
 	} else {
 		KASSERT((addr >> 32) == 0);
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR,
 		    addr & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA,
-		    lpi - its->its_pic->pic_irqbase);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA, data);
 	}
 	ctl |= PCI_MSI_CTL_MSI_ENABLE;
 	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
@@ -528,7 +596,7 @@ gicv3_its_msi_disable(struct gicv3_its *its, int lpi)
 
 static void
 gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
-    bus_space_tag_t bst, bus_space_handle_t bsh)
+    uint32_t data, bus_space_tag_t bst, bus_space_handle_t bsh)
 {
 	const struct pci_attach_args *pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	pci_chipset_tag_t pc = pa->pa_pc;
@@ -542,9 +610,12 @@ gicv3_its_msix_enable(struct gicv3_its *its, int lpi, int msix_vec,
 
 	const uint64_t addr = its->its_base + GITS_TRANSLATER;
 	const uint64_t entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO, (uint32_t)addr);
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, (uint32_t)(addr >> 32));
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, lpi - its->its_pic->pic_irqbase);
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO,
+	    (uint32_t)addr);
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI,
+	    (uint32_t)(addr >> 32));
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA,
+	    data);
 	val = bus_space_read_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL);
 	val &= ~PCI_MSIX_VECTCTL_MASK;
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, val);
@@ -576,9 +647,11 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
+	struct gicv3_its_device *dev;
 	struct cpu_info * const ci = cpu_lookup(0);
 	pci_intr_handle_t *vectors;
 	int n, off, error;
+	uint32_t eventid;
 
 	if (!pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_MSI, &off, NULL))
 		return NULL;
@@ -590,32 +663,37 @@ gicv3_its_msi_alloc(struct arm_pci_msi *msi, int *count,
 
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
 
-	if (gicv3_its_device_map(its, devid, *count) != 0)
+	dev = gicv3_its_device_map(its, devid, *count);
+	if (dev == NULL)
 		return NULL;
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	mutex_enter(its->its_lock);
+	eventid = gicv3_its_alloc_eventid(dev, *count);
+	KASSERT(eventid != ITS_INVALID_EVENTID);
 	for (n = 0; n < *count; n++) {
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
 		KASSERT(lpi >= 0);
 		vectors[n] = ARM_PCI_INTR_MSI |
 		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(n, ARM_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(eventid + n, ARM_PCI_INTR_MSI_VEC) |
 		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
 
 		if (n == 0)
-			gicv3_its_msi_enable(its, lpi, *count);
+			gicv3_its_msi_enable(its, lpi, eventid + n, *count);
 
 		/*
-		 * Record devid and target PE
+		 * Record devid, eventid, dev, and target PE
 		 */
 		its->its_devid[lpi - its->its_pic->pic_irqbase] = devid;
+		its->its_eventid[lpi - its->its_pic->pic_irqbase] = eventid + n;
+		its->its_lpitodev[lpi - its->its_pic->pic_irqbase] = dev;
 		its->its_targets[lpi - its->its_pic->pic_irqbase] = ci;
 
 		/*
 		 * Map event
 		 */
-		gits_command_mapti(its, devid, lpi - its->its_pic->pic_irqbase, lpi, cpu_index(ci));
+		gits_command_mapti(its, devid, eventid + n, lpi, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	error = gits_wait(its);
@@ -634,12 +712,14 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
     const struct pci_attach_args *pa, bool exact)
 {
 	struct gicv3_its * const its = msi->msi_priv;
+	struct gicv3_its_device *dev;
 	struct cpu_info *ci = cpu_lookup(0);
 	pci_intr_handle_t *vectors;
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 	bus_size_t bsz;
 	uint32_t table_offset, table_size;
+	uint32_t eventid;
 	int n, off, bar, error;
 	pcireg_t tbl;
 
@@ -666,34 +746,39 @@ gicv3_its_msix_alloc(struct arm_pci_msi *msi, u_int *table_indexes, int *count,
 
 	const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
 
-	if (gicv3_its_device_map(its, devid, *count) != 0) {
+	dev = gicv3_its_device_map(its, devid, *count);
+	if (dev == NULL) {
 		bus_space_unmap(bst, bsh, bsz);
 		return NULL;
 	}
 
 	vectors = kmem_alloc(sizeof(*vectors) * *count, KM_SLEEP);
 	mutex_enter(its->its_lock);
+	eventid = gicv3_its_alloc_eventid(dev, *count);
+	KASSERT(eventid != ITS_INVALID_EVENTID);
 	for (n = 0; n < *count; n++) {
 		const int lpi = gicv3_its_msi_alloc_lpi(its, pa);
 		KASSERT(lpi >= 0);
 		const int msix_vec = table_indexes ? table_indexes[n] : n;
 		vectors[msix_vec] = ARM_PCI_INTR_MSIX |
 		    __SHIFTIN(lpi, ARM_PCI_INTR_IRQ) |
-		    __SHIFTIN(msix_vec, ARM_PCI_INTR_MSI_VEC) |
+		    __SHIFTIN(eventid + n, ARM_PCI_INTR_MSI_VEC) |
 		    __SHIFTIN(msi->msi_id, ARM_PCI_INTR_FRAME);
 
-		gicv3_its_msix_enable(its, lpi, msix_vec, bst, bsh);
+		gicv3_its_msix_enable(its, lpi, msix_vec, eventid + n, bst, bsh);
 
 		/*
-		 * Record devid and target PE
+		 * Record devid, eventid, dev, and target PE
 		 */
 		its->its_devid[lpi - its->its_pic->pic_irqbase] = devid;
+		its->its_eventid[lpi - its->its_pic->pic_irqbase] = eventid + n;
+		its->its_lpitodev[lpi - its->its_pic->pic_irqbase] = dev;
 		its->its_targets[lpi - its->its_pic->pic_irqbase] = ci;
 
 		/*
 		 * Map event
 		 */
-		gits_command_mapti(its, devid, lpi - its->its_pic->pic_irqbase, lpi, cpu_index(ci));
+		gits_command_mapti(its, devid, eventid + n, lpi, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
@@ -712,6 +797,7 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 	void *intrh;
 
 	const int lpi = __SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
+	const uint32_t eventid = __SHIFTOUT(ih, ARM_PCI_INTR_MSI_VEC);
 	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
 	intrh = pic_establish_intr(its->its_pic, lpi - its->its_pic->pic_irqbase, ipl,
@@ -722,7 +808,7 @@ gicv3_its_msi_intr_establish(struct arm_pci_msi *msi,
 	/* Invalidate LPI configuration tables */
 	KASSERT(its->its_pa[lpi - its->its_pic->pic_irqbase] != NULL);
 	const uint32_t devid = its->its_devid[lpi - its->its_pic->pic_irqbase];
-	gits_command_inv(its, devid, lpi - its->its_pic->pic_irqbase);
+	gits_command_inv(its, devid, eventid);
 
 	return intrh;
 }
@@ -736,14 +822,21 @@ gicv3_its_msi_intr_release(struct arm_pci_msi *msi, pci_intr_handle_t *pih,
 
 	for (n = 0; n < count; n++) {
 		const int lpi = __SHIFTOUT(pih[n], ARM_PCI_INTR_IRQ);
+		const uint32_t eventid = __SHIFTOUT(pih[n], ARM_PCI_INTR_MSI_VEC);
 		KASSERT(lpi >= its->its_pic->pic_irqbase);
+		struct gicv3_its_device *dev =
+		    its->its_lpitodev[lpi - its->its_pic->pic_irqbase];
+		KASSERT(dev != NULL);
 		if (pih[n] & ARM_PCI_INTR_MSIX)
 			gicv3_its_msix_disable(its, lpi);
 		if (pih[n] & ARM_PCI_INTR_MSI)
 			gicv3_its_msi_disable(its, lpi);
+		gicv3_its_free_eventid(dev, eventid);
 		gicv3_its_msi_free_lpi(its, lpi);
 		its->its_targets[lpi - its->its_pic->pic_irqbase] = NULL;
 		its->its_devid[lpi - its->its_pic->pic_irqbase] = 0;
+		its->its_eventid[lpi - its->its_pic->pic_irqbase] = ITS_INVALID_EVENTID;
+		its->its_lpitodev[lpi - its->its_pic->pic_irqbase] = NULL;
 		struct intrsource * const is =
 		    its->its_pic->pic_sources[lpi - its->its_pic->pic_irqbase];
 		if (is != NULL)
@@ -1008,7 +1101,9 @@ gicv3_its_cpu_init(void *priv, struct cpu_info *ci)
 		KASSERT(its->its_pa[irq] != NULL);
 
 		const uint32_t devid = its->its_devid[irq];
-		gits_command_movi(its, devid, irq, cpu_index(ci));
+		const uint32_t eventid = its->its_eventid[irq];
+		KASSERT(eventid != ITS_INVALID_EVENTID);
+		gits_command_movi(its, devid, eventid, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 	}
 	gits_wait(its);
@@ -1048,8 +1143,10 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 
 	if (its->its_cpuonline[cpu_index(ci)] == true) {
 		const uint32_t devid = gicv3_its_devid(pa->pa_pc, pa->pa_tag);
+		const uint32_t eventid = its->its_eventid[irq];
+		KASSERT(eventid != ITS_INVALID_EVENTID);
 		mutex_enter(its->its_lock);
-		gits_command_movi(its, devid, irq, cpu_index(ci));
+		gits_command_movi(its, devid, eventid, cpu_index(ci));
 		gits_command_sync(its, its->its_rdbase[cpu_index(ci)]);
 		mutex_exit(its->its_lock);
 	}
@@ -1080,6 +1177,9 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	its->its_pa = kmem_zalloc(sizeof(struct pci_attach_args *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_targets = kmem_zalloc(sizeof(struct cpu_info *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_devid = kmem_zalloc(sizeof(uint32_t) * its->its_pic->pic_maxsources, KM_SLEEP);
+	its->its_eventid = kmem_alloc(sizeof(uint32_t) * its->its_pic->pic_maxsources, KM_SLEEP);
+	memset(its->its_eventid, 0xff, sizeof(uint32_t) * its->its_pic->pic_maxsources);
+	its->its_lpitodev = kmem_alloc(sizeof(struct gicv3_its_device *) * its->its_pic->pic_maxsources, KM_SLEEP);
 	its->its_gic = sc;
 	its->its_rdbase = kmem_zalloc(sizeof(*its->its_rdbase) * ncpu, KM_SLEEP);
 	its->its_cpuonline = kmem_zalloc(sizeof(*its->its_cpuonline) * ncpu, KM_SLEEP);
