@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.98 2026/05/24 13:39:03 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.99 2026/05/24 15:02:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2026/05/24 13:39:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2026/05/24 15:02:06 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1971,22 +1971,6 @@ pmap_clear_attribute(struct vm_page *pg,
 	return changed;
 }
 
-/*
- *	pmap_clear_reference:
- *
- *	Clear the reference bit on the specified physical page.
- */
-bool
-pmap_clear_reference(struct vm_page *pg)
-{
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx))",
-	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), 0,0);
-
-	PMAP_COUNT(clear_reference);
-	return pmap_clear_attribute(pg, &pmap_clear_reference_ops);
-}
-
 struct pmap_is_attribute_ops {
 	u_long piao_attribute;
 	bool (*piao_pte_isattribute)(pt_entry_t);
@@ -2072,6 +2056,22 @@ pmap_is_attribute(struct vm_page *pg,
 }
 
 /*
+ *	pmap_clear_reference:
+ *
+ *	Clear the reference bit on the specified physical page.
+ */
+bool
+pmap_clear_reference(struct vm_page *pg)
+{
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLARGS(pmaphist, "(pg=%#jx (pa %#jx))",
+	   (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), 0,0);
+
+	PMAP_COUNT(clear_reference);
+	return pmap_clear_attribute(pg, &pmap_clear_reference_ops);
+}
+
+/*
  *	pmap_is_referenced:
  *
  *	Return whether or not the specified physical page is referenced
@@ -2083,6 +2083,12 @@ pmap_is_referenced(struct vm_page *pg)
 
 	return pmap_is_attribute(pg, &pmap_is_reference_ops);
 }
+
+/*
+ *	pmap_clear_modify:
+ *
+ *	Clear the modified bit on the specified physical page.
+ */
 bool
 pmap_clear_modify(struct vm_page *pg)
 {
