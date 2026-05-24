@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.97 2026/05/22 14:31:53 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.98 2026/05/24 13:39:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.97 2026/05/22 14:31:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.98 2026/05/24 13:39:03 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -974,7 +974,7 @@ pmap_update(struct pmap *pmap)
 	kpreempt_enable();
 
 	UVMHIST_LOG(pmaphist, " <-- done (kernel=%jd)",
-		    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
+	    (pmap == pmap_kernel() ? 1 : 0), 0, 0, 0);
 }
 
 /*
