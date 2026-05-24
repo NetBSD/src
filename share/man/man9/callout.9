@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.38 2026/05/24 10:40:05 uwe Exp $
+.\"	$NetBSD: callout.9,v 1.39 2026/05/24 10:40:58 uwe Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -273,7 +273,7 @@ Returns true if a timer has been started but not explicitly stopped,
 even if it has already fired.
 .Fn callout_active c
 is logically the same as
-.Dl callout_pending(c) || callout_expired (c)
+.Dl callout_pending(c) || callout_expired(c)
 it is implemented as a separate function for compatibility with
 .Fx
 and for the special case of
