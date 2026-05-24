@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil_netbsd.c,v 1.39 2024/06/09 20:30:36 mrg Exp $	*/
+/*	$NetBSD: ip_fil_netbsd.c,v 1.40 2026/05/24 17:43:18 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -8,7 +8,7 @@
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.39 2024/06/09 20:30:36 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_fil_netbsd.c,v 1.40 2026/05/24 17:43:18 bouyer Exp $");
 #else
 static const char sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-2000 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_fil_netbsd.c,v 1.1.1.2 2012/07/22 13:45:17 darrenr Exp";
@@ -1211,7 +1211,7 @@ ipf_fastroute(mb_t *m0, mb_t **mpp, fr_info_t *fin, frdest_t *fdp)
 	 * part of the normal packet stream, so do not NAT them or pass
 	 * them through stateful checking, etc.
 	 */
-	if ((fdp != &fr->fr_dif) && (fin->fin_out == 0)) {
+	if ((fr == NULL || fdp != &fr->fr_dif) && fin->fin_out == 0) {
 		sifp = fin->fin_ifp;
 		fin->fin_ifp = ifp;
 		fin->fin_out = 1;
