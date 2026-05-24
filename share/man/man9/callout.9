@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.35 2026/05/23 22:59:15 riastradh Exp $
+.\"	$NetBSD: callout.9,v 1.36 2026/05/24 09:16:00 uwe Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,10 +74,14 @@
 The
 .Nm callout
 facility provides a mechanism to execute a function at a given time.
-The timer is based on the hardclock timer which ticks
-.Dv hz
+The timer is based on the
+.Xr hardclock 8
+timer which ticks
+.Va hz
 times per second.
-The function is called at softclock interrupt level.
+The function is called at
+.Dv IPL_SOFTCLOCK
+interrupt level.
 .Pp
 Clients of the
 .Nm callout
@@ -94,6 +98,7 @@ and
 .Fn untimeout .
 .Sh FUNCTIONS
 .Bl -tag -width Fn
+.
 .It Fn callout_init c flags
 Initializes the callout handle
 .Fa c
@@ -106,13 +111,14 @@ argument is
 the handler will be called without getting the global kernel lock.
 In this case it should only use functions that are multiprocessor
 safe.
+.
 .It Fn callout_destroy c
 Destroys the callout, preventing further use.
 It is provided as a diagnostic facility intended to catch bugs.
 To ensure future compatibility,
 .Fn callout_destroy
-should always be called when the callout is no longer required (for instance,
-when a device is being detached).
+should always be called when the callout is no longer required
+.Pq for instance, when a device is being detached .
 The callout should be stopped before
 .Fn callout_destroy
 is called by calling
@@ -120,6 +126,7 @@ is called by calling
 Note that
 .Fn callout_stop
 shouldn't be used for this purpose.
+.
 .It Fn callout_setfunc c func arg
 Sets the function and argument of the callout handle
 .Fa c
@@ -128,15 +135,16 @@ to
 and
 .Fa arg
 respectively, so that when the timer expires, it will call
-.Fo func
-.Fa arg
-.Fc .
+.Sm off
+.Li "(*" Ar func Li ")(" Ar arg Li ")" .
+.Sm on
 The callout handle must already be initialized.
+.
 .It Fn callout_schedule c ticks
 Starts the timer associated with the callout handle
 .Fa c .
 When the timer expires after
-.Fa ticks Ns No /hz
+.Fa ticks Ns No \|/\| Ns Va hz
 seconds, the function previously specified by
 .Fn callout_setfunc
 will be called.
@@ -153,6 +161,7 @@ and
 and the
 .Em PENDING
 status is cleared.
+.
 .It Fn callout_reset ch ticks func arg
 Atomically does
 .Fn callout_setfunc ch func arg
@@ -168,6 +177,7 @@ in conjunction with
 .Fn callout_schedule ;
 it is clearer, and slightly more efficient, than using
 .Fn callout_reset .
+.
 .It Fn callout_stop c
 Requests that the timer associated with the callout handle
 .Fa c
@@ -192,6 +202,7 @@ It can only be said to prevent the callout from firing in the future,
 unless explicitly re-scheduled.
 To stop a callout and wait for completion, use
 .Fn callout_halt .
+.
 .It Fn callout_halt c interlock
 Acts much like
 .Fn callout_stop ,
@@ -200,10 +211,13 @@ but waits for the callout to complete if it is currently in-flight.
 may not be called from a hard interrupt handler as it will sleep if the
 callout is currently executing.
 .Pp
-If the callout can take locks (such as
+If the callout can take locks
+.Po
+such as
 .Xr mutex 9
 or
-.Xr rwlock 9 ) ,
+.Xr rwlock 9
+.Pc ,
 the caller of
 .Fn callout_halt
 .Em must not
@@ -228,6 +242,7 @@ will not be released.
 However, to avoid race conditions the caller should always assume that
 .Fa interlock
 has been released and reacquired, and act accordingly.
+.
 .It Fn callout_pending c
 Tests the
 .Em PENDING
@@ -243,6 +258,7 @@ to let softclock interrupts through.
 Note that it is only safe to test
 .Em PENDING
 status when at softclock interrupt level or higher.
+.
 .It Fn callout_expired c
 Tests to see if the callout's timer has expired.
 If this returns true, then either the callout's function has already
@@ -251,19 +267,19 @@ been called or is guaranteed to be called, even if
 or
 .Fn callout_halt
 are later used.
+.
 .It Fn callout_active c
 Returns true if a timer has been started but not explicitly stopped,
 even if it has already fired.
-.Fn callout_active foo
+.Fn callout_active c
 is logically the same as
-.Fn callout_pending foo
-||
-.Fn callout_expired foo ;
+.Dl callout_pending(c) || callout_expired (c)
 it is implemented as a separate function for compatibility with
 .Fx
 and for the special case of
 .Fn TCP_TIMER_ISARMED .
 Its use is not recommended.
+.
 .It Fn callout_invoking c
 Tests the
 .Em INVOKING
@@ -280,7 +296,7 @@ Since the code can't sleep, it can't use
 .Fn callout_halt
 to wait for the callout to finish.
 Instead, it needs to distinguish three cases:
-.Bl -enum -compact
+.Bl -enum -offset indent -compact
 .It
 the callout has not yet expired,
 .It
@@ -299,7 +315,7 @@ deallocation until the callout function is allowed to run.
 For this handshake protocol to work, the callout function will
 have to use the
 .Fn callout_ack
-function to clear this flag, typically after taking a lock.
+function to clear this flag, typically after taking a lock:
 .Bd -literal
 mutex_enter(&sc->sc_lock);
 if (!callout_stop(ch)) {
@@ -326,6 +342,7 @@ driver_intr(void *arg)
 	mutex_exit(&sc->sc_lock);
 }
 .Ed
+.
 .It Fn callout_ack c
 Clears the
 .Em INVOKING
@@ -339,8 +356,9 @@ the race condition described under
 The callout facility performs locking internally in order to guarantee the
 atomicity of individual operations performed on callouts.
 It does not provide life cycle management of user-provided callout data
-structures, nor does it ensure that groups of operations (multiple function
-calls) are performed atomically.
+structures, nor does it ensure that groups of operations
+.Pq multiple function calls
+are performed atomically.
 These aspects of callout management are the responsibility of the user of
 the callout facility.
 .Pp
@@ -358,12 +376,22 @@ callout will never have multiple concurrent invocations.
 .Sh HISTORY
 The
 .Nm callout
-facility was implemented by Artur Grabowski and Thomas Nordin, based
-on the work of G. Varghese and A. Lauck, described in the paper
-Hashed and Hierarchical Timing Wheels: Data Structures for the
-Efficient Implementation of a Timer Facility
-in the Proceedings of the 11th ACM Annual Symposium on Operating System
-Principles, Austin, Texas, November 1987.
+facility was implemented for
+.Fx
+by Artur Grabowski and Thomas Nordin, based on the paper by
+.Rs
+.%A G.\~Varghese
+.%A A.\~Lauck
+.\" Some citations give "T. Lauck".  The paper itself says "Tony Lauck"
+.%T Hashed and Hierarchical Timing Wheels: \
+Data Structures for the Efficient Implementation of a Timer Facility
+.%B Proceedings of the 11th ACM Annual Symposium on Operating System Principles
+.%I ACM
+.%P pp.\~25\(en38
+.%C Austin, Texas
+.%D November 1987
+.%U https://doi.org/10.1145/37499.37504
+.Re
 It was adapted to the
 .Nx
 kernel by Jason R. Thorpe.
