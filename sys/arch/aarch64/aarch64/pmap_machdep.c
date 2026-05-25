@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.16 2026/05/21 11:38:42 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.17 2026/05/25 07:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.16 2026/05/21 11:38:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.17 2026/05/25 07:16:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -182,16 +182,13 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 
                 /*
 		 * Enable write permissions for the page by setting the Access
-		 * Flag, marking the page as writeable, and modified (using an
-		 * OS bit).
-		 *
-		 * The MODEMUL bit is also removed as its no longer required.
+		 * Flag, marking the page as writeable. The PTE being writeable
+		 * and OS_MODEMUL indicates it's been modified.
 		 */
 		const pt_entry_t npte =
-		    (opte & ~(LX_BLKPAG_AP | LX_BLKPAG_OS_MODEMUL)) |
+		    (opte & ~LX_BLKPAG_AP) |
 		    LX_BLKPAG_AF |
-		    LX_BLKPAG_AP_RW |
-		    LX_BLKPAG_OS_MODIFIED;
+		    LX_BLKPAG_AP_RW;
 		atomic_swap_64(ptep, npte);
 		// tlb_invalidate_addr does dsb(ishst)
 		tlb_invalidate_addr(va, pai->pai_asid);

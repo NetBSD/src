@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.16 2026/05/21 12:10:28 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.17 2026/05/25 07:16:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -134,11 +134,10 @@ struct pmap_page {
 
 #define	PVLIST_EMPTY_P(pg)	VM_PAGEMD_PVLIST_EMPTY_P(VM_PAGE_TO_MD(pg))
 
-#define	LX_BLKPAG_OS_MODIFIED	LX_BLKPAG_OS_0
-#define	LX_BLKPAG_OS_MODEMUL	LX_BLKPAG_OS_1
+#define	LX_BLKPAG_OS_MODEMUL	LX_BLKPAG_OS_0
 
-#define	PMAP_PTE_OS0	"modified"
-#define	PMAP_PTE_OS1	"modemul"
+#define	PMAP_PTE_OS0	"modemul"
+#define	PMAP_PTE_OS1	"(unused)"
 
 static inline paddr_t
 pmap_l0pa(struct pmap *pm)
@@ -227,7 +226,8 @@ static inline bool
 pte_modified_p(pt_entry_t pte)
 {
 
-	return (pte & LX_BLKPAG_OS_MODIFIED) != 0;
+	return (pte & (LX_BLKPAG_AP | LX_BLKPAG_OS_MODEMUL)) ==
+	    (LX_BLKPAG_AP_RW | LX_BLKPAG_OS_MODEMUL);
 }
 
 static inline bool
@@ -306,12 +306,10 @@ pte_clear_modify(pt_entry_t pte)
 	/*
 	 * See the table in pte_make_enter.
 	 *
-	 * Set the page RO and MODEMUL, and clear MODIFIED.
-	 *
-	 * Don't touch _AF as ref emulation might have completed.
+	 * Set the page RO and MODEMUL, but don't touch _AF as ref
+	 * emulation might have completed.
 	 */
-	CTASSERT(LX_BLKPAG_OS_MODIFIED == __BIT(55));
-	return (pte & ~(LX_BLKPAG_AP | LX_BLKPAG_OS_MODIFIED)) |
+	return (pte & ~LX_BLKPAG_AP) |
 	    LX_BLKPAG_AP_RO |
 	    LX_BLKPAG_OS_MODEMUL;
 }
@@ -538,8 +536,9 @@ pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
 
 	/*
 	 * When doing modified emulation mark page as RO and
-	 * LX_BLKPAG_OS_MODEMUL. A write fault will use MODEMUL to
-	 * fixup the pte and mark the page as modified.
+	 * LX_BLKPAG_OS_MODEMUL. A write fault will use the existance of
+	 * OS_MODEMUL to fixup the pte and mark the page as writeable.
+	 * AP_RW and OS_MODEMUL indicates that is was modified.
 	 *
 	 * When not doing modified emulation mark the page as RO or RW.
 	 */
