@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.99 2026/05/24 15:02:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.100 2026/05/25 07:10:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.99 2026/05/24 15:02:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2026/05/25 07:10:43 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1923,7 +1923,6 @@ pmap_clear_attribute(struct vm_page *pg,
 		return rv;
 	}
 
-	bool changed = false;
 	kpreempt_disable();
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
@@ -1945,7 +1944,7 @@ pmap_clear_attribute(struct vm_page *pg,
 		if (npte == opte) {
 			continue;
 		}
-		changed = true;
+		rv = true;
 		KASSERT(pte_valid_p(npte));
 		const uintptr_t gen = VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 		pmap_tlb_miss_lock_enter();
@@ -1965,10 +1964,13 @@ pmap_clear_attribute(struct vm_page *pg,
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
 
-	UVMHIST_LOG(pmaphist, " <-- %jx (and mappings changed)",
-	    ops->pcao_attribute, changed, 0, 0);
+	UVMHIST_LOG(pmaphist, " <-- %jx (ref=%jd mod=%jd)",
+	    rv,
+	    ops->pcao_attribute == VM_PAGEMD_REFERENCED,
+	    ops->pcao_attribute == VM_PAGEMD_MODIFIED,
+	    0);
 
-	return changed;
+	return rv;
 }
 
 struct pmap_is_attribute_ops {
