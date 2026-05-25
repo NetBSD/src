@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfour.c,v 1.51 2023/12/20 05:33:18 thorpej Exp $	*/
+/*	$NetBSD: cgfour.c,v 1.52 2026/05/25 13:47:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -101,8 +101,10 @@
  * XXX should defer colormap updates to vertical retrace interrupts
  */
 
+#include "wsdisplay.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.51 2023/12/20 05:33:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.52 2026/05/25 13:47:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,6 +124,18 @@ __KERNEL_RCSID(0, "$NetBSD: cgfour.c,v 1.51 2023/12/20 05:33:18 thorpej Exp $");
 #include <dev/sun/btvar.h>
 #include <dev/sun/pfourreg.h>
 
+#if NWSDISPLAY > 0
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wsdisplay_vconsvar.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/rasops/rasops.h>
+
+#include "opt_wsemul.h"
+#endif
+
+#define CGFOUR_OVERLAY_SIZE    0x20000
+#define CGFOUR_RAM_SIZE                0x100000        /* All our cgfour's are 1MB */
+
 /* per-display variables */
 struct cgfour_softc {
 	struct fbdevice	sc_fb;		/* frame buffer device */
@@ -129,6 +143,15 @@ struct cgfour_softc {
 	bus_addr_t	sc_paddr;	/* phys address for device mmap() */
 
 	volatile struct fbcontrol *sc_fbc;	/* Brooktree registers */
+#if NWSDISPLAY > 0
+       uint32_t sc_width;
+       uint32_t sc_height;             /* display width / height */
+       uint32_t sc_stride;
+       int sc_mode;
+       struct vcons_data sc_vd;
+       char *sc_overlay;
+       char *sc_enable;
+#endif
 	union bt_cmap	sc_cmap;	/* Brooktree color map */
 };
 
@@ -176,8 +199,50 @@ static struct fbdriver cgfourfbdriver = {
 static void cgfourloadcmap(struct cgfour_softc *, int, int);
 static int cgfour_get_video(struct cgfour_softc *);
 static void cgfour_set_video(struct cgfour_softc *, int);
-#endif
 
+#if NWSDISPLAY > 0
+static void cgfour_setup_palette(struct cgfour_softc *);
+
+struct wsscreen_descr cgfour_defaultscreen = {
+       "std",
+       0, 0,   /* will be filled in -- XXX shouldn't, it's global */
+       NULL,   /* textops */
+       8, 16,  /* font width/height */
+       WSSCREEN_WSCOLORS,      /* capabilities */
+       NULL    /* modecookie */
+};
+
+static int cgfour_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t cgfour_mmap(void *, void *, off_t, int);
+static void cgfour_init_screen(void *, struct vcons_screen *, int, long *);
+static void cgfour_clear_screen(struct cgfour_softc *, int);
+
+static int cgfour_putcmap(struct cgfour_softc *, struct wsdisplay_cmap *);
+static int cgfour_getcmap(struct cgfour_softc *, struct wsdisplay_cmap *);
+
+struct wsdisplay_accessops cgfour_accessops = {
+       .ioctl = cgfour_ioctl,
+       .mmap = cgfour_mmap,
+       .alloc_screen = NULL,
+       .free_screen = NULL,
+       .show_screen = NULL,
+       .load_font = NULL,
+       .pollc = NULL,
+       .scroll = NULL
+};
+
+const struct wsscreen_descr *_cgfour_scrlist[] = {
+       &cgfour_defaultscreen
+};
+
+struct wsscreen_list cgfour_screenlist = {
+       .nscreens = sizeof(_cgfour_scrlist) / sizeof(struct wsscreen_descr *),
+       .screens = _cgfour_scrlist
+};
+
+static struct vcons_screen cgfour_console_screen;
+#endif /* NWSDISPLAY > 0 */
+#endif /* SUN4 */
 /*
  * Match a cgfour.
  */
@@ -218,8 +283,12 @@ cgfourattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bh;
 	volatile struct bt_regs *bt;
 	struct fbdevice *fb = &sc->sc_fb;
-	int ramsize, i, isconsole;
-
+	int i, isconsole;
+#if NWSDISPLAY > 0
+       struct wsemuldisplaydev_attach_args wsemul_aa;
+       struct rasops_info *ri = &cgfour_console_screen.scr_ri;
+       unsigned long defattr = 0;
+#endif
 	sc->sc_bustag = oba->oba_bustag;
 	sc->sc_paddr = (bus_addr_t)oba->oba_paddr;
 
@@ -240,13 +309,12 @@ cgfourattach(device_t parent, device_t self, void *aux)
 	fb->fb_flags = device_cfdata(self)->cf_flags & FB_USERMASK;
 	fb->fb_flags |= FB_PFOUR;
 
-	ramsize = PFOUR_COLOR_OFF_END - PFOUR_COLOR_OFF_OVERLAY;
 
 	fb->fb_type.fb_depth = 8;
 	fb_setsize_eeprom(fb, fb->fb_type.fb_depth, 1152, 900);
 
 	fb->fb_type.fb_cmsize = 256;
-	fb->fb_type.fb_size = ramsize;
+	fb->fb_type.fb_size = CGFOUR_RAM_SIZE;
 	printf(": cgfour/p4, %d x %d",
 		fb->fb_type.fb_width, fb->fb_type.fb_height);
 
@@ -263,28 +331,47 @@ cgfourattach(device_t parent, device_t self, void *aux)
 			isconsole = fb_is_console(0);
 	}
 
-#if 0
-	/*
-	 * We don't do any of the console handling here.  Instead,
-	 * we let the bwtwo driver pick up the overlay plane and
-	 * use it instead.  Rconsole should have better performance
-	 * with the 1-bit depth.
-	 *	-- Jason R. Thorpe <thorpej@NetBSD.org>
-	 */
-
 	/*
 	 * When the ROM has mapped in a cgfour display, the address
 	 * maps only the video RAM, so in any case we have to map the
-	 * registers ourselves.  We only need the video RAM if we are
-	 * going to print characters via rconsole.
+	 * registers ourselves.
 	 */
 
 	if (isconsole) {
-		/* XXX this is kind of a waste */
-		fb->fb_pixels = mapiodev(ca->ca_ra.ra_reg,
-					 PFOUR_COLOR_OFF_OVERLAY, ramsize);
-	}
-#endif
+               /* Map the framebuffers. */
+               if (bus_space_map(oba->oba_bustag,
+                           oba->oba_paddr + PFOUR_COLOR_OFF_OVERLAY,
+                           CGFOUR_OVERLAY_SIZE,
+                           BUS_SPACE_MAP_LINEAR,
+                           &bh) != 0) {
+                       printf("%s: cannot map overlay plane\n",
+                           device_xname(self));
+               return;
+               }
+               sc->sc_overlay = (char *)bh;
+
+               if (bus_space_map(oba->oba_bustag,
+                           oba->oba_paddr + PFOUR_COLOR_OFF_ENABLE,
+                           CGFOUR_OVERLAY_SIZE,
+                           BUS_SPACE_MAP_LINEAR,
+                           &bh) != 0) {
+                       printf("%s: cannot map enable plane\n",
+                           device_xname(self));
+                       return;
+               }
+               sc->sc_enable  = (char *)bh;
+
+               if (bus_space_map(oba->oba_bustag,
+                           oba->oba_paddr + PFOUR_COLOR_OFF_COLOR,
+                           CGFOUR_RAM_SIZE,
+                           BUS_SPACE_MAP_LINEAR,
+                           &bh) != 0) {
+                       printf("%s: cannot map pixels\n",
+                           device_xname(self));
+                       return;
+               }
+               fb->fb_pixels = (char *)bh;
+        }
 
 	/* Map the Brooktree. */
 	if (bus_space_map(oba->oba_bustag,
@@ -306,14 +393,9 @@ cgfourattach(device_t parent, device_t self, void *aux)
 
 	BT_INIT(bt, 24);
 
-#if 0	/* See above. */
 	if (isconsole) {
 		printf(" (console)\n");
-#if defined(RASTERCONSOLE) && 0	/* XXX been told it doesn't work well. */
-		fbrcons_init(fb);
-#endif
 	} else
-#endif /* 0 */
 		printf("\n");
 
 	/*
@@ -321,6 +403,50 @@ cgfourattach(device_t parent, device_t self, void *aux)
 	 * to notice if we're the console framebuffer.
 	 */
 	fb_attach(fb, isconsole);
+
+#if NWSDISPLAY > 0
+       sc->sc_width = fb->fb_type.fb_width;
+       sc->sc_stride = fb->fb_type.fb_width;
+       sc->sc_height = fb->fb_type.fb_height;
+
+       /* setup rasops and so on for wsdisplay */
+       sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+
+       vcons_init(&sc->sc_vd, sc, &cgfour_defaultscreen, &cgfour_accessops);
+       sc->sc_vd.init_screen = cgfour_init_screen;
+
+       if (isconsole) {
+               /* we mess with cgfour_console_screen only once */
+               vcons_init_screen(&sc->sc_vd, &cgfour_console_screen, 1,
+                   &defattr);
+               cgfour_clear_screen(sc, (defattr >> 16) & 0xff);
+               cgfour_console_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;
+
+               cgfour_defaultscreen.textops = &ri->ri_ops;
+               cgfour_defaultscreen.capabilities = ri->ri_caps;
+               cgfour_defaultscreen.nrows = ri->ri_rows;
+               cgfour_defaultscreen.ncols = ri->ri_cols;
+               SCREEN_VISIBLE(&cgfour_console_screen);
+               sc->sc_vd.active = &cgfour_console_screen;
+               wsdisplay_cnattach(&cgfour_defaultscreen, ri, 0, 0, defattr);
+               vcons_replay_msgbuf(&cgfour_console_screen);
+       } else {
+               /*
+                * we're not the console so we just clear the screen and don't
+                * set up any sort of text display
+                */
+       }
+
+       /* Initialize the default color map. */
+       cgfour_setup_palette(sc);
+
+       wsemul_aa.scrdata = &cgfour_screenlist;
+       wsemul_aa.console = isconsole;
+       wsemul_aa.accessops = &cgfour_accessops;
+       wsemul_aa.accesscookie = &sc->sc_vd;
+       config_found(self, &wsemul_aa, wsemuldisplaydevprint,
+           CFARGS_NONE);
+#endif /* NWSDISPLAY > 0 */
 #endif /* SUN4 */
 }
 
@@ -503,4 +629,199 @@ cgfourloadcmap(struct cgfour_softc *sc, int start, int ncolors)
 		bt->bt_cmap = i << 24;
 	}
 }
+
+#if NWSDISPLAY > 0
+static void
+cgfour_setup_palette(struct cgfour_softc *sc)
+{
+       int i, j;
+
+       j = 0;
+       for (i = 0; i < 256; i++) {
+               sc->sc_cmap.cm_map[i][0] = rasops_cmap[j];
+               j++;
+               sc->sc_cmap.cm_map[i][1] = rasops_cmap[j];
+               j++;
+               sc->sc_cmap.cm_map[i][2] = rasops_cmap[j];
+               j++;
+       }
+       cgfourloadcmap(sc, 0, 256);
+}
+
+static int
+cgfour_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
+    struct lwp *l)
+{
+       /* we'll probably need to add more stuff here */
+       struct vcons_data *vd = v;
+       struct cgfour_softc *sc = vd->cookie;
+       struct wsdisplay_fbinfo *wdf;
+       struct vcons_screen *ms = sc->sc_vd.active;
+       struct rasops_info *ri = &ms->scr_ri;
+       switch (cmd) {
+               case WSDISPLAYIO_GTYPE:
+                       *(u_int *)data = WSDISPLAY_TYPE_SUNTCX; /* XXX */
+                       return 0;
+               case WSDISPLAYIO_GINFO:
+                       wdf = (void *)data;
+                       wdf->height = ri->ri_height;
+                       wdf->width = ri->ri_width;
+                       wdf->depth = 8;
+                       wdf->cmsize = 256;
+                       return 0;
+
+               case WSDISPLAYIO_GETCMAP:
+                       return cgfour_getcmap(sc,
+                           (struct wsdisplay_cmap *)data);
+               case WSDISPLAYIO_PUTCMAP:
+                       return cgfour_putcmap(sc,
+                           (struct wsdisplay_cmap *)data);
+
+               case WSDISPLAYIO_SMODE:
+                       {
+                               int new_mode = *(int *)data;
+
+                               if (new_mode != sc->sc_mode) {
+                                       sc->sc_mode = new_mode;
+                                       if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+                                               cgfour_setup_palette(sc);
+                                               cgfour_clear_screen(sc, 0xff);
+                                               vcons_redraw_screen(ms);
+                                       }
+                               }
+                       }
+                       return 0;
+               case WSDISPLAYIO_GET_FBINFO:
+                       {
+                               struct wsdisplayio_fbinfo *fbi = data;
+
+                               return wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
+                       }
+       }
+       return EPASSTHROUGH;
+}
+
+static paddr_t
+cgfour_mmap(void *v, void *vs, off_t offset, int prot)
+{
+       struct vcons_data *vd = v;
+       struct cgfour_softc *sc = vd->cookie;
+       paddr_t cookie = -1;
+
+       switch (sc->sc_mode) {
+       case WSDISPLAYIO_MODE_DUMBFB:
+               if (offset >= 0 && offset <= sc->sc_fb.fb_type.fb_size) {
+                       cookie = bus_space_mmap(sc->sc_bustag,
+                           sc->sc_paddr, PFOUR_COLOR_OFF_COLOR + offset,
+                           prot, BUS_SPACE_MAP_LINEAR);
+               }
+               break;
+       default:
+               break;
+       }
+
+       return cookie;
+}
+
+static int
+cgfour_putcmap(struct cgfour_softc *sc, struct wsdisplay_cmap *cm)
+{
+       u_int index = cm->index;
+       u_int count = cm->count;
+       int error,i;
+       if (index >= 256 || count > 256 || index + count > 256)
+               return EINVAL;
+
+       for (i = 0; i < count; i++)
+       {
+               error = copyin(&cm->red[i],
+                   &sc->sc_cmap.cm_map[index + i][0], 1);
+               if (error)
+                       return error;
+               error = copyin(&cm->green[i],
+                   &sc->sc_cmap.cm_map[index + i][1],
+                   1);
+               if (error)
+                       return error;
+               error = copyin(&cm->blue[i],
+                   &sc->sc_cmap.cm_map[index + i][2], 1);
+               if (error)
+                       return error;
+       }
+       cgfourloadcmap(sc, index, count);
+
+       return 0;
+}
+
+static int
+cgfour_getcmap(struct cgfour_softc *sc, struct wsdisplay_cmap *cm)
+{
+       u_int index = cm->index;
+       u_int count = cm->count;
+       int error,i;
+
+       if (index >= 256 || count > 256 || index + count > 256)
+               return EINVAL;
+
+       for (i = 0; i < count; i++)
+       {
+               error = copyout(&sc->sc_cmap.cm_map[index + i][0],
+                   &cm->red[i], 1);
+               if (error)
+                       return error;
+               error = copyout(&sc->sc_cmap.cm_map[index + i][1],
+                   &cm->green[i], 1);
+               if (error)
+                       return error;
+               error = copyout(&sc->sc_cmap.cm_map[index + i][2],
+                   &cm->blue[i], 1);
+               if (error)
+                       return error;
+       }
+
+       return 0;
+}
+
+static void
+cgfour_init_screen(void *cookie, struct vcons_screen *scr,
+    int existing, long *defattr)
+{
+       struct cgfour_softc *sc = cookie;
+       struct rasops_info *ri = &scr->scr_ri;
+
+       scr->scr_flags |= VCONS_DONT_READ;
+
+       ri->ri_depth = 8;
+       ri->ri_width = sc->sc_width;
+       ri->ri_height = sc->sc_height;
+       ri->ri_stride = sc->sc_stride;
+       ri->ri_flg = RI_CENTER;
+
+       ri->ri_bits = sc->sc_fb.fb_pixels;
+
+       rasops_init(ri, 0, 0);
+       ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_REVERSE;
+       rasops_reconfig(ri, sc->sc_height / ri->ri_font->fontheight,
+           sc->sc_width / ri->ri_font->fontwidth);
+
+       ri->ri_hw = scr;
+}
+
+static void
+cgfour_clear_screen(struct cgfour_softc *sc, int bg)
+{
+       char *bits;
+
+       /* We can write a maximum of 4 bytes at a time to the framebuffer. */
+       for (bits = (char *)sc->sc_enable;
+           bits < (char *)sc->sc_enable + CGFOUR_OVERLAY_SIZE;
+           bits += 4)
+               memset(bits,  0x00, 4);
+
+       for (bits = (char *)sc->sc_fb.fb_pixels;
+           bits < (char *)sc->sc_fb.fb_pixels + sc->sc_stride * sc->sc_height;
+           bits += 4)
+               memset(bits, bg, 4);
+}
+#endif /* NWSDISPLAY > 0 */
 #endif /* SUN4 */

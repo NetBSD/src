@@ -1,4 +1,4 @@
-/*	$NetBSD: pfourreg.h,v 1.4 2008/04/28 20:23:58 martin Exp $	*/
+/*	$NetBSD: pfourreg.h,v 1.5 2026/05/25 13:47:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -61,12 +61,16 @@
 /* Offset of bwtwo framebuffer from pfour register */
 #define PFOUR_BW_OFF		0x00100000
 
-/* Offsets for color framebuffers */
+/* Offsets for color framebuffers 
+ * The PROM gives us the offset for the pfour registers
+ * which are at 0x300000 in the pfour address space
+ * these offsets are reletive to that
+ */
 #define PFOUR_COLOR_OFF_OVERLAY	0x00100000
 #define PFOUR_COLOR_OFF_ENABLE	0x00300000
 #define PFOUR_COLOR_OFF_COLOR	0x00500000
 #define PFOUR_COLOR_OFF_END	0x00700000
-#define PFOUR_COLOR_OFF_CMAP	0xfff00000	/* (-0x00100000) */
+#define PFOUR_COLOR_OFF_CMAP	(-0x00100000)
 
 #define PFOUR_REG_DIAG		0x80
 #define PFOUR_REG_READBACKCLR	0x40
