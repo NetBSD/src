@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.9 2016/08/16 02:04:01 uwe Exp $
+.\" $NetBSD: moused.8,v 1.10 2026/05/26 12:58:59 nia Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm moused
-.Nd pass mouse data to mouse mux
+.Nd pass data from a serial mouse to the kernel
 .Sh SYNOPSIS
 .Nm
 .Op Fl DPRacdfs
@@ -61,18 +61,17 @@
 .Fl p Ar port
 .Fl i Ar info
 .Sh DESCRIPTION
-The mouse daemon
 .Nm
 and the console driver work together to support
-access to serial mice from user programs.
+input from serial mice.
 They virtualize the mouse and provide user programs with mouse data
 in the standard format
 (see
 .Xr wsmouse 4 ) .
 .Pp
 .Nm
-listens to the specified port for mouse data, interprets and then
-passes it via ioctls to the console driver.
+listens to the specified serial port for mouse data, interprets and
+then passes it via ioctls to the console driver.
 It reports translation movement, button press/release events and
 movement of the roller or the wheel if available.
 The roller/wheel movement is reported as
