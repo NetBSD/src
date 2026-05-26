@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.26 2026/05/21 11:35:40 skrll Exp $
+# $NetBSD: GENERIC64,v 1.27 2026/05/26 06:28:23 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -106,6 +106,7 @@ eqos* 		at fdt?			# DesignWare Ethernet QoS
 # MII/PHY support
 micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 mcommphy* 	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
+rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
 ukphy* 		at mii? phy ?		# generic unknown PHYs
 
 # Temperature sensor
