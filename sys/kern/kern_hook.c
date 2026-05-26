@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.17 2026/05/26 14:57:25 simonb Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.18 2026/05/26 15:11:44 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.17 2026/05/26 14:57:25 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.18 2026/05/26 15:11:44 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -478,22 +478,22 @@ docritpollhooks(void)
  * When running the hooks on power down the hooks are called in reverse
  * registration order, when powering up in registration order.
  */
-struct powerhook_desc {
-	TAILQ_ENTRY(powerhook_desc) sfd_list;
+struct powerhook {
+	TAILQ_ENTRY(powerhook) sfd_list;
 	void	(*sfd_fn)(int, void *);
 	void	*sfd_arg;
 	char	sfd_name[16];
 };
 
-static TAILQ_HEAD(powerhook_head, powerhook_desc) powerhook_list =
+static TAILQ_HEAD(powerhook_head, powerhook) powerhook_list =
     TAILQ_HEAD_INITIALIZER(powerhook_list);
 
 void *
 powerhook_establish(const char *name, void (*fn)(int, void *), void *arg)
 {
-	struct powerhook_desc *ndp;
+	struct powerhook *ndp;
 
-	ndp = (struct powerhook_desc *)
+	ndp = (struct powerhook *)
 	    malloc(sizeof(*ndp), M_DEVBUF, M_NOWAIT);
 	if (ndp == NULL)
 		return (NULL);
@@ -511,7 +511,7 @@ void
 powerhook_disestablish(void *vhook)
 {
 #ifdef DIAGNOSTIC
-	struct powerhook_desc *dp;
+	struct powerhook *dp;
 
 	TAILQ_FOREACH(dp, &powerhook_list, sfd_list)
                 if (dp == vhook)
@@ -520,7 +520,7 @@ powerhook_disestablish(void *vhook)
  found:
 #endif
 
-	TAILQ_REMOVE(&powerhook_list, (struct powerhook_desc *)vhook,
+	TAILQ_REMOVE(&powerhook_list, (struct powerhook *)vhook,
 	    sfd_list);
 	free(vhook, M_DEVBUF);
 }
@@ -531,7 +531,7 @@ powerhook_disestablish(void *vhook)
 void
 dopowerhooks(int why)
 {
-	struct powerhook_desc *dp;
+	struct powerhook *dp;
 	const char *why_name;
 	static const char * pwr_names[] = {PWR_NAMES};
 	why_name = why < __arraycount(pwr_names) ? pwr_names[why] : "???";
