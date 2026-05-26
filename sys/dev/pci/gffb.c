@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.35 2026/05/18 09:17:50 macallan Exp $	*/
+/*	$NetBSD: gffb.c,v 1.36 2026/05/26 12:28:39 macallan Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.35 2026/05/18 09:17:50 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.36 2026/05/26 12:28:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -605,7 +605,7 @@ gffb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_vramsize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset + 0x2000,
-		    0, prot, BUS_SPACE_MAP_LINEAR);
+		    0, prot, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.121 2026/05/20 04:40:34 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.122 2026/05/26 12:28:39 macallan Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.121 2026/05/20 04:40:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.122 2026/05/26 12:28:39 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1332,7 +1332,7 @@ radeonfb_mmap(void *v, void *vs, off_t offset, int prot)
 	if ((offset >= 0) && (offset < (dp->rd_virty * dp->rd_stride))) {
 		pa = bus_space_mmap(sc->sc_memt,
 		    sc->sc_memaddr, dp->rd_offset + offset,
-		    prot, BUS_SPACE_MAP_LINEAR);
+		    prot, BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 
