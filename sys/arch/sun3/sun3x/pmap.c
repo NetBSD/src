@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.129 2026/05/04 15:30:21 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.130 2026/05/26 21:52:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.129 2026/05/04 15:30:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.130 2026/05/26 21:52:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pmap_debug.h"
@@ -652,6 +652,7 @@ pmap_bootstrap(vaddr_t nextva)
 		pmap_membank->pmem_seg = &phys_seg_list[i];
 	}
 	pmap_membank->pmem_next = NULL;
+	pmap_membank = avail_mem;
 
 	for (;;) { /* break on !membank */
 		pmap_membank->pmem_seg->ps_start = membank->address;
