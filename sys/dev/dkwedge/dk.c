@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.173 2025/04/13 14:01:00 jakllsch Exp $	*/
+/*	$NetBSD: dk.c,v 1.174 2026/05/26 14:50:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.173 2025/04/13 14:01:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.174 2026/05/26 14:50:52 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -164,7 +164,7 @@ static dev_type_discard(dkdiscard);
 CFDRIVER_DECL(dk, DV_DISK, NULL);
 CFATTACH_DECL3_NEW(dk, 0,
     dkwedge_match, dkwedge_attach, dkwedge_detach, NULL, NULL, NULL,
-    DVF_DETACH_SHUTDOWN);
+    DVF_DETACH_SHUTDOWN | DVF_NO_PARTITIONS);
 
 const struct bdevsw dk_bdevsw = {
 	.d_open = dkopen,

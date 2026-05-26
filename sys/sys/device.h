@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.193 2026/01/17 02:01:39 thorpej Exp $ */
+/* $NetBSD: device.h,v 1.194 2026/05/26 14:50:52 simonb Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -256,6 +256,7 @@ struct device;
  */
 #define	DVF_PRIV_ALLOC		0x0002	/* device private storage != device */
 #define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
+#define	DVF_NO_PARTITIONS	0x0100	/* (disk) device doesn't have partitions */
 
 #ifdef _KERNEL
 TAILQ_HEAD(devicelist, device);
@@ -619,6 +620,7 @@ device_t	device_parent(device_t);
 bool		device_is_active(device_t);
 bool		device_activation(device_t, devact_level_t);
 bool		device_is_enabled(device_t);
+bool		device_has_partitions(device_t);
 bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);

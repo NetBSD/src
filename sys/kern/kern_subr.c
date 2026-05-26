@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.231 2023/01/19 07:40:58 mlelstv Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.232 2026/05/26 14:50:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.231 2023/01/19 07:40:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.232 2026/05/26 14:50:52 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -179,15 +179,6 @@ char *bootspec;
 #ifndef ROOT_WAITTIME
 #define ROOT_WAITTIME 20
 #endif
-
-/*
- * Use partition letters if it's a disk class but not a wedge or flash.
- * XXX Check for wedge/flash is kinda gross.
- */
-#define	DEV_USES_PARTITIONS(dv)						\
-	(device_class((dv)) == DV_DISK &&				\
-	 !device_is_a((dv), "dk") &&					\
-	 !device_is_a((dv), "flash"))
 
 void
 setroot(device_t bootdv, int bootpartition)
@@ -332,7 +323,7 @@ setroot_ask(device_t bootdv, int bootpartition)
 		printf("root device");
 		if (bootdv != NULL) {
 			printf(" (default %s", device_xname(bootdv));
-			if (DEV_USES_PARTITIONS(bootdv))
+			if (device_has_partitions(bootdv))
 				printf("%c", bootpartition + 'a');
 			printf(")");
 		}
@@ -363,7 +354,7 @@ setroot_ask(device_t bootdv, int bootpartition)
 	 * a network device or a disk without partitions,
 	 * there is no default dump device.
 	 */
-	if (DEV_USES_PARTITIONS(rootdv) == 0)
+	if (!device_has_partitions(rootdv))
 		defdumpdv = NULL;
 	else
 		defdumpdv = rootdv;
@@ -464,7 +455,7 @@ setroot_ask(device_t bootdv, int bootpartition)
 	case DV_IFNET:
 	case DV_DISK:
 		aprint_normal("root on %s", device_xname(rootdv));
-		if (DEV_USES_PARTITIONS(rootdv))
+		if (device_has_partitions(rootdv))
 			aprint_normal("%c", (int)DISKPART(rootdev) + 'a');
 		break;
 	default:
@@ -507,7 +498,7 @@ setroot_root(device_t bootdv, int bootpartition)
 			 * Root is on a disk.  `bootpartition' is root,
 			 * unless the device does not use partitions.
 			 */
-			if (DEV_USES_PARTITIONS(bootdv))
+			if (device_has_partitions(bootdv))
 				rootdev = MAKEDISKDEV(majdev,
 						      device_unit(bootdv),
 						      bootpartition);
@@ -555,7 +546,7 @@ haveroot:
 	case DV_IFNET:
 	case DV_DISK:
 		aprint_normal("root on %s", device_xname(rootdv));
-		if (DEV_USES_PARTITIONS(rootdv))
+		if (device_has_partitions(rootdv))
 			aprint_normal("%c", (int)DISKPART(rootdev) + 'a');
 		break;
 	default:
@@ -628,7 +619,7 @@ setroot_dump(device_t rootdv, device_t dumpdv)
 			goto nodumpdev;
 		}
 	} else {				/* (c) */
-		if (DEV_USES_PARTITIONS(rootdv) == 0) {
+		if (!device_has_partitions(rootdv)) {
 			for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST);
 			     dv != NULL;
 			     dv = deviter_next(&di))
@@ -652,7 +643,7 @@ setroot_dump(device_t rootdv, device_t dumpdv)
 
 	dumpcdev = devsw_blk2chr(dumpdev);
 	aprint_normal(" dumps on %s", device_xname(dumpdv));
-	if (DEV_USES_PARTITIONS(dumpdv))
+	if (device_has_partitions(dumpdv))
 		aprint_normal("%c", (int)DISKPART(dumpdev) + 'a');
 	aprint_normal("\n");
 	return;
@@ -695,7 +686,7 @@ getdisk(const char *str, int len, int defpart, dev_t *devp, int isdump)
 		printf("use one of:");
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 		     dv = deviter_next(&di)) {
-			if (DEV_USES_PARTITIONS(dv))
+			if (device_has_partitions(dv))
 				printf(" %s[a-%c]", device_xname(dv),
 				    'a' + MAXPARTITIONS - 1);
 			else if (device_class(dv) == DV_DISK)
@@ -770,7 +761,7 @@ parsedisk(const char *str, int len, int defpart, dev_t *devp)
 			majdev = devsw_name2blk(device_xname(dv), NULL, 0);
 			if (majdev < 0)
 				panic("parsedisk");
-			if (DEV_USES_PARTITIONS(dv))
+			if (device_has_partitions(dv))
 				*devp = MAKEDISKDEV(majdev, device_unit(dv),
 						    part);
 			else

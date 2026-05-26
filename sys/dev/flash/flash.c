@@ -1,4 +1,4 @@
-/*	$NetBSD: flash.c,v 1.19 2022/09/25 21:56:12 thorpej Exp $	*/
+/*	$NetBSD: flash.c,v 1.20 2026/05/26 14:50:52 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2011 Department of Software Engineering,
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.19 2022/09/25 21:56:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash.c,v 1.20 2026/05/26 14:50:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -84,8 +84,9 @@ int flash_match(device_t parent, cfdata_t match, void *aux);
 void flash_attach(device_t parent, device_t self, void *aux);
 int flash_detach(device_t device, int flags);
 
-CFATTACH_DECL_NEW(flash, sizeof(struct flash_softc),
-    flash_match, flash_attach, flash_detach, NULL);
+CFATTACH_DECL3_NEW(flash, sizeof(struct flash_softc),
+    flash_match, flash_attach, flash_detach, NULL, NULL, NULL,
+    DVF_NO_PARTITIONS);
 
 /**
  * Block device's operation

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_device.c,v 1.20 2026/01/04 03:15:42 riastradh Exp $	*/
+/*	$NetBSD: subr_device.c,v 1.21 2026/05/26 14:50:52 simonb Exp $	*/
 
 /*
  * Copyright (c) 2006, 2021, 2025 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.20 2026/01/04 03:15:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_device.c,v 1.21 2026/05/26 14:50:52 simonb Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -288,6 +288,20 @@ bool
 device_is_enabled(device_t dev)
 {
 	return (dev->dv_flags & DVF_ACTIVE) == DVF_ACTIVE;
+}
+
+/*
+ * device_has_partitions:
+ *
+ *	Returns true if the device is a DISK device and uses
+ *	partitions.
+ */
+bool
+device_has_partitions(device_t dev)
+{
+
+	return device_class((dev)) == DV_DISK &&
+	    !(dev->dv_flags & DVF_NO_PARTITIONS);
 }
 
 bool
