@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.174 2026/05/26 14:50:52 simonb Exp $	*/
+/*	$NetBSD: dk.c,v 1.175 2026/05/26 14:57:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.174 2026/05/26 14:50:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.175 2026/05/26 14:57:25 simonb Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -149,6 +149,10 @@ static void	dkwedge_delall1(struct disk *, bool);
 static int	dkwedge_del1(struct dkwedge_info *, int);
 static int	dk_open_parent(dev_t, int, struct vnode **);
 static int	dk_close_parent(struct vnode *, int);
+
+static device_t	dkwedge_rootspec_hook(const char *);
+static void	dkwedge_rootspec_print(void);
+static void	dkwedge_rootspec_noprint(void);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
@@ -999,8 +1003,17 @@ dkwedge_find_by_parent(const char *name, size_t *i)
 	return dv;
 }
 
-void
-dkwedge_print_wnames(void)
+static device_t
+dkwedge_rootspec_hook(const char *spec)
+{
+	device_t dv;
+
+	dv = dkwedge_find_by_wname(spec);
+	return dv;
+}
+
+static void
+dkwedge_rootspec_print(void)
 {
 	struct dkwedge_softc *sc;
 	int i;
@@ -1012,6 +1025,17 @@ dkwedge_print_wnames(void)
 		printf(" wedge:%s", sc->sc_wname);
 	}
 	rw_exit(&dkwedges_lock);
+}
+
+/*
+ * Only list the device names for the wedge:xxx root spec hook.
+ * For the NAME= root spec hook don't print anything otherwise
+ * we just get the same wedge device list twice.
+ */
+static void
+dkwedge_rootspec_noprint(void)
+{
+	/* nothing */
 }
 
 /*
@@ -1078,6 +1102,12 @@ dkwedge_init(void)
 	}
 
 	rw_exit(&dkwedge_discovery_methods_lock);
+
+	/* never unloaded, so don't need to save the hook establish cookies */
+	rootspechook_establish("wedge:", dkwedge_rootspec_hook,
+	    dkwedge_rootspec_print);
+	rootspechook_establish("NAME=", dkwedge_rootspec_hook,
+	    dkwedge_rootspec_noprint);
 }
 
 #ifdef DKWEDGE_AUTODISCOVER

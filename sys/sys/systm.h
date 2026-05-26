@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.307 2026/05/10 23:51:37 tls Exp $	*/
+/*	$NetBSD: systm.h,v 1.308 2026/05/26 14:57:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -63,12 +63,13 @@
 struct clockframe;
 struct lwp;
 struct proc;
+struct rootspechook;
 struct sysent;
 struct timeval;
 struct tty;
 struct uio;
-struct vnode;
 struct vmspace;
+struct vnode;
 
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
@@ -588,6 +589,13 @@ void	*mountroothook_establish(void (*)(device_t), device_t);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
 void	domountroothook(device_t);
+
+/* Register rootspec/bootdevice prefixes for per-driver handling. */
+struct rootspechook *rootspechook_establish(const char *,
+	    device_t (*)(const char *), void (*)(void));
+void	rootspechook_disestablish(struct rootspechook *);
+device_t dorootspechooks(const char *);
+void	dorootspecprint(void);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process

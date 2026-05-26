@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_subr.c,v 1.232 2026/05/26 14:50:52 simonb Exp $	*/
+/*	$NetBSD: kern_subr.c,v 1.233 2026/05/26 14:57:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.232 2026/05/26 14:50:52 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.233 2026/05/26 14:57:25 simonb Exp $");
 
 #include "opt_ddb.h"
 #include "opt_md.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_subr.c,v 1.232 2026/05/26 14:50:52 simonb Exp $
 static device_t finddevice(const char *);
 static device_t getdisk(const char *, int, int, dev_t *, int);
 static device_t parsedisk(const char *, int, int, dev_t *);
-static const char *getwedgename(const char *, int);
 
 static void setroot_nfs(device_t);
 static void setroot_md(device_t *);
@@ -657,10 +656,10 @@ setroot_dump(device_t rootdv, device_t dumpdv)
 static device_t
 finddevice(const char *name)
 {
-	const char *wname;
+	device_t dv;
 
-	if ((wname = getwedgename(name, strlen(name))) != NULL)
-		return dkwedge_find_by_wname(wname);
+	if ((dv = dorootspechooks(name)) != NULL)
+		return dv;
 
 	return device_find_by_xname(name);
 }
@@ -695,7 +694,7 @@ getdisk(const char *str, int len, int defpart, dev_t *devp, int isdump)
 				printf(" %s", device_xname(dv));
 		}
 		deviter_release(&di);
-		dkwedge_print_wnames();
+		dorootspecprint();
 		if (isdump)
 			printf(" none");
 #if defined(DDB)
@@ -706,28 +705,10 @@ getdisk(const char *str, int len, int defpart, dev_t *devp, int isdump)
 	return dv;
 }
 
-static const char *
-getwedgename(const char *name, int namelen)
-{
-	const char *wpfx1 = "wedge:";
-	const char *wpfx2 = "NAME=";
-	const int wpfx1len = strlen(wpfx1);
-	const int wpfx2len = strlen(wpfx2);
-
-	if (namelen > wpfx1len && strncmp(name, wpfx1, wpfx1len) == 0)
-		return name + wpfx1len;
-
-	if (namelen > wpfx2len && strncasecmp(name, wpfx2, wpfx2len) == 0)
-		return name + wpfx2len;
-
-	return NULL;
-}
-
 static device_t
 parsedisk(const char *str, int len, int defpart, dev_t *devp)
 {
 	device_t dv;
-	const char *wname;
 	char c;
 	int majdev, part;
 	char xname[16]; /* same size as dv_xname */
@@ -735,9 +716,7 @@ parsedisk(const char *str, int len, int defpart, dev_t *devp)
 	if (len == 0)
 		return (NULL);
 
-	if ((wname = getwedgename(str, len)) != NULL) {
-		if ((dv = dkwedge_find_by_wname(wname)) == NULL)
-			return NULL;
+	if ((dv = dorootspechooks(str)) != NULL) {
 		part = defpart;
 		goto gotdisk;
 	}

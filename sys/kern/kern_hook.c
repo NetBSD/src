@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_hook.c,v 1.16 2026/01/04 01:34:37 riastradh Exp $	*/
+/*	$NetBSD: kern_hook.c,v 1.17 2026/05/26 14:57:25 simonb Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.16 2026/01/04 01:34:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.17 2026/05/26 14:57:25 simonb Exp $");
 
 #include <sys/param.h>
 
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_hook.c,v 1.16 2026/01/04 01:34:37 riastradh Exp
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/hook.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/once.h>
@@ -254,6 +255,109 @@ domountroothook(device_t therootdev)
 		}
 	}
 }
+
+/*
+ * "rootspec hook" types, functions, and variables.
+ *
+ * A rootspec hook allows a driver to register a name/prefix that will
+ * be handled if entered at the "root device" prompt when the kernel
+ * starts.
+ * One example is the dk/wedge driver which registers the prefixes
+ * "NAME=" and "wedge:".  If a user enters "NAME=foo" or "wedge:foo" at
+ * the "root device" prompt, then the dk driver's rootspec hook will be
+ * called with the string "foo".  It can then interpret that string to
+ * determine the real device to mount the root filesystem from.
+ */
+
+static LIST_HEAD(rootspechook_list, rootspechook) rootspechook_list =
+    LIST_HEAD_INITIALIZER(rootspechook_list);
+struct rootspechook {
+	LIST_ENTRY(rootspechook) hk_list;
+	device_t	(*hk_hook_func)(const char *);
+	void		(*hk_print_func)(void);
+	const char	*hk_prefix;
+	size_t		hk_prefixlen;
+};
+
+struct rootspechook *
+rootspechook_establish(const char *prefix, device_t (*hookfn)(const char *),
+    void (*printfn)(void))
+{
+	struct rootspechook *hd;
+
+	KASSERT(cold || kernconfig_is_held());
+
+#ifdef DIAGNOSTIC
+	LIST_FOREACH(hd, &rootspechook_list, hk_list) {
+		if (strcmp(hd->hk_prefix, prefix) == 0) {
+			panic("%s: hook for '%s' already exists",
+			    __func__, prefix);
+		}
+	}
+#endif
+
+	hd = kmem_zalloc(sizeof(*hd), KM_SLEEP);
+	hd->hk_hook_func = hookfn;
+	hd->hk_print_func = printfn;
+	hd->hk_prefix = prefix;
+	hd->hk_prefixlen = strlen(prefix);
+	LIST_INSERT_HEAD(&rootspechook_list, hd, hk_list);
+
+	return hd;
+}
+
+void
+rootspechook_disestablish(struct rootspechook *hd)
+{
+	KASSERT(cold || kernconfig_is_held());
+
+#ifdef DIAGNOSTIC
+	struct rootspechook *hd0;
+
+	LIST_FOREACH(hd0, &rootspechook_list, hk_list) {
+                if (hd == hd0)
+			break;
+	}
+
+	if (hd0 == NULL)
+		panic("%s: hook %p not established", __func__, hd);
+#endif
+
+	LIST_REMOVE(hd, hk_list);
+	kmem_free(hd, sizeof(*hd));
+}
+
+device_t
+dorootspechooks(const char *spec)
+{
+	struct rootspechook *hd;
+	device_t ret = NULL;
+
+	kernconfig_lock();
+	LIST_FOREACH(hd, &rootspechook_list, hk_list) {
+		if (strncmp(hd->hk_prefix, spec, hd->hk_prefixlen) == 0) {
+			ret = (*hd->hk_hook_func)(spec + hd->hk_prefixlen);
+			if (ret != NULL) {
+				break;
+			}
+		}
+	}
+	kernconfig_unlock();
+
+	return ret;
+}
+
+void
+dorootspecprint(void)
+{
+	struct rootspechook *hd;
+
+	kernconfig_lock();
+	LIST_FOREACH(hd, &rootspechook_list, hk_list)
+		(*hd->hk_print_func)();
+	kernconfig_unlock();
+}
+
 
 static hook_list_t exechook_list = LIST_HEAD_INITIALIZER(exechook_list);
 
