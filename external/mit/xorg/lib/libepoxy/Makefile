@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2020/11/07 18:12:16 nia Exp $
+#	$NetBSD: Makefile,v 1.10 2026/05/27 12:22:09 nia Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ SRCS= \
 	gl_generated_dispatch.c \
 	glx_generated_dispatch.c
 
-.if ${HAVE_XORG_GLAMOR} != "no"
+.if ${HAVE_XORG_EGL} != "no"
 SRCS+= \
 	dispatch_egl.c \
 	egl_generated_dispatch.c
