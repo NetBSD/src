@@ -1,4 +1,4 @@
-/* $NetBSD: adm1026.c,v 1.16 2026/02/10 12:07:01 jdc Exp $ */
+/* $NetBSD: adm1026.c,v 1.17 2026/05/27 10:30:27 jdc Exp $ */
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.16 2026/02/10 12:07:01 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.17 2026/05/27 10:30:27 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -731,13 +731,13 @@ adm1026_get_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 
 	*props &= ~(PROP_CRITMAX | PROP_WARNMAX | PROP_WARNMIN);
 
-	reg = adm1026_temps_table[temp].h_reg;
+	reg = adm1026_temps_table[temp].t_reg;
 	if (adm1026_read_reg(sc, reg, &val) != 0)
 		return;
 	limits->sel_critmax = VAL_TO_TEMP(val);
 	*props |= PROP_CRITMAX;
 
-	reg = adm1026_temps_table[temp].t_reg;
+	reg = adm1026_temps_table[temp].h_reg;
 	if (adm1026_read_reg(sc, reg, &val) != 0)
 		return;
 	limits->sel_warnmax = VAL_TO_TEMP(val);
@@ -790,12 +790,15 @@ static void
 adm1026_set_fan_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
-	int fan = sc->sc_map[edata->sensor];
+	int fan, snum;
 	uint8_t	reg, val;
 
-	if (*props & PROP_WARNMIN) {
+	fan = sc->sc_map[edata->sensor];
+	snum = ADM1026_FAN_NUM(fan);
+
+	if (limits == NULL || *props & PROP_WARNMIN) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_highlim[fan];
+			val = sc->sc_highlim[snum];
 		else {
 			if (limits->sel_warnmin == 0)
 				val = 0xff;
@@ -812,12 +815,15 @@ static void
 adm1026_set_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
-	int temp = sc->sc_map[edata->sensor];
+	int temp, snum;
 	uint8_t	reg, val;
 
-	if (*props & PROP_CRITMAX) {
+	temp = sc->sc_map[edata->sensor];
+	snum = ADM1026_TEMP_NUM(temp);
+
+	if (limits == NULL || *props & PROP_CRITMAX) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_highlim[edata->sensor];
+			val = sc->sc_highlim[snum];
 		else {
 			val = TEMP_TO_VAL(limits->sel_critmax);
 		}
@@ -825,9 +831,9 @@ adm1026_set_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 		adm1026_write_reg(sc, reg, val);
 	}
 
-	if (*props & PROP_WARNMAX) {
+	if (limits == NULL || *props & PROP_WARNMAX) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_thermlim[edata->sensor];
+			val = sc->sc_thermlim[snum];
 		else {
 			val = TEMP_TO_VAL(limits->sel_warnmax);
 		}
@@ -835,9 +841,9 @@ adm1026_set_temp_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 		adm1026_write_reg(sc, reg, val);
 	}
 
-	if (*props & PROP_WARNMIN) {
+	if (limits == NULL || *props & PROP_WARNMIN) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_lowlim[edata->sensor];
+			val = sc->sc_lowlim[snum];
 		else {
 			val = TEMP_TO_VAL(limits->sel_warnmin);
 		}
@@ -850,12 +856,15 @@ static void
 adm1026_set_volt_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
-	int volt = sc->sc_map[edata->sensor];
+	int volt, snum;
 	uint8_t	reg, val;
 
-	if (*props & PROP_WARNMAX) {
+	volt = sc->sc_map[edata->sensor];
+	snum = ADM1026_VOLT_NUM(volt);
+
+	if (limits == NULL || *props & PROP_WARNMAX) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_highlim[edata->sensor];
+			val = sc->sc_highlim[snum];
 		else {
 			val = VOLT_TO_VAL(limits->sel_warnmax, volt);
 		}
@@ -863,9 +872,9 @@ adm1026_set_volt_limits(struct adm1026_softc *sc, envsys_data_t *edata,
 		adm1026_write_reg(sc, reg, val);
 	}
 
-	if (*props & PROP_WARNMIN) {
+	if (limits == NULL || *props & PROP_WARNMIN) {
 		if (limits == NULL)	/* Restore defaults */
-			val = sc->sc_lowlim[edata->sensor];
+			val = sc->sc_lowlim[snum];
 		else {
 			val = VOLT_TO_VAL(limits->sel_warnmin, volt);
 		}
