@@ -37,9 +37,9 @@ file	arch/evbppc/nintendo/dev/si.c			si
 attach	uhid at si with uhid_si
 file	arch/evbppc/nintendo/dev/uhid_si.c		uhid_si
 
-device	gba
-attach	gba at si with gba_si
-file	arch/evbppc/nintendo/dev/gba_si.c		gba_si
+device	gcport
+attach	gcport at si with gcport_si
+file	arch/evbppc/nintendo/dev/gcport_si.c		gcport_si
 
 define	ahb { [addr=-1], [irq=-1] }
 device	ahb: ahb

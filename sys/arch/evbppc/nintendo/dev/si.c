@@ -209,26 +209,12 @@ si_identify(device_t self, unsigned chan)
 	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
 	uint32_t id;
-	uint32_t sisr;
-	uint8_t msb;
-	int cnt;
 
 	ch = &sc->sc_chan[chan];
-	cnt = 0;
 
-	/*
-	 * Identify call is normaly 2bytes, GBA BIOS however sends a 1byte resp
-	 * and sets SISR as NOREP. We need to try to reset the device and see
-	 * if it can be put into the proper state
-	 */
-	do {
-		send_cmd(sc, CMD_RESET, chan, 1000);
-		id = send_cmd(sc, CMD_IDENTIFY, chan, 1000);
-		msb = (uint8_t)(id >> 24);
-		ch->ch_id = (uint16_t)(id >> 16);
-		sisr = RD4(sc, SISR);
-		cnt++;
-	} while (cnt < 1000 && msb == JB_GBABIOS && (sisr & SISR_NOREP(chan)));
+	send_cmd(sc, CMD_RESET, chan, 1000);
+	id = send_cmd(sc, CMD_IDENTIFY, chan, 1000);
+	ch->ch_id = (uint16_t)(id >> 16);
 
 	return 0;
 }

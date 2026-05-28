@@ -1,4 +1,4 @@
-/* $NetBSD: gba_si.c,v 1.0 2026/05/18 22:54:30 gummybuns Exp $ */
+/* $NetBSD: gcport_si.c,v 1.0 2026/05/18 22:54:30 gummybuns Exp $ */
 
 /*-
  * Copyright (c) 2026 ZacBrown <gummybuns@protonmail.com>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcport_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp $");
 
 #include <sys/bus.h>
 #include <sys/conf.h>
@@ -46,17 +46,17 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp $")
 #include "si.h"
 #include "joybus.h"
 
-struct gba_send {
+struct si_payload {
 	uint32_t 	insize;		/* bytes to receive. max 128 */
 	uint32_t 	outsize;	/* bytes to send. max 128 */
 	uint32_t	*status;	/* sisr status for this channel */
 	void		*in;		/* buffer to store response */
-	void		*out;		/* buffer to send out to gba */
+	void		*out;		/* buffer to send out to device */
 	long		delay;		/* delay the transaction (microsec) */
 };
 
-extern struct cfdriver gba_cd;
-struct gba_softc {
+extern struct cfdriver gcport_cd;
+struct gcport_softc {
 	device_t		sc_dev;
 	struct si_channel	*ch;
 	bus_space_tag_t		sc_bst;
@@ -64,20 +64,20 @@ struct gba_softc {
 };
 
 
-#define GBA_SEND     	_IOWR(0, 1, struct gba_send)
+#define SI_SEND		_IOWR(0, 1, struct si_payload)
 
-static int gba_si_match(device_t, cfdata_t, void *);
-static void gba_si_attach(device_t, device_t, void *);
-static int gbaioctl_send(struct si_channel *ch, struct gba_send *gbs);
+static int gcport_si_match(device_t, cfdata_t, void *);
+static void gcport_si_attach(device_t, device_t, void *);
+static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
 
-dev_type_open(gba_open);
-dev_type_close(gba_close);
-dev_type_ioctl(gba_ioctl);
+dev_type_open(gcport_open);
+dev_type_close(gcport_close);
+dev_type_ioctl(gcport_ioctl);
 
-const struct cdevsw gba_cdevsw = {
-	.d_open = gba_open,
-	.d_close = gba_close,
-	.d_ioctl = gba_ioctl,
+const struct cdevsw gcport_cdevsw = {
+	.d_open = gcport_open,
+	.d_close = gcport_close,
+	.d_ioctl = gcport_ioctl,
 	.d_read = noread,
 	.d_write = nowrite,
 	.d_stop = nostop,
@@ -89,11 +89,11 @@ const struct cdevsw gba_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-CFATTACH_DECL_NEW(gba_si, sizeof(struct gba_softc),
-	gba_si_match, gba_si_attach, NULL, NULL);
+CFATTACH_DECL_NEW(gcport_si, sizeof(struct gcport_softc),
+	gcport_si_match, gcport_si_attach, NULL, NULL);
 
 static int
-gba_si_match(device_t parent, cfdata_t cf, void *aux)
+gcport_si_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct si_softc * const sc = device_private(parent);
 	struct si_attach_args * const saa = aux;
@@ -102,9 +102,12 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 
 	chan = saa->saa_index;
 	ch = &sc->sc_chan[chan];
-	aprint_normal("gba: checking 0x%08X...\n", ch->ch_id);
-	if (ch->ch_id == JB_GBA) {
-		aprint_normal("gba: identified ch%d as a gba device\n", chan);
+	aprint_normal("gcport: checking 0x%08X...\n", ch->ch_id);
+	/* NOTE - existing functionality uses uhid for gc_pad. This will
+	 * match any other device
+	 */
+	if (ch->ch_id != 0 && !(IS_GCPAD(ch->ch_id))) {
+		aprint_normal("gcport: identified ch%d as a device 0x%08X\n", chan, ch->ch_id);
 		return 1;
 	}
 
@@ -112,11 +115,11 @@ gba_si_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 static void
-gba_si_attach(device_t parent, device_t self, void *aux)
+gcport_si_attach(device_t parent, device_t self, void *aux)
 {
 	struct si_softc * const psc = device_private(parent);
 	struct si_attach_args * const saa = aux;
-	struct gba_softc * const sc = device_private(self);
+	struct gcport_softc * const sc = device_private(self);
 	struct si_channel *ch = &psc->sc_chan[saa->saa_index];
 
 	sc->sc_dev = self;
@@ -126,9 +129,9 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 }
 
 int
-gba_open(dev_t dev, int flags, int mode, struct lwp *l)
+gcport_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct gba_softc * const sc = device_lookup_private(&gba_cd, minor(dev));
+	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
 	struct si_channel *ch = sc->ch;
 	int error;
 
@@ -147,10 +150,9 @@ unlock:
 }
 
 int
-gba_close(dev_t dev, int flags, int mode, struct lwp *l)
+gcport_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct gba_softc * const sc = device_lookup_private(&gba_cd,
-	    minor(dev));
+	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
 	struct si_channel *ch = sc->ch;
 
 	mutex_enter(&ch->ch_lock);
@@ -176,16 +178,15 @@ gba_close(dev_t dev, int flags, int mode, struct lwp *l)
  * no one is using but me. so i can define my own mutex for that purpose.
  */
 int
-gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
-	struct gba_softc * const gbasc = device_lookup_private(&gba_cd,
-	    minor(dev));
-	struct si_channel *ch = gbasc->ch;
+	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
+	struct si_channel *ch = sc->ch;
 	int err;
 
 	switch(cmd) {
-	case GBA_SEND:
-		err = gbaioctl_send(ch, (struct gba_send *)data);
+	case SI_SEND:
+		err = siioctl_send(ch, (struct si_payload *)data);
 		break;
 	default:
 		err = EINVAL;
@@ -196,7 +197,7 @@ gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 static int
-gbaioctl_send(struct si_channel *ch, struct gba_send *gbs)
+siioctl_send(struct si_channel *ch, struct si_payload *gbs)
 {
 	int err;
 	struct si_softc *sc;
