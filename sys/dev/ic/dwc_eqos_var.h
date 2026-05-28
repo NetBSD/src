@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.11 2024/10/04 10:42:12 skrll Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.12 2026/05/28 09:33:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,7 @@
 #ifndef _DWC_EQOS_VAR_H
 #define _DWC_EQOS_VAR_H
 
+#include <sys/workqueue.h>
 #include <dev/ic/dwc_eqos_reg.h>
 
 #define	EQOS_DMA_DESC_COUNT	256
@@ -75,6 +76,9 @@ struct eqos_softc {
 
 	struct eqos_ring	sc_tx;
 	struct eqos_ring	sc_rx;
+	struct workqueue	*sc_wq;
+	struct work		sc_txwork;
+	struct work		sc_rxwork;
 
 	/* receiving context for jumbo frame */
 	bool			sc_rx_discarding;

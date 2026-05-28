@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.10 2023/11/13 15:08:06 msaitoh Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.11 2026/05/28 09:33:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -313,6 +313,6 @@ struct eqos_dma_desc {
 #define	EQOS_TDES3_RX_DE			(1U << 19)	/* RX (WB) */
 #define	EQOS_TDES3_RX_ES			(1U << 15)	/* RX (WB) */
 #define	EQOS_TDES3_RX_LENGTH_MASK		0x7FFFU		/* RX */
-} __aligned (64);
+};
 
 #endif /* !_DWC_EQOS_REG_H */
