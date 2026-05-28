@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.60 2026/03/14 16:43:36 kre Exp $	*/
+/*	$NetBSD: exec.c,v 1.61 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.60 2026/03/14 16:43:36 kre Exp $");
+__RCSID("$NetBSD: exec.c,v 1.61 2026/05/28 10:07:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -844,15 +844,14 @@ hashcd(void)
  */
 
 void
-changepath(char *newval, int flags __unused)
+changepath(const char *new, int flags __unused, struct var *vp __unused)
 {
-	const char *old, *new;
+	const char *old;
 	int idx;
 	int firstchange;
 	int bltin;
 
 	old = pathval();
-	new = newval;
 	firstchange = 9999;	/* assume no change */
 	idx = 0;
 	bltin = -1;

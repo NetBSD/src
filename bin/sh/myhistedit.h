@@ -1,4 +1,4 @@
-/*	$NetBSD: myhistedit.h,v 1.16 2024/07/13 13:43:58 kre Exp $	*/
+/*	$NetBSD: myhistedit.h,v 1.17 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,15 +39,17 @@ extern int displayhist;
 
 #include <filecomplete.h>
 
+struct var;
+
 void histedit(void);
-void sethistsize(char *, int);
-void sethistfile(char *, int);
-void sethistappend(char *, int);
+void sethistsize(const char *, int, struct var *);
+void sethistfile(const char *, int, struct var *);
+void sethistappend(const char *, int, struct var *);
 void save_sh_history(void);
-void setterm(char *, int);
+void setterm(const char *, int, struct var *);
 int inputrc(int, char **);
-void set_editrc(char *, int);
-void set_prompt_lit(char *, int);
+void set_editrc(const char *, int, struct var *);
+void set_prompt_lit(const char *, int, struct var *);
 
 #include <stdio.h>
 extern FILE *HistFP;

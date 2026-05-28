@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.62 2024/10/14 09:10:35 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.63 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.62 2024/10/14 09:10:35 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.63 2026/05/28 10:07:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -530,7 +530,7 @@ setcmd(int argc, char **argv)
 
 
 void
-getoptsreset(char *value, int flags __unused)
+getoptsreset(const char *value, int flags __unused, struct var *vp __unused)
 {
 	/*
 	 * This is just to detect the case where OPTIND=1
@@ -573,7 +573,8 @@ getoptscmd(int argc, char **argv)
 }
 
 STATIC int
-getopts(char *optstr, char *optvar, char **optfirst, char ***optnext, char **optpptr)
+getopts(char *optstr, char *optvar, char **optfirst,
+    char ***optnext, char **optpptr)
 {
 	char *p, *q;
 	char c = '?';
@@ -588,7 +589,7 @@ getopts(char *optstr, char *optvar, char **optfirst, char ***optnext, char **opt
 			return 1;
 		p = **optnext;
 		if (p == NULL || *p != '-' || *++p == '\0') {
-atend:
+ atend:;
 			ind = *optnext - optfirst + 1;
 			*optnext = NULL;
 			p = NULL;
@@ -642,11 +643,11 @@ atend:
 	ind = *optnext - optfirst + 1;
 	goto out;
 
-bad:
+ bad:;
 	ind = 1;
 	*optnext = NULL;
 	p = NULL;
-out:
+ out:;
 	*optpptr = p;
 	fmtstr(s, sizeof(s), "%d", ind);
 	err |= setvarsafe("OPTIND", s, VNOFUNC);

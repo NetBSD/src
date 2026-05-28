@@ -1,4 +1,4 @@
-/*	$NetBSD: var.h,v 1.41 2024/07/13 13:43:58 kre Exp $	*/
+/*	$NetBSD: var.h,v 1.42 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -53,6 +53,7 @@
 
 #define VNOFUNC		0x0100	/* don't call the callback function */
 #define VFUNCREF	0x0200	/* the function is called on ref, not set */
+#define VFUNCPOST	0x0400	/* call callback func after setting var */
 
 #define VSPECIAL	0x1000	/* magic properties not lost when set */
 #define VDOEXPORT	0x2000	/* obey VEXPORT even if VNOEXPORT */
@@ -62,7 +63,8 @@
 struct var;
 
 union var_func_union {		/* function to be called when:  */
-	void (*set_func)(char *, int);		/* variable gets set/unset */
+						/* variable set/unset */
+	void (*set_func)(const char *, int, struct var *);
 	char*(*ref_func)(struct var *);		/* variable is referenced */
 };
 
@@ -106,6 +108,14 @@ extern struct var ps_lit;
 extern struct var euname;
 extern struct var random_num;
 extern intmax_t sh_start_time;
+extern struct var lc_all;
+extern struct var lc_collate;
+extern struct var lc_ctype;
+extern struct var lc_messages;
+extern struct var lc_monetary;
+extern struct var lc_numeric;
+extern struct var lc_time;
+extern struct var lc_lang;
 #endif
 
 extern int line_number;

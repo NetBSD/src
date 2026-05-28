@@ -1,4 +1,4 @@
-/*	$NetBSD: histedit.c,v 1.73 2024/08/03 03:46:23 kre Exp $	*/
+/*	$NetBSD: histedit.c,v 1.74 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: histedit.c,v 1.73 2024/08/03 03:46:23 kre Exp $");
+__RCSID("$NetBSD: histedit.c,v 1.74 2026/05/28 10:07:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,18 @@ static unsigned char sh_complete(EditLine *, int);
 static FILE *Hist_File_Open(const char *);
 
 /*
+ * a getenv(3) lookalike function for libedit to
+ * use so it can access current values of sh variables
+ * so there is no need to keep doing setenv() of anything
+ * it might want to lookup.
+ */
+static char *
+el_getenv(const char *name)
+{
+	return bltinlookup(name, 1);
+}
+
+/*
  * Set history and editing status.  Called whenever the status may
  * have changed (figures out what to do).
  */
@@ -122,8 +134,10 @@ histedit(void)
 			INTON;
 
 			if (hist != NULL) {
-				sethistsize(histsizeval(), histsizeflags());
-				sethistfile(histfileval(), histfileflags());
+				sethistsize(histsizeval(),
+				    histsizeflags(), NULL);
+				sethistfile(histfileval(),
+				    histfileflags(), NULL);
 			} else
 				out2str("sh: can't initialize history\n");
 		}
@@ -131,8 +145,6 @@ histedit(void)
 			/*
 			 * turn editing on
 			 */
-			char *term;
-
 			INTOFF;
 			if (el_in == NULL)
 				el_in = fdopen(0, "r");
@@ -145,28 +157,6 @@ histedit(void)
 			if (tracefile)
 				el_err = tracefile;
 #endif
-			/*
-			 * This odd piece of code doesn't affect the shell
-			 * at all, the environment modified here is the
-			 * stuff accessed via "environ" (the incoming
-			 * environment to the shell) which is only ever
-			 * touched at sh startup time (long before we get
-			 * here) and ignored thereafter.
-			 *
-			 * But libedit calls getenv() to discover TERM
-			 * and that searches the "environ" environment,
-			 * not the shell's internal variable data struct,
-			 * so we need to make sure that TERM in there is
-			 * correct.
-			 *
-			 * This sequence copies TERM from the shell into
-			 * the old "environ" environment.
-			 */
-			term = lookupvar("TERM");
-			if (term)
-				setenv("TERM", term, 1);
-			else
-				unsetenv("TERM");
 			el = el_init("sh", el_in, el_out, el_err);
 			VTRACE(DBG_HISTORY, ("el_init() %sed\n",
 			    el != NULL ? "succeed" : "fail"));
@@ -174,7 +164,9 @@ histedit(void)
 				if (hist)
 					el_set(el, EL_HIST, history, hist);
 
-				set_prompt_lit(lookupvar("PSlit"), 0);
+				set_prompt_lit(lookupvar("PSlit"), 0, NULL);
+
+				el_set(el, EL_GETENV, el_getenv);
 				el_set(el, EL_SIGNAL, 1);
 				el_set(el, EL_SAFEREAD, 1);
 				el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
@@ -221,7 +213,7 @@ histedit(void)
 }
 
 void
-set_prompt_lit(char *lit_ch, int flags __unused)
+set_prompt_lit(const char *lit_ch, int flags, struct var *vp __unused)
 {
 	wchar_t wc;
 
@@ -236,7 +228,7 @@ set_prompt_lit(char *lit_ch, int flags __unused)
 	mbtowc(&wc, NULL, 1);		/* state init */
 
 	INTOFF;
-	if (mbtowc(&wc, lit_ch, strlen(lit_ch)) <= 0)
+	if ((flags & VUNSET) || mbtowc(&wc, lit_ch, strlen(lit_ch)) <= 0)
 		el_set(el, EL_PROMPT, getprompt);
 	else
 		el_set(el, EL_PROMPT_ESC, getprompt, (int)wc);
@@ -244,7 +236,7 @@ set_prompt_lit(char *lit_ch, int flags __unused)
 }
 
 void
-set_editrc(char *fname, int flags)
+set_editrc(const char *fname, int flags, struct var *vp __unused)
 {
 	INTOFF;
 	if (iflag && editing && el && !(flags & VUNSET))
@@ -253,7 +245,7 @@ set_editrc(char *fname, int flags)
 }
 
 void
-sethistsize(char *hs, int flags)
+sethistsize(const char *hs, int flags, struct var *vp __unused)
 {
 	int histsize;
 	HistEvent he;
@@ -278,7 +270,7 @@ sethistsize(char *hs, int flags)
 }
 
 void
-sethistfile(char *hs, int flags)
+sethistfile(const char *hs, int flags, struct var *vp __unused)
 {
 	const char *file;
 	HistEvent he;
@@ -330,14 +322,14 @@ sethistfile(char *hs, int flags)
 			HistFileOpen = "";
 
 		sethistappend((histappflags() & VUNSET) ? NULL : histappval(),
-			~VUNSET & 0xFFFF);
+			~VUNSET & 0xFFFF, NULL);
 
 		INTON;
 	}
 }
 
 void
-sethistappend(char *s, int flags __diagused)
+sethistappend(const char *s, int flags, struct var *vp __unused)
 {
 	CTRACE(DBG_HISTORY, ("Set HISTAPPEND=%s [%x] %s ",
 	    (s == NULL ? "''" : s), flags, "!hist" + (hist != NULL)));
@@ -558,7 +550,7 @@ save_sh_history(void)
 }
 
 void
-setterm(char *term, int flags __unused)
+setterm(const char *term, int flags __unused, struct var *vp __unused)
 {
 	INTOFF;
 	if (el != NULL && term != NULL && *term != '\0')

@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.28 2024/07/12 07:30:30 kre Exp $	*/
+/*	$NetBSD: options.h,v 1.29 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -64,9 +64,11 @@ extern char **argptr;		/* argument list for builtin commands */
 extern char *optionarg;		/* set by nextopt */
 extern char *optptr;		/* used by nextopt */
 
+struct var;
+
 void procargs(int, char **);
 void optschanged(void);
 void setparam(char **);
 void freeparam(volatile struct shparam *);
 int nextopt(const char *);
-void getoptsreset(char *, int);
+void getoptsreset(const char *, int, struct var *);

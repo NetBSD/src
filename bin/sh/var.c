@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.90 2026/04/18 14:35:52 kre Exp $	*/
+/*	$NetBSD: var.c,v 1.91 2026/05/28 10:07:58 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: var.c,v 1.90 2026/04/18 14:35:52 kre Exp $");
+__RCSID("$NetBSD: var.c,v 1.91 2026/05/28 10:07:58 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -51,6 +51,9 @@ __RCSID("$NetBSD: var.c,v 1.90 2026/04/18 14:35:52 kre Exp $");
 #include <pwd.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#ifndef SMALL
+#include <locale.h>
+#endif
 
 /*
  * Shell variables.
@@ -101,6 +104,9 @@ char *get_hostname(struct var *);
 char *get_seconds(struct var *);
 char *get_euser(struct var *);
 char *get_random(struct var *);
+
+STATIC void set_locale_var(const char *, int, struct var *);
+void init_locale_vars(void);
 #endif
 
 struct localvar *localvars;
@@ -131,6 +137,15 @@ struct var euname;
 struct var random_num;
 
 intmax_t sh_start_time;
+
+struct var lc_all;
+struct var lc_collate;
+struct var lc_ctype;
+struct var lc_messages;
+struct var lc_monetary;
+struct var lc_numeric;
+struct var lc_time;
+struct var lc_lang;
 #endif
 
 struct var line_num;
@@ -173,6 +188,22 @@ const struct varinit varinit[] = {
 	   { .set_func= set_editrc } },
 	{ &ps_lit, 	VSTRFIXED|VTEXTFIXED|VUNSET,	"PSlit=",
 	   { .set_func= set_prompt_lit } },
+	{ &lc_all,	VSTRFIXED|VTEXTFIXED|VUNSET|VFUNCPOST,	"LC_ALL=",
+	   { .set_func= set_locale_var } },
+	{ &lc_collate,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_COLLATE=",
+	   { .set_func= set_locale_var } },
+	{ &lc_ctype,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_CTYPE=",
+	   { .set_func= set_locale_var } },
+	{ &lc_messages,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_MESSAGES=",
+	   { .set_func= set_locale_var } },
+	{ &lc_monetary,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_MONETARY=",
+	   { .set_func= set_locale_var } },
+	{ &lc_numeric,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_NUMERIC=",
+	   { .set_func= set_locale_var } },
+	{ &lc_time,	VSTRFIXED|VTEXTFIXED|VUNSET,	"LC_TIME=",
+	   { .set_func= set_locale_var } },
+	{ &lc_lang,	VSTRFIXED|VTEXTFIXED|VUNSET|VFUNCPOST,	"LANG=",
+	   { .set_func= set_locale_var } },
 #endif
 	{ &voptind,	VSTRFIXED|VTEXTFIXED|VNOFUNC,	"OPTIND=1",
 	   { .set_func= getoptsreset } },
@@ -214,6 +245,7 @@ INCLUDE "var.h"
 INCLUDE "version.h"
 MKINIT char **environ;
 MKINIT void setvareqsafe(char *, int);
+MKINIT void init_locale_vars(void);
 INIT {
 	char **envp;
 	char buf[64];
@@ -257,6 +289,8 @@ INIT {
 #ifndef SMALL
 	snprintf(buf, sizeof(buf), "%jd", sh_start_time);
 	setvar("START_TIME", buf, VTEXTFIXED);
+
+	init_locale_vars();
 #endif
 
 	setvar("NETBSD_SHELL", NETBSD_SHELL
@@ -505,8 +539,9 @@ setvareq(char *s, int flags)
 
 		INTOFF;
 
-		if (vp->func && !(vp->flags & VFUNCREF) && !(flags & VNOFUNC))
-			(*vp->func)(s + vp->name_len + 1, flags);
+		if (vp->func && !(vp->flags & (VFUNCREF|VFUNCPOST)) && 
+		    !(flags & VNOFUNC))
+			(*vp->func)(s + vp->name_len + 1, flags, vp);
 
 		if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
 			ckfree(vp->text);
@@ -527,6 +562,11 @@ setvareq(char *s, int flags)
 			flags &= ~VEXPORT;
 		vp->flags |= flags & ~(VNOFUNC | VDOEXPORT);
 		vp->text = s;
+
+		if (vp->func &&
+		    (vp->flags & (VFUNCREF|VFUNCPOST)) == VFUNCPOST && 
+		    !(flags & VNOFUNC))
+			(*vp->func)(s + vp->name_len + 1, flags, vp);
 
 		/*
 		 * We could roll this to a function, to handle it as
@@ -1254,7 +1294,7 @@ poplocalvars(void)
 		} else {
 			if (lvp->func && (lvp->flags & (VNOFUNC|VFUNCREF)) == 0)
 				(*lvp->func)(lvp->text + vp->name_len + 1, 
-				    lvp->flags);
+				    lvp->flags, lvp->vp);
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;
@@ -1779,6 +1819,204 @@ specialvarcmd(int argc, char **argv)
 		res |= makespecial(*ap);
 
 	return res;
+}
+
+struct lc_vars {
+	const char *name;
+	int  category;
+	struct var *vp;
+};
+
+const struct lc_vars lc_vars[] = {
+	{ .name= "LC_ALL",	.category= LC_ALL,	.vp= &lc_all	  },
+
+	{ .name= "LC_COLLATE",	.category= LC_COLLATE,	.vp= &lc_collate  },
+	{ .name= "LC_CTYPE",	.category= LC_CTYPE,	.vp= &lc_ctype    },
+	{ .name= "LC_MESSAGES",	.category= LC_MESSAGES,	.vp= &lc_messages },
+	{ .name= "LC_MONETARY",	.category= LC_MONETARY,	.vp= &lc_monetary },
+	{ .name= "LC_NUMERIC",	.category= LC_NUMERIC,	.vp= &lc_numeric  },
+	{ .name= "LC_TIME",	.category= LC_TIME,	.vp= &lc_time     },
+
+	{ .name= "LANG",	.category= LC_ALL,	.vp= &lc_lang     },
+
+	{ .name= NULL,		.category= 0,		.vp= NULL	  }
+};
+
+STATIC void
+set_locale_var(const char *val, int flags, struct var *vp)
+{
+	const struct lc_vars *lv;
+
+	if (flags & VUNSAFE)	/* parsing the environment */
+		return;		/* do nothing until later */
+
+	for (lv = lc_vars; lv->name != NULL;  lv++) {
+		/* Find the var being altered */
+		if (lv->vp != vp)
+			continue;
+
+		if (flags & VUNSET) {
+			/*
+			 * If we are unsetting one of these, then
+			 * we need to set the locale for the category
+			 * back to a default value
+			 */
+
+			if (lv->category == LC_ALL) {
+				/*
+				 * nb: the LC_ALL vars call this func
+				 * after their value has changed, ie:
+				 * since this is an unset,  the var already
+				 * is unset.   This simplifies things.
+				 */
+
+				/*
+				 * LANG is just the default to use when
+				 * nothing more specific is set, if it is
+				 * unset, there is nothing to do.
+				 */
+				if (lv->vp == &lc_lang)
+					return;
+
+				/*
+				 * Otherwise LC_ALL must be being unset,
+				 * in that case, simply set everything to
+				 * the values obtained from the other
+				 * LC_xxx  vars (with LANG as default)
+				 */
+				init_locale_vars();
+				return;
+			}
+
+			/*
+			 * For the category vars, this func is called before
+			 * the sh var is updated
+			 */
+
+			/* If a category var previously was unset - easy case */
+			if (lv->vp->flags & VUNSET)
+				return;
+
+			/*
+			 * One of the specific categories is being
+			 * unset, in that case we fall back upon
+			 * the value of LC_ALL if that is set, or
+			 * otherwise the value of LANG, if that is set,
+			 * or just set the "C" locale for this category
+			 */
+			vp = NULL;
+			if (!(lc_all.flags & VUNSET))
+				vp = &lc_all;
+			else if (!(lc_lang.flags & VUNSET))
+				vp = &lc_lang;
+
+			if (vp != NULL)
+				val = vp->text + vp->name_len + 1;
+			else
+				val = "C";
+
+			set_locale_var(val, 0, lv->vp);
+		} else {
+			char *old;
+
+			if (lv->category == LC_ALL) {
+				/*
+				 * post call, so this var's value is
+				 * already established, just go use
+				 * it (and the others) to set all the
+				 * categories
+				 */
+				init_locale_vars();
+				return;
+			}
+
+			/*
+			 * Potentially changing the value of a specific
+			 * category.
+			 *
+			 * If the value isn't actually changing, do nothing
+			 */
+			old = setlocale(lv->category, NULL);
+			if (old != NULL && strcmp(old, val) != 0) {
+				/*
+				 * Otherwise update the shell's locale
+				 * to match the new setting
+				 */
+				if (setlocale(lv->category, val) == NULL) {
+		/*XXX NetBSD! */    if (lv->category != LC_COLLATE)
+					outfmt(out2, 
+					    "Setting %s to '%s' failed"
+					    " setlocale(3)\n", lv->name, val);
+				} else if (lv->category == LC_CTYPE) {
+					/*
+					 * and if that worked,  and we're
+					 * changing the char encodings,
+					 * go re-init libedit (if in use)
+					 */
+					if (iflag && (Eflag || Vflag)) {
+						int oE = Eflag, oV = Vflag;
+
+						/*
+						  * re-init editing if
+						  * LC_CTYPE changes
+						  *
+						  * easy way: disable, then
+						  * enable again
+						  */
+						Eflag = Vflag = 0;
+						histedit();
+						Eflag = oE, Vflag=oV;
+						histedit();
+					}
+				}
+			}
+					
+		}
+		return;
+	}
+}
+
+void
+init_locale_vars(void)
+{
+	const struct lc_vars *lv;
+	const char *defval;
+
+	if (!(lc_all.flags & VUNSET)) {
+		/*
+		 * If LC_ALL is set, just use it, ignore others
+		 * Simply set all categories to the value of LC_ALL
+		 *
+		 * nb: strlen("LC_ALL") + 1 == 7
+		 */
+		for (lv = lc_vars; lv->name != NULL; lv++) {
+			if (lv->category == LC_ALL)
+				continue;
+			set_locale_var(lc_all.text + 7, 0, lv->vp);
+		}
+		return;
+	}
+
+	/*
+	 * Otherwise, for each specific category, set the value
+	 * of its variable for that category, if that variable is
+	 * set, otherwise we need a default for that category.
+	 * If LANG is set, that gives the default, otherwise it is "C"
+	 */
+	if (lc_lang.flags & VUNSET)
+		defval = "C";
+	else
+		defval = lc_lang.text + 5;   /* strlen("LANG") + 1 == 5 */
+
+	for (lv = lc_vars; lv->name != NULL; lv++) {
+		/* ignore LC_ALL and LANG */
+		if (lv->category == LC_ALL)
+			continue;
+		/* otherwise set the category to the appropriate value */
+		set_locale_var( (lv->vp->flags & VUNSET ? defval :
+			             lv->vp->text + lv->vp->name_len + 1),
+			        0, lv->vp);
+	}
 }
 
 #endif /* SMALL */
