@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.44 2026/02/15 00:05:47 christos Exp $
+# $NetBSD: Makefile,v 1.45 2026/05/28 21:06:45 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -205,6 +205,7 @@ CPPFLAGS+=	\
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
 -DHAVE_LIBM=1 \
+-DHAVE_LIBPROC_H=1 \
 -DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
@@ -239,16 +240,16 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.6a\" \
+-DPACKAGE_STRING=\"tmux\ 3.6b\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.6a\" \
+-DPACKAGE_VERSION=\"3.6b\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
 -DTMUX_LOCK_CMD='"lock -np"' \
 -DTMUX_TERM='"tmux-256color"' \
--DTMUX_VERSION='"3.6a"' \
--DVERSION=\"3.6a\" \
+-DTMUX_VERSION='"3.6b"' \
+-DVERSION=\"3.6b\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_NETBSD_SOURCE \

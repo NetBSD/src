@@ -30,7 +30,6 @@ static u_int		all_images_count;
 static void
 image_free(struct image *im)
 {
-	struct screen	*s = im->s;
 
 	TAILQ_REMOVE(&all_images, im, all_entry);
 	all_images_count--;
