@@ -45,19 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: gba_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp $")
 
 #include "si.h"
 #include "joybus.h"
-#include "gba_multiboot.h"
 
 struct gba_send {
-	uint32_t	status;		/* sisr status for this channel */
 	uint32_t 	insize;		/* bytes to receive. max 128 */
 	uint32_t 	outsize;	/* bytes to send. max 128 */
+	uint32_t	*status;	/* sisr status for this channel */
 	void		*in;		/* buffer to store response */
 	void		*out;		/* buffer to send out to gba */
-};
-
-struct gba_multiboot {
-	long	size;
-	void	*rom;
+	long		delay;		/* delay the transaction (microsec) */
 };
 
 extern struct cfdriver gba_cd;
@@ -70,10 +65,10 @@ struct gba_softc {
 
 
 #define GBA_SEND     	_IOWR(0, 1, struct gba_send)
-#define GBA_MULTIBOOT	_IOWR(0, 2, struct gba_multiboot)
 
 static int gba_si_match(device_t, cfdata_t, void *);
 static void gba_si_attach(device_t, device_t, void *);
+static int gbaioctl_send(struct si_channel *ch, struct gba_send *gbs);
 
 dev_type_open(gba_open);
 dev_type_close(gba_close);
@@ -128,8 +123,6 @@ gba_si_attach(device_t parent, device_t self, void *aux)
 	sc->ch = ch;
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
-	// TODO - i dont know if i need to disable polling or not
-	//WR4(psc, SIPOLL, 0);
 }
 
 int
@@ -188,63 +181,57 @@ gba_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct gba_softc * const gbasc = device_lookup_private(&gba_cd,
 	    minor(dev));
 	struct si_channel *ch = gbasc->ch;
-	struct si_softc * const sc = ch->ch_sc;
 	int err;
 
 	switch(cmd) {
-	case GBA_MULTIBOOT:
-		err = 0;
-		struct gba_multiboot *gbm = (struct gba_multiboot *)data;
-		struct gba_multiboot_p gbmp;
-		void *rom = kmem_alloc(gbm->size, KM_SLEEP);
-		if ((err = copyin(gbm->rom, rom, gbm->size)) != 0) {
-			goto multiboot_cleanup;
-		}
-
-		gbmp.sc = sc;
-		gbmp.chan = ch->ch_index;
-		gbmp.rom = (unsigned char *)rom;
-		gbmp.size = gbm->size;
-
-		err = __gba_multiboot(&gbmp);
-multiboot_cleanup:
-		kmem_free(rom, gbm->size);
-		break;
 	case GBA_SEND:
-		err = 0;
-		struct siio_send sd;
-		struct gba_send *gbs = (struct gba_send *)data;
-		if (gbs->outsize > SIIOBUF_SIZE || gbs->insize > SIIOBUF_SIZE) {
-			return EINVAL;
-		}
-
-		sd.chan = ch->ch_index;
-		sd.outsize = gbs->outsize;
-		sd.insize = gbs->insize;
-		sd.out = kmem_alloc(gbs->outsize, KM_SLEEP);
-		sd.in = kmem_alloc(gbs->insize, KM_SLEEP);
-
-		if ((err = copyin(gbs->out, sd.out, sd.outsize)) != 0) {
-			goto si_send_cleanup;
-		}
-
-		if ((err = __si_send(sc, &sd)) != 0) {
-			goto si_send_cleanup;
-		}
-
-		if ((err = copyout(sd.in, gbs->in, sd.insize)) != 0) {
-			goto si_send_cleanup;
-		}
-
-		gbs->status = sd.status;
-si_send_cleanup:
-		kmem_free(sd.out, sd.outsize);
-		kmem_free(sd.in, sd.insize);
+		err = gbaioctl_send(ch, (struct gba_send *)data);
 		break;
 	default:
 		err = EINVAL;
 		break;
 	}
 
+	return err;
+}
+
+static int
+gbaioctl_send(struct si_channel *ch, struct gba_send *gbs)
+{
+	int err;
+	struct si_softc *sc;
+	struct siio_send sd;
+
+	err = 0;
+	sc = ch->ch_sc;
+	if (gbs->outsize > SIIOBUF_SIZE || gbs->insize > SIIOBUF_SIZE) {
+		return EINVAL;
+	}
+
+	sd.chan = ch->ch_index;
+	sd.outsize = gbs->outsize;
+	sd.insize = gbs->insize;
+	sd.out = kmem_alloc(gbs->outsize, KM_SLEEP);
+	sd.in = kmem_alloc(gbs->insize, KM_SLEEP);
+	sd.delay = gbs->delay;
+
+	if ((err = copyin(gbs->out, sd.out, sd.outsize)) != 0) {
+		goto si_send_cleanup;
+	}
+
+	if ((err = __si_send(sc, &sd)) != 0) {
+		goto si_send_cleanup;
+	}
+
+	if ((err = copyout(sd.in, gbs->in, sd.insize)) != 0) {
+		goto si_send_cleanup;
+	}
+
+	if ((err = copyout(&sd.status, gbs->status, sizeof(uint32_t))) != 0) {
+		goto si_send_cleanup;
+	}
+si_send_cleanup:
+	kmem_free(sd.out, sd.outsize);
+	kmem_free(sd.in, sd.insize);
 	return err;
 }

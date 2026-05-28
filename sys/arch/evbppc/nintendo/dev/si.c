@@ -58,6 +58,7 @@ static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
+static uint32_t	send_cmd(struct si_softc *, uint32_t, unsigned, long);
 static int	si_identify(device_t, unsigned);
 
 static void	si_get_report_desc(void *, void **, int *);                   
@@ -183,6 +184,25 @@ si_print(void *aux, const char *pnp)
 }
 
 
+static uint32_t
+send_cmd(struct si_softc *sc, uint32_t cmd, unsigned chan, long us)
+{
+	struct siio_send data;
+	uint32_t out[1];
+	uint32_t in[1];
+	out[0] = cmd;
+
+	data.chan = chan;
+	data.outsize = 1;
+	data.insize = 3;
+	data.in = in;
+	data.out = out;
+	data.delay = us;
+
+	__si_send(sc, &data);
+	return in[0];
+}
+
 static int
 si_identify(device_t self, unsigned chan)
 {
@@ -202,8 +222,8 @@ si_identify(device_t self, unsigned chan)
 	 * if it can be put into the proper state
 	 */
 	do {
-		jb_reset(sc, chan, 1000);
-		id = jb_identify(sc, chan, 1000);
+		send_cmd(sc, CMD_RESET, chan, 1000);
+		id = send_cmd(sc, CMD_IDENTIFY, chan, 1000);
 		msb = (uint8_t)(id >> 24);
 		ch->ch_id = (uint16_t)(id >> 16);
 		sisr = RD4(sc, SISR);

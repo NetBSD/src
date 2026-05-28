@@ -44,10 +44,10 @@
 #define JB_WIRELESS_NONCTRL	__BIT(3)
 #define JB_WIRELESS_LITE	__BIT(2)
 
-#define	JB_IDENTIFY	0x00000000
-#define	JB_RESET	0xFF000000
-#define	JB_GBA_READ	0x14
-#define	JB_GBA_WRITE	0x15
+#define	CMD_IDENTIFY	0x00000000	/* pad with zeros to clear siiobuf */
+#define	CMD_RESET	0xFF000000	/* pad with zeros to clear siiobuf */
+#define	CMD_GBA_READ	0x14
+#define	CMD_GBA_WRITE	0x15
 
 #define JB_NONE		0x0000
 #define	JB_N64		0x0500
@@ -68,45 +68,4 @@
 #define IS_N64(n)	!ISSET(n, JB_CONTROLLER)
 #define IS_GCPAD(n)	(((n) & (JB_CONTROLLER | JB_DOLPHIN)) == JB_GC) || \
 				ISSET(n, JB_WIRELESS)
-
-#define JB_DELAY	50	/* lowest delay with results for multiboot */
-
-static inline uint32_t
-jb_reset(struct si_softc *sc, unsigned chan, long us)
-{
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	out[0] = JB_RESET;
-
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
-
-	delay(us);
-	__si_send(sc, &data);
-	return in[0];
-}
-
-static inline uint32_t
-jb_identify(struct si_softc *sc, unsigned chan, long us)
-{
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	out[0] = JB_IDENTIFY;
-
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
-
-	delay(us);
-	__si_send(sc, &data);
-	return in[0];
-}
-
 #endif
