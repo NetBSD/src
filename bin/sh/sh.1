@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.274 2026/01/19 21:32:07 pgoyette Exp $
+.\"	$NetBSD: sh.1,v 1.275 2026/05/28 03:18:33 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -352,7 +352,7 @@ is only available at invocation, it cannot be
 and there is no form using
 .Dq Cm \&+ .
 .It Fl E Em emacs
-Enable the built-in emacs style
+Enable the built in emacs style
 command line editor (disables
 .Fl V
 if it had been set).
@@ -542,7 +542,7 @@ operators test if the variable is set, before attempting to
 obtain its value, and hence are unaffected by
 .Fl u .
 .It Fl V Em vi
-Enable the built-in
+Enable the built in
 .Xr vi 1
 command line editor (disables
 .Fl E
@@ -2858,7 +2858,7 @@ With
 the specified names are un-exported.
 Variables can also be un-exported using the
 .Ic unset
-built in command.
+built-in command.
 With
 .Fl x
 .Pq exclude
@@ -4852,7 +4852,7 @@ character (usually control-Z).
 To cause a background process to stop,
 use the
 .Ic suspend
-built in command, or
+built-in command, or
 send it a
 .Dv STOP
 signal, using the kill command.
