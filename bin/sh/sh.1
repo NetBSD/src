@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.275 2026/05/28 03:18:33 kre Exp $
+.\"	$NetBSD: sh.1,v 1.276 2026/05/28 08:53:17 kre Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -3796,7 +3796,7 @@ byte, without attempting to obtain it.
 However, even if the
 .Fl r
 option is not given and the final byte actually read
-were the escape character (not itself escaped), 
+were the escape character (not itself escaped),
 no more bytes will be read, and that escape
 character would simply be removed as described below.
 .It Fl p Ar prompt
@@ -5150,8 +5150,8 @@ can be opened for reading,
 and is a suitable
 .Nm
 history file (one previously written by
-.Nm ) , 
-be read into the history buffer, 
+.Nm ) ,
+be read into the history buffer,
 appending its contents to any existing history entries.
 If
 .Ev HISTFILE
@@ -5419,7 +5419,7 @@ but is usually passed through the environment to
 descendant processes, including other instances of the shell,
 which may interpret it in a similar way.
 .It Ev PPID
-The process identified of the parent process of the
+The process identifier of the parent process of the
 current shell.
 This value is set at shell startup, ignoring
 any value in the environment, and then made readonly.
