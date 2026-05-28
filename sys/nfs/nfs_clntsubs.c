@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.7 2023/03/21 15:47:46 christos Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.8 2026/05/28 13:38:06 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.7 2023/03/21 15:47:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.8 2026/05/28 13:38:06 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -423,7 +423,8 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 			 */
 
 			mutex_enter(&nmp->nm_lock);
-			if (!NFS_WCCKLUDGE(nmp, now)) {
+			if (!NFS_WCCKLUDGE(nmp, now) &&
+			    !(nmp->nm_flag & NFSMNT_NOWCCMSG)) {
 				printf("%s: inaccurate wcc data (%s) detected,"
 				    " disabling wcc"
 				    " (ctime %u.%09u %u.%09u,"
@@ -447,8 +448,9 @@ nfs_check_wccdata(struct nfsnode *np, const struct timespec *ctime,
 		} else if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
 			mutex_enter(&nmp->nm_lock);
 			if (nmp->nm_iflag & NFSMNT_WCCKLUDGE) {
-				printf("%s: re-enabling wcc\n",
-				    vp->v_mount->mnt_stat.f_mntfromname);
+				if (!(nmp->nm_flag & NFSMNT_NOWCCMSG))
+					printf("%s: re-enabling wcc\n",
+					    vp->v_mount->mnt_stat.f_mntfromname);
 				nmp->nm_iflag &= ~NFSMNT_WCCKLUDGE;
 			}
 			mutex_exit(&nmp->nm_lock);
