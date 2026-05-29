@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.13 2026/05/29 16:15:43 uwe Exp $
+.\" $NetBSD: moused.8,v 1.14 2026/05/29 16:49:39 uwe Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -95,11 +95,11 @@ by pressing the left and right physical buttons simultaneously.
 .It Fl D
 Lower DTR on the serial port.
 This option is valid only if
-.Ar mousesystems
+.Ql mousesystems
 is selected as the protocol type.
 The DTR line may need to be dropped for a 3-button mouse
 to operate in the
-.Ar mousesystems
+.Ql mousesystems
 mode.
 .It Fl E Ar timeout
 When the third button emulation is enabled
@@ -131,7 +131,7 @@ will not be able to print useful information for the serial mouse.
 .It Fl R
 Lower RTS on the serial port.
 This option is valid only if
-.Ar mousesystems
+.Ql mousesystems
 is selected as the protocol type by the
 .Fl t
 option below.
@@ -140,11 +140,11 @@ It is often used with the
 option above.
 Both RTS and DTR lines may need to be dropped for
 a 3-button mouse to operate in the
-.Ar mousesystems
+.Ql mousesystems
 mode.
 .It Fl S Ar baudrate
 Select the baud rate for the serial port
-.Pq 1200 to 9600 .
+.Pq 1200 to 9600, see also Fl s .
 Not all serial mice support this option.
 .It Fl W Ar devicename
 Select the
@@ -171,30 +171,42 @@ Useful for testing and debugging.
 Print specified information and quit.
 Available pieces of information are:
 .Pp
-.Bl -tag -compact -width modelxxx
-.It Ar port
-Port (device file) name, e.g.\&
+.Bl -tag -width Ql
+.
+.It Li port
+Device file name, e.g.\&
 .Pa /dev/tty00 .
-.It Ar if
-Interface type: serial, bus, inport or ps/2.
-.It Ar type
+.
+.It Li if
+Interface type:
+.Ql serial ,
+.Ql bus ,
+.Ql inport ,
+.Ql ps/2 ,
+.Ql sysmouse ,
+or
+.Ql usb .
+.
+.It Li type
 Protocol type.
-It is one of the types listed under the
+One of the values listed under the
 .Fl t
 option below.
-.It Ar model
+.
+.It Li model
 Mouse model.
-.Nm
-may not always be able to identify the model.
-.It Ar all
+.
+.It Li all
 All of the above items.
 Print port, interface, type and model in this order in one line.
 .El
 .Pp
 If
 .Nm
-cannot determine the requested information, it prints ``unknown'' or
-``generic''.
+cannot determine the requested information, it prints
+.Ql unknown
+or
+.Ql generic .
 .It Fl m Ar N Ns Ic \^= Ns Ar M
 Assign the physical button
 .Ar M
@@ -213,24 +225,25 @@ Use
 to communicate with the mouse.
 .It Fl r Ar resolution
 Set the resolution of the device; in Dots Per Inch, or
-.Ar low ,
-.Ar medium-low ,
-.Ar medium-high
+.Ql low ,
+.Ql medium-low ,
+.Ql medium-high ,
 or
-.Ar high .
-This option may not be supported by all the device.
+.Ql high .
+This option may not be supported by all devices.
 .It Fl s
-Select a baudrate of 9600 for the serial line.
+Select a baud rate of 9600 for the serial line
+.Pq see also Fl S .
 Not all serial mice support this option.
 .It Fl t Ar type
 Specify the protocol type of the mouse attached to the port.
 You may explicitly specify a type listed below, or use
-.Ar auto
+.Ql auto
 to let
 .Nm
 automatically select an appropriate protocol for the given mouse.
 If you entirely omit this option on the command line,
-.Fl t Ar auto
+.Sq Fl t Cm auto
 is assumed.
 Under normal circumstances, you need to use this option only if
 .Nm
@@ -242,47 +255,45 @@ option above is implied and Plug and Play COM device enumeration
 procedure will be disabled.
 .Pp
 Valid types for this option are
-listed below.
-.Pp
-For the serial mouse:
-.Bl -tag -compact -width mousesystemsxxx
-.It Ar microsoft
+listed below:
+.Bl -tag -width Li
+.It Li microsoft
 Microsoft serial mouse protocol.
 Most 2-button serial mice use this protocol.
-.It Ar intellimouse
+.It Li intellimouse
 Microsoft IntelliMouse protocol.
 Genius NetMouse, ASCII Mie Mouse, Logitech MouseMan+ and FirstMouse+
 use this protocol too.
 Other mice with a roller/wheel may be compatible with this protocol.
-.It Ar mousesystems
+.It Li mousesystems
 MouseSystems 5-byte protocol.
 3-button mice may use this protocol.
-.It Ar mmseries
+.It Li mmseries
 MM Series mouse protocol.
-.It Ar logitech
+.It Li logitech
 Logitech mouse protocol.
 Note that this is for old Logitech models.
-.Ar mouseman
+.Ql mouseman
 or
-.Ar intellimouse
+.Ql intellimouse
 should be specified for newer models.
-.It Ar mouseman
+.It Li mouseman
 Logitech MouseMan and TrackMan protocol.
 Some 3-button mice may be compatible with this protocol.
 Note that MouseMan+ and FirstMouse+ use
-.Ar intellimouse
+.Ql intellimouse
 protocol rather than this one.
-.It Ar glidepoint
+.It Li glidepoint
 ALPS GlidePoint protocol.
-.It Ar thinkingmouse
+.It Li thinkingmouse
 Kensington ThinkingMouse protocol.
-.It Ar mmhitab
+.It Li mmhitab
 Hitachi tablet protocol.
-.It Ar x10mouseremote
+.It Li x10mouseremote
 X10 MouseRemote.
-.It Ar kidspad
+.It Li kidspad
 Genius Kidspad and Easypad protocol.
-.It Ar versapad
+.It Li versapad
 Interlink VersaPad protocol.
 .El
 .It Fl w Ar N
@@ -399,7 +410,7 @@ Start
 on the serial port
 .Pa /dev/tty01 .
 The protocol type
-.Ar microsoft
+.Ql microsoft
 is explicitly specified by the
 .Fl t
 option.
