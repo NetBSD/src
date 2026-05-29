@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.128 2024/02/10 18:43:52 andvar Exp $
+#	$NetBSD: files.vax,v 1.129 2026/05/29 12:53:48 thorpej Exp $
 #
 # new style config file for vax architecture
 #
@@ -401,7 +401,6 @@ include "compat/ultrix/files.ultrix"
 include "compat/vax1k/files.vax1k"
 
 # Dom h{ra f}r vara kvar s} l{nge f}r vi se vilka vi beh|ver...
-#arch/vax/vax/dkbad.c		standard
 #arch/vax/vax/ka730.c		standard
 #arch/vax/vax/iidr.o		optional ii
 #arch/vax/vax/iidrsys.o		optional ii
