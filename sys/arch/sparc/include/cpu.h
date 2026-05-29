@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2023/07/13 12:06:20 riastradh Exp $ */
+/*	$NetBSD: cpu.h,v 1.112 2026/05/29 13:01:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -523,10 +523,6 @@ void	intr_disestablish(int, struct intrhand *);
 
 void	intr_lock_kernel(void);
 void	intr_unlock_kernel(void);
-
-/* disksubr.c */
-struct dkbad;
-int isbad(struct dkbad *, int, int, int);
 
 /* machdep.c */
 int	ldcontrolb(void *);

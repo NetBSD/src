@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.135 2024/09/07 06:17:37 andvar Exp $ */
+/*	$NetBSD: cpu.h,v 1.136 2026/05/29 13:01:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -409,9 +409,6 @@ struct intrhand *intrhand_alloc(void);
 /* cpu.c */
 int	cpu_myid(void);
 
-/* disksubr.c */
-struct dkbad;
-int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
 void *	reserve_dumppages(void *);
 /* clock.c */
