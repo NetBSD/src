@@ -176,18 +176,6 @@ gcport_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-/**
- * TODO:
- *
- * i dont really want to touch the other guys code at all if i dont have to.
- * i dont think that i do. according to the docs you should never set
- * TSTART if you are in the middle of a transaction. i can add the AWAIT to
- * one or two of his lines np.
- *
- * then it says you should never change OUTLENGTH / INLENGTH / CHANNEL in the
- * middle of a transaction. these are only things used for the siiobuf, which
- * no one is using but me. so i can define my own mutex for that purpose.
- */
 int
 gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
