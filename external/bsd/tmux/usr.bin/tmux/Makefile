@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.45 2026/05/28 21:06:45 christos Exp $
+# $NetBSD: Makefile,v 1.46 2026/05/29 15:11:48 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -205,7 +205,6 @@ CPPFLAGS+=	\
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
 -DHAVE_LIBM=1 \
--DHAVE_LIBPROC_H=1 \
 -DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
