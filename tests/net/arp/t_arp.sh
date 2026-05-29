@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.50 2026/03/26 05:23:42 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.51 2026/05/29 06:08:10 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -909,6 +909,8 @@ test_resolution()
 
 test_keep_sending()
 {
+
+	skip_if_qemu
 
 	rump_server_start $SOCKSRC
 	setup_src_server
