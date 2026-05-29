@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.26 2023/12/20 06:36:03 thorpej Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.27 2026/05/29 14:39:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.26 2023/12/20 06:36:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.27 2026/05/29 14:39:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,6 @@ struct ace_bio {
 #define EDOOFUS EIO
 
 	uint32_t	r_error;/* copy of status register */
-#ifdef HAS_BAD144_HANDLING
-	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
-#endif
 };
 /* End of atavar.h*/
 
@@ -1577,10 +1574,6 @@ struct dkdriver acedkdriver = {
 	.d_minphys = minphys
 };
 
-#ifdef HAS_BAD144_HANDLING
-static void bad144intern(struct ace_softc *);
-#endif
-
 void
 aceattach(struct ace_softc *ace)
 {
@@ -2104,10 +2097,6 @@ acegetdisklabel(struct ace_softc *ace)
 
 	acegetdefaultlabel(ace, lp);
 
-#ifdef HAS_BAD144_HANDLING
-	ace->sc_bio.badsect[0] = -1;
-#endif
-
 	errstring = readdisklabel(MAKEACEDEV(0, device_unit(ace->sc_dev),
 				  RAW_PART), acestrategy, lp,
 				  ace->sc_dk.dk_cpulabel);
@@ -2127,11 +2116,6 @@ acegetdisklabel(struct ace_softc *ace)
 			    ace->sc_dk.dk_label->d_partitions[i].p_offset);
 		}
 	}
-#endif
-
-#ifdef HAS_BAD144_HANDLING
-	if ((lp->d_flags & D_BADSECT) != 0)
-		bad144intern(ace);
 #endif
 }
 
@@ -2167,15 +2151,6 @@ aceioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return error;
 
 	switch (xfer) {
-#ifdef HAS_BAD144_HANDLING
-	case DIOCSBAD:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		ace->sc_dk.dk_cpulabel->bad = *(struct dkbad *)addr;
-		ace->sc_dk.dk_label->d_flags |= D_BADSECT;
-		bad144intern(ace);
-		return 0;
-#endif
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
@@ -2402,32 +2377,6 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	acedoingadump = 0;
 	return 0;
 }
-
-#ifdef HAS_BAD144_HANDLING
-/*
- * Internalize the bad sector table.
- */
-void
-bad144intern(struct ace_softc *ace)
-{
-	struct dkbad *bt = &ace->sc_dk.dk_cpulabel->bad;
-	struct disklabel *lp = ace->sc_dk.dk_label;
-	int i = 0;
-
-	DEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
-
-	for (; i < NBT_BAD; i++) {
-		if (bt->bt_bad[i].bt_cyl == 0xffff)
-			break;
-		ace->sc_bio.badsect[i] =
-		    bt->bt_bad[i].bt_cyl * lp->d_secpercyl +
-		    (bt->bt_bad[i].bt_trksec >> 8) * lp->d_nsectors +
-		    (bt->bt_bad[i].bt_trksec & 0xff);
-	}
-	for (; i < NBT_BAD+1; i++)
-		ace->sc_bio.badsect[i] = -1;
-}
-#endif
 
 static void
 ace_set_geometry(struct ace_softc *ace)

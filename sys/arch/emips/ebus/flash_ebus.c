@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.26 2026/05/29 14:39:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.25 2023/12/20 06:36:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.26 2026/05/29 14:39:01 thorpej Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -154,9 +154,6 @@ struct eflash_bio {
 	char		*databuf;/* data buffer address */
 	volatile int	error;
 	u_int32_t	r_error;/* copy of status register */
-#ifdef HAS_BAD144_HANDLING
-	daddr_t		badsect[127];/* 126 plus trailing -1 marker */
-#endif
 };
 /* End of atavar.h*/
 
@@ -1423,10 +1420,6 @@ struct dkdriver eflashdkdriver = {
 	.d_minphys = minphys
 };
 
-#ifdef HAS_BAD144_HANDLING
-static void bad144intern(struct eflash_softc *);
-#endif
-
 static void eflash_wedges(void *arg);
 
 void
@@ -2020,10 +2013,6 @@ eflashgetdisklabel(struct eflash_softc *sc)
 
 	eflashgetdefaultlabel(sc, lp);
 
-#ifdef HAS_BAD144_HANDLING
-	sc->sc_bio.badsect[0] = -1;
-#endif
-
     /* BUGBUG: maj==0?? why is this not EFLASHLABELDEV(??sc->sc_dev) */
 	errstring = readdisklabel(MAKEEFLASHDEV(0, device_unit(sc->sc_dev),
 				  RAW_PART), eflashstrategy, lp,
@@ -2044,11 +2033,6 @@ eflashgetdisklabel(struct eflash_softc *sc)
                    sc->sc_dk.dk_label->d_partitions[i].p_offset);
         }
     }
-#endif
-
-#ifdef HAS_BAD144_HANDLING
-	if ((lp->d_flags & D_BADSECT) != 0)
-		bad144intern(sc);
 #endif
 }
 
@@ -2084,15 +2068,6 @@ eflashioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		return (error);
 
 	switch (xfer) {
-#ifdef HAS_BAD144_HANDLING
-	case DIOCSBAD:
-		if ((flag & FWRITE) == 0)
-			return EBADF;
-		sc->sc_dk.dk_cpulabel->bad = *(struct dkbad *)addr;
-		sc->sc_dk.dk_label->d_flags |= D_BADSECT;
-		bad144intern(sc);
-		return 0;
-#endif
 
 	case DIOCWDINFO:
 	case DIOCSDINFO:
@@ -2230,32 +2205,6 @@ eflashdump(dev_t dev, daddr_t blkno, void *va, size_t size)
     /* no we dont */
     return (ENXIO);
 }
-
-#ifdef HAS_BAD144_HANDLING
-/*
- * Internalize the bad sector table.
- */
-void
-bad144intern(struct eflash_softc *sc)
-{
-	struct dkbad *bt = &sc->sc_dk.dk_cpulabel->bad;
-	struct disklabel *lp = sc->sc_dk.dk_label;
-	int i = 0;
-
-	DEBUG_PRINT(("bad144intern\n"), DEBUG_XFERS);
-
-	for (; i < NBT_BAD; i++) {
-		if (bt->bt_bad[i].bt_cyl == 0xffff)
-			break;
-		sc->sc_bio.badsect[i] =
-		    bt->bt_bad[i].bt_cyl * lp->d_secpercyl +
-		    (bt->bt_bad[i].bt_trksec >> 8) * lp->d_nsectors +
-		    (bt->bt_bad[i].bt_trksec & 0xff);
-	}
-	for (; i < NBT_BAD+1; i++)
-		sc->sc_bio.badsect[i] = -1;
-}
-#endif
 
 static void
 eflash_set_geometry(struct eflash_softc *sc)
