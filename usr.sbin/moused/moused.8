@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.11 2026/05/26 16:17:08 uwe Exp $
+.\" $NetBSD: moused.8,v 1.12 2026/05/29 14:03:58 uwe Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -49,7 +49,7 @@
 .Op Fl S Ar baudrate
 .Op Fl W Ar devicename
 .Op Fl a Ar X Ns Op Ic \&, Ns Ar Y
-.Op Fl m Ar N=M
+.Op Fl m Ar N Ns Ic \^= Ns Ar M
 .Op Fl w Ar N
 .Op Fl z Ar target
 .Op Fl t Ar mousetype
@@ -102,15 +102,18 @@ to operate in the
 .Ar mousesystems
 mode.
 .It Fl E Ar timeout
-When the third button emulation is enabled (see above),
+When the third button emulation is enabled
+.Pq see Fl 3 ,
 .Nm
-waits
+waits at most
 .Ar timeout
-milliseconds at most before deciding whether two buttons are being
+milliseconds before deciding whether two buttons are being
 pressed simultaneously.
 The default timeout is 100 milliseconds.
 .It Fl F Ar rate
-Set the report rate (reports per second) of the device if supported.
+Set the report rate
+.Pq reports per second
+of the device, if supported.
 .It Fl I Ar file
 Write the process id of
 .Nm
@@ -140,7 +143,8 @@ a 3-button mouse to operate in the
 .Ar mousesystems
 mode.
 .It Fl S Ar baudrate
-Select the baudrate for the serial port (1200 to 9600).
+Select the baud rate for the serial port
+.Pq 1200 to 9600 .
 Not all serial mice support this option.
 .It Fl W Ar devicename
 Select the
@@ -191,7 +195,7 @@ If
 .Nm
 cannot determine the requested information, it prints ``unknown'' or
 ``generic''.
-.It Fl m Ar N=M
+.It Fl m Ar N Ns Ic \^= Ns Ar M
 Assign the physical button
 .Ar M
 to the logical button
@@ -201,7 +205,8 @@ More than one physical button may be assigned to a logical button at the
 same time.
 In this case the logical button will be down,
 if either of the assigned physical buttons is held down.
-Do not put space around `='.
+Do not put spaces around
+.Ql = .
 .It Fl p Ar port
 Use
 .Ar port
@@ -414,19 +419,21 @@ in
 .Xr rc.conf 5 ,
 .Xr wsmoused 8
 .Sh STANDARDS
+In order to support PnP serial mice
 .Nm
 partially supports
-.Dq Plug and Play External COM Device Specification
-in order to support PnP serial mice.
+.Rs
+.%B Plug and Play External COM Device Specification
+.Re
 However, due to various degrees of conformance to the specification
 by existing serial mice, it does not strictly follow version 1.0
 of the standard.
 Even with this less strict approach, it may not always determine
 an appropriate protocol type for the given serial mouse.
 .Sh HISTORY
-The mouse daemon
+The
 .Nm
-first appeared in
+mouse daemon first appeared in
 .Fx 2.2
 and
 .Nx 1.6 .
