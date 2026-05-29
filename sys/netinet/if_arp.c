@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.319 2026/03/26 04:35:17 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.320 2026/05/29 02:45:14 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.319 2026/03/26 04:35:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.320 2026/05/29 02:45:14 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -157,6 +157,7 @@ static struct nd_domain arp_nd_domain = {
 	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
+	.nd_gctimer = 24*60*60, /* stale neighbor GC timer duration */
 	.nd_nud_enabled = arp_nud_enabled,
 	.nd_reachable = arp_llinfo_reachable,
 	.nd_retrans = arp_llinfo_retrans,
