@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.12 2026/05/29 14:03:58 uwe Exp $
+.\" $NetBSD: moused.8,v 1.13 2026/05/29 16:15:43 uwe Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -296,26 +296,31 @@ You may further map the Z axis movement to virtual buttons by the
 option below.
 .It Fl z Ar target
 Map Z axis (roller/wheel) movement to another axis or to virtual buttons.
+The target virtual buttons need not exist as physical buttons.
+Note that mapping to logical buttons
+.Pq with Fl m
+is carried out after mapping
+from the Z axis movement to the virtual buttons is done.
 Valid
 .Ar target
-maybe:
-.Bl -tag -compact -width x__
-.It Ar x
-.It Ar y
+may be:
+.Pp
+.Bl -tag -compact -width Ar
+.
+.It Cm x
+.It Cm y
 X or Y axis movement will be reported when the Z axis movement is detected.
+.
+.Pp
 .It Ar N
 Report down events for the virtual buttons
 .Ar N
 and
-.Ar N+1
+.Ar N Ns Li \^+1
 respectively when negative and positive Z axis movement
 is detected.
-There do not need to be physical buttons
-.Ar N
-and
-.Ar N+1 .
-Note that mapping to logical buttons is carried out after mapping
-from the Z axis movement to the virtual buttons is done.
+.
+.Pp
 .It Ar N1 N2
 Report down events for the virtual buttons
 .Ar N1
@@ -323,6 +328,8 @@ and
 .Ar N2
 respectively when negative and positive Z axis movement
 is detected.
+.
+.Pp
 .It Ar N1 N2 N3 N4
 This is useful for the mouse with two wheels of which
 the second wheel is used to generate horizontal scroll action,
