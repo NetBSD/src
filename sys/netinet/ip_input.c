@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.406 2025/07/17 06:49:43 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.407 2026/05/29 02:52:06 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.406 2025/07/17 06:49:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.407 2026/05/29 02:52:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -723,29 +723,30 @@ ip_input(struct mbuf *m, struct ifnet *ifp)
 	if (ipforwarding == 0) {
 		IP_STATINC(IP_STAT_CANTFORWARD);
 		m_freem(m);
-	} else {
-		/*
-		 * If ip_dst matched any of my address on !IFF_UP interface,
-		 * and there's no IFF_UP interface that matches ip_dst,
-		 * send icmp unreach.  Forwarding it will result in in-kernel
-		 * forwarding loop till TTL goes to 0.
-		 */
-		if (downmatch) {
-			icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
-			IP_STATINC(IP_STAT_CANTFORWARD);
-			return;
-		}
-#ifdef IPSEC
-		/* Check the security policy (SP) for the packet */
-		if (ipsec_used) {
-			if (ipsec_ip_input_checkpolicy(m, true) != 0) {
-				IP_STATINC(IP_STAT_IPSECDROP_IN);
-				goto out;
-			}
-		}
-#endif
-		ip_forward(m, srcrt, ifp);
+		return;
 	}
+
+	/*
+	 * If ip_dst matched any of my address on !IFF_UP interface,
+	 * and there's no IFF_UP interface that matches ip_dst,
+	 * send icmp unreach.  Forwarding it will result in in-kernel
+	 * forwarding loop till TTL goes to 0.
+	 */
+	if (downmatch) {
+		icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_HOST, 0, 0);
+		IP_STATINC(IP_STAT_CANTFORWARD);
+		return;
+	}
+#ifdef IPSEC
+	/* Check the security policy (SP) for the packet */
+	if (ipsec_used) {
+		if (ipsec_ip_input_checkpolicy(m, true) != 0) {
+			IP_STATINC(IP_STAT_IPSECDROP_IN);
+			goto out;
+		}
+	}
+#endif
+	ip_forward(m, srcrt, ifp);
 	return;
 
 ours:
