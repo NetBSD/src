@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.184 2024/07/05 04:31:53 rin Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.185 2026/05/29 08:31:34 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.184 2024/07/05 04:31:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.185 2026/05/29 08:31:34 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -78,6 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.184 2024/07/05 04:31:53 rin Exp $");
 
 #ifndef PPPOE_DEQUEUE_MAXLEN
 #define PPPOE_DEQUEUE_MAXLEN	IFQ_MAXLEN
+#endif
+
+#ifndef PPPOE_RETRY_DELAY
+#define PPPOE_RETRY_DELAY	60
 #endif
 
 struct pppoehdr {
@@ -130,7 +134,8 @@ struct pppoetag {
 		PPPOE_ADD_16(PTR, LEN)
 
 #define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
-#define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
+#define	PPPOE_SLOW_RETRY	(hz*PPPOE_RETRY_DELAY)
+					/* persistent retry interval */
 #define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
 #define	PPPOE_RECON_IMMEDIATE	(hz/10)	/* "no delay" reconnect */
 #define	PPPOE_RECON_PADTRCVD	(hz*5)	/* reconnect delay after PADT received */
