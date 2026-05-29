@@ -107,7 +107,8 @@ gcport_si_match(device_t parent, cfdata_t cf, void *aux)
 	 * match any other device
 	 */
 	if (ch->ch_id != 0 && !(IS_GCPAD(ch->ch_id))) {
-		aprint_normal("gcport: identified ch%d as a device 0x%08X\n", chan, ch->ch_id);
+		aprint_normal("gcport: identified ch%d as a device 0x%08X\n",
+		    chan, ch->ch_id);
 		return 1;
 	}
 
@@ -131,10 +132,20 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 int
 gcport_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
-	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
-	struct si_channel *ch = sc->ch;
+	struct gcport_softc *sc;
+	struct si_channel *ch;
 	int error;
 
+	/* TODO maybe there is a way to have the minor number reflect the
+	 * actual port instead of an auto increment thing
+	 */
+	sc = device_lookup_private(&gcport_cd, minor(dev));
+
+	if (sc == NULL) {
+		return ENXIO;
+	}
+
+	ch = sc->ch;
 	mutex_enter(&ch->ch_lock);
 
 	if (ISSET(ch->ch_state, SI_STATE_OPEN)) {

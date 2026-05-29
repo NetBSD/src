@@ -152,6 +152,11 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	uint32_t cnt, comcsr, sisr, shift_amt, status;
 	unsigned chan;
 
+	/* TODO - is the mutex necessary? The docs say you should absolutely
+	 * not change OUTLNGTH / INLNGTH mid transaction, but we are awaiting
+	 * the TSTART before/after already..
+	 */
+	mutex_enter(&sicomcsr_lock);
 	chan = data->chan;
 
 	SIIOBUF_CLEAR(sc);
@@ -192,6 +197,8 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	}
 
 	SIIOBUF_RD(sc, data->in, data->insize);
+
+	mutex_exit(&sicomcsr_lock);
 	return 0;
 }
 
