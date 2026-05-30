@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.49 2026/05/30 13:36:22 mlelstv Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.50 2026/05/30 15:23:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.49 2026/05/30 13:36:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.50 2026/05/30 15:23:27 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1014,6 +1014,9 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
 		    index, index + 1, RX_DESC_COUNT,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
+
+		WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
+		    (uint32_t)sc->sc_rx.desc_ring_paddr + DESC_OFF(index));
 	}
 	/* save jumboframe context */
 	sc->sc_rx_discarding = discarding;
@@ -1023,10 +1026,6 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 	DPRINTF(EDEB_RXRING, "sc_rx.cur %u -> %u\n",
 	    sc->sc_rx.cur, index);
 	sc->sc_rx.cur = index;
-
-	WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
-	    (uint32_t)sc->sc_rx.desc_ring_paddr +
-	    DESC_OFF(sc->sc_rx.cur));
 
 	if (pkts != 0) {
 		rnd_add_uint32(&sc->sc_rndsource, pkts);
@@ -1337,7 +1336,7 @@ eqos_intr(void *arg)
 		if ((rx_tx_status & GMAC_MAC_RX_TX_STATUS_TJT) != 0)
 			sc->sc_ev_tjt.ev_count++;
 
-		DPRINTF(EDEB_INTR, "GMAC_MAC_RX_TX_STATUS = 1x%08x\n",
+		DPRINTF(EDEB_INTR, "GMAC_MAC_RX_TX_STATUS = 0x%08x\n",
 		    rx_tx_status);
 	}
 
