@@ -1,7 +1,7 @@
-/* $NetBSD: dwc_eqos.c,v 1.44 2026/05/28 09:33:30 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.45 2026/05/30 09:50:35 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.44 2026/05/28 09:33:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.45 2026/05/30 09:50:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.44 2026/05/28 09:33:30 jmcneill Exp $
 #include <sys/cprng.h>
 #include <sys/evcnt.h>
 #include <sys/sysctl.h>
-
+#include <sys/kthread.h>
 #include <sys/rndsource.h>
 
 #include <net/if.h>
@@ -116,6 +116,17 @@ unsigned int eqos_debug;	/* Default value */
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+
+/*
+ * Request interrupt on completion for every "rx_batch" # packets.
+ */
+int eqos_rx_batch = 16;
+
+/*
+ * RX interrupt watchdog is triggered after "rx_wdt_count" * 256 system
+ * clock cycles.
+ */
+int eqos_rx_wdt_count = 160;
 
 static void	eqos_init_sysctls(struct eqos_softc *);
 static int	eqos_sysctl_tx_cur_handler(SYSCTLFN_PROTO);
@@ -288,7 +299,7 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		tdes3 = 0;
 		--sc->sc_tx.queued;
 	} else {
-		tdes2 = (flags & EQOS_TDES3_TX_LD) ? EQOS_TDES2_TX_IOC : 0;
+		tdes2 = 0;
 		tdes3 = flags;
 		++sc->sc_tx.queued;
 	}
@@ -307,7 +318,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 }
 
 static int
-eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
+eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m,
+    uint32_t *ptdes3)
 {
 	bus_dma_segment_t *segs;
 	int error, nsegs, cur, i;
@@ -350,7 +362,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	/* stored in same index as loaded map */
 	sc->sc_tx.buf_map[index].mbuf = m;
 
-	flags = EQOS_TDES3_TX_FD;
+	flags = EQOS_TDES3_TX_FD | (ptdes3 == NULL ? EQOS_TDES3_TX_OWN : 0);
 	first_tdes3 = 0;
 
 	for (cur = index, i = 0; i < nsegs; i++) {
@@ -370,20 +382,14 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 		flags |= EQOS_TDES3_TX_OWN;
 	}
 
-	/*
-	 * Defer setting OWN bit on the first descriptor until all
-	 * descriptors have been updated.  The hardware will not try to
-	 * process any descriptors past the first one still owned by
-	 * software (i.e., with the OWN bit clear).
-	 */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
-	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
-	    BUS_DMASYNC_PREWRITE);
+	if (ptdes3 != NULL) {
+		*ptdes3 = first_tdes3;
+	}
+
 	DPRINTF(EDEB_TXRING, "passing tx desc %u to hardware, cur: %u, "
-	    "next: %u, queued: %u\n",
-	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued);
-	sc->sc_tx.desc_ring[index].tdes3 =
-	    htole32(first_tdes3 | EQOS_TDES3_TX_OWN);
+	    "next: %u, queued: %u, owned: %u\n",
+	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued,
+	    ptdes3 == NULL);
 
 	return nsegs;
 }
@@ -392,6 +398,11 @@ static void
 eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 {
 	struct eqos_dma_desc desc;
+	uint32_t tdes3 = EQOS_TDES3_RX_OWN | EQOS_TDES3_RX_BUF1V;
+
+	if ((index % eqos_rx_batch) == 0) {
+		tdes3 |= EQOS_TDES3_RX_IOC;
+	}
 
 	DPRINTF(EDEB_RXRING, "preparing desc %u\n", index);
 
@@ -404,8 +415,7 @@ eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
 	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
 	    BUS_DMASYNC_PREWRITE);
-	sc->sc_rx.desc_ring[index].tdes3 =
-	    htole32(EQOS_TDES3_RX_OWN | EQOS_TDES3_RX_IOC | EQOS_TDES3_RX_BUF1V);
+	sc->sc_rx.desc_ring[index].tdes3 = htole32(tdes3);
 }
 
 static int
@@ -453,8 +463,7 @@ eqos_enable_intr(struct eqos_softc *sc)
 	    GMAC_DMA_CHAN0_INTR_ENABLE_NIE |
 	    GMAC_DMA_CHAN0_INTR_ENABLE_AIE |
 	    GMAC_DMA_CHAN0_INTR_ENABLE_FBE |
-	    GMAC_DMA_CHAN0_INTR_ENABLE_RIE |
-	    GMAC_DMA_CHAN0_INTR_ENABLE_TIE);
+	    GMAC_DMA_CHAN0_INTR_ENABLE_RIE);
 }
 
 static void
@@ -633,6 +642,10 @@ eqos_init_locked(struct eqos_softc *sc)
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
 
+	/* RX interrupt watchdog timer */
+	WR4(sc, GMAC_DMA_CHAN0_RX_WATCHDOG,
+	    GMAC_DMA_CHAN0_RX_WATCHDOG_RWTU_256 | eqos_rx_wdt_count);
+
 	/* Enable transmit and receive DMA */
 	val = RD4(sc, GMAC_DMA_CHAN0_CONTROL);
 	val &= ~GMAC_DMA_CHAN0_CONTROL_DSL_MASK;
@@ -796,7 +809,6 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 	/* Disable interrupts */
 	eqos_disable_intr(sc);
 
-	workqueue_wait(sc->sc_wq, &sc->sc_txwork);
 	workqueue_wait(sc->sc_wq, &sc->sc_rxwork);
 
 	sc->sc_if_flags &= ~IFF_RUNNING;
@@ -937,10 +949,6 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
 		    index, index + 1, RX_DESC_COUNT,
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
-		WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
-		    (uint32_t)sc->sc_rx.desc_ring_paddr +
-		    DESC_OFF(sc->sc_rx.cur));
 	}
 	/* save jumboframe context */
 	sc->sc_rx_discarding = discarding;
@@ -950,6 +958,10 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 	DPRINTF(EDEB_RXRING, "sc_rx.cur %u -> %u\n",
 	    sc->sc_rx.cur, index);
 	sc->sc_rx.cur = index;
+
+	WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
+	    (uint32_t)sc->sc_rx.desc_ring_paddr +
+	    DESC_OFF(sc->sc_rx.cur));
 
 	if (pkts != 0) {
 		rnd_add_uint32(&sc->sc_rndsource, pkts);
@@ -967,15 +979,16 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 
 	DPRINTF(EDEB_INTR, "qid: %u\n", qid);
 
-	EQOS_ASSERT_LOCKED(sc);
 	EQOS_ASSERT_TXLOCKED(sc);
+
+	eqos_dma_sync(sc, sc->sc_tx.desc_map,
+	    sc->sc_tx.next, sc->sc_tx.cur, TX_DESC_COUNT,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0; i = TX_NEXT(i)) {
 		KASSERT(sc->sc_tx.queued > 0);
 		KASSERT(sc->sc_tx.queued <= TX_DESC_COUNT);
-		eqos_dma_sync(sc, sc->sc_tx.desc_map,
-		    i, i + 1, TX_DESC_COUNT,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		desc = &sc->sc_tx.desc_ring[i];
 		tdes3 = le32toh(desc->tdes3);
 		if ((tdes3 & EQOS_TDES3_TX_OWN) != 0) {
@@ -1021,37 +1034,13 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 }
 
 static void
-eqos_worker(struct work *wk, void *arg)
-{
-	struct eqos_softc *sc = arg;
-	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	uint32_t dma_intr_enable;
-
-	EQOS_LOCK(sc);
-
-	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
-	if (wk == &sc->sc_txwork) {
-		EQOS_TXLOCK(sc);
-		eqos_txintr(sc, 0);
-		EQOS_TXUNLOCK(sc);
-		if_schedule_deferred_start(ifp);
-		dma_intr_enable |= GMAC_DMA_CHAN0_STATUS_TI;
-	} else if (wk == &sc->sc_rxwork) {
-		eqos_rxintr(sc, 0);
-		dma_intr_enable |= GMAC_DMA_CHAN0_STATUS_RI;
-	}
-
-	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
-
-	EQOS_UNLOCK(sc);
-}
-
-static void
 eqos_start_locked(struct eqos_softc *sc)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
 	int cnt, nsegs, start;
+	uint32_t first_tdes3 = 0;
+	uint32_t *ptdes3 = &first_tdes3;
 
 	EQOS_ASSERT_TXLOCKED(sc);
 
@@ -1069,7 +1058,7 @@ eqos_start_locked(struct eqos_softc *sc)
 		if (m == NULL)
 			break;
 
-		nsegs = eqos_setup_txbuf(sc, sc->sc_tx.cur, m);
+		nsegs = eqos_setup_txbuf(sc, sc->sc_tx.cur, m, ptdes3);
 		if (nsegs <= 0) {
 			DPRINTF(EDEB_TXRING, "eqos_setup_txbuf failed "
 			    "with %d\n", nsegs);
@@ -1085,6 +1074,7 @@ eqos_start_locked(struct eqos_softc *sc)
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		sc->sc_tx.cur = TX_SKIP(sc->sc_tx.cur, nsegs);
+		ptdes3 = NULL;
 	}
 
 	DPRINTF(EDEB_TXRING, "tx loop -> cnt = %u, cur: %u, next: %u, "
@@ -1094,6 +1084,19 @@ eqos_start_locked(struct eqos_softc *sc)
 	if (cnt != 0) {
 		eqos_dma_sync(sc, sc->sc_tx.desc_map,
 		    start, sc->sc_tx.cur, TX_DESC_COUNT,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Defer setting OWN bit on the first descriptor until all
+		 * descriptors have been updated.  The hardware will not try to
+		 * process any descriptors past the first one still owned by
+		 * software (i.e., with the OWN bit clear).
+		 */
+		sc->sc_tx.desc_ring[start].tdes3 =
+		    htole32(first_tdes3 | EQOS_TDES3_TX_OWN);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
+		    DESC_OFF(start) + offsetof(struct eqos_dma_desc, tdes3),
+		    sizeof(uint32_t),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start and run TX DMA */
@@ -1116,9 +1119,44 @@ eqos_start(struct ifnet *ifp)
 {
 	struct eqos_softc * const sc = ifp->if_softc;
 
+	EQOS_LOCK(sc);
+	cv_signal(&sc->sc_startcv);
+	EQOS_UNLOCK(sc);
+}
+
+static void
+eqos_receive(struct work *wk, void *arg)
+{
+	struct eqos_softc *sc = arg;
+	uint32_t dma_intr_enable;
+
+	EQOS_LOCK(sc);
+
+	eqos_rxintr(sc, 0);
+
+	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
+	dma_intr_enable |= GMAC_DMA_CHAN0_STATUS_RI;
+	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+
+	EQOS_UNLOCK(sc);
+}
+
+static void
+eqos_transmit(void *arg)
+{
+	struct eqos_softc *sc = arg;
+
 	EQOS_TXLOCK(sc);
-	eqos_start_locked(sc);
+	for (;;) {
+		cv_wait(&sc->sc_startcv, &sc->sc_txlock);
+
+		eqos_txintr(sc, 0);
+		eqos_start_locked(sc);
+	}
+
 	EQOS_TXUNLOCK(sc);
+
+	kthread_exit(0);
 }
 
 static void
@@ -1199,12 +1237,6 @@ eqos_intr(void *arg)
 		sc->sc_ev_rxintr.ev_count++;
 	}
 
-	if ((dma_status & GMAC_DMA_CHAN0_STATUS_TI) != 0) {
-		dma_intr_enable &= ~GMAC_DMA_CHAN0_STATUS_TI;
-		WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
-		workqueue_enqueue(sc->sc_wq, &sc->sc_txwork, NULL);
-		sc->sc_ev_txintr.ev_count++;
-	}
 	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
 
 	EQOS_UNLOCK(sc);
@@ -1615,12 +1647,23 @@ eqos_attach(struct eqos_softc *sc)
 		return EINVAL;
 	}
 
-	/* Work queue for packet processing */
+	/* Receive workers */
 	error = workqueue_create(&sc->sc_wq, device_xname(sc->sc_dev),
-	    eqos_worker, sc, PRI_SOFTNET, IPL_NET, WQ_MPSAFE | WQ_PERCPU);
+	    eqos_receive, sc, PRI_SOFTNET, IPL_NET, WQ_MPSAFE | WQ_PERCPU);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "failed to create TX/RX workqueue: %d\n", error);
+		    "failed to create receive workqueue: %d\n", error);
+		return error;
+	}
+
+	/* Transmit thread */
+	cv_init(&sc->sc_startcv, "idle");
+	error = kthread_create(PRI_SOFTNET, KTHREAD_MPSAFE, NULL,
+	    eqos_transmit, sc, &sc->sc_startlwp, "%s-tx",
+	    device_xname(sc->sc_dev));
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to create transmit thread: %d\n", error);
 		return error;
 	}
 
