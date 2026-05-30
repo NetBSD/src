@@ -1,4 +1,4 @@
-/*	$NetBSD: write_pid.c,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: write_pid.c,v 1.3 2026/05/30 10:14:27 roy Exp $	*/
 
 /*
  * Copyright (c) 1999 - 2001 Kungliga Tekniska Högskolan
@@ -82,14 +82,14 @@ pid_file_delete(char **filename)
     }
 }
 
-static char *pidfile_path;
-static pid_t pidfile_pid;
+static char *rk_pidfile_path;
+static pid_t rk_pidfile_pid;
 
 static void
 pidfile_cleanup(void)
 {
-    if (pidfile_path != NULL && pidfile_pid == getpid())
-	pid_file_delete(&pidfile_path);
+    if (rk_pidfile_path != NULL && rk_pidfile_pid == getpid())
+	pid_file_delete(&rk_pidfile_path);
 }
 
 ROKEN_LIB_FUNCTION void ROKEN_LIB_CALL
@@ -104,17 +104,17 @@ rk_pidfile(const char *bname)
     pidfile(bname);
 #endif
 
-    if (pidfile_path != NULL)
+    if (rk_pidfile_path != NULL)
 	return;
     if (bname == NULL)
 	bname = getprogname();
-    pidfile_path = pid_file_write(bname);
-    pidfile_pid = getpid();
+    rk_pidfile_path = pid_file_write(bname);
+    rk_pidfile_pid = getpid();
 #if defined(HAVE_ATEXIT)
-    if (pidfile_path != NULL)
+    if (rk_pidfile_path != NULL)
         atexit(pidfile_cleanup);
 #elif defined(HAVE_ON_EXIT)
-    if (pidfile_path != NULL)
+    if (rk_pidfile_path != NULL)
         on_exit(pidfile_cleanup);
 #endif
 }
