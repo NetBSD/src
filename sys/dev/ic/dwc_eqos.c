@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.45 2026/05/30 09:50:35 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.46 2026/05/30 10:05:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.45 2026/05/30 09:50:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.46 2026/05/30 10:05:20 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -150,15 +150,13 @@ eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	    GMAC_MAC_MDIO_ADDRESS_GOC_READ | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
-	delay(10000);
-
 	for (retry = MII_BUSY_RETRY; retry > 0; retry--) {
+		delay(10);
 		addr = RD4(sc, GMAC_MAC_MDIO_ADDRESS);
 		if ((addr & GMAC_MAC_MDIO_ADDRESS_GB) == 0) {
 			*val = RD4(sc, GMAC_MAC_MDIO_DATA) & 0xFFFF;
 			break;
 		}
-		delay(10);
 	}
 	if (retry == 0) {
 		device_printf(dev, "phy read timeout, phy=%d reg=%d\n",
@@ -184,14 +182,12 @@ eqos_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	    GMAC_MAC_MDIO_ADDRESS_GOC_WRITE | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
-	delay(10000);
-
 	for (retry = MII_BUSY_RETRY; retry > 0; retry--) {
+		delay(10);
 		addr = RD4(sc, GMAC_MAC_MDIO_ADDRESS);
 		if ((addr & GMAC_MAC_MDIO_ADDRESS_GB) == 0) {
 			break;
 		}
-		delay(10);
 	}
 	if (retry == 0) {
 		device_printf(dev, "phy write timeout, phy=%d reg=%d\n",
@@ -451,6 +447,7 @@ eqos_alloc_mbufcl(struct eqos_softc *sc)
 	m = m_getcl(M_NOWAIT, MT_DATA, M_PKTHDR);
 	if (m != NULL)
 		m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
+	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
 
 	return m;
 }
@@ -512,33 +509,58 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	EQOS_ASSERT_LOCKED(sc);
 
 	pfil = RD4(sc, GMAC_MAC_PACKET_FILTER);
+
+	/* turn off promiscous mode */
+	/* turn off the receive-all mode */
+	/* turn off the non-UDP/TCP filter */
+	/* turn off broadcast filter */
+	/* turn off pass all multicast mode */
+	/* turn on  hash or perfect mode */
+	/* turn off source address filter */
+	/* turn off inverse source address filter */
+	/* turn off inverse destination address filter */
+	/* turn off multicast hash table matching */
+	/* turn off unicast hash table matching */
+	/* XXX keep IP Layer3+4 filter */
+	/* XXX keep VLAN tag filter */
+	/* don't pass control packets */
 	pfil &= ~(GMAC_MAC_PACKET_FILTER_PR |
+		  GMAC_MAC_PACKET_FILTER_RA |
+		  GMAC_MAC_PACKET_FILTER_DNTU |
+		  GMAC_MAC_PACKET_FILTER_DBF |
 		  GMAC_MAC_PACKET_FILTER_PM |
+		  GMAC_MAC_PACKET_FILTER_SAF |
+		  GMAC_MAC_PACKET_FILTER_SAIF |
+		  GMAC_MAC_PACKET_FILTER_DAIF |
 		  GMAC_MAC_PACKET_FILTER_HMC |
-		  GMAC_MAC_PACKET_FILTER_PCF_MASK);
-	hash[0] = hash[1] = ~0U;
+		  GMAC_MAC_PACKET_FILTER_HUC |
+	          GMAC_MAC_PACKET_FILTER_PCF_MASK);
+	pfil |= GMAC_MAC_PACKET_FILTER_HPF;
 
 	ETHER_LOCK(ec);
 	if ((sc->sc_if_flags & IFF_PROMISC) != 0)  {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		pfil |= GMAC_MAC_PACKET_FILTER_PR |
-			GMAC_MAC_PACKET_FILTER_PCF_ALL;
+		/* enable promiscous mode */
+		pfil |= GMAC_MAC_PACKET_FILTER_PR;
+		/* also receive control packets */
+		pfil |= GMAC_MAC_PACKET_FILTER_PCF_ALL;
+		/* ignored */
+		hash[0] = hash[1] = ~0U;
 	} else {
-		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
-		hash[0] = hash[1] = 0;
+		hash[0] = hash[1] = 0U;
 		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+		/* enable multicast hash table matching */
+		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				ETHER_ADDR_LEN) != 0) {
-				ec->ec_flags |= ETHER_F_ALLMULTI;
+				/* disable multicast hash table matching */
 				pfil &= ~GMAC_MAC_PACKET_FILTER_HMC;
+				/* pass all multicast instead */
 				pfil |= GMAC_MAC_PACKET_FILTER_PM;
-				/*
-				 * Shouldn't matter if we clear HMC but
-				 * let's avoid using different values.
-				 */
-				hash[0] = hash[1] = 0xffffffff;
+				/* ignored */
+				hash[0] = hash[1] = ~0U;
 				break;
 			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -554,13 +576,16 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 
 	/* Write our unicast address */
 	eaddr = CLLADDR(ifp->if_sadl);
-	val = eaddr[4] | (eaddr[5] << 8) | GMAC_MAC_ADDRESS0_HIGH_AE;
+	val = eaddr[4] | (eaddr[5] << 8);
+	val = __SHIFTIN(val, GMAC_MAC_ADDRESS_HIGH_ADDR)
+	    | GMAC_MAC_ADDRESS_HIGH_AE;
 	WR4(sc, GMAC_MAC_ADDRESS0_HIGH, val);
 	val = eaddr[0] | (eaddr[1] << 8) | (eaddr[2] << 16) |
 	    (eaddr[3] << 24);
 	WR4(sc, GMAC_MAC_ADDRESS0_LOW, val);
 
 	/* Multicast hash filters */
+	/* XXX assumes 64 bit hashtable size */
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG0, hash[0]);
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG1, hash[1]);
 
@@ -630,8 +655,11 @@ eqos_init_locked(struct eqos_softc *sc)
 	EQOS_ASSERT_LOCKED(sc);
 	EQOS_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0)
+	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		/* Only Setup RX filter */
+		eqos_setup_rxfilter(sc);
 		return 0;
+	}
 
 	/* Setup TX/RX rings */
 	eqos_init_rings(sc, 0);
@@ -838,6 +866,9 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 	discarding = sc->sc_rx_discarding;
 	m0 = sc->sc_rx_receiving_m;
 	mprev = sc->sc_rx_receiving_m_last;
+
+	DPRINTF(EDEB_INTR, "qid: %u, discarding %u, m0 %p\n",
+	    qid, discarding, m0);
 
 	for (index = sc->sc_rx.cur; ; index = RX_NEXT(index)) {
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
@@ -1354,17 +1385,16 @@ eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 	}
 
 	maclo = RD4(sc, GMAC_MAC_ADDRESS0_LOW);
-	machi = RD4(sc, GMAC_MAC_ADDRESS0_HIGH) & 0xFFFF;
-	if ((maclo & 0x00000001) != 0) {
+	machi = __SHIFTOUT(RD4(sc, GMAC_MAC_ADDRESS0_HIGH),
+	    GMAC_MAC_ADDRESS_HIGH_ADDR);
+	if (maclo == 0xFFFFFFFF && machi == 0xFFFF) {
+		/* Create one */
+		maclo = 0x00f2 | (cprng_strong32() << 16);
+		machi = cprng_strong32() & 0xffff;
+	} else if (maclo & 0x00000001) {
 		aprint_error_dev(sc->sc_dev,
 		    "Wrong MAC address. Clearing the multicast bit.\n");
 		maclo &= ~0x00000001;
-	}
-
-	if (maclo == 0xFFFFFFFF && machi == 0xFFFF) {
-		/* Create one */
-		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
-		machi = cprng_strong32() & 0xffff;
 	}
 
 	eaddr[0] = maclo & 0xff;
@@ -1475,7 +1505,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 	sc->sc_tx.queued = TX_DESC_COUNT;
 	for (i = 0; i < TX_DESC_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, EQOS_TXDMA_SIZE,
-		    TX_MAX_SEGS, MCLBYTES, 0, BUS_DMA_WAITOK,
+		    TX_MAX_SEGS, MCLBYTES, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_tx.buf_map[i].map);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
@@ -1515,7 +1546,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 
 	for (i = 0; i < RX_DESC_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    RX_DESC_COUNT, MCLBYTES, 0, BUS_DMA_WAITOK,
+		    RX_DESC_COUNT, MCLBYTES, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_rx.buf_map[i].map);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
