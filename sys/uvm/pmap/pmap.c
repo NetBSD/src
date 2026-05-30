@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2026/05/30 06:23:10 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2026/05/30 06:32:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2026/05/30 06:23:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2026/05/30 06:32:49 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -2018,12 +2018,12 @@ pmap_is_attribute(struct vm_page *pg,
 	pv_entry_t pv = &mdpg->mdpg_first;
 	if (pv->pv_pmap == NULL) {
 		UVMHIST_LOG(pmaphist, " no mappings <--- false", 0, 0, 0, 0);
-		return false;        // no mappings
+		return false;		// no mappings
 	}
 
 	pv_entry_t pv_next;
 	bool result = false;
-	kpreempt_disable();            // XXXNH needed?
+	kpreempt_disable();		// XXXNH needed?
 	VM_PAGEMD_PVLIST_READLOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 	for (; pv != NULL; pv = pv_next) {
@@ -2055,7 +2055,7 @@ pmap_is_attribute(struct vm_page *pg,
 	}
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-	kpreempt_enable();        // XXXNH?
+	kpreempt_enable();		// XXXNH?
 
 	if (result)
 		pmap_page_set_attributes(mdpg, ops->piao_attribute);
