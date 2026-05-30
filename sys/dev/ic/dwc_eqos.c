@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.46 2026/05/30 10:05:20 mlelstv Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.47 2026/05/30 10:24:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.46 2026/05/30 10:05:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.47 2026/05/30 10:24:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -358,7 +358,15 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m,
 	/* stored in same index as loaded map */
 	sc->sc_tx.buf_map[index].mbuf = m;
 
-	flags = EQOS_TDES3_TX_FD | (ptdes3 == NULL ? EQOS_TDES3_TX_OWN : 0);
+	flags = EQOS_TDES3_TX_FD;
+	if (ptdes3 == NULL) {
+		flags |= EQOS_TDES3_TX_OWN;
+	}
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+		flags |= EQOS_TDES3_TX_CIC_FULL;
+	} else if ((m->m_pkthdr.csum_flags & M_CSUM_IPv4) != 0) {
+		flags |= EQOS_TDES3_TX_CIC_IPHDR;
+	}
 	first_tdes3 = 0;
 
 	for (cur = index, i = 0; i < nsegs; i++) {
@@ -857,6 +865,7 @@ static void
 eqos_rxintr(struct eqos_softc *sc, int qid)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	const uint64_t if_capenable = ifp->if_capenable;
 	int error, index, pkts = 0;
 	struct mbuf *m, *m0, *new_m, *mprev;
 	uint32_t tdes3;
@@ -965,6 +974,31 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			m_set_rcvif(m0, ifp);
 			m0->m_flags |= M_HASFCS;
 			m0->m_nextpkt = NULL;
+
+			if ((tdes3 & EQOS_TDES3_RX_RS1V) != 0 &&
+			    (if_capenable & IFCAP_CSUM_IPv4_Rx) != 0) {
+				uint32_t tdes1 =
+				    le32toh(sc->sc_rx.desc_ring[index].tdes1);
+
+				if ((tdes1 & (EQOS_TDES1_RX_IPCE |
+					      EQOS_TDES1_RX_IPCB)) == 0) {
+					if ((tdes1 & EQOS_TDES1_RX_IPV4) != 0) {
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_IPv4;
+					}
+					switch (tdes1 & EQOS_TDES1_RX_PT_MASK) {
+					case EQOS_TDES1_RX_PT_UDP:
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_UDPv4;
+						break;
+					case EQOS_TDES1_RX_PT_TCP:
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_TCPv4;
+						break;
+					}
+				}
+			}
+
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
 			m0 = mprev = NULL;
 
@@ -1708,8 +1742,10 @@ eqos_attach(struct eqos_softc *sc)
 	ifp->if_ioctl = eqos_ioctl;
 	ifp->if_init = eqos_init;
 	ifp->if_stop = eqos_stop;
-	ifp->if_capabilities = 0;
-	ifp->if_capenable = ifp->if_capabilities;
+	ifp->if_capabilities = IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+            		       IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+            		       IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
+	ifp->if_capenable = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 

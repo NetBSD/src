@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.13 2026/05/30 10:00:14 mlelstv Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.14 2026/05/30 10:24:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -323,6 +323,12 @@
 struct eqos_dma_desc {
 	uint32_t	tdes0;
 	uint32_t	tdes1;
+#define	EQOS_TDES1_RX_IPCE			(1U << 7)	/* RX (WB) */
+#define	EQOS_TDES1_RX_IPCB			(1U << 6)	/* RX (WB) */
+#define	EQOS_TDES1_RX_IPV4			(1U << 4)	/* RX (WB) */
+#define	EQOS_TDES1_RX_PT_MASK			(7U << 0)	/* RX (WB) */
+#define	EQOS_TDES1_RX_PT_UDP			(1U << 0)	/* RX (WB) */
+#define	EQOS_TDES1_RX_PT_TCP			(2U << 0)	/* RX (WB) */
 	uint32_t	tdes2;
 #define	EQOS_TDES2_TX_IOC			(1U << 31)	/* TX */
 	uint32_t	tdes3;
@@ -330,6 +336,8 @@ struct eqos_dma_desc {
 #define	EQOS_TDES3_TX_FD			(1U << 29)	/* TX */
 #define	EQOS_TDES3_TX_LD			(1U << 28)	/* TX */
 #define	EQOS_TDES3_TX_DE			(1U << 23)	/* TX (WB) */
+#define	EQOS_TDES3_TX_CIC_IPHDR			(1U << 16)	/* TX */
+#define	EQOS_TDES3_TX_CIC_FULL			(3U << 16)	/* TX */
 #define	EQOS_TDES3_TX_ES			(1U << 15)	/* TX (WB) */
 #define	EQOS_TDES3_RX_OWN			(1U << 31)	/* RX */
 #define	EQOS_TDES3_RX_IOC			(1U << 30)	/* RX */
@@ -337,6 +345,7 @@ struct eqos_dma_desc {
 #define	EQOS_TDES3_RX_CTXT			(1U << 30)	/* RX (WB) */
 #define	EQOS_TDES3_RX_FD			(1U << 29)	/* RX (WB) */
 #define	EQOS_TDES3_RX_LD			(1U << 28)	/* RX (WB) */
+#define	EQOS_TDES3_RX_RS1V			(1U << 26)	/* RX (WB) */
 #define	EQOS_TDES3_RX_CE			(1U << 24)	/* RX (WB) */
 #define	EQOS_TDES3_RX_GP			(1U << 23)	/* RX (WB) */
 #define	EQOS_TDES3_RX_RWT			(1U << 22)	/* RX (WB) */
