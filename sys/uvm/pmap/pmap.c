@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.100 2026/05/25 07:10:43 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.101 2026/05/30 06:23:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.100 2026/05/25 07:10:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2026/05/30 06:23:10 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1018,7 +1018,7 @@ pmap_page_remove(struct vm_page_md *mdpg)
 
 	pv_entry_t npv;
 	pv_entry_t pvp = NULL;
-
+	u_long attrs = 0;
 	for (; pv != NULL; pv = npv) {
 		npv = pv->pv_next;
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
@@ -1077,6 +1077,11 @@ pmap_page_remove(struct vm_page_md *mdpg)
 			pmap->pm_stats.wired_count--;
 		pmap->pm_stats.resident_count--;
 
+		if (pte_modified_p(pte))
+			attrs |= VM_PAGEMD_MODIFIED;
+		if (pte_referenced_p(pte))
+			attrs |= VM_PAGEMD_REFERENCED;
+
 		pmap_tlb_miss_lock_enter();
 		const pt_entry_t rpte = pte_nv_entry(is_kernel_pmap_p);
 		pte_set(ptep, rpte);
@@ -1105,6 +1110,9 @@ pmap_page_remove(struct vm_page_md *mdpg)
 	pmap_pvlist_check(mdpg);
 	VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 	kpreempt_enable();
+
+	if (attrs != 0)
+		pmap_page_set_attributes(mdpg, attrs);
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
 }
@@ -1306,6 +1314,8 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
 		if (pg != NULL && pte_modified_p(pte)) {
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
+
+			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
 			if (VM_PAGEMD_EXECPAGE_P(mdpg) || (prot & VM_PROT_EXECUTE)) {
 				KASSERT(!VM_PAGEMD_PVLIST_EMPTY_P(mdpg));
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
@@ -2118,7 +2128,12 @@ pmap_clear_modify(struct vm_page *pg)
 		}
 	}
 
-	return pmap_clear_attribute(pg, &pmap_clear_modify_ops);
+	bool rv = pmap_clear_attribute(pg, &pmap_clear_modify_ops);
+
+	UVMHIST_CALLARGS(pmaphist, " <--- done (pg=%#jx (%#jx) = %d)",
+	    (uintptr_t)pg, VM_PAGE_TO_PHYS(pg), rv, 0);
+
+	return rv;
 }
 
 /*
