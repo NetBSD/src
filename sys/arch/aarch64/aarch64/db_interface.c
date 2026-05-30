@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $ */
+/* $NetBSD: db_interface.c,v 1.25 2026/05/30 06:30:14 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_cpuoptions.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.24 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.25 2026/05/30 06:30:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -390,6 +392,10 @@ db_pte_print(pt_entry_t pte, int level,
 
 		pr(", PA=%lx", l3pte_pa(pte));
 
+#ifdef ARMV81_HAFDBS
+		if (pte & LX_BLKPAG_DBM)
+			pr(", %s", "DBM");
+#endif
 		pr(", %s", (pte & LX_BLKPAG_UXN) ? "UXN" : "UX");
 		pr(", %s", (pte & LX_BLKPAG_PXN) ? "PXN" : "PX");
 
