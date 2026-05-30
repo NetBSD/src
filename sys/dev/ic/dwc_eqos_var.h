@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.13 2026/05/30 09:50:35 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.14 2026/05/30 11:00:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -78,8 +78,7 @@ struct eqos_softc {
 	struct eqos_ring	sc_rx;
 	struct workqueue	*sc_wq;
 	struct work		sc_rxwork;
-	lwp_t			*sc_startlwp;
-	kcondvar_t		sc_startcv;
+	void			*sc_tx_si;
 
 	/* receiving context for jumbo frame */
 	bool			sc_rx_discarding;

@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.47 2026/05/30 10:24:04 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.48 2026/05/30 11:00:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.47 2026/05/30 10:24:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.48 2026/05/30 11:00:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.47 2026/05/30 10:24:04 jmcneill Exp $
 #include <sys/cprng.h>
 #include <sys/evcnt.h>
 #include <sys/sysctl.h>
-#include <sys/kthread.h>
 #include <sys/rndsource.h>
 
 #include <net/if.h>
@@ -295,7 +294,7 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		tdes3 = 0;
 		--sc->sc_tx.queued;
 	} else {
-		tdes2 = 0;
+		tdes2 = (flags & EQOS_TDES3_TX_LD) ? EQOS_TDES2_TX_IOC : 0;
 		tdes3 = flags;
 		++sc->sc_tx.queued;
 	}
@@ -468,7 +467,8 @@ eqos_enable_intr(struct eqos_softc *sc)
 	    GMAC_DMA_CHAN0_INTR_ENABLE_NIE |
 	    GMAC_DMA_CHAN0_INTR_ENABLE_AIE |
 	    GMAC_DMA_CHAN0_INTR_ENABLE_FBE |
-	    GMAC_DMA_CHAN0_INTR_ENABLE_RIE);
+	    GMAC_DMA_CHAN0_INTR_ENABLE_RIE |
+	    GMAC_DMA_CHAN0_INTR_ENABLE_TIE);
 }
 
 static void
@@ -1184,9 +1184,9 @@ eqos_start(struct ifnet *ifp)
 {
 	struct eqos_softc * const sc = ifp->if_softc;
 
-	EQOS_LOCK(sc);
-	cv_signal(&sc->sc_startcv);
-	EQOS_UNLOCK(sc);
+	EQOS_TXLOCK(sc);
+	eqos_start_locked(sc);
+	EQOS_TXUNLOCK(sc);
 }
 
 static void
@@ -1200,28 +1200,27 @@ eqos_receive(struct work *wk, void *arg)
 	eqos_rxintr(sc, 0);
 
 	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
-	dma_intr_enable |= GMAC_DMA_CHAN0_STATUS_RI;
+	dma_intr_enable |= GMAC_DMA_CHAN0_INTR_ENABLE_RIE;
 	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
 
 	EQOS_UNLOCK(sc);
 }
 
 static void
-eqos_transmit(void *arg)
+eqos_txsoftintr(void *arg)
 {
 	struct eqos_softc *sc = arg;
+	uint32_t dma_intr_enable;
 
 	EQOS_TXLOCK(sc);
-	for (;;) {
-		cv_wait(&sc->sc_startcv, &sc->sc_txlock);
-
-		eqos_txintr(sc, 0);
-		eqos_start_locked(sc);
-	}
-
+	eqos_txintr(sc, 0);
 	EQOS_TXUNLOCK(sc);
 
-	kthread_exit(0);
+	EQOS_LOCK(sc);
+	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
+	dma_intr_enable |= GMAC_DMA_CHAN0_INTR_ENABLE_TIE;
+	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+	EQOS_UNLOCK(sc);
 }
 
 static void
@@ -1271,6 +1270,7 @@ eqos_intr(void *arg)
 	struct eqos_softc * const sc = arg;
 	uint32_t mac_status, mtl_status, dma_status, dma_intr_enable,
 		 rx_tx_status;
+	bool do_txintr = false;
 
 	EQOS_LOCK(sc);
 
@@ -1296,10 +1296,17 @@ eqos_intr(void *arg)
 	}
 
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_RI) != 0) {
-		dma_intr_enable &= ~GMAC_DMA_CHAN0_STATUS_RI;
+		dma_intr_enable &= ~GMAC_DMA_CHAN0_INTR_ENABLE_RIE;
 		WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
 		workqueue_enqueue(sc->sc_wq, &sc->sc_rxwork, NULL);
 		sc->sc_ev_rxintr.ev_count++;
+	}
+
+	if ((dma_status & GMAC_DMA_CHAN0_STATUS_TI) != 0) {
+		do_txintr = true;
+		dma_intr_enable &= ~GMAC_DMA_CHAN0_INTR_ENABLE_TIE;
+		WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+		sc->sc_ev_txintr.ev_count++;
 	}
 
 	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
@@ -1329,6 +1336,10 @@ eqos_intr(void *arg)
 
 		DPRINTF(EDEB_INTR, "GMAC_MAC_RX_TX_STATUS = 1x%08x\n",
 		    rx_tx_status);
+	}
+
+	if (do_txintr) {
+		softint_schedule(sc->sc_tx_si);
 	}
 
 	return 1;
@@ -1722,16 +1733,9 @@ eqos_attach(struct eqos_softc *sc)
 		return error;
 	}
 
-	/* Transmit thread */
-	cv_init(&sc->sc_startcv, "idle");
-	error = kthread_create(PRI_SOFTNET, KTHREAD_MPSAFE, NULL,
-	    eqos_transmit, sc, &sc->sc_startlwp, "%s-tx",
-	    device_xname(sc->sc_dev));
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "failed to create transmit thread: %d\n", error);
-		return error;
-	}
+	/* Transmit softint */
+	sc->sc_tx_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    eqos_txsoftintr, sc);
 
 	/* Setup ethernet interface */
 	ifp->if_softc = sc;
