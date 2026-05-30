@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2026/05/30 06:35:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2026/05/30 06:43:14 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2026/05/30 06:35:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2026/05/30 06:43:14 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1308,11 +1308,11 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 	 * Change protection on every valid mapping within this segment.
 	 */
 	for (; sva < eva; sva += NBPG, ptep++) {
-		pt_entry_t pte = atomic_load_relaxed(ptep);
-		if (!pte_valid_p(pte))
+		pt_entry_t opte = atomic_load_relaxed(ptep);
+		if (!pte_valid_p(opte))
 			continue;
-		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(pte));
-		if (pg != NULL && pte_modified_p(pte)) {
+		struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(opte));
+		if (pg != NULL && pte_modified_p(opte)) {
 			struct vm_page_md * const mdpg = VM_PAGE_TO_MD(pg);
 
 			pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED);
@@ -1333,16 +1333,18 @@ pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
 #endif
 			}
 		}
-		pte = pte_prot_downgrade(pte, prot);
-		if (atomic_load_relaxed(ptep) != pte) {
+		pt_entry_t npte = pte_prot_downgrade(opte, prot);
+		if (atomic_load_relaxed(ptep) != npte) {
 			pmap_tlb_miss_lock_enter();
-			pte_set(ptep, pte);
+			pte_set(ptep, npte);
 			/*
 			 * Update the TLB if needed.
 			 */
-			pmap_tlb_update_addr(pmap, sva, pte, PMAP_TLB_NEED_IPI);
+			pmap_tlb_update_addr(pmap, sva, npte, PMAP_TLB_NEED_IPI);
 			pmap_tlb_miss_lock_exit();
 		}
+		UVMHIST_LOG(pmaphist, " pm=%p va=#%#jx pte=%#jx -> %#jx",
+		    (uintptr_t)pmap, (uintptr_t)sva, opte, npte);
 	}
 
 	UVMHIST_LOG(pmaphist, " <-- done", 0, 0, 0, 0);
