@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.48 2026/05/30 11:00:34 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.49 2026/05/30 13:36:22 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.48 2026/05/30 11:00:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.49 2026/05/30 13:36:22 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1210,11 +1210,14 @@ static void
 eqos_txsoftintr(void *arg)
 {
 	struct eqos_softc *sc = arg;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	uint32_t dma_intr_enable;
 
 	EQOS_TXLOCK(sc);
 	eqos_txintr(sc, 0);
 	EQOS_TXUNLOCK(sc);
+
+	if_schedule_deferred_start(ifp);
 
 	EQOS_LOCK(sc);
 	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
