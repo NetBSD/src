@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.99 2026/01/31 00:38:45 gutteridge Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.100 2026/05/30 13:09:20 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.99 2026/01/31 00:38:45 gutteridge Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.100 2026/05/30 13:09:20 jakllsch Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1558,7 +1558,7 @@ dwc_gmac_desc_std_rx_init_flags(struct dwc_gmac_dev_dmadesc *desc)
 {
 
 	desc->ddesc_status0 = 0;
-	desc->ddesc_cntl1 = htole32(DDESC_CNTL_TXCHAIN);
+	desc->ddesc_cntl1 = htole32(DDESC_CNTL_RXCHAIN);
 }
 
 static int
