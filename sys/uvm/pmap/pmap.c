@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.102 2026/05/30 06:32:49 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.103 2026/05/30 06:35:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2026/05/30 06:32:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2026/05/30 06:35:04 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -1293,7 +1293,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 static bool
 pmap_pte_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
-	uintptr_t flags)
+    uintptr_t flags)
 {
 	const vm_prot_t prot = (flags & VM_PROT_ALL);
 
@@ -1696,7 +1696,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 
 static bool
 pmap_pte_kremove(pmap_t pmap, vaddr_t sva, vaddr_t eva, pt_entry_t *ptep,
-	uintptr_t flags)
+    uintptr_t flags)
 {
 	const pt_entry_t krpte = pte_nv_entry(true);
 
