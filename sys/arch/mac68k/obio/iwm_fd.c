@@ -1,4 +1,4 @@
-/*	$NetBSD: iwm_fd.c,v 1.62 2025/08/06 17:25:38 hauke Exp $	*/
+/*	$NetBSD: iwm_fd.c,v 1.63 2026/05/30 10:10:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 Hauke Fath.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.62 2025/08/06 17:25:38 hauke Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.63 2026/05/30 10:10:11 thorpej Exp $");
 
 #include "locators.h"
 
@@ -51,7 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: iwm_fd.c,v 1.62 2025/08/06 17:25:38 hauke Exp $");
 #include <sys/disklabel.h>
 
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/uio.h>
@@ -786,12 +785,6 @@ fdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 		if (result == 0)
 			fd->writeLabel = *(int *)data;
-		break;
-
-	case DIOCSBAD:
-		if (TRACE_IOCTL)
-			printf(" DIOCSBAD: No bad144-style handling.\n");
-		result = EINVAL;
 		break;
 
 	case ODIOCEJECT:

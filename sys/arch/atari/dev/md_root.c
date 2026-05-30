@@ -1,4 +1,4 @@
-/*	$NetBSD: md_root.c,v 1.36 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: md_root.c,v 1.37 2026/05/30 10:10:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.36 2023/01/06 10:28:28 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.37 2026/05/30 10:10:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: md_root.c,v 1.36 2023/01/06 10:28:28 tsutsui Exp $")
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 
 #include <dev/cons.h>
 #include <dev/md.h>

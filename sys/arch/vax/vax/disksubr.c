@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.54 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.55 2026/05/30 10:10:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.54 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.55 2026/05/30 10:10:11 thorpej Exp $");
 
 #include "opt_compat_ultrix.h"
 
@@ -40,7 +40,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.54 2019/04/03 22:10:51 christos Exp $
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
 #include <sys/syslog.h>

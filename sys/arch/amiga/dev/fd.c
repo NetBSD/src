@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.104 2023/10/14 08:05:26 andvar Exp $ */
+/*	$NetBSD: fd.c,v 1.105 2026/05/30 10:10:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.104 2023/10/14 08:05:26 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105 2026/05/30 10:10:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.104 2023/10/14 08:05:26 andvar Exp $");
 #include <sys/fcntl.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 #include <sys/proc.h>
 #include <sys/conf.h>
 
@@ -580,8 +579,6 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		return error;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return(EINVAL);
 	case DIOCSRETRIES:
 		if (*(int *)addr < 0)
 			return(EINVAL);

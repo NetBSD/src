@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.99 2024/07/20 20:36:33 andvar Exp $	*/
+/*	$NetBSD: fd.c,v 1.100 2026/05/30 10:10:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2024/07/20 20:36:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.100 2026/05/30 10:10:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.99 2024/07/20 20:36:33 andvar Exp $");
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 #include <atari/atari/device.h>
 #include <atari/atari/stalloc.h>
 #include <machine/disklabel.h>
@@ -439,8 +438,6 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 		return error;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return EINVAL;
 #ifdef notyet /* XXX LWP */
 	case DIOCSRETRIES:
 	case DIOCSSTEP:
