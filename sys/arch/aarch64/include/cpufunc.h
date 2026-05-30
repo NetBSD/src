@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.29 2026/02/03 08:47:05 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.30 2026/05/30 06:31:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -31,10 +31,10 @@
 
 #ifdef _KERNEL
 
-#include <arm/armreg.h>
+#include <sys/cpu.h>
 #include <sys/device_if.h>
 
-#include <sys/cpu.h>
+#include <arm/armreg.h>
 
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
