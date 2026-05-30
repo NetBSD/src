@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.71 2025/12/14 16:28:05 kre Exp $	*/
+/*	$NetBSD: util.h,v 1.72 2026/05/30 10:09:47 roy Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -112,10 +112,16 @@ int		openpty(int *, int *, char *, struct termios *,
 time_t		parsedate(const char *, const time_t *, const int *)
     __RENAME(__parsedate50);
 #endif
+
 int		pidfile(const char *);
 pid_t		pidfile_lock(const char *);
 pid_t		pidfile_read(const char *);
 int		pidfile_clean(void);
+int		pidfile_unlock(void);
+int		pidfile_fd(void);
+const char *	pidfile_path(void);
+void		pidfile_unremoveable(void);
+
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
 #ifndef __LIBC12_SOURCE__

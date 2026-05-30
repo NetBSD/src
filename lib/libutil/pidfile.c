@@ -1,7 +1,8 @@
-/*	$NetBSD: pidfile.c,v 1.16 2021/08/01 15:29:29 andvar Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.17 2026/05/30 10:09:47 roy Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2016 The NetBSD Foundation, Inc.
+ * SPDX-License-Identifier: BSD-2-Clause
+ * Copyright (c) 1999, 2016, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,40 +30,96 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pidfile.c,v 1.16 2021/08/01 15:29:29 andvar Exp $");
-#endif
-
 #include <sys/param.h>
+#include <sys/file.h>
+#include <sys/stat.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <paths.h>
 #include <stdbool.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
+#ifdef PIDFILE_LOCAL
+#include "pidfile.h"
+#else
 #include <util.h>
+#endif
 
-static pid_t pidfile_pid;
-static char pidfile_path[PATH_MAX];
-static int pidfile_fd = -1;
+#ifdef __RCSID
+__RCSID("$NetBSD: pidfile.c,v 1.17 2026/05/30 10:09:47 roy Exp $");
+#endif
 
-/* Closes pidfile resources.
+static char *pf_path;
+static int pf_fd = -1;
+static bool pf_removeable = true;
+
+/* Reads a pid from a file descriptor */
+static pid_t
+pidfile_readfd(int fd)
+{
+	char buf[16], *eptr;
+	int error;
+	ssize_t n;
+	pid_t pid = -1;
+
+	if (lseek(fd, 0, SEEK_SET) == -1)
+		return -1;
+
+	n = read(fd, buf, sizeof(buf) - 1);
+	if (n == -1)
+		return -1;
+
+	buf[n] = '\0';
+	pid = (pid_t)strtoi(buf, &eptr, 10, 1, INT_MAX, &error);
+	if (error != 0 && !(error == ENOTSUP && *eptr == '\n'))
+		return -1;
+
+	return pid;
+}
+
+int
+pidfile_fd(void)
+{
+
+	return pf_fd;
+}
+
+const char *
+pidfile_path(void)
+{
+
+	return pf_path;
+}
+
+void
+pidfile_unremoveable(void)
+{
+
+	pf_removeable = false;
+}
+
+/* Releases pidfile resources.
  *
  * Returns 0 on success, otherwise -1. */
-static int
-pidfile_close(void)
+int
+pidfile_unlock(void)
 {
 	int error;
 
-	pidfile_pid = 0;
-	error = close(pidfile_fd);
-	pidfile_fd = -1;
-	pidfile_path[0] = '\0';
+	if (pf_fd == -1)
+		error = EBADF;
+	else {
+		error = close(pf_fd);
+		pf_fd = -1;
+	}
+	free(pf_path);
+	pf_path = NULL;
 	return error;
 }
 
@@ -76,22 +133,26 @@ int
 pidfile_clean(void)
 {
 	int error;
+	pid_t pid;
 
-	if (pidfile_fd == -1) {
+	if (pf_fd == -1) {
 		errno = EBADF;
 		return -1;
 	}
 
-	if (pidfile_pid != getpid())
-		error = EPERM;
-	else if (ftruncate(pidfile_fd, 0) == -1)
+	pid = pidfile_readfd(pf_fd);
+	if (pid == -1)
 		error = errno;
-	else {
-		(void) unlink(pidfile_path);
+	else if (pid != getpid())
+		error = EPERM;
+	else if (ftruncate(pf_fd, 0) == -1)
+		error = errno;
+	else if (pf_removeable && unlink(pf_path) == -1)
+		error = errno;
+	else
 		error = 0;
-	}
 
-	(void) pidfile_close();
+	(void)pidfile_unlock();
 
 	if (error != 0) {
 		errno = error;
@@ -105,7 +166,7 @@ static void
 pidfile_cleanup(void)
 {
 
-	pidfile_clean();
+	(void)pidfile_clean();
 }
 
 /* Constructs a name for a pidfile in the default location (/var/run).
@@ -114,19 +175,14 @@ pidfile_cleanup(void)
  *
  * Returns 0 on success, otherwise -1. */
 static int
-pidfile_varrun_path(char *path, size_t len, const char *bname)
+pidfile_varrun_path(char **path, const char *bname)
 {
 
 	if (bname == NULL)
 		bname = getprogname();
 
 	/* _PATH_VARRUN includes trailing / */
-	if ((size_t)snprintf(path, len, "%s%s.pid", _PATH_VARRUN, bname) >= len)
-	{
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	return 0;
+	return asprintf(path, "%s%s.pid", _PATH_VARRUN, bname);
 }
 
 /* Returns the process ID inside path on success, otherwise -1.
@@ -134,40 +190,33 @@ pidfile_varrun_path(char *path, size_t len, const char *bname)
 pid_t
 pidfile_read(const char *path)
 {
-	char dpath[PATH_MAX], buf[16], *eptr;
-	int fd, error;
-	ssize_t n;
-	pid_t pid;
+	char *dpath = NULL;
+	int fd;
+	pid_t pid = -1;
 
-	if (path == NULL && pidfile_path[0] != '\0')
-		path = pidfile_path;
+	if (path == NULL && pf_path != NULL)
+		path = pf_path;
 	if (path == NULL || strchr(path, '/') == NULL) {
-		if (pidfile_varrun_path(dpath, sizeof(dpath), path) == -1)
-			return -1;
+		if (pidfile_varrun_path(&dpath, path) == -1)
+			goto out;
 		path = dpath;
 	}
 
-	if ((fd = open(path, O_RDONLY | O_CLOEXEC | O_NONBLOCK)) == -1)
-		return  -1;
-	n = read(fd, buf, sizeof(buf) - 1);
-	error = errno;
-	(void) close(fd);
-	if (n == -1) {
-		errno = error;
-		return -1;
-	}
-	buf[n] = '\0';
-	pid = (pid_t)strtoi(buf, &eptr, 10, 1, INT_MAX, &error);
-	if (error && !(error == ENOTSUP && *eptr == '\n')) {
-		errno = error;
-		return -1;
-	}
+	if (pf_fd != -1 && strcmp(path, pf_path) == 0)
+		fd = pf_fd;
+	else if ((fd = open(path, O_RDONLY | O_NONBLOCK)) == -1)
+		goto out;
+
+	pid = pidfile_readfd(fd);
+
+out:
+	free(dpath);
 	return pid;
 }
 
 /* Locks the pidfile specified by path and writes the process pid to it.
- * The new pidfile is "registered" in the global variables pidfile_fd,
- * pidfile_path and pidfile_pid so that any further call to pidfile_lock(3)
+ * The new pidfile is "registered" in the global variables pf_fd,
+ * pf_path and so that any further call to pidfile_lock(3)
  * can check if we are recreating the same file or a new one.
  *
  * Returns 0 on success, otherwise the pid of the process who owns the
@@ -175,33 +224,65 @@ pidfile_read(const char *path)
 pid_t
 pidfile_lock(const char *path)
 {
-	char dpath[PATH_MAX];
+	char *dpath = NULL;
 	static bool registered_atexit = false;
+	pid_t pid = -1;
 
 	/* Register for cleanup with atexit. */
 	if (!registered_atexit) {
 		if (atexit(pidfile_cleanup) == -1)
-			return -1;
+			goto out;
 		registered_atexit = true;
 	}
 
 	if (path == NULL || strchr(path, '/') == NULL) {
-		if (pidfile_varrun_path(dpath, sizeof(dpath), path) == -1)
-			return -1;
+		if (pidfile_varrun_path(&dpath, path) == -1)
+			goto out;
 		path = dpath;
 	}
 
 	/* If path has changed (no good reason), clean up the old pidfile. */
-	if (pidfile_fd != -1 && strcmp(pidfile_path, path) != 0)
-		pidfile_clean();
+	if (pf_fd != -1 && strcmp(pf_path, path) != 0)
+		(void)pidfile_clean();
 
-	if (pidfile_fd == -1) {
-		pidfile_fd = open(path,
-		    O_WRONLY | O_CREAT | O_CLOEXEC | O_NONBLOCK | O_EXLOCK,
-		    0644);
-		if (pidfile_fd == -1) {
-			pid_t pid;
+	if (pf_fd == -1) {
+		int fd, opts;
 
+		opts = O_RDWR | O_CREAT | O_NONBLOCK;
+#ifdef O_CLOEXEC
+		opts |= O_CLOEXEC;
+#endif
+#ifdef O_EXLOCK
+		opts |= O_EXLOCK;
+#endif
+		if ((fd = open(path, opts, 0644)) == -1)
+			goto return_pid;
+
+#ifndef O_CLOEXEC
+		if ((opts = fcntl(fd, F_GETFD)) == -1 ||
+		    fcntl(fd, F_SETFL, opts | FD_CLOEXEC) == -1) {
+			int error = errno;
+
+			(void)close(fd);
+			errno = error;
+			goto out;
+		}
+#endif
+#ifndef O_EXLOCK
+		if (flock(fd, LOCK_EX | LOCK_NB) == -1) {
+			int error = errno;
+
+			(void)close(fd);
+			if (error != EAGAIN) {
+				errno = error;
+				goto out;
+			}
+			fd = -1;
+		}
+#endif
+
+return_pid:
+		if (fd == -1) {
 			if (errno == EAGAIN) {
 				/* The pidfile is locked, return the process ID
 				 * it contains.
@@ -211,28 +292,34 @@ pidfile_lock(const char *path)
 			} else
 				pid = -1;
 
-			return pid;
+			goto out;
 		}
-		strlcpy(pidfile_path, path, sizeof(pidfile_path));
-	}
 
-	pidfile_pid = getpid();
+		pf_fd = fd;
+		if (path == dpath) {
+			pf_path = dpath;
+			dpath = NULL;
+		} else
+			pf_path = strdup(path);
+	}
 
 	/* Truncate the file, as we could be re-writing it.
 	 * Then write the process ID. */
-	if (ftruncate(pidfile_fd, 0) == -1 ||
-	    lseek(pidfile_fd, 0, SEEK_SET) == -1 ||
-	    dprintf(pidfile_fd, "%d\n", pidfile_pid) == -1)
-	{
+	if (ftruncate(pf_fd, 0) == -1 || lseek(pf_fd, 0, SEEK_SET) == -1 ||
+	    dprintf(pf_fd, "%ld\n", (long)getpid()) == -1) {
 		int error = errno;
 
-		pidfile_cleanup();
+		(void)pidfile_clean();
 		errno = error;
-		return -1;
+		goto out;
 	}
 
 	/* Hold the fd open to persist the lock. */
-	return 0;
+	pid = 0;
+
+out:
+	free(dpath);
+	return pid;
 }
 
 /* The old function.

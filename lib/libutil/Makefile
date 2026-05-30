@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.87 2023/06/03 09:09:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.88 2026/05/30 10:09:47 roy Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -70,6 +70,10 @@ MLINKS+=openpty.3 forkpty.3
 MLINKS+=pidfile.3 pidfile_clean.3
 MLINKS+=pidfile.3 pidfile_lock.3
 MLINKS+=pidfile.3 pidfile_read.3
+MLINKS+=pidfile.3 pidfile_unlock.3
+MLINKS+=pidfile.3 pidfile_fd.3
+MLINKS+=pidfile.3 pidfile_path.3
+MLINKS+=pidfile.3 pidfile_unremoveable.3
 MLINKS+=pw_getconf.3 pw_getpwconf.3
 MLINKS+=pw_init.3 pw_edit.3
 MLINKS+=pw_init.3 pw_prompt.3
