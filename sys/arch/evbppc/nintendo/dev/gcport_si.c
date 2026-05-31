@@ -192,7 +192,7 @@ gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 static int
-siioctl_send(struct si_channel *ch, struct si_payload *gbs)
+siioctl_send(struct si_channel *ch, struct si_payload *p)
 {
 	int err;
 	struct si_softc *sc;
@@ -200,18 +200,18 @@ siioctl_send(struct si_channel *ch, struct si_payload *gbs)
 
 	err = 0;
 	sc = ch->ch_sc;
-	if (gbs->outsize > SIIOBUF_SIZE || gbs->insize > SIIOBUF_SIZE) {
+	if (p->outsize > SIIOBUF_SIZE || p->insize > SIIOBUF_SIZE) {
 		return EINVAL;
 	}
 
 	sd.chan = ch->ch_index;
-	sd.outsize = gbs->outsize;
-	sd.insize = gbs->insize;
-	sd.out = kmem_alloc(gbs->outsize, KM_SLEEP);
-	sd.in = kmem_alloc(gbs->insize, KM_SLEEP);
-	sd.delay = gbs->delay;
+	sd.outsize = p->outsize;
+	sd.insize = p->insize;
+	sd.out = kmem_alloc(p->outsize, KM_SLEEP);
+	sd.in = kmem_alloc(p->insize, KM_SLEEP);
+	sd.delay = p->delay;
 
-	if ((err = copyin(gbs->out, sd.out, sd.outsize)) != 0) {
+	if ((err = copyin(p->out, sd.out, sd.outsize)) != 0) {
 		goto si_send_cleanup;
 	}
 
@@ -219,11 +219,11 @@ siioctl_send(struct si_channel *ch, struct si_payload *gbs)
 		goto si_send_cleanup;
 	}
 
-	if ((err = copyout(sd.in, gbs->in, sd.insize)) != 0) {
+	if ((err = copyout(sd.in, p->in, sd.insize)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	if ((err = copyout(&sd.status, gbs->status, sizeof(uint32_t))) != 0) {
+	if ((err = copyout(&sd.status, p->status, sizeof(uint32_t))) != 0) {
 		goto si_send_cleanup;
 	}
 si_send_cleanup:
