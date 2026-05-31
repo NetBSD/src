@@ -4,13 +4,10 @@ include "arch/evbarm/conf/GENERIC64"
 
 options 	PMAP_MI
 
-# Hardware management of the Access flag and dirty state (HAFDBS).
-no options 	ARMV81_HAFDBS
-
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 
 #options 	LOCKDEBUG
-#options 	PMAP_DEBUG
+options 	PMAP_DEBUG

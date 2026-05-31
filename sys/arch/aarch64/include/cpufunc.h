@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.30 2026/05/30 06:31:00 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.31 2026/05/31 09:04:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -30,6 +30,8 @@
 #define _AARCH64_CPUFUNC_H_
 
 #ifdef _KERNEL
+
+#include "opt_cpuoptions.h"
 
 #include <sys/cpu.h>
 #include <sys/device_if.h>
@@ -216,5 +218,33 @@ aarch64_strip_pac(uint64_t __val)
 		return __val | AARCH64_ADDRESS_TAGPAC_MASK;
 	return __val & ~AARCH64_ADDRESS_TAGPAC_MASK;
 }
+
+
+#ifdef ARMV81_HAFDBS
+static inline bool
+cpu_has_hw_mod_p(void)
+{
+	return aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_AD;
+}
+
+static inline bool
+cpu_has_hw_ref_p(void)
+{
+	return aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE;
+}
+
+#else
+static inline bool
+cpu_has_hw_mod_p(void)
+{
+	return false;
+}
+
+static inline bool
+cpu_has_hw_ref_p(void)
+{
+	return false;
+}
+#endif
 
 #endif /* _AARCH64_CPUFUNC_H_ */

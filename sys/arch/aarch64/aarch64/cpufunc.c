@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.37 2026/02/03 08:47:05 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.38 2026/05/31 09:04:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -26,11 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "opt_cpuoptions.h"
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.37 2026/02/03 08:47:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.38 2026/05/31 09:04:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
