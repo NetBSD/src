@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.17 2026/05/25 07:16:42 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.18 2026/05/31 09:03:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -518,21 +518,22 @@ pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
 	    | LX_BLKPAG_UXN | LX_BLKPAG_PXN
 	;
 
+	const bool writeable_p = (prot & VM_PROT_WRITE) != 0;
+	const bool any_p = (prot & VM_PROT_ALL) != 0;
+
 	/*
 	 * Need to do modified emulation if
 	 * - the page is writeable; and
 	 * - the physical page hasn't already been modified.
 	 */
-	bool mod_emul_p =
-	    (prot & VM_PROT_WRITE) != 0 && !VM_PAGEMD_MODIFIED_P(mdpg);
+	const bool mod_emul_p = writeable_p && !VM_PAGEMD_MODIFIED_P(mdpg);
 
 	/*
 	 * Need to do referenced emulation if
 	 * - the page has any kind of access; and
 	 * - the physical page hasn't already been referenced
 	 */
-	bool ref_emul_p =
-	    (prot & VM_PROT_ALL) != 0 && !VM_PAGEMD_REFERENCED_P(mdpg);
+	bool ref_emul_p = any_p && !VM_PAGEMD_REFERENCED_P(mdpg);
 
 	/*
 	 * When doing modified emulation mark page as RO and
