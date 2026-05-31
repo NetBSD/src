@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3266 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3267 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -262,9 +262,32 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	dumpfs(8): Allow NAME=wedge-label on the command line.
 		[kre 20260507]
 	postfix(1): Import version 3.11.2. [christos 20260508]
+	evbmips: Improve support for running as an emulated
+		MIPS Malta under QEMU. [tls 20260510]
+	macppc: Support volume control buttons on some Macintosh
+		Performa models. [macallan 20260511]
+	macppc: Improve fan management on Xserve G4. [macallan 20260511]
+	mac68k: Switch to the new machine-independent m68k pmap.
+		[thorpej 20260513]
 	bind: Import version 9.20.23. [christos 20260520]
+	kernel: tcp: Reduce the Initial RTO from 3 seconds to
+		1 second as allowed by RFC6298. [kbowling 20260520]
 	unbound(8): Import 1.25.1. [christos 20260521]
-	mac68k: Add EMULFKEYS [nat 20260523]
+	mkimage: New `-C <config>' option. Enables use of
+		out-of-tree config files. [riastradh 20260522]
+	mac68k: Add commented out EMULFKEYS for emulating function
+		keys on mac keyboards without them. [nat 20260523]
+	sparc: Add direct support for managing a wsdisplay(4)
+		to cgfour(4). Previously this was left to
+		bwtwo(4). From tokenalt. [christos 20260525]
 	tmux(1): Import version 3.6b. [christos 20260528]
+	eqos(4): Various performance improvements. [jmcneill 20260528]
+	sh(1): Teach the shell to recognize live updates to the locale
+		variables after startup and adjust its behaviour
+		accordingly. [kre 20260528]
 	services(5), protocols(5): Pull iana-generated services and protocols.
 		[christos 20260529]
+	pidfile(3): New functionality for PID file management in
+		sandboxed applications in libutil. [roy 20260530]
+	eqos(4): Add IPv4/TCPv4/UDPv4 checksum offload support.
+		[jmcneill 20260530]
