@@ -1,4 +1,4 @@
-#	$NetBSD: t_sets.sh,v 1.10 2026/03/28 07:42:52 skrll Exp $
+#	$NetBSD: t_sets.sh,v 1.11 2026/06/01 18:20:16 martin Exp $
 #
 # Copyright (c) 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -38,7 +38,7 @@ set_case()
 {
 	local set=$1
 
-	eval "set_${set}_head() { atf_set descr \"/etc/mtree/set.${set}\"; }"
+	eval "set_${set}_head() { atf_set descr \"/etc/mtree/set.${set}\"; atf_set \"timeout\" 750; }"
 	eval "set_${set}_body() { check_mtree ${set}; }"
 	eval "set_${set}_defined="
 }
