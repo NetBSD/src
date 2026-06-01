@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.31 2026/05/31 09:04:28 skrll Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.32 2026/06/01 09:29:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -31,7 +31,9 @@
 
 #ifdef _KERNEL
 
+#ifdef _KERNEL_OPT
 #include "opt_cpuoptions.h"
+#endif
 
 #include <sys/cpu.h>
 #include <sys/device_if.h>
