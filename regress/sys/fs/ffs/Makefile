@@ -1,4 +1,4 @@
-##	$NetBSD: Makefile,v 1.8 2024/09/08 09:36:48 rillig Exp $
+##	$NetBSD: Makefile,v 1.9 2026/06/01 20:34:17 andvar Exp $
 ##  Notes:
 ##    This set of tests creates a dummy directory tree in /tmp and
 ##    populates it with several files.  The test requires around 1100
@@ -34,8 +34,8 @@ RPART?= d
 RPART?= c
 .endif
 
-# As make is called recusively, and we may cd to ${OBJDIR}, we need to call make
-# with some variables propagated.
+# As make is called recursively, and we may cd to ${OBJDIR}, we need to call
+# make with some variables propagated.
 SRCDIR?= ${.CURDIR}
 MAKECMD= ${MAKE} -f ${SRCDIR}/Makefile SRCDIR=${SRCDIR} EN=${EN} VND=${VND} MPART=${MPART} RPART=${RPART}
 

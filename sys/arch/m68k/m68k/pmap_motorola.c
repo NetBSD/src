@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.108 2026/05/06 04:45:04 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.109 2026/06/01 20:34:18 andvar Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.108 2026/05/06 04:45:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.109 2026/06/01 20:34:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1356,7 +1356,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 	/*
 	 * Assumption: if it is not part of our managed memory
-	 * then it must be device memory which may be volitile.
+	 * then it must be device memory which may be volatile.
 	 */
 	else if (pmap_initialized) {
 		checkpv = cacheable = false;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.24 2021/08/07 16:19:17 thorpej Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.25 2026/06/01 20:34:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.24 2021/08/07 16:19:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.25 2026/06/01 20:34:18 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -631,8 +631,8 @@ a2502_init(struct usbd_device *dev)
 
 #if 0
 /*
- * Windows device driver send these sequens of USB requests.
- * However currently I can't understand what the messege is,
+ * Windows device driver send this sequence of USB requests.
+ * However currently I can't understand what the message is,
  * disable this code when I get more information about it.
  */
 static  usbd_status

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.6 2022/05/28 22:16:43 andvar Exp $
+# $NetBSD: Makefile.bootprogs,v 1.7 2026/06/01 20:34:18 andvar Exp $
 
 NOSSP=yes
 NOPIE=yes
@@ -60,7 +60,7 @@ REGION1_SIZE!=		expr 256 \* 1024	# 256k
 
 LDSCRIPT=		${COMMON}/boot.ldscript
 
-# our memory lauout:
+# our memory layout:
 
 #	'unified' boot loaders (e.g. netboot) can consume all of region
 #	1 for their text+data, or text+data+bss.

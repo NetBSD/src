@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0var.h,v 1.6 2009/08/09 06:12:34 kiyohara Exp $ */
+/* $NetBSD: pxa2x0var.h,v 1.7 2026/06/01 20:34:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
@@ -67,7 +67,7 @@ extern void pxa2x0_turbo_mode(int);
 extern int pxa2x0_i2c_master_tx( int, uint8_t *, int );
 
 /*
- * Probe the memory controller to deterimine which SDRAM are
+ * Probe the memory controller to determine which SDRAM are
  * populated, and what size of SDRAM is present in each bank.
  *
  * This routine should be called from a port's initarm()

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.bootprogs,v 1.37 2022/05/28 22:16:43 andvar Exp $
+# $NetBSD: Makefile.bootprogs,v 1.38 2026/06/01 20:34:18 andvar Exp $
 
 NOMAN=			# defined
 
@@ -44,7 +44,7 @@ CFLAGS+=	-Werror ${CWARNFLAGS}
 REGION1_START=		0x20000000		# "Region 1 start"
 REGION1_SIZE!=		expr 256 \* 1024	# 256k
 
-# our memory lauout:
+# our memory layout:
 
 #	'unified' boot loaders (e.g. netboot) can consume all of region
 #	1 for their text+data, or text+data+bss.

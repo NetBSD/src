@@ -1,4 +1,4 @@
-/*	$NetBSD: t_clofork.c,v 1.1 2025/07/17 19:50:40 kre Exp $	*/
+/*	$NetBSD: t_clofork.c,v 1.2 2026/06/01 20:34:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -302,7 +302,7 @@ check_clofork(const struct atf_tc *tc, int fd,
 	case 127:		/* exec failed */
 		atf_tc_fail("failed to exec h_cloexec");
 		return;
-	default:		/* something else went wong */
+	default:		/* something else went wrong */
 		atf_tc_fail("h_cloexec failed unexpectedly: %d",
 		    WEXITSTATUS(status));
 		return;

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_cloexec.c,v 1.1 2024/11/10 15:57:32 riastradh Exp $	*/
+/*	$NetBSD: t_cloexec.c,v 1.2 2026/06/01 20:34:18 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_cloexec.c,v 1.1 2024/11/10 15:57:32 riastradh Exp $");
+__RCSID("$NetBSD: t_cloexec.c,v 1.2 2026/06/01 20:34:18 andvar Exp $");
 
 #include <sys/types.h>
 
@@ -325,7 +325,7 @@ check_cloexec(const struct atf_tc *tc, int fd,
 	case 127:		/* exec failed */
 		atf_tc_fail("failed to exec h_cloexec");
 		return;
-	default:		/* something else went wong */
+	default:		/* something else went wrong */
 		atf_tc_fail("h_cloexec failed unexpectedly: %d",
 		    WEXITSTATUS(status));
 		return;

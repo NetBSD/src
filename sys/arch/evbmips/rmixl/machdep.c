@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:27 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.25 2026/06/01 20:34:18 andvar Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2025/12/21 07:00:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2026/06/01 20:34:18 andvar Exp $");
 
 #define __INTR_PRIVATE
 
@@ -186,7 +186,7 @@ static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
 /*
  * storage for fixed extent used to allocate physical address regions
  * because extent(9) start and end values are u_long, they are only
- * 32 bits on a 32 bit kernel, which is insuffucuent since XLS physical
+ * 32 bits on a 32 bit kernel, which is insufficient since XLS physical
  * address is 40 bits wide.  So the "physaddr" map stores regions
  * in units of megabytes.
  */
