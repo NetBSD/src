@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.248 2026/06/01 09:37:58 jdc Exp $ */
+/*	$NetBSD: autoconf.c,v 1.249 2026/06/01 20:42:57 christos Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.248 2026/06/01 09:37:58 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.249 2026/06/01 20:42:57 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1200,7 +1200,7 @@ device_register(device_t dev, void *aux)
 			return;
 
 		/* i2c device patches */
-		set_i2c_dev_props(dev, device_parent(busdev), aux);
+		set_i2c_dev_props(dev, aux);
 
 		return;
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
