@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.18 2026/05/31 11:31:02 roy Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.19 2026/06/01 18:35:03 roy Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -52,7 +52,7 @@
 #endif
 
 #ifdef __RCSID
-__RCSID("$NetBSD: pidfile.c,v 1.18 2026/05/31 11:31:02 roy Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.19 2026/06/01 18:35:03 roy Exp $");
 #endif
 
 static char *pf_path;
@@ -77,8 +77,10 @@ pidfile_readfd(int fd)
 
 	buf[n] = '\0';
 	pid = (pid_t)strtoi(buf, &eptr, 10, 1, INT_MAX, &error);
-	if (error != 0 && !(error == ENOTSUP && *eptr == '\n'))
+	if (error != 0 && !(error == ENOTSUP && *eptr == '\n')) {
+		errno = error;
 		return -1;
+	}
 
 	return pid;
 }
