@@ -1,4 +1,4 @@
-/*	$NetBSD: t_tcp_connect_port.c,v 1.2 2022/11/17 08:36:54 ozaki-r Exp $	*/
+/*	$NetBSD: t_tcp_connect_port.c,v 1.3 2026/06/01 18:18:04 martin Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__RCSID("$NetBSD: t_tcp_connect_port.c,v 1.2 2022/11/17 08:36:54 ozaki-r Exp $");
+__RCSID("$NetBSD: t_tcp_connect_port.c,v 1.3 2026/06/01 18:18:04 martin Exp $");
 #define USE_RUMPKERNEL	1
 #else
 __FBSDID("$FreeBSD$");
@@ -304,6 +304,7 @@ ATF_TC_HEAD(basic_ipv4, tc)
 #endif
 	atf_tc_set_md_var(tc, "descr",
 	    "Check automatic local port assignment during TCP connect calls");
+	atf_tc_set_md_var(tc, "timeout", "950");
 }
 
 ATF_TC_BODY(basic_ipv4, tc)
@@ -335,6 +336,7 @@ ATF_TC_HEAD(basic_ipv6, tc)
 #endif
 	atf_tc_set_md_var(tc, "descr",
 	    "Check automatic local port assignment during TCP connect calls");
+	atf_tc_set_md_var(tc, "timeout", "950");
 }
 
 ATF_TC_BODY(basic_ipv6, tc)
