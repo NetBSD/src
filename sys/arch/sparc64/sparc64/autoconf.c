@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.249 2026/06/01 20:42:57 christos Exp $ */
+/*	$NetBSD: autoconf.c,v 1.250 2026/06/01 21:27:35 kre Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.249 2026/06/01 20:42:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.250 2026/06/01 21:27:35 kre Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -795,8 +795,10 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			}
 			ma.ma_reg = malloc(sizeof(*ma.ma_reg), M_DEVBUF,
 			    M_NOWAIT);
-			if (ma.ma_reg == NULL)
+			if (ma.ma_reg == NULL) {
+				free(reg32p, M_DEVBUF);
 				continue;
+			}
 			ma.ma_reg->ur_paddr = reg32p[0];
 			ma.ma_reg->ur_paddr = ma.ma_reg->ur_paddr << 32;
 			ma.ma_reg->ur_paddr |= reg32p[1];
@@ -812,7 +814,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 			/* reg is encoded as we expect */
 			if (prom_getprop(node, "reg", sizeof(*ma.ma_reg),
 			    &ma.ma_nreg, &ma.ma_reg) != 0)
-			continue;
+				continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
 			if (ma.ma_nreg)
