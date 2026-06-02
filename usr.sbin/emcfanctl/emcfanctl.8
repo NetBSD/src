@@ -1,4 +1,4 @@
-.\" $NetBSD: emcfanctl.8,v 1.2 2025/03/12 00:43:28 uwe Exp $
+.\" $NetBSD: emcfanctl.8,v 1.3 2026/06/02 17:57:01 andvar Exp $
 .\"
 .\" Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -220,7 +220,7 @@ controller.
 .It Cm fan Ar n Cm status
 Print the stall, spin up and drive status for a particular fan.
 Note that the fan will be marked as stalled if the RPMs are below the
-minumum expected RPM level.
+minimum expected RPM level.
 .Pp
 .It Cm fan Ar n Cm drive read
 Print the current value of the drive level for a particular fan.
@@ -421,7 +421,7 @@ like the following:
            FAN 1:      1159                                       RPM
 .Ed
 .Pp
-This is below the minumum expected RPM that the fan is suppose to run at:
+This is below the minimum expected RPM that the fan is suppose to run at:
 .Bd -literal -offset indent
 # emcfanctl /dev/emcfan0 fan 1 min_expected_rpm read
 Minumum expected rpm:500

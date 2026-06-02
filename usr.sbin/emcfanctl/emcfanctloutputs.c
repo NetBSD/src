@@ -1,4 +1,4 @@
-/*	$NetBSD: emcfanctloutputs.c,v 1.2 2025/03/12 14:01:49 brad Exp $	*/
+/*	$NetBSD: emcfanctloutputs.c,v 1.3 2026/06/02 17:57:01 andvar Exp $	*/
 
 /*
  * Copyright (c) 2025 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #ifdef __RCSID
-__RCSID("$NetBSD: emcfanctloutputs.c,v 1.2 2025/03/12 14:01:49 brad Exp $");
+__RCSID("$NetBSD: emcfanctloutputs.c,v 1.3 2026/06/02 17:57:01 andvar Exp $");
 #endif
 
 #include <inttypes.h>
@@ -273,7 +273,7 @@ output_emcfan_minexpected_rpm(int fd, uint8_t product_id, int product_family, ui
 		if (s != NULL)
 			free(s);
 	} else {
-		printf("Minumum expected rpm:%d\n",human_value);
+		printf("Minimum expected rpm:%d\n",human_value);
 	}
 
  out:
