@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.146 2025/04/07 11:25:42 hans Exp $ */
+/* $NetBSD: wskbd.c,v 1.147 2026/06/02 11:33:25 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.146 2025/04/07 11:25:42 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.147 2026/06/02 11:33:25 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1187,11 +1187,35 @@ getkeyrepeat:
 		return(error);
 
 	case WSKBDIO_GETMAP:
+		int i;
 		umdp = (struct wskbd_map_data *)data;
-		if (umdp->maplen > sc->sc_maplen)
-			umdp->maplen = sc->sc_maplen;
-		error = copyout(sc->sc_map, umdp->map,
+		if (sc->sc_evtrans_len > 0) {
+			/* we're translating scancodes so we need to generate an
+			 * appropriate map or clients will be *very* confused */
+			int new_maplen = 0;
+			int code;
+			struct wscons_keymap new_map[256];
+
+			memset(new_map, 0, sizeof(new_map));
+			for (i = 0; i < sc->sc_evtrans_len; i++) {
+				code = sc->sc_evtrans[i];
+				if (code > 255) continue;
+				if (code >= new_maplen)
+					new_maplen = code + 1;
+				/* do not overwrite entries */
+				if (new_map[code].group1[0] == 0)
+					new_map[code] = sc->sc_map[i];
+			}
+			if (umdp->maplen > new_maplen)
+				umdp->maplen = new_maplen;
+			error = copyout(new_map, umdp->map,
 				umdp->maplen*sizeof(struct wscons_keymap));
+		} else {
+			if (umdp->maplen > sc->sc_maplen)
+				umdp->maplen = sc->sc_maplen;
+			error = copyout(sc->sc_map, umdp->map,
+				umdp->maplen*sizeof(struct wscons_keymap));
+		}
 		return(error);
 
 	case WSKBDIO_GETENCODING:
@@ -1694,7 +1718,7 @@ wskbd_translate(struct wskbd_internal *id, u_int type, int value)
 		update_leds(id);
 		return (0);
 	}
-	
+
 	if (sc != NULL) {
 		if (sc->sc_hotkey != NULL)
 			ishotkey = sc->sc_hotkey(sc, sc->sc_hotkeycookie,
