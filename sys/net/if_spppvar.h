@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.42 2021/06/01 04:59:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.43 2026/06/02 04:08:50 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -192,15 +192,6 @@ struct sppp {
 	 */
 	void	(*pp_tls)(struct sppp *);
 	void	(*pp_tlf)(struct sppp *);
-	/*
-	 * These (optional) functions may be filled by the hardware
-	 * driver if any notification of established connections
-	 * (currently: IPCP up) is desired (pp_con) or any internal
-	 * state change of the interface state machine should be
-	 * signaled for monitoring purposes (pp_chg).
-	 */
-	void	(*pp_con)(struct sppp *);
-	void	(*pp_chg)(struct sppp *, int);
 };
 
 #define PP_KEEPALIVE		0x01	/* use keepalive protocol */

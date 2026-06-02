@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.276 2026/06/02 03:38:15 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.277 2026/06/02 04:08:50 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.276 2026/06/02 03:38:15 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.277 2026/06/02 04:08:50 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -488,12 +488,6 @@ static void sppp_notify_up(struct sppp *);
 static void sppp_notify_down(struct sppp *);
 static void sppp_notify_tls_wlocked(struct sppp *);
 static void sppp_notify_tlf_wlocked(struct sppp *);
-#ifdef INET6
-static void sppp_notify_con_wlocked(struct sppp *);
-#endif
-static void sppp_notify_con(struct sppp *);
-
-static void sppp_notify_chg_wlocked(struct sppp *);
 
 /* our control protocol descriptors */
 static const struct cp lcp = {
@@ -2509,7 +2503,6 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	sppp_open_event(sp, xcp);
 }
 
-
 /*
  * Analyze a configure request.  Return true if it was agreeable, and
  * caused action sca, false if it has been rejected or nak'ed, and
@@ -3120,7 +3113,6 @@ sppp_lcp_tlu(struct sppp *sp)
 	else
 		sppp_change_phase(sp, SPPP_PHASE_NETWORK);
 
-
 	for (i = 0; i < IDX_COUNT; i++) {
 		scp = &sp->scp[(cps[i])->protoidx];
 
@@ -3143,9 +3135,6 @@ sppp_lcp_tlu(struct sppp *sp)
 			sppp_wq_add(sp->wq_cp, &scp->work_open);
 		}
 	}
-
-	/* notify low-level driver of state change */
-	sppp_notify_chg_wlocked(sp);
 }
 
 static void
@@ -4440,8 +4429,6 @@ sppp_ipv6cp_tlu(struct sppp *sp)
 {
 
 	SPPP_LOG(sp, LOG_INFO, "IPv6CP layer up\n");
-	/* we are up - notify isdn daemon */
-	sppp_notify_con_wlocked(sp);
 	sppp_rt_ifmsg(sp);
 }
 
@@ -5634,8 +5621,6 @@ sppp_set_ip_addrs(struct sppp *sp)
 	curlwp_bindx(bound);
 
 	IFNET_UNLOCK(ifp);
-
-	sppp_notify_con(sp);
 }
 
 /*
@@ -6540,44 +6525,6 @@ sppp_notify_tlf_wlocked(struct sppp *sp)
 
 	SPPP_UNLOCK(sp);
 	sp->pp_tlf(sp);
-	SPPP_LOCK(sp, RW_WRITER);
-}
-
-static void
-sppp_notify_con(struct sppp *sp)
-{
-
-	if (!sp->pp_con)
-		return;
-
-	sp->pp_con(sp);
-}
-
-#ifdef INET6
-static void
-sppp_notify_con_wlocked(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-
-	SPPP_UNLOCK(sp);
-	sppp_notify_con(sp);
-	SPPP_LOCK(sp, RW_WRITER);
-
-}
-#endif
-
-static void
-sppp_notify_chg_wlocked(struct sppp *sp)
-{
-
-	KASSERT(SPPP_WLOCKED(sp));
-
-	if (!sp->pp_chg)
-		return;
-
-	SPPP_UNLOCK(sp);
-	sp->pp_chg(sp, sp->pp_phase);
 	SPPP_LOCK(sp, RW_WRITER);
 }
 
