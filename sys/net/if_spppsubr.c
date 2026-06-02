@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.275 2026/03/29 09:19:48 andvar Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.276 2026/06/02 03:38:15 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.275 2026/03/29 09:19:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.276 2026/06/02 03:38:15 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -807,11 +807,10 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 #ifndef SPPPSUBR_MPSAFE
 	struct ifqueue *ifq = NULL;		/* XXX */
 #endif
-	int s, error = 0;
+	int error = 0;
 	uint16_t protocol;
 	size_t pktlen;
 
-	s = splnet();
 	SPPP_LOCK(sp, RW_READER);
 
 	sp->pp_last_activity = time_uptime;
@@ -819,7 +818,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
 		SPPP_UNLOCK(sp);
-		splx(s);
 
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
@@ -833,7 +831,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		    (dst->sa_family == AF_INET6 &&
 		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))) {
 			SPPP_UNLOCK(sp);
-			splx(s);
 
 			m_freem(m);
 			if_statinc(ifp, if_oerrors);
@@ -887,7 +884,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			uint8_t proto = ip->ip_p;
 
 			SPPP_UNLOCK(sp);
-			splx(s);
 
 			m_freem(m);
 			if (proto == IPPROTO_TCP)
@@ -925,7 +921,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			SPPP_DLOG(sp, "no memory for transmit header\n");
 			if_statinc(ifp, if_oerrors);
 			SPPP_UNLOCK(sp);
-			splx(s);
 			return (ENOBUFS);
 		}
 		/*
@@ -956,7 +951,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			} else {
 				IF_DROP(&ifp->if_snd);
 				SPPP_UNLOCK(sp);
-				splx(s);
 
 				m_freem(m);
 				if_statinc(ifp, if_oerrors);
@@ -983,7 +977,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			} else {
 				IF_DROP(&ifp->if_snd);
 				SPPP_UNLOCK(sp);
-				splx(s);
 
 				m_freem(m);
 				if_statinc(ifp, if_oerrors);
@@ -996,7 +989,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
 		SPPP_UNLOCK(sp);
-		splx(s);
 		return (EAFNOSUPPORT);
 	}
 
@@ -1006,7 +998,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			SPPP_DLOG(sp, "no memory for transmit header\n");
 			if_statinc(ifp, if_oerrors);
 			SPPP_UNLOCK(sp);
-			splx(s);
 			return (ENOBUFS);
 		}
 		*mtod(m, uint16_t *) = protocol;
@@ -1039,7 +1030,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 #endif /* !SPPPSUBR_MPSAFE */
 	SPPP_UNLOCK(sp);
-	splx(s);
 	return error;
 }
 
@@ -1171,14 +1161,12 @@ int
 sppp_isempty(struct ifnet *ifp)
 {
 	struct sppp *sp = (struct sppp *) ifp;
-	int empty, s;
+	int empty;
 
-	s = splnet();
 	SPPP_LOCK(sp, RW_READER);
 	empty = IF_IS_EMPTY(&sp->pp_fastq) && IF_IS_EMPTY(&sp->pp_cpq) &&
 		IFQ_IS_EMPTY(&sp->pp_if.if_snd);
 	SPPP_UNLOCK(sp);
-	splx(s);
 	return (empty);
 }
 
@@ -1190,9 +1178,7 @@ sppp_dequeue(struct ifnet *ifp)
 {
 	struct sppp *sp = (struct sppp *) ifp;
 	struct mbuf *m;
-	int s;
 
-	s = splnet();
 	SPPP_LOCK(sp, RW_WRITER);
 	/*
 	 * Process only the control protocol queue until we have at
@@ -1207,7 +1193,6 @@ sppp_dequeue(struct ifnet *ifp)
 			IFQ_DEQUEUE(&sp->pp_if.if_snd, m);
 	}
 	SPPP_UNLOCK(sp);
-	splx(s);
 	return m;
 }
 
@@ -1221,11 +1206,10 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr = (struct ifreq *) data;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct sppp *sp = (struct sppp *) ifp;
-	int s, error=0, going_up, going_down;
+	int error=0, going_up, going_down;
 	u_short newmode;
 	u_long lcp_mru;
 
-	s = splnet();
 	switch (cmd) {
 	case SIOCINITIFADDR:
 		ifa->ifa_rtrequest = p2p_rtrequest;
@@ -1366,7 +1350,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		error = ifioctl_common(ifp, cmd, data);
 		break;
 	}
-	splx(s);
 	return (error);
 }
 
@@ -1945,12 +1928,9 @@ static void
 sppp_to_event(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
-	int s;
 
 	KASSERT(SPPP_WLOCKED(sp));
 	KASSERT(!cpu_softintr_p());
-
-	s = splnet();
 
 	SPPP_DLOG(sp, "%s TO(%s) rst_counter = %d\n", cp->name,
 	    sppp_state_name(sp->scp[cp->protoidx].state),
@@ -1996,8 +1976,6 @@ sppp_to_event(struct sppp *sp, void *xcp)
 			callout_schedule(&sp->scp[cp->protoidx].ch, sp->lcp.timeout);
 			break;
 		}
-
-	splx(s);
 }
 static void
 sppp_rcr_update_state(const struct cp *cp, struct sppp *sp,
@@ -4600,7 +4578,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct lcp_header *h;
-	int len, x;
+	int len;
 	u_char *value, *name, digest[sizeof(sp->chap.challenge)];
 	int value_len, name_len;
 	MD5_CTX ctx;
@@ -4701,10 +4679,8 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			break;
 		}
 
-		x = splnet();
 		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
-		splx(x);
 		memset(sp->chap.digest, 0, sizeof(sp->chap.digest));
 		sp->chap.digest_len = 0;
 
@@ -4734,9 +4710,7 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 			break;
 		}
 
-		x = splnet();
 		sp->pp_auth_failures++;
-		splx(x);
 		SPPP_LOG(sp, LOG_INFO, "chap failure");
 		if (debug) {
 			if (len > 4) {
@@ -4900,15 +4874,13 @@ sppp_chap_open(struct sppp *sp, void *xcp)
 static void
 sppp_chap_tlu(struct sppp *sp)
 {
-	int i, x;
+	int i;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
 	i = 0;
 	sp->scp[IDX_CHAP].rst_counter = sp->lcp.max_configure;
-	x = splnet();
 	sp->pp_auth_failures = 0;
-	splx(x);
 
 	SPPP_LOG(sp, LOG_DEBUG, "chap %s",
 	    sp->pp_phase == SPPP_PHASE_NETWORK ? "reconfirmed" : "tlu");
@@ -5031,7 +5003,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 {
 	struct ifnet *ifp;
 	struct lcp_header *h;
-	int len, x;
+	int len;
 	char *name, *secret;
 	int name_len, secret_len;
 	char abuf[SPPP_AUTHTYPE_NAMELEN];
@@ -5139,10 +5111,8 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 			break;
 		}
 
-		x = splnet();
 		sp->pp_auth_failures = 0;
 		sp->pp_flags &= ~PP_NEEDAUTH;
-		splx(x);
 
 		/* we are not authenticator, generate a dummy RCR+ event */
 		if (!ISSET(sppp_auth_role(&pap, sp), SPPP_AUTH_SERV)) {
@@ -5208,14 +5178,11 @@ sppp_pap_init(struct sppp *sp)
 static void
 sppp_pap_tlu(struct sppp *sp)
 {
-	int x;
 
 	SPPP_DLOG(sp, "%s tlu\n", pap.name);
 
 	sp->scp[IDX_PAP].rst_counter = sp->lcp.max_configure;
-	x = splnet();
 	sp->pp_auth_failures = 0;
-	splx(x);
 
 	if (sp->pp_phase < SPPP_PHASE_NETWORK)
 		sppp_phase_network(sp);
@@ -5460,12 +5427,10 @@ static void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	int s;
 	time_t now;
 
 	SPPPQ_LOCK();
 
-	s = splnet();
 	now = time_uptime;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		struct ifnet *ifp = NULL;
@@ -5548,7 +5513,6 @@ sppp_keepalive(void *dummy)
 
 		SPPP_UNLOCK(sp);
 	}
-	splx(s);
 	sppp_keepalive_cnt++;
 	callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
 
@@ -5596,7 +5560,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 }
 
 /*
- * Set IP addresses.  Must be called at splnet.
+ * Set IP addresses.
  * If an address is 0, leave it the way it is.
  */
 static void
@@ -5675,7 +5639,7 @@ sppp_set_ip_addrs(struct sppp *sp)
 }
 
 /*
- * Clear IP addresses.  Must be called at splnet.
+ * Clear IP addresses.
  */
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
@@ -5800,14 +5764,14 @@ sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr)
 }
 
 /*
- * Set my IPv6 address.  Must be called at splnet.
+ * Set my IPv6 address.
  */
 static void
 sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 {
 	struct ifnet *ifp;
 	struct ifaddr *ifa;
-	int bound, s;
+	int bound;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
