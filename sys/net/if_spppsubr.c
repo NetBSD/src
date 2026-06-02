@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.277 2026/06/02 04:08:50 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.278 2026/06/02 04:25:45 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.277 2026/06/02 04:08:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.278 2026/06/02 04:25:45 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -943,7 +943,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (ifp->if_flags & IFF_AUTO) {
 				error = ENETDOWN;
 			} else {
-				IF_DROP(&ifp->if_snd);
 				SPPP_UNLOCK(sp);
 
 				m_freem(m);
@@ -969,7 +968,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (ifp->if_flags & IFF_AUTO) {
 				error = ENETDOWN;
 			} else {
-				IF_DROP(&ifp->if_snd);
 				SPPP_UNLOCK(sp);
 
 				m_freem(m);
@@ -1411,7 +1409,6 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		IF_DROP(&sp->pp_fastq);
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
@@ -5299,7 +5296,6 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		IF_DROP(&sp->pp_fastq);
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
