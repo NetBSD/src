@@ -69,7 +69,7 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-kmutex_t sicomcsr_lock;
+static kmutex_t sicomcsr_lock;
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
