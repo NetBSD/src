@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.311.2.4 2026/01/08 10:37:21 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.311.2.5 2026/06/03 18:43:46 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.311.2.4 2026/01/08 10:37:21 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.311.2.5 2026/06/03 18:43:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1054,6 +1054,7 @@ again:
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
 	la->la_flags |= LLE_VALID;
+	la->la_flags &= ~LLE_UNRESOLVED;
 	la->ln_asked = 0;
 	if (new_state != 0) {
 		la->ln_state = new_state;

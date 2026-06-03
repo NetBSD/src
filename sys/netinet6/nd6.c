@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.279.4.4 2025/10/01 14:58:36 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.279.4.5 2026/06/03 18:43:46 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.4 2025/10/01 14:58:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.279.4.5 2026/06/03 18:43:46 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1399,6 +1399,7 @@ nd6_cache_lladdr(
 		 */
 		memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
 		ln->la_flags |= LLE_VALID;
+		ln->la_flags &= ~LLE_UNRESOLVED;
 	}
 
 	if (!is_newentry) {

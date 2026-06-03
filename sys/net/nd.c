@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.5.2.2 2025/08/29 15:21:16 martin Exp $	*/
+/*	$NetBSD: nd.c,v 1.5.2.3 2026/06/03 18:43:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.5.2.2 2025/08/29 15:21:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.5.2.3 2026/06/03 18:43:46 martin Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -115,6 +115,7 @@ nd_timer(void *arg)
 
 		missed = ND_LLINFO_INCOMPLETE;
 		ln->ln_state = ND_LLINFO_WAITDELETE;
+		ln->la_flags |= LLE_UNRESOLVED;
 		break;
 
 	case ND_LLINFO_REACHABLE:
@@ -362,8 +363,10 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	 * the oldest packet in the queue will be removed.
 	 */
 	if (ln->ln_state == ND_LLINFO_NOSTATE ||
-	    ln->ln_state == ND_LLINFO_WAITDELETE)
+	    ln->ln_state == ND_LLINFO_WAITDELETE) {
+		ln->ln_asked = 0;
 		ln->ln_state = ND_LLINFO_INCOMPLETE;
+	}
 
 #ifdef MBUFTRACE
 	m_claimm(m, ln->lle_tbl->llt_mowner);
@@ -400,7 +403,7 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	    ln->la_numheld, nd->nd_maxqueuelen);
 	ln->la_numheld++;
 
-	if (ln->ln_asked >= nd->nd_mmaxtries)
+	if ((ln->la_flags & LLE_UNRESOLVED) != 0)
 		error = (rt != NULL && rt->rt_flags & RTF_GATEWAY) ?
 		    EHOSTUNREACH : EHOSTDOWN;
 	else

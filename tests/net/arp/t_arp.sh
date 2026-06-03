@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.45.6.3 2025/08/29 15:21:16 martin Exp $
+#	$NetBSD: t_arp.sh,v 1.45.6.4 2026/06/03 18:43:46 martin Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -907,6 +907,31 @@ test_resolution()
 	rump_server_destroy_ifaces
 }
 
+test_keep_sending()
+{
+
+	skip_if_qemu
+
+	rump_server_start $SOCKSRC
+	setup_src_server
+
+	export RUMP_SERVER=$SOCKSRC
+
+	extract_new_packets bus1 > ./out
+
+	atf_check -s not-exit:0 -o ignore -e ignore \
+	    rump.ping -n -w 10 -c 10 $IP4DST
+
+	extract_new_packets bus1 > ./out
+	$DEBUG && cat ./out
+
+	pkt=$(make_pkt_str_arpreq $IP4DST $IP4SRC)
+	n=$(grep -E "$pkt" ./out |wc -l)
+	atf_check -s exit:0 test $n -ge 10
+
+	rump_server_destroy_ifaces
+}
+
 add_test()
 {
 	local name=$1
@@ -947,4 +972,5 @@ atf_init_test_cases()
 	add_test cache_creation        "Tests for ARP cache creation"
 	add_test cache_creation_nodad  "Tests for ARP cache creation without DAD"
 	add_test resolution            "Tests for ARP resolution"
+	add_test keep_sending          "Tests if ARP keeps sending requests"
 }
