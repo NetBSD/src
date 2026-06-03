@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $ */
+/*	$NetBSD: alipm.c,v 1.15 2026/06/03 09:18:46 jdc Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.14 2025/09/15 13:23:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.15 2026/06/03 09:18:46 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -144,35 +144,38 @@ alipm_attach(device_t parent, device_t self, void *aux)
 		/* Map I/O space */
 		iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE);
 		sc->sc_iot = pa->pa_iot;
-		if (iobase == 0 ||
-		    bus_space_map(sc->sc_iot, iobase >> 16,
+		if (iobase == 0) {
+			aprint_error(": I/O base not set\n");
+			return;
+		}
+		if (bus_space_map(sc->sc_iot, iobase >> 16,
 		    iosize, 0, &sc->sc_ioh)) {
-			aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
+			aprint_error("can't map I/O space\n");
 			return;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_CONF);
 		if ((reg & ALIPM_CONF_SMBEN) == 0) {
-			aprint_error_dev(sc->sc_dev, "SMBus disabled\n");
+			aprint_error("SMBus disabled\n");
 			goto fail;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTC);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
-			aprint_error_dev(sc->sc_dev, "SMBus host disabled\n");
+			aprint_error("SMBus host disabled\n");
 			goto fail;
 		}
 	} else {
 		/* Map I/O space */
 		if (pci_mapreg_map(pa, ALIPM_SMB_BASE, PCI_MAPREG_TYPE_IO, 0,
 		    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize)) {
-			aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
+			aprint_error("can't map I/O space\n");
 			return;
 		}
 
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_SMB_HOSTX);
 		if ((reg & ALIPM_SMB_HOSTC_HSTEN) == 0) {
-			aprint_error_dev(sc->sc_dev, "SMBus host disabled\n");
+			aprint_error("SMBus host disabled\n");
 			goto fail;
 		}
 	}
