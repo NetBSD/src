@@ -1,0 +1,245 @@
+.\"	$NetBSD: adt7462sm.4,v 1.1 2026/06/03 15:20:32 jdc Exp $
+.\"
+.\" Copyright (c) 2026 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 19, 2026
+.Dt ADT7462SM 4
+.Os
+.Sh NAME
+.Nm adt7462sm
+.Nd On Semiconductor (Analog Devices) ADT7462 Flexible Temperature,
+Voltage Monitor, and System Fan Controller
+.Sh SYNOPSIS
+.Cd "adt7462sm* at iic? addr?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the On Semiconductor ADT7462 system monitor.
+The chip possesses 8 fan speed sensors, 4 temperature sensors,
+and 13 voltage sensors.
+The number of each sensor type configured by the driver depends on the
+chip configuration.
+.Pp
+The values of the sensors are made available through the
+.Xr envstat 8
+interface.
+.Bl -column ".Li fan fault" "mV DC" -offset indent
+.It Sy Sensor     Ta Sy Units  Ta Sy Description
+.It Li fan Ar N      Ta RPM    Ta Fan 0\^\(en7
+.It Li local         Ta C      Ta Local temperature
+.It Li remote Ar N   Ta C      Ta Remote temperature 1\(en3
+.It Li V2.5 Ar N     Ta mV DC  Ta 2.5V voltage 1\(en3
+.It Li V1.8 Ar N     Ta mV DC  Ta 1.8V voltage 1\(en3
+.It Li V1.5 Ar N     Ta mV DC  Ta 1.5V voltage 1\(en4
+.It Li V3.3 Ar N     Ta mV DC  Ta 3.3V voltage 1\(en2
+.It Li V1.2 Ar N     Ta mV DC  Ta 1.2V voltage 1\(en2
+.It Li Vbatt         Ta mV DC  Ta Battery voltage
+.It Li V12 Ar N      Ta mV DC  Ta 12V voltage 1\(en3
+.It Li V0.9          Ta mV DC  Ta 0.9V voltage
+.It Li V1.25         Ta mV DC  Ta 1.25V voltage
+.It Li V5            Ta mV DC  Ta 5V voltage
+.It Li fan fault     Ta none   Ta Fan fault display
+.El
+.Pp
+Configurable limits for the sensors are also available via
+.Xr envstat 8 .
+Initial limit values are read from the chip.
+Each temperature sensor has therm, high and low limits, which are
+mapped to
+.Fa critmax ,
+.Fa warnmax
+and
+.Fa warnmin ,
+respectively.
+Voltage sensors have high
+.Pq Fa warnmax
+and low
+.Pq Fa warnmin
+limits.
+Fan sensors have a high limit mapped to
+.Fa warnmin ,
+because the fan measurements are revolution intervals, so higher
+numbers correlate to lower fan speeds.
+Note, that there are two therm limits per temperature sensor
+and the one with the lowest value is used as
+.Fa critmax .
+The fan fault sensor has a value of
+.Em 0
+in normal operation.
+If a fault is detected, the fan fault value will represent the numbers
+of the failed fans,
+.Em 1
+for fan 0,
+.Em 10
+for fan 1, and so on, to
+.Em 10000000
+for fan 8.
+.Pp
+The chip also supports Pulse-Width Modulated (PWM) fan speed control and the
+.Nm
+driver
+makes PWM and temperature settings available via
+.Xr sysctl 8 .
+For each PWM channel, the controlling temperature channel is shown.
+For example:
+.Bd -literal -offset indent
+hw.adt7462sm0.pwm1.channel = remote1_dynamic
+hw.adt7462sm0.pwm2.channel = remote2_dynamic
+hw.adt7462sm0.pwm3.channel = remote3
+hw.adt7462sm0.pwm4.channel = manual
+.Ed
+.Pp
+If the channel is shown as
+.Dq manual ,
+then the PWM duty cycle can be altered through the corresponding
+.Fa duty_cycle
+variable.  For example:
+.Bd -literal -offset indent
+hw.adt7462sm0.pwm4.duty_cycle = 12
+.Ed
+.Pp
+The
+.Fa duty cycle
+can be set to any value between 0% (off) and 100% (full) although the
+minimum non-zero value for a fan is usually in the 20% to 33% range.
+.Pp
+If the channel is shown as
+.Dq remoteN ,
+then the.
+.Fa tmin
+and
+.Fa trange
+variables for that
+.Dq remoteN
+can be used to adjust the PWM value and fan speed.
+For example:
+.Bd -literal -offset indent
+hw.adt7462sm0.remote3.tmin = 40
+hw.adt7462sm0.remote3.trange = 32
+.Ed
+.Pp
+The
+.Fa tmin
+value is the temperature in degC at which the fan starts and the
+.Fa trange
+value represents the temperature range over which the fan speed
+increases until it reaches full speed.
+Both of these values can be altered, although
+.Fa tmin
+must be lower than the corresponding
+.Fa critmax
+value from
+.Xr envstat
+and
+.Fa trange
+must be between 2 and 80.
+.Pp
+If the channel is shown as
+.Dq remoteN_dynamic ,
+then the
+.Fa tmin
+value is read-only,
+and the
+.Fa trange
+and
+.Fa oppoint
+variables for that
+.Dq remoteN
+are used to adjust the PWM value and fan speed.
+For example:
+.Bd -literal -offset indent
+hw.adt7462sm0.remote1.tmin = 40
+hw.adt7462sm0.remote1.trange = 32
+hw.adt7462sm0.remote1.oppoint = 60
+.Ed
+.Pp
+The
+.Fa tmin
+value is still the temperature in degC at which the fan starts, but is
+dynamically calculated by the chip based on the
+.Fa oppoint
+(operating point)
+and
+.Fa trange
+values.
+The operating point is a target temperature and the chip will attempt
+to maintain that temperature or lower.
+It does this by adjusting the
+.Fa tmin
+value based on the
+.Fa trange ,
+thus causing the PWM values and fan speed to vary based on the difference
+between the current and operating point temperatures.
+Both the
+.Fa oppoint
+and
+.Fa trange
+values can be altered, although
+.Fa oppoint
+must be higher than
+.Fa tmin .
+.Pp
+If the channel is shown as
+.Dq local_remote3 ,
+then
+.Fa tmin
+and
+.Fa trange
+for both the
+.Dq local
+and the
+.Dq remote3
+temperature sensors affect the PWM value and fan speed.
+.Pp
+If the channel is shown as
+.Dq off ,
+then it can not be altered.
+.Sh SEE ALSO
+.Xr iic 4 ,
+.Xr intro 4 ,
+.Xr envstat 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.1 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Julian Coleman Aq Mt jcoleman@NetBSD.org .
+.Sh BUGS
+It's not possible to determine if either a sensor is not connected,
+or the monitored device is producing no output.
+Therefore, unconnected sensors will show outputs of 0.
+.Pp
+The
+.Nm
+driver does not support interrupt output.
