@@ -1,0 +1,63 @@
+.\"	$NetBSD: lm95221ts.4,v 1.1 2026/06/03 15:19:55 jdc Exp $
+.\"
+.\" Copyright (c) 2026 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Julian Coleman.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 13, 2026
+.Dt LM95221TS 4
+.Os
+.Sh NAME
+.Nm lm95221ts
+.Nd LM95221 Dual Remote Diode Digital Temperature Sensor
+.Sh SYNOPSIS
+.Cd "lm95221ts* at iic? addr?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the Texas Instruments LM95221
+temperature sensor, which supports a local and two remote temperature
+sensors.
+The local sensor has a resolution of 0.25 degC whilst the remote
+sensors have a resolution of 0.125 degC.
+The temperature values are available through the 
+.Xr envstat 8
+interface.
+.Sh SEE ALSO
+.Xr envsys 4 ,
+.Xr iic 4 ,
+.Xr intro 4 ,
+.Xr envstat 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 11.1 .
+.Sh AUTHORS
+The
+.Nm
+driver was written by
+.An Julian Coleman Aq Mt jcoleman@netbsd.org .
