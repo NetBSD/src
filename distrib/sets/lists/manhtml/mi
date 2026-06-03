@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.49 2026/02/20 07:54:25 yamt Exp $
+# $NetBSD: mi,v 1.50 2026/06/03 15:23:45 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -775,6 +775,7 @@
 ./usr/share/man/html4/adm1027.html		man-sys-htmlman		html
 ./usr/share/man/html4/adm1030.html		man-sys-htmlman		html
 ./usr/share/man/html4/admtemp.html		man-sys-htmlman		html
+./usr/share/man/html4/adt7462sm.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7463.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7466.html		man-sys-htmlman		html
 ./usr/share/man/html4/adt7467.html		man-sys-htmlman		html
@@ -1382,6 +1383,7 @@
 ./usr/share/man/html4/lii.html			man-sys-htmlman		html
 ./usr/share/man/html4/lkm.html			man-obsolete		obsolete
 ./usr/share/man/html4/lm.html			man-sys-htmlman		html
+./usr/share/man/html4/lm95221ts.html		man-sys-htmlman		html
 ./usr/share/man/html4/lmc.html			man-obsolete		obsolete
 ./usr/share/man/html4/lmenv.html		man-sys-htmlman		html
 ./usr/share/man/html4/lmtemp.html		man-sys-htmlman		html
@@ -1509,6 +1511,7 @@
 ./usr/share/man/html4/null.html			man-sys-htmlman		html
 ./usr/share/man/html4/nvme.html			man-sys-htmlman		html
 ./usr/share/man/html4/nvmm.html			man-sys-htmlman		html
+./usr/share/man/html4/nxp75a.html		man-sys-htmlman		html
 ./usr/share/man/html4/nxt2k.html		man-sys-htmlman		html
 ./usr/share/man/html4/oak.html			man-sys-htmlman		html
 ./usr/share/man/html4/oboe.html			man-sys-htmlman		html
@@ -1524,9 +1527,11 @@
 ./usr/share/man/html4/owtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/pad.html			man-sys-htmlman		html
 ./usr/share/man/html4/pas.html			man-sys-htmlman		html
+./usr/share/man/html4/pcagpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/pcdisplay.html		man-sys-htmlman		html
 ./usr/share/man/html4/pceb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pcf8563rtc.html		man-sys-htmlman		html
+./usr/share/man/html4/pcf8574io.html		man-sys-htmlman		html
 ./usr/share/man/html4/pchb.html			man-sys-htmlman		html
 ./usr/share/man/html4/pchtemp.html		man-sys-htmlman		html
 ./usr/share/man/html4/pci.html			man-sys-htmlman		html

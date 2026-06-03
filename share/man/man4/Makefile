@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.751 2026/02/20 07:54:26 yamt Exp $
+#	$NetBSD: Makefile,v 1.752 2026/06/03 15:23:44 jdc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	adbbt.4 adbkbd.4 adbms.4 \
-	adc.4 adm1026hm.4 admtemp.4 adv.4 adw.4 age.4 agp.4 agr.4 ahb.4 ahc.4 \
+	adc.4 adm1026hm.4 admtemp.4 adt7462sm.4 \
+	adv.4 adw.4 age.4 agp.4 agr.4 ahb.4 ahc.4 \
 	ahcisata.4 ahd.4 aht20temp.4 aibs.4 alc.4 ale.4 alipm.4 altmem.4 altq.4 \
 	am2315temp.4 amdgpio.4 amdpm.4 amdtemp.4 amhphy.4 amr.4 aps.4 asus.4 \
 	an.4 aq.4 arcmsr.4 arcofi.4 aria.4 artsata.4 ata.4 atalk.4 ataraid.4 \
@@ -39,7 +40,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	ixg.4 ixl.4 ixpide.4 ixv.4 \
 	jme.4 jmide.4 jmphy.4 joy.4 \
 	kcov.4 kloader.4 kse.4 ksyms.4 kttcp.4 \
-	l2tp.4 lagg.4 lc.4 ld.4 lii.4 lo.4 lua.4 lxtphy.4 \
+	l2tp.4 lagg.4 lc.4 ld.4 lii.4 lm95221ts.4 lo.4 lua.4 lxtphy.4 \
 	machfb.4 \
 	mainbus.4 makphy.4 malo.4 mbe.4 mca.4 mcclock.4 mcommphy.4 \
 	mcx.4 md.4 mfb.4 mfi.4 mfii.4 mhzc.4 \
@@ -47,10 +48,11 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	mpu.4 mtd.4 mtio.4 msm6242b.4 multicast.4 mvsata.4 \
 	nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 njata.4 njs.4 npflog.4 \
 	nsclpcsio.4 nside.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 \
-	nvme.4 nvmm.4 \
+	nvme.4 nvmm.4 nxp75a.4 \
 	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
-	pad.4 pas.4 pcdisplay.4 pcf8563rtc.4 pchtemp.4 pciide.4 pckbc.4 pckbd.4 \
-	pcn.4 pcppi.4 pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
+	pad.4 pas.4 pcagpio.4 pcdisplay.4 pcf8563rtc.4 pcf8574io.4 pchtemp.4 \
+	pciide.4 pckbc.4 pckbd.4  pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
+	pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
 	piixpm.4 pim.4 plip.4 pm3fb.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 \
 	pppoe.4 \
 	pseye.4 ptcd.4 ptm.4 pty.4 puc.4 pud.4 puffs.4 pwdog.4 px.4 pxagpio.4 \
