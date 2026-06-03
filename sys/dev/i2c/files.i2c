@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.137 2025/10/24 23:16:11 brad Exp $
+#	$NetBSD: files.i2c,v 1.138 2026/06/03 11:12:09 jdc Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -464,3 +464,18 @@ file dev/i2c/emcfan.c				emcfan
 # NXP SC16IS7xx UART bridge
 attach sc16is7xx at iic with sc16is7xxi2c
 file dev/i2c/sc16is7xxi2c.c			sc16is7xxi2c
+
+# Texas Instruments LM95221 temperature sensor
+device	lm95221ts: sysmon_envsys
+attach	lm95221ts at iic
+file	dev/i2c/lm95221.c			lm95221ts
+
+# NXP LM75A temperature sensor
+device	nxp75a: sysmon_envsys
+attach	nxp75a at iic
+file	dev/i2c/nxp75a.c			nxp75a
+
+# ADM7462 system monitor
+device	adt7462sm: sysmon_envsys
+attach	adt7462sm at iic
+file	dev/i2c/adt7462.c			adt7462sm
