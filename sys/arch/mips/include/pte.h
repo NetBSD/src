@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.27 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.27.28.1 2026/06/03 18:17:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -270,6 +270,12 @@ pte_modified_p(pt_entry_t pte)
 }
 
 static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+	return false;
+}
+
+static inline bool
 pte_global_p(pt_entry_t pte)
 {
 	return (pte & MIPS_MMU(PG_G)) != 0;
@@ -340,9 +346,15 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 	return pte & ~MIPS_MMU(PG_D);
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+	return pte;
 }
 
 static inline pt_entry_t

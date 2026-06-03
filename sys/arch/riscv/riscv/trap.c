@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.30.2.1 2025/10/09 09:25:52 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.30.2.2 2026/06/03 18:17:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	__PMAP_PRIVATE
 #define	__UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.30.2.1 2025/10/09 09:25:52 martin Exp $");
+__RCSID("$NetBSD: trap.c,v 1.30.2.2 2026/06/03 18:17:02 martin Exp $");
 
 #include <sys/param.h>
 
@@ -335,12 +335,11 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
     intptr_t addr)
 {
 	pt_entry_t * const ptep = pmap_pte_lookup(pmap, addr);
-	struct vm_page *pg;
 
 	if (ptep == NULL)
 		return false;
 
-	pt_entry_t opte = *ptep;
+	pt_entry_t opte = atomic_load_relaxed(ptep);
 	if (!pte_valid_p(opte))
 		return false;
 
@@ -353,24 +352,23 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 		/* if ((opte & ~PTE_G) == 0) */
 		/* 	return false; */
 
-		pg = PHYS_TO_VM_PAGE(pte_to_paddr(opte));
-		if (pg == NULL)
+		opte = atomic_load_relaxed(ptep);
+		if (!pte_valid_p(opte))
 			return false;
 
 		attr = 0;
 		npte = opte;
-
 		switch (cause) {
 		case CAUSE_LOAD_PAGE_FAULT:
-			if ((npte & PTE_R) == 0) {
+			if ((npte & (PTE_R | PTE_A)) == PTE_R) {
 				npte |= PTE_A;
 				attr |= VM_PAGEMD_REFERENCED;
 			}
 			break;
 		case CAUSE_STORE_ACCESS:
-			if ((npte & PTE_W) != 0) {
+			if ((npte & (PTE_W | PTE_D)) == PTE_W) {
 				npte |= PTE_A | PTE_D;
-				attr |= VM_PAGEMD_MODIFIED;
+				attr |= VM_PAGEMD_REFERENCED | VM_PAGEMD_MODIFIED;
 			}
 			break;
 		case CAUSE_STORE_PAGE_FAULT:
@@ -379,14 +377,13 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 				attr |= VM_PAGEMD_REFERENCED | VM_PAGEMD_MODIFIED;
 			}
 			break;
-		case CAUSE_FETCH_ACCESS:
 		case CAUSE_FETCH_PAGE_FAULT:
-#if 0
-			if ((npte & PTE_NX) != 0) {
-				npte &= ~PTE_NX;
-				attr |= VM_PAGEMD_EXECPAGE;
+			if ((npte & (PTE_X | PTE_A)) == PTE_X) {
+				npte |= PTE_A;
+				attr |= VM_PAGEMD_REFERENCED;
 			}
-#endif
+			break;
+		case CAUSE_FETCH_ACCESS:
 			break;
 		default:
 			panic("%s: Unhandled cause (%#" PRIxREGISTER
@@ -396,10 +393,14 @@ trap_pagefault_fixup(struct trapframe *tf, struct pmap *pmap, register_t cause,
 			return false;
 	} while (opte != atomic_cas_pte(ptep, opte, npte));
 
-	pmap_page_set_attributes(VM_PAGE_TO_MD(pg), attr);
+	struct vm_page * const pg = PHYS_TO_VM_PAGE(pte_to_paddr(npte));
+	if (pg != NULL) {
+		pmap_page_set_attributes(VM_PAGE_TO_MD(pg), attr);
+	}
+
 	pmap_tlb_update_addr(pmap, addr, npte, 0);
 
-	if (attr & VM_PAGEMD_EXECPAGE)
+	if (pg != NULL && (attr & VM_PAGEMD_EXECPAGE) != 0)
 		pmap_md_page_syncicache(VM_PAGE_TO_MD(pg),
 		    curcpu()->ci_kcpuset);
 

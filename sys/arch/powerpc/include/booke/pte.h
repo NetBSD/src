@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.11.28.1 2026/06/03 18:17:03 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -96,6 +96,12 @@ pte_modified_p(pt_entry_t pt_entry)
 }
 
 static __inline bool
+pte_referenced_p(pt_entry_t pt_entry)
+{
+	return false;
+}
+
+static __inline bool
 pte_valid_p(pt_entry_t pt_entry)
 {
 	return pt_entry != 0;
@@ -181,9 +187,15 @@ pte_unwire_entry(pt_entry_t pt_entry)
 }
 
 static __inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pt_entry)
+pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~(PTE_xW|PTE_UNMODIFIED);
+}
+
+static __inline pt_entry_t
+pte_clear_reference(pt_entry_t pt_entry)
+{
+	return pt_entry;
 }
 
 static __inline pt_entry_t

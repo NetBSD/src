@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.9 2025/07/26 13:58:17 martin Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.9.2.1 2026/06/03 18:17:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -232,6 +232,13 @@ pte_modified_p(pt_entry_t pte)
 	return (pte & LX_BLKPAG_OS_MODIFIED) != 0;
 }
 
+static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+
+	return (pte & LX_BLKPAG_AF) != 0;
+}
+
 
 static inline bool
 pte_wired_p(pt_entry_t pte)
@@ -295,10 +302,16 @@ pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 
 	return pte & ~LX_BLKPAG_AF;
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+        return pte & ~LX_BLKPAG_AF;
 }
 
 static inline pt_entry_t
