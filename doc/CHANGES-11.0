@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.93 2026/05/18 17:09:16 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.94 2026/06/03 18:58:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10311,4 +10311,89 @@ external/mit/xorg/tools/fc-cache/Makefile	1.24
 
 	PR 60271: build fc-cache tool with -std=gnu99 instead of -std=c99.
 	[hgutch, ticket #292]
+
+sys/arch/aarch64/include/pmap_machdep.h		1.15,1.16
+sys/arch/m68k/include/pte_coldfire.h		1.4
+sys/arch/mips/include/pte.h			1.28,1.29
+sys/arch/powerpc/include/booke/pte.h		1.13,1.14
+sys/arch/riscv/include/pte.h			1.18-1.21
+sys/arch/riscv/include/vmparam.h		1.17,1.18
+sys/arch/riscv/riscv/pmap_machdep.c		1.27,1.28
+sys/arch/riscv/riscv/trap.c			1.32
+sys/uvm/pmap/pmap.c				1.92,1.93,1.95
+sys/uvm/pmap/pmap_segtab.c			1.36
+
+	risc-v: mod/ref fixes
+	[skrll, ticket #293]
+
+bin/sh/eval.c					1.198,1.199
+bin/sh/eval.h					1.25
+bin/sh/jobs.c					1.126
+bin/sh/jobs.h					1.28
+bin/sh/trap.c					1.59-1.62
+
+	sh(1): PR 60275: discard less arriving signals.
+	[kre, ticket #294]
+
+sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.40
+
+	ipf: PR 60289: avoid a NULL pointer dereference caused by
+	aggressive optimization in gcc due to undefined behaviour.
+	[bouyer, ticket #295]
+
+external/mit/xorg/lib/libepoxy/Makefile		1.10,1.11
+
+	libepoxy: PR 60295: make EGL libs depend on EGL support
+	rather than GLAMOR.
+	[nia, ticket #296]
+
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.95
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.95
+
+	nvmm(4): PR 59424: remove cpuid leaf 0x40000010.
+	[yamt, ticket #298]
+
+sys/arch/x86/x86/identcpu_subr.c		1.16
+
+	x86: use 0x40000010 cpuid leaf only on vmware and kvm,
+	specifically: do not use it on nvmm.
+	[yamt, ticket #299]
+
+sys/net/if_llatbl.h				1.20
+sys/net/nd.c					1.10
+sys/netinet/if_arp.c				1.319
+sys/netinet6/nd6.c				1.286
+tests/net/arp/t_arp.sh				1.50,1.51
+
+	ARP/IPv6 ND: PR 60071: restore pre-NetBD 10 behavior.
+	[ozaki-r, ticket #300]
+
+sbin/mount_nfs/mount_nfs.8			1.53
+sbin/mount_nfs/mount_nfs.c			1.77
+sys/nfs/nfs_clntsubs.c				1.8
+sys/nfs/nfsmount.h				1.55
+
+	NFS: PR 59452: add a new mount flag "nowccmsg" to suppress printing
+	wcc-related messages.
+	[christos, ticket #301]
+
+usr.bin/calendar/calendars/calendar.christian	1.16
+usr.bin/calendar/calendars/calendar.holiday	1.37
+usr.bin/calendar/calendars/calendar.judaic	1.14
+usr.bin/calendar/calendars/calendar.usholiday	1.14
+
+	Update calendar entries for items happening in the first half of
+	the year.
+	[jnemeth, ticket #302]
+
+external/bsd/tmux/dist/CHANGES                  up to 1.1.1.13
+external/bsd/tmux/dist/configure                up to 1.1.1.13
+external/bsd/tmux/dist/configure.ac             up to 1.1.1.13
+external/bsd/tmux/dist/image.c                  up to 1.2
+external/bsd/tmux/dist/screen.c                 up to 1.18
+external/bsd/tmux/dist/tmux.h                   up to 1.25
+external/bsd/tmux/usr.bin/tmux/Makefile         up to 1.46
+
+	Import tmux 3.6b.
+	[kim, ticket #303]
 
