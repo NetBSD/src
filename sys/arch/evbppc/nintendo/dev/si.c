@@ -69,7 +69,7 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-static kmutex_t sicomcsr_lock;
+kmutex_t sicomcsr_lock;
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
@@ -170,15 +170,11 @@ si_print(void *aux, const char *pnp)
 {
 	struct si_attach_args *saa = aux;
 
-	if (pnp != NULL) {
-		aprint_normal("uhid at %s", pnp);
-	}
-
 	/*
 	 * The Wii Operations Manual for RVL-001 refers to the controller
 	 * ports as "Nintendo GameCube Controller Sockets".
 	 */
-	aprint_normal(" socket %d", saa->saa_index + 1);
+	aprint_normal(" socket %d\n", saa->saa_index + 1);
 
 	return UNCONF;
 }

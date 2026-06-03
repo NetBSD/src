@@ -136,6 +136,13 @@ struct si_attach_args {
 	int			saa_index;
 };
 
+struct gcport_softc {
+	device_t		sc_dev;
+	struct si_channel	*ch;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
+};
+
 struct siio_send {
 	unsigned	chan;		/* which controller port */
 	uint32_t	status;		/* the sisr result for this channel */

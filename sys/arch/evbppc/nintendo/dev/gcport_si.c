@@ -56,18 +56,12 @@ struct si_payload {
 };
 
 extern struct cfdriver gcport_cd;
-struct gcport_softc {
-	device_t		sc_dev;
-	struct si_channel	*ch;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
-};
-
 
 #define SI_SEND		_IOWR(0, 1, struct si_payload)
 
 static int gcport_si_match(device_t, cfdata_t, void *);
 static void gcport_si_attach(device_t, device_t, void *);
+static int gcport_si_print(void *, const char *);
 static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
 
 dev_type_open(gcport_open);
@@ -95,23 +89,7 @@ CFATTACH_DECL_NEW(gcport_si, sizeof(struct gcport_softc),
 static int
 gcport_si_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct si_softc * const sc = device_private(parent);
-	struct si_attach_args * const saa = aux;
-	struct si_channel *ch;
-	int unit;
-	unsigned chan;
-
-	chan = saa->saa_index;
-	ch = &sc->sc_chan[chan];
-	unit = cf->cf_unit;
-
-	if (chan == unit && ch->ch_id != 0 && !(IS_GCPAD(ch->ch_id))) {
-		aprint_normal("gcport: identified ch%d as a device 0x%08X\n",
-		    chan, ch->ch_id);
-		return 1;
-	}
-
-	return 0;
+	return 1;
 }
 
 static void
@@ -126,6 +104,27 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	sc->ch = ch;
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
+
+	config_found(self, saa, gcport_si_print, CFARGS(
+		    .submatch = config_stdsubmatch, .locators = NULL));
+}
+
+static int
+gcport_si_print(void *aux, const char *pnp)
+{
+	struct si_attach_args *saa = aux;
+
+	if (pnp != NULL) {
+		aprint_normal("uhid at %s", pnp);
+	}
+
+	/*
+	 * The Wii Operations Manual for RVL-001 refers to the controller
+	 * ports as "Nintendo GameCube Controller Sockets".
+	 */
+	aprint_normal(" socket %d", saa->saa_index + 1);
+
+	return UNCONF;
 }
 
 int
