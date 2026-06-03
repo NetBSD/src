@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.197 2024/11/11 22:57:42 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.197.2.1 2026/06/03 18:21:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.197 2024/11/11 22:57:42 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.197.2.1 2026/06/03 18:21:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -869,7 +869,7 @@ parse_command_args(int argc, char **argv, int *use_syspath)
 	return sv_argc - argc;
 }
 
-int vforked = 0;
+volatile int vforking = 0;
 
 /*
  * Execute a simple command.
@@ -906,7 +906,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	const int savefuncabs = funclineabs;
 	volatile int cmd_flags = 0;
 
-	vforked = 0;
+	vforking = 0;
 	/* First expand the arguments. */
 	CTRACE(DBG_EVAL, ("evalcommand(%p, %d) called [%s]\n", cmd, flags,
 	    cmd->ncmd.args ? cmd->ncmd.args->narg.text : ""));
@@ -1123,21 +1123,29 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		    (!cmd->ncmd.backgnd || cmd->ncmd.redirect == NULL)) {
 			pid_t	pid;
 			int serrno;
+			sigset_t block_all, olds;
 
+			(void)sigfillset(&block_all);
 			savelocalvars = localvars;
 			localvars = NULL;
-			vforked = 1;
+
+			/* see jobs.c:forkshell() for explanation */
+			(void)sigprocmask(SIG_BLOCK, &block_all, &olds);
+			vforking = 1;
 	VFORK_BLOCK
 			switch (pid = vfork()) {
 			case -1:
 				serrno = errno;
+				vforking = 0;
+				(void)sigprocmask(SIG_SETMASK, &olds, NULL);
 				VTRACE(DBG_EVAL, ("vfork() failed, errno=%d\n",
 				    serrno));
 				INTON;
 				error("Cannot vfork (%s)", strerror(serrno));
 				break;
 			case 0:
-				/* Make sure that exceptions only unwind to
+				/*
+				 * Make sure that exceptions only unwind to
 				 * after the vfork(2)
 				 */
 				SHELL_FORKED();
@@ -1151,11 +1159,11 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 					if (exception == EXSHELLPROC) {
 						/*
 						 * We can't progress with the
-						 * vfork, so, set vforked = 2
+						 * vfork, so, set vforking = 2
 						 * so the parent knows,
 						 * and _exit();
 						 */
-						vforked = 2;
+						vforking = 2;
 						_exit(0);
 					} else {
 						_exit(exception == EXEXIT ?
@@ -1166,33 +1174,51 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 				handler = &jmploc;
 				listmklocal(varlist.list,
 				    VDOEXPORT | VEXPORT | VNOFUNC);
-				forkchild(jp, cmd, mode, vforked);
+				forkchild(jp, cmd, mode, vforking, &olds);
 				break;
 			default:
 				VFORK_UNDO();
 						/* restore from vfork(2) */
-				CTRACE(DBG_PROCS|DBG_CMDS,
-				    ("parent after vfork - vforked=%d\n",
-				      vforked));
-				handler = savehandler;
-				poplocalvars();
-				localvars = savelocalvars;
-				if (vforked == 2) {
-					vforked = 0;
+				/*
+				 * We need to know what happened to the
+				 * vfork() (currently in vforking) but
+				 * we need to restore signals asap, and
+				 * vforking cannot remain set after that.
+				 * so ...
+				 */
+				{
+				    int vforkresult = vforking;
+				
+				    vforking = 0;
+				    (void)sigprocmask(SIG_SETMASK, &olds, NULL);
+				
+				    CTRACE(DBG_PROCS|DBG_CMDS,
+					("parent after vfork - vforking=%d\n",
+					  vforkresult));
 
+				    handler = savehandler;
+				    poplocalvars();
+				    localvars = savelocalvars;
+				    if (vforkresult == 2) {
+					/*
+					 * obliterate the deceased zombie
+					 * (known to have exited already)
+					 */
 					(void)waitpid(pid, NULL, 0);
+
 					/*
 					 * We need to progress in a
 					 * normal fork fashion
 					 */
 					goto normal_fork;
+				    }
 				}
+
 				/*
 				 * Here the child has left home,
 				 * getting on with its life, so
 				 * so must we...
 				 */
-				vforked = 0;
 				forkparent(jp, cmd, mode, pid);
 				goto parent;
 			}
@@ -1209,7 +1235,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		}
 #endif
 		if (flags & EV_BACKCMD) {
-			if (!vforked) {
+			if (!vforking) {
 				FORCEINTON;
 			}
 			close(pip[0]);
@@ -1218,15 +1244,20 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		flags |= EV_EXIT;
 	}
 
-	/* This is the child process if a fork occurred. */
-	/* Execute the command. */
+	/*
+	 * This is the child process if a fork occurred.
+	 * (or "the" process if there was no fork at all)
+	 *
+	 * Execute the command.
+	 */
+
 	switch (cmdentry.cmdtype) {
 		volatile int saved;
 		struct funcdef * volatile savefunc;
 		const char * volatile savectx;
 
 	case CMDFUNCTION:
-		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforked?" VF":""),
+		VXTRACE(DBG_EVAL, ("Shell function%s:  ",vforking?" VF":""),
 		    trargs(argv));
 		redirect(cmd->ncmd.redirect, REDIR_KEEP | (saved =
 			!(flags & EV_EXIT) || have_traps() ? REDIR_PUSH : 0));
@@ -1310,7 +1341,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		VTRACE(DBG_EVAL, ("special "));
 	case CMDBUILTIN:
 		VXTRACE(DBG_EVAL, ("builtin command [%d]%s:  ", argc,
-		    vforked ? " VF" : ""), trargs(argv));
+		    vforking ? " VF" : ""), trargs(argv));
 
 		if (cmdentry.u.bltin == execcmd) {
 			char **ap;
@@ -1489,15 +1520,15 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		break;
 
 	default:
-		VXTRACE(DBG_EVAL, ("normal command%s:  ", vforked?" VF":""),
+		VXTRACE(DBG_EVAL, ("normal command%s:  ", vforking?" VF":""),
 		    trargs(argv));
 		redirect(cmd->ncmd.redirect,
-		    (vforked ? REDIR_VFORK : 0) | REDIR_KEEP);
-		if (!vforked)
+		    (vforking ? REDIR_VFORK : 0) | REDIR_KEEP);
+		if (!vforking)
 			for (sp = varlist.list ; sp ; sp = sp->next)
 				setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
 		envp = environment();
-		shellexec(argv, envp, path, cmdentry.u.index, vforked);
+		shellexec(argv, envp, path, cmdentry.u.index, vforking);
 		break;
 	}
 	goto out;

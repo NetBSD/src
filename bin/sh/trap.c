@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $	*/
+/*	$NetBSD: trap.c,v 1.58.2.1 2026/06/03 18:21:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
 #else
-__RCSID("$NetBSD: trap.c,v 1.58 2024/10/09 13:43:33 kre Exp $");
+__RCSID("$NetBSD: trap.c,v 1.58.2.1 2026/06/03 18:21:41 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -471,6 +471,7 @@ free_traps(void)
 			*tp = NULL;
 		}
 	traps_invalid = 0;
+	vforking = 0;	/* no longer relevant, any later signals are normal */
 	INTON;
 }
 
@@ -498,9 +499,11 @@ have_traps(void)
 void
 setsignal(int signo, int vforked)
 {
-	int action;
+	int action, pending;
 	sig_t sigact = SIG_DFL, sig;
 	char *t, tsig;
+
+	pending = !vforked && gotsig[signo];	/* this signal has been rcvd */
 
 	if (traps_invalid || (t = trap[signo]) == NULL)
 		action = S_DFL;
@@ -509,8 +512,8 @@ setsignal(int signo, int vforked)
 	else
 		action = S_IGN;
 
-	VTRACE(DBG_TRAP, ("setsignal(%d%s) -> %d", signo,
-	    vforked ? ", VF" : "", action));
+	VTRACE(DBG_TRAP, ("setsignal(%d%s) -> %d%s", signo,
+	    vforked ? ", VF" : "", action, pending ? " *" : "" ));
 	if (rootshell && !vforked && action == S_DFL) {
 		switch (signo) {
 		case SIGINT:
@@ -545,7 +548,7 @@ setsignal(int signo, int vforked)
 	if (signo == SIGCHLD)
 		action = S_DFL;
 
-	VTRACE(DBG_TRAP, (" -> %d", action));
+	VTRACE(DBG_TRAP, (" -> %d%s", action, pending ? " *" : ""));
 
 	t = &sigmode[signo];
 	tsig = *t;
@@ -617,6 +620,18 @@ setsignal(int signo, int vforked)
 		(void)sigaddset(&ss, signo);
 		(void)sigprocmask(SIG_UNBLOCK, &ss, NULL);
 	}
+
+	/*
+	 * If we have a pending signal (unprocessed) and are now setting
+	 * the action to SIG_DFL, then send the signal to ourselves so the
+	 * kernel can take whatever is the appropriate default action.
+	 */
+	if (pending && sigact == SIG_DFL) {
+		VTRACE(DBG_TRAP, ("setsignal(%d) - pending, suicide\n", signo));
+		gotsig[signo] = 0;	/* and don't consider it again */
+		(void)raise(signo);
+	}
+
 	return;
 }
 
@@ -698,8 +713,22 @@ void
 onsig(int signo)
 {
 	int sav_err = errno;
+	int invalid = 0;
 
-	CTRACE(DBG_SIG, ("onsig(%d), had: pendingsigs %d%s, gotsig[%d]=%d\n",
+	/*
+	 * vforking can only ever be set if signals are blocked (in which
+	 * case we cannot be here), or in a child process that is currently
+	 * in vfork child state (not permitted to alter parent vars)
+	 * and thus for which all traps are invalid, but traps_invalid
+	 * cannot yet be set, nor can trap[] have been cleared, so in
+	 * that case, along with when a child process has marked traps_invalid
+	 * any signal arriving must be treated as if it were not trapped.
+	 */
+	if (traps_invalid || vforking)
+		invalid = 1;
+
+	CTRACE(DBG_SIG, ("%sonsig(%d), had: pendingsigs %d%s, gotsig[%d]=%d\n",
+	    (invalid ? "invalid " : ""),
 	    signo, pendingsigs, intpending ? " (SIGINT-pending)" : "",
 	    signo, gotsig[signo]));
 
@@ -707,7 +736,14 @@ onsig(int signo)
 	signal(signo, onsig);
 	*/
 
-	if (signo == SIGINT && (traps_invalid || trap[SIGINT] == NULL)) {
+	/*
+	 * We should never receive a SIGCHLD, if we do, ignore it
+	 */
+	if (signo == SIGCHLD)
+		return;
+
+	/* invalid here cannot be because of vfork(), just traps_invalid */
+	if (!vforking && signo == SIGINT && (invalid || trap[SIGINT] == NULL)) {
 		VTRACE(DBG_SIG, ("onsig(SIGINT), doing it now\n"));
 		if (suppressint && !in_dotrap)
 			intpending = 1;
@@ -719,9 +755,12 @@ onsig(int signo)
 
 	/*
 	 * if the signal will do nothing, no point reporting it
+	 *
+	 * SIGCHLD is excluded from everything here, the user/application
+	 * isn't permitted to affect that one at all, and we don't ever
+	 * want to receive it, but if we do, simply ignore it.
 	 */
-	if (!traps_invalid && trap[signo] != NULL && trap[signo][0] != '\0' &&
-	    signo != SIGCHLD) {
+	if (!invalid && trap[signo] != NULL && trap[signo][0] != '\0') {
 		gotsig[signo] = 1;
 		pendingsigs++;
 		if (iflag && signo == SIGINT) {
@@ -738,6 +777,18 @@ onsig(int signo)
 		VTRACE(DBG_SIG, ("onsig: gotsig[%d]->%d pendingsigs->%d%s\n",
 		    signo, gotsig[signo], pendingsigs,
 		    intpending ? " (SIGINT pending)":""));
+	} else {
+		/*
+		 * The signal should not have ever arrived.
+		 *
+		 * But don't simply abandon it, instead return the
+		 * signal to default state (this will occur again later,
+		 * around the time traps_invalid is cleared but that's
+		 * harmless) and then send it to ourselves again, to allow
+		 * the kernel to do whatever it needs to do.
+		 */
+		(void)signal(signo, SIG_DFL);	
+		(void)raise(signo);
 	}
 	errno = sav_err;
 }
@@ -919,7 +970,7 @@ exitshell_savedstatus(void)
 		VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
 		    ("exitshell_savedstatus(): pid %d Death by signal %d\n",
 			getpid(), s));
-		kill(getpid(), s);
+		(void)raise(s);
 	}
 	VTRACE(DBG_ERRS|DBG_PROCS|DBG_CMDS|DBG_TRAP,
 	    ("exitshell_savedstatus(): pid %d exiting(%d)\n",
