@@ -1,4 +1,4 @@
-.\"	$NetBSD: pcf8574io.4,v 1.1 2026/06/03 15:18:39 jdc Exp $
+.\"	$NetBSD: pcf8574io.4,v 1.2 2026/06/03 17:41:33 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -43,9 +43,9 @@ GPIO controllers.
 These differ only in their address on the i2c bus.
 System properties are used to configure the pins as LED's or sensors
 which are then exposed via the
-.Xr led
+.Xr led 4
 or
-.Xr envsys
+.Xr envsys 4
 frameworks.
 If any pins are configured as alert sensors, then a console message
 will be printed if the pin status changes.
