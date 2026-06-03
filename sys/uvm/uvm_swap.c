@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.232 2026/05/03 16:02:37 thorpej Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.233 2026/06/03 15:00:06 yamt Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.232 2026/05/03 16:02:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.233 2026/06/03 15:00:06 yamt Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1629,7 +1629,11 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 		    "vp %#jx/%#jx offset %#jx/%#jx",
 		    (uintptr_t)sdp->swd_vp, (uintptr_t)devvp, byteoff, nbn);
 
-		nbp = getiobuf(devvp, true);
+		nbp = getiobuf(devvp, !uvm_lwp_is_pagedaemon(curlwp));
+		if (nbp == NULL) {
+			error = ENOMEM;
+			break;
+		}
 		nestiobuf_setup(bp, nbp, offset, sz);
 		iobuf_redirect(nbp, devvp);
 		nbp->b_blkno = nbn + btodb(off);
