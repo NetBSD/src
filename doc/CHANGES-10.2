@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.98 2026/05/18 17:05:14 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.99 2026/06/03 18:44:34 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -2351,4 +2351,13 @@ etc/etc.luna68k/MAKEDEV.conf			1.12
 
 	luna68k: add missing audio devices to MAKEDEV.
 	[isaki, ticket #1268]
+
+sys/net/if_llatbl.h				1.20
+sys/net/nd.c					1.10
+sys/netinet/if_arp.c				1.319
+sys/netinet6/nd6.c				1.286
+tests/net/arp/t_arp.sh				1.50,1.51
+
+	ARP/IPv6 ND: PR 60071: restore pre-NetBD 10 behavior.
+	[ozaki-r, ticket #1269]
 
