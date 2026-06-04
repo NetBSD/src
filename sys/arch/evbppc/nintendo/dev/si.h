@@ -53,6 +53,7 @@
 #define  SICOMCSR_CHANNEL	__BITS(2, 1)
 #define  SICOMCSR_TSTART	__BIT(0)
 #define SISR			0x38
+#define  SISR_SICNOUTBUF	__BIT(31)
 #define  SISR_OFF(n)		((3 - (n)) * 8)
 #define  SISR_WR(n)		__BIT(SISR_OFF(n) + 7)
 #define  SISR_RDST(n)		__BIT(SISR_OFF(n) + 5)
@@ -156,12 +157,13 @@ struct siio_send {
 static inline int
 __si_send(struct si_softc *sc, struct siio_send *data)
 {
-	uint32_t cnt, comcsr, sisr, shift_amt, status;
+	uint32_t cnt, comcsr, comcsr_prev, sisr, shift_amt, status;
 	unsigned chan;
 
 	mutex_enter(&sicomcsr_lock);
 	chan = data->chan;
 
+	comcsr_prev = RD4(sc, SICOMCSR);
 	SIIOBUF_CLEAR(sc);
 	data->status = 0;
 
@@ -171,7 +173,6 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
 	sisr = RD4(sc, SISR);
-
 
 	/* 
 	 * libogc uses interrupts for non-blocking. i think this is ok for now
@@ -191,7 +192,13 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 	AWAIT_SICOMCSR(sc);
 
 	comcsr = RD4(sc, SICOMCSR);
-	WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
+
+	/* clear TCINT and preserve previous masks otherwise we lose polling */
+	WR4(sc, SICOMCSR, comcsr |
+	    SICOMCSR_TCINT |
+	    (comcsr_prev & SICOMCSR_TCINTMSK) |
+	    (comcsr_prev & SICOMCSR_RDSTINTMSK));
+
 	if (ISSET(comcsr, SICOMCSR_COMERR)) {
 		sisr = RD4(sc, SISR);
 		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);

@@ -59,7 +59,7 @@ static void	si_softintr(void *);
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
 static uint32_t	send_cmd(struct si_softc *, uint32_t, unsigned, long);
-static int	si_identify(device_t, unsigned);
+static int	si_identify(struct si_softc *, unsigned);
 
 static void	si_get_report_desc(void *, void **, int *);                   
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
@@ -117,7 +117,7 @@ si_attach(device_t parent, device_t self, void *aux)
 		    si_softintr, ch);
 		KASSERT(ch->ch_si != NULL);
 
-		si_identify(self, chan);
+		si_identify(sc, chan);
 
 		t = &ch->ch_hidev;
 		t->_cookie = &sc->sc_chan[chan];
@@ -128,16 +128,31 @@ si_attach(device_t parent, device_t self, void *aux)
 		t->_set_report = si_set_report;
 		t->_get_report = si_get_report;
 		t->_write = si_write;
-	}
 
-	WR4(sc, SIPOLL,
-	    __SHIFTIN(7, SIPOLL_X) |
-	    __SHIFTIN(1, SIPOLL_Y));
-	WR4(sc, SICOMCSR, SICOMCSR_RDSTINT | SICOMCSR_RDSTINTMSK);
+		/* Init controller */
+		WR4(sc, SICOUTBUF(ch->ch_index), 0x00400300);
+	}
 
 	ih = intr_establish_xname(maa->maa_irq, IST_LEVEL, IPL_VM, si_intr, sc,
 	    device_xname(self));
 	KASSERT(ih != NULL);
+
+	/* write to all SICOUTBUF double buffers */
+	WR4(sc, SISR, SISR_SICNOUTBUF);
+
+	WR4(sc, SIPOLL,
+	    SIPOLL_EN(0) |
+	    SIPOLL_EN(1) |
+	    SIPOLL_EN(2) |
+	    SIPOLL_EN(3) |
+	    __SHIFTIN(7, SIPOLL_X) |
+	    __SHIFTIN(1, SIPOLL_Y));
+
+	WR4(sc, SICOMCSR,
+	    RD4(sc, SICOMCSR) |
+	    SICOMCSR_RDSTINT |
+	    SICOMCSR_RDSTINTMSK |
+	    SICOMCSR_TSTART);
 
 	si_rescan(self, NULL, NULL);
 }
@@ -200,9 +215,8 @@ send_cmd(struct si_softc *sc, uint32_t cmd, unsigned chan, long us)
 }
 
 static int
-si_identify(device_t self, unsigned chan)
+si_identify(struct si_softc *sc, unsigned chan)
 {
-	struct si_softc * const sc = device_private(self);
 	struct si_channel *ch;
 	uint32_t id;
 
@@ -270,6 +284,7 @@ si_intr(void *priv)
 	struct si_softc *sc = priv;
 	unsigned chan;
 	uint32_t comcsr, sr;
+
 	int ret = 0;
 
 	comcsr = RD4(sc, SICOMCSR);
@@ -284,11 +299,23 @@ si_intr(void *priv)
 			struct si_channel *ch = &sc->sc_chan[chan];
 
 			if (ISSET(sr, SISR_RDST(chan))) {
-				/* Reading INBUF[HL] de-asserts RDSTINT. */
-				si_make_report(sc, chan, ch->ch_buf, false);
+				/* clears the sisr by reading inbuf */
+				(void)RD4(sc, SICINBUFH(ch->ch_index));
+				(void)RD4(sc, SICINBUFL(ch->ch_index));
 
-				if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
-					softint_schedule(ch->ch_si);
+				if (((sr & SISR_ERROR_MASK(chan)) == 0) && !(IS_GCPAD(ch->ch_id))) {
+					si_identify(sc, ch->ch_index);
+					if (IS_GCPAD(ch->ch_id)) {
+						aprint_normal("CONTROLLER DETECTED!!!\n");
+						// TODO - add this stuff back
+						//si_make_report(sc, chan, ch->ch_buf, false);
+						//if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
+						//  softint_schedule(ch->ch_si);
+						//}
+					}
+				} else if (((sr & SISR_ERROR_MASK(chan)) != 0) && (IS_GCPAD(ch->ch_id))) {
+					aprint_normal("CONTROLLER DISCONNECTED\n");
+					ch->ch_id = 0;
 				}
 			}
 
@@ -312,7 +339,6 @@ static int
 si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 {
 	struct si_channel *ch = cookie;
-	struct si_softc *sc = ch->ch_sc;
 	int error;
 
 	mutex_enter(&ch->ch_lock);
@@ -325,18 +351,6 @@ si_open(void *cookie, void (*intr)(void *, void *, u_int), void *arg)
 	ch->ch_intr = intr;
 	ch->ch_intrarg = arg;
 	ch->ch_state |= SI_STATE_OPEN;
-
-	(void)RD4(sc, SICINBUFH(ch->ch_index));
-	(void)RD4(sc, SICINBUFL(ch->ch_index));
-
-	/* Init controller */
-	WR4(sc, SICOUTBUF(ch->ch_index), 0x00400300);
-
-	/* Enable polling */
-	WR4(sc, SIPOLL, RD4(sc, SIPOLL) | SIPOLL_EN(ch->ch_index));
-
-	WR4(sc, SISR, SISR_WR(ch->ch_index));
-	WR4(sc, SICOMCSR, RD4(sc, SICOMCSR) | SICOMCSR_TSTART);
 
 	error = 0;
 
