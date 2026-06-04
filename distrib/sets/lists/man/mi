@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1832 2026/06/03 15:23:44 jdc Exp $
+# $NetBSD: mi,v 1.1833 2026/06/04 14:22:21 jdc Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1929,7 +1929,9 @@
 ./usr/share/man/cat4/sparc64/envctrl.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/fdc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/ffb.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/fireiic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/intro.0		man-sys-catman		.cat
+./usr/share/man/cat4/sparc64/jbusiic.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/lom.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/psycho.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sparc64/pyro.0		man-sys-catman		.cat
@@ -5527,7 +5529,9 @@
 ./usr/share/man/man4/sparc64/envctrl.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/fdc.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/ffb.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/fireiic.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/intro.4		man-sys-man		.man
+./usr/share/man/man4/sparc64/jbusiic.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/lom.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/psycho.4		man-sys-man		.man
 ./usr/share/man/man4/sparc64/pyro.4		man-sys-man		.man
