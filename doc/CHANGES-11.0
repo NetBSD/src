@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.95 2026/06/04 12:02:49 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.96 2026/06/04 12:18:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10397,4 +10397,33 @@ external/bsd/tmux/usr.bin/tmux/Makefile         up to 1.46
 
 	Import tmux 3.6b.
 	[kim, ticket #303]
+
+xsrc/external/mit/xorg-server/dist/ChangeLog         up to 1.1.1.33
+xsrc/external/mit/xorg-server/dist/configure         up to 1.26
+xsrc/external/mit/xorg-server/dist/configure.ac      up to 1.28
+xsrc/external/mit/xorg-server/dist/meson.build       up to 1.1.1.23
+xsrc/external/mit/xorg-server/dist/meson_options.txt up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/Xext/saver.c      up to 1.6
+xsrc/external/mit/xorg-server/dist/Xext/sync.c       up to 1.16
+xsrc/external/mit/xorg-server/dist/Xi/xipassivegrab.c up to 1.9
+xsrc/external/mit/xorg-server/dist/dix/dixfonts.c    up to 1.9
+xsrc/external/mit/xorg-server/dist/glx/glxcmds.c     up to 1.17
+xsrc/external/mit/xorg-server/dist/glx/glxcmdsswap.c up to 1.5
+xsrc/external/mit/xorg-server/dist/glx/single2.c     up to 1.5
+xsrc/external/mit/xorg-server/dist/glx/single2swap.c up to 1.5
+xsrc/external/mit/xorg-server/dist/hw/xfree86/dri2/dri2.c up to 1.7
+xsrc/external/mit/xorg-server/dist/include/closestr.h up to 1.1.1.5
+xsrc/external/mit/xorg-server/dist/miext/sync/misync.c up to 1.1.1.6
+xsrc/external/mit/xorg-server/dist/present/present_notify.c up to 1.1.1.4
+xsrc/external/mit/xorg-server/dist/xkb/XKBGAlloc.c   up to 1.1.1.8
+xsrc/external/mit/xorg-server/dist/xkb/xkb.c         up to 1.14
+xsrc/external/mit/xorg-server/dist/xkb/xkbtext.c     up to 1.1.1.9
+xsrc/external/mit/xorg-server/include/dix-config.h   up to 1.59
+xsrc/external/mit/xorg-server/include/version-config.h up to 1.29
+xsrc/external/mit/xorg-server/include/xorg-config.h  up to 1.39
+xsrc/external/mit/xorg-server/include/xorg-server.h  up to 1.39
+share/mk/bsd.x11.mk				1.166
+
+	Import XOrg server 21.1.23.
+	[mrg, ticket #304]
 
