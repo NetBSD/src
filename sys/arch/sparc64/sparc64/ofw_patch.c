@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.10 2026/02/06 16:35:30 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.11 2026/06/04 13:58:28 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.10 2026/02/06 16:35:30 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.11 2026/06/04 13:58:28 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -129,6 +129,24 @@ add_gpio_props_v210(device_t dev, void *aux)
 			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0);
 			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0);
 			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+static void
+add_gpio_props_u45(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x18:	/* front panel LEDs */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "LED power", 0, 1, -1);
+			add_gpio_pin(pins, "LED fault", 1, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -290,6 +308,24 @@ add_env_sensors_v210(device_t busdev)
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75", 0x4e, 0);
 }
 
+/*
+ * Add U45 environmental sensors that are not in the OFW tree.
+ */
+static void
+add_env_sensors_u45(device_t busdev)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* LM95221 at 0x2b */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm95221", 0x2b, 0);
+
+	/* NXP LM75A at 0x4f */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75a", 0x4f, 0);
+}
+
 /* Sensors and GPIO's for E450 and E250 */
 static void
 add_i2c_props_e450(device_t busdev, uint64_t node)
@@ -347,6 +383,44 @@ add_i2c_props_e250(device_t busdev, uint64_t node)
 	prop_object_release(cfg);
 }
 
+/*
+ * Fix-up U45 incorrect properties in the OFW tree.
+ */
+static void
+fix_properties_u45(device_t busdev)
+{
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg;
+	prop_object_t dev;
+	uint32_t addr;
+	const char *name;
+	int i, n;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+	if (!cfg)
+		return;
+
+	n = prop_array_count(cfg);
+	for (i = 0; i < n; i++) {
+		dev = prop_array_get(cfg, i);
+		if (prop_object_type(dev) == PROP_TYPE_DICTIONARY &&
+		    prop_dictionary_get_uint32(dev, "addr", &addr) &&
+		    prop_dictionary_get_string(dev, "name", &name)) {
+			/* Change psu-fru-prom to a standard eeprom */
+			if (addr == 0x57)
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-at24c02", strlen("i2c-at24c02") + 1);
+			/* Remove fake lm76 at addresses 2b, 48 and 4f */
+			if ((addr == 0x2b || addr == 0x48 || addr == 0x4f) &&
+			    !strcmp(name, "temperature")) {
+				prop_array_remove(cfg, i);
+				i -= 1;
+				n -= 1;
+			}
+		}
+	}
+}
+
 /* Hardware specific i2c bus properties */
 void
 set_i2c_bus_props(device_t busdev, uint64_t busnode)
@@ -359,6 +433,12 @@ set_i2c_bus_props(device_t busdev, uint64_t busnode)
 		if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
 		    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))
 			add_env_sensors_v210(busdev);
+
+		if (!strcmp(machine_model, "SUNW,A70") ||
+		    !strcmp(machine_model, "SUNW,Ultra-25")) {
+			add_env_sensors_u45(busdev);
+			fix_properties_u45(busdev);
+		}
 
 		/* E450 SUNW,envctrl */
 		if (!strcmp(machine_model, "SUNW,Ultra-4"))
@@ -373,7 +453,7 @@ set_i2c_bus_props(device_t busdev, uint64_t busnode)
 
 /* Hardware specific i2c device properties */
 void
-set_i2c_dev_props(device_t dev, void *aux)
+set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 {
 
 	if ((!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
@@ -391,10 +471,24 @@ set_i2c_dev_props(device_t dev, void *aux)
 		}
 	}
 
+	/* U45 has 5 measured fans */
+	if (!strcmp(machine_model, "SUNW,A70")) {
+		if (device_is_a(dev, "adt7462sm")){
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint8(props, "fan_conf", 0x1f);
+		}
+	}
+
+	/* U45 pcagpio @ firei2c controls the front panel LED */
+	if (!strcmp(machine_model, "SUNW,A70") ||
+	    !strcmp(machine_model, "SUNW,Ultra-25"))
+		if (device_is_a(dev, "pcagpio") &&
+		    device_is_a(busdev, "firei2c"))
+			add_gpio_props_u45(dev, aux);
+
 	if (!strcmp(machine_model, "SUNW,Ultra-250"))
 		if (device_is_a(dev, "pcf8574io"))
 			add_gpio_props_e250(dev, aux);
-
 }
 
 /* Static EDID definitions */
