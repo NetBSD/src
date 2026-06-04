@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.11 2026/06/04 13:58:28 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.12 2026/06/04 15:36:33 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.11 2026/06/04 13:58:28 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.12 2026/06/04 15:36:33 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -421,6 +421,37 @@ fix_properties_u45(device_t busdev)
 	}
 }
 
+/*
+ * Fix-up V245 incorrect properties in the OFW tree.
+ */
+static void
+fix_properties_v245(device_t busdev)
+{
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg;
+	prop_object_t dev;
+	uint32_t addr;
+	const char *name;
+	int i, n;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+	if (!cfg)
+		return;
+
+	n = prop_array_count(cfg);
+	for (i = 0; i < n; i++) {
+		dev = prop_array_get(cfg, i);
+		if (prop_object_type(dev) == PROP_TYPE_DICTIONARY &&
+		    prop_dictionary_get_uint32(dev, "addr", &addr) &&
+		    prop_dictionary_get_string(dev, "name", &name)) {
+			/* Change psu-fru-prom's to standard eeprom's */
+			if (addr == 0x36 || addr == 0x37)
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-at24c02", strlen("i2c-at24c02") + 1);
+		}
+	}
+}
+
 /* Hardware specific i2c bus properties */
 void
 set_i2c_bus_props(device_t busdev, uint64_t busnode)
@@ -447,6 +478,13 @@ set_i2c_bus_props(device_t busdev, uint64_t busnode)
 		/* E250 SUNW,envctrltwo */
 		if (!strcmp(machine_model, "SUNW,Ultra-250"))
 			add_i2c_props_e250(busdev, busnode);
+	}
+
+	if (device_is_a(busdev, "firei2c")) {
+		if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
+			fix_properties_v245(busdev);
+		}
 	}
 }
 
@@ -489,6 +527,12 @@ set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
 	if (!strcmp(machine_model, "SUNW,Ultra-250"))
 		if (device_is_a(dev, "pcf8574io"))
 			add_gpio_props_e250(dev, aux);
+
+	/* Sun use offsets from 2000 but range 1970 to 2069 */
+	if (device_is_a(dev, "dsrtc")) {
+		prop_dictionary_t props = device_properties(dev);
+		prop_dictionary_set_uint(props, "start-year", 2000);
+	}
 }
 
 /* Static EDID definitions */
