@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.94 2026/06/03 18:58:49 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.95 2026/06/04 12:02:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10332,7 +10332,8 @@ bin/sh/jobs.c					1.126
 bin/sh/jobs.h					1.28
 bin/sh/trap.c					1.59-1.62
 
-	sh(1): PR 60275: discard less arriving signals.
+	sh(1): PR 60275: fix problems with signals sent to a child
+	immediately after a fork.
 	[kre, ticket #294]
 
 sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.40
