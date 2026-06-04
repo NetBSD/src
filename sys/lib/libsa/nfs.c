@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.53 2024/06/29 07:49:36 rin Exp $	*/
+/*	$NetBSD: nfs.c,v 1.54 2026/06/04 10:05:02 mlelstv Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -317,6 +317,9 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
 			return ntohl(replv2->errno);
 		}
 
+		if (cc < sizeof(*replv2))
+			return EIO;
+
 		setfh(newfd, replv2->fh);
 		(void)memcpy(&newfd->u_fa.v2, &replv2->fa,
 		    sizeof(newfd->u_fa.v2));
@@ -327,7 +330,16 @@ nfs_lookupfh(struct nfs_iodesc *d, const char *name, int len,
 			return ntohl(replv3->errno);
 		}
 
+		if (cc < sizeof(*replv3) - (NFS_FHSTORE - 4))
+			return EIO;
+
 		setfh(newfd, replv3->fh);
+
+		/* adjust for variable sized file handle */
+		alen = fhstore(d->version, replv3->fh);
+		cc -= offsetof(struct replv3, fattrflag);
+		if (cc > 0)
+			memmove(&replv3->fattrflag, &replv3->fh + alen, cc);
 
 		if (replv3->fattrflag) {
 			(void)memcpy(&newfd->u_fa.v3, &replv3->fa,
