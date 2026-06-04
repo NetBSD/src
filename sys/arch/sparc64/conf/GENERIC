@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.247 2026/02/02 07:58:42 mrg Exp $
+# $NetBSD: GENERIC,v 1.248 2026/06/04 13:59:46 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.247 $"
+#ident		"GENERIC-$Revision: 1.248 $"
 
 maxusers	64
 
@@ -249,6 +249,10 @@ timer*	at mainbus0				# sun4c
 ## found in schizo-based systems
 jbusi2c* 	at mainbus0
 iic* 	at jbusi2c?
+
+## Found in pyro-based systems
+firei2c* 	at mainbus0
+iic* 	at firei2c?
 
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
@@ -830,6 +834,9 @@ ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp* 	at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000
 dbcool* 	at iic? addr?	# SB25000
+nxp75a* 	at iic? addr?	# U45
+lm95221ts* 	at iic? addr?	# U45
+adt7462sm* 	at iic? addr?	# U45
 seeprom*	at iic? addr?	# i2c-at24c64 fru's
 pcagpio* 	at iic? addr?	# V210/V240 GPIO's
 pcf8574io* 	at iic? addr?	# E250 GPIO's
