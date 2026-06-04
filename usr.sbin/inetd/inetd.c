@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.142 2025/12/27 08:06:38 mlelstv Exp $	*/
+/*	$NetBSD: inetd.c,v 1.143 2026/06/04 10:41:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.142 2025/12/27 08:06:38 mlelstv Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.143 2026/06/04 10:41:15 riastradh Exp $");
 #endif
 #endif /* not lint */
 
@@ -938,8 +938,7 @@ suspend_sep(struct servtab *sep)
 
 	if (sep->se_accept_mark == 0)
 		syslog(LOG_ERR, SERV_FMT
-		    ": accept_max reached (%zu);"
-		    "service suspended",
+		    ": accept_max reached (%zu); service suspended",
 		    SERV_PARAMS(sep),
 		    sep->se_accept_max);
 
@@ -966,8 +965,7 @@ resume_sep(struct servtab *sep)
 	if (sep->se_accept_mark == 0 ||
 	    sep->se_accept_count < sep->se_accept_mark) {
 		syslog(LOG_ERR, SERV_FMT
-		    ": fell below accept_max (%zu);"
-		    "service resumed",
+		    ": fell below accept_max (%zu); service resumed",
 		    SERV_PARAMS(sep),
 		    sep->se_accept_max);
 		sep->se_accept_mark = 0;
