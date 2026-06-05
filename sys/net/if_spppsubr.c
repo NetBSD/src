@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.280 2026/06/05 02:38:32 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.281 2026/06/05 02:40:08 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.280 2026/06/05 02:38:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.281 2026/06/05 02:40:08 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -594,11 +594,9 @@ sppp_debug_enabled(struct sppp *sp)
 static void
 sppp_change_phase(struct sppp *sp, int phase)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	if (sp->pp_phase == phase)
 		return;
@@ -1349,14 +1347,13 @@ static void
 sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	     u_char ident, u_short len, void *data)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct lcp_header *lh;
 	struct mbuf *m;
 	size_t pkthdrlen;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	ifp = &sp->pp_if;
 	pkthdrlen = ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING) ?
 	     2 : PPP_HEADER_LEN;
 
@@ -1524,21 +1521,17 @@ sppp_cp_fini(const struct cp *cp, struct sppp *sp)
 static void
 sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 {
-	struct ifnet *ifp;
+	const bool debug = sppp_debug_enabled(sp);
+	struct ifnet *ifp = &sp->pp_if;
+	struct sppp_cp *scp = &sp->scp[cp->protoidx];
 	struct lcp_header *h;
-	struct sppp_cp *scp;
 	int printlen, len = m->m_pkthdr.len;
 	u_char *p;
 	uint32_t u32;
 	char tbuf[SPPP_CPTYPE_NAMELEN];
 	const char *cpname;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
-	debug = sppp_debug_enabled(sp);
-	scp = &sp->scp[cp->protoidx];
 
 	if (len < 4) {
 		SPPP_DLOG(sp, "%s invalid packet length: %d bytes\n",
@@ -1965,10 +1958,8 @@ static void
 sppp_rcr_update_state(const struct cp *cp, struct sppp *sp,
     enum cp_rcr_type type, uint8_t ident, size_t msglen, void *msg)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	u_char ctype;
-
-	ifp = &sp->pp_if;
 
 	if (type == CP_RCR_ERR) {
 		/* parse error, shut down */
@@ -2112,12 +2103,10 @@ sppp_rcr_event(struct sppp *sp, void *xcp)
 static void
 sppp_rca_event(struct sppp *sp, void *xcp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	const struct cp *cp = xcp;
 
 	KASSERT(!cpu_softintr_p());
-
-	ifp = &sp->pp_if;
 
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_CLOSED:
@@ -2223,12 +2212,10 @@ sppp_rcn_event(struct sppp *sp, void *xcp)
 static void
 sppp_rtr_event(struct sppp *sp, void *xcp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	const struct cp *cp = xcp;
 
 	KASSERT(!cpu_softintr_p());
-
-	ifp = &sp->pp_if;
 
 	switch (sp->scp[cp->protoidx].state) {
 	case STATE_ACK_RCVD:
@@ -2392,12 +2379,11 @@ sppp_lcp_init(struct sppp *sp)
 static void
 sppp_lcp_up(struct sppp *sp, void *xcp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	const struct cp *cp = xcp;
 	int pidx;
 
 	KASSERT(SPPP_WLOCKED(sp));
-	ifp = &sp->pp_if;
 
 	pidx = cp->protoidx;
 	/* Initialize activity timestamp: opening a connection is an activity */
@@ -2426,14 +2412,12 @@ static void
 sppp_lcp_down(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
-	struct ifnet *ifp;
-	int pidx;
+	struct ifnet *ifp = &sp->pp_if;
+	int pidx = cp->protoidx;
 
 	KASSERT(SPPP_WLOCKED(sp));
 	KASSERT(!cpu_softintr_p());
 
-	ifp = &sp->pp_if;
-	pidx = cp->protoidx;
 	sppp_down_event(sp, xcp);
 
 	/*
@@ -2503,17 +2487,15 @@ static enum cp_rcr_type
 sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
     uint8_t **msgbuf, size_t *buflen, size_t *msglen)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *buf, *r, *p, l, blen;
 	enum cp_rcr_type type;
 	int len, rlen;
 	uint32_t nmagic;
 	u_short authproto;
 	char lbuf[SPPP_LCPOPT_NAMELEN];
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	debug = sppp_debug_enabled(sp);
 
 	if (origlen < sizeof(*h))
 		return CP_RCR_DROP;
@@ -2872,12 +2854,10 @@ end:
 static void
 sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	debug = sppp_debug_enabled(sp);
 
 	if (len <= sizeof(*h))
 		return;
@@ -2962,16 +2942,15 @@ end:
 static void
 sppp_lcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
 	uint32_t magic;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
 	if (len <= sizeof(*h))
 		return;
 
-	debug = sppp_debug_enabled(sp);
 	len -= sizeof(*h);
 
 	if (debug)
@@ -3055,14 +3034,12 @@ end:
 static void
 sppp_lcp_tlu(struct sppp *sp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct sppp_cp *scp;
 	int i;
 	bool going_up;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	/* unlock for IFNET_LOCK and if_up() */
 	SPPP_UNLOCK(sp);
@@ -3423,6 +3400,7 @@ static enum cp_rcr_type
 sppp_ipcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
    uint8_t **msgbuf, size_t *buflen, size_t *msglen)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *buf, *r, *p, l, blen;
 	enum cp_rcr_type type;
 	int rlen, len;
@@ -3430,7 +3408,6 @@ sppp_ipcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 	char ipbuf[SPPP_IPCPOPT_NAMELEN];
 	char dqbuf[SPPP_DOTQUAD_BUFLEN];
 	const char *dq;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -3439,8 +3416,6 @@ sppp_ipcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 
 	if (origlen < 0)
 		return CP_RCR_DROP;
-
-	debug = sppp_debug_enabled(sp);
 
 	/*
 	 * Make sure to allocate a buf that can at least hold a
@@ -3659,8 +3634,8 @@ end:
 static void
 sppp_ipcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -3668,7 +3643,6 @@ sppp_ipcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 		return;
 
 	len -= sizeof(*h);
-	debug = sppp_debug_enabled(sp);
 
 	if (debug)
 		SPPP_LOG(sp, LOG_DEBUG, "ipcp rej opts:");
@@ -3732,16 +3706,13 @@ end:
 static void
 sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
-	struct ifnet *ifp = &sp->pp_if;
-	int debug = ifp->if_flags & IFF_DEBUG;
 	uint32_t wantaddr;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
 	len -= sizeof(*h);
-
-	debug = sppp_debug_enabled(sp);
 
 	if (debug)
 		SPPP_LOG(sp, LOG_DEBUG, "ipcp nak opts:");
@@ -3844,11 +3815,10 @@ sppp_ipcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 static void
 sppp_rt_ifmsg(struct sppp *sp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	ifp = &sp->pp_if;
 	SPPP_UNLOCK(sp);
 	rt_ifmsg(ifp);
 	SPPP_LOCK(sp, RW_WRITER);
@@ -4011,6 +3981,7 @@ static enum cp_rcr_type
 sppp_ipv6cp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
     uint8_t **msgbuf, size_t *buflen, size_t *msglen)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *buf, *r, *p, l, blen;
 	int rlen, len;
 	struct in6_addr myaddr, desiredaddr, suggestaddr;
@@ -4021,11 +3992,9 @@ sppp_ipv6cp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 	char tbuf[SPPP_CPTYPE_NAMELEN];
 	char ipv6buf[SPPP_IPV6CPOPT_NAMELEN];
 	const char *cpname;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	debug = sppp_debug_enabled(sp);
 	type = CP_RCR_NONE;
 	origlen -= sizeof(*h);
 
@@ -4244,8 +4213,8 @@ end:
 static void
 sppp_ipv6cp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -4253,7 +4222,6 @@ sppp_ipv6cp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 		return;
 
 	len -= sizeof(*h);
-	debug = sppp_debug_enabled(sp);
 
 	if (debug)
 		SPPP_LOG(sp, LOG_DEBUG, "ipv6cp rej opts:");
@@ -4306,10 +4274,10 @@ end:
 static void
 sppp_ipv6cp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 {
+	const bool debug = sppp_debug_enabled(sp);
 	u_char *p, l;
 	struct in6_addr suggestaddr;
 	char ip6buf[INET6_ADDRSTRLEN];
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
@@ -4317,7 +4285,6 @@ sppp_ipv6cp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 		return;
 
 	len -= sizeof(*h);
-	debug = sppp_debug_enabled(sp);
 
 	if (debug)
 		SPPP_LOG(sp, LOG_DEBUG, "ipv6cp nak opts:");
@@ -4553,21 +4520,18 @@ sppp_ipv6cp_scr(struct sppp *sp)
 void
 sppp_chap_input(struct sppp *sp, struct mbuf *m)
 {
-	struct ifnet *ifp;
+	const bool debug = sppp_debug_enabled(sp);
+	struct ifnet *ifp = &sp->pp_if;
 	struct lcp_header *h;
-	int len;
+	int len = m->m_pkthdr.len;
 	u_char *value, *name, digest[sizeof(sp->chap.challenge)];
 	int value_len, name_len;
 	MD5_CTX ctx;
 	char abuf[SPPP_AUTHTYPE_NAMELEN];
 	const char *authname;
-	bool debug;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	ifp = &sp->pp_if;
-	debug = sppp_debug_enabled(sp);
-	len = m->m_pkthdr.len;
 	if (len < 4) {
 		SPPP_DLOG(sp, "chap invalid packet length: "
 		    "%d bytes\n", len);
@@ -4976,17 +4940,14 @@ sppp_chap_rcv_challenge_event(struct sppp *sp, void *xcp)
 static void
 sppp_pap_input(struct sppp *sp, struct mbuf *m)
 {
-	struct ifnet *ifp;
+	const bool debug = sppp_debug_enabled(sp);
+	struct ifnet *ifp = &sp->pp_if;
 	struct lcp_header *h;
 	int len;
 	char *name, *secret;
 	int name_len, secret_len;
 	char abuf[SPPP_AUTHTYPE_NAMELEN];
 	const char *authname;
-	bool debug;
-
-	ifp = &sp->pp_if;
-	debug = sppp_debug_enabled(sp);
 
 	KASSERT(SPPP_WLOCKED(sp));
 	/*
@@ -5209,7 +5170,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
                unsigned int type, unsigned int id,
 	       ...)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct lcp_header *lh;
 	struct mbuf *m;
 	u_char *p;
@@ -5220,8 +5181,6 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 	va_list ap;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (! m)
@@ -5537,7 +5496,7 @@ sppp_get_ip_addrs(struct sppp *sp, uint32_t *src, uint32_t *dst, uint32_t *srcma
 static void
 sppp_set_ip_addrs(struct sppp *sp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	uint32_t myaddr = 0, hisaddr = 0;
@@ -5545,8 +5504,6 @@ sppp_set_ip_addrs(struct sppp *sp)
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
@@ -5613,15 +5570,13 @@ sppp_set_ip_addrs(struct sppp *sp)
 static void
 sppp_clear_ip_addrs(struct sppp *sp)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	struct sockaddr_in *si, *dest;
 	int bound;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
@@ -5738,14 +5693,12 @@ sppp_gen_ip6_addr(struct sppp *sp, struct in6_addr *addr)
 static void
 sppp_set_ip6_addr(struct sppp *sp, const struct in6_addr *src)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sp->pp_if;
 	struct ifaddr *ifa;
 	int bound;
 	struct psref psref;
 
 	KASSERT(SPPP_WLOCKED(sp));
-
-	ifp = &sp->pp_if;
 
 	SPPP_UNLOCK(sp);
 	IFNET_LOCK(ifp);
