@@ -1,4 +1,4 @@
-/* $NetBSD: fire_i2c.c,v 1.1 2026/06/04 13:43:24 jdc Exp $ */
+/* $NetBSD: fire_i2c.c,v 1.2 2026/06/05 06:26:44 kre Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fire_i2c.c,v 1.1 2026/06/04 13:43:24 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fire_i2c.c,v 1.2 2026/06/05 06:26:44 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/condvar.h>
@@ -121,7 +121,7 @@ firei2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	if (ma->ma_reg[0].ur_len < FIREI2C_SRST) {
-		aprint_error(": register length error (%ld < %d\n",
+		aprint_error(": register length error (%lld < %d\n",
 		    ma->ma_reg[0].ur_len, FIREI2C_SRST);
 		return;
 	}
