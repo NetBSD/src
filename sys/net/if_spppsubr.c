@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.283 2026/06/05 02:48:10 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.284 2026/06/05 02:51:03 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.283 2026/06/05 02:48:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.284 2026/06/05 02:51:03 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1676,7 +1676,6 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			SPPP_DLOG(sp, "loopback\n");
 
 			if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
-				sp->pp_flags |= PP_LOOPBACK;
 				/* Shut down the PPP link. */
 				sppp_wq_add(sp->wq_cp,
 				    &sp->work_ifdown);
@@ -2664,7 +2663,6 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				sp->pp_loopcnt = 0;
 
 				if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
-					sp->pp_flags |= PP_LOOPBACK;
 					sppp_wq_add(sp->wq_cp,
 					    &sp->work_ifdown);
 				} else {
@@ -3022,34 +3020,14 @@ sppp_lcp_tlu(struct sppp *sp)
 	struct ifnet *ifp = &sp->pp_if;
 	struct sppp_cp *scp;
 	int i;
-	bool going_up;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	/* unlock for IFNET_LOCK and if_up() */
+	/* unlock for IFNET_LOCK */
 	SPPP_UNLOCK(sp);
-
-	if (! (ifp->if_flags & IFF_UP) &&
-	    (ifp->if_flags & IFF_RUNNING)) {
-		/* Coming out of loopback mode. */
-		going_up = true;
-		if_up(ifp);
-	} else {
-		going_up = false;
-	}
 
 	IFNET_LOCK(ifp);
 	SPPP_LOCK(sp, RW_WRITER);
-
-	if (going_up) {
-		if ((sp->pp_flags & PP_LOOPBACK) == 0) {
-			SPPP_LOG(sp, LOG_DEBUG,
-			    "interface is going up, "
-			    "but no loopback packet is detected\n");
-		}
-		sp->pp_flags &= ~PP_LOOPBACK;
-	}
-
 	if (ifp->if_mtu > sp->lcp.their_mru) {
 		sp->pp_saved_mtu = ifp->if_mtu;
 		ifp->if_mtu = sp->lcp.their_mru;
@@ -3057,7 +3035,10 @@ sppp_lcp_tlu(struct sppp *sp)
 		    "from %"PRIu64" bytes to %"PRIu64" bytes\n",
 		    sp->pp_saved_mtu, ifp->if_mtu);
 	}
+	SPPP_UNLOCK(sp);
 	IFNET_UNLOCK(ifp);
+
+	SPPP_LOCK(sp, RW_WRITER);
 
 	if (ISSET(sp->lcp.opts, SPPP_LCP_OPT_AUTH_PROTO) ||
 	    (sp->pp_flags & PP_NEEDAUTH) != 0)

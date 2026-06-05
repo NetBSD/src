@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.46 2026/06/05 02:48:10 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.47 2026/06/05 02:51:03 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -206,7 +206,7 @@ struct sppp {
 #define PP_CALLIN		0x08	/* we are being called */
 #define PP_NEEDAUTH		0x10	/* remote requested authentication */
 					/* 0x20 was PP_NOFRAMING */
-#define PP_LOOPBACK		0x40	/* in line loopback mode */
+					/* 0x40 was PP_LOOPBACK */
 #define PP_LOOPBACK_IFDOWN	0x80	/* if_down() when loopback detected */
 #define PP_KEEPALIVE_IFDOWN	0x100	/* if_down() when no ECHO_REPLY received */
 
