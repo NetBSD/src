@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.45 2026/06/05 02:44:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.46 2026/06/05 02:48:10 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -57,7 +57,7 @@ struct slcp {
 	/* multilink variables */
 	u_long	mrru;		/* our   max received reconstructed unit */
 	u_long	their_mrru;	/* their max receive dreconstructed unit */
-	bool	tlf_sent;	/* call lower layer's tlf before a down event */
+	bool	lower_running;	/* Whether the lower layer is running */
 };
 
 #define IDX_IPCP 1		/* idx into state table */

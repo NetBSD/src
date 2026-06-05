@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.282 2026/06/05 02:44:43 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.283 2026/06/05 02:48:10 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.282 2026/06/05 02:44:43 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.283 2026/06/05 02:48:10 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2358,7 +2358,7 @@ sppp_lcp_init(struct sppp *sp)
 	sp->lcp.max_terminate = 2;
 	sp->lcp.max_configure = 10;
 	sp->lcp.max_failure = 10;
-	sp->lcp.tlf_sent = false;
+	sp->lcp.lower_running = false;
 
 	/*
 	 * Initialize counters and timeout values.  Note that we don't
@@ -2415,14 +2415,12 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 	sppp_down_event(sp, xcp);
 
 	/*
-	 * We need to do tls to restart when a down event is caused
-	 * by the last tlf.
+	 * A Down event in Req-Sent or Ack-Sent that transitions to Starting
+	 * requires an extra TLS action, because an Open event in the Closed
+	 * state transitions to Req-Sent/Ack-Sent without executing that action.
 	 */
-	if (sp->scp[pidx].state == STATE_STARTING &&
-	    sp->lcp.tlf_sent) {
+	if (sp->scp[pidx].state == STATE_STARTING)
 		cp->tls(cp, sp);
-		sp->lcp.tlf_sent = false;
-	}
 
 	SPPP_DLOG(sp, "Down event (carrier loss)\n");
 
@@ -3153,8 +3151,10 @@ sppp_lcp_tls(const struct cp *cp __unused, struct sppp *sp)
 	sppp_change_phase(sp, SPPP_PHASE_ESTABLISH);
 
 	/* Notify lower layer if desired. */
-	sppp_notify_tls_wlocked(sp);
-	sp->lcp.tlf_sent = false;
+	if (!sp->lcp.lower_running) {
+		sp->lcp.lower_running = true;
+		sppp_notify_tls_wlocked(sp);
+	}
 }
 
 static void
@@ -3166,17 +3166,9 @@ sppp_lcp_tlf(const struct cp *cp __unused, struct sppp *sp)
 	sppp_change_phase(sp, SPPP_PHASE_DEAD);
 
 	/* Notify lower layer if desired. */
-	sppp_notify_tlf_wlocked(sp);
-
-	switch (sp->scp[IDX_LCP].state) {
-	case STATE_CLOSED:
-	case STATE_STOPPED:
-		sp->lcp.tlf_sent = true;
-		break;
-	case STATE_INITIAL:
-	default:
-		/* just in case */
-		sp->lcp.tlf_sent = false;
+	if (sp->lcp.lower_running) {
+		sp->lcp.lower_running = false;
+		sppp_notify_tlf_wlocked(sp);
 	}
 }
 
