@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.286 2026/06/05 02:55:41 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.287 2026/06/05 02:57:45 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.286 2026/06/05 02:55:41 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.287 2026/06/05 02:57:45 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -685,8 +685,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			uint16_t prot = htons(protocol);
 
 			sppp_cp_send(sp, PPP_LCP, PROTO_REJ,
-			    ++sp->scp[IDX_LCP].seq, m->m_pkthdr.len + 2,
-			    &prot);
+			    ++sp->scp[IDX_LCP].seq, sizeof(prot), &prot);
 		}
 		SPPP_UNLOCK(sp);
 		if_statinc(ifp, if_noproto);
