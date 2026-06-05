@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.284 2026/06/05 02:51:03 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.285 2026/06/05 02:53:08 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.284 2026/06/05 02:51:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.285 2026/06/05 02:53:08 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -412,6 +412,7 @@ static void sppp_lcp_tlf(const struct cp *, struct sppp *);
 static void sppp_lcp_scr(struct sppp *);
 static void sppp_lcp_check_and_close(struct sppp *);
 static int sppp_cp_check(struct sppp *, u_char);
+static bool sppp_is_ncp_opened(struct sppp *);
 
 static void sppp_ipcp_init(struct sppp *);
 static void sppp_ipcp_open(struct sppp *, void *);
@@ -981,6 +982,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		return (EAFNOSUPPORT);
 	}
 
+	if (error == ENETDOWN) {
+		IF_DROP(&ifp->if_snd);
+		m_freem(m);
+		return error;
+	}
+
 	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		M_PREPEND(m, 2, M_DONTWAIT);
 		if (m == NULL) {
@@ -1165,12 +1172,10 @@ sppp_dequeue(struct ifnet *ifp)
 	SPPP_LOCK(sp, RW_WRITER);
 	/*
 	 * Process only the control protocol queue until we have at
-	 * least one NCP open.
-	 *
-	 * Do always serve all three queues in Cisco mode.
+	 * least one NCP opened.
 	 */
 	IF_DEQUEUE(&sp->pp_cpq, m);
-	if (m == NULL && sppp_cp_check(sp, CP_NCP)) {
+	if (m == NULL && sppp_is_ncp_opened(sp)) {
 		IF_DEQUEUE(&sp->pp_fastq, m);
 		if (m == NULL)
 			IFQ_DEQUEUE(&sp->pp_if.if_snd, m);
@@ -3207,6 +3212,20 @@ sppp_cp_check(struct sppp *sp, u_char cp_flags)
 		if ((sp->lcp.protos & mask) && (cps[i])->flags & cp_flags)
 			return 1;
 	return 0;
+}
+
+/*
+ * Check the opened NCPs, return true if at least one NCP is opened.
+ */
+static bool
+sppp_is_ncp_opened(struct sppp *sp)
+{
+	int i, mask;
+
+	for (i = 0, mask = 1; i < IDX_COUNT; i++, mask <<= 1)
+		if (((cps[i])->flags & CP_NCP) && (sp->scp[i].state == STATE_OPENED))
+			return true;
+	return false;
 }
 
 /*
