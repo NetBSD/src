@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.185 2026/05/29 08:31:34 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.186 2026/06/05 02:35:22 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.185 2026/05/29 08:31:34 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.186 2026/06/05 02:35:22 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -381,8 +381,9 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_sppp.pp_tls = pppoe_tls;
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
-	sc->sc_sppp.pp_flags |= PP_KEEPALIVE |	/* use LCP keepalive */
-				PP_NOFRAMING;	/* no serial encapsulation */
+	SET(sc->sc_sppp.pp_dev_flags,
+	     (PP_DEVF_KEEPALIVE |	/* use LCP keepalive */
+	      PP_DEVF_NOFRAMING));	/* no serial encapsulation */
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 
 	rv = workqueue_create(&sc->sc_timeout_wq,

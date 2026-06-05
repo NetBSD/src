@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.43 2026/06/02 04:08:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.44 2026/06/05 02:35:22 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -140,9 +140,16 @@ struct sppp {
 	struct  ifqueue pp_fastq; /* fast output queue */
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
+
+#define PP_DEVF_KEEPALIVE	__BIT(0)	/* use keepalive protocol */
+#define PP_DEVF_NOFRAMING	__BIT(1)	/* do not add/expect encapsulation
+						   around PPP frames (i.e. the serial
+						   HDLC like encapsulation, RFC1662) */
+	uint32_t	pp_dev_flags; /* immutable device flags after attach*/
+	size_t		pp_framebytes; /* number of bytes added by (hardware) framing */
+
 	u_int   pp_flags;       /* use Cisco protocol instead of PPP */
 	u_int	pp_ncpflags;	/* enable or disable each NCP */
-	u_int	pp_framebytes;	/* number of bytes added by (hardware) framing */
 	u_int   pp_alivecnt;    /* keepalive packets counter */
 	u_int	pp_alive_interval;	/* keepalive interval */
 	u_int   pp_loopcnt;     /* loopback detection counter */
@@ -194,14 +201,12 @@ struct sppp {
 	void	(*pp_tlf)(struct sppp *);
 };
 
-#define PP_KEEPALIVE		0x01	/* use keepalive protocol */
+					/* 0x01 was PP_KEEPALIVE */
 					/* 0x02 was PP_CISCO */
 					/* 0x04 was PP_TIMO */
 #define PP_CALLIN		0x08	/* we are being called */
 #define PP_NEEDAUTH		0x10	/* remote requested authentication */
-#define PP_NOFRAMING		0x20	/* do not add/expect encapsulation
-					   around PPP frames (i.e. the serial
-					   HDLC like encapsulation, RFC1662) */
+					/* 0x20 was PP_NOFRAMING */
 #define PP_LOOPBACK		0x40	/* in line loopback mode */
 #define PP_LOOPBACK_IFDOWN	0x80	/* if_down() when loopback detected */
 #define PP_KEEPALIVE_IFDOWN	0x100	/* if_down() when no ECHO_REPLY received */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.278 2026/06/02 04:25:45 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.279 2026/06/05 02:35:22 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.278 2026/06/02 04:25:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.279 2026/06/05 02:35:22 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -653,7 +653,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		goto drop;
 	}
 
-	if (sp->pp_flags & PP_NOFRAMING) {
+	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		memcpy(&protocol, mtod(m, void *), 2);
 		protocol = ntohs(protocol);
 		m_adj(m, 2);
@@ -906,7 +906,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	}
 #endif
 
-	if ((sp->pp_flags & PP_NOFRAMING) == 0) {
+	if (!ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		/*
 		 * Prepend general data packet PPP header. For now, IP only.
 		 */
@@ -984,7 +984,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		return (EAFNOSUPPORT);
 	}
 
-	if (sp->pp_flags & PP_NOFRAMING) {
+	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		M_PREPEND(m, 2, M_DONTWAIT);
 		if (m == NULL) {
 			SPPP_DLOG(sp, "no memory for transmit header\n");
@@ -1364,7 +1364,8 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	KASSERT(SPPP_WLOCKED(sp));
 
 	ifp = &sp->pp_if;
-	pkthdrlen = (sp->pp_flags & PP_NOFRAMING) ? 2 : PPP_HEADER_LEN;
+	pkthdrlen = ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING) ?
+	     2 : PPP_HEADER_LEN;
 
 	if (len > MHLEN - pkthdrlen - LCP_HEADER_LEN)
 		len = MHLEN - pkthdrlen - LCP_HEADER_LEN;
@@ -1375,7 +1376,7 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	m->m_pkthdr.len = m->m_len = pkthdrlen + LCP_HEADER_LEN + len;
 	m_reset_rcvif(m);
 
-	if (sp->pp_flags & PP_NOFRAMING) {
+	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		*mtod(m, uint16_t *) = htons(proto);
 		lh = (struct lcp_header *)(mtod(m, uint8_t *) + 2);
 	} else {
@@ -5240,7 +5241,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		return;
 	m_reset_rcvif(m);
 
-	if (sp->pp_flags & PP_NOFRAMING) {
+	if (ISSET(sp->pp_dev_flags, PP_DEVF_NOFRAMING)) {
 		*mtod(m, uint16_t *) = htons(cp->proto);
 		pkthdrlen = 2;
 		lh = (struct lcp_header *)(mtod(m, uint8_t *)+2);
@@ -5435,7 +5436,7 @@ sppp_keepalive(void *dummy)
 		}
 
 		/* Keepalive mode disabled or channel down? */
-		if (! (sp->pp_flags & PP_KEEPALIVE) ||
+		if (! ISSET(sp->pp_dev_flags, PP_DEVF_KEEPALIVE) ||
 		    ! (ifp->if_flags & IFF_RUNNING)) {
 			SPPP_UNLOCK(sp);
 			continue;
