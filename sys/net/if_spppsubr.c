@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.279 2026/06/05 02:35:22 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.280 2026/06/05 02:38:32 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.279 2026/06/05 02:35:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.280 2026/06/05 02:38:32 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -313,11 +313,6 @@ pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
 #define SPPP_LOCK(_sp, _op)	rw_enter(&(_sp)->pp_lock, (_op))
 #define SPPP_UNLOCK(_sp)	rw_exit(&(_sp)->pp_lock)
 #define SPPP_WLOCKED(_sp)	rw_write_held(&(_sp)->pp_lock)
-#define SPPP_UPGRADE(_sp)	do{	\
-	SPPP_UNLOCK(_sp);		\
-	SPPP_LOCK(_sp, RW_WRITER);	\
-}while (0)
-#define SPPP_DOWNGRADE(_sp)	rw_downgrade(&(_sp)->pp_lock)
 #define SPPP_WQ_SET(_wk, _func, _arg)	\
 	sppp_wq_set((_wk), (_func), __UNCONST((_arg)))
 #define SPPP_LOG(_sp, _lvl, _fmt, _args...)	do {		\
@@ -637,8 +632,6 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	/* No RPS for not-IP. */
 	pktq_rps_hash_func_t rps_hash = NULL;
 
-	SPPP_LOCK(sp, RW_READER);
-
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
 		if_statadd(ifp, if_ibytes, m->m_pkthdr.len + sp->pp_framebytes);
@@ -687,15 +680,16 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	switch (protocol) {
 	reject_protocol:
+		KASSERT(SPPP_WLOCKED(sp));
+
 		if (sp->scp[IDX_LCP].state == STATE_OPENED) {
 			uint16_t prot = htons(protocol);
 
-			SPPP_UPGRADE(sp);
 			sppp_cp_send(sp, PPP_LCP, PROTO_REJ,
 			    ++sp->scp[IDX_LCP].seq, m->m_pkthdr.len + 2,
 			    &prot);
-			SPPP_DOWNGRADE(sp);
 		}
+		SPPP_UNLOCK(sp);
 		if_statinc(ifp, if_noproto);
 		goto drop;
 	default:
@@ -703,69 +697,78 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		    "<proto=0x%x>\n", protocol);
 		goto reject_protocol;
 	case PPP_LCP:
-		SPPP_UNLOCK(sp);
+		SPPP_LOCK(sp, RW_WRITER);
 		sppp_cp_input(&lcp, sp, m);
 		/* already m_freem(m) */
+		SPPP_UNLOCK(sp);
 		return;
 	case PPP_PAP:
-		SPPP_UNLOCK(sp);
+		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			sppp_pap_input(sp, m);
 		}
+		SPPP_UNLOCK(sp);
 		m_freem(m);
 		return;
 	case PPP_CHAP:
-		SPPP_UNLOCK(sp);
+		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->pp_phase >= SPPP_PHASE_AUTHENTICATE) {
 			sppp_chap_input(sp, m);
 		}
+		SPPP_UNLOCK(sp);
 		m_freem(m);
 		return;
 #ifdef INET
 	case PPP_IPCP:
+		SPPP_LOCK(sp, RW_WRITER);
 		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) {
 			SPPP_LOG(sp, LOG_INFO, "reject IPCP packet "
 			    "because IPCP is disabled\n");
 			goto reject_protocol;
 		}
-		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipcp, sp, m);
 			/* already m_freem(m) */
 		} else {
 			m_freem(m);
 		}
+		SPPP_UNLOCK(sp);
 		return;
 	case PPP_IP:
+		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
+		SPPP_UNLOCK(sp);
 		break;
 #endif
 #ifdef INET6
 	case PPP_IPV6CP:
+		SPPP_LOCK(sp, RW_WRITER);
 		if (!ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP)) {
 			SPPP_LOG(sp, LOG_INFO, "reject IPv6CP packet "
 			    "because IPv6CP is disabled\n");
 			goto reject_protocol;
 		}
-		SPPP_UNLOCK(sp);
 		if (sp->pp_phase == SPPP_PHASE_NETWORK) {
 			sppp_cp_input(&ipv6cp, sp, m);
 			/* already m_freem(m) */
 		} else {
 			m_freem(m);
 		}
+		SPPP_UNLOCK(sp);
 		return;
 
 	case PPP_IPV6:
+		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
 			sp->pp_last_activity = time_uptime;
 			pktq = ip6_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
+		SPPP_UNLOCK(sp);
 		break;
 #endif
 	}
@@ -779,13 +782,11 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	if (__predict_false(!pktq_enqueue(pktq, m, hash))) {
 		goto drop;
 	}
-	SPPP_UNLOCK(sp);
 	return;
 
 drop:
 	if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
 	m_freem(m);
-	SPPP_UNLOCK(sp);
 	return;
 }
 
@@ -805,14 +806,10 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	uint16_t protocol;
 	size_t pktlen;
 
-	SPPP_LOCK(sp, RW_READER);
-
 	sp->pp_last_activity = time_uptime;
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
-		SPPP_UNLOCK(sp);
-
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
 		return (ENETDOWN);
@@ -820,6 +817,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == IFF_AUTO) {
 		/* ignore packets that have no enabled NCP */
+		SPPP_LOCK(sp, RW_READER);
 		if ((dst->sa_family == AF_INET &&
 		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) ||
 		    (dst->sa_family == AF_INET6 &&
@@ -830,6 +828,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if_statinc(ifp, if_oerrors);
 			return (ENETDOWN);
 		}
+		SPPP_UNLOCK(sp);
 		/*
 		 * Interface is not yet running, but auto-dial.  Need
 		 * to start LCP for it.
@@ -877,8 +876,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		if (ip && ip->ip_src.s_addr == INADDR_ANY) {
 			uint8_t proto = ip->ip_p;
 
-			SPPP_UNLOCK(sp);
-
 			m_freem(m);
 			if (proto == IPPROTO_TCP)
 				return (EADDRNOTAVAIL);
@@ -914,7 +911,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		if (! m) {
 			SPPP_DLOG(sp, "no memory for transmit header\n");
 			if_statinc(ifp, if_oerrors);
-			SPPP_UNLOCK(sp);
 			return (ENOBUFS);
 		}
 		/*
@@ -939,6 +935,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * ENETDOWN, as opposed to ENOBUFS.
 		 */
 		protocol = htons(PPP_IP);
+		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPCP].state != STATE_OPENED) {
 			if (ifp->if_flags & IFF_AUTO) {
 				error = ENETDOWN;
@@ -950,6 +947,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				return (ENETDOWN);
 			}
 		}
+		SPPP_UNLOCK(sp);
 		break;
 #endif
 #ifdef INET6
@@ -964,6 +962,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * ENETDOWN, as opposed to ENOBUFS.
 		 */
 		protocol = htons(PPP_IPV6);
+		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPV6CP].state != STATE_OPENED) {
 			if (ifp->if_flags & IFF_AUTO) {
 				error = ENETDOWN;
@@ -975,12 +974,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 				return (ENETDOWN);
 			}
 		}
+		SPPP_UNLOCK(sp);
 		break;
 #endif
 	default:
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
-		SPPP_UNLOCK(sp);
 		return (EAFNOSUPPORT);
 	}
 
@@ -989,7 +988,6 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		if (m == NULL) {
 			SPPP_DLOG(sp, "no memory for transmit header\n");
 			if_statinc(ifp, if_oerrors);
-			SPPP_UNLOCK(sp);
 			return (ENOBUFS);
 		}
 		*mtod(m, uint16_t *) = protocol;
@@ -999,9 +997,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	pktlen = m->m_pkthdr.len;
 #ifdef SPPPSUBR_MPSAFE
-	SPPP_UNLOCK(sp);
 	error = if_transmit_lock(ifp, m);
-	SPPP_LOCK(sp, RW_READER);
 	if (error == 0)
 		if_statadd(ifp, if_obytes, pktlen + sp->pp_framebytes);
 #else /* !SPPPSUBR_MPSAFE */
@@ -1014,14 +1010,11 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * framing according to RFC 1333.
 		 */
 		if (!(ifp->if_flags & IFF_OACTIVE)) {
-			SPPP_UNLOCK(sp);
 			if_start_lock(ifp);
-			SPPP_LOCK(sp, RW_READER);
 		}
 		if_statadd(ifp, if_obytes, pktlen + sp->pp_framebytes);
 	}
 #endif /* !SPPPSUBR_MPSAFE */
-	SPPP_UNLOCK(sp);
 	return error;
 }
 
@@ -1541,7 +1534,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	const char *cpname;
 	bool debug;
 
-	SPPP_LOCK(sp, RW_WRITER);
+	KASSERT(SPPP_WLOCKED(sp));
 
 	ifp = &sp->pp_if;
 	debug = sppp_debug_enabled(sp);
@@ -1743,7 +1736,6 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 	}
 
 out:
-	SPPP_UNLOCK(sp);
 	m_freem(m);
 }
 
@@ -4571,6 +4563,8 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	const char *authname;
 	bool debug;
 
+	KASSERT(SPPP_WLOCKED(sp));
+
 	ifp = &sp->pp_if;
 	debug = sppp_debug_enabled(sp);
 	len = m->m_pkthdr.len;
@@ -4582,8 +4576,6 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 	h = mtod(m, struct lcp_header *);
 	if (len > ntohs(h->len))
 		len = ntohs(h->len);
-
-	SPPP_LOCK(sp, RW_WRITER);
 
 	switch (h->type) {
 	/* challenge, failure and success are his authproto */
@@ -4827,8 +4819,6 @@ sppp_chap_input(struct sppp *sp, struct mbuf *m)
 		break;
 
 	}
-
-	SPPP_UNLOCK(sp);
 }
 
 static void
@@ -4998,6 +4988,7 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	ifp = &sp->pp_if;
 	debug = sppp_debug_enabled(sp);
 
+	KASSERT(SPPP_WLOCKED(sp));
 	/*
 	 * Malicious input might leave this uninitialized, so
 	 * init to an impossible value.
@@ -5013,8 +5004,6 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 	h = mtod(m, struct lcp_header *);
 	if (len > ntohs(h->len))
 		len = ntohs(h->len);
-
-	SPPP_LOCK(sp, RW_WRITER);
 
 	switch (h->type) {
 	/* PAP request is my authproto */
@@ -5148,8 +5137,6 @@ sppp_pap_input(struct sppp *sp, struct mbuf *m)
 		}
 		break;
 	}
-
-	SPPP_UNLOCK(sp);
 }
 
 static void
