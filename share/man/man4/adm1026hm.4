@@ -1,4 +1,4 @@
-.\"	$NetBSD: adm1026hm.4,v 1.4 2026/02/16 19:14:42 uwe Exp $
+.\"	$NetBSD: adm1026hm.4,v 1.5 2026/06/05 08:54:22 jdc Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -47,19 +47,19 @@ chip configuration.
 The values of the sensors are made available through the
 .Xr envstat 8
 interface.
-.Bl -column ".Li V3.3 standby" "mV DC" -offset indent
+.Bl -column ".Li V3.3 standby" "V DC" -offset indent
 .It Sy Sensor     Ta Sy Units  Ta Sy Description
 .It Li fan Ar N      Ta RPM    Ta Fan 0\^\(en7
 .It Li internal      Ta C      Ta Internal temperature
 .It Li external Ar N Ta C      Ta External temperature 1\(en2
-.It Li Vbatt         Ta mV DC  Ta Battery voltage
-.It Li V3.3 standby  Ta mV DC  Ta 3.3V standby voltage
-.It Li V3.3 main     Ta mV DC  Ta 3.3V main voltage
-.It Li V5.0          Ta mV DC  Ta 5.0V supply voltage
-.It Li V+12          Ta mV DC  Ta +12V supply voltage
-.It Li V-12          Ta mV DC  Ta \-12V supply voltage
-.It Li V3.3 Ar N     Ta mV DC  Ta Analog in (3.3V reference) 0\^\(en5
-.It Li V2.5 Ar N     Ta mV DC  Ta Analog in (2.5V reference) 0\^\(en3
+.It Li Vbatt         Ta V DC   Ta Battery voltage
+.It Li V3.3 standby  Ta V DC   Ta 3.3V standby voltage
+.It Li V3.3 main     Ta V DC   Ta 3.3V main voltage
+.It Li V5.0          Ta V DC   Ta 5.0V supply voltage
+.It Li V+12          Ta V DC   Ta +12V supply voltage
+.It Li V-12          Ta V DC   Ta \-12V supply voltage
+.It Li V3.3 Ar N     Ta V DC   Ta Analog in (3.3V reference) 0\^\(en5
+.It Li V2.5 Ar N     Ta V DC   Ta Analog in (2.5V reference) 0\^\(en3
 .El
 .Pp
 Configurable limits for the sensors are also available via
@@ -85,6 +85,11 @@ numbers correlate to lower fan speeds.
 .Xr iic 4 ,
 .Xr intro 4 ,
 .Xr envstat 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 8.0 .
 .Sh AUTHORS
 .An -nosplit
 The

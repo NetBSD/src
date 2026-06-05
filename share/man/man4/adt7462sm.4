@@ -1,4 +1,4 @@
-.\"	$NetBSD: adt7462sm.4,v 1.1 2026/06/03 15:20:32 jdc Exp $
+.\"	$NetBSD: adt7462sm.4,v 1.2 2026/06/05 08:54:22 jdc Exp $
 .\"
 .\" Copyright (c) 2026 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -48,21 +48,21 @@ chip configuration.
 The values of the sensors are made available through the
 .Xr envstat 8
 interface.
-.Bl -column ".Li fan fault" "mV DC" -offset indent
+.Bl -column ".Li fan fault" "V DC" -offset indent
 .It Sy Sensor     Ta Sy Units  Ta Sy Description
 .It Li fan Ar N      Ta RPM    Ta Fan 0\^\(en7
 .It Li local         Ta C      Ta Local temperature
 .It Li remote Ar N   Ta C      Ta Remote temperature 1\(en3
-.It Li V2.5 Ar N     Ta mV DC  Ta 2.5V voltage 1\(en3
-.It Li V1.8 Ar N     Ta mV DC  Ta 1.8V voltage 1\(en3
-.It Li V1.5 Ar N     Ta mV DC  Ta 1.5V voltage 1\(en4
-.It Li V3.3 Ar N     Ta mV DC  Ta 3.3V voltage 1\(en2
-.It Li V1.2 Ar N     Ta mV DC  Ta 1.2V voltage 1\(en2
-.It Li Vbatt         Ta mV DC  Ta Battery voltage
-.It Li V12 Ar N      Ta mV DC  Ta 12V voltage 1\(en3
-.It Li V0.9          Ta mV DC  Ta 0.9V voltage
-.It Li V1.25         Ta mV DC  Ta 1.25V voltage
-.It Li V5            Ta mV DC  Ta 5V voltage
+.It Li V2.5 Ar N     Ta V DC   Ta 2.5V voltage 1\(en3
+.It Li V1.8 Ar N     Ta V DC   Ta 1.8V voltage 1\(en3
+.It Li V1.5 Ar N     Ta V DC   Ta 1.5V voltage 1\(en4
+.It Li V3.3 Ar N     Ta V DC   Ta 3.3V voltage 1\(en2
+.It Li V1.2 Ar N     Ta V DC   Ta 1.2V voltage 1\(en2
+.It Li Vbatt         Ta V DC   Ta Battery voltage
+.It Li V12 Ar N      Ta V DC   Ta 12V voltage 1\(en3
+.It Li V0.9          Ta V DC   Ta 0.9V voltage
+.It Li V1.25         Ta V DC   Ta 1.25V voltage
+.It Li V5            Ta V DC   Ta 5V voltage
 .It Li fan fault     Ta none   Ta Fan fault display
 .El
 .Pp
@@ -98,7 +98,7 @@ for fan 0,
 .Em 10
 for fan 1, and so on, to
 .Em 10000000
-for fan 8.
+for fan 7.
 .Pp
 The chip also supports Pulse-Width Modulated (PWM) fan speed control and the
 .Nm
