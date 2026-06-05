@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.285 2026/06/05 02:53:08 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.286 2026/06/05 02:55:41 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.285 2026/06/05 02:53:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.286 2026/06/05 02:55:41 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1222,11 +1222,13 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if (going_up || going_down) {
 			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 		}
-		if (going_up && newmode == 0) {
-			/* neither auto-dial nor passive */
-			ifp->if_flags |= IFF_RUNNING;
-			sppp_wq_add(sp->wq_cp,
-			    &sp->scp[IDX_LCP].work_open);
+		if (going_up) {
+			/* Always-on connection */
+			if (newmode != IFF_AUTO) {
+				ifp->if_flags |= IFF_RUNNING;
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_open);
+			}
 		} else if (going_down) {
 			SPPP_UNLOCK(sp);
 			sppp_flush(ifp);
@@ -2392,7 +2394,7 @@ sppp_lcp_up(struct sppp *sp, void *xcp)
 	 * still in Initial state, it means we've got an incoming
 	 * call.  Activate the interface.
 	 */
-	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) != 0) {
+	if (ifp->if_flags & IFF_AUTO) {
 		ifp->if_flags |= IFF_RUNNING;
 		if (sp->scp[pidx].state == STATE_INITIAL) {
 			SPPP_DLOG(sp, "Up event (incoming call)\n");
@@ -2428,7 +2430,7 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 
 	SPPP_DLOG(sp, "Down event (carrier loss)\n");
 
-	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) != 0) {
+	if (ifp->if_flags & IFF_AUTO) {
 		sp->pp_flags &= ~PP_CALLIN;
 		if (sp->scp[pidx].state != STATE_INITIAL)
 			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_close);
@@ -5320,8 +5322,9 @@ sppp_auth_screply(const struct cp *cp, struct sppp *sp, u_char ctype,
 		msg = failmsg;
 		mlen = sizeof(failmsg) - 1;
 
-		/* shutdown LCP if auth failed */
+		/* Reset LCP if auth failed */
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 		sp->pp_auth_failures++;
 	}
 
