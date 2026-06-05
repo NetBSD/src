@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.44 2026/06/05 02:35:22 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.45 2026/06/05 02:44:43 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -57,7 +57,6 @@ struct slcp {
 	/* multilink variables */
 	u_long	mrru;		/* our   max received reconstructed unit */
 	u_long	their_mrru;	/* their max receive dreconstructed unit */
-	bool	reestablish;	/* reestablish after the next down event */
 	bool	tlf_sent;	/* call lower layer's tlf before a down event */
 };
 
@@ -210,7 +209,6 @@ struct sppp {
 #define PP_LOOPBACK		0x40	/* in line loopback mode */
 #define PP_LOOPBACK_IFDOWN	0x80	/* if_down() when loopback detected */
 #define PP_KEEPALIVE_IFDOWN	0x100	/* if_down() when no ECHO_REPLY received */
-#define PP_ADMIN_UP		0x200	/* the interface is up */
 
 
 #define PP_MTU          1500    /* default/minimal MRU */

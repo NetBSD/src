@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.281 2026/06/05 02:40:08 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.282 2026/06/05 02:44:43 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.281 2026/06/05 02:40:08 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.282 2026/06/05 02:44:43 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1214,14 +1214,7 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			ifp->if_flags &= ~IFF_AUTO;
 		}
 
-		if (ifp->if_flags & IFF_UP) {
-			sp->pp_flags |= PP_ADMIN_UP;
-		} else {
-			sp->pp_flags &= ~PP_ADMIN_UP;
-		}
-
 		if (going_up || going_down) {
-			sp->lcp.reestablish = false;
 			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 		}
 		if (going_up && newmode == 0) {
@@ -1684,15 +1677,16 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 
 			if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
 				sp->pp_flags |= PP_LOOPBACK;
+				/* Shut down the PPP link. */
 				sppp_wq_add(sp->wq_cp,
 				    &sp->work_ifdown);
+			} else {
+				/* Reset the PPP link. */
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_close);
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_open);
 			}
-
-			/* Shut down the PPP link. */
-			sppp_wq_add(sp->wq_cp,
-			    &sp->scp[IDX_LCP].work_close);
-			sppp_wq_add(sp->wq_cp,
-			    &sp->scp[IDX_LCP].work_open);
 			break;
 		}
 		u32 = htonl(sp->lcp.magic);
@@ -2432,15 +2426,13 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 
 	SPPP_DLOG(sp, "Down event (carrier loss)\n");
 
-	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) == 0) {
-		if (sp->lcp.reestablish)
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
-	} else {
+	if ((ifp->if_flags & (IFF_AUTO | IFF_PASSIVE)) != 0) {
 		sp->pp_flags &= ~PP_CALLIN;
 		if (sp->scp[pidx].state != STATE_INITIAL)
 			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_close);
 		ifp->if_flags &= ~IFF_RUNNING;
 	}
+
 	sp->scp[pidx].fail_counter = 0;
 }
 
@@ -2451,12 +2443,7 @@ sppp_lcp_open(struct sppp *sp, void *xcp)
 	KASSERT(SPPP_WLOCKED(sp));
 	KASSERT(!cpu_softintr_p());
 
-	sp->lcp.reestablish = false;
 	sp->scp[IDX_LCP].fail_counter = 0;
-
-	/* the interface was down while waiting for reconnection */
-	if ((sp->pp_flags & PP_ADMIN_UP) == 0)
-		return;
 
 	if (sp->pp_if.if_mtu < PP_MTU) {
 		sp->lcp.mru = sp->pp_if.if_mtu;
@@ -2682,12 +2669,12 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 					sp->pp_flags |= PP_LOOPBACK;
 					sppp_wq_add(sp->wq_cp,
 					    &sp->work_ifdown);
+				} else {
+					sppp_wq_add(sp->wq_cp,
+					    &sp->scp[IDX_LCP].work_close);
+					sppp_wq_add(sp->wq_cp,
+					    &sp->scp[IDX_LCP].work_open);
 				}
-
-				sppp_wq_add(sp->wq_cp,
-				    &sp->scp[IDX_LCP].work_close);
-				sppp_wq_add(sp->wq_cp,
-				    &sp->scp[IDX_LCP].work_open);
 			} else {
 				if (debug)
 					addlog(" [glitch]");
@@ -3280,7 +3267,6 @@ sppp_lcp_check_and_close(struct sppp *sp)
 		    "not retrying again\n", sp->pp_auth_failures);
 
 		sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
-		sp->pp_if.if_flags &= ~IFF_RUNNING;
 	} else {
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 	}
@@ -5416,18 +5402,18 @@ sppp_keepalive(void *dummy)
 
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
 			/* No keepalive packets got.  Stop the interface. */
-			if (sp->pp_flags & PP_KEEPALIVE_IFDOWN)
-				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+			SPPP_LOG(sp, LOG_INFO, "LCP keepalive timed out, ");
 
-			SPPP_LOG(sp, LOG_INFO,"LCP keepalive timed out, "
-			    "going to restart the connection\n");
 			sp->pp_alivecnt = 0;
 
-			/* we are down, close all open protocols */
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-
-			/* And now prepare LCP to reestablish the link, if configured to do so. */
-			sp->lcp.reestablish = true;
+			if (sp->pp_flags & PP_KEEPALIVE_IFDOWN) {
+				addlog("going to down the interface\n");
+				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+			} else {
+				addlog("going to restart the connection\n");
+				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
+			}
 
 			SPPP_UNLOCK(sp);
 			continue;
