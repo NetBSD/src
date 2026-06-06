@@ -1,4 +1,4 @@
-/* $NetBSD: wskbd.c,v 1.147 2026/06/02 11:33:25 macallan Exp $ */
+/* $NetBSD: wskbd.c,v 1.148 2026/06/06 17:56:03 kre Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.147 2026/06/02 11:33:25 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wskbd.c,v 1.148 2026/06/06 17:56:03 kre Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1186,8 +1186,9 @@ getkeyrepeat:
 		free(tbuf, M_TEMP);
 		return(error);
 
-	case WSKBDIO_GETMAP:
+	case WSKBDIO_GETMAP: {
 		int i;
+
 		umdp = (struct wskbd_map_data *)data;
 		if (sc->sc_evtrans_len > 0) {
 			/* we're translating scancodes so we need to generate an
@@ -1217,6 +1218,7 @@ getkeyrepeat:
 				umdp->maplen*sizeof(struct wscons_keymap));
 		}
 		return(error);
+	}
 
 	case WSKBDIO_GETENCODING:
 		*((kbd_t *) data) = sc->sc_layout;
