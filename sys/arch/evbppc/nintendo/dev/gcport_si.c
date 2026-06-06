@@ -65,6 +65,7 @@ static int gcport_si_print(void *, const char *);
 static void gcport_si_softintr(void *);
 static int gcport_si_rescan(device_t, const char *, const int *);
 static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
+static void gcport_si_work(struct work *, void *);
 
 dev_type_open(gcport_open);
 dev_type_close(gcport_close);
@@ -101,6 +102,7 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	struct si_attach_args * const saa = aux;
 	struct gcport_softc * const sc = device_private(self);
 	struct si_channel *ch = &psc->sc_chan[saa->saa_index];
+	int err;
 
 	sc->sc_dev = self;
 	sc->ch = ch;
@@ -110,6 +112,12 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	ch->ch_gcport_si = softint_establish(SOFTINT_SERIAL,
 	    gcport_si_softintr, ch);
 
+	/* TODO - figure out the prio / ipl / flags */
+	err = workqueue_create(&ch->ch_wqp, "todo", gcport_si_work, ch, 0, 0, 0);
+	if (err != 0) {
+		/* TODO how do i actually handle this type of situation */
+		aprint_normal("ch%d failed to create workqueue\n", ch->ch_index);
+	}
 	gcport_si_rescan(self, NULL, NULL);
 }
 
@@ -189,18 +197,12 @@ gcport_si_rescan(device_t self, const char *ifattr, const int *locs)
 	ch->ch_id = si_identify(sc, ch->ch_index);
 	is_gcpad = IS_GCPAD(ch->ch_id);
 
-	aprint_normal("GCPORT_SI_RESCAN: NEW ID 0x%08X\n", ch->ch_id);
-
 	if (is_gcpad && ch->ch_uhid_dev == NULL) {
-		aprint_normal("GCPORT_SI_RESCAN: WE HAVE CONFIG FOUND EVENT\n");
 		saa.saa_hidev = &ch->ch_hidev;
 		saa.saa_index = ch->ch_index;
-		aprint_normal("GCPORT_SI_RESCAN: SET SAA\n");
 		uhid_dev = config_found(self, &saa, gcport_si_print, CFARGS_NONE);
-		aprint_normal("GCPORT_SI_RESCAN: FINISHED CONFIG_FOUND\n");
 		ch->ch_uhid_dev = uhid_dev;
 	} else if (!is_gcpad && ch->ch_uhid_dev != NULL) {
-		aprint_normal("GCPORT_SI_RESCAN: WE HAVE A DETACH EVENT\n");
 		res = config_detach_children(ch->ch_gcport_dev, 0);
 		if (res == 0) {
 			ch->ch_uhid_dev = NULL;
@@ -215,6 +217,12 @@ void
 gcport_si_softintr(void *priv)
 {
 	struct si_channel *ch = priv;
+	workqueue_enqueue(ch->ch_wqp, &ch->ch_work, NULL);
+}
+
+void gcport_si_work(struct work *wk, void *arg)
+{
+	struct si_channel *ch = arg;
 	gcport_si_rescan(ch->ch_gcport_dev, NULL, NULL);
 }
 

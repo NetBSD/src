@@ -73,24 +73,19 @@ uhid_si_attach(device_t parent, device_t self, void *aux)
 	struct uhid_softc * const sc = device_private(self);
 	struct si_attach_args * const saa = aux;
 
-	aprint_normal("INSIDE UHID_SI_ATTACH\n");
 	sc->sc_dev = self;
 	sc->sc_report_id = saa->saa_index + 1;
 	sc->sc_ioctl = uhid_si_ioctl;
 	sc->sc_hidev = saa->saa_hidev;
 
-	aprint_normal("CALLING UHID_ATTACH_COMMON\n");
 	uhid_attach_common(sc);
-	aprint_normal("FINISHED UHID_SI_ATTACH\n");
 }
 
 static int
 uhid_si_detach(device_t self, int flags)
 {
-	aprint_normal("INSIDE UHID_SI_DETACH\n");
 	struct uhid_softc * const sc = device_private(self);
 	int res = uhid_detach_common(sc);
-	aprint_normal("FINISHED UHID_SI_DETACH\n");
 	return res;
 }
 

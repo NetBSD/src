@@ -30,6 +30,7 @@
 #define _WII_DEV_SI_H_
 
 #include <dev/hid/hidev.h>
+#include <sys/workqueue.h>
 
 #include "joybus.h"
 
@@ -130,6 +131,8 @@ struct si_channel {
 	int			ch_descsize;
 	void			*ch_si;
 	void			*ch_gcport_si;
+	struct workqueue	*ch_wqp;
+	struct work		ch_work;
 };
 
 struct si_softc {
