@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.68 2026/06/06 13:23:25 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.69 2026/06/06 13:27:16 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.68 2026/06/06 13:23:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.69 2026/06/06 13:27:16 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -1067,13 +1067,12 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 #if PMAP_TLB_MAX > 1
 	}
 #endif
-#ifdef DIAGNOSTIC
+
 	for (size_t i = 0; i < (PMAP_TLB_MAX > 1 ? pmap_ntlbs : 1); i++) {
 		KASSERTMSG(pm->pm_pai[i].pai_asid == 0,
 		    "pm %p i %zu asid %u",
 		    pm, i, pm->pm_pai[i].pai_asid);
 	}
-#endif
 #else
 	/*
 	 * Handle the case of an UP kernel which only has, at most, one TLB.
