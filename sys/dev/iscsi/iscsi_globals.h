@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_globals.h,v 1.28 2023/11/25 10:08:27 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_globals.h,v 1.29 2026/06/06 06:14:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
 
 /* Maximum attempts to recover connection */
 #define MAX_RECOVERY_ATTEMPTS	2	/* If two attempts don't work, something */
-									/* probably is seriously broken */
+					/* probably is seriously broken */
 
 /* PDU flags */
 
