@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.67 2026/04/19 15:09:50 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.68 2026/06/06 13:23:25 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.67 2026/04/19 15:09:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.68 2026/06/06 13:23:25 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -417,18 +417,18 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 }
 #endif /* MULTIPROCESSOR */
 
-#ifdef DIAGNOSTIC
 static size_t
 pmap_tlb_asid_count(struct pmap_tlb_info *ti)
 {
 	size_t count = 0;
+#ifdef DIAGNOSTIC
 	for (tlb_asid_t asid = 1; asid <= ti->ti_asid_max; asid++) {
 		if (TLBINFO_ASID_INUSE_P(ti, asid))
 			count++;
 	}
+#endif
 	return count;
 }
-#endif
 
 static void
 pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
@@ -472,11 +472,11 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		const u_int asids_found = tlb_record_asids(
 		    ti->ti_asid_bitmap._b, ti->ti_asid_max);
 		pmap_tlb_asid_check();
-#ifdef DIAGNOSTIC
-		const u_int asids_count = pmap_tlb_asid_count(ti);
+
+		const u_int asids_count __diagused = pmap_tlb_asid_count(ti);
 		KASSERTMSG(asids_found == asids_count,
 		    "found %u != count %u", asids_found, asids_count);
-#endif
+
 		if (__predict_false(asids_found >= ti->ti_asid_max / 2)) {
 			tlb_invalidate_asids(KERNEL_PID + 1, ti->ti_asid_max);
 #else /* MULTIPROCESSOR && !PMAP_TLB_NEED_SHOOTDOWN */
@@ -533,11 +533,11 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 			pmap_tlb_pai_reset(ti, pai, pm);
 		}
 	}
-#ifdef DIAGNOSTIC
+
 	size_t free_count __diagused = ti->ti_asid_max - pmap_tlb_asid_count(ti);
 	KASSERTMSG(free_count == ti->ti_asids_free,
 	    "bitmap error: %zu != %u", free_count, ti->ti_asids_free);
-#endif
+
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
@@ -1039,8 +1039,10 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	KASSERT(pm != pmap_kernel());
 #if defined(MULTIPROCESSOR)
 	//KASSERT(!kcpuset_iszero(pm->pm_onproc)); // XXX
+
 	struct cpu_info * const ci __diagused = curcpu();
 	KASSERT(!kcpuset_isotherset(pm->pm_onproc, cpu_index(ci)));
+
 #if PMAP_TLB_MAX > 1
 	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
