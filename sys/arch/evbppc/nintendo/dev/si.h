@@ -163,7 +163,6 @@ struct siio_send {
 	uint32_t	outsize;	/* number of bytes for out buffer */
 	void		*in;		/* buffer to store response */
 	void		*out;		/* buffer to send out to ext device */
-	long		delay;		/* delay the transaction (microsec) */
 };
 
 static inline int
@@ -185,11 +184,6 @@ si_send(struct si_softc *sc, struct siio_send *data)
 
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
 	sisr = RD4(sc, SISR);
-
-	/* 
-	 * libogc uses interrupts for non-blocking. i think this is ok for now
-	 */
-	delay(data->delay);
 
 	AWAIT_SICOMCSR(sc);
 	WR4(sc, SICOMCSR,
@@ -237,7 +231,6 @@ si_identify(struct si_softc *sc, unsigned chan) {
 	data.insize = 3;
 	data.in = in;
 	data.out = out;
-	data.delay = 0;
 
 	si_send(sc, &data);
 	return (uint16_t)(in[0] >> 16);

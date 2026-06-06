@@ -52,7 +52,6 @@ struct si_payload {
 	uint32_t	*status;	/* sisr status for this channel */
 	void		*in;		/* buffer to store response */
 	void		*out;		/* buffer to send out to device */
-	long		delay;		/* delay the transaction (microsec) */
 };
 
 extern struct cfdriver gcport_cd;
@@ -263,7 +262,6 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	sd.insize = p->insize;
 	sd.out = kmem_alloc(p->outsize, KM_SLEEP);
 	sd.in = kmem_alloc(p->insize, KM_SLEEP);
-	sd.delay = p->delay;
 
 	if ((err = copyin(p->out, sd.out, sd.outsize)) != 0) {
 		goto si_send_cleanup;
