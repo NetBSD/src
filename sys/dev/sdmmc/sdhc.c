@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.125 2026/01/09 22:54:34 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.126 2026/06/06 16:09:21 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.125 2026/01/09 22:54:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.126 2026/06/06 16:09:21 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2356,8 +2356,10 @@ sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo, bool probing)
 
 	if (nointr ||
 	    (ISSET(status, SDHC_ERROR_INTERRUPT) && error)) {
-		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			sdmmc_delay(100);
 			(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
+		}
 		hp->intr_error_status = 0;
 		status = 0;
 	}
