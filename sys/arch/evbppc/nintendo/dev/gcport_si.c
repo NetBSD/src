@@ -62,6 +62,8 @@ extern struct cfdriver gcport_cd;
 static int gcport_si_match(device_t, cfdata_t, void *);
 static void gcport_si_attach(device_t, device_t, void *);
 static int gcport_si_print(void *, const char *);
+static void gcport_si_softintr(void *);
+static int gcport_si_rescan(device_t, const char *, const int *);
 static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
 
 dev_type_open(gcport_open);
@@ -104,9 +106,11 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	sc->ch = ch;
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
+	ch->ch_gcport_dev = self;
+	ch->ch_gcport_si = softint_establish(SOFTINT_SERIAL,
+	    gcport_si_softintr, ch);
 
-	config_found(self, saa, gcport_si_print, CFARGS(
-		    .submatch = config_stdsubmatch, .locators = NULL));
+	gcport_si_rescan(self, NULL, NULL);
 }
 
 static int
@@ -171,6 +175,49 @@ gcport_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
+static int
+gcport_si_rescan(device_t self, const char *ifattr, const int *locs)
+{
+	struct si_attach_args saa;
+	unsigned is_gcpad;
+	int res;
+	device_t uhid_dev;
+	struct gcport_softc * const gsc = device_private(self);
+	struct si_channel *ch = gsc->ch;
+	struct si_softc *sc = ch->ch_sc;
+
+	ch->ch_id = si_identify(sc, ch->ch_index);
+	is_gcpad = IS_GCPAD(ch->ch_id);
+
+	aprint_normal("GCPORT_SI_RESCAN: NEW ID 0x%08X\n", ch->ch_id);
+
+	if (is_gcpad && ch->ch_uhid_dev == NULL) {
+		aprint_normal("GCPORT_SI_RESCAN: WE HAVE CONFIG FOUND EVENT\n");
+		saa.saa_hidev = &ch->ch_hidev;
+		saa.saa_index = ch->ch_index;
+		aprint_normal("GCPORT_SI_RESCAN: SET SAA\n");
+		uhid_dev = config_found(self, &saa, gcport_si_print, CFARGS_NONE);
+		aprint_normal("GCPORT_SI_RESCAN: FINISHED CONFIG_FOUND\n");
+		ch->ch_uhid_dev = uhid_dev;
+	} else if (!is_gcpad && ch->ch_uhid_dev != NULL) {
+		aprint_normal("GCPORT_SI_RESCAN: WE HAVE A DETACH EVENT\n");
+		res = config_detach_children(ch->ch_gcport_dev, 0);
+		if (res == 0) {
+			ch->ch_uhid_dev = NULL;
+		}
+	}
+
+	return 0;
+
+}
+
+void
+gcport_si_softintr(void *priv)
+{
+	struct si_channel *ch = priv;
+	gcport_si_rescan(ch->ch_gcport_dev, NULL, NULL);
+}
+
 int
 gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
@@ -214,7 +261,7 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		goto si_send_cleanup;
 	}
 
-	if ((err = __si_send(sc, &sd)) != 0) {
+	if ((err = si_send(sc, &sd)) != 0) {
 		goto si_send_cleanup;
 	}
 

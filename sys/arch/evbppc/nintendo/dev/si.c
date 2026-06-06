@@ -58,8 +58,6 @@ static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
-static uint32_t	send_cmd(struct si_softc *, uint32_t, unsigned, long);
-static int	si_identify(struct si_softc *, unsigned);
 
 static void	si_get_report_desc(void *, void **, int *);                   
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
@@ -111,13 +109,15 @@ si_attach(device_t parent, device_t self, void *aux)
 		ch = &sc->sc_chan[chan];
 		ch->ch_sc = sc;
 		ch->ch_index = chan;
+		ch->ch_gcport_dev = NULL;
+		ch->ch_uhid_dev = NULL;
 		mutex_init(&ch->ch_lock, MUTEX_DEFAULT, IPL_VM);
 		cv_init(&ch->ch_cv, "sich");
 		ch->ch_si = softint_establish(SOFTINT_SERIAL,
 		    si_softintr, ch);
 		KASSERT(ch->ch_si != NULL);
 
-		si_identify(sc, chan);
+		ch->ch_id = si_identify(sc, chan);
 
 		t = &ch->ch_hidev;
 		t->_cookie = &sc->sc_chan[chan];
@@ -194,41 +194,6 @@ si_print(void *aux, const char *pnp)
 	return UNCONF;
 }
 
-
-static uint32_t
-send_cmd(struct si_softc *sc, uint32_t cmd, unsigned chan, long us)
-{
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
-	out[0] = cmd;
-
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
-	data.delay = us;
-
-	__si_send(sc, &data);
-	return in[0];
-}
-
-static int
-si_identify(struct si_softc *sc, unsigned chan)
-{
-	struct si_channel *ch;
-	uint32_t id;
-
-	ch = &sc->sc_chan[chan];
-
-	send_cmd(sc, CMD_RESET, chan, 1000);
-	id = send_cmd(sc, CMD_IDENTIFY, chan, 1000);
-	ch->ch_id = (uint16_t)(id >> 16);
-
-	return 0;
-}
-
 static void
 si_make_report(struct si_softc *sc, unsigned chan, void *report, bool with_rid)
 {
@@ -284,6 +249,8 @@ si_intr(void *priv)
 	struct si_softc *sc = priv;
 	unsigned chan;
 	uint32_t comcsr, sr;
+	uint32_t inbuf[2];
+	unsigned is_gcpad, has_err;
 
 	int ret = 0;
 
@@ -294,37 +261,37 @@ si_intr(void *priv)
 		WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
 	}
 
-	if (ISSET(comcsr, SICOMCSR_RDSTINT)) {
-		for (chan = 0; chan < SI_NUM_CHAN; chan++) {
-			struct si_channel *ch = &sc->sc_chan[chan];
+	if (!ISSET(comcsr, SICOMCSR_RDSTINT)) {
+		goto si_intr_done;
+	}
 
-			if (ISSET(sr, SISR_RDST(chan))) {
-				/* clears the sisr by reading inbuf */
-				(void)RD4(sc, SICINBUFH(ch->ch_index));
-				(void)RD4(sc, SICINBUFL(ch->ch_index));
+	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
+		struct si_channel *ch = &sc->sc_chan[chan];
 
-				if (((sr & SISR_ERROR_MASK(chan)) == 0) && !(IS_GCPAD(ch->ch_id))) {
-					si_identify(sc, ch->ch_index);
-					if (IS_GCPAD(ch->ch_id)) {
-						aprint_normal("CONTROLLER DETECTED!!!\n");
-						// TODO - add this stuff back
-						//si_make_report(sc, chan, ch->ch_buf, false);
-						//if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
-						//  softint_schedule(ch->ch_si);
-						//}
-					}
-				} else if (((sr & SISR_ERROR_MASK(chan)) != 0) && (IS_GCPAD(ch->ch_id))) {
-					aprint_normal("CONTROLLER DISCONNECTED\n");
-					ch->ch_id = 0;
+		if (ISSET(sr, SISR_RDST(chan))) {
+			is_gcpad = IS_GCPAD(ch->ch_id) != 0;
+
+			/* clears the sisr by reading inbuf */
+			inbuf[0] = RD4(sc, SICINBUFH(chan));
+			inbuf[1] = RD4(sc, SICINBUFL(chan));
+			has_err = GCPAD_ERR(inbuf);
+
+			if (is_gcpad) {
+				si_make_report(sc, chan, ch->ch_buf, false);
+				if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
+					softint_schedule(ch->ch_si);
 				}
 			}
 
-			ret = 1;
+			if (!(has_err ^ is_gcpad) && ch->ch_gcport_si != NULL) {
+				softint_schedule(ch->ch_gcport_si);
+			}
 		}
+		ret = 1;
 	}
 
+si_intr_done:
 	WR4(sc, SISR, sr & SISR_ERROR_ACK_ALL);
-
 	return ret;
 }
 

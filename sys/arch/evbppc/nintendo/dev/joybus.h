@@ -30,7 +30,6 @@
 #define _JOYBUS_H_
 
 #include <sys/param.h>
-#include "si.h"
 
 #define	JB_WIRELESS		__BIT(15)
 #define	JB_WIRELESS_RECV	__BIT(14)

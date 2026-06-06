@@ -31,6 +31,8 @@
 
 #include <dev/hid/hidev.h>
 
+#include "joybus.h"
+
 #define SI_NUM_CHAN		4
 
 #define SICOUTBUF(n)		((n) * 0xc + 0x00)
@@ -71,6 +73,9 @@
 #define SIIOBUF_SIZE		128
 
 #define GCPAD_REPORT_SIZE	9
+#define GCPAD_ERRSTAT(_buf)	ISSET((_buf)[0], __BIT(31))
+#define GCPAD_ERRLATCH(_buf)	ISSET((_buf)[0], __BIT(30))
+#define GCPAD_ERR(_buf)		(GCPAD_ERRSTAT(_buf)) || (GCPAD_ERRLATCH(_buf))
 #define GCPAD_START(_buf)	ISSET((_buf)[0], 0x10)
 #define GCPAD_Y(_buf)		ISSET((_buf)[0], 0x08)
 #define GCPAD_X(_buf)		ISSET((_buf)[0], 0x04)
@@ -107,6 +112,8 @@ extern kmutex_t sicomcsr_lock;
 struct si_channel {
 	struct si_softc		*ch_sc;
 	device_t		ch_dev;
+	device_t		ch_gcport_dev;
+	device_t		ch_uhid_dev;
 	unsigned		ch_index;
 	struct hidev_tag	ch_hidev;
 	kmutex_t		ch_lock;
@@ -122,6 +129,7 @@ struct si_channel {
 	void			*ch_desc;
 	int			ch_descsize;
 	void			*ch_si;
+	void			*ch_gcport_si;
 };
 
 struct si_softc {
@@ -139,9 +147,10 @@ struct si_attach_args {
 
 struct gcport_softc {
 	device_t		sc_dev;
-	struct si_channel	*ch;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+
+	struct si_channel	*ch;
 };
 
 struct siio_send {
@@ -155,7 +164,7 @@ struct siio_send {
 };
 
 static inline int
-__si_send(struct si_softc *sc, struct siio_send *data)
+si_send(struct si_softc *sc, struct siio_send *data)
 {
 	uint32_t cnt, comcsr, comcsr_prev, sisr, shift_amt, status;
 	unsigned chan;
@@ -210,6 +219,25 @@ __si_send(struct si_softc *sc, struct siio_send *data)
 
 	mutex_exit(&sicomcsr_lock);
 	return 0;
+}
+
+static inline int
+si_identify(struct si_softc *sc, unsigned chan) {
+	struct siio_send data;
+	uint32_t out[1];
+	uint32_t in[1];
+
+	out[0] = CMD_IDENTIFY;
+
+	data.chan = chan;
+	data.outsize = 1;
+	data.insize = 3;
+	data.in = in;
+	data.out = out;
+	data.delay = 0;
+
+	si_send(sc, &data);
+	return (uint16_t)(in[0] >> 16);
 }
 
 #endif /* _WII_DEV_SI_H_ */
