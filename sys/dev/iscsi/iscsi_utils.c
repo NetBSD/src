@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_utils.c,v 1.29 2023/11/25 10:08:27 mlelstv Exp $	*/
+/*	$NetBSD: iscsi_utils.c,v 1.30 2026/06/06 08:29:08 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@
 #include <sys/socketvar.h>
 #include <sys/bswap.h>
 #include <sys/atomic.h>
-
 
 /*****************************************************************************
  * Digest functions
@@ -259,6 +258,7 @@ free_ccb(ccb_t *ccb)
 	session_t *sess = ccb->ccb_session;
 	connection_t *conn = ccb->ccb_connection;
 	pdu_t *pdu;
+	pdu_disp_t pdisp;
 
 	DEBC(conn, 15, (
 		"free_ccb: ccb = %p, usecount = %d\n",
@@ -288,12 +288,14 @@ free_ccb(ccb_t *ccb)
 	if ((pdu = ccb->ccb_pdu_waiting) != NULL) {
 		ccb->ccb_pdu_waiting = NULL;
 		mutex_enter(&conn->c_lock);
+		pdisp = pdu->pdu_disp;
 		if ((pdu->pdu_flags & PDUF_INQUEUE) != 0) {
 			TAILQ_REMOVE(&conn->c_pdus_to_send, pdu, pdu_send_chain);
 			pdu->pdu_flags &= ~PDUF_INQUEUE;
 		}
 		mutex_exit(&conn->c_lock);
-		free_pdu(pdu);
+		if (pdisp > PDUDISP_FREE)
+			free_pdu(pdu);
 	}
 
 	mutex_enter(&sess->s_lock);
