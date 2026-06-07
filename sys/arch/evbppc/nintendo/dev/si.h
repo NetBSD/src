@@ -130,7 +130,6 @@ struct si_channel {
 	void			*ch_desc;
 	int			ch_descsize;
 	void			*ch_si;
-	void			*ch_gcport_si;
 	struct workqueue	*ch_wqp;
 	struct work		ch_work;
 };

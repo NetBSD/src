@@ -61,7 +61,6 @@ extern struct cfdriver gcport_cd;
 static int gcport_si_match(device_t, cfdata_t, void *);
 static void gcport_si_attach(device_t, device_t, void *);
 static int gcport_si_print(void *, const char *);
-static void gcport_si_softintr(void *);
 static int gcport_si_rescan(device_t, const char *, const int *);
 static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
 static void gcport_si_work(struct work *, void *);
@@ -108,8 +107,6 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
 	ch->ch_gcport_dev = self;
-	ch->ch_gcport_si = softint_establish(SOFTINT_SERIAL,
-	    gcport_si_softintr, ch);
 
 	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, ch,
 	    PRI_NONE, IPL_VM, 0);
@@ -211,15 +208,6 @@ gcport_si_rescan(device_t self, const char *ifattr, const int *locs)
 
 	return 0;
 
-}
-
-void
-gcport_si_softintr(void *priv)
-{
-	struct si_channel *ch = priv;
-	if (ch->ch_wqp != NULL) {
-		workqueue_enqueue(ch->ch_wqp, &ch->ch_work, NULL);
-	}
 }
 
 void gcport_si_work(struct work *wk, void *arg)

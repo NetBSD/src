@@ -288,8 +288,9 @@ si_intr(void *priv)
 			 * attach event: non-gcpad has no errors
 			 * detach event: gcpad has errors
 			 */
-			if (!(has_err ^ is_gcpad) && ch->ch_gcport_si != NULL) {
-				softint_schedule(ch->ch_gcport_si);
+			if (!(has_err ^ is_gcpad) && ch->ch_wqp != NULL) {
+				workqueue_enqueue(ch->ch_wqp, &ch->ch_work,
+				    NULL);
 			}
 		}
 		ret = 1;
