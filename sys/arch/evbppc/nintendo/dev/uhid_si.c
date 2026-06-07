@@ -60,11 +60,7 @@ uhid_si_match(device_t parent, cfdata_t cf, void *aux)
 	struct gcport_softc * const sc = device_private(parent);
 	struct si_channel *ch = sc->ch;
 
-	if (IS_GCPAD(ch->ch_id)) {
-		return 1;
-	}
-
-	return 0;
+	return IS_GCPAD(ch->ch_id);
 }
 
 static void
