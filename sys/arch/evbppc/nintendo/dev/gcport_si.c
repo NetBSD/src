@@ -111,11 +111,12 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	ch->ch_gcport_si = softint_establish(SOFTINT_SERIAL,
 	    gcport_si_softintr, ch);
 
-	/* TODO - figure out the prio / ipl / flags */
-	err = workqueue_create(&ch->ch_wqp, "todo", gcport_si_work, ch, 0, 0, 0);
+	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, ch,
+	    PRI_NONE, IPL_NONE, 0);
 	if (err != 0) {
-		/* TODO how do i actually handle this type of situation */
-		aprint_normal("ch%d failed to create workqueue\n", ch->ch_index);
+		aprint_normal("gcport_si: ch%d failed to create workqueue\n",
+		    ch->ch_index);
+		ch->ch_wqp = NULL;
 	}
 	gcport_si_rescan(self, NULL, NULL);
 }
@@ -216,7 +217,9 @@ void
 gcport_si_softintr(void *priv)
 {
 	struct si_channel *ch = priv;
-	workqueue_enqueue(ch->ch_wqp, &ch->ch_work, NULL);
+	if (ch->ch_wqp != NULL) {
+		workqueue_enqueue(ch->ch_wqp, &ch->ch_work, NULL);
+	}
 }
 
 void gcport_si_work(struct work *wk, void *arg)
