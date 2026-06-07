@@ -112,7 +112,7 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	    gcport_si_softintr, ch);
 
 	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, ch,
-	    PRI_NONE, IPL_NONE, 0);
+	    PRI_NONE, IPL_VM, 0);
 	if (err != 0) {
 		aprint_normal("gcport_si: ch%d failed to create workqueue\n",
 		    ch->ch_index);
