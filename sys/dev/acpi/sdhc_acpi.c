@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.23 2026/06/06 16:13:06 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.24 2026/06/07 19:47:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.23 2026/06/06 16:13:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.24 2026/06/07 19:47:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,6 +93,15 @@ static const struct sdhc_acpi_slot {
 	{ .hid = "80865ACA",		 .type = SLOT_TYPE_SD },
 	{ .hid = "80865ACC",		 .type = SLOT_TYPE_EMMC },
 	{ .hid = "80865AD0",		 .type = SLOT_TYPE_SD },
+
+	/* Broadcom BRCM5D12 (eMMC/SD on Raspberry Pi 5) */
+	{ .hid = "BRCM5D12", .uid = "0", .type = SLOT_TYPE_SD,
+					 .flags = SDHC_FLAG_NO_PWR0 |
+						  SDHC_FLAG_NO_1_8_V },
+	{ .hid = "BRCM5D12", .uid = "1", .type = SLOT_TYPE_EMMC,
+					 .flags = SDHC_FLAG_NO_PWR0 |
+						  SDHC_FLAG_NO_1_8_V },
+
 	{ .hid = "80860F14", .uid = "1", .type = SLOT_TYPE_EMMC },
 	{ .hid = "80860F14", .uid = "3", .type = SLOT_TYPE_SD },
 	{ .hid = "80860F16",   		 .type = SLOT_TYPE_SD },
