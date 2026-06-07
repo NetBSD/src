@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.40 2022/07/06 14:34:13 jandberg Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.41 2026/06/07 13:30:18 jandberg Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.40 2022/07/06 14:34:13 jandberg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.41 2026/06/07 13:30:18 jandberg Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -68,8 +68,6 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.40 2022/07/06 14:34:13 jandberg E
 /* These can be lowered if you are sure you don't need that much colors. */
 #define MAXDEPTH 8
 #define MAXROWS 128
-
-#define ADJUSTCOLORS
 
 #define MAXCOLORS (1<<MAXDEPTH)
 
@@ -1000,11 +998,17 @@ amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 	scr = screen;
 	maxcolor = (1 << scr->view->bitmap->depth) - 1;
 
+	/* No color in 1bpp mode (WSSCREEN_WSCOLORS not enabled) */
+	if (maxcolor == 1)
+	{
+		*attrp = MAKEATTR(1, 0, flags);
+		return 0;
+	}
+
 	/* Ensure the colors are displayable. */
 	newfg = fg & maxcolor;
 	newbg = bg & maxcolor;
 
-#ifdef ADJUSTCOLORS
 	/*
 	 * Hack for low-color screens, if background color is nonzero
 	 * but would be displayed as one, adjust it.
@@ -1022,7 +1026,6 @@ amidisplaycc_allocattr(void *screen, int fg, int bg, int flags, long *attrp)
 		else
 			newfg = maxcolor;
 	}
-#endif
 	*attrp = MAKEATTR(newfg, newbg, flags);
 
 	return 0;
