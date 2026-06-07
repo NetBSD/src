@@ -1,3 +1,5 @@
+/*	$NetBSD: agp_amd64.c,v 1.10 2026/06/07 15:32:03 andvar Exp $	*/
+
 /*-
  * Copyright (c) 2004, 2005 Jung-uk Kim <jkim@FreeBSD.org>
  * All rights reserved.
@@ -25,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.9 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.10 2026/06/07 15:32:03 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
