@@ -67,7 +67,7 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-kmutex_t sicomcsr_lock;
+static kmutex_t sicomcsr_lock;
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
@@ -393,4 +393,75 @@ static usbd_status
 si_write(void *cookie, void *data, int len)
 {
         return USBD_INVAL;
+}
+
+int
+si_send(struct si_softc *sc, struct siio_send *data)
+{
+	uint32_t cnt, comcsr, comcsr_prev, sisr, shift_amt, status;
+	unsigned chan;
+
+	mutex_enter(&sicomcsr_lock);
+	chan = data->chan;
+
+	comcsr_prev = RD4(sc, SICOMCSR);
+	SIIOBUF_CLEAR(sc);
+	data->status = 0;
+
+	/* siiobuf must to be written in increments of 4 bytes */
+	cnt = ((data->outsize+3)/4);
+	SIIOBUF_WR(sc, data->out, cnt);
+
+	WR4(sc, SISR, SISR_ERROR_MASK(chan));
+	sisr = RD4(sc, SISR);
+
+	AWAIT_SICOMCSR(sc);
+	WR4(sc, SICOMCSR,
+	    SICOMCSR_CH_EN |
+	    SICOMCSR_CMD_EN |
+	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
+	    __SHIFTIN(data->outsize, SICOMCSR_OUTLNGTH) |
+	    __SHIFTIN(data->insize, SICOMCSR_INLNGTH) |
+	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
+	    SICOMCSR_TSTART
+	);
+	AWAIT_SICOMCSR(sc);
+
+	comcsr = RD4(sc, SICOMCSR);
+
+	/* clear TCINT and preserve previous masks otherwise we lose polling */
+	WR4(sc, SICOMCSR, comcsr |
+	    SICOMCSR_TCINT |
+	    (comcsr_prev & SICOMCSR_TCINTMSK) |
+	    (comcsr_prev & SICOMCSR_RDSTINTMSK));
+
+	if (ISSET(comcsr, SICOMCSR_COMERR)) {
+		sisr = RD4(sc, SISR);
+		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
+		status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
+		data->status = status;
+	}
+
+	SIIOBUF_RD(sc, data->in, data->insize);
+
+	mutex_exit(&sicomcsr_lock);
+	return 0;
+}
+
+int
+si_identify(struct si_softc *sc, unsigned chan) {
+	struct siio_send data;
+	uint32_t out[1];
+	uint32_t in[1];
+
+	out[0] = CMD_IDENTIFY;
+
+	data.chan = chan;
+	data.outsize = 1;
+	data.insize = 3;
+	data.in = in;
+	data.out = out;
+
+	si_send(sc, &data);
+	return (uint16_t)(in[0] >> 16);
 }
