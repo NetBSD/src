@@ -81,8 +81,8 @@ static int
 uhid_si_detach(device_t self, int flags)
 {
 	struct uhid_softc * const sc = device_private(self);
-	int res = uhid_detach_common(sc);
-	return res;
+
+	return uhid_detach_common(sc);
 }
 
 static int
