@@ -185,11 +185,15 @@ si_print(void *aux, const char *pnp)
 {
 	struct si_attach_args *saa = aux;
 
+	if (pnp != NULL) {
+		aprint_normal("gcport at %s", pnp);
+	}
+
 	/*
 	 * The Wii Operations Manual for RVL-001 refers to the controller
 	 * ports as "Nintendo GameCube Controller Sockets".
 	 */
-	aprint_normal(" socket %d\n", saa->saa_index + 1);
+	aprint_normal(" socket %d", saa->saa_index + 1);
 
 	return UNCONF;
 }
