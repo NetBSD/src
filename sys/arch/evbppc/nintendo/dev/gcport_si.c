@@ -238,21 +238,22 @@ gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static int
 siioctl_send(struct si_channel *ch, struct si_payload *p)
 {
-	int err;
+	int err, outsize_r, insize_r;
 	struct si_softc *sc;
 	struct siio_send sd;
 
 	err = 0;
 	sc = ch->ch_sc;
-	if (p->outsize > SIIOBUF_SIZE || p->insize > SIIOBUF_SIZE) {
-		return EINVAL;
-	}
 
+	/* siiobuf must to be written in increments of 4 bytes */
+	outsize_r = roundup(p->outsize, 4);
+	insize_r = roundup(p->insize, 4);
+
+	sd.out = kmem_zalloc(outsize_r, KM_SLEEP);
+	sd.in = kmem_zalloc(insize_r, KM_SLEEP);
 	sd.chan = ch->ch_index;
 	sd.outsize = p->outsize;
 	sd.insize = p->insize;
-	sd.out = kmem_alloc(p->outsize, KM_SLEEP);
-	sd.in = kmem_alloc(p->insize, KM_SLEEP);
 
 	if ((err = copyin(p->out, sd.out, sd.outsize)) != 0) {
 		goto si_send_cleanup;
@@ -270,7 +271,7 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		goto si_send_cleanup;
 	}
 si_send_cleanup:
-	kmem_free(sd.out, sd.outsize);
-	kmem_free(sd.in, sd.insize);
+	kmem_free(sd.out, outsize_r);
+	kmem_free(sd.in, insize_r);
 	return err;
 }

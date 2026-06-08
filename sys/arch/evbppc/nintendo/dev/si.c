@@ -401,6 +401,18 @@ si_send(struct si_softc *sc, struct siio_send *data)
 	uint32_t cnt, comcsr, comcsr_prev, sisr, shift_amt, status;
 	unsigned chan;
 
+	if (data->chan > 3) {
+		return EINVAL;
+	}
+
+	if (data->outsize > SIIOBUF_SIZE || data->insize > SIIOBUF_SIZE) {
+		return EINVAL;
+	}
+
+	if (data->out == NULL || data->in == NULL) {
+		return EINVAL;
+	}
+
 	mutex_enter(&sicomcsr_lock);
 	chan = data->chan;
 
@@ -408,7 +420,7 @@ si_send(struct si_softc *sc, struct siio_send *data)
 	SIIOBUF_CLEAR(sc);
 	data->status = 0;
 
-	/* siiobuf must to be written in increments of 4 bytes */
+	/* outsize is number of bytes. we need number of words */
 	cnt = ((data->outsize+3)/4);
 	SIIOBUF_WR(sc, data->out, cnt);
 
@@ -442,7 +454,7 @@ si_send(struct si_softc *sc, struct siio_send *data)
 		data->status = status;
 	}
 
-	SIIOBUF_RD(sc, data->in, data->insize);
+	SIIOBUF_RD(sc, (void *)data->in, data->insize);
 
 	mutex_exit(&sicomcsr_lock);
 	return 0;

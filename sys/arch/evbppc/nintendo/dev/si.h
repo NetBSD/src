@@ -95,8 +95,8 @@
 #define WR4(sc, reg, val)						\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 #define SIIOBUF_CLEAR(sc)						\
-	bus_space_set_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, 0,	\
-	    SIIOBUF_SIZE)
+	bus_space_set_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, 0,	\
+	    (SIIOBUF_SIZE / 4))
 #define SIIOBUF_WR(sc, buf, cnt)					\
 	bus_space_write_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
 #define SIIOBUF_RD(sc, buf, cnt)					\
@@ -159,8 +159,8 @@ struct siio_send {
 	uint32_t	status;		/* the sisr result for this channel */
 	uint32_t	insize;		/* number of bytes for in buffer */
 	uint32_t	outsize;	/* number of bytes for out buffer */
-	void		*in;		/* buffer to store response */
-	void		*out;		/* buffer to send out to ext device */
+	uint32_t	*in;		/* buffer to store response */
+	uint32_t	*out;		/* buffer to send out to ext device */
 };
 
 int si_send(struct si_softc *sc, struct siio_send *);
