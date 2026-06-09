@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_file.c,v 1.133 2024/10/01 17:46:51 riastradh Exp $	*/
+/*	$NetBSD: linux_file.c,v 1.134 2026/06/09 21:45:21 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.133 2024/10/01 17:46:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_file.c,v 1.134 2026/06/09 21:45:21 andvar Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,19 +202,19 @@ linux_open_ctty(struct lwp *l, int flags, int fd)
 	 * terminal yet, and the O_NOCTTY flag is not set, try to make
 	 * this the controlling terminal.
 	 */
-        if (!(flags & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
-                file_t *fp;
+	if (!(flags & O_NOCTTY) && SESS_LEADER(p) && !(p->p_lflag & PL_CONTROLT)) {
+		file_t *fp;
 
 		fp = fd_getfile(fd);
 
-                /* ignore any error, just give it a try */
-                if (fp != NULL) {
+		/* ignore any error, just give it a try */
+		if (fp != NULL) {
 			if (fp->f_type == DTYPE_VNODE) {
 				(fp->f_ops->fo_ioctl) (fp, TIOCSCTTY, NULL);
 			}
 			fd_putfile(fd);
 		}
-        }
+	}
 }
 
 /*
