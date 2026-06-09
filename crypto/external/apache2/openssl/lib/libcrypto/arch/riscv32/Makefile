@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2025/07/19 17:41:37 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2026/06/09 19:20:32 christos Exp $
 
 .include "bsd.own.mk"
 
@@ -10,7 +10,7 @@ CC+= -fno-integrated-as
 .endif
 
 regen:
-	for i in $$(find ${OPENSSLSRC} -name \*${MACHINE_ARCH}\*.pl); do \
+	for i in $$(find ${OPENSSLSRC} -name \*riscv32\*.pl); do \
 		j=$$(basename $$i .pl).S; \
 		(echo "#include <machine/asm.h>"; CC=${CC:Q} perl $$i) > $$j; \
 	done

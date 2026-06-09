@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2026/04/08 17:06:45 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2026/06/09 19:20:38 christos Exp $
 
 # the makefile is not, and should not be visited during normal build process.
 # try to use latest pod2man, which comes with the latest perl.
@@ -7,7 +7,7 @@
 CRYPTODIST=	${NETBSDSRCDIR}/crypto
 .include "${NETBSDSRCDIR}/crypto/Makefile.openssl"
 
-OPENSSLDIST=${.CURDIR}/../../../openssl-3.5.6
+OPENSSLDIST=${.CURDIR}/../../../openssl-3.5.7
 VERSION!=	awk '/\#\#\#/ { print $$6; exit 0; };' ${OPENSSLDIST}/CHANGES.md
 
 

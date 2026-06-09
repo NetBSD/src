@@ -658,11 +658,13 @@ AES_set_encrypt_key:
     sd      x18,16(sp)
     sd      x19,8(sp)
     sd      x20,0(sp)
-    bnez    x10,1f    # if (!userKey || !key) return -1;
-    bnez    x12,1f
+    beqz    x10,1f    # if (!userKey || !key) return -1;
+    beqz    x12,1f
+    j       2f
+1:
     li      a0,-1
     ret
-1:
+2:
     la      x9,AES_rcon
     la      x20,AES_Te0
     li      x28,128

@@ -908,9 +908,6 @@ L_ecb_dec_256:
 .globl rv64i_zvkned_set_encrypt_key
 .type rv64i_zvkned_set_encrypt_key,@function
 rv64i_zvkned_set_encrypt_key:
-    beqz a0, L_fail_m1
-    beqz a2, L_fail_m1
-
     # Get proper routine for key size
     li t1, 256
     beq a1, t1, L_set_key_256
@@ -924,9 +921,6 @@ rv64i_zvkned_set_encrypt_key:
 .globl rv64i_zvkned_set_decrypt_key
 .type rv64i_zvkned_set_decrypt_key,@function
 rv64i_zvkned_set_decrypt_key:
-    beqz a0, L_fail_m1
-    beqz a2, L_fail_m1
-
     # Get proper routine for key size
     li t1, 256
     beq a1, t1, L_set_key_256
@@ -1387,11 +1381,6 @@ L_dec_256:
 
     ret
 .size L_dec_256,.-L_dec_256
-L_fail_m1:
-    li a0, -1
-    ret
-.size L_fail_m1,.-L_fail_m1
-
 L_fail_m2:
     li a0, -2
     ret

@@ -1,4 +1,4 @@
-#	$NetBSD: man.inc,v 1.6 2026/01/30 16:22:12 christos Exp $
+#	$NetBSD: man.inc,v 1.7 2026/06/09 19:20:32 christos Exp $
 
 .PATH:	${.CURDIR}/man
 
@@ -704,6 +704,7 @@ UI_UTIL_read_pw.3 \
 UI_create_method.3 \
 UI_new.3 \
 X25519.7 \
+X509V3_EXT_print.3 \
 X509V3_get_d2i.3 \
 X509V3_set_ctx.3 \
 X509_ACERT_add1_attr.3 \
