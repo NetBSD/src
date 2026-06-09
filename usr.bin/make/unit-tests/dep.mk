@@ -1,4 +1,4 @@
-# $NetBSD: dep.mk,v 1.4 2023/06/01 07:27:30 rillig Exp $
+# $NetBSD: dep.mk,v 1.5 2026/06/09 07:30:38 rillig Exp $
 #
 # Tests for dependency declarations, such as "target: sources".
 
@@ -26,5 +26,24 @@ for-subst:	  ${file:S;^;./;g}
 	@echo ".for with :S;... OK"
 .endfor
 
+
+# Before parse.c 1.757 from 2026-06-09, the parser counted "$(" and "${" as
+# opening a brace level, and ")" and "}" as closing it.  It didn't count a
+# plain "(" or "{" as opening, though.  This simple counting resulted in
+# parse errors on modifiers containing parentheses or braces, as well as
+# semicolons.
+
+semicolon-in-modifier.${:Utarget:S;from;to;}:
+# FIXME
+# expect+3: Unfinished modifier after "(.)", expecting ";"
+# FIXME
+# expect+1: Invalid line "parentheses-in-modifier.${:Utarget:C;(.)", expanded to "parentheses-in-modifier."
+parentheses-in-modifier.${:Utarget:C;(.);\1-\1;g}:
+# FIXME
+# expect+1: Invalid line "var-semicolon.$", expanded to "var-semicolon."
+var-semicolon.$;: source
+# FIXME
+# expect+1: Invalid line "double-dollar.$$$", expanded to "double-dollar.$"
+double-dollar.$$$;-$$$$: source
 
 all:

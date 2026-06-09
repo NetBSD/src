@@ -1,5 +1,10 @@
 make: dep.mk:11: Inconsistent operator for only-colon
 make: dep.mk:13: Inconsistent operator for only-colon
+make: dep.mk:41: Unfinished modifier after "(.)", expecting ";"
+	while evaluating "${:Utarget:C;(.)" with value "target"
+make: dep.mk:41: Invalid line "parentheses-in-modifier.${:Utarget:C;(.)", expanded to "parentheses-in-modifier."
+make: dep.mk:44: Invalid line "var-semicolon.$", expanded to "var-semicolon."
+make: dep.mk:47: Invalid line "double-dollar.$$$", expanded to "double-dollar.$"
 make: Fatal errors encountered -- cannot continue
 make: stopped making "all" in unit-tests
 exit status 1
