@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.78 2026/01/09 22:54:34 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.79 2026/06/09 05:29:26 skrll Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.78 2026/01/09 22:54:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.79 2026/06/09 05:29:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1538,7 +1538,7 @@ sdmmc_mem_decode_general_info(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 			sf->ext_sd.pef.valid = true;
 			sf->ext_sd.pef.fno =
 			    SD_EXTENSION_INFO_REG_FNO(reg);
-			sf->ext_sd.pef.start_addr = 
+			sf->ext_sd.pef.start_addr =
 			    SD_EXTENSION_INFO_REG_START_ADDR(reg);
 			break;
 		}
