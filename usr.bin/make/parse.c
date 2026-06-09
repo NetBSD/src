@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.756 2026/04/06 17:13:55 rillig Exp $	*/
+/*	$NetBSD: parse.c,v 1.757 2026/06/09 08:27:08 rillig Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.756 2026/04/06 17:13:55 rillig Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.757 2026/06/09 08:27:08 rillig Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -2833,22 +2833,23 @@ Parse_GuardEndif(void)
 static char *
 FindSemicolon(char *p)
 {
-	int depth = 0;
+	if (strchr(p, ';') == NULL)
+		return NULL;
 
-	for (; *p != '\0'; p++) {
-		if (*p == '\\' && p[1] != '\0') {
+	while (*p != '\0') {
+		if (*p == ';')
+			return p;
+		if (*p == '$' && p[1] == '$')
+			p += 2;
+		else if (*p == '$') {
+			const char *cp = p;
+			FStr value = Var_Parse(&cp, SCOPE_GLOBAL, VARE_PARSE);
+			FStr_Done(&value);
+			p += cp - p;
+		} else
 			p++;
-			continue;
-		}
-
-		if (*p == '$' && (p[1] == '(' || p[1] == '{'))
-			depth++;
-		else if (depth > 0 && (*p == ')' || *p == '}'))
-			depth--;
-		else if (depth == 0 && *p == ';')
-			break;
 	}
-	return p;
+	return NULL;
 }
 
 static void
@@ -2859,7 +2860,7 @@ ParseDependencyLine(char *line)
 
 	{
 		char *semicolon = FindSemicolon(line);
-		if (*semicolon != '\0') {
+		if (semicolon != NULL) {
 			/* Terminate the dependency list at the ';' */
 			*semicolon = '\0';
 			shellcmd = semicolon + 1;
