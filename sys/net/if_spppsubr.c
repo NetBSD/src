@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.287 2026/06/05 02:57:45 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.288 2026/06/09 06:43:14 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.287 2026/06/05 02:57:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.288 2026/06/09 06:43:14 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2419,13 +2419,31 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 
 	sppp_down_event(sp, xcp);
 
-	/*
-	 * A Down event in Req-Sent or Ack-Sent that transitions to Starting
-	 * requires an extra TLS action, because an Open event in the Closed
-	 * state transitions to Req-Sent/Ack-Sent without executing that action.
-	 */
-	if (sp->scp[pidx].state == STATE_STARTING)
+	switch (sp->scp[pidx].state) {
+	case STATE_STARTING:
+		/*
+		 * Req-Sent/Ack-Sent/Ack-Rcvd -> Starting:
+		 * This transition requires an extra TLS action.
+		 * * sequence of events/actions:
+		 * 1. Closing -> Closed      : Triggers TLF  action.
+		 * 2. Closed  -> Req-Sent    : Occurs on Open event.
+		 * 3. Req-Sent -> Ack-Sent...: (Optional state progression)
+		 * 4. Req-Sent/Ack-Sent/Ack-Rcvd -> Starting:
+		 *    - Triggered by a Down event caused by the previous TLF action.
+		 *    - This specific transition does NOT trigger another TLS action.
+		 */
 		cp->tls(cp, sp);
+		break;
+	case STATE_INITIAL:
+		/*
+		 * Closing -> Initial:
+		 * A Down event in the Closing state triggers a transition to
+		 * Initial state without a TLF action. Since the lower layer
+		 * will attempt to reconnect, we explicitly stop it here.
+		 */
+		cp->tlf(cp, sp);
+		break;
+	}
 
 	SPPP_DLOG(sp, "Down event (carrier loss)\n");
 
