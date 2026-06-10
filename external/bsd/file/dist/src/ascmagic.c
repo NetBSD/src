@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.16 2023/08/18 18:36:49 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.17 2026/06/10 15:59:13 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,9 +38,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.116 2023/05/21 16:08:50 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.118 2026/06/02 19:58:38 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.16 2023/08/18 18:36:49 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.17 2026/06/10 15:59:13 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -148,6 +148,9 @@ file_ascmagic_with_encoding(struct magic_set *ms, const struct buffer *b,
 		/* Convert ubuf to UTF-8 and try text soft magic */
 		/* malloc size is a conservative overestimate; could be
 		   improved, or at least realloced after conversion. */
+		if (ulen > SIZE_MAX / 6) {
+			goto done;
+		}
 		mlen = ulen * 6;
 		if ((utf8_buf = CAST(unsigned char *, malloc(mlen))) == NULL) {
 			file_oomem(ms, mlen);
@@ -210,6 +213,9 @@ file_ascmagic_with_encoding(struct magic_set *ms, const struct buffer *b,
 		if (ubuf[i] == '\b')
 			has_backspace = 1;
 	}
+
+	if (seen_cr && n_cr == 0 && n_crlf == 0)
+		n_cr++;
 
 	if (strcmp(type, "binary") == 0) {
 		rv = 0;

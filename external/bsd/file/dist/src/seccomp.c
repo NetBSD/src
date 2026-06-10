@@ -1,4 +1,4 @@
-/*	$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $	*/
+/*	$NetBSD: seccomp.c,v 1.1.1.9 2026/06/10 15:59:13 christos Exp $	*/
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -30,21 +30,24 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: seccomp.c,v 1.25 2022/12/26 18:57:29 christos Exp $")
+FILE_RCSID("@(#)$File: seccomp.c,v 1.37 2026/05/11 16:06:03 christos Exp $")
 #else
-__RCSID("$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $");
+__RCSID("$NetBSD: seccomp.c,v 1.1.1.9 2026/06/10 15:59:13 christos Exp $");
 #endif
 #endif	/* lint */
 
 #if HAVE_LIBSECCOMP
+#include "magic.h"
 #include <seccomp.h> /* libseccomp */
 #include <sys/prctl.h> /* prctl */
-#include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <termios.h>
+// See: https://sourceware.org/bugzilla/show_bug.cgi?id=32806
+#include <asm/termbits.h>
+#include <sys/ioctl.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <unistd.h>
 
 #define DENY_RULE(call) \
     do \
@@ -55,6 +58,12 @@ __RCSID("$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $");
     do \
 	if (seccomp_rule_add (ctx, SCMP_ACT_ALLOW, SCMP_SYS(call), 0) == -1) \
 	    goto out; \
+    while (/*CONSTCOND*/0)
+/* ENOSYS makes glibc try an older syscall instead of dying. */
+#define ERRNO_RULE(call) \
+    do \
+	if (seccomp_rule_add(ctx, SCMP_ACT_ERRNO(ENOSYS), SCMP_SYS(call), 0) \
+	    == -1) goto out; \
     while (/*CONSTCOND*/0)
 
 #define ALLOW_IOCTL_RULE(param) \
@@ -68,106 +77,27 @@ __RCSID("$NetBSD: seccomp.c,v 1.1.1.8 2023/08/18 18:36:50 christos Exp $");
 static scmp_filter_ctx ctx;
 
 int
-enable_sandbox_basic(void)
+enable_sandbox(int flags, int action)
 {
+	struct stat sb;
+	int needs_write;
+
+	/* Writes are needed when building the magic file (-C, -c, -l)
+	   or when stdin is a pipe and we copy it to a tempfile. */
+	needs_write = (action == FILE_COMPILE || action == FILE_CHECK ||
+	    action == FILE_LIST);
+	if (!needs_write && fstat(STDIN_FILENO, &sb) == 0 &&
+	    S_ISFIFO(sb.st_mode))
+		needs_write = 1;
 
 	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1)
 		return -1;
 
+#if 0
 	if (prctl(PR_SET_DUMPABLE, 0, 0, 0, 0) == -1)
 		return -1;
-
-	// initialize the filter
-	ctx = seccomp_init(SCMP_ACT_ALLOW);
-	if (ctx == NULL)
-	    return 1;
-
-	DENY_RULE(_sysctl);
-	DENY_RULE(acct);
-	DENY_RULE(add_key);
-	DENY_RULE(adjtimex);
-	DENY_RULE(chroot);
-	DENY_RULE(clock_adjtime);
-	DENY_RULE(create_module);
-	DENY_RULE(delete_module);
-	DENY_RULE(fanotify_init);
-	DENY_RULE(finit_module);
-	DENY_RULE(get_kernel_syms);
-	DENY_RULE(get_mempolicy);
-	DENY_RULE(init_module);
-	DENY_RULE(io_cancel);
-	DENY_RULE(io_destroy);
-	DENY_RULE(io_getevents);
-	DENY_RULE(io_setup);
-	DENY_RULE(io_submit);
-	DENY_RULE(ioperm);
-	DENY_RULE(iopl);
-	DENY_RULE(ioprio_set);
-	DENY_RULE(kcmp);
-#ifdef __NR_kexec_file_load
-	DENY_RULE(kexec_file_load);
 #endif
-	DENY_RULE(kexec_load);
-	DENY_RULE(keyctl);
-	DENY_RULE(lookup_dcookie);
-	DENY_RULE(mbind);
-	DENY_RULE(nfsservctl);
-	DENY_RULE(migrate_pages);
-	DENY_RULE(modify_ldt);
-	DENY_RULE(mount);
-	DENY_RULE(move_pages);
-	DENY_RULE(name_to_handle_at);
-	DENY_RULE(open_by_handle_at);
-	DENY_RULE(perf_event_open);
-	DENY_RULE(pivot_root);
-	DENY_RULE(process_vm_readv);
-	DENY_RULE(process_vm_writev);
-	DENY_RULE(ptrace);
-	DENY_RULE(reboot);
-	DENY_RULE(remap_file_pages);
-	DENY_RULE(request_key);
-	DENY_RULE(set_mempolicy);
-	DENY_RULE(swapoff);
-	DENY_RULE(swapon);
-	DENY_RULE(sysfs);
-	DENY_RULE(syslog);
-	DENY_RULE(tuxcall);
-	DENY_RULE(umount2);
-	DENY_RULE(uselib);
-	DENY_RULE(vmsplice);
 
-	// blocking dangerous syscalls that file should not need
-	DENY_RULE (execve);
-	DENY_RULE (socket);
-	// ...
-
-
-	// applying filter...
-	if (seccomp_load (ctx) == -1)
-		goto out;
-	// free ctx after the filter has been loaded into the kernel
-	seccomp_release(ctx);
-	return 0;
-
-out:
-	seccomp_release(ctx);
-	return -1;
-}
-
-
-int
-enable_sandbox_full(void)
-{
-
-	// prevent child processes from getting more priv e.g. via setuid,
-	// capabilities, ...
-	if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) == -1)
-		return -1;
-
-	if (prctl(PR_SET_DUMPABLE, 0, 0, 0, 0) == -1)
-		return -1;
-
-	// initialize the filter
 	ctx = seccomp_init(SCMP_ACT_KILL);
 	if (ctx == NULL)
 		return -1;
@@ -195,6 +125,11 @@ enable_sandbox_full(void)
 #ifdef __NR_getdents64
 	ALLOW_RULE(getdents64);
 #endif
+	ALLOW_RULE(getpid);	// Used by glibc in file_pipe2file()
+	ALLOW_RULE(getrandom);	// Used by glibc in file_pipe2file()
+#ifdef __NR_getcwd
+	ALLOW_RULE(getcwd);	// GCONV_PATH=
+#endif
 #ifdef FIONREAD
 	// called in src/compress.c under sread
 	ALLOW_IOCTL_RULE(FIONREAD);
@@ -206,6 +141,10 @@ enable_sandbox_full(void)
 #ifdef TCGETS
 	// glibc may call ioctl TCGETS on stdout on physical terminal
 	ALLOW_IOCTL_RULE(TCGETS);
+#endif
+#ifdef TCGETS2
+	// glibc may call ioctl TCGETS2 on stdout on physical terminal
+	ALLOW_IOCTL_RULE(TCGETS2);
 #endif
 	ALLOW_RULE(lseek);
  	ALLOW_RULE(_llseek);
@@ -220,14 +159,38 @@ enable_sandbox_full(void)
 #ifdef __NR_newfstatat
 	ALLOW_RULE(newfstatat);
 #endif
-	ALLOW_RULE(open);
-	ALLOW_RULE(openat);
+
+	/* Read-only opens are always fine. Writes are allowed when we
+	   need them, otherwise return EACCES instead of killing. */
+	if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(open), 1,
+	    SCMP_CMP(1, SCMP_CMP_MASKED_EQ, O_WRONLY | O_RDWR, 0)) == -1)
+		goto out;
+	if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(openat), 1,
+	    SCMP_CMP(2, SCMP_CMP_MASKED_EQ, O_WRONLY | O_RDWR, 0)) == -1)
+		goto out;
+	{
+		uint32_t act = needs_write ? SCMP_ACT_ALLOW
+		                           : SCMP_ACT_ERRNO(EACCES);
+		if (seccomp_rule_add(ctx, act, SCMP_SYS(open), 1,
+		    SCMP_CMP(1, SCMP_CMP_MASKED_EQ, O_WRONLY, O_WRONLY)) == -1)
+			goto out;
+		if (seccomp_rule_add(ctx, act, SCMP_SYS(open), 1,
+		    SCMP_CMP(1, SCMP_CMP_MASKED_EQ, O_RDWR, O_RDWR)) == -1)
+			goto out;
+		if (seccomp_rule_add(ctx, act, SCMP_SYS(openat), 1,
+		    SCMP_CMP(2, SCMP_CMP_MASKED_EQ, O_WRONLY, O_WRONLY)) == -1)
+			goto out;
+		if (seccomp_rule_add(ctx, act, SCMP_SYS(openat), 1,
+		    SCMP_CMP(2, SCMP_CMP_MASKED_EQ, O_RDWR, O_RDWR)) == -1)
+			goto out;
+	}
 	ALLOW_RULE(pread64);
 	ALLOW_RULE(read);
 	ALLOW_RULE(readlink);
 #ifdef __NR_readlinkat
 	ALLOW_RULE(readlinkat);
 #endif
+	ALLOW_RULE(rseq);	// Used by glibc to randomize malloc
 	ALLOW_RULE(rt_sigaction);
 	ALLOW_RULE(rt_sigprocmask);
 	ALLOW_RULE(rt_sigreturn);
@@ -236,12 +199,29 @@ enable_sandbox_full(void)
 	ALLOW_RULE(statx);
 	ALLOW_RULE(stat64);
 	ALLOW_RULE(sysinfo);
-	ALLOW_RULE(umask);	// Used in file_pipe2file()
-	ALLOW_RULE(getpid);	// Used by glibc in file_pipe2file()
-	ALLOW_RULE(unlink);
-	ALLOW_RULE(utimes);
+	if (needs_write) {
+		ALLOW_RULE(umask);	/* used in file_pipe2file() */
+		ALLOW_RULE(unlinkat);	/* used in file_pipe2file() */
+#ifdef __NR_unlink
+		ALLOW_RULE(unlink);
+#endif
+	}
+	if (flags & MAGIC_PRESERVE_ATIME) {
+		/* glibc 2.28+ uses utimes() via utimensat. */
+		ALLOW_RULE(utimensat);
+#ifdef __NR_utimes
+		ALLOW_RULE(utimes);
+#endif
+	}
+	/* Always allow writes. The kernel checks the fd, and restricting
+	   here would just break stdout/stderr and the tempfile. */
 	ALLOW_RULE(write);
 	ALLOW_RULE(writev);
+
+	/* Newer variants we don't use. ENOSYS lets glibc fall back. */
+	ERRNO_RULE(openat2);
+	ERRNO_RULE(faccessat2);
+	ERRNO_RULE(close_range);
 
 
 #if 0
@@ -279,6 +259,14 @@ enable_sandbox_full(void)
 	 if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(write), 1,
 	     SCMP_CMP(0, SCMP_CMP_EQ, 2)) == -1)
 		 goto out;
+#endif
+
+#if defined(PR_SET_VMA) && defined(PR_SET_VMA_ANON_NAME)
+	/* allow glibc to name malloc areas */
+	if (seccomp_rule_add(ctx, SCMP_ACT_ALLOW, SCMP_SYS(prctl), 2,
+	    SCMP_CMP32(0, SCMP_CMP_EQ, PR_SET_VMA),
+	    SCMP_CMP64(1, SCMP_CMP_EQ, PR_SET_VMA_ANON_NAME)) == -1)
+		goto out;
 #endif
 
 	// applying filter...
