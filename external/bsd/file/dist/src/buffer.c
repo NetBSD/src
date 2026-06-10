@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.5 2023/08/18 18:36:49 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.6 2026/06/10 15:59:13 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2017.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: buffer.c,v 1.13 2023/07/02 12:48:39 christos Exp $")
+FILE_RCSID("@(#)$File: buffer.c,v 1.14 2025/05/28 19:22:22 christos Exp $")
 #else
-__RCSID("$NetBSD: buffer.c,v 1.1.1.5 2023/08/18 18:36:49 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.1.1.6 2026/06/10 15:59:13 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -73,6 +73,10 @@ buffer_fill(const struct buffer *bb)
 
 	if (b->elen != 0)
 		return b->elen == FILE_BADSIZE ? -1 : 0;
+
+	// Nothing to refill, everything is in memory
+	if (b->fd == -1)
+		return 0;
 
 	if (!S_ISREG(b->st.st_mode))
 		goto out;

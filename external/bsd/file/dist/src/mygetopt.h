@@ -1,6 +1,6 @@
-/*	$NetBSD: mygetopt.h,v 1.1.1.5 2018/10/18 23:54:09 christos Exp $	*/
+/*	$NetBSD: mygetopt.h,v 1.1.1.6 2026/06/10 15:59:13 christos Exp $	*/
 
-/*	NetBSD: getopt.h,v 1.8 2007/11/06 19:21:18 christos Exp 	*/
+/*	NetBSD: getopt.h,v 1.11 2008/04/28 20:22:54 martin Exp 	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -17,13 +17,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED

@@ -1,4 +1,4 @@
-/*	$NetBSD: der.h,v 1.1.1.1 2017/02/10 17:42:57 christos Exp $	*/
+/*	$NetBSD: der.h,v 1.1.1.2 2026/06/10 15:59:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016 Christos Zoulas
@@ -26,5 +26,5 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-extern int der_offs(struct magic_set *, struct magic *, size_t);
-extern int der_cmp(struct magic_set *, struct magic *);
+file_protected int der_offs(struct magic_set *, struct magic *, size_t);
+file_protected int der_cmp(struct magic_set *, struct magic *);
