@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1418 2026/05/17 00:39:45 riastradh Exp $
+# $NetBSD: mi,v 1.1419 2026/06/10 05:22:57 yamaguchi Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -4545,6 +4545,9 @@
 ./usr/tests/net/if_pppoe/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/if_pppoe/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/if_pppoe/t_pppoe			tests-net-tests		atf,rump
+./usr/tests/net/if_pppoe/t_pppoe_ipcp			tests-net-tests		atf,rump
+./usr/tests/net/if_pppoe/t_pppoe_ipv6cp			tests-net-tests		atf,rump
+./usr/tests/net/if_pppoe/t_pppoe_tags			tests-net-tests		atf,rump
 ./usr/tests/net/if_pppoe/t_pppoe_unnumbered		tests-net-tests		atf,rump
 ./usr/tests/net/if_shmif				tests-net-tests		compattestfile,atf
 ./usr/tests/net/if_shmif/Atffile			tests-net-tests		atf,rump
