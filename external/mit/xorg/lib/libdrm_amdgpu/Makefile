@@ -1,4 +1,4 @@
-#      $NetBSD: Makefile,v 1.6 2021/08/19 09:05:23 mrg Exp $
+#      $NetBSD: Makefile,v 1.7 2026/06/10 05:52:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ SRCS= \
 	amdgpu_cs.c \
 	amdgpu_device.c \
 	amdgpu_gpu_info.c \
+	amdgpu_userq.c \
 	amdgpu_vamgr.c \
 	amdgpu_vm.c \
 	handle_table.c
