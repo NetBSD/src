@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2215 2026/06/10 20:56:46 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2216 2026/06/10 22:26:43 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -898,18 +898,18 @@ The source files are in external/bsd/lutok/dist.
 Use external/bsd/lutok/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	m4
-Version:	20091026
-Current Vers:	20190628
+Version:	20260610
+Current Vers:	20260610
 Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
 Home Page:	http://www.openbsd.org/
-Date:		2020-06-13
+Date:		2026-06-10
 Mailing List:
 License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
 Location:	usr.bin/m4
 Notes:
-Uses libc's ohash
+Uses libutil's ohash
 
 Package:	mDNSResponder
 Version:	2559.1.1
