@@ -1,4 +1,4 @@
-/*	$NetBSD: magic.c,v 1.18 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: magic.c,v 1.19 2026/06/10 20:54:16 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -36,9 +36,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: magic.c,v 1.121 2023/02/09 17:45:19 christos Exp $")
+FILE_RCSID("@(#)$File: magic.c,v 1.128 2026/05/09 22:34:30 christos Exp $")
 #else
-__RCSID("$NetBSD: magic.c,v 1.18 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: magic.c,v 1.19 2026/06/10 20:54:16 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -78,7 +78,7 @@ __RCSID("$NetBSD: magic.c,v 1.18 2023/08/18 19:00:11 christos Exp $");
 file_private void close_and_restore(const struct magic_set *, const char *, int,
     const struct stat *);
 file_private int unreadable_info(struct magic_set *, mode_t, const char *);
-file_private const char* get_default_magic(void);
+file_private const char *get_default_magic(void);
 #ifndef COMPILE_ONLY
 file_private const char *file_or_fd(struct magic_set *, const char *, int);
 #endif
@@ -182,15 +182,11 @@ get_default_magic(void)
 {
 	static const char hmagic[] = "/.magic/magic.mgc";
 	static char *default_magic;
-	char *home, *hmagicpath;
+	char *home, *hmagicpath, *tmp_magic;
 
 #ifndef WIN32
 	struct stat st;
 
-	if (default_magic) {
-		free(default_magic);
-		default_magic = NULL;
-	}
 	if ((home = getenv("HOME")) == NULL)
 		return MAGIC;
 
@@ -211,8 +207,11 @@ get_default_magic(void)
 		}
 	}
 
-	if (asprintf(&default_magic, "%s:%s", hmagicpath, MAGIC) < 0)
+	if (asprintf(&tmp_magic, "%s%c%s", hmagicpath, PATHSEP, MAGIC) < 0)
 		goto out;
+	free(hmagicpath);
+	hmagicpath = default_magic;
+	default_magic = tmp_magic;
 	free(hmagicpath);
 	return default_magic;
 out:
@@ -251,7 +250,9 @@ out:
         _w32_get_magic_relative_to(&hmagicpath, _w32_dll_instance);
 
 	/* Avoid MAGIC constant - it likely points to a file within MSys tree */
+	tmp_magic = default_magic;
 	default_magic = hmagicpath;
+	free(tmp_magic);
 	return default_magic;
 #endif
 }
@@ -374,29 +375,30 @@ close_and_restore(const struct magic_set *ms, const char *name, int fd,
 		return;
 	(void) close(fd);
 
-	if ((ms->flags & MAGIC_PRESERVE_ATIME) != 0) {
-		/*
-		 * Try to restore access, modification times if read it.
-		 * This is really *bad* because it will modify the status
-		 * time of the file... And of course this will affect
-		 * backup programs
-		 */
+	if (sb == NULL || (ms->flags & MAGIC_PRESERVE_ATIME) == 0)
+		return;
+
+	/*
+	 * Try to restore access, modification times if read it.
+	 * This is really *bad* because it will modify the status
+	 * time of the file... And of course this will affect
+	 * backup programs
+	 */
 #ifdef HAVE_UTIMES
-		struct timeval  utsbuf[2];
-		(void)memset(utsbuf, 0, sizeof(utsbuf));
-		utsbuf[0].tv_sec = sb->st_atime;
-		utsbuf[1].tv_sec = sb->st_mtime;
+	struct timeval  utsbuf[2];
+	(void)memset(utsbuf, 0, sizeof(utsbuf));
+	utsbuf[0].tv_sec = sb->st_atime;
+	utsbuf[1].tv_sec = sb->st_mtime;
 
-		(void) utimes(name, utsbuf); /* don't care if loses */
+	(void) utimes(name, utsbuf); /* don't care if loses */
 #elif defined(HAVE_UTIME_H) || defined(HAVE_SYS_UTIME_H)
-		struct utimbuf  utbuf;
+	struct utimbuf  utbuf;
 
-		(void)memset(&utbuf, 0, sizeof(utbuf));
-		utbuf.actime = sb->st_atime;
-		utbuf.modtime = sb->st_mtime;
-		(void) utime(name, &utbuf); /* don't care if loses */
+	(void)memset(&utbuf, 0, sizeof(utbuf));
+	utbuf.actime = sb->st_atime;
+	utbuf.modtime = sb->st_mtime;
+	(void) utime(name, &utbuf); /* don't care if loses */
 #endif
-	}
 }
 
 #ifndef COMPILE_ONLY
@@ -536,7 +538,8 @@ file_or_fd(struct magic_set *ms, const char *inname, int fd)
 	}
 
 	(void)memset(buf + nbytes, 0, SLOP); /* NUL terminate */
-	if (file_buffer(ms, fd, okstat ? &sb : NULL, inname, buf, CAST(size_t, nbytes)) == -1)
+	if (file_buffer(ms, fd, okstat ? &sb : NULL, inname, buf,
+	    CAST(size_t, nbytes)) == -1)
 		goto done;
 	rv = 0;
 done:
@@ -544,7 +547,7 @@ done:
 	if (fd != -1) {
 		if (pos != CAST(off_t, -1))
 			(void)lseek(fd, pos, SEEK_SET);
-		close_and_restore(ms, inname, fd, &sb);
+		close_and_restore(ms, inname, fd, okstat ? &sb : NULL);
 	}
 out:
 	return rv == 0 ? file_getbuffer(ms) : NULL;
@@ -613,38 +616,66 @@ magic_version(void)
 	return MAGIC_VERSION;
 }
 
+file_public ssize_t
+magic_getmaxparam(int param)
+{
+	switch (param) {
+	case MAGIC_PARAM_INDIR_MAX:
+	case MAGIC_PARAM_NAME_MAX:
+	case MAGIC_PARAM_ELF_PHNUM_MAX:
+	case MAGIC_PARAM_ELF_SHNUM_MAX:
+	case MAGIC_PARAM_ELF_SHSIZE_MAX:
+	case MAGIC_PARAM_ELF_NOTES_MAX:
+	case MAGIC_PARAM_REGEX_MAX:
+		return 0xffff;
+	case MAGIC_PARAM_BYTES_MAX:
+	case MAGIC_PARAM_ENCODING_MAX:
+	case MAGIC_PARAM_MAGWARN_MAX:
+		return 0x7fffffff;
+	default:
+		errno = EINVAL;
+		return -1;
+	}
+}
+
 file_public int
 magic_setparam(struct magic_set *ms, int param, const void *val)
 {
-	if (ms == NULL)
+	if (ms == NULL || val == NULL) {
+		errno = EFAULT;
 		return -1;
+	}
+	const size_t v = *CAST(const size_t *, val);
 	switch (param) {
 	case MAGIC_PARAM_INDIR_MAX:
-		ms->indir_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->indir_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_NAME_MAX:
-		ms->name_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->name_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_ELF_PHNUM_MAX:
-		ms->elf_phnum_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->elf_phnum_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_ELF_SHNUM_MAX:
-		ms->elf_shnum_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->elf_shnum_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_ELF_SHSIZE_MAX:
-		ms->elf_shsize_max = *CAST(const size_t *, val);
+		ms->elf_shsize_max = v;
 		return 0;
 	case MAGIC_PARAM_ELF_NOTES_MAX:
-		ms->elf_notes_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->elf_notes_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_REGEX_MAX:
-		ms->regex_max = CAST(uint16_t, *CAST(const size_t *, val));
+		ms->regex_max = CAST(uint16_t, v);
 		return 0;
 	case MAGIC_PARAM_BYTES_MAX:
-		ms->bytes_max = *CAST(const size_t *, val);
+		ms->bytes_max = v;
 		return 0;
 	case MAGIC_PARAM_ENCODING_MAX:
-		ms->encoding_max = *CAST(const size_t *, val);
+		ms->encoding_max = v;
+		return 0;
+	case MAGIC_PARAM_MAGWARN_MAX:
+		ms->magwarn_max = v;
 		return 0;
 	default:
 		errno = EINVAL;
@@ -655,8 +686,10 @@ magic_setparam(struct magic_set *ms, int param, const void *val)
 file_public int
 magic_getparam(struct magic_set *ms, int param, void *val)
 {
-	if (ms == NULL)
+	if (ms == NULL || val == NULL) {
+		errno = EFAULT;
 		return -1;
+	}
 	switch (param) {
 	case MAGIC_PARAM_INDIR_MAX:
 		*CAST(size_t *, val) = ms->indir_max;
@@ -684,6 +717,9 @@ magic_getparam(struct magic_set *ms, int param, void *val)
 		return 0;
 	case MAGIC_PARAM_ENCODING_MAX:
 		*CAST(size_t *, val) = ms->encoding_max;
+		return 0;
+	case MAGIC_PARAM_MAGWARN_MAX:
+		*CAST(size_t *, val) = ms->magwarn_max;
 		return 0;
 	default:
 		errno = EINVAL;

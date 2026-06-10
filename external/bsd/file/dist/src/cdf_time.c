@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf_time.c,v 1.12 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: cdf_time.c,v 1.13 2026/06/10 20:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -30,9 +30,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf_time.c,v 1.24 2023/07/17 15:54:44 christos Exp $")
+FILE_RCSID("@(#)$File: cdf_time.c,v 1.26 2026/05/09 22:08:32 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf_time.c,v 1.12 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: cdf_time.c,v 1.13 2026/06/10 20:54:16 christos Exp $");
 #endif
 #endif
 
@@ -47,14 +47,14 @@ __RCSID("$NetBSD: cdf_time.c,v 1.12 2023/08/18 19:00:11 christos Exp $");
 #define isleap(y) ((((y) % 4) == 0) && \
     ((((y) % 100) != 0) || (((y) % 400) == 0)))
 
-static const int mdays[] = {
+file_private const int mdays[] = {
     31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31
 };
 
 /*
  * Return the number of days between jan 01 1601 and jan 01 of year.
  */
-static int
+file_private int
 cdf_getdays(int year)
 {
 	int days = 0;
@@ -69,7 +69,7 @@ cdf_getdays(int year)
 /*
  * Return the day within the month
  */
-static int
+file_private int
 cdf_getday(int year, int days)
 {
 	size_t m;
@@ -86,7 +86,7 @@ cdf_getday(int year, int days)
 /*
  * Return the 0...11 month number.
  */
-static int
+file_private int
 cdf_getmonth(int year, int days)
 {
 	size_t m;
@@ -101,12 +101,12 @@ cdf_getmonth(int year, int days)
 	return CAST(int, m);
 }
 
-int
+file_protected int
 cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 {
 	struct tm tm;
 #ifdef HAVE_STRUCT_TM_TM_ZONE
-	static char UTC[] = "UTC";
+	file_private char UTC[] = "UTC";
 #endif
 	int rdays;
 
@@ -126,6 +126,9 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 	/* XXX: Approx */
 	tm.tm_year = CAST(int, CDF_BASE_YEAR + (t / 365));
 
+	if (tm.tm_year > 9999)
+		goto out;
+
 	rdays = cdf_getdays(tm.tm_year);
 	t -= rdays - 1;
 	tm.tm_mday = cdf_getday(tm.tm_year, CAST(int, t));
@@ -141,14 +144,15 @@ cdf_timestamp_to_timespec(struct timespec *ts, cdf_timestamp_t t)
 #endif
 	tm.tm_year -= 1900;
 	ts->tv_sec = mktime(&tm);
-	if (ts->tv_sec == -1) {
-		errno = EINVAL;
-		return -1;
-	}
+	if (ts->tv_sec == -1)
+		goto out;
 	return 0;
+out:
+	errno = EINVAL;
+	return -1;
 }
 
-int
+file_protected int
 /*ARGSUSED*/
 cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 {
@@ -171,7 +175,7 @@ cdf_timespec_to_timestamp(cdf_timestamp_t *t, const struct timespec *ts)
 	return 0;
 }
 
-char *
+file_protected char *
 cdf_ctime(const time_t *sec, char *buf)
 {
 	char *ptr = *sec > MAX_CTIME ? NULL : ctime_r(sec, buf);
@@ -194,8 +198,8 @@ main(int argc, char *argv[])
 {
 	struct timespec ts;
 	char buf[25];
-	static const cdf_timestamp_t tst = 0x01A5E403C2D59C00ULL;
-	static const char *ref = "Sat Apr 23 01:30:00 1977";
+	file_private const cdf_timestamp_t tst = 0x01A5E403C2D59C00ULL;
+	file_private const char *ref = "Sat Apr 23 01:30:00 1977";
 	char *p, *q;
 
 	cdf_timestamp_to_timespec(&ts, tst);

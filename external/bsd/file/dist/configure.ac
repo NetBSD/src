@@ -1,5 +1,5 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_INIT([file],[5.45],[christos@astron.com])
+AC_INIT([file],[5.48],[christos@astron.com])
 AM_INIT_AUTOMAKE([subdir-objects foreign])
 AM_MAINTAINER_MODE(disable)
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
@@ -60,10 +60,20 @@ AC_ARG_ENABLE([lzlib],
 [AS_HELP_STRING([--disable-lzlib], [disable liblz (lzip) compression support @<:@default=auto@:>@])])
 AC_MSG_RESULT($enable_lzlib)
 
+AC_MSG_CHECKING(for lrziplib support)
+AC_ARG_ENABLE([lrziplib],
+[AS_HELP_STRING([--disable-lrziplib], [disable liblrzip (lrzip) compression support @<:@default=auto@:>@])])
+AC_MSG_RESULT($enable_lrziplib)
+
 AC_MSG_CHECKING(for libseccomp support)
 AC_ARG_ENABLE([libseccomp],
 [AS_HELP_STRING([--disable-libseccomp], [disable libseccomp sandboxing @<:@default=auto@:>@])])
 AC_MSG_RESULT($enable_libseccomp)
+
+AC_MSG_CHECKING(for Landlock LSM support)
+AC_ARG_ENABLE([landlock],
+[AS_HELP_STRING([--disable-landlock], [disable Landlock filesystem sandboxing @<:@default=auto@:>@])])
+AC_MSG_RESULT($enable_landlock)
 
 AC_MSG_CHECKING(for file formats in man section 5)
 AC_ARG_ENABLE(fsect-man5,
@@ -111,7 +121,7 @@ dnl Checks for headers
 AC_HEADER_MAJOR
 AC_HEADER_SYS_WAIT
 AC_CHECK_HEADERS(stdint.h fcntl.h inttypes.h unistd.h byteswap.h)
-AC_CHECK_HEADERS(spawn.h utime.h wchar.h wctype.h)
+AC_CHECK_HEADERS(spawn.h utime.h wchar.h wctype.h limits.h)
 AC_CHECK_HEADERS(getopt.h err.h xlocale.h)
 AC_CHECK_HEADERS(sys/bswap.h sys/mman.h sys/stat.h sys/types.h sys/utime.h sys/time.h sys/sysmacros.h sys/ioctl.h)
 if test "$enable_zlib" != "no"; then
@@ -128,6 +138,9 @@ if test "$enable_zstdlib" != "no"; then
 fi
 if test "$enable_lzlib" != "no"; then
   AC_CHECK_HEADERS(lzlib.h)
+fi
+if test "$enable_lrziplib" != "no"; then
+  AC_CHECK_HEADERS(Lrzip.h)
 fi
 AC_CHECK_TYPE([sig_t],[AC_DEFINE([HAVE_SIG_T],1,[Have sig_t type])],,[#include <signal.h>])
 
@@ -153,6 +166,18 @@ AC_TYPE_UINT64_T
 AC_TYPE_INT64_T
 AC_TYPE_INTPTR_T
 AC_TYPE_UINTPTR_T
+m4_ifdef([AC_SYS_YEAR2038], [AC_SYS_YEAR2038], [
+# GNU libc only allows setting _TIME_BITS when FILE_OFFSET_BITS is also set.
+# GNU libc defines __TIMESIZE on systems where _TIME_BITS can be set.
+AS_IF([test X"$ac_cv_sys_file_offset_bits" = X"64"], [
+    AC_CHECK_DECL(__TIMESIZE, [
+	AC_DEFINE([_TIME_BITS], [64], [Number of bits in a timestamp, on hosts where this is settable.])
+    ], [], [
+AC_INCLUDES_DEFAULT
+#include <time.h>
+	])
+    ])
+])
 AC_FUNC_MMAP
 AC_FUNC_FORK
 AC_FUNC_MBRTOWC
@@ -203,8 +228,15 @@ fi
 if test "$enable_lzlib" != "no"; then
   AC_CHECK_LIB(lz, LZ_decompress_open)
 fi
+if test "$enable_lrziplib" != "no"; then
+  AC_CHECK_LIB(lrzip, lrzip_new)
+fi
+
 if test "$enable_libseccomp" != "no"; then
     AC_CHECK_LIB(seccomp, seccomp_init)
+fi
+if test "$enable_landlock" != "no"; then
+    AC_CHECK_HEADERS(linux/landlock.h)
 fi
 if test "$MINGW" = 1; then
   AC_CHECK_LIB(gnurx,regexec,,AC_MSG_ERROR([libgnurx is required to build file(1) with MinGW]))
@@ -253,6 +285,15 @@ if test "$enable_lzlib" = "yes"; then
 fi
 if  test "$ac_cv_header_lzlib_h$ac_cv_lib_lz_LZ_decompress_open" = "yesyes"; then
   AC_DEFINE([LZLIBSUPPORT], 1, [Enable lzlib compression support])
+fi
+
+if test "$enable_lrziplib" = "yes"; then
+  if test "$ac_cv_header_Lrzip_h$ac_cv_lib_lrzip_lrzip_new" != "yesyes"; then
+    AC_MSG_ERROR([lrzip support requested but not found])
+  fi
+fi
+if  test "$ac_cv_header_Lrzip_h$ac_cv_lib_lrzip_lrzip_new" = "yesyes"; then
+  AC_DEFINE([LRZIPLIBSUPPORT], 1, [Enable lrziplib compression support])
 fi
 
 AC_CONFIG_FILES([Makefile src/Makefile magic/Makefile tests/Makefile doc/Makefile python/Makefile libmagic.pc])

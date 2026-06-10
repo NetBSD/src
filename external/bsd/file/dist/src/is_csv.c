@@ -1,4 +1,4 @@
-/*	$NetBSD: is_csv.c,v 1.5 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: is_csv.c,v 1.6 2026/06/10 20:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 Christos Zoulas
@@ -35,15 +35,16 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: is_csv.c,v 1.13 2023/07/17 16:08:17 christos Exp $")
+FILE_RCSID("@(#)$File: is_csv.c,v 1.16 2026/06/02 17:50:54 christos Exp $")
 #else
-__RCSID("$NetBSD: is_csv.c,v 1.5 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: is_csv.c,v 1.6 2026/06/10 20:54:16 christos Exp $");
 #endif
 #endif
 
 #include <string.h>
 #include "magic.h"
 #else
+#define CAST(a, b)	((a)(b))
 #include <sys/types.h>
 #endif
 
@@ -109,11 +110,11 @@ csv_parse(const unsigned char *uc, const unsigned char *ue)
 			nf++;
 			break;
 		case '\n':
-			DPRINTF("%zu %zu %zu\n", nl, nf, tf);
+			DPRINTF("nl=%zu nf=%zu tf=%zu\n", nl, nf, tf);
 			nl++;
 #if CSV_LINES
 			if (nl == CSV_LINES)
-				return tf != 0 && tf == nf;
+				return tf > 1 && tf == nf;
 #endif
 			if (tf == 0) {
 				// First time and no fields, give up
@@ -131,7 +132,8 @@ csv_parse(const unsigned char *uc, const unsigned char *ue)
 			break;
 		}
 	}
-	return tf && nl >= 2;
+	DPRINTF("tf=%zu>1 nl=%zu>=2\n", tf, nl);
+	return tf >= 1 && nl >= 2;
 }
 
 #ifndef TEST
@@ -192,7 +194,7 @@ main(int argc, char *argv[])
 	if (fstat(fd, &st) == -1)
 		err(EXIT_FAILURE, "Can't stat `%s'", argv[1]);
 
-	if ((p = CAST(char *, malloc(st.st_size))) == NULL)
+	if ((p = CAST(unsigned char *, malloc(st.st_size))) == NULL)
 		err(EXIT_FAILURE, "Can't allocate %jd bytes",
 		    (intmax_t)st.st_size);
 	if (read(fd, p, st.st_size) != st.st_size)

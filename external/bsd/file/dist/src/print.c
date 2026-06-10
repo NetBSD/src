@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.17 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: print.c,v 1.18 2026/06/10 20:54:16 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: print.c,v 1.99 2023/07/17 16:40:57 christos Exp $")
+FILE_RCSID("@(#)$File: print.c,v 1.111 2026/04/19 19:56:49 christos Exp $")
 #else
-__RCSID("$NetBSD: print.c,v 1.17 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: print.c,v 1.18 2026/06/10 20:54:16 christos Exp $");
 #endif
 #endif  /* lint */
 
@@ -58,7 +58,8 @@ file_mdump(struct magic *m)
 	static const char optyp[] = { FILE_OPS };
 	char tbuf[256];
 
-	(void) fprintf(stderr, "%u: %.*s %d", m->lineno,
+	(void) fprintf(stderr, "%s, %u: %.*s %d", 
+	     m->desc[0] == '\0' ? m->desc + 1 : "*unknown*", m->lineno,
 	    (m->cont_level & 7) + 1, ">>>>>>>>", m->offset);
 
 	if (m->flag & INDIR) {
@@ -232,12 +233,17 @@ file_mdump(struct magic *m)
 		case FILE_DER:
 			(void) fprintf(stderr, "'%s'", m->value.s);
 			break;
+		case FILE_LEGUID:
 		case FILE_GUID:
-			(void) file_print_guid(tbuf, sizeof(tbuf),
+			(void) file_print_leguid(tbuf, sizeof(tbuf),
 			    m->value.guid);
 			(void) fprintf(stderr, "%s", tbuf);
 			break;
-
+		case FILE_BEGUID:
+			(void) file_print_beguid(tbuf, sizeof(tbuf),
+			    m->value.guid);
+			(void) fprintf(stderr, "%s", tbuf);
+			break;
 		default:
 			(void) fprintf(stderr, "*bad type %d*", m->type);
 			break;
@@ -247,23 +253,55 @@ file_mdump(struct magic *m)
 }
 #endif
 
+static void __attribute__((__format__(__printf__, 1, 0)))
+file_vmagwarn(const char *f, va_list va)
+{
+	/* cuz we use stdout for most, stderr here */
+	(void) fflush(stdout);
+
+	(void) fprintf(stderr, "Warning: ");
+	(void) vfprintf(stderr, f, va);
+	(void) fputc('\n', stderr);
+}
+
+/*VARARGS*/
+file_protected void
+file_magwarn1(const char *f, ...)
+{
+	va_list va;
+
+	va_start(va, f);
+	file_vmagwarn(f, va);
+	va_end(va);
+}
+
+
 /*VARARGS*/
 file_protected void
 file_magwarn(struct magic_set *ms, const char *f, ...)
 {
 	va_list va;
 
-	/* cuz we use stdout for most, stderr here */
-	(void) fflush(stdout);
+	if (++ms->magwarn == ms->magwarn_max) {
+		(void) fprintf(stderr,
+		    "%s, %lu: Maximum number of warnings (%u) exceeded.\n",
+		    ms->file, CAST(unsigned long, ms->line),
+		    ms->magwarn_max);
+		(void) fprintf(stderr,
+		    "%s, %lu: Additional warnings are suppressed.\n",
+		    ms->file, CAST(unsigned long, ms->line));
+	}
+	if (ms->magwarn >= ms->magwarn_max) {
+		return;
+	}
 
-	if (ms && ms->file)
+	if (ms->file)
 		(void) fprintf(stderr, "%s, %lu: ", ms->file,
 		    CAST(unsigned long, ms->line));
-	(void) fprintf(stderr, "Warning: ");
+
 	va_start(va, f);
-	(void) vfprintf(stderr, f, va);
+	file_vmagwarn(f, va);
 	va_end(va);
-	(void) fputc('\n', stderr);
 }
 
 file_protected const char *
@@ -295,6 +333,7 @@ file_fmtdatetime(char *buf, size_t bsize, uint64_t v, int flags)
 		goto out;
 
 	if (flags & FILE_T_LOCAL) {
+		tzset();
 		tm = localtime_r(&t, &tmz);
 	} else {
 		tm = gmtime_r(&t, &tmz);
@@ -324,9 +363,13 @@ file_fmtdate(char *buf, size_t bsize, uint16_t v)
 	memset(&tm, 0, sizeof(tm));
 	tm.tm_mday = v & 0x1f;
 	tm.tm_mon = ((v >> 5) & 0xf) - 1;
+	// Sanity check because some OS's coredump with invalid values.
+	// Yes, Cygwin I am looking at you!
+	if (tm.tm_mon < 0 || tm.tm_mon > 11)
+		tm.tm_mon = 0;
 	tm.tm_year = (v >> 9) + 80;
 
-	if (strftime(buf, bsize, "%a, %b %d %Y", &tm) == 0)
+	if (strftime(buf, bsize, "%b %d %Y", &tm) == 0)
 		goto out;
 
 	return buf;

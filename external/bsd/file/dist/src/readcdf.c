@@ -1,4 +1,4 @@
-/*	$NetBSD: readcdf.c,v 1.20 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: readcdf.c,v 1.21 2026/06/10 20:54:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2016 Christos Zoulas
@@ -29,9 +29,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: readcdf.c,v 1.80 2023/01/24 20:13:40 christos Exp $")
+FILE_RCSID("@(#)$File: readcdf.c,v 1.82 2026/06/02 17:33:48 christos Exp $")
 #else
-__RCSID("$NetBSD: readcdf.c,v 1.20 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: readcdf.c,v 1.21 2026/06/10 20:54:16 christos Exp $");
 #endif
 #endif
 
@@ -83,7 +83,7 @@ static const struct cv {
 } clsid2mime[] = {
 	{
 		{ 0x00000000000c1084ULL, 0x46000000000000c0ULL  },
-		"x-msi",
+		"vnd.ms-msi",
 	},
 	{	{ 0,			 0			},
 		NULL,
@@ -91,7 +91,7 @@ static const struct cv {
 }, clsid2desc[] = {
 	{
 		{ 0x00000000000c1084ULL, 0x46000000000000c0ULL  },
-		"MSI Installer",
+		"Microsoft Installer",
 	},
 	{	{ 0,			 0			},
 		NULL,
@@ -226,6 +226,11 @@ cdf_file_property_info(struct magic_set *ms, const cdf_property_info_t *info,
 				} else if (str == NULL && info[i].pi_id ==
 				    CDF_PROPERTY_NAME_OF_APPLICATION) {
 					str = cdf_app_to_mime(vbuf, app2mime);
+#ifdef CDF_DEBUG
+					fprintf(stderr, "Found property "
+					    "application name = \"%s\" "
+					    "(mime=%s)\n", vbuf, str);
+#endif
 				}
 			}
 			break;
@@ -493,7 +498,7 @@ file_private struct sinfo {
 	},
 	{ "Microsoft PowerPoint", "vnd.ms-powerpoint",
 		{
-			"PowerPoint", NULL, NULL, NULL, NULL,
+			"PowerPoint Document", NULL, NULL, NULL, NULL,
 		},
 		{
 			CDF_DIR_TYPE_USER_STREAM,
@@ -517,28 +522,43 @@ file_private struct sinfo {
 file_private int
 cdf_file_dir_info(struct magic_set *ms, const cdf_dir_t *dir)
 {
-	size_t sd, j;
+	size_t sd, i, j;
+	uint16_t *dir_name;
+	int dir_type;
+	const char* section_name;
 
-	for (sd = 0; sd < __arraycount(sectioninfo); sd++) {
-		const struct sinfo *si = &sectioninfo[sd];
-		for (j = 0; si->sections[j]; j++) {
-			if (cdf_find_stream(dir, si->sections[j], si->types[j])
-			    > 0)
-				break;
+	for (i = 0; i < dir->dir_len; i++) {
+		dir_name = dir->dir_tab[i].d_name;
+		dir_type = dir->dir_tab[i].d_type;
+
+		for (sd = 0; sd < __arraycount(sectioninfo); sd++) {
+			const struct sinfo *si = &sectioninfo[sd];
+			for (j = 0; si->sections[j]; j++) {
+				if (si->sections[j] == NULL)
+					continue;
+				section_name = si->sections[j];
+				if (si->types[j] != dir_type ||
+				    cdf_namecmp(section_name, dir_name,
+					strlen(section_name) + 1) != 0)
+				    continue;
 #ifdef CDF_DEBUG
-			fprintf(stderr, "Can't read %s\n", si->sections[j]);
+				fprintf(stderr, "Matching directory %"
+				    SIZE_T_FORMAT
+				    "u with expected name \"%s\"\n",
+				    i, section_name);
 #endif
+				if (NOTMIME(ms)) {
+					if (file_printf(ms, "CDFV2 %s",
+					    si->name) == -1)
+						return -1;
+				} else if (ms->flags & MAGIC_MIME_TYPE) {
+					if (file_printf(ms, "application/%s",
+					    si->mime) == -1)
+						return -1;
+				}
+				return 1;
+			}
 		}
-		if (si->sections[j] == NULL)
-			continue;
-		if (NOTMIME(ms)) {
-			if (file_printf(ms, "CDFV2 %s", si->name) == -1)
-				return -1;
-		} else if (ms->flags & MAGIC_MIME_TYPE) {
-			if (file_printf(ms, "application/%s", si->mime) == -1)
-				return -1;
-		}
-		return 1;
 	}
 	return -1;
 }
