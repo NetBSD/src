@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.h,v 1.3 2024/06/27 07:31:41 rin Exp $	*/
+/*	$NetBSD: if_igc.h,v 1.4 2026/06/10 21:02:49 wiz Exp $	*/
 /*	$OpenBSD: if_igc.h,v 1.2 2022/01/09 05:42:50 jsg Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -40,6 +40,7 @@
 
 #include <sys/types.h>
 #include <sys/atomic.h>
+#include <sys/callout.h>
 #include <sys/pcq.h>
 #include <sys/workqueue.h>
 
@@ -315,6 +316,7 @@ struct rx_ring {
 	struct if_rxring	rx_ring;
 #endif
 
+	callout_t		rx_refill;
 	kmutex_t		rxr_lock;
 
 	struct igc_queue	*rxr_igcq;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_igc.c,v 1.24 2026/01/03 20:17:16 riastradh Exp $	*/
+/*	$NetBSD: if_igc.c,v 1.25 2026/06/10 21:02:49 wiz Exp $	*/
 /*	$OpenBSD: if_igc.c,v 1.13 2023/04/28 10:18:57 bluhm Exp $	*/
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.24 2026/01/03 20:17:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_igc.c,v 1.25 2026/06/10 21:02:49 wiz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_igc.h"
@@ -196,7 +196,8 @@ static int	igc_ioctl(struct ifnet *, u_long, void *);
 static int	igc_rxrinfo(struct igc_softc *, struct if_rxrinfo *);
 #endif
 static void	igc_rxfill(struct rx_ring *);
-static void	igc_rxrefill(struct rx_ring *, int);
+static bool	igc_rxrefill(struct rx_ring *);
+static void	igc_rxrefill_callout(void *);
 static bool	igc_rxeof(struct rx_ring *, u_int);
 static int	igc_rx_checksum(struct igc_queue *, uint64_t, uint32_t,
 		    uint32_t);
@@ -692,6 +693,9 @@ igc_allocate_queues(struct igc_softc *sc)
 #ifdef OPENBSD
 		timeout_set(&rxr->rx_refill, igc_rxrefill, rxr);
 #endif
+		callout_init(&rxr->rx_refill, CALLOUT_MPSAFE);
+		callout_setfunc(&rxr->rx_refill, igc_rxrefill_callout, rxr);
+
 		if (igc_dma_malloc(sc, rsize, &rxr->rxdma)) {
 			aprint_error_dev(dev,
 			    "unable to allocate RX descriptor\n");
@@ -1919,6 +1923,7 @@ igc_stop_locked(struct igc_softc *sc)
 	for (int iq = 0; iq < sc->sc_nqueues; iq++) {
 		struct rx_ring *rxr = &sc->rx_rings[iq];
 
+		callout_halt(&rxr->rx_refill, &rxr->rxr_lock);
 		igc_clear_receive_status(rxr);
 	}
 
@@ -2044,25 +2049,41 @@ igc_rxfill(struct rx_ring *rxr)
 	rxr->next_to_check = 0;
 }
 
-static void
-igc_rxrefill(struct rx_ring *rxr, int end)
+static bool
+igc_rxrefill(struct rx_ring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
 	int id;
+	const int start = igc_rxdesc_incr(sc, rxr->last_desc_filled);
+	bool progress = false;
 
-	for (id = rxr->next_to_check; id != end; id = igc_rxdesc_incr(sc, id)) {
-		if (igc_get_buf(rxr, id, true)) {
-			/* XXXRO */
-			panic("%s: msix=%d id=%d\n", __func__, rxr->me, id);
-		}
+	for (id = start; id != rxr->next_to_check; id = igc_rxdesc_incr(sc, id)) {
+		if (igc_get_buf(rxr, id, true))
+			break;
+		progress = true;
 	}
 
-	id = igc_rxdesc_decr(sc, id);
-	DPRINTF(RX, "%s RDT %d id %d\n",
-	    rxr->last_desc_filled == id ? "same" : "diff",
-	    rxr->last_desc_filled, id);
-	rxr->last_desc_filled = id;
-	IGC_WRITE_REG(&sc->hw, IGC_RDT(rxr->me), id);
+	if (progress) {
+		int last = igc_rxdesc_decr(sc, id);
+		DPRINTF(RX, "%s RDT %d last%d\n",
+			rxr->last_desc_filled == last ? "same" : "diff",
+			rxr->last_desc_filled, last);
+		rxr->last_desc_filled = last;
+		IGC_WRITE_REG(&sc->hw, IGC_RDT(rxr->me), last);
+	}
+
+	return id != rxr->next_to_check;
+}
+
+static void
+igc_rxrefill_callout(void *callout_arg)
+{
+	struct rx_ring *rxr = callout_arg;
+
+	mutex_enter(&rxr->rxr_lock);
+	if (igc_rxrefill(rxr))
+		callout_schedule(&rxr->rx_refill, 1);
+	mutex_exit(&rxr->rxr_lock);
 }
 
 /*********************************************************************
@@ -2217,13 +2238,14 @@ igc_rxeof(struct rx_ring *rxr, u_int limit)
 		id = igc_rxdesc_incr(sc, id);
 	}
 
-	DPRINTF(RX, "fill queue[%d]\n", rxr->me);
-	igc_rxrefill(rxr, id);
-
 	DPRINTF(RX, "%s n2c %d id %d\n",
 	    rxr->next_to_check == id ? "same" : "diff",
 	    rxr->next_to_check, id);
 	rxr->next_to_check = id;
+
+	DPRINTF(RX, "fill queue[%d]\n", rxr->me);
+	if (igc_rxrefill(rxr))
+		callout_schedule(&rxr->rx_refill, 1);
 
 #ifdef OPENBSD
 	if (!(staterr & IGC_RXD_STAT_DD))
@@ -3554,6 +3576,9 @@ static void
 igc_free_receive_buffers(struct rx_ring *rxr)
 {
 	struct igc_softc *sc = rxr->sc;
+
+	callout_halt(&rxr->rx_refill, &rxr->rxr_lock);
+	callout_destroy(&rxr->rx_refill);
 
 	if (rxr->rx_buffers != NULL) {
 		for (int id = 0; id < sc->num_rx_desc; id++) {
