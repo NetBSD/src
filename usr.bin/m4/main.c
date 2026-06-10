@@ -1,5 +1,5 @@
 /*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.50 2020/06/25 02:25:53 uwe Exp $	*/
+/*	$NetBSD: main.c,v 1.51 2026/06/10 16:26:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.50 2020/06/25 02:25:53 uwe Exp $");
+__RCSID("$NetBSD: main.c,v 1.51 2026/06/10 16:26:01 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -195,6 +195,7 @@ onintr(int signo)
 
 struct option longopts[] = {
 	{ "debug",		optional_argument,	0, 'd' },
+	{ "debugfile",		optional_argument, 	0, 'o' },
 	{ "define",		required_argument,	0, 'D' },
 	{ "error-output",	required_argument,	0, 'o' }, /* sic */
 	{ "fatal-warnings",	no_argument,		0, 'E' },
@@ -215,7 +216,6 @@ struct option longopts[] = {
 	{ "version",		no_argument,		0, 'v' },
 #ifdef notyet
 	{ "arglength",		required_argument,	0, 'l' },
-	{ "debugfile",		optional_argument, 	0, OPT_DEBUGFILE },
 	{ "hashsize",		required_argument,	0, 'H' },
 	{ "warn-macro-sequence",optional_argument,	0, OPT_WARN_SEQUENCE },
 #endif
