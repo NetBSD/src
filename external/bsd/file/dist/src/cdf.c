@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.21 2023/08/18 19:00:11 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.22 2026/06/10 20:10:38 kre Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -40,7 +40,7 @@
 #if 0
 FILE_RCSID("@(#)$File: cdf.c,v 1.123 2022/09/24 20:30:13 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.21 2023/08/18 19:00:11 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.22 2026/06/10 20:10:38 kre Exp $");
 #endif
 #endif
 
@@ -836,7 +836,7 @@ out:
 	return 0;
 }
 
-static int
+file_protected int
 cdf_namecmp(const char *d, const uint16_t *s, size_t l)
 {
 	for (; l--; d++, s++)
