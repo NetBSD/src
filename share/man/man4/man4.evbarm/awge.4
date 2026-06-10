@@ -1,9 +1,9 @@
-.\" $NetBSD: awge.4,v 1.2 2025/03/22 14:13:12 gutteridge Exp $
+.\" $NetBSD: awge.4,v 1.3 2026/06/10 16:08:00 gutteridge Exp $
 .\"
 .\" written by Maya Rashish, 2019
 .\" This file is in the Public Domain
 .\"
-.Dd March 22, 2025
+.Dd June 10, 2026
 .Dt AWGE 4
 .Os
 .Sh NAME
@@ -15,6 +15,9 @@
 The
 .Nm
 driver provides support for the DesignWare GMAC Ethernet.
+.Pp
+It supports VLAN-sized frames.
+It does not presently provide hardware-based checksumming.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
