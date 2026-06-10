@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.56 2026/06/10 21:24:10 andvar Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.56 2026/06/10 21:24:10 andvar Exp $");
 
 #include "opt_pci.h"
 
@@ -1387,7 +1387,7 @@ mem_region_ok64(struct pciconf_resource * const r __used_only_lp64)
 /*
  * pciconf_resource_init:
  *
- *	Allocate and initilize a pci configuration resources container.
+ *	Allocate and initialize a pci configuration resources container.
  */
 struct pciconf_resources *
 pciconf_resource_init(void)

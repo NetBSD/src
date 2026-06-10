@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2026/03/10 21:59:30 andvar Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2026/06/10 21:24:10 andvar Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -150,7 +150,7 @@ typedef struct {
 } Block0;
 
 /*
- * Default Disk Partition Map used for an uninitilized disk.
+ * Default Disk Partition Map used for an uninitialized disk.
  *  Has minimal entry for an old Apple SCSI driver, a newer 43 SCSI
  *  driver and an IDE driver (for those Macs with IDE).
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.25 2026/04/08 04:06:40 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.26 2026/06/10 21:24:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.25 2026/04/08 04:06:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.26 2026/06/10 21:24:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,7 +187,7 @@ landisk_startup(int howto, void *bi)
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
 	boothowto = howto;
 
-	/* Initilize CPU ops. */
+	/* Initialize CPU ops. */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751R);	
 
 	/* Initialize console */

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbios.c,v 1.4 2021/09/16 22:19:10 andvar Exp $	*/
+/*	$NetBSD: smbios.c,v 1.5 2026/06/10 21:24:10 andvar Exp $	*/
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.4 2021/09/16 22:19:10 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbios.c,v 1.5 2026/06/10 21:24:10 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -251,7 +251,7 @@ smbios3_check_header(const uint8_t *p)
  * smbios_find_table() takes a caller supplied smbios struct type and
  * a pointer to a handle (struct smbtable) returning one if the structure
  * is successfully located and zero otherwise. Callers should take care
- * to initilize the cookie field of the smbtable structure to zero before
+ * to initialize the cookie field of the smbtable structure to zero before
  * the first invocation of this function.
  * Multiple tables of the same type can be located by repeadtly calling
  * smbios_find_table with the same arguments.

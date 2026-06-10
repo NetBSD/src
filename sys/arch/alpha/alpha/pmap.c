@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.308 2023/12/30 23:07:42 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.309 2026/06/10 21:24:11 andvar Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008, 2020
@@ -135,7 +135,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.308 2023/12/30 23:07:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.309 2026/06/10 21:24:11 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1232,7 +1232,7 @@ static bool	vtophys_internal(vaddr_t, paddr_t *p);
 /*
  * pmap_init_cpu:
  *
- *	Initilize pmap data in the cpu_info.
+ *	Initialize pmap data in the cpu_info.
  */
 void
 pmap_init_cpu(struct cpu_info * const ci)

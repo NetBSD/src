@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.60 2026/04/08 04:06:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.61 2026/06/10 21:24:11 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.60 2026/04/08 04:06:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.61 2026/06/10 21:24:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -282,7 +282,7 @@ initSH3(void *pc, u_int bim, int32_t bip)	/* XXX return address */
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
-	/* Initilize CPU ops. */
+	/* Initialize CPU ops. */
 #if defined(SH7708R)
 	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708R);
 #elif defined(SH7708)

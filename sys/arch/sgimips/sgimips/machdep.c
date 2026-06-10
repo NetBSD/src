@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.157 2026/04/30 03:12:39 adrian Exp $	*/
+/*	$NetBSD: machdep.c,v 1.158 2026/06/10 21:24:11 andvar Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.157 2026/04/30 03:12:39 adrian Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.158 2026/06/10 21:24:11 andvar Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -362,7 +362,7 @@ mach_init(int argc, int32_t argv32[], uintptr_t magic, int32_t bip32)
 	 * Check machine (IPn) type.
 	 *
 	 * Note even on IP12 (which doesn't have ARCBIOS),
-	 * arcbios_system_identifiler[] has been initilialized
+	 * arcbios_system_identifier[] has been initialized
 	 * in arcemu_ip12_init().
 	 */
 	for (i = 0; arcbios_system_identifier[i] != '\0'; i++) {
