@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.77 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: main.c,v 1.51 2026/06/10 16:26:01 christos Exp $	*/
+/*	$OpenBSD: main.c,v 1.90 2026/02/25 05:37:25 op Exp $	*/
+/*	$NetBSD: main.c,v 1.52 2026/06/10 22:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.51 2026/06/10 16:26:01 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.52 2026/06/10 22:25:02 christos Exp $");
 #include <assert.h>
 #include <signal.h>
 #include <getopt.h>
@@ -62,96 +62,93 @@ __RCSID("$NetBSD: main.c,v 1.51 2026/06/10 16:26:01 christos Exp $");
 #include "pathnames.h"
 
 ndptr hashtab[HASHSIZE];	/* hash table for macros etc.  */
-stae *mstack;		 	/* stack of m4 machine         */
-char *sstack;		 	/* shadow stack, for string space extension */
+stae *mstack;			/* stack of m4 machine	       */
+char *sstack;			/* shadow stack, for string space extension */
 static size_t STACKMAX;		/* current maximum size of stack */
-int sp; 			/* current m4  stack pointer   */
-int fp; 			/* m4 call frame pointer       */
-struct input_file infile[MAXINP];/* input file stack (0=stdin)  */
+int sp;				/* current m4  stack pointer   */
+int fp;				/* m4 call frame pointer       */
+struct input_file infile[MAXINP];/* input file stack (0=stdin)	*/
 FILE **outfile;			/* diversion array(0=bitbucket)*/
 int maxout;
 FILE *active;			/* active output file pointer  */
-int ilevel = 0; 		/* input file stack pointer    */
-int oindex = 0; 		/* diversion index..	       */
-const char *null = "";          /* as it says.. just a null..  */
-char **m4wraps = NULL;		/* m4wraps array.     	       */
+int ilevel = 0;			/* input file stack pointer    */
+int oindex = 0;			/* diversion index..	       */
+const char *null = "";		/* as it says.. just a null..  */
+char **m4wraps = NULL;		/* m4wraps array.	       */
 int maxwraps = 0;		/* size of m4wraps array       */
 int wrapindex = 0;		/* current offset in m4wraps   */
-char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character  (`)   */
+char lquote[MAXCCHARS+1] = {LQUOTE};	/* left quote character	 (`)   */
 char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 int  synch_lines = 0;		/* line synchronisation for C preprocessor */
 int  prefix_builtins = 0;	/* -P option to prefix builtin keywords */
-int  fatal_warnings = 0;	/* -E option to exit on warnings */
+int  error_warns = 0;           /* -E option to make warnings exit_code = 1 */
+int  fatal_warns = 0;		/* -E -E option to exit on warnings */
 int  quiet = 0;			/* -Q option to silence warnings */
 int  nesting_limit = -1;	/* -L for nesting limit */
-const char *freeze = NULL;	/* -F to freeze state */
-const char *reload = NULL;	/* -R to reload state */
+static const char *freeze = NULL;	/* -F to freeze state */
+static const char *reload = NULL;	/* -R to reload state */
 #ifndef REAL_FREEZE
 FILE *freezef = NULL;
 int thawing = 0;
 #endif
 
 struct keyblk {
-        const char *knam;	/* keyword name */
-        int	ktyp;           /* keyword type */
+	const char *knam;	/* keyword name */
+	int	ktyp;		/* keyword type */
 };
 
-struct keyblk keywrds[] = {	/* m4 keywords to be installed */
-	{ "include",      INCLTYPE },
-	{ "sinclude",     SINCTYPE },
-	{ "define",       DEFITYPE },
+static struct keyblk keywrds[] = {	/* m4 keywords to be installed */
+	{ "include",      INCLUDETYPE },
+	{ "sinclude",     SINCLUDETYPE },
+	{ "define",       DEFINETYPE },
 	{ "defn",         DEFNTYPE },
-	{ "divert",       DIVRTYPE | NOARGS },
-	{ "expr",         EXPRTYPE },
-	{ "eval",         EXPRTYPE },
-	{ "substr",       SUBSTYPE },
-	{ "ifelse",       IFELTYPE },
-	{ "ifdef",        IFDFTYPE },
-	{ "len",          LENGTYPE },
+	{ "divert",       DIVERTTYPE | NOARGS },
+	{ "eval",         EVALTYPE },
+	{ "expr",         EVALTYPE },
+	{ "substr",       SUBSTRTYPE },
+	{ "ifelse",       IFELSETYPE },
+	{ "ifdef",        IFDEFTYPE },
+	{ "len",          LENTYPE },
 	{ "incr",         INCRTYPE },
 	{ "decr",         DECRTYPE },
-	{ "dnl",          DNLNTYPE | NOARGS },
-	{ "changequote",  CHNQTYPE | NOARGS },
-	{ "changecom",    CHNCTYPE | NOARGS },
-	{ "index",        INDXTYPE },
+	{ "dnl",          DNLTYPE | NOARGS },
+	{ "changequote",  CHANGEQUOTETYPE | NOARGS },
+	{ "changecom",    CHANGECOMTYPE | NOARGS },
+	{ "index",        INDEXTYPE },
 #ifdef EXTENDED
-	{ "paste",        PASTTYPE },
-	{ "spaste",       SPASTYPE },
-    	/* Newer extensions, needed to handle gnu-m4 scripts */
+	{ "paste",        PASTETYPE },
+	{ "spaste",       SPASTETYPE },
+	/* Newer extensions, needed to handle gnu-m4 scripts */
 	{ "indir",        INDIRTYPE},
 	{ "builtin",      BUILTINTYPE},
-	{ "patsubst",	  PATSTYPE},
+	{ "patsubst",	  PATSUBSTTYPE},
 	{ "regexp",	  REGEXPTYPE},
 	{ "esyscmd",	  ESYSCMDTYPE},
 	{ "__file__",	  FILENAMETYPE | NOARGS},
 	{ "__line__",	  LINETYPE | NOARGS},
 #endif
-	{ "popdef",       POPDTYPE },
-	{ "pushdef",      PUSDTYPE },
-	{ "dumpdef",      DUMPTYPE | NOARGS },
-	{ "shift",        SHIFTYPE | NOARGS },
-	{ "translit",     TRNLTYPE },
-	{ "undefine",     UNDFTYPE },
-	{ "undivert",     UNDVTYPE | NOARGS },
-	{ "divnum",       DIVNTYPE | NOARGS },
-	{ "maketemp",     MKTMTYPE },
-	{ "errprint",     ERRPTYPE | NOARGS },
-	{ "m4wrap",       M4WRTYPE | NOARGS },
-	{ "m4exit",       EXITTYPE | NOARGS },
-	{ "syscmd",       SYSCTYPE },
-	{ "sysval",       SYSVTYPE | NOARGS },
+	{ "popdef",       POPDEFTYPE },
+	{ "pushdef",      PUSHDEFTYPE },
+	{ "dumpdef",      DUMPDEFTYPE | NOARGS },
+	{ "shift",        SHIFTTYPE | NOARGS },
+	{ "translit",     TRANSLITTYPE },
+	{ "undefine",     UNDEFINETYPE },
+	{ "undivert",     UNDIVERTTYPE | NOARGS },
+	{ "divnum",       DIVNUMTYPE | NOARGS },
+	{ "maketemp",     MKSTEMPTYPE },
+	{ "mkstemp",      MKSTEMPTYPE },
+	{ "errprint",     ERRPRINTTYPE | NOARGS },
+	{ "m4wrap",       M4WRAPTYPE | NOARGS },
+	{ "m4exit",       M4EXITTYPE | NOARGS },
+	{ "syscmd",       SYSCMDTYPE },
+	{ "sysval",       SYSVALTYPE | NOARGS },
 	{ "traceon",	  TRACEONTYPE | NOARGS },
 	{ "traceoff",	  TRACEOFFTYPE | NOARGS },
 
-#if defined(unix) || defined(__unix__) 
+/* Macro that expands to itself, signature of the current OS */
 	{ "unix",         SELFTYPE | NOARGS },
-#else
-#ifdef vms
-	{ "vms",          SELFTYPE | NOARGS },
-#endif
-#endif
 };
 
 #define MAXKEYS	(sizeof(keywrds)/sizeof(struct keyblk))
@@ -175,27 +172,11 @@ static void reallyputchar(int);
 static void enlarge_stack(void);
 static void help(void);
 
-static void
-usage(FILE *f)
-{
-	fprintf(f, "Usage: %s [-EGgiPQsv] [-Dname[=value]] [-d flags] "
-	    "[-I dirname] [-o filename] [-L limit]\n"
-	    "\t[-t macro] [-Uname] [file ...]\n", getprogname());
-}
-
-__dead static void
-onintr(int signo)
-{
-	char intrmessage[] = "m4: interrupted.\n";
-	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
-	_exit(1);
-}
-
+int exit_code = 0;
 #define OPT_HELP 1
 
-struct option longopts[] = {
+static struct option longopts[] = {
 	{ "debug",		optional_argument,	0, 'd' },
-	{ "debugfile",		optional_argument, 	0, 'o' },
 	{ "define",		required_argument,	0, 'D' },
 	{ "error-output",	required_argument,	0, 'o' }, /* sic */
 	{ "fatal-warnings",	no_argument,		0, 'E' },
@@ -216,6 +197,7 @@ struct option longopts[] = {
 	{ "version",		no_argument,		0, 'v' },
 #ifdef notyet
 	{ "arglength",		required_argument,	0, 'l' },
+	{ "debugfile",		optional_argument,	0, OPT_DEBUGFILE },
 	{ "hashsize",		required_argument,	0, 'H' },
 	{ "warn-macro-sequence",optional_argument,	0, OPT_WARN_SEQUENCE },
 #endif
@@ -239,8 +221,8 @@ main(int argc, char *argv[])
 	initspaces();
 	STACKMAX = INITSTACKMAX;
 
-	mstack = (stae *)xalloc(sizeof(stae) * STACKMAX, NULL);
-	sstack = (char *)xalloc(STACKMAX, NULL);
+	mstack = xreallocarray(NULL, STACKMAX, sizeof(stae), NULL);
+	sstack = xalloc(STACKMAX, NULL);
 
 	maxout = 0;
 	outfile = NULL;
@@ -249,7 +231,7 @@ main(int argc, char *argv[])
 	while ((c = getopt_long(argc, argv, "D:d:EF:GgI:iL:o:PR:Qst:U:v",
 	    longopts, NULL)) != -1)
 		switch(c) {
-		case 'D':               /* define something..*/
+		case 'D':		/* define something..*/
 			for (p = optarg; *p; p++)
 				if (*p == '=')
 					break;
@@ -260,8 +242,11 @@ main(int argc, char *argv[])
 		case 'd':
 			set_trace_flags(optarg);
 			break;
-		case 'E':
-			fatal_warnings++;
+		case 'E':               /* like GNU m4 1.4.9+ */
+			if (error_warns == 0)
+				error_warns = 1;
+			else
+				fatal_warns = 1;
 			break;
 		case 'F':
 			freeze = optarg;
@@ -290,7 +275,7 @@ main(int argc, char *argv[])
 			error = trace_file(optarg);
 			if (error)
 				warn("%s", optarg);
-                        break;
+			break;
 		case 'P':
 			prefix_builtins = 1;
 			break;
@@ -306,7 +291,7 @@ main(int argc, char *argv[])
 		case 't':
 			mark_traced(optarg, 1);
 			break;
-		case 'U':               /* undefine...       */
+		case 'U':		/* undefine...	     */
 			macro_popdef(optarg);
 			break;
 		case 'v':
@@ -332,9 +317,8 @@ main(int argc, char *argv[])
 		err(EXIT_FAILURE, "Can't redirect errors to `%s'",
 		    "/tmp/m4");
 #endif
-        argc -= optind;
-        argv += optind;
-
+	argc -= optind;
+	argv += optind;
 
 	initkwds();
 	if (mimic_gnu)
@@ -358,9 +342,9 @@ main(int argc, char *argv[])
 #endif
 	}
 
-        if (!argc) {
- 		sp = -1;		/* stack pointer initialized */
-		fp = 0; 		/* frame pointer initialized */
+	if (!argc) {
+		sp = -1;		/* stack pointer initialized */
+		fp = 0;			/* frame pointer initialized */
 		set_input(infile+0, stdin, "stdin");
 					/* default input (naturally) */
 		macro();
@@ -372,9 +356,9 @@ main(int argc, char *argv[])
 			else if (fopen_trypath(infile, p) == NULL)
 				err(1, "%s", p);
 			sp = -1;
-			fp = 0; 
+			fp = 0;
 			macro();
-		    	release_input(infile);
+			release_input(infile);
 		}
 
 	if (wrapindex) {
@@ -393,7 +377,7 @@ main(int argc, char *argv[])
 			for (i = 0; i < wrapindex; i++) {
 				pbstr(m4wraps[i]);
 				macro();
-		    	}
+			}
 		}
 	}
 
@@ -423,7 +407,7 @@ main(int argc, char *argv[])
  * (on input `t == token[0]')
  * Used for comment and quoting delimiters.
  * Returns 1 if `token' present; copied to output.
- *         0 if `token' not found; all characters pushed back
+ *	   0 if `token' not found; all characters pushed back
  */
 static int
 do_look_ahead(int t, const char *token)
@@ -444,8 +428,8 @@ do_look_ahead(int t, const char *token)
 	return 1;
 }
 
-#define LOOK_AHEAD(t, token) (t != EOF && 		\
-    (unsigned char)(t)==(unsigned char)(token)[0] && 	\
+#define LOOK_AHEAD(t, token) (t != EOF &&		\
+    (unsigned char)(t)==(unsigned char)(token)[0] &&	\
     do_look_ahead(t,token))
 
 /*
@@ -516,7 +500,7 @@ macro(void)
 			p = inspect(t, token);
 			if (p != NULL)
 				pushback(l = gpbc());
-			if (p == NULL || (l != LPAREN && 
+			if (p == NULL || (l != LPAREN &&
 			    (macro_getdef(p)->type & NEEDARGS) != 0))
 				outputstr(token);
 			else {
@@ -533,21 +517,21 @@ macro(void)
 		 * XXX: Copy the macro definition. This leaks, but too
 		 * lazy to fix properly.
 		 * The problem is that if we evaluate a pushdef'ed
-		 * macro and then popdef it while it the definition 
+		 * macro and then popdef it while it the definition
 		 * is still on the stack we are going to reference
 		 * free memory.
 		 */
-				pushs1(xstrdup(macro_getdef(p)->defn));	/* defn string */
+				pushs1(xstrdup(macro_getdef(p)->defn)); /* defn string */
 				pushs1((char *)macro_name(p));	/* macro name  */
-				pushs(ep);	      	/* start next..*/
+				pushs(ep);		/* start next..*/
 
-				if (l != LPAREN && PARLEV == 0)  {   
+				if (l != LPAREN && PARLEV == 0)	{
 				    /* no bracks  */
 					chrsave(EOS);
 
 					if ((size_t)sp == STACKMAX)
 						errx(1, "internal stack overflow");
-					eval((const char **) mstack+fp+1, 2, 
+					eval((const char **)(void *)mstack+fp+1, 2,
 					    CALTYP, TRACESTATUS);
 
 					ep = PREVEP;	/* flush strspace */
@@ -595,7 +579,7 @@ macro(void)
 				if ((size_t)sp == STACKMAX)
 					errx(1, "internal stack overflow");
 
-				eval((const char **) mstack+fp+1, sp-fp, 
+				eval((const char **)(void *)mstack+fp+1, sp-fp,
 				    CALTYP, TRACESTATUS);
 
 				ep = PREVEP;	/* flush strspace */
@@ -606,7 +590,7 @@ macro(void)
 
 		case COMMA:
 			if (PARLEV == 1) {
-				chrsave(EOS);		/* new argument   */
+				chrsave(EOS);		/* new argument	  */
 				while (isspace(l = gpbc()))
 					;
 				pushback(l);
@@ -638,8 +622,8 @@ macro(void)
 	}
 }
 
-/* 
- * output string directly, without pushing it for reparses. 
+/*
+ * output string directly, without pushing it for reparses.
  */
 void
 outputstr(const char *s)
@@ -659,7 +643,7 @@ reallyoutputstr(const char *s)
 			fputc(*s, active);
 			if (*s++ == '\n') {
 				infile[ilevel].synch_lineno++;
-				if (infile[ilevel].synch_lineno != 
+				if (infile[ilevel].synch_lineno !=
 				    infile[ilevel].lineno)
 					do_emit_synchline();
 			}
@@ -681,15 +665,15 @@ reallyputchar(int c)
 
 /*
  * build an input token..
- * consider only those starting with _ or A-Za-z. 
+ * consider only those starting with _ or A-Za-z.
  */
 static ndptr
-inspect(int c, char *tp) 
+inspect(int c, char *tp)
 {
 	char *name = tp;
 	char *etp = tp+MAXTOK;
 	ndptr p;
-	
+
 	*tp++ = c;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
@@ -720,9 +704,9 @@ inspect(int c, char *tp)
 }
 
 /*
- * initkwds - initialise m4 keywords as fast as possible. 
+ * initkwds - initialise m4 keywords as fast as possible.
  * This very similar to install, but without certain overheads,
- * such as calling lookup. Malloc is not used for storing the 
+ * such as calling lookup. Malloc is not used for storing the
  * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */
@@ -733,7 +717,7 @@ initkwds(void)
 	size_t i;
 
 	for (i = 0; i < MAXKEYS; i++) {
-		type = keywrds[i].ktyp;
+		type = keywrds[i].ktyp & TYPEMASK;
 		if ((keywrds[i].ktyp & NOARGS) == 0)
 			type |= NEEDARGS;
 		setup_builtin(keywrds[i].knam, type);
@@ -759,21 +743,21 @@ dump_stack(struct position *t, int lev)
 			fprintf(stderr, "   ...\n");
 			break;
 		}
-		fprintf(stderr, "   %s at line %lu\n", 
+		fprintf(stderr, "   %s at line %lu\n",
 			t[i].name, t[i].line);
 	}
 }
 
 
-static void 
+static void
 enlarge_stack(void)
 {
 	STACKMAX += STACKMAX/2;
-	mstack = xrealloc(mstack, sizeof(stae) * STACKMAX, 
-	    "Evaluation stack overflow (%lu)", 
+	mstack = xreallocarray(mstack, STACKMAX, sizeof(stae),
+	    "Evaluation stack overflow (%lu)",
 	    (unsigned long)STACKMAX);
 	sstack = xrealloc(sstack, STACKMAX,
-	    "Evaluation stack overflow (%lu)", 
+	    "Evaluation stack overflow (%lu)",
 	    (unsigned long)STACKMAX);
 }
 

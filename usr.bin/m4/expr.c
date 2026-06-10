@@ -1,5 +1,5 @@
-/*	$NetBSD: expr.c,v 1.21 2019/03/26 23:31:45 kre Exp $	*/
-/* $OpenBSD: expr.c,v 1.17 2006/01/20 23:10:19 espie Exp $ */
+/*	$NetBSD: expr.c,v 1.22 2026/06/10 22:25:02 christos Exp $	*/
+/* $OpenBSD: expr.c,v 1.18 2010/09/07 19:58:09 marco Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -19,7 +19,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.c,v 1.21 2019/03/26 23:31:45 kre Exp $");
+__RCSID("$NetBSD: expr.c,v 1.22 2026/06/10 22:25:02 christos Exp $");
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -27,7 +27,7 @@ __RCSID("$NetBSD: expr.c,v 1.21 2019/03/26 23:31:45 kre Exp $");
 #include "extern.h"
 
 int32_t end_result;
-const char *copy_toeval;
+static const char *copy_toeval;
 
 extern void yy_scan_string(const char *);
 extern int yyparse(void);
@@ -41,7 +41,7 @@ yyerror(const char *msg)
 	return(0);
 }
 
-int 
+int
 expr(const char *toeval)
 {
 	copy_toeval = toeval;

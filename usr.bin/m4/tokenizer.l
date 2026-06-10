@@ -1,6 +1,6 @@
 %{
-/* $NetBSD: tokenizer.l,v 1.6 2012/03/20 20:34:58 matt Exp $ */
-/* $OpenBSD: tokenizer.l,v 1.6 2008/08/21 21:00:14 espie Exp $ */
+/* $NetBSD: tokenizer.l,v 1.7 2026/06/10 22:25:02 christos Exp $ */
+/* $OpenBSD: tokenizer.l,v 1.11 2025/11/05 17:10:45 tb Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
  *
@@ -19,8 +19,15 @@
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: tokenizer.l,v 1.7 2026/06/10 22:25:02 christos Exp $");
 #include "parser.h"
-__RCSID("$NetBSD: tokenizer.l,v 1.6 2012/03/20 20:34:58 matt Exp $");
+#include "mdef.h"
+#define buf xbuf
+#include "extern.h"
+#undef buf
+
+#include <assert.h>
 #include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
@@ -28,8 +35,6 @@ __RCSID("$NetBSD: tokenizer.l,v 1.6 2012/03/20 20:34:58 matt Exp $");
 
 extern int mimic_gnu;
 extern int32_t yylval;
-extern int yylex(void);
-extern int yywrap(void);
 
 int32_t number(void);
 int32_t parse_radix(void);
@@ -45,6 +50,8 @@ hex	0[xX][0-9a-fA-F]+
 oct	0[0-7]*
 dec	[1-9][0-9]*
 radix	0[rR][0-9]+:[0-9a-zA-Z]+
+
+%option noyywrap
 
 %%
 {ws}			{/* just skip it */}
@@ -63,6 +70,7 @@ radix	0[rR][0-9]+:[0-9a-zA-Z]+
 "!="			{ return(NE); }
 "&&"			{ return(LAND); }
 "||"			{ return(LOR); }
+"**"			{ if (mimic_gnu) { return (EXPONENT); } }
 .			{ return yytext[0]; }
 %%
 
@@ -74,9 +82,8 @@ number(void)
 	errno = 0;
 	l = strtol(yytext, NULL, 0);
 	if (((l == LONG_MAX || l == LONG_MIN) && errno == ERANGE) ||
-	    l > INT32_MAX || l < INT32_MIN) {
-		fprintf(stderr, "m4: numeric overflow in expr: %s\n", yytext);
-	}
+	    l > INT32_MAX || l < INT32_MIN)
+		m4_warnx("numeric overflow in expr: %s", yytext);
 	return l;
 }
 
@@ -86,20 +93,28 @@ parse_radix(void)
 	long base;
 	char *next;
 	long l;
+	int d;
 
 	l = 0;
 	base = strtol(yytext+2, &next, 0);
 	if (base > 36 || next == NULL) {
-		fprintf(stderr, "m4: error in number %s\n", yytext);
+		m4_warnx("error in number %s", yytext);
 	} else {
 		next++;
 		while (*next != 0) {
 			if (*next >= '0' && *next <= '9')
-				l = base * l + *next - '0';
+				d = *next - '0';
 			else if (*next >= 'a' && *next <= 'z')
-				l = base * l + *next - 'a' + 10;
-			else if (*next >= 'A' && *next <= 'Z')
-				l = base * l + *next - 'A' + 10;
+				d = *next - 'a' + 10;
+			else {
+				assert(*next >= 'A' && *next <= 'Z');
+				d = *next - 'A' + 10;
+			}
+			if (d >= base) {
+				m4_warnx("error in number %s", yytext);
+				return 0;
+			}
+			l = base * l + d;
 			next++;
 		}
 	}

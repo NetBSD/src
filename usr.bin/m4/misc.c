@@ -1,5 +1,5 @@
-/*	$OpenBSD: misc.c,v 1.41 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: misc.c,v 1.25 2024/10/06 19:31:26 rillig Exp $	*/
+/*	$OpenBSD: misc.c,v 1.50 2026/02/25 05:37:25 op Exp $	*/
+/*	$NetBSD: misc.c,v 1.26 2026/06/10 22:25:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,12 +36,13 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.25 2024/10/06 19:31:26 rillig Exp $");
+__RCSID("$NetBSD: misc.c,v 1.26 2026/06/10 22:25:02 christos Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <stddef.h>
 #include <string.h>
@@ -61,7 +62,7 @@ static size_t bufsize = BUFSIZE;
 unsigned char *buf;			/* push-back buffer	       */
 unsigned char *bufbase;			/* the base for current ilevel */
 unsigned char *bbase[MAXINP];		/* the base for each ilevel    */
-unsigned char *bp; 			/* first available character   */
+unsigned char *bp;			/* first available character   */
 unsigned char *endpbb;			/* end of push-back buffer     */
 
 
@@ -69,7 +70,7 @@ unsigned char *endpbb;			/* end of push-back buffer     */
  * find the index of second str in the first str.
  */
 ptrdiff_t
-indx(const char *s1, const char *s2)
+doindex(const char *s1, const char *s2)
 {
 	const char *t;
 
@@ -159,7 +160,7 @@ pbunsigned(unsigned long n)
 	while ((n /= 10) > 0);
 }
 
-void 
+void
 initspaces(void)
 {
 	int i;
@@ -167,7 +168,7 @@ initspaces(void)
 	strspace = xalloc(strsize+1, NULL);
 	ep = strspace;
 	endest = strspace+strsize;
-	buf = (unsigned char *)xalloc(bufsize, NULL);
+	buf = xalloc(bufsize, NULL);
 	bufbase = buf;
 	bp = buf;
 	endpbb = buf + bufsize;
@@ -175,7 +176,7 @@ initspaces(void)
 		bbase[i] = buf;
 }
 
-void 
+void
 enlarge_strspace(void)
 {
 	char *newstrspace;
@@ -186,9 +187,9 @@ enlarge_strspace(void)
 	if (!newstrspace)
 		errx(1, "string space overflow");
 	memcpy(newstrspace, strspace, strsize/2);
-	for (i = 0; i <= sp; i++) 
-		if (sstack[i])
-			mstack[i].sstr = (mstack[i].sstr - strspace) 
+	for (i = 0; i <= sp; i++)
+		if (sstack[i] == STORAGE_STRSPACE)
+			mstack[i].sstr = (mstack[i].sstr - strspace)
 			    + newstrspace;
 	ep = (ep-strspace) + newstrspace;
 	free(strspace);
@@ -218,7 +219,7 @@ enlarge_bufspace(void)
 void
 chrsave(int c)
 {
-	if (ep >= endest) 
+	if (ep >= endest)
 		enlarge_strspace();
 	*ep++ = c;
 }
@@ -239,6 +240,15 @@ getdiv(int n)
 	(void) fclose(outfile[n]);
 	outfile[n] = NULL;
 }
+
+void
+onintr(int signo __unused)
+{
+#define intrmessage	"m4: interrupted.\n"
+	write(STDERR_FILENO, intrmessage, sizeof(intrmessage)-1);
+	_exit(1);
+}
+
 
 /*
  * killdiv - get rid of the diversion files
@@ -277,7 +287,7 @@ resizedivs(int n)
 {
 	int i;
 
-	outfile = (FILE **)xrealloc(outfile, sizeof(FILE *) * n, 
+	outfile = xreallocarray(outfile, n, sizeof(FILE *),
 	    "too many diverts %d", n);
 	for (i = maxout; i < n; i++)
 		outfile[i] = NULL;
@@ -294,7 +304,26 @@ xalloc(size_t n, const char *fmt, ...)
 			err(1, "malloc");
 		else {
 			va_list va;
-			
+
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+		}
+	}
+	return p;
+}
+
+void *
+xcalloc(size_t n, size_t s, const char *fmt, ...)
+{
+	void *p = calloc(n, s);
+
+	if (p == NULL) {
+		if (fmt == NULL)
+			err(1, "calloc");
+		else {
+			va_list va;
+
 			va_start(va, fmt);
 			verr(1, fmt, va);
 			va_end(va);
@@ -318,7 +347,27 @@ xrealloc(void *old, size_t n, const char *fmt, ...)
 			va_start(va, fmt);
 			verr(1, fmt, va);
 			va_end(va);
-	    	}
+		}
+	}
+	return p;
+}
+
+void *
+xreallocarray(void *old, size_t s1, size_t s2, const char *fmt, ...)
+{
+	void *p = reallocarray(old, s1, s2);
+
+	if (p == NULL) {
+		free(old);
+		if (fmt == NULL)
+			err(1, "reallocarray");
+		else {
+			va_list va;
+
+			va_start(va, fmt);
+			verr(1, fmt, va);
+			va_end(va);
+		}
 	}
 	return p;
 }
@@ -332,7 +381,15 @@ xstrdup(const char *s)
 	return p;
 }
 
-int 
+void
+usage(FILE *f)
+{
+	fprintf(f, "Usage: %s [-EGgiPQsv] [-Dname[=value]] [-d flags] "
+	    "[-I dirname] [-o filename] [-L limit]\n"
+	    "\t[-t macro] [-Uname] [file ...]\n", getprogname());
+}
+
+int
 obtain_char(struct input_file *f)
 {
 	if (f->c == EOF)
@@ -349,7 +406,7 @@ obtain_char(struct input_file *f)
 	return f->c;
 }
 
-void 
+void
 set_input(struct input_file *f, FILE *real, const char *name)
 {
 	f->file = real;
@@ -367,14 +424,16 @@ do_emit_synchline(void)
 	infile[ilevel].synch_lineno = infile[ilevel].lineno;
 }
 
-void 
+void
 release_input(struct input_file *f)
 {
+	if (ferror(f->file))
+		errx(1, "Fatal error reading from %s\n", f->name);
 	if (f->file != stdin)
 	    fclose(f->file);
 	f->c = EOF;
 	/*
-	 * XXX can't free filename, as there might still be 
+	 * XXX can't free filename, as there might still be
 	 * error information pointing to it.
 	 */
 }
@@ -393,7 +452,7 @@ doprintfilename(struct input_file *f)
 	pbstr(lquote);
 }
 
-/* 
+/*
  * buffer_mark/dump_buffer: allows one to save a mark in a buffer,
  * and later dump everything that was added since then to a file.
  */

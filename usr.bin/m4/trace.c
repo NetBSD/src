@@ -1,5 +1,5 @@
-/*	$NetBSD: trace.c,v 1.9 2020/06/25 02:25:53 uwe Exp $	*/
-/* $OpenBSD: trace.c,v 1.15 2006/03/24 08:03:44 espie Exp $ */
+/*	$NetBSD: trace.c,v 1.10 2026/06/10 22:25:02 christos Exp $	*/
+/* $OpenBSD: trace.c,v 1.17 2025/11/05 17:10:45 tb Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -28,7 +28,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: trace.c,v 1.9 2020/06/25 02:25:53 uwe Exp $");
+__RCSID("$NetBSD: trace.c,v 1.10 2026/06/10 22:25:02 christos Exp $");
 
 #include <sys/types.h>
 #include <err.h>
@@ -42,7 +42,7 @@ __RCSID("$NetBSD: trace.c,v 1.9 2020/06/25 02:25:53 uwe Exp $");
 
 FILE *traceout;
 
-#define TRACE_ARGS 	1
+#define TRACE_ARGS	1
 #define TRACE_EXPANSION 2
 #define TRACE_QUOTE	4
 #define TRACE_FILENAME	8
@@ -107,7 +107,7 @@ letter_to_flag(int c)
 	case 't':
 		return TRACE_ALL;
 	case 'V':
-		return ~0;
+		return (unsigned int)~0;
 	default:
 		return 0;
 	}
@@ -142,7 +142,7 @@ frame_level(void)
 	int level;
 	int framep;
 
-	for (framep = fp, level = 0; framep != 0; 
+	for (framep = fp, level = 0; framep != 0;
 		level++,framep = mstack[framep-3].sfra)
 		;
 	return level;
@@ -161,7 +161,7 @@ print_header(struct input_file *inp)
 		fprintf(traceout, "id %lu: ", expansion_id);
 }
 
-size_t 
+size_t
 trace(const char *argv[], int argc, struct input_file *inp)
 {
 	if (!traceout)
@@ -179,9 +179,9 @@ trace(const char *argv[], int argc, struct input_file *inp)
 		delim[0] = LPAREN;
 		delim[1] = EOS;
 		for (i = 2; i < argc; i++) {
-			fprintf(traceout, "%s%s%s%s", delim, 
-			    (trace_flags & TRACE_QUOTE) ? lquote : "", 
-			    argv[i], 
+			fprintf(traceout, "%s%s%s%s", delim,
+			    (trace_flags & TRACE_QUOTE) ? lquote : "",
+			    argv[i],
 			    (trace_flags & TRACE_QUOTE) ? rquote : "");
 			delim[0] = COMMA;
 			delim[1] = ' ';
@@ -202,7 +202,7 @@ trace(const char *argv[], int argc, struct input_file *inp)
 	}
 }
 
-void 
+void
 finish_trace(size_t mark)
 {
 	fprintf(traceout, " -> ");

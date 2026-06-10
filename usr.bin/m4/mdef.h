@@ -1,5 +1,5 @@
-/*	$OpenBSD: mdef.h,v 1.29 2006/03/20 20:27:45 espie Exp $	*/
-/*	$NetBSD: mdef.h,v 1.17 2016/01/16 18:31:29 christos Exp $	*/
+/*	$NetBSD: mdef.h,v 1.18 2026/06/10 22:25:02 christos Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.35 2026/02/25 05:37:25 op Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -41,62 +41,62 @@
 # define UNUSED
 #endif
 
-#define MACRTYPE        1
-#define DEFITYPE        2
-#define EXPRTYPE        3
-#define SUBSTYPE        4
-#define IFELTYPE        5
-#define LENGTYPE        6
-#define CHNQTYPE        7
-#define SYSCTYPE        8
-#define UNDFTYPE        9
-#define INCLTYPE        10
-#define SINCTYPE        11
-#define PASTTYPE        12
-#define SPASTYPE        13
-#define INCRTYPE        14
-#define IFDFTYPE        15
-#define PUSDTYPE        16
-#define POPDTYPE        17
-#define SHIFTYPE        18
-#define DECRTYPE        19
-#define DIVRTYPE        20
-#define UNDVTYPE        21
-#define DIVNTYPE        22
-#define MKTMTYPE        23
-#define ERRPTYPE        24
-#define M4WRTYPE        25
-#define TRNLTYPE        26
-#define DNLNTYPE        27
-#define DUMPTYPE        28
-#define CHNCTYPE        29
-#define INDXTYPE        30
-#define SYSVTYPE        31
-#define EXITTYPE        32
-#define DEFNTYPE        33
-#define SELFTYPE	34
-#define INDIRTYPE	35
-#define BUILTINTYPE	36
-#define PATSTYPE	37
-#define FILENAMETYPE	38
-#define LINETYPE	39
-#define REGEXPTYPE	40
-#define ESYSCMDTYPE	41
-#define TRACEONTYPE	42
-#define TRACEOFFTYPE	43
-#define FORMATTYPE	44
+#define MACROTYPE		1
+#define DEFINETYPE		2
+#define EVALTYPE		3
+#define SUBSTRTYPE		4
+#define IFELSETYPE		5
+#define LENTYPE			6
+#define CHANGEQUOTETYPE		7
+#define SYSCMDTYPE		8
+#define UNDEFINETYPE		9
+#define INCLUDETYPE		10
+#define SINCLUDETYPE		11
+#define PASTETYPE		12
+#define SPASTETYPE		13
+#define INCRTYPE		14
+#define IFDEFTYPE		15
+#define PUSHDEFTYPE		16
+#define POPDEFTYPE		17
+#define SHIFTTYPE		18
+#define DECRTYPE		19
+#define DIVERTTYPE		20
+#define UNDIVERTTYPE		21
+#define DIVNUMTYPE		22
+#define MKSTEMPTYPE		23
+#define ERRPRINTTYPE		24
+#define M4WRAPTYPE		25
+#define TRANSLITTYPE		26
+#define DNLTYPE			27
+#define DUMPDEFTYPE		28
+#define CHANGECOMTYPE		29
+#define INDEXTYPE		30
+#define SYSVALTYPE		31
+#define M4EXITTYPE		32
+#define DEFNTYPE		33
+#define SELFTYPE		34
+#define INDIRTYPE		35
+#define BUILTINTYPE		36
+#define PATSUBSTTYPE		37
+#define FILENAMETYPE		38
+#define LINETYPE		39
+#define REGEXPTYPE		40
+#define ESYSCMDTYPE		41
+#define TRACEONTYPE		42
+#define TRACEOFFTYPE		43
+#define FORMATTYPE		44
 
 #define BUILTIN_MARKER	"__builtin_"
- 
-#define TYPEMASK	0xff	/* Keep bits really corresponding to a type. */
-#define RECDEF		0x100	/* Pure recursive def, don't expand it */
-#define NOARGS		0x200	/* builtin needs no args */
-#define NEEDARGS	0x400	/* mark builtin that need args with this */
+
+#define TYPEMASK	63	/* Keep bits really corresponding to a type. */
+#define RECDEF		256	/* Pure recursive def, don't expand it */
+#define NOARGS		512	/* builtin needs no args */
+#define NEEDARGS	1024	/* mark builtin that need args with this */
 
 /*
  * m4 special characters
  */
- 
+
 #define ARGFLAG         '$'
 #define LPAREN          '('
 #define RPAREN          ')'
@@ -106,41 +106,37 @@
 #define SCOMMT          '#'
 #define ECOMMT          '\n'
 
-#ifdef msdos
-#define system(str)	(-1)
-#endif
-
 /*
  * other important constants
  */
 
 #define EOS             '\0'
-#define MAXINP          10              /* maximum include files   	    */
-#define MAXOUT          10              /* maximum # of diversions 	    */
+#define MAXINP          10              /* maximum include files	    */
+#define MAXOUT          10              /* maximum # of diversions	    */
 #define BUFSIZE         4096            /* starting size of pushback buffer */
-#define INITSTACKMAX    4096           	/* starting size of call stack      */
+#define INITSTACKMAX    4096		/* starting size of call stack      */
 #define STRSPMAX        4096            /* starting size of string space    */
-#define MAXTOK          512          	/* maximum chars in a tokn 	    */
-#define HASHSIZE        199             /* maximum size of hashtab 	    */
+#define MAXTOK          512		/* maximum chars in a tokn	    */
+#define HASHSIZE        199		/* maximum size of hashtab        */
 #define MAXCCHARS	5		/* max size of comment/quote delim  */
- 
+
 #define ALL             1
 #define TOP             0
- 
+
 #ifndef TRUE
-#define TRUE	1
+#define TRUE            1
 #endif
 #ifndef FALSE
-#define FALSE	0
+#define FALSE           0
 #endif
 #define cycle           for(;;)
 
 /*
  * m4 data structures
  */
- 
+
 typedef struct ndblock *ndptr;
- 
+
 struct macro_definition {
 	struct macro_definition *next;
 	char		*defn;	/* definition..               */
@@ -149,60 +145,73 @@ struct macro_definition {
 
 
 struct ndblock {			/* hashtable structure         */
-	unsigned int 		builtin_type;
+	unsigned int		builtin_type;
 	unsigned int		trace_flags;
 	struct macro_definition *d;
 	char		name[1];	/* entry name..               */
 };
- 
+
 typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
-	char 	*sstr;		/* string entry */
+	char	*sstr;		/* string entry */
 } stae;
 
 struct input_file {
-	FILE 		*file;
-	char 		*name;
-	unsigned long 	lineno;
+	FILE		*file;
+	char		*name;
+	unsigned long	lineno;
 	unsigned long   synch_lineno;	/* used for -s */
-	int 		c;
+	int		c;
 };
+
+#define STORAGE_STRSPACE 0
+#define STORAGE_MACRO 1
+#define STORAGE_OTHER 2
 
 #define CURRENT_NAME	(infile[ilevel].name)
 #define CURRENT_LINE	(infile[ilevel].lineno)
-#define	TOKEN_LINE(f)	(f->lineno - (f->c == '\n' ? 1 : 0))
+#define TOKEN_LINE(f)	((f)->lineno - ((f)->c == '\n' ? 1 : 0))
 
 /*
- * macros for readibility and/or speed
+ * macros for readability and/or speed
  *
  *      gpbc()  - get a possibly pushed-back character
  *      pushf() - push a call frame entry onto stack
  *      pushs() - push a string pointer onto stack
  */
-#define gpbc() 	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
-#define pushf(x) 			\
+#define gpbc()	 (bp > bufbase) ? *--bp : obtain_char(infile+ilevel)
+#define pushf(x)			\
 	do {				\
-		if ((size_t)++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sfra = (x);	\
-		sstack[sp] = 0; \
+		sstack[sp] = STORAGE_OTHER; \
 	} while (0)
 
-#define pushs(x) 			\
+#define pushs(x)			\
 	do {				\
-		if ((size_t)++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
-		sstack[sp] = 1; \
+		sstack[sp] = STORAGE_STRSPACE; \
 	} while (0)
 
-#define pushs1(x) 			\
+#define pushs1(x)			\
 	do {				\
-		if ((size_t)++sp == STACKMAX) 	\
+		if ((size_t)++sp == STACKMAX)	\
 			enlarge_stack();\
 		mstack[sp].sstr = (x);	\
-		sstack[sp] = 0; \
+		sstack[sp] = STORAGE_OTHER; \
 	} while (0)
+
+#define pushdef(p)			\
+	do {				\
+		if ((size_t)++sp == STACKMAX)	\
+			enlarge_stack();\
+		mstack[sp].sstr = macro_getdef(p)->defn;\
+		sstack[sp] = STORAGE_MACRO; \
+	} while (0)
+		
 
 /*
  *	    .				   .
@@ -210,18 +219,18 @@ struct input_file {
  *	+-------+			+-----+
  *	| arg 3 ----------------------->| str |
  *	+-------+			|  .  |
- *	| arg 2 ---PREVEP-----+ 	   .
+ *	| arg 2 ---PREVEP-----+		   .
  *	+-------+	      |
  *	    .		      |		|     |
- *	+-------+	      | 	+-----+
+ *	+-------+	      |		+-----+
  *	| plev	|  PARLEV     +-------->| str |
  *	+-------+			|  .  |
  *	| type	|  CALTYP		   .
  *	+-------+
  *	| prcf	---PREVFP--+
- *	+-------+  	   |
+ *	+-------+	   |
  *	|   .	|  PREVSP  |
- *	    .	   	   |
+ *	    .		   |
  *	+-------+	   |
  *	|	<----------+
  *	+-------+
@@ -234,4 +243,5 @@ struct input_file {
 #define PREVSP	(fp-4)
 #define PREVFP	(mstack[fp-3].sfra)
 
-#define VERSION	20150116
+#define VERSION       20260610
+

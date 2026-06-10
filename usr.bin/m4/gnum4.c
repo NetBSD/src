@@ -1,39 +1,30 @@
-/* $NetBSD: gnum4.c,v 1.13 2023/05/24 22:14:31 christos Exp $ */
-/* $OpenBSD: gnum4.c,v 1.39 2008/08/21 21:01:04 espie Exp $ */
+/* $NetBSD: gnum4.c,v 1.14 2026/06/10 22:25:02 christos Exp $ */
+/* $OpenBSD: gnum4.c,v 1.55 2025/11/05 17:10:45 tb Exp $ */
 
 /*
- * Copyright (c) 1999 Marc Espie
+ * Copyright (c) 1999-2022 Marc Espie <espie@openbsd.org>
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* 
+/*
  * functions needed to support gnu-m4 extensions, including a fake freezing
  */
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gnum4.c,v 1.13 2023/05/24 22:14:31 christos Exp $");
+__RCSID("$NetBSD: gnum4.c,v 1.14 2026/06/10 22:25:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -42,21 +33,24 @@ __RCSID("$NetBSD: gnum4.c,v 1.13 2023/05/24 22:14:31 christos Exp $");
 #include <err.h>
 #include <paths.h>
 #include <regex.h>
+#include <stdarg.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include <unistd.h>
+#include <limits.h>
 #include "mdef.h"
 #include "stdd.h"
 #include "extern.h"
 
 
 int mimic_gnu = 0;
-#ifndef SIZE_T_MAX
+#ifndef SIZE_T_MAX 
 #define SIZE_T_MAX (size_t)~0ull
-#endif
+#endif 
 
 /*
  * Support for include path search
@@ -66,7 +60,7 @@ int mimic_gnu = 0;
  * Then M4PATH env variable
  */
 
-struct path_entry {
+static struct path_entry {
 	char *name;
 	struct path_entry *next;
 } *first, *last;
@@ -83,14 +77,12 @@ new_path_entry(const char *dirname)
 	n = malloc(sizeof(struct path_entry));
 	if (!n)
 		errx(1, "out of memory");
-	n->name = strdup(dirname);
-	if (!n->name)
-		errx(1, "out of memory");
+	n->name = xstrdup(dirname);
 	n->next = 0;
 	return n;
 }
-	
-void 
+
+void
 addtoincludepath(const char *dirname)
 {
 	struct path_entry *n;
@@ -117,13 +109,11 @@ ensure_m4path(void)
 		return;
 	envpathdone = TRUE;
 	envpath = getenv("M4PATH");
-	if (!envpath) 
+	if (!envpath)
 		return;
 	/* for portability: getenv result is read-only */
-	envpath = strdup(envpath);
-	if (!envpath)
-		errx(1, "out of memory");
-	for (sweep = envpath; 
+	envpath = xstrdup(envpath);
+	for (sweep = envpath;
 	    (path = strsep(&sweep, ":")) != NULL;)
 	    addtoincludepath(path);
 	free(envpath);
@@ -133,7 +123,7 @@ static
 struct input_file *
 dopath(struct input_file *i, const char *filename)
 {
-	char path[MAXPATHLEN];
+	char path[PATH_MAX];
 	struct path_entry *pe;
 	FILE *f;
 
@@ -165,7 +155,7 @@ fopen_trypath(struct input_file *i, const char *filename)
 	return dopath(i, filename);
 }
 
-void 
+void
 doindir(const char *argv[], int argc)
 {
 	ndptr n;
@@ -175,11 +165,11 @@ doindir(const char *argv[], int argc)
 	if (n == NULL || (p = macro_getdef(n)) == NULL)
 		m4errx(1, "indir: undefined macro %s.", argv[2]);
 	argv[1] = p->defn;
-	
+
 	eval(argv+1, argc-1, p->type, is_traced(n));
 }
 
-void 
+void
 dobuiltin(const char *argv[], int argc)
 {
 	ndptr p;
@@ -190,7 +180,7 @@ dobuiltin(const char *argv[], int argc)
 		eval(argv+1, argc-1, macro_builtin_type(p), is_traced(p));
 	else
 		m4errx(1, "unknown builtin %s.", argv[2]);
-} 
+}
 
 
 /* We need some temporary buffer space, as pb pushes BACK and substitution
@@ -203,16 +193,17 @@ static void addchars(const char *, size_t);
 static void addchar(int);
 static char *twiddle(const char *);
 static char *getstring(void);
-static void exit_regerror(int, const char *, regex_t *) __dead;
-static void do_subst(const char *, const char *, regex_t *, const char *,
+static void exit_regerror(int, regex_t *, const char *) __dead;
+static void do_subst(const char *, regex_t *, const char *, const char *,
     regmatch_t *);
-static void do_regexpindex(const char *, const char *, regex_t *, regmatch_t *);
-static void do_regexp(const char *, const char *, regex_t *, const char *, regmatch_t *);
+static void do_regexpindex(const char *, regex_t *, const char *, regmatch_t *);
+static void do_regexp(const char *, regex_t *, const char *, const char *, 
+    regmatch_t *);
 static void add_sub(size_t, const char *, regex_t *, regmatch_t *);
 static void add_replace(const char *, regex_t *, const char *, regmatch_t *);
 #define addconstantstring(s) addchars((s), sizeof(s)-1)
 
-static void 
+static void
 addchars(const char *c, size_t n)
 {
 	if (n == 0)
@@ -220,15 +211,18 @@ addchars(const char *c, size_t n)
 	while (current + n > bufsize) {
 		if (bufsize == 0)
 			bufsize = 1024;
-		else
+		else if (bufsize <= SIZE_MAX/2) {
 			bufsize *= 2;
+		} else {
+			errx(1, "size overflow");
+		}
 		buffer = xrealloc(buffer, bufsize, NULL);
 	}
 	memcpy(buffer+current, c, n);
 	current += n;
 }
 
-static void 
+static void
 addchar(int c)
 {
 	if (current +1 > bufsize) {
@@ -250,17 +244,35 @@ getstring(void)
 }
 
 
-static void 
-exit_regerror(int er, const char *pat, regex_t *re)
+static void
+exit_regerror(int er, regex_t *re, const char *source)
 {
-	size_t 	errlen;
-	char 	*errbuf;
+	size_t	errlen;
+	char	*errbuf;
 
 	errlen = regerror(er, re, NULL, 0);
-	errbuf = xalloc(errlen, 
+	errbuf = xalloc(errlen,
 	    "malloc in regerror: %lu", (unsigned long)errlen);
 	regerror(er, re, errbuf, errlen);
-	m4errx(1, "regular expression error: %s for: `%s'", errbuf, pat);
+	m4errx(1, "regular expression error in %s: `%s'", source, errbuf);
+}
+
+/* warnx() plus check to see if we need to change exit code or exit.
+ * -E flag functionality.
+ */
+void
+m4_warnx(const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	vwarnx(fmt, ap);
+	va_end(ap);
+
+	if (fatal_warns)
+		exit(1);
+	if (error_warns)
+		exit_code = 1;
 }
 
 static void
@@ -269,7 +281,7 @@ add_sub(size_t n, const char *string, regex_t *re, regmatch_t *pm)
 	if (n > re->re_nsub) {
 		if (!quiet)
 			warnx("No subexpression %zu", n);
-		if (fatal_warnings)
+		if (fatal_warns)
 			exit(EXIT_FAILURE);
 	}
 	/* Subexpressions that did not match are
@@ -284,7 +296,7 @@ add_sub(size_t n, const char *string, regex_t *re, regmatch_t *pm)
 /* Add replacement string to the output buffer, recognizing special
  * constructs and replacing them with substrings of the original string.
  */
-static void 
+static void
 add_replace(const char *string, regex_t *re, const char *replace, regmatch_t *pm)
 {
 	const char *p;
@@ -317,9 +329,9 @@ add_replace(const char *string, regex_t *re, const char *replace, regmatch_t *pm
 	}
 }
 
-static void 
-do_subst(const char *pat, const char *string, regex_t *re, const char *replace,
-    regmatch_t *pm)
+static void
+do_subst(const char *string, regex_t *re, const char *source, 
+    const char *replace, regmatch_t *pm)
 {
 	int error;
 	int flags = 0;
@@ -333,11 +345,11 @@ do_subst(const char *pat, const char *string, regex_t *re, const char *replace,
 				flags = REG_NOTBOL;
 		}
 
-		/* NULL length matches are special... We use the `vi-mode' 
+		/* NULL length matches are special... We use the `vi-mode'
 		 * rule: don't allow a NULL-match at the last match
-		 * position. 
+		 * position.
 		 */
-		if (pm[0].rm_so == pm[0].rm_eo && 
+		if (pm[0].rm_so == pm[0].rm_eo &&
 		    string + pm[0].rm_so == last_match) {
 			if (*string == '\0')
 				return;
@@ -357,30 +369,30 @@ do_subst(const char *pat, const char *string, regex_t *re, const char *replace,
 	while (*string)
 		addchar(*string++);
 	if (error != REG_NOMATCH)
-		exit_regerror(error, pat, re);
+		exit_regerror(error, re, source);
 	pbstr(string);
 }
 
-static void 
-do_regexp(const char *pat, const char *string, regex_t *re, const char *replace,
-    regmatch_t *pm)
+static void
+do_regexp(const char *string, regex_t *re, const char *source, 
+    const char *replace, regmatch_t *pm)
 {
 	int error;
 
 	switch(error = regexec(re, string, re->re_nsub+1, pm, 0)) {
-	case 0: 
+	case 0:
 		add_replace(string, re, replace, pm);
 		pbstr(getstring());
 		break;
 	case REG_NOMATCH:
 		break;
 	default:
-		exit_regerror(error, pat, re);
+		exit_regerror(error, re, source);
 	}
 }
 
-static void 
-do_regexpindex(const char *pat, const char *string, regex_t *re, regmatch_t *pm)
+static void
+do_regexpindex(const char *source, regex_t *re, const char *string, regmatch_t *pm)
 {
 	int error;
 
@@ -392,7 +404,7 @@ do_regexpindex(const char *pat, const char *string, regex_t *re, regmatch_t *pm)
 		pbnum(-1);
 		break;
 	default:
-		exit_regerror(error, pat, re);
+		exit_regerror(error, re, source);
 	}
 }
 
@@ -447,33 +459,6 @@ twiddle(const char *p)
 	return getstring();
 }
 
-static int
-checkempty(const char *argv[], int argc)
-{
-	const char *s;
-	size_t len;
-
-	if (argc != 3 && argv[3][0] != '\0')
-		return 0;
-
-	if (argc == 3) {
-		if (!quiet)
-			warnx("Too few arguments to patsubst");
-		if (fatal_warnings)
-			exit(EXIT_FAILURE);
-	}
-			
-	if (argv[4] && argc > 4) 
-		len = strlen(argv[4]);
-	else
-		len = 0;
-	for (s = argv[2]; *s != '\0'; s++) {
-		addchars(argv[4], len);
-		addchar(*s);
-	}
-	return 1;
-}
-
 /* patsubst(string, regexp, opt replacement) */
 /* argv[2]: string
  * argv[3]: regexp
@@ -482,35 +467,47 @@ checkempty(const char *argv[], int argc)
 void
 dopatsubst(const char *argv[], int argc)
 {
-	if (argc < 3) {
+	if (argc <= 3) {
 		if (!quiet)
-			warnx("Too few arguments to patsubst");
-		if (fatal_warnings)
+			warnx("Too few arguments (%d) to patsubst", argc);
+
+		if (fatal_warns)
 			exit(EXIT_FAILURE);
 		return;
 	}
 	/* special case: empty regexp */
-	if (!checkempty(argv, argc)) {
-
-		const char *pat;
+	if (argv[3][0] == '\0') {
+		const char *s;
+		size_t len;
+		if (argc > 4 && argv[4])
+			len = strlen(argv[4]);
+		else
+			len = 0;
+		for (s = argv[2]; *s != '\0'; s++) {
+			addchars(argv[4], len);
+			addchar(*s);
+		}
+	} else {
 		int error;
 		regex_t re;
 		regmatch_t *pmatch;
 		int mode = REG_EXTENDED;
+		const char *source;
 		size_t l = strlen(argv[3]);
 
 		if (!mimic_gnu ||
-		    (argv[3][0] == '^') || 
+		    (argv[3][0] == '^') ||
 		    (l > 0 && argv[3][l-1] == '$'))
 			mode |= REG_NEWLINE;
 
-		pat = mimic_gnu ? twiddle(argv[3]) : argv[3];
-		error = regcomp(&re, pat, mode);
+		source = mimic_gnu ? twiddle(argv[3]) : argv[3];
+		error = regcomp(&re, source, mode);
 		if (error != 0)
-			exit_regerror(error, pat, &re);
-		
-		pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
-		do_subst(pat, argv[2], &re, 
+			exit_regerror(error, &re, source);
+
+		pmatch = xreallocarray(NULL, re.re_nsub+1,  sizeof(regmatch_t),
+		    NULL);
+		do_subst(argv[2], &re, source,
 		    argc > 4 && argv[4] != NULL ? argv[4] : "", pmatch);
 		free(pmatch);
 		regfree(&re);
@@ -524,29 +521,33 @@ doregexp(const char *argv[], int argc)
 	int error;
 	regex_t re;
 	regmatch_t *pmatch;
-	const char *pat;
+	const char *source;
 
-	if (argc < 3) {
+	if (argc <= 3) {
 		if (!quiet)
-			warnx("Too few arguments to regexp");
-		if (fatal_warnings)
+			m4_warnx("Too few arguments (%d) to regexp", argc);
+		if (fatal_warns)
 			exit(EXIT_FAILURE);
 		return;
 	}
-	if (checkempty(argv, argc)) {
-		return;
+	/* special gnu case */
+	if (argv[3][0] == '\0' && mimic_gnu) {
+		if (argc == 4 || argv[4] == NULL)
+			return;
+		else
+			pbstr(argv[4]);
 	}
 
-	pat = mimic_gnu ? twiddle(argv[3]) : argv[3];
-	error = regcomp(&re, pat, REG_EXTENDED);
+	source = mimic_gnu ? twiddle(argv[3]) : argv[3];
+	error = regcomp(&re, source, REG_EXTENDED);
 	if (error != 0)
-		exit_regerror(error, pat, &re);
-	
-	pmatch = xalloc(sizeof(regmatch_t) * (re.re_nsub+1), NULL);
-	if (argv[4] == NULL || argc == 4)
-		do_regexpindex(pat, argv[2], &re, pmatch);
+		exit_regerror(error, &re, source);
+
+	pmatch = xreallocarray(NULL, re.re_nsub+1, sizeof(regmatch_t), NULL);
+	if (argc == 4 || argv[4] == NULL)
+		do_regexpindex(argv[2], &re, source, pmatch);
 	else
-		do_regexp(pat, argv[2], &re, argv[4], pmatch);
+		do_regexp(argv[2], &re, source, argv[4], pmatch);
 	free(pmatch);
 	regfree(&re);
 }
@@ -582,7 +583,7 @@ doformat(const char *argv[], int argc)
 		if (*format == '*') {
 			format++;
 			if (pos >= argc)
-				m4errx(1, 
+				m4errx(1,
 				    "Format with too many format specifiers.");
 			width = strtol(argv[pos++], NULL, 10);
 		} else {
@@ -601,7 +602,7 @@ doformat(const char *argv[], int argc)
 			if (*format == '*') {
 				format++;
 				if (pos >= argc)
-					m4errx(1, 
+					m4errx(1,
 					    "Format with too many format specifiers.");
 				extra = strtol(argv[pos++], NULL, 10);
 			} else {
@@ -619,12 +620,12 @@ doformat(const char *argv[], int argc)
 			thisarg = argv[pos++];
 			break;
 		case 'c':
-			temp[0] = strtoul(argv[pos++], NULL, 10);
+			temp[0] = (int)strtoul(argv[pos++], NULL, 10);
 			temp[1] = 0;
 			thisarg = temp;
 			break;
 		default:
-			m4errx(1, "Unsupported format specification: %s.", 
+			m4errx(1, "Unsupported format specification: %s.",
 			    argv[2]);
 		}
 		format++;
@@ -648,7 +649,7 @@ void
 doesyscmd(const char *cmd)
 {
 	int p[2];
-	pid_t pid, cpid;
+	pid_t cpid;
 	const char *argv[4];
 	int cc;
 	int status;
@@ -686,8 +687,10 @@ doesyscmd(const char *cmd)
 		} while (cc > 0 || (cc == -1 && errno == EINTR));
 
 		(void) close(p[0]);
-		while ((pid = wait(&status)) != cpid && pid >= 0)
-			continue;
+		while (waitpid(cpid, &status, 0) == -1) {
+			if (errno != EINTR)
+				break;
+		}
 		pbstr(getstring());
 	}
 }

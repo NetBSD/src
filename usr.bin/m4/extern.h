@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.20 2020/06/25 02:25:53 uwe Exp $	*/
+/*	$NetBSD: extern.h,v 1.21 2026/06/10 22:25:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -95,24 +95,29 @@ extern void  restore_state(FILE *);
 /* main.c */
 extern void outputstr(const char *);
 extern void do_emit_synchline(void);
+extern int exit_code;
 #define emit_synchline() do { if (synch_lines) do_emit_synchline(); } while(0)
 
 /* misc.c */
 extern void	chrsave(int);
 extern char 	*compute_prevep(void);
 extern void	getdiv(int);
-extern ptrdiff_t indx(const char *, const char *);
+extern ptrdiff_t doindex(const char *, const char *);
 extern void 	initspaces(void);
 extern void	killdiv(void);
+extern void	onintr(int);
 extern void	pbnum(int);
 extern void	pbnumbase(int, int, int);
 extern void	pbunsigned(unsigned long);
 extern void	pbstr(const char *);
 extern void	pushback(int);
-extern void	*xalloc(size_t, const char *fmt, ...) __printflike(2, 3);
-extern void	*xrealloc(void *, size_t, const char *fmt, ...)
-    __printflike(3, 4);
+extern void	*xalloc(size_t, const char *, ...) __printflike(2, 3);
+extern void	*xcalloc(size_t, size_t, const char *, ...) __printflike(3, 4);
+extern void	*xrealloc(void *, size_t, const char *, ...) __printflike(3, 4);
+extern void	*xreallocarray(void *, size_t, size_t, const char *, ...)
+    __printflike(4, 5);
 extern char	*xstrdup(const char *);
+extern void	usage(FILE *);
 extern void	resizedivs(int);
 extern size_t	buffer_mark(void);
 extern void	dump_buffer(FILE *, size_t);
@@ -173,7 +178,6 @@ extern char lquote[MAXCCHARS+1];/* left quote character (`) */
 extern char **m4wraps;		/* m4wrap string default. */
 extern int maxwraps;		/* size of m4wraps array */
 extern int wrapindex;		/* current index in m4wraps */
-extern int fatal_warnings;	/* exit on warning */
 extern int quiet;		/* no warnings */
 extern int nesting_limit;	/* macro expansion nesting limit */
 #ifndef REAL_FREEZE
@@ -188,3 +192,10 @@ extern int  synch_lines;	/* line synchronisation directives */
 
 extern int mimic_gnu;		/* behaves like gnu-m4 */
 extern int prefix_builtins;	/* prefix builtin macros with m4_ */
+extern int error_warns;		/* make warnings cause exit_code = 1 */
+extern int fatal_warns;		/* make warnings fatal */
+
+extern int32_t end_result;
+
+
+extern void m4_warnx(const char *, ...) __printflike(1, 2);
