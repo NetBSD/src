@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.449 2026/04/28 05:51:14 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.450 2026/06/10 21:30:05 andvar Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.449 2026/04/28 05:51:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.450 2026/06/10 21:30:05 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2433,7 +2433,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 				 *
 				 * Don't turn caching on again if this is a
 				 * modified emulation. This would be
-				 * inconsitent with the settings created by
+				 * inconsistent with the settings created by
 				 * pmap_vac_me_harder(). Otherwise, it's safe
 				 * to re-enable cacheing.
 				 *

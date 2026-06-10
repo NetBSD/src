@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.21 2026/04/07 22:22:13 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.22 2026/06/10 21:30:06 andvar Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1417,7 +1417,7 @@ mvxpsec_session_dtor(void *arg, void *obj)
 	struct mvxpsec_session *mv_s = obj;
 
 	if (mv_s->sc != sc)
-		panic("inconsitent context\n");
+		panic("inconsistent context\n");
 
 	bus_dmamap_destroy(sc->sc_dmat, mv_s->session_header_map);
 }
