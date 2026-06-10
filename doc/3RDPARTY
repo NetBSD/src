@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2214 2026/06/09 19:21:49 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2215 2026/06/10 20:56:46 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -448,12 +448,12 @@ Release tag:	expat-X-Y-Z for expat-X.Y.Z
 Notes:
 
 Package:	file
-Version:	5.45
-Current Vers:	5.45
+Version:	5.48
+Current Vers:	5.48
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
-Date:		2023-08-18
+Date:		2026-06-10
 Mailing List:	file@astron.com
 Responsible:	christos, pooka
 License:	BSD (2-clause)
