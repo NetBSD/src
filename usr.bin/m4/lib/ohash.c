@@ -1,4 +1,4 @@
-/*	$NetBSD: ohash.c,v 1.1 2026/06/10 22:25:02 christos Exp $	*/
+/*	$NetBSD: ohash.c,v 1.2 2026/06/11 14:11:52 christos Exp $	*/
 /* $OpenBSD: ohash.c,v 1.1 2014/06/02 18:52:03 deraadt Exp $ */
 
 /* Copyright (c) 1999, 2004 Marc Espie <espie@openbsd.org>
@@ -16,8 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ohash.c,v 1.1 2026/06/10 22:25:02 christos Exp $");
+__RCSID("$NetBSD: ohash.c,v 1.2 2026/06/11 14:11:52 christos Exp $");
 
 #include <stddef.h>
 #include <stdint.h>
