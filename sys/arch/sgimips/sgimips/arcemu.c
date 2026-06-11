@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.26 2026/06/11 06:23:08 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.27 2026/06/11 06:30:55 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.26 2026/06/11 06:23:08 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.27 2026/06/11 06:30:55 rumble Exp $");
 
 #ifndef _LP64
 
@@ -128,8 +128,7 @@ arcemu_init(const char **env)
 }
 
 /*
- * Attempt to identify the SGI IP%d platform. This is extra ugly since
- * we don't yet have badaddr to fall back on.
+ * Attempt to identify the SGI IP%d platform.
  */
 static int
 arcemu_identify(void)
@@ -277,7 +276,7 @@ eeprom_read(uint8_t *eeprom_buf, size_t len, int is_cs56,
 
 		eeprom_buf[i * 2 + 0] = bitword >> 8;
 		eeprom_buf[i * 2 + 1] = bitword & 0xff;
-	
+
 		set_sk(0);
 		set_cs(0);
 	}
@@ -584,72 +583,126 @@ arcemu_ip6_GetMemoryDescriptor(void *mem)
 	return (&am);
 }
 
+static struct arcbios_mem
+arcemu_mem(int type, int base, int count)
+{
+	struct arcbios_mem am = {
+		.Type = type,
+		.BasePage = base,
+		.PageCount = count
+	};
+	return am;
+}
+
+/*
+ * Real ARCBIOS reports the first 2 pages as 'Exception' and 'SystemParameter'
+ * blocks. We just use one descriptor for both.
+ *
+ * Real ARCBIOS also reports where the kernel was loaded as LoadedProgram, but
+ * we can just advertise it as free memory here (machdep code sorts out where
+ * the kernel is anyway).
+ */
 static void *
 arcemu_ip12_GetMemoryDescriptor(void *mem)
 {
-	static int bank;
-	u_int32_t memcfg;
-	static struct arcbios_mem am;
+	static int call_num = 0;
+	static struct arcbios_mem am[8];
+	static int num_am = 0;
 
-	if (mem == NULL) {
+	if (num_am == 0) {
+		u_int32_t memcfg;
+
 		/*
-		 * We know pages 0, 1 are occupied, emulate the reserved space.
+		 * Pages [896,1024) -- 3.5MiB to 4MiB -- are PROM bss and stack.
+		 * That should always be within a single bank, but on very low
+		 * memory systems it might be in bank 1 instead of bank 0.
 		 */
-		am.Type = ARCBIOS_MEM_ExceptionBlock;
-		am.BasePage = 0;
-		am.PageCount = 2;
 
-		bank = 0;
-		return (&am);
-	}
+		for (int bank = 0; bank < 4; bank++) {
+			/*
+			 * 'volatile' prevents the compiler from emitting
+			 * 16-bit loads.
+			 */
+			switch (bank) {
+			case 0:
+				memcfg = *(volatile u_int32_t *)
+				    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) >> 16;
+				break;
 
-	if (bank > 3)
-		return (NULL);
+			case 1:
+				memcfg = *(volatile u_int32_t *)
+				    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) & 0xffff;
+				break;
 
-	switch (bank) {
-	case 0:
-		memcfg = *(u_int32_t *)
-		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) >> 16;
-		break;
+			case 2:
+				memcfg = *(volatile u_int32_t *)
+				    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) >> 16;
+				break;
 
-	case 1:
-		memcfg = *(u_int32_t *)
-		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG0_PHYSADDR) & 0xffff;
-		break;
+			case 3:
+				memcfg = *(volatile u_int32_t *)
+				    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) & 0xffff;
+				break;
+			}
 
-	case 2:
-		memcfg = *(u_int32_t *)
-		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) >> 16;
-		break;
+			const int pgsize = ARCBIOS_PAGESIZE;
+			int bp = PIC_MEMCFG_ADDR(memcfg) / pgsize;
+			int pc = PIC_MEMCFG_SIZ(memcfg) / pgsize;
+			int ep = bp + pc;
 
-	case 3:
-		memcfg = *(u_int32_t *)
-		    MIPS_PHYS_TO_KSEG1(PIC_MEMCFG1_PHYSADDR) & 0xffff;
-		break;
+			const int BadMemory = ARCBIOS_MEM_BadMemory;
+			const int FreeMemory = ARCBIOS_MEM_FreeContiguous;
+			const int ExceptionBlock = ARCBIOS_MEM_ExceptionBlock;
+			const int PromMemory = ARCBIOS_MEM_FirmwareTemporary;
 
-	default:
-		memcfg = PIC_MEMCFG_BADADDR;
-	}	
+			if (memcfg == PIC_MEMCFG_BADADDR) {
+				sgi_prom_printf("Bank %d: No RAM present\n", bank);
+				am[num_am++] = arcemu_mem(BadMemory, bp, 0);
+			} else if (bp >= 1024) {
+				sgi_prom_printf("Bank %d base 0x%x pages %d\n",
+				    bank, bp, pc);
+				am[num_am++] = arcemu_mem(FreeMemory, bp, pc);
+			} else {
+				sgi_prom_printf("Bank %d base 0x%x pages %d",
+				    bank, bp, pc);
 
-	if (memcfg == PIC_MEMCFG_BADADDR) {
-		am.Type = ARCBIOS_MEM_BadMemory;
-		am.BasePage =
-		    PIC_MEMCFG_ADDR(PIC_MEMCFG_BADADDR) / ARCBIOS_PAGESIZE;
-		am.PageCount = 0;
-	} else {
-		am.Type = ARCBIOS_MEM_FreeContiguous; 
-		am.BasePage = PIC_MEMCFG_ADDR(memcfg) / ARCBIOS_PAGESIZE;
-		am.PageCount = PIC_MEMCFG_SIZ(memcfg) / ARCBIOS_PAGESIZE;
+				int reserved = 0;
 
-		/* pages 0, 1 are occupied (if clause before switch), compensate */
-		if (am.BasePage == 0) {
-			am.BasePage = 2;
-			am.PageCount -= 2;	/* won't overflow */
+				/* Exclude exception block. */
+				if (bp == 0) {
+					am[num_am++] = arcemu_mem(
+					    ExceptionBlock, 0, 2);
+					bp += 2;
+					pc -= 2;
+					reserved += 2;
+				}
+
+				/* Exclude PROM bss/stack. */
+				if (bp < 896 && ep >= 1024) {
+					am[num_am++] = arcemu_mem(
+					    FreeMemory, bp, 896 - bp);
+					am[num_am++] = arcemu_mem(
+					    PromMemory, 896, 128);
+					am[num_am++] = arcemu_mem(
+					    FreeMemory, 1024, ep - 1024);
+					reserved += 128;
+				} else {
+					am[num_am++] = arcemu_mem(
+					    FreeMemory, bp, pc);
+				}
+
+				if (reserved > 0) {
+					sgi_prom_printf(" (%d reserved)",
+					    reserved);
+				}
+				sgi_prom_printf("\n");
+
+			}
 		}
+
 	}
 
-	bank++;
-	return (&am);
+	return ((call_num < num_am) ? &am[call_num++] : NULL);
 }
 
 /*
