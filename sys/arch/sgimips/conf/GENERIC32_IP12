@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.45 2026/06/11 06:47:29 rumble Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.46 2026/06/11 20:51:33 rumble Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -22,17 +22,18 @@
 # Currently this config file supports Personal IRIS 4D/2x (IP6/IP10),
 # Personal IRIS 4D/3x (IP12) and Indigo R3k (IP12).
 #
-# Note that to load at beginning of memory, the kernel _must_ be under
-# 3.5MB in size to avoid stomping on (or being stomped on by) the PROM.
-#
 
 include 	"arch/sgimips/conf/std.sgimips"
 
-makeoptions	TEXTADDR=0x80002000	# entry point
+# Load the kernel at physical address 8MB. Below that there is not enough
+# contiguous space for a modern kernel due to PROM stack/bss placement.
+#
+# This might work for all pre-ARCS machines with 16MB or more of memory.
+makeoptions	TEXTADDR=0x80800000
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.45 $"
+#ident		"GENERIC32-IP12-$Revision: 1.46 $"
 
 maxusers	32
 
