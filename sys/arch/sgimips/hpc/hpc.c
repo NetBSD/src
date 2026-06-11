@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.73 2021/08/07 16:19:04 thorpej Exp $	*/
+/*	$NetBSD: hpc.c,v 1.74 2026/06/11 00:39:05 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.73 2021/08/07 16:19:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.74 2026/06/11 00:39:05 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -698,7 +698,6 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 {
 	struct seeprom_descriptor sd;
 	bus_space_handle_t bsh;
-	bus_space_tag_t tag;
 	bus_size_t offset;
 
 	if (!len || len & 0x1)
@@ -706,21 +705,21 @@ hpc_read_eeprom(int hpctype, bus_space_tag_t t, bus_space_handle_t h,
 
 	offset = (hpctype == 3) ? HPC3_EEPROM_DATA : HPC1_AUX_REGS;
 
-	tag = normal_memt;
 	if (bus_space_subregion(t, h, offset, 1, &bsh) != 0)
 		return (1);
 
 	sd.sd_chip = C56_66;
-	sd.sd_tag = tag;
+	sd.sd_tag = t;
 	sd.sd_bsh = bsh;
 	sd.sd_regsize = 1;
 	sd.sd_control_offset = 0;
 	sd.sd_status_offset = 0;
 	sd.sd_dataout_offset = 0;
-	sd.sd_DI = 0x10;	/* EEPROM -> CPU */
-	sd.sd_DO = 0x08;	/* CPU -> EEPROM */
-	sd.sd_CK = 0x04;
-	sd.sd_CS = 0x02;
+	/* The cx56 driver swaps the meaning of DI and DO. */
+	sd.sd_DI = HPC_AUX_EEPROM_DO;	/* EEPROM -> CPU */
+	sd.sd_DO = HPC_AUX_EEPROM_DI;	/* CPU -> EEPROM */
+	sd.sd_CK = HPC_AUX_EEPROM_SK;
+	sd.sd_CS = HPC_AUX_EEPROM_CS;
 	sd.sd_MS = 0;
 	sd.sd_RDY = 0;
 
