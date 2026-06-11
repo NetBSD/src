@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP2x,v 1.125 2024/01/29 18:27:15 christos Exp $
+#	$NetBSD: GENERIC32_IP2x,v 1.126 2026/06/11 06:47:29 rumble Exp $
 #
 # GENERIC32_IP2x machine description file
 # 
@@ -29,7 +29,7 @@ makeoptions	TEXTADDR=0x88069000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.125 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.126 $"
 
 maxusers	32
 
@@ -209,9 +209,10 @@ tlphy*		at mii? phy ?		 # ThunderLAN PHY (unused)
 # HPC devices
 sq* 		at hpc? offset ?	# On-board ethernet / E++ adapter
 wdsc* 		at hpc? offset ?	# On-board SCSI / GIO32 SCSI adapter
-haltwo*         at hpc0 offset ?	# IP22 / 24
+haltwo*         at hpc0 offset ?	# HAL2 Audio (IP22 / 24)
 button*		at hpc0 offset ?	# front panel buttons on Indy
 pckbc*		at hpc0 offset ?
+haud* 		at hpc0 offset ?	# Hollywood Audio (IP20)
 
 pckbd*  	at pckbc?
 pms* 		at pckbc?

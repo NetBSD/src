@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.44 2024/01/29 18:27:15 christos Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.45 2026/06/11 06:47:29 rumble Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.44 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.45 $"
 
 maxusers	32
 
@@ -173,6 +173,7 @@ uk*     at scsibus? target ? lun ?	# unknown SCSI
 # Common devices
 int0		at mainbus0			# Interrupt controller
 scsibus*	at scsi?			# HPC or IOC SCSI
+audio*		at audiobus?
 
 # IP6/10 devices
 ctl0		at mainbus0 addr 0x1f800000	# Memory controller
@@ -202,6 +203,7 @@ zstty*		at zsc0 channel ?
 zsc1 		at hpc0 offset ?	# IP12 keyboard/mouse
 zskbd0		at zsc1 channel 0
 zsms0		at zsc1 channel 1
+haud* 		at hpc0 offset ?	# Hollywood Audio
 
 # Pseudo-Devices
 
