@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1386 2026/01/19 02:45:14 mrg Exp $
+# $NetBSD: mi,v 1.1387 2026/06/11 19:51:15 rumble Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4695,6 +4695,7 @@
 ./usr/share/man/cat1				base-man-share
 ./usr/share/man/cat1/atari			base-man-share
 ./usr/share/man/cat1/hp300			base-man-share
+./usr/share/man/cat1/sgimips			base-man-share
 ./usr/share/man/cat1/x68k			base-man-share
 ./usr/share/man/cat2				base-man-share
 ./usr/share/man/cat3				base-man-share
@@ -4827,6 +4828,7 @@
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
+./usr/share/man/html1/sgimips			base-man-share
 ./usr/share/man/html1/x68k			base-man-share
 ./usr/share/man/html2				base-man-share
 ./usr/share/man/html3				base-man-share
@@ -4958,6 +4960,7 @@
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
 ./usr/share/man/man1/hp300			base-man-share
+./usr/share/man/man1/sgimips			base-man-share
 ./usr/share/man/man1/x68k			base-man-share
 ./usr/share/man/man2				base-man-share
 ./usr/share/man/man3				base-man-share

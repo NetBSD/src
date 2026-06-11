@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1834 2026/06/11 07:48:07 rumble Exp $
+# $NetBSD: mi,v 1.1835 2026/06/11 19:51:15 rumble Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -611,6 +611,8 @@
 ./usr/share/man/cat1/setextattr.0		man-util-catman		.cat
 ./usr/share/man/cat1/setfacl.0			man-util-catman		.cat
 ./usr/share/man/cat1/sftp.0			man-secsh-catman	ssh,.cat
+./usr/share/man/cat1/sgimips/haudfw.0		man-util-catman		.cat
+./usr/share/man/cat1/sgimips/undist.0		man-util-catman		.cat
 ./usr/share/man/cat1/sh.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha256.0			man-util-catman		.cat
@@ -4211,6 +4213,8 @@
 ./usr/share/man/man1/setextattr.1		man-util-man		.man
 ./usr/share/man/man1/setfacl.1			man-util-man		.man
 ./usr/share/man/man1/sftp.1			man-secsh-man		ssh,.man
+./usr/share/man/man1/sgimips/haudfw.1		man-util-man		.man
+./usr/share/man/man1/sgimips/undist.1		man-util-man		.man
 ./usr/share/man/man1/sh.1			man-util-man		.man
 ./usr/share/man/man1/sha1.1			man-util-man		.man
 ./usr/share/man/man1/sha256.1			man-util-man		.man

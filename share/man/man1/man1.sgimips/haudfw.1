@@ -1,0 +1,40 @@
+.\"	$NetBSD: haudfw.1,v 1.1 2026/06/11 19:51:16 rumble Exp $
+.Dd December 26, 2025
+.Dt HAUDFW 1 sgimips
+.Os
+.Sh NAME
+.Nm haudfw
+.Nd convert a Hollywood Audio DSP .lod file to a firmware image
+.Sh SYNOPSIS
+.Nm
+.Ar hdsp.lod
+.Ar hdsp.bin
+.Sh DESCRIPTION
+.Nm
+converts a Motorola DSP 56000 .lod file into a firmware blob that
+.Xr haud 4
+can load directly into the DSP's 32K-word SRAM. For use with SGI
+Indigo and Personal Iris 4D/3x (IP12, IP20) machines.
+.Pp
+There is no open source firmware. The input file must be pulled from
+an existing installation of IRIX or from install media. See
+.Xr haud 4
+for more details.
+.Pp
+The following options are available:
+.Bl -tag -width indent
+.It Fl c
+Also output a C array of the converted firmware image to stdout.
+.It Fl v
+Increase debugging verbosity of stderr. Can be specified multiple times
+to further increase logging.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr haud 4 ,
+.Xr undist 1
+.Sh HISTORY
+The
+.Nm
+utility first appeared in
+.Nx 12 .
