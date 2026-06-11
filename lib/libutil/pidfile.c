@@ -1,4 +1,4 @@
-/*	$NetBSD: pidfile.c,v 1.19 2026/06/01 18:35:03 roy Exp $	*/
+/*	$NetBSD: pidfile.c,v 1.20 2026/06/11 21:13:47 roy Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -52,7 +52,7 @@
 #endif
 
 #ifdef __RCSID
-__RCSID("$NetBSD: pidfile.c,v 1.19 2026/06/01 18:35:03 roy Exp $");
+__RCSID("$NetBSD: pidfile.c,v 1.20 2026/06/11 21:13:47 roy Exp $");
 #endif
 
 static char *pf_path;
@@ -291,9 +291,14 @@ return_pid:
 			if (errno == EAGAIN) {
 				/* The pidfile is locked, return the process ID
 				 * it contains.
-				 * If successful, set errno to EEXIST. */
+				 * If successful, set errno to EEXIST.
+				 * Otherwise set EAGAIN to show it's locked,
+				 * as that is more important than why a pid
+				 * cannot be read from the locked file. */
 				if ((pid = pidfile_read(path)) != -1)
 					errno = EEXIST;
+				else
+					errno = EAGAIN;
 			} else
 				pid = -1;
 
