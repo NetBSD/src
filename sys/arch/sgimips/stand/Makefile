@@ -1,5 +1,5 @@
-#	$NetBSD: Makefile,v 1.6 2019/01/12 16:44:47 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.7 2026/06/11 08:16:44 rumble Exp $
 
-SUBDIR=	boot boot64 bootiris sgivol
+SUBDIR=	boot boot64 bootiris haudfw sgivol
 
 .include <bsd.subdir.mk>
