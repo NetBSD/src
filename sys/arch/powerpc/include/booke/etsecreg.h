@@ -1,4 +1,4 @@
-/*	$NetBSD: etsecreg.h,v 1.12 2024/11/05 22:00:30 andvar Exp $	*/
+/*	$NetBSD: etsecreg.h,v 1.13 2026/06/11 03:59:16 andvar Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -350,7 +350,7 @@ struct rxfcb {
 #define RQFAR		0x334 /* Receive queue filing table address register [TSEC3] */
 #define RQFCR		0x338 /* Receive queue filing table control register [TSEC3] */
 #define RQFCR_GPI	__PPCBIT(0) /* General purpose interrupt */
-#define RQFCR_HASHTBL	__PPCBITS(12,14) /* Select between filer Q value and RIR fileds. */
+#define RQFCR_HASHTBL	__PPCBITS(12,14) /* Select between filer Q value and RIR fields. */
 #define RQFCR_HASHTBL_Q	__SHIFTIN(0,RQFCR_HASHTBL)
 #define RQFCR_HASHTBL_0	__SHIFTIN(1,RQFCR_HASHTBL)
 #define RQFCR_HASHTBL_1	__SHIFTIN(2,RQFCR_HASHTBL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.reg,v 1.18 2025/09/06 21:09:27 andvar Exp $	*/
+/*	$NetBSD: aic79xx.reg,v 1.19 2026/06/11 03:59:16 andvar Exp $	*/
 
 /*
  * Aic79xx register and scratch ram definitions.
@@ -1417,7 +1417,7 @@ register MAXCMDCNT {
 
 /*
  * LQ Packet Reserved Bytes
- * The bytes to be sent in the currently reserved fileds
+ * The bytes to be sent in the currently reserved fields
  * of all LQ packets.
  */
 register LQRSVD01 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clrpcops.c,v 1.6 2025/12/10 21:33:03 andvar Exp $	*/
+/*	$NetBSD: nfs_clrpcops.c,v 1.7 2026/06/11 03:59:16 andvar Exp $	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/fs/nfsclient/nfs_clrpcops.c 298788 2016-04-29 16:07:25Z pfg "); */
-__RCSID("$NetBSD: nfs_clrpcops.c,v 1.6 2025/12/10 21:33:03 andvar Exp $");
+__RCSID("$NetBSD: nfs_clrpcops.c,v 1.7 2026/06/11 03:59:16 andvar Exp $");
 
 /*
  * Rpc op calls, generally called from the vnode op calls or through the
@@ -1671,7 +1671,7 @@ nfsrpc_writerpc(vnode_t vp, struct uio *uiop, int *iomode,
 		if (nd->nd_repstat) {
 			/*
 			 * In case the rpc gets retried, roll
-			 * the uio fileds changed by nfsm_uiombuf()
+			 * the uio fields changed by nfsm_uiombuf()
 			 * back.
 			 */
 			uiop->uio_offset -= len;
@@ -5755,7 +5755,7 @@ nfsrpc_writeds(vnode_t vp, struct uio *uiop, int *iomode, int *must_commit,
 	if (nd->nd_repstat != 0) {
 		/*
 		 * In case the rpc gets retried, roll
-		 * the uio fileds changed by nfsm_uiombuf()
+		 * the uio fields changed by nfsm_uiombuf()
 		 * back.
 		 */
 		uiop->uio_offset -= len;
