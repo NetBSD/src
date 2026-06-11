@@ -1,4 +1,4 @@
-/* $NetBSD: si.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $ */
+/* $NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $ */
 
 /*-
  * Copyright (c) 2025 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -406,7 +406,7 @@ si_close(void *cookie)
 
 	mutex_enter(&ch->ch_lock);
 
-	/* Diable polling */
+	/* Disable polling */
 	WR4(sc, SIPOLL, RD4(sc, SIPOLL) & ~SIPOLL_EN(ch->ch_index));
 
 	ch->ch_state &= ~(SI_STATE_OPEN | SI_STATE_STOPPED);

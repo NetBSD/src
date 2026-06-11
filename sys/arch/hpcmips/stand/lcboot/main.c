@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.7 2016/06/11 06:29:24 dholland Exp $ */
+/* $NetBSD: main.c,v 1.8 2026/06/11 19:46:18 andvar Exp $ */
 
 /*
  * Copyright (c) 2003 Naoto Shimazaki.
@@ -107,7 +107,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.7 2016/06/11 06:29:24 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: main.c,v 1.8 2026/06/11 19:46:18 andvar Exp $");
 
 #include <lib/libsa/stand.h>
 
@@ -205,7 +205,7 @@ init_devices(void)
 	 */
 
 	/*
-	 * setup ISA BUS clock freqency
+	 * setup ISA BUS clock frequency
 	 *
 	 * set PCLK (internal peripheral clock) to 32.768MHz (TClock / 1)
 	 * set External ISA bus clock to 10.922MHz (TClock / 3)

@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.1 2009/03/02 09:33:02 nonaka Exp $	*/
+/*	$NetBSD: disk.h,v 1.2 2026/06/11 19:46:18 andvar Exp $	*/
 /*	$OpenBSD: disk.h,v 1.1 2005/05/24 20:38:20 uwe Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
  *
  * Also, do not bother with BIOSN*() macros, just parcel
  * the info out, and use it like this.  This makes for less
- * of a dependance on BIOSN*() macros having to be the same
+ * of a dependence on BIOSN*() macros having to be the same
  * across /boot, /bsd, and userland.
  */
 #define	BOOTARG_DISKINFO 1

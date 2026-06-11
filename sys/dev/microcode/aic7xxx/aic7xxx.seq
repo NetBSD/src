@@ -40,7 +40,7 @@
  * $FreeBSD: /repoman/r/ncvs/src/sys/dev/aic7xxx/aic7xxx.seq,v 1.123 2003/01/20 20:44:55 gibbs Exp $
  */
 
-VERSION = "$NetBSD: aic7xxx.seq,v 1.24 2024/02/10 08:36:04 andvar Exp $"
+VERSION = "$NetBSD: aic7xxx.seq,v 1.25 2026/06/11 19:46:19 andvar Exp $"
 PATCH_ARG_LIST = "struct ahc_softc *ahc"
 PREFIX = "ahc_"
 
@@ -445,7 +445,7 @@ select_out:
 		or	SXFRCTL0, CLRSTCNT|CLRCHN;
 
 		/*
-		 * Put tag in connonical location since not
+		 * Put tag in canonical location since not
 		 * all connections have an SCB.
 		 */
 		mov	INITIATOR_TAG, SCB_TARGET_ITAG;

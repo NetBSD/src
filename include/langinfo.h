@@ -1,4 +1,4 @@
-/*	$NetBSD: langinfo.h,v 1.11 2024/10/30 15:56:10 riastradh Exp $	*/
+/*	$NetBSD: langinfo.h,v 1.12 2026/06/11 19:46:18 andvar Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>
@@ -66,9 +66,9 @@
 
 #define RADIXCHAR	((nl_item)44)	/* Radix character */
 #define THOUSEP		((nl_item)45)	/* Separator for thousands */
-#define YESSTR		((nl_item)46)	/* Affirmitive response for yes/no
+#define YESSTR		((nl_item)46)	/* Affirmative response for yes/no
 					   queries */
-#define YESEXPR		((nl_item)47)	/* Affirmitive response for yes/no
+#define YESEXPR		((nl_item)47)	/* Affirmative response for yes/no
 					   queries */
 #define NOSTR		((nl_item)48)	/* Negative response for yes/no
 					   queries */

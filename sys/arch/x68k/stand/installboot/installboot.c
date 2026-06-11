@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.6 2012/10/14 16:20:04 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.7 2026/06/11 19:46:18 andvar Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -137,7 +137,7 @@ checkparttype(const char *name, int force)
 		errx(1, "%s: reading the mark", name);
 	close(fd);
 	if (strncmp((const char *)bootblock, "X68SCSI1", 8) != 0)
-		floppy = 1;	/* XXX: or unformated */
+		floppy = 1;	/* XXX: or unformatted */
 
 	if (!force && !floppy) {
 		if (label.d_partitions[part].p_fstype != FS_BSDFFS

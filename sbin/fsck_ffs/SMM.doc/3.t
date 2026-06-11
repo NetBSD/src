@@ -1,4 +1,4 @@
-.\"	$NetBSD: 3.t,v 1.6 2003/08/07 10:04:22 agc Exp $
+.\"	$NetBSD: 3.t,v 1.7 2026/06/11 19:46:18 andvar Exp $
 .\"
 .\" Copyright (c) 1982, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -201,7 +201,7 @@ regular inode, directory inode, symbolic link inode,
 special block inode, special character inode, or socket inode.
 Inodes may be found in one of three allocation states:
 unallocated, allocated, and neither unallocated nor allocated.
-This last state suggests an incorrectly formated inode.
+This last state suggests an incorrectly formatted inode.
 An inode can get in this state if
 bad data is written into the inode list.
 The only possible corrective action is for
