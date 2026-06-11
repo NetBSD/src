@@ -1,0 +1,117 @@
+.\"	$NetBSD: haud.4,v 1.1 2026/06/11 07:48:07 rumble Exp $
+.\"
+.\" Copyright (c) 2025 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This document is derived from work contributed to The NetBSD Foundation
+.\" by Steve Rumble.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS BE
+.\" LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd December 25, 2025
+.Dt HAUD 4 sgimips
+.Os
+.Sh NAME
+.Nm haud
+.Nd SGI Hollywood Audio Processor
+.Sh SYNOPSIS
+.Cd "haud0 at hpc0 offset 0x180"
+.Sh DESCRIPTION
+.Nm
+is the driver for the audio processor found on Iris Indigo machines (IP12,
+IP20). The same hardware is available on IP12 Personal Iris machines (4D/3x),
+with components split across the mainboard and the "Magnum Audio" option card.
+The processor apparently went by various other names such as "(Iris) Audio
+Processor" and "Hollywood DSP" in IRIX and the PROM.
+.Pp
+The core of Hollywood Audio is a Motorola DSP 56001 processor, which sits
+in front of audio input and output circuitry and uses
+.Xr sgimips/hpc 4
+to read and write 16-bit audio streams via circular buffers in main memory.
+.Pp
+The
+.Nm
+driver requires DSP firmware to operate. No open source firmware exists, so
+this driver currently requires IRIX's proprietary hdsp.lod.
+.Nm
+attempts to load the firmware using
+.Xr firmload 9
+when the audio device is first opened.
+.Pp
+Because the firmware is proprietary and not licensed for distribution, it is
+not included with NetBSD. It must be pulled from an IRIX installation CD or
+from an installed IRIX filesystem, converted into a loadable binary, and
+placed in a
+.Xr firmload 9
+directory as "haud/hdsp.bin".
+.Sh FIRMWARE INSTALLATION
+The following example pulls the IRIX hdsp.lod firmware from an install CD's
+EFS filesystem, converts it into a loadable binary blob with
+.Xr haudfw 1 ,
+and makes the blob available for loading by the kernel:
+.Bd -literal -offset indent -compact
+cd /tmp
+svhlabel -w /dev/cd0
+mount /dev/cd0a /mnt
+undist -x -P usr/etc/audio/hdsp.lod /mnt/dist/dmedia_eoe.idb
+mkdir /libdata/firmware/haud
+haudfw usr/etc/audio/hdsp.lod /libdata/firmware/haud/hdsp.bin
+.Ed
+.Pp
+In IRIX 6.5, the dmedia_eoe dist is found on the "Foundation 1"
+disc (SGI part number 812-0759-002). In IRIX 6.2 it is found on the
+first install CD (812-0469-001). In 5.3 it is on the one and only
+install CD.
+.Pp
+In older IRIX releases, hdsp.lod may be in a different dist. For example,
+in 4.0.5H it is found in eoe1 instead of dmedia_eoe. So the above undist
+command would change to:
+.Bd -literal -offset indent -compact
+undist -x -P usr/etc/audio/hdsp.lod /mnt/dist/eoe1.idb
+.Ed
+.Sh SUPPORTED FIRMWARE
+.Nm
+was developed with the following firmware:
+.Bd -literal -offset indent -compact
+cksum -a md5 hdsp.lod
+MD5 (hdsp.lod) = 798b2bff0a0726e12afddd07273d5814
+.Ed
+.Pp
+This version of the firmware was distributed with IRIX from at least version
+5.3 up through 6.5. Older firmwares may also work but are untested.
+.Sh SEE ALSO
+.Xr sgimips/haudfw 1
+.Xr sgimips/undist 1
+.Xr sgimips/hpc 4
+.Xr firmload 9
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 12.0 .
+.Sh CAVEATS
+Only basic playback is supported.
+.Pp
+The driver relies on the MI
+.Xr audio 9
+layer for mixing even though the DSP is capable of mixing multiple output
+streams automatically.

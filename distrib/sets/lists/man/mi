@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1833 2026/06/04 14:22:21 jdc Exp $
+# $NetBSD: mi,v 1.1834 2026/06/11 07:48:07 rumble Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.man				man-sys-root
@@ -1851,6 +1851,7 @@
 ./usr/share/man/cat4/sgimips/giopci.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/grtwo.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/haltwo.0		man-sys-catman		.cat
+./usr/share/man/cat4/sgimips/haud.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/hpc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/imc.0		man-sys-catman		.cat
 ./usr/share/man/cat4/sgimips/intro.0		man-sys-catman		.cat
@@ -5451,6 +5452,7 @@
 ./usr/share/man/man4/sgimips/giopci.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/grtwo.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/haltwo.4		man-sys-man		.man
+./usr/share/man/man4/sgimips/haud.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/hpc.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/imc.4		man-sys-man		.man
 ./usr/share/man/man4/sgimips/intro.4		man-sys-man		.man
