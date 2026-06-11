@@ -1,4 +1,4 @@
-#	$NetBSD: files.sgimips,v 1.54 2019/03/23 17:44:49 sevan Exp $
+#	$NetBSD: files.sgimips,v 1.55 2026/06/11 00:21:35 rumble Exp $
 
 maxpartitions 16
 
@@ -17,6 +17,8 @@ file dev/arcbios/arcbios_tty.c
 file dev/arcbios/arcbios_calls.S
 
 file arch/sgimips/sgimips/arcemu.c
+file arch/sgimips/sgimips/prom.c
+file arch/sgimips/sgimips/prom_vectors.S
 
 file arch/sgimips/sgimips/ip22_cache.S		indy_r4600_cache
 file arch/sgimips/sgimips/autoconf.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.24 2018/11/08 06:43:52 msaitoh Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.25 2026/06/11 00:21:35 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.24 2018/11/08 06:43:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.25 2026/06/11 00:21:35 rumble Exp $");
 
 #ifndef _LP64
 
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.24 2018/11/08 06:43:52 msaitoh Exp $");
 
 #define _ARCEMU_PRIVATE
 #include <sgimips/sgimips/arcemu.h>
+#include <sgimips/sgimips/prom.h>
 #include <sgimips/dev/picreg.h>
 
 static struct consdev arcemu_cn = {
@@ -170,12 +171,6 @@ extractenv(const char **env, const char *key, char *dest, int len)
 
 	return (false);
 }
-
-/* Prom Vectors */
-static void   (*sgi_prom_reset)(void) = (void *)MIPS_PHYS_TO_KSEG1(0x1fc00000);
-static void   (*sgi_prom_reinit)(void) =(void *)MIPS_PHYS_TO_KSEG1(0x1fc00018);
-static int    (*sgi_prom_printf)(const char *, ...) =
-					 (void *)MIPS_PHYS_TO_KSEG1(0x1fc00080);
 
 /*
  * The following matches IP6's and IP12's NVRAM memory layout
