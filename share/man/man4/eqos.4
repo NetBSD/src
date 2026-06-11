@@ -1,4 +1,4 @@
-.\" $NetBSD: eqos.4,v 1.2 2023/10/20 10:09:43 msaitoh Exp $
+.\" $NetBSD: eqos.4,v 1.3 2026/06/11 01:03:54 gutteridge Exp $
 .\"
 .\" Copyright (c) 2022 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 20, 2023
+.Dd June 11, 2026
 .Dt EQOS 4
 .Os
 .Sh NAME
@@ -42,16 +42,20 @@ The
 driver provides support for the DesignWare Ethernet Quality-of-Service
 controller, which supports 10baseT, 100baseT, 1000baseT, and 2500baseT
 modes of operation.
+.Pp
+It provides IPv4, TCPv4, and UDPv4 hardware checksumming.
+It also supports VLAN-sized frames and jumbo frames.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
+.Xr mcommphy 4 ,
 .Xr mii 4 ,
 .Xr netintro 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
-device driver was written by
-.An Jared D. McNeill .
-It first appeared in
+device driver first appeared in
 .Nx 10.0 .
+.Sh AUTHORS
+.An Jared D. McNeill Aq Mt jmcneill@NetBSD.org
