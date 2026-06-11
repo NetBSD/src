@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.22 2026/06/11 00:34:30 rumble Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.23 2026/06/11 06:49:36 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -450,6 +450,12 @@ struct hpc_dma_desc {
 #define HPC1_LPT_DMACFG		0x00000014	/* DMA Configuration */
 #define HPC1_LPT_DEVREGS	0x00000132	/* Ext. Parallel Registers */
 #define	HPC1_LPT_DEVREGS_SIZE	0x00000001	/* Size of External Registers */
+
+/* DSP regs on the primary HPC */
+#define HPC1_DSP_DEVREGS	0x00000180	/* Hollywood Audio DSP Regs */
+#define HPC1_DSP_DEVREGS_SIZE	0x00000038
+#define HPC1_DSP_SRAM		0x00060000	/* Hollywood Audio DSP Memory */
+#define HPC1_DSP_SRAM_SIZE	0x00020000	/* 24-bit words mapped as 32b */
 
 /* AUX regs on the primary HPC */
 #define HPC1_AUX_REGS		0x000001bf	/* EEPROM/LED Control (byte) */
