@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.60 2024/07/05 04:31:50 rin Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.61 2026/06/11 00:47:24 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.60 2024/07/05 04:31:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.61 2026/06/11 00:47:24 rumble Exp $");
 
 
 #include <sys/param.h>
@@ -132,8 +132,15 @@ CFATTACH_DECL_NEW(sq, sizeof(struct sq_softc),
 #define sq_hpc_write(sc, off, val) \
 	bus_space_write_4(sc->sc_hpct, sc->sc_hpch, off, val)
 
-/* MAC address offset for non-onboard implementations */
-#define SQ_HPC_EEPROM_ENADDR	250
+/*
+ * MAC addresses live in different places depending on whether we're dealing
+ * with a built-in or an optional interface.
+ *
+ * Some (all?) machines have MAC addresses in both locations in their onboard
+ * EEPROMs.
+ */
+#define SQ_ONB_HPC_EEPROM_ENADDR 122
+#define SQ_EXT_HPC_EEPROM_ENADDR 250
 
 #define SGI_OUI_0		0x08
 #define SGI_OUI_1		0x00
@@ -262,8 +269,18 @@ sq_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	memcpy(sc->sc_enaddr, &haa->hpc_eeprom[SQ_HPC_EEPROM_ENADDR],
+	/*
+	 * Assume this is the onboard interface first and use that mac address
+	 * if it's present. If not, try the location for option cards.
+	 */
+	memcpy(sc->sc_enaddr, &haa->hpc_eeprom[SQ_ONB_HPC_EEPROM_ENADDR],
 	    ETHER_ADDR_LEN);
+	if (sc->sc_enaddr[0] != SGI_OUI_0 ||
+	    sc->sc_enaddr[1] != SGI_OUI_1 ||
+	    sc->sc_enaddr[2] != SGI_OUI_2) {
+		memcpy(sc->sc_enaddr,
+		    &haa->hpc_eeprom[SQ_EXT_HPC_EEPROM_ENADDR], ETHER_ADDR_LEN);
+	}
 
 	/*
 	 * If our mac address is bogus, obtain it from ARCBIOS. This will
