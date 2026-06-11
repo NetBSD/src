@@ -1,6 +1,7 @@
-# $NetBSD: md.sgimips,v 1.16 2026/06/11 08:16:44 rumble Exp $
+# $NetBSD: md.sgimips,v 1.17 2026/06/11 08:29:49 rumble Exp $
 #
 ./usr/bin/haudfw				base-util-bin
+./usr/bin/undist				base-util-bin
 ./usr/mdec/aoutboot				base-sysutil-bin
 ./usr/mdec/ip12boot				base-sysutil-bin
 ./usr/mdec/ip2xboot				base-sysutil-bin
