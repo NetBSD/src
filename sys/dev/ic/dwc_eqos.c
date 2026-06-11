@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.50 2026/05/30 15:23:27 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.51 2026/06/11 01:04:37 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.50 2026/05/30 15:23:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.51 2026/06/11 01:04:37 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1755,7 +1755,7 @@ eqos_attach(struct eqos_softc *sc)
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/* 802.1Q VLAN-sized frames, and jumbo frame are supported */
+	/* 802.1Q VLAN-sized frames and jumbo frames are supported */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
