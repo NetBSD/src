@@ -1,4 +1,4 @@
-.\"	$NetBSD: undist.1,v 1.1 2026/06/11 19:51:16 rumble Exp $
+.\"	$NetBSD: undist.1,v 1.2 2026/06/11 21:45:22 uwe Exp $
 .Dd December 26, 2025
 .Dt UNDIST 1 sgimips
 .Os
@@ -19,64 +19,59 @@ media.
 .Pp
 .Nm
 runs in one of three mutually exclusive modes:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl l
 List the archive's contents without extracting.
 .It Fl v
 Verify the archive's contents by calculating and comparing checksums
-(after decompressing, if necessary), without saving any files.
+.Pq after decompressing, if necessary ,
+without saving any files.
 .It Fl x
 Extract the archive's contents.
 .El
 .Pp
 The following flags augment one or more of the above modes:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl a
-Allow extraction to an absolute path. Otherwise, files are extracted
-relative to the current working directory.
+Allow extraction to an absolute path.
+Otherwise, files are extracted relative to the current working directory.
 .It Fl m Ar machtype
-Extract only files whose 'mach' field in the idb file exactly match the
-given string.
+Extract only files whose
+.Fa mach
+field in the idb file exactly match the given string.
 .It Fl o
-Ignore offset fields in the .idb file and compute each manually. Mainly
-for testing.
-.It Fl p
-Allow extraction to relative paths such as '../'. Otherwise, relative
-paths are munged such that files are extracted only within the current
-working directory and subdirectories thereof.
+Ignore offset fields in the idb file and compute each manually.
+Mainly for testing.
 .It Fl P Ar prefix
-Only extract files whose names begin with the given prefix. There
-is currently no globbing support.
+Only extract files whose names begin with the given prefix.
+There is currently no globbing support.
+.It Fl p
+Allow extraction to relative paths such as
+.Sq Pa ../ .
+Otherwise, relative paths are munged such that files are extracted
+only within the current working directory and subdirectories thereof.
 .It Fl s
-Skip extraction errors and try to continue. Otherwise, fails immediately
-when an error is encountered.
+Skip extraction errors and try to continue.
+Otherwise, fails immediately when an error is encountered.
 .It Fl t
-Extract using the temporary file path in the .idb file instead of the
+Extract using the temporary file path in the idb file instead of the
 destination file path.
 .El
 .Sh EXAMPLES
 Extract all contents from a dist into the current working directory:
-.Bd -literal -offset indent -compact
-undist -x /mnt/dist/eoe1.idb
-.Ed
+.Dl undist -x /mnt/dist/eoe1.idb
 .Pp
 List all contents in a dist:
-.Bd -literal -offset indent -compact
-undist -l /mnt/dist/eoe1.idb
-.Ed
+.Dl undist -l /mnt/dist/eoe1.idb
 .Pp
 Verify sizes and checksums of all files in a dist:
-.Bd -literal -offset indent -compact
-undist -v /mnt/dist/eoe1.idb
-.Ed
+.Dl undist -v /mnt/dist/eoe1.idb
 .Pp
 Extract a single file from a dist:
-.Bd -literal -offset indent -compact
-undist -x -P usr/etc/audio/hdsp.lod /mnt/dist/dmedia_eoe.idb
-.Ed
+.Dl undist -x -P usr/etc/audio/hdsp.lod /mnt/dist/dmedia_eoe.idb
 .Sh SEE ALSO
-.Xr haud 4 ,
-.Xr haudfw 1
+.Xr haudfw 1 ,
+.Xr haud 4
 .Sh HISTORY
 The
 .Nm
