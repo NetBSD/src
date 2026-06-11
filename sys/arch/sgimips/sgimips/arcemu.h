@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.h,v 1.14 2023/06/24 05:31:05 msaitoh Exp $	*/
+/*	$NetBSD: arcemu.h,v 1.15 2026/06/11 00:34:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -34,6 +34,8 @@
 
 #include <dev/arcbios/arcbios.h>
 #include <dev/arcbios/arcbiosvar.h>
+
+#include <sgimips/hpc/hpcreg.h>
 
 int arcemu_init(const char **);
 
@@ -79,6 +81,21 @@ static struct arcbios_component arcemu_component_tree[] = {
 static void	arcemu_unimpl(void);
 
 /*
+ * DELAY() isn't available yet this early, so roll our own.
+ *
+ * Most pre-ARCS SGIs are 8 to 40MHz, but the fastest was up to 150MHz (IP17,
+ * Crimson). This is only used at startup and taking longer than necessary is
+ * fine, so delay for at least 4 microseconds using IP17 as a baseline.
+ */
+static void
+arcemu_eeprom_delay(void) {
+	register int __N = (150000000 / 1000000) * 4;
+	do {
+		__asm("addiu %0,%1,-1" : "=r" (__N) : "0" (__N));
+	} while (__N > 0);
+}
+
+/*
  * EEPROM bit access functions.
  */
 
@@ -89,7 +106,7 @@ ip6_set_pre(int raise)
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) |= 0x10;
 	else
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) &= ~0x10;
-	DELAY(4);
+	arcemu_eeprom_delay();
 }
 
 static inline void
@@ -99,7 +116,7 @@ ip6_set_cs(int raise)
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) |= 0x20;
 	else
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) &= ~0x20;
-	DELAY(4);
+	arcemu_eeprom_delay();
 }
 
 static inline void
@@ -109,13 +126,13 @@ ip6_set_sk(int raise)
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) |= 0x40;
 	else
 		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f8e0000) &= ~0x40;
-	DELAY(4);
+	arcemu_eeprom_delay();
 }
 
 static inline int
 ip6_get_do(void)
 {
-	DELAY(4);
+	arcemu_eeprom_delay();
 	if (*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1f800001) & 0x01)
 		return (1);
 	return (0);
@@ -128,56 +145,58 @@ ip6_set_di(int raise)
 		*(volatile uint16_t *)MIPS_PHYS_TO_KSEG1(0x1f880002) |= 0x0100;
 	else
 		*(volatile uint16_t *)MIPS_PHYS_TO_KSEG1(0x1f880002) &= ~0x0100;
-	DELAY(4);
+	arcemu_eeprom_delay();
+}
+
+static inline volatile uint8_t*
+ip12_eeprom_register(void)
+{
+	return (volatile uint8_t*)MIPS_PHYS_TO_KSEG1(
+	    HPC_BASE_ADDRESS_0 + HPC1_AUX_REGS);
+}
+
+static inline void
+ip12_set_eeprom_bit(uint8_t bit, int raise)
+{
+	if (raise)
+		*ip12_eeprom_register() |= bit;
+	else
+		*ip12_eeprom_register() &= ~bit;
 }
 
 static inline void
 ip12_set_pre(int raise)
 {
-	if (raise)
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) |= 0x01;
-	else
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) &= ~0x01;
-	DELAY(4);
+	ip12_set_eeprom_bit(HPC_AUX_EEPROM_PRE, raise);
+	arcemu_eeprom_delay();
 }
 
 static inline void
 ip12_set_cs(int raise)
 {
-	if (raise)
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) |= 0x02;
-	else
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) &= ~0x02;
-	DELAY(4);
+	ip12_set_eeprom_bit(HPC_AUX_EEPROM_CS, raise);
+	arcemu_eeprom_delay();
 }
 
 static inline void
 ip12_set_sk(int raise)
 {
-	if (raise)
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) |= 0x04;
-	else
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) &= ~0x04;
-	DELAY(4);
+	ip12_set_eeprom_bit(HPC_AUX_EEPROM_SK, raise);
+	arcemu_eeprom_delay();
 }
 
 static inline int
 ip12_get_do(void)
 {
-	DELAY(4);
-	if (*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) & 0x08)
-		return (1);
-	return (0);
+	arcemu_eeprom_delay();
+	return !!(*ip12_eeprom_register() & HPC_AUX_EEPROM_DO);
 }
 
 static inline void
 ip12_set_di(int raise)
 {
-	if (raise)	
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) |= 0x10;
-	else
-		*(volatile uint8_t *)MIPS_PHYS_TO_KSEG1(0x1fbd0000) &= ~0x10;
-	DELAY(4);
+	ip12_set_eeprom_bit(HPC_AUX_EEPROM_DI, raise);
+	arcemu_eeprom_delay();
 }
 
 

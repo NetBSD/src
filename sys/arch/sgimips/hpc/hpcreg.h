@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.21 2025/02/23 13:31:30 andvar Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.22 2026/06/11 00:34:30 rumble Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -454,5 +454,12 @@ struct hpc_dma_desc {
 /* AUX regs on the primary HPC */
 #define HPC1_AUX_REGS		0x000001bf	/* EEPROM/LED Control (byte) */
 #define HPC1_AUX_CONSLED	0x01		/* Console LED */
+
+/* EEPROM bits are the same on HPC1 and HPC3 */
+#define HPC_AUX_EEPROM_PRE	0x01		/* CS56 PRE pin (same as LED) */
+#define HPC_AUX_EEPROM_CS	0x02		/* CS56 CS pin */
+#define HPC_AUX_EEPROM_SK	0x04		/* CS56 SK pin */
+#define HPC_AUX_EEPROM_DI	0x08		/* CS56 DI pin */
+#define HPC_AUX_EEPROM_DO	0x10		/* CS56 DO pin */
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */
