@@ -1,4 +1,4 @@
-/*	$NetBSD: arcemu.c,v 1.25 2026/06/11 00:21:35 rumble Exp $	*/
+/*	$NetBSD: arcemu.c,v 1.26 2026/06/11 06:23:08 rumble Exp $	*/
 
 /*
  * Copyright (c) 2004 Steve Rumble 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.25 2026/06/11 00:21:35 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcemu.c,v 1.26 2026/06/11 06:23:08 rumble Exp $");
 
 #ifndef _LP64
 
@@ -134,22 +134,47 @@ arcemu_init(const char **env)
 static int
 arcemu_identify(void)
 {
-	int mach;
-
 	/*
-	 * Try to write a value to one of IP12's pic(4) graphics DMA registers.
-	 * This is at the same location as four byte parity strobes on IP6,
-	 * which appear to always read 0.
+	 * Since all pre-ARCS machines have PROMs at the same address, we just
+	 * scan it for known IP-specific substrings. The smallest PROM is
+	 * apparently 1Mbit, so we initially search only the first 128KB as
+	 * badaddr isn't usable yet.
 	 */
-	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) = 0xdeadbeef;
-	DELAY(1000);
-	if (*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) == 0xdeadbeef)
-		mach = MACH_SGI_IP12;
-	else
-		mach = MACH_SGI_IP6;
-	*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000) = 0;
-	(void)*(volatile uint32_t *)MIPS_PHYS_TO_KSEG1(0x1faa0000);
+	static struct {
+		const char *pattern;
+		int mach_type;
+	} patterns[] = {
+		{ "IP12/GR2 PROM", MACH_SGI_IP12 },
+		{ "IP6 Processor", MACH_SGI_IP6 },
+		{ " PROM IP6 ", MACH_SGI_IP6 },
+		{ " PROM IP4 ", MACH_SGI_IP4 },
+		{ " IP 9 ", MACH_SGI_IP9 },
+		{ " IP 7 ", MACH_SGI_IP7 },
+		{ " IP 5 ", MACH_SGI_IP5 },
+		{ NULL, -1 },
+	};
 
+	int mach = -1;
+	for (int i = 1; i < 3; i++) {
+		for (int j = 0; patterns[j].pattern != NULL; j++) {
+			int len = i * 128 * 1024;
+			if (memmem((void*)MIPS_PHYS_TO_KSEG1(0x1fc00000), len,
+			    patterns[j].pattern,
+			    strlen(patterns[j].pattern)) != NULL) {
+				mach = patterns[j].mach_type;
+				break;
+			}
+		}
+	}
+
+	if (mach == -1) {
+		sgi_prom_printf("Failed to identify Pre-ARCBIOS machine. "
+		    "Assuming IP12.\n");
+		return (MACH_SGI_IP12);
+	}
+
+	sgi_prom_printf("Pre-ARCBIOS machine identified as IP%d\n",
+	    mach);
 	return (mach);
 }
 
