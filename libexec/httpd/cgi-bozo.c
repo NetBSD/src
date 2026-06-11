@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.56 2023/09/20 08:41:35 shm Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.57 2026/06/11 05:44:11 mlelstv Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -36,6 +36,7 @@
 
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
@@ -590,10 +591,9 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	assert(lastenvp > curenvp);
 
 	/*
-	 * We create 2 procs: one to become the CGI, one read from
-	 * the CGI and output to the network, and this parent will
-	 * continue reading from the network and writing to the
-	 * CGI procsss.
+	 * We create 2 procs: one to become the CGI, one to continue
+	 * reading from the network and writing to the CGI process.
+	 * This parent will read from the CGI and output to the network.
 	 */
 	switch (fork()) {
 	case -1: /* eep, failure */
@@ -633,38 +633,43 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	close(sv[1]);
 
-	/* parent: read from stdin (bozo_read()) write to sv[0] */
-	/* child: read from sv[0] (bozo_write()) write to stdout */
+	/* parent: read from sv[0] (bozo_write()) write to stdout */
+	/* child: read from stdin (bozo_read()) write to sv[0] */
 	pid = fork();
 	if (pid == -1)
 		bozoerr(httpd, 1, "io child fork failed: %s", strerror(errno));
 	else if (pid == 0) {
-		/* child reader/writer */
-		close(STDIN_FILENO);
-		finish_cgi_output(httpd, request, sv[0], nph);
-		/* if we do SSL, send a SSL_shutdown now */
-		bozo_ssl_shutdown(request->hr_httpd);
-		/* if we're done output, our parent is useless... */
-		kill(getppid(), SIGKILL);
-		debug((httpd, DEBUG_FAT, "done processing cgi output"));
+		close(STDOUT_FILENO);
+		/* CGI programs should perform their own timeouts */
+		while ((rbytes = bozo_read(httpd, STDIN_FILENO, buf,
+		    sizeof buf)) > 0) {
+			ssize_t wbytes;
+			while (rbytes) {
+				wbytes = write(sv[0], buf, (size_t)rbytes);
+				if (wbytes > 0)
+					rbytes -= wbytes;
+				else
+					bozoerr(httpd, 1, "write failed: %s",
+						strerror(errno));
+			}		
+		}
+		debug((httpd, DEBUG_FAT, "done processing cgi input"));
 		_exit(0);
 	}
-	close(STDOUT_FILENO);
 
-	/* CGI programs should perform their own timeouts */
-	while ((rbytes = bozo_read(httpd, STDIN_FILENO, buf, sizeof buf)) > 0) {
-		ssize_t wbytes;
-
-		while (rbytes) {
-			wbytes = write(sv[0], buf, (size_t)rbytes);
-			if (wbytes > 0)
-				rbytes -= wbytes;
-			else
-				bozoerr(httpd, 1, "write failed: %s",
-					strerror(errno));
-		}		
-	}
-	debug((httpd, DEBUG_FAT, "done processing cgi input"));
+	/* child reader/writer */
+	close(STDIN_FILENO);
+	finish_cgi_output(httpd, request, sv[0], nph);
+	/* if we do SSL, send a SSL_shutdown now */
+	bozo_ssl_shutdown(request->hr_httpd);
+	/* if we're done output, our child is useless... */
+	kill(pid, SIGKILL);
+	debug((httpd, DEBUG_FAT, "done processing cgi output"));
+	/*
+	 * Collect input child, but leave CGI child running
+	 * to allow some overlap.
+	 */
+	waitpid(pid, NULL, 0);
 	exit(0);
 
  out:
