@@ -1,4 +1,4 @@
-# $NetBSD: files.hpc,v 1.17 2019/05/08 13:40:16 isaki Exp $
+# $NetBSD: files.hpc,v 1.18 2026/06/11 01:03:58 rumble Exp $
 
 device	sq: arp, ether, ifnet
 attach	sq at hpc
@@ -28,3 +28,7 @@ file	arch/sgimips/hpc/pi1ppc.c	pi1ppc
 device	button : sysmon_power, sysmon_taskq
 attach	button at hpc
 file	arch/sgimips/hpc/button.c	button
+
+device	haud: audiobus, firmload
+attach	haud at hpc
+file	arch/sgimips/hpc/haud.c		haud

@@ -1,4 +1,4 @@
-/*	$NetBSD: hpc.c,v 1.74 2026/06/11 00:39:05 rumble Exp $	*/
+/*	$NetBSD: hpc.c,v 1.75 2026/06/11 01:03:58 rumble Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.74 2026/06/11 00:39:05 rumble Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpc.c,v 1.75 2026/06/11 01:03:58 rumble Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,6 +142,12 @@ static const struct hpc_device hpc1_devices[] = {
 	  HPC1_SCSI0_DEVREGS, HPC1_SCSI0_REGS,
 	  23,
 	  HPCDEV_IP24 },
+
+	{ "haud",	/* Personal Iris/Indigo Hollywood Audio DSP */
+	  HPC_BASE_ADDRESS_0,
+	  HPC1_DSP_DEVREGS, HPC1_DSP_SRAM,
+	  8 + 4, /* IRQ_LOCAL1 + 4 */
+	  HPCDEV_IP12 | HPCDEV_IP20 },
 
 	{ NULL,
 	  0,
