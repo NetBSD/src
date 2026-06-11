@@ -1,4 +1,4 @@
-# $NetBSD: tzdata2netbsd,v 1.19 2026/05/13 17:46:00 kre Exp $
+# $NetBSD: tzdata2netbsd,v 1.20 2026/06/11 16:50:18 kre Exp $
 
 # For use by NetBSD developers when updating to new versions of tzdata.
 #
@@ -1009,7 +1009,7 @@ EOF
 		touch "${MERGEDONEFILE}" &&
 		return 0
 
-	if [ -z "$( ht resolve -l | grep -v '^R' >/dev/null 2>&1 )" ]
+	if [ -z "$( hg resolve -l | grep -v '^R' >/dev/null 2>&1 )" ]
 	then
 		# All conflicts already resolved, just note that
 		printf 'Auto-resolving merge "conflicts"\n.'
@@ -1028,6 +1028,9 @@ EOF
 	    'as each file listed above is corrected.' ''		\
 	    'Then re-run this script.'
 
+	# Don't repeat the above if there are unresolved conflicts,
+	# Rather hgcommitmerge() will refuse to proceed until they
+	# are fixed.
 	touch "${MERGEDONEFILE}"
 	exit 1
 }
@@ -1197,10 +1200,18 @@ hgcommitmerge()
 	if ! hg resolve -l
 	then
 		cat >&2 <<EOF
+
 There still appear to be conflicts in the files listed above.
-Not performing hg commit.   Resolve conflicts first.
+
+Not performing hg commit.
+
+Resolve conflicts first.  Use:
+	hg resolve -l
+to discover what remains to be done (marked 'U') and then:
+	hg resolve -m file...
+as each conflict has been fixed, until no unresolved conflicts remain.
 EOF
-		return 1
+		exit 1
 	fi
 	if [ -e "${COMMITMERGEDONEFILE}" ]; then
 		cat >&2 <<EOF
