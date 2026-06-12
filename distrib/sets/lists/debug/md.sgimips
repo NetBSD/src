@@ -1,3 +1,6 @@
-# $NetBSD: md.sgimips,v 1.4 2024/07/11 20:41:08 riastradh Exp $
+# $NetBSD: md.sgimips,v 1.5 2026/06/12 05:36:50 kre Exp $
 #
+
+./usr/libdata/debug/usr/bin/haudfw.debug	base-util-debug			debug
+./usr/libdata/debug/usr/bin/undist.debug	base-util-debug			debug
 ./usr/libdata/debug/usr/mdec/sgivol.debug	comp-sysutil-debug		debug
