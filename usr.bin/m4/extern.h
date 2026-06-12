@@ -1,5 +1,5 @@
 /*	$OpenBSD: extern.h,v 1.49 2009/10/14 17:19:47 sthen Exp $	*/
-/*	$NetBSD: extern.h,v 1.21 2026/06/10 22:25:02 christos Exp $	*/
+/*	$NetBSD: extern.h,v 1.22 2026/06/12 00:35:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -105,7 +105,7 @@ extern void	getdiv(int);
 extern ptrdiff_t doindex(const char *, const char *);
 extern void 	initspaces(void);
 extern void	killdiv(void);
-extern void	onintr(int);
+extern __dead void	onintr(int);
 extern void	pbnum(int);
 extern void	pbnumbase(int, int, int);
 extern void	pbunsigned(unsigned long);
@@ -121,7 +121,7 @@ extern void	usage(FILE *);
 extern void	resizedivs(int);
 extern size_t	buffer_mark(void);
 extern void	dump_buffer(FILE *, size_t);
-extern void	__dead m4errx(int, const char *, ...) __printflike(2, 3);
+extern __dead void m4errx(int, const char *, ...) __printflike(2, 3);
 
 extern int 	obtain_char(struct input_file *);
 extern void	set_input(struct input_file *, FILE *, const char *);

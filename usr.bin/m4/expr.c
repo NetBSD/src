@@ -1,4 +1,4 @@
-/*	$NetBSD: expr.c,v 1.22 2026/06/10 22:25:02 christos Exp $	*/
+/*	$NetBSD: expr.c,v 1.23 2026/06/12 00:35:01 christos Exp $	*/
 /* $OpenBSD: expr.c,v 1.18 2010/09/07 19:58:09 marco Exp $ */
 /*
  * Copyright (c) 2004 Marc Espie <espie@cvs.openbsd.org>
@@ -19,7 +19,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expr.c,v 1.22 2026/06/10 22:25:02 christos Exp $");
+__RCSID("$NetBSD: expr.c,v 1.23 2026/06/12 00:35:01 christos Exp $");
 #include <stdint.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -37,7 +37,7 @@ int
 yyerror(const char *msg)
 {
 	fprintf(stderr, "m4:%s:%lu: %s in expr %s\n", infile[ilevel].name,
-	    infile[ilevel].lineno, msg, copy_toeval);
+	    TOKEN_LINE(&infile[ilevel]), msg, copy_toeval);
 	return(0);
 }
 

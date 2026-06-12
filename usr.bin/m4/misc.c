@@ -1,5 +1,5 @@
 /*	$OpenBSD: misc.c,v 1.50 2026/02/25 05:37:25 op Exp $	*/
-/*	$NetBSD: misc.c,v 1.26 2026/06/10 22:25:02 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.27 2026/06/12 00:35:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -36,7 +36,7 @@
 #include "nbtool_config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: misc.c,v 1.26 2026/06/10 22:25:02 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.27 2026/06/12 00:35:01 christos Exp $");
 #include <sys/types.h>
 #include <errno.h>
 #include <unistd.h>
@@ -420,7 +420,7 @@ void
 do_emit_synchline(void)
 {
 	fprintf(active, "#line %lu \"%s\"\n",
-	    infile[ilevel].lineno, infile[ilevel].name);
+	    TOKEN_LINE(&infile[ilevel]), infile[ilevel].name);
 	infile[ilevel].synch_lineno = infile[ilevel].lineno;
 }
 
