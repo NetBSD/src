@@ -1,4 +1,4 @@
-/*	$NetBSD: elf2ecoff.c,v 1.41 2026/01/11 08:19:12 tsutsui Exp $	*/
+/*	$NetBSD: elf2ecoff.c,v 1.42 2026/06/12 05:32:25 rumble Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone
@@ -76,6 +76,9 @@ struct ecoff_syms {
 
 int debug = 0;
 
+#if BYTE_ORDER != BIG_ENDIAN && BYTE_ORDER != LITTLE_ENDIAN
+#error "unknown endian"
+#endif
 static int     needswap;
 
 static int     phcmp(Elf32_Phdr *, Elf32_Phdr *);
@@ -97,6 +100,44 @@ static void    bswap32_region(int32_t* , int);
 static void    elf_read_syms(struct elf_syms *, int, off_t, off_t, off_t,
     off_t);
 
+
+static void
+debug_printf(int level, const char *format, ...)
+{
+	if (debug >= level) {
+		va_list ap;
+		va_start(ap, format);
+		vfprintf(stderr, format, ap);
+		va_end(ap);
+	}
+}
+
+static void
+usage(void)
+{
+	fprintf(stderr,
+	    "Usage: %s [-sv] <elf executable> <ECOFF executable>\n",
+	    getprogname());
+	exit(1);
+}
+
+static int
+is_mipsel(const Elf32_Ehdr *ex)
+{
+	if (ex->e_ident[EI_DATA] == ELFDATA2LSB)
+		return 1;
+	if (ex->e_ident[EI_DATA] == ELFDATA2MSB)
+		return 0;
+	errx(1, "invalid ELF byte order %d", ex->e_ident[EI_DATA]);
+}
+
+static int
+is_different_endianness(const Elf32_Ehdr *ex)
+{
+	const int input_is_mipsel = is_mipsel(ex);
+	const int runtime_is_mipsel = (BYTE_ORDER == LITTLE_ENDIAN);
+	return input_is_mipsel != runtime_is_mipsel;
+}
 
 int
 main(int argc, char **argv)
@@ -123,45 +164,39 @@ main(int argc, char **argv)
 	text.len = data.len = bss.len = 0;
 	text.vaddr = data.vaddr = bss.vaddr = 0;
 
-	/* Check args... */
-	if (argc < 3 || argc > 4) {
-usage:
-		fprintf(stderr,
-		    "Usage: %s <elf executable> <ECOFF executable> [-s]\n",
-		    getprogname());
-		exit(1);
+	int ch;
+	while ((ch = getopt(argc, argv, "sv")) != -1) {
+		switch (ch) {
+		case 'v':
+			debug++;
+			break;
+		case 's':
+		case '?':
+		default:
+			usage();
+		}
 	}
-	if (argc == 4) {
-		if (strcmp(argv[3], "-s"))
-			goto usage;
+	argv += optind;
+	argc -= optind;
+	if (argc != 2) {
+		usage();
 	}
+
 	/* Try the input file... */
-	if ((infile = open(argv[1], O_RDONLY)) < 0)
-		err(1, "Can't open %s for read", argv[1]);
+	if ((infile = open(argv[0], O_RDONLY)) < 0)
+		err(1, "Can't open %s for read", argv[0]);
 	/* Read the header, which is at the beginning of the file... */
 	i = read(infile, &ex, sizeof ex);
 	if (i != sizeof ex)
-		err(1, "Short header read from %s", argv[1]);
+		err(1, "Short header read from %s", argv[0]);
 	if (ex.e_ident[EI_DATA] == ELFDATA2LSB)
 		mipsel = 1;
 	else if (ex.e_ident[EI_DATA] == ELFDATA2MSB)
 		mipsel = 0;
 	else
 		errx(1, "invalid ELF byte order %d", ex.e_ident[EI_DATA]);
-#if BYTE_ORDER == BIG_ENDIAN
-	if (mipsel)
-		needswap = 1;
-	else
-		needswap = 0;
-#elif BYTE_ORDER == LITTLE_ENDIAN
-	if (mipsel)
-		needswap = 0;
-	else
-		needswap = 1;
-#else
-#error "unknown endian"
-#endif
 
+	needswap = is_different_endianness(&ex);
 	if (needswap) {
 		ex.e_type	= bswap16(ex.e_type);
 		ex.e_machine	= bswap16(ex.e_machine);
@@ -227,11 +262,8 @@ usage:
 		case PT_MIPS_ABIFLAGS:
 		case PT_MIPS_REGINFO:
 			/* Section types we can ignore... */
-			if (debug) {
-				fprintf(stderr, "  skipping PH %zu type %#x "
-				    "flags %#x\n",
-				    i, ph[i].p_type, ph[i].p_flags);
-			}
+			debug_printf(1, "  skipping PH %zu type %#x "
+			    "flags %#x\n", i, ph[i].p_type, ph[i].p_flags);
 			continue;
 		default:
 			/* Section types we can't handle... */
@@ -248,12 +280,9 @@ usage:
 			nbss.vaddr = ph[i].p_vaddr + ph[i].p_filesz;
 			nbss.len = ph[i].p_memsz - ph[i].p_filesz;
 
-			if (debug) {
-				fprintf(stderr, "  combining PH %zu type %d "
-				    "flags %#x with data, ndata = %d, "
-				    "nbss =%d\n", i, ph[i].p_type,
-				    ph[i].p_flags, ndata.len, nbss.len);
-			}
+			debug_printf(1, "  combining PH %zu type %d flags %#x "
+			    "with data, ndata = %d, nbss = %d\n", i,
+			    ph[i].p_type, ph[i].p_flags, ndata.len, nbss.len);
 			combine(&data, &ndata, 0);
 			combine(&bss, &nbss, 1);
 		} else {
@@ -261,11 +290,9 @@ usage:
 
 			ntxt.vaddr = ph[i].p_vaddr;
 			ntxt.len = ph[i].p_filesz;
-			if (debug) {
-				fprintf(stderr, "  combining PH %zu type %d "
-				    "flags %#x with text, len = %d\n",
-				    i, ph[i].p_type, ph[i].p_flags, ntxt.len);
-			}
+			debug_printf(1, "  combining PH %zu type %d flags %#x "
+			    "with text, len = %d\n", i, ph[i].p_type,
+			    ph[i].p_flags, ntxt.len);
 			combine(&text, &ntxt, 0);
 		}
 		/* Remember the lowest segment start address. */
@@ -361,34 +388,29 @@ usage:
 	}
 
 	/* Make the output file... */
-	if ((outfile = open(argv[2], O_WRONLY | O_CREAT, 0777)) < 0)
-		err(1, "Unable to create %s", argv[2]);
+	if ((outfile = open(argv[1], O_WRONLY | O_CREAT, 0777)) < 0)
+		err(1, "Unable to create %s", argv[1]);
 
 	/* Truncate file... */
 	if (ftruncate(outfile, 0)) {
-		warn("ftruncate %s", argv[2]);
+		warn("ftruncate %s", argv[1]);
 	}
 	/* Write the headers... */
 	safewrite(outfile, &ep.f, sizeof(ep.f), "ep.f: write");
-	if (debug)
-		fprintf(stderr, "wrote %zu byte file header.\n", sizeof(ep.f));
+	debug_printf(1, "wrote %zu byte file header.\n", sizeof(ep.f));
 
 	safewrite(outfile, &ep.a, sizeof(ep.a), "ep.a: write");
-	if (debug)
-		fprintf(stderr, "wrote %zu byte a.out header.\n", sizeof(ep.a));
+	debug_printf(1, "wrote %zu byte a.out header.\n", sizeof(ep.a));
 
 	safewrite(outfile, &esecs, sizeof(esecs[0]) * nsecs, "esecs: write");
-	if (debug)
-		fprintf(stderr, "wrote %zu bytes of section headers.\n",
-		    sizeof(esecs[0]) * nsecs);
-
+	debug_printf(1, "wrote %zu bytes of section headers.\n",
+	    sizeof(esecs[0]) * nsecs);
 
 	pad = ((sizeof ep.f + sizeof ep.a + sizeof esecs) & 15);
 	if (pad) {
 		pad = 16 - pad;
 		pad16(outfile, pad, "ipad: write");
-		if (debug)
-			fprintf(stderr, "wrote %d byte pad.\n", pad);
+		debug_printf(1, "wrote %d byte pad.\n", pad);
 	}
 	/* Copy the loadable sections.   Zero-fill any gaps less than 64k;
 	 * complain about any zero-filling, and die if we're asked to
@@ -403,9 +425,8 @@ usage:
 				if (gap > 65536)
 					errx(1, "Intersegment gap (%d bytes) "
 					    "too large", gap);
-				if (debug)
-					fprintf(stderr, "Warning: %d byte "
-					    "intersegment gap.\n", gap);
+				debug_printf(1, "Warning: %d byte "
+				    "intersegment gap.\n", gap);
 				memset(obuf, 0, sizeof obuf);
 				while (gap) {
 					int count = write(outfile, obuf,
@@ -416,21 +437,17 @@ usage:
 					gap -= count;
 				}
 			}
-			if (debug)
-				fprintf(stderr, "writing %d bytes...\n",
-				    ph[i].p_filesz);
+			debug_printf(1, "writing %d bytes...\n",
+			    ph[i].p_filesz);
 			copy(outfile, infile, ph[i].p_offset, ph[i].p_filesz);
 			cur_vma = ph[i].p_vaddr + ph[i].p_filesz;
 		}
 	}
 
 
-	if (debug) {
-		uint32_t symptr = needswap ? bswap32(ep.f.f_symptr) : ep.f.f_symptr;
-		fprintf(stderr, "writing symhdr at offset %#x, "
-		    "syms at offset %#x\n", symptr,
-		    (uint32_t)(symptr + sizeof(symhdr)));
-	}
+	uint32_t symptr = needswap ? bswap32(ep.f.f_symptr) : ep.f.f_symptr;
+	debug_printf(1, "writing symhdr at offset %#x, syms at offset %#x\n",
+	    symptr, (uint32_t)(symptr + sizeof(symhdr)));
 
 	/* Copy and translate the symbol table... */
 	elf_symbol_table_to_ecoff(outfile, infile, &ep,
@@ -530,6 +547,8 @@ safewrite(int outfile, const void *buf, off_t len, const char *msg)
 {
 	ssize_t     written;
 
+	debug_printf(2, "writing %u bytes at offset 0x%x [%s]\n",
+	    (uint32_t)len, (uint32_t)lseek(outfile, 0, SEEK_CUR), msg);
 	written = write(outfile, buf, len);
 	if (written != len)
 		err(1, "%s", msg);
@@ -594,12 +613,9 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
     int32_t extsymoff, int32_t extstroff, int32_t strsize)
 {
 
-	if (debug) {
-		uint32_t symptr = needswap ? bswap32(ep->f.f_symptr) : ep->f.f_symptr;
-		fprintf(stderr,
-		    "writing symhdr for %d entries at offset %#x\n",
-		    nesyms, symptr);
-	}
+	uint32_t symptr = needswap ? bswap32(ep->f.f_symptr) : ep->f.f_symptr;
+	debug_printf(1, "writing symhdr for %d entries at offset %#x\n",
+	    nesyms, symptr);
 
 	memset(symhdrp, 0, sizeof(*symhdrp));
 	symhdrp->esymMax = nesyms;
@@ -608,11 +624,8 @@ write_ecoff_symhdr(int out, struct ecoff32_exechdr *ep,
 	symhdrp->cbSsExtOffset = extstroff;
 
 	symhdrp->issExtMax = strsize;
-	if (debug)
-		fprintf(stderr,
-		    "ECOFF symhdr: symhdr %zx, strsize %x, symsize %zx\n",
-		    sizeof(*symhdrp), strsize,
-		    (nesyms * sizeof(struct ecoff32_extsym)));
+	debug_printf(1, "ECOFF symhdr: symhdr %zx, strsize %x, symsize %zx\n",
+	    sizeof(*symhdrp), strsize, (nesyms * sizeof(struct ecoff32_extsym)));
 
 	if (needswap) {
 		bswap32_region(&symhdrp->ilineMax,
@@ -775,14 +788,10 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 
 	/* ECOFF string table could be bigger than the ELF one. */
 	stringsize = compute_stringsize(elfp->elf_syms, nsyms, oldstringbase);
-	if (debug) {
-		fprintf(stderr,
-		    "%zu (0x%zx) bytes ELF string table\n",
-		    (size_t)elfp->stringsize, (size_t)elfp->stringsize);
-		fprintf(stderr,
-		    "%zu (0x%zx) bytes required for ECOFF string table\n",
-		    stringsize, stringsize);
-	}
+	debug_printf(1, "%zu (0x%zx) bytes ELF string table\n",
+	    (size_t)elfp->stringsize, (size_t)elfp->stringsize);
+	debug_printf(1, "%zu (0x%zx) bytes required for ECOFF string table\n",
+	    stringsize, stringsize);
 	newstrings = malloc(stringsize);
 	if (newstrings == NULL)
 		errx(1, "No memory for new string table");
@@ -819,10 +828,8 @@ translate_syms(struct elf_syms *elfp, struct ecoff_syms *ecoffp)
 	ecoffp->nsymbols = idx;
 	ecoffp->stringtab = newstrings;
 	ecoffp->stringsize = nsp - newstrings;
-	if (debug)
-		fprintf(stderr,
-		    "%zu (0x%zx) bytes used for ECOFF string table\n",
-		    (size_t)ecoffp->stringsize, (size_t)ecoffp->stringsize);
+	debug_printf(1, "%zu (0x%zx) bytes used for ECOFF string table\n",
+	    (size_t)ecoffp->stringsize, (size_t)ecoffp->stringsize);
 }
 /*
  * pad to a 16-byte boundary
