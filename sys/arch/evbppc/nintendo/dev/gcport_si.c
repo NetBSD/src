@@ -46,24 +46,26 @@ __KERNEL_RCSID(0, "$NetBSD: gcport_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp 
 #include "si.h"
 #include "joybus.h"
 
-struct si_payload {
-	uint32_t 	insize;		/* bytes to receive. max 128 */
-	uint32_t 	outsize;	/* bytes to send. max 128 */
-	uint32_t	*status;	/* sisr status for this channel */
-	void		*in;		/* buffer to store response */
-	void		*out;		/* buffer to send out to device */
+struct si_control_payload {
+	uint32_t	insize;
+	uint32_t	outsize;
 };
 
 extern struct cfdriver gcport_cd;
 
-#define SI_SEND		_IOWR(0, 1, struct si_payload)
+#define SI_CTRL_GET	_IOWR(0, 1, struct si_control)
+#define SI_CTRL_SET	_IOWR(0, 2, struct si_control_payload)
 
-static int gcport_si_match(device_t, cfdata_t, void *);
 static void gcport_si_attach(device_t, device_t, void *);
+static int gcport_si_match(device_t, cfdata_t, void *);
+static int gcport_si_read(dev_t, struct uio *, int);
+static int gcport_si_write(dev_t, struct uio *, int);
 static int gcport_si_print(void *, const char *);
-static int gcport_si_rescan(device_t, const char *, const int *);
-static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
-static void gcport_si_work(struct work *, void *);
+
+static void gcport_work(struct work *, void *);
+
+static int siioctl_ctrl_get(struct gcport_softc *, struct si_control *);
+static int siioctl_ctrl_set(struct gcport_softc *, struct si_control_payload *);
 
 dev_type_open(gcport_open);
 dev_type_close(gcport_close);
@@ -73,8 +75,8 @@ const struct cdevsw gcport_cdevsw = {
 	.d_open = gcport_open,
 	.d_close = gcport_close,
 	.d_ioctl = gcport_ioctl,
-	.d_read = noread,
-	.d_write = nowrite,
+	.d_read = gcport_si_read,
+	.d_write = gcport_si_write,
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
@@ -100,6 +102,7 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	struct si_attach_args * const saa = aux;
 	struct gcport_softc * const sc = device_private(self);
 	struct si_channel *ch = &psc->sc_chan[saa->saa_index];
+	struct si_control *ctrl = &sc->ctrl;
 	int err;
 
 	sc->sc_dev = self;
@@ -107,15 +110,19 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = psc->sc_bst;
 	sc->sc_bsh = psc->sc_bsh;
 	ch->ch_gcport_dev = self;
+	ch->ch_gcport_sc = sc;
 
-	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, ch,
-	    PRI_NONE, IPL_VM, 0);
+	ctrl->insize = 0;
+	ctrl->outsize = 0;
+	ctrl->status = SI_AVAILABLE;
+
+	err = workqueue_create(&sc->wqp, "gcport_rdstint",
+	    gcport_work, sc, PRI_NONE, IPL_VM, 0);
 	if (err != 0) {
 		aprint_normal("gcport_si: ch%d failed to create workqueue\n",
 		    ch->ch_index);
-		ch->ch_wqp = NULL;
+		sc->wqp = NULL;
 	}
-	gcport_si_rescan(self, NULL, NULL);
 }
 
 static int
@@ -180,52 +187,18 @@ gcport_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-static int
-gcport_si_rescan(device_t self, const char *ifattr, const int *locs)
-{
-	struct si_attach_args saa;
-	unsigned is_gcpad;
-	int res;
-	device_t uhid_dev;
-	struct gcport_softc * const gsc = device_private(self);
-	struct si_channel *ch = gsc->ch;
-	struct si_softc *sc = ch->ch_sc;
-
-	ch->ch_id = si_identify(sc, ch->ch_index);
-	is_gcpad = IS_GCPAD(ch->ch_id);
-
-	if (is_gcpad && ch->ch_uhid_dev == NULL) {
-		saa.saa_hidev = &ch->ch_hidev;
-		saa.saa_index = ch->ch_index;
-		uhid_dev = config_found(self, &saa, gcport_si_print, CFARGS_NONE);
-		ch->ch_uhid_dev = uhid_dev;
-	} else if (!is_gcpad && ch->ch_uhid_dev != NULL) {
-		res = config_detach_children(ch->ch_gcport_dev, 0);
-		if (res == 0) {
-			ch->ch_uhid_dev = NULL;
-		}
-	}
-
-	return 0;
-
-}
-
-void gcport_si_work(struct work *wk, void *arg)
-{
-	struct si_channel *ch = arg;
-	gcport_si_rescan(ch->ch_gcport_dev, NULL, NULL);
-}
-
 int
 gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
-	struct si_channel *ch = sc->ch;
 	int err;
 
 	switch(cmd) {
-	case SI_SEND:
-		err = siioctl_send(ch, (struct si_payload *)data);
+	case SI_CTRL_GET:
+		err = siioctl_ctrl_get(sc, (struct si_control *)data);
+		break;
+	case SI_CTRL_SET:
+		err = siioctl_ctrl_set(sc, (struct si_control_payload *)data);
 		break;
 	default:
 		err = EINVAL;
@@ -236,42 +209,118 @@ gcport_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 }
 
 static int
-siioctl_send(struct si_channel *ch, struct si_payload *p)
+gcport_si_read(dev_t dev, struct uio *uio, int ioflag)
 {
-	int err, outsize_r, insize_r;
-	struct si_softc *sc;
-	struct siio_send sd;
+	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
+	struct si_packet *pk = &sc->pk;
+	struct si_channel *ch = sc->ch;
+	struct si_control *ctrl = &sc->ctrl;
+	int err, insize_r, outsize_r;
 
-	err = 0;
-	sc = ch->ch_sc;
+
+	if (ctrl->status != SI_COMPLETE) {
+		return EBUSY;
+	}
+
+	outsize_r = roundup(ctrl->outsize, 4);
+	insize_r = roundup(ctrl->insize, 4);
+
+	err = uiomove(pk->in, ctrl->insize, uio);
+	kmem_free(pk->out, outsize_r);
+	kmem_free(pk->in, insize_r);
+
+	mutex_enter(&ch->ch_lock);
+	ctrl->status = SI_AVAILABLE;
+	mutex_exit(&ch->ch_lock);
+
+	return err;
+}
+
+static int
+gcport_si_write(dev_t dev, struct uio *uio, int ioflag)
+{
+	struct gcport_softc *sc = device_lookup_private(&gcport_cd, minor(dev));
+	struct si_packet *pk = &sc->pk;
+	struct si_control *ctrl = &sc->ctrl;
+	struct si_channel *ch = sc->ch;
+	int err, outsize_r, insize_r;
+
+	if (ctrl->status != SI_AVAILABLE) {
+		return EBUSY;
+	}
 
 	/* siiobuf must to be written in increments of 4 bytes */
-	outsize_r = roundup(p->outsize, 4);
-	insize_r = roundup(p->insize, 4);
+	outsize_r = roundup(ctrl->outsize, 4);
+	insize_r = roundup(ctrl->insize, 4);
 
-	sd.out = kmem_zalloc(outsize_r, KM_SLEEP);
-	sd.in = kmem_zalloc(insize_r, KM_SLEEP);
-	sd.chan = ch->ch_index;
-	sd.outsize = p->outsize;
-	sd.insize = p->insize;
-
-	if ((err = copyin(p->out, sd.out, sd.outsize)) != 0) {
-		goto si_send_cleanup;
+	if (outsize_r > SIIOBUF_SIZE || insize_r > SIIOBUF_SIZE) {
+		return EINVAL;
 	}
 
-	if ((err = si_send(sc, &sd)) != 0) {
-		goto si_send_cleanup;
+	mutex_enter(&ch->ch_lock);
+	pk->out = kmem_zalloc(outsize_r, KM_SLEEP);
+	pk->in = kmem_zalloc(insize_r, KM_SLEEP);
+	pk->chan = ch->ch_index;
+	pk->outsize = ctrl->outsize;
+	pk->insize = ctrl->insize;
+
+	err = uiomove(pk->out, pk->outsize, uio);
+	mutex_exit(&ch->ch_lock);
+
+	if (err == 0) {
+		si_send(ch->ch_sc, pk);
 	}
 
-	if ((err = copyout(sd.in, p->in, sd.insize)) != 0) {
-		goto si_send_cleanup;
-	}
-
-	if ((err = copyout(&sd.status, p->status, sizeof(uint32_t))) != 0) {
-		goto si_send_cleanup;
-	}
-si_send_cleanup:
-	kmem_free(sd.out, outsize_r);
-	kmem_free(sd.in, insize_r);
 	return err;
+}
+
+static void
+gcport_work(struct work *wk, void *arg)
+{
+	struct si_attach_args saa;
+	struct gcport_softc *sc;
+	struct si_channel *ch;
+	int res;
+
+	sc = arg;
+	ch = sc->ch;
+
+	if (ch->ch_uhid_dev == NULL) {
+		saa.saa_hidev = &ch->ch_hidev;
+		saa.saa_index = ch->ch_index;
+		ch->ch_uhid_dev = config_found(sc->sc_dev, &saa,
+		    gcport_si_print, CFARGS_NONE);
+	} else {
+		res = config_detach_children(ch->ch_gcport_dev, 0);
+		if (res == 0) {
+			ch->ch_uhid_dev = NULL;
+		}
+	}
+}
+
+static int
+siioctl_ctrl_get(struct gcport_softc *sc, struct si_control *ctrl_out)
+{
+	struct si_control *ctrl = &sc->ctrl;
+
+	ctrl_out->insize = ctrl->insize;
+	ctrl_out->outsize = ctrl->outsize;
+	ctrl_out->status = ctrl->status;
+
+	return 0;
+}
+
+static int
+siioctl_ctrl_set(struct gcport_softc *sc, struct si_control_payload *p)
+{
+	struct si_control *ctrl = &sc->ctrl;
+
+	if (ctrl->status != SI_AVAILABLE) {
+		return EBUSY;
+	}
+
+	ctrl->insize = p->insize;
+	ctrl->outsize = p->outsize;
+
+	return 0;
 }

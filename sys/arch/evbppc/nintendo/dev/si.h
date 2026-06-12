@@ -107,10 +107,19 @@
 #define AWAIT_SICOMCSR(sc)	 					\
 	do { while (RD4(sc, SICOMCSR) & SICOMCSR_TSTART); } while (0)
 
+
+#define SI_AVAILABLE	0	/* can perform a transaction */
+#define SI_READY	1	/* transaction is ready to be sent */
+#define SI_PENDING	2	/* another transaction in progress. wait */
+#define SI_ACTIVE	3	/* transaction is in flight */
+#define SI_COMPLETE	4	/* transaction compelted */
+
 struct si_softc;
+struct si_packet;
 
 struct si_channel {
 	struct si_softc		*ch_sc;
+	struct gcport_softc	*ch_gcport_sc;
 	device_t		ch_dev;
 	device_t		ch_gcport_dev;
 	device_t		ch_uhid_dev;
@@ -129,8 +138,6 @@ struct si_channel {
 	void			*ch_desc;
 	int			ch_descsize;
 	void			*ch_si;
-	struct workqueue	*ch_wqp;
-	struct work		ch_work;
 };
 
 struct si_softc {
@@ -139,6 +146,8 @@ struct si_softc {
 	bus_space_handle_t	sc_bsh;
 
 	struct si_channel	sc_chan[SI_NUM_CHAN];
+	struct workqueue	*wqp;
+	struct work		work;
 };
 
 struct si_attach_args {
@@ -146,16 +155,14 @@ struct si_attach_args {
 	int			saa_index;
 };
 
-struct gcport_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
-
-	struct si_channel	*ch;
+struct si_control {
+	uint32_t	insize;
+	uint32_t	outsize;
+	unsigned	status;
 };
 
-struct siio_send {
-	unsigned	chan;		/* which controller port */
+struct si_packet {
+	unsigned	chan;		/* the channel to send on */
 	uint32_t	status;		/* the sisr result for this channel */
 	uint32_t	insize;		/* number of bytes for in buffer */
 	uint32_t	outsize;	/* number of bytes for out buffer */
@@ -163,7 +170,20 @@ struct siio_send {
 	uint32_t	*out;		/* buffer to send out to ext device */
 };
 
-int si_send(struct si_softc *sc, struct siio_send *);
-int si_identify(struct si_softc *, unsigned);
+struct gcport_softc {
+	device_t		sc_dev;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
+
+	struct workqueue	*wqp;
+	struct work		work;
+
+	struct si_packet	pk;
+	struct si_control	ctrl;
+	struct si_channel	*ch;
+};
+
+
+int si_send(struct si_softc *sc, struct si_packet *);
 
 #endif /* _WII_DEV_SI_H_ */
