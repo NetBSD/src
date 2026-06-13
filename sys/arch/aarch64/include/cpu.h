@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.53 2024/12/30 19:17:21 jmcneill Exp $ */
+/* $NetBSD: cpu.h,v 1.54 2026/06/13 12:12:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -152,12 +152,6 @@ struct cpu_info {
 	volatile uint32_t ci_pending_ipls;
 
 	int ci_kfpu_spl;
-
-#if defined(PMAP_MI)
-        struct pmap_tlb_info *ci_tlb_info;
-        struct pmap *ci_pmap_lastuser;
-        struct pmap *ci_pmap_cur;
-#endif
 
 	/* ASID of current pmap */
 	tlb_asid_t ci_pmap_asid_cur;

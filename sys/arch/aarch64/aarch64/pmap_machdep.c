@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.17 2026/05/25 07:16:42 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.18 2026/06/13 12:12:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.17 2026/05/25 07:16:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.18 2026/06/13 12:12:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -460,8 +460,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialise the kernel pmap object
 	 */
-	curcpu()->ci_pmap_cur = pm;
-
 	virtual_avail = vstart;
 	virtual_end = vend;
 
