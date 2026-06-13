@@ -1,4 +1,4 @@
-/*	$NetBSD: 4xx_trap_subr.S,v 1.10 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: 4xx_trap_subr.S,v 1.11 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -35,7 +35,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* This file provides necessary handlers for 405GP CPU
+/* This file provides necessary handlers for 405 and 440 CPUs
  * It should be included in locore.S after powerpc/ibm4xx/trap_subr.S
  */
 
@@ -95,12 +95,26 @@ s4xx_miss:
 	.globl	_C_LABEL(pmap_tlbmiss)
 
 	/* If the kernel stack would fault, don't use it. */
+#ifdef PPC_IBM440
+	mfspr	%r30,SPR_MMUCR
+	lis	%r31,0xfffe
+	ori	%r31,%r31,0xff00	/* ~(MMUCR_STS|MMUCR_STID) */
+	and	%r31,%r30,%r31
+	oris	%r31,%r31,0x0001	/* MMUCR_STS */
+	ori	%r31,%r31,KERNEL_PID
+	mtspr	SPR_MMUCR,%r31
+	isync
+	li	%r31,-FRAMELEN
+	tlbsx.	%r31,%r31,%r1
+	mtspr	SPR_MMUCR,%r30
+#else
 	mfspr	%r30,SPR_PID
 	li	%r31,KERNEL_PID
 	mtspr	SPR_PID,%r31
 	li	%r31,-FRAMELEN
 	tlbsx.	%r31,%r31,%r1
 	mtspr	SPR_PID,%r30
+#endif
 	beq	1f
 
 	/*

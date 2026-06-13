@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.33 2022/10/05 08:18:00 rin Exp $	*/
+/*	$NetBSD: clock.c,v 1.34 2026/06/13 20:16:23 rkujawa Exp $	*/
 /*      $OpenBSD: clock.c,v 1.3 1997/10/13 13:42:53 pefo Exp $  */
 
 /*
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2022/10/05 08:18:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.34 2026/06/13 20:16:23 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -58,7 +58,6 @@ __KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.33 2022/10/05 08:18:00 rin Exp $");
  * Initially we assume a processor with a bus frequency of 12.5 MHz.
  */
 static u_long ticks_per_sec;
-static u_long ns_per_tick;
 static long ticks_per_intr;
 static volatile u_long lasttb, lasttb2;
 static u_long ticksmissed;
@@ -82,9 +81,17 @@ void stat_intr(struct clockframe *);	/* called from trap_subr.S */
 #define PERIOD_POWER	17
 #define TCR_PERIOD	TCR_FP_2_17
 #else
-/* Stat clock runs at ~ 95Hz */
+/* Stat clock runs at ~ 550Hz (440) / ~95Hz (405) */
 #define PERIOD_POWER	21
 #define TCR_PERIOD	TCR_FP_2_21
+#endif
+
+#ifdef PPC_IBM440
+/*
+ * tprof sampling shares the FIT
+ */
+void (*ibm4xx_tprof_samplefn)(struct clockframe *);
+u_int ibm4xx_tprof_div;
 #endif
 
 
@@ -96,6 +103,20 @@ stat_intr(struct clockframe *frame)
 	mtspr(SPR_TSR, TSR_FIS);	/* Clear TSR[FIS] */
 	ci->ci_data.cpu_nintr++;
 	ci->ci_ev_statclock.ev_count++;
+
+#ifdef PPC_IBM440
+	if (ibm4xx_tprof_div != 0) {
+		static u_int statdiv;
+
+		/* take a PC sample every (fast) FIT tick. */
+		(*ibm4xx_tprof_samplefn)(frame);
+
+		/* statclock only every ibm4xx_tprof_div ticks. */
+		if (++statdiv < ibm4xx_tprof_div)
+			return;
+		statdiv = 0;
+	}
+#endif
 
 	/* Nobody can interrupt us, but see if we're allowed to run. */
 	int s = splclock();
@@ -184,10 +205,22 @@ cpu_initclocks(void)
 	    ticks_per_intr);
 
 	lasttb2 = lasttb = mftbl();
+#ifdef PPC_IBM440
+	/*
+	 * PIT is replaced by the decrementer!
+	 * TCR/TSR bit positions match.
+	 */
+	mtspr(SPR_DECAR, ticks_per_intr);
+	mtspr(SPR_DEC, ticks_per_intr);
+
+	/* Enable DEC & FIT interrupts and auto-reload */
+	mtspr(SPR_TCR, TCR_DIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
+#else
 	mtspr(SPR_PIT, ticks_per_intr);
 
 	/* Enable PIT & FIT(2^17c = 0.655ms) interrupts and auto-reload */
 	mtspr(SPR_TCR, TCR_PIE | TCR_ARE | TCR_FIE | TCR_PERIOD);
+#endif
 
 	init_ppc4xx_tc();
 }
@@ -208,8 +241,6 @@ calc_delayconst(void)
 	else
 #endif
 		ticks_per_sec = (u_long) prop_number_integer_value(freq);
-
-	ns_per_tick = 1000000000 / ticks_per_sec;
 }
 
 static u_int
@@ -235,8 +266,8 @@ delay(unsigned int n)
 	u_long tbh, tbl, scratch;
 
 	tb = mftb();
-	/* use 1000ULL to force 64 bit math to avoid 32 bit overflows */
-	tb += (n * 1000ULL + ns_per_tick - 1) / ns_per_tick;
+	/* Math must handle clock speed above 1GHz. */
+	tb += ((u_quad_t)n * ticks_per_sec + 999999) / 1000000;
 	tbh = tb >> 32;
 	tbl = tb;
 	__asm volatile (

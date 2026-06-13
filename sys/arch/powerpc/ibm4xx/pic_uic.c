@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_uic.c,v 1.9 2021/03/05 05:35:50 rin Exp $	*/
+/*	$NetBSD: pic_uic.c,v 1.10 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.9 2021/03/05 05:35:50 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_uic.c,v 1.10 2026/06/13 20:16:23 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -199,7 +199,16 @@ struct pic_ops pic_uic0 = {
 
 #ifdef MULTIUIC
 
-/* 440EP/440GP/440SP/405EX/440SPe/440GX */
+/*
+ * Cascade inputs on UIC0.  The defaults match the 405EX; SoCs with
+ * different wiring should override via options in the kernel config.
+ */
+#ifndef UIC1_CASCADE_IRQ
+#define	UIC1_CASCADE_IRQ	30
+#endif
+#ifndef UIC2_CASCADE_IRQ
+#define	UIC2_CASCADE_IRQ	28
+#endif
 
 static uint32_t
 uic1_mfdcr_intr_status(void)
@@ -230,8 +239,8 @@ extern struct pic_ops pic_uic1;
 static void
 uic1_finish_setup(struct pic_ops *pic)
 {
-	intr_establish_xname(30, IST_LEVEL, IPL_HIGH, pic_handle_intr,
-	    &pic_uic1, "uic1");
+	intr_establish_xname(UIC1_CASCADE_IRQ, IST_LEVEL, IPL_HIGH,
+	    pic_handle_intr, &pic_uic1, "uic1");
 }
 
 struct uic uic1 = {
@@ -254,8 +263,6 @@ struct pic_ops pic_uic1 = {
 	.pic_finish_setup = uic1_finish_setup,
 	.pic_name = "uic1"
 };
-
-/* 440EP/440GP/440SP/405EX/440SPe */
 
 static uint32_t
 uic2_mfdcr_intr_status(void)
@@ -286,8 +293,8 @@ extern struct pic_ops pic_uic2;
 static void
 uic2_finish_setup(struct pic_ops *pic)
 {
-	intr_establish_xname(28, IST_LEVEL, IPL_HIGH, pic_handle_intr,
-	    &pic_uic2, "uic2");
+	intr_establish_xname(UIC2_CASCADE_IRQ, IST_LEVEL, IPL_HIGH,
+	    pic_handle_intr, &pic_uic2, "uic2");
 }
 
 static struct uic uic2 = {
@@ -310,6 +317,64 @@ struct pic_ops pic_uic2 = {
 	.pic_finish_setup = uic2_finish_setup,
 	.pic_name = "uic2"
 };
+
+#ifdef UIC3_CASCADE_IRQ
+
+static uint32_t
+uic3_mfdcr_intr_status(void)
+{
+	return mfdcr(DCR_UIC3_BASE + DCR_UIC_MSR);
+}
+
+static uint32_t
+uic3_mfdcr_intr_enable(void)
+{
+	return mfdcr(DCR_UIC3_BASE + DCR_UIC_ER);
+}
+
+static void
+uic3_mtdcr_intr_ack(uint32_t v)
+{
+	mtdcr(DCR_UIC3_BASE + DCR_UIC_SR, v);
+}
+
+static void
+uic3_mtdcr_intr_enable(uint32_t v)
+{
+	mtdcr(DCR_UIC3_BASE + DCR_UIC_ER, v);
+}
+
+extern struct pic_ops pic_uic3;
+
+static void
+uic3_finish_setup(struct pic_ops *pic)
+{
+	intr_establish_xname(UIC3_CASCADE_IRQ, IST_LEVEL, IPL_HIGH,
+	    pic_handle_intr, &pic_uic3, "uic3");
+}
+
+static struct uic uic3 = {
+	.uic_intr_enable =	0,
+	.uic_mf_intr_status =	uic3_mfdcr_intr_status,
+	.uic_mf_intr_enable =	uic3_mfdcr_intr_enable,
+	.uic_mt_intr_enable =	uic3_mtdcr_intr_enable,
+	.uic_mt_intr_ack =	uic3_mtdcr_intr_ack,
+};
+
+struct pic_ops pic_uic3 = {
+	.pic_cookie = &uic3,
+	.pic_numintrs = 32,
+	.pic_enable_irq = uic_enable_irq,
+	.pic_reenable_irq = uic_enable_irq,
+	.pic_disable_irq = uic_disable_irq,
+	.pic_establish_irq = uic_establish_irq,
+	.pic_get_irq = uic_get_irq,
+	.pic_ack_irq = uic_ack_irq,
+	.pic_finish_setup = uic3_finish_setup,
+	.pic_name = "uic3"
+};
+
+#endif /* UIC3_CASCADE_IRQ */
 
 #endif /* MULTIUIC */
 #endif /* !PPC_IBM403 */

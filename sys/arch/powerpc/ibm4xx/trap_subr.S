@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.30 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.31 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -76,6 +76,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
+#include "opt_ppcarch.h"
 #endif
 
 /*
@@ -108,8 +109,8 @@
 	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
 	mflr	%r28;			/* save LR */		\
 	mfcr	%r29;			/* save CR */		\
-	mfdear	%r30;						\
-	mfesr	%r31;						\
+	mfspr	%r30,SPR_DEAR;					\
+	mfspr	%r31,SPR_ESR;					\
 	stmw	%r30,(savearea+CPUSAVE_DEAR)(%r1); /* save esr/dear */ \
 	mfsrr0	%r30;						\
 	mfsrr1	%r31; /* Test whether we already had PR set */	\
@@ -121,6 +122,41 @@
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
+#ifdef PPC_IBM440
+/* Book E: critical state is in CSRR0/CSRR1 instead of SRR2/SRR3 */
+#define	CRITICAL_PROLOG(savearea)				\
+	mtsprg1	%r1;			/* save SP */ 		\
+	GET_CPUINFO(%r1);					\
+	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
+	mflr	%r28;			/* save LR */		\
+	mfcr	%r29;			/* save CR */		\
+	mfspr	%r30,SPR_CSRR0; /* Fake a standard trap */	\
+	mfspr	%r31,SPR_CSRR1; /* Test whether we already had PR set */ \
+	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
+	mtcr	%r31;						\
+	bf	MSR_PR,1f;		/* branch if MSR[PR] is clear */ \
+	GET_PCB(%r1);						\
+	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
+1:
+
+/* 440x6/460: machine check state is in MCSRR0/MCSRR1 */
+#define	MCHK_PROLOG(savearea)					\
+	mtsprg1	%r1;			/* save SP */ 		\
+	GET_CPUINFO(%r1);					\
+	stmw	%r28,(savearea+CPUSAVE_R28)(%r1); /* free r28-r31 */ \
+	mflr	%r28;			/* save LR */		\
+	mfcr	%r29;			/* save CR */		\
+	mfspr	%r30,SPR_MCSRR0; /* Fake a standard trap */	\
+	mfspr	%r31,SPR_MCSRR1; /* Test whether we already had PR set */ \
+	stmw	%r30,(savearea+CPUSAVE_SRR0)(%r1); /* save srr0/srr1 */	\
+	mfsprg1	%r1;			/* restore SP */ 	\
+	mtcr	%r31;						\
+	bf	MSR_PR,1f;		/* branch if MSR[PR] is clear */ \
+	GET_PCB(%r1);						\
+	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
+1:
+#else
 #define	CRITICAL_PROLOG(savearea)				\
 	mtsprg1	%r1;			/* save SP */ 		\
 	GET_CPUINFO(%r1);					\
@@ -136,6 +172,7 @@
 	GET_PCB(%r1);						\
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
+#endif /* PPC_IBM440 */
 
 
 /* Standard handler saves r1,r28-31,LR,CR, sets up the stack and calls s_trap */
@@ -155,12 +192,24 @@ _C_LABEL(name ## trap):						\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 
 /* Maybe this should call ddb.... */
+#ifdef PPC_IBM440
+/*
+ * Critical-class traps use their own save area.
+ */
+#define CRITICAL_EXC_HANDLER(name)\
+	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
+_C_LABEL(name ## trap):						\
+	CRITICAL_PROLOG(CI_CRITSAVE);				\
+	bla	s_ctrap;					\
+_C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
+#else
 #define CRITICAL_EXC_HANDLER(name)\
 	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
 _C_LABEL(name ## trap):						\
 	CRITICAL_PROLOG(CI_TEMPSAVE);				\
 	bla	s_trap;						\
 _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
+#endif /* PPC_IBM440 */
 
 #define	INTR_PROLOG(tempsave)					\
 	mtsprg1	%r1;			/* save SP */		\
@@ -177,10 +226,23 @@ _C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
 	addi	%r1,%r1,USPACE-CALLFRAMELEN; /* stack is top of user struct */ \
 1:
 
+/* Machine check handler: separate save/restore regs on 440x6/460 */
+#ifdef PPC_IBM440
+#define MCHK_EXC_HANDLER(name)\
+	.globl	_C_LABEL(name ## trap),_C_LABEL(name ## size) ;	\
+_C_LABEL(name ## trap):						\
+	MCHK_PROLOG(CI_CRITSAVE);				\
+	bla	s_mctrap;					\
+_C_LABEL(name ## size) = .-_C_LABEL(name ## trap)
+#endif
+
 	.text
 	STANDARD_EXC_HANDLER(default)
 	ACCESS_EXC_HANDLER(access)
 	CRITICAL_EXC_HANDLER(critical)
+#ifdef PPC_IBM440
+	MCHK_EXC_HANDLER(mchk)
+#endif
 
 /*
  * This one for the external interrupt handler.
@@ -385,6 +447,80 @@ intrleave_to_user:
 	rfi
 	ba	.	/* Protect against prefetch */
 
+#ifdef PPC_IBM440
+/*
+ * Critical-class (CSRR) and machine-check (MCSRR) s_trap variants 
+ * FRAME_RESTORE with the return state going to CSRR/MCSRR ...
+ */
+#define	FRAME_RESTORE_TO(srr0spr, srr1spr)				\
+	lwz	%r6,FRAME_LR(%r1);					\
+	lwz	%r7,FRAME_CR(%r1);					\
+	lwz	%r8,FRAME_XER(%r1);					\
+	lwz	%r9,FRAME_CTR(%r1);					\
+	lwz	%r10,FRAME_SRR0(%r1);					\
+	lwz	%r11,FRAME_SRR1(%r1);					\
+	mtlr	%r6;							\
+	mtcr	%r7;							\
+	mtxer	%r8;							\
+	mtctr	%r9;							\
+	mtspr	srr0spr,%r10;						\
+	mtspr	srr1spr,%r11;						\
+	lwz	%r13,FRAME_R13(%r1);					\
+	lwz	%r12,FRAME_R12(%r1);					\
+	lwz	%r11,FRAME_R11(%r1);					\
+	lwz	%r10,FRAME_R10(%r1);					\
+	lwz	%r9,FRAME_R9(%r1);					\
+	lwz	%r8,FRAME_R8(%r1);					\
+	lwz	%r7,FRAME_R7(%r1);					\
+	lwz	%r6,FRAME_R6(%r1);					\
+	lwz	%r5,FRAME_R5(%r1);					\
+	lwz	%r4,FRAME_R4(%r1);					\
+	lwz	%r3,FRAME_R3(%r1);					\
+	lwz	%r2,FRAME_R2(%r1);					\
+	lwz	%r0,FRAME_R1(%r1);					\
+	mtsprg1	%r0;							\
+	lwz	%r0,FRAME_R0(%r1)
+
+/* Common tail; ends just before the return-from-interrupt instruction */
+#define	CRIT_LEAVE_PROLOGUE						\
+	mtsprg2	%r30;							\
+	mtsprg3	%r31;							\
+	mfmsr	%r30;							\
+	li	%r31,(PSL_DR|PSL_IR)@l;					\
+	andc	%r30,%r30,%r31;						\
+	lwz	%r31,FRAME_PID(%r1);					\
+	TRAP_IF_ZERO(%r31);						\
+	mfsprg1	%r1;							\
+	mtmsr	%r30;	/* translation off (TS=0) */			\
+	isync;								\
+	mtspr	SPR_PID,%r31;						\
+	mfsprg3	%r31;							\
+	mfsprg2	%r30
+
+s_ctrap:
+	FRAME_SETUP(CI_CRITSAVE)
+	/* R31 = CSRR1 */
+	wrtee	%r31			/* restore EE of interrupted ctx */
+	addi	%r3,%r1,FRAME_TF
+	bl	_C_LABEL(trap)
+	wrteei	0
+	lmw	%r14,FRAME_R14(%r1)	/* restore callee registers */
+	FRAME_RESTORE_TO(SPR_CSRR0, SPR_CSRR1)
+	CRIT_LEAVE_PROLOGUE
+	rfci
+	ba	.	/* Protect against prefetch */
+
+s_mctrap:
+	FRAME_SETUP(CI_CRITSAVE)
+	/* R31 = MCSRR1; do not re-enable interrupts in a machine check */
+	addi	%r3,%r1,FRAME_TF
+	bl	_C_LABEL(trap)
+	lmw	%r14,FRAME_R14(%r1)	/* restore callee registers */
+	FRAME_RESTORE_TO(SPR_MCSRR0, SPR_MCSRR1)
+	CRIT_LEAVE_PROLOGUE
+	rfmci
+	ba	.	/* Protect against prefetch */
+#endif /* PPC_IBM440 */
 
 	.globl	_C_LABEL(sctrap),_C_LABEL(scsize),_C_LABEL(sctrapexit)
 _C_LABEL(sctrap):
@@ -521,3 +657,10 @@ ddbtrap:
 	beq	trapagain
 	b	trapexit
 #endif /* DDB || KGDB */
+
+/*
+ * The FPU-equipped 440 cores use the common lazy FPU ctx
+ */
+#ifdef PPC_IBM440
+#include <powerpc/powerpc/fpu_subr.S>
+#endif

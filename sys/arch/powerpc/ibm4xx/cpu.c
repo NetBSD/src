@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 2022/10/05 08:18:00 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.40 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2022/10/05 08:18:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2026/06/13 20:16:23 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,13 +210,23 @@ static const struct cputab models[] = {
 			.icache_line_size = 32,
 		}
 	}, {
-		.version = PVR_405EX, 
-		.mask = 0xffff0000, 
+		.version = PVR_405EX,
+		.mask = 0xffff0000,
 		.name = "405EX",
 		.ci = {
 			.dcache_size = 16384,
 			.dcache_line_size = 32,
 			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_460EX,
+		.mask = 0xffff0000,
+		.name = "460EX",
+		.ci = {
+			.dcache_size = 32768,
+			.dcache_line_size = 32,
+			.icache_size = 32768,
 			.icache_line_size = 32,
 		}
 	}, {

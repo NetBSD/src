@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.102 2023/10/05 19:41:05 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.103 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -69,7 +69,7 @@
 #define	__UFETCHSTORE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2023/10/05 19:41:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.103 2026/06/13 20:16:23 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -81,10 +81,12 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.102 2023/10/05 19:41:05 ad Exp $");
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
 #include <sys/reboot.h>
 #include <sys/syscall.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #if defined(KGDB)
@@ -361,6 +363,39 @@ sigtrap:
 		trapsignal(l, &ksi);
 		break;
 
+#ifdef PPC_IBM440
+	case EXC_FPU|EXC_USER:
+		curcpu()->ci_data.cpu_ntrap++;
+#ifdef PPC_HAVE_FPU
+		fpu_load();
+#else
+		/* FPU-less 440: emulate like 40x */
+		KSI_INIT_TRAP(&ksi);
+		ksi.ksi_trap = EXC_FPU;
+		ksi.ksi_addr = (void *)tf->tf_srr0;
+
+		pcb = lwp_getpcb(l);
+
+		if (__predict_false(!fpu_used_p(l))) {
+			memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
+			fpu_mark_used(l);
+		}
+
+		if (fpu_emulate(tf, &pcb->pcb_fpu, &ksi)) {
+			if (ksi.ksi_signo == 0)	/* was emulated */
+				break;
+			else if (ksi.ksi_signo == SIGTRAP)
+				goto sigtrap;	/* XXX H/W bug? */
+		} else {
+			ksi.ksi_code = ILL_ILLOPC;
+			ksi.ksi_signo = SIGILL;
+		}
+
+		trapsignal(l, &ksi);
+#endif /* PPC_HAVE_FPU */
+		break;
+#endif /* PPC_IBM440 */
+
 	case EXC_MCHK:
 		{
 			struct faultbuf *fb;
@@ -379,6 +414,32 @@ sigtrap:
 				return;
 			}
 		}
+#ifdef PPC_IBM440
+		/*
+		 * Unrecovered machine check, do what we can.
+		 */
+		{
+			const uint32_t mcsr = mfspr(SPR_MCSR);
+
+			printf("machine check: MCSR 0x%08x MCSRR0 0x%08lx "
+			    "MCSRR1 0x%08lx\n", mcsr,
+			    (u_long)mfspr(SPR_MCSRR0),
+			    (u_long)mfspr(SPR_MCSRR1));
+			printf("machine check cause:%s%s%s%s%s%s%s%s%s%s\n",
+			    (mcsr & MCSR_MCS)  ? " summary"		: "",
+			    (mcsr & MCSR_IB)   ? " insn-PLB"		: "",
+			    (mcsr & MCSR_DRB)  ? " data-read-PLB"	: "",
+			    (mcsr & MCSR_DWB)  ? " data-write-PLB"	: "",
+			    (mcsr & MCSR_TLBP) ? " TLB-parity"		: "",
+			    (mcsr & MCSR_ICP)  ? " Icache-parity"	: "",
+			    (mcsr & MCSR_DCSP) ? " Dcache-search-parity": "",
+			    (mcsr & MCSR_DCFP) ? " Dcache-flush-parity"	: "",
+			    (mcsr & MCSR_IMPE) ? " imprecise"		: "",
+			    (mcsr == 0)        ? " none"		: "");
+			/* MCSR is write-1-to-clear; clear what we read. */
+			mtspr(SPR_MCSR, mcsr);
+		}
+#endif /* PPC_IBM440 */
 		goto brain_damage;
 
 	default:
@@ -426,6 +487,27 @@ extern void vunmaprange(vaddr_t, vsize_t);
 static int bigcopyin(const void *, void *, size_t );
 static int bigcopyout(const void *, void *, size_t );
 
+#ifdef PPC_IBM440
+/*
+ * Optimize if copy is larger than vslock+vmaprange+blkcpy path
+ */
+int ibm4xx_copy_bigthresh = 8192;
+#define	COPY_BIGTHRESH	((size_t)ibm4xx_copy_bigthresh)
+
+SYSCTL_SETUP(sysctl_ibm4xx_copy, "ibm4xx copy threshold")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "copy_bigthresh",
+	    SYSCTL_DESCR("copyin/copyout size above which the "
+			 "mapped bulk-copy path is used"),
+	    NULL, 0, &ibm4xx_copy_bigthresh, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
+}
+#else
+#define	COPY_BIGTHRESH	1024
+#endif
+
 #ifdef __clang__
 #pragma clang optimize off
 #endif
@@ -437,7 +519,7 @@ copyin(const void *uaddr, void *kaddr, size_t len)
 	struct faultbuf env;
 
 	/* For bigger buffers use the faster copy */
-	if (len > 1024)
+	if (len > COPY_BIGTHRESH)
 		return (bigcopyin(uaddr, kaddr, len));
 
 	if ((rv = setfault(&env))) {
@@ -535,7 +617,11 @@ bigcopyin(const void *uaddr, void *kaddr, size_t len)
 	up = (char *)vmaprange(p, (vaddr_t)uaddr, len, VM_PROT_READ);
 
 	if ((error = setfault(&env)) == 0) {
+#ifdef PPC_IBM440
+		ibm4xx_blkcpy(kp, up, len, true);
+#else
 		memcpy(kp, up, len);
+#endif
 	}
 
 	curpcb->pcb_onfault = NULL;
@@ -556,7 +642,7 @@ copyout(const void *kaddr, void *uaddr, size_t len)
 	struct faultbuf env;
 
 	/* For big copies use more efficient routine */
-	if (len > 1024)
+	if (len > COPY_BIGTHRESH)
 		return (bigcopyout(kaddr, uaddr, len));
 
 	if ((rv = setfault(&env))) {
@@ -656,7 +742,11 @@ bigcopyout(const void *kaddr, void *uaddr, size_t len)
 	    VM_PROT_READ | VM_PROT_WRITE);
 
 	if ((error = setfault(&env)) == 0) {
+#ifdef PPC_IBM440
+		ibm4xx_blkcpy(up, kp, len, true);
+#else
 		memcpy(up, kp, len);
+#endif
 	}
 
 	curpcb->pcb_onfault = NULL;
@@ -665,6 +755,165 @@ bigcopyout(const void *kaddr, void *uaddr, size_t len)
 
 	return error;
 }
+
+#ifdef PPC_IBM440
+/*
+ * Bulk copy tuned for the 440/460EX
+ */
+#ifndef PPC_4XX_NOCACHE
+#define	__BLKCPY_LOOP(ZERO)						\
+	__asm volatile(							\
+		"mtctr	%[n];"						\
+	"1:	dcbt	%[s],%[pf];"					\
+		ZERO							\
+		"lwz	%[t0],0(%[s]);"					\
+		"lwz	%[t1],4(%[s]);"					\
+		"lwz	%[t2],8(%[s]);"					\
+		"lwz	%[t3],12(%[s]);"				\
+		"lwz	%[t4],16(%[s]);"				\
+		"lwz	%[t5],20(%[s]);"				\
+		"lwz	%[t6],24(%[s]);"				\
+		"lwz	%[t7],28(%[s]);"				\
+		"stw	%[t0],0(%[d]);"					\
+		"stw	%[t1],4(%[d]);"					\
+		"stw	%[t2],8(%[d]);"					\
+		"stw	%[t3],12(%[d]);"				\
+		"stw	%[t4],16(%[d]);"				\
+		"stw	%[t5],20(%[d]);"				\
+		"stw	%[t6],24(%[d]);"				\
+		"stw	%[t7],28(%[d]);"				\
+		"addi	%[s],%[s],32;"					\
+		"addi	%[d],%[d],32;"					\
+		"bdnz	1b;"						\
+		: [s] "+b" (s), [d] "+b" (d),				\
+		  [t0] "=&r" (t0), [t1] "=&r" (t1),			\
+		  [t2] "=&r" (t2), [t3] "=&r" (t3),			\
+		  [t4] "=&r" (t4), [t5] "=&r" (t5),			\
+		  [t6] "=&r" (t6), [t7] "=&r" (t7)			\
+		: [n] "r" (nlines), [pf] "b" (3 * CACHELINESIZE)	\
+		: "ctr", "memory")
+#endif /* !PPC_4XX_NOCACHE */
+
+void
+ibm4xx_blkcpy(void *dst, const void *src, size_t len, bool dcbz_ok)
+{
+#ifdef PPC_4XX_NOCACHE
+	/* All RAM is mapped caching-inhibited: dcbz would trap. */
+	memcpy(dst, src, len);
+#else
+	uint8_t *d = dst;
+	const uint8_t *s = src;
+	size_t head, nlines, tail;
+
+	/*
+	 * below three cache lines the setup and prefetch buy nothing?
+	 */
+	if (len < 3 * CACHELINESIZE ||
+	    (((uintptr_t)d ^ (uintptr_t)s) & 3) != 0) {
+		memcpy(dst, src, len);
+		return;
+	}
+
+	head = (uintptr_t)(-(intptr_t)(uintptr_t)d) & (CACHELINESIZE - 1);
+	if (head != 0) {
+		memcpy(d, s, head);
+		d += head;
+		s += head;
+		len -= head;
+	}
+	nlines = len / CACHELINESIZE;
+	tail = len & (CACHELINESIZE - 1);
+
+	if (nlines != 0) {
+		uint32_t t0, t1, t2, t3, t4, t5, t6, t7;
+
+		if (dcbz_ok)
+			__BLKCPY_LOOP("dcbz	0,%[d];");
+		else
+			__BLKCPY_LOOP("");
+	}
+
+	if (tail != 0)
+		memcpy(d, s, tail);
+#endif /* PPC_4XX_NOCACHE */
+}
+
+#ifdef BLKCPY_SELFTEST
+/*
+ * This is supposed to verify correctness of the above 440/460 blkcpy
+ */
+#define	BLKCPY_TESTLEN	8192
+#define	BLKCPY_GUARD	64
+
+void
+ibm4xx_blkcpy_selftest(void)
+{
+	static const size_t lens[] = {
+		0, 1, 3, 31, 32, 33, 63, 64, 65, 95, 96, 97, 255,
+		1023, 1024, 1025, 4095, 4096, 8000
+	};
+	uint8_t *src, *dstbuf, *ref, *dst;
+	size_t i, len, off;
+	int soff, doff, z, cases = 0;
+
+	src = kmem_alloc(BLKCPY_TESTLEN + 8, KM_SLEEP);
+	ref = kmem_alloc(BLKCPY_TESTLEN + 8, KM_SLEEP);
+	dstbuf = kmem_alloc(BLKCPY_TESTLEN + 8 + 2 * BLKCPY_GUARD,
+	    KM_SLEEP);
+	dst = dstbuf + BLKCPY_GUARD;
+
+	for (i = 0; i < BLKCPY_TESTLEN + 8; i++)
+		src[i] = (i * 251 + 13) & 0xff;
+
+	for (i = 0; i < __arraycount(lens); i++) {
+		len = lens[i];
+		for (soff = 0; soff < 8; soff++) {
+			for (doff = 0; doff < 8; doff++) {
+				for (z = 0; z < 2; z++) {
+					memset(dstbuf, 0xa5,
+					    BLKCPY_TESTLEN + 8 +
+					    2 * BLKCPY_GUARD);
+					memset(ref, 0xa5,
+					    BLKCPY_TESTLEN + 8);
+					memcpy(ref + doff, src + soff, len);
+					ibm4xx_blkcpy(dst + doff, src + soff,
+					    len, z != 0);
+					if (memcmp(dst + doff, ref + doff,
+					    len) != 0)
+						panic("blkcpy selftest: "
+						    "payload len=%zu soff=%d "
+						    "doff=%d dcbz=%d",
+						    len, soff, doff, z);
+					for (off = 0;
+					    off < BLKCPY_TESTLEN + 8 +
+					    2 * BLKCPY_GUARD; off++) {
+						if (off >= BLKCPY_GUARD + doff
+						    && off < BLKCPY_GUARD +
+						    doff + len)
+							continue;
+						if (dstbuf[off] != 0xa5)
+							panic("blkcpy "
+							    "selftest: guard "
+							    "len=%zu soff=%d "
+							    "doff=%d dcbz=%d "
+							    "off=%zu",
+							    len, soff, doff,
+							    z, off);
+					}
+					cases++;
+				}
+			}
+		}
+	}
+
+	kmem_free(src, BLKCPY_TESTLEN + 8);
+	kmem_free(ref, BLKCPY_TESTLEN + 8);
+	kmem_free(dstbuf, BLKCPY_TESTLEN + 8 + 2 * BLKCPY_GUARD);
+
+	printf("ibm4xx_blkcpy: self-test passed (%d cases)\n", cases);
+}
+#endif /* BLKCPY_SELFTEST */
+#endif /* PPC_IBM440 */
 
 /*
  * kcopy(const void *src, void *dst, size_t len);
@@ -688,7 +937,11 @@ kcopy(const void *src, void *dst, size_t len)
 		return rv;
 	}
 
+#ifdef PPC_IBM440
+	ibm4xx_blkcpy(dst, src, len, false);
+#else
 	memcpy(dst, src, len);
+#endif
 
 	curpcb->pcb_onfault = oldfault;
 	return 0;

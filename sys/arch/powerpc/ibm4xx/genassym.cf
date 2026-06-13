@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.24 2018/07/15 05:16:43 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.25 2026/06/13 20:16:23 rkujawa Exp $
 
 #
 # Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -47,6 +47,8 @@ define	CI_INTSTK	offsetof(struct cpu_info, ci_intstk)
 define	CI_TEMPSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVETEMP])
 define	CI_DDBSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEDDB])
 define	CI_TLBMISSSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEMMU])
+# critical/machine-check save area (reuses the obsolete IPKDB slot)
+define	CI_CRITSAVE	offsetof(struct cpu_info, ci_savearea[CI_SAVEIPKDB])
 
 define	CPUSAVE_R28	CPUSAVE_R28*sizeof(register_t)
 define	CPUSAVE_R29	CPUSAVE_R29*sizeof(register_t)
@@ -56,3 +58,41 @@ define	CPUSAVE_DEAR	CPUSAVE_DEAR*sizeof(register_t)
 define	CPUSAVE_ESR	CPUSAVE_ESR*sizeof(register_t)
 define	CPUSAVE_SRR0	CPUSAVE_SRR0*sizeof(register_t)
 define	CPUSAVE_SRR1	CPUSAVE_SRR1*sizeof(register_t)
+
+# FPU context offsets for fpu_subr.S (440 cores with an FPU: 460EX).
+# Harmless for FPU-less kernels: assym.h entries cost nothing unused.
+include <machine/reg.h>
+
+define	FPREG_F0	offsetof(struct fpreg, fpreg[0])
+define	FPREG_F1	offsetof(struct fpreg, fpreg[1])
+define	FPREG_F2	offsetof(struct fpreg, fpreg[2])
+define	FPREG_F3	offsetof(struct fpreg, fpreg[3])
+define	FPREG_F4	offsetof(struct fpreg, fpreg[4])
+define	FPREG_F5	offsetof(struct fpreg, fpreg[5])
+define	FPREG_F6	offsetof(struct fpreg, fpreg[6])
+define	FPREG_F7	offsetof(struct fpreg, fpreg[7])
+define	FPREG_F8	offsetof(struct fpreg, fpreg[8])
+define	FPREG_F9	offsetof(struct fpreg, fpreg[9])
+define	FPREG_F10	offsetof(struct fpreg, fpreg[10])
+define	FPREG_F11	offsetof(struct fpreg, fpreg[11])
+define	FPREG_F12	offsetof(struct fpreg, fpreg[12])
+define	FPREG_F13	offsetof(struct fpreg, fpreg[13])
+define	FPREG_F14	offsetof(struct fpreg, fpreg[14])
+define	FPREG_F15	offsetof(struct fpreg, fpreg[15])
+define	FPREG_F16	offsetof(struct fpreg, fpreg[16])
+define	FPREG_F17	offsetof(struct fpreg, fpreg[17])
+define	FPREG_F18	offsetof(struct fpreg, fpreg[18])
+define	FPREG_F19	offsetof(struct fpreg, fpreg[19])
+define	FPREG_F20	offsetof(struct fpreg, fpreg[20])
+define	FPREG_F21	offsetof(struct fpreg, fpreg[21])
+define	FPREG_F22	offsetof(struct fpreg, fpreg[22])
+define	FPREG_F23	offsetof(struct fpreg, fpreg[23])
+define	FPREG_F24	offsetof(struct fpreg, fpreg[24])
+define	FPREG_F25	offsetof(struct fpreg, fpreg[25])
+define	FPREG_F26	offsetof(struct fpreg, fpreg[26])
+define	FPREG_F27	offsetof(struct fpreg, fpreg[27])
+define	FPREG_F28	offsetof(struct fpreg, fpreg[28])
+define	FPREG_F29	offsetof(struct fpreg, fpreg[29])
+define	FPREG_F30	offsetof(struct fpreg, fpreg[30])
+define	FPREG_F31	offsetof(struct fpreg, fpreg[31])
+define	FPREG_FPSCR	offsetof(struct fpreg, fpscr)

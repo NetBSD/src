@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.110 2024/02/01 22:02:18 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.111 2026/06/13 20:16:23 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,11 +67,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.110 2024/02/01 22:02:18 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2026/06/13 20:16:23 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_pmap.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
@@ -174,9 +175,21 @@ static size_t tlbsize[] = {
 	65536, 		/* TLB_SIZE_64K */
 	262144, 	/* TLB_SIZE_256K */
 	1048576, 	/* TLB_SIZE_1M */
+#ifdef PPC_IBM440
+	0,		/* encoding 6 unused on 440 (no 4M page size) */
+#else
 	4194304, 	/* TLB_SIZE_4M */
+#endif
 	16777216, 	/* TLB_SIZE_16M */
 };
+
+#ifdef PPC_IBM440
+static struct tlb44_resv {
+	uint64_t tr_pa;		/* 36-bit physical address */
+	vaddr_t	 tr_va;
+	psize_t	 tr_size;
+} tlb44_resv[NTLB];
+#endif
 
 struct pv_entry *pv_table;
 static struct pool pv_pool;
@@ -196,7 +209,9 @@ static void pmap_remove_pv(struct pmap *, vaddr_t, paddr_t);
 
 static inline void tlb_invalidate_entry(int);
 
+#ifndef PPC_IBM440
 static int ppc4xx_tlb_size_mask(size_t, int *, int *);
+#endif
 
 
 struct pv_entry *
@@ -696,7 +711,11 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 
+#ifdef PPC_IBM440
+	ibm4xx_blkcpy((void *)dst, (void *)src, PAGE_SIZE, true);
+#else
 	memcpy((void *)dst, (void *)src, PAGE_SIZE);
+#endif
 	dcache_wbinv_page(dst);
 }
 
@@ -1228,7 +1247,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 static inline void
 tlb_invalidate_entry(int i)
 {
-#ifdef PMAP_TLBDEBUG
+#if defined(PMAP_TLBDEBUG) && !defined(PPC_IBM440)
 	/*
 	 * Clear only TLBHI[V] bit so that we can track invalidated entry.
 	 */
@@ -1273,6 +1292,38 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	if (!pid)
 		return;
 
+#ifdef PPC_IBM440
+	/*
+	 * PID and space come from MMUCR, not the PID SPR!!!
+	 */
+	{
+		u_long omm, tmp;
+
+		__asm volatile (
+			"mfmsr	%[msr];"
+			"wrteei	0;"
+			MFMMUCR(%[omm])
+			"andc	%[tmp],%[omm],%[clr];"
+			"or	%[tmp],%[tmp],%[stspid];"
+			MTMMUCR(%[tmp])
+			"isync;"
+			"tlbsx.	%[i],0,%[va];"
+			MTMMUCR(%[omm])
+			"mtmsr	%[msr];"
+			"isync;"
+			"li	%[found],1;"
+			"beq	1f;"
+			"li	%[found],0;"
+		"1:"
+			: [i] "=&r" (i), [found] "=&r" (found),
+			  [msr] "=&r" (msr), [omm] "=&r" (omm),
+			  [tmp] "=&r" (tmp)
+			: [va] "r" (va),
+			  [stspid] "r" (MMUCR_STS | (pid & MMUCR_STID)),
+			  [clr] "r" (MMUCR_STS | MMUCR_STID)
+			: "cr0");
+	}
+#else
 	__asm volatile (
 		MFPID(%[found])		/* Save PID */
 		"mfmsr	%[msr];"	/* Save MSR */
@@ -1292,6 +1343,7 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	"1:"
 		: [i] "=&r" (i), [found] "=&r" (found), [msr] "=&r" (msr)
 		: [va] "r" (va), [pid] "r" (pid));
+#endif
 
 	if (found && !TLB_LOCKED(i)) {
 		/* Now flush translation */
@@ -1344,20 +1396,59 @@ ppc4xx_tlb_find_victim(void)
 	}
 }
 
+#ifdef PPC_IBM440
+/*
+ * Convert the 40x-style software TTE permission/attribute bits into
+ * 440 TLB word 2.
+ */
+static inline u_int
+tte_to_tlb44_word2(u_int pte)
+{
+	u_int w2;
+
+	w2 = TLB44_WIMG(pte) | TLB44_SR;
+	if (pte & TTE_WR)
+		w2 |= TLB44_SW;
+	if (pte & TTE_EX)
+		w2 |= TLB44_SX;
+	if (((pte & TTE_ZSEL_MASK) >> TTE_ZSEL_SHFT) == ZONE_USER) {
+		w2 |= TLB44_UR;
+		if (pte & TTE_WR)
+			w2 |= TLB44_UW;
+		if (pte & TTE_EX)
+			w2 |= TLB44_UX;
+	}
+	return w2;
+}
+#endif /* PPC_IBM440 */
+
 void
 ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 {
+#ifdef PPC_IBM440
+	u_long w0, w1, w2, omm, tmp, i;
+	paddr_t pa;
+	int msr, sz;
+#else
 	u_long hi, lo, i;
 	paddr_t pa;
 	int msr, pid, sz;
+#endif
 
 	tlbenter_ev.ev_count++;
 
 	sz = (pte & TTE_SZ_MASK) >> TTE_SZ_SHIFT;
 	pa = (pte & TTE_RPN_MASK(sz));
+#ifdef PPC_IBM440
+	w0 = (va & ~(tlbsize[sz] - 1)) | (sz << TLB44_SIZE_SHFT) |
+	    TLB44_V | TLB44_TS;
+	w1 = pa;		/* ERPN=0: RAM is below 4GB */
+	w2 = tte_to_tlb44_word2(pte);
+#else
 	hi = (va & TLB_EPN_MASK) | (sz << TLB_SIZE_SHFT) | TLB_VALID;
 	lo = (pte & ~TLB_RPN_MASK) | pa;
 	lo |= ppc4xx_tlbflags(va, pa);
+#endif
 
 	i = ppc4xx_tlb_find_victim();
 
@@ -1368,6 +1459,31 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	tlb_info[i].ti_ctx = ctx;
 	tlb_info[i].ti_flags = TLBF_USED | TLBF_REF;
 
+#ifdef PPC_IBM440
+	/*
+	 * ID is taken from MMUCR[STID] when word 0 is written.
+	 */
+	__asm volatile (
+		"mfmsr	%[msr];"
+		"wrteei	0;"
+		MFMMUCR(%[omm])
+		"andc	%[tmp],%[omm],%[clr];"
+		"or	%[tmp],%[tmp],%[ctx];"
+		MTMMUCR(%[tmp])
+		"isync;"
+		"tlbwe	%[w2],%[i],2;"
+		"tlbwe	%[w1],%[i],1;"
+		"tlbwe	%[w0],%[i],0;"
+		"isync;"
+		MTMMUCR(%[omm])
+		"mtmsr	%[msr];"
+		"isync;"
+		: [msr] "=&r" (msr), [omm] "=&r" (omm),
+		  [tmp] "=&r" (tmp)
+		: [ctx] "r" (ctx & MMUCR_STID),
+		  [clr] "r" (MMUCR_STS | MMUCR_STID), [i] "r" (i),
+		  [w0] "r" (w0), [w1] "r" (w1), [w2] "r" (w2));
+#else
 	__asm volatile (
 		"mfmsr	%[msr];"		/* Save MSR */
 		"li	%[pid],0;"
@@ -1385,6 +1501,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		"isync;"
 		: [msr] "=&r" (msr), [pid] "=&r" (pid)
 		: [ctx] "r" (ctx), [i] "r" (i), [lo] "r" (lo), [hi] "r" (hi));
+#endif
 }
 
 void
@@ -1398,6 +1515,7 @@ ppc4xx_tlb_init(void)
 		tlb_info[i].ti_ctx = KERNEL_PID;
 	}
 
+#ifndef PPC_IBM440
 	/* Setup security zones */
 	/* Z0 - accessible by kernel only if TLB entry permissions allow
 	 * Z1,Z2 - access is controlled by TLB entry permissions
@@ -1408,8 +1526,10 @@ ppc4xx_tlb_init(void)
 		"mtspr	%0,%1;"
 		"isync;"
 		: : "K" (SPR_ZPR), "r" (0x1b000000));
+#endif
 }
 
+#ifndef PPC_IBM440
 /*
  * ppc4xx_tlb_size_mask:
  *
@@ -1428,6 +1548,7 @@ ppc4xx_tlb_size_mask(size_t size, int *mask, int *rsiz)
 		}
 	return EINVAL;
 }
+#endif /* !PPC_IBM440 */
 
 /*
  * ppc4xx_tlb_mapiodev:
@@ -1441,6 +1562,49 @@ ppc4xx_tlb_size_mask(size_t size, int *mask, int *rsiz)
 void *
 ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 {
+#ifdef PPC_IBM440
+	int i, j;
+
+	/*
+	 * Match against the 32-bit (on-chip bus) address; the ERPN
+	 * extension is recorded in the reserved-mapping table only.
+	 */
+	for (i = 0; i < tlb_nreserved; i++) {
+		const uint32_t pa32 = (uint32_t)tlb44_resv[i].tr_pa;
+		uint64_t end_pa;
+		vaddr_t va, end_va;
+		bool grew;
+
+		if (tlb44_resv[i].tr_size == 0)
+			continue;
+		if (base < pa32 || base >= pa32 + tlb44_resv[i].tr_size)
+			continue;
+
+		va = tlb44_resv[i].tr_va + (base - pa32);
+		end_pa = tlb44_resv[i].tr_pa + tlb44_resv[i].tr_size;
+		end_va = tlb44_resv[i].tr_va + tlb44_resv[i].tr_size;
+
+		do {
+			if (base + len <= (uint32_t)end_pa)
+				return (void *)va;
+			grew = false;
+			for (j = 0; j < tlb_nreserved; j++) {
+				if (tlb44_resv[j].tr_size != 0 &&
+				    tlb44_resv[j].tr_pa == end_pa &&
+				    tlb44_resv[j].tr_va == end_va) {
+					end_pa += tlb44_resv[j].tr_size;
+					end_va += tlb44_resv[j].tr_size;
+					grew = true;
+					break;
+				}
+			}
+		} while (grew);
+		/* run ended before covering len; no other entry can */
+		return NULL;
+	}
+
+	return NULL;
+#else
 	paddr_t pa;
 	vaddr_t va;
 	u_int lo, hi, sz;
@@ -1470,8 +1634,144 @@ ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 	}
 
 	return NULL;
+#endif
 }
 
+#ifdef PPC_IBM440
+void
+ppc44x_tlb_boot_reserved(int n)
+{
+
+	KASSERT(tlb_nreserved == 0);
+	KASSERT(n < NTLB);
+
+	/* zero-size entries never match in ppc4xx_tlb_mapiodev() */
+	tlb_nreserved = n;
+}
+
+void
+ppc44x_tlb_reserve(uint64_t pa, vaddr_t va, size_t size, int flags)
+{
+	static const struct {
+		size_t size;
+		int enc;
+	} sizetab[] = {
+		{ 0x00000400, TLB_SIZE_1K },
+		{ 0x00001000, TLB_SIZE_4K },
+		{ 0x00004000, TLB_SIZE_16K },
+		{ 0x00010000, TLB_SIZE_64K },
+		{ 0x00040000, TLB_SIZE_256K },
+		{ 0x00100000, TLB_SIZE_1M },
+		{ 0x01000000, TLB_SIZE_16M },
+		{ 0x10000000, TLB44_SIZE_256M },
+	};
+	u_long w0, w1, w2, msr, omm, tmp;
+	size_t rsize = 0;
+	int i, enc = -1;
+
+	/* Called before pmap_bootstrap(), va outside kernel space. */
+	KASSERT(va < VM_MIN_KERNEL_ADDRESS || va >= VM_MAX_KERNEL_ADDRESS);
+	KASSERT(!pmap_bootstrap_done);
+	KASSERT(tlb_nreserved < NTLB);
+
+	for (i = 0; i < __arraycount(sizetab); i++)
+		if (size <= sizetab[i].size) {
+			rsize = sizetab[i].size;
+			enc = sizetab[i].enc;
+			break;
+		}
+	if (enc < 0)
+		panic("ppc44x_tlb_reserve: entry %d, %zuB too large",
+		    tlb_nreserved, size);
+
+	pa &= ~(uint64_t)(rsize - 1);
+	va &= ~(rsize - 1);
+
+	w0 = va | TLB44_V | TLB44_TS | (enc << TLB44_SIZE_SHFT);
+	w1 = (u_long)pa | ((u_long)(pa >> 32) & TLB44_ERPN_MASK);
+	w2 = TLB44_WIMG(flags) | TLB44_SR | TLB44_SW;
+	if (flags & TLB_EX)
+		w2 |= TLB44_SX;
+#ifdef PPC_4XX_NOCACHE
+	w2 |= TLB44_I;
+#endif
+
+	tlb44_resv[tlb_nreserved].tr_pa = pa;
+	tlb44_resv[tlb_nreserved].tr_va = va;
+	tlb44_resv[tlb_nreserved].tr_size = rsize;
+
+	__asm volatile (
+		"mfmsr	%[msr];"
+		"wrteei	0;"
+		MFMMUCR(%[omm])
+		"andc	%[tmp],%[omm],%[clr];"
+		"ori	%[tmp],%[tmp],%[pid];"
+		MTMMUCR(%[tmp])
+		"isync;"
+		"tlbwe	%[w2],%[i],2;"
+		"tlbwe	%[w1],%[i],1;"
+		"tlbwe	%[w0],%[i],0;"
+		"isync;"
+		MTMMUCR(%[omm])
+		"mtmsr	%[msr];"
+		"isync;"
+		: [msr] "=&r" (msr), [omm] "=&r" (omm), [tmp] "=&r" (tmp)
+		: [pid] "K" (KERNEL_PID),
+		  [clr] "r" (MMUCR_STS | MMUCR_STID), [i] "r" (tlb_nreserved),
+		  [w0] "r" (w0), [w1] "r" (w1), [w2] "r" (w2));
+
+	tlb_nreserved++;
+}
+
+/*
+ * Pin a TS=0 identity entry for a 256MB chunk of RAM. 
+ * Should be enough for everyone.
+ */
+void
+ppc44x_tlb_reserve_ts0(paddr_t pa)
+{
+	const size_t size = 0x10000000;	/* 256MB */
+	u_long w0, w1, w2, msr, omm, tmp;
+
+	KASSERT(!pmap_bootstrap_done);
+	KASSERT(tlb_nreserved < NTLB);
+	KASSERT((pa & (size - 1)) == 0);
+
+	w0 = (u_long)pa | TLB44_V | (TLB44_SIZE_256M << TLB44_SIZE_SHFT);
+	w1 = (u_long)pa;		/* ERPN = 0: RAM is below 4GB */
+	w2 = TLB44_SR | TLB44_SW | TLB44_SX;
+#ifdef PPC_4XX_NOCACHE
+	w2 |= TLB44_I;
+#endif
+
+	__asm volatile (
+		"mfmsr	%[msr];"
+		"wrteei	0;"
+		MFMMUCR(%[omm])
+		"andc	%[tmp],%[omm],%[clr];"	/* STS = 0, STID = 0 */
+		MTMMUCR(%[tmp])
+		"isync;"
+		"tlbwe	%[w2],%[i],2;"
+		"tlbwe	%[w1],%[i],1;"
+		"tlbwe	%[w0],%[i],0;"
+		"isync;"
+		MTMMUCR(%[omm])
+		"mtmsr	%[msr];"
+		"isync;"
+		: [msr] "=&r" (msr), [omm] "=&r" (omm), [tmp] "=&r" (tmp)
+		: [clr] "r" (MMUCR_STS | MMUCR_STID), [i] "r" (tlb_nreserved),
+		  [w0] "r" (w0), [w1] "r" (w1), [w2] "r" (w2));
+
+	tlb_nreserved++;
+}
+
+void
+ppc4xx_tlb_reserve(paddr_t pa, vaddr_t va, size_t size, int flags)
+{
+
+	ppc44x_tlb_reserve((uint64_t)pa, va, size, flags);
+}
+#else /* !PPC_IBM440 */
 /*
  * ppc4xx_tlb_reserve:
  *
@@ -1512,6 +1812,7 @@ ppc4xx_tlb_reserve(paddr_t pa, vaddr_t va, size_t size, int flags)
 
 	tlb_nreserved++;
 }
+#endif /* PPC_IBM440 */
 
 /*
  * We should pass the ctx in from trap code.
