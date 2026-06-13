@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.122 2026/05/26 12:28:39 macallan Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.123 2026/06/13 17:20:33 jdc Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.122 2026/05/26 12:28:39 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.123 2026/06/13 17:20:33 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -463,6 +463,7 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	pcireg_t		screg;
 	int			i, j, fg, bg, ul, flags;
 	uint32_t		v;
+	char			memstr[16] = "";
 
 	sc->sc_dev = dev;
 	sc->sc_id = pa->pa_id;
@@ -654,8 +655,10 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 	radeonfb_set_fbloc(sc);
 
 	/* 64 MB should be enough -- more just wastes map entries */
-	if (sc->sc_memsz > (64 << 20))
+	if (sc->sc_memsz > (64 << 20)) {
+		snprintf(memstr, 16, " %d MB,", (int)sc->sc_memsz >> 20);
 		sc->sc_memsz = (64 << 20);
+	}
 
 	for (i = 0; radeonfb_limits[i].size; i++) {
 		if (sc->sc_memsz >= radeonfb_limits[i].size) {
@@ -806,8 +809,8 @@ radeonfb_attach(device_t parent, device_t dev, void *aux)
 		goto error;
 	}
 
-	aprint_normal("%s: %d MB aperture at 0x%08x, "
-	    "%d KB registers at 0x%08x\n", XNAME(sc),
+	aprint_normal("%s:%s %d MB aperture at 0x%08x, "
+	    "%d KB registers at 0x%08x\n", XNAME(sc), memstr,
 	    (int)sc->sc_memsz >> 20, (unsigned)sc->sc_memaddr,
 	    (int)sc->sc_regsz >> 10, (unsigned)sc->sc_regaddr);
 
