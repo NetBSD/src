@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3270 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3271 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -294,3 +294,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	OpenSSL: Imported 3.5.7. [christos 20260609]
 	file(1): Upgraded to 5.48. [christos 20260610]
 	m4(1): Sync with OpenBSD [christos 20260610]
+	mac68k: Support 68060 CPUs, from zigzagjoe. [thorpej 20260613]
