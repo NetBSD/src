@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.51 2026/06/11 01:04:37 gutteridge Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.52 2026/06/13 12:03:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.51 2026/06/11 01:04:37 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.52 2026/06/13 12:03:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -603,6 +603,26 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	WR4(sc, GMAC_MAC_PACKET_FILTER, pfil);
 }
 
+static void
+eqos_setup_coe(struct eqos_softc *sc)
+{
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	const uint64_t if_capenable = ifp->if_capenable;
+	uint32_t val;
+
+	EQOS_ASSERT_LOCKED(sc);
+
+	val = RD4(sc, GMAC_MAC_CONFIGURATION);
+	if ((if_capenable & (IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+			     IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+			     IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx)) != 0) {
+		val |= GMAC_MAC_CONFIGURATION_IPC;
+	} else {
+		val &= ~GMAC_MAC_CONFIGURATION_IPC;
+	}
+	WR4(sc, GMAC_MAC_CONFIGURATION, val);
+}
+
 static int
 eqos_reset(struct eqos_softc *sc)
 {
@@ -664,8 +684,9 @@ eqos_init_locked(struct eqos_softc *sc)
 	EQOS_ASSERT_TXLOCKED(sc);
 
 	if ((ifp->if_flags & IFF_RUNNING) != 0) {
-		/* Only Setup RX filter */
+		/* Only Setup RX filter and checksum offload */
 		eqos_setup_rxfilter(sc);
+		eqos_setup_coe(sc);
 		return 0;
 	}
 
@@ -675,6 +696,9 @@ eqos_init_locked(struct eqos_softc *sc)
 	/* Setup RX filter */
 	sc->sc_if_flags = ifp->if_flags;
 	eqos_setup_rxfilter(sc);
+
+	/* Setup checksum offload */
+	eqos_setup_coe(sc);
 
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
 

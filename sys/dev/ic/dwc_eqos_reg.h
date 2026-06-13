@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_reg.h,v 1.14 2026/05/30 10:24:04 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_reg.h,v 1.15 2026/06/13 12:03:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -34,6 +34,7 @@
 #define _DWC_EQOS_REG_H
 
 #define	GMAC_MAC_CONFIGURATION			0x0000
+#define	 GMAC_MAC_CONFIGURATION_IPC		(1U << 27)
 #define	 GMAC_MAC_CONFIGURATION_CST		(1U << 21)
 #define	 GMAC_MAC_CONFIGURATION_ACS		(1U << 20)
 #define	 GMAC_MAC_CONFIGURATION_BE		(1U << 18)
