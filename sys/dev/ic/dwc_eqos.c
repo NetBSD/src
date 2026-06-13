@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.53 2026/06/13 14:38:02 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.54 2026/06/13 15:38:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.53 2026/06/13 14:38:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.54 2026/06/13 15:38:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1727,6 +1727,7 @@ eqos_attach(struct eqos_softc *sc)
 {
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct ifcapreq ifcr;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	u_int userver, snpsver;
 	int error;
@@ -1926,6 +1927,16 @@ eqos_attach(struct eqos_softc *sc)
 
 	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
 	    RND_FLAG_DEFAULT);
+
+	/* Try to enable COE */
+	memset(&ifcr, 0, sizeof(ifcr));
+	snprintf(ifcr.ifcr_name, sizeof(ifcr.ifcr_name), "%s", if_name(ifp));
+	ifcr.ifcr_capenable = ifp->if_capabilities;
+	error = ifioctl_common(ifp, SIOCSIFCAP, &ifcr);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to enable COE: %d\n",
+		    error);
+	}
 
 	return 0;
 }
