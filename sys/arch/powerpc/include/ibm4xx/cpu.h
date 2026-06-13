@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2021/11/02 11:21:24 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.28 2026/06/13 19:45:50 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -139,10 +139,17 @@ extern struct pic_ops pic_uic403;
 extern struct pic_ops pic_uic0;
 extern struct pic_ops pic_uic1;
 extern struct pic_ops pic_uic2;
+extern struct pic_ops pic_uic3;
 
 extern paddr_t msgbuf_paddr;
 extern vaddr_t msgbuf_vaddr;
 extern char msgbuf[MSGBUFSIZE];
+
+void	ibm4xx_blkcpy(void *, const void *, size_t, bool);
+/* #define BLKCPY_SELFTEST */
+#ifdef BLKCPY_SELFTEST
+void	ibm4xx_blkcpy_selftest(void);
+#endif
 #endif /* _KERNEL */
 
 /* Board info dictionary */

@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.23 2024/02/08 20:51:24 andvar Exp $	*/
+/*	$NetBSD: psl.h,v 1.24 2026/06/13 19:45:50 rkujawa Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -115,13 +115,20 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #define	PSL_USERMASK		(PSL_SPV | PSL_CE | 0xFFFF)
 #define	PSL_USERMOD		(0)
 #else /* PPC_IBM4XX */
-#ifdef PPC_IBM403
+#if defined(PPC_IBM403)
+#define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR | PSL_ME)
+#elif defined(PPC_IBM440)
+/* 440 rets from machine checks with rfmci, so ME can stay enabled. */
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR | PSL_ME)
 #else /* Apparently we get unexplained machine checks, so disable them. */
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR)
 #endif
 #define	PSL_USERMASK		0xFFFF
+#if defined(PPC_IBM440)
+#define	PSL_USERMOD		(PSL_FP | PSL_FE0 | PSL_FE1)
+#else
 #define	PSL_USERMOD		(0)
+#endif
 #endif
 
 #define	PSL_USERSRR1		((PSL_USERSET|PSL_USERMOD) & PSL_USERMASK)

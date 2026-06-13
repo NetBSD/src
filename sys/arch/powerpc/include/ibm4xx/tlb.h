@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.7 2021/03/30 03:15:53 rin Exp $	*/
+/*	$NetBSD: tlb.h,v 1.8 2026/06/13 19:45:50 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -37,6 +37,10 @@
 
 #ifndef _IBM4XX_TLB_H_
 #define _IBM4XX_TLB_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 #define NTLB	64
 
@@ -87,6 +91,41 @@
 #define TLB_HI(epn,size,flags)	(((epn)&TLB_EPN_MASK)|(((size)<<TLB_SIZE_SHFT)&TLB_SIZE_MASK)|(flags))
 #define TLB_LO(rpn,zone,flags)	(((rpn)&TLB_RPN_MASK)|(((zone)<<TLB_ZSEL_SHFT)&TLB_ZSEL_MASK)|(flags))
 
+/*
+ * 440/460 (Book E) TLB entries
+ */
+/* Word 0 */
+#define TLB44_EPN_MASK	0xfffffc00
+#define TLB44_V		0x00000200	/* Valid */
+#define TLB44_TS	0x00000100	/* Translation Space */
+#define TLB44_SIZE_MASK	0x000000f0
+#define TLB44_SIZE_SHFT	4
+/* page size encodings 1K to 16M are identical to the 40x TLB_SIZE_* values */
+#define TLB44_SIZE_256M	9
+#define TLB44_SIZE_1G	10
+/* Word 1 */
+#define TLB44_RPN_MASK	0xfffffc00
+#define TLB44_ERPN_MASK	0x0000000f	/* phys addr bits 32:35 */
+/* Word 2 */
+#define TLB44_U0	0x00008000
+#define TLB44_U1	0x00004000
+#define TLB44_U2	0x00002000
+#define TLB44_U3	0x00001000
+#define TLB44_W		0x00000800	/* Write-through */
+#define TLB44_I		0x00000400	/* Inhibit caching */
+#define TLB44_M		0x00000200	/* Memory coherent */
+#define TLB44_G		0x00000100	/* Guarded */
+#define TLB44_E		0x00000080	/* Little endian */
+#define TLB44_UX	0x00000020	/* User execute */
+#define TLB44_UW	0x00000010	/* User write */
+#define TLB44_UR	0x00000008	/* User read */
+#define TLB44_SX	0x00000004	/* Supervisor execute */
+#define TLB44_SW	0x00000002	/* Supervisor write */
+#define TLB44_SR	0x00000001	/* Supervisor read */
+
+/* 40x TLBLO WIMG flags (TLB_W..TLB_G, also used as TTE_*) -> word 2 */
+#define TLB44_WIMG(flags)	(((flags) & 0xf) << 8)
+
 #ifndef _LOCORE
 
 typedef struct tlb_s {
@@ -103,6 +142,14 @@ void	ppc4xx_tlb_init(void);
 int	ppc4xx_tlb_new_pid(struct pmap *);
 void	ppc4xx_tlb_reserve(paddr_t, vaddr_t, size_t, int);
 void 	*ppc4xx_tlb_mapiodev(paddr_t, psize_t);
+#ifdef PPC_IBM440
+/* 36-bit physical address variant for 440/460 I/O above 4GB */
+void	ppc44x_tlb_reserve(uint64_t, vaddr_t, size_t, int);
+/* pin a TS=0 identity entry for a 256MB RAM chunk above 256MB */
+void	ppc44x_tlb_reserve_ts0(paddr_t);
+/* claim locore-pinned boot TLB slots before the first reserve */
+void	ppc44x_tlb_boot_reserved(int);
+#endif
 
 #ifndef ppc4xx_tlbflags
 #define	ppc4xx_tlbflags(va, pa)	(0)

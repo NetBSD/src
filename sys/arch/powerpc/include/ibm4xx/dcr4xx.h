@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.4 2021/04/02 03:20:53 rin Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.5 2026/06/13 19:45:50 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -61,7 +61,15 @@
 /* On-Chip busses */
 #define	DCR_PLB0_BESR		0x084	/* PLB Bus Error Status Register */
 #define	DCR_PLB0_BEAR		0x086	/* PLB Bus Error Address Register */
-#define	DCR_PLB0_ACR		0x087	/* PLB Arbiter Control Register */
+#define	DCR_PLB0_ACR		0x087	/* PLB Arbiter Control Register (4xx) */
+/*
+ * 460EX has a PLB4 with two arbiter segments
+ */
+#define	DCR_PLB4A0_ACR		0x081	/* PLB4 arbiter 0 control */
+#define	DCR_PLB4A1_ACR		0x089	/* PLB4 arbiter 1 control */
+#define	  PLB4Ax_ACR_RDP_MASK	  0x06000000	/* read pipeline depth */
+#define	  PLB4Ax_ACR_RDP_4DEEP	  0x06000000
+#define	  PLB4Ax_ACR_WRP_MASK	  0x01000000	/* write pipeline depth */
 #define	DCR_POB0_BESR0		0x0a0	/* PLB to OPB Bus Error Status Register 0 */
 #define	DCR_POB0_BEAR		0x0a2	/* PLB to OPB Bus Error Address Register */
 #define	DCR_POB0_BESR1		0x0a4	/* PLB to OPB Bus Error Status Register 1 */
@@ -239,6 +247,14 @@
 
 /* Indirectly accessed Clocking Controller DCRs */
 
+/*
+ * AHB-to-PLB bridge configuration (460EX/460GT).  
+ */
+#define	DCR_SDR0_AHB_CFG	0x0370	/* AHB-to-PLB bridge config */
+#define	  SDR0_AHB_CFG_A2P_INCR4	  0x00000080	/* IBM bit 24 */
+#define	  SDR0_AHB_CFG_A2P_PROT2	  0x00000040	/* IBM bit 25 */
+#define	DCR_SDR0_USB2HOST_CFG	0x0371	/* USB 2.0 host config */
+
 #define	DCR_SDR0_SRST0		0x0200	/* Soft Reset */
 #define	  SDR0_SRST0_BGO	  (1 << 31)	/* PLB4 to OPB bridge */
 #define	  SDR0_SRST0_PLB4	  (1 << 30)	/* PLB4 arbiter */
@@ -283,6 +299,9 @@
 #define   SDR0_PFC1_AHBSWAP	  (1 << 5)	/* AHB Data Swap Enable */
 #define   SDR0_PFC1_USBBIGEN	  (1 << 4)	/* USB OTG - AHB Interface Endian Mode */
 #define   SDR0_PFC1_GPTFREQ(x)	  ((x) & 0xf)	/* GPT Variable Frequency Generator */
+#define	DCR_SDR0_ETH_CFG	0x4103	/* Ethernet Configuration (460EX/GT) */
+#define	  SDR0_ETH_CFG_ECS(n)	  (1 << (8 + (n)))	/* EMACn PHY Clock Selection */
+#define	  SDR0_ETH_CFG_TAH_BYPASS(n) (1 << (12 + (n)))	/* TAHn bypass: MAL-EMACn direct */
 #define	DCR_SDR0_MFR		0x4300	/* Miscellaneous Function Register */
 #define	  SDR0_MFR_ECS(n)	  (1 << (27 - (n)))	/* Ethernet n Clock Selection */
 #define	  SDR0_MFR_ETXFL(n)	  (1 << (15 - ((n) << 2)))	/* Force Parity Error EMACn Tx FIFO Bits 0:63 */

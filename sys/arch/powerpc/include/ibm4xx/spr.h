@@ -1,7 +1,11 @@
-/*	$NetBSD: spr.h,v 1.5 2022/09/12 08:02:44 rin Exp $	*/
+/*	$NetBSD: spr.h,v 1.6 2026/06/13 19:45:50 rkujawa Exp $	*/
 
 #ifndef _POWERPC_IBM4XX_SPR_H_
 #define	_POWERPC_IBM4XX_SPR_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_ppcarch.h"
+#endif
 
 /*
  * IBM4xx Special Purpose Register declarations.
@@ -61,8 +65,53 @@
 
 #define PVR_405EX		0x12910000
 
+#define   AMCC460EX		  0x1302
+#define PVR_460EX		0x13020000
+
 #define	SPR_ZPR			0x3b0	/* .4.. Zone Protection Register */
+#ifdef PPC_IBM440
+/*
+ * The 440/460 family is Book E really, but it fits better here than into
+ * our existing Book E support which is e500-centric...
+ */
+#define	SPR_PID			SPR_44XPID /* E... Process ID */
+#define	SPR_DECAR		0x036	/* E... Decrementer Auto-Reload */
+#define	SPR_CSRR0		0x03a	/* E... Critical Save/Restore 0 */
+#define	SPR_CSRR1		0x03b	/* E... Critical Save/Restore 1 */
+#define	SPR_DEAR		0x03d	/* E... Data Exception Address */
+#define	SPR_ESR			0x03e	/* E... Exception Syndrome */
+#define	SPR_IVPR		0x03f	/* E... Interrupt Vector Prefix */
+#define	SPR_IVOR0		0x190	/* E... Critical input */
+#define	SPR_IVOR1		0x191	/* E... Machine check */
+#define	SPR_IVOR2		0x192	/* E... Data storage */
+#define	SPR_IVOR3		0x193	/* E... Instruction storage */
+#define	SPR_IVOR4		0x194	/* E... External input */
+#define	SPR_IVOR5		0x195	/* E... Alignment */
+#define	SPR_IVOR6		0x196	/* E... Program */
+#define	SPR_IVOR7		0x197	/* E... FP unavailable */
+#define	SPR_IVOR8		0x198	/* E... System call */
+#define	SPR_IVOR9		0x199	/* E... AP unavailable */
+#define	SPR_IVOR10		0x19a	/* E... Decrementer */
+#define	SPR_IVOR11		0x19b	/* E... Fixed-interval timer */
+#define	SPR_IVOR12		0x19c	/* E... Watchdog timer */
+#define	SPR_IVOR13		0x19d	/* E... Data TLB error */
+#define	SPR_IVOR14		0x19e	/* E... Instruction TLB error */
+#define	SPR_IVOR15		0x19f	/* E... Debug */
+#define	SPR_MCSRR0		0x23a	/* E... Machine check SRR0 (440x6/460) */
+#define	SPR_MCSRR1		0x23b	/* E... Machine check SRR1 (440x6/460) */
+#define	SPR_MCSR		0x23c	/* E... Machine check Syndrome (440x6/460) */
+#define	  MCSR_MCS		  0x80000000 /* Machine check summary */
+#define	  MCSR_IB		  0x40000000 /* Instruction PLB error */
+#define	  MCSR_DRB		  0x20000000 /* Data read PLB error */
+#define	  MCSR_DWB		  0x10000000 /* Data write PLB error */
+#define	  MCSR_TLBP		  0x08000000 /* TLB parity error */
+#define	  MCSR_ICP		  0x04000000 /* I-cache parity error */
+#define	  MCSR_DCSP		  0x02000000 /* D-cache search parity error */
+#define	  MCSR_DCFP		  0x01000000 /* D-cache flush parity error */
+#define	  MCSR_IMPE		  0x00800000 /* Imprecise machine check */
+#else
 #define	SPR_PID			0x3b1	/* .4.. Process ID */
+#endif /* PPC_IBM440 */
 #define	SPR_MMUCR		0x3b2	/* .4.. MMU Control Register */
 #define	  MMUCR_SW0A		  0x01000000 /* Store WithOut Allocate */
 #define	  MMUCR_U1TE		  0x00400000 /* U1 Transient Enable */
@@ -82,7 +131,9 @@
 #define	SPR_SU0R		0x3bc	/* .4.. Storage User-defined 0 Register */
 #define	SPR_DBCR1		0x3bd	/* .4.. Debug Control Register 1 */
 #define	SPR_ICDBDR		0x3d3	/* .4.. Instruction Cache Debug Data Register */
+#ifndef PPC_IBM440
 #define	SPR_ESR			0x3d4	/* .4.. Exception Syndrome Register */
+#endif
 #define	  ESR_MCI		  0x80000000 /* 0: Machine check - instruction */
 #define	  ESR_PIL		  0x08000000 /* 4: Program interrupt - illegal */
 #define	  ESR_PPR		  0x04000000 /* 5: Program interrupt - privileged */
@@ -95,9 +146,15 @@
 #define	  ESR_BO		  0x00020000 /* 14: Byte ordering exception */
 #define	  ESR_U0F		  0x00008000 /* 16: Data storage interrupt - U0 fault */
 #define	  ESR_SPE		  0x00000080 /* 24: SPE exception */
+#ifndef PPC_IBM440
 #define	SPR_DEAR		0x3d5	/* .4.. Data Error Address Register */
+#endif
 #define	SPR_EVPR		0x3d6	/* .4.. Exception Vector Prefix Register */
+#ifdef PPC_IBM440
+#define	SPR_TSR			0x150	/* E... Timer Status Register */
+#else
 #define	SPR_TSR			0x3d8	/* .4.. Timer Status Register */
+#endif
 #define	  TSR_ENW		  0x80000000 /* Enable Next Watchdog */
 #define	  TSR_WIS		  0x40000000 /* Watchdog Interrupt Status */
 #define	  TSR_WRS_MASK		  0x30000000 /* Watchdog Reset Status */
@@ -106,13 +163,28 @@
 #define	  TSR_WRS_CHIP		  0x20000000 /* Chip reset was forced by the watchdog */
 #define	  TSR_WRS_SYSTEM	  0x30000000 /* System reset was forced by the watchdog */
 #define	  TSR_PIS		  0x08000000 /* PIT Interrupt Status */
+#define	  TSR_DIS		  TSR_PIS    /* E... Decrementer Intr Status */
 #define	  TSR_FIS		  0x04000000 /* FIT Interrupt Status */
+#ifdef PPC_IBM440
+#define	SPR_TCR			0x154	/* E... Timer Control Register */
+#else
 #define	SPR_TCR			0x3da	/* .4.. Timer Control Register */
+#endif
 #define	  TCR_WP_MASK		  0xc0000000 /* Watchdog Period mask */
+#ifdef PPC_IBM440
+/*
+ * 440/460EX watchdog
+ */
+#define	  TCR_WP_2_21		  0x00000000 /* 0b00: 2**21 clocks */
+#define	  TCR_WP_2_25		  0x40000000 /* 0b01: 2**25 clocks */
+#define	  TCR_WP_2_29		  0x80000000 /* 0b10: 2**29 clocks */
+#define	  TCR_WP_2_33		  0xc0000000 /* 0b11: 2**33 clocks */
+#else
 #define	  TCR_WP_2_17		  0x00000000 /* 2**17 clocks */
 #define	  TCR_WP_2_21		  0x40000000 /* 2**21 clocks */
 #define	  TCR_WP_2_25		  0x80000000 /* 2**25 clocks */
 #define	  TCR_WP_2_29		  0xc0000000 /* 2**29 clocks */
+#endif
 #define	  TCR_WRC_MASK		  0x30000000 /* Watchdog Reset Control mask */
 #define	  TCR_WRC_NONE		  0x00000000 /* No watchdog reset */
 #define	  TCR_WRC_CORE		  0x10000000 /* Core reset */
@@ -120,17 +192,34 @@
 #define	  TCR_WRC_SYSTEM	  0x30000000 /* System reset */
 #define	  TCR_WIE		  0x08000000 /* Watchdog Interrupt Enable */
 #define	  TCR_PIE		  0x04000000 /* PIT Interrupt Enable */
+#define	  TCR_DIE		  TCR_PIE    /* E... Decrementer Intr Enable */
 #define	  TCR_FP_MASK		  0x03000000 /* FIT Period */
+#ifdef PPC_IBM440
+/*
+ * 440/460EX FIT periods
+ */
+#define	  TCR_FP_2_13		  0x00000000 /* 0b00: TBL19, 2**13 clocks */
+#define	  TCR_FP_2_17		  0x01000000 /* 0b01: TBL15, 2**17 clocks */
+#define	  TCR_FP_2_21		  0x02000000 /* 0b10: TBL11, 2**21 clocks */
+#define	  TCR_FP_2_25		  0x03000000 /* 0b11: TBL7,  2**25 clocks */
+#else
 #define	  TCR_FP_2_9		  0x00000000 /* 2**9 clocks */
 #define	  TCR_FP_2_13		  0x01000000 /* 2**13 clocks */
 #define	  TCR_FP_2_17		  0x02000000 /* 2**17 clocks */
 #define	  TCR_FP_2_21		  0x03000000 /* 2**21 clocks */
+#endif
 #define	  TCR_FIE		  0x00800000 /* FIT Interrupt Enable */
 #define	  TCR_ARE		  0x00400000 /* Auto Reload Enable */
+#ifndef PPC_IBM440
 #define	SPR_PIT			0x3db	/* .4.. Programmable Interval Timer */
 #define	SPR_SRR2		0x3de	/* .4.. Save/Restore Register 2 */
 #define	SPR_SRR3		0x3df	/* .4.. Save/Restore Register 3 */
+#endif
+#ifdef PPC_IBM440
+#define	SPR_DBSR		0x130	/* E... Debug Status Register */
+#else
 #define	SPR_DBSR		0x3f0	/* .4.. Debug Status Register */
+#endif
 #define	  DBSR_IC		  0x80000000 /* Instruction completion debug event */
 #define   DBSR_IDE		  0x80000000 /* Imprecise debug event */
 #define	  DBSR_BT		  0x40000000 /* Branch Taken debug event */
@@ -146,7 +235,11 @@
 #define	  DBSR_IA3		  0x00080000 /* IAC3 debug event */
 #define	  DBSR_IA4		  0x00040000 /* IAC4 debug event */
 #define	  DBSR_MRR		  0x00000300 /* Most recent reset */
+#ifdef PPC_IBM440
+#define	SPR_DBCR0		0x134	/* E... Debug Control Register 0 */
+#else
 #define	SPR_DBCR0		0x3f2	/* .4.. Debug Control Register 0 */
+#endif
 #define	  DBCR0_EDM		  0x80000000 /* 0: External Debug Mode */
 #define	  DBCR0_IDM		  0x40000000 /* 1: Internal Debug Mode */
 #define	  DBCR0_RST_MASK	  0x30000000 /* 2..3: ReSeT */
@@ -183,5 +276,8 @@
  */
 #define	MFPID(reg)	"mfspr "#reg","___STRING(SPR_PID)";"
 #define	MTPID(reg)	"mtspr "___STRING(SPR_PID)","#reg";"
+
+#define	MFMMUCR(reg)	"mfspr "#reg","___STRING(SPR_MMUCR)";"
+#define	MTMMUCR(reg)	"mtspr "___STRING(SPR_MMUCR)","#reg";"
 
 #endif /* !_POWERPC_IBM4XX_SPR_H_ */
