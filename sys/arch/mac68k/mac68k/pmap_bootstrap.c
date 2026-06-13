@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.115 2026/04/05 14:35:49 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.116 2026/06/13 15:28:09 thorpej Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.115 2026/04/05 14:35:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.116 2026/06/13 15:28:09 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -415,7 +415,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 	 */
 	Sysseg = PA2VA(kstpa, st_entry_t *);
 	Sysseg_pa = kstpa;
-#if defined(M68040)
+#if defined(M68040) || defined(M68060)
 	if (mmutype == MMU_68040)
 		protostfree = stfree;
 #endif

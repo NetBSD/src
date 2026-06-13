@@ -1,4 +1,4 @@
-#	$NetBSD: SMALLRAM,v 1.44 2020/09/27 13:48:52 roy Exp $
+#	$NetBSD: SMALLRAM,v 1.45 2026/06/13 15:28:08 thorpej Exp $
 #
 # This is an example of how to configure a small, efficient kernel for
 # a system with limited RAM. Even so it's capable of doing quite a
@@ -19,9 +19,11 @@ no options 	INCLUDE_CONFIG_FILE
 maxusers	8
 makeoptions	COPTS="-Os -m68030"	# Optimize for the MC68030
 
+no options 	M68060
 no options 	M68040
 no options 	M68020
 no options 	FPSP
+no options 	M060SP
 no options 	FPU_EMULATE
 
 no options 	INSECURE

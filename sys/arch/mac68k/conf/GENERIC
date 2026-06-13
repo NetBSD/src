@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240 2026/05/23 21:01:54 nat Exp $
+# $NetBSD: GENERIC,v 1.241 2026/06/13 15:28:08 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/mac68k/conf/std.mac68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.240 $"
+#ident 		"GENERIC-$Revision: 1.241 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
@@ -31,12 +31,14 @@ makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
 maxusers	16		# estimated number of users
 
 # CPU support.  At least one is REQUIRED.
+options 	M68060
 options 	M68040
 options 	M68030
 options 	M68020		# Note:  must have 68851 PMMU
 
 # CPU-related options.
 options 	FPSP
+options 	M060SP
 options 	FPU_EMULATE
 
 # Support for 128 meg SIMMs in Centris / Quadra 610, 650 and 800 machines.

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2023/01/05 18:48:13 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.59 2026/06/13 15:28:08 thorpej Exp $
 #
 # INSTALL
 
@@ -19,12 +19,14 @@ options 	MEMORY_DISK_ROOT_SIZE=5120	# 2.5 MB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # CPU support.  At least one is REQUIRED.
+options 	M68060
 options 	M68040
 options 	M68030
 options 	M68020		# Note:  must have 68851 PMMU
 
 # CPU-related options.
 options 	FPSP
+options 	M060SP
 options 	FPU_EMULATE
 
 # Standard system options

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.388 2026/05/06 12:46:24 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.389 2026/06/13 15:28:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.388 2026/05/06 12:46:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.389 2026/06/13 15:28:09 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -2083,6 +2083,7 @@ gray_bar(void)
 
 /* in locore */
 extern u_long ptest040(void *, u_int);
+extern u_long plpar060(void *, u_int);
 extern int get_pte(u_int, u_long *, u_short *);
 
 /*
@@ -2099,7 +2100,17 @@ get_physical(u_int addr, u_long * phys)
 	u_short psr;
 	int i, numbits;
 
-	if (mmutype == MMU_68040) {
+	if (cputype == CPU_68060) {
+		ph = plpar060((void *)addr, FC_SUPERD);
+		if (ph == (u_long)-1) {
+			ph = plpar060((void *)addr, FC_USERD);
+			if (ph == (u_long)-1)  {
+				return 0;
+			}
+		}
+		*phys = ph;
+		return 1;
+	} else if (mmutype == MMU_68040) {
 		ph = ptest040((void *)addr, FC_SUPERD);
 		if ((ph & MMUSR40_R) == 0) {
 			ph = ptest040((void *)addr, FC_USERD);

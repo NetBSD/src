@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.209 2026/04/07 12:36:22 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.210 2026/06/13 15:28:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -154,7 +154,7 @@ ASENTRY_NOPROFILE(start)
 	movc	%d0,%cacr		|   only exists on 68030
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040
+	jeq	Lnot68030		| yes, we have 68020/68040/68060
 
 	movl	#CACHE_OFF,%d0		| disable and clear both caches
 	movc	%d0,%cacr
@@ -166,7 +166,7 @@ ASENTRY_NOPROFILE(start)
 
 Lnot68030:
 	bset	#31,%d0			| data cache enable bit
-	movc	%d0,%cacr		|   only exists on 68040
+	movc	%d0,%cacr		|   only exists on 68040/68060
 	movc	%cacr,%d0		| read it back
 	tstl	%d0			| zero?
 	beq	Lis68020		| yes, we have 68020
@@ -174,6 +174,28 @@ Lnot68030:
 	movql	#CACHE40_OFF,%d0	| now turn it back off
 	movc	%d0,%cacr		|   before we access any data
 	.word	0xf4f8			| cpusha bc ;push and invalidate caches
+	bset	#30,%d0			| data cache no allocate mode bit
+	movc	%d0,%cacr		|   only exists on 68060
+	movc	%cacr,%d0		| read it back
+	tstl	%d0			| zero?
+	jeq	Lis68040		| yes, we have 68040
+	lea	_C_LABEL(mmutype),%a0	| no, we have 68060
+	movl	#MMU_68040,%a0@		| with a 68040 compatible MMU
+	lea	_C_LABEL(cputype),%a0
+	movl	#CPU_68060,%a0@		| and a 68060 CPU
+
+	| Mac OS may be running with 060 FPU disabled. Check if we have
+	| one and re-enable it.  Assume superscalar execution and loadstore
+	| bypass are already enabled if required.
+	| XXXJRT revisit this maybe?
+	.word	0x4e7a,0x1808		| movc	pcr,d1
+	cmpw	#0x0430,%d1		| check ID word
+	jne	Lstart1			| no FPU? go to start
+	swap	%d1
+	bclr	#1,%d1			| ... and switch it on.
+	.word	0x4e7b,0x1808		| movc	d1,pcr
+	jra	Lstart1
+Lis68040:
 	lea	_C_LABEL(mmutype),%a0
 	movl	#MMU_68040,%a0@		| Reflect 68040 MMU
 	lea	_C_LABEL(cputype),%a0
@@ -366,6 +388,12 @@ Lnodjmemc:
 	movl	#MMU40_TCR_BITS,%d0
 	.long	0x4e7b0003		| movc %d0,%tc   ;Enable MMU
 	movl	#CACHE40_ON,%d0
+#ifdef M68060
+	cmpl	#CPU_68060,_C_LABEL(cputype)
+	jne	Lcacheon
+	movl	#CACHE60_ON,%d0
+#endif
+Lcacheon:
 	movc	%d0,%cacr		| turn on both caches
 	jra	Lloaddone
 
@@ -401,7 +429,7 @@ Lloaddone:
 	movl	#0,%a6			| terminate the stack back trace
 
 /* flush TLB and turn on caches */
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040/060?
 	jeq	Ltbia040		| yes, cache already on
 	pflusha
 	movl	#CACHE_ON,%d0
@@ -575,8 +603,8 @@ ENTRY(delay)
  * memory this way.
  */
 ENTRY_NOPROFILE(doboot)
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+#if defined(M68040) || defined(M68060)
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040/060?
 	jeq	Lnocache5		| yes, skip
 #endif
 	movl	#CACHE_OFF,%d0
@@ -589,8 +617,8 @@ Lbootcopy:
 	movw	%a1@+,%a0@+		| copy a word
 	cmpl	%a3,%a1			| done yet?
 	jcs	Lbootcopy		| no, keep going
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+#if defined(M68040) || defined(M68060)
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040/060?
 	jne	LmotommuE		| no, skip
 	.word	0xf4f8			| cpusha bc
 LmotommuE:
@@ -602,8 +630,8 @@ Lbootcode:
 	lea	%a0@(0x800),%sp		| physical %SP in case of NMI
 	movl	_C_LABEL(MacOSROMBase),%a1 | Load MacOS ROMBase
 
-#if defined(M68040)
-	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040?
+#if defined(M68040) || defined(M68060)
+	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040/060?
 	jne	LmotommuF		| no, skip
 	movl	#0,%d0
 	movc	%d0,%cacr		| caches off
@@ -619,6 +647,47 @@ Ldoboot1:
 	lea	%a1@(0x90),%a1		| offset of ROM reset routine
 	jmp	%a1@			| and jump to ROM to reset machine
 Lebootcode:
+
+/*
+ * u_long plpar060(void *addr, u_int fc);
+ *
+ * plpar060() uses the new plpar instruction to resolve a physical address to
+ * the associated logical address when MMU is enabled. Used by get_physical().
+ * zzj apr-9-2026
+ */
+ENTRY_NOPROFILE(plpar060)
+#if defined(M68060)
+	.long	0x4e7a0003		| movc %tc,%d0
+	andw	#0x8000,%d0
+	jeq	2f			| MMU is disabled
+
+	movc	%dfc,%d1		| Save %dfc
+	movl	%sp@(8),%d0		| Set FC for plpar
+	movc	%d0,%dfc
+
+	movec	%vbr,%a1		| get vbr
+	addq.l	#8,%a1			| access error vector
+	lea	_ASM_LABEL(L060mmuerr),%a0 | temporary handler address
+	move.l	%a1@,%d0		| save old handler into %d0
+	move.l	%a0,%a1@		| install temp handler
+
+	movl	%sp@(4),%a0		| logical address to look up
+
+	.word	0xf5c8			| plpar %a0@
+	move.l	%d0,%a1@		| restore original handler
+
+	movl	%a0,%d0			| return address in %d0
+	movc	%d1,%dfc		| Restore %dfc
+	rts
+
+L060mmuerr:	 | plpa will throw an access error (vect $8) on failure
+	movl	#-1, %a0		| return failure
+	addq.l	#2,2(%sp)		| advance %pc past plpar insn
+	rte
+2:
+#endif
+	movl	#-1,%d0			| return failure
+	rts
 
 /*
  * u_long ptest040(void *addr, u_int fc);
