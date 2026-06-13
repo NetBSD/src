@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2025/10/13 14:03:47 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.25 2026/06/13 16:54:40 jdc Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -84,7 +84,7 @@ SRCS.freetype+=	type42.c
 SRCS.freetype+=	winfnt.c
 
 .PATH:	${EXPAT}/lib
-SRCS.expat=	xmlparse.c xmltok.c xmlrole.c
+SRCS.expat=	xmlparse.c xmltok.c xmlrole.c random_arc4random_buf.c
 
 SRCS=	${SRCS.fc-cache} ${SRCS.fontconfig} ${SRCS.freetype} ${SRCS.expat}
 
