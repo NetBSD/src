@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.12 2026/06/04 15:36:33 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.13 2026/06/13 17:17:39 jdc Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.12 2026/06/04 15:36:33 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.13 2026/06/13 17:17:39 jdc Exp $");
 
 #include <sys/param.h>
 
@@ -376,9 +376,6 @@ add_i2c_props_e250(device_t busdev, uint64_t node)
 
 	/* NVRAM */
 	add_i2c_device(cfg, "nvram", "i2c-at24c02", 0x52, node);
-
-	/* RSC clock */
-	add_i2c_device(cfg, "rscrtc", "i2c-ds1307", 0x68, node);
 
 	prop_object_release(cfg);
 }
