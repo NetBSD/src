@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.31 2026/06/13 09:33:07 skrll Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.32 2026/06/13 09:34:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -114,13 +114,13 @@ LIST_HEAD(kern_history_head, kern_history);
 #define	MAXHISTS		32
 
 /* and these are the bit values of each history */
-#define	KERNHIST_UVMMAPHIST	0x00000001	/* maphist */
-#define	KERNHIST_UVMPDHIST	0x00000002	/* pdhist */
-#define	KERNHIST_UVMUBCHIST	0x00000004	/* ubchist */
-#define	KERNHIST_UVMLOANHIST	0x00000008	/* loanhist */
-#define	KERNHIST_USBHIST	0x00000010	/* usbhist */
-#define	KERNHIST_SCDEBUGHIST	0x00000020	/* scdebughist */
-#define	KERNHIST_BIOHIST	0x00000040	/* biohist */
+#define	KERNHIST_UVMMAPHIST	__BIT(0)	/* maphist */
+#define	KERNHIST_UVMPDHIST	__BIT(1)	/* pdhist */
+#define	KERNHIST_UVMUBCHIST	__BIT(2)	/* ubchist */
+#define	KERNHIST_UVMLOANHIST	__BIT(3)	/* loanhist */
+#define	KERNHIST_USBHIST	__BIT(4)	/* usbhist */
+#define	KERNHIST_SCDEBUGHIST	__BIT(5)	/* scdebughist */
+#define	KERNHIST_BIOHIST	__BIT(6)	/* biohist */
 
 #ifdef _KERNEL
 
