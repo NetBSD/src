@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.14 2026/05/30 11:00:34 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.15 2026/06/13 14:38:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -33,11 +33,20 @@
 #ifndef _DWC_EQOS_VAR_H
 #define _DWC_EQOS_VAR_H
 
+#include <sys/queue.h>
 #include <sys/workqueue.h>
 #include <dev/ic/dwc_eqos_reg.h>
 
 #define	EQOS_DMA_DESC_COUNT	256
+#define	EQOS_DMA_RXBUF_COUNT	(EQOS_DMA_DESC_COUNT * 2)
 #define	EQOS_DMA_PBL_DEFAULT	8
+
+struct eqos_rxbuf {
+	struct eqos_softc	*sc;
+	void			*vaddr;
+	bus_addr_t		paddr;
+	SLIST_ENTRY(eqos_rxbuf)	next;
+};
 
 struct eqos_bufmap {
 	bus_dmamap_t		map;
@@ -52,6 +61,16 @@ struct eqos_ring {
 	bus_addr_t		desc_ring_paddr;
 	struct eqos_bufmap	buf_map[EQOS_DMA_DESC_COUNT];
 	u_int			cur, next, queued;
+};
+
+struct eqos_rxdata {
+	bus_dmamap_t		map;
+	bus_dma_segment_t	seg;
+	void			*vaddr;
+	bus_addr_t		paddr;
+	struct eqos_rxbuf	rxbuf[EQOS_DMA_RXBUF_COUNT];
+	SLIST_HEAD(, eqos_rxbuf) freelist;
+	kmutex_t		freelist_mtx;
 };
 
 struct eqos_softc {
@@ -76,6 +95,7 @@ struct eqos_softc {
 
 	struct eqos_ring	sc_tx;
 	struct eqos_ring	sc_rx;
+	struct eqos_rxdata	sc_rxdata;
 	struct workqueue	*sc_wq;
 	struct work		sc_rxwork;
 	void			*sc_tx_si;

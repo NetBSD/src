@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.52 2026/06/13 12:03:13 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.53 2026/06/13 14:38:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.52 2026/06/13 12:03:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.53 2026/06/13 14:38:02 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.52 2026/06/13 12:03:13 jmcneill Exp $
 #define	EQOS_TXDMA_SIZE		(EQOS_MAX_MTU + ETHER_HDR_LEN + ETHER_CRC_LEN)
 #define	EQOS_RXDMA_SIZE		2048	/* Fixed value by hardware */
 CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
+#define	EQOS_RXBUF_SIZE		(EQOS_RXDMA_SIZE * EQOS_DMA_RXBUF_COUNT)
 
 #ifdef EQOS_DEBUG
 #define	EDEB_NOTE		(1U << 0)
@@ -446,15 +447,54 @@ eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	return 0;
 }
 
+static struct eqos_rxbuf *
+eqos_alloc_rxbuf(struct eqos_softc *sc)
+{
+	struct eqos_rxbuf *rxbuf;
+
+	mutex_enter(&sc->sc_rxdata.freelist_mtx);
+	rxbuf = SLIST_FIRST(&sc->sc_rxdata.freelist);
+	if (rxbuf != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_rxdata.freelist, next);
+	}
+	mutex_exit(&sc->sc_rxdata.freelist_mtx);
+
+	return rxbuf;
+}
+
+static void
+eqos_free_rxbuf(struct mbuf *m, void *buf, size_t size, void *arg)
+{
+	struct eqos_rxbuf *rxbuf = arg;
+	struct eqos_softc *sc = rxbuf->sc;
+
+	mutex_enter(&sc->sc_rxdata.freelist_mtx);
+	SLIST_INSERT_HEAD(&sc->sc_rxdata.freelist, rxbuf, next);
+	mutex_exit(&sc->sc_rxdata.freelist_mtx);
+
+	if (__predict_true(m != NULL)) {
+		pool_cache_put(mb_cache, m);
+	}
+}
+
 static struct mbuf *
 eqos_alloc_mbufcl(struct eqos_softc *sc)
 {
+	struct eqos_rxbuf *rxbuf;
 	struct mbuf *m;
 
-	m = m_getcl(M_NOWAIT, MT_DATA, M_PKTHDR);
-	if (m != NULL)
-		m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
-	MCLAIM(m, &sc->sc_ec.ec_rx_mowner);
+	m = m_gethdr(M_NOWAIT, MT_DATA);
+	if (m == NULL) {
+		return NULL;
+	}
+	rxbuf = eqos_alloc_rxbuf(sc);
+	if (rxbuf == NULL) {
+		m_freem(m);
+		return NULL;
+	}
+	MEXTADD(m, rxbuf->vaddr, EQOS_RXDMA_SIZE, 0, eqos_free_rxbuf, rxbuf);
+	m->m_flags |= M_EXT_RW;
+	m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
 
 	return m;
 }
@@ -1589,6 +1629,41 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 		EQOS_TXUNLOCK(sc);
 	}
 
+	/* Setup RX buffers */
+	error = bus_dmamap_create(sc->sc_dmat, EQOS_RXBUF_SIZE, 1,
+	    EQOS_RXBUF_SIZE, 0, BUS_DMA_WAITOK, &sc->sc_rxdata.map);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamem_alloc(sc->sc_dmat, EQOS_RXBUF_SIZE, PAGE_SIZE, 0,
+	    &sc->sc_rxdata.seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_rxdata.seg, nsegs,
+	    EQOS_RXBUF_SIZE, &sc->sc_rxdata.vaddr, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rxdata.map,
+	    sc->sc_rxdata.vaddr, EQOS_RXBUF_SIZE, NULL, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	sc->sc_rxdata.paddr = sc->sc_rxdata.map->dm_segs[0].ds_addr;
+
+	mutex_init(&sc->sc_rxdata.freelist_mtx, MUTEX_DEFAULT, IPL_NET);
+	SLIST_INIT(&sc->sc_rxdata.freelist);
+	for (i = 0; i < EQOS_DMA_RXBUF_COUNT; i++) {
+		sc->sc_rxdata.rxbuf[i].sc = sc;
+		sc->sc_rxdata.rxbuf[i].vaddr =
+		    (char *)sc->sc_rxdata.vaddr + i * EQOS_RXDMA_SIZE;
+		sc->sc_rxdata.rxbuf[i].paddr =
+		    sc->sc_rxdata.paddr + i * EQOS_RXDMA_SIZE;
+		SLIST_INSERT_HEAD(&sc->sc_rxdata.freelist,
+		    &sc->sc_rxdata.rxbuf[i], next);
+	}
+
 	/* Setup RX ring */
 	error = bus_dmamap_create(sc->sc_dmat, RX_DESC_SIZE, 1, RX_DESC_SIZE,
 	    DESC_BOUNDARY, BUS_DMA_WAITOK, &sc->sc_rx.desc_map);
@@ -1617,7 +1692,7 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 
 	for (i = 0; i < RX_DESC_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    RX_DESC_COUNT, MCLBYTES, 0,
+		    1, MCLBYTES, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_rx.buf_map[i].map);
 		if (error != 0) {
