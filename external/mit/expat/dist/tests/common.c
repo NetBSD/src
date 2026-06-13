@@ -19,6 +19,7 @@
    Copyright (c) 2020      Tim Gates <tim.gates@iress.com>
    Copyright (c) 2021      Donghee Na <donghee.na@python.org>
    Copyright (c) 2023-2024 Sony Corporation / Snild Dolkow <snild@sony.com>
+   Copyright (c) 2026      Matthew Fernandez <matthew.fernandez@gmail.com>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -261,7 +262,7 @@ _run_attribute_check(const char *text, const XML_Char *expected,
 void
 _run_ext_character_check(const char *text, ExtTest *test_data,
                          const XML_Char *expected, const char *file, int line) {
-  CharData *const storage = (CharData *)malloc(sizeof(CharData));
+  CharData *const storage = malloc(sizeof(CharData));
 
   CharData_Init(storage);
   test_data->storage = storage;
@@ -303,7 +304,14 @@ duff_reallocator(void *ptr, size_t size) {
   return realloc(ptr, size);
 }
 
-// Portable remake of strndup(3) for C99; does not care about space efficiency
+// Portable remake of strnlen(3) for C99
+static size_t
+portable_strnlen(const char *s, size_t maxlen) {
+  const char *const end = (const char *)memchr(s, '\0', maxlen);
+  return (end == NULL) ? maxlen : (size_t)(end - s);
+}
+
+// Portable remake of strndup(3) for C99
 char *
 portable_strndup(const char *s, size_t n) {
   if ((s == NULL) || (n == SIZE_MAX)) {
@@ -311,7 +319,9 @@ portable_strndup(const char *s, size_t n) {
     return NULL;
   }
 
-  char *const buffer = (char *)malloc(n + 1);
+  n = portable_strnlen(s, n);
+
+  char *const buffer = malloc(n + 1);
   if (buffer == NULL) {
     errno = ENOMEM;
     return NULL;
