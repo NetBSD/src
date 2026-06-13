@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos.c,v 1.54 2026/06/13 15:38:29 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.55 2026/06/13 17:28:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.54 2026/06/13 15:38:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.55 2026/06/13 17:28:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.54 2026/06/13 15:38:29 jmcneill Exp $
 #define	EQOS_RXDMA_SIZE		2048	/* Fixed value by hardware */
 CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
 #define	EQOS_RXBUF_SIZE		(EQOS_RXDMA_SIZE * EQOS_DMA_RXBUF_COUNT)
+#define	EQOS_TX_PACKET_PER_INTR	16
 
 #ifdef EQOS_DEBUG
 #define	EDEB_NOTE		(1U << 0)
@@ -278,7 +279,7 @@ eqos_dma_sync(struct eqos_softc *sc, bus_dmamap_t map,
 
 static uint32_t
 eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
-    bus_addr_t paddr, u_int len, u_int total_len)
+    bus_addr_t paddr, u_int len, u_int total_len, bool ioc)
 {
 	struct eqos_dma_desc desc;
 	uint32_t tdes2, tdes3;
@@ -295,7 +296,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		tdes3 = 0;
 		--sc->sc_tx.queued;
 	} else {
-		tdes2 = (flags & EQOS_TDES3_TX_LD) ? EQOS_TDES2_TX_IOC : 0;
+		tdes2 = (ioc && (flags & EQOS_TDES3_TX_LD) != 0) ?
+			EQOS_TDES2_TX_IOC : 0;
 		tdes3 = flags;
 		++sc->sc_tx.queued;
 	}
@@ -369,6 +371,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m,
 	}
 	first_tdes3 = 0;
 
+	const bool ioc = (sc->sc_tx.count++ % EQOS_TX_PACKET_PER_INTR) == 0;
 	for (cur = index, i = 0; i < nsegs; i++) {
 		uint32_t tdes3;
 
@@ -376,7 +379,7 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m,
 			flags |= EQOS_TDES3_TX_LD;
 
 		tdes3 = eqos_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
-		    segs[i].ds_len, m->m_pkthdr.len);
+		    segs[i].ds_len, m->m_pkthdr.len, ioc);
 		cur = TX_NEXT(cur);
 
 		if (i == 0) {
@@ -1625,7 +1628,7 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 			return error;
 		}
 		EQOS_TXLOCK(sc);
-		eqos_setup_txdesc(sc, i, 0, 0, 0, 0);
+		eqos_setup_txdesc(sc, i, 0, 0, 0, 0, false);
 		EQOS_TXUNLOCK(sc);
 	}
 
