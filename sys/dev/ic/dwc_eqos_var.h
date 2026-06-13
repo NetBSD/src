@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_eqos_var.h,v 1.15 2026/06/13 14:38:02 jmcneill Exp $ */
+/* $NetBSD: dwc_eqos_var.h,v 1.16 2026/06/13 17:32:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
@@ -60,7 +60,7 @@ struct eqos_ring {
 	struct eqos_dma_desc	*desc_ring;
 	bus_addr_t		desc_ring_paddr;
 	struct eqos_bufmap	buf_map[EQOS_DMA_DESC_COUNT];
-	u_int			cur, next, queued;
+	u_int			cur, next, queued, count;
 };
 
 struct eqos_rxdata {
