@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.30 2026/04/05 10:19:57 andvar Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.31 2026/06/13 09:33:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -184,11 +184,11 @@ do { \
 extern int kernhist_print_enabled;
 #define KERNHIST_PRINTNOW(E) \
 do { \
-		if (kernhist_print_enabled) { \
-			kernhist_entry_print(E, printf); \
-			if (KERNHIST_DELAY != 0) \
-				DELAY(KERNHIST_DELAY); \
-		} \
+	if (kernhist_print_enabled) { \
+		kernhist_entry_print(E, printf); \
+		if (KERNHIST_DELAY != 0) \
+			DELAY(KERNHIST_DELAY); \
+	} \
 } while (0)
 #else
 #define KERNHIST_PRINTNOW(E) /* nothing */
