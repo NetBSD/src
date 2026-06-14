@@ -1,4 +1,4 @@
-/*	$NetBSD: satalink.c,v 1.58 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: satalink.c,v 1.59 2026/06/14 15:06:19 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.58 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: satalink.c,v 1.59 2026/06/14 15:06:19 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,6 +454,20 @@ sii3112_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			    "unable to map SATALink BA5 register space\n");
 		else
 			sc->sc_ba5_en = 1;
+#if 0
+	/*
+	 * qemu workaround: BA5 enable is not set, although... 
+	 * BAR5 is mappable anyway 
+	 */
+	} else if (pci_mapreg_map(pa, PCI_MAPREG_START + 0x14,
+				  PCI_MAPREG_TYPE_MEM|
+				  PCI_MAPREG_MEM_TYPE_32BIT, 0,
+				  &sc->sc_ba5_st, &sc->sc_ba5_sh,
+				  NULL, &sc->sc_ba5_ss) == 0) {
+		aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "SATALink BA5 register space mapped\n");
+		sc->sc_ba5_en = 1;
+#endif 
 	} else {
 		aprint_verbose_dev(sc->sc_wdcdev.sc_atac.atac_dev,
 		    "SATALink BA5 register space disabled\n");
