@@ -57,7 +57,10 @@ CFATTACH_DECL_NEW(uhid_si, sizeof(struct uhid_softc),
 static int
 uhid_si_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	struct gcport_softc * const sc = device_private(parent);
+	struct si_channel *ch = sc->ch;
+
+	return IS_GCPAD(ch->ch_id);
 }
 
 static void
