@@ -1,4 +1,4 @@
-/*	$NetBSD: pciex.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $	*/
+/*	$NetBSD: pciex.c,v 1.2 2026/06/14 18:50:56 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.2 2026/06/14 18:50:56 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -209,12 +209,17 @@ pciex_conf_read(void *v, pcitag_t tag, int reg)
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
 	pcireg_t data;
-	int bus;
+	int bus, dev;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return (pcireg_t) -1;
-	ibm4xx_pci_decompose_tag(v, tag, &bus, NULL, NULL);
+	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
 	if (bus >= AMCC460EX_PCIE_CFG_SIZE >> 20)
+		return (pcireg_t) -1;
+	/*
+	 * avoid bus wedge (reasons unknown)
+	 */
+	if (bus <= 1 && dev != 0)
 		return (pcireg_t) -1;
 
 	if (setfault(&env)) {
@@ -232,12 +237,15 @@ pciex_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
-	int bus;
+	int bus, dev;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return;
-	ibm4xx_pci_decompose_tag(v, tag, &bus, NULL, NULL);
+	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
 	if (bus >= AMCC460EX_PCIE_CFG_SIZE >> 20)
+		return;
+	/* See pciex_conf_read: only device 0 exists on bus 0 and bus 1. */
+	if (bus <= 1 && dev != 0)
 		return;
 
 	if (setfault(&env)) {
