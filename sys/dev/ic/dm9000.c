@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.42 2026/06/14 01:01:54 gutteridge Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.43 2026/06/14 01:04:04 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -226,7 +226,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 			enaddr[0] = maclo;
 			enaddr[1] = maclo >> 8;
 			enaddr[2] = maclo >> 16;
-			enaddr[3] = maclo >> 26;
+			enaddr[3] = maclo >> 24;
 			enaddr[4] = machi;
 			enaddr[5] = machi >> 8;
 		}
