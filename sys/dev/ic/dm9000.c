@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.43 2026/06/14 01:04:04 gutteridge Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.44 2026/06/14 16:00:25 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -87,6 +87,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.44 2026/06/14 16:00:25 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
