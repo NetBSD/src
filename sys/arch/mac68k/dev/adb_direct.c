@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.74 2026/04/07 22:22:11 andvar Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.75 2026/06/14 02:03:57 thorpej Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.74 2026/04/07 22:22:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.75 2026/06/14 02:03:57 thorpej Exp $");
 
 #include "opt_adb.h"
 
@@ -790,6 +790,11 @@ switch_start:
 			adbBusState = ADB_BUS_IDLE;
 			adbActionState = ADB_ACTION_IDLE;
 			ADB_SET_STATE_IDLE_II();
+			/*
+			 * delay required after idle transition
+			 * so ADB uC recognizes transition.
+			 */
+			delay(ADB_DELAY);
 			break;
 		}
 		adbInputBuffer[0] = 1;
@@ -2157,11 +2162,11 @@ adb_reinit(void)
 
 	adb_hw_setup();		/* init the VIA bits and hard reset ADB */
 
-	delay(100000);
+	delay(1000);
 
 	/* send an ADB reset first */
 	(void)adb_op_sync((Ptr)0, (Ptr)0, (Ptr)0, (short)0x00);
-	delay(300000);
+	delay(3000);
 
 	/*
 	 * Probe for ADB devices. Probe devices 1-15 quickly to determine
