@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.24 2024/10/19 05:09:03 skrll Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.25 2026/06/14 02:10:58 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -77,6 +77,7 @@
 #define	AWIN_GMAC_MAC_INT_RGSMII	__BIT(0)
 
 #define	AWIN_GMAC_MAC_FLOWCTRL_PAUSE	__BITS(31,16)
+#define	AWIN_GMAC_MAC_FLOWCTRL_UPE	__BIT(3)
 #define	AWIN_GMAC_MAC_FLOWCTRL_RFE	__BIT(2)
 #define	AWIN_GMAC_MAC_FLOWCTRL_TFE	__BIT(1)
 #define	AWIN_GMAC_MAC_FLOWCTRL_BUSY	__BIT(0)
@@ -188,6 +189,7 @@
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20) /* flush TX fifo */
 #define	GMAC_DMA_OP_TTC			__BITS(16,14) /* TX thresh control */
 #define	GMAC_DMA_OP_TXSTART		__BIT(13) /* start TX DMA engine */
+#define	GMAC_DMA_OP_EFC			__BIT(8)  /* enable flow control */
 #define	GMAC_DMA_OP_RTC			__BITS(4,3) /* RX thres control */
 #define	GMAC_DMA_OP_RXSTART		__BIT(1)  /* start RX DMA engine */
 

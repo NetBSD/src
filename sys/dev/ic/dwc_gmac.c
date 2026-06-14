@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.100 2026/05/30 13:09:20 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.101 2026/06/14 02:10:58 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.100 2026/05/30 13:09:20 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.101 2026/06/14 02:10:58 jakllsch Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -831,7 +831,7 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 	if (sc->sc_set_speed)
 		sc->sc_set_speed(sc, IFM_SUBTYPE(mii->mii_media_active));
 
-	flow = 0;
+	flow = AWIN_GMAC_MAC_FLOWCTRL_UPE;
 	if (IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) {
 		conf |= AWIN_GMAC_MAC_CONF_FULLDPLX;
 		flow |= __SHIFTIN(0x200, AWIN_GMAC_MAC_FLOWCTRL_PAUSE);
@@ -912,6 +912,7 @@ dwc_gmac_init(struct ifnet *ifp)
 	uint32_t opmode = GMAC_DMA_OP_RXSTART | GMAC_DMA_OP_TXSTART;
 	if ((sc->sc_flags & DWC_GMAC_FORCE_THRESH_DMA_MODE) == 0) {
 		opmode |= GMAC_DMA_OP_RXSTOREFORWARD | GMAC_DMA_OP_TXSTOREFORWARD;
+		opmode |= GMAC_DMA_OP_EFC; /* requires 4KiB+ RX FIFO */
 	}
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_OPMODE, opmode);
 #ifdef DWC_GMAC_DEBUG
