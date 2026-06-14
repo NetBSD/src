@@ -1,4 +1,4 @@
-/* $NetBSD: opbvar.h,v 1.6 2011/06/18 06:41:42 matt Exp $ */
+/* $NetBSD: opbvar.h,v 1.7 2026/06/14 00:02:35 rkujawa Exp $ */
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -58,6 +58,8 @@ struct opb_attach_args {
 #define	OPB_FLAGS_EMAC_HT256		(1 << 2)  /* emac 256bit Hash Table */
 #define	OPB_FLAGS_EMAC_RMII_ZMII	(1 << 3)  /* emac RMII uses ZMII */
 #define	OPB_FLAGS_EMAC_RMII_RGMII	(1 << 4)  /* emac RMII uses RGMII */
+#define	OPB_FLAGS_EMAC_ETHCFG_ECS	(1 << 5)  /* clk sel in SDR0_ETH_CFG (460EX) */
+#define	OPB_FLAGS_EMAC_TAH		(1 << 6)  /* TAH offload engine present */
 };
 
 /* For use before opb_attach() is called */

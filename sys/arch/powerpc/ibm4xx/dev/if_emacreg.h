@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emacreg.h,v 1.1 2001/06/24 02:13:37 simonb Exp $	*/
+/*	$NetBSD: if_emacreg.h,v 1.2 2026/06/14 00:02:35 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -48,9 +48,21 @@
 #define	EMAC_TXC_IVT		0x0020	/* Insert VLAN Tag */
 #define	EMAC_TXC_RVT		0x0010	/* Replace VLAN Tag */
 
+/*
+ * Hardware Acceleration Control, TAH-equipped channels only (440GX
+ * channels 2/3, 460EX/GT). 
+ */
+#define	EMAC_TXC_HAC_MASK	0x000e	/* 000: acceleration disabled */
+#define	EMAC_TXC_HAC_SSR(n)	(((n) + 1) << 1) /* 001-110: csum + TSO
+						    using TAH_SSR(n) */
+#define	EMAC_TXC_HAC_CSUM	0x000e	/* 111: checksum insertion only */
+
 /* EMAC transmit status definitions */
 #define EMAC_TXS_BFCS		0x0200	/* Bad FCS */
 #define EMAC_TXS_BPP		0x0100	/* Bad previous packet */
+#define EMAC_TXS_TED		0x0100	/* TAH channels: Transmit Error
+					   Detected, cause is in TAH_TSR
+					   (overlays BPP) */
 #define EMAC_TXS_LCS		0x0080	/* Loss of carrier sense */
 #define EMAC_TXS_ED		0x0040	/* Excessive deferral */
 #define EMAC_TXS_EC		0x0020	/* Excessive collisions */
@@ -71,3 +83,9 @@
 #define EMAC_RXS_PTL		0x0004	/* Packet too long */
 #define EMAC_RXS_ORE		0x0002	/* Out of range error */
 #define EMAC_RXS_IRE		0x0001	/* In range error */
+
+/*
+ * TAH RX checksum verification result, valid only when TAH_MR[CVR] set
+ */
+#define	EMAC_RXS_CSUM_MASK	0x0003
+#define	EMAC_RXS_CSUM_BAD	0x0003

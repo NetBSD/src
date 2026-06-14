@@ -1,4 +1,4 @@
-/* $NetBSD: mal.c,v 1.5 2023/06/19 08:40:30 msaitoh Exp $ */
+/* $NetBSD: mal.c,v 1.6 2026/06/14 00:02:35 rkujawa Exp $ */
 /*
  * Copyright (c) 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.5 2023/06/19 08:40:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mal.c,v 1.6 2026/06/14 00:02:35 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,6 +58,7 @@ const static struct maltbl {
 	{ IBM405GP,	{    11,    12,    13,    14,    10  },	0 },
 	{ IBM405GPR,	{    11,    12,    13,    14,    10  },	0 },
 	{ AMCC405EX,	{    10,    11, 32+ 1, 32+ 2, 32+ 0  }, MAL_GEN2 },
+	{ AMCC460EX,	{ 64+ 6, 64+ 7, 64+ 4, 64+ 5, 64+ 3  }, MAL_GEN2 }
 };
 
 /* Max channel is 4 on 440GX.  Others is 2 or 1. */

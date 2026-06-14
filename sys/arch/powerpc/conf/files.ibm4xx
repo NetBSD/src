@@ -1,4 +1,4 @@
-#	$NetBSD: files.ibm4xx,v 1.15 2013/11/21 13:33:15 kiyohara Exp $
+#	$NetBSD: files.ibm4xx,v 1.16 2026/06/14 00:02:35 rkujawa Exp $
 #
 # IBM 4xx specific configuration info
 
@@ -6,6 +6,8 @@ include "arch/powerpc/fpu/files.fpu"
 include "arch/powerpc/pic/files.pic"
 
 defflag opt_uic.h			MULTIUIC
+defparam opt_uic.h			UIC1_CASCADE_IRQ UIC2_CASCADE_IRQ
+defparam opt_uic.h			UIC3_CASCADE_IRQ
 file	arch/powerpc/ibm4xx/pic_uic.c
 
 # Board Properties
@@ -43,7 +45,7 @@ device	emac: ether, ifnet, arp, mii
 attach	emac at opb
 file	arch/powerpc/ibm4xx/dev/if_emac.c	emac	needs-flag
 file	arch/powerpc/ibm4xx/dev/mal.c		emac
-defflag	opt_emac.h	EMAC_ZMII_PHY EMAC_RGMII_PHY
+defflag	opt_emac.h	EMAC_ZMII_PHY EMAC_RGMII_PHY EMAC_TAH
 #file	arch/powerpc/ibm4xx/dev/zmii.c		emac_zmii_phy
 file	arch/powerpc/ibm4xx/dev/rgmii.c		emac_rgmii_phy
 
@@ -66,6 +68,16 @@ file	arch/powerpc/ibm4xx/pci/pchb.c		pchb
 file	arch/powerpc/ibm4xx/pci/pci_machdep.c	pci
 file	arch/powerpc/ibm4xx/dev/ibm405gp.c	pchb | pci
 file	arch/powerpc/pci/pci_machdep_common.c	pci
+
+# PLB-PCIX host bridge (440GP/440SPe/460EX)
+device	pcix : pcibus
+attach	pcix at plb
+file	arch/powerpc/ibm4xx/pci/pcix.c		pcix
+
+# PLB-PCIE root complex (440SPe/460EX)
+device	pciex : pcibus
+attach	pciex at plb
+file	arch/powerpc/ibm4xx/pci/pciex.c		pciex
 file	arch/powerpc/pci/pci_module.c		pci & modular
 
 # On-chip IIC controller
@@ -81,3 +93,16 @@ file	arch/powerpc/ibm4xx/dev/gpiic_opb.c	gpiic
 # On-chip USB OTG bridge (Synopsys DesigneWave OTG)
 attach dwctwo at plb with dwctwo_plb
 file	arch/powerpc/ibm4xx/dev/dwctwo_plb.c	dwctwo_plb
+
+# On-chip USB 2.0 host (EHCI + OHCI companion on the AHB)
+attach	ehci at plb with ehci_plb
+file	arch/powerpc/ibm4xx/dev/ehci_plb.c	ehci_plb
+
+attach	ohci at plb with ohci_plb
+file	arch/powerpc/ibm4xx/dev/ohci_plb.c	ohci_plb
+
+# On-chip Synopsys DWC SATA-II host (460EX, on the AHB)
+device	dwcsata: ata, ata_dma, ata_udma, wdc_common, sata
+attach	dwcsata at plb
+file	arch/powerpc/ibm4xx/dev/dwcsata.c	dwcsata
+defflag	opt_dwcsata.h			DWCSATA_PIO_ONLY

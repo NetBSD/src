@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.61 2026/06/14 00:02:35 rkujawa Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -37,7 +37,9 @@
 
 /*
  * emac(4) supports following ibm4xx's EMACs.
- *   XXXX: ZMII and 'TCP Accelaration Hardware' not support yet...
+ *   XXXX: ZMII not supported yet...
+ *   The 'TCP Acceleration Hardware' (TAH) checksum offload engine is
+ *   supported on the 460EX/GT with options EMAC_TAH.
  *
  *            tested
  *            ------
@@ -49,19 +51,24 @@
  * 440GX	-  10/100/1000 x4, ZMII/RGMII(ch 2, 3), TAH(ch 2, 3)
  * 440SP	-  10/100/1000
  * 440SPe	-  10/100/1000, STA v2
+ * 460EX	-  10/100/1000, STA v2, 256bit hash-Table, RGMII, TAH
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.61 2026/06/14 00:02:35 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_emac.h"
+#ifdef EMAC_TAH
+#include "opt_inet.h"
+#endif
 #endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
+#include <sys/timevar.h>
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/cpu.h>
@@ -78,9 +85,25 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $")
 
 #include <net/bpf.h>
 
+#ifdef EMAC_TAH
+#include <netinet/in.h>
+#include <netinet/in_systm.h>
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <netinet/udp.h>
+#include <netinet/in_offload.h>
+#ifdef INET6
+#include <netinet/ip6.h>
+#include <netinet6/in6_offload.h>
+#endif
+#endif
+
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
 #include <powerpc/ibm4xx/mal405gp.h>
+#ifdef EMAC_TAH
+#include <powerpc/ibm4xx/amcc460ex.h>
+#endif
 #include <powerpc/ibm4xx/dev/emacreg.h>
 #include <powerpc/ibm4xx/dev/if_emacreg.h>
 #include <powerpc/ibm4xx/dev/if_emacvar.h>
@@ -123,6 +146,19 @@ __KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.60 2025/10/04 04:44:20 thorpej Exp $")
 #define	EMAC_NEXTRX(x)		(((x) + 1) & EMAC_NRXDESC_MASK)
 #define	EMAC_PREVRX(x)		(((x) - 1) & EMAC_NRXDESC_MASK)
 
+#ifdef EMAC_TAH
+/*
+ * TSO via the TAH. Tx DMA maps must take a full combined packet
+ * (the MAL buffer length field is 12 bits, so segments stay below 4KB)
+ */
+#define	EMAC_TSO_NSSR		6	/* TAH_SSR0..5 */
+#define	EMAC_TSO_NTXSEGS	40	/* 64KB of 2KB clusters + slack */
+#define	EMAC_TSO_MAXLEN		(IP_MAXPACKET + ETHER_HDR_LEN)
+#define	EMAC_TSO_MAXSEGSZ	MCLBYTES
+#define	EMAC_TSO_SEG_MIN	168
+#define	EMAC_TSO_SEG_MAX	9700
+#endif
+
 /*
  * Transmit/receive descriptors that are DMA'd to the EMAC.
  */
@@ -144,6 +180,10 @@ struct emac_txsoft {
 	int txs_firstdesc;		/* first descriptor in packet */
 	int txs_lastdesc;		/* last descriptor in packet */
 	int txs_ndesc;			/* # of descriptors used */
+#ifdef EMAC_TAH
+	int8_t txs_ssr;			/* TAH_SSR slot held, -1 = none */
+	uint16_t txs_opackets;		/* wire packets this job produces */
+#endif
 };
 
 /*
@@ -176,6 +216,25 @@ struct emac_softc {
 	uint32_t sc_stacr_bits;		/* misc bits of STACR */
 	bool sc_stacr_completed;	/* Operation completed of STACR */
 	int sc_htsize;			/* Hash Table size */
+	bool sc_ethcfg_ecs;		/* clock select via SDR0_ETH_CFG */
+#ifdef EMAC_TAH
+	bus_space_handle_t sc_tahh;	/* TAH bus space handle */
+	bool sc_tah;			/* TAH present, mapped and in path */
+	bool sc_tah_cvr;		/* RX checksum verification enabled */
+
+	/* IFF_DEBUG diagnostics for the per-packet status interrupt */
+	uint32_t sc_isr_seen;		/* accumulated ISR bits */
+	uint32_t sc_isr_zero;		/* interrupts with empty ISR */
+	struct timeval sc_isr_last;	/* report rate limit */
+
+	/*
+	 * TSO segment-size register cache: a TAH_SSR slot may only be
+	 * rewritten while no unreaped transmit job references it.
+	 */
+	uint16_t sc_ssr_bytes[EMAC_TSO_NSSR];	/* programmed size, 0 = none */
+	uint16_t sc_ssr_refs[EMAC_TSO_NSSR];	/* in-flight references */
+	struct mbuf *sc_txpending;	/* sw-segmented chain (m_nextpkt) */
+#endif
 
 	bus_dmamap_t sc_cddmamap;	/* control data dma map */
 #define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
@@ -201,6 +260,14 @@ struct emac_softc {
 	struct evcnt sc_ev_txdstall;	/* Tx stalled due to no txd */
 	struct evcnt sc_ev_txdrop;	/* Tx packets dropped (too many segs) */
 	struct evcnt sc_ev_tu;		/* Tx underrun */
+#ifdef EMAC_TAH
+	struct evcnt sc_ev_txcsum;	/* Tx packets checksummed by the TAH */
+	struct evcnt sc_ev_tahted;	/* TAH transmit errors (TSR) */
+	struct evcnt sc_ev_rxcsum;	/* Rx packets verified by the TAH */
+	struct evcnt sc_ev_rxcsumbad;	/* Rx checksum errors from the TAH */
+	struct evcnt sc_ev_txtso;	/* Tx bursts segmented by the TAH */
+	struct evcnt sc_ev_txtsofb;	/* Tx TSO software fallbacks */
+#endif
 #endif /* EMAC_EVENT_COUNTERS */
 
 	int sc_txfree;			/* number of free Tx descriptors */
@@ -281,6 +348,13 @@ do {									\
 #define	EMAC_READ(sc, reg) \
 	bus_space_read_stream_4((sc)->sc_st, (sc)->sc_sh, (reg))
 
+#ifdef EMAC_TAH
+#define	TAH_WRITE(sc, reg, val) \
+	bus_space_write_stream_4((sc)->sc_st, (sc)->sc_tahh, (reg), (val))
+#define	TAH_READ(sc, reg) \
+	bus_space_read_stream_4((sc)->sc_st, (sc)->sc_tahh, (reg))
+#endif
+
 #define	EMAC_SET_FILTER(aht, crc) \
 do {									\
 	(aht)[3 - (((crc) >> 26) >> 4)] |= 1 << (((crc) >> 26) & 0xf);	\
@@ -309,6 +383,9 @@ static int	emac_txreap(struct emac_softc *);
 
 static void	emac_soft_reset(struct emac_softc *);
 static void	emac_smart_reset(struct emac_softc *);
+#ifdef EMAC_TAH
+static void	emac_tah_reset(struct emac_softc *);
+#endif
 
 static int	emac_mii_readreg(device_t, int, int, uint16_t *);
 static int	emac_mii_writereg(device_t, int, int, uint16_t);
@@ -393,9 +470,12 @@ emac_attach(device_t parent, device_t self, void *aux)
 		goto fail_0;
 	}
 
+	/*
+	 * Map the descriptor ring UNCACHED, no cache snooping of any kind.
+	 */
 	if ((error = bus_dmamem_map(sc->sc_dmat, &seg, nseg,
 	    sizeof(struct emac_control_data), (void **)&sc->sc_control_data,
-	    BUS_DMA_COHERENT)) != 0) {
+	    BUS_DMA_DONTCACHE)) != 0) {
 		aprint_error_dev(self,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
@@ -418,18 +498,50 @@ emac_attach(device_t parent, device_t self, void *aux)
 		goto fail_3;
 	}
 
+#ifdef EMAC_TAH
 	/*
-	 * Create the transmit buffer DMA maps.
+	 * Map and configure the TAH offload 
+	 */
+	if (oaa->opb_flags & OPB_FLAGS_EMAC_TAH) {
+		if (bus_space_map(oaa->opb_bt,
+		    AMCC460EX_TAH0_BASE + 0x100 * sc->sc_instance,
+		    TAH_NREG, 0, &sc->sc_tahh) == 0) {
+			sc->sc_tah = true;
+			emac_tah_reset(sc);
+			aprint_normal_dev(self,
+			    "TAH offload engine, rev. 0x%08x\n",
+			    TAH_READ(sc, TAH_REVID));
+		} else
+			aprint_error_dev(self,
+			    "unable to map TAH registers, offload disabled\n");
+	}
+#endif
+
+	/*
+	 * Create the transmit buffer DMA maps, dimensioned for a full
+	 * TSO burst when the TAH will segment for us.
 	 */
 	for (i = 0; i < EMAC_TXQUEUELEN; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    EMAC_NTXSEGS, MCLBYTES, 0, 0,
-		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
+#ifdef EMAC_TAH
+		if (sc->sc_tah)
+			error = bus_dmamap_create(sc->sc_dmat,
+			    EMAC_TSO_MAXLEN, EMAC_TSO_NTXSEGS,
+			    EMAC_TSO_MAXSEGSZ, 0, 0,
+			    &sc->sc_txsoft[i].txs_dmamap);
+		else
+#endif
+			error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
+			    EMAC_NTXSEGS, MCLBYTES, 0, 0,
+			    &sc->sc_txsoft[i].txs_dmamap);
+		if (error != 0) {
 			aprint_error_dev(self,
 			    "unable to create tx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_4;
 		}
+#ifdef EMAC_TAH
+		sc->sc_txsoft[i].txs_ssr = -1;
+#endif
 	}
 
 	/*
@@ -444,6 +556,28 @@ emac_attach(device_t parent, device_t self, void *aux)
 			goto fail_5;
 		}
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
+	}
+
+	/*
+	 * 460EX/GT moved the EMAC clock-select bits used during soft
+	 * reset from SDR0_MFR to SDR0_ETH_CFG.
+	 */
+	sc->sc_ethcfg_ecs = (oaa->opb_flags & OPB_FLAGS_EMAC_ETHCFG_ECS) != 0;
+
+	if (sc->sc_ethcfg_ecs) {
+		uint32_t sdr;
+
+		/*
+		 * Bypass the TAH offload engine 
+		 */
+		sdr = mfsdr(DCR_SDR0_ETH_CFG);
+#ifdef EMAC_TAH
+		if (sc->sc_tah)
+			sdr &= ~SDR0_ETH_CFG_TAH_BYPASS(sc->sc_instance);
+		else
+#endif
+			sdr |= SDR0_ETH_CFG_TAH_BYPASS(sc->sc_instance);
+		mtsdr(DCR_SDR0_ETH_CFG, sdr);
 	}
 
 	/* Soft Reset the EMAC.  The chip to a known state. */
@@ -469,9 +603,21 @@ emac_attach(device_t parent, device_t self, void *aux)
 	if (oaa->opb_flags & OPB_FLAGS_EMAC_GBE) {
 		sc->sc_mr1 =
 		    MR1_RFS_GBE(MR1__FS_16KB)	|
+#ifdef EMAC_TAH
+		    /*
+		     * The 460EX EMAC0/1 transmit FIFO is 2KB!
+		     */
+		    MR1_TFS_GBE(MR1__FS_2KB)	|
+#else
 		    MR1_TFS_GBE(MR1__FS_16KB)	|
+#endif
 		    MR1_TR0_MULTIPLE		|
 		    MR1_OBCI(opbc);
+		/*
+		 * Do NOT set MR1_MWSW here
+		 * EMAC holds the last packet's TX status to overlap 
+		 * it with the next packet
+		 */
 		sc->sc_ethercom.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
 		if (oaa->opb_flags & OPB_FLAGS_EMAC_STACV2) {
@@ -549,6 +695,26 @@ emac_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
+#ifdef EMAC_TAH
+	/*
+	 * The TAH generates IPv4/TCP/UDP checksums on tx and rx
+	 */
+	if (sc->sc_tah) {
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+		    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+		    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+		    IFCAP_TSOv4;
+#ifdef INET6
+	/* no IPv6 header checksum, hence no IFCAP for it.*/
+		ifp->if_capabilities |=
+		    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+		    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx |
+		    IFCAP_TSOv6;
+#endif
+	}
+#endif
+
 	/*
 	 * Attach the interface.
 	 */
@@ -584,6 +750,20 @@ emac_attach(device_t parent, device_t self, void *aux)
 	    NULL, xname, "txdrop");
 	evcnt_attach_dynamic(&sc->sc_ev_tu, EVCNT_TYPE_MISC,
 	    NULL, xname, "tu");
+#ifdef EMAC_TAH
+	evcnt_attach_dynamic(&sc->sc_ev_txcsum, EVCNT_TYPE_MISC,
+	    NULL, xname, "txcsum");
+	evcnt_attach_dynamic(&sc->sc_ev_tahted, EVCNT_TYPE_MISC,
+	    NULL, xname, "tahted");
+	evcnt_attach_dynamic(&sc->sc_ev_rxcsum, EVCNT_TYPE_MISC,
+	    NULL, xname, "rxcsum");
+	evcnt_attach_dynamic(&sc->sc_ev_rxcsumbad, EVCNT_TYPE_MISC,
+	    NULL, xname, "rxcsumbad");
+	evcnt_attach_dynamic(&sc->sc_ev_txtso, EVCNT_TYPE_MISC,
+	    NULL, xname, "txtso");
+	evcnt_attach_dynamic(&sc->sc_ev_txtsofb, EVCNT_TYPE_MISC,
+	    NULL, xname, "txtsofb");
+#endif
 #endif /* EMAC_EVENT_COUNTERS */
 
 	/*
@@ -639,6 +819,21 @@ emac_intr(void *arg)
 	/* Clear the interrupt status bits. */
 	EMAC_WRITE(sc, EMAC_ISR, status);
 
+#ifdef EMAC_TAH
+	if (__predict_false(
+	    sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)) {
+		static const struct timeval rate = { 1, 0 };
+
+		sc->sc_isr_seen |= status;
+		if (status == 0)
+			sc->sc_isr_zero++;
+		if (ratecheck(&sc->sc_isr_last, &rate))
+			aprint_normal_ifnet(&sc->sc_ethercom.ec_if,
+			    "ISR 0x%08x (seen 0x%08x, %u empty)\n",
+			    status, sc->sc_isr_seen, sc->sc_isr_zero);
+	}
+#endif
+
 	return 1;
 }
 
@@ -648,12 +843,351 @@ emac_shutdown(void *arg)
 	struct emac_softc *sc = arg;
 
 	emac_stop(&sc->sc_ethercom.ec_if, 0);
+
+#ifdef EMAC_TAH
+	/*
+	 * Put the TAH back into bypass
+	 */
+	if (sc->sc_tah) {
+		uint32_t sdr;
+
+		sdr = mfsdr(DCR_SDR0_ETH_CFG);
+		sdr |= SDR0_ETH_CFG_TAH_BYPASS(sc->sc_instance);
+		mtsdr(DCR_SDR0_ETH_CFG, sdr);
+	}
+#endif
 }
 
 
 /*
  * ifnet interface functions
  */
+
+#ifdef EMAC_TAH
+/*
+ * Decide what the TAH can do for this packet.
+ */
+#define	EMAC_TAHTX_SW	0	/* software handling required */
+#define	EMAC_TAHTX_CSUM	1	/* HAC = 111: checksum insertion */
+#define	EMAC_TAHTX_TSO	2	/* HAC = SSRn: checksum + segmentation */
+
+static int
+emac_tah_tx_classify(struct mbuf *m0, u_int *ssr_bytesp)
+{
+	const struct ether_header *eh;
+	const struct ip *ip;
+#ifdef INET6
+	const struct ip6_hdr *ip6;
+#endif
+	const struct tcphdr *th;
+	const int tso = m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4
+#ifdef INET6
+	    | M_CSUM_TSOv6
+#endif
+	    );
+	u_int bytes;
+
+	/*
+	 * The headers of locally generated packets are contiguous in
+	 * the first mbuf; anything else falls back to software.
+	 */
+	if (m0->m_len < sizeof(*eh))
+		return EMAC_TAHTX_SW;
+	eh = mtod(m0, const struct ether_header *);
+
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP:
+		if (m0->m_len < sizeof(*eh) + sizeof(*ip))
+			return EMAC_TAHTX_SW;
+		ip = (const struct ip *)(mtod(m0, const char *) +
+		    sizeof(*eh));
+		if (ip->ip_hl != 5)
+			return EMAC_TAHTX_SW;	/* options: TAH_TSR[IPOP] */
+		if (ip->ip_off & htons(IP_OFFMASK | IP_MF))
+			return EMAC_TAHTX_SW;	/* fragment: TAH_TSR[IPFP] */
+		if (tso == 0) {
+			if (ip->ip_p != IPPROTO_TCP &&
+			    ip->ip_p != IPPROTO_UDP)
+				return EMAC_TAHTX_SW;	/* TAH_TSR[UP] */
+			if (ntohs(ip->ip_len) < 40)
+				return EMAC_TAHTX_SW;	/* TAH_TSR[ILTS] */
+			return EMAC_TAHTX_CSUM;
+		}
+		/* M_CSUM_TSOv4; M_CSUM_IPv4 may ride along (ip_output) */
+		if (ip->ip_p != IPPROTO_TCP)
+			return EMAC_TAHTX_SW;	/* TAH_TSR[SUDP] */
+		if (m0->m_len < sizeof(*eh) + sizeof(*ip) + sizeof(*th))
+			return EMAC_TAHTX_SW;
+		if (ntohs(ip->ip_len) != m0->m_pkthdr.len - sizeof(*eh))
+			return EMAC_TAHTX_SW;	/* TAH_TSR[DLM] */
+		th = (const struct tcphdr *)((const char *)ip + sizeof(*ip));
+		bytes = m0->m_pkthdr.segsz + sizeof(*ip) + sizeof(*th);
+		goto tso_common;
+
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		if (m0->m_len < sizeof(*eh) + sizeof(*ip6))
+			return EMAC_TAHTX_SW;
+		ip6 = (const struct ip6_hdr *)(mtod(m0, const char *) +
+		    sizeof(*eh));
+		/* extension headers: TAH_TSR[IP6EHP]/[IP6UNH] */
+		if (tso == 0) {
+			if (ip6->ip6_nxt != IPPROTO_TCP &&
+			    ip6->ip6_nxt != IPPROTO_UDP)
+				return EMAC_TAHTX_SW;
+			return EMAC_TAHTX_CSUM;
+		}
+		/* M_CSUM_TSOv6 */
+		if (ip6->ip6_nxt != IPPROTO_TCP)
+			return EMAC_TAHTX_SW;
+		if (m0->m_len < sizeof(*eh) + sizeof(*ip6) + sizeof(*th))
+			return EMAC_TAHTX_SW;
+		if (ntohs(ip6->ip6_plen) !=
+		    m0->m_pkthdr.len - sizeof(*eh) - sizeof(*ip6))
+			return EMAC_TAHTX_SW;	/* TAH_TSR[IP6HPLM] */
+		th = (const struct tcphdr *)((const char *)ip6 +
+		    sizeof(*ip6));
+		bytes = m0->m_pkthdr.segsz + sizeof(*ip6) + sizeof(*th);
+		goto tso_common;
+#endif
+
+	default:
+		/* VLAN-tagged or LLC/SNAP frames? */
+		return EMAC_TAHTX_SW;
+	}
+
+ tso_common:
+	/*
+	 * TAH does not replicate TCP options!
+	 */
+	if (th->th_off != sizeof(*th) >> 2)
+		return EMAC_TAHTX_SW;
+	if (th->th_flags & (TH_SYN | TH_RST))
+		return EMAC_TAHTX_SW;	/* TAH_TSR[TFP] */
+	/* TAH_SSR holds halfwords; bounds per TAH_TSR[SSTS]/FIFO size */
+	if ((bytes & 1) != 0 ||
+	    bytes < EMAC_TSO_SEG_MIN || bytes > EMAC_TSO_SEG_MAX)
+		return EMAC_TAHTX_SW;
+	*ssr_bytesp = bytes;
+	return EMAC_TAHTX_TSO;
+}
+
+/*
+ * Claim a TAH segment-size register slot for byte-sized segments
+ */
+static int
+emac_tso_ssr_claim(struct emac_softc *sc, u_int bytes)
+{
+	int i, free = -1;
+
+	for (i = 0; i < EMAC_TSO_NSSR; i++) {
+		if (sc->sc_ssr_bytes[i] == bytes) {
+			sc->sc_ssr_refs[i]++;
+			return i;
+		}
+		if (free < 0 && sc->sc_ssr_refs[i] == 0)
+			free = i;
+	}
+	if (free >= 0) {
+		TAH_WRITE(sc, TAH_SSR(free), TAH_SSR_SS(bytes / 2));
+		sc->sc_ssr_bytes[free] = bytes;
+		sc->sc_ssr_refs[free] = 1;
+	}
+	return free;
+}
+
+static void
+emac_tso_ssr_release(struct emac_softc *sc, struct emac_txsoft *txs)
+{
+
+	if (txs->txs_ssr >= 0) {
+		KASSERT(sc->sc_ssr_refs[txs->txs_ssr] > 0);
+		sc->sc_ssr_refs[txs->txs_ssr]--;
+		txs->txs_ssr = -1;
+	}
+}
+
+/*
+ * Segment a TSO combined packet in software
+ */
+static int
+emac_tso_sw_segment(struct emac_softc *sc, struct ifnet *ifp,
+    struct mbuf *m0)
+{
+	const struct ether_header *eh;
+	const struct tcphdr *th;
+	struct mbuf *m;
+	u_int hdrlen = 0;
+#ifdef INET6
+	bool v6 = false;
+#endif
+
+	/*
+	 * tcp[46]_segment() silently truncates a payload that is not a
+	 * multiple of segsz (see DIAGNOSTIC).
+	 */
+	if (m0->m_len >= sizeof(*eh)) {
+		eh = mtod(m0, const struct ether_header *);
+		switch (ntohs(eh->ether_type)) {
+		case ETHERTYPE_IP: {
+			const struct ip *ip;
+
+			if (m0->m_len < sizeof(*eh) + sizeof(*ip))
+				break;
+			ip = (const struct ip *)(mtod(m0, const char *) +
+			    sizeof(*eh));
+			if (ip->ip_p != IPPROTO_TCP ||
+			    m0->m_len < sizeof(*eh) + (ip->ip_hl << 2) +
+			    sizeof(*th))
+				break;
+			th = (const struct tcphdr *)((const char *)ip +
+			    (ip->ip_hl << 2));
+			hdrlen = sizeof(*eh) + (ip->ip_hl << 2) +
+			    (th->th_off << 2);
+			break;
+		}
+#ifdef INET6
+		case ETHERTYPE_IPV6: {
+			const struct ip6_hdr *ip6;
+
+			if (m0->m_len < sizeof(*eh) + sizeof(*ip6) +
+			    sizeof(*th))
+				break;
+			ip6 = (const struct ip6_hdr *)
+			    (mtod(m0, const char *) + sizeof(*eh));
+			if (ip6->ip6_nxt != IPPROTO_TCP)
+				break;
+			th = (const struct tcphdr *)((const char *)ip6 +
+			    sizeof(*ip6));
+			hdrlen = sizeof(*eh) + sizeof(*ip6) +
+			    (th->th_off << 2);
+			v6 = true;
+			break;
+		}
+#endif
+		}
+	}
+	if (m0->m_pkthdr.segsz == 0 || hdrlen == 0 ||
+	    hdrlen >= m0->m_pkthdr.len ||
+	    (m0->m_pkthdr.len - hdrlen) % m0->m_pkthdr.segsz != 0) {
+		m_freem(m0);
+		return -1;
+	}
+
+	EMAC_EVCNT_INCR(&sc->sc_ev_txtsofb);
+
+	/*
+	 * tcp[46]_segment() consume m0, recompute all checksums in
+	 * software 
+	 */
+#ifdef INET6
+	if (v6)
+		m = tcp6_segment(m0, ETHER_HDR_LEN);
+	else
+#endif
+		m = tcp4_segment(m0, ETHER_HDR_LEN);
+	if (m == NULL)
+		return -1;
+	KASSERT(sc->sc_txpending == NULL);
+	sc->sc_txpending = m;
+	return 0;
+}
+
+/*
+ * Translate the TAH RX verification result into mbuf checksum flags.
+ */
+static void
+emac_rx_csum(struct emac_softc *sc, struct mbuf *m, bool bad)
+{
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	const struct ether_header *eh;
+	const struct ip *ip;
+#ifdef INET6
+	const struct ip6_hdr *ip6;
+#endif
+	const struct udphdr *uh;
+	int flags = 0;
+
+	if (m->m_len < sizeof(*eh))
+		return;
+	eh = mtod(m, const struct ether_header *);
+
+	switch (ntohs(eh->ether_type)) {
+	case ETHERTYPE_IP:
+		if (m->m_len < sizeof(*eh) + sizeof(*ip))
+			return;
+		ip = (const struct ip *)(mtod(m, const char *) +
+		    sizeof(*eh));
+		if (ip->ip_hl != 5 ||
+		    (ip->ip_off & htons(IP_OFFMASK | IP_MF)) != 0)
+			return;		/* not verified by the TAH */
+
+		/*
+		 * The TAH verifies TCP and UDP packets ONLY
+		 */
+		switch (ip->ip_p) {
+		case IPPROTO_TCP:
+			flags = M_CSUM_IPv4 | M_CSUM_TCPv4 |
+			    (bad ? M_CSUM_IPv4_BAD | M_CSUM_TCP_UDP_BAD : 0);
+			break;
+		case IPPROTO_UDP:
+			/*
+			 * A zero UDP checksum means "no checksum"
+			 */
+			if (m->m_len < sizeof(*eh) + sizeof(*ip) +
+			    sizeof(*uh))
+				return;
+			uh = (const struct udphdr *)((const char *)ip +
+			    sizeof(*ip));
+			if (uh->uh_sum == 0)
+				return;
+			flags = M_CSUM_IPv4 | M_CSUM_UDPv4 |
+			    (bad ? M_CSUM_IPv4_BAD | M_CSUM_TCP_UDP_BAD : 0);
+			break;
+		default:
+			return;
+		}
+		break;
+
+#ifdef INET6
+	case ETHERTYPE_IPV6:
+		if (m->m_len < sizeof(*eh) + sizeof(*ip6))
+			return;
+		ip6 = (const struct ip6_hdr *)(mtod(m, const char *) +
+		    sizeof(*eh));
+		/* No header checksum in IPv6, no flags for ext headers. */
+		switch (ip6->ip6_nxt) {
+		case IPPROTO_TCP:
+			flags = M_CSUM_TCPv6 |
+			    (bad ? M_CSUM_TCP_UDP_BAD : 0);
+			break;
+		case IPPROTO_UDP:
+			flags = M_CSUM_UDPv6 |
+			    (bad ? M_CSUM_TCP_UDP_BAD : 0);
+			break;
+		}
+		break;
+#endif
+
+	default:
+		return;
+	}
+
+	if (flags == 0)
+		return;
+
+#ifdef EMAC_EVENT_COUNTERS
+	if (bad)
+		EMAC_EVCNT_INCR(&sc->sc_ev_rxcsumbad);
+	else
+		EMAC_EVCNT_INCR(&sc->sc_ev_rxcsum);
+#endif
+
+	/* Claim only the enabled "good" flags; propagate BAD always. */
+	m->m_pkthdr.csum_flags |= flags & (ifp->if_csum_flags_rx |
+	    M_CSUM_IPv4_BAD | M_CSUM_TCP_UDP_BAD);
+}
+#endif /* EMAC_TAH */
 
 static void
 emac_start(struct ifnet *ifp)
@@ -663,6 +1197,12 @@ emac_start(struct ifnet *ifp)
 	struct emac_txsoft *txs;
 	bus_dmamap_t dmamap;
 	int error, firsttx, nexttx, lasttx, ofree, seg;
+#ifdef EMAC_TAH
+	uint16_t txc;
+	u_int tso_bytes;
+	int tah_ssr, tah_cls;
+	bool tah_pending;
+#endif
 
 	lasttx = 0;	/* XXX gcc */
 
@@ -680,10 +1220,22 @@ emac_start(struct ifnet *ifp)
 	 * descriptors.
 	 */
 	for (;;) {
-		/* Grab a packet off the queue. */
-		IFQ_POLL(&ifp->if_snd, m0);
-		if (m0 == NULL)
-			break;
+#ifdef EMAC_TAH
+		txc = 0;
+		tso_bytes = 0;
+		tah_ssr = -1;
+		tah_pending = false;
+
+		if ((m0 = sc->sc_txpending) != NULL)
+			tah_pending = true;
+		else
+#endif
+		{
+			/* Grab a packet off the queue. */
+			IFQ_POLL(&ifp->if_snd, m0);
+			if (m0 == NULL)
+				break;
+		}
 
 		/*
 		 * Get a work queue entry.  Reclaim used Tx descriptors if
@@ -696,6 +1248,70 @@ emac_start(struct ifnet *ifp)
 				break;
 			}
 		}
+
+#ifdef EMAC_TAH
+		/*
+		 * Decide what the TAH should do for this packet
+		 */
+		if (sc->sc_tah && m0->m_pkthdr.csum_flags != 0) {
+			tah_cls = emac_tah_tx_classify(m0, &tso_bytes);
+
+			if (tah_cls == EMAC_TAHTX_TSO) {
+				tah_ssr = emac_tso_ssr_claim(sc, tso_bytes);
+				if (tah_ssr < 0)	/* all slots busy */
+					tah_cls = EMAC_TAHTX_SW;
+			}
+
+			switch (tah_cls) {
+			case EMAC_TAHTX_TSO:
+				txc = EMAC_TXC_HAC_SSR(tah_ssr);
+				EMAC_EVCNT_INCR(&sc->sc_ev_txtso);
+				break;
+
+			case EMAC_TAHTX_CSUM:
+				txc = EMAC_TXC_HAC_CSUM;
+				EMAC_EVCNT_INCR(&sc->sc_ev_txcsum);
+				break;
+
+			case EMAC_TAHTX_SW:
+				if (m0->m_pkthdr.csum_flags &
+				    (M_CSUM_TSOv4 | M_CSUM_TSOv6)) {
+					/* Segment in software. */
+					IFQ_DEQUEUE(&ifp->if_snd, m0);
+					if (emac_tso_sw_segment(sc, ifp,
+					    m0) != 0)
+						if_statinc(ifp, if_oerrors);
+					continue;
+				}
+
+				/* Compute the checksums in software. */
+				{
+					const int cf4 =
+					    m0->m_pkthdr.csum_flags &
+					    (M_CSUM_IPv4 | M_CSUM_TCPv4 |
+					    M_CSUM_UDPv4);
+#ifdef INET6
+					const int cf6 =
+					    m0->m_pkthdr.csum_flags &
+					    (M_CSUM_TCPv6 | M_CSUM_UDPv6);
+#else
+					const int cf6 = 0;
+#endif
+					if (cf4 != 0)
+						in_undefer_cksum(m0,
+						    ETHER_HDR_LEN, cf4);
+#ifdef INET6
+					if (cf6 != 0)
+						in6_undefer_cksum(m0,
+						    ETHER_HDR_LEN, cf6);
+#endif
+					m0->m_pkthdr.csum_flags &=
+					    ~(cf4 | cf6);
+				}
+				break;
+			}
+		}
+#endif
 
 		txs = &sc->sc_txsoft[sc->sc_txsnext];
 		dmamap = txs->txs_dmamap;
@@ -710,15 +1326,40 @@ emac_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
+#ifdef EMAC_TAH
+				if (tah_ssr >= 0) {
+					/*
+					 * A TSO burst with too many
+					 * segments: segment it in
+					 * software instead of dropping.
+					 */
+					sc->sc_ssr_refs[tah_ssr]--;
+					IFQ_DEQUEUE(&ifp->if_snd, m0);
+					if (emac_tso_sw_segment(sc, ifp,
+					    m0) != 0)
+						if_statinc(ifp, if_oerrors);
+					continue;
+				}
+#endif
 				EMAC_EVCNT_INCR(&sc->sc_ev_txdrop);
 				aprint_error_ifnet(ifp,
 				    "Tx packet consumes too many "
 				    "DMA segments, dropping...\n");
-				    IFQ_DEQUEUE(&ifp->if_snd, m0);
-				    m_freem(m0);
-				    continue;
+#ifdef EMAC_TAH
+				if (tah_pending) {
+					sc->sc_txpending = m0->m_nextpkt;
+					m0->m_nextpkt = NULL;
+				} else
+#endif
+					IFQ_DEQUEUE(&ifp->if_snd, m0);
+				m_freem(m0);
+				continue;
 			}
 			/* Short on resources, just stop for now. */
+#ifdef EMAC_TAH
+			if (tah_ssr >= 0)
+				sc->sc_ssr_refs[tah_ssr]--;
+#endif
 			break;
 		}
 
@@ -737,10 +1378,20 @@ emac_start(struct ifnet *ifp)
 			 */
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			EMAC_EVCNT_INCR(&sc->sc_ev_txdstall);
+#ifdef EMAC_TAH
+			if (tah_ssr >= 0)
+				sc->sc_ssr_refs[tah_ssr]--;
+#endif
 			break;
 		}
 
-		IFQ_DEQUEUE(&ifp->if_snd, m0);
+#ifdef EMAC_TAH
+		if (tah_pending) {
+			sc->sc_txpending = m0->m_nextpkt;
+			m0->m_nextpkt = NULL;
+		} else
+#endif
+			IFQ_DEQUEUE(&ifp->if_snd, m0);
 
 		/*
 		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
@@ -757,6 +1408,19 @@ emac_start(struct ifnet *ifp)
 		txs->txs_mbuf = m0;
 		txs->txs_firstdesc = sc->sc_txnext;
 		txs->txs_ndesc = dmamap->dm_nsegs;
+#ifdef EMAC_TAH
+		txs->txs_ssr = tah_ssr;
+		if (tah_ssr >= 0)
+			/*
+			 * Wire packets this burst produces; tso_bytes -
+			 * segsz is the IP + TCP header length.
+			 */
+			txs->txs_opackets = howmany(m0->m_pkthdr.len -
+			    ETHER_HDR_LEN - (tso_bytes - m0->m_pkthdr.segsz),
+			    m0->m_pkthdr.segsz);
+		else
+			txs->txs_opackets = 1;
+#endif
 
 		/*
 		 * Initialize the transmit descriptor.
@@ -779,6 +1443,9 @@ emac_start(struct ifnet *ifp)
 			txdesc->md_stat_ctrl =
 			    (txdesc->md_stat_ctrl & MAL_TX_WRAP) |
 			    (nexttx == firsttx ? 0 : MAL_TX_READY) |
+#ifdef EMAC_TAH
+			    txc |
+#endif
 			    EMAC_TXC_GFCS | EMAC_TXC_GPAD;
 			lasttx = nexttx;
 		}
@@ -787,12 +1454,9 @@ emac_start(struct ifnet *ifp)
 		sc->sc_txdescs[lasttx].md_stat_ctrl |= MAL_TX_LAST;
 
 		/*
-		 * Set up last segment descriptor to send an interrupt after
-		 * that descriptor is transmitted, and bypass existing Tx
-		 * descriptor reaping method (for now...).
+		 * Request a Tx-complete interrupt for this packet.
 		 */
 		sc->sc_txdescs[lasttx].md_stat_ctrl |= MAL_TX_INTERRUPT;
-
 
 		txs->txs_lastdesc = lasttx;
 
@@ -863,6 +1527,18 @@ emac_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (error == ENETRESET) {
+#ifdef EMAC_TAH
+			if (cmd == SIOCSIFCAP) {
+				/*
+				 * Checksum offload changed, reinitialize
+				 */
+				if (ifp->if_flags & IFF_RUNNING)
+					error = emac_init(ifp);
+				else
+					error = 0;
+				break;
+			}
+#endif
 			/*
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
@@ -896,6 +1572,18 @@ emac_init(struct ifnet *ifp)
 
 	/* Reset the chip to a known state. */
 	emac_soft_reset(sc);
+
+#ifdef EMAC_TAH
+	/*
+	 * Re-establish a sane TAH config
+	 */
+	if (sc->sc_tah) {
+		sc->sc_tah_cvr = (ifp->if_csum_flags_rx &
+		    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4 |
+		    M_CSUM_TCPv6 | M_CSUM_UDPv6)) != 0;
+		emac_tah_reset(sc);
+	}
+#endif
 
 	/*
 	 * Initialise the transmit descriptor ring.
@@ -995,8 +1683,16 @@ emac_init(struct ifnet *ifp)
 	/*
 	 * Set high and low receive watermarks.
 	 */
+#ifdef EMAC_TAH
+	/*
+	 * the fix probably is OK for all EMACs
+	 */
+	EMAC_WRITE(sc, EMAC_RWMR,
+	    30 << RWMR_RLWM_SHIFT | 64 << RWMR_RHWM_SHIFT);
+#else
 	EMAC_WRITE(sc, EMAC_RWMR,
 	    30 << RWMR_RLWM_SHIFT | 64 << RWMR_RLWM_SHIFT);
+#endif
 
 	/*
 	 * Set frame gap.
@@ -1010,7 +1706,13 @@ emac_init(struct ifnet *ifp)
 	    ISR_TXPE |		/* TX Parity Error */
 	    ISR_RXPE |		/* RX Parity Error */
 	    ISR_TXUE |		/* TX Underrun Event */
+#ifndef EMAC_TAH
+	    /*
+	     * With the TAH in the RX path, RXOE latches on most
+	     * received packets without any actual packet loss
+	     */
 	    ISR_RXOE |		/* RX Overrun Event */
+#endif
 	    ISR_OVR  |		/* Overrun Error */
 	    ISR_PP   |		/* Pause Packet */
 	    ISR_BP   |		/* Bad Packet */
@@ -1080,8 +1782,22 @@ emac_stop(struct ifnet *ifp, int disable)
 			bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 			m_freem(txs->txs_mbuf);
 			txs->txs_mbuf = NULL;
+#ifdef EMAC_TAH
+			emac_tso_ssr_release(sc, txs);
+#endif
 		}
 	}
+
+#ifdef EMAC_TAH
+	/* Free any software-segmented packets awaiting transmission. */
+	while (sc->sc_txpending != NULL) {
+		struct mbuf *m = sc->sc_txpending;
+
+		sc->sc_txpending = m->m_nextpkt;
+		m->m_nextpkt = NULL;
+		m_freem(m);
+	}
+#endif
 
 	if (disable)
 		emac_rxdrain(sc);
@@ -1276,6 +1992,11 @@ emac_txreap(struct emac_softc *sc)
 
 		handled = 1;
 
+#ifdef EMAC_TAH
+		/* The TAH is done with this job's segment size slot. */
+		emac_tso_ssr_release(sc, txs);
+#endif
+
 		/*
 		 * Check for errors and collisions.
 		 */
@@ -1287,6 +2008,22 @@ emac_txreap(struct emac_softc *sc)
 			EMAC_EVCNT_INCR(&sc->sc_ev_tu);
 #endif /* EMAC_EVENT_COUNTERS */
 
+#ifdef EMAC_TAH
+		/*
+		 * On TAH channels EMAC_TXS_TED (which overlays
+		 * EMAC_TXS_BPP) means the TAH aborted the packet
+		 */
+		if (sc->sc_tah && (txstat & EMAC_TXS_TED)) {
+			uint32_t tsr = TAH_READ(sc, TAH_TSR);
+
+			EMAC_EVCNT_INCR(&sc->sc_ev_tahted);
+			if_statinc(ifp, if_oerrors);
+			if (ifp->if_flags & IFF_DEBUG)
+				aprint_error_ifnet(ifp,
+				    "TAH transmit error, TSR = 0x%08x\n", tsr);
+		}
+#endif
+
 		if (txstat &
 		    (EMAC_TXS_EC | EMAC_TXS_MC | EMAC_TXS_SC | EMAC_TXS_LC)) {
 			if (txstat & EMAC_TXS_EC)
@@ -1297,8 +2034,14 @@ emac_txreap(struct emac_softc *sc)
 				if_statinc(ifp, if_collisions);
 			if (txstat & EMAC_TXS_LC)
 				if_statinc(ifp, if_collisions);
-		} else
+		} else {
+#ifdef EMAC_TAH
+			/* a TSO burst produces several wire packets */
+			if_statadd(ifp, if_opackets, txs->txs_opackets);
+#else
 			if_statinc(ifp, if_opackets);
+#endif
+		}
 
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (txstat & EMAC_TXS_ED)
@@ -1352,15 +2095,27 @@ emac_soft_reset(struct emac_softc *sc)
 	 * clock.
 	 */
 
-	sdr = mfsdr(DCR_SDR0_MFR);
-	sdr |= SDR0_MFR_ECS(sc->sc_instance);
-	mtsdr(DCR_SDR0_MFR, sdr);
+	if (sc->sc_ethcfg_ecs) {
+		sdr = mfsdr(DCR_SDR0_ETH_CFG);
+		sdr |= SDR0_ETH_CFG_ECS(sc->sc_instance);
+		mtsdr(DCR_SDR0_ETH_CFG, sdr);
+	} else {
+		sdr = mfsdr(DCR_SDR0_MFR);
+		sdr |= SDR0_MFR_ECS(sc->sc_instance);
+		mtsdr(DCR_SDR0_MFR, sdr);
+	}
 
 	EMAC_WRITE(sc, EMAC_MR0, MR0_SRST);
 
-	sdr = mfsdr(DCR_SDR0_MFR);
-	sdr &= ~SDR0_MFR_ECS(sc->sc_instance);
-	mtsdr(DCR_SDR0_MFR, sdr);
+	if (sc->sc_ethcfg_ecs) {
+		sdr = mfsdr(DCR_SDR0_ETH_CFG);
+		sdr &= ~SDR0_ETH_CFG_ECS(sc->sc_instance);
+		mtsdr(DCR_SDR0_ETH_CFG, sdr);
+	} else {
+		sdr = mfsdr(DCR_SDR0_MFR);
+		sdr &= ~SDR0_MFR_ECS(sc->sc_instance);
+		mtsdr(DCR_SDR0_MFR, sdr);
+	}
 
 	delay(5);
 
@@ -1397,6 +2152,33 @@ emac_smart_reset(struct emac_softc *sc)
 		}
 	}
 }
+
+#ifdef EMAC_TAH
+static void
+emac_tah_reset(struct emac_softc *sc)
+{
+	int t = 0;
+
+	TAH_WRITE(sc, TAH_MR, TAH_MR_SR);
+
+	while (TAH_READ(sc, TAH_MR) & TAH_MR_SR) {
+		if (++t == 1000000 /* 1sec XXXXX */) {
+			aprint_error_dev(sc->sc_dev,
+			    "TAH Soft Reset failed\n");
+			return;
+		}
+		delay(1);
+	}
+
+	TAH_WRITE(sc, TAH_MR,
+	    TAH_MR_ST(768 / 256) | TAH_MR_TFS_10K | TAH_MR_DTFP |
+	    TAH_MR_DIG | TAH_MR_IPV6 |
+	    (sc->sc_tah_cvr ? TAH_MR_CVR : 0));
+
+	memset(sc->sc_ssr_bytes, 0, sizeof(sc->sc_ssr_bytes));
+	memset(sc->sc_ssr_refs, 0, sizeof(sc->sc_ssr_refs));
+}
+#endif /* EMAC_TAH */
 
 
 /*
@@ -1586,6 +2368,9 @@ emac_rxeob_intr(void *arg)
 	struct mbuf *m;
 	uint32_t rxstat, count;
 	int i, len;
+#ifdef EMAC_TAH
+	bool csum_bad;
+#endif
 
 	EMAC_EVCNT_INCR(&sc->sc_ev_rxintr);
 
@@ -1607,6 +2392,15 @@ emac_rxeob_intr(void *arg)
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 			break;
 		}
+
+#ifdef EMAC_TAH
+		csum_bad = false;
+		if (sc->sc_tah_cvr &&
+		    (rxstat & EMAC_RXS_CSUM_MASK) == EMAC_RXS_CSUM_BAD) {
+			rxstat &= ~EMAC_RXS_CSUM_MASK;
+			csum_bad = true;
+		}
+#endif
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -1681,6 +2475,11 @@ emac_rxeob_intr(void *arg)
 
 		m_set_rcvif(m, ifp);
 		m->m_pkthdr.len = m->m_len = len;
+
+#ifdef EMAC_TAH
+		if (sc->sc_tah_cvr)
+			emac_rx_csum(sc, m, csum_bad);
+#endif
 
 		/* Pass it on. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);

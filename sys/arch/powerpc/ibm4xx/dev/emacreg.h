@@ -1,4 +1,4 @@
-/*	$NetBSD: emacreg.h,v 1.6 2024/11/02 21:33:30 andvar Exp $	*/
+/*	$NetBSD: emacreg.h,v 1.7 2026/06/14 00:02:35 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -87,6 +87,8 @@
 #define	  MR1_TR1_DEPENDANT	  0x00004000	/* Dependent Mode */
 #define	  MR1_MWSW_MASK		  0x00007000	/* Maximum Waiting Status Words (GbE) */
 #define	  MR1_MWSW_SHIFT	  12
+#define	  MR1_MWSW(n)		  (((n) << MR1_MWSW_SHIFT) & MR1_MWSW_MASK)
+					/* 1 = back-to-back TX status, UM 30.2.3.3 */
 #define	  MR1_JPSM		  0x00000800	/* Jumbo Packet Support Mode (GbE) */
 #define	  MR1_IPPA_MASK		  0x000007c0	/* Internal PCS PHY Address (GbE) */
 #define	  MR1_IPPA_SHIFT	  6
@@ -271,5 +273,69 @@
 #define	  TPC_IPA		  0x80000000	/* Issue a Pause Packet */
 #define	  TPC_TV_MASK		  0x7fff8000	/* Timer Value */
 #define	  TPC_TV_SHIFT		  15
+
+/*
+ * TCP/IP Acceleration Hardware (TAH), a checksum/segmentation offload
+ * engine inserted between the MAL and the EMAC on some channels
+ * (440GX channels 2/3, 460EX/GT both channels).  Register offsets and
+ * bits from the PPC460EX UM (rev 1.22) chapter 30; the block lives in
+ * OPB MMIO space (460EX: TAH0 at 0xef601350, TAH1 at 0xef601450).
+ * All registers are cleared by a soft reset (UM 30.3), so the mode
+ * register must be (re)programmed after every reset.
+ */
+#define	TAH_NREG		0x30
+
+#define	TAH_REVID		0x00	/* Revision ID Register */
+
+#define	TAH_MR			0x10	/* Mode Register (UM 30.3.2) */
+#define	  TAH_MR_CVR		  0x80000000	/* Checksum Verification on RX */
+#define	  TAH_MR_SR		  0x40000000	/* Soft Reset (self-clearing) */
+#define	  TAH_MR_ST(x)		  (((x) & 0x3f) << 24)	/* Send Threshold,
+							   units of 256B */
+#define	  TAH_MR_TFS_MASK	  0x00e00000	/* Transmit FIFO Size */
+#define	  TAH_MR_TFS_2K		  0x00200000
+#define	  TAH_MR_TFS_4K		  0x00400000
+#define	  TAH_MR_TFS_6K		  0x00600000
+#define	  TAH_MR_TFS_8K		  0x00800000
+#define	  TAH_MR_TFS_10K	  0x00a00000
+#define	  TAH_MR_DTFP		  0x00100000	/* Disable TX FIFO Parity */
+#define	  TAH_MR_DIG		  0x00080000	/* Disable Interrupt Generation */
+#define	  TAH_MR_IPV6		  0x00040000	/* enable IPv6 (IPv4 always on) */
+#define	  TAH_MR_V6INV4		  0x00020000	/* IPv6-within-IPv4, RX only */
+
+/*
+ * Segment size registers (TSO), size in halfwords in bits 2:14;
+ * reset to 750 (= 1500 bytes).  Selected per packet via the HAC
+ * field of the TX descriptor (EMAC_TXC_HAC_SSR(n)).
+ */
+#define	TAH_SSR(n)		(0x14 + 4 * (n))	/* n = 0..5 */
+#define	  TAH_SSR_SS(x)		  (((x) & 0x1fff) << 17)
+
+/*
+ * Transmit status register: cause of the abnormal termination
+ * signalled by EMAC_TXS_TED, latched until read (read-clear).
+ * UM 30.3.4; mode applicability per tables 30-1..30-3 (e.g. IPOP
+ * aborts checksum mode too, TFP only segmentation).
+ */
+#define	TAH_TSR			0x2c
+#define	  TAH_TSR_TFTS		  0x80000000	/* Transmit FIFO Too Small */
+#define	  TAH_TSR_UH		  0x40000000	/* Unrecognized Header */
+#define	  TAH_TSR_NIPF		  0x20000000	/* Not IPv4 Format */
+#define	  TAH_TSR_IPOP		  0x10000000	/* IP Option Present */
+#define	  TAH_TSR_NISF		  0x08000000	/* No IEEE SNAP Format */
+#define	  TAH_TSR_ILTS		  0x04000000	/* IP Length Too Short */
+#define	  TAH_TSR_IPFP		  0x02000000	/* IP Fragment Present */
+#define	  TAH_TSR_UP		  0x01000000	/* Unsupported Protocol */
+#define	  TAH_TSR_TFP		  0x00800000	/* TCP Flags Present (TSO) */
+#define	  TAH_TSR_SUDP		  0x00400000	/* Segmentation for UDP (TSO) */
+#define	  TAH_TSR_DLM		  0x00200000	/* Data Length Mismatch */
+#define	  TAH_TSR_SIEEE		  0x00100000	/* Segmentation for IEEE (TSO) */
+#define	  TAH_TSR_TFPE		  0x00080000	/* Transmit FIFO Parity Error */
+#define	  TAH_TSR_SSTS		  0x00040000	/* Segment Size Too Small (TSO) */
+#define	  TAH_TSR_NIP6F		  0x00020000	/* Not IPv6 Format */
+#define	  TAH_TSR_IP6OP		  0x00010000	/* IPv6 Option Present */
+#define	  TAH_TSR_IP6EHP	  0x00008000	/* IPv6 Extended Header Present */
+#define	  TAH_TSR_IP6UNH	  0x00004000	/* IPv6 Unsupported Protocol */
+#define	  TAH_TSR_IP6HPLM	  0x00002000	/* IPv6 Payload Length Mismatch */
 
 #endif	/* _IBM4XX_EMACREG_H_ */

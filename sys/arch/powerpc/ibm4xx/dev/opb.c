@@ -1,4 +1,4 @@
-/* $NetBSD: opb.c,v 1.29 2021/08/07 16:19:03 thorpej Exp $ */
+/* $NetBSD: opb.c,v 1.30 2026/06/14 00:02:35 rkujawa Exp $ */
 
 /*
  * Copyright 2001,2002 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.29 2021/08/07 16:19:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.30 2026/06/14 00:02:35 rkujawa Exp $");
 
 #include "locators.h"
 
@@ -94,9 +94,11 @@ __KERNEL_RCSID(0, "$NetBSD: opb.c,v 1.29 2021/08/07 16:19:03 thorpej Exp $");
 
 #include <powerpc/ibm4xx/ibm405gp.h>
 #include <powerpc/ibm4xx/amcc405ex.h>
+#include <powerpc/ibm4xx/amcc460ex.h>
 
 static int opb_get_frequency_405gp(void);
 static int opb_get_frequency_405ex(void);
+static int opb_get_frequency_boardprop(void);
 
 
 /*
@@ -142,6 +144,22 @@ const struct opb_dev {
 	    OPB_FLAGS_EMAC_RMII_RGMII },
 	{ AMCC405EX,	"wdog",	-1,			 0, -1, 0 },
 
+	/* AMCC460EX */
+	{ AMCC460EX,	"wdog",	-1,			 0, -1, 0 },
+	{ AMCC460EX,	"com",	AMCC460EX_UART0_BASE,	 0, AMCC460EX_UART0_IRQ, 0 },
+	{ AMCC460EX,	"com",	AMCC460EX_UART1_BASE,	 1, AMCC460EX_UART1_IRQ, 0 },
+	{ AMCC460EX,	"gpiic",AMCC460EX_IIC0_BASE,	 0, AMCC460EX_IIC0_IRQ, 0 },
+	{ AMCC460EX,	"gpiic",AMCC460EX_IIC1_BASE,	 1, AMCC460EX_IIC1_IRQ, 0 },
+	{ AMCC460EX,	"opbgpio",	AMCC460EX_GPIO0_BASE,	-1, -1, 0 },
+	{ AMCC460EX,	"emac",	AMCC460EX_EMAC0_BASE,	 0, AMCC460EX_EMAC0_IRQ,
+	    OPB_FLAGS_EMAC_GBE | OPB_FLAGS_EMAC_STACV2 | OPB_FLAGS_EMAC_HT256 |\
+	    OPB_FLAGS_EMAC_RMII_RGMII | OPB_FLAGS_EMAC_ETHCFG_ECS |\
+	    OPB_FLAGS_EMAC_TAH },
+	{ AMCC460EX,	"emac",	AMCC460EX_EMAC1_BASE,	 1, AMCC460EX_EMAC1_IRQ,
+	    OPB_FLAGS_EMAC_GBE | OPB_FLAGS_EMAC_STACV2 | OPB_FLAGS_EMAC_HT256 |\
+	    OPB_FLAGS_EMAC_RMII_RGMII | OPB_FLAGS_EMAC_ETHCFG_ECS |\
+	    OPB_FLAGS_EMAC_TAH },
+
 	{ 0,		 NULL }
 };
 
@@ -166,6 +184,10 @@ const struct opb_param {
 	    AMCC405EX_OPB_BASE,	AMCC405EX_OPB_BASE + OPBREG_SIZE,
 	    opb_get_frequency_405ex,
 	    0,				AMCC405EX_RGMIIB0_BASE},
+	{ AMCC460EX,
+	    AMCC460EX_OPB_BASE,	AMCC460EX_OPB_BASE + 2 * OPBREG_SIZE,
+	    opb_get_frequency_boardprop,
+	    0,				AMCC460EX_RGMII0_BASE},
 
 	{ 0 }
 };
@@ -236,15 +258,21 @@ opb_attach(device_t parent, device_t self, void *aux)
 	if (opb_params[i].pvr == 0)
 		panic("opb_get_bus_space_tag: no params for this CPU!");
 	opb_get_frequency = opb_params[i].opb_get_frequency;
+	/*
+	 * The MII bridge handles are used unconditionally
+	 * so these must succeed!
+	 */
 #ifdef EMAC_ZMII_PHY
-	if (opb_params[i].zmii_base != 0)
-		bus_space_map(sc->sc_iot, opb_params[i].zmii_base, ZMII0_SIZE,
-		    0, &sc->sc_zmiih);
+	if (opb_params[i].zmii_base != 0 &&
+	    bus_space_map(sc->sc_iot, opb_params[i].zmii_base, ZMII0_SIZE,
+	      0, &sc->sc_zmiih))
+		panic("opb_attach: can't map ZMII bridge");
 #endif
 #ifdef EMAC_RGMII_PHY
-	if (opb_params[i].rgmii_base != 0)
-		bus_space_map(sc->sc_iot, opb_params[i].rgmii_base, RGMII0_SIZE,
-		    0, &sc->sc_rgmiih);
+	if (opb_params[i].rgmii_base != 0 &&
+	    bus_space_map(sc->sc_iot, opb_params[i].rgmii_base, RGMII0_SIZE,
+	      0, &sc->sc_rgmiih))
+		panic("opb_attach: can't map RGMII bridge");
 #endif
 
 	for (i = 0; opb_devs[i].name != NULL; i++) {
@@ -335,4 +363,15 @@ opb_get_frequency_405ex(void)
 	opb_freq = plb_freq / CPR0_OPBDV0(mfcpr(DCR_CPR0_OPBD));
 
 	return opb_freq;
+}
+
+static int
+opb_get_frequency_boardprop(void)
+{
+	prop_number_t pn;
+
+	pn = prop_dictionary_get(board_properties, "opb-frequency");
+	KASSERT(pn != NULL);
+
+	return (int)prop_number_integer_value(pn);
 }

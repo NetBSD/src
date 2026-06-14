@@ -1,4 +1,4 @@
-/* $NetBSD: wdog.c,v 1.12 2011/06/18 02:02:50 matt Exp $ */
+/* $NetBSD: wdog.c,v 1.13 2026/06/14 00:02:35 rkujawa Exp $ */
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -36,14 +36,15 @@
  */
 
 /*
- * Watchdog timer support for the IBM 405GP processor.
+ * Watchdog timer support for the IBM 405GP and 440/460EX processors.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.12 2011/06/18 02:02:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdog.c,v 1.13 2026/06/14 00:02:35 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/callout.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
 #include <sys/wdog.h>
@@ -61,12 +62,18 @@ static int wdog_match(device_t, cfdata_t, void *);
 static void wdog_attach(device_t, device_t, void *);
 static int wdog_tickle(struct sysmon_wdog *);
 static int wdog_setmode(struct sysmon_wdog *);
+#ifdef PPC_IBM440
+static void wdog_ktickle(void *);
+#endif
 
 struct wdog_softc {
 	device_t sc_dev;
 	struct sysmon_wdog sc_smw;
 	bool sc_wdog_armed;
 	int sc_wdog_period;
+#ifdef PPC_IBM440
+	struct callout sc_tickler;	/* self-tickle after "disarm" */
+#endif
 };
 
 CFATTACH_DECL_NEW(wdog, sizeof(struct wdog_softc),
@@ -95,8 +102,35 @@ wdog_attach(device_t parent, device_t self, void *aux)
 	KASSERT(freq != NULL);
 	processor_freq = (unsigned int) prop_number_integer_value(freq);
 
+#ifdef PPC_IBM440
+	/*
+	 * The 440 watchdog period encodings sit four powers of two
+	 * above the 405's... for whatever reason.
+	 */
+	sc->sc_wdog_period = (2LL << 33) / processor_freq;
+#else
 	sc->sc_wdog_period = (2LL << 29) / processor_freq;
+#endif
 	aprint_normal(": %d second period\n", sc->sc_wdog_period);
+
+#ifdef PPC_IBM440
+	/*
+	 * TSR[WRS] survives a watchdog-forced reset; report and clear
+	 * it (TSR is write-1-to-clear) so a rebooted headless board
+	 * leaves evidence of why.
+	 *
+	 * Btw. on Sam460ex firmware messes with TSR[WRS], so it's 
+	 * pointless.
+	 */
+	if (mfspr(SPR_TSR) & TSR_WRS_MASK) {
+		aprint_normal_dev(self,
+		    "previous reset was forced by the watchdog\n");
+		mtspr(SPR_TSR, TSR_WRS_MASK);
+	}
+
+	callout_init(&sc->sc_tickler, 0);
+	callout_setfunc(&sc->sc_tickler, wdog_ktickle, sc);
+#endif
 
 	sc->sc_dev = self;
 	sc->sc_smw.smw_name = device_xname(self);
@@ -112,13 +146,36 @@ wdog_attach(device_t parent, device_t self, void *aux)
 static int
 wdog_tickle(struct sysmon_wdog *smw)
 {
+#ifdef PPC_IBM440
+	/*
+	 * TSR is write-1-to-clear
+	 */
+	mtspr(SPR_TSR, TSR_ENW | TSR_WIS);
+#else
 	uint32_t tsr;
 
 	tsr = mfspr(SPR_TSR);
 	tsr |= TSR_ENW | TSR_WIS;
 	mtspr(SPR_TSR, tsr);
+#endif
 	return (0);
 }
+
+#ifdef PPC_IBM440
+/*
+ * TCR[WRC] is sticky: once the watchdog has been armed with a reset
+ * action it cannot be turned off until the next reset.  "Disarming"
+ * therefore hands the tickling duty to this callout instead.
+ */
+static void
+wdog_ktickle(void *arg)
+{
+	struct wdog_softc * const sc = arg;
+
+	mtspr(SPR_TSR, TSR_ENW | TSR_WIS);
+	callout_schedule(&sc->sc_tickler, hz * sc->sc_wdog_period / 3);
+}
+#endif
 
 static int
 wdog_setmode(struct sysmon_wdog *smw)
@@ -127,27 +184,52 @@ wdog_setmode(struct sysmon_wdog *smw)
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
 		if (sc->sc_wdog_armed) {
+#ifdef PPC_IBM440
+			/*
+			 * The hardware cannot be disarmed (sticky
+			 * TCR[WRC]); keep it fed from a callout so the
+			 * system stays up without userland's help.
+			 */
+			sc->sc_wdog_armed = false;
+			wdog_ktickle(sc);
+#else
 			uint32_t tsr = mfspr(SPR_TSR);
 			tsr &= ~(TSR_ENW | TSR_WIS);
 			mtspr(SPR_TSR, tsr);
 			sc->sc_wdog_armed = false;
+#endif
 		}
 	} else {
 		if (smw->smw_period == WDOG_PERIOD_DEFAULT)
 			smw->smw_period = sc->sc_wdog_period;
 		else if (smw->smw_period != sc->sc_wdog_period) {
 			/*
-			 * There's 4 set watchdog periods on the 405GP,
-			 * but we only support the longest one (2.684
-			 * seconds).
+			 * There's 4 set watchdog periods, but we only
+			 * support the longest one (2.684 seconds on a
+			 * 400MHz 405GP, 14.9 seconds on a 1.155GHz
+			 * 460EX).
 			 */
 			return (EOPNOTSUPP);
 		}
 		sc->sc_wdog_armed = true;
 
+#ifdef PPC_IBM440
+		/*
+		 * TCR is shared with the clock (PIE/FIE) and the tprof
+		 * FIT backend (FP), all read-modify-write: keep the
+		 * update atomic with respect to them.
+		 */
+		const int s = splhigh();
+		uint32_t tcr = mfspr(SPR_TCR);
+		tcr |= TCR_WP_2_33 | TCR_WRC_SYSTEM;
+		mtspr(SPR_TCR, tcr);
+		splx(s);
+		callout_stop(&sc->sc_tickler);
+#else
 		uint32_t tcr = mfspr(SPR_TCR);
 		tcr |= TCR_WP_2_29 | TCR_WRC_SYSTEM;
 		mtspr(SPR_TCR, tcr);
+#endif
 
 		/* Arm the watchdog. */
 		wdog_tickle(smw);
