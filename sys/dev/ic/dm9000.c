@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.41 2025/10/04 04:44:20 thorpej Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.42 2026/06/14 01:01:54 gutteridge Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -214,7 +214,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 #endif
 	if (! ether_getaddr(sc->sc_dev, enaddr)) {
 		/*
-		 * If we did not get an externally configure address,
+		 * If we did not get an externally configured address,
 		 * try to read one from the current setup, before
 		 * resetting the chip.
 		 */
