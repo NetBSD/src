@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.237 2024/03/15 07:09:37 andvar Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.238 2026/06/15 15:46:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.237 2024/03/15 07:09:37 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.238 2026/06/15 15:46:10 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -850,13 +850,8 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 		 * during the fault from read -> write and uvm_faultctx
 		 * changed to match, but is never downgraded write -> read.
 		 */
-#ifdef __HAVE_UNLOCKED_PMAP /* XXX temporary */
-		.upper_lock_type = RW_WRITER,
-		.lower_lock_type = RW_WRITER,
-#else
 		.upper_lock_type = RW_READER,
 		.lower_lock_type = RW_READER,
-#endif
 	};
 	const bool maxprot = (fault_flag & UVM_FAULT_MAXPROT) != 0;
 	struct vm_anon *anons_store[UVM_MAXRANGE], **anons;
