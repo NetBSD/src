@@ -61,7 +61,6 @@ extern struct cfdriver gcport_cd;
 static int gcport_si_match(device_t, cfdata_t, void *);
 static void gcport_si_attach(device_t, device_t, void *);
 static int gcport_si_print(void *, const char *);
-static int gcport_si_rescan(device_t, const char *, const int *);
 static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
 static void gcport_si_work(struct work *, void *);
 
@@ -108,14 +107,13 @@ gcport_si_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bsh = psc->sc_bsh;
 	ch->ch_gcport_dev = self;
 
-	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, ch,
+	err = workqueue_create(&ch->ch_wqp, "gcport", gcport_si_work, sc,
 	    PRI_NONE, IPL_VM, 0);
 	if (err != 0) {
 		aprint_normal("gcport_si: ch%d failed to create workqueue\n",
 		    ch->ch_index);
 		ch->ch_wqp = NULL;
 	}
-	gcport_si_rescan(self, NULL, NULL);
 }
 
 static int
@@ -180,40 +178,28 @@ gcport_close(dev_t dev, int flags, int mode, struct lwp *l)
 	return 0;
 }
 
-static int
-gcport_si_rescan(device_t self, const char *ifattr, const int *locs)
+static void
+gcport_si_work(struct work *wk, void *arg)
 {
 	struct si_attach_args saa;
-	unsigned is_gcpad;
+	struct gcport_softc *sc;
+	struct si_channel *ch;
 	int res;
-	device_t uhid_dev;
-	struct gcport_softc * const gsc = device_private(self);
-	struct si_channel *ch = gsc->ch;
-	struct si_softc *sc = ch->ch_sc;
 
-	ch->ch_id = si_identify(sc, ch->ch_index);
-	is_gcpad = IS_GCPAD(ch->ch_id);
+	sc = arg;
+	ch = sc->ch;
 
-	if (is_gcpad && ch->ch_uhid_dev == NULL) {
+	if (ch->ch_uhid_dev == NULL) {
 		saa.saa_hidev = &ch->ch_hidev;
 		saa.saa_index = ch->ch_index;
-		uhid_dev = config_found(self, &saa, gcport_si_print, CFARGS_NONE);
-		ch->ch_uhid_dev = uhid_dev;
-	} else if (!is_gcpad && ch->ch_uhid_dev != NULL) {
+		ch->ch_uhid_dev = config_found(sc->sc_dev, &saa,
+		   gcport_si_print, CFARGS_NONE);
+	} else {
 		res = config_detach_children(ch->ch_gcport_dev, 0);
 		if (res == 0) {
 			ch->ch_uhid_dev = NULL;
 		}
 	}
-
-	return 0;
-
-}
-
-void gcport_si_work(struct work *wk, void *arg)
-{
-	struct si_channel *ch = arg;
-	gcport_si_rescan(ch->ch_gcport_dev, NULL, NULL);
 }
 
 int
@@ -240,7 +226,8 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 {
 	int err, outsize_r, insize_r;
 	struct si_softc *sc;
-	struct siio_send sd;
+	struct si_packet pk;
+	struct bintime to;
 
 	err = 0;
 	sc = ch->ch_sc;
@@ -249,29 +236,53 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	outsize_r = roundup(p->outsize, 4);
 	insize_r = roundup(p->insize, 4);
 
-	sd.out = kmem_zalloc(outsize_r, KM_SLEEP);
-	sd.in = kmem_zalloc(insize_r, KM_SLEEP);
-	sd.chan = ch->ch_index;
-	sd.outsize = p->outsize;
-	sd.insize = p->insize;
+	pk.out = kmem_zalloc(outsize_r, KM_SLEEP);
+	pk.in = kmem_zalloc(insize_r, KM_SLEEP);
+	pk.chan = ch->ch_index;
+	pk.outsize = p->outsize;
+	pk.insize = p->insize;
 
-	if ((err = copyin(p->out, sd.out, sd.outsize)) != 0) {
+	if ((err = copyin(p->out, pk.out, pk.outsize)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	if ((err = si_send(sc, &sd)) != 0) {
+	mutex_enter(&ch->ch_lock);
+	ch->ch_sipk = &pk;
+	ch->ch_send_status = CH_UNAVAIL;
+	mutex_exit(&ch->ch_lock);
+
+	if ((err = si_send(sc, &pk)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	if ((err = copyout(sd.in, p->in, sd.insize)) != 0) {
+	mutex_enter(&ch->ch_lock);
+
+	/* wait for channel to be available */
+	to.sec = 1;
+	to.frac = 0;
+	while (ch->ch_send_status == CH_UNAVAIL) {
+		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &to, DEFAULT_TIMEOUT_EPSILON);
+		if (err) {
+			KASSERT(err == EWOULDBLOCK);
+			err = ETIMEDOUT;
+			mutex_exit(&ch->ch_lock);
+			goto si_send_cleanup;
+		}
+
+	}
+	mutex_exit(&ch->ch_lock);
+
+	if ((err = copyout(pk.in, p->in, pk.insize)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	if ((err = copyout(&sd.status, p->status, sizeof(uint32_t))) != 0) {
+	if ((err = copyout(&pk.status, p->status, sizeof(uint32_t))) != 0) {
 		goto si_send_cleanup;
 	}
 si_send_cleanup:
-	kmem_free(sd.out, outsize_r);
-	kmem_free(sd.in, insize_r);
+	kmem_free(pk.out, outsize_r);
+	kmem_free(pk.in, insize_r);
+	pk.in = NULL;
+	pk.out = NULL;
 	return err;
 }

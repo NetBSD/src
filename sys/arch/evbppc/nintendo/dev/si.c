@@ -58,6 +58,7 @@ static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
+static void	si_send_complete(struct work *, void *);
 
 static void	si_get_report_desc(void *, void **, int *);                   
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
@@ -68,6 +69,8 @@ static usbd_status si_get_report(void *, int, void *, int);
 static usbd_status si_write(void *, void *, int);                         
 
 static kmutex_t sicomcsr_lock;
+static kcondvar_t sicomcsr_cv;
+static int cur_chan = CH_AVAIL;
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
@@ -86,6 +89,7 @@ si_attach(device_t parent, device_t self, void *aux)
 	struct mainbus_attach_args * const maa = aux;
 	struct si_softc * const sc = device_private(self);
 	unsigned chan;
+	int err;
 	void *ih;
 
 	KASSERT(device_unit(self) == 0);
@@ -101,6 +105,15 @@ si_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sicomcsr_cv, "sicmocsr");
+
+	err = workqueue_create(&sc->wqp, "si_tcint", si_send_complete,
+	    sc, PRI_NONE, IPL_VM, 0);
+	if (err != 0) {
+		aprint_normal("si: failed to create workqueue\n");
+		sc->wqp = NULL;
+	}
+
 
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
 		struct si_channel *ch;
@@ -111,13 +124,12 @@ si_attach(device_t parent, device_t self, void *aux)
 		ch->ch_index = chan;
 		ch->ch_gcport_dev = NULL;
 		ch->ch_uhid_dev = NULL;
+		ch->ch_send_status = CH_AVAIL;
 		mutex_init(&ch->ch_lock, MUTEX_DEFAULT, IPL_VM);
 		cv_init(&ch->ch_cv, "sich");
 		ch->ch_si = softint_establish(SOFTINT_SERIAL,
 		    si_softintr, ch);
 		KASSERT(ch->ch_si != NULL);
-
-		ch->ch_id = si_identify(sc, chan);
 
 		t = &ch->ch_hidev;
 		t->_cookie = &sc->sc_chan[chan];
@@ -251,10 +263,11 @@ static int
 si_intr(void *priv)
 {
 	struct si_softc *sc = priv;
+	struct si_channel *ch;
 	unsigned chan;
 	uint32_t comcsr, sr;
 	uint32_t inbuf[2];
-	unsigned is_gcpad, has_err;
+	unsigned err, uhid;
 
 	int ret = 0;
 
@@ -262,25 +275,27 @@ si_intr(void *priv)
 	sr = RD4(sc, SISR);
 
 	if (ISSET(comcsr, SICOMCSR_TCINT)) {
-		WR4(sc, SICOMCSR, comcsr | SICOMCSR_TCINT);
+		WR4(sc, SICOMCSR, (comcsr | SICOMCSR_TCINT) & ~SICOMCSR_TSTART);
+		workqueue_enqueue(sc->wqp, &sc->work, NULL);
+		ret = 1;
 	}
+
 
 	if (!ISSET(comcsr, SICOMCSR_RDSTINT)) {
 		goto si_intr_done;
 	}
 
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
-		struct si_channel *ch = &sc->sc_chan[chan];
+		ch = &sc->sc_chan[chan];
+		uhid = ch->ch_uhid_dev != NULL;
 
 		if (ISSET(sr, SISR_RDST(chan))) {
-			is_gcpad = IS_GCPAD(ch->ch_id) != 0;
-
 			/* clears the sisr by reading inbuf */
 			inbuf[0] = RD4(sc, SICINBUFH(chan));
 			inbuf[1] = RD4(sc, SICINBUFL(chan));
-			has_err = GCPAD_ERR(inbuf);
+			err = GCPAD_ERR(inbuf);
 
-			if (is_gcpad) {
+			if (uhid) {
 				si_make_report(sc, chan, ch->ch_buf, false);
 				if (ISSET(ch->ch_state, SI_STATE_OPEN)) {
 					softint_schedule(ch->ch_si);
@@ -289,10 +304,10 @@ si_intr(void *priv)
 
 
 			/*
-			 * attach event: non-gcpad has no errors
-			 * detach event: gcpad has errors
+			 * attach event: non-uhid has no errors
+			 * detach event: hid has errors
 			 */
-			if (!(has_err ^ is_gcpad) && ch->ch_wqp != NULL) {
+			if ((err == uhid) && ch->ch_wqp != NULL) {
 				workqueue_enqueue(ch->ch_wqp, &ch->ch_work,
 				    NULL);
 			}
@@ -400,84 +415,105 @@ si_write(void *cookie, void *data, int len)
 }
 
 int
-si_send(struct si_softc *sc, struct siio_send *data)
+si_send(struct si_softc *sc, struct si_packet *pk)
 {
-	uint32_t cnt, comcsr, comcsr_prev, sisr, shift_amt, status;
+	uint32_t cnt;
+	struct bintime to;
+	int err;
 	unsigned chan;
 
-	if (data->chan > 3) {
+	if (pk->chan > 3) {
 		return EINVAL;
 	}
 
-	if (data->outsize > SIIOBUF_SIZE || data->insize > SIIOBUF_SIZE) {
+	if (pk->outsize > SIIOBUF_SIZE || pk->insize > SIIOBUF_SIZE) {
 		return EINVAL;
 	}
 
-	if (data->out == NULL || data->in == NULL) {
+	if (pk->out == NULL || pk->in == NULL) {
 		return EINVAL;
 	}
 
+	chan = pk->chan;
+
+	/* TODO improve timeout */
 	mutex_enter(&sicomcsr_lock);
-	chan = data->chan;
+	to.sec = 1;
+	to.frac = 0;
+	while (cur_chan != CH_AVAIL) {
+		err = cv_timedwaitbt(&sicomcsr_cv, &sicomcsr_lock, &to, DEFAULT_TIMEOUT_EPSILON);
+		if (err) {
+			KASSERT(err == EWOULDBLOCK);
+			mutex_exit(&sicomcsr_lock);
+			return ETIMEDOUT;
+		}
+	}
+	cur_chan = chan;
+	mutex_exit(&sicomcsr_lock);
 
-	comcsr_prev = RD4(sc, SICOMCSR);
 	SIIOBUF_CLEAR(sc);
-	data->status = 0;
+	pk->status = 0;
 
 	/* outsize is number of bytes. we need number of words */
-	cnt = ((data->outsize+3)/4);
-	SIIOBUF_WR(sc, data->out, cnt);
+	cnt = ((pk->outsize+3)/4);
+	SIIOBUF_WR(sc, pk->out, cnt);
 
 	WR4(sc, SISR, SISR_ERROR_MASK(chan));
-	sisr = RD4(sc, SISR);
 
-	AWAIT_SICOMCSR(sc);
 	WR4(sc, SICOMCSR,
 	    SICOMCSR_CH_EN |
 	    SICOMCSR_CMD_EN |
-	    __SHIFTIN(0, SICOMCSR_TCINTMSK) |
-	    __SHIFTIN(data->outsize, SICOMCSR_OUTLNGTH) |
-	    __SHIFTIN(data->insize, SICOMCSR_INLNGTH) |
+	    SICOMCSR_TCINTMSK |
+	    SICOMCSR_RDSTINTMSK |
+	    __SHIFTIN(pk->outsize, SICOMCSR_OUTLNGTH) |
+	    __SHIFTIN(pk->insize, SICOMCSR_INLNGTH) |
 	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
 	    SICOMCSR_TSTART
 	);
-	AWAIT_SICOMCSR(sc);
 
-	comcsr = RD4(sc, SICOMCSR);
-
-	/* clear TCINT and preserve previous masks otherwise we lose polling */
-	WR4(sc, SICOMCSR, comcsr |
-	    SICOMCSR_TCINT |
-	    (comcsr_prev & SICOMCSR_TCINTMSK) |
-	    (comcsr_prev & SICOMCSR_RDSTINTMSK));
-
-	if (ISSET(comcsr, SICOMCSR_COMERR)) {
-		sisr = RD4(sc, SISR);
-		shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
-		status = ((sisr & SISR_ERROR_MASK(chan)) >> shift_amt) & 0x3F;
-		data->status = status;
-	}
-
-	SIIOBUF_RD(sc, (void *)data->in, data->insize);
-
-	mutex_exit(&sicomcsr_lock);
 	return 0;
 }
 
-int
-si_identify(struct si_softc *sc, unsigned chan) {
-	struct siio_send data;
-	uint32_t out[1];
-	uint32_t in[1];
+static void
+si_send_complete(struct work *, void *arg)
+{
+	struct si_softc *sc;
+	struct si_channel *ch;
+	struct si_packet *pk;
+	uint32_t comcsr, sisr, sisr_mask, shift_amt, status;
+	int completed_chan = cur_chan;
 
-	out[0] = CMD_IDENTIFY;
+	mutex_enter(&sicomcsr_lock);
+	if (cur_chan == CH_AVAIL) {
+		goto unlock_sicomcsr;
+	}
 
-	data.chan = chan;
-	data.outsize = 1;
-	data.insize = 3;
-	data.in = in;
-	data.out = out;
+	sc = arg;
+	ch = &sc->sc_chan[completed_chan];
 
-	si_send(sc, &data);
-	return (uint16_t)(in[0] >> 16);
+	mutex_enter(&ch->ch_lock);
+	pk = ch->ch_sipk;
+
+	if (pk->in != NULL) {
+		SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
+	}
+
+	comcsr = RD4(sc, SICOMCSR);
+
+	if (ISSET(comcsr, SICOMCSR_COMERR)) {
+		sisr = RD4(sc, SISR);
+		shift_amt = 8 * (SI_NUM_CHAN - 1 - completed_chan);
+		sisr_mask = sisr & SISR_ERROR_MASK(completed_chan);
+		status = (sisr_mask >> shift_amt) & 0x3F;
+		pk->status = status;
+	}
+
+	cur_chan = CH_AVAIL;
+	ch->ch_send_status = CH_AVAIL;
+
+	cv_signal(&sicomcsr_cv);
+	cv_signal(&ch->ch_cv);
+	mutex_exit(&ch->ch_lock);
+unlock_sicomcsr:
+	mutex_exit(&sicomcsr_lock);
 }
