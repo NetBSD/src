@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3272 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3273 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -291,8 +291,32 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		sandboxed applications in libutil. [roy 20260530]
 	eqos(4): Add IPv4/TCPv4/UDPv4 checksum offload support.
 		[jmcneill 20260530]
+	sparc64: Add a driver for the Texas Instruments LM95221
+		temperature sensor. The chip is used in the
+		Sun Ultra 45. [jdc 20260603]
+	sparc64: Add a driver for the On Semiconductor (Analog Devices)
+		ADT7462 system monitor.  The chip is used in the
+		Sun Ultra 45. [jdc 20260603]
+	sparc64: Add a driver for the NXP LM75A temperature sensor.
+		The chip is used in the Sun Ultra 45. [jdc 20260603]
+	sparc64: Add fireiic(4), a driver for the Fire/MICV i2c
+		controller found in Pyro-based machines (e.g.
+		U45, V245). [jdc 20260604]
+	arm: Relax coherent DMA ordering barriers from DSB to DMB,
+		results in a 1% performance improvement on some
+		platforms. [skrll 20260605]
+	make(1): Allow semicolons and parentheses in dependency
+		line expressions. [rillig 20260609]
 	OpenSSL: Imported 3.5.7. [christos 20260609]
 	file(1): Upgraded to 5.48. [christos 20260610]
 	m4(1): Sync with OpenBSD [christos 20260610]
+	sgimips: Add haud(4), a driver for audio playback using
+		Iris Indigo's onboard DSP ("Hollywood Audio").
+		[rumble 20260611]
+	sgimips: Add undist(1) and haudfw(1) - utilities for unpacking
+		files from an IRIX distribution, for the haud(3) driver.
+		[rumble 20260611]
 	mac68k: Support 68060 CPUs, from zigzagjoe. [thorpej 20260613]
 	expat: Import 2.8.1 (security fixes). [jdc 20260613]
+	powerpc: Add support for the PowerPC 440 core and 460EX SoC.
+		[rkujawa 20260613]
