@@ -1,4 +1,4 @@
-/*	$NetBSD: fcntl.h,v 1.58 2026/01/10 18:26:00 christos Exp $	*/
+/*	$NetBSD: fcntl.h,v 1.59 2026/06/15 20:16:29 kre Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990, 1993
@@ -121,6 +121,9 @@
 #if defined(_NETBSD_SOURCE)
 #define	O_NOSIGPIPE	0x01000000	/* don't deliver sigpipe */
 #define	O_REGULAR	0x02000000	/* fail if not a regular file */
+#endif
+#if (_POSIX_C_SOURCE - 0) >= 200809L || (_XOPEN_SOURCE - 0 >= 700) || \
+    defined(_NETBSD_SOURCE)
 #define	O_EXEC		0x04000000	/* open for executing only */
 #endif
 #if (_POSIX_C_SOURCE - 0) >= 202405L || (_XOPEN_SOURCE - 0 >= 800) || \
