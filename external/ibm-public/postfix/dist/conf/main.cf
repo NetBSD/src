@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.13 2026/05/12 20:08:38 christos Exp $
+#	$NetBSD: main.cf,v 1.14 2026/06/15 12:09:33 christos Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -145,10 +145,6 @@ mail_owner = postfix
 #inet_interfaces = all
 #inet_interfaces = $myhostname
 #inet_interfaces = $myhostname, localhost
-
-# NetBSD is IPv6-capable.  Use all available address families.
-#
-inet_protocols = all
 
 # The proxy_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on by way of a
@@ -704,4 +700,6 @@ shlib_directory = /usr/lib/postfix
 # between multiple Postfix instances.
 meta_directory = /usr/libexec/postfix
 
-#inet_protocols = ipv4
+# NetBSD is IPv6-capable.  Use all available address families.
+#
+inet_protocols = all
