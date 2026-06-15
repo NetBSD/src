@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.19 2024/11/23 18:13:04 skrll Exp $ */
+/* $NetBSD: types.h,v 1.20 2026/06/15 15:18:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -100,8 +100,6 @@ typedef __int32_t	__register_t;
 #define	__HAVE_SYSCALL_INTERN
 #define	__HAVE_TLS_VARIANT_I
 #define	__HAVE_UCAS_FULL
-/* XXX temporary */
-#define	__HAVE_UNLOCKED_PMAP
 #define	__HAVE___LWP_GETPRIVATE_FAST
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB

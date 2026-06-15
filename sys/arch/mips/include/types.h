@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.78 2023/03/28 10:54:13 nakayama Exp $	*/
+/*	$NetBSD: types.h,v 1.79 2026/06/15 15:18:04 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -178,9 +178,6 @@ typedef __uint32_t tlb_asid_t;
 #define	__HAVE___LWP_GETTCB_FAST
 #define	__HAVE___LWP_SETTCB
 #define	__HAVE_BUS_SPACE_8
-
-/* XXX temporary */
-#define	__HAVE_UNLOCKED_PMAP
 
 #if !defined(__mips_o32)
 #define	__HAVE_ATOMIC64_OPS

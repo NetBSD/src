@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.21 2022/11/03 09:04:56 skrll Exp $ */
+/* $NetBSD: types.h,v 1.22 2026/06/15 15:18:04 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -119,11 +119,6 @@ typedef __uint64_t __register_t;
 
 #if defined(_KERNEL)
 #define __HAVE_RAS
-#endif
-
-#if defined(PMAP_MI)
-/* XXX temporary */
-#define __HAVE_UNLOCKED_PMAP
 #endif
 
 #elif defined(__arm__)
