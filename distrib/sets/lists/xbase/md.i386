@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.37 2024/07/11 20:41:09 riastradh Exp $
+# $NetBSD: md.i386,v 1.37.2.1 2026/06/15 19:04:09 martin Exp $
 #
 ./usr/X11R7/lib/libI810XvMC.so			xbase-libI810XvMC-lib		xorg
 ./usr/X11R7/lib/libI810XvMC.so.1		xbase-libI810XvMC-lib		xorg
@@ -14,7 +14,7 @@
 ./usr/X11R7/lib/libchromeXvMCPro.so.1.0		xbase-libchromeXvMCPro-lib		xorg
 ./usr/X11R7/lib/libdrm_amdgpu.so		xbase-libdrm_amdgpu-lib		xorg
 ./usr/X11R7/lib/libdrm_amdgpu.so.1		xbase-libdrm_amdgpu-lib		xorg
-./usr/X11R7/lib/libdrm_amdgpu.so.1.3		xbase-libdrm_amdgpu-lib		xorg
+./usr/X11R7/lib/libdrm_amdgpu.so.1.4		xbase-libdrm_amdgpu-lib		xorg
 ./usr/X11R7/lib/libdrm_intel.so			xbase-libdrm_intel-lib		xorg
 ./usr/X11R7/lib/libdrm_intel.so.0		xbase-libdrm_intel-lib		xorg
 ./usr/X11R7/lib/libdrm_intel.so.0.2		xbase-libdrm_intel-lib		xorg
