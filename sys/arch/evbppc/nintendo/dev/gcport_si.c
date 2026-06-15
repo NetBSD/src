@@ -247,6 +247,11 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	}
 
 	mutex_enter(&ch->ch_lock);
+	if (ch->ch_send_status == CH_UNAVAIL) {
+		err = EBUSY;
+		mutex_exit(&ch->ch_lock);
+		goto si_send_cleanup;
+	}
 	ch->ch_sipk = &pk;
 	ch->ch_send_status = CH_UNAVAIL;
 	mutex_exit(&ch->ch_lock);
@@ -255,13 +260,14 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		goto si_send_cleanup;
 	}
 
-	mutex_enter(&ch->ch_lock);
 
 	/* wait for channel to be available */
+	mutex_enter(&ch->ch_lock);
 	to.sec = 1;
 	to.frac = 0;
 	while (ch->ch_send_status == CH_UNAVAIL) {
-		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &to, DEFAULT_TIMEOUT_EPSILON);
+		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &to,
+		    DEFAULT_TIMEOUT_EPSILON);
 		if (err) {
 			KASSERT(err == EWOULDBLOCK);
 			err = ETIMEDOUT;

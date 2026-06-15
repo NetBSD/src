@@ -115,7 +115,6 @@ struct si_packet;
 
 struct si_channel {
 	struct si_softc		*ch_sc;
-	struct gcport_softc	*ch_gcport_sc;
 	device_t		ch_dev;
 	device_t		ch_gcport_dev;
 	device_t		ch_uhid_dev;
@@ -124,8 +123,6 @@ struct si_channel {
 	kmutex_t		ch_lock;
 	kcondvar_t		ch_cv;
 	uint8_t			ch_state;
-	uint16_t		ch_id;
-	uint16_t		ch_id_extra;
 #define SI_STATE_OPEN		__BIT(0)
 #define SI_STATE_STOPPED	__BIT(1)
 	void			(*ch_intr)(void *, void *, u_int);
