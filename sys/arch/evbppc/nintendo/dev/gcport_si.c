@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: gcport_si.c,v 1.0 2026/05/18 22:53:30 gummybuns Exp 
 #include <dev/hid/uhid.h>
 
 #include "si.h"
-#include "joybus.h"
 
 struct si_payload {
 	uint32_t 	insize;		/* bytes to receive. max 128 */
@@ -58,11 +57,12 @@ extern struct cfdriver gcport_cd;
 
 #define SI_SEND		_IOWR(0, 1, struct si_payload)
 
-static int gcport_si_match(device_t, cfdata_t, void *);
-static void gcport_si_attach(device_t, device_t, void *);
-static int gcport_si_print(void *, const char *);
-static int siioctl_send(struct si_channel *ch, struct si_payload *sp);
-static void gcport_si_work(struct work *, void *);
+static int 	gcport_si_match(device_t, cfdata_t, void *);
+static void 	gcport_si_attach(device_t, device_t, void *);
+
+static int 	gcport_si_print(void *, const char *);
+static int 	siioctl_send(struct si_channel *ch, struct si_payload *sp);
+static void 	gcport_si_work(struct work *, void *);
 
 dev_type_open(gcport_open);
 dev_type_close(gcport_close);
@@ -227,7 +227,8 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	int err, outsize_r, insize_r;
 	struct si_softc *sc;
 	struct si_packet pk;
-	struct bintime to;
+	struct bintime bt;
+	struct timeval tv;
 
 	err = 0;
 	sc = ch->ch_sc;
@@ -260,13 +261,13 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		goto si_send_cleanup;
 	}
 
-
 	/* wait for channel to be available */
 	mutex_enter(&ch->ch_lock);
-	to.sec = 1;
-	to.frac = 0;
+	tv.tv_sec = 0;
+	tv.tv_usec = 10000;
+	timeval2bintime(&tv, &bt);
 	while (ch->ch_send_status == CH_UNAVAIL) {
-		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &to,
+		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &bt,
 		    DEFAULT_TIMEOUT_EPSILON);
 		if (err) {
 			KASSERT(err == EWOULDBLOCK);

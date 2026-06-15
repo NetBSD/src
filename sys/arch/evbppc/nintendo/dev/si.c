@@ -47,7 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #include "mainbus.h"
 #include "si.h"
 #include "gcpad_rdesc.h"
-#include "joybus.h"
 
 
 static int	si_match(device_t, cfdata_t, void *);
@@ -68,8 +67,11 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-static kmutex_t sicomcsr_lock;
-static kcondvar_t sicomcsr_cv;
+static kmutex_t 		sicomcsr_lock;
+static kcondvar_t		sicomcsr_cv;
+static struct work		sicomcsr_work;
+static struct workqueue		*sicomcsr_wqp;
+
 static int cur_chan = CH_AVAIL;
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
@@ -107,13 +109,12 @@ si_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sicomcsr_cv, "sicmocsr");
 
-	err = workqueue_create(&sc->wqp, "si_tcint", si_send_complete,
+	err = workqueue_create(&sicomcsr_wqp, "si_tcint", si_send_complete,
 	    sc, PRI_NONE, IPL_VM, 0);
 	if (err != 0) {
 		aprint_normal("si: failed to create workqueue\n");
-		sc->wqp = NULL;
+		sicomcsr_wqp = NULL;
 	}
-
 
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
 		struct si_channel *ch;
@@ -276,7 +277,7 @@ si_intr(void *priv)
 
 	if (ISSET(comcsr, SICOMCSR_TCINT)) {
 		WR4(sc, SICOMCSR, (comcsr | SICOMCSR_TCINT) & ~SICOMCSR_TSTART);
-		workqueue_enqueue(sc->wqp, &sc->work, NULL);
+		workqueue_enqueue(sicomcsr_wqp, &sicomcsr_work, NULL);
 		ret = 1;
 	}
 
@@ -301,7 +302,6 @@ si_intr(void *priv)
 					softint_schedule(ch->ch_si);
 				}
 			}
-
 
 			/*
 			 * attach event: non-uhid has no errors
@@ -417,10 +417,11 @@ si_write(void *cookie, void *data, int len)
 int
 si_send(struct si_softc *sc, struct si_packet *pk)
 {
-	uint32_t cnt;
-	struct bintime to;
-	int err;
 	unsigned chan;
+	uint32_t cnt;
+	int err;
+	struct bintime bt;
+	struct timeval tv;
 
 	if (pk->chan > 3) {
 		return EINVAL;
@@ -436,12 +437,13 @@ si_send(struct si_softc *sc, struct si_packet *pk)
 
 	chan = pk->chan;
 
-	/* TODO improve timeout */
 	mutex_enter(&sicomcsr_lock);
-	to.sec = 1;
-	to.frac = 0;
+	tv.tv_sec = 0;
+	tv.tv_usec = 5000;
+	timeval2bintime(&tv, &bt);
 	while (cur_chan != CH_AVAIL) {
-		err = cv_timedwaitbt(&sicomcsr_cv, &sicomcsr_lock, &to, DEFAULT_TIMEOUT_EPSILON);
+		err = cv_timedwaitbt(&sicomcsr_cv, &sicomcsr_lock, &bt,
+		    DEFAULT_TIMEOUT_EPSILON);
 		if (err) {
 			KASSERT(err == EWOULDBLOCK);
 			mutex_exit(&sicomcsr_lock);

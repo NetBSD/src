@@ -39,7 +39,6 @@ __KERNEL_RCSID(0, "$NetBSD: uhid_si.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $")
 #include <dev/hid/uhid.h>
 
 #include "si.h"
-#include "joybus.h"
 
 #define UHID_SI_VENDOR	0x057e	/* Nintendo */
 #define UHID_SI_PRODUCT	0x0337	/* GameCube adapter */

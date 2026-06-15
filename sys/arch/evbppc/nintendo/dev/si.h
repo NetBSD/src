@@ -32,8 +32,6 @@
 #include <dev/hid/hidev.h>
 #include <sys/workqueue.h>
 
-#include "joybus.h"
-
 #define SI_NUM_CHAN		4
 
 #define SICOUTBUF(n)		((n) * 0xc + 0x00)
@@ -143,8 +141,6 @@ struct si_softc {
 	bus_space_handle_t	sc_bsh;
 
 	struct si_channel	sc_chan[SI_NUM_CHAN];
-	struct workqueue	*wqp;
-	struct work		work;
 };
 
 struct si_attach_args {
