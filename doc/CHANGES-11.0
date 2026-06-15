@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.97 2026/06/07 09:44:22 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.98 2026/06/15 19:25:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10432,4 +10432,517 @@ sys/dev/sdmmc/sdhc.c				1.126
 	sdhc(4): PR 60311: fix soft reset after error on Rockchip
 	RK3568 and RK3588 SoCs.
 	[mlelstv, ticket #305]
+
+sys/dev/acpi/sdhc_acpi.c			1.24,1.25
+
+	evbarm: PR 60314: Raspberry PI 5 SD support under UEFI.
+	[skrll, ticket #306]
+
+crypto/external/apache2/openssl/dist/ssl/record/methods/tls_common.c 1.2
+
+	openssl(3): PR 60292: apply upstream fix for writing TLS records.
+	[wiz, ticket #307]
+
+crypto/external/apache2/openssl/dist/test/recipes/80-test_cmsapi_data/cms_pwri_kek_oob.der up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/recipes/80-test_pkcs12_data/pbmac1_256_256.bad-key-len.p12 up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/recipes/80-test_pkcs12_data/pbmac1_256_256.good-shorter-key-len.p12 up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/recipes/70-test_tls13ticket.t up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/smime-eml/pkcs7-empty-digest-set.eml up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/cms-msg/make_missing_kdf_der.py up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/cms-msg/missing-kdf.der up to 1.1.1.1
+crypto/external/apache2/openssl/dist/test/tls13tickettest.c up to 1.1.1.1
+crypto/external/apache2/openssl/dist/CHANGES.md up to 1.1.1.4
+crypto/external/apache2/openssl/dist/Configure  up to 1.1.1.2
+crypto/external/apache2/openssl/dist/NEWS.md    up to 1.1.1.4
+crypto/external/apache2/openssl/dist/VERSION.dat up to 1.1.1.4
+crypto/external/apache2/openssl/dist/Configurations/README.md up to 1.1.1.2
+crypto/external/apache2/openssl/dist/apps/enc.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/list.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/s_client.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/apps/skeyutl.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/speed.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/testdsa.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/testrsa.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/apps/lib/apps.c up to 1.5
+crypto/external/apache2/openssl/dist/apps/lib/cmp_mock_srv.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/initthread.c up to 1.4
+crypto/external/apache2/openssl/dist/crypto/param_build.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/param_build_set.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/threads_none.c up to 1.3
+crypto/external/apache2/openssl/dist/crypto/threads_pthread.c up to 1.7
+crypto/external/apache2/openssl/dist/crypto/threads_win.c up to 1.3
+crypto/external/apache2/openssl/dist/crypto/aes/asm/aesfx-sparcv9.pl up to 1.1.1.2
+crypto/external/apache2/openssl/dist/crypto/asn1/a_d2i_fp.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/asn1/a_mbstr.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/asn1/asn1_lib.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/asn1/asn_mime.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/asn1/tasn_dec.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/bio/bss_dgram.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/bio/bss_dgram_pair.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/bn/bn_const.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/bn/bn_mod.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/cast/cast_s.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/chacha/asm/chachap10-ppc.pl up to 1.1.1.2
+crypto/external/apache2/openssl/dist/crypto/cmp/cmp_genm.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/cms/cms_enc.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/cms/cms_env.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/cms/cms_pwri.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/crmf/crmf_lib.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/des/fcrypt.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/dso/dso_win32.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ec/ec_curve.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ec/ec_lib.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/ec/ecp_s390x_nistp.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ec/ecp_sm2p256.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ec/curve448/scalar.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ec/curve448/word.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/evp/asymcipher.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/evp/e_aes.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/evp/encode.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/evp/evp_lib.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/evp/kem.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/evp/m_sigver.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/evp/signature.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ffc/ffc_params.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/hashtable/hashtable.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/hpke/hpke_util.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/http/http_client.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/http/http_lib.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/md2/md2_dgst.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/ml_dsa/ml_dsa_key.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/modes/wrap128.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/objects/obj_dat.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/objects/obj_lib.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/pkcs12/p12_decr.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/pkcs12/p12_mutl.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/pkcs7/pk7_doit.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/crypto/pkcs7/pk7_smime.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/rc2/rc2_skey.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/slh_dsa/slh_dsa_key.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/sm2/sm2_crypt.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/sm2/sm2_sign.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/crypto/x509/v3_ist.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/cipher/aeskeywrap.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/cipher/ariacbc.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/digest/EVP_MD_demo.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/encrypt/rsa_encrypt.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/mac/cmac-aes256.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/mac/hmac-sha512.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/demos/signature/EVP_EC_Signature_demo.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/doc/fingerprints.txt up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/internal/man3/ossl_rcu_lock_new.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man1/openssl-format-options.pod up to 1.1.1.3
+crypto/external/apache2/openssl/dist/doc/man1/openssl-pkcs8.pod.in up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man1/openssl-rehash.pod.in up to 1.1.1.3
+crypto/external/apache2/openssl/dist/doc/man1/openssl-s_client.pod.in up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man1/openssl-s_server.pod.in up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man1/openssl-smime.pod.in up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/BIO_s_bio.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/BN_add.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/CMS_decrypt.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/EVP_EncryptInit.pod up to 1.1.1.4
+crypto/external/apache2/openssl/dist/doc/man3/OSSL_HTTP_REQ_CTX.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/OSSL_HTTP_parse_url.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/OSSL_HTTP_transfer.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/PKCS7_decrypt.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/SSL_CTX_set_session_cache_mode.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/SSL_CTX_set_session_id_context.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/SSL_CTX_set_tlsext_servername_callback.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man3/d2i_X509.pod up to 1.1.1.3
+crypto/external/apache2/openssl/dist/doc/man7/EVP_CIPHER-AES.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man7/openssl-env.pod up to 1.1.1.4
+crypto/external/apache2/openssl/dist/doc/man7/provider-asym_cipher.pod up to 1.1.1.2
+crypto/external/apache2/openssl/dist/doc/man7/provider-signature.pod up to 1.1.1.3
+crypto/external/apache2/openssl/dist/fuzz/dtlsserver.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/fuzz/server.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/crypto/riscv_arch.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/internal/cryptlib.h up to 1.3
+crypto/external/apache2/openssl/dist/include/internal/quic_cfq.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/internal/quic_channel.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/internal/quic_fifd.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/internal/quic_stream_map.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/internal/rcu.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/openssl/bn.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/openssl/ssl.h.in up to 1.1.1.3
+crypto/external/apache2/openssl/dist/include/openssl/x509_acert.h.in up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/defltprov.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/fips-sources.checksums up to 1.1.1.4
+crypto/external/apache2/openssl/dist/providers/fips.checksum up to 1.1.1.4
+crypto/external/apache2/openssl/dist/providers/fips.module.sources up to 1.1.1.2
+crypto/external/apache2/openssl/dist/providers/fips/self_test_data.inc up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/ciphers/cipher_aes_gcm_hw_rv64i.inc up to 1.1.1.2
+crypto/external/apache2/openssl/dist/providers/implementations/ciphers/cipher_aes_gcm_siv_hw.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/ciphers/cipher_aes_ocb.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/providers/implementations/ciphers/cipher_aes_siv.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/encode_decode/ml_dsa_codecs.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/encode_decode/ml_dsa_codecs.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/encode_decode/ml_kem_codecs.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/exchange/dh_exch.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/include/prov/implementations.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/keymgmt/ecx_kmgmt.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/keymgmt/ml_kem_kmgmt.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/providers/implementations/keymgmt/mlx_kmgmt.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/macs/poly1305_prov.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/signature/rsa_sig.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/providers/implementations/signature/slh_dsa_sig.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/ssl_ciph.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/ssl_rsa.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/t1_lib.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/ssl/t1_trce.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_ackm.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_cfq.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_channel.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_channel_local.h up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_fifd.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_impl.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/ssl/quic/quic_port.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_record_rx.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_record_shared.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_record_tx.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/quic_rx_depack.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/ssl/quic/quic_stream_map.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/ssl/quic/quic_txp.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/quic/uint_set.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/ssl/record/methods/ktls_meth.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/record/methods/tls_common.c up to 1.3
+crypto/external/apache2/openssl/dist/ssl/statem/extensions_cust.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/statem/extensions_srvr.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/statem/statem.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/statem/statem_clnt.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/statem/statem_lib.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/ssl/statem/statem_srvr.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/asn1_decode_test.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/bad_dtls_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/bio_tfo_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/build.info up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/chacha_internal_test.c up to 1.1.1.2
+crypto/external/apache2/openssl/dist/test/cipherlist_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/cmsapitest.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/destest.c up to 1.4
+crypto/external/apache2/openssl/dist/test/dsatest.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/ectest.c up to 1.4
+crypto/external/apache2/openssl/dist/test/endecode_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/enginetest.c up to 1.4
+crypto/external/apache2/openssl/dist/test/evp_extra_test.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/evp_extra_test2.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/evp_kdf_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/evp_libctx_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/evp_pkey_provided_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/evp_skey_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/hpke_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/http_test.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/ideatest.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/ml_kem_evp_extra_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/param_build_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/pbetest.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/pkcs12_format_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/quic_record_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/quic_txp_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/quic_wire_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/quicapitest.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/siphash_internal_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/sslapitest.c up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/stack_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/threadstest.c up to 1.4
+crypto/external/apache2/openssl/dist/test/x509_test.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/helpers/predefined_dhparams.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/radix/quic_tests.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/radix/terp.c up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/recipes/80-test_cms.t up to 1.1.1.4
+crypto/external/apache2/openssl/dist/test/recipes/80-test_cmsapi.t up to 1.1.1.3
+crypto/external/apache2/openssl/dist/test/recipes/80-test_pkcs12.t up to 1.1.1.3
+crypto/external/apache2/openssl/dist/util/missingcrypto.txt up to 1.1.1.4
+crypto/external/apache2/openssl/dist/util/missingcrypto111.txt up to 1.1.1.2
+doc/3RDPARTY						(manually edited)
+
+	Update OpenSSL to 3.5.7.
+	[christos, ticket #308]
+
+external/bsd/unbound/dist/contrib/gost12.patch  up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/127.0.0.1/example.com.zone up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/auth_https_origin.conf up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/auth_https_origin.dsc up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/auth_https_origin.post up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/auth_https_origin.pre up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/auth_https_origin.test up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/petal.key up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_https_origin.tdir/petal.pem up to 1.1.1.1
+external/bsd/unbound/dist/testdata/subnet_cached_servfail_timeout.crpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_notify_lookup.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/dname_unsigned_cname.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/ds_wildcard_cname.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fwd_scrub_rrsig.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_dname_ttl0.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_nat64_donotq.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_priv_svcb.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_scrub_dname_out_of_zone.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/iter_svcb_malformed.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/long_qname.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/respip_dns64_lookup.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/subnet_scopezero_bogus.crpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/subnet_scopezero_global_nocache.crpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/ttl_zero_cacherep.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.conf up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.conf2 up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.dsc up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.post up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.pre up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/tls_reuse_auth.test up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/unbound_control.key up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/unbound_control.pem up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/unbound_server.key up to 1.1.1.1
+external/bsd/unbound/dist/testdata/tls_reuse_auth.tdir/unbound_server.pem up to 1.1.1.1
+external/bsd/unbound/dist/testdata/serve_expired_client_timeout_no_prefetch.rpl delete
+external/bsd/unbound/dist/README.md             up to 1.1.1.5
+external/bsd/unbound/dist/aclocal.m4            up to 1.1.1.7
+external/bsd/unbound/dist/acx_nlnetlabs.m4      up to 1.1.1.7
+external/bsd/unbound/dist/config.h.in           up to 1.1.1.11
+external/bsd/unbound/dist/configure             up to 1.1.1.11
+external/bsd/unbound/dist/configure.ac          up to 1.1.1.11
+external/bsd/unbound/dist/cachedb/cachedb.c     up to 1.1.1.10
+external/bsd/unbound/dist/cachedb/redis.c       up to 1.1.1.6
+external/bsd/unbound/dist/compat/arc4random.c   up to 1.1.1.6
+external/bsd/unbound/dist/compat/chacha_private.h up to 1.1.1.2
+external/bsd/unbound/dist/compat/getentropy_linux.c up to 1.1.1.4
+external/bsd/unbound/dist/compat/gmtime_r.c     up to 1.1.1.2
+external/bsd/unbound/dist/contrib/README        up to 1.1.1.8
+external/bsd/unbound/dist/contrib/unbound.service.in up to 1.1.1.9
+external/bsd/unbound/dist/contrib/unbound_portable.service.in up to 1.1.1.3
+external/bsd/unbound/dist/contrib/ios/install_openssl.sh up to 1.1.1.2
+external/bsd/unbound/dist/contrib/ios/setenv_ios.sh up to 1.1.1.2
+external/bsd/unbound/dist/daemon/daemon.c       up to 1.1.1.10
+external/bsd/unbound/dist/daemon/daemon.h       up to 1.1.1.7
+external/bsd/unbound/dist/daemon/remote.c       up to 1.1.1.11
+external/bsd/unbound/dist/daemon/remote.h       up to 1.1.1.6
+external/bsd/unbound/dist/daemon/stats.c        up to 1.1.1.11
+external/bsd/unbound/dist/daemon/unbound.c      up to 1.1.1.10
+external/bsd/unbound/dist/daemon/worker.c       up to 1.1.1.11
+external/bsd/unbound/dist/dns64/dns64.c         up to 1.1.1.10
+external/bsd/unbound/dist/dnscrypt/dnscrypt.c   up to 1.1.1.6
+external/bsd/unbound/dist/dnstap/dtstream.c     up to 1.1.1.6
+external/bsd/unbound/dist/dnstap/dtstream.h     up to 1.1.1.2
+external/bsd/unbound/dist/dnstap/unbound-dnstap-socket.c up to 1.1.1.5
+external/bsd/unbound/dist/doc/Changelog         up to 1.1.1.11
+external/bsd/unbound/dist/doc/README            up to 1.1.1.11
+external/bsd/unbound/dist/doc/README.DNS64      up to 1.1.1.3
+external/bsd/unbound/dist/doc/README.man        up to 1.1.1.2
+external/bsd/unbound/dist/doc/example.conf.in   up to 1.1.1.11
+external/bsd/unbound/dist/doc/libunbound.3.in   up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound-anchor.8.in up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound-anchor.rst up to 1.1.1.2
+external/bsd/unbound/dist/doc/unbound-checkconf.8.in up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound-control.8.in up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound-control.rst up to 1.1.1.2
+external/bsd/unbound/dist/doc/unbound-host.1.in up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound.8.in      up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound.conf.5.in up to 1.1.1.11
+external/bsd/unbound/dist/doc/unbound.conf.rst  up to 1.1.1.2
+external/bsd/unbound/dist/doc/unbound.rst       up to 1.1.1.2
+external/bsd/unbound/dist/edns-subnet/subnetmod.c up to 1.1.1.10
+external/bsd/unbound/dist/edns-subnet/subnetmod.h up to 1.1.1.8
+external/bsd/unbound/dist/ipsecmod/ipsecmod.c   up to 1.1.1.6
+external/bsd/unbound/dist/iterator/iter_fwd.c   up to 1.1.1.8
+external/bsd/unbound/dist/iterator/iter_hints.c up to 1.1.1.8
+external/bsd/unbound/dist/iterator/iter_priv.c  up to 1.1.1.3
+external/bsd/unbound/dist/iterator/iter_scrub.c up to 1.1.1.11
+external/bsd/unbound/dist/iterator/iter_utils.c up to 1.1.1.10
+external/bsd/unbound/dist/iterator/iter_utils.h up to 1.1.1.9
+external/bsd/unbound/dist/iterator/iterator.c   up to 1.1.1.11
+external/bsd/unbound/dist/libunbound/unbound.h  up to 1.8
+external/bsd/unbound/dist/libunbound/python/libunbound.i up to 1.1.1.6
+external/bsd/unbound/dist/pythonmod/interface.i up to 1.1.1.10
+external/bsd/unbound/dist/pythonmod/pythonmod.c up to 1.1.1.8
+external/bsd/unbound/dist/respip/respip.c       up to 1.1.1.8
+external/bsd/unbound/dist/services/authzone.c   up to 1.6
+external/bsd/unbound/dist/services/listen_dnsport.c up to 1.1.1.11
+external/bsd/unbound/dist/services/localzone.c  up to 1.1.1.10
+external/bsd/unbound/dist/services/localzone.h  up to 1.1.1.9
+external/bsd/unbound/dist/services/mesh.c       up to 1.1.1.11
+external/bsd/unbound/dist/services/mesh.h       up to 1.1.1.9
+external/bsd/unbound/dist/services/modstack.c   up to 1.1.1.10
+external/bsd/unbound/dist/services/outside_network.c up to 1.1.1.11
+external/bsd/unbound/dist/services/outside_network.h up to 1.1.1.10
+external/bsd/unbound/dist/services/rpz.c        up to 1.1.1.6
+external/bsd/unbound/dist/services/cache/dns.c  up to 1.1.1.10
+external/bsd/unbound/dist/services/cache/dns.h  up to 1.1.1.9
+external/bsd/unbound/dist/services/cache/infra.c up to 1.1.1.9
+external/bsd/unbound/dist/services/cache/rrset.c up to 1.1.1.8
+external/bsd/unbound/dist/sldns/rrdef.h         up to 1.1.1.8
+external/bsd/unbound/dist/sldns/wire2str.c      up to 1.1.1.9
+external/bsd/unbound/dist/smallapp/unbound-anchor.c up to 1.1.1.10
+external/bsd/unbound/dist/smallapp/unbound-checkconf.c up to 1.1.1.11
+external/bsd/unbound/dist/smallapp/unbound-control.c up to 1.1.1.11
+external/bsd/unbound/dist/smallapp/unbound-host.c up to 1.1.1.9
+external/bsd/unbound/dist/testcode/asynclook.c  up to 1.1.1.7
+external/bsd/unbound/dist/testcode/checklocks.h up to 1.1.1.4
+external/bsd/unbound/dist/testcode/dohclient.c  up to 1.1.1.5
+external/bsd/unbound/dist/testcode/doqclient.c  up to 1.1.1.3
+external/bsd/unbound/dist/testcode/mini_tdir.sh up to 1.1.1.6
+external/bsd/unbound/dist/testcode/petal.c      up to 1.1.1.9
+external/bsd/unbound/dist/testcode/pktview.c    up to 1.1.1.2
+external/bsd/unbound/dist/testcode/replay.h     up to 1.1.1.8
+external/bsd/unbound/dist/testcode/streamtcp.c  up to 1.1.1.10
+external/bsd/unbound/dist/testcode/testpkts.c   up to 1.1.1.11
+external/bsd/unbound/dist/testcode/testpkts.h   up to 1.1.1.6
+external/bsd/unbound/dist/testcode/unitldns.c   up to 1.1.1.6
+external/bsd/unbound/dist/testcode/unitmain.c   up to 1.1.1.11
+external/bsd/unbound/dist/testcode/unitmsgparse.c up to 1.1.1.5
+external/bsd/unbound/dist/testcode/unitverify.c up to 1.1.1.9
+external/bsd/unbound/dist/testcode/unitzonemd.c up to 1.1.1.4
+external/bsd/unbound/dist/testdata/cachedb_expired.crpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/cachedb_expired_client_timeout.crpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/cachedb_expired_reply_ttl.crpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/cachedb_subnet_change.crpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/cachedb_val_expired.crpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/fwd_0ttlservfail.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/iter_scrub_promiscuous.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/refuse_xfr.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/rrset_use_cached.rpl up to 1.1.1.3
+external/bsd/unbound/dist/testdata/serve_expired.rpl up to 1.1.1.5
+external/bsd/unbound/dist/testdata/serve_expired_0ttl_nodata.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/serve_expired_0ttl_nxdomain.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/serve_expired_0ttl_servfail.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/serve_expired_client_timeout.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/serve_expired_client_timeout_servfail.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/serve_expired_reply_ttl.rpl up to 1.1.1.5
+external/bsd/unbound/dist/testdata/serve_expired_ttl_client_timeout.rpl up to 1.1.1.3
+external/bsd/unbound/dist/testdata/serve_expired_ttl_reset.rpl up to 1.1.1.2
+external/bsd/unbound/dist/testdata/serve_expired_zerottl.rpl up to 1.1.1.5
+external/bsd/unbound/dist/testdata/subnet_global_prefetch_always_forward.crpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/subnet_global_prefetch_expired.crpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/test_ldnsrr.5 up to 1.1.1.5
+external/bsd/unbound/dist/testdata/test_sigs.revoked up to 1.1.1.2
+external/bsd/unbound/dist/testdata/val_ds_cname.rpl up to 1.1.1.6
+external/bsd/unbound/dist/testdata/val_nsec3_iter_high.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/val_nx_nsec3_collision.rpl up to 1.1.1.6
+external/bsd/unbound/dist/testdata/val_nx_nsec3_params.rpl up to 1.1.1.4
+external/bsd/unbound/dist/testdata/04-checkconf.tdir/good.all up to 1.1.1.3
+external/bsd/unbound/dist/testdata/04-checkconf.tdir/good.ifport up to 1.1.1.2
+external/bsd/unbound/dist/testdata/fwd_compress_c00c.tdir/fwd_compress_c00c.test up to 1.1.1.3
+external/bsd/unbound/dist/testdata/stat_values.tdir/stat_values.test up to 1.1.1.6
+external/bsd/unbound/dist/util/alloc.c          up to 1.1.1.6
+external/bsd/unbound/dist/util/config_file.c    up to 1.1.1.11
+external/bsd/unbound/dist/util/config_file.h    up to 1.1.1.11
+external/bsd/unbound/dist/util/configlexer.c    up to 1.1.1.11
+external/bsd/unbound/dist/util/configlexer.lex  up to 1.1.1.11
+external/bsd/unbound/dist/util/configparser.c   up to 1.1.1.11
+external/bsd/unbound/dist/util/configparser.h   up to 1.1.1.11
+external/bsd/unbound/dist/util/configparser.y   up to 1.1.1.11
+external/bsd/unbound/dist/util/fptr_wlist.c     up to 1.1.1.10
+external/bsd/unbound/dist/util/fptr_wlist.h     up to 1.1.1.7
+external/bsd/unbound/dist/util/iana_ports.inc   up to 1.1.1.11
+external/bsd/unbound/dist/util/locks.h          up to 1.1.1.4
+external/bsd/unbound/dist/util/log.c            up to 1.1.1.9
+external/bsd/unbound/dist/util/module.h         up to 1.1.1.9
+external/bsd/unbound/dist/util/net_help.c       up to 1.1.1.11
+external/bsd/unbound/dist/util/net_help.h       up to 1.1.1.10
+external/bsd/unbound/dist/util/netevent.c       up to 1.9
+external/bsd/unbound/dist/util/timehist.h       up to 1.1.1.3
+external/bsd/unbound/dist/util/data/msgencode.c up to 1.1.1.10
+external/bsd/unbound/dist/util/data/msgencode.h up to 1.1.1.5
+external/bsd/unbound/dist/util/data/msgparse.c  up to 1.1.1.9
+external/bsd/unbound/dist/util/data/msgparse.h  up to 1.1.1.9
+external/bsd/unbound/dist/util/data/msgreply.c  up to 1.1.1.11
+external/bsd/unbound/dist/util/data/msgreply.h  up to 1.1.1.11
+external/bsd/unbound/dist/util/data/packed_rrset.c up to 1.1.1.6
+external/bsd/unbound/dist/util/data/packed_rrset.h up to 1.1.1.7
+external/bsd/unbound/dist/util/shm_side/shm_main.c up to 1.1.1.6
+external/bsd/unbound/dist/util/shm_side/shm_main.h up to 1.1.1.2
+external/bsd/unbound/dist/validator/val_neg.c   up to 1.1.1.8
+external/bsd/unbound/dist/validator/val_nsec3.c up to 1.1.1.7
+external/bsd/unbound/dist/validator/val_nsec3.h up to 1.1.1.6
+external/bsd/unbound/dist/validator/val_sigcrypt.c up to 1.1.1.10
+external/bsd/unbound/dist/validator/val_sigcrypt.h up to 1.1.1.6
+external/bsd/unbound/dist/validator/val_utils.c up to 1.1.1.7
+external/bsd/unbound/dist/validator/val_utils.h up to 1.1.1.7
+external/bsd/unbound/dist/validator/validator.c up to 1.1.1.11
+external/bsd/unbound/dist/winrc/win_svc.c       up to 1.1.1.6
+doc/3RDPARTY						(manually edited)
+
+	Update unbound to 1.25.1.
+	[christos, ticket #309]
+
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_userq.c	up to 1.2
+xsrc/external/mit/libdrm/dist/tests/amdgpu/amdgpu_test.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/amdgpu_test.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/basic_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/bo_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/cp_dma_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/cs_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/deadlock_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/decode_messages.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/frame.h	delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/hotunplug_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/jpeg_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/ras_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/security_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_code.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_code_gfx10.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_code_gfx11.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_code_gfx9.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_code_hang.h delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/shader_test_util.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/syncobj_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/uvd_enc_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/uve_ib.h	delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/vce_ib.h	delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/vce_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/vcn_tests.c delete
+xsrc/external/mit/libdrm/dist/tests/amdgpu/vm_tests.c delete
+xsrc/external/mit/libdrm/dist/.gitlab-ci.yml 	up to 1.1.1.5
+xsrc/external/mit/libdrm/dist/README.rst		up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/gen_table_fourcc.py	up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/meson.build		up to 1.1.1.14
+xsrc/external/mit/libdrm/dist/meson_options.txt	up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/util_math.h		up to 1.4
+xsrc/external/mit/libdrm/dist/xf86drm.c		up to 1.35
+xsrc/external/mit/libdrm/dist/xf86drm.h		up to 1.18
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu-symbols.txt up to 1.1.1.6
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu.h	up to 1.6
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_asic_id.c up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_bo.c	up to 1.8
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_device.c up to 1.1.1.10
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_gpu_info.c up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_internal.h up to 1.1.1.7
+xsrc/external/mit/libdrm/dist/amdgpu/amdgpu_vamgr.c	up to 1.6
+xsrc/external/mit/libdrm/dist/amdgpu/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/data/amdgpu.ids	up to 1.1.1.13
+xsrc/external/mit/libdrm/dist/etnaviv/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/exynos/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/freedreno/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/include/drm/amdgpu_drm.h up to 1.1.1.14
+xsrc/external/mit/libdrm/dist/include/drm/drm.h	up to 1.16
+xsrc/external/mit/libdrm/dist/include/drm/drm_fourcc.h up to 1.1.1.11
+xsrc/external/mit/libdrm/dist/include/drm/drm_mode.h up to 1.1.1.16
+xsrc/external/mit/libdrm/dist/include/drm/virtgpu_drm.h up to 1.1.1.4
+xsrc/external/mit/libdrm/dist/intel/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/man/drm-kms.7.rst	up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/man/drm-memory.7.rst	up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/man/drm.7.rst		up to 1.1.1.3
+xsrc/external/mit/libdrm/dist/man/drmAvailable.3.rst up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/man/drmHandleEvent.3.rst up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/man/drmModeGetResources.3.rst up to 1.1.1.2
+xsrc/external/mit/libdrm/dist/nouveau/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/omap/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/omap/omap_drm.c	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/radeon/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/tegra/meson.build	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/tests/drmdevice.c	up to 1.1.1.6
+xsrc/external/mit/libdrm/dist/tests/amdgpu/meson.build up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/tests/modetest/buffers.c up to 1.1.1.11
+xsrc/external/mit/libdrm/dist/tests/modetest/buffers.h up to 1.1.1.5
+xsrc/external/mit/libdrm/dist/tests/modetest/modetest.c up to 1.21
+xsrc/external/mit/libdrm/dist/tests/util/pattern.c	up to 1.1.1.9
+xsrc/external/mit/libdrm/dist/tests/util/pattern.h	up to 1.1.1.4
+distrib/sets/lists/xbase/md.amd64		1.24
+distrib/sets/lists/xbase/md.evbarm		1.12
+distrib/sets/lists/xbase/md.i386		1.38
+distrib/sets/lists/xdebug/md.amd64		1.71
+distrib/sets/lists/xdebug/md.evbarm		1.41
+distrib/sets/lists/xdebug/md.i386		1.68
+external/mit/xorg/lib/libdrm_amdgpu/Makefile	1.7
+external/mit/xorg/lib/libdrm_amdgpu/shlib_version 1.5
+
+	Update libdrm to 2.4.134.
+	[mrg, ticket #310]
 
