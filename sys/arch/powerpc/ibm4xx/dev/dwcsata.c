@@ -1,4 +1,4 @@
-/*	$NetBSD: dwcsata.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $	*/
+/*	$NetBSD: dwcsata.c,v 1.2 2026/06/15 19:21:14 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -31,14 +31,34 @@
 /*
  * 460EX on-chip Synopsys DWC SATA-II host
  *
- * DMA is broken despite many attempts to get it fixed.
- *
- * Btw. SATA PHY shares its SerDes lane with PCIE0; firmware routes
+ * SATA PHY shares its SerDes lane with PCIE0; firmware routes
  * and initializes it. Only one of these can work at a given time.
+ *
+ * DMA support is ugly, we mess with USB host controller schedule enables to 
+ * work around the DMAC FIFO. Honestly, this is just papering over the true
+ * issue, which is that the DMAC FIFO drain is starved by the AHB bus-mastering.
+ * Or at least, that's what it looks like, we may never know without an NDA
+ * with company that does not exist anymore.
+ *
+ * The on-chip OHCI and EHCI bus-master their periodic/async schedules on 
+ * the shared AHB and starve the SATA DMAC FIFO drain.  
+ *
+ * sysctl hw.dwcsata.usb_workaround tries to workaround DMAC stalls by pausing 
+ * USB for the duration of each SATA DMA burst:
+ * 1=EHCI periodic 2=EHCI async 4=OHCI; 0=off 7=all
+ *
+ * Note that even with EHCI periodic schedule paused, the async schedule can 
+ * still cause stall, so don't be fooled into thinking that DMA is working 
+ * stable when USB is enabled. It will break sooner or later, depending on the
+ * USB and SATA traffic.
+ *
+ * The only stable option is to either:
+ * - disable USB entirely - then you can use DWC SATA DMA
+ * - drive DWC SATA in PIO mode - then you can use USB and DWC SATA at the same time
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.2 2026/06/15 19:21:14 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dwcsata.h"
@@ -49,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
 #include <sys/device.h>
 #include <sys/extent.h>
 #include <sys/bus.h>
+#include <sys/sysctl.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/amcc460ex.h>
@@ -78,6 +99,26 @@ __KERNEL_RCSID(0, "$NetBSD: dwcsata.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
  */
 #define	DWCSATA_NLLI		64
 
+#ifndef DWCSATA_PIO_ONLY
+#define	DWCSATA_USB_OFFSET	0x1000
+#define	DWCSATA_USB_SIZE	0x800
+#define	DWCSATA_OHCI_HCCONTROL	0x0004
+#define	 DWCSATA_OHCI_PLE	0x00000004
+#define	 DWCSATA_OHCI_CLE	0x00000010
+#define	 DWCSATA_OHCI_BLE	0x00000020
+#define	DWCSATA_EHCI_CAPLEN	0x0400	/* EHCI base; USBCMD = +CAPLENGTH */
+#define	 DWCSATA_EHCI_PSE	0x00000010
+#define	 DWCSATA_EHCI_ASE	0x00000020
+#define	DWCSATA_Q_EHCI_PSE	0x1
+#define	DWCSATA_Q_EHCI_ASE	0x2
+#define	DWCSATA_Q_OHCI		0x4
+/* SATA PHY soft-reset registers (SDR space), for dwcsata_unwedge() */
+#define	SATA_PESDR0_L0CDRCTL	0x030a
+#define	SATA_PESDR0_L0DRV	0x030b
+#define	SATA_PESDR0_L0CLK	0x030e
+#define	SATA_PESDR0_PHY_CTL_RST	0x030f
+#endif
+
 struct dwcsata_softc {
 	struct wdc_softc sc_wdcdev;
 	struct ata_channel *sc_chanlist[1];
@@ -104,6 +145,17 @@ struct dwcsata_softc {
 	bool sc_dma_loaded;		/* sc_dmamap_xfer is loaded */
 	bool sc_dma_ok;			/* resources up, hooks registered */
 	bool sc_dma_active;		/* between dma_start and teardown */
+
+	/* USB schedule-quiesce */
+	bus_space_tag_t sc_usb_iot;
+	bus_space_handle_t sc_usb_ioh;
+	bus_size_t sc_ehci_cmd_off;
+	bool sc_usb_mapped;
+	bool sc_usb_quiesced;
+	bool sc_usb_q_ehci;
+	bool sc_usb_q_ohci;
+	uint32_t sc_usb_ohci_ctl;
+	uint32_t sc_usb_ehci_cmd;
 #endif
 };
 
@@ -122,6 +174,9 @@ static void	dwcsata_dma_start(void *, int, int);
 static int	dwcsata_dma_finish(void *, int, int, int);
 static int	dwcsata_intr(void *);
 static int	dwcsata_dmac_intr(void *);
+static void	dwcsata_unwedge(struct dwcsata_softc *);
+static void	dwcsata_usb_quiesce(struct dwcsata_softc *);
+static void	dwcsata_usb_restore(struct dwcsata_softc *);
 #endif
 
 CFATTACH_DECL_NEW(dwcsata, sizeof(struct dwcsata_softc),
@@ -133,6 +188,17 @@ static struct powerpc_bus_space dwcsata_tag = {
 };
 static char dwcsata_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
     __attribute__((aligned(8)));
+
+#ifndef DWCSATA_PIO_ONLY
+/* separate little-endian tag for the OHCI/EHCI host window (below the core) */
+static struct powerpc_bus_space dwcsata_usb_tag = {
+	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+	0x00000000,
+};
+static char dwcsata_usb_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8)]
+    __attribute__((aligned(8)));
+static int dwcsata_usb_workaround = 0;	/* hw.dwcsata.usb_workaround */
+#endif
 
 static int
 dwcsata_match(device_t parent, cfdata_t match, void *aux)
@@ -215,6 +281,23 @@ dwcsata_dma_setup(device_t self, struct dwcsata_softc *sc,
 		    mfdcr(DCR_PLB4A0_ACR), mfdcr(DCR_PLB4A1_ACR),
 		    mfsdr(DCR_SDR0_USB2HOST_CFG));
 	}
+
+	/* map the on-chip OHCI + EHCI host-control registers for the USB
+	 * schedule-quiesce; EHCI operational regs are at base + CAPLENGTH */
+	dwcsata_usb_tag.pbs_base = paa->plb_addr - DWCSATA_USB_OFFSET;
+	dwcsata_usb_tag.pbs_limit = paa->plb_addr - DWCSATA_USB_OFFSET +
+	    DWCSATA_USB_SIZE;
+	if (bus_space_init(&dwcsata_usb_tag, "dwcsataub", dwcsata_usb_ex_storage,
+	      sizeof(dwcsata_usb_ex_storage)) == 0 &&
+	    bus_space_map(&dwcsata_usb_tag, paa->plb_addr - DWCSATA_USB_OFFSET,
+	      DWCSATA_USB_SIZE, 0, &sc->sc_usb_ioh) == 0) {
+		uint8_t caplen = bus_space_read_1(&dwcsata_usb_tag,
+		    sc->sc_usb_ioh, DWCSATA_EHCI_CAPLEN);
+		sc->sc_usb_iot = &dwcsata_usb_tag;
+		sc->sc_ehci_cmd_off = DWCSATA_EHCI_CAPLEN + caplen;
+		sc->sc_usb_mapped = true;
+	} else
+		sc->sc_usb_mapped = false;
 
 	dwcdmac_write(sc, DWCDMAC_MASK_TFR, DWCDMAC_CH_ENABLE(DWCSATA_DMACH));
 	dwcdmac_write(sc, DWCDMAC_MASK_BLOCK,
@@ -484,11 +567,90 @@ dwcsata_dma_dump(struct dwcsata_softc *sc, uint32_t tfr, uint32_t err)
 	}
 }
 
+/*
+ * SDR/DCR SATA reset
+ *
+ * Tries to recover a hung DMAC channel without touching the poisoned AHB 
+ * master, so the abort path can proceed without machine check (drop to 
+ * DDB or panic).
+ */
+static void
+dwcsata_unwedge(struct dwcsata_softc *sc)
+{
+	uint32_t reg;
+
+	mtsdr(DCR_SDR0_SRST1, SDR0_SRST1_SATA_RESET);
+	reg = mfsdr(SATA_PESDR0_PHY_CTL_RST);
+	mtsdr(SATA_PESDR0_PHY_CTL_RST, (reg & 0xeffffffc) | 0x00000001);
+	reg = mfsdr(SATA_PESDR0_L0CLK);
+	mtsdr(SATA_PESDR0_L0CLK, (reg & 0xfffffff8) | 0x00000007);
+	mtsdr(SATA_PESDR0_L0CDRCTL, 0x00003111);
+	mtsdr(SATA_PESDR0_L0DRV, 0x00000104);
+	mtsdr(DCR_SDR0_SRST1, 0);
+	delay(10000);
+	reg = mfsdr(DCR_SDR0_AHB_CFG);	/* errata is lost across the reset */
+	mtsdr(DCR_SDR0_AHB_CFG,
+	    (reg | SDR0_AHB_CFG_A2P_INCR4) & ~SDR0_AHB_CFG_A2P_PROT2);
+	(void)sc;
+}
+
+/* clear the selected USB schedule-enable bits; keep the controllers RUNning */
+static void
+dwcsata_usb_quiesce(struct dwcsata_softc *sc)
+{
+	bus_space_tag_t t = sc->sc_usb_iot;
+	bus_space_handle_t h = sc->sc_usb_ioh;
+	const int mask = dwcsata_usb_workaround;
+	uint32_t ehci_clr, ohci_clr;
+
+	if (mask == 0 || !sc->sc_usb_mapped || sc->sc_usb_quiesced)
+		return;
+	ehci_clr = ((mask & DWCSATA_Q_EHCI_PSE) ? DWCSATA_EHCI_PSE : 0) |
+		   ((mask & DWCSATA_Q_EHCI_ASE) ? DWCSATA_EHCI_ASE : 0);
+	ohci_clr = (mask & DWCSATA_Q_OHCI) ?
+	    (DWCSATA_OHCI_PLE | DWCSATA_OHCI_CLE | DWCSATA_OHCI_BLE) : 0;
+	if (ohci_clr != 0) {
+		sc->sc_usb_ohci_ctl =
+		    bus_space_read_4(t, h, DWCSATA_OHCI_HCCONTROL);
+		bus_space_write_4(t, h, DWCSATA_OHCI_HCCONTROL,
+		    sc->sc_usb_ohci_ctl & ~ohci_clr);
+		sc->sc_usb_q_ohci = true;
+	}
+	if (ehci_clr != 0) {
+		sc->sc_usb_ehci_cmd =
+		    bus_space_read_4(t, h, sc->sc_ehci_cmd_off);
+		bus_space_write_4(t, h, sc->sc_ehci_cmd_off,
+		    sc->sc_usb_ehci_cmd & ~ehci_clr);
+		sc->sc_usb_q_ehci = true;
+	}
+	sc->sc_usb_quiesced = true;
+}
+
+static void
+dwcsata_usb_restore(struct dwcsata_softc *sc)
+{
+	if (!sc->sc_usb_quiesced)
+		return;
+	if (sc->sc_usb_q_ohci) {
+		bus_space_write_4(sc->sc_usb_iot, sc->sc_usb_ioh,
+		    DWCSATA_OHCI_HCCONTROL, sc->sc_usb_ohci_ctl);
+		sc->sc_usb_q_ohci = false;
+	}
+	if (sc->sc_usb_q_ehci) {
+		bus_space_write_4(sc->sc_usb_iot, sc->sc_usb_ioh,
+		    sc->sc_ehci_cmd_off, sc->sc_usb_ehci_cmd);
+		sc->sc_usb_q_ehci = false;
+	}
+	sc->sc_usb_quiesced = false;
+}
+
 static void
 dwcsata_dma_start(void *v, int channel, int drive)
 {
 	struct dwcsata_softc *sc = v;
 	const bool read = (sc->sc_dma_flags & WDC_DMA_READ) != 0;
+
+	dwcsata_usb_quiesce(sc);
 
 	/* open the FIS data channel in the SATA core first... */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, DWCSATA_DMACR,
@@ -526,9 +688,22 @@ dwcsata_dma_finish(void *v, int channel, int drive, int force)
 		if (err & DWCDMAC_CHANBIT(DWCSATA_DMACH))
 			dwcsata_dma_dump(sc, tfr, err);
 	} else {
+		const uint32_t chanbit = DWCDMAC_CHANBIT(DWCSATA_DMACH);
+
+		/*
+		 * If the channel wedged, clear it through SDR/DCR first
+		 * (bridge-safe) before any AHB register access can machine-
+		 * check. CHEN stuck with no TFR/ERR is the wedge signature.
+		 */
+		if (dwcdmac_read(sc, DWCDMAC_CHEN) & chanbit) {
+			if (force != WDC_DMAEND_ABRT_QUIET)
+				aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+				    "DMA wedge: SDR un-wedge before abort\n");
+			dwcsata_unwedge(sc);
+		}
+
 		tfr = dwcdmac_read(sc, DWCDMAC_RAW_TFR);
 		err = dwcdmac_read(sc, DWCDMAC_RAW_ERR);
-		const uint32_t chanbit = DWCDMAC_CHANBIT(DWCSATA_DMACH);
 
 		/*
 		 * Abort. Close the SATA-side channel first so the
@@ -610,6 +785,7 @@ dwcsata_dma_finish(void *v, int channel, int drive, int force)
 	    read ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_dmamap_xfer);
 	sc->sc_dma_loaded = false;
+	dwcsata_usb_restore(sc);
 	sc->sc_dma_active = false;
 
 	return status;
@@ -787,6 +963,22 @@ dwcsata_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dma_ok = true;
 	} else
 		aprint_error_dev(self, "DMA setup failed, PIO only\n");
+
+	if (sc->sc_dma_ok) {
+		const struct sysctlnode *rnode = NULL;
+
+		sysctl_createv(NULL, 0, NULL, &rnode,
+		    CTLFLAG_PERMANENT, CTLTYPE_NODE, "dwcsata",
+		    SYSCTL_DESCR("DWC SATA-II controller"),
+		    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+		if (rnode != NULL)
+			sysctl_createv(NULL, 0, &rnode, NULL,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "usb_workaround",
+			    SYSCTL_DESCR("pause USB schedules during SATA DMA "
+			    "(1=EHCI periodic 2=async 4=OHCI; 0=off 7=all)"),
+			    NULL, 0, &dwcsata_usb_workaround, 0,
+			    CTL_CREATE, CTL_EOL);
+	}
 #endif
 
 	sc->sc_chanlist[0] = chp;
