@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.100 2026/06/16 09:07:39 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.101 2026/06/16 15:48:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11082,4 +11082,10 @@ sys/sys/fcntl.h					1.59
 
 	fcntl.h: PR 60335: fix O_EXEC exposure.
 	[kre, ticket #312]
+
+external/gpl2/groff/tmac/mdoc.local		(manually edited)
+sys/sys/param.h					(manually edited)
+
+	Welcome to 11.0_RC5!
+	[martin]
 
