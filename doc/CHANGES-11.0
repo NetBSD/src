@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.99 2026/06/16 06:04:28 jdc Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.100 2026/06/16 09:07:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -10950,4 +10950,136 @@ external/mit/xorg/lib/libdrm_amdgpu/shlib_version 1.5
 
 	Update libdrm to 2.4.134.
 	[mrg, ticket #310]
+
+external/mit/expat/dist/lib/libexpat.map.in     up to 1.1.1.1
+external/mit/expat/dist/lib/random_arc4random.c up to 1.1.1.1
+external/mit/expat/dist/lib/random_arc4random.h up to 1.1.1.1
+external/mit/expat/dist/lib/random_arc4random_buf.c up to 1.1.1.1
+external/mit/expat/dist/lib/random_arc4random_buf.h up to 1.1.1.1
+external/mit/expat/dist/lib/random_dev_urandom.c up to 1.1.1.1
+external/mit/expat/dist/lib/random_dev_urandom.h up to 1.1.1.1
+external/mit/expat/dist/lib/random_getentropy.c up to 1.1.1.1
+external/mit/expat/dist/lib/random_getentropy.h up to 1.1.1.1
+external/mit/expat/dist/lib/random_getrandom.c  up to 1.1.1.1
+external/mit/expat/dist/lib/random_getrandom.h  up to 1.1.1.1
+external/mit/expat/dist/lib/random_rand_s.c     up to 1.1.1.1
+external/mit/expat/dist/lib/random_rand_s.h     up to 1.1.1.1
+external/mit/expat/dist/coverage.sh             up to 1.1.1.1
+external/mit/expat/dist/cmake/autotools/expat__linux.cmake.in up to 1.1.1.1
+external/mit/expat/dist/cmake/autotools/expat__macos.cmake.in up to 1.1.1.1
+external/mit/expat/dist/cmake/autotools/expat__windows.cmake.in up to 1.1.1.1
+external/mit/expat/dist/qa.sh                   up to 1.1.1.1
+external/mit/expat/dist/gennmtab/gennmtab.c     up to 1.1.1.1
+external/mit/expat/dist/.clang-format           up to 1.1.1.1
+external/mit/expat/dist/apply-clang-format.sh   up to 1.1.1.1
+external/mit/expat/dist/apply-clang-tidy.sh     up to 1.1.1.1
+external/mit/expat/dist/clean_coverage.sh       up to 1.1.1.1
+external/mit/expat/dist/configure-ac-style.md   up to 1.1.1.1
+external/mit/expat/dist/distribute.sh           up to 1.1.1.1
+external/mit/expat/dist/memory-sanitizer-blacklist.txt up to 1.1.1.1
+external/mit/expat/dist/Makefile.in             delete
+external/mit/expat/dist/aclocal.m4              delete
+external/mit/expat/dist/configure               delete
+external/mit/expat/dist/expat_config.h.in       delete
+external/mit/expat/dist/cmake/autotools/expat.cmake delete
+external/mit/expat/dist/conftools/compile       delete
+external/mit/expat/dist/conftools/ar-lib        delete
+external/mit/expat/dist/conftools/config.guess  delete
+external/mit/expat/dist/conftools/config.sub    delete
+external/mit/expat/dist/conftools/depcomp       delete
+external/mit/expat/dist/conftools/expat.m4      delete
+external/mit/expat/dist/conftools/missing       delete
+external/mit/expat/dist/conftools/install-sh    delete
+external/mit/expat/dist/conftools/ltmain.sh     delete
+external/mit/expat/dist/conftools/test-driver   delete
+external/mit/expat/dist/doc/Makefile.in         delete
+external/mit/expat/dist/doc/xmlwf.1             delete
+external/mit/expat/dist/examples/Makefile.in    delete
+external/mit/expat/dist/lib/Makefile.in         delete
+external/mit/expat/dist/m4/libtool.m4           delete
+external/mit/expat/dist/m4/ltoptions.m4         delete
+external/mit/expat/dist/m4/ltsugar.m4           delete
+external/mit/expat/dist/m4/ltversion.m4         delete
+external/mit/expat/dist/m4/lt~obsolete.m4       delete
+external/mit/expat/dist/tests/benchmark/Makefile.in delete
+external/mit/expat/dist/tests/Makefile.in       delete
+external/mit/expat/dist/tests/acc_tests_cxx.cpp delete
+external/mit/expat/dist/tests/alloc_tests_cxx.cpp delete
+external/mit/expat/dist/tests/basic_tests_cxx.cpp delete
+external/mit/expat/dist/tests/chardata_cxx.cpp  delete
+external/mit/expat/dist/tests/common_cxx.cpp    delete
+external/mit/expat/dist/tests/dummy_cxx.cpp     delete
+external/mit/expat/dist/tests/handlers_cxx.cpp  delete
+external/mit/expat/dist/tests/memcheck_cxx.cpp  delete
+external/mit/expat/dist/tests/minicheck_cxx.cpp delete
+external/mit/expat/dist/tests/misc_tests_cxx.cpp delete
+external/mit/expat/dist/tests/ns_tests_cxx.cpp  delete
+external/mit/expat/dist/tests/nsalloc_tests_cxx.cpp delete
+external/mit/expat/dist/tests/runtests_cxx.cpp  delete
+external/mit/expat/dist/tests/structdata_cxx.cpp delete
+external/mit/expat/dist/xmlwf/Makefile.in       delete
+external/mit/expat/dist/CMake.README            up to 1.1.1.9
+external/mit/expat/dist/CMakeLists.txt          up to 1.1.1.9
+external/mit/expat/dist/Changes                 up to 1.1.1.10
+external/mit/expat/dist/ConfigureChecks.cmake   up to 1.1.1.5
+external/mit/expat/dist/Makefile.am             up to 1.1.1.5
+external/mit/expat/dist/README.md               up to 1.1.1.5
+external/mit/expat/dist/configure.ac            up to 1.1.1.8
+external/mit/expat/dist/expat_config.h.cmake    up to 1.1.1.4
+external/mit/expat/dist/fix-xmltest-log.sh      up to 1.1.1.4
+external/mit/expat/dist/doc/reference.html      up to 1.1.1.9
+external/mit/expat/dist/doc/xmlwf.xml           up to 1.1.1.6
+external/mit/expat/dist/examples/element_declarations.c up to 1.1.1.2
+external/mit/expat/dist/fuzz/xml_lpm_fuzzer.cpp up to 1.1.1.2
+external/mit/expat/dist/fuzz/xml_parse_fuzzer.c up to 1.1.1.3
+external/mit/expat/dist/fuzz/xml_parsebuffer_fuzzer.c up to 1.1.1.3
+external/mit/expat/dist/lib/Makefile.am         up to 1.1.1.4
+external/mit/expat/dist/lib/expat.h             up to 1.1.1.10
+external/mit/expat/dist/lib/expat_external.h    up to 1.1.1.6
+external/mit/expat/dist/lib/internal.h          up to 1.1.1.7
+external/mit/expat/dist/lib/libexpat.def.cmake  up to 1.1.1.2
+external/mit/expat/dist/lib/xmlparse.c          up to 1.12
+external/mit/expat/dist/lib/xmlrole.c           up to 1.1.1.8
+external/mit/expat/dist/lib/xmlrole.h           up to 1.1.1.5
+external/mit/expat/dist/lib/xmltok.c            up to 1.8
+external/mit/expat/dist/lib/xmltok.h            up to 1.6
+external/mit/expat/dist/lib/xmltok_ns.c         up to 1.1.1.4
+external/mit/expat/dist/tests/Makefile.am       up to 1.1.1.4
+external/mit/expat/dist/tests/alloc_tests.c     up to 1.1.1.2
+external/mit/expat/dist/tests/basic_tests.c     up to 1.1.1.2
+external/mit/expat/dist/tests/common.c          up to 1.1.1.3
+external/mit/expat/dist/tests/handlers.c        up to 1.1.1.2
+external/mit/expat/dist/tests/handlers.h        up to 1.1.1.2
+external/mit/expat/dist/tests/memcheck.c        up to 1.1.1.5
+external/mit/expat/dist/tests/minicheck.c       up to 1.1.1.7
+external/mit/expat/dist/tests/minicheck.h       up to 1.1.1.8
+external/mit/expat/dist/tests/misc_tests.c      up to 1.1.1.3
+external/mit/expat/dist/tests/nsalloc_tests.c   up to 1.1.1.2
+external/mit/expat/dist/tests/structdata.c      up to 1.1.1.4
+external/mit/expat/dist/tests/xmltest.sh        up to 1.7
+external/mit/expat/dist/win32/README.txt        up to 1.1.1.7
+external/mit/expat/dist/win32/build_expat_iss.bat up to 1.1.1.4
+external/mit/expat/dist/win32/expat.iss         up to 1.1.1.10
+external/mit/expat/dist/xmlwf/unixfilemap.c     up to 1.1.1.6
+external/mit/expat/dist/xmlwf/xmlfile.c         up to 1.1.1.7
+external/mit/expat/dist/xmlwf/xmlwf.c           up to 1.1.1.9
+external/mit/expat/dist/xmlwf/xmlwf_helpgen.py  up to 1.1.1.4
+external/mit/expat/bin/xmlwf/xmlwf.1		1.1
+distrib/sets/lists/base/shl.mi			1.1043
+distrib/sets/lists/debug/shl.mi			1.404
+doc/3RDPARTY					1.2217
+external/mit/expat/bin/xmlwf/Makefile		1.2
+external/mit/expat/lib/libexpat/Makefile	1.6
+external/mit/expat/lib/libexpat/expat.expsym	1.3
+external/mit/expat/lib/libexpat/expat_config.h	1.18
+external/mit/expat/lib/libexpat/shlib_version	1.7
+external/mit/xorg/tools/fc-cache/Makefile	1.25
+
+	Update expat to 2.8.1.
+	[jdc, ticket #311]
+
+sys/sys/fcntl.h					1.59
+
+	fcntl.h: PR 60335: fix O_EXEC exposure.
+	[kre, ticket #312]
 
