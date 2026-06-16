@@ -1,0 +1,145 @@
+#	$NetBSD: SAM460EX,v 1.1 2026/06/16 21:51:19 rkujawa Exp $
+#
+#	SAM460EX -- ACube Sam460ex (AMCC 460EX)
+#
+
+include 	"arch/evbppc/conf/std.sam460ex"
+
+#ident 		"SAM460EX-$Revision: 1.1 $"
+
+maxusers	32
+
+options 	SAM460EX_FDT		# parse U-Boot supplied device tree
+
+#
+# Diagnostic/debugging support options
+#
+#options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+options 	DDB			# in-kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	TRAP_PANICWAIT
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
+
+makeoptions	DEBUG="-g"		# compile full symbol table
+
+#
+# Compatibility options
+#
+include 	"conf/compat_netbsd13.config"
+
+#
+# File systems
+#
+file-system 	FFS		# UFS
+file-system 	NFS		# Network File System client
+file-system 	KERNFS		# /kern
+file-system	PTYFS		# /dev/pts/N support
+file-system	TMPFS		# Efficient memory file-system
+
+options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+
+#
+# Networking options
+#
+options 	INET
+options 	INET6
+
+#
+# Kernel root file system and dump configuration.
+#
+config		netbsd	root on ? type ?
+
+#
+# Device configuration
+#
+plb0 at root				# Processor Local Bus
+cpu0	at plb?				# CPU
+
+# On-chip Peripheral Bus support
+opb*	at plb?				# On-chip Peripheral Bus
+com*	at opb? addr ? irq ?		# UARTs
+wdog*	at opb?				# 460EX on-chip watchdog -> sysmon(4) /dev/watchdog
+gpiic*	at opb? addr ? irq ?		# On-chip IIC (bitbang via DIRECTCNTL)
+iic*	at gpiic?			# I2C bus
+
+# needs MI m41st84 M41T62 support, not yet committed
+#strtc0	at iic0 addr 0x68 flags 62	# M41T62 RTC (M41T80 under QEMU)
+spdmem0 at iic0 addr 0x50		# DDR2 SPD EEPROM
+
+#seeprom0 at iic0 addr 0x54 flags 8	# U-Boot env EEPROM
+
+# only EMAC0 is wired on the Sam460ex 
+emac0	at opb0 addr 0xef600e00 irq 80	# Ethernet Media Access Controller
+options 	EMAC_EVENT_COUNTERS
+options 	EMAC_RGMII_PHY		# both EMACs use the RGMII0 bridge
+options		EMAC_TAH
+
+# MII/PHY support
+makphy*	at mii? phy ?			# Marvell 88E1121R (dual GbE PHY)
+ukphy*	at mii? phy ?			# generic/unknown PHYs
+
+# PCI bus support
+options 	PCI_NETBSD_CONFIGURE
+pcix0	at plb?				# 460EX PLB-PCIX host bridge
+pciex0	at plb?				# 460EX PCIe root complex 0
+pciex1	at plb?				# 460EX PCIe root complex 1
+pci*	at pcix?
+pci*	at pciex?
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+# SM502 needs MI voyager/voyagerfb fixes not committed yet
+#voyager0 at pci? dev ? function ?	# SM502 multimedia processor
+#voyagerfb0 at voyager0			# SM502 framebuffer console
+#iic*	at voyager0			# not yet
+#wsdisplay* at wsemuldisplaydev?
+
+#options 	WSEMUL_VT100
+#options 	WSDISPLAY_SCROLLSUPPORT
+#options 	FONT_BOLD8x16		# bitmap font (engine putchar path)
+
+satalink* at pci? dev ? function ?	# SATALink, often used on Sam460ex
+siisata* at pci? dev ? function ?
+
+dwcsata0 at plb? addr 0xbffd1000 irq 96	# on-chip DWC SATA-II (PIO only)
+options 	DWCSATA_PIO_ONLY	# DMA is unstable
+
+atabus*	at ata?
+wd*	at atabus? drive ? flags 0x0000
+
+# On-chip USB 2.0 host (EHCI + OHCI on the AHB)
+ohci0	at plb? addr 0xbffd0000 irq 94
+ehci0	at plb? addr 0xbffd0400 irq 93
+
+# USB bus support
+usb*	at ehci0
+usb*	at ohci0
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# USB HID devices (QEMU plugs a usb-kbd and usb-mouse by default)
+uhidev*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ?
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+uhid*	at uhidev? reportid ?
+
+#
+# Pseudo devices
+#
+pseudo-device	wsmux			# keyboard/mouse multiplexor
+					# (console input from USB keyboards)
+pseudo-device	loop			# network loopback
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# detach/rescan devices (AHB tests)
+pseudo-device	ksyms			# /dev/ksyms

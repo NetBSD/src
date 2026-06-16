@@ -1,0 +1,23 @@
+#	$NetBSD: files.sam460ex,v 1.1 2026/06/16 21:51:19 rkujawa Exp $
+#
+# sam460ex-specific configuration info
+
+defparam opt_sam460ex.h	SAM460EX_MEMSIZE
+defparam opt_sam460ex.h	SAM460EX_CPU_FREQ
+defparam opt_sam460ex.h	SAM460EX_OPB_FREQ
+
+# Parse the U-Boot supplied device tree (raw libfdt, not FDTBASE)
+defflag opt_sam460ex.h	SAM460EX_FDT: libfdt
+file	arch/evbppc/sam460ex/sam460ex_fdt.c	sam460ex_fdt
+
+file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c
+file	arch/powerpc/ibm4xx/ibm40x_machdep.c
+file	arch/powerpc/ibm4xx/ibm4xx_machdep.c
+
+file	arch/evbppc/sam460ex/machdep.c
+file	arch/evbppc/sam460ex/autoconf.c
+
+# Machine-independent SCSI and ATA drivers (for satalink and friends)
+include	"dev/scsipi/files.scsipi"
+include	"dev/ata/files.ata"
+include	"dev/usb/files.usb"

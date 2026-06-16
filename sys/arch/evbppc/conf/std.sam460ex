@@ -1,0 +1,32 @@
+#	$NetBSD: std.sam460ex,v 1.1 2026/06/16 21:51:19 rkujawa Exp $
+#
+# Standard/required options for NetBSD/sam460ex (ACube Sam460ex, AMCC 460EX).
+
+machine	evbppc powerpc
+include		"conf/std"	# MI standard options
+
+# standard ("mandatory") kernel options.
+options 	PPC_IBM4XX	# IBM 4xx family
+options 	PPC_IBM440	# 440/460 (Book E) core
+
+options 	MULTIUIC	# UIC0 + cascaded UIC1/UIC2/UIC3
+options 	UIC1_CASCADE_IRQ=30	# 460EX UIC1 -> UIC0 bit 30
+options 	UIC2_CASCADE_IRQ=10	# 460EX UIC2 -> UIC0 bit 10
+options 	UIC3_CASCADE_IRQ=16	# 460EX UIC3 -> UIC0 bit 16
+
+# Executable support:
+options 	EXEC_ELF32	# (native) ELF32 binary support
+options 	EXEC_SCRIPT	# shell script support
+
+makeoptions	TEXTADDR=0x100000
+makeoptions	BOARDTYPE="sam460ex"
+makeoptions	PPCDIR="ibm4xx"
+
+options 	PPC_INTR_IMPL="<powerpc/intr.h>"
+options 	PPC_PCI_MACHDEP_IMPL="<powerpc/pci_machdep.h>"
+options 	KERNBASE=0x100000
+
+options 	INTSTK=16384
+
+include		"arch/powerpc/conf/files.ibm4xx"
+include		"arch/evbppc/conf/files.sam460ex"
