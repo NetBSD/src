@@ -1,3 +1,4 @@
+# $NetBSD: protocols,v 1.37 2026/06/16 13:24:50 christos Exp $
 # See also: protocols(5), https://www.iana.org/assignments/protocol-numbers/
 #
 #      • Domains
