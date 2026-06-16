@@ -1,12 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2012/02/29 20:07:56 tron Exp $
+#	$NetBSD: Makefile,v 1.1.50.1 2026/06/16 08:55:54 martin Exp $
 
 .include <bsd.init.mk>
 
 PROG=	xmlwf
 
-.PATH:	${EXPATSRCDIR}/xmlwf ${EXPATSRCDIR}/doc
+.PATH:	${EXPATSRCDIR}/xmlwf
 
 SRCS=	codepage.c unixfilemap.c xmlfile.c xmlwf.c
-CPPFLAGS+=-DHAVE_UNISTD_H
 
 .include <bsd.prog.mk>

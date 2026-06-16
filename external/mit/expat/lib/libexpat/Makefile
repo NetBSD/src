@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.4.12.1 2026/04/02 18:31:11 martin Exp $
+#	$NetBSD: Makefile,v 1.4.12.2 2026/06/16 08:55:53 martin Exp $
 
 .include <bsd.init.mk>
 
 LIB=		expat
 
 .PATH:	${EXPATSRCDIR}/lib
-SRCS=	xmlparse.c xmlrole.c xmltok.c
+SRCS=	random_arc4random.c random_arc4random_buf.c random_dev_urandom.c random_getentropy.c random_getrandom.c xmlparse.c xmlrole.c xmltok.c
 
 INCS=		expat.h expat_config.h expat_external.h
 INCSDIR=	/usr/include
