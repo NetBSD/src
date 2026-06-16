@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.2,v 1.1.2.101 2026/06/15 17:37:29 martin Exp $
+# $NetBSD: CHANGES-10.2,v 1.1.2.102 2026/06/16 09:08:37 martin Exp $
 
 A complete list of changes from the NetBSD 10.1 release on 2024-12-16
 until the 10.2 release:
@@ -2397,4 +2397,9 @@ doc/3RDPARTY					(apply patch)
 
 	Updated tzdata to 2026b.
 	[kre, ticket #1271]
+
+sys/sys/fcntl.h					1.59
+
+	fcntl.h: PR 60335: fix O_EXEC exposure.
+	[kre, ticket #1272]
 
