@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.24 2025/05/03 02:00:46 riastradh Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.25 2026/06/16 05:33:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.24 2025/05/03 02:00:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.25 2026/06/16 05:33:07 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -189,7 +189,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	 * is a NOP.
 	 */
 	new_insns[0] =
-	    (new_insns[1] & (0xfc1f0000|PAGE_MASK)) | (0xffff & ~PAGE_MASK);
+	    (new_insns[1] & (0xfc1f0000 | PAGE_MASK)) | (0xffff & ~PAGE_MASK);
 	new_insns[1] = 0;
 #ifdef DEBUG_VERBOSE
 	printf("%s: %08x: insn#1 %08x: %s r%u, %d(r%u)\n",
@@ -211,7 +211,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	 */
 	TLBINFO_LOCK(ti);
 	if (ci->ci_tlb_slot < 0) {
-		uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V|MIPS3_PG_D
+		uint32_t tlb_lo = MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D
 		    | mips3_paddr_to_tlbpfn(MIPS_KSEG0_TO_PHYS(trunc_page(load_addr)));
 		struct tlbmask tlbmask = {
 			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
@@ -297,7 +297,7 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	 nop
 	 */
 	mips_reg_t regs[32];
-	uint32_t used = 1 |__BIT(_R_A0)|__BIT(_R_A1)|__BIT(_R_A2)|__BIT(_R_A3);
+	uint32_t used = 1 | __BIT(_R_A0) | __BIT(_R_A1) | __BIT(_R_A2) | __BIT(_R_A3);
 	size_t n;
 	const char *errstr = "mips";
 
