@@ -61,8 +61,7 @@ TS="$PWD/tests/"
 MYDIR="`dirname \"$0\"`"
 cd "$MYDIR"
 MYDIR="`pwd`"
-#XMLWF="${1:-`dirname \"$MYDIR\"`/xmlwf/xmlwf}"
-XMLWF=/usr/bin/xmlwf
+XMLWF="${1:-`dirname \"$MYDIR\"`/xmlwf/xmlwf}"
 # Unicode-aware diff utility
 DIFF="${MYDIR}/udiffer.py"
 
