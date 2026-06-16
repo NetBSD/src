@@ -126,6 +126,7 @@ si_attach(device_t parent, device_t self, void *aux)
 		ch->ch_gcport_dev = NULL;
 		ch->ch_uhid_dev = NULL;
 		ch->ch_send_status = CH_AVAIL;
+		ch->ch_pkid = 0;
 		mutex_init(&ch->ch_lock, MUTEX_DEFAULT, IPL_VM);
 		cv_init(&ch->ch_cv, "sich");
 		ch->ch_si = softint_establish(SOFTINT_SERIAL,
@@ -495,8 +496,8 @@ si_send_complete(struct work *, void *arg)
 	ch = &sc->sc_chan[completed_chan];
 
 	mutex_enter(&ch->ch_lock);
-	if (ch->ch_send_status == CH_UNAVAIL) {
-		pk = ch->ch_sipk;
+	pk = ch->ch_pk;
+	if (ch->ch_send_status == CH_UNAVAIL && ch->ch_pkid == pk->id) {
 		SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
 		comcsr = RD4(sc, SICOMCSR);
 

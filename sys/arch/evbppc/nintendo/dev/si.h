@@ -129,7 +129,8 @@ struct si_channel {
 	void			*ch_desc;
 	int			ch_descsize;
 	void			*ch_si;
-	struct si_packet	*ch_sipk;
+	struct si_packet	*ch_pk;
+	unsigned		ch_pkid;
 	int			ch_send_status;
 	struct workqueue	*ch_wqp;
 	struct work		ch_work;
@@ -157,6 +158,7 @@ struct gcport_softc {
 };
 
 struct si_packet {
+	unsigned	id;		/* identifier for the packet */
 	unsigned	chan;		/* which controller port */
 	uint32_t	status;		/* the sisr result for this channel */
 	uint32_t	insize;		/* number of bytes for in buffer */

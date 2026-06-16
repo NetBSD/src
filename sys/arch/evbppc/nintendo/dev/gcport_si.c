@@ -254,7 +254,9 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		mutex_exit(&ch->ch_lock);
 		goto si_send_cleanup;
 	}
-	ch->ch_sipk = &pk;
+	ch->ch_pkid++;
+	pk.id = ch->ch_pkid;
+	ch->ch_pk = &pk;
 	ch->ch_send_status = CH_UNAVAIL;
 	mutex_exit(&ch->ch_lock);
 
