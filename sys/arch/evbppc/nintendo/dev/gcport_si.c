@@ -229,6 +229,7 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 	struct si_packet pk;
 	struct bintime bt;
 	struct timeval tv;
+	unsigned has_ch_lock = 0;
 
 	err = 0;
 	sc = ch->ch_sc;
@@ -261,10 +262,9 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		goto si_send_cleanup;
 	}
 
-	/* wait for channel to be available */
 	mutex_enter(&ch->ch_lock);
-	tv.tv_sec = 0;
-	tv.tv_usec = 10000;
+	tv.tv_sec = 1;
+	tv.tv_usec = 0;
 	timeval2bintime(&tv, &bt);
 	while (ch->ch_send_status == CH_UNAVAIL) {
 		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &bt,
@@ -272,12 +272,13 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 		if (err) {
 			KASSERT(err == EWOULDBLOCK);
 			err = ETIMEDOUT;
+			ch->ch_send_status = CH_AVAIL;
 			mutex_exit(&ch->ch_lock);
 			goto si_send_cleanup;
 		}
 
 	}
-	mutex_exit(&ch->ch_lock);
+	has_ch_lock = 1;
 
 	if ((err = copyout(pk.in, p->in, pk.insize)) != 0) {
 		goto si_send_cleanup;
@@ -291,5 +292,8 @@ si_send_cleanup:
 	kmem_free(pk.in, insize_r);
 	pk.in = NULL;
 	pk.out = NULL;
+	if (has_ch_lock) {
+		mutex_exit(&ch->ch_lock);
+	}
 	return err;
 }

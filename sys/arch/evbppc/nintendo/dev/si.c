@@ -439,7 +439,7 @@ si_send(struct si_softc *sc, struct si_packet *pk)
 
 	mutex_enter(&sicomcsr_lock);
 	tv.tv_sec = 0;
-	tv.tv_usec = 5000;
+	tv.tv_usec = 100000;
 	timeval2bintime(&tv, &bt);
 	while (cur_chan != CH_AVAIL) {
 		err = cv_timedwaitbt(&sicomcsr_cv, &sicomcsr_lock, &bt,
@@ -483,9 +483,10 @@ si_send_complete(struct work *, void *arg)
 	struct si_channel *ch;
 	struct si_packet *pk;
 	uint32_t comcsr, sisr, sisr_mask, shift_amt, status;
-	int completed_chan = cur_chan;
+	int completed_chan;
 
 	mutex_enter(&sicomcsr_lock);
+	completed_chan = cur_chan;
 	if (cur_chan == CH_AVAIL) {
 		goto unlock_sicomcsr;
 	}
@@ -494,28 +495,26 @@ si_send_complete(struct work *, void *arg)
 	ch = &sc->sc_chan[completed_chan];
 
 	mutex_enter(&ch->ch_lock);
-	pk = ch->ch_sipk;
-
-	if (pk->in != NULL) {
+	if (ch->ch_send_status == CH_UNAVAIL) {
+		pk = ch->ch_sipk;
 		SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
-	}
+		comcsr = RD4(sc, SICOMCSR);
 
-	comcsr = RD4(sc, SICOMCSR);
+		if (ISSET(comcsr, SICOMCSR_COMERR)) {
+			sisr = RD4(sc, SISR);
+			shift_amt = 8 * (SI_NUM_CHAN - 1 - completed_chan);
+			sisr_mask = sisr & SISR_ERROR_MASK(completed_chan);
+			status = (sisr_mask >> shift_amt) & 0x3F;
+			pk->status = status;
+		}
 
-	if (ISSET(comcsr, SICOMCSR_COMERR)) {
-		sisr = RD4(sc, SISR);
-		shift_amt = 8 * (SI_NUM_CHAN - 1 - completed_chan);
-		sisr_mask = sisr & SISR_ERROR_MASK(completed_chan);
-		status = (sisr_mask >> shift_amt) & 0x3F;
-		pk->status = status;
+		ch->ch_send_status = CH_AVAIL;
+		cv_signal(&ch->ch_cv);
 	}
+	mutex_exit(&ch->ch_lock);
 
 	cur_chan = CH_AVAIL;
-	ch->ch_send_status = CH_AVAIL;
-
 	cv_signal(&sicomcsr_cv);
-	cv_signal(&ch->ch_cv);
-	mutex_exit(&ch->ch_lock);
 unlock_sicomcsr:
 	mutex_exit(&sicomcsr_lock);
 }
