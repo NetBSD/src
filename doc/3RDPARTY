@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2217 2026/06/13 16:55:02 jdc Exp $
+#	$NetBSD: 3RDPARTY,v 1.2218 2026/06/16 13:26:31 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1587,6 +1587,7 @@ Notes:
      implementation.
    - add alias carp to vrrp
    - put back 240 (pfsync), splitting the unassigned entries
+   - put back NetBSD RCSID
 
 Package:	pigz
 Version:	2.3.1
