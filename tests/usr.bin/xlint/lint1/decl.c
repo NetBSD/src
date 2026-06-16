@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.36 2025/09/14 12:27:42 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.37 2026/06/16 05:27:58 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -325,9 +325,9 @@ void static_function(change_logger);
 void no_prototype_declaration();
 void prototype_declaration(void);
 
-// TODO: Warn about the missing 'void', for C99 and later.
 void
 no_prototype_definition()
+/* expect+1: warning: function definition for 'no_prototype_definition' is not a prototype [286] */
 {
 }
 

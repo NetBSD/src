@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.428 2026/04/20 22:03:38 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.429 2026/06/16 05:27:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.428 2026/04/20 22:03:38 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.429 2026/06/16 05:27:57 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1318,7 +1318,7 @@ add_array(sym_t *decl, bool has_dim, int dim)
 
 static type_t *
 block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg,
-    bool noreturn)
+    bool noreturn, bool identifier_params)
 {
 
 	type_t *tp = block_derive_type(ret, FUNC);
@@ -1327,6 +1327,7 @@ block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg,
 		tp->u.params = params;
 	tp->t_noreturn = noreturn;
 	tp->t_vararg = vararg;
+	tp->t_identifier_params = identifier_params;
 	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
@@ -1444,7 +1445,8 @@ add_function(sym_t *decl, parameter_list params)
 
 	*tpp = block_derive_function(dcs->d_enclosing->d_type,
 	    params.prototype, params.first, params.vararg,
-	    params.noreturn || dcs->d_enclosing->d_noreturn);
+	    params.noreturn || dcs->d_enclosing->d_noreturn,
+	    params.identifier);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_dcs_all();

@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.199 2026/03/15 08:16:53 rillig Exp $	*/
+/*	$NetBSD: func.c,v 1.200 2026/06/16 05:27:57 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.199 2026/03/15 08:16:53 rillig Exp $");
+__RCSID("$NetBSD: func.c,v 1.200 2026/06/16 05:27:57 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -308,8 +308,8 @@ begin_function(sym_t *fsym)
 		symtab_remove_forever(rdsym);
 	}
 
-	if (fsym->s_osdef && !fsym->s_type->t_proto) {
-		if (!allow_trad && hflag &&
+	if (fsym->s_osdef && !fsym->s_type->t_proto && !fsym->s_type->t_identifier_params) {
+		if (!allow_trad &&
 		    (allow_c99 || strcmp(fsym->s_name, "main") != 0))
 			/* function definition for '%s' is not a prototype */
 			warning(286, fsym->s_name);

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.240 2026/03/18 06:17:55 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.241 2026/06/16 05:27:57 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -151,6 +151,7 @@ struct lint1_type {
 	bool	t_const:1;
 	bool	t_volatile:1;
 	bool	t_proto:1;	/* function prototype (u.params valid) */
+	bool	t_identifier_params:1;	/* if FUNC and not t_proto */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_noreturn:1;	/* function never returns normally */
 	bool	t_typedef:1;	/* type defined with typedef */
