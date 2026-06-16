@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.11 2025/08/11 12:31:57 skrll Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.12 2026/06/16 15:49:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -32,7 +32,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.11 2025/08/11 12:31:57 skrll Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.12 2026/06/16 15:49:33 skrll Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -137,8 +137,11 @@ no_el2_host_mode:
 
 	/* Set the address to return to. */
 	msr	elr_el2, lr
-	isb
 
+	/*
+	 * An isb is not required before eret if
+	 * SCTLR_EL2.EOS=1 [bit 11] (RES1)
+	 */
 	eret
 
 	.align 3
