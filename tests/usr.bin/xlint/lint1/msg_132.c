@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.58 2026/01/17 16:22:35 rillig Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.59 2026/06/16 05:37:27 rillig Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -644,8 +644,8 @@ combine_arithmetic_and_bit_operations(void)
 	return 0xc0 | (u32 & 0x07c0) / 64;
 }
 
-long write(int, const char *, size_t);
-long read(int, char *, size_t);
+long write(int, const void *, size_t);
+long read(int, void *, size_t);
 
 size_t strlen(const char *);
 size_t strcspn(const char *, const char *);

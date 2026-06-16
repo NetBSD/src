@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.714 2026/04/23 04:45:27 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.715 2026/06/16 05:37:27 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.714 2026/04/23 04:45:27 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.715 2026/06/16 05:37:27 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -4717,7 +4717,7 @@ add_function_argument(function_call *call, tnode_t *arg)
  * the type of the parameter.
  */
 static tnode_t *
-check_prototype_argument(const function_call *call, int arg,
+convert_prototype_argument(const function_call *call, int arg,
     type_t *tp, tnode_t *tn)
 {
 	tnode_t *ln = xcalloc(1, sizeof(*ln));
@@ -4733,16 +4733,11 @@ check_prototype_argument(const function_call *call, int arg,
 	return tn;
 }
 
-/*
- * Check types of all function arguments and insert conversions,
- * if necessary.
- */
 static void
-check_function_arguments(const function_call *call)
+convert_function_arguments(const function_call *call)
 {
 	type_t *ftp = call->func->tn_type->t_subt;
 
-	/* get # of parameters in the prototype */
 	int npar = 0;
 	for (const sym_t *p = ftp->u.params; p != NULL; p = p->s_next)
 		npar++;
@@ -4759,7 +4754,6 @@ check_function_arguments(const function_call *call)
 	for (int i = 0; i < narg; i++) {
 		tnode_t *arg = call->args[i];
 
-		/* some things which are always not allowed */
 		tspec_t at = arg->tn_type->t_tspec;
 		if (at == VOID) {
 			/* void expressions may not be arguments, arg #%d */
@@ -4782,7 +4776,8 @@ check_function_arguments(const function_call *call)
 		call->args[i] = arg;
 
 		arg = param != NULL
-		    ? check_prototype_argument(call, i + 1, param->s_type, arg)
+		    ? convert_prototype_argument(call,
+			i + 1, param->s_type, arg)
 		    : promote(NOOP, true, arg);
 		call->args[i] = arg;
 
@@ -4845,7 +4840,7 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 		return NULL;
 	}
 
-	check_function_arguments(call);
+	convert_function_arguments(call);
 
 	tnode_t *ntn = expr_alloc_tnode();
 	ntn->tn_op = CALL;
