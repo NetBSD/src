@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $");
 
 #include "opt_ddb.h"
 #include "opt_sam460ex.h"
@@ -230,6 +230,8 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 	} else
 		printf("sam460ex: no valid FDT at %#lx, using defaults\n",
 		    (u_long)fdt_pa);
+	/* Record the value actually used so cpu_startup() agrees. */
+	sam460ex_fdt_info.fi_memsize = memsize;
 #endif
 
 	/* Slots 0/1 hold the TS=0 identity entries pinned by locore */
@@ -301,12 +303,26 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 #endif
 }
 
+/*
+ * UART input clock for the console and com devices.
+ */
+uint32_t
+sam460ex_com_freq(void)
+{
+
+#ifdef SAM460EX_FDT
+	if (sam460ex_fdt_info.fi_uart_freq != 0)
+		return sam460ex_fdt_info.fi_uart_freq;
+#endif
+	return AMCC460EX_COM_FREQ;
+}
+
 void
 consinit(void)
 {
 
 #if (NCOM > 0)
-	com_opb_cnattach(AMCC460EX_COM_FREQ, CONADDR, CONSPEED, CONMODE);
+	com_opb_cnattach(sam460ex_com_freq(), CONADDR, CONSPEED, CONMODE);
 #endif
 }
 
@@ -380,6 +396,9 @@ cpu_startup(void)
 		opb_freq = sam460ex_fdt_info.fi_opb_freq;
 	if (sam460ex_fdt_info.fi_memsize != 0)
 		memsize = sam460ex_fdt_info.fi_memsize;
+	printf("sam460ex: fdt cpu %u Hz, opb %u Hz, uart %u Hz, mem %u MB\n",
+	    cpu_freq, opb_freq, sam460ex_fdt_info.fi_uart_freq,
+	    memsize / (1024 * 1024));
 	if (sam460ex_fdt_info.fi_bootargs != NULL) {
 		printf("bootargs: %s\n", sam460ex_fdt_info.fi_bootargs);
 		parse_bootargs(sam460ex_fdt_info.fi_bootargs);

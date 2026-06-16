@@ -1,4 +1,4 @@
-/*	$NetBSD: sam460ex.h,v 1.1 2026/06/16 21:51:19 rkujawa Exp $	*/
+/*	$NetBSD: sam460ex.h,v 1.2 2026/06/16 23:37:48 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -59,6 +59,11 @@ extern struct sam460ex_fdt_info sam460ex_fdt_info;
 
 bool sam460ex_fdt_parse(paddr_t);
 #endif
+
+/*
+ * UART input clock for the console and com devices
+ */
+uint32_t sam460ex_com_freq(void);
 
 /* set by the "console=fb" bootarg: make the SM502 wsdisplay the console */
 extern bool sam460ex_console_fb;

@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -121,7 +121,7 @@ void
 device_register(device_t dev, void *aux)
 {
 
-	ibm4xx_device_register(dev, aux, AMCC460EX_COM_FREQ);
+	ibm4xx_device_register(dev, aux, sam460ex_com_freq());
 
 	/* "console=fb" in bootargs: the SM502 wsdisplay becomes console */
 	if (sam460ex_console_fb && device_is_a(dev, "voyagerfb"))

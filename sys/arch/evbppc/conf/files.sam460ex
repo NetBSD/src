@@ -1,4 +1,4 @@
-#	$NetBSD: files.sam460ex,v 1.1 2026/06/16 21:51:19 rkujawa Exp $
+#	$NetBSD: files.sam460ex,v 1.2 2026/06/16 23:37:48 rkujawa Exp $
 #
 # sam460ex-specific configuration info
 
@@ -6,8 +6,8 @@ defparam opt_sam460ex.h	SAM460EX_MEMSIZE
 defparam opt_sam460ex.h	SAM460EX_CPU_FREQ
 defparam opt_sam460ex.h	SAM460EX_OPB_FREQ
 
-# Parse the U-Boot supplied device tree (raw libfdt, not FDTBASE)
-defflag opt_sam460ex.h	SAM460EX_FDT: libfdt
+# Parse the U-Boot supplied device tree via the dev/fdt OF_* helper API
+defflag opt_sam460ex.h	SAM460EX_FDT: FDTBASE
 file	arch/evbppc/sam460ex/sam460ex_fdt.c	sam460ex_fdt
 
 file	arch/powerpc/ibm4xx/ibm4xx_autoconf.c

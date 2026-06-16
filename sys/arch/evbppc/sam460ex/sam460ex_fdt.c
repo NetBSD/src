@@ -1,4 +1,4 @@
-/*	$NetBSD: sam460ex_fdt.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $	*/
+/*	$NetBSD: sam460ex_fdt.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -29,119 +29,153 @@
  */
 
 /*
- * Minimal flattened-device-tree parsing for the Sam460ex.
- * Extract just enough for early bootstrap.
+ * Flattened-device-tree bootstrap for the Sam460ex.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sam460ex_fdt.c,v 1.1 2026/06/16 21:51:20 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sam460ex_fdt.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/device.h>
 
 #include <machine/sam460ex.h>
+
+#include <dev/ofw/openfirm.h>
+#include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <libfdt.h>
 
 struct sam460ex_fdt_info sam460ex_fdt_info;
 
+/* see consinit() */
+static int
+sam460ex_fdt_console_nomatch(int phandle)
+{
+	return 0;
+}
+
+static const struct fdt_console sam460ex_fdt_console_none = {
+	.match = sam460ex_fdt_console_nomatch,
+	.consinit = NULL,
+};
+FDT_CONSOLE(sam460ex_none, &sam460ex_fdt_console_none);
+
+/*
+ * Our own copy of the device tree, kept live for the lifetime of the
+ * kernel. 
+ */
+#define	SAM460EX_FDT_BUFSIZE	(64 * 1024)
+static uint64_t fdt_buf[SAM460EX_FDT_BUFSIZE / sizeof(uint64_t)];
+
 static char bootargs_buf[256];
 
-static uint32_t
-fdt_getprop_u32(const void *fdt, int node, const char *prop, uint32_t defval)
-{
-	const fdt32_t *p;
-	int len;
+static const struct device_compatible_entry emac_compat[] = {
+	{ .compat = "ibm,emac4sync" },
+	DEVICE_COMPAT_EOL
+};
 
-	p = fdt_getprop(fdt, node, prop, &len);
-	if (p == NULL || len < (int)sizeof(*p))
-		return defval;
-	return fdt32_to_cpu(*p);
+/*
+ * Recursively collect the per-EMAC MAC addresses.
+ */
+static void
+sam460ex_fdt_emac(int node)
+{
+	int child;
+
+	for (child = OF_child(node); child; child = OF_peer(child)) {
+		uint32_t idx;
+		uint8_t mac[6];
+		int j;
+
+		if (of_compatible_match(child, emac_compat) != 0 &&
+		    of_getprop_uint32(child, "cell-index", &idx) == 0 &&
+		    idx < SAM460EX_NEMAC &&
+		    OF_getprop(child, "local-mac-address", mac, sizeof(mac)) ==
+		    (int)sizeof(mac)) {
+			for (j = 0; j < 6; j++)
+				if (mac[j] != 0)
+					break;
+			if (j != 6) {
+				memcpy(sam460ex_fdt_info.fi_enaddr[idx], mac, 6);
+				sam460ex_fdt_info.fi_enaddr_valid[idx] = true;
+			}
+		}
+		sam460ex_fdt_emac(child);
+	}
 }
 
 /*
- * Parse the FDT at fdt_pa
+ * Parse the device tree at the physical address U-Boot passed in r3.
  */
 bool
 sam460ex_fdt_parse(paddr_t fdt_pa)
 {
 	struct sam460ex_fdt_info *info = &sam460ex_fdt_info;
-	const void *fdt = (const void *)fdt_pa;
-	const fdt32_t *reg;
-	const char *args;
-	int node, len, addr_cells, size_cells;
+	const void *src = (const void *)fdt_pa;
+	uint32_t ac, sc;
+	int root, node, len;
 
 	memset(info, 0, sizeof(*info));
 
 	if (fdt_pa == 0 || fdt_pa >= 0x10000000 ||
-	    fdt_check_header(fdt) != 0)
+	    fdt_check_header(src) != 0 ||
+	    (size_t)fdt_totalsize(src) > sizeof(fdt_buf))
 		return false;
 
-	/* /memory reg = <addr-cells..., size-cells...> */
-	addr_cells = fdt_address_cells(fdt, 0);
-	size_cells = fdt_size_cells(fdt, 0);
-	node = fdt_path_offset(fdt, "/memory");
-	if (node >= 0 && addr_cells > 0 && size_cells > 0) {
-		reg = fdt_getprop(fdt, node, "reg", &len);
-		if (reg != NULL &&
-		    len >= (int)((addr_cells + size_cells) * sizeof(*reg))) {
-			/* memory starts at 0; sum is the low size word */
-			info->fi_memsize =
-			    fdt32_to_cpu(reg[addr_cells + size_cells - 1]);
-		}
-	}
+	/*
+	 * Copy the blob into our own buf
+	 */
+	if (fdt_open_into(src, fdt_buf, sizeof(fdt_buf)) != 0 ||
+	    !fdtbus_init(fdt_buf))
+		return false;
 
-	node = fdt_path_offset(fdt, "/cpus/cpu@0");
-	if (node >= 0) {
-		info->fi_cpu_freq =
-		    fdt_getprop_u32(fdt, node, "clock-frequency", 0);
-		info->fi_timebase_freq =
-		    fdt_getprop_u32(fdt, node, "timebase-frequency", 0);
-	}
-
-	node = fdt_path_offset(fdt, "/plb/opb");
-	if (node >= 0)
-		info->fi_opb_freq =
-		    fdt_getprop_u32(fdt, node, "clock-frequency", 0);
-
-	node = fdt_node_offset_by_compatible(fdt, -1, "ns16550");
-	if (node >= 0)
-		info->fi_uart_freq =
-		    fdt_getprop_u32(fdt, node, "clock-frequency", 0);
+	root = OF_finddevice("/");
 
 	/*
-	 * EMAC MAC addresses
+	 * RAM size: /memory "reg" = <address... size...>.  
 	 */
-	node = -1;
-	while ((node = fdt_node_offset_by_compatible(fdt, node,
-	    "ibm,emac4sync")) >= 0) {
-		const uint8_t *mac;
-		uint32_t idx;
-		int j;
+	ac = 2;
+	sc = 1;
+	of_getprop_uint32(root, "#address-cells", &ac);
+	of_getprop_uint32(root, "#size-cells", &sc);
+	node = OF_finddevice("/memory");
+	if (node >= 0 && ac > 0 && sc > 0 && ac + sc <= 4) {
+		uint32_t reg[4];
 
-		idx = fdt_getprop_u32(fdt, node, "cell-index", ~0U);
-		if (idx >= SAM460EX_NEMAC)
-			continue;
-		mac = fdt_getprop(fdt, node, "local-mac-address", &len);
-		if (mac == NULL || len < 6)
-			continue;
-		for (j = 0; j < 6; j++)
-			if (mac[j] != 0)
-				break;
-		if (j == 6)
-			continue;	/* all-zero: not fixed up */
-		memcpy(info->fi_enaddr[idx], mac, 6);
-		info->fi_enaddr_valid[idx] = true;
+		if (of_getprop_uint32_array(node, "reg", reg, ac + sc) == 0)
+			info->fi_memsize = reg[ac + sc - 1];
 	}
 
-	node = fdt_path_offset(fdt, "/chosen");
+	/* CPU and timebase clocks (the timebase runs at the CPU clock). */
+	node = OF_finddevice("/cpus/cpu@0");
 	if (node >= 0) {
-		args = fdt_getprop(fdt, node, "bootargs", &len);
-		if (args != NULL && len > 0) {
-			strlcpy(bootargs_buf, args,
-			    uimin(sizeof(bootargs_buf), (size_t)len + 1));
+		of_getprop_uint32(node, "clock-frequency", &info->fi_cpu_freq);
+		of_getprop_uint32(node, "timebase-frequency",
+		    &info->fi_timebase_freq);
+	}
+
+	/* OPB (peripheral) clock. */
+	node = OF_finddevice("/plb/opb");
+	if (node >= 0)
+		of_getprop_uint32(node, "clock-frequency", &info->fi_opb_freq);
+
+	/* UART input clock: the first ns16550 in the tree. */
+	node = of_find_bycompat(root, "ns16550");
+	if (node != -1)
+		of_getprop_uint32(node, "clock-frequency", &info->fi_uart_freq);
+
+	/* Per-EMAC MAC addresses. */
+	sam460ex_fdt_emac(root);
+
+	/* Kernel command line from /chosen. */
+	node = OF_finddevice("/chosen");
+	if (node >= 0) {
+		len = OF_getprop(node, "bootargs", bootargs_buf,
+		    sizeof(bootargs_buf));
+		if (len > 1)	/* length includes the terminating NUL */
 			info->fi_bootargs = bootargs_buf;
-		}
 	}
 
 	return true;
