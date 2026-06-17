@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbufdebug.c,v 1.9 2025/02/16 18:49:59 jakllsch Exp $	*/
+/*	$NetBSD: uipc_mbufdebug.c,v 1.10 2026/06/17 09:49:12 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.9 2025/02/16 18:49:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbufdebug.c,v 1.10 2026/06/17 09:49:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -840,6 +840,8 @@ m_examine_tcp(const struct mbuf *m, int off, const char *modif,
 			(*pr)("RST ");
 		if (tcp.th_flags & TH_PUSH)
 			(*pr)("PUSH ");
+		if (tcp.th_flags & TH_ACK)
+			(*pr)("ACK ");
 		if (tcp.th_flags & TH_URG)
 			(*pr)("URG ");
 		if (tcp.th_flags & TH_ECE)
