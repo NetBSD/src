@@ -1,4 +1,4 @@
-/*	$NetBSD: pcix.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $	*/
+/*	$NetBSD: pcix.c,v 1.2 2026/06/17 15:08:54 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.2 2026/06/17 15:08:54 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
 #define	PCIX0_POM1LAL	0x7c
 #define	PCIX0_POM1LAH	0x80
 #define	PCIX0_POM1SA	0x84
+#define	PCIX0_POM1PCIAL	0x88
+#define	PCIX0_POM1PCIAH	0x8c
 #define	PCIX0_POM2SA	0x90
 #define	PCIX0_PIM0SAL	0x98
 #define	PCIX0_PIM0LAL	0x9c
@@ -116,12 +118,14 @@ static struct powerpc_bus_space pcix_io_tag = {
 	0x00010000,			/* extent limit */
 };
 
-/* PCI memory: bus addr == low 32 bits of PLB addr */
+/*
+ * PCI memory: bus addr = low 32 bits of PLB addr.  
+ */
 static struct powerpc_bus_space pcix_mem_tag = {
 	_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
 	0x00000000,
 	AMCC460EX_PCIX0_MEM_BASE,
-	AMCC460EX_PCIX0_MEM_BASE + AMCC460EX_PCIX0_MEM_SIZE,
+	AMCC460EX_PCIX0_PMEM_BASE + AMCC460EX_PCIX0_PMEM_SIZE,
 };
 
 static bus_space_handle_t pcix_cfg_ioh;
@@ -171,6 +175,19 @@ pcix_conf_hook(void *v, int bus, int dev, int func, pcireg_t id)
 	return PCI_CONF_DEFAULT;
 }
 
+/*
+ * Translate the tag
+ */
+static uint32_t
+pcix_cfg_addr(pcitag_t tag, int reg)
+{
+	uint32_t addr = (tag & 0x00ffff00) | (reg & 0xfc);
+
+	if (tag & 0x00ff0000)		/* bus number != 0 -> Type 1 */
+		addr |= 1;
+	return addr;
+}
+
 static pcireg_t
 pcix_conf_read(void *v, pcitag_t tag, int reg)
 {
@@ -180,7 +197,7 @@ pcix_conf_read(void *v, pcitag_t tag, int reg)
 		return (pcireg_t) -1;
 
 	bus_space_write_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGADDR,
-	    tag | reg);
+	    pcix_cfg_addr(tag, reg));
 	data = bus_space_read_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGDATA);
 	bus_space_write_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGADDR, 0);
 	return data;
@@ -194,7 +211,7 @@ pcix_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 		return;
 
 	bus_space_write_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGADDR,
-	    tag | reg);
+	    pcix_cfg_addr(tag, reg));
 	bus_space_write_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGDATA, data);
 	bus_space_write_4(&pcix_cfg_tag, pcix_cfg_ioh, PCIC_CFGADDR, 0);
 }
@@ -214,8 +231,15 @@ pcix_setup_windows(void)
 	PCIX_REG_WRITE(PCIX0_POM0PCIAH, 0);
 	PCIX_REG_WRITE(PCIX0_POM0SA, ~(0x08000000 - 1) | 1);
 
-	/* POM1/POM2 unused */
-	PCIX_REG_WRITE(PCIX0_POM1SA, 0);
+	/* POM1: PLB -> PCI prefetchable memory, identity mapped, 256MB */
+	PCIX_REG_WRITE(PCIX0_POM1SA, 0);		/* disable while */
+	PCIX_REG_WRITE(PCIX0_POM1LAL, AMCC460EX_PCIX0_PMEM_BASE);
+	PCIX_REG_WRITE(PCIX0_POM1LAH, AMCC460EX_PCIX0_PMEM_PLBA_H);
+	PCIX_REG_WRITE(PCIX0_POM1PCIAL, AMCC460EX_PCIX0_PMEM_BASE);
+	PCIX_REG_WRITE(PCIX0_POM1PCIAH, 0);
+	PCIX_REG_WRITE(PCIX0_POM1SA, ~(AMCC460EX_PCIX0_PMEM_SIZE - 1) | 1);
+
+	/* POM2 unused */
 	PCIX_REG_WRITE(PCIX0_POM2SA, 0);
 
 	/* PIM0: PCI 0 -> PLB 0, 2GB (covers all of RAM) */
@@ -272,6 +296,8 @@ pcix_attach(device_t parent, device_t self, void *aux)
 	    0x1000, 0x10000 - 0x1000);
 	pciconf_resource_add(pcires, PCICONF_RESOURCE_MEM,
 	    AMCC460EX_PCIX0_MEM_BASE, AMCC460EX_PCIX0_MEM_SIZE);
+	pciconf_resource_add(pcires, PCICONF_RESOURCE_PREFETCHABLE_MEM,
+	    AMCC460EX_PCIX0_PMEM_BASE, AMCC460EX_PCIX0_PMEM_SIZE);
 
 	pci_configure_bus(pc, pcires, 0, 32);
 	pciconf_resource_fini(pcires);

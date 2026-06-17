@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.111 2026/06/13 20:16:23 rkujawa Exp $	*/
+/*	$NetBSD: pmap.c,v 1.112 2026/06/17 15:08:54 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.111 2026/06/13 20:16:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.112 2026/06/17 15:08:54 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1638,6 +1638,24 @@ ppc4xx_tlb_mapiodev(paddr_t base, psize_t len)
 }
 
 #ifdef PPC_IBM440
+bool
+ppc44x_tlb_reverse(vaddr_t va, paddr_t *pap)
+{
+	int i;
+
+	for (i = 0; i < tlb_nreserved; i++) {
+		if (tlb44_resv[i].tr_size == 0)
+			continue;
+		if (va >= tlb44_resv[i].tr_va &&
+		    va < tlb44_resv[i].tr_va + tlb44_resv[i].tr_size) {
+			*pap = (uint32_t)tlb44_resv[i].tr_pa +
+			    (va - tlb44_resv[i].tr_va);
+			return true;
+		}
+	}
+	return false;
+}
+
 void
 ppc44x_tlb_boot_reserved(int n)
 {

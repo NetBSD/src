@@ -1,4 +1,4 @@
-/*	$NetBSD: amcc460ex.h,v 1.1 2026/06/13 19:45:50 rkujawa Exp $	*/
+/*	$NetBSD: amcc460ex.h,v 1.2 2026/06/17 15:08:54 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -69,6 +69,15 @@
 #define	AMCC460EX_PCIX0_MEM_PLBA_H	0xd
 /* How much of the (128MB) outbound memory window has pinned mappings */
 #define	AMCC460EX_PCIX0_MEM_SIZE	0x05000000	/* 80MB */
+
+/*
+ * Second outbound memory window (POM1)
+ */
+#define	AMCC460EX_PCIX0_PMEM_BASE	0x88000000	/* ERPN 0xd */
+#define	AMCC460EX_PCIX0_PMEM_PLBA_H	0xd
+#define	AMCC460EX_PCIX0_PMEM_SIZE	0x10000000	/* 256MB POM1/extent */
+/* How much of the prefetchable window gets pinned into kernel VA */
+#define	AMCC460EX_PCIX0_PMEM_MAP	0x04000000	/* 64MB */
 
 /*
  * PCI Express root complexes (PCIE0/PCIE1).

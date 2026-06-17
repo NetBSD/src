@@ -1,11 +1,11 @@
-#	$NetBSD: SAM460EX,v 1.1 2026/06/16 21:51:19 rkujawa Exp $
+#	$NetBSD: SAM460EX,v 1.2 2026/06/17 15:08:53 rkujawa Exp $
 #
 #	SAM460EX -- ACube Sam460ex (AMCC 460EX)
 #
 
 include 	"arch/evbppc/conf/std.sam460ex"
 
-#ident 		"SAM460EX-$Revision: 1.1 $"
+#ident 		"SAM460EX-$Revision: 1.2 $"
 
 maxusers	32
 
@@ -89,15 +89,19 @@ pci*	at pciex?
 ppb*	at pci? dev ? function ?	# PCI-PCI bridges
 pci*	at ppb? bus ?
 
-# SM502 needs MI voyager/voyagerfb fixes not committed yet
-#voyager0 at pci? dev ? function ?	# SM502 multimedia processor
-#voyagerfb0 at voyager0			# SM502 framebuffer console
-#iic*	at voyager0			# not yet
-#wsdisplay* at wsemuldisplaydev?
+# on-board SM502 framebuffer, selected via console=sm502
+voyager0 at pci? dev ? function ?	# SM502 multimedia processor
+voyagerfb0 at voyager0			# SM502 framebuffer console
+#iic*	at voyager0			# SM502 DDC/I2C bus
 
-#options 	WSEMUL_VT100
-#options 	WSDISPLAY_SCROLLSUPPORT
-#options 	FONT_BOLD8x16		# bitmap font (engine putchar path)
+# selected via console=pci
+radeonfb* at pci? dev ? function ?	# ATI Radeon R100 - R3XX
+
+wsdisplay* at wsemuldisplaydev?
+
+options 	WSEMUL_VT100
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	FONT_BOLD8x16		# bitmap font (engine putchar path)
 
 satalink* at pci? dev ? function ?	# SATALink, often used on Sam460ex
 siisata* at pci? dev ? function ?
@@ -138,6 +142,7 @@ uhid*	at uhidev? reportid ?
 #
 pseudo-device	wsmux			# keyboard/mouse multiplexor
 					# (console input from USB keyboards)
+pseudo-device	wsfont			# bitmap fonts for the wsdisplay console
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem

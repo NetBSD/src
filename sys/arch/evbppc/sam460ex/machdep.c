@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $");
 
 #include "opt_ddb.h"
 #include "opt_sam460ex.h"
@@ -261,6 +261,12 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 		    (uint64_t)AMCC460EX_PCIX0_MEM_PLBA_H << 32 |
 		      (AMCC460EX_PCIX0_MEM_BASE + va),
 		    SAM460EX_PCIMEM_VA + va, TLB_PG_SIZE, TLB_I | TLB_G);
+	/* Prefetchable window (POM1): pin the radeonfb framebuffer aperture */
+	for (va = 0; va < AMCC460EX_PCIX0_PMEM_MAP; va += TLB_PG_SIZE)
+		ppc44x_tlb_reserve(
+		    (uint64_t)AMCC460EX_PCIX0_PMEM_PLBA_H << 32 |
+		      (AMCC460EX_PCIX0_PMEM_BASE + va),
+		    SAM460EX_PCIPREFMEM_VA + va, TLB_PG_SIZE, TLB_I | TLB_G);
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIX0_IO_PA_HIGH << 32 |
 	    AMCC460EX_PCIX0_IO_PLBA,
 	    SAM460EX_PCIIO_VA, TLB_PG_SIZE, TLB_I | TLB_G);
@@ -331,8 +337,28 @@ consinit(void)
  */
 static char bootspec_buf[64];
 
-/* "console=fb" in bootargs makes the SM502 wsdisplay the console */
-bool sam460ex_console_fb;
+/* Console target from the "console=" bootarg (see machine/sam460ex.h). */
+enum sam460ex_console sam460ex_console = SAM460EX_CONS_COM;
+int sam460ex_console_pci_bdf[3] = { -1, -1, -1 };
+
+/*
+ * Parse an optional ":bus:dev:func" suffix for "console=pci"
+ */
+static void
+parse_pci_bdf(const char *s)
+{
+	char *ep;
+	int i;
+
+	for (i = 0; i < 3 && *s == ':'; i++) {
+		sam460ex_console_pci_bdf[i] = (int)strtoul(s + 1, &ep, 0);
+		if (ep == s + 1) {		/* no digits consumed */
+			sam460ex_console_pci_bdf[i] = -1;
+			return;
+		}
+		s = ep;
+	}
+}
 
 static void
 parse_bootargs(const char *args)
@@ -359,9 +385,25 @@ parse_bootargs(const char *args)
 				bootspec = bootspec_buf;
 				booted_method = "bootargs/root";
 			}
-		} else if (strncmp(cp, "console=fb", 10) == 0) {
-			sam460ex_console_fb = true;
-			cp += 10;
+		} else if (strncmp(cp, "console=", 8) == 0) {
+			char cbuf[24];
+			char *bp = cbuf;
+
+			for (cp += 8; *cp != '\0' && !BA_DELIM(*cp) &&
+			    bp < &cbuf[sizeof(cbuf) - 1]; )
+				*bp++ = *cp++;
+			*bp = '\0';
+
+			if (strcmp(cbuf, "com0") == 0 ||
+			    strcmp(cbuf, "serial") == 0)
+				sam460ex_console = SAM460EX_CONS_COM;
+			else if (strcmp(cbuf, "sm502") == 0 ||
+			    strcmp(cbuf, "fb") == 0)
+				sam460ex_console = SAM460EX_CONS_SM502;
+			else if (strncmp(cbuf, "pci", 3) == 0) {
+				sam460ex_console = SAM460EX_CONS_PCI;
+				parse_pci_bdf(&cbuf[3]);
+			}
 		} else {
 			while (*cp != '\0' && !BA_DELIM(*cp))
 				cp++;
@@ -406,7 +448,9 @@ cpu_startup(void)
 #endif
 
 #if NUKBD > 0
-	if (sam460ex_console_fb) {
+	/* Glass consoles (SM502 or a PCI display) take keyboard input via USB. */
+	if (sam460ex_console == SAM460EX_CONS_SM502 ||
+	    sam460ex_console == SAM460EX_CONS_PCI) {
 		ukbd_cnattach();
 	}
 #endif

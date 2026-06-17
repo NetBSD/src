@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.8 2026/06/13 19:45:50 rkujawa Exp $	*/
+/*	$NetBSD: tlb.h,v 1.9 2026/06/17 15:08:54 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -149,6 +149,8 @@ void	ppc44x_tlb_reserve(uint64_t, vaddr_t, size_t, int);
 void	ppc44x_tlb_reserve_ts0(paddr_t);
 /* claim locore-pinned boot TLB slots before the first reserve */
 void	ppc44x_tlb_boot_reserved(int);
+/* recover the low-32 PA of a VA mapped via a reserved TLB entry */
+bool	ppc44x_tlb_reverse(vaddr_t, paddr_t *);
 #endif
 
 #ifndef ppc4xx_tlbflags

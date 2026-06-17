@@ -1,4 +1,4 @@
-/*	$NetBSD: sam460ex.h,v 1.2 2026/06/16 23:37:48 rkujawa Exp $	*/
+/*	$NetBSD: sam460ex.h,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -65,8 +65,16 @@ bool sam460ex_fdt_parse(paddr_t);
  */
 uint32_t sam460ex_com_freq(void);
 
-/* set by the "console=fb" bootarg: make the SM502 wsdisplay the console */
-extern bool sam460ex_console_fb;
+/*
+ * Console target, selected by the "console=" bootarg
+ */
+enum sam460ex_console {
+	SAM460EX_CONS_COM,
+	SAM460EX_CONS_SM502,
+	SAM460EX_CONS_PCI,
+};
+extern enum sam460ex_console sam460ex_console;
+extern int sam460ex_console_pci_bdf[3];
 
 /* ePAPR magic passed in r6 by U-Boot and QEMU */
 #define	SAM460EX_EPAPR_MAGIC	0x45504150
@@ -82,7 +90,7 @@ extern bool sam460ex_console_fb;
  *	0xf9000000  PCIE0 memory window (16MB)
  *	0xfa000000  PCIE1 memory window (16MB)
  *	0xfb000000  AHB peripherals: USB OTG/OHCI/EHCI (16MB)
- *	0xfc000000+ free
+ *	0xfc000000  PCI prefetchable window (POM1, 64MB pinned of 256MB)
  */
 #define	SAM460EX_PCIMEM_VA	0xf0000000
 #define	SAM460EX_PCIIO_VA	0xf5000000
@@ -92,5 +100,6 @@ extern bool sam460ex_console_fb;
 #define	SAM460EX_PCIE0MEM_VA	0xf9000000
 #define	SAM460EX_PCIE1MEM_VA	0xfa000000
 #define	SAM460EX_AHB_VA		0xfb000000
+#define	SAM460EX_PCIPREFMEM_VA	0xfc000000
 
 #endif	/* _EVBPPC_SAM460EX_H_ */

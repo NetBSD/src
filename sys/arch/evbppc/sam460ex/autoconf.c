@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,6 +80,13 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2026/06/16 23:37:49 rkujawa Exp $")
 #include <powerpc/ibm4xx/amcc460ex.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcidevs.h>
+
+/* Set once console=pci has made a PCI display the console (see below). */
+static bool sam460ex_pci_console_found;
 
 /*
  * Determine device configuration for a machine.
@@ -112,6 +119,10 @@ cpu_configure(void)
 	if (config_rootfound("plb", NULL) == NULL)
 		panic("configure: mainbus not configured");
 
+	if (sam460ex_console == SAM460EX_CONS_PCI && !sam460ex_pci_console_found)
+		printf("sam460ex: console=pci: no suitable PCI display found, "
+		    "using serial\n");
+
 	pic_finish_setup();
 
 	genppc_cpu_configure();
@@ -123,10 +134,36 @@ device_register(device_t dev, void *aux)
 
 	ibm4xx_device_register(dev, aux, sam460ex_com_freq());
 
-	/* "console=fb" in bootargs: the SM502 wsdisplay becomes console */
-	if (sam460ex_console_fb && device_is_a(dev, "voyagerfb"))
+	/* console=sm502: the on-board SM502 voyagerfb becomes the console */
+	if (sam460ex_console == SAM460EX_CONS_SM502 &&
+	    device_is_a(dev, "voyagerfb"))
 		prop_dictionary_set_bool(device_properties(dev),
 		    "is_console", true);
+
+	/*
+	 * console=pci: when first non-SM502 PCI display device attaches, make
+	 * a console
+	 */
+	if (sam460ex_console == SAM460EX_CONS_PCI && !sam460ex_pci_console_found &&
+	    device_parent(dev) != NULL && device_is_a(device_parent(dev), "pci")) {
+		struct pci_attach_args *pa = aux;
+		const int *bdf = sam460ex_console_pci_bdf;
+
+		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
+		    !(PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SILMOTION &&
+		      PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SILMOTION_SM502) &&
+		    (bdf[0] == -1 || bdf[0] == pa->pa_bus) &&
+		    (bdf[1] == -1 || bdf[1] == pa->pa_device) &&
+		    (bdf[2] == -1 || bdf[2] == pa->pa_function)) {
+			aprint_normal("sam460ex: console=pci: selected PCI display "
+			    "at %d:%d:%d (vendor 0x%04x product 0x%04x)\n",
+			    pa->pa_bus, pa->pa_device, pa->pa_function,
+			    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+			prop_dictionary_set_bool(device_properties(dev),
+			    "is_console", true);
+			sam460ex_pci_console_found = true;
+		}
+	}
 
 	/*
 	 * Match a "root=" from the bootargs.
