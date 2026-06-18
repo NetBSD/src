@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.35 2026/06/18 00:44:21 rkujawa Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.36 2026/06/18 22:10:27 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.35 2026/06/18 00:44:21 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.36 2026/06/18 22:10:27 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,11 +55,15 @@ __KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.35 2026/06/18 00:44:21 rkujawa Exp $
 #include <dev/wscons/wsdisplay_vconsvar.h>
 #include <dev/pci/wsdisplay_pci.h>
 
+#include "opt_voyagerfb.h"
+
 #include <dev/i2c/i2cvar.h>
+#ifdef VOYAGERFB_MODE_SETTING
+#include <dev/i2c/ddcvar.h>
+#include <dev/videomode/edidvar.h>
+#endif
 #include <dev/pci/voyagervar.h>
 #include <dev/wscons/wsdisplay_glyphcachevar.h>
-
-#include "opt_voyagerfb.h"
 
 #ifdef VOYAGERFB_DEBUG
 #define DPRINTF aprint_error
@@ -94,6 +98,15 @@ struct voyagerfb_softc {
 	int sc_mode;
 	int sc_bl_on, sc_bl_level;
 	void *sc_gpio_cookie;
+
+#ifdef VOYAGERFB_MODE_SETTING
+	/* DDC/EDID via the SM502 hardware I2C master (independent of parent) */
+	struct i2c_controller sc_ddc_i2c;
+	uint8_t sc_edid[128];
+	uint8_t sc_i2c_status;		/* last engine status, for diag */
+	bool sc_edid_valid;
+	struct edid_info sc_edid_info;
+#endif
 
 	/* cursor stuff */
 	int sc_cur_x;
@@ -134,6 +147,30 @@ static int 	voyagerfb_putpalreg(struct voyagerfb_softc *, int, uint8_t,
 			    uint8_t, uint8_t);
 
 static void	voyagerfb_init(struct voyagerfb_softc *);
+
+#ifdef VOYAGERFB_MODE_SETTING
+/* DDC/EDID over the SM502 hardware I2C master */
+static void	voyagerfb_i2c_enable(struct voyagerfb_softc *);
+static int	voyagerfb_i2c_xfer(struct voyagerfb_softc *, int, i2c_addr_t,
+			    uint8_t *, size_t);
+static int	voyagerfb_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
+			    size_t, void *, size_t, int);
+static void	voyagerfb_ddc_read(struct voyagerfb_softc *);
+
+/* mode-setting */
+static void	voyagerfb_set_videomode(struct voyagerfb_softc *,
+			    const struct videomode *);
+static bus_size_t voyagerfb_active_clock_reg(struct voyagerfb_softc *);
+static void	voyagerfb_solve_pll(int, uint32_t *, uint32_t *, uint32_t *);
+static void	voyagerfb_set_dotclock(struct voyagerfb_softc *, int);
+static void	voyagerfb_set_geometry(struct voyagerfb_softc *,
+			    const struct videomode *);
+static void	voyagerfb_set_mode(struct voyagerfb_softc *,
+			    const struct videomode *);
+static bool	voyagerfb_mode_ok(struct voyagerfb_softc *,
+			    const struct videomode *);
+static const struct videomode *voyagerfb_pick_mode(struct voyagerfb_softc *);
+#endif
 
 static void	voyagerfb_rectfill(struct voyagerfb_softc *, int, int, int, int,
 			    uint32_t);
@@ -186,9 +223,368 @@ voyagerfb_ready(struct voyagerfb_softc *sc)
 static inline void
 voyagerfb_wait(struct voyagerfb_softc *sc)
 {
-	do {} while ((bus_space_read_4(sc->sc_memt, sc->sc_regh, 
+	do {} while ((bus_space_read_4(sc->sc_memt, sc->sc_regh,
 	    SM502_SYSTEM_CTRL) & SM502_SYSCTL_ENGINE_BUSY) != 0);
 }
+
+#ifdef VOYAGERFB_MODE_SETTING
+/* route GPIO46/47 to the I2C master and enable the engine */
+static void
+voyagerfb_i2c_enable(struct voyagerfb_softc *sc)
+{
+	uint32_t reg;
+
+	/* make sure the GPIO/PWM/I2C block is clocked */
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_CURRENT_GATE);
+	if ((reg & SM502_GATE_GPIO_ENABLE) == 0) {
+		reg |= SM502_GATE_GPIO_ENABLE;
+		bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_CURRENT_GATE,
+		    reg);
+	}
+
+	/* select the I2C special function on GPIO46/47 (1 = not plain GPIO) */
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_GPIO1_CONTROL);
+	reg |= SM502_GPIO1_I2C_BITS;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_GPIO1_CONTROL, reg);
+
+	/* clear any latched error, then enable in standard (100kHz) mode */
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_RESET, 0);
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_CONTROL,
+	    SM502_I2C_CTL_ENABLE);
+}
+
+/*
+ * Run one hardware I2C transaction of up to SM502_I2C_MAX_BYTES
+ */
+static int
+voyagerfb_i2c_xfer(struct voyagerfb_softc *sc, int rw, i2c_addr_t addr,
+    uint8_t *data, size_t len)
+{
+	uint8_t status = 0;
+	size_t i;
+	int timo;
+
+	if (len == 0 || len > SM502_I2C_MAX_BYTES)
+		return EINVAL;
+
+	/*
+	 * Reset the engine 
+	 */
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_RESET, 0);
+	delay(1);
+
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_SLAVE_ADDR,
+	    (uint8_t)(addr << 1) | (rw ? SM502_I2C_ADDR_READ : 0));
+
+	if (rw == 0) {
+		for (i = 0; i < len; i++)
+			bus_space_write_1(sc->sc_memt, sc->sc_regh,
+			    SM502_I2C_DATA0 + i, data[i]);
+	}
+
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_BYTE_COUNT,
+	    (uint8_t)(len - 1));
+
+	/* keep ENABLE set, kick off the transfer (START self-clears) */
+	bus_space_write_1(sc->sc_memt, sc->sc_regh, SM502_I2C_CONTROL,
+	    SM502_I2C_CTL_ENABLE | SM502_I2C_CTL_START);
+
+	/* 16-byte tx at 100kHz, allow 10ms */
+	for (timo = 10000; timo > 0; timo--) {
+		status = bus_space_read_1(sc->sc_memt, sc->sc_regh,
+		    SM502_I2C_STATUS);
+		if (status & (SM502_I2C_STAT_COMPLETE | SM502_I2C_STAT_ERROR))
+			break;
+		delay(1);
+	}
+	sc->sc_i2c_status = status;
+
+	if (timo == 0 || (status & SM502_I2C_STAT_ERROR))
+		return EIO;
+	if (status & SM502_I2C_STAT_NAK)
+		return ENXIO;
+
+	if (rw != 0) {
+		for (i = 0; i < len; i++)
+			data[i] = bus_space_read_1(sc->sc_memt, sc->sc_regh,
+			    SM502_I2C_DATA0 + i);
+	}
+
+	return 0;
+}
+
+static int
+voyagerfb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
+    const void *cmdbuf, size_t cmdlen, void *buf, size_t buflen, int flags)
+{
+	struct voyagerfb_softc *sc = cookie;
+	uint8_t *p;
+	size_t done, chunk;
+	int rw, error;
+
+	if (cmdlen > 0) {
+		uint8_t tmp[SM502_I2C_MAX_BYTES];
+
+		if (cmdlen > sizeof(tmp))
+			return EINVAL;
+		memcpy(tmp, cmdbuf, cmdlen);
+		error = voyagerfb_i2c_xfer(sc, 0, addr, tmp, cmdlen);
+		if (error)
+			return error;
+	}
+
+	if (buflen == 0)
+		return 0;
+
+	rw = I2C_OP_READ_P(op) ? SM502_I2C_ADDR_READ : 0;
+	p = buf;
+	for (done = 0; done < buflen; done += chunk) {
+		chunk = buflen - done;
+		if (chunk > SM502_I2C_MAX_BYTES)
+			chunk = SM502_I2C_MAX_BYTES;
+		error = voyagerfb_i2c_xfer(sc, rw, addr, p + done, chunk);
+		if (error)
+			return error;
+	}
+
+	return 0;
+}
+
+/* read and parse the monitor's EDID over the hardware I2C master */
+static void
+voyagerfb_ddc_read(struct voyagerfb_softc *sc)
+{
+	int i;
+
+	voyagerfb_i2c_enable(sc);
+
+	iic_tag_init(&sc->sc_ddc_i2c);
+	sc->sc_ddc_i2c.ic_cookie = sc;
+	sc->sc_ddc_i2c.ic_exec = voyagerfb_i2c_exec;
+
+	/* some displays miss the first attempt */
+	memset(sc->sc_edid, 0, sizeof(sc->sc_edid));
+	for (i = 0; i < 3; i++) {
+		if (ddc_read_edid(&sc->sc_ddc_i2c, sc->sc_edid,
+		    sizeof(sc->sc_edid)) == 0 && sc->sc_edid[1] != 0)
+			break;
+		memset(sc->sc_edid, 0, sizeof(sc->sc_edid));
+	}
+
+	if (sc->sc_edid[1] == 0) {
+		aprint_normal_dev(sc->sc_dev,
+		    "DDC: no EDID response (I2C status 0x%02x)\n",
+		    sc->sc_i2c_status);
+		return;
+	}
+
+	if (edid_parse(sc->sc_edid, &sc->sc_edid_info) == -1) {
+		aprint_error_dev(sc->sc_dev, "DDC: EDID parse failed\n");
+		return;
+	}
+
+	sc->sc_edid_valid = true;
+}
+
+/*
+ * Program the panel timing generator from a videomode.
+ */
+static void
+voyagerfb_set_videomode(struct voyagerfb_softc *sc, const struct videomode *vm)
+{
+	uint32_t ht, hs, vt, vs, ctrl;
+
+	ht = ((uint32_t)(vm->htotal - 1) << SM502_HT_HTOTAL_SHIFT) |
+	    (vm->hdisplay - 1);
+	hs = ((uint32_t)(vm->hsync_end - vm->hsync_start) <<
+	    SM502_HS_HSWIDTH_SHIFT) | (vm->hsync_start - 1);
+	vt = ((uint32_t)(vm->vtotal - 1) << SM502_VT_VTOTAL_SHIFT) |
+	    (vm->vdisplay - 1);
+	vs = ((uint32_t)(vm->vsync_end - vm->vsync_start) <<
+	    SM502_VS_VSHEIGHT_SHIFT) | (vm->vsync_start - 1);
+
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_HTOTAL, ht);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_HSYNC, hs);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_VTOTAL, vt);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_VSYNC, vs);
+
+	ctrl = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
+	ctrl &= ~(SM502_PDC_HSYNC_PHASE_LOW | SM502_PDC_VSYNC_PHASE_LOW);
+	if (vm->flags & VID_NHSYNC)
+		ctrl |= SM502_PDC_HSYNC_PHASE_LOW;
+	if (vm->flags & VID_NVSYNC)
+		ctrl |= SM502_PDC_VSYNC_PHASE_LOW;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL, ctrl);
+}
+
+/* return the clock register of the currently-selected power mode */
+static bus_size_t
+voyagerfb_active_clock_reg(struct voyagerfb_softc *sc)
+{
+	uint32_t ctrl = bus_space_read_4(sc->sc_memt, sc->sc_regh,
+	    SM502_POWER_MODE_CONTROL);
+
+	return (ctrl & SM502_PMCTL_MODE_MASK) ? SM502_POWER_MODE1_CLOCK :
+	    SM502_POWER_MODE0_CLOCK;
+}
+
+/*
+ * Find programmable-PLL M/N/K
+ */
+static void
+voyagerfb_solve_pll(int target_khz, uint32_t *rm, uint32_t *rn, uint32_t *rk)
+{
+	uint32_t k, n, m, bm = 1, bn = 1, bk = 1;
+	int actual, err, vco, vcodist;
+	int best_err = 0x7fffffff, best_vcodist = 0x7fffffff;
+
+	for (k = 1; k <= 2; k++) {
+		for (n = 1; n <= 127; n++) {
+			m = ((uint32_t)target_khz * n * k + SM502_XTAL_KHZ / 2) /
+			    SM502_XTAL_KHZ;
+			if (m < 1 || m > 255)
+				continue;
+			vco = (int)(SM502_XTAL_KHZ * m / n);	/* before /K */
+			if (vco < SM502_PLL_VCO_MIN || vco > SM502_PLL_VCO_MAX)
+				continue;
+			actual = vco / (int)k;
+			err = actual - target_khz;
+			if (err < 0)
+				err = -err;
+			vcodist = vco - SM502_PLL_VCO_NOM;
+			if (vcodist < 0)
+				vcodist = -vcodist;
+			if (err < best_err ||
+			    (err == best_err && vcodist < best_vcodist)) {
+				best_err = err;
+				best_vcodist = vcodist;
+				bm = m;
+				bn = n;
+				bk = k;
+			}
+		}
+	}
+	*rm = bm;
+	*rn = bn;
+	*rk = bk;
+}
+
+/*
+ * Program the panel pixel clock via the PLL
+ */
+static void
+voyagerfb_set_dotclock(struct voyagerfb_softc *sc, int dotclock_khz)
+{
+	bus_size_t clk = voyagerfb_active_clock_reg(sc);
+	uint32_t m, n, k, pll, reg;
+
+	voyagerfb_solve_pll(dotclock_khz * 2, &m, &n, &k);
+
+	pll = SM502_PLL_POWER |
+	    ((n << SM502_PLL_N_SHIFT) & SM502_PLL_N_MASK) |
+	    ((m << SM502_PLL_M_SHIFT) & SM502_PLL_M_MASK);
+	if (k == 2)
+		pll |= SM502_PLL_K_DIV2;
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PROG_PLL, pll);
+	delay(20000);				/* >= 16 ms PLL lock */
+
+	/* select the programmable PLL as P2XCLK source, then wait */
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, clk);
+	reg = (reg & ~SM502_PMC_P2_SRC_MASK) |
+	    (SM502_PMC_SRC_PROGPLL << SM502_PMC_P2_SRC_SHIFT);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, clk, reg);
+	delay(20000);
+
+	/* P2 divider = 1, 2x stage active (DIS2X clear) */
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, clk);
+	reg &= ~(SM502_PMC_P2_DIV_MASK | SM502_PMC_P2_DIS2X);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, clk, reg);
+	delay(20000);
+}
+
+static const struct videomode *
+voyagerfb_pick_mode(struct voyagerfb_softc *sc)
+{
+	const struct videomode *vm;
+
+	if (!sc->sc_edid_valid)
+		return NULL;
+
+	vm = sc->sc_edid_info.edid_preferred_mode;
+	if (vm != NULL && voyagerfb_mode_ok(sc, vm))
+		return vm;
+	return NULL;
+}
+
+/* program the panel framebuffer window/plane geometry for a mode */
+static void
+voyagerfb_set_geometry(struct voyagerfb_softc *sc, const struct videomode *vm)
+{
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_FB_WIDTH,
+	    (uint32_t)vm->hdisplay << 16);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_FB_HEIGHT,
+	    (uint32_t)vm->vdisplay << 16);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_TL, 0);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_BR,
+	    ((uint32_t)vm->vdisplay << 16) | (uint32_t)vm->hdisplay);
+	/* the FB stride is programmed from sc_stride later, in voyagerfb_init */
+}
+
+static void
+voyagerfb_set_mode(struct voyagerfb_softc *sc, const struct videomode *vm)
+{
+	uint32_t ctrl;
+
+	ctrl = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL,
+	    ctrl & ~SM502_PDC_TIMING_ENABLE);
+
+	voyagerfb_set_dotclock(sc, vm->dot_clock);
+	voyagerfb_set_videomode(sc, vm);	/* timing + sync polarity */
+	voyagerfb_set_geometry(sc, vm);
+
+	ctrl = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL);
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_PANEL_DISP_CTRL,
+	    ctrl | SM502_PDC_TIMING_ENABLE);
+}
+
+/*
+ * Sanity-check a candidate mode
+ */
+static bool
+voyagerfb_mode_ok(struct voyagerfb_softc *sc, const struct videomode *vm)
+{
+#ifdef VOYAGERFB_DEPTH_32
+	const int bytespp = 4;
+#else
+	const int bytespp = 1;
+#endif
+	const struct edid_range *r = &sc->sc_edid_info.edid_range;
+	int hfreq, vfreq;
+
+	if (vm->hdisplay > 4095 || vm->htotal > 4095 ||
+	    vm->vdisplay > 2047 || vm->vtotal > 2047)
+		return false;
+	if ((uint32_t)vm->hdisplay * vm->vdisplay * bytespp > sc->sc_fbsize)
+		return false;
+
+	if (!sc->sc_edid_valid || !sc->sc_edid_info.edid_have_range)
+		return false;
+
+	hfreq = vm->dot_clock / vm->htotal;			/* kHz */
+	vfreq = (vm->dot_clock * 1000) / (vm->htotal * vm->vtotal); /* Hz */
+
+	if (vm->dot_clock / 1000 > r->er_max_clock)
+		return false;
+	if (hfreq < r->er_min_hfreq || hfreq > r->er_max_hfreq)
+		return false;
+	if (vfreq < r->er_min_vfreq || vfreq > r->er_max_vfreq)
+		return false;
+
+	return true;
+}
+
+#endif /* VOYAGERFB_MODE_SETTING */
 
 static int
 voyagerfb_match(device_t parent, cfdata_t match, void *aux)
@@ -235,6 +631,10 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gpio_cookie = device_private(parent);
 
+#ifdef VOYAGERFB_MODE_SETTING
+	voyagerfb_ddc_read(sc);
+#endif
+
 	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, SM502_DRAM_CONTROL);
 	switch(reg & 0x0000e000) {
 		case SM502_MEM_2M:
@@ -275,6 +675,24 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		    "panel not initialized by firmware, not attaching\n");
 		return;
 	}
+
+#ifdef VOYAGERFB_MODE_SETTING
+	/*
+	 * Switch to the best mode the monitor advertises via EDID.  
+	 */
+	{
+		const struct videomode *vm = voyagerfb_pick_mode(sc);
+
+		if (vm != NULL) {
+			voyagerfb_set_mode(sc, vm);
+			sc->sc_width = vm->hdisplay;
+			sc->sc_height = vm->vdisplay;
+			aprint_normal_dev(self,
+			    "mode set to %dx%d from EDID\n",
+			    vm->hdisplay, vm->vdisplay);
+		}
+	}
+#endif
 
 #ifdef VOYAGERFB_DEPTH_32
 	sc->sc_depth = 32;

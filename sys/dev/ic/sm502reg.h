@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.8 2026/06/18 00:44:20 rkujawa Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.9 2026/06/18 22:10:27 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -141,6 +141,38 @@
 #define SM502_POWER_MODE1_CLOCK		0x0000004c
 #define SM502_SLEEP_MODE_GATE		0x00000050
 #define SM502_POWER_MODE_CONTROL	0x00000054
+#define		SM502_PMCTL_MODE_MASK	0x00000003	/* active power mode */
+
+#define		SM502_PMC_P2_DIS2X	0x80000000	/* 1 = 1x (no /2) */
+#define		SM502_PMC_P2_SRC_MASK	0x60000000	/* bits[30:29] */
+#define		SM502_PMC_P2_SRC_SHIFT	29
+#define		SM502_PMC_P2_DIV_MASK	0x1f000000	/* bits[28:24] coded */
+#define		SM502_PMC_P2_DIV_SHIFT	24
+#define		SM502_PMC_V2_DIS2X	0x00200000	/* bit 21 */
+#define		SM502_PMC_V2_SRC_MASK	0x00100000	/* bit 20 */
+#define		SM502_PMC_V2_SRC_SHIFT	20
+#define		SM502_PMC_V2_DIV_MASK	0x000f0000	/* bits[19:16] coded */
+#define		SM502_PMC_V2_DIV_SHIFT	16
+/* source select values (P2/V2_SRC) */
+#define		SM502_PMC_SRC_288	0		/* 00 = 288 MHz PLL */
+#define		SM502_PMC_SRC_ALT	1		/* 01 = per misc timing */
+#define		SM502_PMC_SRC_PROGPLL	2		/* 1x = programmable PLL */
+
+/* Programmable PLL Control (0x074): f_out = 24MHz * M / N, /2 if K set */
+#define SM502_PROG_PLL			0x00000074
+#define		SM502_PLL_POWER		0x00020000	/* bit17: 1 = powered */
+#define		SM502_PLL_SEL		0x00010000	/* bit16: clock select */
+#define		SM502_PLL_K_DIV2	0x00008000	/* bit15: 1 = output /2 */
+#define		SM502_PLL_N_MASK	0x00007f00	/* bits[14:8] */
+#define		SM502_PLL_N_SHIFT	8
+#define		SM502_PLL_M_MASK	0x000000ff	/* bits[7:0] */
+#define		SM502_PLL_M_SHIFT	0
+#define		SM502_XTAL_KHZ		24000		/* reference crystal */
+/* keep the VCO (24MHz*M/N, before the K /2) in the range the chip's fixed
+ * 288/336 MHz PLLs operate in! */
+#define		SM502_PLL_VCO_MIN	100000		/* kHz */
+#define		SM502_PLL_VCO_MAX	400000		/* kHz */
+#define		SM502_PLL_VCO_NOM	250000		/* kHz, tie-break target */
 
 /* GPIO */
 #define SM502_GPIO_DATA0		0x00010000
@@ -167,6 +199,34 @@
 /* output remains high for n+1 cycles */
 #define		SM502_PWM_CLOCK_HIGH_MASK	0xfff00000
 #define		SM502_PWM_CLOCK_HIGH_SHIFT	20
+
+/*
+ * I2C master. 
+ */
+#define SM502_I2C_BYTE_COUNT		0x00010040
+#define		SM502_I2C_COUNT_MASK		0x0f	/* count = nbytes - 1 */
+#define		SM502_I2C_MAX_BYTES		16	/* FIFO depth */
+#define SM502_I2C_CONTROL		0x00010041
+#define		SM502_I2C_CTL_ENABLE		0x01	/* controller enable */
+#define		SM502_I2C_CTL_MODE_400		0x02	/* 0=100kHz, 1=400kHz */
+#define		SM502_I2C_CTL_START		0x04	/* start xfer (self-clears) */
+#define		SM502_I2C_CTL_INTR_EN		0x10	/* (unused - we poll) */
+#define SM502_I2C_STATUS		0x00010042	/* on read */
+#define		SM502_I2C_STAT_BUSY		0x01	/* 1 = bus busy */
+#define		SM502_I2C_STAT_NAK		0x02	/* 1 = slave did NOT ack */
+#define		SM502_I2C_STAT_ERROR		0x04	/* 1 = lost arbitration */
+#define		SM502_I2C_STAT_COMPLETE		0x08	/* 1 = whole xfer done */
+#define SM502_I2C_RESET			0x00010042	/* on write */
+#define SM502_I2C_SLAVE_ADDR		0x00010043
+#define		SM502_I2C_ADDR_READ		0x01	/* [0]: 1=read, 0=write */
+#define SM502_I2C_DATA0			0x00010044	/* FIFO: 0x44 .. 0x53 */
+
+/*
+ * GPIO function-select mux
+ */
+#define SM502_GPIO1_I2C_SCL		(1 << 14)	/* GPIO46 */
+#define SM502_GPIO1_I2C_SDA		(1 << 15)	/* GPIO47 */
+#define SM502_GPIO1_I2C_BITS	(SM502_GPIO1_I2C_SCL | SM502_GPIO1_I2C_SDA)
 
 /* Video Controller Registers */
 #define SM502_PANEL_DISP_CTRL			0x080000
@@ -244,13 +304,21 @@
 #define		SM502_BR_BOTTOM_MASK		0x07ff0000
 
 #define SM502_PANEL_HTOTAL	0x080024
-#define 	SM502_HT_HDISPE_MASK		0x00000fff
-#define 	SM502_HT_HTOTAL_MASK		0x0fff0000
+#define 	SM502_HT_HDISPE_MASK		0x00000fff	/* hdisplay - 1 */
+#define 	SM502_HT_HTOTAL_MASK		0x0fff0000	/* htotal - 1 */
+#define 	SM502_HT_HTOTAL_SHIFT		16
 #define SM502_PANEL_HSYNC	0x080028
+#define 	SM502_HS_HSSTART_MASK		0x00000fff	/* hsync start - 1 */
+#define 	SM502_HS_HSWIDTH_MASK		0x00ff0000	/* hsync width, px */
+#define 	SM502_HS_HSWIDTH_SHIFT		16
 #define SM502_PANEL_VTOTAL	0x08002C
-#define 	SM502_VT_VDISPE_MASK		0x00000fff
-#define 	SM502_VT_VTOTAL_MASK		0x0fff0000
+#define 	SM502_VT_VDISPE_MASK		0x00000fff	/* vdisplay - 1 */
+#define 	SM502_VT_VTOTAL_MASK		0x0fff0000	/* vtotal - 1 */
+#define 	SM502_VT_VTOTAL_SHIFT		16
 #define SM502_PANEL_VSYNC	0x080030
+#define 	SM502_VS_VSSTART_MASK		0x000007ff	/* vsync start - 1 */
+#define 	SM502_VS_VSHEIGHT_MASK		0x003f0000	/* vsync height, lines */
+#define 	SM502_VS_VSHEIGHT_SHIFT		16
 #define SM502_PANEL_CRSR_ADDR	0x0800f0
 #define		SM502_CRSR_ENABLE	0x80000000
 #define		SM502_CRSR_SYSTEM_MEM	0x08000000
