@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.334 2026/06/18 19:48:00 jakllsch Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.335 2026/06/18 19:50:00 jakllsch Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.334 2026/06/18 19:48:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.335 2026/06/18 19:50:00 jakllsch Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -454,7 +454,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	if (hdrcmplt) {
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	} else {
-	 	memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
+		memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
 		    sizeof(eh->ether_shost));
 	}
 
