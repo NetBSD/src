@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4 2026/06/18 21:23:01 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/06/18 21:23:01 rkujawa Exp $");
 
 #include "opt_ddb.h"
 #include "opt_sam460ex.h"
@@ -413,6 +413,58 @@ parse_bootargs(const char *args)
 }
 
 /*
+ * Sanitize EHCI state before the kernel takes over the USB host controller. 
+ */
+static void
+sam460ex_usb_host_init(void)
+{
+	volatile uint32_t *gpio;
+	uint32_t v, srst;
+	const uint32_t pin = 0x00008000;	/* GPIO16 = bit 15 in OR/TCR */
+
+	/* AHB-to-PLB bridge config: 460EX errata for concurrent USB/SATA. */
+	v = mfsdr(DCR_SDR0_AHB_CFG);
+	v |= SDR0_AHB_CFG_A2P_INCR4;
+	v &= ~SDR0_AHB_CFG_A2P_PROT2;
+	mtsdr(DCR_SDR0_AHB_CFG, v);
+
+	/* USB 2.0 host wrapper config (Sam460ex value). */
+	v = mfsdr(DCR_SDR0_USB2HOST_CFG);
+	v &= ~0x0000ff00;
+	v |= 0x00004400;
+	mtsdr(DCR_SDR0_USB2HOST_CFG, v);
+
+	gpio = ppc4xx_tlb_mapiodev(AMCC460EX_GPIO0_BASE, 0x40);
+
+	/*
+	 * Reset and re-sync the USB 2.0 host and its external ULPI PHY 
+	 */
+	srst = mfsdr(DCR_SDR0_SRST1);
+	mtsdr(DCR_SDR0_SRST1, srst | SDR0_SRST1_USBHOST);
+
+	if (gpio != NULL) {
+		/* GPIO16 -> GPIO mode, output low */
+		gpio[0x04 / 4] &= ~pin;			/* TCR: tristate */
+		gpio[0x0c / 4] &= ~0xc0000000;		/* OSRH: select GPIO */
+		gpio[0x00 / 4] &= ~pin;			/* OR: drive low */
+		gpio[0x04 / 4] |= pin;			/* TCR: drive output */
+	}
+
+	delay(500 * 1000);
+
+	if (gpio != NULL) {
+		/* GPIO16 -> ALT1 (USB2HostStop), output high */
+		gpio[0x04 / 4] &= ~pin;
+		gpio[0x0c / 4] = (gpio[0x0c / 4] & ~0xc0000000) | 0x40000000;
+		gpio[0x00 / 4] |= pin;
+		gpio[0x04 / 4] |= pin;
+	}
+
+	mtsdr(DCR_SDR0_SRST1, srst & ~SDR0_SRST1_USBHOST);
+	delay(200 * 1000);
+}
+
+/*
  * Machine dependent startup code.
  */
 void
@@ -424,6 +476,9 @@ cpu_startup(void)
 	uint32_t memsize = SAM460EX_MEMSIZE;
 
 	ibm4xx_cpu_startup("ACube Sam460ex (AMCC 460EX)");
+
+	/* re-init the on-chip USB host so it doesn't depend on firmware state */
+	sam460ex_usb_host_init();
 
 #ifdef SAM460EX_FDT
 	/*

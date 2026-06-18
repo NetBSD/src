@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.6 2026/06/15 19:21:15 rkujawa Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.7 2026/06/18 21:23:01 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -256,6 +256,7 @@
 #define	DCR_SDR0_USB2HOST_CFG	0x0371	/* USB 2.0 host config */
 #define	DCR_SDR0_SRST1		0x0201	/* Soft Reset 1 (SATA etc., 460EX) */
 #define	  SDR0_SRST1_SATA_RESET	  0x00020001	/* SATA core+sub in reset */
+#define	  SDR0_SRST1_USBHOST	  0x00000008	/* USB 2.0 host controller */
 
 #define	DCR_SDR0_SRST0		0x0200	/* Soft Reset */
 #define	  SDR0_SRST0_BGO	  (1 << 31)	/* PLB4 to OPB bridge */
