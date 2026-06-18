@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.184 2023/03/23 19:53:01 riastradh Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.185 2026/06/18 19:58:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.184 2023/03/23 19:53:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.185 2026/06/18 19:58:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2709,9 +2709,11 @@ nfsrv_readdir(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *
 		toff = fxdr_unsigned(u_quad_t, *tl++);
 	}
 	off = toff;
-	cnt = fxdr_unsigned(int, *tl);
-	siz = ((cnt + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
+	cnt = fxdr_unsigned(int, *tl);
+	if (cnt > xfer || cnt < 0)
+		cnt = xfer;
+	siz = ((cnt + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	if (siz > xfer)
 		siz = xfer;
 	fullsiz = siz;
@@ -2966,11 +2968,15 @@ nfsrv_readdirplus(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct l
 	verf = fxdr_hyper(tl);
 #endif
 	tl += 2;
-	siz = fxdr_unsigned(int, *tl++);
-	cnt = fxdr_unsigned(int, *tl);
 	off = toff;
-	siz = ((siz + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	xfer = NFS_SRVMAXDATA(nfsd);
+	siz = fxdr_unsigned(int, *tl++);
+	if (siz > xfer || siz < 0)
+		siz = xfer;
+	cnt = fxdr_unsigned(int, *tl);
+	if (cnt > xfer || cnt < 0)
+		cnt = xfer;
+	siz = ((siz + NFS_SRVDIRBLKSIZ - 1) & ~(NFS_SRVDIRBLKSIZ - 1));
 	if (siz > xfer)
 		siz = xfer;
 	fullsiz = siz;
