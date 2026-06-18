@@ -1,4 +1,4 @@
-/*	$NetBSD: sam460ex_locore.S,v 1.1 2026/06/16 21:51:20 rkujawa Exp $	*/
+/*	$NetBSD: sam460ex_locore.S,v 1.2 2026/06/18 23:18:24 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -102,6 +102,13 @@ __start:
 	iccci	%r0, %r0
 	dccci	%r0, %r0
 	sync
+	isync
+
+	/* Enable the FPU. */
+	mfspr	%r3, SPR_CCR0
+	lis	%r4, 0x0010		/* CCR0[DAPUIB], bit 11 = 0x00100000 */
+	andc	%r3, %r3, %r4
+	mtspr	SPR_CCR0, %r3
 	isync
 
 	/* TLB writes below tag entries with MMUCR[STID]; want TID=0 */
