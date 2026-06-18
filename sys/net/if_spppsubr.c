@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.288 2026/06/09 06:43:14 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.289 2026/06/18 09:14:58 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.288 2026/06/09 06:43:14 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.289 2026/06/18 09:14:58 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -298,10 +298,11 @@ enum auth_role {
 	SPPP_AUTH_PEER = __BIT(1),
 };
 
-static struct sppp *spppq;
-static kmutex_t *spppq_lock = NULL;
-static callout_t keepalive_ch;
-static unsigned int sppp_keepalive_cnt = 0;
+static struct sppp	*spppq;
+static kmutex_t		*spppq_lock = NULL;
+static callout_t	 keepalive_ch;
+static unsigned int	 sppp_keepalive_cnt = 0;
+unsigned int		 sppp_keepalive_interval = SPPP_KEEPALIVE_INTERVAL;
 
 pktq_rps_hash_func_t sppp_pktq_rps_hash_p;
 
@@ -1031,7 +1032,8 @@ sppp_attach(struct ifnet *ifp)
 	/* Initialize keepalive handler. */
 	if (! spppq) {
 		callout_init(&keepalive_ch, CALLOUT_MPSAFE);
-		callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
+		callout_setfunc(&keepalive_ch, sppp_keepalive, NULL);
+		callout_schedule(&keepalive_ch, hz * sppp_keepalive_interval);
 	}
 
 	if (! spppq_lock)
@@ -5442,7 +5444,7 @@ sppp_keepalive(void *dummy)
 		SPPP_UNLOCK(sp);
 	}
 	sppp_keepalive_cnt++;
-	callout_reset(&keepalive_ch, hz * SPPP_KEEPALIVE_INTERVAL, sppp_keepalive, NULL);
+	callout_schedule(&keepalive_ch, hz * sppp_keepalive_interval);
 
 	SPPPQ_UNLOCK();
 }
