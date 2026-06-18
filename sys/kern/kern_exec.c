@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.532 2026/05/10 21:38:42 thorpej Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.533 2026/06/18 20:02:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.532 2026/05/10 21:38:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.533 2026/06/18 20:02:20 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -957,22 +957,35 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 
 	base_vcp = NULL;
 
-	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
+	for (i = 0; i < epp->ep_vmcmds.evs_used; i++) {
 		struct exec_vmcmd *vcp;
 
 		vcp = &epp->ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
+
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
-			KASSERTMSG(base_vcp != NULL,
-			    "%s: relative vmcmd with no base", __func__);
-			KASSERTMSG((vcp->ev_flags & VMCMD_BASE) == 0,
-			    "%s: illegal base & relative vmcmd", __func__);
+			if (base_vcp == NULL) {
+				DPRINTF(("%s: relative vmcmd %zu with no base",
+				    __func__, i));
+				error = EINVAL;
+				break;
+			}
+			if ((vcp->ev_flags & VMCMD_BASE) != 0) {
+				DPRINTF(("%s: illegal base|relative vmcmd %zu",
+				    __func__, i));
+				error = EINVAL;
+				break;
+			}
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(l, vcp);
-		if (error)
+		if (error) {
 			DUMPVMCMDS(epp, i, error);
-		if (vcp->ev_flags & VMCMD_BASE)
-			base_vcp = vcp;
+			DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i,
+			    error));
+			break;
+		}
 	}
 
 	/* free the vmspace-creation commands, and release their references */
@@ -982,10 +995,6 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
 	vput(epp->ep_vp);
 
-	/* if an error happened, deallocate and punt */
-	if (error != 0) {
-		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
-	}
 	return error;
 }
 
