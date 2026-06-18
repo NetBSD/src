@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2218 2026/06/16 13:26:31 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2219 2026/06/18 04:34:10 taca Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -127,12 +127,12 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.20.23/MPL
-Current Vers:	9.20.23/9.21.22/MPL
+Version:	9.20.24/MPL
+Current Vers:	9.20.24/9.21.23/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	https://www.isc.org/software/bind/
-Date:		2026-05-20
+Date:		2026-06-17
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
@@ -1292,11 +1292,11 @@ now to do a new import.
 
 Package:	Postfix
 Version:	3.11.2
-Current Vers:	3.11.3
+Current Vers:	3.11.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
 Home Page:	https://www.postfix.org/
-Date: 		2026-05-17
+Date: 		2026-06-17
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
