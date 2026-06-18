@@ -226,76 +226,72 @@ siioctl_send(struct si_channel *ch, struct si_payload *p)
 {
 	int err, outsize_r, insize_r;
 	struct si_softc *sc;
-	struct si_packet pk;
+	struct si_packet *pk;
+	struct si_request *req;
 	struct bintime bt;
 	struct timeval tv;
-	unsigned has_ch_lock = 0;
+	unsigned has_lock = 0;
 
 	err = 0;
 	sc = ch->ch_sc;
+
+	req = kmem_alloc(sizeof(struct si_request), KM_SLEEP);
+	pk = kmem_alloc(sizeof(struct si_packet), KM_SLEEP);
+
+	req->pk = pk;
+	cv_init(&req->cv, "siioctl");
+	req->status = -1;
 
 	/* siiobuf must to be written in increments of 4 bytes */
 	outsize_r = roundup(p->outsize, 4);
 	insize_r = roundup(p->insize, 4);
 
-	pk.out = kmem_zalloc(outsize_r, KM_SLEEP);
-	pk.in = kmem_zalloc(insize_r, KM_SLEEP);
-	pk.chan = ch->ch_index;
-	pk.outsize = p->outsize;
-	pk.insize = p->insize;
+	pk->out = kmem_zalloc(outsize_r, KM_SLEEP);
+	pk->in = kmem_zalloc(insize_r, KM_SLEEP);
+	pk->chan = ch->ch_index;
+	pk->outsize = p->outsize;
+	pk->insize = p->insize;
 
-	if ((err = copyin(p->out, pk.out, pk.outsize)) != 0) {
+	if ((err = copyin(p->out, pk->out, pk->outsize)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	mutex_enter(&ch->ch_lock);
-	if (ch->ch_send_status == CH_UNAVAIL) {
-		err = EBUSY;
-		mutex_exit(&ch->ch_lock);
-		goto si_send_cleanup;
-	}
-	ch->ch_pkid++;
-	pk.id = ch->ch_pkid;
-	ch->ch_pk = &pk;
-	ch->ch_send_status = CH_UNAVAIL;
-	mutex_exit(&ch->ch_lock);
-
-	if ((err = si_send(sc, &pk)) != 0) {
+	if ((err = si_send(sc, req)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	mutex_enter(&ch->ch_lock);
-	tv.tv_sec = 1;
-	tv.tv_usec = 0;
+	mutex_enter(&sc->txn_lock);
+	has_lock = 1;
+	tv.tv_sec = 0;
+	tv.tv_usec = 250000;
 	timeval2bintime(&tv, &bt);
-	while (ch->ch_send_status == CH_UNAVAIL) {
-		err = cv_timedwaitbt(&ch->ch_cv, &ch->ch_lock, &bt,
+	while (req->status != 0) {
+		err = cv_timedwaitbt(&req->cv, &sc->txn_lock, &bt,
 		    DEFAULT_TIMEOUT_EPSILON);
 		if (err) {
 			KASSERT(err == EWOULDBLOCK);
 			err = ETIMEDOUT;
-			ch->ch_send_status = CH_AVAIL;
-			mutex_exit(&ch->ch_lock);
 			goto si_send_cleanup;
 		}
 
 	}
-	has_ch_lock = 1;
 
-	if ((err = copyout(pk.in, p->in, pk.insize)) != 0) {
+	if ((err = copyout(pk->in, p->in, pk->insize)) != 0) {
 		goto si_send_cleanup;
 	}
 
-	if ((err = copyout(&pk.status, p->status, sizeof(uint32_t))) != 0) {
+	if ((err = copyout(&pk->status, p->status, sizeof(uint32_t))) != 0) {
 		goto si_send_cleanup;
 	}
 si_send_cleanup:
-	kmem_free(pk.out, outsize_r);
-	kmem_free(pk.in, insize_r);
-	pk.in = NULL;
-	pk.out = NULL;
-	if (has_ch_lock) {
-		mutex_exit(&ch->ch_lock);
+	if (!has_lock) {
+		mutex_enter(&sc->txn_lock);
 	}
+	kmem_free(pk->out, outsize_r);
+	kmem_free(pk->in, insize_r);
+	kmem_free(pk, sizeof(struct si_packet));
+	cv_destroy(&req->cv);
+	kmem_free(req, sizeof(struct si_request));
+	mutex_exit(&sc->txn_lock);
 	return err;
 }

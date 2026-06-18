@@ -32,10 +32,12 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 #include <sys/systm.h>
 #include <sys/bitops.h>
 #include <sys/mutex.h>
 #include <sys/tty.h>
+#include <sys/queue.h>
 #include <uvm/uvm_extern.h>
 
 #include <machine/wii.h>
@@ -48,6 +50,11 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #include "si.h"
 #include "gcpad_rdesc.h"
 
+#define TXN_MAX 50
+struct sicomcsr_txn {
+	struct si_request		*req;
+	SIMPLEQ_ENTRY(sicomcsr_txn)	entries;
+};
 
 static int	si_match(device_t, cfdata_t, void *);
 static void	si_attach(device_t, device_t, void *);
@@ -57,7 +64,6 @@ static void	si_softintr(void *);
 
 static int	si_rescan(device_t, const char *, const int *);
 static int	si_print(void *, const char *);
-static void	si_send_complete(struct work *, void *);
 
 static void	si_get_report_desc(void *, void **, int *);                   
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
@@ -67,12 +73,17 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
+static void			si_send_complete(struct work *, void *);
+static struct si_request *	next_active_req(struct si_softc *);
+static void			txn_softintr(void *);
+
 static kmutex_t 		sicomcsr_lock;
-static kcondvar_t		sicomcsr_cv;
+static void			*txn_si;
 static struct work		sicomcsr_work;
 static struct workqueue		*sicomcsr_wqp;
+static int			txn_len;
 
-static int cur_chan = CH_AVAIL;
+SIMPLEQ_HEAD(simplehead, sicomcsr_txn) head = SIMPLEQ_HEAD_INITIALIZER(head);
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
@@ -107,7 +118,7 @@ si_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&sicomcsr_cv, "sicmocsr");
+	mutex_init(&sc->txn_lock, MUTEX_DEFAULT, IPL_VM);
 
 	err = workqueue_create(&sicomcsr_wqp, "si_tcint", si_send_complete,
 	    sc, PRI_NONE, IPL_VM, 0);
@@ -115,6 +126,10 @@ si_attach(device_t parent, device_t self, void *aux)
 		aprint_normal("si: failed to create workqueue\n");
 		sicomcsr_wqp = NULL;
 	}
+
+	txn_len = 0;
+	txn_si = softint_establish(SOFTINT_SERIAL, txn_softintr, sc);
+	KASSERT(txn_si != NULL);
 
 	for (chan = 0; chan < SI_NUM_CHAN; chan++) {
 		struct si_channel *ch;
@@ -125,8 +140,6 @@ si_attach(device_t parent, device_t self, void *aux)
 		ch->ch_index = chan;
 		ch->ch_gcport_dev = NULL;
 		ch->ch_uhid_dev = NULL;
-		ch->ch_send_status = CH_AVAIL;
-		ch->ch_pkid = 0;
 		mutex_init(&ch->ch_lock, MUTEX_DEFAULT, IPL_VM);
 		cv_init(&ch->ch_cv, "sich");
 		ch->ch_si = softint_establish(SOFTINT_SERIAL,
@@ -416,13 +429,12 @@ si_write(void *cookie, void *data, int len)
 }
 
 int
-si_send(struct si_softc *sc, struct si_packet *pk)
+si_send(struct si_softc *sc, struct si_request *req)
 {
-	unsigned chan;
-	uint32_t cnt;
-	int err;
-	struct bintime bt;
-	struct timeval tv;
+	struct si_packet *pk;
+	struct sicomcsr_txn *txn;
+
+	pk = req->pk;
 
 	if (pk->chan > 3) {
 		return EINVAL;
@@ -436,32 +448,50 @@ si_send(struct si_softc *sc, struct si_packet *pk)
 		return EINVAL;
 	}
 
-	chan = pk->chan;
+
+	mutex_enter(&sc->txn_lock);
+	if (txn_len > TXN_MAX) {
+		return EBUSY;
+	}
+
+	txn = kmem_alloc(sizeof(struct sicomcsr_txn), KM_SLEEP);
+	txn->req = req;
+	SIMPLEQ_INSERT_TAIL(&head, txn, entries);
+	txn_len++;
+
+	if (txn_len == 1) {
+		softint_schedule(txn_si);
+	}
+	mutex_exit(&sc->txn_lock);
+	
+	return 0;
+}
+
+static void
+txn_softintr(void *arg)
+{
+	uint32_t cnt;
+	struct si_softc *sc;
+	struct si_request *req;
+	struct si_packet *pk;
+
+	sc = arg;
+	req = NULL;
+
+	if ((req = next_active_req(sc)) == NULL) {
+		return;
+	}
+
+	pk = req->pk;
 
 	mutex_enter(&sicomcsr_lock);
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	timeval2bintime(&tv, &bt);
-	while (cur_chan != CH_AVAIL) {
-		err = cv_timedwaitbt(&sicomcsr_cv, &sicomcsr_lock, &bt,
-		    DEFAULT_TIMEOUT_EPSILON);
-		if (err) {
-			KASSERT(err == EWOULDBLOCK);
-			mutex_exit(&sicomcsr_lock);
-			return ETIMEDOUT;
-		}
-	}
-	cur_chan = chan;
-	mutex_exit(&sicomcsr_lock);
-
 	SIIOBUF_CLEAR(sc);
-	pk->status = 0;
 
 	/* outsize is number of bytes. we need number of words */
 	cnt = ((pk->outsize+3)/4);
 	SIIOBUF_WR(sc, pk->out, cnt);
 
-	WR4(sc, SISR, SISR_ERROR_MASK(chan));
+	WR4(sc, SISR, SISR_ERROR_MASK(pk->chan));
 
 	WR4(sc, SICOMCSR,
 	    SICOMCSR_CH_EN |
@@ -470,52 +500,80 @@ si_send(struct si_softc *sc, struct si_packet *pk)
 	    SICOMCSR_RDSTINTMSK |
 	    __SHIFTIN(pk->outsize, SICOMCSR_OUTLNGTH) |
 	    __SHIFTIN(pk->insize, SICOMCSR_INLNGTH) |
-	    __SHIFTIN(chan, SICOMCSR_CHANNEL) |
+	    __SHIFTIN(pk->chan, SICOMCSR_CHANNEL) |
 	    SICOMCSR_TSTART
 	);
+	mutex_exit(&sicomcsr_lock);
+}
 
-	return 0;
+static struct si_request *
+next_active_req(struct si_softc *sc)
+{
+	struct sicomcsr_txn *cur;
+
+	mutex_enter(&sc->txn_lock);
+	while (!SIMPLEQ_EMPTY(&head)) {
+		cur = SIMPLEQ_FIRST(&head);
+		if (cur->req != NULL) {
+			mutex_exit(&sc->txn_lock);
+			return cur->req;
+		}
+		SIMPLEQ_REMOVE_HEAD(&head, entries);
+		kmem_free(cur, sizeof(struct sicomcsr_txn));
+		txn_len--;
+	}
+	mutex_exit(&sc->txn_lock);
+
+	return NULL;
 }
 
 static void
 si_send_complete(struct work *, void *arg)
 {
 	struct si_softc *sc;
-	struct si_channel *ch;
 	struct si_packet *pk;
+	struct sicomcsr_txn *txn;
+	struct si_request *req;
 	uint32_t comcsr, sisr, sisr_mask, shift_amt, status;
-	int completed_chan;
-
-	mutex_enter(&sicomcsr_lock);
-	completed_chan = cur_chan;
-	if (cur_chan == CH_AVAIL) {
-		goto unlock_sicomcsr;
-	}
+	unsigned chan;
 
 	sc = arg;
-	ch = &sc->sc_chan[completed_chan];
+	req = NULL;
 
-	mutex_enter(&ch->ch_lock);
-	pk = ch->ch_pk;
-	if (ch->ch_send_status == CH_UNAVAIL && ch->ch_pkid == pk->id) {
+	mutex_enter(&sc->txn_lock);
+	if (SIMPLEQ_EMPTY(&head)) {
+		mutex_exit(&sc->txn_lock);
+		return;
+	}
+
+	txn = SIMPLEQ_FIRST(&head);
+	SIMPLEQ_REMOVE_HEAD(&head, entries);
+	req = txn->req;
+	txn_len--;
+
+	if (req != NULL) {
+		mutex_enter(&sicomcsr_lock);
+		pk = req->pk;
+		chan = pk->chan;
 		SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
 		comcsr = RD4(sc, SICOMCSR);
-
 		if (ISSET(comcsr, SICOMCSR_COMERR)) {
 			sisr = RD4(sc, SISR);
-			shift_amt = 8 * (SI_NUM_CHAN - 1 - completed_chan);
-			sisr_mask = sisr & SISR_ERROR_MASK(completed_chan);
+			shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
+			sisr_mask = sisr & SISR_ERROR_MASK(chan);
 			status = (sisr_mask >> shift_amt) & 0x3F;
 			pk->status = status;
 		}
 
-		ch->ch_send_status = CH_AVAIL;
-		cv_signal(&ch->ch_cv);
+		mutex_exit(&sicomcsr_lock);
+		req->status = 0;
+		cv_signal(&req->cv);
 	}
-	mutex_exit(&ch->ch_lock);
 
-	cur_chan = CH_AVAIL;
-	cv_signal(&sicomcsr_cv);
-unlock_sicomcsr:
-	mutex_exit(&sicomcsr_lock);
+	kmem_free(txn, sizeof(struct sicomcsr_txn));
+
+	if (!SIMPLEQ_EMPTY(&head)) {
+		softint_schedule(txn_si);
+	}
+	mutex_exit(&sc->txn_lock);
 }

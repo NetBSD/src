@@ -109,7 +109,6 @@
 #define CH_UNAVAIL 0
 
 struct si_softc;
-struct si_packet;
 
 struct si_channel {
 	struct si_softc		*ch_sc;
@@ -129,9 +128,6 @@ struct si_channel {
 	void			*ch_desc;
 	int			ch_descsize;
 	void			*ch_si;
-	struct si_packet	*ch_pk;
-	unsigned		ch_pkid;
-	int			ch_send_status;
 	struct workqueue	*ch_wqp;
 	struct work		ch_work;
 };
@@ -142,6 +138,7 @@ struct si_softc {
 	bus_space_handle_t	sc_bsh;
 
 	struct si_channel	sc_chan[SI_NUM_CHAN];
+	kmutex_t		txn_lock;
 };
 
 struct si_attach_args {
@@ -167,5 +164,11 @@ struct si_packet {
 	uint32_t	*out;		/* buffer to send out to ext device */
 };
 
-int si_send(struct si_softc *sc, struct si_packet*);
+struct si_request {
+	kcondvar_t		cv;
+	struct si_packet	*pk;
+	unsigned		status;
+};
+
+int si_send(struct si_softc *sc, struct si_request *);
 #endif /* _WII_DEV_SI_H_ */
