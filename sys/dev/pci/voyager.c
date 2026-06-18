@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.20 2025/09/15 13:23:03 thorpej Exp $	*/
+/*	$NetBSD: voyager.c,v 1.21 2026/06/18 00:44:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.20 2025/09/15 13:23:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.21 2026/06/18 00:44:20 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.20 2025/09/15 13:23:03 thorpej Exp $")
 #include "opt_voyager.h"
 #include "voyagerfb.h"
 #include "pwmclock.h"
+#include "vac.h"
 
 #ifdef VOYAGER_DEBUG
 #define DPRINTF aprint_normal
@@ -178,6 +179,9 @@ voyager_attach(device_t parent, device_t self, void *aux)
 
 	/* disable all interrupts */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK, 0);
+	/* ack anything firmware left pending */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_CLEAR_R,
+	    0xffffffff);
 	
 	/* initialize handler list */
 	for (i = 0; i < 32; i++) {
@@ -187,24 +191,28 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		    EVCNT_TYPE_INTR, NULL, "voyager", sc->sc_intrs[i].vih_name);
 	}
 
-	/* Map and establish the interrupt. */
+	/*
+	 * Map and establish the interrupt (or not). 
+	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
-		return;
+		aprint_normal_dev(self,
+		    "no interrupt mapped, continuing without\n");
+		sc->sc_ih = NULL;
+	} else {
+		intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf,
+		    sizeof(intrbuf));
+		sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_VM,
+		    voyager_intr, NULL, /* so we get the clock frame instead */
+		    device_xname(self));
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(self, "couldn't establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			return;
+		}
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
-
-	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_VM,
-	    voyager_intr, NULL, /* so we get the clock frame instead */
-	    device_xname(self));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		return;
-	}
-	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 #ifdef VOYAGER_DEBUG
 	voyager_print_pwm(sc, SM502_PWM0);
@@ -230,7 +238,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &vaa, voyager_print,
 	    CFARGS(.iattr = "voyagerbus"));
 #endif
-#ifdef notyet
+#if NVAC > 0
 	strcpy(vaa.vaa_name, "vac");
 	config_found(sc->sc_dev, &vaa, voyager_print,
 	    CFARGS(.iattr = "voyagerbus"));

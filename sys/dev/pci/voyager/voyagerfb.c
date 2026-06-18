@@ -1,4 +1,4 @@
-/*	$NetBSD: voyagerfb.c,v 1.34 2023/12/20 05:08:34 thorpej Exp $	*/
+/*	$NetBSD: voyagerfb.c,v 1.35 2026/06/18 00:44:21 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.34 2023/12/20 05:08:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyagerfb.c,v 1.35 2026/06/18 00:44:21 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,7 +209,7 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
 	uint32_t		reg;
-	bool			is_console;
+	bool			is_console = false;
 	int i, j;
 	uint8_t			cmap[768];
 
@@ -261,6 +261,20 @@ voyagerfb_attach(device_t parent, device_t self, void *aux)
 		SM502_PANEL_FB_WIDTH) & SM502_FBW_WIN_WIDTH_MASK) >> 16;
 	sc->sc_height = (bus_space_read_4(sc->sc_memt, sc->sc_regh, 	
 		SM502_PANEL_FB_HEIGHT) & SM502_FBH_WIN_HEIGHT_MASK) >> 16;
+
+	/*
+	 * Demand an enabled panel to attach...
+	 */
+	reg = bus_space_read_4(sc->sc_memt, sc->sc_regh,
+	    SM502_PANEL_DISP_CTRL);
+	if (sc->sc_fbsize == 0 ||
+	    (reg & SM502_PDC_PANEL_ENABLE) == 0 ||
+	    sc->sc_width == 0 ||
+	    (uint32_t)sc->sc_width * sc->sc_height > sc->sc_fbsize) {
+		aprint_normal_dev(self,
+		    "panel not initialized by firmware, not attaching\n");
+		return;
+	}
 
 #ifdef VOYAGERFB_DEPTH_32
 	sc->sc_depth = 32;
@@ -904,7 +918,7 @@ voyagerfb_feed8(struct voyagerfb_softc *sc, uint8_t *data, int len)
 	int i;
 
 	for (i = 0; i < ((len + 3) & 0xfffc); i++) {
-		*port = *data;
+		*port = htole32(*data);
 		data++;
 	}
 }
@@ -913,12 +927,13 @@ static inline void
 voyagerfb_feed16(struct voyagerfb_softc *sc, uint16_t *data, int len)
 {
 	uint32_t *port = (uint32_t *)sc->sc_dataport;
+	uint8_t *d8 = (uint8_t *)data;
 	int i;
 
 	len = len << 1;
 	for (i = 0; i < ((len + 1) & 0xfffe); i++) {
-		*port = *data;
-		data++;
+		*port = htole32(le16dec(d8));
+		d8 += 2;
 	}
 }
 
@@ -1162,15 +1177,15 @@ voyagerfb_putchar_aa8(void *cookie, int row, int col, u_int c, long attr)
 			/* write in 32bit chunks */
 			if ((j & 3) == 3) {
 				bus_space_write_4(sc->sc_memt, sc->sc_regh,
-				    SM502_DATAPORT, be32toh(latch));
+				    SM502_DATAPORT, bswap32(latch));
 				latch = 0;
 			}
 		}
 		/* if we have pixels left in latch write them out */
 		if ((j & 3) != 0) {
-			latch = latch << ((4 - (i & 3)) << 3);	
+			latch = latch << ((4 - (i & 3)) << 3);
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
-			    SM502_DATAPORT, be32toh(latch));
+			    SM502_DATAPORT, bswap32(latch));
 		}
 		if (pad)
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sm502reg.h,v 1.7 2013/03/13 21:31:01 macallan Exp $	*/
+/*	$NetBSD: sm502reg.h,v 1.8 2026/06/18 00:44:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2009 Michael Lorenz
@@ -394,14 +394,17 @@
 #define		SM502_AC97_S3_VALID	0x1000
 #define		SM502_AC97_S4_VALID	0x0800
 #define SM502_AC97_TX_ADDR	0x0A0104
-#define		SM502_AC97_READ		0x00100000	/* write otherwise */
-#define		SM502_AC97_ADDR_MASK	0x000fe000
+#define		SM502_AC97_READ		0x00080000	/* bit 19; write otherwise */
+#define		SM502_AC97_ADDR_MASK	0x0007f000	/* index, bits 18:12 */
+#define		SM502_AC97_ADDR_SHIFT	12
 #define SM502_AC97_TX_DATA	0x0A0108
 #define		SM502_AC97_DATA_MASK	0x000ffff0
 #define SM502_AC97_TX_LEFT	0x0A010C
 #define SM502_AC97_TX_RIGHT	0x0A0110
 #define SM502_AC97_RX_TAG	0x0A0140
 #define SM502_AC97_RX_ADDR	0x0A0144
+#define		SM502_AC97_R3		0x00000800 /* slot3 on-demand: 0=send */
+#define		SM502_AC97_R4		0x00000400 /* slot4 on-demand: 0=send */
 #define SM502_AC97_RX_DATA	0x0A0148
 #define SM502_AC97_RX_LEFT	0x0A014C
 #define SM502_AC97_RX_RIGHT	0x0A0150
@@ -442,7 +445,10 @@
 #define SM502_uC_8051_INTR	0x000b0008
 #define SM502_uC_CPU_INTR	0x000b000c
 
-#define SM502_uC_SRAM_PROG	0x00dc0000	/* only readable in RESET */
-#define SM502_uC_SRAM_DATA	0x00dc3000
+#define SM502_uC_SRAM_PROG	0x000c0000	/* 12KB, host R/W only in RESET */
+					/* (8051 code space 0x0000) */
+#define SM502_uC_SRAM_DUALPORT	0x000c3000	/* 4KB shared buffer, HW-verified */
+					/* (8051 xdata 0x3000; right after the */
+					/* 12KB program SRAM, no gap) */
 
 #endif /* SM502REG_H */
