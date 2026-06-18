@@ -1,11 +1,11 @@
-#	$NetBSD: SAM460EX,v 1.2 2026/06/17 15:08:53 rkujawa Exp $
+#	$NetBSD: SAM460EX,v 1.3 2026/06/18 00:44:58 rkujawa Exp $
 #
 #	SAM460EX -- ACube Sam460ex (AMCC 460EX)
 #
 
 include 	"arch/evbppc/conf/std.sam460ex"
 
-#ident 		"SAM460EX-$Revision: 1.2 $"
+#ident 		"SAM460EX-$Revision: 1.3 $"
 
 maxusers	32
 
@@ -93,6 +93,10 @@ pci*	at ppb? bus ?
 voyager0 at pci? dev ? function ?	# SM502 multimedia processor
 voyagerfb0 at voyager0			# SM502 framebuffer console
 #iic*	at voyager0			# SM502 DDC/I2C bus
+vac0	at voyager0			# SM502 AC97-link (Realtek ALC655)
+
+# audio
+audio*	at audiobus?
 
 # selected via console=pci
 radeonfb* at pci? dev ? function ?	# ATI Radeon R100 - R3XX
