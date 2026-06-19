@@ -9,11 +9,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from pathlib import Path
+
 import shutil
 
 from isctest.kasp import private_type_record
 from isctest.run import EnvCmd
-from isctest.template import Nameserver, TrustAnchor, Zone
+from isctest.template import NS2, NS3, TrustAnchor, Zone
 from isctest.vars.algorithms import Algorithm
 
 import isctest
@@ -50,7 +52,7 @@ def configure_tld(zonename: str, delegations: list[Zone]) -> Zone:
     templates.render(f"ns2/{outfile}", tdata, template=f"ns2/{template}")
     signer(f"-P -x -O full -o {zonename} -f {outfile}.signed {outfile}", cwd="ns2")
 
-    return Zone(zonename, f"{outfile}.signed", Nameserver("ns2", "10.53.0.2"))
+    return Zone(zonename, NS2, filepath=Path(f"{outfile}.signed"))
 
 
 def configure_root(delegations: list[Zone]) -> TrustAnchor:
@@ -146,7 +148,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     TactN = "now-7d"
     TsbmN = "now-161h"
@@ -164,7 +166,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
         # Step 2:
         # After the publication interval has passed the DNSKEY is OMNIPRESENT.
         zonename = f"step2.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the new algorithm keys have been introduced is 3 hours.
         TpubN1 = "now-3h"
@@ -187,7 +189,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
         # Step 3:
         # The zone signatures are also OMNIPRESENT.
         zonename = f"step3.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the new algorithm keys have been introduced is 7 hours.
         TpubN1 = "now-7h"
@@ -211,7 +213,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
         # Step 4:
         # The DS is swapped and can become OMNIPRESENT.
         zonename = f"step4.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the DS has been swapped is 3 hours.
         TpubN1 = "now-10h"
@@ -235,7 +237,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
         # Step 5:
         # The DNSKEY is removed long enough to be HIDDEN.
         zonename = f"step5.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the DNSKEY has been removed is 2 hours.
         TpubN1 = "now-12h"
@@ -259,7 +261,7 @@ def configure_algo_csk(tld: str, policy: str, reconfig: bool = False) -> list[Zo
         # Step 6:
         # The RRSIGs have been removed long enough to be HIDDEN.
         zonename = f"step6.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # Additional time passed: 7h.
         TpubN1 = "now-19h"
@@ -294,7 +296,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     TactN = "now-7d"
     TsbmN = "now-161h"
@@ -319,7 +321,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
         # Step 2:
         # After the publication interval has passed the DNSKEY is OMNIPRESENT.
         zonename = f"step2.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the new algorithm keys have been introduced is 3 hours.
         # Tsbm(N+1) = TpubN1 + Ipub = now + TTLsig + Dprp = now - 3h + 6h + 1h = now + 4h
@@ -364,7 +366,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
         # Step 3:
         # The zone signatures are also OMNIPRESENT.
         zonename = f"step3.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the new algorithm keys have been introduced is 7 hours.
         TpubN1 = "now-7h"
@@ -408,7 +410,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
         # Step 4:
         # The DS is swapped and can become OMNIPRESENT.
         zonename = f"step4.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the DS has been swapped is 3 hours.
         TpubN1 = "now-10h"
@@ -452,7 +454,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
         # Step 5:
         # The DNSKEY is removed long enough to be HIDDEN.
         zonename = f"step5.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # The time passed since the DNSKEY has been removed is 2 hours.
         TpubN1 = "now-12h"
@@ -496,7 +498,7 @@ def configure_algo_ksk_zsk(tld: str, reconfig: bool = False) -> list[Zone]:
         # Step 6:
         # The RRSIGs have been removed long enough to be HIDDEN.
         zonename = f"step6.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # Additional time passed: 7h.
         TpubN1 = "now-19h"
@@ -551,7 +553,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     TactN = "now-7d"
     keytimes = f"-P {TactN} -A {TactN}"
@@ -567,7 +569,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # Step 2:
     # It is time to introduce the new CSK.
     zonename = f"step2.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # KSK: Tpub(N+1) <= Tact(N) + Lksk - IpubC
@@ -599,7 +601,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # Step 3:
     # It is time to submit the DS and to roll signatures.
     zonename = f"step3.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     #
@@ -664,7 +666,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # (which is 26d3h).  The DS is swapped after Iret (which is 4h).
     # In other words, the DS is swapped before all zone signatures are replaced.
     zonename = f"step4.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Trem(N)    = Tret(N) - Iret + IretZ
@@ -715,7 +717,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # After the DS is swapped in step 4, also the KRRSIG records can be removed.
     # At this time these have all become hidden.
     zonename = f"step5.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract DNSKEY TTL plus zone propagation delay from all the times (2h).
     TpubN = "now-4470h"
@@ -750,7 +752,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # After the retire interval has passed the predecessor DNSKEY can be
     # removed from the zone.
     zonename = f"step6.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Trem(N) = Tret(N) + IretZ
@@ -800,7 +802,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # Step 7:
     # Some time later the predecessor DNSKEY enters the HIDDEN state.
     zonename = f"step7.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract DNSKEY TTL plus zone propagation delay from all the times (2h).
     TpubN = "now-5093h"
@@ -834,7 +836,7 @@ def configure_cskroll1(tld: str, policy: str) -> list[Zone]:
     # Step 8:
     # The predecessor DNSKEY can be purged.
     zonename = f"step8.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract purge-keys interval from all the times (1h).
     TpubN = "now-5094h"
@@ -882,7 +884,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     TactN = "now-7d"
     keytimes = f"-P {TactN} -A {TactN}"
@@ -898,7 +900,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 2:
     # It is time to introduce the new CSK.
     zonename = f"step2.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # KSK: Tpub(N+1) <= Tact(N) + Lksk - IpubC
@@ -930,7 +932,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 3:
     # It is time to submit the DS and to roll signatures.
     zonename = f"step3.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     #
@@ -995,7 +997,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # The DS is swapped after Dreg + Iret (1w3h). In other words, the zone
     # signatures are replaced before the DS is swapped.
     zonename = f"step4.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Trem(N)    = Tret(N) + IretZ
@@ -1048,7 +1050,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Some time later the DS can be swapped and the old DNSKEY can be removed from
     # the zone.
     zonename = f"step5.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract Iret (170h) - IretZ (38h) = 132h.
     #
@@ -1091,7 +1093,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 6:
     # Some time later the predecessor DNSKEY enters the HIDDEN state.
     zonename = f"step6.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract DNSKEY TTL plus zone propagation delay (2h).
     #
@@ -1134,7 +1136,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 7:
     # The predecessor DNSKEY can be purged, but purge-keys is disabled.
     zonename = f"step7.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract 90 days (default, 2160h) from all the times.
     #
@@ -1178,7 +1180,7 @@ def configure_cskroll2(tld: str, policy: str) -> list[Zone]:
     # Step 8:
     # The predecessor DNSKEY can be purged.
     zonename = f"step8.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract purge-keys interval from all the times (1h).
     TpubN = "now-5094h"
@@ -1224,14 +1226,14 @@ def configure_enable_dnssec(tld: str, policy: str) -> list[Zone]:
     # This is an unsigned zone and named should perform the initial steps of
     # introducing the DNSSEC records in the right order.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     render_and_sign_zone(zonename, [], signing=False)
 
     # Step 2:
     # The DNSKEY has been published long enough to become OMNIPRESENT.
     zonename = f"step2.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # DNSKEY TTL:             300 seconds
     # zone-propagation-delay: 5 minutes (300 seconds)
@@ -1251,7 +1253,7 @@ def configure_enable_dnssec(tld: str, policy: str) -> list[Zone]:
     # Step 3:
     # The zone signatures have been published long enough to become OMNIPRESENT.
     zonename = f"step3.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Passed time since publication:
     # max-zone-ttl:           12 hours (43200 seconds)
@@ -1271,7 +1273,7 @@ def configure_enable_dnssec(tld: str, policy: str) -> list[Zone]:
     # Step 4:
     # The DS has been submitted long enough ago to become OMNIPRESENT.
     zonename = f"step4.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # DS TTL:                    2 hour (7200 seconds)
     # parent-propagation-delay:  1 hour (3600 seconds)
@@ -1304,7 +1306,7 @@ def configure_going_insecure(tld: str, reconfig: bool = False) -> list[Zone]:
 
         # Step 1:
         zonename = f"step1.{zone}"
-        zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+        zones.append(Zone(zonename, NS3))
         isctest.log.info(f"setup {zonename}")
         # Timing metadata.
         TpubN = "now-10d"
@@ -1330,9 +1332,7 @@ def configure_going_insecure(tld: str, reconfig: bool = False) -> list[Zone]:
         if reconfig:
             # Step 2:
             zonename = f"step2.{zone}"
-            zones.append(
-                Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3"))
-            )
+            zones.append(Zone(zonename, NS3))
             isctest.log.info(f"setup {zonename}")
             # The DS was withdrawn from the parent zone 26 hours ago.
             TremN = "now-26h"
@@ -1371,7 +1371,7 @@ def configure_straight2none(tld: str) -> list[Zone]:
     keytimes = f"-P {TpubN} -A {TpubN} -P sync {TsbmN}"
 
     zonename = f"going-straight-to-none.{tld}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Key generation.
     csk_name = keygen(f"-f KSK {keytimes} {zonename}", cwd="ns3").out.strip()
@@ -1383,9 +1383,7 @@ def configure_straight2none(tld: str) -> list[Zone]:
     render_and_sign_zone(zonename, [csk_name], extra_options="-z")
 
     zonename = f"going-straight-to-none-dynamic.{tld}"
-    zones.append(
-        Zone(zonename, f"{zonename}.db.signed", Nameserver("ns3", "10.53.0.3"))
-    )
+    zones.append(Zone(zonename, NS3, filepath=Path(f"{zonename}.db.signed")))
     isctest.log.info(f"setup {zonename}")
     # Key generation.
     csk_name = keygen(f"-f KSK {keytimes} {zonename}", cwd="ns3").out.strip()
@@ -1411,7 +1409,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Timing metadata.
     TactN = "now-7d"
@@ -1433,7 +1431,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 2:
     # It is time to introduce the new KSK.
     zonename = f"step2.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Lksk:           60d
     # Dreg:           n/a
@@ -1469,7 +1467,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 3:
     # It is time to submit the DS.
     zonename = f"step3.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Iret = DprpP + TTLds (+retire-safety)
@@ -1523,7 +1521,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 4:
     # The DS should be swapped now.
     zonename = f"step4.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Tpub(N)    = now - Lksk - Iret = now - 60d - 50h
     #            = now - 1440h - 50h = now - 1490h
@@ -1574,7 +1572,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 5:
     # The predecessor DNSKEY is removed long enough that is has become HIDDEN.
     zonename = f"step5.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract DNSKEY TTL + zone-propagation-delay from all the times (3h).
     # Tpub(N)    = now - 1490h - 3h = now - 1493h
@@ -1624,7 +1622,7 @@ def configure_ksk_doubleksk(tld: str) -> list[Zone]:
     # Step 6:
     # The predecessor DNSKEY can be purged.
     zonename = f"step6.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract purge-keys interval from all the times (1h).
     TpubN = "now-1494h"
@@ -1685,7 +1683,7 @@ def configure_ksk_3crowd(tld: str) -> list[Zone]:
     # Set up a zone that has a KSK (KEY1) and have the successor key (KEY2)
     # published as well.
     zonename = f"three-is-a-crowd.{tld}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # These times are the same as step3.ksk-doubleksk.autosign.
     TpubN = "now-60d"
@@ -1738,7 +1736,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # Step 1:
     # Introduce the first key. This will immediately be active.
     zonename = f"step1.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Timing metadata.
     TactN = "now-7d"
@@ -1760,7 +1758,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # Step 2:
     # It is time to pre-publish the successor ZSK.
     zonename = f"step2.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Tact(N) = now + Ipub - Lzsk = now + 26h - 30d
@@ -1785,7 +1783,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # After the publication interval has passed the DNSKEY of the successor ZSK
     # is OMNIPRESENT and the zone can thus be signed with the successor ZSK.
     zonename = f"step3.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # According to RFC 7583:
     # Tpub(N+1) <= Tact(N) + Lzsk - Ipub
@@ -1827,7 +1825,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # After the retire interval has passed the predecessor DNSKEY can be
     # removed from the zone.
     zonename = f"step4.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Lzsk:          30d
     # Ipub:          26h
@@ -1878,7 +1876,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # Step 5:
     # The predecessor DNSKEY is removed long enough that is has become HIDDEN.
     zonename = f"step5.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract DNSKEY TTL + zone-propagation-delay from all the times (2h).
     # Tact(N)   = now - 961h - 2h = now - 963h
@@ -1916,7 +1914,7 @@ def configure_zsk_prepub(tld: str) -> list[Zone]:
     # Step 6:
     # The predecessor DNSKEY can be purged.
     zonename = f"step6.{zone}"
-    zones.append(Zone(zonename, f"{zonename}.db", Nameserver("ns3", "10.53.0.3")))
+    zones.append(Zone(zonename, NS3))
     isctest.log.info(f"setup {zonename}")
     # Subtract purge-keys interval from all the times (1h).
     TactN = "now-964h"

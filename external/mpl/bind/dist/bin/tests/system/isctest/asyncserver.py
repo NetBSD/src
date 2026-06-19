@@ -1375,8 +1375,12 @@ class AsyncDnsServer(AsyncServer):
                 qctx.socket,
                 qctx.protocol.name,
             )
+            try:
+                response_text = str(response)
+            except OverflowError:
+                response_text = "<response not representable as text>"
             logging.debug(
-                "\n".join([f"[OUT] {l}" for l in [""] + str(response).splitlines()])
+                "\n".join([f"[OUT] {l}" for l in [""] + response_text.splitlines()])
             )
             return
 

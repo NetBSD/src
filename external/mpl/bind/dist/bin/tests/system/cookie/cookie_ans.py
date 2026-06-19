@@ -44,12 +44,8 @@ def _add_cookie(qctx: QueryContext) -> None:
     for o in qctx.query.options:
         if o.otype == dns.edns.OptionType.COOKIE:
             cookie = o
-            try:
-                if len(cookie.server) == 0:
-                    cookie.server = cookie.client
-            except AttributeError:  # dnspython<2.7.0 compat
-                if len(o.data) == 8:
-                    cookie.data *= 2
+            if len(cookie.server) == 0:
+                cookie.server = cookie.client
 
             qctx.response.use_edns(options=[cookie])
             return

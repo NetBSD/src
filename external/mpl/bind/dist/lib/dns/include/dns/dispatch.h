@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.1.1.8 2026/05/20 16:43:12 christos Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.1.1.9 2026/06/19 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -199,7 +199,7 @@ dns_dispatch_createtcp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *localaddr,
  *
  * Note: a NULL transport is different from a non-NULL transport of type
  *	 DNS_TRANSPORT_TCP, though currently their behavior is the same.
- *	 This allows for different types of transactions to be seperated
+ *	 This allows for different types of transactions to be separated
  *	 in the future if needed.
  *
  * Requires:

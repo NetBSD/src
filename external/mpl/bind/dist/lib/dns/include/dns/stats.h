@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.1.1.8 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.1.1.9 2026/06/19 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -76,7 +76,8 @@ enum {
 	dns_resstatscounter_clientquota = 43,
 	dns_resstatscounter_nextitem = 44,
 	dns_resstatscounter_priming = 45,
-	dns_resstatscounter_max = 46,
+	dns_resstatscounter_mismatchtcp = 46,
+	dns_resstatscounter_max = 47,
 
 	/*
 	 * DNSSEC stats.

@@ -1,4 +1,4 @@
-/*	$NetBSD: compress.h,v 1.1.1.7 2025/01/26 16:12:35 christos Exp $	*/
+/*	$NetBSD: compress.h,v 1.1.1.8 2026/06/19 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,7 +56,7 @@ ISC_LANG_BEGINDECLS
  */
 
 /*
- * Logarithms of hash set sizes. In the usual (small) case, allow for for a
+ * Logarithms of hash set sizes. In the usual (small) case, allow for a
  * few dozen names in the hash set. (We can't actually use every slot because
  * space is reserved for performance reasons.) For large messages, the number
  * of names is limited by the minimum size of an RR (owner, type, class, ttl,

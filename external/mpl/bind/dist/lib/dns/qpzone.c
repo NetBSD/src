@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone.c,v 1.1.1.5 2026/05/20 16:43:09 christos Exp $	*/
+/*	$NetBSD: qpzone.c,v 1.1.1.6 2026/06/19 19:52:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -177,7 +177,7 @@ struct qpznode {
 	 * and the database have both released the object) the object
 	 * is freed.
 	 *
-	 * Whenever 'erefs' is incremented from zero, we also aquire a
+	 * Whenever 'erefs' is incremented from zero, we also acquire a
 	 * node use reference (see 'qpzonedb->references' below), and
 	 * release it when 'erefs' goes back to zero. This prevents the
 	 * database from being shut down until every caller has released

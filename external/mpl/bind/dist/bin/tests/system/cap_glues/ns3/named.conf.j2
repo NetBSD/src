@@ -1,0 +1,31 @@
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	recursion yes;
+	dnssec-validation no;
+};
+
+server 10.53.0.2 {
+	// Avoid truncation of the additional section without TC, because some
+	// mandatory glues would already be in the additional section, thus the
+	// resolver wouldn't try again using TCP by itself.
+	tcp-only yes;
+};
+
+zone "." {
+	type hint;
+	file "root.hint";
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+controls {
+	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};

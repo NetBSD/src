@@ -9,8 +9,6 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from re import compile as Re
-
 import dns.rcode
 import pytest
 
@@ -27,8 +25,8 @@ pytestmark = pytest.mark.extra_artifacts(
 @pytest.fixture(scope="module")
 def transfers_complete(servers):
     for zone in ["example", "example-aes-128", "example-aes-256", "example-chacha-20"]:
-        pattern = Re(
-            f"transfer of '{zone}/IN' from 10.53.0.1#[0-9]+: Transfer completed"
+        pattern = isctest.transfer.transfer_message(
+            zone, "10.53.0.1", "Transfer completed"
         )
         for ns in ["ns2", "ns3", "ns4", "ns5"]:
             with servers[ns].watch_log_from_start() as watcher:

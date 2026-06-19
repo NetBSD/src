@@ -1,0 +1,11 @@
+$TTL 300
+@       IN SOA ns.example. root.example. (
+                1          ; serial
+                3600       ; refresh
+                1800       ; retry
+                1814400    ; expire
+                300        ; minimum
+                )
+        IN NS   ns.example.
+ns      IN A   10.53.0.2
+www     IN A   10.53.0.3

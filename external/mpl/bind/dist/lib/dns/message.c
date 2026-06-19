@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.1.1.20 2026/05/20 16:43:10 christos Exp $	*/
+/*	$NetBSD: message.c,v 1.1.1.21 2026/06/19 19:52:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1417,7 +1417,10 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 		rdata->rdclass = rdclass;
 		if (rdtype == dns_rdatatype_rrsig && rdata->flags == 0) {
 			covers = dns_rdata_covers(rdata);
-			if (covers == 0) {
+			/* A signature can only cover a real rdata type */
+			if (covers == dns_rdatatype_none ||
+			    dns_rdatatype_ismeta(covers))
+			{
 				DO_ERROR(DNS_R_FORMERR);
 			}
 		} else if (rdtype == dns_rdatatype_sig /* SIG(0) */ &&

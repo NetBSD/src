@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap_test.c,v 1.1.1.3 2026/04/07 23:58:37 christos Exp $	*/
+/*	$NetBSD: dnstap_test.c,v 1.1.1.4 2026/06/19 19:52:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
@@ -63,6 +64,7 @@ setup(void **state) {
 	 * the testdata was originally generated.
 	 */
 	setenv("TZ", "PDT8", 1);
+	tzset();
 
 	setup_loopmgr(state);
 

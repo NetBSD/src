@@ -80,6 +80,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns*/signer.out.*",
         "ns*/zones",
         "ns*/policies/*.conf",
+        "ns1/managed-keys.*",
         "ns3/legacy-keys.*",
         "ns3/dynamic-signed-inline-signing.kasp.db.signed.signed",
         "ns4/purgekeys.conf",
@@ -87,6 +88,18 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
+default_config = {
+    "dnskey-ttl": timedelta(hours=1),
+    "ds-ttl": timedelta(days=1),
+    "max-zone-ttl": timedelta(days=1),
+    "parent-propagation-delay": timedelta(hours=1),
+    "publish-safety": timedelta(hours=1),
+    "purge-keys": timedelta(days=90),
+    "retire-safety": timedelta(hours=1),
+    "signatures-refresh": timedelta(days=5),
+    "signatures-validity": timedelta(days=14),
+    "zone-propagation-delay": timedelta(minutes=5),
+}
 
 kasp_config = {
     "dnskey-ttl": timedelta(seconds=1234),
@@ -894,7 +907,7 @@ def test_kasp_default(ns3):
 
     expected_updates = [f"a.{zone}. A 10.0.0.11", f"d.{zone}. A 10.0.0.44"]
     for update in expected_updates:
-        isctest.run.retry_with_timeout(update_is_signed, timeout=5)
+        isctest.run.retry_with_timeout(update_is_signed, timeout=10)
 
     # Move the private key file, a rekey event should not introduce
     # replacement keys.
@@ -994,7 +1007,7 @@ def test_kasp_dynamic(ns3):
     expected_updates = [f"a.{zone}. A 10.0.0.1", f"d.{zone}. A 10.0.0.44"]
 
     for update in expected_updates:
-        isctest.run.retry_with_timeout(update_is_signed, timeout=5)
+        isctest.run.retry_with_timeout(update_is_signed, timeout=10)
 
     # Dynamic, and inline-signing.
     zone = "dynamic-inline-signing.kasp"
@@ -1030,7 +1043,7 @@ def test_kasp_dynamic(ns3):
 
     expected_updates = [f"a.{zone}. A 10.0.0.11", f"d.{zone}. A 10.0.0.44"]
     for update in expected_updates:
-        isctest.run.retry_with_timeout(update_is_signed, timeout=5)
+        isctest.run.retry_with_timeout(update_is_signed, timeout=10)
 
     # Dynamic, signed, and inline-signing.
     isctest.log.info("check dynamic signed, and inline-signed zone")
@@ -1768,3 +1781,28 @@ def test_kasp_manual_mode(ns3, default_algorithm):
     isctest.kasp.check_keys(zone, keys, expected)
     check_all(ns3, zone, policy, ksks, zsks, manual_mode=True)
     isctest.kasp.check_dnssec_verify(ns3, zone)
+
+
+def test_root_case(ns1):
+    keydir = ns1.identifier
+
+    # Get test parameters.
+    zone = ""
+    policy = "default"
+    ttl = 3600
+
+    isctest.kasp.wait_keymgr_done(ns1, ".")
+
+    # Test case.
+    isctest.log.info(f"check root zone with policy {policy}")
+
+    # First make sure the zone is signed.
+    isctest.kasp.check_dnssec_verify(ns1, zone)
+
+    # Check key properties. DS is expected to go to rumoured, so checkds kicks in.
+    keyprops = [
+        "csk 0 13 256 goal:omnipresent dnskey:omnipresent krrsig:omnipresent zrrsig:omnipresent ds:rumoured",
+    ]
+    expected = isctest.kasp.policy_to_properties(ttl=ttl, keys=keyprops)
+    keys = isctest.kasp.keydir_to_keylist(zone, keydir)
+    isctest.kasp.check_keys(zone, keys, expected)

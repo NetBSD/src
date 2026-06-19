@@ -15,7 +15,6 @@
 from typing import NamedTuple
 
 import os
-import sys
 import time
 
 import dns.name
@@ -27,9 +26,6 @@ import pytest
 import isctest
 
 pytestmark = [
-    pytest.mark.skipif(
-        sys.version_info < (3, 7), reason="Python >= 3.7 required [GL #3001]"
-    ),
     pytest.mark.extra_artifacts(
         [
             "*.out",
@@ -435,16 +431,14 @@ def test_checkds(ns2, ns9, params):
     # Wait until the provided zone is signed and then verify its DNSSEC data.
     zone_check(ns9, params.zone)
 
-    # Wait up to 10 seconds until all the expected log lines are found in the
-    # log file for the provided server.  Rekey every second if necessary.
-    time_remaining = 10
-    for log_string in params.logs_to_wait_for:
-        line = f"zone {params.zone}/IN (signed): checkds: {log_string}"
-        while line not in ns9.log:
-            ns9.rndc(f"loadkeys {params.zone}")
-            time_remaining -= 1
-            assert time_remaining, f'Timed out waiting for "{log_string}" to be logged'
-            time.sleep(1)
+    # Trigger a single checkds round and wait for all expected parental-
+    # agent response lines.
+    patterns = [
+        f"zone {params.zone}/IN (signed): checkds: {s}" for s in params.logs_to_wait_for
+    ]
+    with ns9.watch_log_from_start() as watcher:
+        ns9.rndc(f"loadkeys {params.zone}")
+        watcher.wait_for_all(patterns)
 
     # Check whether key states on the parent server provided match
     # expectations.

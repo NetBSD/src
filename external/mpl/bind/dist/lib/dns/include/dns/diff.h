@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.h,v 1.1.1.8 2026/04/07 23:58:33 christos Exp $	*/
+/*	$NetBSD: diff.h,v 1.1.1.9 2026/06/19 19:52:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -194,16 +194,6 @@ dns_diff_append(dns_diff_t *diff, dns_difftuple_t **tuple);
  * Ensures:
  * \li	*tuple is NULL.
  * \li	The tuple has been freed, or will be freed when the diff is cleared.
- */
-
-bool
-dns_diff_is_boundary(const dns_diff_t *diff, dns_name_t *name);
-/*%<
- * Checks if 'name' is equal, up to case, to the last name of the diff.
- *
- * Requires:
- * \li	'diff' is a valid diff.
- * \li	'name' is a valid dns name.
  */
 
 size_t

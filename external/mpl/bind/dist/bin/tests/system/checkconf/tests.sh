@@ -297,6 +297,9 @@ l=$(grep "missing 'file' entry" <checkconf.out$n.2 | wc -l)
 $CHECKCONF inline-bad.conf >checkconf.out$n.3 2>&1 && ret=1
 l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
 [ $l -eq 1 ] || ret=1
+$CHECKCONF inline-inherit.conf >checkconf.out$n.3 2>&1 && ret=1
+l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
+[ $l -eq 1 ] || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

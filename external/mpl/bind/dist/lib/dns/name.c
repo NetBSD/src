@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.1.1.13 2025/05/21 14:40:53 christos Exp $	*/
+/*	$NetBSD: name.c,v 1.1.1.14 2026/06/19 19:52:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1417,7 +1417,7 @@ dns_name_fromwire(dns_name_t *const name, isc_buffer_t *const source,
 	 *
 	 * > In this scheme, an entire domain name or a list of labels at the
 	 * > end of a domain name is replaced with a pointer to a prior
-	 * > occurance of the same name.
+	 * > occurrence of the same name.
 	 *
 	 * The key word is "prior". This says that compression pointers must
 	 * point strictly earlier in the message (before our "marker" variable),

@@ -154,7 +154,7 @@ class Add50ToMessageIdFromSecondResponse(ResponseHandlerWrapper):
             assert isinstance(
                 response_action, DnsResponseSend
             ), "Add50ToMessageIdFromSecondResponse can only wrap handlers that yield DnsResponseSend from the second response onward"
-            response_action.response.id += 50
+            response_action.response.id = (response_action.response.id + 50) % 65536
         else:
             self._first_yielded = True
 

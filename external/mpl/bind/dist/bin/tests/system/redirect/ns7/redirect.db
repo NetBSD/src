@@ -1,0 +1,5 @@
+$TTL 300
+@   IN  SOA ns.redirect. admin.redirect. 1 3600 900 604800 86400
+@   IN  NS  ns.redirect.
+ns  IN  A   10.53.0.7
+*   IN  A   203.0.113.1

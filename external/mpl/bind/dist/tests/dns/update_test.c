@@ -1,4 +1,4 @@
-/*	$NetBSD: update_test.c,v 1.1.1.3 2026/01/29 18:19:57 christos Exp $	*/
+/*	$NetBSD: update_test.c,v 1.1.1.4 2026/06/19 19:52:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,6 +50,7 @@ setup_test(void **state) {
 	UNUSED(state);
 
 	setenv("TZ", "", 1);
+	tzset();
 
 	return 0;
 }

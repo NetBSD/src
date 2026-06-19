@@ -15,6 +15,7 @@ import subprocess
 from .basic import BASIC_VARS
 
 FEATURES = {
+    "DEVELOPER": "--enable-developer",
     "DNSRPS": "--enable-dnsrps",
     "DNSTAP": "--enable-dnstap",
     "FIPS_DH": "--have-fips-dh",
@@ -35,7 +36,7 @@ FEATURES = {
     "ZLIB": "--with-zlib",
 }
 
-FEATURE_VARS = {}
+FEATURE_VARS: dict[str, str] = {}
 
 
 def feature_test(feature):

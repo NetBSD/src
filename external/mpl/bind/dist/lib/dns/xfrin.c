@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.1.1.18 2026/05/20 16:43:10 christos Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.1.1.19 2026/06/19 19:52:04 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -320,10 +320,7 @@ axfr_putdata(dns_xfrin_t *xfr, dns_diffop_t op, dns_name_t *name, dns_ttl_t ttl,
 	}
 
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
-
-	if (dns_diff_size(&xfr->diff) > 128 &&
-	    dns_diff_is_boundary(&xfr->diff, name))
-	{
+	if (dns_diff_size(&xfr->diff) > 128) {
 		xfrin_work_t work = (xfrin_work_t){
 			.magic = XFRIN_WORK_MAGIC,
 			.result = ISC_R_UNSET,

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.1.1.12 2026/04/07 23:58:26 christos Exp $	*/
+/*	$NetBSD: tcp.c,v 1.1.1.13 2026/06/19 19:52:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -905,7 +905,7 @@ accept_connection(isc_nmsocket_t *csock) {
 
 	/*
 	 * We need to initialize the tcp and timer before failing because
-	 * isc__nm_tcp_close() can't handle uninitalized TCP nmsocket.
+	 * isc__nm_tcp_close() can't handle uninitialized TCP nmsocket.
 	 */
 	if (isc__nmsocket_closing(csock)) {
 		result = ISC_R_CANCELED;

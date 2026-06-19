@@ -1,0 +1,4 @@
+{% include "_common/rndc.key" %}
+controls {
+	inet @ns.ip@ port @CONTROLPORT@ allow { any; } keys { rndc_key; };
+};
