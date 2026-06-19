@@ -88,25 +88,10 @@
 #define GCPAD_RIGHT(_buf)	ISSET((_buf)[1], 0x02)
 #define GCPAD_LEFT(_buf)	ISSET((_buf)[1], 0x01)
 
-#define RD4(sc, reg)							\
-	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
-#define WR4(sc, reg, val)						\
-	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
-#define SIIOBUF_CLEAR(sc)						\
-	bus_space_set_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, 0,	\
-	    (SIIOBUF_SIZE / 4))
-#define SIIOBUF_WR(sc, buf, cnt)					\
-	bus_space_write_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
-#define SIIOBUF_RD(sc, buf, cnt)					\
-	bus_space_read_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
-
-#define AWAIT_SISR(sc, chan)	 					\
-	do { while (RD4(sc, SISR) & SISR_WRST(chan)); } while (0)
-#define AWAIT_SICOMCSR(sc)	 					\
-	do { while (RD4(sc, SICOMCSR) & SICOMCSR_TSTART); } while (0)
-
-#define CH_AVAIL -1
-#define CH_UNAVAIL 0
+#define TXN_MAX 	12
+#define TXN_READY 	-1
+#define TXN_DEQUEUED	0
+#define TXN_USEC	250000
 
 struct si_softc;
 
@@ -138,7 +123,6 @@ struct si_softc {
 	bus_space_handle_t	sc_bsh;
 
 	struct si_channel	sc_chan[SI_NUM_CHAN];
-	kmutex_t		txn_lock;
 };
 
 struct si_attach_args {
@@ -155,7 +139,6 @@ struct gcport_softc {
 };
 
 struct si_packet {
-	unsigned	id;		/* identifier for the packet */
 	unsigned	chan;		/* which controller port */
 	uint32_t	status;		/* the sisr result for this channel */
 	uint32_t	insize;		/* number of bytes for in buffer */
@@ -164,11 +147,18 @@ struct si_packet {
 	uint32_t	*out;		/* buffer to send out to ext device */
 };
 
-struct si_request {
-	kcondvar_t		cv;
-	struct si_packet	*pk;
-	unsigned		status;
+struct sicomcsr_txn {
+	unsigned			status;		/* txn current state */
+	uint32_t			comcsr;		/* write to sicomcsr */
+	kcondvar_t			cv;		/* signal completion */
+	kmutex_t			lock;		/* cv interlock */
+	struct si_packet		*pk;		/* siiobuf data */
+	TAILQ_ENTRY(sicomcsr_txn)	txn_q;
 };
 
-int si_send(struct si_softc *sc, struct si_request *);
+void 	txn_init(struct sicomcsr_txn *);
+int 	txn_enqueue(struct sicomcsr_txn *);
+void	txn_dequeue(struct sicomcsr_txn *);
+int 	txn_await(struct sicomcsr_txn *);
+void 	txn_destroy(struct sicomcsr_txn *);
 #endif /* _WII_DEV_SI_H_ */

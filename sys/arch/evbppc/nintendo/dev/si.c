@@ -50,11 +50,18 @@ __KERNEL_RCSID(0, "$NetBSD: si.c,v 1.2 2026/06/11 19:46:18 andvar Exp $");
 #include "si.h"
 #include "gcpad_rdesc.h"
 
-#define TXN_MAX 50
-struct sicomcsr_txn {
-	struct si_request		*req;
-	SIMPLEQ_ENTRY(sicomcsr_txn)	entries;
-};
+#define RD4(sc, reg)							\
+	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define WR4(sc, reg, val)						\
+	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define SIIOBUF_CLEAR(sc)						\
+	bus_space_set_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, 0,	\
+	    (SIIOBUF_SIZE / 4))
+#define SIIOBUF_WR(sc, buf, cnt)					\
+	bus_space_write_region_4((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
+#define SIIOBUF_RD(sc, buf, cnt)					\
+	bus_space_read_region_1((sc)->sc_bst, (sc)->sc_bsh, SIIOBUF, buf, cnt)
+
 
 static int	si_match(device_t, cfdata_t, void *);
 static void	si_attach(device_t, device_t, void *);
@@ -73,17 +80,18 @@ static usbd_status si_set_report(void *, int, void *, int);
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-static void			si_send_complete(struct work *, void *);
-static struct si_request *	next_active_req(struct si_softc *);
+static void			enable_polling(device_t);
+static void			tcint_handler(struct work *, void *);
 static void			txn_softintr(void *);
 
 static kmutex_t 		sicomcsr_lock;
+static kmutex_t			sicomcsr_qlock;
 static void			*txn_si;
 static struct work		sicomcsr_work;
 static struct workqueue		*sicomcsr_wqp;
 static int			txn_len;
 
-SIMPLEQ_HEAD(simplehead, sicomcsr_txn) head = SIMPLEQ_HEAD_INITIALIZER(head);
+TAILQ_HEAD(, sicomcsr_txn) txn_head = TAILQ_HEAD_INITIALIZER(txn_head);
 
 CFATTACH_DECL_NEW(si, sizeof(struct si_softc),
 	si_match, si_attach, NULL, NULL);
@@ -118,9 +126,9 @@ si_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	mutex_init(&sicomcsr_lock, MUTEX_DEFAULT, IPL_VM);
-	mutex_init(&sc->txn_lock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&sicomcsr_qlock, MUTEX_DEFAULT, IPL_VM);
 
-	err = workqueue_create(&sicomcsr_wqp, "si_tcint", si_send_complete,
+	err = workqueue_create(&sicomcsr_wqp, "si_tcint", tcint_handler,
 	    sc, PRI_NONE, IPL_VM, 0);
 	if (err != 0) {
 		aprint_normal("si: failed to create workqueue\n");
@@ -164,6 +172,16 @@ si_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self));
 	KASSERT(ih != NULL);
 
+	config_interrupts(self, enable_polling);
+	si_rescan(self, NULL, NULL);
+}
+
+static void
+enable_polling(device_t self)
+{
+	struct si_softc *sc = device_private(self);
+	struct sicomcsr_txn txn;
+
 	/* write to all SICOUTBUF double buffers */
 	WR4(sc, SISR, SISR_SICNOUTBUF);
 
@@ -175,13 +193,19 @@ si_attach(device_t parent, device_t self, void *aux)
 	    __SHIFTIN(7, SIPOLL_X) |
 	    __SHIFTIN(1, SIPOLL_Y));
 
-	WR4(sc, SICOMCSR,
+	txn_init(&txn);
+	txn.comcsr = (
 	    RD4(sc, SICOMCSR) |
 	    SICOMCSR_RDSTINT |
 	    SICOMCSR_RDSTINTMSK |
-	    SICOMCSR_TSTART);
-
-	si_rescan(self, NULL, NULL);
+	    SICOMCSR_TSTART
+	);
+	txn_enqueue(&txn);
+	if (txn_await(&txn) != 0) {
+		txn_dequeue(&txn);
+		aprint_normal("si: failed to setup polling\n");
+	}
+	txn_destroy(&txn);
 }
 
 static int
@@ -428,152 +452,173 @@ si_write(void *cookie, void *data, int len)
         return USBD_INVAL;
 }
 
-int
-si_send(struct si_softc *sc, struct si_request *req)
-{
-	struct si_packet *pk;
-	struct sicomcsr_txn *txn;
-
-	pk = req->pk;
-
-	if (pk->chan > 3) {
-		return EINVAL;
-	}
-
-	if (pk->outsize > SIIOBUF_SIZE || pk->insize > SIIOBUF_SIZE) {
-		return EINVAL;
-	}
-
-	if (pk->out == NULL || pk->in == NULL) {
-		return EINVAL;
-	}
-
-
-	mutex_enter(&sc->txn_lock);
-	if (txn_len > TXN_MAX) {
-		return EBUSY;
-	}
-
-	txn = kmem_alloc(sizeof(struct sicomcsr_txn), KM_SLEEP);
-	txn->req = req;
-	SIMPLEQ_INSERT_TAIL(&head, txn, entries);
-	txn_len++;
-
-	if (txn_len == 1) {
-		softint_schedule(txn_si);
-	}
-	mutex_exit(&sc->txn_lock);
-	
-	return 0;
-}
 
 static void
 txn_softintr(void *arg)
 {
 	uint32_t cnt;
 	struct si_softc *sc;
-	struct si_request *req;
 	struct si_packet *pk;
+	struct sicomcsr_txn *txn;
 
 	sc = arg;
-	req = NULL;
 
-	if ((req = next_active_req(sc)) == NULL) {
-		return;
-	}
-
-	pk = req->pk;
-
+	mutex_enter(&sicomcsr_qlock);
+	txn = TAILQ_FIRST(&txn_head);
+	pk = txn->pk;
 	mutex_enter(&sicomcsr_lock);
-	SIIOBUF_CLEAR(sc);
+	if(pk != NULL) {
+		SIIOBUF_CLEAR(sc);
 
-	/* outsize is number of bytes. we need number of words */
-	cnt = ((pk->outsize+3)/4);
-	SIIOBUF_WR(sc, pk->out, cnt);
+		/* outsize is number of bytes. we need number of words */
+		cnt = ((pk->outsize+3)/4);
+		SIIOBUF_WR(sc, pk->out, cnt);
+
+	}
 
 	WR4(sc, SISR, SISR_ERROR_MASK(pk->chan));
-
 	WR4(sc, SICOMCSR,
-	    SICOMCSR_CH_EN |
-	    SICOMCSR_CMD_EN |
+	    txn->comcsr |
 	    SICOMCSR_TCINTMSK |
 	    SICOMCSR_RDSTINTMSK |
-	    __SHIFTIN(pk->outsize, SICOMCSR_OUTLNGTH) |
-	    __SHIFTIN(pk->insize, SICOMCSR_INLNGTH) |
-	    __SHIFTIN(pk->chan, SICOMCSR_CHANNEL) |
-	    SICOMCSR_TSTART
-	);
+	    SICOMCSR_TSTART);
 	mutex_exit(&sicomcsr_lock);
-}
-
-static struct si_request *
-next_active_req(struct si_softc *sc)
-{
-	struct sicomcsr_txn *cur;
-
-	mutex_enter(&sc->txn_lock);
-	while (!SIMPLEQ_EMPTY(&head)) {
-		cur = SIMPLEQ_FIRST(&head);
-		if (cur->req != NULL) {
-			mutex_exit(&sc->txn_lock);
-			return cur->req;
-		}
-		SIMPLEQ_REMOVE_HEAD(&head, entries);
-		kmem_free(cur, sizeof(struct sicomcsr_txn));
-		txn_len--;
-	}
-	mutex_exit(&sc->txn_lock);
-
-	return NULL;
+	mutex_exit(&sicomcsr_qlock);
 }
 
 static void
-si_send_complete(struct work *, void *arg)
+tcint_handler(struct work *, void *arg)
 {
 	struct si_softc *sc;
 	struct si_packet *pk;
 	struct sicomcsr_txn *txn;
-	struct si_request *req;
 	uint32_t comcsr, sisr, sisr_mask, shift_amt, status;
 	unsigned chan;
 
 	sc = arg;
-	req = NULL;
 
-	mutex_enter(&sc->txn_lock);
-	if (SIMPLEQ_EMPTY(&head)) {
-		mutex_exit(&sc->txn_lock);
-		return;
+	mutex_enter(&sicomcsr_qlock);
+	if (TAILQ_EMPTY(&txn_head)) {
+		txn_len = 0;
+		goto done;
 	}
 
-	txn = SIMPLEQ_FIRST(&head);
-	SIMPLEQ_REMOVE_HEAD(&head, entries);
-	req = txn->req;
-	txn_len--;
+	txn = TAILQ_FIRST(&txn_head);
+	mutex_enter(&txn->lock);
+	if (txn->status == TXN_READY) {
+		txn->status = TXN_DEQUEUED;
+		TAILQ_REMOVE(&txn_head, txn, txn_q);
+		txn_len--;
+		pk = txn->pk;
+		if (pk != NULL) {
+			chan = pk->chan;
+			SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
+			comcsr = RD4(sc, SICOMCSR);
+			if (ISSET(comcsr, SICOMCSR_COMERR)) {
+				sisr = RD4(sc, SISR);
+				shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
+				sisr_mask = sisr & SISR_ERROR_MASK(chan);
+				status = (sisr_mask >> shift_amt) & 0x3F;
+				pk->status = status;
+			}
 
-	if (req != NULL) {
-		mutex_enter(&sicomcsr_lock);
-		pk = req->pk;
-		chan = pk->chan;
-		SIIOBUF_RD(sc, (void *)pk->in, pk->insize);
-		comcsr = RD4(sc, SICOMCSR);
-		if (ISSET(comcsr, SICOMCSR_COMERR)) {
-			sisr = RD4(sc, SISR);
-			shift_amt = 8 * (SI_NUM_CHAN - 1 - chan);
-			sisr_mask = sisr & SISR_ERROR_MASK(chan);
-			status = (sisr_mask >> shift_amt) & 0x3F;
-			pk->status = status;
 		}
-
-		mutex_exit(&sicomcsr_lock);
-		req->status = 0;
-		cv_signal(&req->cv);
+		cv_signal(&txn->cv);
 	}
-
-	kmem_free(txn, sizeof(struct sicomcsr_txn));
-
-	if (!SIMPLEQ_EMPTY(&head)) {
+	mutex_exit(&txn->lock);
+done:
+	if (!TAILQ_EMPTY(&txn_head)) {
 		softint_schedule(txn_si);
 	}
-	mutex_exit(&sc->txn_lock);
+	mutex_exit(&sicomcsr_qlock);
+}
+
+void
+txn_init(struct sicomcsr_txn *txn)
+{
+	cv_init(&txn->cv, "sicomcsr_txn");
+	mutex_init(&txn->lock, MUTEX_DEFAULT, IPL_VM);
+	txn->status = TXN_READY;
+	txn->pk = NULL;
+}
+
+int
+txn_enqueue(struct sicomcsr_txn *txn)
+{
+	struct si_packet *pk;
+
+	pk = txn->pk;
+	if (pk != NULL) {
+		if (pk->chan > 3) {
+			return EINVAL;
+		}
+
+		if (pk->outsize > SIIOBUF_SIZE || pk->insize > SIIOBUF_SIZE) {
+			return EINVAL;
+		}
+
+		if (pk->out == NULL || pk->in == NULL) {
+			return EINVAL;
+		}
+	}
+
+	mutex_enter(&sicomcsr_qlock);
+	if (txn_len > TXN_MAX) {
+		return EBUSY;
+	}
+
+	TAILQ_INSERT_TAIL(&txn_head, txn, txn_q);
+	txn_len++;
+
+	if (txn_len == 1) {
+		softint_schedule(txn_si);
+	}
+	mutex_exit(&sicomcsr_qlock);
+
+	return 0;
+}
+
+void
+txn_dequeue(struct sicomcsr_txn *txn)
+{
+	mutex_enter(&sicomcsr_qlock);
+	mutex_enter(&txn->lock);
+	if (txn->status != TXN_DEQUEUED) {
+		txn->status = TXN_DEQUEUED;
+		TAILQ_REMOVE(&txn_head, txn, txn_q);
+	}
+	mutex_exit(&txn->lock);
+	mutex_exit(&sicomcsr_qlock);
+}
+
+int
+txn_await(struct sicomcsr_txn *txn)
+{
+	struct bintime bt;
+	struct timeval tv;
+	int err;
+
+	err = 0;
+	tv.tv_sec = 0;
+	tv.tv_usec = TXN_USEC;
+	timeval2bintime(&tv, &bt);
+
+	mutex_enter(&txn->lock);
+	while (txn->status == TXN_READY) {
+		err = cv_timedwaitbt(&txn->cv, &txn->lock, &bt,
+		    DEFAULT_TIMEOUT_EPSILON);
+		if (err) {
+			KASSERT(err == EWOULDBLOCK);
+			break;
+		}
+	}
+	mutex_exit(&txn->lock);
+	return err;
+}
+
+void
+txn_destroy(struct sicomcsr_txn *txn)
+{
+	cv_destroy(&txn->cv);
+	mutex_destroy(&txn->lock);
 }
