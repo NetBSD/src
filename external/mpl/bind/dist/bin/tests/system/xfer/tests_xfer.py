@@ -40,18 +40,26 @@ def send_switch_control_command(command):
 
 
 @pytest.fixture(scope="module", autouse=True)
-def after_servers_start(templates, ns4):
+def after_servers_start(templates, named_port, ns4):
     # initial correctly-signed transfer should succeed
     send_switch_control_command("goodaxfr")
 
     with ns4.watch_log_from_here() as watcher:
         templates.render("ns4/named.conf", {"ns4_as_secondary_for_nil": True})
         ns4.reconfigure()
-        watcher.wait_for_line("Transfer status: success")
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "nil", "10.53.0.5", "Transfer status: success", named_port
+            )
+        )
 
     with ns4.watch_log_from_here() as watcher_retransfer_nil_success:
         ns4.rndc("retransfer nil.")
-        watcher_retransfer_nil_success.wait_for_line("Transfer status: success")
+        watcher_retransfer_nil_success.wait_for_line(
+            isctest.transfer.transfer_message(
+                "nil", "10.53.0.5", "Transfer status: success", named_port
+            )
+        )
 
 
 def get_response(msg, server_ip, allow_empty_answer=False):
@@ -297,7 +305,7 @@ def test_make_ns4_secondary_for_nil():
     check_rdata_in_txt_record("initial AXFR")
 
 
-def test_handle_ixfr_notimp(ns4):
+def test_handle_ixfr_notimp(named_port, ns4):
     send_switch_control_command("ixfrnotimp")
     with ns4.watch_log_from_here() as watcher_transfer_success:
         with ns4.watch_log_from_here() as watcher_requesting_ixfr:
@@ -305,76 +313,105 @@ def test_handle_ixfr_notimp(ns4):
             watcher_requesting_ixfr.wait_for_line(
                 "zone nil/IN: requesting IXFR from 10.53.0.5"
             )
-        watcher_transfer_success.wait_for_line("Transfer status: success")
+        watcher_transfer_success.wait_for_line(
+            isctest.transfer.transfer_message(
+                "nil", "10.53.0.5", "Transfer status: success", named_port
+            )
+        )
 
     check_rdata_in_txt_record("IXFR NOTIMP")
 
 
 @pytest.mark.parametrize(
-    "command_file,expected_rdata,named_log_line",
+    "command_file,expected_rdata,named_log_line,xfrin_msg",
     [
         param(
             "unsigned",
             "unsigned AXFR",
             "Transfer status: expected a TSIG or SIG(0)",
+            True,
         ),
         param(
             "badkeydata",
             "bad keydata AXFR",
             "Transfer status: tsig verify failure",
+            True,
         ),
         param(
             "partial",
             "partially signed AXFR",
             "Transfer status: expected a TSIG or SIG(0)",
+            True,
         ),
         param(
             "unknownkey",
             "unknown key AXFR",
             "tsig key 'tsig_key': key name and algorithm do not match",
+            False,
         ),
         param(
             "wrongkey",
             "incorrect key AXFR",
             "tsig key 'tsig_key': key name and algorithm do not match",
+            False,
         ),
         param(
             "wrongname",
             "wrong question AXFR",
             "question name mismatch",
+            True,
         ),
         param(
             "badmessageid",
             "bad message id",
             "Transfer status: unexpected error",
+            True,
         ),
         param(
             "soamismatch",
             "SOA mismatch AXFR",
             "Transfer status: FORMERR",
+            True,
         ),
     ],
 )
-def test_under_signed_transfer(command_file, expected_rdata, named_log_line, ns4):
+def test_under_signed_transfer(
+    command_file, expected_rdata, named_log_line, xfrin_msg, named_port, ns4
+):
     send_switch_control_command(command_file)
     with ns4.watch_log_from_here() as watcher:
         ns4.rndc("retransfer nil.")
-        watcher.wait_for_line(named_log_line)
+        if xfrin_msg:
+            watcher.wait_for_line(
+                isctest.transfer.transfer_message(
+                    "nil", "10.53.0.5", named_log_line, named_port
+                )
+            )
+        else:
+            watcher.wait_for_line(named_log_line)
     check_rdata_in_txt_record(expected_rdata, should_exist=False)
 
 
-def test_handle_edns_notimp(ns4):
+def test_handle_edns_notimp(named_port, ns4):
     send_switch_control_command("ednsnotimp")
     with ns4.watch_log_from_here() as watcher:
         ns4.rndc("retransfer nil.")
-        watcher.wait_for_line("Transfer status: NOTIMP")
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "nil", "10.53.0.5", "Transfer status: NOTIMP", named_port
+            )
+        )
 
 
-def test_handle_edns_formerr(ns4):
+def test_handle_edns_formerr(named_port, ns4):
     send_switch_control_command("ednsformerr")
     with ns4.watch_log_from_here() as watcher:
         ns4.rndc("retransfer nil.")
-        watcher.wait_for_line("Transfer status: success")
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "nil", "10.53.0.5", "Transfer status: success", named_port
+            )
+        )
     check_rdata_in_txt_record("EDNS FORMERR")
 
 
@@ -391,7 +428,7 @@ def test_edns_expire_from_secondary(ns7):
 def test_edns_expire_refresh(ns7):
     time.sleep(1)
     with ns7.watch_log_from_here() as watcher:
-        ns7.rndc("refresh edns-expire.")
+        ns7.rndc("refresh edns-expire.", timeout=30)
         isctest.log.info("make sure the EDNS EXPIRE of 1814400 decreases a slightly")
         pattern = Re("zone edns-expire/IN: got EDNS EXPIRE of 1814[0-3][0-9][0-9]")
         watcher.wait_for_line(pattern)
@@ -436,9 +473,16 @@ def test_mapped_zone(named_port, ns3):
 
 
 # test that a zone with too many records is rejected (AXFR)
-def test_axfr_too_many_records(ns6):
+def test_axfr_too_many_records(named_port, ns6):
     with ns6.watch_log_from_start() as watcher:
-        watcher.wait_for_line(Re("'axfr-too-big/IN'.*: too many records"))
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "axfr-too-big",
+                "10.53.0.1",
+                "Transfer status: too many records",
+                named_port,
+            )
+        )
 
 
 # test that a zone with too many records is rejected (IXFR)
@@ -451,7 +495,14 @@ def test_ixfr_too_many_records(named_port, ns6):
         send
         """
         nsupdate(nsupdate_config)
-        watcher.wait_for_line("Transfer status: too many records")
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "ixfr-too-big",
+                "10.53.0.1",
+                "Transfer status: too many records",
+                named_port,
+            )
+        )
 
 
 # checking whether dig calculates AXFR statistics correctly
@@ -459,10 +510,14 @@ def test_dig_and_named_axfr_stats(named_port, ns3):
     # Use ns3 logs for checking incoming transfer statistics as ns3 is a
     # secondary server (for ns1) for "xfer-stats".
     with ns3.watch_log_from_start() as watcher_transfer_completed:
-        pattern_transfer_completed = (
-            "Transfer completed: 16 messages, 10003 records, 218403 bytes"
+        watcher_transfer_completed.wait_for_line(
+            isctest.transfer.transfer_message(
+                "xfer-stats",
+                "10.53.0.1",
+                "Transfer completed: 16 messages, 10003 records, 218403 bytes",
+                named_port,
+            )
         )
-        watcher_transfer_completed.wait_for_line(pattern_transfer_completed)
 
     # Loop until the secondary server manages to transfer the "xfer-stats" zone so
     # that we can both check dig output and immediately proceed with the next test.
@@ -497,11 +552,18 @@ def test_transfer_source_option_uses_port_option_correctly(ns6):
 # First, test that named tries the next primary in the list when the first one
 # fails (XoT -> Do53). Then, test that named tries the next primary in the list
 # when the first one is already marked as unreachable (XoT -> Do53).
-def test_xot_primary_try_next(ns6):
+def test_xot_primary_try_next(named_port, ns6):
     def retransfer_and_check_log():
         with ns6.watch_log_from_here(timeout=60) as watcher:
             ns6.rndc("retransfer xot-primary-try-next.")
-            watcher.wait_for_line("Transfer status: success")
+            watcher.wait_for_line(
+                isctest.transfer.transfer_message(
+                    "xot-primary-try-next",
+                    "10.53.0.1",
+                    "Transfer status: success",
+                    named_port,
+                )
+            )
 
     retransfer_and_check_log()
     retransfer_and_check_log()

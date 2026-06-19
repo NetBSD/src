@@ -1,0 +1,29 @@
+// NS10 — validating recursor used to drive the synth-from-dnssec entry
+// into query_redirect (covering NSEC from ns9 synthesizes NXDOMAIN
+// locally, then nxdomain-redirect+dns64 hit the same buggy path as ns7).
+
+options {
+	port @PORT@;
+	listen-on port @PORT@ { 10.53.0.10; };
+	pid-file "named.pid";
+	nxdomain-redirect redirect;
+	dnssec-validation yes;
+	synth-from-dnssec yes;
+	dns64 64:ff9b::/96 {
+		clients { any; };
+		mapped { any; };
+		suffix ::;
+	};
+};
+
+include "trusted.conf";
+
+zone "." {
+	type hint;
+	file "root.hints";
+};
+
+zone "redirect" {
+	type primary;
+	file "redirect.db";
+};

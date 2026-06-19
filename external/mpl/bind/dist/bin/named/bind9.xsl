@@ -22,7 +22,7 @@
         <script type="text/javascript">
           $(function($) {
               var wid=0;
-              $('table.zones').each(function(i) { if( $(this).width() > wid ) wid = $(this).width(); return true; });
+              <xsl:text disable-output-escaping="yes">$('table.zones').each(function(i) { if( $(this).width() > wid ) wid = $(this).width(); return true; });</xsl:text>
               $('table.zones').css('min-width', wid );
               $("h2+table,h3+table,h4+table,h2+div,h3+div,h2+script,h3+script").prev().append(' <a class="tabletoggle" href="#" style="font-size:small">Show/Hide</a>');
               $(".tabletoggle").click(function(){
@@ -63,7 +63,7 @@
             var g;
 
             while (g = graphs.shift()) {
-              if (g.data.length > 1) {
+              <xsl:text disable-output-escaping="yes">if (g.data.length > 1) {</xsl:text>
                 drawChart(g.title,g.target,g.style,g.data);
               }
             }

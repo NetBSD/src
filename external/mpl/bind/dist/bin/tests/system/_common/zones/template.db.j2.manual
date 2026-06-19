@@ -1,0 +1,7 @@
+{% include '_common/zones/soa.partial.db.j2' %}
+{% include '_common/zones/ns.partial.db.j2' %}
+{% include '_common/zones/delegations.partial.db.j2' %}
+
+a			A	10.0.0.1
+b			A	10.0.0.2
+c			A	10.0.0.3

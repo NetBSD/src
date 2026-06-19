@@ -2037,17 +2037,6 @@ if [ $ret != 0 ]; then
 fi
 status=$((status + ret))
 
-n=$((n + 1))
-echo_i "check server is alive or restart ($n)"
-ret=0
-$RNDCCMD 10.53.0.3 status >rndc.out.test$n 2>&1 || ret=1
-if [ $ret != 0 ]; then
-  echo_i "failed"
-  echo_i "restart ns3"
-  start_server --noclean --restart --port ${PORT} serve-stale ns3
-fi
-status=$((status + ret))
-
 #############################################
 # Test for stale-answer-client-timeout 0.   #
 #############################################
@@ -2366,6 +2355,93 @@ grep "ANSWER: 3," dig.out.test$n >/dev/null || ret=1
 grep "cname-b1\.stale\.test\..*29[0-9].*IN.*CNAME.*cname-b2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
 grep "cname-b2\.stale\.test\..*3.*IN.*CNAME.*cname-b3\.stale\.test\." dig.out.test$n >/dev/null || ret=1
 grep "cname-b3\.stale\.test\..*3.*IN.*A.*192\.0\.2\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# Change CNAME to A.
+n=$((n + 1))
+echo_i "change cname2.stale.test. CNAME to A (stale-answer-client-timeout 0) ($n)"
+ret=0
+(
+  echo zone stale.test.
+  echo server 10.53.0.1 "${PORT}"
+  echo update del cname2.stale.test. CNAME a2.stale.test.
+  echo update add cname2.stale.test. 1 A 192.0.0.2
+  echo send
+) | $NSUPDATE || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname2.stale.test A comes from cache (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+$DIG -p ${PORT} @10.53.0.3 cname2.stale.test A >dig.out.test$n || ret=1
+wait_for_log 5 "cname2.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 2," dig.out.test$n >/dev/null || ret=1
+grep "cname2\.stale\.test\..*3.*IN.*CNAME.*a2\.stale\.test\." dig.out.test$n >/dev/null || ret=1
+# We can't reliably test the TTL of the a2.stale.test A record.
+grep "a2\.stale\.test\..*IN.*A.*192\.0\.2\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname2.stale.test A is refreshed (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+$DIG -p ${PORT} @10.53.0.3 cname2.stale.test A >dig.out.test$n || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n >/dev/null || ret=1
+grep "cname2\.stale\.test\..*IN.*A.*192\.0\.0\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+# Change A to CNAME.
+n=$((n + 1))
+echo_i "change cname2.stale.test. A to CNAME (stale-answer-client-timeout 0) ($n)"
+ret=0
+(
+  echo zone stale.test.
+  echo server 10.53.0.1 "${PORT}"
+  echo update del cname2.stale.test. A 192.0.0.2
+  echo update add cname2.stale.test. 1 CNAME a2.stale.test.
+  echo send
+) | $NSUPDATE || ret=1
+test "$ret" -eq 0 || echo_i "failed"
+status=$((status + ret))
+
+# Allow A record to become stale.
+sleep 1
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname2.stale.test A comes from cache (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+$DIG -p ${PORT} @10.53.0.3 cname2.stale.test A >dig.out.test$n || ret=1
+wait_for_log 5 "cname2.stale.test A stale answer used, an attempt to refresh the RRset" ns3/named.run || ret=1
+grep "status: NOERROR" dig.out.test$n >/dev/null || ret=1
+grep "EDE: 3 (Stale Answer): (stale data prioritized over lookup)" dig.out.test$n >/dev/null || ret=1
+grep "ANSWER: 1," dig.out.test$n >/dev/null || ret=1
+grep "cname2\.stale\.test\..*3.*IN.*A.*192\.0\.0\.2" dig.out.test$n >/dev/null || ret=1
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+wait_for_cname_refresh() {
+  $DIG -p ${PORT} @10.53.0.3 cname2.stale.test A >dig.out.test$n || return 1
+  grep "status: NOERROR" dig.out.test$n >/dev/null || return 1
+  grep "ANSWER: 2," dig.out.test$n >/dev/null || return 1
+  # We can't reliably test the TTL of the these records.
+  grep "cname2\.stale\.test\..*IN.*CNAME.*a2\.stale\.test\." dig.out.test$n >/dev/null || return 1
+  grep "a2\.stale\.test\..*IN.*A.*192\.0\.2\.2" dig.out.test$n >/dev/null || return 1
+}
+
+n=$((n + 1))
+ret=0
+echo_i "check stale cname2.stale.test A is refreshed (stale-answer-client-timeout 0) ($n)"
+nextpart ns3/named.run >/dev/null
+retry 10 wait_for_cname_refresh || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 

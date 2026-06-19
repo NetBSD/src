@@ -44,6 +44,17 @@ def generic_query(
     log_response: bool = True,
 ) -> Any:
 
+    def _safe_to_text(msg: dns.message.Message) -> str:
+        """
+        Convert a DNS message to text, tolerating dnspython's failure to render
+        RRSIG inception/expiration timestamps that overflow the platform's
+        time_t (e.g. post-2038 values on 32-bit systems).
+        """
+        try:
+            return msg.to_text()
+        except OverflowError:
+            return "<message not representable as text>"
+
     def log_querymsg(exception: Exception | None = None) -> None:
         """
         Helper for logging query message. Call this *after* query_func() has
@@ -54,7 +65,7 @@ def generic_query(
         nonlocal log_query
         if log_query:
             isctest.log.debug(
-                f"isc.query.{query_func.__name__}(): query\n{message.to_text()}"
+                f"isc.query.{query_func.__name__}(): query\n{_safe_to_text(message)}"
             )
             log_query = False  # only log query once
 
@@ -99,7 +110,7 @@ def generic_query(
         if res:
             if log_response:
                 isctest.log.debug(
-                    f"isc.query.{query_func.__name__}(): response\n{res.to_text()}"
+                    f"isc.query.{query_func.__name__}(): response\n{_safe_to_text(res)}"
                 )
             if res.rcode() == expected_rcode or expected_rcode is None:
                 return res

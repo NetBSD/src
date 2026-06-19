@@ -1,0 +1,10 @@
+$TTL 300
+@       IN SOA ns.secure. root.secure. (
+                1          ; serial
+                3600       ; refresh
+                1800       ; retry
+                1814400    ; expire
+                300        ; minimum
+                )
+        IN NS   ns.secure.
+ns      IN A   10.53.0.2

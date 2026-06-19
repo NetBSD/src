@@ -27,7 +27,7 @@ options {
 	sig-signing-signatures 900;
 };
 
-include "controls.conf";
+{% include "_common/controls.conf.j2" %}
 
 dnssec-policy "optout" {
 	keys {

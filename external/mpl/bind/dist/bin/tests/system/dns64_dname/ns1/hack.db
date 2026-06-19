@@ -1,0 +1,8 @@
+$TTL 300
+@	SOA	ns.hack. hostmaster.hack. 1 300 300 300 300
+@	NS	ns
+ns	A	10.53.0.1
+
+d	DNAME	hack.
+d	AAAA	::ffff:192.0.2.1
+d	AAAA	2001:db8::64

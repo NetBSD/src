@@ -1,0 +1,5 @@
+{% if delegations is defined and delegations %}
+{% for zone in delegations %}
+{% include '_common/zones/ns.partial.db.j2' %}
+{% endfor %}
+{% endif %}

@@ -58,6 +58,12 @@ def with_algorithm(name: str):
     return pytest.mark.skipif(os.getenv(key) != "1", reason=f"{name} is not supported")
 
 
+with_developer = pytest.mark.skipif(
+    os.getenv("FEATURE_DEVELOPER") != "1",
+    reason="developer mode disabled in the build",
+)
+
+
 with_dnstap = pytest.mark.skipif(
     os.getenv("FEATURE_DNSTAP") != "1", reason="DNSTAP support disabled in the build"
 )

@@ -1,0 +1,10 @@
+{% if zones is defined and zones %}
+{% for zone in zones.values() %}
+{% if zone.ns.name == ns.name %}
+zone "@zone.name@" {
+	type @zone.type@;
+	file "@zone.filepath@";
+};
+{% endif %}
+{% endfor %}
+{% endif %}

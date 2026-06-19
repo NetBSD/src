@@ -20,6 +20,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns*/named_dump*",
         "ns*/named.stats*",
         "ns*/root.bk",
+        "ns1/stale.test.db.jnl",
     ]
 )
 

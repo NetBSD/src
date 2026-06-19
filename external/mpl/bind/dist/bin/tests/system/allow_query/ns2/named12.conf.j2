@@ -26,7 +26,7 @@ options {
 	dnssec-validation no;
 };
 
-include "controls.conf";
+{% include "_common/controls.conf.j2" %}
 
 zone "." {
 	type hint;

@@ -1,0 +1,2 @@
+.			518400	IN	NS	a.root-servers.nil.
+a.root-servers.nil.	518400	IN	A	10.53.0.9

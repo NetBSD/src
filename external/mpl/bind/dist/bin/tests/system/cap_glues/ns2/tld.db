@@ -1,0 +1,63 @@
+$TTL 300
+@ 			IN SOA	hoster.tld. ns.tld. (
+				2010   	; serial
+				600     ; refresh
+				600     ; retry
+				1200    ; expire
+				600     ; minimum
+				)
+
+ 		NS	ns
+ns		A	10.52.0.2
+
+example		NS 	ns.example
+
+ns.example	A 	10.53.0.20
+ns.example	A 	10.53.0.21
+ns.example	A 	10.53.0.22
+ns.example	A 	10.53.0.23
+ns.example	A 	10.53.0.24
+ns.example	A 	10.53.0.25
+ns.example	A 	10.53.0.26
+ns.example	A 	10.53.0.27
+ns.example	A 	10.53.0.28
+ns.example	A 	10.53.0.29
+ns.example	A 	10.53.0.30
+ns.example	A 	10.53.0.31
+ns.example	A 	10.53.0.32
+ns.example	A 	10.53.0.33
+ns.example	A 	10.53.0.34
+ns.example	A 	10.53.0.35
+ns.example	A 	10.53.0.36
+ns.example	A 	10.53.0.37
+ns.example	A 	10.53.0.38
+ns.example	A 	10.53.0.39
+ns.example	A 	10.53.0.40
+ns.example	A 	10.53.0.41
+ns.example	A 	10.53.0.42
+ns.example	A 	10.53.0.43
+
+ns.example	AAAA 	2001:db8::20
+ns.example	AAAA 	2001:db8::21
+ns.example	AAAA 	2001:db8::22
+ns.example	AAAA 	2001:db8::23
+ns.example	AAAA 	2001:db8::24
+ns.example	AAAA 	2001:db8::25
+ns.example	AAAA 	2001:db8::26
+ns.example	AAAA 	2001:db8::27
+ns.example	AAAA 	2001:db8::28
+ns.example	AAAA 	2001:db8::29
+ns.example	AAAA 	2001:db8::30
+ns.example	AAAA 	2001:db8::31
+ns.example	AAAA 	2001:db8::32
+ns.example	AAAA 	2001:db8::33
+ns.example	AAAA 	2001:db8::34
+ns.example	AAAA 	2001:db8::35
+ns.example	AAAA 	2001:db8::36
+ns.example	AAAA 	2001:db8::37
+ns.example	AAAA 	2001:db8::38
+ns.example	AAAA 	2001:db8::39
+ns.example	AAAA 	2001:db8::40
+ns.example	AAAA 	2001:db8::41
+ns.example	AAAA 	2001:db8::42
+ns.example	AAAA 	2001:db8::43

@@ -1,0 +1,20 @@
+// NS2
+
+options {
+	query-source address 10.53.0.2;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	recursion yes;
+	allow-recursion { any; };
+	dnssec-validation no;
+	qname-minimization off;
+
+	dns64 64:ff9b::/96 { };
+};
+
+zone "." {
+	type hint;
+	file "root.hint";
+};

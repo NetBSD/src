@@ -141,13 +141,6 @@ Bug Fixes
   handled consistently with RRSIG records during update processing.
   :gl:`#5818`
 
-- Fix :option:`rndc modzone` behavior for a zone in named.conf.
-
-  If a zone was present in the configuration file and not originally
-  added by :option:`rndc addzone`, :option:`rndc modzone` for that zone would succeed
-  once but subsequent :option:`rndc modzone` attempts would fail. This has been
-  fixed. :gl:`#5826`
-
 - Fix zone verification of NSEC3 signed zones.
 
   Previously, when computing the compressed bitmap during verification

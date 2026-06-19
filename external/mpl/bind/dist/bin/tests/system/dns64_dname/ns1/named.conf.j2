@@ -1,0 +1,21 @@
+// NS1
+
+options {
+	query-source address 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "hack" {
+	type primary;
+	file "hack.db";
+};
