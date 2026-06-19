@@ -1,15 +1,16 @@
-#	$NetBSD: SAM460EX,v 1.4 2026/06/18 22:11:20 rkujawa Exp $
+#	$NetBSD: SAM460EX,v 1.5 2026/06/19 18:55:23 rkujawa Exp $
 #
 #	SAM460EX -- ACube Sam460ex (AMCC 460EX)
 #
 
 include 	"arch/evbppc/conf/std.sam460ex"
 
-#ident 		"SAM460EX-$Revision: 1.4 $"
+#ident 		"SAM460EX-$Revision: 1.5 $"
 
 maxusers	32
 
 options 	SAM460EX_FDT		# parse U-Boot supplied device tree
+options 	PPC4XX_L2CACHE		# on-chip 256KB L2 
 
 #
 # Diagnostic/debugging support options
@@ -24,15 +25,11 @@ makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 makeoptions	DEBUG="-g"		# compile full symbol table
 
 #
-# Compatibility options
-#
-include 	"conf/compat_netbsd13.config"
-
-#
 # File systems
 #
 file-system 	FFS		# UFS
 file-system 	NFS		# Network File System client
+file-system 	MSDOSFS		# FAT (USB mass storage stress testing)
 file-system 	KERNFS		# /kern
 file-system	PTYFS		# /dev/pts/N support
 file-system	TMPFS		# Efficient memory file-system

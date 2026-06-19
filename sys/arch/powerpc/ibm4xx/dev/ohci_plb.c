@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci_plb.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $	*/
+/*	$NetBSD: ohci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -33,7 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci_plb.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci_plb.c,v 1.2 2026/06/19 18:55:23 rkujawa Exp $");
+
+#include "opt_ppc4xx.h"
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +44,9 @@ __KERNEL_RCSID(0, "$NetBSD: ohci_plb.c,v 1.1 2026/06/14 00:02:35 rkujawa Exp $")
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
+#ifdef PPC4XX_L2CACHE
+#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
+#endif
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -94,7 +99,12 @@ ohci_plb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_bus.ub_hcpriv = sc;
+#ifdef PPC4XX_L2CACHE
+	/* USB DMA needs software L2 invalidation (hardware snoop misses it). */
+	sc->sc_bus.ub_dmatag = ibm4xx_460ex_l2_dmatag();
+#else
 	sc->sc_bus.ub_dmatag = paa->plb_dmat;
+#endif
 	sc->sc_bus.ub_revision = USBREV_1_0;
 
 	ohci_plb_tag.pbs_base = paa->plb_addr;

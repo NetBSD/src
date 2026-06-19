@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4 2026/06/18 21:23:01 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.5 2026/06/19 18:55:23 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,9 +100,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/06/18 21:23:01 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2026/06/19 18:55:23 rkujawa Exp $");
 
 #include "opt_ddb.h"
+#include "opt_ppc4xx.h"
 #include "opt_sam460ex.h"
 
 #include <sys/param.h>
@@ -126,6 +127,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4 2026/06/18 21:23:01 rkujawa Exp $");
 #include <powerpc/ibm4xx/amcc460ex.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
 #include <powerpc/ibm4xx/tlb.h>
 
 #include <powerpc/ibm4xx/pci_machdep.h>
@@ -232,6 +234,10 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 		    (u_long)fdt_pa);
 	/* Record the value actually used so cpu_startup() agrees. */
 	sam460ex_fdt_info.fi_memsize = memsize;
+#endif
+
+#ifdef PPC4XX_L2CACHE
+	ibm4xx_460ex_l2cache_enable(memsize);
 #endif
 
 	/* Slots 0/1 hold the TS=0 identity entries pinned by locore */
@@ -499,6 +505,29 @@ cpu_startup(void)
 	if (sam460ex_fdt_info.fi_bootargs != NULL) {
 		printf("bootargs: %s\n", sam460ex_fdt_info.fi_bootargs);
 		parse_bootargs(sam460ex_fdt_info.fi_bootargs);
+	}
+#endif
+
+#ifdef PPC4XX_L2CACHE
+	if (ibm4xx_460ex_l2_cfg & L2C_CFG_L2M)
+		printf("sam460ex: 256KB L2 cache enabled, write-through, "
+		    "hw snoop (EMAC) + SW inval (USB) (L2C0_CFG %#x)\n",
+		    ibm4xx_460ex_l2_cfg);
+	else
+		printf("sam460ex: L2 cache NOT enabled (L2C0_CFG %#x)\n",
+		    ibm4xx_460ex_l2_cfg);
+#endif
+
+#ifdef DIAGNOSTIC
+	{
+		uint32_t cr = mfdcr(DCR_AHB_CR);
+		printf("sam460ex: AHB bridge rev %#x top %#x bot %#x att %#x "
+		    "cr %#x (PUOA %#x -> USB DMA on %s segment)\n",
+		    mfdcr(DCR_AHB_REV), mfdcr(DCR_AHB_TOP), mfdcr(DCR_AHB_BOT),
+		    mfdcr(DCR_AHB_ATT), cr,
+		    (cr & AHB_CR_PUOA_MASK) >> AHB_CR_PUOA_SHIFT,
+		    ((cr & AHB_CR_PUOA_MASK) >> AHB_CR_PUOA_SHIFT) < 0x8 ?
+		    "low-latency (snooped)" : "high-bandwidth (UNSNOOPED)");
 	}
 #endif
 

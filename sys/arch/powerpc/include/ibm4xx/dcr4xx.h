@@ -1,4 +1,4 @@
-/*	$NetBSD: dcr4xx.h,v 1.7 2026/06/18 21:23:01 rkujawa Exp $	*/
+/*	$NetBSD: dcr4xx.h,v 1.8 2026/06/19 18:55:24 rkujawa Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -248,7 +248,7 @@
 /* Indirectly accessed Clocking Controller DCRs */
 
 /*
- * AHB-to-PLB bridge configuration (460EX/460GT).  
+ * AHB-to-PLB bridge configuration (460EX/460GT).
  */
 #define	DCR_SDR0_AHB_CFG	0x0370	/* AHB-to-PLB bridge config */
 #define	  SDR0_AHB_CFG_A2P_INCR4	  0x00000080	/* IBM bit 24 */
