@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.13 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.14 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,7 +48,7 @@ log_end(dns_rrl_t *rrl, dns_rrl_entry_t *e, bool early, char *log_buf,
 
 /*
  * Get a modulus for a hash function that is tolerably likely to be
- * relatively prime to most inputs.  Of course, we get a prime for for initial
+ * relatively prime to most inputs.  Of course, we get a prime for initial
  * values not larger than the square of the last prime.  We often get a prime
  * after that.
  * This works well in practice for hash tables up to at least 100

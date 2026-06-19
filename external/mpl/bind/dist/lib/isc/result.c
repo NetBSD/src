@@ -1,4 +1,4 @@
-/*	$NetBSD: result.c,v 1.15 2026/04/08 00:16:16 christos Exp $	*/
+/*	$NetBSD: result.c,v 1.16 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,6 +232,7 @@ static const char *description[ISC_R_NRESULTS] = {
 	[DNS_R_NOSKRFILE] = "no SKR file",
 	[DNS_R_NOSKRBUNDLE] = "no available SKR bundle",
 	[DNS_R_LOOPDETECTED] = "fetch loop detected",
+	[DNS_R_MISMATCH] = "response with mismatched query id",
 
 	[DST_R_UNSUPPORTEDALG] = "algorithm is unsupported",
 	[DST_R_CRYPTOFAILURE] = "crypto failure",
@@ -487,6 +488,7 @@ static const char *identifier[ISC_R_NRESULTS] = {
 	[DNS_R_NOSKRFILE] = "DNS_R_NOSKRFILE",
 	[DNS_R_NOSKRBUNDLE] = "DNS_R_NOSKRBUNDLE",
 	[DNS_R_LOOPDETECTED] = "DNS_R_LOOPDETECTED",
+	[DNS_R_MISMATCH] = "DNS_R_MISMATCH",
 
 	[DST_R_UNSUPPORTEDALG] = "DST_R_UNSUPPORTEDALG",
 	[DST_R_CRYPTOFAILURE] = "DST_R_CRYPTOFAILURE",

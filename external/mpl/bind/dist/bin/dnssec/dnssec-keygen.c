@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-keygen.c,v 1.16 2026/01/29 18:36:26 christos Exp $	*/
+/*	$NetBSD: dnssec-keygen.c,v 1.17 2026/06/19 20:09:58 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,7 +68,7 @@
 const char *program = "dnssec-keygen";
 
 /*
- * These are are set here for backwards compatibility.  They are
+ * These are set here for backwards compatibility.  They are
  * raised to 2048 in FIPS mode.
  */
 static int min_rsa = 1024;

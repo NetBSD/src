@@ -315,7 +315,6 @@ dns_diff_apply_with_callbacks
 dns_diff_applysilently
 dns_diff_clear
 dns_diff_init
-dns_diff_is_boundary
 dns_diff_load
 dns_diff_print
 dns_diff_size

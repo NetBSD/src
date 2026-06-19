@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.12 2026/01/29 18:37:54 christos Exp $	*/
+/*	$NetBSD: a_1.c,v 1.13 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,7 +232,7 @@ checkowner_in_a(ARGS_CHECKOWNER) {
 		}
 
 		/*
-		 * Handle SPF exists targets when the seperating label is:
+		 * Handle SPF exists targets when the separating label is:
 		 * - "_spf" RFC7208, section 5.7
 		 * - "_spf_verify" RFC7208, Appendix D1
 		 * - "_spf_rate" RFC7208, Appendix D1

@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.13 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: diff.c,v 1.14 2026/06/19 20:09:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -150,19 +150,6 @@ dns_diff_append(dns_diff_t *diff, dns_difftuple_t **tuplep) {
 	ISC_LIST_APPEND(diff->tuples, *tuplep, link);
 	diff->size += 1;
 	*tuplep = NULL;
-}
-
-bool
-dns_diff_is_boundary(const dns_diff_t *diff, dns_name_t *new_name) {
-	REQUIRE(DNS_DIFF_VALID(diff));
-	REQUIRE(DNS_NAME_VALID(new_name));
-
-	if (ISC_LIST_EMPTY(diff->tuples)) {
-		return false;
-	}
-
-	dns_difftuple_t *tail = ISC_LIST_TAIL(diff->tuples);
-	return !dns_name_caseequal(&tail->name, new_name);
 }
 
 size_t

@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.c,v 1.19 2026/01/29 18:37:48 christos Exp $	*/
+/*	$NetBSD: dnssec.c,v 1.20 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -624,7 +624,7 @@ dns_dnssec_keyactive(dst_key_t *key, isc_stdtime_t now) {
 }
 
 /*%<
- * Indicate whether a key is scheduled to to have CDS/CDNSKEY records
+ * Indicate whether a key is scheduled to have CDS/CDNSKEY records
  * published now.
  *
  * Returns true if.
@@ -676,7 +676,7 @@ syncpublish(dst_key_t *key, isc_stdtime_t now) {
 }
 
 /*%<
- * Indicate whether a key is scheduled to to have CDS/CDNSKEY records
+ * Indicate whether a key is scheduled to have CDS/CDNSKEY records
  * deleted now.
  *
  * Returns true if:

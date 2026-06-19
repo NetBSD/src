@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.21 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: validator.c,v 1.22 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -962,27 +962,54 @@ notfound:
 	return result;
 }
 
+#define CHAINING(r) (((r)->attributes & DNS_RDATASETATTR_CHAINING) != 0)
+
 /*%
- * Checks to make sure we are not going to loop.  As we use a SHARED fetch
- * the validation process will stall if looping was to occur.
+ * Returns true if proceeding would stall the SHARED fetch: either the
+ * fetch cannot advance an alias chain, or an ancestor is already
+ * resolving the same (name, type).
  */
 static bool
 check_deadlock(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset) {
-	dns_validator_t *parent;
+	for (dns_validator_t *cur = val; cur != NULL; cur = cur->parent) {
+		if (!dns_name_equal(cur->name, name)) {
+			continue;
+		}
 
-	for (parent = val; parent != NULL; parent = parent->parent) {
-		if (parent->type == type &&
-		    dns_name_equal(parent->name, name) &&
-		    /*
-		     * As NSEC3 records are meta data you sometimes
-		     * need to prove a NSEC3 record which says that
-		     * itself doesn't exist.
-		     */
-		    (parent->type != dns_rdatatype_nsec3 || rdataset == NULL ||
-		     sigrdataset == NULL || parent->message == NULL ||
-		     parent->rdataset != NULL || parent->sigrdataset != NULL))
+		/*
+		 * Validating a CNAME/DNAME ("chaining" rdataset): a fetch at
+		 * the alias's own name cannot advance the chain (the type we
+		 * need, e.g. DS/DNSKEY for an insecurity proof, cannot live at
+		 * an alias) and would only self-join the in-flight fetch.
+		 */
+		if (cur->rdataset != NULL && CHAINING(cur->rdataset)) {
+			validator_log(
+				val, ISC_LOG_DEBUG(3),
+				"fetch would not advance the alias chain: "
+				"aborting validation");
+			return true;
+		}
+
+		/*
+		 * Not a loop: NSEC3 is meta data, so proving a name's
+		 * nonexistence can need the NSEC3 RRset that proves it
+		 * validated at its own owner name.  Allow that when we hold a
+		 * concrete RRset and the ancestor runs a message-driven
+		 * nonexistence proof.
+		 */
+		if (cur->type == dns_rdatatype_nsec3 && rdataset != NULL &&
+		    sigrdataset != NULL && cur->message != NULL &&
+		    cur->rdataset == NULL && cur->sigrdataset == NULL)
 		{
+			continue;
+		}
+
+		/*
+		 * An ancestor at this name is already validating this type; a
+		 * shared fetch would block on itself.
+		 */
+		if (cur->type == type) {
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "continuing validation would lead to "
 				      "deadlock: aborting validation");
@@ -991,6 +1018,8 @@ check_deadlock(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	}
 	return false;
 }
+
+#undef CHAINING
 
 /*%
  * Start a fetch for the requested name and type.
@@ -1004,8 +1033,6 @@ create_fetch(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	disassociate_rdatasets(val);
 
 	if (check_deadlock(val, name, type, NULL, NULL)) {
-		validator_log(val, ISC_LOG_DEBUG(3),
-			      "deadlock found (create_fetch)");
 		return ISC_R_DEADLOCK;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.28 2026/05/20 16:53:43 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.29 2026/06/19 20:09:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12915,7 +12915,7 @@ named_server_sync(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text) {
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumping all zones%s: %s",
 			      cleanup ? ", removing journal files" : "",
-			      isc_result_totext(result));
+			      isc_result_totext(tresult));
 		return tresult;
 	}
 

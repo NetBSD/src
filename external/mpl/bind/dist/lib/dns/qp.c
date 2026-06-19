@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.c,v 1.5 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: qp.c,v 1.6 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -166,7 +166,7 @@ uint16_t dns_qp_bits_for_byte[BYTE_VALUES] = { 0 };
  *
  * This table only handles the first bit in an escape sequence; we
  * arrange that we can calculate the byte value for both bits by
- * adding the the second bit to the first bit's byte value.
+ * adding the second bit to the first bit's byte value.
  */
 uint8_t dns_qp_byte_for_bit[SHIFT_OFFSET] = { 0 };
 

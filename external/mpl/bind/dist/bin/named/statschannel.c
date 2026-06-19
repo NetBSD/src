@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.19 2026/04/08 00:15:44 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.20 2026/06/19 20:09:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -466,6 +466,10 @@ init_desc(void) {
 			"ClientQuota");
 	SET_RESSTATDESC(nextitem, "waited for next item", "NextItem");
 	SET_RESSTATDESC(priming, "priming queries", "Priming");
+	SET_RESSTATDESC(mismatchtcp,
+			"queries retried over TCP after a response with "
+			"mismatched query id",
+			"MismatchTCP");
 
 	INSIST(i == dns_resstatscounter_max);
 

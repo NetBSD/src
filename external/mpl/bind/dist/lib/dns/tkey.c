@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey.c,v 1.18 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: tkey.c,v 1.19 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -325,7 +325,7 @@ process_deletetkey(dns_name_t *signer, dns_name_t *name,
 	 * was not generated with TKEY and is in the config file, it may be
 	 * reloaded later.
 	 */
-	dns_tsigkey_delete(tsigkey);
+	dns_tsigkey_delete(ring, tsigkey);
 
 	/* Release the reference */
 	dns_tsigkey_detach(&tsigkey);

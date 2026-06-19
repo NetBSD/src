@@ -1,4 +1,4 @@
-/*	$NetBSD: adb.h,v 1.11 2026/04/08 00:16:14 christos Exp $	*/
+/*	$NetBSD: adb.h,v 1.12 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -219,7 +219,7 @@ struct dns_adbaddrinfo {
 };
 
 /*!<
- * When the caller recieves a callback from dns_adb_createfind(), the
+ * When the caller receives a callback from dns_adb_createfind(), the
  * argument will a pointer to the dns_adbfind_t structure, which includes
  * this includes a copy of the callback function and argument passed to
  * dns_adb_createfind(), and a dns_adbstatus_t in the 'status' field,

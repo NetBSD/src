@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.17 2026/05/20 16:53:43 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.18 2026/06/19 20:09:58 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2884,7 +2884,7 @@ findkeys:
 	dns_diff_init(mctx, &diff);
 
 	/*
-	 * Update keylist with information from from the key repository.
+	 * Update keylist with information from the key repository.
 	 */
 	dns_dnssec_updatekeys(&keylist, &matchkeys, NULL, gorigin, keyttl,
 			      &diff, mctx, report);

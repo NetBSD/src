@@ -1,4 +1,4 @@
-/*	$NetBSD: catz.c,v 1.17 2026/05/20 16:53:45 christos Exp $	*/
+/*	$NetBSD: catz.c,v 1.18 2026/06/19 20:09:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -708,7 +708,7 @@ dns__catz_zones_merge(dns_catz_zone_t *catz, dns_catz_zone_t *newcatz) {
 	}
 	RUNTIME_CHECK(result == ISC_R_NOMORE);
 	isc_ht_iter_destroy(&iter2);
-	/* At this moment catz->entries has to be be empty. */
+	/* At this moment catz->entries has to be empty. */
 	INSIST(isc_ht_count(catz->entries) == 0);
 	isc_ht_destroy(&catz->entries);
 

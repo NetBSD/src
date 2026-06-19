@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch_test.c,v 1.4 2026/05/20 16:53:47 christos Exp $	*/
+/*	$NetBSD: dispatch_test.c,v 1.5 2026/06/19 20:10:03 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -448,6 +448,41 @@ response_shutdown(isc_result_t eresult, isc_region_t *region ISC_ATTR_UNUSED,
 }
 
 static void
+response_mismatch(isc_result_t eresult, isc_region_t *region ISC_ATTR_UNUSED,
+		  void *arg) {
+	test_dispatch_t *test = arg;
+
+	assert_int_equal(eresult, DNS_R_MISMATCH);
+
+	test_dispatch_shutdown(test);
+}
+
+static void
+nameserver_mismatch(isc_nmhandle_t *handle, isc_result_t eresult,
+		    isc_region_t *region, void *arg ISC_ATTR_UNUSED) {
+	/*
+	 * Reply with a single response whose DNS message id has been
+	 * flipped; the dispatcher must escalate immediately rather than
+	 * waiting for a "correct" id to arrive.
+	 */
+	static unsigned char buf[16];
+	static isc_region_t resp;
+
+	if (eresult != ISC_R_SUCCESS) {
+		return;
+	}
+
+	memmove(buf, region->base, 12);
+	memset(buf + 12, 0, 4);
+	buf[0] ^= 0xff; /* flip id high byte */
+	buf[1] ^= 0xff; /* flip id low byte */
+	buf[2] |= 0x80; /* qr=1 */
+	resp.base = buf;
+	resp.length = sizeof(buf);
+	isc_nm_send(handle, &resp, server_senddone, NULL);
+}
+
+static void
 response_timeout(isc_result_t eresult, isc_region_t *region ISC_ATTR_UNUSED,
 		 void *arg) {
 	test_dispatch_t *test = arg;
@@ -769,6 +804,47 @@ ISC_LOOP_TEST_IMPL(dispatch_getnext) {
 	dns_dispatch_connect(test->dispentry);
 }
 
+/*
+ * Verify that a UDP response carrying the wrong DNS message id causes the
+ * dispatcher to deliver DNS_R_MISMATCH to the response callback, instead
+ * of silently waiting for the correct id to arrive.
+ */
+ISC_LOOP_TEST_IMPL(dispatch_mismatch_tcp) {
+	isc_result_t result;
+	test_dispatch_t *test = isc_mem_get(mctx, sizeof(*test));
+	*test = (test_dispatch_t){ 0 };
+
+	/* Server: replies with a single wrong-id response. */
+	result = isc_nm_listenudp(netmgr, ISC_NM_LISTEN_ONE, &udp_server_addr,
+				  nameserver_mismatch, NULL, &sock);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	isc_loop_teardown(isc_loop_main(loopmgr), stop_listening, sock);
+
+	/* Client */
+	testdata.region.base = testdata.message;
+	testdata.region.length = sizeof(testdata.message);
+
+	result = dns_dispatchmgr_create(mctx, loopmgr, connect_nm,
+					&test->dispatchmgr);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = dns_dispatch_createudp(test->dispatchmgr, &udp_connect_addr,
+					&test->dispatch);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = dns_dispatch_add(
+		test->dispatch, isc_loop_main(loopmgr), 0, T_CLIENT_CONNECT,
+		&udp_server_addr, NULL, NULL, connected, client_senddone,
+		response_mismatch, test, &test->id, &test->dispentry);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	testdata.message[0] = (test->id >> 8) & 0xff;
+	testdata.message[1] = test->id & 0xff;
+
+	dns_dispatch_connect(test->dispentry);
+}
+
 ISC_LOOP_TEST_IMPL(dispatch_sharedtcp) {
 	isc_result_t result;
 	test_dispatch_t *test = isc_mem_get(mctx, sizeof(*test));
@@ -813,6 +889,7 @@ ISC_TEST_ENTRY_CUSTOM(dispatch_timeout_tcp_connect, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(dispatch_tcp_response, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(dispatch_tls_response, setup_test, teardown_test)
 ISC_TEST_ENTRY_CUSTOM(dispatch_getnext, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(dispatch_mismatch_tcp, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

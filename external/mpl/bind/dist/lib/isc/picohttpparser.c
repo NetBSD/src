@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.6 2026/01/29 18:37:54 christos Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.7 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -648,7 +648,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			}
 			decoder->_hex_count = 0;
 			decoder->_state = CHUNKED_IN_CHUNK_EXT;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_CHUNK_EXT:
 			/* RFC 7230 A.2 "Line folding in chunk extensions is
 			 * disallowed" */
@@ -671,7 +671,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				}
 			}
 			decoder->_state = CHUNKED_IN_CHUNK_DATA;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_CHUNK_DATA: {
 			size_t avail = bufsz - src;
 			if (avail < decoder->bytes_left_in_chunk) {
@@ -692,7 +692,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			decoder->bytes_left_in_chunk = 0;
 			decoder->_state = CHUNKED_IN_CHUNK_CRLF;
 		}
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_CHUNK_CRLF:
 			for (;; ++src) {
 				if (src == bufsz) {
@@ -722,7 +722,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				goto Complete;
 			}
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_MIDDLE;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_TRAILERS_LINE_MIDDLE:
 			for (;; ++src) {
 				if (src == bufsz) {

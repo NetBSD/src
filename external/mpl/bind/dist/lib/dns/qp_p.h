@@ -1,4 +1,4 @@
-/*	$NetBSD: qp_p.h,v 1.3 2026/01/29 18:37:49 christos Exp $	*/
+/*	$NetBSD: qp_p.h,v 1.4 2026/06/19 20:10:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,7 +53,7 @@
  * In a branch node:
  * - The 64-bit word is subdivided into three portions: the least
  *   significant bits are the node type (for a branch, 0x1); the
- *   most sigificant 15 bits are an offset value into the key, and
+ *   most significant 15 bits are an offset value into the key, and
  *   the 47 bits in the middle are a bitmap; see the documentation
  *   for the SHIFT_* enum below.
  * - The 32-bit word is a reference (dns_qpref_t) to the packed sparse
@@ -821,7 +821,7 @@ zero_twigs(dns_qpnode_t *twigs, dns_qpweight_t size) {
  *
  * Packed reader nodes save us from having to track `dns_qpread_t`
  * objects as distinct allocations: the packed reader nodes get
- * reclaimed when the the chunk containing their cells is reclaimed.
+ * reclaimed when the chunk containing their cells is reclaimed.
  * When a real `dns_qpread_t` object is needed, it is allocated on the
  * stack (it must not live longer than a isc_loop callback) and the
  * packed reader is unpacked into it.

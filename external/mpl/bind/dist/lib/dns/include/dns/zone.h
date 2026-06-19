@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.h,v 1.16 2026/01/29 18:37:51 christos Exp $	*/
+/*	$NetBSD: zone.h,v 1.17 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1752,7 +1752,7 @@ dns_zone_findkeys(dns_zone_t *zone, dns_db_t *db, dns_dbversion_t *ver,
  * Requires:
  *\li	'zone' to be a valid initialised zone.
  *\li	'mctx' is not NULL.
- *\li	'keys' is not NULL and has enough space form 'nkeys' keys.
+ *\li	'keys' is not NULL and has enough space for 'nkeys' keys.
  *\li	'nkeys' is not NULL.
  *
  * Returns:

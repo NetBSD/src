@@ -1,4 +1,4 @@
-/*	$NetBSD: qp.h,v 1.4 2026/01/29 18:37:50 christos Exp $	*/
+/*	$NetBSD: qp.h,v 1.5 2026/06/19 20:10:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -330,7 +330,7 @@ typedef enum dns_qpgc {
 
 /***********************************************************************
  *
- *  functions - create, destory, enquire
+ *  functions - create, destroy, enquire
  */
 
 void
