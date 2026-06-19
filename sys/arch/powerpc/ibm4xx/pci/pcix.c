@@ -1,4 +1,4 @@
-/*	$NetBSD: pcix.c,v 1.2 2026/06/17 15:08:54 rkujawa Exp $	*/
+/*	$NetBSD: pcix.c,v 1.3 2026/06/19 21:13:52 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.2 2026/06/17 15:08:54 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.3 2026/06/19 21:13:52 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -78,6 +78,9 @@ __KERNEL_RCSID(0, "$NetBSD: pcix.c,v 1.2 2026/06/17 15:08:54 rkujawa Exp $");
 #define	PCIX0_PIM1LAH	0xac
 #define	PCIX0_PIM2SAL	0xb0
 #define	PCIX0_PIM0SAH	0xf8
+
+#define	PIM_SA_ENABLE	0x1
+#define	PIM_SA_PREFETCH	0x2		/* inbound read prefetch (bit 1) */
 
 #define	PCIC_CFGADDR	0
 #define	PCIC_CFGDATA	4
@@ -247,7 +250,11 @@ pcix_setup_windows(void)
 	PCIX_REG_WRITE(PCIX0_PIM0LAL, 0);
 	PCIX_REG_WRITE(PCIX0_PIM0LAH, 0);
 	PCIX_REG_WRITE(PCIX0_PIM0SAH, 0xffffffff);
-	PCIX_REG_WRITE(PCIX0_PIM0SAL, ~(0x80000000U - 1) | 1);
+	/*
+	 * Enable inbound read prefetch
+	 */
+	PCIX_REG_WRITE(PCIX0_PIM0SAL,
+	    ~(0x80000000U - 1) | PIM_SA_ENABLE | PIM_SA_PREFETCH);
 
 	/* PIM1/PIM2 unused */
 	PCIX_REG_WRITE(PCIX0_PIM1SA, 0);
