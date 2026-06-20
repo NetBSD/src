@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.S,v 1.31 2026/06/13 20:16:23 rkujawa Exp $	*/
+/*	$NetBSD: trap_subr.S,v 1.32 2026/06/20 09:30:07 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -290,6 +290,8 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
  *	%r1		kernel stack
  *	LR		trap type
  */
+#define	CLEAR_WAIT_STATE(reg)	rlwinm reg,reg,0,14,12
+
 #define	FRAME_SETUP(savearea)						\
 /* Have to enable translation to allow access of kernel stack: */	\
 	ENABLE_TRANSLATION(%r30,%r31);					\
@@ -316,6 +318,7 @@ _C_LABEL(ddbsize) = .-_C_LABEL(ddblow)
 	stw	%r28,FRAME_DEAR(%r1);					\
 	stw	%r29,FRAME_ESR(%r1);					\
 	stw	%r30,FRAME_SRR0(%r1);					\
+	CLEAR_WAIT_STATE(%r31);		/* wake from MSR[WE] idle */	\
 	stw	%r31,FRAME_SRR1(%r1)
 
 #define	FRAME_SAVE_CALLEE						\
@@ -573,6 +576,7 @@ _C_LABEL(sctrapexit):
 	mfsrr1	%r3;							\
 	stw	%r5,FRAME_IDEPTH(%r1);					\
 	stw	%r4,FRAME_SRR0(%r1);					\
+	CLEAR_WAIT_STATE(%r3);		/* wake from MSR[WE] idle */	\
 	stw	%r3,FRAME_SRR1(%r1);					\
 /* interrupts are recoverable here, and enable translation */		\
 	ENABLE_TRANSLATION(%r0,%r5);					\

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.40 2026/06/13 20:16:23 rkujawa Exp $	*/
+/*	$NetBSD: cpu.c,v 1.41 2026/06/20 09:30:07 rkujawa Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,17 +36,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.40 2026/06/13 20:16:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.41 2026/06/20 09:30:07 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
+
+#include <machine/psl.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
@@ -265,6 +268,40 @@ struct cpu_info cpu_info[1] = {
 
 bool cpufound;
 
+/*
+ * Idle the CPU using the 4xx wait state.
+ *
+ * Note that... unlike classic PPC's MSR[POW], 4xx does NOT clear WE 
+ * in the saved SRR1 on interrupt
+ */
+extern int powersave;
+
+static void
+ibm4xx_idlespin(void)
+{
+
+	KASSERT(mfmsr() & PSL_EE);
+
+	if (powersave > 0)
+		mtmsr(mfmsr() | PSL_WE);
+}
+
+SYSCTL_SETUP(sysctl_machdep_powersave_setup, "sysctl machdep.powersave setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "powersave",
+	    SYSCTL_DESCR("Idle CPU using the wait state (MSR[WE])"),
+	    NULL, 0, &powersave, 0,
+	    CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+}
+
 static int
 cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
@@ -291,6 +328,12 @@ cpuattach(device_t parent, device_t self, void *aux)
 
 	cpufound = true;
 	ncpus++;
+
+	/*
+	 * Use the wait-state idle loop, controllable via machdep.powersave.
+	 */
+	ci->ci_idlespin = ibm4xx_idlespin;
+	powersave = 0; /* off by default */
 
 	const u_int pvr = mfpvr();
 	for (cp = models; cp->name != NULL; cp++) {
