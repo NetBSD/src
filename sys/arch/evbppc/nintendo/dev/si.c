@@ -76,11 +76,11 @@ static void	si_get_report_desc(void *, void **, int *);
 static int	si_open(void *, void (*)(void *, void *, unsigned), void *);   
 static void	si_stop(void *);                                              
 static void	si_close(void *);                                             
+static void	si_enable_polling(device_t);
 static usbd_status si_set_report(void *, int, void *, int);               
 static usbd_status si_get_report(void *, int, void *, int);               
 static usbd_status si_write(void *, void *, int);                         
 
-static void			enable_polling(device_t);
 static void			tcint_handler(struct work *, void *);
 static void			txn_softintr(void *);
 
@@ -172,12 +172,12 @@ si_attach(device_t parent, device_t self, void *aux)
 	    device_xname(self));
 	KASSERT(ih != NULL);
 
-	config_interrupts(self, enable_polling);
+	config_interrupts(self, si_enable_polling);
 	si_rescan(self, NULL, NULL);
 }
 
 static void
-enable_polling(device_t self)
+si_enable_polling(device_t self)
 {
 	struct si_softc *sc = device_private(self);
 	struct sicomcsr_txn txn;
@@ -585,6 +585,7 @@ txn_dequeue(struct sicomcsr_txn *txn)
 	mutex_enter(&txn->lock);
 	if (txn->status != TXN_DEQUEUED) {
 		txn->status = TXN_DEQUEUED;
+		txn_len--;
 		TAILQ_REMOVE(&txn_head, txn, txn_q);
 	}
 	mutex_exit(&txn->lock);
