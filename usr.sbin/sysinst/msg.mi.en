@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.57 2026/06/21 12:56:35 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.58 2026/06/21 20:02:43 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1579,3 +1579,6 @@ message month {Month (1-12)}
 message day {Day (1-31)}
 message hour {Hour (0-23)}
 message minute {Minute (0-59)}
+
+message resize_gpt
+{The disk size is larger than the GPT shows, fix this?}

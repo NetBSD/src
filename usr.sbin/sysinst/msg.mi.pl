@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.53 2026/06/21 12:56:35 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.54 2026/06/21 20:02:43 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1559,3 +1559,5 @@ message day {Day (1-31)}
 message hour {Hour (0-23)}
 message minute {Minute (0-59)}
 
+message resize_gpt
+{The disk size is larger than the GPT shows, fix this?}
