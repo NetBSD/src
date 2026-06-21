@@ -1,10 +1,10 @@
-# $NetBSD: services,v 1.109 2026/05/29 16:18:13 christos Exp $
+# $NetBSD: services,v 1.110 2026/06/21 13:03:29 christos Exp $
 # See also: services(5), https://www.iana.org/assignments/service-names-port-numbers/
 #
-#    • Domains
-#    • Protocols
-#    • Numbers
-#    • About
+#    - Domains
+#    - Protocols
+#    - Numbers
+#    - About
 # 
 #                                              Service Name and Transport Protocol Port Number Registry
 # 
