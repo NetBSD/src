@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.22 2022/04/10 09:50:45 andvar Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.23 2026/06/21 10:35:14 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -33,6 +33,8 @@
 
 #include <sys/mallocvar.h>
 #include <sys/mutex.h>
+
+#include <dev/pci/pcivar.h>
 
 struct agpbus_attach_args {
 	char	*_apa_busname; /* XXX placeholder */
