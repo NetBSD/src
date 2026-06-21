@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_vcaudio.c,v 1.21 2025/12/21 10:31:07 tsutsui Exp $ */
+/* $NetBSD: bcm2835_vcaudio.c,v 1.22 2026/06/21 10:28:07 andvar Exp $ */
 
 /*-
  * Copyright (c) 2013 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.21 2025/12/21 10:31:07 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_vcaudio.c,v 1.22 2026/06/21 10:28:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -848,7 +848,7 @@ vcaudio_swvol_codec(audio_filter_arg_t *arg)
 	dst = arg->dst;
 	sample_count = arg->count * arg->srcfmt->channels;
 	for (i = 0; i < sample_count; i++) {
-		/* assume SLINEAR_NE:16 is prefered on playback */
+		/* assume SLINEAR_NE:16 is preferred on playback */
 		aint2_t v = (aint2_t)(*src++);
 		v = v * sc->sc_swvol / 255;
 		/* output vcaudio requires SLINEAR_LE:16 */

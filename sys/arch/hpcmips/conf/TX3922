@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.112 2021/06/29 10:22:35 nia Exp $
+#	$NetBSD: TX3922,v 1.113 2026/06/21 10:28:08 andvar Exp $
 #
 include 	"arch/hpcmips/conf/std.hpcmips"
 
@@ -130,7 +130,7 @@ hpcin*	at hpcioman2 iochip 1 evtype EVENT   id COM0_DCD   port 13 edge 3
 hpcout*	at hpcioman2 iochip 1 evtype POWER   id PWCTL_COM0 port 15
 hpcout*	at hpcioman2 iochip 1 evtype POWER   id PWCTL_LED  port 4  flags 3 #(blink)
 
-# InterLink (not maintainanced.)
+# InterLink (unmaintained.)
 hpcioman3 at txioman? platform VICTOR_INTERLINK
 hpcin*	at hpcioman3 iochip 1 evtype BUTTON id BTN_COVER   port 4
 hpcin*	at hpcioman3 iochip 1 evtype BUTTON id BTN_REC	port 7

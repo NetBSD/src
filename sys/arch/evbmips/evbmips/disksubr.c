@@ -1,4 +1,4 @@
-/* $NetBSD: disksubr.c,v 1.18 2019/04/03 22:10:50 christos Exp $ */
+/* $NetBSD: disksubr.c,v 1.19 2026/06/21 10:28:07 andvar Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.18 2019/04/03 22:10:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.19 2026/06/21 10:28:07 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	uint32_t secperunit;
 	int i;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
 	if (lp->d_secperunit == 0)

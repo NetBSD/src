@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdev.c,v 1.37 2017/09/15 13:25:34 martin Exp $	*/
+/*	$NetBSD: ofdev.c,v 1.38 2026/06/21 10:28:08 andvar Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -330,7 +330,7 @@ search_label(struct of_dev *devp, u_long off, char *buf,
 	struct disklabel *dlp;
 	struct sun_disklabel *slp;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	lp->d_npartitions = 1;

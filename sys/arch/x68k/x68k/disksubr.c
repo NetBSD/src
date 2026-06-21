@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.38 2026/04/30 05:20:54 isaki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.39 2026/06/21 10:28:09 andvar Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.38 2026/04/30 05:20:54 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.39 2026/06/21 10:28:09 andvar Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -73,7 +73,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	if (osdep)
 		dp = osdep->dosparts;
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEF_BSIZE;
 	if (lp->d_secperunit == 0)
