@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.46 2026/04/26 13:31:47 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.47 2026/06/21 12:56:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -701,6 +701,25 @@ message delete_xfer_file
  */
 message notarfile
 {El conjunto $0 no existe.}
+
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
+message opt_set_not_found
+{The set "$0" is optional and not included on this
+distribution medium. 
+
+This is not critical and installation will continue. 
+You can add this set later, e.g. by downloading it via
+https from the NetBSD CDN. 
+
+Optional sets are: 
+ debug/debug32 containing debug information 
+ base32 containing support for running 32bit code on 64bit architectures 
+
+Some architectures offer differen CD vs. DVD ISO images, the DVD images
+are complete and contain all sets. 
+}
 
 message endtarok
 {Todos los conjuntos de distribución han sido desempaquetados

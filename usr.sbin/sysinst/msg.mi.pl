@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.52 2026/04/26 13:31:47 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.53 2026/06/21 12:56:35 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -684,6 +684,25 @@ message delete_xfer_file
  */
 message notarfile
 {Pakiet $0 nie istnieje.}
+
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
+message opt_set_not_found
+{The set "$0" is optional and not included on this
+distribution medium. 
+
+This is not critical and installation will continue. 
+You can add this set later, e.g. by downloading it via
+https from the NetBSD CDN. 
+
+Optional sets are: 
+ debug/debug32 containing debug information 
+ base32 containing support for running 32bit code on 64bit architectures 
+
+Some architectures offer differen CD vs. DVD ISO images, the DVD images
+are complete and contain all sets. 
+}
 
 message endtarok
 {Wszystkie wybrane pakiety dystrybucji zostaly rozpakowane.}

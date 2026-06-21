@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.55 2026/04/26 13:31:47 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.56 2026/06/21 12:56:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -719,6 +719,25 @@ message delete_xfer_file
  */
 message notarfile
 {Das Release-Paket $0 existiert nicht.}
+
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
+message opt_set_not_found
+{Das Paket "$0" ist optional und auf diesem Medium
+nicht vorhanden. 
+
+Das ist kein Problem und die Installation wird forgesetzt. 
+Das Paket kann nachträglich installiert werden, z.B. durch
+download via https von der NetBSD CDN. 
+
+Optionale Pakete sind: 
+ debug/debug32 mit debug Informationen 
+ base32 mit Unterstützung um 32bit Applikationen auf 64bit Architekturen zu verwenden 
+
+Für einige Architekturen stehen unterschiedliche ISO Dateien für CD und DVD Laufwerke
+zur verfügung, auf der DVD Version sind alle Installations-Pakete enthalten. 
+}
 
 message endtarok
 {Alle Distributionspakete wurden erfolgreich entpackt.}
