@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_intel.c,v 1.39 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: agp_intel.c,v 1.40 2026/06/21 17:09:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -29,23 +29,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.39 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_intel.c,v 1.40 2026/06/21 17:09:44 andvar Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/agpio.h>
+#include <sys/bus.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/agpio.h>
-#include <sys/device.h>
+#include <sys/systm.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
-
-#include <sys/bus.h>
+#include <dev/pci/agpvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 struct agp_intel_softc {
 	u_int32_t		initial_aperture;

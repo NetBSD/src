@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_amd64.c,v 1.10 2026/06/07 15:32:03 andvar Exp $	*/
+/*	$NetBSD: agp_amd64.c,v 1.11 2026/06/21 17:09:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005 Jung-uk Kim <jkim@FreeBSD.org>
@@ -27,25 +27,23 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.10 2026/06/07 15:32:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_amd64.c,v 1.11 2026/06/21 17:09:44 andvar Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/agpio.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/agpio.h>
+#include <sys/systm.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
-
+#include <dev/pci/agpvar.h>
 #include <dev/pci/pcidevs.h>
-
-#include <sys/bus.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
 
 #define	AMD64_MAX_MCTRL		8

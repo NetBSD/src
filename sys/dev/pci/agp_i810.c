@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.126 2024/01/29 01:05:55 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.127 2026/06/21 17:09:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,28 +30,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.126 2024/01/29 01:05:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.127 2026/06/21 17:09:44 andvar Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/agpio.h>
 #include <sys/atomic.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/device.h>
-#include <sys/conf.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/pcidevs.h>
-#include <dev/pci/agpvar.h>
-#include <dev/pci/agpreg.h>
 #include <dev/pci/agp_i810var.h>
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
-#include <sys/agpio.h>
-
-#include <sys/bus.h>
 
 #include "agp_intel.h"
 

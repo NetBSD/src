@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_apple.c,v 1.8 2019/11/10 21:16:36 chs Exp $ */
+/*	$NetBSD: agp_apple.c,v 1.9 2026/06/21 17:09:44 andvar Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,22 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.8 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_apple.c,v 1.9 2026/06/21 17:09:44 andvar Exp $");
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/agpio.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/agpio.h>
+#include <sys/systm.h>
 
-#include <dev/pci/pcivar.h>
-#include <dev/pci/pcireg.h>
-#include <dev/pci/agpvar.h>
 #include <dev/pci/agpreg.h>
-
-#include <sys/bus.h>
+#include <dev/pci/agpvar.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
 
 #define	APPLE_UNINORTH_GART_BASE	0x8c
 #define	APPLE_UNINORTH_GART_BASE_ADDR	0x90

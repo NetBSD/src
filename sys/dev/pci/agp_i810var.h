@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810var.h,v 1.7 2018/08/27 00:51:37 riastradh Exp $	*/
+/*	$NetBSD: agp_i810var.h,v 1.8 2026/06/21 17:09:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,9 +30,8 @@
 #include <sys/types.h>
 #include <sys/bus.h>
 
-#include <dev/pci/pcivar.h>
-
 #include <dev/pci/agpvar.h>
+#include <dev/pci/pcivar.h>
 
 struct agp_i810_softc {
 	struct pci_attach_args vga_pa;	/* integrated graphics device args */

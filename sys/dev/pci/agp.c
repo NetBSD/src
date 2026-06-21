@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: agp.c,v 1.89 2026/06/21 17:09:44 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,27 +65,26 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.89 2026/06/21 17:09:44 andvar Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <sys/agpio.h>
-#include <sys/proc.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/agpvar.h>
-#include <dev/pci/agpreg.h>
-#include <dev/pci/pcidevs.h>
-
-#include <sys/bus.h>
 
 MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 
@@ -109,11 +108,11 @@ static bool agp_resume(device_t, const pmf_qual_t *);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
+#include "agp_amd64.h"
 #include "agp_i810.h"
 #include "agp_intel.h"
 #include "agp_sis.h"
 #include "agp_via.h"
-#include "agp_amd64.h"
 
 const struct agp_product {
 	uint32_t	ap_vendor;
