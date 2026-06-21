@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.89 2026/06/21 17:09:44 andvar Exp $	*/
+/*	$NetBSD: agp.c,v 1.90 2026/06/21 18:38:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.89 2026/06/21 17:09:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.90 2026/06/21 18:38:35 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/agpio.h>
@@ -111,6 +111,7 @@ static bool agp_resume(device_t, const pmf_qual_t *);
 #include "agp_amd64.h"
 #include "agp_i810.h"
 #include "agp_intel.h"
+#include "agp_nvidia.h"
 #include "agp_sis.h"
 #include "agp_via.h"
 
@@ -225,6 +226,13 @@ const struct agp_product {
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
 	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_NVIDIA > 0
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE_PCHB,
+	  NULL,			agp_nvidia_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
+	  NULL,			agp_nvidia_attach },
 #endif
 
 #if NAGP_AMD64 > 0

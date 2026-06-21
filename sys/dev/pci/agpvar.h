@@ -1,4 +1,4 @@
-/*	$NetBSD: agpvar.h,v 1.23 2026/06/21 10:35:14 andvar Exp $	*/
+/*	$NetBSD: agpvar.h,v 1.24 2026/06/21 18:38:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -192,8 +192,9 @@ int agp_amd_attach(device_t, device_t, void *);
 int agp_apple_attach(device_t, device_t, void *);
 int agp_i810_attach(device_t, device_t, void *);
 int agp_intel_attach(device_t, device_t, void *);
-int agp_via_attach(device_t, device_t, void *);
 int agp_sis_attach(device_t, device_t, void *);
+int agp_nvidia_attach(device_t, device_t, void *);
+int agp_via_attach(device_t, device_t, void *);
 int agp_amd64_attach(device_t, device_t, void *);
 
 int agp_alloc_dmamem(bus_dma_tag_t, size_t, int, bus_dmamap_t *, void **,

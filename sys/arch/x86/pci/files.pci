@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.28 2026/02/20 07:54:26 yamt Exp $
+#	$NetBSD: files.pci,v 1.29 2026/06/21 18:38:35 andvar Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -6,7 +6,8 @@ file 	arch/x86/pci/aapic.c		aapic
 
 file	arch/x86/pci/agp_machdep.c	agp
 
-define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_sis, agp_via
+define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_nvidia,
+		 agp_sis, agp_via
 defflag	AGP_X86
 
 # PCI-Host bridge chipsets

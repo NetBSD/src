@@ -1,4 +1,4 @@
-/*	$NetBSD: agpreg.h,v 1.24 2017/02/27 14:13:56 msaitoh Exp $	*/
+/*	$NetBSD: agpreg.h,v 1.25 2026/06/21 18:38:35 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -318,6 +318,23 @@
 #define	AGP_AMD64_ATTBASE_MASK		0xfffffff0
 #define	AGP_AMD64_CACHECTRL_INVGART	0x00000001
 #define	AGP_AMD64_CACHECTRL_PTEERR	0x00000002
+
+/*
+ * NVIDIA nForce/nForce2 registers
+ */
+#define	AGP_NVIDIA_0_APBASE		0x10
+#define	AGP_NVIDIA_0_APSIZE		0x80
+#define	AGP_NVIDIA_0_APSIZE_MASK	0x0f
+#define	AGP_NVIDIA_1_WBC		0xf0
+#define	AGP_NVIDIA_2_GARTCTRL		0xd0
+#define	AGP_NVIDIA_2_APBASE		0xd8
+#define	AGP_NVIDIA_2_APLIMIT		0xdc
+#define	AGP_NVIDIA_2_ATTBASE(i)		(0xe0 + (i) * 4)
+#define	AGP_NVIDIA_3_APBASE		0x50
+#define	AGP_NVIDIA_3_APLIMIT		0x54
+#define	AGP_NVIDIA_1_WBC		0xf0
+#define AGP_NVIDIA_NFORCE_WBC_MASK	0x00010000
+#define AGP_NVIDIA_NFORCE2_WBC_MASK	0x80000000
 
 /*
  * NVIDIA nForce3 registers
