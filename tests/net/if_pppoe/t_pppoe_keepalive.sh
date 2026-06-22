@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_keepalive.sh,v 1.2 2026/06/22 04:06:25 yamaguchi Exp $
+#	$NetBSD: t_pppoe_keepalive.sh,v 1.3 2026/06/22 04:08:57 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -88,8 +88,110 @@ pppoe_keepalive_reset_cleanup()
 	cleanup
 }
 
+atf_test_case pppoe_keepalive_ifdown cleanup
+pppoe_keppalive_ifdown_head()
+{
+
+	atf_set "descr" "Test for PP_IFDOWN flag"
+	atf_set "require.progs" "rump_server pppoectl"
+}
+
+pppoe_keepalive_ifdown_body()
+{
+	export RUMP_PPPOE_KEEPALIVE_INTERVAL=1
+	setup_pppoe_server_client $SERVER $CLIENT $BUS
+	setup_auth_params chap $AUTHNAME $SECRET
+	setup_ipcp_addrs   $SERVER_IP $CLIENT_IP
+
+	export RUMP_SERVER=$CLIENT
+	atf_pppoectl pppoe0  \
+	    alive-interval=1   \
+	    max-alive-missed=1 \
+	    max-noreceive=0
+
+	atf_check -s exit:0 -o match:"ifdown: 0 -> 1" \
+	    rump.sysctl -w net.sppp.pppoe0.ifdown=1
+
+	pppoe_connect
+
+	#
+	# Test IFF_UP cleared after disconnect
+	#
+	echo "Test IFF_UP cleared during disconnection and reconnection"
+
+	export RUMP_SERVER=$SERVER
+	atf_ifconfig shmif0 down
+
+	# wait for no keepalive detaction
+	T=$((RUMP_PPPOE_KEEPALIVE_INTERVAL * 3))
+	echo "sleep PPPOE_KEEPALIVE_INTERVAL * 3 (${T}s)"
+	sleep $T
+
+	export RUMP_SERVER=$CLIENT
+	wait_for "LCP" "starting"
+	atf_check -s exit:0 -o not-match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o     match:'RUNNING' rump.ifconfig pppoe0
+
+	export RUMP_SERVER=$SERVER
+	atf_ifconfig pppoe0 down
+	atf_ifconfig shmif0 up
+	atf_ifconfig pppoe0 up
+
+	# automatically recoonect
+	echo "sleep \$PPPOE_RECON_PADTRCVD (${PPPOE_RECON_PADTRCVD}s)"
+	sleep $PPPOE_RECON_PADTRCVD
+	wait_for "IPCP" "opened"
+	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
+
+	#
+	# Test for taking interface down during if_down() and if_up()
+	#
+	echo "Test for taking interface down during if_down() and if_up()"
+
+	export RUMP_SERVER=$SERVER
+	atf_ifconfig shmif0 down
+
+	# wait for no keepalive detaction
+	T=$((RUMP_PPPOE_KEEPALIVE_INTERVAL * 3))
+	echo "sleep PPPOE_KEEPALIVE_INTERVAL * 3 (${T}s)"
+	sleep $T
+	export RUMP_SERVER=$CLIENT
+	wait_for "LCP" "starting"
+
+	atf_check -s exit:0 -o not-match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o     match:'RUNNING' rump.ifconfig pppoe0
+
+	atf_ifconfig pppoe0 down
+
+	atf_check -s exit:0 -o not-match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
+
+	# restart server
+	export RUMP_SERVER=$SERVER
+	atf_ifconfig pppoe0 down
+	atf_ifconfig shmif0 up
+	atf_ifconfig pppoe0 up
+
+	echo "sleep \$PPPOE_RECON_PADTRCVD (${PPPOE_RECON_PADTRCVD}s)"
+	sleep $PPPOE_RECON_PADTRCVD
+
+	# pppoe0 should NOT reconnect after `ifconfig pppoe0 down`
+	export RUMP_SERVER=$CLIENT
+	wait_for "LCP" "initial"
+	atf_check -s exit:0 -o not-match:'UP'      rump.ifconfig pppoe0
+	atf_check -s exit:0 -o not-match:'RUNNING' rump.ifconfig pppoe0
+}
+
+pppoe_keepalive_ifdown_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case pppoe_keepalive_reset
+	atf_add_test_case pppoe_keepalive_ifdown
 }
