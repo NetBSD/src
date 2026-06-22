@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.48 2026/06/21 20:02:43 martin Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.49 2026/06/22 19:26:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -702,6 +702,7 @@ message delete_xfer_file
 message notarfile
 {El conjunto $0 no existe.}
 
+.if HAVE_DVD_IMAGE
 /* Called with: 			Example
  *  $0 = set name			base
  */
@@ -720,6 +721,7 @@ Optional sets are:
 Some architectures offer differen CD vs. DVD ISO images, the DVD images
 are complete and contain all sets. 
 }
+.endif
 
 message endtarok
 {Todos los conjuntos de distribución han sido desempaquetados
@@ -1548,8 +1550,10 @@ message ptn_instflag_desc	{(I)nstalar, }
 message clone_flag	{C}
 message clone_flag_desc	{, (C)lone}
 
+.if HAVE_GPT
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
+.endif
 
 message	ptn_label	{Label}
 message ptn_uuid	{UUID}
@@ -1563,8 +1567,10 @@ message	ptn_boot	{Boot}
 message use_partitions_anyway
 {Use this partitions anyway}
 
+.if HAVE_GPT
 message	gpt_flags	{B}
 message	gpt_flag_desc	{, (B)ootable}
+.endif
 
 /* Called with:				Example
  *  $0 = file system type		FFSv2
@@ -1621,5 +1627,7 @@ message day {Day (1-31)}
 message hour {Hour (0-23)}
 message minute {Minute (0-59)}
 
+.if HAVE_GPT
 message resize_gpt
 {The disk size is larger than the GPT shows, fix this?}
+.endif

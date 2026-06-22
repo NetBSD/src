@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.57 2026/06/21 20:02:43 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.58 2026/06/22 19:26:01 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -720,6 +720,7 @@ message delete_xfer_file
 message notarfile
 {Das Release-Paket $0 existiert nicht.}
 
+.if HAVE_DVD_IMAGE
 /* Called with: 			Example
  *  $0 = set name			base
  */
@@ -738,6 +739,7 @@ Optionale Pakete sind:
 Für einige Architekturen stehen unterschiedliche ISO Dateien für CD und DVD Laufwerke
 zur verfügung, auf der DVD Version sind alle Installations-Pakete enthalten. 
 }
+.endif
 
 message endtarok
 {Alle Distributionspakete wurden erfolgreich entpackt.}
@@ -1570,8 +1572,10 @@ message	ptn_instflag_desc	{(I)nstalllieren, }
 message clone_flag	{C}
 message clone_flag_desc	{, (C) für Klonen}
 
+.if HAVE_GPT
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
+.endif
 
 message	ptn_label	{Label}
 message ptn_uuid	{UUID}
@@ -1585,8 +1589,10 @@ message	ptn_boot	{Start}
 message use_partitions_anyway
 {Diese Partitionierung dennoch verwenden}
 
+.if HAVE_GPT
 message	gpt_flags	{S}
 message	gpt_flag_desc	{, (S)tart}
+.endif
 
 /* Called with:				Example
  *  $0 = file system type		FFSv2
@@ -1643,5 +1649,7 @@ message day {Tag (1-31)}
 message hour {Stunde (0-23)}
 message minute {Minute (0-59)}
 
+.if HAVE_GPT
 message resize_gpt
 {Die Festplatte ist größer als der GPT angibt, soll das korrigiert werden?}
+.endif
