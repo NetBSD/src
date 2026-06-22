@@ -1,4 +1,4 @@
-#	$NetBSD: t_pppoe_keepalive.sh,v 1.1 2026/06/18 09:26:45 yamaguchi Exp $
+#	$NetBSD: t_pppoe_keepalive.sh,v 1.2 2026/06/22 04:06:25 yamaguchi Exp $
 #
 # Copyright (c) Internet Initiative Japan Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@ atf_test_case pppoe_keepalive_reset cleanup
 pppoe_keepalive_reset_head()
 {
 
-	atf_set "descr" "Test disconnection by keepalive"
+	atf_set "descr" "Test reconnection triggered by keepalive"
 	atf_set "require.progs" "rump_server pppoectl"
 }
 
@@ -61,14 +61,13 @@ pppoe_keepalive_reset_body()
 	export RUMP_SERVER=$SERVER
 	atf_ifconfig shmif0 down
 
-	# wait fo no keepalive detaction
+	# wait for no keepalive detaction
 	T=$((RUMP_PPPOE_KEEPALIVE_INTERVAL * 3))
 	echo "sleep PPPOE_KEEPALIVE_INTERVAL * 3 (${T}s)"
 	sleep $T
-	export RUMP_SERVER=$CLIENT
-	wait_for "LCP" "starting"
 
 	export RUMP_SERVER=$CLIENT
+	wait_for "LCP" "starting"
 	atf_check -s exit:0 -o match:'UP.*RUNNING' rump.ifconfig pppoe0
 
 	export RUMP_SERVER=$SERVER
