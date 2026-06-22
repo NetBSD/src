@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3274 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3275 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -321,3 +321,5 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	powerpc: Add support for the PowerPC 440 core and 460EX SoC.
 		[rkujawa 20260613]
 	bind: Import version 9.20.24. [christos 20260619]
+	acpi: Consume and wipe entropy passed by Hyper-V in OEM0 table.
+		[tls 20260621]
