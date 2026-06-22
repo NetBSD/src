@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.48 2026/06/22 03:20:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.49 2026/06/22 04:03:50 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -139,6 +139,7 @@ struct sppp {
 	struct  ifqueue pp_fastq; /* fast output queue */
 	struct	ifqueue pp_cpq;	/* PPP control protocol queue */
 	struct  sppp *pp_next;  /* next interface in keepalive list */
+	struct  sysctllog *pp_sysctl_log;
 
 #define PP_DEVF_KEEPALIVE	__BIT(0)	/* use keepalive protocol */
 #define PP_DEVF_NOFRAMING	__BIT(1)	/* do not add/expect encapsulation
@@ -200,13 +201,12 @@ struct sppp {
 	void	(*pp_tlf)(struct sppp *);
 };
 
-#define PP_IFDOWN		0x01	/* if_down() when no ECHO_REPLY received
-					   or loopback detected */
-					/* 0x02 was PP_CISCO */
-					/* 0x04 was PP_TIMO */
-#define PP_CALLIN		0x08	/* we are being called */
-#define PP_NEEDAUTH		0x10	/* remote requested authentication */
-
+#define PP_IFDOWN	0x01	/* if_down() when no ECHO_REPLY received
+				   or loopback detected */
+				/* 0x02 was PP_CISCO */
+				/* 0x04 was PP_TIMO */
+#define PP_CALLIN	0x08	/* we are being called */
+#define PP_NEEDAUTH	0x10	/* remote requested authentication */
 
 #define PP_MTU          1500    /* default/minimal MRU */
 #define PP_MAX_MRU	2048	/* maximal MRU we want to negotiate */

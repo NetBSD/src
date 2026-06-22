@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.291 2026/06/22 03:24:12 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.292 2026/06/22 04:03:50 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.291 2026/06/22 03:24:12 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.292 2026/06/22 04:03:50 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1023,6 +1023,84 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	return error;
 }
 
+static int
+sppp_sysctl_flags(SYSCTLFN_ARGS)
+{
+	struct sppp *sp = rnode->sysctl_data;
+	const char *s = rnode->sysctl_name;
+	struct sysctlnode node;
+	int err, val;
+	u_int flag;
+
+	if (strcmp(s, "ifdown") == 0) {
+		flag = PP_IFDOWN;
+	} else {
+		return EINVAL;
+	}
+
+	SPPP_LOCK(sp, RW_READER);
+	val = (sp->pp_flags & flag) ? 1 : 0;
+	SPPP_UNLOCK(sp);
+
+	node = *rnode;
+	node.sysctl_data = &val;
+
+	err = sysctl_lookup(SYSCTLFN_CALL(&node));
+	    if (err || newp == NULL)
+	        return err;
+
+	SPPP_LOCK(sp, RW_WRITER);
+	if (val == 1) {
+		sp->pp_flags |= flag;
+	} else {
+		sp->pp_flags &= ~flag;
+	}
+	SPPP_UNLOCK(sp);
+
+	return 0;
+}
+
+static void
+sppp_sysctl_setup(struct sppp *sp)
+{
+	struct sysctllog **clog = &sp->pp_sysctl_log;
+	const struct sysctlnode *rnode = NULL, *cnode = NULL;
+	int err;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "sppp",
+	    SYSCTL_DESCR("Synchronous Point-to-Point Protocol controls"),
+	    NULL, 0, NULL, 0,
+	    CTL_NET, CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		goto bad;
+
+	err = sysctl_createv(clog, 0, &rnode, &rnode,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, sp->pp_if.if_xname,
+	    SYSCTL_DESCR("Interface controls"),
+	    NULL, 0, NULL, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		goto bad;
+
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "ifdown",
+	    SYSCTL_DESCR("Down interface on no echo reply and loopback detected"),
+	    sppp_sysctl_flags, 0, (void *)sp, 0,
+	    CTL_CREATE, CTL_EOL);
+	if (err != 0)
+		goto bad;
+
+	return;
+bad:
+	printf("%s: could not attach sysctl nodes for sppp\n",
+	    sp->pp_if.if_xname);
+	return;
+}
+
 void
 sppp_attach(struct ifnet *ifp)
 {
@@ -1063,6 +1141,7 @@ sppp_attach(struct ifnet *ifp)
 	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
 	rw_init(&sp->pp_lock);
+	sppp_sysctl_setup(sp);
 
 	if_alloc_sadl(ifp);
 
@@ -1111,6 +1190,7 @@ sppp_detach(struct ifnet *ifp)
 		spppq_lock = NULL;
 	}
 
+	sysctl_teardown(&sp->pp_sysctl_log);
 	sppp_cp_fini(&lcp, sp);
 	sppp_cp_fini(&ipcp, sp);
 	sppp_cp_fini(&pap, sp);
