@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.25 2026/06/14 02:10:58 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.26 2026/06/22 18:35:32 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -55,6 +55,7 @@
 						     TX frames in half duplex
 						     mode */
 #define	AWIN_GMAC_MAC_CONF_FULLDPLX	__BIT(11) /* select full duplex */
+#define	AWIN_GMAC_MAC_CONF_IPC		__BIT(10) /* IP checksum offload (RX) */
 #define	AWIN_GMAC_MAC_CONF_ACS		__BIT(7)  /* auto pad/CRC stripping */
 #define	AWIN_GMAC_MAC_CONF_TXENABLE	__BIT(3)  /* enable TX dma engine */
 #define	AWIN_GMAC_MAC_CONF_RXENABLE	__BIT(2)  /* enable RX dma engine */
@@ -130,6 +131,7 @@
 #define	AWIN_GMAC_DMA_STATUS		0x1014
 #define	AWIN_GMAC_DMA_OPMODE		0x1018
 #define	AWIN_GMAC_DMA_INTENABLE		0x101c
+#define	AWIN_GMAC_DMA_RIWT		0x1024
 #define	AWIN_GMAC_DMA_CUR_TX_DESC	0x1048
 #define	AWIN_GMAC_DMA_CUR_RX_DESC	0x104c
 #define	AWIN_GMAC_DMA_CUR_TX_BUFADDR	0x1050
@@ -157,7 +159,9 @@
 #define	GMAC_MII_CLK_DIV18		0xf
 #define	GMAC_MII_CLKMASK		__BITS(5,2)
 
+#define	GMAC_BUSMODE_AAL		__BIT(25)
 #define	GMAC_BUSMODE_4PBL		__BIT(24)
+#define	GMAC_BUSMODE_USP		__BIT(23)
 #define	GMAC_BUSMODE_RPBL		__BITS(22,17)
 #define	GMAC_BUSMODE_FIXEDBURST		__BIT(16)
 #define	GMAC_BUSMODE_PRIORXTX		__BITS(15,14)
@@ -167,6 +171,7 @@
 #define	GMAC_BUSMODE_PRIORXTX_11	0
 #define	GMAC_BUSMODE_PBL		__BITS(13,8) /* possible DMA
 						        burst len */
+#define	GMAC_BUSMODE_DSL		__BITS(6,2)
 #define	GMAC_BUSMODE_RESET		__BIT(0)
 
 #define	AWIN_GMAC_MRCOIS		__BIT(7) /* MMC RX csum offload intr */
@@ -189,11 +194,17 @@
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20) /* flush TX fifo */
 #define	GMAC_DMA_OP_TTC			__BITS(16,14) /* TX thresh control */
 #define	GMAC_DMA_OP_TXSTART		__BIT(13) /* start TX DMA engine */
+#define	GMAC_DMA_OP_RFD			__BITS(12,11) /* rx flwctl deactivate */
+#define	GMAC_DMA_OP_RFA			__BITS(10,9) /* rx flwctl activate */
 #define	GMAC_DMA_OP_EFC			__BIT(8)  /* enable flow control */
+#define	GMAC_DMA_OP_FEF			__BIT(7)  /* forward error frames */
+#define	GMAC_DMA_OP_FUF			__BIT(6)  /* forward undersize frames */
 #define	GMAC_DMA_OP_RTC			__BITS(4,3) /* RX thres control */
+#define	GMAC_DMA_OP_OSF			__BIT(2)  /* operate on 2nd frame */
 #define	GMAC_DMA_OP_RXSTART		__BIT(1)  /* start RX DMA engine */
 
 #define	GMAC_DMA_INT_MMC		__BIT(27) /* MMC interrupt */
+#define	GMAC_DMA_INT_GLI		__BIT(26) /* PHY interrupt */
 #define	GMAC_DMA_INT_NIE		__BIT(16) /* Normal/Summary */
 #define	GMAC_DMA_INT_AIE		__BIT(15) /* Abnormal/Summary */
 #define	GMAC_DMA_INT_ERE		__BIT(14) /* Early receive */
@@ -213,6 +224,9 @@
 #define	GMAC_DMA_INT_MASK	__BITS(0,16)	  /* all possible intr bits */
 
 #define	GMAC_DMA_FEAT_ENHANCED_DESC	__BIT(24)
+#define	GMAC_DMA_FEAT_COE_RX_2		__BIT(18) /* RX cksum offload type 2 */
+#define	GMAC_DMA_FEAT_COE_RX_1		__BIT(17) /* RX cksum offload type 1 */
+#define	GMAC_DMA_FEAT_COE_TX		__BIT(16) /* TX checksum offload */
 #define	GMAC_DMA_FEAT_RMON		__BIT(11) /* MMC */
 
 struct dwc_gmac_dev_dmadesc {
@@ -238,6 +252,7 @@ struct dwc_gmac_dev_dmadesc {
 #define	DDESC_STATUS_RXMIIERROR		__BIT(3)
 #define	DDESC_STATUS_RXDRIBBLING	__BIT(2)
 #define	DDESC_STATUS_RXCRC		__BIT(1)
+#define	DDESC_STATUS_RXPCE		__BIT(0)
 
 	uint32_t ddesc_cntl1;		/* Control / TDES1 */
 
@@ -284,6 +299,8 @@ struct dwc_gmac_dev_dmadesc {
 #define	DDESC_TDES0_IC			__BIT(30)
 #define	DDESC_TDES0_LS			__BIT(29)
 #define	DDESC_TDES0_FS			__BIT(28)
+#define	DDESC_TDES0_CIC			__BITS(23,22)
+#define	DDESC_TDES0_TER			__BIT(21)
 #define	DDESC_TDES0_TCH			__BIT(20)
 
 /* For enhanced RX descriptors */
