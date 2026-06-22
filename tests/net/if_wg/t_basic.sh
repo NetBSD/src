@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.6 2024/10/08 02:29:40 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.7 2026/06/22 22:24:23 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -63,6 +63,23 @@ check_badudp()
 	fi
 }
 
+check_badpeerkey()
+{
+	local proto=$1
+	local ip=$2
+	local ping= size=
+
+	atf_expect_fail "PR kern/6016: wg(4) should properly handle invalid or insecure ephemeral Curve25119 public keys"
+
+	if [ $proto = inet ]; then
+		ping="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	else
+		ping="atf_check -s not-exit:0 -o ignore rump.ping6 -n -c 1 -X 1"
+	fi
+
+	$ping $ip
+}
+
 test_common()
 {
 	local type=$1
@@ -104,6 +121,12 @@ test_common()
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
 	generate_keys
 
+	case $type in
+	badpeerkey)
+		key_pub_peer=$4
+		;;
+	esac
+
 	export RUMP_SERVER=$SOCK_LOCAL
 	setup_common shmif0 $outer_proto $ip_local $outer_prefix
 	setup_wg_common wg0 $inner_proto $ip_wg_local $inner_prefix $port "$key_priv_local"
@@ -125,6 +148,9 @@ test_common()
 	elif [ $type = badudp ]; then
 		export RUMP_SERVER=$SOCK_LOCAL
 		check_badudp $outer_proto $ip_peer
+	elif [ $type = badpeerkey ]; then
+		export RUMP_SERVER=$SOCK_LOCAL
+		check_badpeerkey $outer_proto $ip_wg_peer
 	fi
 
 	destroy_wg_interfaces
@@ -330,6 +356,38 @@ add_badudp_test()
 	atf_add_test_case ${name}
 }
 
+add_badpeerkey_test()
+{
+	local inner=$1
+	local outer=$2
+	local testno=$3
+	local pubkey=$4
+	local ipv4=inet
+	local ipv6=inet6
+
+	name="wg_badpeerkey_${inner}_over_${outer}_test_${testno}"
+	fulldesc="Test wg(4) with ${inner} over ${outer} with bad peer key"
+
+	eval inner=\$$inner
+	eval outer=\$$outer
+
+	atf_test_case ${name} cleanup
+	eval "
+		${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server wgconfig wg-keygen nc
+		}
+		${name}_body() {
+			test_common badpeerkey $outer $inner $pubkey
+			rump_server_destroy_ifaces
+		}
+		${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case ${name}
+}
+
 atf_test_case wg_multiple_interfaces cleanup
 wg_multiple_interfaces_head()
 {
@@ -506,6 +564,7 @@ wg_multiple_peers_cleanup()
 
 atf_init_test_cases()
 {
+	local testno badkey
 
 	add_badudp_test ipv4 ipv4
 	add_badudp_test ipv4 ipv6
@@ -527,4 +586,25 @@ atf_init_test_cases()
 	atf_add_test_case wg_create_destroy_peers_ipv6
 	atf_add_test_case wg_multiple_interfaces
 	atf_add_test_case wg_multiple_peers
+
+	# These are all possible little-endian x coordinates of points
+	# of order <=8 on Curve25519.  See
+	# <https://web.archive.org/web/20260613191208/https://cr.yp.to/ecdh.html#validate>
+	# for details.
+	while read testno badkey; do
+		add_badpeerkey_test ipv4 ipv4 "$testno" "$badkey"
+	done <<EOF
+0 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+1 AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+2 4Ot6fDtBuK4WVuP68Z/EatoJjeucMrH9hmIFFl9JuAA=
+3 X5yVvKNQjCSx0LFVnIPvWwREXMRYHI6G2CJO3dCfEVc=
+4 7P///////////////////////////////////////38=
+5 7f///////////////////////////////////////38=
+6 7v///////////////////////////////////////38=
+7 zet6fDtBuK4WVuP68Z/EatoJjeucMrH9hmIFFl9JuIA=
+8 TJyVvKNQjCSx0LFVnIPvWwREXMRYHI6G2CJO3dCfEdc=
+9 2f////////////////////////////////////////8=
+10 2v////////////////////////////////////////8=
+11 2/////////////////////////////////////////8=
+EOF
 }
