@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.18 2026/06/22 05:57:31 andvar Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.17 2024/07/05 04:31:51 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.18 2026/06/22 05:57:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -1982,7 +1982,7 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "Watchdog timeout");
 		evcnt_attach_dynamic(&txq->vxtxq_defragged, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "m_defrag successed");
+		    NULL, txq->vxtxq_name, "m_defrag succeeded");
 		evcnt_attach_dynamic(&txq->vxtxq_defrag_failed, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "m_defrag failed");
 	}

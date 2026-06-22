@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.100 2025/03/25 19:24:07 christos Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.101 2026/06/22 05:57:31 andvar Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.100 2025/03/25 19:24:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.101 2026/06/22 05:57:31 andvar Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_ixl.h"
@@ -6051,9 +6051,9 @@ ixl_setup_stats(struct ixl_softc *sc)
 		rxr = qp->qp_rxr;
 
 		evcnt_attach_dynamic(&txr->txr_defragged, EVCNT_TYPE_MISC,
-		    NULL, qp->qp_name, "m_defrag successed");
+		    NULL, qp->qp_name, "m_defrag succeeded");
 		evcnt_attach_dynamic(&txr->txr_defrag_failed, EVCNT_TYPE_MISC,
-		    NULL, qp->qp_name, "m_defrag_failed");
+		    NULL, qp->qp_name, "m_defrag failed");
 		evcnt_attach_dynamic(&txr->txr_pcqdrop, EVCNT_TYPE_MISC,
 		    NULL, qp->qp_name, "Dropped in pcq");
 		evcnt_attach_dynamic(&txr->txr_transmitdef, EVCNT_TYPE_MISC,
