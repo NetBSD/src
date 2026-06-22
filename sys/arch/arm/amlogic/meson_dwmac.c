@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.16 2024/10/13 08:55:24 skrll Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.17 2026/06/22 20:26:34 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.16 2024/10/13 08:55:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.17 2026/06/22 20:26:34 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.16 2024/10/13 08:55:24 skrll Exp $
 #include <dev/ic/dwc_gmac_reg.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/dwc_gmac_fdt_subr.h>
 
 #define	PRG_ETHERNET_ADDR0		0x00
 #define	 CLKGEN_ENABLE			__BIT(12)
@@ -286,6 +287,8 @@ meson_dwmac_attach(device_t parent, device_t self, void *aux)
 		if (meson_dwmac_reset_phy(phandle_phy) != 0)
 			aprint_error_dev(self, "PHY reset failed\n");
 	}
+
+	dwc_gmac_preattach_fdt(phandle, sc);
 
 	miiclk_rate = clk_get_rate(clk_gmac);
 	if (miiclk_rate > 250 * 1000 * 1000)

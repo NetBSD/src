@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.74 2025/09/19 05:18:22 mrg Exp $
+#	$NetBSD: files.sunxi,v 1.75 2026/06/22 20:26:34 jakllsch Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -195,7 +195,7 @@ attach	emac at fdt with sunxi_emac: fdt_clock, fdt_gpio, fdt_regulator, fdt_rese
 file	arch/arm/sunxi/sunxi_emac.c		sunxi_emac
 
 # GMAC
-attach	awge at fdt with sunxi_gmac: fdt_clock, fdt_gpio, fdt_regulator
+attach	awge at fdt with sunxi_gmac: fdt_clock, fdt_gpio, fdt_regulator, dwc_gmac_fdt_subr
 file	arch/arm/sunxi/sunxi_gmac.c		sunxi_gmac
 
 # Timer

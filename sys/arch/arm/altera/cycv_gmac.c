@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_gmac.c,v 1.7 2024/08/10 12:16:46 skrll Exp $ */
+/* $NetBSD: cycv_gmac.c,v 1.8 2026/06/22 20:26:34 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.7 2024/08/10 12:16:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.8 2026/06/22 20:26:34 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: cycv_gmac.c,v 1.7 2024/08/10 12:16:46 skrll Exp $");
 #include <dev/ic/dwc_gmac_reg.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/dwc_gmac_fdt_subr.h>
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "altr,socfpga-stmmac" },
@@ -139,6 +140,8 @@ cycv_gmac_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	dwc_gmac_preattach_fdt(phandle, sc);
 
 	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102);
 }

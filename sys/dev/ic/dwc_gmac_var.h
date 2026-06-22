@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_var.h,v 1.22 2024/08/11 12:48:09 riastradh Exp $ */
+/* $NetBSD: dwc_gmac_var.h,v 1.23 2026/06/22 20:26:34 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -28,6 +28,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_IC_DWC_GMAC_VAR_H_
+#define _DEV_IC_DWC_GMAC_VAR_H_
 
 /*
  * Rx and Tx Ring counts that map into single 4K page with 16byte descriptor
@@ -94,6 +97,7 @@ struct dwc_gmac_softc {
 	bus_dma_tag_t sc_dmat;
 	uint32_t sc_flags;
 #define	DWC_GMAC_FORCE_THRESH_DMA_MODE	__BIT(0)/* force DMA to use threshold mode */
+#define	DWC_GMAC_FIXED_BURST		__BIT(1)/* fixed burst bus mode */
 	struct ethercom sc_ec;
 	struct mii_data sc_mii;
 	kmutex_t sc_mdio_lock;
@@ -106,6 +110,7 @@ struct dwc_gmac_softc {
 	uint16_t sc_mii_clk;
 	bool sc_txbusy;		/* (sc_txq.t_mtx) no Tx because down or busy */
 	bool sc_stopping;	/* (sc_intr_lock) ignore intr because down */
+	uint8_t sc_txpbl, sc_rxpbl;
 	krndsource_t rnd_source;
 	kmutex_t *sc_mcast_lock;	/* lock for SIOCADD/DELMULTI */
 	kmutex_t *sc_intr_lock;		/* lock for interrupt operations */
@@ -118,3 +123,5 @@ struct dwc_gmac_softc {
 int dwc_gmac_attach(struct dwc_gmac_softc *, int /*phy_id*/,
     uint32_t /*mii_clk*/);
 int dwc_gmac_intr(struct dwc_gmac_softc *);
+
+#endif /* _DEV_IC_DWC_GMAC_VAR_H_ */

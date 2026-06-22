@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.101 2026/06/14 02:10:58 jakllsch Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.102 2026/06/22 20:26:34 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.101 2026/06/14 02:10:58 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.102 2026/06/22 20:26:34 jakllsch Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -174,6 +174,8 @@ static const struct dwc_gmac_desc_methods desc_methods_enhanced = {
 	(AWIN_GMAC_MAC_INT_TSI | AWIN_GMAC_MAC_INT_ANEG |	\
 	AWIN_GMAC_MAC_INT_LINKCHG)
 
+#define	DWC_GMAC_DEFAULT_PBL 8
+
 #ifdef DWC_GMAC_DEBUG
 static void dwc_gmac_dump_dma(struct dwc_gmac_softc *);
 static void dwc_gmac_dump_tx_desc(struct dwc_gmac_softc *);
@@ -269,6 +271,11 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, int phy_id, uint32_t mii_clk)
 		bus_space_write_4(sc->sc_bst, sc->sc_bsh,
 		    GMAC_MMC_TX_INT_MSK, val);
 	}
+
+	if (!sc->sc_txpbl)
+		sc->sc_txpbl = DWC_GMAC_DEFAULT_PBL;
+	if (!sc->sc_rxpbl)
+		sc->sc_rxpbl = DWC_GMAC_DEFAULT_PBL;
 
 	/*
 	 * Allocate Tx and Rx rings
@@ -871,9 +878,10 @@ dwc_gmac_init(struct ifnet *ifp)
 	 * XXX - the GMAC_BUSMODE_PRIORXTX bits are undocumented.
 	 */
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_DMA_BUSMODE,
-	    GMAC_BUSMODE_FIXEDBURST | GMAC_BUSMODE_4PBL |
-	    __SHIFTIN(2, GMAC_BUSMODE_RPBL) |
-	    __SHIFTIN(2, GMAC_BUSMODE_PBL));
+	    ((sc->sc_flags & DWC_GMAC_FIXED_BURST) ? GMAC_BUSMODE_FIXEDBURST :
+	    0) | GMAC_BUSMODE_4PBL | GMAC_BUSMODE_USP |
+	    __SHIFTIN(sc->sc_rxpbl, GMAC_BUSMODE_RPBL) |
+	    __SHIFTIN(sc->sc_txpbl, GMAC_BUSMODE_PBL));
 
 	/*
 	 * Set up address filter

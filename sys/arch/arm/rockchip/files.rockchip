@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.31 2025/09/06 15:44:03 thorpej Exp $
+#	$NetBSD: files.rockchip,v 1.32 2026/06/22 20:26:34 jakllsch Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -90,7 +90,7 @@ attach	rk3288usbphy at rk3288usb with rk3288_usbphy
 file	arch/arm/rockchip/rk3288_usb.c		rk3288_usb | rk3288_usbphy
 
 # GMAC
-attach	awge at fdt with rk_gmac: fdt_clock, fdt_gpio, fdt_reset, fdt_syscon
+attach	awge at fdt with rk_gmac: fdt_clock, fdt_gpio, fdt_reset, fdt_syscon, dwc_gmac_fdt_subr
 file	arch/arm/rockchip/rk_gmac.c		rk_gmac
 
 # EQOS
