@@ -1,4 +1,4 @@
-/* $NetBSD: vac.c,v 1.1 2026/06/18 00:44:21 rkujawa Exp $ */
+/* $NetBSD: vac.c,v 1.2 2026/06/22 15:12:59 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vac.c,v 1.1 2026/06/18 00:44:21 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vac.c,v 1.2 2026/06/22 15:12:59 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,6 +466,12 @@ vac_trigger_output(void *priv, void *start, void *end, int blksize,
 	struct vac_softc * const sc = priv;
 	int i;
 
+	/*
+	 * audio calls trigger_output with both sc_lock and sc_intr_lock held 
+	 */
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (!sc->sc_8051_ok)
 		return ENXIO;
 
@@ -480,7 +486,6 @@ vac_trigger_output(void *priv, void *start, void *end, int blksize,
 	    VAC_DP_R8(sc, VAC_DP_H_ALIVE) != VAC_DP_ALIVE_MAGIC; i++)
 		DELAY(10);
 
-	mutex_enter(&sc->sc_intr_lock);
 	sc->sc_pstart = start;
 	sc->sc_pend = end;
 	sc->sc_pcur = start;
@@ -497,7 +502,6 @@ vac_trigger_output(void *priv, void *start, void *end, int blksize,
 	vac_dp_queue(sc);
 	vac_dp_queue(sc);
 	callout_schedule(&sc->sc_feed_ch, sc->sc_feed_ticks);
-	mutex_exit(&sc->sc_intr_lock);
 
 	return 0;
 }
@@ -507,12 +511,14 @@ vac_halt_output(void *priv)
 {
 	struct vac_softc * const sc = priv;
 
-	mutex_enter(&sc->sc_intr_lock);
+	/*
+	 * called with both sc_lock and sc_intr_lock held
+	 */
+	KASSERT(mutex_owned(&sc->sc_intr_lock));
+
 	sc->sc_active = false;
 	sc->sc_pint = NULL;
-	mutex_exit(&sc->sc_intr_lock);
-
-	callout_halt(&sc->sc_feed_ch, NULL);
+	callout_stop(&sc->sc_feed_ch);
 
 	/* Park the 8051 so the host codec/mixer path is live while idle. */
 	VAC_WRITE(sc, SM502_uC_RESET, 0);
