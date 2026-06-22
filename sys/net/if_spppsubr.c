@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.289 2026/06/18 09:14:58 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.290 2026/06/22 03:20:37 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.289 2026/06/18 09:14:58 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.290 2026/06/22 03:20:37 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1058,7 +1058,7 @@ sppp_attach(struct ifnet *ifp)
 	sp->pp_down = sppp_notify_down;
 	sp->pp_ncpflags = SPPP_NCP_IPCP | SPPP_NCP_IPV6CP;
 #ifdef SPPP_IFDOWN_RECONNECT
-	sp->pp_flags |= PP_LOOPBACK_IFDOWN | PP_KEEPALIVE_IFDOWN;
+	sp->pp_flags |= PP_IFDOWN;
 #endif
 	sppp_wq_set(&sp->work_ifdown, sppp_ifdown, NULL);
 	memset(sp->scp, 0, sizeof(sp->scp));
@@ -1683,7 +1683,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			SPPP_DLOG(sp, "loopback\n");
 
-			if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
+			if (sp->pp_flags & PP_IFDOWN) {
 				/* Shut down the PPP link. */
 				sppp_wq_add(sp->wq_cp,
 				    &sp->work_ifdown);
@@ -2688,7 +2688,7 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				SPPP_DLOG(sp, "loopback\n");
 				sp->pp_loopcnt = 0;
 
-				if (sp->pp_flags & PP_LOOPBACK_IFDOWN) {
+				if (sp->pp_flags & PP_IFDOWN) {
 					sppp_wq_add(sp->wq_cp,
 					    &sp->work_ifdown);
 				} else {
@@ -5420,7 +5420,7 @@ sppp_keepalive(void *dummy)
 
 			sp->pp_alivecnt = 0;
 
-			if (sp->pp_flags & PP_KEEPALIVE_IFDOWN) {
+			if (sp->pp_flags & PP_IFDOWN) {
 				addlog("going to down the interface\n");
 				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
 			} else {
