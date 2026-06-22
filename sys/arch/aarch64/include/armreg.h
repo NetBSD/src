@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.74 2026/03/29 11:15:03 skrll Exp $ */
+/* $NetBSD: armreg.h,v 1.75 2026/06/22 07:52:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -652,7 +652,7 @@ AARCH64REG_WRITEIMM_INLINE(daifset)
 #define	DAIF_A			__BIT(8)	// SError Abort Mask
 #define	DAIF_I			__BIT(7)	// IRQ Mask
 #define	DAIF_F			__BIT(6)	// FIQ Mask
-#define	DAIF_SETCLR_SHIFT	6		// for daifset/daifclr #imm shift
+#define	DAIF_MASK		(DAIF_D | DAIF_A | DAIF_I | DAIF_F)
 
 AARCH64REG_READ_INLINE(elr_el1)		// Exception Link Register
 AARCH64REG_WRITE_INLINE(elr_el1)

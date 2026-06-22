@@ -1,4 +1,4 @@
-/* $NetBSD: locore.h,v 1.9 2021/03/01 11:29:14 jmcneill Exp $ */
+/* $NetBSD: locore.h,v 1.10 2026/06/22 07:52:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,9 +41,9 @@
 #ifdef _LOCORE
 
 #define ENABLE_INTERRUPT	\
-	msr daifclr, #((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
+	msr daifclr, #__SHIFTOUT(DAIF_I | DAIF_F, DAIF_MASK)
 #define DISABLE_INTERRUPT	\
-	msr daifset, #((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
+	msr daifset, #__SHIFTOUT(DAIF_I | DAIF_F, DAIF_MASK)
 
 #else /* _LOCORE */
 
@@ -59,13 +59,11 @@
 #define cpsid(psw)		daif_disable((psw))
 
 #define ENABLE_INTERRUPT()						\
-	reg_daifclr_write((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
+	reg_daifclr_write(__SHIFTOUT(DAIF_I | DAIF_F, DAIF_MASK))
 #define DISABLE_INTERRUPT()						\
-	reg_daifset_write((DAIF_I|DAIF_F) >> DAIF_SETCLR_SHIFT)
+	reg_daifset_write(__SHIFTOUT(DAIF_I | DAIF_F, DAIF_MASK))
 #define DISABLE_INTERRUPT_SAVE()					\
-	daif_disable(DAIF_I|DAIF_F)
-
-#define DAIF_MASK		(DAIF_D|DAIF_A|DAIF_I|DAIF_F)
+	daif_disable(DAIF_I | DAIF_F)
 
 static inline void __unused
 daif_enable(register_t psw)
@@ -73,7 +71,7 @@ daif_enable(register_t psw)
 	if (!__builtin_constant_p(psw)) {
 		reg_daif_write(reg_daif_read() & ~psw);
 	} else {
-		reg_daifclr_write((psw & DAIF_MASK) >> DAIF_SETCLR_SHIFT);
+		reg_daifclr_write(__SHIFTOUT(psw, DAIF_MASK));
 	}
 }
 
@@ -85,7 +83,7 @@ daif_disable(register_t psw)
 		if (!__builtin_constant_p(psw)) {
 			reg_daif_write(oldpsw | psw);
 		} else {
-			reg_daifset_write((psw & DAIF_MASK) >> DAIF_SETCLR_SHIFT);
+			reg_daifset_write(__SHIFTOUT(psw, DAIF_MASK));
 		}
 	}
 	return oldpsw;

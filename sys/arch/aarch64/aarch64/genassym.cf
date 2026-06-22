@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.42 2026/04/03 07:15:03 skrll Exp $
+# $NetBSD: genassym.cf,v 1.43 2026/06/22 07:52:32 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -304,7 +304,7 @@ define	V_RESCHED_KPREEMPT	ilog2(RESCHED_KPREEMPT)
 define	SPSR_M_EL1T		SPSR_M_EL1T
 define	DAIF_I			DAIF_I
 define	DAIF_F			DAIF_F
-define	DAIF_SETCLR_SHIFT	DAIF_SETCLR_SHIFT
+define	DAIF_MASK		DAIF_MASK
 
 define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
 define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
