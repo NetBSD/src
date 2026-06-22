@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.16 2024/08/26 17:52:46 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.17 2026/06/22 22:27:17 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -658,6 +658,71 @@ wg_malformed_cleanup()
 	cleanup
 }
 
+atf_test_case wg_toomanyallowedips cleanup
+wg_toomanyallowedips_head()
+{
+
+	atf_set "descr" "tests too many allowed IP ranges"
+	atf_set "require.progs" "nc" "rump_server" "wgconfig" "wg-keygen"
+	atf_set "timeout" "100"
+}
+
+wg_toomanyallowedips_body()
+{
+	local ifconfig="atf_check -s exit:0 rump.ifconfig"
+	local ping="atf_check -s exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	local ip_local=192.168.1.1
+	local ip_peer=192.168.1.2
+	local ip_wg_local=10.0.0.1
+	local ip_wg_local_allowed=$ip_wg_local/32
+	local ip_wg_peer=10.0.0.2
+	local ip_wg_peer_allowed=$ip_wg_peer/32
+	local port=51820
+	setup_servers
+
+	atf_expect_fail "PR kern/60232: kernel panic when adding a wireguard peer with too many allowed IP addresses"
+
+	for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+	do
+		ip_wg_peer_allowed=$ip_wg_peer_allowed,10.$i.0.128/32
+	done
+
+	for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
+	do
+		ip_wg_local_allowed=$ip_wg_local_allowed,10.$i.0.129/32
+	done
+
+	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
+	generate_keys
+
+	export RUMP_SERVER=$SOCK_LOCAL
+	setup_common shmif0 inet $ip_local 24
+	setup_wg_common wg0 inet $ip_wg_local 24 $port "$key_priv_local"
+	atf_check -s not-exit:0 -e ignore $HIJACKING wgconfig wg0 add peer \
+	    peer0 $key_pub_peer --allowed-ips=$ip_wg_peer_allowed
+	add_peer wg0 peer0 $key_pub_peer $ip_peer:$port $ip_wg_peer/32
+	$ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_PEER
+	setup_common shmif0 inet $ip_peer 24
+	setup_wg_common wg0 inet $ip_wg_peer 24 $port "$key_priv_peer"
+	atf_check -s not-exit:0 -e ignore $HIJACKING wgconfig wg0 add peer \
+	    peer0 $key_pub_local --allowed-ips=$ip_wg_local_allowed
+	add_peer wg0 peer0 $key_pub_local $ip_local:$port $ip_wg_local/32
+	$ifconfig -w 10
+
+	export RUMP_SERVER=$SOCK_LOCAL
+
+	$ping $ip_wg_peer
+}
+
+wg_toomanyallowedips_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
@@ -668,4 +733,5 @@ atf_init_test_cases()
 	atf_add_test_case wg_keepalive
 	atf_add_test_case wg_psk
 	atf_add_test_case wg_malformed
+	atf_add_test_case wg_toomanyallowedips
 }
