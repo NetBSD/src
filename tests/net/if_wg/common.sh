@@ -1,4 +1,4 @@
-#	$NetBSD: common.sh,v 1.1 2020/08/26 16:03:42 riastradh Exp $
+#	$NetBSD: common.sh,v 1.2 2026/06/22 22:24:36 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -188,6 +188,12 @@ delete_peer()
 	    $HIJACKING wgconfig $ifname
 }
 
+# generate_keys
+#
+#	Generate two key pairs, $key_priv_local/$key_pub_local and
+#	$key_priv_peer/$key_pub_peer, and export them in the
+#	environment.
+#
 generate_keys()
 {
 
@@ -195,6 +201,35 @@ generate_keys()
 	key_pub_local=$(echo $key_priv_local| wg-keygen --pub)
 	key_priv_peer=$(wg-keygen)
 	key_pub_peer=$(echo $key_priv_peer| wg-keygen --pub)
+
+	export key_priv_local key_pub_local key_priv_peer key_pub_peer
+}
+
+# generate_fixed_test_keys
+#
+#	Set two key pairs, $key_priv_local/$key_pub_local and
+#	$key_priv_peer/$key_pub_peer, to be fixed keys for testing
+#	purposes.  There is nothing special about these keys.  We will
+#	use them to generate potentially troublesome protocol messages,
+#	which are inconvenient to construct dynamically -- so I
+#	generated a couple key pairs at random with wg-keygen(8) and
+#	used a modified if_wg.c to construct the troublesome protocol
+#	messages with them.
+#
+generate_fixed_test_keys()
+{
+
+	# b865d7c2687b673e905b787a6b16441ac9959abc0ec9f07d552b429e97b08074
+	key_priv_local=uGXXwmh7Zz6QW3h6axZEGsmVmrwOyfB9VStCnpewgHQ=
+
+	# 7dd90f9855877e923045abd12d6bb2ce604e3ab2b14fa28a2e0a956f58392e16
+	key_pub_local=fdkPmFWHfpIwRavRLWuyzmBOOrKxT6KKLgqVb1g5LhY=
+
+	# 681d8b8ebbd8e009e299c051da62c255e787c776d47d7edd09628e9121d4ee51
+	key_priv_peer=aB2LjrvY4AnimcBR2mLCVeeHx3bUfX7dCWKOkSHU7lE=
+
+	# d2aa91ed9f4ae52001b8435a49decc2016fecba05178c25413d2f6a81cf6ad69
+	key_pub_peer=0qqR7Z9K5SABuENaSd7MIBb+y6BReMJUE9L2qBz2rWk=
 
 	export key_priv_local key_pub_local key_priv_peer key_pub_peer
 }

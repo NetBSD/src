@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.7 2026/06/22 22:24:23 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.8 2026/06/22 22:24:36 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -80,6 +80,131 @@ check_badpeerkey()
 	$ping $ip
 }
 
+check_badhandshakekey()
+{
+	local proto=$1
+	local wg_ip=$2
+	local ip=$3
+	local pubkey=$4
+	local port=51820        # XXX parametrize more clearly
+
+	atf_expect_fail "PR kern/6016: wg(4) should properly handle invalid or insecure ephemeral Curve25119 public keys"
+
+	# For each invalid public key (representing the 32-byte
+	# little-endian encoding of an x coordinate of a point of order
+	# <=8 on Curve25519), we have a preassembled init message that
+	# uses that public key as its ephemeral public key and
+	# otherwise has all the hashes computed correctly -- generated
+	# by tweaking if_wg.c to hard-code each possible invalid key,
+	# and printing the resulting init message.
+	#
+	# (Fortunately, the set of points of order <=8 on Curve25519
+	# does not change very often, so we won't have to generate this
+	# list until we move on to some post-quantum key agreement that
+	# has its own weird inputs!)
+	#
+	case $pubkey in
+	"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlIIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK/jDw2scvj0v9G2UVt/+EyV
+y/n+15Jq6+h2ttmPvmDSlNE9Ye6POFzitBVW30Q6jVJXmU8LmQS7c1heUmIFpA57sILsldvY9Zck
+u+fbNoiZqTOtLfg/jEscBkKIAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlIIBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOSNjvF3Hl3dJtvCp1H6ZMS
+mG4Aw86kG4/yIYjTvUsLjirhal8l7Ed/Q/Ne2naAQFz7YGufHsxUA/2JIE0mny+wq888qObeK7gz
+S9e2dYZmvn15f06+aso5vV1yAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"4Ot6fDtBuK4WVuP68Z/EatoJjeucMrH9hmIFFl9JuAA=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILg63p8O0G4rhZW4/rxn8Rq2gmN65wysf2GYgUWX0m4AONODwHdcJwRxKmw2oW4prDK
+AKpg9WPA3PBgs+SYYi58hyueAzHa4Nl8wQ6qIV87jBz2nqwiqwRRzvSYCZDvB0W1obVEeJTjS71C
+RT/VRq0J9xYL8UXM/69C2Pt8AAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"X5yVvKNQjCSx0LFVnIPvWwREXMRYHI6G2CJO3dCfEVc=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlIJfnJW8o1CMJLHQsVWcg+9bBERcxFgcjobYIk7d0J8RV+Lelfe8koazxp5GiU6YDujl
+Teck8Vcf+2Ja8YFDr5AJDmC+LSZwdO0E1U6pJO4//zuzKYZ8l/tqP5uEn+6fpIVTRUFdFh0DOMHk
+78XiRuLMeo9uFYGXM7GFUQsRAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"7P///////////////////////////////////////38=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILs////////////////////////////////////////f2V4uZtAkzNU3dDcnwOD+8Qu
+KIe6aFkMRYFl8KdCYAtmuwd7WzzSrM/l4YeS7VbkJAV+F6/zFykwijFporJebtDfirc5JTA055Bd
+CQ4HFV7de3UCXQI4jLyzz0TwAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"7f///////////////////////////////////////38=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILt////////////////////////////////////////f1a5i10Q+gmID8QIAcxwe5xm
+OcuWZosr2bjCCP/0kNeE++Gw6AynD+OAf8uW/rWSUXE59JmiDDrP6jc4mBk2ax3vy9x5+YXAuGK5
+iBXvgYPqEdlc8Fxa4jtDEXDRAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"7v///////////////////////////////////////38=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILu////////////////////////////////////////fziZHxCJC02xxcsZh2Fm2XaG
+RgfOO/oDgEgMhfZF81n/kZgmLP2rUtIWYOpNvfvOlISlJp/8Mc0OBxnO4XVpl6Ux047I/WSDZaT/
+2DyOI7NnCF4UwFeH8DoL+3IPAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"zet6fDtBuK4WVuP68Z/EatoJjeucMrH9hmIFFl9JuIA=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILN63p8O0G4rhZW4/rxn8Rq2gmN65wysf2GYgUWX0m4gDabPNBQhXIf883p655csReY
+y9xTkkkDOW8fwEfFtVeALp0D0yu3C1HyEUifwnd+o2Aa8YYaeT8vkcL1wTiS3Ap1iQO1J/OTmWek
+SOOopCkEWxOxF2+D9PNF27nGAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"TJyVvKNQjCSx0LFVnIPvWwREXMRYHI6G2CJO3dCfEdc=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlIJMnJW8o1CMJLHQsVWcg+9bBERcxFgcjobYIk7d0J8R1w9SPoGi2YVq3znle0dn0/5R
+W4opQdY+1jkSbHuTwhYBiqgaBIbeGrNz7d88dF2lt/vkMlYfH6TGBEIHw+iIwjT/eQcjTy7sqV5h
+edWqvJ00Bi97u95JKm27ogsUAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"2f////////////////////////////////////////8=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILZ/////////////////////////////////////////wAJbt3qhxKn6Cu3UyTrkt0I
+rSEtWlwOf3J7aGUVpIDdK+L68oMmM+GoCe40JJdsmdFAnKq0kcicOlPiuB+Dg+OABRsLQy/WNsEh
+9UNuoKUU8GzWVjslXfJKqpSjAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"2v////////////////////////////////////////8=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILa/////////////////////////////////////////9VCEJnMrtIplbej+1z/eoLI
+3/YfsJo81t1kaJk/iTmhHvMCUxW0jFOD3DLTF6bGe9ZxqNczcRRPeAIZJnT0107QhlAjtS/EtzO8
+6EnJrm75o9KcN6J5dIox963MAAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	"2/////////////////////////////////////////8=")
+		openssl base64 -d <<EOF >initmsg
+AQAAAFUFlILb//////////////////////////////////////////H9a+a+mgjUU5agdYuUlcIC
+MM72yinuThd0eNVAJ5HzvxFZiVvycJuWGB8GsY5uAWWHmZydf19tH8OKWr4ZAn5cE0uJYJibUUlf
+zzfeXl7dhyg51yP62ZIFMgw3AAAAAAAAAAAAAAAAAAAAAA==
+EOF
+		;;
+	*)	atf_fail "They're the wrong trousers, and they've gone wrong!"
+		;;
+	esac
+
+	if [ $proto = inet ]; then
+		atf_check -o ignore -e ignore \
+		    $HIJACKING nc -4u -w0 $ip $port <initmsg
+		ping="atf_check -s exit:0 -o ignore rump.ping -n -c 1 -w 1"
+	else
+		atf_check -o ignore -e ignore \
+		    $HIJACKING nc -6u -w0 $ip $port <initmsg
+		ping="atf_check -s exit:0 -o ignore rump.ping6 -n -c 1 -X 1"
+	fi
+
+	$ping $wg_ip
+}
+
 test_common()
 {
 	local type=$1
@@ -91,6 +216,7 @@ test_common()
 	local ip_wg_local= ip_wg_peer=
 	local outer_prefix= outer_prefixall=
 	local inner_prefix= inner_prefixall=
+	local handshake_key=
 
 	if [ $outer_proto = inet ]; then
 		ip_local=192.168.1.1
@@ -119,7 +245,14 @@ test_common()
 	setup_servers
 
 	# It sets key_priv_local key_pub_local key_priv_peer key_pub_peer
-	generate_keys
+	case $type in
+	badhandshakekey)
+		generate_fixed_test_keys
+		handshake_key=$4
+		;;
+	*)	generate_keys
+		;;
+	esac
 
 	case $type in
 	badpeerkey)
@@ -151,6 +284,10 @@ test_common()
 	elif [ $type = badpeerkey ]; then
 		export RUMP_SERVER=$SOCK_LOCAL
 		check_badpeerkey $outer_proto $ip_wg_peer
+	elif [ $type = badhandshakekey ]; then
+		export RUMP_SERVER=$SOCK_LOCAL
+		check_badhandshakekey $outer_proto $ip_wg_peer $ip_peer \
+		    $handshake_key
 	fi
 
 	destroy_wg_interfaces
@@ -388,6 +525,38 @@ add_badpeerkey_test()
 	atf_add_test_case ${name}
 }
 
+add_badhandshakekey_test()
+{
+	local inner=$1
+	local outer=$2
+	local testno=$3
+	local pubkey=$4
+	local ipv4=inet
+	local ipv6=inet6
+
+	name="wg_badhanddshakekey_${inner}_over_${outer}_test_${testno}"
+	fulldesc="Test wg(4) with ${inner} over ${outer} with bad handshake key"
+
+	eval inner=\$$inner
+	eval outer=\$$outer
+
+	atf_test_case ${name} cleanup
+	eval "
+		${name}_head() {
+			atf_set descr \"${fulldesc}\"
+			atf_set require.progs rump_server wgconfig wg-keygen nc
+		}
+		${name}_body() {
+			test_common badhandshakekey $outer $inner $pubkey
+			rump_server_destroy_ifaces
+		}
+		${name}_cleanup() {
+			\$DEBUG && dump
+			cleanup
+		}"
+	atf_add_test_case ${name}
+}
+
 atf_test_case wg_multiple_interfaces cleanup
 wg_multiple_interfaces_head()
 {
@@ -593,6 +762,7 @@ atf_init_test_cases()
 	# for details.
 	while read testno badkey; do
 		add_badpeerkey_test ipv4 ipv4 "$testno" "$badkey"
+		add_badhandshakekey_test ipv4 ipv4 "$testno" "$badkey"
 	done <<EOF
 0 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 1 AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
