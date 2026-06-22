@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.290 2026/06/22 03:20:37 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.291 2026/06/22 03:24:12 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.290 2026/06/22 03:20:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.291 2026/06/22 03:24:12 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1683,17 +1683,15 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			/* Line loopback mode detected. */
 			SPPP_DLOG(sp, "loopback\n");
 
-			if (sp->pp_flags & PP_IFDOWN) {
-				/* Shut down the PPP link. */
-				sppp_wq_add(sp->wq_cp,
-				    &sp->work_ifdown);
-			} else {
-				/* Reset the PPP link. */
-				sppp_wq_add(sp->wq_cp,
-				    &sp->scp[IDX_LCP].work_close);
-				sppp_wq_add(sp->wq_cp,
-				    &sp->scp[IDX_LCP].work_open);
-			}
+			/* Shut down the PPP link. */
+			if (sp->pp_flags & PP_IFDOWN)
+				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+
+			/* Reset the PPP link. */
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[IDX_LCP].work_close);
+			sppp_wq_add(sp->wq_cp,
+			    &sp->scp[IDX_LCP].work_open);
 			break;
 		}
 		u32 = htonl(sp->lcp.magic);
@@ -2688,15 +2686,12 @@ sppp_lcp_confreq(struct sppp *sp, struct lcp_header *h, int origlen,
 				SPPP_DLOG(sp, "loopback\n");
 				sp->pp_loopcnt = 0;
 
-				if (sp->pp_flags & PP_IFDOWN) {
-					sppp_wq_add(sp->wq_cp,
-					    &sp->work_ifdown);
-				} else {
-					sppp_wq_add(sp->wq_cp,
-					    &sp->scp[IDX_LCP].work_close);
-					sppp_wq_add(sp->wq_cp,
-					    &sp->scp[IDX_LCP].work_open);
-				}
+				if (sp->pp_flags & PP_IFDOWN)
+					sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_close);
+				sppp_wq_add(sp->wq_cp,
+				    &sp->scp[IDX_LCP].work_open);
 			} else {
 				if (debug)
 					addlog(" [glitch]");
@@ -3051,6 +3046,12 @@ sppp_lcp_tlu(struct sppp *sp)
 
 	/* unlock for IFNET_LOCK */
 	SPPP_UNLOCK(sp);
+
+	/* the interface was down by PP_IFDOWN flag */
+	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == IFF_RUNNING) {
+		SPPP_LOG(sp, LOG_DEBUG, "interface is going up\n");
+		if_up(ifp);
+	}
 
 	IFNET_LOCK(ifp);
 	SPPP_LOCK(sp, RW_WRITER);
@@ -5415,19 +5416,16 @@ sppp_keepalive(void *dummy)
 		}
 
 		if (sp->pp_alivecnt >= sp->pp_maxalive) {
-			/* No keepalive packets got.  Stop the interface. */
-			SPPP_LOG(sp, LOG_INFO, "LCP keepalive timed out, ");
+			/* No keepalive packets got. Stop the interface. */
+			SPPP_LOG(sp, LOG_INFO,"LCP keepalive timed out, "
+			    "going to restart the connection\n");
 
 			sp->pp_alivecnt = 0;
 
-			if (sp->pp_flags & PP_IFDOWN) {
-				addlog("going to down the interface\n");
+			if (sp->pp_flags & PP_IFDOWN)
 				sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
-			} else {
-				addlog("going to restart the connection\n");
-				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-				sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
-			}
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 
 			SPPP_UNLOCK(sp);
 			continue;
