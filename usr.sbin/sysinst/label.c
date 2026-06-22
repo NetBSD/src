@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.51 2024/02/14 13:52:11 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.52 2026/06/22 19:36:47 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.51 2024/02/14 13:52:11 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.52 2026/06/22 19:36:47 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -514,7 +514,7 @@ renumber_partitions(struct partition_usage_set *pset)
 			    != (info.flags & ~PTI_INSTALL_TARGET))
 				continue;
 			if ((info.flags & PTI_SPECIAL_PARTS) !=
-			    (pset->infos[i].flags & PTI_SPECIAL_PARTS))
+			    (pset->infos[i].cur_flags & PTI_SPECIAL_PARTS))
 				continue;
 			if ((info.fs_type != FS_UNUSED &&
 			    info.fs_type == pset->infos[i].fs_type) ||
@@ -1054,10 +1054,10 @@ edit_ptn(menudesc *menu, void *arg)
 		pset->cur_free_space += edit.info.size;
 		memmove(pset->infos+edit.index,
 		    pset->infos+edit.index+1,
-		    sizeof(*pset->infos)*(pset->num-edit.index));
+		    sizeof(*pset->infos)*(pset->num-edit.index-1));
 		memmove(menu->opts+edit.index,
 		    menu->opts+edit.index+1,
-		    sizeof(*menu->opts)*(menu->numopts-edit.index));
+		    sizeof(*menu->opts)*(menu->numopts-edit.index-1));
 		menu->numopts--;
 		menu->cursel = 0;
 		if (pset->parts->num_part == 0)
