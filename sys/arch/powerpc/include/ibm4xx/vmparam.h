@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.12 2019/03/27 19:30:31 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.13 2026/06/22 12:34:20 rkujawa Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -78,7 +78,14 @@
 #define	VM_MAXUSER_ADDRESS	((vaddr_t)0xffff0000-PAGE_SIZE)
 #define	VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
 #define	VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x80000000)
+#if defined(PPC_IBM440)
+/*
+ * 440/460 boards need more room above the kernel for I/O
+ */
+#define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xe0000000)
+#else
 #define	VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xef000000)	/* before I/O periphs */
+#endif
 #else
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work

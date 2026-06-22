@@ -1,4 +1,4 @@
-/*	$NetBSD: sam460ex.h,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
+/*	$NetBSD: sam460ex.h,v 1.4 2026/06/22 12:34:19 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -80,8 +80,9 @@ extern int sam460ex_console_pci_bdf[3];
 #define	SAM460EX_EPAPR_MAGIC	0x45504150
 
 /*
- * Kernel VA layout for pinned I/O windows (all above
- * VM_MAX_KERNEL_ADDRESS; 0xef000000 holds the 16MB OPB entry):
+ * Kernel VA for I/O
+ *	0xe0000000  PCIE1 local-config (XCFG: inbound BAR/PIM regs, 16MB)
+ *      0xef000000  OPB (16MB)
  *	0xf0000000  PCI memory window  (AMCC460EX_PCIX0_MEM_SIZE)
  *	0xf5000000  PCI I/O window     (16MB entry, 64KB used)
  *	0xf6000000  PCIX config + internal registers (16MB entry)
@@ -92,6 +93,7 @@ extern int sam460ex_console_pci_bdf[3];
  *	0xfb000000  AHB peripherals: USB OTG/OHCI/EHCI (16MB)
  *	0xfc000000  PCI prefetchable window (POM1, 64MB pinned of 256MB)
  */
+#define	SAM460EX_PCIE1XCFG_VA	0xe0000000
 #define	SAM460EX_PCIMEM_VA	0xf0000000
 #define	SAM460EX_PCIIO_VA	0xf5000000
 #define	SAM460EX_PCICFG_VA	0xf6000000

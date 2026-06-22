@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.7 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: pci_machdep.h,v 1.8 2026/06/22 12:34:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -76,6 +76,11 @@ int		ibm4xx_pci_conf_hook(void *, int, int, int, pcireg_t);
 void		ibm4xx_pci_machdep_init(void);
 pci_chipset_tag_t
 		ibm4xx_get_pci_chipset_tag(void);
+
+/*
+ * Board-supplied PCIe INTx routing
+ */
+int		pciex_inta_irq(int port);
 
 
 /*

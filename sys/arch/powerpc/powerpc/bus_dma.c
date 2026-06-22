@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.58 2026/02/09 10:49:17 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.59 2026/06/22 12:34:20 rkujawa Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.58 2026/02/09 10:49:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.59 2026/06/22 12:34:20 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -716,6 +716,22 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 }
 
 /*
+ * Apparently, this code was written with the assumption that OEA PowerPC
+ * have bus snooping, and that the DMA_MAP_COHERENT can be a no-op.
+ *
+ * The 4xx, (at least some) BookE and few OEA (Wii) cores have no DMA bus
+ * snooping, so a coherent mapping has to be made cache-inhibited...
+ *
+ * Truth is, this needs a proper refactor (perhaps using tags like arm).
+ */
+#if defined(PPC_IBM4XX) /* || defined(PPC_BOOKE) */
+#define	PPC_DMAMEM_UNCACHED(flags)	\
+	(((flags) & (BUS_DMA_DONTCACHE | BUS_DMA_COHERENT)) != 0)
+#else
+#define	PPC_DMAMEM_UNCACHED(flags)	(((flags) & BUS_DMA_DONTCACHE) != 0)
+#endif
+
+/*
  * Common function for mapping DMA-safe memory.  May be called by
  * bus-specific DMA memory map functions.
  */
@@ -735,7 +751,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 	 * If we are mapping a cacheable physically contiguous segment, treat
 	 * it as if we are mapping a poolpage and avoid consuming any KVAs.
 	 */
-	if (nsegs == 1 && (flags & BUS_DMA_DONTCACHE) == 0) {
+	if (nsegs == 1 && !PPC_DMAMEM_UNCACHED(flags)) {
 		KASSERT(size == segs->ds_len);
 		addr = BUS_MEM_TO_PHYS(t, segs->ds_addr);
 		if (__predict_true(addr + size < PMAP_DIRECT_MAPPED_LEN)) {
@@ -760,16 +776,16 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			/*
-			 * If we are mapping nocache, flush the page from
+			 * If we are mapping uncached, flush the page from
 			 * cache before we map it.
 			 */
-			if (flags & BUS_DMA_DONTCACHE)
+			if (PPC_DMAMEM_UNCACHED(flags))
 				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED |
-			    ((flags & BUS_DMA_DONTCACHE) ? PMAP_NOCACHE : 0));
+			    (PPC_DMAMEM_UNCACHED(flags) ? PMAP_NOCACHE : 0));
 		}
 	}
 

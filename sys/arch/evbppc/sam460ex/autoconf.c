@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.4 2026/06/22 12:34:19 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.4 2026/06/22 12:34:19 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -80,10 +80,21 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.3 2026/06/17 15:08:53 rkujawa Exp $")
 #include <powerpc/ibm4xx/amcc460ex.h>
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dcr4xx.h>
+#include <powerpc/ibm4xx/pci_machdep.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+/*
+ * PCIe INTx routing
+ */
+int
+pciex_inta_irq(int port)
+{
+
+	return 0x60 + port * 0x6;
+}
 
 /* Set once console=pci has made a PCI display the console (see below). */
 static bool sam460ex_pci_console_found;

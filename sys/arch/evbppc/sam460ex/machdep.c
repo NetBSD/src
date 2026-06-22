@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.5 2026/06/19 18:55:23 rkujawa Exp $	*/
+/*	$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2026/06/19 18:55:23 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.6 2026/06/22 12:34:19 rkujawa Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ppc4xx.h"
@@ -289,6 +289,10 @@ initppc(vaddr_t startkernel, vaddr_t endkernel, paddr_t fdt_pa,
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_CFG_PA_HIGH << 32 |
 	    AMCC460EX_PCIE1_CFG_PLBA,
 	    SAM460EX_PCIE1CFG_VA, TLB_PG_SIZE, TLB_I | TLB_G);
+	/* PCIE1 local config (XCFG): inbound BAR/PIM registers */
+	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_CFG_PA_HIGH << 32 |
+	    AMCC460EX_PCIE1_XCFG_PLBA,
+	    SAM460EX_PCIE1XCFG_VA, TLB_PG_SIZE, TLB_I | TLB_G);
 	ppc44x_tlb_reserve((uint64_t)AMCC460EX_PCIE_MEM_PA_HIGH << 32 |
 	    AMCC460EX_PCIE0_MEM_PLBA,
 	    SAM460EX_PCIE0MEM_VA, TLB_PG_SIZE, TLB_I | TLB_G);

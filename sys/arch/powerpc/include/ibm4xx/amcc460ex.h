@@ -1,4 +1,4 @@
-/*	$NetBSD: amcc460ex.h,v 1.3 2026/06/19 18:55:24 rkujawa Exp $	*/
+/*	$NetBSD: amcc460ex.h,v 1.4 2026/06/22 12:34:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -87,8 +87,16 @@
 
 #define	AMCC460EX_PCIE_CFG_PA_HIGH	0xd	/* ERPN of config windows */
 #define	AMCC460EX_PCIE0_CFG_PLBA	0x30000000
-#define	AMCC460EX_PCIE1_CFG_PLBA	0x38000000
-#define	AMCC460EX_PCIE_CFG_SIZE		0x01000000	/* buses 0-15 */
+/*
+ * The PCIe core - port's local config
+ * XCFG: PECFG inbound BAR/PIM at cfg-region-base + 0x10000000
+ */
+#define	AMCC460EX_PCIE1_CFG_PLBA	0x40000000
+#define	AMCC460EX_PCIE_CFG_SIZE		0x01000000	/* ECAM: buses 0-15 */
+#define	AMCC460EX_PCIE_CFG_REGION_SIZE	0x20000000	/* PEGPL region: 512MB */
+#define	AMCC460EX_PCIE_XCFG_OFFSET	0x10000000	/* local cfg vs region base */
+#define	AMCC460EX_PCIE1_XCFG_PLBA	(AMCC460EX_PCIE1_CFG_PLBA + \
+					    AMCC460EX_PCIE_XCFG_OFFSET)
 
 #define	AMCC460EX_PCIE_MEM_PA_HIGH	0xe	/* ERPN of memory windows */
 #define	AMCC460EX_PCIE0_MEM_PLBA	0x10000000
@@ -96,12 +104,8 @@
 #define	AMCC460EX_PCIE_MEM_BASE		0xa0000000	/* PCI-side base */
 #define	AMCC460EX_PCIE_MEM_SIZE		0x01000000
 
-/* INTA-INTD, flat irq numbers (UIC3 bits 12-15 and 16-19) */
-#define	AMCC460EX_PCIE0_INTA_IRQ	108
-#define	AMCC460EX_PCIE1_INTA_IRQ	112
-
 /*
- * AHB peripherals (USB). 
+ * AHB peripherals (USB).
  */
 #define	AMCC460EX_AHB_PA_HIGH		0x4	/* ERPN */
 #define	AMCC460EX_AHB_BASE		0xbf000000

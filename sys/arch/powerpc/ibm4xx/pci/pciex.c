@@ -1,4 +1,4 @@
-/*	$NetBSD: pciex.c,v 1.2 2026/06/14 18:50:56 rkujawa Exp $	*/
+/*	$NetBSD: pciex.c,v 1.3 2026/06/22 12:34:20 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2012, 2014, 2024, 2026 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.2 2026/06/14 18:50:56 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.3 2026/06/22 12:34:20 rkujawa Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -69,6 +69,18 @@ __KERNEL_RCSID(0, "$NetBSD: pciex.c,v 1.2 2026/06/14 18:50:56 rkujawa Exp $");
 #define	PEGPL_OMR1BAL	0x07
 #define	PEGPL_OMR1MSKH	0x08
 #define	PEGPL_OMR1MSKL	0x09
+#define	PEGPL_CFG	0x16	/* GPL configuration register */
+
+/*
+ * PEGPLn_CFG bits 
+ * inbound-read PLB pipeline MUST be cleared for inbound DMA to work.
+ */
+#define	PEGPL_CFG_PLE	0x20000000	/* bit 2: inbound read pipeline enable */
+
+/* PECFG inbound-mapping registers, accessed via the port's XCFG window */
+#define	PECFG_PIMEN	0x33c	/* PIM enable */
+#define	PECFG_PIM1LAL	0x348	/* PIM1 local (PLB) address low */
+#define	PECFG_PIM1LAH	0x34c	/* PIM1 local (PLB) address high */
 
 struct pciex_softc {
 	struct genppc_pci_chipset sc_pc;	/* must be first */
@@ -124,6 +136,22 @@ static struct powerpc_bus_space pciex_mem_tag[PCIEX_NPORTS] = {
 	},
 };
 
+/* Local-config (XCFG) windows: cfg-region-base + 0x10000000 per port */
+static struct powerpc_bus_space pciex_xcfg_tag[PCIEX_NPORTS] = {
+	{
+		_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+		0x00000000,
+		AMCC460EX_PCIE0_CFG_PLBA + AMCC460EX_PCIE_XCFG_OFFSET,
+		AMCC460EX_PCIE0_CFG_PLBA + AMCC460EX_PCIE_XCFG_OFFSET + 0x1000,
+	},
+	{
+		_BUS_SPACE_LITTLE_ENDIAN | _BUS_SPACE_MEM_TYPE,
+		0x00000000,
+		AMCC460EX_PCIE1_XCFG_PLBA,
+		AMCC460EX_PCIE1_XCFG_PLBA + 0x1000,
+	},
+};
+
 static const struct genppc_pci_chipset pciex_chipset_template = {
 	.pc_conf_v =		NULL,		/* set to softc */
 	.pc_attach_hook =	pciex_attach_hook,
@@ -155,13 +183,6 @@ static const struct genppc_pci_chipset pciex_chipset_template = {
 	.pc_conf_hook =		pciex_conf_hook,
 };
 
-static int
-pciex_port_inta(int port)
-{
-
-	return port == 0 ? AMCC460EX_PCIE0_INTA_IRQ : AMCC460EX_PCIE1_INTA_IRQ;
-}
-
 static void
 pciex_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
@@ -186,7 +207,7 @@ pciex_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 
 	if (pa->pa_intrpin == 0 || pa->pa_intrpin > 4)
 		return 1;
-	*ihp = pciex_port_inta(sc->sc_port) + pa->pa_intrpin - 1;
+	*ihp = pciex_inta_irq(sc->sc_port) + pa->pa_intrpin - 1;
 	return 0;
 }
 
@@ -196,12 +217,21 @@ pciex_conf_interrupt(void *v, int bus, int dev, int pin, int swiz,
 {
 	struct pciex_softc *sc = v;
 
-	*iline = pciex_port_inta(sc->sc_port) + (pin - 1 + swiz + dev) % 4;
+	*iline = pciex_inta_irq(sc->sc_port) + (pin - 1 + swiz + dev) % 4;
+}
+
+static bool
+pciex_conf_ok(void *v, pcitag_t tag)
+{
+	int bus, dev;
+
+	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
+	return bus <= 1 && dev == 0;
 }
 
 /*
  * Config access: ECAM offset is the standard tag (bus<<16|dev<<11|
- * func<<8) shifted left by 4. 
+ * func<<8) shifted left by 4.
  */
 static pcireg_t
 pciex_conf_read(void *v, pcitag_t tag, int reg)
@@ -209,17 +239,10 @@ pciex_conf_read(void *v, pcitag_t tag, int reg)
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
 	pcireg_t data;
-	int bus, dev;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return (pcireg_t) -1;
-	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
-	if (bus >= AMCC460EX_PCIE_CFG_SIZE >> 20)
-		return (pcireg_t) -1;
-	/*
-	 * avoid bus wedge (reasons unknown)
-	 */
-	if (bus <= 1 && dev != 0)
+	if (!pciex_conf_ok(v, tag))
 		return (pcireg_t) -1;
 
 	if (setfault(&env)) {
@@ -237,15 +260,10 @@ pciex_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct pciex_softc *sc = v;
 	struct faultbuf env;
-	int bus, dev;
 
 	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return;
-	ibm4xx_pci_decompose_tag(v, tag, &bus, &dev, NULL);
-	if (bus >= AMCC460EX_PCIE_CFG_SIZE >> 20)
-		return;
-	/* See pciex_conf_read: only device 0 exists on bus 0 and bus 1. */
-	if (bus <= 1 && dev != 0)
+	if (!pciex_conf_ok(v, tag))
 		return;
 
 	if (setfault(&env)) {
@@ -267,12 +285,15 @@ do {									\
 	mtdcr((base) + PEGPL_CFGBAH, AMCC460EX_PCIE_CFG_PA_HIGH);	\
 	mtdcr((base) + PEGPL_CFGBAL, (cfg_plba));			\
 	mtdcr((base) + PEGPL_CFGMSK,				\
-	    ~(AMCC460EX_PCIE_CFG_SIZE - 1) | 1);			\
+	    ~(AMCC460EX_PCIE_CFG_REGION_SIZE - 1) | 1);			\
 	mtdcr((base) + PEGPL_OMR1BAH, AMCC460EX_PCIE_MEM_PA_HIGH);	\
 	mtdcr((base) + PEGPL_OMR1BAL, (mem_plba));			\
 	mtdcr((base) + PEGPL_OMR1MSKH, 0x7fffffff);			\
 	mtdcr((base) + PEGPL_OMR1MSKL,				\
 	    ~(AMCC460EX_PCIE_MEM_SIZE - 1) | 3);			\
+	/* PCIE_4 erratum: clear PLE so inbound reads don't hang. */	\
+	mtdcr((base) + PEGPL_CFG,					\
+	    mfdcr((base) + PEGPL_CFG) & ~PEGPL_CFG_PLE);		\
 } while (0)
 
 static void
@@ -352,6 +373,26 @@ pciex_attach(device_t parent, device_t self, void *aux)
 	pci_configure_bus(pc, pcires, 0, 32);
 	pciconf_resource_fini(pcires);
 #endif
+
+	/*
+	 * root-complex inbound window's PIM1 half goes to DRAM.
+	 */
+	{
+		struct powerpc_bus_space *xt = &pciex_xcfg_tag[sc->sc_port];
+		bus_space_handle_t xh;
+
+		if (bus_space_init(xt, "pciexxcfg", NULL, 0) == 0 &&
+		    bus_space_map(xt, xt->pbs_base, 0x1000, 0, &xh) == 0) {
+			bus_space_write_4(xt, xh, PECFG_PIMEN, 0);
+			bus_space_write_4(xt, xh, PECFG_PIM1LAH, 0);
+			bus_space_write_4(xt, xh, PECFG_PIM1LAL, 0);
+			bus_space_write_4(xt, xh, PECFG_PIMEN, 1);
+			bus_space_unmap(xt, xh, 0x1000);
+		} else {
+			aprint_error_dev(self,
+			    "can't map XCFG to fix inbound window\n");
+		}
+	}
 
 	pba.pba_iot = NULL;
 	pba.pba_memt = &pciex_mem_tag[sc->sc_port];
