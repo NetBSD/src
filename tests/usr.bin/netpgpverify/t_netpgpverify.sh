@@ -1,6 +1,6 @@
 #! /bin/sh
 
-# $NetBSD: t_netpgpverify.sh,v 1.7 2026/01/30 09:01:08 wiz Exp $
+# $NetBSD: t_netpgpverify.sh,v 1.8 2026/06/23 16:53:24 riastradh Exp $
 
 #
 # Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -103,6 +103,11 @@ netpgpverify_testset_2_dsa_signatures_body() {
 	atf_check -s exit:0 -o file:${data}/expected42 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat in1.asc
 	atf_check -s exit:0 -o file:${data}/expected43 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg -c cat < in1.asc
 	atf_check -s exit:0 -o file:${data}/expected44 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.gpg
+	case $(uname -p) in
+	sparc64)
+		atf_expect_fail "PR bin/59823: netpgpverify broken for PGP since switch to gcc 14.3"
+		;;
+	esac
 	atf_check -s exit:0 -o file:${data}/expected45 -e empty env TZ=US/Pacific netpgpverify -k dsa-pubring.gpg in2.asc
 }
 
