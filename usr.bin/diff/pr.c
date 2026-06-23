@@ -81,13 +81,7 @@ start_pr(char *file1, char *file2)
 		close(pfd[0]);
 		rewind(stdout);
 		free(header);
-		pr->kq = kqueue();
-		if (pr->kq == -1)
-			err(2, "kqueue");
-		pr->e = xmalloc(sizeof(struct kevent));
-		EV_SET(pr->e, pid, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-		if (kevent(pr->kq, pr->e, 1, NULL, 0, NULL) == -1)
-			err(2, "kevent");
+		pr->pid = pid;
 	}
 	return (pr);
 }
@@ -96,6 +90,8 @@ start_pr(char *file1, char *file2)
 void
 stop_pr(struct pr *pr)
 {
+	int wstatus;
+
 	if (pr == NULL)
 		return;
 
@@ -105,8 +101,12 @@ stop_pr(struct pr *pr)
 		dup2(pr->ostdout, STDOUT_FILENO);
 		close(pr->ostdout);
 	}
-	if (kevent(pr->kq, NULL, 0, pr->e, 1, NULL) == -1)
-		err(2, "kevent");
-	close(pr->kq);
+	if (waitpid(pr->pid, &wstatus, 0) == -1)
+		err(2, "waitpid");
 	free(pr);
+	if (WIFEXITED(wstatus) && WEXITSTATUS(wstatus) != 0)
+		errx(2, "pr exited abnormally");
+	else if (WIFSIGNALED(wstatus))
+		errx(2, "pr killed by signal %d",
+		    WTERMSIG(wstatus));
 }

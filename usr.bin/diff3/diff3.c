@@ -71,7 +71,6 @@ static char sccsid[] = "@(#)diff3.c	8.1 (Berkeley) 6/6/93";
 #endif /* not lint */
 #include <sys/cdefs.h>
 #include <sys/types.h>
-#include <sys/event.h>
 #include <sys/wait.h>
 
 #include <ctype.h>
@@ -827,10 +826,23 @@ increase(void)
 }
 
 
+static void
+wait_and_check(pid_t pd)
+{
+	int status;
+
+	if (waitpid(pd, &status, 0) == -1)
+		err(2, "waitpid");
+	if (WIFEXITED(status) && WEXITSTATUS(status) >= 2)
+		errx(2, "diff exited abnormally");
+	if (WIFSIGNALED(status))
+		errx(2, "diff killed by signal %d", WTERMSIG(status));
+}
+
 int
 main(int argc, char **argv)
 {
-	int ch, nblabels, m, n, kq, nke, nleft;
+	int ch, nblabels, m, n;
 	char *labels[] = { NULL, NULL, NULL };
 	const char *diffprog = DIFF_PATH;
 	char *file1, *file2, *file3;
@@ -838,7 +850,6 @@ main(int argc, char **argv)
 	int diffargc = 0;
 	int fd13[2], fd23[2];
 	int pd13, pd23;
-	struct kevent e[2];
 
 	nblabels = 0;
 	eflag = EFLAG_NONE;
@@ -914,10 +925,6 @@ main(int argc, char **argv)
 		exit(2);
 	}
 
-	kq = kqueue();
-	if (kq == -1)
-		err(2, "kqueue");
-
 	/* TODO stdio */
 	file1 = argv[0];
 	file2 = argv[1];
@@ -958,32 +965,19 @@ main(int argc, char **argv)
 	diffargv[diffargc + 1] = file3;
 	diffargv[diffargc + 2] = NULL;
 
-	nleft = 0;
 	pd13 = diffexec(diffprog, diffargv, fd13);
-	EV_SET(e + nleft , pd13, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-	if (kevent(kq, e + nleft, 1, NULL, 0, NULL) == -1)
-		err(2, "kevent1");
-	nleft++;
 
 	diffargv[diffargc] = file2;
 	pd23 = diffexec(diffprog, diffargv, fd23);
-	EV_SET(e + nleft , pd23, EVFILT_PROC, EV_ADD, NOTE_EXIT, 0, NULL);
-	if (kevent(kq, e + nleft, 1, NULL, 0, NULL) == -1)
-		err(2, "kevent2");
-	nleft++;
 
 	/* parse diffs */
 	increase();
 	m = readin(fd13[0], &d13);
 	n = readin(fd23[0], &d23);
 
-	/* waitpid cooked over pdforks */
-	while (nleft > 0) {
-		nke = kevent(kq, NULL, 0, e, nleft, NULL);
-		if (nke == -1)
-			err(2, "kevent");
-		nleft -= nke;
-	}
+	wait_and_check(pd13);
+	wait_and_check(pd23);
+
 	merge(m, n);
 
 	return (EXIT_SUCCESS);
