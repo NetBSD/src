@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.34 2025/09/07 21:45:15 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.35 2026/06/23 21:59:18 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.34 2025/09/07 21:45:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.35 2026/06/23 21:59:18 rkujawa Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,7 +62,14 @@ struct strtc_model {
 	uint32_t	sm_flags;
 };
 
-#define	STRTC_F_HAS_WDOG	__BIT(0)
+#define	STRTC_F_HAS_WDOG	__BIT(0)	/* watchdog register present */
+#define	STRTC_F_YEAR_2000	__BIT(1)	/* year epoch is 2000, not 1970 */
+#define	STRTC_F_OSC_FAIL_OF	__BIT(2)	/* M41T6x: OF flag, no HT bit */
+
+static const struct strtc_model m41t62_model = {
+	.sm_model =		62,
+	.sm_flags =		STRTC_F_YEAR_2000 | STRTC_F_OSC_FAIL_OF,
+};
 
 static const struct strtc_model m41t80_model = {
 	.sm_model =		80,
@@ -81,6 +88,7 @@ static const struct strtc_model m48t84_model = {
 };
 
 static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "st,m41t62",	.data = &m41t62_model },
 	{ .compat = "st,m41t80",	.data = &m41t80_model },
 	{ .compat = "st,m41t81",	.data = &m41t81_model },
 	{ .compat = "st,m41t84",	.data = &m48t84_model },
@@ -123,10 +131,21 @@ const struct cdevsw strtc_cdevsw = {
 };
 
 static int strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *);
+static int strtc_clock_write_m41t6x(struct strtc_softc *sc,
+				struct clock_ymdhms *);
+static int strtc_check_osc_fail(struct strtc_softc *sc, int *);
 static int strtc_gettime_ymdhms(struct todr_chip_handle *,
 				struct clock_ymdhms *);
 static int strtc_settime_ymdhms(struct todr_chip_handle *,
 				struct clock_ymdhms *);
+
+static int
+strtc_epoch(const struct strtc_softc *sc)
+{
+
+	return (sc->sc_model->sm_flags & STRTC_F_YEAR_2000) ?
+	    2000 : POSIX_BASE_YEAR;
+}
 
 static const struct strtc_model *
 strtc_model_by_number(u_int model)
@@ -330,6 +349,18 @@ strtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	memset(dt, 0, sizeof(*dt));
 	memset(&check, 0, sizeof(check));
 
+	if (sc->sc_model->sm_flags & STRTC_F_OSC_FAIL_OF) {
+		int failed;
+
+		if ((error = strtc_check_osc_fail(sc, &failed)) != 0)
+			return error;
+		if (failed) {
+			aprint_error_dev(sc->sc_dev,
+			    "oscillator failure, time is not valid\n");
+			return EIO;
+		}
+	}
+
 	/*
 	 * Since we don't support Burst Read, we have to read the clock twice
 	 * until we get two consecutive identical results.
@@ -360,24 +391,28 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	/*
 	 * Check for the HT bit -- if set, then clock lost power & stopped
 	 * If that happened, then clear the bit so that the clock will have
-	 * a chance to run again.
+	 * a chance to run again.  The M41T6x has no HT bit (the register
+	 * holds an alarm value there), it reports stopped clock via OF.
 	 */
-	cmdbuf[0] = M41ST84_REG_AL_HOUR;
-	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
-		iic_release_bus(sc->sc_tag, 0);
-		aprint_error_dev(sc->sc_dev,
-		    "strtc_clock_read: failed to read HT\n");
-		return (error);
-	}
-	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
-		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
-		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+	if ((sc->sc_model->sm_flags & STRTC_F_OSC_FAIL_OF) == 0) {
+		cmdbuf[0] = M41ST84_REG_AL_HOUR;
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
 			     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
-			    "strtc_clock_read: failed to reset HT\n");
+			    "strtc_clock_read: failed to read HT\n");
 			return (error);
+		}
+		if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
+			cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
+			if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE,
+				     sc->sc_address, cmdbuf, 1, &cmdbuf[1],
+				     1, 0)) != 0) {
+				iic_release_bus(sc->sc_tag, 0);
+				aprint_error_dev(sc->sc_dev,
+				    "strtc_clock_read: failed to reset HT\n");
+				return (error);
+			}
 		}
 	}
 
@@ -410,9 +445,38 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
 	/* XXX: Wait, isn't that what rtc_offset in todr_gettime() is for? */
-	dt->dt_year = bcdtobin(bcd[M41ST84_REG_YEAR]) + POSIX_BASE_YEAR;
+	dt->dt_year = bcdtobin(bcd[M41ST84_REG_YEAR]) + strtc_epoch(sc);
 
 	return (0);
+}
+
+/*
+ * Check for oscillator fail - M41T6x only
+ */
+static int
+strtc_check_osc_fail(struct strtc_softc *sc, int *failedp)
+{
+	uint8_t cmdbuf[2];
+	int error;
+
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to acquire I2C bus\n", __func__);
+		return error;
+	}
+
+	cmdbuf[0] = M41ST84_REG_FLAGS;
+	error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
+	    cmdbuf, 1, &cmdbuf[1], 1, 0);
+	iic_release_bus(sc->sc_tag, 0);
+
+	if (error)
+		aprint_error_dev(sc->sc_dev, "%s: failed to read flags\n",
+		    __func__);
+	else
+		*failedp = (cmdbuf[1] & M41ST84_FLAGS_OF) != 0;
+
+	return error;
 }
 
 static int
@@ -421,6 +485,9 @@ strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	struct strtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
 	int i, error;
+
+	if (sc->sc_model->sm_flags & STRTC_F_OSC_FAIL_OF)
+		return strtc_clock_write_m41t6x(sc, dt);
 
 	/*
 	 * Convert our time representation into something the M41ST84
@@ -433,7 +500,7 @@ strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	bcd[M41ST84_REG_DATE] = bintobcd(dt->dt_day);
 	bcd[M41ST84_REG_DAY] = bintobcd(dt->dt_wday);
 	bcd[M41ST84_REG_MONTH] = bintobcd(dt->dt_mon);
-	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
+	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - strtc_epoch(sc)) % 100);
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -498,6 +565,66 @@ strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	iic_release_bus(sc->sc_tag, 0);
 
 	return (0);
+}
+
+/*
+ * Set the clock on an M41T6x. Timekeeping registers are buffered.
+ */
+static int
+strtc_clock_write_m41t6x(struct strtc_softc *sc, struct clock_ymdhms *dt)
+{
+	uint8_t bcd[M41ST84_REG_DATE_BYTES], cur[M41ST84_REG_DATE_BYTES];
+	uint8_t cmdbuf[1];
+	int error;
+
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "%s: failed to acquire I2C bus\n", __func__);
+		return error;
+	}
+
+	cmdbuf[0] = M41ST84_REG_CSEC;
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
+	    cmdbuf, 1, cur, sizeof(cur), 0)) != 0)
+		goto out;
+
+	bcd[M41ST84_REG_CSEC] = 0;	/* must always write as 0 */
+	bcd[M41ST84_REG_SEC] = bintobcd(dt->dt_sec) |
+	    (cur[M41ST84_REG_SEC] & M41ST84_SEC_ST);
+	bcd[M41ST84_REG_MIN] = bintobcd(dt->dt_min) |
+	    (cur[M41ST84_REG_MIN] & M41ST84_MIN_OFIE);
+	bcd[M41ST84_REG_CENHR] = bintobcd(dt->dt_hour);
+	bcd[M41ST84_REG_DAY] = bintobcd(dt->dt_wday) |
+	    (cur[M41ST84_REG_DAY] & M41ST84_DAY_SQW_MASK);
+	bcd[M41ST84_REG_DATE] = bintobcd(dt->dt_day);
+	bcd[M41ST84_REG_MONTH] = bintobcd(dt->dt_mon) |
+	    (cur[M41ST84_REG_MONTH] & M41ST84_MONTH_CB_MASK);
+	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - strtc_epoch(sc)) % 100);
+
+	cmdbuf[0] = M41ST84_REG_CSEC;
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_address, cmdbuf, 1, bcd, sizeof(bcd), 0)) != 0)
+		goto out;
+
+	/*
+	 * A valid time is now running
+	 */
+	cmdbuf[0] = M41ST84_REG_FLAGS;
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+	    cmdbuf, 1, &bcd[0], 1, 0)) != 0)
+		goto out;
+	if (bcd[0] & M41ST84_FLAGS_OF) {
+		bcd[0] &= ~M41ST84_FLAGS_OF;
+		error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+		    sc->sc_address, cmdbuf, 1, &bcd[0], 1, 0);
+	}
+
+out:
+	if (error)
+		aprint_error_dev(sc->sc_dev, "%s: failed to set clock\n",
+		    __func__);
+	iic_release_bus(sc->sc_tag, 0);
+	return error;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84reg.h,v 1.4 2023/01/23 22:20:59 andvar Exp $	*/
+/*	$NetBSD: m41st84reg.h,v 1.5 2026/06/23 21:59:18 rkujawa Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -72,6 +72,13 @@
 
 #define	M41ST84_SEC_ST		0x80		/* clock stop bit */
 
+/*
+ * M41T6x family differences
+ */
+#define	M41ST84_MIN_OFIE	0x80		/* osc fail intr enable */
+#define	M41ST84_DAY_SQW_MASK	0xf0		/* RS3-RS0 rate select */
+#define	M41ST84_MONTH_CB_MASK	0xc0		/* century bits CB1/CB0 */
+
 #define	M41ST84_CONTROL_CALIB_MASK	0x1f
 #define	M41ST84_CONTROL_S		0x20	/* sign bit */
 #define	M41ST84_CONTROL_FT		0x40	/* Frequency test bit */
@@ -87,6 +94,7 @@
 
 #define	M41ST84_AL_HOUR_HT		0x40	/* Halt Update Bit */
 
+#define	M41ST84_FLAGS_OF		0x04	/* oscillator fail flag (M41T6x) */
 #define	M41ST84_FLAGS_BL		0x10	/* battery low flag */
 #define	M41ST84_FLAGS_AF		0x40	/* alarm flag */
 #define	M41ST84_FLAGS_WDF		0x80	/* watchdog flag */
