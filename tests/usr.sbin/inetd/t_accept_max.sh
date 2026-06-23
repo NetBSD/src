@@ -1,4 +1,4 @@
-#	$NetBSD: t_accept_max.sh,v 1.3 2026/06/23 06:42:26 riastradh Exp $
+#	$NetBSD: t_accept_max.sh,v 1.4 2026/06/23 18:53:29 riastradh Exp $
 #
 # Copyright (c) 2026 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -63,47 +63,43 @@ EOF
 max2_test()
 {
 	atf_require_prog ${INETD:-inetd}
-	(max2_subshell) || atf_fail "$?"
+	max2_subshell || atf_fail "max2_subshell failed with status $?"
 }
 max2_subshell()
-{
+(
 
-	# Save traps and arrange to kill jobs.  We have at most five
-	# jobs running or pending at any given time, so job ids %0
+	# Arrange to kill jobs on exit.  We have at most four
+	# jobs running or pending at any given time, so job ids %1
 	# through %4 should cover them all.
 	#
-	# XXX Hope atf doesn't have any background jobs of its own to
-	# collide with the job ids!
-	#
-	traps=$(trap -p)
-	trap 'eval "$traps"; kill -9 %0 %1 %2 %3 %4 2>/dev/null; wait' \
+	trap 'for j in 1 2 3 4; do kill -9 %$j 2>/dev/null || :; done; wait' \
 	    ALRM EXIT HUP INT PIPE TERM
-	reset=$(set +o)
-	set -e -m -x
+	set -eu -m -x
 
 	# Create some state.
 	#
 	echo 0 >ntasks
 	: >output
-	mkfifo 1A 1B 2A 2B 3A 3B 4A 4B
+	mkfifo 1A 1B 2A 2B 3A 3B
 
 	# Configure inetd with a daemon.  The daemon will:
 	#
 	# 1. read a connection number $client,
 	# 2. append ${client} to a log of output,
-	# 3. write to fifo ${client}A to notify the test that it has
-	#    done so,
-	# 4. and then read from fifo ${client}B before exiting.
+	# 3. open fifo ${client}A for writing to notify the test that
+	#    it has done so, and then
+	# 4. open fifo ${client}B for reading before exiting in order
+	#    to wait until the parent is ready for us to exit.
 	#
 	cat <<'EOF' >run
 #!/bin/sh
-set -eu -o pipefail
-flock ntasks sh -c 'n=$(cat ntasks); echo $((n + 1)) >ntasks'
+set -eu
+flock ntasks sh -euc 'n=$(cat ntasks); echo $((n + 1)) >ntasks'
 read -r client
 printf '%s\n' "$client" >>output
 : >"${client}A"
 : <"${client}B"
-flock ntasks sh -c 'n=$(cat ntasks); echo $((n - 1)) >ntasks'
+flock ntasks sh -euc 'n=$(cat ntasks); echo $((n - 1)) >ntasks'
 EOF
 	chmod +x run
 
@@ -133,8 +129,7 @@ EOF
 	echo client 1 running as $client1
 	timeout 10s sh -c ': <1A' || return $?
 	case $(cat ntasks):$(cat output) in
-	1:1)
-		;;
+	1:1)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -153,8 +148,7 @@ EOF
 	echo client 2 running as $client2
 	timeout 10s sh -c ': <2A' || return $?
 	case $(cat ntasks):$(cat output) in
-	2:2)
-		;;
+	2:2)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -176,8 +170,7 @@ EOF
 	# output should have happened:
 	#
 	case $(cat ntasks):$(cat output) in
-	2:)
-		;;
+	2:)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -194,8 +187,7 @@ EOF
 	#
 	timeout 10s sh -c ': >1B; : <3A' || return $?
 	case $(cat ntasks):$(cat output) in
-	2:3)
-		;;
+	2:3)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -206,8 +198,7 @@ EOF
 	: >output
 	wait $client1 || atf_fail "failed to wait for client 1 ($?)"
 	case $(cat ntasks):$(cat output) in
-	2:)
-		;;
+	2:)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -228,8 +219,7 @@ EOF
 	# happened.
 	#
 	case $(cat ntasks):$(cat output) in
-	0:)
-		;;
+	0:)	;;
 	*)	echo '# ntasks' >&2
 		cat ntasks >&2
 		echo '# output' >&2
@@ -239,12 +229,11 @@ EOF
 	esac
 	: >output
 
-	# All done; kill inetd, wait for it to exit, and restore traps:
+	# All done; kill inetd and wait for it to exit.
 	#
-	kill $inetd; wait $inetd
-	eval "$reset"
-	eval "$traps"
-}
+	kill $inetd
+	wait $inetd
+)
 
 atf_init_test_cases()
 {
