@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.137 2026/06/23 04:12:20 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.138 2026/06/23 04:12:48 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.137 2026/06/23 04:12:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.138 2026/06/23 04:12:48 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4934,7 +4934,7 @@ static int
 wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const void *privkey;
 	size_t privkey_len;
@@ -4964,6 +4964,8 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 	error = 0;
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4972,7 +4974,7 @@ static int
 wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	uint16_t port;
 
@@ -4989,6 +4991,8 @@ wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 	error = wg->wg_ops->bind_port(wg, (uint16_t)port);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4997,7 +5001,7 @@ static int
 wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	struct wg_peer *wgp = NULL, *wgp0 __diagused;
 
@@ -5039,6 +5043,8 @@ wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 	if_link_state_change(&wg->wg_if, LINK_STATE_UP);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -5047,7 +5053,7 @@ static int
 wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const char *name;
 
@@ -5066,6 +5072,8 @@ wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 
 	error = wg_destroy_peer_name(wg, name);
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
