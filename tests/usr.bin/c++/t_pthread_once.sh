@@ -1,4 +1,4 @@
-#	$NetBSD: t_pthread_once.sh,v 1.8 2026/03/09 20:29:25 skrll Exp $
+#	$NetBSD: t_pthread_once.sh,v 1.9 2026/06/23 16:43:51 riastradh Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -219,6 +219,11 @@ EOF
 
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
+	case $(uname -p) in
+	powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o pthread_once test.cpp -L. -ltest -pthread
 

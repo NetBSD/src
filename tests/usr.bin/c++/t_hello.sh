@@ -1,4 +1,4 @@
-#	$NetBSD: t_hello.sh,v 1.9 2026/03/09 20:29:25 skrll Exp $
+#	$NetBSD: t_hello.sh,v 1.10 2026/06/23 16:43:51 riastradh Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -202,6 +202,12 @@ EOF
 	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o hello test.cpp -L. -ltest
+
+	case $(uname -p) in
+	*mips*|powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello

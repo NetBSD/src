@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once.sh,v 1.9 2026/06/23 16:43:29 riastradh Exp $
+#	$NetBSD: t_call_once.sh,v 1.10 2026/06/23 16:43:51 riastradh Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -112,6 +112,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o call_once test.cpp -pthread
+	case $(uname -p) in
+	riscv*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
 
@@ -202,6 +207,12 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -m32 -o call_once test.cpp -L. -ltest -pthread
 
+	case $(uname -p) in
+	mips*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
+
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
@@ -227,6 +238,12 @@ EOF
 	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o call_once test.cpp -L. -ltest -pthread
+
+	case $(uname -p) in
+	*arm*|i?86|mips*|powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
