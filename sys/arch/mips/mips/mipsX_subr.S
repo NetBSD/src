@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.116 2025/04/24 01:40:27 riastradh Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.117 2026/06/23 08:10:17 andvar Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.116 2025/04/24 01:40:27 riastradh Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.117 2026/06/23 08:10:17 andvar Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -658,7 +658,7 @@ VECTOR(MIPSX(intr), unknown)
 	MFC0_HAZARD				#01: stall
 	and	k0, k0, MIPS3_SR_KSU_USER	#02: test for user mode
 	bnez	k0, 1f				#03: yep, do it
-	 nop					#04:  branch deay
+	 nop					#04:  branch delay
 	j	MIPSX(kern_intr)		#05: nope, kernel intr
 1:
 	lui	k1, %hi(CPUVAR(CURLWP))		#06: k1=hi of curlwp
