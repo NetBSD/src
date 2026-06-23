@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.21 2026/06/15 15:18:04 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.22 2026/06/23 19:29:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -73,6 +73,9 @@
 
 #define	__HAVE_PMAP_PV_TRACK
 #define	__HAVE_PMAP_MD
+
+/* XXX temporary */
+#define	__HAVE_UNLOCKED_PMAP
 
 #define	PMAP_PAGE_INIT(pp)				\
 do {							\

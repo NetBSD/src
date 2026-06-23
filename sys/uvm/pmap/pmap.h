@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.30 2026/06/15 12:05:58 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.31 2026/06/23 19:29:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -248,13 +248,6 @@ pmap_unlock(struct pmap *pm)
 {
 
 	rw_exit(pm->pm_lock);
-}
-
-static inline bool
-pmap_trylock(struct pmap *pm)
-{
-
-	return rw_tryenter(pm->pm_lock, RW_WRITER);
 }
 
 struct pmap_kernel {

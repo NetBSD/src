@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.430 2026/06/15 15:46:10 skrll Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.431 2026/06/23 19:29:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.430 2026/06/15 15:46:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.431 2026/06/23 19:29:12 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2414,7 +2414,11 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * change while in pmap_remove().
 			 */
 
+#ifdef __HAVE_UNLOCKED_PMAP /* XXX temporary */
+			uvm_map_lock_entry(entry, RW_WRITER);
+#else
 			uvm_map_lock_entry(entry, RW_READER);
+#endif
 			pmap_remove(map->pmap, entry->start, entry->end);
 
 			/*
@@ -2990,7 +2994,11 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
+#ifdef __HAVE_UNLOCKED_PMAP /* XXX temporary */
+				uvm_map_lock_entry(entry, RW_WRITER);
+#else
 				uvm_map_lock_entry(entry, RW_READER);
+#endif
 				pmap_remove(srcmap->pmap, entry->start,
 						entry->end);
 				uvm_map_unlock_entry(entry);
@@ -3222,7 +3230,11 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		if (current->protection != old_prot) {
 			/* update pmap! */
+#ifdef __HAVE_UNLOCKED_PMAP /* XXX temporary */
+			uvm_map_lock_entry(current, RW_WRITER);
+#else
 			uvm_map_lock_entry(current, RW_READER);
+#endif
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(current));
 			uvm_map_unlock_entry(current);
@@ -4555,7 +4567,11 @@ uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
 		if (old_entry->aref.ar_amap &&
 		    !UVM_ET_ISNEEDSCOPY(old_entry)) {
 			if (old_entry->max_protection & VM_PROT_WRITE) {
+#ifdef __HAVE_UNLOCKED_PMAP /* XXX temporary */
+				uvm_map_lock_entry(old_entry, RW_WRITER);
+#else
 				uvm_map_lock_entry(old_entry, RW_READER);
+#endif
 				pmap_protect(old_map->pmap,
 				    old_entry->start, old_entry->end,
 				    old_entry->protection & ~VM_PROT_WRITE);

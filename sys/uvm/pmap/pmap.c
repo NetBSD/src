@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.105 2026/06/15 12:05:58 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.106 2026/06/23 19:29:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2026/06/15 12:05:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.106 2026/06/23 19:29:12 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -985,8 +985,6 @@ void
 pmap_page_remove(struct vm_page_md *mdpg)
 {
 	kpreempt_disable();
-
-restart:
 	VM_PAGEMD_PVLIST_LOCK(mdpg);
 	pmap_pvlist_check(mdpg);
 
@@ -1055,33 +1053,8 @@ restart:
 			continue;
 		}
 #endif
-		/*
-		 * We have to seamlessly get a hold on the pmap's lock
-		 * while holding the PV head lock, to know that the
-		 * mapping is still in place and we can operate on it.
-		 * If that can't be had, drop the PV head lock, wait
-		 * for the pmap's lock to become available, and then
-		 * try again.
-		 */
 		const pmap_t pmap = pv->pv_pmap;
 		vaddr_t va = trunc_page(pv->pv_va);
-		UVMHIST_LOG(maphist, "... pm %#jx va %#jx... removing",
-			(uintptr_t)pmap, va, 0, 0);
-
-		pmap_reference(pmap);
-		bool locked = pmap_trylock(pmap);
-		if (!locked) {
-			VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-			pmap_lock(pmap);
-			/* nothing */
-			pmap_unlock(pmap);
-			pmap_destroy(pmap);
-
-			UVMHIST_LOG(maphist, "... failed lock", 0, 0, 0,
-				0);
-			goto restart;
-		}
-
 		pt_entry_t * const ptep = pmap_pte_lookup(pmap, va);
 
 		KASSERTMSG(ptep != NULL, "%#"PRIxVADDR " %#"PRIxVADDR, va,
@@ -1132,13 +1105,6 @@ restart:
 			pv->pv_pmap = NULL;
 			pv->pv_next = NULL;
 		}
-
-		VM_PAGEMD_PVLIST_UNLOCK(mdpg);
-		pmap_unlock(pmap);
-		pmap_destroy(pmap);
-		UVMHIST_LOG(maphist, "... removed", 0, 0, 0, 0);
-
-		goto restart;
 	}
 
 	pmap_pvlist_check(mdpg);
