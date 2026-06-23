@@ -1,4 +1,4 @@
-#	$NetBSD: t_basic.sh,v 1.8 2026/06/22 22:24:36 riastradh Exp $
+#	$NetBSD: t_basic.sh,v 1.9 2026/06/23 04:11:40 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -69,8 +69,6 @@ check_badpeerkey()
 	local ip=$2
 	local ping= size=
 
-	atf_expect_fail "PR kern/6016: wg(4) should properly handle invalid or insecure ephemeral Curve25119 public keys"
-
 	if [ $proto = inet ]; then
 		ping="atf_check -s not-exit:0 -o ignore rump.ping -n -c 1 -w 1"
 	else
@@ -87,8 +85,6 @@ check_badhandshakekey()
 	local ip=$3
 	local pubkey=$4
 	local port=51820        # XXX parametrize more clearly
-
-	atf_expect_fail "PR kern/6016: wg(4) should properly handle invalid or insecure ephemeral Curve25119 public keys"
 
 	# For each invalid public key (representing the 32-byte
 	# little-endian encoding of an x coordinate of a point of order

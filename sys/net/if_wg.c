@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.136 2026/06/23 04:11:40 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.136 2026/06/23 04:11:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1094,8 +1094,71 @@ wg_algo_dh(uint8_t out[static WG_DH_OUTPUT_LEN],
 
 	CTASSERT(WG_STATIC_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
 
-	int ret __diagused = crypto_scalarmult(out, privkey, pubkey);
-	KASSERT(ret == 0);
+	/*
+	 * libsodium crypto_scalarmult may fail early (return -1) if
+	 * pubkey is a point of order <=8 -- and thus if the output
+	 * _would_ be all-zero -- in order to mitigate _potential_
+	 * timing side channel attacks prompted by:
+	 *
+	 *	Daniel Genkin, Luke Valenta, and Yuval Yarom, `May the
+	 *	Fourth Be With You: A Microarchitectural Side Channel
+	 *	Attack on Several Real-World Applications of
+	 *	Curve25519', ACM CCS 2017
+	 *	https://dl.acm.org/doi/10.1145/3133956.3134029
+	 *
+	 * (The paper is actually about exploiting variable-time logic
+	 * in erstwhile versions of libgcrypt; the risk libsodium
+	 * mitigates is only the potential of compiler optimizations
+	 * that convert branchless arithmetic circuits written in C
+	 * into variable-time machine code.  Of course, this early
+	 * abort itself introduces timing variation!  But that timing
+	 * variation only reveals the distinction between a point of
+	 * order <=8 (not possible for legitimate keys) and a point of
+	 * order >8.)
+	 *
+	 * The X25519 function was explicitly designed from the
+	 * beginning to be safe without point validation in DH key
+	 * agreements:
+	 *
+	 * https://web.archive.org/web/20260618014320/https://cr.yp.to/ecdh/curve25519-20060209.pdf
+	 * https://web.archive.org/web/20260613191208/https://cr.yp.to/ecdh.html#validate
+	 *
+	 * Consistent with the `MAY' in the RFC 7748 procedure for
+	 * X25519 DH key agreements, we deliberately ignore the result
+	 * of this check -- except to memset the output to zero --
+	 * because:
+	 *
+	 * - If a malicious peer provides a static public key of low
+	 *   order as its identity, that malicious peer could also just
+	 *   maliciously forward traffic to the NSA anyway.
+	 *
+	 * - If a MITM on the network provides an ephemeral public key
+	 *   in a key agreement, we will reject it as a forgery anyway
+	 *   using the static public key of the peer's identity.
+	 *
+	 * So there is no value in using the result of the check -- and
+	 * if we did use it, it would introduce unnecessary code
+	 * complexity downstream, raising the cost of auditing.
+	 *
+	 * Note that not all of libsodium's implementations of
+	 * crypto_scalarmult_curve25519 even do the check!  At time of
+	 * writing (both in the version of libsodium in NetBSD, 1.0.16,
+	 * and the latest libsodium, 1.0.22), the ref10 implementation
+	 * may return -1, while the sandy2x implementation never does.
+	 * The libsodium documentation doesn't even mention what the
+	 * return value means, even though the function is annotated
+	 * with __attribute__((warn_unused_result)):
+	 *
+	 * https://web.archive.org/web/20260521174050/https://libsodium.gitbook.io/doc/advanced/scalar_multiplication
+	 *
+	 * Further reading on the check, its value, and its
+	 * limitations:
+	 *
+	 * https://web.archive.org/web/20260404134530/https://moderncrypto.org/mail-archive/curves/2017/000896.html
+	 * https://web.archive.org/web/20210506235924/https://crypto.stackexchange.com/questions/55632/libsodium-x25519-and-ed25519-small-order-check/55643#55643
+	 */
+	if (crypto_scalarmult(out, privkey, pubkey))
+		memset(out, 0, WG_DH_OUTPUT_LEN);
 }
 
 static void
