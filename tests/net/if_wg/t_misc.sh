@@ -1,4 +1,4 @@
-#	$NetBSD: t_misc.sh,v 1.17 2026/06/22 22:27:17 riastradh Exp $
+#	$NetBSD: t_misc.sh,v 1.18 2026/06/23 04:12:20 riastradh Exp $
 #
 # Copyright (c) 2018 Ryota Ozaki <ozaki.ryota@gmail.com>
 # All rights reserved.
@@ -679,8 +679,6 @@ wg_toomanyallowedips_body()
 	local ip_wg_peer_allowed=$ip_wg_peer/32
 	local port=51820
 	setup_servers
-
-	atf_expect_fail "PR kern/60232: kernel panic when adding a wireguard peer with too many allowed IP addresses"
 
 	for i in 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23
 	do

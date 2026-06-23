@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.136 2026/06/23 04:11:40 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.137 2026/06/23 04:12:20 riastradh Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.136 2026/06/23 04:11:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.137 2026/06/23 04:12:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -4003,6 +4003,7 @@ wg_destroy_peer(struct wg_peer *wgp)
 
 	/* Prevent new packets from this peer on any source address.  */
 	rw_enter(wg->wg_rwlock, RW_WRITER);
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 	for (int i = 0; i < wgp->wgp_n_allowedips; i++) {
 		struct wg_allowedip *wga = &wgp->wgp_allowedips[i];
 		struct radix_node_head *rnh = wg_rnh(wg, wga->wga_family);
@@ -4725,6 +4726,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	const void *psk;
 	size_t psk_len;
 	const char *name = NULL;
+	struct wg_peer *wgp = NULL;
 
 	if (prop_dictionary_get_string(peer, "name", &name)) {
 		if (strlen(name) > WG_PEER_NAME_MAXLEN) {
@@ -4747,7 +4749,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	}
 #endif
 
-	struct wg_peer *wgp = wg_alloc_peer(wg);
+	wgp = wg_alloc_peer(wg);
 	memcpy(wgp->wgp_pubkey, pubkey, sizeof(wgp->wgp_pubkey));
 	if (name != NULL)
 		strncpy(wgp->wgp_name, name, sizeof(wgp->wgp_name));
@@ -4804,9 +4806,14 @@ skip_endpoint:
 
 	prop_object_iterator_t _it = prop_array_iterator(allowedips);
 	prop_dictionary_t prop_allowedip;
-	int j = 0;
 	while ((prop_allowedip = prop_object_iterator_next(_it)) != NULL) {
-		struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
+		if (wgp->wgp_n_allowedips >= WG_ALLOWEDIPS) {
+			error = E2BIG;
+			goto out;
+		}
+
+		struct wg_allowedip *const wga =
+		    &wgp->wgp_allowedips[wgp->wgp_n_allowedips++];
 
 		if (!prop_dictionary_get_int(prop_allowedip, "family",
 			&wga->wga_family))
@@ -4826,8 +4833,10 @@ skip_endpoint:
 			struct in_addr mask;
 			struct sockaddr_in sin_mask;
 
-			if (addr_len != sizeof(struct in_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr4, addr, addr_len);
 
 			sockaddr_in_init(&sin, (const struct in_addr *)addr,
@@ -4854,8 +4863,10 @@ skip_endpoint:
 			struct in6_addr mask;
 			struct sockaddr_in6 sin6_mask;
 
-			if (addr_len != sizeof(struct in6_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in6_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr6, addr, addr_len);
 
 			sockaddr_in6_init(&sin6, (const struct in6_addr *)addr,
@@ -4884,13 +4895,14 @@ skip_endpoint:
 		error = wg_rtable_add_route(wg, wga);
 		if (error != 0)
 			goto out;
-
-		j++;
 	}
-	wgp->wgp_n_allowedips = j;
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 skip:
 	*wgpp = wgp;
+	wgp = NULL;
 out:
+	if (wgp)
+		wg_destroy_peer(wgp);
 	return error;
 }
 
@@ -5163,6 +5175,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		prop_array_t allowedips = prop_array_create();
 		if (allowedips == NULL)
 			goto next;
+		KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 		for (int j = 0; j < wgp->wgp_n_allowedips; j++) {
 			struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
 			prop_dictionary_t prop_allowedip;
