@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.8 2022/09/29 07:22:49 skrll Exp $
+#	$NetBSD: t_call_once2.sh,v 1.9 2026/06/23 16:43:29 riastradh Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -429,6 +429,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -fpie -pie -o call_once2 test.cpp -pthread
+	case $(uname -p) in
+	alpha)
+		atf_expect_fail "PR port-alpha/60356: pie tests are failing on alpha"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once2
 }
 
