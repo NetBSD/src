@@ -1,4 +1,4 @@
-#	$NetBSD: t_accept_max.sh,v 1.2 2026/05/17 01:31:55 riastradh Exp $
+#	$NetBSD: t_accept_max.sh,v 1.3 2026/06/23 06:42:26 riastradh Exp $
 #
 # Copyright (c) 2026 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -75,7 +75,7 @@ max2_subshell()
 	# XXX Hope atf doesn't have any background jobs of its own to
 	# collide with the job ids!
 	#
-	traps=$(trap)
+	traps=$(trap -p)
 	trap 'eval "$traps"; kill -9 %0 %1 %2 %3 %4 2>/dev/null; wait' \
 	    ALRM EXIT HUP INT PIPE TERM
 	reset=$(set +o)
