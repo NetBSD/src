@@ -1,11 +1,11 @@
-#	$NetBSD: SAM460EX,v 1.5 2026/06/19 18:55:23 rkujawa Exp $
+#	$NetBSD: SAM460EX,v 1.6 2026/06/23 22:07:46 rkujawa Exp $
 #
 #	SAM460EX -- ACube Sam460ex (AMCC 460EX)
 #
 
 include 	"arch/evbppc/conf/std.sam460ex"
 
-#ident 		"SAM460EX-$Revision: 1.5 $"
+#ident 		"SAM460EX-$Revision: 1.6 $"
 
 maxusers	32
 
@@ -22,19 +22,28 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	TRAP_PANICWAIT
 makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
 
+options		KTRACE			# system call tracing
+
 makeoptions	DEBUG="-g"		# compile full symbol table
 
 #
 # File systems
 #
-file-system 	FFS		# UFS
-file-system 	NFS		# Network File System client
-file-system 	MSDOSFS		# FAT (USB mass storage stress testing)
-file-system 	KERNFS		# /kern
-file-system	PTYFS		# /dev/pts/N support
-file-system	TMPFS		# Efficient memory file-system
+file-system 	FFS			# UFS
+file-system 	EXT2FS			# Linux ext2fs
+file-system 	MSDOSFS			# FAT 
+file-system 	KERNFS			# /kern
+file-system	PTYFS			# /dev/pts/N support
+file-system	TMPFS			# Efficient memory file-system
 
-options 	NFS_BOOT_DHCP	# Support DHCP NFS root
+options		FFS_EI			# Enable Endian Independent 
+
+options         DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options         DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options         DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+
+file-system 	NFS			# Network File System client
+options 	NFS_BOOT_DHCP		# Support DHCP NFS root
 
 #
 # Networking options
@@ -56,12 +65,11 @@ cpu0	at plb?				# CPU
 # On-chip Peripheral Bus support
 opb*	at plb?				# On-chip Peripheral Bus
 com*	at opb? addr ? irq ?		# UARTs
-wdog*	at opb?				# 460EX on-chip watchdog -> sysmon(4) /dev/watchdog
-gpiic*	at opb? addr ? irq ?		# On-chip IIC (bitbang via DIRECTCNTL)
+wdog*	at opb?				# On-chip Watchdog
+gpiic*	at opb? addr ? irq ?		# On-chip IIC 
 iic*	at gpiic?			# I2C bus
 
-# needs MI m41st84 M41T62 support, not yet committed
-#strtc0	at iic0 addr 0x68 flags 62	# M41T62 RTC (M41T80 under QEMU)
+strtc0	at iic0 addr 0x68 flags 62	# M41T62 RTC (M41T80 under QEMU)
 spdmem0 at iic0 addr 0x50		# DDR2 SPD EEPROM
 
 #seeprom0 at iic0 addr 0x54 flags 8	# U-Boot env EEPROM
@@ -95,6 +103,9 @@ vac0	at voyager0			# SM502 AC97-link (Realtek ALC655)
 # audio
 audio*	at audiobus?
 
+spkr*	at audio?			# tone interface, synthesized via audio
+wsbell*	at spkr?			# bell for the wscons display
+
 # selected via console=pci
 radeonfb* at pci? dev ? function ?	# ATI Radeon R100 - R3XX
 
@@ -102,13 +113,13 @@ wsdisplay* at wsemuldisplaydev?
 
 options 	WSEMUL_VT100
 options 	WSDISPLAY_SCROLLSUPPORT
-options 	FONT_BOLD8x16		# bitmap font (engine putchar path)
+options 	FONT_BOLD8x16		# bitmap font
 
-satalink* at pci? dev ? function ?	# SATALink, often used on Sam460ex
+satalink* at pci? dev ? function ?	# SATALink
 siisata* at pci? dev ? function ?
 
-dwcsata0 at plb? addr 0xbffd1000 irq 96	# on-chip DWC SATA-II (PIO only)
-options 	DWCSATA_PIO_ONLY	# DMA is unstable
+dwcsata0 at plb? addr 0xbffd1000 irq 96	# on-chip DWC SATA-II
+options 	DWCSATA_PIO_ONLY	# force PIO mode
 
 atabus*	at ata?
 wd*	at atabus? drive ? flags 0x0000
@@ -130,7 +141,7 @@ umass*	at uhub? port ? configuration ? interface ?
 scsibus* at umass?
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 
-# USB HID devices (QEMU plugs a usb-kbd and usb-mouse by default)
+# USB HID devices
 uhidev*	at uhub? port ? configuration ? interface ?
 ukbd*	at uhidev? reportid ?
 wskbd*	at ukbd? console ?
@@ -142,10 +153,9 @@ uhid*	at uhidev? reportid ?
 # Pseudo devices
 #
 pseudo-device	wsmux			# keyboard/mouse multiplexor
-					# (console input from USB keyboards)
 pseudo-device	wsfont			# bitmap fonts for the wsdisplay console
 pseudo-device	loop			# network loopback
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	clockctl		# user control of clock subsystem
-pseudo-device	drvctl			# detach/rescan devices (AHB tests)
+pseudo-device	drvctl			# detach/rescan devices
 pseudo-device	ksyms			# /dev/ksyms
