@@ -1,4 +1,4 @@
-#       $NetBSD: t_cpio.sh,v 1.1 2020/01/17 16:25:37 christos Exp $
+#       $NetBSD: t_cpio.sh,v 1.2 2026/06/23 15:52:58 riastradh Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,17 @@ cpio_body()
 	# to get the program name right since it is embedded in error
 	# strings that need to match
 	ln -s /usr/bin/cpio "$dd/bsdcpio"
+
+	# The test drops privileges to the uid/gid of user `nobody' --
+	# make sure that user has access to this working directory so
+	# they can get at the wrapper symlink.
+	case $(id -u) in
+	0)	atf_check chgrp $(id -g nobody) .
+		atf_check chmod g+rx .
+		;;
+	esac
+
+	export TMPDIR="$(pwd)"
 	atf_check -s exit:0 -o 'not-match:^Details for failing tests:.*' \
 	    -e ignore "$d/h_cpio" -p "$dd/bsdcpio" -r "$d"
 }

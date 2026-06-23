@@ -3658,7 +3658,7 @@ test_run(int i, const char *tmpdir)
 	 * Temporarily drop privileges.
 	 */
 	if (tuser != NULL) {
-		(void)setegid(tuid);
+		(void)setegid(tgid);
 		(void)seteuid(tuid);
 	}
 #endif
