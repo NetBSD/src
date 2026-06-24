@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.14 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: start.S,v 1.15 2026/06/24 13:51:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -33,7 +33,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: start.S,v 1.14 2024/02/07 04:20:26 msaitoh Exp $")
+RCSID("$NetBSD: start.S,v 1.15 2026/06/24 13:51:21 skrll Exp $")
 
 /*
  * Padding at start of kernel image to make room for 64-byte header
@@ -81,7 +81,6 @@ start:
 	br	x9
 9:
 
-
 	/*
 	 * Zero the BSS
 	 */
@@ -92,7 +91,6 @@ start:
 1:	stp	xzr, xzr, [x8], #16
 2:	cmp	x8, x9
 	b.lo	1b
-
 
 	mrs	x8, CurrentEL
 	lsr	x8, x8, #2
@@ -117,7 +115,6 @@ start:
 #endif
 	msr	sctlr_el1, x8
 	isb
-
 
 	adr	x9, start
 	ldr	x10, =start
