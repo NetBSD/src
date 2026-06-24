@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.296 2026/06/24 07:03:33 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.297 2026/06/24 15:30:45 riastradh Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.296 2026/06/24 07:03:33 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.297 2026/06/24 15:30:45 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -656,7 +656,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		/* Count received bytes, add hardware framing */
 		if_statadd(ifp, if_ibytes, m->m_pkthdr.len + sp->pp_framebytes);
 		/* Note time of last receive */
-		sp->pp_last_receive = time_uptime;
+		sp->pp_last_receive = time_uptime32;
 	}
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
@@ -2501,8 +2501,8 @@ sppp_lcp_up(struct sppp *sp, void *xcp)
 	KASSERT(SPPP_WLOCKED(sp));
 
 	/* Initialize activity timestamp: opening a connection is an activity */
-	atomic_store_relaxed(&sp->pp_last_receive, time_uptime);
-	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
+	atomic_store_relaxed(&sp->pp_last_receive, time_uptime32);
+	atomic_store_relaxed(&sp->pp_last_activity, time_uptime32);
 
 	sppp_up_event(sp, xcp);
 }
@@ -5448,11 +5448,11 @@ static void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	time_t now, last_activity;
+	uint32_t now, last_activity;
 
 	SPPPQ_LOCK();
 
-	now = time_uptime;
+	now = time_uptime32;
 	for (sp=spppq; sp; sp=sp->pp_next) {
 		SPPP_LOCK(sp, RW_WRITER);
 		last_activity = atomic_load_relaxed(&sp->pp_last_activity);
@@ -6084,7 +6084,7 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 	    	struct spppidletimeout *to = (struct spppidletimeout *)data;
 
 		SPPP_LOCK(sp, RW_WRITER);
-		sp->pp_idle_timeout = to->idle_seconds;
+		sp->pp_idle_timeout = MIN(to->idle_seconds, INT32_MAX/2);
 		SPPP_UNLOCK(sp);
 	    }
 	    break;
@@ -6155,7 +6155,8 @@ sppp_params(struct sppp *sp, u_long cmd, void *data)
 
 		SPPP_LOCK(sp, RW_WRITER);
 		sp->pp_maxalive = settings->maxalive;
-		sp->pp_max_noreceive = settings->max_noreceive;
+		sp->pp_max_noreceive = MIN(settings->max_noreceive,
+		    INT32_MAX/2);
 		sp->pp_alive_interval = settings->alive_interval;
 		SPPP_UNLOCK(sp);
 	    }

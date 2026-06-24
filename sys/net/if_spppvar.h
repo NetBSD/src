@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.52 2026/06/24 07:03:33 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.53 2026/06/24 15:30:45 riastradh Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -155,12 +155,16 @@ struct sppp {
 	u_int   pp_loopcnt;     /* loopback detection counter */
 	u_int	pp_maxalive;	/* number or echo req. w/o reply */
 	uint64_t	pp_saved_mtu;	/* saved MTU value */
-	time_t	pp_last_receive;	/* peer's last "sign of life" */
-	time_t	pp_max_noreceive;	/* seconds since last receive before
+	volatile uint32_t pp_last_receive;
+					/* peer's last "sign of life" */
+	uint32_t	pp_max_noreceive;
+					/* seconds since last receive before
 					   we start to worry and send echo
 					   requests */
-	time_t	pp_last_activity;	/* second of last payload data s/r */
-	time_t	pp_idle_timeout;	/* idle seconds before auto-disconnect,
+	volatile uint32_t pp_last_activity;
+					/* second of last payload data s/r */
+	uint32_t	pp_idle_timeout;
+					/* idle seconds before auto-disconnect,
 					 * 0 = disabled */
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
