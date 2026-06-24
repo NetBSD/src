@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.49 2026/06/22 04:03:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.50 2026/06/24 06:58:37 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -205,7 +205,7 @@ struct sppp {
 				   or loopback detected */
 				/* 0x02 was PP_CISCO */
 				/* 0x04 was PP_TIMO */
-#define PP_CALLIN	0x08	/* we are being called */
+				/* 0x08 was PP_CALLIN */
 #define PP_NEEDAUTH	0x10	/* remote requested authentication */
 
 #define PP_MTU          1500    /* default/minimal MRU */

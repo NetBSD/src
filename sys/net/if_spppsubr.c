@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.293 2026/06/24 06:56:03 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.294 2026/06/24 06:58:37 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.293 2026/06/24 06:56:03 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.294 2026/06/24 06:58:37 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2458,33 +2458,12 @@ sppp_lcp_init(struct sppp *sp)
 static void
 sppp_lcp_up(struct sppp *sp, void *xcp)
 {
-	struct ifnet *ifp = &sp->pp_if;
-	const struct cp *cp = xcp;
-	int pidx;
 
 	KASSERT(SPPP_WLOCKED(sp));
 
-	pidx = cp->protoidx;
 	/* Initialize activity timestamp: opening a connection is an activity */
-
 	atomic_store_relaxed(&sp->pp_last_receive, time_uptime);
 	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
-
-	/*
-	 * If this interface is passive or dial-on-demand, and we are
-	 * still in Initial state, it means we've got an incoming
-	 * call.  Activate the interface.
-	 */
-	if (ifp->if_flags & IFF_AUTO) {
-		ifp->if_flags |= IFF_RUNNING;
-		if (sp->scp[pidx].state == STATE_INITIAL) {
-			SPPP_DLOG(sp, "Up event (incoming call)\n");
-			sp->pp_flags |= PP_CALLIN;
-			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_open);
-		} else {
-			SPPP_DLOG(sp, "Up event\n");
-		}
-	}
 
 	sppp_up_event(sp, xcp);
 }
@@ -2493,7 +2472,6 @@ static void
 sppp_lcp_down(struct sppp *sp, void *xcp)
 {
 	const struct cp *cp = xcp;
-	struct ifnet *ifp = &sp->pp_if;
 	int pidx = cp->protoidx;
 
 	KASSERT(SPPP_WLOCKED(sp));
@@ -2528,13 +2506,6 @@ sppp_lcp_down(struct sppp *sp, void *xcp)
 	}
 
 	SPPP_DLOG(sp, "Down event (carrier loss)\n");
-
-	if (ifp->if_flags & IFF_AUTO) {
-		sp->pp_flags &= ~PP_CALLIN;
-		if (sp->scp[pidx].state != STATE_INITIAL)
-			sppp_wq_add(sp->wq_cp, &sp->scp[pidx].work_close);
-		ifp->if_flags &= ~IFF_RUNNING;
-	}
 
 	sp->scp[pidx].fail_counter = 0;
 }
@@ -2997,11 +2968,9 @@ sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 		case LCP_OPT_AUTH_PROTO:
 			/*
 			 * Peer doesn't want to authenticate himself,
-			 * deny unless this is a dialout call, and
-			 * SPPP_AUTHFLAG_NOCALLOUT is set.
+			 * deny unless SPPP_AUTHFLAG_NOCALLOUT is set.
 			 */
-			if ((sp->pp_flags & PP_CALLIN) == 0 &&
-			    (sp->hisauth.flags & SPPP_AUTHFLAG_NOCALLOUT) != 0) {
+			if ((sp->hisauth.flags & SPPP_AUTHFLAG_NOCALLOUT) != 0) {
 				if (debug) {
 					addlog(" [don't insist on auth "
 					       "for callout]");
