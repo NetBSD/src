@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.294 2026/06/24 06:58:37 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.295 2026/06/24 07:01:05 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.294 2026/06/24 06:58:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.295 2026/06/24 07:01:05 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1263,6 +1263,24 @@ sppp_dequeue(struct ifnet *ifp)
 	}
 	SPPP_UNLOCK(sp);
 	return m;
+}
+
+void
+sppp_abort_connect(struct ifnet *ifp)
+{
+	struct sppp *sp = (struct sppp *)ifp;
+
+	SPPP_LOCK(sp, RW_WRITER);
+	if (ifp->if_flags & IFF_AUTO) {
+		if (ifp->if_flags & IFF_RUNNING) {
+			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			ifp->if_flags &= ~IFF_RUNNING;
+		}
+	} else {
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
+	}
+	SPPP_UNLOCK(sp);
 }
 
 /*

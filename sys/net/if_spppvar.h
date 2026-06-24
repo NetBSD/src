@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.50 2026/06/24 06:58:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.51 2026/06/24 07:01:05 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -219,6 +219,7 @@ int sppp_ioctl(struct ifnet *, u_long, void *);
 struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
+void sppp_abort_connect(struct ifnet *);
 #endif
 
 /*

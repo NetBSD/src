@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.186 2026/06/05 02:35:22 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.187 2026/06/24 07:01:05 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.186 2026/06/05 02:35:22 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.187 2026/06/24 07:01:05 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1721,11 +1721,10 @@ pppoe_disconnect(struct pppoe_softc *sc)
 #endif
 	sc->sc_session = 0;
 
-	PPPOE_UNLOCK(sc);
 
 	/* notify upper layer */
+	PPPOE_UNLOCK(sc);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
 	PPPOE_LOCK(sc, RW_WRITER);
 
 	RELEASE_SPLNET();
@@ -1741,16 +1740,14 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 	pppoe_printf(sc, "could not establish connection\n");
 	sc->sc_state = PPPOE_STATE_CLOSING;
 
-	PPPOE_UNLOCK(sc);
-
-	/* notify upper layer */
-	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
-	PPPOE_LOCK(sc, RW_WRITER);
-
 	/* clear connection state */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 	sc->sc_state = PPPOE_STATE_INITIAL;
+
+	/* notify upper layer */
+	PPPOE_UNLOCK(sc);
+	sppp_abort_connect(&sc->sc_sppp.pp_if);
+	PPPOE_LOCK(sc, RW_WRITER);
 }
 
 static int
@@ -2109,11 +2106,9 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 	/* fix our state */
 	sc->sc_state = PPPOE_STATE_INITIAL;
 
-	PPPOE_UNLOCK(sc);
-
 	/* signal upper layer */
+	PPPOE_UNLOCK(sc);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
 	PPPOE_LOCK(sc, RW_WRITER);
 
 	/* clean up softc */
