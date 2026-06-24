@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.292 2026/06/22 04:03:50 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.293 2026/06/24 06:56:03 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.292 2026/06/22 04:03:50 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.293 2026/06/24 06:56:03 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -736,7 +736,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IP:
 		SPPP_LOCK(sp, RW_READER);
 		if (sp->scp[IDX_IPCP].state == STATE_OPENED) {
-			sp->pp_last_activity = time_uptime;
+			atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
 			pktq = ip_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -763,7 +763,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 	case PPP_IPV6:
 		SPPP_LOCK(sp, RW_WRITER);
 		if (sp->scp[IDX_IPV6CP].state == STATE_OPENED) {
-			sp->pp_last_activity = time_uptime;
+			atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
 			pktq = ip6_pktq;
 			rps_hash = atomic_load_relaxed(&sppp_pktq_rps_hash_p);
 		}
@@ -805,7 +805,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	uint16_t protocol;
 	size_t pktlen;
 
-	sp->pp_last_activity = time_uptime;
+	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
 
 	if ((ifp->if_flags & IFF_UP) == 0 ||
 	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
@@ -2466,7 +2466,9 @@ sppp_lcp_up(struct sppp *sp, void *xcp)
 
 	pidx = cp->protoidx;
 	/* Initialize activity timestamp: opening a connection is an activity */
-	sp->pp_last_receive = sp->pp_last_activity = time_uptime;
+
+	atomic_store_relaxed(&sp->pp_last_receive, time_uptime);
+	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
 
 	/*
 	 * If this interface is passive or dial-on-demand, and we are
@@ -5438,7 +5440,7 @@ static void
 sppp_keepalive(void *dummy)
 {
 	struct sppp *sp;
-	time_t now;
+	time_t now, last_activity;
 
 	SPPPQ_LOCK();
 
@@ -5448,14 +5450,15 @@ sppp_keepalive(void *dummy)
 
 		SPPP_LOCK(sp, RW_WRITER);
 		ifp = &sp->pp_if;
+		last_activity = atomic_load_relaxed(&sp->pp_last_activity);
 
 		/* check idle timeout */
 		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)
 		    && (sp->pp_phase == SPPP_PHASE_NETWORK)) {
 		    /* idle timeout is enabled for this interface */
-		    if ((now-sp->pp_last_activity) >= sp->pp_idle_timeout) {
+		    if ((now - last_activity) >= sp->pp_idle_timeout) {
 			SPPP_DLOG(sp, "no activity for %lu seconds\n",
-				(unsigned long)(now-sp->pp_last_activity));
+				(unsigned long)(now - last_activity));
 			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 			SPPP_UNLOCK(sp);
 			continue;
