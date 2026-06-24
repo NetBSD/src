@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2026/06/24 10:33:22 martin Exp $ */
+/*	$NetBSD: md.c,v 1.25 2026/06/24 11:09:11 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -352,8 +352,7 @@ md_parts_use_wholedisk(struct disk_partitions *parts)
 		    PART_BOOT_LARGE/parts->bytes_per_sector :
 		    PART_BOOT/parts->bytes_per_sector,
 		.fs_type = PART_BOOT_TYPE,
-		.fs_sub_type = md_need_boot_dtb() ?
-		    MBR_PTYPE_FAT32L : MBR_PTYPE_FAT16L,
+		.fs_sub_type = MBR_PTYPE_FAT16L,
 	};
 
 	return parts_use_wholedisk(parts, 1, &boot_part);
@@ -392,8 +391,7 @@ evbarm_part_defaults(struct pm_devs *my_pm, struct part_usage_info *infos,
 			infos[i].size = md_need_boot_dtb() ?
 			    PART_BOOT_LARGE/my_pm->parts->bytes_per_sector :
 			    PART_BOOT/my_pm->parts->bytes_per_sector;
-			infos[i].fs_version = md_need_boot_dtb() ?
-			    MBR_PTYPE_FAT32L : MBR_PTYPE_FAT16L; 
+			infos[i].fs_version = MBR_PTYPE_FAT16L;
 			return;
 		}
 	}
