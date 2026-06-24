@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77.4.1 2025/08/08 14:07:44 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.77.4.2 2026/06/24 07:14:09 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,6 +188,9 @@ struct cd_info {
 	char menu[100];
 };
 static struct cd_info cds[MAX_CD_INFOS];
+#ifdef HAVE_DVD_IMAGE
+static bool have_warned_compat_missing;
+#endif
 
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
@@ -964,6 +967,28 @@ customise_sets(void)
 	free_menu(menu_no);
 }
 
+#ifdef HAVE_DVD_IMAGE
+static bool
+is_compat_or_debug_set(distinfo *dist)
+{
+#ifdef HAVE_BASE32
+	if (strcmp(dist->name, "base32") == 0) return true;
+#endif
+#ifdef HAVE_BASE64
+	if (strcmp(dist->name, "base64") == 0) return true;
+#endif
+#ifdef HAVE_DEBUG32
+	if (strcmp(dist->name, "debug32") == 0) return true;
+#endif
+#ifdef HAVE_DEBUG64
+	if (strcmp(dist->name, "debug64") == 0) return true;
+#endif
+	if (strcmp(dist->name, "debug") == 0) return true;
+
+	return false;
+}
+#endif
+
 /*
  * Extract_file **REQUIRES** an absolute path in ext_dir.  Any code
  * that sets up xfer_dir for use by extract_file needs to put in the
@@ -1008,6 +1033,19 @@ extract_file_to(distinfo *dist, int update, const char *dest_dir,
 		rval = fetch_fn(dist->name);
 		if (rval != SET_OK)
 			return rval;
+#ifdef HAVE_DVD_IMAGE
+	} else if (is_compat_or_debug_set(dist)) {
+		if (!have_warned_compat_missing) {
+			have_warned_compat_missing = true;
+
+			char *err = str_arg_subst(
+			    msg_string(MSG_opt_set_not_found),
+			    1, &dist->name);
+			hit_enter_to_continue(err, NULL);
+			free(err);
+		}
+		goto set_ok;
+#endif
 	}
 
 	/* check tarfile exists */
@@ -1080,6 +1118,10 @@ extract_file_to(distinfo *dist, int update, const char *dest_dir,
 		run_program(0, "rm %s", path);
 		/* Plausibly we should unlink an empty xfer_dir as well */
 	}
+
+#ifdef HAVE_DVD_IMAGE
+set_ok:
+#endif
 
 	set_status[dist->set] |= SET_INSTALLED;
 	if (do_stats)
@@ -1423,6 +1465,9 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* reset failure/success counters */
 	memset(&tarstats, 0, sizeof(tarstats));
+#ifdef HAVE_DVD_IMAGE
+	have_warned_compat_missing = false;
+#endif
 
 	/* Find out which files to "get" if we get files. */
 

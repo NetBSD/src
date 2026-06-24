@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.50.2.1 2026/01/08 10:32:42 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.50.2.2 2026/06/24 07:14:09 jdc Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -684,6 +684,27 @@ message delete_xfer_file
  */
 message notarfile
 {Pakiet $0 nie istnieje.}
+
+.if HAVE_DVD_IMAGE
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
+message opt_set_not_found
+{The set "$0" is optional and not included on this
+distribution medium. 
+
+This is not critical and installation will continue. 
+You can add this set later, e.g. by downloading it via
+https from the NetBSD CDN. 
+
+Optional sets are: 
+ debug/debug32 containing debug information 
+ base32 containing support for running 32bit code on 64bit architectures 
+
+Some architectures offer differen CD vs. DVD ISO images, the DVD images
+are complete and contain all sets. 
+}
+.endif
 
 message endtarok
 {Wszystkie wybrane pakiety dystrybucji zostaly rozpakowane.}
@@ -1467,8 +1488,10 @@ message ptn_instflag_desc	{(I)nstalacja, }
 message clone_flag	{C}
 message clone_flag_desc	{, (C)lone}
 
+.if HAVE_GPT
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
+.endif
 
 message	ptn_label	{Label}
 message ptn_uuid	{UUID}
@@ -1482,8 +1505,10 @@ message	ptn_boot	{Boot}
 message use_partitions_anyway
 {Use this partitions anyway}
 
+.if HAVE_GPT
 message	gpt_flags	{R}
 message	gpt_flag_desc	{, (R)ozruchowa}
+.endif
 
 /* Called with:				Example
  *  $0 = file system type		FFSv2
@@ -1510,3 +1535,8 @@ message network_ok
 {Your network seems to work fine. 
 Should we skip the configuration 
 and just use the network as-is?}
+
+.if HAVE_GPT
+message resize_gpt
+{The disk size is larger than the GPT shows, fix this?}
+.endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.57 2023/11/25 19:43:26 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.57.4.1 2026/06/24 07:14:09 jdc Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -3217,7 +3217,7 @@ partman(struct install_partition_desc *install)
 			free_menu(menu_no);
 		}
 
-		if (pm_retvalue == 0 && pm->parts != NULL)
+		if (pm_retvalue == 0 && pm != NULL && pm->parts != NULL)
 			if (pm_needsave())
 				pm_commit(NULL, NULL);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.53.2.1 2026/01/08 10:32:43 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.53.2.2 2026/06/24 07:14:09 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -719,6 +719,27 @@ message delete_xfer_file
  */
 message notarfile
 {Das Release-Paket $0 existiert nicht.}
+
+.if HAVE_DVD_IMAGE
+/* Called with: 			Example
+ *  $0 = set name			base
+ */
+message opt_set_not_found
+{Das Paket "$0" ist optional und auf diesem Medium
+nicht vorhanden. 
+
+Das ist kein Problem und die Installation wird forgesetzt. 
+Das Paket kann nachträglich installiert werden, z.B. durch
+download via https von der NetBSD CDN. 
+
+Optionale Pakete sind: 
+ debug/debug32 mit debug Informationen 
+ base32 mit Unterstützung um 32bit Applikationen auf 64bit Architekturen zu verwenden 
+
+Für einige Architekturen stehen unterschiedliche ISO Dateien für CD und DVD Laufwerke
+zur verfügung, auf der DVD Version sind alle Installations-Pakete enthalten. 
+}
+.endif
 
 message endtarok
 {Alle Distributionspakete wurden erfolgreich entpackt.}
@@ -1551,8 +1572,10 @@ message	ptn_instflag_desc	{(I)nstalllieren, }
 message clone_flag	{C}
 message clone_flag_desc	{, (C) für Klonen}
 
+.if HAVE_GPT
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
+.endif
 
 message	ptn_label	{Label}
 message ptn_uuid	{UUID}
@@ -1566,8 +1589,10 @@ message	ptn_boot	{Start}
 message use_partitions_anyway
 {Diese Partitionierung dennoch verwenden}
 
+.if HAVE_GPT
 message	gpt_flags	{S}
 message	gpt_flag_desc	{, (S)tart}
+.endif
 
 /* Called with:				Example
  *  $0 = file system type		FFSv2
@@ -1593,3 +1618,8 @@ message network_ok
 {Ihr Netzwerk scheint bereits zu funktionieren. 
 Möchten Sie die Konfiguration überspringen 
 und die bisherigen Einstellungen verwenden?}
+
+.if HAVE_GPT
+message resize_gpt
+{Die Festplatte ist größer als der GPT angibt, soll das korrigiert werden?}
+.endif

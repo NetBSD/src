@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.32 2024/03/24 17:29:58 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.32.4.1 2026/06/24 07:14:09 jdc Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -269,26 +269,38 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 	struct dkwedge_info *dkw;
 	struct dkwedge_list dkwl;
 	size_t bufsize, dk;
+	int i;
+	unsigned int p_index;
+	daddr_t p_start, p_size, avail_start, avail_size,
+	    disk_size;
+	char *textbuf, *t, *tt, p_type[STRSIZE];
+	static const char regpart_prefix[] = "GPT part - ";
+	struct gpt_disk_partitions *parts;
+	struct gpt_part_entry *last, *add_to;
+	const struct gpt_ptype_desc *native_root
+	     = gpt_find_native_type(gpt_native_root);
+	bool have_target;
+	bool gpt_needs_resize;
 
 	assert(start == 0);
 	assert(have_gpt);
+
+retry_after_fixup:
 
 	if (run_program(RUN_SILENT | RUN_ERROR_OK,
 	    "gpt -rq header %s", dev) != 0)
 		return NULL;
 
 	/* read the partitions */
-	int i;
-	unsigned int p_index;
-	daddr_t p_start = 0, p_size = 0, avail_start = 0, avail_size = 0,
+	p_start = 0;
+	p_size = 0;
+	avail_start = 0;
+	avail_size = 0;
 	    disk_size = 0;
-	char *textbuf, *t, *tt, p_type[STRSIZE];
-	static const char regpart_prefix[] = "GPT part - ";
-	struct gpt_disk_partitions *parts;
-	struct gpt_part_entry *last = NULL, *add_to = NULL;
-	const struct gpt_ptype_desc *native_root
-	     = gpt_find_native_type(gpt_native_root);
-	bool have_target = false;
+	last = NULL;
+	add_to = NULL;
+	have_target = false;
+	gpt_needs_resize = false;
 
 	if (collect(T_OUTPUT, &textbuf, "gpt -r show -a %s 2>/dev/null", dev)
 	    < 1)
@@ -315,10 +327,15 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 				else
 					add_to = NULL;
 			}
-			if (i == 1)
+			if (i == 1) {
 				p_size = strtouq(tt, NULL, 10);
-			if (i == 2)
+			}
+			if (i == 2) {
+				if (strcmp(tt, "Unused") == 0 && p_size > 0 && disk_size > 0)
+					gpt_needs_resize = true;
+				else
 				p_index = strtouq(tt, NULL, 10);
+			}
 			if (i > 2 || (i == 2 && p_index == 0)) {
 				if (p_type[0])
 					strlcat(p_type, " ", STRSIZE);
@@ -381,6 +398,17 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
 	if (disk_size <= 0) {
 		free(parts);
 		return NULL;
+	}
+
+	/* If the size of the disk did not fit the GPT, resize it */
+	if (gpt_needs_resize) {
+		free(parts);
+		if (!ask_yesno(MSG_resize_gpt))
+			return NULL;
+		if (run_program(RUN_SILENT | RUN_ERROR_OK,
+		    "gpt resizedisk %s", dev) != 0)
+			return NULL;
+		goto retry_after_fixup;
 	}
 
 	parts->dp.pscheme = scheme;

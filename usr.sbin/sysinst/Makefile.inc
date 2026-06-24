@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2024/12/01 11:10:34 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.50.2.1 2026/06/24 07:14:09 jdc Exp $
 #
 # Makefile for sysinst
 
@@ -34,6 +34,7 @@ MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
 
 .if ${NO_GPT:Uno} != "yes"
 CPPFLAGS+=	-DHAVE_GPT
+MD_OPTIONS+=	HAVE_GPT
 GPT_DIR=${.CURDIR}/../../../../sbin/gpt
 SRCS+=	gpt.c gpt_uuid.c
 CPPFLAGS.gpt_uuid.c+=	-I${GPT_DIR}
@@ -45,6 +46,10 @@ SRCS+=	mbr.c
 .endif
 .if ${NO_CLONES:Uno} == "yes"
 CPPFLAGS+=	-DNO_CLONES
+.endif
+.if ${HAVE_DVD_IMAGE:Uno} == "yes"
+CPPFLAGS+=	-DHAVE_DVD_IMAGE
+MD_OPTIONS+=	HAVE_DVD_IMAGE
 .endif
 
 .if ${CHECK_ENTROPY:Uyes} != "no"
