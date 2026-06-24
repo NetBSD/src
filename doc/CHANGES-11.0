@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.102 2026/06/24 07:16:22 jdc Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.103 2026/06/24 16:50:53 jdc Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11113,4 +11113,12 @@ usr.sbin/sysinst/util.c				1.79,1.80
 	 - fix bugs when deleting partitions after starting with the
 	   default partitions
 	[martin, ticket #319]
+
+usr.sbin/sysinst/util.c				1.82,1.83
+
+	PR 60354: move the test and new message about optional sets missing
+	into the correct place so it only shows the message when we really
+	can not find the set.
+	This only applies to local files.
+	[martin, ticket #324]
 
