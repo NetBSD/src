@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.187 2026/06/24 07:01:05 yamaguchi Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.188 2026/06/24 07:03:33 yamaguchi Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.187 2026/06/24 07:01:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.188 2026/06/24 07:03:33 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -1066,7 +1066,7 @@ breakbreak:;
 		}
 
 		pppoe_clear_softc(sc, "received PADT");
-		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING) {
+		if (sppp_is_connecting(&sc->sc_sppp.pp_if)) {
 			pppoe_printf(sc, "wait for reconnect\n");
 			callout_schedule(&sc->sc_timeout,
 			    PPPOE_RECON_PADTRCVD);
@@ -1584,8 +1584,7 @@ pppoe_timeout(struct pppoe_softc *sc)
 		 *  - Slow retry mode: we already had a connection successfully
 		 *    established and will try infinitely (without user
 		 *    intervention)
-		 * We only enter slow retry mode if IFF_LINK1 (aka autodial)
-		 * is not set.
+		 * We only enter slow retry mode if on-demand is disabled.
 		 */
 
 		/* initialize for quick retry mode */
@@ -1594,7 +1593,7 @@ pppoe_timeout(struct pppoe_softc *sc)
 		ACQUIRE_SPLNET();
 		sc->sc_padi_retried++;
 		if (sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
-			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0) {
+			if (!sppp_ondemand_enabled(&sc->sc_sppp.pp_if)) {
 				/* slow retry mode */
 				retry_wait = PPPOE_SLOW_RETRY;
 			} else {

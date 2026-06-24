@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppvar.h,v 1.51 2026/06/24 07:01:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_spppvar.h,v 1.52 2026/06/24 07:03:33 yamaguchi Exp $	*/
 
 #ifndef _NET_IF_SPPPVAR_H_
 #define _NET_IF_SPPPVAR_H_
@@ -164,6 +164,8 @@ struct sppp {
 					 * 0 = disabled */
 	int	pp_auth_failures;	/* authorization failures */
 	int	pp_max_auth_fail;	/* max. allowed authorization failures */
+	bool	pp_connecting;		/* MP-safe IFF_RUNNING flag */
+	bool	pp_ondemand;		/* MP-safe IFF_AUTO (= IFF_LINK1) flag */
 	int	pp_phase;	/* phase we're currently in */
 	krwlock_t	pp_lock;	/* lock for sppp structure */
 	int	query_dns;	/* 1 if we want to know the dns addresses */
@@ -220,6 +222,22 @@ struct mbuf *sppp_dequeue (struct ifnet *);
 int sppp_isempty (struct ifnet *);
 void sppp_flush (struct ifnet *);
 void sppp_abort_connect(struct ifnet *);
+
+static inline bool
+sppp_is_connecting(struct ifnet *ifp)
+{
+	struct sppp *sp = (struct sppp *)ifp;
+
+	return atomic_load_relaxed(&sp->pp_connecting);
+}
+
+static inline bool
+sppp_ondemand_enabled(struct ifnet *ifp)
+{
+	struct sppp *sp = (struct sppp *)ifp;
+
+	return atomic_load_relaxed(&sp->pp_ondemand);
+}
 #endif
 
 /*

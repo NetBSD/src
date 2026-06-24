@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.295 2026/06/24 07:01:05 yamaguchi Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.296 2026/06/24 07:03:33 yamaguchi Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.295 2026/06/24 07:01:05 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.296 2026/06/24 07:03:33 yamaguchi Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -593,6 +593,26 @@ sppp_debug_enabled(struct sppp *sp)
 	return true;
 }
 
+static inline void
+sppp_connect(struct sppp *sp)
+{
+	KASSERT(SPPP_WLOCKED(sp));
+
+	sp->pp_if.if_flags |= IFF_RUNNING;
+	atomic_store_relaxed(&sp->pp_connecting, true);
+	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
+}
+
+static inline void
+sppp_disconnect(struct sppp *sp)
+{
+	KASSERT(SPPP_WLOCKED(sp));
+
+	sp->pp_if.if_flags &= ~IFF_RUNNING;
+	atomic_store_relaxed(&sp->pp_connecting, false);
+	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+}
+
 static void
 sppp_change_phase(struct sppp *sp, int phase)
 {
@@ -807,33 +827,41 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 
 	atomic_store_relaxed(&sp->pp_last_activity, time_uptime);
 
-	if ((ifp->if_flags & IFF_UP) == 0 ||
-	    (ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == 0) {
+	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
 		if_statinc(ifp, if_oerrors);
 		return (ENETDOWN);
 	}
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_AUTO)) == IFF_AUTO) {
-		/* ignore packets that have no enabled NCP */
-		SPPP_LOCK(sp, RW_READER);
-		if ((dst->sa_family == AF_INET &&
-		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) ||
-		    (dst->sa_family == AF_INET6 &&
-		    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))) {
+	if (!sppp_is_connecting(ifp)) {
+		SPPP_LOCK(sp, RW_WRITER);
+		if (!sp->pp_ondemand) {
 			SPPP_UNLOCK(sp);
-
 			m_freem(m);
 			if_statinc(ifp, if_oerrors);
 			return (ENETDOWN);
+		} else {
+			/* ignore packets that have no enabled NCP */
+			if ((dst->sa_family == AF_INET &&
+			    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPCP)) ||
+			    (dst->sa_family == AF_INET6 &&
+			    !ISSET(sp->pp_ncpflags, SPPP_NCP_IPV6CP))) {
+				SPPP_UNLOCK(sp);
+
+				m_freem(m);
+				if_statinc(ifp, if_oerrors);
+				return (ENETDOWN);
+			}
+			/*
+			 * Interface is not yet running, but auto-dial.  Need
+			 * to start LCP for it.
+			 * Re-check sp->pp_connecting
+			 * under lock (Double-Checked Locking)
+			 */
+			if (!sp->pp_connecting)
+				sppp_connect(sp);
 		}
 		SPPP_UNLOCK(sp);
-		/*
-		 * Interface is not yet running, but auto-dial.  Need
-		 * to start LCP for it.
-		 */
-		ifp->if_flags |= IFF_RUNNING;
-		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 	}
 
 	/*
@@ -1271,11 +1299,9 @@ sppp_abort_connect(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp *)ifp;
 
 	SPPP_LOCK(sp, RW_WRITER);
-	if (ifp->if_flags & IFF_AUTO) {
-		if (ifp->if_flags & IFF_RUNNING) {
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-			ifp->if_flags &= ~IFF_RUNNING;
-		}
+	if (sp->pp_ondemand) {
+		if (sp->pp_connecting)
+			sppp_disconnect(sp);
 	} else {
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
@@ -1294,7 +1320,6 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct sppp *sp = (struct sppp *) ifp;
 	int error=0, going_up, going_down;
-	u_short newmode;
 	u_long lcp_mru;
 
 	switch (cmd) {
@@ -1307,33 +1332,29 @@ sppp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 
 		SPPP_LOCK(sp, RW_WRITER);
-		going_up = ifp->if_flags & IFF_UP &&
-			(ifp->if_flags & IFF_RUNNING) == 0;
-		going_down = (ifp->if_flags & IFF_UP) == 0 &&
-			ifp->if_flags & IFF_RUNNING;
-		newmode = ifp->if_flags & (IFF_AUTO | IFF_PASSIVE);
-		if (newmode == (IFF_AUTO | IFF_PASSIVE)) {
-			/* sanity */
-			newmode = IFF_PASSIVE;
+		going_up =
+		     (ifp->if_flags & IFF_UP) && !sp->pp_connecting;
+		going_down =
+		     ((ifp->if_flags & IFF_UP) == 0) && sp->pp_connecting;
+		if ((ifp->if_flags & IFF_AUTO) &&
+		    (ifp->if_flags & IFF_PASSIVE)) {
 			ifp->if_flags &= ~IFF_AUTO;
 		}
 
+		atomic_store_relaxed(&sp->pp_ondemand,
+		    (ifp->if_flags & IFF_AUTO) ? true : false);
+
 		if (going_up || going_down) {
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			sppp_disconnect(sp);
 		}
 		if (going_up) {
 			/* Always-on connection */
-			if (newmode != IFF_AUTO) {
-				ifp->if_flags |= IFF_RUNNING;
-				sppp_wq_add(sp->wq_cp,
-				    &sp->scp[IDX_LCP].work_open);
-			}
+			if (!sp->pp_ondemand)
+				sppp_connect(sp);
 		} else if (going_down) {
 			SPPP_UNLOCK(sp);
 			sppp_flush(ifp);
 			SPPP_LOCK(sp, RW_WRITER);
-
-			ifp->if_flags &= ~IFF_RUNNING;
 		}
 		SPPP_UNLOCK(sp);
 		break;
@@ -2998,7 +3019,7 @@ sppp_lcp_confrej(struct sppp *sp, struct lcp_header *h, int len)
 			}
 			if (debug)
 				addlog("[access denied]\n");
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			sppp_disconnect(sp);
 			break;
 		}
 	}
@@ -3094,7 +3115,7 @@ sppp_lcp_confnak(struct sppp *sp, struct lcp_header *h, int len)
 			 */
 			if (debug)
 				addlog("[access denied]\n");
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			sppp_disconnect(sp);
 			break;
 		}
 	}
@@ -3342,15 +3363,15 @@ sppp_lcp_check_and_close(struct sppp *sp)
 	    sppp_cp_check(sp, CP_NCP))
 		return;
 
-	sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
-
 	if (sp->pp_max_auth_fail != 0 &&
 	    sp->pp_auth_failures >= sp->pp_max_auth_fail) {
 		SPPP_LOG(sp, LOG_INFO, "authentication failed %d times, "
 		    "not retrying again\n", sp->pp_auth_failures);
 
 		sppp_wq_add(sp->wq_cp, &sp->work_ifdown);
+		sppp_disconnect(sp);
 	} else {
+		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
 		sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_open);
 	}
 }
@@ -5433,20 +5454,17 @@ sppp_keepalive(void *dummy)
 
 	now = time_uptime;
 	for (sp=spppq; sp; sp=sp->pp_next) {
-		struct ifnet *ifp = NULL;
-
 		SPPP_LOCK(sp, RW_WRITER);
-		ifp = &sp->pp_if;
 		last_activity = atomic_load_relaxed(&sp->pp_last_activity);
 
 		/* check idle timeout */
-		if ((sp->pp_idle_timeout != 0) && (ifp->if_flags & IFF_RUNNING)
+		if ((sp->pp_idle_timeout != 0) && sp->pp_connecting
 		    && (sp->pp_phase == SPPP_PHASE_NETWORK)) {
 		    /* idle timeout is enabled for this interface */
 		    if ((now - last_activity) >= sp->pp_idle_timeout) {
 			SPPP_DLOG(sp, "no activity for %lu seconds\n",
 				(unsigned long)(now - last_activity));
-			sppp_wq_add(sp->wq_cp, &sp->scp[IDX_LCP].work_close);
+			sppp_disconnect(sp);
 			SPPP_UNLOCK(sp);
 			continue;
 		    }
@@ -5454,7 +5472,7 @@ sppp_keepalive(void *dummy)
 
 		/* Keepalive mode disabled or channel down? */
 		if (! ISSET(sp->pp_dev_flags, PP_DEVF_KEEPALIVE) ||
-		    ! (ifp->if_flags & IFF_RUNNING)) {
+		    ! sp->pp_connecting) {
 			SPPP_UNLOCK(sp);
 			continue;
 		}
