@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.82 2026/06/24 15:35:36 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.83 2026/06/24 16:13:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1063,7 +1063,7 @@ extract_file_to(distinfo *dist, int update, const char *dest_dir,
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
 #ifdef HAVE_DVD_IMAGE
-			if (is_compat_or_debug_set(dist)) {
+			if (fetch_fn == NULL && is_compat_or_debug_set(dist)) {
 				if (!have_warned_compat_missing) {
 					have_warned_compat_missing = true;
 
