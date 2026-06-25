@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.46 2026/06/25 15:11:05 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.47 2026/06/25 16:46:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -967,26 +967,27 @@ make_url(char *urlbuffer, struct ftpinfo *f, const char *dir)
 /* ftp_fetch() and pkgsrc_fetch() are essentially the same, with a different
  * ftpinfo var and pkgsrc always using .tgz suffix, while for
  * regular sets we only use .tgz for source sets on some architectures. */
-static int do_ftp_fetch(const char *, bool, struct ftpinfo *);
+static int do_ftp_fetch(const char *, bool, struct ftpinfo *, bool);
 
 static int
 ftp_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, use_tgz_for_set(set_name), &ftp);
+	return do_ftp_fetch(set_name, use_tgz_for_set(set_name), &ftp, false);
 }
 
 static int
 pkgsrc_fetch(const char *set_name)
 {
-	return do_ftp_fetch(set_name, true, &pkgsrc);
+	return do_ftp_fetch(set_name, true, &pkgsrc, true);
 }
 
 static int
-do_ftp_fetch(const char *set_name, bool force_tgz, struct ftpinfo *f)
+do_ftp_fetch(const char *set_name, bool force_tgz, struct ftpinfo *f, bool in_chroot)
 {
 	const char *ftp_opt;
 	char url[STRSIZE];
 	int rval;
+	bool remove_target_resolv = false;
 
 	/*
 	 * Invoke ftp to fetch the file.
@@ -998,11 +999,21 @@ do_ftp_fetch(const char *set_name, bool force_tgz, struct ftpinfo *f)
 		ftp_opt = "";
 	}
 
+	if (in_chroot) {
+		if (access(target_expand("/etc/resolv.conf"), R_OK) != 0) {
+			dup_file_into_target("/etc/resolv.conf");
+			remove_target_resolv = true;
+		}
+	}
+
 	make_url(url, f, set_dir_for_set(set_name));
-	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR,
+	rval = run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_XFER_DIR | (in_chroot?RUN_CHROOT:0),
 		    "/usr/bin/ftp %s%s/%s%s",
 		    ftp_opt, url, set_name,
 		    force_tgz ? dist_tgz_postfix : dist_postfix);
+
+	if (remove_target_resolv)
+		unlink(target_expand("/etc/resolv.conf"));
 
 	return rval ? SET_RETRY : SET_OK;
 }

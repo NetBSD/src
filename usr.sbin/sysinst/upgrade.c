@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.21 2022/06/24 22:05:24 tsutsui Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.22 2026/06/25 16:46:56 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -121,6 +121,9 @@ do_upgrade(void)
 
 	if (md_post_extract(&install, true))
 		goto free_install;
+
+	/* we have now installed our own trust anchors, so make use of them! */
+	unsetenv("FTPSSLNOVERIFY");
 
 	merge_X("/usr/X11R6");
 	merge_X("/usr/X11R7");
