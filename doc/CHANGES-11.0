@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.103 2026/06/24 16:50:53 jdc Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.104 2026/06/25 15:10:26 jdc Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11121,4 +11121,14 @@ usr.sbin/sysinst/util.c				1.82,1.83
 	can not find the set.
 	This only applies to local files.
 	[martin, ticket #324]
+
+src/usr.sbin/sysinst/util.c			1.81
+src/usr.sbin/sysinst/arch/evbarm/md.c		1.24
+src/usr.sbin/sysinst/arch/evbarm/md.h		1.10
+
+	PR 60360: make the default /boot partition on evbarm 64MB if we need
+	the dtb set (the newer dtb files overflow the old 32mb default).
+	In ACPI environments where we do not need dtb installed, do not select
+	the set by default.
+	[martin, ticket #327]
 
