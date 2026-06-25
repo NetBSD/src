@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.305 2026/06/22 01:48:05 tls Exp $	*/
+/*	$NetBSD: acpi.c,v 1.306 2026/06/25 14:37:57 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.305 2026/06/22 01:48:05 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.306 2026/06/25 14:37:57 riastradh Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -580,7 +580,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_SUCCESS(rv) && oem0 != NULL) {
 		if (memcmp(oem0->OemId, "VRTUAL", 6) == 0 &&
 		    memcmp(oem0->OemTableId, "MICROSFT", 8) == 0) {
-			struct krndsource hvrs;
+			static struct krndsource hvrs;
 			uint8_t *hostrnd;
 			size_t hrlen;
 
@@ -592,7 +592,6 @@ acpi_attach(device_t parent, device_t self, void *aux)
 			rnd_add_data(&hvrs, hostrnd, hrlen, hrlen * NBBY);
 			/* Now wipe it out - hide from /dev/acpi access */
 			explicit_memset(hostrnd, 0, hrlen);
-			rnd_detach_source(&hvrs);
 			aprint_normal_dev(self,
 			    "Hyper-V OEM0 entropy consumed and wiped\n");
 		}
