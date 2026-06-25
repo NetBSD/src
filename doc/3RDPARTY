@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2223 2026/06/24 05:42:11 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.2224 2026/06/25 11:44:34 nia Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1145,6 +1145,7 @@ markus is very cooperative about it):
   (see if there is any difference between the current version of opensshX.Yp1
    and the new opensshZ.Wp1) and apply them.
 - added LDAP from portable openssh.
+- added rlimit sandbox from portable openssh.
 - conditionalize login_cap
 - conditionalize bsd_auth
 - restore krb5, krb4, afs, skey
