@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77.4.3 2026/06/24 16:50:31 jdc Exp $	*/
+/*	$NetBSD: util.c,v 1.77.4.4 2026/06/25 15:10:09 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -231,8 +231,14 @@ init_set_status(int flags)
 
 	for (i = 0; i < __arraycount(sets_valid); i++)
 		set_status[sets_valid[i]] = SET_VALID;
-	for (i = 0; i < nelem_selected; i++)
+	for (i = 0; i < nelem_selected; i++) {
+#ifdef MD_ALLOW_DEFAULT_SET
+		if (!MD_ALLOW_DEFAULT_SET(sets_selected[i]))
+			continue;
+#endif
+
 		set_status[sets_selected[i]] |= SET_SELECTED;
+	}
 
 	set_status[SET_GROUP] = SET_VALID;
 
@@ -816,6 +822,11 @@ set_all_none(menudesc *menu, void *arg, int set, int clr)
 			nested++;
 			continue;
 		}
+#ifdef MD_ALLOW_DEFAULT_SET
+		if (set)
+			if (!MD_ALLOW_DEFAULT_SET(set))
+				continue;
+#endif
 		set_status[dist->set] = (set_status[dist->set] & ~clr) | set;
 	}
 	return 0;

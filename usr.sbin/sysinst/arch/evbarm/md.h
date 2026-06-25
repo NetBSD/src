@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.9 2024/04/09 15:17:25 nia Exp $	*/
+/*	$NetBSD: md.h,v 1.9.4.1 2026/06/25 15:10:09 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -39,7 +39,7 @@
 
 /* Constants and defines */
 #define PART_BOOT		(16*MEG)
-#define PART_BOOT_LARGE		(32*MEG)
+#define PART_BOOT_LARGE		(64*MEG)
 #define PART_BOOT_TYPE		FS_MSDOS
 #define	PART_BOOT_SUBT		MBR_PTYPE_FAT16L
 #define PART_BOOT_MOUNT		"/boot"
@@ -120,3 +120,5 @@ void evbarm_part_defaults(struct pm_devs*, struct part_usage_info*,
 
 #define	HAVE_EFI_BOOT		1	/* we support EFI boot partitions */
 
+bool md_allow_default_set(int);
+#define MD_ALLOW_DEFAULT_SET(S)	md_allow_default_set(S)
