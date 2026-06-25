@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd-auth.c,v 1.6 2026/05/16 15:08:30 christos Exp $	*/
+/*	$NetBSD: sshd-auth.c,v 1.7 2026/06/25 11:42:48 nia Exp $	*/
 /* $OpenBSD: sshd-auth.c,v 1.14 2026/03/11 09:10:59 dtucker Exp $ */
 
 /*
@@ -30,10 +30,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd-auth.c,v 1.6 2026/05/16 15:08:30 christos Exp $");
+__RCSID("$NetBSD: sshd-auth.c,v 1.7 2026/06/25 11:42:48 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
+#include <sys/resource.h>
 #include <sys/ioctl.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
@@ -217,6 +218,20 @@ privsep_child_demote(void)
 #ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		fatal_f("pledge()");
+#else
+	struct rlimit rl_zero;
+
+	rl_zero.rlim_cur = rl_zero.rlim_max = 0;
+
+	if (setrlimit(RLIMIT_FSIZE, &rl_zero) == -1)
+		fatal_f("setrlimit(RLIMIT_FSIZE, { 0, 0 }): %s",
+			strerror(errno));
+	if (setrlimit(RLIMIT_NOFILE, &rl_zero) == -1)
+		fatal_f("setrlimit(RLIMIT_NOFILE, { 0, 0 }): %s",
+			strerror(errno));
+	if (setrlimit(RLIMIT_NPROC, &rl_zero) == -1)
+		fatal_f("setrlimit(RLIMIT_NPROC, { 0, 0 }): %s",
+			strerror(errno));
 #endif
 }
 
