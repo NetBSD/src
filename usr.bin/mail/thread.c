@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.c,v 1.16 2023/08/23 03:49:00 rin Exp $	*/
+/*	$NetBSD: thread.c,v 1.17 2026/06/25 22:27:52 kre Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef __lint__
-__RCSID("$NetBSD: thread.c,v 1.16 2023/08/23 03:49:00 rin Exp $");
+__RCSID("$NetBSD: thread.c,v 1.17 2026/06/25 22:27:52 kre Exp $");
 #endif /* not __lint__ */
 
 #include <assert.h>
@@ -436,11 +436,40 @@ redepth(struct thread_s *thread)
 }
 
 /************************************************************************
- * To be called after reallocating the main message list.  It is here
- * as it needs access to current_thread.t_head.
+ * To be called while reallocating the main message list.  They are here
+ * as thread_fix_old_links needs access to current_thread.t_head.
+ *
+ * thread_save_old_links() is called on the old message list before realloc
+ * thread_fix_old_links() is called with the new message list after realloc
  */
 PUBLIC void
-thread_fix_old_links(struct message *nmessage, ptrdiff_t off, int omsgCount)
+thread_save_old_links(struct message *omessage, int omsgCount)
+{
+	int i;
+
+#define	SAVE_LINK(u)	do {\
+	u.offset = (ptrdiff_t)( u.link != NULL ? u.link - omessage : -1 ); \
+  } while (0)
+#define	SAVE_LINK_PTR(p)	do {\
+	p = (struct message *)(ptrdiff_t)((p) != NULL ? (p) - omessage : -1 ); \
+  } while (0)
+
+
+	SAVE_LINK_PTR(current_thread.t_head);
+	for (i = 0; i < omsgCount; i++) {
+		SAVE_LINK(omessage[i].m_b);
+		SAVE_LINK(omessage[i].m_f);
+		SAVE_LINK(omessage[i].m_c);
+		SAVE_LINK(omessage[i].m_p);
+	}
+	for (i = 0; i < current_thread.t_msgCount; i++)
+		SAVE_LINK_PTR(current_thread.t_msgtbl[i]);
+#undef SAVE_LINK
+#undef SAVE_LINK_PTR
+}
+
+PUBLIC void
+thread_fix_old_links(struct message *nmessage, int omsgCount)
 {
 	int i;
 
@@ -448,21 +477,25 @@ thread_fix_old_links(struct message *nmessage, ptrdiff_t off, int omsgCount)
 	message_array.t_head = nmessage; /* for assert check in thread_fix_new_links */
 #endif
 
-# define FIX_LINK(p)	do {\
-	p = nmessage + off;\
-  } while (0)
+# define UPD_LINK(u)	do {\
+	u.link = u.offset == -1 ? NULL : nmessage + u.offset;\
+  } while (0);
+# define UPD_PTR(p)	do {\
+	p = (ptrdiff_t)(p) == -1 ? NULL : nmessage + (ptrdiff_t)(p);\
+  } while (0);
 
-	FIX_LINK(current_thread.t_head);
+	UPD_PTR(current_thread.t_head);
 	for (i = 0; i < omsgCount; i++) {
-		FIX_LINK(nmessage[i].m_blink);
-		FIX_LINK(nmessage[i].m_flink);
-		FIX_LINK(nmessage[i].m_clink);
-		FIX_LINK(nmessage[i].m_plink);
+		UPD_LINK(nmessage[i].m_b);
+		UPD_LINK(nmessage[i].m_f);
+		UPD_LINK(nmessage[i].m_c);
+		UPD_LINK(nmessage[i].m_p);
 	}
 	for (i = 0; i < current_thread.t_msgCount; i++)
-		FIX_LINK(current_thread.t_msgtbl[i]);
+		UPD_PTR(current_thread.t_msgtbl[i]);
 
-# undef FIX_LINK
+# undef UPD_LINK
+# undef UPD_PTR
 }
 
 static void
