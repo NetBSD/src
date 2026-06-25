@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once.sh,v 1.10 2026/06/23 16:43:51 riastradh Exp $
+#	$NetBSD: t_call_once.sh,v 1.11 2026/06/25 00:35:41 riastradh Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -282,6 +282,12 @@ EOF
 	    c++ -m32 -pg -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -m32 -pg -o call_once test.cpp -L. -ltest -pthread
+
+	case $(uname -p) in
+	x86_64)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
