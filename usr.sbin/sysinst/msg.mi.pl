@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.55 2026/06/22 19:26:01 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.56 2026/06/25 15:54:22 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -700,6 +700,8 @@ https from the NetBSD CDN.
 Optional sets are: 
  debug/debug32 containing debug information 
  base32 containing support for running 32bit code on 64bit architectures 
+ test containing automatic test programs
+ manhtml containing man pages in html format
 
 Some architectures offer differen CD vs. DVD ISO images, the DVD images
 are complete and contain all sets. 
