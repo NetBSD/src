@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.31 2026/06/25 15:11:05 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.32 2026/06/26 19:03:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -171,16 +171,6 @@ remove_color_options()
 	remove_sub_menu(MENU_colors);
 }
 
-void
-remove_https_options()
-{
-	/*
-	 * If we can not validate certificates, do not pretend
-	 * to do https
-	 */
-	remove_menu_option(MENU_distmedium, MSG_https);
-}
-
 #ifndef NO_PARTMAN
 void
 remove_raid_options()
@@ -349,11 +339,28 @@ menu ptnsize_replace_existing_partition, sub menu, y=0,
 	option MSG_cancel, exit, action { *((int*)arg) = 0; };
 
 menu distmedium, title MSG_Select_medium, y=-5;
+	display action {
+		/*
+		 * In some installers we can not use https early,
+		 * so disable the menu item.
+		 * Later, after installing the base sets,
+		 * we an use it in a target chroot, so
+		 * enable it again.
+		 */
+		char *env_opt = getenv("FTPSSLNOVERIFY");
+		bool disable = env_opt && strcmp(env_opt, "1") == 0;
+
+		for (int i = 0; i < menu->numopts; i++) {
+			if (menu->opts[i].opt_name != MSG_https)
+				continue;
+			if (disable)
+				menu->opts[i].opt_flags |= OPT_IGNORE;
+			else
+				menu->opts[i].opt_flags &= ~OPT_IGNORE;
+		}
+	    };
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
-.if NO_HTTPS
-.else
 	option MSG_https,     exit, action { *(int *)arg = get_via_ftp(XFER_HTTPS); };
-.endif
 	option MSG_http,      exit, action { *(int *)arg = get_via_ftp(XFER_HTTP); };
 	option MSG_ftp,	      exit, action { *(int *)arg = get_via_ftp(XFER_FTP); };
 	option MSG_nfs,	      exit, action { *(int *)arg = get_via_nfs(); };

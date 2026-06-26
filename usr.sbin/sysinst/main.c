@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2026/06/25 15:11:05 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2026/06/26 19:03:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,7 +97,9 @@ __dead static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);
+#ifndef NO_HTTPS
 static bool no_openssl_trust_anchors_available(void);
+#endif
 #ifdef BUILD_TIMESTAMP
 static void check_todr_sanity(void);
 #endif
@@ -194,7 +196,12 @@ init(void)
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
-	ftp.xfer = pkg.xfer = pkgsrc.xfer = XFER_MAX;
+	pkg.xfer = pkgsrc.xfer = XFER_HTTPS;
+#ifdef NO_HTTPS
+	ftp.xfer = XFER_HTTP;
+#else
+	ftp.xfer = XFER_HTTPS;
+#endif
 
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
@@ -211,7 +218,7 @@ init_lang(void)
 int
 main(int argc, char **argv)
 {
-	int ch, no_https = 0;
+	int ch;
 	const char *msg_cat_dir = NULL;
 
 	init();
@@ -268,11 +275,15 @@ main(int argc, char **argv)
 	/* Initialize the partitioning subsystem */
 	partitions_init();
 
-	/* do we need to tell ftp(1) to avoid checking certificate chains? */
-	if (no_openssl_trust_anchors_available()) {
+	/*
+	 * Do we need to tell ftp(1) to avoid checking certificate chains?
+	 * Does the ftp(1) that comes with this installer support https
+	 * at all?
+	 */
+#ifndef NO_HTTPS
+	if (no_openssl_trust_anchors_available())
+#endif
 		setenv("FTPSSLNOVERIFY", "1", 1);
-		no_https = 1;
-	}
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -320,8 +331,6 @@ main(int argc, char **argv)
 	/* remove some invalid menu entries */
 	if (!has_colors())
 		remove_color_options();
-	if (no_https)
-		remove_https_options();
 
 	/* Menu processing */
 	if (partman_go)
@@ -654,6 +663,7 @@ process_f_flag(char *f_name)
 	fclose(fp);
 }
 
+#ifndef NO_HTTPS
 /*
  * return true if we do not have any root certificates installed,
  * so can not verify any trust chain.
@@ -696,6 +706,7 @@ no_openssl_trust_anchors_available(void)
 
 	return cnt < 2;
 }
+#endif
 
 #ifdef BUILD_TIMESTAMP
 static void

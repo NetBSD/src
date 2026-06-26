@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.25 2026/06/25 16:46:56 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.26 2026/06/26 19:03:49 martin Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -344,9 +344,15 @@ set_binpkg(struct menudesc *menu, void *arg)
 	char additional_pkgs[STRSIZE] = {0};
 	int allok = 0;
 	arg_rv parm;
+	bool remove_target_resolv = false;
 
 	if (config_network(0))
 		mnt_net_config();
+
+	if (access(target_expand("/etc/resolv.conf"), R_OK) != 0) {
+		dup_file_into_target("/etc/resolv.conf");
+		remove_target_resolv = true;
+	}
 
 	do {
 		parm.rv = -1;
@@ -376,6 +382,9 @@ set_binpkg(struct menudesc *menu, void *arg)
 		"/usr/pkg/bin/pkgin -y install %s", additional_pkgs);
 
 	hit_enter_to_continue(MSG_binpkg_installed, NULL);
+
+	if (remove_target_resolv)
+		unlink(target_expand("/etc/resolv.conf"));
 
 	confp[menu->cursel]->setting = MSG_DONE;
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.96 2026/06/25 15:11:05 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.97 2026/06/26 19:03:49 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -605,12 +605,8 @@ extern const char *ushell;
 
 #define	XFER_FTP	0
 #define	XFER_HTTP	1
-#ifdef NO_HTTPS
-#define	XFER_MAX	XFER_HTTP
-#else
 #define	XFER_HTTPS	2
 #define	XFER_MAX	XFER_HTTPS
-#endif
 #define	XFER_HOST_MAX	XFER_HTTP	/* http and https share a server name */
 #define	XFER_HOST(XFER)	((XFER) == XFER_FTP ? 0 : 1)
 
@@ -649,7 +645,6 @@ extern char dist_tgz_postfix[SSTRSIZE];
 /* needed prototypes */
 void set_menu_numopts(int, int);
 void remove_color_options(void);
-void remove_https_options(void);
 #ifdef CHECK_ENTROPY
 bool do_add_entropy(void);
 size_t entropy_needed(void);
