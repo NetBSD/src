@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.es,v 1.44.2.2 2026/06/24 07:14:09 jdc Exp $	*/
+/*	$NetBSD: msg.mi.es,v 1.44.2.3 2026/06/26 09:12:24 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -717,6 +717,8 @@ https from the NetBSD CDN.
 Optional sets are: 
  debug/debug32 containing debug information 
  base32 containing support for running 32bit code on 64bit architectures 
+ test containing automatic test programs
+ manhtml containing man pages in html format
 
 Some architectures offer differen CD vs. DVD ISO images, the DVD images
 are complete and contain all sets. 

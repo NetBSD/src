@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.53.2.2 2026/06/24 07:14:09 jdc Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.53.2.3 2026/06/26 09:12:24 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -735,6 +735,8 @@ download via https von der NetBSD CDN.
 Optionale Pakete sind: 
  debug/debug32 mit debug Informationen 
  base32 mit Unterstützung um 32bit Applikationen auf 64bit Architekturen zu verwenden 
+ test mit automatischen Testprogrammen
+ manhtml mit Anleitung im html Format
 
 Für einige Architekturen stehen unterschiedliche ISO Dateien für CD und DVD Laufwerke
 zur verfügung, auf der DVD Version sind alle Installations-Pakete enthalten. 

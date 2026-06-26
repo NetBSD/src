@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77.4.4 2026/06/25 15:10:09 jdc Exp $	*/
+/*	$NetBSD: util.c,v 1.77.4.5 2026/06/26 09:12:24 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -995,6 +995,8 @@ is_compat_or_debug_set(distinfo *dist)
 	if (strcmp(dist->name, "debug64") == 0) return true;
 #endif
 	if (strcmp(dist->name, "debug") == 0) return true;
+	if (strcmp(dist->name, "tests") == 0) return true;
+	if (strcmp(dist->name, "manhtml") == 0) return true;
 
 	return false;
 }
