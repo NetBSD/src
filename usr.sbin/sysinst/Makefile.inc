@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50.2.1 2026/06/24 07:14:09 jdc Exp $
+#	$NetBSD: Makefile.inc,v 1.50.2.2 2026/06/26 09:10:49 jdc Exp $
 #
 # Makefile for sysinst
 
@@ -163,6 +163,8 @@ COPTS.net.c	+= -Wno-error=maybe-uninitialized
 .else
 .if defined(SMALLPROG)
 COPTS += -Os
+CPPFLAGS+=	-DNO_HTTPS
+MD_OPTIONS+=	NO_HTTPS
 .endif
 .endif
 

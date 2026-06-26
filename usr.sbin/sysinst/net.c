@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.45 2023/12/17 18:46:42 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.45.4.1 2026/06/26 09:10:49 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -907,7 +907,9 @@ url_proto(unsigned int xfer)
 	switch (xfer) {
 	case XFER_FTP:		return "ftp";
 	case XFER_HTTP:		return "http";
+#ifndef NO_HTTPS
 	case XFER_HTTPS:	return "https";
+#endif
 	}
 
 	return "";

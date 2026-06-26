@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.94 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.94.2.1 2026/06/26 09:10:49 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -605,8 +605,12 @@ extern const char *ushell;
 
 #define	XFER_FTP	0
 #define	XFER_HTTP	1
+#ifdef NO_HTTPS
+#define	XFER_MAX	XFER_HTTP
+#else
 #define	XFER_HTTPS	2
 #define	XFER_MAX	XFER_HTTPS
+#endif
 #define	XFER_HOST_MAX	XFER_HTTP	/* http and https share a server name */
 #define	XFER_HOST(XFER)	((XFER) == XFER_FTP ? 0 : 1)
 

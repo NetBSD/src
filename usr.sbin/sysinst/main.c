@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.34 2025/07/25 17:28:50 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.34.2.1 2026/06/26 09:10:49 jdc Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -191,7 +191,7 @@ init(void)
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
-	ftp.xfer = pkg.xfer = pkgsrc.xfer = XFER_HTTPS;
+	ftp.xfer = pkg.xfer = pkgsrc.xfer = XFER_MAX;
 
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
