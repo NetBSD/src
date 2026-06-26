@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbrtowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $ */
+/* $NetBSD: t_mbrtowc.c,v 1.3 2026/06/26 22:36:23 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbrtowc.c,v 1.2 2017/07/12 17:32:51 perseant Exp $");
+__RCSID("$NetBSD: t_mbrtowc.c,v 1.3 2026/06/26 22:36:23 riastradh Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -78,23 +78,31 @@ static struct test {
 	const wchar_t wchars[64];
 	const wchar_t widths[64];
 	size_t length;
+	const char *xfail;
 } tests[] = {
 {
 	"C",
 	"ABCD01234_\\",
 	{ 0x41, 0x42, 0x43, 0x44, 0x30, 0x31, 0x32, 0x33, 0x34, 0x5F, 0x5C },
 	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-	11
+	11,
+	NULL
 }, {
 	"en_US.UTF-8",
-	"[\001\177][\302\200\337\277][\340\240\200\357\277\277][\360\220\200"
-	"\200\367\277\277\277][\370\210\200\200\200\373\277\277\277\277][\374"
-	"\204\200\200\200\200\375\277\277\277\277\277]",
+	"[\001\177]"				/* one-octet examples */
+	    "[\302\200\337\277]"		/* two-octet examples */
+	    "[\340\240\200\357\277\277]"	/* three-octet examples */
+	    "[\360\220\200\200\367\277\277\277]"/* four-octet samples */
+	    /* five-octet samples -- XXX invalid UTF-8 */
+	    "[\370\210\200\200\200\373\277\277\277\277]"
+	    /* six-octet samples -- XXX invalid UTF-8 */
+	    "[\374\204\200\200\200\200\375\277\277\277\277\277]",
 	{ 0x5b, 0x01, 0x7f, 0x5d, 0x5b, 0x80, 0x7ff, 0x5d, 0x5b, 0x800, 0xffff,
 	  0x5d, 0x5b, 0x10000, 0x1fffff, 0x5d, 0x5b, 0x200000, 0x3ffffff, 0x5d,
 	  0x5b, 0x4000000, 0x7fffffff, 0x5d },
 	{ 1, 1, 1, 1, 1, 2, 2, 1, 1, 3, 3, 1, 1, 4, 4, 1, 1, 5, 5, 1, 1, 6, 6, 1 },
-	24
+	24,
+	"PR lib/60369: mbrtowc, mbrlen have wrong return value for some invalid byte sequences"
 }, {
 	"ja_JP.ISO2022-JP2",
 	"\033$BF|K\1348l\033(BA\033$B$\"\033(BB\033$B$$\033(B",
@@ -104,7 +112,8 @@ static struct test {
 	{ 0x4200467c, 0x42004b5c, 0x4200386c, 0x41, 0x42002422, 0x42, 0x42002424 },
 #endif
 	{ 5, 2, 2, 4, 5, 4, 5 },
-	7
+	7,
+	NULL
 }, {
 	"ja_JP.SJIS",
 	"\223\372\226{\214\352A\202\240B\202\242",
@@ -114,7 +123,8 @@ static struct test {
 	{ 0x93FA, 0x967B, 0x8CEA, 0x41, 0x82A0, 0x42, 0x82A2 },
 #endif
 	{ 2, 2, 2, 1, 2, 1, 2 },
-	7
+	7,
+	NULL
 }, {
 	"ja_JP.eucJP",
 	"\306\374\313\334\270\354A\244\242B\244\244",
@@ -124,13 +134,15 @@ static struct test {
 	{ 0xC6FC, 0xCBDC, 0xB8EC, 0x41, 0xA4A2, 0x42, 0xA4A4 },
 #endif
 	{ 2, 2, 2, 1, 2, 1, 2 },
-	7
+	7,
+	NULL
 }, {
 	NULL,
 	NULL,
 	{ },
 	{ },
-	0
+	0,
+	NULL
 }
 };
 
@@ -254,8 +266,13 @@ ATF_TC_BODY(mbrtowc_internal, tc)
 {
 	struct test *t;
 
-	for (t = &tests[0]; t->data != NULL; ++t)
+	for (t = &tests[0]; t->data != NULL; ++t) {
+		if (t->xfail)
+			atf_tc_expect_fail("%s", t->xfail);
 		h_ctype2(t, false);
+		if (t->xfail)
+			atf_tc_expect_pass();
+	}
 }
 
 ATF_TC(mbrtowc_object);
@@ -269,8 +286,13 @@ ATF_TC_BODY(mbrtowc_object, tc)
 {
 	struct test *t;
 
-	for (t = &tests[0]; t->data != NULL; ++t)
+	for (t = &tests[0]; t->data != NULL; ++t) {
+		if (t->xfail)
+			atf_tc_expect_fail("%s", t->xfail);
 		h_ctype2(t, true);
+		if (t->xfail)
+			atf_tc_expect_pass();
+	}
 }
 
 ATF_TP_ADD_TCS(tp)
