@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.32 2026/06/26 19:03:49 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.33 2026/06/26 21:02:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ remove_sub_menu(int menuID)
 	}
 }
 
+#ifndef NO_PARTMAN
 static void
 remove_menu_option(int menuID, const char *option)
 {
@@ -159,6 +160,7 @@ remove_menu_option(int menuID, const char *option)
 		}
 	}
 }
+#endif
 
 void
 remove_color_options()
