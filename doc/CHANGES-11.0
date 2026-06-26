@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.104 2026/06/25 15:10:26 jdc Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.105 2026/06/26 09:14:03 jdc Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11131,4 +11131,38 @@ src/usr.sbin/sysinst/arch/evbarm/md.h		1.10
 	In ACPI environments where we do not need dtb installed, do not select
 	the set by default.
 	[martin, ticket #327]
+
+src/usr.sbin/sysinst/Makefile.inc		1.54
+src/usr.sbin/sysinst/configmenu.c		1.24
+src/usr.sbin/sysinst/defs.h			1.96
+src/usr.sbin/sysinst/main.c			1.37
+src/usr.sbin/sysinst/menus.mi			1.31
+src/usr.sbin/sysinst/net.c			1.46
+
+	When compiled with SMALLPROG (i.e. as part of a crunched ramdisk
+	userland) ftp(1) does not support https - so remove that option from
+	sysinst and only offer http in that case.
+	Should fix PR 60359.
+	[martin, ticket #335]
+
+src/usr.sbin/sysinst/msg.mi.de			1.59
+src/usr.sbin/sysinst/msg.mi.en			1.60
+src/usr.sbin/sysinst/msg.mi.es			1.50
+src/usr.sbin/sysinst/msg.mi.fr			1.53
+src/usr.sbin/sysinst/msg.mi.pl			1.56
+src/usr.sbin/sysinst/util.c			1.84
+
+	Include "tests" and "manhtml" in the optional sets.
+	[martin, ticket #336]
+
+src/usr.sbin/sysinst/configmenu.c		1.25
+src/usr.sbin/sysinst/install.c			1.26
+src/usr.sbin/sysinst/net.c			1.47
+src/usr.sbin/sysinst/upgrade.c			1.22
+
+	We have SSL trust anchors in base, so make use of them when downloading
+	additional items after basic installation is done (even if the installer
+	used does not come with its own certs, so we can not verify trust
+	for set download).
+	[martin, ticket #337]
 
