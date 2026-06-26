@@ -10,6 +10,7 @@
 # Copyright (c) 2019      Philippe Antoine <contact@catenacyber.fr>
 # Copyright (c) 2019-2025 Hanno Böck <hanno@gentoo.org>
 # Copyright (c) 2024      Alexander Bluhm <alexander.bluhm@gmx.net>
+# Copyright (c) 2026      Matthew Fernandez <matthew.fernandez@gmail.com>
 # Licensed under the MIT license:
 #
 # Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -98,7 +99,7 @@ populate_environment() {
                 ;;
             memory)
                 # https://clang.llvm.org/docs/MemorySanitizer.html
-                BASE_COMPILE_FLAGS+=" -fsanitize=memory -fno-omit-frame-pointer -g -O2 -fsanitize-memory-track-origins -fsanitize-blacklist=$PWD/memory-sanitizer-blacklist.txt"
+                BASE_COMPILE_FLAGS+=" -fsanitize=memory -fno-omit-frame-pointer -g -O2 -fsanitize-memory-track-origins"
                 ;;
             undefined)
                 # https://clang.llvm.org/docs/UndefinedBehaviorSanitizer.html
