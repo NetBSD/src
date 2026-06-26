@@ -1,4 +1,13 @@
-# $NetBSD: shl.mi,v 1.407 2026/06/26 19:17:35 kre Exp $
+# $NetBSD: shl.mi,v 1.408 2026/06/26 22:47:42 riastradh Exp $
+#
+# Note: Like base/shl.mi, entries here for shared libraries should
+#       generally NOT be marked `obsolete' and instead should be
+#       deleted when we stop installing a certain file.  This way,
+#       systems that still have the old shared libraries after an
+#       update, which applications might have been linked against, will
+#       not only generally continue to work, but also generally
+#       continue to have debug data.  Exceptions: shared objects that
+#       are only used through dlopen() at runtime.
 #
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -24,7 +33,6 @@
 ./usr/libdata/debug/lib/libnvpair.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
 ./usr/libdata/debug/lib/libpcap.so.10.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libprop.so.1.2.debug			comp-obsolete	obsolete
 ./usr/libdata/debug/lib/libprop.so.1.3.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libpthread.so.1.7.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libradius.so.5.0.debug			comp-sys-debug	debug,dynamicroot
@@ -82,7 +90,6 @@
 ./usr/libdata/debug/usr/lib/libbfd.so.19.0.debug		comp-sys-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libbfd.so.20.0.debug		comp-sys-debug	debug,compatfile,binutils=245
 ./usr/libdata/debug/usr/lib/libbfd.so.21.0.debug		comp-sys-debug	debug,compatfile,binutils=246
-./usr/libdata/debug/usr/lib/libbind9.so.22.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libblocklist.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbluetooth.so.4.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libbozohttpd.so.1.0.debug		comp-sys-debug	debug,compatfile
@@ -115,8 +122,6 @@
 ./usr/libdata/debug/usr/lib/libevent_openssl.so.5.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libevent_pthreads.so.5.0.debug	comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libexecinfo.so.0.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libexpat.so.2.5.debug		comp-obsolete	obsolete
-./usr/libdata/debug/usr/lib/libexpat.so.2.6.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libexpat.so.2.7.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfetch.so.4.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libfido2.so.5.1.debug		comp-sys-debug	debug,compatfile
@@ -139,7 +144,6 @@
 ./usr/libdata/debug/usr/lib/libhx509.so.7.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libintl.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libipsec.so.3.0.debug		comp-net-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libirs.so.22.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libisc.so.23.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libisccc.so.23.0.debug		comp-bind-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libisccfg.so.23.1.debug		comp-bind-debug	debug,compatfile
@@ -154,7 +158,6 @@
 ./usr/libdata/debug/usr/lib/libkvm.so.6.0.debug			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/liblber.so.5.0.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/libldap.so.6.0.debug		comp-ldap-debug	debug,compatfile,ldap
-./usr/libdata/debug/usr/lib/libldap_r.so.6.0.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libldap_r.so.7.0.debug		comp-ldap-debug	debug,compatfile,ldap
 ./usr/libdata/debug/usr/lib/liblsan.so.2.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=10
 ./usr/libdata/debug/usr/lib/liblsan.so.3.0.debug		comp-sys-debug	debug,compatfile,cxx,gcccmds,gcc=12
@@ -190,7 +193,6 @@
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libproc.so.1.0.debug		comp-sys-debug	debug,compatfile,dtrace
-./usr/libdata/debug/usr/lib/libprop.so.1.2.debug		comp-obsolete   obsolete
 ./usr/libdata/debug/usr/lib/libprop.so.1.3.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread.so.1.7.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpuffs.so.2.0.debug		comp-puffs-debug	debug,compatfile
@@ -328,7 +330,6 @@
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libunbound.so.11.1.debug 		comp-net-debug	debug,compatfile,unbound
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libutil.so.7.24.debug		comp-obsolete	obsolete
 ./usr/libdata/debug/usr/lib/libutil.so.7.25.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.1.0.debug		comp-krb5-debug	debug,compatfile,kerberos
