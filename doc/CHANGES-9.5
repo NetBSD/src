@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.104 2026/06/27 20:22:05 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.105 2026/06/27 20:59:31 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1408,28 +1408,6 @@ tests/lib/libpthread/dlopen/t_dso_pthread_create.c 1.2
 
 	pthread: PR 59784: prevent unload with dlclose.
 	[riastradh, ticket #2017]
-
-external/cddl/osnet/dist/lib/libuutil/common/libuutil_impl.h 1.2 (patch)
-external/cddl/osnet/dist/lib/libuutil/common/uu_avl.c 1.2 (patch)
-external/cddl/osnet/dist/lib/libuutil/common/uu_list.c 1.2,1.5 (patch)
-lib/libbsdmalloc/malloc.c			1.13 (patch)
-lib/libc/gen/arc4random.c			1.51 (patch)
-lib/libc/stdlib/malloc.c			1.61 (patch)
-
-	libc, libuutil (zfs stuff), libbsdmalloc: PR 59237:
-	fix postfork mutex actions to reinitialize the mutex
-	instead of unlocking it.
-	Avoids potential deadlocks after fork in case other threads
-	are waiting for a mutex.
-	[riastradh, ticket #2018]
-
-sys/kern/uipc_usrreq.c				1.208
-tests/net/net/t_unix.c				1.26-1.28
-
-	unix(4): PR 59220: fix null pointer dereference in accept(2)
-	in DIAGNOSTIC builds under certain circumstances.
-	Add a test for the circumstances.
-	[riastradh, ticket #2019]
 
 usr.bin/mail/mail.1				1.70
 
