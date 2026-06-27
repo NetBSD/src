@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20.2.1 2026/05/07 16:15:11 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.20.2.2 2026/06/27 10:13:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -126,6 +126,8 @@ extern unsigned int dns_zone_mkey_month;
 
 extern unsigned int dns_adb_entrywindow;
 extern unsigned int dns_adb_cachemin;
+extern size_t dns_dispatch_tcppipelining;
+extern size_t dns_adb_addrslimit;
 
 static bool want_stats = false;
 static char program_name[NAME_MAX] = "named";
@@ -813,6 +815,20 @@ parse_T_opt(char *option) {
 		dns_adb_entrywindow = atoi(option + 15);
 	} else if (!strncmp(option, "adbcachemin=", 12)) {
 		dns_adb_cachemin = atoi(option + 12);
+	} else if (!strncmp(option, "tcppipelining=", 14)) {
+		size_t pipelining = atoi(option + 14);
+		if (pipelining < 1) {
+			named_main_earlyfatal("tcppipelining must be at "
+					      "least 1");
+		}
+		dns_dispatch_tcppipelining = pipelining;
+	} else if (!strncmp(option, "adbaddrslimit=", 14)) {
+		size_t adb_addrslimit = atoi(option + 14);
+		if (adb_addrslimit < 1) {
+			named_main_earlyfatal("adbaddrslimit must be at "
+					      "least 1");
+		}
+		dns_adb_addrslimit = adb_addrslimit;
 	} else {
 		fprintf(stderr, "unknown -T flag '%s'\n", option);
 	}

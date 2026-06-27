@@ -18,6 +18,7 @@ from . import (  # pylint: disable=redefined-builtin
     query,
     run,
     template,
+    transfer,
     vars,
 )
 
@@ -35,5 +36,6 @@ __all__ = [
     "query",
     "run",
     "template",
+    "transfer",
     "vars",
 ]

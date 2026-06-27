@@ -34,9 +34,14 @@ zone example. {
 	file "example.db.signed.malformed";
 };
 
-zone truncated.selfsigned. {
+zone truncated-active.selfsigned. {
 	type primary;
-	file "truncated.selfsigned.db.signed";
+	file "truncated-active.selfsigned.db.signed";
+};
+
+zone truncated-revoked.selfsigned. {
+	type primary;
+	file "truncated-revoked.selfsigned.db.signed";
 };
 
 include "trusted.conf";

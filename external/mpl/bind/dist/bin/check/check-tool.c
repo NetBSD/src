@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.11.2.1 2026/05/07 16:15:08 martin Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.11.2.2 2026/06/27 10:13:55 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -59,14 +59,16 @@
 #define CHECK_LOCAL 1
 #endif /* ifndef CHECK_LOCAL */
 
-#define ERR_IS_CNAME	   1
-#define ERR_NO_ADDRESSES   2
-#define ERR_LOOKUP_FAILURE 3
-#define ERR_EXTRA_A	   4
-#define ERR_EXTRA_AAAA	   5
-#define ERR_MISSING_GLUE   5
-#define ERR_IS_MXCNAME	   6
-#define ERR_IS_SRVCNAME	   7
+enum {
+	ERR_IS_CNAME = 1,
+	ERR_NO_ADDRESSES,
+	ERR_LOOKUP_FAILURE,
+	ERR_EXTRA_A,
+	ERR_EXTRA_AAAA,
+	ERR_MISSING_GLUE,
+	ERR_IS_MXCNAME,
+	ERR_IS_SRVCNAME,
+};
 
 static const char *dbtype[] = { ZONEDB_DEFAULT };
 

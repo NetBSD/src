@@ -21,6 +21,10 @@ mkdir ns3/keys
 
 # Setup zones
 (
+  cd ns1
+  $SHELL setup.sh
+)
+(
   cd ns2
   $SHELL setup.sh
 )

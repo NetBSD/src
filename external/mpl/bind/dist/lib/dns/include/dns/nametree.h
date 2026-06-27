@@ -1,4 +1,4 @@
-/*	$NetBSD: nametree.h,v 1.2 2025/01/26 16:25:27 christos Exp $	*/
+/*	$NetBSD: nametree.h,v 1.2.2.1 2026/06/27 10:14:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,10 +85,10 @@ dns_nametree_add(dns_nametree_t *nametree, const dns_name_t *name,
  * as dns_nametree_add() before the name is removed from the tree.
  *
  * If the nametree type was set to DNS_NAMETREE_BITS, then 'value' is
- * a bit number within a bit field, which is sized to accomodate at least
+ * a bit number within a bit field, which is sized to accommodate at least
  * 'value' bits. If the name already exists, then that bit will be set
  * in the bitfield, other bits will be retained, and ISC_R_SUCCESS will be
- * returned. If 'value' excees the number of bits in the existing bit
+ * returned. If 'value' exceeds the number of bits in the existing bit
  * field, the field will be expanded.
  *
  * Requires:

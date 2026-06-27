@@ -1,4 +1,4 @@
-/*	$NetBSD: qpzone.c,v 1.3.2.1 2026/05/07 16:18:38 martin Exp $	*/
+/*	$NetBSD: qpzone.c,v 1.3.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -177,7 +177,7 @@ struct qpznode {
 	 * and the database have both released the object) the object
 	 * is freed.
 	 *
-	 * Whenever 'erefs' is incremented from zero, we also aquire a
+	 * Whenever 'erefs' is incremented from zero, we also acquire a
 	 * node use reference (see 'qpzonedb->references' below), and
 	 * release it when 'erefs' goes back to zero. This prevents the
 	 * database from being shut down until every caller has released
@@ -271,6 +271,7 @@ typedef struct {
 	qpzonedb_t *qpdb;
 	qpz_version_t *version;
 	dns_qpread_t qpr;
+	dns_qpread_t nqpr;
 	uint32_t serial;
 	unsigned int options;
 	dns_qpchain_t chain;
@@ -2971,7 +2972,6 @@ previous_closest_nsec(dns_rdatatype_t type, qpz_search_t *search,
 		      dns_name_t *name, qpznode_t **nodep, dns_qpiter_t *nit,
 		      bool *firstp) {
 	isc_result_t result;
-	dns_qpread_t qpr;
 
 	REQUIRE(nodep != NULL && *nodep == NULL);
 	REQUIRE(type == dns_rdatatype_nsec3 || firstp != NULL);
@@ -2982,8 +2982,6 @@ previous_closest_nsec(dns_rdatatype_t type, qpz_search_t *search,
 		return result;
 	}
 
-	dns_qpmulti_query(search->qpdb->nsec, &qpr);
-
 	for (;;) {
 		if (*firstp) {
 			/*
@@ -2991,8 +2989,8 @@ previous_closest_nsec(dns_rdatatype_t type, qpz_search_t *search,
 			 * It is the first node sought in the NSEC tree.
 			 */
 			*firstp = false;
-			result = dns_qp_lookup(&qpr, name, NULL, nit, NULL,
-					       NULL, NULL);
+			result = dns_qp_lookup(&search->nqpr, name, NULL, nit,
+					       NULL, NULL, NULL);
 			INSIST(result != ISC_R_NOTFOUND);
 			if (result == ISC_R_SUCCESS) {
 				/*
@@ -3046,7 +3044,6 @@ previous_closest_nsec(dns_rdatatype_t type, qpz_search_t *search,
 		}
 	}
 
-	dns_qpread_destroy(search->qpdb->nsec, &qpr);
 	return result;
 }
 
@@ -3400,6 +3397,7 @@ find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		nsec3 = true;
 	} else {
 		dns_qpmulti_query(qpdb->tree, &search.qpr);
+		dns_qpmulti_query(qpdb->nsec, &search.nqpr);
 	}
 
 	/*
@@ -3848,6 +3846,7 @@ tree_exit:
 		dns_qpread_destroy(qpdb->nsec3, &search.qpr);
 	} else {
 		dns_qpread_destroy(qpdb->tree, &search.qpr);
+		dns_qpread_destroy(qpdb->nsec, &search.nqpr);
 	}
 
 	/*

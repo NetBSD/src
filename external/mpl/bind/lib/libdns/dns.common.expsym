@@ -118,6 +118,7 @@ dns_aclenv_detach
 dns_aclenv_ref
 dns_aclenv_set
 dns_aclenv_unref
+dns_adb_addrslimit
 dns_adb_adjustsrtt
 dns_adb_agesrtt
 dns_adb_attach
@@ -314,7 +315,6 @@ dns_diff_apply_with_callbacks
 dns_diff_applysilently
 dns_diff_clear
 dns_diff_init
-dns_diff_is_boundary
 dns_diff_load
 dns_diff_print
 dns_diff_size
@@ -332,10 +332,10 @@ dns_dispatch_detach
 dns_dispatch_done
 dns_dispatch_getlocaladdress
 dns_dispatch_getnext
-dns_dispatch_gettcp
 dns_dispatch_ref
 dns_dispatch_resume
 dns_dispatch_send
+dns_dispatch_tcppipelining
 dns_dispatch_unref
 dns_dispatchmgr_attach
 dns_dispatchmgr_create

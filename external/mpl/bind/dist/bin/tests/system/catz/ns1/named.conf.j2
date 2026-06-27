@@ -128,6 +128,16 @@ view "default" {
 		notify explicit;
 	};
 
+	# Bad TSIG key name
+	zone "catalog-bad6.example" {
+		type primary;
+		file "catalog-bad6.example.db";
+		allow-transfer { any; };
+		allow-update { any; };
+		also-notify { 10.53.0.2; };
+		notify explicit;
+	};
+
 	# A catalog zone that requires TLS to be used
 	zone "catalog-tls.example" {
 		type primary;

@@ -1,0 +1,7 @@
+@ 3600 SOA . . 1 86400 3600 86400 3600
+@ 3600 IN NS invalid.
+version IN TXT "2"
+deadbeef.zones IN PTR member.example.
+mykey.primaries.ext.deadbeef.zones IN A 192.0.2.1
+; bad key name label too big
+mykey.primaries.ext.deadbeef.zones IN TXT "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA.example.com"

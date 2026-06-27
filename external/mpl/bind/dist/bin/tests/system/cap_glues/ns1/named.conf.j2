@@ -1,0 +1,15 @@
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+};

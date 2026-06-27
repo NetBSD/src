@@ -1,4 +1,4 @@
-/*	$NetBSD: query.c,v 1.25.2.1 2026/05/07 16:18:53 martin Exp $	*/
+/*	$NetBSD: query.c,v 1.25.2.2 2026/06/27 10:14:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -5316,8 +5316,11 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 	dns_zone_t *zone = NULL;
 	bool is_zone;
 	unsigned int labels;
+	bool redirected = REDIRECT(client);
 
 	CTRACE(ISC_LOG_DEBUG(3), "redirect2");
+
+	client->query.attributes &= ~NS_QUERYATTR_REDIRECT;
 
 	if (client->view->redirectzone == NULL) {
 		return ISC_R_NOTFOUND;
@@ -5382,7 +5385,7 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 			return ISC_R_NOTFOUND;
 		}
 	} else {
-		dns_name_copy(redirectname, client->view->redirectzone);
+		dns_name_copy(client->view->redirectzone, redirectname);
 	}
 
 	result = query_getdb(client, redirectname, qtype,
@@ -5420,17 +5423,17 @@ redirect2(ns_client_t *client, dns_name_t *name, dns_rdataset_t *rdataset,
 			dns_db_detachnode(db, &node);
 		}
 		dns_db_detach(&db);
+
 		/*
 		 * Don't loop forever if the lookup failed last time.
 		 */
-		if (!REDIRECT(client)) {
+		if (!redirected) {
 			result = ns_query_recurse(client, qtype, redirectname,
 						  NULL, NULL, true);
 			if (result == ISC_R_SUCCESS) {
 				client->query.attributes |=
-					NS_QUERYATTR_RECURSING;
-				client->query.attributes |=
-					NS_QUERYATTR_REDIRECT;
+					(NS_QUERYATTR_RECURSING |
+					 NS_QUERYATTR_REDIRECT);
 				return DNS_R_CONTINUE;
 			}
 		}
@@ -6651,6 +6654,7 @@ query_resume(query_ctx_t *qctx) {
 	char qbuf[DNS_NAME_FORMATSIZE];
 	char tbuf[DNS_RDATATYPE_FORMATSIZE];
 #endif /* ifdef WANT_QUERYTRACE */
+	bool redirect = REDIRECT(qctx->client);
 
 	CCTRACE(ISC_LOG_DEBUG(3), "query_resume");
 
@@ -6659,9 +6663,10 @@ query_resume(query_ctx_t *qctx) {
 	qctx->want_restart = false;
 
 	qctx->rpz_st = qctx->client->query.rpz_st;
-	if (qctx->rpz_st != NULL &&
-	    (qctx->rpz_st->state & DNS_RPZ_RECURSING) != 0)
-	{
+	bool rpz = (qctx->rpz_st != NULL &&
+		    (qctx->rpz_st->state & DNS_RPZ_RECURSING) != 0);
+
+	if (rpz) {
 		CCTRACE(ISC_LOG_DEBUG(3), "resume from RPZ recursion");
 #ifdef WANT_QUERYTRACE
 		{
@@ -6705,7 +6710,7 @@ query_resume(query_ctx_t *qctx) {
 		qctx->rpz_st->r.r_type = qctx->fresp->qtype;
 		SAVE(qctx->rpz_st->r.r_rdataset, qctx->fresp->rdataset);
 		ns_client_putrdataset(qctx->client, &qctx->fresp->sigrdataset);
-	} else if (REDIRECT(qctx->client)) {
+	} else if (redirect) {
 		/*
 		 * Restore saved state.
 		 */
@@ -6774,9 +6779,7 @@ query_resume(query_ctx_t *qctx) {
 		qctx->dns64_exclude = true;
 	}
 
-	if (qctx->rpz_st != NULL &&
-	    (qctx->rpz_st->state & DNS_RPZ_RECURSING) != 0)
-	{
+	if (rpz) {
 		/*
 		 * Has response policy changed out from under us?
 		 */
@@ -6798,11 +6801,9 @@ query_resume(query_ctx_t *qctx) {
 	qctx->dbuf = ns_client_getnamebuf(qctx->client);
 	qctx->fname = ns_client_newname(qctx->client, qctx->dbuf, &b);
 
-	if (qctx->rpz_st != NULL &&
-	    (qctx->rpz_st->state & DNS_RPZ_RECURSING) != 0)
-	{
+	if (rpz) {
 		tname = qctx->rpz_st->fname;
-	} else if (REDIRECT(qctx->client)) {
+	} else if (redirect) {
 		tname = qctx->client->query.redirect.fname;
 	} else {
 		tname = qctx->fresp->foundname;
@@ -6810,14 +6811,25 @@ query_resume(query_ctx_t *qctx) {
 
 	dns_name_copy(tname, qctx->fname);
 
-	if (qctx->rpz_st != NULL &&
-	    (qctx->rpz_st->state & DNS_RPZ_RECURSING) != 0)
-	{
+	if (rpz) {
 		qctx->rpz_st->r.r_result = qctx->fresp->result;
 		result = qctx->rpz_st->q.result;
 		free_fresp(qctx->client, &qctx->fresp);
-	} else if (REDIRECT(qctx->client)) {
+	} else if (redirect) {
 		result = qctx->client->query.redirect.result;
+
+		/*
+		 * If we got an answer from a redirect query that could
+		 * trigger another redirect, keep the REDIRECT flag set
+		 * so we can avoid looping; we'll clear it later.
+		 * Otherwise, we're done with it now.
+		 */
+		if (result != DNS_R_COVERINGNSEC && result != DNS_R_NXDOMAIN &&
+		    result != DNS_R_NCACHENXDOMAIN)
+		{
+			qctx->client->query.attributes &=
+				~NS_QUERYATTR_REDIRECT;
+		}
 	} else {
 		result = qctx->fresp->result;
 	}
@@ -8252,6 +8264,10 @@ query_addanswer(query_ctx_t *qctx) {
 	} else if (qctx->client->query.dns64_aaaaok != NULL) {
 		query_filter64(qctx);
 		ns_client_putrdataset(qctx->client, &qctx->rdataset);
+		isc_mem_cput(qctx->client->manager->mctx,
+			     qctx->client->query.dns64_aaaaok,
+			     qctx->client->query.dns64_aaaaoklen, sizeof(bool));
+		qctx->client->query.dns64_aaaaoklen = 0;
 	} else {
 		if (!qctx->is_zone && RECURSIONOK(qctx->client)) {
 			query_prefetch(qctx->client, qctx->fname,
@@ -8654,7 +8670,7 @@ query_filter64(query_ctx_t *qctx) {
 	}
 
 	dns_rdatalist_tordataset(myrdatalist, myrdataset);
-	dns_rdataset_setownercase(myrdataset, name);
+	dns_rdataset_setownercase(myrdataset, mname);
 	client->query.attributes |= NS_QUERYATTR_NOADDITIONAL;
 	if (mname == name) {
 		if (qctx->dbuf != NULL) {
@@ -9308,6 +9324,7 @@ query_nodata(query_ctx_t *qctx, isc_result_t res) {
 #endif /* ifdef dns64_bis_return_excluded_addresses */
 	} else if ((result == DNS_R_NXRRSET || result == DNS_R_NCACHENXRRSET) &&
 		   !ISC_LIST_EMPTY(qctx->view->dns64) && !qctx->nxrewrite &&
+		   !qctx->redirected &&
 		   qctx->client->message->rdclass == dns_rdataclass_in &&
 		   qctx->qtype == dns_rdatatype_aaaa)
 	{
@@ -9571,8 +9588,6 @@ query_nxdomain(query_ctx_t *qctx, isc_result_t result) {
 
 	CALL_HOOK(NS_QUERY_NXDOMAIN_BEGIN, qctx);
 
-	INSIST(qctx->is_zone || REDIRECT(qctx->client));
-
 	if (!empty_wild) {
 		result = query_redirect(qctx, result);
 		if (result != ISC_R_COMPLETE) {
@@ -9657,6 +9672,10 @@ cleanup:
  *
  * Any result code other than ISC_R_COMPLETE means redirection was
  * successful and the result code should be returned up the call stack.
+ * DNS_R_CONTINUE means we've initiated a recursive query to the
+ * redirect zone, and we'll resume processing with the answer to that
+ * in query_resume(); other results mean we have the redirected answer
+ * now.
  *
  * ISC_R_COMPLETE means we reached the end of this function without
  * redirecting, so query processing should continue past it.

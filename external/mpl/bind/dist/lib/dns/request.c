@@ -1,4 +1,4 @@
-/*	$NetBSD: request.c,v 1.12.2.1 2026/05/07 16:18:38 martin Exp $	*/
+/*	$NetBSD: request.c,v 1.12.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -338,27 +338,12 @@ isblackholed(dns_dispatchmgr_t *dispatchmgr, const isc_sockaddr_t *destaddr) {
 }
 
 static isc_result_t
-tcp_dispatch(bool newtcp, dns_requestmgr_t *requestmgr,
-	     const isc_sockaddr_t *srcaddr, const isc_sockaddr_t *destaddr,
-	     dns_transport_t *transport, dns_dispatch_t **dispatchp) {
-	isc_result_t result;
-
-	if (!newtcp) {
-		result = dns_dispatch_gettcp(requestmgr->dispatchmgr, destaddr,
-					     srcaddr, transport, dispatchp);
-		if (result == ISC_R_SUCCESS) {
-			char peer[ISC_SOCKADDR_FORMATSIZE];
-
-			isc_sockaddr_format(destaddr, peer, sizeof(peer));
-			req_log(ISC_LOG_DEBUG(1),
-				"attached to TCP connection to %s", peer);
-			return result;
-		}
-	}
-
-	result = dns_dispatch_createtcp(requestmgr->dispatchmgr, srcaddr,
-					destaddr, transport, 0, dispatchp);
-	return result;
+tcp_dispatch(dns_requestmgr_t *requestmgr, const isc_sockaddr_t *srcaddr,
+	     const isc_sockaddr_t *destaddr, dns_transport_t *transport,
+	     unsigned int dispopt, dns_dispatch_t **dispatchp) {
+	return dns_dispatch_createtcp(
+		requestmgr->dispatchmgr, srcaddr, destaddr, transport,
+		DNS_DISPATCHTYPE_REQUEST, dispopt, dispatchp);
 }
 
 static isc_result_t
@@ -391,14 +376,15 @@ udp_dispatch(dns_requestmgr_t *requestmgr, const isc_sockaddr_t *srcaddr,
 }
 
 static isc_result_t
-get_dispatch(bool tcp, bool newtcp, dns_requestmgr_t *requestmgr,
+get_dispatch(bool tcp, dns_requestmgr_t *requestmgr,
 	     const isc_sockaddr_t *srcaddr, const isc_sockaddr_t *destaddr,
-	     dns_transport_t *transport, dns_dispatch_t **dispatchp) {
+	     dns_transport_t *transport, unsigned int dispopt,
+	     dns_dispatch_t **dispatchp) {
 	isc_result_t result;
 
 	if (tcp) {
-		result = tcp_dispatch(newtcp, requestmgr, srcaddr, destaddr,
-				      transport, dispatchp);
+		result = tcp_dispatch(requestmgr, srcaddr, destaddr, transport,
+				      dispopt, dispatchp);
 	} else {
 		result = udp_dispatch(requestmgr, srcaddr, destaddr, dispatchp);
 	}
@@ -419,7 +405,6 @@ dns_request_createraw(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 	isc_mem_t *mctx = NULL;
 	dns_messageid_t id;
 	bool tcp = false;
-	bool newtcp = false;
 	isc_region_t r;
 	unsigned int dispopt = 0;
 
@@ -471,16 +456,15 @@ dns_request_createraw(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 		goto cleanup;
 	}
 
-again:
-	result = get_dispatch(tcp, newtcp, requestmgr, srcaddr, destaddr,
-			      transport, &request->dispatch);
-	if (result != ISC_R_SUCCESS) {
-		goto cleanup;
-	}
-
 	if ((options & DNS_REQUESTOPT_FIXEDID) != 0) {
 		id = (r.base[0] << 8) | r.base[1];
 		dispopt |= DNS_DISPATCHOPT_FIXEDID;
+	}
+
+	result = get_dispatch(tcp, requestmgr, srcaddr, destaddr, transport,
+			      dispopt, &request->dispatch);
+	if (result != ISC_R_SUCCESS) {
+		goto cleanup;
 	}
 
 	result = dns_dispatch_add(
@@ -488,12 +472,6 @@ again:
 		transport, tlsctx_cache, req_connected, req_senddone,
 		req_response, request, &id, &request->dispentry);
 	if (result != ISC_R_SUCCESS) {
-		if ((options & DNS_REQUESTOPT_FIXEDID) != 0 && !newtcp) {
-			dns_dispatch_detach(&request->dispatch);
-			newtcp = true;
-			goto again;
-		}
-
 		goto cleanup;
 	}
 
@@ -597,8 +575,8 @@ dns_request_create(dns_requestmgr_t *requestmgr, dns_message_t *message,
 	}
 
 again:
-	result = get_dispatch(tcp, false, requestmgr, srcaddr, destaddr,
-			      transport, &request->dispatch);
+	result = get_dispatch(tcp, requestmgr, srcaddr, destaddr, transport, 0,
+			      &request->dispatch);
 	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
 	}

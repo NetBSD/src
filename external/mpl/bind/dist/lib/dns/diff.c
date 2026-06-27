@@ -1,4 +1,4 @@
-/*	$NetBSD: diff.c,v 1.10.2.1 2026/05/07 16:18:36 martin Exp $	*/
+/*	$NetBSD: diff.c,v 1.10.2.2 2026/06/27 10:14:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -43,7 +43,13 @@
 
 static dns_rdatatype_t
 rdata_covers(dns_rdata_t *rdata) {
-	return rdata->type == dns_rdatatype_rrsig ? dns_rdata_covers(rdata) : 0;
+	if (rdata->type == dns_rdatatype_rrsig ||
+	    rdata->type == dns_rdatatype_sig)
+	{
+		return dns_rdata_covers(rdata);
+	}
+
+	return 0;
 }
 
 isc_result_t
@@ -144,19 +150,6 @@ dns_diff_append(dns_diff_t *diff, dns_difftuple_t **tuplep) {
 	ISC_LIST_APPEND(diff->tuples, *tuplep, link);
 	diff->size += 1;
 	*tuplep = NULL;
-}
-
-bool
-dns_diff_is_boundary(const dns_diff_t *diff, dns_name_t *new_name) {
-	REQUIRE(DNS_DIFF_VALID(diff));
-	REQUIRE(DNS_NAME_VALID(new_name));
-
-	if (ISC_LIST_EMPTY(diff->tuples)) {
-		return false;
-	}
-
-	dns_difftuple_t *tail = ISC_LIST_TAIL(diff->tuples);
-	return !dns_name_caseequal(&tail->name, new_name);
 }
 
 size_t

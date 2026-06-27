@@ -1,0 +1,21 @@
+// NS1
+
+options {
+	query-source address 10.53.0.1;
+	notify-source 10.53.0.1;
+	transfer-source 10.53.0.1;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.1; };
+	listen-on-v6 { none; };
+	recursion no;
+	notify yes;
+        allow-transfer { any; };
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+	dnssec-policy default;
+	checkds yes;
+};

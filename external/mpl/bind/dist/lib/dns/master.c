@@ -1,4 +1,4 @@
-/*	$NetBSD: master.c,v 1.14.2.1 2026/05/07 16:18:37 martin Exp $	*/
+/*	$NetBSD: master.c,v 1.14.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -109,6 +109,8 @@ struct dns_loadctx {
 	dns_rdatacallbacks_t *callbacks;
 	dns_loaddonefunc_t done;
 	void *done_arg;
+
+	isc_loop_t *loop;
 
 	/* Common methods */
 	isc_result_t (*openfile)(dns_loadctx_t *lctx, const char *filename);
@@ -2665,33 +2667,38 @@ cleanup:
 	return result;
 }
 
+/*
+ * The combination of isc_work_enqueue() on the current loop and callback on
+ * lctx->loop ensures the correct ordering:
+ *
+ * 1. dns_master_loadfileasync() calls isc_work_enqueue() on the current loop.
+ * 2. master_load() runs asynchronously and can finish before the entry point
+ *    returns; master_load_done() is queued on the current loop and cannot run
+ *    until the entry point returns.
+ * 3. The entry point publishes *lctxp.
+ * 4. master_load_done() runs on the current loop and hands off to lctx->loop.
+ * 5. lctx->done() runs on lctx->loop asynchronously.
+ */
 static void
-load(void *arg) {
+master_load(void *arg) {
 	dns_loadctx_t *lctx = arg;
 	lctx->result = (lctx->load)(lctx);
 }
 
 static void
-load_done(void *arg) {
+master_load_callback(void *arg) {
 	dns_loadctx_t *lctx = arg;
 
 	(lctx->done)(lctx->done_arg, lctx->result);
+	isc_loop_detach(&lctx->loop);
 	dns_loadctx_detach(&lctx);
 }
 
 static void
-load_enqueue(void *lctx) {
-	isc_work_enqueue(isc_loop(), load, load_done, lctx);
-}
+master_load_done(void *arg) {
+	dns_loadctx_t *lctx = arg;
 
-static void
-dns_loadctx_enqueue(isc_loop_t *loop, dns_loadctx_t *lctx) {
-	dns_loadctx_ref(lctx);
-	if (loop == isc_loop()) {
-		load_enqueue(lctx);
-	} else {
-		isc_async_run(loop, load_enqueue, lctx);
-	}
+	isc_async_run(lctx->loop, master_load_callback, lctx);
 }
 
 isc_result_t
@@ -2722,7 +2729,10 @@ dns_master_loadfileasync(const char *master_file, dns_name_t *top,
 		return result;
 	}
 
-	dns_loadctx_enqueue(loop, lctx);
+	dns_loadctx_ref(lctx);
+	isc_loop_attach(loop, &lctx->loop);
+	isc_work_enqueue(isc_loop(), master_load, master_load_done, lctx);
+
 	*lctxp = lctx;
 
 	return ISC_R_SUCCESS;

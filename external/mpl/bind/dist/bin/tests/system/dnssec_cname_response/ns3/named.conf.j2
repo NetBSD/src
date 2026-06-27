@@ -1,0 +1,24 @@
+options {
+	query-source address 10.53.0.3;
+	notify-source 10.53.0.3;
+	transfer-source 10.53.0.3;
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.3; };
+	listen-on-v6 { none; };
+	allow-transfer { any; };
+	dnssec-validation yes;
+	recursion yes;
+};
+
+zone "example." {
+	type static-stub;
+	server-addresses { 10.53.0.2; };
+};
+
+zone "secure." {
+	type static-stub;
+	server-addresses { 10.53.0.2; };
+};
+
+include "trusted.conf";

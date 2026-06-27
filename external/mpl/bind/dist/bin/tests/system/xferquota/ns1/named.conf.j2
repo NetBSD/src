@@ -23,6 +23,8 @@ options {
 	recursion no;
 	dnssec-validation no;
 	notify yes;
+
+	transfers-out 3;
 };
 
 key rndc_key {

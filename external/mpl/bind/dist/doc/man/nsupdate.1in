@@ -393,16 +393,25 @@ a set of RRs. This set of RRs must exactly match the set of RRs
 existing in the zone at the given \fBtype\fP, \fBclass\fP, and
 \fBdomain\-name\fP\&. The \fBdata\fP are written in the standard text
 representation of the resource record\(aqs RDATA.
+.sp
+Note RDATA which is empty (e.g. APL with an zero length rdata)
+needs to be entered using \fB\e# 0\fP form.
 .TP
 .B \fBupdate delete domain\-name ttl class type data\fP
 This command deletes any resource records named \fBdomain\-name\fP\&. If \fBtype\fP and
 \fBdata\fP are provided, only matching resource records are removed.
 The Internet class is assumed if \fBclass\fP is not supplied. The
 \fBttl\fP is ignored, and is only allowed for compatibility.
+.sp
+Note RDATA which is empty (e.g. APL with an zero length rdata)
+needs to be entered using \fB\e# 0\fP form.
 .TP
 .B \fBupdate add domain\-name ttl class type data\fP
 This command adds a new resource record with the specified \fBttl\fP, \fBclass\fP, and
 \fBdata\fP\&.
+.sp
+Note RDATA which is empty (e.g. APL with an zero length rdata)
+needs to be entered using \fB\e# 0\fP form.
 .TP
 .B \fBshow\fP
 This command displays the current message, containing all of the prerequisites and

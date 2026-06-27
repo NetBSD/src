@@ -20,3 +20,4 @@ cp ns2/example.db.in ns2/example.db
 cp ns4/example.db.in ns4/example.db
 (cd ns3 && $SHELL sign.sh)
 (cd ns5 && $SHELL sign.sh)
+(cd ns9 && $SHELL sign.sh)

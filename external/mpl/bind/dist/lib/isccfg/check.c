@@ -1,4 +1,4 @@
-/*	$NetBSD: check.c,v 1.3.2.1 2026/05/07 16:18:52 martin Exp $	*/
+/*	$NetBSD: check.c,v 1.3.2.2 2026/06/27 10:14:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2362,8 +2362,8 @@ done:
 #endif /* HAVE_LIBNGHTTP2 */
 
 static isc_result_t
-check_tls_defintion(const cfg_obj_t *tlsobj, const char *name,
-		    isc_log_t *logctx, isc_symtab_t *symtab) {
+check_tls_definition(const cfg_obj_t *tlsobj, const char *name,
+		     isc_log_t *logctx, isc_symtab_t *symtab) {
 	isc_result_t result, tresult;
 	const cfg_obj_t *tls_proto_list = NULL, *tls_key = NULL,
 			*tls_cert = NULL, *tls_ciphers = NULL,
@@ -2522,7 +2522,7 @@ check_tls_definitions(const cfg_obj_t *config, isc_log_t *logctx,
 		const char *name;
 		obj = cfg_listelt_value(elt);
 		name = cfg_obj_asstring(cfg_map_getname(obj));
-		tresult = check_tls_defintion(obj, name, logctx, symtab);
+		tresult = check_tls_definition(obj, name, logctx, symtab);
 		if (result == ISC_R_SUCCESS) {
 			result = tresult;
 		}
@@ -3043,12 +3043,16 @@ check_mirror_zone_notify(const cfg_obj_t *zoptions, const char *znamestr,
  */
 static bool
 check_recursion(const cfg_obj_t *config, const cfg_obj_t *voptions,
-		const cfg_obj_t *goptions, isc_log_t *logctx,
-		cfg_aclconfctx_t *actx, isc_mem_t *mctx) {
+		dns_rdataclass_t vclass, const cfg_obj_t *goptions,
+		isc_log_t *logctx, cfg_aclconfctx_t *actx, isc_mem_t *mctx) {
 	dns_acl_t *acl = NULL;
 	const cfg_obj_t *obj;
 	isc_result_t result;
 	bool retval = true;
+
+	if (vclass != dns_rdataclass_in) {
+		return false;
+	}
 
 	/*
 	 * Check the "recursion" option first.
@@ -3907,7 +3911,8 @@ check_zoneconf(const cfg_obj_t *zconfig, const cfg_obj_t *voptions,
 	 * contradicts the purpose of the former.
 	 */
 	if (ztype == CFG_ZONE_MIRROR &&
-	    !check_recursion(config, voptions, goptions, logctx, actx, mctx))
+	    !check_recursion(config, voptions, zclass, goptions, logctx, actx,
+			     mctx))
 	{
 		cfg_obj_log(zoptions, logctx, ISC_LOG_ERROR,
 			    "zone '%s': mirror zones cannot be used if "
@@ -5720,6 +5725,17 @@ check_viewconf(const cfg_obj_t *config, const cfg_obj_t *voptions,
 	}
 
 	cfg_aclconfctx_create(mctx, &actx);
+
+	if (vclass != dns_rdataclass_in) {
+		if (check_recursion(config, voptions, dns_rdataclass_in,
+				    options, logctx, actx, mctx))
+		{
+			cfg_obj_log(opts, logctx, ISC_LOG_WARNING,
+				    "recursion will be disabled for "
+				    "non-IN view '%s'",
+				    viewname);
+		}
+	}
 
 	if (voptions != NULL) {
 		(void)cfg_map_get(voptions, "zone", &zones);

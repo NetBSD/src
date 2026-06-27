@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3hash.c,v 1.9 2025/01/26 16:25:10 christos Exp $	*/
+/*	$NetBSD: nsec3hash.c,v 1.9.2.1 2026/06/27 10:14:29 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@
 #include <isc/file.h>
 #include <isc/hex.h>
 #include <isc/iterated_hash.h>
+#include <isc/parseint.h>
 #include <isc/result.h>
 #include <isc/string.h>
 #include <isc/tls.h>
@@ -84,10 +85,10 @@ nsec3hash(nsec3printer *nsec3print, const char *algostr, const char *flagstr,
 	unsigned char hash[NSEC3_MAX_HASH_LENGTH];
 	unsigned char salt[DNS_NSEC3_SALTSIZE];
 	unsigned char text[1024];
-	unsigned int hash_alg;
-	unsigned int flags;
+	uint8_t hash_alg;
+	uint8_t flags;
 	unsigned int length;
-	unsigned int iterations;
+	uint16_t iterations;
 	unsigned int salt_length;
 	const char dash[] = "-";
 
@@ -106,17 +107,24 @@ nsec3hash(nsec3printer *nsec3print, const char *algostr, const char *flagstr,
 			saltstr = dash;
 		}
 	}
-	hash_alg = atoi(algostr);
-	if (hash_alg > 255U) {
-		fatal("hash algorithm too large");
+	result = isc_parse_uint8(&hash_alg, algostr, 10);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid hash algorithm '%s': %s", algostr,
+		      isc_result_totext(result));
 	}
-	flags = flagstr == NULL ? 0 : atoi(flagstr);
-	if (flags > 255U) {
-		fatal("flags too large");
+	if (flagstr == NULL) {
+		flags = 0;
+	} else {
+		result = isc_parse_uint8(&flags, flagstr, 10);
+		if (result != ISC_R_SUCCESS) {
+			fatal("invalid flags '%s': %s", flagstr,
+			      isc_result_totext(result));
+		}
 	}
-	iterations = atoi(iterstr);
-	if (iterations > 0xffffU) {
-		fatal("iterations to large");
+	result = isc_parse_uint16(&iterations, iterstr, 10);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid iterations '%s': %s", iterstr,
+		      isc_result_totext(result));
 	}
 
 	name = dns_fixedname_initname(&fixed);

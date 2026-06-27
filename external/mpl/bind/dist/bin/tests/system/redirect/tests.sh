@@ -542,6 +542,16 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+echo_i "checking nxdomain-redirect survives query for root ($n)"
+ret=0
+$DIG $DIGOPTS . any @10.53.0.4 -b 10.53.0.2 >dig.out.ns4.test$n.a || ret=1
+$DIG $DIGOPTS nonexist. @10.53.0.4 -b 10.53.0.2 a >dig.out.ns4.test$n.b || ret=1
+grep "status: NOERROR" dig.out.ns4.test$n.b >/dev/null || ret=1
+grep "nonexist.	.*100.100.100.1" dig.out.ns4.test$n.b >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 echo_i "checking extended error is not set on allow-recursion ($n)"
 ret=0
 $DIG $DIGOPTS example. @10.53.0.1 -b 10.53.0.2 soa >dig.out.ns1.test$n || ret=1

@@ -32,7 +32,9 @@ def test_dialup_zone_transfer(named_port, servers, ns):
     ns1response = isctest.query.tcp(msg, "10.53.0.1")
     with servers[f"ns{ns}"].watch_log_from_start(timeout=90) as watcher:
         watcher.wait_for_line(
-            f"transfer of 'example/IN' from 10.53.0.{ns-1}#{named_port}: Transfer status: success",
+            isctest.transfer.transfer_message(
+                "example", f"10.53.0.{ns-1}", "Transfer status: success", named_port
+            )
         )
     response = isctest.query.tcp(msg, f"10.53.0.{ns}")
     if response.rcode() != dns.rcode.SERVFAIL:

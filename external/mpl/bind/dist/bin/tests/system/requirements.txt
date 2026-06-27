@@ -3,6 +3,7 @@
 dnspython>=2.7.0
 
 cryptography
+h2
 hypothesis>=4.41.2
 jinja2
 pytest>=7.0.0

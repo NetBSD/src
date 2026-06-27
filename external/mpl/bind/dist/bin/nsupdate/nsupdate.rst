@@ -354,15 +354,24 @@ The command formats and their meanings are as follows:
    ``domain-name``. The ``data`` are written in the standard text
    representation of the resource record's RDATA.
 
+   Note RDATA which is empty (e.g. APL with an zero length rdata)
+   needs to be entered using ``\# 0`` form.
+
 ``update delete domain-name ttl class type data``
    This command deletes any resource records named ``domain-name``. If ``type`` and
    ``data`` are provided, only matching resource records are removed.
    The Internet class is assumed if ``class`` is not supplied. The
    ``ttl`` is ignored, and is only allowed for compatibility.
 
+   Note RDATA which is empty (e.g. APL with an zero length rdata)
+   needs to be entered using ``\# 0`` form.
+
 ``update add domain-name ttl class type data``
    This command adds a new resource record with the specified ``ttl``, ``class``, and
    ``data``.
+
+   Note RDATA which is empty (e.g. APL with an zero length rdata)
+   needs to be entered using ``\# 0`` form.
 
 ``show``
    This command displays the current message, containing all of the prerequisites and

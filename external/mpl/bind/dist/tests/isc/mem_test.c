@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.4.2.1 2026/05/07 16:18:56 martin Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.4.2.2 2026/06/27 10:14:37 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -293,6 +293,17 @@ ISC_RUN_TEST_IMPL(isc_mem_reallocate) {
 	isc_mem_free(mctx, data);
 }
 
+static bool
+at_least_one_overmem(isc_mem_t *omctx) {
+	for (size_t i = 0; i < UINT16_MAX; i++) {
+		/* The overmem is probability based in this range */
+		if (isc_mem_isovermem(omctx)) {
+			return true;
+		}
+	}
+	return false;
+}
+
 ISC_RUN_TEST_IMPL(isc_mem_overmem) {
 	isc_mem_t *omctx = NULL;
 	isc_mem_create(&omctx);
@@ -300,27 +311,27 @@ ISC_RUN_TEST_IMPL(isc_mem_overmem) {
 
 	isc_mem_setwater(omctx, 1024, 512);
 
-	/* inuse < lo_water */
+	/* inuse <= lo_water is always false */
 	void *data1 = isc_mem_allocate(omctx, 256);
 	assert_false(isc_mem_isovermem(omctx));
 
-	/* lo_water < inuse < hi_water */
+	/* lo_water < inuse < hi_water might be true or false */
 	void *data2 = isc_mem_allocate(omctx, 512);
-	assert_false(isc_mem_isovermem(omctx));
+	assert_true(at_least_one_overmem(omctx));
 
-	/* hi_water < inuse */
+	/* hi_water <= inuse is always true */
 	void *data3 = isc_mem_allocate(omctx, 512);
 	assert_true(isc_mem_isovermem(omctx));
 
-	/* lo_water < inuse < hi_water */
+	/* lo_water < inuse < hi_water might be true or false */
 	isc_mem_free(omctx, data2);
-	assert_true(isc_mem_isovermem(omctx));
+	assert_true(at_least_one_overmem(omctx));
 
-	/* inuse < lo_water */
+	/* inuse <= lo_water is always false */
 	isc_mem_free(omctx, data3);
 	assert_false(isc_mem_isovermem(omctx));
 
-	/* inuse == 0 */
+	/* inuse == 0 is always false */
 	isc_mem_free(omctx, data1);
 	assert_false(isc_mem_isovermem(omctx));
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.21.2.1 2026/05/07 16:18:37 martin Exp $	*/
+/*	$NetBSD: message.c,v 1.21.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1076,6 +1076,17 @@ getquestions(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 		rdclass = isc_buffer_getuint16(source);
 
 		/*
+		 * Notify and update messages need to specify the data class.
+		 */
+		if ((msg->opcode == dns_opcode_update ||
+		     msg->opcode == dns_opcode_notify) &&
+		    (rdclass == dns_rdataclass_none ||
+		     rdclass == dns_rdataclass_any))
+		{
+			DO_ERROR(DNS_R_FORMERR);
+		}
+
+		/*
 		 * If this class is different than the one we already read,
 		 * this is an error.
 		 */
@@ -1406,7 +1417,10 @@ getsection(isc_buffer_t *source, dns_message_t *msg, dns_decompress_t dctx,
 		rdata->rdclass = rdclass;
 		if (rdtype == dns_rdatatype_rrsig && rdata->flags == 0) {
 			covers = dns_rdata_covers(rdata);
-			if (covers == 0) {
+			/* A signature can only cover a real rdata type */
+			if (covers == dns_rdatatype_none ||
+			    dns_rdatatype_ismeta(covers))
+			{
 				DO_ERROR(DNS_R_FORMERR);
 			}
 		} else if (rdtype == dns_rdatatype_sig /* SIG(0) */ &&

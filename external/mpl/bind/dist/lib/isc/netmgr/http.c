@@ -1,4 +1,4 @@
-/*	$NetBSD: http.c,v 1.5.2.1 2026/05/07 16:18:51 martin Exp $	*/
+/*	$NetBSD: http.c,v 1.5.2.2 2026/06/27 10:14:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1470,7 +1470,7 @@ http_send_outgoing(isc_nm_http_session_t *session, isc_nmhandle_t *httphandle,
 	if (cb != NULL) {
 		/*
 		 * Case 0: The callback is specified, that means that a DNS
-		 * message is ready. Let's flush the the buffer.
+		 * message is ready. Let's flush the buffer.
 		 */
 		total = max_total_write_size;
 	} else if (max_total_write_size >= FLUSH_HTTP_WRITE_BUFFER_AFTER) {
@@ -1482,9 +1482,9 @@ http_send_outgoing(isc_nm_http_session_t *session, isc_nmhandle_t *httphandle,
 	} else if (session->sending > 0 && total > 0) {
 		/*
 		 * Case 2: There is one or more write requests in flight and
-		 * we have some new data form nghttp2 to send.
+		 * we have some new data from nghttp2 to send.
 		 * Then let's return from the function: as soon as the
-		 * "in-flight" write callback get's called or we have reached
+		 * "in-flight" write callback gets called or we have reached
 		 * FLUSH_HTTP_WRITE_BUFFER_AFTER bytes in the write buffer, we
 		 * will flush the buffer. */
 		INSIST(cb == NULL);
@@ -2755,6 +2755,8 @@ server_httpsend(isc_nmhandle_t *handle, isc_nmsocket_t *sock,
 	} else {
 		cb(handle, result, cbarg);
 	}
+
+	isc_buffer_initnull(&sock->h2->wbuf);
 	isc__nm_uvreq_put(&req);
 }
 

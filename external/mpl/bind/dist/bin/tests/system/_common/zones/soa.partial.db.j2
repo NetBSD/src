@@ -1,0 +1,9 @@
+$ORIGIN @zone.name@.
+$TTL 300
+{% raw %}@{% endraw %}			IN SOA	@zone.ns.name@.@zone.name@. . (
+				1		; serial
+				20		; refresh (20 seconds)
+				20		; retry (20 seconds)
+				1814400		; expire (3 weeks)
+				3600		; minimum (1 hour)
+)

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.16.2.1 2026/05/07 16:18:39 martin Exp $	*/
+/*	$NetBSD: rpz.c,v 1.16.2.2 2026/06/27 10:14:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -580,7 +580,7 @@ fix_qname_skip_recurse(dns_rpz_zones_t *rpzs) {
 		 * it is okay to skip recursion. After the first zone
 		 * that has to wait for recursion, all the others have
 		 * to wait as well, so we want to create a mask in which
-		 * all the trailing zeroes in zbits_req are are 1, and
+		 * all the trailing zeroes in zbits_req are 1, and
 		 * more significant bits are 0. (For instance,
 		 * 0x0700 => 0x00ff, 0x0007 => 0x0000)
 		 */

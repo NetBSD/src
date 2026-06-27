@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.12 2025/07/17 19:01:45 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.12.2.1 2026/06/27 10:14:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,8 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/hash.h>
+#include <isc/log.h>
 #include <isc/mem.h>
 #include <isc/net.h>
 #include <isc/netaddr.h>
@@ -46,7 +48,7 @@ log_end(dns_rrl_t *rrl, dns_rrl_entry_t *e, bool early, char *log_buf,
 
 /*
  * Get a modulus for a hash function that is tolerably likely to be
- * relatively prime to most inputs.  Of course, we get a prime for for initial
+ * relatively prime to most inputs.  Of course, we get a prime for initial
  * values not larger than the square of the last prime.  We often get a prime
  * after that.
  * This works well in practice for hash tables up to at least 100
@@ -376,14 +378,12 @@ key_cmp(const dns_rrl_key_t *a, const dns_rrl_key_t *b) {
 
 static uint32_t
 hash_key(const dns_rrl_key_t *key) {
-	uint32_t hval;
-	int i;
-
-	hval = key->w[0];
-	for (i = sizeof(key->w) / sizeof(key->w[0]) - 1; i >= 0; --i) {
-		hval = key->w[i] + (hval << 1);
-	}
-	return hval;
+	/*
+	 * The key includes attacker-controlled bits (client /24, qname
+	 * hash, qtype). Use the keyed, per-process-randomised hash so
+	 * collisions cannot be engineered to overload one bucket chain.
+	 */
+	return isc_hash32(key, sizeof(*key), true);
 }
 
 /*

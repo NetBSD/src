@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.12.2.1 2026/05/07 16:18:37 martin Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.12.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -828,6 +828,9 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	c.n = BN_bin2bn(r.base, r.length, NULL);
 	if (c.e == NULL || c.n == NULL) {
 		DST_RET(ISC_R_NOMEMORY);
+	}
+	if (BN_num_bits(c.e) > RSA_MAX_PUBEXP_BITS) {
+		DST_RET(ISC_R_RANGE);
 	}
 	isc_buffer_forward(data, length);
 

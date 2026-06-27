@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.25.2.1 2026/05/07 16:15:11 martin Exp $	*/
+/*	$NetBSD: server.c,v 1.25.2.2 2026/06/27 10:13:56 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1919,10 +1919,12 @@ dlzconfigure_callback(dns_view_t *view, dns_dlzdb_t *dlzdb, dns_zone_t *zone) {
 	dns_rdataclass_t zclass = view->rdclass;
 	isc_result_t result;
 
+	dns_zone_setclass(zone, zclass);
 	result = dns_zonemgr_managezone(named_g_server->zonemgr, zone);
 	if (result != ISC_R_SUCCESS) {
 		return result;
 	}
+
 	dns_zone_setstats(zone, named_g_server->zonestats);
 
 	return named_zone_configure_writeable_dlz(dlzdb, zone, zclass, origin);
@@ -4430,7 +4432,8 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	obj = NULL;
 	result = named_config_get(maps, "recursion", &obj);
 	INSIST(result == ISC_R_SUCCESS);
-	view->recursion = cfg_obj_asboolean(obj);
+	view->recursion = (view->rdclass == dns_rdataclass_in &&
+			   cfg_obj_asboolean(obj));
 
 	if (named_g_maxcachesize != 0) {
 		/*
@@ -5146,33 +5149,13 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 	}
 
 	/*
-	 * We have default hints for class IN if we need them.
+	 * We have default root hints for class IN if we need them.
+	 * Each view gets its own rootdb so a priming response only
+	 * writes into that view's copy.  Other classes don't support
+	 * recursion and don't need hints.
 	 */
 	if (view->rdclass == dns_rdataclass_in && view->hints == NULL) {
 		dns_view_sethints(view, named_g_server->in_roothints);
-	}
-
-	/*
-	 * If we still have no hints, this is a non-IN view with no
-	 * "hints zone" configured.  Issue a warning, except if this
-	 * is a root server.  Root servers never need to consult
-	 * their hints, so it's no point requiring users to configure
-	 * them.
-	 */
-	if (view->hints == NULL) {
-		dns_zone_t *rootzone = NULL;
-		(void)dns_view_findzone(view, dns_rootname, DNS_ZTFIND_EXACT,
-					&rootzone);
-		if (rootzone != NULL) {
-			dns_zone_detach(&rootzone);
-			need_hints = false;
-		}
-		if (need_hints) {
-			isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
-				      NAMED_LOGMODULE_SERVER, ISC_LOG_WARNING,
-				      "no root hints for view '%s'",
-				      view->name);
-		}
 	}
 
 	/*
@@ -5410,14 +5393,13 @@ configure_view(dns_view_t *view, dns_viewlist_t *viewlist, cfg_obj_t *config,
 				 "allow-proxy-on", NULL, actx, named_g_mctx,
 				 &view->proxyonacl));
 
-	if (strcmp(view->name, "_bind") != 0 &&
-	    view->rdclass != dns_rdataclass_chaos)
-	{
-		/* named.conf only */
+	if (view->rdclass != dns_rdataclass_in) {
+		dns_acl_none(named_g_mctx, &view->recursionacl);
+		dns_acl_none(named_g_mctx, &view->recursiononacl);
+	} else {
 		CHECK(configure_view_acl(vconfig, config, NULL,
 					 "allow-recursion", NULL, actx,
 					 named_g_mctx, &view->recursionacl));
-		/* named.conf only */
 		CHECK(configure_view_acl(vconfig, config, NULL,
 					 "allow-recursion-on", NULL, actx,
 					 named_g_mctx, &view->recursiononacl));
@@ -12662,7 +12644,7 @@ named_server_status(named_server_t *server, isc_buffer_t **text) {
 		 cb);
 	CHECK(putstr(text, line));
 
-	if (gethostname(hostname, sizeof(hostname)) == 0) {
+	if (gethostname(hostname, sizeof(hostname)) != 0) {
 		strlcpy(hostname, "localhost", sizeof(hostname));
 	}
 	snprintf(line, sizeof(line), "running on %s: %s\n", hostname,
@@ -12933,7 +12915,7 @@ named_server_sync(named_server_t *server, isc_lex_t *lex, isc_buffer_t **text) {
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumping all zones%s: %s",
 			      cleanup ? ", removing journal files" : "",
-			      isc_result_totext(result));
+			      isc_result_totext(tresult));
 		return tresult;
 	}
 

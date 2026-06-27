@@ -31,7 +31,12 @@ zone "example." {
 	server-addresses { 10.53.0.2; };
 };
 
-zone "truncated.selfsigned." {
+zone "truncated-active.selfsigned." {
+	type static-stub;
+	server-addresses { 10.53.0.2; };
+};
+
+zone "truncated-revoked.selfsigned." {
 	type static-stub;
 	server-addresses { 10.53.0.2; };
 };

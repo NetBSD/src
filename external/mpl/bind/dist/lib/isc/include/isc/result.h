@@ -1,4 +1,4 @@
-/*	$NetBSD: result.h,v 1.12.2.1 2026/05/07 16:18:51 martin Exp $	*/
+/*	$NetBSD: result.h,v 1.12.2.2 2026/06/27 10:14:35 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,6 +232,7 @@ typedef enum isc_result {
 	DNS_R_NOSKRFILE,
 	DNS_R_NOSKRBUNDLE,
 	DNS_R_LOOPDETECTED,
+	DNS_R_MISMATCH,
 
 	DST_R_UNSUPPORTEDALG,
 	DST_R_CRYPTOFAILURE,

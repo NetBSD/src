@@ -297,6 +297,9 @@ l=$(grep "missing 'file' entry" <checkconf.out$n.2 | wc -l)
 $CHECKCONF inline-bad.conf >checkconf.out$n.3 2>&1 && ret=1
 l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
 [ $l -eq 1 ] || ret=1
+$CHECKCONF inline-inherit.conf >checkconf.out$n.3 2>&1 && ret=1
+l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
+[ $l -eq 1 ] || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -545,6 +548,7 @@ $CHECKCONF -l good.conf \
   | grep -v "is not implemented" \
   | grep -v "is not recommended" \
   | grep -v "no longer exists" \
+  | grep -v "recursion will be disabled" \
   | grep -v "is obsolete" >checkconf.out$n || ret=1
 diff good.zonelist checkconf.out$n >diff.out$n || ret=1
 if [ $ret -ne 0 ]; then
@@ -799,6 +803,17 @@ echo_i "check that 'check-wildcard yes;' warns as configured ($n)"
 ret=0
 $CHECKCONF -z check-wildcard.conf >checkconf.out$n 2>&1 || ret=1
 grep -F "warning: ownername 'foo.*.check-wildcard' contains an non-terminal wildcard" checkconf.out$n >/dev/null || ret=1
+if [ $ret != 0 ]; then
+  echo_i "failed"
+  ret=1
+fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "check 'recursion yes;' is warned and disabled in a non-IN view ($n)"
+ret=0
+$CHECKCONF warn-chaos-recursion.conf >checkconf.out$n 2>&1 || ret=1
+grep -F "recursion will be disabled" checkconf.out$n >/dev/null || ret=1
 if [ $ret != 0 ]; then
   echo_i "failed"
   ret=1

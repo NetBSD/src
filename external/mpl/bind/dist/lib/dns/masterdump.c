@@ -1,4 +1,4 @@
-/*	$NetBSD: masterdump.c,v 1.17.2.1 2026/05/07 16:18:37 martin Exp $	*/
+/*	$NetBSD: masterdump.c,v 1.17.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -237,6 +237,7 @@ static char tabs[N_TABS + 1] = "\t\t\t\t\t\t\t\t\t\t";
 struct dns_dumpctx {
 	unsigned int magic;
 	isc_mem_t *mctx;
+	isc_loop_t *loop;
 	isc_mutex_t lock;
 	isc_refcount_t references;
 	atomic_bool canceled;
@@ -1489,10 +1490,20 @@ closeandrename(FILE *f, isc_result_t result, const char *temp,
 }
 
 /*
- * This will run in a libuv threadpool thread.
+ * The combination of isc_work_enqueue() on the current loop and callback on
+ * dctx->loop ensures the correct ordering:
+ *
+ * 1. dns_master_dumptostreamasync() (or dns_master_dumpasync()) calls
+ *    isc_work_enqueue() on the current loop.
+ * 2. master_dump() runs asynchronously and can finish before the entry point
+ *    returns; master_dump_done() is queued on the current loop and cannot run
+ *    until the entry point returns.
+ * 3. The entry point publishes *dctxp.
+ * 4. master_dump_done() runs on the current loop and hands off to dctx->loop.
+ * 5. dctx->done() runs on dctx->loop asynchronously.
  */
 static void
-master_dump_cb(void *data) {
+master_dump(void *data) {
 	isc_result_t result = ISC_R_UNSET;
 	dns_dumpctx_t *dctx = data;
 	REQUIRE(DNS_DCTX_VALID(dctx));
@@ -1517,15 +1528,20 @@ master_dump_cb(void *data) {
 	dctx->result = result;
 }
 
-/*
- * This will run in a loop manager thread when the dump is complete.
- */
 static void
-master_dump_done_cb(void *data) {
+master_dump_callback(void *data) {
 	dns_dumpctx_t *dctx = data;
 
 	(dctx->done)(dctx->done_arg, dctx->result);
+	isc_loop_detach(&dctx->loop);
 	dns_dumpctx_detach(&dctx);
+}
+
+static void
+master_dump_done(void *data) {
+	dns_dumpctx_t *dctx = data;
+
+	isc_async_run(dctx->loop, master_dump_callback, dctx);
 }
 
 static isc_result_t
@@ -1758,21 +1774,6 @@ cleanup:
 	return result;
 }
 
-static void
-master_dump_enqueue(void *dctx) {
-	isc_work_enqueue(isc_loop(), master_dump_cb, master_dump_done_cb, dctx);
-}
-
-static void
-dns_dumpctx_enqueue(isc_loop_t *loop, dns_dumpctx_t *dctx) {
-	dns_dumpctx_ref(dctx);
-	if (loop == isc_loop()) {
-		master_dump_enqueue(dctx);
-	} else {
-		isc_async_run(loop, master_dump_enqueue, dctx);
-	}
-}
-
 isc_result_t
 dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 			     dns_dbversion_t *version,
@@ -1794,7 +1795,10 @@ dns_master_dumptostreamasync(isc_mem_t *mctx, dns_db_t *db,
 	dctx->done = done;
 	dctx->done_arg = done_arg;
 
-	dns_dumpctx_enqueue(loop, dctx);
+	dns_dumpctx_ref(dctx);
+	isc_loop_attach(loop, &dctx->loop);
+	isc_work_enqueue(isc_loop(), master_dump, master_dump_done, dctx);
+
 	*dctxp = dctx;
 
 	return ISC_R_SUCCESS;
@@ -1889,7 +1893,10 @@ dns_master_dumpasync(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *version,
 	dctx->file = file;
 	dctx->tmpfile = tempname;
 
-	dns_dumpctx_enqueue(loop, dctx);
+	dns_dumpctx_ref(dctx);
+	isc_loop_attach(loop, &dctx->loop);
+	isc_work_enqueue(isc_loop(), master_dump, master_dump_done, dctx);
+
 	*dctxp = dctx;
 
 	return ISC_R_SUCCESS;

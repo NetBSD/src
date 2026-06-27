@@ -1,4 +1,4 @@
-/*	$NetBSD: qpcache.c,v 1.4.2.1 2026/05/07 16:18:38 martin Exp $	*/
+/*	$NetBSD: qpcache.c,v 1.4.2.2 2026/06/27 10:14:32 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -182,7 +182,7 @@ struct qpcnode {
 	 * and the database have both released the object) the object
 	 * is freed.
 	 *
-	 * Whenever 'erefs' is incremented from zero, we also aquire a
+	 * Whenever 'erefs' is incremented from zero, we also acquire a
 	 * node use reference (see 'qpcache->references' below), and
 	 * release it when 'erefs' goes back to zero. This prevents the
 	 * database from being shut down until every caller has released

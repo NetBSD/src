@@ -852,7 +852,7 @@ def check_dnssec_verify(server, zone, tsig=None):
                     file.write(rr.to_text())
                     file.write("\n")
 
-            verify_command = [os.environ.get("VERIFY"), "-z", "-o", zone, zonefile]
+            verify_command = [os.environ.get("VERIFY"), "-z", "-o", fqdn, zonefile]
             verified = isctest.run.cmd(verify_command, raise_on_exception=False)
             if verified.rc == 0:
                 return

@@ -1,0 +1,36 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+. 			IN SOA	owner.root-servers.nil. a.root-servers.nil. (
+				2000042100   	; serial
+				600         	; refresh
+				600         	; retry
+				1200    	; expire
+				600       	; minimum
+				)
+.			NS	a.root-servers.nil.
+a.root-servers.nil.	A	10.53.0.1
+
+; The idea is that the resolver would do 2 ADB lookups, so there would be 2
+; find list, both with 2 IPs in it. ns1 (which is actually ans2 and ans5) would
+; have both the slowest and fastest addresses. ns2 (which is actually ans3 and
+; ans4) would have two addresses in the middle.
+
+example.		NS	ns1.example.
+example.		NS	ns1.example.
+example.		NS	ns2.example.
+example.		NS	ns2.example.
+
+ns1.example.		A	10.53.0.2 ; delay is 0
+ns1.example.		A	10.53.0.5 ; delay is 0.15
+ns2.example.		A	10.53.0.4 ; delay is 0.08
+ns2.example.		A	10.53.0.3 ; delay is 0.03

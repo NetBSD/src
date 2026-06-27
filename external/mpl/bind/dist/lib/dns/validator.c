@@ -1,4 +1,4 @@
-/*	$NetBSD: validator.c,v 1.18.2.1 2026/05/07 16:18:39 martin Exp $	*/
+/*	$NetBSD: validator.c,v 1.18.2.2 2026/06/27 10:14:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -260,9 +260,9 @@ validator_done(dns_validator_t *val, isc_result_t result) {
 }
 
 /*%
- * The isdelegation() function is called as part of seeking the DS record.
- * Look in the NSEC or NSEC3 record returned from a DS query to see if the
- * record has the NS bitmap set. If so, we are at a delegation point.
+ * The is_insecure_referral() function is called as part of seeking the DS
+ * record. Look in the NSEC or NSEC3 record returned from a DS query to see if
+ * the record has the NS bitmap set. If so, we are at a delegation point.
  *
  * If the response contains NSEC3 records with too high iterations, we cannot
  * (or rather we are not going to) validate the insecurity proof. Instead we
@@ -270,15 +270,16 @@ validator_done(dns_validator_t *val, isc_result_t result) {
  * the delegation.
  *
  * Returns:
- *\li	#ISC_R_SUCCESS	the NS bitmap was set in the NSEC or NSEC3 record, or
- *			the NSEC3 covers the name (in case of opt-out), or
- *			we cannot validate the insecurity proof and are going
- *			to treat the message as isnecure.
- *\li	#ISC_R_NOTFOUND the NS bitmap was not set,
+ *\li	#true  the NS bitmap was set in the NSEC or NSEC3 record, or
+ *	       the NSEC3 covers the name (in case of opt-out), or
+ *	       we cannot validate the insecurity proof and are going
+ *	       to treat the message as insecure.
+ *\li	#false the NS bitmap was not set.
  */
-static isc_result_t
-isdelegation(dns_validator_t *val, dns_name_t *name, dns_rdataset_t *rdataset,
-	     isc_result_t dbresult, const char *caller) {
+static bool
+is_insecure_referral(dns_validator_t *val, dns_name_t *name,
+		     dns_rdataset_t *rdataset, isc_result_t dbresult,
+		     const char *caller) {
 	dns_fixedname_t fixed;
 	dns_label_t hashlabel;
 	dns_name_t nsec3name;
@@ -306,7 +307,7 @@ isdelegation(dns_validator_t *val, dns_name_t *name, dns_rdataset_t *rdataset,
 			goto trynsec3;
 		}
 		if (result != ISC_R_SUCCESS) {
-			return ISC_R_NOTFOUND;
+			return false;
 		}
 	}
 
@@ -320,7 +321,7 @@ isdelegation(dns_validator_t *val, dns_name_t *name, dns_rdataset_t *rdataset,
 		dns_rdata_reset(&rdata);
 	}
 	dns_rdataset_disassociate(&set);
-	return found ? ISC_R_SUCCESS : ISC_R_NOTFOUND;
+	return found;
 
 trynsec3:
 	/*
@@ -369,7 +370,7 @@ trynsec3:
 					      "%s: too many iterations",
 					      caller);
 				dns_rdataset_disassociate(&set);
-				return ISC_R_SUCCESS;
+				return true;
 			}
 			length = isc_iterated_hash(
 				hash, nsec3.hash, nsec3.iterations, nsec3.salt,
@@ -382,7 +383,7 @@ trynsec3:
 				found = dns_nsec3_typepresent(&rdata,
 							      dns_rdatatype_ns);
 				dns_rdataset_disassociate(&set);
-				return found ? ISC_R_SUCCESS : ISC_R_NOTFOUND;
+				return found;
 			}
 			if ((nsec3.flags & DNS_NSEC3FLAG_OPTOUT) == 0) {
 				continue;
@@ -398,12 +399,12 @@ trynsec3:
 			      memcmp(hash, nsec3.next, length) < 0)))
 			{
 				dns_rdataset_disassociate(&set);
-				return ISC_R_SUCCESS;
+				return true;
 			}
 		}
 		dns_rdataset_disassociate(&set);
 	}
-	return found ? ISC_R_SUCCESS : ISC_R_NOTFOUND;
+	return found;
 }
 
 static void
@@ -617,10 +618,10 @@ fetch_callback_ds(void *arg) {
 			break;
 		case DNS_R_NXRRSET:
 		case DNS_R_NCACHENXRRSET:
-			result = isdelegation(val, resp->foundname,
-					      &val->frdataset, eresult,
-					      "fetch_callback_ds");
-			if (result == ISC_R_SUCCESS) {
+			if (is_insecure_referral(val, resp->foundname,
+						 &val->frdataset, eresult,
+						 "fetch_callback_ds"))
+			{
 				/*
 				 * Failed to find a DS while trying to prove
 				 * insecurity. If this is a zone cut, that
@@ -740,9 +741,9 @@ validator_callback_ds(void *arg) {
 		if ((val->attributes & VALATTR_INSECURITY) != 0 &&
 		    val->frdataset.covers == dns_rdatatype_ds &&
 		    NEGATIVE(&val->frdataset) &&
-		    isdelegation(val, name, &val->frdataset,
-				 DNS_R_NCACHENXRRSET,
-				 "validator_callback_ds") == ISC_R_SUCCESS)
+		    is_insecure_referral(val, name, &val->frdataset,
+					 DNS_R_NCACHENXRRSET,
+					 "validator_callback_ds"))
 		{
 			result = markanswer(val, "validator_callback_ds",
 					    "no DS and this is a delegation");
@@ -961,27 +962,54 @@ notfound:
 	return result;
 }
 
+#define CHAINING(r) (((r)->attributes & DNS_RDATASETATTR_CHAINING) != 0)
+
 /*%
- * Checks to make sure we are not going to loop.  As we use a SHARED fetch
- * the validation process will stall if looping was to occur.
+ * Returns true if proceeding would stall the SHARED fetch: either the
+ * fetch cannot advance an alias chain, or an ancestor is already
+ * resolving the same (name, type).
  */
 static bool
 check_deadlock(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	       dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset) {
-	dns_validator_t *parent;
+	for (dns_validator_t *cur = val; cur != NULL; cur = cur->parent) {
+		if (!dns_name_equal(cur->name, name)) {
+			continue;
+		}
 
-	for (parent = val; parent != NULL; parent = parent->parent) {
-		if (parent->type == type &&
-		    dns_name_equal(parent->name, name) &&
-		    /*
-		     * As NSEC3 records are meta data you sometimes
-		     * need to prove a NSEC3 record which says that
-		     * itself doesn't exist.
-		     */
-		    (parent->type != dns_rdatatype_nsec3 || rdataset == NULL ||
-		     sigrdataset == NULL || parent->message == NULL ||
-		     parent->rdataset != NULL || parent->sigrdataset != NULL))
+		/*
+		 * Validating a CNAME/DNAME ("chaining" rdataset): a fetch at
+		 * the alias's own name cannot advance the chain (the type we
+		 * need, e.g. DS/DNSKEY for an insecurity proof, cannot live at
+		 * an alias) and would only self-join the in-flight fetch.
+		 */
+		if (cur->rdataset != NULL && CHAINING(cur->rdataset)) {
+			validator_log(
+				val, ISC_LOG_DEBUG(3),
+				"fetch would not advance the alias chain: "
+				"aborting validation");
+			return true;
+		}
+
+		/*
+		 * Not a loop: NSEC3 is meta data, so proving a name's
+		 * nonexistence can need the NSEC3 RRset that proves it
+		 * validated at its own owner name.  Allow that when we hold a
+		 * concrete RRset and the ancestor runs a message-driven
+		 * nonexistence proof.
+		 */
+		if (cur->type == dns_rdatatype_nsec3 && rdataset != NULL &&
+		    sigrdataset != NULL && cur->message != NULL &&
+		    cur->rdataset == NULL && cur->sigrdataset == NULL)
 		{
+			continue;
+		}
+
+		/*
+		 * An ancestor at this name is already validating this type; a
+		 * shared fetch would block on itself.
+		 */
+		if (cur->type == type) {
 			validator_log(val, ISC_LOG_DEBUG(3),
 				      "continuing validation would lead to "
 				      "deadlock: aborting validation");
@@ -990,6 +1018,8 @@ check_deadlock(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	}
 	return false;
 }
+
+#undef CHAINING
 
 /*%
  * Start a fetch for the requested name and type.
@@ -1003,8 +1033,6 @@ create_fetch(dns_validator_t *val, dns_name_t *name, dns_rdatatype_t type,
 	disassociate_rdatasets(val);
 
 	if (check_deadlock(val, name, type, NULL, NULL)) {
-		validator_log(val, ISC_LOG_DEBUG(3),
-			      "deadlock found (create_fetch)");
 		return ISC_R_DEADLOCK;
 	}
 
@@ -1971,6 +1999,13 @@ check_signer(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
 	dst_key_t *dstkey = NULL;
 	isc_result_t result;
 	dns_rdataset_t rdataset = DNS_RDATASET_INIT;
+
+	result = dns_dnssec_keyfromrdata(val->name, keyrdata, val->view->mctx,
+					 &dstkey);
+	if (result != ISC_R_SUCCESS) {
+		return result;
+	}
+
 	dns_rdataset_clone(val->sigrdataset, &rdataset);
 
 	for (result = dns_rdataset_first(&rdataset); result == ISC_R_SUCCESS;
@@ -1984,22 +2019,14 @@ check_signer(dns_validator_t *val, dns_rdata_t *keyrdata, uint16_t keyid,
 		if (keyid != sig.keyid || algorithm != sig.algorithm) {
 			continue;
 		}
-		if (dstkey == NULL) {
-			result = dns_dnssec_keyfromrdata(
-				val->name, keyrdata, val->view->mctx, &dstkey);
-			if (result != ISC_R_SUCCESS) {
-				return result;
-			}
-		}
+
 		result = verify(val, dstkey, &rdata, sig.keyid);
 		if (result == ISC_R_SUCCESS || result == ISC_R_QUOTA) {
 			break;
 		}
 	}
 
-	if (dstkey != NULL) {
-		dst_key_free(&dstkey);
-	}
+	dst_key_free(&dstkey);
 	dns_rdataset_disassociate(&rdataset);
 
 	return result;
@@ -3225,9 +3252,9 @@ seek_ds(dns_validator_t *val, isc_result_t *resp) {
 			return ISC_R_COMPLETE;
 		}
 
-		result = isdelegation(val, tname, &val->frdataset, result,
-				      "seek_ds");
-		if (result == ISC_R_SUCCESS) {
+		if (is_insecure_referral(val, tname, &val->frdataset, result,
+					 "seek_ds"))
+		{
 			*resp = markanswer(val, "seek_ds (3)",
 					   "this is a delegation");
 			return ISC_R_COMPLETE;
@@ -3802,12 +3829,16 @@ validator_addede(dns_validator_t *val, uint16_t code, const char *extra) {
 
 	if (extra != NULL) {
 		isc_buffer_putstr(&b, extra);
-		isc_buffer_putuint8(&b, ' ');
 	}
 
-	dns_name_totext(val->name, DNS_NAME_OMITFINALDOT, &b);
-	isc_buffer_putuint8(&b, '/');
-	dns_rdatatype_totext(val->type, &b);
+	if (val->name != NULL) {
+		if (extra != NULL) {
+			isc_buffer_putuint8(&b, ' ');
+		}
+		dns_name_totext(val->name, DNS_NAME_OMITFINALDOT, &b);
+		isc_buffer_putuint8(&b, '/');
+		dns_rdatatype_totext(val->type, &b);
+	}
 	isc_buffer_putuint8(&b, '\0');
 
 	dns_ede_add(&val->edectx, code, bdata);

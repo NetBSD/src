@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.25.2.1 2026/05/07 16:18:40 martin Exp $	*/
+/*	$NetBSD: zone.c,v 1.25.2.2 2026/06/27 10:14:33 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22060,7 +22060,6 @@ static void
 do_nsfetch(void *arg) {
 	dns_nsfetch_t *nsfetch = (dns_nsfetch_t *)arg;
 	isc_result_t result;
-	unsigned int nlabels = 1;
 	dns_resolver_t *resolver = NULL;
 	dns_zone_t *zone = nsfetch->zone;
 	unsigned int options = DNS_FETCHOPT_UNSHARED | DNS_FETCHOPT_NOCACHED;
@@ -22082,9 +22081,13 @@ do_nsfetch(void *arg) {
 			   "Create fetch for '%s' NS request", namebuf);
 	}
 
-	/* Derive parent domain. XXXWMM: Check for root domain */
+	/* Derive parent domain. Check for root domain. */
+	if (dns_name_countlabels(&nsfetch->pname) <= 1U) {
+		result = ISC_R_NOTFOUND;
+		goto cleanup;
+	}
 	dns_name_split(&nsfetch->pname,
-		       dns_name_countlabels(&nsfetch->pname) - nlabels, NULL,
+		       dns_name_countlabels(&nsfetch->pname) - 1U, NULL,
 		       &nsfetch->pname);
 
 	/*
@@ -22109,10 +22112,20 @@ cleanup:
 		dns_name_t *zname = dns_fixedname_name(&nsfetch->name);
 		bool free_needed;
 		char namebuf[DNS_NAME_FORMATSIZE];
-		dns_name_format(&nsfetch->pname, namebuf, sizeof(namebuf));
-		dnssec_log(zone, ISC_LOG_WARNING,
-			   "Failed to create fetch for '%s' NS request",
-			   namebuf);
+
+		if (DNS_NAME_VALID(&nsfetch->pname)) {
+			dns_name_format(&nsfetch->pname, namebuf,
+					sizeof(namebuf));
+			dnssec_log(zone, ISC_LOG_WARNING,
+				   "Failed to create fetch for '%s' NS request",
+				   namebuf);
+		} else {
+			dns_zone_nameonly(zone, namebuf, sizeof(namebuf));
+			dnssec_log(zone, ISC_LOG_WARNING,
+				   "Failed to create fetch for '%s' NS request",
+				   namebuf);
+		}
+
 		LOCK_ZONE(zone);
 		zone->nsfetchcount--;
 		isc_refcount_decrement(&zone->irefs);

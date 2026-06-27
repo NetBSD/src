@@ -25,3 +25,7 @@ def test_filter_dns64():
     msg = isctest.query.create("aaaa-only.unsigned", "aaaa")
     res = isctest.query.tcp(msg, "10.53.0.5")
     isctest.check.noerror(res)
+
+    msg = isctest.query.create("excludeone.unsigned", "aaaa")
+    res = isctest.query.tcp(msg, "10.53.0.5")
+    isctest.check.noerror(res)

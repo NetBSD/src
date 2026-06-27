@@ -1,0 +1,155 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+$TTL 300
+example.tld.		IN SOA	owner.dnshoster.tld. ns.dnshoster.tld. (
+				2010   	; serial
+				600         	; refresh
+				600         	; retry
+				1200    	; expire
+				600       	; minimum
+				)
+
+example.tld.			NS	ns.example.tld.
+ns.example.tld.			A	10.53.0.3
+
+sub.example.tld.		NS 	ns01.sub.example.tld.
+sub.example.tld.		NS 	ns02.sub.example.tld.
+sub.example.tld.		NS 	ns03.sub.example.tld.
+sub.example.tld.		NS 	ns04.sub.example.tld.
+sub.example.tld.		NS 	ns05.sub.example.tld.
+sub.example.tld.		NS 	ns06.sub.example.tld.
+sub.example.tld.		NS 	ns07.sub.example.tld.
+sub.example.tld.		NS 	ns08.sub.example.tld.
+sub.example.tld.		NS 	ns09.sub.example.tld.
+sub.example.tld.		NS 	ns10.sub.example.tld.
+
+ns01.sub.example.tld.		A	10.53.0.5
+ns01.sub.example.tld.		A	10.53.0.6
+ns01.sub.example.tld.		A	10.53.0.7
+ns01.sub.example.tld.		A	10.53.0.8
+ns01.sub.example.tld.		A	10.53.0.9
+ns01.sub.example.tld.		A	10.53.0.10
+ns01.sub.example.tld.		A	10.53.1.1
+ns01.sub.example.tld.		A	10.53.1.2
+ns01.sub.example.tld.		A	10.53.2.1
+ns01.sub.example.tld.		A	10.53.0.3
+; Those RR (same below) pointing to 127.0.0.1  won't ever be used as they
+; exceeded the ADB limit.
+ns01.sub.example.tld.		A	127.0.0.1
+
+ns02.sub.example.tld.		A	10.53.0.5
+ns02.sub.example.tld.		A	10.53.0.6
+ns02.sub.example.tld.		A	10.53.0.7
+ns02.sub.example.tld.		A	10.53.0.8
+ns02.sub.example.tld.		A	10.53.0.9
+ns02.sub.example.tld.		A	10.53.0.10
+ns02.sub.example.tld.		A	10.53.1.1
+ns02.sub.example.tld.		A	10.53.1.2
+ns02.sub.example.tld.		A	10.53.2.1
+ns02.sub.example.tld.		A	10.53.0.3
+ns02.sub.example.tld.		A	127.0.0.1
+
+ns03.sub.example.tld.		A	10.53.0.5
+ns03.sub.example.tld.		A	10.53.0.6
+ns03.sub.example.tld.		A	10.53.0.7
+ns03.sub.example.tld.		A	10.53.0.8
+ns03.sub.example.tld.		A	10.53.0.9
+ns03.sub.example.tld.		A	10.53.0.10
+ns03.sub.example.tld.		A	10.53.1.1
+ns03.sub.example.tld.		A	10.53.1.2
+ns03.sub.example.tld.		A	10.53.2.1
+ns03.sub.example.tld.		A	10.53.0.3
+ns03.sub.example.tld.		A	127.0.0.1
+
+ns04.sub.example.tld.		A	10.53.0.5
+ns04.sub.example.tld.		A	10.53.0.6
+ns04.sub.example.tld.		A	10.53.0.7
+ns04.sub.example.tld.		A	10.53.0.8
+ns04.sub.example.tld.		A	10.53.0.9
+ns04.sub.example.tld.		A	10.53.0.10
+ns04.sub.example.tld.		A	10.53.1.1
+ns04.sub.example.tld.		A	10.53.1.2
+ns04.sub.example.tld.		A	10.53.2.1
+ns04.sub.example.tld.		A	10.53.0.3
+ns04.sub.example.tld.		A	127.0.0.1
+
+ns05.sub.example.tld.		A	10.53.0.5
+ns05.sub.example.tld.		A	10.53.0.6
+ns05.sub.example.tld.		A	10.53.0.7
+ns05.sub.example.tld.		A	10.53.0.8
+ns05.sub.example.tld.		A	10.53.0.9
+ns05.sub.example.tld.		A	10.53.0.10
+ns05.sub.example.tld.		A	10.53.1.1
+ns05.sub.example.tld.		A	10.53.1.2
+ns05.sub.example.tld.		A	10.53.2.1
+ns05.sub.example.tld.		A	10.53.0.3
+ns05.sub.example.tld.		A	127.0.0.1
+
+ns06.sub.example.tld.		A	10.53.0.5
+ns06.sub.example.tld.		A	10.53.0.6
+ns06.sub.example.tld.		A	10.53.0.7
+ns06.sub.example.tld.		A	10.53.0.8
+ns06.sub.example.tld.		A	10.53.0.9
+ns06.sub.example.tld.		A	10.53.0.10
+ns06.sub.example.tld.		A	10.53.1.1
+ns06.sub.example.tld.		A	10.53.1.2
+ns06.sub.example.tld.		A	10.53.2.1
+ns06.sub.example.tld.		A	10.53.0.3
+ns06.sub.example.tld.		A	127.0.0.1
+
+ns07.sub.example.tld.		A	10.53.0.5
+ns07.sub.example.tld.		A	10.53.0.6
+ns07.sub.example.tld.		A	10.53.0.7
+ns07.sub.example.tld.		A	10.53.0.8
+ns07.sub.example.tld.		A	10.53.0.9
+ns07.sub.example.tld.		A	10.53.0.10
+ns07.sub.example.tld.		A	10.53.1.1
+ns07.sub.example.tld.		A	10.53.1.2
+ns07.sub.example.tld.		A	10.53.2.1
+ns07.sub.example.tld.		A	10.53.0.3
+ns07.sub.example.tld.		A	127.0.0.1
+
+ns08.sub.example.tld.		A	10.53.0.5
+ns08.sub.example.tld.		A	10.53.0.6
+ns08.sub.example.tld.		A	10.53.0.7
+ns08.sub.example.tld.		A	10.53.0.8
+ns08.sub.example.tld.		A	10.53.0.9
+ns08.sub.example.tld.		A	10.53.0.10
+ns08.sub.example.tld.		A	10.53.1.1
+ns08.sub.example.tld.		A	10.53.1.2
+ns08.sub.example.tld.		A	10.53.2.1
+ns08.sub.example.tld.		A	10.53.0.3
+ns08.sub.example.tld.		A	127.0.0.1
+
+ns09.sub.example.tld.		A	10.53.0.5
+ns09.sub.example.tld.		A	10.53.0.6
+ns09.sub.example.tld.		A	10.53.0.7
+ns09.sub.example.tld.		A	10.53.0.8
+ns09.sub.example.tld.		A	10.53.0.9
+ns09.sub.example.tld.		A	10.53.0.10
+ns09.sub.example.tld.		A	10.53.1.1
+ns09.sub.example.tld.		A	10.53.1.2
+ns09.sub.example.tld.		A	10.53.2.1
+ns09.sub.example.tld.		A	10.53.0.3
+ns09.sub.example.tld.		A	127.0.0.1
+
+ns10.sub.example.tld.		A	10.53.0.5
+ns10.sub.example.tld.		A	10.53.0.6
+ns10.sub.example.tld.		A	10.53.0.7
+ns10.sub.example.tld.		A	10.53.0.8
+ns10.sub.example.tld.		A	10.53.0.9
+ns10.sub.example.tld.		A	10.53.0.10
+ns10.sub.example.tld.		A	10.53.1.1
+ns10.sub.example.tld.		A	10.53.1.2
+ns10.sub.example.tld.		A	10.53.2.1
+ns10.sub.example.tld.		A	10.53.0.3
+ns10.sub.example.tld.		A	127.0.0.1

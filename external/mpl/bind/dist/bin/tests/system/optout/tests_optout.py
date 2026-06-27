@@ -14,7 +14,6 @@
 
 import os
 import re
-import sys
 
 import dns.query
 import dns.rcode
@@ -24,9 +23,6 @@ import pytest
 import isctest
 
 pytestmark = [
-    pytest.mark.skipif(
-        sys.version_info < (3, 7), reason="Python >= 3.7 required [GL #3001]"
-    ),
     pytest.mark.extra_artifacts(
         [
             "*.out",
@@ -34,7 +30,6 @@ pytestmark = [
             "ns2/*.signed",
             "ns2/*.jnl",
             "ns2/*.jbk",
-            "ns2/controls.conf",
             "ns2/dsset-*",
             "ns2/K*",
         ]

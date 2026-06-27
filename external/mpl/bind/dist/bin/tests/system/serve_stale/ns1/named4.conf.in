@@ -47,4 +47,5 @@ zone "." {
 zone "stale.test" {
 	type primary;
 	file "stale.test.db";
+	allow-update { any; };
 };

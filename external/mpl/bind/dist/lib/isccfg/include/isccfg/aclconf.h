@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.h,v 1.9 2025/01/26 16:25:45 christos Exp $	*/
+/*	$NetBSD: aclconf.h,v 1.9.2.1 2026/06/27 10:14:36 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -66,7 +66,7 @@ cfg_acl_fromconfig(const cfg_obj_t *caml, const cfg_obj_t *cctx,
  * Construct a new dns_acl_t from configuration data in 'caml' and
  * 'cctx'.  Memory is allocated through 'mctx'.
  *
- * Any named ACLs referred to within 'caml' will be be converted
+ * Any named ACLs referred to within 'caml' will be converted
  * into nested dns_acl_t objects.  Multiple references to the same
  * named ACLs will be converted into shared references to a single
  * nested dns_acl_t object when the referring objects were created

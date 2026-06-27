@@ -1,4 +1,4 @@
-/*	$NetBSD: dns64.c,v 1.8 2025/01/26 16:25:22 christos Exp $	*/
+/*	$NetBSD: dns64.c,v 1.8.2.1 2026/06/27 10:14:31 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -327,7 +327,7 @@ done:
 }
 
 /*
- * Posible mapping of IPV4ONLY.ARPA A records into AAAA records
+ * Possible mapping of IPV4ONLY.ARPA A records into AAAA records
  * for valid RFC6052 prefixes.
  */
 static struct {

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.h,v 1.13.2.1 2026/05/07 16:18:40 martin Exp $	*/
+/*	$NetBSD: db.h,v 1.13.2.2 2026/06/27 10:14:34 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -693,7 +693,7 @@ dns_db_currentversion(dns_db_t *db, dns_dbversion_t **versionp);
  *
  * \li	'db' is a valid database with zone semantics.
  *
- * \li	versionp != NULL && *verisonp == NULL
+ * \li	versionp != NULL && *versionp == NULL
  *
  * Ensures:
  *
@@ -710,7 +710,7 @@ dns_db_newversion(dns_db_t *db, dns_dbversion_t **versionp);
  *
  * \li	'db' is a valid database with zone semantics.
  *
- * \li	versionp != NULL && *verisonp == NULL
+ * \li	versionp != NULL && *versionp == NULL
  *
  * Ensures:
  *

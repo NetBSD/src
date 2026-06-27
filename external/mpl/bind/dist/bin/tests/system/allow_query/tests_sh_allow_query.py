@@ -14,7 +14,6 @@ import pytest
 pytestmark = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
-        "ns2/controls.conf",
     ]
 )
 

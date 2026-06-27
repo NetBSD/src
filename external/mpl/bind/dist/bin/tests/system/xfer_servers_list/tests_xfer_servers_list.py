@@ -25,9 +25,13 @@ def check_soa(ns, serial):
     )
 
 
-def wait_for_initial_xfrin(ns):
+def wait_for_initial_xfrin(ns, named_port):
     with ns.watch_log_from_start() as watcher:
-        watcher.wait_for_line("Transfer status: success")
+        watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "test", "10.53.0.1", "Transfer status: success", named_port
+            )
+        )
     check_soa(ns, 1)
 
 
@@ -39,11 +43,11 @@ def wait_for_sending_notify(ns1, ns, key_name):
         watcher.wait_for_line(pattern)
 
 
-def test_xfer_servers_list(ns1, ns2, ns3, ns4, templates):
-    # First, wait for ns2, ns3 and ns4 to xfrin foo.fr and answer it
-    wait_for_initial_xfrin(ns2)
-    wait_for_initial_xfrin(ns3)
-    wait_for_initial_xfrin(ns4)
+def test_xfer_servers_list(named_port, ns1, ns2, ns3, ns4, templates):
+    # First, wait for ns2, ns3 and ns4 to xfrin test. and answer it
+    wait_for_initial_xfrin(ns2, named_port)
+    wait_for_initial_xfrin(ns3, named_port)
+    wait_for_initial_xfrin(ns4, named_port)
 
     # ns1 initially notifies the secondaries using the respectively configured keys
     # - 10.53.0.2 has the key defined where `secondaries` is used
@@ -56,13 +60,25 @@ def test_xfer_servers_list(ns1, ns2, ns3, ns4, templates):
     for ns, key_name in seq:
         wait_for_sending_notify(ns1, ns, key_name)
 
-    # Then, ns1 update foo.fr. It notifies ns2, ns3 and ns4 about it
+    # Then, ns1 update test. It notifies ns2, ns3 and ns4 about it
     templates.render("ns1/test.db", {"serial": 2})
     with ns2.watch_log_from_here() as ns2_watcher, ns3.watch_log_from_here() as ns3_watcher, ns4.watch_log_from_here() as ns4_watcher:
         ns1.rndc("reload")
-        ns2_watcher.wait_for_line("Transfer status: success")
-        ns3_watcher.wait_for_line("Transfer status: success")
-        ns4_watcher.wait_for_line("Transfer status: success")
+        ns2_watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "test", "10.53.0.1", "Transfer status: success", named_port
+            )
+        )
+        ns3_watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "test", "10.53.0.1", "Transfer status: success", named_port
+            )
+        )
+        ns4_watcher.wait_for_line(
+            isctest.transfer.transfer_message(
+                "test", "10.53.0.1", "Transfer status: success", named_port
+            )
+        )
     check_soa(ns2, 2)
     check_soa(ns3, 2)
     check_soa(ns4, 2)
