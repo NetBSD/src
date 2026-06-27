@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.5,v 1.1.2.103 2026/06/15 17:44:22 martin Exp $
+# $NetBSD: CHANGES-9.5,v 1.1.2.104 2026/06/27 20:22:05 martin Exp $
 
 A complete list of changes from the NetBSD 9.4 release to the NetBSD 9.5
 release:
@@ -1370,4 +1370,88 @@ doc/3RDPARTY					(apply patch)
 
 	Update tzdata to tzdata2026b.
 	[kre, ticket #2013]
+
+crypto/external/bsd/openssl/dist/apps/s_client.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/asn1/a_strex.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/asn1/tasn_dec.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/bio/bf_lbuf.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/cms/cms_pwri.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/modes/ocb128.c		(apply patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs12/p12_decr.c	(apply patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs12/p12_kiss.c	(apply patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs12/p12_utl.c	(apply patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pk7_doit.c	(apply patch)
+crypto/external/bsd/openssl/dist/crypto/pkcs7/pk7_smime.c	(apply patch)
+crypto/external/bsd/openssl/dist/crypto/ts/ts_rsp_verify.c	(apply patch)
+
+	OpenSSL: fix CVE-2026-34180, CVE-2026-42766, CVE-2026-45447,
+	CVE-2026-9076, CVE-2025-9230, CVE-2025-68160, CVE-2025-69418,
+	CVE-2025-69419, CVE-2025-69420, CVE-2025-69421, CVE-2026-22795,
+	CVE-2026-22796
+	[nia, ticket #2014]
+
+sys/kern/kern_exec.c				1.526
+
+	posix_spawn(2): PR 59175, PR 52634: fix misuse of condition
+	variables leading to race between parent and child.
+	[riastradh, ticket #2015]
+
+external/gpl3/gcc/dist/libsanitizer/sanitizer_common/sanitizer_mutex.h 1.3
+
+	Fix StaticSpinMutex::CheckLocked() on sparc32.
+	[riastradh, ticket #2016]
+
+lib/libpthread/Makefile				1.103
+lib/libpthread/shlib_version			1.24
+tests/lib/libpthread/dlopen/t_dlopen.c		1.2,1.3
+tests/lib/libpthread/dlopen/t_dso_pthread_create.c 1.2
+
+	pthread: PR 59784: prevent unload with dlclose.
+	[riastradh, ticket #2017]
+
+external/cddl/osnet/dist/lib/libuutil/common/libuutil_impl.h 1.2 (patch)
+external/cddl/osnet/dist/lib/libuutil/common/uu_avl.c 1.2 (patch)
+external/cddl/osnet/dist/lib/libuutil/common/uu_list.c 1.2,1.5 (patch)
+lib/libbsdmalloc/malloc.c			1.13 (patch)
+lib/libc/gen/arc4random.c			1.51 (patch)
+lib/libc/stdlib/malloc.c			1.61 (patch)
+
+	libc, libuutil (zfs stuff), libbsdmalloc: PR 59237:
+	fix postfork mutex actions to reinitialize the mutex
+	instead of unlocking it.
+	Avoids potential deadlocks after fork in case other threads
+	are waiting for a mutex.
+	[riastradh, ticket #2018]
+
+sys/kern/uipc_usrreq.c				1.208
+tests/net/net/t_unix.c				1.26-1.28
+
+	unix(4): PR 59220: fix null pointer dereference in accept(2)
+	in DIAGNOSTIC builds under certain circumstances.
+	Add a test for the circumstances.
+	[riastradh, ticket #2019]
+
+usr.bin/mail/mail.1				1.70
+
+	mail(1): PR 59671: document "list" command
+	[riastradh, ticket #2020]
+
+distrib/sets/lists/debug/mi			1.493
+distrib/sets/lists/tests/mi			1.1404
+libexec/ld.elf_so/headers.c			1.76
+tests/libexec/ld.elf_so/Makefile		1.31
+tests/libexec/ld.elf_so/t_dladdr.c		1.1,1.2
+
+	ld.elf_so(1): PR 59567: fix dladdr(3)'s idea of main executable.
+	[riastradh, ticket #2021]
+
+sys/uvm/uvm_km.c				1.167
+
+	uvm_km_pgremove_intrsafe: drain TLB shootdown before freeing pages.
+	[kbowling, ticket #2022]
+
+lib/libnvmm/libnvmm.c				1.21 (patch)
+
+	libnvmm(3): check return value of malloc.
+	[nia, ticket #2004]
 
