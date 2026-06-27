@@ -1,8 +1,11 @@
-# $NetBSD: Makefile,v 1.55.2.1 2024/10/09 13:25:13 martin Exp $
+# $NetBSD: Makefile,v 1.55.2.2 2026/06/27 17:08:21 martin Exp $
+
+NOMAN=		# defined
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libc/gen
+BINDIR=		${TESTSDIR}
 
 TESTS_SUBDIRS+=	execve
 TESTS_SUBDIRS+=	posix_spawn
@@ -40,6 +43,8 @@ TESTS_C+=	t_syslog
 TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
+
+PROGS+=		h_execsig
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
 COPTS.t_siginfo.c+=	-DENABLE_TESTS
