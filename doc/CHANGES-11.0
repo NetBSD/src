@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.105 2026/06/26 09:14:03 jdc Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.106 2026/06/27 06:05:45 snj Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11165,4 +11165,17 @@ src/usr.sbin/sysinst/upgrade.c			1.22
 	used does not come with its own certs, so we can not verify trust
 	for set download).
 	[martin, ticket #337]
+
+usr.sbin/sysinst/Makefile.inc			1.55
+usr.sbin/sysinst/configmenu.c			1.26
+usr.sbin/sysinst/defs.h				1.97
+usr.sbin/sysinst/main.c				1.38 via patch
+usr.sbin/sysinst/menus.mi			1.32
+usr.sbin/sysinst/menus.mi			1.33
+usr.sbin/sysinst/net.c				1.48
+
+	sysinst(8): support https for pkgsrc/bin packages download,
+	even if the initial installer environment lacks support
+	for https when downloading the base sets.
+	[martin, ticket #344]
 
