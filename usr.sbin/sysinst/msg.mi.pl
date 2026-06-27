@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.50.2.3 2026/06/26 09:12:24 jdc Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.50.2.4 2026/06/27 20:04:21 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -703,7 +703,7 @@ Optional sets are:
  test containing automatic test programs
  manhtml containing man pages in html format
 
-Some architectures offer differen CD vs. DVD ISO images, the DVD images
+Some architectures offer different CD vs. DVD ISO images, the DVD images
 are complete and contain all sets. 
 }
 .endif
