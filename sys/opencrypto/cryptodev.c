@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.126.2.1 2026/05/07 14:40:13 martin Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.126.2.2 2026/06/27 15:23:23 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.126.2.1 2026/05/07 14:40:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.126.2.2 2026/06/27 15:23:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -88,6 +88,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.126.2.1 2026/05/07 14:40:13 martin E
 #include <sys/module.h>
 #include <sys/compat_stub.h> 
 
+#include "ioconf.h"
+
 #ifdef _KERNEL_OPT
 #include "opt_ocf.h"
 #include "opt_compat_netbsd.h"
@@ -100,8 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.126.2.1 2026/05/07 14:40:13 martin E
 
 #include "ioconf.h"
 
-kmutex_t cryptodev_mtx;
-#define CRYPTODEV_OPS_MAX 1000000
+static kmutex_t cryptodev_mtx;
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -147,7 +148,37 @@ static int	cryptoread(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptowrite(dev_t dev, struct uio *uio, int ioflag);
 static int	cryptoselect(dev_t dev, int rw, struct lwp *l);
 
+static bool	crypto_detaching = false;
 static int	crypto_refcount = 0;	/* Prevent detaching while in use */
+
+static int
+crypto_refcount_get(void)
+{
+	int error;
+
+	mutex_enter(&cryptodev_mtx);
+	if (crypto_detaching) {
+		error = ENXIO;
+	} else if (crypto_refcount == INT_MAX) {
+		error = EBUSY;
+	} else {
+		crypto_refcount++;
+		error = 0;
+	}
+	mutex_exit(&cryptodev_mtx);
+
+	return error;
+}
+
+static void
+crypto_refcount_put(void)
+{
+
+	mutex_enter(&cryptodev_mtx);
+	KASSERT(crypto_refcount > 0);
+	crypto_refcount--;
+	mutex_exit(&cryptodev_mtx);
+}
 
 /* Declaration of cloned-device (per-ctxt) entrypoints */
 static int	cryptof_read(struct file *, off_t *, struct uio *,
@@ -258,9 +289,6 @@ fcrypt_ctor(void)
 	fcr->requestid = 1;
 	mutex_init(&fcr->lock, MUTEX_DEFAULT, IPL_NONE);
 
-	mutex_enter(&cryptodev_mtx);
-	crypto_refcount++;
-	mutex_exit(&cryptodev_mtx);
 	return fcr;
 }
 
@@ -269,19 +297,13 @@ fcrypt_dtor(struct fcrypt *fcr)
 {
 	struct csession *cse;
 
-	mutex_enter(&fcr->lock);
 	while ((cse = TAILQ_FIRST(&fcr->csessions))) {
 		TAILQ_REMOVE(&fcr->csessions, cse, next);
 		KASSERT(atomic_load_relaxed(&cse->refcnt) == 1);
 		cse_free(cse);
 	}
 	seldestroy(&fcr->sinfo);
-	mutex_exit(&fcr->lock);
 	mutex_destroy(&fcr->lock);
-
-	mutex_enter(&cryptodev_mtx);
-	crypto_refcount--;
-	mutex_exit(&cryptodev_mtx);
 
 	pool_put(&fcrpl, fcr);
 }
@@ -340,14 +362,19 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 
 	switch (cmd) {
         case CRIOGET:   /* XXX deprecated, remove after 5.0 */
-		if ((error = fd_allocfile(&criofp, &criofd)) != 0)
+		error = crypto_refcount_get();
+		if (error)
 			return error;
+		if ((error = fd_allocfile(&criofp, &criofd)) != 0) {
+			crypto_refcount_put();
+			return error;
+		}
 		criofcr = fcrypt_ctor();
-		(void)fd_clone(criofp, criofd, (FREAD|FWRITE),
+		error = fd_clone(criofp, criofd, (FREAD|FWRITE),
 		    &cryptofops, criofcr);
+		KASSERTMSG(error == EMOVEFD, "error=%d", error);
 		*(uint32_t *)data = criofd;
-		return error;
-		break;
+		return 0;
 	case CIOCGSESSION:
 		sop = (struct session_op *)data;
 		error = cryptodev_session(fcr, sop);
@@ -355,8 +382,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		sgop = (struct crypt_sgop *)data;
-		if (sgop->count <= 0 || sgop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*snop) <= sgop->count) {
+		if (sgop->count <= 0 || sgop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*snop))) {
 			error = EINVAL;
 			break;
 		}
@@ -383,8 +410,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNFSESSION:
 		fcrypt_settime(fcr);
 		sfop = (struct crypt_sfop *)data;
-		if (sfop->count <= 0 || sfop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*sesid) <= sfop->count) {
+		if (sfop->count <= 0 || sfop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*sesid))) {
 			error = EINVAL;
 			break;
 		}
@@ -411,8 +438,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNCRYPTM:
 		fcrypt_settime(fcr);
 		mop = (struct crypt_mop *)data;
-		if (mop->count <= 0 || mop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*cnop) <= mop->count) {
+		if (mop->count <= 0 || mop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*cnop))) {
 			error = EINVAL;
 			break;
 		}
@@ -434,8 +461,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNFKEYM:
 		fcrypt_settime(fcr);
 		mkop = (struct crypt_mkop *)data;
-		if (mkop->count <= 0 || mkop->count > CRYPTODEV_OPS_MAX 
-		    || SIZE_MAX / sizeof(*knop) <= mkop->count) {
+		if (mkop->count <= 0 || mkop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*knop))) {
 			error = EINVAL;
 			break;
 		}
@@ -455,8 +482,8 @@ cryptof_ioctl(struct file *fp, u_long cmd, void *data)
 	case CIOCNCRYPTRETM:
 		fcrypt_settime(fcr);
 		crypt_ret = (struct cryptret *)data;
-		if (crypt_ret->count <= 0
-		    || SIZE_MAX / sizeof(*crypt_res) <= crypt_ret->count) {
+		if (crypt_ret->count <= 0 || crypt_ret->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*crypt_res))) {
 			error = EINVAL;
 			break;
 		}
@@ -919,6 +946,7 @@ cryptof_close(struct file *fp)
 
 	fp->f_fcrypt = NULL;
 	fcrypt_dtor(fcr);
+	crypto_refcount_put();
 	return 0;
 }
 
@@ -944,8 +972,11 @@ cse_find(struct fcrypt *fcr, uint32_t ses)
 	mutex_enter(&fcr->lock);
 	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext)
 		if (cse->ses == ses) {
+			if (atomic_inc_uint_nv(&cse->refcnt) == UINT_MAX) {
+				atomic_dec_uint(&cse->refcnt);
+				cse = NULL;
+			}
 			mutex_exit(&fcr->lock);
-			atomic_inc_uint(&cse->refcnt);
 			return cse;
 		}
 	mutex_exit(&fcr->lock);
@@ -1024,8 +1055,10 @@ cse_free(struct csession *cse)
 {
 
 	DPRINTF("destroying %p %d\n", cse, atomic_load_relaxed(&cse->refcnt));
+	membar_release();
 	if (atomic_dec_uint_nv(&cse->refcnt) > 0)
 		return;
+	membar_acquire();
 	mutex_destroy(&cse->lock);
 	crypto_freesession(cse->sid);
 	if (cse->key)
@@ -1046,11 +1079,18 @@ cryptoopen(dev_t dev, int flag, int mode,
 	if (crypto_usercrypto == 0)
 		return ENXIO;
 
-	if ((error = fd_allocfile(&fp, &fd)) != 0)
+	if ((error = crypto_refcount_get()) != 0)
 		return error;
 
+	if ((error = fd_allocfile(&fp, &fd)) != 0) {
+		crypto_refcount_put();
+		return error;
+	}
+
 	fcr = fcrypt_ctor();
-	return fd_clone(fp, fd, flag, &cryptofops, fcr);
+	error = fd_clone(fp, fd, flag, &cryptofops, fcr);
+	KASSERTMSG(error == EMOVEFD, "error=%d", error);
+	return error;
 }
 
 static int
@@ -1992,14 +2032,9 @@ cryptof_poll(struct file *fp, int events)
 	return revents;
 }
 
-/*
- * Pseudo-device initialization routine for /dev/crypto
- */
-void
-cryptoattach(int num)
+static void
+cryptodev_init(void)
 {
-
-	crypto_init();
 
 	mutex_init(&cryptodev_mtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -2019,139 +2054,73 @@ cryptoattach(int num)
 	pool_prime(&csepl, 64 * 5);
 }
 
-void	crypto_attach(device_t, device_t, void *);
-
-void
-crypto_attach(device_t parent, device_t self, void *opaque)
+static void
+cryptodev_fini(void)
 {
 
-	cryptoattach(0);
-}
+	KASSERTMSG(crypto_refcount == 0,
+	    "crypto_refcount=%d", crypto_refcount);
 
-int	crypto_detach(device_t, int);
-
-int
-crypto_detach(device_t self, int num)
-{
-
-	pool_destroy(&fcrpl);
 	pool_destroy(&csepl);
+	pool_destroy(&fcrpl);
 
 	mutex_destroy(&cryptodev_mtx);
-
-	return 0;
 }
 
-int crypto_match(device_t, cfdata_t, void *);
- 
-int
-crypto_match(device_t parent, cfdata_t data, void *opaque) 
-{   
- 
-	return 1;
+/*
+ * Pseudo-device initialization routine for /dev/crypto
+ */
+void
+cryptoattach(int num)
+{
+#ifndef _MODULE
+	crypto_init();
+	cryptodev_init();
+#endif
 }
 
 MODULE(MODULE_CLASS_DRIVER, crypto, "opencrypto");
 
-CFDRIVER_DECL(crypto, DV_DULL, NULL);
-
-CFATTACH_DECL2_NEW(crypto, 0, crypto_match, crypto_attach, crypto_detach,
-    NULL, NULL, NULL);
-
-#ifdef _MODULE
-static int cryptoloc[] = { -1, -1 };
-
-static struct cfdata crypto_cfdata[] = {
-	{
-		.cf_name = "crypto",
-		.cf_atname = "crypto",
-		.cf_unit = 0,
-		.cf_fstate = 0,
-		.cf_loc = cryptoloc,
-		.cf_flags = 0,
-		.cf_pspec = NULL,
-	},
-	{ NULL, NULL, 0, 0, NULL, 0, NULL }
-};
-#endif
-
 static int
 crypto_modcmd(modcmd_t cmd, void *arg)
 {
-	int error = 0;
 #ifdef _MODULE
+	int error = 0;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 #endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-
-		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
+		cryptodev_init();
+		error = devsw_attach("crypto", NULL, &bmajor,
 		    &crypto_cdevsw, &cmajor);
 		if (error) {
-			aprint_error("%s: unable to register devsw, error %d\n",
-				crypto_cd.cd_name, error);
+			aprint_error("crypto: unable to register devsw,"
+			    " error %d\n", error);
+			cryptodev_fini();
 			return error;
 		}
-
-		error = config_cfdriver_attach(&crypto_cd);
-		if (error) {
-			devsw_detach(NULL, &crypto_cdevsw);
-			return error;
-		}
-
-		error = config_cfattach_attach(crypto_cd.cd_name, &crypto_ca);
-		if (error) {
-			config_cfdriver_detach(&crypto_cd);
-			devsw_detach(NULL, &crypto_cdevsw);
-			aprint_error("%s: unable to register cfattach\n",
-				crypto_cd.cd_name);
-
-			return error;
-		}
-
-		error = config_cfdata_attach(crypto_cfdata, 1);
-		if (error) {
-			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-			config_cfdriver_detach(&crypto_cd);
-			devsw_detach(NULL, &crypto_cdevsw);
-			aprint_error("%s: unable to register cfdata\n",
-				crypto_cd.cd_name);
-
-			return error;
-		}
-
-		(void)config_attach_pseudo(crypto_cfdata);
 #endif
-
-		return error;
+		return 0;
 	case MODULE_CMD_FINI:
-#ifdef _MODULE
-		if (crypto_refcount != 0)
+		/*
+		 * Can't unload safely because there is no way to wait
+		 * for all files with a given struct fileops to be
+		 * closed.
+		 */
+		return ENOTTY;
+
+		mutex_enter(&cryptodev_mtx);
+		if (crypto_refcount != 0) {
+			mutex_exit(&cryptodev_mtx);
 			return EBUSY;
-		error = config_cfdata_detach(crypto_cfdata);
-		if (error) {
-			return error;
 		}
-
-		config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
-		config_cfdriver_detach(&crypto_cd);
+		crypto_detaching = true;
+		mutex_exit(&cryptodev_mtx);
 		devsw_detach(NULL, &crypto_cdevsw);
-#endif
-
-		return error;
-#ifdef _MODULE
-	case MODULE_CMD_AUTOUNLOAD:
-#if 0	/*
-	 * XXX Completely disable auto-unload for now, since there is still
-	 * XXX a (small) window where in-module ref-counting doesn't help
-	 */
-		if (crypto_refcount != 0)
-#endif
-			return EBUSY;
-	/* FALLTHROUGH */
-#endif
+		cryptodev_fini();
+		return 0;
 	default:
 		return ENOTTY;
 	}

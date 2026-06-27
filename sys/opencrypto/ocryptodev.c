@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.17.12.1 2026/05/07 14:40:13 martin Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.17.12.2 2026/06/27 15:23:23 martin Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.17.12.1 2026/05/07 14:40:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.17.12.2 2026/06/27 15:23:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -130,15 +130,14 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		break;
 	case CIOCNGSESSION:
 		osgop = (struct ocrypt_sgop *)data;
-		if ((osgop->count <= 0) ||
-		    (SIZE_MAX/sizeof(struct osession_n_op) < osgop->count)) {
+		if (osgop->count <= 0 || osgop->count >
+		    MIN(CRYPTODEV_OPS_MAX, SIZE_MAX/sizeof(*osnop))) {
 			error = EINVAL;
 			break;
 		}
-		osnop = kmem_alloc((osgop->count *
-				  sizeof(struct osession_n_op)), KM_SLEEP);
+		osnop = kmem_alloc(osgop->count * sizeof(*osnop), KM_SLEEP);
 		error = copyin(osgop->sessions, osnop, osgop->count *
-			       sizeof(struct osession_n_op));
+		    sizeof(*osnop));
 		if (error) {
 			goto mbail;
 		}
@@ -149,14 +148,13 @@ ocryptof_ioctl(struct file *fp, u_long cmd, void *data)
 		}
 
 		error = copyout(osnop, osgop->sessions, osgop->count *
-		    sizeof(struct osession_n_op));
+		    sizeof(*osnop));
 mbail:
-		kmem_free(osnop, osgop->count * sizeof(struct osession_n_op));
+		kmem_free(osnop, osgop->count * sizeof(*osnop));
 		break;
 	case OCIOCCRYPT:
 		ocop = (struct ocrypt_op *)data;
 		cse = cryptodev_cse_find(fcr, ocop->ses);
-		mutex_exit(&cryptodev_mtx);
 		if (cse == NULL) {
 			DPRINTF("csefind failed\n");
 			return EINVAL;
@@ -171,20 +169,23 @@ mbail:
 			error = EINVAL;
 			break;
 		}
-		ocnop = kmem_alloc((omop->count * sizeof(struct ocrypt_n_op)),
-		    KM_SLEEP);
-		error = copyin(omop->reqs, ocnop,
-		    (omop->count * sizeof(struct ocrypt_n_op)));
-		if(!error) {
-			error = ocryptodev_mop(fcr, ocnop, omop->count,
-			    curlwp);
-			if (!error) {
-				error = copyout(ocnop, omop->reqs, 
-				    (omop->count * sizeof(struct ocrypt_n_op)));
-			}
+		ocnop = kmem_alloc(omop->count * sizeof(*ocnop), KM_SLEEP);
+		error = copyin(omop->reqs, ocnop, omop->count *
+		    sizeof(*ocnop));
+		if (error) {
+			goto nbail;
 		}
-		kmem_free(ocnop, (omop->count * sizeof(struct ocrypt_n_op)));
-		break;	
+
+		error = ocryptodev_mop(fcr, ocnop, omop->count, curlwp);
+		if (error) {
+			goto nbail;
+		}
+
+		error = copyout(ocnop, omop->reqs, omop->count *
+		    sizeof(*ocnop));
+nbail:
+		kmem_free(ocnop, omop->count * sizeof(*ocnop));
+		break;
 	default:
 		DPRINTF("invalid ioctl cmd 0x%lx\n", cmd);
 		return EINVAL;
