@@ -1,4 +1,4 @@
-/*	$NetBSD: def.h,v 1.28 2014/10/18 08:33:30 snj Exp $	*/
+/*	$NetBSD: def.h,v 1.28.30.1 2026/06/27 16:28:36 martin Exp $	*/
 /*
  * Copyright (c) 1980, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  *
  *	@(#)def.h	8.4 (Berkeley) 4/20/95
- *	$NetBSD: def.h,v 1.28 2014/10/18 08:33:30 snj Exp $
+ *	$NetBSD: def.h,v 1.28.30.1 2026/06/27 16:28:36 martin Exp $
  */
 
 /*
@@ -137,6 +137,11 @@
 
 #define	equal(a, b)	(strcmp(a,b)==0)/* A nice function to string compare */
 
+union msgref {
+	struct message *link;	/* the usual content of the field */
+	ptrdiff_t offset;	/* temporary use during turbulence */
+};
+
 struct message {
 	short	m_flag;			/* flags, see below */
 	short	m_offset;		/* offset in block of message */
@@ -150,12 +155,17 @@ struct message {
 	 */
 	int		m_index;	/* message index in this thread */
 	int		m_depth;	/* depth in thread */
-	struct message *m_flink;	/* link to next message */
-	struct message *m_blink;	/* link to previous message */
-	struct message *m_clink;	/* link to child of this message */
-	struct message *m_plink;	/* link to parent of thread */
+	union msgref	m_f;		/* link to next message */
+	union msgref	m_b;		/* link to previous message */
+	union msgref	m_c;		/* link to child of this message */
+	union msgref	m_p;		/* link to parent of thread */
 };
 typedef struct mime_info mime_info_t;	/* phantom structure only to attach.c */
+
+#define	m_flink	m_f.link	/* for access to usual members */
+#define	m_blink	m_b.link	/* all are struct message * */
+#define	m_clink	m_c.link
+#define	m_plink	m_p.link
 
 /*
  * flag bits.

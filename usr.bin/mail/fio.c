@@ -1,4 +1,4 @@
-/*	$NetBSD: fio.c,v 1.45 2023/08/23 03:49:00 rin Exp $	*/
+/*	$NetBSD: fio.c,v 1.45.4.1 2026/06/27 16:28:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: fio.c,v 1.45 2023/08/23 03:49:00 rin Exp $");
+__RCSID("$NetBSD: fio.c,v 1.45.4.1 2026/06/27 16:28:36 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -122,11 +122,14 @@ message_init(struct message *mp, off_t offset, short flags)
 static void
 makemessage(FILE *f, int omsgCount, int nmsgCount)
 {
-	size_t size;
+	ssize_t size;
 	struct message *omessage;	/* old message structure array */
 	struct message *nmessage;
 	ptrdiff_t off;
-	int need_init;
+
+#ifndef min
+#define	min(a, b) ((a) < (b) ? (a) : (b))	/* caution, args eval'd twice */
+#endif
 
 	omessage = get_abs_message(1);
 
@@ -136,24 +139,25 @@ makemessage(FILE *f, int omsgCount, int nmsgCount)
 		off = 0;
 	else
 		off = dot - omessage;
-	need_init = (omessage == NULL);
+	thread_save_old_links(omessage, omsgCount);
 	nmessage = realloc(omessage, size);
 	if (nmessage == NULL)
 		err(EXIT_FAILURE,
 		    "Insufficient memory for %d messages", nmsgCount);
 	dot = nmessage + off;
 
-	if (off != 0 || need_init != 0)
-		thread_fix_old_links(nmessage, off, omsgCount);
+	thread_fix_old_links(nmessage, min(omsgCount, nmsgCount));
 
 #ifndef THREAD_SUPPORT
 	message = nmessage;
 #endif
 	size -= (omsgCount + 1) * sizeof(*nmessage);
-	(void)fflush(f);
-	(void)lseek(fileno(f), (off_t)sizeof(*nmessage), SEEK_SET);
-	if (read(fileno(f), &nmessage[omsgCount], size) != (ssize_t)size)
-		errx(EXIT_FAILURE, "Message temporary file corrupted");
+	if (size >= 0) {
+		(void)fflush(f);
+		(void)lseek(fileno(f), (off_t)sizeof(*nmessage), SEEK_SET);
+		if (read(fileno(f), &nmessage[omsgCount], (size_t)size) != size)
+			errx(EXIT_FAILURE, "Message temporary file corrupted");
+	}
 
 	message_init(&nmessage[nmsgCount], (off_t)0, 0); /* append a dummy */
 

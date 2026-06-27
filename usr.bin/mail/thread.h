@@ -1,4 +1,4 @@
-/*	$NetBSD: thread.h,v 1.3 2023/08/10 20:36:28 mrg Exp $	*/
+/*	$NetBSD: thread.h,v 1.3.4.1 2026/06/27 16:28:36 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@ int	 get_abs_msgCount(void);
 /*
  * Support hooks used by other modules.
  */
-void	 thread_fix_old_links(struct message *, ptrdiff_t, int);
+void	 thread_save_old_links(struct message *, int);
+void	 thread_fix_old_links(struct message *, int);
 void	 thread_fix_new_links(struct message *, int, int);
 int	 thread_hidden(void);
 int	 thread_depth(void);
