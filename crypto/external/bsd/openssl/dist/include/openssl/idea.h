@@ -8,30 +8,30 @@
  */
 
 #ifndef OPENSSL_IDEA_H
-# define OPENSSL_IDEA_H
-# pragma once
+#define OPENSSL_IDEA_H
+#pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_IDEA_H
-# endif
+#include <openssl/macros.h>
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+#define HEADER_IDEA_H
+#endif
 
-# include <openssl/opensslconf.h>
+#include <openssl/opensslconf.h>
 
-# ifndef OPENSSL_NO_IDEA
-#  ifdef  __cplusplus
+#ifndef OPENSSL_NO_IDEA
+#ifdef __cplusplus
 extern "C" {
-#  endif
+#endif
 
-#  define IDEA_BLOCK      8
-#  define IDEA_KEY_LENGTH 16
+#define IDEA_BLOCK 8
+#define IDEA_KEY_LENGTH 16
 
-#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 
 typedef unsigned int IDEA_INT;
 
-#   define IDEA_ENCRYPT    1
-#   define IDEA_DECRYPT    0
+#define IDEA_ENCRYPT 1
+#define IDEA_DECRYPT 0
 
 typedef struct idea_key_st {
     IDEA_INT data[9][6];

@@ -102,6 +102,7 @@ with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
 
 OSSL_ENCODER_CTX_free() frees the given context I<ctx>.
+If the argument is NULL, nothing is done.
 
 OSSL_ENCODER_CTX_add_encoder() populates the B<OSSL_ENCODER_CTX>
 I<ctx> with a encoder, to be used to encode an input object.
@@ -128,6 +129,13 @@ passed to the constructor every time it's called.
 
 OSSL_ENCODER_CTX_set_cleanup() sets the constructor data I<cleanup>
 function.  This is called by L<OSSL_ENCODER_CTX_free(3)>.
+
+Note that functions OSSL_ENCODER_CTX_set_selection(),
+OSSL_ENCODER_CTX_set_output_type(), OSSL_ENCODER_CTX_set_output_structure(),
+OSSL_ENCODER_CTX_add_encoder(), OSSL_ENCODER_CTX_add_extra(),
+OSSL_ENCODER_CTX_set_construct(), OSSL_ENCODER_CTX_set_construct_data(), and
+OSSL_ENCODER_CTX_set_cleanup() shouldn't be used after the context is finalised,
+in particular after calling the function OSSL_ENCODER_CTX_new_for_pkey().
 
 =head2 Constructor
 
@@ -201,6 +209,12 @@ output type.
 OSSL_ENCODER_INSTANCE_get_output_structure() returns a string with the name
 of the output structure.
 
+=head1 NOTES AND BUGS
+
+The chain mechanism in ENCODE is not yet completely implemented.
+It affects functions such as OSSL_ENCODER_CTX_add_extra and the
+inner processing loop.
+
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_ENCODER(3)>
@@ -211,7 +225,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

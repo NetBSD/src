@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,11 +19,11 @@
 
 static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass);
 static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
-                        const char *newpass);
+    const char *newpass);
 static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
-                        const char *newpass);
+    const char *newpass);
 static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
-                   int *psaltlen);
+    int *psaltlen);
 
 /*
  * Change the password on a PKCS#12 structure.
@@ -77,8 +77,9 @@ static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
             bags = PKCS12_unpack_p7data(p7);
         } else if (bagnid == NID_pkcs7_encrypted) {
             bags = PKCS12_unpack_p7encdata(p7, oldpass, -1);
-            if (!alg_get(p7->d.encrypted->enc_data->algorithm,
-                         &pbe_nid, &pbe_iter, &pbe_saltlen))
+            if (p7->d.encrypted == NULL
+                || !alg_get(p7->d.encrypted->enc_data->algorithm,
+                    &pbe_nid, &pbe_iter, &pbe_saltlen))
                 goto err;
         } else {
             continue;
@@ -92,7 +93,7 @@ static int newpass_p12(PKCS12 *p12, const char *oldpass, const char *newpass)
             p7new = PKCS12_pack_p7data(bags);
         else
             p7new = PKCS12_pack_p7encdata(pbe_nid, newpass, -1, NULL,
-                                          pbe_saltlen, pbe_iter, bags);
+                pbe_saltlen, pbe_iter, bags);
         if (p7new == NULL || !sk_PKCS7_push(newsafes, p7new))
             goto err;
         sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
@@ -130,7 +131,7 @@ err:
 }
 
 static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
-                        const char *newpass)
+    const char *newpass)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
@@ -143,7 +144,7 @@ static int newpass_bags(STACK_OF(PKCS12_SAFEBAG) *bags, const char *oldpass,
 /* Change password of safebag: only needs handle shrouded keybags */
 
 static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
-                       const char *newpass)
+    const char *newpass)
 {
     PKCS8_PRIV_KEY_INFO *p8;
     X509_SIG *p8new;
@@ -161,7 +162,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
         return 0;
     }
     p8new = PKCS8_encrypt(p8_nid, NULL, newpass, -1, NULL, p8_saltlen,
-                          p8_iter, p8);
+        p8_iter, p8);
     PKCS8_PRIV_KEY_INFO_free(p8);
     if (p8new == NULL)
         return 0;
@@ -171,7 +172,7 @@ static int newpass_bag(PKCS12_SAFEBAG *bag, const char *oldpass,
 }
 
 static int alg_get(const X509_ALGOR *alg, int *pnid, int *piter,
-                   int *psaltlen)
+    int *psaltlen)
 {
     PBEPARAM *pbe;
 

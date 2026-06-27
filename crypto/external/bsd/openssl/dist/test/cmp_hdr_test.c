@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -41,7 +41,7 @@ static CMP_HDR_TEST_FIXTURE *set_up(const char *const test_case_name)
         goto err;
     return fixture;
 
- err:
+err:
     tear_down(fixture);
     return NULL;
 }
@@ -65,31 +65,36 @@ static int test_HDR_set_get_pvno(void)
     return result;
 }
 
-#define X509_NAME_ADD(n, rd, s) \
+#define X509_NAME_ADD(n, rd, s)                                               \
     X509_NAME_add_entry_by_txt((n), (rd), MBSTRING_ASC, (unsigned char *)(s), \
-                               -1, -1, 0)
+        -1, -1, 0)
 
 static int execute_HDR_get0_senderNonce_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
+    int res = 0;
     X509_NAME *sender = X509_NAME_new();
     ASN1_OCTET_STRING *sn;
 
     if (!TEST_ptr(sender))
-        return 0;
+        goto err;
 
     X509_NAME_ADD(sender, "CN", "A common sender name");
     if (!TEST_int_eq(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx, sender),
-                     1))
-        return 0;
+            1))
+        goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_init(fixture->cmp_ctx, fixture->hdr),
-                     1))
-        return 0;
+            1))
+        goto err;
     sn = ossl_cmp_hdr_get0_senderNonce(fixture->hdr);
     if (!TEST_int_eq(ASN1_OCTET_STRING_cmp(fixture->cmp_ctx->senderNonce, sn),
-                     0))
-        return 0;
+            0))
+        goto err;
+
+    res = 1;
+err:
     X509_NAME_free(sender);
-    return 1;
+
+    return res;
 }
 
 static int test_HDR_get0_senderNonce(void)
@@ -102,23 +107,29 @@ static int test_HDR_get0_senderNonce(void)
 
 static int execute_HDR_set1_sender_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
+    int res = 0;
     X509_NAME *x509name = X509_NAME_new();
 
     if (!TEST_ptr(x509name))
-        return 0;
+        goto err;
 
     X509_NAME_ADD(x509name, "CN", "A common sender name");
     if (!TEST_int_eq(ossl_cmp_hdr_set1_sender(fixture->hdr, x509name), 1))
-        return 0;
+        goto err;
+
     if (!TEST_int_eq(fixture->hdr->sender->type, GEN_DIRNAME))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(X509_NAME_cmp(fixture->hdr->sender->d.directoryName,
-                                   x509name), 0))
-        return 0;
+                         x509name),
+            0))
+        goto err;
 
+    res = 1;
+err:
     X509_NAME_free(x509name);
-    return 1;
+
+    return res;
 }
 
 static int test_HDR_set1_sender(void)
@@ -131,24 +142,29 @@ static int test_HDR_set1_sender(void)
 
 static int execute_HDR_set1_recipient_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
+    int res = 0;
     X509_NAME *x509name = X509_NAME_new();
 
     if (!TEST_ptr(x509name))
-        return 0;
+        goto err;
 
     X509_NAME_ADD(x509name, "CN", "A common recipient name");
     if (!TEST_int_eq(ossl_cmp_hdr_set1_recipient(fixture->hdr, x509name), 1))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(fixture->hdr->recipient->type, GEN_DIRNAME))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(X509_NAME_cmp(fixture->hdr->recipient->d.directoryName,
-                                   x509name), 0))
-        return 0;
+                         x509name),
+            0))
+        goto err;
 
+    res = 1;
+err:
     X509_NAME_free(x509name);
-    return 1;
+
+    return res;
 }
 
 static int test_HDR_set1_recipient(void)
@@ -203,18 +219,20 @@ static int execute_HDR_set1_senderKID_test(CMP_HDR_TEST_FIXTURE *fixture)
     int res = 0;
 
     if (!TEST_ptr(senderKID))
-        return 0;
+        goto err;
 
     if (!TEST_int_eq(ASN1_OCTET_STRING_set(senderKID, rand_data,
-                                           sizeof(rand_data)), 1))
+                         sizeof(rand_data)),
+            1))
         goto err;
     if (!TEST_int_eq(ossl_cmp_hdr_set1_senderKID(fixture->hdr, senderKID), 1))
         goto err;
     if (!TEST_int_eq(ASN1_OCTET_STRING_cmp(fixture->hdr->senderKID,
-                                           senderKID), 0))
+                         senderKID),
+            0))
         goto err;
     res = 1;
- err:
+err:
     ASN1_OCTET_STRING_free(senderKID);
     return res;
 }
@@ -245,7 +263,7 @@ static int execute_HDR_push0_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
 
     return 1;
 
- err:
+err:
     ASN1_UTF8STRING_free(text);
     return 0;
 }
@@ -265,7 +283,7 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
     int res = 0;
 
     if (!TEST_ptr(text))
-        return 0;
+        goto err;
 
     if (!ASN1_STRING_set(text, "A free text", -1))
         goto err;
@@ -278,8 +296,9 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
         goto err;
 
     res = 1;
- err:
+err:
     ASN1_UTF8STRING_free(text);
+
     return res;
 }
 
@@ -300,11 +319,10 @@ execute_HDR_generalInfo_push0_item_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     if (!TEST_int_eq(ossl_cmp_hdr_generalInfo_push0_item(fixture->hdr, itav),
-                     1))
+            1))
         return 0;
 
-    if (!TEST_true(itav == sk_OSSL_CMP_ITAV_value(fixture->hdr->generalInfo,
-                                                  0)))
+    if (!TEST_true(itav == sk_OSSL_CMP_ITAV_value(fixture->hdr->generalInfo, 0)))
         return 0;
 
     return 1;
@@ -334,7 +352,7 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     if (!TEST_ptr(val)
-            || !TEST_true(ASN1_INTEGER_set(asn1int, 88))) {
+        || !TEST_true(ASN1_INTEGER_set(asn1int, 88))) {
         ASN1_INTEGER_free(asn1int);
         return 0;
     }
@@ -350,7 +368,7 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
     }
 
     if (!TEST_int_eq(ossl_cmp_hdr_generalInfo_push1_items(fixture->hdr, itavs),
-                     1))
+            1))
         goto err;
     ginfo = fixture->hdr->generalInfo;
     pushed_itav = sk_OSSL_CMP_ITAV_value(ginfo, 0);
@@ -364,7 +382,7 @@ execute_HDR_generalInfo_push1_items_test(CMP_HDR_TEST_FIXTURE *fixture)
 
     res = 1;
 
- err:
+err:
     sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
     return res;
 }
@@ -379,7 +397,7 @@ static int test_HDR_generalInfo_push1_items(void)
 
 static int
 execute_HDR_set_and_check_implicitConfirm_test(CMP_HDR_TEST_FIXTURE
-                                               * fixture)
+        *fixture)
 {
     return TEST_false(ossl_cmp_hdr_has_implicitConfirm(fixture->hdr))
         && TEST_true(ossl_cmp_hdr_set_implicitConfirm(fixture->hdr))
@@ -393,14 +411,13 @@ static int test_HDR_set_and_check_implicit_confirm(void)
     return result;
 }
 
-
 static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
 {
     ASN1_OCTET_STRING *header_nonce, *header_transactionID;
     ASN1_OCTET_STRING *ctx_nonce;
 
     if (!TEST_int_eq(fixture->expected,
-                     ossl_cmp_hdr_init(fixture->cmp_ctx, fixture->hdr)))
+            ossl_cmp_hdr_init(fixture->cmp_ctx, fixture->hdr)))
         return 0;
     if (fixture->expected == 0)
         return 1;
@@ -409,20 +426,17 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
         return 0;
 
     header_nonce = ossl_cmp_hdr_get0_senderNonce(fixture->hdr);
-    if (!TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce,
-                                              fixture->cmp_ctx->senderNonce)))
+    if (!TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce, fixture->cmp_ctx->senderNonce)))
         return 0;
     header_transactionID = OSSL_CMP_HDR_get0_transactionID(fixture->hdr);
-    if (!TEST_true(0 == ASN1_OCTET_STRING_cmp(header_transactionID,
-                                              fixture->cmp_ctx->transactionID)))
+    if (!TEST_true(0 == ASN1_OCTET_STRING_cmp(header_transactionID, fixture->cmp_ctx->transactionID)))
         return 0;
 
     header_nonce = OSSL_CMP_HDR_get0_recipNonce(fixture->hdr);
     ctx_nonce = fixture->cmp_ctx->recipNonce;
     if (ctx_nonce != NULL
-            && (!TEST_ptr(header_nonce)
-                    || !TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce,
-                                                             ctx_nonce))))
+        && (!TEST_ptr(header_nonce)
+            || !TEST_int_eq(0, ASN1_OCTET_STRING_cmp(header_nonce, ctx_nonce))))
         return 0;
 
     return 1;
@@ -436,8 +450,8 @@ static int test_HDR_init_with_ref(void)
 
     fixture->expected = 1;
     if (!TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))
-            || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
-                                                           ref, sizeof(ref)))) {
+        || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
+            ref, sizeof(ref)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -452,9 +466,9 @@ static int test_HDR_init_with_subject(void)
     SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     fixture->expected = 1;
     if (!TEST_ptr(subject = X509_NAME_new())
-            || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
-            || !TEST_true(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx,
-                                                        subject))) {
+        || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
+        || !TEST_true(OSSL_CMP_CTX_set1_subjectName(fixture->cmp_ctx,
+            subject))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -462,7 +476,6 @@ static int test_HDR_init_with_subject(void)
     EXECUTE_TEST(execute_HDR_init_test, tear_down);
     return result;
 }
-
 
 void cleanup_tests(void)
 {

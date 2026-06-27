@@ -61,8 +61,6 @@ EVP_CIPHER_CTX_get_block_size,
 EVP_CIPHER_CTX_get_key_length,
 EVP_CIPHER_CTX_get_iv_length,
 EVP_CIPHER_CTX_get_tag_length,
-EVP_CIPHER_CTX_get_app_data,
-EVP_CIPHER_CTX_set_app_data,
 EVP_CIPHER_CTX_flags,
 EVP_CIPHER_CTX_set_flags,
 EVP_CIPHER_CTX_clear_flags,
@@ -196,8 +194,6 @@ EVP_CIPHER_CTX_mode
  int EVP_CIPHER_CTX_get_key_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_iv_length(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_tag_length(const EVP_CIPHER_CTX *ctx);
- void *EVP_CIPHER_CTX_get_app_data(const EVP_CIPHER_CTX *ctx);
- void EVP_CIPHER_CTX_set_app_data(const EVP_CIPHER_CTX *ctx, void *data);
  int EVP_CIPHER_CTX_get_type(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_mode(const EVP_CIPHER_CTX *ctx);
  int EVP_CIPHER_CTX_get_num(const EVP_CIPHER_CTX *ctx);
@@ -268,6 +264,7 @@ Increments the reference count for an B<EVP_CIPHER> structure.
 
 Decrements the reference count for the fetched B<EVP_CIPHER> structure.
 If the reference count drops to 0 then the structure is freed.
+If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_new()
 
@@ -276,9 +273,9 @@ Allocates and returns a cipher context.
 =item EVP_CIPHER_CTX_free()
 
 Clears all information from a cipher context and frees any allocated memory
-associated with it, including I<ctx> itself. This function should be called after
-all operations using a cipher are complete so sensitive information does not
-remain in memory.
+associated with it, including I<ctx> itself. This function should be called
+after all operations using a cipher are complete so sensitive information does
+not remain in memory. If the argument is NULL, nothing is done.
 
 =item EVP_CIPHER_CTX_ctrl()
 
@@ -359,19 +356,28 @@ exists.
 =item EVP_EncryptUpdate()
 
 Encrypts I<inl> bytes from the buffer I<in> and writes the encrypted version to
-I<out>. This function can be called multiple times to encrypt successive blocks
+I<out>. The pointers I<out> and I<in> may point to the same location, in which
+case the encryption will be done in-place. However, in-place encryption is
+guaranteed to work only if the encryption context (I<ctx>) has processed data in
+multiples of the block size. If the context contains an incomplete data block
+from previous operations, in-place encryption will fail.
+
+If I<out> and I<in> point to different locations, the two buffers must be
+disjoint, otherwise the operation might fail or the outcome might be undefined.
+
+This function can be called multiple times to encrypt successive blocks
 of data. The amount of data written depends on the block alignment of the
 encrypted data.
 For most ciphers and modes, the amount of data written can be anything
 from zero bytes to (inl + cipher_block_size - 1) bytes.
 For wrap cipher modes, the amount of data written can be anything
-from zero bytes to (inl + cipher_block_size) bytes.
+from zero bytes to (inl rounded up to cipher_block_size + cipher_block_size)
+bytes.
 For stream ciphers, the amount of data written can be anything from zero
 bytes to inl bytes.
-Thus, I<out> should contain sufficient room for the operation being performed.
-The actual number of bytes written is placed in I<outl>. It also
-checks if I<in> and I<out> are partially overlapping, and if they are
-0 is returned to indicate failure.
+Thus, the buffer pointed to by I<out> must contain sufficient room for the
+operation being performed.
+The actual number of bytes written is placed in I<outl>.
 
 If padding is enabled (the default) then EVP_EncryptFinal_ex() encrypts
 the "final" data, that is any data that remains in a partial block.
@@ -735,7 +741,7 @@ See also EVP_CIPHER_CTX_get_key_length() and EVP_CIPHER_CTX_set_key_length().
 =item "tag" (B<OSSL_CIPHER_PARAM_AEAD_TAG>) <octet string>
 
 Gets or sets the AEAD tag for the associated cipher context I<ctx>.
-See L<EVP_EncryptInit(3)/AEAD Interface>.
+See L<EVP_EncryptInit(3)/AEAD INTERFACE>.
 
 =item "keybits" (B<OSSL_CIPHER_PARAM_RC2_KEYBITS>) <unsigned integer>
 
@@ -1244,6 +1250,9 @@ for failure.
 EVP_CIPHER_names_do_all() returns 1 if the callback was called for all names.
 A return value of 0 means that the callback was not called for any names.
 
+EVP_CIPHER_get_params(), EVP_CIPHER_CTX_get_params() and
+EVP_CIPHER_CTX_set_params() return 1 for success and 0 for failure.
+
 =head1 CIPHER LISTING
 
 All algorithms have a fixed key length unless otherwise stated.
@@ -1267,13 +1276,27 @@ depending on the mode specified.
 
 To specify additional authenticated data (AAD), a call to EVP_CipherUpdate(),
 EVP_EncryptUpdate() or EVP_DecryptUpdate() should be made with the output
-parameter I<out> set to B<NULL>. In this case, on success, the parameter
-I<outl> is set to the number of bytes authenticated.
+parameter I<out> set to NULL. In this case, on success, the parameter
+I<outl> is set to the number of AAD bytes processed in that call
+(that is, the value of I<inl>), and does not include any plaintext
+or ciphertext bytes processed by other calls.
+
+If no AAD is used, this call can be omitted. See the mode-specific notes
+below for any exceptions.
 
 When decrypting, the return value of EVP_DecryptFinal() or EVP_CipherFinal()
 indicates whether the operation was successful. If it does not indicate success,
 the authentication operation has failed and any output data B<MUST NOT> be used
 as it is corrupted.
+
+Please note that the number of authenticated bytes returned by
+EVP_CipherUpdate() depends on the cipher used. Stream ciphers, such as ChaCha20
+or ciphers in GCM mode, can handle 1 byte at a time, resulting in an effective
+"block" size of 1. Conversely, ciphers in OCB mode must process data one block
+at a time, and the block size is returned.
+
+Regardless of the returned size, it is safe to pass unpadded data to an
+EVP_CipherUpdate() call in a single operation.
 
 =head2 GCM and OCB Modes
 
@@ -1310,10 +1333,9 @@ For GCM, this call is only valid when decrypting data.
 For OCB, this call is valid when decrypting data to set the expected tag,
 and when encrypting to set the desired tag length.
 
-In OCB mode, calling this when encrypting with C<tag> set to C<NULL> sets the
-tag length. The tag length can only be set before specifying an IV. If this is
-not called prior to setting the IV during encryption, then a default tag length
-is used.
+In OCB mode, calling this with C<tag> set to C<NULL> sets the tag length.
+The tag length can only be set before specifying an IV. If this is not called
+prior to setting the IV, then a default tag length is used.
 
 For OCB AES, the default tag length is 16 (i.e. 128 bits).  It is also the
 maximum tag length for OCB.
@@ -1729,7 +1751,7 @@ The EVP_CIPHER_CTX_flags() macro was deprecated in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

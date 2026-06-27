@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
-                        const ASN1_STRING_TABLE *const *b);
+    const ASN1_STRING_TABLE *const *b);
 
 /*
  * This is the global mask for the mbstring functions: this is use to mask
@@ -39,10 +39,10 @@ unsigned long ASN1_STRING_get_default_mask(void)
  * This function sets the default to various "flavours" of configuration.
  * based on an ASCII string. Currently this is:
  * MASK:XXXX : a numerical mask value.
- * nobmp : Don't use BMPStrings (just Printable, T61).
- * pkix : PKIX recommendation in RFC2459.
- * utf8only : only use UTF8Strings (RFC2459 recommendation for 2004).
- * default:   the default value, Printable, T61, BMP.
+ * default   : use Printable, IA5, T61, BMP, and UTF8 string types
+ * nombstr   : any string type except variable-sized BMPStrings or UTF8Strings
+ * pkix      : PKIX recommendation in RFC2459
+ * utf8only  : this is the default, use UTF8Strings
  */
 
 int ASN1_STRING_set_default_mask_asc(const char *p)
@@ -77,8 +77,8 @@ int ASN1_STRING_set_default_mask_asc(const char *p)
  */
 
 ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
-                                    const unsigned char *in, int inlen,
-                                    int inform, int nid)
+    const unsigned char *in, int inlen,
+    int inform, int nid)
 {
     ASN1_STRING_TABLE *tbl;
     ASN1_STRING *str = NULL;
@@ -93,10 +93,10 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
         if (!(tbl->flags & STABLE_NO_MASK))
             mask &= global_mask;
         ret = ASN1_mbstring_ncopy(out, in, inlen, inform, mask,
-                                  tbl->minsize, tbl->maxsize);
+            tbl->minsize, tbl->maxsize);
     } else {
         ret = ASN1_mbstring_copy(out, in, inlen, inform,
-                                 DIRSTRING_TYPE & global_mask);
+            DIRSTRING_TYPE & global_mask);
     }
     if (ret <= 0)
         return NULL;
@@ -110,7 +110,7 @@ ASN1_STRING *ASN1_STRING_set_by_NID(ASN1_STRING **out,
 #include "tbl_standard.h"
 
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
-                        const ASN1_STRING_TABLE *const *b)
+    const ASN1_STRING_TABLE *const *b)
 {
     return (*a)->nid - (*b)->nid;
 }
@@ -185,8 +185,8 @@ static ASN1_STRING_TABLE *stable_get(int nid)
 }
 
 int ASN1_STRING_TABLE_add(int nid,
-                          long minsize, long maxsize, unsigned long mask,
-                          unsigned long flags)
+    long minsize, long maxsize, unsigned long mask,
+    unsigned long flags)
 {
     ASN1_STRING_TABLE *tmp;
 

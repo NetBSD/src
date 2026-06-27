@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -22,10 +22,10 @@
  */
 
 static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
-                             const char *value, size_t value_n,
-                             /* Output parameters */
-                             const OSSL_PARAM **paramdef, int *ishex,
-                             size_t *buf_n, BIGNUM **tmpbn, int *found)
+    const char *value, size_t value_n,
+    /* Output parameters */
+    const OSSL_PARAM **paramdef, int *ishex,
+    size_t *buf_n, BIGNUM **tmpbn, int *found)
 {
     const OSSL_PARAM *p;
     size_t buf_bits;
@@ -118,7 +118,13 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
         break;
     case OSSL_PARAM_OCTET_STRING:
         if (*ishex) {
-            *buf_n = strlen(value) >> 1;
+            size_t hexdigits = strlen(value);
+            if ((hexdigits % 2) != 0) {
+                /* We don't accept an odd number of hex digits */
+                ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_ODD_NUMBER_OF_DIGITS);
+                return 0;
+            }
+            *buf_n = hexdigits >> 1;
         } else {
             *buf_n = value_n;
         }
@@ -129,8 +135,8 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
 }
 
 static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
-                               const char *value, size_t value_n, int ishex,
-                               void *buf, size_t buf_n, BIGNUM *tmpbn)
+    const char *value, size_t value_n, int ishex,
+    void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
     if (buf == NULL)
         return 0;
@@ -195,9 +201,9 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
 }
 
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
-                                  const OSSL_PARAM *paramdefs,
-                                  const char *key, const char *value,
-                                  size_t value_n, int *found)
+    const OSSL_PARAM *paramdefs,
+    const char *key, const char *value,
+    size_t value_n, int *found)
 {
     const OSSL_PARAM *paramdef = NULL;
     int ishex = 0;
@@ -210,7 +216,7 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
         return 0;
 
     if (!prepare_from_text(paramdefs, key, value, value_n,
-                           &paramdef, &ishex, &buf_n, &tmpbn, found))
+            &paramdef, &ishex, &buf_n, &tmpbn, found))
         goto err;
 
     if ((buf = OPENSSL_zalloc(buf_n > 0 ? buf_n : 1)) == NULL) {
@@ -219,12 +225,12 @@ int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
     }
 
     ok = construct_from_text(to, paramdef, value, value_n, ishex,
-                             buf, buf_n, tmpbn);
+        buf, buf_n, tmpbn);
     BN_free(tmpbn);
     if (!ok)
         OPENSSL_free(buf);
     return ok;
- err:
+err:
     BN_free(tmpbn);
     return 0;
 }

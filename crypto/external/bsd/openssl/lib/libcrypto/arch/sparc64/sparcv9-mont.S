@@ -300,11 +300,11 @@ bn_mul_mont_int:
 
 	mulx	%o1,%l3,%o1
 	mulx	%l6,%l3,%o4
+	add	%g5,%o0,%o0
 	add	%g4,%o1,%o1
 	and	%o0,%g1,%o3
 	ld	[%i3+8],%l6			! np[2]
 	srlx	%o1,32,%o1
-	add	%g5,%o1,%o1
 	srlx	%o0,32,%o0
 	add	%o3,%o1,%o1
 	and	%o0,1,%o5

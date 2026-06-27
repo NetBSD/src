@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,16 +15,16 @@
 
 /* __has_feature is a clang-ism, while __SANITIZE_ADDRESS__ is a gcc-ism */
 #if defined(__has_feature)
-# if __has_feature(address_sanitizer)
-#  define __SANITIZE_ADDRESS__ 1
-# endif
+#if __has_feature(address_sanitizer)
+#define __SANITIZE_ADDRESS__ 1
+#endif
 #endif
 /* If __SANITIZE_ADDRESS__ isn't defined, define it to be false */
 /* Leak detection is not yet supported with MSVC on Windows, so */
 /* set __SANITIZE_ADDRESS__ to false in this case as well.      */
 #if !defined(__SANITIZE_ADDRESS__) || defined(_MSC_VER)
-# undef __SANITIZE_ADDRESS__
-# define __SANITIZE_ADDRESS__ 0
+#undef __SANITIZE_ADDRESS__
+#define __SANITIZE_ADDRESS__ 0
 #endif
 
 /*
@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
      */
     int exitcode = EXIT_FAILURE;
 #endif
-    char *lost;
+    char *volatile lost;
 
     lost = OPENSSL_malloc(3);
     if (!TEST_ptr(lost))

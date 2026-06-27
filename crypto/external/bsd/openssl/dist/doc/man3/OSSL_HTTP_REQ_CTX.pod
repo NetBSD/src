@@ -71,6 +71,7 @@ which collects the HTTP request header lines.
 
 OSSL_HTTP_REQ_CTX_free() frees up the HTTP request context I<rctx>.
 The I<rbio> is not free'd, I<wbio> will be free'd if I<free_wbio> is set.
+If the argument is NULL, nothing is done.
 
 OSSL_HTTP_REQ_CTX_set_request_line() adds the 1st HTTP request line to I<rctx>.
 The HTTP method is determined by I<method_POST>,
@@ -82,9 +83,12 @@ For backward compatibility, I<path> may begin with C<http://> and thus convey
 an absoluteURI. In this case it indicates HTTP proxy use and provides also the
 server (and optionally the port) that the proxy shall forward the request to.
 In this case the I<server> and I<port> arguments must be NULL.
+The I<server>, I<port>, and I<path> arguments must not contain CR or LF
+characters.
 
 OSSL_HTTP_REQ_CTX_add1_header() adds header I<name> with value I<value> to the
 context I<rctx>. It can be called more than once to add multiple header lines.
+The I<name> and I<value> arguments must not contain CR or LF characters.
 For example, to add a C<Host> header for C<example.com> you would call:
 
  OSSL_HTTP_REQ_CTX_add1_header(ctx, "Host", "example.com");
@@ -128,6 +132,7 @@ The HTTP header C<Content-Length> is filled out with the length of the request.
 I<content_type> must be NULL if I<req> is NULL.
 If I<content_type> isn't NULL,
 the HTTP header C<Content-Type> is also added with the given string value.
+The I<content_type> argument must not contain CR or LF characters.
 The header lines are added to the internal memory B<BIO> for the request header.
 
 OSSL_HTTP_REQ_CTX_nbio() attempts to send the request prepared in I<rctx>
@@ -260,7 +265,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2015-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

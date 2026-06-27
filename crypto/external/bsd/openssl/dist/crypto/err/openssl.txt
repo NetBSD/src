@@ -1,4 +1,4 @@
-# Copyright 1999-2023 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -284,6 +284,7 @@ CMS_R_ATTRIBUTE_ERROR:161:attribute error
 CMS_R_CERTIFICATE_ALREADY_PRESENT:175:certificate already present
 CMS_R_CERTIFICATE_HAS_NO_KEYID:160:certificate has no keyid
 CMS_R_CERTIFICATE_VERIFY_ERROR:100:certificate verify error
+CMS_R_CIPHER_AEAD_IN_ENVELOPED_DATA:182:cipher aead in enveloped data
 CMS_R_CIPHER_AEAD_SET_TAG_ERROR:184:cipher aead set tag error
 CMS_R_CIPHER_GET_TAG:185:cipher get tag
 CMS_R_CIPHER_INITIALISATION_ERROR:101:cipher initialisation error
@@ -307,6 +308,8 @@ CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
 	error reading messagedigest attribute
 CMS_R_ERROR_SETTING_KEY:115:error setting key
 CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
+CMS_R_ERROR_UNSUPPORTED_STATIC_KEY_AGREEMENT:196:\
+	error unsupported static key agreement
 CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
@@ -403,6 +406,7 @@ CONF_R_NUMBER_TOO_LARGE:121:number too large
 CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION:124:\
 	openssl conf references missing section
 CONF_R_RECURSIVE_DIRECTORY_INCLUDE:111:recursive directory include
+CONF_R_RECURSIVE_SECTION_REFERENCE:126:recursive section reference
 CONF_R_RELATIVE_PATH:125:relative path
 CONF_R_SSL_COMMAND_SECTION_EMPTY:117:ssl command section empty
 CONF_R_SSL_COMMAND_SECTION_NOT_FOUND:118:ssl command section not found
@@ -500,6 +504,7 @@ DH_R_NO_PARAMETERS_SET:107:no parameters set
 DH_R_NO_PRIVATE_VALUE:100:no private value
 DH_R_PARAMETER_ENCODING_ERROR:105:parameter encoding error
 DH_R_PEER_KEY_ERROR:111:peer key error
+DH_R_Q_TOO_LARGE:130:q too large
 DH_R_SHARED_INFO_ERROR:113:shared info error
 DH_R_UNABLE_TO_CHECK_GENERATOR:121:unable to check generator
 DSA_R_BAD_FFC_PARAMETERS:114:bad ffc parameters

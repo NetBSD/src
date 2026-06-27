@@ -17,7 +17,7 @@
 #include "rc2_local.h"
 
 void RC2_cbc_encrypt(const unsigned char *in, unsigned char *out, long length,
-                     RC2_KEY *ks, unsigned char *iv, int encrypt)
+    RC2_KEY *ks, unsigned char *iv, int encrypt)
 {
     register uint32_t tin0, tin1;
     register uint32_t tout0, tout1, xor0, xor1;
@@ -99,11 +99,11 @@ void RC2_encrypt(uint32_t *d, RC2_KEY *key)
     uint32_t l;
 
     l = d[0];
-    x0 = (RC2_INT) l & 0xffff;
-    x1 = (RC2_INT) (l >> 16L);
+    x0 = (RC2_INT)l & 0xffff;
+    x1 = (RC2_INT)(l >> 16L);
     l = d[1];
-    x2 = (RC2_INT) l & 0xffff;
-    x3 = (RC2_INT) (l >> 16L);
+    x2 = (RC2_INT)l & 0xffff;
+    x3 = (RC2_INT)(l >> 16L);
 
     n = 3;
     i = 5;
@@ -145,11 +145,11 @@ void RC2_decrypt(uint32_t *d, RC2_KEY *key)
     uint32_t l;
 
     l = d[0];
-    x0 = (RC2_INT) l & 0xffff;
-    x1 = (RC2_INT) (l >> 16L);
+    x0 = (RC2_INT)l & 0xffff;
+    x1 = (RC2_INT)(l >> 16L);
     l = d[1];
-    x2 = (RC2_INT) l & 0xffff;
-    x3 = (RC2_INT) (l >> 16L);
+    x2 = (RC2_INT)l & 0xffff;
+    x3 = (RC2_INT)(l >> 16L);
 
     n = 3;
     i = 5;

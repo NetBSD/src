@@ -63,7 +63,7 @@ int DH_check_params(const DH *dh, int *ret)
      * validity tests.
      */
     return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
-                                              FFC_PARAM_TYPE_DH, ret, NULL);
+        FFC_PARAM_TYPE_DH, ret, NULL);
 }
 #else
 int DH_check_params(const DH *dh, int *ret)
@@ -97,7 +97,7 @@ int DH_check_params(const DH *dh, int *ret)
         *ret |= DH_MODULUS_TOO_LARGE;
 
     ok = 1;
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
@@ -220,7 +220,7 @@ int DH_check(const DH *dh, int *ret)
             *ret |= DH_CHECK_P_NOT_SAFE_PRIME;
     }
     ok = 1;
- err:
+err:
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
@@ -249,6 +249,18 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
  */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
+    /* Don't do any checks at all with an excessively large modulus */
+    if (BN_num_bits(dh->params.p) > OPENSSL_DH_CHECK_MAX_MODULUS_BITS) {
+        ERR_raise(ERR_LIB_DH, DH_R_MODULUS_TOO_LARGE);
+        *ret = DH_MODULUS_TOO_LARGE | DH_CHECK_PUBKEY_INVALID;
+        return 0;
+    }
+
+    if (dh->params.q != NULL && BN_ucmp(dh->params.p, dh->params.q) < 0) {
+        *ret |= DH_CHECK_INVALID_Q_VALUE | DH_CHECK_PUBKEY_INVALID;
+        return 1;
+    }
+
     return ossl_ffc_validate_public_key(&dh->params, pub_key, ret);
 }
 
@@ -260,7 +272,7 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 int ossl_dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
     return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret)
-           && *ret == 0;
+        && *ret == 0;
 }
 
 int ossl_dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)

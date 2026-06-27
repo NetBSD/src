@@ -113,6 +113,7 @@ UI_METHOD                               datatype
 UI_STRING                               datatype
 UI_string_types                         datatype
 UI_string_types                         datatype
+X509_ATTRIBUTE                          datatype
 X509_STORE_CTX_cert_crl_fn              datatype
 X509_STORE_CTX_check_crl_fn             datatype
 X509_STORE_CTX_check_issued_fn          datatype
@@ -177,6 +178,8 @@ BIO_get_conn_hostname                   define
 BIO_get_conn_port                       define
 BIO_get_conn_ip_family                  define
 BIO_get_fd                              define
+BIO_get_flags                           define
+BIO_get_retry_flags                     define
 BIO_get_fp                              define
 BIO_get_indent                          define
 BIO_get_info_callback                   define
@@ -210,6 +213,12 @@ BIO_set_conn_hostname                   define
 BIO_set_conn_port                       define
 BIO_set_conn_ip_family                  define
 BIO_set_fd                              define
+BIO_set_flags                           define
+BIO_set_retry_read                      define
+BIO_set_retry_write                     define
+BIO_set_retry_special                   define
+BIO_clear_flags                         define
+BIO_clear_retry_flags                   define
 BIO_set_fp                              define
 BIO_set_indent                          define
 BIO_set_info_callback                   define

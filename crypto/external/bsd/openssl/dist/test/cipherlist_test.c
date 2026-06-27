@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,6 @@ typedef struct cipherlist_test_fixture {
     SSL_CTX *client;
 } CIPHERLIST_TEST_FIXTURE;
 
-
 static void tear_down(CIPHERLIST_TEST_FIXTURE *fixture)
 {
     if (fixture != NULL) {
@@ -46,7 +45,7 @@ static CIPHERLIST_TEST_FIXTURE *set_up(const char *const test_case_name)
         return NULL;
     fixture->test_case_name = test_case_name;
     if (!TEST_ptr(fixture->server = SSL_CTX_new(TLS_server_method()))
-            || !TEST_ptr(fixture->client = SSL_CTX_new(TLS_client_method()))) {
+        || !TEST_ptr(fixture->client = SSL_CTX_new(TLS_client_method()))) {
         tear_down(fixture);
         return NULL;
     }
@@ -65,69 +64,69 @@ static CIPHERLIST_TEST_FIXTURE *set_up(const char *const test_case_name)
 static const uint32_t default_ciphers_in_order[] = {
 #ifndef OPENSSL_NO_TLS1_3
     TLS1_3_CK_AES_256_GCM_SHA384,
-# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     TLS1_3_CK_CHACHA20_POLY1305_SHA256,
-# endif
+#endif
     TLS1_3_CK_AES_128_GCM_SHA256,
 #endif
 #ifndef OPENSSL_NO_TLS1_2
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
     TLS1_CK_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
-# endif
-# ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_256_GCM_SHA384,
-# endif
+#endif
 
-# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-#  ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,
     TLS1_CK_ECDHE_RSA_WITH_CHACHA20_POLY1305,
-#  endif
-#  ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_CHACHA20_POLY1305,
-#  endif
-# endif  /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */
+#endif
+#endif /* !OPENSSL_NO_CHACHA && !OPENSSL_NO_POLY1305 */
 
-# ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
     TLS1_CK_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
-# endif
-# ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_128_GCM_SHA256,
-# endif
-# ifndef OPENSSL_NO_EC
+#endif
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_SHA384,
     TLS1_CK_ECDHE_RSA_WITH_AES_256_SHA384,
-# endif
-# ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_256_SHA256,
-# endif
-# ifndef OPENSSL_NO_EC
+#endif
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_SHA256,
     TLS1_CK_ECDHE_RSA_WITH_AES_128_SHA256,
-# endif
-# ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
-# endif
-#endif  /* !OPENSSL_NO_TLS1_2 */
+#endif
+#endif /* !OPENSSL_NO_TLS1_2 */
 
 #if !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3)
-    /* These won't be usable if TLSv1.3 is available but TLSv1.2 isn't */
-# ifndef OPENSSL_NO_EC
+/* These won't be usable if TLSv1.3 is available but TLSv1.2 isn't */
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
     TLS1_CK_ECDHE_RSA_WITH_AES_256_CBC_SHA,
-# endif
- #ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_256_SHA,
-# endif
-# ifndef OPENSSL_NO_EC
+#endif
+#ifndef OPENSSL_NO_EC
     TLS1_CK_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
     TLS1_CK_ECDHE_RSA_WITH_AES_128_CBC_SHA,
-# endif
-# ifndef OPENSSL_NO_DH
+#endif
+#ifndef OPENSSL_NO_DH
     TLS1_CK_DHE_RSA_WITH_AES_128_SHA,
-# endif
+#endif
 #endif /* !defined(OPENSSL_NO_TLS1_2) || defined(OPENSSL_NO_TLS1_3) */
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -156,7 +155,7 @@ static int test_default_cipherlist(SSL_CTX *ctx)
         return 0;
 
     if (!TEST_ptr(ssl = SSL_new(ctx))
-            || !TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl)))
+        || !TEST_ptr(ciphers = SSL_get1_supported_ciphers(ssl)))
         goto err;
 
     num_expected_ciphers = OSSL_NELEM(default_ciphers_in_order);
@@ -175,7 +174,7 @@ static int test_default_cipherlist(SSL_CTX *ctx)
 
     ret = 1;
 
- err:
+err:
     sk_SSL_CIPHER_free(ciphers);
     SSL_free(ssl);
     return ret;
@@ -205,7 +204,7 @@ static int test_default_cipherlist_explicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
     if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, "DEFAULT"))
-            || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT"))) {
+        || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT"))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -228,13 +227,13 @@ static int test_default_cipherlist_clear(void)
     s = SSL_new(fixture->client);
 
     if (!TEST_ptr(s))
-      goto end;
+        goto end;
 
     if (!TEST_int_eq(SSL_set_cipher_list(s, "no-such"), 0))
         goto end;
 
     if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
-                SSL_R_NO_CIPHER_MATCH))
+            SSL_R_NO_CIPHER_MATCH))
         goto end;
 
     result = 1;
@@ -244,10 +243,65 @@ end:
     return result;
 }
 
+/*
+ * SSL_CTX_set_ciphersuites() must not crash on empty list elements.
+ * CONF_parse_list() signals them with elem=NULL; ciphersuite_cb() must skip
+ * such entries rather than passing NULL to memcpy().
+ */
+#ifndef OPENSSL_NO_TLS1_3
+static int cipher_in_ctx(const SSL_CTX *ctx, uint32_t id)
+{
+    const STACK_OF(SSL_CIPHER) *sk = SSL_CTX_get_ciphers(ctx);
+    int i;
+
+    for (i = 0; i < sk_SSL_CIPHER_num(sk); i++)
+        if (SSL_CIPHER_get_id(sk_SSL_CIPHER_value(sk, i)) == id)
+            return 1;
+    return 0;
+}
+
+static int test_set_ciphersuites_empty_elem(void)
+{
+    SSL_CTX *ctx = NULL;
+    int result = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_method())))
+        goto end;
+
+    /* Double colon: both surrounding valid suites must be applied */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx,
+            "TLS_AES_128_GCM_SHA256::TLS_AES_256_GCM_SHA384")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256))
+        || !TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_256_GCM_SHA384)))
+        goto end;
+
+    /* Leading separator: empty first element, one valid suite must apply */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, ":TLS_AES_128_GCM_SHA256")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    /* Trailing separator: empty last element, one valid suite must apply */
+    if (!TEST_true(SSL_CTX_set_ciphersuites(ctx, "TLS_AES_128_GCM_SHA256:")))
+        goto end;
+    if (!TEST_true(cipher_in_ctx(ctx, TLS1_3_CK_AES_128_GCM_SHA256)))
+        goto end;
+
+    result = 1;
+end:
+    SSL_CTX_free(ctx);
+    return result;
+}
+#endif
+
 int setup_tests(void)
 {
     ADD_TEST(test_default_cipherlist_implicit);
     ADD_TEST(test_default_cipherlist_explicit);
     ADD_TEST(test_default_cipherlist_clear);
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_set_ciphersuites_empty_elem);
+#endif
     return 1;
 }

@@ -126,6 +126,7 @@ decoders that have been added to the I<ctx> so far.  Parameters that an
 implementation doesn't recognise should be ignored by it.
 
 OSSL_DECODER_CTX_free() frees the given context I<ctx>.
+If the argument is NULL, nothing is done.
 
 OSSL_DECODER_CTX_add_decoder() populates the B<OSSL_DECODER_CTX> I<ctx> with
 a decoder, to be used to attempt to decode some encoded input.
@@ -165,6 +166,13 @@ decode instance I<decoder_inst> that the constructor got and an object
 I<reference>, unpacks the object which it refers to, and exports it by
 creating an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>,
 along with I<export_arg>.
+
+Note that functions OSSL_DECODER_CTX_set_selection(),
+OSSL_DECODER_CTX_set_output_type(), OSSL_DECODER_CTX_set_output_structure(),
+OSSL_DECODER_CTX_add_encoder(), OSSL_DECODER_CTX_add_extra(),
+OSSL_DECODER_CTX_set_construct(), OSSL_DECODER_CTX_set_construct_data(), and
+OSSL_DECODER_CTX_set_cleanup() shouldn't be used after the context is finalised,
+in particular after calling the function OSSL_DECODER_CTX_new_for_pkey().
 
 =head2 Constructor
 
@@ -249,7 +257,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2020-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2024 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

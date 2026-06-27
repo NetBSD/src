@@ -89,58 +89,58 @@
  * with additional instructions and penalties, it kind of makes sense to
  * default to "iso"...
  */
-# define TSAN_QUALIFIER volatile
-# if defined(_M_ARM) || defined(_M_ARM64)
-#  define _InterlockedExchangeAdd _InterlockedExchangeAdd_nf
-#  pragma intrinsic(_InterlockedExchangeAdd_nf)
-#  pragma intrinsic(__iso_volatile_load32, __iso_volatile_store32)
-#  ifdef _WIN64
-#   define _InterlockedExchangeAdd64 _InterlockedExchangeAdd64_nf
-#   pragma intrinsic(_InterlockedExchangeAdd64_nf)
-#   pragma intrinsic(__iso_volatile_load64, __iso_volatile_store64)
-#   define tsan_load(ptr) (sizeof(*(ptr)) == 8 ? __iso_volatile_load64(ptr) \
-                                               : __iso_volatile_load32(ptr))
-#   define tsan_store(ptr, val) (sizeof(*(ptr)) == 8 ? __iso_volatile_store64((ptr), (val)) \
-                                                     : __iso_volatile_store32((ptr), (val)))
-#  else
-#   define tsan_load(ptr) __iso_volatile_load32(ptr)
-#   define tsan_store(ptr, val) __iso_volatile_store32((ptr), (val))
-#  endif
-# else
-#  define tsan_load(ptr) (*(ptr))
-#  define tsan_store(ptr, val) (*(ptr) = (val))
-# endif
-# pragma intrinsic(_InterlockedExchangeAdd)
-# ifdef _WIN64
-#  pragma intrinsic(_InterlockedExchangeAdd64)
-#  define tsan_counter(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), 1) \
-                                                 : _InterlockedExchangeAdd((ptr), 1))
-#  define tsan_decr(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), -1) \
-                                                 : _InterlockedExchangeAdd((ptr), -1))
-# else
-#  define tsan_counter(ptr) _InterlockedExchangeAdd((ptr), 1)
-#  define tsan_decr(ptr) _InterlockedExchangeAdd((ptr), -1)
-# endif
-# if !defined(_ISO_VOLATILE)
-#  define tsan_ld_acq(ptr) (*(ptr))
-#  define tsan_st_rel(ptr, val) (*(ptr) = (val))
-# endif
+#define TSAN_QUALIFIER volatile
+#if defined(_M_ARM) || defined(_M_ARM64)
+#define _InterlockedExchangeAdd _InterlockedExchangeAdd_nf
+#pragma intrinsic(_InterlockedExchangeAdd_nf)
+#pragma intrinsic(__iso_volatile_load32, __iso_volatile_store32)
+#ifdef _WIN64
+#define _InterlockedExchangeAdd64 _InterlockedExchangeAdd64_nf
+#pragma intrinsic(_InterlockedExchangeAdd64_nf)
+#pragma intrinsic(__iso_volatile_load64, __iso_volatile_store64)
+#define tsan_load(ptr) (sizeof(*(ptr)) == 8 ? __iso_volatile_load64(ptr) \
+                                            : __iso_volatile_load32(ptr))
+#define tsan_store(ptr, val) (sizeof(*(ptr)) == 8 ? __iso_volatile_store64((ptr), (val)) \
+                                                  : __iso_volatile_store32((ptr), (val)))
+#else
+#define tsan_load(ptr) __iso_volatile_load32(ptr)
+#define tsan_store(ptr, val) __iso_volatile_store32((ptr), (val))
+#endif
+#else
+#define tsan_load(ptr) (*(ptr))
+#define tsan_store(ptr, val) (*(ptr) = (val))
+#endif
+#pragma intrinsic(_InterlockedExchangeAdd)
+#ifdef _WIN64
+#pragma intrinsic(_InterlockedExchangeAdd64)
+#define tsan_counter(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), 1) \
+                                               : _InterlockedExchangeAdd((ptr), 1))
+#define tsan_decr(ptr) (sizeof(*(ptr)) == 8 ? _InterlockedExchangeAdd64((ptr), -1) \
+                                            : _InterlockedExchangeAdd((ptr), -1))
+#else
+#define tsan_counter(ptr) _InterlockedExchangeAdd((ptr), 1)
+#define tsan_decr(ptr) _InterlockedExchangeAdd((ptr), -1)
+#endif
+#if !defined(_ISO_VOLATILE)
+#define tsan_ld_acq(ptr) (*(ptr))
+#define tsan_st_rel(ptr, val) (*(ptr) = (val))
+#endif
 
 #endif
 
 #ifndef TSAN_QUALIFIER
 
-# ifdef OPENSSL_THREADS
-#  define TSAN_QUALIFIER volatile
-#  define TSAN_REQUIRES_LOCKING
-# else  /* OPENSSL_THREADS */
-#  define TSAN_QUALIFIER
-# endif /* OPENSSL_THREADS */
+#ifdef OPENSSL_THREADS
+#define TSAN_QUALIFIER volatile
+#define TSAN_REQUIRES_LOCKING
+#else /* OPENSSL_THREADS */
+#define TSAN_QUALIFIER
+#endif /* OPENSSL_THREADS */
 
-# define tsan_load(ptr) (*(ptr))
-# define tsan_store(ptr, val) (*(ptr) = (val))
-# define tsan_counter(ptr) ((*(ptr))++)
-# define tsan_decr(ptr) ((*(ptr))--)
+#define tsan_load(ptr) (*(ptr))
+#define tsan_store(ptr, val) (*(ptr) = (val))
+#define tsan_counter(ptr) ((*(ptr))++)
+#define tsan_decr(ptr) ((*(ptr))--)
 /*
  * Lack of tsan_ld_acq and tsan_ld_rel means that compiler support is not
  * sophisticated enough to support them. Code that relies on them should be

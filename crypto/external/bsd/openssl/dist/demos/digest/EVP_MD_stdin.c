@@ -1,5 +1,5 @@
 /*-
- * Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,10 +35,10 @@ int demonstrate_digest(BIO *input)
 {
     OSSL_LIB_CTX *library_context = NULL;
     int result = 0;
-    const char * option_properties = NULL;
+    const char *option_properties = NULL;
     EVP_MD *message_digest = NULL;
     EVP_MD_CTX *digest_context = NULL;
-    unsigned int digest_length;
+    int digest_length;
     unsigned char *digest_value = NULL;
     unsigned char buffer[512];
     int ii;
@@ -51,11 +51,11 @@ int demonstrate_digest(BIO *input)
 
     /*
      * Fetch a message digest by name
-     * The algorithm name is case insensitive. 
+     * The algorithm name is case insensitive.
      * See providers(7) for details about algorithm fetching
      */
     message_digest = EVP_MD_fetch(library_context,
-                                  "SHA3-512", option_properties);
+        "SHA3-512", option_properties);
     if (message_digest == NULL) {
         fprintf(stderr, "EVP_MD_fetch could not find SHA3-512.");
         ERR_print_errors_fp(stderr);
@@ -85,7 +85,7 @@ int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     /*
-     * Initialize the message digest context to use the fetched 
+     * Initialize the message digest context to use the fetched
      * digest provider
      */
     if (EVP_DigestInit(digest_context, message_digest) != 1) {
@@ -104,7 +104,7 @@ int demonstrate_digest(BIO *input)
         goto cleanup;
     }
     result = 1;
-    for (ii=0; ii<digest_length; ii++) {
+    for (ii = 0; ii < digest_length; ii++) {
         fprintf(stdout, "%02x", digest_value[ii]);
     }
     fprintf(stdout, "\n");
@@ -124,7 +124,7 @@ cleanup:
 int main(void)
 {
     int result = 1;
-    BIO *input = BIO_new_fd( fileno(stdin), 1 );
+    BIO *input = BIO_new_fd(fileno(stdin), 1);
 
     if (input != NULL) {
         result = demonstrate_digest(input);

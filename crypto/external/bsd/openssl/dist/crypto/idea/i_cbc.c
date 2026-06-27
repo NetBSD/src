@@ -18,8 +18,8 @@
 #include "idea_local.h"
 
 void IDEA_cbc_encrypt(const unsigned char *in, unsigned char *out,
-                      long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
-                      int encrypt)
+    long length, IDEA_KEY_SCHEDULE *ks, unsigned char *iv,
+    int encrypt)
 {
     register IDEA_INT tin0, tin1;
     register IDEA_INT tout0, tout1, xor0, xor1;

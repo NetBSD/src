@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2022 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,10 +20,10 @@
 #define SXNET_TEST
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
-                     int indent);
+    int indent);
 #ifdef SXNET_TEST
 static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-                        STACK_OF(CONF_VALUE) *nval);
+    STACK_OF(CONF_VALUE) *nval);
 #endif
 const X509V3_EXT_METHOD ossl_v3_sxnet = {
     NID_sxnet, X509V3_EXT_MULTILINE, ASN1_ITEM_ref(SXNET),
@@ -41,21 +41,21 @@ const X509V3_EXT_METHOD ossl_v3_sxnet = {
 };
 
 ASN1_SEQUENCE(SXNETID) = {
-        ASN1_SIMPLE(SXNETID, zone, ASN1_INTEGER),
-        ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
+    ASN1_SIMPLE(SXNETID, zone, ASN1_INTEGER),
+    ASN1_SIMPLE(SXNETID, user, ASN1_OCTET_STRING)
 } ASN1_SEQUENCE_END(SXNETID)
 
 IMPLEMENT_ASN1_FUNCTIONS(SXNETID)
 
 ASN1_SEQUENCE(SXNET) = {
-        ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
-        ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
+    ASN1_SIMPLE(SXNET, version, ASN1_INTEGER),
+    ASN1_SEQUENCE_OF(SXNET, ids, SXNETID)
 } ASN1_SEQUENCE_END(SXNET)
 
 IMPLEMENT_ASN1_FUNCTIONS(SXNET)
 
 static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
-                     int indent)
+    int indent)
 {
     int64_t v;
     char *tmp;
@@ -67,8 +67,8 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
      * LONG_MAX since that would cause on overflow.
      */
     if (!ASN1_INTEGER_get_int64(&v, sx->version)
-            || v >= LONG_MAX
-            || v < LONG_MIN) {
+        || v >= LONG_MAX
+        || v < LONG_MIN) {
         BIO_printf(out, "%*sVersion: <unsupported>", indent, "");
     } else {
         long vl = (long)v;
@@ -96,15 +96,17 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
  */
 
 static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-                        STACK_OF(CONF_VALUE) *nval)
+    STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *cnf;
     SXNET *sx = NULL;
     int i;
     for (i = 0; i < sk_CONF_VALUE_num(nval); i++) {
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1))
+        if (!SXNET_add_id_asc(&sx, cnf->name, cnf->value, -1)) {
+            SXNET_free(sx);
             return NULL;
+        }
     }
     return sx;
 }
@@ -123,13 +125,17 @@ int SXNET_add_id_asc(SXNET **psx, const char *zone, const char *user, int userle
         ERR_raise(ERR_LIB_X509V3, X509V3_R_ERROR_CONVERTING_ZONE);
         return 0;
     }
-    return SXNET_add_id_INTEGER(psx, izone, user, userlen);
+    if (!SXNET_add_id_INTEGER(psx, izone, user, userlen)) {
+        ASN1_INTEGER_free(izone);
+        return 0;
+    }
+    return 1;
 }
 
 /* Add an id given the zone as an unsigned long */
 
 int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
-                       int userlen)
+    int userlen)
 {
     ASN1_INTEGER *izone;
 
@@ -139,8 +145,11 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
         ASN1_INTEGER_free(izone);
         return 0;
     }
-    return SXNET_add_id_INTEGER(psx, izone, user, userlen);
-
+    if (!SXNET_add_id_INTEGER(psx, izone, user, userlen)) {
+        ASN1_INTEGER_free(izone);
+        return 0;
+    }
+    return 1;
 }
 
 /*
@@ -149,7 +158,7 @@ int SXNET_add_id_ulong(SXNET **psx, unsigned long lzone, const char *user,
  */
 
 int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
-                         int userlen)
+    int userlen)
 {
     SXNET *sx = NULL;
     SXNETID *id = NULL;
@@ -187,11 +196,12 @@ int SXNET_add_id_INTEGER(SXNET **psx, ASN1_INTEGER *zone, const char *user,
         goto err;
     if (!sk_SXNETID_push(sx->ids, id))
         goto err;
+    ASN1_INTEGER_free(id->zone);
     id->zone = zone;
     *psx = sx;
     return 1;
 
- err:
+err:
     ERR_raise(ERR_LIB_X509V3, ERR_R_MALLOC_FAILURE);
     SXNETID_free(id);
     if (*psx == NULL)

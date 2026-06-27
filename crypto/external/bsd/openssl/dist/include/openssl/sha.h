@@ -54,13 +54,13 @@ OSSL_DEPRECATEDIN_3_0 int SHA1_Init(SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Update(SHA_CTX *c, const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA1_Final(unsigned char *md, SHA_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA1_Transform(SHA_CTX *c, const unsigned char *data);
-# endif
+#endif
 
 unsigned char *SHA1(const unsigned char *d, size_t n, unsigned char *md);
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define SHA256_CBLOCK   (SHA_LBLOCK*4)/* SHA-256 treats input data as a
-                                        * contiguous array of 32 bit wide
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+#define SHA256_CBLOCK (SHA_LBLOCK * 4) /* SHA-256 treats input data as a  \
+                                        * contiguous array of 32 bit wide \
                                         * big-endian values. */
 
 typedef struct SHA256state_st {
@@ -72,25 +72,25 @@ typedef struct SHA256state_st {
 
 OSSL_DEPRECATEDIN_3_0 int SHA224_Init(SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Update(SHA256_CTX *c,
-                                        const void *data, size_t len);
+    const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA224_Final(unsigned char *md, SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Init(SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Update(SHA256_CTX *c,
-                                        const void *data, size_t len);
+    const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA256_Final(unsigned char *md, SHA256_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA256_Transform(SHA256_CTX *c,
-                                            const unsigned char *data);
-# endif
+    const unsigned char *data);
+#endif
 
 unsigned char *SHA224(const unsigned char *d, size_t n, unsigned char *md);
 unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
 
-# define SHA224_DIGEST_LENGTH    28
-# define SHA256_DIGEST_LENGTH    32
-# define SHA384_DIGEST_LENGTH    48
-# define SHA512_DIGEST_LENGTH    64
+#define SHA224_DIGEST_LENGTH 28
+#define SHA256_DIGEST_LENGTH 32
+#define SHA384_DIGEST_LENGTH 48
+#define SHA512_DIGEST_LENGTH 64
 
-# ifndef OPENSSL_NO_DEPRECATED_3_0
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * Unlike 32-bit digest algorithms, SHA-512 *relies* on SHA_LONG64
  * being exactly 64-bit wide. See Implementation Notes in sha512.c
@@ -101,14 +101,14 @@ unsigned char *SHA256(const unsigned char *d, size_t n, unsigned char *md);
  * contiguous array of 64 bit
  * wide big-endian values.
  */
-#  define SHA512_CBLOCK   (SHA_LBLOCK*8)
-#  if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
-#   define SHA_LONG64 unsigned __int64
-#  elif defined(__arch64__)
-#   define SHA_LONG64 unsigned long
-#  else
-#   define SHA_LONG64 unsigned long long
-#  endif
+#define SHA512_CBLOCK (SHA_LBLOCK * 8)
+#if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
+#define SHA_LONG64 unsigned __int64
+#elif defined(__arch64__)
+#define SHA_LONG64 unsigned long
+#else
+#define SHA_LONG64 unsigned long long
+#endif
 
 typedef struct SHA512state_st {
     SHA_LONG64 h[8];
@@ -122,21 +122,21 @@ typedef struct SHA512state_st {
 
 OSSL_DEPRECATEDIN_3_0 int SHA384_Init(SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Update(SHA512_CTX *c,
-                                        const void *data, size_t len);
+    const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA384_Final(unsigned char *md, SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Init(SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Update(SHA512_CTX *c,
-                                        const void *data, size_t len);
+    const void *data, size_t len);
 OSSL_DEPRECATEDIN_3_0 int SHA512_Final(unsigned char *md, SHA512_CTX *c);
 OSSL_DEPRECATEDIN_3_0 void SHA512_Transform(SHA512_CTX *c,
-                                            const unsigned char *data);
-# endif
+    const unsigned char *data);
+#endif
 
 unsigned char *SHA384(const unsigned char *d, size_t n, unsigned char *md);
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md);
 
-# ifdef  __cplusplus
+#ifdef __cplusplus
 }
-# endif
+#endif
 
 #endif

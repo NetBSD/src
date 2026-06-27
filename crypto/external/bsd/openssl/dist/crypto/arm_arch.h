@@ -89,36 +89,32 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
  *
  */
 
-# define ARM_CPU_IMP_ARM           0x41
+#define ARM_CPU_IMP_ARM 0x41
 
-# define ARM_CPU_PART_CORTEX_A72   0xD08
-# define ARM_CPU_PART_N1           0xD0C
+#define ARM_CPU_PART_CORTEX_A72 0xD08
+#define ARM_CPU_PART_N1 0xD0C
 
-# define MIDR_PARTNUM_SHIFT       4
-# define MIDR_PARTNUM_MASK        (0xfffU << MIDR_PARTNUM_SHIFT)
-# define MIDR_PARTNUM(midr)       \
-           (((midr) & MIDR_PARTNUM_MASK) >> MIDR_PARTNUM_SHIFT)
+#define MIDR_PARTNUM_SHIFT 4
+#define MIDR_PARTNUM_MASK (0xfffU << MIDR_PARTNUM_SHIFT)
+#define MIDR_PARTNUM(midr) \
+    (((midr) & MIDR_PARTNUM_MASK) >> MIDR_PARTNUM_SHIFT)
 
-# define MIDR_IMPLEMENTER_SHIFT   24
-# define MIDR_IMPLEMENTER_MASK    (0xffU << MIDR_IMPLEMENTER_SHIFT)
-# define MIDR_IMPLEMENTER(midr)   \
-           (((midr) & MIDR_IMPLEMENTER_MASK) >> MIDR_IMPLEMENTER_SHIFT)
+#define MIDR_IMPLEMENTER_SHIFT 24
+#define MIDR_IMPLEMENTER_MASK (0xffU << MIDR_IMPLEMENTER_SHIFT)
+#define MIDR_IMPLEMENTER(midr) \
+    (((midr) & MIDR_IMPLEMENTER_MASK) >> MIDR_IMPLEMENTER_SHIFT)
 
-# define MIDR_ARCHITECTURE_SHIFT  16
-# define MIDR_ARCHITECTURE_MASK   (0xfU << MIDR_ARCHITECTURE_SHIFT)
-# define MIDR_ARCHITECTURE(midr)  \
-           (((midr) & MIDR_ARCHITECTURE_MASK) >> MIDR_ARCHITECTURE_SHIFT)
+#define MIDR_ARCHITECTURE_SHIFT 16
+#define MIDR_ARCHITECTURE_MASK (0xfU << MIDR_ARCHITECTURE_SHIFT)
+#define MIDR_ARCHITECTURE(midr) \
+    (((midr) & MIDR_ARCHITECTURE_MASK) >> MIDR_ARCHITECTURE_SHIFT)
 
-# define MIDR_CPU_MODEL_MASK \
-           (MIDR_IMPLEMENTER_MASK | \
-            MIDR_PARTNUM_MASK     | \
-            MIDR_ARCHITECTURE_MASK)
+#define MIDR_CPU_MODEL_MASK \
+    (MIDR_IMPLEMENTER_MASK | MIDR_PARTNUM_MASK | MIDR_ARCHITECTURE_MASK)
 
-# define MIDR_CPU_MODEL(imp, partnum) \
-           (((imp)     << MIDR_IMPLEMENTER_SHIFT)  | \
-            (0xfU      << MIDR_ARCHITECTURE_SHIFT) | \
-            ((partnum) << MIDR_PARTNUM_SHIFT))
+#define MIDR_CPU_MODEL(imp, partnum) \
+    (((imp) << MIDR_IMPLEMENTER_SHIFT) | (0xfU << MIDR_ARCHITECTURE_SHIFT) | ((partnum) << MIDR_PARTNUM_SHIFT))
 
-# define MIDR_IS_CPU_MODEL(midr, imp, partnum) \
-           (((midr) & MIDR_CPU_MODEL_MASK) == MIDR_CPU_MODEL(imp, partnum))
+#define MIDR_IS_CPU_MODEL(midr, imp, partnum) \
+    (((midr) & MIDR_CPU_MODEL_MASK) == MIDR_CPU_MODEL(imp, partnum))
 #endif

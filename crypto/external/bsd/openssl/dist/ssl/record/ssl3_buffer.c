@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -47,7 +47,7 @@ int ssl3_setup_read_buffer(SSL *s)
     else
         headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
     align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
 #endif
 
@@ -96,7 +96,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
         else
             headerlen = SSL3_RT_HEADER_LENGTH;
 
-#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
+#if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD != 0
         align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
@@ -121,7 +121,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
 
         if (thiswb->len != len) {
             OPENSSL_free(thiswb->buf);
-            thiswb->buf = NULL;         /* force reallocation */
+            thiswb->buf = NULL; /* force reallocation */
         }
 
         if (thiswb->buf == NULL) {
@@ -191,5 +191,7 @@ int ssl3_release_read_buffer(SSL *s)
         OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);
     b->buf = NULL;
+    s->rlayer.packet = NULL;
+    s->rlayer.packet_length = 0;
     return 1;
 }

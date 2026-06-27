@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2024 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,13 +18,13 @@
 int i2d_PKCS7_bio_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 {
     return i2d_ASN1_bio_stream(out, (ASN1_VALUE *)p7, in, flags,
-                               ASN1_ITEM_rptr(PKCS7));
+        ASN1_ITEM_rptr(PKCS7));
 }
 
 int PEM_write_bio_PKCS7_stream(BIO *out, PKCS7 *p7, BIO *in, int flags)
 {
     return PEM_write_bio_ASN1_stream(out, (ASN1_VALUE *)p7, in, flags,
-                                     "PKCS7", ASN1_ITEM_rptr(PKCS7));
+        "PKCS7", ASN1_ITEM_rptr(PKCS7));
 }
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
@@ -33,17 +33,20 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
     int ctype_nid = OBJ_obj2nid(p7->type);
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
 
-    if (ctype_nid == NID_pkcs7_signed)
+    if (ctype_nid == NID_pkcs7_signed) {
+        if (p7->d.sign == NULL)
+            return 0;
         mdalgs = p7->d.sign->md_algs;
-    else
+    } else {
         mdalgs = NULL;
+    }
 
     flags ^= SMIME_OLDMIME;
 
     return SMIME_write_ASN1_ex(bio, (ASN1_VALUE *)p7, data, flags, ctype_nid,
-                               NID_undef, mdalgs, ASN1_ITEM_rptr(PKCS7),
-                               ossl_pkcs7_ctx_get0_libctx(ctx),
-                               ossl_pkcs7_ctx_get0_propq(ctx));
+        NID_undef, mdalgs, ASN1_ITEM_rptr(PKCS7),
+        ossl_pkcs7_ctx_get0_libctx(ctx),
+        ossl_pkcs7_ctx_get0_propq(ctx));
 }
 
 PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
@@ -58,7 +61,7 @@ PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
     }
 
     ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, 0, bcont, ASN1_ITEM_rptr(PKCS7),
-                                      (ASN1_VALUE **)p7, libctx, propq);
+        (ASN1_VALUE **)p7, libctx, propq);
     if (ret != NULL)
         ossl_pkcs7_resolve_libctx(ret);
     return ret;

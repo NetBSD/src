@@ -3,6 +3,8 @@
 ##
 ## {- join("\n## ", @autowarntext) -}
 {-
+     use Time::Piece;
+
      use OpenSSL::Util;
 
      our $makedep_scheme = $config{makedep_scheme};
@@ -21,7 +23,7 @@
      sub dependmagic {
          my $target = shift;
 
-         return "$target: build_generated\n\t\$(MAKE) depend && \$(MAKE) _$target\n_$target";
+         return "$target: build_generated\n\t\"\$(MAKE)\" depend && \"\$(MAKE)\" _$target\n_$target";
      }
 
      our $COLUMNS = $ENV{COLUMNS};
@@ -64,10 +66,20 @@ OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+RESULT_D=$(BLDDIR)/test-runs
 FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
 VERSION_NUMBER={- "$config{version}" -}
+RELEASE_DATE={- my $t = localtime;
+		if ($config{"release_date"}) {
+			# Provide the user with a more meaningful error message
+			# than the default internal parsing error from
+			# `Time::Piece->strptime(..)`.
+			eval { $t = Time::Piece->strptime($config{"release_date"}, "%d %b %Y"); } ||
+				die "Parsing \$config{release_date} ('$config{release_date}') failed: $@";
+		}
+		$t->strftime("%Y-%m-%d") -}
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
@@ -526,8 +538,9 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all: build_sw build_docs
 
 test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils run_tests
-run_tests:
+{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep link-utils
+	"$(MAKE)" run_tests
+run_tests: FORCE
 	@ : {- output_off() if $disabled{tests}; "" -}
 	( SRCTOP=$(SRCDIR) \
 	  BLDTOP=$(BLDDIR) \
@@ -541,7 +554,7 @@ run_tests:
 
 list-tests:
 	@ : {- output_off() if $disabled{tests}; "" -}
-	$(MAKE) run_tests TESTS=list
+	"$(MAKE)" run_tests TESTS=list
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}
@@ -588,7 +601,7 @@ clean: libclean
 	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
-	$(RM) -r test/test-runs
+	$(RM) -r $(RESULT_D)
 	$(RM) providers/fips*.new
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-find . -type l \! -name '.*' -exec $(RM) {} \;
@@ -1192,12 +1205,12 @@ providers/fips.module.sources.new: configdata.pm
 	  cd sources-tmp \
 	  && $$srcdir/Configure --banner=Configured enable-fips -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources1 \
-	  && $(MAKE) -sj 4 build_generated providers/fips.so \
+	  && "$(MAKE)" -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep1 \
-          && $(MAKE) distclean \
+          && "$(MAKE)" distclean \
 	  && $$srcdir/Configure --banner=Configured enable-fips no-asm -O0 \
 	  && ./configdata.pm --query 'get_sources("providers/fips")' > sources2 \
-	  && $(MAKE) -sj 4 build_generated providers/fips.so \
+	  && "$(MAKE)" -sj 4 build_generated providers/fips.so \
 	  && find . -name '*.d' | xargs cat > dep2 \
 	  && cat sources1 sources2 \
 	     | grep -v ' : \\$$' | grep -v util/providers.num \
@@ -1331,7 +1344,7 @@ ordinals: build_generated
                 $(SSLHEADERS)
 
 test_ordinals:
-	$(MAKE) run_tests TESTS=test_ordinals
+	"$(MAKE)" run_tests TESTS=test_ordinals
 
 tags TAGS: FORCE
 	rm -f TAGS tags
@@ -1539,7 +1552,8 @@ EOF
           return <<"EOF";
 $args{src}: $pod
 	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
-		--release=\$(VERSION) $pod >\$\@
+		--date=\$(RELEASE_DATE) --release=\$(VERSION) \\
+		$pod >\$\@
 EOF
       } elsif (platform->isdef($args{src})) {
           #
@@ -1687,7 +1701,7 @@ EOF
       } elsif ($makedep_scheme eq 'gcc' && !grep /\.rc$/, @srcs) {
           $recipe .= <<"EOF";
 $obj: $deps
-	$cmd $incs $defs $cmdflags -MMD -MF $dep.tmp -MT \$\@ -c -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags -MMD -MF $dep.tmp -c -o \$\@ $srcs
 	\@touch $dep.tmp
 	\@if cmp $dep.tmp $dep > /dev/null 2> /dev/null; then \\
 		rm -f $dep.tmp; \\
