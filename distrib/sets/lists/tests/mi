@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1421 2026/06/24 07:13:44 yamaguchi Exp $
+# $NetBSD: mi,v 1.1422 2026/06/27 20:05:06 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -2424,6 +2424,7 @@
 ./usr/tests/kernel/t_ksem				tests-kernel-tests	atf
 ./usr/tests/kernel/t_lock				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lockf				tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/t_lua				tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_lwpctl				tests-obsolete		obsolete
 ./usr/tests/kernel/t_magic_symlinks			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_memfd_create			tests-kernel-tests	compattestfile,atf

@@ -1,4 +1,4 @@
-/*	$NetBSD: lua.h,v 1.9 2023/07/11 14:57:21 martin Exp $ */
+/*	$NetBSD: lua.h,v 1.10 2026/06/27 20:05:06 riastradh Exp $ */
 
 /*
  * Copyright (c) 2014 by Lourival Vieira Neto <lneto@NetBSD.org>.
@@ -33,7 +33,9 @@
 #define _SYS_LUA_H_
 
 #include <sys/param.h>
+
 #include <sys/ioccom.h>
+#include <sys/stdbool.h>
 
 #include <lua.h>		/* for lua_State */
 

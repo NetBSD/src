@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.513 2026/05/10 14:19:10 tls Exp $
+# $NetBSD: mi,v 1.514 2026/06/27 20:05:06 riastradh Exp $
 #
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -1833,6 +1833,7 @@
 ./usr/libdata/debug/usr/tests/kernel/t_ksem.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lock.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lockf.debug			tests-kernel-tests	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/kernel/t_lua.debug			tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_lwpctl.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_memfd_create.debug		tests-kernel-tests	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/kernel/t_mkdir.debug			tests-obsolete		obsolete,compattestfile
