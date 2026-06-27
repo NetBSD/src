@@ -1,4 +1,4 @@
-/* $NetBSD: virtio_pci.c,v 1.55 2024/09/25 17:12:47 christos Exp $ */
+/* $NetBSD: virtio_pci.c,v 1.55.2.1 2026/06/27 15:28:30 martin Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.55 2024/09/25 17:12:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio_pci.c,v 1.55.2.1 2026/06/27 15:28:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -395,11 +395,14 @@ virtio_pci_attach_09(device_t self, void *aux)
 	struct virtio_pci_softc * const psc = device_private(self);
 	const struct pci_attach_args * const pa = aux;
 	struct virtio_softc * const sc = &psc->sc_sc;
+	pcireg_t bar_type;
 
-	/* complete IO region */
-	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
+	/* complete BAR0 region */
+	bar_type = pci_mapreg_type(pa->pa_pc, pa->pa_tag, PCI_MAPREG_START);
+	if (pci_mapreg_map(pa, PCI_MAPREG_START, bar_type, 0,
 		&psc->sc_iot, &psc->sc_ioh, NULL, &psc->sc_iosize)) {
-		aprint_error_dev(self, "can't map i/o space\n");
+		aprint_error_dev(self, "can't map BAR0 (%s)\n",
+			bar_type == PCI_MAPREG_TYPE_IO ? "I/O" : "MEM");
 		return EIO;
 	}
 
