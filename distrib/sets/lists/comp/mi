@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2425.2.13 2026/04/02 18:32:44 martin Exp $
+#	$NetBSD: mi,v 1.2425.2.14 2026/06/27 19:13:12 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6659,6 +6659,7 @@
 ./usr/share/man/cat3/bottom_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/box.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bsd_signal.0		comp-c-catman		.cat
+./usr/share/man/cat3/bsdmalloc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/bsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bstring.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bswap.0			comp-c-catman		.cat
@@ -15165,6 +15166,7 @@
 ./usr/share/man/html3/bottom_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/box.html			comp-c-htmlman		html
 ./usr/share/man/html3/bsd_signal.html		comp-c-htmlman		html
+./usr/share/man/html3/bsdmalloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/bsearch.html		comp-c-htmlman		html
 ./usr/share/man/html3/bstring.html		comp-c-htmlman		html
 ./usr/share/man/html3/bswap.html		comp-c-htmlman		html
@@ -23516,6 +23518,7 @@
 ./usr/share/man/man3/bottom_panel.3		comp-c-man		.man
 ./usr/share/man/man3/box.3			comp-c-man		.man
 ./usr/share/man/man3/bsd_signal.3		comp-c-man		.man
+./usr/share/man/man3/bsdmalloc.3		comp-c-man		.man
 ./usr/share/man/man3/bsearch.3			comp-c-man		.man
 ./usr/share/man/man3/bstring.3			comp-c-man		.man
 ./usr/share/man/man3/bswap.3			comp-c-man		.man

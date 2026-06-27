@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.5.10.1 2024/08/24 16:24:04 martin Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.5.10.2 2026/06/27 19:13:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.5.10.1 2024/08/24 16:24:04 martin Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.5.10.2 2026/06/27 19:13:11 martin Exp $");
 
 #include <atf-c.h>
 
@@ -189,19 +189,11 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 				ATF_CHECK_EQ_MSG(p, NULL,
 				    "aligned_alloc(%zu, %zu): %p, %s",
 				    align[i], size[j], p, strerror(errno));
-				switch (errno) {
-				case EINVAL:
-				case ENOMEM:
-					break;
-				default:
-					atf_tc_fail_nonfatal(
-					    "%s:%d:"
-					    " aligned_alloc(%zu, %zu): %s",
-					    __FILE__, __LINE__,
-					    align[i], size[j],
-					    strerror(errno));
-					break;
-				}
+				ATF_CHECK_MSG((errno == EINVAL ||
+					errno == ENOMEM),
+				    "aligned_alloc(%zu, %zu): %s",
+				    align[i], size[j],
+				    strerror(errno));
 				continue;
 			}
 
@@ -219,15 +211,10 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 			    "aligned_alloc(%zu, %zu): %p",
 			    align[i], size[j], p);
 			if (size[j] != 0) {
-				if (p == NULL) {
-					atf_tc_fail_nonfatal(
-					    "%s:%d:"
-					    " aligned_alloc(&p, %zu, %zu):"
-					    " %p, %s",
-					    __FILE__, __LINE__,
-					    align[i], size[j], p,
-					    strerror(errno));
-				}
+				ATF_CHECK_MSG(p != NULL,
+				    "aligned_alloc(&p, %zu, %zu): %p, %s",
+				    align[i], size[j], p,
+				    strerror(errno));
 			} else {
 				/*
 				 * No guarantees about whether
