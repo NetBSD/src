@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.30.4.2 2024/10/02 18:20:48 martin Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.30.4.3 2026/06/27 16:51:52 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.30.4.2 2024/10/02 18:20:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.30.4.3 2026/06/27 16:51:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -542,7 +542,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	r = virtio_enqueue_prep(vsc, vq, &slot);
 	if (r != 0) {
 		if (r == EAGAIN) { /* no free slot; dequeue first */
-			delay(100);
+			while (!virtio_vq_is_enqueued(vsc, vq))
+				delay(100);
 			ld_virtio_vq_done(vq);
 			r = virtio_enqueue_prep(vsc, vq, &slot);
 			if (r != 0)
@@ -595,6 +596,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, int blkno, int blkcnt)
 	for ( ; ; ) {
 		int dslot;
 
+		while (!virtio_vq_is_enqueued(vsc, vq))
+			continue;
 		r = virtio_dequeue(vsc, vq, &dslot, NULL);
 		if (r != 0)
 			continue;
@@ -677,7 +680,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_FREE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -725,7 +729,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_DONE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
