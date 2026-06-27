@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.74 2026/06/27 18:02:15 nat Exp $	*/
+/*	$NetBSD: sbc.c,v 1.75 2026/06/27 18:06:24 nat Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.74 2026/06/27 18:02:15 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.75 2026/06/27 18:06:24 nat Exp $");
 
 #include "opt_ddb.h"
 
@@ -275,6 +275,15 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 	nofault = &faultbuf;
 	if (setjmp(nofault)) {
 		goto interrupt;
+	}
+
+	int tmpres = 64;
+	while (tmpres) {
+		if (sbc_ready(ncr_sc))
+			goto interrupt;
+		*(u_int8_t *)data = *byte_data, data += 1;
+		resid--;
+		tmpres--;
 	}
 
 #define R4	*(u_int32_t *)data = *long_data, data += 4, resid -= 4
