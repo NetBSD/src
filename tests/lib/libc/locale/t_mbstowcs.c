@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbstowcs.c,v 1.3 2022/12/21 09:33:34 wiz Exp $ */
+/* $NetBSD: t_mbstowcs.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbstowcs.c,v 1.3 2022/12/21 09:33:34 wiz Exp $");
+__RCSID("$NetBSD: t_mbstowcs.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -78,12 +78,18 @@ static struct test {
 	wchar_t wchars[64];
 	int widths[64];
 	int width;
+	const char *xfail;
 } tests[] = {
 {
 	"en_US.UTF-8",
-	"[\001\177][\302\200\337\277][\340\240\200\357\277\277][\360\220\200"
-	"\200\367\277\277\277][\370\210\200\200\200\373\277\277\277\277][\374"
-	"\204\200\200\200\200\375\277\277\277\277\277]",
+	"[\001\177]"					/* 1-byte samples */
+	    "[\302\200\337\277]"			/* 2-byte samples */
+	    "[\340\240\200\357\277\277]"		/* 3-byte samples */
+	    "[\360\220\200\200\367\277\277\277]"	/* 4-byte samples */
+	    /* legacy 5-byte samples */
+	    "[\370\210\200\200\200\373\277\277\277\277]"
+	    /* legacy 6-byte samples */
+	    "[\374\204\200\200\200\200\375\277\277\277\277\277]",
 	{
 		0x5B, 0x01, 0x7F, 0x5D, 0x5B, 0x80, 0x07FF, 0x5D, 0x5B, 0x0800,
 		0xFFFF, 0x5D, 0x5B, 0x10000, 0x1FFFFF, 0x5D, 0x5B, 0x200000,
@@ -93,7 +99,8 @@ static struct test {
 		 -1, 1, 1, 1, -1, 1, 1, -1,
 		 -1, 1, 1, -1, -1, 1, -1
 	},
-	-1
+	-1,
+	"PR lib/60369: mbrtowc, mbrlen have wrong return value for some invalid byte sequences: Invalid sequence",
 }, {
 	"ja_JP.ISO2022-JP",
 	"\033$B#J#I#S$G$9!#\033(Baaaa\033$B$\"$$$&$($*\033(B",
@@ -109,7 +116,8 @@ static struct test {
 #endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
-	26
+	26,
+	NULL,
 }, {
 	"ja_JP.SJIS",
 	"\202r\202i\202h\202r\202\305\202\267\201Baaaa\202\240\202\242"
@@ -124,7 +132,8 @@ static struct test {
 #endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
-	28
+	28,
+	NULL,
 }, {
 	"ja_JP.eucJP",
 	"\243\305\243\325\243\303\244\307\244\271\241\243aaaa\244\242\244"
@@ -139,13 +148,15 @@ static struct test {
 #endif
 	},
 	{ 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 2, 2, -1 },
-	26
+	26,
+	NULL,
 }, {
 	NULL,
 	NULL,
 	{},
 	{},
-	0
+	0,
+	NULL,
 }
 };
 
@@ -166,6 +177,9 @@ ATF_TC_BODY(mbstowcs_basic, tc)
 		char *str;
 		int i;
 
+		if (t->xfail)
+			atf_tc_expect_fail("%s", t->xfail);
+
 		ATF_REQUIRE_STREQ(setlocale(LC_ALL, "C"), "C");
 		ATF_REQUIRE(setlocale(LC_CTYPE, t->locale) != NULL);
 
@@ -182,7 +196,8 @@ ATF_TC_BODY(mbstowcs_basic, tc)
 			(void)strvis(visbuf, buf, VIS_WHITE | VIS_OCTAL);
 			(void)printf("Conversion to wcs and back failed: "
 				"\"%s\"\n", visbuf);
-			atf_tc_fail("Test failed");
+			atf_tc_fail_nonfatal("Test failed");
+			continue;
 		}
 
 		/* The output here is implementation-dependent. */
@@ -197,17 +212,22 @@ ATF_TC_BODY(mbstowcs_basic, tc)
 				t->wchars[i], t->widths[i]);
 			(void)printf("  got     : 0x%04X (%d)\n", wbuf[i],
 				wcwidth(wbuf[i]));
-			atf_tc_fail("Test failed");
+			atf_tc_fail_nonfatal("Test failed");
+			goto next;
 		}
 
 		if (wcswidth(wbuf, SIZE-1) != t->width) {
 			(void)printf("Incorrect wcswidth:\n");
 			(void)printf("  expected: %d\n", t->width);
 			(void)printf("  got     : %d\n", wcswidth(wbuf, SIZE-1));
-			atf_tc_fail("Test failed");
+			atf_tc_fail_nonfatal("Test failed");
+			goto next;
 		}
 
 		(void)printf("Ok.\n");
+
+next:		if (t->xfail)
+			atf_tc_expect_pass();
 	}
 }
 

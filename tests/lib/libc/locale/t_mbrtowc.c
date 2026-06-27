@@ -1,4 +1,4 @@
-/* $NetBSD: t_mbrtowc.c,v 1.3 2026/06/26 22:36:23 riastradh Exp $ */
+/* $NetBSD: t_mbrtowc.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_mbrtowc.c,v 1.3 2026/06/26 22:36:23 riastradh Exp $");
+__RCSID("$NetBSD: t_mbrtowc.c,v 1.4 2026/06/27 20:43:43 riastradh Exp $");
 
 #include <errno.h>
 #include <locale.h>
@@ -245,7 +245,8 @@ h_ctype2(const struct test *t, bool use_mbstate)
 			(void)printf("At position %d:\n", i);
 			(void)printf("  expected: 0x%04X\n", t->wchars[i]);
 			(void)printf("  got     : 0x%04X\n", wbuf[i]);
-			atf_tc_fail("Test failed");
+			atf_tc_fail_nonfatal("Test failed");
+			return;
 		}
 
 		ATF_REQUIRE_EQ_MSG((size_t)i, t->length, "Incorrect length: "
