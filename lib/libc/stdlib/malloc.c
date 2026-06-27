@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.59.16.1 2026/06/27 19:23:43 martin Exp $	*/
+/*	$NetBSD: malloc.c,v 1.59.16.2 2026/06/27 20:58:38 martin Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -80,7 +80,6 @@ void utrace(struct ut *, int);
     static spinlock_t thread_lock	= _SPINLOCK_INITIALIZER;
 #   define _MALLOC_LOCK()		if (__isthreaded) _SPINLOCK(&thread_lock);
 #   define _MALLOC_UNLOCK()		if (__isthreaded) _SPINUNLOCK(&thread_lock);
-#   define _MALLOC_REINIT()		if (__isthreaded) thread_lock = (spinlock_t)_SPINLOCK_INITIALIZER;
 #endif /* __FreeBSD__ */
 
 #include <sys/types.h>
@@ -94,7 +93,7 @@ int utrace(const char *, void *, size_t);
 # include <sys/cdefs.h>
 # include "extern.h"
 # if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: malloc.c,v 1.59.16.1 2026/06/27 19:23:43 martin Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.59.16.2 2026/06/27 20:58:38 martin Exp $");
 # endif /* LIBC_SCCS and not lint */
 # include <reentrant.h>
 # ifdef _REENTRANT
@@ -102,11 +101,9 @@ extern int __isthreaded;
 static mutex_t thread_lock = MUTEX_INITIALIZER;
 #  define _MALLOC_LOCK()	if (__isthreaded) mutex_lock(&thread_lock);
 #  define _MALLOC_UNLOCK()	if (__isthreaded) mutex_unlock(&thread_lock);
-#  define _MALLOC_REINIT()	if (__isthreaded) mutex_init(&thread_lock, NULL);
 # else
 #  define _MALLOC_LOCK()	
 #  define _MALLOC_UNLOCK()
-#  define _MALLOC_REINIT()
 # endif
 #endif /* __NetBSD__ */
 
@@ -209,10 +206,6 @@ static size_t malloc_pagemask;
 
 #ifndef _MALLOC_UNLOCK
 #define _MALLOC_UNLOCK()
-#endif
-
-#ifndef _MALLOC_REINIT
-#define _MALLOC_REINIT()
 #endif
 
 #ifndef MMAP_FD
@@ -1302,11 +1295,4 @@ _malloc_postfork(void)
 {
 
 	_MALLOC_UNLOCK();
-}
-
-void
-_malloc_postfork_child(void)
-{
-
-	_MALLOC_REINIT();
 }

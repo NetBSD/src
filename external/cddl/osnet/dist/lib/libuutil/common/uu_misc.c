@@ -239,12 +239,7 @@ uu_release_child(void)
 	uu_panic_format = NULL;
 	uu_panic_thread = 0;
 
-	(void) pthread_mutex_init(&uu_panic_lock, NULL);
-#if !defined(PTHREAD_ONCE_KEY_NP)
-	(void) pthread_mutex_init(&uu_key_lock, NULL);
-#endif
-	uu_avl_release_child();
-	uu_list_release_child();
+	uu_release();
 }
 
 #pragma init(uu_init)
