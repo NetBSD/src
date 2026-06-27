@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.9 2019/12/03 04:20:45 hikaru Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.9.8.1 2026/06/27 15:25:56 martin Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -295,6 +295,32 @@ xcbcmac_cleanup() {
 	common_cleanup
 }
 
+atf_test_case thread cleanup
+thread_head() {
+	common_head "Test threaded crypto"
+}
+
+thread_body() {
+	common_body h_thread
+}
+
+thread_cleanup() {
+	if ! [ -f rump_server.core ]; then
+		LD_PRELOAD="/usr/lib/librumphijack.so" \
+		RUMPHIJACK=sysctl=yes \
+		dmesg >&2
+	fi
+	if [ -f h_thread.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    "$(atf_get_srcdir)/h_thread" h_thread.core
+	fi
+	if [ -f rump_server.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    /usr/bin/rump_server rump_server.core
+	fi
+	common_cleanup
+}
+
 atf_test_case ioctl cleanup
 ioctl_head() {
 	common_head "Test ioctl for /dev/crypto"
@@ -328,5 +354,6 @@ atf_init_test_cases() {
 	atf_add_test_case sha1_hmac
 	atf_add_test_case sha2_hmac
 	atf_add_test_case xcbcmac
+	atf_add_test_case thread
 	atf_add_test_case ioctl
 }
