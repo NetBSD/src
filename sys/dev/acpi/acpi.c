@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.303 2025/02/25 00:41:42 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.303.2.1 2026/06/27 10:46:19 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.303 2025/02/25 00:41:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.303.2.1 2026/06/27 10:46:19 martin Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -114,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.303 2025/02/25 00:41:42 christos Exp $");
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
 #include <sys/timetc.h>
@@ -434,7 +435,7 @@ acpi_attach(device_t parent, device_t self, void *aux)
 {
 	struct acpi_softc *sc = device_private(self);
 	struct acpibus_attach_args *aa = aux;
-	ACPI_TABLE_HEADER *rsdt, *hdr;
+	ACPI_TABLE_HEADER *rsdt, *hdr, *oem0;
 	ACPI_STATUS rv;
 	int i;
 
@@ -570,6 +571,31 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	acpi_debug_init();
 #endif
 
+	/*
+	 * Microsoft Hyper-V drops off entropy from the Windows system RNG
+	 * in the OEM0 table of its guests.  Consume and clear it as early
+	 * as possible.
+	 */
+	rv = AcpiGetTable("OEM0", 1, &oem0);
+	if (ACPI_SUCCESS(rv) && oem0 != NULL) {
+		if (memcmp(oem0->OemId, "VRTUAL", 6) == 0 &&
+		    memcmp(oem0->OemTableId, "MICROSFT", 8) == 0) {
+			static struct krndsource hvrs;
+			uint8_t *hostrnd;
+			size_t hrlen;
+
+			memset(&hvrs, 0, sizeof(hvrs));
+			rnd_attach_source(&hvrs, "Hyper-V OEM0",
+			    RND_TYPE_UNKNOWN, RND_FLAG_DEFAULT);
+			hostrnd = (uint8_t *)oem0 + sizeof(ACPI_TABLE_HEADER);
+			hrlen = oem0->Length - sizeof(ACPI_TABLE_HEADER);
+			rnd_add_data(&hvrs, hostrnd, hrlen, hrlen * NBBY);
+			/* Now wipe it out - hide from /dev/acpi access */
+			explicit_memset(hostrnd, 0, hrlen);
+			aprint_normal_dev(self,
+			    "Hyper-V OEM0 entropy consumed and wiped\n");
+		}
+	}
 	/*
 	 * Print debug information.
 	 */
