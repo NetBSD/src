@@ -1,4 +1,4 @@
-/*	$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $	*/
+/*	$NetBSD: malloc.c,v 1.2.106.1 2026/06/27 19:04:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)malloc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: malloc.c,v 1.2 2003/08/07 16:42:01 agc Exp $");
+__RCSID("$NetBSD: malloc.c,v 1.2.106.1 2026/06/27 19:04:55 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -193,8 +193,7 @@ malloc(nbytes)
 			n += pagesz;
 		if (n) {
 			if (sbrk((int)n) == (void *)-1) {
-				mutex_unlock(&malloc_mutex);
-				return (NULL);
+				goto out;
 			}
 		}
 		bucket = 0;
@@ -226,7 +225,7 @@ malloc(nbytes)
 	while (nbytes > amt + n) {
 		amt <<= 1;
 		if (amt == 0)
-			return (NULL);
+			goto out;
 		bucket++;
 	}
 	/*
@@ -236,8 +235,7 @@ malloc(nbytes)
   	if ((op = nextf[bucket]) == NULL) {
   		morecore(bucket);
   		if ((op = nextf[bucket]) == NULL) {
-			mutex_unlock(&malloc_mutex);
-  			return (NULL);
+			goto out;
 		}
 	}
 	/* remove from linked list */
@@ -258,6 +256,9 @@ malloc(nbytes)
   	*(u_short *)((caddr_t)(op + 1) + op->ov_size) = RMAGIC;
 #endif
   	return ((void *)(op + 1));
+out:
+	mutex_unlock(&malloc_mutex);
+	return (NULL);
 }
 
 /*
