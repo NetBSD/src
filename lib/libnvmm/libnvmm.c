@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.14.4.1 2019/11/10 12:58:30 martin Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.14.4.2 2026/06/27 20:20:03 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -294,24 +294,31 @@ nvmm_vcpu_create(struct nvmm_machine *mach, nvmm_cpuid_t cpuid,
 	struct nvmm_comm_page *comm;
 	int ret;
 
+	vcpu->exit = malloc(sizeof(*vcpu->exit));
+	if (vcpu->exit == NULL)
+		return -1;
+
 	args.machid = mach->machid;
 	args.cpuid = cpuid;
 
 	ret = ioctl(nvmm_fd, NVMM_IOC_VCPU_CREATE, &args);
-	if (ret == -1)
+	if (ret == -1) {
+		free(vcpu->exit);
 		return -1;
+	}
 
 	comm = mmap(NULL, PAGE_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_FILE,
 	    nvmm_fd, NVMM_COMM_OFF(mach->machid, cpuid));
-	if (comm == MAP_FAILED)
+	if (comm == MAP_FAILED) {
+		free(vcpu->exit);
 		return -1;
+	}
 
 	mach->pages[cpuid] = comm;
 
 	vcpu->cpuid = cpuid;
 	vcpu->state = &comm->state;
 	vcpu->event = &comm->event;
-	vcpu->exit = malloc(sizeof(*vcpu->exit));
 
 	return 0;
 }
