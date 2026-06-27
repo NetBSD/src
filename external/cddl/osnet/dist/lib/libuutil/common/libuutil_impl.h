@@ -170,9 +170,11 @@ struct uu_avl_pool {
  */
 void uu_avl_lockup(void);
 void uu_avl_release(void);
+void uu_avl_release_child(void) __dso_hidden;
 
 void uu_list_lockup(void);
 void uu_list_release(void);
+void uu_list_release_child(void) __dso_hidden;
 
 #ifdef	__cplusplus
 }
