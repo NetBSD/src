@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep.h,v 1.15 2018/04/19 21:50:07 christos Exp $ */
+/* $NetBSD: pci_machdep.h,v 1.16 2026/06/27 13:31:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2002,2007 The NetBSD Foundation, Inc.
@@ -443,6 +443,7 @@ int genofw_pci_conf_hook(void *, int, int, int, pcireg_t);
 #define PICNODE_TYPE_HEATHROW	3
 #define PICNODE_TYPE_OHARE	4
 #define PICNODE_TYPE_IVR	5
+#define PICNODE_TYPE_MPC5200	6
 
 typedef struct _ofw_pic_node_t {
 	int node;

@@ -1,4 +1,4 @@
-/* $NetBSD: pci_machdep_ofw.c,v 1.22 2017/06/01 02:45:07 chs Exp $ */
+/* $NetBSD: pci_machdep_ofw.c,v 1.23 2026/06/27 13:31:03 rkujawa Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.22 2017/06/01 02:45:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep_ofw.c,v 1.23 2026/06/27 13:31:03 rkujawa Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -97,6 +97,15 @@ genofw_find_ofpics(int startnode)
 		    sizeof(name)) > -1)
 			goto foundic;
 
+		/*
+		 * The MPC5200/MPC5200B SIU interrupt controller advertises
+		 * itself only through its "compatible" property.
+		 */
+		if (OF_getprop(node, "compatible", name, sizeof(name)) > 0 &&
+		    (strcmp(name, "mpc5200-pic") == 0 ||
+		     strcmp(name, "mpc5200b-pic") == 0))
+			goto foundic;
+
 		if (OF_getprop(node, "device_type", name, sizeof(name)) == -1)
 			continue;
 		if (strncmp(name, "interrupt-controller", 20) == 0)
@@ -155,6 +164,14 @@ foundic:
 			/* probably a Pegasos, assume 8259 */
 			picnodes[nrofpics].type = PICNODE_TYPE_8259;
 		}
+		/*
+		 * The MPC5200/MPC5200B SIU interrupt controller advertises
+		 * itself via its "compatible" property.
+		 */
+		if (OF_getprop(node, "compatible", name, sizeof(name)) > 0 &&
+		    (strcmp(name, "mpc5200-pic") == 0 ||
+		     strcmp(name, "mpc5200b-pic") == 0))
+			picnodes[nrofpics].type = PICNODE_TYPE_MPC5200;
 		nrofpics++;
 	}
 }

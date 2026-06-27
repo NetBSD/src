@@ -1,4 +1,4 @@
-#	$NetBSD: majors.powerpc,v 1.17 2021/06/29 10:22:36 nia Exp $
+#	$NetBSD: majors.powerpc,v 1.18 2026/06/27 13:31:03 rkujawa Exp $
 #
 # Device majors for shared PowerPC
 #
@@ -92,6 +92,7 @@ device-major	gtmpsc		char 80			gtmpsc
 #device-major	obsolete	char 98			obsolete (nsmb)
 device-major	xlcom		char 99			xlcom
 device-major	satmgr		char 100		satmgr
+device-major	psc		char 101		psc
 
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 

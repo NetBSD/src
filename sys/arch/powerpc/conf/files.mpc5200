@@ -1,0 +1,61 @@
+#	$NetBSD: files.mpc5200,v 1.1 2026/06/27 13:31:03 rkujawa Exp $
+#
+# Configuration for Freescale MPC5200B on-chip peripherals (SoC bus).
+#
+# mpcobio: the MPC5200B on-chip peripheral bus, attaching on the OpenFirmware
+# /builtin node.
+define	mpcobio { }
+device	mpcobio: mpcobio
+attach	mpcobio at mainbus
+file	arch/powerpc/mpc5200/obio.c		mpcobio
+
+# CDM (Clock Distribution Module)
+device	cdm
+attach	cdm at mpcobio
+file	arch/powerpc/mpc5200/cdm.c		cdm
+
+# PSC (Programmable Serial Controller)
+device	psc
+attach	psc at mpcobio
+file	arch/powerpc/mpc5200/psc.c		psc
+
+# On-chip SRAM (16KB)
+device	sram
+attach	sram at mpcobio
+file	arch/powerpc/mpc5200/sram.c		sram
+
+# BestComm SDMA engine
+device	bestcomm
+attach	bestcomm at mpcobio
+file	arch/powerpc/mpc5200/bestcomm.c		bestcomm
+# BestComm SDMA task microcode image (Freescale, MIT-licensed; data only).
+file	arch/powerpc/mpc5200/bestcomm_image.c	bestcomm
+
+# On-chip ATA Controller
+attach	wdc at mpcobio with mpcata
+file	arch/powerpc/mpc5200/mpc5200_ata.c	mpcata
+
+# FEC fast ethernet
+device	fec: ether, ifnet, arp, mii
+attach	fec at mpcobio
+file	arch/powerpc/mpc5200/fec.c		fec
+
+# USB OHCI host controller
+attach	ohci at mpcobio with ohci_obio
+file	arch/powerpc/mpc5200/mpc5200_ohci.c	ohci_obio
+
+# AC97 audio controller
+device	mpcaudio: audiobus, ac97
+attach	mpcaudio at mpcobio
+file	arch/powerpc/mpc5200/mpc5200_ac97.c	mpcaudio
+
+# MPC5200B SIU interrupt controller
+device	mpc5200pic
+attach	mpc5200pic at mpcobio
+file	arch/powerpc/mpc5200/pic_mpc5200.c	mpc5200pic
+defflag	opt_interrupt.h			PIC_MPC5200
+
+# MPC5200B PCI host bridge
+device	mpcpci: pcibus
+attach	mpcpci at mainbus
+file	arch/powerpc/mpc5200/mpc5200_pci.c	mpcpci
