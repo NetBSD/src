@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.44.2.1 2026/06/27 16:12:02 martin Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.44 2025/07/05 11:41:13 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.44.2.1 2026/06/27 16:12:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -492,7 +492,8 @@ ld_virtio_info(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_FREE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -558,7 +559,8 @@ done:
 	while (sc->sc_sync_use != SYNC_DONE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -767,7 +769,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 	r = virtio_enqueue_prep(vsc, vq, &slot);
 	if (r != 0) {
 		if (r == EAGAIN) { /* no free slot; dequeue first */
-			delay(100);
+			while (!virtio_vq_is_enqueued(vsc, vq))
+				delay(100);
 			ld_virtio_vq_done(vq);
 			r = virtio_enqueue_prep(vsc, vq, &slot);
 			if (r != 0)
@@ -820,6 +823,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 	for ( ; ; ) {
 		int dslot;
 
+		while (!virtio_vq_is_enqueued(vsc, vq))
+			continue;
 		r = virtio_dequeue(vsc, vq, &dslot, NULL);
 		if (r != 0)
 			continue;
@@ -905,7 +910,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_FREE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -953,7 +959,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_DONE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
