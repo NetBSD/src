@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.67 2024/06/07 13:53:23 riastradh Exp $	*/
+/*	$NetBSD: strptime.c,v 1.67.4.1 2026/06/27 10:54:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.67 2024/06/07 13:53:23 riastradh Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.67.4.1 2026/06/27 10:54:07 martin Exp $");
 #endif
 
 #include "namespace.h"
@@ -109,8 +109,10 @@ static const int start_of_month[2][13] = {
 static int
 first_wday_of(int yr)
 {
-	return ((2 * (3 - (yr / 100) % 4)) + (yr % 100) + ((yr % 100) /  4) +
-	    (isleap(yr) ? 6 : 0) + 1) % 7;
+	return (1 +
+		5 * ((yr - 1) % 4) +
+		4 * ((yr - 1) % 100) +
+		6 * ((yr - 1) % 400)) % 7;
 }
 
 #define delim(p)	((p) == '\0' || isspace((unsigned char)(p)))
@@ -717,13 +719,9 @@ loadzone:
 
 		if (!HAVE_WDAY(state)) {
 			/* calculate day of week */
-			i = 0;
-			week_offset = first_wday_of(tm->tm_year);
-			while (i++ <= tm->tm_yday) {
-				if (week_offset++ >= 6)
-					week_offset = 0;
-			}
-			tm->tm_wday = week_offset;
+			week_offset = first_wday_of(tm->tm_year +
+						    TM_YEAR_BASE);
+			tm->tm_wday = (week_offset + tm->tm_yday) % 7;
 			state |= S_WDAY;
 		}
 	}
