@@ -1,4 +1,4 @@
-/*	$NetBSD: citrus_utf8.c,v 1.18 2013/05/28 16:57:56 joerg Exp $	*/
+/*	$NetBSD: citrus_utf8.c,v 1.18.38.1 2026/06/27 16:48:23 martin Exp $	*/
 
 /*-
  * Copyright (c)2002 Citrus Project,
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_utf8.c,v 1.18 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_utf8.c,v 1.18.38.1 2026/06/27 16:48:23 martin Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -139,16 +139,12 @@ _UTF8_init_count(void)
 		memset(_UTF8_count_array, 0, sizeof(_UTF8_count_array));
 		for (i = 0; i <= 0x7f; i++)
 			_UTF8_count_array[i] = 1;
-		for (i = 0xc0; i <= 0xdf; i++)
+		for (i = 0xc2; i <= 0xdf; i++)
 			_UTF8_count_array[i] = 2;
 		for (i = 0xe0; i <= 0xef; i++)
 			_UTF8_count_array[i] = 3;
-		for (i = 0xf0; i <= 0xf7; i++)
+		for (i = 0xf0; i <= 0xf4; i++)
 			_UTF8_count_array[i] = 4;
-		for (i = 0xf8; i <= 0xfb; i++)
-			_UTF8_count_array[i] = 5;
-		for (i = 0xfc; i <= 0xfd; i++)
-			_UTF8_count_array[i] = 6;
 		_UTF8_count = _UTF8_count_array;
 	}
 }
@@ -234,12 +230,12 @@ _citrus_UTF8_mbrtowc_priv(_UTF8EncodingInfo *ei, wchar_t *pwc, const char **s,
 		while (psenc->chlen < c) {
 			if (n-- < 1)
 				goto restart;
+			if ((*s0 & 0xc0) != 0x80)
+				goto ilseq;
 			psenc->ch[psenc->chlen++] = *s0++;
 		}
 		wchar = psenc->ch[0] & (0x7f >> c);
 		for (i = 1; i < c; i++) {
-			if ((psenc->ch[i] & 0xc0) != 0x80)
-				goto ilseq;
 			wchar <<= 6;
 			wchar |= (psenc->ch[i] & 0x3f);
 		}
