@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.106 2026/06/27 06:05:45 snj Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.107 2026/06/27 20:12:57 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -11178,4 +11178,604 @@ usr.sbin/sysinst/net.c				1.48
 	even if the initial installer environment lacks support
 	for https when downloading the base sets.
 	[martin, ticket #344]
+
+sys/nfs/nfs.h					1.83
+sys/nfs/nfs_serv.c				1.185
+sys/nfs/nfs_srvsocket.c				1.7
+sys/nfs/nfs_syscalls.c				1.165
+
+	nfs: fix various kernel issues.
+	[christos, ticket #313]
+
+sys/kern/kern_exec.c				1.533
+
+	Prevent a DoS attack by crafted binaries that trigger KASSERTS.
+	[christos, ticket #314]
+
+external/mpl/bind/dist/bin/tests/system/class/ns1/chaos.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/ns2/example.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/ns2/localhost.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/setup.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/tests_class_chaos.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/tests_class_update.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/class/ns3/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns1/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns2/tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/tests_cap_glues.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns3/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/cap_glues/ns3/root.hint up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/catz/ns1/catalog-bad6.example.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/checkconf/warn-chaos-recursion.conf up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/checkconf/inline-inherit.conf up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones/delegations.partial.db.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones/ns.partial.db.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones/root.db.j2.manual up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones/soa.partial.db.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones/template.db.j2.manual up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/controls.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/root.hint.conf up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/_common/zones.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec/signer/general/test13.zone up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/masterformat/ns2/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsupdate/ans11/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsupdate/tests_update_sig.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns10/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns10/redirect.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns10/root.hints up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns7/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns7/redirect.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns7/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns8/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns8/root.hints up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/tests_redirect_dns64.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns9/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns9/redirect.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns9/root.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/redirect/ns9/sign.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tcp/ns2/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tcp/ns3/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tcp/ns4/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tcp/ns5/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/ans.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/xfer/ans11/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/xferquota/ns3/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/xferquota/ns3/quota.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/xferquota/ns3/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dispatch/ans4/tcp-only.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dispatch/ans4/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dispatch/tests_tcponly.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/kasp/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/kasp/ns1/root.db.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/kasp/ns1/setup.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/ns1/hack.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/ns1/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/ns2/root.hint up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dns64_dname/tests_dns64_dname.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/ans2/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/ans2/example.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/ans2/secure.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/tests_cname_rejection.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/ns3/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_cname_response/ns3/trusted.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns2/truncated-active.selfsigned.db.signed up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns2/truncated-revoked.selfsigned.db.signed up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/doth/tests_malicious.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/isctest/transfer.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsec_ixfr/ns1/example.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsec_ixfr/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsec_ixfr/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsec_ixfr/setup.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/nsec_ixfr/tests_nsec_ixfr.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/resend_loop/ans3/ans.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/resend_loop/tests_resend_loop.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/resend_loop/ns4/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/resend_loop/ns4/root.hint up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/rndc_confgen/tests_rndc_confgen.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/mismatchtcp/ans2/example.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/mismatchtcp/ans2/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/mismatchtcp/tests_mismatchtcp.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/mismatchtcp/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/mismatchtcp/ns1/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/qpcache_rrsig_any/ans3/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/qpcache_rrsig_any/tests_qpcache_rrsig_any.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/qpcache_rrsig_any/ns2/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/qpcache_rrsig_any/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns1/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns2/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns2/tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/tests_selfpointedglue.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns3/example.tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns3/example2.tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns3/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns4/named.args.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns4/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/selfpointedglue/ns4/root.hint up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/srtt_ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/README up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ans2/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/tests_srtt.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ans3/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ans4/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ans5/ans.py up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ns1/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ns6/named.args up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/srtt/ns6/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/ns1/dns.keytab up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/ns1/example.db.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/ns1/named.conf.j2 up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/prereq.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/setup.sh up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/tkeyleak/tests_tkeyleak.py up to 1.1.1.1
+external/mpl/bind/dist/doc/notes/notes-9.20.23.rst up to 1.1.1.2
+external/mpl/bind/dist/doc/notes/notes-9.20.24.rst up to 1.1.1.1
+external/mpl/bind/dist/doc/changelog/changelog-9.20.23.rst up to 1.1.1.1
+external/mpl/bind/dist/doc/changelog/changelog-9.20.24.rst up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/ans.pl  delete
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns2/truncated.selfsigned.db.signed delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/badkeydata delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/badmessageid delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/ednsformerr delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/ednsnotimp delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/goodaxfr delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/ixfrnotimp delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/partial delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/soamismatch delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/unknownkey delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/unsigned delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/wrongkey delete
+external/mpl/bind/dist/bin/tests/system/xfer/ans5/wrongname delete
+external/mpl/bind/dist/CONTRIBUTING.md          up to 1.1.1.11
+external/mpl/bind/dist/NEWS                     up to 1.1.1.9
+external/mpl/bind/dist/configure                up to 1.25
+external/mpl/bind/dist/configure.ac             up to 1.1.1.23
+external/mpl/bind/dist/srcid                    up to 1.1.1.24
+external/mpl/bind/dist/bin/check/check-tool.c   up to 1.13
+external/mpl/bind/dist/bin/confgen/keygen.c     up to 1.9
+external/mpl/bind/dist/bin/delv/delv.c          up to 1.20
+external/mpl/bind/dist/bin/dnssec/dnssec-keygen.c up to 1.17
+external/mpl/bind/dist/bin/dnssec/dnssec-ksr.c  up to 1.6
+external/mpl/bind/dist/bin/dnssec/dnssec-signzone.c up to 1.18
+external/mpl/bind/dist/bin/dnssec/dnssec-verify.c up to 1.11
+external/mpl/bind/dist/bin/named/bind9.xsl      up to 1.1.1.13
+external/mpl/bind/dist/bin/named/controlconf.c  up to 1.15
+external/mpl/bind/dist/bin/named/main.c         up to 1.24
+external/mpl/bind/dist/bin/named/server.c       up to 1.29
+external/mpl/bind/dist/bin/named/statschannel.c up to 1.20
+external/mpl/bind/dist/bin/nsupdate/nsupdate.rst up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/conftest.py up to 1.1.1.9
+external/mpl/bind/dist/bin/tests/system/feature-test.c up to 1.15
+external/mpl/bind/dist/bin/tests/system/packet.pl up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/requirements.txt up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/start.pl up to 1.1.1.13
+external/mpl/bind/dist/bin/tests/system/_common/controls.conf.in up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/_common/rndc.conf up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/_common/rndc.key up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/_common/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/_common/root.hint.blackhole up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/_common/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/additional/ns3/root.hint up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/allow_query/tests.sh up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/tests_sh_allow_query.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/controls.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named02.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named03.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named04.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named05.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named06.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named07.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named08.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named09.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named10.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named11.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named12.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named21.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named22.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named23.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named24.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named25.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named26.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named27.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named28.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named29.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named30.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named31.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named32.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named33.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named34.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named40.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named53.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named54.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named55.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named56.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/allow_query/ns2/named57.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/catz/tests.sh up to 1.1.1.14
+external/mpl/bind/dist/bin/tests/system/catz/ns1/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/catz/ns2/named.conf.j2 up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/chain/ns7/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/checkconf/tests.sh up to 1.1.1.15
+external/mpl/bind/dist/bin/tests/system/checkds/tests_checkds.py up to 1.1.1.8
+external/mpl/bind/dist/bin/tests/system/checknames/ns2/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/checknames/ns3/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/checknames/ns4/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/checknames/ns5/root.hints up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/cipher_suites/tests_cipher_suites.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/cookie/cookie_ans.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/cookie/ns1/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/cookie/ns3/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/cookie/ns4/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/cookie/ns5/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/cookie/ns6/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/dialup/tests_dialup_zone_transfer.py up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/digdelv/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/digdelv/tests.sh up to 1.1.1.20
+external/mpl/bind/dist/bin/tests/system/dispatch/ns1/root.db up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/dnssec/tests.sh up to 1.1.1.18
+external/mpl/bind/dist/bin/tests/system/dnssec/tests_sh_dnssec.py up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/tests_malformed_dnskey.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns2/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns2/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns3/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/dnssec_malformed_dnskey/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/emptyzones/ns1/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/expiredglue/ns4/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/fetchlimit/ns3/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/fetchlimit/ns5/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/filters/tests_filter_dns64.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/filters/ns1/unsigned.db up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/filters/ns4/unsigned.db up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/filters/ns5/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/isctest/__init__.py up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/isctest/asyncserver.py up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/isctest/check.py up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/isctest/kasp.py up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/isctest/mark.py up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/isctest/query.py up to 1.1.1.9
+external/mpl/bind/dist/bin/tests/system/isctest/template.py up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/isctest/vars/features.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/ixfr/ans2/ans.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/kasp/setup.sh up to 1.1.1.9
+external/mpl/bind/dist/bin/tests/system/kasp/tests_kasp.py up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/ksr/tests_ksr.py up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/ksr/ns1/named.conf.j2 up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/ksr/ns1/setup.sh up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/mirror_root_zone/tests_mirror_root_zone.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/nsec/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/nsec3_delegation/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/nsprocessinglimit/ns4/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/nsupdate/setup.sh up to 1.1.1.12
+external/mpl/bind/dist/bin/tests/system/nsupdate/tests.sh up to 1.1.1.18
+external/mpl/bind/dist/bin/tests/system/nsupdate/tests_sh_nsupdate.py up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/nsupdate/ns6/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/optout/tests_optout.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/optout/ns2/controls.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/optout/ns2/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/query_source/ns2/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/query_source/ns3/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/query_source/ns4/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/query_source/ns5/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/reclimit/tests.sh up to 1.1.1.10
+external/mpl/bind/dist/bin/tests/system/redirect/setup.sh up to 1.1.1.9
+external/mpl/bind/dist/bin/tests/system/redirect/tests.sh up to 1.1.1.8
+external/mpl/bind/dist/bin/tests/system/redirect/tests_sh_redirect.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/redirect/ns4/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/resolver/tests.sh up to 1.1.1.15
+external/mpl/bind/dist/bin/tests/system/resolver/ns1/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/resolver/ns5/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/resolver/ns7/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/resolver/ns9/root.hint up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover/setup.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/rollover/tests_rollover_manual.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/rollover/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_algo_csk/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_algo_ksk_zsk/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_csk_roll1/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_csk_roll2/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_enable_dnssec/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_going_insecure/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_ksk_3crowd/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_ksk_doubleksk/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_straight2none/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rollover_zsk_prepub/ns3/trusted.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rpz/testlib/test-data.c up to 1.4
+external/mpl/bind/dist/bin/tests/system/rpzrecurse/ns2/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/serve_stale/tests.sh up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/tests_sh_serve_stale.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns1/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns1/named4.conf.in up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named1.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named2.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named3.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named4.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named5.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named6.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named7.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/serve_stale/ns3/named9.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/statistics/ns3/root.hint up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/synthfromdnssec/ns2/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/synthfromdnssec/ns3/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/synthfromdnssec/ns4/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/synthfromdnssec/ns5/root.hints up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/synthfromdnssec/ns6/root.hints up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/unknown/tests.sh up to 1.1.1.8
+external/mpl/bind/dist/bin/tests/system/xfer/tests_retransfer_with_force.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/xfer/tests_xfer.py up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/xfer/ns6/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/xfer/ns8/small.db.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/xfer_servers_list/tests_xfer_servers_list.py up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/xferquota/tests_xferquota.py up to 1.1.1.7
+external/mpl/bind/dist/bin/tests/system/xferquota/ns1/named.conf.j2 up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/zero/ns3/root.hint up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/nsec3hash.c    up to 1.10
+external/mpl/bind/dist/doc/arm/changelog.rst    up to 1.1.1.8
+external/mpl/bind/dist/doc/arm/conf.py          up to 1.1.1.11
+external/mpl/bind/dist/doc/arm/isc-logo.pdf     up to 1.6
+external/mpl/bind/dist/doc/arm/notes.rst        up to 1.1.1.16
+external/mpl/bind/dist/doc/arm/platforms.inc.rst up to 1.1.1.7
+external/mpl/bind/dist/doc/dnssec-guide/img/remove-ds-2.png up to 1.2
+external/mpl/bind/dist/doc/man/nsupdate.1in     up to 1.1.1.11
+external/mpl/bind/dist/lib/dns/adb.c            up to 1.18
+external/mpl/bind/dist/lib/dns/catz.c           up to 1.18
+external/mpl/bind/dist/lib/dns/db.c             up to 1.15
+external/mpl/bind/dist/lib/dns/diff.c           up to 1.14
+external/mpl/bind/dist/lib/dns/dispatch.c       up to 1.16
+external/mpl/bind/dist/lib/dns/dns64.c          up to 1.9
+external/mpl/bind/dist/lib/dns/dnssec.c         up to 1.20
+external/mpl/bind/dist/lib/dns/dst_api.c        up to 1.19
+external/mpl/bind/dist/lib/dns/gssapictx.c      up to 1.14
+external/mpl/bind/dist/lib/dns/hmac_link.c      up to 1.11
+external/mpl/bind/dist/lib/dns/master.c         up to 1.16
+external/mpl/bind/dist/lib/dns/masterdump.c     up to 1.20
+external/mpl/bind/dist/lib/dns/message.c        up to 1.24
+external/mpl/bind/dist/lib/dns/name.c           up to 1.17
+external/mpl/bind/dist/lib/dns/nta.c            up to 1.15
+external/mpl/bind/dist/lib/dns/opensslrsa_link.c up to 1.14
+external/mpl/bind/dist/lib/dns/qp.c             up to 1.6
+external/mpl/bind/dist/lib/dns/qp_p.h           up to 1.4
+external/mpl/bind/dist/lib/dns/qpcache.c        up to 1.7
+external/mpl/bind/dist/lib/dns/qpzone.c         up to 1.7
+external/mpl/bind/dist/lib/dns/rdataslab.c      up to 1.14
+external/mpl/bind/dist/lib/dns/request.c        up to 1.15
+external/mpl/bind/dist/lib/dns/resolver.c       up to 1.27
+external/mpl/bind/dist/lib/dns/rpz.c            up to 1.19
+external/mpl/bind/dist/lib/dns/rrl.c            up to 1.14
+external/mpl/bind/dist/lib/dns/tkey.c           up to 1.19
+external/mpl/bind/dist/lib/dns/tsig.c           up to 1.16
+external/mpl/bind/dist/lib/dns/validator.c      up to 1.22
+external/mpl/bind/dist/lib/dns/xfrin.c          up to 1.23
+external/mpl/bind/dist/lib/dns/zone.c           up to 1.28
+external/mpl/bind/dist/lib/dns/zoneverify.c     up to 1.14
+external/mpl/bind/dist/lib/dns/include/dns/adb.h up to 1.12
+external/mpl/bind/dist/lib/dns/include/dns/compress.h up to 1.9
+external/mpl/bind/dist/lib/dns/include/dns/db.h up to 1.16
+external/mpl/bind/dist/lib/dns/include/dns/diff.h up to 1.10
+external/mpl/bind/dist/lib/dns/include/dns/dispatch.h up to 1.10
+external/mpl/bind/dist/lib/dns/include/dns/keyvalues.h up to 1.11
+external/mpl/bind/dist/lib/dns/include/dns/nametree.h up to 1.3
+external/mpl/bind/dist/lib/dns/include/dns/nsec.h up to 1.9
+external/mpl/bind/dist/lib/dns/include/dns/qp.h up to 1.5
+external/mpl/bind/dist/lib/dns/include/dns/sdlz.h up to 1.10
+external/mpl/bind/dist/lib/dns/include/dns/ssu.h up to 1.9
+external/mpl/bind/dist/lib/dns/include/dns/stats.h up to 1.10
+external/mpl/bind/dist/lib/dns/include/dns/tsig.h up to 1.11
+external/mpl/bind/dist/lib/dns/include/dns/zone.h up to 1.17
+external/mpl/bind/dist/lib/dns/include/dst/gssapi.h up to 1.10
+external/mpl/bind/dist/lib/dns/rdata/in_1/a_1.c up to 1.13
+external/mpl/bind/dist/lib/isc/histo.c          up to 1.4
+external/mpl/bind/dist/lib/isc/ht.c             up to 1.12
+external/mpl/bind/dist/lib/isc/mem.c            up to 1.20
+external/mpl/bind/dist/lib/isc/picohttpparser.c up to 1.7
+external/mpl/bind/dist/lib/isc/ratelimiter.c    up to 1.11
+external/mpl/bind/dist/lib/isc/result.c         up to 1.16
+external/mpl/bind/dist/lib/isc/tls.c            up to 1.9
+external/mpl/bind/dist/lib/isc/include/isc/hmac.h up to 1.8
+external/mpl/bind/dist/lib/isc/include/isc/result.h up to 1.15
+external/mpl/bind/dist/lib/isc/include/isc/stdio.h up to 1.8
+external/mpl/bind/dist/lib/isc/include/isc/tls.h up to 1.6
+external/mpl/bind/dist/lib/isc/netmgr/http.c    up to 1.9
+external/mpl/bind/dist/lib/isc/netmgr/tcp.c     up to 1.15
+external/mpl/bind/dist/lib/isccfg/check.c       up to 1.7
+external/mpl/bind/dist/lib/isccfg/include/isccfg/aclconf.h up to 1.10
+external/mpl/bind/dist/lib/ns/client.c          up to 1.29
+external/mpl/bind/dist/lib/ns/query.c           up to 1.29
+external/mpl/bind/dist/lib/ns/update.c          up to 1.21
+external/mpl/bind/dist/lib/ns/xfrout.c          up to 1.18
+external/mpl/bind/dist/tests/dns/dispatch_test.c up to 1.5
+external/mpl/bind/dist/tests/dns/dnstap_test.c  up to 1.5
+external/mpl/bind/dist/tests/dns/qpdb_test.c    up to 1.4
+external/mpl/bind/dist/tests/dns/rsa_test.c     up to 1.4
+external/mpl/bind/dist/tests/dns/tsig_test.c    up to 1.8
+external/mpl/bind/dist/tests/dns/update_test.c  up to 1.5
+external/mpl/bind/dist/tests/isc/mem_test.c     up to 1.6
+external/mpl/bind/dist/tests/isc/time_test.c    up to 1.4
+external/mpl/bind/include/config.h              up to 1.28
+external/mpl/bind/lib/libdns/dns.common.expsym  up to 1.9
+external/mpl/bind/lib/libdns/shlib_version      up to 1.21
+distrib/sets/lists/base/shl.mi			(manually edited)
+distrib/sets/lists/debug/shl.mi			(manually edited)
+doc/3RDPARTY					(manually edited)
+
+	Import bind 9.20.24/MPL
+	[christos, ticket #315]
+
+sys/dev/acpi/acpi.c				1.305,1.306
+
+	acpi(4): use bootstrap entropy provided on Hyper-V and
+	leave Hyper-V rndsource attached.
+	[tls, ticket #317]
+
+lib/libc/time/strptime.c			1.68
+
+	strptime(3): fix day of week calculcation.
+	[wiz, ticket #318]
+
+tests/usr.sbin/inetd/t_accept_max.sh		1.3,1.4
+
+	inetd(8): PR 59645: fix sh(1) trap save/restore in accept-max test
+	and some cleanup.
+	[riastradh, ticket #325]
+
+sys/dev/scsipi/sd.c				1.346
+
+	sd(4): properly deal with drivers like mpt(4) that announce SPC-3
+	conformity but don't support READ_CAPACITY_16 in all configurations.
+	[mlelstv, ticket #326]
+
+sys/arch/alpha/conf/INSTALL			1.123
+
+	alpha: add bge (3X-DEGXA-T*) to the INSTALL configuration.
+	[jdc, ticket #328]
+
+sys/net/if_wg.c					1.136-1.138
+tests/net/if_wg/common.sh			1.2
+tests/net/if_wg/t_basic.sh			1.7-1.9
+tests/net/if_wg/t_misc.sh			1.17,1.18
+
+	wg(4): PR 60106, PR 60232, PR 60349:
+	1. Make sure we handle invalid public keys robustly.
+	2. Fail, don't panic, if user passes too many allowed IP ranges.
+	3. Avoid memory leaks on every ioctl.
+	[riastradh, ticket #329]
+
+distrib/sets/lists/debug/mi			1.512
+distrib/sets/lists/tests/mi			1.1417
+sys/opencrypto/cryptodev.c			1.129-1.133
+sys/opencrypto/cryptodev_internal.h		1.5
+sys/opencrypto/cryptosoft.c			1.67
+sys/opencrypto/ocryptodev.c			1.19
+sys/rump/dev/lib/libopencrypto/OPENCRYPTO.ioconf 1.2
+sys/rump/dev/lib/libopencrypto/opencrypto_component.c 1.7
+tests/crypto/opencrypto/Makefile		1.6
+tests/crypto/opencrypto/h_thread.c		1.1,1.2
+tests/crypto/opencrypto/t_opencrypto.sh		1.12-1.14
+
+	crypto(4): PR 60281: new stress tests
+	and fix various issues with the test and with /dev/crypto.
+	[riastradh, ticket #330]
+
+sys/dev/pci/virtio_pci.c			1.56
+
+	virtio(4): PR 60247: allow virtio 0.9 BAR0 type to be memory
+	rather than I/O.
+	[riastradh, ticket #331]
+
+sys/dev/pci/virtio.c				1.85
+
+	virtio(4): PR 60144: fix cache coherence issue
+	on some platforms.
+	[riastradh, ticket #332]
+
+sys/dev/pci/ld_virtio.c				1.48
+
+	ld(4) at virtio: PR 60182: call the right subroutines when
+	polling to issue the necessary bus_dmamap_sync so we don't
+	read stale data from the device and conclude it's stuck.      
+	[riastradh, ticket #333]
+
+usr.bin/mail/def.h				1.29
+usr.bin/mail/fio.c				1.46
+usr.bin/mail/thread.c				1.17
+usr.bin/mail/thread.h				1.4
+
+	mail(1): PR 59635: fix post realloc() cleanup.
+	[kre, ticket #334]
+
+external/mit/expat/dist/lib/xcsinc.c            up to 1.1.1.1
+external/mit/expat/dist/lib/fallthrough.h       up to 1.1.1.1
+external/mit/expat/dist/lib/memory_sanitizer.h  up to 1.1.1.1
+external/mit/expat/dist/memory-sanitizer-blacklist.txt delete
+external/mit/expat/dist/CMake.README            up to 1.1.1.10
+external/mit/expat/dist/CMakeLists.txt          up to 1.1.1.10
+external/mit/expat/dist/Changes                 up to 1.1.1.11
+external/mit/expat/dist/ConfigureChecks.cmake   up to 1.1.1.6
+external/mit/expat/dist/README.md               up to 1.1.1.6
+external/mit/expat/dist/configure.ac            up to 1.1.1.9
+external/mit/expat/dist/qa.sh                   up to 1.1.1.2
+external/mit/expat/dist/doc/reference.html      up to 1.1.1.10
+external/mit/expat/dist/doc/xmlwf.xml           up to 1.1.1.7
+external/mit/expat/dist/lib/Makefile.am         up to 1.1.1.5
+external/mit/expat/dist/lib/expat.h             up to 1.1.1.11
+external/mit/expat/dist/lib/libexpat.def.cmake  up to 1.1.1.3
+external/mit/expat/dist/lib/random_arc4random_buf.c up to 1.1.1.2
+external/mit/expat/dist/lib/random_dev_urandom.c up to 1.1.1.2
+external/mit/expat/dist/lib/random_getentropy.c up to 1.1.1.2
+external/mit/expat/dist/lib/random_getrandom.c  up to 1.1.1.2
+external/mit/expat/dist/lib/siphash.h           up to 1.1.1.5
+external/mit/expat/dist/lib/xmlparse.c          up to 1.13
+external/mit/expat/dist/lib/xmltok.c            up to 1.9
+external/mit/expat/dist/lib/xmltok_impl.c       up to 1.9
+external/mit/expat/dist/tests/acc_tests.c       up to 1.1.1.2
+external/mit/expat/dist/tests/alloc_tests.c     up to 1.1.1.3
+external/mit/expat/dist/tests/basic_tests.c     up to 1.1.1.3
+external/mit/expat/dist/tests/chardata.c        up to 1.1.1.7
+external/mit/expat/dist/tests/common.c          up to 1.1.1.4
+external/mit/expat/dist/tests/handlers.c        up to 1.1.1.3
+external/mit/expat/dist/tests/handlers.h        up to 1.1.1.3
+external/mit/expat/dist/tests/misc_tests.c      up to 1.1.1.4
+external/mit/expat/dist/win32/expat.iss         up to 1.1.1.11
+external/mit/expat/dist/xmlwf/filemap.h         up to 1.1.1.5
+external/mit/expat/dist/xmlwf/win32filemap.c    up to 1.1.1.6
+external/mit/expat/dist/xmlwf/xmlfile.c         up to 1.1.1.8
+external/mit/expat/dist/xmlwf/xmlwf.c           up to 1.1.1.10
+external/mit/expat/dist/xmlwf/xmlwf_helpgen.py  up to 1.1.1.5
+distrib/sets/lists/base/shl.mi			1.1045
+distrib/sets/lists/debug/shl.mi			1.406
+doc/3RDPARTY					1.2226
+external/mit/expat/bin/xmlwf/xmlwf.1		1.2
+external/mit/expat/lib/libexpat/shlib_version	1.8
+
+	Update expat to 2.8.2.
+	[jdc, ticket #338]
+
+lib/libc/citrus/modules/citrus_utf8.c		1.19
+
+	mbrtowc(3), mbrlen(3): PR 60369: fix return value for
+	some invalid UTF-8 byte sequences.
+	[wiz, ticket #339]
+
+lib/libbsdmalloc/malloc.c			1.12
+
+	libbsdmalloc: don't leak malloc lock in failure branches.
+	[riastradh, ticket #340]
+
+external/cddl/osnet/dist/lib/libuutil/common/libuutil_impl.h 1.2
+external/cddl/osnet/dist/lib/libuutil/common/uu_avl.c 1.2
+external/cddl/osnet/dist/lib/libuutil/common/uu_list.c 1.2,1.5
+lib/libbsdmalloc/malloc.c			1.13
+lib/libc/gen/arc4random.c			1.51
+lib/libc/stdlib/malloc.c			1.61
+
+	libc, libuutil (zfs stuff), libbsdmalloc: PR 59237:
+	fix postfork mutex actions to reinitialize the mutex
+	instead of unlocking it.
+	Avoids potential deadlocks after fork in case other threads
+	are waiting for a mutex.
+	[riastradh, ticket #341]
+
+usr.bin/mail/mail.1				1.70
+
+	mail(1): PR 59671: document "list" command
+	[riastradh, ticket #342]
+
+usr.sbin/sysinst/msg.mi.en			1.61
+usr.sbin/sysinst/msg.mi.es			1.51
+usr.sbin/sysinst/msg.mi.fr			1.54
+usr.sbin/sysinst/msg.mi.pl			1.57
+
+	sysinst(8): fix typo in recent addition to msg files
+	[nia, ticket #343]
+
+sys/uvm/uvm_km.c				1.167
+
+	uvm_km_pgremove_intrsafe: drain TLB shootdown before freeing pages.
+	[kbowling, ticket #345]
 
