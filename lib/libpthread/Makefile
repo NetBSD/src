@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96.8.1 2024/09/20 11:05:44 martin Exp $
+#	$NetBSD: Makefile,v 1.96.8.2 2026/06/27 17:32:35 martin Exp $
 #
 
 NOSANITIZER=	# defined
@@ -47,6 +47,22 @@ CPPFLAGS+=-I${NETBSDSRCDIR}/sys -I${.CURDIR}/../libc
 # possible by setting PTHREAD_MAKELWP.  Currently, alternatives are
 # set by the rumprun software stacks (see https://github.com/rumpkernel/rumprun )
 PTHREAD_MAKELWP?=	pthread_makelwp_netbsd.c
+
+# Prevent unloading libpthread.
+#
+# libpthread provides strong definitions of some symbols defined weakly
+# by libc, such as pthread_mutex_lock (actually __libc_mutex_lock under
+# the hood), which are used in libraries that take locks for
+# thread-safety -- this way, in non-threaded applications,
+# pthread_mutex_lock is a cheap noop libc stub, while in threaded
+# applications, it's a real libpthread operation.  If libpthread is
+# dlopened, the symbol might be lazily resolved _after_ it is dlopened
+# to point at libpthread; then it cannot be safely unloaded, because
+# there's no way to roll back symbol resolution.
+#
+# PR lib/59784: dlopening and dlclosing libpthread is broken
+#
+LDADD+=		-Wl,-z,nodelete
 
 #
 # NOTE: When you create a new file for libpthread, make sure that pthread.c
