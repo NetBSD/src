@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.135.2.1 2026/06/27 14:54:25 martin Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135 2024/12/27 16:42:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.135.2.1 2026/06/27 14:54:25 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -1094,8 +1094,71 @@ wg_algo_dh(uint8_t out[static WG_DH_OUTPUT_LEN],
 
 	CTASSERT(WG_STATIC_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
 
-	int ret __diagused = crypto_scalarmult(out, privkey, pubkey);
-	KASSERT(ret == 0);
+	/*
+	 * libsodium crypto_scalarmult may fail early (return -1) if
+	 * pubkey is a point of order <=8 -- and thus if the output
+	 * _would_ be all-zero -- in order to mitigate _potential_
+	 * timing side channel attacks prompted by:
+	 *
+	 *	Daniel Genkin, Luke Valenta, and Yuval Yarom, `May the
+	 *	Fourth Be With You: A Microarchitectural Side Channel
+	 *	Attack on Several Real-World Applications of
+	 *	Curve25519', ACM CCS 2017
+	 *	https://dl.acm.org/doi/10.1145/3133956.3134029
+	 *
+	 * (The paper is actually about exploiting variable-time logic
+	 * in erstwhile versions of libgcrypt; the risk libsodium
+	 * mitigates is only the potential of compiler optimizations
+	 * that convert branchless arithmetic circuits written in C
+	 * into variable-time machine code.  Of course, this early
+	 * abort itself introduces timing variation!  But that timing
+	 * variation only reveals the distinction between a point of
+	 * order <=8 (not possible for legitimate keys) and a point of
+	 * order >8.)
+	 *
+	 * The X25519 function was explicitly designed from the
+	 * beginning to be safe without point validation in DH key
+	 * agreements:
+	 *
+	 * https://web.archive.org/web/20260618014320/https://cr.yp.to/ecdh/curve25519-20060209.pdf
+	 * https://web.archive.org/web/20260613191208/https://cr.yp.to/ecdh.html#validate
+	 *
+	 * Consistent with the `MAY' in the RFC 7748 procedure for
+	 * X25519 DH key agreements, we deliberately ignore the result
+	 * of this check -- except to memset the output to zero --
+	 * because:
+	 *
+	 * - If a malicious peer provides a static public key of low
+	 *   order as its identity, that malicious peer could also just
+	 *   maliciously forward traffic to the NSA anyway.
+	 *
+	 * - If a MITM on the network provides an ephemeral public key
+	 *   in a key agreement, we will reject it as a forgery anyway
+	 *   using the static public key of the peer's identity.
+	 *
+	 * So there is no value in using the result of the check -- and
+	 * if we did use it, it would introduce unnecessary code
+	 * complexity downstream, raising the cost of auditing.
+	 *
+	 * Note that not all of libsodium's implementations of
+	 * crypto_scalarmult_curve25519 even do the check!  At time of
+	 * writing (both in the version of libsodium in NetBSD, 1.0.16,
+	 * and the latest libsodium, 1.0.22), the ref10 implementation
+	 * may return -1, while the sandy2x implementation never does.
+	 * The libsodium documentation doesn't even mention what the
+	 * return value means, even though the function is annotated
+	 * with __attribute__((warn_unused_result)):
+	 *
+	 * https://web.archive.org/web/20260521174050/https://libsodium.gitbook.io/doc/advanced/scalar_multiplication
+	 *
+	 * Further reading on the check, its value, and its
+	 * limitations:
+	 *
+	 * https://web.archive.org/web/20260404134530/https://moderncrypto.org/mail-archive/curves/2017/000896.html
+	 * https://web.archive.org/web/20210506235924/https://crypto.stackexchange.com/questions/55632/libsodium-x25519-and-ed25519-small-order-check/55643#55643
+	 */
+	if (crypto_scalarmult(out, privkey, pubkey))
+		memset(out, 0, WG_DH_OUTPUT_LEN);
 }
 
 static void
@@ -3940,6 +4003,7 @@ wg_destroy_peer(struct wg_peer *wgp)
 
 	/* Prevent new packets from this peer on any source address.  */
 	rw_enter(wg->wg_rwlock, RW_WRITER);
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 	for (int i = 0; i < wgp->wgp_n_allowedips; i++) {
 		struct wg_allowedip *wga = &wgp->wgp_allowedips[i];
 		struct radix_node_head *rnh = wg_rnh(wg, wga->wga_family);
@@ -4662,6 +4726,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	const void *psk;
 	size_t psk_len;
 	const char *name = NULL;
+	struct wg_peer *wgp = NULL;
 
 	if (prop_dictionary_get_string(peer, "name", &name)) {
 		if (strlen(name) > WG_PEER_NAME_MAXLEN) {
@@ -4684,7 +4749,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	}
 #endif
 
-	struct wg_peer *wgp = wg_alloc_peer(wg);
+	wgp = wg_alloc_peer(wg);
 	memcpy(wgp->wgp_pubkey, pubkey, sizeof(wgp->wgp_pubkey));
 	if (name != NULL)
 		strncpy(wgp->wgp_name, name, sizeof(wgp->wgp_name));
@@ -4741,9 +4806,14 @@ skip_endpoint:
 
 	prop_object_iterator_t _it = prop_array_iterator(allowedips);
 	prop_dictionary_t prop_allowedip;
-	int j = 0;
 	while ((prop_allowedip = prop_object_iterator_next(_it)) != NULL) {
-		struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
+		if (wgp->wgp_n_allowedips >= WG_ALLOWEDIPS) {
+			error = E2BIG;
+			goto out;
+		}
+
+		struct wg_allowedip *const wga =
+		    &wgp->wgp_allowedips[wgp->wgp_n_allowedips++];
 
 		if (!prop_dictionary_get_int(prop_allowedip, "family",
 			&wga->wga_family))
@@ -4763,8 +4833,10 @@ skip_endpoint:
 			struct in_addr mask;
 			struct sockaddr_in sin_mask;
 
-			if (addr_len != sizeof(struct in_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr4, addr, addr_len);
 
 			sockaddr_in_init(&sin, (const struct in_addr *)addr,
@@ -4791,8 +4863,10 @@ skip_endpoint:
 			struct in6_addr mask;
 			struct sockaddr_in6 sin6_mask;
 
-			if (addr_len != sizeof(struct in6_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in6_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr6, addr, addr_len);
 
 			sockaddr_in6_init(&sin6, (const struct in6_addr *)addr,
@@ -4821,13 +4895,14 @@ skip_endpoint:
 		error = wg_rtable_add_route(wg, wga);
 		if (error != 0)
 			goto out;
-
-		j++;
 	}
-	wgp->wgp_n_allowedips = j;
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 skip:
 	*wgpp = wgp;
+	wgp = NULL;
 out:
+	if (wgp)
+		wg_destroy_peer(wgp);
 	return error;
 }
 
@@ -4859,7 +4934,7 @@ static int
 wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const void *privkey;
 	size_t privkey_len;
@@ -4889,6 +4964,8 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 	error = 0;
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4897,7 +4974,7 @@ static int
 wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	uint16_t port;
 
@@ -4914,6 +4991,8 @@ wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 	error = wg->wg_ops->bind_port(wg, (uint16_t)port);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4922,7 +5001,7 @@ static int
 wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	struct wg_peer *wgp = NULL, *wgp0 __diagused;
 
@@ -4964,6 +5043,8 @@ wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 	if_link_state_change(&wg->wg_if, LINK_STATE_UP);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4972,7 +5053,7 @@ static int
 wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const char *name;
 
@@ -4991,6 +5072,8 @@ wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 
 	error = wg_destroy_peer_name(wg, name);
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -5100,6 +5183,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		prop_array_t allowedips = prop_array_create();
 		if (allowedips == NULL)
 			goto next;
+		KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 		for (int j = 0; j < wgp->wgp_n_allowedips; j++) {
 			struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
 			prop_dictionary_t prop_allowedip;
