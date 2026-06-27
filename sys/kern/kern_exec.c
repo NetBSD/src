@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.518.4.3 2026/06/27 09:52:11 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.518.4.4 2026/06/27 17:21:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.518.4.3 2026/06/27 09:52:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.518.4.4 2026/06/27 17:21:06 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -280,6 +280,7 @@ struct spawn_exec_data {
 	kcondvar_t		sed_cv_child_ready;
 	kmutex_t		sed_mtx_child;
 	int			sed_error;
+	bool			sed_child_ready;
 	volatile uint32_t	sed_refcnt;
 };
 
@@ -2351,6 +2352,9 @@ spawn_return(void *arg)
 	    && rw_tryenter(&exec_lock, RW_READER)) {
 		parent_is_waiting = false;
 		mutex_enter(&spawn_data->sed_mtx_child);
+		KASSERT(!spawn_data->sed_child_ready);
+		spawn_data->sed_error = 0;
+		spawn_data->sed_child_ready = true;
 		cv_signal(&spawn_data->sed_cv_child_ready);
 		mutex_exit(&spawn_data->sed_mtx_child);
 	}
@@ -2380,6 +2384,9 @@ spawn_return(void *arg)
 
 	if (parent_is_waiting) {
 		mutex_enter(&spawn_data->sed_mtx_child);
+		KASSERT(!spawn_data->sed_child_ready);
+		spawn_data->sed_error = 0;
+		spawn_data->sed_child_ready = true;
 		cv_signal(&spawn_data->sed_cv_child_ready);
 		mutex_exit(&spawn_data->sed_mtx_child);
 	}
@@ -2413,7 +2420,9 @@ spawn_return(void *arg)
 	if (parent_is_waiting) {
 		/* pass error to parent */
 		mutex_enter(&spawn_data->sed_mtx_child);
+		KASSERT(!spawn_data->sed_child_ready);
 		spawn_data->sed_error = error;
+		spawn_data->sed_child_ready = true;
 		cv_signal(&spawn_data->sed_cv_child_ready);
 		mutex_exit(&spawn_data->sed_mtx_child);
 	} else {
@@ -2827,7 +2836,10 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_exit(p2->p_lock);
 	mutex_exit(&proc_lock);
 
-	cv_wait(&spawn_data->sed_cv_child_ready, &spawn_data->sed_mtx_child);
+	while (!spawn_data->sed_child_ready) {
+		cv_wait(&spawn_data->sed_cv_child_ready,
+		    &spawn_data->sed_mtx_child);
+	}
 	error = spawn_data->sed_error;
 	mutex_exit(&spawn_data->sed_mtx_child);
 	spawn_exec_data_release(spawn_data);
